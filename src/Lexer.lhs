@@ -1,30 +1,5 @@
 \section{Lexer}
 
-%if False
-
-> {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE TypeSynonymInstances #-}
-
-%endif
-
-> module Lexer
->  (  Tok(..)
->  ,  Br(..)
->  ,  tokOut
->  ,  tokenize
->  ,  isSpcT
->  ,  brackets
->  )  where
-
-%if False
-
-> import Control.Applicative
-> import Control.Monad.State
-> import Data.Char
-> import Data.List
-
-%endif
-
 I propose to keep the lexical structure fairly simple, with not much by
 way of character classification. Every sequence of characters lexes,
 but there are `ugly' lexemes which have no part in a valid.
@@ -35,6 +10,36 @@ between open-and-bar, or bar-and-close without
 whitespace. Correspondingly, bar may not be next to an identifier
 unless it is part of a bracket. Otherwise, sequences of non-whitespace
 are identifiers unless they're keywords.
+
+%------------------------------------------------------------------------
+\subsection{Preamble}
+%------------------------------------------------------------------------
+
+
+%if False
+
+> {-# OPTIONS_GHC -F -pgmF she #-}
+> {-# LANGUAGE TypeSynonymInstances #-}
+
+%endif
+
+> module Lexer
+>  (  Tok(..)     -- structured tokens, nesting brackets and layout
+>  ,  Br(..)      -- bracket kinds (infinitely many)
+>  ,  tokOut      -- token printer
+>  ,  tokenize    -- token snarfer
+>  ,  isSpcT      -- test if a token is whitespace
+>  ,  brackets    -- test if bracket kinds match: |(blah||..||)| is ok
+>  )  where
+
+%if False
+
+> import Control.Applicative
+> import Control.Monad.State
+> import Data.Char
+> import Data.List
+
+%endif
 
 %------------------------------------------------------------------------
 \subsection{What are tokens?}

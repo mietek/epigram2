@@ -3,5 +3,7 @@
 %subst keyword a = "\mathkw{" a "}"
 %subst conid a = "\mathsf{" a "}"
 
+%format forall = "\forall"
 %format <|> = "\obar"
 %format <*> = "\varoast"
+%format . = "\cdot"

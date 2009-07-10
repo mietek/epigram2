@@ -1,5 +1,5 @@
 \documentclass[a4]{report}
-\usepackage{stmaryrd,wasysym,url,upgreek,palatino}
+\usepackage{stmaryrd,wasysym,url,upgreek,palatino,alltt}
 
 %include lhs2TeX.fmt
 %include lhs2TeX.sty
