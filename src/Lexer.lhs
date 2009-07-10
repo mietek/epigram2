@@ -1,174 +1,199 @@
-> module Lexer(
->   lexer, rexel,
->   LDoc,
->   LBloc,
->   Line (..),
->   LTok (..),
->   Brac (..), Bracket,
->   HC, width,
->   LeGt (..),
->   VC, vcs,
->   closer
->   ) where
+\section{Lexer}
 
-> import Data.Monoid
+%if False
 
-INTERFACE
+> {-# OPTIONS_GHC -F -pgmF she #-}
+> {-# LANGUAGE TypeSynonymInstances #-}
 
-> type LDoc = [(VC, LLine)]
+%endif
 
-> lexer :: String -> LDoc
-> lexer s = zip vcs (fmap (grok mempty) (lines s))
+> module Lexer
+>  (  Tok(..)
+>  ,  Br(..)
+>  ,  tokOut
+>  ,  tokenize
+>  ,  isSpcT
+>  ,  brackets
+>  )  where
 
-> rexel :: LDoc -> String
-> rexel [] = ""
-> rexel ((_, Blank) : ls) = '\n' : rexel ls
-> rexel ((_, i :>->: ts) : ls) = spaces mempty i ++ lbloc mempty ts ++ "\n" ++
->   rexel ls
+%if False
 
-> newtype VC = VC Int deriving (Eq, Ord, Show)
-> newtype HC = HC Int deriving (Eq, Ord, Show)
+> import Control.Applicative
+> import Control.Monad.State
+> import Data.Char
+> import Data.List
 
-> data Dent b
->   = HC :>->: b
->   | Blank
->   deriving Show
+%endif
 
-> type LLine = Dent LBloc
+I propose to keep the lexical structure fairly simple, with not much by
+way of character classification. Every sequence of characters lexes,
+but there are `ugly' lexemes which have no part in a valid.
 
-> type LBloc = [(HC, LTok, HC)]
+Commas and semicolons always stand alone. Brackets are round, square,
+or curly, and you can make fancy brackets by wedging an identifier
+between open-and-bar, or bar-and-close without
+whitespace. Correspondingly, bar may not be next to an identifier
+unless it is part of a bracket. Otherwise, sequences of non-whitespace
+are identifiers unless they're keywords.
 
-> data LTok
->   = LStuff String
->   | Opener Bracket
->   | Closer (Brac, Maybe ())
->   deriving Eq
+%------------------------------------------------------------------------
+\subsection{What are tokens?}
+%------------------------------------------------------------------------
 
-> instance Show LTok where
->   show (LStuff s) = s
->   show (Opener (b, Just s)) = openc b : s ++ "|"
->   show (Opener (b, _)) = [openc b]
->   show (Closer (b, Just _)) = ['|', closec b]
->   show (Closer (b, _)) = [closec b]
+We lex into tokens, classified as follows.
 
-> type Bracket = (Brac, Maybe String)
-> data Brac = Rnd | Sqr | Crl deriving (Eq, Show)
+> data Tok
+>   =  I String  -- identifiers
+>   |  Ope Br    -- open brackets
+>   |  Clo Br    -- close brackets
+>   |  K String  -- keywords
+>   |  S Int     -- space
+>   |  U String  -- ugly non-lexemes (non-close-bracket bar-starts)
+>   |  Com       -- just the comma
+>   |  Sem       -- semicolon
+>   |  Bar       -- bar (not in another lexeme)
+>   |  Eol       -- new line
+>                -- tokens used only after bracketing
+>   |  B Br [Tok] Br     -- a bracket
+>   |  L String [[Tok]]  -- layout introduced by keyword, then lines
+>      deriving  (Show, Eq)
 
-> closer :: Bracket -> LTok
-> closer (b, m) = Closer (b, m >> return ())
+We have ordinary and fancy brackets.
 
-> instance Monoid HC where
->   mempty = HC 0
->   mappend (HC x) (HC y) = HC (x + y)
+> data Br
+>   =  Rnd  | RndB String
+>   |  Sqr  | SqrB String
+>   |  Crl  | CrlB String
+>      deriving (Show, Eq)
 
-> width :: Char -> HC
-> width c = HC 1
+Here's how to generate the text for a token
 
-> data LeGt x
->   = LeBy x
->   | GtBy x
+> tokOut :: Tok -> String
+> tokOut (I s)  = s
+> tokOut (Ope b) = case b of
+>   Rnd         -> "("
+>   RndB s      -> "(" ++ s ++ "|"
+>   Sqr         -> "[" 
+>   SqrB s      -> "[" ++ s ++ "|"
+>   Crl         -> "{"
+>   CrlB s      -> "{" ++ s ++ "|"
+> tokOut (Clo b) = case b of
+>   Rnd         -> ")"
+>   RndB s      -> "|" ++ s ++ ")"
+>   Sqr         -> "]"
+>   SqrB s      -> "|" ++ s ++ "]"
+>   Crl         -> "}"
+>   CrlB s      -> "|" ++ s ++ "}"
+> tokOut (K s)  = s
+> tokOut (S i)  = replicate i ' '
+> tokOut (U s)  = s
+> tokOut Eol     = "\n"
 
-> class (Eq x, Ord x, Monoid x) => LEGT x where
->   legt :: x -> x -> LeGt x
 
-> instance LEGT HC where
->   legt (HC i) (HC j) = if i <= j
->     then LeBy (HC (j - i))
->     else GtBy (HC (i - j))
+%------------------------------------------------------------------------
+\subsection{Tokenizing}
+%------------------------------------------------------------------------
 
-> vcs :: [VC]
-> vcs = fmap VC [0..]
+The lexing process is almost a classic unfold. We generate a list of
+tokens labelled with their starting column. The slightly contextual
+behaviour of bar means we need a running repair.
 
-IMPLEMENTATION
+> tokenize :: String -> [(Int, Tok)]
+> tokenize = fixUp . unfoldr (runStateT (|gets fst, tokIn|)) . (,) 0
 
-> openCB :: [(Char, Brac)]
-> openCB = [('(', Rnd), ('[', Sqr), ('{', Crl)]
+We check for spaces and specials first. We detect bar-starts, but not
+bar-ends.
 
-> openc :: Brac -> Char
-> openc b = c where [c] = [c | (c, b') <- openCB, b == b']
+> tokIn :: L Tok
+> tokIn = (| S (| length (some (ch ' ')) |)
+>          | Ope  {ch '('} (| RndB (spa isOrd) {ch '|'} | Rnd |)
+>          | Ope  {ch '['} (| SqrB (spa isOrd) {ch '|'} | Sqr |)
+>          | Ope  {ch '{'} (| CrlB (spa isOrd) {ch '|'} | Crl |)
+>          | Clo  ~ Rnd {ch ')'}
+>          | Clo  ~ Sqr {ch ']'}
+>          | Clo  ~ Crl {ch '}'}
+>          | Clo  {ch '|'} (| (flip ($)) (spa isOrd)
+>              (| RndB {ch ')'} | SqrB {ch ']'} | CrlB {ch '}'} |) |)
+>          | U    (| ch '|' : some (chk isOrd cha) |)
+>          | Bar  {ch '|'}
+>          | Com  {ch ','}
+>          | Sem  {ch ';'}
+>          | Eol  {chk isNL cha}
+>          | ik   (some (chk isOrd cha))
+>          |)
+>  where   ik s = if elem s keywords then K s else I s
 
-> closeCB :: [(Char, Brac)]
-> closeCB = [(')', Rnd), (']', Sqr), ('}', Crl)]
+However, we can repair the problem by checking the output sequence for
+bars in the wrong place.
 
-> closec :: Brac -> Char
-> closec b = c where [c] = [c | (c, b') <- closeCB, b == b']
+> fixUp :: [(Int, Tok)] -> [(Int, Tok)]
+> fixUp [] = []
+> fixUp ((i, I s)  : (_, Bar)  : its) = fixUp $ (i, U (s ++ "|"))  : its
+> fixUp ((i, K s)  : (_, Bar)  : its) = fixUp $ (i, U (s ++ "|"))  : its
+> fixUp ((i, U s)  : (_, Bar)  : its) = fixUp $ (i, U (s ++ "|"))  : its
+> fixUp ((i, I s)  : (_, U t)  : its) = fixUp $ (i, U (s ++ t))    : its
+> fixUp ((i, K s)  : (_, U t)  : its) = fixUp $ (i, U (s ++ t))    : its
+> fixUp ((i, U s)  : (_, U t)  : its) = fixUp $ (i, U (s ++ t))    : its
+> fixUp (x : xs) = x : fixUp xs
 
-> spaces :: HC -> HC -> String
-> spaces (HC i) (HC j) = take (j - i) (repeat ' ')
 
-> lbloc :: HC -> LBloc -> String
-> lbloc i [] = ""
-> lbloc i ((j, t, k) : ts) = spaces i j ++ show t ++ lbloc k ts
+%------------------------------------------------------------------------------
+\subsection{Classifiers, odds and ends}
+%------------------------------------------------------------------------------
 
-> grok :: HC -> String -> LLine
-> grok _ [] = Blank
-> grok i (x : xs) | isSpace x = grok (i `mappend` width x) xs
-> grok i xs = i :>->: chomp toks mempty xs
+> isOrd :: Char -> Bool
+> isOrd c = not (isSpace c || elem c ",;()[]{}|")
+>
+> isNL :: Char -> Bool
+> isNL b = elem b "\r\n"
 
-> data Chomp
->   = Eol Chomp
->   | Here (HC -> Chomp)
->   | Try (Char -> Maybe Chomp) Chomp
->   | Eat (Char -> Chomp)
->   | Out HC LTok Chomp
->   | LOut HC LTok HC Chomp
+> keywords :: [String]
+> keywords = ["where"]
 
-> chomp :: Chomp -> HC -> String -> LBloc
-> chomp (Eol c) i [] = []
-> chomp (Eol c) i xs = chomp c i xs
-> chomp (Out j t c) i xs = (j, t, i) : chomp c i xs
-> chomp (LOut j t l c) i xs = (j, t, l) : chomp c i xs
-> chomp (Here f) i xs = chomp (f i) i xs
-> chomp c i [] = chomp c i " "
-> chomp (Try f e) i xs@(x : xs') = case f x of
->   Just c  -> chomp c (i `mappend` width x) xs'
->   _       -> chomp e i xs
-> chomp (Eat f) i (x : xs) = chomp (f x) (i `mappend` width x) xs
+> isSpcT :: Tok -> Bool
+> isSpcT (S _)  = True
+> isSpcT Eol    = True
+> isSpcT _      = False
 
-> (??) :: (s -> Maybe t) -> (t -> u) -> s -> Maybe u
-> (??) test yes s = fmap yes (test s)
+> brackets :: Br -> Br -> Bool
+> brackets (RndB _)  (RndB "")  = True
+> brackets (SqrB _)  (SqrB "")  = True
+> brackets (CrlB _)  (CrlB "")  = True
+> brackets o         c          = o == c
 
-> like :: (s -> Bool) -> s -> Maybe s
-> like f x = if f x then Just x else Nothing
+%------------------------------------------------------------------------
+\subsection{Lexer monad}
+%------------------------------------------------------------------------
 
-> toks :: Chomp
-> toks =
->   Eol $
->   Try (like isSpace ?? \_ -> toks) $
->   Here $ \i ->
->     Try (flip lookup openCB ?? \b -> Here $ \j -> opToks i b j id) $
->     Try (flip lookup closeCB ?? \b -> Out i (Closer (b, Nothing)) toks) $
->     Try (like ('|' ==) ?? \_ -> barToks i) $
->     Try (like (`elem` solo) ?? \c -> Out i (LStuff [c]) toks) $
->     Eat $ \c -> tokToks i (c :)
+It's an off-the-peg monad. But why do I have to roll my own gubbins?
 
-> tokToks :: HC -> (String -> String) -> Chomp
-> tokToks i s =
->   Try (like (not . isSpecial) ?? \c -> tokToks i (snoc s c)) $
->   Out i (LStuff (s "")) toks
+> type L = StateT (Int, String) Maybe
+>
+> instance Alternative L where
+>   empty = StateT $ \ is -> empty
+>   p <|> q = StateT $ \ is -> runStateT p is <|> runStateT q is
+>
+> instance Applicative L where
+>   pure = return
+>   (<*>) = ap
 
-> opToks :: HC -> Brac -> HC -> (String -> String) -> Chomp
-> opToks i b j s =
->   Try (like ('|' ==) ?? \_ -> Out i (Opener (b, Just (s []))) toks) $
->   Try (like (not . isSpecial) ?? \c -> opToks i b j (snoc s c)) $
->   LOut i (Opener (b, Nothing)) j $ case s [] of
->     "" -> toks
->     n  -> Out j (LStuff n) toks
+We'll need some bits and pieces.
 
-> barToks :: HC -> Chomp
-> barToks i = Here $ \j ->
->   Try (flip lookup closeCB ?? \b -> Out i (Closer (b, Just ())) toks) $
->   Out i (LStuff "|") toks
-
-> snoc :: (String -> String) -> Char -> String -> String
-> snoc f c s = f (c : s)
-
-> solo :: String
-> solo = ",;"
-
-> isSpace :: Char -> Bool
-> isSpace = (' ' ==)
-
-> isSpecial :: Char -> Bool
-> isSpecial c = isSpace c || elem c specials where
->   specials = "|" ++ solo ++ fmap fst openCB ++ fmap fst closeCB
+> cha :: L Char
+> cha = StateT moo where
+>   moo (i, []) = Nothing
+>   moo (i, c : s)
+>     |  isNL c = Just (c, (0, s))
+>     |  c == '\t' -- unwind tabs
+>     =  if mod i 8 == 7 then Just (' ', (i + 1, s))
+>                        else Just (' ', (i + 1, c : s))
+>     |  otherwise = Just (c, (i + 1, s))
+>
+> chk :: (t -> Bool) -> L t -> L t
+> chk p l = do t <- l ; if p t then return t else empty
+>
+> ch :: Char -> L Char
+> ch c = chk (== c) cha
+>
+> spa :: (Char -> Bool) -> L String
+> spa p = (| chk p cha : spa p | [] |)
