@@ -16,6 +16,7 @@
 \chapter{Perversity}
 
 %include BwdFwd.lhs
+%include Parsley.lhs
 
 \chapter{Syntax}
 
