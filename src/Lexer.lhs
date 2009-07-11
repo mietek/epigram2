@@ -48,19 +48,19 @@ are identifiers unless they're keywords.
 We lex into tokens, classified as follows.
 
 > data Tok
->   =  I String  -- identifiers
->   |  Ope Br    -- open brackets
->   |  Clo Br    -- close brackets
->   |  K String  -- keywords
->   |  S Int     -- space
->   |  U String  -- ugly non-lexemes (non-close-bracket bar-starts)
->   |  Com       -- just the comma
->   |  Sem       -- semicolon
->   |  Bar       -- bar (not in another lexeme)
->   |  Eol       -- new line
->                -- tokens used only after bracketing
->   |  B Br [Tok] Br     -- a bracket
->   |  L String [[Tok]]  -- layout introduced by keyword, then lines
+>   =  Idf String  -- identifiers
+>   |  Ope Br      -- open brackets
+>   |  Clo Br      -- close brackets
+>   |  Key String  -- keywords
+>   |  Spc Int     -- space
+>   |  Urk String  -- ugly non-lexemes (non-close-bracket bar-starts)
+>   |  Com         -- just the comma
+>   |  Sem         -- semicolon
+>   |  Bar         -- bar (not in another lexeme)
+>   |  Eol         -- new line
+>                  -- tokens used only after bracketing
+>   |  Bra Br [Tok] Br     -- a bracket
+>   |  Lay String [[Tok]]  -- layout introduced by keyword, then lines
 >      deriving  (Show, Eq)
 
 We have ordinary and fancy brackets.
@@ -74,25 +74,27 @@ We have ordinary and fancy brackets.
 Here's how to generate the text for a token
 
 > tokOut :: Tok -> String
-> tokOut (I s)  = s
-> tokOut (Ope b) = case b of
->   Rnd         -> "("
->   RndB s      -> "(" ++ s ++ "|"
->   Sqr         -> "[" 
->   SqrB s      -> "[" ++ s ++ "|"
->   Crl         -> "{"
->   CrlB s      -> "{" ++ s ++ "|"
-> tokOut (Clo b) = case b of
->   Rnd         -> ")"
->   RndB s      -> "|" ++ s ++ ")"
->   Sqr         -> "]"
->   SqrB s      -> "|" ++ s ++ "]"
->   Crl         -> "}"
->   CrlB s      -> "|" ++ s ++ "}"
-> tokOut (K s)  = s
-> tokOut (S i)  = replicate i ' '
-> tokOut (U s)  = s
-> tokOut Eol     = "\n"
+> tokOut (Idf s)  = s
+> tokOut (Ope b)  = case b of
+>   Rnd                -> "("
+>   RndB s             -> "(" ++ s ++ "|"
+>   Sqr                -> "[" 
+>   SqrB s             -> "[" ++ s ++ "|"
+>   Crl                -> "{"
+>   CrlB s             -> "{" ++ s ++ "|"
+> tokOut (Clo b)       = case b of
+>   Rnd                -> ")"
+>   RndB s             -> "|" ++ s ++ ")"
+>   Sqr                -> "]"
+>   SqrB s             -> "|" ++ s ++ "]"
+>   Crl                -> "}"
+>   CrlB s             -> "|" ++ s ++ "}"
+> tokOut (Key s)       = s
+> tokOut (Spc i)       = replicate i ' '
+> tokOut (Urk s)       = s
+> tokOut Eol           = "\n"
+> tokOut (Bra o ts c)  = tokOut (Ope o) ++ (tokOut =<< ts) ++ tokOut (Clo c)
+> tokOut (Lay k tss)   = k ++ ((tokOut =<<) =<< tss)
 
 
 %------------------------------------------------------------------------
@@ -110,7 +112,7 @@ We check for spaces and specials first. We detect bar-starts, but not
 bar-ends.
 
 > tokIn :: L Tok
-> tokIn = (| S (| length (some (ch ' ')) |)
+> tokIn = (| Spc  (| length (some (ch ' ')) |)
 >          | Ope  {ch '('} (| RndB (spa isOrd) {ch '|'} | Rnd |)
 >          | Ope  {ch '['} (| SqrB (spa isOrd) {ch '|'} | Sqr |)
 >          | Ope  {ch '{'} (| CrlB (spa isOrd) {ch '|'} | Crl |)
@@ -119,26 +121,26 @@ bar-ends.
 >          | Clo  ~ Crl {ch '}'}
 >          | Clo  {ch '|'} (| (flip ($)) (spa isOrd)
 >              (| RndB {ch ')'} | SqrB {ch ']'} | CrlB {ch '}'} |) |)
->          | U    (| ch '|' : some (chk isOrd cha) |)
+>          | Urk  (| ch '|' : some (chk isOrd cha) |)
 >          | Bar  {ch '|'}
 >          | Com  {ch ','}
 >          | Sem  {ch ';'}
 >          | Eol  {chk isNL cha}
 >          | ik   (some (chk isOrd cha))
 >          |)
->  where   ik s = if elem s keywords then K s else I s
+>  where   ik s = if elem s keywords then Key s else Idf s
 
 However, we can repair the problem by checking the output sequence for
 bars in the wrong place.
 
 > fixUp :: [(Int, Tok)] -> [(Int, Tok)]
 > fixUp [] = []
-> fixUp ((i, I s)  : (_, Bar)  : its) = fixUp $ (i, U (s ++ "|"))  : its
-> fixUp ((i, K s)  : (_, Bar)  : its) = fixUp $ (i, U (s ++ "|"))  : its
-> fixUp ((i, U s)  : (_, Bar)  : its) = fixUp $ (i, U (s ++ "|"))  : its
-> fixUp ((i, I s)  : (_, U t)  : its) = fixUp $ (i, U (s ++ t))    : its
-> fixUp ((i, K s)  : (_, U t)  : its) = fixUp $ (i, U (s ++ t))    : its
-> fixUp ((i, U s)  : (_, U t)  : its) = fixUp $ (i, U (s ++ t))    : its
+> fixUp ((i, Idf s)  : (_, Bar)    : its) = fixUp $ (i, Urk (s ++ "|"))  : its
+> fixUp ((i, Key s)  : (_, Bar)    : its) = fixUp $ (i, Urk (s ++ "|"))  : its
+> fixUp ((i, Urk s)  : (_, Bar)    : its) = fixUp $ (i, Urk (s ++ "|"))  : its
+> fixUp ((i, Idf s)  : (_, Urk t)  : its) = fixUp $ (i, Urk (s ++ t))    : its
+> fixUp ((i, Key s)  : (_, Urk t)  : its) = fixUp $ (i, Urk (s ++ t))    : its
+> fixUp ((i, Urk s)  : (_, Urk t)  : its) = fixUp $ (i, Urk (s ++ t))    : its
 > fixUp (x : xs) = x : fixUp xs
 
 
@@ -153,12 +155,12 @@ bars in the wrong place.
 > isNL b = elem b "\r\n"
 
 > keywords :: [String]
-> keywords = ["where"]
+> keywords = ["\\", "->", ":", "Set", "where", "--"]
 
 > isSpcT :: Tok -> Bool
-> isSpcT (S _)  = True
-> isSpcT Eol    = True
-> isSpcT _      = False
+> isSpcT (Spc _)  = True
+> isSpcT Eol      = True
+> isSpcT _        = False
 
 > brackets :: Br -> Br -> Bool
 > brackets (RndB _)  (RndB "")  = True

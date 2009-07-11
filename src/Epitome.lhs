@@ -18,9 +18,15 @@
 %include BwdFwd.lhs
 %include Parsley.lhs
 
-\chapter{Syntax}
+\chapter{Core}
+
+%include Tm.lhs
+
+\chapter{Concrete Syntax}
 
 %include Lexer.lhs
 %include Layout.lhs
+%include TmParse.lhs
+
 
 \end{document}

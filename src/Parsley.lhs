@@ -10,7 +10,6 @@ numerically.
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE TypeOperators, TypeSynonymInstances #-}
 
 > module Parsley where
 
@@ -20,20 +19,20 @@ numerically.
 
 %endif
 
-> newtype P t x = P {runP :: [t] -> Maybe ([t], x, [t])}
+> newtype P t x = Parsley {runParsley :: [t] -> Maybe ([t], x, [t])}
 >
 > parse :: P t x -> [t] -> Maybe x
-> parse p ts = case runP p ts of
+> parse (Parsley p) ts = case p ts of
 >   Just (_, x, []) -> Just x
 >   _ -> Nothing
 
 It's a |Monad| and all that.
 
 > instance Monad (P t) where
->   return x = P $ \ ts -> Just ([], x, ts)
->   P s >>= f = P $ \ts -> do
+>   return x = Parsley $ \ ts -> Just ([], x, ts)
+>   Parsley s >>= f = Parsley $ \ts -> do
 >     (sts, s', ts)  <- s ts
->     (tts, t', ts)  <- runP (f s') ts
+>     (tts, t', ts)  <- runParsley (f s') ts
 >     return (sts ++ tts, t', ts)
 >
 > instance Functor (P t) where
@@ -44,8 +43,8 @@ It's a |Monad| and all that.
 >   (<*>)  = ap
 >
 > instance Alternative (P t) where
->   empty = P $ \ _ -> Nothing
->   p <|> q = P $ \ ts -> runP p ts <|> runP q ts
+>   empty = Parsley $ \ _ -> Nothing
+>   p <|> q = Parsley $ \ ts -> runParsley p ts <|> runParsley q ts
 >
 > instance MonadPlus (P t) where
 >   mzero  = empty
@@ -54,19 +53,19 @@ It's a |Monad| and all that.
 You can consume the next thing.
 
 > next :: P t t
-> next = P $ \ ts -> case ts of
+> next = Parsley $ \ ts -> case ts of
 >   []        -> Nothing
 >   (t : ts)  -> Just ([t], t, ts)
 
 You can consume everything!
 
 > pRest :: P t [t]
-> pRest = P $ \ ts -> Just (ts, ts, [])
+> pRest = Parsley $ \ ts -> Just (ts, ts, [])
 
 You can peek ahead, perhaps to check you've finished.
 
 > peek :: P t [t]
-> peek = P $ \ ts -> Just ([], ts, ts)
+> peek = Parsley $ \ ts -> Just ([], ts, ts)
 >
 > pEnd :: P t ()
 > pEnd = guard =<< (|null peek|)
@@ -75,14 +74,21 @@ You can make a parser give you the input extent it consumes as well as
 its output.
 
 > pExt :: P t x -> P t ([t], x)
-> pExt (P x) = P $ \ ts -> do
->   (xts, x', ts) <- x ts
+> pExt (Parsley p) = Parsley $ \ ts -> do
+>   (xts, x', ts) <- p ts
 >   return (xts, (xts, x'), ts)
 
 Parsing separated sequences:
 
 > pSep :: P t s -> P t x -> P t [x]
 > pSep s p = (:) <$> p <*> many (s *> p) <|> pure []
+
+Looping
+
+> pLoop :: P t a -> (a -> P t a) -> P t a
+> pLoop p l = do
+>   a <- p
+>   pLoop (l a) l <|> pure a
 
 Post-processing parser output:
 

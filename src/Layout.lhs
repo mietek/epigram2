@@ -11,7 +11,7 @@ and subordinate layout blocks.
 
 %endif
 
-> module Layout (layout) where
+> module Layout (layout, layTest) where
 
 %if False
 
@@ -26,7 +26,8 @@ and subordinate layout blocks.
 
 %endif
 
-> layout :: [(Int, Tok)] -> [[Tok]]
+> layout   :: [(Int, Tok)] -> [[Tok]]
+> layTest  :: String -> [Tok]
 
 \subsection{how to read layout}
 
@@ -189,9 +190,9 @@ The hard work gets done by this function.
 >     tell $ cur ss                      -- ~ send spaces
 >     tellIf (k <= j) brk                -- ~ start of new line?
 >     case t of                          -- ~ nested token?
->       Ope b                -> tell =<< (|cur (braToks b)|)
->       K w | elem w lakeys  -> tell =<< (|cur (layToks w (j + 1))|)
->       _                    -> tell $ cur [t]
+>       Ope b                  -> tell =<< (|cur (braToks b)|)
+>       Key w | elem w lakeys  -> tell =<< (|cur (layToks w (j + 1))|)
+>       _                      -> tell $ cur [t]
 >     lBody i (min j k) True             -- ~ new line left may decrease
 
 We can use |lBody| to build a layout-token, for a given layout-keyword
@@ -200,7 +201,7 @@ and block-left. Parametricity tells you that nothing is writen!
 > layToks :: Monoid x => String -> Int -> L x [Tok]
 > layToks k i = do
 >  ((), l) <- local $ lBody i maxBound False
->  (|[L k (unl l)]|)
+>  (|[Lay k (unl l)]|)
 
 Grabbing the body of a bracket is easier: keep going until you find a
 close-bracket which matches. End-of-file or the wrong close-bracket
@@ -212,7 +213,7 @@ induced by nested open brackets, or layout.
 >   Clo c  | brackets o c  -> Right (|Just ~ c|)
 >          | otherwise     -> Left Nothing
 >   Ope b                  -> Right $ do tell =<< braToks b;    bBody o
->   K k | elem k lakeys    -> Right $ do tell =<< layToks k 0;  bBody o
+>   Key k | elem k lakeys  -> Right $ do tell =<< layToks k 0;  bBody o
 >   t                      -> Right $ do tell [t] ; bBody o
 
 We use |bBody| to build the token sequence resulting from a given
@@ -224,9 +225,10 @@ as it was.
 > braToks b = do
 >   (mb, ts) <- local $ bBody b
 >   case mb of
->     Just b' -> (|[B b ts b']|)
+>     Just b' -> (|[Bra b ts b']|)
 >     Nothing -> (|(Ope b : ts)|)
 
 So we know how to process a file.
 
 > layout its = unl . execWriter $ evalStateT (lBody 0 maxBound False) its
+> layTest s = layout (tokenize s) !! 1
