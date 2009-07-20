@@ -1,4 +1,4 @@
-\documentclass[a4]{report}
+\documentclass[a4paper]{report}
 \usepackage{stmaryrd,wasysym,url,upgreek,palatino,alltt}
 
 %include lhs2TeX.fmt
@@ -20,6 +20,7 @@
 
 \chapter{Core}
 
+%include Root.lhs
 %include Tm.lhs
 
 \chapter{Concrete Syntax}

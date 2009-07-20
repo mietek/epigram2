@@ -18,7 +18,7 @@
 
 %endif
 
-%format :$ = ":\!$"
+%format :$ = ":\!\$"
 %format :? = "\,:\!\!\!\in"
 %format Set = "\star"
 %format Pi = "\Pi"
@@ -47,9 +47,10 @@
 >   deriving (Show, Eq)
 >
 > data Elim :: * -> * where
->   A     :: t -> Elim t                                      -- application
+>   A     :: t -> Elim t                                  -- application
 >   deriving (Show, Eq)
 
+> pattern SET       = C Set                   -- set of sets
 > pattern Arr s t   = C (Pi s (L (K t)))      -- simple arrow
 > pattern PI x s t  = C (Pi s (L (x :. t)))   -- dependent functions
 
