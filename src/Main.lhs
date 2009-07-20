@@ -4,7 +4,7 @@
 
 > module Main where
 
-> import Tm
+> import Rules
 
 > main :: IO ()
 > main = return ()

@@ -16,12 +16,14 @@
 > canTy ev (Set :>: Set)    = Just Set
 > canTy ev (Set :>: Pi s t) = 
 >   Just (Pi (SET :>: ev s) (Arr (ev s) SET :>: ev t))
-> canTy _  _                = Nothing
+> import <- CanTyRules
+> canTy _  _            = Nothing
 
-> elimTy :: (t -> VAL) -> (VAL :<: Can VAL) -> Elim t ->
+> elimTy :: (t -> VAL) -> (Can VAL :>: VAL) -> Elim t ->
 >           Maybe (Elim (VAL :>: t),VAL)
-> elimTy ev (f :<: Pi s t) (A e) = 
->   Just (A (s :>: e),(t $$ A v)) where v = ev e
+> elimTy ev (Pi s t :>: f) (A e) = Just (A (s :>: e),(t $$ A (ev e))) 
+> import <- ElimTyRules
+> elimTy _ _ _ = Nothing
 
 > quop :: REF -> Root -> EXTM
 > quop ref@(ns := _) r = help (bwdList ns) r
@@ -57,4 +59,4 @@
 > exQuote (n :$ v)             r = (n' :$ traverse inQuote e r) :<: ty'
 >   where
 >   (n' :<: ty) = exQuote n r
->   Just (e,ty') = elimTy id (N n :<: unC ty) v
+>   Just (e,ty') = elimTy id (unC ty :>: N n) v

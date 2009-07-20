@@ -186,6 +186,7 @@ We have special pairs for types going in and coming out of stuff.
 > instance Traversable Can where
 >   traverse f Set       = (|Set|)
 >   traverse f (Pi s t)  = (|Pi (f s) (f t)|)
+>   import <- TraverseCan
 >
 > instance Functor Can where
 >   fmap = fmapDefault
@@ -194,6 +195,7 @@ We have special pairs for types going in and coming out of stuff.
 
 > instance Traversable Elim where
 >   traverse f (A s)  = (|A (f s)|)
+>   import <- TraverseElim
 >
 > instance Functor Elim where
 >   fmap = fmapDefault
