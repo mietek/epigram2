@@ -144,9 +144,16 @@ We have special pairs for types going in and coming out of stuff.
 >     | x == y      = Right 0
 >     | otherwise   = (|succ (h ys y)|)
 
+> under :: Int -> x -> Mangle I x x
+> under i y = Mang
+>   {  mangP = \ x ies -> (|(P x $:$) ies|)
+>   ,  mangV = \ j ies -> (|((if i == j then P y else V j) $:$) ies|)
+>   ,  mangB = \ _ -> under (i + 1) y
+>   }
+
 %if False
 
-> newtype I x = I {unI :: x}
+> newtype I x = I {unI :: x} deriving (Show, Eq)
 > instance Functor I where
 >   fmap f (I s) = I (f s)
 > instance Applicative I where
