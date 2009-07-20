@@ -1,3 +1,5 @@
+%if False
+
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE TypeOperators, GADTs, KindSignatures,
 >     TypeSynonymInstances, FlexibleInstances, PatternGuards #-}
@@ -11,6 +13,8 @@
 > import Tm
 > import Root
 > import Features
+
+%endif
 
 > canTy :: (t -> VAL) -> (Can VAL :>: Can t) -> Maybe (Can (VAL :>: VAL))
 > canTy ev (Set :>: Set)    = Just Set

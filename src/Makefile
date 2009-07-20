@@ -1,7 +1,9 @@
 HC      = ghc
 
-SRCS = Main.lhs Rules.lhs Tm.lhs Sigma.lhs Features.lhs BwdFwd.lhs Root.lhs 
-OBJS = Main.o Rules.o Tm.o Sigma.o Features.o BwdFwd.o Root.o
+SRCS = Epitome.lhs Main.lhs Rules.lhs Tm.lhs Sigma.lhs Features.lhs BwdFwd.lhs Root.lhs\
+       Lexer.lhs Layout.lhs Parsley.lhs TmParse.lhs
+OBJS = Epitome.o Main.o Rules.o Tm.o Sigma.o Features.o BwdFwd.o Root.o\
+       Lexer.o Layout.o Parsley.o TmParse.o
 
 .SUFFIXES : .o .hs .hi .lhs .hc .s
 
@@ -17,7 +19,7 @@ dvi : Epitome.dvi
 Epitome.dvi : Epitome.tex
 	latex Epitome
 
-Epitome.tex : Epitome.lhs Lexer.lhs Layout.lhs BwdFwd.lhs Parsley.lhs Root.lhs Features.lhs Tm.lhs TmParse.lhs stuff.fmt
+Epitome.tex : $(SRCS) stuff.fmt
 	lhs2TeX --poly Epitome.lhs > Epitome.tex
 
 # Standard suffix rules

@@ -1,3 +1,9 @@
+%if False
+
+> module Epitome where
+
+%endif
+
 \documentclass[a4paper]{report}
 \usepackage{stmaryrd,wasysym,url,upgreek,palatino,alltt}
 
@@ -22,10 +28,12 @@
 
 %include Root.lhs
 %include Tm.lhs
+%include Rules.lhs
 
 \chapter{Feature by Feature}
 
 %include Features.lhs
+%include Sigma.lhs
 
 \chapter{Concrete Syntax}
 
