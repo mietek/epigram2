@@ -1,9 +1,8 @@
 HC      = ghc
+HC_OPTS = -package mtl
 
-SRCS = Epitome.lhs Main.lhs Rules.lhs Tm.lhs Sigma.lhs Features.lhs BwdFwd.lhs Root.lhs\
-       Lexer.lhs Layout.lhs Parsley.lhs TmParse.lhs
-OBJS = Epitome.o Main.o Rules.o Tm.o Sigma.o Features.o BwdFwd.o Root.o\
-       Lexer.o Layout.o Parsley.o TmParse.o
+SRCS := $(wildcard *.lhs) 
+OBJS := $(SRCS:.lhs=.o) 
 
 .SUFFIXES : .o .hs .hi .lhs .hc .s
 
@@ -12,7 +11,7 @@ Pig : $(OBJS)
 	$(HC) -o $@ $(HC_OPTS) $(OBJS)
 
 .depend : $(SRCS)
-	ghc -M -dep-makefile .depend Main.lhs
+	ghc -M -dep-makefile .depend $(SRCS)
 
 dvi : Epitome.dvi
 
