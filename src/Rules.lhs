@@ -16,10 +16,10 @@
 
 %endif
 
-> canTy :: (t -> VAL) -> (Can VAL :>: Can t) -> Maybe (Can (VAL :>: VAL))
+> canTy :: (t -> VAL) -> (Can VAL :>: Can t) -> Maybe (Can (VAL :>: t))
 > canTy ev (Set :>: Set)    = Just Set
 > canTy ev (Set :>: Pi s t) = 
->   Just (Pi (SET :>: ev s) (Arr (ev s) SET :>: ev t))
+>   Just (Pi (SET :>: s) (Arr (ev s) SET :>: t))
 > import <- CanTyRules
 > canTy _  _            = Nothing
 
@@ -70,3 +70,29 @@
 
 > equal :: (VAL :>: (VAL,VAL)) -> Root -> Bool
 > equal (ty :>: (v1,v2)) r = quote (ty :>: v1) r == quote (ty :>: v2) r
+
+> infer :: EXTM -> Root -> Maybe VAL
+> infer (P (x := DECL ty)) r = Just ty
+> infer (t :$ s)  r = do
+>   C ty <- infer t r
+>   (s',ty') <- elimTy evTm (ty :>: evTm t) s
+>   traverse id $ traverse check s' r
+>   return ty'
+> infer (t :? ty) r = do
+>   check (SET :>: ty) r
+>   let vty = evTm ty
+>   check (vty :>: t) r
+>   return vty
+> infer _ _ = Nothing
+
+> check :: (VAL :>: INTM) -> Root -> Maybe ()
+> check (C c :>: C c') r = do
+>   x <- canTy evTm (c :>: c')
+>   traverse id $ traverse check x r
+>   return ()
+> check (C (Pi s t) :>: L sc) r = do
+>   freshRef ("" :<: s) 
+>            (\ref -> check (t $$ A (pval ref) :>: (underScope sc ref))) 
+>            r
+> check (_ :>: N n) r = infer n r >> return ()
+> check _ _ = Nothing

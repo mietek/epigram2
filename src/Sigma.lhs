@@ -37,10 +37,10 @@
 > import -> CanTyRules where
 >   canTy ev (Set :>: Unit) = Just Unit
 >   canTy ev (Set :>: Sigma s t) = 
->     Just (Sigma (SET :>: ev s) (Arr (ev s) SET :>: ev t))
+>     Just (Sigma (SET :>: s) (Arr (ev s) SET :>: t))
 >   canTy ev (Unit :>: Void) = Just Void
 >   canTy ev (Sigma s t :>: Pair x y) = 
->     Just (Pair (s :>: ev x) (t $$ A (ev x) :>: ev y))
+>     Just (Pair (s :>: x) (t $$ A (ev x) :>: y))
 
 > import -> ElimTyRules where
 >   elimTy ev (Sigma s t :>: C (Pair x y)) Fst = Just (Fst,s)
