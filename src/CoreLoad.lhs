@@ -105,21 +105,35 @@
 > pINTM es = grok (resolve es B0 %) bigTmIn
 
 > data CoreLine
->   = LLam [String]
+>   = LLam [String] (Maybe INTM)
+>   | LDef INTM (Maybe INTM)
 >   | LCom
 
 > pCoreLine :: Bwd Entry -> P Tok CoreLine
 > pCoreLine es =
->   (|LLam {key "\\"} (some idf)
->    |LCom {key "--"; pRest}|)
+>   (|LLam {key "\\"} (some idf) {spc} (optional (pINTM es))
+>    |LCom {key "--"; pRest}
+>    |LCom {pSep (tok isSpcT) (teq Sem)}
+>    |)
 
 > coreLineAction :: CoreLine -> Dev -> Root -> Maybe (Dev, Root)
-> coreLineAction (LLam []) d r = Just (d, r)
-> coreLineAction (LLam (x : xs)) (es, Unknown (C (Pi s t))) r =
->   coreLineAction (LLam xs) (es :< xe, Unknown (t $$ A (pval xr))) (roos r) where
->     xr = name r x := DECL s
->     xe = E xr (x, snd r) (Boy LAMB)
+> coreLineAction (LLam [] _) d r = Just (d, r)
+> coreLineAction (LLam (x : xs) mty) (es, tip) r = do
+>   s <- tipDom mty tip
+>   let xr = name r x := DECL s
+>   let xe = E xr (x, snd r) (Boy LAMB)
+>   coreLineAction (LLam xs mty) (es :< xe, tipRan tip xr) (roos r)
 > coreLineAction LCom d r = Just (d, r)
+
+> tipDom :: Maybe INTM -> Tip -> Maybe VAL
+> tipDom (Just s)  Module                  = Just (evTm s)
+> tipDom (Just s)  (Unknown (C (Pi _ _)))  = Just (evTm s)
+> tipDom Nothing   (Unknown (C (Pi s _)))  = Just s
+> tipDom _         _                       = Nothing
+
+> tipRan :: Tip -> REF -> Tip
+> tipRan (Unknown (C (Pi _ t)))  x  = Unknown (t $$ A (pval x))
+> tipRan Module                  _  = Module
 
 > makeFun :: Bwd Entry -> Dev -> [[Tok]] -> Root -> Writer [[Tok]] Dev
 > makeFun gs d [] r = (|d|)

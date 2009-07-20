@@ -80,6 +80,22 @@ We have some type synonyms for commonly occurring instances of |Tm|.
 > type NEU   = Tm {Ex, VV} REF
 > type Env   = Bwd VAL
 
+> instance Eq x => Eq (Tm {d, TT} x) where
+>   L s0        == L s1        = s0 == s1
+>   C c0        == C c1        = c0 == c1
+>   N n0        == N n1        = n0 == n1
+>   P x0        == P x1        = x0 == x1
+>   V i0        == V i1        = i0 == i1
+>   (t0 :$ e0)  == (t1 :$ e1)  = t0 == t1 && e0 == e1
+>   (t0 :? _)   == (t1 :? _)   = t0 == t1
+>   _           == _           = False
+
+> instance Eq x => Eq (Scope {TT} x) where
+>   (_ :. t0)  == (_ :. t1)  = t0 == t1
+>   K t0       == K t1       = t0 == t1
+>   _          == _          = False
+
+
 > type Spine p x = [Elim (Tm {In, p} x)]
 > ($:$) :: Tm {Ex, p} x -> Spine p x -> Tm {Ex, p} x
 > ($:$) = foldl (:$)
@@ -128,6 +144,8 @@ We have special pairs for types going in and coming out of stuff.
 > eval (t :$ e)  = (|eval t $$ (eval ^$ e)|)
 > eval (t :? _)  = eval t
 
+> evTm :: Tm {d, TT} REF -> VAL
+> evTm t = eval t B0
 
 > data Mangle f x y = Mang
 >   {  mangP :: x -> f [Elim (InTm y)] -> f (ExTm y)
