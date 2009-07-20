@@ -80,9 +80,9 @@
 >   (x := _) == (y := _) = x == y  -- could use cheeky pointer equality?
 
 > data RKind
->   = DECL VAL
->   | DEFN VAL VAL
->   | HOLE VAL
+>   =  DECL VAL
+>   |  DEFN VAL VAL
+>   |  HOLE VAL
 >   deriving Show
 
 We have special pairs for types going in and coming out of stuff.
@@ -93,6 +93,7 @@ We have special pairs for types going in and coming out of stuff.
 > ($$) :: VAL -> Elim VAL -> VAL
 > L (K v)      $$ A _  = v
 > L (H g _ t)  $$ A v  = eval t (g :< v)
+> import <- ElimComputation
 > N n          $$ e    = N (n :$ e)
 
 > pval :: REF -> VAL
