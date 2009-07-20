@@ -8,9 +8,12 @@
 > module CoreLoad where
 
 > import Control.Monad
+> import Control.Monad.Writer
 > import Control.Monad.State
+> import Control.Monad.Instances
 > import Control.Applicative
 > import Data.Char
+> import Data.Maybe
 > import Data.Foldable hiding (elem)
 > import Data.Traversable
 
@@ -20,6 +23,7 @@
 > import Parsley
 > import TmParse
 > import Core
+> import Root
 
 %endif
 
@@ -40,10 +44,6 @@
 > relName :: P Char [(String,Offs)]
 > relName = pSep (teq '.') (|some (tok noffer), offs|)
 
-> load :: [[Tok]] -> Construct [[Tok]]
-> load [] = (|[]|)
-> load (ts@(Key "--" : _) : tss) = (|(ts :) (load tss)|)
-
 > vinc :: ExTm REF -> ExTm REF
 > vinc (V i)  = V (i + 1)
 > vinc n      = n
@@ -59,15 +59,22 @@
 > boy (E r _ (Boy _))  = [A (N (P r))]
 > boy _                = []
 
-> findC :: REF -> Entity -> RelName -> Maybe (ExTm REF)
-> findC r  _                 []  = (|(P r)|)
-> findC r  (Girl _ (es, _))  ys  = findG es ys
-> findC _  _                 ys  = empty
+> findC :: REF -> Spine {TT} REF -> Entity -> RelName -> Maybe (ExTm REF)
+> findC r  as (Boy _)           []  = (|(P r)|)
+> findC r  as _                 []  = (|(P r $:$ as)|)
+> findC r  as (Girl _ (es, _))  ys  = findD es ys as
+> findC _  as _                 ys  = empty
+
+> findD :: Bwd Entry -> RelName -> Spine {TT} REF -> Maybe (ExTm REF)
+> findD B0 sos as = empty
+> findD (xs :< E r x e@(Girl _ _)) (y : ys) as = case hits x y of
+>   Right _  -> findC r as e ys
+>   Left y'  -> findD xs (y' : ys) as
 
 > findG :: Bwd Entry -> RelName -> Maybe (ExTm REF)
 > findG B0 sos = empty
 > findG (xs :< E r x e) (y : ys) = case hits x y of
->   Right _  -> ($:$ foldMap boy xs) <$> findC r e ys
+>   Right _  -> findC r (foldMap boy xs) e ys
 >   Left y'  -> findG xs (y' : ys)
 
 > findL :: Bwd Entry -> Bwd String -> RelName -> Maybe (ExTm REF)
@@ -88,39 +95,40 @@
 > auncles (ls, _, (es, _)) = foldMap elders ls <+> es
 
 > testResolve :: Tm {In, TT} String -> Maybe (Tm {In, TT} REF)
-> testResolve t = resolve (B0, (B0, 0), (B0, Module)) % t
+> testResolve t = resolve B0 B0 % t
 
 > instance Applicative (State s) where
 >   pure = return
 >   (<*>) = ap
 
 > pINTM :: Bwd Entry -> P Tok INTM
-> pINTM es = grok (resolve es B0) bigTmIn
+> pINTM es = grok (resolve es B0 %) bigTmIn
 
-> mkLam :: String -> Maybe INTM -> Construct ()
-> mkLam x _ = do
->   (ls, _, (es, Unknown (PI _ s t))) <- get
->   put (ls, (es :< E 
+> data CoreLine
+>   = LLam [String]
+>   | LCom
 
-> action :: Bwd Entry -> P Tok Dev
-> action es =
->   (|() {key "--"; pRest}
->    |() {pSep (teq Sem) spc}
->    |mkLam {key "\\"} idf {spc ; optional (pINTM es)}
->    |mkPi (pBr Rnd (|idf , {key ":"} bigTmIn|))
->    |mkDef
->       idf {spc}
->       (bra Rnd (pSep (pad (teq Sem)) (|idf, {key ":"} (pINTM es)|)))
->       {key "="} (|Just (pINTM es) | Nothing {key "?"}|)
->       {key ":"} (pInTm es)
->    |)
+> pCoreLine :: Bwd Entry -> P Tok CoreLine
+> pCoreLine es =
+>   (|LLam {key "\\"} (some idf)
+>    |LCom {key "--"; pRest}|)
 
-> coreAct :: Bwd Entry -> [Tok] -> ([Tok], Dev)
-> coreAct ts = do
->   es   <- gets auncles
->   case parse (action es) ts of
->     Just a   -> (|{a} ts|)
->     Nothing  -> (|(Key "--" : Spc " " : ts)|)
+> coreLineAction :: CoreLine -> Dev -> Root -> Maybe (Dev, Root)
+> coreLineAction (LLam []) d r = Just (d, r)
+> coreLineAction (LLam (x : xs)) (es, Unknown (C (Pi s t))) r =
+>   coreLineAction (LLam xs) (es :< xe, Unknown (t $$ A (pval xr))) (roos r) where
+>     xr = name r x := DECL s
+>     xe = E xr (x, snd r) (Boy LAMB)
+> coreLineAction LCom d r = Just (d, r)
 
-> coreLoad :: [[Tok]] -> State WhereAmI [[Tok]]
-> coreLoad = traverse coreAct
+> makeFun :: Bwd Entry -> Dev -> [[Tok]] -> Root -> Writer [[Tok]] Dev
+> makeFun gs d [] r = (|d|)
+> makeFun gs d@(ls, _) (ts : tss) r =
+>   fromMaybe (tell [Key "--" : Spc 1 : ts] >> makeFun gs d tss r) $ do
+>     c <- parse (pCoreLine (gs <+> ls)) ts
+>     (d, r) <- coreLineAction c d r
+>     return (tell [ts] >> makeFun gs d tss r)
+
+> instance Monoid o => Applicative (Writer o) where
+>   pure = return
+>   (<*>) = ap
