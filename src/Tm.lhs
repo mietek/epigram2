@@ -15,6 +15,7 @@
 > import Data.Either
 
 > import BwdFwd
+> import Features
 
 %endif
 
@@ -44,10 +45,12 @@
 > data Can :: * -> * where
 >   Set   :: Can t                                        -- set of sets
 >   Pi    :: t -> t -> Can t                              -- functions
+>   import <- CanConstructors
 >   deriving (Show, Eq)
 >
 > data Elim :: * -> * where
 >   A     :: t -> Elim t                                  -- application
+>   import <- ElimConstructors
 >   deriving (Show, Eq)
 
 > pattern SET       = C Set                   -- set of sets

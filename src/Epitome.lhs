@@ -23,6 +23,10 @@
 %include Root.lhs
 %include Tm.lhs
 
+\chapter{Feature by Feature}
+
+%include Features.lhs
+
 \chapter{Concrete Syntax}
 
 %include Lexer.lhs
