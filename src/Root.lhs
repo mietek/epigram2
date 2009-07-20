@@ -26,3 +26,6 @@
 
 > roos :: Root -> Root
 > roos (sis, i) = (sis, i + 1)
+
+> room :: Root -> String -> Root
+> room (sis, i) s = (sis :< (s,i), 0)

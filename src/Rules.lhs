@@ -60,3 +60,9 @@
 >   where
 >   (n' :<: ty) = exQuote n r
 >   Just (e,ty') = elimTy id (unC ty :>: N n) v
+
+> quote :: (VAL :>: VAL) -> Root -> INTM
+> quote vty r = inQuote vty (room r "quote")
+
+> equal :: (VAL :>: (VAL,VAL)) -> Root -> Bool
+> equal (ty :>: (v1,v2)) r = quote (ty :>: v1) r == quote (ty :>: v2) r

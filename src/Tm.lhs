@@ -45,8 +45,8 @@ like your mother always told you.
 >   N     :: Tm {Ex, p} x        -> Tm {In, p} x   -- |Ex| to |In|
 >   P     :: x                   -> Tm {Ex, p} x   -- parameter
 >   V     :: Int                 -> Tm {Ex, TT} x  -- variable
->   (:$)  :: Tm {Ex, p} x -> Elim (Tm {In, p} x) -> Tm {Ex, p} x  -- elimination
->   (:?)  :: Tm {In, TT} x -> Tm {In, TT} x -> Tm {Ex, TT} x      -- typing
+>   (:$)  :: Tm {Ex, p} x -> Elim (Tm {In, p} x) -> Tm {Ex, p} x -- elimination
+>   (:?)  :: Tm {In, TT} x -> Tm {In, TT} x -> Tm {Ex, TT} x     -- typing
 >
 > data Scope :: {Phase} -> * -> * where
 >   (:.)  :: String -> Tm {In, TT} x         -> Scope {TT} x  -- binding
