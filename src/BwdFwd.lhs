@@ -9,7 +9,7 @@
 > module BwdFwd where
 
 > import Data.Monoid
-> import Data.Foldable
+> import Data.Foldable hiding (foldl, foldr)
 > import Data.Traversable
 > import Control.Applicative
 
@@ -23,6 +23,11 @@ Backward and forward lists, applicative with zipping.
 
 > data Bwd x = B0 | Bwd x :< x deriving (Show, Eq)
 > data Fwd x = F0 | x :> Fwd x deriving (Show, Eq)
+
+> bwdList :: [x] -> Bwd x
+> bwdList = foldl (:<) B0
+> fwdList :: [x] -> Fwd x
+> fwdList = foldr (:>) F0
 
 > instance Applicative Bwd where
 >   pure x                     = pure x       :< x

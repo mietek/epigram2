@@ -13,6 +13,7 @@
 
 > import BwdFwd
 > import Tm
+> import Root
 
 %endif
 
@@ -33,7 +34,7 @@
 >   | Girl  GirlKind Dev
 >   deriving Show
 >
-> data BoyKind   = LAM | PI deriving (Show, Eq)
+> data BoyKind   = LAMB | PIB deriving (Show, Eq)
 > data GirlKind  = LET deriving (Show, Eq)
 
 > data Layer = Layer
@@ -43,7 +44,6 @@
 >   ,  laytip  :: Tip }
 >   deriving Show
 
-> type Root = (Bwd (String, Int), Int)
 > type WhereAmI = (Bwd Layer, Root, Dev)
 
 > data Elab x

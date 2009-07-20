@@ -20,3 +20,6 @@
 
 > name :: Root -> String -> Name
 > name (sis, i) s = trail (sis :< (s, i))
+
+> roos :: Root -> Root
+> roos (sis, i) = (sis, i + 1)

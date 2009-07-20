@@ -10,7 +10,7 @@
 \begin{document}
 
 \title{An Epigram Implementation}
-\author{Conor McBride}
+\author{Conor McBride, James Chapman, Peter Morris}
 \maketitle
 
 \chapter{Perversity}

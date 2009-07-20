@@ -25,8 +25,19 @@
 %format Pi = "\Pi"
 %format :. = "\bullet"
 
+\subsection{Syntax of Terms and Values}
+
 > data Dir    = In | Ex
+
+We distinguish |In|Terms (into which we push types) and |Ex|Terms
+(from which we infer types).
+
 > data Phase  = TT | VV
+
+We distinguish the representations of |TT| terms and |VV| values.
+
+And, of course, we're polymorphic in the representation of free variables,
+like your mother always told you.
 
 > data Tm :: {Dir, Phase} -> * -> * where
 >   L     :: Scope p x           -> Tm {In, p} x   -- \(\lambda\)
@@ -53,9 +64,13 @@
 >   import <- ElimConstructors
 >   deriving (Show, Eq)
 
+We have some pattern synonyms for common, er, patterns.
+
 > pattern SET       = C Set                   -- set of sets
 > pattern Arr s t   = C (Pi s (L (K t)))      -- simple arrow
 > pattern PI x s t  = C (Pi s (L (x :. t)))   -- dependent functions
+
+We have some type synonyms for commonly occurring instances of |Tm|.
 
 > type InTm  = Tm {In, TT}
 > type ExTm  = Tm {Ex, TT}
