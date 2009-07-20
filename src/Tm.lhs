@@ -184,6 +184,10 @@ We have special pairs for types going in and coming out of stuff.
 >   ,  mangB = \ _ -> under (i + 1) y
 >   }
 
+> underScope :: Scope {TT} REF -> REF -> INTM
+> underScope (K t)     _ = t
+> underScope (_ :. t)  x = unI (under 0 x % t)
+
 %if False
 
 > newtype I x = I {unI :: x} deriving (Show, Eq)
