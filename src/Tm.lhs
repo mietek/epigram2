@@ -11,8 +11,8 @@
 > import Control.Applicative
 > import Data.Foldable hiding (foldl)
 > import Data.Traversable
-> import Control.Monad.Identity
 > import Data.Either
+> import Control.Monad
 
 > import BwdFwd
 > import Features
@@ -199,5 +199,6 @@ We have special pairs for types going in and coming out of stuff.
 >   show (H g x t)  =
 >     "H (" ++ show g ++ ") " ++ show x ++ " (" ++ show t ++ ")"
 >   show (K t) = "K (" ++ show t ++")"
+
 
 %endif

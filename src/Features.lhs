@@ -15,3 +15,4 @@ should be imported by all the functionality modules. This module
 thus functions as exactly the list of features included in the
 current version of the system.
 
+> import Sigma

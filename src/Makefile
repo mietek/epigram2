@@ -1,7 +1,7 @@
 HC      = ghc
 
-SRCS = Main.lhs Tm.lhs Sigma.lhs BwdFwd.lhs 
-OBJS = Main.o Tm.o Sigma.o BwdFwd.o 
+SRCS = Main.lhs Tm.lhs Sigma.lhs Features.lhs BwdFwd.lhs 
+OBJS = Main.o Tm.o Sigma.o Features.o BwdFwd.o 
 
 .SUFFIXES : .o .hs .hi .lhs .hc .s
 
