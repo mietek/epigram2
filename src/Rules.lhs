@@ -1,6 +1,6 @@
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE TypeOperators, GADTs, KindSignatures,
->     TypeSynonymInstances, FlexibleInstances #-}
+>     TypeSynonymInstances, FlexibleInstances, PatternGuards #-}
 
 > module Rules where
 
@@ -12,15 +12,16 @@
 > import Root
 > import Features
 
-> canTy :: (t -> VAL) -> (Can t :<: Can VAL) -> Maybe (Can (t, VAL))
-> canTy ev (Set :<: Set)    = Just Set
-> canTy ev (Pi s t :<: Set) = Just (Pi (s,SET) (t,Arr (ev s) SET))
+> canTy :: (t -> VAL) -> (Can VAL :>: Can t) -> Maybe (Can (VAL :>: VAL))
+> canTy ev (Set :>: Set)    = Just Set
+> canTy ev (Set :>: Pi s t) = 
+>   Just (Pi (SET :>: ev s) (Arr (ev s) SET :>: ev t))
 > canTy _  _                = Nothing
 
 > elimTy :: (t -> VAL) -> (VAL :<: Can VAL) -> Elim t ->
->           Maybe (Elim (t :<: VAL),(VAL :<: VAL))
+>           Maybe (Elim (VAL :>: t),VAL)
 > elimTy ev (f :<: Pi s t) (A e) = 
->   Just (A (e :<: s),(f $$ A v :<: (t $$ A v))) where v = ev e
+>   Just (A (s :>: e),(t $$ A v)) where v = ev e
 
 > quop :: REF -> Root -> EXTM
 > quop ref@(ns := _) r = help (bwdList ns) r
@@ -38,12 +39,22 @@
 
 > etaExpand :: (VAL :>: VAL) -> Root -> Maybe INTM
 > etaExpand (C (Pi s t) :>: f) r = Just $
->   L ("" :. fresh ("" :<: s) (\v  -> bquote (f $$ A v)) r) 
+>   L ("" :. fresh ("" :<: s) (\v  -> inQuote (t $$ A v :>: (f $$ A v))) r)
 > import <- EtaExpand
-> etaExpand _               _ = Nothing
+> etaExpand _                  _ = Nothing
 
 > inQuote :: (VAL :>: VAL) -> Root -> INTM
-> inQuote = undefined
+> inQuote tyv              r | Just t    <- etaExpand tyv r = t
+> inQuote (_ :>: N n)      r | (t :<: _) <- exQuote n r = N t
+> inQuote (C cty :>: C cv) r | Just x    <- canTy id (cty :>: cv) =
+>   C $ traverse inQuote x r
+
+> unC :: VAL -> Can VAL
+> unC (C c) = c
 
 > exQuote :: NEU -> Root -> (EXTM :<: VAL)
-> exQuote = undefined
+> exQuote (P x@(_ := DECL ty)) r = quop x r :<: ty
+> exQuote (n :$ v)             r = (n' :$ traverse inQuote e r) :<: ty'
+>   where
+>   (n' :<: ty) = exQuote n r
+>   Just (e,ty') = elimTy id (N n :<: unC ty) v
