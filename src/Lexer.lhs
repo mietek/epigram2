@@ -155,7 +155,7 @@ bars in the wrong place.
 > isNL b = elem b "\r\n"
 
 > keywords :: [String]
-> keywords = ["\\", "->", ":", "Set", "where", "--"]
+> keywords = ["\\", "->", ":", "Set", "where", "--", "?", "="]
 
 > isSpcT :: Tok -> Bool
 > isSpcT (Spc _)  = True

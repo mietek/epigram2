@@ -4,19 +4,21 @@
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE TypeOperators, GADTs, KindSignatures,
->     TypeSynonymInstances, FlexibleInstances #-}
+>     TypeSynonymInstances, FlexibleInstances, ScopedTypeVariables #-}
 
 > module Tm where
 
 > import Control.Applicative
-> import Data.Foldable
+> import Data.Foldable hiding (foldl)
 > import Data.Traversable
+> import Control.Monad.Identity
+> import Data.Either
 
 > import BwdFwd
 
 %endif
 
-%format :- = ":\!\!\!-"
+%format :$ = ":\!$"
 %format :? = "\,:\!\!\!\in"
 %format Set = "\star"
 %format Pi = "\Pi"
@@ -31,7 +33,7 @@
 >   N     :: Tm {Ex, p} x        -> Tm {In, p} x   -- |Ex| to |In|
 >   P     :: x                   -> Tm {Ex, p} x   -- parameter
 >   V     :: Int                 -> Tm {Ex, TT} x  -- variable
->   (:-)  :: Tm {Ex, p} x -> Elim (Tm {In, p} x) -> Tm {Ex, p} x  -- elimination
+>   (:$)  :: Tm {Ex, p} x -> Elim (Tm {In, p} x) -> Tm {Ex, p} x  -- elimination
 >   (:?)  :: Tm {In, TT} x -> Tm {In, TT} x -> Tm {Ex, TT} x      -- typing
 >
 > data Scope :: {Phase} -> * -> * where
@@ -45,10 +47,11 @@
 >   deriving (Show, Eq)
 >
 > data Elim :: * -> * where
->   A :: t -> Elim t                                      -- application
+>   A     :: t -> Elim t                                      -- application
 >   deriving (Show, Eq)
 
 > pattern Arr s t   = C (Pi s (L (K t)))      -- simple arrow
+> pattern PI x s t  = C (Pi s (L (x :. t)))   -- dependent functions
 
 > type InTm  = Tm {In, TT}
 > type ExTm  = Tm {Ex, TT}
@@ -57,6 +60,10 @@
 > type VAL   = Tm {In, VV} REF
 > type NEU   = Tm {Ex, VV} REF
 > type Env   = Bwd VAL
+
+> type Spine p x = [Elim (Tm {In, p} x)]
+> ($:$) :: Tm {Ex, p} x -> Spine p x -> Tm {Ex, p} x
+> ($:$) = foldl (:$)
 
 > data REF = Name := RKind  -- is shared where possible
 >
@@ -74,10 +81,15 @@
 >   | HOLE VAL
 >   deriving Show
 
-> ($-) :: VAL -> Elim VAL -> VAL
-> L (K v)      $- A _  = v
-> L (H g _ t)  $- A v  = eval t (g :< v)
-> N n          $- e    = N (n :- e)
+We have special pairs for types going in and coming out of stuff.
+
+> data y :>: t = y :>: t
+> data t :<: y = t :<: y
+
+> ($$) :: VAL -> Elim VAL -> VAL
+> L (K v)      $$ A _  = v
+> L (H g _ t)  $$ A v  = eval t (g :< v)
+> N n          $$ e    = N (n :$ e)
 
 > pval :: REF -> VAL
 > pval (_ := DEFN v _)  = v
@@ -93,11 +105,56 @@
 > eval (N n)     = eval n
 > eval (P x)     = (|(pval x)|)
 > eval (V i)     = (!. i)
-> eval (t :- e)  = (|eval t $- (eval ^$ e)|)
+> eval (t :$ e)  = (|eval t $$ (eval ^$ e)|)
 > eval (t :? _)  = eval t
 
 
+> data Mangle f x y = Mang
+>   {  mangP :: x -> f [Elim (InTm y)] -> f (ExTm y)
+>   ,  mangV :: Int -> f [Elim (InTm y)] -> f (ExTm y)
+>   ,  mangB :: String -> Mangle f x y
+>   }
+
+> (%) :: Applicative f => Mangle f x y -> Tm {In, TT} x -> f (Tm {In, TT} y)
+> m % L (K t)      = (|L (|K (m % t)|)|)
+> m % L (x :. t)   = (|L (|(x :.) (mangB m x % t)|)|)
+> m % C c          = (|C ((m %) ^$ c)|)
+> m % N n          = (|N (exMang m n (|[]|))|)
+
+> exMang ::  Applicative f => Mangle f x y ->
+>            Tm {Ex, TT} x -> f [Elim (Tm {In, TT} y)] -> f (Tm {Ex, TT} y)
+> exMang m (P x)     es = mangP m x es
+> exMang m (V i)     es = mangV m i es
+> exMang m (t :$ e)  es = exMang m t (|((m %) ^$ e) : es|)
+> exMang m (t :? y)  es = (|(|(m % t) :? (m % y)|) $:$ es|)
+
+> capture :: Bwd String -> Mangle I String String
+> capture xs = Mang
+>   {  mangP = \ x ies  -> (|(either P V (h xs x) $:$) ies|)
+>   ,  mangV = \ i ies  -> (|(V i $:$) ies|)
+>   ,  mangB = \ x -> capture (xs :< x)
+>   } where
+>   h B0         x  = Left x
+>   h (ys :< y)  x
+>     | x == y      = Right 0
+>     | otherwise   = (|succ (h ys y)|)
+
 %if False
+
+> newtype I x = I {unI :: x}
+> instance Functor I where
+>   fmap f (I s) = I (f s)
+> instance Applicative I where
+>   pure         = I
+>   I f <*> I s  = I (f s)
+
+> instance Applicative (Either x) where
+>   pure = return
+>   (<*>) = ap
+> instance Monad (Either x) where
+>   return = Right
+>   Left x   >>= _  = Left x
+>   Right y  >>= f  = f y
 
 > instance Traversable Can where
 >   traverse f Set       = (|Set|)
@@ -122,7 +179,7 @@
 >   show (N n)     = "N (" ++ show n ++ ")"
 >   show (P x)     = "P (" ++ show x ++ ")"
 >   show (V i)     = "V " ++ show i
->   show (n :- e)  = "(" ++ show n ++ " :- " ++ show e ++ ")"
+>   show (n :$ e)  = "(" ++ show n ++ " :$ " ++ show e ++ ")"
 >   show (t :? y)  = "(" ++ show t ++ " :? " ++ show y ++ ")"
 >
 > instance Show x => Show (Scope p x) where

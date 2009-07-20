@@ -9,7 +9,6 @@
 
 > import Data.Foldable
 > import Control.Monad
-> import Control.Monad.State
 > import Control.Applicative
 
 > import BwdFwd
@@ -26,7 +25,7 @@
 >   deriving Show
 
 > data Entry
->   = REF :-: Entity
+>   = E REF (String, Int) Entity
 >   deriving Show
 
 > data Entity
@@ -44,14 +43,8 @@
 >   ,  laytip  :: Tip }
 >   deriving Show
 
-> type WhereAmI = (Bwd Layer, Dev)
-
-> boys :: WhereAmI -> [REF]
-> boys (ls, (es, _)) = foldMap (foldMap boy . elders) ls ++ foldMap boy es where
->   boy (r :-: Boy _)  = [r]
->   boy _              = []
-
-> type Construct = State WhereAmI
+> type Root = (Bwd (String, Int), Int)
+> type WhereAmI = (Bwd Layer, Root, Dev)
 
 > data Elab x
 >   = Bale x

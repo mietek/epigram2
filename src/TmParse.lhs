@@ -8,7 +8,7 @@
 > module TmParse where
 
 > import Control.Applicative
-> import Data.Foldable
+> import Data.Foldable hiding (foldr)
 > import Data.Traversable
 
 > import Lexer
@@ -21,25 +21,22 @@
 > weeTmIn =
 >   (|id (bra Rnd bigTmIn)
 >    |C ~ Set {key "Set"}
->    |mkL {key "\\"} (some (spc *> idf)) {key "->"} bigTmIn
+>    |(flip (foldr mkL)) {key "\\"} (some (spc *> idf)) {key "->"} bigTmIn
 >    |N weeTmEx
 >    |)
 >  where
->    mkL [] t = t
->    mkL ("_" : xs) t = L (K (mkL xs t))
->    mkL (x : xs) t = L (x :. mkL xs t)
+>    mkL "_"  t = L (K t)
+>    mkL x    t = L (x :. t)
+
+> telescope :: P Tok [(String, InTm String)]
+> telescope = bra Rnd (pSep (pad (teq Sem)) (|idf, {key ":"} bigTmIn|))
 
 > bigTmIn :: P Tok (InTm String)
 > bigTmIn =
->     (|mkPi
->       (bra Rnd (pSep (pad (teq Sem)) (|idf, {key ":"} bigTmIn|)))
->       {key "->"} bigTmIn
+>     (|(flip (foldr (uncurry PI))) telescope {key "->"} bigTmIn
 >      |) <|> (pLoop (|N bigTmEx | id weeTmIn|) $ \ i ->
 >     (|Arr ~ i {key "->"} bigTmIn
 >      |))
->   where
->     mkPi []             t = t
->     mkPi ((x, s) : xs)  t = C (Pi s (L (x :. mkPi xs t)))
 
 > weeTmEx :: P Tok (ExTm String)
 > weeTmEx =
@@ -50,7 +47,7 @@
 
 > bigTmEx :: P Tok (ExTm String)
 > bigTmEx = pLoop weeTmEx $ \ e -> spc *>
->   (|(e :-) (|A weeTmIn|)
+>   (|(e :$) (|A weeTmIn|)
 >    |)
 
 > spc :: P Tok ()
@@ -63,6 +60,11 @@
 > bra b p = grok inside next where
 >   inside (Bra o ts c) | o == b  = parse (pad p) ts
 >   inside _                      = Nothing
+
+> lay :: String -> P [Tok] x -> P Tok x
+> lay k p = spc *> grok inside next where
+>   inside (Lay k' tss) | k == k'  = parse p tss
+>   inside _                       = Nothing
 
 > idf :: P Tok String
 > idf = grok g next where
