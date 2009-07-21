@@ -42,6 +42,7 @@
 > bquote (N n)          r = N (bquote n r)
 > bquote (P x)          r = quop x r
 > bquote (n :$ v)       r = bquote n r :$ traverse bquote v r
+> bquote (op :@ vs)     r = op :@ traverse bquote vs r
 
 > etaExpand :: (VAL :>: VAL) -> Root -> Maybe INTM
 > etaExpand (C (Pi s t) :>: f) r = Just $
@@ -55,6 +56,7 @@
 > inQuote (C cty :>: C cv) r | Just x    <- canTy id (cty :>: cv) =
 >   C (traverse inQuote x r)
 
+
 > unC :: VAL -> Can VAL
 > unC (C c) = c
 
@@ -64,6 +66,8 @@
 >   where
 >   (n' :<: ty)  = exQuote n r
 >   Just (e,ty') = elimTy id (unC ty :>: N n) v
+> exQuote (op :@ vs)           r = (op :@ traverse inQuote vs' r) :<: v where
+>    Just (vs',v) = opTy op id vs 
 
 > quote :: (VAL :>: VAL) -> Root -> INTM
 > quote vty r = inQuote vty (room r "quote")
@@ -78,6 +82,10 @@
 >   (s',ty') <- elimTy evTm (ty :>: evTm t) s
 >   traverse id $ traverse check s' r
 >   return ty'
+> infer (op :@ ts)         r = do
+>   (vs,v) <- opTy op evTm ts
+>   traverse id $ traverse check vs r
+>   return v
 > infer (t :? ty)          r = do
 >   check (SET :>: ty) r
 >   let vty = evTm ty
