@@ -34,8 +34,8 @@
 >   | Girl  GirlKind Dev
 >   deriving Show
 >
-> data BoyKind   = LAMB | PIB deriving (Show, Eq)
-> data GirlKind  = LET deriving (Show, Eq)
+> data BoyKind   = LAMB | PIB INTM deriving (Show, Eq)
+> data GirlKind  = LETG deriving (Show, Eq)
 
 > data Layer = Layer
 >   {  elders  :: Bwd Entry

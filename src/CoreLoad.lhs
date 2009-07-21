@@ -106,7 +106,7 @@
 
 > data CoreLine
 >   = LLam [String] (Maybe INTM)
->   | LDef INTM (Maybe INTM)
+>   | LDef String (Maybe INTM) [[Tok]]
 >   | LCom
 
 > pCoreLine :: Bwd Entry -> P Tok CoreLine
@@ -114,16 +114,54 @@
 >   (|LLam {key "\\"} (some idf) {spc} (optional (pINTM es))
 >    |LCom {key "--"; pRest}
 >    |LCom {pSep (tok isSpcT) (teq Sem)}
+>    |LDef idf (optional (key ":" >> pINTM es)) {spc} (lay "where" pRest)
 >    |)
 
-> coreLineAction :: CoreLine -> Dev -> Root -> Maybe (Dev, Root)
-> coreLineAction (LLam [] _) d r = Just (d, r)
-> coreLineAction (LLam (x : xs) mty) (es, tip) r = do
+> coreLineAction :: Bwd Entry -> CoreLine -> Dev -> Root -> Maybe (Dev, Root)
+> coreLineAction gs (LLam [] _) d r = Just (d, r)
+> coreLineAction gs (LLam (x : xs) mty) (es, tip) r = do
 >   s <- tipDom mty tip
 >   let xr = name r x := DECL s
 >   let xe = E xr (x, snd r) (Boy LAMB)
->   coreLineAction (LLam xs mty) (es :< xe, tipRan tip xr) (roos r)
-> coreLineAction LCom d r = Just (d, r)
+>   coreLineAction gs (LLam xs mty) (es :< xe, tipRan tip xr) (roos r)
+> coreLineAction gs LCom d r = Just (d, r)
+> coreLineAction gs (LDef x (Just ty) tss) (es, t) r =
+>   let  gs' = gs <+> es
+>        vy = evTm ty
+>        (d@(ds, u), tss') =
+>          runWriter (makeFun gs' (B0, Unknown vy) tss (room r x))
+>        xr = name r x := case u of
+>               Unknown _ -> HOLE vy
+>               Defined b _ ->
+>                 DEFN (evTm (lambda gs' (discharge ds ((gs' <+> ds) -| b)))) vy
+>        xe = E xr (x, snd r) (Girl LETG d)
+>   in   Just ((es :< xe, t), roos r)
+
+> discharge :: Bwd Entry -> INTM -> INTM
+> discharge B0 t = t
+> discharge (es :< E _ _ (Girl _ _)) t = discharge es t
+> discharge (es :< E _ (x, _) (Boy LAMB)) t = discharge es (L (x :. t))
+> discharge (es :< E _ (x, _) (Boy (PIB s))) t = discharge es (PI x (es -| s) t)
+
+> lambda :: Bwd Entry -> INTM -> INTM
+> lambda B0 t = t
+> lambda (es :< E _ _ (Girl _ _)) t = lambda es t
+> lambda (es :< E _ (x, _) (Boy _)) t = lambda es (L (x :. t))
+
+> disMangle :: Bwd Entry -> Int -> Mangle I REF REF
+> disMangle ys i = Mang
+>   {  mangP = \ x ies -> (|(h ys x i $:$) ies|)
+>   ,  mangV = \ i ies -> (|(V i $:$) ies|)
+>   ,  mangB = \ _ -> disMangle ys (i + 1)
+>   } where
+>   h B0                        x i  = P x
+>   h (ys :< E y _ (Boy _))     x i
+>     | x == y     = V i
+>     | otherwise  = h ys x (i + 1)
+>   h (ys :< E y _ (Girl _ _))  x i = h ys x i
+
+> (-|) :: Bwd Entry -> INTM -> INTM
+> es -| t = disMangle es 0 %% t
 
 > tipDom :: Maybe INTM -> Tip -> Maybe VAL
 > tipDom (Just s)  Module                  = Just (evTm s)
@@ -140,7 +178,7 @@
 > makeFun gs d@(ls, _) (ts : tss) r =
 >   fromMaybe (tell [Key "--" : Spc 1 : ts] >> makeFun gs d tss r) $ do
 >     c <- parse (pCoreLine (gs <+> ls)) ts
->     (d, r) <- coreLineAction c d r
+>     (d, r) <- coreLineAction gs c d r
 >     return (tell [ts] >> makeFun gs d tss r)
 
 > instance Monoid o => Applicative (Writer o) where

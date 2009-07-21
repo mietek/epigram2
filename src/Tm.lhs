@@ -187,6 +187,9 @@ We have special pairs for types going in and coming out of stuff.
 > exMang m (t :$ e)  es = exMang m t (|((m %) ^$ e) : es|)
 > exMang m (t :? y)  es = (|(|(m % t) :? (m % y)|) $:$ es|)
 
+> (%%) :: Mangle I x y -> Tm {In, TT} x -> Tm {In, TT} y
+> m %% t = unI $ m % t
+
 > capture :: Bwd String -> Mangle I String String
 > capture xs = Mang
 >   {  mangP = \ x ies  -> (|(either P V (h xs x) $:$) ies|)
@@ -207,7 +210,7 @@ We have special pairs for types going in and coming out of stuff.
 
 > underScope :: Scope {TT} REF -> REF -> INTM
 > underScope (K t)     _ = t
-> underScope (_ :. t)  x = unI (under 0 x % t)
+> underScope (_ :. t)  x = under 0 x %% t
 
 %if False
 
