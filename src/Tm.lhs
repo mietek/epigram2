@@ -3,7 +3,7 @@
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE TypeOperators, GADTs, KindSignatures,
+> {-# LANGUAGE TypeOperators, GADTs, KindSignatures, RankNTypes,
 >     TypeSynonymInstances, FlexibleInstances, ScopedTypeVariables #-}
 
 > module Tm where
@@ -46,6 +46,7 @@ like your mother always told you.
 >   P     :: x                   -> Tm {Ex, p} x   -- parameter
 >   V     :: Int                 -> Tm {Ex, TT} x  -- variable
 >   (:$)  :: Tm {Ex, p} x -> Elim (Tm {In, p} x) -> Tm {Ex, p} x -- elimination
+>   (:@)  :: Op -> [Tm {In, p} x] -> Tm {Ex, p} x  -- fully applied operator
 >   (:?)  :: Tm {In, TT} x -> Tm {In, TT} x -> Tm {Ex, TT} x     -- typing
 >
 > data Scope :: {Phase} -> * -> * where
@@ -63,6 +64,12 @@ like your mother always told you.
 >   A     :: t -> Elim t                                  -- application
 >   import <- ElimConstructors
 >   deriving (Show, Eq)
+>
+> data Op = Op
+>   { opName  :: String
+>   , opTy    :: forall t. (t -> VAL) -> [t] -> Maybe ([VAL :>: t] , VAL)
+>   , opRun   :: [VAL] -> Either NEU VAL
+>   }
 
 We have some pattern synonyms for common, er, patterns.
 
@@ -87,20 +94,23 @@ We have some type synonyms for commonly occurring instances of |Tm|.
 >   _ == _ = True
 
 > instance Eq x => Eq (Tm {d, TT} x) where
->   L s0        == L s1        = s0 == s1
->   C c0        == C c1        = c0 == c1
->   N n0        == N n1        = n0 == n1
->   P x0        == P x1        = x0 == x1
->   V i0        == V i1        = i0 == i1
->   (t0 :$ e0)  == (t1 :$ e1)  = t0 == t1 && e0 == e1
->   (t0 :? _)   == (t1 :? _)   = t0 == t1
->   _           == _           = False
+>   L s0          == L s1          = s0 == s1
+>   C c0          == C c1          = c0 == c1
+>   N n0          == N n1          = n0 == n1
+>   P x0          == P x1          = x0 == x1
+>   V i0          == V i1          = i0 == i1
+>   (t0 :$ e0)    == (t1 :$ e1)    = t0 == t1 && e0 == e1
+>   (op0 :@ vs0)  == (op1 :@ vs1)  = op0 == op1 && vs0 == vs1
+>   (t0 :? _)     == (t1 :? _)     = t0 == t1
+>   _             == _             = False
 
 > instance Eq x => Eq (Scope {TT} x) where
 >   (_ :. t0)  == (_ :. t1)  = t0 == t1
 >   K t0       == K t1       = t0 == t1
 >   _          == _          = False
 
+> instance Eq Op where
+>   op0 == op1 = opName op0 == opName op1
 
 > type Spine p x = [Elim (Tm {In, p} x)]
 > ($:$) :: Tm {Ex, p} x -> Spine p x -> Tm {Ex, p} x
@@ -133,6 +143,9 @@ We have special pairs for types going in and coming out of stuff.
 > import <- ElimComputation
 > N n          $$ e    = N (n :$ e)
 
+> (@@) :: Op -> [VAL] -> VAL
+> op @@ vs = either (\_ -> N (op :@ vs)) id (opRun op vs) 
+
 > pval :: REF -> VAL
 > pval (_ := DEFN v _)  = v
 > pval r                = N (P r)
@@ -142,13 +155,14 @@ We have special pairs for types going in and coming out of stuff.
 > body (x :. t)  g = H g x t
 
 > eval :: Tm {d, TT} REF -> Env -> VAL
-> eval (L b)     = (|L (body b)|)
-> eval (C c)     = (|C (eval ^$ c)|)
-> eval (N n)     = eval n
-> eval (P x)     = (|(pval x)|)
-> eval (V i)     = (!. i)
-> eval (t :$ e)  = (|eval t $$ (eval ^$ e)|)
-> eval (t :? _)  = eval t
+> eval (L b)       = (|L (body b)|)
+> eval (C c)       = (|C (eval ^$ c)|)
+> eval (N n)       = eval n
+> eval (P x)       = (|(pval x)|)
+> eval (V i)       = (!. i)
+> eval (t :$ e)    = (|eval t $$ (eval ^$ e)|)
+> eval (op :@ vs)  = (|(op @@) (eval ^$ vs)|)
+> eval (t :? _)    = eval t
 
 > evTm :: Tm {d, TT} REF -> VAL
 > evTm t = eval t B0
@@ -169,6 +183,7 @@ We have special pairs for types going in and coming out of stuff.
 >            Tm {Ex, TT} x -> f [Elim (Tm {In, TT} y)] -> f (Tm {Ex, TT} y)
 > exMang m (P x)     es = mangP m x es
 > exMang m (V i)     es = mangV m i es
+> exMang m (o :@ a)  es = (|(| (o :@) ((m %) ^$ a) |) $:$ es|) 
 > exMang m (t :$ e)  es = exMang m t (|((m %) ^$ e) : es|)
 > exMang m (t :? y)  es = (|(|(m % t) :? (m % y)|) $:$ es|)
 
@@ -238,13 +253,14 @@ We have special pairs for types going in and coming out of stuff.
 >   foldMap = foldMapDefault
 
 > instance Show x => Show (Tm dp x) where
->   show (L s)     = "L (" ++ show s ++ ")"
->   show (C c)     = "C (" ++ show c ++ ")"
->   show (N n)     = "N (" ++ show n ++ ")"
->   show (P x)     = "P (" ++ show x ++ ")"
->   show (V i)     = "V " ++ show i
->   show (n :$ e)  = "(" ++ show n ++ " :$ " ++ show e ++ ")"
->   show (t :? y)  = "(" ++ show t ++ " :? " ++ show y ++ ")"
+>   show (L s)       = "L (" ++ show s ++ ")"
+>   show (C c)       = "C (" ++ show c ++ ")"
+>   show (N n)       = "N (" ++ show n ++ ")"
+>   show (P x)       = "P (" ++ show x ++ ")"
+>   show (V i)       = "V " ++ show i
+>   show (n :$ e)    = "(" ++ show n ++ " :$ " ++ show e ++ ")"
+>   show (op :@ vs)  = "(" ++ opName op ++ " :@ " ++ show vs ++ ")"
+>   show (t :? y)    = "(" ++ show t ++ " :? " ++ show y ++ ")"
 >
 > instance Show x => Show (Scope p x) where
 >   show (x :. t)   = show x ++ " :. " ++ show t
