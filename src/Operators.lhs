@@ -8,6 +8,7 @@
 
 > module Operators where
 
+> import BwdFwd
 > import Tm
 > import Features
 > import Prop

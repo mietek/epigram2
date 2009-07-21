@@ -25,6 +25,8 @@
 >   pattern PAIR  p q = C (Pair p q)
 >   pattern UNIT      = C Unit
 >   pattern VOID      = C Void
+>   pattern Times x y = Sigma x (L (K y))
+>   pattern TIMES x y = C (Times x y)  
 
 > import -> ElimComputation where
 >   PAIR x y $$ Fst = x

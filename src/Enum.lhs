@@ -19,9 +19,13 @@
 >   Su     :: t -> Can t 
 
 > import -> CanPats where
->   pattern UID      = C UId
->   pattern ENUMU    = C EnumU 
->   pattern ENUMT e  = C (EnumT e) 
+>   pattern UID        = C UId
+>   pattern ENUMU      = C EnumU 
+>   pattern ENUMT e    = C (EnumT e) 
+>   pattern NILE        = C NilE
+>   pattern CONSE t e  = C (ConsE t e) 
+>   pattern ZE         = C Ze
+>   pattern SU n       = C (Su n)
 
 > import -> TraverseCan where
 >   traverse f EnumU        = (|EnumU|)
@@ -36,5 +40,23 @@
 >   canTy ev (Set :>: EnumT e)  =  Just (EnumT (ENUMU :>: e))
 >   canTy ev (EnumU :>: NilE)       = Just NilE
 >   canTy ev (EnumU :>: ConsE t e)  = Just (ConsE (UID :>: t) (ENUMU :>: e))
->   canTy ev (EnumT (C (ConsE t e)) :>: Ze)    = Just Ze 
->   canTy ev (EnumT (C (ConsE t e)) :>: Su n)  = Just (Su (ENUMT e :>: n)) 
+>   canTy ev (EnumT (CONSE t e) :>: Ze)    = Just Ze 
+>   canTy ev (EnumT (CONSE t e) :>: Su n)  = Just (Su (ENUMT e :>: n))
+
+> import -> OpCode where
+>   branchesOp = Op 
+>     { opName   = "Branches"
+>     , opArity  = 2 
+>     , opTy     = bOpTy
+>     , opRun    = bOpRun
+>     } where
+>         bOpTy ev [e , p] = 
+>           Just ([ENUMU :>: e , Arr (ENUMT (ev e)) SET :>: p] , SET)
+>         bOpTy _ _ = Nothing
+>         bOpRun :: [VAL] -> Either NEU VAL
+>         bOpRun [NILE , p] = Right UNIT
+>         bOpRun [CONSE t e' , p] = 
+>           Right (TIMES (p $$ A ZE) 
+>                 (branchesOp @@ [e' , L (H (B0 :< p) 
+>                                  "" (N (V 1 :$ A ((C (Su (N (V 0))))))))]))
+>         bOpRun [N e , _] = Left e 
