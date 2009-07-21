@@ -80,6 +80,11 @@ We have some type synonyms for commonly occurring instances of |Tm|.
 > type NEU   = Tm {Ex, VV} REF
 > type Env   = Bwd VAL
 
+> data Irr x = Irr x deriving Show
+
+> instance Eq (Irr x) where
+>   _ == _ = True
+
 > instance Eq x => Eq (Tm {d, TT} x) where
 >   L s0        == L s1        = s0 == s1
 >   C c0        == C c1        = c0 == c1
@@ -218,7 +223,14 @@ We have special pairs for types going in and coming out of stuff.
 > instance Traversable Elim where
 >   traverse f (A s)  = (|A (f s)|)
 >   import <- TraverseElim
->
+
+> instance Functor Irr where
+>   fmap = fmapDefault
+> instance Foldable Irr where
+>   foldMap = foldMapDefault
+> instance Traversable Irr where
+>    traverse f (Irr x) = (|Irr (f x)|)
+
 > instance Functor Elim where
 >   fmap = fmapDefault
 > instance Foldable Elim where
