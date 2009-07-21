@@ -20,9 +20,15 @@
 >   Fst    :: Elim t
 >   Snd    :: Elim t
 
+> import -> CanPats where
+>   pattern SIGMA p q = C (Sigma p q)
+>   pattern PAIR  p q = C (Pair p q)
+>   pattern UNIT      = C Unit
+>   pattern VOID      = C Void
+
 > import -> ElimComputation where
->   C (Pair x y) $$ Fst = x
->   C (Pair x y) $$ Snd = y
+>   PAIR x y $$ Fst = x
+>   PAIR x y $$ Snd = y
 
 > import -> TraverseCan where
 >   traverse f Unit         = (|Unit|)
@@ -33,12 +39,6 @@
 > import -> TraverseElim where
 >   traverse f Fst  = (|Fst|)
 >   traverse f Snd  = (|Snd|)
-
-> import -> CanPats where
->   pattern SIGMA p q = C (Sigma p q)
->   pattern PAIR  p q = C (Pair p q)
->   pattern UNIT      = C Unit
->   pattern VOID      = C Void
 
 > import -> CanTyRules where
 >   canTy ev (Set :>: Unit) = Just Unit
