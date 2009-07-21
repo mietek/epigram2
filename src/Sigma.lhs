@@ -25,14 +25,14 @@
 >   C (Pair x y) $$ Snd = y
 
 > import -> TraverseCan where
->   traverse f Unit = (|Unit|)
->   traverse f Void = (|Void|)
->   traverse f (Sigma s t) = (|Sigma (f s) (f t)|)
->   traverse f (Pair x y) = (|Pair (f x) (f y)|) 
+>   traverse f Unit         = (|Unit|)
+>   traverse f Void         = (|Void|)
+>   traverse f (Sigma s t)  = (|Sigma (f s) (f t)|)
+>   traverse f (Pair x y)   = (|Pair (f x) (f y)|) 
 
 > import -> TraverseElim where
->   traverse f Fst = (|Fst|)
->   traverse f Snd = (|Snd|)
+>   traverse f Fst  = (|Fst|)
+>   traverse f Snd  = (|Snd|)
 
 > import -> CanTyRules where
 >   canTy ev (Set :>: Unit) = Just Unit
