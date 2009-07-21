@@ -56,7 +56,6 @@
 > inQuote (C cty :>: C cv) r | Just x    <- canTy id (cty :>: cv) =
 >   C (traverse inQuote x r)
 
-
 > unC :: VAL -> Can VAL
 > unC (C c) = c
 

@@ -29,6 +29,8 @@ Elim forms inherited from elsewhere
 >   pattern PRF p   = C (Prf p)
 >   pattern ALL p q = C (All p q)
 >   pattern AND p q = C (And p q)
+>   pattern TRIVIAL = C Trivial
+>   pattern ABSURD  = C Absurd
 >   pattern BOX p   = C (Box p)
 
 > import -> CanTyRules where
@@ -48,6 +50,19 @@ Elim forms inherited from elsewhere
 >     Just (A (p :>: e),q $$ A (ev e))
 >   elimTy ev (Prf (AND p q) :>: PAIR x y) Fst   = Just (Fst,x)
 >   elimTy ev (Prf (AND p q) :>: PAIR x y) Snd   = Just (Snd,y)
+
+> import -> OpCode where
+>   nEOp = Op { opName = "naughtE"
+>             , opArity = 2
+>             , opTy = opty
+>             , opRun = oprun
+>             } where
+>               opty f [z,ty] = Just ([ PRF ABSURD :>: z,SET :>: ty ],f ty)
+>               opty _ _      = Nothing
+>               oprun = undefined
+
+> import -> Operators where
+>   nEOp :
 
 > import -> EtaExpand where
 >   etaExpand (PRF p :>: x) r = Just (BOX (Irr (inQuote (PRF p :>: x) r))))

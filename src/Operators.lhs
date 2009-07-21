@@ -10,6 +10,7 @@
 
 > import Tm
 > import Features
+> import Prop
 
 > import <- OpCode
 
