@@ -60,3 +60,27 @@
 >                 (branchesOp @@ [e' , L (H (B0 :< p) 
 >                                  "" (N (V 1 :$ A ((C (Su (N (V 0))))))))]))
 >         bOpRun [N e , _] = Left e 
+>
+>   switchOp = Op
+>     { opName = "Switch"
+>     , opArity = 4
+>     , opTy = sOpTy
+>     , opRun = sOpRun
+>     } where
+>         sOpTy ev [e , p , b, x] = 
+>           Just ([ ENUMU :>: e 
+>                 , Arr (ENUMT (ev e)) SET :>: p
+>                 , branchesOp @@ [ev e , ev p] :>: b
+>                 , ENUMT e :>: x] , (ev p) $$ A (ev x))
+>         sOpRun [CONSE t e' , p , ps , ZE] = ps $$ Fst
+>         sOpRun [CONSE t e' , p , ps , SU n] = 
+>           switchOp @@ [e' 
+>                       , L (H (B0 :< p) "" (N (V 1 :$ A ((C (Su (N (V 0))))))))
+>                       , ps $$ Snd
+>                       , n ]
+>         sOpRun [_ , _ , _ , N n] = Left n
+
+
+> import -> Operators where
+>   branchesOp :
+>   switchOp :
