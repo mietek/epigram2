@@ -34,6 +34,12 @@
 >   traverse f Fst  = (|Fst|)
 >   traverse f Snd  = (|Snd|)
 
+> import -> CanPats where
+>   pattern SIGMA p q = C (Sigma p q)
+>   pattern PAIR  p q = C (Pair p q)
+>   pattern UNIT      = C Unit
+>   pattern VOID      = C Void
+
 > import -> CanTyRules where
 >   canTy ev (Set :>: Unit) = Just Unit
 >   canTy ev (Set :>: Sigma s t) = 
@@ -43,11 +49,11 @@
 >     Just (Pair (s :>: x) (t $$ A (ev x) :>: y))
 
 > import -> ElimTyRules where
->   elimTy ev (Sigma s t :>: C (Pair x y)) Fst = Just (Fst,s)
->   elimTy ev (Sigma s t :>: C (Pair x y)) Snd = Just (Snd,t $$ A x)
+>   elimTy ev (Sigma s t :>: PAIR x y) Fst = Just (Fst,s)
+>   elimTy ev (Sigma s t :>: PAIR x y) Snd = Just (Snd,t $$ A x)
 
 > import -> EtaExpand where
->   etaExpand (C Void :>: v) r = Just (C Unit)
->   etaExpand (ty@(C (Sigma s t)) :>: p) r = let x = p $$ Fst in 
->     (| (\x y -> C (Pair x y)) (etaExpand (s :>: x) r) 
+>   etaExpand (VOID :>: v) r = Just (UNIT)
+>   etaExpand (ty@(SIGMA s t) :>: p) r = let x = p $$ Fst in 
+>     (| (\x y -> PAIR x y) (etaExpand (s :>: x) r) 
 >                   (etaExpand (t $$ (A x) :>: (p $$ Snd)) r) |)  
