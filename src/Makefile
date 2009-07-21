@@ -11,7 +11,7 @@ Pig : $(OBJS)
 	$(HC) -o $@ $(HC_OPTS) $(OBJS)
 
 .depend : $(SRCS)
-	ghc -M -dep-makefile .depend $(SRCS)
+	$(HC) -M -dep-makefile .depend $(SRCS)
 
 dvi : Epitome.dvi
 
