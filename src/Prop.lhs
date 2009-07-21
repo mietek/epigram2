@@ -50,8 +50,7 @@ Elim forms inherited from elsewhere
 >   elimTy ev (Prf (AND p q) :>: PAIR x y) Snd   = Just (Snd,y)
 
 > import -> EtaExpand where
->   etaExpand (PRF p :>: x) r = 
->     Just (BOX (Irr (inQuote (PRF p :>: x) r))))
+>   etaExpand (PRF p :>: x) r = Just (BOX (Irr (inQuote (PRF p :>: x) r))))
 
 > import -> Check where
 >   check (PRF (ALL p q) :>: L sc) r = do
