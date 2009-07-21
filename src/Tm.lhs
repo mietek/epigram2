@@ -69,6 +69,7 @@ We have some pattern synonyms for common, er, patterns.
 > pattern SET       = C Set                   -- set of sets
 > pattern Arr s t   = C (Pi s (L (K t)))      -- simple arrow
 > pattern PI x s t  = C (Pi s (L (x :. t)))   -- dependent functions
+> import <- CanPats
 
 We have some type synonyms for commonly occurring instances of |Tm|.
 

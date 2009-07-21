@@ -25,7 +25,7 @@
 
 > elimTy :: (t -> VAL) -> (Can VAL :>: VAL) -> Elim t ->
 >           Maybe (Elim (VAL :>: t),VAL)
-> elimTy ev (Pi s t :>: f) (A e) = Just (A (s :>: e),(t $$ A (ev e))) 
+> elimTy ev (Pi s t :>: f) (A e) = Just (A (s :>: e),t $$ A (ev e)) 
 > import <- ElimTyRules
 > elimTy _ _ _ = Nothing
 
@@ -95,4 +95,5 @@
 >            (\ref -> check (t $$ A (pval ref) :>: (underScope sc ref))) 
 >            r
 > check (_ :>: N n) r = infer n r >> return ()
+> import <- Check
 > check _ _ = Nothing
