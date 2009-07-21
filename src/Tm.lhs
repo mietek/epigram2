@@ -66,7 +66,7 @@ like your mother always told you.
 >   deriving (Show, Eq)
 >
 > data Op = Op
->   { opName  :: String
+>   { opName  :: String, opArity :: Int
 >   , opTy    :: forall t. (t -> VAL) -> [t] -> Maybe ([VAL :>: t] , VAL)
 >   , opRun   :: [VAL] -> Either NEU VAL
 >   }
