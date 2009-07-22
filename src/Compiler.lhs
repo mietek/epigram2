@@ -1,5 +1,8 @@
 \section{Compiler}
 
+This module uses Epic (darcs get http://www-fp.cs.st-and.ac.uk/~eb/darcs/EpiVM) to
+generate an executable from a collection of supercombinator definitions.
+
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
@@ -15,6 +18,7 @@
 > import List
 
 > import Tm
+> import Features
 
 %endif
 
@@ -109,9 +113,35 @@ Things which are convertible to epic code
 >          tryReads (x:xs) = catch (readFile x)
 >                                  (\e -> tryReads xs)
 
+> class MakeBody t where
+>     makeBody :: t -> FnBody
 
+> instance MakeBody (Tm {d,p} Name) where
+>     makeBody (C can) = makeBody can
+>     makeBody (N t) = makeBody t
+>     makeBody (P x) = Var x
+>     makeBody (tm :$ elim) = makeBody (tm, elim)
+>     makeBody (op :@ args) = makeBody (op, args)
+>     makeBody (tm :? ty) = Ignore
+>     makeBody _ = error "Please don't do that"
 
+> instance MakeBody (Can (Tm {In, p} Name)) where
+>     makeBody Set = Ignore
+>     makeBody (Pi _ _) = Ignore
+>     import <- CanCompile
 
+> instance MakeBody (Tm {Ex, p} Name, Elim (Tm {In, p} Name)) where
+>     import <- ElimCompile
+>     makeBody (arg, A f) = appArgs f [makeBody arg]
+>        where appArgs :: Tm {d, p} Name -> [FnBody] -> FnBody
+>              appArgs (a :$ (A f)) acc = appArgs f (makeBody a:acc)
+>              appArgs f acc = App (makeBody f) acc
+
+> instance MakeBody (Op, [Tm {In, p} Name]) where
+>     makeBody (Op name arity _ _, args) 
+>          = case (name, args) of
+>                import <- OpCompile
+>                _ -> error "Unknown operator"
 
 A simple test case
 
