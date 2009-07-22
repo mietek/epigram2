@@ -13,5 +13,8 @@
 > pipe :: String -> String
 > pipe = foldMap (foldMap tokOut) . snd . coreLoad . layout . tokenize
 
+> pipeT :: String -> String
+> pipeT = (++ "\n") . show . fst . coreLoad . layout . tokenize
+
 > main :: IO ()
-> main = interact pipe
+> main = interact pipeT

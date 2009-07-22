@@ -116,12 +116,12 @@ We have some type synonyms for commonly occurring instances of |Tm|.
 > ($:$) :: Tm {Ex, p} x -> Spine p x -> Tm {Ex, p} x
 > ($:$) = foldl (:$)
 
-> data REF = Name := RKind  -- is shared where possible
+> data REF = Name := RKind  deriving Show -- is shared where possible
 >
 > type Name = [(String, Int)]
 >
-> instance Show REF where
->   show (n := _) = show n
+> -- instance Show REF where
+> --   show (n := _) = show n
 >
 > instance Eq REF where
 >   (x := _) == (y := _) = x == y  -- could use cheeky pointer equality?
@@ -149,6 +149,11 @@ We have special pairs for types going in and coming out of stuff.
 > pval :: REF -> VAL
 > pval (_ := DEFN v _)  = v
 > pval r                = N (P r)
+
+> pty :: REF -> VAL
+> pty (_ := DECL ty) = ty
+> pty (_ := DEFN _ ty) = ty
+> pty (_ := HOLE ty) = ty
 
 > body :: Scope {TT} REF -> ENV -> Scope {VV} REF
 > body (K v)     g = K (eval v g)

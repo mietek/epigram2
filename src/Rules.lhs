@@ -7,6 +7,7 @@
 > module Rules where
 
 > import Control.Applicative
+> import Control.Monad
 > import Data.Foldable
 > import Data.Traversable
 > import BwdFwd
@@ -75,7 +76,7 @@
 > equal (ty :>: (v1,v2)) r = quote (ty :>: v1) r == quote (ty :>: v2) r
 
 > infer :: EXTM -> Root -> Maybe VAL
-> infer (P (x := DECL ty)) r = Just ty
+> infer (P x)              r = Just (pty x)
 > infer (t :$ s)           r = do
 >   C ty <- infer t r
 >   (s',ty') <- elimTy evTm (ty :>: evTm t) s
@@ -101,6 +102,9 @@
 >   freshRef ("" :<: s) 
 >            (\ref -> check (t $$ A (pval ref) :>: underScope sc ref)) 
 >            r
-> check (_ :>: N n)           r = infer n r >> return ()
+> check (w :>: N n)           r = do
+>   y <- infer n r
+>   guard $ equal (SET :>: (w, y)) r
+>   return ()
 > import <- Check
 > check _                     _ = Nothing

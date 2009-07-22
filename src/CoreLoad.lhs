@@ -24,6 +24,7 @@
 > import TmParse
 > import Core
 > import Root
+> import Rules
 
 %endif
 
@@ -124,7 +125,7 @@
 > coreLineAction :: Bwd Entry -> CoreLine -> Dev -> Root -> Maybe (Dev, Root)
 > coreLineAction gs (LLam [] _) d r = Just (d, r)
 > coreLineAction gs (LLam (x : xs) mty) (es, tip) r = do
->   s <- tipDom mty tip
+>   s <- tipDom mty tip r
 >   let xr = name r x := DECL s
 >   let xe = E xr (x, snd r) (Boy LAMB)
 >   coreLineAction gs (LLam xs mty) (es :< xe, tipRan tip xr) (roos r)
@@ -140,6 +141,28 @@
 >                 DEFN (evTm (lambda gs' (discharge ds ((gs' <+> ds) -| b)))) vy
 >        xe = E xr (x, snd r) (Girl LETG d)
 >   in   Just ((es :< xe, t), roos r)
+> coreLineAction gs (LEq (Just t) Nothing) (es, Unknown y) r = do
+>   () <- check (y :>: t) r
+>   Just ((es, Defined t y), r)
+> coreLineAction gs (LEq (Just t) (Just y)) (es, tip) r = do
+>   () <- check (SET :>: y) r
+>   let vy = evTm y
+>   () <- case tip of
+>      Unknown y' -> guard $ equal (SET :>: (vy, y')) r
+>      _ -> (|()|)
+>   () <- check (vy :>: t) r
+>   Just ((es, Defined t (evTm y)), r)
+> coreLineAction gs (LEq Nothing Nothing) (es, Unknown y) r =
+>   Just ((es, Unknown y), r)
+> coreLineAction gs (LEq Nothing (Just y)) (es, tip) r = do
+>   () <- check (SET :>: y) r
+>   let vy = evTm y
+>   () <- case tip of
+>      Unknown y' -> guard $ equal (SET :>: (vy, y')) r
+>      _ -> (|()|)
+>   Just ((es, Unknown (evTm y)), r)
+> coreLineAction _ _ _ _ = Nothing
+
 
 > discharge :: Bwd Entry -> INTM -> INTM
 > discharge B0 t = t
@@ -167,11 +190,17 @@
 > (-|) :: Bwd Entry -> INTM -> INTM
 > es -| t = disMangle es 0 %% t
 
-> tipDom :: Maybe INTM -> Tip -> Maybe VAL
-> tipDom (Just s)  Module                  = Just (evTm s)
-> tipDom (Just s)  (Unknown (C (Pi _ _)))  = Just (evTm s)
-> tipDom Nothing   (Unknown (C (Pi s _)))  = Just s
-> tipDom _         _                       = Nothing
+> tipDom :: Maybe INTM -> Tip -> Root -> Maybe VAL
+> tipDom (Just s)  Module                   r = do
+>   () <- check (SET :>: s) r
+>   return (evTm s)
+> tipDom (Just s)  (Unknown (C (Pi s' _)))  r = do
+>   () <- check (SET :>: s) r
+>   let vs = evTm s
+>   guard $ equal (SET :>: (vs, s')) r
+>   return vs
+> tipDom Nothing   (Unknown (C (Pi s _)))  r = Just s
+> tipDom _         _                       r = Nothing
 
 > tipRan :: Tip -> REF -> Tip
 > tipRan (Unknown (C (Pi _ t)))  x  = Unknown (t $$ A (pval x))
@@ -184,6 +213,10 @@
 >     c <- parse (pCoreLine (gs <+> ls)) ts
 >     (d, r) <- coreLineAction gs c d r
 >     return (tell [ts] >> makeFun gs d tss r)
+
+> instance Monoid o => Applicative (Writer o) where
+>   pure = return
+>   (<*>) = ap
 
 > coreLoad :: [[Tok]] -> (Dev, [[Tok]])
 > coreLoad tss = runWriter (makeFun B0 (B0, Module) tss (B0, 0))
