@@ -22,9 +22,11 @@ generate an executable from a collection of supercombinator definitions.
 
 %endif
 
-> data CompileFn = Comp [Name] FnBody 
+> type CName = String
 
-> data FnBody = Var Name
+> data CompileFn = Comp [CName] FnBody 
+
+> data FnBody = Var CName
 >             | App FnBody [FnBody]
 >             | Case FnBody [FnBody] (Maybe FnBody)
 >             | Proj FnBody Int
@@ -39,7 +41,7 @@ Where to look for support files:
 Given a list of names and definitions, and the top level function to evaluate,
 write out an executable. This will evaluate the function and dump the result.
 
-> output :: [(Name, CompileFn)] -> Name -> FilePath -> IO ()
+> output :: [(CName, CompileFn)] -> CName -> FilePath -> IO ()
 > output defs mainfn outfile =
 >    do (epicFile, eh) <- tempfile
 >       mapM_ (hPutStrLn eh) (map codegen defs) 
@@ -59,17 +61,17 @@ Things which are convertible to epic code
 > class CodeGen x where
 >     codegen :: x -> String
 
-> instance CodeGen (Name, CompileFn) where
->     codegen (n, def) = cname n ++ " " ++ codegen def
+> instance CodeGen (CName, CompileFn) where
+>     codegen (n, def) = n ++ " " ++ codegen def
 
 > instance CodeGen CompileFn where
 >     codegen (Comp args body) = "(" ++ arglist (map showarg args) ++ ") -> Data = " ++ 
 >                                codegen body
 >        where 
->              showarg n = cname n ++ ":Data"
+>              showarg n = n ++ ":Data"
 
 > instance CodeGen FnBody where
->     codegen (Var x) = cname x
+>     codegen (Var x) = x
 >     codegen (App f args) = codegen f ++ "(" ++ arglist (map codegen args) ++ ")"
 >     codegen (Case sc opts def)
 >             = "case " ++ codegen sc ++ " of { " ++
@@ -85,14 +87,8 @@ Things which are convertible to epic code
 >     codegen (Tuple xs) = "[" ++ arglist (map codegen xs) ++ "]"
 >     codegen Ignore = "42"
 
-> mainDef :: Name -> String
-> mainDef m = "main () -> Unit = dumpData(" ++ cname m ++ "())"
-
-> cname :: Name -> String
-> cname = concatMap (\ (n,i) -> "_" ++ concatMap decorate n ++ "_" ++ show i)
->   where decorate '_' = "__"
->         decorate x | isAlphaNum x = [x]
->                    | otherwise = '_':(show (fromEnum x)) ++ "_"
+> mainDef :: CName -> String
+> mainDef m = "main () -> Unit = dumpData(" ++ m ++ "())"
 
 > tempfile :: IO (FilePath, Handle)
 > tempfile = 
@@ -116,34 +112,48 @@ Things which are convertible to epic code
 > class MakeBody t where
 >     makeBody :: t -> FnBody
 
-> instance MakeBody (Tm {d,p} Name) where
+> class CNameable n where
+>     cname :: n -> String
+
+> instance CNameable Name where
+>     cname = concatMap (\ (n,i) -> "_" ++ concatMap decorate n ++ "_" ++ show i)
+>         where decorate '_' = "__"
+>               decorate x | isAlphaNum x = [x]
+>                          | otherwise = '_':(show (fromEnum x)) ++ "_"
+
+> instance CNameable REF where
+>     cname (x := d) = cname x
+
+> instance CNameable n => MakeBody (Tm {d,p} n) where
 >     makeBody (C can) = makeBody can
 >     makeBody (N t) = makeBody t
->     makeBody (P x) = Var x
+>     makeBody (P x) = Var (cname x)
 >     makeBody (tm :$ elim) = makeBody (tm, elim)
 >     makeBody (op :@ args) = makeBody (op, args)
 >     makeBody (tm :? ty) = Ignore
 >     makeBody _ = error "Please don't do that"
 
-> instance MakeBody (Can (Tm {In, p} Name)) where
+> instance CNameable n => MakeBody (Can (Tm {In, p} n)) where
 >     makeBody Set = Ignore
 >     makeBody (Pi _ _) = Ignore
 >     import <- CanCompile
 
-> instance MakeBody (Tm {Ex, p} Name, Elim (Tm {In, p} Name)) where
+> instance CNameable n => MakeBody (Tm {Ex, p} n, Elim (Tm {In, p} n)) where
 >     import <- ElimCompile
 >     makeBody (arg, A f) = appArgs f [makeBody arg]
->        where appArgs :: Tm {d, p} Name -> [FnBody] -> FnBody
+>        where appArgs :: Tm {d, p} n -> [FnBody] -> FnBody
 >              appArgs (a :$ (A f)) acc = appArgs f (makeBody a:acc)
 >              appArgs f acc = App (makeBody f) acc
 
-> instance MakeBody (Op, [Tm {In, p} Name]) where
+> instance CNameable n => MakeBody (Op, [Tm {In, p} n]) where
 >     makeBody (Op name arity _ _, args) 
 >          = case (name, args) of
 >                import <- OpCompile
 >                _ -> error "Unknown operator"
 
 A simple test case
+
+> x,y,plus,test :: Name
 
 > x = [("x",0)]
 > y = [("y",0)]
@@ -156,13 +166,14 @@ A simple test case
 > one = suc zero
 > two = suc one
 
-> plusFn = Comp [x,y] plusBody
-> plusBody = Case (Proj (Var x) 0)
->                [Var y,
->                  suc (App (Var plus) [Proj (Proj (Var x) 1) 0, Var y])] Nothing
+> plusFn = Comp [cname x,cname y] plusBody
+> plusBody = Case (Proj (Var (cname x)) 0)
+>              [Var (cname y),
+>               suc (App (Var (cname plus)) [Proj (Proj (Var (cname x)) 1) 0, Var (cname y)])]
+>              Nothing
 
-> testFn = Comp [] (App (Var plus) [two,two])
+> testFn = Comp [] (App (Var (cname plus)) [two,two])
 
-> program = [(plus, plusFn), (test, testFn)]
+> program = [(cname plus, plusFn), (cname test, testFn)]
 
-> testOut = output program test "testout"
+> testOut = output program (cname test) "testout"
