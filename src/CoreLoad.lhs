@@ -185,9 +185,5 @@
 >     (d, r) <- coreLineAction gs c d r
 >     return (tell [ts] >> makeFun gs d tss r)
 
-> instance Monoid o => Applicative (Writer o) where
->   pure = return
->   (<*>) = ap
-
 > coreLoad :: [[Tok]] -> (Dev, [[Tok]])
 > coreLoad tss = runWriter (makeFun B0 (B0, Module) tss (B0, 0))
