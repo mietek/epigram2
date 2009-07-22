@@ -13,6 +13,8 @@
 > import Features
 > import Prop
 
+%endif
+
 > import <- OpCode
 
 > operators :: [Op]

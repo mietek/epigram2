@@ -28,6 +28,7 @@
 
 %include Root.lhs
 %include Tm.lhs
+%include Operators.lhs
 %include Rules.lhs
 %include Core.lhs
 
@@ -38,6 +39,7 @@
 %include Enum.lhs
 %include Sigma.lhs
 %include Prop.lhs
+%include Containers.lhs
 
 \chapter{Concrete Syntax}
 
