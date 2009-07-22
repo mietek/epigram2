@@ -12,6 +12,7 @@
 > import Data.Foldable hiding (foldl, foldr)
 > import Data.Traversable
 > import Control.Applicative
+> import Control.Monad.Writer
 
 %endif
 
@@ -101,5 +102,9 @@ These bits of renaming should go elsewhere.
 >
 > instance Foldable Fwd where
 >   foldMap = foldMapDefault
+
+> instance Monoid o => Applicative (Writer o) where
+>   pure = return
+>   (<*>) = ap
 
 %endif
