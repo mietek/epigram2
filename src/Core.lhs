@@ -10,7 +10,7 @@
 > import Data.Foldable
 > import Control.Monad
 > import Control.Applicative
-
+> import Data.Traversable
 > import BwdFwd
 > import Tm
 > import Root
@@ -70,6 +70,25 @@
 >   pure = return
 >   (<*>) = ap
 
+> traverseDev :: Applicative f => (REF -> f REF) -> Dev -> f Dev
+> traverseDev f (es, t) = 
+>   (|(,) (traverse (traverseEntry f) es) (traverseTip f t)|)
 
+> traverseTip :: Applicative f => (REF -> f REF) -> Tip -> f Tip
+> traverseTip f Module        = pure Module
+> traverseTip f (Unknown v)   = (|Unknown (traverseVal f v)|)
+> traverseTip f (Defined t v) = (|Defined (traverse f t) (traverseVal f v)|)
 
+> traverseEntry :: Applicative f => (REF -> f REF) -> Entry -> f Entry
+> traverseEntry f (E r (x,i) e) = (|E (f r) (pure (x,i)) (traverseEntity f e)|)
 
+> traverseEntity :: Applicative f => (REF -> f REF) -> Entity -> f Entity
+> traverseEntity f (Boy bk)     = (|Boy (traverseBK f bk)|)
+> traverseEntity f (Girl gk dv) = (|Girl (traverseGK f gk) (traverseDev f dv)|)
+
+> traverseBK :: Applicative f => (REF -> f REF) -> BoyKind -> f BoyKind
+> traverseBK f LAMB = pure LAMB
+> traverseBK f (PIB t) = (|PIB (traverse f t)|)
+
+> traverseGK :: Applicative f => (REF -> f REF) -> GirlKind -> f GirlKind
+> traverseGK f LETG = pure LETG

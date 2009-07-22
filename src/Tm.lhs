@@ -295,20 +295,20 @@ We have special pairs for types going in and coming out of stuff.
 >   traverse f (op :@ ts) = (|(op :@) (traverse (traverse f) ts)|)
 >   traverse f (tm :? ty) = (|(:?) (traverse f tm) (traverse f ty)|)
 
-> traverseScEval :: (Applicative f) => (REF -> f REF) -> 
->                                      Scope {VV} REF ->
->                                      f (Scope {VV} REF)
-> traverseScEval f (H vs x t) = 
->     (|H (traverse (traverseEval f) vs) ~x (traverse f t)|)
-> traverseScEval f (K t)      = (|K (traverseEval f t)|)
+> traverseScVal :: (Applicative f) => (REF -> f REF) -> 
+>                                     Scope {VV} REF ->
+>                                     f (Scope {VV} REF)
+> traverseScVal f (H vs x t) = 
+>     (|H (traverse (traverseVal f) vs) ~x (traverse f t)|)
+> traverseScVal f (K t)      = (|K (traverseVal f t)|)
 
-> traverseEval :: (Applicative f) => (REF -> f REF) -> Tm {d,VV} REF -> f VAL
-> traverseEval f (L sc)     = (|L (traverseScEval f sc)|)
-> traverseEval f (C c)      = (|C (traverse (traverseEval f) c)|)
-> traverseEval f (N n)      = traverseEval f n
-> traverseEval f (P x)      = (|pval (f x)|)
-> traverseEval f (t :$ u)   = 
->   (|($$) (traverseEval f t) (traverse (traverseEval f) u)|)
-> traverseEval f (op :@ ts) = (|(op @@) (traverse (traverseEval f) ts)|)
+> traverseVal :: (Applicative f) => (REF -> f REF) -> Tm {d,VV} REF -> f VAL
+> traverseVal f (L sc)     = (|L (traverseScVal f sc)|)
+> traverseVal f (C c)      = (|C (traverse (traverseVal f) c)|)
+> traverseVal f (N n)      = traverseVal f n
+> traverseVal f (P x)      = (|pval (f x)|)
+> traverseVal f (t :$ u)   = 
+>   (|($$) (traverseVal f t) (traverse (traverseVal f) u)|)
+> traverseVal f (op :@ ts) = (|(op @@) (traverse (traverseVal f) ts)|)
 
 %endif
