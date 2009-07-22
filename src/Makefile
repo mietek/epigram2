@@ -40,5 +40,8 @@ Epitome.tex : $(SRCS) stuff.fmt
 .hs-boot.o-boot:
 	$(HC) -c $< $(HC_OPTS)
 
+clean:
+	rm *.o *.hers *.hi
+
 include .depend
 
