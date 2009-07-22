@@ -29,11 +29,15 @@
 %include Root.lhs
 %include Tm.lhs
 %include Rules.lhs
+%include Core.lhs
 
 \chapter{Feature by Feature}
 
 %include Features.lhs
+%include UId.lhs
+%include Enum.lhs
 %include Sigma.lhs
+%include Prop.lhs
 
 \chapter{Concrete Syntax}
 

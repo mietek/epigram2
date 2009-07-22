@@ -1,3 +1,5 @@
+\section{Rules}
+
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
