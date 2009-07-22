@@ -120,8 +120,8 @@ We have some type synonyms for commonly occurring instances of |Tm|.
 >
 > type Name = [(String, Int)]
 >
-> -- instance Show REF where
-> --   show (n := _) = show n
+> -- |instance Show REF where|
+> --   |show (n := _) = show n|
 >
 > instance Eq REF where
 >   (x := _) == (y := _) = x == y  -- could use cheeky pointer equality?
