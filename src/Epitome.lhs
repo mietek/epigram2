@@ -16,7 +16,7 @@
 \begin{document}
 
 \title{An Epigram Implementation}
-\author{Conor McBride, James Chapman, Peter Morris}
+\author{Conor McBride, James Chapman, Peter Morris, Edwin Brady}
 \maketitle
 
 \chapter{Perversity}
@@ -41,5 +41,8 @@
 %include Layout.lhs
 %include TmParse.lhs
 
+\chapter{Compiler}
+
+%include Compiler.lhs
 
 \end{document}

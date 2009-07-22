@@ -15,6 +15,10 @@ Pig : $(OBJS)
 
 dvi : Epitome.dvi
 
+
+Epitome.pdf : Epitome.tex
+	pdflatex Epitome
+
 Epitome.dvi : Epitome.tex
 	latex Epitome
 

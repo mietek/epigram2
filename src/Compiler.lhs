@@ -35,7 +35,7 @@ generate an executable from a collection of supercombinator definitions.
 >             | Tuple [FnBody]
 >             | Ignore
 
-Where to look for support files:
+Where to look for support files. We'll need this to be a bit cleverer later.
 
 > libPath = [".", "./epic"]
 
@@ -57,7 +57,7 @@ write out an executable. This will evaluate the function and dump the result.
 
 > arglist = concat.(intersperse ",")
 
-Things which are convertible to epic code
+Things which are convertible to Epic code
 
 > class CodeGen x where
 >     codegen :: x -> String
@@ -111,8 +111,12 @@ Things which are convertible to epic code
 >          tryReads (x:xs) = catch (readFile x)
 >                                  (\e -> tryReads xs)
 
+Convert a term into the body of a function (need to add the argument names elsewhere).
+
 > class MakeBody t where
 >     makeBody :: t -> FnBody
+
+We'll need to convert whatever representation was used for names into a name usable in C:
 
 > class CNameable n where
 >     cname :: n -> String
@@ -135,24 +139,30 @@ Things which are convertible to epic code
 >     makeBody (tm :? ty) = Ignore
 >     makeBody _ = error "Please don't do that"
 
+Lots of canonical things are just there for the typechecker, and we don't care about them.
+So we'll just ignore everything that isn't otherwise explained.
+
 > instance CNameable n => MakeBody (Can (Tm {In, p} n)) where
->     makeBody Set = Ignore
->     makeBody (Pi _ _) = Ignore
 >     import <- CanCompile
 >     makeBody _ = Ignore
 
 > instance CNameable n => MakeBody (Tm {Ex, p} n, Elim (Tm {In, p} n)) where
->     import <- ElimCompile
 >     makeBody (arg, A f) = appArgs f [makeBody arg]
 >        where appArgs :: Tm {d, p} n -> [FnBody] -> FnBody
 >              appArgs (a :$ (A f)) acc = appArgs f (makeBody a:acc)
 >              appArgs f acc = App (makeBody f) acc
+>     import <- ElimCompile
+
+Operators will, in many cases, just compile to an application of a function we write
+by hand in Epic - see epic/support.e
 
 > instance CNameable n => MakeBody (Op, [Tm {In, p} n]) where
 >     makeBody (Op name arity _ _, args) 
 >          = case (name, map makeBody args) of
 >                import <- OpCompile
 >                _ -> error "Unknown operator"
+
+%if False
 
 A simple test case
 
@@ -180,3 +190,5 @@ A simple test case
 > program = [(cname plus, plusFn), (cname test, testFn)]
 
 > testOut = output program (cname test) "testout"
+
+%endif
