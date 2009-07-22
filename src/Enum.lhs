@@ -71,9 +71,10 @@
 >           Just ([ ENUMU :>: e 
 >                 , Arr (ENUMT (ev e)) SET :>: p
 >                 , branchesOp @@ [ev e , ev p] :>: b
->                 , ENUMT e :>: x] , (ev p) $$ A (ev x))
->         sOpRun [CONSE t e' , p , ps , ZE] = ps $$ Fst
->         sOpRun [CONSE t e' , p , ps , SU n] = 
+>                 , ENUMT (ev e) :>: x] , (ev p) $$ A (ev x))
+>         sOpRun :: [VAL] -> Either NEU VAL
+>         sOpRun [CONSE t e' , p , ps , ZE] = Right $ ps $$ Fst
+>         sOpRun [CONSE t e' , p , ps , SU n] = Right $
 >           switchOp @@ [e' 
 >                       , L (H (B0 :< p) "" (N (V 1 :$ A ((C (Su (N (V 0))))))))
 >                       , ps $$ Snd

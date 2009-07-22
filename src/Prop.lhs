@@ -59,7 +59,8 @@ Elim forms inherited from elsewhere
 >             } where
 >               opty f [z,ty] = Just ([ PRF ABSURD :>: z,SET :>: ty ],f ty)
 >               opty _ _      = Nothing
->               oprun [z,ty] = Left (N z)
+>               oprun :: [VAL] -> Either NEU VAL
+>               oprun [N z,ty] = Left z
 
 > import -> Operators where
 >   nEOp :
