@@ -45,13 +45,13 @@ like your mother always told you.
 >   N     :: Tm {Ex, p} x        -> Tm {In, p} x   -- |Ex| to |In|
 >   P     :: x                   -> Tm {Ex, p} x   -- parameter
 >   V     :: Int                 -> Tm {Ex, TT} x  -- variable
->   (:$)  :: Tm {Ex, p} x -> Elim (Tm {In, p} x) -> Tm {Ex, p} x  -- elimination
+>   (:$)  :: Tm {Ex, p} x -> Elim (Tm {In, p} x) -> Tm {Ex, p} x -- elimination
 >   (:@)  :: Op -> [Tm {In, p} x] -> Tm {Ex, p} x  -- fully applied operator
 >   (:?)  :: Tm {In, TT} x -> Tm {In, TT} x -> Tm {Ex, TT} x      -- typing
 >
 > data Scope :: {Phase} -> * -> * where
 >   (:.)  :: String -> Tm {In, TT} x           -> Scope {TT} x  -- binding
->   H     :: Env x -> String -> Tm {In, TT} x  -> Scope {VV} x  -- closure
+>   H     :: ENV -> String -> Tm {In, TT} x    -> Scope {VV} x  -- closure
 >   K     :: Tm {In, p} x                      -> Scope p x     -- constant
 >
 > data Can :: * -> * where
@@ -84,12 +84,9 @@ We have some type synonyms for commonly occurring instances of |Tm|.
 > type ExTm   = Tm {Ex, TT}
 > type INTM   = InTm REF
 > type EXTM   = ExTm REF
-> type Val    = Tm {In, VV}
-> type Neu    = Tm {Ex, VV}
-> type VAL    = Val REF
-> type NEU    = Neu REF
-> type Env x  = Bwd (Val x)
-> type ENV    = Env REF
+> type VAL    = Tm {In, VV} REF
+> type NEU    = Tm {Ex, VV} REF
+> type ENV    = Bwd VAL
 
 > data Irr x = Irr x deriving Show
 
@@ -274,5 +271,44 @@ We have special pairs for types going in and coming out of stuff.
 >     "H (" ++ show g ++ ") " ++ show x ++ " (" ++ show t ++ ")"
 >   show (K t) = "K (" ++ show t ++")"
 
+
+> instance Functor (Scope {TT}) where
+>   fmap = fmapDefault
+> instance Foldable (Scope {TT}) where
+>   foldMap = foldMapDefault
+> instance Traversable (Scope {TT}) where
+>   traverse f (x :. t)   = (|(x :.) (traverse f t)|)
+>   traverse f (K t)      = (|K (traverse f t)|)
+
+
+> instance Functor (Tm {d,TT}) where
+>   fmap = fmapDefault
+> instance Foldable (Tm {d,TT}) where
+>   foldMap = foldMapDefault
+> instance Traversable (Tm {d,TT}) where
+>   traverse f (L sc)     = (|L (traverse f sc)|)
+>   traverse f (C c)      = (|C (traverse (traverse f) c)|)
+>   traverse f (N n)      = (|N (traverse f n)|)
+>   traverse f (P x)      = (|P (f x)|)
+>   traverse f (V i)      = pure (V i)
+>   traverse f (t :$ u)   = (|(:$) (traverse f t) (traverse (traverse f) u)|)
+>   traverse f (op :@ ts) = (|(op :@) (traverse (traverse f) ts)|)
+>   traverse f (tm :? ty) = (|(:?) (traverse f tm) (traverse f ty)|)
+
+> traverseScEval :: (Applicative f) => (REF -> f REF) -> 
+>                                      Scope {VV} REF ->
+>                                      f (Scope {VV} REF)
+> traverseScEval f (H vs x t) = 
+>     (|H (traverse (traverseEval f) vs) ~x (traverse f t)|)
+> traverseScEval f (K t)      = (|K (traverseEval f t)|)
+
+> traverseEval :: (Applicative f) => (REF -> f REF) -> Tm {d,VV} REF -> f VAL
+> traverseEval f (L sc)     = (|L (traverseScEval f sc)|)
+> traverseEval f (C c)      = (|C (traverse (traverseEval f) c)|)
+> traverseEval f (N n)      = traverseEval f n
+> traverseEval f (P x)      = (|pval (f x)|)
+> traverseEval f (t :$ u)   = 
+>   (|($$) (traverseEval f t) (traverse (traverseEval f) u)|)
+> traverseEval f (op :@ ts) = (|(op @@) (traverse (traverseEval f) ts)|)
 
 %endif
