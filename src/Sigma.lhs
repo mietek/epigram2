@@ -28,9 +28,16 @@
 >   pattern Times x y = Sigma x (L (K y))
 >   pattern TIMES x y = C (Times x y)  
 
+> import -> CanCompile where
+>   makeBody (Pair x y) = Tuple [makeBody x, makeBody y]
+
 > import -> ElimComputation where
 >   PAIR x y $$ Fst = x
 >   PAIR x y $$ Snd = y
+
+> import -> ElimCompile where
+>   makeBody (arg, Fst) = Proj (makeBody arg) 0
+>   makeBody (arg, Snd) = Proj (makeBody arg) 1
 
 > import -> TraverseCan where
 >   traverse f Unit         = (|Unit|)

@@ -27,6 +27,10 @@
 >   pattern ZE         = C Ze
 >   pattern SU n       = C (Su n)
 
+> import -> CanCompile where
+>   makeBody Ze = CTag 0
+>   makeBody (Su x) = STag (makeBody x)
+
 > import -> TraverseCan where
 >   traverse f EnumU        = (|EnumU|)
 >   traverse f (EnumT e)    = (|EnumT (f e)|)
@@ -85,3 +89,8 @@
 > import -> Operators where
 >   branchesOp :
 >   switchOp :
+
+> import -> OpCompile where
+>     ("Branches", _) -> Ignore
+>     ("Switch", [e, p, b, x]) -> App (Var "switch") [b, x]
+

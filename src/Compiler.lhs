@@ -31,6 +31,7 @@ generate an executable from a collection of supercombinator definitions.
 >             | Case FnBody [FnBody] (Maybe FnBody)
 >             | Proj FnBody Int
 >             | CTag Int
+>             | STag FnBody 
 >             | Tuple [FnBody]
 >             | Ignore
 
@@ -84,6 +85,7 @@ Things which are convertible to epic code
 
 >     codegen (Proj f i) = "(" ++ codegen f ++ "!" ++ show i ++ ")"
 >     codegen (CTag i) = show i
+>     codegen (STag n) = "1+" ++ codegen n
 >     codegen (Tuple xs) = "[" ++ arglist (map codegen xs) ++ "]"
 >     codegen Ignore = "42"
 
@@ -137,6 +139,7 @@ Things which are convertible to epic code
 >     makeBody Set = Ignore
 >     makeBody (Pi _ _) = Ignore
 >     import <- CanCompile
+>     makeBody _ = Ignore
 
 > instance CNameable n => MakeBody (Tm {Ex, p} n, Elim (Tm {In, p} n)) where
 >     import <- ElimCompile
@@ -147,7 +150,7 @@ Things which are convertible to epic code
 
 > instance CNameable n => MakeBody (Op, [Tm {In, p} n]) where
 >     makeBody (Op name arity _ _, args) 
->          = case (name, args) of
+>          = case (name, map makeBody args) of
 >                import <- OpCompile
 >                _ -> error "Unknown operator"
 
