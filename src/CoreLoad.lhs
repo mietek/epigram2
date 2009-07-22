@@ -107,14 +107,18 @@
 > data CoreLine
 >   = LLam [String] (Maybe INTM)
 >   | LDef String (Maybe INTM) [[Tok]]
+>   | LEq (Maybe INTM) (Maybe INTM)
 >   | LCom
+>   deriving Show
 
 > pCoreLine :: Bwd Entry -> P Tok CoreLine
 > pCoreLine es =
 >   (|LLam {key "\\"} (some idf) {spc} (optional (pINTM es))
 >    |LCom {key "--"; pRest}
+>    |LDef idf (optional (key ":" >> pINTM es)) (lay "where" pRest)
+>    |LEq {key "="} (|Nothing {key "?"} | Just (pINTM es)|)
+>         (optional (key ":" >> pINTM es))
 >    |LCom {pSep (tok isSpcT) (teq Sem)}
->    |LDef idf (optional (key ":" >> pINTM es)) {spc} (lay "where" pRest)
 >    |)
 
 > coreLineAction :: Bwd Entry -> CoreLine -> Dev -> Root -> Maybe (Dev, Root)
@@ -184,3 +188,6 @@
 > instance Monoid o => Applicative (Writer o) where
 >   pure = return
 >   (<*>) = ap
+
+> coreLoad :: [[Tok]] -> (Dev, [[Tok]])
+> coreLoad tss = runWriter (makeFun B0 (B0, Module) tss (B0, 0))

@@ -4,5 +4,14 @@
 
 > module Main where
 
+> import Data.Foldable
+
+> import Lexer
+> import Layout
+> import CoreLoad
+
+> pipe :: String -> String
+> pipe = foldMap (foldMap tokOut) . snd . coreLoad . layout . tokenize
+
 > main :: IO ()
-> main = return ()
+> main = interact pipe

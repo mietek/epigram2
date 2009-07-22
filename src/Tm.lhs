@@ -45,14 +45,14 @@ like your mother always told you.
 >   N     :: Tm {Ex, p} x        -> Tm {In, p} x   -- |Ex| to |In|
 >   P     :: x                   -> Tm {Ex, p} x   -- parameter
 >   V     :: Int                 -> Tm {Ex, TT} x  -- variable
->   (:$)  :: Tm {Ex, p} x -> Elim (Tm {In, p} x) -> Tm {Ex, p} x -- elimination
+>   (:$)  :: Tm {Ex, p} x -> Elim (Tm {In, p} x) -> Tm {Ex, p} x  -- elimination
 >   (:@)  :: Op -> [Tm {In, p} x] -> Tm {Ex, p} x  -- fully applied operator
->   (:?)  :: Tm {In, TT} x -> Tm {In, TT} x -> Tm {Ex, TT} x     -- typing
+>   (:?)  :: Tm {In, TT} x -> Tm {In, TT} x -> Tm {Ex, TT} x      -- typing
 >
 > data Scope :: {Phase} -> * -> * where
->   (:.)  :: String -> Tm {In, TT} x         -> Scope {TT} x  -- binding
->   H     :: Env -> String -> Tm {In, TT} x  -> Scope {VV} x  -- closure
->   K     :: Tm {In, p} x                    -> Scope p x     -- constant
+>   (:.)  :: String -> Tm {In, TT} x           -> Scope {TT} x  -- binding
+>   H     :: Env x -> String -> Tm {In, TT} x  -> Scope {VV} x  -- closure
+>   K     :: Tm {In, p} x                      -> Scope p x     -- constant
 >
 > data Can :: * -> * where
 >   Set   :: Can t                                        -- set of sets
@@ -80,13 +80,16 @@ We have some pattern synonyms for common, er, patterns.
 
 We have some type synonyms for commonly occurring instances of |Tm|.
 
-> type InTm  = Tm {In, TT}
-> type ExTm  = Tm {Ex, TT}
-> type INTM  = InTm REF
-> type EXTM  = ExTm REF
-> type VAL   = Tm {In, VV} REF
-> type NEU   = Tm {Ex, VV} REF
-> type Env   = Bwd VAL
+> type InTm   = Tm {In, TT}
+> type ExTm   = Tm {Ex, TT}
+> type INTM   = InTm REF
+> type EXTM   = ExTm REF
+> type Val    = Tm {In, VV}
+> type Neu    = Tm {Ex, VV}
+> type VAL    = Val REF
+> type NEU    = Neu REF
+> type Env x  = Bwd (Val x)
+> type ENV    = Env REF
 
 > data Irr x = Irr x deriving Show
 
@@ -150,11 +153,11 @@ We have special pairs for types going in and coming out of stuff.
 > pval (_ := DEFN v _)  = v
 > pval r                = N (P r)
 
-> body :: Scope {TT} REF -> Env -> Scope {VV} REF
+> body :: Scope {TT} REF -> ENV -> Scope {VV} REF
 > body (K v)     g = K (eval v g)
 > body (x :. t)  g = H g x t
 
-> eval :: Tm {d, TT} REF -> Env -> VAL
+> eval :: Tm {d, TT} REF -> ENV -> VAL
 > eval (L b)       = (|L (body b)|)
 > eval (C c)       = (|C (eval ^$ c)|)
 > eval (N n)       = eval n
