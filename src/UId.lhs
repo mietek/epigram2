@@ -14,6 +14,10 @@
 >   UId    :: Can t
 >   Tag    :: String -> Can t
 
+> import -> CanPats where
+>   pattern UID = C UId
+>   pattern TAG s = C (Tag s)
+
 > import -> TraverseCan where
 >   traverse f UId          = (|EnumU|)
 >   traverse f (Tag s)      = (|(Tag s)|)

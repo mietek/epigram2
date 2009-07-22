@@ -19,7 +19,6 @@
 >   Su     :: t -> Can t 
 
 > import -> CanPats where
->   pattern UID        = C UId
 >   pattern ENUMU      = C EnumU 
 >   pattern ENUMT e    = C (EnumT e) 
 >   pattern NILE        = C NilE

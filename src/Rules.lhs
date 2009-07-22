@@ -13,6 +13,7 @@
 > import BwdFwd
 > import Tm
 > import Root
+> import Operators
 > import Features
 
 %endif
