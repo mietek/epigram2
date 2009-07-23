@@ -13,7 +13,7 @@
 > import Data.Traversable
 > import Data.Either
 > import Control.Monad
-
+> import MissingLibrary
 > import BwdFwd
 > import Features
 
@@ -130,9 +130,9 @@ We have some type synonyms for commonly occurring instances of |Tm|.
 
 We have special pairs for types going into and coming out of stuff.
 
-> data y :>: t = y :>: t  deriving Show
+> data y :>: t = y :>: t  deriving (Show,Eq)
 > infix 4 :>:
-> data t :<: y = t :<: y  deriving Show
+> data t :<: y = t :<: y  deriving (Show,Eq)
 > infix 4 :<:
 
 \subsection{Syntactic Equality}
@@ -309,7 +309,14 @@ values, and are shared.
 >   traverse f (Pi s t)  = (|Pi (f s) (f t)|)
 >   traverse f (Con t)   = (|Con (f t)|)
 >   import <- TraverseCan
->
+
+> instance HalfZip Can where
+>    halfZip Set        Set        = Just Set
+>    halfZip (Pi s1 t1) (Pi s2 t2) = Just $ Pi (s1,s2) (t1,t2)
+>    halfZip (Con t1)   (Con t2)   = Just $ Con (t1,t2)
+>    import <- HalfZipCan
+>    halfZip _ _ = Nothing
+
 > instance Functor Can where
 >   fmap = fmapDefault
 > instance Foldable Can where
