@@ -315,7 +315,7 @@ values, and are shared.
 >    halfZip (Pi s1 t1) (Pi s2 t2) = Just $ Pi (s1,s2) (t1,t2)
 >    halfZip (Con t1)   (Con t2)   = Just $ Con (t1,t2)
 >    import <- HalfZipCan
->    halfZip _ _ = Nothing
+>    halfZip _          _          = Nothing
 
 > instance Functor Can where
 >   fmap = fmapDefault

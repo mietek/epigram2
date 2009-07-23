@@ -15,8 +15,8 @@
 > import BwdFwd
 > import Tm
 > import Root
-> import Operators
 > import Features
+> import MissingLibrary
 
 %endif
 
@@ -111,3 +111,30 @@
 >   return ()
 > import <- Check
 > check _                     _ = Nothing
+
+> import <- OpCode
+
+> operators :: [Op]
+> operators = (
+>   import <- Operators
+>   [])
+
+> mkEqConj :: [(TY :>: VAL,TY :>: VAL)] -> VAL
+> mkEqConj ((y0 :>: t0,y1 :>: t1) : []) = eqGreen @@ [y0,t0,y1,t1]
+> mkEqConj ((y0 :>: t0,y1 :>: t1) : xs) = 
+>   AND (eqGreen @@ [y0,t0,y1,t1]) (mkEqConj xs)
+> mkEqConj []                           = TRIVIAL
+
+> opRunEqGreen :: [VAL] -> Either NEU VAL
+> opRunEqGreen [SET,C t0,SET,C t1] = case halfZip t0' t1' of
+>    Nothing -> Right ABSURD
+>    Just x  -> Right $ mkEqConj (trail x)
+>    where
+>    Just t0' = canTy id (Set :>: t0)
+>    Just t1' = canTy id (Set :>: t1)
+> import <- OpRunEqGreen
+> opRunEqGreen [SET,N t0,SET,_] = Left t0
+> opRunEqGreen [SET,_,SET,N t1] = Left t1
+> opRunEqGreen [N y0,_,_,_] = Left y0
+> opRunEqGreen [_,_,N y1,_] = Left y1
+> opRunEqGreen [C y0,_,C y1,_] = Right TRIVIAL

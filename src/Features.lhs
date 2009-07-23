@@ -20,3 +20,4 @@ current version of the system.
 > import Sigma
 > import Prop
 > import Containers
+> import Equality
