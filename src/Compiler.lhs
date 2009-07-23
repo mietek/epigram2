@@ -32,14 +32,15 @@ generate an executable from a collection of supercombinator definitions.
 
 > data FnBody = Var CName
 >             | App FnBody [FnBody]
->             | Case FnBody [FnBody] (Maybe FnBody)
->             | Proj FnBody Int
->             | CTag Int
->             | STag FnBody 
+>             | Case FnBody [FnBody] (Maybe FnBody) -- scrutinee, branches, default
+>             | Proj FnBody Int   -- project from a tuple
+>             | CTag Int          -- any tag
+>             | STag FnBody       -- for Su
 >             | Tuple [FnBody]
->             | Ignore
+>             | Ignore            -- anything we can't inspect. Types, basically.
 
-Where to look for support files. We'll need this to be a bit cleverer later.
+Where to look for support files. We'll need this to be a bit cleverer later. Only interesting
+in epic/support.e for now (which is a good place to implement operators, for example).
 
 > libPath = [".", "./epic"]
 
