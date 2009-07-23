@@ -33,6 +33,7 @@ Elim forms inherited from elsewhere
 > import -> CanPats where
 >   pattern PROP    = C Prop
 >   pattern PRF p   = C (Prf p)
+>   pattern IMP p q = C (All (PRF p) (L (K q)))
 >   pattern ALL p q = C (All p q)
 >   pattern AND p q = C (And p q)
 >   pattern TRIVIAL = C Trivial
@@ -79,3 +80,7 @@ Elim forms inherited from elsewhere
 >     freshRef ("" :<: p)
 >              (\ref -> check (PRF (q $$ A (pval ref)) :>: underScope sc ref))
 >              r
+
+> import -> OpRunEqGreen
+>   opRunEqGreen [PROP,t1,PROP,t2] = Right $ AND (IMP t1 t2) (IMP t2 t1)
+>   opRunEqGreen [Prf _,_,Prf _,_] = Right TRIVIAL
