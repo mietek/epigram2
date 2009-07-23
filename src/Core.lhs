@@ -21,8 +21,8 @@
 
 > data Tip
 >   = Module
->   | Unknown VAL
->   | Defined INTM VAL
+>   | Unknown TY
+>   | Defined INTM TY
 >   deriving Show
 
 > data Entry

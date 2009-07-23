@@ -20,16 +20,16 @@
 
 %endif
 
-> canTy :: (t -> VAL) -> (Can VAL :>: Can t) -> Maybe (Can (VAL :>: t))
+> canTy :: (t -> VAL) -> (Can VAL :>: Can t) -> Maybe (Can (TY :>: t))
 > canTy ev (Set :>: Set)    = Just Set
 > canTy ev (Set :>: Pi s t) = 
 >   Just (Pi (SET :>: s) (Arr (ev s) SET :>: t))
 > import <- CanTyRules
 > canTy _  _                = Nothing
 
-> elimTy :: (t -> VAL) -> (Can VAL :>: VAL) -> Elim t ->
->           Maybe (Elim (VAL :>: t),VAL)
-> elimTy ev (Pi s t :>: f) (A e) = Just (A (s :>: e),t $$ A (ev e)) 
+> elimTy :: (t -> VAL) -> (VAL :<: Can VAL) -> Elim t ->
+>           Maybe (Elim (TY :>: t),VAL)
+> elimTy ev (f :<: Pi s t) (A e) = Just (A (s :>: e),t $$ A (ev e)) 
 > import <- ElimTyRules
 > elimTy _  _              _     = Nothing
 
@@ -48,13 +48,13 @@
 > bquote (n :$ v)       r = bquote n r :$ traverse bquote v r
 > bquote (op :@ vs)     r = op :@ traverse bquote vs r
 
-> etaExpand :: (VAL :>: VAL) -> Root -> Maybe INTM
+> etaExpand :: (TY :>: VAL) -> Root -> Maybe INTM
 > etaExpand (C (Pi s t) :>: f) r = Just $
 >   L ("" :. fresh ("" :<: s) (\v  -> inQuote (t $$ A v :>: (f $$ A v))) r)
 > import <- EtaExpand
 > etaExpand _                  _ = Nothing
 
-> inQuote :: (VAL :>: VAL) -> Root -> INTM
+> inQuote :: (TY :>: VAL) -> Root -> INTM
 > inQuote tyv              r | Just t    <- etaExpand tyv r = t
 > inQuote (_ :>: N n)      r | (t :<: _) <- exQuote n r = N t
 > inQuote (C cty :>: C cv) r | Just x    <- canTy id (cty :>: cv) =
@@ -63,26 +63,26 @@
 > unC :: VAL -> Can VAL
 > unC (C c) = c
 
-> exQuote :: NEU -> Root -> (EXTM :<: VAL)
-> exQuote (P x@(_ := DECL ty)) r = quop x r :<: ty
-> exQuote (n :$ v)             r = (n' :$ traverse inQuote e r) :<: ty'
+> exQuote :: NEU -> Root -> (EXTM :<: TY)
+> exQuote (P x)       r = quop x r :<: pty x
+> exQuote (n :$ v)    r = (n' :$ traverse inQuote e r) :<: ty'
 >   where
 >   (n' :<: ty)  = exQuote n r
->   Just (e,ty') = elimTy id (unC ty :>: N n) v
-> exQuote (op :@ vs)           r = (op :@ traverse inQuote vs' r) :<: v where
+>   Just (e,ty') = elimTy id (N n :<: unC ty) v
+> exQuote (op :@ vs)  r = (op :@ traverse inQuote vs' r) :<: v where
 >    Just (vs',v) = opTy op id vs 
 
-> quote :: (VAL :>: VAL) -> Root -> INTM
+> quote :: (TY :>: VAL) -> Root -> INTM
 > quote vty r = inQuote vty (room r "quote")
 
-> equal :: (VAL :>: (VAL,VAL)) -> Root -> Bool
+> equal :: (TY :>: (VAL,VAL)) -> Root -> Bool
 > equal (ty :>: (v1,v2)) r = quote (ty :>: v1) r == quote (ty :>: v2) r
 
-> infer :: EXTM -> Root -> Maybe VAL
+> infer :: EXTM -> Root -> Maybe TY
 > infer (P x)              r = Just (pty x)
 > infer (t :$ s)           r = do
 >   C ty <- infer t r
->   (s',ty') <- elimTy evTm (ty :>: evTm t) s
+>   (s',ty') <- elimTy evTm (evTm t :<: ty) s
 >   traverse id $ traverse check s' r
 >   return ty'
 > infer (op :@ ts)         r = do
@@ -96,7 +96,7 @@
 >   return vty
 > infer _                  _ = Nothing
 
-> check :: (VAL :>: INTM) -> Root -> Maybe ()
+> check :: (TY :>: INTM) -> Root -> Maybe ()
 > check (C c :>: C c')        r = do
 >   x <- canTy evTm (c :>: c')
 >   traverse id $ traverse check x r

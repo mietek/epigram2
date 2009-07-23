@@ -52,10 +52,10 @@ Elim forms inherited from elsewhere
 >   canTy _  (Trivial :>: Void)      = Just Void
 
 > import -> ElimTyRules where
->   elimTy ev (Prf (ALL p q) :>: f)        (A e) = 
+>   elimTy ev (f :<: Prf (ALL p q))      (A e)  = 
 >     Just (A (p :>: e),q $$ A (ev e))
->   elimTy ev (Prf (AND p q) :>: PAIR x y) Fst   = Just (Fst,x)
->   elimTy ev (Prf (AND p q) :>: PAIR x y) Snd   = Just (Snd,y)
+>   elimTy ev (_ :<: Prf (AND p q))      Fst    = Just (Fst, PRF p)
+>   elimTy ev (_ :<: Prf (AND p q))      Snd    = Just (Snd, PRF q)
 
 > import -> OpCode where
 >   nEOp = Op { opName = "naughtE"

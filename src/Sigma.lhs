@@ -58,8 +58,8 @@
 >     Just (Pair (s :>: x) (t $$ A (ev x) :>: y))
 
 > import -> ElimTyRules where
->   elimTy ev (Sigma s t :>: p) Fst = Just (Fst,s)
->   elimTy ev (Sigma s t :>: p) Snd = Just (Snd,t $$ A (p $$ Fst))
+>   elimTy ev (_ :<: Sigma s t) Fst = Just (Fst, s)
+>   elimTy ev (p :<: Sigma s t) Snd = Just (Snd, t $$ A (p $$ Fst))
 
 > import -> EtaExpand where
 >   etaExpand (VOID :>: v) r = Just (UNIT)

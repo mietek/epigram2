@@ -21,11 +21,11 @@
 > name :: Root -> String -> Name
 > name (sis, i) s = trail (sis :< (s, i))
 
-> fresh :: (String :<: VAL) -> (VAL -> Root -> t) -> Root -> t
+> fresh :: (String :<: TY) -> (VAL -> Root -> t) -> Root -> t
 > fresh xty f = freshRef xty (f . pval)
 
-> freshRef :: (String :<: VAL) -> (REF -> Root -> t) -> Root -> t
-> freshRef (x :<: ty) f r = f (name r x := DECL ty) (roos r)
+> freshRef :: (String :<: TY) -> (REF -> Root -> t) -> Root -> t
+> freshRef (x :<: ty) f r = f (name r x := DECL :<: ty) (roos r)
 
 > roos :: Root -> Root
 > roos (sis, i) = (sis, i + 1)

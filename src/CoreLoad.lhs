@@ -126,7 +126,7 @@
 > coreLineAction gs (LLam [] _) d r = Just (d, r)
 > coreLineAction gs (LLam (x : xs) mty) (es, tip) r = do
 >   s <- tipDom mty tip r
->   let xr = name r x := DECL s
+>   let xr = name r x := DECL :<: s
 >   let xe = E xr (x, snd r) (Boy LAMB)
 >   coreLineAction gs (LLam xs mty) (es :< xe, tipRan tip xr) (roos r)
 > coreLineAction gs LCom d r = Just (d, r)
@@ -135,10 +135,10 @@
 >        vy = evTm ty
 >        (d@(ds, u), tss') =
 >          runWriter (makeFun gs' (B0, Unknown vy) tss (room r x))
->        xr = name r x := case u of
->               Unknown _ -> HOLE vy
+>        xr = name r x := (case u of
+>               Unknown _ -> HOLE
 >               Defined b _ ->
->                 DEFN (evTm (lambda gs' (discharge ds ((gs' <+> ds) -| b)))) vy
+>                 DEFN (evTm (lambda gs' (discharge ds ((gs' <+> ds) -| b))))) :<: vy
 >        xe = E xr (x, snd r) (Girl LETG d)
 >   in   Just ((es :< xe, t), roos r)
 > coreLineAction gs (LEq (Just t) Nothing) (es, Unknown y) r = do
@@ -190,7 +190,7 @@
 > (-|) :: Bwd Entry -> INTM -> INTM
 > es -| t = disMangle es 0 %% t
 
-> tipDom :: Maybe INTM -> Tip -> Root -> Maybe VAL
+> tipDom :: Maybe INTM -> Tip -> Root -> Maybe TY
 > tipDom (Just s)  Module                   r = do
 >   () <- check (SET :>: s) r
 >   return (evTm s)
