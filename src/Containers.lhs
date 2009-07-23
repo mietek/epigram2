@@ -21,8 +21,6 @@
 >   NuC     :: t -> t -> t -> Can t
 >   Mu      :: t -> t -> t -> t -> t -> Can t
 >   Nu      :: t -> t -> t -> t -> t -> Can t
->   InMu    :: t -> Can t
->   InNu    :: t -> Can t
 
 > -- import -> ElimComputation where
 
@@ -37,8 +35,6 @@
 >   traverse f (NuC o x oi)     = (|NuC (f o) (f x) (f oi)|) 
 >   traverse f (Mu i o d x oi)  = (|Mu (f i) (f o) (f d) (f x) (f oi)|) 
 >   traverse f (Nu i o d x oi)  = (|Nu (f i) (f o) (f d) (f x) (f oi)|) 
->   traverse f (InMu t)         = (|InMu (f t)|)
->   traverse f (InNu t)         = (|InNu (f t)|)
 
 
 > -- import -> TraverseElim where
@@ -54,8 +50,6 @@
 >   pattern NUC o x oi     = C (NuC o x oi)
 >   pattern MU i o d x oi  = C (Mu i o d x oi)
 >   pattern NU i o d x oi  = C (Nu i o d x oi)
->   pattern INMU t        = C (InMu t)
->   pattern INNU t        = C (InNu t)
 
 > import -> CanTyRules where
 >   -- ContU Rules :
@@ -86,22 +80,22 @@
 >          (Arr ov (CONTU (sumVV (ev i) ov)) :>: d)
 >          (Arr ov SET :>: x) (ov :>: oi))
 >       where ov = ev o
->   canTy ev (Mu i o d x oi :>: InMu t) = 
->     Just (InMu (contTOp @@ [ i 
->                            , d $$ A o  
->                            , cases (L (K SET)) x 
->                                      (L (H (bwdList [i,o,d,x]) "" 
->                                            (MU (N (V 4)) (N (V 3)) 
->                                                (N (V 2)) (N (V 1)) (N (V 0)))))
->                            ] :>: t))
->   canTy ev (Nu i o d x oi :>: InNu t) = 
->     Just (InNu (contTOp @@ [ i 
->                            , d $$ A o  
->                            , cases (L (K SET)) x 
->                                      (L (H (bwdList [i,o,d,x]) "" 
->                                            (MU (N (V 4)) (N (V 3)) 
->                                                (N (V 2)) (N (V 1)) (N (V 0)))))
->                            ] :>: t))
+>   canTy ev (Mu i o d x oi :>: Con t) = 
+>     Just (Con (contTOp @@ [ i 
+>                           , d $$ A o  
+>                           , cases (L (K SET)) x 
+>                                     (L (H (bwdList [i,o,d,x]) "" 
+>                                           (MU (NV 4) (NV 3) 
+>                                               (NV 2) (NV 1) (NV 0))))
+>                          ] :>: t))
+>   canTy ev (Nu i o d x oi :>: Con t) = 
+>     Just (Con (contTOp @@ [ i 
+>                           , d $$ A o  
+>                           , cases (L (K SET)) x 
+>                                     (L (H (bwdList [i,o,d,x]) "" 
+>                                           (MU (NV 4) (NV 3) 
+>                                               (NV 2) (NV 1) (NV 0))))
+>                           ] :>: t))
 
 > import -> OpCode where
 >   boolE :: Tm {In,p} x
@@ -115,19 +109,21 @@
 >     SIGMA boolT 
 >           (L (H (B0 :< x :< y) "b" (SIGMA (N (switchOp :@ [ boolE 
 >                                                           , L (K SET)
->                                                           , PAIR (N (V 2)) 
->                                                              (PAIR (N (V 1)) VOID)  
->                                                           , N (V 0)]))
+>                                                           , PAIR (NV 2) 
+>                                                              (PAIR (NV 1) 
+>                                                                VOID)  
+>                                                           , NV 0]))
 >                                           (L (K UNIT)))))
 >
 >   cases :: VAL -> VAL -> VAL -> VAL
 >   cases dty f g = 
 >     L (H (B0 :< dty :< f :< g) "" 
->          (N (switchOp :@ [ boolE
->                          , N (V 3)
->                          , PAIR (N ((V 2) :$ A (N (V 0 :$ Snd :$ Fst))))  
->                              (PAIR (N ((V 1) :$ A (N (V 0 :$ Snd :$ Fst)))) VOID)  
->                          , N ((V 0) :$ Fst) ])))
+>          (N (switchOp :@ 
+>               [ boolE
+>               , N (V 3)
+>               , PAIR (N ((V 2) :$ A (N (V 0 :$ Snd :$ Fst))))  
+>                   (PAIR (N ((V 1) :$ A (N (V 0 :$ Snd :$ Fst)))) VOID)  
+>               , N ((V 0) :$ Fst) ])))
 > 
 >   contTOp :: Op
 >   contTOp = Op
@@ -146,10 +142,10 @@
 >         cTOpRun [i , TIMESC a b , x] = Right (TIMES a b)
 >         cTOpRun [i , SIGMAC a b , x] = Right $
 >           SIGMA a (L (H (B0 :< i :< b :< x) "" 
->                    (N (contTOp :@ [N (V 3) , N ((V 2) :$ A (N (V 0))) , N (V 1) ]))))
+>                    (N (contTOp :@ [NV 3 , N ((V 2) :$ A (NV 0)) , NV 1 ]))))
 >         cTOpRun [i , PIC a b , x] = Right $ C $
 >           Pi a (L (H (B0 :< i :< b :< x) "" 
->                 (N (contTOp :@ [N (V 3) , N ((V 2) :$ A (N (V 0))) , N (V 1) ]))))
+>                 (N (contTOp :@ [NV 3 , N ((V 2) :$ A (NV 0)) , NV 1 ]))))
 >         cTOpRun [i , MUC o c oi , x] = Right (MU i o c x oi)
 >         cTOpRun [i , NUC o c oi , x] = Right (NU i o c x oi)
 >         cTOpRun [i , N c , x] = Left c
@@ -161,51 +157,53 @@
 >     , opTy = mOpTy
 >     , opRun = mOpRun
 >     } where
->         mOpTy ev [i , c , x , y , f , t] = Just $
->           ([ SET :>: i , CONTU (ev i) :>: c 
->            , Arr vi SET :>: x , Arr vi SET :>: y
->            , C (Pi vi (L (H (B0 :< vx :< vy) "" 
->                       (Arr (N (V 2 :$ A (N (V 0)))) (N (V 1 :$ A (N (V 0))))))))
->                :>: f
->            , contTOp @@ [ vi , vc , vx ] :>: t ] , contTOp @@ [ vi , vc , vy ])
->               where vi = ev i
->                     vc = ev c
->                     vx = ev x 
->                     vy = ev y 
->         mOpRun :: [VAL] -> Either NEU VAL
->         mOpRun [i , REQC ii , x , y , f , t] = Right $ f $$ A ii $$ A t
->         mOpRun [i , UNITC , x , y , f , t] = Right $ VOID
->         mOpRun [i , TIMESC a b , x , y , f , t] = Right $ 
->           PAIR (mapCOp @@ [i , a , x , y , f , t $$ Fst])
->                (mapCOp @@ [i , b , x , y , f , t $$ Snd]) 
->         mOpRun [i , SIGMAC a b , x , y , f , t] = let t0 = t $$ Fst in Right $
->           PAIR t0 (mapCOp @@ [i , b $$ A t0 , x , y , f , t $$ Snd])
->         mOpRun [i , PIC a b , x , y , f , t] = Right $
->           L (H (bwdList [i , b , x , y , f , t]) ""
->                (N (mapCOp :@ [ N (V 6) , N (V 5 :$ A (N (V 0))) , N (V 4)
->                              , N (V 3) , N (V 2) , N (V 1 :$ A (N (V 0))) ])))
->         mOpRun [i , MUC o c oi , x , y , f , INMU t] = Right $
->           INMU (mapCOp @@ [ sumVV i o , c $$ A oi , x' , y'
->                           , cases (L (H (B0 :< x' :< y') "" 
->                                     (Arr (N (V 2 :$ A (N (V 0)))) 
->                                          (N (V 1 :$ A (N (V 0))))))) 
->                                   f 
->                                   (L (H (bwdList [i , o , c , x , y , f]) "" 
->                                     (L ("" :. 
->                                       (N (mapCOp :@ [ N (V 7)  
->                                                    , MUC (N (V 6)) (N (V 5)) (N (V 1)) 
->                                                    , N (V 4) , N (V 3) , N (V 2) 
->                                                    , N (V 0) ]))))))
->                           , t ])  
->             where x' = cases (L (K SET)) x 
->                                (L (H (B0 :< i :< c) "" 
->                                     (N (contTOp :@ [ N (V 2) , N (V 1) , N (V 0)]))))
->                   y' = cases (L (K SET)) y 
->                                (L (H (B0 :< i :< c) "" 
->                                     (N (contTOp :@ [ N (V 2) , N (V 1) , N (V 0)]))))
->         mOpRun [i , NUC o c oi , x , y , f , t] = Right $ undefined
->         mOpRun [i , N c , x , y , f , t] = Left c 
->         mOpRun [i , c , x , y , f , N t] = Left t 
+>       mOpTy ev [i , c , x , y , f , t] = Just $
+>         ([ SET :>: i , CONTU (ev i) :>: c 
+>          , Arr vi SET :>: x , Arr vi SET :>: y
+>          , C (Pi vi (L (H (B0 :< vx :< vy) "" 
+>                     (Arr (N (V 2 :$ A (NV 0))) (N (V 1 :$ A (NV 0)))))))
+>              :>: f
+>          , contTOp @@ [ vi , vc , vx ] :>: t ] , contTOp @@ [ vi , vc , vy ])
+>             where vi = ev i
+>                   vc = ev c
+>                   vx = ev x 
+>                   vy = ev y 
+>       mOpRun :: [VAL] -> Either NEU VAL
+>       mOpRun [i , REQC ii , x , y , f , t] = Right $ f $$ A ii $$ A t
+>       mOpRun [i , UNITC , x , y , f , t] = Right $ VOID
+>       mOpRun [i , TIMESC a b , x , y , f , t] = Right $ 
+>         PAIR (mapCOp @@ [i , a , x , y , f , t $$ Fst])
+>              (mapCOp @@ [i , b , x , y , f , t $$ Snd]) 
+>       mOpRun [i , SIGMAC a b , x , y , f , t] = let t0 = t $$ Fst in Right $
+>         PAIR t0 (mapCOp @@ [i , b $$ A t0 , x , y , f , t $$ Snd])
+>       mOpRun [i , PIC a b , x , y , f , t] = Right $
+>         L (H (bwdList [i , b , x , y , f , t]) ""
+>              (N (mapCOp :@ [ N (V 6) , N (V 5 :$ A (N (V 0))) , N (V 4)
+>                            , N (V 3) , N (V 2) , N (V 1 :$ A (N (V 0))) ])))
+>       mOpRun [i , MUC o c oi , x , y , f , CON t] = Right $
+>         CON (mapCOp @@ 
+>               [ sumVV i o , c $$ A oi , x' , y'
+>               , cases (L (H (B0 :< x' :< y') "" 
+>                         (Arr (N (V 2 :$ A (NV 0))) 
+>                              (N (V 1 :$ A (NV 0)))))) 
+>                       f 
+>                       (L (H (bwdList [i , o , c , x , y , f]) "" 
+>                         (L ("" :. 
+>                           (N (mapCOp :@ [ NV 7  
+>                                         , MUC (NV 6) (NV 5) (NV 1) 
+>                                         , NV 4 , NV 3 , NV 2 
+>                                         , NV 0 ]))))))
+>               , t ])  
+>           where 
+>             x' = cases (L (K SET)) x 
+>                          (L (H (B0 :< i :< c) "" 
+>                               (N (contTOp :@ [ NV 2 , NV 1 , NV 0 ]))))
+>             y' = cases (L (K SET)) y 
+>                          (L (H (B0 :< i :< c) "" 
+>                               (N (contTOp :@ [ NV 2 , NV 1 , NV 0]))))
+>       mOpRun [i , NUC o c oi , x , y , f , t] = Right $ undefined
+>       mOpRun [i , N c , x , y , f , t] = Left c 
+>       mOpRun [i , c , x , y , f , N t] = Left t 
 
 > import -> Operators where
 >   contTOp :

@@ -47,5 +47,6 @@ Epitome.tex : $(SRCS) stuff.fmt
 clean:
 	rm *.o *.hers *.hi
 
+ifneq ($(MAKECMDGOALS),clean)
 include .depend
-
+endif

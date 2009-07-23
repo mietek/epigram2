@@ -70,6 +70,7 @@ complicates the definition.
 > data Can :: * -> * where
 >   Set   :: Can t                                   -- set of sets
 >   Pi    :: t -> t -> Can t                         -- functions
+>   Con   :: t -> Can t
 >   import <- CanConstructors
 >   deriving (Show, Eq)
 
@@ -112,6 +113,8 @@ We have some pattern synonyms for common, er, patterns.
 > pattern SET       = C Set                   -- set of sets
 > pattern Arr s t   = C (Pi s (L (K t)))      -- simple arrow
 > pattern PI x s t  = C (Pi s (L (x :. t)))   -- dependent functions
+> pattern CON t     = C (Con t)
+> pattern NV n      = N (V n)
 > import <- CanPats
 
 We have some type synonyms for commonly occurring instances of |Tm|.
@@ -304,6 +307,7 @@ values, and are shared.
 > instance Traversable Can where
 >   traverse f Set       = (|Set|)
 >   traverse f (Pi s t)  = (|Pi (f s) (f t)|)
+>   traverse f (Con t)   = (|Con (f t)|)
 >   import <- TraverseCan
 >
 > instance Functor Can where
