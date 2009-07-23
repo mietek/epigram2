@@ -107,4 +107,10 @@ These bits of renaming should go elsewhere.
 >   pure = return
 >   (<*>) = ap
 
+Grr.
+
+> instance Monoid (IO ()) where
+>   mempty = return ()
+>   mappend x y = do x; y
+
 %endif

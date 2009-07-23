@@ -45,7 +45,7 @@ Epitome.tex : $(SRCS) stuff.fmt
 	$(HC) -c $< $(HC_OPTS)
 
 clean:
-	rm *.o *.hers *.hi
+	rm -f *.o *.hers *.hi
 
 ifneq ($(MAKECMDGOALS),clean)
 include .depend

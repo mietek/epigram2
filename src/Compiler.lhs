@@ -16,8 +16,12 @@ generate an executable from a collection of supercombinator definitions.
 > import System
 > import Char
 > import List
+> import Data.Foldable hiding (concatMap, concat)
+> import Data.Monoid
 
 > import Tm
+> import Core
+> import BwdFwd
 > import Features
 
 %endif
@@ -41,16 +45,18 @@ Where to look for support files. We'll need this to be a bit cleverer later.
 
 Given a list of names and definitions, and the top level function to evaluate,
 write out an executable. This will evaluate the function and dump the result.
+Also take a list of extra options to give to epic (e.g. for keeping intermediate code, etc)
 
-> output :: [(CName, CompileFn)] -> CName -> FilePath -> IO ()
-> output defs mainfn outfile =
+> output :: Bwd (CName, CompileFn) -> CName -> FilePath -> String -> IO ()
+> output defs mainfn outfile epicopts =
 >    do (epicFile, eh) <- tempfile
->       mapM_ (hPutStrLn eh) (map codegen defs) 
+>       fold $ fmap ((hPutStrLn eh).codegen) defs
 >       support <- readLibFile libPath "support.e"
 >       hPutStrLn eh support
 >       hPutStrLn eh (mainDef mainfn)
 >       hClose eh
->       exit <- system $ "epic " ++ epicFile ++ " -o " ++ outfile
+>       let cmd = "epic " ++ epicFile ++ " -o " ++ outfile ++ " " ++ epicopts
+>       exit <- system cmd
 >       if (exit /= ExitSuccess) 
 >         then fail "EPIC FAIL"
 >         else return ()
@@ -121,7 +127,7 @@ We'll need to convert whatever representation was used for names into a name usa
 > class CNameable n where
 >     cname :: n -> String
 
-> instance CNameable Name where
+> instance Show t => CNameable [(String, t)] where
 >     cname = concatMap (\ (n,i) -> "_" ++ concatMap decorate n ++ "_" ++ show i)
 >         where decorate '_' = "__"
 >               decorate x | isAlphaNum x = [x]
@@ -147,9 +153,9 @@ So we'll just ignore everything that isn't otherwise explained.
 >     makeBody _ = Ignore
 
 > instance CNameable n => MakeBody (Tm {Ex, p} n, Elim (Tm {In, p} n)) where
->     makeBody (arg, A f) = appArgs f [makeBody arg]
+>     makeBody (f, A arg) = appArgs f [makeBody arg]
 >        where appArgs :: Tm {d, p} n -> [FnBody] -> FnBody
->              appArgs (a :$ (A f)) acc = appArgs f (makeBody a:acc)
+>              appArgs (f :$ (A a)) acc = appArgs f (makeBody a:acc)
 >              appArgs f acc = App (makeBody f) acc
 >     import <- ElimCompile
 
@@ -161,6 +167,16 @@ by hand in Epic - see epic/support.e
 >          = case (name, map makeBody args) of
 >                import <- OpCompile
 >                _ -> error "Unknown operator"
+
+> compileModule :: Dev -> Bwd (CName, CompileFn)
+> compileModule (entries, Module) = fmap compileEntry entries
+
+> compileEntry (E name _ (Girl LETG (entries, tip))) 
+>       = (cname name, collectArgs [] entries tip)
+
+> collectArgs :: [REF] -> Bwd Entry -> Tip -> CompileFn
+> collectArgs acc B0 (Defined tm _) = Comp (map cname acc) (makeBody tm)
+> collectArgs acc (bs :< E name _ (Boy _)) tip = collectArgs (name:acc) bs tip
 
 %if False
 
@@ -187,7 +203,7 @@ A simple test case
 
 > testFn = Comp [] (App (Var (cname plus)) [two,two])
 
-> program = [(cname plus, plusFn), (cname test, testFn)]
+> program = B0 :< (cname plus, plusFn) :< (cname test, testFn)
 
 > testOut = output program (cname test) "testout"
 
