@@ -45,8 +45,8 @@ like your mother always told you.
 >   N     :: Tm {Ex, p} x          -> Tm {In, p} x   -- |Ex| to |In|
 >   P     :: x                     -> Tm {Ex, p} x   -- parameter
 >   V     :: Int                   -> Tm {Ex, TT} x  -- variable
->   (:@)  :: Op -> [Tm {In, p} x]  -> Tm {Ex, p} x   -- fully applied operator
->   (:$)  :: Tm {Ex, p} x -> Elim (Tm {In, p} x) -> Tm {Ex, p} x  -- elimination
+>   (:@)  :: Op -> [Tm {In, p} x]  -> Tm {Ex, p} x   -- fully applied op
+>   (:$)  :: Tm {Ex, p} x -> Elim (Tm {In, p} x) -> Tm {Ex, p} x  -- elim
 >   (:?)  :: Tm {In, TT} x -> Tm {In, TT} x -> Tm {Ex, TT} x      -- typing
 
 |Scope| represents bodies of binders, but the representation differs

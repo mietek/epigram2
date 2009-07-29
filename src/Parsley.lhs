@@ -100,7 +100,7 @@ Post-processing parser output:
 >     Nothing -> empty
 >
 > ok :: (a -> Bool) -> a -> Maybe a
-> ok p a = (|a {guard (p a)}|)
+> ok p a = (|a (%guard (p a)%)|)
 
 Token-checking:
 

@@ -35,8 +35,8 @@
 
 > offs :: P Char Offs
 > offs =
->   (|Abs {teq '_'} (|read (some (tok isDigit))|)
->    |Rel {teq '^'} (|read (some (tok isDigit))|)
+>   (|Abs (%teq '_'%) (|read (some (tok isDigit))|)
+>    |Rel (%teq '^'%) (|read (some (tok isDigit))|)
 >    |(Rel 0)
 >    |)
 
@@ -114,12 +114,12 @@
 
 > pCoreLine :: Bwd Entry -> P Tok CoreLine
 > pCoreLine es =
->   (|LLam {key "\\"} (some idf) {spc} (optional (pINTM es))
->    |LCom {key "--"; pRest}
+>   (|LLam (%key "\\"%) (some idf) (%spc%) (optional (pINTM es))
+>    |LCom (%key "--"; pRest%)
 >    |LDef idf (optional (key ":" >> pINTM es)) (lay "where" pRest)
->    |LEq {key "="} (|Nothing {key "?"} | Just (pINTM es)|)
+>    |LEq (%key "="%) (|Nothing (%key "?"%) | Just (pINTM es)|)
 >         (optional (key ":" >> pINTM es))
->    |LCom {pSep (tok isSpcT) (teq Sem)}
+>    |LCom (%pSep (tok isSpcT) (teq Sem)%)
 >    |)
 
 > coreLineAction :: Bwd Entry -> CoreLine -> Dev -> Root -> Maybe (Dev, Root)

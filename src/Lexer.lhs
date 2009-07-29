@@ -113,19 +113,19 @@ bar-ends.
 
 > tokIn :: L Tok
 > tokIn = (| Spc  (| length (some (ch ' ')) |)
->          | Ope  {ch '('} (| RndB (spa isOrd) {ch '|'} | Rnd |)
->          | Ope  {ch '['} (| SqrB (spa isOrd) {ch '|'} | Sqr |)
->          | Ope  {ch '{'} (| CrlB (spa isOrd) {ch '|'} | Crl |)
->          | Clo  ~ Rnd {ch ')'}
->          | Clo  ~ Sqr {ch ']'}
->          | Clo  ~ Crl {ch '}'}
->          | Clo  {ch '|'} (| (flip ($)) (spa isOrd)
->              (| RndB {ch ')'} | SqrB {ch ']'} | CrlB {ch '}'} |) |)
+>          | Ope  (%ch '('%) (| RndB (spa isOrd) (%ch '|'%) | Rnd |)
+>          | Ope  (%ch '['%) (| SqrB (spa isOrd) (%ch '|'%) | Sqr |)
+>          | Ope  (%ch '{'%) (| CrlB (spa isOrd) (%ch '|'%) | Crl |)
+>          | Clo  ~ Rnd (%ch ')'%)
+>          | Clo  ~ Sqr (%ch ']'%)
+>          | Clo  ~ Crl (%ch '}'%)
+>          | Clo  (%ch '|'%) (| (flip ($)) (spa isOrd)
+>              (| RndB (%ch ')'%) | SqrB (%ch ']'%) | CrlB (%ch '}'%) |) |)
 >          | Urk  (| ch '|' : some (chk isOrd cha) |)
->          | Bar  {ch '|'}
->          | Com  {ch ','}
->          | Sem  {ch ';'}
->          | Eol  {chk isNL cha}
+>          | Bar  (%ch '|'%)
+>          | Com  (%ch ','%)
+>          | Sem  (%ch ';'%)
+>          | Eol  (%chk isNL cha%)
 >          | ik   (some (chk isOrd cha))
 >          |)
 >  where   ik s = if elem s keywords then Key s else Idf s

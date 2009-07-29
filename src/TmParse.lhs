@@ -20,8 +20,8 @@
 > weeTmIn :: P Tok (InTm String)
 > weeTmIn =
 >   (|id (bra Rnd bigTmIn)
->    |C ~ Set {key "Set"}
->    |(flip (foldr mkL)) {key "\\"} (some (spc *> idf)) {key "->"} bigTmIn
+>    |C ~ Set (%key "Set"%)
+>    |(flip (foldr mkL)) (%key "\\"%) (some (spc *> idf)) (%key "->"%) bigTmIn
 >    |N weeTmEx
 >    |)
 >  where
@@ -29,20 +29,20 @@
 >    mkL x    t = L (x :. t)
 
 > telescope :: P Tok [(String, InTm String)]
-> telescope = bra Rnd (pSep (pad (teq Sem)) (|idf, {key ":"} bigTmIn|))
+> telescope = bra Rnd (pSep (pad (teq Sem)) (|idf, (%key ":"%) bigTmIn|))
 
 > bigTmIn :: P Tok (InTm String)
 > bigTmIn =
->     (|(flip (foldr (uncurry PI))) telescope {key "->"} bigTmIn
+>     (|(flip (foldr (uncurry PI))) telescope (%key "->"%) bigTmIn
 >      |) <|> (pLoop (|N bigTmEx | id weeTmIn|) $ \ i ->
->     (|Arr ~ i {key "->"} bigTmIn
+>     (|Arr ~ i (%key "->"%) bigTmIn
 >      |))
 
 > weeTmEx :: P Tok (ExTm String)
 > weeTmEx =
 >   (|P idf
 >    |id (bra Rnd bigTmEx)
->    |id (bra Rnd (|bigTmIn :? {key ":"} bigTmIn|))
+>    |id (bra Rnd (|bigTmIn :? (%key ":"%) bigTmIn|))
 >    |)
 
 > bigTmEx :: P Tok (ExTm String)
@@ -51,10 +51,10 @@
 >    |)
 
 > spc :: P Tok ()
-> spc = (|() {many (tok isSpcT)}|)
+> spc = (|() (%many (tok isSpcT)%)|)
 
 > pad :: P Tok x -> P Tok x
-> pad p = (|id {spc} p {spc}|)
+> pad p = (|id (%spc%) p (%spc%)|)
 
 > bra :: Br -> P Tok x -> P Tok x
 > bra b p = grok inside next where
