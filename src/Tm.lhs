@@ -80,6 +80,7 @@ with \(\eta\)-laws go here.
 
 > data Elim :: * -> * where
 >   A     :: t -> Elim t                             -- application
+>   Out   :: Elim t                                  -- upacks Con
 >   import <- ElimConstructors
 >   deriving (Show, Eq)
 
@@ -210,6 +211,7 @@ values, and are shared.
 > ($$) :: VAL -> Elim VAL -> VAL
 > L (K v)      $$ A _  = v
 > L (H g _ t)  $$ A v  = eval t (g :< v)
+> C (Con t)    $$ Out  = t
 > import <- ElimComputation
 > N n          $$ e    = N (n :$ e)
 

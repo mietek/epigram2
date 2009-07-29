@@ -138,3 +138,4 @@
 > opRunEqGreen [N y0,_,_,_] = Left y0
 > opRunEqGreen [_,_,N y1,_] = Left y1
 > opRunEqGreen [C y0,_,C y1,_] = Right TRIVIAL
+

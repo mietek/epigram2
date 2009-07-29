@@ -63,39 +63,45 @@
 >     Just (SigmaC (SET :>: s) (Arr (ev s) (CONTU i) :>: t))
 >   canTy ev (ContU i :>: PiC s t) = 
 >     Just (PiC (SET :>: s) (Arr (ev s) (CONTU i) :>: t))
->   canTy ev (ContU i :>: MuC o x oi) = 
->     Just (MuC (SET :>: o) (Arr ov (CONTU (sumVV i ov)) :>: x) (ov :>: oi))
+>   canTy ev (ContU i :>: MuC o x oi) = Just $ 
+>     MuC (SET :>: o) (Arr ov (CONTU (sumVV $$ A i $$ A ov)) :>: x) (ov :>: oi)
 >       where ov = ev o 
->   canTy ev (ContU i :>: NuC o x oi) = 
->     Just (NuC (SET :>: o) (Arr ov (CONTU (sumVV i ov)) :>: x) (ov :>: oi))
+>   canTy ev (ContU i :>: NuC o x oi) = Just $ 
+>     NuC (SET :>: o) (Arr ov (CONTU (sumVV $$ A i $$ A ov)) :>: x) (ov :>: oi)
 >       where ov = ev o 
 >   -- Mu, Nu Rules
 >   canTy ev (Set :>: Mu i o d x oi) = 
 >     Just (Mu (SET :>: i) (SET :>: o) 
->          (Arr ov (CONTU (sumVV (ev i) ov)) :>: d)
+>          (Arr ov (CONTU (sumVV $$ A (ev i) $$ A ov)) :>: d)
 >          (Arr ov SET :>: x) (ov :>: oi)) 
 >       where ov = ev o
 >   canTy ev (Set :>: Nu i o d x oi) = 
 >     Just (Nu (SET :>: i) (SET :>: o) 
->          (Arr ov (CONTU (sumVV (ev i) ov)) :>: d)
+>          (Arr ov (CONTU (sumVV $$ A (ev i) $$ A ov)) :>: d)
 >          (Arr ov SET :>: x) (ov :>: oi))
 >       where ov = ev o
 >   canTy ev (Mu i o d x oi :>: Con t) = 
 >     Just (Con (contTOp @@ [ i 
 >                           , d $$ A o  
->                           , cases (L (K SET)) x 
->                                     (L (H (bwdList [i,o,d,x]) "" 
->                                           (MU (NV 4) (NV 3) 
->                                               (NV 2) (NV 1) (NV 0))))
+>                           , L (H (bwdList [i,o,d,x]) "t"
+>                               (N (casesOp :@ 
+>                                  [ NV 4 , NV 3
+>                                  , L (K SET) , NV 1  
+>                                  , L ("oo" :. (MU (NV 5) (NV 4) 
+>                                                   (NV 3) (NV 2) (NV 0)))
+>                                  , NV 0])))
 >                          ] :>: t))
 >   canTy ev (Nu i o d x oi :>: Con t) = 
 >     Just (Con (contTOp @@ [ i 
 >                           , d $$ A o  
->                           , cases (L (K SET)) x 
->                                     (L (H (bwdList [i,o,d,x]) "" 
->                                           (MU (NV 4) (NV 3) 
->                                               (NV 2) (NV 1) (NV 0))))
->                           ] :>: t))
+>                           , L (H (bwdList [i,o,d,x]) "t"
+>                               (N (casesOp :@ 
+>                                  [ NV 4 , NV 3
+>                                  , L (K SET) , NV 1  
+>                                  , L ("oo" :. (NU (NV 5) (NV 4) 
+>                                                   (NV 3) (NV 2) (NV 0)))
+>                                  , NV 0])))
+>                          ] :>: t))
 
 > import -> OpCode where
 >   boolE :: Tm {In,p} x
@@ -104,27 +110,44 @@
 >   boolT :: Tm {In,p} x
 >   boolT = ENUMT boolE
 >
->   sumVV :: VAL -> VAL -> VAL
->   sumVV x y = 
->     SIGMA boolT 
->           (L (H (B0 :< x :< y) "b" (SIGMA (N (switchOp :@ [ boolE 
->                                                           , L (K SET)
->                                                           , PAIR (NV 2) 
->                                                              (PAIR (NV 1) 
->                                                                VOID)  
->                                                           , NV 0]))
->                                           (L (K UNIT)))))
+>   sumTT :: EXTM
+>   sumTT = 
+>     L ("x" :. L ("y" :. 
+>       SIGMA boolT 
+>             (L ("b" :. (SIGMA (N (switchOp :@ [ boolE 
+>                                               , L (K SET)
+>                                               , PAIR (NV 2) (PAIR (NV 1) VOID)
+>                                               , NV 0]))
+>                               (L (K UNIT)))))))
+>     :? Arr SET (Arr SET SET)
 >
->   cases :: VAL -> VAL -> VAL -> VAL
->   cases dty f g = 
->     L (H (B0 :< dty :< f :< g) "" 
->          (N (switchOp :@ 
->               [ boolE
->               , N (V 3)
->               , PAIR (N ((V 2) :$ A (N (V 0 :$ Snd :$ Fst))))  
->                   (PAIR (N ((V 1) :$ A (N (V 0 :$ Snd :$ Fst)))) VOID)  
->               , N ((V 0) :$ Fst) ])))
-> 
+>   sumVV :: VAL
+>   sumVV = L (H B0 "x" (L ("y" :. N (sumTT :$ A (NV 1) :$ A (NV 2)))))  
+>  
+>   pattern LEFT x   = PAIR ZE (PAIR x VOID)  
+>   pattern RIGHT y  = PAIR (SU ZE) (PAIR y VOID)  
+>
+>   casesOp :: Op
+>   casesOp = Op
+>     { opName = "cases" , opArity = 6 
+>     , opTy = cOpTy , opRun = cOpRun 
+>     } where
+>       cOpTy ev [a , b , c , f , g , x] = Just $
+>         ( [ SET :>: a , SET :>: b , Arr sumab SET :>: c
+>           , C (Pi va (L (H (B0 :< vc) "a" 
+>                     (N (V 1 :$ A (LEFT (NV 0))))))) :>: f
+>           , C (Pi vb (L (H (B0 :< vc) "b" 
+>                     (N (V 1 :$ A (RIGHT (NV 0))))))) :>: g
+>           , sumab :>: x ]
+>         , C (Pi sumab (L (H (B0 :< vc) "ab" (N (V 1 :$ A (NV 0))))))) 
+>        where va = ev a
+>              vb = ev b
+>              vc = ev c
+>              sumab = sumVV $$ A va $$ A vb
+>       cOpRun :: [VAL] -> Either NEU VAL
+>       cOpRun [_ , _ , _ , f , _ , LEFT a ] = Right (f $$ A a)
+>       cOpRun [_ , _ , _ , _ , g , RIGHT b ] = Right (g $$ A b)
+>       cOpRun [_ , _ , _ , _ , _ , N x] = Left x
 >   contTOp :: Op
 >   contTOp = Op
 >     { opName = "cont"
@@ -182,33 +205,129 @@
 >                            , N (V 3) , N (V 2) , N (V 1 :$ A (N (V 0))) ])))
 >       mOpRun [i , MUC o c oi , x , y , f , CON t] = Right $
 >         CON (mapCOp @@ 
->               [ sumVV i o , c $$ A oi , x' , y'
->               , cases (L (H (B0 :< x' :< y') "" 
->                         (Arr (N (V 2 :$ A (NV 0))) 
->                              (N (V 1 :$ A (NV 0)))))) 
->                       f 
->                       (L (H (bwdList [i , o , c , x , y , f]) "" 
+>               [ sumVV $$ A i $$ A o , c $$ A oi 
+>               , L (H (bwdList [i , o , c , x]) "" 
+>                   (N (casesOp :@ 
+>                     [ NV 4 , NV 3 , L (K SET) , NV 1
+>                     , L ("" :. N (contTOp :@ 
+>                                    [ NV 5 , NV 3 , NV 0])) 
+>                     , NV 0])))
+>               , L (H (bwdList [i , o , c , y]) "" 
+>                   (N (casesOp :@ 
+>                     [ NV 4 , NV 3 , L (K SET) , NV 1
+>                     , L ("" :. N (contTOp :@ 
+>                                    [ NV 5 , NV 3 , NV 0])) 
+>                     , NV 0])))
+>               , L (H (bwdList [i , o , c , x , y , f]) "" 
+>                   (N (casesOp :@ 
+>                     [ NV 6
+>                     , NV 5
+>                     , (L ("" :. 
+>                         (Arr (N (casesOp :@ 
+>                                   [ NV 7 , NV 6 , L (K SET) , NV 4
+>                                   , L ("" :. N (contTOp :@ 
+>                                                  [ NV 8 , NV 6 , NV 0])) 
+>                                   , NV 0])) 
+>                              (N (casesOp :@ 
+>                                   [ NV 7 , NV 6 , L (K SET) , NV 3
+>                                   , L ("" :. N (contTOp :@ 
+>                                                  [ NV 8 , NV 6 , NV 0])) 
+>                                   , NV 0]))))) 
+>                     , NV 1 
+>                     , (L ("" :.  
 >                         (L ("" :. 
->                           (N (mapCOp :@ [ NV 7  
->                                         , MUC (NV 6) (NV 5) (NV 1) 
->                                         , NV 4 , NV 3 , NV 2 
+>                           (N (mapCOp :@ [ NV 8  
+>                                         , MUC (NV 7) (NV 6) (NV 1) 
+>                                         , NV 5 , NV 4 , NV 3 
 >                                         , NV 0 ]))))))
+>                     , NV 0 ])))
 >               , t ])  
->           where 
->             x' = cases (L (K SET)) x 
->                          (L (H (B0 :< i :< c) "" 
->                               (N (contTOp :@ [ NV 2 , NV 1 , NV 0 ]))))
->             y' = cases (L (K SET)) y 
->                          (L (H (B0 :< i :< c) "" 
->                               (N (contTOp :@ [ NV 2 , NV 1 , NV 0]))))
 >       mOpRun [i , NUC o c oi , x , y , f , t] = Right $ undefined
 >       mOpRun [i , N c , x , y , f , t] = Left c 
 >       mOpRun [i , c , x , y , f , N t] = Left t 
+> 
+>   
+>   everyWhereOp :: Op
+>   everyWhereOp = Op 
+>     { opName = "Everywhere"
+>     , opArity = 4
+>     , opTy = eWOpTy
+>     , opRun = eWOpRun
+>     } where
+>       eWOpTy ev [i , d , j , x , c , t] = Just $
+>         ([ SET :>: i , CONTU vi :>: d , Arr vi SET :>: j 
+>          , SET :>: x , Arr (SIGMA vi vj) (ev x) :>: c
+>          , contTOp @@ [ vi , ev d , vj ] :>: t ] , CONTU (SIGMA vi vj))
+>           where vi = ev i
+>                 vj = ev j
+>       eWOpTy _ _ = Nothing       
+>       eWOpRun :: [VAL] -> Either NEU VAL
+>       eWOpRun [i , REQC ii , j , x , c , jj] = Right $ 
+>         REQC (c $$ A (PAIR ii jj))
+>       eWOpRun [i , UNITC , j , x , c , t] = Right $ UNITC
+>       eWOpRun [i , TIMESC a b , j , x , c , t] = Right $ TIMESC
+>         (everyWhereOp @@ [i , a , j , x , c , t $$ Fst])
+>         (everyWhereOp @@ [i , b , j , x , c , t $$ Snd])
+>       eWOpRun [i , SIGMAC a b , j , x , c , t] = Right $ 
+>         everyWhereOp @@ [i , b $$ A a , j , x , c , t $$ Snd]
+>       eWOpRun [i , PIC a b , x , c , j , t] = Right $ PIC a 
+>         (L (H (bwdList [i , b , j , x , c , t]) "" 
+>               (N (everyWhereOp :@ [ NV 6 , N (V 5 :$ A (NV 0)) , NV 3 , NV 2
+>                                  , NV 4 , N (V 1 :$ A (NV 0)) ]))))
+>       eWOpRun [i , MUC o d oo , j , x , c , t] = Right $ MUC
+>         (SIGMA o (L (H (bwdList [i , o , d , j]) "" 
+>                    (MU (NV 4) (NV 3) (NV 2) (NV 1) (NV 0)))))
+>         (L (H (bwdList [i , o , d , j , x , c]) "" (N
+>           (everyWhereOp :@ 
+>             [ NV 5 , N (V 2 :$ A (N (V 0 :$ Fst))) 
+>             , L ("x'" :. N (casesOp :@ 
+>                 [ NV 6 , NV 5 , L (K SET) , NV 2  
+>                 , L ("oo" :. MU (NV 7) (NV 6) (NV 5) (NV 4) (NV 0)) , NV 0 ]))
+>             , N (sumTT 
+>                   :$ A (NV 2) 
+>                   :$ A (SIGMA (NV 5) (L ("oo" :. MU (NV 7) (NV 6) 
+>                                                     (NV 5) (NV 4) (NV 0)))))
+>             , L ("x" :. N (splitOp :@ 
+>                   [ N (sumTT :$ A (NV 7) :$ A (NV 6))
+>                   , L ("io" :. N (casesOp :@ 
+>                         [ NV 8 , NV 7 , L (K SET) , NV 5 
+>                         , L ("oo" :. MU (NV 8) (NV 7) (NV 6) (NV 5) (NV 0))
+>                         , NV 0]))
+>                   , L (K (N (sumTT 
+>                               :$ A (NV 3) 
+>                               :$ A (SIGMA (NV 6) 
+>                                    (L ("oo" :. MU (NV 9) (NV 8) 
+>                                                   (NV 7) (NV 6) (NV 0)))))))
+>                   , L ("io" :. N (casesOp :@ 
+>                         [ NV 8 , NV 7 
+>                         , L ("oo" :. Arr 
+>                                 (N (casesOp :@ 
+>                                   [ NV 9 , NV 8 , L (K SET) , NV 6 
+>                                   , L ("oo" :. MU (NV 9) (NV 8) 
+>                                                   (NV 7) (NV 6) (NV 0))
+>                                   , NV 0 ])) 
+>                                 (N (sumTT 
+>                                      :$ A (NV 3)  
+>                                      :$ A (SIGMA (NV 6) (L ("oo" :. 
+>                                                MU (NV 9) (NV 8) 
+>                                                   (NV 7) (NV 6) (NV 0)))))))
+>                         , L ("i" :. L ("j" :. 
+>                             LEFT (N (V 5 :$ A (PAIR (NV 1) (NV 0))))))
+>                         , L ("o''" :. L ("t''" :. 
+>                             RIGHT (PAIR (NV 1) (NV 0))))
+>                         , NV 0]))
+>                   , NV 0 ])) 
+>             , N (V 0 :$ Snd :$ Out) ]))))
+>         (PAIR oo t)
+>       eWOpRun [i , N d , j , x , c , t] = Left d
+>       eWOpRun [i , d , j , x , c , N t] = Left t
+
 
 > import -> Operators where
->   contTOp :
+>   casesOp :
+>   contTOp : 
 >   mapCOp :
->   
+
 
 > -- import -> ElimTyRules where
 

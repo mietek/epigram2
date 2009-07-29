@@ -65,4 +65,24 @@
 >   etaExpand (VOID :>: v) r = Just (UNIT)
 >   etaExpand (ty@(SIGMA s t) :>: p) r = let x = p $$ Fst in 
 >     (| (\x y -> PAIR x y) (etaExpand (s :>: x) r) 
->                   (etaExpand (t $$ (A x) :>: (p $$ Snd)) r) |)  
+>                   (etaExpand (t $$ (A x) :>: (p $$ Snd)) r) |)
+
+> import -> OpCode where
+>   splitOp = Op
+>     { opName = "split" , opArity = 5
+>     , opTy = sOpTy , opRun = sOpRun 
+>     } where
+>       sOpTy ev [a , b , c , f , t] = Just $
+>         ([ SET :>: a , Arr va SET :>: b , Arr (SIGMA va vb) SET :>: c
+>          , C (Pi va (L (H (B0 :< vb :< vc) "a" 
+>                (PI "b" (N (V 2 :$ A (NV 0))) 
+>                  (N (V 2 :$ A (PAIR (NV 1) (NV 0)))))))) :>: f
+>          , (SIGMA va vb) :>: t ], vc $$ A (ev t))
+>           where va = ev a
+>                 vb = ev b
+>                 vc = ev c
+>       sOpRun :: [VAL] -> Either NEU VAL
+>       sOpRun [_ , _ , _ , f , t] = Right $ f $$ A (t $$ Fst) $$ A (t $$ Snd)
+
+> import -> Operators where
+>   splitOp :
