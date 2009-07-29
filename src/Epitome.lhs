@@ -28,7 +28,6 @@
 
 %include Root.lhs
 %include Tm.lhs
-%include Operators.lhs
 %include Rules.lhs
 %include Core.lhs
 
