@@ -125,6 +125,9 @@
 >   AND (eqGreen @@ [y0,t0,y1,t1]) (mkEqConj xs)
 > mkEqConj []                           = TRIVIAL
 
+> eqGreenT :: (InTm x :>: InTm x) -> (InTm x :>: InTm x) -> InTm x
+> eqGreenT (y0 :>: t0) (y1 :>: t1) = N (eqGreen :@ [y0,t0,y1,t1])
+
 > opRunEqGreen :: [VAL] -> Either NEU VAL
 > opRunEqGreen [SET,C t0,SET,C t1] = case halfZip t0' t1' of
 >    Nothing -> Right ABSURD
@@ -134,22 +137,29 @@
 >    Just t1' = canTy id (Set :>: t1)
 > import <- OpRunEqGreen
 > opRunEqGreen [C (Pi s1 t1),f1,C (Pi s2 t2),f2] = Right $
->    ALL s1 (L (H (bwdList [s1,t1,f1,s2,t2,f2])
->                 "" 
->                 (ALL (NV 3) -- s2
->                      (L ("" 
->                          :. 
->                          (IMP (EQBLUE (NV 7 :>: NV 1)  -- s1 :>: x1
->                                       (NV 4 :>: NV 0)) -- s2 :>: x2
->                               (N (eqGreen :@ [N (V 5 :$ A NV 1), -- f1 x1
->                                               N (V 6 :$ A NV 1), -- t1 x1
->                                               N (V 2 :$ A NV 0), -- f2 x2
->                                               N (V 3 :$ A NV 0)] -- t2 x2
->                                  ))))))))
+>   eval  [.s1.t1.f1.s2.t2.f2.
+>         ALL (NV s1) . L $ "" :. [.x1.
+>         ALL (NV s2) . L $ "" :. [.x2.
+>         IMP (EQBLUE (NV s1 :>: NV x1) (NV s2 :>: NV x2))
+>             (eqGreenT (t1 $# [x1] :>: f1 $# [x1]) (t2 $# [x2] :>: f2 $# [x2]))
+>         ]]]
+>         $ B0 :< s1 :< t1 :< f1 :< s2 :< t2 :< f2
+
+    ALL s1 (L (H (bwdList [s1,t1,f1,s2,t2,f2])
+                 "" 
+                 (ALL (NV 3) -- s2
+                      (L ("" 
+                          :. 
+                          (IMP (EQBLUE (NV 7 :>: NV 1)  -- s1 :>: x1
+                                       (NV 4 :>: NV 0)) -- s2 :>: x2
+                               (N (eqGreen :@ [N (V 5 :$ A NV 1), -- f1 x1
+                                               N (V 6 :$ A NV 1), -- t1 x1
+                                               N (V 2 :$ A NV 0), -- f2 x2
+                                               N (V 3 :$ A NV 0)] -- t2 x2
+                                  ))))))))
 
 > opRunEqGreen [SET,N t0,SET,_] = Left t0
 > opRunEqGreen [SET,_,SET,N t1] = Left t1
 > opRunEqGreen [N y0,_,_,_] = Left y0
 > opRunEqGreen [_,_,N y1,_] = Left y1
 > opRunEqGreen [C y0,_,C y1,_] = Right TRIVIAL
-

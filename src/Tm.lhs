@@ -289,6 +289,13 @@ values, and are shared.
 > underScope (K t)     _ = t
 > underScope (_ :. t)  x = under 0 x %% t
 
+
+\subsection{Term Construction}
+
+> ($#) :: Int -> [Int] -> InTm x
+> f $# xs = N (foldl (\ g x -> g :$ A (NV x)) (V f) xs)
+
+
 %if False
 
 > newtype I x = I {unI :: x} deriving (Show, Eq)
