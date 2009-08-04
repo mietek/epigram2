@@ -92,3 +92,9 @@
 >   opRunEqGreen [SIGMA s1 t1,p1,SIGMA s2 t2,p2] = Right $
 >     AND (eqGreen @@ [s1,p1 $$ Fst,s2,p2 $$ Fst])
 >         (eqGreen @@ [t1 $$ A (p1 $$ Fst),p1 $$ Snd,t2 $$ A (p2 $$ Fst),p2 $$ Snd])
+
+> import -> Coerce where
+>   coerce (Sigma (x1,x2) (y1,y2)) q p = 
+>     PAIR (coe @@ [x1,x2,q $$ Fst,p $$ Fst]) 
+>          (coe @@ [y1,y2,q $$ Snd,p $$ Snd]) 
+>   coerce Unit        q s = s

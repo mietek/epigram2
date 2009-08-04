@@ -27,5 +27,40 @@
 >                        PROP)
 >                opty _  _             = Nothing
 
+>   coe = Op { opName = "coe"
+>            , opArity = 4
+>            , opTy = opty
+>            , opRun = oprun
+>            } where
+>            opty ev [x,y,q,s] = 
+>              Just ([ SET :>: x
+>                    , SET :>: y
+>                    , PRF (EQBLUE (SET :>: ev x) (SET :>: ev y)) :>: q
+>                    , ev x :>: s
+>                    ],ev y)
+>            oprun :: [VAL] -> Either NEU VAL
+>            oprun [C x,C y,q,s] = Right $ case halfZip x y of
+>              Nothing  -> ABSURD
+>              Just fxy -> coerce fxy q s
+>            oprun [N x,y,q,s] = Left x
+>            oprun [x,N y,q,s] = Left y
+>            oprun _ = undefined
+>
+>   coh = Op { opName = "coh"
+>            , opArity = 4
+>            , opTy = opty
+>            , opRun = oprun
+>            } where
+>            opty ev [x,y,q,s] =
+>              Just ([SET :>: x,
+>                     SET :>: y,
+>                     PRF (EQBLUE (SET :>: ev x) (SET :>: ev y)) :>: q,
+>                     ev x :>: s],
+>                     PRF (EQBLUE (ev x :>: ev s) 
+>                                 (ev y :>: coe @@ [ev x,ev y,ev q,ev s])))
+>            oprun :: [VAL] -> Either NEU VAL
+>            oprun [C x,C y,q,s] = Left undefined
+
 > import -> Operators where
 >   eqGreen :
+>   coe :

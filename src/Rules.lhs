@@ -140,7 +140,7 @@
 >   eval  [.s1.t1.f1.s2.t2.f2.
 >         ALL (NV s1) . L $ "" :. [.x1.
 >         ALL (NV s2) . L $ "" :. [.x2.
->         IMP (EQBLUE (NV s1 :>: NV x1) (NV s2 :>: NV x2))
+>         IMP (EQBLUE (NV s2 :>: NV x2) (NV s1 :>: NV x1))
 >             (eqGreenT (t1 $# [x1] :>: f1 $# [x1]) (t2 $# [x2] :>: f2 $# [x2]))
 >         ]]]
 >         $ B0 :< s1 :< t1 :< f1 :< s2 :< t2 :< f2
@@ -163,3 +163,18 @@
 > opRunEqGreen [N y0,_,_,_] = Left y0
 > opRunEqGreen [_,_,N y1,_] = Left y1
 > opRunEqGreen [C y0,_,C y1,_] = Right TRIVIAL
+
+> coerce :: (Can (VAL,VAL)) -> VAL -> VAL -> VAL
+> coerce (Pi (x1,x2) (y1,y2))    q f = 
+>              eval [.x1.x2.y1.y2.q.f.
+>                   (L $ "" :. [.s1.
+>                     (let
+>                     s2 = N (coe :@ [NV x2,NV x1,N (V q :$ Fst),NV s1])
+>                     q2 = N (coh :@ [NV x2,NV x1,N (V q :$ Fst),NV s1])
+>                     in
+>                     N $ coe :@ [N (V y2 :$ A s2),
+>                                 y1 $# [s1],
+>                                 N (V q :$ A s2 :$ A (NV s1) :$ A q2),
+>                                 N (V f :$ A s2)])])]
+>                    (B0 :< x1 :< x2 :< y1 :< y2 :< q :< f)
+> import <- Coerce
