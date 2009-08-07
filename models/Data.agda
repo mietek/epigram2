@@ -116,7 +116,22 @@ mutual
 induction : {I O : Set}(C : O -> CON (I + O)){X : I -> Set}
             (P : (o : O) -> Mu C X o -> Set) ->
             ((o : O)(xyps : [| C o |] [ X , (\ o -> Sig (Mu C X o) (P o)) ]) ->
-             P o (con (map (C o) [ konst id , (\ o -> fst) ] xyps))) ->
+             P o (con (map (C o) [ konst id , konst fst ] xyps))) ->
             (o : O)(y : Mu C X o) -> P o y
 induction C P p o (con xys) =
   p o (map (C o) [ konst id , (\ o y -> (y , induction C P p o y)) ] xys)
+
+
+moo : {I O : Set}(C : O -> CON (I + O)){X : I -> Set}(o : O)
+      (W : (o : O) -> Mu C X o -> Set)(w : (o : O)(y : Mu C X o) -> W o y)
+      (P : (io : I + O) -> [| ?? io |] [ X , Mu C X ] -> Set)
+      (io : I + O)(xy : [| ?? io |] [ X , Mu C X ]) -> P io xy ->
+      let g : (io : I + O) ->
+              [| ?? io |] [ X , Mu C X ] -> [| ?? io |] [ X , (\ o -> Sig (Mu C X o) (W o)) ]
+          g = [ konst id , (\ o y -> (y , w o y)) ]
+          f : (io : I + O) ->
+              [| ?? io |] [ X , (\ o -> Sig (Mu C X o) (W o)) ] -> [| ?? io |] [ X , Mu C X ]
+          f = [ konst id , konst fst ]
+      in  P io (f io (g io xy))
+moo C o W w P io xy p = {!p!}
+
