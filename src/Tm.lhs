@@ -295,6 +295,10 @@ values, and are shared.
 > ($#) :: Int -> [Int] -> InTm x
 > f $# xs = N (foldl (\ g x -> g :$ A (NV x)) (V f) xs)
 
+> fortran :: Tm {In, p} x -> String
+> fortran (L (x :. _)) = x
+> fortran _ = ""
+
 
 %if False
 

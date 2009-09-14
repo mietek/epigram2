@@ -39,12 +39,19 @@
 >   traverse f (Su n)       = (|Su (f n)|) 
 
 > import -> CanTyRules where
->   canTy ev (Set :>: EnumU)    = Just EnumU
->   canTy ev (Set :>: EnumT e)  =  Just (EnumT (ENUMU :>: e))
->   canTy ev (EnumU :>: NilE)       = Just NilE
->   canTy ev (EnumU :>: ConsE t e)  = Just (ConsE (UID :>: t) (ENUMU :>: e))
->   canTy ev (EnumT (CONSE t e) :>: Ze)    = Just Ze 
->   canTy ev (EnumT (CONSE t e) :>: Su n)  = Just (Su (ENUMT e :>: n))
+>   canTy tc (Set :>: EnumU)    = Just EnumU
+>   canTy tc (Set :>: EnumT e)  =
+>     ENUMU `tc` e &\ \ e _ ->
+>     Just $ EnumT e
+>   canTy tc (EnumU :>: NilE)       = Just NilE
+>   canTy tc (EnumU :>: ConsE t e)  =
+>     UID `tc` t    &\ \ t _ ->
+>     ENUMU `tc` e  &\ \ e _ ->
+>     Just $ ConsE t e
+>   canTy tc (EnumT (CONSE t e) :>: Ze)    = Just Ze 
+>   canTy tc (EnumT (CONSE t e) :>: Su n)  =
+>     ENUMT e `tc` n &\ \ n _ ->
+>     Just $ Su n
 
 > import -> OpCode where
 >   branchesOp = Op 

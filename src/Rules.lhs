@@ -20,12 +20,19 @@
 
 %endif
 
-> canTy :: (t -> VAL) -> (Can VAL :>: Can t) -> Maybe (Can (TY :>: t))
-> canTy ev (Set :>: Set)    = Just Set
-> canTy ev (Set :>: Pi s t) = 
->   Just (Pi (SET :>: s) (Arr (ev s) SET :>: t))
+> (&\) :: (a, b) -> (a -> b -> c) -> c
+> (&\) = flip uncurry
+
+> infixr 1 &\
+
+> canTy :: (TY -> s -> (t, VAL)) -> (Can VAL :>: Can s) -> Maybe (Can t)
+> canTy tc (Set :>: Set)     =  Just Set
+> canTy tc (Set :>: Pi s t)  =
+>   SET         `tc` s &\ \ s sv ->
+>   Arr sv SET  `tc` t &\ \ t _ ->
+>   Just $ Pi s t
 > import <- CanTyRules
-> canTy _  _                = Nothing
+> canTy  _  _                 = Nothing
 
 > elimTy :: (t -> VAL) -> (VAL :<: Can VAL) -> Elim t ->
 >           Maybe (Elim (TY :>: t),VAL)
@@ -57,8 +64,9 @@
 > inQuote :: (TY :>: VAL) -> Root -> INTM
 > inQuote tyv              r | Just t    <- etaExpand tyv r = t
 > inQuote (_ :>: N n)      r | (t :<: _) <- exQuote n r = N t
-> inQuote (C cty :>: C cv) r | Just x    <- canTy id (cty :>: cv) =
->   C (traverse inQuote x r)
+> inQuote (C cty :>: C cv) r
+>   | Just ct   <- canTy (\ y v -> (inQuote (y :>: v) r, v)) (cty :>: cv)
+>   = C ct
 
 > unC :: VAL -> Can VAL
 > unC (C c) = c
@@ -98,8 +106,8 @@
 
 > check :: (TY :>: INTM) -> Root -> Maybe ()
 > check (C c :>: C c')        r = do
->   x <- canTy evTm (c :>: c')
->   traverse id $ traverse check x r
+>   csp <- canTy (\ y t -> (check (y :>: t) r, evTm t)) (c :>: c')
+>   traverse id csp
 >   return ()
 > check (C (Pi s t) :>: L sc) r = do
 >   freshRef ("" :<: s) 
@@ -133,8 +141,8 @@
 >    Nothing -> Right ABSURD
 >    Just x  -> Right $ mkEqConj (trail x)
 >    where
->    Just t0' = canTy id (Set :>: t0)
->    Just t1' = canTy id (Set :>: t1)
+>    Just t0' = canTy (\ y v -> (y :>: v, v)) (Set :>: t0)
+>    Just t1' = canTy (\ y v -> (y :>: v, v)) (Set :>: t1)
 > import <- OpRunEqGreen
 > opRunEqGreen [C (Pi s1 t1),f1,C (Pi s2 t2),f2] = Right $
 >   eval  [.s1.t1.f1.s2.t2.f2.

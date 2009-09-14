@@ -30,6 +30,7 @@
 %include Tm.lhs
 %include Rules.lhs
 %include Core.lhs
+%include Construction.lhs
 
 \chapter{Feature by Feature}
 
