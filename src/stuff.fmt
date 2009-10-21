@@ -7,4 +7,5 @@
 %format <|> = "\obar"
 %format <*> = "\varoast"
 %format . = "\cdot"
+%format * = "*~"
 %format pattern = "\mathkw{pattern}\,"

@@ -1,4 +1,5 @@
 \section{Rules}
+\label{sec:rules}
 
 %if False
 
@@ -153,18 +154,24 @@
 >         ]]]
 >         $ B0 :< s1 :< t1 :< f1 :< s2 :< t2 :< f2
 
-    ALL s1 (L (H (bwdList [s1,t1,f1,s2,t2,f2])
-                 "" 
-                 (ALL (NV 3) -- s2
-                      (L ("" 
-                          :. 
-                          (IMP (EQBLUE (NV 7 :>: NV 1)  -- s1 :>: x1
-                                       (NV 4 :>: NV 0)) -- s2 :>: x2
-                               (N (eqGreen :@ [N (V 5 :$ A NV 1), -- f1 x1
-                                               N (V 6 :$ A NV 1), -- t1 x1
-                                               N (V 2 :$ A NV 0), -- f2 x2
-                                               N (V 3 :$ A NV 0)] -- t2 x2
-                                  ))))))))
+%if False
+
+> {-
+>    ALL s1 (L (H (bwdList [s1,t1,f1,s2,t2,f2])
+>                 "" 
+>                 (ALL (NV 3) -- s2
+>                      (L ("" 
+>                          :. 
+>                          (IMP (EQBLUE (NV 7 :>: NV 1)  -- s1 :>: x1
+>                                       (NV 4 :>: NV 0)) -- s2 :>: x2
+>                               (N (eqGreen :@ [N (V 5 :$ A NV 1), -- f1 x1
+>                                               N (V 6 :$ A NV 1), -- t1 x1
+>                                               N (V 2 :$ A NV 0), -- f2 x2
+>                                               N (V 3 :$ A NV 0)] -- t2 x2
+>                                  ))))))))
+> -}
+
+%endif
 
 > opRunEqGreen [SET,N t0,SET,_] = Left t0
 > opRunEqGreen [SET,_,SET,N t1] = Left t1

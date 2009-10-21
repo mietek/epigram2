@@ -16,10 +16,16 @@ Pig : $(OBJS)
 dvi : Epitome.dvi
 
 
-Epitome.pdf : Epitome.tex
+Epitome.pdf : Epitome.tex Epitome.bib
+	pdflatex Epitome
+	bibtex Epitome
+	pdflatex Epitome
 	pdflatex Epitome
 
 Epitome.dvi : Epitome.tex
+	latex Epitome
+	bibtex Epitome
+	latex Epitome
 	latex Epitome
 
 Epitome.tex : $(SRCS) stuff.fmt
@@ -45,7 +51,10 @@ Epitome.tex : $(SRCS) stuff.fmt
 	$(HC) -c $< $(HC_OPTS)
 
 clean:
-	rm -f *.o *.hers *.hi
+	rm -f *.o *.hers *.hi\
+	      *.aux *.bbl\
+	      *.blg *.log *.ptb\
+	      Epitome.tex 
 
 ifeq ($(MAKECMDGOALS),clean)
 else ifeq ($(MAKECMDGOALS),dvi)

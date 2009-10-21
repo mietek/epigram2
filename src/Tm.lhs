@@ -24,25 +24,34 @@
 %format Set = "\star"
 %format Pi = "\Pi"
 %format :. = "\bullet"
+%format :>: = "\ni"
+%format :<: = "\in"
 
 \subsection{Syntax of Terms and Values}
 
-> data Dir    = In | Ex
 
 We distinguish |In|Terms (into which we push types) and |Ex|Terms
 (from which we infer types).
 
-> data Phase  = TT | VV
+> data Dir    = In | Ex
 
-We distinguish the representations of |TT| terms and |VV| values.
+We also distinguish the representations of |TT| terms and |VV| values.
+
+> data Phase  = TT | VV
 
 And, of course, we're polymorphic in the representation of free variables,
 like your mother always told you.
 
 > data Tm :: {Dir, Phase} -> * -> * where
+
+We push types in:
+
 >   L     :: Scope p x             -> Tm {In, p} x   -- \(\lambda\)
 >   C     :: Can (Tm {In, p} x)    -> Tm {In, p} x   -- canonical
 >   N     :: Tm {Ex, p} x          -> Tm {In, p} x   -- |Ex| to |In|
+
+And we infer types from:
+
 >   P     :: x                     -> Tm {Ex, p} x   -- parameter
 >   V     :: Int                   -> Tm {Ex, TT} x  -- variable
 >   (:@)  :: Op -> [Tm {In, p} x]  -> Tm {Ex, p} x   -- fully applied op
@@ -66,6 +75,9 @@ The |Can| functor explains how canonical objects are constructed from
 subobjects (terms or values, as appropriate). Lambda is not included here:
 morally, it belongs; practically, adapting |Can| to support binding
 complicates the definition.
+
+Note the presence of the @import@ She-ism: this means that canonical
+constructors can be later plugged in using a She aspect.
 
 > data Can :: * -> * where
 >   Set   :: Can t                                   -- set of sets
@@ -129,7 +141,11 @@ We have some type synonyms for commonly occurring instances of |Tm|.
 > type NEU    = Tm {Ex, VV} REF
 > type ENV    = Bwd VAL
 
-We have special pairs for types going into and coming out of stuff.
+We have special pairs for types going into and coming out of
+stuff. That is, we write |typ :>: thing| to say that
+|typ| accepts the term |thing|. Conversely, we write |thing :<: typ|
+to say that |thing| is of infered type |typ|. Therefore, we can read
+|:<:| as "accepts" and |:>:| as "has infered".
 
 > data y :>: t = y :>: t  deriving (Show,Eq)
 > infix 4 :>:
@@ -139,9 +155,16 @@ We have special pairs for types going into and coming out of stuff.
 \subsection{Syntactic Equality}
 
 We use syntactic equality on \(\eta\)-quoted values to implement the
-definitional equality. For terms, it's mainly structural.
+definitional equality.
+
+
+In the following, we implement definitional equality on terms. In this
+case, it's mainly structural.
 
 > instance Eq x => Eq (Tm {d, TT} x) where
+
+First, a bunch of straightforward structural inductions:
+
 >   L s0          == L s1          = s0 == s1
 >   C c0          == C c1          = c0 == c1
 >   N n0          == N n1          = n0 == n1
@@ -149,8 +172,16 @@ definitional equality. For terms, it's mainly structural.
 >   V i0          == V i1          = i0 == i1
 >   (t0 :$ e0)    == (t1 :$ e1)    = t0 == t1 && e0 == e1
 >   (op0 :@ vs0)  == (op1 :@ vs1)  = op0 == op1 && vs0 == vs1
+
+Then, equality in a set means having equal canonical element:
+
 >   (t0 :? _)     == (t1 :? _)     = t0 == t1
+
+Finally, a place-holder, as all terms should be matched by one of the
+previous patterns:
+
 >   _             == _             = False
+
 
 For scopes, we should only ever see full binders, and we compare them
 ignoring name advice: de Bruijn indexing gets rid of \(\alpha\)-conversion
@@ -175,7 +206,15 @@ irrelevant. We intend this for proofs, but there may be other things
 > instance Eq (Irr x) where
 >   _ == _ = True
 
+In this section, we have defined the syntactic equality on terms. The
+Igeneral definition of syntactic equality remains to be done. It is
+the subject of Section~\ref{sec:rules}: there, we rely on
+\emph{quotation} to turn values into terms. Once turned into terms, 
+we fall back to the equality defined above.
+
+
 \subsection{References}
+\label{sec:references}
 
 References are the key way we represent free variables, declared,
 defined, and deluded. References carry not only names, but types and
@@ -186,11 +225,15 @@ values, and are shared.
 >
 > type Name = [(String, Int)]
 >
-> -- |instance Show REF where|
-> --   |show (n := _) = show n|
->
 > instance Eq REF where
 >   (x := _) == (y := _) = x == y  -- could use cheeky pointer equality?
+
+A |REF| can either be:
+\begin{description}
+\item[|DECL|:] used a binder, a declaration
+\item[|DEFN|:] computed, a definition
+\item[|HOLE|:] manipulated, a hole in a zipper
+\end{description}
 
 > data RKind
 >   =  DECL
@@ -198,9 +241,17 @@ values, and are shared.
 >   |  HOLE
 >   deriving Show
 
+We can already define some handy operators on |REF|s. First, we can
+turn a |REF| to a |VAL|ue by using |pval|. If the reference is already
+reduced, then we simply pick the computed value. Otherwise, it is
+dealt as a neutral parameter.
+
 > pval :: REF -> VAL
 > pval (_ := DEFN v :<: _)  = v
-> pval r                      = N (P r)
+> pval r                    = N (P r)
+
+Second, we can extract the infered type of a reference thanks to the
+following code:
 
 > pty :: REF -> VAL
 > pty (_ := _ :<: ty) = ty
@@ -208,35 +259,117 @@ values, and are shared.
 
 \subsection{Computation}
 
+In this section, we implement an interpreter for Epigram. As one would
+expect, it will become handy during type-checking. We assume that
+evaluated terms have been type-checked beforehand, that is: the
+interpreter always terminates.
+
+The interpreter is decomposed in four blocks. First, the application
+operation |$$|. This operation applies an elimination principle to a
+value. Note that it is open to further extension, as we had new
+constructs and elimination principles to the core.
+
 > ($$) :: VAL -> Elim VAL -> VAL
+
+Application on a free variable in |v|: $(\lambda x . v) u = v$
+
 > L (K v)      $$ A _  = v
+
+Application on a bound variable in |t|: $(\lambda x . t) v = \mbox{eval } t[x \mapsto v]$
+
 > L (H g _ t)  $$ A v  = eval t (g :< v)
+
+Container unpacking: $\mbox{unpack}(Con t) = t$
+
 > C (Con t)    $$ Out  = t
+
+Extensions:
+
 > import <- ElimComputation
+
+Applying a term to a neutral function reduces to the neutral
+application of the term to the function:
+
 > N n          $$ e    = N (n :$ e)
+
+
+
+Second, the function |@@| evaluates the operator |op| on |vs|, if
+possible. If the evaluation is stuck, it returns a neutral
+application.
 
 > (@@) :: Op -> [VAL] -> VAL
 > op @@ vs = either (\_ -> N (op :@ vs)) id (opRun op vs) 
 
+
+Third, we reduce under binders. Two cases are possible.
+
 > body :: Scope {TT} REF -> ENV -> Scope {VV} REF
+
+Either, the binder disregards its argument, in which case we can
+innocently evaluate deeper.
+
 > body (K v)     g = K (eval v g)
+
+Or, a variable |x| is defined and bound in |t|: we are facing a
+closure, which is returned as such.
+
 > body (x :. t)  g = H g x t
 
+
+Finally, we can implement the interpreter. Technically, we are working
+in the Applicative |-> ENV| and use She's notation for applicative
+applications. 
+
 > eval :: Tm {d, TT} REF -> ENV -> VAL
+
+Evaluate under lambda binder with |body|:
+
 > eval (L b)       = (|L (body b)|)
+
+Reduce canonical term to normal form:
+
 > eval (C c)       = (|C (eval ^$ c)|)
+
+%% ???
+Drop off types Ex to In, just reduce |n|:
+
 > eval (N n)       = eval n
+
+%% ???
+Extract the value of a parameter, or it is stuck neutral:
+
 > eval (P x)       = (|(pval x)|)
+
+Extract the bound value from the environment:
+
 > eval (V i)       = (!. i)
+
+Apply an elimination form:
+
 > eval (t :$ e)    = (|eval t $$ (eval ^$ e)|)
+
+Apply the operator logic:
+
 > eval (op :@ vs)  = (|(op @@) (eval ^$ vs)|)
+
+Drop off type information, just reduce |t|
+
 > eval (t :? _)    = eval t
+
+
+
+The evaluation of a closed term simply consists in calling the
+interpreter defined above with the empty environment.
 
 > evTm :: Tm {d, TT} REF -> VAL
 > evTm t = eval t B0
 
 
 \subsection{Variable Manipulation}
+
+
+
 
 > data Mangle f x y = Mang
 >   {  mangP :: x -> f [Elim (InTm y)] -> f (ExTm y)

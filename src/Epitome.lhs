@@ -51,4 +51,10 @@
 
 %include Compiler.lhs
 
+
+
+\bibliographystyle{plain}
+\bibliography{Epitome}
+
+
 \end{document}
