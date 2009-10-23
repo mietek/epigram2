@@ -369,7 +369,7 @@ interpreter defined above with the empty environment.
 \subsection{Variable Manipulation}
 
 
-
+This is the Evil Mangler. Good luck with that stuff.
 
 > data Mangle f x y = Mang
 >   {  mangP :: x -> f [Elim (InTm y)] -> f (ExTm y)

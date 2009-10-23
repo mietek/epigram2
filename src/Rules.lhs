@@ -21,6 +21,8 @@
 
 %endif
 
+\subsection{Type-directed operations}
+
 > (&\) :: (a, b) -> (a -> b -> c) -> c
 > (&\) = flip uncurry
 
@@ -35,11 +37,17 @@
 > import <- CanTyRules
 > canTy  _  _                 = Nothing
 
+
+
 > elimTy :: (t -> VAL) -> (VAL :<: Can VAL) -> Elim t ->
 >           Maybe (Elim (TY :>: t),VAL)
 > elimTy ev (f :<: Pi s t) (A e) = Just (A (s :>: e),t $$ A (ev e)) 
 > import <- ElimTyRules
 > elimTy _  _              _     = Nothing
+
+
+\subsection{Quotation}
+
 
 > quop :: REF -> Root -> EXTM
 > quop ref@(ns := _) r = help (bwdList ns) r
@@ -87,6 +95,10 @@
 > equal :: (TY :>: (VAL,VAL)) -> Root -> Bool
 > equal (ty :>: (v1,v2)) r = quote (ty :>: v1) r == quote (ty :>: v2) r
 
+
+
+\subsection{Type inference}
+
 > infer :: EXTM -> Root -> Maybe TY
 > infer (P x)              r = Just (pty x)
 > infer (t :$ s)           r = do
@@ -105,6 +117,10 @@
 >   return vty
 > infer _                  _ = Nothing
 
+
+\subsection{Type checking}
+
+
 > check :: (TY :>: INTM) -> Root -> Maybe ()
 > check (C c :>: C c')        r = do
 >   csp <- canTy (\ y t -> (check (y :>: t) r, evTm t)) (c :>: c')
@@ -121,12 +137,19 @@
 > import <- Check
 > check _                     _ = Nothing
 
+
+
+
+\subsection{Operators}
+
 > import <- OpCode
 
 > operators :: [Op]
 > operators = (
 >   import <- Operators
 >   [])
+
+\subsection{Equality?}
 
 > mkEqConj :: [(TY :>: VAL,TY :>: VAL)] -> VAL
 > mkEqConj ((y0 :>: t0,y1 :>: t1) : []) = eqGreen @@ [y0,t0,y1,t1]
