@@ -70,22 +70,23 @@
 The role of |quoteRef tm v| is to bind the free variable |v| in |tm|
 to the bound variable |0|. Hence, it turns a |VV|alue into a |TT|erm.
 
-> quoteRef' :: [REF] -> Tm {d,VV} REF -> Root -> (Tm {d,TT} REF)
-> quoteRef'  refs (P x) r =
+> quoteRef' :: Rooty m => [REF] -> Tm {d,VV} REF -> m (Tm {d,TT} REF)
+> quoteRef'  refs (P x) =
 >     case x `elemIndex` refs of
->       Just i -> V $ length refs - i - 1
->       Nothing -> P x
-> quoteRef' refs (L (H vs x t)) r = 
->     L (x :. Rooty.freshRef (x :<: undefined) 
->                            (\x r -> 
->                              quoteRef' (x:refs) 
->                                        (eval t (vs :< pval x)) r)
->                           r)
-> quoteRef' refs (L (K t)) r = L (K (quoteRef' refs t r))
-> quoteRef' refs (C c) r = C (traverse (quoteRef' refs) c r)
-> quoteRef' refs (N n) r = N ((quoteRef' refs) n r)
-> quoteRef' refs (n :$ v) r = quoteRef' refs n r :$ traverse (quoteRef' refs) v r
-> quoteRef' refs (op :@ vs) r = op :@ traverse (quoteRef' refs) vs r
+>       Just i -> pure $ V $ length refs - i - 1
+>       Nothing -> pure $ P x
+> quoteRef' refs (L (H vs x t)) = 
+>     (|(\t -> L (x :. t))
+>       (Rooty.freshRef (x :<: undefined) 
+>                      (\x -> quoteRef' (x:refs) 
+>                                       (eval t (vs :< pval x))))|)
+> quoteRef' refs (L (K t)) = (|(L . K) (quoteRef' refs t) |)
+> quoteRef' refs (C c) = (|C (traverse (quoteRef' refs) c )|)
+> quoteRef' refs (N n) = (|N (quoteRef' refs n)|)
+> quoteRef' refs (n :$ v) = (|(:$) (quoteRef' refs n)
+>                                (traverse (quoteRef' refs) v)|)
+> quoteRef' refs (op :@ vs) = (|(:@) (pure op)
+>                                  (traverse (quoteRef' refs) vs)|)
 
 
 > etaExpand :: (TY :>: VAL) -> Root -> Maybe INTM
