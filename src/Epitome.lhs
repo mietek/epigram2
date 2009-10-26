@@ -55,6 +55,9 @@
 
 %include Compiler.lhs
 
+\chapter{Elaborator}
+
+%include Elaborator.lhs
 
 
 \bibliographystyle{plain}

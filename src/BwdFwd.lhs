@@ -30,6 +30,10 @@ Backward and forward lists, applicative with zipping.
 > fwdList :: [x] -> Fwd x
 > fwdList = foldr (:>) F0
 
+> (<><) :: Bwd x -> Fwd x -> Bwd x
+> xs <>< F0 = xs
+> xs <>< (y :> ys) = (xs :< y) <>< ys
+
 > instance Applicative Bwd where
 >   pure x                     = pure x       :< x
 >   (fs :< f)  <*>  (ss :< s)  = (fs <*> ss)  :< f s
