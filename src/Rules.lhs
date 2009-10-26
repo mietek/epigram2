@@ -13,9 +13,12 @@
 > import Control.Monad
 > import Data.Foldable
 > import Data.Traversable
+> import Data.List
+
 > import BwdFwd
 > import Tm
 > import Root
+> import Rooty
 > import Features
 > import MissingLibrary
 
@@ -63,6 +66,27 @@
 > bquote (P x)          r = quop x r
 > bquote (n :$ v)       r = bquote n r :$ traverse bquote v r
 > bquote (op :@ vs)     r = op :@ traverse bquote vs r
+
+The role of |quoteRef tm v| is to bind the free variable |v| in |tm|
+to the bound variable |0|. Hence, it turns a |VV|alue into a |TT|erm.
+
+> quoteRef' :: [REF] -> Tm {d,VV} REF -> Root -> (Tm {d,TT} REF)
+> quoteRef'  refs (P x) r =
+>     case x `elemIndex` refs of
+>       Just i -> V $ length refs - i - 1
+>       Nothing -> P x
+> quoteRef' refs (L (H vs x t)) r = 
+>     L (x :. Rooty.freshRef (x :<: undefined) 
+>                            (\x r -> 
+>                              quoteRef' (x:refs) 
+>                                        (eval t (vs :< pval x)) r)
+>                           r)
+> quoteRef' refs (L (K t)) r = L (K (quoteRef' refs t r))
+> quoteRef' refs (C c) r = C (traverse (quoteRef' refs) c r)
+> quoteRef' refs (N n) r = N ((quoteRef' refs) n r)
+> quoteRef' refs (n :$ v) r = quoteRef' refs n r :$ traverse (quoteRef' refs) v r
+> quoteRef' refs (op :@ vs) r = op :@ traverse (quoteRef' refs) vs r
+
 
 > etaExpand :: (TY :>: VAL) -> Root -> Maybe INTM
 > etaExpand (C (Pi s t) :>: f) r = Just $
@@ -127,7 +151,7 @@
 >   traverse id csp
 >   return ()
 > check (C (Pi s t) :>: L sc) r = do
->   freshRef ("" :<: s) 
+>   Root.freshRef ("" :<: s) 
 >            (\ref -> check (t $$ A (pval ref) :>: underScope sc ref)) 
 >            r
 > check (w :>: N n)           r = do
