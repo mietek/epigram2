@@ -19,6 +19,7 @@
 
 %endif
 
+%if False
 
 |showDev| is an ugly-printer for developments that makes the structure a little
 bit clearer than the derived |Show| instance.
@@ -44,14 +45,23 @@ bit clearer than the derived |Show| instance.
 > printDev :: Dev -> IO ()
 > printDev = putStrLn . showDev
 
+%endif
 
-Unfolding the nested development data structure produces a Zipper-like structure that
-allows us to keep track of a working development and perform local navigation easily.
-A |Layer| in this structure contains a list of |elders| (siblings above
-the current development), a |mother| (the |REF| of the |Entry| that
-contains the current development), a list of |cadets| (siblings below the current
-development) and a |laytip| (|Tip| of the current development). The entire structure
-is then a list of these layers.
+Recall from Section~\ref{sec:developments} that
+
+< type Dev = (Bwd Entry, Tip, Root)
+
+We ``unzip`` (cf. Huet's Zipper) this type to produce a type representing its
+one-hole context, which allows us to keep track of the location of a working
+development and perform local navigation easily.
+Each |Layer| of the structure is a record with the following fields:
+\begin{description}
+\item[|elders|] entries appearing above the working development
+\item[|mother|] the |REF| of the |Entry| that contains the working development
+\item[|cadets|] entries appearing below the working development
+\item[|laytip|] the |Tip| of the containing development
+\item[|layroot|] the |Root| of the containing development
+\end{description}
 
 > data Layer = Layer
 >   {  elders  :: Bwd Entry
@@ -61,10 +71,13 @@ is then a list of these layers.
 >   ,  layroot :: Root }
 >   deriving Show
 
+The current state is then represented by a stack of |Layer|s, along with the
+current working development:
+
 > type WhereAmI = (Bwd Layer, Dev)
 
+Now we need functions to manipulate the unzipped data structure.
 
-Now we need functions to manipulate the zipper data structure.
 |goIn| changes the current location to the bottom-most girl in the current development.
 
 > goIn :: WhereAmI -> WhereAmI
@@ -132,13 +145,14 @@ without type-checking or handling roots properly at the moment.
 >     freshRef x (\ref@(n := _) r ->
 >                     (ls, (es :< E ref (last n) (Boy k), tip, r))) r
 
-
 > appendGoal :: (String :<: TY) -> WhereAmI -> WhereAmI
 > appendGoal (s:<:ty) (ls, (es, tip, root)) = 
 >     let n = name root s in
 >     (ls, (es :< E (n := HOLE :<: ty) (last n) (Girl LETG (B0, Unknown ty, room root s)), tip, roos root))
 
 
+|auncles| calculates the elder aunts or uncles of the current development,
+thereby giving a list of entries that are currently in scope.
 
 > auncles :: WhereAmI -> Bwd Entry
 > auncles (ls, (es, _, _)) = foldMap elders ls <+> es
