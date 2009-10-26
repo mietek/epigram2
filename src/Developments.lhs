@@ -1,11 +1,11 @@
-\section{Core}
+\section{Developments}
 
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE TypeOperators #-}
 
-> module Core where
+> module Developments where
 
 > import Data.Foldable
 > import Control.Monad
@@ -17,7 +17,18 @@
 
 %endif
 
-> type Dev = (Bwd Entry, Tip)
+The top level state of the system is represented by a |Module| (that is, a
+|Dev| with a |Module| tip). Each |Dev| contains a list of entries, some
+of which may have their own developments, creating a nested tree-like structure.
+The list of entries is from top-to-bottom (so the topmost is the furthest left).
+A |Dev| also keeps track of its |Root| for namespace handling purposes.
+
+> type Dev = (Bwd Entry, Tip, Root)
+
+
+A |Module| is the |Tip| of a top-level development. Developments contained
+within a female |Entity| may represent |Unknown|s of a given type, or may be |Defined|
+as a term with a given type.
 
 > data Tip
 >   = Module
@@ -25,9 +36,19 @@
 >   | Defined INTM TY
 >   deriving Show
 
+
+An |Entry| consists of a |REF| with the last component of its |Name| and an |Entity|.
+
 > data Entry
 >   = E REF (String, Int) Entity
 >   deriving Show
+
+
+An |Entity| may be a |Boy| (which does not have children) or a |Girl| (which may do).
+A |Girl| is a definition, with a (possibly empty) development of sub-objects, which
+has a |Tip| that is |Unknown| or |Defined|.
+A |Boy| represents a parameter (either a $\lambda$ or $\Pi$ abstraction), which scopes
+over all following entries and the definition (if any) in its development.
 
 > data Entity
 >   = Boy   BoyKind
@@ -37,14 +58,6 @@
 > data BoyKind   = LAMB | PIB INTM deriving (Show, Eq)
 > data GirlKind  = LETG deriving (Show, Eq)
 
-> data Layer = Layer
->   {  elders  :: Bwd Entry
->   ,  mother  :: REF
->   ,  cadets  :: Fwd Entry
->   ,  laytip  :: Tip }
->   deriving Show
-
-> type WhereAmI = (Bwd Layer, Root, Dev)
 
 > data Elab x
 >   = Bale x
@@ -71,8 +84,8 @@
 >   (<*>) = ap
 
 > traverseDev :: Applicative f => (REF -> f REF) -> Dev -> f Dev
-> traverseDev f (es, t) = 
->   (|(,) (traverse (traverseEntry f) es) (traverseTip f t)|)
+> traverseDev f (es, t, r) = 
+>   (|(\x y z -> (x,y,z)) (traverse (traverseEntry f) es) (traverseTip f t) ~r|)
 
 > traverseTip :: Applicative f => (REF -> f REF) -> Tip -> f Tip
 > traverseTip f Module        = pure Module

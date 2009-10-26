@@ -20,7 +20,7 @@ generate an executable from a collection of supercombinator definitions.
 > import Data.Monoid
 
 > import Tm
-> import Core
+> import Developments
 > import BwdFwd
 > import Features
 
@@ -170,9 +170,9 @@ by hand in Epic - see epic/support.e
 >                _ -> error "Unknown operator"
 
 > compileModule :: Dev -> Bwd (CName, CompileFn)
-> compileModule (entries, Module) = fmap compileEntry entries
+> compileModule (entries, Module, _) = fmap compileEntry entries
 
-> compileEntry (E name _ (Girl LETG (entries, tip))) 
+> compileEntry (E name _ (Girl LETG (entries, tip, _))) 
 >       = (cname name, collectArgs [] entries tip)
 
 > collectArgs :: [REF] -> Bwd Entry -> Tip -> CompileFn

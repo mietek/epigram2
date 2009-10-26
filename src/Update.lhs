@@ -13,7 +13,7 @@
 > import BwdFwd
 > import Tm
 > import Root
-> import Core
+> import Developments
 
 > afind :: Eq x => [x] -> x -> Writer Any x
 > afind []     y = return y

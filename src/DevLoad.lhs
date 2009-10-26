@@ -1,11 +1,11 @@
-\section{CoreLoad}
+\section{DevLoad}
 
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE TypeOperators #-}
 
-> module CoreLoad where
+> module DevLoad where
 
 > import Control.Monad
 > import Control.Monad.Writer
@@ -22,7 +22,7 @@
 > import Lexer
 > import Parsley
 > import TmParse
-> import Core
+> import Developments
 > import Root
 > import Rules
 
@@ -63,7 +63,7 @@
 > findC :: REF -> Spine {TT} REF -> Entity -> RelName -> Maybe (ExTm REF)
 > findC r  as (Boy _)           []  = (|(P r)|)
 > findC r  as _                 []  = (|(P r $:$ as)|)
-> findC r  as (Girl _ (es, _))  ys  = findD es ys as
+> findC r  as (Girl _ (es, _, _))  ys  = findD es ys as
 > findC _  as _                 ys  = empty
 
 > findD :: Bwd Entry -> RelName -> Spine {TT} REF -> Maybe (ExTm REF)
@@ -92,9 +92,6 @@
 >   ,  mangB = \ x -> resolve ps (vs :< x)
 >   } where
 
-> auncles :: WhereAmI -> Bwd Entry
-> auncles (ls, _, (es, _)) = foldMap elders ls <+> es
-
 > testResolve :: Tm {In, TT} String -> Maybe (Tm {In, TT} REF)
 > testResolve t = resolve B0 B0 % t
 
@@ -122,46 +119,46 @@
 >    |LCom (%pSep (tok isSpcT) (teq Sem)%)
 >    |)
 
-> coreLineAction :: Bwd Entry -> CoreLine -> Dev -> Root -> Maybe (Dev, Root)
-> coreLineAction gs (LLam [] _) d r = Just (d, r)
-> coreLineAction gs (LLam (x : xs) mty) (es, tip) r = do
+> coreLineAction :: Bwd Entry -> CoreLine -> Dev -> Maybe Dev
+> coreLineAction gs (LLam [] _) d = Just d
+> coreLineAction gs (LLam (x : xs) mty) (es, tip, r) = do
 >   s <- tipDom mty tip r
 >   let xr = name r x := DECL :<: s
 >   let xe = E xr (x, snd r) (Boy LAMB)
->   coreLineAction gs (LLam xs mty) (es :< xe, tipRan tip xr) (roos r)
-> coreLineAction gs LCom d r = Just (d, r)
-> coreLineAction gs (LDef x (Just ty) tss) (es, t) r =
+>   coreLineAction gs (LLam xs mty) (es :< xe, tipRan tip xr, roos r)
+> coreLineAction gs LCom d = Just d
+> coreLineAction gs (LDef x (Just ty) tss) (es, t, r) =
 >   let  gs' = gs <+> es
 >        vy = evTm ty
->        (d@(ds, u), tss') =
->          runWriter (makeFun gs' (B0, Unknown vy) tss (room r x))
+>        (d@(ds, u, _), tss') =
+>          runWriter (makeFun gs' (B0, Unknown vy, room r x) tss)
 >        xr = name r x := (case u of
 >               Unknown _ -> HOLE
 >               Defined b _ ->
 >                 DEFN (evTm (lambda gs' (discharge ds ((gs' <+> ds) -| b))))) :<: vy
 >        xe = E xr (x, snd r) (Girl LETG d)
->   in   Just ((es :< xe, t), roos r)
-> coreLineAction gs (LEq (Just t) Nothing) (es, Unknown y) r = do
+>   in   Just (es :< xe, t, roos r)
+> coreLineAction gs (LEq (Just t) Nothing) (es, Unknown y, r) = do
 >   () <- check (y :>: t) r
->   Just ((es, Defined t y), r)
-> coreLineAction gs (LEq (Just t) (Just y)) (es, tip) r = do
+>   Just (es, Defined t y, r)
+> coreLineAction gs (LEq (Just t) (Just y)) (es, tip, r) = do
 >   () <- check (SET :>: y) r
 >   let vy = evTm y
 >   () <- case tip of
 >      Unknown y' -> guard $ equal (SET :>: (vy, y')) r
 >      _ -> (|()|)
 >   () <- check (vy :>: t) r
->   Just ((es, Defined t (evTm y)), r)
-> coreLineAction gs (LEq Nothing Nothing) (es, Unknown y) r =
->   Just ((es, Unknown y), r)
-> coreLineAction gs (LEq Nothing (Just y)) (es, tip) r = do
+>   Just (es, Defined t (evTm y), r)
+> coreLineAction gs (LEq Nothing Nothing) (es, Unknown y, r) =
+>   Just (es, Unknown y, r)
+> coreLineAction gs (LEq Nothing (Just y)) (es, tip, r) = do
 >   () <- check (SET :>: y) r
 >   let vy = evTm y
 >   () <- case tip of
 >      Unknown y' -> guard $ equal (SET :>: (vy, y')) r
 >      _ -> (|()|)
->   Just ((es, Unknown (evTm y)), r)
-> coreLineAction _ _ _ _ = Nothing
+>   Just (es, Unknown (evTm y), r)
+> coreLineAction _ _ _ = Nothing
 
 
 > discharge :: Bwd Entry -> INTM -> INTM
@@ -206,13 +203,13 @@
 > tipRan (Unknown (C (Pi _ t)))  x  = Unknown (t $$ A (pval x))
 > tipRan Module                  _  = Module
 
-> makeFun :: Bwd Entry -> Dev -> [[Tok]] -> Root -> Writer [[Tok]] Dev
-> makeFun gs d [] r = (|d|)
-> makeFun gs d@(ls, _) (ts : tss) r =
->   fromMaybe (tell [Key "--" : Spc 1 : ts] >> makeFun gs d tss r) $ do
+> makeFun :: Bwd Entry -> Dev -> [[Tok]] -> Writer [[Tok]] Dev
+> makeFun gs d [] = (|d|)
+> makeFun gs d@(ls, _, r) (ts : tss) =
+>   fromMaybe (tell [Key "--" : Spc 1 : ts] >> makeFun gs d tss) $ do
 >     c <- parse (pCoreLine (gs <+> ls)) ts
->     (d, r) <- coreLineAction gs c d r
->     return (tell [ts] >> makeFun gs d tss r)
+>     d <- coreLineAction gs c d
+>     return (tell [ts] >> makeFun gs d tss)
 
 > coreLoad :: [[Tok]] -> (Dev, [[Tok]])
-> coreLoad tss = runWriter (makeFun B0 (B0, Module) tss (B0, 0))
+> coreLoad tss = runWriter (makeFun B0 (B0, Module, (B0, 0)) tss)

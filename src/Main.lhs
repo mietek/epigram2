@@ -10,7 +10,7 @@
 
 > import Lexer
 > import Layout
-> import CoreLoad
+> import DevLoad
 > import Compiler
 
 > message = "Epigram version (suc n)\n" ++

@@ -19,7 +19,7 @@
 > import Tm
 > import Root
 > import Rules
-> import CoreLoad -- probably not the right thing to do
+> import DevLoad -- probably not the right thing to do
 
 > type Cxty x = (Bwd REF, ENV) -> Root -> x
 

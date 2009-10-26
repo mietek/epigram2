@@ -32,7 +32,8 @@
 %include Tm.lhs
 %include Tactics.lhs
 %include Rules.lhs
-%include Core.lhs
+%include Developments.lhs
+%include DevLoad.lhs
 %include Construction.lhs
 
 \chapter{Feature by Feature}
