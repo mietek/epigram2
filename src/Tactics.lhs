@@ -11,15 +11,12 @@
 Export |Tac| abstractly.
 
 > import Control.Monad
+> import Control.Applicative
 > import Debug.Trace
 
 > import BwdFwd
-
-We ought to be able to get rid of Root import, and parameterize
-everything by a Functor/Monad/Rooty m.
-
-> import Root
 > import Rooty
+> import Root
 > import Tm
 > import Rules
 
@@ -30,14 +27,30 @@ everything by a Functor/Monad/Rooty m.
 > newtype Tac x = Tac { runTac :: Root -> TY -> Maybe x }
 
 > instance Functor Tac where
->     fmap f g = Tac { \r t -> fmap f (runTac g r t) }
+>     fmap f g = Tac { runTac = \r t -> fmap f (runTac g r t) }
+
+> instance Applicative Tac where
+>     pure x = Tac { runTac = \_ _ -> Just x }
+>     f <*> x = Tac { runTac = \r t ->
+>                              do 
+>                              f' <- runTac f r t
+>                              x' <- runTac x r t
+>                              return $ f' x' }
 
 > instance Monad Tac where
->     return x = Tac { runTac = \_ _ -> Just x }
+>     return = pure
 >     x >>= f = Tac { runTac = \r t -> 
 >                                do 
 >                                x <- runTac x r t
 >                                runTac (f x) r t }
+
+> instance Rooty Tac where
+>     freshRef x tacF = Tac { runTac = Rooty.freshRef x (runTac . tacF) }
+>     forkRoot s child dad = Tac { runTac = \root typ -> 
+>                                           do 
+>                                           c <- runTac child (room root s) typ
+>                                           runTac (dad c) (roos root) typ
+>                                }
 
 \subsection{The tactic combinators}
 
@@ -61,49 +74,40 @@ This is a bit of Reader digest: |ask| and |runReader|.
 \subsubsection{}
 
 > discharge :: Rooty m => REF -> VAL -> m VAL
-> discharge ref val = Rooty.freshRef ("dischargeTac" :<: val)
->                                    (\ref' -> undefined)
+> discharge freshRef val = (|(\t -> L (H B0 "discharge" t)) 
+>                            (quoteRef' [freshRef] val) |)
 
 \subsection{Syntax-directed tacticals}
 
 Intros
 
 > lambda :: (VAL -> Tac VAL) -> Tac VAL
-> lambda body = 
->     Tac { runTac = \root typ ->
->           case typ of 
->             C (Pi s t) ->
->                 fresh ("lambdaTac" :<: s)
->                       (\val root' -> 
->                            do
->                              term <- runTac (body val) root' (t $$ A val)
->                              return (L (H B0 "lambdaTac" (bquote term root'))))
->                       root
->             _ -> Nothing
->           }
+> lambda body = do
+>   C (Pi s t) <- goal
+>   Rooty.freshRef ("" :<: s) $
+>                  \x -> 
+>                      discharge x =<<
+>                      subgoal (t $$ A (pval x)) (body (pval x))
+
+This one should use the modified version of canTy:
        
 > can :: Can (Tac VAL) -> Tac VAL
-> can Set = 
->     Tac { runTac = \root typ ->
->           case typ of
->             SET -> do
->                    return SET
->             _ -> Nothing                  
->         }
-> can (Pi tacS tacT) =
->     Tac { runTac = \root typ ->
->           case typ of
->             SET -> do
->                      s <- runTac tacS root SET
->                      t <- runTac tacT root (C (Pi s SET))
->                      return (C (Pi s t))
->             _ -> Nothing 
->         }
+> can Set = do
+>           SET <- goal
+>           return SET
+> can (Pi tacS tacT) = do
+>   SET <- goal
+>   s <- subgoal SET tacS
+>   t <- subgoal (C (Pi s SET)) tacT
+>   return $ C (Pi s t)
 
 Elim
 
-> newtype Use = Use { runUse :: (NEU :<: TY) -> Tac VAL }
+> type Use = (NEU :<: TY) -> Tac VAL
 
+
+
+> {-
 > done :: Use
 > done =
 >   Use { runUse = \(v :<: t) ->
@@ -137,3 +141,4 @@ Elim
 >                       _ -> Nothing
 >                 }
 >         }
+> -}
