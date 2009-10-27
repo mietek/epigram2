@@ -66,6 +66,7 @@ over all following entries and the definition (if any) in its development.
 > data GirlKind  = LETG deriving (Show, Eq)
 
 
+\subsection{Old leftover stuff}
 
 > data Elab x
 >   = Bale x

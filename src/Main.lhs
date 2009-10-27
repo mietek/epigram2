@@ -1,3 +1,7 @@
+\section{Main}
+
+%if False
+
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE TypeOperators, GADTs, KindSignatures,
 >     TypeSynonymInstances, FlexibleInstances, ScopedTypeVariables #-}
@@ -12,6 +16,8 @@
 > import Layout
 > import DevLoad
 > import Compiler
+
+%endif
 
 > message = "Epigram version (suc n)\n" ++
 >           "-----------------------\n" ++

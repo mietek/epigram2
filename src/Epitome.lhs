@@ -8,6 +8,7 @@
 \usepackage{stmaryrd,wasysym,url,
             upgreek,palatino,alltt,
             color}
+\usepackage{hyperref}
 
 %include lhs2TeX.fmt
 %include lhs2TeX.sty
@@ -25,16 +26,20 @@
 
 %include BwdFwd.lhs
 %include Parsley.lhs
+%include MissingLibrary.lhs
 
 \chapter{Core}
 
 %include Root.lhs
+%include Rooty.lhs
 %include Tm.lhs
 %include Tactics.lhs
 %include Rules.lhs
+%include Tactics.lhs
 %include Developments.lhs
 %include DevLoad.lhs
 %include Construction.lhs
+%include Update.lhs
 
 \chapter{Feature by Feature}
 
@@ -59,6 +64,9 @@
 
 %include Elaborator.lhs
 
+\chapter{Main}
+
+%include Main.lhs
 
 \bibliographystyle{plain}
 \bibliography{Epitome}

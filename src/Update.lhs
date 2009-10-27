@@ -1,3 +1,7 @@
+\section{Update}
+
+%if False
+
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE TypeOperators #-}
 
@@ -14,6 +18,8 @@
 > import Tm
 > import Root
 > import Developments
+
+%endif
 
 > afind :: Eq x => [x] -> x -> Writer Any x
 > afind []     y = return y

@@ -1,11 +1,13 @@
 \section{DevLoad}
 
+This module exists to provide the |coreLoad| function.
+
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE TypeOperators #-}
 
-> module DevLoad where
+> module DevLoad (coreLoad) where
 
 > import Control.Monad
 > import Control.Monad.Writer
@@ -210,6 +212,11 @@
 >     c <- parse (pCoreLine (gs <+> ls)) ts
 >     d <- coreLineAction gs c d
 >     return (tell [ts] >> makeFun gs d tss)
+
+
+|coreLoad| takes a |[[Tok]]| as produced by |layout|, and converts it
+to a |Module| development. It returns the |Dev| produced, and a
+|[[Tok]]| with any lines that fail to type-check commented out.
 
 > coreLoad :: [[Tok]] -> (Dev, [[Tok]])
 > coreLoad tss = runWriter (makeFun B0 (B0, Module, (B0, 0)) tss)
