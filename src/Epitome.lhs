@@ -5,7 +5,9 @@
 %endif
 
 \documentclass[a4paper]{report}
-\usepackage{stmaryrd,wasysym,url,upgreek,palatino,alltt}
+\usepackage{stmaryrd,wasysym,url,
+            upgreek,palatino,alltt,
+            color}
 
 %include lhs2TeX.fmt
 %include lhs2TeX.sty
@@ -28,6 +30,7 @@
 
 %include Root.lhs
 %include Tm.lhs
+%include Tactics.lhs
 %include Rules.lhs
 %include Core.lhs
 %include Construction.lhs
