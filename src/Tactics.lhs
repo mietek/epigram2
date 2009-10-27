@@ -105,40 +105,22 @@ Elim
 
 > type Use = (NEU :<: TY) -> Tac VAL
 
-
-
-> {-
 > done :: Use
-> done =
->   Use { runUse = \(v :<: t) ->
->     Tac { runTac = \root typ ->
->                    if equal (SET :>: (typ, t)) root then
->                       do
->                       check (typ :>: bquote (N v) root) root
->                       return (N v)
->                    else
->                        Nothing
->         }
->       }
+> done (v :<: t) =
+>     do
+>       vv <- subgoal t $
+>             (do
+>               return $ N v)
+>       return vv
 
 > use :: REF -> Use -> Tac VAL
 > use ref useR = 
->     Tac { runTac =
->             runTac $ runUse useR (P ref :<: pty ref)
->         }
+>     do
+>       useR (P ref :<: pty ref)
 
 > apply :: Tac VAL -> Use -> Use
-> apply tacX use = 
->     Use { runUse = \(f :<: t) ->
->             Tac { runTac = \root typ ->
->                     case t of
->                       C (Pi s t) ->
->                         do
->                         xv <- runTac tacX root s
->                         runTac (runUse use (f :$ A xv :<: t $$ A xv))
->                                root
->                                typ
->                       _ -> Nothing
->                 }
->         }
-> -}
+> apply tacX use (f :<: C (Pi s t)) = 
+>     do
+>     x <- subgoal s tacX
+>     use (f :$ A x :<: t $$ A x)
+
