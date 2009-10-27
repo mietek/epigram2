@@ -83,19 +83,22 @@ Now we need functions to manipulate the unzipped data structure.
 > goIn :: WhereAmI -> WhereAmI
 > goIn l = goInAcc l F0 
 >     where goInAcc :: WhereAmI -> Fwd Entry -> WhereAmI
->           goInAcc (ls, (es :< E ref (s, _) (Girl LETG dev), tip, root)) cadets
->               = (ls :< Layer es ref cadets tip root, dev)
->           goInAcc (ls, (es :< e, tip, root)) cadets
->               = goInAcc (ls, (es, tip, root)) (e :> cadets)
->           goInAcc (_, (B0, _, _)) _ = error "goIn: no girls in current development"
+>           goInAcc (ls, (es :< e, tip, root)) cadets =
+>               case e of
+>                   E ref _ (Girl LETG dev) ->
+>                       (ls :< Layer es ref cadets tip root, dev)
+>                   e -> goInAcc (ls, (es, tip, root)) (e :> cadets)
+>           goInAcc _ _ = error "goIn: no girls in current development"
 
 
 |goOut| goes up a layer, so the focus changes to the development containing
 the current working location.
 
 > goOut :: WhereAmI -> WhereAmI
-> goOut (ls :< Layer elders ref@(name := _) cadets tip root, dev)
->     = (ls, (elders :< E ref (last name) (Girl LETG dev) <>< cadets, tip, root))
+> goOut (ls :< l, dev) = (ls,
+>     (elders l :< E (mother l) (lastName (mother l)) (Girl LETG dev) <>< cadets l
+>     ,laytip l
+>     ,layroot l))
 > goOut (B0, _) = error "goOut: already at outermost layer"
 
 
@@ -123,14 +126,13 @@ the current working location.
 > goDown :: WhereAmI -> WhereAmI
 > goDown = goDownAcc B0
 >     where goDownAcc :: Bwd Entry -> WhereAmI -> WhereAmI
->           goDownAcc acc (ls :< Layer 
->                        elders oldRef@(name := _) (E newRef _ (Girl LETG newDev) :> cadets) tip root
->                       , oldDev)
->               = (ls :< Layer 
->                  ((elders :< E oldRef (last name) (Girl LETG oldDev)) <+> acc) newRef cadets tip root
->                 , newDev)
->           goDownAcc acc (ls :< Layer elders ref (e :> es) tip root, dev)
->               = goDownAcc (acc :< e) (ls :< Layer elders ref es tip root, dev)
+>           goDownAcc acc (ls :< l@(Layer elders ref (e :> es) tip root), dev)
+>               = case e of
+>                     E newRef _ (Girl LETG newDev) ->
+>                         (ls :< l{elders=elders:<E ref (lastName ref) (Girl LETG dev) <+> acc,
+>                                  mother=newRef, cadets=es}, newDev)
+>                     e ->
+>                         goDownAcc (acc :< e) (ls :< l{cadets=es}, dev)
 >           goDownAcc _ (_ :< Layer _ _ F0 _ _, _) 
 >               = error "goDown: no girls below current development"
 >           goDownAcc _ (B0,  _)
@@ -147,8 +149,10 @@ without type-checking or handling roots properly at the moment.
 
 > appendGoal :: (String :<: TY) -> WhereAmI -> WhereAmI
 > appendGoal (s:<:ty) (ls, (es, tip, root)) = 
->     let n = name root s in
->     (ls, (es :< E (n := HOLE :<: ty) (last n) (Girl LETG (B0, Unknown ty, room root s)), tip, roos root))
+>     let n = name root s
+>         ref = n := HOLE :<: ty in
+>     (ls, (es :< E ref (lastName ref) (Girl LETG (B0, Unknown ty, room root s)), 
+>           tip, roos root))
 
 
 |auncles| calculates the elder aunts or uncles of the current development,

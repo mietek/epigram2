@@ -44,6 +44,12 @@ An |Entry| consists of a |REF| with the last component of its |Name| and an |Ent
 >   = E REF (String, Int) Entity
 >   deriving Show
 
+Why do we need to record the last component again? Here's a utility function to
+extract it from a reference.
+
+> lastName :: REF -> (String, Int)
+> lastName (n := _) = last n
+
 
 An |Entity| may be a |Boy| (which does not have children) or a |Girl| (which may do).
 A |Girl| is a definition, with a (possibly empty) development of sub-objects, which
@@ -58,6 +64,7 @@ over all following entries and the definition (if any) in its development.
 >
 > data BoyKind   = LAMB | PIB INTM deriving (Show, Eq)
 > data GirlKind  = LETG deriving (Show, Eq)
+
 
 
 > data Elab x
