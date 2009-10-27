@@ -1,4 +1,3 @@
-\section{Dev Zipper}
 
 %if False
 
@@ -19,33 +18,7 @@
 
 %endif
 
-%if False
-
-|showDev| is an ugly-printer for developments that makes the structure a little
-bit clearer than the derived |Show| instance.
-
-> showDev :: Dev -> String
-> showDev d = showDevAcc d 0 ""
->     where showDevAcc :: Dev -> Int -> String -> String
->           showDevAcc (B0, t, r) n acc = acc ++ "\n" ++ indent n 
->                                         ++ "Tip: " ++ show t ++ "\n" ++ indent n
->                                         ++ "Root: " ++ show r
->           showDevAcc (es :< E ref _ (Boy k), t, r) n acc = 
->               showDevAcc (es, t, r) n (
->               "\n" ++ indent n ++ "Boy " ++ show k ++ " " ++ show ref
->               ++ acc)
->           showDevAcc (es :< E ref _ (Girl LETG d), t, r) n acc = 
->               showDevAcc (es, t, r) n (
->               "\n" ++ indent n ++ "Girl " ++ show ref
->               ++ showDevAcc d (succ n) ""
->               ++ acc)
->               
->           indent n = replicate (n*4) ' '
->                
-> printDev :: Dev -> IO ()
-> printDev = putStrLn . showDev
-
-%endif
+\section{Dev Zipper}
 
 Recall from Section~\ref{sec:developments} that
 
@@ -160,3 +133,54 @@ thereby giving a list of entries that are currently in scope.
 
 > auncles :: WhereAmI -> Bwd Entry
 > auncles (ls, (es, _, _)) = foldMap elders ls <+> es
+
+
+\section{Command-line interface}
+
+|showDev| is an ugly-printer for developments that makes the structure a little
+bit clearer than the derived |Show| instance.
+
+> showDev :: Dev -> String
+> showDev d = showDevAcc d 0 ""
+>     where showDevAcc :: Dev -> Int -> String -> String
+>           showDevAcc (B0, t, r) n acc = acc ++ "\n" ++ indent n 
+>                                         ++ "Tip: " ++ show t ++ "\n" ++ indent n
+>                                         ++ "Root: " ++ show r
+>           showDevAcc (es :< E ref _ (Boy k), t, r) n acc = 
+>               showDevAcc (es, t, r) n (
+>               "\n" ++ indent n ++ "Boy " ++ show k ++ " " ++ show ref
+>               ++ acc)
+>           showDevAcc (es :< E ref _ (Girl LETG d), t, r) n acc = 
+>               showDevAcc (es, t, r) n (
+>               "\n" ++ indent n ++ "Girl " ++ show ref
+>               ++ showDevAcc d (succ n) ""
+>               ++ acc)
+>               
+>           indent n = replicate (n*4) ' '
+                
+> printDev :: Dev -> IO ()
+> printDev = putStrLn . showDev
+
+> showRef :: REF -> String
+> showRef (ns := _) = unwords (fst . unzip $ ns)
+
+
+Here we have a very basic command-driven interface to the elaborator.
+
+> elaborator :: WhereAmI -> IO ()
+> elaborator loc = do
+>   printDev (snd loc)
+>   case fst loc of
+>       _ :< layer  -> putStr ((showRef . mother $ layer) ++ " > ")
+>       _       -> putStr "Top > "
+>   l <- getLine
+>   case words l of
+>     "in":_ -> elaborator (goIn loc)
+>     "out":_ -> elaborator (goOut loc)
+>     "up":_ -> elaborator (goUp loc)
+>     "down":_ -> elaborator (goDown loc)
+>     "goal":s:_ -> elaborator (appendGoal (s :<: C Set) loc)
+>     "bind":s:_ -> elaborator (appendBinding (s :<: C Set) LAMB loc)
+>     "auncles":_ -> putStrLn (foldMap ((++"\n").show) (auncles loc)) >> elaborator loc
+>     "quit":_ -> return ()
+>     _ -> putStrLn "???" >> elaborator loc
