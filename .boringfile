@@ -1,5 +1,17 @@
+# (lhs2TeX) Boring file regexps:
+Epitome\.aux
+Epitome\.bbl
+Epitome\.blg
+Epitome\.log
+Epitome\.pdf
+Epitome\.ptb
+Epitome\.tex
+
 # (She) Boring file regexps:
 \.hers
+
+# (Makefile) Boring file regexps:
+src/\.depend$
 
 # (Darcs) Boring file regexps:
 \.hi$
