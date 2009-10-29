@@ -34,7 +34,7 @@
 >   canTy tc (Desc :>: Done)    = Just Done
 >   canTy tc (Desc :>: Arg x y) = 
 >     SET `tc` x &\ \ x xv -> 
->     Arr xv DESC `tc` y &\ \ y _ -> Just (Arg x y)
+>     ARR xv DESC `tc` y &\ \ y _ -> Just (Arg x y)
 >   canTy tc (Desc :>: Ind x y) =
 >     SET `tc` x &\ \ x _ ->
 >     DESC `tc` y &\ \ y _ -> Just (Ind x y)
@@ -44,7 +44,7 @@
 > import -> OpCode where
 >   descOp :: Op
 >   descOp = Op
->     { opName = "desc"
+>     { opName = "descOp"
 >     , opArity = 1
 >     , opTy = dOpTy
 >     , opRun = dOpRun
@@ -52,10 +52,64 @@
 >       dOpTy ev [x,y] = Just ([DESC :>: x,SET :>: y],SET)
 >       dOpRun :: [VAL] -> Either NEU VAL
 >       dOpRun [DONE,y]    = Right UNIT
->       dOpRun [ARG x y,z] = 
->         Right (SIGMA x 
->                      (L (H (B0 :< y :< z) 
->                            "" 
->                            (N (descOp :@ [N (V 2 :$ A (NV 0)),NV 1])))))
->       dOpRun [IND x y,z] = Right (PAIR (Arr x z) (descOp @@ [y,z]))
+>       dOpRun [ARG x y,z] = Right $
+>         eval [.x.y.z. 
+>              SIGMA (NV x) . L $ "" :. [.a.
+>              (N (descOp :@ [y $# [a],NV z]))
+>              ]] $ B0 :< x :< y :< z
+
+>       dOpRun [IND x y,z] = Right (TIMES (ARR x z) (descOp @@ [y,z]))
 >       dOpRun [N x,_]     = Left x
+
+>   boxOp :: Op
+>   boxOp = Op
+>     { opName = "boxOp"
+>     , opArity = 4
+>     , opTy = boxOpTy
+>     , opRun = boxOpRun
+>     } where
+>       boxOpTy ev [w,x,y,z] = 
+>         Just ([DESC :>: w,
+>                SET :>: x,
+>                ARR (ev x) SET :>: y,
+>                descOp @@ [ev x,ev y] :>: z]
+>                , SET)
+>       boxOpRun :: [VAL] -> Either NEU VAL
+>       boxOpRun [DONE   ,d,p,v] = Right UNIT
+>       boxOpRun [ARG a f,d,p,v] = Right $
+>         boxOp @@ [f $$ A (v $$ Fst),d,p,v $$ Snd] 
+>       boxOpRun [IND h x,d,p,v] = Right $
+>         eval [.h.x.d.p.v.
+>              TIMES (ALL (NV h) . L $ "" :. [.y.
+>                                    N (V p :$ A (N (V v :$ Fst :$ A (NV h))))])
+>                   (N (boxOp :@ [NV x,NV d,NV p,N (V v :$ Snd)]))
+>              ] $ B0 :< h :< x :< d :< p :< v
+>       boxOpRun [N x    ,_,_,_] = Left x
+
+>   mapBoxOp :: Op
+>   mapBoxOp = Op
+>     { opName = "mapBoxOp"
+>     , opArity = 5
+>     , opTy = mapBoxOpTy
+>     , opRun = mapBoxOpRun
+>     } where
+>       mapBoxOpTy ev [x,d,bp,p,v] = Just $
+>         ([DESC :>: x
+>          ,SET :>: d
+>          ,ARR (ev d) SET :>: bp
+>          ,descOp @@ [ev x,ev d] :>: v]
+>         ,boxOp @@ [ev x,ev d,ev bp,ev v])
+>       mapBoxOpRun :: [VAL] -> Either NEU VAL
+>       mapBoxOpRun [DONE,d,bp,p,v] = Right VOID
+>       mapBoxOpRun [ARG a f,d,bp,p,v] = Right $
+>         mapBoxOp @@ [f $$ (A (v $$ Fst)),d,bp,p,v $$ Snd]
+>       mapBoxOpRun [IND h x,d,bp,p,v] = Right $
+>         eval [.h.x.d.bp.p.v.
+>              PAIR (L $ "" :. [.y. N (V p :$ A (N (V v :$ Fst :$ A (NV y))))])
+>                   (N (mapBoxOp :@ [NV x,NV d
+>                                   ,NV bp
+>                                   ,NV p
+>                                   ,N (V p :$ A (N (V v :$ Snd)))
+>                                   ]))
+>              ] $ B0 :< h :< x :< d :< bp :< p :< v
+>       mapBoxOpRun [N x    ,_, _,_,_] = Left x
