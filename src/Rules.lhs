@@ -44,9 +44,11 @@ form, as we get it during type-checking.
 
 However, in order to implement tactics, we have to generalize this
 function. The generalization consists in parameterizing |canTy| with a
-type-directed function |(TY :>: t) -> s|, which is equivalent to 
-|TY -> t -> s|. Because we are still using the concept of evaluation, both
-functions are fused into a single one, of type: |TY -> t -> (s, VAL)|.
+type-directed function |(TY :>: t) -> s|, which is equivalent to |TY
+-> t -> s|. Because we are still using the concept of evaluation, both
+functions are fused into a single one, of type: 
+|TY -> t -> (s,VAL)|. To support the use of tactics, which can fail to produce a
+value, we extend this type to |TY -> t -> Maybe (s,VAL)|
 
 Hence, by defining an appropriate function |tc|, we can recover the
 previous definition of |canTy|. We can also do much more: intuitively,
@@ -62,7 +64,6 @@ using |canTy|.
 >   Just $ Pi s t
 > import <- CanTyRules
 > canTy  _  _                 = Nothing
-
 
 
 
