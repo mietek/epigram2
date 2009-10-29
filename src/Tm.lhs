@@ -89,7 +89,7 @@ construct an operator, you need a name (for scope resolution and
 printing), an arity (so the resolver can manage fully applied usage),
 a typing rule, and a computation strategy. The |opTy| field explains
 how to label the operator's arguments with the types they must have
-and delivers the type of the whole applications: to do that, one must
+and delivers the type of the whole application: to do that, one must
 be able to evaluate arguments. It is vital to check the subterms (left
 to right) before trusting the type at the end.
 
@@ -112,7 +112,7 @@ list if it is neutral.
 We have some pattern synonyms for common, er, patterns.
 
 > pattern SET       = C Set                   -- set of sets
-> pattern Arr s t   = C (Pi s (L (K t)))      -- simple arrow
+> pattern ARR s t   = C (Pi s (L (K t)))      -- simple arrow
 > pattern PI x s t  = C (Pi s (L (x :. t)))   -- dependent functions
 > pattern CON t     = C (Con t)
 > pattern NV n      = N (V n)

@@ -35,7 +35,7 @@
 > bigTmIn =
 >     (|(flip (foldr (uncurry PI))) telescope (%key "->"%) bigTmIn
 >      |) <|> (pLoop (|N bigTmEx | id weeTmIn|) $ \ i ->
->     (|Arr ~ i (%key "->"%) bigTmIn
+>     (|ARR ~ i (%key "->"%) bigTmIn
 >      |))
 
 > weeTmEx :: P Tok (ExTm String)

@@ -29,7 +29,7 @@
 > canTy tc (Set :>: Set)     =  Just Set
 > canTy tc (Set :>: Pi s t)  =
 >   SET         `tc` s &\ \ s sv ->
->   Arr sv SET  `tc` t &\ \ t _ ->
+>   ARR sv SET  `tc` t &\ \ t _ ->
 >   Just $ Pi s t
 > import <- CanTyRules
 > canTy  _  _                 = Nothing

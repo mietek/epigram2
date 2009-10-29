@@ -53,7 +53,7 @@
 >   canTy _   (Set :>: Unit) = Just Unit
 >   canTy tc  (Set :>: Sigma s t) =
 >     SET `tc` s         &\ \ s sv ->
->     Arr sv SET `tc` t  &\ \ t _ ->
+>     ARR sv SET `tc` t  &\ \ t _ ->
 >     Just $ Sigma s t
 >   canTy _   (Unit :>: Void) = Just Void
 >   canTy tc  (Sigma s t :>: Pair x y) = 
@@ -77,7 +77,7 @@
 >     , opTy = sOpTy , opRun = sOpRun 
 >     } where
 >       sOpTy ev [a , b , c , f , t] = Just $
->         ([ SET :>: a , Arr va SET :>: b , Arr (SIGMA va vb) SET :>: c
+>         ([ SET :>: a , ARR va SET :>: b , ARR (SIGMA va vb) SET :>: c
 >          , C (Pi va (L (H (B0 :< vb :< vc) "a" 
 >                (PI "b" (N (V 2 :$ A (NV 0))) 
 >                  (N (V 2 :$ A (PAIR (NV 1) (NV 0)))))))) :>: f

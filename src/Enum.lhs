@@ -61,7 +61,7 @@
 >     , opRun    = bOpRun
 >     } where
 >         bOpTy ev [e , p] = 
->           Just ([ENUMU :>: e , Arr (ENUMT (ev e)) SET :>: p] , SET)
+>           Just ([ENUMU :>: e , ARR (ENUMT (ev e)) SET :>: p] , SET)
 >         bOpTy _ _ = Nothing
 >         bOpRun :: [VAL] -> Either NEU VAL
 >         bOpRun [NILE , p] = Right UNIT
@@ -79,7 +79,7 @@
 >     } where
 >         sOpTy ev [e , p , b, x] = 
 >           Just ([ ENUMU :>: e 
->                 , Arr (ENUMT (ev e)) SET :>: p
+>                 , ARR (ENUMT (ev e)) SET :>: p
 >                 , branchesOp @@ [ev e , ev p] :>: b
 >                 , ENUMT (ev e) :>: x] , (ev p) $$ A (ev x))
 >         sOpRun :: [VAL] -> Either NEU VAL

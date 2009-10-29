@@ -66,35 +66,35 @@
 >     Just $ TimesC x y
 >   canTy tc (ContU i :>: SigmaC s t) = 
 >     SET `tc` s               &\ \ s sv ->
->     Arr sv (CONTU i) `tc` t  &\ \ t _ ->
+>     ARR sv (CONTU i) `tc` t  &\ \ t _ ->
 >     Just $ SigmaC s t
 >   canTy tc (ContU i :>: PiC s t) = 
 >     SET `tc` s               &\ \ s sv ->
->     Arr sv (CONTU i) `tc` t  &\ \ t _ ->
+>     ARR sv (CONTU i) `tc` t  &\ \ t _ ->
 >     Just $ PiC s t
 >   canTy tc (ContU i :>: MuC o x oi) =
 >     SET `tc` o                                    &\ \ o ov ->
->     Arr ov (CONTU (sumVV $$ A i $$ A ov)) `tc` x  &\ \ x _ ->
+>     ARR ov (CONTU (sumVV $$ A i $$ A ov)) `tc` x  &\ \ x _ ->
 >     ov `tc` oi                                    &\ \ oi _ ->
 >     Just $ MuC o x oi
 >   canTy tc (ContU i :>: NuC o x oi) =
 >     SET `tc` o                                    &\ \ o ov ->
->     Arr ov (CONTU (sumVV $$ A i $$ A ov)) `tc` x  &\ \ x _ ->
+>     ARR ov (CONTU (sumVV $$ A i $$ A ov)) `tc` x  &\ \ x _ ->
 >     ov `tc` oi                                    &\ \ oi _ ->
 >     Just $ NuC o x oi
 >   -- Mu, Nu Rules
 >   canTy tc (Set :>: Mu i o d x oi) =
 >     SET `tc` i                                     &\ \ i iv -> 
 >     SET `tc` o                                     &\ \ o ov -> 
->     Arr ov (CONTU (sumVV $$ A iv $$ A ov)) `tc` d  &\ \ d _ ->
->     Arr iv SET `tc` x                              &\ \ x _ ->
+>     ARR ov (CONTU (sumVV $$ A iv $$ A ov)) `tc` d  &\ \ d _ ->
+>     ARR iv SET `tc` x                              &\ \ x _ ->
 >     ov `tc` oi                                     &\ \ oi _ ->
 >     Just $ Mu i o d x oi
 >   canTy tc (Set :>: Nu i o d x oi) =
 >     SET `tc` i                                     &\ \ i iv -> 
 >     SET `tc` o                                     &\ \ o ov -> 
->     Arr ov (CONTU (sumVV $$ A iv $$ A ov)) `tc` d  &\ \ d _ ->
->     Arr iv SET `tc` x                              &\ \ x _ ->
+>     ARR ov (CONTU (sumVV $$ A iv $$ A ov)) `tc` d  &\ \ d _ ->
+>     ARR iv SET `tc` x                              &\ \ x _ ->
 >     ov `tc` oi                                     &\ \ oi _ ->
 >     Just $ Nu i o d x oi
 >   canTy tc (Mu i o d x oi :>: Con t) = 
@@ -138,7 +138,7 @@
 >                                               , PAIR (NV 2) (PAIR (NV 1) VOID)
 >                                               , NV 0]))
 >                               (L (K UNIT)))))))
->     :? Arr SET (Arr SET SET)
+>     :? ARR SET (ARR SET SET)
 >
 >   sumVV :: VAL
 >   sumVV = L (H B0 "x" (L ("y" :. N (sumTT :$ A (NV 1) :$ A (NV 2)))))  
@@ -152,7 +152,7 @@
 >     , opTy = cOpTy , opRun = cOpRun 
 >     } where
 >       cOpTy ev [a , b , c , f , g , x] = Just $
->         ( [ SET :>: a , SET :>: b , Arr sumab SET :>: c
+>         ( [ SET :>: a , SET :>: b , ARR sumab SET :>: c
 >           , C (Pi va (L (H (B0 :< vc) "a" 
 >                     (N (V 1 :$ A (LEFT (NV 0))))))) :>: f
 >           , C (Pi vb (L (H (B0 :< vc) "b" 
@@ -175,7 +175,7 @@
 >     , opRun = cTOpRun
 >     } where
 >         cTOpTy ev [i , c , x] = 
->           Just ([ SET :>: i , CONTU vi :>: c , Arr vi SET :>: x ] , SET)
+>           Just ([ SET :>: i , CONTU vi :>: c , ARR vi SET :>: x ] , SET)
 >             where vi = ev i 
 >         cTOpTy _ _ = Nothing
 >         cTOpRun :: [VAL] -> Either NEU VAL
@@ -201,9 +201,9 @@
 >     } where
 >       mOpTy ev [i , c , x , y , f , t] = Just $
 >         ([ SET :>: i , CONTU (ev i) :>: c 
->          , Arr vi SET :>: x , Arr vi SET :>: y
+>          , ARR vi SET :>: x , ARR vi SET :>: y
 >          , C (Pi vi (L (H (B0 :< vx :< vy) "" 
->                     (Arr (N (V 2 :$ A (NV 0))) (N (V 1 :$ A (NV 0)))))))
+>                     (ARR (N (V 2 :$ A (NV 0))) (N (V 1 :$ A (NV 0)))))))
 >              :>: f
 >          , contTOp @@ [ vi , vc , vx ] :>: t ] , contTOp @@ [ vi , vc , vy ])
 >             where vi = ev i
@@ -242,7 +242,7 @@
 >                     [ NV 6
 >                     , NV 5
 >                     , (L ("" :. 
->                         (Arr (N (casesOp :@ 
+>                         (ARR (N (casesOp :@ 
 >                                   [ NV 7 , NV 6 , L (K SET) , NV 4
 >                                   , L ("" :. N (contTOp :@ 
 >                                                  [ NV 8 , NV 6 , NV 0])) 
@@ -274,8 +274,8 @@
 >     , opRun = eWOpRun
 >     } where
 >       eWOpTy ev [i , d , j , x , c , t] = Just $
->         ([ SET :>: i , CONTU vi :>: d , Arr vi SET :>: j 
->          , SET :>: x , Arr (SIGMA vi vj) (ev x) :>: c
+>         ([ SET :>: i , CONTU vi :>: d , ARR vi SET :>: j 
+>          , SET :>: x , ARR (SIGMA vi vj) (ev x) :>: c
 >          , contTOp @@ [ vi , ev d , vj ] :>: t ] , CONTU (SIGMA vi vj))
 >           where vi = ev i
 >                 vj = ev j
@@ -319,7 +319,7 @@
 >                                                   (NV 7) (NV 6) (NV 0)))))))
 >                   , L ("io" :. N (casesOp :@ 
 >                         [ NV 8 , NV 7 
->                         , L ("oo" :. Arr 
+>                         , L ("oo" :. ARR 
 >                                 (N (casesOp :@ 
 >                                   [ NV 9 , NV 8 , L (K SET) , NV 6 
 >                                   , L ("oo" :. MU (NV 9) (NV 8) 

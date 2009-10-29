@@ -47,7 +47,7 @@ Elim forms inherited from elsewhere
 >     Just $ Prf p 
 >   canTy tc  (Prop :>: All s p)       =
 >     SET `tc` s          &\ \ s sv ->
->     Arr sv PROP `tc` p  &\ \ p _ ->
+>     ARR sv PROP `tc` p  &\ \ p _ ->
 >     Just $ All s p
 >   canTy tc  (Prop :>: And p q)       =
 >     PROP `tc` p &\ \ p _ ->
