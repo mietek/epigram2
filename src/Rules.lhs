@@ -29,12 +29,11 @@
 Historically, canonical terms were type-checked by the following
 function:
 
-> {-
-> canTy :: (t -> VAL) -> (Can VAL :>: Can t) -> Maybe (Can (t, VAL))
-> canTy ev (Set,Set)    = Just Set
-> canTy ev (Pi s t,Set) = Just (Pi (s,SET) (t,Arr (ev s) SET))
-> canTy _  _            = Nothing
-> -}
+> canTy_ :: (t -> VAL) -> (Can VAL :>: Can t) -> Maybe (Can (t, VAL))
+> canTy_ ev (Set,Set)    = Just Set
+> canTy_ ev (Pi s t,Set) = Just (Pi (s,SET) (t,Arr (ev s) SET))
+> canTy_ _  _            = Nothing
+
 
 If we temporally forget Features, we have here a type-checker that
 takes an evaluation function |ev|, a type, and a term to be checked
@@ -44,8 +43,8 @@ form, as we get it during type-checking.
 
 However, in order to implement tactics, we have to generalize this
 function. The generalization consists in parameterizing |canTy| with a
-type-directed function |(TY :>: t) -> s|, which is equivalent to |TY
--> t -> s|. Because we are still using the concept of evaluation, both
+type-directed function |(TY :>: t) -> s|, which is equivalent to 
+|TY -> t -> s|. Because we are still using the concept of evaluation, both
 functions are fused into a single one, of type: 
 |TY -> t -> (s,VAL)|. To support the use of tactics, which can fail to produce a
 value, we extend this type to |TY -> t -> Maybe (s,VAL)|
@@ -94,7 +93,7 @@ using |canTy|.
 > bquote (op :@ vs)     r = op :@ traverse bquote vs r
 
 The role of |quoteRef tm v| is to bind the free variable |v| in |tm|
-to the bound variable |0|. Hence, it turns a |VV|alue into a |TT|erm.
+to the bound variable 0. Hence, it turns a |VV|alue into a |TT|erm.
 
 > quoteRef :: Rooty m => [REF] -> Tm {d,VV} REF -> m (Tm {d,TT} REF)
 > quoteRef  refs (P x) =
