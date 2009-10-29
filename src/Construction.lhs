@@ -35,7 +35,7 @@
 
 > cC :: Can (TY -> Cxty INTM) -> TY -> Cxty INTM
 > cC ca (C ty) g@(_, e) r = C tm where
->   Just tm = canTy (\ y k -> let t = k y g r in (t, eval t e)) (ty :>: ca)
+>   Just tm = canTy (\ y k -> let t = k y g r in Just (t, eval t e)) (ty :>: ca)
 
 
 %endif

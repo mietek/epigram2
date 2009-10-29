@@ -47,7 +47,7 @@ Elim forms inherited from elsewhere
 >     Just $ Prf p 
 >   canTy tc  (Prop :>: All s p)       =
 >     SET `tc` s          &\ \ s sv ->
->     ARR sv PROP `tc` p  &\ \ p _ ->
+>     Arr sv PROP `tc` p  &\ \ p _ ->
 >     Just $ All s p
 >   canTy tc  (Prop :>: And p q)       =
 >     PROP `tc` p &\ \ p _ ->
@@ -55,13 +55,13 @@ Elim forms inherited from elsewhere
 >     Just $ And p q
 >   canTy tc  (Prop :>: Trivial)       = Just Trivial
 >   canTy _   (Prop :>: Absurd)        = Just Absurd
->   canTy tc  (Prf p :>: Box (Irr x))  =
->     PRF p `tc` x &\ \ x _ ->
->     Just $ Box (Irr x)
->   canTy tc  (And p q :>: Pair x y)   =
->     PRF p `tc` x &\ \ x _ ->
->     PRF q `tc` y &\ \ y _ ->
->     Just $ Pair x y
+>   canTy tc  (Prf p :>: Box (Irr x))  = do
+>     (x,_) <- PRF p `tc` x 
+>     return $ Box (Irr x)
+>   canTy tc  (And p q :>: Pair x y)   = do
+>     (x,_) <- PRF p `tc` x
+>     (y,_) <- PRF q `tc` y
+>     return $ Pair x y
 >   canTy _   (Trivial :>: Void)       = Just Void
 
 > import -> ElimTyRules where

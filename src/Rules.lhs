@@ -26,16 +26,39 @@
 
 \subsection{Type-directed operations}
 
-> (&\) :: (a, b) -> (a -> b -> c) -> c
-> (&\) = flip uncurry
+Historically, canonical terms were type-checked by the following
+function:
 
-> infixr 1 &\
+> {-
+> canTy :: (t -> VAL) -> (Can VAL :>: Can t) -> Maybe (Can (t, VAL))
+> canTy ev (Set,Set)    = Just Set
+> canTy ev (Pi s t,Set) = Just (Pi (s,SET) (t,Arr (ev s) SET))
+> canTy _  _            = Nothing
+> -}
 
-> canTy :: (TY -> s -> (t, VAL)) -> (Can VAL :>: Can s) -> Maybe (Can t)
+If we temporally forget Features, we have here a type-checker that
+takes an evaluation function |ev|, a type, and a term to be checked
+against this type. When successful, the result of typing is a
+canonical term that contains both the initial term and its normalized
+form, as we get it during type-checking.
+
+However, in order to implement tactics, we have to generalize this
+function. The generalization consists in parameterizing |canTy| with a
+type-directed function |(TY :>: t) -> s|, which is equivalent to 
+|TY -> t -> s|. Because we are still using the concept of evaluation, both
+functions are fused into a single one, of type: |TY -> t -> (s, VAL)|.
+
+Hence, by defining an appropriate function |tc|, we can recover the
+previous definition of |canTy|. We can also do much more: intuitively,
+we can write any type-directed function in term of |canTy|. That is,
+any function traversing the types derivation tree can be expressed
+using |canTy|. 
+
+> canTy :: (TY -> t -> Maybe (s, VAL)) -> (Can VAL :>: Can t) -> Maybe (Can s)
 > canTy tc (Set :>: Set)     =  Just Set
 > canTy tc (Set :>: Pi s t)  =
 >   SET         `tc` s &\ \ s sv ->
->   ARR sv SET  `tc` t &\ \ t _ ->
+>   Arr sv SET  `tc` t &\ \ t _ ->
 >   Just $ Pi s t
 > import <- CanTyRules
 > canTy  _  _                 = Nothing
@@ -101,7 +124,7 @@ to the bound variable |0|. Hence, it turns a |VV|alue into a |TT|erm.
 > inQuote tyv              r | Just t    <- etaExpand tyv r = t
 > inQuote (_ :>: N n)      r | (t :<: _) <- exQuote n r = N t
 > inQuote (C cty :>: C cv) r
->   | Just ct   <- canTy (\ y v -> (inQuote (y :>: v) r, v)) (cty :>: cv)
+>   | Just ct   <- canTy (\ y v -> Just (inQuote (y :>: v) r, v)) (cty :>: cv)
 >   = C ct
 
 > unC :: VAL -> Can VAL
@@ -150,7 +173,7 @@ to the bound variable |0|. Hence, it turns a |VV|alue into a |TT|erm.
 
 > check :: (TY :>: INTM) -> Root -> Maybe ()
 > check (C c :>: C c')        r = do
->   csp <- canTy (\ y t -> (check (y :>: t) r, evTm t)) (c :>: c')
+>   csp <- canTy (\ y t -> Just (check (y :>: t) r, evTm t)) (c :>: c')
 >   traverse id csp
 >   return ()
 > check (C (Pi s t) :>: L sc) r = do
@@ -192,8 +215,8 @@ to the bound variable |0|. Hence, it turns a |VV|alue into a |TT|erm.
 >    Nothing -> Right ABSURD
 >    Just x  -> Right $ mkEqConj (trail x)
 >    where
->    Just t0' = canTy (\ y v -> (y :>: v, v)) (Set :>: t0)
->    Just t1' = canTy (\ y v -> (y :>: v, v)) (Set :>: t1)
+>    Just t0' = canTy (\ y v -> Just (y :>: v, v)) (Set :>: t0)
+>    Just t1' = canTy (\ y v -> Just (y :>: v, v)) (Set :>: t1)
 > import <- OpRunEqGreen
 > opRunEqGreen [C (Pi s1 t1),f1,C (Pi s2 t2),f2] = Right $
 >   eval  [.s1.t1.f1.s2.t2.f2.

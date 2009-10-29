@@ -10,15 +10,15 @@
 >   pattern EQBLUE p q = C (EqBlue p q)
 
 > import -> CanTyRules where
->   canTy tc (Prop :>: EqBlue (y0 :>: t0) (y1 :>: t1)) =
->     SET `tc` y0 &\ \ y0 y0v ->
->     y0v `tc` t0 &\ \ t0 _ ->
->     SET `tc` y1 &\ \ y1 y1v ->
->     y1v `tc` t1 &\ \ t1 _ ->
->     Just $ EqBlue (y0 :>: t0) (y1 :>: t1)
->   canTy tc (Prf (EQBLUE (y0 :>: t0) (y1 :>: t1)) :>: Con p) =
->     (eqGreen @@ [y0, t0, y1, t1]) `tc` p &\ \ p _ ->
->     Just $ Con p
+>   canTy tc (Prop :>: EqBlue (y0 :>: t0) (y1 :>: t1)) = do
+>     (y0, y0v) <- SET `tc` y0
+>     (t0,_) <- y0v `tc` t0
+>     (y1,y1v) <- SET `tc` y1
+>     (t1,_) <- y1v `tc` t1
+>     return $ EqBlue (y0 :>: t0) (y1 :>: t1)
+>   canTy tc (Prf (EQBLUE (y0 :>: t0) (y1 :>: t1)) :>: Con p) = do
+>     (p,_) <- (eqGreen @@ [y0, t0, y1, t1]) `tc` p
+>     return $ Con p
 
 > import -> OpCode where
 >   eqGreen = Op { opName = "eqGreen"

@@ -53,13 +53,13 @@
 >   canTy _   (Set :>: Unit) = Just Unit
 >   canTy tc  (Set :>: Sigma s t) =
 >     SET `tc` s         &\ \ s sv ->
->     ARR sv SET `tc` t  &\ \ t _ ->
+>     Arr sv SET `tc` t  &\ \ t _ ->
 >     Just $ Sigma s t
 >   canTy _   (Unit :>: Void) = Just Void
->   canTy tc  (Sigma s t :>: Pair x y) = 
->     s `tc` x            &\ \ x xv ->
->     (t $$ A xv) `tc` y  &\ \ y yv ->
->     Just $ Pair x y
+>   canTy tc  (Sigma s t :>: Pair x y) =  do
+>       (x,xv) <- s `tc` x
+>       (y,yv) <- (t $$ A xv) `tc` y
+>       return $ Pair x y
 
 > import -> ElimTyRules where
 >   elimTy ev (_ :<: Sigma s t) Fst = Just (Fst, s)

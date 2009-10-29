@@ -40,18 +40,18 @@
 
 > import -> CanTyRules where
 >   canTy tc (Set :>: EnumU)    = Just EnumU
->   canTy tc (Set :>: EnumT e)  =
->     ENUMU `tc` e &\ \ e _ ->
->     Just $ EnumT e
+>   canTy tc (Set :>: EnumT e)  = do
+>     (e,_) <- ENUMU `tc` e 
+>     return $ EnumT e
 >   canTy tc (EnumU :>: NilE)       = Just NilE
->   canTy tc (EnumU :>: ConsE t e)  =
->     UID `tc` t    &\ \ t _ ->
->     ENUMU `tc` e  &\ \ e _ ->
->     Just $ ConsE t e
+>   canTy tc (EnumU :>: ConsE t e)  = do
+>     (t,_) <- UID `tc` t
+>     (e,_) <- ENUMU `tc` e
+>     return $ ConsE t e
 >   canTy tc (EnumT (CONSE t e) :>: Ze)    = Just Ze 
->   canTy tc (EnumT (CONSE t e) :>: Su n)  =
->     ENUMT e `tc` n &\ \ n _ ->
->     Just $ Su n
+>   canTy tc (EnumT (CONSE t e) :>: Su n)  = do
+>     (n,_) <- ENUMT e `tc` n
+>     return $ Su n
 
 > import -> OpCode where
 >   branchesOp = Op 

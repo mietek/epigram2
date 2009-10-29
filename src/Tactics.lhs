@@ -175,23 +175,25 @@ about binding. Taking a canonical term containing well-typed values,
 |can| builds a well-typed (canonical) value.
       
 > can :: Can (Tac VAL) -> Tac VAL
-> can Set = do
->           SET <- goal
->           return SET
-> can (Pi tacS tacT) = do
->   SET <- goal
->   s <- subgoal SET tacS
->   t <- subgoal (Arr s SET) tacT
->   return $ C (Pi s t)
+> can cTac =
+>     Tac { runTac = \root typ -> 
+>                    do
+>                    C t <- typ
+>                    v <- canTy (evTac root)
+>                               (t :>: cTac) 
+>                    return $ C v
+>         }
+>     where evTac :: Root -> TY -> Tac VAL -> Maybe (VAL, VAL)
+>           evTac root typ tacVal = 
+>               do
+>                 v <- runTac tacVal root typ
+>                 return (v,v)
+>                   
 
-This code is incomplete is incomplete and quite insatisfactory. First,
-incomplete because it doesn't account for the canonical constructors
-added by |CanConstructors|. Second, insatisfactory because it
-duplicates |canTy| in @Rules.lhs@.
+This code is insatisfactory: instead of bring |canTy| in the beautiful
+world of Rooty, I have just hacked a |Tac| around it. There might an
+esthetically more pleasing way of doing that.
 
-\pierre{Conor has suggested that we use |can| to implement |canTy|. I have
-        played a bit with that idea, with no success. I should come
-        back on this issue later on.}
 
 \subsubsection{Elimination rules}
 

@@ -53,12 +53,12 @@
 
 > import -> CanTyRules where
 >   -- ContU Rules :
->   canTy tc (Set :>: ContU i) =
->     SET `tc` i &\ \ i _ ->
->     Just $ ContU i
->   canTy tc (ContU i :>: ReqC ii) =
->     i `tc` ii &\ \ ii _ ->
->     Just $ ReqC ii
+>   canTy tc (Set :>: ContU i) = do
+>     (i,_) <- SET `tc` i
+>     return $ ContU i
+>   canTy tc (ContU i :>: ReqC ii) = do
+>     (ii,_) <- i `tc` ii
+>     return $ ReqC ii
 >   canTy tc (ContU i :>: UnitC) = Just UnitC
 >   canTy tc (ContU i :>: TimesC x y) = 
 >     CONTU i `tc` x  &\ \ x _ ->
@@ -66,35 +66,35 @@
 >     Just $ TimesC x y
 >   canTy tc (ContU i :>: SigmaC s t) = 
 >     SET `tc` s               &\ \ s sv ->
->     ARR sv (CONTU i) `tc` t  &\ \ t _ ->
+>     Arr sv (CONTU i) `tc` t  &\ \ t _ ->
 >     Just $ SigmaC s t
 >   canTy tc (ContU i :>: PiC s t) = 
 >     SET `tc` s               &\ \ s sv ->
->     ARR sv (CONTU i) `tc` t  &\ \ t _ ->
+>     Arr sv (CONTU i) `tc` t  &\ \ t _ ->
 >     Just $ PiC s t
 >   canTy tc (ContU i :>: MuC o x oi) =
 >     SET `tc` o                                    &\ \ o ov ->
->     ARR ov (CONTU (sumVV $$ A i $$ A ov)) `tc` x  &\ \ x _ ->
+>     Arr ov (CONTU (sumVV $$ A i $$ A ov)) `tc` x  &\ \ x _ ->
 >     ov `tc` oi                                    &\ \ oi _ ->
 >     Just $ MuC o x oi
 >   canTy tc (ContU i :>: NuC o x oi) =
 >     SET `tc` o                                    &\ \ o ov ->
->     ARR ov (CONTU (sumVV $$ A i $$ A ov)) `tc` x  &\ \ x _ ->
+>     Arr ov (CONTU (sumVV $$ A i $$ A ov)) `tc` x  &\ \ x _ ->
 >     ov `tc` oi                                    &\ \ oi _ ->
 >     Just $ NuC o x oi
 >   -- Mu, Nu Rules
 >   canTy tc (Set :>: Mu i o d x oi) =
 >     SET `tc` i                                     &\ \ i iv -> 
 >     SET `tc` o                                     &\ \ o ov -> 
->     ARR ov (CONTU (sumVV $$ A iv $$ A ov)) `tc` d  &\ \ d _ ->
->     ARR iv SET `tc` x                              &\ \ x _ ->
+>     Arr ov (CONTU (sumVV $$ A iv $$ A ov)) `tc` d  &\ \ d _ ->
+>     Arr iv SET `tc` x                              &\ \ x _ ->
 >     ov `tc` oi                                     &\ \ oi _ ->
 >     Just $ Mu i o d x oi
 >   canTy tc (Set :>: Nu i o d x oi) =
 >     SET `tc` i                                     &\ \ i iv -> 
 >     SET `tc` o                                     &\ \ o ov -> 
->     ARR ov (CONTU (sumVV $$ A iv $$ A ov)) `tc` d  &\ \ d _ ->
->     ARR iv SET `tc` x                              &\ \ x _ ->
+>     Arr ov (CONTU (sumVV $$ A iv $$ A ov)) `tc` d  &\ \ d _ ->
+>     Arr iv SET `tc` x                              &\ \ x _ ->
 >     ov `tc` oi                                     &\ \ oi _ ->
 >     Just $ Nu i o d x oi
 >   canTy tc (Mu i o d x oi :>: Con t) = 
@@ -107,10 +107,10 @@
 >                                  , L ("oo" :. (MU (NV 5) (NV 4) 
 >                                                   (NV 3) (NV 2) (NV 0)))
 >                                  , NV 0])))
->                 ] `tc` t &\ \ t _ ->
->     Just $ Con t
->   canTy tc (Nu i o d x oi :>: Con t) = 
->     contTOp @@  [ i 
+>                 ] `tc` t 
+>     return $ Con t
+>   canTy tc (Nu i o d x oi :>: Con t) = do
+>     (t,_) <- contTOp @@  [ i 
 >                 , d $$ A o  
 >                 , L (H (bwdList [i,o,d,x]) "t"
 >                               (N (casesOp :@ 
@@ -119,8 +119,8 @@
 >                                  , L ("oo" :. (NU (NV 5) (NV 4) 
 >                                                   (NV 3) (NV 2) (NV 0)))
 >                                  , NV 0])))
->                 ] `tc` t &\ \ t _ ->
->     Just $ Con t
+>                 ] `tc` t
+>     return $ Con t
 
 > import -> OpCode where
 >   boolE :: Tm {In,p} x
