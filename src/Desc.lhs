@@ -113,3 +113,33 @@
 >                                   ]))
 >              ] $ B0 :< h :< x :< d :< bp :< p :< v
 >       mapBoxOpRun [N x    ,_, _,_,_] = Left x
+ 
+>   elimOp :: Op
+>   elimOp = Op
+>     { opName = "elimOp"
+>     , opArity = 4
+>     , opTy = elimOpTy
+>     , opRun = elimOpRun
+>     } where
+>       elimOpTy ev [d,bp,p,v] = Just $
+>              ([DESC :>: d
+>              ,ARR (MU (ev d)) SET :>: bp
+>              ,ALL (descOp @@ [ev d,MU (ev d)]) 
+>                   (eval [.d.bp.p.v. L $ "" :. [.x. 
+>                         ARR (N (boxOp :@ [NV d,MU (NV d),NV bp,NV x]))
+>                             (N (V bp :$ A (INTROS (NV x))))]
+>                         ] $ B0 :< ev d :< ev bp :< ev p :< ev v) :>: p
+>              ,MU (ev d):>: v
+>              ], ev bp $$ A (ev v))
+
+>       elimOpRun :: [VAL] -> Either NEU VAL
+>       elimOpRun [d,bp,p,INTROS v] = Right $
+>          p $$ A v $$ A (mapBoxOp @@ 
+>                         [d
+>                         ,MU d
+>                         ,bp
+>                         ,eval [.d.bp.p. L $ "" :. [.x. 
+>                               N (elimOp :@ [NV d,NV bp,NV p,NV x])]
+>                               ] $ B0 :< d :< bp :< p
+>                         ,v])
+>       elimOpRun [_, _,_,N x] = Left x
