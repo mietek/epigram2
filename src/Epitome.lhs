@@ -35,7 +35,6 @@
 %include Tm.lhs
 %include Tactics.lhs
 %include Rules.lhs
-%include Tactics.lhs
 %include Developments.lhs
 %include DevLoad.lhs
 %include Construction.lhs
