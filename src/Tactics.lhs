@@ -176,9 +176,8 @@ about binding. Taking a canonical term containing well-typed values,
       
 > can :: Can (Tac VAL) -> Tac VAL
 > can cTac =
->     Tac { runTac = \root typ -> 
+>     Tac { runTac = \root (C t) -> 
 >                    do
->                    C t <- typ
 >                    v <- canTy (evTac root)
 >                               (t :>: cTac) 
 >                    return $ C v
