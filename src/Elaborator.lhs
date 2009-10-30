@@ -44,18 +44,18 @@ Each |Layer| of the structure is a record with the following fields:
 >   ,  layroot :: Root }
 >   deriving Show
 
-The current state is then represented by a stack of |Layer|s, along with the
+The current proof state is then represented by a stack of |Layer|s, along with the
 current working development:
 
-> type WhereAmI = (Bwd Layer, Dev)
+> type ProofState = (Bwd Layer, Dev)
 
 Now we need functions to manipulate the unzipped data structure.
 
 |goIn| changes the current location to the bottom-most girl in the current development.
 
-> goIn :: WhereAmI -> WhereAmI
+> goIn :: ProofState -> ProofState
 > goIn l = goInAcc l F0 
->     where goInAcc :: WhereAmI -> Fwd Entry -> WhereAmI
+>     where goInAcc :: ProofState -> Fwd Entry -> ProofState
 >           goInAcc (ls, (es :< e, tip, root)) cadets =
 >               case e of
 >                   E ref _ (Girl LETG dev) ->
@@ -67,7 +67,7 @@ Now we need functions to manipulate the unzipped data structure.
 |goOut| goes up a layer, so the focus changes to the development containing
 the current working location.
 
-> goOut :: WhereAmI -> WhereAmI
+> goOut :: ProofState -> ProofState
 > goOut (ls :< l, dev) = (ls,
 >     (elders l :< E (mother l) (lastName (mother l)) (Girl LETG dev) <>< cadets l
 >     ,laytip l
@@ -77,9 +77,9 @@ the current working location.
 
 |goUp| moves the focus to the next eldest girl.
 
-> goUp :: WhereAmI -> WhereAmI
+> goUp :: ProofState -> ProofState
 > goUp = goUpAcc F0
->     where goUpAcc :: Fwd Entry -> WhereAmI -> WhereAmI
+>     where goUpAcc :: Fwd Entry -> ProofState -> ProofState
 >           goUpAcc acc (ls :< Layer 
 >                        (es :< E newRef _ (Girl LETG newDev)) oldRef@(name := _) cadets tip root
 >                       , oldDev)
@@ -96,9 +96,9 @@ the current working location.
 
 |goDown| moves the focus to the next youngest girl.
 
-> goDown :: WhereAmI -> WhereAmI
+> goDown :: ProofState -> ProofState
 > goDown = goDownAcc B0
->     where goDownAcc :: Bwd Entry -> WhereAmI -> WhereAmI
+>     where goDownAcc :: Bwd Entry -> ProofState -> ProofState
 >           goDownAcc acc (ls :< l@(Layer elders ref (e :> es) tip root), dev)
 >               = case e of
 >                     E newRef _ (Girl LETG newDev) ->
@@ -115,12 +115,12 @@ the current working location.
 |appendBinding| and |appendGoal| add entries to the working development,
 without type-checking or handling roots properly at the moment.
 
-> appendBinding :: (String :<: TY) -> BoyKind -> WhereAmI -> WhereAmI
+> appendBinding :: (String :<: TY) -> BoyKind -> ProofState -> ProofState
 > appendBinding x k (ls, (es, tip, r)) = 
 >     freshRef x (\ref@(n := _) r ->
 >                     (ls, (es :< E ref (last n) (Boy k), tip, r))) r
 
-> appendGoal :: (String :<: TY) -> WhereAmI -> WhereAmI
+> appendGoal :: (String :<: TY) -> ProofState -> ProofState
 > appendGoal (s:<:ty) (ls, (es, tip, root)) = 
 >     let n = name root s
 >         ref = n := HOLE :<: ty in
@@ -131,7 +131,7 @@ without type-checking or handling roots properly at the moment.
 |auncles| calculates the elder aunts or uncles of the current development,
 thereby giving a list of entries that are currently in scope.
 
-> auncles :: WhereAmI -> Bwd Entry
+> auncles :: ProofState -> Bwd Entry
 > auncles (ls, (es, _, _)) = foldMap elders ls <+> es
 
 
@@ -165,9 +165,9 @@ bit clearer than the derived |Show| instance.
 > showRef (ns := _) = unwords (fst . unzip $ ns)
 
 
-Here we have a very basic command-driven interface to the elaborator.
+Here we have a very basic command-driven interface to the zipper.
 
-> elaborator :: WhereAmI -> IO ()
+> elaborator :: ProofState -> IO ()
 > elaborator loc = do
 >   printDev (snd loc)
 >   case fst loc of
