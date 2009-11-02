@@ -235,6 +235,9 @@ A |REF| can either be:
 \item[|HOLE|:] manipulated, a hole in a zipper
 \end{description}
 
+\question{Is that right? Especially concerning |HOLE|, it was a wild
+          guess.}
+
 > data RKind
 >   =  DECL
 >   |  DEFN VAL
