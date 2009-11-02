@@ -175,6 +175,16 @@ term.
 >                    body <- subgoal (t $$ A (pval x)) (body (pval x))
 >                    discharge x body
 
+> tyLambda :: (String :<: TY) -> (VAL -> Tac (VAL :<: TY))
+>                             -> Tac (VAL :<: TY)
+> tyLambda (name :<: s) body = do
+>     C (Pi s t) <- goal
+>     Rooty.freshRef ("" :<: s) $
+>                    \x -> do
+>                      (body :<: ts) <- subgoal (t $$ A (pval x)) (body $ pval x)
+>                      v <- discharge x body
+>                      return (v :<: ts)
+
 The second builder is significantly simpler, as we don't have to care
 about binding. Taking a canonical term containing well-typed values,
 |can| builds a well-typed (canonical) value.
@@ -194,6 +204,14 @@ canonical value.
 >     v <- canTy id (t :>: cTac)
 >     v <- traverse (\(t :>: v) -> v) v
 >     return $ C v
+
+
+
+> infr :: TY -> Tac VAL -> Tac (VAL :<: TY)
+> infr typ tacX = do
+>   typ <- goal
+>   x <- tacX
+>   return (x :<: typ)
 
 \subsubsection{Elimination rules}
 
