@@ -11,9 +11,11 @@
 
 > import Control.Applicative
 > import Control.Monad
+
 > import Data.Foldable
 > import Data.Traversable
 > import Data.List
+> import Data.Maybe
 
 > import BwdFwd
 > import Tm
@@ -62,7 +64,7 @@ using |canTy|.
 >   Arr sv SET  `tc` t &\ \ t _ ->
 >   Just $ Pi s t
 > import <- CanTyRules
-> canTy  _  _                 = Nothing
+> canTy  _  _                 = mzero
 
 
 
@@ -120,12 +122,21 @@ to the bound variable 0. Hence, it turns a |VV|alue into a |TT|erm.
 > import <- EtaExpand
 > etaExpand _                  _ = Nothing
 
+(Explain what inQuote does)
+
+The reason for the breeding of |Just| is that we are in the |Maybe|
+monad, and we really want to stay in there: |canTy| asks for a
+MonadPlus. Obviously, (hopefully) we cannot fail in this code, but we
+have to be artificially cautious. Hence, this is |Just| a mess.
+
 > inQuote :: (TY :>: VAL) -> Root -> INTM
 > inQuote tyv              r | Just t    <- etaExpand tyv r = t
 > inQuote (_ :>: N n)      r | (t :<: _) <- exQuote n r = N t
-> inQuote (C cty :>: C cv) r
->   | Just ct   <- canTy (\ y v -> Just (inQuote (y :>: v) r, v)) (cty :>: cv)
->   = C ct
+> inQuote (C cty :>: C cv) r = fromJust $ do
+>     ct <- canTy (\t -> Just t) (cty :>: cv)
+>     c <- traverse (\c -> Just $ inQuote c r)  ct
+>     return $ C c
+
 
 > unC :: VAL -> Can VAL
 > unC (C c) = c
@@ -173,8 +184,7 @@ to the bound variable 0. Hence, it turns a |VV|alue into a |TT|erm.
 
 > check :: (TY :>: INTM) -> Root -> Maybe ()
 > check (C c :>: C c')        r = do
->   csp <- canTy (\ y t -> Just (check (y :>: t) r, evTm t)) (c :>: c')
->   traverse id csp
+>   csp <- canTy (Just . evTm) (c :>: c')
 >   return ()
 > check (C (Pi s t) :>: L sc) r = do
 >   Root.freshRef ("" :<: s) 
@@ -215,8 +225,8 @@ to the bound variable 0. Hence, it turns a |VV|alue into a |TT|erm.
 >    Nothing -> Right ABSURD
 >    Just x  -> Right $ mkEqConj (trail x)
 >    where
->    Just t0' = canTy (\ y v -> Just (y :>: v, v)) (Set :>: t0)
->    Just t1' = canTy (\ y v -> Just (y :>: v, v)) (Set :>: t1)
+>    Just t0' = canTy Just (Set :>: t0)
+>    Just t1' = canTy Just (Set :>: t1)
 > import <- OpRunEqGreen
 > opRunEqGreen [C (Pi s1 t1),f1,C (Pi s2 t2),f2] = Right $
 >   eval  [.s1.t1.f1.s2.t2.f2.

@@ -14,6 +14,7 @@
 
 > import Control.Monad
 > import Control.Applicative
+> import Data.Traversable
 > import Debug.Trace
 
 > import BwdFwd
@@ -60,6 +61,10 @@ Then we have a monad:
 >                                do -- in Maybe monad
 >                                x <- runTac x r t
 >                                runTac (f x) r t }
+>
+> instance MonadPlus Tac where
+>     mzero = Tac { runTac = \_ _ -> Nothing }
+>     a `mplus` b = Tac { runTac = \r t -> runTac a r t `mplus` runTac b r t }
 
 \subsubsection{Going rooty}
 
@@ -176,8 +181,9 @@ about binding. Taking a canonical term containing well-typed values,
       
 > can :: Can (Tac VAL) -> Tac VAL
 > can cTac =
->     Tac { runTac = \root (C t) -> 
+>     Tac { runTac = \root typ -> 
 >                    do
+>                    C t <- typ
 >                    v <- canTy (evTac root)
 >                               (t :>: cTac) 
 >                    return $ C v
@@ -189,10 +195,21 @@ about binding. Taking a canonical term containing well-typed values,
 >                 return (v,v)
 >                   
 
-This code is insatisfactory: instead of bring |canTy| in the beautiful
-world of Rooty, I have just hacked a |Tac| around it. There might an
-esthetically more pleasing way of doing that.
+To do that, we first ask our goal to live in the canonical
+world. That's an obvious requirement. Then, we use the canonical
+type-checker (with the identity as an evaluation function, because we
+don't have to evaluate terms) to check that |cTac| lives in |t|. The
+result is a |Tac (Can (TY :>: Tac VAL))|. Meaning that in the |Tac|
+monad, |v| has type |Can (TY :>: Tac VAL)|. But do we care about 
+|TY :>: .|? Surely not, so we drop this information and just return the
+canonical value.
 
+> can :: Can (Tac VAL) -> Tac VAL
+> can cTac = do
+>     C t <- goal
+>     v <- canTy id (t :>: cTac)
+>     v <- traverse (\(t :>: v) -> v) v
+>     return $ C v
 
 \subsubsection{Elimination rules}
 

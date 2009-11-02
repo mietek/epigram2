@@ -33,10 +33,13 @@
 > cLam n f (C (Pi s t)) (g, e) = freshRef (n :<: s) $ \ x ->
 >   f x (t $$ A (pval x)) (g :< x, e :< pval x)
 
+I think that this is useless, thanks to the shining tactics.
+
+> {-
 > cC :: Can (TY -> Cxty INTM) -> TY -> Cxty INTM
 > cC ca (C ty) g@(_, e) r = C tm where
->   Just tm = canTy (\ y k -> let t = k y g r in Just (t, eval t e)) (ty :>: ca)
-
+>   Just tm = canTy (\ y k -> let t = k y g r in (t, eval t e)) (ty :>: ca)
+> -}
 
 %endif
 

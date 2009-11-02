@@ -23,5 +23,5 @@
 >   traverse f (Tag s)      = (|(Tag s)|)
 
 > import -> CanTyRules where
->   canTy _  (Set :>: UId)    = Just UId
->   canTy _  (UId :>: Tag s)  = Just (Tag s)
+>   canTy _  (Set :>: UId)    = return UId
+>   canTy _  (UId :>: Tag s)  = return (Tag s)
