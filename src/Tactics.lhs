@@ -178,22 +178,6 @@ term.
 The second builder is significantly simpler, as we don't have to care
 about binding. Taking a canonical term containing well-typed values,
 |can| builds a well-typed (canonical) value.
-      
-> can :: Can (Tac VAL) -> Tac VAL
-> can cTac =
->     Tac { runTac = \root typ -> 
->                    do
->                    C t <- typ
->                    v <- canTy (evTac root)
->                               (t :>: cTac) 
->                    return $ C v
->         }
->     where evTac :: Root -> TY -> Tac VAL -> Maybe (VAL, VAL)
->           evTac root typ tacVal = 
->               do
->                 v <- runTac tacVal root typ
->                 return (v,v)
->                   
 
 To do that, we first ask our goal to live in the canonical
 world. That's an obvious requirement. Then, we use the canonical
