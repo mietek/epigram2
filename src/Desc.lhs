@@ -45,7 +45,7 @@
 >   descOp :: Op
 >   descOp = Op
 >     { opName = "descOp"
->     , opArity = 1
+>     , opArity = 2
 >     , opTy = dOpTy
 >     , opRun = dOpRun
 >     } where
