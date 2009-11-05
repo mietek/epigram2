@@ -234,6 +234,9 @@ work and comparing the inferred type with the goal.
 >       p <- equalR (SET :>: (typ, typ'))
 >       guard p
 >       return $ N v
+>     where equalR x = do
+>             r <- root
+>             return $ equal x r
 
 One the other hand, |apply| builds up the continuation. It builds an
 |Use| which \emph{emph} must be a function, this function being
