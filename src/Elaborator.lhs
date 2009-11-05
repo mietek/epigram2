@@ -6,19 +6,21 @@
 
 > module Elaborator where
 
-> import Data.Foldable
-> import Control.Monad
 > import Control.Applicative
+> import Control.Monad
+> import Control.Monad.State
+> import Data.Foldable
 > import Data.Traversable
 
 > import BwdFwd
 > import Developments
 > import Root
+> import Rooty
 > import Tm
 
 %endif
 
-\section{Dev Zipper}
+\section{Proof Context}
 
 Recall from Section~\ref{sec:developments} that
 
@@ -47,15 +49,15 @@ Each |Layer| of the structure is a record with the following fields:
 The current proof state is then represented by a stack of |Layer|s, along with the
 current working development:
 
-> type ProofState = (Bwd Layer, Dev)
+> type ProofContext = (Bwd Layer, Dev)
 
 Now we need functions to manipulate the unzipped data structure.
 
 |goIn| changes the current location to the bottom-most girl in the current development.
 
-> goIn :: ProofState -> ProofState
+> goIn :: ProofContext -> ProofContext
 > goIn l = goInAcc l F0 
->     where goInAcc :: ProofState -> Fwd Entry -> ProofState
+>     where goInAcc :: ProofContext -> Fwd Entry -> ProofContext
 >           goInAcc (ls, (es :< e, tip, root)) cadets =
 >               case e of
 >                   E ref _ (Girl LETG dev) ->
@@ -67,7 +69,7 @@ Now we need functions to manipulate the unzipped data structure.
 |goOut| goes up a layer, so the focus changes to the development containing
 the current working location.
 
-> goOut :: ProofState -> ProofState
+> goOut :: ProofContext -> ProofContext
 > goOut (ls :< l, dev) = (ls,
 >     (elders l :< E (mother l) (lastName (mother l)) (Girl LETG dev) <>< cadets l
 >     ,laytip l
@@ -77,9 +79,9 @@ the current working location.
 
 |goUp| moves the focus to the next eldest girl.
 
-> goUp :: ProofState -> ProofState
+> goUp :: ProofContext -> ProofContext
 > goUp = goUpAcc F0
->     where goUpAcc :: Fwd Entry -> ProofState -> ProofState
+>     where goUpAcc :: Fwd Entry -> ProofContext -> ProofContext
 >           goUpAcc acc (ls :< Layer 
 >                        (es :< E newRef _ (Girl LETG newDev)) oldRef@(name := _) cadets tip root
 >                       , oldDev)
@@ -96,9 +98,9 @@ the current working location.
 
 |goDown| moves the focus to the next youngest girl.
 
-> goDown :: ProofState -> ProofState
+> goDown :: ProofContext -> ProofContext
 > goDown = goDownAcc B0
->     where goDownAcc :: Bwd Entry -> ProofState -> ProofState
+>     where goDownAcc :: Bwd Entry -> ProofContext -> ProofContext
 >           goDownAcc acc (ls :< l@(Layer elders ref (e :> es) tip root), dev)
 >               = case e of
 >                     E newRef _ (Girl LETG newDev) ->
@@ -115,12 +117,12 @@ the current working location.
 |appendBinding| and |appendGoal| add entries to the working development,
 without type-checking or handling roots properly at the moment.
 
-> appendBinding :: (String :<: TY) -> BoyKind -> ProofState -> ProofState
+> appendBinding :: (String :<: TY) -> BoyKind -> ProofContext -> ProofContext
 > appendBinding x k (ls, (es, tip, r)) = 
->     freshRef x (\ref@(n := _) r ->
+>     Root.freshRef x (\ref@(n := _) r ->
 >                     (ls, (es :< E ref (last n) (Boy k), tip, r))) r
 
-> appendGoal :: (String :<: TY) -> ProofState -> ProofState
+> appendGoal :: (String :<: TY) -> ProofContext -> ProofContext
 > appendGoal (s:<:ty) (ls, (es, tip, root)) = 
 >     let n = name root s
 >         ref = n := HOLE :<: ty in
@@ -131,8 +133,35 @@ without type-checking or handling roots properly at the moment.
 |auncles| calculates the elder aunts or uncles of the current development,
 thereby giving a list of entries that are currently in scope.
 
-> auncles :: ProofState -> Bwd Entry
+> auncles :: ProofContext -> Bwd Entry
 > auncles (ls, (es, _, _)) = foldMap elders ls <+> es
+
+
+\section{Proof State Monad}
+
+> newtype ProofState a = ProofState {getProofState :: StateT ProofContext Maybe a}
+
+> instance (Monad m) => Applicative (StateT s m) where
+>     pure = return
+>     (<*>) = ap
+
+> instance Applicative ProofState where
+>     pure = ProofState . pure
+>     ProofState x <*> ProofState y = ProofState (x <*> y)
+
+> instance Functor ProofState where
+>     fmap f = ProofState . (fmap f) . getProofState
+
+> instance Monad ProofState where
+>     return = pure
+>     (ProofState x) >>= f = ProofState (x >>= getProofState . f)
+
+> instance Rooty ProofState where
+>     freshRef x f = ProofState (do
+>         (_, _, root) <-  gets snd
+>         getProofState $ Root.freshRef x ((\proof root -> proof) . f) root
+>       )
+>     forkRoot s child dad = undefined
 
 
 \section{Command-line interface}
@@ -167,7 +196,7 @@ bit clearer than the derived |Show| instance.
 
 Here we have a very basic command-driven interface to the zipper.
 
-> elaborator :: ProofState -> IO ()
+> elaborator :: ProofContext -> IO ()
 > elaborator loc = do
 >   printDev (snd loc)
 >   case fst loc of
