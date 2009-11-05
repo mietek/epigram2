@@ -1,3 +1,6 @@
+# Boring compilation results:
+^src/Pig$
+
 # (lhs2TeX) Boring file regexps:
 Epitome\.aux
 Epitome\.bbl
