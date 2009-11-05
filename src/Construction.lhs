@@ -21,8 +21,6 @@
 > import Rules
 > import DevLoad -- probably not the right thing to do
 
-%endif
-
 > type Cxty x = (Bwd REF, ENV) -> Root -> x
 
 > deb :: REF -> Cxty EXTM
@@ -39,9 +37,8 @@ I think that this is useless, thanks to the shining tactics.
 
 > {-
 > cC :: Can (TY -> Cxty INTM) -> TY -> Cxty INTM
-> cC ca (C ty) g@(_, e) r = C tm where
->   Just tm = canTy (\ y k -> let t = k y g r in Just (t, eval t e)) (ty :>: ca)
-
+> cC ca (C ty) g@@(_, e) r = C tm where
+>   Just tm = canTy (\ y k -> let t = k y g r in (t, eval t e)) (ty :>: ca)
+> -}
 
 %endif
-
