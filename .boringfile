@@ -16,6 +16,9 @@ Epitome\.tex
 # (Makefile) Boring file regexps:
 src/\.depend$
 
+# NFS is boring
+\.nfs0
+
 # (Darcs) Boring file regexps:
 \.hi$
 \.hi-boot$
