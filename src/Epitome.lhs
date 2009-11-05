@@ -19,7 +19,9 @@
 \begin{document}
 
 \title{An Epigram Implementation}
-\author{Conor McBride, James Chapman, Peter Morris, Edwin Brady}
+\author{Edwin Brady,  James Chapman, Pierre-\'{E}variste Dagand, \\
+   Adam Gundry, Conor McBride, Peter Morris
+}
 \maketitle
 
 \chapter{Perversity}
