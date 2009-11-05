@@ -31,9 +31,16 @@
 
 
 We distinguish |In|Terms (into which we push types) and |Ex|Terms
-(from which we infer types).
+(from which we pull types).
 
 > data Dir    = In | Ex
+
+This is the by-now traditional bidirectional
+type-checking~\cite{turner:bidirectional_tc} story: there are
+\emph{checkable} terms that are checked against again a given term,
+and there are \emph{inferable} terms which type are inferred
+relatively to a typing context. We push types in checkable terms, pull
+types from inferable terms.
 
 We also distinguish the representations of |TT| terms and |VV| values.
 
@@ -44,19 +51,42 @@ like your mother always told you.
 
 > data Tm :: {Dir, Phase} -> * -> * where
 
-We push types in:
+We can push types in:
+\begin{itemize}
+\item lambda terms,
+\item canonical terms, and
+\item inferred terms
+\end{itemize}
 
 >   L     :: Scope p x             -> Tm {In, p} x   -- \(\lambda\)
 >   C     :: Can (Tm {In, p} x)    -> Tm {In, p} x   -- canonical
 >   N     :: Tm {Ex, p} x          -> Tm {In, p} x   -- |Ex| to |In|
 
-And we infer types from:
+And we can infer types from:
+\begin{itemize}
+\item variables, by reading the context,
+\item fully applied operator, by |opTy| defined below,
+\item elimination, by the type of the eliminator,
+\item type ascription on a checkable term, by the ascripted type
+\end{itemize}
 
 >   P     :: x                     -> Tm {Ex, p} x   -- parameter
 >   V     :: Int                   -> Tm {Ex, TT} x  -- variable
 >   (:@)  :: Op -> [Tm {In, p} x]  -> Tm {Ex, p} x   -- fully applied op
 >   (:$)  :: Tm {Ex, p} x -> Elim (Tm {In, p} x) -> Tm {Ex, p} x  -- elim
 >   (:?)  :: Tm {In, TT} x -> Tm {In, TT} x -> Tm {Ex, TT} x      -- typing
+
+In Values, an |N t| is not only an |Ex| to |In|, but really a neutral
+term. Typing and variable will not let you get a value, so problem
+trivially solved.  This is also obvious if you have wrapped a
+parameter into an |In| value. An eliminator in value form consists in
+applying an elimination to a value in |Ex|, that is (by induction) a
+neutral term. Hence, the eliminator is stucked too. The case for fully
+applied operator is nuanced: if one of the argument is a |N t| and it
+is actually used by |Op|, then the operation is a neutral term. We can
+hardly enforce that constraints in types, so we have to deal with this
+approximation. To conclude, if the code is correct, in a |N t| value,
+you have a neutral.
 
 |Scope| represents bodies of binders, but the representation differs
 with phase. In \emph{terms}, |x :. t| is a \emph{binder}: the |t| is a
@@ -153,6 +183,7 @@ to say that |thing| is of infered type |typ|. Therefore, we can read
 > infix 4 :<:
 
 \subsection{Syntactic Equality}
+\label{sec:syntactic_equality}
 
 We use syntactic equality on \(\eta\)-quoted values to implement the
 definitional equality.
@@ -274,7 +305,7 @@ constructs and elimination principles to the core.
 
 > ($$) :: VAL -> Elim VAL -> VAL
 
-Application on a free variable in |v|: $(\lambda x . v) u = v$
+Application on a constant |v|: $(\lambda _ . v) u = v$
 
 > L (K v)      $$ A _  = v
 
@@ -282,16 +313,21 @@ Application on a bound variable in |t|: $(\lambda x . t) v = \mbox{eval } t[x \m
 
 > L (H g _ t)  $$ A v  = eval t (g :< v)
 
-Container unpacking: $\mbox{unpack}(Con t) = t$
+Container unpacking: $\mbox{unpack}(Con\ t) = t$
 
 > C (Con t)    $$ Out  = t
 
-Extensions:
+Features
 
 > import <- ElimComputation
 
-Applying a term to a neutral function reduces to the neutral
-application of the term to the function:
+If no application rule applies, this means that we are stuck. This can
+happen if the application is itself stuck or we are applying |e| to a
+free variable. In both cases, we simply re-wrap the application inside
+|N|.
+
+\question{|N| stands for Neutral or it is just the standard term to
+          bring an |Ex| to |In|?}
 
 > N n          $$ e    = N (n :$ e)
 
@@ -427,6 +463,7 @@ This is the Evil Mangler. Good luck with that stuff.
 
 
 \subsection{Term Construction}
+
 
 > ($#) :: Int -> [Int] -> InTm x
 > f $# xs = N (foldl (\ g x -> g :$ A (NV x)) (V f) xs)
