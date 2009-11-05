@@ -270,14 +270,14 @@ simply as:
 As for more "complex" examples, here is an identity function:
 
 > ident = lambda (\x -> return (pval x))
-> identT = Arr SET SET
+> identT = ARR SET SET
 
 And here is the twice function:
 
 > twice = tyLambda ("X" :<: SET) 
 >         (\tx ->
 >          let vtx = pval tx in
->          tyLambda ("f" :<: (Arr vtx vtx)) 
+>          tyLambda ("f" :<: (ARR vtx vtx)) 
 >          (\f -> 
 >           tyLambda ("x" :<: vtx) 
 >           (\x -> do
@@ -285,6 +285,9 @@ And here is the twice function:
 >                   use f . apply (use f . apply  (use x done) $ done) $ done)))
 > twiceT = (C (Pi SET 
 >             (L (H (B0 :< SET) "" 
->                (Arr (Arr (NV 0) (NV 0))
->                     (Arr (NV 0)
+>                (ARR (ARR (NV 0) (NV 0))
+>                     (ARR (NV 0)
 >                          (NV 0)))))))
+
+> main = do
+>        putStrLn $ show $ runTac twice (B0,0) twiceT
