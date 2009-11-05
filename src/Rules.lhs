@@ -56,12 +56,33 @@ we can write any type-directed function in term of |canTy|. That is,
 any function traversing the types derivation tree can be expressed
 using |canTy|. 
 
-> canTy :: (TY -> t -> Maybe (s, VAL)) -> (Can VAL :>: Can t) -> Maybe (Can s)
-> canTy tc (Set :>: Set)     =  Just Set
-> canTy tc (Set :>: Pi s t)  =
->   SET         `tc` s &\ \ s sv ->
->   Arr sv SET  `tc` t &\ \ t _ ->
->   Just $ Pi s t
+< canTy :: (TY -> t -> Maybe (s, VAL)) -> (Can VAL :>: Can t) -> Maybe (Can s)
+< canTy tc (Set :>: Set)     =  Just Set
+< canTy tc (Set :>: Pi s t)  = do
+<   (s,sv) <-  SET `tc` s 
+<   (t,_) <- Arr sv SET  `tc` t
+<   return $ Pi s t
+< import <- CanTyRules
+< canTy  _  _                 = Nothing
+
+If you think about it, what we have defined about could be generalized
+once again. Indeed, if we jump inside a |MonadPlus|, we are still able
+to write the code above. However, doing that, we regain the mental
+sanity we lost with the typechecking-evaluating function: we consider
+a |t -> m VAL| which stands for an evaluator in the monad. Some
+type-checking might happen under the hood but we don't have to be
+aware of that. In the end, we get a function quite similar to the
+original one.
+
+\pierre{When the epig people get use to this new |canTy|, we can
+        scratch the previous code.}
+
+> canTy :: MonadPlus m => (t -> m VAL) -> (Can VAL :>: Can t) -> m (Can (TY :>: t))
+> canTy ev (Set :>: Set)     = return Set
+> canTy ev (Set :>: Pi s t)  = do
+>   sv <-  ev s
+>   tv <- ev t
+>   return $ Pi (SET :>: s) (Arr sv SET :>: t)
 > import <- CanTyRules
 > canTy  _  _                 = mzero
 
