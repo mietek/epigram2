@@ -14,7 +14,6 @@
 
 > import Data.Foldable
 > import Data.Traversable
-> import Data.List
 > import Data.Maybe
 
 > import BwdFwd
@@ -220,47 +219,58 @@ constructor.
 >    Just (vs',v) = opTy op id vs 
 
 
-As we are in the quotation business, let us define |quoteRef|. The
-role of |quoteRef tm v| is to bind the free variable |v| in |tm| to
-the bound variable 0. Hence, it turns a |VV|alue into a |TT|erm.
 
-> quoteRef :: Rooty m => [REF] -> Tm {d,VV} REF -> m (Tm {d,TT} REF)
-> quoteRef  refs (P x) =
+
+
+As we are in the quotation business, let us define $\beta$-quotation,
+ie |bquote|. Unlike |quote|, |bquote| does not perform
+$\eta$-expansion, but just brings the term in $\beta$ normal
+form. Therefore, the code is much more simpler than |quote|, although
+the idea is the same. 
+
+From a technical perspective, it is important to note that we are in
+|Rooty| and we don't require a specially crafted |Root| (unlike
+|quote| and |quop|, as described above). Because of that, we have to
+maintain the variables we have generated and to which De Bruijn index
+they correspond. This is the role of the backward list of references. We let 
+
+Note that we let the user provide an initial environment of
+references: this is useful to discharge a bunch of assumptions inside
+a term. The typical use-case is @Tactics.lhs:discharge@.
+
+Apart from that, this is a standard $\beta$-quotation: 
+
+> bquote :: Rooty m => Bwd REF -> Tm {d,VV} REF -> m (Tm {d,TT} REF)
+
+If binded by a lambda of ours, we bound the free variables to the
+(hopefully) correct lambda. We don't do anything otherwise.
+
+> bquote  refs (P x) =
 >     case x `elemIndex` refs of
 >       Just i -> pure $ V i
 >       Nothing -> pure $ P x
-> quoteRef refs (L (H vs x t)) = 
+
+Going under a closure is the usual story: we create a fresh variable,
+evaluate the applied term, quote the result, and bring everyone under
+a binding.
+
+> bquote refs (L (H vs x t)) = 
 >     (|(\t -> L (x :. t))
 >       (Rooty.freshRef (x :<: undefined) 
->                       (\x -> quoteRef (x:refs) 
->                                        (eval t (vs :< pval x))))|)
-> quoteRef refs (L (K t)) = (|(L . K) (quoteRef refs t) |)
-> quoteRef refs (C c) = (|C (traverse (quoteRef refs) c )|)
-> quoteRef refs (N n) = (|N (quoteRef refs n)|)
-> quoteRef refs (n :$ v) = (|(:$) (quoteRef refs n)
->                                 (traverse (quoteRef refs) v)|)
-> quoteRef refs (op :@ vs) = (|(:@) (pure op)
->                                   (traverse (quoteRef refs) vs)|)
+>                       (\x -> bquote (refs :< x) 
+>                                     (eval t (vs :< pval x))))|)
 
+For the other constructors, we simply go through and do as much damage
+as we can. Simple.
 
-%if false
+> bquote refs (L (K t)) = (|(L . K) (bquote refs t) |)
+> bquote refs (C c) = (|C (traverse (bquote refs) c )|)
+> bquote refs (N n) = (|N (bquote refs n)|)
+> bquote refs (n :$ v) = (|(:$) (bquote refs n)
+>                                 (traverse (bquote refs) v)|)
+> bquote refs (op :@ vs) = (|(:@) (pure op)
+>                                   (traverse (bquote refs) vs)|)
 
-This is the ancestor of quoteRef, and I should do something to solve
-that genetic disaster.
-
-> {-
-> bquote :: Tm {d,VV} REF -> Root -> Tm {d,TT} REF
-> bquote (L (H vs x t)) r = 
->   L (x :. fresh (x :<: undefined) (\x -> bquote (eval t (vs :< x))) r)
-> bquote (L (K t))      r = L (K (bquote t r))
-> bquote (C c)          r = C (traverse bquote c r)
-> bquote (N n)          r = N (bquote n r)
-> bquote (P x)          r = quop x r
-> bquote (n :$ v)       r = bquote n r :$ traverse bquote v r
-> bquote (op :@ vs)     r = op :@ traverse bquote vs r
-> -}
-
-%endif
 
 
 \subsection{Type inference}

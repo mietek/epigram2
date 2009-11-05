@@ -83,6 +83,23 @@ These bits of renaming should go elsewhere.
 
 %if False
 
+> bwdFoldCtxt :: (Fwd x -> t) ->
+>                (t -> x -> Fwd x -> t) ->
+>                Bwd x -> t
+> bwdFoldCtxt n s xs = help xs F0 
+>     where help B0 ys = n ys
+>           help (xs :< x) ys = s (help xs (x :> ys)) x ys
+
+> elemIndex :: Eq x => x -> Bwd x -> Maybe Int
+> elemIndex x = bwdFoldCtxt (\_ -> Nothing)
+>                            (\t y i -> 
+>                             if y == x then 
+>                                 Just $ sum i 
+>                             else 
+>                                 t)
+>     where sum = foldr' (\_ x -> x+1) 0
+
+
 > instance Traversable Bwd where
 >   traverse f B0         = (|B0|)
 >   traverse f (xs :< x)  = (|(f ^$ xs) :< f x|)
