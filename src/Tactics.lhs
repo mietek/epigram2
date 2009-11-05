@@ -266,3 +266,25 @@ Therefore, we are able to write a standard function application as
 simply as:
 
 > example = use f . apply x1 . apply x2 $ done
+
+As for more "complex" examples, here is an identity function:
+
+> ident = lambda (\x -> return (pval x))
+> identT = Arr SET SET
+
+And here is the twice function:
+
+> twice = tyLambda ("X" :<: SET) 
+>         (\tx ->
+>          let vtx = pval tx in
+>          tyLambda ("f" :<: (Arr vtx vtx)) 
+>          (\f -> 
+>           tyLambda ("x" :<: vtx) 
+>           (\x -> do
+>              infr vtx $
+>                   use f . apply (use f . apply  (use x done) $ done) $ done)))
+> twiceT = (C (Pi SET 
+>             (L (H (B0 :< SET) "" 
+>                (Arr (Arr (NV 0) (NV 0))
+>                     (Arr (NV 0)
+>                          (NV 0)))))))
