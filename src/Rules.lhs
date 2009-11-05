@@ -133,20 +133,21 @@ a fresh namespace.
 > quote vty r = inQuote vty (room r "quote")
 
 
-Quoting a value consists in, if possible, $\eta$-expand it. Needless
-to say, we can always $\eta$-expand a closure. If $\eta$-expansion has
-failed, there are two possible cases: either we are quoting a neutral
-term, or a canonical term. In the case of neutral term, we simply
-switched to |exQuote|, which is designed to quote neutral terms.
+Quoting a value consists in, if possible, $\eta$-expanding
+it. Needless to say, we can always $\eta$-expand a closure. If
+$\eta$-expansion has failed, there are two possible cases: either we
+are quoting a neutral term, or a canonical term. In the case of
+neutral term, we simply switch to |exQuote|, which is designed to
+quote neutral terms.
 
 In the case of a canonical term, we use |canTy| to check that |cv| is
-of type |cty| and, more importantly, to evaluate |cv| to a
-value. \pierre{To be continued}.
-
-The reason for the breeding of |Just| is that we are in the |Maybe|
-monad, and we really want to stay in there: |canTy| asks for a
-MonadPlus. Obviously, (hopefully) we cannot fail in this code, but we
-have to be artificially cautious. Hence, this is |Just| a mess.
+of type |cty| and, more importantly, to evaluate |cty|. Then, it is
+simply a matter of quoting this |type :>: val| inside the canonical
+constructor, and return the fully quoted term. The reason for the
+breeding of |Just| is that we are in the |Maybe| monad, and we really
+want to stay in there: |canTy| asks for a |MonadPlus|. Obviously,
+(hopefully) we cannot fail in this code, but we have to be
+artificially cautious. Hence, this is |Just| a mess.
 
 > inQuote :: (TY :>: VAL) -> Root -> INTM
 > inQuote tyv              r | Just t    <- etaExpand tyv r = t
@@ -157,17 +158,14 @@ have to be artificially cautious. Hence, this is |Just| a mess.
 >     c <- traverse (\c -> Just $ inQuote c r)  ct
 >     return $ C c
 
-> exQuote :: NEU -> Root -> (EXTM :<: TY)
-> exQuote (P x)       r = quop x r :<: pty x
-> exQuote (n :$ v)    r = (n' :$ traverse inQuote e r) :<: ty'
->   where
->   (n' :<: ty)  = exQuote n r
->   Just (e,ty') = elimTy id (N n :<: unC ty) v
-> exQuote (op :@ vs)  r = (op :@ traverse inQuote vs' r) :<: v where
->    Just (vs',v) = opTy op id vs 
-
-
-
+As mentioned above, |\eta|-expansion is the first sensible thing to do
+when quoting. Sometimes it works, especially for closures and features
+for which an |EtaExpand| aspect is defined. Quoting a closure is a bit
+tricky: you cannot compute under a binder as you would like to. So, we
+first have to generate a fresh variable |v|. Then, we apply |v| to the
+function |f|, getting a value of type |t v|. At this point, we can
+safely quote this term. The result is a binding of |v| in the quoted
+term.
 
 > etaExpand :: (TY :>: VAL) -> Root -> Maybe INTM
 > etaExpand (C (Pi s t) :>: f) r = Just $
@@ -176,24 +174,55 @@ have to be artificially cautious. Hence, this is |Just| a mess.
 > etaExpand _                  _ = Nothing
 
 
-> bquote :: Tm {d,VV} REF -> Root -> Tm {d,TT} REF
-> bquote (L (H vs x t)) r = 
->   L (x :. fresh (x :<: undefined) (\x -> bquote (eval t (vs :< x))) r)
-> bquote (L (K t))      r = L (K (bquote t r))
-> bquote (C c)          r = C (traverse bquote c r)
-> bquote (N n)          r = N (bquote n r)
-> bquote (P x)          r = quop x r
-> bquote (n :$ v)       r = bquote n r :$ traverse bquote v r
-> bquote (op :@ vs)     r = op :@ traverse bquote vs r
+Remember that a neutral term is either a parameter, a stuck
+elimination, or a stuck operation. Hence, we consider each cases in
+turn. 
 
-> quop :: REF -> Root -> EXTM
-> quop ref@(ns := _) r = help (bwdList ns) r
->   where 
->   help (ns :< (_,i)) (r,j) = if ns == r then V (j-i-1) else P ref
+> exQuote :: NEU -> Root -> (EXTM :<: TY)
+
+Let's be clear. The code below is, in my opinion, a hack. The idea is
+the following. If we are asked to quote a free variable |P| we have
+introduced during |\eta|-expansion (above), we know it is bound by a
+lambda: hence it needs to be turned into a bound variable |V|, with
+the right De Bruijn index. If we have not introduced that free
+variable, we simply return it.
+
+Technically, we know that a free variable has been created by |quote|
+if the current root and the namespace |ns| of the variable are the
+same. Hence, the test |ns == r|. Then, we compute the De Bruijn index
+of the bound variable by counting the number of lambdas traversed up
+to now -- by looking at |j-1| in our current root |(r,j)| -- minus the
+number of lambdas traversed at the time of the parameter creation,
+ie. |i|. Do some math, pray, and you get the right De Bruijn index.
+
+> exQuote (P x)       r = quop x r :<: pty x
+>     where quop :: REF -> Root -> EXTM
+>           quop ref@(ns := _) r = help (bwdList ns) r
+>               where
+>               help (ns :< (_,i)) (r,j) = if ns == r then V (j-i-1) else P ref
+
+If an elimination is stuck, it is because the function is stuck while
+the arguments are ready to go. So, we have to recursively |exQuote|
+the neutral application, while |inQuote|-ing the arguments. 
+
+> exQuote (n :$ v)    r = (n' :$ traverse inQuote e r) :<: ty'
+>     where (n' :<: ty)  = exQuote n r
+>           Just (e,ty') = elimTy id (N n :<: unC ty) v
+>           unC :: VAL -> Can VAL
+>           unC (C ty) = ty
+
+Similarly, if an operation is stuck, this means that one of the value
+passed as an argument needs to be |inQuote|-ed. So it goes. Note that
+the operation itself cannot be stuck: it is a mere fully-applied
+constructor.
+
+> exQuote (op :@ vs)  r = (op :@ traverse inQuote vs' r) :<: v where
+>    Just (vs',v) = opTy op id vs 
 
 
-The role of |quoteRef tm v| is to bind the free variable |v| in |tm|
-to the bound variable 0. Hence, it turns a |VV|alue into a |TT|erm.
+As we are in the quotation business, let us define |quoteRef|. The
+role of |quoteRef tm v| is to bind the free variable |v| in |tm| to
+the bound variable 0. Hence, it turns a |VV|alue into a |TT|erm.
 
 > quoteRef :: Rooty m => [REF] -> Tm {d,VV} REF -> m (Tm {d,TT} REF)
 > quoteRef  refs (P x) =
@@ -214,7 +243,24 @@ to the bound variable 0. Hence, it turns a |VV|alue into a |TT|erm.
 >                                   (traverse (quoteRef refs) vs)|)
 
 
+%if false
 
+This is the ancestor of quoteRef, and I should do something to solve
+that genetic disaster.
+
+> {-
+> bquote :: Tm {d,VV} REF -> Root -> Tm {d,TT} REF
+> bquote (L (H vs x t)) r = 
+>   L (x :. fresh (x :<: undefined) (\x -> bquote (eval t (vs :< x))) r)
+> bquote (L (K t))      r = L (K (bquote t r))
+> bquote (C c)          r = C (traverse bquote c r)
+> bquote (N n)          r = N (bquote n r)
+> bquote (P x)          r = quop x r
+> bquote (n :$ v)       r = bquote n r :$ traverse bquote v r
+> bquote (op :@ vs)     r = op :@ traverse bquote vs r
+> -}
+
+%endif
 
 
 \subsection{Type inference}
