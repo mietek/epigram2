@@ -26,7 +26,7 @@
 
 %endif
 
-\subsection{Type-directed operations}
+\subsection{Type-checking Canonicals and Eliminators}
 
 Historically, canonical terms were type-checked by the following
 function:
@@ -35,7 +35,6 @@ function:
 < canTy ev (Set,Set)    = Just Set
 < canTy ev (Pi s t,Set) = Just (Pi (SET :>: s) ((ARR (ev s) SET) :>: t)
 < canTy _  _            = Nothing
-
 
 If we temporally forget Features, we have here a type-checker that
 takes an evaluation function |ev|, a type, and a term to be checked
@@ -57,41 +56,104 @@ we can write any type-directed function in term of |canTy|. That is,
 any function traversing the types derivation tree can be expressed
 using |canTy|. 
 
-< canTy :: (TY -> t -> Maybe (s, VAL)) -> (Can VAL :>: Can t) -> Maybe (Can s)
-< canTy tc (Set :>: Set)     =  Just Set
-< canTy tc (Set :>: Pi s t)  = do
-<   (s,sv) <-  SET `tc` s 
-<   (t,_) <- ARR sv SET  `tc` t
-<   return $ Pi s t
-< import <- CanTyRules
-< canTy  _  _                 = Nothing
-
-> canTy :: MonadPlus m => (t -> m VAL) -> (Can VAL :>: Can t) -> m (Can (TY :>: t))
-> canTy ev (Set :>: Set)     = return Set
-> canTy ev (Set :>: Pi s t)  = do
->   sv <-  ev s
->   tv <- ev t
->   return $ Pi (SET :>: s) (ARR sv SET :>: t)
+> canTy :: (TY -> t -> Maybe (s, VAL)) -> (Can VAL :>: Can t) -> Maybe (Can s)
+> canTy tc (Set :>: Set)     =  Just Set
+> canTy tc (Set :>: Pi s t)  =
+>   SET         `tc` s &\ \ s sv ->
+>   Arr sv SET  `tc` t &\ \ t _ ->
+>   Just $ Pi s t
 > import <- CanTyRules
 > canTy  _  _                 = mzero
 
 
-
+Type-checking elimination forms is more standard and mirrors the
+initial definition of |canTy|. |elimTy| is provided with an evaluator
+of |t -> VAL|, a value |f| of inferred typed |t|, ie. |f :<: t| of
+|VAL :<: Can VAL|, an eliminator of |Elim t|. If the operation is
+type-correct, it computes the type of the argument, ie. the
+eliminator, of |Elim (TY :>: t)| and the type of the result |TY|.
 
 > elimTy :: (t -> VAL) -> (VAL :<: Can VAL) -> Elim t ->
->           Maybe (Elim (TY :>: t),VAL)
+>           Maybe (Elim (TY :>: t),TY)
 > elimTy ev (f :<: Pi s t) (A e) = Just (A (s :>: e),t $$ A (ev e)) 
 > import <- ElimTyRules
 > elimTy _  _              _     = Nothing
 
 
-\subsection{Quotation}
+\subsection{Equality and Quotation}
+
+Testing for equality is a direct application of normalization by
+evaluation\cite{dybjer:nbe, chapman:phd, dybjer:dependent_types_work}:
+to compare two values, we first bring them to their normal form. Then,
+it is a simple matter of syntactic equality, defined in Section
+\ref{sec:syntactic_equality}, to compare the normal forms.
+
+> equal :: (TY :>: (VAL,VAL)) -> Root -> Bool
+> equal (ty :>: (v1,v2)) r = quote (ty :>: v1) r == quote (ty :>: v2) r
 
 
-> quop :: REF -> Root -> EXTM
-> quop ref@(ns := _) r = help (bwdList ns) r
->   where 
->   help (ns :< (_,i)) (r,j) = if ns == r then V (j-i-1) else P ref
+|quote| is a type-directed operation that returns a normal form |INTM|
+by recursively evaluating the value |VAL| of type |TY|. Unless I'm
+mistaken, the normal form corresponds to a |\beta|-normal |\eta|-long
+form: there are no |\beta|-redexes present and all possible
+|\eta|-expansions have been performed.
+
+This is performed by two mutually recursive functions, |inQuote| and
+|exQuote|:
+
+< inQuote :: (TY :>: VAL) -> Root -> INTM
+< exQuote :: NEU -> Root -> (EXTM :<: TY)
+
+Where |inQuote| quotes values and |exQuote| quotes neutral terms. As
+we are initially provided with a value, we quote it with |inQuote|, in
+a fresh namespace.
+
+> quote :: (TY :>: VAL) -> Root -> INTM
+> quote vty r = inQuote vty (room r "quote")
+
+
+Quoting a value consists in, if possible, $\eta$-expand it. Needless
+to say, we can always $\eta$-expand a closure. If $\eta$-expansion has
+failed, there are two possible cases: either we are quoting a neutral
+term, or a canonical term. In the case of neutral term, we simply
+switched to |exQuote|, which is designed to quote neutral terms.
+
+In the case of a canonical term, we use |canTy| to check that |cv| is
+of type |cty| and, more importantly, to evaluate |cv| to a
+value. \pierre{To be continued}.
+
+The reason for the breeding of |Just| is that we are in the |Maybe|
+monad, and we really want to stay in there: |canTy| asks for a
+MonadPlus. Obviously, (hopefully) we cannot fail in this code, but we
+have to be artificially cautious. Hence, this is |Just| a mess.
+
+> inQuote :: (TY :>: VAL) -> Root -> INTM
+> inQuote tyv              r | Just t    <- etaExpand tyv r = t
+> inQuote (_ :>: N n)      r = N t
+>     where (t :<: _) = exQuote n r
+> inQuote (C cty :>: C cv) r = fromJust $ do
+>     ct <- canTy (\t -> Just t) (cty :>: cv)
+>     c <- traverse (\c -> Just $ inQuote c r)  ct
+>     return $ C c
+
+> exQuote :: NEU -> Root -> (EXTM :<: TY)
+> exQuote (P x)       r = quop x r :<: pty x
+> exQuote (n :$ v)    r = (n' :$ traverse inQuote e r) :<: ty'
+>   where
+>   (n' :<: ty)  = exQuote n r
+>   Just (e,ty') = elimTy id (N n :<: unC ty) v
+> exQuote (op :@ vs)  r = (op :@ traverse inQuote vs' r) :<: v where
+>    Just (vs',v) = opTy op id vs 
+
+
+
+
+> etaExpand :: (TY :>: VAL) -> Root -> Maybe INTM
+> etaExpand (C (Pi s t) :>: f) r = Just $
+>   L ("" :. fresh ("" :<: s) (\v  -> inQuote (t $$ A v :>: (f $$ A v))) r)
+> import <- EtaExpand
+> etaExpand _                  _ = Nothing
+
 
 > bquote :: Tm {d,VV} REF -> Root -> Tm {d,TT} REF
 > bquote (L (H vs x t)) r = 
@@ -102,6 +164,12 @@ using |canTy|.
 > bquote (P x)          r = quop x r
 > bquote (n :$ v)       r = bquote n r :$ traverse bquote v r
 > bquote (op :@ vs)     r = op :@ traverse bquote vs r
+
+> quop :: REF -> Root -> EXTM
+> quop ref@(ns := _) r = help (bwdList ns) r
+>   where 
+>   help (ns :< (_,i)) (r,j) = if ns == r then V (j-i-1) else P ref
+
 
 The role of |quoteRef tm v| is to bind the free variable |v| in |tm|
 to the bound variable 0. Hence, it turns a |VV|alue into a |TT|erm.
@@ -125,45 +193,6 @@ to the bound variable 0. Hence, it turns a |VV|alue into a |TT|erm.
 >                                   (traverse (quoteRef refs) vs)|)
 
 
-> etaExpand :: (TY :>: VAL) -> Root -> Maybe INTM
-> etaExpand (C (Pi s t) :>: f) r = Just $
->   L ("" :. fresh ("" :<: s) (\v  -> inQuote (t $$ A v :>: (f $$ A v))) r)
-> import <- EtaExpand
-> etaExpand _                  _ = Nothing
-
-(Explain what inQuote does)
-
-The reason for the breeding of |Just| is that we are in the |Maybe|
-monad, and we really want to stay in there: |canTy| asks for a
-MonadPlus. Obviously, (hopefully) we cannot fail in this code, but we
-have to be artificially cautious. Hence, this is |Just| a mess.
-
-> inQuote :: (TY :>: VAL) -> Root -> INTM
-> inQuote tyv              r | Just t    <- etaExpand tyv r = t
-> inQuote (_ :>: N n)      r | (t :<: _) <- exQuote n r = N t
-> inQuote (C cty :>: C cv) r = fromJust $ do
->     ct <- canTy (\t -> Just t) (cty :>: cv)
->     c <- traverse (\c -> Just $ inQuote c r)  ct
->     return $ C c
-
-
-> unC :: VAL -> Can VAL
-> unC (C c) = c
-
-> exQuote :: NEU -> Root -> (EXTM :<: TY)
-> exQuote (P x)       r = quop x r :<: pty x
-> exQuote (n :$ v)    r = (n' :$ traverse inQuote e r) :<: ty'
->   where
->   (n' :<: ty)  = exQuote n r
->   Just (e,ty') = elimTy id (N n :<: unC ty) v
-> exQuote (op :@ vs)  r = (op :@ traverse inQuote vs' r) :<: v where
->    Just (vs',v) = opTy op id vs 
-
-> quote :: (TY :>: VAL) -> Root -> INTM
-> quote vty r = inQuote vty (room r "quote")
-
-> equal :: (TY :>: (VAL,VAL)) -> Root -> Bool
-> equal (ty :>: (v1,v2)) r = quote (ty :>: v1) r == quote (ty :>: v2) r
 
 
 

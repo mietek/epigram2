@@ -473,6 +473,10 @@ This is the Evil Mangler. Good luck with that stuff.
 > fortran _ = ""
 
 
+> unC :: VAL -> Can VAL
+> unC (C c) = c
+
+
 %if False
 
 > newtype I x = I {unI :: x} deriving (Show, Eq)
