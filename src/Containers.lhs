@@ -53,74 +53,85 @@
 
 > import -> CanTyRules where
 >   -- ContU Rules :
->   canTy tc (Set :>: ContU i) = do
->     (i,_) <- SET `tc` i
->     return $ ContU i
->   canTy tc (ContU i :>: ReqC ii) = do
->     (ii,_) <- i `tc` ii
->     return $ ReqC ii
->   canTy tc (ContU i :>: UnitC) = Just UnitC
->   canTy tc (ContU i :>: TimesC x y) = 
->     CONTU i `tc` x  &\ \ x _ ->
->     CONTU i `tc` y  &\ \ y _ ->
->     Just $ TimesC x y
->   canTy tc (ContU i :>: SigmaC s t) = 
->     SET `tc` s               &\ \ s sv ->
->     Arr sv (CONTU i) `tc` t  &\ \ t _ ->
->     Just $ SigmaC s t
->   canTy tc (ContU i :>: PiC s t) = 
->     SET `tc` s               &\ \ s sv ->
->     Arr sv (CONTU i) `tc` t  &\ \ t _ ->
->     Just $ PiC s t
->   canTy tc (ContU i :>: MuC o x oi) =
->     SET `tc` o                                    &\ \ o ov ->
->     Arr ov (CONTU (sumVV $$ A i $$ A ov)) `tc` x  &\ \ x _ ->
->     ov `tc` oi                                    &\ \ oi _ ->
->     Just $ MuC o x oi
->   canTy tc (ContU i :>: NuC o x oi) =
->     SET `tc` o                                    &\ \ o ov ->
->     Arr ov (CONTU (sumVV $$ A i $$ A ov)) `tc` x  &\ \ x _ ->
->     ov `tc` oi                                    &\ \ oi _ ->
->     Just $ NuC o x oi
+>   canTy ev (Set :>: ContU i) = do
+>     iv <- ev i
+>     return $ ContU (SET :>: i)
+>   canTy ev (ContU i :>: ReqC ii) = do
+>     iiv <- ev ii
+>     return $ ReqC (i :>: ii)
+>   canTy _ (ContU i :>: UnitC) = return (i :>: UnitC)
+>   canTy ev (ContU i :>: TimesC x y) = do
+>     xv <- ev x
+>     yv <- ev y
+>     return $ TimesC (CONTU i :>: x) (CONTU i :>: y)
+>   canTy ev (ContU i :>: SigmaC s t) = do
+>     sv <- ev s
+>     tv <- ev t
+>     return $ SigmaC (SET :>: s) (ARR sv (CONTU i) :>: t)
+>   canTy ev (ContU i :>: PiC s t) = do
+>     sv <- ev s
+>     tv <- ev t
+>     return $ PiC (SET :>: s) (CONTU :>: t)
+>   canTy ev (ContU i :>: MuC o x oi) = do
+>     ov <- ev o
+>     xv <- ev x
+>     oiv <- ev oi
+>     return $ MuC (SET :>: o) 
+>                  (ARR ov (CONTU (sumVV $$ A i $$ A ov)) :>: x)
+>                  (ov :>: oi)
+>   canTy ev (ContU i :>: NuC o x oi) = do
+>     ov <- ev o
+>     xv <- ev x
+>     oiv <- ev oi
+>     return $ NuC (SET :>: o)
+>                  (ARR ov (CONTU (sumVV $$ A i $$ A ov)) :>: x)
+>                  (ov :>: oi)
 >   -- Mu, Nu Rules
->   canTy tc (Set :>: Mu i o d x oi) =
->     SET `tc` i                                     &\ \ i iv -> 
->     SET `tc` o                                     &\ \ o ov -> 
->     Arr ov (CONTU (sumVV $$ A iv $$ A ov)) `tc` d  &\ \ d _ ->
->     Arr iv SET `tc` x                              &\ \ x _ ->
->     ov `tc` oi                                     &\ \ oi _ ->
->     Just $ Mu i o d x oi
->   canTy tc (Set :>: Nu i o d x oi) =
->     SET `tc` i                                     &\ \ i iv -> 
->     SET `tc` o                                     &\ \ o ov -> 
->     Arr ov (CONTU (sumVV $$ A iv $$ A ov)) `tc` d  &\ \ d _ ->
->     Arr iv SET `tc` x                              &\ \ x _ ->
->     ov `tc` oi                                     &\ \ oi _ ->
->     Just $ Nu i o d x oi
->   canTy tc (Mu i o d x oi :>: Con t) = 
->     contTOp @@  [ i 
->                 , d $$ A o  
->                 , L (H (bwdList [i,o,d,x]) "t"
->                               (N (casesOp :@ 
->                                  [ NV 4 , NV 3
->                                  , L (K SET) , NV 1  
->                                  , L ("oo" :. (MU (NV 5) (NV 4) 
->                                                   (NV 3) (NV 2) (NV 0)))
->                                  , NV 0])))
->                 ] `tc` t 
->     return $ Con t
->   canTy tc (Nu i o d x oi :>: Con t) = do
->     (t,_) <- contTOp @@  [ i 
->                 , d $$ A o  
->                 , L (H (bwdList [i,o,d,x]) "t"
->                               (N (casesOp :@ 
->                                  [ NV 4 , NV 3
->                                  , L (K SET) , NV 1  
->                                  , L ("oo" :. (NU (NV 5) (NV 4) 
->                                                   (NV 3) (NV 2) (NV 0)))
->                                  , NV 0])))
->                 ] `tc` t
->     return $ Con t
+>   canTy ev (Set :>: Mu i o d x oi) = do
+>     iv <- ev i
+>     ov <- ev o
+>     dv <- ev d
+>     oiv <- ev oi
+>     return $ Mu (SET :>: i)
+>                 (SET :>: o)
+>                 (ARR ov (CONTU (sumVV $$ A iv $$ A ov)) :>: d)
+>                 (ARR iv SET :>: x)
+>                 (ov :>: oi)
+>   canTy ev (Set :>: Nu i o d x oi) = do
+>     iv <- ev i
+>     ov <- ev o
+>     dv <- ev d
+>     xv <- ev x
+>     oiv <- ev oi
+>     return $ Nu (SET :>: i)
+>                 (SET :>: o)
+>                 (ARR ov (CONTU (sumVV $$ A iv $$ A ov)) :>: d)
+>                 (ARR iv SET :>: x)
+>                 (ov :>: oi)
+>   canTy ev (Mu i o d x oi :>: Con t) = do
+>     tv <- ev t
+>     return $ Con (contTOp @@  [ i 
+>                               , d $$ A o  
+>                               , L (H (bwdList [i,o,d,x]) "t"
+>                                          (N (casesOp :@ 
+>                                              [ NV 4 , NV 3
+>                                              , L (K SET) , NV 1  
+>                                              , L ("oo" :. (MU (NV 5) (NV 4) 
+>                                                            (NV 3) (NV 2) (NV 0)))
+>                                              , NV 0]))) 
+>                                 ] :>: t)
+>   canTy ev (Nu i o d x oi :>: Con t) = do
+>     tv <- ev t
+>     return $ Con (contTOp @@  [ i 
+>                               , d $$ A o  
+>                               , L (H (bwdList [i,o,d,x]) "t"
+>                                    (N (casesOp :@ 
+>                                        [ NV 4 , NV 3
+>                                        , L (K SET) , NV 1  
+>                                        , L ("oo" :. (NU (NV 5) (NV 4) 
+>                                                      (NV 3) (NV 2) (NV 0)))
+>                                        , NV 0])))
+>                               ] :>: t)
 
 > import -> OpCode where
 >   boolE :: Tm {In,p} x

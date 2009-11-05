@@ -50,16 +50,16 @@
 >   traverse f Snd  = (|Snd|)
 
 > import -> CanTyRules where
->   canTy _   (Set :>: Unit) = Just Unit
->   canTy tc  (Set :>: Sigma s t) =
->     SET `tc` s         &\ \ s sv ->
->     Arr sv SET `tc` t  &\ \ t _ ->
->     Just $ Sigma s t
->   canTy _   (Unit :>: Void) = Just Void
->   canTy tc  (Sigma s t :>: Pair x y) =  do
->       (x,xv) <- s `tc` x
->       (y,yv) <- (t $$ A xv) `tc` y
->       return $ Pair x y
+>   canTy _   (Set :>: Unit) = return Unit
+>   canTy ev  (Set :>: Sigma s t) = do
+>     sv <- ev s 
+>     tv <- ev t
+>     return $ Sigma (SET :>: s) (ARR sv SET :>: t)
+>   canTy _   (Unit :>: Void) = return Void
+>   canTy ev  (Sigma s t :>: Pair x y) =  do
+>       xv <- ev x
+>       yv <- ev y
+>       return $ Pair (s :>: x) ((t $$ A xv) :>: y)
 
 > import -> ElimTyRules where
 >   elimTy ev (_ :<: Sigma s t) Fst = Just (Fst, s)

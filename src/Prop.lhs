@@ -41,28 +41,29 @@ Elim forms inherited from elsewhere
 >   pattern BOX p   = C (Box p)
 
 > import -> CanTyRules where
->   canTy _   (Set :>: Prop)           = Just Prop
->   canTy tc  (Set :>: Prf p)          =
->     PROP `tc` p &\ \ p _ ->
->     Just $ Prf p 
->   canTy tc  (Prop :>: All s p)       =
->     SET `tc` s          &\ \ s sv ->
->     Arr sv PROP `tc` p  &\ \ p _ ->
->     Just $ All s p
->   canTy tc  (Prop :>: And p q)       =
->     PROP `tc` p &\ \ p _ ->
->     PROP `tc` q &\ \ q _ ->
->     Just $ And p q
->   canTy tc  (Prop :>: Trivial)       = Just Trivial
->   canTy _   (Prop :>: Absurd)        = Just Absurd
->   canTy tc  (Prf p :>: Box (Irr x))  = do
->     (x,_) <- PRF p `tc` x 
->     return $ Box (Irr x)
->   canTy tc  (And p q :>: Pair x y)   = do
->     (x,_) <- PRF p `tc` x
->     (y,_) <- PRF q `tc` y
->     return $ Pair x y
->   canTy _   (Trivial :>: Void)       = Just Void
+>   canTy _   (Set :>: Prop)           = return Prop
+>   canTy ev  (Set :>: Prf p)          = do
+>     pv <- ev p
+>     return $ Prf (PROP :>: p)
+>   canTy ev  (Prop :>: All s p)       = do
+>     sv <- ev s
+>     pv <- ev p
+>     return $ All (SET :>: s) (ARR sv PROP :>: p)
+>   canTy ev  (Prop :>: And p q)       = do
+>     pv <- ev p
+>     qv <- ev q
+>     return $ And (PROP :>: p) (PROP :>: q)
+>   canTy _  (Prop :>: Trivial)       = return Trivial
+>   canTy _   (Prop :>: Absurd)        = return Absurd
+>   canTy ev  (Prf p :>: Box (Irr x))  = do
+>     xv <- ev x 
+>     return $ Box (Irr (PRF p :>: x))
+>   canTy ev  (And p q :>: Pair x y)   = do
+>     xv <- ev x
+>     yv <- ev y
+>     return $ Pair (PRF p :>: x) (PRF q :>: y)
+>   canTy _   (Trivial :>: Void)       = return Void
+
 
 > import -> ElimTyRules where
 >   elimTy ev (f :<: Prf (ALL p q))      (A e)  = 

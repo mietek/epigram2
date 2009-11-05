@@ -29,17 +29,23 @@
 >   pattern INTROS x = C (Intros x)
 
 > import -> CanTyRules where
->   canTy tc (Set :>: Desc)     = Just Desc
->   canTy tc (Set :>: Mu x)     = DESC `tc` x &\ \ x _ -> Just (Mu x)
->   canTy tc (Desc :>: Done)    = Just Done
->   canTy tc (Desc :>: Arg x y) = 
->     SET `tc` x &\ \ x xv -> 
->     ARR xv DESC `tc` y &\ \ y _ -> Just (Arg x y)
->   canTy tc (Desc :>: Ind x y) =
->     SET `tc` x &\ \ x _ ->
->     DESC `tc` y &\ \ y _ -> Just (Ind x y)
->   canTy tc (Mu x :>: Intros y) =
->     descOp @@ [x, MU x] `tc` y &\ \ t _ -> Just (Intros t)
+>   canTy ev (Set :>: Desc)     = return Desc
+>   canTy ev (Set :>: Mu x)     = do
+>     xv <- ev x
+>     return $ Mu (DESC :>: x)
+>   canTy ev (Desc :>: Done)    = return Done
+>   canTy ev (Desc :>: Arg x y) = do
+>     xv <- ev x
+>     yv <- ev y
+>     return $ Arg (SET :>: x)
+>                  (ARR xv DESC :>: y) 
+>   canTy ev (Desc :>: Ind x y) = do
+>     xv <- ev x
+>     yv <- ev y
+>     return $ Ind (SET :>: x) (DESC :>: y)
+>   canTy ev (Mu x :>: Intros y) = do
+>     yv <- ev y
+>     return $ Intros (descOp @@ [x, MU x] :>: y)
 
 > import -> OpCode where
 >   descOp :: Op
