@@ -14,8 +14,8 @@
 
 > import Control.Monad
 > import Control.Applicative
+
 > import Data.Traversable
-> import Debug.Trace
 
 > import BwdFwd
 > import Rooty
@@ -75,6 +75,7 @@ operations on it.
 Let us work out the implementation:
 
 > instance Rooty Tac where
+>     root = Tac { runTac = \root _ -> Just root }
 >     freshRef x tacF = Tac { runTac = Rooty.freshRef x (runTac . tacF) }
 >     forkRoot s child dad = Tac { runTac = \root typ -> 
 >                                           do 
@@ -115,21 +116,14 @@ This is a bit of Reader digest: |ask| and |runReader|.
 > goal :: Tac TY
 > goal = Tac { runTac = \root typ -> Just typ }
 
-|subgoal| is a sort of |runReader| that runs |tacX| in the current
-|typ| environment. For this operation to be type-correct, the current
-goal needs to be equal to the proposed subgoal, hence the equality
-guard.
-
-\question{Does that make sense? It doesn't look like a subgoal then. 
-          Ha, now, I'm confused.}
+|subgoal| is the |local| of Reader that runs |tacX| in a local |typ|
+environment. Conor is concerned about the fact that, apart from
+Inference rules, nobody should be using this guy.
 
 > subgoal :: TY -> Tac x -> Tac x
 > subgoal typ tacX = 
 >     Tac { runTac = \root typ' -> 
->           do
->           guard $ equal (SET :>: (typ, typ')) root 
->           runTac tacX root typ
->         }
+>              runTac tacX root typ }
 
 \subsubsection{Making lambdas}
 
@@ -167,23 +161,28 @@ The first combinator is our beloved |lambda|. It turns an Haskell
 function using a value to build a well-typed term into a well-typed
 term. 
 
-> lambda :: (VAL -> Tac VAL) -> Tac VAL
+> lambda :: (REF -> Tac VAL) -> Tac VAL
 > lambda body = do
 >   C (Pi s t) <- goal
 >   Rooty.freshRef ("" :<: s) $
 >                  \x -> do
->                    body <- subgoal (t $$ A (pval x)) (body (pval x))
+>                    body <- subgoal (t $$ A (pval x)) (body x)
 >                    discharge x body
 
-> tyLambda :: (String :<: TY) -> (VAL -> Tac (VAL :<: TY))
+Similarly, we can also implement the typed lambda, for which variable
+types are known. If |lambda| were a bit more polymorphic, we could use
+it here I think.
+
+> tyLambda :: (String :<: TY) -> (REF -> Tac (VAL :<: TY))
 >                             -> Tac (VAL :<: TY)
 > tyLambda (name :<: s) body = do
 >     C (Pi s t) <- goal
 >     Rooty.freshRef ("" :<: s) $
 >                    \x -> do
->                      (body :<: ts) <- subgoal (t $$ A (pval x)) (body $ pval x)
+>                      (body :<: ts) <- subgoal (t $$ A (pval x)) (body x)
 >                      v <- discharge x body
->                      return (v :<: ts)
+>                      t <- discharge x ts
+>                      return $ v :<: C (Pi s t)
 
 The second builder is significantly simpler, as we don't have to care
 about binding. Taking a canonical term containing well-typed values,
@@ -229,12 +228,12 @@ Confirming the insight behind |Use|, here is the definition of
 work and comparing the inferred type with the goal.
 
 > done :: Use
-> done (v :<: t) =
+> done (v :<: typ) =
 >     do
->       vv <- subgoal t $
->             (do
->               return $ N v)
->       return vv
+>       typ' <- goal
+>       p <- equalR (SET :>: (typ, typ'))
+>       guard p
+>       return $ N v
 
 One the other hand, |apply| builds up the continuation. It builds an
 |Use| which \emph{emph} must be a function, this function being

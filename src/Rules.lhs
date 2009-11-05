@@ -247,8 +247,20 @@ If binded by a lambda of ours, we bound the free variables to the
 
 > bquote  refs (P x) =
 >     case x `elemIndex` refs of
->       Just i -> pure $ V i
+>       Just i -> pure $ V $ length refs - i - 1
 >       Nothing -> pure $ P x
+> quoteRef refs (L (H vs x t)) = 
+>     (|(\t -> L (x :. t))
+>       (Rooty.freshRef (x :<: undefined) 
+>                       (\x -> quoteRef (x:refs) 
+>                                        (eval t (vs :< pval x))))|)
+> quoteRef refs (L (K t)) = (|(L . K) (quoteRef refs t) |)
+> quoteRef refs (C c) = (|C (traverse (quoteRef refs) c )|)
+> quoteRef refs (N n) = (|N (quoteRef refs n)|)
+> quoteRef refs (n :$ v) = (|(:$) (quoteRef refs n)
+>                                 (traverse (quoteRef refs) v)|)
+> quoteRef refs (op :@ vs) = (|(:@) (pure op)
+>                                   (traverse (quoteRef refs) vs)|)
 
 Going under a closure is the usual story: we create a fresh variable,
 evaluate the applied term, quote the result, and bring everyone under

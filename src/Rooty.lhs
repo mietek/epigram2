@@ -18,10 +18,12 @@
 
 Basically, a Reader monad on steroid
 
-> class Applicative m => Rooty m where
+> class (Applicative m, Monad m) => Rooty m where
 >     freshRef :: (String :<: TY) -> (REF -> m t) -> m t
 >     forkRoot :: String -> m s -> (s -> m t) -> m t
+>     root :: m Root
 
 > instance Rooty ((->) Root) where
 >     freshRef = Root.freshRef
 >     forkRoot s child dad root = (dad . child) (room root s) (roos root)
+>     root r = r
