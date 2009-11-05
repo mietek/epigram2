@@ -60,7 +60,7 @@ using |canTy|.
 < canTy tc (Set :>: Set)     =  Just Set
 < canTy tc (Set :>: Pi s t)  = do
 <   (s,sv) <-  SET `tc` s 
-<   (t,_) <- Arr sv SET  `tc` t
+<   (t,_) <- ARR sv SET  `tc` t
 <   return $ Pi s t
 < import <- CanTyRules
 < canTy  _  _                 = Nothing
@@ -82,7 +82,7 @@ original one.
 > canTy ev (Set :>: Pi s t)  = do
 >   sv <-  ev s
 >   tv <- ev t
->   return $ Pi (SET :>: s) (Arr sv SET :>: t)
+>   return $ Pi (SET :>: s) (ARR sv SET :>: t)
 > import <- CanTyRules
 > canTy  _  _                 = mzero
 
