@@ -1,8 +1,9 @@
+\section{Proof State}
 
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE TypeOperators #-}
+> {-# LANGUAGE TypeOperators, TypeSynonymInstances #-}
 
 > module Elaborator where
 
@@ -20,7 +21,7 @@
 
 %endif
 
-\section{Proof Context}
+\subsection{Proof Context}
 
 Recall from Section~\ref{sec:developments} that
 
@@ -46,125 +47,169 @@ Each |Layer| of the structure is a record with the following fields:
 >   ,  layroot :: Root }
 >   deriving Show
 
-The current proof state is then represented by a stack of |Layer|s, along with the
+The current proof context is then represented by a stack of |Layer|s, along with the
 current working development:
 
 > type ProofContext = (Bwd Layer, Dev)
 
-Now we need functions to manipulate the unzipped data structure.
-
-|goIn| changes the current location to the bottom-most girl in the current development.
-
-> goIn :: ProofContext -> ProofContext
-> goIn l = goInAcc l F0 
->     where goInAcc :: ProofContext -> Fwd Entry -> ProofContext
->           goInAcc (ls, (es :< e, tip, root)) cadets =
->               case e of
->                   E ref _ (Girl LETG dev) ->
->                       (ls :< Layer es ref cadets tip root, dev)
->                   e -> goInAcc (ls, (es, tip, root)) (e :> cadets)
->           goInAcc _ _ = error "goIn: no girls in current development"
-
-
-|goOut| goes up a layer, so the focus changes to the development containing
-the current working location.
-
-> goOut :: ProofContext -> ProofContext
-> goOut (ls :< l, dev) = (ls,
->     (elders l :< E (mother l) (lastName (mother l)) (Girl LETG dev) <>< cadets l
->     ,laytip l
->     ,layroot l))
-> goOut (B0, _) = error "goOut: already at outermost layer"
-
-
-|goUp| moves the focus to the next eldest girl.
-
-> goUp :: ProofContext -> ProofContext
-> goUp = goUpAcc F0
->     where goUpAcc :: Fwd Entry -> ProofContext -> ProofContext
->           goUpAcc acc (ls :< Layer 
->                        (es :< E newRef _ (Girl LETG newDev)) oldRef@(name := _) cadets tip root
->                       , oldDev)
->               = (ls :< Layer es newRef 
->                    (acc <+> (E oldRef (last name) (Girl LETG oldDev) :> cadets)) tip root
->                 , newDev)
->           goUpAcc acc (ls :< Layer (es :< e) ref cadets tip root, dev)
->               = goUpAcc (e :> acc) (ls :< Layer es ref cadets tip root, dev)
->           goUpAcc _ (_ :< Layer B0 _ _ _ _, _) 
->               = error "goUp: no girls above current development"
->           goUpAcc _ (B0, _)
->               = error "goUp: cannot move up from outermost development"
-
-
-|goDown| moves the focus to the next youngest girl.
-
-> goDown :: ProofContext -> ProofContext
-> goDown = goDownAcc B0
->     where goDownAcc :: Bwd Entry -> ProofContext -> ProofContext
->           goDownAcc acc (ls :< l@(Layer elders ref (e :> es) tip root), dev)
->               = case e of
->                     E newRef _ (Girl LETG newDev) ->
->                         (ls :< l{elders=elders:<E ref (lastName ref) (Girl LETG dev) <+> acc,
->                                  mother=newRef, cadets=es}, newDev)
->                     e ->
->                         goDownAcc (acc :< e) (ls :< l{cadets=es}, dev)
->           goDownAcc _ (_ :< Layer _ _ F0 _ _, _) 
->               = error "goDown: no girls below current development"
->           goDownAcc _ (B0,  _)
->               = error "goDown: cannot move down from outermost development"
-
-
-|appendBinding| and |appendGoal| add entries to the working development,
-without type-checking or handling roots properly at the moment.
-
-> appendBinding :: (String :<: TY) -> BoyKind -> ProofContext -> ProofContext
-> appendBinding x k (ls, (es, tip, r)) = 
->     Root.freshRef x (\ref@(n := _) r ->
->                     (ls, (es :< E ref (last n) (Boy k), tip, r))) r
-
-> appendGoal :: (String :<: TY) -> ProofContext -> ProofContext
-> appendGoal (s:<:ty) (ls, (es, tip, root)) = 
->     let n = name root s
->         ref = n := HOLE :<: ty in
->     (ls, (es :< E ref (lastName ref) (Girl LETG (B0, Unknown ty, room root s)), 
->           tip, roos root))
-
-
-|auncles| calculates the elder aunts or uncles of the current development,
+The |auncles| function calculates the elder aunts or uncles of the current development,
 thereby giving a list of entries that are currently in scope.
 
 > auncles :: ProofContext -> Bwd Entry
 > auncles (ls, (es, _, _)) = foldMap elders ls <+> es
 
 
-\section{Proof State Monad}
+\subsection{Proof State Monad}
 
-> newtype ProofState a = ProofState {getProofState :: StateT ProofContext Maybe a}
+The proof state monad provides access to the |ProofContext| as in a |State| monad,
+but with the possibility of command failure represented by |Maybe|. 
 
-> instance (Monad m) => Applicative (StateT s m) where
->     pure = return
->     (<*>) = ap
+> type ProofState = StateT ProofContext Maybe
 
-> instance Applicative ProofState where
->     pure = ProofState . pure
->     ProofState x <*> ProofState y = ProofState (x <*> y)
+We provide various functions to get information from the proof state and store
+updated information, providing a friendlier interface than |get| and |put|.
 
-> instance Functor ProofState where
->     fmap f = ProofState . (fmap f) . getProofState
+> getDev :: ProofState Dev
+> getDev = gets snd
 
-> instance Monad ProofState where
->     return = pure
->     (ProofState x) >>= f = ProofState (x >>= getProofState . f)
+> getLayer :: ProofState Layer
+> getLayer = do
+>     ls :< l <- gets fst
+>     return l
 
-> instance Rooty ProofState where
->     freshRef x f = ProofState (do
->         (_, _, root) <-  gets snd
->         getProofState $ Root.freshRef x ((\proof root -> proof) . f) root
->       )
->     forkRoot s child dad = undefined
+> getRoot :: ProofState Root
+> getRoot = do
+>     (_, _, root) <- getDev
+>     return root
+
+> putDev :: Dev -> ProofState ()
+> putDev dev = do
+>     ls <- gets fst
+>     put (ls, dev)
+
+> putDevEntry :: Entry -> ProofState ()
+> putDevEntry e = do
+>     (es, tip, root) <- getDev
+>     putDev (es :< e, tip, root)
+
+> putDevRoot :: Root -> ProofState ()
+> putDevRoot r = do
+>     (es, tip, _) <- getDev
+>     putDev (es, tip, r)
+
+> putLayer :: Layer -> ProofState ()
+> putLayer l = do
+>     (ls, dev) <- get
+>     put (ls :< l, dev)
+
+> removeLayer :: ProofState Layer
+> removeLayer = do
+>     (ls :< l, dev) <- get
+>     put (ls, dev)
+>     return l
+
+> replaceDev :: Dev -> ProofState Dev
+> replaceDev dev = do
+>     (ls, dev') <- get
+>     put (ls, dev)
+>     return dev'
+
+> replaceLayer :: Layer -> ProofState Layer
+> replaceLayer l = do
+>     (ls :< l', dev) <- get
+>     put (ls :< l, dev)
+>     return l'
 
 
-\section{Command-line interface}
+A |ProofState| is not |Rooty| because the semantics of the latter are not compatible
+with the caching of |Root|s in the proof context. However, it can provide the current
+|Root| to a function that requires it. Note that this function has no way to return
+an updated root to the proof context, so it must not leave any references around
+when it has finished.
+
+> withRoot :: (Root -> x) -> ProofState x
+> withRoot f = getRoot >>= return . f
+
+Presumably we should be able to do something similar for running tactics?
+
+< withTac :: TY -> Tac x -> ProofState x
+
+
+\subsection{Proof State Manipulation Commands}
+
+Now we provide commands to manipulate the proof state:
+\begin{itemize}
+\item |goIn| changes the current location to the bottom-most girl in the current development;
+\item |goOut| goes up a layer, so the focus changes to the development containing
+the current working location;
+\item |goUp| moves the focus to the next eldest girl;
+\item |goDown| moves the focus to the next youngest girl.
+\end{itemize}
+
+These commands fail (yielding |Nothing|) if they are impossible because the proof context
+is not in the required form.
+
+> goIn :: ProofState ()
+> goIn = goInAcc F0 
+>   where
+>     goInAcc :: Fwd Entry -> ProofState ()
+>     goInAcc cadets = do
+>         (ls, (es :< e, tip, root)) <- get
+>         case e of
+>             E ref _ (Girl LETG dev) -> put (ls :< Layer es ref cadets tip root, dev)
+>             _ -> put (ls, (es, tip, root)) >> goInAcc (e :> cadets)
+
+> goOut :: ProofState ()
+> goOut = do
+>     Layer elders mother cadets tip root <- removeLayer
+>     dev <- getDev
+>     putDev (elders :< E mother (lastName mother) (Girl LETG dev) <>< cadets, tip, root)        
+
+> goUp :: ProofState ()
+> goUp = goUpAcc F0
+>   where
+>     goUpAcc :: Fwd Entry -> ProofState ()
+>     goUpAcc acc = do
+>         l@(Layer (es :< e) oldRef cadets tip root) <- removeLayer
+>         oldDev <- getDev
+>         case e of
+>             E newRef _ (Girl LETG newDev) ->
+>                 putDev newDev >>
+>                 putLayer (Layer es newRef (acc <+> 
+>                     (E oldRef (lastName oldRef) (Girl LETG oldDev) :> cadets))
+>                     tip root) 
+>             _ -> putLayer l{elders=es} >> goUpAcc (e :> acc)
+
+> goDown :: ProofState ()
+> goDown = goDownAcc B0
+>   where
+>     goDownAcc :: Bwd Entry -> ProofState ()
+>     goDownAcc acc = do
+>         l@(Layer elders ref (e :> es) tip root) <- removeLayer
+>         case e of
+>             E newRef _ (Girl LETG newDev) -> do
+>                 oldDev <- replaceDev newDev
+>                 putLayer l{elders=elders:<E ref (lastName ref) (Girl LETG oldDev) <+> acc,
+>                     mother=newRef, cadets=es}
+>             _ -> putLayer l{cadets=es} >> goDownAcc (acc :< e)
+
+
+The slightly dubious |appendBinding| and |appendGoal| commands add entries to the
+working development, without type-checking.
+
+> appendBinding :: (String :<: TY) -> BoyKind -> ProofState ()
+> appendBinding x k = getRoot >>=
+>     Root.freshRef x (\ref r -> putDevEntry (E ref (lastName ref) (Boy k)) >> putDevRoot r)
+
+> appendGoal :: (String :<: TY) -> ProofState ()
+> appendGoal (s:<:ty) = do
+>     root <- getRoot
+>     n <- withRoot (flip name s)
+>     putDevEntry (E (n := HOLE :<: ty) (last n) (Girl LETG (B0, Unknown ty, room root s)))
+>     putDevRoot (roos root)
+
+
+\subsection{Command-line interface}
 
 |showDev| is an ugly-printer for developments that makes the structure a little
 bit clearer than the derived |Show| instance.
@@ -194,22 +239,30 @@ bit clearer than the derived |Show| instance.
 > showRef (ns := _) = unwords (fst . unzip $ ns)
 
 
-Here we have a very basic command-driven interface to the zipper.
+Here we have a very basic command-driven interface to the proof state monad.
 
 > elaborator :: ProofContext -> IO ()
-> elaborator loc = do
->   printDev (snd loc)
->   case fst loc of
+> elaborator loc@(ls, dev) = do
+>     printDev dev
+>     case ls of
 >       _ :< layer  -> putStr ((showRef . mother $ layer) ++ " > ")
 >       _       -> putStr "Top > "
->   l <- getLine
->   case words l of
->     "in":_ -> elaborator (goIn loc)
->     "out":_ -> elaborator (goOut loc)
->     "up":_ -> elaborator (goUp loc)
->     "down":_ -> elaborator (goDown loc)
->     "goal":s:_ -> elaborator (appendGoal (s :<: C Set) loc)
->     "bind":s:_ -> elaborator (appendBinding (s :<: C Set) LAMB loc)
->     "auncles":_ -> putStrLn (foldMap ((++"\n").show) (auncles loc)) >> elaborator loc
->     "quit":_ -> return ()
->     _ -> putStrLn "???" >> elaborator loc
+>     l <- getLine
+>     let ws = words l
+>     if (head ws == "quit")
+>         then return ()
+>         else case runStateT (elabParse ws) loc of
+>             Just (s, loc') -> putStrLn s >> elaborator loc'
+>             Nothing -> putStrLn "fail" >> elaborator loc
+
+> elabParse :: [String] -> ProofState String
+> elabParse ("in":_)       = goIn >> return "Going in..."
+> elabParse ("out":_)      = goOut >> return "Going out..."
+> elabParse ("up":_)       = goUp >> return "Going up..."
+> elabParse ("down":_)     = goDown >> return "Going down..."
+> elabParse ("bind":s:_)   = appendBinding (s :<: C Set) LAMB >> return "Appended binding!"
+> elabParse ("goal":s:_)   = appendGoal (s :<: C Set) >> return "Appended goal!"
+> elabParse ("auncles":_)  = do
+>     loc <- get
+>     return (foldMap ((++"\n").show) (auncles loc))
+> elabParse _ = return "???"
