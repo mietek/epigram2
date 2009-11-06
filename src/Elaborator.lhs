@@ -66,21 +66,37 @@ but with the possibility of command failure represented by |Maybe|.
 
 > type ProofState = StateT ProofContext Maybe
 
+Handily, |Maybe| is a |MonadPlus|, and |StateT| preserves this, so we can easily
+make |ProofState| an |Alternative|:
+
+> instance Applicative ProofState where
+>     pure = return
+>     (<*>) = ap
+
+> instance Alternative ProofState where
+>     empty = mzero
+>     (<|>) = mplus
+
 We provide various functions to get information from the proof state and store
 updated information, providing a friendlier interface than |get| and |put|.
 
 > getDev :: ProofState Dev
 > getDev = gets snd
 
+> getDevRoot :: ProofState Root
+> getDevRoot = do
+>     (_, _, root) <- getDev
+>     return root
+
+> getDevTip :: ProofState Tip
+> getDevTip = do
+>     (_, tip, _) <- getDev
+>     return tip
+
 > getLayer :: ProofState Layer
 > getLayer = do
 >     ls :< l <- gets fst
 >     return l
-
-> getRoot :: ProofState Root
-> getRoot = do
->     (_, _, root) <- getDev
->     return root
 
 > putDev :: Dev -> ProofState ()
 > putDev dev = do
@@ -128,16 +144,16 @@ an updated root to the proof context, so it must not leave any references around
 when it has finished.
 
 > withRoot :: (Root -> x) -> ProofState x
-> withRoot f = getRoot >>= return . f
+> withRoot f = getDevRoot >>= return . f
 
 Presumably we should be able to do something similar for running tactics?
 
 < withTac :: TY -> Tac x -> ProofState x
 
 
-\subsection{Proof State Manipulation Commands}
+\subsubsection{Proof State Navigation Commands}
 
-Now we provide commands to manipulate the proof state:
+Now we provide commands to navigate the proof state:
 \begin{itemize}
 \item |goIn| changes the current location to the bottom-most girl in the current development;
 \item |goOut| goes up a layer, so the focus changes to the development containing
@@ -198,18 +214,53 @@ The slightly dubious |appendBinding| and |appendGoal| commands add entries to th
 working development, without type-checking.
 
 > appendBinding :: (String :<: TY) -> BoyKind -> ProofState ()
-> appendBinding x k = getRoot >>=
+> appendBinding x k = getDevRoot >>=
 >     Root.freshRef x (\ref r -> putDevEntry (E ref (lastName ref) (Boy k)) >> putDevRoot r)
 
 > appendGoal :: (String :<: TY) -> ProofState ()
 > appendGoal (s:<:ty) = do
->     root <- getRoot
+>     root <- getDevRoot
 >     n <- withRoot (flip name s)
 >     putDevEntry (E (n := HOLE :<: ty) (last n) (Girl LETG (B0, Unknown ty, room root s)))
 >     putDevRoot (roos root)
 
 
-\subsection{Command-line interface}
+\subsubsection{Goal Search Commands}
+
+To implement goal search, we need a few useful bits of kit...
+
+The |untilA| operator runs its first argument one or more times until its second
+argument succeeds, at which point it returns the result. If the first argument
+fails, the whole operation fails.
+
+> untilA :: Alternative f => f () -> f a -> f a
+> g `untilA` test = g *> try
+>     where try = test <|> (g *> try)
+
+The |much| operator runs its argument until it fails, then returns the state of
+its last success.
+
+> much :: Alternative f => f () -> f ()
+> much f = (f *> much f) <|> pure ()
+
+The |isGoal| command succeeds (returning |()|) if the current location is a goal,
+and fails (yielding |Nothing|) if not.
+
+> isGoal :: ProofState ()
+> isGoal = do
+>     Unknown _ <- getDevTip
+>     return ()
+
+We can now compactly describe how to search the proof state for goals, by giving
+several alternatives for where to go next and continuing until a goal is reached.
+
+> prevGoal :: ProofState ()
+> prevGoal = ((goUp >> much goIn) <|> goOut) `untilA` isGoal
+
+> nextGoal :: ProofState ()
+> nextGoal = ((goIn >> much goUp) <|> goDown <|> (goOut `untilA` goDown)) `untilA` isGoal
+
+\subsection{Command-Line Interface}
 
 |showDev| is an ugly-printer for developments that makes the structure a little
 bit clearer than the derived |Show| instance.
@@ -260,6 +311,8 @@ Here we have a very basic command-driven interface to the proof state monad.
 > elabParse ("out":_)      = goOut >> return "Going out..."
 > elabParse ("up":_)       = goUp >> return "Going up..."
 > elabParse ("down":_)     = goDown >> return "Going down..."
+> elabParse ("prev":_)     = prevGoal >> return "Searching for previous goal..."
+> elabParse ("next":_)     = nextGoal >> return "Searching for next goal..."
 > elabParse ("bind":s:_)   = appendBinding (s :<: C Set) LAMB >> return "Appended binding!"
 > elabParse ("goal":s:_)   = appendGoal (s :<: C Set) >> return "Appended goal!"
 > elabParse ("auncles":_)  = do
