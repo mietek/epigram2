@@ -4,7 +4,8 @@ HC_OPTS = -package mtl
 SRCS := $(wildcard *.lhs) 
 OBJS := $(SRCS:.lhs=.o) 
 
-.SUFFIXES : .o .hs .hi .lhs .hc .s
+.SUFFIXES : .o .hs .hi .lhs .hc .s\
+	    .hi-boot .lhs-boot .o-boot
 
 Pig : $(OBJS)
 	rm -f $@
@@ -52,6 +53,7 @@ Epitome.tex : $(SRCS) stuff.fmt
 
 clean:
 	rm -f *.o *.hers *.hi\
+	      *.o-boot *.hi-boot\
 	      *.aux *.bbl\
 	      *.blg *.log *.ptb\
 	      Epitome.tex 
