@@ -293,5 +293,61 @@ And here is the twice function:
 >                     (ARR (NV 0)
 >                          (NV 0)))))))
 
-> main = do
->        putStrLn $ show $ runTac twice (B0,0) twiceT
+\subsection{Building functions on |EnumT|}
+
+The code below is a work in progress. It should work fine if you use
+it well, but will fail badly if you don't. We (Conor, and Pierre) are
+currently working on an improved tactics system that would give
+stronger garantees. This would affect the code below but also the code
+above: it's more of a makeover than a refactoring. An example of sin
+is the generalized usage of |subgoal|: in theory, |subgoal| should be
+limited to inference rules. Therefore, it should disappear from this
+code, at some point.
+
+The following tactic aims at automating as much as possible the
+implementation of function operating on finite enumerations. Such
+functions have a type |Pi (EnumT e) P|. Therefore, when facing such a
+goal, we create a lambda that gives us an |x| in |EnumT e|. To build
+the expected |P x|, we rely on |switchOp|. The argument |ps| of
+|switchOp| corresponds to the result for each case of the enumeration.
+
+> switch :: Tac VAL -> Tac VAL
+> switch cases = do
+>     C (Pi (ENUMT e) p) <- goal
+>     lambda (\x -> do               
+>                   ps <- subgoal (branchesOp @@ [e,p]) cases
+>                   return $ switchOp @@ [e, p, ps, pval x])
+
+To build the result cases, we use the following |cases|
+combinator. Each case of the enumeration must be addressed, in order,
+by a list of tactics. We simply build a tuple which satisfies the
+|branchesOp e P| type and can be fed to |switchOp|.
+
+> cases :: [Tac VAL] -> Tac VAL
+> cases [] = do
+>   C Unit <- goal
+>   return UNIT
+> cases (p:ps) = do
+>   C (Sigma pT psT) <- goal
+>   v <- subgoal pT p
+>   vs <- subgoal (psT $$ A pT) $ cases ps
+>   return $ PAIR v vs
+
+Here is a trivial example. We define the enumeration $\{1,2,3,4\}$:
+
+> test1234 :: VAL
+> test1234 = ENUMT (CONSE (TAG "1") 
+>                   (CONSE (TAG "2")
+>                    (CONSE (TAG "3")
+>                     (CONSE (TAG "4")
+>                      NILE))))
+
+And we implement the function that permutes each element $i$ to $5-i$:
+
+> perm = switch $ cases [ return (TAG "4"),
+>                         return (TAG "3"),
+>                         return (TAG "2"),
+>                         return (TAG "1") ]
+>
+> permT :: TY
+> permT = ARR test1234 test1234
