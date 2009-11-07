@@ -202,7 +202,7 @@ canonical value.
 > can cTac = do
 >     C t <- goal
 >     v <- canTy id (t :>: cTac)
->     v <- traverse (\(t :>: v) -> v) v
+>     v <- traverse (\(t :>: v) -> subgoal t v) v
 >     return $ C v
 
 
