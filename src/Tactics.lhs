@@ -217,7 +217,7 @@ canonical value.
 
 Elimination rules are manipulating the following type:
 
-> type Use = (NEU :<: TY) -> Tac VAL
+> type Use = (VAL :<: TY) -> Tac VAL
 
 Which says something like "provided a value of inferred type, I have a
 well-typed value". This is used to handle the |In| terms of the
@@ -234,7 +234,7 @@ work and comparing the inferred type with the goal.
 >       typ' <- goal
 >       p <- equalR (SET :>: (typ, typ'))
 >       guard p
->       return $ N v
+>       return v
 >     where equalR x = do
 >             r <- root
 >             return $ equal x r
@@ -248,7 +248,7 @@ the |use| continuation is called.
 > apply tacX use (f :<: C (Pi s t)) = 
 >     do
 >     x <- subgoal s tacX
->     use (f :$ A x :<: t $$ A x)
+>     use (f $$ A x :<: t $$ A x)
 
 Finally, the continuation is created by |use| that, basically, allows
 you to apply the arguments built in |useR| to the function |ref|erenced.
@@ -256,7 +256,7 @@ you to apply the arguments built in |useR| to the function |ref|erenced.
 > use :: REF -> Use -> Tac VAL
 > use ref useR = 
 >     do
->       useR (P ref :<: pty ref)
+>       useR (pval ref :<: pty ref)
 
 %if false
 
