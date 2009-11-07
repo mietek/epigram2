@@ -7,6 +7,7 @@
 >     TypeSynonymInstances, FlexibleInstances, ScopedTypeVariables #-}
 
 > module Tactics (Tac,                      -- abstract Tactic
+>                 runTac,                   -- run tactics
 >                 goal, subgoal, discharge, -- low-level combinators
 >                 lambda, can,              -- introduction rules
 >                 done, use, apply          -- elimination rules
