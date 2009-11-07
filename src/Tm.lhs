@@ -26,6 +26,7 @@
 %format :. = "\bullet"
 %format :>: = "\ni"
 %format :<: = "\in"
+%format :=>: = "\Downarrow"
 
 \subsection{Syntax of Terms and Values}
 
@@ -181,6 +182,19 @@ to say that |thing| is of infered type |typ|. Therefore, we can read
 > infix 4 :>:
 > data t :<: y = t :<: y  deriving (Show,Eq)
 > infix 4 :<:
+
+As we are discussing syntactic sugar, let me introduce the "reduces
+to" symbol:
+
+> data t :=>: v = t :=>: v deriving (Show, Eq)
+
+Intuitively, |t :=>: v| can be read as "the term |t| reduces to the
+value |v|".
+
+\pierre{This implicit conversion is not yet enforced everywhere in the
+code. If you find opportunities to enforce it, go ahead. Typically,
+you can recognize such case when there is a |(t, VAL)| where the value
+in |VAL| has been obtained by evaluation of a thing in |t|}
 
 \subsection{Syntactic Equality}
 \label{sec:syntactic_equality}

@@ -55,7 +55,7 @@ we can write any type-directed function in term of |canTy|. That is,
 any function traversing the types derivation tree can be expressed
 using |canTy|. 
 
-< canTy :: (TY -> t -> Maybe (s, VAL)) -> (Can VAL :>: Can t) -> Maybe (Can s)
+< canTy :: (TY -> t -> Maybe (s :=>: VAL)) -> (Can VAL :>: Can t) -> Maybe (Can s)
 < canTy tc (Set :>: Set)     =  Just Set
 < canTy tc (Set :>: Pi s t)  = do
 <   (s,sv) <-  SET `tc` s 
