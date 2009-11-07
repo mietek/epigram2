@@ -121,8 +121,8 @@ This is a bit of Reader digest: |ask| and |runReader|.
 environment. Conor is concerned about the fact that, apart from
 Inference rules, nobody should be using this guy.
 
-> subgoal :: TY -> Tac x -> Tac x
-> subgoal typ tacX = 
+> subgoal :: (TY :>: Tac x) -> Tac x
+> subgoal (typ :>: tacX) = 
 >     Tac { runTac = \root typ' -> 
 >              runTac tacX root typ }
 
@@ -167,7 +167,7 @@ term.
 >   C (Pi s t) <- goal
 >   Rooty.freshRef ("" :<: s) $
 >                  \x -> do
->                    body <- subgoal (t $$ A (pval x)) (body x)
+>                    body <- subgoal (t $$ A (pval x) :>: body x)
 >                    discharge x body
 
 Similarly, we can also implement the typed lambda, for which variable
@@ -180,7 +180,7 @@ it here I think.
 >     C (Pi s t) <- goal
 >     Rooty.freshRef ("" :<: s) $
 >                    \x -> do
->                      (body :<: ts) <- subgoal (t $$ A (pval x)) (body x)
+>                      (body :<: ts) <- subgoal (t $$ A (pval x) :>: body x)
 >                      v <- discharge x body
 >                      t <- discharge x ts
 >                      return $ v :<: C (Pi s t)
@@ -202,7 +202,7 @@ canonical value.
 > can cTac = do
 >     C t <- goal
 >     v <- canTy id (t :>: cTac)
->     v <- traverse (\(t :>: v) -> subgoal t v) v
+>     v <- traverse subgoal v
 >     return $ C v
 
 
@@ -247,7 +247,7 @@ the |use| continuation is called.
 > apply :: Tac VAL -> Use -> Use
 > apply tacX use (f :<: C (Pi s t)) = 
 >     do
->     x <- subgoal s tacX
+>     x <- subgoal (s :>: tacX)
 >     use (f $$ A x :<: t $$ A x)
 
 Finally, the continuation is created by |use| that, basically, allows
@@ -315,7 +315,7 @@ the expected |P x|, we rely on |switchOp|. The argument |ps| of
 > switch cases = do
 >     C (Pi (ENUMT e) p) <- goal
 >     lambda (\x -> do               
->                   ps <- subgoal (branchesOp @@ [e,p]) cases
+>                   ps <- subgoal (branchesOp @@ [e,p] :>: cases)
 >                   return $ switchOp @@ [e, p, ps, pval x])
 
 To build the result cases, we use the following |cases|
@@ -329,8 +329,8 @@ by a list of tactics. We simply build a tuple which satisfies the
 >   return UNIT
 > cases (p:ps) = do
 >   C (Sigma pT psT) <- goal
->   v <- subgoal pT p
->   vs <- subgoal (psT $$ A pT) $ cases ps
+>   v <- subgoal (pT :>: p)
+>   vs <- subgoal (psT $$ A pT :>: cases ps)
 >   return $ PAIR v vs
 
 Here is a trivial example. We define the enumeration $\{1,2,3,4\}$:
