@@ -23,6 +23,8 @@
 > import Features
 > import MissingLibrary
 
+> import {-# SOURCE #-} Tactics
+
 %endif
 
 \subsection{Type-checking Canonicals and Eliminators}

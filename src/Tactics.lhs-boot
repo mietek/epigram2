@@ -1,0 +1,42 @@
+> {-# LANGUAGE TypeOperators, GADTs, KindSignatures, RankNTypes,
+>     TypeSynonymInstances, FlexibleInstances, ScopedTypeVariables #-}
+
+
+> module Tactics (Tac,                      -- abstract Tactic
+>                 runTac,                   -- run tactics
+>                 goal, subgoal, discharge, -- low-level combinators
+>                 lambda, can,              -- introduction rules
+>                 done, use, useOp, apply,         -- elimination rules
+>                 trustMe
+>                 ) where
+
+> import Tm
+> import Root
+> import Rooty
+
+> data Tac x
+
+> runTac :: Tac x -> Root -> TY -> Maybe x
+
+
+> goal :: Tac TY
+> subgoal :: (TY :>: Tac x) -> Tac x
+
+> discharge :: Rooty m => REF -> VAL -> m VAL
+> lambda :: (REF -> Tac VAL) -> Tac VAL
+> tyLambda :: (String :<: TY) -> (REF -> Tac (VAL :<: TY))
+>                             -> Tac (VAL :<: TY)
+> can :: Can (Tac VAL) -> Tac VAL
+> infr :: TY -> Tac VAL -> Tac (VAL :<: TY)
+
+> type Use = (VAL :<: TY) -> Tac VAL
+
+> done :: Use
+> apply :: Tac VAL -> Use -> Use
+> use :: REF -> Use -> Tac VAL
+> useOp :: Op -> [Tac VAL] -> Use -> Tac VAL
+
+> switch :: Tac VAL -> Tac VAL
+> cases :: [Tac VAL] -> Tac VAL
+
+> trustMe :: (TY :>: Tac VAL) -> VAL
