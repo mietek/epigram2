@@ -16,6 +16,7 @@
 > import Control.Monad
 > import Control.Applicative
 
+> import Data.Maybe
 > import Data.Traversable
 
 > import BwdFwd
@@ -351,3 +352,16 @@ And we implement the function that permutes each element $i$ to $5-i$:
 >
 > permT :: TY
 > permT = ARR test1234 test1234
+
+
+
+\subsection{Using Tac}
+
+At some point, we need to build a value. This is place where it is
+done. We trust you to provide |trustMe| with a correct type,
+corresponding to the type of the value built by the |Tac VAl|. If it
+doesn't, good luck to find the source of the mistake.
+
+> trustMe :: (TY :>: Tac VAL) -> VAL
+> trustMe (typ :>: tacV) = fromJust $ runTac tacV (B0,0) typ
+
