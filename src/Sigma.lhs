@@ -82,15 +82,21 @@
 >     { opName = "split" , opArity = 5
 >     , opTy = sOpTy , opRun = sOpRun 
 >     } where
->       sOpTy ev [a , b , c , f , t] = Just $
->         ([ SET :>: a , ARR va SET :>: b , ARR (SIGMA va vb) SET :>: c
->          , C (Pi va (L (H (B0 :< vb :< vc) "a" 
->                (PI "b" (N (V 2 :$ A (NV 0))) 
->                  (N (V 2 :$ A (PAIR (NV 1) (NV 0)))))))) :>: f
->          , (SIGMA va vb) :>: t ], vc $$ A (ev t))
->           where va = ev a
->                 vb = ev b
->                 vc = ev c
+>       sOpTy chev [a , b , c , f , t] = do
+>                    (a :=>: av) <- chev (SET :>: a)
+>                    (b :=>: bv) <- chev (ARR av SET :>: b)
+>                    (c :=>: cv) <- chev (ARR (SIGMA av bv) SET :>: c)
+>                    (f :=>: fv) <- chev (C (Pi av (L (H (B0 :< bv :< cv) "a" 
+>                                             (PI "b" (N (V 2 :$ A (NV 0))) 
+>                                              (N (V 2 :$ A (PAIR (NV 1) 
+>                                                            (NV 0)))))))) :>: f)
+>                    (t :=>: tv) <- chev (SIGMA av bv :>: t)
+>                    return ([ a :=>: av
+>                            , b :=>: bv
+>                            , c :=>: cv
+>                            , f :=>: fv
+>                            , t :=>: tv ]
+>                           , cv $$ A tv)
 >       sOpRun :: [VAL] -> Either NEU VAL
 >       sOpRun [_ , _ , _ , f , t] = Right $ f $$ A (t $$ Fst) $$ A (t $$ Snd)
 

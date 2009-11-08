@@ -77,8 +77,13 @@ Elim forms inherited from elsewhere
 >             , opTy = opty
 >             , opRun = oprun
 >             } where
->               opty f [z,ty] = Just ([ PRF ABSURD :>: z,SET :>: ty ],f ty)
->               opty _ _      = Nothing
+>               opty chev [z,ty] = do
+>                    (z :=>: zv) <- chev (PRF ABSURD :>: z)
+>                    (ty :=>: tyv) <- chev (SET :>: ty)
+>                    return ([ z :=>: zv
+>                            , ty :=>: tyv ]
+>                           , tyv)
+>               opty _ _      = mzero
 >               oprun :: [VAL] -> Either NEU VAL
 >               oprun [N z,ty] = Left z
 

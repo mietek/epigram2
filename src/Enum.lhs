@@ -60,28 +60,54 @@
 >     , opTy     = bOpTy
 >     , opRun    = bOpRun
 >     } where
->         bOpTy ev [e , p] = 
->           Just ([ENUMU :>: e , ARR (ENUMT (ev e)) SET :>: p] , SET)
->         bOpTy _ _ = Nothing
+>         bOpTy chev [e , p] = do
+>                  (e :=>: ev) <- chev (ENUMU :>: e)
+>                  (p :=>: pv) <- chev (ARR (ENUMT ev) SET :>: p)
+>                  return ([ e :=>: ev
+>                          , p :=>: pv]
+>                          , SET)
+>         bOpTy _ _ = mzero
 >         bOpRun :: [VAL] -> Either NEU VAL
 >         bOpRun [NILE , p] = Right UNIT
->         bOpRun [CONSE t e' , p] = 
->           Right (TIMES (p $$ A ZE) 
->                 (branchesOp @@ [e' , L (H (B0 :< p) 
->                                  "" (N (V 1 :$ A ((C (Su (N (V 0))))))))]))
+>         bOpRun [CONSE t e' , p] = Right $ trustMe (typeBranches :>: tacBranches) $$ A t $$ A e' $$ A p
 >         bOpRun [N e , _] = Left e 
->
+>         typeBranches = C (Pi ENUMU (L (H B0 "" (ARR (ARR (ENUMT $ NV 0) SET) SET))))
+>         tacBranches = lambda 
+>                        (\t -> 
+>                         lambda 
+>                         (\e' -> 
+>                          lambda 
+>                           (\p -> 
+>                            timesTac (use p . apply (can Ze) $ done)
+>                                     (useOp branchesOp [use e' done, 
+>                                                        lambda
+>                                                        (\x -> 
+>                                                         use p . apply (use x done) $ done)] 
+>                                      done))))
+
+tacBranches is supposed to build the following term:
+
+<           (TIMES (p $$ A ZE) 
+<                 (branchesOp @@ [e' , L (H (B0 :< p) 
+<                                  "" (N (V 1 :$ A ((C (Su (N (V 0))))))))]))
+
+
 >   switchOp = Op
 >     { opName = "Switch"
 >     , opArity = 4
 >     , opTy = sOpTy
 >     , opRun = sOpRun
 >     } where
->         sOpTy ev [e , p , b, x] = 
->           Just ([ ENUMU :>: e 
->                 , ARR (ENUMT (ev e)) SET :>: p
->                 , branchesOp @@ [ev e , ev p] :>: b
->                 , ENUMT (ev e) :>: x] , (ev p) $$ A (ev x))
+>         sOpTy chev [e , p , b, x] = do
+>           (e :=>: ev) <- chev (ENUMU :>: e)
+>           (p :=>: pv) <- chev (ARR (ENUMT ev) SET :>: p)
+>           (b :=>: bv) <- chev (branchesOp @@ [ev , pv] :>: b)
+>           (x :=>: xv) <- chev (ENUMT ev :>: x)
+>           return $ ([ e :=>: ev
+>                     , p :=>: pv
+>                     , b :=>: bv
+>                     , x :=>: xv ] 
+>                    , pv $$ A xv)
 >         sOpRun :: [VAL] -> Either NEU VAL
 >         sOpRun [CONSE t e' , p , ps , ZE] = Right $ ps $$ Fst
 >         sOpRun [CONSE t e' , p , ps , SU n] = Right $

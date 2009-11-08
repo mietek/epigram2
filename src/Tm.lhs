@@ -130,15 +130,32 @@ with \(\eta\)-laws go here.
 Other computation is performed by a fixed repertoire of operators. To
 construct an operator, you need a name (for scope resolution and
 printing), an arity (so the resolver can manage fully applied usage),
-a typing rule, and a computation strategy. The |opTy| field explains
-how to label the operator's arguments with the types they must have
-and delivers the type of the whole application: to do that, one must
-be able to evaluate arguments. It is vital to check the subterms (left
-to right) before trusting the type at the end.
+a typing rule, and a computation strategy. 
+
+
+The |opTy| field explains how to label the operator's arguments with
+the types they must have and delivers the type of the whole
+application: to do that, one must be able to evaluate arguments. It is
+vital to check the subterms (left to right) before trusting the type
+at the end. This corresponds to the following type:
+
+< opTy :: forall t. (t -> VAL) -> [t] -> Maybe ([TY :>: t] , TY)
+
+However, in order to be able to use |opTy| directly in the tactics, we
+had to generalize it once again. Following the previous version of
+|canTy|, we have adopted the following scheme:
+
+< opTy    :: MonadPlus m => (TY :>: t -> m (s :=>: VAL)) -> [t] -> m ([s :=>: VAL] , TY)
+
+First, being |MonadPlus| allows a seemless integration in the Tactics
+word. Second, we have extended the evaluation function to perform
+type-checking at the same time. We also liberalize the return type to
+|s|, to give more freedom in the choice of the checker-evaluator. This
+change impacts on |exQuote|, |infer|, and |useOp|.
 
 > data Op = Op
 >   { opName  :: String, opArity :: Int
->   , opTy    :: forall t. (t -> VAL) -> [t] -> Maybe ([TY :>: t] , TY)
+>   , opTy    :: MonadPlus m => (TY :>: t -> m (s :=>: VAL)) -> [t] -> m ([s :=>: VAL] , TY)
 >   , opRun   :: [VAL] -> Either NEU VAL
 >   }
 

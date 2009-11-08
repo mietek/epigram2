@@ -10,7 +10,8 @@
 >                 runTac,                   -- run tactics
 >                 goal, subgoal, discharge, -- low-level combinators
 >                 lambda, can,              -- introduction rules
->                 done, use, apply          -- elimination rules
+>                 done, use, useOp, apply,         -- elimination rules
+>                 trustMe
 >                 ) where
 
 > import Control.Monad
@@ -258,6 +259,16 @@ you to apply the arguments built in |useR| to the function |ref|erenced.
 > use ref useR = 
 >     do
 >       useR (pval ref :<: pty ref)
+
+Similarly, we can use operators almost transparently with:
+
+> useOp :: Op -> [Tac VAL] -> Use -> Tac VAL
+> useOp op args useR = do
+>   (vals, ty) <- opTy op (\tx@(t :>: x) -> do
+>                                           v <- subgoal tx
+>                                           return $ x :=>: v) args
+>   let vs = map (\(s :=>: v) -> v) vals
+>   useR ((either N id $ opRun op vs) :<: ty )
 
 %if false
 

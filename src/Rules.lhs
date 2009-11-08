@@ -217,10 +217,10 @@ passed as an argument needs to be |inQuote|-ed. So it goes. Note that
 the operation itself cannot be stuck: it is a mere fully-applied
 constructor.
 
-> exQuote (op :@ vs)  r = (op :@ traverse inQuote vs' r) :<: v where
->    Just (vs',v) = opTy op id vs 
-
-
+> exQuote (op :@ vs)  r = (op :@ vals) :<: v where
+>    (vs',v) = fromJust $ opTy op (\(t :>: x) -> do
+>                                  return $ inQuote (t :>: x) r :=>: x) vs 
+>    vals = map (\(t :=>: v) -> t) vs'
 
 
 
@@ -285,8 +285,9 @@ as we can. Simple.
 >   traverse id $ traverse check s' r
 >   return ty'
 > infer (op :@ ts)         r = do
->   (vs,v) <- opTy op evTm ts
->   traverse id $ traverse check vs r
+>   (vs,v) <- opTy op (\tx@(t :>: x) -> do 
+>                                       ch <- check tx r 
+>                                       return $ ch :=>: evTm x) ts
 >   return v
 > infer (t :? ty)          r = do
 >   check (SET :>: ty) r

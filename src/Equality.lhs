@@ -27,22 +27,33 @@
 >                , opTy = opty
 >                , opRun = opRunEqGreen
 >                } where
->                opty ev [y0,t0,y1,t1] = 
->                  Just ([SET :>: y0, ev y0 :>: t0,SET :>: y1,ev y1 :>: t1],
->                        PROP)
->                opty _  _             = Nothing
+>                opty chev [y0,t0,y1,t1] = do
+>                    (y0 :=>: y0v) <- chev (SET :>: y0)
+>                    (t0 :=>: t0v) <- chev (y0v :>: t0)
+>                    (y1 :=>: y1v) <- chev (SET :>: y1)
+>                    (t1 :=>: t1v) <- chev (y1v :>: t1)
+>                    return ([ y0 :=>: y0v
+>                            , t0 :=>: t0v
+>                            , y1 :=>: y1v
+>                            , t1 :=>: t1v ]
+>                           , PROP)
+>                opty _  _             = mzero
 
 >   coe = Op { opName = "coe"
 >            , opArity = 4
 >            , opTy = opty
 >            , opRun = oprun
 >            } where
->            opty ev [x,y,q,s] = 
->              Just ([ SET :>: x
->                    , SET :>: y
->                    , PRF (EQBLUE (SET :>: ev x) (SET :>: ev y)) :>: q
->                    , ev x :>: s
->                    ],ev y)
+>            opty chev [x,y,q,s] = do
+>              (x :=>: xv) <- chev (SET :>: x)
+>              (y :=>: yv) <- chev (SET :>: y)
+>              (q :=>: qv) <- chev (PRF (EQBLUE (SET :>: xv) (SET :>: yv)) :>: q)
+>              (s :=>: sv) <- chev (xv :>: s)
+>              return ([ x :=>: xv
+>                      , y :=>: yv
+>                      , q :=>: qv
+>                      , s :=>: sv ]
+>                     , yv)
 >            oprun :: [VAL] -> Either NEU VAL
 >            oprun [C x,C y,q,s] = Right $ case halfZip x y of
 >              Nothing  -> ABSURD
@@ -56,13 +67,17 @@
 >            , opTy = opty
 >            , opRun = oprun
 >            } where
->            opty ev [x,y,q,s] =
->              Just ([SET :>: x,
->                     SET :>: y,
->                     PRF (EQBLUE (SET :>: ev x) (SET :>: ev y)) :>: q,
->                     ev x :>: s],
->                     PRF (EQBLUE (ev x :>: ev s) 
->                                 (ev y :>: coe @@ [ev x,ev y,ev q,ev s])))
+>            opty chev [x,y,q,s] = do
+>              (x :=>: xv) <- chev (SET :>: x)
+>              (y :=>: yv) <- chev (SET :>: y)
+>              (q :=>: qv) <- chev (PRF (EQBLUE (SET :>: xv) (SET :>: yv)) :>: q)
+>              (s :=>: sv) <- chev (xv :>: s)
+>              return ([ x :=>: xv
+>                      , y :=>: yv
+>                      , q :=>: qv
+>                      , s :=>: sv ]
+>                     , PRF (EQBLUE (xv :>: sv) 
+>                            (yv :>: coe @@ [xv,yv,qv,sv])))
 >            oprun :: [VAL] -> Either NEU VAL
 >            oprun [C x,C y,q,s] = Left undefined
 
