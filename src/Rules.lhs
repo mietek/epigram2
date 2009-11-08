@@ -326,6 +326,8 @@ as we can. Simple.
 >   import <- Operators
 >   [])
 
+> import <- SugarTactics
+
 \subsection{Equality?}
 
 > mkEqConj :: [(TY :>: VAL,TY :>: VAL)] -> VAL
