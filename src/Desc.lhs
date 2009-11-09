@@ -96,12 +96,11 @@
 >       boxOpRun [IND h x,d,p,v] = Right $
 >         eval [.h.x.d.p.v.
 >              TIMES (ALL (NV h) . L $ "" :. [.y.
->                                    N (V p :$ A (N (V v :$ Fst :$ A (NV h))))])
+>                                    N (V p :$ A (N (V v :$ Fst :$ A (NV y))))])
 >                   (N (boxOp :@ [NV x,NV d,NV p,N (V v :$ Snd)]))
 >              ] $ B0 :< h :< x :< d :< p :< v
 >       boxOpRun [N x    ,_,_,_] = Left x
 
-\pierre{Why |p| is ignored in the definition of |mapBoxOpTy|?}
 
 >   mapBoxOp :: Op
 >   mapBoxOp = Op
@@ -114,11 +113,15 @@
 >           (x :=>: xv) <- chev (DESC :>: x)
 >           (d :=>: dv) <- chev (SET :>: d)
 >           (bp :=>: bpv) <- chev (ARR dv SET :>: bp)
+>           (p :=>: pv) <- chev (ALL dv (eval [.bpv. L $ "" :. 
+>                                               [.y. N (V bpv :$ A (NV y))]
+>                                             ] $ B0 :< bpv)
+>                                 :>: p)
 >           (v :=>: vv) <- chev (descOp @@ [xv,dv] :>: v)
->           -- chev on p?
 >           return ([ x :=>: xv
 >                   , d :=>: dv
 >                   , bp :=>: bpv
+>                   , p :=>: pv
 >                   , v :=>: vv ]
 >                  , boxOp @@ [xv,dv,bpv,vv])
 >       mapBoxOpRun :: [VAL] -> Either NEU VAL
