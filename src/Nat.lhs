@@ -35,10 +35,10 @@
 > nat = MU natd
 
 > zero :: VAL
-> zero = INTROS (PAIR ZE VOID)
+> zero = CON (PAIR ZE VOID)
 
 > suc :: VAL
-> suc = L $ H B0 "" (INTROS (PAIR (SU ZE) (PAIR (L $ K (NV 0)) VOID)))
+> suc = L $ H B0 "" (CON (PAIR (SU ZE) (PAIR (L $ K (NV 0)) VOID)))
 
 > plus :: VAL
 > plus = eval [.nat.suc.natc.natd. L $ "" :. [.m. N $

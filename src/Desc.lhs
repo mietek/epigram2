@@ -10,7 +10,6 @@
 >   Done   :: Can t
 >   Arg    :: t -> t -> Can t
 >   Ind    :: t -> t -> Can t
->   Intros :: t -> Can t
 
 > import -> TraverseCan where
 >   traverse _ Desc       = (|Desc|)
@@ -18,7 +17,6 @@
 >   traverse _ Done       = (|Done|)
 >   traverse f (Arg x y)  = (|Arg (f x) (f y)|)
 >   traverse f (Ind x y)  = (|Ind (f x) (f y)|)
->   traverse f (Intros x) = (|Intros (f x)|)
 
 > import -> CanPats where
 >   pattern DESC     = C Desc
@@ -26,7 +24,6 @@
 >   pattern DONE     = C Done
 >   pattern ARG x y  = C (Arg x y)
 >   pattern IND x y  = C (Ind x y)
->   pattern INTROS x = C (Intros x)
 
 > import -> CanTyRules where
 >   canTy ev (Set :>: Desc)     = return Desc
@@ -43,9 +40,9 @@
 >     xv <- ev x
 >     yv <- ev y
 >     return $ Ind (SET :>: x) (DESC :>: y)
->   canTy ev (Mu x :>: Intros y) = do
+>   canTy ev (Mu x :>: Con y) = do
 >     yv <- ev y
->     return $ Intros (descOp @@ [x, MU x] :>: y)
+>     return $ Con (descOp @@ [x, MU x] :>: y)
 
 > import -> OpCode where
 >   descOp :: Op
@@ -153,7 +150,7 @@
 >         (p :=>: pv) <- chev (ALL (descOp @@ [dv,MU dv]) 
 >                     (eval [.d.bp.v. L $ "" :. [.x. 
 >                         ARR (N (boxOp :@ [NV d,MU (NV d),NV bp,NV x]))
->                             (N (V bp :$ A (INTROS (NV x))))]
+>                             (N (V bp :$ A (CON (NV x))))]
 >                         ] $ B0 :< dv :< bpv :< vv) :>: p)
 >         return ([ d :=>: dv
 >                 , bp :=>: bpv
@@ -161,7 +158,7 @@
 >                 , v :=>: vv ]
 >                 , bpv $$ A vv)
 >       elimOpRun :: [VAL] -> Either NEU VAL
->       elimOpRun [d,bp,p,INTROS v] = Right $
+>       elimOpRun [d,bp,p,CON v] = Right $
 >          p $$ A v $$ A (mapBoxOp @@ 
 >                         [d
 >                         ,MU d
