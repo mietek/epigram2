@@ -9,6 +9,10 @@
 > import -> CanPats where
 >   pattern EQBLUE p q = C (EqBlue p q)
 
+> import -> TraverseCan where
+>   traverse f (EqBlue (pty :>: p) (qty :>: q)) =
+>     (|EqBlue (|(:>:) (f pty) (f p)|) (|(:>:) (f qty) (f q)|)|)
+
 > import -> CanTyRules where
 >   canTy ev (Prop :>: EqBlue (y0 :>: t0) (y1 :>: t1)) = do
 >     y0v <- ev y0

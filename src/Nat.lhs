@@ -40,10 +40,11 @@
 > suc :: VAL
 > suc = L $ H B0 "" (INTROS (PAIR (SU ZE) (PAIR (L $ K (NV 0)) VOID)))
 
-> plus :: VAL -> VAL
-> plus m = elimOp @@ [natd
->                      ,L $ K (ARR nat nat)
->                      ,eval [.nat.suc.natc. L $ "" :. [.x.
+> plus :: VAL
+> plus = eval [.nat.suc.natc.natd. L $ "" :. [.m. N $
+>            elimOp :@ [NV natd
+>                      ,L $ K (ARR (NV nat) (NV nat))
+>                      ,L $ "" :. [.x.
 >                         N $ splitOp :@ [ENUMT (CONSE (TAG "czero") (CONSE (TAG "csuc") NILE))              -- A
 >                                        ,L $ "" :. [.t. N $ descOp :@ [natc $# [t] ,NV nat] ]               -- B
 >                                        ,L $ "" :. [.y. ARR (N $ boxOp :@ [N $ V natc :$ A (N $ V y :$ Fst) -- C
@@ -65,8 +66,8 @@
 >                                                                                    VOID)
 >                                                                        ,NV t]]                                               -- t
 >                                        ,NV x]]                                                             -- x
->                            ] $ B0 :< nat :< suc :< natc
->                      ,m]
+>                      ,NV m]]
+>  ] $ B0 :< nat :< suc :< natc :< natd
 
 > two :: VAL
 > two = suc $$ A (suc $$ A zero) 
@@ -76,3 +77,11 @@
 
 > nat2nat :: VAL
 > nat2nat = ARR nat nat
+
+> lemTy :: VAL
+> lemTy = PRF $ eval [.plus.zero.nat2nat. 
+>           eqGreen :@ [NV nat2nat
+>                      ,L $ "" :. [.n. N $ V plus :$ A (NV n) :$ A (NV zero)]
+>                      ,NV nat2nat
+>                      ,L $ "" :. [.n. N $ V plus :$ A (NV zero) :$ A (NV n)]
+>                      ]] $ B0 :< plus :< zero :< nat2nat
