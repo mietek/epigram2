@@ -23,7 +23,7 @@
 >                     ((SET :>: y1) :>: (y1v :>: t1))
 >   canTy ev (Prf (EQBLUE (y0 :>: t0) (y1 :>: t1)) :>: Con p) = do
 >     pv <- ev p
->     return $ Con ((eqGreen @@ [y0, t0, y1, t1]) :>: p)
+>     return $ Con (PRF (eqGreen @@ [y0, t0, y1, t1]) :>: p)
 
 > import -> OpCode where
 >   eqGreen = Op { opName = "eqGreen"
