@@ -69,21 +69,19 @@
 >         bOpTy _ _ = mzero
 >         bOpRun :: [VAL] -> Either NEU VAL
 >         bOpRun [NILE , p] = Right UNIT
->         bOpRun [CONSE t e' , p] = Right $ trustMe (typeBranches :>: tacBranches) $$ A t $$ A e' $$ A p
+>         bOpRun [CONSE t e' , p] = Right $ trustMe (typeBranches :>: tacBranches) $$ A e' $$ A p
 >         bOpRun [N e , _] = Left e 
 >         typeBranches = C (Pi ENUMU (L (H B0 "" (ARR (ARR (ENUMT $ NV 0) SET) SET))))
 >         tacBranches = lambda 
->                        (\t -> 
+>                        (\e' -> 
 >                         lambda 
->                         (\e' -> 
->                          lambda 
->                           (\p -> 
->                            timesTac (use p . apply (can Ze) $ done)
->                                     (useOp branchesOp [use e' done, 
->                                                        lambda
->                                                        (\x -> 
->                                                         use p . apply (use x done) $ done)] 
->                                      done))))
+>                          (\p -> 
+>                           timesTac (use p . apply (can Ze) $ done)
+>                                    (useOp branchesOp [use e' done, 
+>                                                       lambda
+>                                                       (\x -> 
+>                                                        use p . apply (can (Su (use x done))) $ done)]
+>                                     done)))
 
 tacBranches is supposed to build the following term:
 
