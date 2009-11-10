@@ -16,6 +16,8 @@
 
 > data Tac x
 
+> instance Monad Tac where
+
 > runTac :: Tac x -> Root -> TY -> Maybe x
 
 
