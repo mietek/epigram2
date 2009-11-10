@@ -241,7 +241,7 @@ work and comparing the inferred type with the goal.
 >             r <- root
 >             return $ equal x r
 
-One the other hand, |apply| builds up the continuation. It builds an
+On the other hand, |apply| builds up the continuation. It builds an
 |Use| which \emph{emph} must be a function, this function being
 applied to the value inside |tacX|. Once the result has been computed,
 the |use| continuation is called.
@@ -268,7 +268,7 @@ Similarly, we can use operators almost transparently with:
 >                                           v <- subgoal tx
 >                                           return $ x :=>: v) args
 >   let vs = map (\(s :=>: v) -> v) vals
->   useR ((either N id $ opRun op vs) :<: ty )
+>   useR ((either (\_ -> N $ op :@ vs) id $ opRun op vs) :<: ty)
 
 %if false
 

@@ -21,7 +21,7 @@
 > import -> CanPats where
 >   pattern ENUMU      = C EnumU 
 >   pattern ENUMT e    = C (EnumT e) 
->   pattern NILE        = C NilE
+>   pattern NILE       = C NilE
 >   pattern CONSE t e  = C (ConsE t e) 
 >   pattern ZE         = C Ze
 >   pattern SU n       = C (Su n)
@@ -41,16 +41,12 @@
 > import -> CanTyRules where
 >   canTy ev (Set :>: EnumU)    = return EnumU
 >   canTy eval (Set :>: EnumT e)  = do
->     ev <- eval e 
 >     return $ EnumT (ENUMU :>: e)
 >   canTy ev (EnumU :>: NilE)       = return NilE
 >   canTy eval (EnumU :>: ConsE t e)  = do
->     tv <- eval t
->     ev <- eval e
 >     return $ ConsE (UID :>: t) (ENUMU :>: e)
 >   canTy ev (EnumT (CONSE t e) :>: Ze)    = return Ze 
 >   canTy ev (EnumT (CONSE t e) :>: Su n)  = do
->     nv <- ev n
 >     return $ Su (ENUMT e :>: n)
 
 > import -> OpCode where
@@ -68,20 +64,22 @@
 >                          , SET)
 >         bOpTy _ _ = mzero
 >         bOpRun :: [VAL] -> Either NEU VAL
->         bOpRun [NILE , p] = Right UNIT
->         bOpRun [CONSE t e' , p] = Right $ trustMe (typeBranches :>: tacBranches) $$ A e' $$ A p
+>         bOpRun [NILE , _] = Right UNIT
+>         bOpRun [CONSE t e' , p] = Right $ trustMe (typeBranches :>: tacBranches) $$ A t $$ A e' $$ A p
 >         bOpRun [N e , _] = Left e 
->         typeBranches = C (Pi ENUMU (L (H B0 "" (ARR (ARR (ENUMT $ NV 0) SET) SET))))
->         tacBranches = lambda 
->                        (\e' -> 
+>         typeBranches = C (Pi UID (L $ H B0 "" (C (Pi ENUMU (L $ "" :. (ARR (ARR (ENUMT (CONSE (NV 1) (NV 0))) SET) SET))))))
+>         tacBranches = lambda
+>                        (\_ ->
 >                         lambda 
->                          (\p -> 
->                           timesTac (use p . apply (can Ze) $ done)
->                                    (useOp branchesOp [use e' done, 
->                                                       lambda
->                                                       (\x -> 
->                                                        use p . apply (can (Su (use x done))) $ done)]
->                                     done)))
+>                          (\e' -> 
+>                           lambda 
+>                            (\p -> 
+>                             timesTac (use p . apply (can Ze) $ done)
+>                                      (useOp branchesOp [return (pval e'), 
+>                                                         lambda
+>                                                         (\x -> 
+>                                                          use p . apply (can (Su (return (pval x)))) $ done)]
+>                                       done))))
 
 tacBranches is supposed to build the following term:
 
