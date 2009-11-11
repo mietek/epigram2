@@ -99,7 +99,8 @@ eliminator, of |Elim (TY :>: t)| and the type of the result |TY|.
 >           Maybe (Elim (TY :>: t),TY)
 > elimTy ev (f :<: Pi s t) (A e) = Just (A (s :>: e),t $$ A (ev e)) 
 > import <- ElimTyRules
-> elimTy _  _              _     = Nothing
+> elimTy _  (v :<: t) e = traceErr $ "elimTy: failed to eliminate " ++ show v ++ 
+>                                    " with " ++ (show $ traverse (\t -> ".") e)
 
 
 \subsection{Equality and Quotation}

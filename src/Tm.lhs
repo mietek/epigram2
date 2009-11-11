@@ -155,7 +155,7 @@ change impacts on |exQuote|, |infer|, and |useOp|.
 
 > data Op = Op
 >   { opName  :: String, opArity :: Int
->   , opTy    :: MonadPlus m => (TY :>: t -> m (s :=>: VAL)) -> [t] -> m ([s :=>: VAL] , TY)
+>   , opTy    :: MonadTrace m => (TY :>: t -> m (s :=>: VAL)) -> [t] -> m ([s :=>: VAL] , TY)
 >   , opRun   :: [VAL] -> Either NEU VAL
 >   }
 
@@ -204,6 +204,7 @@ As we are discussing syntactic sugar, let me introduce the "reduces
 to" symbol:
 
 > data t :=>: v = t :=>: v deriving (Show, Eq)
+> infix 4 :=>:
 
 Intuitively, |t :=>: v| can be read as "the term |t| reduces to the
 value |v|".

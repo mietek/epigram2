@@ -17,7 +17,7 @@
 > import Control.Monad
 > import Control.Applicative
 
-> import Data.Maybe
+> import Data.List
 > import Data.Traversable
 
 > import BwdFwd
@@ -25,6 +25,8 @@
 > import Root
 > import Tm
 > import Rules
+
+> import MissingLibrary
 
 %endif
 
@@ -41,7 +43,7 @@ A Tactic is something that builds a term of a given type. In
 this process, it might be required to create fresh names, hence the
 availability of a |Root|. All in all, this goes like this:
 
-> newtype Tac x = Tac { runTac :: Root -> TY -> Maybe x }
+> newtype Tac x = Tac { runTac :: Root -> TY -> Either [String] x }
 
 In other words, we have two @Reader@ monads stacked on an @Error@
 monad. I don't know for you but I'm quite happy to reinvent the wheel
@@ -53,21 +55,20 @@ The corollary is that we have to implement the standard mumbo jumbo
 for monads. First, we have a functor:
 
 > instance Functor Tac where
->     fmap f g = Tac { runTac = \r t -> fmap f -- in Maybe functor
+>     fmap f g = Tac { runTac = \r t -> fmap f -- in Either functor
 >                                            (runTac g r t) }
 
 Then we have a monad:
 
 > instance Monad Tac where
->     return x = Tac { runTac = \_ _ -> Just x }
+>     return x = Tac { runTac = \_ _ -> Right x }
 >     x >>= f = Tac { runTac = \r t -> 
->                                do -- in Maybe monad
+>                                do -- in Either monad
 >                                x <- runTac x r t
 >                                runTac (f x) r t }
 >
-> instance MonadPlus Tac where
->     mzero = Tac { runTac = \_ _ -> Nothing }
->     a `mplus` b = Tac { runTac = \r t -> runTac a r t `mplus` runTac b r t }
+> instance MonadTrace Tac where
+>     traceErr s = Tac { runTac = \_ _ -> Left [s] }
 
 \subsubsection{Going rooty}
 
@@ -78,7 +79,7 @@ operations on it.
 Let us work out the implementation:
 
 > instance Rooty Tac where
->     root = Tac { runTac = \root _ -> Just root }
+>     root = Tac { runTac = \root _ -> Right root }
 >     freshRef x tacF = Tac { runTac = Rooty.freshRef x (runTac . tacF) }
 >     forkRoot s child dad = Tac { runTac = \root typ -> 
 >                                           do 
@@ -117,7 +118,7 @@ Hence, we can |ask| what is the current type goal with, well,
 This is a bit of Reader digest: |ask| and |runReader|.
 
 > goal :: Tac TY
-> goal = Tac { runTac = \root typ -> Just typ }
+> goal = Tac { runTac = \root typ -> Right typ }
 
 |subgoal| is the |local| of Reader that runs |tacX| in a local |typ|
 environment. Conor is concerned about the fact that, apart from
@@ -125,8 +126,11 @@ Inference rules, nobody should be using this guy.
 
 > subgoal :: (TY :>: Tac x) -> Tac x
 > subgoal (typ :>: tacX) = 
->     Tac { runTac = \root typ' -> 
->              runTac tacX root typ }
+>     Tac { runTac = \root _ -> 
+>             case runTac tacX root typ of
+>               Left x -> Left $ ("subgoal: unable to build an inhabitant of " ++ show typ) : x
+>               k -> k
+>         }
 
 \subsubsection{Making lambdas}
 
@@ -142,6 +146,21 @@ discharged.
 
 As mentioned above, we should not forget that |Tac| is in |Rooty|: we
 have |freshRef| and |forkRoot| for free.
+
+\subsubsection{Failing, loudly}
+
+When a tactic fails, it is good to know why. So, we provide you this
+combinator to report a failure.
+
+> failTac :: String -> Tac x
+> failTac s = Tac { runTac = \_ _ -> Left [s] }
+
+We are not entirely satisfied with this solution, so this will
+probably change (for the better) in future iterations. The problem
+with this scheme is that you get a stack, consisting of the initial
+problem and all its consequences. However, it is often not enough to
+pinpoint the precise location of the error. So, this mechanism is
+pretty much useless.
 
 \subsection{Syntax-directed tacticals}
 
@@ -166,11 +185,15 @@ term.
 
 > lambda :: (REF -> Tac VAL) -> Tac VAL
 > lambda body = do
->   C (Pi s t) <- goal
->   Rooty.freshRef ("" :<: s) $
->                  \x -> do
->                    body <- subgoal (t $$ A (pval x) :>: body x)
->                    discharge x body
+>   pi <- goal
+>   case pi of
+>     C (Pi s t) ->
+>         Rooty.freshRef ("" :<: s) $
+>                        \x -> do
+>                              body <- subgoal (t $$ A (pval x) :>: body x)
+>                              discharge x body
+>     _ -> failTac ("lambdaTac: could not match the current goal " ++ show pi ++ 
+>                   " against a Pi type")
 
 Similarly, we can also implement the typed lambda, for which variable
 types are known. If |lambda| were a bit more polymorphic, we could use
@@ -179,13 +202,18 @@ it here I think.
 > tyLambda :: (String :<: TY) -> (REF -> Tac (VAL :<: TY))
 >                             -> Tac (VAL :<: TY)
 > tyLambda (name :<: s) body = do
->     C (Pi s t) <- goal
->     Rooty.freshRef ("" :<: s) $
->                    \x -> do
->                      (body :<: ts) <- subgoal (t $$ A (pval x) :>: body x)
->                      v <- discharge x body
->                      t <- discharge x ts
->                      return $ v :<: C (Pi s t)
+>     pi <- goal
+>     case pi of 
+>         C (Pi s t) ->
+>             Rooty.freshRef ("" :<: s) $
+>                            \x -> do
+>                                  (body :<: ts) <- subgoal (t $$ A (pval x) :>: body x)
+>                                  v <- discharge x body
+>                                  t <- discharge x ts
+>                                  return $ v :<: C (Pi s t)
+>         _ -> failTac ("tyLambdaTac: could not match the current goal "
+>                       ++ show pi ++ 
+>                       " against a (Pi " ++ show s ++ ") type")
 
 The second builder is significantly simpler, as we don't have to care
 about binding. Taking a canonical term containing well-typed values,
@@ -202,18 +230,23 @@ canonical value.
 
 > can :: Can (Tac VAL) -> Tac VAL
 > can cTac = do
->     C t <- goal
->     v <- canTy id (t :>: cTac)
->     v <- traverse subgoal v
->     return $ C v
-
+>     c <- goal
+>     case c of
+>       C t -> do
+>              v <- canTy (\tx@(t :>: x) -> do
+>                                           v <- subgoal tx
+>                                           return $ x:=>: v) (t :>: cTac)
+>              let Just v' = traverse (\(x :=>: v) -> Just v) v
+>              return $ C v'
+>       _ -> failTac ("can: could not match " ++ show c ++ 
+>                     " against a Can type")
 
 
 > infr :: TY -> Tac VAL -> Tac (VAL :<: TY)
 > infr typ tacX = do
->   typ <- goal
->   x <- tacX
->   return (x :<: typ)
+>     typ <- goal
+>     x <- tacX
+>     return (x :<: typ)
 
 \subsubsection{Elimination rules}
 
@@ -235,8 +268,11 @@ work and comparing the inferred type with the goal.
 >     do
 >       typ' <- goal
 >       p <- equalR (SET :>: (typ, typ'))
->       guard p
->       return v
+>       case p of 
+>         True -> return v
+>         False -> failTac ("done: the provided type " ++ show typ ++
+>                           " for value " ++ show v ++ 
+>                           " is not equal to the current goal " ++ show typ')
 >     where equalR x = do
 >             r <- root
 >             return $ equal x r
@@ -285,7 +321,7 @@ simply as:
 
 As for more "complex" examples, here is an identity function:
 
-> ident = lambda (\x -> return (pval x))
+> ident = lambda (\x -> use x done)
 > identT = ARR SET SET
 
 And here is the twice function:
@@ -374,5 +410,8 @@ corresponding to the type of the value built by the |Tac VAl|. If it
 doesn't, good luck to find the source of the mistake.
 
 > trustMe :: (TY :>: Tac VAL) -> VAL
-> trustMe (typ :>: tacV) = fromJust $ runTac tacV (B0,0) typ
+> trustMe (typ :>: tacV) = 
+>     case runTac tacV (B0 :< ("tactics",0),0) typ of
+>       Left e -> error $ concat $ intersperse "\n" $ reverse e
+>       Right x -> x
 

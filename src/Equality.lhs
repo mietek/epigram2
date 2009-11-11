@@ -41,7 +41,7 @@
 >                            , y1 :=>: y1v
 >                            , t1 :=>: t1v ]
 >                           , PROP)
->                opty _  _             = mzero
+>                opty _  _             = traceErr "eqGreen: invalid arguments."
 
 >   coe = Op { opName = "coe"
 >            , opArity = 4
