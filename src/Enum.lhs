@@ -41,12 +41,16 @@
 > import -> CanTyRules where
 >   canTy ev (Set :>: EnumU)    = return EnumU
 >   canTy eval (Set :>: EnumT e)  = do
+>     ev <- eval e 
 >     return $ EnumT (ENUMU :>: e)
 >   canTy ev (EnumU :>: NilE)       = return NilE
 >   canTy eval (EnumU :>: ConsE t e)  = do
+>     tv <- eval t
+>     ev <- eval e
 >     return $ ConsE (UID :>: t) (ENUMU :>: e)
 >   canTy ev (EnumT (CONSE t e) :>: Ze)    = return Ze 
 >   canTy ev (EnumT (CONSE t e) :>: Su n)  = do
+>     nv <- ev n
 >     return $ Su (ENUMT e :>: n)
 
 > import -> OpCode where

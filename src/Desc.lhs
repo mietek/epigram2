@@ -40,9 +40,9 @@
 >     xv <- ev x
 >     yv <- ev y
 >     return $ Ind (SET :>: x) (DESC :>: y)
->   canTy ev (Mu x :>: Con y) = do
+>   canTy ev (Mu x :>: Intros y) = do
 >     yv <- ev y
->     return $ Con (descOp @@ [x, MU x] :>: y)
+>     return $ Intros (descOp @@ [x, MU x] :>: y)
 
 > import -> OpCode where
 >   descOp :: Op

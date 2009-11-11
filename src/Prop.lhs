@@ -42,26 +42,26 @@ Elim forms inherited from elsewhere
 
 > import -> CanTyRules where
 >   canTy _   (Set :>: Prop)           = return Prop
->   canTy ev  (Set :>: Prf p)          = do
->     pv <- ev p
->     return $ Prf (PROP :>: p)
->   canTy ev  (Prop :>: All s p)       = do
->     sv <- ev s
->     pv <- ev p
->     return $ All (SET :>: s) (ARR sv PROP :>: p)
->   canTy ev  (Prop :>: And p q)       = do
->     pv <- ev p
->     qv <- ev q
->     return $ And (PROP :>: p) (PROP :>: q)
+>   canTy chev  (Set :>: Prf p)         = do
+>     ppv@(p :=>: pv) <- chev (PROP :>: p)
+>     return $ Prf ppv
+>   canTy chev  (Prop :>: All s p)       = do
+>     ssv@(s :=>: sv) <- chev (SET :>: s)
+>     ppv@(p :=>: pv) <- chev (ARR sv PROP :>: p)
+>     return $ All ssv ppv
+>   canTy chev  (Prop :>: And p q)       = do
+>     ppv@(p :=>: pv) <- chev (PROP :>: p)
+>     qqv@(q :=>: qv) <- chev (PROP :>: q)
+>     return $ And ppv qqv
 >   canTy _  (Prop :>: Trivial)       = return Trivial
 >   canTy _   (Prop :>: Absurd)        = return Absurd
->   canTy ev  (Prf p :>: Box (Irr x))  = do
->     xv <- ev x 
->     return $ Box (Irr (PRF p :>: x))
->   canTy ev  (And p q :>: Pair x y)   = do
->     xv <- ev x
->     yv <- ev y
->     return $ Pair (PRF p :>: x) (PRF q :>: y)
+>   canTy chev  (Prf p :>: Box (Irr x))  = do
+>     xxv@(x :=>: xv) <- chev (PRF p :>: x)
+>     return $ Box (Irr (xxv))
+>   canTy chev  (And p q :>: Pair x y)   = do
+>     xxv@(x :=>: xv) <- chev (PRF p :>: x)
+>     yyv@(y :=>: yv) <- chev (PRF q :>: y)
+>     return $ Pair xxv yyv
 >   canTy _   (Trivial :>: Void)       = return Void
 
 

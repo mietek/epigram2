@@ -85,7 +85,9 @@ original one.
 >   tv <- ev t
 >   return $ Pi (SET :>: s) (ARR sv SET :>: t)
 > import <- CanTyRules
-> canTy  _  _                 = mzero
+> canTy  chev (ty :>: x)  = traceErr ("canTy: the proposed value "
+>                                     ++ show (Data.Traversable.mapM (\x -> ".") x)
+>                                     ++ " is not of type " ++ show ty)
 
 
 Type-checking elimination forms is more standard and mirrors the
@@ -156,8 +158,8 @@ artificially cautious. Hence, this is |Just| a mess.
 > inQuote (_ :>: N n)      r = N t
 >     where (t :<: _) = exQuote n r
 > inQuote (C cty :>: C cv) r = fromJust $ do
->     ct <- canTy (\t -> Just t) (cty :>: cv)
->     c <- traverse (\c -> Just $ inQuote c r)  ct
+>     ct <- canTy (\tv@(t :>: v) -> Just $ tv :=>: v) (cty :>: cv)
+>     c <- traverse (\(c :=>: _) -> Just $ inQuote c r)  ct
 >     return $ C c
 
 As mentioned above, |\eta|-expansion is the first sensible thing to do
@@ -303,7 +305,7 @@ as we can. Simple.
 
 > check :: (TY :>: INTM) -> Root -> Maybe ()
 > check (C c :>: C c')        r = do
->   csp <- canTy (Just . evTm) (c :>: c')
+>   csp <- canTy (\(t :>: x) -> Just $ x :=>: evTm x) (c :>: c')
 >   return ()
 > check (C (Pi s t) :>: L sc) r = do
 >   Root.freshRef ("" :<: s) 
@@ -342,12 +344,14 @@ as we can. Simple.
 > eqGreenT (y0 :>: t0) (y1 :>: t1) = N (eqGreen :@ [y0,t0,y1,t1])
 
 > opRunEqGreen :: [VAL] -> Either NEU VAL
-> opRunEqGreen [SET,C t0,SET,C t1] = case halfZip t0' t1' of
+> opRunEqGreen [SET,C t0,SET,C t1] = case halfZip t0'' t1'' of
 >    Nothing -> Right ABSURD
 >    Just x  -> Right $ mkEqConj (trail x)
 >    where
->    Just t0' = canTy Just (Set :>: t0)
->    Just t1' = canTy Just (Set :>: t1)
+>    Just t0' = canTy (\tx@(t :>: x) -> Just (tx :=>: x)) (Set :>: t0)
+>    Just t0'' = traverse (\(x :=>: y) -> Just x) t0'
+>    Just t1' = canTy (\tx@(t :>: x) -> Just (tx :=>: x)) (Set :>: t1)
+>    Just t1'' = traverse (\(x :=>: y) -> Just x) t1'
 > import <- OpRunEqGreen
 > opRunEqGreen [C (Pi s1 t1),f1,C (Pi s2 t2),f2] = Right $
 >   eval  [.s1.t1.f1.s2.t2.f2.
