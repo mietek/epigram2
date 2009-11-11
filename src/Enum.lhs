@@ -71,19 +71,19 @@
 >         bOpRun [NILE , _] = Right UNIT
 >         bOpRun [CONSE t e' , p] = Right $ trustMe (typeBranches :>: tacBranches) $$ A t $$ A e' $$ A p
 >         bOpRun [N e , _] = Left e 
->         typeBranches = C (Pi UID (L $ H B0 "" (C (Pi ENUMU (L $ "" :. (ARR (ARR (ENUMT (CONSE (NV 1) (NV 0))) SET) SET))))))
->         tacBranches = lambda
->                        (\_ ->
+>         typeBranches = C (Pi ENUMU (L (H B0 "" (ARR (ARR (ENUMT $ NV 0) SET) SET))))
+>         tacBranches = lambda 
+>                        (\t -> 
 >                         lambda 
->                          (\e' -> 
->                           lambda 
->                            (\p -> 
->                             timesTac (use p . apply (can Ze) $ done)
->                                      (useOp branchesOp [return (pval e'), 
->                                                         lambda
->                                                         (\x -> 
->                                                          use p . apply (can (Su (return (pval x)))) $ done)]
->                                       done))))
+>                         (\e' -> 
+>                          lambda 
+>                           (\p -> 
+>                            timesTac (use p . apply (can Ze) $ done)
+>                                     (useOp branchesOp [use e' done, 
+>                                                        lambda
+>                                                        (\x -> 
+>                                                         use p . apply (use x done) $ done)] 
+>                                      done))))
 
 tacBranches is supposed to build the following term:
 
@@ -110,12 +110,35 @@ tacBranches is supposed to build the following term:
 >                    , pv $$ A xv)
 >         sOpRun :: [VAL] -> Either NEU VAL
 >         sOpRun [CONSE t e' , p , ps , ZE] = Right $ ps $$ Fst
->         sOpRun [CONSE t e' , p , ps , SU n] = Right $
->           switchOp @@ [e' 
->                       , L (H (B0 :< p) "" (N (V 1 :$ A ((C (Su (N (V 0))))))))
->                       , ps $$ Snd
->                       , n ]
+>         sOpRun [CONSE t e' , p , ps , SU n] = Right $ trustMe (typeSwitch :>: tacSwitch) 
+>                                                       $$ A t $$ A e' $$ A p $$ A ps $$ A n
 >         sOpRun [_ , _ , _ , N n] = Left n
+
+>         tacSwitch = lambda (\t ->
+>                      lambda (\e' ->
+>                       lambda (\p ->
+>                        lambda (\ps ->
+>                         lambda (\n ->
+>                          useOp switchOp [ use e' done
+>                                         , lambda (\x -> 
+>                                            use p . apply (A (can (Su (use x done)))) $ done)
+>                                         , use ps . apply Snd $ done
+>                                         , use n done ]
+>                          done)))))
+>         typeSwitch = trustMe (SET :>: tacTypeSwitch) 
+>         tacTypeSwitch = can $ Pi (can UId)
+>                               (lambda (\t ->
+>                                 can $ Pi (can EnumU)
+>                                          (lambda (\e -> 
+>                                           can $ Pi (arrTac (can $ EnumT (can $ ConsE (use t done) (use e done)))
+>                                                            (can Set))
+>                                                    (lambda (\p ->
+>                                                     arrTac (useOp branchesOp [ can $ ConsE (use t done) (use e done)
+>                                                                                 , use p done]
+>                                                             done)
+>                                                             (can $ Pi (can $ EnumT (use e done))
+>                                                                         (lambda (\x -> 
+>                                                                          use p . apply (A $ can $ Su $ use x done) $ done)))))))))
 
 
 > import -> Operators where
