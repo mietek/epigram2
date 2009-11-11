@@ -307,11 +307,11 @@ Similarly, we can use operators almost transparently with:
 
 > useOp :: Op -> [Tac VAL] -> Use -> Tac VAL
 > useOp op args useR = do
->   (vals, ty) <- opTy op (\tx@(t :>: x) -> do
->                                           v <- subgoal tx
->                                           return $ x :=>: v) args
+>   (vals, ty) <- opTy op (\tx -> do
+>                                 v <- subgoal tx
+>                                 return $ tx :=>: v) args
 >   let vs = map (\(s :=>: v) -> v) vals
->   useR ((either (\_ -> N $ op :@ vs) id $ opRun op vs) :<: ty)
+>   useR ((either N id $ opRun op vs) :<: ty )
 
 %if false
 
