@@ -56,15 +56,15 @@
 
 > import -> CanTyRules where
 >   canTy _   (Set :>: Unit) = return Unit
->   canTy ev  (Set :>: Sigma s t) = do
->     sv <- ev s 
->     tv <- ev t
->     return $ Sigma (SET :>: s) (ARR sv SET :>: t)
+>   canTy chev  (Set :>: Sigma s t) = do
+>     ssv@(s :=>: sv) <- chev (SET :>: s)
+>     ttv@(t :=>: tv) <- chev (ARR sv SET :>: t)
+>     return $ Sigma ssv ttv
 >   canTy _   (Unit :>: Void) = return Void
->   canTy ev  (Sigma s t :>: Pair x y) =  do
->       xv <- ev x
->       yv <- ev y
->       return $ Pair (s :>: x) ((t $$ A xv) :>: y)
+>   canTy chev  (Sigma s t :>: Pair x y) =  do
+>     xxv@(x :=>: xv) <- chev (s :>: x)
+>     yyv@(y :=>: yv) <- chev ((t $$ A xv) :>: y)
+>     return $ Pair xxv yyv
 
 > import -> ElimTyRules where
 >   elimTy chev (_ :<: Sigma s t) Fst = return (Fst, s)

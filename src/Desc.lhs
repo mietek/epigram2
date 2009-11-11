@@ -26,23 +26,22 @@
 >   pattern IND x y  = C (Ind x y)
 
 > import -> CanTyRules where
->   canTy ev (Set :>: Desc)     = return Desc
->   canTy ev (Set :>: Mu x)     = do
->     xv <- ev x
->     return $ Mu (DESC :>: x)
->   canTy ev (Desc :>: Done)    = return Done
->   canTy ev (Desc :>: Arg x y) = do
->     xv <- ev x
->     yv <- ev y
->     return $ Arg (SET :>: x)
->                  (ARR xv DESC :>: y) 
->   canTy ev (Desc :>: Ind x y) = do
->     xv <- ev x
->     yv <- ev y
->     return $ Ind (SET :>: x) (DESC :>: y)
->   canTy ev (Mu x :>: Intros y) = do
->     yv <- ev y
->     return $ Intros (descOp @@ [x, MU x] :>: y)
+>   canTy _ (Set :>: Desc)     = return Desc
+>   canTy chev (Set :>: Mu x)     = do
+>     xxv@(x :=>: xv) <- chev (DESC :>: x)
+>     return $ Mu xxv
+>   canTy _ (Desc :>: Done)    = return Done
+>   canTy chev (Desc :>: Arg x y) = do
+>     xxv@(x :=>: xv) <- chev (SET :>: x)
+>     yyv@(y :=>: yv) <- chev (ARR xv DESC :>: y)
+>     return $ Arg xxv yyv
+>   canTy chev (Desc :>: Ind x y) = do
+>     xxv@(x :=>: xv) <- chev (SET :>: x)
+>     yyv@(y :=>: yv) <- chev (DESC :>: y)
+>     return $ Ind xxv yyv
+>   canTy chev (Mu x :>: Con y) = do
+>     yyv@(y :=>: yv) <- chev (descOp @@ [x, MU x] :>: y)
+>     return $ Con yyv
 
 > import -> OpCode where
 >   descOp :: Op

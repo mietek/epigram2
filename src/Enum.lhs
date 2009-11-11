@@ -39,19 +39,19 @@
 >   traverse f (Su n)       = (|Su (f n)|) 
 
 > import -> CanTyRules where
->   canTy ev (Set :>: EnumU)    = return EnumU
->   canTy eval (Set :>: EnumT e)  = do
->     ev <- eval e 
->     return $ EnumT (ENUMU :>: e)
->   canTy ev (EnumU :>: NilE)       = return NilE
->   canTy eval (EnumU :>: ConsE t e)  = do
->     tv <- eval t
->     ev <- eval e
->     return $ ConsE (UID :>: t) (ENUMU :>: e)
->   canTy ev (EnumT (CONSE t e) :>: Ze)    = return Ze 
->   canTy ev (EnumT (CONSE t e) :>: Su n)  = do
->     nv <- ev n
->     return $ Su (ENUMT e :>: n)
+>   canTy _ (Set :>: EnumU)    = return EnumU
+>   canTy chev (Set :>: EnumT e)  = do
+>     eev@(e :=>: ev) <- chev (ENUMU :>: e)
+>     return $ EnumT eev
+>   canTy chev (EnumU :>: NilE)       = return NilE
+>   canTy chev (EnumU :>: ConsE t e)  = do
+>     ttv@(t :=>: tv) <- chev (UID :>: t)
+>     eev@(e :=>: ev) <- chev (ENUMU :>: e)
+>     return $ ConsE ttv eev
+>   canTy _ (EnumT (CONSE t e) :>: Ze)    = return Ze 
+>   canTy chev (EnumT (CONSE t e) :>: Su n)  = do
+>     nnv@(n :=>: nv) <- chev (ENUMT e :>: n)
+>     return $ Su nnv
 
 > import -> OpCode where
 >   branchesOp = Op 
@@ -71,26 +71,23 @@
 >         bOpRun [NILE , _] = Right UNIT
 >         bOpRun [CONSE t e' , p] = Right $ trustMe (typeBranches :>: tacBranches) $$ A t $$ A e' $$ A p
 >         bOpRun [N e , _] = Left e 
->         typeBranches = C (Pi ENUMU (L (H B0 "" (ARR (ARR (ENUMT $ NV 0) SET) SET))))
->         tacBranches = lambda 
->                        (\t -> 
->                         lambda 
->                         (\e' -> 
->                          lambda 
->                           (\p -> 
->                            timesTac (use p . apply (can Ze) $ done)
->                                     (useOp branchesOp [use e' done, 
->                                                        lambda
->                                                        (\x -> 
->                                                         use p . apply (use x done) $ done)] 
->                                      done))))
-
-tacBranches is supposed to build the following term:
-
-<           (TIMES (p $$ A ZE) 
-<                 (branchesOp @@ [e' , L (H (B0 :< p) 
-<                                  "" (N (V 1 :$ A ((C (Su (N (V 0))))))))]))
-
+>         typeBranches = trustMe (SET :>: tacTypeBranches)
+>         tacTypeBranches = can $ Pi (can UId)
+>                                    (lambda (\t ->
+>                                     can $ Pi (can EnumU)
+>                                              (lambda (\e ->
+>                                               arrTac (arrTac (can $ EnumT (can $ ConsE (use t done)
+>                                                                                          (use e done)))
+>                                                                (can Set))
+>                                                      (can Set)))))
+>         tacBranches = lambda (\t -> 
+>                        lambda (\e' -> 
+>                         lambda (\p -> 
+>                          timesTac (use p . apply (A (can Ze)) $ done)
+>                                   (useOp branchesOp [ use e' done
+>                                                     , lambda (\x -> 
+>                                                        use p . apply (A (can (Su (use x done)))) $ done)] 
+>                                    done))))
 
 >   switchOp = Op
 >     { opName = "Switch"

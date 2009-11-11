@@ -78,12 +78,12 @@ original one.
 \pierre{When the epig people get use to this new |canTy|, we can
         scratch the previous code.}
 
-> canTy :: MonadPlus m => (t -> m VAL) -> (Can VAL :>: Can t) -> m (Can (TY :>: t))
-> canTy ev (Set :>: Set)     = return Set
-> canTy ev (Set :>: Pi s t)  = do
->   sv <-  ev s
->   tv <- ev t
->   return $ Pi (SET :>: s) (ARR sv SET :>: t)
+> canTy :: MonadTrace m => (TY :>: t -> m (s :=>: VAL)) -> (Can VAL :>: Can t) -> m (Can (s :=>: VAL))
+> canTy chev (Set :>: Set)     = return Set
+> canTy chev (Set :>: Pi s t)  = do
+>   ssv@(s :=>: sv) <- chev (SET :>: s)
+>   ttv@(t :=>: tv) <- chev (ARR sv SET :>: t)
+>   return $ Pi ssv ttv
 > import <- CanTyRules
 > canTy  chev (ty :>: x)  = traceErr ("canTy: the proposed value "
 >                                     ++ show (Data.Traversable.mapM (\x -> ".") x)

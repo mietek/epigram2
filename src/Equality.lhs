@@ -14,16 +14,15 @@
 >     (|EqBlue (|(:>:) (f pty) (f p)|) (|(:>:) (f qty) (f q)|)|)
 
 > import -> CanTyRules where
->   canTy ev (Prop :>: EqBlue (y0 :>: t0) (y1 :>: t1)) = do
->     y0v <- ev y0
->     t0v <- ev t0
->     y1v <- ev y1
->     t1v <- ev t1
->     return $ EqBlue ((SET :>: y0) :>: (y0v :>: t0)) 
->                     ((SET :>: y1) :>: (y1v :>: t1))
->   canTy ev (Prf (EQBLUE (y0 :>: t0) (y1 :>: t1)) :>: Con p) = do
->     pv <- ev p
->     return $ Con ((eqGreen @@ [y0, t0, y1, t1]) :>: p)
+>   canTy chev (Prop :>: EqBlue (y0 :>: t0) (y1 :>: t1)) = do
+>     y0y0v@(y0 :=>: y0v) <- chev (SET :>: y0)
+>     t0t0v@(t0 :=>: t0v) <- chev (y0v :>: t0)
+>     y1y1v@(y1 :=>: y1v) <- chev (SET :>: y1)
+>     t1t1v@(t1 :=>: t1v) <- chev (y1v :>: t1)
+>     return $ EqBlue (y0y0v :>: t0t0v) (y1y1v :>: t1t1v)
+>   canTy chev (Prf (EQBLUE (y0 :>: t0) (y1 :>: t1)) :>: Con p) = do
+>     ppv@(p :=>: pv) <- chev (eqGreen @@ [y0, t0, y1, t1] :>: p)
+>     return $ Con ppv
 
 > import -> OpCode where
 >   eqGreen = Op { opName = "eqGreen"

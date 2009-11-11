@@ -284,11 +284,23 @@ work and comparing the inferred type with the goal.
 >             r <- root
 >             return $ equal x r
 
-One the other hand, |apply| builds up the continuation. It builds an
-|Use| which \emph{emph} must be a function, this function being
-applied to the value inside |tacX|. Once the result has been computed,
-the |use| continuation is called.
+On the other hand, |apply| builds up the continuation. It builds an
+|Use| which \emph{must} be a canonical term to be eliminated. The
+eliminator and its argument are provided by |tacX|. Once the result
+has been computed, the |use| continuation is called.
 
+> apply :: Elim (Tac VAL) -> Use -> Use
+> apply etacX use (x :<: t) = 
+>   case t of
+>     C t -> do
+>           (v,tv) <- elimTy (\tx -> do 
+>                                    v <- subgoal tx
+>                                    return $ tx :=>: v) 
+>                            (x :<: t) etacX 
+>           let I v' = traverse (\(_ :=>: v) -> I v) v
+>           use (x $$ v' :<: tv)
+>     _ -> traceErr $ "apply: cannot apply an elimination" ++ 
+>                     " on non canonical type " ++ show t
 
 Finally, the continuation is created by |use| that, basically, allows
 you to apply the arguments built in |useR| to the function |ref|erenced.
@@ -306,7 +318,8 @@ Similarly, we can use operators almost transparently with:
 >                                 v <- subgoal tx
 >                                 return $ tx :=>: v) args
 >   let vs = map (\(s :=>: v) -> v) vals
->   useR ((either N id $ opRun op vs) :<: ty )
+>   useR (N (op :@ vs) :<: ty )
+
 
 %if false
 

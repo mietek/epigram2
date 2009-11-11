@@ -16,7 +16,9 @@
 
 > data Tac x
 
-> runTac :: Tac x -> Root -> TY -> Maybe x
+> instance Monad Tac
+
+> runTac :: Tac x -> Root -> TY -> Either [String] x
 
 
 > goal :: Tac TY
