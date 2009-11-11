@@ -28,15 +28,20 @@
 > import -> CanTyRules where
 >   canTy ev (Set :>: Desc)     = return Desc
 >   canTy ev (Set :>: Mu x)     = do
+>     xv <- ev x
 >     return $ Mu (DESC :>: x)
 >   canTy ev (Desc :>: Done)    = return Done
 >   canTy ev (Desc :>: Arg x y) = do
 >     xv <- ev x
+>     yv <- ev y
 >     return $ Arg (SET :>: x)
 >                  (ARR xv DESC :>: y) 
 >   canTy ev (Desc :>: Ind x y) = do
+>     xv <- ev x
+>     yv <- ev y
 >     return $ Ind (SET :>: x) (DESC :>: y)
 >   canTy ev (Mu x :>: Con y) = do
+>     yv <- ev y
 >     return $ Con (descOp @@ [x, MU x] :>: y)
 
 > import -> OpCode where

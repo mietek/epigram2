@@ -82,6 +82,7 @@ original one.
 > canTy ev (Set :>: Set)     = return Set
 > canTy ev (Set :>: Pi s t)  = do
 >   sv <-  ev s
+>   tv <- ev t
 >   return $ Pi (SET :>: s) (ARR sv SET :>: t)
 > import <- CanTyRules
 > canTy  _  _                 = mzero

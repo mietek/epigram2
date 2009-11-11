@@ -59,10 +59,12 @@
 >   canTy _   (Set :>: Unit) = return Unit
 >   canTy ev  (Set :>: Sigma s t) = do
 >     sv <- ev s 
+>     tv <- ev t
 >     return $ Sigma (SET :>: s) (ARR sv SET :>: t)
 >   canTy _   (Unit :>: Void) = return Void
 >   canTy ev  (Sigma s t :>: Pair x y) =  do
 >       xv <- ev x
+>       yv <- ev y
 >       return $ Pair (s :>: x) ((t $$ A xv) :>: y)
 
 > import -> ElimTyRules where
