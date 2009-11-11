@@ -199,6 +199,9 @@ Similarly, we can also implement the typed lambda, for which variable
 types are known. If |lambda| were a bit more polymorphic, we could use
 it here I think.
 
+Matching for |s| is hopeless here: there should be an equality test
+instead.
+
 > tyLambda :: (String :<: TY) -> (REF -> Tac (VAL :<: TY))
 >                             -> Tac (VAL :<: TY)
 > tyLambda (name :<: s) body = do
@@ -241,6 +244,10 @@ canonical value.
 >       _ -> failTac ("can: could not match " ++ show c ++ 
 >                     " against a Can type")
 
+I'm confused by this code now. Matching |goal| with |typ| is hopeless,
+as it will not be done. Instead, |typ| will be mercilessly
+overwritten. Moreover, I'm not sure to understand what this things
+should do.
 
 > infr :: TY -> Tac VAL -> Tac (VAL :<: TY)
 > infr typ tacX = do
