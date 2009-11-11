@@ -31,8 +31,7 @@
 > import -> SugarTactics where
 >     timesTac :: Tac VAL -> Tac VAL -> Tac VAL
 >     timesTac p q
->         = can (Sigma p
->                      (lambda (\_ -> q)))
+>         = can (Sigma p (lambda $ \_ -> q))
 
 > import -> CanCompile where
 >   makeBody (Pair x y) = Tuple [makeBody x, makeBody y]

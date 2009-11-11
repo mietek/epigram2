@@ -332,6 +332,10 @@ as we can. Simple.
 
 > import <- SugarTactics
 
+> arrTac :: Tac VAL -> Tac VAL -> Tac VAL
+> arrTac s t = can $ Pi s
+>                       (lambda (\_ -> t))
+
 \subsection{Equality?}
 
 > mkEqConj :: [(TY :>: VAL,TY :>: VAL)] -> VAL
