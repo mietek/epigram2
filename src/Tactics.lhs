@@ -284,16 +284,11 @@ work and comparing the inferred type with the goal.
 >             r <- root
 >             return $ equal x r
 
-On the other hand, |apply| builds up the continuation. It builds an
+One the other hand, |apply| builds up the continuation. It builds an
 |Use| which \emph{emph} must be a function, this function being
 applied to the value inside |tacX|. Once the result has been computed,
 the |use| continuation is called.
 
-> apply :: Tac VAL -> Use -> Use
-> apply tacX use (f :<: C (Pi s t)) = 
->     do
->     x <- subgoal (s :>: tacX)
->     use (f $$ A x :<: t $$ A x)
 
 Finally, the continuation is created by |use| that, basically, allows
 you to apply the arguments built in |useR| to the function |ref|erenced.
@@ -341,7 +336,7 @@ And here is the twice function:
 >           tyLambda ("x" :<: vtx) 
 >           (\x -> do
 >              infr vtx $
->                   use f . apply (use f . apply  (use x done) $ done) $ done)))
+>                   use f . apply (A (use f . apply  (A (use x done)) $ done)) $ done)))
 > twiceT = (C (Pi SET 
 >             (L (H (B0 :< SET) "" 
 >                (ARR (ARR (NV 0) (NV 0))

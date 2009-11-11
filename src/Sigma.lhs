@@ -67,8 +67,8 @@
 >       return $ Pair (s :>: x) ((t $$ A xv) :>: y)
 
 > import -> ElimTyRules where
->   elimTy ev (_ :<: Sigma s t) Fst = Just (Fst, s)
->   elimTy ev (p :<: Sigma s t) Snd = Just (Snd, t $$ A (p $$ Fst))
+>   elimTy chev (_ :<: Sigma s t) Fst = return (Fst, s)
+>   elimTy chev (p :<: Sigma s t) Snd = return (Snd, t $$ A (p $$ Fst))
 
 > import -> EtaExpand where
 >   etaExpand (VOID :>: v) r = Just (UNIT)

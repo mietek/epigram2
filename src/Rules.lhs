@@ -97,9 +97,18 @@ of |t -> VAL|, a value |f| of inferred typed |t|, ie. |f :<: t| of
 type-correct, it computes the type of the argument, ie. the
 eliminator, of |Elim (TY :>: t)| and the type of the result |TY|.
 
-> elimTy :: (t -> VAL) -> (VAL :<: Can VAL) -> Elim t ->
->           Maybe (Elim (TY :>: t),TY)
-> elimTy ev (f :<: Pi s t) (A e) = Just (A (s :>: e),t $$ A (ev e)) 
+< elimTy :: (t -> VAL) -> (VAL :<: Can VAL) -> Elim t ->
+<           Maybe (Elim (TY :>: t),TY)
+< elimTy ev (f :<: Pi s t) (A e) = Just (A (s :>: e),t $$ A (ev e)) 
+< import <- ElimTyRules
+< elimTy _  _              _     = Nothing
+
+> elimTy :: MonadTrace m => (TY :>: t -> m (s :=>: VAL)) -> 
+>           (VAL :<: Can VAL) -> Elim t ->
+>           m (Elim (s :=>: VAL),TY)
+> elimTy chev (f :<: Pi s t) (A e) = do
+>   eev@(e :=>: ev) <- chev (s :>: e)
+>   return $ (A eev, t $$ A ev) 
 > import <- ElimTyRules
 > elimTy _  (v :<: t) e = traceErr $ "elimTy: failed to eliminate " ++ show v ++ 
 >                                    " with " ++ (show $ traverse (\t -> ".") e)
@@ -209,9 +218,9 @@ If an elimination is stuck, it is because the function is stuck while
 the arguments are ready to go. So, we have to recursively |exQuote|
 the neutral application, while |inQuote|-ing the arguments. 
 
-> exQuote (n :$ v)    r = (n' :$ traverse inQuote e r) :<: ty'
+> exQuote (n :$ v)    r = (n' :$ traverse (\(tx :=>: _) -> inQuote tx) e r) :<: ty'
 >     where (n' :<: ty)  = exQuote n r
->           Just (e,ty') = elimTy id (N n :<: unC ty) v
+>           Just (e,ty') = elimTy (\tx@(t :>: x) -> Just (tx :=>: x)) (N n :<: unC ty) v
 >           unC :: VAL -> Can VAL
 >           unC (C ty) = ty
 
@@ -284,8 +293,8 @@ as we can. Simple.
 > infer (P x)              r = Just (pty x)
 > infer (t :$ s)           r = do
 >   C ty <- infer t r
->   (s',ty') <- elimTy evTm (evTm t :<: ty) s
->   traverse id $ traverse check s' r
+>   (s',ty') <- elimTy (\tx@(t :>: x) -> Just $ check tx :=>: evTm x)
+>                      (evTm t :<: ty) s
 >   return ty'
 > infer (op :@ ts)         r = do
 >   (vs,v) <- opTy op (\tx@(t :>: x) -> do 

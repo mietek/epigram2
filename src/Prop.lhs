@@ -66,10 +66,11 @@ Elim forms inherited from elsewhere
 
 
 > import -> ElimTyRules where
->   elimTy ev (f :<: Prf (ALL p q))      (A e)  = 
->     Just (A (p :>: e),q $$ A (ev e))
->   elimTy ev (_ :<: Prf (AND p q))      Fst    = Just (Fst, PRF p)
->   elimTy ev (_ :<: Prf (AND p q))      Snd    = Just (Snd, PRF q)
+>   elimTy chev (f :<: Prf (ALL p q))      (A e)  = do
+>     eev@(e :=>: ev) <- chev (p :>: e)
+>     return $ (A eev, q $$ A ev)
+>   elimTy chev (_ :<: Prf (AND p q))      Fst    = return (Fst, PRF p)
+>   elimTy chev (_ :<: Prf (AND p q))      Snd    = return (Snd, PRF q)
 
 > import -> OpCode where
 >   nEOp = Op { opName = "naughtE"

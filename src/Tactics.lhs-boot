@@ -32,7 +32,7 @@
 > type Use = (VAL :<: TY) -> Tac VAL
 
 > done :: Use
-> apply :: Tac VAL -> Use -> Use
+> apply :: Elim (Tac VAL) -> Use -> Use
 > use :: REF -> Use -> Tac VAL
 > useOp :: Op -> [Tac VAL] -> Use -> Tac VAL
 
