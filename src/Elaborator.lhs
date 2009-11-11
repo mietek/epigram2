@@ -191,9 +191,8 @@ is not in the required form.
 >         case e of
 >             E newRef _ (Girl LETG newDev) ->
 >                 putDev newDev >>
->                 putLayer (Layer es newRef (acc <+> 
->                     (E oldRef (lastName oldRef) (Girl LETG oldDev) :> cadets))
->                     tip root) 
+>                 putLayer l{elders=es, mother=newRef,cadets=(acc <+> 
+>                     (E oldRef (lastName oldRef) (Girl LETG oldDev) :> cadets))}
 >             _ -> putLayer l{elders=es} >> goUpAcc (e :> acc)
 
 > goDown :: ProofState ()
@@ -205,8 +204,8 @@ is not in the required form.
 >         case e of
 >             E newRef _ (Girl LETG newDev) -> do
 >                 oldDev <- replaceDev newDev
->                 putLayer l{elders=elders:<E ref (lastName ref) (Girl LETG oldDev) <+> acc,
->                     mother=newRef, cadets=es}
+>                 putLayer  l{elders=(elders:<E ref (lastName ref) (Girl LETG oldDev)) <+> acc,
+>                               mother=newRef, cadets=es}
 >             _ -> putLayer l{cadets=es} >> goDownAcc (acc :< e)
 
 
@@ -295,27 +294,81 @@ Here we have a very basic command-driven interface to the proof state monad.
 > elaborator :: ProofContext -> IO ()
 > elaborator loc@(ls, dev) = do
 >     printDev dev
->     case ls of
->       _ :< layer  -> putStr ((showRef . mother $ layer) ++ " > ")
->       _       -> putStr "Top > "
+>     putStr (showPrompt ls)
 >     l <- getLine
 >     let ws = words l
 >     if (head ws == "quit")
 >         then return ()
 >         else case runStateT (elabParse ws) loc of
->             Just (s, loc') -> putStrLn s >> elaborator loc'
->             Nothing -> putStrLn "fail" >> elaborator loc
+>             Just (s, loc') -> do
+>                 putStrLn s 
+>                 printChanges (auncles loc) (auncles loc')
+>                 elaborator loc'
+>             Nothing ->  putStrLn "I'm sorry, Dave. I'm afraid I can't do that."
+>                         >> elaborator loc
 
 > elabParse :: [String] -> ProofState String
-> elabParse ("in":_)       = goIn >> return "Going in..."
-> elabParse ("out":_)      = goOut >> return "Going out..."
-> elabParse ("up":_)       = goUp >> return "Going up..."
-> elabParse ("down":_)     = goDown >> return "Going down..."
-> elabParse ("prev":_)     = prevGoal >> return "Searching for previous goal..."
-> elabParse ("next":_)     = nextGoal >> return "Searching for next goal..."
+> elabParse ("in":_)       = goIn         >> return "Going in..."
+> elabParse ("out":_)      = goOut        >> return "Going out..."
+> elabParse ("up":_)       = goUp         >> return "Going up..."
+> elabParse ("down":_)     = goDown       >> return "Going down..."
+> elabParse ("top":_)      = much goUp    >> return "Going to top..."
+> elabParse ("bottom":_)   = much goDown  >> return "Going to bottom..."
+> elabParse ("module":_)     = much goOut   >> return "Going to module..."
+> elabParse ("prev":_)     = prevGoal     >> return "Searching for previous goal..."
+> elabParse ("next":_)     = nextGoal     >> return "Searching for next goal..."
 > elabParse ("bind":s:_)   = appendBinding (s :<: C Set) LAMB >> return "Appended binding!"
 > elabParse ("goal":s:_)   = appendGoal (s :<: C Set) >> return "Appended goal!"
-> elabParse ("auncles":_)  = do
->     loc <- get
->     return (foldMap ((++"\n").show) (auncles loc))
+> elabParse ("auncles":_)  = get >>= return . showEntries . (<>> F0) . auncles
 > elabParse _ = return "???"
+
+> showPrompt :: Bwd Layer -> String
+> showPrompt (_ :< l)  = showRef (mother l) ++ " > "
+> showPrompt B0        = "> "
+
+> printChanges :: Bwd Entry -> Bwd Entry -> IO ()
+> printChanges as bs | as /= bs = do
+>     let (lost, gained)  = diff (as <>> F0) (bs <>> F0)
+>     if lost /= F0
+>         then putStrLn ("Left scope: " ++ showEntries lost)
+>         else putStrLn "Nothing went out of scope."
+>     if gained /= F0
+>        then putStrLn ("Entered scope: " ++ showEntries gained)
+>        else putStrLn "Nothing came into scope."
+> printChanges _ _ = return ()
+
+> diff :: (Eq a) => Fwd a -> Fwd a -> (Fwd a, Fwd a)
+> diff (x :> xs) (y :> ys)
+>     | x == y     = diff xs ys
+>     | otherwise  = (x :> xs, y :> ys)
+> diff xs ys = (xs, ys)
+
+> showEntries :: Fwd Entry -> String
+> showEntries = foldMap (\(E ref _ _) -> showRef ref ++ ", ")
+
+
+\section{Elab Monad}
+
+> data Elab x
+>   = Bale x
+>   | Cry
+>   | Hope
+>   | EDef String INTM (Elab INTM) (VAL -> Elab x)
+>   | ELam String (VAL -> Elab x)
+>   | EPi String INTM (VAL -> Elab x)
+
+> instance Monad Elab where
+>   return = Bale
+>   Bale x        >>= k = k x
+>   Cry           >>= k = Cry
+>   Hope          >>= k = Hope
+>   EDef x y d f  >>= k = EDef x y d ((k =<<) . f)
+>   ELam x f      >>= k = ELam x ((k =<<) . f)
+>   EPi x y f     >>= k = EPi x y ((k =<<) . f)
+>
+> instance Functor Elab where
+>   fmap = ap . return
+>
+> instance Applicative Elab where
+>   pure = return
+>   (<*>) = ap

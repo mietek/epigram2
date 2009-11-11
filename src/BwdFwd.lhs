@@ -23,7 +23,9 @@
 Backward and forward lists, applicative with zipping.
 
 > data Bwd x = B0 | Bwd x :< x deriving (Show, Eq)
+> infixl 5 :<
 > data Fwd x = F0 | x :> Fwd x deriving (Show, Eq)
+> infixr 5 :>
 
 > bwdList :: [x] -> Bwd x
 > bwdList = foldl (:<) B0
@@ -31,8 +33,14 @@ Backward and forward lists, applicative with zipping.
 > fwdList = foldr (:>) F0
 
 > (<><) :: Bwd x -> Fwd x -> Bwd x
+> infixl 5 <><
 > xs <>< F0 = xs
 > xs <>< (y :> ys) = (xs :< y) <>< ys
+
+> (<>>) :: Bwd x -> Fwd x -> Fwd x
+> infixl 5 <>>
+> B0 <>> ys = ys
+> (xs :< x) <>> ys = xs <>> (x :> ys)
 
 > instance Applicative Bwd where
 >   pure x                     = pure x       :< x

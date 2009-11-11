@@ -44,8 +44,13 @@ An |Entry| consists of a |REF| with the last component of its |Name| and an |Ent
 >   = E REF (String, Int) Entity
 >   deriving Show
 
-Why do we need to record the last component again? Here's a utility function to
-extract it from a reference.
+We can compare them for equality by comparing their references (presumably?).
+
+> instance Eq Entry where
+>     (E r1 _ _) == (E r2 _ _)  =  r1 == r2
+
+The last component of the name is cached because we will need it quite frequently for
+display purposes. We can easily (but inefficiently) extract it from a reference:
 
 > lastName :: REF -> (String, Int)
 > lastName (n := _) = last n
@@ -66,31 +71,8 @@ over all following entries and the definition (if any) in its development.
 > data GirlKind  = LETG deriving (Show, Eq)
 
 
-\subsection{Old leftover stuff}
-
-> data Elab x
->   = Bale x
->   | Cry
->   | Hope
->   | EDef String INTM (Elab INTM) (VAL -> Elab x)
->   | ELam String (VAL -> Elab x)
->   | EPi String INTM (VAL -> Elab x)
-
-> instance Monad Elab where
->   return = Bale
->   Bale x        >>= k = k x
->   Cry           >>= k = Cry
->   Hope          >>= k = Hope
->   EDef x y d f  >>= k = EDef x y d ((k =<<) . f)
->   ELam x f      >>= k = ELam x ((k =<<) . f)
->   EPi x y f     >>= k = EPi x y ((k =<<) . f)
->
-> instance Functor Elab where
->   fmap = ap . return
->
-> instance Applicative Elab where
->   pure = return
->   (<*>) = ap
+A |Dev| is not truly |Traversable|, but it supports |traverse|-like operations that update
+its references:
 
 > traverseDev :: Applicative f => (REF -> f REF) -> Dev -> f Dev
 > traverseDev f (es, t, r) = 
