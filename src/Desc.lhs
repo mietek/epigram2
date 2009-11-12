@@ -59,14 +59,39 @@
 >                           , SET)
 >       dOpRun :: [VAL] -> Either NEU VAL
 >       dOpRun [DONE,y]    = Right UNIT
->       dOpRun [ARG x y,z] = Right $
->         eval [.x.y.z. 
->              SIGMA (NV x) . L $ "" :. [.a.
->              (N (descOp :@ [y $# [a],NV z]))
->              ]] $ B0 :< x :< y :< z
-
->       dOpRun [IND x y,z] = Right (TIMES (ARR x z) (descOp @@ [y,z]))
+>       dOpRun [ARG x y,z] = Right $ trustMe (opRunArgType :>: opRunArgTac) $$ A x $$ A y $$ A z
+>       dOpRun [IND x y,z] = Right $ trustMe (opRunIndType :>: opRunIndTac) $$ A x $$ A y $$ A z
 >       dOpRun [N x,_]     = Left x
+
+>       opRunArgType = trustMe (SET :>: opRunArgTypeTac) 
+>       opRunArgTypeTac = can $ Pi (can Set)
+>                                  (lambda (\x ->
+>                                    arrTac (arrTac (use x done)
+>                                                   (can Desc))
+>                                           (arrTac (can Set)
+>                                                   (can Set))))
+>       opRunArgTac = lambda (\x ->
+>                      lambda (\y ->
+>                       lambda (\z ->
+>                        can $ Sigma (use x done)
+>                                    (lambda (\a ->
+>                                      useOp descOp [ use y . apply (A (use a done)) $ done
+>                                                   , use z done ] done)))))
+>       opRunIndType = trustMe (SET :>: opRunIndTypeTac)
+>       opRunIndTypeTac = arrTac (can Set) 
+>                                (arrTac (can Desc)
+>                                        (arrTac (can Set)
+>                                                (can Set)))
+>       opRunIndTac = lambda (\x ->
+>                      lambda (\y ->
+>                       lambda (\z ->
+>                        timesTac (arrTac (use x done)
+>                                         (use z done))
+>                                 (useOp descOp [ use y done
+>                                               , use z done ] done))))
+
+
+
 
 >   boxOp :: Op
 >   boxOp = Op

@@ -58,8 +58,40 @@ Let's test it:
 >           orig = switchOpRun t e' p ps n
 
 
+\subsection{Desc}
+
+> argOpRun x y z = eval [.x.y.z. 
+>              SIGMA (NV x) . L $ "" :. [.a.
+>              (N (descOp :@ [y $# [a],NV z]))
+>              ]] $ B0 :< x :< y :< z
+
+Let's test it:
+
+> testArg = equal (typ :>: (fromRight $ withTac, orig)) (B0,3)
+>     where x = N (P ([("",0)] := DECL :<: SET))
+>           y = N (P ([("",1)] := DECL :<: ARR x DESC))
+>           z = N (P ([("",2)] := DECL :<: SET))
+>           typ = SET
+>           withTac = opRun descOp [ARG x y, z]
+>           orig = argOpRun x y z
+
+> indOpRun x y z = TIMES (ARR x z) (descOp @@ [y,z])
+
+Let's test it:
+
+> testInd = equal (typ :>: (fromRight $ withTac, orig)) (B0,3)
+>     where x = N (P ([("",0)] := DECL :<: SET))
+>           y = N (P ([("",1)] := DECL :<: DESC))
+>           z = N (P ([("",2)] := DECL :<: SET))
+>           typ = SET
+>           withTac = opRun descOp [IND x y, z]
+>           orig = indOpRun x y z
+
+
 \subsection{Testing}
 
 > main = do
 >     putStrLn $ "Is branches ok? " ++ show testBranches
 >     putStrLn $ "Is switch ok? " ++ show testSwitch
+>     putStrLn $ "Is arg ok? " ++ show testArg
+>     putStrLn $ "Is ind ok? " ++ show testInd
