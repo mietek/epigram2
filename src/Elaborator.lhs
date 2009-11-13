@@ -15,6 +15,7 @@
 
 > import BwdFwd
 > import Developments
+> import PrettyPrint
 > import Root
 > import Rooty
 > import Tm
@@ -261,39 +262,11 @@ several alternatives for where to go next and continuing until a goal is reached
 
 \subsection{Command-Line Interface}
 
-|showDev| is an ugly-printer for developments that makes the structure a little
-bit clearer than the derived |Show| instance.
-
-> showDev :: Dev -> String
-> showDev d = showDevAcc d 0 ""
->     where showDevAcc :: Dev -> Int -> String -> String
->           showDevAcc (B0, t, r) n acc = acc ++ "\n" ++ indent n 
->                                         ++ "Tip: " ++ show t ++ "\n" ++ indent n
->                                         ++ "Root: " ++ show r
->           showDevAcc (es :< E ref _ (Boy k), t, r) n acc = 
->               showDevAcc (es, t, r) n (
->               "\n" ++ indent n ++ "Boy " ++ show k ++ " " ++ show ref
->               ++ acc)
->           showDevAcc (es :< E ref _ (Girl LETG d), t, r) n acc = 
->               showDevAcc (es, t, r) n (
->               "\n" ++ indent n ++ "Girl " ++ show ref
->               ++ showDevAcc d (succ n) ""
->               ++ acc)
->               
->           indent n = replicate (n*4) ' '
-                
-> printDev :: Dev -> IO ()
-> printDev = putStrLn . showDev
-
-> showRef :: REF -> String
-> showRef (ns := _) = unwords (fst . unzip $ ns)
-
-
 Here we have a very basic command-driven interface to the proof state monad.
 
-> elaborator :: ProofContext -> IO ()
-> elaborator loc@(ls, dev) = do
->     printDev dev
+> cochon :: ProofContext -> IO ()
+> cochon loc@(ls, dev) = do
+>     putStrLn (prettyDev dev)
 >     putStr (showPrompt ls)
 >     l <- getLine
 >     let ws = words l
@@ -303,9 +276,9 @@ Here we have a very basic command-driven interface to the proof state monad.
 >             Just (s, loc') -> do
 >                 putStrLn s 
 >                 printChanges (auncles loc) (auncles loc')
->                 elaborator loc'
+>                 cochon loc'
 >             Nothing ->  putStrLn "I'm sorry, Dave. I'm afraid I can't do that."
->                         >> elaborator loc
+>                         >> cochon loc
 
 > elabParse :: [String] -> ProofState String
 > elabParse ("in":_)       = goIn         >> return "Going in..."
@@ -323,7 +296,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 > elabParse _ = return "???"
 
 > showPrompt :: Bwd Layer -> String
-> showPrompt (_ :< l)  = showRef (mother l) ++ " > "
+> showPrompt (_ :< Layer _ (n := _) _ _ _)  = prettyName n ++ " > "
 > showPrompt B0        = "> "
 
 > printChanges :: Bwd Entry -> Bwd Entry -> IO ()
@@ -344,7 +317,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 > diff xs ys = (xs, ys)
 
 > showEntries :: Fwd Entry -> String
-> showEntries = foldMap (\(E ref _ _) -> showRef ref ++ ", ")
+> showEntries = foldMap (\(E ref _ _) -> prettyRef [] ref ++ ", ")
 
 
 \section{Elab Monad}

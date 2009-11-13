@@ -56,6 +56,7 @@
 %include Lexer.lhs
 %include Layout.lhs
 %include TmParse.lhs
+%include PrettyPrint.lhs
 
 \chapter{Compiler}
 
