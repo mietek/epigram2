@@ -24,11 +24,12 @@
 }
 \maketitle
 
-\chapter{Perversity}
+\tableofcontents
 
-%include BwdFwd.lhs
-%include Parsley.lhs
-%include MissingLibrary.lhs
+\chapter{Introduction}
+
+\input{Docs/Intro.tex}
+\input{Docs/Language.tex}
 
 \chapter{Core}
 
@@ -50,6 +51,8 @@
 %include Sigma.lhs
 %include Prop.lhs
 %include Containers.lhs
+%include Desc.lhs
+%include Equality.lhs
 
 \chapter{Concrete Syntax}
 
@@ -70,6 +73,21 @@
 
 %include Main.lhs
 
+
+\appendix
+
+
+\chapter{Perversity}
+
+%include BwdFwd.lhs
+%include Parsley.lhs
+%include MissingLibrary.lhs
+%include Nat.lhs
+
+
+\cleardoublepage
+\phantomsection
+\addcontentsline{toc}{chapter}{Bibliography}
 \bibliographystyle{plain}
 \bibliography{Epitome}
 

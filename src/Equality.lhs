@@ -1,7 +1,13 @@
+\section{Equality}
+
+%if False
+
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE TypeOperators, GADTs #-}
 
 > module Equality where
+
+%endif
 
 > import -> CanConstructors where
 >   EqBlue :: (t :>: t) -> (t :>: t) -> Can t

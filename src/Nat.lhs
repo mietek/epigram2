@@ -1,3 +1,7 @@
+\section{Nat}
+
+%if False
+
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE TypeOperators, GADTs, KindSignatures,
 >     TypeSynonymInstances, FlexibleInstances, ScopedTypeVariables #-}
@@ -8,18 +12,22 @@
 > import Tm
 > import Rules
 
+%endif
+
 > natd :: VAL
 > natd = ARG (ENUMT (CONSE (TAG "czero") (CONSE (TAG "csuc") NILE))) natc
 
- natd = ARG (ENUMT (CONSE (TAG "czero") (CONSE (TAG "csuc") NILE))) 
-            (L $ H B0 
-                  "" 
-                  (N (switchOp :@ [CONSE (TAG "czero") 
-                                         (CONSE (TAG "csuc") NILE)
-                                  ,L $ K DESC
-                                  ,PAIR DONE (PAIR (IND UNIT DONE) VOID)
-                                  ,NV 0
-                                  ])))
+
+% natd = ARG (ENUMT (CONSE (TAG "czero") (CONSE (TAG "csuc") NILE))) 
+%            (L $ H B0 
+%                  "" 
+%                  (N (switchOp :@ [CONSE (TAG "czero") 
+%                                         (CONSE (TAG "csuc") NILE)
+%                                  ,L $ K DESC
+%                                  ,PAIR DONE (PAIR (IND UNIT DONE) VOID)
+%                                  ,NV 0
+%                                  ])))
+
 
 > natc :: VAL
 > natc = L $ H B0 

@@ -1,0 +1,20 @@
+\section{Language}
+
+At present, this section only contains a few meaningless scribbles on the 
+language of types. We would like to write:
+
+\begin{itemize}
+\item \verb|*| for the universe of sets
+\item \verb!\ x . t! for the $\lambda$-term $\lambda x.t$
+\item \verb|f a| for $f$ applied to $a$ (no surprises here)
+\item \verb!(x : S) -> T! for the $\Pi$-type $\Pi x:S. T$
+\item \verb!S -> T! for the same $\Pi$-type if $T$ is independent of $x$
+\item \verb!(x : S)(y : T) -> U! for the nested $\Pi$-type $\Pi x:S. \Pi y:T. U$
+\item \verb!{| P}! for the type of proofs of $P$ (cf.\ set notation)
+\item \verb!{x : S | P}! for the $\Sigma$-type $\Sigma x:S. P$
+\item \verb!{x : S, y : T | P}! for the nested $\Sigma$-type $\Sigma x:S. \Sigma y:T. P$
+\end{itemize}
+
+This is all very tenative. One overriding principle is that we should stick to ASCII
+characters throughout. Users may use Unicode if they wish, but it should not be
+forced upon them.
