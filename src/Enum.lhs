@@ -80,14 +80,14 @@
 >                                                                                          (use e done)))
 >                                                                (can Set))
 >                                                      (can Set)))))
->         tacBranches = lambda (\t -> 
->                        lambda (\e' -> 
->                         lambda (\p -> 
->                          timesTac (use p . apply (A (can Ze)) $ done)
->                                   (useOp branchesOp [ use e' done
->                                                     , lambda (\x -> 
->                                                        use p . apply (A (can (Su (use x done)))) $ done)] 
->                                    done))))
+>         tacBranches = lambda $ \t ->
+>                       lambda $ \e' ->
+>                       lambda $ \p ->
+>                       timesTac (use p . apply (A (can Ze)) $ done)
+>                                (useOp branchesOp [ use e' done
+>                                                  , lambda $ \x -> 
+>                                                    use p . apply (A (can (Su (use x done)))) $ done] 
+>                                done
 
 >   switchOp = Op
 >     { opName = "Switch"
@@ -111,17 +111,17 @@
 >                                                       $$ A t $$ A e' $$ A p $$ A ps $$ A n
 >         sOpRun [_ , _ , _ , N n] = Left n
 
->         tacSwitch = lambda (\t ->
->                      lambda (\e' ->
->                       lambda (\p ->
->                        lambda (\ps ->
->                         lambda (\n ->
->                          useOp switchOp [ use e' done
->                                         , lambda (\x -> 
->                                            use p . apply (A (can (Su (use x done)))) $ done)
->                                         , use ps . apply Snd $ done
->                                         , use n done ]
->                          done)))))
+>         tacSwitch = lambda $ \t ->
+>                     lambda $ \e' ->
+>                     lambda $ \p ->
+>                     lambda $ \ps ->
+>                     lambda $ \n ->
+>                     useOp switchOp [ use e' done
+>                                    , lambda $ \x -> 
+>                                      use p . apply (A (can (Su (use x done)))) $ done
+>                                    , use ps . apply Snd $ done
+>                                    , use n done ]
+>                     done
 >         typeSwitch = trustMe (SET :>: tacTypeSwitch) 
 >         tacTypeSwitch = can $ Pi (can UId)
 >                               (lambda (\t ->
