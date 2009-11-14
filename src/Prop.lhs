@@ -40,6 +40,10 @@ Elim forms inherited from elsewhere
 >   pattern ABSURD  = C Absurd
 >   pattern BOX p   = C (Box p)
 
+> import -> SugarTactics where
+>   impTac p q = can $ All (can $ Prf p)
+>                          (lambda $ \_ -> q)
+
 > import -> CanTyRules where
 >   canTy _   (Set :>: Prop)           = return Prop
 >   canTy chev  (Set :>: Prf p)         = do
