@@ -366,33 +366,44 @@ as we can. Simple.
 >    Just t1' = canTy (\tx@(t :>: x) -> Just (tx :=>: x)) (Set :>: t1)
 >    Just t1'' = traverse (\(x :=>: y) -> Just x) t1'
 > import <- OpRunEqGreen
-> opRunEqGreen [C (Pi s1 t1),f1,C (Pi s2 t2),f2] = Right $
->   eval  [.s1.t1.f1.s2.t2.f2.
->         ALL (NV s1) . L $ "" :. [.x1.
->         ALL (NV s2) . L $ "" :. [.x2.
->         IMP (EQBLUE (NV s2 :>: NV x2) (NV s1 :>: NV x1))
->             (eqGreenT (t1 $# [x1] :>: f1 $# [x1]) (t2 $# [x2] :>: f2 $# [x2]))
->         ]]]
->         $ B0 :< s1 :< t1 :< f1 :< s2 :< t2 :< f2
+> opRunEqGreen [C (Pi s1 t1),f1,C (Pi s2 t2),f2] = Right $ trustMe (runEqGreenType :>: runEqGreenTac)
+>                                                          $$ A s1 $$ A t1 $$ A f1 $$ A s2 $$ A t2 $$ A f2
+>       where runEqGreenType = trustMe (SET :>: runEqGreenTypeTac)
+>             runEqGreenTypeTac = can $ Pi (can Set)
+>                                          (lambda $ \s1 ->
+>                                           can $ Pi (arrTac (use s1 done)
+>                                                            (can Set))
+>                                                    (lambda $ \t1 ->
+>                                                     can $ Pi (can $ Pi (use s1 done)
+>                                                                        (use t1 done))
+>                                                              (lambda $ \f1 ->
+>                                                               can $ Pi (can Set)
+>                                                                        (lambda $ \s2 ->
+>                                                                         can $ Pi (arrTac (use s2 done)
+>                                                                                          (can Set))
+>                                                                                   (lambda $ \t2 ->
+>                                                                                    can $ Pi (can $ Pi (use s2 done)
+>                                                                                                       (use t2 done))
+>                                                                                             (lambda $ \f2 -> 
+>                                                                                              can Prop))))))
+>             runEqGreenTac = lambda $ \s1 ->
+>                             lambda $ \t1 ->
+>                             lambda $ \f1 ->
+>                             lambda $ \s2 ->
+>                             lambda $ \t2 ->
+>                             lambda $ \f2 ->
+>                             can $ All (use s1 done)
+>                                       (lambda $ \x1 ->
+>                                         can $ All (use s2 done)
+>                                                   (lambda $ \x2 ->
+>                                                     impTac (can $ EqBlue (use s2 done :>: use x2 done)
+>                                                                          (use s1 done :>: use x1 done))
+>                                                            (eqGreenTac ((use t1 . apply (A (use x1 done)) $ done) :>:
+>                                                                         (use f1 . apply (A (use x1 done)) $ done))
+>                                                                        ((use t2 . apply (A (use x2 done)) $ done) :>:
+>                                                                         (use f2 . apply (A (use x2 done)) $ done)))))
+>             eqGreenTac (y0 :>: t0) (y1 :>: t1) = useOp eqGreen [y0,t0,y1,t1] done
 
-%if False
-
-> {-
->    ALL s1 (L (H (bwdList [s1,t1,f1,s2,t2,f2])
->                 "" 
->                 (ALL (NV 3) -- s2
->                      (L ("" 
->                          :. 
->                          (IMP (EQBLUE (NV 7 :>: NV 1)  -- s1 :>: x1
->                                       (NV 4 :>: NV 0)) -- s2 :>: x2
->                               (N (eqGreen :@ [N (V 5 :$ A NV 1), -- f1 x1
->                                               N (V 6 :$ A NV 1), -- t1 x1
->                                               N (V 2 :$ A NV 0), -- f2 x2
->                                               N (V 3 :$ A NV 0)] -- t2 x2
->                                  ))))))))
-> -}
-
-%endif
 
 > opRunEqGreen [SET,N t0,SET,_] = Left t0
 > opRunEqGreen [SET,_,SET,N t1] = Left t1
