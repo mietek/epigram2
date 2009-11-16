@@ -87,7 +87,7 @@
 >                                (useOp branchesOp [ use e' done
 >                                                  , lambda $ \x -> 
 >                                                    use p . apply (A (can (Su (use x done)))) $ done] 
->                                done
+>                                 done)
 
 >   switchOp = Op
 >     { opName = "Switch"
