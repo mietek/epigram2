@@ -102,7 +102,7 @@ Let's test it:
 >           f = N (P ([("",1)] := DECL :<: ARR a DESC))
 >           d = N (P ([("",2)] := DECL :<: SET))
 >           p = N (P ([("",3)] := DECL :<: ARR d SET))
->           v = N (P ([("",4)] := DECL :<: descOp @@ [d, p]))
+>           v = N (P ([("",4)] := DECL :<: descOp @@ [ARG a f, p]))
 >           typ = SET
 >           withTac = opRun boxOp [ARG a f, d, p, v]
 >           orig = boxArgRun a f d p v
@@ -111,8 +111,8 @@ Box on an Ind is supposed to build this term:
 
 > boxIndRun h x d p v =
 >         eval [.h.x.d.p.v.
->              TIMES (ALL (NV h) . L $ "" :. [.y.
->                                    N (V p :$ A (N (V v :$ Fst :$ A (NV y))))])
+>              TIMES (C (Pi (NV h) . L $ "" :. [.y.
+>                                    N (V p :$ A (N (V v :$ Fst :$ A (NV y))))]))
 >                   (N (boxOp :@ [NV x,NV d,NV p,N (V v :$ Snd)]))
 >              ] $ B0 :< h :< x :< d :< p :< v
 
@@ -121,9 +121,9 @@ Let's test it:
 > testBoxInd = equal (typ :>: (fromRight $ withTac, orig)) (B0,5)
 >     where h = N (P ([("",0)] := DECL :<: SET))
 >           x = N (P ([("",1)] := DECL :<: DESC))
->           d = N (P ([("",2)] := DECL :<: DESC))
->           p = N (P ([("",3)] := DECL :<: SET))
->           v = N (P ([("",4)] := DECL :<: descOp @@ [d, p]))
+>           d = N (P ([("",2)] := DECL :<: SET))
+>           p = N (P ([("",3)] := DECL :<: ARR d SET))
+>           v = N (P ([("",4)] := DECL :<: descOp @@ [IND h x, p]))
 >           typ = SET
 >           withTac = opRun boxOp [IND h x, d, p, v]
 >           orig = boxIndRun h x d p v
@@ -139,14 +139,71 @@ Let's test it:
 >     where a = N (P ([("",0)] := DECL :<: SET))
 >           f = N (P ([("",1)] := DECL :<: ARR a DESC))
 >           d = N (P ([("",2)] := DECL :<: SET))
->           bpv = N (P ([("",3)] := DECL :<: ARR d PROP))
->           p = N (P ([("",4)] := DECL :<: PRF (ALL d (eval [.bpv. L $ "" :. 
->                                                        [.y. N (V bpv :$ A (NV y))]
->                                                       ] $ B0 :< bpv))))
+>           bpv = N (P ([("",3)] := DECL :<: ARR d SET))
+>           p = N (P ([("",4)] := DECL :<: (C (Pi d (eval [.bpv. L $ "" :. 
+>                                             [.y. N (V bpv :$ A (NV y))]
+>                                            ] $ B0 :< bpv)))))
 >           v = N (P ([("",5)] := DECL :<: descOp @@ [ARG a f, d]))
 >           typ = boxOp @@ [ARG a f, d, bpv,v]
 >           withTac = opRun mapBoxOp [ARG a f, d, bpv, p, v]
 >           orig = mapboxArgRun a f d bpv p v
+
+Mapbox on an Ind is supposed to build this term:
+
+> mapboxIndRun h x d bp p v =
+>         eval [.h.x.d.bp.p.v.
+>              PAIR (L $ "" :. [.y. N (V p :$ A (N (V v :$ Fst :$ A (NV y))))])
+>                   (N (mapBoxOp :@ [NV x,NV d
+>                                   ,NV bp
+>                                   ,NV p
+>                                   ,N (V v :$ Snd)
+>                                   ]))
+>              ] $ B0 :< h :< x :< d :< bp :< p :< v
+
+Test:
+
+> testMapboxInd = equal (typ :>: (fromRight $ withTac, orig)) (B0,6)
+>     where h = N (P ([("",0)] := DECL :<: SET))
+>           x = N (P ([("",1)] := DECL :<: DESC))
+>           d = N (P ([("",2)] := DECL :<: SET))
+>           bpv = N (P ([("",3)] := DECL :<: ARR d SET))
+>           p = N (P ([("",4)] := DECL :<: (C (Pi d (eval [.bpv. L $ "" :. 
+>                                             [.y. N (V bpv :$ A (NV y))]
+>                                            ] $ B0 :< bpv)))))
+>           v = N (P ([("",5)] := DECL :<: descOp @@ [IND h x, d]))
+>           typ = boxOp @@ [IND h x, d, bpv,v]
+>           withTac = opRun mapBoxOp [IND h x, d, bpv, p, v]
+>           orig = mapboxIndRun h x d bpv p v
+
+elimOp is supposed to build this term:
+
+> elimRun d bp p v =
+>          p $$ A v $$ A (mapBoxOp @@ 
+>                         [d
+>                         ,MU d
+>                         ,bp
+>                         ,eval [.d.bp.p. L $ "" :. [.x. 
+>                               N (elimOp :@ [NV d,NV bp,NV p,NV x])]
+>                               ] $ B0 :< d :< bp :< p
+>                         ,v])
+
+Let's test now:
+
+
+> testElim = equal (typ :>: (fromRight $ withTac, orig)) (B0,6)
+>     where d = N (P ([("",0)] := DECL :<: DESC))
+>           bp = (P ([("",1)] := DECL :<: ARR (MU d) SET))
+>           bpv = N bp
+>           p = N (P ([("",2)] := DECL :<: (C (Pi (descOp @@ [d,MU d])
+>                                              (eval [.d.bp. L $ "" :. [.x. 
+>                                               ARR (N (boxOp :@ [NV d,MU (NV d),NV bp,NV x]))
+>                                                   (N (V bp :$ A (CON (NV x))))]
+>                                                    ] $ B0 :< d :< bpv)))))
+>           v = N (P ([("",3)] := DECL :<: (descOp @@ [d, MU d])))
+>           typ = N (bp :$ A (MU v))
+>           withTac = opRun elimOp [d, bpv, p, CON v]
+>           orig = elimRun d bpv p v
+
 
 \subsection{Equality}
 
@@ -182,7 +239,9 @@ I don't believe it:
 >     putStrLn $ "Is switch ok? " ++ show testSwitch
 >     putStrLn $ "Is desc arg ok? " ++ show testDescArg
 >     putStrLn $ "Is desc ind ok? " ++ show testDescInd
-> --    putStrLn $ "Is box arg ok? " ++ show testBoxArg
-> --    putStrLn $ "Is box ind ok? " ++ show testBoxInd
-> --    putStrLn $ "Is mapBox arg ok? " ++ show testMapboxArg
+>     putStrLn $ "Is box arg ok? " ++ show testBoxArg
+>     putStrLn $ "Is box ind ok? " ++ show testBoxInd
+>     putStrLn $ "Is mapBox arg ok? " ++ show testMapboxArg
+>     putStrLn $ "Is mapBox ind ok? " ++ show testMapboxInd
+>     putStrLn $ "Is elim ok ? " ++ show testElim
 >     putStrLn $ "Is eqGreen Pi ok ? " ++ show testEqGreenPi
