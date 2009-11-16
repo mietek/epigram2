@@ -318,7 +318,7 @@ Similarly, we can use operators almost transparently with:
 >                                 v <- subgoal tx
 >                                 return $ tx :=>: v) args
 >   let vs = map (\(s :=>: v) -> v) vals
->   useR (N (op :@ vs) :<: ty )
+>   useR (op @@ vs :<: ty )
 
 
 %if false
