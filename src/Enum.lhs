@@ -145,3 +145,15 @@
 > import -> OpCompile where
 >     ("Branches", _) -> Ignore
 >     ("Switch", [e, p, b, x]) -> App (Var "switch") [b, x]
+
+> import -> OpRunEqGreen where
+>   opRunEqGreen [ENUMU,NILE,ENUMU,NILE] = Right $ TRIVIAL
+>   opRunEqGreen [ENUMU,CONSE t1 e1,ENUMU,CONSE t2 e2] = Right $ 
+>     eval [.t1.e1.t2.e2. C (And (eqGreenT (UID :>: NV t1) (UID :>: NV t2))
+>                                (eqGreenT (ENUMU :>: NV e1) (ENUMU :>: NV e2)))
+>          ] $ B0 :< t1 :< e1 :< t2 :< e2
+>   opRunEqGreen [ENUMT (CONSE _ e1),ZE,ENUMT (CONSE _ e2),ZE] = Right TRIVIAL
+>   opRunEqGreen [ENUMT (CONSE _ e1),SU n1,ENUMT (CONSE _ e2),SU n2] = Right $ 
+>     eval [.e1.n1.e2.n2. eqGreenT (ENUMT (NV e1) :>: NV n1) 
+>                                  (ENUMT (NV e2) :>: NV n2) 
+>          ] $ B0 :< e1 :< n1 :< e2 :< n2

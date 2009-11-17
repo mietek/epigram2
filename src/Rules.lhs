@@ -406,11 +406,15 @@ as we can. Simple.
 >             eqGreenTac (y0 :>: t0) (y1 :>: t1) = useOp eqGreen [y0,t0,y1,t1] done
 
 
-> opRunEqGreen [SET,N t0,SET,_] = Left t0
-> opRunEqGreen [SET,_,SET,N t1] = Left t1
+> opRunEqGreen [_,N t0,_,_] = Left t0
+> opRunEqGreen [_,_,_,N t1] = Left t1
 > opRunEqGreen [N y0,_,_,_] = Left y0
 > opRunEqGreen [_,_,N y1,_] = Left y1
-> opRunEqGreen [C y0,_,C y1,_] = Right TRIVIAL
+> opRunEqGreen [C y0,_,C y1,_] = error $ show (fmap (\_ -> ()) y0) ++ "    " ++
+>                                        show (fmap (\_ -> ()) y1)
+
+
+< opRunEqGreen [C y0,_,C y1,_] = Right TRIVIAL
 
 > coerce :: (Can (VAL,VAL)) -> VAL -> VAL -> VAL
 > coerce (Pi (x1,x2) (y1,y2))    q f = 
