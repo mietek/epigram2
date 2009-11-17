@@ -61,7 +61,7 @@
 >                                                                          ,N $ V y :$ Snd])
 >                                                            (ARR (NV nat) (NV nat)) ]                       
 >                                        ,L $ "" :. [.t. N $ switchOp :@ [CONSE (TAG "czero") (CONSE (TAG "csuc") NILE)        -- ls
->                                                                        ,L $ "" :. [.c. ALL (N $ descOp :@ [natc $# [c],NV nat]) -- f
+>                                                                        ,L $ "" :. [.c. C (Pi (N $ descOp :@ [natc $# [c],NV nat]) -- f
 >                                                                                            (L $ "" :. [.as.
 >                                                                                               (ARR (N $ boxOp :@ [natc $# [c]
 >                                                                                                                  ,NV nat
