@@ -27,8 +27,11 @@
 >     t1t1v@(t1 :=>: t1v) <- chev (y1v :>: t1)
 >     return $ EqBlue (y0y0v :>: t0t0v) (y1y1v :>: t1t1v)
 >   canTy chev (Prf (EQBLUE (y0 :>: t0) (y1 :>: t1)) :>: Con p) = do
->     ppv@(p :=>: pv) <- chev (eqGreen @@ [y0, t0, y1, t1] :>: p)
+>     ppv@(p :=>: pv) <- chev (PRF (eqGreen @@ [y0, t0, y1, t1]) :>: p)
 >     return $ Con ppv
+
+> import -> ElimTyRules where
+>   elimTy chev (_ :<: Prf (EQBLUE (t0 :>: x0) (t1 :>: x1))) Out = return (Out, PRF (eqGreen @@ [t0 , x0 , t1 , x1]))
 
 > import -> OpCode where
 >   eqGreen = Op { opName = "eqGreen"

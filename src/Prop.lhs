@@ -44,6 +44,12 @@ Elim forms inherited from elsewhere
 >   impTac p q = can $ All (can $ Prf p)
 >                          (lambda $ \_ -> q)
 
+> import -> Check where
+>   check (C (All s t) :>: L sc) r = 
+>     Root.freshRef ("" :<: s) 
+>              (\ref -> check (PRF (t $$ A (pval ref)) :>: underScope sc ref)) 
+>              r
+
 > import -> CanTyRules where
 >   canTy _   (Set :>: Prop)           = return Prop
 >   canTy chev  (Set :>: Prf p)         = do
@@ -58,23 +64,32 @@ Elim forms inherited from elsewhere
 >     qqv@(q :=>: qv) <- chev (PROP :>: q)
 >     return $ And ppv qqv
 >   canTy _  (Prop :>: Trivial)       = return Trivial
->   canTy _   (Prop :>: Absurd)        = return Absurd
->   canTy chev  (Prf p :>: Box (Irr x))  = do
->     xxv@(x :=>: xv) <- chev (PRF p :>: x)
->     return $ Box (Irr (xxv))
+>   canTy _  (Prop :>: Absurd)        = return Absurd
+>   canTy chev  (Prf p :>: Box (Irr x))  = do 
+>     xxv@(x :=>: xv) <- chev (p :>: x)
+>     return $ Box (Irr xxv)
 >   canTy chev  (And p q :>: Pair x y)   = do
 >     xxv@(x :=>: xv) <- chev (PRF p :>: x)
 >     yyv@(y :=>: yv) <- chev (PRF q :>: y)
 >     return $ Pair xxv yyv
 >   canTy _   (Trivial :>: Void)       = return Void
 
+> import -> ElimConstructors where
+>   UnBox    :: Elim t
+
+> import -> TraverseElim where
+>   traverse _ UnBox = (|UnBox|)
 
 > import -> ElimTyRules where
 >   elimTy chev (f :<: Prf (ALL p q))      (A e)  = do
 >     eev@(e :=>: ev) <- chev (p :>: e)
->     return $ (A eev, q $$ A ev)
+>     return $ (A eev, PRF (q $$ A ev))
 >   elimTy chev (_ :<: Prf (AND p q))      Fst    = return (Fst, PRF p)
 >   elimTy chev (_ :<: Prf (AND p q))      Snd    = return (Snd, PRF q)
+>   elimTy chev (_ :<: Prf p)              UnBox  = return (UnBox, p)
+
+> import -> ElimComputation where
+>   C (Box (Irr p))    $$ UnBox  = p -- only for eta-expand?
 
 > import -> OpCode where
 >   nEOp = Op { opName = "naughtE"
@@ -96,13 +111,13 @@ Elim forms inherited from elsewhere
 >   nEOp :
 
 > import -> EtaExpand where
->   etaExpand (PRF p :>: x) r = Just (BOX (Irr (inQuote (PRF p :>: x) r))))
-
-> import -> Check where
->   check (PRF (ALL p q) :>: L sc) r = do
->     freshRef ("" :<: p)
->              (\ref -> check (PRF (q $$ A (pval ref)) :>: underScope sc ref))
->              r
+>   etaExpand (C (All s t) :>: f) r = Just $
+>     L ("etaAll" :. fresh ("" :<: s) 
+>       (\v  -> inQuote (C (Prf (t $$ A v)) :>: (f $$ A v))) r)
+>   etaExpand (PRF p :>: x) r = Just (BOX (Irr (inQuote (p :>: x $$ UnBox) r))))
+>   etaExpand (AND p q :>: pq) r =  
+>     (| (\x y -> PAIR x y) (etaExpand (PRF p :>: (pq $$ Fst)) r) 
+>                           (etaExpand (PRF q :>: (pq $$ Snd)) r) |)
 
 > import -> OpRunEqGreen
 >   opRunEqGreen [PROP,t1,PROP,t2] = Right $ AND (IMP t1 t2) (IMP t2 t1)
