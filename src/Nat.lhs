@@ -64,7 +64,7 @@
 >                                                                        ,L $ "" :. [.c. ALL (N $ descOp :@ [natc $# [c],NV nat]) -- f
 >                                                                                            (L $ "" :. [.as.
 >                                                                                               (ARR (N $ boxOp :@ [natc $# [c]
->                                                                                                                  ,NV natc
+>                                                                                                                  ,NV nat
 >                                                                                                                  ,L $ K (ARR (NV nat) (NV nat))
 >                                                                                                                  ,NV as])
 >                                                                                                 (ARR (NV nat) (NV nat)))])]

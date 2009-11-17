@@ -170,6 +170,7 @@ artificially cautious. Hence, this is |Just| a mess.
 >     ct <- canTy (\tv@(t :>: v) -> Just $ tv :=>: v) (cty :>: cv)
 >     c <- traverse (\(c :=>: _) -> Just $ inQuote c r)  ct
 >     return $ C c
+> inQuote (C x :>: _) r = error $ "Type doesn't admit lambda: " ++ show (fmap (\_ -> ()) x) 
 
 As mentioned above, |\eta|-expansion is the first sensible thing to do
 when quoting. Sometimes it works, especially for closures and features
@@ -316,7 +317,7 @@ as we can. Simple.
 > check (C c :>: C c')        r = do
 >   csp <- canTy (\(t :>: x) -> Just $ x :=>: evTm x) (c :>: c')
 >   return ()
-> check (C (Pi s t) :>: L sc) r = do
+> check (C (Pi s t) :>: L sc) r = 
 >   Root.freshRef ("" :<: s) 
 >            (\ref -> check (t $$ A (pval ref) :>: underScope sc ref)) 
 >            r

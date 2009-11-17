@@ -542,6 +542,7 @@ This is the Evil Mangler. Good luck with that stuff.
 
 > instance Traversable Elim where
 >   traverse f (A s)  = (|A (f s)|)
+>   traverse _ Out    = (|Out|)
 >   import <- TraverseElim
 
 > instance Functor Irr where

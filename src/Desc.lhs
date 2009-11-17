@@ -49,6 +49,10 @@
 >     yyv@(y :=>: yv) <- chev (descOp @@ [x, MU x] :>: y)
 >     return $ Con yyv
 
+> import -> ElimTyRules where
+>   elimTy chev (_ :<: Mu d) Out = return (Out, descOp @@ [d , MU d])
+
+
 > import -> OpCode where
 >   descOp :: Op
 >   descOp = Op
@@ -110,7 +114,7 @@
 >         (w :=>: wv) <- chev (DESC :>: w)
 >         (x :=>: xv) <- chev (SET :>: x)
 >         (y :=>: yv) <- chev (ARR xv SET :>: y)
->         (z :=>: zv) <- chev (descOp @@ [xv,yv] :>: z)
+>         (z :=>: zv) <- chev (descOp @@ [wv,xv] :>: z)
 >         return ([ w :=>: wv
 >                 , x :=>: xv
 >                 , y :=>: yv
@@ -183,9 +187,10 @@
 >           (x :=>: xv) <- chev (DESC :>: x)
 >           (d :=>: dv) <- chev (SET :>: d)
 >           (bp :=>: bpv) <- chev (ARR dv SET :>: bp)
->           (p :=>: pv) <- chev ((C (Pi dv (eval [.bpv. L $ "" :. 
->                                                [.y. N ((V bpv) :$ A (NV y))]
->                                               ] $ B0 :< bpv))) :>: p)
+>           (p :=>: pv) <- chev (C (Pi dv (eval [.bpv. L $ "" :. 
+>                                                 [.y. N (V bpv :$ A (NV y))]
+>                                               ] $ B0 :< bpv))
+>                                 :>: p)
 >           (v :=>: vv) <- chev (descOp @@ [xv,dv] :>: v)
 >           return ([ x :=>: xv
 >                   , d :=>: dv
@@ -273,11 +278,11 @@
 >         (d :=>: dv) <- chev (DESC :>: d)
 >         (bp :=>: bpv) <- chev (ARR (MU dv) SET :>: bp)
 >         (v :=>: vv) <- chev (MU dv :>: v)
->         (p :=>: pv) <- chev ((C (Pi (descOp @@ [dv,MU dv])
->                                     (eval [.d.bp.v. L $ "" :. [.x. 
->                                      ARR (N (boxOp :@ [NV d,MU (NV d),NV bp,NV x]))
->                                          (N ((V bp) :$ A (CON (NV x))))]
->                                           ] $ B0 :< dv :< bpv :< vv))) :>: p)
+>         (p :=>: pv) <- chev (C (Pi (descOp @@ [dv,MU dv]) 
+>                     (eval [.d.bp.v. L $ "" :. [.x. 
+>                         ARR (N (boxOp :@ [NV d,MU (NV d),NV bp,NV x]))
+>                             (N (V bp :$ A (CON (NV x))))]
+>                         ] $ B0 :< dv :< bpv :< vv)) :>: p)
 >         return ([ d :=>: dv
 >                 , bp :=>: bpv
 >                 , p :=>: pv
