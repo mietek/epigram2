@@ -7,7 +7,7 @@
 \documentclass[a4paper]{report}
 \usepackage{stmaryrd,wasysym,url,
             upgreek,palatino,alltt,
-            color}
+            color, bussproofs}
 \usepackage{hyperref}
 
 %include lhs2TeX.fmt
@@ -36,8 +36,8 @@
 %include Root.lhs
 %include Rooty.lhs
 %include Tm.lhs
-%include Tactics.lhs
 %include Rules.lhs
+%include Tactics.lhs
 %include Developments.lhs
 %include DevLoad.lhs
 %include Construction.lhs
