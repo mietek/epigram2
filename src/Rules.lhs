@@ -153,6 +153,10 @@ cautious. Hence, this is |Just| a mess.
 >     ct <- canTy chev (cty :>: cv)
 >     c <- traverse (\(c :=>: _) -> Just $ inQuote c r)  ct
 >     return $ C c
+>         where chev (t :>: v) = do
+>                 return $ (t :>: v) :=>: v
+> inQuote (C x :>: _) r = error $ "Type doesn't admit lambda: " ++
+>                                 show (fmap (\_ -> ()) x) 
 
 As mentioned above, |\eta|-expansion is the first sensible thing to do
 when quoting. Sometimes it works, especially for closures and features
@@ -303,7 +307,22 @@ to evaluate the well-typed terms.
 > check (C c :>: C c')        r = do
 >   canTy chev (c :>: c')
 >   return ()
-> check (C (Pi s t) :>: L sc) r = do
+>     where chev (t :>: x) = 
+>             Just $ x :=>: evTm x
+
+As for lambda, we know it is simple too. We wish the code was simple
+too. But, hey, it isn't. The formal typing rule is the following:
+
+\begin{prooftree}
+\AxiomC{$x : S \vdash T x \ni t$}
+\UnaryInfC{$\Pi S\ T \ni \lambda x . t$}
+\end{prooftree}
+
+As for the implementation, we apply the by-now standard trick of
+making a fresh variable $x \in S$ and computing the type |T x|. Then,
+we simply have to check that $T\ x \ni t$.
+
+> check (C (Pi s t) :>: L sc) r = 
 >   Root.freshRef ("" :<: s) 
 >            (\ref -> check (t $$ A (pval ref) :>: underScope sc ref)) 
 >            r
