@@ -9,6 +9,75 @@
 
 %endif
 
+\question{Do the Formation/Introduction/\ldots names make sense?}
+\question{How to handle the eliminators?}
+\question{Computational behavior of eqGreen and coe?}
+\question{Relation with Con, Prf, and Green?}
+
+Introduction rules:
+
+\begin{prooftree}
+\AxiomC{|Set :>: y0|}
+\noLine
+\UnaryInfC{|y0 :>: t0|}
+\AxiomC{|Set :>: y1|}
+\noLine
+\UnaryInfC{|y1 :>: t1|}
+\RightLabel{Prop-intro-5}
+\BinaryInfC{|Prop :>: EqBlue (y0 :>: t0) (y1 :>: t1)|}
+\end{prooftree}
+
+\question{What is the role of Con below?}
+
+\begin{prooftree}
+\AxiomC{|Prf eqGreen(y0,t0,y1,t1) :>: p|}
+\RightLabel{Prf-intro-2}
+\UnaryInfC{|Prf EqBlue(y0 :>: t0) (y1 :>: t1) :>: Con p|}
+\end{prooftree}
+
+Elimination rules:
+
+\begin{prooftree}
+\AxiomC{|Set :>: y0|}
+\noLine
+\UnaryInfC{|y0 :>: t0|}
+\AxiomC{|Set :>: y1|}
+\noLine
+\UnaryInfC{|y1 :>: t1|}
+\RightLabel{eqGreen-elim}
+\BinaryInfC{Prop :>: eqGreen(y0,t0,y1,t1)}
+\end{prooftree}
+
+With some computational behavior:
+
+< eqGreen = ???
+
+\begin{prooftree}
+\AxiomC{|Set :>: x|}
+\AxiomC{|Set :>: y|}
+\AxiomC{|x :>: s|}
+\noLine
+\TrinaryInfC{|Prf EqBlue (Set :>: x) (Set :>: y) :>: q|}
+\RightLabel{coe-elim}
+\UnaryInfC{|y :>: coe(x,y,q,s)|}
+\end{prooftree}
+
+With some computational behavior:
+
+< coe = ???
+
+\begin{prooftree}
+\AxiomC{|Set :>: x|}
+\AxiomC{|Set :>: y|}
+\AxiomC{|x :>: s|}
+\noLine
+\TrinaryInfC{|Prf EqBlue (Set :>: x) (Set :>: y) :>: q|}
+\RightLabel{coh-elim}
+\UnaryInfC{|Prf EqBlue (x :>: s) (y :>: coe(x,y,q,s)) :>: coh(x,y,q,s)|}
+\end{prooftree}
+
+With no computational behavior.
+
 > import -> CanConstructors where
 >   EqBlue :: (t :>: t) -> (t :>: t) -> Can t
 
