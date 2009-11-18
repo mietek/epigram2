@@ -67,7 +67,7 @@
 >                                                                                                                  ,NV nat
 >                                                                                                                  ,L $ K (ARR (NV nat) (NV nat))
 >                                                                                                                  ,NV as])
->                                                                                                 (ARR (NV nat) (NV nat)))])]
+>                                                                                                 (ARR (NV nat) (NV nat)))]))]
 >                                                                        ,PAIR (L $ K (L $ K (L $ "" :. [.n. NV n ])))         -- T 
 >                                                                              (PAIR (L $ K (L $ "" :. [.ih. L $ "" :. [.n.
 >                                                                                       N (V suc :$ A (N ((V ih :$ Fst) :$ A VOID :$ A (NV n))))]]))
