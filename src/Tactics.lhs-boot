@@ -29,7 +29,7 @@
 > tyLambda :: (String :<: TY) -> (REF -> Tac (VAL :<: TY))
 >                             -> Tac (VAL :<: TY)
 > can :: Can (Tac VAL) -> Tac VAL
-> infr :: TY -> Tac VAL -> Tac (VAL :<: TY)
+> infr :: (TY :>: Tac VAL) -> Tac (VAL :<: TY)
 
 > type Use = (VAL :<: TY) -> Tac VAL
 
