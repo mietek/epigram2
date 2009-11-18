@@ -9,6 +9,7 @@
             upgreek,palatino,alltt,
             color, bussproofs}
 \usepackage{hyperref}
+\usepackage{a4wide}
 
 %include lhs2TeX.fmt
 %include lhs2TeX.sty
