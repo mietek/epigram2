@@ -10,6 +10,28 @@
 
 %endif
 
+Formation rule:
+
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{UId-formation}
+\UnaryInfC{|Set :>: UId|}
+\end{prooftree}
+
+Introduction rules:
+
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{UId-intro-1}
+\UnaryInfC{|UId :>: Tag s|}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{|s1 == s2|}
+\RightLabel{UId-intro-2}
+\UnaryInfC{|UId :>: (Tag s1 == Tag s2)|}
+\end{prooftree}
+
 > import -> CanConstructors where
 >   UId    :: Can t
 >   Tag    :: String -> Can t
