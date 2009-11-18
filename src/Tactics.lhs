@@ -128,7 +128,8 @@ Inference rules, nobody should be using this guy.
 > subgoal (typ :>: tacX) = 
 >     Tac { runTac = \root _ -> 
 >             case runTac tacX root typ of
->               Left x -> Left $ ("subgoal: unable to build an inhabitant of " ++ show typ) : x
+>               Left x -> Left $ ("subgoal: unable to build an " ++
+>                                 "inhabitant of " ++ show typ) : x
 >               k -> k
 >         }
 
@@ -193,8 +194,9 @@ you got the idea now.
 >                        \x -> do
 >                              body <- subgoal (t $$ A (pval x) :>: body x)
 >                              discharge x body
->     _ -> failTac ("lambdaTac: could not match the current goal " ++ show pi ++ 
->                   " against a Pi type")
+>     _ -> failTac $ "lambdaTac: could not match the current goal "
+>                    ++ show pi ++ 
+>                    " against a Pi type"
 
 Similarly, we can also implement the typed lambda, for which variable
 types are known.
@@ -217,9 +219,10 @@ types are known.
 >                              v <- discharge x body
 >                              t <- discharge x ts
 >                              return $ v :<: C (Pi s t)
->       _ -> failTac ("tyLambdaTac: could not match the current goal "
->                     ++ show pi ++ 
->                     " against a (Pi " ++ show s ++ ") type")
+>       _ -> failTac $ "tyLambdaTac: could not match " ++ 
+>                      "the current goal "
+>                      ++ show pi ++ 
+>                      " against a (Pi " ++ show s ++ ") type"
 
 
 To build a |Tac (VAL :<: TY)|, we need some help. This help is offered
