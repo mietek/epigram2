@@ -16,16 +16,16 @@
 
 %endif
 
-The |Root| is the name generator used thoughout Epigram. It is greatly
-inspired by the \emph{hierarchical names}\cite{mcbride:free_variable}
+The |Root| is the name generator used throughout Epigram. It is
+inspired by the \emph{hierarchical names}~\cite{mcbride:free_variable}
 used in Epigram the First. The aim of this structure is to,
-conveniently, provide non-conflicting, free variable names.
+conveniently, provide unique free variable names.
 
 A |Root| is composed by a backward list of |(String, Int)| and an
 |Int|. This corresponds to a hierarchical namespace and a free name in
 that namespace. The structure of the namespace stack is justified as
 follow. The |String| component is simply here for readability
-purposes, while the |Int| uniquely structures the namespace.
+purposes, while the |Int| uniquely identifies the namespace.
 
 > type Root = (Bwd (String, Int), Int)
 
@@ -43,13 +43,10 @@ counter to |0|:
 > room (sis, i) s = (sis :< (s,i), 0)
 
 Intuitively, the function |name| computes a fresh name out of a given
-name generator, decorating it with the human-readable name
-|s|. 
-
-Technically, we notice that |Name| is defined in
-Section~\ref{sec:references} as a list of |(String, Int)|. Hence, on
-that structure, the effect of |trail| is to flatten the backward
-namespace into a (unique) |Name|.
+name generator, decorating it with the human-readable label
+|s|. Technically, |Name| is defined in Section~\ref{sec:references} as
+a list of |(String, Int)|. Hence, on that structure, the effect of
+|trail| is to flatten the backward namespace into a (unique) |Name|.
 
 > name :: Root -> String -> Name
 > name (sis, i) s = trail (sis :< (s, i))
