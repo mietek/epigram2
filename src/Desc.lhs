@@ -10,6 +10,117 @@
 
 %endif
 
+\question{Do the Formation/Introduction/\ldots names make sense?}
+\question{How to handle the eliminators?}
+\question{Equality?}
+
+Formation rules:
+
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{Desc-formation}
+\UnaryInfC{|Set :>: Desc|}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{|Desc :>: x|}
+\RightLabel{Mu-formation}
+\UnaryInfC{|Set :>: Mu x|}
+\end{prooftree}
+
+Introduction rules:
+
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{Desc-intro-1}
+\UnaryInfC{|Desc :>: Done|}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{|Set :>: A|}
+\AxiomC{|X -> Desc :>: f|}
+\RightLabel{Desc-intro-2}
+\BinaryInfC{|Desc :>: Arg A f|}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{|Set :>: H|}
+\AxiomC{|Desc :>: x|}
+\RightLabel{Desc-intro-3}
+\BinaryInfC{|Desc :>: Ind H x|}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{|desc x (Mu x) :>: y|}
+\RightLabel{Mu-intro}
+\UnaryInfC{|Mu x :>: y|}
+\end{prooftree}
+
+Elimination rules:
+
+
+\begin{prooftree}
+\AxiomC{|Desc :>: x|}
+\AxiomC{|Set :>: y|}
+\RightLabel{desc-elim}
+\BinaryInfC{|Set :>: desc(x,y)|}
+\end{prooftree}
+
+With the computational behavior:
+
+< desc Done _ :-> Unit
+< desc (Arg X f) Z :-> Sigma X (\a -> desc(f a, Z))
+< desc (Ind H d) Z :-> Times (H -> Z) (desc(d,Z))
+
+\begin{prooftree}
+\AxiomC{|Desc :>: d|}
+\AxiomC{|Set :>: D|}
+\noLine
+\BinaryInfC{|desc(d,D) :>: v|}
+\AxiomC{|D -> Set :>: bp|}
+\RightLabel{box-elim}
+\BinaryInfC{|Set :>: box(d,D,bp,v)|}
+\end{prooftree}
+
+With the computation behavior:
+
+< box Done _ _ _ :-> Unit
+< box (Arg A f) d p v :-> box (f (fst v)) d p (snd v)
+< box (Ind H x) d p v :-> Times ((y : H) -> p ((fst v) y)) 
+<                               box(x,d,p,snd v)
+
+\begin{prooftree}
+\AxiomC{|Desc :>: d|}
+\AxiomC{|Set :>: D|}
+\AxiomC{|D -> Set :>: bp|}
+\noLine
+\TrinaryInfC{|(y : D) -> bp y :>: p|}
+\AxiomC{|desc(d,D) :>: v|}
+\RightLabel{mapbox-elim}
+\BinaryInfC{|box(d,D,bp,v) :>: mapbox(d,D,bp,p,v)|}
+\end{prooftree}
+
+With the computational behavior:
+
+< mapbox Done _ _ _ _ :-> Void
+< mapbox (Arg A f) d bp p v :-> mapbox (f (fst v)) d bp p (snd v)
+< mapbox (Ind H x) d bp p v :-> Pair (\y -> p ((fst v) y))
+<                                    mapbox(x,d,bp,p,(snd v))
+
+\begin{prooftree}
+\AxiomC{|Desc :>: d|}
+\AxiomC{|Mu d -> Set :>: bp|}
+\AxiomC{|Mu d :>: v|}
+\noLine
+\TrinaryInfC{|(x : desc(d,Mu d)) -> box(d,Mu d, bp, x) -> bp (Con x) :>: p|}
+\RightLabel{elim-elim}
+\UnaryInfC{|p v (mapbox d (Mu d) bp (\x -> elim d bp p x) v|}
+\end{prooftree}
+
+With the computational behavior:
+
+< elim d bp p (Con v) :-> p v (mapbox(d, Mu d, bp, (\x -> elim d bp p x), v))
+
 > import -> CanConstructors where
 >   Desc   :: Can t
 >   Mu     :: t -> Can t
