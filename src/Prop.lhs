@@ -10,6 +10,85 @@
 
 %endif
 
+\question{Do the Formation/Introduction/\ldots names make sense?}
+\question{How to handle the eliminators?}
+\question{Equality?}
+\question{Eta expansion?}
+
+Formation rules:
+
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{Prop-formation}
+\UnaryInfC{|Set :>: Prop|}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{|Prop :>: p|}
+\RightLabel{Prf-formation}
+\UnaryInfC{|Set :>: Prf p|}
+\end{prooftree}
+
+Introduction rules:
+
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{Prop-intro-1}
+\UnaryInfC{|Prop :>: Trivial|}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{Prop-intro-2}
+\UnaryInfC{|Prop :>: Absurd|}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{|Set :>: S|}
+\AxiomC{|S -> Set :>: P|}
+\RightLabel{Prop-intro-3}
+\BinaryInfC{|Prop :>: All S P|}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{|Prop :>: p|}
+\AxiomC{|Prop :>: q|}
+\RightLabel{Prop-intro-4}
+\BinaryInfC{|Prop :>: And p q|}
+\end{prooftree}
+
+\question{Is that our proof irrelevance?}
+
+\begin{prooftree}
+\AxiomC{|p :>: x|}
+\RightLabel{Prf-intro-1}
+\UnaryInfC{|Prf p :>: Box (Irr x)|}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{|Prf p :>: x|}
+\AxiomC{|Prf q :>: y|}
+\RightLabel{And-intro}
+\BinaryInfC{|And p q :>: Pair x y|}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{Trivial-intro}
+\UnaryInfC{|Trivial :>: Void|}
+\end{prooftree}
+
+Elimination rules:
+
+\begin{prooftree}
+\AxiomC{|Prf Absurd :>: z|}
+\AxiomC{|Set :>: ty|}
+\RightLabel{naughtE-elim}
+\BinaryInfC{|ty :>: naughtE z ty|}
+\end{prooftree}
+
+With no computational rule (!)
+
 > import -> CanConstructors where
 >   Prop    :: Can t
 >   Prf     :: t -> Can t
