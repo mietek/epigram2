@@ -12,3 +12,4 @@
 %format . = "\cdot"
 %format * = "*~"
 %format pattern = "\mathkw{pattern}\,"
+%format :-> = "\mapsto"
