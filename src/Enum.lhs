@@ -10,6 +10,107 @@
 
 %endif
 
+\question{Do the Formation/Introduction/\ldots names make sense?}
+
+Formation rule:
+
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{EnumU-formation}
+\UnaryInfC{|Set :>: EnumU|}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{|EnumU :>: e|}
+\RightLabel{EnumT-formation}
+\UnaryInfC{|Set :>: EnumT e|}
+\end{prooftree}
+
+Introduction rules:
+
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{NilE-intro-1}
+\UnaryInfC{|EnumU :>: NilE|}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{NilE-intro-2}
+\UnaryInfC{|EnumU :>: (NilE == NilE)|}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{|UId :>: t|}
+\AxiomC{|EnumU :>: e|}
+\RightLabel{ConsE-Intro-1}
+\BinaryInfC{|EnumU :>: ConsE t e|}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{|UId :>: (t1 == t2)|}
+\AxiomC{|EnumU :>: (e1 == e2)|}
+\RightLabel{ConsE-intro-2}
+\BinaryInfC{|EnumU :>: (ConsE t1 e1 == ConsE t2 e2)|}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{Ze-intro-1}
+\UnaryInfC{|EnumT (ConsE t e) :>: Ze|}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{Ze-intro-2}
+\UnaryInfC{|Set :>: (EnumT (Cons t1 e1) :>: Ze == EnumT (Cons t2 e2) :>: Ze)|}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{|EnumT e :>: n|}
+\RightLabel{Su-intro-1}
+\UnaryInfC{|EnumT (ConsE t e) :>: Su n|}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{|Set :>: (EnumT e1 :>: n1 == EnumT e2 :>: n2)|}
+\RightLabel{Su-intro-2}
+\UnaryInfC{|Set :>: (EnumT (Cons t1 e1) :>: Su n1 == EnumT (Cons t2 e2) :>: Su n2)|}
+\end{prooftree}
+
+Elimination rules:
+
+\begin{prooftree}
+\AxiomC{|EnumU :>: e|}
+\AxiomC{|EnumT e -> Set :>: P|}
+\RightLabel{branches-elim}
+\BinaryInfC{|Set :>: branches(e,P)|}
+\end{prooftree}
+
+With the following computational behavior:
+
+< branches NilE _ :-> Unit
+< branches (ConsE t e') P :-> (p Ze , \x -> branches (e', P (Su x)))
+
+\begin{prooftree}
+\AxiomC{|EnumU :>: e|}
+\noLine
+\UnaryInfC{|EnumT e -> Set :>: P|}
+\AxiomC{|branches(e,P) :>: b|}
+\noLine
+\UnaryInfC{|EnumT e :>: x|}
+\RightLabel{switch-elim}
+\BinaryInfC{|P x :>: switch(e,P,b,x)|}
+\end{prooftree}
+
+With the following computational behavior:
+
+< switch (ConsE t e') P ps Ze :-> fst ps
+< switch (ConsE t e') P ps (Su n) :-> switch(e', \x -> P (Su x), snd ps, n)
+
+
+
+
 > import -> CanConstructors where
 >   EnumU  :: Can t
 >   EnumT  :: t -> Can t
