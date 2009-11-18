@@ -41,42 +41,22 @@ If we temporally forget Features, we have here a type-checker that
 takes an evaluation function |ev|, a type, and a term to be checked
 against this type. When successful, the result of typing is a
 canonical term that contains both the initial term and its normalized
-form, as we get it during type-checking.
+form, as we get it for free during type-checking.
 
 However, in order to implement tactics, we have to generalize this
 function. The generalization consists in parameterizing |canTy| with a
-type-directed function |(TY :>: t) -> s|, which is equivalent to 
+type-directed function |TY :>: t -> s|, which is equivalent to 
 |TY -> t -> s|. Because we are still using the concept of evaluation, both
-functions are fused into a single one, of type: 
-|TY -> t -> (s,VAL)|. To support the use of tactics, which can fail to produce a
-value, we extend this type to |TY -> t -> Maybe (s,VAL)|
+functions are fused into a single one, of type: |TY :>: t -> (s,VAL)|.
+To support the use of tactics, which can fail to produce a
+value, we extend this type to |TY :>: t -> m (s,VAL)| where |m| is a
+|MonadTrace|.
 
-Hence, by defining an appropriate function |tc|, we can recover the
+Hence, by defining an appropriate function |chev|, we can recover the
 previous definition of |canTy|. We can also do much more: intuitively,
 we can write any type-directed function in term of |canTy|. That is,
 any function traversing the types derivation tree can be expressed
-using |canTy|. 
-
-< canTy :: (TY -> t -> Maybe (s :=>: VAL)) -> (Can VAL :>: Can t) -> Maybe (Can s)
-< canTy tc (Set :>: Set)     =  Just Set
-< canTy tc (Set :>: Pi s t)  = do
-<   (s,sv) <-  SET `tc` s 
-<   (t,_) <- ARR sv SET  `tc` t
-<   return $ Pi s t
-< import <- CanTyRules
-< canTy  _  _                 = Nothing
-
-If you think about it, what we have defined about could be generalized
-once again. Indeed, if we jump inside a |MonadPlus|, we are still able
-to write the code above. However, doing that, we regain the mental
-sanity we lost with the typechecking-evaluating function: we consider
-a |t -> m VAL| which stands for an evaluator in the monad. Some
-type-checking might happen under the hood but we don't have to be
-aware of that. In the end, we get a function quite similar to the
-original one.
-
-\pierre{When the epig people get use to this new |canTy|, we can
-        scratch the previous code.}
+using |canTy|.
 
 > canTy :: MonadTrace m => (TY :>: t -> m (s :=>: VAL)) -> (Can VAL :>: Can t) -> m (Can (s :=>: VAL))
 > canTy chev (Set :>: Set)     = return Set
@@ -85,23 +65,20 @@ original one.
 >   ttv@(t :=>: tv) <- chev (ARR sv SET :>: t)
 >   return $ Pi ssv ttv
 > import <- CanTyRules
-> canTy  chev (ty :>: x)  = traceErr ("canTy: the proposed value "
->                                     ++ show (Data.Traversable.mapM (\x -> ".") x)
->                                     ++ " is not of type " ++ show ty)
+> canTy  chev (ty :>: x)  = traceErr $ "canTy: the proposed value "
+>                                      ++ show (fmap (\x -> ".") x)
+>                                      ++ " is not of type " ++ show ty
 
 
-Type-checking elimination forms is more standard and mirrors the
-initial definition of |canTy|. |elimTy| is provided with an evaluator
-of |t -> VAL|, a value |f| of inferred typed |t|, ie. |f :<: t| of
-|VAL :<: Can VAL|, an eliminator of |Elim t|. If the operation is
-type-correct, it computes the type of the argument, ie. the
-eliminator, of |Elim (TY :>: t)| and the type of the result |TY|.
+Type-checking elimination forms mirrors |canTy|. |elimTy| is provided
+with a checker-evaluator, a value |f| of inferred typed |t|, ie. a |f
+:<: t| of |VAL :<: Can VAL|, and an eliminator of |Elim t|. If the
+operation is type-safe, we are given back the eliminator enclosing the
+result of |chev| and the type of the eliminated value.
 
-< elimTy :: (t -> VAL) -> (VAL :<: Can VAL) -> Elim t ->
-<           Maybe (Elim (TY :>: t),TY)
-< elimTy ev (f :<: Pi s t) (A e) = Just (A (s :>: e),t $$ A (ev e)) 
-< import <- ElimTyRules
-< elimTy _  _              _     = Nothing
+it computes the type of the argument,
+ie. the eliminator, in |Elim (s :=>: VAL)| and the type of the result in
+|TY|.
 
 > elimTy :: MonadTrace m => (TY :>: t -> m (s :=>: VAL)) -> 
 >           (VAL :<: Can VAL) -> Elim t ->
@@ -111,7 +88,7 @@ eliminator, of |Elim (TY :>: t)| and the type of the result |TY|.
 >   return $ (A eev, t $$ A ev) 
 > import <- ElimTyRules
 > elimTy _  (v :<: t) e = traceErr $ "elimTy: failed to eliminate " ++ show v ++ 
->                                    " with " ++ (show $ traverse (\t -> ".") e)
+>                                    " with " ++ (show $ fmap (\t -> ".") e)
 
 
 \subsection{Equality and Quotation}
@@ -127,10 +104,12 @@ it is a simple matter of syntactic equality, defined in Section
 
 
 |quote| is a type-directed operation that returns a normal form |INTM|
-by recursively evaluating the value |VAL| of type |TY|. Unless I'm
-mistaken, the normal form corresponds to a |\beta|-normal |\eta|-long
-form: there are no |\beta|-redexes present and all possible
-|\eta|-expansions have been performed.
+by recursively evaluating the value |VAL| of type |TY|. The normal
+form corresponds to a $\beta$-normal $\eta$-long form: there are no
+$\beta$-redexes present and all possible $\eta$-expansions have been
+performed.
+
+\question{Is that right? It's $\beta$-$\eta$-stuff?}
 
 This is performed by two mutually recursive functions, |inQuote| and
 |exQuote|:
@@ -147,30 +126,33 @@ a fresh namespace.
 
 
 Quoting a value consists in, if possible, $\eta$-expanding
-it. Needless to say, we can always $\eta$-expand a closure. If
+it. So it goes:
+
+> inQuote :: (TY :>: VAL) -> Root -> INTM
+> inQuote tyv              r | Just t    <- etaExpand tyv r = t
+
+Needless to say, we can always $\eta$-expand a closure. Therefore, if
 $\eta$-expansion has failed, there are two possible cases: either we
 are quoting a neutral term, or a canonical term. In the case of
 neutral term, we simply switch to |exQuote|, which is designed to
-quote neutral terms.
+quote neutral terms:
+
+> inQuote (_ :>: N n)      r = N t
+>     where (t :<: _) = exQuote n r
 
 In the case of a canonical term, we use |canTy| to check that |cv| is
 of type |cty| and, more importantly, to evaluate |cty|. Then, it is
 simply a matter of quoting this |type :>: val| inside the canonical
-constructor, and return the fully quoted term. The reason for the
+constructor, and returning the fully quoted term. The reason for the
 breeding of |Just| is that we are in the |Maybe| monad, and we really
-want to stay in there: |canTy| asks for a |MonadPlus|. Obviously,
-(hopefully) we cannot fail in this code, but we have to be
-artificially cautious. Hence, this is |Just| a mess.
+want to stay in there: |canTy| asks for a |MonadTrace|. Obviously, we
+cannot fail in this code, but we have to be artificially
+cautious. Hence, this is |Just| a mess.
 
-> inQuote :: (TY :>: VAL) -> Root -> INTM
-> inQuote tyv              r | Just t    <- etaExpand tyv r = t
-> inQuote (_ :>: N n)      r = N t
->     where (t :<: _) = exQuote n r
 > inQuote (C cty :>: C cv) r = fromJust $ do
->     ct <- canTy (\tv@(t :>: v) -> Just $ tv :=>: v) (cty :>: cv)
+>     ct <- canTy chev (cty :>: cv)
 >     c <- traverse (\(c :=>: _) -> Just $ inQuote c r)  ct
 >     return $ C c
-> inQuote (C x :>: _) r = error $ "Type doesn't admit lambda: " ++ show (fmap (\_ -> ()) x) 
 
 As mentioned above, |\eta|-expansion is the first sensible thing to do
 when quoting. Sometimes it works, especially for closures and features
@@ -188,26 +170,19 @@ term.
 > etaExpand _                  _ = Nothing
 
 
-Remember that a neutral term is either a parameter, a stuck
-elimination, or a stuck operation. Hence, we consider each cases in
-turn. 
+Now, let us examine the quotation of neutral terms. Remember that a
+neutral term is either a parameter, a stuck elimination, or a stuck
+operation. Hence, we consider each cases in turn.
 
 > exQuote :: NEU -> Root -> (EXTM :<: TY)
 
-Let's be clear. The code below is, in my opinion, a hack. The idea is
-the following. If we are asked to quote a free variable |P| we have
-introduced during |\eta|-expansion (above), we know it is bound by a
-lambda: hence it needs to be turned into a bound variable |V|, with
-the right De Bruijn index. If we have not introduced that free
-variable, we simply return it.
-
-Technically, we know that a free variable has been created by |quote|
-if the current root and the namespace |ns| of the variable are the
-same. Hence, the test |ns == r|. Then, we compute the De Bruijn index
-of the bound variable by counting the number of lambdas traversed up
-to now -- by looking at |j-1| in our current root |(r,j)| -- minus the
-number of lambdas traversed at the time of the parameter creation,
-ie. |i|. Do some math, pray, and you get the right De Bruijn index.
+To quote a free variable, ie. a parameter, the idea is the
+following. If we are asked to quote a free variable |P|, there are two
+possible cases. First case, we have introduced it during an
+$\eta$-expansion (see |etaExpand|, above). Hence, we know that it is
+bound by a lambda: it needs to be turned into the bound variable |V|,
+with the right De Bruijn index. Second case, we have not introduced
+it: we can simply return it as such.
 
 > exQuote (P x)       r = quop x r :<: pty x
 >     where quop :: REF -> Root -> EXTM
@@ -215,49 +190,63 @@ ie. |i|. Do some math, pray, and you get the right De Bruijn index.
 >               where
 >               help (ns :< (_,i)) (r,j) = if ns == r then V (j-i-1) else P ref
 
+Let's be clear. The code above is, in my opinion, a hack.
+Technically, we know that a free variable has been created by |quote|
+if and only if the current root and the namespace |ns| of the variable
+are the same. Hence, the test |ns == r|. Then, we compute the De
+Bruijn index of the bound variable by counting the number of lambdas
+traversed up to now -- by looking at |j-1| in our current root |(r,j)|
+-- minus the number of lambdas traversed at the time of the parameter
+creation, ie. |i|. Do some math, pray, and you get the right De Bruijn
+index.
+
+
 If an elimination is stuck, it is because the function is stuck while
 the arguments are ready to go. So, we have to recursively |exQuote|
 the neutral application, while |inQuote|-ing the arguments. 
 
 > exQuote (n :$ v)    r = (n' :$ traverse (\(tx :=>: _) -> inQuote tx) e r) :<: ty'
 >     where (n' :<: ty)  = exQuote n r
->           Just (e,ty') = elimTy (\tx@(t :>: x) -> Just (tx :=>: x)) (N n :<: unC ty) v
+>           Just (e,ty') = elimTy chev (N n :<: unC ty) v
+>           chev (t :>: x) =
+>             Just $ (t :>: x) :=>: x
 >           unC :: VAL -> Can VAL
 >           unC (C ty) = ty
 
+
 Similarly, if an operation is stuck, this means that one of the value
 passed as an argument needs to be |inQuote|-ed. So it goes. Note that
-the operation itself cannot be stuck: it is a mere fully-applied
-constructor.
+the operation itself cannot be stuck: it is a simple fully-applied
+constructor which can always compute.
 
 > exQuote (op :@ vs)  r = (op :@ vals) :<: v where
->    (vs',v) = fromJust $ opTy op (\(t :>: x) -> do
->                                  return $ inQuote (t :>: x) r :=>: x) vs 
+>    (vs',v) = fromJust $ opTy op chev vs 
 >    vals = map (\(t :=>: v) -> t) vs'
-
+>    chev (t :>: x) = do
+>      return $ inQuote (t :>: x) r :=>: x
 
 
 As we are in the quotation business, let us define $\beta$-quotation,
-ie |bquote|. Unlike |quote|, |bquote| does not perform
-$\eta$-expansion, but just brings the term in $\beta$ normal
+ie. |bquote|. Unlike |quote|, |bquote| does not perform
+$\eta$-expansion, but just brings the term in $\beta$-normal
 form. Therefore, the code is much more simpler than |quote|, although
-the idea is the same. 
+the idea is the same.
 
-From a technical perspective, it is important to note that we are in
+From a technical point of view, it is important to note that we are in
 |Rooty| and we don't require a specially crafted |Root| (unlike
 |quote| and |quop|, as described above). Because of that, we have to
 maintain the variables we have generated and to which De Bruijn index
-they correspond. This is the role of the backward list of references. We let 
-
-Note that we let the user provide an initial environment of
-references: this is useful to discharge a bunch of assumptions inside
-a term. The typical use-case is @Tactics.lhs:discharge@.
+they correspond. This is the role of the backward list of
+references. Note also that we let the user provide an initial
+environment of references: this is useful to discharge a bunch of
+assumptions inside a term. The typical use-case is |discharge| in
+@Tactics.lhs@.
 
 Apart from that, this is a standard $\beta$-quotation: 
 
 > bquote :: Rooty m => Bwd REF -> Tm {d,VV} REF -> m (Tm {d,TT} REF)
 
-If binded by a lambda of ours, we bound the free variables to the
+If binded by one of our lambda, we bind the free variables to the
 (hopefully) correct lambda. We don't do anything otherwise.
 
 > bquote  refs (P x) =
@@ -267,7 +256,7 @@ If binded by a lambda of ours, we bound the free variables to the
 
 Going under a closure is the usual story: we create a fresh variable,
 evaluate the applied term, quote the result, and bring everyone under
-a binding.
+a binder.
 
 > bquote refs (L (H vs x t)) = 
 >     (|(\t -> L (x :. t))
@@ -276,7 +265,7 @@ a binding.
 >                                     (eval t (vs :< pval x))))|)
 
 For the other constructors, we simply go through and do as much damage
-as we can. Simple.
+as we can. Simple, easy.
 
 > bquote refs (L (K t)) = (|(L . K) (bquote refs t) |)
 > bquote refs (C c) = (|C (traverse (bquote refs) c )|)
@@ -287,66 +276,162 @@ as we can. Simple.
 >                                   (traverse (bquote refs) vs)|)
 
 
+\subsection{Type checking}
+
+Here starts the bidirectional type-checking story. In this section, we
+address the Checking side. In the next section, we implement the
+Inference side. Give Conor a white-board, three pens of different
+colors, 30 minutes, and you will know what is happening below in the
+Edinburgh style. If you can bear with some black-and-white boring
+sequents, keep reading.
+
+The checker works as follow. In a valid typing environment $\Gamma$,
+it checks that the term $t$ is indeed of type $T$, ie. $t$ can be
+pushed into $T$: |T :>: t|:
+
+$$\Gamma \vdash \mbox{TY} \ni \mbox{Tm \{In,.\} p}$$
+
+Technically, we also need a root and handle failure with the |Maybe|
+monad:
+
+> check :: (TY :>: INTM) -> Root -> Maybe ()
+
+Type-checking a canonical term is rather easy, as we just have to
+delegate the hard work to |canTy|. The checker-evaluator simply needs
+to evaluate the well-typed terms.
+
+> check (C c :>: C c')        r = do
+>   canTy chev (c :>: c')
+>   return ()
+> check (C (Pi s t) :>: L sc) r = do
+>   Root.freshRef ("" :<: s) 
+>            (\ref -> check (t $$ A (pval ref) :>: underScope sc ref)) 
+>            r
+
+Formally, we can bring the |Ex| terms into the |In| world with the
+rule:
+
+\begin{prooftree}
+\AxiomC{$n \in Y$}
+\AxiomC{$\star \ni W \equiv Y$}
+\BinaryInfC{$W \ni n$}
+\end{prooftree}
+
+This translates naturally into the following code:
+
+> check (w :>: N n)           r = do
+>   y <- infer n r
+>   guard $ equal (SET :>: (w, y)) r
+>   return ()
+
+Finally, we can extend the checker with the |Check| aspect. If no rule
+has matched, then we have to give up.
+
+> import <- Check
+> check _                     _ = Nothing
 
 \subsection{Type inference}
 
+On the inference side, we also have a valid typing environment
+$\Gamma$ that is used to pull types |TY| out of |Ex| terms:
+
+$$\Gamma \vdash \mbox{Tm \{Ex,.\} p} \in \mbox{TY}$$
+
+This translates into the following signature:
+
 > infer :: EXTM -> Root -> Maybe TY
+
+We all know the rule to infer the type of a free variable from the
+context:
+
+\begin{prooftree}
+\AxiomC{}
+\UnaryInfC{$\Gamma, x : A, \Delta \vdash x \in A$}
+\end{prooftree}
+
+In Epigram, parameters carry there types, so it even easier:
+
 > infer (P x)              r = Just (pty x)
+
+The rule for eliminators is a generalization of the rule for function
+application. Let us give a look at its formal rule:
+
+\begin{prooftree}
+\AxiomC{$f \in \Pi\ S\ T$}
+\AxiomC{$S \ni x$}
+\BinaryInfC{$f x \in {(B x)}^\downarrow$}
+\end{prooftree}
+
+The story is the same in the general case: we infer the eliminated
+term |t| and we type-check the eliminator, using |elimTy|. Because
+|elimTy| computes the result type, we have inferred the result type.
+
 > infer (t :$ s)           r = do
 >   C ty <- infer t r
->   (s',ty') <- elimTy (\tx@(t :>: x) -> Just $ check tx :=>: evTm x)
->                      (evTm t :<: ty) s
+>   (s',ty') <- elimTy chev (evTm t :<: ty) s
 >   return ty'
+>       where chev (t :>: x) =
+>               Just $ check (t :>: x) :=>: evTm x
+
+Following exactly the same principle, we can infer the result of an
+operator application:
+
 > infer (op :@ ts)         r = do
->   (vs,v) <- opTy op (\tx@(t :>: x) -> do 
->                                       ch <- check tx r 
->                                       return $ ch :=>: evTm x) ts
->   return v
+>   (vs,t) <- opTy op chev ts
+>   return t
+>       where chev (t :>: x) = do 
+>               ch <- check (t :>: x) r 
+>               return $ ch :=>: evTm x
+
+Type ascription is formalized by the following rule:
+
+\begin{prooftree}
+\AxiomC{$\star \ni \mbox{ty}$}
+\AxiomC{$\mbox{ty}^\downarrow \ni t$}
+\BinaryInfC{$(t :\in T) \in \mbox{ty}^\downarrow$}
+\end{prooftree}
+
+Which translates directly into the following code:
+
 > infer (t :? ty)          r = do
 >   check (SET :>: ty) r
 >   let vty = evTm ty
 >   check (vty :>: t) r
 >   return vty
+
+Obviously, if none of the rule above applies, then there is something
+fishy.
+
 > infer _                  _ = Nothing
-
-
-\subsection{Type checking}
-
-
-> check :: (TY :>: INTM) -> Root -> Maybe ()
-> check (C c :>: C c')        r = do
->   csp <- canTy (\(t :>: x) -> Just $ x :=>: evTm x) (c :>: c')
->   return ()
-> check (C (Pi s t) :>: L sc) r = 
->   Root.freshRef ("" :<: s) 
->            (\ref -> check (t $$ A (pval ref) :>: underScope sc ref)) 
->            r
-> check (w :>: N n)           r = do
->   y <- infer n r
->   guard $ equal (SET :>: (w, y)) r
->   return ()
-> import <- Check
-> check _                     _ = Nothing
-
 
 
 
 \subsection{Operators}
 
-> import <- OpCode
+In this section, we weave some She aspects. In particular, we bring
+inside @Rules.lhs@ the |OpCode|s and |Operators| defined in the
+various Features.
 
+> import <- OpCode
+>
 > operators :: [Op]
 > operators = (
 >   import <- Operators
 >   [])
 
-> import <- SugarTactics
+We also define and import some handy tactics, sugaring some canonical
+constructors to make them easier to swallow.
 
 > arrTac :: Tac VAL -> Tac VAL -> Tac VAL
 > arrTac s t = can $ Pi s
 >                       (lambda (\_ -> t))
+>
+> import <- SugarTactics
+
 
 \subsection{Equality?}
+
+\question{Why Green? Why here? Why so unreadable? Why, but why???}
 
 > mkEqConj :: [(TY :>: VAL,TY :>: VAL)] -> VAL
 > mkEqConj ((y0 :>: t0,y1 :>: t1) : []) = eqGreen @@ [y0,t0,y1,t1]
@@ -415,6 +500,8 @@ as we can. Simple.
 
 
 < opRunEqGreen [C y0,_,C y1,_] = Right TRIVIAL
+
+\question{Same question, excepted for its color\ldots}
 
 > coerce :: (Can (VAL,VAL)) -> VAL -> VAL -> VAL
 > coerce (Pi (x1,x2) (y1,y2))    q f = 
