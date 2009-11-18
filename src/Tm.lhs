@@ -19,8 +19,9 @@
 
 %endif
 
-%format :$ = ":\!\$"
-%format :? = "\,:\!\!\!\in"
+%format :$ = ":\!\!\$"
+%format :@ = ":\!\!@"
+%format :? = ":\!\in"
 %format Set = "\star"
 %format Pi = "\Pi"
 %format :. = "\bullet"
@@ -38,17 +39,18 @@ We distinguish |In|Terms (into which we push types) and |Ex|Terms
 
 This is the by-now traditional bidirectional
 type-checking~\cite{turner:bidirectional_tc} story: there are
-\emph{checkable} terms that are checked against again a given term,
-and there are \emph{inferable} terms which type are inferred
-relatively to a typing context. We push types in checkable terms, pull
-types from inferable terms.
+\emph{checkable} terms that are checked against given types, and there
+are \emph{inferable} terms which type are inferred relatively to a
+typing context. We push types in checkable terms, pull types from
+inferable terms.
 
 We also distinguish the representations of |TT| terms and |VV| values.
 
 > data Phase  = TT | VV
 
-And, of course, we're polymorphic in the representation of free variables,
-like your mother always told you.
+And, of course, we're polymorphic in the representation of free
+variables, like your mother always told you. This gives the following
+signature for a term:
 
 > data Tm :: {Dir, Phase} -> * -> * where
 
@@ -77,17 +79,46 @@ And we can infer types from:
 >   (:$)  :: Tm {Ex, p} x -> Elim (Tm {In, p} x) -> Tm {Ex, p} x  -- elim
 >   (:?)  :: Tm {In, TT} x -> Tm {In, TT} x -> Tm {Ex, TT} x      -- typing
 
-In Values, an |N t| is not only an |Ex| to |In|, but really a neutral
-term. Typing and variable will not let you get a value, so problem
-trivially solved.  This is also obvious if you have wrapped a
-parameter into an |In| value. An eliminator in value form consists in
-applying an elimination to a value in |Ex|, that is (by induction) a
-neutral term. Hence, the eliminator is stucked too. The case for fully
-applied operator is nuanced: if one of the argument is a |N t| and it
-is actually used by |Op|, then the operation is a neutral term. We can
-hardly enforce that constraints in types, so we have to deal with this
-approximation. To conclude, if the code is correct, in a |N t| value,
-you have a neutral.
+In the world of values, ie. |Tm {In, VV} p|, the neutral terms are
+exactly the |N t| terms. Actually, it requires some caution in the way
+we deal with operator and how we turn them into values, so this
+statement relies on the hypothesis that the evaluation of operators is
+correct. More detail below.
+
+To prove that statement, we first show that any |Tm {In, VV} p| which
+is not a |N t| is not a neutral term. This obvious as we are left with
+lambda and canonicals, which cannot be stuck. Then, we have to prove
+that a |N t| in |Tm {In, VV} p| form is a stuck term. We do so by case
+analysis on the term |t| inside the |N|:
+\begin{itemize}
+
+\item Typing and variable will not let you get a value, so a neutral
+value is not one of those.
+
+\item This is also easy if you have a parameter: it is stuck waiting
+for its definition.
+
+\item An eliminator in value form consists in an elimination applied
+to a value in |Ex|, which is -- by induction -- a neutral term. Hence,
+the eliminator is stuck too.
+
+\item The case for fully applied operator is more problematic: we need
+one of the arguments to be a |N t|, and to be used by |Op|. This way,
+the operation is indeed a neutral term. We can hardly enforce these
+constraints in types, so we have to deal with this approximation.
+
+\end{itemize}
+
+Fully applied operators call for some care with |:@|. If you are to
+explicitly write a |:@| term wrapped inside a |N|, you must be sure
+that the operator is indeed applied to a stuck term \emph{which is
+used} by the operator. Similarly, when evaluating for example, we have
+been careful in returning a neutral operator if and only if the
+operator was consuming a stuck term. As a corollary, if the operator
+can be fully computed, then it \emph{must} be so. More tricky but for
+the same reason: when building tactics, we are building terms. So,
+again, we should be careful of not building a stuck operator for no
+good reason.
 
 |Scope| represents bodies of binders, but the representation differs
 with phase. In \emph{terms}, |x :. t| is a \emph{binder}: the |t| is a
@@ -103,12 +134,11 @@ the stored term.
 >   K     :: Tm {In, p} x                      -> Scope p x     -- constant
 
 The |Can| functor explains how canonical objects are constructed from
-subobjects (terms or values, as appropriate). Lambda is not included here:
-morally, it belongs; practically, adapting |Can| to support binding
-complicates the definition.
-
-Note the presence of the @import@ She-ism: this means that canonical
-constructors can be later plugged in using a She aspect.
+sub-objects (terms or values, as appropriate). Lambda is not included
+here: morally, it belongs; practically, adapting |Can| to support
+binding complicates the definition. Note the presence of the @import@
+She-ism: this means that canonical constructors can be later plugged
+in using a She aspect.
 
 > data Can :: * -> * where
 >   Set   :: Can t                                   -- set of sets
@@ -118,8 +148,10 @@ constructors can be later plugged in using a She aspect.
 >   deriving (Show, Eq)
 
 The |Elim| functor explains how eliminators are constructed from their
-subobjects. It's a sort of logarithm. Projective eliminators for types
+sub-objects. It's a sort of logarithm. Projective eliminators for types
 with \(\eta\)-laws go here.
+
+\question{What is that story with logarithms?}
 
 > data Elim :: * -> * where
 >   A     :: t -> Elim t                             -- application
@@ -136,31 +168,44 @@ a typing rule, and a computation strategy.
 The |opTy| field explains how to label the operator's arguments with
 the types they must have and delivers the type of the whole
 application: to do that, one must be able to evaluate arguments. It is
-vital to check the subterms (left to right) before trusting the type
+vital to check the sub-terms (left to right) before trusting the type
 at the end. This corresponds to the following type:
 
 < opTy :: forall t. (t -> VAL) -> [t] -> Maybe ([TY :>: t] , TY)
+< opTy ev args = (...)
 
-However, in order to be able to use |opTy| directly in the tactics, we
-had to generalize it once again. Following the previous version of
-|canTy|, we have adopted the following scheme:
+Where we are provided an evaluator |ev| and the list of arguments,
+which length should be the arity of the operator. If the type of the
+arguments is correct, we return them labelled with their type and the
+type of the result.
 
-< opTy    :: MonadPlus m => (TY :>: t -> m (s :=>: VAL)) -> [t] -> m ([s :=>: VAL] , TY)
+However, in order to use |opTy| directly in the tactics, we had to
+generalize it. Following the evolution of |canTy| in @Rules.lhs@, we
+have adopted the following scheme:
 
-First, being |MonadPlus| allows a seemless integration in the Tactics
-word. Second, we have extended the evaluation function to perform
+< opTy    :: MonadPlus m => (TY :>: t -> m (s :=>: VAL)) -> 
+<                           [t] -> 
+<                           m ([s :=>: VAL] , TY)
+
+First, being |MonadPlus| allows a seamless integration in the Tactics
+world. Second, we have extended the evaluation function to perform
 type-checking at the same time. We also liberalize the return type to
 |s|, to give more freedom in the choice of the checker-evaluator. This
-change impacts on |exQuote|, |infer|, and |useOp|.
+change impacts on |exQuote|, |infer|, and |useOp|. If this definition
+is not clear now, it should become clear after the definition of
+|canTy|.
 
 > data Op = Op
->   { opName  :: String, opArity :: Int
->   , opTy    :: MonadTrace m => (TY :>: t -> m (s :=>: VAL)) -> [t] -> m ([s :=>: VAL] , TY)
+>   { opName  :: String
+>   , opArity :: Int
+>   , opTy    :: MonadTrace m => (TY :>: t -> m (s :=>: VAL)) -> 
+>                                [t] -> 
+>                                m ([s :=>: VAL] , TY)
 >   , opRun   :: [VAL] -> Either NEU VAL
 >   }
 
 Meanwhile, the |opRun| argument implements the computational
-behaviour: given suitable arguments, we should receive a value, or
+behavior: given suitable arguments, we should receive a value, or
 failing that, the neutral term to blame for the failure of
 computation. For example, if `append' were an operator, it would
 compute if the first list is nil or cons, but complain about the first
@@ -193,21 +238,21 @@ We have special pairs for types going into and coming out of
 stuff. That is, we write |typ :>: thing| to say that
 |typ| accepts the term |thing|. Conversely, we write |thing :<: typ|
 to say that |thing| is of infered type |typ|. Therefore, we can read
-|:<:| as "accepts" and |:>:| as "has infered".
+|:<:| as ``accepts'' and |:>:| as ``has infered''.
 
 > data y :>: t = y :>: t  deriving (Show,Eq)
 > infix 4 :>:
 > data t :<: y = t :<: y  deriving (Show,Eq)
 > infix 4 :<:
 
-As we are discussing syntactic sugar, let me introduce the "reduces
-to" symbol:
+As we are discussing syntactic sugar, let me introduce the ``reduces
+to'' symbol:
 
 > data t :=>: v = t :=>: v deriving (Show, Eq)
 > infix 4 :=>:
 
-Intuitively, |t :=>: v| can be read as "the term |t| reduces to the
-value |v|".
+Intuitively, |t :=>: v| can be read as ``the term |t| reduces to the
+value |v|''.
 
 \pierre{This implicit conversion is not yet enforced everywhere in the
 code. If you find opportunities to enforce it, go ahead. Typically,
@@ -270,7 +315,7 @@ irrelevant. We intend this for proofs, but there may be other things
 >   _ == _ = True
 
 In this section, we have defined the syntactic equality on terms. The
-Igeneral definition of syntactic equality remains to be done. It is
+general definition of syntactic equality remains to be done. It is
 the subject of Section~\ref{sec:rules}: there, we rely on
 \emph{quotation} to turn values into terms. Once turned into terms, 
 we fall back to the equality defined above.
@@ -316,8 +361,8 @@ dealt as a neutral parameter.
 > pval (_ := DEFN v :<: _)  = v
 > pval r                    = N (P r)
 
-Second, we can extract the infered type of a reference thanks to the
-following code:
+Second, we can extract the type of a reference thanks to the following
+code:
 
 > pty :: REF -> VAL
 > pty (_ := _ :<: ty) = ty
@@ -331,106 +376,148 @@ evaluated terms have been type-checked beforehand, that is: the
 interpreter always terminates.
 
 The interpreter is decomposed in four blocks. First, the application
-operation |$$|. This operation applies an elimination principle to a
-value. Note that it is open to further extension, as we had new
-constructs and elimination principles to the core.
+of eliminators, implemented by |$$|. Second, the execution of
+operators, implemented by |@@|. Third, reduction under binder,
+implemented by |body|. Finally, full term evaluation, implemented by
+|eval|. At the end, this is all wrapped inside |evTm|, to evaluate a
+given term in an empty environment.
+
+\subsubsection{Elimination}
+
+The |$$| function applies an elimination principle to a value. Note
+that it is open to further extension as we add new constructs and
+elimination principles to the language. Extensions are added through
+the |ElimComputation| aspect.
+
+Formally, the computation rules of the Core language are the
+following:
+
+\begin{eqnarray}
+(\lambda \_ . v) u & \mapsto & v                            \label{eqn:elim_cstt} \\
+(\lambda x . t) v  & \mapsto & \mbox{eval } t[x \mapsto v]  \label{eqn:elim_bind} \\
+\mbox{unpack}(Con\ t) & \mapsto & t                         \label{eqn:elim_con}  \\
+(N n) \$\$ ee      & \mapsto & N (n \:\$ e)                 \label{eqn:elim_stuck}
+\end{eqnarray}
+
+The rules \ref{eqn:elim_cstt} and \ref{eqn:elim_bind} are standard
+lambda calculus stories. Rule \ref{eqn:elim_stuck} is justified as
+follow: if no application rule applies, this means that we are
+stuck. This can happen if and only if the application is itself
+stuck. The stuckness therefore propagates to the whole elimination.
+
+\question{What is the story for |Con| and |out|?}
+
+This translates into the following code:
 
 > ($$) :: VAL -> Elim VAL -> VAL
-
-Application on a constant |v|: $(\lambda _ . v) u = v$
-
-> L (K v)      $$ A _  = v
-
-Application on a bound variable in |t|: $(\lambda x . t) v = \mbox{eval } t[x \mapsto v]$
-
-> L (H g _ t)  $$ A v  = eval t (g :< v)
-
-Container unpacking: $\mbox{unpack}(Con\ t) = t$
-
-> C (Con t)    $$ Out  = t
-
-Features
-
-> import <- ElimComputation
-
-If no application rule applies, this means that we are stuck. This can
-happen if the application is itself stuck or we are applying |e| to a
-free variable. In both cases, we simply re-wrap the application inside
-|N|.
-
-\question{|N| stands for Neutral or it is just the standard term to
-          bring an |Ex| to |In|?}
-
-> N n          $$ e    = N (n :$ e)
+> L (K v)      $$ A _  = v                -- By \ref{eqn:elim_cstt}
+> L (H g _ t)  $$ A v  = eval t (g :< v)  -- By \ref{eqn:elim_bind}
+> C (Con t)    $$ Out  = t                -- By \ref{eqn:elim_con}
+> import <- ElimComputation               -- Extensions
+> N n          $$ e    = N (n :$ e)       -- By \ref{eqn:elim_stuck}
 
 
+\subsubsection{Operators}
 
-Second, the function |@@| evaluates the operator |op| on |vs|, if
-possible. If the evaluation is stuck, it returns a neutral
-application.
+Running an operator is quite simple, as operators come with the
+mechanics to be ran, through |opRun|. However, we are not ensured to
+get a value out of an applied operator: the operator might get stuck
+by a neutral argument. In such case, the operator will blame the
+argument by returning it on the |Left|. Otherwise, it returns the
+computed value on the |Right|. 
+
+Hence, the implementation of |@@| is as follow. First, run the
+operator. On the left, the operator is stuck, so return the neutral
+term consisting of the operation applied to its arguments. On the
+right, we have gone down to a value, so we simply return it.
 
 > (@@) :: Op -> [VAL] -> VAL
 > op @@ vs = either (\_ -> N (op :@ vs)) id (opRun op vs) 
 
+Note that we respect the invariant on |N| values: we have an |:@|
+that, for sure, is applying at least one stuck term to an operator
+that uses it.
 
-Third, we reduce under binders. Two cases are possible.
+
+\subsubsection{Binders}
+
+Evaluation under binders needs to distinguish two cases:
+\begin{itemize}
+\item the binder ignores its argument, or
+\item a variable |x| is defined and bound in a term |t|
+\end{itemize}
+
+In the first case, we can trivially go under the binder and innocently
+evaluate. In the second case, we turn the binding -- a term -- into a
+closure -- a value. The closure environment will be the current
+evaluation environment, whereas the name and the binded terms remain
+the same.
+
+This naturally leads to the following code:
 
 > body :: Scope {TT} REF -> ENV -> Scope {VV} REF
-
-Either, the binder disregards its argument, in which case we can
-innocently evaluate deeper.
-
 > body (K v)     g = K (eval v g)
-
-Or, a variable |x| is defined and bound in |t|: we are facing a
-closure, which is returned as such.
-
 > body (x :. t)  g = H g x t
 
+\subsubsection{Evaluator}
 
-Finally, we can implement the interpreter. Technically, we are working
-in the Applicative |-> ENV| and use She's notation for applicative
-applications. 
+Putting the above pieces together, plus some machinery, we are finally
+able to implement an evaluator. 
+
+On a technical note, we are working in the Applicative |-> ENV| and
+use She's notation for writing applicatives.
+
+The evaluator is typed as follow: provided with a term and a variable
+binding environment, it reduces the term to a value.
 
 > eval :: Tm {d, TT} REF -> ENV -> VAL
 
-Evaluate under lambda binder with |body|:
+The implementation is simply a matter of pattern-matching and doing
+the right thing. Hence, we evaluate under lambdas by calling |body|:
 
 > eval (L b)       = (|L (body b)|)
 
-Reduce canonical term to normal form:
+We reduce canonical term by evaluating under the constructor:
 
 > eval (C c)       = (|C (eval ^$ c)|)
 
-%% ???
-Drop off types Ex to In, just reduce |n|:
+We drop off bidirectional annotations from Ex to In, just reducing the
+inner term |n|:
+
+\question{Any other subtlety here?}
 
 > eval (N n)       = eval n
 
-%% ???
-Extract the value of a parameter, or it is stuck neutral:
-
-> eval (P x)       = (|(pval x)|)
-
-Extract the bound value from the environment:
-
-> eval (V i)       = (!. i)
-
-Apply an elimination form:
-
-> eval (t :$ e)    = (|eval t $$ (eval ^$ e)|)
-
-Apply the operator logic:
-
-> eval (op :@ vs)  = (|(op @@) (eval ^$ vs)|)
-
-Drop off type information, just reduce |t|
+Similarly for type ascriptions, we ignore the type and just evaluate
+the term:
 
 > eval (t :? _)    = eval t
 
 
+If we reach a parameter, either it is already defined or it is still
+not binded. In both case, |pval| is the right tool: if the parameter is
+intrinsically associated to a value, we grab that value. Otherwise, we
+get the neutral term consisting of the stuck parameter.
 
-The evaluation of a closed term simply consists in calling the
+> eval (P x)       = (|(pval x)|)
+
+A bound variable simply requires to extract the corresponding value
+from the environment:
+
+> eval (V i)       = (!. i)
+
+Elimination is handled by |$$| defined above:
+
+> eval (t :$ e)    = (|eval t $$ (eval ^$ e)|)
+
+And similarly for operators with |@@|:
+
+> eval (op :@ vs)  = (|(op @@) (eval ^$ vs)|)
+
+
+\subsubsection{Putting things together}
+
+Finally, the evaluation of a closed term simply consists in calling the
 interpreter defined above with the empty environment.
 
 > evTm :: Tm {d, TT} REF -> VAL
@@ -494,8 +581,13 @@ This is the Evil Mangler. Good luck with that stuff.
 > underScope (_ :. t)  x = under 0 x %% t
 
 
+
+%if False
+
+
 \subsection{Term Construction}
 
+I think that this stuff should disappear with Tactics spreading.
 
 > ($#) :: Int -> [Int] -> InTm x
 > f $# xs = N (foldl (\ g x -> g :$ A (NV x)) (V f) xs)
@@ -504,8 +596,6 @@ This is the Evil Mangler. Good luck with that stuff.
 > fortran (L (x :. _)) = x
 > fortran _ = ""
 
-
-%if False
 
 > newtype I x = I {unI :: x} deriving (Show, Eq)
 > instance Functor I where
