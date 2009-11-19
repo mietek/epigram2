@@ -49,6 +49,10 @@ Equality rules:
 >   traverse f UId          = (|EnumU|)
 >   traverse f (Tag s)      = (|(Tag s)|)
 
+> import -> CanPretty where
+>   prettyCan ss UId      = text "Uid"
+>   prettyCan ss (Tag s)  = text ('@':s)
+
 > import -> CanTyRules where
 >   canTy _  (Set :>: UId)    = return UId
 >   canTy _  (UId :>: Tag s)  = return (Tag s)

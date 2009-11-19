@@ -127,6 +127,15 @@ Elim forms inherited from elsewhere
 >   pattern ABSURD  = C Absurd
 >   pattern BOX p   = C (Box p)
 
+> import -> CanPretty where
+>   prettyCan ss Prop           = text "#"
+>   prettyCan ss (Prf p)        = braces (text "|" <+> prettyTm ss p)
+>   prettyCan ss (All p q)      = parens (text "All" <+> prettyTm ss p <+> prettyTm ss q)
+>   prettyCan ss (And p q)      = parens (text "And" <+> prettyTm ss p <+> prettyTm ss q)
+>   prettyCan ss Trivial        = text "Trivial"
+>   prettyCan ss Absurd         = text "Absurd"
+>   prettyCan ss (Box (Irr p))  = parens (text "Box" <+> prettyTm ss p)
+
 > import -> SugarTactics where
 >   impTac p q = can $ All (can $ Prf p)
 >                          (lambda $ \_ -> q)
@@ -155,6 +164,9 @@ Elim forms inherited from elsewhere
 >     return $ Pair xxv yyv
 >   canTy _   (Prf TRIVIAL :>: Void)       = return Void
 
+
+> import -> ElimPretty where
+>   prettyElim ss UnBox = text "UnBox"
 
 > import -> ElimTyRules where
 >   elimTy chev (f :<: Prf (ALL p q))      (A e)  = do

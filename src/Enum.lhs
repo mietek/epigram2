@@ -122,6 +122,14 @@ Equality rules:
 >   traverse f Ze           = (|Ze|)
 >   traverse f (Su n)       = (|Su (f n)|) 
 
+> import -> CanPretty where
+>   prettyCan ss EnumU         = text "Enum"
+>   prettyCan ss (EnumT t)     = braces (prettyTm ss t)
+>   prettyCan ss NilE          = braces empty
+>   prettyCan ss (ConsE t ts)  = prettyTm ss t <> comma <+> prettyTm ss ts
+>   prettyCan ss Ze            = text "Ze"
+>   prettyCan ss (Su t)        = parens (text "Su" <+> prettyTm ss t)
+
 > import -> CanTyRules where
 >   canTy _ (Set :>: EnumU)    = return EnumU
 >   canTy chev (Set :>: EnumT e)  = do
