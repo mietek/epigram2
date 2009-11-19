@@ -1,5 +1,5 @@
 HC      = ghc
-HC_OPTS = -package mtl
+HC_OPTS = -package mtl -package pretty
 
 SRCS := $(wildcard *.lhs) 
 OBJS := $(SRCS:.lhs=.o) 
