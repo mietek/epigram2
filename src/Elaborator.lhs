@@ -266,7 +266,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 
 > cochon :: ProofContext -> IO ()
 > cochon loc@(ls, dev) = do
->     putStrLn (prettyDev dev)
+>     printDev dev
 >     putStr (showPrompt ls)
 >     l <- getLine
 >     let ws = words l
@@ -317,7 +317,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 > diff xs ys = (xs, ys)
 
 > showEntries :: Fwd Entry -> String
-> showEntries = foldMap (\(E ref _ _) -> prettyRef [] ref ++ ", ")
+> showEntries = foldMap (\(E ref _ _) -> show (prettyRef [] ref) ++ ", ")
 
 
 \section{Elab Monad}
