@@ -96,6 +96,11 @@ With no computational behavior.
 >   traverse f (EqBlue (pty :>: p) (qty :>: q)) =
 >     (|EqBlue (|(:>:) (f pty) (f p)|) (|(:>:) (f qty) (f q)|)|)
 
+> import -> CanPretty where
+>   prettyCan e (EqBlue (y0 :>: t0) (y1 :>: t1)) = parens (text "EqBlue"
+>       <+> parens (pretty e y0 <+> text ":>:" <+> pretty e t0)
+>       <+> parens (pretty e y1 <+> text ":>:" <+> pretty e t1))
+
 > import -> CanTyRules where
 >   canTy chev (Prop :>: EqBlue (y0 :>: t0) (y1 :>: t1)) = do
 >     y0y0v@(y0 :=>: y0v) <- chev (SET :>: y0)

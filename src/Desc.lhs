@@ -156,10 +156,10 @@ Equality rules:
 
 > import -> CanPretty where
 >   prettyCan ss Desc   = text "Desc"
->   prettyCan ss (Mu t) = parens (text "Mu" <+> prettyTm ss t)
+>   prettyCan ss (Mu t) = parens (text "Mu" <+> pretty ss t)
 >   prettyCan ss Done   = text "Done"
->   prettyCan ss (Arg t1 t2) = parens (text "Arg" <+> prettyTm ss t1 <+> prettyTm ss t2)
->   prettyCan ss (Ind t1 t2) = parens (text "Ind" <+> prettyTm ss t1 <+> prettyTm ss t2)
+>   prettyCan ss (Arg t1 t2) = parens (text "Arg" <+> pretty ss t1 <+> pretty ss t2)
+>   prettyCan ss (Ind t1 t2) = parens (text "Ind" <+> pretty ss t1 <+> pretty ss t2)
 
 > import -> CanTyRules where
 >   canTy _ (Set :>: Desc)     = return Desc

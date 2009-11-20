@@ -317,7 +317,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 > diff xs ys = (xs, ys)
 
 > showEntries :: Fwd Entry -> String
-> showEntries = foldMap (\(E ref _ _) -> show (prettyRef [] ref) ++ ", ")
+> showEntries = foldMap (\(E ref _ _) -> show (prettyRef B0 ref) ++ ", ")
 
 
 \section{Elab Monad}

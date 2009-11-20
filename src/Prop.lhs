@@ -129,12 +129,12 @@ Elim forms inherited from elsewhere
 
 > import -> CanPretty where
 >   prettyCan ss Prop           = text "#"
->   prettyCan ss (Prf p)        = braces (text "|" <+> prettyTm ss p)
->   prettyCan ss (All p q)      = parens (text "All" <+> prettyTm ss p <+> prettyTm ss q)
->   prettyCan ss (And p q)      = parens (text "And" <+> prettyTm ss p <+> prettyTm ss q)
+>   prettyCan ss (Prf p)        = braces (text "|" <+> pretty ss p)
+>   prettyCan ss (All p q)      = parens (text "All" <+> pretty ss p <+> pretty ss q)
+>   prettyCan ss (And p q)      = parens (text "And" <+> pretty ss p <+> pretty ss q)
 >   prettyCan ss Trivial        = text "Trivial"
 >   prettyCan ss Absurd         = text "Absurd"
->   prettyCan ss (Box (Irr p))  = parens (text "Box" <+> prettyTm ss p)
+>   prettyCan ss (Box (Irr p))  = parens (text "Box" <+> pretty ss p)
 
 > import -> SugarTactics where
 >   impTac p q = can $ All (can $ Prf p)

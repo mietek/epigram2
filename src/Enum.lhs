@@ -123,12 +123,18 @@ Equality rules:
 >   traverse f (Su n)       = (|Su (f n)|) 
 
 > import -> CanPretty where
->   prettyCan ss EnumU         = text "Enum"
->   prettyCan ss (EnumT t)     = braces (prettyTm ss t)
->   prettyCan ss NilE          = braces empty
->   prettyCan ss (ConsE t ts)  = prettyTm ss t <> comma <+> prettyTm ss ts
->   prettyCan ss Ze            = text "Ze"
->   prettyCan ss (Su t)        = parens (text "Su" <+> prettyTm ss t)
+>   prettyCan e EnumU         = text "Enum"
+>   prettyCan e (EnumT t)     = braces (prettyEnum e t)
+>   prettyCan e NilE          = braces (parens empty)
+>   prettyCan e (ConsE t ts)  = pretty e t <> comma <+> pretty e ts
+>   prettyCan e Ze            = text "Ze"
+>   prettyCan e (Su t)        = parens (text "Su" <+> pretty e t)
+
+> import -> Pretty where
+>   prettyEnum :: ENV -> Tm {d, p} REF -> Doc
+>   prettyEnum e (C NilE)          = empty
+>   prettyEnum e (C (ConsE t ts))  = pretty e t <> comma <+> prettyEnum e ts
+>   prettyEnum e t                 = pretty e t
 
 > import -> CanTyRules where
 >   canTy _ (Set :>: EnumU)    = return EnumU
