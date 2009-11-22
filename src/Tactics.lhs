@@ -474,7 +474,49 @@ And we implement the function that permutes each element $i$ to $5-i$:
 > permT :: TY
 > permT = ARR test1234 test1234
 
+\subsection{Splitting on Sigmas}
 
+Here is the eliminator for Sigmas:
+
+> split :: Tac VAL -> Tac VAL
+> split tacF = do
+>   t <- goal
+>   case t of
+>     C (Pi (SIGMA a b) t) -> 
+>          lambda $ \x -> do
+>            useOp splitOp [ return a
+>                          , return b
+>                          , return t
+>                          , tacF
+>                          , use x done ] done
+>     _ -> traceErr $ "split: current goal is " ++
+>                     show t ++ " but expected a Pi (Sigma . .) ."
+
+\pierre{I should tell a story above.}
+
+\subsection{Eliminating Descs}
+
+Same thing here, for the |Mu| eliminator:
+
+> foldDesc :: Tac VAL -> Tac VAL
+> foldDesc p = do
+>   t <- goal
+>   case t of 
+>     C (Pi (MU d) bp) ->
+>         lambda $ \v ->
+>             useOp elimOp [ return d
+>                          , return bp
+>                          , p
+>                          , use v done ] done
+>     _ -> traceErr $ "foldDesc: current goal is " ++
+>                     show t ++ " but expected a Pi (Mu .) ."
+>     
+
+\pierre{I should tell a story above, too.}
+
+\pierre{I should also come up with a general scheme for eliminators:
+        if you have seen Switch, Split, and Fold, you know that
+        something is happening.}
 
 \subsection{Using |Tac|}
 
