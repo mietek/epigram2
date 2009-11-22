@@ -421,8 +421,8 @@ With the computational behavior:
 >                                                                          , can $ Mu (use d done) ] done)
 >                                                            (lambda $ \v ->
 >                                                             use bp . apply (A $ can $ Con $ use v done) $ done))))
->       elimOpTac = lambda $ \d ->  -- Desc
->                   lambda $ \bp -> -- Mu d -> Set
+>       elimOpTac = lambda $ \d ->  -- (d : Desc)
+>                   lambda $ \bp -> -- (bp : Mu d -> Set)
 >                   lambda $ \p ->  -- (x : descOp d (Mu d)) -> (boxOp d (Mu d) bp x) -> bp (Con x)
 >                   lambda $ \v ->  -- (v : descOp d (Mu d))
 >                   use p . 
