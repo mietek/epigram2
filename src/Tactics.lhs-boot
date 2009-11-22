@@ -5,8 +5,12 @@
 > module Tactics (Tac,                          -- abstract Tactic
 >                 runTac,                       -- run tactics
 >                 goal, subgoal, discharge,     -- low-level combinators
->                 lambda, tyLambda, infr, can,  -- introduction rules
+>                 lambda, can,                  -- introduction rules
 >                 done, use, useOp, apply,      -- elimination rules
+>                 tyLambda, infr, chk, useTac,  -- out of context
+>                 switch, cases,                -- dealing with Enum
+>                 split,                        -- dealing with Sigma		  	 
+>		  foldDesc,                     -- dealing with Desc
 >                 trustMe                       -- build terms
 >                 ) where
 
@@ -26,10 +30,7 @@
 
 > discharge :: Rooty m => REF -> VAL -> m VAL
 > lambda :: (REF -> Tac VAL) -> Tac VAL
-> tyLambda :: (String :<: TY) -> (REF -> Tac (VAL :<: TY))
->                             -> Tac (VAL :<: TY)
 > can :: Can (Tac VAL) -> Tac VAL
-> infr :: (TY :>: Tac VAL) -> Tac (VAL :<: TY)
 
 > type Use = (VAL :<: TY) -> Tac VAL
 
@@ -40,5 +41,16 @@
 
 > switch :: Tac VAL -> Tac VAL
 > cases :: [Tac VAL] -> Tac VAL
+
+> split :: Tac VAL -> Tac VAL
+
+> tyLambda :: (String :<: TY) -> (REF -> Tac (VAL :<: TY))
+>                             -> Tac (VAL :<: TY)
+> infr :: (TY :>: Tac VAL) -> Tac (VAL :<: TY)
+> chk :: Tac (VAL :<: TY) -> Tac VAL
+> useTac :: Tac (VAL :<: TY) -> Elim (Tac VAL)
+>                            -> Tac (VAL :<: TY)
+
+> foldDesc :: Tac VAL -> Tac VAL
 
 > trustMe :: (TY :>: Tac VAL) -> VAL

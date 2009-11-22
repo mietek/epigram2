@@ -9,8 +9,12 @@
 > module Tactics (Tac,                         -- abstract Tactic
 >                 runTac,                      -- run tactics
 >                 goal, subgoal, discharge,    -- low-level combinators
->                 lambda, tyLambda, infr, can, -- introduction rules
+>                 lambda, can,                 -- introduction rules
 >                 done, use, useOp, apply,     -- elimination rules
+>                 tyLambda, infr, chk, useTac, -- out of context
+>                 switch, cases,               -- dealing with Enum
+>                 split,                       -- dealing with Sigma
+>                 foldDesc,                    -- dealing with Desc
 >                 trustMe                      -- build terms
 >                 ) where
 
