@@ -428,7 +428,7 @@ by a list of tactics. We simply build a tuple which satisfies the
 |branchesOp e P| type and can be fed to |switchOp|.
 
 > cases :: [Tac VAL] -> Tac VAL
-> cases [] = can Unit
+> cases [] = can Void
 > cases (p:ps) = can $ Pair p (cases ps)
 
 Here is a trivial example. We define the enumeration $\{1,2,3,4\}$:
