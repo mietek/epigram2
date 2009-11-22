@@ -198,47 +198,6 @@ you got the idea now.
 >                    ++ show pi ++ 
 >                    " against a Pi type"
 
-Similarly, we can also implement the typed lambda, for which variable
-types are known.
-
-\question{If |lambda| were a bit more polymorphic, we could use
-          it here, right? What about doing it?}
-
-\question{Is that right to use |equal| here? I think so.}
-
-> tyLambda :: (String :<: TY) -> (REF -> Tac (VAL :<: TY))
->                             -> Tac (VAL :<: TY)
-> tyLambda (name :<: s) body = do
->     r <- root
->     pi <- goal
->     case pi of 
->       C (Pi s' t) | equal (SET :>: (s,s')) r ->
->         Rooty.freshRef ("" :<: s) $
->                        \x -> do
->                              (body :<: ts) <- subgoal (t $$ A (pval x) :>: body x)
->                              v <- discharge x body
->                              t <- discharge x ts
->                              return $ v :<: C (Pi s t)
->       _ -> failTac $ "tyLambdaTac: could not match " ++ 
->                      "the current goal "
->                      ++ show pi ++ 
->                      " against a (Pi " ++ show s ++ ") type"
-
-
-To build a |Tac (VAL :<: TY)|, we need some help. This help is offered
-by |infr| that allows to give a hint to the tactics: 
-|infr (typ :>: tacV)| simply advertise the guess that |tacV| generates a value of
-type |typ|, a |Tac (VAL :<: TY)|.
-
-> infr :: (TY :>: Tac VAL) -> Tac (VAL :<: TY)
-> infr (typ :>: tacX) = 
->     fmap (\x -> (typ :<: x)) tacX
-
-\question{Is it right? Especially, is the code correct? I had an
-          heavyweight implementation looking at the current goal and
-          checking the types for equality. However, this was
-          meaningless considering the explanation above.}
-
 The second builder is significantly simpler, as we don't have to care
 about binding. Taking a canonical term containing well-typed values,
 |can| builds a well-typed (canonical) value. 
@@ -390,6 +349,71 @@ And here is the twice function:
 >                           (arrTac (use x done)
 >                                   (use x done)))
 > twiceTT = SET
+
+\subsection{Out of context tactics}
+
+Having a |Tac (VAL :<: TY)| at hand is always a good thing. Such a
+beast can be reduced to a value, under any goal, because it doesn't
+look at the goal to build the value: it is here, on the right. 
+
+To prove that, we proceed by induction: a |Tac (VAL :<: TY)| is either
+built from another |Tac (VAL :<: TY)| (see |useTac|, |tyLambda|), or
+from a |(TY :>: Tac VAL)|, using |infr|. The base case, |infr|, does
+not make use of the current context, as it relies on |subgoal| to
+check the value and type it is provided. In the inductive case, the
+tactics are not relying on the goal and are only provided
+context-independent tactics (by induction hypothesis). Qed.
+
+\pierre{At some point, I think that this should be related to the |Ok|
+        tactics, ``the tactics you can always trust'' says the ad.}
+
+
+Hence, we can implement the typed lambda, for which variable types are
+known.
+
+> tyLambda :: (String :<: TY) -> (REF -> Tac (VAL :<: TY))
+>                             -> Tac (VAL :<: TY)
+> tyLambda (name :<: s) body =
+>     Rooty.freshRef ("" :<: s) $ \x -> do
+>         (vx :<: tx) <- body x -- out of context
+>         v <- discharge x vx
+>         t <- discharge x tx
+>         return $ v :<: C (Pi s t)
+
+
+To build a |Tac (VAL :<: TY)|, we need some help:
+
+> infr :: (TY :>: Tac VAL) -> Tac (VAL :<: TY)
+> infr (typ :>: tacX) = do
+>     v <- subgoal (typ :>: tacX)
+>     return $ v :<: typ
+
+Our efforts are rewarded by the ability to apply an eliminator to a
+tactics, and get a typed tactics back:
+
+> useTac :: Tac (VAL :<: TY) -> Elim (Tac VAL)
+>                            -> Tac (VAL :<: TY)
+> useTac tacf etacx = do
+>     (v :<: t) <- tacf  -- out of context
+>     case t of
+>       C tv -> do
+>               (e,t) <- elimTy chev (v :<: tv) etacx
+>               let e' = fmap (\(_ :=>: v) -> v) e
+>               return $ v $$ e' :<: t
+>       _ -> traceErr $ "useTac: inferred type " ++
+>                       show t ++ " is not a Constructor"
+>     where chev (t :>: x) = do
+>             v <- subgoal (t :>: x)
+>             return $ x :=>: v
+
+At last, we can get a normal tactics out of typed one, with a bit of
+checking:
+
+> chk :: Tac (VAL :<: TY) -> Tac VAL
+> chk tacVT = do
+>   (v :<: t) <- tacVT -- out of context
+>   done $ v :<: t
+
 
 \subsection{Building functions on |EnumT|}
 
