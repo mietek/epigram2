@@ -58,7 +58,7 @@ Elimination rules:
 \noLine
 \UnaryInfC{|Sigma A B :>: t|}
 \RightLabel{Sigma-elim}
-\BinaryInfC{|Sigma S T :>: Pair x y|}
+\BinaryInfC{|C t :>: split(A,B,f,t)|}
 \end{prooftree}
 
 With the following computational behavior:
