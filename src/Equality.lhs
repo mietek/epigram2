@@ -45,12 +45,16 @@ Elimination rules:
 \noLine
 \UnaryInfC{|y1 :>: t1|}
 \RightLabel{eqGreen-elim}
-\BinaryInfC{Prop :>: eqGreen(y0,t0,y1,t1)}
+\BinaryInfC{|Prop :>: eqGreen(y0,t0,y1,t1)|}
 \end{prooftree}
 
 With some computational behavior:
 
-< eqGreen = ???
+< eqGreen(Set, C t0, Set, C t1) :-> {- $\wedge_{(t0',t1') \in [t0,t1]}$ -} eqGreen(canTy t0', t0', canTy t0', t1')
+< eqGreen(Pi s1 t1, f1, Pi s2 t2, f2) :-> All s1 (\x1 -> All s2 (\x2 ->
+<                                         Imp (EqBlue(s2 :>: x2) (s1 :>: x1))
+<                                             (eqGreen(t1 x1, f1 x1, t2 x2, f2 x2))))
+< eqGreen(...) :-> (...) -- defined by aspect OpRunEqGreen
 
 \begin{prooftree}
 \AxiomC{|Set :>: x|}
@@ -64,7 +68,11 @@ With some computational behavior:
 
 With some computational behavior:
 
-< coe = ???
+< coe(C x, C y, q, s) :-> Absurd -- if x and y of distinct arity
+< coe(Pi x1 y1, Pi x2 y2, q, f) :-> \s1 -> coe( y2 s2, y1 s1, q s2 s1 q2, f s2)
+<     where  s2 = coe(x2, x1, fst q, s1)
+<            q2 = coh(x2, x1, fst q, s1)
+< coe(...) = (...) -- defined by the aspect Coerce
 
 \begin{prooftree}
 \AxiomC{|Set :>: x|}

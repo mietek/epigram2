@@ -35,23 +35,10 @@ Introduction rules:
 \end{prooftree}
 
 \begin{prooftree}
-\AxiomC{}
-\RightLabel{NilE-intro-2}
-\UnaryInfC{|EnumU :>: (NilE == NilE)|}
-\end{prooftree}
-
-\begin{prooftree}
 \AxiomC{|UId :>: t|}
 \AxiomC{|EnumU :>: e|}
 \RightLabel{ConsE-Intro-1}
 \BinaryInfC{|EnumU :>: ConsE t e|}
-\end{prooftree}
-
-\begin{prooftree}
-\AxiomC{|UId :>: (t1 == t2)|}
-\AxiomC{|EnumU :>: (e1 == e2)|}
-\RightLabel{ConsE-intro-2}
-\BinaryInfC{|EnumU :>: (ConsE t1 e1 == ConsE t2 e2)|}
 \end{prooftree}
 
 \begin{prooftree}
@@ -61,21 +48,9 @@ Introduction rules:
 \end{prooftree}
 
 \begin{prooftree}
-\AxiomC{}
-\RightLabel{Ze-intro-2}
-\UnaryInfC{|Set :>: (EnumT (Cons t1 e1) :>: Ze == EnumT (Cons t2 e2) :>: Ze)|}
-\end{prooftree}
-
-\begin{prooftree}
 \AxiomC{|EnumT e :>: n|}
 \RightLabel{Su-intro-1}
 \UnaryInfC{|EnumT (ConsE t e) :>: Su n|}
-\end{prooftree}
-
-\begin{prooftree}
-\AxiomC{|Set :>: (EnumT e1 :>: n1 == EnumT e2 :>: n2)|}
-\RightLabel{Su-intro-2}
-\UnaryInfC{|Set :>: (EnumT (Cons t1 e1) :>: Su n1 == EnumT (Cons t2 e2) :>: Su n2)|}
 \end{prooftree}
 
 Elimination rules:
@@ -108,7 +83,15 @@ With the following computational behavior:
 < switch (ConsE t e') P ps Ze :-> fst ps
 < switch (ConsE t e') P ps (Su n) :-> switch(e', \x -> P (Su x), snd ps, n)
 
+Equality rules:
 
+< eqGreen(EnumU, NilE, EnumU, NilE) :-> Trivial
+< eqGreen(EnumU, ConsE t1 e1, EnumU, ConsE t2 e2) :->
+<     And (eqGreen(UId, t1, UId, t2))
+<         (eqGreen(EnumU, e1, EnumU, e2))
+< eqGreen(EnumT (ConsE _ e1), Ze, EnumT (ConsE _ e2), Ze) :-> Trivial
+< eqGreen(EnumT (ConsE _ e1), Su n1, EnumT (ConsE _ e2), Su n2) :->
+<     eqGreen(EnumT e1, n1, EnumT e2, n2)
 
 
 > import -> CanConstructors where

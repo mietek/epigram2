@@ -14,8 +14,6 @@
 
 \question{How do we handle the |Fst| and |Snd| eliminators?}
 
-\question{What about equality and coercion?}
-
 
 Formation rules:
 
@@ -64,6 +62,23 @@ Elimination rules:
 With the following computational behavior:
 
 < split _ _ _ f t = f (fst t) (snd t)
+
+Equality rules:
+
+< eqGreen(Unit, _, Unit, _) :-> Trivial
+< eqGreen(Sigma s1 t1, p1, Sigma s2 t2, p2) :->
+<     And (eqGreen(s1, fst p1, s2, fst p2))
+<         (eqGreen(t1 (fst p1), snd p1, t2 (fst p2), snd p2))
+
+Coercion rule:
+
+\question{At first glance, the coerce rule does not respect the
+          definition of the OTT paper.}
+
+< coe(Sigma x1 y1, Sigma x2 y2, q, f) :-> 
+<     \s1 -> coe(y2 s2, y1 s1, q s2 s1 q2, f s2)
+<         where s2 = coe(x2, x1, fst q, s1)
+<               q2 = coh(x2, x1, fst q, s1)
 
 
 > import -> CanConstructors where

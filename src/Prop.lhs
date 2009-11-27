@@ -12,7 +12,6 @@
 
 \question{Do the Formation/Introduction/\ldots names make sense?}
 \question{How to handle the eliminators?}
-\question{Equality?}
 \question{Eta expansion?}
 
 Formation rules:
@@ -88,6 +87,15 @@ Elimination rules:
 \end{prooftree}
 
 With no computational rule (!)
+
+Equality rules:
+
+< eqGreen(Prop, t1, Prop, t2) :-> And (Imp t1 t2) (Imp t2 t1)
+
+\question{Can we really say that all terms of any proofs are equal?
+          Even if they are terms of distinct proofs?}
+
+< eqGreen(Prf _, _, Prf _, _) :-> Trivial
 
 > import -> CanConstructors where
 >   Prop    :: Can t

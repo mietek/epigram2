@@ -32,6 +32,11 @@ Introduction rules:
 \UnaryInfC{|UId :>: (Tag s1 == Tag s2)|}
 \end{prooftree}
 
+Equality rules:
+
+< eqGreen(UId, Tag s1, UId, Tag s2) :-> Trivial -- if s1 == s2
+< eqGreen(UId, Tag s1, UId, Tag s2) :-> Absurd  -- otherwise
+
 > import -> CanConstructors where
 >   UId    :: Can t
 >   Tag    :: String -> Can t

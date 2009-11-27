@@ -12,7 +12,6 @@
 
 \question{Do the Formation/Introduction/\ldots names make sense?}
 \question{How to handle the eliminators?}
-\question{Equality?}
 
 Formation rules:
 
@@ -120,6 +119,19 @@ With the computational behavior:
 With the computational behavior:
 
 < elim d bp p (Con v) :-> p v (mapbox(d, Mu d, bp, (\x -> elim d bp p x), v))
+
+Equality rules:
+
+< eqGreen(Desc, Done, Desc, Done) :-> Trivial
+< eqGreen(Desc, Arg x1 y1, Desc, Arg x2 y2) :-> 
+<     And (eqGreen(Set, x1, Set, x2))
+<         (eqGreen(x1 -> Desc, y1, x1 -> Desc, y2))
+< eqGreen(Desc, Ind x1 y1, Desc, Ind x2 y2) :->
+<     And (eqGreen(Set, x1, Set, x2))
+<         (eqGreen(Desc, y1, Desc, y2))
+< eqGreen(Mu d1, x1, Mu d2, x2) :->
+<     eqGreen(descOp @@ [d1, Mu d1], Out x1,
+<             descOp @@ [d2, Mu d2], Out x2) 
 
 > import -> CanConstructors where
 >   Desc   :: Can t

@@ -448,9 +448,11 @@ constructors to make them easier to swallow.
 > import <- SugarTactics
 
 
-\subsection{Equality?}
+\subsection{Observational Equality}
 
-\question{Why Green? Why here? Why so unreadable? Why, but why???}
+\question{|mkEqConj| does not respect contravariance in the |Pi| rule,
+          and, in general, does not introduce quantifiers. At first
+          glance, this contradicts the definition in the OTT paper.}
 
 > mkEqConj :: [(TY :>: VAL,TY :>: VAL)] -> VAL
 > mkEqConj ((y0 :>: t0,y1 :>: t1) : []) = eqGreen @@ [y0,t0,y1,t1]
@@ -467,9 +469,9 @@ constructors to make them easier to swallow.
 >    Just x  -> Right $ mkEqConj (trail x)
 >    where
 >    Just t0' = canTy (\tx@(t :>: x) -> Just (tx :=>: x)) (Set :>: t0)
->    Just t0'' = traverse (\(x :=>: y) -> Just x) t0'
+>    t0'' = fmap (\(x :=>: y) -> x) t0'
 >    Just t1' = canTy (\tx@(t :>: x) -> Just (tx :=>: x)) (Set :>: t1)
->    Just t1'' = traverse (\(x :=>: y) -> Just x) t1'
+>    t1'' = fmap (\(x :=>: y) -> x) t1'
 > import <- OpRunEqGreen
 > opRunEqGreen [C (Pi s1 t1),f1,C (Pi s2 t2),f2] = Right $ trustMe (runEqGreenType :>: runEqGreenTac)
 >                                                          $$ A s1 $$ A t1 $$ A f1 $$ A s2 $$ A t2 $$ A f2
@@ -520,7 +522,8 @@ constructors to make them easier to swallow.
 
 < opRunEqGreen [C y0,_,C y1,_] = Right TRIVIAL
 
-\question{Same question, excepted for its color\ldots}
+\question{At first glance, the coerce rule for |Pi| does not respect
+          the definition of the OTT paper.}
 
 > coerce :: (Can (VAL,VAL)) -> VAL -> VAL -> VAL
 > coerce (Pi (x1,x2) (y1,y2))    q f = 
