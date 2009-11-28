@@ -15,10 +15,13 @@
 
 > import BwdFwd
 > import Developments
+> import DevLoad
 > import PrettyPrint
 > import Root
 > import Rooty
+> import Rules
 > import Tm
+> import MissingLibrary
 
 %endif
 
@@ -60,6 +63,11 @@ thereby giving a list of entries that are currently in scope.
 > auncles (ls, (es, _, _)) = foldMap elders ls <+> es
 
 
+> boys :: Bwd Entry -> Bwd Entry
+> boys = ffilter isBoy
+>     where isBoy (E _ _ (Boy _)) = True
+>           isBoy (E _ _ (Girl _ _)) = False
+
 \subsection{Proof State Monad}
 
 The proof state monad provides access to the |ProofContext| as in a |State| monad,
@@ -83,6 +91,11 @@ updated information, providing a friendlier interface than |get| and |put|.
 
 > getDev :: ProofState Dev
 > getDev = gets snd
+
+> getDevEntries :: ProofState (Bwd Entry)
+> getDevEntries = do
+>     (es, _, _) <- getDev
+>     return es
 
 > getDevRoot :: ProofState Root
 > getDevRoot = do
@@ -114,10 +127,20 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     (es, tip, _) <- getDev
 >     putDev (es, tip, r)
 
+> putDevTip :: Tip -> ProofState ()
+> putDevTip tip = do
+>     (es, _, r) <- getDev
+>     putDev (es, tip, r)
+
 > putLayer :: Layer -> ProofState ()
 > putLayer l = do
 >     (ls, dev) <- get
 >     put (ls :< l, dev)
+
+> putMother :: REF -> ProofState ()
+> putMother ref = do
+>     l <- getLayer
+>     putLayer l{mother=ref}
 
 > removeLayer :: ProofState Layer
 > removeLayer = do
@@ -136,6 +159,12 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     (ls :< l', dev) <- get
 >     put (ls :< l, dev)
 >     return l'
+
+TODO: updateMother should replace the RKind in the reference
+with the given one. 
+
+> updateMother :: RKind -> ProofState ()
+> updateMother k = undefined
 
 
 A |ProofState| is not |Rooty| because the semantics of the latter are not compatible
@@ -210,20 +239,62 @@ is not in the required form.
 >             _ -> putLayer l{cadets=es} >> goDownAcc (acc :< e)
 
 
-The slightly dubious |appendBinding| and |appendGoal| commands add entries to the
-working development, without type-checking.
+\subsubsection{Construction Commands}
 
-> appendBinding :: (String :<: TY) -> BoyKind -> ProofState ()
-> appendBinding x k = getDevRoot >>=
->     Root.freshRef x (\ref r -> putDevEntry (E ref (lastName ref) (Boy k)) >> putDevRoot r)
 
-> appendGoal :: (String :<: TY) -> ProofState ()
-> appendGoal (s:<:ty) = do
+> make :: (String :<: INTM) -> ProofState ()
+> make (s:<:ty) = do
 >     root <- getDevRoot
+>     () <- lift (check (SET :>: ty) root)
+>     let ty' = eval ty B0
 >     n <- withRoot (flip name s)
->     putDevEntry (E (n := HOLE :<: ty) (last n) (Girl LETG (B0, Unknown ty, room root s)))
+>     putDevEntry (E (n := HOLE :<: ty') (last n) (Girl LETG (B0, Unknown ty', room root s)))
 >     putDevRoot (roos root)
 
+> piBoy :: (String :<: INTM) -> ProofState ()
+> piBoy (s:<:ty) = do
+>     Unknown SET <- getDevTip     
+>     root <- getDevRoot
+>     () <- lift (check (SET :>: ty) root)
+>     let ty' = eval ty B0
+>     Root.freshRef (s :<: ty')
+>         (\ref r -> putDevEntry (E ref (lastName ref) (Boy (PIB ty))) >> putDevRoot r) root
+
+> lambdaBoy :: String -> ProofState ()
+> lambdaBoy x = do
+>     Unknown (C (Pi s t)) <- getDevTip
+>     root <- getDevRoot
+>     Root.freshRef (x :<: s)
+>         (\ref r -> do
+>            putDevEntry (E ref (lastName ref) (Boy LAMB))
+>            putDevTip (Unknown (t $$ A (N (P ref))))
+>            putDevRoot r
+>          ) root
+
+TODO: give should also propagate the change to the reference downwards through
+the proof state. (Which could then cause many further changes.)
+
+> give :: INTM -> ProofState ()
+> give tm = do
+>     Unknown tipTy <- getDevTip
+>     root <- getDevRoot
+>     () <- lift (check (tipTy :>: tm) root)
+>     putDevTip (Defined tm tipTy)
+>     loc <- get
+>     let aus = auncles loc
+>     sibs <- getDevEntries
+>     let tm' = eval (lambdaLift aus sibs tm) B0
+>     updateMother (DEFN tm')
+
+> lambdaLift :: Bwd Entry -> Bwd Entry -> INTM -> INTM
+> lambdaLift auncles siblings = globalLLift (boys auncles) . localLPLift (boys siblings)
+
+> localLPLift :: Bwd Entry -> INTM -> INTM
+> localLPLift (es :< E _ (s, _) (Boy LAMB)) tm = localLPLift es (L (s :. tm))
+> localLPLift (es :< E _ (s, _) (Boy (PIB t))) tm = localLPLift es (C (Pi t (L (s :. tm))))
+
+> globalLLift :: Bwd Entry -> INTM -> INTM
+> globalLLift (es :< E _ (s, _) (Boy _)) tm = globalLLift es (L (s :. tm))
 
 \subsubsection{Goal Search Commands}
 
@@ -290,8 +361,30 @@ Here we have a very basic command-driven interface to the proof state monad.
 > elabParse ("module":_)     = much goOut   >> return "Going to module..."
 > elabParse ("prev":_)     = prevGoal     >> return "Searching for previous goal..."
 > elabParse ("next":_)     = nextGoal     >> return "Searching for next goal..."
-> elabParse ("bind":s:_)   = appendBinding (s :<: C Set) LAMB >> return "Appended binding!"
-> elabParse ("goal":s:_)   = appendGoal (s :<: C Set) >> return "Appended goal!"
+
+> elabParse ("make":x:":":tss)   = do
+>     c <- get
+>     ty <- lift (parseTerm (unwords tss) (auncles c))
+>     make (x :<: ty)
+>     goIn
+>     return "Appended goal!"
+
+> elabParse ("pi":x:":":tss) = do
+>     c <- get
+>     ty <- lift (parseTerm (unwords tss) (auncles c))
+>     piBoy (x :<: ty)
+>     return "Made pi boy!"
+
+> elabParse ("lambda":x:_) = do
+>     lambdaBoy x
+>     return "Made lambda boy!"
+
+> elabParse ("give":tss) = do
+>     c <- get
+>     tm <- lift (parseTerm (unwords tss) (auncles c))
+>     give tm
+>     return "Thank you."
+
 > elabParse ("auncles":_)  = get >>= return . showEntries . (<>> F0) . auncles
 > elabParse _ = return "???"
 

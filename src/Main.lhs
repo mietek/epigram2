@@ -29,10 +29,10 @@
 >           "         --epic <options>   Send further options to epic\n"
 
 > pipe :: String -> String
-> pipe = foldMap (foldMap tokOut) . snd . coreLoad . layout . tokenize
+> pipe = foldMap (foldMap tokOut) . snd . devLoad . layout . tokenize
 
 > pipeT :: String -> String
-> pipeT = (++ "\n") . show . fst . coreLoad . layout . tokenize
+> pipeT = (++ "\n") . show . fst . devLoad . layout . tokenize
 
 > main :: IO ()
 > -- main = interact pipeT
@@ -53,7 +53,7 @@ Read input, compile to 'epi.out'
 
 This was the old behaviour:
 
->            let dev = (fst . coreLoad . layout . tokenize) inp
+>            let dev = (fst . devLoad . layout . tokenize) inp
 >            print dev
 
 Pull out the definitions, and, if the -o flag has been used, output an executable

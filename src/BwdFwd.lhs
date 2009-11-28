@@ -56,7 +56,11 @@ Backward and forward lists, applicative with zipping.
 >   mempty = B0
 >   mappend xs B0          = xs
 >   mappend xs (ys :< y)  = mappend xs ys :< y
->
+
+> instance Alternative Bwd where
+>   empty = mempty
+>   (<|>) = mappend
+
 > instance Monoid (Fwd x) where
 >   mempty = F0
 >   mappend F0         ys  = ys

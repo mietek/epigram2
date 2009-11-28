@@ -165,9 +165,6 @@ Elim forms inherited from elsewhere
 >   canTy _   (Prf TRIVIAL :>: Void)       = return Void
 
 
-> import -> ElimPretty where
->   prettyElim ss UnBox = text "UnBox"
-
 > import -> ElimTyRules where
 >   elimTy chev (f :<: Prf (ALL p q))      (A e)  = do
 >     eev@(e :=>: ev) <- chev (p :>: e)

@@ -1,13 +1,13 @@
 \section{DevLoad}
 
-This module exists to provide the |coreLoad| function.
+This module mostly exists to provide the |devLoad| function.
 
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE TypeOperators #-}
 
-> module DevLoad (coreLoad) where
+> module DevLoad (devLoad, parseTerm) where
 
 > import Control.Monad
 > import Control.Monad.Writer
@@ -21,6 +21,7 @@ This module exists to provide the |coreLoad| function.
 
 > import BwdFwd
 > import Tm
+> import Layout
 > import Lexer
 > import Parsley
 > import TmParse
@@ -214,9 +215,15 @@ This module exists to provide the |coreLoad| function.
 >     return (tell [ts] >> makeFun gs d tss)
 
 
-|coreLoad| takes a |[[Tok]]| as produced by |layout|, and converts it
+The |devLoad| function takes a |[[Tok]]| as produced by |layout|, and converts it
 to a |Module| development. It returns the |Dev| produced, and a
 |[[Tok]]| with any lines that fail to type-check commented out.
 
-> coreLoad :: [[Tok]] -> (Dev, [[Tok]])
-> coreLoad tss = runWriter (makeFun B0 (B0, Module, (B0, 0)) tss)
+> devLoad :: [[Tok]] -> (Dev, [[Tok]])
+> devLoad tss = runWriter (makeFun B0 (B0, Module, (B0, 0)) tss)
+
+
+\question{Should this really just ignore the tail?}
+
+> parseTerm :: String -> Bwd Entry -> Maybe INTM
+> parseTerm s es = parse (pINTM es) . (!! 1) . layout . tokenize $ s

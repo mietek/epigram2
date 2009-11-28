@@ -40,7 +40,6 @@
 %include Rules.lhs
 %include Tactics.lhs
 %include Developments.lhs
-%include DevLoad.lhs
 %include Construction.lhs
 %include Update.lhs
 
@@ -60,6 +59,7 @@
 %include Lexer.lhs
 %include Layout.lhs
 %include TmParse.lhs
+%include DevLoad.lhs
 %include PrettyPrint.lhs
 
 \chapter{Compiler}
