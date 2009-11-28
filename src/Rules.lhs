@@ -431,6 +431,7 @@ In this section, we weave some She aspects. In particular, we bring
 inside @Rules.lhs@ the |OpCode|s and |Operators| defined in the
 various Features.
 
+> import <- Axioms
 > import <- OpCode
 >
 > operators :: [Op]
@@ -527,15 +528,15 @@ constructors to make them easier to swallow.
 
 > coerce :: (Can (VAL,VAL)) -> VAL -> VAL -> VAL
 > coerce (Pi (x1,x2) (y1,y2))    q f = 
->              eval [.x1.x2.y1.y2.q.f.
->                   (L $ "" :. [.s1.
+>              eval [.x1.x2.y1.y2.q.f.coh.
+>                   (L $ "" :. [.s.
 >                     (let
->                     s2 = N (coe :@ [NV x2,NV x1,N (V q :$ Fst),NV s1])
->                     q2 = N (coh :@ [NV x2,NV x1,N (V q :$ Fst),NV s1])
+>                     cs = N (coe :@ [NV x2,NV x1,N (V q :$ Fst :$ Sym),NV s])
+>                     q2 = N (V coh :$ A (NV x2) :$ A (NV x1) :$ A (N (V q :$ Fst :$ Sym)) :$ A (NV s))
 >                     in
->                     N $ coe :@ [N (V y2 :$ A s2),
->                                 y1 $# [s1],
->                                 N (V q :$ A s2 :$ A (NV s1) :$ A q2),
->                                 N (V f :$ A s2)])])]
->                    (B0 :< x1 :< x2 :< y1 :< y2 :< q :< f)
+>                     N $ coe :@ [N (V y1 :$ A cs),
+>                                 y2 $# [s],
+>                                 N (V q :$ Snd :$ A (NV s) :$ A cs :$ A q2),
+>                                 N (V f :$ A cs)])])]
+>                    (B0 :< x1 :< x2 :< y1 :< y2 :< q :< f :< (pval coh))
 > import <- Coerce

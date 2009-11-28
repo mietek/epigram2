@@ -112,6 +112,23 @@ With no computational behavior.
 >     ppv@(p :=>: pv) <- chev (PRF (eqGreen @@ [y0, t0, y1, t1]) :>: p)
 >     return $ Con ppv
 
+> import -> ElimConstructors where
+>  Sym :: Elim t 
+
+> import -> ElimComputation where
+>   VOID $$ Sym = VOID
+>   (PAIR a b) $$ Sym = PAIR (a $$ Sym) (b $$ Sym)
+>   L body $$ Sym = eval [.f.
+>                         (L $ "" :. [.y. 
+>                          (L $ "" :. [.x.
+>                           (L $ "" :. [.q.
+>                             N $ V f :$ (A $ NV x)
+>                                     :$ (A $ NV y) 
+>                                     :$ (A $ N $ V q :$ Sym) 
+>                                     :$ Sym  ])])])] $ 
+>                         B0 :< (L body)
+>   
+
 > import -> ElimTyRules where
 >   elimTy chev (_ :<: Prf (EQBLUE (t0 :>: x0) (t1 :>: x1))) Out = return (Out, PRF (eqGreen @@ [t0 , x0 , t1 , x1]))
 
@@ -156,24 +173,34 @@ With no computational behavior.
 >            oprun [x,N y,q,s] = Left y
 >            oprun _ = undefined
 >
->   coh = Op { opName = "coh"
->            , opArity = 4
->            , opTy = opty
->            , opRun = oprun
->            } where
->            opty chev [x,y,q,s] = do
->              (x :=>: xv) <- chev (SET :>: x)
->              (y :=>: yv) <- chev (SET :>: y)
->              (q :=>: qv) <- chev (PRF (EQBLUE (SET :>: xv) (SET :>: yv)) :>: q)
->              (s :=>: sv) <- chev (xv :>: s)
->              return ([ x :=>: xv
->                      , y :=>: yv
->                      , q :=>: qv
->                      , s :=>: sv ]
->                     , PRF (EQBLUE (xv :>: sv) 
->                            (yv :>: coe @@ [xv,yv,qv,sv])))
->            oprun :: [VAL] -> Either NEU VAL
->            oprun [C x,C y,q,s] = Left undefined
+> import -> Axioms where
+>   coh = [("Axiom",0),("coh",0)] := (DECL :<: cohType)
+>       where cohType = trustMe (SET :>: cohTypeTac)
+>             cohTypeTac 
+>              = can $ Pi (can Set)
+>                         (lambda $ \x ->
+>                          can $ Pi (can Set)
+>                                   (lambda $ \y ->
+>                                    can $ Pi (can $ Prf (can $ EqBlue (can Set :>: use x done)
+>                                                                      (can Set :>: use y done)))
+>                                             (lambda $ \q ->
+>                                              can $ Pi (use x done)
+>                                                       (lambda $ \s ->
+>                                                        can $ Prf (can $ EqBlue (use x done :>: use s done)
+>                                                                                (use y done :>: useOp coe [ use x done 
+>                                                                                                          , use y done
+>                                                                                                          , use q done
+>                                                                                                          , use s done ] done))))))
+>
+>   refl = [("Axiom",0),("refl",0)] := (DECL :<: reflType)
+>          where reflType = trustMe (SET :>: reflTypeTac)
+>                reflTypeTac = can $ Pi (can Set)
+>                                       (lambda $ \s ->
+>                                        can $ Pi (use s done)
+>                                                 (lambda $ \x ->
+>                                                  can $ Prf (can $ EqBlue (use s done :>: use x done)
+>                                                                          (use s done :>: use x done))))
+>
 
 > import -> Operators where
 >   eqGreen :

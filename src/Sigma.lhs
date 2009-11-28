@@ -191,6 +191,10 @@ Coercion rule:
 
 > import -> Coerce where
 >   coerce (Sigma (x1,x2) (y1,y2)) q p = 
->     PAIR (coe @@ [x1,x2,q $$ Fst,p $$ Fst]) 
->          (coe @@ [y1,y2,q $$ Snd,p $$ Snd]) 
+>     PAIR s1
+>          (coe @@ [ y1 $$ (A $ p $$ Fst)
+>                  , y2 $$ (A s1)
+>                  , q $$ Snd $$ (A (p $$ Fst)) $$ A s1 $$ A (pval coh $$ A x1 $$ A x2 $$ A (q $$ Fst) $$ A (p $$ Fst))
+>                  , p $$ Snd]) 
+>         where s1 = coe @@ [x1,x2,q $$ Fst,p $$ Fst]
 >   coerce Unit        q s = s
