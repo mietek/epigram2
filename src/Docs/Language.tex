@@ -1,5 +1,43 @@
 \section{Language}
 
+
+\newcommand{\SC}{\textsc}
+\newcommand{\lgb}{\langle}
+\newcommand{\rgb}{\rangle}
+\newcommand{\gb}[1]{\left<{#1}\right>}
+\[
+\begin{array}{rll}
+\SC{InTm} ::= & \verb!*! & \mbox{Set} \\
+            | & \verb!(!\SC{Nom}\verb! : !\SC{InTm} \verb!) -> ! \SC{InTm} 
+                & \mbox{\(\Pi\)-type}\\
+            | & \SC{InTm} \verb! -> ! \SC{InTm}  & \mbox{nondependent function type}\\
+            | & \verb!\! \SC{Nom}^* \verb! -> ! \SC{InTm} & \mbox{\(\lambda\)-abstraction}\\
+            | & \verb!#! & \mbox{Prop} \\
+            | & \verb!:- ! \SC{InTm} & \mbox{set of proofs} \\
+            | & \verb!(!\SC{Sig}\verb!)! & \mbox{`record' signature} \\
+            | & \verb![]! & \mbox{void}\\
+            | & \verb![!\SC{InTm}^+\:\lgb\verb!/ !\SC{InTm}\rgb^?\verb!]! & \mbox{tuple}\\
+            | & \verb!{!\SC{Nom}^*\:\lgb\verb!/ !\SC{InTm}\rgb^?\verb!}! &
+ \mbox{enumeration}\\
+            | & \verb!(!\SC{InTm}\verb!)! & \mbox{grouping} \\
+            | & \SC{ExTm} & \mbox{term with synthesizable type} \medskip \\
+\SC{Sig} ::= & \varepsilon & \mbox{unit signature} \\
+           | & \lgb\SC{Nom}\verb! : !\rgb^? \SC{InTm}\:
+               \lgb\verb!; !|\verb!:- !\rgb \lgb\SC{InTm}|\SC{Sig}\rgb
+                  & \mbox{\(\Sigma\)-type} \medskip \\
+\SC{ExTm} ::= & \SC{InTm}\verb! : !\SC{InTm} \\
+            | & \SC{Nom}\lgb\verb!^!\SC{Nat}\rgb \\
+            | & \SC{ExTm}\:\SC{InTm} \\
+            | & \SC{ExTm}\:\verb|!| & \mbox{car} \\
+            | & \SC{ExTm}\:\verb!-! & \mbox{cdr} \\
+\end{array}
+\]
+
+and more to come.
+
+
+
+
 At present, this section only contains a few meaningless scribbles on the 
 proposed concrete syntax for types. We would like to write:
 
