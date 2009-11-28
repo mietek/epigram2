@@ -18,18 +18,20 @@
 
 %endif
 
+> type PrettyENV = Bwd (Either String VAL)
+
 The following uses the |HughesPJ| pretty-printing combinators.
 \question{Is passing a list of |String|s the best way to handle scopes?}
 
-> prettyBinder :: String -> Doc
-> prettyBinder ""  = text "\"\""
-> prettyBinder x   = text x
+> renameBinder :: PrettyENV -> String -> String
+> renameBinder e ""  = '_': (show (bwdLength e))
+> renameBinder _ x   = x
 
-> prettyCan :: ENV -> Can (Tm {d, p} REF) -> Doc
+> prettyCan :: PrettyENV -> Can (Tm {d, p} REF) -> Doc
 > prettyCan e Set       = text "*"
 > prettyCan e (Pi s (L (K t)))  = parens (sep [pretty e s <+> text "->", pretty e t])
-> prettyCan e (Pi s (L (x :. t))) = parens (sep [
->     parens (prettyBinder x <+> text ":" <+> pretty e s) <+> text "->", pretty e t])
+> prettyCan e (Pi s (L (x :. t))) = let y = renameBinder e x in
+>     parens (sep [parens (text y <+> text ":" <+> pretty e s) <+> text "->", pretty (e :< Left y) t])
 > prettyCan e (Pi s t)  = text "Pi" <+> (parens (pretty e s) $$ parens (pretty e t))
 > prettyCan e (Con x)   = pretty e x
 > import <- CanPretty
@@ -46,7 +48,7 @@ The following uses the |HughesPJ| pretty-printing combinators.
 >           prettyEntries (es :< E ref _ (Girl LETG d)) = prettyEntries es
 >               $$ text "Girl" <+> prettyRef B0 ref $$ nest 4 (prettyDev d)
 
-> prettyElim :: ENV -> Elim (Tm {d, p} REF) -> Doc
+> prettyElim :: PrettyENV -> Elim (Tm {d, p} REF) -> Doc
 > prettyElim e (A t)  = pretty e t
 > prettyElim e Out    = text "Out"
 > import <- ElimPretty
@@ -55,36 +57,39 @@ The following uses the |HughesPJ| pretty-printing combinators.
 > prettyName :: Name -> String                
 > prettyName = intercalate "." . fst . unzip
 
-> prettyRef :: ENV -> REF -> Doc
-> prettyRef ss (ns := k :<: ty) = text (prettyName ns) <+> prettyRKind k <+> prettyVAL ss ty
+> prettyRef :: PrettyENV -> REF -> Doc
+> prettyRef e (ns := k :<: ty) = text (prettyName ns) <+> prettyRKind k <+> prettyVAL e ty
 >     where prettyRKind :: RKind -> Doc
 >           prettyRKind DECL      = text ":"
->           prettyRKind (DEFN v)  = text ":=" <+> prettyVAL ss v <+> text ":"
+>           prettyRKind (DEFN v)  = text ":=" <+> prettyVAL e v <+> text ":"
 >           prettyRKind HOLE      = text ":= ? :"
 
-> prettyScope :: ENV -> Scope p REF -> Doc
-> prettyScope ss (x :. t)   = parens (prettyBinder x <+> text ":." <+> prettyTm (ss :< SET) t)
-> prettyScope ss (H g x t)  = parens (text "\\" <> prettyBinder x <> text "."
->     <+> prettyTm (ss BwdFwd.<+> g :< SET) t)
-> prettyScope ss (K t) = parens (text "\\_." <+> pretty ss t)
+> prettyScope :: PrettyENV -> Scope p REF -> Doc
+> prettyScope e (x :. t)   = let y = renameBinder e x in
+>     parens (text y <+> text ":." <+> prettyTm (e :< Left y) t)
+> prettyScope e (H g x t)  = let y = renameBinder e x in
+>     parens (text "\\" <> text y <> text "." <+> prettyTm (e BwdFwd.<+> (fmap Right g) :< Left y) t)
+> prettyScope e (K t) = parens (text "\\_." <+> pretty e t)
 
 > prettyTip :: Tip -> Doc
 > prettyTip Module           = text "Module"
 > prettyTip (Unknown ty)     = text "? :" <+> prettyVAL B0 ty
 > prettyTip (Defined tm ty)  = pretty B0 tm <+> text ":" <+> prettyVAL B0 ty
 
-> prettyVAL :: ENV -> Tm {d, VV} REF -> Doc
+> prettyVAL :: PrettyENV -> Tm {d, VV} REF -> Doc
 > prettyVAL = pretty
 
-> prettyTm :: ENV -> Tm {d, TT} REF -> Doc
+> prettyTm :: PrettyENV -> Tm {d, TT} REF -> Doc
 > prettyTm = pretty
 
-> pretty :: ENV -> Tm {d, p} REF -> Doc
+> pretty :: PrettyENV -> Tm {d, p} REF -> Doc
 > pretty e (L s)          = prettyScope e s
 > pretty e (C c)          = prettyCan e c
 > pretty e (N n)          = pretty e n
 > pretty e (P (ns := _))  = text (prettyName ns)
-> pretty e (V i)          = char 'V' <> int i {- <> brackets (text . take 10 . show $ e !. i) -}
+> pretty e (V i)          = case e !. i of
+>                             Left s   -> text s
+>                             Right v  -> char 'V' <> int i
 > pretty e (op :@ vs)     = parens (text (opName op) 
 >     <+> sep (punctuate comma (map (pretty e) vs)))
 > pretty e (n :$ el)      = parens (pretty e n <+> prettyElim e el)

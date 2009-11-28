@@ -131,7 +131,7 @@ Equality rules:
 >   prettyCan e (Su t)        = parens (text "Su" <+> pretty e t)
 
 > import -> Pretty where
->   prettyEnum :: ENV -> Tm {d, p} REF -> Doc
+>   prettyEnum :: PrettyENV -> Tm {d, p} REF -> Doc
 >   prettyEnum e (C NilE)          = empty
 >   prettyEnum e (C (ConsE t ts))  = pretty e t <> comma <+> prettyEnum e ts
 >   prettyEnum e t                 = pretty e t

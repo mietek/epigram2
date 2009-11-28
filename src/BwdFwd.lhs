@@ -73,6 +73,9 @@ Backward and forward lists, applicative with zipping.
 >   (xs :< x) !. i = xs !. (i - 1)
 >   logTable = (1 + logTable) :< 0
 
+> bwdLength :: Bwd x -> Int
+> bwdLength = getSum . foldMap (\_ -> Sum 1)
+
 These bits of renaming should go elsewhere.
 
 > instance (Applicative f, Num x, Show (f x), Eq (f x)) => Num (f x) where
