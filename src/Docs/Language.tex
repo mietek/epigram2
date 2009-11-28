@@ -8,7 +8,7 @@
 \[
 \begin{array}{rll}
 \SC{InTm} ::= & \verb!*! & \mbox{Set} \\
-            | & \verb!(!\SC{Nom}\verb! : !\SC{InTm} \verb!) -> ! \SC{InTm} 
+            | & \lgb\verb!(!\SC{Nom}\verb! : !\SC{InTm} \verb!)!\rgb^+\verb! -> ! \SC{InTm} 
                 & \mbox{\(\Pi\)-type}\\
             | & \SC{InTm} \verb! -> ! \SC{InTm}  & \mbox{nondependent function type}\\
             | & \verb!\! \SC{Nom}^* \verb! -> ! \SC{InTm} & \mbox{\(\lambda\)-abstraction}\\
