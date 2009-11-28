@@ -131,12 +131,6 @@ Elim forms inherited from elsewhere
 >   impTac p q = can $ All (can $ Prf p)
 >                          (lambda $ \_ -> q)
 
-> import -> Check where
->   check (C (All s t) :>: L sc) r = 
->     Root.freshRef ("" :<: s) 
->              (\ref -> check (PRF (t $$ A (pval ref)) :>: underScope sc ref)) 
->              r
-
 > import -> CanTyRules where
 >   canTy _   (Set :>: Prop)           = return Prop
 >   canTy chev  (Set :>: Prf p)         = do
@@ -151,21 +145,16 @@ Elim forms inherited from elsewhere
 >     qqv@(q :=>: qv) <- chev (PROP :>: q)
 >     return $ And ppv qqv
 >   canTy _  (Prop :>: Trivial)       = return Trivial
->   canTy _  (Prop :>: Absurd)        = return Absurd
->   canTy chev  (Prf p :>: Box (Irr x))  = do 
->     xxv@(x :=>: xv) <- chev (p :>: x)
->     return $ Box (Irr xxv)
->   canTy chev  (And p q :>: Pair x y)   = do
+>   canTy _   (Prop :>: Absurd)        = return Absurd
+>   canTy chev  (Prf p :>: Box (Irr x))  = do
+>     xxv@(x :=>: xv) <- chev (PRF p :>: x)
+>     return $ Box (Irr (xxv))
+>   canTy chev (Prf (AND p q) :>: Pair x y)   = do
 >     xxv@(x :=>: xv) <- chev (PRF p :>: x)
 >     yyv@(y :=>: yv) <- chev (PRF q :>: y)
 >     return $ Pair xxv yyv
->   canTy _   (Trivial :>: Void)       = return Void
+>   canTy _   (Prf TRIVIAL :>: Void)       = return Void
 
-> import -> ElimConstructors where
->   UnBox    :: Elim t
-
-> import -> TraverseElim where
->   traverse _ UnBox = (|UnBox|)
 
 > import -> ElimTyRules where
 >   elimTy chev (f :<: Prf (ALL p q))      (A e)  = do
@@ -173,10 +162,6 @@ Elim forms inherited from elsewhere
 >     return $ (A eev, PRF (q $$ A ev))
 >   elimTy chev (_ :<: Prf (AND p q))      Fst    = return (Fst, PRF p)
 >   elimTy chev (_ :<: Prf (AND p q))      Snd    = return (Snd, PRF q)
->   elimTy chev (_ :<: Prf p)              UnBox  = return (UnBox, p)
-
-> import -> ElimComputation where
->   C (Box (Irr p))    $$ UnBox  = p -- only for eta-expand?
 
 > import -> OpCode where
 >   nEOp = Op { opName = "naughtE"
@@ -198,14 +183,14 @@ Elim forms inherited from elsewhere
 >   nEOp :
 
 > import -> EtaExpand where
->   etaExpand (C (All s t) :>: f) r = Just $
->     L ("etaAll" :. fresh ("" :<: s) 
->       (\v  -> inQuote (C (Prf (t $$ A v)) :>: (f $$ A v))) r)
->   etaExpand (PRF p :>: x) r = Just (BOX (Irr (inQuote (p :>: x $$ UnBox) r))))
->   etaExpand (AND p q :>: pq) r =  
->     (| (\x y -> PAIR x y) (etaExpand (PRF p :>: (pq $$ Fst)) r) 
->                           (etaExpand (PRF q :>: (pq $$ Snd)) r) |)
+>   etaExpand (PRF p :>: x) r = Just (BOX (Irr (bquote B0 x r)))
 
-> import -> OpRunEqGreen
+> import -> Check where
+>   check (PRF (ALL p q) :>: L sc) r = do
+>     Root.freshRef ("" :<: p)
+>       (\ref -> check (PRF (q $$ A (pval ref)) :>: underScope sc ref))
+>       r
+
+> import -> OpRunEqGreen where
 >   opRunEqGreen [PROP,t1,PROP,t2] = Right $ AND (IMP t1 t2) (IMP t2 t1)
->   opRunEqGreen [Prf _,_,Prf _,_] = Right TRIVIAL
+>   opRunEqGreen [PRF _,_,PRF _,_] = Right TRIVIAL
