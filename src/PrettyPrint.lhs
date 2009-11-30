@@ -77,9 +77,9 @@ The following uses the |HughesPJ| pretty-printing combinators.
 > prettyScope e (K t) = parens (text "\\_." <+> pretty e t)
 
 > prettyTip :: Tip -> Doc
-> prettyTip Module           = text "Module"
-> prettyTip (Unknown ty)     = text "? :" <+> prettyVAL B0 ty
-> prettyTip (Defined tm ty)  = pretty B0 tm <+> text ":" <+> prettyVAL B0 ty
+> prettyTip Module                    = text "Module"
+> prettyTip (Unknown (_ :=>: ty))     = text "? :" <+> prettyVAL B0 ty
+> prettyTip (Defined tm (_ :=>: ty))  = pretty B0 tm <+> text ":" <+> prettyVAL B0 ty
 
 > prettyVAL :: PrettyENV -> Tm {d, VV} REF -> Doc
 > prettyVAL = pretty

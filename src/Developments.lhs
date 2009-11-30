@@ -33,8 +33,8 @@ as a term with a given type.
 
 > data Tip
 >   = Module
->   | Unknown TY
->   | Defined INTM TY
+>   | Unknown (INTM :=>: TY)
+>   | Defined INTM (INTM :=>: TY)
 >   deriving Show
 
 
@@ -116,9 +116,10 @@ its references:
 >   (|(\x y z -> (x,y,z)) (traverse (traverseEntry f) es) (traverseTip f t) ~r|)
 
 > traverseTip :: Applicative f => (REF -> f REF) -> Tip -> f Tip
-> traverseTip f Module        = pure Module
-> traverseTip f (Unknown v)   = (|Unknown (traverseVal f v)|)
-> traverseTip f (Defined t v) = (|Defined (traverse f t) (traverseVal f v)|)
+> traverseTip f Module                   = pure Module
+> traverseTip f (Unknown (t :=>: v))     = (|Unknown (|traverse f t :=>: traverseVal f v|)|)
+> traverseTip f (Defined tm (t :=>: v))  =
+>   (|Defined (traverse f tm) (|traverse f t :=>: traverseVal f v|)|)
 
 > traverseEntry :: Applicative f => (REF -> f REF) -> Entry -> f Entry
 > traverseEntry f (E r (x,i) e) = (|E (f r) (pure (x,i)) (traverseEntity f e)|)

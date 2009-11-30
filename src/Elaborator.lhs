@@ -295,7 +295,8 @@ current development. It first checks that the purported type is in fact a type.
 >     () <- lift (check (SET :>: ty) root)
 >     let ty' = eval ty B0
 >     n <- withRoot (flip name s)
->     putDevEntry (E (n := HOLE :<: ty') (last n) (Girl LETG (B0, Unknown ty', room root s)))
+>     putDevEntry (E (n := HOLE :<: ty') (last n) (Girl LETG 
+>                                                  (B0, Unknown (ty :=>: ty'), room root s)))
 >     putDevRoot (roos root)
 
 The |piBoy| command checks that the current goal is SET, and if so, appends a
@@ -303,7 +304,7 @@ $\Pi$-abstraction to the current development.
 
 > piBoy :: (String :<: INTM) -> ProofState ()
 > piBoy (s:<:ty) = do
->     Unknown SET <- getDevTip     
+>     Unknown (_ :=>: SET) <- getDevTip     
 >     root <- getDevRoot
 >     () <- lift (check (SET :>: ty) root)
 >     let ty' = eval ty B0
@@ -312,15 +313,17 @@ $\Pi$-abstraction to the current development.
 
 The |lambdaBoy| command checks that the current goal is a $\Pi$-type, and if so,
 appends a $\lambda$-abstraction to the current development.
+\question{Does this do the right thing with the term representation of the type in the tip?
+If so, DevLoad.lhs#tipRan should do it as well.}
 
 > lambdaBoy :: String -> ProofState ()
 > lambdaBoy x = do
->     Unknown (PI s t) <- getDevTip
+>     Unknown (C (Pi s t)) <- getDevTip
 >     root <- getDevRoot
 >     Root.freshRef (x :<: s)
 >         (\ref r -> do
 >            putDevEntry (E ref (lastName ref) (Boy LAMB))
->            putDevTip (Unknown (t $$ A (N (P ref))))
+>            putDevTip (Unknown (N ((pi :? SET) :$ A (N (P ref))) :=>: t $$ A (N (P ref))))
 >            putDevRoot r
 >          ) root
 
@@ -329,10 +332,10 @@ the goal and updates the reference.
 
 > give :: INTM -> ProofState ()
 > give tm = do
->     Unknown tipTy <- getDevTip
+>     Unknown (tipTyTm :=>: tipTy) <- getDevTip
 >     root <- getDevRoot
 >     () <- lift (check (tipTy :>: tm) root)
->     putDevTip (Defined tm tipTy)
+>     putDevTip (Defined tm (tipTyTm :=>: tipTy))
 >     loc <- get
 >     let aus = greatAuncles loc
 >     sibs <- getDevEntries

@@ -134,33 +134,33 @@ This module mostly exists to provide the |devLoad| function.
 >   let  gs' = gs <+> es
 >        vy = evTm ty
 >        (d@(ds, u, _), tss') =
->          runWriter (makeFun gs' (B0, Unknown vy, room r x) tss)
+>          runWriter (makeFun gs' (B0, Unknown (ty :=>: vy), room r x) tss)
 >        xr = name r x := (case u of
 >               Unknown _ -> HOLE
 >               Defined b _ ->
 >                 DEFN (evTm (parBind gs' ds b))) :<: vy
 >        xe = E xr (x, snd r) (Girl LETG d)
 >   in   Just (es :< xe, t, roos r)
-> coreLineAction gs (LEq (Just t) Nothing) (es, Unknown y, r) = do
+> coreLineAction gs (LEq (Just t) Nothing) (es, Unknown (u :=>: y), r) = do
 >   () <- check (y :>: t) r
->   Just (es, Defined t y, r)
+>   Just (es, Defined t (u :=>: y), r)
 > coreLineAction gs (LEq (Just t) (Just y)) (es, tip, r) = do
 >   () <- check (SET :>: y) r
 >   let vy = evTm y
 >   () <- case tip of
->      Unknown y' -> guard $ equal (SET :>: (vy, y')) r
+>      Unknown (_ :=>: y') -> guard $ equal (SET :>: (vy, y')) r
 >      _ -> (|()|)
 >   () <- check (vy :>: t) r
->   Just (es, Defined t (evTm y), r)
+>   Just (es, Defined t (y :=>: evTm y), r)
 > coreLineAction gs (LEq Nothing Nothing) (es, Unknown y, r) =
 >   Just (es, Unknown y, r)
 > coreLineAction gs (LEq Nothing (Just y)) (es, tip, r) = do
 >   () <- check (SET :>: y) r
 >   let vy = evTm y
 >   () <- case tip of
->      Unknown y' -> guard $ equal (SET :>: (vy, y')) r
+>      Unknown (_ :=>: y') -> guard $ equal (SET :>: (vy, y')) r
 >      _ -> (|()|)
->   Just (es, Unknown (evTm y), r)
+>   Just (es, Unknown (y :=>: evTm y), r)
 > coreLineAction _ _ _ = Nothing
 
 
@@ -194,16 +194,16 @@ This module mostly exists to provide the |devLoad| function.
 > tipDom (Just s)  Module                   r = do
 >   () <- check (SET :>: s) r
 >   return (evTm s)
-> tipDom (Just s)  (Unknown (PI s' _))  r = do
+> tipDom (Just s)  (Unknown (C (Pi s' _)))  r = do
 >   () <- check (SET :>: s) r
 >   let vs = evTm s
 >   guard $ equal (SET :>: (vs, s')) r
 >   return vs
-> tipDom Nothing   (Unknown (PI s _))  r = Just s
+> tipDom Nothing   (Unknown (C (Pi s _)))  r = Just s
 > tipDom _         _                       r = Nothing
 
 > tipRan :: Tip -> REF -> Tip
-> tipRan (Unknown (PI _ t))  x  = Unknown (t $$ A (pval x))
+> tipRan (Unknown (C (Pi _ t)))  x  = Unknown (t $$ A (pval x))
 > tipRan Module                  _  = Module
 
 > makeFun :: Bwd Entry -> Dev -> [[Tok]] -> Writer [[Tok]] Dev
