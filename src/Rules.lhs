@@ -168,7 +168,7 @@ safely quote this term. The result is a binding of |v| in the quoted
 term.
 
 > etaExpand :: (TY :>: VAL) -> Root -> Maybe INTM
-> etaExpand (C (Pi s t) :>: f) r = Just $
+> etaExpand (PI s t :>: f) r = Just $
 >   L ("" :. fresh ("" :<: s) (\v  -> inQuote (t $$ A v :>: (f $$ A v))) r)
 > import <- EtaExpand
 > etaExpand _                  _ = Nothing
@@ -322,7 +322,7 @@ As for the implementation, we apply the by-now standard trick of
 making a fresh variable $x \in S$ and computing the type |T x|. Then,
 we simply have to check that $T\ x \ni t$.
 
-> check (C (Pi s t) :>: L sc) r = 
+> check (PI s t :>: L sc) r = 
 >   Root.freshRef ("" :<: s) 
 >            (\ref -> check (t $$ A (pval ref) :>: underScope sc ref)) 
 >            r

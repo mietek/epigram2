@@ -168,7 +168,8 @@ This module mostly exists to provide the |devLoad| function.
 > discharge B0 t = t
 > discharge (es :< E _ _ (Girl _ _)) t = discharge es t
 > discharge (es :< E _ (x, _) (Boy LAMB)) t = discharge es (L (x :. t))
-> discharge (es :< E _ (x, _) (Boy (PIB s))) t = discharge es (PI x (es -| s) t)
+> discharge (es :< E _ (x, _) (Boy (PIB s))) t = 
+>   discharge es (PI (es -| s) (L (x :. t)))
 
 > lambda :: Bwd Entry -> INTM -> INTM
 > lambda B0 t = t
@@ -194,16 +195,16 @@ This module mostly exists to provide the |devLoad| function.
 > tipDom (Just s)  Module                   r = do
 >   () <- check (SET :>: s) r
 >   return (evTm s)
-> tipDom (Just s)  (Unknown (C (Pi s' _)))  r = do
+> tipDom (Just s)  (Unknown (PI s' _))  r = do
 >   () <- check (SET :>: s) r
 >   let vs = evTm s
 >   guard $ equal (SET :>: (vs, s')) r
 >   return vs
-> tipDom Nothing   (Unknown (C (Pi s _)))  r = Just s
+> tipDom Nothing   (Unknown (PI s _))  r = Just s
 > tipDom _         _                       r = Nothing
 
 > tipRan :: Tip -> REF -> Tip
-> tipRan (Unknown (C (Pi _ t)))  x  = Unknown (t $$ A (pval x))
+> tipRan (Unknown (PI _ t))  x  = Unknown (t $$ A (pval x))
 > tipRan Module                  _  = Module
 
 > makeFun :: Bwd Entry -> Dev -> [[Tok]] -> Writer [[Tok]] Dev

@@ -164,12 +164,12 @@
 >     } where
 >       cOpTy ev [a , b , c , f , g , x] = Just $
 >         ( [ SET :>: a , SET :>: b , ARR sumab SET :>: c
->           , C (Pi va (L (H (B0 :< vc) "a" 
->                     (N (V 1 :$ A (LEFT (NV 0))))))) :>: f
->           , C (Pi vb (L (H (B0 :< vc) "b" 
->                     (N (V 1 :$ A (RIGHT (NV 0))))))) :>: g
+>           , PI va (L (H (B0 :< vc) "a" 
+>                     (N (V 1 :$ A (LEFT (NV 0)))))) :>: f
+>           , PI vb (L (H (B0 :< vc) "b" 
+>                     (N (V 1 :$ A (RIGHT (NV 0)))))) :>: g
 >           , sumab :>: x ]
->         , C (Pi sumab (L (H (B0 :< vc) "ab" (N (V 1 :$ A (NV 0))))))) 
+>         , PI sumab (L (H (B0 :< vc) "ab" (N (V 1 :$ A (NV 0)))))) 
 >        where va = ev a
 >              vb = ev b
 >              vc = ev c
@@ -213,8 +213,8 @@
 >       mOpTy ev [i , c , x , y , f , t] = Just $
 >         ([ SET :>: i , CONTU (ev i) :>: c 
 >          , ARR vi SET :>: x , ARR vi SET :>: y
->          , C (Pi vi (L (H (B0 :< vx :< vy) "" 
->                     (ARR (N (V 2 :$ A (NV 0))) (N (V 1 :$ A (NV 0)))))))
+>          , PI vi (L (H (B0 :< vx :< vy) "" 
+>                     (ARR (N (V 2 :$ A (NV 0))) (N (V 1 :$ A (NV 0))))))
 >              :>: f
 >          , contTOp @@ [ vi , vc , vx ] :>: t ] , contTOp @@ [ vi , vc , vy ])
 >             where vi = ev i

@@ -193,7 +193,7 @@ you got the idea now.
 > lambda body = do
 >   pi <- goal
 >   case pi of
->     C (Pi s t) ->
+>     PI s t ->
 >         Rooty.freshRef ("" :<: s) $
 >                        \x -> do
 >                              body <- subgoal (t $$ A (pval x) :>: body x)
@@ -382,7 +382,7 @@ known.
 >         (vx :<: tx) <- body x -- out of context
 >         v <- discharge x vx
 >         t <- discharge x tx
->         return $ v :<: C (Pi s t)
+>         return $ v :<: PI s t
 
 
 To build a |Tac (VAL :<: TY)|, we need some help:
@@ -441,7 +441,7 @@ the expected |P x|, we rely on |switchOp|. The argument |ps| of
 > switch cases = do
 >     t <- goal
 >     case t of
->       C (Pi (ENUMT e) p) ->
+>       PI (ENUMT e) p ->
 >           lambda $ \x -> do
 >           useOp switchOp [ return e
 >                          , return p
@@ -486,7 +486,7 @@ Here is the eliminator for Sigmas:
 > split tacF = do
 >   t <- goal
 >   case t of
->     C (Pi (SIGMA a b) t) -> 
+>     PI (SIGMA a b) t -> 
 >          lambda $ \x -> do
 >            useOp splitOp [ return a
 >                          , return b
@@ -506,7 +506,7 @@ Same thing here, for the |Mu| eliminator:
 > foldDesc p = do
 >   t <- goal
 >   case t of 
->     C (Pi (MU d) bp) ->
+>     PI (MU d) bp ->
 >         lambda $ \v ->
 >             useOp elimOp [ return d
 >                          , return bp

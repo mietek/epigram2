@@ -262,7 +262,7 @@ is not in the required form.
 
 > lambdaBoy :: String -> ProofState ()
 > lambdaBoy x = do
->     Unknown (C (Pi s t)) <- getDevTip
+>     Unknown (PI s t) <- getDevTip
 >     root <- getDevRoot
 >     Root.freshRef (x :<: s)
 >         (\ref r -> do
@@ -291,7 +291,7 @@ the proof state. (Which could then cause many further changes.)
 
 > localLPLift :: Bwd Entry -> INTM -> INTM
 > localLPLift (es :< E _ (s, _) (Boy LAMB)) tm = localLPLift es (L (s :. tm))
-> localLPLift (es :< E _ (s, _) (Boy (PIB t))) tm = localLPLift es (C (Pi t (L (s :. tm))))
+> localLPLift (es :< E _ (s, _) (Boy (PIB t))) tm = localLPLift es (PI t (L (s :. tm)))
 
 > globalLLift :: Bwd Entry -> INTM -> INTM
 > globalLLift (es :< E _ (s, _) (Boy _)) tm = globalLLift es (L (s :. tm))

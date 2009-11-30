@@ -218,7 +218,7 @@ We have some pattern synonyms for common, er, patterns.
 
 > pattern SET       = C Set                   -- set of sets
 > pattern ARR s t   = C (Pi s (L (K t)))      -- simple arrow
-> pattern PI x s t  = C (Pi s (L (x :. t)))   -- dependent functions
+> pattern PI s t    = C (Pi s t)   -- dependent functions
 > pattern CON t     = C (Con t)
 > pattern NV n      = N (V n)
 > import <- CanPats

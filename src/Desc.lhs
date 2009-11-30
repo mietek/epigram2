@@ -317,9 +317,9 @@ Equality rules:
 >           (x :=>: xv) <- chev (DESC :>: x)
 >           (d :=>: dv) <- chev (SET :>: d)
 >           (bp :=>: bpv) <- chev (ARR dv SET :>: bp)
->           (p :=>: pv) <- chev (C (Pi dv (eval [.bpv. L $ "" :. 
+>           (p :=>: pv) <- chev (PI dv (eval [.bpv. L $ "" :. 
 >                                                 [.y. N (V bpv :$ A (NV y))]
->                                               ] $ B0 :< bpv))
+>                                               ] $ B0 :< bpv)
 >                                 :>: p)
 >           (v :=>: vv) <- chev (descOp @@ [xv,dv] :>: v)
 >           return ([ x :=>: xv
@@ -408,11 +408,11 @@ Equality rules:
 >         (d :=>: dv) <- chev (DESC :>: d)
 >         (bp :=>: bpv) <- chev (ARR (MU dv) SET :>: bp)
 >         (v :=>: vv) <- chev (MU dv :>: v)
->         (p :=>: pv) <- chev (C (Pi (descOp @@ [dv,MU dv]) 
+>         (p :=>: pv) <- chev (PI (descOp @@ [dv,MU dv]) 
 >                     (eval [.d.bp.v. L $ "" :. [.x. 
 >                         ARR (N (boxOp :@ [NV d,MU (NV d),NV bp,NV x]))
 >                             (N (V bp :$ A (CON (NV x))))]
->                         ] $ B0 :< dv :< bpv :< vv)) :>: p)
+>                         ] $ B0 :< dv :< bpv :< vv) :>: p)
 >         return ([ d :=>: dv
 >                 , bp :=>: bpv
 >                 , p :=>: pv

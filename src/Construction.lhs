@@ -29,7 +29,7 @@
 >   vf _                      = error "discharging non var in Construction"
 
 > cLam :: String -> (REF -> TY -> Cxty INTM) -> TY -> Cxty INTM
-> cLam n f (C (Pi s t)) (g, e) = freshRef (n :<: s) $ \ x ->
+> cLam n f (PI s t) (g, e) = freshRef (n :<: s) $ \ x ->
 >   f x (t $$ A (pval x)) (g :< x, e :< pval x)
 
 I think that this is useless, thanks to the shining tactics.

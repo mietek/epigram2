@@ -166,10 +166,10 @@ Coercion rule:
 >                    (a :=>: av) <- chev (SET :>: a)
 >                    (b :=>: bv) <- chev (ARR av SET :>: b)
 >                    (c :=>: cv) <- chev (ARR (SIGMA av bv) SET :>: c)
->                    (f :=>: fv) <- chev (C (Pi av (L (H (B0 :< bv :< cv) "a" 
->                                             (PI "b" (N (V 2 :$ A (NV 0))) 
->                                              (N (V 2 :$ A (PAIR (NV 1) 
->                                                            (NV 0)))))))) :>: f)
+>                    (f :=>: fv) <- chev (PI av (L (H (B0 :< bv :< cv) "a" 
+>                                         (PI (N (V 2 :$ A (NV 0))) (L $ "b" :.
+>                                             (N (V 2 :$ A (PAIR (NV 1) 
+>                                                          (NV 0)))))))) :>: f)
 >                    (t :=>: tv) <- chev (SIGMA av bv :>: t)
 >                    return ([ a :=>: av
 >                            , b :=>: bv
