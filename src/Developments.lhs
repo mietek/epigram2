@@ -71,6 +71,43 @@ over all following entries and the definition (if any) in its development.
 > data GirlKind  = LETG deriving (Show, Eq)
 
 
+The |(-||)| operator takes a list of entries and a term, and changes the term
+so that boys in the list of entries are represented by de Brujin indices.
+
+> (-|) :: Bwd Entry -> INTM -> INTM
+> es -| t = disMangle es 0 %% t
+>   where
+>     disMangle :: Bwd Entry -> Int -> Mangle I REF REF
+>     disMangle ys i = Mang
+>       {  mangP = \ x ies -> (|(h ys x i $:$) ies|)
+>       ,  mangV = \ i ies -> (|(V i $:$) ies|)
+>       ,  mangB = \ _ -> disMangle ys (i + 1)
+>       }
+>     h B0                        x i  = P x
+>     h (ys :< E y _ (Boy _))     x i
+>       | x == y     = V i
+>       | otherwise  = h ys x (i + 1)
+>     h (ys :< E y _ (Girl _ _))  x i = h ys x i
+
+The |parBind| function $\lambda$-binds over a list $\Delta$ of entries and
+$\lambda$- and $\Pi$-binds over a list $\nabla$.
+
+> parBind ::  {- $\Delta$ :: -} Bwd Entry {- $\Gamma$ -} -> 
+>             {- $\nabla$ :: -} Bwd Entry {- $\Gamma, \Delta$ -} -> 
+>             INTM {- $\Gamma, \Delta, \nabla$ -} ->
+>             INTM {- $\Gamma$ -}
+> parBind delta nabla t = help delnab nabla (delnab -| t) where
+>     delnab = delta <+> nabla
+>     help B0                                      B0            t = t
+>     help (delta   :< E _ _       (Girl _ _))     B0            t = help delta B0 t
+>     help (delta   :< E _ (x, _)  (Boy _))        B0            t = help delta B0 (L (x :. t))
+>     help (delnab  :< E _ (x, _)  (Girl _ _))     (nabla :< _)  t = help delnab nabla t
+>     help (delnab  :< E _ (x, _)  (Boy LAMB))     (nabla :< _)  t = 
+>         help delnab nabla (L (x :. t))
+>     help (delnab  :< E _ (x, _)  (Boy (PIB s)))  (nabla :< _)  t = 
+>         help delnab nabla (PI x (delnab -| s) t)
+
+
 A |Dev| is not truly |Traversable|, but it supports |traverse|-like operations that update
 its references:
 

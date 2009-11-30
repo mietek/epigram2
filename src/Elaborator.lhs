@@ -271,11 +271,17 @@ and fails (yielding |Nothing|) if not.
 We can now compactly describe how to search the proof state for goals, by giving
 several alternatives for where to go next and continuing until a goal is reached.
 
+> prevStep :: ProofState ()
+> prevStep = (goUp >> much goIn) <|> goOut
+
 > prevGoal :: ProofState ()
-> prevGoal = ((goUp >> much goIn) <|> goOut) `untilA` isGoal
+> prevGoal = prevStep `untilA` isGoal
+
+> nextStep :: ProofState ()
+> nextStep = (goIn >> much goUp) <|> goDown <|> (goOut `untilA` goDown)
 
 > nextGoal :: ProofState ()
-> nextGoal = ((goIn >> much goUp) <|> goDown <|> (goOut `untilA` goDown)) `untilA` isGoal
+> nextGoal = nextStep `untilA` isGoal
 
 
 \subsubsection{Construction Commands}
@@ -319,9 +325,7 @@ appends a $\lambda$-abstraction to the current development.
 >          ) root
 
 The |give| command checks the provided term has the goal type, and if so, fills in
-the goal.
-TODO: give should also propagate the change to the reference downwards through
-the proof state. (Which could then cause many further changes.)
+the goal and updates the reference.
 
 > give :: INTM -> ProofState ()
 > give tm = do
@@ -360,27 +364,18 @@ fails, the whole operation fails.
 The |much| operator runs its argument until it fails, then returns the state of
 its last success.
 
-The |lambdaLift| function takes lists of great auncles and siblings of the current insertion
-point, as well as a term. It $\lambda$- and $\Pi$-lifts the term over the siblings,
-and $\lambda$-lifts the term over the auncles.
 
-> lambdaLift :: Bwd Entry -> Bwd Entry -> INTM -> INTM
-> lambdaLift auncles siblings =
->     trace ("lambdaLift (" ++ showEntries (auncles <>> F0) ++ ") (" 
->            ++ showEntries (siblings <>> F0) ++ ")") $
->     globalLLift auncles . localLPLift siblings
+\subsection{Wire Service}
+
+TODO: there is lots to do here.
+
+> updateRef :: REF -> ProofState ()
+> updateRef ref = much (goDown >> much (doUpdate >> nextStep))
 >   where
->     localLPLift :: Bwd Entry -> INTM -> INTM
->     localLPLift (es :< E _ (s, _) (Boy LAMB))     tm = localLPLift es (L (s :. tm))
->     localLPLift (es :< E _ (s, _) (Boy (PIB t)))  tm = localLPLift es (C (Pi t (L (s :. tm))))
->     localLPLift (es :< E _ _ (Girl _ _)) tm = localLPLift es tm
->     localLPLift B0 tm = tm
->
->     globalLLift :: Bwd Entry -> INTM -> INTM
->     globalLLift (es :< E _ (s, _) (Boy _)) tm = globalLLift es (L (s :. tm))
->     globalLLift (es :< E _ _ (Girl _ _)) tm = globalLLift es tm
->     globalLLift B0 tm = tm
-
+>     doUpdate :: ProofState ()
+>     doUpdate = do
+>         m <- getMother
+>         trace ("doUpdate: " ++ show m) $ return ()
 
 \subsection{Command-Line Interface}
 

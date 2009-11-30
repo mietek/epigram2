@@ -138,7 +138,7 @@ This module mostly exists to provide the |devLoad| function.
 >        xr = name r x := (case u of
 >               Unknown _ -> HOLE
 >               Defined b _ ->
->                 DEFN (evTm (lambda gs' (discharge ds ((gs' <+> ds) -| b))))) :<: vy
+>                 DEFN (evTm (parBind gs' ds b))) :<: vy
 >        xe = E xr (x, snd r) (Girl LETG d)
 >   in   Just (es :< xe, t, roos r)
 > coreLineAction gs (LEq (Just t) Nothing) (es, Unknown y, r) = do
@@ -168,8 +168,7 @@ This module mostly exists to provide the |devLoad| function.
 > discharge B0 t = t
 > discharge (es :< E _ _ (Girl _ _)) t = discharge es t
 > discharge (es :< E _ (x, _) (Boy LAMB)) t = discharge es (L (x :. t))
-> discharge (es :< E _ (x, _) (Boy (PIB s))) t = 
->   discharge es (PI (es -| s) (L (x :. t)))
+> discharge (es :< E _ (x, _) (Boy (PIB s))) t = discharge es (PI x (es -| s) t)
 
 > lambda :: Bwd Entry -> INTM -> INTM
 > lambda B0 t = t
@@ -224,7 +223,7 @@ to a |Module| development. It returns the |Dev| produced, and a
 > devLoad tss = runWriter (makeFun B0 (B0, Module, (B0, 0)) tss)
 
 
-\question{Should this really just ignore the tail?}
+\question{Should this really just take the first entry in the list?}
 
 > parseTerm :: String -> Bwd Entry -> Maybe INTM
 > parseTerm s es = parse (pINTM es) . (!! 1) . layout . tokenize $ s
