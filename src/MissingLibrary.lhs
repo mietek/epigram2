@@ -24,6 +24,3 @@
 >   -- HalfZip xs xs = Just (fmap (\x -> (x,x)) xs)
 
 %endif
-
-> ffilter :: (Foldable f, Alternative a, Monoid (a x)) => (x -> Bool) -> f x -> a x
-> ffilter p = foldMap (\x -> if p x then pure x else empty)

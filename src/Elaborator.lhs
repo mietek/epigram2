@@ -12,6 +12,7 @@
 > import Control.Monad.State
 > import Data.Foldable
 > import Data.Traversable
+> import Debug.Trace
 
 > import BwdFwd
 > import Developments
@@ -56,17 +57,19 @@ current working development:
 
 > type ProofContext = (Bwd Layer, Dev)
 
-The |auncles| function calculates the elder aunts or uncles of the current development,
-thereby giving a list of entries that are currently in scope.
+The |greatAuncles| function returns the elder aunts or uncles of the current development,
+not including its contents.
+
+> greatAuncles :: ProofContext -> Bwd Entry
+> greatAuncles (ls, _) = foldMap elders ls
+
+The |auncles| function returns the elder aunts or uncles of the current insertion point,
+including the contents of the current development, thereby giving a list of entries that
+are currently in scope.
 
 > auncles :: ProofContext -> Bwd Entry
-> auncles (ls, (es, _, _)) = foldMap elders ls <+> es
+> auncles c@(_, (es, _, _)) = greatAuncles c <+> es
 
-
-> boys :: Bwd Entry -> Bwd Entry
-> boys = ffilter isBoy
->     where isBoy (E _ _ (Boy _)) = True
->           isBoy (E _ _ (Girl _ _)) = False
 
 \subsection{Proof State Monad}
 
@@ -112,6 +115,11 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     ls :< l <- gets fst
 >     return l
 
+> getMother :: ProofState REF
+> getMother = do
+>     l <- getLayer
+>     return (mother l)
+
 > putDev :: Dev -> ProofState ()
 > putDev dev = do
 >     ls <- gets fst
@@ -140,7 +148,8 @@ updated information, providing a friendlier interface than |get| and |put|.
 > putMother :: REF -> ProofState ()
 > putMother ref = do
 >     l <- getLayer
->     putLayer l{mother=ref}
+>     _ <- replaceLayer l{mother=ref}
+>     return ()
 
 > removeLayer :: ProofState Layer
 > removeLayer = do
@@ -160,12 +169,6 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     put (ls :< l, dev)
 >     return l'
 
-TODO: updateMother should replace the RKind in the reference
-with the given one. 
-
-> updateMother :: RKind -> ProofState ()
-> updateMother k = undefined
-
 
 A |ProofState| is not |Rooty| because the semantics of the latter are not compatible
 with the caching of |Root|s in the proof context. However, it can provide the current
@@ -181,7 +184,7 @@ Presumably we should be able to do something similar for running tactics?
 < withTac :: TY -> Tac x -> ProofState x
 
 
-\subsubsection{Proof State Navigation Commands}
+\subsubsection{Navigation Commands}
 
 Now we provide commands to navigate the proof state:
 \begin{itemize}
@@ -239,63 +242,6 @@ is not in the required form.
 >             _ -> putLayer l{cadets=es} >> goDownAcc (acc :< e)
 
 
-\subsubsection{Construction Commands}
-
-
-> make :: (String :<: INTM) -> ProofState ()
-> make (s:<:ty) = do
->     root <- getDevRoot
->     () <- lift (check (SET :>: ty) root)
->     let ty' = eval ty B0
->     n <- withRoot (flip name s)
->     putDevEntry (E (n := HOLE :<: ty') (last n) (Girl LETG (B0, Unknown ty', room root s)))
->     putDevRoot (roos root)
-
-> piBoy :: (String :<: INTM) -> ProofState ()
-> piBoy (s:<:ty) = do
->     Unknown SET <- getDevTip     
->     root <- getDevRoot
->     () <- lift (check (SET :>: ty) root)
->     let ty' = eval ty B0
->     Root.freshRef (s :<: ty')
->         (\ref r -> putDevEntry (E ref (lastName ref) (Boy (PIB ty))) >> putDevRoot r) root
-
-> lambdaBoy :: String -> ProofState ()
-> lambdaBoy x = do
->     Unknown (PI s t) <- getDevTip
->     root <- getDevRoot
->     Root.freshRef (x :<: s)
->         (\ref r -> do
->            putDevEntry (E ref (lastName ref) (Boy LAMB))
->            putDevTip (Unknown (t $$ A (N (P ref))))
->            putDevRoot r
->          ) root
-
-TODO: give should also propagate the change to the reference downwards through
-the proof state. (Which could then cause many further changes.)
-
-> give :: INTM -> ProofState ()
-> give tm = do
->     Unknown tipTy <- getDevTip
->     root <- getDevRoot
->     () <- lift (check (tipTy :>: tm) root)
->     putDevTip (Defined tm tipTy)
->     loc <- get
->     let aus = auncles loc
->     sibs <- getDevEntries
->     let tm' = eval (lambdaLift aus sibs tm) B0
->     updateMother (DEFN tm')
-
-> lambdaLift :: Bwd Entry -> Bwd Entry -> INTM -> INTM
-> lambdaLift auncles siblings = globalLLift (boys auncles) . localLPLift (boys siblings)
-
-> localLPLift :: Bwd Entry -> INTM -> INTM
-> localLPLift (es :< E _ (s, _) (Boy LAMB)) tm = localLPLift es (L (s :. tm))
-> localLPLift (es :< E _ (s, _) (Boy (PIB t))) tm = localLPLift es (PI t (L (s :. tm)))
-
-> globalLLift :: Bwd Entry -> INTM -> INTM
-> globalLLift (es :< E _ (s, _) (Boy _)) tm = globalLLift es (L (s :. tm))
-
 \subsubsection{Goal Search Commands}
 
 To implement goal search, we need a few useful bits of kit...
@@ -330,6 +276,111 @@ several alternatives for where to go next and continuing until a goal is reached
 
 > nextGoal :: ProofState ()
 > nextGoal = ((goIn >> much goUp) <|> goDown <|> (goOut `untilA` goDown)) `untilA` isGoal
+
+
+\subsubsection{Construction Commands}
+
+The |make| command adds a named goal of the given type to the bottom of the
+current development. It first checks that the purported type is in fact a type.
+
+> make :: (String :<: INTM) -> ProofState ()
+> make (s:<:ty) = do
+>     root <- getDevRoot
+>     () <- lift (check (SET :>: ty) root)
+>     let ty' = eval ty B0
+>     n <- withRoot (flip name s)
+>     putDevEntry (E (n := HOLE :<: ty') (last n) (Girl LETG (B0, Unknown ty', room root s)))
+>     putDevRoot (roos root)
+
+The |piBoy| command checks that the current goal is SET, and if so, appends a
+$\Pi$-abstraction to the current development.
+
+> piBoy :: (String :<: INTM) -> ProofState ()
+> piBoy (s:<:ty) = do
+>     Unknown SET <- getDevTip     
+>     root <- getDevRoot
+>     () <- lift (check (SET :>: ty) root)
+>     let ty' = eval ty B0
+>     Root.freshRef (s :<: ty')
+>         (\ref r -> putDevEntry (E ref (lastName ref) (Boy (PIB ty))) >> putDevRoot r) root
+
+The |lambdaBoy| command checks that the current goal is a $\Pi$-type, and if so,
+appends a $\lambda$-abstraction to the current development.
+
+> lambdaBoy :: String -> ProofState ()
+> lambdaBoy x = do
+>     Unknown (PI s t) <- getDevTip
+>     root <- getDevRoot
+>     Root.freshRef (x :<: s)
+>         (\ref r -> do
+>            putDevEntry (E ref (lastName ref) (Boy LAMB))
+>            putDevTip (Unknown (t $$ A (N (P ref))))
+>            putDevRoot r
+>          ) root
+
+The |give| command checks the provided term has the goal type, and if so, fills in
+the goal.
+TODO: give should also propagate the change to the reference downwards through
+the proof state. (Which could then cause many further changes.)
+
+> give :: INTM -> ProofState ()
+> give tm = do
+>     Unknown tipTy <- getDevTip
+>     root <- getDevRoot
+>     () <- lift (check (tipTy :>: tm) root)
+>     putDevTip (Defined tm tipTy)
+>     loc <- get
+>     let aus = greatAuncles loc
+>     sibs <- getDevEntries
+>     let tm' = eval (lambdaLift aus sibs tm) B0
+>     updateMother (DEFN tm')
+
+> lambdaLift :: Bwd Entry -> Bwd Entry -> INTM -> INTM
+> lambdaLift auncles siblings = globalLLift (boys auncles) . localLPLift (boys siblings)
+
+> localLPLift :: Bwd Entry -> INTM -> INTM
+> localLPLift (es :< E _ (s, _) (Boy LAMB)) tm = localLPLift es (L (s :. tm))
+> localLPLift (es :< E _ (s, _) (Boy (PIB t))) tm = localLPLift es (C (Pi t (L (s :. tm))))
+
+> globalLLift :: Bwd Entry -> INTM -> INTM
+> globalLLift (es :< E _ (s, _) (Boy _)) tm = globalLLift es (L (s :. tm))
+
+\subsubsection{Goal Search Commands}
+
+To implement goal search, we need a few useful bits of kit...
+
+The |untilA| operator runs its first argument one or more times until its second
+argument succeeds, at which point it returns the result. If the first argument
+fails, the whole operation fails.
+
+> untilA :: Alternative f => f () -> f a -> f a
+> g `untilA` test = g *> try
+>     where try = test <|> (g *> try)
+
+The |much| operator runs its argument until it fails, then returns the state of
+its last success.
+
+The |lambdaLift| function takes lists of great auncles and siblings of the current insertion
+point, as well as a term. It $\lambda$- and $\Pi$-lifts the term over the siblings,
+and $\lambda$-lifts the term over the auncles.
+
+> lambdaLift :: Bwd Entry -> Bwd Entry -> INTM -> INTM
+> lambdaLift auncles siblings =
+>     trace ("lambdaLift (" ++ showEntries (auncles <>> F0) ++ ") (" 
+>            ++ showEntries (siblings <>> F0) ++ ")") $
+>     globalLLift auncles . localLPLift siblings
+>   where
+>     localLPLift :: Bwd Entry -> INTM -> INTM
+>     localLPLift (es :< E _ (s, _) (Boy LAMB))     tm = localLPLift es (L (s :. tm))
+>     localLPLift (es :< E _ (s, _) (Boy (PIB t)))  tm = localLPLift es (C (Pi t (L (s :. tm))))
+>     localLPLift (es :< E _ _ (Girl _ _)) tm = localLPLift es tm
+>     localLPLift B0 tm = tm
+>
+>     globalLLift :: Bwd Entry -> INTM -> INTM
+>     globalLLift (es :< E _ (s, _) (Boy _)) tm = globalLLift es (L (s :. tm))
+>     globalLLift (es :< E _ _ (Girl _ _)) tm = globalLLift es tm
+>     globalLLift B0 tm = tm
+
 
 \subsection{Command-Line Interface}
 
@@ -394,7 +445,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 
 > printChanges :: Bwd Entry -> Bwd Entry -> IO ()
 > printChanges as bs | as /= bs = do
->     let (lost, gained)  = diff (as <>> F0) (bs <>> F0)
+>     let (lost, gained)  = trace ("diff (" ++ showEntries (as <>> F0) ++ ") (" ++ showEntries (bs <>> F0) ++ ")") $ diff (as <>> F0) (bs <>> F0)
 >     if lost /= F0
 >         then putStrLn ("Left scope: " ++ showEntries lost)
 >         else putStrLn "Nothing went out of scope."
@@ -403,7 +454,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >        else putStrLn "Nothing came into scope."
 > printChanges _ _ = return ()
 
-> diff :: (Eq a) => Fwd a -> Fwd a -> (Fwd a, Fwd a)
+> diff :: (Eq a, Show a) => Fwd a -> Fwd a -> (Fwd a, Fwd a)
 > diff (x :> xs) (y :> ys)
 >     | x == y     = diff xs ys
 >     | otherwise  = (x :> xs, y :> ys)
