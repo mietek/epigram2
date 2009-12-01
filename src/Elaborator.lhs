@@ -120,6 +120,12 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     l <- getLayer
 >     return (mother l)
 
+> insertCadet :: Entry -> ProofState ()
+> insertCadet e = do
+>     l <- getLayer
+>     replaceLayer l{cadets = e :> cadets l}
+>     return ()
+
 > putDev :: Dev -> ProofState ()
 > putDev dev = do
 >     ls <- gets fst
@@ -129,6 +135,11 @@ updated information, providing a friendlier interface than |get| and |put|.
 > putDevEntry e = do
 >     (es, tip, root) <- getDev
 >     putDev (es :< e, tip, root)
+
+> putDevEntries :: Bwd Entry -> ProofState ()
+> putDevEntries es = do
+>     (_, tip, root) <- getDev
+>     putDev (es, tip, root)
 
 > putDevRoot :: Root -> ProofState ()
 > putDevRoot r = do
@@ -150,6 +161,15 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     l <- getLayer
 >     _ <- replaceLayer l{mother=ref}
 >     return ()
+
+> removeDevEntry :: ProofState (Maybe Entry)
+> removeDevEntry = do
+>     es <- getDevEntries
+>     case es of
+>       B0 -> return Nothing
+>       (es' :< e) -> do
+>         putDevEntries es'
+>         return (Just e)
 
 > removeLayer :: ProofState Layer
 > removeLayer = do
@@ -212,7 +232,8 @@ is not in the required form.
 > goOut = do
 >     Layer elders mother cadets tip root <- removeLayer
 >     dev <- getDev
->     putDev (elders :< E mother (lastName mother) (Girl LETG dev) <>< cadets, tip, root)        
+>     putDev (elders :< E mother (lastName mother) (Girl LETG dev) {- <>< cadets-}, tip, root)        
+>     propagateNews [] cadets
 
 > goUp :: ProofState ()
 > goUp = goUpAcc F0
@@ -339,23 +360,12 @@ the goal and updates the reference.
 >     loc <- get
 >     let aus = greatAuncles loc
 >     sibs <- getDevEntries
->     let tm' = eval (lambdaLift aus sibs tm) B0
->     updateMother (DEFN tm')
-
-> lambdaLift :: Bwd Entry -> Bwd Entry -> INTM -> INTM
-> lambdaLift auncles siblings = globalLLift (boys auncles) . localLPLift (boys siblings)
-
-> localLPLift :: Bwd Entry -> INTM -> INTM
-> localLPLift (es :< E _ (s, _) (Boy LAMB)) tm = localLPLift es (L (s :. tm))
-> localLPLift (es :< E _ (s, _) (Boy (PIB t))) tm = localLPLift es (C (Pi t (L (s :. tm))))
-
-
-\subsection{Wire Service}
-
-TODO: there is lots to do here.
-
-The |much| operator runs its argument until it fails, then returns the state of
-its last success.
+>     let tm' = eval (parBind aus sibs tm) B0
+>     name := _ <- getMother
+>     let ref = name := DEFN tm' :<: tipTy
+>     putMother ref
+>     updateRef ref
+>     goOut
 
 
 \subsection{Wire Service}
@@ -363,12 +373,32 @@ its last success.
 TODO: there is lots to do here.
 
 > updateRef :: REF -> ProofState ()
-> updateRef ref = much (goDown >> much (doUpdate >> nextStep))
->   where
->     doUpdate :: ProofState ()
->     doUpdate = do
->         m <- getMother
->         trace ("doUpdate: " ++ show m) $ return ()
+> updateRef ref = insertCadet (R [(ref, GoodNews)])
+
+> lookupNews :: REF -> NewsBulletin -> News
+> lookupNews ref nb = case lookup ref nb of
+>     Just n   -> n
+>     Nothing  -> NoNews
+
+> mergeNews :: NewsBulletin -> NewsBulletin -> NewsBulletin
+> mergeNews old [] = old
+> mergeNews [] new = new
+> mergeNews ((r, n):old) new = mergeNews old ((r, min n (lookupNews r new)):new)
+
+> propagateNews :: NewsBulletin -> Fwd Entry -> ProofState ()
+> propagateNews []   F0         = return ()
+> propagateNews news F0         = optional (insertCadet (R news)) >> return ()
+> propagateNews news (e :> es)  = do
+>   case e of
+>     (E ref sn (Boy LAMB))       -> putDevEntry e >> propagateNews news es
+>     (E ref sn (Boy (PIB s)))    -> putDevEntry e >> propagateNews news es
+>     (E ref sn (Girl LETG (es', tip, root))) -> case tip of
+>       Unknown (t :=>: ty)     -> putDevEntry e >> propagateNews news es
+>       Defined tm (t :=>: ty)  -> putDevEntry e >> propagateNews news es
+>     (R oldNews)   -> propagateNews (mergeNews oldNews news) es
+
+> tellNews :: NewsBulletin -> Tm {d, TT} REF -> (Tm {d, TT} REF, News)
+> tellNews = undefined
 
 \subsection{Command-Line Interface}
 
@@ -452,7 +482,8 @@ Here we have a very basic command-driven interface to the proof state monad.
 > diff xs ys = (xs, ys)
 
 > showEntries :: Fwd Entry -> String
-> showEntries = foldMap (\(E ref _ _) -> show (prettyRef B0 ref) ++ ", ")
+> showEntries = foldMap (\e -> case e of (E ref _ _) -> show (prettyRef B0 ref) ++ ", "
+>                                        (R news) -> "News: " ++ show news)
 
 
 \section{Elab Monad}

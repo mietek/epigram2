@@ -38,16 +38,19 @@ as a term with a given type.
 >   deriving Show
 
 
-An |Entry| consists of a |REF| with the last component of its |Name| and an |Entity|.
+An |Entry| is either an |Entity| with its |REF| and the last component of its |Name|,
+or a "news bulletin" |R| describing updates to future references.
 
 > data Entry
->   = E REF (String, Int) Entity
+>   =  E REF (String, Int) Entity
+>   |  R NewsBulletin
 >   deriving Show
 
 We can compare them for equality by comparing their references (presumably?).
 
 > instance Eq Entry where
 >     (E r1 _ _) == (E r2 _ _)  =  r1 == r2
+>     _ == _ = error "instance Eq Entry: cannot compare news bulletins for equality"
 
 The last component of the name is cached because we will need it quite frequently for
 display purposes. We can easily (but inefficiently) extract it from a reference:
@@ -70,6 +73,16 @@ over all following entries and the definition (if any) in its development.
 > data BoyKind   = LAMB | PIB INTM deriving (Show, Eq)
 > data GirlKind  = LETG deriving (Show, Eq)
 
+
+|News| represents possible changes to references. At the moment, it may be |GoodNews|
+(the reference has become more defined) or |NoNews| (even better from our perspective,
+as the reference has not changed). When we come to implement functionality to remove
+definitions from the proof state, we will also need |BadNews| (the reference has
+changed but is not more informative) and |DeletedNews| (the reference has gone completely).
+
+> data News = GoodNews | NoNews deriving (Eq, Ord, Show)
+
+> type NewsBulletin = [(REF, News)]
 
 The |(-||)| operator takes a list of entries and a term, and changes the term
 so that boys in the list of entries are represented by de Brujin indices.
