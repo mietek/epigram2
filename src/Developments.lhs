@@ -105,7 +105,7 @@ $\lambda$- and $\Pi$-binds over a list $\nabla$.
 >     help (delnab  :< E _ (x, _)  (Boy LAMB))     (nabla :< _)  t = 
 >         help delnab nabla (L (x :. t))
 >     help (delnab  :< E _ (x, _)  (Boy (PIB s)))  (nabla :< _)  t = 
->         help delnab nabla (PI x (delnab -| s) t)
+>         help delnab nabla (PI (delnab -| s) (L (x :. t)))
 
 
 A |Dev| is not truly |Traversable|, but it supports |traverse|-like operations that update

@@ -164,47 +164,24 @@ This module mostly exists to provide the |devLoad| function.
 > coreLineAction _ _ _ = Nothing
 
 
-> discharge :: Bwd Entry -> INTM -> INTM
-> discharge B0 t = t
-> discharge (es :< E _ _ (Girl _ _)) t = discharge es t
-> discharge (es :< E _ (x, _) (Boy LAMB)) t = discharge es (L (x :. t))
-> discharge (es :< E _ (x, _) (Boy (PIB s))) t = discharge es (PI x (es -| s) t)
-
-> lambda :: Bwd Entry -> INTM -> INTM
-> lambda B0 t = t
-> lambda (es :< E _ _ (Girl _ _)) t = lambda es t
-> lambda (es :< E _ (x, _) (Boy _)) t = lambda es (L (x :. t))
-
-> disMangle :: Bwd Entry -> Int -> Mangle I REF REF
-> disMangle ys i = Mang
->   {  mangP = \ x ies -> (|(h ys x i $:$) ies|)
->   ,  mangV = \ i ies -> (|(V i $:$) ies|)
->   ,  mangB = \ _ -> disMangle ys (i + 1)
->   } where
->   h B0                        x i  = P x
->   h (ys :< E y _ (Boy _))     x i
->     | x == y     = V i
->     | otherwise  = h ys x (i + 1)
->   h (ys :< E y _ (Girl _ _))  x i = h ys x i
-
-> (-|) :: Bwd Entry -> INTM -> INTM
-> es -| t = disMangle es 0 %% t
-
 > tipDom :: Maybe INTM -> Tip -> Root -> Maybe TY
 > tipDom (Just s)  Module                   r = do
 >   () <- check (SET :>: s) r
 >   return (evTm s)
-> tipDom (Just s)  (Unknown (C (Pi s' _)))  r = do
+> tipDom (Just s)  (Unknown (_ :=>: PI s' _))  r = do
 >   () <- check (SET :>: s) r
 >   let vs = evTm s
 >   guard $ equal (SET :>: (vs, s')) r
 >   return vs
-> tipDom Nothing   (Unknown (C (Pi s _)))  r = Just s
-> tipDom _         _                       r = Nothing
+> tipDom Nothing   (Unknown (_ :=>: PI s _))  r = Just s
+> tipDom _         _                          r = Nothing
+
+
+TODO: the type here is clearly nonsense, but how to deal with this?
 
 > tipRan :: Tip -> REF -> Tip
-> tipRan (Unknown (C (Pi _ t)))  x  = Unknown (t $$ A (pval x))
-> tipRan Module                  _  = Module
+> tipRan (Unknown (ty :=>: PI _ t))  x  = Unknown (ty :=>: t $$ A (pval x))
+> tipRan Module                      _  = Module
 
 > makeFun :: Bwd Entry -> Dev -> [[Tok]] -> Writer [[Tok]] Dev
 > makeFun gs d [] = (|d|)

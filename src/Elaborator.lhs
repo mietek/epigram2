@@ -318,7 +318,7 @@ If so, DevLoad.lhs#tipRan should do it as well.}
 
 > lambdaBoy :: String -> ProofState ()
 > lambdaBoy x = do
->     Unknown (C (Pi s t)) <- getDevTip
+>     Unknown (pi :=>: PI s t) <- getDevTip
 >     root <- getDevRoot
 >     Root.freshRef (x :<: s)
 >         (\ref r -> do
@@ -349,20 +349,10 @@ the goal and updates the reference.
 > localLPLift (es :< E _ (s, _) (Boy LAMB)) tm = localLPLift es (L (s :. tm))
 > localLPLift (es :< E _ (s, _) (Boy (PIB t))) tm = localLPLift es (C (Pi t (L (s :. tm))))
 
-> globalLLift :: Bwd Entry -> INTM -> INTM
-> globalLLift (es :< E _ (s, _) (Boy _)) tm = globalLLift es (L (s :. tm))
 
-\subsubsection{Goal Search Commands}
+\subsection{Wire Service}
 
-To implement goal search, we need a few useful bits of kit...
-
-The |untilA| operator runs its first argument one or more times until its second
-argument succeeds, at which point it returns the result. If the first argument
-fails, the whole operation fails.
-
-> untilA :: Alternative f => f () -> f a -> f a
-> g `untilA` test = g *> try
->     where try = test <|> (g *> try)
+TODO: there is lots to do here.
 
 The |much| operator runs its argument until it fails, then returns the state of
 its last success.
@@ -434,6 +424,9 @@ Here we have a very basic command-driven interface to the proof state monad.
 >     give tm
 >     return "Thank you."
 
+> elabParse ("dump":_)     = do
+>     c <- get
+>     trace (show c) $ return "Done."
 > elabParse ("auncles":_)  = get >>= return . showEntries . (<>> F0) . auncles
 > elabParse _ = return "???"
 
