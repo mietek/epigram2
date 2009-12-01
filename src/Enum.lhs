@@ -122,6 +122,14 @@ Equality rules:
 >   traverse f Ze           = (|Ze|)
 >   traverse f (Su n)       = (|Su (f n)|) 
 
+> import -> HalfZipCan where
+>   halfZip EnumU EnumU = Just EnumU
+>   halfZip (EnumT t0) (EnumT t1) = Just (EnumT (t0,t1))
+>   halfZip NilE NilE = Just NilE
+>   halfZip (ConsE s0 t0) (ConsE s1 t1) = Just (ConsE (s0,s1) (t0,t1))
+>   halfZip Ze Ze = Just Ze
+>   halfZip (Su t0) (Su t1) = Just (Su (t0,t1))
+
 > import -> CanPretty where
 >   prettyCan e EnumU         = text "Enum"
 >   prettyCan e (EnumT t)     = braces (prettyEnum e t)
@@ -244,14 +252,3 @@ Equality rules:
 >     ("Branches", _) -> Ignore
 >     ("Switch", [e, p, b, x]) -> App (Var "switch") [b, x]
 
-> import -> OpRunEqGreen where
->   opRunEqGreen [ENUMU,NILE,ENUMU,NILE] = Right $ TRIVIAL
->   opRunEqGreen [ENUMU,CONSE t1 e1,ENUMU,CONSE t2 e2] = Right $ 
->     eval [.t1.e1.t2.e2. C (And (eqGreenT (UID :>: NV t1) (UID :>: NV t2))
->                                (eqGreenT (ENUMU :>: NV e1) (ENUMU :>: NV e2)))
->          ] $ B0 :< t1 :< e1 :< t2 :< e2
->   opRunEqGreen [ENUMT (CONSE _ e1),ZE,ENUMT (CONSE _ e2),ZE] = Right TRIVIAL
->   opRunEqGreen [ENUMT (CONSE _ e1),SU n1,ENUMT (CONSE _ e2),SU n2] = Right $ 
->     eval [.e1.n1.e2.n2. eqGreenT (ENUMT (NV e1) :>: NV n1) 
->                                  (ENUMT (NV e2) :>: NV n2) 
->          ] $ B0 :< e1 :< n1 :< e2 :< n2

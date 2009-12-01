@@ -147,6 +147,13 @@ Equality rules:
 >   traverse f (Arg x y)  = (|Arg (f x) (f y)|)
 >   traverse f (Ind x y)  = (|Ind (f x) (f y)|)
 
+> import -> HalfZipCan where
+>   halfZip Desc Desc = Just Desc
+>   halfZip (Mu t0) (Mu t1) = Just (Mu (t0,t1))
+>   halfZip Done Done = Just Done
+>   halfZip (Arg s0 t0) (Arg s1 t1) = Just (Arg (s0,s1) (t0,t1))
+>   halfZip (Ind s0 t0) (Ind s1 t1) = Just (Ind (s0,s1) (t0,t1))
+
 > import -> CanPats where
 >   pattern DESC     = C Desc
 >   pattern MU x     = C (Mu x)
@@ -457,21 +464,3 @@ Equality rules:
 >                                             , use v done ] done) $
 >                   done
 
-> import -> OpRunEqGreen where
->   opRunEqGreen [DESC,DONE,DESC,DONE] = Right $ TRIVIAL
->   opRunEqGreen [DESC,ARG x1 y1,DESC,ARG x2 y2] = Right $ 
->     eval [.x1.y1.x2.y2. C (And (eqGreenT (SET :>: NV x1) (SET :>: NV x2))
->                                (eqGreenT (ARR (NV x1) DESC :>: NV y1) 
->                                          (ARR (NV x2) DESC :>: NV y2)))
->          ] $ B0 :< x1 :< y1 :< x2 :< y2
->   opRunEqGreen [DESC,IND x1 y1,DESC,IND x2 y2] = Right $ 
->     eval [.x1.y1.x2.y2. C (And (eqGreenT (SET :>: NV x1) (SET :>: NV x2))
->                                (eqGreenT (DESC :>: NV y1) 
->                                          (DESC :>: NV y2)))
->          ] $ B0 :< x1 :< y1 :< x2 :< y2
->   opRunEqGreen [MU d1,x1,MU d2,x2] = Right $ 
->     eval [.d1.x1.d2.x2. eqGreenT (N (descOp :@ [NV d1,MU (NV d1)]) 
->                                     :>: N (V x1 :$ Out)) 
->                                  (N (descOp :@ [NV d2,MU (NV d2)]) 
->                                     :>: N (V x2 :$ Out)) 
->          ] $ B0 :< d1 :< x1 :< d2 :< x2

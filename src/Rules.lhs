@@ -464,15 +464,8 @@ constructors to make them easier to swallow.
 > eqGreenT :: (InTm x :>: InTm x) -> (InTm x :>: InTm x) -> InTm x
 > eqGreenT (y0 :>: t0) (y1 :>: t1) = N (eqGreen :@ [y0,t0,y1,t1])
 
+
 > opRunEqGreen :: [VAL] -> Either NEU VAL
-> opRunEqGreen [SET,C t0,SET,C t1] = case halfZip t0'' t1'' of
->    Nothing -> Right ABSURD
->    Just x  -> Right $ mkEqConj (trail x)
->    where
->    Just t0' = canTy (\tx@(t :>: x) -> Just (tx :=>: x)) (Set :>: t0)
->    t0'' = fmap (\(x :=>: y) -> x) t0'
->    Just t1' = canTy (\tx@(t :>: x) -> Just (tx :=>: x)) (Set :>: t1)
->    t1'' = fmap (\(x :=>: y) -> x) t1'
 > import <- OpRunEqGreen
 > opRunEqGreen [C (Pi s1 t1),f1,C (Pi s2 t2),f2] = Right $ trustMe (runEqGreenType :>: runEqGreenTac)
 >                                                          $$ A s1 $$ A t1 $$ A f1 $$ A s2 $$ A t2 $$ A f2
@@ -511,17 +504,19 @@ constructors to make them easier to swallow.
 >                                                                        ((use t2 . apply (A (use x2 done)) $ done) :>:
 >                                                                         (use f2 . apply (A (use x2 done)) $ done)))))
 >             eqGreenTac (y0 :>: t0) (y1 :>: t1) = useOp eqGreen [y0,t0,y1,t1] done
-
-
-> opRunEqGreen [_,N t0,_,_] = Left t0
-> opRunEqGreen [_,_,_,N t1] = Left t1
-> opRunEqGreen [N y0,_,_,_] = Left y0
-> opRunEqGreen [_,_,N y1,_] = Left y1
-> opRunEqGreen [C y0,_,C y1,_] = error $ show (fmap (\_ -> ()) y0) ++ "    " ++
->                                        show (fmap (\_ -> ()) y1)
-
-
-< opRunEqGreen [C y0,_,C y1,_] = Right TRIVIAL
+> opRunEqGreen [C ty0,C t0,C ty1,C t1] = case halfZip t0'' t1'' of
+>    Nothing -> Right ABSURD 
+>    Just x  -> Right $ mkEqConj (trail x)
+>    where
+>    Just t0' = canTy (\tx@(t :>: x) -> Just (tx :=>: x)) (ty0 :>: t0)
+>    t0'' = fmap (\(x :=>: y) -> x) t0'
+>    Just t1' = canTy (\tx@(t :>: x) -> Just (tx :=>: x)) (ty1 :>: t1)
+>    t1'' = fmap (\(x :=>: y) -> x) t1'
+> opRunEqGreen [C _,N t0,C _,_] = Left t0
+> opRunEqGreen [C _,_,C _,N t1] = Left t1
+> opRunEqGreen [N y0,_,_,_] = Left y0 
+> opRunEqGreen [_,_,N y1,_] = Left y1 
+> opRunEqGreen [C y0,_,C y1,_] = Right TRIVIAL
 
 \question{At first glance, the coerce rule for |Pi| does not respect
           the definition of the OTT paper.}
