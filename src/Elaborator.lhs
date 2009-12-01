@@ -335,7 +335,7 @@ $\Pi$-abstraction to the current development.
 The |lambdaBoy| command checks that the current goal is a $\Pi$-type, and if so,
 appends a $\lambda$-abstraction to the current development.
 \question{Does this do the right thing with the term representation of the type in the tip?
-If so, DevLoad.lhs#tipRan should do it as well.}
+If so, tipRan in DevLoad.lhs should do something like it as well.}
 
 > lambdaBoy :: String -> ProofState ()
 > lambdaBoy x = do
