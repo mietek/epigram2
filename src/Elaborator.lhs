@@ -449,9 +449,9 @@ term and the news about it.
 
 > tellNews :: NewsBulletin -> Tm {d, TT} REF -> (Tm {d, TT} REF, News)
 > tellNews []    tm = (tm, NoNews)
-> tellNews news  tm = case foldMap (flip lookupNews news) tm of
+> tellNews news  tm = case foldMap (lookupNews news) tm of
 >     NoNews  -> (tm, NoNews)
->     n       -> (fmap (flip getLatest news) tm, n)
+>     n       -> (fmap (getLatest news) tm, n)
 
 
 

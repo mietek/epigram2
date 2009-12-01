@@ -9,6 +9,7 @@
 > module Developments where
 
 > import Data.Foldable
+> import Data.Maybe
 > import Data.Monoid
 > import Control.Monad
 > import Control.Applicative
@@ -110,7 +111,7 @@ their names.
 > getLatest []                ref = ref
 > getLatest ((ref', _):news)  ref
 >     | ref == ref'  = ref'
->     | otherwise    = getLatest ref news
+>     | otherwise    = getLatest news ref
 
 The |mergeNews| function takes older and newer bulletins, and composes them to
 produce a single bulletin with the worst news about every reference mentioned
@@ -119,7 +120,7 @@ in either.
 > mergeNews :: NewsBulletin -> NewsBulletin -> NewsBulletin
 > mergeNews old [] = old
 > mergeNews [] new = new
-> mergeNews ((r, n):old) new = mergeNews old ((r, min n (lookupNews r new)):new)
+> mergeNews ((r, n):old) new = mergeNews old ((r, min n (lookupNews new r)):new)
 
 
 \subsection{Lambda-lifting and discharging}
