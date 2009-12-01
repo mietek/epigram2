@@ -9,6 +9,7 @@
 > module Developments where
 
 > import Data.Foldable
+> import Data.Monoid
 > import Control.Monad
 > import Control.Applicative
 > import Data.Traversable
@@ -74,15 +75,54 @@ over all following entries and the definition (if any) in its development.
 > data GirlKind  = LETG deriving (Show, Eq)
 
 
+\subsection{News about updated references}
+
 |News| represents possible changes to references. At the moment, it may be |GoodNews|
 (the reference has become more defined) or |NoNews| (even better from our perspective,
-as the reference has not changed). When we come to implement functionality to remove
-definitions from the proof state, we will also need |BadNews| (the reference has
-changed but is not more informative) and |DeletedNews| (the reference has gone completely).
+as the reference has not changed). Note that |News| is ordered by increasing ``niceness''.
 
-> data News = GoodNews | NoNews deriving (Eq, Ord, Show)
+When we come to implement functionality to remove definitions from the proof state,
+we will also need |BadNews| (the reference has changed but is not more informative)
+and |DeletedNews| (the reference has gone completely).
+
+> data News = DeletedNews | BadNews | GoodNews | NoNews deriving (Eq, Ord, Show)
+
+> instance Monoid News where
+>     mempty   = NoNews
+>     mappend  = min
+
+A |NewsBulletin| is a list of pairs of updated references and the news about them.
 
 > type NewsBulletin = [(REF, News)]
+
+The |lookupNews| function returns the news about a reference contained in the
+bulletin, which may be |NoNews| if the reference is not present.
+
+> lookupNews :: NewsBulletin -> REF -> News
+> lookupNews nb ref = fromMaybe NoNews (lookup ref nb)
+
+The |getLatest| function returns the most up-to-date copy of the given reference,
+either the one from the bulletin if it is present, or the one passed in otherwise.
+The slightly odd recursive case arises because equality for references just compares
+their names.
+
+> getLatest :: NewsBulletin -> REF -> REF
+> getLatest []                ref = ref
+> getLatest ((ref', _):news)  ref
+>     | ref == ref'  = ref'
+>     | otherwise    = getLatest ref news
+
+The |mergeNews| function takes older and newer bulletins, and composes them to
+produce a single bulletin with the worst news about every reference mentioned
+in either.
+
+> mergeNews :: NewsBulletin -> NewsBulletin -> NewsBulletin
+> mergeNews old [] = old
+> mergeNews [] new = new
+> mergeNews ((r, n):old) new = mergeNews old ((r, min n (lookupNews r new)):new)
+
+
+\subsection{Lambda-lifting and discharging}
 
 The |(-||)| operator takes a list of entries and a term, and changes the term
 so that boys in the list of entries are represented by de Brujin indices.
@@ -120,6 +160,8 @@ $\lambda$- and $\Pi$-binds over a list $\nabla$.
 >     help (delnab  :< E _ (x, _)  (Boy (PIB s)))  (nabla :< _)  t = 
 >         help delnab nabla (PI (delnab -| s) (L (x :. t)))
 
+
+\subsection{Traversal}
 
 A |Dev| is not truly |Traversable|, but it supports |traverse|-like operations that update
 its references:

@@ -308,7 +308,7 @@ several alternatives for where to go next and continuing until a goal is reached
 \subsubsection{Construction Commands}
 
 The |make| command adds a named goal of the given type to the bottom of the
-current development. It first checks that the purported type is in fact a type.
+current development, after checking that the purported type is in fact a type.
 
 > make :: (String :<: INTM) -> ProofState ()
 > make (s:<:ty) = do
@@ -320,8 +320,8 @@ current development. It first checks that the purported type is in fact a type.
 >                                                  (B0, Unknown (ty :=>: ty'), room root s)))
 >     putDevRoot (roos root)
 
-The |piBoy| command checks that the current goal is SET, and if so, appends a
-$\Pi$-abstraction to the current development.
+The |piBoy| command checks that the current goal is of type SET, and that the supplied type
+is also a set; if so, it appends a $\Pi$-abstraction to the current development.
 
 > piBoy :: (String :<: INTM) -> ProofState ()
 > piBoy (s:<:ty) = do
@@ -333,9 +333,7 @@ $\Pi$-abstraction to the current development.
 >         (\ref r -> putDevEntry (E ref (lastName ref) (Boy (PIB ty))) >> putDevRoot r) root
 
 The |lambdaBoy| command checks that the current goal is a $\Pi$-type, and if so,
-appends a $\lambda$-abstraction to the current development.
-\question{Does this do the right thing with the term representation of the type in the tip?
-If so, tipRan in DevLoad.lhs should do something like it as well.}
+appends a $\lambda$-abstraction with the appropriate type to the current development.
 
 > lambdaBoy :: String -> ProofState ()
 > lambdaBoy x = do
@@ -344,7 +342,8 @@ If so, tipRan in DevLoad.lhs should do something like it as well.}
 >     Root.freshRef (x :<: s)
 >         (\ref r -> do
 >            putDevEntry (E ref (lastName ref) (Boy LAMB))
->            putDevTip (Unknown (N ((pi :? SET) :$ A (N (P ref))) :=>: t $$ A (N (P ref))))
+>            let tipTyv = t $$ A (N (P ref))
+>            putDevTip (Unknown (bquote B0 tipTyv r :=>: tipTyv))
 >            putDevRoot r
 >          ) root
 
@@ -361,8 +360,8 @@ the goal and updates the reference.
 >     let aus = greatAuncles loc
 >     sibs <- getDevEntries
 >     let tm' = eval (parBind aus sibs tm) B0
->     name := _ <- getMother
->     let ref = name := DEFN tm' :<: tipTy
+>     name := _ :<: ty <- getMother
+>     let ref = name := DEFN tm' :<: ty
 >     putMother ref
 >     updateRef ref
 >     goOut
@@ -370,35 +369,92 @@ the goal and updates the reference.
 
 \subsection{Wire Service}
 
-TODO: there is lots to do here.
+Here we describe how to handle updates to references in the proof state, caused by
+refinement commands like |give|. The idea is to deal with updates lazily, to avoid
+unnecessary traversals of the proof tree. When |updateRef| is called to announce
+a changed reference (that the current development has already processed), it simply
+inserts a news bulletin below the current development.
 
 > updateRef :: REF -> ProofState ()
 > updateRef ref = insertCadet (R [(ref, GoodNews)])
 
-> lookupNews :: REF -> NewsBulletin -> News
-> lookupNews ref nb = case lookup ref nb of
->     Just n   -> n
->     Nothing  -> NoNews
-
-> mergeNews :: NewsBulletin -> NewsBulletin -> NewsBulletin
-> mergeNews old [] = old
-> mergeNews [] new = new
-> mergeNews ((r, n):old) new = mergeNews old ((r, min n (lookupNews r new)):new)
+The |propagateNews| function takes a current news bulletin and a list of entries
+to add to the current development. It applies the news bulletin to each entry
+in turn, picking up other bulletins along the way. This function should be called
+when navigating to a development that may contain news bulletins, so they can be
+pushed out of sight.
 
 > propagateNews :: NewsBulletin -> Fwd Entry -> ProofState ()
+
+If there are no entries to process, we should stash the bulletin after the current
+location (if the bulletin is non-empty) and stop. Note that the insertion is
+optional because it will fail when we have reached the end of the module, at which
+point everyone knows the news anyway.
+
 > propagateNews []   F0         = return ()
 > propagateNews news F0         = optional (insertCadet (R news)) >> return ()
-> propagateNews news (e :> es)  = do
->   case e of
->     (E ref sn (Boy LAMB))       -> putDevEntry e >> propagateNews news es
->     (E ref sn (Boy (PIB s)))    -> putDevEntry e >> propagateNews news es
->     (E ref sn (Girl LETG (es', tip, root))) -> case tip of
->       Unknown (t :=>: ty)     -> putDevEntry e >> propagateNews news es
->       Defined tm (t :=>: ty)  -> putDevEntry e >> propagateNews news es
->     (R oldNews)   -> propagateNews (mergeNews oldNews news) es
+
+\question{|LAMB|s and |Girl|s do not contain a term representation of their type, so
+where can we get it from?}
+
+> propagateNews news (e@(E (name := DECL :<: ty) sn (Boy LAMB)) :> es) = do
+>     putDevEntry (E (name := DECL :<: ty) sn (Boy LAMB))
+>     propagateNews news es
+
+To update a |PIB|, we tell the news to its domain type. If the type changes, we update
+the boy's reference and add the change to the bulletin.
+
+> propagateNews news (e@(E (name := DECL :<: ty) sn (Boy (PIB s))) :> es) = do
+>     case tellNews news s of
+>         (_,   NoNews)    -> putDevEntry e >> propagateNews news es
+>         (s',  GoodNews)  -> do
+>             let ref = name := DECL :<: (eval s' B0)
+>             putDevEntry (E ref sn (Boy (PIB s')))
+>             propagateNews ((ref, GoodNews):news) es
+
+Updating girls is a bit more complicated. First we have to check whether the tip type
+needs to be updated, and re-evaluate it if necessary. 
+
+> propagateNews news (e@(E (name := HOLE :<: ty) sn 
+>   (Girl LETG (cs, Unknown (tipTy :=>: tipTyv), root))) :> es) = case tellNews news tipTy of
+>     (_,      NoNews)    -> putDevEntry e >> propagateNews news es
+>     (tipTy', GoodNews)  -> do
+>         putDevEntry (E (name := HOLE :<: ty) sn 
+>             (Girl LETG (cs, Unknown (tipTy' :=>: eval tipTy' B0), root)))
+
+> propagateNews news (e@(E (name := DEFN v :<: ty) sn 
+>   (Girl LETG (cs, Defined tm (tipTy :=>: tipTyv), root))) :> es) = do
+>     let  tt = case tellNews news tipTy of
+>             (_,       NoNews)    -> tipTy :=>: tipTyv
+>             (tipTy',  GoodNews)  -> tipTy' :=>: eval tipTy' B0
+>          (tm', v') = case tellNews news tm of
+>             (_ ,   NoNews)    -> (tm, v)
+>             (tm',  GoodNews)  -> (tm', eval tm' B0)
+>     putDevEntry (E (name := DEFN v' :<: ty) sn (Girl LETG (cs, Defined tm' tt, root)))
+>     goIn
+>     es' <- getDevEntries
+>     putDevEntries B0
+>     propagateNews news (es' <>> F0)
+>     goOut
+>     propagateNews news es
+
+Finally, if we encounter an older news bulletin when propagating news, we can simply
+merge the two together.
+
+> propagateNews news (R oldNews :> es) = propagateNews (mergeNews oldNews news) es
+
+
+The |tellNews| function applies a bulletin to a term. It returns the updated
+term and the news about it.
 
 > tellNews :: NewsBulletin -> Tm {d, TT} REF -> (Tm {d, TT} REF, News)
-> tellNews = undefined
+> tellNews []    tm = (tm, NoNews)
+> tellNews news  tm = case foldMap (flip lookupNews news) tm of
+>     NoNews  -> (tm, NoNews)
+>     n       -> (fmap (flip getLatest news) tm, n)
+
+
+
 
 \subsection{Command-Line Interface}
 

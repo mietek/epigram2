@@ -128,7 +128,7 @@ This module mostly exists to provide the |devLoad| function.
 >   s <- tipDom mty tip r
 >   let xr = name r x := DECL :<: s
 >   let xe = E xr (x, snd r) (Boy LAMB)
->   coreLineAction gs (LLam xs mty) (es :< xe, tipRan tip xr, roos r)
+>   coreLineAction gs (LLam xs mty) (es :< xe, tipRan tip xr r, roos r)
 > coreLineAction gs LCom d = Just d
 > coreLineAction gs (LDef x (Just ty) tss) (es, t, r) =
 >   let  gs' = gs <+> es
@@ -176,12 +176,10 @@ This module mostly exists to provide the |devLoad| function.
 > tipDom Nothing   (Unknown (_ :=>: PI s _))  r = Just s
 > tipDom _         _                          r = Nothing
 
-
-TODO: the type here is clearly nonsense, but how to deal with this?
-
-> tipRan :: Tip -> REF -> Tip
-> tipRan (Unknown (ty :=>: PI _ t))  x  = Unknown (ty :=>: t $$ A (pval x))
-> tipRan Module                      _  = Module
+> tipRan :: Tip -> REF -> Root -> Tip
+> tipRan (Unknown (ty :=>: PI _ t))  x r  = let tyv = t $$ A (pval x) in
+>   Unknown (bquote B0 tyv r :=>: tyv)
+> tipRan Module                      _ _  = Module
 
 > makeFun :: Bwd Entry -> Dev -> [[Tok]] -> Writer [[Tok]] Dev
 > makeFun gs d [] = (|d|)
