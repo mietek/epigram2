@@ -47,6 +47,7 @@ Each |Layer| of the structure is a record with the following fields:
 > data Layer = Layer
 >   {  elders  :: Bwd Entry
 >   ,  mother  :: REF
+>   ,  motherTy :: INTM
 >   ,  cadets  :: Fwd Entry
 >   ,  laytip  :: Tip
 >   ,  layroot :: Root }
@@ -225,28 +226,29 @@ is not in the required form.
 >     goInAcc cadets = do
 >         (ls, (es :< e, tip, root)) <- get
 >         case e of
->             E ref _ (Girl LETG dev) -> put (ls :< Layer es ref cadets tip root, dev)
+>             E ref _ (Girl LETG dev) ty -> put (ls :< Layer es ref ty cadets tip root, dev)
 >             _ -> put (ls, (es, tip, root)) >> goInAcc (e :> cadets)
 
 > goOut :: ProofState ()
 > goOut = do
->     Layer elders mother cadets tip root <- removeLayer
+>     Layer elders mother mty cadets tip root <- removeLayer
 >     dev <- getDev
->     putDev (elders :< E mother (lastName mother) (Girl LETG dev) {- <>< cadets-}, tip, root)        
+>     putDev (elders :< E mother (lastName mother) (Girl LETG dev){- <>< cadets-} mty, tip, root)
 >     propagateNews [] cadets
+>     return ()
 
 > goUp :: ProofState ()
 > goUp = goUpAcc F0
 >   where
 >     goUpAcc :: Fwd Entry -> ProofState ()
 >     goUpAcc acc = do
->         l@(Layer (es :< e) oldRef cadets tip root) <- removeLayer
+>         l@(Layer (es :< e) oldRef oldTy cadets tip root) <- removeLayer
 >         oldDev <- getDev
 >         case e of
->             E newRef _ (Girl LETG newDev) ->
+>             E newRef _ (Girl LETG newDev) newTy ->
 >                 putDev newDev >>
->                 putLayer l{elders=es, mother=newRef,cadets=(acc <+> 
->                     (E oldRef (lastName oldRef) (Girl LETG oldDev) :> cadets))}
+>                 putLayer l{elders=es, mother=newRef, motherTy=newTy, cadets=(acc <+> 
+>                     (E oldRef (lastName oldRef) (Girl LETG oldDev) oldTy :> cadets))}
 >             _ -> putLayer l{elders=es} >> goUpAcc (e :> acc)
 
 > goDown :: ProofState ()
@@ -254,12 +256,12 @@ is not in the required form.
 >   where
 >     goDownAcc :: Bwd Entry -> ProofState ()
 >     goDownAcc acc = do
->         l@(Layer elders ref (e :> es) tip root) <- removeLayer
+>         l@(Layer elders ref ty (e :> es) tip root) <- removeLayer
 >         case e of
->             E newRef _ (Girl LETG newDev) -> do
+>             E newRef _ (Girl LETG newDev) newTy -> do
 >                 oldDev <- replaceDev newDev
->                 putLayer  l{elders=(elders:<E ref (lastName ref) (Girl LETG oldDev)) <+> acc,
->                               mother=newRef, cadets=es}
+>                 putLayer  l{elders=(elders:<E ref (lastName ref) (Girl LETG oldDev) ty)<+> acc,
+>                               mother=newRef, motherTy=newTy, cadets=es}
 >             _ -> putLayer l{cadets=es} >> goDownAcc (acc :< e)
 
 
@@ -317,7 +319,7 @@ current development, after checking that the purported type is in fact a type.
 >     let ty' = eval ty B0
 >     n <- withRoot (flip name s)
 >     putDevEntry (E (n := HOLE :<: ty') (last n) (Girl LETG 
->                                                  (B0, Unknown (ty :=>: ty'), room root s)))
+>                                                  (B0, Unknown (ty :=>: ty'), room root s)) ty)
 >     putDevRoot (roos root)
 
 The |piBoy| command checks that the current goal is of type SET, and that the supplied type
@@ -330,7 +332,7 @@ is also a set; if so, it appends a $\Pi$-abstraction to the current development.
 >     () <- lift (check (SET :>: ty) root)
 >     let ty' = eval ty B0
 >     Root.freshRef (s :<: ty')
->         (\ref r -> putDevEntry (E ref (lastName ref) (Boy (PIB ty))) >> putDevRoot r) root
+>         (\ref r -> putDevEntry (E ref (lastName ref) (Boy PIB) ty) >> putDevRoot r) root
 
 The |lambdaBoy| command checks that the current goal is a $\Pi$-type, and if so,
 appends a $\lambda$-abstraction with the appropriate type to the current development.
@@ -341,7 +343,7 @@ appends a $\lambda$-abstraction with the appropriate type to the current develop
 >     root <- getDevRoot
 >     Root.freshRef (x :<: s)
 >         (\ref r -> do
->            putDevEntry (E ref (lastName ref) (Boy LAMB))
+>            putDevEntry (E ref (lastName ref) (Boy LAMB) (bquote B0 s r))
 >            let tipTyv = t $$ A (N (P ref))
 >            putDevTip (Unknown (bquote B0 tipTyv r :=>: tipTyv))
 >            putDevRoot r
@@ -384,59 +386,72 @@ in turn, picking up other bulletins along the way. This function should be calle
 when navigating to a development that may contain news bulletins, so they can be
 pushed out of sight.
 
-> propagateNews :: NewsBulletin -> Fwd Entry -> ProofState ()
+> propagateNews :: NewsBulletin -> Fwd Entry -> ProofState NewsBulletin
 
 If there are no entries to process, we should stash the bulletin after the current
 location (if the bulletin is non-empty) and stop. Note that the insertion is
 optional because it will fail when we have reached the end of the module, at which
 point everyone knows the news anyway.
 
-> propagateNews []   F0         = return ()
-> propagateNews news F0         = optional (insertCadet (R news)) >> return ()
+> propagateNews []   F0         = return []
+> propagateNews news F0         = optional (insertCadet (R news)) >> return news
 
-\question{|LAMB|s and |Girl|s do not contain a term representation of their type, so
-where can we get it from?}
+A |Boy| is relatively easy to deal with, we just check to see if its type
+has become more defined, and pass on the good news if necessary.
 
-> propagateNews news (e@(E (name := DECL :<: ty) sn (Boy LAMB)) :> es) = do
->     putDevEntry (E (name := DECL :<: ty) sn (Boy LAMB))
->     propagateNews news es
-
-To update a |PIB|, we tell the news to its domain type. If the type changes, we update
-the boy's reference and add the change to the bulletin.
-
-> propagateNews news (e@(E (name := DECL :<: ty) sn (Boy (PIB s))) :> es) = do
->     case tellNews news s of
->         (_,   NoNews)    -> putDevEntry e >> propagateNews news es
->         (s',  GoodNews)  -> do
->             let ref = name := DECL :<: (eval s' B0)
->             putDevEntry (E ref sn (Boy (PIB s')))
+> propagateNews news (e@(E (name := DECL :<: tv) sn (Boy _) ty) :> es) = do
+>     case tellNews news ty of
+>         (_, NoNews) -> putDevEntry e >> propagateNews news es
+>         (ty', GoodNews) -> do
+>             let ref = name := DECL :<: evTm ty'
+>             putDevEntry (E ref sn (Boy LAMB) ty')
 >             propagateNews ((ref, GoodNews):news) es
 
-Updating girls is a bit more complicated. First we have to check whether the tip type
-needs to be updated, and re-evaluate it if necessary. 
+Updating girls is a bit more complicated. We proceed as follows:
+\begin{enumerate}
+\item Recursively propagate the news to the children.
+\item Update the tip type.
+\item Update the term at the tip, if there is one.
+\item Re-evaluate the definition, if there is one.
+\item Add the updated girl to the current development.
+\item Continue propagation, adding this girl to the bulletin if necessary.
+\end{enumerate}
 
-> propagateNews news (e@(E (name := HOLE :<: ty) sn 
->   (Girl LETG (cs, Unknown (tipTy :=>: tipTyv), root))) :> es) = case tellNews news tipTy of
->     (_,      NoNews)    -> putDevEntry e >> propagateNews news es
->     (tipTy', GoodNews)  -> do
->         putDevEntry (E (name := HOLE :<: ty) sn 
->             (Girl LETG (cs, Unknown (tipTy' :=>: eval tipTy' B0), root)))
-
-> propagateNews news (e@(E (name := DEFN v :<: ty) sn 
->   (Girl LETG (cs, Defined tm (tipTy :=>: tipTyv), root))) :> es) = do
->     let  tt = case tellNews news tipTy of
->             (_,       NoNews)    -> tipTy :=>: tipTyv
->             (tipTy',  GoodNews)  -> tipTy' :=>: eval tipTy' B0
->          (tm', v') = case tellNews news tm of
->             (_ ,   NoNews)    -> (tm, v)
->             (tm',  GoodNews)  -> (tm', eval tm' B0)
->     putDevEntry (E (name := DEFN v' :<: ty) sn (Girl LETG (cs, Defined tm' tt, root)))
+> propagateNews news (e@(E (name := k :<: tv) sn 
+>   (Girl LETG (cs, tip, root)) ty) :> es) = do
+>     putDevEntry e
 >     goIn
 >     es' <- getDevEntries
 >     putDevEntries B0
->     propagateNews news (es' <>> F0)
+>     news' <- propagateNews news (es' <>> F0)
 >     goOut
->     propagateNews news es
+>     Just (E _ _ (Girl LETG (cs', _, root')) _) <- removeDevEntry
+>     let  (tipTy :=>: tipTyv) = case tip of
+>             Unknown    x -> x
+>             Defined _  x -> x
+>          (tt, n) = case tellNews news' tipTy of
+>             (_,       NoNews)    -> (tipTy :=>: tipTyv, NoNews)
+>             (tipTy',  GoodNews)  -> (tipTy' :=>: evTm tipTy', GoodNews)
+>          (ty', tv', n') = case tellNews news' ty of
+>             (_,    NoNews)    -> (ty, tv, n)
+>             (ty',  GoodNews)  -> (ty', evTm ty', GoodNews)
+>          (tip', n'') = case tip of 
+>             Unknown     _ -> (Unknown tt, n')
+>             Defined tm  _ -> case tellNews news' tm of
+>                 (_,    NoNews)    -> (Defined tm tt, n')
+>                 (tm',  GoodNews)  -> (Defined tm' tt, GoodNews)
+>     k' <- case k of
+>             HOLE -> return HOLE
+>             DEFN _ -> do
+>                 loc <- get
+>                 let aus = greatAuncles loc
+>                 let Defined tm _ = tip'
+>                 return (DEFN (evTm (parBind aus cs' tm)))
+>     let ref = name := k' :<: tv'
+>     putDevEntry (E ref sn (Girl LETG (cs', tip', root')) ty')
+>     case n'' of
+>         NoNews    -> propagateNews news' es
+>         GoodNews  -> propagateNews ((ref, GoodNews):news') es
 
 Finally, if we encounter an older news bulletin when propagating news, we can simply
 merge the two together.
@@ -517,7 +532,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 > elabParse _ = return "???"
 
 > showPrompt :: Bwd Layer -> String
-> showPrompt (_ :< Layer _ (n := _) _ _ _)  = prettyName n ++ " > "
+> showPrompt (_ :< Layer _ (n := _) _ _ _ _)  = prettyName n ++ " > "
 > showPrompt B0        = "> "
 
 > printChanges :: Bwd Entry -> Bwd Entry -> IO ()
@@ -538,7 +553,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 > diff xs ys = (xs, ys)
 
 > showEntries :: Fwd Entry -> String
-> showEntries = foldMap (\e -> case e of (E ref _ _) -> show (prettyRef B0 ref) ++ ", "
+> showEntries = foldMap (\e -> case e of (E ref _ _ _) -> show (prettyRef B0 ref) ++ ", "
 >                                        (R news) -> "News: " ++ show news)
 
 

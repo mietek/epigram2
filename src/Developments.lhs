@@ -44,14 +44,14 @@ An |Entry| is either an |Entity| with its |REF| and the last component of its |N
 or a "news bulletin" |R| describing updates to future references.
 
 > data Entry
->   =  E REF (String, Int) Entity
+>   =  E REF (String, Int) Entity INTM
 >   |  R NewsBulletin
 >   deriving Show
 
 We can compare them for equality by comparing their references (presumably?).
 
 > instance Eq Entry where
->     (E r1 _ _) == (E r2 _ _)  =  r1 == r2
+>     (E r1 _ _ _) == (E r2 _ _ _)  =  r1 == r2
 >     _ == _ = error "instance Eq Entry: cannot compare news bulletins for equality"
 
 The last component of the name is cached because we will need it quite frequently for
@@ -68,12 +68,12 @@ A |Boy| represents a parameter (either a $\lambda$ or $\Pi$ abstraction), which 
 over all following entries and the definition (if any) in its development.
 
 > data Entity
->   = Boy   BoyKind
->   | Girl  GirlKind Dev
+>   =  Boy   BoyKind
+>   |  Girl  GirlKind Dev
 >   deriving Show
 >
-> data BoyKind   = LAMB | PIB INTM deriving (Show, Eq)
-> data GirlKind  = LETG deriving (Show, Eq)
+> data BoyKind   = LAMB | PIB  deriving (Show, Eq)
+> data GirlKind  = LETG        deriving (Show, Eq)
 
 
 \subsection{News about updated references}
@@ -138,10 +138,10 @@ so that boys in the list of entries are represented by de Brujin indices.
 >       ,  mangB = \ _ -> disMangle ys (i + 1)
 >       }
 >     h B0                        x i  = P x
->     h (ys :< E y _ (Boy _))     x i
+>     h (ys :< E y _ (Boy _) _)     x i
 >       | x == y     = V i
 >       | otherwise  = h ys x (i + 1)
->     h (ys :< E y _ (Girl _ _))  x i = h ys x i
+>     h (ys :< E y _ (Girl _ _) _)  x i = h ys x i
 
 The |parBind| function $\lambda$-binds over a list $\Delta$ of entries and
 $\lambda$- and $\Pi$-binds over a list $\nabla$.
@@ -153,12 +153,12 @@ $\lambda$- and $\Pi$-binds over a list $\nabla$.
 > parBind delta nabla t = help delnab nabla (delnab -| t) where
 >     delnab = delta <+> nabla
 >     help B0                                      B0            t = t
->     help (delta   :< E _ _       (Girl _ _))     B0            t = help delta B0 t
->     help (delta   :< E _ (x, _)  (Boy _))        B0            t = help delta B0 (L (x :. t))
->     help (delnab  :< E _ (x, _)  (Girl _ _))     (nabla :< _)  t = help delnab nabla t
->     help (delnab  :< E _ (x, _)  (Boy LAMB))     (nabla :< _)  t = 
+>     help (delta   :< E _ _       (Girl _ _) _)     B0            t = help delta B0 t
+>     help (delta   :< E _ (x, _)  (Boy _) _)        B0            t = help delta B0 (L (x :. t))
+>     help (delnab  :< E _ (x, _)  (Girl _ _) _)     (nabla :< _)  t = help delnab nabla t
+>     help (delnab  :< E _ (x, _)  (Boy LAMB) _)     (nabla :< _)  t = 
 >         help delnab nabla (L (x :. t))
->     help (delnab  :< E _ (x, _)  (Boy (PIB s)))  (nabla :< _)  t = 
+>     help (delnab  :< E _ (x, _)  (Boy PIB) s)  (nabla :< _)  t = 
 >         help delnab nabla (PI (delnab -| s) (L (x :. t)))
 
 
@@ -178,7 +178,7 @@ its references:
 >   (|Defined (traverse f tm) (|traverse f t :=>: traverseVal f v|)|)
 
 > traverseEntry :: Applicative f => (REF -> f REF) -> Entry -> f Entry
-> traverseEntry f (E r (x,i) e) = (|E (f r) (pure (x,i)) (traverseEntity f e)|)
+> traverseEntry f (E r (x,i) e t) = (|E (f r) (pure (x,i)) (traverseEntity f e) (traverse f t)|)
 
 > traverseEntity :: Applicative f => (REF -> f REF) -> Entity -> f Entity
 > traverseEntity f (Boy bk)     = (|Boy (traverseBK f bk)|)
@@ -186,7 +186,7 @@ its references:
 
 > traverseBK :: Applicative f => (REF -> f REF) -> BoyKind -> f BoyKind
 > traverseBK f LAMB = pure LAMB
-> traverseBK f (PIB t) = (|PIB (traverse f t)|)
+> traverseBK f PIB =  pure PIB
 
 > traverseGK :: Applicative f => (REF -> f REF) -> GirlKind -> f GirlKind
 > traverseGK f LETG = pure LETG

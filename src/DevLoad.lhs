@@ -60,7 +60,7 @@ This module mostly exists to provide the |devLoad| function.
 > hits _ yo = Left yo
 
 > boy :: Entry -> Spine {TT} REF
-> boy (E r _ (Boy _))  = [A (N (P r))]
+> boy (E r _ (Boy _) _)  = [A (N (P r))]
 > boy _                = []
 
 > findC :: REF -> Spine {TT} REF -> Entity -> RelName -> Maybe (ExTm REF)
@@ -71,13 +71,13 @@ This module mostly exists to provide the |devLoad| function.
 
 > findD :: Bwd Entry -> RelName -> Spine {TT} REF -> Maybe (ExTm REF)
 > findD B0 sos as = empty
-> findD (xs :< E r x e@(Girl _ _)) (y : ys) as = case hits x y of
+> findD (xs :< E r x e@(Girl _ _) _) (y : ys) as = case hits x y of
 >   Right _  -> findC r as e ys
 >   Left y'  -> findD xs (y' : ys) as
 
 > findG :: Bwd Entry -> RelName -> Maybe (ExTm REF)
 > findG B0 sos = empty
-> findG (xs :< E r x e) (y : ys) = case hits x y of
+> findG (xs :< E r x e _) (y : ys) = case hits x y of
 >   Right _  -> findC r (foldMap boy xs) e ys
 >   Left y'  -> findG xs (y' : ys)
 
@@ -125,9 +125,9 @@ This module mostly exists to provide the |devLoad| function.
 > coreLineAction :: Bwd Entry -> CoreLine -> Dev -> Maybe Dev
 > coreLineAction gs (LLam [] _) d = Just d
 > coreLineAction gs (LLam (x : xs) mty) (es, tip, r) = do
->   s <- tipDom mty tip r
+>   (st :=>: s) <- tipDom mty tip r
 >   let xr = name r x := DECL :<: s
->   let xe = E xr (x, snd r) (Boy LAMB)
+>   let xe = E xr (x, snd r) (Boy LAMB) st
 >   coreLineAction gs (LLam xs mty) (es :< xe, tipRan tip xr r, roos r)
 > coreLineAction gs LCom d = Just d
 > coreLineAction gs (LDef x (Just ty) tss) (es, t, r) =
@@ -139,7 +139,7 @@ This module mostly exists to provide the |devLoad| function.
 >               Unknown _ -> HOLE
 >               Defined b _ ->
 >                 DEFN (evTm (parBind gs' ds b))) :<: vy
->        xe = E xr (x, snd r) (Girl LETG d)
+>        xe = E xr (x, snd r) (Girl LETG d) ty
 >   in   Just (es :< xe, t, roos r)
 > coreLineAction gs (LEq (Just t) Nothing) (es, Unknown (u :=>: y), r) = do
 >   () <- check (y :>: t) r
@@ -164,16 +164,16 @@ This module mostly exists to provide the |devLoad| function.
 > coreLineAction _ _ _ = Nothing
 
 
-> tipDom :: Maybe INTM -> Tip -> Root -> Maybe TY
+> tipDom :: Maybe INTM -> Tip -> Root -> Maybe (INTM :=>: TY)
 > tipDom (Just s)  Module                   r = do
 >   () <- check (SET :>: s) r
->   return (evTm s)
+>   return (s :=>: evTm s)
 > tipDom (Just s)  (Unknown (_ :=>: PI s' _))  r = do
 >   () <- check (SET :>: s) r
 >   let vs = evTm s
 >   guard $ equal (SET :>: (vs, s')) r
->   return vs
-> tipDom Nothing   (Unknown (_ :=>: PI s _))  r = Just s
+>   return (s :=>: vs)
+> tipDom Nothing   (Unknown (_ :=>: PI s _))  r = Just (bquote B0 s r :=>: s)
 > tipDom _         _                          r = Nothing
 
 > tipRan :: Tip -> REF -> Root -> Tip

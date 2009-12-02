@@ -43,14 +43,14 @@ The following uses the |HughesPJ| pretty-printing combinators.
 >                          $$ text "Root:" <+> text (show r)
 >     where prettyEntries :: Bwd Entry -> Doc
 >           prettyEntries B0 = empty
->           prettyEntries (es :< E ref _ (Boy k)) = prettyEntries es 
+>           prettyEntries (es :< E ref _ (Boy k) _) = prettyEntries es 
 >               $$ text "Boy" <+> prettyBKind k <+> prettyRef B0 ref
->           prettyEntries (es :< E ref _ (Girl LETG d)) = prettyEntries es
+>           prettyEntries (es :< E ref _ (Girl LETG d) _) = prettyEntries es
 >               $$ text "Girl" <+> prettyRef B0 ref $$ nest 4 (prettyDev d)
 >           
 >           prettyBKind :: BoyKind -> Doc
->           prettyBKind LAMB     = text "Lamb"
->           prettyBKind (PIB t)  = text "Pi"
+>           prettyBKind LAMB  = text "\\"
+>           prettyBKind PIB   = text "Pi"
 
 
 > prettyElim :: PrettyENV -> Elim (Tm {d, p} REF) -> Doc
