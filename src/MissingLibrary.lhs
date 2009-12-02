@@ -5,6 +5,7 @@
 > module MissingLibrary where
 
 > import Control.Applicative
+> import Control.Monad.State
 > import Data.Foldable
 > import Data.Monoid
 
@@ -18,6 +19,10 @@
 
 > instance MonadTrace Maybe where
 >     traceErr _ = Nothing
+
+> instance Applicative (State s) where
+>   pure = return
+>   (<*>) = ap
 
 %if False
 

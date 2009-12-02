@@ -1,5 +1,3 @@
-\section{Proof State}
-
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
@@ -26,7 +24,7 @@
 
 %endif
 
-\subsection{Proof Context}
+\section{Proof Context}
 
 Recall from Section~\ref{sec:developments} that
 
@@ -77,7 +75,7 @@ are currently in scope.
 > auncles c@(_, (es, _, _)) = greatAuncles c <+> es
 
 
-\subsection{Proof State Monad}
+\section{Proof State Monad}
 
 The proof state monad provides access to the |ProofContext| as in a |State| monad,
 but with the possibility of command failure represented by |Maybe|. 
@@ -223,7 +221,7 @@ when it has finished.
 > withRoot f = getDevRoot >>= return . f
 
 
-\subsubsection{Navigation Commands}
+\subsection{Navigation Commands}
 
 Now we provide commands to navigate the proof state:
 \begin{itemize}
@@ -283,7 +281,7 @@ is not in the required form.
 >             _ -> putLayer l{cadets=es} >> goDownAcc (acc :< e)
 
 
-\subsubsection{Goal Search Commands}
+\subsection{Goal Search Commands}
 
 To implement goal search, we need a few useful bits of kit...
 
@@ -325,7 +323,7 @@ several alternatives for where to go next and continuing until a goal is reached
 > nextGoal = nextStep `untilA` isGoal
 
 
-\subsubsection{Construction Commands}
+\subsection{Construction Commands}
 
 The |apply| command checks if the last entry in the development is a girl $y$ with type
 $\Pi S T$ and if so, adds a goal of type $S$ and applies $y$ to it.
@@ -335,7 +333,9 @@ $\Pi S T$ and if so, adds a goal of type $S$ and applies $y$ to it.
 >     E ref@(name := k :<: (PI s t)) _ (Girl LETG _) _ <- getDevEntry
 >     root <- getDevRoot
 >     z <- make ("z" :<: bquote B0 s root)
->     make ("w" :<: bquote B0 ((N (P ref)) $$ (A (N (P z)))) root)
+>     make ("w" :<: bquote B0 (t $$ A (pval z)) root)
+>     goIn
+>     give (bquote B0 (pval ref $$ A (pval z)) root)
 >     return ()
 
 The |done| command checks if the last entry in the development is a girl, and if so,
@@ -374,7 +374,7 @@ appends a $\lambda$-abstraction with the appropriate type to the current develop
 >     Root.freshRef (x :<: s)
 >         (\ref r -> do
 >            putDevEntry (E ref (lastName ref) (Boy LAMB) (bquote B0 s r))
->            let tipTyv = t $$ A (N (P ref))
+>            let tipTyv = t $$ A (pval ref)
 >            putDevTip (Unknown (bquote B0 tipTyv r :=>: tipTyv))
 >            putDevRoot r
 >          ) root
@@ -422,7 +422,7 @@ The |ungawa| command looks for a truly obvious thing to do, and does it.
 
 
 
-\subsection{Wire Service}
+\section{Wire Service}
 
 Here we describe how to handle updates to references in the proof state, caused by
 refinement commands like |give|. The idea is to deal with updates lazily, to avoid
@@ -535,7 +535,7 @@ the term with the bulletin and re-evaluates it if necessary.
 >     (tm',  GoodNews)  -> (tm',  evTm tm',  GoodNews)
 
 
-\subsection{Command-Line Interface}
+\section{Command-Line Interface}
 
 The |parseHere| command parses a String to produce a term in the current context.
 
@@ -550,10 +550,10 @@ Here we have a very basic command-driven interface to the proof state monad.
 >     printDev dev
 >     putStr (showPrompt ls)
 >     l <- getLine
->     let ws = words l
->     if (head ws == "quit")
->         then return ()
->         else case runStateT (elabParse ws) loc of
+>     case words l of
+>         []          -> cochon loc
+>         ("quit":_)  -> return ()
+>         ws          -> case runStateT (elabParse ws) loc of
 >             Just (s, loc') -> do
 >                 putStrLn s 
 >                 printChanges (auncles loc) (auncles loc')
@@ -607,10 +607,13 @@ Construction commands:
 
 Information commands:
 
+> elabParse ("auncles":_)  = getAuncles >>= return . showEntries . (<>> F0)
+
 > elabParse ("dump":_)     = do
 >     (es, dev) <- get
 >     return (foldMap ((++ "\n") . show) es ++ show dev)
-> elabParse ("auncles":_)  = getAuncles >>= return . showEntries . (<>> F0)
+
+> elabParse ("eval":tss) = parseHere (unwords tss) >>= return . (show . (pretty B0) . evTm)
 
 
 Unhelpful error message:
@@ -644,6 +647,8 @@ Unhelpful error message:
 >                                        (R news) -> "News: " ++ show news)
 
 
+%if False
+
 \section{Elab Monad}
 
 > data Elab x
@@ -669,3 +674,5 @@ Unhelpful error message:
 > instance Applicative Elab where
 >   pure = return
 >   (<*>) = ap
+
+%endif

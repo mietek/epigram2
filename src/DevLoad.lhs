@@ -1,6 +1,8 @@
 \section{DevLoad}
 
-This module mostly exists to provide the |devLoad| function.
+This module provides functionality for resolving names (converting an
+|InTm String| produced by |TmParse| into an |INTM|) and hence for
+loading developments.
 
 %if False
 
@@ -23,6 +25,7 @@ This module mostly exists to provide the |devLoad| function.
 > import Tm
 > import Layout
 > import Lexer
+> import MissingLibrary
 > import Parsley
 > import TmParse
 > import Developments
@@ -48,9 +51,7 @@ This module mostly exists to provide the |devLoad| function.
 > relName :: P Char [(String,Offs)]
 > relName = pSep (teq '.') (|some (tok noffer), offs|)
 
-> vinc :: ExTm REF -> ExTm REF
-> vinc (V i)  = V (i + 1)
-> vinc n      = n
+
 
 > hits :: (String, Int) -> (String, Offs) -> Either (String, Offs) ()
 > hits (x, i) (y, o) | x == y = case o of
@@ -88,6 +89,15 @@ This module mostly exists to provide the |devLoad| function.
 >   vinc <$> findL ps xs ((y, Rel (i - 1)) : sos)
 > findL ps (xs :< x) sos = vinc <$> findL ps xs sos
 
+> vinc :: ExTm REF -> ExTm REF
+> vinc (V i)  = V (i + 1)
+> vinc n      = n
+
+
+The |resolve| function takes a context and a list of binder names, and
+produces a mangler that, when applied, attempts to resolve the parameter
+names in an |InTm String| to produce an |InTm REF|.
+
 > resolve :: Bwd Entry -> Bwd String -> Mangle Maybe String REF
 > resolve ps vs = Mang
 >   {  mangP = \ x mes -> (|(|(findL ps vs) (parse relName x) @ |) $:$ mes|)
@@ -95,15 +105,16 @@ This module mostly exists to provide the |devLoad| function.
 >   ,  mangB = \ x -> resolve ps (vs :< x)
 >   } where
 
-> testResolve :: Tm {In, TT} String -> Maybe (Tm {In, TT} REF)
+> testResolve :: InTm String -> Maybe INTM
 > testResolve t = resolve B0 B0 % t
 
-> instance Applicative (State s) where
->   pure = return
->   (<*>) = ap
+
+The |pINTM| function produces a parser for terms, given a context, by resolving
+in the context all the names in the |InTm String| produced by |bigTmIn|.
 
 > pINTM :: Bwd Entry -> P Tok INTM
 > pINTM es = grok (resolve es B0 %) bigTmIn
+
 
 > data CoreLine
 >   = LLam [String] (Maybe INTM)
@@ -121,6 +132,11 @@ This module mostly exists to provide the |devLoad| function.
 >         (optional (key ":" >> pINTM es))
 >    |LCom (%pSep (tok isSpcT) (teq Sem)%)
 >    |)
+
+
+The |coreLineAction| function takes a context, a |CoreLine| and a current
+development. It attempts to update the development with the information
+from the |CoreLine|, producing |Nothing| if this fails.
 
 > coreLineAction :: Bwd Entry -> CoreLine -> Dev -> Maybe Dev
 > coreLineAction gs (LLam [] _) d = Just d
@@ -176,10 +192,21 @@ This module mostly exists to provide the |devLoad| function.
 > tipDom Nothing   (Unknown (_ :=>: PI s _))  r = Just (bquote B0 s r :=>: s)
 > tipDom _         _                          r = Nothing
 
+
+The |tipRan| function applies the $\Pi$-type at the |Unknown| tip to the given
+reference, and returns an |Unknown| tip with the resulting type. If the tip
+is a |Module|, it is returned unchanged.
+
 > tipRan :: Tip -> REF -> Root -> Tip
 > tipRan (Unknown (ty :=>: PI _ t))  x r  = let tyv = t $$ A (pval x) in
 >   Unknown (bquote B0 tyv r :=>: tyv)
 > tipRan Module                      _ _  = Module
+
+
+The |makeFun| function takes a context, a development produced so far and a list
+of lists of tokens. It attempts to interpret each list of tokens to update the
+development, and writes out an updated list of lists of tokens with those that
+fail commented out.
 
 > makeFun :: Bwd Entry -> Dev -> [[Tok]] -> Writer [[Tok]] Dev
 > makeFun gs d [] = (|d|)
@@ -198,7 +225,10 @@ to a |Module| development. It returns the |Dev| produced, and a
 > devLoad tss = runWriter (makeFun B0 (B0, Module, (B0, 0)) tss)
 
 
-\question{Should this really just take the first entry in the list?}
+We should replace |parseTerm| once we having parsing sorted out.
+\question{Should this really just take the second entry in the list?}
 
 > parseTerm :: String -> Bwd Entry -> Maybe INTM
-> parseTerm s es = parse (pINTM es) . (!! 1) . layout . tokenize $ s
+> parseTerm s es = case layout . tokenize $ s of 
+>   (_:x:_)  -> parse (pINTM es) x
+>   _        -> Nothing
