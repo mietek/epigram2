@@ -30,23 +30,26 @@ The following uses the |HughesPJ| pretty-printing combinators.
 > prettyCan :: PrettyENV -> Can (Tm {d, p} REF) -> Doc
 > prettyCan e Set       = text "*"
 > prettyCan e (Pi s (L (K t)))  = parens (sep [pretty e s <+> text "->", pretty e t])
+> prettyCan e (Pi s (L (H B0 x t)))  = let y = renameBinder e x in
+>     parens (sep [parens (text y <+> text ":" <+> pretty e s) <+> text "->", 
+>                  pretty (e :< Left y) t])
 > prettyCan e (Pi s (L (x :. t))) = let y = renameBinder e x in
->     parens (sep [parens (text y <+> text ":" <+> pretty e s) <+> text "->", pretty (e :< Left y) t])
+>     parens (sep [parens (text y <+> text ":" <+> pretty e s) <+> text "->", 
+>                  pretty (e :< Left y) t])
 > prettyCan e (Pi s t)  = text "Pi" <+> (parens (pretty e s) $$ parens (pretty e t))
 > prettyCan e (Con x)   = pretty e x
 > import <- CanPretty
 > prettyCan e can       = quotes . text .show $ can
 
 > prettyDev :: Dev -> Doc
-> prettyDev (es, t, r) = prettyEntries es
->                          $$ text "Tip:" <+> prettyTip t
->                          $$ text "Root:" <+> text (show r)
+> prettyDev (B0, t, _) = brackets empty <+> prettyTip t
+> prettyDev (es, t, r) = lbrack <+> prettyEntries es $$ rbrack <+> prettyTip t
 >     where prettyEntries :: Bwd Entry -> Doc
 >           prettyEntries B0 = empty
 >           prettyEntries (es :< E ref _ (Boy k) _) = prettyEntries es 
->               $$ text "Boy" <+> prettyBKind k <+> prettyRef B0 ref
+>               $+$ (prettyBKind k <+> prettyRef B0 ref)
 >           prettyEntries (es :< E ref _ (Girl LETG d) _) = prettyEntries es
->               $$ text "Girl" <+> prettyRef B0 ref $$ nest 4 (prettyDev d)
+>               $+$ (sep [prettyRef B0 ref, nest 4 (prettyDev d)])
 >           
 >           prettyBKind :: BoyKind -> Doc
 >           prettyBKind LAMB  = text "\\"
@@ -77,9 +80,10 @@ The following uses the |HughesPJ| pretty-printing combinators.
 > prettyScope e (K t) = parens (text "\\_." <+> pretty e t)
 
 > prettyTip :: Tip -> Doc
-> prettyTip Module                    = text "Module"
-> prettyTip (Unknown (_ :=>: ty))     = text "? :" <+> prettyVAL B0 ty
-> prettyTip (Defined tm (_ :=>: ty))  = pretty B0 tm <+> text ":" <+> prettyVAL B0 ty
+> prettyTip Module                    = empty
+> prettyTip (Unknown (_ :=>: ty))     = text ":= ? :" <+> prettyVAL B0 ty
+> prettyTip (Defined tm (_ :=>: ty))  = text ":=" <+> pretty B0 tm <+> text ":"
+>                                           <+> prettyVAL B0 ty
 
 > prettyVAL :: PrettyENV -> Tm {d, VV} REF -> Doc
 > prettyVAL = pretty

@@ -39,6 +39,7 @@ Each |Layer| of the structure is a record with the following fields:
 \begin{description}
 \item[|elders|] entries appearing above the working development
 \item[|mother|] the |REF| of the |Entry| that contains the working development
+\item[|motherTy|] the term representation of the type of |mother|
 \item[|cadets|] entries appearing below the working development
 \item[|laytip|] the |Tip| of the containing development
 \item[|layroot|] the |Root| of the containing development
@@ -54,9 +55,13 @@ Each |Layer| of the structure is a record with the following fields:
 >   deriving Show
 
 The current proof context is then represented by a stack of |Layer|s, along with the
-current working development:
+current working development.
 
 > type ProofContext = (Bwd Layer, Dev)
+
+> emptyContext :: ProofContext
+> emptyContext = (B0, (B0, Module, (B0, 0)))
+
 
 The |greatAuncles| function returns the elder aunts or uncles of the current development,
 not including its contents.
@@ -93,6 +98,9 @@ make |ProofState| an |Alternative|:
 We provide various functions to get information from the proof state and store
 updated information, providing a friendlier interface than |get| and |put|.
 
+> getAuncles :: ProofState (Bwd Entry)
+> getAuncles = get >>= return . auncles
+
 > getDev :: ProofState Dev
 > getDev = gets snd
 
@@ -110,6 +118,9 @@ updated information, providing a friendlier interface than |get| and |put|.
 > getDevTip = do
 >     (_, tip, _) <- getDev
 >     return tip
+
+> getGreatAuncles :: ProofState (Bwd Entry)
+> getGreatAuncles = get >>= return . greatAuncles
 
 > getLayer :: ProofState Layer
 > getLayer = do
@@ -330,7 +341,7 @@ is also a set; if so, it appends a $\Pi$-abstraction to the current development.
 >     Unknown (_ :=>: SET) <- getDevTip     
 >     root <- getDevRoot
 >     () <- lift (check (SET :>: ty) root)
->     let ty' = eval ty B0
+>     let ty' = evTm ty
 >     Root.freshRef (s :<: ty')
 >         (\ref r -> putDevEntry (E ref (lastName ref) (Boy PIB) ty) >> putDevRoot r) root
 
@@ -358,10 +369,9 @@ the goal and updates the reference.
 >     root <- getDevRoot
 >     () <- lift (check (tipTy :>: tm) root)
 >     putDevTip (Defined tm (tipTyTm :=>: tipTy))
->     loc <- get
->     let aus = greatAuncles loc
+>     aus <- getGreatAuncles
 >     sibs <- getDevEntries
->     let tm' = eval (parBind aus sibs tm) B0
+>     let tm' = evTm (parBind aus sibs tm)
 >     name := _ :<: ty <- getMother
 >     let ref = name := DEFN tm' :<: ty
 >     putMother ref
@@ -443,8 +453,7 @@ Updating girls is a bit more complicated. We proceed as follows:
 >     k' <- case k of
 >             HOLE -> return HOLE
 >             DEFN _ -> do
->                 loc <- get
->                 let aus = greatAuncles loc
+>                 aus <- getGreatAuncles
 >                 let Defined tm _ = tip'
 >                 return (DEFN (evTm (parBind aus cs' tm)))
 >     let ref = name := k' :<: tv'
@@ -503,15 +512,15 @@ Here we have a very basic command-driven interface to the proof state monad.
 > elabParse ("next":_)     = nextGoal     >> return "Searching for next goal..."
 
 > elabParse ("make":x:":":tss)   = do
->     c <- get
->     ty <- lift (parseTerm (unwords tss) (auncles c))
+>     aus <- getAuncles
+>     ty <- lift (parseTerm (unwords tss) aus)
 >     make (x :<: ty)
 >     goIn
 >     return "Appended goal!"
 
 > elabParse ("pi":x:":":tss) = do
->     c <- get
->     ty <- lift (parseTerm (unwords tss) (auncles c))
+>     aus <- getAuncles
+>     ty <- lift (parseTerm (unwords tss) aus)
 >     piBoy (x :<: ty)
 >     return "Made pi boy!"
 
@@ -520,15 +529,15 @@ Here we have a very basic command-driven interface to the proof state monad.
 >     return "Made lambda boy!"
 
 > elabParse ("give":tss) = do
->     c <- get
->     tm <- lift (parseTerm (unwords tss) (auncles c))
+>     aus <- getAuncles
+>     tm <- lift (parseTerm (unwords tss) aus)
 >     give tm
 >     return "Thank you."
 
 > elabParse ("dump":_)     = do
->     c <- get
->     trace (show c) $ return "Done."
-> elabParse ("auncles":_)  = get >>= return . showEntries . (<>> F0) . auncles
+>     (es, dev) <- get
+>     return (foldMap ((++ "\n") . show) es ++ show dev)
+> elabParse ("auncles":_)  = getAuncles >>= return . showEntries . (<>> F0)
 > elabParse _ = return "???"
 
 > showPrompt :: Bwd Layer -> String
@@ -537,7 +546,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 
 > printChanges :: Bwd Entry -> Bwd Entry -> IO ()
 > printChanges as bs | as /= bs = do
->     let (lost, gained)  = trace ("diff (" ++ showEntries (as <>> F0) ++ ") (" ++ showEntries (bs <>> F0) ++ ")") $ diff (as <>> F0) (bs <>> F0)
+>     let (lost, gained)  = diff (as <>> F0) (bs <>> F0)
 >     if lost /= F0
 >         then putStrLn ("Left scope: " ++ showEntries lost)
 >         else putStrLn "Nothing went out of scope."
