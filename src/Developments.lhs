@@ -96,6 +96,12 @@ A |NewsBulletin| is a list of pairs of updated references and the news about the
 
 > type NewsBulletin = [(REF, News)]
 
+The |addNews| function adds the given news to the bulletin, if it is newsworthy.
+
+> addNews :: NewsBulletin -> (REF, News) -> NewsBulletin
+> addNews news (_,    NoNews)    = news
+> addNews news (ref,  GoodNews)  = (ref, GoodNews):news
+
 The |lookupNews| function returns the news about a reference contained in the
 bulletin, which may be |NoNews| if the reference is not present.
 

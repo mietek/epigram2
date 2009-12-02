@@ -109,6 +109,11 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     (es, _, _) <- getDev
 >     return es
 
+> getDevEntry :: ProofState Entry
+> getDevEntry = do
+>     (_ :< e, _, _) <- getDev
+>     return e
+
 > getDevRoot :: ProofState Root
 > getDevRoot = do
 >     (_, _, root) <- getDev
@@ -195,6 +200,12 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     put (ls, dev)
 >     return dev'
 
+> replaceDevEntries :: Bwd Entry -> ProofState (Bwd Entry)
+> replaceDevEntries es = do
+>     es' <- getDevEntries
+>     putDevEntries es
+>     return es'
+
 > replaceLayer :: Layer -> ProofState Layer
 > replaceLayer l = do
 >     (ls :< l', dev) <- get
@@ -210,10 +221,6 @@ when it has finished.
 
 > withRoot :: (Root -> x) -> ProofState x
 > withRoot f = getDevRoot >>= return . f
-
-Presumably we should be able to do something similar for running tactics?
-
-< withTac :: TY -> Tac x -> ProofState x
 
 
 \subsubsection{Navigation Commands}
@@ -307,58 +314,37 @@ several alternatives for where to go next and continuing until a goal is reached
 
 > prevStep :: ProofState ()
 > prevStep = (goUp >> much goIn) <|> goOut
-
+>
 > prevGoal :: ProofState ()
 > prevGoal = prevStep `untilA` isGoal
-
+>
 > nextStep :: ProofState ()
 > nextStep = (goIn >> much goUp) <|> goDown <|> (goOut `untilA` goDown)
-
+>
 > nextGoal :: ProofState ()
 > nextGoal = nextStep `untilA` isGoal
 
 
 \subsubsection{Construction Commands}
 
-The |make| command adds a named goal of the given type to the bottom of the
-current development, after checking that the purported type is in fact a type.
+The |apply| command checks if the last entry in the development is a girl $y$ with type
+$\Pi S T$ and if so, adds a goal of type $S$ and applies $y$ to it.
 
-> make :: (String :<: INTM) -> ProofState ()
-> make (s:<:ty) = do
+> apply :: ProofState()
+> apply = do
+>     E ref@(name := k :<: (PI s t)) _ (Girl LETG _) _ <- getDevEntry
 >     root <- getDevRoot
->     () <- lift (check (SET :>: ty) root)
->     let ty' = eval ty B0
->     n <- withRoot (flip name s)
->     putDevEntry (E (n := HOLE :<: ty') (last n) (Girl LETG 
->                                                  (B0, Unknown (ty :=>: ty'), room root s)) ty)
->     putDevRoot (roos root)
+>     z <- make ("z" :<: bquote B0 s root)
+>     make ("w" :<: bquote B0 ((N (P ref)) $$ (A (N (P z)))) root)
+>     return ()
 
-The |piBoy| command checks that the current goal is of type SET, and that the supplied type
-is also a set; if so, it appends a $\Pi$-abstraction to the current development.
+The |done| command checks if the last entry in the development is a girl, and if so,
+fills in the goal with this entry.
 
-> piBoy :: (String :<: INTM) -> ProofState ()
-> piBoy (s:<:ty) = do
->     Unknown (_ :=>: SET) <- getDevTip     
->     root <- getDevRoot
->     () <- lift (check (SET :>: ty) root)
->     let ty' = evTm ty
->     Root.freshRef (s :<: ty')
->         (\ref r -> putDevEntry (E ref (lastName ref) (Boy PIB) ty) >> putDevRoot r) root
-
-The |lambdaBoy| command checks that the current goal is a $\Pi$-type, and if so,
-appends a $\lambda$-abstraction with the appropriate type to the current development.
-
-> lambdaBoy :: String -> ProofState ()
-> lambdaBoy x = do
->     Unknown (pi :=>: PI s t) <- getDevTip
->     root <- getDevRoot
->     Root.freshRef (x :<: s)
->         (\ref r -> do
->            putDevEntry (E ref (lastName ref) (Boy LAMB) (bquote B0 s r))
->            let tipTyv = t $$ A (N (P ref))
->            putDevTip (Unknown (bquote B0 tipTyv r :=>: tipTyv))
->            putDevRoot r
->          ) root
+> done :: ProofState()
+> done = do
+>     E ref _ (Girl LETG _) _ <- getDevEntry
+>     give (N (P ref))
 
 The |give| command checks the provided term has the goal type, and if so, fills in
 the goal and updates the reference.
@@ -377,6 +363,63 @@ the goal and updates the reference.
 >     putMother ref
 >     updateRef ref
 >     goOut
+
+The |lambdaBoy| command checks that the current goal is a $\Pi$-type, and if so,
+appends a $\lambda$-abstraction with the appropriate type to the current development.
+
+> lambdaBoy :: String -> ProofState ()
+> lambdaBoy x = do
+>     Unknown (pi :=>: PI s t) <- getDevTip
+>     root <- getDevRoot
+>     Root.freshRef (x :<: s)
+>         (\ref r -> do
+>            putDevEntry (E ref (lastName ref) (Boy LAMB) (bquote B0 s r))
+>            let tipTyv = t $$ A (N (P ref))
+>            putDevTip (Unknown (bquote B0 tipTyv r :=>: tipTyv))
+>            putDevRoot r
+>          ) root
+
+The |make| command adds a named goal of the given type to the bottom of the
+current development, after checking that the purported type is in fact a type.
+
+> make :: (String :<: INTM) -> ProofState REF
+> make (s:<:ty) = do
+>     root <- getDevRoot
+>     () <- lift (check (SET :>: ty) root)
+>     let ty' = eval ty B0
+>     n <- withRoot (flip name s)
+>     let ref = n := HOLE :<: ty'
+>     putDevEntry (E ref (last n) (Girl LETG (B0, Unknown (ty :=>: ty'), room root s)) ty)
+>     putDevRoot (roos root)
+>     return ref
+
+The |piBoy| command checks that the current goal is of type SET, and that the supplied type
+is also a set; if so, it appends a $\Pi$-abstraction to the current development.
+
+> piBoy :: (String :<: INTM) -> ProofState ()
+> piBoy (s:<:ty) = do
+>     Unknown (_ :=>: SET) <- getDevTip     
+>     root <- getDevRoot
+>     () <- lift (check (SET :>: ty) root)
+>     let ty' = evTm ty
+>     Root.freshRef (s :<: ty')
+>         (\ref r -> putDevEntry (E ref (lastName ref) (Boy PIB) ty) >> putDevRoot r) root
+
+The |select| command takes a term representing a neutral parameter, makes a new goal of the
+same type, and fills it in with the parameter. \question{Is bquote really right here?}
+
+> select :: INTM -> ProofState ()
+> select tm@(N (P (name := k :<: ty))) = do
+>     root <- getDevRoot
+>     make (fst (last name) :<: bquote B0 ty root)
+>     goIn
+>     give tm
+     
+The |ungawa| command looks for a truly obvious thing to do, and does it.
+
+> ungawa :: ProofState ()
+> ungawa = done <|> apply <|> lambdaBoy "ug"
+
 
 
 \subsection{Wire Service}
@@ -419,48 +462,54 @@ has become more defined, and pass on the good news if necessary.
 
 Updating girls is a bit more complicated. We proceed as follows:
 \begin{enumerate}
-\item Recursively propagate the news to the children.
-\item Update the tip type.
-\item Update the term at the tip, if there is one.
+\item Recursively propagate the news to the children. \question{does this create spurious |R|s?}
+\item Update the tip type (and term, if there is one).
+\item Update the overall type of the entry.
 \item Re-evaluate the definition, if there is one.
 \item Add the updated girl to the current development.
 \item Continue propagation, adding this girl to the bulletin if necessary.
 \end{enumerate}
 
-> propagateNews news (e@(E (name := k :<: tv) sn 
->   (Girl LETG (cs, tip, root)) ty) :> es) = do
->     putDevEntry e
->     goIn
->     es' <- getDevEntries
->     putDevEntries B0
->     news' <- propagateNews news (es' <>> F0)
->     goOut
->     Just (E _ _ (Girl LETG (cs', _, root')) _) <- removeDevEntry
->     let  (tipTy :=>: tipTyv) = case tip of
->             Unknown    x -> x
->             Defined _  x -> x
->          (tt, n) = case tellNews news' tipTy of
->             (_,       NoNews)    -> (tipTy :=>: tipTyv, NoNews)
->             (tipTy',  GoodNews)  -> (tipTy' :=>: evTm tipTy', GoodNews)
->          (ty', tv', n') = case tellNews news' ty of
->             (_,    NoNews)    -> (ty, tv, n)
->             (ty',  GoodNews)  -> (ty', evTm ty', GoodNews)
->          (tip', n'') = case tip of 
->             Unknown     _ -> (Unknown tt, n')
->             Defined tm  _ -> case tellNews news' tm of
->                 (_,    NoNews)    -> (Defined tm tt, n')
->                 (tm',  GoodNews)  -> (Defined tm' tt, GoodNews)
+> propagateNews news (e@(E (name := k :<: tv) sn (Girl LETG (_, tip, root)) ty) :> es) = do
+>     (news', cs) <- propagateIn news e
+>     let  (tip', n)       = tellTip news' tip
+>          (ty', tv', n')  = tellNewsEval news' ty tv
 >     k' <- case k of
->             HOLE -> return HOLE
->             DEFN _ -> do
+>             HOLE    -> return HOLE
+>             DEFN _  -> do
 >                 aus <- getGreatAuncles
 >                 let Defined tm _ = tip'
->                 return (DEFN (evTm (parBind aus cs' tm)))
+>                 return (DEFN (evTm (parBind aus cs tm)))
 >     let ref = name := k' :<: tv'
->     putDevEntry (E ref sn (Girl LETG (cs', tip', root')) ty')
->     case n'' of
->         NoNews    -> propagateNews news' es
->         GoodNews  -> propagateNews ((ref, GoodNews):news') es
+>     putDevEntry (E ref sn (Girl LETG (cs, tip', root)) ty')
+>     propagateNews (addNews news' (ref, min n n')) es
+>
+>  where
+>    propagateIn :: NewsBulletin -> Entry -> ProofState (NewsBulletin, Bwd Entry)
+>    propagateIn news e = do
+>        putDevEntry e
+>        goIn
+>        es <- replaceDevEntries B0
+>        news' <- propagateNews news (es <>> F0)
+>        goOut
+>        Just (E _ _ (Girl LETG (cs, _, _)) _) <- removeDevEntry
+>        return (news', cs)
+>  
+>    tellTip :: NewsBulletin -> Tip -> (Tip, News)
+>    tellTip news (Unknown tt) =
+>        let (tt', n) = tellTipType news tt in
+>            (Unknown tt', n)
+>    tellTip news (Defined tm tt) =
+>        let (tt', n) = tellTipType news tt in
+>            case tellNews news tm of
+>                (_,    NoNews)    -> (Defined tm   tt', n)
+>                (tm',  GoodNews)  -> (Defined tm'  tt', GoodNews)
+>
+>    tellTipType :: NewsBulletin -> (INTM :=>: TY) -> (INTM :=>: TY, News)
+>    tellTipType news (tm :=>: ty) =
+>        let (tm', ty', n) = tellNewsEval news tm ty in
+>            (tm' :=>: ty',  n)
+
 
 Finally, if we encounter an older news bulletin when propagating news, we can simply
 merge the two together.
@@ -477,10 +526,22 @@ term and the news about it.
 >     NoNews  -> (tm, NoNews)
 >     n       -> (fmap (getLatest news) tm, n)
 
+The |tellNewsEval| function takes a bulletin, term and its present value. It updates
+the term with the bulletin and re-evaluates it if necessary.
 
+> tellNewsEval :: NewsBulletin -> INTM -> VAL -> (INTM, VAL, News)
+> tellNewsEval news tm tv = case tellNews news tm of
+>     (_,    NoNews)    -> (tm,   tv,        NoNews)
+>     (tm',  GoodNews)  -> (tm',  evTm tm',  GoodNews)
 
 
 \subsection{Command-Line Interface}
+
+The |parseHere| command parses a String to produce a term in the current context.
+
+> parseHere :: String -> ProofState INTM
+> parseHere s  = getAuncles >>= lift . (parseTerm s)
+
 
 Here we have a very basic command-driven interface to the proof state monad.
 
@@ -500,45 +561,62 @@ Here we have a very basic command-driven interface to the proof state monad.
 >             Nothing ->  putStrLn "I'm sorry, Dave. I'm afraid I can't do that."
 >                         >> cochon loc
 
-> elabParse :: [String] -> ProofState String
-> elabParse ("in":_)       = goIn         >> return "Going in..."
-> elabParse ("out":_)      = goOut        >> return "Going out..."
-> elabParse ("up":_)       = goUp         >> return "Going up..."
-> elabParse ("down":_)     = goDown       >> return "Going down..."
-> elabParse ("top":_)      = much goUp    >> return "Going to top..."
-> elabParse ("bottom":_)   = much goDown  >> return "Going to bottom..."
-> elabParse ("module":_)     = much goOut   >> return "Going to module..."
-> elabParse ("prev":_)     = prevGoal     >> return "Searching for previous goal..."
-> elabParse ("next":_)     = nextGoal     >> return "Searching for next goal..."
+We need a better parser here when the new parser for terms is implemented.
 
-> elabParse ("make":x:":":tss)   = do
->     aus <- getAuncles
->     ty <- lift (parseTerm (unwords tss) aus)
+> elabParse :: [String] -> ProofState String
+
+Navigation commands:
+
+> elabParse ("in":_)      = goIn           >> return "Going in..."
+> elabParse ("out":_)     = goOut          >> return "Going out..."
+> elabParse ("up":_)      = goUp           >> return "Going up..."
+> elabParse ("down":_)    = goDown         >> return "Going down..."
+> elabParse ("top":_)     = much goUp      >> return "Going to top..."
+> elabParse ("bottom":_)  = much goDown    >> return "Going to bottom..."
+> elabParse ("module":_)  = much goOut     >> return "Going to module..."
+> elabParse ("prev":_)    = prevGoal       >> return "Searching for previous goal..."
+> elabParse ("next":_)    = nextGoal       >> return "Searching for next goal..."
+> elabParse ("first":_)   = much prevGoal  >> return "Searching for first goal..."
+> elabParse ("last":_)    = much nextGoal  >> return "Searching for last goal..."
+
+
+Construction commands:
+
+> elabParse ("apply":_)   = apply          >> return "Applied."
+> elabParse ("done":_)    = done           >> return "Done."
+
+> elabParse ("give":tss)  = parseHere (unwords tss) >>= give >> return "Thank you."
+
+> elabParse ("lambda":x:_) = lambdaBoy x   >> return "Made lambda boy!"
+
+> elabParse ("make":x:":":tss) = do
+>     ty <- parseHere (unwords tss)
 >     make (x :<: ty)
 >     goIn
 >     return "Appended goal!"
 
 > elabParse ("pi":x:":":tss) = do
->     aus <- getAuncles
->     ty <- lift (parseTerm (unwords tss) aus)
+>     ty <- parseHere (unwords tss)
 >     piBoy (x :<: ty)
 >     return "Made pi boy!"
 
-> elabParse ("lambda":x:_) = do
->     lambdaBoy x
->     return "Made lambda boy!"
+> elabParse ("select":x:_) = parseHere x >>= select >> return "Selected."
 
-> elabParse ("give":tss) = do
->     aus <- getAuncles
->     tm <- lift (parseTerm (unwords tss) aus)
->     give tm
->     return "Thank you."
+> elabParse ("ungawa":_)  = ungawa >> return "Ungawa!"
+
+
+Information commands:
 
 > elabParse ("dump":_)     = do
 >     (es, dev) <- get
 >     return (foldMap ((++ "\n") . show) es ++ show dev)
 > elabParse ("auncles":_)  = getAuncles >>= return . showEntries . (<>> F0)
+
+
+Unhelpful error message:
+
 > elabParse _ = return "???"
+
 
 > showPrompt :: Bwd Layer -> String
 > showPrompt (_ :< Layer _ (n := _) _ _ _ _)  = prettyName n ++ " > "
