@@ -20,6 +20,12 @@
 > instance MonadTrace Maybe where
 >     traceErr _ = Nothing
 
+> instance Monad (Either e) where
+>     return x = Right x
+>     x >>= f = either Left f x
+
+
+
 > instance Applicative (State s) where
 >   pure = return
 >   (<*>) = ap
