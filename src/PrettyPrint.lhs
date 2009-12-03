@@ -5,7 +5,7 @@
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE ScopedTypeVariables #-}
 
-> module PrettyPrint (pretty, prettyDev, prettyName, prettyRef, prettyVAL, printDev) where
+> module PrettyPrint (pretty, prettyDev, prettyRef, printDev) where
 
 > import Data.List
 > import Text.PrettyPrint.HughesPJ
@@ -14,98 +14,86 @@
 > import qualified BwdFwd ((<+>))
 > import Developments
 > import Features
+> import Naming
+> import Root
+> import Rules
 > import Tm hiding (($$))
 
 %endif
 
-> type PrettyENV = Bwd (Either String VAL)
-
 The following uses the |HughesPJ| pretty-printing combinators.
-\question{Is passing a list of |String|s the best way to handle scopes?}
 
-> renameBinder :: PrettyENV -> String -> String
-> renameBinder e ""  = '_': (show (bwdLength e))
-> renameBinder _ x   = x
-
-> prettyCan :: PrettyENV -> Can (Tm {d, p} REF) -> Doc
-> prettyCan e Set       = text "*"
-> prettyCan e (Pi s (L (K t)))  = parens (sep [pretty e s <+> text "->", pretty e t])
-> prettyCan e (Pi s (L (H B0 x t)))  = let y = renameBinder e x in
->     parens (sep [parens (text y <+> text ":" <+> pretty e s) <+> text "->", 
->                  pretty (e :< Left y) t])
-> prettyCan e (Pi s (L (x :. t))) = let y = renameBinder e x in
->     parens (sep [parens (text y <+> text ":" <+> pretty e s) <+> text "->", 
->                  pretty (e :< Left y) t])
-> prettyCan e (Pi s t)  = text "Pi" <+> (parens (pretty e s) $$ parens (pretty e t))
-> prettyCan e (Con x)   = pretty e x
+> prettyCan :: Can (Tm {d, p} String) -> Doc
+> prettyCan Set       = text "*"
+> prettyCan (Pi s (L (K t)))  = parens (sep [pretty s <+> text "->", pretty t])
+> prettyCan (Pi s (L (H B0 x t)))  = 
+>     parens (sep [parens (text x <+> text ":" <+> pretty s) <+> text "->", pretty t])
+> prettyCan (Pi s (L (x :. t))) = 
+>     parens (sep [parens (text x <+> text ":" <+> pretty s) <+> text "->", pretty t])
+> prettyCan (Pi s t)  = text "Pi" <+> (parens (pretty s) $$ parens (pretty t))
+> prettyCan (Con x)   = pretty x
 > import <- CanPretty
-> prettyCan e can       = quotes . text .show $ can
+> prettyCan can       = quotes . text .show $ can
 
-> prettyDev :: Dev -> Doc
-> prettyDev (B0, t, _) = brackets empty <+> prettyTip t
-> prettyDev (es, t, r) = lbrack <+> prettyEntries es $$ rbrack <+> prettyTip t
+> prettyDev :: Bwd Entry -> Name -> Dev -> Doc
+> prettyDev aus me (B0, t, _) = brackets empty <+> prettyTip aus me t
+> prettyDev aus me (es, t, r) = lbrack <+> prettyEntries es $$ rbrack 
+>   <+> prettyTip (aus BwdFwd.<+> es) me t
 >     where prettyEntries :: Bwd Entry -> Doc
 >           prettyEntries B0 = empty
->           prettyEntries (es :< E ref _ (Boy k) _) = prettyEntries es 
->               $+$ (prettyBKind k <+> prettyRef B0 ref)
->           prettyEntries (es :< E ref _ (Girl LETG d) _) = prettyEntries es
->               $+$ (sep [prettyRef B0 ref, nest 4 (prettyDev d)])
+>           prettyEntries (es' :< E ref _ (Boy k) _) = prettyEntries es'
+>               $+$ (prettyBKind k <+> prettyRef (aus BwdFwd.<+> es') me r ref)
+>           prettyEntries (es' :< E ref _ (Girl LETG d) _) = 
+>               let aus' = aus BwdFwd.<+> es' in
+>                 prettyEntries es' $+$ (sep [prettyRef aus me r ref, 
+>                                              nest 4 (prettyDev aus' me d)])
 >           
 >           prettyBKind :: BoyKind -> Doc
 >           prettyBKind LAMB  = text "\\"
 >           prettyBKind PIB   = text "Pi"
 
 
-> prettyElim :: PrettyENV -> Elim (Tm {d, p} REF) -> Doc
-> prettyElim e (A t)  = pretty e t
-> prettyElim e Out    = text "Out"
+> prettyElim :: Elim (Tm {d, p} String) -> Doc
+> prettyElim (A t)  = pretty t
+> prettyElim Out    = text "Out"
 > import <- ElimPretty
-> prettyElim e elim   = quotes . text . show $ elim
+> prettyElim elim   = quotes . text . show $ elim
 
-> prettyName :: Name -> String                
-> prettyName = intercalate "." . fst . unzip
-
-> prettyRef :: PrettyENV -> REF -> Doc
-> prettyRef e (ns := k :<: ty) = text (prettyName ns) <+> prettyRKind k <+> prettyVAL e ty
+> prettyRef :: Bwd Entry -> Name -> Root -> REF -> Doc
+> prettyRef aus me root ref@(_ := k :<: ty) = pretty (christenREF aus me ref) <+> prettyRKind k 
+>   <+> pretty (christen aus me (bquote B0 ty root))
 >     where prettyRKind :: RKind -> Doc
 >           prettyRKind DECL      = text ":"
->           prettyRKind (DEFN v)  = text ":=" <+> prettyVAL e v <+> text ":"
+>           prettyRKind (DEFN v)  = text ":=" <+> pretty (christen aus me (bquote B0 v root)) 
+>               <+> text ":"
 >           prettyRKind HOLE      = text ":= ? :"
 
-> prettyScope :: PrettyENV -> Scope p REF -> Doc
-> prettyScope e (x :. t)   = let y = renameBinder e x in
->     parens (text y <+> text ":." <+> prettyTm (e :< Left y) t)
-> prettyScope e (H g x t)  = let y = renameBinder e x in
->     parens (text "\\" <> text y <> text "." <+> prettyTm (e BwdFwd.<+> (fmap Right g) :< Left y) t)
-> prettyScope e (K t) = parens (text "\\_." <+> pretty e t)
+> prettyScope :: Scope p String -> Doc
+> prettyScope (x :. t)   = 
+>     parens (text x <+> text ":." <+> pretty t)
+> prettyScope (H g x t)  = 
+>     parens (text "\\" <> text x <> text "." <+> pretty t)
+> prettyScope (K t) = parens (text "\\_." <+> pretty t)
 
-> prettyTip :: Tip -> Doc
-> prettyTip Module                    = empty
-> prettyTip (Unknown (_ :=>: ty))     = text ":= ? :" <+> prettyVAL B0 ty
-> prettyTip (Defined tm (_ :=>: ty))  = text ":=" <+> pretty B0 tm <+> text ":"
->                                           <+> prettyVAL B0 ty
+> prettyTip :: Bwd Entry -> Name -> Tip -> Doc
+> prettyTip aus me Module                     = empty
+> prettyTip aus me (Unknown     (tv :=>: _))  = text ":= ? :" <+> pretty (christen aus me tv)
+> prettyTip aus me (Defined tm  (tv :=>: _))  = text ":=" <+> pretty (christen aus me tm) 
+>     <+> text ":" <+> pretty (christen aus me tv)
 
-> prettyVAL :: PrettyENV -> Tm {d, VV} REF -> Doc
-> prettyVAL = pretty
+> pretty :: Tm {d, p} String -> Doc
+> pretty (L s)          = prettyScope s
+> pretty (C c)          = prettyCan c
+> pretty (N n)          = pretty n
+> pretty (P x)          = text x
+> pretty (V i)          = char 'V' <> int i
+> pretty (op :@ vs)     = parens (text (opName op) 
+>     <+> sep (punctuate comma (map (pretty) vs)))
+> pretty (n :$ el)      = parens (pretty n <+> prettyElim el)
+> pretty (t :? y)       = parens (pretty t <+> text ":" <+> pretty y)
 
-> prettyTm :: PrettyENV -> Tm {d, TT} REF -> Doc
-> prettyTm = pretty
-
-> pretty :: PrettyENV -> Tm {d, p} REF -> Doc
-> pretty e (L s)          = prettyScope e s
-> pretty e (C c)          = prettyCan e c
-> pretty e (N n)          = pretty e n
-> pretty e (P (ns := _))  = text (prettyName ns)
-> pretty e (V i)          = case e !. i of
->                             Left s   -> text s
->                             Right v  -> char 'V' <> int i
-> pretty e (op :@ vs)     = parens (text (opName op) 
->     <+> sep (punctuate comma (map (pretty e) vs)))
-> pretty e (n :$ el)      = parens (pretty e n <+> prettyElim e el)
-> pretty e (t :? y)       = parens (pretty e t <+> text ":" <+> pretty e y)
-
-> printDev :: Dev -> IO ()
-> printDev = putStrLn . show . prettyDev
+> printDev :: Bwd Entry -> Name -> Dev -> IO ()
+> printDev aus n d = putStrLn . show $ prettyDev aus n d
 
 
 > import <- Pretty

@@ -50,8 +50,8 @@ Equality rules:
 >   traverse f (Tag s)      = (|(Tag s)|)
 
 > import -> CanPretty where
->   prettyCan ss UId      = text "Uid"
->   prettyCan ss (Tag s)  = text ('@':s)
+>   prettyCan UId      = text "Uid"
+>   prettyCan (Tag s)  = text ('@':s)
 
 > import -> CanTyRules where
 >   canTy _  (Set :>: UId)    = return UId

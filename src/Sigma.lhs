@@ -88,18 +88,18 @@ Coercion rule:
 >   Pair   :: t -> t -> Can t 
 
 > import -> CanPretty where
->   prettyCan ss Unit = parens empty
->   prettyCan ss Void = text "Void"
->   prettyCan ss (Sigma s t) = parens (text "Sigma" <+> pretty ss s <+> pretty ss t)
->   prettyCan ss (Pair a b) = parens (pretty ss a <> comma <+> pretty ss b)
+>   prettyCan Unit = parens empty
+>   prettyCan Void = text "Void"
+>   prettyCan (Sigma s t) = parens (text "Sigma" <+> pretty s <+> pretty t)
+>   prettyCan (Pair a b) = parens (pretty a <> comma <+> pretty b)
 
 > import -> ElimConstructors where
 >   Fst    :: Elim t
 >   Snd    :: Elim t
 
 > import -> ElimPretty where
->   prettyElim ss Fst = text "Fst"
->   prettyElim ss Snd = text "Snd"
+>   prettyElim Fst = text "Fst"
+>   prettyElim Snd = text "Snd"
 
 > import -> CanPats where
 >   pattern SIGMA p q = C (Sigma p q)

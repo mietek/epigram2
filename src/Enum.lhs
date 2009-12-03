@@ -131,18 +131,18 @@ Equality rules:
 >   halfZip (Su t0) (Su t1) = Just (Su (t0,t1))
 
 > import -> CanPretty where
->   prettyCan e EnumU         = text "Enum"
->   prettyCan e (EnumT t)     = braces (prettyEnum e t)
->   prettyCan e NilE          = braces (parens empty)
->   prettyCan e (ConsE t ts)  = pretty e t <> comma <+> pretty e ts
->   prettyCan e Ze            = text "Ze"
->   prettyCan e (Su t)        = parens (text "Su" <+> pretty e t)
+>   prettyCan EnumU         = text "Enum"
+>   prettyCan (EnumT t)     = braces (prettyEnum t)
+>   prettyCan NilE          = braces (parens empty)
+>   prettyCan (ConsE t ts)  = pretty t <> comma <+> pretty ts
+>   prettyCan Ze            = text "Ze"
+>   prettyCan (Su t)        = parens (text "Su" <+> pretty t)
 
 > import -> Pretty where
->   prettyEnum :: PrettyENV -> Tm {d, p} REF -> Doc
->   prettyEnum e (C NilE)          = empty
->   prettyEnum e (C (ConsE t ts))  = pretty e t <> comma <+> prettyEnum e ts
->   prettyEnum e t                 = pretty e t
+>   prettyEnum :: Tm {d, p} String -> Doc
+>   prettyEnum (C NilE)          = empty
+>   prettyEnum (C (ConsE t ts))  = pretty t <> comma <+> prettyEnum ts
+>   prettyEnum t                 = pretty t
 
 > import -> CanTyRules where
 >   canTy _ (Set :>: EnumU)    = return EnumU

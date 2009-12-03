@@ -15,6 +15,7 @@
 > import BwdFwd
 > import Developments
 > import DevLoad
+> import Naming
 > import PrettyPrint
 > import Root
 > import Rooty
@@ -134,6 +135,13 @@ updated information, providing a friendlier interface than |get| and |put|.
 > getMother = do
 >     l <- getLayer
 >     return (mother l)
+
+> getMotherName :: ProofState Name
+> getMotherName = do
+>     ls <- gets fst
+>     case ls of
+>         (_ :< Layer{mother=name := _}) -> return name
+>         B0 -> return []
 
 > insertCadet :: Entry -> ProofState ()
 > insertCadet e = do
@@ -537,6 +545,15 @@ the term with the bulletin and re-evaluates it if necessary.
 
 \section{Command-Line Interface}
 
+The |prettyHere| command christens a term in the current context, then passes it
+to the pretty-printer.
+
+> prettyHere :: INTM -> ProofState String
+> prettyHere tm = do
+>     aus <- getAuncles
+>     me <- getMotherName
+>     return (show (pretty (christen aus me tm)))
+
 The |parseHere| command parses a String to produce a term in the current context.
 
 > parseHere :: String -> ProofState INTM
@@ -547,7 +564,8 @@ Here we have a very basic command-driven interface to the proof state monad.
 
 > cochon :: ProofContext -> IO ()
 > cochon loc@(ls, dev) = do
->     printDev dev
+>     let Just me = evalStateT getMotherName loc
+>     printDev (auncles loc) me dev
 >     putStr (showPrompt ls)
 >     l <- getLine
 >     case words l of
@@ -616,7 +634,7 @@ Information commands:
 > elabParse ("eval":tss) = do
 >     tm <-  parseHere (unwords tss)
 >     tv <-  withRoot (bquote B0 (evTm tm))
->     return (show (pretty B0 tv))
+>     prettyHere tv
 
 
 Unhelpful error message:
@@ -625,7 +643,7 @@ Unhelpful error message:
 
 
 > showPrompt :: Bwd Layer -> String
-> showPrompt (_ :< Layer _ (n := _) _ _ _ _)  = prettyName n ++ " > "
+> showPrompt (_ :< Layer _ (n := _) _ _ _ _)  = show n ++ " > "
 > showPrompt B0        = "> "
 
 > printChanges :: Bwd Entry -> Bwd Entry -> IO ()
@@ -646,7 +664,7 @@ Unhelpful error message:
 > diff xs ys = (xs, ys)
 
 > showEntries :: Fwd Entry -> String
-> showEntries = foldMap (\e -> case e of (E ref _ _ _) -> show (prettyRef B0 ref) ++ ", "
+> showEntries = foldMap (\e -> case e of (E ref _ _ _) -> show ({-prettyRef B0-} ref) ++ ", "
 >                                        (R news) -> "News: " ++ show news)
 
 

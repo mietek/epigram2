@@ -162,11 +162,11 @@ Equality rules:
 >   pattern IND x y  = C (Ind x y)
 
 > import -> CanPretty where
->   prettyCan ss Desc   = text "Desc"
->   prettyCan ss (Mu t) = parens (text "Mu" <+> pretty ss t)
->   prettyCan ss Done   = text "Done"
->   prettyCan ss (Arg t1 t2) = parens (text "Arg" <+> pretty ss t1 <+> pretty ss t2)
->   prettyCan ss (Ind t1 t2) = parens (text "Ind" <+> pretty ss t1 <+> pretty ss t2)
+>   prettyCan Desc   = text "Desc"
+>   prettyCan (Mu t) = parens (text "Mu" <+> pretty t)
+>   prettyCan Done   = text "Done"
+>   prettyCan (Arg t1 t2) = parens (text "Arg" <+> pretty t1 <+> pretty t2)
+>   prettyCan (Ind t1 t2) = parens (text "Ind" <+> pretty t1 <+> pretty t2)
 
 > import -> CanTyRules where
 >   canTy _ (Set :>: Desc)     = return Desc

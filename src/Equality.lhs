@@ -97,9 +97,9 @@ With no computational behavior.
 >     (|EqBlue (|(:>:) (f pty) (f p)|) (|(:>:) (f qty) (f q)|)|)
 
 > import -> CanPretty where
->   prettyCan e (EqBlue (y0 :>: t0) (y1 :>: t1)) = parens (text "EqBlue"
->       <+> parens (pretty e y0 <+> text ":>:" <+> pretty e t0)
->       <+> parens (pretty e y1 <+> text ":>:" <+> pretty e t1))
+>   prettyCan (EqBlue (y0 :>: t0) (y1 :>: t1)) = parens (text "EqBlue"
+>       <+> parens (pretty y0 <+> text ":>:" <+> pretty t0)
+>       <+> parens (pretty y1 <+> text ":>:" <+> pretty t1))
 
 > import -> CanTyRules where
 >   canTy chev (Prop :>: EqBlue (y0 :>: t0) (y1 :>: t1)) = do

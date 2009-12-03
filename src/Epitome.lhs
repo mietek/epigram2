@@ -60,6 +60,7 @@
 %include Layout.lhs
 %include TmParse.lhs
 %include DevLoad.lhs
+%include Naming.lhs
 %include PrettyPrint.lhs
 
 \chapter{Compiler}
