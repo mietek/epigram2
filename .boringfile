@@ -9,9 +9,12 @@ Epitome\.log
 Epitome\.pdf
 Epitome\.ptb
 Epitome\.tex
+Epitome\.toc
+Epitome\.out
 
 # (She) Boring file regexps:
 \.hers
+\.hspp
 
 # (Makefile) Boring file regexps:
 src/\.depend$
