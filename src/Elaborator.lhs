@@ -613,7 +613,10 @@ Information commands:
 >     (es, dev) <- get
 >     return (foldMap ((++ "\n") . show) es ++ show dev)
 
-> elabParse ("eval":tss) = parseHere (unwords tss) >>= return . (show . (pretty B0) . evTm)
+> elabParse ("eval":tss) = do
+>     tm <-  parseHere (unwords tss)
+>     tv <-  withRoot (bquote B0 (evTm tm))
+>     return (show (pretty B0 tv))
 
 
 Unhelpful error message:
