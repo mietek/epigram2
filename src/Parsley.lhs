@@ -45,6 +45,7 @@ tokens |t| to:
 >               | EndOfStream
 >               | EndOfParser
 >               | Expect t
+>                 deriving Show
 > newtype Parsley t x = Parsley {runParsley :: [t] -> Either (PFailure t) ([t], x, [t])}
 
 The informal semantics given above is formalized by the |parse|
