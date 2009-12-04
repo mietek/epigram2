@@ -14,10 +14,11 @@
 
 
 > import BwdFwd
-> import Elaborator
-> import Parsley
-> import Lexer
+> import Cochon
 > import Compiler
+> import Elaborator
+> import Lexer
+> import Parsley
 
 %endif
 
