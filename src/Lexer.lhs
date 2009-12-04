@@ -1,19 +1,19 @@
 \section{Lexer}
 
-I propose to keep the lexical structure fairly simple, with not much by
-way of character classification. Every sequence of characters lexes,
-but there are `ugly' lexemes which have no part in a valid.
+The lexical structure is extremely simple. The reason is that Cochon
+being an interactive theorem prover, its inputs will be
+straightforward, 1-dimension terms. Being interactive, our user is
+also more interested in knowing where she did a mistake, rather than
+having the ability to write terms in 3D.
 
-Commas and semicolons always stand alone. Brackets are round, square,
-or curly, and you can make fancy brackets by wedging an identifier
-between open-and-bar, or bar-and-close without
-whitespace. Correspondingly, bar may not be next to an identifier
-unless it is part of a bracket. Otherwise, sequences of non-whitespace
-are identifiers unless they're keywords.
-
-%------------------------------------------------------------------------
-\subsection{Preamble}
-%------------------------------------------------------------------------
+We want to recognize ``valid'' identifiers, and keywords, with all of
+this structures by brackets. Interestingly, we only consider correctly
+paired brackets: we never use left-over brackets, and it is much
+simpler to work with well-parenthesized expressions when parsing
+terms. Brackets are round, square, or curly, and you can make fancy
+brackets by wedging an identifier between open-and-bar, or
+bar-and-close without whitespace. Sequences of non-whitespace are
+identifiers unless they're keywords.
 
 
 %if False
@@ -21,23 +21,15 @@ are identifiers unless they're keywords.
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE TypeSynonymInstances #-}
 
-%endif
+> module Lexer (Token(..),
+>               Bracket(..),
+>               tokenize) where
 
-> module Lexer
->  (  Tok(..)     -- structured tokens, nesting brackets and layout
->  ,  Br(..)      -- bracket kinds (infinitely many)
->  ,  tokOut      -- token printer
->  ,  tokenize    -- token snarfer
->  ,  isSpcT      -- test if a token is whitespace
->  ,  brackets    -- test if bracket kinds match: |(blah||..||)| is ok
->  )  where
-
-%if False
-
+> import Control.Monad
 > import Control.Applicative
-> import Control.Monad.State
-> import Data.Char
 > import Data.List
+
+> import Parsley
 
 %endif
 
@@ -47,160 +39,176 @@ are identifiers unless they're keywords.
 
 We lex into tokens, classified as follows.
 
-> data Tok
->   =  Idf String  -- identifiers
->   |  Ope Br      -- open brackets
->   |  Clo Br      -- close brackets
->   |  Key String  -- keywords
->   |  Spc Int     -- space
->   |  Urk String  -- ugly non-lexemes (non-close-bracket bar-starts)
->   |  Com         -- just the comma
->   |  Sem         -- semicolon
->   |  Bar         -- bar (not in another lexeme)
->   |  Eol         -- new line
->                  -- tokens used only after bracketing
->   |  Bra Br [Tok] Br     -- a bracket
->   |  Lay String [[Tok]]  -- layout introduced by keyword, then lines
->      deriving  (Show, Eq)
+> data Token
+>   =  Identifier String                    -- identifiers
+>   |  Keyword String                       -- keywords
+>   |  Brackets Bracket [Token]             -- bracketted tokens
+>      deriving Eq
 
-We have ordinary and fancy brackets.
+Brackets are the structuring tokens. We have:
 
-> data Br
->   =  Rnd  | RndB String
->   |  Sqr  | SqrB String
->   |  Crl  | CrlB String
->      deriving (Show, Eq)
+> data Bracket
+>   =  Round  | RoundB String    -- |(| or |(foo\||
+>   |  Square | SquareB String   -- |[| or |[foo\||
+>   |  Curly  | CurlyB String    -- |{| or |{foo\||
+>      deriving Eq
 
-Here's how to generate the text for a token
+As we are very likely to |show| our tokens all too often, let us
+implement a pretty |Show| instance on tokens.
 
-> tokOut :: Tok -> String
-> tokOut (Idf s)  = s
-> tokOut (Ope b)  = case b of
->   Rnd                -> "("
->   RndB s             -> "(" ++ s ++ "|"
->   Sqr                -> "[" 
->   SqrB s             -> "[" ++ s ++ "|"
->   Crl                -> "{"
->   CrlB s             -> "{" ++ s ++ "|"
-> tokOut (Clo b)       = case b of
->   Rnd                -> ")"
->   RndB s             -> "|" ++ s ++ ")"
->   Sqr                -> "]"
->   SqrB s             -> "|" ++ s ++ "]"
->   Crl                -> "}"
->   CrlB s             -> "|" ++ s ++ "}"
-> tokOut (Key s)       = s
-> tokOut (Spc i)       = replicate i ' '
-> tokOut (Urk s)       = s
-> tokOut Eol           = "\n"
-> tokOut (Bra o ts c)  = tokOut (Ope o) ++ (tokOut =<< ts) ++ tokOut (Clo c)
-> tokOut (Lay k tss)   = k ++ ((tokOut =<<) =<< tss)
+> instance Show Token where
+>     show (Identifier s) = s
+>     show (Keyword s) = s
+>     show (Brackets bra toks) = 
+>       showOpenB bra ++ (show =<< toks) ++ showCloseB bra 
+>           where showOpenB Round = "("
+>                 showOpenB Square = "["
+>                 showOpenB Curly = "{"
+>                 showOpenB (RoundB s) = "(" ++ s ++ "|"
+>                 showOpenB (SquareB s) = "[" ++ s ++ "|"
+>                 showOpenB (CurlyB s) = "{" ++ s ++ "|"
+>                 showCloseB Round = ")"
+>                 showCloseB Square = "]"
+>                 showCloseB Curly = "}"
+>                 showCloseB (RoundB s) = "|" ++ s ++ ")"
+>                 showCloseB (SquareB s) = "|" ++ s ++ "]"
+>                 showCloseB (CurlyB s) = "|" ++ s ++ "}"
 
 
-%------------------------------------------------------------------------
-\subsection{Tokenizing}
-%------------------------------------------------------------------------
+\subsection{Lexer}
 
-The lexing process is almost a classic unfold. We generate a list of
-tokens labelled with their starting column. The slightly contextual
-behaviour of bar means we need a running repair.
+We implement the tokenizer as a |Parsley| on |Char|s. That's a cheap
+solution for what we have to do. The previous implementation was
+running other the string of characters, wrapped in a |StateT| monad
+transformer. 
 
-> tokenize :: String -> [(Int, Tok)]
-> tokenize = fixUp . unfoldr (runStateT (|gets fst, tokIn|)) . (,) 0
+\question{What was the benefit of a |StateT| lexer, as we have a
+          parser combinator library at hand?}
 
-We check for spaces and specials first. We detect bar-starts, but not
-bar-ends.
+A token is either a bracketted expression, a keyword, or, failing all
+that, an identifier. Hence, we can recognize a token with the
+following parser:
 
-> tokIn :: L Tok
-> tokIn = (| Spc  (| length (some (ch ' ')) |)
->          | Ope  (%ch '('%) (| RndB (spa isOrd) (%ch '|'%) | Rnd |)
->          | Ope  (%ch '['%) (| SqrB (spa isOrd) (%ch '|'%) | Sqr |)
->          | Ope  (%ch '{'%) (| CrlB (spa isOrd) (%ch '|'%) | Crl |)
->          | Clo  ~ Rnd (%ch ')'%)
->          | Clo  ~ Sqr (%ch ']'%)
->          | Clo  ~ Crl (%ch '}'%)
->          | Clo  (%ch '|'%) (| (flip ($)) (spa isOrd)
->              (| RndB (%ch ')'%) | SqrB (%ch ']'%) | CrlB (%ch '}'%) |) |)
->          | Urk  (| ch '|' : some (chk isOrd cha) |)
->          | Bar  (%ch '|'%)
->          | Com  (%ch ','%)
->          | Sem  (%ch ';'%)
->          | Eol  (%chk isNL cha%)
->          | ik   (some (chk isOrd cha))
->          |)
->  where   ik s = if elem s keywords then Key s else Idf s
+> parseToken :: Parsley Char Token
+> parseToken = (|id parseBrackets
+>               |id parseKeyword 
+>               |id parseIdent 
+>               |)
 
-However, we can repair the problem by checking the output sequence for
-bars in the wrong place.
+Tokenizing an input string then simply consists in matching a bunch of
+token separated by spaces. For readability, we are also glutton in
+spaces the user may have put before and after the tokens.
 
-> fixUp :: [(Int, Tok)] -> [(Int, Tok)]
-> fixUp [] = []
-> fixUp ((i, Idf s)  : (_, Bar)    : its) = fixUp $ (i, Urk (s ++ "|"))  : its
-> fixUp ((i, Key s)  : (_, Bar)    : its) = fixUp $ (i, Urk (s ++ "|"))  : its
-> fixUp ((i, Urk s)  : (_, Bar)    : its) = fixUp $ (i, Urk (s ++ "|"))  : its
-> fixUp ((i, Idf s)  : (_, Urk t)  : its) = fixUp $ (i, Urk (s ++ t))    : its
-> fixUp ((i, Key s)  : (_, Urk t)  : its) = fixUp $ (i, Urk (s ++ t))    : its
-> fixUp ((i, Urk s)  : (_, Urk t)  : its) = fixUp $ (i, Urk (s ++ t))    : its
-> fixUp (x : xs) = x : fixUp xs
+> tokenize :: Parsley Char [Token]
+> tokenize = spaces *> pSep spaces parseToken <* spaces
+
+In the following, we implement these combinators in turn: |spaces|,
+|parseIdent|, |parseKeyword|, and |parseBrackets|.
+
+\subsubsection{Lexing spaces}
+
+A space is one of the following character:
+
+> space :: String
+> space = " \n\r"
+
+So, we look for |many| of them:
+
+> spaces :: Parsley Char ()
+> spaces = (many $ tokenFilter (flip elem space)) *> pure ()
+
+\subsubsection{Parsing words}
+
+As an intermediary step before keyword, identifier, and brackets, let
+us introduce a parser for words. A word is any non-empty string of
+characters that doesn't include a space or a bracketting symbol. In
+|Parsley|, this translates to:
+
+> parseWord :: Parsley Char String
+> parseWord = some $ tokenFilter (\t -> not $ elem t $ space ++ bracket)
+
+As we are at it, we can test for word equality, that is build a parser
+matching a given word:
+
+> wordEq :: String -> Parsley Char ()
+> wordEq word = pFilter filter parseWord
+>     where filter s | s == word = Just () 
+>                    | otherwise = Nothing
+
+Equipped with |parseWord| and |wordEq|, the following lexers win a
+level of abstraction, working on words instead of characters.
 
 
-%------------------------------------------------------------------------------
-\subsection{Classifiers, odds and ends}
-%------------------------------------------------------------------------------
+\subsubsection{Lexing identifiers}
 
-> isOrd :: Char -> Bool
-> isOrd c = not (isSpace c || elem c ",;()[]{}|")
->
-> isNL :: Char -> Bool
-> isNL b = elem b "\r\n"
+Hence, parsing an identifier simply consists in successfully parsing a
+word and saying ``oh! it's an |Identifier|''.
+
+> parseIdent = fmap Identifier parseWord
+
+\subsubsection{Lexing keywords}
+
+Keywords are slightly more involved. A keyword is one of the following
+thing. Don't forget to extend this list if you use new keywords in the
+grammar!
 
 > keywords :: [String]
-> keywords = ["\\", "->", ":", "Set", "where", "--", "?", "="]
+> keywords = [ "\\", "->", ":", "*", "#"
+>            , "==", "<->", "&&", ";", ":-" ]
 
-> isSpcT :: Tok -> Bool
-> isSpcT (Spc _)  = True
-> isSpcT Eol      = True
-> isSpcT _        = False
+To implement |parseKeyword|, this is simply a matter of filtering by
+words that can be found in the |keywords| list.
 
-> brackets :: Br -> Br -> Bool
-> brackets (RndB _)  (RndB "")  = True
-> brackets (SqrB _)  (SqrB "")  = True
-> brackets (CrlB _)  (CrlB "")  = True
-> brackets o         c          = o == c
+> parseKeyword :: Parsley Char Token
+> parseKeyword = pFilter (\t -> fmap Keyword $ find (t ==) keywords) parseWord
 
-%------------------------------------------------------------------------
-\subsection{Lexer monad}
-%------------------------------------------------------------------------
+\subsubsection{Lexing brackets}
 
-It's an off-the-peg monad. But why do I have to roll my own gubbins?
+Brackets, open and closed, are one of the following.
 
-> type L = StateT (Int, String) Maybe
->
-> instance Alternative L where
->   empty = StateT $ \ is -> empty
->   p <|> q = StateT $ \ is -> runStateT p is <|> runStateT q is
->
-> instance Applicative L where
->   pure = return
->   (<*>) = ap
+> openBracket, closeBracket, bracket :: String
+> openBracket = "([{"
+> closeBracket = "}])"
+> bracket = "|" ++ openBracket ++ closeBracket
 
-We'll need some bits and pieces.
+Parsing brackets, as you would expect, requires a monad: we're not
+context-free my friend. This is slight variation around the |pLoop|
+combinator. 
 
-> cha :: L Char
-> cha = StateT moo where
->   moo (i, []) = Nothing
->   moo (i, c : s)
->     |  isNL c = Just (c, (0, s))
->     |  c == '\t' -- unwind tabs
->     =  if mod i 8 == 7 then Just (' ', (i + 1, s))
->                        else Just (' ', (i + 1, c : s))
->     |  otherwise = Just (c, (i + 1, s))
->
-> chk :: (t -> Bool) -> L t -> L t
-> chk p l = do t <- l ; if p t then return t else empty
->
-> ch :: Char -> L Char
-> ch c = chk (== c) cha
->
-> spa :: (Char -> Bool) -> L String
-> spa p = (| chk p cha : spa p | [] |)
+First, we use |parseOpenBracket| to match an opening bracket, and get
+it's code. Thanks to this code, we can already say that we hold a
+|Brackets|. We are left with tokenizing the content of the bracket, up
+to parsing the corresponding closing bracket. 
+
+Parsing the closing bracket is made slightly more complex by the
+presence of fancy brackets: we have to match the fancy name of the
+opening bracket with the one of the closing bracket.
+
+> parseBrackets :: Parsley Char Token
+> parseBrackets = do
+>   bra <- parseOpenBracket
+>   (|(Brackets bra)
+>      (|id tokenize (%parseCloseBracket bra %) |) |)
+>     where parseOpenBracket :: Parsley Char Bracket
+>           parseOpenBracket = (|id (% tokenEq '(' %)
+>                                     (|RoundB parseWord (% tokenEq '|' %)
+>                                      |Round (% spaces %)|)
+>                               |id (% tokenEq '[' %)
+>                                     (|SquareB parseWord (% tokenEq '|' %)
+>                                      |Square (% spaces %)|)
+>                               |id (% tokenEq '{' %)
+>                                     (|CurlyB parseWord (% tokenEq '|' %)
+>                                      |Curly (% spaces %)|)
+>                               |)                                                        
+>           parseCloseBracket :: Bracket -> Parsley Char ()
+>           parseCloseBracket Round = tokenEq ')' 
+>           parseCloseBracket Square = tokenEq ']'
+>           parseCloseBracket Curly = tokenEq '}'
+>           parseCloseBracket (RoundB s) = matchBracketB s ')'
+>           parseCloseBracket (SquareB s) = matchBracketB s ']'
+>           parseCloseBracket (CurlyB s) = matchBracketB s '}'
+>           parseBracket x = tokenFilter (flip elem x)
+>           matchBracketB s bra = (|id ~ () (% tokenEq '|' %) 
+>                                           (% wordEq s %) 
+>                                           (% tokenEq bra %) |)
+
