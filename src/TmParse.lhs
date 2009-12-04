@@ -17,60 +17,72 @@
 
 %endif
 
-> weeTmIn :: P Tok (InTm String)
-> weeTmIn =
->   (|id (bra Rnd bigTmIn)
->    |C ~ Set (%key "Set"%)
->    |(flip (foldr mkL)) (%key "\\"%) (some (spc *> idf)) (%key "->"%) bigTmIn
->    |N weeTmEx
->    |)
->  where
->    mkL "_"  t = L (K t)
->    mkL x    t = L (x :. t)
+\subsection{Matching terminal symbols}
 
-> telescope :: P Tok [(String, InTm String)]
-> telescope = bra Rnd (pSep (pad (teq Sem)) (|idf, (%key ":"%) bigTmIn|))
+> keyword :: String -> Parsley Token ()
+> keyword s = tokenEq (Keyword s)
 
-> bigTmIn :: P Tok (InTm String)
-> bigTmIn =
->     (|(flip (foldr (uncurry pi))) telescope (%key "->"%) bigTmIn
->      |) <|> (pLoop (|N bigTmEx | id weeTmIn|) $ \ i ->
->     (|ARR ~ i (%key "->"%) bigTmIn
->      |))
->  where pi x s t = PI s (L (x :. t))
+> ident :: Parsley Token String
+> ident = pFilter filterIdent nextToken
+>     where filterIdent (Identifier s) = Just s
+>           filterIdent _ = Nothing
 
-> weeTmEx :: P Tok (ExTm String)
-> weeTmEx =
->   (|P idf
->    |id (bra Rnd bigTmEx)
->    |id (bra Rnd (|bigTmIn :? (%key ":"%) bigTmIn|))
->    |)
+> bracket :: Bracket -> Parsley Token x -> Parsley Token x
+> bracket bra p = pFilter filterBra nextToken
+>     where filterBra (Brackets bra' toks) | bra == bra' = 
+>               either (\_ ->Nothing) Just $ parse p toks
+>           filterBra _ = Nothing
 
-> bigTmEx :: P Tok (ExTm String)
-> bigTmEx = pLoop weeTmEx $ \ e -> spc *>
->   (|(e :$) (|A weeTmIn|)
->    |)
+\subsection{Matching |InTm|}
 
-> spc :: P Tok ()
-> spc = (|() (%many (tok isSpcT)%)|)
+> bigTmIn :: Parsley Token (InTm String)
+> bigTmIn = 
+>     (|id piParse
+>      |id arrParse
+>      |id sigmaParse
+>      |id littleTmIn
+>      |)
 
-> pad :: P Tok x -> P Tok x
-> pad p = (|id (%spc%) p (%spc%)|)
+> littleTmIn :: Parsley Token (InTm String)
+> littleTmIn =
+>     (|C ~ Set (%keyword "*"%) 
+>      |C ~ Prop (%keyword "#"%) 
+>      |id lamParse
+>      |id (bracket Round bigTmIn)
+>      |)
 
-> bra :: Br -> P Tok x -> P Tok x
-> bra b p = grok inside next where
->   inside (Bra o ts c) | o == b  = parse (pad p) ts
->   inside _                      = Nothing
 
-> lay :: String -> P [Tok] x -> P Tok x
-> lay k p = spc *> grok inside next where
->   inside (Lay k' tss) | k == k'  = parse p tss
->   inside _                       = Nothing
 
-> idf :: P Tok String
-> idf = grok g next where
->   g (Idf s)  = Just s
->   g _        = Nothing
+> piParse :: Parsley Token (InTm String)
+> piParse = (|(flip $ foldr mkPi) piVars (%keyword "->"%) bigTmIn|)
+>     where mkPi (x,s) t = PI s (L (x :. t))
+>           piVars = many (bracket Round (|ident, (%keyword ":"%) bigTmIn|))
 
-> key :: String -> P Tok ()
-> key s = pad (teq (Key s))
+> arrParse :: Parsley Token (InTm String)
+> arrParse = (|mkArr littleTmIn (%keyword "->"%) bigTmIn|)
+>     where mkArr s t = ARR s t
+
+> lamParse :: Parsley Token (InTm String)
+> lamParse = (|(flip $ foldr mkLam) (%keyword "\\"%) (some ident) (%keyword "->"%) bigTmIn|)
+>     where mkLam x t = L (x :. t)
+
+
+> sigmaParse :: Parsley Token (InTm String)
+> sigmaParse = bracket Round sigma
+>     where sigma = (|mkSigma (optional (ident <* keyword ":")) bigTmIn sigmaMore
+>                    |C ~ Unit (% pEndOfStream %)
+>                    |)
+>           sigmaMore = (|id (% keyword ";" %) (sigma <|> bigTmIn)
+
+%if false
+
+>  --                      |(\p s -> mkSigma ) (% keyword ":-" %) bigTmIn sigmaMore
+
+%endif
+
+>                        |(\x -> PRF x) (% keyword ":-" %) bigTmIn
+>                        |)
+>           mkSigma Nothing s t = C $ Sigma s (L (K t))
+>           mkSigma (Just x) s t = C (Sigma s (L (x :. t)))
+>           
+
