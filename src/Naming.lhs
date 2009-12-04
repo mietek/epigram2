@@ -17,6 +17,7 @@
 > import BwdFwd
 > import Developments
 > import Lexer
+> import MissingLibrary
 > import Parsley
 > import Tm
 > import TmParse
@@ -81,13 +82,13 @@ names in an |InTm String| to produce an |InTm REF|, i.e.\ an INTM.
 
 > resolver :: Bwd Entry -> Bwd String -> Mangle Maybe String REF
 > resolver ps vs = Mang
->     {  mangP  = \ x mes -> (|(|(findLocal ps vs) (parse pRelName x) @ |) $:$ mes|)
+>     {  mangP  = \ x mes -> (|(|(findLocal ps vs) (eitherRight (parse pRelName x)) @ |) $:$ mes|)
 >     ,  mangV  = \ _ _ -> Nothing -- what's that index doing here?
 >     ,  mangB  = \ x -> resolver ps (vs :< x)
 >     }
 >   where
->     pRelName :: P Char RelName
->     pRelName = pSep (teq '.') (|some (tok noffer), offs|)
+>     pRelName :: Parsley Char [(String,Offs)]
+>     pRelName = pSep (tokenEq '.') (|some (tokenFilter noffer), offs|)
 >
 >     offs :: Parsley Char Offs
 >     offs =
@@ -171,7 +172,7 @@ in the context all the names in the |InTm String| produced by |bigTmIn|.
 \question{Where should this live? Probably somewhere else when parsing is sorted out.}
 
 > pINTM :: Bwd Entry -> Parsley Token INTM
-> pINTM es = pFilter (resolve es B0 %) bigTmIn
+> pINTM es = pFilter (resolver es B0 %) bigTmIn
 
 \subsection{Christening (Generating Local Longnames)}
 

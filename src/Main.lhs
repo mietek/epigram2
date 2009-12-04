@@ -12,9 +12,10 @@
 > import Data.Maybe
 > import System
 
+
+> import BwdFwd
+> import Parsley
 > import Lexer
-> import Layout
-> import DevLoad
 > import Compiler
 
 %endif
@@ -29,11 +30,10 @@
 >           "         --epic <options>   Send further options to epic\n" ++
 >           "         --cochon           Run the cochon interface\n"
 
-> pipe :: String -> String
-> pipe = foldMap (foldMap tokOut) . snd . devLoad . layout . tokenize
 
-> pipeT :: String -> String
-> pipeT = (++ "\n") . show . fst . devLoad . layout . tokenize
+%if False
+
+That's dead code, Jim.
 
 < pipe :: String -> String
 < pipe = foldMap (foldMap tokOut) . snd . devLoad . layout . tokenize

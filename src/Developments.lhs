@@ -14,7 +14,9 @@
 > import Control.Monad
 > import Control.Applicative
 > import Data.Traversable
+
 > import BwdFwd
+> import MissingLibrary
 > import Tm
 > import Root
 

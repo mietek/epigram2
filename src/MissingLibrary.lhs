@@ -41,6 +41,11 @@
 >   pure = return
 >   (<*>) = ap
 
+
+> eitherRight :: Either a b -> Maybe b
+> eitherRight (Right x)  = Just x
+> eitherRight (Left _)   = Nothing
+
 %if False
 
 >   -- HalfZip xs xs = Just (fmap (\x -> (x,x)) xs)
