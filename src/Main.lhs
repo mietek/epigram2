@@ -14,6 +14,7 @@
 
 
 > import BwdFwd
+> import Elaborator
 > import Parsley
 > import Lexer
 > import Compiler
@@ -75,7 +76,7 @@ which evaluates the last definition in the development.
 If the --cochon flag has been used, run the interactive interface:
 
 >            case getOpt cochonOpt opts of
->              Just ()  -> cochon (B0, dev)
+>              Just ()  -> cochon emptyContext
 >              _        -> return ()
 
 > data Option = InFile FilePath | OutFile FilePath | Epic String | Help | Cochon

@@ -4,8 +4,8 @@
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
 
-> module Naming (christen, christenAbs, christenName, christenREF,
->                        pINTM, showName, showEntries, showEntriesAbs) where
+> module Naming (christen, christenAbs, christenName, christenREF, resolve,
+>                showName, showEntries, showEntriesAbs) where
 
 > import Control.Applicative
 > import Control.Monad
@@ -75,6 +75,11 @@ references. We resolve \(f.x.y.z\) by searching outwards for $f$, then
 inwards for a child $x$, $x$'s child $y$, $y$'s child $z$. References
 are fully $\lambda$-lifted, but as $f$'s parameters are held in common
 with the point of reference, we automatically supply them.
+
+
+> resolve :: Bwd Entry -> InTm String -> Maybe INTM
+> resolve es tm = resolver es B0 % tm
+
 
 The |resolver| function takes a context and a list of binder names, and
 produces a mangle that, when applied, attempts to resolve the parameter
@@ -166,13 +171,6 @@ the entity should be a |Girl|, and it searches her children for the name.
 >         Left y'  -> findD xs (y' : ys) as
 >     findD _ sos as = empty
 
-
-The |pINTM| function produces a parser for terms, given a context, by resolving
-in the context all the names in the |InTm String| produced by |bigTmIn|.
-\question{Where should this live? Probably somewhere else when parsing is sorted out.}
-
-> pINTM :: Bwd Entry -> Parsley Token INTM
-> pINTM es = pFilter (resolver es B0 %) bigTmIn
 
 \subsection{Christening (Generating Local Longnames)}
 

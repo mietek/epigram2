@@ -152,8 +152,14 @@ to a |Module| development. It returns the |Dev| produced, and a
 >   --runWriter (makeFun B0 (B0, Module, (B0, 0)) tss)
 
 
-We should replace |parseTerm| once we having parsing sorted out.
-\question{Should this really just take the second entry in the list?}
+\subsection{Parsing Terms}
+
+The |pINTM| function produces a parser for terms, given a context, by resolving
+in the context all the names in the |InTm String| produced by |bigTmIn|.
+
+> pINTM :: Bwd Entry -> Parsley Token INTM
+> pINTM es = pFilter (resolve es) bigTmIn
+
 
 > parseTerm :: String -> Bwd Entry -> Maybe INTM
 > parseTerm s es = parsed
