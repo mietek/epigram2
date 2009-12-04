@@ -40,8 +40,6 @@
 %include Rules.lhs
 %include Tactics.lhs
 %include Developments.lhs
-%include Construction.lhs
-%include Update.lhs
 
 \chapter{Feature by Feature}
 
