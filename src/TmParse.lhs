@@ -128,3 +128,17 @@
 >           mkEnum names Nothing = mkEnum' names NILE
 >           mkEnum names (Just t) = mkEnum' names t
 >           mkEnum' = flip $ foldr (\t e -> CONSE (TAG t) e) 
+
+> blueEqParse :: Parsley Token (InTm String)
+> blueEqParse = (|mkBlueEq parseTerm (%keyword "=="%) parseTerm|)
+>     where parseTerm = bracket Round (|(,) littleTmIn (%keyword ":"%) littleTmIn|)
+>           mkBlueEq (x1,t1) (x2,t2) = EQBLUE (t1 :>: x1) (t2 :>: x2)
+
+
+\subsection{Parsing Terms}
+
+The |termParse| function produces a parser for terms, given a context, by resolving
+in the context all the names in the |InTm String| produced by |bigTmIn|.
+
+> termParse :: Bwd Entry -> Parsley Token INTM
+> termParse es = pFilter (resolve es) bigTmIn
