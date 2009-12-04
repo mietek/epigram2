@@ -48,9 +48,9 @@ We lex into tokens, classified as follows.
 Brackets are the structuring tokens. We have:
 
 > data Bracket
->   =  Round  | RoundB String    -- |(| or |(foo\||
->   |  Square | SquareB String   -- |[| or |[foo\||
->   |  Curly  | CurlyB String    -- |{| or |{foo\||
+>   =  Round  | RoundB String    -- |(| or |(foo|||
+>   |  Square | SquareB String   -- |[| or |[foo|||
+>   |  Curly  | CurlyB String    -- |{| or |{foo|||
 >      deriving Eq
 
 As we are very likely to |show| our tokens all too often, let us
