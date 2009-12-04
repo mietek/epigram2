@@ -26,6 +26,55 @@
 >         , "( * :- #)"                 -- sigma
 >         , "( * :- # ; * )"            -- sigma
 >         , "( * :- # :- # )"           -- sigma
+>         , "( x : * ; #)"              -- sigma
+>         , "( x : * ; y : # ; *)"      -- sigma
+>         , "( x : * ; z : () ; )"      -- sigma
+>         , "( y : * ; )"               -- sigma
+>         , "( x : * ; # ; z : * ; )"   -- sigma
+>         , "( x : * :- #)"             -- sigma
+>         , "( x : * :- # ; y : * ;)"   -- sigma
+>         , "( x : * :- # :- # )"       -- sigma
+>         , ":- #"                      -- proposition
+>         , ":- (# -> #)"               -- proposition
+>         , "* : *"                     -- ExTm
+>         , "(* : *)"                   -- ExTm
+>         , "(* -> * : *)"              -- ExTm
+>         , "@ *"                       -- Con
+>         , "@(\\ x -> *)"              -- Con
+>         , "[]"                        -- Tuple
+>         , "[ * # ]"                   -- Tuple
+>         , "[ * # * ]"                 -- Tuple
+>         , "[ * (* -> *) (* -> * -> *) ]" -- Tuple
+>         , "[ * / # ]"                 -- Tuple
+>         , "[ # * / #]"                -- Tuple
+>         , "{}"                        -- Enum
+>         , "{x}"                       -- Enum
+>         , "{x , y}"                   -- Enum
+>         , "{x, y}"                    -- Enum
+>         , "{x , y , z}"               -- Enum
+>         , "{ x , y , z }"             -- Enum
+>         , "{ x , y , z / * }"         -- Enum
+>         , "{ x , y , z / {} }"        -- Enum
+>         , "(x : *) => *"              -- Forall
+>         , "( x : *) => *"             -- Forall
+>         , "( x : * ) => *"            -- Forall
+>         , "( x : * )( y : #) => *"    -- Forall
+>         , "( x : * ) ( y : *) => #"   -- Forall
+>         , "* && #"                    -- And
+>         , "((x : *) => *) && *"       -- And
+>         , "TT && FF"                  -- And
+>         , "FF && FF"                  -- And
+>         , "TT"                        -- Trivial
+>         , "FF"                        -- Absurd
+>         , "(* : *) == (* : *)"        -- EqBlue
+>         , "((* -> *) : *) == (# : *)" -- EqBlue
+>         , "* : *"                     -- Annotate
+>         , "(* -> *) : *"              -- Annotate
+>         , "x"                         -- Name
+>         , "x^2"                       -- Nam
+>         , "xx^242"                    -- Name
+>         , "xx^242.y^12"               -- Name
+>         , "xx^242.y^12.z^1"           -- Name
 >         , "( * )"                     -- grouping
 >         , "((*))"                     -- grouping
 >         ]
