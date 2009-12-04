@@ -88,10 +88,10 @@ names in an |InTm String| to produce an |InTm REF|, i.e.\ an INTM.
 >     pRelName :: P Char RelName
 >     pRelName = pSep (teq '.') (|some (tok noffer), offs|)
 >
->     offs :: P Char Offs
+>     offs :: Parsley Char Offs
 >     offs =
->         (|Abs (%teq '_'%) (|read (some (tok isDigit))|)
->          |Rel (%teq '^'%) (|read (some (tok isDigit))|)
+>         (|Abs (%tokenEq '_'%) (|read (some (tokenFilter isDigit))|)
+>          |Rel (%tokenEq '^'%) (|read (some (tokenFilter isDigit))|)
 >          |(Rel 0)
 >          |)
 >
@@ -169,9 +169,8 @@ The |pINTM| function produces a parser for terms, given a context, by resolving
 in the context all the names in the |InTm String| produced by |bigTmIn|.
 \question{Where should this live? Probably somewhere else when parsing is sorted out.}
 
-> pINTM :: Bwd Entry -> P Tok INTM
-> pINTM es = grok (resolver es B0 %) bigTmIn
-
+> pINTM :: Bwd Entry -> Parsley Token INTM
+> pINTM es = pFilter (resolve es B0 %) bigTmIn
 
 \subsection{Christening (Generating Local Longnames)}
 
