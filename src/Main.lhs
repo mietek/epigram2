@@ -12,9 +12,8 @@
 > import Data.Maybe
 > import System
 
+> import Parsley
 > import Lexer
-> import Layout
-> import DevLoad
 > import Compiler
 
 %endif
@@ -28,11 +27,19 @@
 >           "         --help             Display this message\n" ++
 >           "         --epic <options>   Send further options to epic\n"
 
+%if false 
+
+That's dead code, Jim.
+
+> {-
 > pipe :: String -> String
 > pipe = foldMap (foldMap tokOut) . snd . devLoad . layout . tokenize
 
 > pipeT :: String -> String
 > pipeT = (++ "\n") . show . fst . devLoad . layout . tokenize
+> -}
+
+%endif
 
 > main :: IO ()
 > -- main = interact pipeT
@@ -53,8 +60,8 @@ Read input, compile to 'epi.out'
 
 This was the old behaviour:
 
->            let dev = (fst . devLoad . layout . tokenize) inp
->            print dev
+>            let dev = undefined -- FIX (or not):  (fst . devLoad . tokenize) inp
+>            -- FIX (or not): print dev
 
 Pull out the definitions, and, if the -o flag has been used, output an executable
 which evaluates the last definition in the development.             

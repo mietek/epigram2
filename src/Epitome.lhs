@@ -57,7 +57,6 @@
 \chapter{Concrete Syntax}
 
 %include Lexer.lhs
-%include Layout.lhs
 %include TmParse.lhs
 %include DevLoad.lhs
 %include Naming.lhs
