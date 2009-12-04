@@ -154,8 +154,9 @@ thing. Don't forget to extend this list if you use new keywords in the
 grammar!
 
 > keywords :: [String]
-> keywords = [ "\\", "->", ":", "*", "#"
->            , "==", "<->", "&&", ";", ":-" ]
+> keywords = [ ":", "*", "#", "@", ",", ";", "/", "^", "."
+>            , "\\", "->", "=>", "==", "<->", "&&", ":-"
+>            , "TT", "FF" ]
 
 To implement |parseKeyword|, this is simply a matter of filtering by
 words that can be found in the |keywords| list.
