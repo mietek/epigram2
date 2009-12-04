@@ -5,7 +5,7 @@
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE ScopedTypeVariables #-}
 
-> module PrettyPrint (pretty, prettyDev, prettyRef, printDev) where
+> module PrettyPrint (pretty, prettyDev, prettyRef) where
 
 > import Data.Foldable
 > import Data.List
@@ -23,7 +23,9 @@
 
 %endif
 
-The following uses the |HughesPJ| pretty-printing combinators.
+The following uses the |HughesPJ| pretty-printing combinators. We define how to
+pretty-print everything defined in the Core chapter here, and provide she aspects
+to allow extra canonical terms and eliminators to be pretty-printed.
 
 > prettyCan :: Can (Tm {d, p} String) -> Doc
 > prettyCan Set       = text "*"
@@ -76,8 +78,8 @@ The following uses the |HughesPJ| pretty-printing combinators.
 > prettyScope (x :. t)   = 
 >     parens (text x <+> text ":." <+> pretty t)
 > prettyScope (H g x t)  = 
->     parens (text "\\" <> text x <> text "." <+> pretty t)
-> prettyScope (K t) = parens (text "\\_." <+> pretty t)
+>     parens (text "\\" <> text x <> text "->" <+> pretty t)
+> prettyScope (K t) = parens (text "\\_ ->" <+> pretty t)
 
 > prettyTip :: Bwd Entry -> Name -> Tip -> Doc
 > prettyTip aus me Module                     = empty
@@ -95,9 +97,6 @@ The following uses the |HughesPJ| pretty-printing combinators.
 >     <+> sep (punctuate comma (map (pretty) vs)))
 > pretty (n :$ el)      = parens (pretty n <+> prettyElim el)
 > pretty (t :? y)       = parens (pretty t <+> text ":" <+> pretty y)
-
-> printDev :: Bwd Entry -> Name -> Dev -> IO ()
-> printDev aus n d = putStrLn . show $ prettyDev aus n d
 
 
 > import <- Pretty

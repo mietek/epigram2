@@ -129,11 +129,11 @@ Elim forms inherited from elsewhere
 
 > import -> CanPretty where
 >   prettyCan Prop           = text "#"
->   prettyCan (Prf p)        = braces (text "|" <+> pretty p)
+>   prettyCan (Prf p)        = parens (text ":-" <+> pretty p)
 >   prettyCan (All p q)      = parens (text "All" <+> pretty p <+> pretty q)
->   prettyCan (And p q)      = parens (text "And" <+> pretty p <+> pretty q)
->   prettyCan Trivial        = text "Trivial"
->   prettyCan Absurd         = text "Absurd"
+>   prettyCan (And p q)      = parens (pretty p <+> text "&&" <+> pretty q)
+>   prettyCan Trivial        = text "TT"
+>   prettyCan Absurd         = text "FF"
 >   prettyCan (Box (Irr p))  = parens (text "Box" <+> pretty p)
 
 > import -> SugarTactics where

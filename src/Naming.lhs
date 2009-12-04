@@ -4,7 +4,8 @@
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
 
-> module Naming (christen, christenName, christenREF, pINTM, showName, showEntries, showEntriesAbs) where
+> module Naming (christen, christenAbs, christenName, christenREF,
+>                        pINTM, showName, showEntries, showEntriesAbs) where
 
 > import Control.Applicative
 > import Control.Monad
@@ -281,3 +282,17 @@ It returns the entry found, its prefix in the list of entries, and the count.
 >   | x == y     = findName es p y (i+1)
 >   | otherwise  = findName es p y i
 > findName B0 p _ _ = error ("findName: ran out of ancestors seeking " ++ showName p)
+
+
+
+Just in case it is useful, here is a simple christener that assigns absolute names.
+
+> christenAbs :: INTM -> InTm String
+> christenAbs tm = christenerAbs B0 %% tm
+
+> christenerAbs :: Bwd String -> Mangle I REF String
+> christenerAbs vs = Mang
+>     {  mangP = \(name := _) as -> pure (P (showName name))
+>     ,  mangV = \i _ -> pure (P (vs !. i))
+>     ,  mangB = \v -> christenerAbs (vs :< v)
+>     }

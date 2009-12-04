@@ -566,7 +566,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 > cochon :: ProofContext -> IO ()
 > cochon loc@(ls, dev) = do
 >     let Just me = evalStateT getMotherName loc
->     printDev (auncles loc) me dev
+>     putStrLn (show (prettyDev (auncles loc) me dev))
 >     putStr (showPrompt ls)
 >     l <- getLine
 >     case words l of
