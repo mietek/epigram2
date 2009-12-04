@@ -111,7 +111,7 @@ In the following, we implement these combinators in turn: |spaces|,
 A space is one of the following character:
 
 > space :: String
-> space = " \n\r"
+> space = " \n\r\t"
 
 So, we look for |many| of them:
 
