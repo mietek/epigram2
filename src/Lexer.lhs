@@ -23,7 +23,8 @@ identifiers unless they're keywords.
 
 > module Lexer (Token(..),
 >               Bracket(..),
->               tokenize) where
+>               tokenize,
+>               keyword, ident, bracket) where
 
 > import Control.Monad
 > import Control.Applicative
@@ -125,7 +126,7 @@ characters that doesn't include a space or a bracketting symbol. In
 |Parsley|, this translates to:
 
 > parseWord :: Parsley Char String
-> parseWord = some $ tokenFilter (\t -> not $ elem t $ space ++ bracket)
+> parseWord = some $ tokenFilter (\t -> not $ elem t $ space ++ brackets)
 
 As we are at it, we can test for word equality, that is build a parser
 matching a given word:
@@ -166,10 +167,10 @@ words that can be found in the |keywords| list.
 
 Brackets, open and closed, are one of the following.
 
-> openBracket, closeBracket, bracket :: String
+> openBracket, closeBracket, brackets :: String
 > openBracket = "([{"
 > closeBracket = "}])"
-> bracket = "|" ++ openBracket ++ closeBracket
+> brackets = "|" ++ openBracket ++ closeBracket
 
 Parsing brackets, as you would expect, requires a monad: we're not
 context-free my friend. This is slight variation around the |pLoop|
@@ -211,4 +212,29 @@ opening bracket with the one of the closing bracket.
 >           matchBracketB s bra = (|id ~ () (% tokenEq '|' %) 
 >                                           (% wordEq s %) 
 >                                           (% tokenEq bra %) |)
+
+\subsection{Abstracting tokens}
+
+As we are very likely to use these tokens in a parser, let us readily
+define parser combinators for them. Hence, looking for a given keyword
+is not more difficult than that:
+
+> keyword :: String -> Parsley Token ()
+> keyword s = tokenEq (Keyword s)
+
+Parsing an identifier is as simple as:
+
+> ident :: Parsley Token String
+> ident = pFilter filterIdent nextToken
+>     where filterIdent (Identifier s) = Just s
+>           filterIdent _ = Nothing
+
+Finally, we can match a bracketted expression and use a specific
+parser for the bracketted tokens:
+
+> bracket :: Bracket -> Parsley Token x -> Parsley Token x
+> bracket bra p = pFilter filterBra nextToken
+>     where filterBra (Brackets bra' toks) | bra == bra' = 
+>               either (\_ ->Nothing) Just $ parse p toks
+>           filterBra _ = Nothing
 

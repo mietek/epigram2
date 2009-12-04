@@ -17,22 +17,6 @@
 
 %endif
 
-\subsection{Matching terminal symbols}
-
-> keyword :: String -> Parsley Token ()
-> keyword s = tokenEq (Keyword s)
-
-> ident :: Parsley Token String
-> ident = pFilter filterIdent nextToken
->     where filterIdent (Identifier s) = Just s
->           filterIdent _ = Nothing
-
-> bracket :: Bracket -> Parsley Token x -> Parsley Token x
-> bracket bra p = pFilter filterBra nextToken
->     where filterBra (Brackets bra' toks) | bra == bra' = 
->               either (\_ ->Nothing) Just $ parse p toks
->           filterBra _ = Nothing
-
 \subsection{Matching |InTm|}
 
 > bigTmIn :: Parsley Token (InTm String)
