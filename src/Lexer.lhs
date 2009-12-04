@@ -140,13 +140,6 @@ Equipped with |parseWord| and |wordEq|, the following lexers win a
 level of abstraction, working on words instead of characters.
 
 
-\subsubsection{Lexing identifiers}
-
-Hence, parsing an identifier simply consists in successfully parsing a
-word and saying ``oh! it's an |Identifier|''.
-
-> parseIdent = fmap Identifier parseWord
-
 \subsubsection{Lexing keywords}
 
 Keywords are slightly more involved. A keyword is one of the following
@@ -163,6 +156,16 @@ words that can be found in the |keywords| list.
 
 > parseKeyword :: Parsley Char Token
 > parseKeyword = pFilter (\t -> fmap Keyword $ find (t ==) keywords) parseWord
+
+\subsubsection{Lexing identifiers}
+
+Hence, parsing an identifier simply consists in successfully parsing a
+word -- which is not a keyword -- and saying ``oh! it's an
+|Identifier|''.
+
+> parseIdent = (|id (%parseKeyword%) (|)
+>               |Identifier parseWord |)
+
 
 \subsubsection{Lexing brackets}
 
