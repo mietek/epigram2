@@ -7,7 +7,9 @@
 
 > module PrettyPrint (pretty, prettyDev, prettyRef, printDev) where
 
+> import Data.Foldable
 > import Data.List
+> import Data.Monoid (Monoid, mempty, mappend)
 > import Text.PrettyPrint.HughesPJ
 
 > import BwdFwd hiding ((<+>))
@@ -35,22 +37,24 @@ The following uses the |HughesPJ| pretty-printing combinators.
 > import <- CanPretty
 > prettyCan can       = quotes . text .show $ can
 
+
+> instance Monoid Doc where
+>     mempty = empty
+>     mappend = ($+$)
+
 > prettyDev :: Bwd Entry -> Name -> Dev -> Doc
 > prettyDev aus me (B0, t, _) = brackets empty <+> prettyTip aus me t
-> prettyDev aus me (es, t, r) = lbrack <+> prettyEntries es $$ rbrack 
->   <+> prettyTip (aus BwdFwd.<+> es) me t
->     where prettyEntries :: Bwd Entry -> Doc
->           prettyEntries B0 = empty
->           prettyEntries (es' :< E ref _ (Boy k) _) = prettyEntries es'
->               $+$ (prettyBKind k <+> prettyRef (aus BwdFwd.<+> es') me r ref)
->           prettyEntries (es' :< E ref _ (Girl LETG d) _) = 
->               let aus' = aus BwdFwd.<+> es' in
->                 prettyEntries es' $+$ (sep [prettyRef aus me r ref, 
->                                              nest 4 (prettyDev aus' me d)])
->           
->           prettyBKind :: BoyKind -> Doc
->           prettyBKind LAMB  = text "\\"
->           prettyBKind PIB   = text "Pi"
+> prettyDev aus me (es, t, r) = lbrack <+> foldMap prettyEntry es $$ rbrack 
+>     <+> prettyTip aus me t
+>   where
+>     prettyEntry :: Entry -> Doc
+>     prettyEntry (E ref _ (Boy k) _) = prettyBKind k <+> prettyRef aus me r ref
+>     prettyEntry (E ref _ (Girl LETG d) _) = sep [prettyRef aus me r ref, 
+>                                                      nest 4 (prettyDev aus me d)]
+>
+>     prettyBKind :: BoyKind -> Doc
+>     prettyBKind LAMB  = text "\\"
+>     prettyBKind PIB   = text "Pi"
 
 
 > prettyElim :: Elim (Tm {d, p} String) -> Doc
@@ -60,7 +64,7 @@ The following uses the |HughesPJ| pretty-printing combinators.
 > prettyElim elim   = quotes . text . show $ elim
 
 > prettyRef :: Bwd Entry -> Name -> Root -> REF -> Doc
-> prettyRef aus me root ref@(_ := k :<: ty) = pretty (christenREF aus me ref) <+> prettyRKind k 
+> prettyRef aus me root ref@(_ := k :<: ty) = text (christenREF aus me ref) <+> prettyRKind k 
 >   <+> pretty (christen aus me (bquote B0 ty root))
 >     where prettyRKind :: RKind -> Doc
 >           prettyRKind DECL      = text ":"
@@ -97,3 +101,6 @@ The following uses the |HughesPJ| pretty-printing combinators.
 
 
 > import <- Pretty
+
+
+

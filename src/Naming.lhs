@@ -4,7 +4,7 @@
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
 
-> module Naming (christen, christenREF, pINTM) where
+> module Naming (christen, christenName, christenREF, pINTM, showName, showEntries, showEntriesAbs) where
 
 > import Control.Applicative
 > import Control.Monad
@@ -22,16 +22,9 @@
 
 %endif
 
+\subsection{The Naming of Things}
 
-\subsection{Resolving Local Longnames}
-
-For display and storage purposes, we have a system of local longnames
-for referring to entries. We need to resolve those names as
-references. We resolve \(f.x.y.z\) by searching outwards for $f$, then
-inwards for a child $x$, $x$'s child $y$, $y$'s child $z$. References
-are fully $\lambda$-lifted, but as $f$'s parameters are held in common
-with the point of reference, we automatically supply them.
-
+For display and storage purposes, we have a system of local longnames for referring to entries.
 Any component of a local name may have a \textasciicircum|n| or |_n| suffix, where |n| is
 an integer, representing a relative or absolute offset. A relative
 offset \textasciicircum|n| refers to the $n^\mathrm{th}$ occurrence of the name
@@ -43,6 +36,10 @@ component of the name.
 > data Offs = Rel Int | Abs Int deriving Show
 > type RelName = [(String,Offs)]
 
+
+The |showRelName| function converts a relative name to a string by
+inserting the appropriate punctuation.
+
 > showRelName :: RelName -> String
 > showRelName = intercalate "." . map f
 >   where
@@ -50,16 +47,35 @@ component of the name.
 >     f (x, Rel i) = x ++ "^" ++ show i
 >     f (x, Abs i) = x ++ "_" ++ show i
 
+The |showName| function converts a name to a string absolutely (without christening).
 
-The |pINTM| function produces a parser for terms, given a context, by resolving
-in the context all the names in the |InTm String| produced by |bigTmIn|.
+> showName :: Name -> String
+> showName = showRelName . map (\(x, i) -> (x, Abs i))
 
-> pINTM :: Bwd Entry -> P Tok INTM
-> pINTM es = grok (resolver es B0 %) bigTmIn
 
+The |showEntries| function folds over a bunch of entries, christening them with the
+given auncles and current name, and intercalating to produce a comma-separated list.
+
+> showEntries :: Foldable f => Bwd Entry -> Name -> f Entry -> String
+> showEntries aus me = intercalate ", " . foldMap (\(E ref _ _ _) -> [christenREF aus me ref])
+
+The |showEntriesAbs| function works similarly, but uses absolute names instead of
+christening them.
+
+> showEntriesAbs :: Foldable f => f Entry -> String
+> showEntriesAbs = intercalate ", " . foldMap (\(E (n := _) _ _ _) -> [showName n])
+
+
+\subsection{Resolving Local Longnames}
+
+We need to resolve local longnames as
+references. We resolve \(f.x.y.z\) by searching outwards for $f$, then
+inwards for a child $x$, $x$'s child $y$, $y$'s child $z$. References
+are fully $\lambda$-lifted, but as $f$'s parameters are held in common
+with the point of reference, we automatically supply them.
 
 The |resolver| function takes a context and a list of binder names, and
-produces a mangler that, when applied, attempts to resolve the parameter
+produces a mangle that, when applied, attempts to resolve the parameter
 names in an |InTm String| to produce an |InTm REF|, i.e.\ an INTM.
 
 > resolver :: Bwd Entry -> Bwd String -> Mangle Maybe String REF
@@ -149,6 +165,14 @@ the entity should be a |Girl|, and it searches her children for the name.
 >     findD _ sos as = empty
 
 
+The |pINTM| function produces a parser for terms, given a context, by resolving
+in the context all the names in the |InTm String| produced by |bigTmIn|.
+\question{Where should this live? Probably somewhere else when parsing is sorted out.}
+
+> pINTM :: Bwd Entry -> P Tok INTM
+> pINTM es = grok (resolver es B0 %) bigTmIn
+
+
 \subsection{Christening (Generating Local Longnames)}
 
 Just as resolution automatically supplies parameters to references
@@ -171,22 +195,43 @@ common prefix of the name may thus be omitted, as may any common
 parameters.
 
 
+The |christen| function takea a list of entries in scope (the auncles of the
+current location), the name of the current location and a term. It replaces
+the variables and parameters of the term with |String| names as described
+above, and removes common parameters.
+
 > christen :: Bwd Entry -> Name -> INTM -> InTm String
 > christen es n tm = christener es n B0 %% tm
 
-> christenREF :: Bwd Entry -> Name -> REF -> InTm String
-> christenREF es n r = christen es n (N (P r))
 
+The |christenName| and |christenREF| functions do a similar job for names, and
+the name part of references, respectively.
+
+> christenName :: Bwd Entry -> Name -> Name -> String
+> christenName es me target = case mangleP es me B0 target [] of P x -> x
+>
+> christenREF :: Bwd Entry -> Name -> REF -> String
+> christenREF es me (target := _) = christenName es me target
+
+
+The business of christening is actually done by the following mangle, which
+does most of its work in the |mangleP| function. 
 
 > christener :: Bwd Entry -> Name -> Bwd String -> Mangle I REF String
-> christener es n vs = Mang
->     {  mangP = \r as -> pure (mangleP es n vs r (unI as))
+> christener es me vs = Mang
+>     {  mangP = \(target := _) as -> pure (mangleP es me vs target (unI as))
 >     ,  mangV = \i _ -> pure (P (vs !. i))
->     ,  mangB = \v -> christener es n (vs :< v)
+>     ,  mangB = \v -> christener es me (vs :< v)
 >     }
->   
-> mangleP :: Bwd Entry -> Name -> Bwd String -> REF -> [Elim (InTm String)] -> ExTm String
-> mangleP auncles me vs (target := _) args = 
+
+
+The |mangleP| function takes a list of entries in scope, the name of the curent
+location, a list of local variables, the name of the parameter to christen and a
+spine of arguments. It gives an appropriate relative name to the parameter and
+applies it to the arguments, dropping any that are shared with the current location.
+
+> mangleP :: Bwd Entry -> Name -> Bwd String -> Name -> [Elim (InTm String)] -> ExTm String
+> mangleP auncles me vs target args = 
 >     let  (prefix, (t, n):targetSuffix) = splitNames me target
 >          numBindersToSkip = getSum (foldMap (\x -> if x == t then Sum 1 else Sum 0) vs)
 >          (ancestor, commonEntries, i) = findName auncles (prefix++[(t, n)]) t numBindersToSkip
@@ -201,8 +246,9 @@ parameters.
 >                 in   P (showRelName n) $:$ args'
 
 
-
-
+The |searchKids| function searches a list of children to match a name suffix, producing
+a relative name corresponding to the suffix. It should be called with the counter set
+to zero, which then is incremented to determine the relative offset of each name component.
 
 > searchKids :: Bwd Entry -> [(String, Int)] -> Int -> RelName
 > searchKids _   []  _ = []
@@ -235,4 +281,4 @@ It returns the entry found, its prefix in the list of entries, and the count.
 >   | n == p     = (e, es, i)                         
 >   | x == y     = findName es p y (i+1)
 >   | otherwise  = findName es p y i
-> findName B0 _ _ _ = error "findName: ran out of ancestors"
+> findName B0 p _ _ = error ("findName: ran out of ancestors seeking " ++ showName p)

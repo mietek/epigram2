@@ -9,6 +9,7 @@
 > import Control.Monad
 > import Control.Monad.State
 > import Data.Foldable
+> import Data.List
 > import Data.Traversable
 > import Debug.Trace
 
@@ -574,7 +575,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >         ws          -> case runStateT (elabParse ws) loc of
 >             Just (s, loc') -> do
 >                 putStrLn s 
->                 printChanges (auncles loc) (auncles loc')
+>                 printChanges loc loc'
 >                 cochon loc'
 >             Nothing ->  putStrLn "I'm sorry, Dave. I'm afraid I can't do that."
 >                         >> cochon loc
@@ -625,7 +626,10 @@ Construction commands:
 
 Information commands:
 
-> elabParse ("auncles":_)  = getAuncles >>= return . showEntries . (<>> F0)
+> elabParse ("auncles":_)  = do
+>     aus <- getAuncles
+>     me <- getMotherName
+>     return (showEntries aus me (aus <>> F0))
 
 > elabParse ("dump":_)     = do
 >     (es, dev) <- get
@@ -643,19 +647,20 @@ Unhelpful error message:
 
 
 > showPrompt :: Bwd Layer -> String
-> showPrompt (_ :< Layer _ (n := _) _ _ _ _)  = show n ++ " > "
+> showPrompt (_ :< Layer _ (n := _) _ _ _ _)  = showName n ++ " > "
 > showPrompt B0        = "> "
 
-> printChanges :: Bwd Entry -> Bwd Entry -> IO ()
-> printChanges as bs | as /= bs = do
+> printChanges :: ProofContext -> ProofContext -> IO ()
+> printChanges from to = do
+>     let Just as = evalStateT getAuncles from
+>         Just bs = evalStateT getAuncles to
 >     let (lost, gained)  = diff (as <>> F0) (bs <>> F0)
 >     if lost /= F0
->         then putStrLn ("Left scope: " ++ showEntries lost)
->         else putStrLn "Nothing went out of scope."
+>         then putStrLn ("Left scope: " ++ showEntriesAbs lost )
+>         else return ()
 >     if gained /= F0
->        then putStrLn ("Entered scope: " ++ showEntries gained)
->        else putStrLn "Nothing came into scope."
-> printChanges _ _ = return ()
+>        then putStrLn ("Entered scope: " ++ showEntriesAbs gained)
+>        else return ()
 
 > diff :: (Eq a, Show a) => Fwd a -> Fwd a -> (Fwd a, Fwd a)
 > diff (x :> xs) (y :> ys)
@@ -663,9 +668,6 @@ Unhelpful error message:
 >     | otherwise  = (x :> xs, y :> ys)
 > diff xs ys = (xs, ys)
 
-> showEntries :: Fwd Entry -> String
-> showEntries = foldMap (\e -> case e of (E ref _ _ _) -> show ({-prettyRef B0-} ref) ++ ", "
->                                        (R news) -> "News: " ++ show news)
 
 
 %if False

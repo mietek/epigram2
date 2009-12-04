@@ -526,8 +526,19 @@ interpreter defined above with the empty environment.
 
 \subsection{Variable Manipulation}
 
-
-This is the Evil Mangler. Good luck with that stuff.
+This is the Very Nice Mangler. A |Mangle f x y| is a record that describes how to deal with
+parameters of type |x|, variables and binders, producing terms with parameters
+of type |y| and wrapping the results in some applicative functor |f|. It 
+contains three fields:
+\begin{description}
+\item{|mangP|} describes what to do with parameters. It takes a parameter value
+               and a spine (a list of eliminators) that this parameter is applied to
+               (handy for christening); it must produce an appropriate term.
+\item{|mangV|} describes what to do with variables. It takes a de Brujin index
+               and a spine as before, and must produce a term.
+\item{|mangB|} describes how to update the |Mangle| in response to a given
+               binder name.
+\end{description}
 
 > data Mangle f x y = Mang
 >   {  mangP :: x -> f [Elim (InTm y)] -> f (ExTm y)
@@ -535,12 +546,16 @@ This is the Evil Mangler. Good luck with that stuff.
 >   ,  mangB :: String -> Mangle f x y
 >   }
 
+The |%| operator mangles a term, produing a term with the appropriate parameter
+type in the relevant idiom. This is basically a traversal, but calling the
+appropriate fields of |Mangle| for each parameter, variable or binder encountered.
+
 > (%) :: Applicative f => Mangle f x y -> Tm {In, TT} x -> f (Tm {In, TT} y)
 > m % L (K t)      = (|L (|K (m % t)|)|)
 > m % L (x :. t)   = (|L (|(x :.) (mangB m x % t)|)|)
 > m % C c          = (|C ((m %) ^$ c)|)
 > m % N n          = (|N (exMang m n (|[]|))|)
-
+>
 > exMang ::  Applicative f => Mangle f x y ->
 >            Tm {Ex, TT} x -> f [Elim (Tm {In, TT} y)] -> f (Tm {Ex, TT} y)
 > exMang m (P x)     es = mangP m x es
@@ -549,14 +564,27 @@ This is the Evil Mangler. Good luck with that stuff.
 > exMang m (t :$ e)  es = exMang m t (|((m %) ^$ e) : es|)
 > exMang m (t :? y)  es = (|(|(m % t) :? (m % y)|) $:$ es|)
 
+
+The |%%| operator applies a mangle that uses the identity functor.
+
 > (%%) :: Mangle I x y -> Tm {In, TT} x -> Tm {In, TT} y
 > m %% t = unI $ m % t
 
+
 %format $:$ = "\mathbin{\$\!:\!\$}"
 
+A |Spine| is a list of eliminators for terms, typically representing a list of
+arguments that can be applied to a term with the |$:$| operator.
+
 > type Spine p x = [Elim (Tm {In, p} x)]
+>
 > ($:$) :: Tm {Ex, p} x -> Spine p x -> Tm {Ex, p} x
 > ($:$) = foldl (:$)
+
+
+Given a list |xs| of |String| parameter names, the |capture| function produces a mangle
+that captures those parameters as de Brujin indexed variables.
+\question{Do we ever need to do this?}
 
 > capture :: Bwd String -> Mangle I String String
 > capture xs = Mang
@@ -569,12 +597,20 @@ This is the Evil Mangler. Good luck with that stuff.
 >     | x == y      = Right 0
 >     | otherwise   = (|succ (h ys y)|)
 
+
+The |under i y| mangle binds the variable with de Brujin index |i| to the parameter |y|
+and leaves the term otherwise unchanged.
+
 > under :: Int -> x -> Mangle I x x
 > under i y = Mang
 >   {  mangP = \ x ies -> (|(P x $:$) ies|)
 >   ,  mangV = \ j ies -> (|((if i == j then P y else V j) $:$) ies|)
 >   ,  mangB = \ _ -> under (i + 1) y
 >   }
+
+
+The |underScope| function goes under a binding, instantiating the bound variable
+to the given reference.
 
 > underScope :: Scope {TT} REF -> REF -> INTM
 > underScope (K t)     _ = t
