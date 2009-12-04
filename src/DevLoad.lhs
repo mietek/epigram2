@@ -5,7 +5,7 @@
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE TypeOperators #-}
 
-> module DevLoad (devLoad, parseTerm) where
+> module DevLoad () where
 
 > import Control.Monad
 > import Control.Monad.Writer
@@ -32,7 +32,7 @@
 %endif
 
 
-\subsection{Loading Developments}
+This needs pretty much a total rewrite to match the new syntax of developments.
 
 
 > data CoreLine
@@ -44,7 +44,7 @@
 
 > pCoreLine :: Bwd Entry -> Parsley Token CoreLine
 > pCoreLine es =
->   (|LLam (%keyword "\\"%) (some ident) (optional (pINTM es))
+>   (|LLam (%keyword "\\"%) (some ident) (optional (termParse es))
 >    |LCom (%keyword "--"; pRest%)
 
 %if false
@@ -53,8 +53,8 @@
 
 %endif
 
->    |LEq (%keyword "="%) (|Nothing (%keyword "?"%) | Just (pINTM es)|)
->         (optional (keyword ":" >> pINTM es))
+>    |LEq (%keyword "="%) (|Nothing (%keyword "?"%) | Just (termParse es)|)
+>         (optional (keyword ":" >> termParse es))
 >    |LCom (% many (keyword ";") %)
 >    |)
 
@@ -150,22 +150,3 @@ to a |Module| development. It returns the |Dev| produced, and a
 > devLoad :: [[Token]] -> (Dev, [[Token]])
 > devLoad tss = error "DevLoad: Broken for political reasons. -- Pierre"
 >   --runWriter (makeFun B0 (B0, Module, (B0, 0)) tss)
-
-
-\subsection{Parsing Terms}
-
-The |pINTM| function produces a parser for terms, given a context, by resolving
-in the context all the names in the |InTm String| produced by |bigTmIn|.
-
-> pINTM :: Bwd Entry -> Parsley Token INTM
-> pINTM es = pFilter (resolve es) bigTmIn
-
-
-> parseTerm :: String -> Bwd Entry -> Maybe INTM
-> parseTerm s es = parsed
->     where tokenized = case parse tokenize s of
->                         Left e -> error $ "DevLoad: tokenizer error: " ++ show e
->                         Right t -> t
->           parsed = case parse (pINTM es) tokenized of
->                      Left e -> error $ "DevLoad: parser error: " ++ show e
->                      Right t -> Just t

@@ -11,7 +11,6 @@
 > import Data.Foldable
 > import Data.List
 > import Data.Traversable
-> import Debug.Trace
 
 > import BwdFwd
 > import Developments
@@ -229,6 +228,32 @@ when it has finished.
 > withRoot :: (Root -> x) -> ProofState x
 > withRoot f = getDevRoot >>= return . f
 
+
+The |prettyHere| command christens a term in the current context, then passes it
+to the pretty-printer.
+
+> prettyHere :: INTM -> ProofState String
+> prettyHere tm = do
+>     aus <- getAuncles
+>     me <- getMotherName
+>     return (show (pretty (christen aus me tm)))
+
+
+\subsection{Information Commands}
+
+> infoAuncles :: ProofState String
+> infoAuncles = do
+>     aus <- getAuncles
+>     me <- getMotherName
+>     return (showEntries aus me (aus <>> F0))
+
+> infoDump :: ProofState String
+> infoDump = do
+>     (es, dev) <- get
+>     return (foldMap ((++ "\n") . show) es ++ show dev)
+
+> infoEval :: INTM -> ProofState INTM
+> infoEval tm = withRoot (bquote B0 (evTm tm))
 
 \subsection{Navigation Commands}
 
@@ -542,132 +567,6 @@ the term with the bulletin and re-evaluates it if necessary.
 > tellNewsEval news tm tv = case tellNews news tm of
 >     (_,    NoNews)    -> (tm,   tv,        NoNews)
 >     (tm',  GoodNews)  -> (tm',  evTm tm',  GoodNews)
-
-
-\section{Command-Line Interface}
-
-The |prettyHere| command christens a term in the current context, then passes it
-to the pretty-printer.
-
-> prettyHere :: INTM -> ProofState String
-> prettyHere tm = do
->     aus <- getAuncles
->     me <- getMotherName
->     return (show (pretty (christen aus me tm)))
-
-The |parseHere| command parses a String to produce a term in the current context.
-
-> parseHere :: String -> ProofState INTM
-> parseHere s  = getAuncles >>= lift . (parseTerm s)
-
-
-Here we have a very basic command-driven interface to the proof state monad.
-
-> cochon :: ProofContext -> IO ()
-> cochon loc@(ls, dev) = do
->     let Just me = evalStateT getMotherName loc
->     putStrLn (show (prettyDev (auncles loc) me dev))
->     putStr (showPrompt ls)
->     l <- getLine
->     case words l of
->         []          -> cochon loc
->         ("quit":_)  -> return ()
->         ws          -> case runStateT (elabParse ws) loc of
->             Just (s, loc') -> do
->                 putStrLn s 
->                 printChanges loc loc'
->                 cochon loc'
->             Nothing ->  putStrLn "I'm sorry, Dave. I'm afraid I can't do that."
->                         >> cochon loc
-
-We need a better parser here when the new parser for terms is implemented.
-
-> elabParse :: [String] -> ProofState String
-
-Navigation commands:
-
-> elabParse ("in":_)      = goIn           >> return "Going in..."
-> elabParse ("out":_)     = goOut          >> return "Going out..."
-> elabParse ("up":_)      = goUp           >> return "Going up..."
-> elabParse ("down":_)    = goDown         >> return "Going down..."
-> elabParse ("top":_)     = much goUp      >> return "Going to top..."
-> elabParse ("bottom":_)  = much goDown    >> return "Going to bottom..."
-> elabParse ("module":_)  = much goOut     >> return "Going to module..."
-> elabParse ("prev":_)    = prevGoal       >> return "Searching for previous goal..."
-> elabParse ("next":_)    = nextGoal       >> return "Searching for next goal..."
-> elabParse ("first":_)   = much prevGoal  >> return "Searching for first goal..."
-> elabParse ("last":_)    = much nextGoal  >> return "Searching for last goal..."
-
-
-Construction commands:
-
-> elabParse ("apply":_)   = apply          >> return "Applied."
-> elabParse ("done":_)    = done           >> return "Done."
-
-> elabParse ("give":tss)  = parseHere (unwords tss) >>= give >> return "Thank you."
-
-> elabParse ("lambda":x:_) = lambdaBoy x   >> return "Made lambda boy!"
-
-> elabParse ("make":x:":":tss) = do
->     ty <- parseHere (unwords tss)
->     make (x :<: ty)
->     goIn
->     return "Appended goal!"
-
-> elabParse ("pi":x:":":tss) = do
->     ty <- parseHere (unwords tss)
->     piBoy (x :<: ty)
->     return "Made pi boy!"
-
-> elabParse ("select":x:_) = parseHere x >>= select >> return "Selected."
-
-> elabParse ("ungawa":_)  = ungawa >> return "Ungawa!"
-
-
-Information commands:
-
-> elabParse ("auncles":_)  = do
->     aus <- getAuncles
->     me <- getMotherName
->     return (showEntries aus me (aus <>> F0))
-
-> elabParse ("dump":_)     = do
->     (es, dev) <- get
->     return (foldMap ((++ "\n") . show) es ++ show dev)
-
-> elabParse ("eval":tss) = do
->     tm <-  parseHere (unwords tss)
->     tv <-  withRoot (bquote B0 (evTm tm))
->     prettyHere tv
-
-
-Unhelpful error message:
-
-> elabParse _ = return "???"
-
-
-> showPrompt :: Bwd Layer -> String
-> showPrompt (_ :< Layer _ (n := _) _ _ _ _)  = showName n ++ " > "
-> showPrompt B0        = "> "
-
-> printChanges :: ProofContext -> ProofContext -> IO ()
-> printChanges from to = do
->     let Just as = evalStateT getAuncles from
->         Just bs = evalStateT getAuncles to
->     let (lost, gained)  = diff (as <>> F0) (bs <>> F0)
->     if lost /= F0
->         then putStrLn ("Left scope: " ++ showEntriesAbs lost )
->         else return ()
->     if gained /= F0
->        then putStrLn ("Entered scope: " ++ showEntriesAbs gained)
->        else return ()
-
-> diff :: (Eq a, Show a) => Fwd a -> Fwd a -> (Fwd a, Fwd a)
-> diff (x :> xs) (y :> ys)
->     | x == y     = diff xs ys
->     | otherwise  = (x :> xs, y :> ys)
-> diff xs ys = (xs, ys)
-
 
 
 %if False

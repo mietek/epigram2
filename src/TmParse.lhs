@@ -11,7 +11,10 @@
 > import Data.Foldable hiding (foldr)
 > import Data.Traversable
 
+> import BwdFwd
+> import Developments
 > import Lexer
+> import Naming
 > import Parsley
 > import Tm
 > import Rules
@@ -125,8 +128,3 @@
 >           mkEnum names Nothing = mkEnum' names NILE
 >           mkEnum names (Just t) = mkEnum' names t
 >           mkEnum' = flip $ foldr (\t e -> CONSE (TAG t) e) 
-
-> blueEqParse :: Parsley Token (InTm String)
-> blueEqParse = (|mkBlueEq parseTerm (%keyword "=="%) parseTerm|)
->     where parseTerm = bracket Round (|(,) littleTmIn (%keyword ":"%) littleTmIn|)
->           mkBlueEq (x1,t1) (x2,t2) = EQBLUE (t1 :>: x1) (t2 :>: x2)

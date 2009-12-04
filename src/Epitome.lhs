@@ -55,9 +55,9 @@
 \chapter{Concrete Syntax}
 
 %include Lexer.lhs
+%include Naming.lhs
 %include TmParse.lhs
 %include DevLoad.lhs
-%include Naming.lhs
 %include PrettyPrint.lhs
 
 \chapter{Compiler}
@@ -67,6 +67,7 @@
 \chapter{Elaborator}
 
 %include Elaborator.lhs
+%include Cochon.lhs
 
 \chapter{Main}
 
