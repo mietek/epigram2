@@ -61,17 +61,34 @@
                 & \mbox{operator} \\
             | & \verb!(!\SC{InTm}\verb! : !\SC{InTm}\verb!)!  \verb! <-> ! \verb!(!\SC{InTm}\verb! : !\SC{InTm}\verb!)! 
                 & \mbox{green equality} \\
-            
+\end{array}
+\]
+  
+and more to come. For developments:
+
+\[
+\begin{array}{rll}
+\SC{Top} ::= & \lgb \verb![! \SC{Girl}^* \verb!]! \rgb^? \SC{Com}^{\verb!;!*} 
+               & \mbox{top-level development} \\
+
+\SC{Girl} ::= & \SC{Nom} \lgb \verb![! \SC{Line}^* \verb!]! | \verb!:=!  \rgb \lgb \verb!?! | \SC{InTm} \rgb \verb!:! \SC{InTm} \lgb \verb![| ! \SC{Com}^{\verb!;!*} \verb! |]! \rgb^? \verb! ;!
+               & \mbox{development} \\
+
+\SC{Line} ::= & \SC{Girl} | \SC{Boy}
+                 & \mbox{line in development} \\
+
+\SC{Boy} ::= & \verb!\! \SC{Nom} \verb!:! \SC{InTm} \verb! ->!
+               & \mbox{$\lambda$-boy} \\
+           | & \verb!(! \SC{Nom} \verb!:! \SC{InTm} \verb!) ->!
+               & \mbox{$\Pi$-boy} \\
+           | & \verb!(! \SC{Nom} \verb!:! \SC{InTm} \verb!;) ->!
+               & \mbox{$\Sigma$-boy} \\
+           | & \verb!:- (! \SC{Nom} \verb!:! \SC{InTm} \verb!) =>!
+               & \mbox{$\forall$-boy} \\
+
 \end{array}
 \]
 
-and more to come.
-
-
-
-
-At present, this section only contains a few meaningless scribbles on the 
-proposed concrete syntax for types. We would like to write:
 
 \begin{itemize}
 \item \verb!*! for the universe of sets
