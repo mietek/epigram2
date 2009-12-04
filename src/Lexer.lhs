@@ -24,11 +24,12 @@ identifiers unless they're keywords.
 > module Lexer (Token(..),
 >               Bracket(..),
 >               tokenize,
->               keyword, ident, bracket) where
+>               keyword, ident, digits, bracket) where
 
 > import Control.Monad
 > import Control.Applicative
 > import Data.List
+> import Data.Char
 
 > import Parsley
 
@@ -226,12 +227,18 @@ is not more difficult than that:
 > keyword :: String -> Parsley Token ()
 > keyword s = tokenEq (Keyword s)
 
-Parsing an identifier is as simple as:
+Parsing an identifier or a number is as simple as:
 
 > ident :: Parsley Token String
 > ident = pFilter filterIdent nextToken
 >     where filterIdent (Identifier s) = Just s
 >           filterIdent _ = Nothing
+>
+> digits :: Parsley Token String
+> digits = pFilter filterInt nextToken
+>     where filterInt (Identifier s) | all isDigit s = Just s
+>           filterInt _ = Nothing
+
 
 Finally, we can match a bracketted expression and use a specific
 parser for the bracketted tokens:
