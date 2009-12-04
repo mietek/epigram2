@@ -190,6 +190,13 @@ Equality rules:
 >   elimTy chev (_ :<: Mu d) Out = return (Out, descOp @@ [d , MU d])
 
 
+> import -> Operators where
+>   descOp :
+>   boxOp :
+>   mapBoxOp :
+>   elimOp :
+
+
 > import -> OpCode where
 >   descOp :: Op
 >   descOp = Op
