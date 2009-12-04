@@ -71,10 +71,20 @@
 >         , "* : *"                     -- Annotate
 >         , "(* -> *) : *"              -- Annotate
 >         , "x"                         -- Name
->         , "x^2"                       -- Nam
+>         , "x^2"                       -- Name
 >         , "xx^242"                    -- Name
 >         , "xx^242.y^12"               -- Name
 >         , "xx^242.y^12.z^1"           -- Name
+>         , "x -> y"                    -- Name
+>         , "x y"                       -- Application
+>         , "x y z"                     -- Application
+>         , "(* : *) <-> (* : *)"       -- EqGreen
+>         , "((* -> *) : *) <-> (# : *)"-- EqGreen
+>         , "eqGreen(x , y , z)"        -- Operator
+>         , "elimOp()"                  -- Operator
+>         , "elimOp(x)"                 -- Operator
+>         , "elimOp(x , y)"             -- Operator
+>         , "Branches(x , y)"           -- Operator
 >         , "( * )"                     -- grouping
 >         , "((*))"                     -- grouping
 >         ]

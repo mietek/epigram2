@@ -14,6 +14,7 @@
 > import Lexer
 > import Parsley
 > import Tm
+> import Rules
 
 %endif
 
@@ -42,14 +43,34 @@
 >      |id lamParse
 >      |(\t -> PRF t) (%keyword ":-"%) littleTmIn
 >      |(\t -> CON t) (%keyword "@"%) littleTmIn
+>      |N littleTmEx
 >      |id (bracket Round bigTmIn)
 >      |)
 
 > bigTmEx :: Parsley Token (ExTm String)
 > bigTmEx = 
 >     (|(:?) littleTmIn (%keyword ":"%) bigTmIn
->      |id variableParse
+>      |id operatorParse
+>      |(:$) littleTmEx (|A bigTmIn|)
+>      |id greenEqParse 
+>      |id littleTmEx
 >      |)
+
+
+> littleTmEx :: Parsley Token (ExTm String)
+> littleTmEx = 
+>     (|id variableParse |)
+> 
+
+> operatorParse :: Parsley Token (ExTm String)
+> operatorParse = (|mkOp (pFilter findOp ident) (bracket Round (pSep (keyword ",") bigTmIn))|)
+>     where mkOp op args = op :@ args
+>           findOp name = find (\op -> opName op == name) operators 
+
+> greenEqParse :: Parsley Token (ExTm String)
+> greenEqParse = (|mkGreenEq parseTerm (%keyword "<->"%) parseTerm|)
+>     where parseTerm = bracket Round (|(,) littleTmIn (%keyword ":"%) littleTmIn|)
+>           mkGreenEq (x1,t1) (x2,t2) = eqGreen :@ [t1, x1, t2, x2]
 
 > variableParse :: Parsley Token (ExTm String)
 > variableParse = (|mkVar (pExtent 
