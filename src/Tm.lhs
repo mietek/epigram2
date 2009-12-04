@@ -633,21 +633,6 @@ I think that this stuff should disappear with Tactics spreading.
 > fortran _ = ""
 
 
-> newtype I x = I {unI :: x} deriving (Show, Eq)
-> instance Functor I where
->   fmap f (I s) = I (f s)
-> instance Applicative I where
->   pure         = I
->   I f <*> I s  = I (f s)
-
-> instance Applicative (Either x) where
->   pure = return
->   (<*>) = ap
-> instance Monad (Either x) where
->   return = Right
->   Left x   >>= _  = Left x
->   Right y  >>= f  = f y
-
 > instance Traversable Can where
 >   traverse f Set       = (|Set|)
 >   traverse f (Pi s t)  = (|Pi (f s) (f t)|)

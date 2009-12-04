@@ -4,6 +4,7 @@
 
 > module MissingLibrary where
 
+> import Control.Monad
 > import Control.Applicative
 > import Control.Monad.State
 > import Data.Foldable
@@ -20,10 +21,20 @@
 > instance MonadTrace Maybe where
 >     traceErr _ = Nothing
 
-> instance Monad (Either e) where
->     return x = Right x
->     x >>= f = either Left f x
 
+> newtype I x = I {unI :: x} deriving (Show, Eq)
+> instance Functor I where
+>   fmap f (I s) = I (f s)
+> instance Applicative I where
+>   pure         = I
+>   I f <*> I s  = I (f s)
+
+> instance Applicative (Either x) where
+>   pure = return
+>   (<*>) = ap
+> instance Monad (Either e) where
+>     return = Right
+>     x >>= f = either Left f x
 
 
 > instance Applicative (State s) where
