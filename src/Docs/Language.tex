@@ -1,4 +1,5 @@
 \section{Language}
+\label{sec:language}
 
 
 \newcommand{\SC}{\textsc}
@@ -43,10 +44,18 @@
                 & \mbox{grouping} \\
             | & \SC{ExTm} 
                 & \mbox{term with synthesizable type} \medskip \\
-\SC{Sig} ::= & \varepsilon & \mbox{unit signature} \\
-           | & \lgb\SC{Nom}\verb! : !\rgb^? \SC{InTm}\:
-               \lgb\verb!; !|\verb! :- !\rgb \lgb\SC{InTm}|\SC{Sig}\rgb
-                  & \mbox{\(\Sigma\)-type} \medskip \\
+\SC{Sig} ::= & \varepsilon 
+                & \mbox{unit signature} \\
+           | & \lgb\SC{Nom}\verb! : !\rgb^? \SC{InTm} \SC{SigMore} 
+                & \Sigma x : S . T \\
+\SC{SigMore} ::= & \verb!;! \SC{InTm} 
+                   & \verb!; T! \mbox{ means } \verb!T!\\
+                 & \verb!;! \SC{Sig}  
+                   & \verb!; S! \mbox{ means } \verb!S!\\
+                 & \verb!:-! \SC{InTm} 
+                   & \verb!:-! \mbox{ means } \verb!Prf P!\\
+                 & \verb!:-! \SC{InTm} \SC{SigMore} 
+                   & \verb!:- P S! \mbox{ means } \Sigma \_ . P S \\
 \SC{ExTm} ::= & \SC{InTm}\verb! : !\SC{InTm} 
                 & \\
             | & \SC{Nom}\lgb\verb!^!\SC{Nat}\rgb^? \lgb \verb!.! \SC{Nom} \lgb\verb!^!\SC{Nat}\rgb^? \rgb^*
