@@ -94,7 +94,7 @@
 >     Prelude.sequence_ $
 >            map (\x -> 
 >                 let tokenX = parse tokenize x in
->                 let parseX = parse bigTmIn (fromRight tokenX) in
+>                 let parseX = parse bigInTm (fromRight tokenX) in
 >                 putStrLn (x ++ "\t==>\t" ++ show tokenX ++ "\t==>\t" ++ show parseX))
 >            tests
 >                where fromRight (Right x) = x
