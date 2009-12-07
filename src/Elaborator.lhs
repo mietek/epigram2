@@ -238,7 +238,7 @@ to the pretty-printer.
 >     return (show (pretty (christen aus me tm)))
 
 
-> resolveHere :: InTm String -> ProofState INTM
+> resolveHere :: InTmRN -> ProofState INTM
 > resolveHere tm = do
 >     aus <- getAuncles
 >     lift (resolve aus tm)

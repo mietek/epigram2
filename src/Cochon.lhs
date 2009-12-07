@@ -96,7 +96,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 > instance Foldable Command where
 >     foldMap = foldMapDefault
 
-> pCommand :: Parsley Token (Command (InTm String))
+> pCommand :: Parsley Token (Command InTmRN)
 > pCommand = do
 >     x <- ident
 >     case x of
@@ -125,7 +125,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >         "up"       -> (| (Go Up) |)
 >         _          -> empty
 
-> resolveCommand :: Bwd Entry -> Command (InTm String) -> Maybe (Command INTM)
+> resolveCommand :: Bwd Entry -> Command InTmRN -> Maybe (Command INTM)
 > resolveCommand es = traverse (resolve es)
 
 > evalCommand :: Command INTM -> ProofState String
@@ -152,14 +152,14 @@ Here we have a very basic command-driven interface to the proof state monad.
 > evalCommand (Select x)      = select x          >> return "Selected."
 > evalCommand Ungawa          = ungawa            >> return "Ungawa!"
 
-> doCommand :: Command (InTm String) -> ProofState String
+> doCommand :: Command InTmRN -> ProofState String
 > doCommand c = do
 >     aus <- getAuncles
 >     case resolveCommand aus c of
 >         Nothing -> lift Nothing
 >         Just c' -> evalCommand c'
 
-> doCommands :: [Command (InTm String)] -> ProofState [String]
+> doCommands :: [Command InTmRN] -> ProofState [String]
 > doCommands cs = sequenceA (map doCommand cs)
 
 

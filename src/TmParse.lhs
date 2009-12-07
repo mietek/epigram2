@@ -49,7 +49,7 @@ each of these cases allows us to unambiguously consume tokens. On the
 other hand, |bigInTm| typically contains operations which might go
 left, and will do so with |littleInTm|.
 
-> bigInTm :: Parsley Token (InTm String)
+> bigInTm :: Parsley Token InTmRN
 > bigInTm = 
 >     (|id piParse
 >      |id arrParse
@@ -61,7 +61,7 @@ left, and will do so with |littleInTm|.
 >      |id littleInTm
 >      |)
 
-> littleInTm :: Parsley Token (InTm String)
+> littleInTm :: Parsley Token InTmRN
 > littleInTm =
 >     (|C ~ Set (%keyword "*"%) 
 >      |C ~ Prop (%keyword "#"%)
@@ -78,26 +78,26 @@ left, and will do so with |littleInTm|.
 
 
 
-> telescope :: Parsley Token [(String, InTm String)]
+> telescope :: Parsley Token [(String, InTmRN)]
 > telescope = some (bracket Round (|ident, (%keyword ":"%) bigInTm|))
 
-> piParse :: Parsley Token (InTm String)
+> piParse :: Parsley Token InTmRN
 > piParse = (|(flip $ foldr mkPi) telescope (%keyword "->"%) bigInTm|)
 >     where mkPi (x,s) t = PI s (L (x :. t))
 
-> forallParse :: Parsley Token (InTm String)
+> forallParse :: Parsley Token InTmRN
 > forallParse = (|(flip $ foldr mkForall) telescope (%keyword "=>"%) bigInTm|)
 >     where mkForall (x,s) t = ALL s (L (x :. t))
 
-> arrParse :: Parsley Token (InTm String)
+> arrParse :: Parsley Token InTmRN
 > arrParse = (|mkArr littleInTm (%keyword "->"%) bigInTm|)
 >     where mkArr s t = ARR s t
 
-> lamParse :: Parsley Token (InTm String)
+> lamParse :: Parsley Token InTmRN
 > lamParse = (|(flip $ foldr mkLam) (%keyword "\\"%) (some ident) (%keyword "->"%) bigInTm|)
 >     where mkLam x t = L (x :. t)
 
-> sigmaParse :: Parsley Token (InTm String)
+> sigmaParse :: Parsley Token InTmRN
 > sigmaParse = bracket Round sigma
 >     where sigma = (|mkSigma (optional (ident <* keyword ":")) bigInTm sigmaMore
 >                    |C ~ Unit (% pEndOfStream %)
@@ -110,18 +110,18 @@ left, and will do so with |littleInTm|.
 >           mkSigma (Just x) s t = C (Sigma s (L (x :. t)))
 >           
 
-> andParse :: Parsley Token (InTm String)
+> andParse :: Parsley Token InTmRN
 > andParse = (|(\p q -> AND p q) littleInTm 
 >                                (%keyword "&&"%) 
 >                                littleInTm|)
 
-> tupleParse :: Parsley Token (InTm String)
+> tupleParse :: Parsley Token InTmRN
 > tupleParse = bracket Square tuple 
 >     where tuple = (|(\p q -> PAIR p q) littleInTm (|id tuple
 >                                                    |id (%keyword "/"%) bigInTm |)
 >                    |C ~ Void (% pEndOfStream %) |)
 
-> enumParse :: Parsley Token (InTm String)
+> enumParse :: Parsley Token InTmRN
 > enumParse = bracket Curly enum
 >     where enum = (|mkEnum (pSep (keyword ",") ident) 
 >                           (optional $ (keyword "/" *> bigInTm))|)
@@ -129,7 +129,7 @@ left, and will do so with |littleInTm|.
 >           mkEnum names (Just t) = mkEnum' names t
 >           mkEnum' = flip $ foldr (\t e -> CONSE (TAG t) e) 
 
-> blueEqParse :: Parsley Token (InTm String)
+> blueEqParse :: Parsley Token InTmRN
 > blueEqParse = (|mkBlueEq parseTerm (%keyword "=="%) parseTerm|)
 >     where parseTerm = bracket Round (|(,) littleInTm (%keyword ":"%) littleInTm|)
 >           mkBlueEq (x1,t1) (x2,t2) = EQBLUE (t1 :>: x1) (t2 :>: x2)
@@ -137,7 +137,7 @@ left, and will do so with |littleInTm|.
 
 \subsection{Matching |ExTm|}
 
-> bigExTm :: Parsley Token (ExTm String)
+> bigExTm :: Parsley Token ExTmRN
 > bigExTm = 
 >     (|id ascriptionParse
 >      |id operatorParse
@@ -147,30 +147,30 @@ left, and will do so with |littleInTm|.
 >      |)
 
 
-> littleExTm :: Parsley Token (ExTm String)
+> littleExTm :: Parsley Token ExTmRN
 > littleExTm = 
 >     (|id variableParse |)
 
-> ascriptionParse :: Parsley Token (ExTm String)
+> ascriptionParse :: Parsley Token ExTmRN
 > ascriptionParse = (| (:?) littleInTm (%keyword ":"%) bigInTm |)
 
-> operatorParse :: Parsley Token (ExTm String)
+> operatorParse :: Parsley Token ExTmRN
 > operatorParse = (|mkOp (pFilter findOp ident) (bracket Round (pSep (keyword ",") bigInTm))|)
 >     where mkOp op args = op :@ args
 >           findOp name = find (\op -> opName op == name) operators 
 
-> greenEqParse :: Parsley Token (ExTm String)
+> greenEqParse :: Parsley Token ExTmRN
 > greenEqParse = (|mkGreenEq parseTerm (%keyword "<->"%) parseTerm|)
 >     where parseTerm = bracket Round (|(,) littleInTm (%keyword ":"%) littleInTm|)
 >           mkGreenEq (x1,t1) (x2,t2) = eqGreen :@ [t1, x1, t2, x2]
 
-> variableParse :: Parsley Token (ExTm String)
-> variableParse = (|mkVar (pExtent 
->                          (|(:) nameParse 
->                                (many $ keyword "." *> nameParse)|))|)
->     where mkVar (str,_) = P $ crushToken =<< str
->           nameParse = (|(,) ident
->                             (optional $ keyword "^" *> digits)|)
+> variableParse :: Parsley Token ExTmRN
+> variableParse = (|P (|(:) nameParse (many $ keyword "." *> nameParse)|) |)
+>     where nameParse = (|(,) ident (%keyword "^"%) (| Rel (| read digits |) |)
+>                        |(,) ident (%keyword "_"%) (| Abs (| read digits |) |)
+>                        |(,) ident ~(Rel 0)
+>                        |)
+
 
 \subsection{Parsing Terms}
 

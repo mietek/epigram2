@@ -35,12 +35,12 @@
 
 
 > data DevLine
->   =  DLBoy BoyKind String (InTm String)
->   |  DLGirl String [DevLine] (Either (InTm String) (InTm String :<: InTm String)) 
->          [Command (InTm String)]
+>   =  DLBoy BoyKind String InTmRN
+>   |  DLGirl String [DevLine] (Either InTmRN (InTmRN :<: InTmRN)) 
+>          [Command InTmRN]
 >      deriving Show
 
-> pModule :: Parsley Token ([DevLine], [Command (InTm String)])
+> pModule :: Parsley Token ([DevLine], [Command InTmRN])
 > pModule = (| pTopDevLines, (pSep (keyword ";") pCommand) |)
 
 > pTopDevLines :: Parsley Token [DevLine]
@@ -55,17 +55,17 @@
 >     pDevLine :: Parsley Token DevLine
 >     pDevLine = pGirl <|> pBoy
 
-> pDefn :: Parsley Token (Either (InTm String) (InTm String :<: InTm String))
+> pDefn :: Parsley Token (Either InTmRN (InTmRN :<: InTmRN))
 > pDefn =  (| (%keyword "?"%) (%keyword ":"%) Left bigInTm 
 >           | Right pAsc
 >           |)
 
-> pAsc :: Parsley Token (InTm String :<: InTm String)
+> pAsc :: Parsley Token (InTmRN :<: InTmRN)
 > pAsc = do
 >     tm :? ty <- ascriptionParse
 >     return (tm :<: ty)
 
-> pCommandSuffix :: Parsley Token [Command (InTm String)]
+> pCommandSuffix :: Parsley Token [Command InTmRN]
 > pCommandSuffix = bracket (SquareB "") (pSep (keyword ";") pCommand) <|> pure []
 
 > pBoy :: Parsley Token DevLine

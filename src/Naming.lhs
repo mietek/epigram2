@@ -4,8 +4,12 @@
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
 
-> module Naming (christen, christenAbs, christenName, christenREF, resolve,
->                showName, showEntries, showEntriesAbs) where
+> module Naming (
+>        Offs(Rel, Abs), RelName, InTmRN, ExTmRN,
+>        christen, christenAbs, christenName, christenREF,
+>        resolve,
+>        showName, showEntries, showEntriesAbs
+>    ) where
 
 > import Control.Applicative
 > import Control.Monad
@@ -16,9 +20,7 @@
 
 > import BwdFwd
 > import Developments
-> import Lexer
 > import MissingLibrary
-> import Parsley
 > import Tm
 
 %endif
@@ -36,6 +38,9 @@ component of the name.
 
 > data Offs = Rel Int | Abs Int deriving Show
 > type RelName = [(String,Offs)]
+
+> type InTmRN = InTm RelName
+> type ExTmRN = ExTm RelName
 
 
 The |showRelName| function converts a relative name to a string by
@@ -76,33 +81,20 @@ are fully $\lambda$-lifted, but as $f$'s parameters are held in common
 with the point of reference, we automatically supply them.
 
 
-> resolve :: Bwd Entry -> InTm String -> Maybe INTM
+> resolve :: Bwd Entry -> InTm RelName -> Maybe INTM
 > resolve es tm = resolver es B0 % tm
 
 
 The |resolver| function takes a context and a list of binder names, and
 produces a mangle that, when applied, attempts to resolve the parameter
-names in an |InTm String| to produce an |InTm REF|, i.e.\ an INTM.
+names in an |InTmRN| to produce an |InTm REF|, i.e.\ an INTM.
 
-> resolver :: Bwd Entry -> Bwd String -> Mangle Maybe String REF
+> resolver :: Bwd Entry -> Bwd String -> Mangle Maybe RelName REF
 > resolver ps vs = Mang
->     {  mangP  = \ x mes -> (|(|(findLocal ps vs) (eitherRight (parse pRelName x)) @ |) $:$ mes|)
+>     {  mangP  = \ x mes -> (| (findLocal ps vs x) $:$ mes |)
 >     ,  mangV  = \ _ _ -> Nothing -- what's that index doing here?
 >     ,  mangB  = \ x -> resolver ps (vs :< x)
 >     }
->   where
->     pRelName :: Parsley Char [(String,Offs)]
->     pRelName = pSep (tokenEq '.') (|some (tokenFilter noffer), offs|)
->
->     offs :: Parsley Char Offs
->     offs =
->         (|Abs (%tokenEq '_'%) (|read (some (tokenFilter isDigit))|)
->          |Rel (%tokenEq '^'%) (|read (some (tokenFilter isDigit))|)
->          |(Rel 0)
->          |)
->
->     noffer :: Char -> Bool
->     noffer c = not (elem c ".^_")
 
 
 The |hits| function determines whether a name component matches a
