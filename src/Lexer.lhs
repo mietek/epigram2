@@ -23,6 +23,7 @@ identifiers unless they're keywords.
 
 > module Lexer (Token(..),
 >               Bracket(..),
+>               crushToken,
 >               tokenize,
 >               keyword, ident, digits, bracket) where
 
@@ -45,7 +46,7 @@ We lex into tokens, classified as follows.
 >   =  Identifier String                    -- identifiers
 >   |  Keyword String                       -- keywords
 >   |  Brackets Bracket [Token]             -- bracketted tokens
->      deriving Eq
+>      deriving (Eq, Show)
 
 Brackets are the structuring tokens. We have:
 
@@ -53,17 +54,16 @@ Brackets are the structuring tokens. We have:
 >   =  Round  | RoundB String    -- |(| or |(foo|||
 >   |  Square | SquareB String   -- |[| or |[foo|||
 >   |  Curly  | CurlyB String    -- |{| or |{foo|||
->      deriving Eq
+>      deriving (Eq, Show)
 
-As we are very likely to |show| our tokens all too often, let us
-implement a pretty |Show| instance on tokens.
+As we are very likely to look at our tokens all too often, let us
+implement a function to crush tokens down to strings.
 
-> instance Show Token where
->     show (Identifier s) = s
->     show (Keyword s) = s
->     show (Brackets bra toks) = 
->       showOpenB bra ++ (show =<< toks) ++ showCloseB bra 
->           where showOpenB Round = "("
+> crushToken :: Token -> String
+> crushToken (Identifier s) = s
+> crushToken (Keyword s) = s
+> crushToken (Brackets bra toks) = showOpenB bra ++ (show =<< toks) ++ showCloseB bra 
+>          where  showOpenB Round = "("
 >                 showOpenB Square = "["
 >                 showOpenB Curly = "{"
 >                 showOpenB (RoundB s) = "(" ++ s ++ "|"
@@ -151,7 +151,8 @@ grammar!
 > keywords = [ ":", "*", "#", "@", ",", ";", "/", "^", "."
 >            , "\\", "->", "=>", "==", "&&", ":-"
 >            , "TT", "FF"
->            , "<->" ]
+>            , "<->"
+>            , ":=", "?" ]
 
 To implement |parseKeyword|, this is simply a matter of filtering by
 words that can be found in the |keywords| list.

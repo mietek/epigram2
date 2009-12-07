@@ -14,7 +14,6 @@
 
 > import BwdFwd
 > import Developments
-> import DevLoad
 > import Naming
 > import PrettyPrint
 > import Root
@@ -238,6 +237,11 @@ to the pretty-printer.
 >     me <- getMotherName
 >     return (show (pretty (christen aus me tm)))
 
+
+> resolveHere :: InTm String -> ProofState INTM
+> resolveHere tm = do
+>     aus <- getAuncles
+>     lift (resolve aus tm)
 
 \subsection{Information Commands}
 

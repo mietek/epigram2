@@ -8,6 +8,7 @@
 
 > module Main where
 
+> import Control.Monad.State
 > import Data.Foldable
 > import Data.Maybe
 > import System
@@ -16,9 +17,11 @@
 > import BwdFwd
 > import Cochon
 > import Compiler
+> import DevLoad
 > import Elaborator
 > import Lexer
 > import Parsley
+> import PrettyPrint
 
 %endif
 
@@ -62,23 +65,29 @@ Read input, compile to 'epi.out'
 
 This was the old behaviour:
 
->            let dev = undefined -- FIX (or not):  (fst . devLoad . tokenize) inp
->            -- FIX (or not): print dev
+>            case parse tokenize inp of
+>              Left e -> putStrLn ("Failed to tokenize: " ++ show e)
+>              Right ts ->
+>                case execStateT (devLoad ts) emptyContext of
+>                  Nothing -> putStrLn "Failed to load development"
+>                  Just (B0, dev) -> do
+>                    print dev
 
 Pull out the definitions, and, if the -o flag has been used, output an executable
 which evaluates the last definition in the development.             
 
->            let defs = compileModule dev
->            let mainName = fst (Data.Foldable.foldl (\ _ t -> t) undefined defs)
->            case getOpt outFile opts of
->              Just n -> output defs mainName n (maybe "" id (getOpt epic opts))
->              _ -> return ()
+>                    let defs = compileModule dev
+>                    let mainName = fst (Data.Foldable.foldl (\ _ t -> t) undefined defs)
+>                    case getOpt outFile opts of
+>                      Just n -> output defs mainName n (maybe "" id (getOpt epic opts))
+>                      _ -> return ()
 
-If the --cochon flag has been used, run the interactive interface:
+If the --cochon flag has been used, run the interactive interface. Otherwise, just
+pretty-print the development.
 
->            case getOpt cochonOpt opts of
->              Just ()  -> cochon emptyContext
->              _        -> return ()
+>                    case getOpt cochonOpt opts of
+>                      Just ()  -> cochon (B0, dev)
+>                      _        -> print (prettyDev (auncles (B0, dev)) [] dev)
 
 > data Option = InFile FilePath | OutFile FilePath | Epic String | Help | Cochon
 >    deriving Show

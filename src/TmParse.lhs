@@ -139,7 +139,7 @@ left, and will do so with |littleInTm|.
 
 > bigExTm :: Parsley Token (ExTm String)
 > bigExTm = 
->     (|(:?) littleInTm (%keyword ":"%) bigInTm
+>     (|id ascriptionParse
 >      |id operatorParse
 >      |(:$) littleExTm (|A bigInTm|)
 >      |id greenEqParse 
@@ -151,6 +151,8 @@ left, and will do so with |littleInTm|.
 > littleExTm = 
 >     (|id variableParse |)
 
+> ascriptionParse :: Parsley Token (ExTm String)
+> ascriptionParse = (| (:?) littleInTm (%keyword ":"%) bigInTm |)
 
 > operatorParse :: Parsley Token (ExTm String)
 > operatorParse = (|mkOp (pFilter findOp ident) (bracket Round (pSep (keyword ",") bigInTm))|)
@@ -166,7 +168,7 @@ left, and will do so with |littleInTm|.
 > variableParse = (|mkVar (pExtent 
 >                          (|(:) nameParse 
 >                                (many $ keyword "." *> nameParse)|))|)
->     where mkVar (str,_) = P $ show =<< str
+>     where mkVar (str,_) = P $ crushToken =<< str
 >           nameParse = (|(,) ident
 >                             (optional $ keyword "^" *> digits)|)
 

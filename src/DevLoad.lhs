@@ -5,7 +5,7 @@
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE TypeOperators #-}
 
-> module DevLoad () where
+> module DevLoad (devLoad) where
 
 > import Control.Monad
 > import Control.Monad.Writer
@@ -17,19 +17,88 @@
 > import Data.Foldable hiding (elem)
 > import Data.Traversable
 
-> import MissingLibrary
 > import BwdFwd
-> import Tm
+> import Cochon
+> import Developments
+> import Elaborator
 > import Lexer
 > import MissingLibrary
 > import Naming
 > import Parsley
-> import TmParse
-> import Developments
 > import Root
 > import Rules
+> import Tm
+> import TmParse
+
 
 %endif
+
+
+> data DevLine
+>   =  DLBoy BoyKind String (InTm String)
+>   |  DLGirl String [DevLine] (Either (InTm String) (InTm String :<: InTm String)) 
+>          [Command (InTm String)]
+>      deriving Show
+
+> pModule :: Parsley Token ([DevLine], [Command (InTm String)])
+> pModule = (| pTopDevLines, (pSep (keyword ";") pCommand) |)
+
+> pTopDevLines :: Parsley Token [DevLine]
+> pTopDevLines =  bracket Square (many pGirl) <|> pure []
+
+> pGirl :: Parsley Token DevLine
+> pGirl = (| DLGirl ident pDevLines pDefn pCommandSuffix (%keyword ";"%) |)
+
+> pDevLines :: Parsley Token [DevLine]
+> pDevLines =  bracket Square (many pDevLine) <|> (keyword ":=" *> pure [])
+>   where
+>     pDevLine :: Parsley Token DevLine
+>     pDevLine = pGirl <|> pBoy
+
+> pDefn :: Parsley Token (Either (InTm String) (InTm String :<: InTm String))
+> pDefn =  (| (%keyword "?"%) (%keyword ":"%) Left bigInTm 
+>           | Right pAsc
+>           |)
+
+> pAsc :: Parsley Token (InTm String :<: InTm String)
+> pAsc = do
+>     tm :? ty <- ascriptionParse
+>     return (tm :<: ty)
+
+> pCommandSuffix :: Parsley Token [Command (InTm String)]
+> pCommandSuffix = bracket (SquareB "") (pSep (keyword ";") pCommand) <|> pure []
+
+> pBoy :: Parsley Token DevLine
+> pBoy =  (| (%keyword "\\"%) (DLBoy LAMB) ident (%keyword ":"%) bigInTm (%keyword "->"%) |)
+>         <|> (bracket Round (| (DLBoy PIB) ident (%keyword ":"%) bigInTm |)) <* keyword "->"
+
+
+> makeDev :: [DevLine] -> ProofState ()
+> makeDev [] = return ()
+> makeDev (l:ls) = makeEntry l >> makeDev ls
+
+> makeEntry :: DevLine -> ProofState ()
+> makeEntry (DLGirl s kids (Left ty) commands) = do
+>     ty' <- resolveHere ty
+>     make (s :<: ty')
+>     goIn
+>     makeDev kids
+>     goOut
+
+> makeEntry (DLGirl s kids (Right (tm :<: ty)) commands) = do
+>     ty' <- resolveHere ty
+>     make (s :<: ty')
+>     goIn
+>     makeDev kids
+>     resolveHere tm >>= give
+
+> makeEntry (DLBoy LAMB s _) = lambdaBoy s
+
+> devLoad :: [Token] -> ProofState ()
+> devLoad ts = case parse pModule ts of
+>   Left _ -> lift Nothing
+>   Right (dls, cs) -> makeDev dls >> doCommands cs >> much goOut
+         
 
 
 This needs pretty much a total rewrite to match the new syntax of developments.
@@ -147,6 +216,6 @@ The |devLoad| function takes a |[[Token]]| as produced by |layout|, and converts
 to a |Module| development. It returns the |Dev| produced, and a
 |[[Token]]| with any lines that fail to type-check commented out.
 
-> devLoad :: [[Token]] -> (Dev, [[Token]])
-> devLoad tss = error "DevLoad: Broken for political reasons. -- Pierre"
->   --runWriter (makeFun B0 (B0, Module, (B0, 0)) tss)
+< devLoad :: [[Token]] -> (Dev, [[Token]])
+< devLoad tss = error "DevLoad: Broken for political reasons. -- Pierre"
+<   --runWriter (makeFun B0 (B0, Module, (B0, 0)) tss)

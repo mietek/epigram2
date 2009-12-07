@@ -16,7 +16,6 @@
 
 > import BwdFwd
 > import Developments
-> import DevLoad
 > import Elaborator
 > import MissingLibrary
 > import Naming
@@ -44,78 +43,105 @@ Here we have a very basic command-driven interface to the proof state monad.
 >     case parse tokenize l of 
 >         Left _ -> putStrLn "No cookie for you!" >> cochon loc
 >         Right ts ->
->           case parse (pCommand (auncles loc)) ts of
+>           case parse pCommand ts of
 >               Left _ -> putStrLn "I don't understand!" >> cochon loc
 >               Right Quit -> return ()
->               Right c -> case runStateT (evalCommand c) loc of
->                   Just (s, loc') -> do
->                       putStrLn s 
->                       printChanges loc loc'
->                       cochon loc'
->                   Nothing ->  do
->                       putStrLn "I'm sorry, Dave. I'm afraid I can't do that."
->                       cochon loc
+>               Right c -> case resolveCommand (auncles loc) c of
+>                   Nothing -> putStrLn "I still don't understand!" >> cochon loc
+>                   Just c' -> case runStateT (evalCommand c') loc of
+>                       Just (s, loc') -> do
+>                           putStrLn s 
+>                           printChanges loc loc'
+>                           cochon loc'
+>                       Nothing ->  do
+>                           putStrLn "I'm sorry, Dave. I'm afraid I can't do that."
+>                           cochon loc
 
-> data Nav = InNav | OutNav | Up | Down | Top | Bottom | ModuleNav | Prev | Next | First | Last
+> data NavC = InC | OutC | Up | Down | Top | Bottom | ModuleC | Prev | Next | First | Last
+>     deriving Show
 
-> data Command  =  Apply
->               |  Auncles
->               |  DoneCom
->               |  Dump
->               |  Eval INTM
->               |  Give INTM
->               |  Go Nav
->               |  Lambda String
->               |  Make String INTM
->               |  PiBoy String INTM
->               |  Quit
->               |  Select INTM
->               |  Ungawa
+> data Command x  =  Apply
+>                 |  Auncles
+>                 |  DoneC
+>                 |  Dump
+>                 |  Eval x
+>                 |  Give x
+>                 |  Go NavC
+>                 |  Lambda String
+>                 |  Make String x
+>                 |  PiBoy String x
+>                 |  Quit
+>                 |  Select x
+>                 |  Ungawa
+>     deriving Show
 
-> pCommand :: Bwd Entry -> Parsley Token Command
-> pCommand es = do
+> instance Traversable Command where
+>     traverse f Apply        = (| Apply |)
+>     traverse f Auncles      = (| Auncles |)
+>     traverse f DoneC        = (| DoneC |)
+>     traverse f Dump         = (| Dump |)
+>     traverse f (Eval x)     = (| Eval (f x) |)
+>     traverse f (Give x)     = (| Give (f x) |)
+>     traverse f (Go d)       = (| (Go d) |)
+>     traverse f (Lambda s)   = (| (Lambda s) |)
+>     traverse f (Make s x)   = (| (Make s) (f x) |)
+>     traverse f (PiBoy s x)  = (| (PiBoy s) (f x) |)
+>     traverse f Quit         = (| Quit |)
+>     traverse f (Select x)   = (| Select (f x) |)
+>     traverse f Ungawa       = (| Ungawa |)
+
+> instance Functor Command where
+>     fmap = fmapDefault
+
+> instance Foldable Command where
+>     foldMap = foldMapDefault
+
+> pCommand :: Parsley Token (Command (InTm String))
+> pCommand = do
 >     x <- ident
 >     case x of
 >         "apply"    -> (| Apply |)
->         "auncles"  -> return Auncles
->         "bottom"   -> return (Go Bottom)
->         "done"     -> return DoneCom
->         "down"     -> return (Go Down)
->         "dump"     -> return Dump
->         "eval"     -> (| Eval (termParse es) |)
->         "first"    -> return (Go First)
->         "give"     -> (| Give (termParse es) |)
->         "in"       -> return (Go InNav)
+>         "auncles"  -> (| Auncles |)
+>         "bottom"   -> (| (Go Bottom) |)
+>         "done"     -> (| DoneC |)
+>         "down"     -> (| (Go Down) |)
+>         "dump"     -> (| Dump |)
+>         "eval"     -> (| Eval bigInTm |)
+>         "first"    -> (| (Go First) |)
+>         "give"     -> (| Give bigInTm |)
+>         "in"       -> (| (Go InC) |)
 >         "lambda"   -> (| Lambda ident |)
->         "last"     -> return (Go Last)
->         "make"     -> (| Make ident (%keyword ":"%) (termParse es) |)
->         "module"   -> return (Go ModuleNav)
->         "next"     -> return (Go Next)
->         "out"      -> return (Go OutNav)
->         "pi"       -> (| PiBoy ident (%keyword ":"%) (termParse es) |)
->         "prev"     -> return (Go Prev)
->         "quit"     -> return Quit
->         "select"   -> (| Select (termParse es) |)
->         "top"      -> return (Go Top)
->         "ungawa"   -> return Ungawa
->         "up"       -> return (Go Up)
+>         "last"     -> (| (Go Last) |)
+>         "make"     -> (| Make ident (%keyword ":"%) bigInTm |)
+>         "module"   -> (| (Go ModuleC) |)
+>         "next"     -> (| (Go Next) |)
+>         "out"      -> (| (Go OutC) |)
+>         "pi"       -> (| PiBoy ident (%keyword ":"%) bigInTm |)
+>         "prev"     -> (| (Go Prev) |)
+>         "quit"     -> (| Quit |)
+>         "select"   -> (| Select bigInTm |)
+>         "top"      -> (| (Go Top) |)
+>         "ungawa"   -> (| Ungawa |)
+>         "up"       -> (| (Go Up) |)
 >         _          -> empty
 
+> resolveCommand :: Bwd Entry -> Command (InTm String) -> Maybe (Command INTM)
+> resolveCommand es = traverse (resolve es)
 
-> evalCommand :: Command -> ProofState String
+> evalCommand :: Command INTM -> ProofState String
 > evalCommand Apply           = apply             >> return "Applied."
 > evalCommand Auncles         = infoAuncles
-> evalCommand DoneCom         = done              >> return "Done."
+> evalCommand DoneC           = done              >> return "Done."
 > evalCommand Dump            = infoDump
 > evalCommand (Eval tm)       = infoEval tm       >>= prettyHere
 > evalCommand (Give tm)       = give tm           >> return "Thank you."
-> evalCommand (Go InNav)      = goIn              >> return "Going in..."
-> evalCommand (Go OutNav)     = goOut             >> return "Going out..."
+> evalCommand (Go InC)        = goIn              >> return "Going in..."
+> evalCommand (Go OutC)       = goOut             >> return "Going out..."
 > evalCommand (Go Up)         = goUp              >> return "Going up..."
 > evalCommand (Go Down)       = goDown            >> return "Going down..."
 > evalCommand (Go Top)        = much goUp         >> return "Going to top..."
 > evalCommand (Go Bottom)     = much goDown       >> return "Going to bottom..."
-> evalCommand (Go ModuleNav)  = much goOut        >> return "Going to module..."
+> evalCommand (Go ModuleC)    = much goOut        >> return "Going to module..."
 > evalCommand (Go Prev)       = prevGoal          >> return "Searching for previous goal..."
 > evalCommand (Go Next)       = nextGoal          >> return "Searching for next goal..."
 > evalCommand (Go First)      = much prevGoal     >> return "Searching for first goal..."
@@ -126,6 +152,15 @@ Here we have a very basic command-driven interface to the proof state monad.
 > evalCommand (Select x)      = select x          >> return "Selected."
 > evalCommand Ungawa          = ungawa            >> return "Ungawa!"
 
+> doCommand :: Command (InTm String) -> ProofState String
+> doCommand c = do
+>     aus <- getAuncles
+>     case resolveCommand aus c of
+>         Nothing -> lift Nothing
+>         Just c' -> evalCommand c'
+
+> doCommands :: [Command (InTm String)] -> ProofState [String]
+> doCommands cs = sequenceA (map doCommand cs)
 
 
 > showPrompt :: Bwd Layer -> String
