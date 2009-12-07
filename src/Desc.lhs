@@ -458,19 +458,20 @@ Equality rules:
 >                                            (piTac (useOp descOp [ use d done
 >                                                                 , muTac (use d done) ] done)
 >                                                   (\v ->
->                                                    bp @@@ [conTac $ use v done]))
+>                                                    bp @@@ [conTac $ use v done]))))
+>
 >       elimOpTac = lambda $ \d ->  -- (d : Desc)
 >                   lambda $ \bp -> -- (bp : Mu d -> Set)
 >                   lambda $ \p ->  -- (x : descOp d (Mu d)) -> (boxOp d (Mu d) bp x) -> bp (Con x)
 >                   lambda $ \v ->  -- (v : descOp d (Mu d))
->                   p [ use v done
->                     , useOp mapBoxOp [ use d done
->                                      , can $ Mu (use d done)
->                                      , use bp done
->                                      , lambda $ \x ->
->                                        useOp elimOp [ use d done
->                                                     , use bp done
->                                                     , use p done
->                                                     , use x done ] done 
->                                      , use v done ] done ]
+>                   p @@@ [ use v done
+>                         , useOp mapBoxOp [ use d done
+>                                          , muTac (use d done)
+>                                          , use bp done
+>                                          , lambda $ \x ->
+>                                            useOp elimOp [ use d done
+>                                                         , use bp done
+>                                                         , use p done
+>                                                         , use x done ] done 
+>                                          , use v done ] done ]
 

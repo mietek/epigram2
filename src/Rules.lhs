@@ -458,7 +458,6 @@ constructors to make them easier to swallow.
 > f @@@ xs = foldl' app (use f) xs $ done
 >     where app f x = f . apply (A x)
 
-
 > import <- SugarTactics
 
 
