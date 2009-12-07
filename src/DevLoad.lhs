@@ -77,20 +77,51 @@ list of commands.
 > makeDev (l:ls) = makeEntry l >> makeDev ls
 
 > makeEntry :: DevLine -> ProofState ()
-> makeEntry (DLGirl s kids (mtm :<: ty) commands) = do
->     ty' <- resolveHere ty
->     make (s :<: ty')
+> makeEntry (DLGirl x kids (mtipTm :<: tipTys) commands) = do
+>     n <- withRoot (flip name x)
+>     let ref = n := HOLE :<: undefined
+>     root <- getDevRoot
+>     putDevEntry (E ref (last n) (Girl LETG (B0, undefined, room root x)) undefined)
+>     putDevRoot (roos root)
 >     goIn
->     makeDev kids
->     case mtm of
->         Nothing -> goOut
->         Just tm -> resolveHere tm >>= give
+>     makeDev kids     
+>     tipTy <- resolveHere tipTys 
+>     kids' <- getDevEntries
+>     let goalTy = inferGoalType tipTy kids'
+>     goOut
+>     Just (E _ _ (Girl LETG (es, _, root')) _) <- removeDevEntry
+>     putDevEntry (E (n := HOLE :<: evTm goalTy) (last n) (Girl LETG (es, Unknown (tipTy :=>: evTm tipTy), root')) goalTy)
+>     
+>     case mtipTm of
+>         Nothing -> return ()
+>         Just tm -> goIn >> resolveHere tm >>= give
 
-> makeEntry (DLBoy LAMB s _) = lambdaBoy s
+> makeEntry (DLBoy LAMB x tys) = do
+>     ty <- resolveHere tys
+>     Just () <- withRoot (check (SET :>: ty))     
+>     root <- getDevRoot
+>     Root.freshRef (x :<: evTm ty)
+>         (\ref r -> do 
+>            putDevEntry (E ref (lastName ref) (Boy LAMB) ty)
+>            putDevRoot r
+>          ) root
 
-> makeEntry (DLBoy PIB s ty) = do
->     ty' <- resolveHere ty
->     piBoy (s :<: ty')
+> makeEntry (DLBoy PIB x tys) = do 
+>     ty <- resolveHere tys
+>     Just () <- withRoot (check (SET :>: ty))
+>     root <- getDevRoot
+>     Root.freshRef (x :<: evTm ty)
+>         (\ref r -> do
+>            putDevEntry (E ref (lastName ref) (Boy PIB) ty)
+>            putDevRoot r
+>          ) root
+
+
+> inferGoalType :: INTM -> Bwd Entry -> INTM
+> inferGoalType ty B0 = ty
+> inferGoalType ty (es' :< E _ _ (Girl _ _) _)      = inferGoalType ty es'
+> inferGoalType ty (es' :< E _ (x,_) (Boy LAMB) s)  = inferGoalType (PI s (L (x :. ty))) es'
+> inferGoalType ty (es' :< E _ (x,_) (Boy PIB) s)   = inferGoalType SET es'
 
 > devLoad :: [Token] -> ProofState ()
 > devLoad ts = case parse pModule ts of
