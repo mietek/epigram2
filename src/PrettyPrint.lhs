@@ -5,7 +5,7 @@
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE ScopedTypeVariables #-}
 
-> module PrettyPrint (pretty, prettyDev, prettyRef) where
+> module PrettyPrint (pretty, prettyModule) where
 
 > import Data.Foldable
 > import Data.List
@@ -42,21 +42,25 @@ to allow extra canonical terms and eliminators to be pretty-printed.
 
 > instance Monoid Doc where
 >     mempty = empty
->     mappend = ($+$)
+>     mappend = ($$)
+
+> prettyModule :: Bwd Entry -> Name -> Dev -> Doc
+> prettyModule aus me (B0, _, _) = empty
+> prettyModule aus me dev = prettyDev aus me dev
 
 > prettyDev :: Bwd Entry -> Name -> Dev -> Doc
-> prettyDev aus me (B0, t, _) = brackets empty <+> prettyTip aus me t
+> prettyDev aus me (B0, t, _) = text ":=" <+> prettyTip aus me t
 > prettyDev aus me (es, t, r) = lbrack <+> foldMap prettyEntry es $$ rbrack 
 >     <+> prettyTip aus me t
 >   where
 >     prettyEntry :: Entry -> Doc
->     prettyEntry (E ref _ (Boy k) _) = prettyBKind k <+> prettyRef aus me r ref
->     prettyEntry (E ref _ (Girl LETG d) _) = sep [prettyRef aus me r ref, 
->                                                      nest 4 (prettyDev aus me d)]
+>     prettyEntry (E ref _ (Boy k) _) = prettyBKind k (prettyRef aus me r ref)
+>     prettyEntry (E ref _ (Girl LETG d) _) = sep [text (christenREF aus me ref), 
+>                                                      nest 2 (prettyDev aus me d) <+> semi]
 >
->     prettyBKind :: BoyKind -> Doc
->     prettyBKind LAMB  = text "\\"
->     prettyBKind PIB   = text "Pi"
+>     prettyBKind :: BoyKind -> Doc -> Doc
+>     prettyBKind LAMB  d = text "\\" <+> d <+> text "->"
+>     prettyBKind PIB   d = parens d <+> text "->"
 
 
 > prettyElim :: Elim (Tm {d, p} String) -> Doc
@@ -83,8 +87,8 @@ to allow extra canonical terms and eliminators to be pretty-printed.
 
 > prettyTip :: Bwd Entry -> Name -> Tip -> Doc
 > prettyTip aus me Module                     = empty
-> prettyTip aus me (Unknown     (tv :=>: _))  = text ":= ? :" <+> pretty (christen aus me tv)
-> prettyTip aus me (Defined tm  (tv :=>: _))  = text ":=" <+> pretty (christen aus me tm) 
+> prettyTip aus me (Unknown     (tv :=>: _))  = text "? :" <+> pretty (christen aus me tv)
+> prettyTip aus me (Defined tm  (tv :=>: _))  = pretty (christen aus me tm) 
 >     <+> text ":" <+> pretty (christen aus me tv)
 
 > pretty :: Tm {d, p} String -> Doc

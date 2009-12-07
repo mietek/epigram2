@@ -71,7 +71,6 @@ This was the old behaviour:
 >                case execStateT (devLoad ts) emptyContext of
 >                  Nothing -> putStrLn "Failed to load development"
 >                  Just (B0, dev) -> do
->                    print dev
 
 Pull out the definitions, and, if the -o flag has been used, output an executable
 which evaluates the last definition in the development.             
@@ -87,7 +86,7 @@ pretty-print the development.
 
 >                    case getOpt cochonOpt opts of
 >                      Just ()  -> cochon (B0, dev)
->                      _        -> print (prettyDev (auncles (B0, dev)) [] dev)
+>                      _        -> print (prettyModule (auncles (B0, dev)) [] dev)
 
 > data Option = InFile FilePath | OutFile FilePath | Epic String | Help | Cochon
 >    deriving Show

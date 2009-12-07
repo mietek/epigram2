@@ -13,6 +13,7 @@
 > import Data.Foldable
 > import Data.List
 > import Data.Traversable
+> import System.IO (hFlush, stdout)
 
 > import BwdFwd
 > import Developments
@@ -37,8 +38,9 @@ Here we have a very basic command-driven interface to the proof state monad.
 > cochon :: ProofContext -> IO ()
 > cochon loc@(ls, dev) = do
 >     let Just me = evalStateT getMotherName loc
->     putStrLn (show (prettyDev (auncles loc) me dev))
+>     putStrLn (show (prettyModule (auncles loc) me dev))
 >     putStr (showPrompt ls)
+>     hFlush stdout
 >     l <- getLine
 >     case parse tokenize l of 
 >         Left _ -> putStrLn "No cookie for you!" >> cochon loc
