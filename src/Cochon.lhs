@@ -72,7 +72,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >                 |  Go NavC
 >                 |  Infer x
 >                 |  Lambda String
->                 |  Make String x
+>                 |  Make String (Maybe x :<: x)
 >                 |  PiBoy String x
 >                 |  Quit
 >                 |  Select x
@@ -90,7 +90,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >     traverse f (Go d)       = (| (Go d) |)
 >     traverse f (Infer x)    = (| Infer (f x) |)
 >     traverse f (Lambda s)   = (| (Lambda s) |)
->     traverse f (Make s x)   = (| (Make s) (f x) |)
+>     traverse f (Make s (md :<: x))   = (| (Make s) (| (traverse f md) :<: (f x) |) |)
 >     traverse f (PiBoy s x)  = (| (PiBoy s) (f x) |)
 >     traverse f Quit         = (| Quit |)
 >     traverse f (Select x)   = (| Select (f x) |)
@@ -121,7 +121,9 @@ Here we have a very basic command-driven interface to the proof state monad.
 >         "infer"    -> (| Infer bigInTm |)
 >         "lambda"   -> (| Lambda ident |)
 >         "last"     -> (| (Go Last) |)
->         "make"     -> (| Make ident (%keyword ":"%) bigInTm |)
+>         "make"     -> (| Make ident (%keyword ":"%) (| ~Nothing :<: bigInTm |)
+>                        | Make ident (%keyword ":="%) maybeAscriptionParse
+>                        |)
 >         "module"   -> (| (Go ModuleC) |)
 >         "next"     -> (| (Go Next) |)
 >         "out"      -> (| (Go OutC) |)
@@ -158,7 +160,12 @@ Here we have a very basic command-driven interface to the proof state monad.
 > evalCommand (Go Last)       = much nextGoal     >> return "Searching for last goal..."
 > evalCommand (Infer tm)      = infoInfer tm      >>= bquoteHere >>= prettyHere
 > evalCommand (Lambda x)      = lambdaBoy x       >> return "Made lambda boy!"
-> evalCommand (Make x ty)     = make (x :<: ty)   >> goIn >> return "Appended goal!"
+> evalCommand (Make x (mtm :<: ty)) = do
+>     make (x :<: ty)
+>     goIn
+>     case mtm of
+>         Nothing  -> return "Appended goal!"
+>         Just tm  -> give tm >> return "Yessir."
 > evalCommand (PiBoy x ty)    = piBoy (x :<: ty)  >> return "Made pi boy!"
 > evalCommand (Select x)      = select x          >> return "Selected."
 > evalCommand Ungawa          = ungawa            >> return "Ungawa!"

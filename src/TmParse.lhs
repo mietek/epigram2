@@ -179,3 +179,9 @@ in the context all the names in the |InTm String| produced by |bigInTm|.
 
 > termParse :: Bwd Entry -> Parsley Token INTM
 > termParse es = pFilter (resolve es) bigInTm
+
+
+> maybeAscriptionParse :: Parsley Token (Maybe InTmRN :<: InTmRN)
+> maybeAscriptionParse = do
+>     tm :? ty <- ascriptionParse
+>     return (Just tm :<: ty)

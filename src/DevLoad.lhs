@@ -57,13 +57,9 @@ list of commands.
 >
 >     pDefn :: Parsley Token (Maybe InTmRN :<: InTmRN)
 >     pDefn =  (| (%keyword "?"%) (%keyword ":"%) ~Nothing :<: bigInTm 
->               | id pAscription
+>               | id maybeAscriptionParse
 >               |)
 >
->     pAscription :: Parsley Token (Maybe InTmRN :<: InTmRN)
->     pAscription = do  tm :? ty <- ascriptionParse
->                       return (Just tm :<: ty)
-
 >     pCommandSuffix :: Parsley Token [Command InTmRN]
 >     pCommandSuffix = bracket (SquareB "") (pSep (keyword ";") pCommand) <|> pure []
 
