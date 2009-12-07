@@ -110,6 +110,14 @@ Equality rules:
 >   pattern ZE         = C Ze
 >   pattern SU n       = C (Su n)
 
+> import -> SugarTactics where
+>   enumUTac = can EnumU
+>   enumTTac t = can $ EnumT t
+>   nilETac = can NilE
+>   consETac e t = can $ ConsE e t
+>   zeTac = can Ze
+>   suTac t = can $ Su t
+
 > import -> CanCompile where
 >   makeBody Ze = CTag 0
 >   makeBody (Su x) = STag (makeBody x)
@@ -178,21 +186,21 @@ Equality rules:
 >         bOpRun [CONSE t e' , p] = Right $ trustMe (typeBranches :>: tacBranches) $$ A t $$ A e' $$ A p
 >         bOpRun [N e , _] = Left e 
 >         typeBranches = trustMe (SET :>: tacTypeBranches)
->         tacTypeBranches = can $ Pi (can UId)
->                                    (lambda (\t ->
->                                     can $ Pi (can EnumU)
->                                              (lambda (\e ->
->                                               arrTac (arrTac (can $ EnumT (can $ ConsE (use t done)
->                                                                                          (use e done)))
->                                                                (can Set))
->                                                      (can Set)))))
+>         tacTypeBranches = piTac uidTac
+>                                 (\t ->
+>                                  piTac enumUTac
+>                                        (\e ->
+>                                         arrTac (arrTac (enumTTac (consETac (use t done)
+>                                                                            (use e done)))
+>                                                        setTac)
+>                                                setTac))
 >         tacBranches = lambda $ \t ->
 >                       lambda $ \e' ->
 >                       lambda $ \p ->
->                       timesTac (use p . apply (A (can Ze)) $ done)
+>                       timesTac (use p . apply (A zeTac) $ done)
 >                                (useOp branchesOp [ use e' done
 >                                                  , lambda $ \x -> 
->                                                    use p . apply (A (can (Su (use x done)))) $ done] 
+>                                                    use p . apply (A (suTac (use x done))) $ done] 
 >                                 done)
 
 >   switchOp = Op
@@ -224,24 +232,24 @@ Equality rules:
 >                     lambda $ \n ->
 >                     useOp switchOp [ use e' done
 >                                    , lambda $ \x -> 
->                                      use p . apply (A (can (Su (use x done)))) $ done
+>                                      use p . apply (A (suTac (use x done))) $ done
 >                                    , use ps . apply Snd $ done
 >                                    , use n done ]
 >                     done
 >         typeSwitch = trustMe (SET :>: tacTypeSwitch) 
->         tacTypeSwitch = can $ Pi (can UId)
->                               (lambda (\t ->
->                                 can $ Pi (can EnumU)
->                                          (lambda (\e -> 
->                                           can $ Pi (arrTac (can $ EnumT (can $ ConsE (use t done) (use e done)))
->                                                            (can Set))
->                                                    (lambda (\p ->
->                                                     arrTac (useOp branchesOp [ can $ ConsE (use t done) (use e done)
->                                                                                 , use p done]
->                                                             done)
->                                                             (can $ Pi (can $ EnumT (use e done))
->                                                                         (lambda (\x -> 
->                                                                          use p . apply (A $ can $ Su $ use x done) $ done)))))))))
+>         tacTypeSwitch = piTac uidTac
+>                               (\t ->
+>                                piTac enumUTac
+>                                      (\e -> 
+>                                       piTac (arrTac (enumTTac (consETac (use t done) 
+>                                                                         (use e done)))
+>                                                     setTac)
+>                                             (\p ->
+>                                              arrTac (useOp branchesOp [ consETac (use t done) (use e done)
+>                                                                       , use p done] done)
+>                                                      (piTac (enumTTac (use e done))
+>                                                                       (\x -> 
+>                                                                        use p . apply (A $ suTac $ use x done) $ done)))))))))
 
 
 > import -> Operators where

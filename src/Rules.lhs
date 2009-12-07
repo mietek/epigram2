@@ -442,9 +442,17 @@ various Features.
 We also define and import some handy tactics, sugaring some canonical
 constructors to make them easier to swallow.
 
+> setTac :: Tac VAL
+> setTac = can Set
+
+> conTac :: Tac VAL -> Tac VAL
+> conTac t = can $ Con t
+
+> piTac :: Tac VAL -> (REF -> Tac VAL) -> Tac VAL
+> piTac s t = can $ Pi s (lambda t)
+
 > arrTac :: Tac VAL -> Tac VAL -> Tac VAL
-> arrTac s t = can $ Pi s
->                       (lambda (\_ -> t))
+> arrTac s t = piTac s (\_ -> t)
 >
 > import <- SugarTactics
 
@@ -470,39 +478,39 @@ constructors to make them easier to swallow.
 > opRunEqGreen [C (Pi s1 t1),f1,C (Pi s2 t2),f2] = Right $ trustMe (runEqGreenType :>: runEqGreenTac)
 >                                                          $$ A s1 $$ A t1 $$ A f1 $$ A s2 $$ A t2 $$ A f2
 >       where runEqGreenType = trustMe (SET :>: runEqGreenTypeTac)
->             runEqGreenTypeTac = can $ Pi (can Set)
->                                          (lambda $ \s1 ->
->                                           can $ Pi (arrTac (use s1 done)
->                                                            (can Set))
->                                                    (lambda $ \t1 ->
->                                                     can $ Pi (can $ Pi (use s1 done)
->                                                                        (use t1 done))
->                                                              (lambda $ \f1 ->
->                                                               can $ Pi (can Set)
->                                                                        (lambda $ \s2 ->
->                                                                         can $ Pi (arrTac (use s2 done)
->                                                                                          (can Set))
->                                                                                   (lambda $ \t2 ->
->                                                                                    can $ Pi (can $ Pi (use s2 done)
->                                                                                                       (use t2 done))
->                                                                                             (lambda $ \f2 -> 
->                                                                                              can Prop))))))
+>             runEqGreenTypeTac = piTac setTac
+>                                       (\s1 ->
+>                                        piTac (arrTac (use s1 done)
+>                                                      setTac)
+>                                              (\t1 ->
+>                                               piTac (can $ Pi (use s1 done)
+>                                                               (use t1 done))
+>                                                     (\f1 ->
+>                                                      piTac setTac
+>                                                            (\s2 ->
+>                                                             piTac (arrTac (use s2 done)
+>                                                                           setTac)
+>                                                                   (\t2 ->
+>                                                                    piTac (can $ Pi (use s2 done)
+>                                                                                    (use t2 done))
+>                                                                          (\f2 -> 
+>                                                                           propTac))))))
 >             runEqGreenTac = lambda $ \s1 ->
 >                             lambda $ \t1 ->
 >                             lambda $ \f1 ->
 >                             lambda $ \s2 ->
 >                             lambda $ \t2 ->
 >                             lambda $ \f2 ->
->                             can $ All (use s1 done)
->                                       (lambda $ \x1 ->
->                                         can $ All (use s2 done)
->                                                   (lambda $ \x2 ->
->                                                     impTac (can $ EqBlue (use s2 done :>: use x2 done)
->                                                                          (use s1 done :>: use x1 done))
->                                                            (eqGreenTac ((use t1 . apply (A (use x1 done)) $ done) :>:
->                                                                         (use f1 . apply (A (use x1 done)) $ done))
->                                                                        ((use t2 . apply (A (use x2 done)) $ done) :>:
->                                                                         (use f2 . apply (A (use x2 done)) $ done)))))
+>                             allTac (use s1 done)
+>                                    (\x1 ->
+>                                     allTac (use s2 done)
+>                                            (\x2 ->
+>                                             impTac (eqBlueTac (use s2 done :>: use x2 done)
+>                                                               (use s1 done :>: use x1 done))
+>                                                    (eqGreenTac ((use t1 . apply (A (use x1 done)) $ done) :>:
+>                                                                 (use f1 . apply (A (use x1 done)) $ done))
+>                                                                ((use t2 . apply (A (use x2 done)) $ done) :>:
+>                                                                 (use f2 . apply (A (use x2 done)) $ done)))))
 >             eqGreenTac (y0 :>: t0) (y1 :>: t1) = useOp eqGreen [y0,t0,y1,t1] done
 > opRunEqGreen [C ty0,C t0,C ty1,C t1] = case halfZip t0'' t1'' of
 >    Nothing -> Right ABSURD 

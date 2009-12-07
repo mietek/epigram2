@@ -161,6 +161,13 @@ Equality rules:
 >   pattern ARG x y  = C (Arg x y)
 >   pattern IND x y  = C (Ind x y)
 
+> import -> SugarTactics where
+>   descTac = can Desc
+>   muTac t = can $ Mu t
+>   doneTac = can Done
+>   argTac h f = can $ Arg h (lambda f)
+>   indTac x d = can $ Ind x d
+
 > import -> CanPretty where
 >   prettyCan Desc   = text "Desc"
 >   prettyCan (Mu t) = parens (text "Mu" <+> pretty t)
@@ -218,20 +225,20 @@ Equality rules:
 >       dOpRun [N x,_]     = Left x
 >
 >       opRunTypeTac arg = arrTac arg
->                                 (arrTac (can Set)
->                                         (can Set))
+>                                 (arrTac setTac
+>                                         setTac)
 >       opRunArgType = trustMe (SET :>: opRunArgTypeTac) 
->       opRunArgTypeTac = can $ Pi (can Set)
->                                  (lambda $ \x ->
->                                   opRunTypeTac (arrTac (use x done)
->                                                        (can Desc)))
+>       opRunArgTypeTac = piTac setTac
+>                               (\x ->
+>                                opRunTypeTac (arrTac (use x done)
+>                                                     descTac))
 >       opRunArgTac = lambda $ \x ->
 >                     lambda $ \f ->
 >                     lambda $ \d ->
->                     can $ Sigma (use x done)
->                                 (lambda $ \a ->
->                                  useOp descOp [ use f . apply (A (use a done)) $ done
->                                               , use d done ] done)
+>                     sigmaTac (use x done)
+>                              (\a ->
+>                               useOp descOp [ use f . apply (A (use a done)) $ done
+>                                            , use d done ] done)
 >
 >       opRunIndType = trustMe (SET :>: opRunIndTypeTac)
 >       opRunIndTypeTac = arrTac (can Set) 
@@ -272,22 +279,22 @@ Equality rules:
 >                                          $$ A h $$ A x $$ A d $$ A p $$ A v
 >       boxOpRun [N x    ,_,_,_] = Left x
 >
->       opRunTypeTac arg = can $ Pi (can Set)
->                                   (lambda $ \y ->
->                                    can $ Pi (arrTac (use y done)
->                                                     (can Set))
->                                             (lambda $ \z -> 
->                                              arrTac (useOp descOp [ arg
->                                                                   , use y done ] done)
->                                                     (can Set)))
+>       opRunTypeTac arg = piTac setTac
+>                                (\y ->
+>                                 piTac (arrTac (use y done)
+>                                               setTac)
+>                                       (\z -> 
+>                                        arrTac (useOp descOp [ arg
+>                                                             , use y done ] done)
+>                                               setTac))
 >       opRunArgType = trustMe (SET :>: opRunArgTypeTac)
->       opRunArgTypeTac = can $ Pi (can Set)
->                                  (lambda $ \x ->
->                                   can $ Pi (arrTac (use x done)
->                                                    (can Desc)) 
->                                            (lambda $ \f ->
->                                             opRunTypeTac (can $ Arg (use x done)
->                                                                     (use f done))))
+>       opRunArgTypeTac = piTac setTac
+>                               (\x ->
+>                                piTac (arrTac (use x done)
+>                                              descTac) 
+>                                      (\f ->
+>                                       opRunTypeTac (can $ Arg (use x done)
+>                                                               (use f done))))
 >       opRunArgTac = lambda $ \a ->
 >                     lambda $ \f ->
 >                     lambda $ \d ->
@@ -299,21 +306,21 @@ Equality rules:
 >                                 , use v . apply Snd $ done ] done
 >
 >       opRunIndType = trustMe (SET :>: opRunIndTypeTac) 
->       opRunIndTypeTac = can $ Pi (can Set)
->                                  (lambda $ \h ->
->                                   can $ Pi (can Desc)
->                                            (lambda $ \x ->
->                                             opRunTypeTac (can $ Ind (use h done)
->                                                                     (use x done))))
+>       opRunIndTypeTac = piTac setTac
+>                               (\h ->
+>                                piTac descTac
+>                                      (\x ->
+>                                       opRunTypeTac (indTac (use h done)
+>                                                            (use x done))))
 >       opRunIndTac = lambda $ \h ->
 >                     lambda $ \x ->
 >                     lambda $ \d ->
 >                     lambda $ \p ->
 >                     lambda $ \v ->
->                     timesTac (can $ Pi (use h done)
->                                        (lambda $ \y -> 
->                                         use p . apply (A (use v . apply Fst . 
->                                                                   apply (A $ use y done) $ done)) $ done))
+>                     timesTac (piTac (use h done)
+>                                     (\y -> 
+>                                      use p . apply (A (use v . apply Fst . 
+>                                                        apply (A $ use y done) $ done)) $ done))
 >                              (useOp boxOp [ use x done
 >                                           , use d done
 >                                           , use p done
@@ -350,54 +357,54 @@ Equality rules:
 >                                                $$ A h $$ A x $$ A d $$ A bp $$ A p $$ A v
 >       mapBoxOpRun [N x    ,_, _,_,_] = Left x
 >
->       mapBoxTypeTac arg = can $ Pi (can Set)
->                                    (lambda $ \d ->
->                                     can $ Pi (arrTac (use d done)
->                                                      (can Set))
->                                              (lambda $ \bp ->
->                                               arrTac (can $ Pi (use d done)
->                                                                (lambda $ \y ->
->                                                                 use bp . 
->                                                                 apply (A (use y done)) $
->                                                                 done))
->                                                      (can $ Pi (useOp descOp [ arg
->                                                                              , use d done ] done)
->                                                                (lambda $ \v ->
->                                                                 useOp boxOp [ arg
->                                                                             , use d done
->                                                                             , use bp done
->                                                                             , use v done] done))))
+>       mapBoxTypeTac arg = piTac setTac
+>                                 (\d ->
+>                                  piTac (arrTac (use d done)
+>                                                setTac)
+>                                        (\bp ->
+>                                         arrTac (piTac (use d done)
+>                                                       (\y ->
+>                                                        use bp . 
+>                                                        apply (A (use y done)) $
+>                                                        done))
+>                                                (piTac (useOp descOp [ arg
+>                                                                     , use d done ] done)
+>                                                       (\v ->
+>                                                        useOp boxOp [ arg
+>                                                                    , use d done
+>                                                                    , use bp done
+>                                                                    , use v done] done))))
 >       mapBoxIndType = trustMe (SET :>: mapBoxIndTypeTac)
->       mapBoxIndTypeTac = can $ Pi (can Set)
->                                   (lambda $ \h ->
->                                    can $ Pi (can Desc)
->                                             (lambda $ \x ->
->                                              mapBoxTypeTac (can $ Ind (use h done)
->                                                                       (use x done))))
+>       mapBoxIndTypeTac = piTac setTac
+>                                (\h ->
+>                                 piTac descTac
+>                                       (\x ->
+>                                        mapBoxTypeTac (indTac (use h done)
+>                                                              (use x done))))
 >       mapBoxIndTac = lambda $ \h ->
 >                      lambda $ \x ->
 >                      lambda $ \d ->
 >                      lambda $ \bp ->
 >                      lambda $ \p ->
 >                      lambda $ \v ->
->                      can $ Pair (lambda $ \y ->
->                                  use p . apply (A (use v .
->                                                   apply Fst .
->                                                   apply (A (use y done)) 
->                                                   $ done)) $ done)
->                                 (useOp mapBoxOp [ use x done
->                                                 , use d done
->                                                 , use bp done
->                                                 , use p done
->                                                 , use v . apply Snd $ done ] done)
+>                      pairTac (lambda $ \y ->
+>                               use p . apply (A (use v .
+>                                                 apply Fst .
+>                                                 apply (A (use y done)) 
+>                                                 $ done)) $ done)
+>                               (useOp mapBoxOp [ use x done
+>                                               , use d done
+>                                               , use bp done
+>                                               , use p done
+>                                               , use v . apply Snd $ done ] done)
 >       mapBoxArgType = trustMe (SET :>: mapBoxArgTypeTac)
->       mapBoxArgTypeTac = can $ Pi (can Set)
->                                   (lambda $ \a -> 
->                                    can $ Pi (arrTac (use a done)
->                                                     (can Desc))
->                                             (lambda $ \f -> 
->                                              mapBoxTypeTac (can $ Arg (use a done)
->                                                                       (use f done))))
+>       mapBoxArgTypeTac = piTac setTac
+>                                (\a -> 
+>                                 piTac (arrTac (use a done)
+>                                               descTac)
+>                                       (\f -> 
+>                                        mapBoxTypeTac (can $ Arg (use a done)
+>                                                                 (use f done))))
 >       mapBoxArgTac = lambda $ \a ->
 >                      lambda $ \f ->
 >                      lambda $ \d ->
@@ -437,23 +444,23 @@ Equality rules:
 >                                          $$ A d $$ A bp $$ A p $$ A v
 >       elimOpRun [_, _,_,N x] = Left x
 >       elimOpType = trustMe (SET :>: elimOpTypeTac)
->       elimOpTypeTac = can $ Pi (can Desc)
->                                (lambda $ \d ->
->                                 can $ Pi (arrTac (can $ Mu (use d done))
->                                                  (can Set))
->                                          (lambda $ \bp ->
->                                           arrTac (can $ Pi (useOp descOp [ use d done
->                                                                          , can $ Mu (use d done) ] done)
->                                                            (lambda $ \x ->
->                                                             arrTac (useOp boxOp [ use d done
->                                                                                 , can $ Mu (use d done)
->                                                                                 , use bp done
->                                                                                 , use x done ] done)
->                                                                    (use bp . apply (A (can $ Con (use x done))) $ done)))
->                                                  (can $ Pi (useOp descOp [ use d done
->                                                                          , can $ Mu (use d done) ] done)
->                                                            (lambda $ \v ->
->                                                             use bp . apply (A $ can $ Con $ use v done) $ done))))
+>       elimOpTypeTac = piTac descTac
+>                             (\d ->
+>                              piTac (arrTac (muTac (use d done))
+>                                            setTac)
+>                                    (\bp ->
+>                                     arrTac (piTac (useOp descOp [ use d done
+>                                                                 , muTac (use d done) ] done)
+>                                                   (\x ->
+>                                                    arrTac (useOp boxOp [ use d done
+>                                                                        , muTac (use d done)
+>                                                                        , use bp done
+>                                                                        , use x done ] done)
+>                                                           (use bp . apply (A (conTac (use x done))) $ done)))
+>                                            (piTac (useOp descOp [ use d done
+>                                                                 , muTac (use d done) ] done)
+>                                                   (\v ->
+>                                                    use bp . apply (A $ conTac $ use v done) $ done))))
 >       elimOpTac = lambda $ \d ->  -- (d : Desc)
 >                   lambda $ \bp -> -- (bp : Mu d -> Set)
 >                   lambda $ \p ->  -- (x : descOp d (Mu d)) -> (boxOp d (Mu d) bp x) -> bp (Con x)

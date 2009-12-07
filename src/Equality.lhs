@@ -92,6 +92,9 @@ With no computational behavior.
 > import -> CanPats where
 >   pattern EQBLUE p q = C (EqBlue p q)
 
+> import -> SugarTactics where
+>     eqBlueTac p q = can $ EqBlue p q
+
 > import -> TraverseCan where
 >   traverse f (EqBlue (pty :>: p) (qty :>: q)) =
 >     (|EqBlue (|(:>:) (f pty) (f p)|) (|(:>:) (f qty) (f q)|)|)
@@ -177,29 +180,29 @@ With no computational behavior.
 >   coh = [("Axiom",0),("coh",0)] := (DECL :<: cohType)
 >       where cohType = trustMe (SET :>: cohTypeTac)
 >             cohTypeTac 
->              = can $ Pi (can Set)
->                         (lambda $ \x ->
->                          can $ Pi (can Set)
->                                   (lambda $ \y ->
->                                    can $ Pi (can $ Prf (can $ EqBlue (can Set :>: use x done)
->                                                                      (can Set :>: use y done)))
->                                             (lambda $ \q ->
->                                              can $ Pi (use x done)
->                                                       (lambda $ \s ->
->                                                        can $ Prf (can $ EqBlue (use x done :>: use s done)
->                                                                                (use y done :>: useOp coe [ use x done 
->                                                                                                          , use y done
->                                                                                                          , use q done
->                                                                                                          , use s done ] done))))))
+>              = piTac setTac
+>                      (\x ->
+>                       piTac setTac
+>                             (\y ->
+>                              piTac (prfTac (eqBlueTac (setTac :>: use x done)
+>                                                       (setTac :>: use y done)))
+>                                    (\q ->
+>                                     piTac (use x done)
+>                                           (\s ->
+>                                            prfTac (eqBlueTac (use x done :>: use s done)
+>                                                              (use y done :>: useOp coe [ use x done 
+>                                                                                        , use y done
+>                                                                                        , use q done
+>                                                                                        , use s done ] done))))))
 >
 >   refl = [("Axiom",0),("refl",0)] := (DECL :<: reflType)
 >          where reflType = trustMe (SET :>: reflTypeTac)
->                reflTypeTac = can $ Pi (can Set)
->                                       (lambda $ \s ->
->                                        can $ Pi (use s done)
->                                                 (lambda $ \x ->
->                                                  can $ Prf (can $ EqBlue (use s done :>: use x done)
->                                                                          (use s done :>: use x done))))
+>                reflTypeTac = piTac setTac
+>                                    (\s ->
+>                                     piTac (use s done)
+>                                           (\x ->
+>                                            prfTac (eqBlueTac (use s done :>: use x done)
+>                                                              (use s done :>: use x done))))
 >
 
 > import -> Operators where

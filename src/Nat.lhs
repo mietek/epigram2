@@ -26,19 +26,19 @@ This gives:
 
 > natdTac :: Tac VAL
 > natdTac = can $ Arg natEnumTac natcTac
->     where natEnumTac = can $ EnumT natConst 
->               where natConst = can $ ConsE (can $ Tag "czero")
->                                            (can $ ConsE (can $ Tag "csuc")
->                                                         (can NilE))
+>     where natEnumTac = enumTTac natConst 
+>               where natConst = consETac (tagTac "czero")
+>                                         (consETac (tagTac "csuc")
+>                                                   (nilETac))
 >                                            
->           natcTac = switch $ cases [ can Done
->                                    , can $ Ind (can Unit) (can Done) ]
+>           natcTac = switch $ cases [ doneTac
+>                                    , indTac unitTac doneTac ]
 
 The natural numbers as such are the fix-point of the previous
 definition:
 
 > natTac :: Tac VAL
-> natTac = can $ Mu natdTac
+> natTac = muTac natdTac
 > nat :: VAL
 > nat = trustMe (SET :>: natTac)
 
@@ -48,7 +48,7 @@ Hence, we have the standard constructors of natural numbers. Let start
 with |zero|:
 
 > zeroTac :: Tac VAL
-> zeroTac = can $ Con $ cases [ can Ze ]
+> zeroTac = conTac $ cases [ zeTac ]
 
 \question{Honestly, I would not have written that, so I don't know
           how/why this thing works. I cannot link that definition with
@@ -57,8 +57,8 @@ with |zero|:
 Similarly, we can implement the |suc| constructor:
 
 > sucTac :: Tac VAL -> Tac VAL
-> sucTac x = can $ Con $ cases [ can $ Su (can Ze)
->                              , lambda $ \_ -> x ]
+> sucTac x = conTac $ cases [ suTac zeTac
+>                           , lambda $ \_ -> x ]
 
 \question{Same as above.}
 
@@ -103,7 +103,7 @@ applying the precept saying that |n1 + n2 = suc ((n1 - 1) + n2)|.
 >                             sucTac $ 
 >                             use ih . 
 >                             apply Fst .
->                             apply (A $ can Void) $
+>                             apply (A $ voidTac) $
 >                             done ]
 >           plusType = ARR nat (ARR nat nat)
 

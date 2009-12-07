@@ -72,10 +72,8 @@ Equality rules:
 
 Coercion rule:
 
-\question{At first glance, the coerce rule does not respect the
-          definition of the OTT paper.}
-
 < coe(Sigma x1 y1, Sigma x2 y2, q, f) :-> 
+<     (something, but not that)
 <     \s1 -> coe(y2 s2, y1 s1, q s2 s1 q2, f s2)
 <         where s2 = coe(x2, x1, fst q, s1)
 <               q2 = coh(x2, x1, fst q, s1)
@@ -110,9 +108,13 @@ Coercion rule:
 >   pattern TIMES x y = C (Times x y)  
 
 > import -> SugarTactics where
->     timesTac :: Tac VAL -> Tac VAL -> Tac VAL
+>     sigmaTac p q 
+>         = can $ Sigma p (lambda q)
+>     pairTac p q = can $ Pair p q
+>     unitTac = can Unit
+>     voidTac = can Void
 >     timesTac p q
->         = can (Sigma p (lambda $ \_ -> q))
+>         = can $ Sigma p (lambda $ \_ -> q)
 
 > import -> CanCompile where
 >   makeBody (Pair x y) = Tuple [makeBody x, makeBody y]
