@@ -453,7 +453,12 @@ constructors to make them easier to swallow.
 
 > arrTac :: Tac VAL -> Tac VAL -> Tac VAL
 > arrTac s t = piTac s (\_ -> t)
->
+
+> (@@@) :: REF -> [Tac VAL] -> Tac VAL
+> f @@@ xs = foldl' app (use f) xs $ done
+>     where app f x = f . apply (A x)
+
+
 > import <- SugarTactics
 
 
@@ -507,10 +512,10 @@ constructors to make them easier to swallow.
 >                                            (\x2 ->
 >                                             impTac (eqBlueTac (use s2 done :>: use x2 done)
 >                                                               (use s1 done :>: use x1 done))
->                                                    (eqGreenTac ((use t1 . apply (A (use x1 done)) $ done) :>:
->                                                                 (use f1 . apply (A (use x1 done)) $ done))
->                                                                ((use t2 . apply (A (use x2 done)) $ done) :>:
->                                                                 (use f2 . apply (A (use x2 done)) $ done)))))
+>                                                    (eqGreenTac ((t1 @@@ [ use x1 done ]) :>:
+>                                                                 (f1 @@@ [ use x1 done ]))
+>                                                                ((t2 @@@ [ use x2 done ]) :>:
+>                                                                 (f2 @@@ [ use x2 done ])))))
 >             eqGreenTac (y0 :>: t0) (y1 :>: t1) = useOp eqGreen [y0,t0,y1,t1] done
 > opRunEqGreen [C ty0,C t0,C ty1,C t1] = case halfZip t0'' t1'' of
 >    Nothing -> Right ABSURD 

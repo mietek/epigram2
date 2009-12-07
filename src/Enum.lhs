@@ -197,10 +197,10 @@ Equality rules:
 >         tacBranches = lambda $ \t ->
 >                       lambda $ \e' ->
 >                       lambda $ \p ->
->                       timesTac (use p . apply (A zeTac) $ done)
+>                       timesTac (p @@@ [zeTac])
 >                                (useOp branchesOp [ use e' done
 >                                                  , lambda $ \x -> 
->                                                    use p . apply (A (suTac (use x done))) $ done] 
+>                                                    p @@@ [suTac (use x done)]]
 >                                 done)
 
 >   switchOp = Op
@@ -232,7 +232,7 @@ Equality rules:
 >                     lambda $ \n ->
 >                     useOp switchOp [ use e' done
 >                                    , lambda $ \x -> 
->                                      use p . apply (A (suTac (use x done))) $ done
+>                                      p @@@ [ suTac (use x done) ]
 >                                    , use ps . apply Snd $ done
 >                                    , use n done ]
 >                     done
@@ -249,7 +249,7 @@ Equality rules:
 >                                                                       , use p done] done)
 >                                                      (piTac (enumTTac (use e done))
 >                                                                       (\x -> 
->                                                                        use p . apply (A $ suTac $ use x done) $ done)))))))))
+>                                                                        p @@@ [ suTac $ use x done ])))))
 
 
 > import -> Operators where

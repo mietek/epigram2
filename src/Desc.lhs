@@ -237,7 +237,7 @@ Equality rules:
 >                     lambda $ \d ->
 >                     sigmaTac (use x done)
 >                              (\a ->
->                               useOp descOp [ use f . apply (A (use a done)) $ done
+>                               useOp descOp [ f @@@ [use a done]
 >                                            , use d done ] done)
 >
 >       opRunIndType = trustMe (SET :>: opRunIndTypeTac)
@@ -300,7 +300,7 @@ Equality rules:
 >                     lambda $ \d ->
 >                     lambda $ \p ->
 >                     lambda $ \v -> 
->                     useOp boxOp [ use f . apply (A (use v . apply Fst $ done)) $ done
+>                     useOp boxOp [ f @@@ [use v . apply Fst $ done]
 >                                 , use d done 
 >                                 , use p done
 >                                 , use v . apply Snd $ done ] done
@@ -319,8 +319,8 @@ Equality rules:
 >                     lambda $ \v ->
 >                     timesTac (piTac (use h done)
 >                                     (\y -> 
->                                      use p . apply (A (use v . apply Fst . 
->                                                        apply (A $ use y done) $ done)) $ done))
+>                                      p @@@ [use v . apply Fst . 
+>                                                     apply (A $ use y done) $ done]))
 >                              (useOp boxOp [ use x done
 >                                           , use d done
 >                                           , use p done
@@ -364,9 +364,7 @@ Equality rules:
 >                                        (\bp ->
 >                                         arrTac (piTac (use d done)
 >                                                       (\y ->
->                                                        use bp . 
->                                                        apply (A (use y done)) $
->                                                        done))
+>                                                        bp @@@ [use y done]))
 >                                                (piTac (useOp descOp [ arg
 >                                                                     , use d done ] done)
 >                                                       (\v ->
@@ -388,10 +386,10 @@ Equality rules:
 >                      lambda $ \p ->
 >                      lambda $ \v ->
 >                      pairTac (lambda $ \y ->
->                               use p . apply (A (use v .
->                                                 apply Fst .
->                                                 apply (A (use y done)) 
->                                                 $ done)) $ done)
+>                               p @@@ [use v .
+>                                      apply Fst .
+>                                      apply (A (use y done)) 
+>                                      $ done])
 >                               (useOp mapBoxOp [ use x done
 >                                               , use d done
 >                                               , use bp done
@@ -411,7 +409,7 @@ Equality rules:
 >                      lambda $ \bp ->
 >                      lambda $ \p ->
 >                      lambda $ \v ->
->                      useOp mapBoxOp [ use f . apply (A (use v . apply Fst $ done)) $ done
+>                      useOp mapBoxOp [ f @@@ [ use v . apply Fst $ done ]
 >                                     , use d done
 >                                     , use bp done
 >                                     , use p done
@@ -456,25 +454,23 @@ Equality rules:
 >                                                                        , muTac (use d done)
 >                                                                        , use bp done
 >                                                                        , use x done ] done)
->                                                           (use bp . apply (A (conTac (use x done))) $ done)))
+>                                                           (bp @@@ [conTac (use x done)])))
 >                                            (piTac (useOp descOp [ use d done
 >                                                                 , muTac (use d done) ] done)
 >                                                   (\v ->
->                                                    use bp . apply (A $ conTac $ use v done) $ done))))
+>                                                    bp @@@ [conTac $ use v done]))
 >       elimOpTac = lambda $ \d ->  -- (d : Desc)
 >                   lambda $ \bp -> -- (bp : Mu d -> Set)
 >                   lambda $ \p ->  -- (x : descOp d (Mu d)) -> (boxOp d (Mu d) bp x) -> bp (Con x)
 >                   lambda $ \v ->  -- (v : descOp d (Mu d))
->                   use p . 
->                   apply (A $ use v done) .
->                   apply (A $ useOp mapBoxOp [ use d done
->                                             , can $ Mu (use d done)
->                                             , use bp done
->                                             , lambda $ \x ->
->                                               useOp elimOp [ use d done
->                                                            , use bp done
->                                                            , use p done
->                                                            , use x done ] done 
->                                             , use v done ] done) $
->                   done
+>                   p [ use v done
+>                     , useOp mapBoxOp [ use d done
+>                                      , can $ Mu (use d done)
+>                                      , use bp done
+>                                      , lambda $ \x ->
+>                                        useOp elimOp [ use d done
+>                                                     , use bp done
+>                                                     , use p done
+>                                                     , use x done ] done 
+>                                      , use v done ] done ]
 
