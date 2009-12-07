@@ -64,11 +64,13 @@ Here we have a very basic command-driven interface to the proof state monad.
 
 > data Command x  =  Apply
 >                 |  Auncles
+>                 |  Check (x :>: x)
 >                 |  DoneC
 >                 |  Dump
 >                 |  Eval x
 >                 |  Give x
 >                 |  Go NavC
+>                 |  Infer x
 >                 |  Lambda String
 >                 |  Make String x
 >                 |  PiBoy String x
@@ -80,11 +82,13 @@ Here we have a very basic command-driven interface to the proof state monad.
 > instance Traversable Command where
 >     traverse f Apply        = (| Apply |)
 >     traverse f Auncles      = (| Auncles |)
+>     traverse f (Check (x :>: y))    = (| Check (| (f x) :>: (f y) |) |)
 >     traverse f DoneC        = (| DoneC |)
 >     traverse f Dump         = (| Dump |)
 >     traverse f (Eval x)     = (| Eval (f x) |)
 >     traverse f (Give x)     = (| Give (f x) |)
 >     traverse f (Go d)       = (| (Go d) |)
+>     traverse f (Infer x)    = (| Infer (f x) |)
 >     traverse f (Lambda s)   = (| (Lambda s) |)
 >     traverse f (Make s x)   = (| (Make s) (f x) |)
 >     traverse f (PiBoy s x)  = (| (PiBoy s) (f x) |)
@@ -105,6 +109,8 @@ Here we have a very basic command-driven interface to the proof state monad.
 >         "apply"    -> (| Apply |)
 >         "auncles"  -> (| Auncles |)
 >         "bottom"   -> (| (Go Bottom) |)
+>         "check"    -> do  (tm :? ty) <-  ascriptionParse
+>                           return (Check (ty :>: tm))
 >         "done"     -> (| DoneC |)
 >         "down"     -> (| (Go Down) |)
 >         "dump"     -> (| Dump |)
@@ -112,6 +118,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >         "first"    -> (| (Go First) |)
 >         "give"     -> (| Give bigInTm |)
 >         "in"       -> (| (Go InC) |)
+>         "infer"    -> (| Infer bigInTm |)
 >         "lambda"   -> (| Lambda ident |)
 >         "last"     -> (| (Go Last) |)
 >         "make"     -> (| Make ident (%keyword ":"%) bigInTm |)
@@ -133,6 +140,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 > evalCommand :: Command INTM -> ProofState String
 > evalCommand Apply           = apply             >> return "Applied."
 > evalCommand Auncles         = infoAuncles
+> evalCommand (Check a)       = infoCheck a       >> return "Okay."
 > evalCommand DoneC           = done              >> return "Done."
 > evalCommand Dump            = infoDump
 > evalCommand (Eval tm)       = infoEval tm       >>= prettyHere
@@ -148,8 +156,9 @@ Here we have a very basic command-driven interface to the proof state monad.
 > evalCommand (Go Next)       = nextGoal          >> return "Searching for next goal..."
 > evalCommand (Go First)      = much prevGoal     >> return "Searching for first goal..."
 > evalCommand (Go Last)       = much nextGoal     >> return "Searching for last goal..."
+> evalCommand (Infer tm)      = infoInfer tm      >>= bquoteHere >>= prettyHere
 > evalCommand (Lambda x)      = lambdaBoy x       >> return "Made lambda boy!"
-> evalCommand (Make x ty)     = make (x :<: ty) >> goIn >> return "Appended goal!"
+> evalCommand (Make x ty)     = make (x :<: ty)   >> goIn >> return "Appended goal!"
 > evalCommand (PiBoy x ty)    = piBoy (x :<: ty)  >> return "Made pi boy!"
 > evalCommand (Select x)      = select x          >> return "Selected."
 > evalCommand Ungawa          = ungawa            >> return "Ungawa!"

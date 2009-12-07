@@ -228,6 +228,10 @@ when it has finished.
 > withRoot f = getDevRoot >>= return . f
 
 
+> bquoteHere :: Tm {d, VV} REF -> ProofState (Tm {d, TT} REF)
+> bquoteHere tm = withRoot (bquote B0 tm)
+
+
 The |prettyHere| command christens a term in the current context, then passes it
 to the pretty-printer.
 
@@ -251,6 +255,12 @@ to the pretty-printer.
 >     me <- getMotherName
 >     return (showEntries aus me (aus <>> F0))
 
+> infoCheck :: (INTM :>: INTM) -> ProofState ()
+> infoCheck (ty :>: tm) = do
+>     Just () <- withRoot (check (SET :>: ty))
+>     Just () <- withRoot (check (evTm ty :>: tm))
+>     return ()
+
 > infoDump :: ProofState String
 > infoDump = do
 >     (es, dev) <- get
@@ -258,6 +268,12 @@ to the pretty-printer.
 
 > infoEval :: INTM -> ProofState INTM
 > infoEval tm = withRoot (bquote B0 (evTm tm))
+
+> infoInfer :: INTM -> ProofState TY
+> infoInfer (N tm) = do
+>     Just ty <- withRoot (infer tm)
+>     return ty
+> infoInfer _ = lift Nothing
 
 \subsection{Navigation Commands}
 
