@@ -60,6 +60,8 @@ clean:
 
 ifeq ($(MAKECMDGOALS),clean)
 else ifeq ($(MAKECMDGOALS),dvi)
+else ifeq ($(MAKECMDGOALS),Epitome.dvi)
+else ifeq ($(MAKECMDGOALS),Epitome.pdf)
 else
 include .depend
 endif
