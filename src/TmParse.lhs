@@ -1,4 +1,4 @@
-\section{TmParse}
+\section{Parsing Terms}
 
 %if False
 
@@ -27,7 +27,7 @@ The Cochon's terms parser eats structured Tokens, as defined in
 
 There is nothing fancy here. The code is simply using the applicative
 parser to translate the grammar of terms. The grammar was informally
-defined in Section~\section{sec:language}.
+defined in Section~\ref{sec:language}.
 
 \subsection{Matching |InTm|}
 
@@ -172,7 +172,7 @@ left, and will do so with |littleInTm|.
 >                        |)
 
 
-\subsection{Parsing Terms}
+\subsection{Odds and ends}
 
 The |termParse| function produces a parser for terms, given a context, by resolving
 in the context all the names in the |InTm String| produced by |bigInTm|.
