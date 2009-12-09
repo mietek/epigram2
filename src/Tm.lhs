@@ -4,15 +4,18 @@
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE TypeOperators, GADTs, KindSignatures, RankNTypes,
->     TypeSynonymInstances, FlexibleInstances, ScopedTypeVariables #-}
+>     TypeSynonymInstances, FlexibleInstances, FlexibleContexts, ScopedTypeVariables #-}
 
 > module Tm where
 
 > import Control.Applicative
+> import Control.Monad
+> import Control.Monad.Error
+> import Control.Monad.Identity
+> import Data.Either
 > import Data.Foldable hiding (foldl)
 > import Data.Traversable
-> import Data.Either
-> import Control.Monad
+
 > import MissingLibrary
 > import BwdFwd
 > import Features
@@ -198,9 +201,9 @@ is not clear now, it should become clear after the definition of
 > data Op = Op
 >   { opName  :: String
 >   , opArity :: Int
->   , opTy    :: MonadTrace m => (TY :>: t -> m (s :=>: VAL)) -> 
->                                [t] -> 
->                                m ([s :=>: VAL] , TY)
+>   , opTy    :: MonadError [String] m =>  (TY :>: t -> m (s :=>: VAL)) -> 
+>                                        [t] -> 
+>                                        m ([s :=>: VAL] , TY)
 >   , opRun   :: [VAL] -> Either NEU VAL
 >   }
 
@@ -567,8 +570,8 @@ appropriate fields of |Mangle| for each parameter, variable or binder encountere
 
 The |%%| operator applies a mangle that uses the identity functor.
 
-> (%%) :: Mangle I x y -> Tm {In, TT} x -> Tm {In, TT} y
-> m %% t = unI $ m % t
+> (%%) :: Mangle Identity x y -> Tm {In, TT} x -> Tm {In, TT} y
+> m %% t = runIdentity $ m % t
 
 
 %format $:$ = "\mathbin{\$\!:\!\$}"
@@ -586,7 +589,7 @@ Given a list |xs| of |String| parameter names, the |capture| function produces a
 that captures those parameters as de Brujin indexed variables.
 \question{Do we ever need to do this?}
 
-> capture :: Bwd String -> Mangle I String String
+> capture :: Bwd String -> Mangle Identity String String
 > capture xs = Mang
 >   {  mangP = \ x ies  -> (|(either P V (h xs x) $:$) ies|)
 >   ,  mangV = \ i ies  -> (|(V i $:$) ies|)
@@ -601,7 +604,7 @@ that captures those parameters as de Brujin indexed variables.
 The |under i y| mangle binds the variable with de Brujin index |i| to the parameter |y|
 and leaves the term otherwise unchanged.
 
-> under :: Int -> x -> Mangle I x x
+> under :: Int -> x -> Mangle Identity x x
 > under i y = Mang
 >   {  mangP = \ x ies -> (|(P x $:$) ies|)
 >   ,  mangV = \ j ies -> (|((if i == j then P y else V j) $:$) ies|)

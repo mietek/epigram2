@@ -191,7 +191,7 @@ Elim forms inherited from elsewhere
 >                    return ([ z :=>: zv
 >                            , ty :=>: tyv ]
 >                           , tyv)
->               opty _ _      = traceErr "naughtE: invalid arguments"
+>               opty _ _      = throwError' "naughtE: invalid arguments"
 >               oprun :: [VAL] -> Either NEU VAL
 >               oprun [N z,ty] = Left z
 

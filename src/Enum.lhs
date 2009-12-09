@@ -180,7 +180,7 @@ Equality rules:
 >                  return ([ e :=>: ev
 >                          , p :=>: pv]
 >                          , SET)
->         bOpTy _ _ = traceErr "branches: invalid arguments"
+>         bOpTy _ _ = throwError' "branches: invalid arguments"
 >         bOpRun :: [VAL] -> Either NEU VAL
 >         bOpRun [NILE , _] = Right UNIT
 >         bOpRun [CONSE t e' , p] = Right $ trustMe (typeBranches :>: tacBranches) $$ A t $$ A e' $$ A p

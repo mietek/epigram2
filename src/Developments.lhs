@@ -8,11 +8,12 @@
 
 > module Developments where
 
+> import Control.Applicative
+> import Control.Monad
+> import Control.Monad.Identity
 > import Data.Foldable
 > import Data.Maybe
 > import Data.Monoid
-> import Control.Monad
-> import Control.Applicative
 > import Data.Traversable
 
 > import BwdFwd
@@ -139,7 +140,7 @@ so that boys in the list of entries are represented by de Brujin indices.
 > (-|) :: Bwd Entry -> INTM -> INTM
 > es -| t = disMangle es 0 %% t
 >   where
->     disMangle :: Bwd Entry -> Int -> Mangle I REF REF
+>     disMangle :: Bwd Entry -> Int -> Mangle Identity REF REF
 >     disMangle ys i = Mang
 >       {  mangP = \ x ies -> (|(h ys x i $:$) ies|)
 >       ,  mangV = \ i ies -> (|(V i $:$) ies|)

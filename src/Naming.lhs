@@ -13,6 +13,7 @@
 
 > import Control.Applicative
 > import Control.Monad
+> import Control.Monad.Identity
 > import Data.Char
 > import Data.Foldable hiding (elem)
 > import Data.List
@@ -207,9 +208,9 @@ the name part of references, respectively.
 The business of christening is actually done by the following mangle, which
 does most of its work in the |mangleP| function. 
 
-> christener :: Bwd Entry -> Name -> Bwd String -> Mangle I REF String
+> christener :: Bwd Entry -> Name -> Bwd String -> Mangle Identity REF String
 > christener es me vs = Mang
->     {  mangP = \(target := _) as -> pure (mangleP es me vs target (unI as))
+>     {  mangP = \(target := _) as -> pure (mangleP es me vs target (runIdentity as))
 >     ,  mangV = \i _ -> pure (P (vs !. i))
 >     ,  mangB = \v -> christener es me (vs :< v)
 >     }
@@ -280,7 +281,7 @@ Just in case it is useful, here is a simple christener that assigns absolute nam
 > christenAbs :: INTM -> InTm String
 > christenAbs tm = christenerAbs B0 %% tm
 
-> christenerAbs :: Bwd String -> Mangle I REF String
+> christenerAbs :: Bwd String -> Mangle Identity REF String
 > christenerAbs vs = Mang
 >     {  mangP = \(name := _) as -> pure (P (showName name))
 >     ,  mangV = \i _ -> pure (P (vs !. i))

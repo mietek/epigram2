@@ -5,12 +5,13 @@
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE TypeOperators, GADTs, KindSignatures,
->     TypeSynonymInstances, FlexibleInstances, PatternGuards #-}
+>     TypeSynonymInstances, FlexibleInstances, FlexibleContexts, PatternGuards #-}
 
 > module Rules where
 
 > import Control.Applicative
 > import Control.Monad
+> import Control.Monad.Error
 
 > import Data.Foldable
 > import Data.Traversable
@@ -50,7 +51,7 @@ type-directed function |TY :>: t -> s|, which is equivalent to
 functions are fused into a single one, of type: |TY :>: t -> (s,VAL)|.
 To support the use of tactics, which can fail to produce a
 value, we extend this type to |TY :>: t -> m (s,VAL)| where |m| is a
-|MonadTrace|.
+|MonadError|.
 
 Hence, by defining an appropriate function |chev|, we can recover the
 previous definition of |canTy|. We can also do much more: intuitively,
@@ -58,14 +59,14 @@ we can write any type-directed function in term of |canTy|. That is,
 any function traversing the types derivation tree can be expressed
 using |canTy|.
 
-> canTy :: MonadTrace m => (TY :>: t -> m (s :=>: VAL)) -> (Can VAL :>: Can t) -> m (Can (s :=>: VAL))
+> canTy :: MonadError [String] m => (TY :>: t -> m (s :=>: VAL)) -> (Can VAL :>: Can t) -> m (Can (s :=>: VAL))
 > canTy chev (Set :>: Set)     = return Set
 > canTy chev (Set :>: Pi s t)  = do
 >   ssv@(s :=>: sv) <- chev (SET :>: s)
 >   ttv@(t :=>: tv) <- chev (ARR sv SET :>: t)
 >   return $ Pi ssv ttv
 > import <- CanTyRules
-> canTy  chev (ty :>: x)  = traceErr $ "canTy: the proposed value "
+> canTy  chev (ty :>: x)  = throwError' $ "canTy: the proposed value "
 >                                      ++ show (fmap (\x -> ".") x)
 >                                      ++ " is not of type " ++ show ty
 
@@ -80,14 +81,14 @@ it computes the type of the argument,
 ie. the eliminator, in |Elim (s :=>: VAL)| and the type of the result in
 |TY|.
 
-> elimTy :: MonadTrace m => (TY :>: t -> m (s :=>: VAL)) -> 
+> elimTy :: MonadError [String] m => (TY :>: t -> m (s :=>: VAL)) -> 
 >           (VAL :<: Can VAL) -> Elim t ->
 >           m (Elim (s :=>: VAL),TY)
 > elimTy chev (f :<: Pi s t) (A e) = do
 >   eev@(e :=>: ev) <- chev (s :>: e)
 >   return $ (A eev, t $$ A ev) 
 > import <- ElimTyRules
-> elimTy _  (v :<: t) e = traceErr $ "elimTy: failed to eliminate " ++ show v ++ 
+> elimTy _  (v :<: t) e = throwError' $ "elimTy: failed to eliminate " ++ show v ++ 
 >                                    " with " ++ (show $ fmap (\t -> ".") e)
 
 
@@ -145,7 +146,7 @@ of type |cty| and, more importantly, to evaluate |cty|. Then, it is
 simply a matter of quoting this |type :>: val| inside the canonical
 constructor, and returning the fully quoted term. The reason for the
 breeding of |Just| is that we are in the |Maybe| monad, and we really
-want to stay in there: |canTy| asks for a |MonadTrace|. Obviously, we
+want to stay in there: |canTy| asks for a |MonadError|. Obviously, we
 cannot fail in this code, but we have to be artificially
 cautious. Hence, this is |Just| a mess.
 

@@ -8,6 +8,7 @@
 > module DevLoad (devLoad) where
 
 > import Control.Monad
+> import Control.Monad.Error
 > import Control.Monad.Writer
 > import Control.Monad.State
 > import Control.Monad.Instances
@@ -88,7 +89,7 @@ up the proof state. The |devLoad| function takes care of this process.
 
 > devLoad :: [Token] -> ProofState ()
 > devLoad ts = case parse pModule ts of
->   Left pf -> traceErr ("Failed to parse development: " ++ show pf)
+>   Left pf -> throwError' $ "Failed to parse development: " ++ show pf
 >   Right (dls, cs) -> do
 >     ncs <- makeDev dls []
 >     doCommandsAt ncs

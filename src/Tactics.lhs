@@ -4,7 +4,8 @@
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE TypeOperators, GADTs, KindSignatures, RankNTypes,
->     TypeSynonymInstances, FlexibleInstances, ScopedTypeVariables #-}
+>     TypeSynonymInstances, FlexibleInstances, ScopedTypeVariables,
+>     MultiParamTypeClasses #-}
 
 > module Tactics (Tac,                         -- abstract Tactic
 >                 runTac,                      -- run tactics
@@ -18,8 +19,9 @@
 >                 trustMe                      -- build terms
 >                 ) where
 
-> import Control.Monad
 > import Control.Applicative
+> import Control.Monad
+> import Control.Monad.Error
 
 > import Data.List
 > import Data.Traversable
@@ -71,12 +73,10 @@ Then we have a monad:
 >                                x <- runTac x r t
 >                                runTac (f x) r t }
 >
-> instance MonadTrace Tac where
->     traceErr s = Tac { runTac = \_ _ -> Left [s] }
+> instance MonadError [String] Tac where
+>     throwError s = Tac { runTac = \_ _ -> Left s }
+>     catchError (Tac f) g = Tac { runTac = \r t -> either (\x -> runTac (g x) r t) Right (f r t) }
 
-|MonadTrace| is just a |MonadPlus| with a more friendly |mzero|: we
- have a |traceErr| instead which asks for a reason to give up. This is
- useful for tracing errors.
 
 \subsubsection{Going rooty}
 
@@ -158,7 +158,7 @@ When a tactic fails, it is good to know why. So, we provide this
 combinator to report a failure.
 
 > failTac :: String -> Tac x
-> failTac s = Tac { runTac = \_ _ -> Left [s] }
+> failTac = throwError'
 
 We are not entirely satisfied with this solution, so this will
 probably change (for the better) in future iterations. The problem
@@ -279,7 +279,7 @@ and its type |tv|.
 >           (v,tv) <- elimTy chev (x :<: t) etacX 
 >           let v' = fmap (\(_ :=>: x) -> x) v
 >           use (x $$ v' :<: tv)
->     _ -> traceErr $ "apply: cannot apply an elimination" ++ 
+>     _ -> failTac $ "apply: cannot apply an elimination" ++ 
 >                     " on non canonical type " ++ show t
 >     where chev (t :>: x) = do 
 >             v <- subgoal (t :>: x)
@@ -404,7 +404,7 @@ tactics, and get a typed tactics back:
 >               (e,t) <- elimTy chev (v :<: tv) etacx
 >               let e' = fmap (\(_ :=>: v) -> v) e
 >               return $ v $$ e' :<: t
->       _ -> traceErr $ "useTac: inferred type " ++
+>       _ -> failTac $ "useTac: inferred type " ++
 >                       show t ++ " is not a Constructor"
 >     where chev (t :>: x) = do
 >             v <- subgoal (t :>: x)
@@ -447,7 +447,7 @@ the expected |P x|, we rely on |switchOp|. The argument |ps| of
 >                          , return p
 >                          , cases
 >                          , use x done ] done
->       _ -> traceErr $ "switch: current goal is " ++
+>       _ -> failTac $ "switch: current goal is " ++
 >                        show t ++ " when a Pi (EnumT e) was expected"
 
 To build the result cases, we use the following |cases|
@@ -493,7 +493,7 @@ Here is the eliminator for Sigmas:
 >                          , return t
 >                          , tacF
 >                          , use x done ] done
->     _ -> traceErr $ "split: current goal is " ++
+>     _ -> failTac $ "split: current goal is " ++
 >                     show t ++ " but expected a Pi (Sigma . .) ."
 
 \pierre{I should tell a story above.}
@@ -512,7 +512,7 @@ Same thing here, for the |Mu| eliminator:
 >                          , return bp
 >                          , p
 >                          , use v done ] done
->     _ -> traceErr $ "foldDesc: current goal is " ++
+>     _ -> failTac $ "foldDesc: current goal is " ++
 >                     show t ++ " but expected a Pi (Mu .) ."
 >     
 

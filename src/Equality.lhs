@@ -151,7 +151,7 @@ With no computational behavior.
 >                            , y1 :=>: y1v
 >                            , t1 :=>: t1v ]
 >                           , PROP)
->                opty _  _             = traceErr "eqGreen: invalid arguments."
+>                opty _  _             = throwError' "eqGreen: invalid arguments."
 
 >   coe = Op { opName = "coe"
 >            , opArity = 4

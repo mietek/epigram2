@@ -7,6 +7,7 @@
 
 > import Control.Applicative
 > import Control.Monad
+> import Control.Monad.Error
 > import Control.Monad.State
 > import Data.Foldable
 > import Data.List
@@ -93,9 +94,6 @@ make |ProofState| an |Alternative|:
 > instance Alternative ProofState where
 >     empty = mzero
 >     (<|>) = mplus
-
-> instance MonadTrace ProofState where
->     traceErr  = lift . traceErr
 
 We provide various functions to get information from the proof state and store
 updated information, providing a friendlier interface than |get| and |put|.
@@ -277,7 +275,7 @@ to the pretty-printer.
 > infoInfer (N tm) = do
 >     Just ty <- withRoot (infer tm)
 >     return ty
-> infoInfer _ = traceErr "infoInfer: can only infer the type of neutral terms"
+> infoInfer _ = throwError' "infoInfer: can only infer the type of neutral terms"
 
 \subsection{Navigation Commands}
 
