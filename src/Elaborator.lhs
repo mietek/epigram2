@@ -95,6 +95,9 @@ make |ProofState| an |Alternative|:
 >     empty = mzero
 >     (<|>) = mplus
 
+
+\subsection{Getters and Setters}
+
 We provide various functions to get information from the proof state and store
 updated information, providing a friendlier interface than |get| and |put|.
 
@@ -220,6 +223,8 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     return l'
 
 
+\subsection{Proof State Technology}
+
 A |ProofState| is not |Rooty| because the semantics of the latter are not compatible
 with the caching of |Root|s in the proof context. However, it can provide the current
 |Root| to a function that requires it. Note that this function has no way to return
@@ -229,6 +234,8 @@ when it has finished.
 > withRoot :: (Root -> x) -> ProofState x
 > withRoot f = getDevRoot >>= return . f
 
+
+The |bquoteHere| command $\beta$-quotes a term using the current root.
 
 > bquoteHere :: Tm {d, VV} REF -> ProofState (Tm {d, TT} REF)
 > bquoteHere tm = withRoot (bquote B0 tm)
@@ -244,10 +251,13 @@ to the pretty-printer.
 >     return (show (pretty (christen aus me tm)))
 
 
+The |resolveHere| command resolves the relative names in a term.
+
 > resolveHere :: InTmRN -> ProofState INTM
 > resolveHere tm = do
 >     aus <- getAuncles
 >     resolve aus tm `catchMaybe` "resolveHere: could not resolve names in term"
+
 
 \subsection{Information Commands}
 
@@ -257,11 +267,14 @@ to the pretty-printer.
 >     me <- getMotherName
 >     return (showEntries aus me (aus <>> F0))
 
-> infoCheck :: (INTM :>: INTM) -> ProofState ()
+> infoCheck :: (INTM :>: INTM) -> ProofState Bool
 > infoCheck (ty :>: tm) = do
->     Just () <- withRoot (check (SET :>: ty))
->     Just () <- withRoot (check (evTm ty :>: tm))
->     return ()
+>     m <- withRoot (check (SET :>: ty))
+>     m `catchMaybe` "infoCheck: type is not a set."
+>     r <- withRoot (check (evTm ty :>: tm))
+>     case r of
+>         Just ()  -> return True
+>         Nothing  -> return False
 
 > infoDump :: ProofState String
 > infoDump = do
@@ -269,13 +282,21 @@ to the pretty-printer.
 >     return (foldMap ((++ "\n") . show) es ++ show dev)
 
 > infoEval :: INTM -> ProofState INTM
-> infoEval tm = withRoot (bquote B0 (evTm tm))
+> infoEval tm = do
+>     ty <- infoInfer tm
+>     ty' <- bquoteHere ty
+>     b <- infoCheck (ty' :>: tm)
+>     case b of
+>         True   -> withRoot (bquote B0 (evTm tm))
+>         False  -> throwError' "infoEval: term does not type-check."
 
 > infoInfer :: INTM -> ProofState TY
 > infoInfer (N tm) = do
->     Just ty <- withRoot (infer tm)
->     return ty
-> infoInfer _ = throwError' "infoInfer: can only infer the type of neutral terms"
+>     mty <- withRoot (infer tm)
+>     case mty of
+>         Just ty  -> return ty
+>         Nothing  -> throwError' "infoInfer: term does not type-check."
+> infoInfer _ = throwError' "infoInfer: can only infer the type of neutral terms."
 
 \subsection{Navigation Commands}
 
@@ -292,7 +313,7 @@ These commands fail (yielding |Nothing|) if they are impossible because the proo
 is not in the required form.
 
 > goIn :: ProofState ()
-> goIn = goInAcc F0 
+> goIn = goInAcc F0 `replaceError` "goIn: you can't go that way."
 >   where
 >     goInAcc :: Fwd Entry -> ProofState ()
 >     goInAcc cadets = do
@@ -302,15 +323,16 @@ is not in the required form.
 >             _ -> put (ls, (es, tip, root)) >> goInAcc (e :> cadets)
 
 > goOut :: ProofState ()
-> goOut = do
+> goOut = (do
 >     Layer elders mother mty cadets tip root <- removeLayer
 >     dev <- getDev
 >     putDev (elders :< E mother (lastName mother) (Girl LETG dev){- <>< cadets-} mty, tip, root)
 >     propagateNews [] cadets
 >     return ()
+>   ) `replaceError` "goOut: you can't go that way."
 
 > goUp :: ProofState ()
-> goUp = goUpAcc F0
+> goUp = goUpAcc F0 `replaceError` "goUp: you can't go that way."
 >   where
 >     goUpAcc :: Fwd Entry -> ProofState ()
 >     goUpAcc acc = do
@@ -324,7 +346,7 @@ is not in the required form.
 >             _ -> putLayer l{elders=es} >> goUpAcc (e :> acc)
 
 > goDown :: ProofState ()
-> goDown = goDownAcc B0
+> goDown = goDownAcc B0 `replaceError` "goDown: you can't go that way."
 >   where
 >     goDownAcc :: Bwd Entry -> ProofState ()
 >     goDownAcc acc = do
@@ -338,14 +360,15 @@ is not in the required form.
 
 > goTo :: Name -> ProofState ()
 > goTo [] = return ()
-> goTo (xn:xns) = seek xn >> goTo xns
->  where
->    seek :: (String, Int) -> ProofState ()
->    seek xn = (goUp <|> goIn) >> do
->      m := _ <- getMother
->      if xn == last m
->        then return ()
->        else removeDevEntry >> seek xn
+> goTo (xn:xns) = (seek xn >> goTo xns)
+>     `replaceError` ("goTo: could not find " ++ showName (xn:xns))
+>   where
+>     seek :: (String, Int) -> ProofState ()
+>     seek xn = (goUp <|> goIn) >> do
+>         m := _ <- getMother
+>         if xn == last m
+>             then return ()
+>             else removeDevEntry >> seek xn
 
 \subsection{Goal Search Commands}
 
@@ -360,7 +383,8 @@ fails, the whole operation fails.
 >     where try = test <|> (g *> try)
 
 The |much| operator runs its argument until it fails, then returns the state of
-its last success.
+its last success. It is very similar to |many|, except that it throws away the
+results.
 
 > much :: Alternative f => f () -> f ()
 > much f = (f *> much f) <|> pure ()
@@ -377,16 +401,17 @@ We can now compactly describe how to search the proof state for goals, by giving
 several alternatives for where to go next and continuing until a goal is reached.
 
 > prevStep :: ProofState ()
-> prevStep = (goUp >> much goIn) <|> goOut
+> prevStep = ((goUp >> much goIn) <|> goOut) `replaceError` "prevStep: no previous steps."
 >
 > prevGoal :: ProofState ()
-> prevGoal = prevStep `untilA` isGoal
+> prevGoal = (prevStep `untilA` isGoal) `replaceError` "prevGoal: no previous goals."
 >
 > nextStep :: ProofState ()
-> nextStep = (goIn >> much goUp) <|> goDown <|> (goOut `untilA` goDown)
+> nextStep = ((goIn >> much goUp) <|> goDown <|> (goOut `untilA` goDown))
+>                `replaceError` "nextStep: no more steps."
 >
 > nextGoal :: ProofState ()
-> nextGoal = nextStep `untilA` isGoal
+> nextGoal = (nextStep `untilA` isGoal) `replaceError` "nextGoal: no more goals."
 
 
 \subsection{Construction Commands}
@@ -395,7 +420,7 @@ The |apply| command checks if the last entry in the development is a girl $y$ wi
 $\Pi S T$ and if so, adds a goal of type $S$ and applies $y$ to it.
 
 > apply :: ProofState()
-> apply = do
+> apply = (do
 >     E ref@(name := k :<: (PI s t)) _ (Girl LETG _) _ <- getDevEntry
 >     root <- getDevRoot
 >     z <- make ("z" :<: bquote B0 s root)
@@ -403,47 +428,56 @@ $\Pi S T$ and if so, adds a goal of type $S$ and applies $y$ to it.
 >     goIn
 >     give (bquote B0 (pval ref $$ A (pval z)) root)
 >     return ()
+>   ) `replacePMF` "apply: last entry in the development must be a girl with a pi-type."
 
 The |done| command checks if the last entry in the development is a girl, and if so,
 fills in the goal with this entry.
 
 > done :: ProofState()
-> done = do
+> done = (do
 >     E ref _ (Girl LETG _) _ <- getDevEntry
 >     give (N (P ref))
+>  ) `replacePMF` "done: last entry in the development must be a girl."
 
 The |give| command checks the provided term has the goal type, and if so, fills in
 the goal and updates the reference.
 
 > give :: INTM -> ProofState ()
 > give tm = do
->     Unknown (tipTyTm :=>: tipTy) <- getDevTip
->     root <- getDevRoot
->     () <- (check (tipTy :>: tm) root) `catchMaybe` "give: term is not of correct type"
->     putDevTip (Defined tm (tipTyTm :=>: tipTy))
->     aus <- getGreatAuncles
->     sibs <- getDevEntries
->     let tm' = evTm (parBind aus sibs tm)
->     name := _ :<: ty <- getMother
->     let ref = name := DEFN tm' :<: ty
->     putMother ref
->     updateRef ref
->     goOut
+>     tip <- getDevTip
+>     case tip of         
+>         Unknown (tipTyTm :=>: tipTy) -> do
+>             root <- getDevRoot
+>             () <- (check (tipTy :>: tm) root)
+>                       `catchMaybe` "give: offered term is not of correct type."
+>             putDevTip (Defined tm (tipTyTm :=>: tipTy))
+>             aus <- getGreatAuncles
+>             sibs <- getDevEntries
+>             let tm' = evTm (parBind aus sibs tm)
+>             name := _ :<: ty <- getMother
+>             let ref = name := DEFN tm' :<: ty
+>             putMother ref
+>             updateRef ref
+>             goOut
+>         _  -> throwError' "give: only possible for incomplete goals."
 
 The |lambdaBoy| command checks that the current goal is a $\Pi$-type, and if so,
 appends a $\lambda$-abstraction with the appropriate type to the current development.
 
 > lambdaBoy :: String -> ProofState ()
 > lambdaBoy x = do
->     Unknown (pi :=>: PI s t) <- getDevTip
->     root <- getDevRoot
->     Root.freshRef (x :<: s)
->         (\ref r -> do
->            putDevEntry (E ref (lastName ref) (Boy LAMB) (bquote B0 s r))
->            let tipTyv = t $$ A (pval ref)
->            putDevTip (Unknown (bquote B0 tipTyv r :=>: tipTyv))
->            putDevRoot r
->          ) root
+>     tip <- getDevTip
+>     case tip of
+>         Unknown (pi :=>: PI s t) -> do
+>             root <- getDevRoot
+>             Root.freshRef (x :<: s) (\ref r -> do
+>                 putDevEntry (E ref (lastName ref) (Boy LAMB) (bquote B0 s r))
+>                 let tipTyv = t $$ A (pval ref)
+>                 putDevTip (Unknown (bquote B0 tipTyv r :=>: tipTyv))
+>                 putDevRoot r
+>               ) root
+>         Unknown _  -> throwError' "lambdaBoy: goal is not a pi-type."
+>         _          -> throwError' "lambdaBoy: only possible for incomplete goals."
 
 The |make| command adds a named goal of the given type to the bottom of the
 current development, after checking that the purported type is in fact a type.
@@ -452,7 +486,7 @@ current development, after checking that the purported type is in fact a type.
 > make (s:<:ty) = do
 >     root <- getDevRoot
 >     () <- check (SET :>: ty) root `catchMaybe` "make: supplied type is not a set"
->     let ty' = eval ty B0
+>     let ty' = evTm ty
 >     n <- withRoot (flip name s)
 >     let ref = n := HOLE :<: ty'
 >     putDevEntry (E ref (last n) (Girl LETG (B0, Unknown (ty :=>: ty'), room root s)) ty)
@@ -464,12 +498,17 @@ is also a set; if so, it appends a $\Pi$-abstraction to the current development.
 
 > piBoy :: (String :<: INTM) -> ProofState ()
 > piBoy (s:<:ty) = do
->     Unknown (_ :=>: SET) <- getDevTip     
->     root <- getDevRoot
->     () <- check (SET :>: ty) root `catchMaybe` "piBoy: supplied type is not a set"
->     let ty' = evTm ty
->     Root.freshRef (s :<: ty')
->         (\ref r -> putDevEntry (E ref (lastName ref) (Boy PIB) ty) >> putDevRoot r) root
+>     tip <- getDevTip
+>     case tip of
+>         Unknown (_ :=>: SET) -> do
+>             root <- getDevRoot
+>             () <- check (SET :>: ty) root `catchMaybe` "piBoy: supplied type is not a set."
+>             let ty' = evTm ty
+>             Root.freshRef (s :<: ty')
+>                 (\ref r ->  putDevEntry (E ref (lastName ref) (Boy PIB) ty)
+>                             >> putDevRoot r) root
+>         Unknown _  -> throwError' "piBoy: goal is not of type SET."
+>         _          -> throwError' "piBoy: only possible for incomplete goals."
 
 The |select| command takes a term representing a neutral parameter, makes a new goal of the
 same type, and fills it in with the parameter. \question{Is bquote really right here?}
@@ -480,11 +519,12 @@ same type, and fills it in with the parameter. \question{Is bquote really right 
 >     make (fst (last name) :<: bquote B0 ty root)
 >     goIn
 >     give tm
+> select _ = throwError' "select: term is not a parameter."
      
 The |ungawa| command looks for a truly obvious thing to do, and does it.
 
 > ungawa :: ProofState ()
-> ungawa = done <|> apply <|> lambdaBoy "ug"
+> ungawa = (done <|> apply <|> lambdaBoy "ug") `replaceError` "ungawa: no can do."
 
 
 

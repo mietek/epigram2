@@ -5,7 +5,7 @@
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE ScopedTypeVariables #-}
 
-> module PrettyPrint (pretty, prettyModule) where
+> module PrettyPrint (pretty, prettyDev, prettyModule) where
 
 > import Data.Foldable
 > import Data.List

@@ -38,41 +38,42 @@ Here we have a very basic command-driven interface to the proof state monad.
 > cochon :: ProofContext -> IO ()
 > cochon loc@(ls, dev) = do
 >     let Right me = evalStateT getMotherName loc
->     putStrLn (show (prettyModule (auncles loc) me dev))
+>     putStrLn (show ((if bwdNull ls then prettyModule else prettyDev) (auncles loc) me dev))
 >     putStr (showPrompt ls)
 >     hFlush stdout
 >     l <- getLine
 >     case parse tokenize l of 
->         Left pf ->  putStrLn ("Tokenize failure: " ++ describePFailure pf (: [])) 
+>         Left pf ->  putStrLn ("Tokenize failure: " ++ describePFailure pf id) 
 >                     >> cochon loc
 >         Right ts ->
 >           case parse pCommand ts of
->               Left pf ->  putStrLn ("Parse failure: " ++ describePFailure pf crushToken) 
+>               Left pf ->  putStrLn ("Parse failure: " ++ describePFailure pf (intercalate " " . map crushToken))
 >                           >> cochon loc
 >               Right Quit -> return ()
->               Right c -> case resolveCommand (auncles loc) c of
->                   Nothing -> putStrLn "Could not resolve names in command." >> cochon loc
->                   Just c' -> case runStateT (evalCommand c') loc of
->                       Right (s, loc') -> do
->                           putStrLn s 
->                           printChanges loc loc'
->                           cochon loc'
->                       Left ss ->  do
->                           putStrLn "I'm sorry, Dave. I'm afraid I can't do that."
->                           putStr (unlines ss)
->                           cochon loc
+>               Right c -> case runStateT (doCommand c) loc of
+>                   Right (s, loc') -> do
+>                       putStrLn s 
+>                       printChanges loc loc'
+>                       cochon loc'
+>                   Left ss ->  do
+>                       putStrLn "I'm sorry, Dave. I'm afraid I can't do that."
+>                       putStr (unlines ss)
+>                       cochon loc
 
-> describePFailure :: PFailure a -> (a -> String) -> String
+> describePFailure :: PFailure a -> ([a] -> String) -> String
 > describePFailure (PFailure (ts, fail)) f = (case fail of
 >     Abort        -> "parser aborted."
 >     EndOfStream  -> "end of stream."
 >     EndOfParser  -> "end of parser."
->     Expect t     -> "expected " ++ f t ++ "."
+>     Expect t     -> "expected " ++ f [t] ++ "."
 >   ) ++ (if length ts > 0
->        then ("\nSuccessfully parsed: " ++ intercalate " " (map f ts) ++ ".")
+>        then ("\nSuccessfully parsed: ``" ++ f ts ++ "''.")
 >        else "")
 
-> data NavC = InC | OutC | Up | Down | Top | Bottom | ModuleC | Prev | Next | First | Last
+> data NavC  =  InC | OutC
+>            |  Up | Down | Top | Bottom 
+>            |  ModuleC
+>            |  Prev | Next | First | Last
 >     deriving Show
 
 > data Command x  =  Apply
@@ -84,6 +85,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >                 |  Give x
 >                 |  Go NavC
 >                 |  Infer x
+>                 |  Jump x
 >                 |  Lambda String
 >                 |  Make String (Maybe x :<: x)
 >                 |  PiBoy String x
@@ -93,21 +95,22 @@ Here we have a very basic command-driven interface to the proof state monad.
 >     deriving Show
 
 > instance Traversable Command where
->     traverse f Apply        = (| Apply |)
->     traverse f Auncles      = (| Auncles |)
+>     traverse f Apply                = (| Apply |)
+>     traverse f Auncles              = (| Auncles |)
 >     traverse f (Check (x :>: y))    = (| Check (| (f x) :>: (f y) |) |)
->     traverse f DoneC        = (| DoneC |)
->     traverse f Dump         = (| Dump |)
->     traverse f (Eval x)     = (| Eval (f x) |)
->     traverse f (Give x)     = (| Give (f x) |)
->     traverse f (Go d)       = (| (Go d) |)
->     traverse f (Infer x)    = (| Infer (f x) |)
->     traverse f (Lambda s)   = (| (Lambda s) |)
->     traverse f (Make s (md :<: x))   = (| (Make s) (| (traverse f md) :<: (f x) |) |)
->     traverse f (PiBoy s x)  = (| (PiBoy s) (f x) |)
->     traverse f Quit         = (| Quit |)
->     traverse f (Select x)   = (| Select (f x) |)
->     traverse f Ungawa       = (| Ungawa |)
+>     traverse f DoneC                = (| DoneC |)
+>     traverse f Dump                 = (| Dump |)
+>     traverse f (Eval x)             = (| Eval (f x) |)
+>     traverse f (Give x)             = (| Give (f x) |)
+>     traverse f (Go d)               = (| (Go d) |)
+>     traverse f (Infer x)            = (| Infer (f x) |)
+>     traverse f (Jump x)             = (| Jump (f x) |)
+>     traverse f (Lambda s)           = (| (Lambda s) |)
+>     traverse f (Make s (md :<: x))  = (| (Make s) (| (traverse f md) :<: (f x) |) |)
+>     traverse f (PiBoy s x)          = (| (PiBoy s) (f x) |)
+>     traverse f Quit                 = (| Quit |)
+>     traverse f (Select x)           = (| Select (f x) |)
+>     traverse f Ungawa               = (| Ungawa |)
 
 > instance Functor Command where
 >     fmap = fmapDefault
@@ -132,6 +135,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >         "give"     -> (| Give bigInTm |)
 >         "in"       -> (| (Go InC) |)
 >         "infer"    -> (| Infer bigInTm |)
+>         "jump"     -> (| Jump (| N variableParse |) |)
 >         "lambda"   -> (| Lambda ident |)
 >         "last"     -> (| (Go Last) |)
 >         "make"     -> (| Make ident (%keyword ":"%) (| ~Nothing :<: bigInTm |)
@@ -143,7 +147,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >         "pi"       -> (| PiBoy ident (%keyword ":"%) bigInTm |)
 >         "prev"     -> (| (Go Prev) |)
 >         "quit"     -> (| Quit |)
->         "select"   -> (| Select bigInTm |)
+>         "select"   -> (| Select (| N variableParse |) |)
 >         "top"      -> (| (Go Top) |)
 >         "ungawa"   -> (| Ungawa |)
 >         "up"       -> (| (Go Up) |)
@@ -155,7 +159,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 > evalCommand :: Command INTM -> ProofState String
 > evalCommand Apply           = apply             >> return "Applied."
 > evalCommand Auncles         = infoAuncles
-> evalCommand (Check a)       = infoCheck a       >> return "Okay."
+> evalCommand (Check a)       = infoCheck a       >>= return .(\x -> if x then "Yes." else "No.")
 > evalCommand DoneC           = done              >> return "Done."
 > evalCommand Dump            = infoDump
 > evalCommand (Eval tm)       = infoEval tm       >>= prettyHere
@@ -164,14 +168,18 @@ Here we have a very basic command-driven interface to the proof state monad.
 > evalCommand (Go OutC)       = goOut             >> return "Going out..."
 > evalCommand (Go Up)         = goUp              >> return "Going up..."
 > evalCommand (Go Down)       = goDown            >> return "Going down..."
-> evalCommand (Go Top)        = much goUp         >> return "Going to top..."
-> evalCommand (Go Bottom)     = much goDown       >> return "Going to bottom..."
-> evalCommand (Go ModuleC)    = much goOut        >> return "Going to module..."
+> evalCommand (Go Top)        = many goUp         >> return "Going to top..."
+> evalCommand (Go Bottom)     = many goDown       >> return "Going to bottom..."
+> evalCommand (Go ModuleC)    = many goOut        >> return "Going to module..."
 > evalCommand (Go Prev)       = prevGoal          >> return "Searching for previous goal..."
 > evalCommand (Go Next)       = nextGoal          >> return "Searching for next goal..."
-> evalCommand (Go First)      = much prevGoal     >> return "Searching for first goal..."
-> evalCommand (Go Last)       = much nextGoal     >> return "Searching for last goal..."
+> evalCommand (Go First)      = some prevGoal     >> return "Searching for first goal..."
+> evalCommand (Go Last)       = some nextGoal     >> return "Searching for last goal..."
 > evalCommand (Infer tm)      = infoInfer tm      >>= bquoteHere >>= prettyHere
+> evalCommand (Jump (N (P (n := _)))) = do
+>     much goOut
+>     goTo n
+>     return ("Going to " ++ showName n ++ "...")
 > evalCommand (Lambda x)      = lambdaBoy x       >> return "Made lambda boy!"
 > evalCommand (Make x (mtm :<: ty)) = do
 >     make (x :<: ty)
@@ -186,7 +194,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 > doCommand :: Command InTmRN -> ProofState String
 > doCommand c = do
 >     aus <- getAuncles
->     c' <- resolveCommand aus c `catchMaybe` ("doCommand: could not resolve command " ++ show c)
+>     c' <- resolveCommand aus c `catchMaybe` "doCommand: could not resolve names in command."
 >     evalCommand c'
 
 > doCommands :: [Command InTmRN] -> ProofState [String]

@@ -11,7 +11,9 @@
 > import Control.Monad.Error
 > import Control.Monad.Identity
 > import Control.Monad.State
+
 > import Data.Foldable
+> import Data.List
 > import Data.Monoid
 
 %endif
@@ -31,9 +33,19 @@
 > catchMaybe (Just x)  _ = return x
 > catchMaybe Nothing   s = throwError [s]
 
-> throwError' :: MonadError [e] m => e -> m x
+> throwError' :: MonadError [e] m => e -> m a
 > throwError' e = throwError [e]
 
+> replaceError :: MonadError [e] m => m a -> e -> m a
+> replaceError c e = catchError c (\x -> throwError' e)
+
+> replacePMF :: MonadError [String] m => m a -> String -> m a
+> replacePMF c s = catchError c f
+>   where
+>     f (x:xs) =  if "Pattern match failure" `isPrefixOf` x
+>                 then throwError' s
+>                 else throwError (x:xs)
+>     f [] = throwError []
 
 \subsection{Missing Applicatives}
 
