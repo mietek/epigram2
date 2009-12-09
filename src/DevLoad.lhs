@@ -88,7 +88,7 @@ up the proof state. The |devLoad| function takes care of this process.
 
 > devLoad :: [Token] -> ProofState ()
 > devLoad ts = case parse pModule ts of
->   Left _ -> lift Nothing
+>   Left pf -> traceErr ("Failed to parse development: " ++ show pf)
 >   Right (dls, cs) -> do
 >     ncs <- makeDev dls []
 >     doCommandsAt ncs

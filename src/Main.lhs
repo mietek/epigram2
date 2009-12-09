@@ -69,8 +69,8 @@ This was the old behaviour:
 >              Left e -> putStrLn ("Failed to tokenize: " ++ show e)
 >              Right ts ->
 >                case execStateT (devLoad ts) emptyContext of
->                  Nothing -> putStrLn "Failed to load development"
->                  Just (B0, dev) -> do
+>                  Left ss -> putStrLn ("Failed to load development: " ++ unlines ss)
+>                  Right (B0, dev) -> do
 
 Pull out the definitions, and, if the -o flag has been used, output an executable
 which evaluates the last definition in the development.             

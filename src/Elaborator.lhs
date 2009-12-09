@@ -81,7 +81,7 @@ are currently in scope.
 The proof state monad provides access to the |ProofContext| as in a |State| monad,
 but with the possibility of command failure represented by |Maybe|. 
 
-> type ProofState = StateT ProofContext Maybe
+> type ProofState = StateT ProofContext (Either [String])
 
 Handily, |Maybe| is a |MonadPlus|, and |StateT| preserves this, so we can easily
 make |ProofState| an |Alternative|:
@@ -93,6 +93,9 @@ make |ProofState| an |Alternative|:
 > instance Alternative ProofState where
 >     empty = mzero
 >     (<|>) = mplus
+
+> instance MonadTrace ProofState where
+>     traceErr  = lift . traceErr
 
 We provide various functions to get information from the proof state and store
 updated information, providing a friendlier interface than |get| and |put|.
@@ -246,7 +249,7 @@ to the pretty-printer.
 > resolveHere :: InTmRN -> ProofState INTM
 > resolveHere tm = do
 >     aus <- getAuncles
->     lift (resolve aus tm)
+>     resolve aus tm `catchMaybe` "resolveHere: could not resolve names in term"
 
 \subsection{Information Commands}
 
@@ -274,7 +277,7 @@ to the pretty-printer.
 > infoInfer (N tm) = do
 >     Just ty <- withRoot (infer tm)
 >     return ty
-> infoInfer _ = lift Nothing
+> infoInfer _ = traceErr "infoInfer: can only infer the type of neutral terms"
 
 \subsection{Navigation Commands}
 
@@ -418,7 +421,7 @@ the goal and updates the reference.
 > give tm = do
 >     Unknown (tipTyTm :=>: tipTy) <- getDevTip
 >     root <- getDevRoot
->     () <- lift (check (tipTy :>: tm) root)
+>     () <- (check (tipTy :>: tm) root) `catchMaybe` "give: term is not of correct type"
 >     putDevTip (Defined tm (tipTyTm :=>: tipTy))
 >     aus <- getGreatAuncles
 >     sibs <- getDevEntries
@@ -450,7 +453,7 @@ current development, after checking that the purported type is in fact a type.
 > make :: (String :<: INTM) -> ProofState REF
 > make (s:<:ty) = do
 >     root <- getDevRoot
->     () <- lift (check (SET :>: ty) root)
+>     () <- check (SET :>: ty) root `catchMaybe` "make: supplied type is not a set"
 >     let ty' = eval ty B0
 >     n <- withRoot (flip name s)
 >     let ref = n := HOLE :<: ty'
@@ -465,7 +468,7 @@ is also a set; if so, it appends a $\Pi$-abstraction to the current development.
 > piBoy (s:<:ty) = do
 >     Unknown (_ :=>: SET) <- getDevTip     
 >     root <- getDevRoot
->     () <- lift (check (SET :>: ty) root)
+>     () <- check (SET :>: ty) root `catchMaybe` "piBoy: supplied type is not a set"
 >     let ty' = evTm ty
 >     Root.freshRef (s :<: ty')
 >         (\ref r -> putDevEntry (E ref (lastName ref) (Boy PIB) ty) >> putDevRoot r) root

@@ -15,6 +15,7 @@ represent extents numerically.
 
 > import Control.Applicative
 > import Control.Monad
+> import Control.Monad.Error
 > import Control.Monad.State
 
 > import MissingLibrary
@@ -40,7 +41,7 @@ tokens |t| to:
     \end{itemize}
 \end{itemize}
 
-> type PFailure t = ([t], PError t)
+> newtype PFailure t = PFailure ([t], PError t) deriving Show
 > data PError t = Abort
 >               | EndOfStream
 >               | EndOfParser
@@ -55,7 +56,7 @@ tokens. In all other cases, something went wrong.
 > parse :: Parsley t x -> [t] -> Either (PFailure t) x
 > parse (Parsley p) ts = case p ts of
 >   Right (_, x, []) -> Right x
->   Right (ts, _, cts) -> Left (ts, EndOfParser)
+>   Right (ts, _, cts) -> Left (PFailure (ts, EndOfParser))
 >   Left e -> Left e
 
 \subsection{Structure}
@@ -77,13 +78,17 @@ It's a |Monad| and all that.
 >   (<*>)  = ap
 >
 > instance Alternative (Parsley t) where
->   empty = Parsley $ \ _ -> Left ([], Abort)
+>   empty = Parsley $ \ _ -> Left noMsg
 >   p <|> q = Parsley $ \ ts -> 
 >             either (\_ -> runParsley q ts) Right (runParsley p ts)
 >
 > instance MonadPlus (Parsley t) where
 >   mzero  = empty
 >   mplus  = (<|>)
+
+
+> instance Error (PFailure t) where
+>   noMsg = PFailure ([], Abort)
 
 \subsection{Low-level combinators}
 
@@ -92,7 +97,7 @@ end of the token stream.
 
 > nextToken :: Parsley t t
 > nextToken = Parsley $ \ ts -> case ts of
->   []        -> Left ([], EndOfStream)
+>   []        -> Left (PFailure ([], EndOfStream))
 >   (t : ts)  -> Right ([t], t, ts)
 
 You can consume everything! This always succeed.

@@ -37,27 +37,40 @@ Here we have a very basic command-driven interface to the proof state monad.
 
 > cochon :: ProofContext -> IO ()
 > cochon loc@(ls, dev) = do
->     let Just me = evalStateT getMotherName loc
+>     let Right me = evalStateT getMotherName loc
 >     putStrLn (show (prettyModule (auncles loc) me dev))
 >     putStr (showPrompt ls)
 >     hFlush stdout
 >     l <- getLine
 >     case parse tokenize l of 
->         Left _ -> putStrLn "No cookie for you!" >> cochon loc
+>         Left pf ->  putStrLn ("Tokenize failure: " ++ describePFailure pf (: [])) 
+>                     >> cochon loc
 >         Right ts ->
 >           case parse pCommand ts of
->               Left _ -> putStrLn "I don't understand!" >> cochon loc
+>               Left pf ->  putStrLn ("Parse failure: " ++ describePFailure pf crushToken) 
+>                           >> cochon loc
 >               Right Quit -> return ()
 >               Right c -> case resolveCommand (auncles loc) c of
->                   Nothing -> putStrLn "I still don't understand!" >> cochon loc
+>                   Nothing -> putStrLn "Could not resolve names in command." >> cochon loc
 >                   Just c' -> case runStateT (evalCommand c') loc of
->                       Just (s, loc') -> do
+>                       Right (s, loc') -> do
 >                           putStrLn s 
 >                           printChanges loc loc'
 >                           cochon loc'
->                       Nothing ->  do
+>                       Left ss ->  do
 >                           putStrLn "I'm sorry, Dave. I'm afraid I can't do that."
+>                           putStr (unlines ss)
 >                           cochon loc
+
+> describePFailure :: PFailure a -> (a -> String) -> String
+> describePFailure (PFailure (ts, fail)) f = (case fail of
+>     Abort        -> "parser aborted."
+>     EndOfStream  -> "end of stream."
+>     EndOfParser  -> "end of parser."
+>     Expect t     -> "expected " ++ f t ++ "."
+>   ) ++ (if length ts > 0
+>        then ("\nSuccessfully parsed: " ++ intercalate " " (map f ts) ++ ".")
+>        else "")
 
 > data NavC = InC | OutC | Up | Down | Top | Bottom | ModuleC | Prev | Next | First | Last
 >     deriving Show
@@ -173,9 +186,8 @@ Here we have a very basic command-driven interface to the proof state monad.
 > doCommand :: Command InTmRN -> ProofState String
 > doCommand c = do
 >     aus <- getAuncles
->     case resolveCommand aus c of
->         Nothing -> lift Nothing
->         Just c' -> evalCommand c'
+>     c' <- resolveCommand aus c `catchMaybe` ("doCommand: could not resolve command " ++ show c)
+>     evalCommand c'
 
 > doCommands :: [Command InTmRN] -> ProofState [String]
 > doCommands cs = sequenceA (map doCommand cs)
@@ -190,8 +202,8 @@ Here we have a very basic command-driven interface to the proof state monad.
 
 > printChanges :: ProofContext -> ProofContext -> IO ()
 > printChanges from to = do
->     let Just as = evalStateT getAuncles from
->         Just bs = evalStateT getAuncles to
+>     let Right as = evalStateT getAuncles from
+>         Right bs = evalStateT getAuncles to
 >     let (lost, gained)  = diff (as <>> F0) (bs <>> F0)
 >     if lost /= F0
 >         then putStrLn ("Left scope: " ++ showEntriesAbs lost )
