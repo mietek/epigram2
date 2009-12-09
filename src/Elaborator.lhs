@@ -76,6 +76,7 @@ are currently in scope.
 
 
 \section{Proof State Monad}
+\label{sec:proofStateMonad}
 
 The proof state monad provides access to the |ProofContext| as in a |State| monad,
 but with the possibility of command failure represented by |Maybe|. 
@@ -334,6 +335,16 @@ is not in the required form.
 >                               mother=newRef, motherTy=newTy, cadets=es}
 >             _ -> putLayer l{cadets=es} >> goDownAcc (acc :< e)
 
+> goTo :: Name -> ProofState ()
+> goTo [] = return ()
+> goTo (xn:xns) = seek xn >> goTo xns
+>  where
+>    seek :: (String, Int) -> ProofState ()
+>    seek xn = (goUp <|> goIn) >> do
+>      m := _ <- getMother
+>      if xn == last m
+>        then return ()
+>        else removeDevEntry >> seek xn
 
 \subsection{Goal Search Commands}
 

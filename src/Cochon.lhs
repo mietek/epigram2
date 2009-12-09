@@ -180,6 +180,9 @@ Here we have a very basic command-driven interface to the proof state monad.
 > doCommands :: [Command InTmRN] -> ProofState [String]
 > doCommands cs = sequenceA (map doCommand cs)
 
+> doCommandsAt :: [(Name, [Command InTmRN])] -> ProofState ()
+> doCommandsAt [] = return ()
+> doCommandsAt ((n, cs):ncs) = goTo n >> doCommands cs >> doCommandsAt ncs
 
 > showPrompt :: Bwd Layer -> String
 > showPrompt (_ :< Layer _ (n := _) _ _ _ _)  = showName n ++ " > "

@@ -32,15 +32,21 @@
 
 %endif
 
+
+\subsection{Parsing}
+
+To parse a development, we represent it as a list of |DevLine|s, each of
+which corresponds to a |Boy| or |Girl| entry and stores enough information
+to reconstruct it. Note that at this stage, we simply tag each girl with
+a list of commands to execute later.
+
 > data DevLine
 >   =  DLBoy BoyKind String InTmRN
->   |  DLGirl String [DevLine] (Maybe InTmRN :<: InTmRN)
->          [Command InTmRN]
+>   |  DLGirl String [DevLine] (Maybe InTmRN :<: InTmRN) [Command InTmRN]
 >      deriving Show
 
-
-A module has many girls in square brackets, followed by a semicolon-separated
-list of commands.
+A module may have a list of girls in square brackets, followed by an optional
+semicolon-separated list of commands.
 
 > pModule :: Parsley Token ([DevLine], [Command InTmRN])
 > pModule = (| pTopDevLines, (pSep (keyword ";") pCommand) |)
@@ -48,6 +54,9 @@ list of commands.
 >     pTopDevLines :: Parsley Token [DevLine]
 >     pTopDevLines =  bracket Square (many pGirl) <|> pure []
 
+A girl is an identifier, followed by a list of children (or the \verb!:=! symbol if
+there are none), a definition (which may be \verb!?!), and optionally a list of commands
+in \verb![| |]! brackets.
 
 > pGirl :: Parsley Token DevLine
 > pGirl = (| DLGirl ident pLines pDefn pCommandSuffix (%keyword ";"%) |)
@@ -63,36 +72,58 @@ list of commands.
 >     pCommandSuffix :: Parsley Token [Command InTmRN]
 >     pCommandSuffix = bracket (SquareB "") (pSep (keyword ";") pCommand) <|> pure []
 
+A boy is a $\lambda$-abstraction (represented by \verb!\ x : T ->!) or a $\Pi$-abstraction
+(represented by \verb!(x : S) ->!). 
+
 > pBoy :: Parsley Token DevLine
 > pBoy =  (| (%keyword "\\"%) (DLBoy LAMB) ident (%keyword ":"%) bigInTm (%keyword "->"%) |)
 >         <|> (bracket Round (| (DLBoy PIB) ident (%keyword ":"%) bigInTm |)) <* keyword "->"
 
 
-> makeDev :: [DevLine] -> ProofState ()
-> makeDev [] = return ()
-> makeDev (l:ls) = makeEntry l >> makeDev ls
+\subsection{Construction}
 
-> makeEntry :: DevLine -> ProofState ()
-> makeEntry (DLGirl x kids (mtipTm :<: tipTys) commands) = do
+Once we have parsed a list of |DevLine|s, we need to construct a |Dev| from them.
+The idea is to use commands defined in Section~\ref{sec:proofStateMonad} to build
+up the proof state. The |devLoad| function takes care of this process.
+
+> devLoad :: [Token] -> ProofState ()
+> devLoad ts = case parse pModule ts of
+>   Left _ -> lift Nothing
+>   Right (dls, cs) -> do
+>     ncs <- makeDev dls []
+>     doCommandsAt ncs
+>     doCommands cs
+>     much goOut
+
+The |makeDev| function updates the proof state to represent the given list of |DevLine|s,
+accumulating pairs of names and command lists along the way.
+
+> makeDev :: [DevLine] -> [(Name, [Command InTmRN])] -> ProofState [(Name, [Command InTmRN])]
+> makeDev []      ncs = return ncs
+> makeDev (l:ls)  ncs = makeEntry l ncs >>= makeDev ls
+
+> makeEntry :: DevLine -> [(Name, [Command InTmRN])] -> ProofState [(Name, [Command InTmRN])]
+> makeEntry (DLGirl x kids (mtipTm :<: tipTys) commands) ncs = do
 >     n <- withRoot (flip name x)
 >     let ref = n := HOLE :<: undefined
 >     root <- getDevRoot
 >     putDevEntry (E ref (last n) (Girl LETG (B0, undefined, room root x)) undefined)
 >     putDevRoot (roos root)
 >     goIn
->     makeDev kids     
+>     ncs' <- makeDev kids ncs     
 >     tipTy <- resolveHere tipTys 
 >     kids' <- getDevEntries
 >     let goalTy = inferGoalType tipTy kids'
 >     goOut
 >     Just (E _ _ (Girl LETG (es, _, root')) _) <- removeDevEntry
->     putDevEntry (E (n := HOLE :<: evTm goalTy) (last n) (Girl LETG (es, Unknown (tipTy :=>: evTm tipTy), root')) goalTy)
->     
+>     putDevEntry (E (n := HOLE :<: evTm goalTy) (last n) 
+>                    (Girl LETG (es, Unknown (tipTy :=>: evTm tipTy), root')) goalTy)
 >     case mtipTm of
 >         Nothing -> return ()
 >         Just tm -> goIn >> resolveHere tm >>= give
+>     return ((n, commands):ncs')
 
-> makeEntry (DLBoy LAMB x tys) = do
+> makeEntry (DLBoy LAMB x tys) ncs = do
 >     ty <- resolveHere tys
 >     Just () <- withRoot (check (SET :>: ty))     
 >     root <- getDevRoot
@@ -101,8 +132,9 @@ list of commands.
 >            putDevEntry (E ref (lastName ref) (Boy LAMB) ty)
 >            putDevRoot r
 >          ) root
+>     return ncs
 
-> makeEntry (DLBoy PIB x tys) = do 
+> makeEntry (DLBoy PIB x tys) ncs = do 
 >     ty <- resolveHere tys
 >     Just () <- withRoot (check (SET :>: ty))
 >     root <- getDevRoot
@@ -111,15 +143,13 @@ list of commands.
 >            putDevEntry (E ref (lastName ref) (Boy PIB) ty)
 >            putDevRoot r
 >          ) root
+>     return ncs
 
+The |inferGoalType| function takes a tip type and list of children, and infers the
+goal type by abstracting over the boys.
 
 > inferGoalType :: INTM -> Bwd Entry -> INTM
 > inferGoalType ty B0 = ty
 > inferGoalType ty (es' :< E _ _ (Girl _ _) _)      = inferGoalType ty es'
 > inferGoalType ty (es' :< E _ (x,_) (Boy LAMB) s)  = inferGoalType (PI s (L (x :. ty))) es'
 > inferGoalType ty (es' :< E _ (x,_) (Boy PIB) s)   = inferGoalType SET es'
-
-> devLoad :: [Token] -> ProofState ()
-> devLoad ts = case parse pModule ts of
->   Left _ -> lift Nothing
->   Right (dls, cs) -> makeDev dls >> doCommands cs >> much goOut

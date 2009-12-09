@@ -133,6 +133,7 @@ As we are at it, we can test for word equality, that is build a parser
 matching a given word:
 
 > wordEq :: String -> Parsley Char ()
+> wordEq "" = pure ()
 > wordEq word = pFilter filter parseWord
 >     where filter s | s == word = Just () 
 >                    | otherwise = Nothing
@@ -199,13 +200,13 @@ opening bracket with the one of the closing bracket.
 >      (|id tokenize (%parseCloseBracket bra %) |) |)
 >     where parseOpenBracket :: Parsley Char Bracket
 >           parseOpenBracket = (|id (% tokenEq '(' %)
->                                     (|RoundB parseWord (% tokenEq '|' %)
+>                                     (|RoundB possibleWord (% tokenEq '|' %)
 >                                      |Round (% spaces %)|)
 >                               |id (% tokenEq '[' %)
->                                     (|SquareB parseWord (% tokenEq '|' %)
+>                                     (|SquareB possibleWord (% tokenEq '|' %)
 >                                      |Square (% spaces %)|)
 >                               |id (% tokenEq '{' %)
->                                     (|CurlyB parseWord (% tokenEq '|' %)
+>                                     (|CurlyB possibleWord (% tokenEq '|' %)
 >                                      |Curly (% spaces %)|)
 >                               |)                                                        
 >           parseCloseBracket :: Bracket -> Parsley Char ()
@@ -219,6 +220,8 @@ opening bracket with the one of the closing bracket.
 >           matchBracketB s bra = (|id ~ () (% tokenEq '|' %) 
 >                                           (% wordEq s %) 
 >                                           (% tokenEq bra %) |)
+>
+>           possibleWord = parseWord <|> pure ""
 
 \subsection{Abstracting tokens}
 

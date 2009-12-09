@@ -27,6 +27,8 @@
 >         , "( * :- # :- # )"           -- sigma
 >         , "( * )"                     -- grouping
 >         , "((*))"                     -- grouping
+>         , "[| fancy |]"               -- empty fancy brackets
+>         , "[foo| bar |foo]"           -- non-empty fancy brackets
 >         ]
 
 > main = 
