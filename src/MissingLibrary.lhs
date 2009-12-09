@@ -40,15 +40,6 @@
 > instance Error x => Applicative (Either x) where
 >   pure = return
 >   (<*>) = ap
-> {-instance Monad (Either e) where
->     return = Right
->     x >>= f = either Left f x-}
-
-> {-instance Monoid e => MonadPlus (Either e) where
->     mzero = Left mempty
->     Right x `mplus` _ = Right x
->     _ `mplus` Right x = Right x  
->     Left as `mplus` Left bs = Left (as `mappend` bs) -}
 
 > instance Applicative (State s) where
 >   pure = return
