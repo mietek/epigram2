@@ -156,13 +156,10 @@ Here we have a very basic command-driven interface to the proof state monad.
 >         "up"       -> (| (Go Up) |)
 >         _          -> empty
 
-> resolveCommand :: Bwd Entry -> Command InTmRN -> Maybe (Command INTM)
-> resolveCommand es = traverse (resolve es)
-
 > evalCommand :: Command INTM -> ProofState String
 > evalCommand Apply           = apply             >> return "Applied."
 > evalCommand Auncles         = infoAuncles
-> evalCommand (Check a)       = infoCheck a       >>= return .(\x -> if x then "Yes." else "No.")
+> evalCommand (Check a)       = infoCheck a       >> return "Okay."
 > evalCommand DoneC           = done              >> return "Done."
 > evalCommand Dump            = infoDump
 > evalCommand (Eval tm)       = infoEval tm       >>= prettyHere
@@ -198,7 +195,8 @@ Here we have a very basic command-driven interface to the proof state monad.
 > doCommand :: Command InTmRN -> ProofState String
 > doCommand c = do
 >     aus <- getAuncles
->     c' <- resolveCommand aus c `catchMaybe` "doCommand: could not resolve names in command."
+>     c' <- traverse (resolve aus) c
+>               `catchMaybe` "doCommand: could not resolve names in command."
 >     evalCommand c'
 
 > doCommands :: [Command InTmRN] -> ProofState [String]

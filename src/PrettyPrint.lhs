@@ -98,6 +98,7 @@ to allow extra canonical terms and eliminators to be pretty-printed.
 > pretty (L s)          = prettyScope s
 > pretty (C c)          = prettyCan c
 > pretty (N n)          = pretty n
+> pretty (Q x)          = text ("? " ++ x)
 > pretty (P x)          = text x
 > pretty (V i)          = char 'V' <> int i
 > pretty (op :@ vs)     = parens (text (opName op) 

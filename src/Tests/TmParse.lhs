@@ -93,6 +93,8 @@
 >         , "2 + x"                     -- Nat
 >         , "( * )"                     -- grouping
 >         , "((*))"                     -- grouping
+>         , "? a"                       -- hole
+>         , "(? a : ? b) -> ? c"        -- more holes
 >         ]
 
 

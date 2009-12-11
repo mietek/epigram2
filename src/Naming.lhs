@@ -70,7 +70,10 @@ The |showEntriesAbs| function works similarly, but uses absolute names instead o
 christening them.
 
 > showEntriesAbs :: Foldable f => f Entry -> String
-> showEntriesAbs = intercalate ", " . foldMap (\(E (n := _) _ _ _) -> [showName n])
+> showEntriesAbs = intercalate ", " . foldMap f
+>   where
+>     f (E (n := _) _ _ _) = [showName n]
+>     f (R nb) = [show nb]
 
 
 \subsection{Resolving Local Longnames}

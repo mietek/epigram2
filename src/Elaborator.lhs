@@ -281,14 +281,11 @@ The |resolveHere| command resolves the relative names in a term.
 >     me <- getMotherName
 >     return (showEntries aus me (aus <>> F0))
 
-> infoCheck :: (INTM :>: INTM) -> ProofState Bool
+> infoCheck :: (INDTM :>: INDTM) -> ProofState ()
 > infoCheck (ty :>: tm) = do
->     m <- withRoot (check (SET :>: ty))
->     m `catchMaybe` "infoCheck: type is not a set."
->     r <- withRoot (check (evTm ty :>: tm))
->     case r of
->         Just ()  -> return True
->         Nothing  -> return False
+>     ty' :=>: tyv <- elaborate (SET :>: ty)
+>     tm' :=>: tmv <- elaborate (tyv :>: tm)
+>     return ()
 
 > infoDump :: ProofState String
 > infoDump = do
@@ -296,21 +293,16 @@ The |resolveHere| command resolves the relative names in a term.
 >     return (foldMap ((++ "\n") . show) es ++ show dev)
 
 > infoEval :: INTM -> ProofState INTM
-> infoEval tm = do
->     ty <- infoInfer tm
->     ty' <- bquoteHere ty
->     b <- infoCheck (ty' :>: tm)
->     case b of
->         True   -> withRoot (bquote B0 (evTm tm))
->         False  -> throwError' "infoEval: term does not type-check."
+> infoEval (N tm) = do
+>     _ :>: tm' <- elabInfer tm
+>     return (N tm')
+> infoEval _ = throwError' "infoEval: can only evaluate neutral terms."
 
 > infoInfer :: INTM -> ProofState TY
-> infoInfer (N tm) = do
->     mty <- withRoot (infer tm)
->     case mty of
->         Just ty  -> return ty
->         Nothing  -> throwError' "infoInfer: term does not type-check."
-> infoInfer _ = throwError' "infoInfer: can only infer the type of neutral terms."
+> infoInfer (N tm)  = do
+>     ty :>: _ <- elabInfer tm
+>     return ty
+> infoInfer _       = throwError' "infoInfer: can only infer the type of neutral terms."
 
 
 \subsection{Navigation Commands}
@@ -439,9 +431,9 @@ $\Pi S T$ and if so, adds a goal of type $S$ and applies $y$ to it.
 >     E ref@(name := k :<: (PI s t)) _ (Girl LETG _) _ <- getDevEntry
 >     root <- getDevRoot
 >     z <- make ("z" :<: bquote B0 s root)
->     make ("w" :<: bquote B0 (t $$ A (pval z)) root)
+>     make ("w" :<: bquote B0 (t $$ A s) root)
 >     goIn
->     give (bquote B0 (pval ref $$ A (pval z)) root)
+>     give (bquote B0 (pval ref $$ A s) root)
 >     return ()
 >   ) `replacePMF` "apply: last entry in the development must be a girl with a pi-type."
 
@@ -457,20 +449,19 @@ fills in the goal with this entry.
 The |give| command checks the provided term has the goal type, and if so, fills in
 the goal and updates the reference.
 
-> give :: INTM -> ProofState ()
+> give :: INDTM -> ProofState ()
+> give (Q "") = return ()
 > give tm = do
 >     tip <- getDevTip
 >     case tip of         
 >         Unknown (tipTyTm :=>: tipTy) -> do
->             root <- getDevRoot
->             () <- (check (tipTy :>: tm) root)
->                       `catchMaybe` "give: offered term is not of correct type."
->             putDevTip (Defined tm (tipTyTm :=>: tipTy))
+>             (tm' :=>: tv) <- elaborate (tipTy :>: tm)
+>             putDevTip (Defined tm' (tipTyTm :=>: tipTy))
 >             aus <- getGreatAuncles
 >             sibs <- getDevEntries
->             let tm' = evTm (parBind aus sibs tm)
+>             let tmv = evTm (parBind aus sibs tm')
 >             name := _ :<: ty <- getMother
->             let ref = name := DEFN tm' :<: ty
+>             let ref = name := DEFN tmv :<: ty
 >             putMother ref
 >             updateRef ref
 >             goOut
@@ -497,31 +488,39 @@ appends a $\lambda$-abstraction with the appropriate type to the current develop
 The |make| command adds a named goal of the given type to the bottom of the
 current development, after checking that the purported type is in fact a type.
 
-> make :: (String :<: INTM) -> ProofState REF
+> make :: (String :<: INDTM) -> ProofState INTM
 > make (s:<:ty) = do
->     root <- getDevRoot
->     () <- check (SET :>: ty) root `catchMaybe` "make: supplied type is not a set"
+>     (ty' :=>: tyv) <- elaborate (SET :>: ty)
 >     aus <- getAuncles
->     n <- withRoot (flip name s)
->     let  liftedTy  = liftType aus ty
+>     s' <- pickName s
+>     n <- withRoot (flip name s')
+>     let  liftedTy  = liftType aus ty'
 >          ref  = n := HOLE :<: evTm liftedTy
->     putDevEntry (E ref (last n) (Girl LETG (B0, Unknown (ty :=>: evTm ty), room root s)) liftedTy)
+>     root <- getDevRoot
+>     putDevEntry (E ref (last n) (Girl LETG (B0, Unknown (ty' :=>: tyv), room root s')) liftedTy)
 >     putDevRoot (roos root)
->     return ref
+>     return (N (P ref))
+
+
+> pickName :: String -> ProofState String
+> pickName ""  = do
+>     r <- getDevRoot
+>     return ("G" ++ show (snd r))
+> pickName s   = return s
+
 
 The |piBoy| command checks that the current goal is of type SET, and that the supplied type
 is also a set; if so, it appends a $\Pi$-abstraction to the current development.
 
-> piBoy :: (String :<: INTM) -> ProofState ()
+> piBoy :: (String :<: INDTM) -> ProofState ()
 > piBoy (s:<:ty) = do
 >     tip <- getDevTip
 >     case tip of
 >         Unknown (_ :=>: SET) -> do
 >             root <- getDevRoot
->             () <- check (SET :>: ty) root `catchMaybe` "piBoy: supplied type is not a set."
->             let ty' = evTm ty
->             Root.freshRef (s :<: ty')
->                 (\ref r ->  putDevEntry (E ref (lastName ref) (Boy PIB) ty)
+>             (ty' :=>: tv) <- elaborate (SET :>: ty)
+>             Root.freshRef (s :<: tv)
+>                 (\ref r ->  putDevEntry (E ref (lastName ref) (Boy PIB) ty')
 >                             >> putDevRoot r) root
 >         Unknown _  -> throwError' "piBoy: goal is not of type SET."
 >         _          -> throwError' "piBoy: only possible for incomplete goals."
@@ -655,6 +654,65 @@ the term with the bulletin and re-evaluates it if necessary.
 > tellNewsEval news tm tv = case tellNews news tm of
 >     (_,    NoNews)    -> (tm,   tv,        NoNews)
 >     (tm',  GoodNews)  -> (tm',  evTm tm',  GoodNews)
+
+
+\section{Elaboration}
+
+> subgoal :: (TY :>: String) -> ProofState (INTM :=>: VAL)
+> subgoal (ty :>: x) = do
+>     ty' <- bquoteHere ty
+>     g <- make (x :<: ty')
+>     return (g :=>: evTm g)
+
+> elaborate :: (TY :>: INDTM) -> ProofState (INTM :=>: VAL)
+> elaborate (C ty :>: C tm) = do
+>     v <- canTy elaborate (ty :>: tm)
+>     return $ (C $ fmap (\(x :=>: _) -> x) v) :=>: (C $ fmap (\(_ :=>: x) -> x) v)
+
+> elaborate (ty :>: Q x) = subgoal (ty :>: x)
+
+> elaborate (PI s t :>: L sc) = do
+>   r <- getDevRoot
+>   (tm :=>: tv) <- Root.freshRef ("x" :<: s) (\ref r ->
+>       elaborate (t $$ A (pval ref) :>: underScope sc ref)) r
+>   case sc of
+>       K _  -> return (L (K tm) :=>: L (K tv))
+>       _    -> return (L ("x" :. tm) :=>: L (H B0 "x" tm))
+>   
+
+> elaborate (w :>: N n) = do
+>   (y :>: _) <- elabInfer n
+>   eq <- withRoot (equal (SET :>: (w, y)))
+>   guard eq `replaceError` ("elaborate: inferred type " ++ show y ++ " of " ++ show n
+>                              ++ " is not " ++ show w)
+>   return (N n :=>: evTm (N n))
+
+> elaborate tt = throwError' ("elaborate: can't cope with " ++ show tt)
+
+
+> elabInfer :: EXDTM -> ProofState (TY :>: EXTM)
+> elabInfer (P x) = return (pty x :>: P x)
+
+> elabInfer (t :$ s) = do
+>     (C ty :>: t') <- elabInfer t
+>     (s', ty') <- elimTy elaborate (evTm t' :<: ty) s
+>     let s'' = fmap (\(x :=>: _) -> x) s'
+>     return (ty' :>: (t' :$ s''))
+
+> elabInfer (op :@ ts) = do
+>   (vs, t) <- opTy op chev ts
+>   let vs' = fmap (\((x :=>: _) :=>: _) -> x) vs
+>   return (t :>: op :@ vs')
+>       where chev (t :>: x) = do 
+>               ch <- elaborate (t :>: x)
+>               return $ ch :=>: evTm x
+
+> elabInfer (t :? ty) = do
+>   (ty' :=>: vty)  <- elaborate (SET :>: ty)
+>   (t'  :=>: _)    <- elaborate (vty :>: t)
+>   return (vty :>: t' :? ty')
+
+> elabInfer tt = throwError' ("elabInfer: can't cope with " ++ show tt)
 
 
 %if False

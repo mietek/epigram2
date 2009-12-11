@@ -48,6 +48,10 @@ typing context. We push types in checkable terms, pull types from
 inferable terms.
 
 We also distinguish the representations of |TT| terms and |VV| values.
+We may consider distinguishing (unelaborated) display terms from those which
+have been elaborated and hence can be evaluated, but for the moment we
+conflate the two cases.
+
 
 > data Phase  = TT | VV
 
@@ -57,28 +61,30 @@ signature for a term:
 
 > data Tm :: {Dir, Phase} -> * -> * where
 
-We can push types in:
+We can push types in to:
 \begin{itemize}
-\item lambda terms,
-\item canonical terms, and
-\item inferred terms
+\item lambda terms;
+\item canonical terms;
+\item inferred terms; and
+\item holes.
 \end{itemize}
 
->   L     :: Scope p x             -> Tm {In, p} x   -- \(\lambda\)
->   C     :: Can (Tm {In, p} x)    -> Tm {In, p} x   -- canonical
->   N     :: Tm {Ex, p} x          -> Tm {In, p} x   -- |Ex| to |In|
+>   L     :: Scope p x             -> Tm {In, p}   x -- \(\lambda\)
+>   C     :: Can (Tm {In, p} x)    -> Tm {In, p}   x -- canonical
+>   N     :: Tm {Ex, p} x          -> Tm {In, p}   x -- |Ex| to |In|
+>   Q     :: String                -> Tm {In, TT}  x -- hole
 
 And we can infer types from:
 \begin{itemize}
-\item variables, by reading the context,
-\item fully applied operator, by |opTy| defined below,
-\item elimination, by the type of the eliminator,
-\item type ascription on a checkable term, by the ascripted type
+\item variables, by reading the context;
+\item fully applied operator, by |opTy| defined below;
+\item elimination, by the type of the eliminator; and
+\item type ascription on a checkable term, by the ascripted type.
 \end{itemize}
 
->   P     :: x                     -> Tm {Ex, p} x   -- parameter
->   V     :: Int                   -> Tm {Ex, TT} x  -- variable
->   (:@)  :: Op -> [Tm {In, p} x]  -> Tm {Ex, p} x   -- fully applied op
+>   P     :: x                     -> Tm {Ex, p}   x -- parameter
+>   V     :: Int                   -> Tm {Ex, TT}  x -- variable
+>   (:@)  :: Op -> [Tm {In, p} x]  -> Tm {Ex, p}   x -- fully applied op
 >   (:$)  :: Tm {Ex, p} x -> Elim (Tm {In, p} x) -> Tm {Ex, p} x  -- elim
 >   (:?)  :: Tm {In, TT} x -> Tm {In, TT} x -> Tm {Ex, TT} x      -- typing
 
@@ -237,11 +243,17 @@ We have some type synonyms for commonly occurring instances of |Tm|.
 > type NEU    = Tm {Ex, VV} REF
 > type ENV    = Bwd VAL
 
+At the moment we do not make a type distinction between display and
+elaborated terms, so using the following synonyms is optional.
+
+> type INDTM  = INTM
+> type EXDTM  = EXTM
+
 We have special pairs for types going into and coming out of
 stuff. That is, we write |typ :>: thing| to say that
 |typ| accepts the term |thing|. Conversely, we write |thing :<: typ|
 to say that |thing| is of infered type |typ|. Therefore, we can read
-|:<:| as ``accepts'' and |:>:| as ``has infered''.
+|:>:| as ``accepts'' and |:<:| as ``has inferred type''.
 
 > data y :>: t = y :>: t  deriving (Show,Eq)
 > infix 4 :>:
@@ -558,6 +570,7 @@ appropriate fields of |Mangle| for each parameter, variable or binder encountere
 > m % L (x :. t)   = (|L (|(x :.) (mangB m x % t)|)|)
 > m % C c          = (|C ((m %) ^$ c)|)
 > m % N n          = (|N (exMang m n (|[]|))|)
+> m % Q x          = (|(Q x)|)
 >
 > exMang ::  Applicative f => Mangle f x y ->
 >            Tm {Ex, TT} x -> f [Elim (Tm {In, TT} y)] -> f (Tm {Ex, TT} y)
@@ -675,6 +688,7 @@ I think that this stuff should disappear with Tactics spreading.
 >   show (L s)       = "L (" ++ show s ++ ")"
 >   show (C c)       = "C (" ++ show c ++ ")"
 >   show (N n)       = "N (" ++ show n ++ ")"
+>   show (Q x)       = "(? " ++ x ++ ")"
 >   show (P x)       = "P (" ++ show x ++ ")"
 >   show (V i)       = "V " ++ show i
 >   show (n :$ e)    = "(" ++ show n ++ " :$ " ++ show e ++ ")"

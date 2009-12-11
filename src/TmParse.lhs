@@ -69,6 +69,7 @@ left, and will do so with |littleInTm|.
 >      |C ~ Prop (%keyword "#"%)
 >      |C ~ Absurd (%keyword "FF"%)
 >      |C ~ Trivial (%keyword "TT"%)
+>      |Q (%keyword "?"%) maybeIdent
 >      |id lamParse
 >      |(\t -> PRF t) (%keyword ":-"%) littleInTm
 >      |(\t -> CON t) (%keyword "@"%) littleInTm
@@ -77,6 +78,9 @@ left, and will do so with |littleInTm|.
 >      |N littleExTm
 >      |id (bracket Round bigInTm)
 >      |)
+>   where
+>     maybeIdent :: Parsley Token String
+>     maybeIdent = ident <|> pure ""
 
 
 
