@@ -48,11 +48,11 @@ The |showRelName| function converts a relative name to a string by
 inserting the appropriate punctuation.
 
 > showRelName :: RelName -> String
-> showRelName = intercalate "." . map f
+> showRelName = intercalate " . " . map f
 >   where
 >     f (x, Rel 0) = x
->     f (x, Rel i) = x ++ "^" ++ show i
->     f (x, Abs i) = x ++ "_" ++ show i
+>     f (x, Rel i) = x ++ " ^ " ++ show i
+>     f (x, Abs i) = x ++ " _ " ++ show i
 
 The |showName| function converts a name to a string absolutely (without christening).
 
@@ -160,6 +160,9 @@ the entity should be a |Girl|, and it searches her children for the name.
 >     findD :: Bwd Entry -> RelName -> Spine {TT} REF -> Maybe EXTM
 >     findD (xs :< E r x e@(Girl _ _) _) (y : ys) as = case hits x y of
 >         Right _  -> findChild r as e ys
+>         Left y'  -> findD xs (y' : ys) as
+>     findD (xs :< E _ x (Boy _) _) (y : ys) as = case hits x y of
+>         Right _  -> empty
 >         Left y'  -> findD xs (y' : ys) as
 >     findD _ sos as = empty
 

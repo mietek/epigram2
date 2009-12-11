@@ -49,14 +49,23 @@ to allow extra canonical terms and eliminators to be pretty-printed.
 > prettyModule aus me dev = prettyDev aus me dev
 
 > prettyDev :: Bwd Entry -> Name -> Dev -> Doc
-> prettyDev aus me (B0, t, _) = text ":=" <+> prettyTip aus me t
-> prettyDev aus me (es, t, r) = lbrack <+> foldMap prettyEntry es $$ rbrack 
+> prettyDev gaus me (B0, t, _) = text ":=" <+> prettyTip gaus me t
+> prettyDev gaus me dev@(es, t, r) =
+>     lbrack <+> prettyEntries es aus $$ rbrack 
 >     <+> prettyTip aus me t
 >   where
->     prettyEntry :: Entry -> Doc
->     prettyEntry (E ref _ (Boy k) _) = prettyBKind k (prettyRef aus me r ref)
->     prettyEntry (E ref _ (Girl LETG d) _) = sep [text (christenREF aus me ref), 
->                                                      nest 2 (prettyDev aus me d) <+> semi]
+>     aus = gaus BwdFwd.<+> es
+>
+>     prettyEntries :: Bwd Entry -> Bwd Entry -> Doc
+>     prettyEntries (es' :< E ref _ (Boy k) _) (aus' :< _) =
+>         prettyEntries es' aus'
+>         $$ prettyBKind k (prettyRef aus me r ref) 
+>                                          
+>     prettyEntries (es' :< e@(E ref@(n := _) _ (Girl LETG d) _)) (aus' :< _) = 
+>         prettyEntries es' aus'
+>         $$ sep [text (christenREF aus me ref),
+>                 nest 2 (prettyDev aus' n d) <+> semi]
+>     prettyEntries B0 _ = empty
 >
 >     prettyBKind :: BoyKind -> Doc -> Doc
 >     prettyBKind LAMB  d = text "\\" <+> d <+> text "->"

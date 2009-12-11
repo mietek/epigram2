@@ -165,11 +165,16 @@ left, and will do so with |littleInTm|.
 >           mkGreenEq (x1,t1) (x2,t2) = eqGreen :@ [t1, x1, t2, x2]
 
 > variableParse :: Parsley Token ExTmRN
-> variableParse = (|P (|(:) nameParse (many $ keyword "." *> nameParse)|) |)
->     where nameParse = (|(,) ident (%keyword "^"%) (| Rel (| read digits |) |)
->                        |(,) ident (%keyword "_"%) (| Abs (| read digits |) |)
->                        |(,) ident ~(Rel 0)
->                        |)
+> variableParse = (|P nameParse|)
+
+> nameParse :: Parsley Token RelName
+> nameParse = (|namePartParse : (many $ keyword "." *> namePartParse)|)
+
+> namePartParse :: Parsley Token (String, Offs)
+> namePartParse =  (|(,) ident (%keyword "^"%) (| Rel (| read digits |) |)
+>                   |(,) ident (%keyword "_"%) (| Abs (| read digits |) |)
+>                   |(,) ident ~(Rel 0)
+>                   |)
 
 
 \subsection{Odds and ends}

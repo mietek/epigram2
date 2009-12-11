@@ -132,8 +132,11 @@ updated information, providing a friendlier interface than |get| and |put|.
 
 > getLayer :: ProofState Layer
 > getLayer = do
->     ls :< l <- gets fst
+>     ls :< l <- getLayers
 >     return l
+
+> getLayers :: ProofState (Bwd Layer)
+> getLayers = gets fst
 
 > getMother :: ProofState REF
 > getMother = do
@@ -259,6 +262,17 @@ The |resolveHere| command resolves the relative names in a term.
 >     resolve aus tm `catchMaybe` "resolveHere: could not resolve names in term"
 
 
+> prettyProofState :: ProofState String
+> prettyProofState = do
+>     me <- getMotherName
+>     gaus <- getGreatAuncles
+>     ls <- gets fst
+>     dev <- getDev
+>     case ls of
+>         B0      -> return (show (prettyModule gaus me dev))
+>         _ :< _  -> return (show (prettyDev gaus me dev))
+
+
 \subsection{Information Commands}
 
 > infoAuncles :: ProofState String
@@ -297,6 +311,7 @@ The |resolveHere| command resolves the relative names in a term.
 >         Just ty  -> return ty
 >         Nothing  -> throwError' "infoInfer: term does not type-check."
 > infoInfer _ = throwError' "infoInfer: can only infer the type of neutral terms."
+
 
 \subsection{Navigation Commands}
 
@@ -486,10 +501,11 @@ current development, after checking that the purported type is in fact a type.
 > make (s:<:ty) = do
 >     root <- getDevRoot
 >     () <- check (SET :>: ty) root `catchMaybe` "make: supplied type is not a set"
->     let ty' = evTm ty
+>     aus <- getAuncles
 >     n <- withRoot (flip name s)
->     let ref = n := HOLE :<: ty'
->     putDevEntry (E ref (last n) (Girl LETG (B0, Unknown (ty :=>: ty'), room root s)) ty)
+>     let  liftedTy  = liftType aus ty
+>          ref  = n := HOLE :<: evTm liftedTy
+>     putDevEntry (E ref (last n) (Girl LETG (B0, Unknown (ty :=>: evTm ty), room root s)) liftedTy)
 >     putDevRoot (roos root)
 >     return ref
 

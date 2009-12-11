@@ -161,7 +161,7 @@ $\lambda$- and $\Pi$-binds over a list $\nabla$.
 >             INTM {- $\Gamma$ -}
 > parBind delta nabla t = help delnab nabla (delnab -| t) where
 >     delnab = delta <+> nabla
->     help B0                                      B0            t = t
+>     help B0                                        B0            t = t
 >     help (delta   :< E _ _       (Girl _ _) _)     B0            t = help delta B0 t
 >     help (delta   :< E _ (x, _)  (Boy _) _)        B0            t = help delta B0 (L (x :. t))
 >     help (delnab  :< E _ (x, _)  (Girl _ _) _)     (nabla :< _)  t = help delnab nabla t
@@ -169,6 +169,24 @@ $\lambda$- and $\Pi$-binds over a list $\nabla$.
 >         help delnab nabla (L (x :. t))
 >     help (delnab  :< E _ (x, _)  (Boy PIB) s)  (nabla :< _)  t = 
 >         help delnab nabla (PI (delnab -| s) (L (x :. t)))
+
+
+The |liftType| function $\Pi$-binds a type over a list of entries.
+
+> liftType :: Bwd Entry -> INTM -> INTM
+> liftType B0 t = t
+> liftType (es :< E _ _      (Girl _ _)  _)  t = liftType es t
+> liftType (es :< E _ (x,_)  (Boy _)     s)  t = liftType es (PI s (L (x :. t)))
+
+
+The |inferGoalType| function $\Pi$-binds the type when it encounters a $\lambda$-boy
+in the list of entries, and produces |SET| when it encounters a $\Pi$-boy.
+
+> inferGoalType :: Bwd Entry -> INTM -> INTM
+> inferGoalType B0 t = t
+> inferGoalType (es :< E _ _      (Girl _ _)  _)  t = inferGoalType es t
+> inferGoalType (es :< E _ (x,_)  (Boy LAMB)  s)  t = inferGoalType es (PI s (L (x :. t)))
+> inferGoalType (es :< E _ (x,_)  (Boy PIB)   s)  t = inferGoalType es SET
 
 
 \subsection{Traversal}

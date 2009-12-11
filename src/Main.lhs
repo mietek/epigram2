@@ -86,7 +86,7 @@ pretty-print the development.
 
 >                    case getOpt cochonOpt opts of
 >                      Just ()  -> cochon (B0, dev)
->                      _        -> print (prettyModule (auncles (B0, dev)) [] dev)
+>                      _        -> print (prettyModule (greatAuncles (B0, dev)) [] dev)
 
 > data Option = InFile FilePath | OutFile FilePath | Epic String | Help | Cochon
 >    deriving Show

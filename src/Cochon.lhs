@@ -37,8 +37,8 @@ Here we have a very basic command-driven interface to the proof state monad.
 
 > cochon :: ProofContext -> IO ()
 > cochon loc@(ls, dev) = do
->     let Right me = evalStateT getMotherName loc
->     putStrLn (show ((if bwdNull ls then prettyModule else prettyDev) (auncles loc) me dev))
+>     let Right s = evalStateT prettyProofState loc
+>     putStrLn s
 >     putStr (showPrompt ls)
 >     hFlush stdout
 >     l <- getLine
@@ -91,6 +91,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >                 |  PiBoy String x
 >                 |  Quit
 >                 |  Select x
+>                 |  Show x
 >                 |  Ungawa
 >     deriving Show
 
@@ -110,6 +111,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >     traverse f (PiBoy s x)          = (| (PiBoy s) (f x) |)
 >     traverse f Quit                 = (| Quit |)
 >     traverse f (Select x)           = (| Select (f x) |)
+>     traverse f (Show x)             = (| Show (f x) |)
 >     traverse f Ungawa               = (| Ungawa |)
 
 > instance Functor Command where
@@ -148,6 +150,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >         "prev"     -> (| (Go Prev) |)
 >         "quit"     -> (| Quit |)
 >         "select"   -> (| Select (| N variableParse |) |)
+>         "show"     -> (| Show bigInTm |)
 >         "top"      -> (| (Go Top) |)
 >         "ungawa"   -> (| Ungawa |)
 >         "up"       -> (| (Go Up) |)
@@ -189,6 +192,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >         Just tm  -> give tm >> return "Yessir."
 > evalCommand (PiBoy x ty)    = piBoy (x :<: ty)  >> return "Made pi boy!"
 > evalCommand (Select x)      = select x          >> return "Selected."
+> evalCommand (Show x)        = return (show x)
 > evalCommand Ungawa          = ungawa            >> return "Ungawa!"
 
 > doCommand :: Command InTmRN -> ProofState String
@@ -202,7 +206,8 @@ Here we have a very basic command-driven interface to the proof state monad.
 
 > doCommandsAt :: [(Name, [Command InTmRN])] -> ProofState ()
 > doCommandsAt [] = return ()
-> doCommandsAt ((n, cs):ncs) = goTo n >> doCommands cs >> doCommandsAt ncs
+> doCommandsAt ((_, []):ncs) = doCommandsAt ncs
+> doCommandsAt ((n, cs):ncs) = much goOut >> goTo n >> doCommands cs >> doCommandsAt ncs
 
 > showPrompt :: Bwd Layer -> String
 > showPrompt (_ :< Layer _ (n := _) _ _ _ _)  = showName n ++ " > "

@@ -60,7 +60,7 @@ there are none), a definition (which may be \verb!?!), and optionally a list of 
 in \verb![| |]! brackets.
 
 > pGirl :: Parsley Token DevLine
-> pGirl = (| DLGirl ident pLines pDefn pCommandSuffix (%keyword ";"%) |)
+> pGirl = (| DLGirl (|fst namePartParse|) pLines pDefn pCommandSuffix (%keyword ";"%) |)
 >   where
 >     pLines :: Parsley Token [DevLine]
 >     pLines =  bracket Square (many (pGirl <|> pBoy)) <|> (keyword ":=" *> pure [])
@@ -77,8 +77,8 @@ A boy is a $\lambda$-abstraction (represented by \verb!\ x : T ->!) or a $\Pi$-a
 (represented by \verb!(x : S) ->!). 
 
 > pBoy :: Parsley Token DevLine
-> pBoy =  (| (%keyword "\\"%) (DLBoy LAMB) ident (%keyword ":"%) bigInTm (%keyword "->"%) |)
->         <|> (bracket Round (| (DLBoy PIB) ident (%keyword ":"%) bigInTm |)) <* keyword "->"
+> pBoy =  (| (%keyword "\\"%) (DLBoy LAMB) (| fst namePartParse |) (%keyword ":"%) littleInTm (%keyword "->"%) |)
+>         <|> (bracket Round (| (DLBoy PIB) (| fst namePartParse |) (%keyword ":"%) littleInTm |)) <* keyword "->"
 
 
 \subsection{Construction}
@@ -113,8 +113,9 @@ accumulating pairs of names and command lists along the way.
 >     goIn
 >     ncs' <- makeDev kids ncs     
 >     tipTy <- resolveHere tipTys 
+>     aus <- getGreatAuncles
 >     kids' <- getDevEntries
->     let goalTy = inferGoalType tipTy kids'
+>     let goalTy = liftType aus (inferGoalType kids' tipTy)
 >     goOut
 >     Just (E _ _ (Girl LETG (es, _, root')) _) <- removeDevEntry
 >     putDevEntry (E (n := HOLE :<: evTm goalTy) (last n) 
@@ -122,7 +123,9 @@ accumulating pairs of names and command lists along the way.
 >     case mtipTm of
 >         Nothing -> return ()
 >         Just tm -> goIn >> resolveHere tm >>= give
->     return ((n, commands):ncs')
+>     case commands of
+>         []  -> return ncs'
+>         _   -> return ((n, commands):ncs')
 
 > makeEntry (DLBoy LAMB x tys) ncs = do
 >     ty <- resolveHere tys
@@ -145,12 +148,3 @@ accumulating pairs of names and command lists along the way.
 >            putDevRoot r
 >          ) root
 >     return ncs
-
-The |inferGoalType| function takes a tip type and list of children, and infers the
-goal type by abstracting over the boys.
-
-> inferGoalType :: INTM -> Bwd Entry -> INTM
-> inferGoalType ty B0 = ty
-> inferGoalType ty (es' :< E _ _ (Girl _ _) _)      = inferGoalType ty es'
-> inferGoalType ty (es' :< E _ (x,_) (Boy LAMB) s)  = inferGoalType (PI s (L (x :. ty))) es'
-> inferGoalType ty (es' :< E _ (x,_) (Boy PIB) s)   = inferGoalType SET es'
