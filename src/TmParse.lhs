@@ -122,7 +122,7 @@ left, and will do so with |littleInTm|.
 >                    |C ~ Void (% pEndOfStream %) |)
 
 > enumParse :: Parsley Token InTmRN
-> enumParse = bracket Curly enum
+> enumParse = bracket Curly (|(\t -> ENUMT t) enum|)
 >     where enum = (|mkEnum (pSep (keyword ",") ident) 
 >                           (optional $ (keyword "/" *> bigInTm))|)
 >           mkEnum names Nothing = mkEnum' names NILE
