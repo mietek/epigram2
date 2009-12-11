@@ -86,18 +86,36 @@ Coercion rule:
 >   Pair   :: t -> t -> Can t 
 
 > import -> CanPretty where
->   prettyCan Unit = parens empty
->   prettyCan Void = text "Void"
->   prettyCan (Sigma s t) = parens (text "Sigma" <+> pretty s <+> pretty t)
->   prettyCan (Pair a b) = parens (pretty a <> comma <+> pretty b)
+>   prettyCan Unit                    = parens empty
+>   prettyCan Void                    = brackets empty
+>   prettyCan (Sigma s (L (x :. t)))  = parens (text x <+> colon <+> pretty s
+>                                           <+> semi <+> prettySigma t)
+>   prettyCan (Sigma s (L (K t)))     = parens (pretty s <+> semi <+> prettySigma t)
+>   prettyCan (Sigma s t)             = text "BAD Sigma" <+> parens (pretty s)
+>   prettyCan (Pair a b)              = brackets (pretty a <+> prettyPair b)
+
+> import -> Pretty where
+>   prettyPair :: Tm {d, p} String -> Doc
+>   prettyPair (PAIR a VOID)  = pretty a
+>   prettyPair (PAIR a b)     = pretty a <+> prettyPair b
+>   prettyPair t              = text "/" <+> pretty t
+
+>   prettySigma :: Tm {d, p} String -> Doc
+>   prettySigma UNIT = empty
+>   prettySigma (SIGMA s (L (x :. t)))  = text x <+> colon <+> pretty s
+>                                           <+> semi <+> prettySigma t
+>   prettySigma (SIGMA s (L (K t)))     = pretty s <+> semi <+> prettySigma t
+>   prettySigma (SIGMA s t)             = text "BAD Sigma" <+> parens (pretty s)
+>                                           <+> parens (pretty t)
+>   prettySigma t                       = pretty t
 
 > import -> ElimConstructors where
 >   Fst    :: Elim t
 >   Snd    :: Elim t
 
 > import -> ElimPretty where
->   prettyElim Fst = text "Fst"
->   prettyElim Snd = text "Snd"
+>   prettyElim Fst = text "!"
+>   prettyElim Snd = text "-"
 
 > import -> CanPats where
 >   pattern SIGMA p q = C (Sigma p q)
