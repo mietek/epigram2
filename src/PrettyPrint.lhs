@@ -9,7 +9,6 @@
 
 > import Data.Foldable
 > import Data.List
-> import Data.Monoid (Monoid, mempty, mappend)
 > import Text.PrettyPrint.HughesPJ
 
 > import BwdFwd hiding ((<+>))
@@ -38,11 +37,6 @@ to allow extra canonical terms and eliminators to be pretty-printed.
 > prettyCan (Con x)   = pretty x
 > import <- CanPretty
 > prettyCan can       = quotes . text .show $ can
-
-
-> instance Monoid Doc where
->     mempty = empty
->     mappend = ($$)
 
 > prettyModule :: Bwd Entry -> Name -> Dev -> Doc
 > prettyModule aus me (B0, _, _) = empty
