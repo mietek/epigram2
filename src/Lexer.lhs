@@ -158,8 +158,7 @@ grammar!
 > keywords = [ ":", "*", "#", "@", ",", ";", "/", "^", ".", "_", "+"
 >            , "\\", "->", "=>", "==", "&&", ":-", ":=", "?"
 >            , "TT", "FF"
->            , "<->"
->            , ":=", "?" ]
+>            , "<->", ":->", ":=>" ]
 
 To implement |parseKeyword|, this is simply a matter of filtering by
 words that can be found in the |keywords| list.
