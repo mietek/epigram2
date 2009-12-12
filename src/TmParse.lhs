@@ -10,6 +10,7 @@
 > import Control.Applicative
 > import Data.Foldable hiding (foldr)
 > import Data.Traversable
+> import Data.Char
 
 > import BwdFwd
 > import Developments
@@ -57,6 +58,7 @@ left, and will do so with |littleInTm|.
 >      |id forallParse
 >      |id blueEqParse
 >      |id andParse
+>      |id natParse
 >      |N bigExTm
 >      |id littleInTm
 >      |)
@@ -134,6 +136,12 @@ left, and will do so with |littleInTm|.
 >     where parseTerm = bracket Round (|(,) littleInTm (%keyword ":"%) littleInTm|)
 >           mkBlueEq (x1,t1) (x2,t2) = EQBLUE (t1 :>: x1) (t2 :>: x2)
 
+> natParse :: Parsley Token InTmRN
+> natParse = (|mkNum digits (optional $ (keyword "+") *> littleInTm)|)
+>     where mkNum num Nothing = mkNum' (read num) ZE
+>           mkNum num (Just t) = mkNum' (read num) t
+>           mkNum' 0 t = t
+>           mkNum' n t = mkNum' (n-1) (SU t)
 
 \subsection{Matching |ExTm|}
 

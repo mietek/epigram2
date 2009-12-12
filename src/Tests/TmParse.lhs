@@ -85,6 +85,12 @@
 >         , "elimOp(x)"                 -- Operator
 >         , "elimOp(x , y)"             -- Operator
 >         , "Branches(x , y)"           -- Operator
+>         , "0"                         -- Nat
+>         , "1"                         -- Nat
+>         , "2"                         -- Nat
+>         , "0 + x"                     -- Nat
+>         , "1 + x"                     -- Nat
+>         , "2 + x"                     -- Nat
 >         , "( * )"                     -- grouping
 >         , "((*))"                     -- grouping
 >         ]
