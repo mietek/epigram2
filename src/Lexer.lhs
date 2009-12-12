@@ -123,11 +123,17 @@ So, we look for |many| of them:
 
 As an intermediary step before keyword, identifier, and brackets, let
 us introduce a parser for words. A word is any non-empty string of
-characters that doesn't include a space or a bracketting symbol. In
-|Parsley|, this translates to:
+characters that doesn't include a space, a bracketting symbol, or one
+of the protected symbols. A protected symbol is, simply, a
+one-character symbol which can be prefix or suffix a word, but will
+not be merged into the parsed word. For example, "foo," lexes into
+first |Idenfitier foo| then |Keyword ,|. In |Parsley|, this translates
+to:
 
 > parseWord :: Parsley Char String
-> parseWord = some $ tokenFilter (\t -> not $ elem t $ space ++ brackets)
+> parseWord = (| id (some $ tokenFilter (\t -> not $ elem t $ space ++ brackets ++ protected)) 
+>              | (: []) (tokenFilter (flip elem protected))|)
+>     where protected = ","
 
 As we are at it, we can test for word equality, that is build a parser
 matching a given word:
