@@ -143,6 +143,12 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     l <- getLayer
 >     return (mother l)
 
+> getMotherEntry :: ProofState Entry
+> getMotherEntry = do
+>     l <- getLayer
+>     dev <- getDev
+>     return (E (mother l) (lastName (mother l)) (Girl LETG dev) (motherTy l))
+
 > getMotherName :: ProofState Name
 > getMotherName = do
 >     ls <- gets fst
@@ -191,6 +197,12 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     l <- getLayer
 >     _ <- replaceLayer l{mother=ref}
 >     return ()
+
+> putMotherEntry :: Entry -> ProofState ()
+> putMotherEntry (E ref _ (Girl LETG dev) ty) = do
+>     l <- getLayer
+>     replaceLayer (l{mother=ref, motherTy=ty})
+>     putDev dev
 
 > removeDevEntry :: ProofState (Maybe Entry)
 > removeDevEntry = do
@@ -331,12 +343,18 @@ is not in the required form.
 
 > goOut :: ProofState ()
 > goOut = (do
->     Layer elders mother mty cadets tip root <- removeLayer
->     dev <- getDev
->     putDev (elders :< E mother (lastName mother) (Girl LETG dev){- <>< cadets-} mty, tip, root)
->     propagateNews [] cadets
+>     e <- getMotherEntry
+>     l <- removeLayer
+>     putDev (elders l :< e, laytip l, layroot l)
+>     propagateNews [] (cadets l)
 >     return ()
 >   ) `replaceError` "goOut: you can't go that way."
+
+> goOutSilently :: ProofState ()
+> goOutSilently = do
+>     e <- getMotherEntry
+>     l <- removeLayer
+>     putDev (elders l :< e <>< cadets l, laytip l, layroot l)
 
 > goUp :: ProofState ()
 > goUp = goUpAcc F0 `replaceError` "goUp: you can't go that way."
@@ -353,17 +371,21 @@ is not in the required form.
 >             _ -> putLayer l{elders=es} >> goUpAcc (e :> acc)
 
 > goDown :: ProofState ()
-> goDown = goDownAcc B0 `replaceError` "goDown: you can't go that way."
+> goDown = goDownAcc B0 [] `replaceError` "goDown: you can't go that way."
 >   where
->     goDownAcc :: Bwd Entry -> ProofState ()
->     goDownAcc acc = do
+>     goDownAcc :: Bwd Entry -> NewsBulletin -> ProofState ()
+>     goDownAcc acc news = do
 >         l@(Layer elders ref ty (e :> es) tip root) <- removeLayer
 >         case e of
->             E newRef _ (Girl LETG newDev) newTy -> do
+>             E _ _ (Girl LETG newDev) _ -> do
 >                 oldDev <- replaceDev newDev
+>                 news' <- propagateNewsHere news
+>                 (news'', E newRef _ (Girl LETG newDev') newTy) <- tellGirl news' e
+>                 replaceDev newDev'
 >                 putLayer  l{elders=(elders:<E ref (lastName ref) (Girl LETG oldDev) ty)<+> acc,
->                               mother=newRef, motherTy=newTy, cadets=es}
->             _ -> putLayer l{cadets=es} >> goDownAcc (acc :< e)
+>                               mother=newRef, motherTy=newTy, cadets=R news'' :> es}
+>             R nb  -> putLayer l{cadets=es} >> goDownAcc acc (mergeNews nb news)
+>             _     -> putLayer l{cadets=es} >> goDownAcc (acc :< e) news
 
 > goTo :: Name -> ProofState ()
 > goTo [] = return ()
@@ -467,6 +489,23 @@ the goal and updates the reference.
 >             goOut
 >         _  -> throwError' "give: only possible for incomplete goals."
 
+> giveSilently :: INDTM -> ProofState ()
+> giveSilently (Q "") = return ()
+> giveSilently tm = do
+>     tip <- getDevTip
+>     case tip of         
+>         Unknown (tipTyTm :=>: tipTy) -> do
+>             (tm' :=>: tv) <- elaborate (tipTy :>: tm)
+>             putDevTip (Defined tm' (tipTyTm :=>: tipTy))
+>             aus <- getGreatAuncles
+>             sibs <- getDevEntries
+>             let tmv = evTm (parBind aus sibs tm')
+>             name := _ :<: ty <- getMother
+>             let ref = name := DEFN tmv :<: ty
+>             putMother ref
+>             goOut
+>         _  -> throwError' "give: only possible for incomplete goals."
+
 The |lambdaBoy| command checks that the current goal is a $\Pi$-type, and if so,
 appends a $\lambda$-abstraction with the appropriate type to the current development.
 
@@ -554,6 +593,7 @@ inserts a news bulletin below the current development.
 > updateRef :: REF -> ProofState ()
 > updateRef ref = insertCadet (R [(ref, GoodNews)])
 
+
 The |propagateNews| function takes a current news bulletin and a list of entries
 to add to the current development. It applies the news bulletin to each entry
 in turn, picking up other bulletins along the way. This function should be called
@@ -562,13 +602,19 @@ pushed out of sight.
 
 > propagateNews :: NewsBulletin -> Fwd Entry -> ProofState NewsBulletin
 
-If there are no entries to process, we should stash the bulletin after the current
-location (if the bulletin is non-empty) and stop. Note that the insertion is
+If we have nothing to say and nobody to tell, we might as well give up and go home.
+
+> propagateNews [] F0 = return []
+
+If there are no entries to process, we should tell the mother (if there is one),
+stash the bulletin after the current location and stop. Note that the insertion is
 optional because it will fail when we have reached the end of the module, at which
 point everyone knows the news anyway.
 
-> propagateNews []   F0         = return []
-> propagateNews news F0         = optional (insertCadet (R news)) >> return news
+> propagateNews news F0 = do
+>     news' <- tellMother news
+>     optional (insertCadet (R news'))
+>     return news'
 
 A |Boy| is relatively easy to deal with, we just check to see if its type
 has become more defined, and pass on the good news if necessary.
@@ -584,17 +630,45 @@ has become more defined, and pass on the good news if necessary.
 Updating girls is a bit more complicated. We proceed as follows:
 \begin{enumerate}
 \item Recursively propagate the news to the children. \question{does this create spurious |R|s?}
-\item Update the tip type (and term, if there is one).
-\item Update the overall type of the entry.
-\item Re-evaluate the definition, if there is one.
+\item Call |tellGirl| to update the tip and definition (including their types)
 \item Add the updated girl to the current development.
-\item Continue propagation, adding this girl to the bulletin if necessary.
+\item Continue propagating the latest news.
 \end{enumerate}
 
-> propagateNews news (e@(E (name := k :<: tv) sn (Girl LETG (_, tip, root)) ty) :> es) = do
+> propagateNews news (e@(E ref sn (Girl LETG (_, tip, root)) ty) :> es) = do
 >     (news', cs) <- propagateIn news e
->     let  (tip', n)       = tellTip news' tip
->          (ty', tv', n')  = tellNewsEval news' ty tv
+>     (news'', e') <- tellGirl news' (E ref sn (Girl LETG (cs, tip, root)) ty)
+>     putDevEntry e'
+>     propagateNews news'' es
+>  where
+>    propagateIn :: NewsBulletin -> Entry -> ProofState (NewsBulletin, Bwd Entry)
+>    propagateIn news e = do
+>        putDevEntry e
+>        goIn
+>        news' <- propagateNewsHere news
+>        goOut
+>        Just (E _ _ (Girl LETG (cs, _, _)) _) <- removeDevEntry
+>        return (news', cs)
+
+Finally, if we encounter an older news bulletin when propagating news, we can simply
+merge the two together.
+
+> propagateNews news (R oldNews :> es) = propagateNews (mergeNews oldNews news) es
+
+
+The |tellGirl| function informs a girl about a news bulletin that her children
+should have already received. It will
+\begin{enumerate}
+\item update the tip type (and term, if there is one);
+\item update the overall type of the entry;
+\item re-evaluate the definition, if there is one; and
+\item update the news bulletin with news about this girl.
+\end{enumerate}
+
+> tellGirl :: NewsBulletin -> Entry -> ProofState (NewsBulletin, Entry)
+> tellGirl news (E (name := k :<: tv) sn (Girl LETG (cs, tip, root)) ty) = do
+>     let  (tip', n)       = tellTip news tip
+>          (ty', tv', n')  = tellNewsEval news ty tv
 >     k' <- case k of
 >             HOLE    -> return HOLE
 >             DEFN _  -> do
@@ -602,20 +676,8 @@ Updating girls is a bit more complicated. We proceed as follows:
 >                 let Defined tm _ = tip'
 >                 return (DEFN (evTm (parBind aus cs tm)))
 >     let ref = name := k' :<: tv'
->     putDevEntry (E ref sn (Girl LETG (cs, tip', root)) ty')
->     propagateNews (addNews news' (ref, min n n')) es
->
->  where
->    propagateIn :: NewsBulletin -> Entry -> ProofState (NewsBulletin, Bwd Entry)
->    propagateIn news e = do
->        putDevEntry e
->        goIn
->        es <- replaceDevEntries B0
->        news' <- propagateNews news (es <>> F0)
->        goOut
->        Just (E _ _ (Girl LETG (cs, _, _)) _) <- removeDevEntry
->        return (news', cs)
->  
+>     return (addNews news (ref, min n n'), E ref sn (Girl LETG (cs, tip', root)) ty')
+>  where 
 >    tellTip :: NewsBulletin -> Tip -> (Tip, News)
 >    tellTip news (Unknown tt) =
 >        let (tt', n) = tellTipType news tt in
@@ -632,10 +694,13 @@ Updating girls is a bit more complicated. We proceed as follows:
 >            (tm' :=>: ty',  n)
 
 
-Finally, if we encounter an older news bulletin when propagating news, we can simply
-merge the two together.
-
-> propagateNews news (R oldNews :> es) = propagateNews (mergeNews oldNews news) es
+> tellMother :: NewsBulletin -> ProofState NewsBulletin
+> tellMother news = (do
+>     e <- getMotherEntry
+>     (news', e') <- tellGirl news e 
+>     putMotherEntry e'
+>     return news'
+>  ) <|> return news
 
 
 The |tellNews| function applies a bulletin to a term. It returns the updated
@@ -654,6 +719,15 @@ the term with the bulletin and re-evaluates it if necessary.
 > tellNewsEval news tm tv = case tellNews news tm of
 >     (_,    NoNews)    -> (tm,   tv,        NoNews)
 >     (tm',  GoodNews)  -> (tm',  evTm tm',  GoodNews)
+
+
+The |propagateNewsHere| function is a special case of |propagateNews| that
+simply processes the current development.
+
+> propagateNewsHere :: NewsBulletin -> ProofState NewsBulletin
+> propagateNewsHere news = do
+>     es <- replaceDevEntries B0
+>     propagateNews news (es <>> F0)
 
 
 \section{Elaboration}

@@ -106,9 +106,10 @@ accumulating pairs of names and command lists along the way.
 > makeEntry :: DevLine -> [(Name, [Command InTmRN])] -> ProofState [(Name, [Command InTmRN])]
 > makeEntry (DLGirl x kids (mtipTm :<: tipTys) commands) ncs = do
 >     n <- withRoot (flip name x)
->     let ref = n := HOLE :<: undefined
+>     let ref = n := HOLE :<: (error "makeEntry: ref undefined")
 >     root <- getDevRoot
->     putDevEntry (E ref (last n) (Girl LETG (B0, undefined, room root x)) undefined)
+>     putDevEntry (E ref (last n) (Girl LETG (B0, error "makeEntry: tip undefined", room root x))
+>                     (error "makeEntry: type undefined"))
 >     putDevRoot (roos root)
 >     goIn
 >     ncs' <- makeDev kids ncs     
@@ -116,13 +117,13 @@ accumulating pairs of names and command lists along the way.
 >     aus <- getGreatAuncles
 >     kids' <- getDevEntries
 >     let goalTy = liftType aus (inferGoalType kids' tipTy)
->     goOut
+>     goOutSilently
 >     Just (E _ _ (Girl LETG (es, _, root')) _) <- removeDevEntry
 >     putDevEntry (E (n := HOLE :<: evTm goalTy) (last n) 
 >                    (Girl LETG (es, Unknown (tipTy :=>: evTm tipTy), root')) goalTy)
 >     case mtipTm of
 >         Nothing -> return ()
->         Just tm -> goIn >> resolveHere tm >>= give
+>         Just tm -> goIn >> resolveHere tm >>= giveSilently
 >     case commands of
 >         []  -> return ncs'
 >         _   -> return ((n, commands):ncs')
