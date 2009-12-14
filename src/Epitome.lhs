@@ -64,8 +64,9 @@
 
 %include Compiler.lhs
 
-\chapter{Elaborator}
+\chapter{Proof State and Elaborator}
 
+%include ProofState.lhs
 %include Elaborator.lhs
 %include Cochon.lhs
 

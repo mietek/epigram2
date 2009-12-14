@@ -23,6 +23,7 @@
 > import Lexer
 > import Parsley
 > import PrettyPrint
+> import ProofState
 > import Root
 > import Rooty
 > import Rules
@@ -78,10 +79,9 @@ Here we have a very basic command-driven interface to the proof state monad.
 
 > data Command x  =  Apply
 >                 |  Auncles
->                 |  Check (x :>: x)
 >                 |  DoneC
 >                 |  Dump
->                 |  Eval x
+>                 |  Elaborate x
 >                 |  Give x
 >                 |  Go NavC
 >                 |  Infer x
@@ -98,10 +98,9 @@ Here we have a very basic command-driven interface to the proof state monad.
 > instance Traversable Command where
 >     traverse f Apply                = (| Apply |)
 >     traverse f Auncles              = (| Auncles |)
->     traverse f (Check (x :>: y))    = (| Check (| (f x) :>: (f y) |) |)
 >     traverse f DoneC                = (| DoneC |)
 >     traverse f Dump                 = (| Dump |)
->     traverse f (Eval x)             = (| Eval (f x) |)
+>     traverse f (Elaborate x)        = (| Elaborate (f x) |)
 >     traverse f (Give x)             = (| Give (f x) |)
 >     traverse f (Go d)               = (| (Go d) |)
 >     traverse f (Infer x)            = (| Infer (f x) |)
@@ -127,16 +126,13 @@ Here we have a very basic command-driven interface to the proof state monad.
 >         "apply"    -> (| Apply |)
 >         "auncles"  -> (| Auncles |)
 >         "bottom"   -> (| (Go Bottom) |)
->         "check"    -> do  (tm :? ty) <-  ascriptionParse
->                           return (Check (ty :>: tm))
 >         "done"     -> (| DoneC |)
 >         "down"     -> (| (Go Down) |)
 >         "dump"     -> (| Dump |)
->         "eval"     -> (| Eval bigInTm |)
+>         "elab"     -> (| Elaborate bigInTm |)
 >         "first"    -> (| (Go First) |)
 >         "give"     -> (| Give bigInTm |)
 >         "in"       -> (| (Go InC) |)
->         "infer"    -> (| Infer bigInTm |)
 >         "jump"     -> (| Jump (| N variableParse |) |)
 >         "lambda"   -> (| Lambda ident |)
 >         "last"     -> (| (Go Last) |)
@@ -159,10 +155,9 @@ Here we have a very basic command-driven interface to the proof state monad.
 > evalCommand :: Command INTM -> ProofState String
 > evalCommand Apply           = apply             >> return "Applied."
 > evalCommand Auncles         = infoAuncles
-> evalCommand (Check a)       = infoCheck a       >> return "Okay."
 > evalCommand DoneC           = done              >> return "Done."
 > evalCommand Dump            = infoDump
-> evalCommand (Eval tm)       = infoEval tm       >>= prettyHere
+> evalCommand (Elaborate tm)  = infoElaborate tm  >>= prettyHere
 > evalCommand (Give tm)       = give tm           >> return "Thank you."
 > evalCommand (Go InC)        = goIn              >> return "Going in..."
 > evalCommand (Go OutC)       = goOut             >> return "Going out..."

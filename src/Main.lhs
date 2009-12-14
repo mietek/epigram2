@@ -22,6 +22,7 @@
 > import Lexer
 > import Parsley
 > import PrettyPrint
+> import ProofState
 
 %endif
 

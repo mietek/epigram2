@@ -21,11 +21,11 @@
 > import BwdFwd
 > import Cochon
 > import Developments
-> import Elaborator
 > import Lexer
 > import MissingLibrary
 > import Naming
 > import Parsley
+> import ProofState
 > import Root
 > import Rules
 > import Tm
