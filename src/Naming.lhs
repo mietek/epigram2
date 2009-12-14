@@ -48,11 +48,11 @@ The |showRelName| function converts a relative name to a string by
 inserting the appropriate punctuation.
 
 > showRelName :: RelName -> String
-> showRelName = intercalate " . " . map f
+> showRelName = intercalate "." . map f
 >   where
 >     f (x, Rel 0) = x
->     f (x, Rel i) = x ++ " ^ " ++ show i
->     f (x, Abs i) = x ++ " _ " ++ show i
+>     f (x, Rel i) = x ++ "^" ++ show i
+>     f (x, Abs i) = x ++ "_" ++ show i
 
 The |showName| function converts a name to a string absolutely (without christening).
 
