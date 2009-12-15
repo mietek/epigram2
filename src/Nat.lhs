@@ -32,7 +32,7 @@ This gives:
 >                                                   (nilETac))
 >                                            
 >           natcTac = switch $ cases [ doneTac
->                                    , indTac unitTac doneTac ]
+>                                    , ind1Tac doneTac ]
 
 The natural numbers as such are the fix-point of the previous
 definition:
@@ -58,7 +58,7 @@ Similarly, we can implement the |suc| constructor:
 
 > sucTac :: Tac VAL -> Tac VAL
 > sucTac x = conTac $ cases [ suTac zeTac
->                           , lambda $ \_ -> x ]
+>                           , x ]
 
 \question{Same as above.}
 
@@ -102,8 +102,7 @@ applying the precept saying that |n1 + n2 = suc ((n1 - 1) + n2)|.
 >                             lambda $ \ih -> 
 >                             sucTac $ 
 >                             use ih . 
->                             apply Fst .
->                             apply (A $ voidTac) $
+>                             apply Fst $
 >                             done ]
 >           plusType = ARR nat (ARR nat nat)
 
