@@ -426,11 +426,11 @@ is not in the required form.
 >                   >> goUpAcc (NF (Right (reverseEntry e) :> acc))
 
 > goDown :: ProofState ()
-> goDown = goDownAcc B0 [] --`replaceError` "goDown: you can't go that way."
+> goDown = goDownAcc B0 [] `replaceError` "goDown: you can't go that way."
 >   where
 >     goDownAcc :: Entries -> NewsBulletin -> ProofState ()
 >     goDownAcc acc news = do
->         l@(Layer elders m{-(GirlMother ref _ ty)-} (NF (e :> es)) tip root) <- getLayer
+>         l@(Layer elders _ (NF (e :> es)) _ _) <- getLayer
 >         case e of
 >             Left nb -> do
 >                 replaceLayer l{cadets=NF es}
@@ -521,14 +521,14 @@ $\Pi S T$ and if so, adds a goal of type $S$ and applies $y$ to it.
 >     z <- make ("z" :<: bquote B0 s root)
 >     make ("w" :<: bquote B0 (t $$ A s) root)
 >     goIn
->     give (bquote B0 (pval ref $$ A s) root)
+>     give (bquote B0 (pval ref $$ A (evTm z)) root)
 >     return ()
 >   ) `replacePMF` "apply: last entry in the development must be a girl with a pi-type."
 
 The |done| command checks if the last entry in the development is a girl, and if so,
 fills in the goal with this entry.
 
-> done :: ProofState()
+> done :: ProofState INTM
 > done = (do
 >     E ref _ (Girl LETG _) _ <- getDevEntry
 >     give (N (P ref))
@@ -537,12 +537,14 @@ fills in the goal with this entry.
 The |give| command checks the provided term has the goal type, and if so, fills in
 the goal and updates the reference.
 
-> give :: INTM -> ProofState ()
+> give :: INTM -> ProofState INTM
 > give tm = do
 >     tip <- getDevTip
 >     case tip of         
 >         Unknown (tipTyTm :=>: tipTy) -> do
 >             putDevTip (Defined tm (tipTyTm :=>: tipTy))
+>             mc <- withRoot (check (tipTy :>: tm))
+>             mc `catchMaybe` intercalate "\n" ["Typechecking failed:", show tm, "is not of type", show tipTy]
 >             aus <- getGreatAuncles
 >             sibs <- getDevEntries
 >             let tmv = evTm (parBind aus sibs tm)
@@ -551,6 +553,7 @@ the goal and updates the reference.
 >             putMother (GirlMother ref xn ty)
 >             updateRef ref
 >             goOut
+>             return (N (P ref))
 >         _  -> throwError' "give: only possible for incomplete goals."
 
 > giveSilently :: INTM -> ProofState ()
@@ -644,7 +647,7 @@ is also a set; if so, it appends a $\Pi$-abstraction to the current development.
 The |select| command takes a term representing a neutral parameter, makes a new goal of the
 same type, and fills it in with the parameter. \question{Is bquote really right here?}
 
-> select :: INTM -> ProofState ()
+> select :: INTM -> ProofState INTM
 > select tm@(N (P (name := k :<: ty))) = do
 >     root <- getDevRoot
 >     make (fst (last name) :<: bquote B0 ty root)
@@ -654,8 +657,14 @@ same type, and fills it in with the parameter. \question{Is bquote really right 
      
 The |ungawa| command looks for a truly obvious thing to do, and does it.
 
+> ignore :: ProofState a -> ProofState ()
+> ignore f = do
+>     f
+>     return ()
+
 > ungawa :: ProofState ()
-> ungawa = (done <|> apply <|> (lambdaBoy "ug" >> return ())) `replaceError` "ungawa: no can do."
+> ungawa = (ignore done <|> ignore apply <|> ignore (lambdaBoy "ug"))
+>     `replaceError` "ungawa: no can do."
 
 
 

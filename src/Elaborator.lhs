@@ -94,7 +94,7 @@
 > infoElaborate :: INDTM -> ProofState INTM
 > infoElaborate (N tm) = do
 >     _ :>: tm' <- elabInfer tm
->     return (N tm')
+>     bquoteHere (evTm (N tm'))
 > infoElaborate _ = throwError' "infoElaborate: can only elaborate neutral terms."
 
 > infoInfer :: INDTM -> ProofState TY
@@ -106,8 +106,8 @@
 
 \subsubsection{Construction}
 
-> elabGive :: INDTM -> ProofState ()
-> elabGive (Q "") = return ()
+> elabGive :: INDTM -> ProofState INTM
+> --elabGive (Q "") = return ()
 > elabGive tm = do
 >     tip <- getDevTip
 >     case tip of         
