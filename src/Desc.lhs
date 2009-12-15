@@ -139,6 +139,7 @@ Equality rules:
 >   Done   :: Can t
 >   Arg    :: t -> t -> Can t
 >   Ind    :: t -> t -> Can t
+>   Ind1   :: t -> Can t
 
 > import -> TraverseCan where
 >   traverse _ Desc       = (|Desc|)
@@ -146,6 +147,7 @@ Equality rules:
 >   traverse _ Done       = (|Done|)
 >   traverse f (Arg x y)  = (|Arg (f x) (f y)|)
 >   traverse f (Ind x y)  = (|Ind (f x) (f y)|)
+>   traverse f (Ind1 x)   = (|Ind1 (f x)|)
 
 > import -> HalfZipCan where
 >   halfZip Desc Desc = Just Desc
@@ -153,6 +155,7 @@ Equality rules:
 >   halfZip Done Done = Just Done
 >   halfZip (Arg s0 t0) (Arg s1 t1) = Just (Arg (s0,s1) (t0,t1))
 >   halfZip (Ind s0 t0) (Ind s1 t1) = Just (Ind (s0,s1) (t0,t1))
+>   halfZip (Ind1 s0) (Ind1 s1) = Just (Ind1 (s0,s1))
 
 > import -> CanPats where
 >   pattern DESC     = C Desc
@@ -160,6 +163,7 @@ Equality rules:
 >   pattern DONE     = C Done
 >   pattern ARG x y  = C (Arg x y)
 >   pattern IND x y  = C (Ind x y)
+>   pattern IND1 x   = C (Ind1 x)
 
 > import -> SugarTactics where
 >   descTac = can Desc
@@ -167,6 +171,7 @@ Equality rules:
 >   doneTac = can Done
 >   argTac h f = can $ Arg h (lambda f)
 >   indTac x d = can $ Ind x d
+>   ind1Tac d = can $ Ind1 d
 
 > import -> CanPretty where
 >   prettyCan Desc   = text "Desc"
@@ -174,6 +179,7 @@ Equality rules:
 >   prettyCan Done   = text "Done"
 >   prettyCan (Arg t1 t2) = parens (text "Arg" <+> pretty t1 <+> pretty t2)
 >   prettyCan (Ind t1 t2) = parens (text "Ind" <+> pretty t1 <+> pretty t2)
+>   prettyCan (Ind1 t) = parens (text "Ind1" <+> pretty t)
 
 > import -> CanTyRules where
 >   canTy _ (Set :>: Desc)     = return Desc
@@ -189,6 +195,9 @@ Equality rules:
 >     xxv@(x :=>: xv) <- chev (SET :>: x)
 >     yyv@(y :=>: yv) <- chev (DESC :>: y)
 >     return $ Ind xxv yyv
+>   canTy chev (Desc :>: Ind1 x) = do
+>     xxv@(x :=>: xv) <- chev (DESC :>: x)
+>     return $ Ind1 xxv
 >   canTy chev (Mu x :>: Con y) = do
 >     yyv@(y :=>: yv) <- chev (descOp @@ [x, MU x] :>: y)
 >     return $ Con yyv
@@ -222,6 +231,7 @@ Equality rules:
 >       dOpRun [DONE,y]    = Right UNIT
 >       dOpRun [ARG x y,z] = Right $ trustMe (opRunArgType :>: opRunArgTac) $$ A x $$ A y $$ A z
 >       dOpRun [IND x y,z] = Right $ trustMe (opRunIndType :>: opRunIndTac) $$ A x $$ A y $$ A z
+>       dOpRun [IND1 y,z] = Right $ trustMe (opRunInd1Type :>: opRunInd1Tac) $$ A y $$ A z
 >       dOpRun [N x,_]     = Left x
 >
 >       opRunTypeTac arg = arrTac arg
@@ -250,6 +260,14 @@ Equality rules:
 >                                      (use d done))
 >                              (useOp descOp [ use x done
 >                                            , use d done ] done)
+>
+>       opRunInd1Type = trustMe (SET :>: opRunInd1TypeTac)
+>       opRunInd1TypeTac = opRunTypeTac (can Desc)
+>       opRunInd1Tac = lambda $ \x ->
+>                      lambda $ \d ->
+>                      timesTac (use d done)
+>                               (useOp descOp [ use x done
+>                                             , use d done ] done)
 
 
 
@@ -277,6 +295,8 @@ Equality rules:
 >                                          $$ A a $$ A f $$ A d $$ A p $$ A v
 >       boxOpRun [IND h x,d,p,v] = Right $ trustMe (opRunIndType :>: opRunIndTac)
 >                                          $$ A h $$ A x $$ A d $$ A p $$ A v
+>       boxOpRun [IND1 x,d,p,v] = Right $ trustMe (opRunInd1Type :>: opRunInd1Tac)
+>                                         $$ A x $$ A d $$ A p $$ A v
 >       boxOpRun [N x    ,_,_,_] = Left x
 >
 >       opRunTypeTac arg = piTac setTac
@@ -325,6 +345,19 @@ Equality rules:
 >                                           , use d done
 >                                           , use p done
 >                                           , use v . apply Snd $ done ] done)
+>       opRunInd1Type = trustMe (SET :>: opRunInd1TypeTac) 
+>       opRunInd1TypeTac = piTac descTac
+>                                (\x ->
+>                                 opRunTypeTac (ind1Tac (use x done)))
+>       opRunInd1Tac = lambda $ \x ->
+>                      lambda $ \d ->
+>                      lambda $ \p ->
+>                      lambda $ \v ->
+>                      timesTac (p @@@ [use v . apply Fst $ done])
+>                               (useOp boxOp [ use x done
+>                                            , use d done
+>                                            , use p done
+>                                            , use v . apply Snd $ done ] done)
 
 
 >   mapBoxOp :: Op
@@ -355,6 +388,8 @@ Equality rules:
 >                                                $$ A a $$ A f $$ A d $$ A bp $$ A p $$ A v
 >       mapBoxOpRun [IND h x,d,bp,p,v] = Right $ trustMe (mapBoxIndType :>: mapBoxIndTac) 
 >                                                $$ A h $$ A x $$ A d $$ A bp $$ A p $$ A v
+>       mapBoxOpRun [IND1 x,d,bp,p,v] = Right $ trustMe (mapBoxInd1Type :>: mapBoxInd1Tac) 
+>                                                 $$ A x $$ A d $$ A bp $$ A p $$ A v
 >       mapBoxOpRun [N x    ,_, _,_,_] = Left x
 >
 >       mapBoxTypeTac arg = piTac setTac
@@ -390,6 +425,23 @@ Equality rules:
 >                                      apply Fst .
 >                                      apply (A (use y done)) 
 >                                      $ done])
+>                               (useOp mapBoxOp [ use x done
+>                                               , use d done
+>                                               , use bp done
+>                                               , use p done
+>                                               , use v . apply Snd $ done ] done)
+>       mapBoxInd1Type = trustMe (SET :>: mapBoxInd1TypeTac)
+>       mapBoxInd1TypeTac = piTac descTac
+>                                 (\x ->
+>                                  mapBoxTypeTac (ind1Tac (use x done)))
+>       mapBoxInd1Tac = lambda $ \x ->
+>                       lambda $ \d ->
+>                       lambda $ \bp ->
+>                       lambda $ \p ->
+>                       lambda $ \v ->
+>                       pairTac (p @@@ [use v .
+>                                       apply Fst 
+>                                       $ done])
 >                               (useOp mapBoxOp [ use x done
 >                                               , use d done
 >                                               , use bp done

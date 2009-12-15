@@ -91,6 +91,13 @@ Let's test it:
 >           withTac = opRun descOp [IND x y, z]
 >           orig = indDescRun x y z
 
+> testDescInd1 = show $ withTac 
+>     where x = N (P ([("",1)] := DECL :<: DESC))
+>           z = N (P ([("",2)] := DECL :<: SET))
+>           typ = SET
+>           withTac = opRun descOp [IND1 x, z]
+
+
 Box on an Arg is supposed to build this term:
 
 > boxArgRun a f d p v = boxOp @@ [f $$ A (v $$ Fst),d,p,v $$ Snd] 
