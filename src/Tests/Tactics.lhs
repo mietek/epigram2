@@ -19,6 +19,9 @@
 > fromRight (Right x) = x
 > fromRight (Left y) = error $ "fromRight: got a left term: " ++ show y
 
+> isRight (Right _) = True
+> isRight _ = False
+
 \subsection{Enum}
 
 branches is supposed to build the following term:
@@ -91,7 +94,9 @@ Let's test it:
 >           withTac = opRun descOp [IND x y, z]
 >           orig = indDescRun x y z
 
-> testDescInd1 = show $ withTac 
+Just check that we can use Ind1:
+
+> testDescInd1 = isRight withTac 
 >     where x = N (P ([("",1)] := DECL :<: DESC))
 >           z = N (P ([("",2)] := DECL :<: SET))
 >           typ = SET
@@ -134,6 +139,17 @@ Let's test it:
 >           typ = SET
 >           withTac = opRun boxOp [IND h x, d, p, v]
 >           orig = boxIndRun h x d p v
+
+Just check that box does something on Ind1:
+
+> testBoxInd1 = isRight withTac
+>     where x = N (P ([("",1)] := DECL :<: DESC))
+>           d = N (P ([("",2)] := DECL :<: SET))
+>           p = N (P ([("",3)] := DECL :<: ARR d SET))
+>           v = N (P ([("",4)] := DECL :<: descOp @@ [IND1 x, p]))
+>           typ = SET
+>           withTac = opRun boxOp [IND1 x, d, p, v]
+
 
 Mapbox on an Arg is supposed to build this term:
 
@@ -181,6 +197,21 @@ Test:
 >           typ = boxOp @@ [IND h x, d, bpv,v]
 >           withTac = opRun mapBoxOp [IND h x, d, bpv, p, v]
 >           orig = mapboxIndRun h x d bpv p v
+
+Just check that mapBox build something with Ind1:
+
+> testMapboxInd1 = isRight withTac
+>     where x = N (P ([("",1)] := DECL :<: DESC))
+>           d = N (P ([("",2)] := DECL :<: SET))
+>           bpv = N (P ([("",3)] := DECL :<: ARR d SET))
+>           p = N (P ([("",4)] := DECL :<: (C (Pi d (eval [.bpv. L $ "" :. 
+>                                             [.y. N (V bpv :$ A (NV y))]
+>                                            ] $ B0 :< bpv)))))
+>           v = N (P ([("",5)] := DECL :<: descOp @@ [IND1 x, d]))
+>           typ = boxOp @@ [IND1 x, d, bpv,v]
+>           withTac = opRun mapBoxOp [IND1 x, d, bpv, p, v]
+
+
 
 elimOp is supposed to build this term:
 
@@ -246,9 +277,12 @@ I don't believe it:
 >     putStrLn $ "Is switch ok? " ++ show testSwitch
 >     putStrLn $ "Is desc arg ok? " ++ show testDescArg
 >     putStrLn $ "Is desc ind ok? " ++ show testDescInd
+>     putStrLn $ "Is desc ind1 ok? " ++ show testDescInd1
 >     putStrLn $ "Is box arg ok? " ++ show testBoxArg
 >     putStrLn $ "Is box ind ok? " ++ show testBoxInd
+>     putStrLn $ "Is box ind1 ok? " ++ show testBoxInd1
 >     putStrLn $ "Is mapBox arg ok? " ++ show testMapboxArg
 >     putStrLn $ "Is mapBox ind ok? " ++ show testMapboxInd
+>     putStrLn $ "Is mapBox ind1 ok? " ++ show testMapboxInd1
 >     putStrLn $ "Is elim ok ? " ++ show testElim
 >     putStrLn $ "Is eqGreen Pi ok ? " ++ show testEqGreenPi
