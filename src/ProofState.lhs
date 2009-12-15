@@ -1,7 +1,7 @@
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE TypeOperators, TypeSynonymInstances #-}
+> {-# LANGUAGE FlexibleInstances, TypeOperators, TypeSynonymInstances #-}
 
 > module ProofState where
 
@@ -29,7 +29,7 @@
 
 Recall from Section~\ref{sec:developments} that
 
-< type Dev = (Bwd Entry, Tip, Root)
+< type Dev = (f (Entry f), Tip, Root)
 
 We ``unzip`` (cf. Huet's Zipper) this type to produce a type representing its
 one-hole context, which allows us to keep track of the location of a working
@@ -45,18 +45,68 @@ Each |Layer| of the structure is a record with the following fields:
 \end{description}
 
 > data Layer = Layer
->   {  elders  :: Bwd Entry
->   ,  mother  :: REF
->   ,  motherTy :: INTM
->   ,  cadets  :: Fwd Entry
->   ,  laytip  :: Tip
->   ,  layroot :: Root }
->   deriving Show
+>   {  elders    :: Entries
+>   ,  mother    :: REF
+>   ,  motherTy  :: INTM
+>   ,  cadets    :: NewsyEntries
+>   ,  laytip    :: Tip
+>   ,  layroot   :: Root }
+>  deriving Show
 
-The current proof context is then represented by a stack of |Layer|s, along with the
-current working development.
+Because we propagate news updates lazily, we may have news bulletins below the
+current cursor position, as well as entries. We defined a |newtype| for the
+composition of the |Fwd| and |Either NewsBulletin| functors, and use this functor
+to contain cadets.
 
-> type ProofContext = (Bwd Layer, Dev)
+> newtype NewsyFwd x = NF { unNF :: Fwd (Either NewsBulletin x) }
+
+> type NewsyEntries = NewsyFwd (Entry NewsyFwd)
+
+
+%if False
+
+> instance Show (NewsyFwd (Entry NewsyFwd)) where
+>     show (NF ls) = show ls
+
+> instance Show (Entry NewsyFwd) where
+>     show (E ref xn e t) = intercalate " " ["E", show ref, show xn, show e, show t]
+>     show (M n d) = intercalate " " ["M", show n, show d]
+
+> instance Show (Entity NewsyFwd) where
+>     show (Boy k) = "Boy " ++ show k
+>     show (Girl k d) = "Girl " ++ show k ++ " " ++ show d
+
+> instance Traversable NewsyFwd where
+>     traverse g (NF x) = NF <$> traverse (traverse g) x
+
+> instance Foldable NewsyFwd where
+>     foldMap = foldMapDefault
+
+> instance Functor NewsyFwd where
+>     fmap = fmapDefault
+
+%endif
+
+
+When moving the cursor backwards, we sometimes need to reverse the direction of contained
+entries, using the |reverseEntry|, |reverseEntries| and |reverseDev| functions.
+
+> reverseEntry :: Entry Bwd -> Entry NewsyFwd
+> reverseEntry (E ref xn (Boy k) ty)          = E ref xn (Boy k) ty
+> reverseEntry (E ref xn (Girl LETG dev) ty)  = E ref xn (Girl LETG (reverseDev dev)) ty
+> reverseEntry (M n d)                        = M n (reverseDev d)
+
+> reverseEntries :: Entries -> NewsyEntries
+> reverseEntries xs = NF (fmap (Right . reverseEntry) xs <>> F0)
+
+> reverseDev :: Dev Bwd -> Dev NewsyFwd
+> reverseDev (xs, tip, root) = (reverseEntries xs, tip, root)
+
+
+The current proof context is represented by a stack of |Layer|s, along with the
+current working development (above the cursor).
+
+> type ProofContext = (Bwd Layer, Dev Bwd)
 
 > emptyContext :: ProofContext
 > emptyContext = (B0, (B0, Module, (B0, 0)))
@@ -65,14 +115,14 @@ current working development.
 The |greatAuncles| function returns the elder aunts or uncles of the current development,
 not including its contents.
 
-> greatAuncles :: ProofContext -> Bwd Entry
+> greatAuncles :: ProofContext -> Entries
 > greatAuncles (ls, _) = foldMap elders ls
 
-The |auncles| function returns the elder aunts or uncles of the current insertion point,
-including the contents of the current development, thereby giving a list of entries that
+The |auncles| function returns the elder aunts or uncles of the cursor, including the
+contents of the current development, thereby giving a list of entries that
 are currently in scope.
 
-> auncles :: ProofContext -> Bwd Entry
+> auncles :: ProofContext -> Entries
 > auncles c@(_, (es, _, _)) = greatAuncles c <+> es
 
 
@@ -80,11 +130,11 @@ are currently in scope.
 \label{sec:proofStateMonad}
 
 The proof state monad provides access to the |ProofContext| as in a |State| monad,
-but with the possibility of command failure represented by |Maybe|. 
+but with the possibility of command failure represented by |Either [String]|. 
 
 > type ProofState = StateT ProofContext (Either [String])
 
-Handily, |Maybe| is a |MonadPlus|, and |StateT| preserves this, so we can easily
+Handily, |Either [String]| is a |MonadPlus|, and |StateT| preserves this, so we can easily
 make |ProofState| an |Alternative|:
 
 > instance Applicative ProofState where
@@ -101,18 +151,18 @@ make |ProofState| an |Alternative|:
 We provide various functions to get information from the proof state and store
 updated information, providing a friendlier interface than |get| and |put|.
 
-> getAuncles :: ProofState (Bwd Entry)
+> getAuncles :: ProofState (Entries)
 > getAuncles = get >>= return . auncles
 
-> getDev :: ProofState Dev
+> getDev :: ProofState (Dev Bwd)
 > getDev = gets snd
 
-> getDevEntries :: ProofState (Bwd Entry)
+> getDevEntries :: ProofState (Entries)
 > getDevEntries = do
 >     (es, _, _) <- getDev
 >     return es
 
-> getDevEntry :: ProofState Entry
+> getDevEntry :: ProofState (Entry Bwd)
 > getDevEntry = do
 >     (_ :< e, _, _) <- getDev
 >     return e
@@ -127,7 +177,7 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     (_, tip, _) <- getDev
 >     return tip
 
-> getGreatAuncles :: ProofState (Bwd Entry)
+> getGreatAuncles :: ProofState Entries
 > getGreatAuncles = get >>= return . greatAuncles
 
 > getLayer :: ProofState Layer
@@ -143,7 +193,7 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     l <- getLayer
 >     return (mother l)
 
-> getMotherEntry :: ProofState Entry
+> getMotherEntry :: ProofState (Entry Bwd)
 > getMotherEntry = do
 >     l <- getLayer
 >     dev <- getDev
@@ -156,23 +206,23 @@ updated information, providing a friendlier interface than |get| and |put|.
 >         (_ :< Layer{mother=name := _}) -> return name
 >         B0 -> return []
 
-> insertCadet :: Entry -> ProofState ()
-> insertCadet e = do
+> insertCadet :: NewsBulletin -> ProofState ()
+> insertCadet news = do
 >     l <- getLayer
->     replaceLayer l{cadets = e :> cadets l}
+>     replaceLayer l{cadets = NF (Left news :> unNF (cadets l))}
 >     return ()
 
-> putDev :: Dev -> ProofState ()
+> putDev :: Dev Bwd -> ProofState ()
 > putDev dev = do
 >     ls <- gets fst
 >     put (ls, dev)
 
-> putDevEntry :: Entry -> ProofState ()
+> putDevEntry :: Entry Bwd -> ProofState ()
 > putDevEntry e = do
 >     (es, tip, root) <- getDev
 >     putDev (es :< e, tip, root)
 
-> putDevEntries :: Bwd Entry -> ProofState ()
+> putDevEntries :: Entries -> ProofState ()
 > putDevEntries es = do
 >     (_, tip, root) <- getDev
 >     putDev (es, tip, root)
@@ -198,13 +248,13 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     _ <- replaceLayer l{mother=ref}
 >     return ()
 
-> putMotherEntry :: Entry -> ProofState ()
+> putMotherEntry :: Entry Bwd -> ProofState ()
 > putMotherEntry (E ref _ (Girl LETG dev) ty) = do
 >     l <- getLayer
 >     replaceLayer (l{mother=ref, motherTy=ty})
 >     putDev dev
 
-> removeDevEntry :: ProofState (Maybe Entry)
+> removeDevEntry :: ProofState (Maybe (Entry Bwd))
 > removeDevEntry = do
 >     es <- getDevEntries
 >     case es of
@@ -219,13 +269,13 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     put (ls, dev)
 >     return l
 
-> replaceDev :: Dev -> ProofState Dev
+> replaceDev :: Dev Bwd -> ProofState (Dev Bwd)
 > replaceDev dev = do
 >     (ls, dev') <- get
 >     put (ls, dev)
 >     return dev'
 
-> replaceDevEntries :: Bwd Entry -> ProofState (Bwd Entry)
+> replaceDevEntries :: Entries -> ProofState Entries
 > replaceDevEntries es = do
 >     es' <- getDevEntries
 >     putDevEntries es
@@ -315,14 +365,20 @@ These commands fail (yielding |Nothing|) if they are impossible because the proo
 is not in the required form.
 
 > goIn :: ProofState ()
-> goIn = goInAcc F0 `replaceError` "goIn: you can't go that way."
+> goIn = goInAcc (NF F0) `replaceError` "goIn: you can't go that way."
 >   where
->     goInAcc :: Fwd Entry -> ProofState ()
->     goInAcc cadets = do
+>     goInAcc :: NewsyEntries -> ProofState ()
+>     goInAcc (NF cadets) = do
 >         (ls, (es :< e, tip, root)) <- get
 >         case e of
->             E ref _ (Girl LETG dev) ty -> put (ls :< Layer es ref ty cadets tip root, dev)
->             _ -> put (ls, (es, tip, root)) >> goInAcc (e :> cadets)
+>             E ref _ (Girl LETG dev) ty -> put (ls :< Layer es ref ty (NF cadets) tip root, dev)
+>             _ -> put (ls, (es, tip, root)) >> goInAcc (NF (Right (reverseEntry e) :> cadets))
+
+> jumpIn :: Entry NewsyFwd -> ProofState NewsyEntries
+> jumpIn (E ref _ (Girl LETG (cs, newTip, newRoot)) ty) = do
+>     (ls, (es, tip, root)) <- get
+>     put (ls :< Layer es ref ty (NF F0) tip root, (B0, newTip, newRoot))
+>     return cs
 
 > goOut :: ProofState ()
 > goOut = (do
@@ -333,42 +389,41 @@ is not in the required form.
 >     return ()
 >   ) `replaceError` "goOut: you can't go that way."
 
-> goOutSilently :: ProofState ()
-> goOutSilently = do
->     e <- getMotherEntry
->     l <- removeLayer
->     putDev (elders l :< e <>< cadets l, laytip l, layroot l)
-
 > goUp :: ProofState ()
-> goUp = goUpAcc F0 `replaceError` "goUp: you can't go that way."
+> goUp = goUpAcc (NF F0) `replaceError` "goUp: you can't go that way."
 >   where
->     goUpAcc :: Fwd Entry -> ProofState ()
->     goUpAcc acc = do
->         l@(Layer (es :< e) oldRef oldTy cadets tip root) <- removeLayer
+>     goUpAcc :: NewsyEntries -> ProofState ()
+>     goUpAcc (NF acc) = do
+>         l@(Layer (es :< e) oldRef oldTy (NF cadets) tip root) <- removeLayer
 >         oldDev <- getDev
 >         case e of
 >             E newRef _ (Girl LETG newDev) newTy ->
 >                 putDev newDev >>
->                 putLayer l{elders=es, mother=newRef, motherTy=newTy, cadets=(acc <+> 
->                     (E oldRef (lastName oldRef) (Girl LETG oldDev) oldTy :> cadets))}
->             _ -> putLayer l{elders=es} >> goUpAcc (e :> acc)
+>                 putLayer l{elders=es, mother=newRef, motherTy=newTy, cadets=NF (acc <+> 
+>                     (Right (E oldRef (lastName oldRef) (Girl LETG (reverseDev oldDev)) oldTy) :> cadets))}
+>             _ -> putLayer l{elders=es} >> goUpAcc (NF (Right (reverseEntry e) :> acc))
 
 > goDown :: ProofState ()
 > goDown = goDownAcc B0 [] `replaceError` "goDown: you can't go that way."
 >   where
->     goDownAcc :: Bwd Entry -> NewsBulletin -> ProofState ()
+>     goDownAcc :: Entries -> NewsBulletin -> ProofState ()
 >     goDownAcc acc news = do
->         l@(Layer elders ref ty (e :> es) tip root) <- removeLayer
+>         l@(Layer elders ref ty (NF (e :> es)) tip root) <- removeLayer
 >         case e of
->             E _ _ (Girl LETG newDev) _ -> do
->                 oldDev <- replaceDev newDev
->                 news' <- propagateNewsHere news
->                 (news'', E newRef _ (Girl LETG newDev') newTy) <- tellGirl news' e
+>             Right (E ref' xn (Girl LETG (NF es', tip', root')) ty') -> do
+>                 oldDev <- replaceDev (B0, tip', root')
+>                 news' <- propagateNews news (NF es')
+>                 dev <- getDev
+>                 (news'', E newRef _ (Girl LETG newDev') newTy) <- tellGirl news' (E ref' xn (Girl LETG dev) ty')
 >                 replaceDev newDev'
 >                 putLayer  l{elders=(elders:<E ref (lastName ref) (Girl LETG oldDev) ty)<+> acc,
->                               mother=newRef, motherTy=newTy, cadets=R news'' :> es}
->             R nb  -> putLayer l{cadets=es} >> goDownAcc acc (mergeNews nb news)
->             _     -> putLayer l{cadets=es} >> goDownAcc (acc :< e) news
+>                               mother=newRef, motherTy=newTy, cadets=NF (Left news'' :> es)}
+>             Right (E ref xn (Boy k) ty') -> do
+>                 putLayer l{cadets=NF es}
+>                 goDownAcc (acc :< E ref xn (Boy k) ty') news
+>             Left nb -> do
+>                 putLayer l{cadets=NF es}
+>                 goDownAcc acc (mergeNews nb news)
 
 > goTo :: Name -> ProofState ()
 > goTo [] = return ()
@@ -408,6 +463,7 @@ and fails (yielding |Nothing|) if not.
 > isGoal = do
 >     Unknown _ <- getDevTip
 >     return ()
+
 
 We can now compactly describe how to search the proof state for goals, by giving
 several alternatives for where to go next and continuing until a goal is reached.
@@ -578,7 +634,7 @@ a changed reference (that the current development has already processed), it sim
 inserts a news bulletin below the current development.
 
 > updateRef :: REF -> ProofState ()
-> updateRef ref = insertCadet (R [(ref, GoodNews)])
+> updateRef ref = insertCadet [(ref, GoodNews)]
 
 
 The |propagateNews| function takes a current news bulletin and a list of entries
@@ -587,32 +643,32 @@ in turn, picking up other bulletins along the way. This function should be calle
 when navigating to a development that may contain news bulletins, so they can be
 pushed out of sight.
 
-> propagateNews :: NewsBulletin -> Fwd Entry -> ProofState NewsBulletin
+> propagateNews :: NewsBulletin -> NewsyEntries -> ProofState NewsBulletin
 
 If we have nothing to say and nobody to tell, we might as well give up and go home.
 
-> propagateNews [] F0 = return []
+> propagateNews [] (NF F0) = return []
 
 If there are no entries to process, we should tell the mother (if there is one),
 stash the bulletin after the current location and stop. Note that the insertion is
 optional because it will fail when we have reached the end of the module, at which
 point everyone knows the news anyway.
 
-> propagateNews news F0 = do
+> propagateNews news (NF F0) = do
 >     news' <- tellMother news
->     optional (insertCadet (R news'))
+>     optional (insertCadet news')
 >     return news'
 
 A |Boy| is relatively easy to deal with, we just check to see if its type
 has become more defined, and pass on the good news if necessary.
 
-> propagateNews news (e@(E (name := DECL :<: tv) sn (Boy _) ty) :> es) = do
+> propagateNews news (NF (Right e@(E (name := DECL :<: tv) sn (Boy k) ty) :> es)) = do
 >     case tellNews news ty of
->         (_, NoNews) -> putDevEntry e >> propagateNews news es
+>         (_, NoNews) -> putDevEntry (E (name := DECL :<: tv) sn (Boy k) ty) >> propagateNews news (NF es)
 >         (ty', GoodNews) -> do
 >             let ref = name := DECL :<: evTm ty'
 >             putDevEntry (E ref sn (Boy LAMB) ty')
->             propagateNews ((ref, GoodNews):news) es
+>             propagateNews ((ref, GoodNews):news) (NF es)
 
 Updating girls is a bit more complicated. We proceed as follows:
 \begin{enumerate}
@@ -622,25 +678,25 @@ Updating girls is a bit more complicated. We proceed as follows:
 \item Continue propagating the latest news.
 \end{enumerate}
 
-> propagateNews news (e@(E ref sn (Girl LETG (_, tip, root)) ty) :> es) = do
->     (news', cs) <- propagateIn news e
+> propagateNews news (NF ((Right e@(E ref sn (Girl LETG (_, tip, root)) ty)) :> es)) = do
+>     (news', cs) <- propagateIn
 >     (news'', e') <- tellGirl news' (E ref sn (Girl LETG (cs, tip, root)) ty)
 >     putDevEntry e'
->     propagateNews news'' es
->  where
->    propagateIn :: NewsBulletin -> Entry -> ProofState (NewsBulletin, Bwd Entry)
->    propagateIn news e = do
->        putDevEntry e
->        goIn
->        news' <- propagateNewsHere news
->        goOut
->        Just (E _ _ (Girl LETG (cs, _, _)) _) <- removeDevEntry
->        return (news', cs)
+>     propagateNews news'' (NF es)
+>   where
+>     propagateIn :: ProofState (NewsBulletin, Entries)
+>     propagateIn = do
+>         xs <- jumpIn e
+>         news' <- propagateNews news xs
+>         goOut
+>         Just (E _ _ (Girl LETG (cs, _, _)) _) <- removeDevEntry
+>         return (news', cs)
+
 
 Finally, if we encounter an older news bulletin when propagating news, we can simply
 merge the two together.
 
-> propagateNews news (R oldNews :> es) = propagateNews (mergeNews oldNews news) es
+> propagateNews news (NF (Left oldNews :> es)) = propagateNews (mergeNews oldNews news) (NF es)
 
 
 The |tellGirl| function informs a girl about a news bulletin that her children
@@ -652,7 +708,7 @@ should have already received. It will
 \item update the news bulletin with news about this girl.
 \end{enumerate}
 
-> tellGirl :: NewsBulletin -> Entry -> ProofState (NewsBulletin, Entry)
+> tellGirl :: NewsBulletin -> Entry Bwd -> ProofState (NewsBulletin, Entry Bwd)
 > tellGirl news (E (name := k :<: tv) sn (Girl LETG (cs, tip, root)) ty) = do
 >     let  (tip', n)       = tellTip news tip
 >          (ty', tv', n')  = tellNewsEval news ty tv
@@ -706,12 +762,3 @@ the term with the bulletin and re-evaluates it if necessary.
 > tellNewsEval news tm tv = case tellNews news tm of
 >     (_,    NoNews)    -> (tm,   tv,        NoNews)
 >     (tm',  GoodNews)  -> (tm',  evTm tm',  GoodNews)
-
-
-The |propagateNewsHere| function is a special case of |propagateNews| that
-simply processes the current development.
-
-> propagateNewsHere :: NewsBulletin -> ProofState NewsBulletin
-> propagateNewsHere news = do
->     es <- replaceDevEntries B0
->     propagateNews news (es <>> F0)

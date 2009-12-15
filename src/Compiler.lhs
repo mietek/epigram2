@@ -171,13 +171,13 @@ by hand in Epic - see epic/support.e
 >                import <- OpCompile
 >                _ -> error "Unknown operator"
 
-> compileModule :: Dev -> Bwd (CName, CompileFn)
+> compileModule :: Dev Bwd -> Bwd (CName, CompileFn)
 > compileModule (entries, Module, _) = fmap compileEntry entries
 
 > compileEntry (E name _ (Girl LETG (entries, tip, _)) _) 
 >       = (cname name, collectArgs [] entries tip)
 
-> collectArgs :: [REF] -> Bwd Entry -> Tip -> CompileFn
+> collectArgs :: [REF] -> Entries -> Tip -> CompileFn
 > collectArgs acc B0 (Defined tm _) = Comp (map cname acc) (makeBody tm)
 > collectArgs acc (bs :< E name _ (Boy _) _) tip = collectArgs (name:acc) bs tip
 

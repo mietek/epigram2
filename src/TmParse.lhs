@@ -194,7 +194,7 @@ left, and will do so with |littleInTm|.
 The |termParse| function produces a parser for terms, given a context, by resolving
 in the context all the names in the |InTm String| produced by |bigInTm|.
 
-> termParse :: Bwd Entry -> Parsley Token INTM
+> termParse :: Entries -> Parsley Token INTM
 > termParse es = pFilter (resolve es) bigInTm
 
 

@@ -108,7 +108,8 @@ accumulating pairs of names and command lists along the way.
 >     n <- withRoot (flip name x)
 >     let ref = n := HOLE :<: (error "makeEntry: ref undefined")
 >     root <- getDevRoot
->     putDevEntry (E ref (last n) (Girl LETG (B0, error "makeEntry: tip undefined", room root x))
+>     putDevEntry (E ref (last n) (Girl LETG
+>                     (B0, Unknown (error "makeEntry: tip undefined"), room root x))
 >                     (error "makeEntry: type undefined"))
 >     putDevRoot (roos root)
 >     goIn
@@ -117,7 +118,7 @@ accumulating pairs of names and command lists along the way.
 >     aus <- getGreatAuncles
 >     kids' <- getDevEntries
 >     let goalTy = liftType aus (inferGoalType kids' tipTy)
->     goOutSilently
+>     goOut
 >     Just (E _ _ (Girl LETG (es, _, root')) _) <- removeDevEntry
 >     putDevEntry (E (n := HOLE :<: evTm goalTy) (last n) 
 >                    (Girl LETG (es, Unknown (tipTy :=>: evTm tipTy), root')) goalTy)

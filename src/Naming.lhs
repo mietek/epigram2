@@ -18,6 +18,7 @@
 > import Data.Foldable hiding (elem)
 > import Data.List
 > import Data.Monoid
+> import Data.Traversable
 
 > import BwdFwd
 > import Developments
@@ -63,17 +64,16 @@ The |showName| function converts a name to a string absolutely (without christen
 The |showEntries| function folds over a bunch of entries, christening them with the
 given auncles and current name, and intercalating to produce a comma-separated list.
 
-> showEntries :: Foldable f => Bwd Entry -> Name -> f Entry -> String
+> showEntries :: (Traversable f, Traversable g) => Entries -> Name -> f (Entry g) -> String
 > showEntries aus me = intercalate ", " . foldMap (\(E ref _ _ _) -> [christenREF aus me ref])
 
 The |showEntriesAbs| function works similarly, but uses absolute names instead of
 christening them.
 
-> showEntriesAbs :: Foldable f => f Entry -> String
+> showEntriesAbs :: Traversable f => f (Entry f) -> String
 > showEntriesAbs = intercalate ", " . foldMap f
 >   where
 >     f (E (n := _) _ _ _) = [showName n]
->     f (R nb) = [show nb]
 
 
 \subsection{Resolving Local Longnames}
@@ -85,7 +85,7 @@ are fully $\lambda$-lifted, but as $f$'s parameters are held in common
 with the point of reference, we automatically supply them.
 
 
-> resolve :: Bwd Entry -> InTm RelName -> Maybe INTM
+> resolve :: Entries -> InTm RelName -> Maybe INTM
 > resolve es tm = resolver es B0 % tm
 
 
@@ -93,7 +93,7 @@ The |resolver| function takes a context and a list of binder names, and
 produces a mangle that, when applied, attempts to resolve the parameter
 names in an |InTmRN| to produce an |InTm REF|, i.e.\ an INTM.
 
-> resolver :: Bwd Entry -> Bwd String -> Mangle Maybe RelName REF
+> resolver :: Entries -> Bwd String -> Mangle Maybe RelName REF
 > resolver ps vs = Mang
 >     {  mangP  = \ x mes -> (| (findLocal ps vs x) $:$ mes |)
 >     ,  mangV  = \ _ _ -> Nothing -- what's that index doing here?
@@ -121,7 +121,7 @@ name to resolve. It first searches the binders for a |Rel| name, and
 returns a de Brujin indexed variable if it is present. Otherwise, it calls
 |findGlobal| to search the context.
 
-> findLocal :: Bwd Entry -> Bwd String -> RelName -> Maybe (ExTm REF)
+> findLocal :: Entries -> Bwd String -> RelName -> Maybe (ExTm REF)
 > findLocal ps B0 sos = findGlobal ps sos
 > findLocal ps (xs :< x) [(y, Rel 0)]       | x == y = (|(V 0)|)
 > findLocal ps (xs :< x) ((y, Rel i) : sos) | x == y =
@@ -137,13 +137,13 @@ The |findGlobal| function takes a context and a relative name to resolve. It
 searches the context for an entry that hits the name, then searches that
 entry's children to resolve the next component. 
 
-> findGlobal :: Bwd Entry -> RelName -> Maybe EXTM
+> findGlobal :: Entries -> RelName -> Maybe EXTM
 > findGlobal B0 sos = empty
 > findGlobal (xs :< E r x e _) (y : ys) = case hits x y of
 >     Right _  -> findChild r (foldMap boy xs) e ys
 >     Left y'  -> findGlobal xs (y' : ys)
 >   where
->     boy :: Entry -> Spine {TT} REF
+>     boy :: Entry Bwd -> Spine {TT} REF
 >     boy (E r _ (Boy _) _)  = [A (N (P r))]
 >     boy _                = []
 
@@ -154,13 +154,13 @@ resolve. If the remainder is empty, it returns a parameter referring to the
 current entry (applied to the shared parameters if appropriate). Otherwise,
 the entity should be a |Girl|, and it searches her children for the name.
 
-> findChild :: REF -> Spine {TT} REF -> Entity -> RelName -> Maybe EXTM
+> findChild :: REF -> Spine {TT} REF -> Entity Bwd -> RelName -> Maybe EXTM
 > findChild r  as (Boy _)              []  = (|(P r)|)
 > findChild r  as (Girl _ _)           []  = (|(P r $:$ as)|)
 > findChild r  as (Boy _)              ys  = empty
 > findChild r  as (Girl _ (es, _, _))  ys  = findD es ys as
 >   where
->     findD :: Bwd Entry -> RelName -> Spine {TT} REF -> Maybe EXTM
+>     findD :: Entries -> RelName -> Spine {TT} REF -> Maybe EXTM
 >     findD (xs :< E r x e@(Girl _ _) _) (y : ys) as = case hits x y of
 >         Right _  -> findChild r as e ys
 >         Left y'  -> findD xs (y' : ys) as
@@ -197,24 +197,24 @@ current location), the name of the current location and a term. It replaces
 the variables and parameters of the term with |String| names as described
 above, and removes common parameters.
 
-> christen :: Bwd Entry -> Name -> INTM -> InTm String
+> christen :: Entries -> Name -> INTM -> InTm String
 > christen es n tm = christener es n B0 %% tm
 
 
 The |christenName| and |christenREF| functions do a similar job for names, and
 the name part of references, respectively.
 
-> christenName :: Bwd Entry -> Name -> Name -> String
+> christenName :: Entries -> Name -> Name -> String
 > christenName es me target = case mangleP es me B0 target [] of P x -> x
 >
-> christenREF :: Bwd Entry -> Name -> REF -> String
+> christenREF :: Entries -> Name -> REF -> String
 > christenREF es me (target := _) = christenName es me target
 
 
 The business of christening is actually done by the following mangle, which
 does most of its work in the |mangleP| function. 
 
-> christener :: Bwd Entry -> Name -> Bwd String -> Mangle Identity REF String
+> christener :: Entries -> Name -> Bwd String -> Mangle Identity REF String
 > christener es me vs = Mang
 >     {  mangP = \(target := _) as -> pure (mangleP es me vs target (runIdentity as))
 >     ,  mangV = \i _ -> pure (P (vs !. i))
@@ -227,7 +227,7 @@ location, a list of local variables, the name of the parameter to christen and a
 spine of arguments. It gives an appropriate relative name to the parameter and
 applies it to the arguments, dropping any that are shared with the current location.
 
-> mangleP :: Bwd Entry -> Name -> Bwd String -> Name -> [Elim (InTm String)] -> ExTm String
+> mangleP :: Entries -> Name -> Bwd String -> Name -> [Elim (InTm String)] -> ExTm String
 > mangleP auncles me vs target args = 
 >     let  (prefix, (t, n):targetSuffix) = splitNames me target
 >          numBindersToSkip = getSum (foldMap (\x -> if x == t then Sum 1 else Sum 0) vs)
@@ -247,7 +247,7 @@ The |searchKids| function searches a list of children to match a name suffix, pr
 a relative name corresponding to the suffix. It should be called with the counter set
 to zero, which then is incremented to determine the relative offset of each name component.
 
-> searchKids :: Bwd Entry -> [(String, Int)] -> Int -> RelName
+> searchKids :: Entries -> [(String, Int)] -> Int -> RelName
 > searchKids _   []  _ = []
 > searchKids B0  _   _ = error "searchKids: ran out of children"
 > searchKids (es :< E _ (x, n) entity _) ((y, m):yms) i
@@ -273,7 +273,7 @@ The |findName| function searches a list of entries for a name, incrementing the
 counter each time its string argument appears as the last component of an entry.
 It returns the entry found, its prefix in the list of entries, and the count.
 
-> findName :: Bwd Entry -> Name -> String -> Int -> (Entry, Bwd Entry, Int)
+> findName :: Entries -> Name -> String -> Int -> (Entry Bwd, Entries, Int)
 > findName (es :< e@(E (n := _) (x,_) _ _)) p y i
 >   | n == p     = (e, es, i)                         
 >   | x == y     = findName es p y (i+1)

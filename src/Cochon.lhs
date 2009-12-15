@@ -213,10 +213,10 @@ Here we have a very basic command-driven interface to the proof state monad.
 >         Right bs = evalStateT getAuncles to
 >     let (lost, gained)  = diff (as <>> F0) (bs <>> F0)
 >     if lost /= F0
->         then putStrLn ("Left scope: " ++ showEntriesAbs lost )
+>         then putStrLn ("Left scope: " ++ showEntriesAbs (fmap reverseEntry (NF (fmap Right lost))) )
 >         else return ()
 >     if gained /= F0
->        then putStrLn ("Entered scope: " ++ showEntriesAbs gained)
+>        then putStrLn ("Entered scope: " ++ showEntriesAbs (fmap reverseEntry (NF (fmap Right gained))))
 >        else return ()
 
 > diff :: (Eq a, Show a) => Fwd a -> Fwd a -> (Fwd a, Fwd a)

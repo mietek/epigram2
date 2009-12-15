@@ -15,6 +15,7 @@
 > import Data.Foldable
 > import Data.List
 > import Data.Monoid
+> import Data.Traversable
 
 %endif
 
@@ -68,6 +69,15 @@ so we have to do things the long way...
 >   pure = return
 >   (<*>) = ap
 
+
+\subsection{Missing Instances}
+
+> instance Traversable (Either x) where
+>     traverse g (Left a) = pure (Left a)
+>     traverse g (Right b) = Right <$> g b
+
+> instance Foldable (Either x) where
+>     foldMap = foldMapDefault
 
 
 \subsection{HalfZip}

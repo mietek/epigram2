@@ -8,6 +8,7 @@
 > import Elaborator
 > import Parsley
 > import PrettyPrint
+> import ProofState
 > import Lexer
 
 

@@ -4,7 +4,7 @@
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE TypeOperators #-}
+> {-# LANGUAGE FlexibleInstances, TypeOperators #-}
 
 > module Developments where
 
@@ -12,6 +12,7 @@
 > import Control.Monad
 > import Control.Monad.Identity
 > import Data.Foldable
+> import Data.List
 > import Data.Maybe
 > import Data.Monoid
 > import Data.Traversable
@@ -23,18 +24,20 @@
 
 %endif
 
-The top level state of the system is represented by a |Module| (that is, a
-|Dev| with a |Module| tip). Each |Dev| contains a list of entries, some
-of which may have their own developments, creating a nested tree-like structure.
-The list of entries is from top-to-bottom (so the topmost is the furthest left).
-A |Dev| also keeps track of its |Root| for namespace handling purposes.
+A |Dev| is a structure containing entries, some of which may have their own developments,
+creating a nested tree-like structure. It also carries a |Tip| representing the type of
+structure, and its |Root| for namespace handling purposes. Initially we had
 
-> type Dev = (Bwd Entry, Tip, Root)
+< type Dev = (Bwd Entry, Tip, Root)
+
+but generalised this to allow other |Traversable| functors |f| in place of |Bwd|, giving
+
+> type Dev f = (f (Entry f), Tip, Root)
 
 
-A |Module| is the |Tip| of a top-level development. Developments contained
-within a female |Entity| may represent |Unknown|s of a given type, or may be |Defined|
-as a term with a given type.
+A |Module| is a development that cannot have a type or value; this may be at the top level
+or further in. Developments contained within a female |Entity| may represent |Unknown|s
+of a given type, or may be |Defined| as a term with a given type.
 
 > data Tip
 >   = Module
@@ -43,19 +46,37 @@ as a term with a given type.
 >   deriving Show
 
 
-An |Entry| is either an |Entity| with its |REF| and the last component of its |Name|,
-or a "news bulletin" |R| describing updates to future references.
+An |Entry| is either an |Entity| with its |REF|, the last component of its |Name|
+and the |INTM| representation of its type, or it is a module (a |Name| associated
+with a |Dev| that has no type or value).
 
-> data Entry
->   =  E REF (String, Int) Entity INTM
->   |  R NewsBulletin
->   deriving Show
+> data Traversable f => Entry f
+>   =  E REF (String, Int) (Entity f) INTM
+>   |  M Name (Dev f)
 
-We can compare them for equality by comparing their references (presumably?).
+Typically, we want to work with developments that use backwards lists, so define
 
-> instance Eq Entry where
+> type Entries = Bwd (Entry Bwd)
+
+
+%if False
+
+> instance Show (Entry Bwd) where
+>     show (E ref xn e t) = intercalate " " ["E", show ref, show xn, show e, show t]
+>     show (M n d) = intercalate " " ["M", show n, show d]
+
+> instance Show (Entry Fwd) where
+>     show (E ref xn e t) = intercalate " " ["E", show ref, show xn, show e, show t]
+>     show (M n d) = intercalate " " ["M", show n, show d]
+
+%endif
+
+
+We can compare entities for equality by comparing their references.
+
+> instance Traversable f => Eq (Entry f) where
 >     (E r1 _ _ _) == (E r2 _ _ _)  =  r1 == r2
->     _ == _ = error "instance Eq Entry: cannot compare news bulletins for equality"
+>     _ == _ = error "instance Eq Entry: cannot compare modules for equality"
 
 The last component of the name is cached because we will need it quite frequently for
 display purposes. We can easily (but inefficiently) extract it from a reference:
@@ -70,14 +91,20 @@ has a |Tip| that is |Unknown| or |Defined|.
 A |Boy| represents a parameter (either a $\lambda$ or $\Pi$ abstraction), which scopes
 over all following entries and the definition (if any) in its development.
 
-> data Entity
+> data Traversable f => Entity f
 >   =  Boy   BoyKind
->   |  Girl  GirlKind Dev
->   deriving Show
+>   |  Girl  GirlKind (Dev f)
 >
 > data BoyKind   = LAMB | PIB  deriving (Show, Eq)
 > data GirlKind  = LETG        deriving (Show, Eq)
 
+> instance Show (Entity Bwd) where
+>     show (Boy k) = "Boy " ++ show k
+>     show (Girl k d) = "Girl " ++ show k ++ " " ++ show d
+
+> instance Show (Entity Fwd) where
+>     show (Boy k) = "Boy " ++ show k
+>     show (Girl k d) = "Girl " ++ show k ++ " " ++ show d
 
 \subsection{News about updated references}
 
@@ -137,10 +164,10 @@ in either.
 The |(-||)| operator takes a list of entries and a term, and changes the term
 so that boys in the list of entries are represented by de Brujin indices.
 
-> (-|) :: Bwd Entry -> INTM -> INTM
+> (-|) :: Bwd (Entry Bwd) -> INTM -> INTM
 > es -| t = disMangle es 0 %% t
 >   where
->     disMangle :: Bwd Entry -> Int -> Mangle Identity REF REF
+>     disMangle :: Bwd (Entry Bwd) -> Int -> Mangle Identity REF REF
 >     disMangle ys i = Mang
 >       {  mangP = \ x ies -> (|(h ys x i $:$) ies|)
 >       ,  mangV = \ i ies -> (|(V i $:$) ies|)
@@ -155,8 +182,8 @@ so that boys in the list of entries are represented by de Brujin indices.
 The |parBind| function $\lambda$-binds over a list $\Delta$ of entries and
 $\lambda$- and $\Pi$-binds over a list $\nabla$.
 
-> parBind ::  {- $\Delta$ :: -} Bwd Entry {- $\Gamma$ -} -> 
->             {- $\nabla$ :: -} Bwd Entry {- $\Gamma, \Delta$ -} -> 
+> parBind ::  {- $\Delta$ :: -} Bwd (Entry Bwd) {- $\Gamma$ -} -> 
+>             {- $\nabla$ :: -} Bwd (Entry Bwd) {- $\Gamma, \Delta$ -} -> 
 >             INTM {- $\Gamma, \Delta, \nabla$ -} ->
 >             INTM {- $\Gamma$ -}
 > parBind delta nabla t = help delnab nabla (delnab -| t) where
@@ -173,7 +200,7 @@ $\lambda$- and $\Pi$-binds over a list $\nabla$.
 
 The |liftType| function $\Pi$-binds a type over a list of entries.
 
-> liftType :: Bwd Entry -> INTM -> INTM
+> liftType :: Bwd (Entry Bwd) -> INTM -> INTM
 > liftType B0 t = t
 > liftType (es :< E _ _      (Girl _ _)  _)  t = liftType es t
 > liftType (es :< E _ (x,_)  (Boy _)     s)  t = liftType es (PI s (L (x :. t)))
@@ -182,7 +209,7 @@ The |liftType| function $\Pi$-binds a type over a list of entries.
 The |inferGoalType| function $\Pi$-binds the type when it encounters a $\lambda$-boy
 in the list of entries, and produces |SET| when it encounters a $\Pi$-boy.
 
-> inferGoalType :: Bwd Entry -> INTM -> INTM
+> inferGoalType :: Bwd (Entry Bwd) -> INTM -> INTM
 > inferGoalType B0 t = t
 > inferGoalType (es :< E _ _      (Girl _ _)  _)  t = inferGoalType es t
 > inferGoalType (es :< E _ (x,_)  (Boy LAMB)  s)  t = inferGoalType es (PI s (L (x :. t)))
@@ -194,7 +221,7 @@ in the list of entries, and produces |SET| when it encounters a $\Pi$-boy.
 A |Dev| is not truly |Traversable|, but it supports |traverse|-like operations that update
 its references:
 
-> traverseDev :: Applicative f => (REF -> f REF) -> Dev -> f Dev
+> traverseDev :: (Applicative f, Traversable g) => (REF -> f REF) -> (Dev g) -> f (Dev g)
 > traverseDev f (es, t, r) = 
 >   (|(\x y z -> (x,y,z)) (traverse (traverseEntry f) es) (traverseTip f t) ~r|)
 
@@ -204,10 +231,10 @@ its references:
 > traverseTip f (Defined tm (t :=>: v))  =
 >   (|Defined (traverse f tm) (|traverse f t :=>: traverseVal f v|)|)
 
-> traverseEntry :: Applicative f => (REF -> f REF) -> Entry -> f Entry
+> traverseEntry :: (Applicative f, Traversable g) => (REF -> f REF) -> (Entry g) -> f (Entry g)
 > traverseEntry f (E r (x,i) e t) = (|E (f r) (pure (x,i)) (traverseEntity f e) (traverse f t)|)
 
-> traverseEntity :: Applicative f => (REF -> f REF) -> Entity -> f Entity
+> traverseEntity :: (Applicative f, Traversable g) => (REF -> f REF) -> (Entity g) -> f (Entity g)
 > traverseEntity f (Boy bk)     = (|Boy (traverseBK f bk)|)
 > traverseEntity f (Girl gk dv) = (|Girl (traverseGK f gk) (traverseDev f dv)|)
 

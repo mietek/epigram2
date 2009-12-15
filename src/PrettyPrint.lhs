@@ -38,11 +38,11 @@ to allow extra canonical terms and eliminators to be pretty-printed.
 > import <- CanPretty
 > prettyCan can       = quotes . text .show $ can
 
-> prettyModule :: Bwd Entry -> Name -> Dev -> Doc
+> prettyModule :: Entries -> Name -> Dev Bwd -> Doc
 > prettyModule aus me (B0, _, _) = empty
 > prettyModule aus me dev = prettyDev aus me dev
 
-> prettyDev :: Bwd Entry -> Name -> Dev -> Doc
+> prettyDev :: Entries -> Name -> Dev Bwd -> Doc
 > prettyDev gaus me (B0, t, _) = text ":=" <+> prettyTip gaus me t
 > prettyDev gaus me dev@(es, t, r) =
 >     lbrack <+> prettyEntries es aus $$ rbrack 
@@ -50,7 +50,7 @@ to allow extra canonical terms and eliminators to be pretty-printed.
 >   where
 >     aus = gaus BwdFwd.<+> es
 >
->     prettyEntries :: Bwd Entry -> Bwd Entry -> Doc
+>     prettyEntries :: Entries -> Entries -> Doc
 >     prettyEntries (es' :< E ref _ (Boy k) _) (aus' :< _) =
 >         prettyEntries es' aus'
 >         $$ prettyBKind k (prettyRef aus me r ref) 
@@ -72,7 +72,7 @@ to allow extra canonical terms and eliminators to be pretty-printed.
 > import <- ElimPretty
 > prettyElim elim   = quotes . text . show $ elim
 
-> prettyRef :: Bwd Entry -> Name -> Root -> REF -> Doc
+> prettyRef :: Entries -> Name -> Root -> REF -> Doc
 > prettyRef aus me root ref@(_ := k :<: ty) = text (christenREF aus me ref) <+> prettyRKind k 
 >   <+> pretty (christen aus me (bquote B0 ty root))
 >     where prettyRKind :: RKind -> Doc
@@ -88,7 +88,7 @@ to allow extra canonical terms and eliminators to be pretty-printed.
 >     parens (text "\\" <> text x <> text "->" <+> pretty t)
 > prettyScope (K t) = parens (text "\\_ ->" <+> pretty t)
 
-> prettyTip :: Bwd Entry -> Name -> Tip -> Doc
+> prettyTip :: Entries -> Name -> Tip -> Doc
 > prettyTip aus me Module                     = empty
 > prettyTip aus me (Unknown     (tv :=>: _))  = text "? :" <+> pretty (christen aus me tv)
 > prettyTip aus me (Defined tm  (tv :=>: _))  = pretty (christen aus me tm) 
