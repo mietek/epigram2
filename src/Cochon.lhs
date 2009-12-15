@@ -133,6 +133,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >         "first"    -> (| (Go First) |)
 >         "give"     -> (| Give bigInTm |)
 >         "in"       -> (| (Go InC) |)
+>         "infer"    -> (| Infer bigInTm |)
 >         "jump"     -> (| Jump (| N variableParse |) |)
 >         "lambda"   -> (| Lambda ident |)
 >         "last"     -> (| (Go Last) |)
