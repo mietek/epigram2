@@ -151,6 +151,7 @@ So we'll just ignore everything that isn't otherwise explained.
 
 > instance CNameable n => MakeBody (Can (Tm {In, p} n)) where
 >     import <- CanCompile
+>     makeBody (Con t) = makeBody t
 >     makeBody _ = Ignore
 
 > instance CNameable n => MakeBody (Tm {Ex, p} n, Elim (Tm {In, p} n)) where
@@ -158,6 +159,7 @@ So we'll just ignore everything that isn't otherwise explained.
 >        where appArgs :: Tm {d, p} n -> [FnBody] -> FnBody
 >              appArgs (f :$ (A a)) acc = appArgs f (makeBody a:acc)
 >              appArgs f acc = App (makeBody f) acc
+>     makeBody (f, Out) = makeBody f
 >     import <- ElimCompile
 
 Operators will, in many cases, just compile to an application of a function we write
