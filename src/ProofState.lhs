@@ -46,12 +46,23 @@ Each |Layer| of the structure is a record with the following fields:
 
 > data Layer = Layer
 >   {  elders    :: Entries
->   ,  mother    :: REF
->   ,  motherTy  :: INTM
+>   ,  mother    :: Mother
 >   ,  cadets    :: NewsyEntries
 >   ,  laytip    :: Tip
 >   ,  layroot   :: Root }
 >  deriving Show
+
+> data Mother =  GirlMother REF (String, Int) INTM 
+>             |  ModuleMother Name
+>     deriving Show
+
+> motherName :: Mother -> Name
+> motherName (GirlMother (n := _) _ _) = n
+> motherName (ModuleMother n) = n
+
+> entryToMother :: Traversable f => Entry f -> Mother
+> entryToMother (E ref xn (Girl LETG _) ty) = GirlMother ref xn ty
+> entryToMother (M n _) = ModuleMother n
 
 Because we propagate news updates lazily, we may have news bulletins below the
 current cursor position, as well as entries. We defined a |newtype| for the
@@ -188,7 +199,7 @@ updated information, providing a friendlier interface than |get| and |put|.
 > getLayers :: ProofState (Bwd Layer)
 > getLayers = gets fst
 
-> getMother :: ProofState REF
+> getMother :: ProofState Mother
 > getMother = do
 >     l <- getLayer
 >     return (mother l)
@@ -197,13 +208,15 @@ updated information, providing a friendlier interface than |get| and |put|.
 > getMotherEntry = do
 >     l <- getLayer
 >     dev <- getDev
->     return (E (mother l) (lastName (mother l)) (Girl LETG dev) (motherTy l))
+>     case mother l of
+>         GirlMother ref xn ty -> return (E ref xn (Girl LETG dev) ty)
+>         ModuleMother n -> return (M n dev)
 
 > getMotherName :: ProofState Name
 > getMotherName = do
 >     ls <- gets fst
 >     case ls of
->         (_ :< Layer{mother=name := _}) -> return name
+>         (_ :< Layer{mother=m}) -> return (motherName m)
 >         B0 -> return []
 
 > insertCadet :: NewsBulletin -> ProofState ()
@@ -242,16 +255,20 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     (ls, dev) <- get
 >     put (ls :< l, dev)
 
-> putMother :: REF -> ProofState ()
-> putMother ref = do
+> putMother :: Mother -> ProofState ()
+> putMother m = do
 >     l <- getLayer
->     _ <- replaceLayer l{mother=ref}
+>     _ <- replaceLayer l{mother=m}
 >     return ()
 
 > putMotherEntry :: Entry Bwd -> ProofState ()
-> putMotherEntry (E ref _ (Girl LETG dev) ty) = do
+> putMotherEntry (E ref xn (Girl LETG dev) ty) = do
 >     l <- getLayer
->     replaceLayer (l{mother=ref, motherTy=ty})
+>     replaceLayer (l{mother=GirlMother ref xn ty})
+>     putDev dev
+> putMotherEntry (M n dev) = do
+>     l <- getLayer
+>     replaceLayer (l{mother=ModuleMother n})
 >     putDev dev
 
 > removeDevEntry :: ProofState (Maybe (Entry Bwd))
@@ -370,14 +387,17 @@ is not in the required form.
 >     goInAcc :: NewsyEntries -> ProofState ()
 >     goInAcc (NF cadets) = do
 >         (ls, (es :< e, tip, root)) <- get
->         case e of
->             E ref _ (Girl LETG dev) ty -> put (ls :< Layer es ref ty (NF cadets) tip root, dev)
->             _ -> put (ls, (es, tip, root)) >> goInAcc (NF (Right (reverseEntry e) :> cadets))
+>         if entryHasDev e
+>            then  put (ls :< Layer es (entryToMother e) (NF cadets) tip root, entryDev e)
+>            else  put (ls, (es, tip, root))
+>                  >> goInAcc (NF (Right (reverseEntry e) :> cadets)) 
+
 
 > jumpIn :: Entry NewsyFwd -> ProofState NewsyEntries
-> jumpIn (E ref _ (Girl LETG (cs, newTip, newRoot)) ty) = do
+> jumpIn e = do
 >     (ls, (es, tip, root)) <- get
->     put (ls :< Layer es ref ty (NF F0) tip root, (B0, newTip, newRoot))
+>     let (cs, newTip, newRoot) = entryDev e
+>     put (ls :< Layer es (entryToMother e) (NF F0) tip root, (B0, newTip, newRoot))
 >     return cs
 
 > goOut :: ProofState ()
@@ -394,36 +414,43 @@ is not in the required form.
 >   where
 >     goUpAcc :: NewsyEntries -> ProofState ()
 >     goUpAcc (NF acc) = do
->         l@(Layer (es :< e) oldRef oldTy (NF cadets) tip root) <- removeLayer
->         oldDev <- getDev
->         case e of
->             E newRef _ (Girl LETG newDev) newTy ->
->                 putDev newDev >>
->                 putLayer l{elders=es, mother=newRef, motherTy=newTy, cadets=NF (acc <+> 
->                     (Right (E oldRef (lastName oldRef) (Girl LETG (reverseDev oldDev)) oldTy) :> cadets))}
->             _ -> putLayer l{elders=es} >> goUpAcc (NF (Right (reverseEntry e) :> acc))
+>         l@(Layer (es :< e) m (NF cadets) tip root) <- getLayer
+>         if entryHasDev e
+>             then do
+>                 me <- getMotherEntry
+>                 putDev (entryDev e)
+>                 replaceLayer l{elders=es, mother=entryToMother e, cadets=NF (acc <+> 
+>                     (Right (reverseEntry me) :> cadets))}
+>                 return ()
+>             else  replaceLayer l{elders=es}
+>                   >> goUpAcc (NF (Right (reverseEntry e) :> acc))
 
 > goDown :: ProofState ()
-> goDown = goDownAcc B0 [] `replaceError` "goDown: you can't go that way."
+> goDown = goDownAcc B0 [] --`replaceError` "goDown: you can't go that way."
 >   where
 >     goDownAcc :: Entries -> NewsBulletin -> ProofState ()
 >     goDownAcc acc news = do
->         l@(Layer elders ref ty (NF (e :> es)) tip root) <- removeLayer
+>         l@(Layer elders m{-(GirlMother ref _ ty)-} (NF (e :> es)) tip root) <- getLayer
 >         case e of
->             Right (E ref' xn (Girl LETG (NF es', tip', root')) ty') -> do
+>             Left nb -> do
+>                 replaceLayer l{cadets=NF es}
+>                 goDownAcc acc (mergeNews nb news)
+>             Right e' -> if entryHasDev e'
+>               then do
+>                 me <- getMotherEntry
+>                 let (NF es', tip', root') = entryDev e'
 >                 oldDev <- replaceDev (B0, tip', root')
 >                 news' <- propagateNews news (NF es')
 >                 dev <- getDev
->                 (news'', E newRef _ (Girl LETG newDev') newTy) <- tellGirl news' (E ref' xn (Girl LETG dev) ty')
->                 replaceDev newDev'
->                 putLayer  l{elders=(elders:<E ref (lastName ref) (Girl LETG oldDev) ty)<+> acc,
->                               mother=newRef, motherTy=newTy, cadets=NF (Left news'' :> es)}
->             Right (E ref xn (Boy k) ty') -> do
->                 putLayer l{cadets=NF es}
->                 goDownAcc (acc :< E ref xn (Boy k) ty') news
->             Left nb -> do
->                 putLayer l{cadets=NF es}
->                 goDownAcc acc (mergeNews nb news)
+>                 let e'' = replaceEntryDev e' dev
+>                 (news'', e''') <- tellEntry news' e''
+>                 replaceDev (entryDev e''')
+>                 replaceLayer  l{elders=(elders :< me) <+> acc,
+>                               mother=entryToMother e''', cadets=NF (Left news'' :> es)}
+>                 return ()
+>               else do
+>                 replaceLayer l{cadets=NF es}
+>                 goDownAcc (acc :< coerceEntry e') news
 
 > goTo :: Name -> ProofState ()
 > goTo [] = return ()
@@ -432,7 +459,7 @@ is not in the required form.
 >   where
 >     seek :: (String, Int) -> ProofState ()
 >     seek xn = (goUp <|> goIn) >> do
->         m := _ <- getMother
+>         m <- getMotherName
 >         if xn == last m
 >             then return ()
 >             else removeDevEntry >> seek xn
@@ -519,9 +546,9 @@ the goal and updates the reference.
 >             aus <- getGreatAuncles
 >             sibs <- getDevEntries
 >             let tmv = evTm (parBind aus sibs tm)
->             name := _ :<: ty <- getMother
->             let ref = name := DEFN tmv :<: ty
->             putMother ref
+>             GirlMother (name := _ :<: tyv) xn ty <- getMother
+>             let ref = name := DEFN tmv :<: tyv
+>             putMother (GirlMother ref xn ty)
 >             updateRef ref
 >             goOut
 >         _  -> throwError' "give: only possible for incomplete goals."
@@ -535,9 +562,9 @@ the goal and updates the reference.
 >             aus <- getGreatAuncles
 >             sibs <- getDevEntries
 >             let tmv = evTm (parBind aus sibs tm)
->             name := _ :<: ty <- getMother
->             let ref = name := DEFN tmv :<: ty
->             putMother ref
+>             GirlMother (name := _ :<: tyv) xn ty <- getMother
+>             let ref = name := DEFN tmv :<: tyv
+>             putMother (GirlMother ref xn ty)
 >             goOut
 >         _  -> throwError' "give: only possible for incomplete goals."
 
@@ -581,6 +608,13 @@ current development, after checking that the purported type is in fact a type.
 >     putDevRoot (roos root)
 >     return (N (P ref))
 
+
+> makeModule :: String -> ProofState ()
+> makeModule s = do
+>     n <- withRoot (flip name s)
+>     root <- getDevRoot
+>     putDevEntry (M n (B0, Module, room root s))
+>     putDevRoot (roos root)
 
 > pickName :: String -> ProofState String
 > pickName ""  = do
@@ -693,11 +727,22 @@ Updating girls is a bit more complicated. We proceed as follows:
 >         return (news', cs)
 
 
+> propagateNews news (NF (Right e@(M n d) :> es)) = do
+>     xs <- jumpIn e
+>     news' <- propagateNews news xs
+>     goOut
+>     propagateNews news (NF es)
+
+
 Finally, if we encounter an older news bulletin when propagating news, we can simply
 merge the two together.
 
 > propagateNews news (NF (Left oldNews :> es)) = propagateNews (mergeNews oldNews news) (NF es)
 
+
+> tellEntry :: NewsBulletin -> Entry Bwd -> ProofState (NewsBulletin, Entry Bwd)
+> tellEntry news (M n d) = return (news, M n d)
+> tellEntry news e = tellGirl news e
 
 The |tellGirl| function informs a girl about a news bulletin that her children
 should have already received. It will
@@ -740,7 +785,7 @@ should have already received. It will
 > tellMother :: NewsBulletin -> ProofState NewsBulletin
 > tellMother news = (do
 >     e <- getMotherEntry
->     (news', e') <- tellGirl news e 
+>     (news', e') <- tellEntry news e 
 >     putMotherEntry e'
 >     return news'
 >  ) <|> return news

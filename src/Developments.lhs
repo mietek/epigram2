@@ -54,10 +54,43 @@ with a |Dev| that has no type or value).
 >   =  E REF (String, Int) (Entity f) INTM
 >   |  M Name (Dev f)
 
+
+> entryDev :: Traversable f => Entry f -> Dev f
+> entryDev (E _ _ (Boy _) _) = error "entryDev: boys have no development"
+> entryDev (E _ _ (Girl LETG d) _) = d
+> entryDev (M _ d) = d
+
+> entryHasDev :: Traversable f => Entry f -> Bool
+> entryHasDev (E _ _ (Boy _)     _)  = False
+> entryHasDev (E _ _ (Girl _ _)  _)  = True
+> entryHasDev (M _ _)                = True
+
+> entryLastName :: Traversable f => Entry f -> (String, Int)
+> entryLastName (E _ xn _ _) = xn
+> entryLastName (M n _) = last n
+
+> entryName :: Traversable f => Entry f -> Name
+> entryName (E (n := _) _ _ _) = n
+> entryName (M n _) = n
+
+> replaceEntryDev :: (Traversable f, Traversable g) => Entry f -> Dev g -> Entry g
+> replaceEntryDev (E _ _ (Boy _) _) _ = error "replaceEntryDev: boys have no development"
+> replaceEntryDev e@(E ref xn (Girl LETG _) ty) dev = E ref xn (Girl LETG dev) ty
+> replaceEntryDev (M n _) dev = M n dev
+
+> coerceEntry :: (Traversable f, Traversable g) => Entry f -> Entry g
+> coerceEntry (E ref xn (Boy k) ty) = E ref xn (Boy k) ty
+> coerceEntry _ = error "coerceEntry: only boys can be coerced"
+
+We can compare entities for equality by comparing their names.
+
+> instance Traversable f => Eq (Entry f) where
+>     e1 == e2 = entryName e1 == entryName e2
+
+
 Typically, we want to work with developments that use backwards lists, so define
 
 > type Entries = Bwd (Entry Bwd)
-
 
 %if False
 
@@ -71,12 +104,6 @@ Typically, we want to work with developments that use backwards lists, so define
 
 %endif
 
-
-We can compare entities for equality by comparing their references.
-
-> instance Traversable f => Eq (Entry f) where
->     (E r1 _ _ _) == (E r2 _ _ _)  =  r1 == r2
->     _ == _ = error "instance Eq Entry: cannot compare modules for equality"
 
 The last component of the name is cached because we will need it quite frequently for
 display purposes. We can easily (but inefficiently) extract it from a reference:
@@ -202,19 +229,17 @@ The |liftType| function $\Pi$-binds a type over a list of entries.
 
 > liftType :: Bwd (Entry Bwd) -> INTM -> INTM
 > liftType B0 t = t
-> liftType (es :< E _ _      (Girl _ _)  _)  t = liftType es t
 > liftType (es :< E _ (x,_)  (Boy _)     s)  t = liftType es (PI s (L (x :. t)))
-
+> liftType (es :< _)                         t = liftType es t
 
 The |inferGoalType| function $\Pi$-binds the type when it encounters a $\lambda$-boy
 in the list of entries, and produces |SET| when it encounters a $\Pi$-boy.
 
 > inferGoalType :: Bwd (Entry Bwd) -> INTM -> INTM
 > inferGoalType B0 t = t
-> inferGoalType (es :< E _ _      (Girl _ _)  _)  t = inferGoalType es t
 > inferGoalType (es :< E _ (x,_)  (Boy LAMB)  s)  t = inferGoalType es (PI s (L (x :. t)))
 > inferGoalType (es :< E _ (x,_)  (Boy PIB)   s)  t = inferGoalType es SET
-
+> inferGoalType (es :< _)                         t = inferGoalType es t
 
 \subsection{Traversal}
 

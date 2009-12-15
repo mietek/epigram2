@@ -43,7 +43,8 @@ to allow extra canonical terms and eliminators to be pretty-printed.
 > prettyModule aus me dev = prettyDev aus me dev
 
 > prettyDev :: Entries -> Name -> Dev Bwd -> Doc
-> prettyDev gaus me (B0, t, _) = text ":=" <+> prettyTip gaus me t
+> prettyDev gaus me (B0, Module,  _) = text "[]"
+> prettyDev gaus me (B0, t,       _) = text ":=" <+> prettyTip gaus me t
 > prettyDev gaus me dev@(es, t, r) =
 >     lbrack <+> prettyEntries es aus $$ rbrack 
 >     <+> prettyTip aus me t
@@ -51,14 +52,16 @@ to allow extra canonical terms and eliminators to be pretty-printed.
 >     aus = gaus BwdFwd.<+> es
 >
 >     prettyEntries :: Entries -> Entries -> Doc
+>
 >     prettyEntries (es' :< E ref _ (Boy k) _) (aus' :< _) =
 >         prettyEntries es' aus'
 >         $$ prettyBKind k (prettyRef aus me r ref) 
 >                                          
->     prettyEntries (es' :< e@(E ref@(n := _) _ (Girl LETG d) _)) (aus' :< _) = 
+>     prettyEntries (es' :< e) (aus' :< _) = 
 >         prettyEntries es' aus'
->         $$ sep [text (christenREF aus me ref),
->                 nest 2 (prettyDev aus' n d) <+> semi]
+>         $$ sep [text (christenName aus me (entryName e)),
+>                 nest 2 (prettyDev aus' (entryName e) (entryDev e)) <+> semi]
+>
 >     prettyEntries B0 _ = empty
 >
 >     prettyBKind :: BoyKind -> Doc -> Doc

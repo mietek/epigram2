@@ -44,16 +44,17 @@ a list of commands to execute later.
 > data DevLine
 >   =  DLBoy BoyKind String InTmRN
 >   |  DLGirl String [DevLine] (Maybe InTmRN :<: InTmRN) [Command InTmRN]
+>   |  DLModule String [DevLine] [Command InTmRN]
 >      deriving Show
 
 A module may have a list of girls in square brackets, followed by an optional
 semicolon-separated list of commands.
 
-> pModule :: Parsley Token ([DevLine], [Command InTmRN])
-> pModule = (| pTopDevLines, (pSep (keyword ";") pCommand) |)
+> pRootModule :: Parsley Token ([DevLine], [Command InTmRN])
+> pRootModule = (| pTopDevLines, (pSep (keyword ";") pCommand) |)
 >   where
 >     pTopDevLines :: Parsley Token [DevLine]
->     pTopDevLines =  bracket Square (many pGirl) <|> pure []
+>     pTopDevLines =  bracket Square (many (pGirl <|> pModule)) <|> pure []
 
 A girl is an identifier, followed by a list of children (or the \verb!:=! symbol if
 there are none), a definition (which may be \verb!?!), and optionally a list of commands
@@ -61,17 +62,23 @@ in \verb![| |]! brackets.
 
 > pGirl :: Parsley Token DevLine
 > pGirl = (| DLGirl (|fst namePartParse|) pLines pDefn pCommandSuffix (%keyword ";"%) |)
->   where
->     pLines :: Parsley Token [DevLine]
->     pLines =  bracket Square (many (pGirl <|> pBoy)) <|> (keyword ":=" *> pure [])
+
+A module is similar, but has no definition.
+
+> pModule :: Parsley Token DevLine
+> pModule = (| DLModule (|fst namePartParse|) pLines pCommandSuffix (%keyword ";"%) |)
+
+
+> pLines :: Parsley Token [DevLine]
+> pLines =  bracket Square (many (pGirl <|> pBoy <|> pModule)) <|> (keyword ":=" *> pure [])
 >
->     pDefn :: Parsley Token (Maybe InTmRN :<: InTmRN)
->     pDefn =  (| (%keyword "?"%) (%keyword ":"%) ~Nothing :<: bigInTm 
+> pDefn :: Parsley Token (Maybe InTmRN :<: InTmRN)
+> pDefn =  (| (%keyword "?"%) (%keyword ":"%) ~Nothing :<: bigInTm 
 >               | id maybeAscriptionParse
 >               |)
 >
->     pCommandSuffix :: Parsley Token [Command InTmRN]
->     pCommandSuffix = bracket (SquareB "") (pSep (keyword ";") pCommand) <|> pure []
+> pCommandSuffix :: Parsley Token [Command InTmRN]
+> pCommandSuffix = bracket (SquareB "") (pSep (keyword ";") pCommand) <|> pure []
 
 A boy is a $\lambda$-abstraction (represented by \verb!\ x : T ->!) or a $\Pi$-abstraction
 (represented by \verb!(x : S) ->!). 
@@ -88,7 +95,7 @@ The idea is to use commands defined in Section~\ref{sec:proofStateMonad} to buil
 up the proof state. The |devLoad| function takes care of this process.
 
 > devLoad :: [Token] -> ProofState ()
-> devLoad ts = case parse pModule ts of
+> devLoad ts = case parse pRootModule ts of
 >   Left pf -> throwError' $ "Failed to parse development: " ++ show pf
 >   Right (dls, cs) -> do
 >     ncs <- makeDev dls []
@@ -125,6 +132,18 @@ accumulating pairs of names and command lists along the way.
 >     case mtipTm of
 >         Nothing -> return ()
 >         Just tm -> goIn >> resolveHere tm >>= giveSilently
+>     case commands of
+>         []  -> return ncs'
+>         _   -> return ((n, commands):ncs')
+
+> makeEntry (DLModule x kids commands) ncs = do
+>     n <- withRoot (flip name x)
+>     root <- getDevRoot
+>     putDevEntry (M n (B0, Module, room root x))
+>     putDevRoot (roos root)
+>     goIn
+>     ncs' <- makeDev kids ncs     
+>     goOut
 >     case commands of
 >         []  -> return ncs'
 >         _   -> return ((n, commands):ncs')

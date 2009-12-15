@@ -73,7 +73,7 @@ christening them.
 > showEntriesAbs :: Traversable f => f (Entry f) -> String
 > showEntriesAbs = intercalate ", " . foldMap f
 >   where
->     f (E (n := _) _ _ _) = [showName n]
+>     f e = [showName (entryName e)]
 
 
 \subsection{Resolving Local Longnames}
@@ -139,8 +139,10 @@ entry's children to resolve the next component.
 
 > findGlobal :: Entries -> RelName -> Maybe EXTM
 > findGlobal B0 sos = empty
-> findGlobal (xs :< E r x e _) (y : ys) = case hits x y of
->     Right _  -> findChild r (foldMap boy xs) e ys
+> findGlobal (xs :< e) (y : ys) = case hits (entryLastName e) y of
+>     Right _  -> case e of
+>         E r _ e _ -> findChild r (foldMap boy xs) e ys
+>         M n (es, _, _) -> findD es ys (foldMap boy xs)
 >     Left y'  -> findGlobal xs (y' : ys)
 >   where
 >     boy :: Entry Bwd -> Spine {TT} REF
@@ -159,15 +161,15 @@ the entity should be a |Girl|, and it searches her children for the name.
 > findChild r  as (Girl _ _)           []  = (|(P r $:$ as)|)
 > findChild r  as (Boy _)              ys  = empty
 > findChild r  as (Girl _ (es, _, _))  ys  = findD es ys as
->   where
->     findD :: Entries -> RelName -> Spine {TT} REF -> Maybe EXTM
->     findD (xs :< E r x e@(Girl _ _) _) (y : ys) as = case hits x y of
->         Right _  -> findChild r as e ys
->         Left y'  -> findD xs (y' : ys) as
->     findD (xs :< E _ x (Boy _) _) (y : ys) as = case hits x y of
->         Right _  -> empty
->         Left y'  -> findD xs (y' : ys) as
->     findD _ sos as = empty
+
+> findD :: Entries -> RelName -> Spine {TT} REF -> Maybe EXTM
+> findD (xs :< E r x e@(Girl _ _) _) (y : ys) as = case hits x y of
+>     Right _  -> findChild r as e ys
+>     Left y'  -> findD xs (y' : ys) as
+> findD (xs :< E _ x (Boy _) _) (y : ys) as = case hits x y of
+>     Right _  -> empty
+>     Left y'  -> findD xs (y' : ys) as
+> findD _ sos as = empty
 
 
 \subsection{Christening (Generating Local Longnames)}
@@ -235,12 +237,10 @@ applies it to the arguments, dropping any that are shared with the current locat
 >          args' = drop (bwdLength commonEntries) args
 >     in  if targetSuffix == []
 >         then  P (showRelName [(t, Rel i)]) $:$ args'
->         else  case ancestor of
->             E _ (x,_) (Boy _) _ ->
->                 error "mangleP: common ancestor is a boy, so it has no children"
->             E _ (x,_) (Girl LETG (kids, _, _)) _ -> 
->                 let  n = (t, Rel i) : (searchKids kids targetSuffix 0)
->                 in   P (showRelName n) $:$ args'
+>         else
+>             let  (kids, _, _) = entryDev ancestor
+>                  n = (t, Rel i) : (searchKids kids targetSuffix 0)
+>             in   P (showRelName n) $:$ args'
 
 
 The |searchKids| function searches a list of children to match a name suffix, producing
@@ -274,9 +274,9 @@ counter each time its string argument appears as the last component of an entry.
 It returns the entry found, its prefix in the list of entries, and the count.
 
 > findName :: Entries -> Name -> String -> Int -> (Entry Bwd, Entries, Int)
-> findName (es :< e@(E (n := _) (x,_) _ _)) p y i
->   | n == p     = (e, es, i)                         
->   | x == y     = findName es p y (i+1)
+> findName (es :< e) p y i
+>   | entryName e == p     = (e, es, i)                         
+>   | fst (entryLastName e) == y     = findName es p y (i+1)
 >   | otherwise  = findName es p y i
 > findName B0 p _ _ = error ("findName: ran out of ancestors seeking " ++ showName p)
 

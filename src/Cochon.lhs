@@ -73,7 +73,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 
 > data NavC  =  InC | OutC
 >            |  Up | Down | Top | Bottom 
->            |  ModuleC
+>            |  RootC
 >            |  Prev | Next | First | Last
 >     deriving Show
 
@@ -88,6 +88,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >                 |  Jump x
 >                 |  Lambda String
 >                 |  Make String (Maybe x :<: x)
+>                 |  ModuleC String
 >                 |  PiBoy String x
 >                 |  Quit
 >                 |  Select x
@@ -107,6 +108,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >     traverse f (Jump x)             = (| Jump (f x) |)
 >     traverse f (Lambda s)           = (| (Lambda s) |)
 >     traverse f (Make s (md :<: x))  = (| (Make s) (| (traverse f md) :<: (f x) |) |)
+>     traverse f (ModuleC s)          = (| (ModuleC s) |)
 >     traverse f (PiBoy s x)          = (| (PiBoy s) (f x) |)
 >     traverse f Quit                 = (| Quit |)
 >     traverse f (Select x)           = (| Select (f x) |)
@@ -140,11 +142,12 @@ Here we have a very basic command-driven interface to the proof state monad.
 >         "make"     -> (| Make ident (%keyword ":"%) (| ~Nothing :<: bigInTm |)
 >                        | Make ident (%keyword ":="%) maybeAscriptionParse
 >                        |)
->         "module"   -> (| (Go ModuleC) |)
+>         "module"   -> (| ModuleC ident |)
 >         "next"     -> (| (Go Next) |)
 >         "out"      -> (| (Go OutC) |)
 >         "pi"       -> (| PiBoy ident (%keyword ":"%) bigInTm |)
 >         "prev"     -> (| (Go Prev) |)
+>         "root"     -> (| (Go RootC) |)
 >         "quit"     -> (| Quit |)
 >         "select"   -> (| Select (| N variableParse |) |)
 >         "show"     -> (| Show bigInTm |)
@@ -166,8 +169,8 @@ Here we have a very basic command-driven interface to the proof state monad.
 > evalCommand (Go Down)       = goDown            >> return "Going down..."
 > evalCommand (Go Top)        = many goUp         >> return "Going to top..."
 > evalCommand (Go Bottom)     = many goDown       >> return "Going to bottom..."
-> evalCommand (Go ModuleC)    = many goOut        >> return "Going to module..."
 > evalCommand (Go Prev)       = prevGoal          >> return "Searching for previous goal..."
+> evalCommand (Go RootC)      = many goOut        >> return "Going to root..."
 > evalCommand (Go Next)       = nextGoal          >> return "Searching for next goal..."
 > evalCommand (Go First)      = some prevGoal     >> return "Searching for first goal..."
 > evalCommand (Go Last)       = some nextGoal     >> return "Searching for last goal..."
@@ -183,6 +186,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >     case mtm of
 >         Nothing  -> return "Appended goal!"
 >         Just tm  -> give tm >> return "Yessir."
+> evalCommand (ModuleC s)     = makeModule s      >> return "Made module."
 > evalCommand (PiBoy x ty)    = piBoy (x :<: ty)  >> return "Made pi boy!"
 > evalCommand (Select x)      = select x          >> return "Selected."
 > evalCommand (Show x)        = return (show x)
@@ -204,7 +208,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 > doCommandsAt ((n, cs):ncs) = much goOut >> goTo n >> doCommands cs >> doCommandsAt ncs
 
 > showPrompt :: Bwd Layer -> String
-> showPrompt (_ :< Layer _ (n := _) _ _ _ _)  = showName n ++ " > "
+> showPrompt (_ :< l)  = showName (motherName (mother l)) ++ " > "
 > showPrompt B0        = "> "
 
 > printChanges :: ProofContext -> ProofContext -> IO ()
