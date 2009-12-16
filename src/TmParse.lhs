@@ -153,7 +153,7 @@ left, and will do so with |littleInTm|.
 > bigExTm = 
 >     (|id ascriptionParse
 >      |id operatorParse
->      |(:$) littleExTm (|A bigInTm|)
+>      |id appParse
 >      |id greenEqParse 
 >      |id littleExTm
 >      |)
@@ -162,6 +162,11 @@ left, and will do so with |littleInTm|.
 > littleExTm :: Parsley Token ExTmRN
 > littleExTm = 
 >     (|id variableParse |)
+
+> appParse :: Parsley Token ExTmRN
+> appParse =
+>     pLoop littleExTm $ \f -> 
+>     (|(:$) ~ f (|A bigInTm|)|)
 
 > ascriptionParse :: Parsley Token ExTmRN
 > ascriptionParse = (| (:?) littleInTm (%keyword ":"%) bigInTm |)

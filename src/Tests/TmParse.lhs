@@ -78,6 +78,7 @@
 >         , "x -> y"                    -- Name
 >         , "x y"                       -- Application
 >         , "x y z"                     -- Application
+>         , "f * *"                     -- Application
 >         , "(* : *) <-> (* : *)"       -- EqGreen
 >         , "((* -> *) : *) <-> (# : *)"-- EqGreen
 >         , "eqGreen(x , y , z)"        -- Operator
