@@ -461,6 +461,22 @@ constructors to make them easier to swallow.
 
 > import <- SugarTactics
 
+A neat thing to do, because |opTy| gives it for free, is to computeq
+the type of the operator. Here is how it goes, relying on the |Fresh|
+Rooty. Provided with a Root and an Operator, we compute its type.
+
+> opType ::  Root -> Op -> TY
+> opType root op = buildType args ty
+>     where names = replicate (opArity op) "x"
+>           (args, ty) = runFresh root $ opTy op mkTypes names
+>           buildType [] t = t
+>           buildType (((s,v) :=>: _) : ts) t = C (Pi s (L (H B0 "" (bquote (B0 :< v) 
+>                                                                   (buildType ts t)
+>                                                                   root))))
+>           mkTypes (ty :>: s) = 
+>               Rooty.freshRef (s :<: ty) $ \r ->
+>                   return $ (ty,r) :=>: pval r
+
 
 \subsection{Observational Equality}
 
