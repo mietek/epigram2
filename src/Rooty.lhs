@@ -4,12 +4,14 @@
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE TypeOperators, GADTs, KindSignatures, RankNTypes,
->     TypeSynonymInstances, FlexibleInstances, ScopedTypeVariables #-}
+>     TypeSynonymInstances, FlexibleInstances, ScopedTypeVariables,
+>     MultiParamTypeClasses #-}
 
 > module Rooty where
 
 > import Control.Applicative
 > import Control.Monad
+> import Control.Monad.Error
 > import Data.Maybe
 
 > import BwdFwd
@@ -99,7 +101,7 @@ will be really fresh.
 >               inFresh (g a) (room r "z")
 
 Then comes the usual junk, |Functor|, |Applicative|, and a fake
-|MonadTrace|.
+|MonadError|.
 
 > instance Functor Fresh where
 >     fmap f (Fresh g) = Fresh $ (fmap f) . g 
@@ -108,5 +110,6 @@ Then comes the usual junk, |Functor|, |Applicative|, and a fake
 >     pure = return
 >     (<*>) = ap
 >
-> instance MonadTrace Fresh where
->     traceErr _ = Fresh $ const Nothing
+> instance MonadError [String] Fresh  where
+>     throwError _ = Fresh $ const Nothing
+>     catchError = error "Fresh has no catchError"

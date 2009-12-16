@@ -40,6 +40,8 @@ generate an executable from a collection of supercombinator definitions.
 >             | Lazy FnBody       -- evaluate body lazily
 >             | Missing String    
 >             | Ignore            -- anything we can't inspect. Types, basically.
+>             | Error String
+>    deriving Show
 
 Where to look for support files. We'll need this to be a bit cleverer later. Only interested
 in epic/support.e for now (which is a good place to implement operators, for example).
@@ -175,7 +177,7 @@ by hand in Epic - see epic/support.e
 >     makeBody (Op name arity _ _, args) 
 >          = case (name, map makeBody args) of
 >                import <- OpCompile
->                _ -> error ("Unknown operator" ++ show name)
+>                _ -> Lazy (Error ("Unknown operator" ++ show name))  -- |error ("Unknown operator" ++ show name)|
 
 > compileCommand :: Name -> Dev Fwd -> String -> IO ()
 > compileCommand mainName dev outfile = do
