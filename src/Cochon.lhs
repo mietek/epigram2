@@ -7,6 +7,7 @@
 
 > module Cochon where
 
+> import Compiler
 > import Control.Applicative
 > import Control.Monad
 > import Control.Monad.State
@@ -33,7 +34,6 @@
 
 %endif
 
-
 Here we have a very basic command-driven interface to the proof state monad.
 
 > cochon :: ProofContext -> IO ()
@@ -51,6 +51,13 @@ Here we have a very basic command-driven interface to the proof state monad.
 >               Left pf ->  putStrLn ("Parse failure: " ++ describePFailure pf (intercalate " " . map crushToken))
 >                           >> cochon loc
 >               Right Quit -> return ()
+>               Right (Compile rn fn) -> do
+>                   let  Right dev = evalStateT getDev loc
+>                        Right aus = evalStateT getAuncles loc
+>                        mn = resolve aus rn
+>                   case mn of
+>                       Just (N (P (n := _))) -> compileCommand n (reverseDev' dev) fn
+>                       Nothing -> putStrLn "Can't resolve." >> cochon loc
 >               Right c -> case runStateT (doCommand c) loc of
 >                   Right (s, loc') -> do
 >                       putStrLn s 
@@ -82,6 +89,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >                 |  DoneC
 >                 |  Dump
 >                 |  Elaborate x
+>                 |  Compile x String
 >                 |  Give x
 >                 |  Go NavC
 >                 |  Infer x
@@ -99,6 +107,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 > instance Traversable Command where
 >     traverse f Apply                = (| Apply |)
 >     traverse f Auncles              = (| Auncles |)
+>     traverse f (Compile x fn)       = (| Compile (f x) ~fn |)
 >     traverse f DoneC                = (| DoneC |)
 >     traverse f Dump                 = (| Dump |)
 >     traverse f (Elaborate x)        = (| Elaborate (f x) |)
@@ -128,6 +137,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >         "apply"    -> (| Apply |)
 >         "auncles"  -> (| Auncles |)
 >         "bottom"   -> (| (Go Bottom) |)
+>         "compile"  -> (| Compile (| N variableParse |) pFileName |)
 >         "done"     -> (| DoneC |)
 >         "down"     -> (| (Go Down) |)
 >         "dump"     -> (| Dump |)
@@ -155,6 +165,9 @@ Here we have a very basic command-driven interface to the proof state monad.
 >         "ungawa"   -> (| Ungawa |)
 >         "up"       -> (| (Go Up) |)
 >         _          -> empty
+
+> pFileName :: Parsley Token String
+> pFileName = ident
 
 > evalCommand :: Command INTM -> ProofState String
 > evalCommand Apply           = apply             >> return "Applied."

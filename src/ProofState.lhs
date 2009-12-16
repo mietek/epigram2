@@ -114,6 +114,19 @@ entries, using the |reverseEntry|, |reverseEntries| and |reverseDev| functions.
 > reverseDev (xs, tip, root) = (reverseEntries xs, tip, root)
 
 
+> reverseEntry' :: Entry Bwd -> Entry Fwd
+> reverseEntry' (E ref xn (Boy k) ty)          = E ref xn (Boy k) ty
+> reverseEntry' (E ref xn (Girl LETG dev) ty)  = E ref xn (Girl LETG (reverseDev' dev)) ty
+> reverseEntry' (M n d)                        = M n (reverseDev' d)
+
+> reverseEntries' :: Entries -> Fwd (Entry Fwd)
+> reverseEntries' xs = fmap reverseEntry' xs <>> F0
+
+> reverseDev' :: Dev Bwd -> Dev Fwd
+> reverseDev' (xs, tip, root) = (reverseEntries' xs, tip, root)
+
+
+
 The current proof context is represented by a stack of |Layer|s, along with the
 current working development (above the cursor).
 
