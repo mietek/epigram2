@@ -38,7 +38,9 @@ generate an executable from a collection of supercombinator definitions.
 >             | STag FnBody       -- for Su
 >             | Tuple [FnBody]
 >             | Lazy FnBody       -- evaluate body lazily
+>             | Missing String    
 >             | Ignore            -- anything we can't inspect. Types, basically.
+>    deriving Show
 
 Where to look for support files. We'll need this to be a bit cleverer later. Only interested
 in epic/support.e for now (which is a good place to implement operators, for example).
@@ -96,6 +98,7 @@ Things which are convertible to Epic code
 >     codegen (STag n) = "1+" ++ codegen n
 >     codegen (Tuple xs) = "[" ++ arglist (map codegen xs) ++ "]"
 >     codegen (Lazy t) = "lazy(" ++ codegen t ++ ")"
+>     codegen (Missing m) = "error(\"Missing definition " ++ m ++ "\")"
 >     codegen Ignore = "42"
 
 > mainDef :: CName -> String
@@ -139,7 +142,7 @@ We'll need to convert whatever representation was used for names into a name usa
 > instance CNameable REF where
 >     cname (x := d) = cname x
 
-> instance CNameable n => MakeBody (Tm {d,p} n) where
+> instance (CNameable n) => MakeBody (Tm {d,p} n) where
 >     makeBody (C can) = makeBody can
 >     makeBody (N t) = makeBody t
 >     makeBody (P x) = Var (cname x)
@@ -172,24 +175,23 @@ by hand in Epic - see epic/support.e
 >     makeBody (Op name arity _ _, args) 
 >          = case (name, map makeBody args) of
 >                import <- OpCompile
->                _ -> error ("Unknown operator" ++ show name)
+>                _ -> error ("Unknown operator " ++ show name)
 
 > compileCommand :: Name -> Dev Fwd -> String -> IO ()
-> compileCommand mainName dev outfile =
->     let fns = makeFns (flatten LAMB [] B0 dev) in
->         output fns (cname mainName) outfile ""
+> compileCommand mainName dev outfile = do
+>     let flat = flatten LAMB [] B0 dev
+>     output (makeFns flat) (cname mainName) outfile ""
 
-> makeFns :: [(Name, Bwd Name, INTM)] -> [(CName, CompileFn)]
+> makeFns :: [(Name, Bwd Name, FnBody)] -> [(CName, CompileFn)]
 > makeFns = map (\ (n, args, tm) -> 
->                  (cname n, Comp (map cname (trail args)) (makeBody tm)))
+>                  (cname n, Comp (map cname (trail args)) tm))
 
-> missingThing = error "flatten: missing thing is missing"
-
-> flatten :: BoyKind -> Name -> Bwd Name -> Dev Fwd -> [(Name, Bwd Name, INTM)]
+> flatten :: BoyKind -> Name -> Bwd Name -> Dev Fwd -> 
+>            [(Name, Bwd Name, FnBody)]
 > flatten b ma del (F0, Module, _) = []
-> flatten LAMB ma del (F0, Unknown _, _) = [(ma, del, missingThing)]
-> flatten LAMB ma del (F0, Defined tm _, _) = [(ma, del, tm)]
-> flatten PIB ma del (F0, _, _) = [(ma, del, SET)] -- nasty hack relying on SET erasure
+> flatten LAMB ma del (F0, Unknown _, _) = [(ma, del, Missing (show ma))]
+> flatten LAMB ma del (F0, Defined tm _, _) = [(ma, del, makeBody tm)]
+> flatten PIB ma del (F0, _, _) = [(ma, del, Ignore)]
 > flatten _ ma del (E (x := _) _ (Boy b) _ :> es, tip, root) =
 >     flatten b ma (del :< x) (es, tip, root)
 > flatten b ma del (E (her := _) _ (Girl LETG herDev) _ :> es, tip, root) = 
