@@ -37,9 +37,10 @@ generate an executable from a collection of supercombinator definitions.
 >             | CTag Int          -- any tag
 >             | STag FnBody       -- for Su
 >             | Tuple [FnBody]
+>             | Lazy FnBody       -- evaluate body lazily
 >             | Ignore            -- anything we can't inspect. Types, basically.
 
-Where to look for support files. We'll need this to be a bit cleverer later. Only interesting
+Where to look for support files. We'll need this to be a bit cleverer later. Only interested
 in epic/support.e for now (which is a good place to implement operators, for example).
 
 > libPath = [".", "./epic"]
@@ -94,10 +95,11 @@ Things which are convertible to Epic code
 >     codegen (CTag i) = show i
 >     codegen (STag n) = "1+" ++ codegen n
 >     codegen (Tuple xs) = "[" ++ arglist (map codegen xs) ++ "]"
+>     codegen (Lazy t) = "lazy(" ++ codegen t ++ ")"
 >     codegen Ignore = "42"
 
 > mainDef :: CName -> String
-> mainDef m = "main () -> Unit = dumpData(" ++ m ++ "())"
+> mainDef m = "main () -> Unit = __dumpData(" ++ m ++ "())"
 
 > tempfile :: IO (FilePath, Handle)
 > tempfile = 
@@ -143,7 +145,8 @@ We'll need to convert whatever representation was used for names into a name usa
 >     makeBody (P x) = Var (cname x)
 >     makeBody (tm :$ elim) = makeBody (tm, elim)
 >     makeBody (op :@ args) = makeBody (op, args)
->     makeBody (tm :? ty) = Ignore
+>     makeBody (tm :? ty) = makeBody tm
+>     makeBody (L (K tm)) = App (Var "__const") (makeBody tm)
 >     makeBody _ = error "Please don't do that"
 
 Lots of canonical things are just there for the typechecker, and we don't care about them.
@@ -169,7 +172,7 @@ by hand in Epic - see epic/support.e
 >     makeBody (Op name arity _ _, args) 
 >          = case (name, map makeBody args) of
 >                import <- OpCompile
->                _ -> error "Unknown operator"
+>                _ -> error ("Unknown operator" ++ show name)
 
 > compileModule :: Dev Bwd -> Bwd (CName, CompileFn)
 > compileModule (entries, Module, _) = fmap compileEntry entries
