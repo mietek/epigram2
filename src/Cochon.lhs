@@ -162,7 +162,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 > evalCommand DoneC           = done              >> return "Done."
 > evalCommand Dump            = infoDump
 > evalCommand (Elaborate tm)  = infoElaborate tm  >>= prettyHere
-> evalCommand (Give tm)       = give tm           >> return "Thank you."
+> evalCommand (Give tm)       = elabGive tm       >> return "Thank you."
 > evalCommand (Go InC)        = goIn              >> return "Going in..."
 > evalCommand (Go OutC)       = goOut             >> return "Going out..."
 > evalCommand (Go Up)         = goUp              >> return "Going up..."
@@ -181,13 +181,13 @@ Here we have a very basic command-driven interface to the proof state monad.
 >     return ("Going to " ++ showName n ++ "...")
 > evalCommand (Lambda x)      = lambdaBoy x       >> return "Made lambda boy!"
 > evalCommand (Make x (mtm :<: ty)) = do
->     make (x :<: ty)
+>     elabMake (x :<: ty)
 >     goIn
 >     case mtm of
 >         Nothing  -> return "Appended goal!"
 >         Just tm  -> give tm >> return "Yessir."
 > evalCommand (ModuleC s)     = makeModule s      >> return "Made module."
-> evalCommand (PiBoy x ty)    = piBoy (x :<: ty)  >> return "Made pi boy!"
+> evalCommand (PiBoy x ty)    = elabPiBoy (x :<: ty)  >> return "Made pi boy!"
 > evalCommand (Select x)      = select x          >> return "Selected."
 > evalCommand (Show x)        = return (show x)
 > evalCommand Ungawa          = ungawa            >> return "Ungawa!"

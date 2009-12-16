@@ -607,9 +607,14 @@ current development, after checking that the purported type is in fact a type.
 >     let  ty'  = liftType aus ty
 >          ref  = n := HOLE :<: evTm ty'
 >     root <- getDevRoot
->     putDevEntry (E ref (last n) (Girl LETG (B0, Unknown (ty' :=>: tyv), room root s')) ty')
+>     putDevEntry (E ref (last n) (Girl LETG (B0, Unknown (ty :=>: tyv), room root s')) ty')
 >     putDevRoot (roos root)
->     return (N (P ref))
+>     return (N (P ref $:$ aunclesToElims (aus <>> F0)))
+
+> aunclesToElims :: Fwd (Entry Bwd) -> [Elim INTM]
+> aunclesToElims F0 = []
+> aunclesToElims (E ref _ (Boy _) _ :> es) = (A (N (P ref))) : aunclesToElims es
+> aunclesToElims (_ :> es) = aunclesToElims es
 
 
 > makeModule :: String -> ProofState ()
@@ -624,6 +629,22 @@ current development, after checking that the purported type is in fact a type.
 >     r <- getDevRoot
 >     return ("G" ++ show (snd r))
 > pickName s   = return s
+
+
+> moduleToGoal :: (INTM :=>: TY) -> ProofState INTM
+> moduleToGoal (ty :=>: tyv) = do
+>     ModuleMother n <- getMother
+>     aus <- getAuncles
+>     let  ty' = liftType aus ty
+>          ref = n := HOLE :<: evTm ty'
+>     putMother (GirlMother ref (last n) ty')
+>     putDevTip (Unknown (ty :=>: tyv))
+>     return (N (P ref $:$ aunclesToElims (aus <>> F0)))
+
+> dropModule :: ProofState ()
+> dropModule = do
+>     Just (M _ _) <- removeDevEntry
+>     return ()
 
 
 The |piBoy| command checks that the current goal is of type SET, and that the supplied type

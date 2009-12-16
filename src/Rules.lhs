@@ -156,8 +156,8 @@ cautious. Hence, this is |Just| a mess.
 >     return $ C c
 >         where chev (t :>: v) = do
 >                 return $ (t :>: v) :=>: v
-> inQuote (C x :>: _) r = error $ "Type doesn't admit lambda: " ++
->                                 show (fmap (\_ -> ()) x) 
+> inQuote (C x :>: t) r = error $ "inQuote: type "
+>     ++ show (fmap (\_ -> ()) x) ++ " doesn't admit " ++ show t
 
 As mentioned above, |\eta|-expansion is the first sensible thing to do
 when quoting. Sometimes it works, especially for closures and features

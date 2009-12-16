@@ -3,7 +3,7 @@
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE TypeOperators, TypeSynonymInstances #-}
+> {-# LANGUAGE ScopedTypeVariables, TypeOperators, TypeSynonymInstances #-}
 
 > module Elaborator where
 
@@ -36,30 +36,41 @@
 >     g <- make (x :<: ty')
 >     return (g :=>: evTm g)
 
-> elaborate :: (TY :>: INDTM) -> ProofState (INTM :=>: VAL)
-> elaborate (C ty :>: C tm) = do
->     v <- canTy elaborate (ty :>: tm)
+
+> elaborate :: Bool -> (TY :>: INDTM) -> ProofState (INTM :=>: VAL)
+> elaborate top (C ty :>: C tm) = do
+>     v <- canTy (elaborate False) (ty :>: tm)
 >     return $ (C $ fmap (\(x :=>: _) -> x) v) :=>: (C $ fmap (\(_ :=>: x) -> x) v)
 
-> elaborate (ty :>: Q x) = subgoal (ty :>: x)
+> elaborate top (ty :>: Q x) = subgoal (ty :>: x)
 
-> elaborate (PI s t :>: L sc) = do
->   r <- getDevRoot
->   (tm :=>: tv) <- Root.freshRef ("x" :<: s) (\ref r ->
->       elaborate (t $$ A (pval ref) :>: underScope sc ref)) r
->   case sc of
->       K _  -> return (L (K tm) :=>: L (K tv))
->       _    -> return (L ("x" :. tm) :=>: L (H B0 "x" tm))
->   
+> elaborate False (PI s (L (K t)) :>: L (K dtm)) = do
+>     (tm :=>: tmv) <- elaborate False (t :>: dtm)
+>     return (L (K tm) :=>: L (K tmv))
 
-> elaborate (w :>: N n) = do
+> elaborate False (PI s t :>: L sc) = do
+>     let x :: String = case sc of { (x :. _) -> x ; K _ -> "_" }
+>     pi' <- bquoteHere (PI s t)
+>     make ("h" :<: pi')
+>     goIn
+>     l <- lambdaBoy x
+>     h <- elabGive (underScope sc l)
+>     return (h :=>: evTm h)
+
+> elaborate True (PI s t :>: L sc) = do
+>     let x :: String = case sc of { (x :. _) -> x ; K _ -> "_" }
+>     l <- lambdaBoy x
+>     elaborate True (t $$ A (pval l) :>: underScope sc l)
+>     
+    
+> elaborate top (w :>: N n) = do
 >   (y :>: _) <- elabInfer n
 >   eq <- withRoot (equal (SET :>: (w, y)))
 >   guard eq `replaceError` ("elaborate: inferred type " ++ show y ++ " of " ++ show n
 >                              ++ " is not " ++ show w)
 >   return (N n :=>: evTm (N n))
 
-> elaborate tt = throwError' ("elaborate: can't cope with " ++ show tt)
+> elaborate top tt = throwError' ("elaborate: can't cope with " ++ show tt)
 
 
 > elabInfer :: EXDTM -> ProofState (TY :>: EXTM)
@@ -67,7 +78,7 @@
 
 > elabInfer (t :$ s) = do
 >     (C ty :>: t') <- elabInfer t
->     (s', ty') <- elimTy elaborate (evTm t' :<: ty) s
+>     (s', ty') <- elimTy (elaborate False) (evTm t' :<: ty) s
 >     let s'' = fmap (\(x :=>: _) -> x) s'
 >     return (ty' :>: (t' :$ s''))
 
@@ -76,12 +87,12 @@
 >   let vs' = fmap (\((x :=>: _) :=>: _) -> x) vs
 >   return (t :>: op :@ vs')
 >       where chev (t :>: x) = do 
->               ch <- elaborate (t :>: x)
+>               ch <- elaborate False (t :>: x)
 >               return $ ch :=>: evTm x
 
 > elabInfer (t :? ty) = do
->   (ty' :=>: vty)  <- elaborate (SET :>: ty)
->   (t'  :=>: _)    <- elaborate (vty :>: t)
+>   (ty' :=>: vty)  <- elaborate False (SET :>: ty)
+>   (t'  :=>: _)    <- elaborate False (vty :>: t)
 >   return (vty :>: t' :? ty')
 
 > elabInfer tt = throwError' ("elabInfer: can't cope with " ++ show tt)
@@ -93,13 +104,22 @@
 
 > infoElaborate :: INDTM -> ProofState INTM
 > infoElaborate (N tm) = do
+>     makeModule "elab"
+>     goIn
 >     _ :>: tm' <- elabInfer tm
->     bquoteHere (evTm (N tm'))
+>     tm <- bquoteHere (evTm (N tm'))
+>     goOut
+>     dropModule
+>     return tm
 > infoElaborate _ = throwError' "infoElaborate: can only elaborate neutral terms."
 
 > infoInfer :: INDTM -> ProofState TY
 > infoInfer (N tm) = do
+>     makeModule "infer"
+>     goIn
 >     ty :>: _ <- elabInfer tm
+>     goOut
+>     dropModule
 >     return ty
 > infoInfer _ = throwError' "infoInfer: can only infer the type of neutral terms."
 
@@ -107,23 +127,32 @@
 \subsubsection{Construction}
 
 > elabGive :: INDTM -> ProofState INTM
-> --elabGive (Q "") = return ()
 > elabGive tm = do
 >     tip <- getDevTip
 >     case tip of         
 >         Unknown (tipTyTm :=>: tipTy) -> do
->             (tm' :=>: tv) <- elaborate (tipTy :>: tm)
->             give tm'
+>             case tm of
+>                 Q "" -> do
+>                     GirlMother ref _ _ <- getMother
+>                     goOut
+>                     return (N (P ref))
+>                 _ -> do
+>                     (tm' :=>: tv) <- elaborate True (tipTy :>: tm)
+>                     give tm'
 >         _  -> throwError' "give: only possible for incomplete goals."
 
 
 > elabMake :: (String :<: INDTM) -> ProofState INTM
 > elabMake (s :<: ty) = do
->     tt <- elaborate (SET :>: ty)
->     make' (s :<: tt)
+>     makeModule s
+>     goIn
+>     tt <- elaborate False (SET :>: ty)
+>     tm <- moduleToGoal tt
+>     goOut
+>     return tm
 
 
 > elabPiBoy :: (String :<: INDTM) -> ProofState ()
 > elabPiBoy (s :<: ty) = do
->     tt <- elaborate (SET :>: ty)
+>     tt <- elaborate True (SET :>: ty)
 >     piBoy' (s :<: tt)
