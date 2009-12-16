@@ -146,7 +146,7 @@ We'll need to convert whatever representation was used for names into a name usa
 >     makeBody (tm :$ elim) = makeBody (tm, elim)
 >     makeBody (op :@ args) = makeBody (op, args)
 >     makeBody (tm :? ty) = makeBody tm
->     makeBody (L (K tm)) = App (Var "__const") (makeBody tm)
+>     makeBody (L (K tm)) = App (Var "__const") [makeBody tm]
 >     makeBody _ = error "Please don't do that"
 
 Lots of canonical things are just there for the typechecker, and we don't care about them.
