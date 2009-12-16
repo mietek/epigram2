@@ -76,10 +76,10 @@ This was the old behaviour:
 Pull out the definitions, and, if the -o flag has been used, output an executable
 which evaluates the last definition in the development.             
 
->                    let defs = compileModule dev
->                    let mainName = fst (Data.Foldable.foldl (\ _ t -> t) undefined defs)
+>                    -- let defs = compileModule dev
+>                    -- let mainName = fst (Data.Foldable.foldl (\ _ t -> t) undefined defs)
 >                    case getOpt outFile opts of
->                      Just n -> output defs mainName n (maybe "" id (getOpt epic opts))
+>                      -- Just n -> output defs mainName n (maybe "" id (getOpt epic opts))
 >                      _ -> return ()
 
 If the --cochon flag has been used, run the interactive interface. Otherwise, just

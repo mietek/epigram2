@@ -49,10 +49,10 @@ Given a list of names and definitions, and the top level function to evaluate,
 write out an executable. This will evaluate the function and dump the result.
 Also take a list of extra options to give to epic (e.g. for keeping intermediate code, etc)
 
-> output :: Bwd (CName, CompileFn) -> CName -> FilePath -> String -> IO ()
+> output :: [(CName, CompileFn)] -> CName -> FilePath -> String -> IO ()
 > output defs mainfn outfile epicopts =
 >    do (epicFile, eh) <- tempfile
->       fold $ fmap ((hPutStrLn eh).codegen) defs
+>       Prelude.mapM_ ((hPutStrLn eh).codegen) defs
 >       support <- readLibFile libPath "support.e"
 >       hPutStrLn eh support
 >       hPutStrLn eh (mainDef mainfn)
@@ -174,16 +174,14 @@ by hand in Epic - see epic/support.e
 >                import <- OpCompile
 >                _ -> error ("Unknown operator" ++ show name)
 
-> compileModule :: Dev Bwd -> Bwd (CName, CompileFn)
-> compileModule (entries, Module, _) = fmap compileEntry entries
+> compileCommand :: Name -> Dev Fwd -> String -> IO ()
+> compileCommand mainName dev outfile =
+>     let fns = makeFns (flatten LAMB [] B0 dev) in
+>         output fns (cname mainName) outfile ""
 
-> compileEntry (E name _ (Girl LETG (entries, tip, _)) _) 
->       = (cname name, collectArgs [] entries tip)
-
-> collectArgs :: [REF] -> Entries -> Tip -> CompileFn
-> collectArgs acc B0 (Defined tm _) = Comp (map cname acc) (makeBody tm)
-> collectArgs acc (bs :< E name _ (Boy _) _) tip = collectArgs (name:acc) bs tip
-
+> makeFns :: [(Name, Bwd Name, INTM)] -> [(CName, CompileFn)]
+> makeFns = map (\ (n, args, tm) -> 
+>                  (cname n, Comp (map cname (trail args)) (makeBody tm)))
 
 > missingThing = error "flatten: missing thing is missing"
 
@@ -224,7 +222,7 @@ A simple test case
 
 > testFn = Comp [] (App (Var (cname plus)) [two,two])
 
-> program = B0 :< (cname plus, plusFn) :< (cname test, testFn)
+> program = [(cname plus, plusFn), (cname test, testFn)]
 
 > testOut = output program (cname test) "testout"
 
