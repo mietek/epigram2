@@ -184,6 +184,9 @@ Coercion rule:
 >     (| (\x y -> PAIR x y) (etaExpand (s :>: x) r) 
 >                   (etaExpand (t $$ (A x) :>: (p $$ Snd)) r) |)
 
+> import -> OpCompile where
+>   ("split", [_,_,_,f,y]) -> App (Var "__split") [f,y] 
+
 > import -> OpCode where
 >   splitOp = Op
 >     { opName = "split" , opArity = 5

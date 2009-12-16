@@ -181,9 +181,9 @@ produce a single bulletin with the worst news about every reference mentioned
 in either.
 
 > mergeNews :: NewsBulletin -> NewsBulletin -> NewsBulletin
-> mergeNews old [] = old
-> mergeNews [] new = new
-> mergeNews ((r, n):old) new = mergeNews old ((r, min n (lookupNews new r)):new)
+> mergeNews new [] = new
+> mergeNews [] old = old
+> mergeNews ((r, n):new) old = mergeNews new ((r, min n (lookupNews old r)):old)
 
 
 \subsection{Lambda-lifting and discharging}

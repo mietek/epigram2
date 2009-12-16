@@ -447,7 +447,7 @@ is not in the required form.
 >         case e of
 >             Left nb -> do
 >                 replaceLayer l{cadets=NF es}
->                 goDownAcc acc (mergeNews nb news)
+>                 goDownAcc acc (mergeNews news nb)
 >             Right e' -> if entryHasDev e'
 >               then do
 >                 me <- getMotherEntry
@@ -780,7 +780,7 @@ Updating girls is a bit more complicated. We proceed as follows:
 Finally, if we encounter an older news bulletin when propagating news, we can simply
 merge the two together.
 
-> propagateNews news (NF (Left oldNews :> es)) = propagateNews (mergeNews oldNews news) (NF es)
+> propagateNews news (NF (Left oldNews :> es)) = propagateNews (mergeNews news oldNews) (NF es)
 
 
 > tellEntry :: NewsBulletin -> Entry Bwd -> ProofState (NewsBulletin, Entry Bwd)

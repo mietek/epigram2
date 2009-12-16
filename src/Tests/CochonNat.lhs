@@ -22,20 +22,20 @@
 >     nat' <- bquoteHere nat
 >     refNat <- elabGive nat'
 >     
->     elabMake ("two" :<: refNat)
+>     make ("two" :<: refNat)
 >     goIn
 >     two' <- bquoteHere two
->     elabGive two'
+>     give two'
 >
->     elabMake ("four" :<: refNat)
+>     make ("four" :<: refNat)
 >     goIn
 >     four' <- bquoteHere four
->     elabGive four'
+>     give four'
 >
->     elabMake ("plus" :<: ARR refNat (ARR refNat refNat))
+>     make ("plus" :<: ARR refNat (ARR refNat refNat))
 >     goIn
 >     plus' <- bquoteHere plus
->     elabGive plus'
+>     give plus'
 >   ) emptyContext 
 
 > Right loc = a
@@ -43,3 +43,7 @@
 > Right (s, _) = runStateT prettyProofState loc
 
 > main = cochon loc
+
+You might want to try
+
+< make f := (@ (@ ([(\ r r y -> y) (\ r -> @ (\ h r y -> (suc (h y))))]))) : nat -> nat -> nat

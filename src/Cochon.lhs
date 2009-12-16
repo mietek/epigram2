@@ -52,11 +52,13 @@ Here we have a very basic command-driven interface to the proof state monad.
 >                           >> cochon loc
 >               Right Quit -> return ()
 >               Right (Compile rn fn) -> do
->                   let  Right dev = evalStateT getDev loc
->                        Right aus = evalStateT getAuncles loc
+>                   let  Right aus = evalStateT getAuncles loc
 >                        mn = resolve aus rn
 >                   case mn of
->                       Just (N (P (n := _))) -> compileCommand n (reverseDev' dev) fn
+>                       Just (N (P (n := _))) -> do
+>                           let  Right loc' = execStateT gimme loc
+>                                Right dev = evalStateT getDev loc'
+>                           compileCommand n (reverseDev' dev) fn
 >                       Nothing -> putStrLn "Can't resolve." >> cochon loc
 >               Right c -> case runStateT (doCommand c) loc of
 >                   Right (s, loc') -> do

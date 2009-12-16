@@ -40,7 +40,6 @@ generate an executable from a collection of supercombinator definitions.
 >             | Lazy FnBody       -- evaluate body lazily
 >             | Missing String    
 >             | Ignore            -- anything we can't inspect. Types, basically.
->    deriving Show
 
 Where to look for support files. We'll need this to be a bit cleverer later. Only interested
 in epic/support.e for now (which is a good place to implement operators, for example).
@@ -100,6 +99,7 @@ Things which are convertible to Epic code
 >     codegen (Lazy t) = "lazy(" ++ codegen t ++ ")"
 >     codegen (Missing m) = "error(\"Missing definition " ++ m ++ "\")"
 >     codegen Ignore = "42"
+>     codegen (Error s) = "error " ++ show s
 
 > mainDef :: CName -> String
 > mainDef m = "main () -> Unit = __dumpData(" ++ m ++ "())"
@@ -175,7 +175,7 @@ by hand in Epic - see epic/support.e
 >     makeBody (Op name arity _ _, args) 
 >          = case (name, map makeBody args) of
 >                import <- OpCompile
->                _ -> error ("Unknown operator " ++ show name)
+>                _ -> error ("Unknown operator" ++ show name)
 
 > compileCommand :: Name -> Dev Fwd -> String -> IO ()
 > compileCommand mainName dev outfile = do

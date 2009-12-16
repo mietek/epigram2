@@ -31,6 +31,9 @@ __elim(D:Data, m:Data, x:Data) -> Data =
 
 __const(x:Data, y:Data) -> Data = x 
 
+%inline __split(f:Data, y:Data) -> Data =
+   f(y!0, y!1)
+
 -- Some tests
 
 {-
