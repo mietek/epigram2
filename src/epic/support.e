@@ -13,7 +13,7 @@ __dumpData (x:Data) -> Unit =
 __switch (ps:Data, n:Int) -> Data =
    case n of {
       0 -> ps!0
-    | Default -> switch (ps!1, (n-1))
+    | Default -> __switch (ps!1, (n-1))
    }
 
 __mapBox (D:Data, p:Data, d:Data) -> Data =

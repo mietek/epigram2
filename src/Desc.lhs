@@ -165,6 +165,12 @@ Equality rules:
 >   pattern IND x y  = C (Ind x y)
 >   pattern IND1 x   = C (Ind1 x)
 
+> import -> CanCompile where
+>   makeBody Done = Tuple [CTag 0]
+>   makeBody (Arg x y) = Tuple [CTag 1, makeBody y]
+>   makeBody (Ind x y) = Tuple [CTag 2, makeBody y]
+>   makeBody (Ind1 y) = Tuple [CTag 3, makeBody y]
+
 > import -> SugarTactics where
 >   descTac = can Desc
 >   muTac t = can $ Mu t
@@ -212,6 +218,9 @@ Equality rules:
 >   mapBoxOp :
 >   elimOp :
 
+> import -> OpCompile where
+>   ("elimOp", [d,bp,p,v]) -> App (Var "__elim") [d, p, v]
+>   ("mapBox", [x,d,bp,p,v]) -> App (Var "__mapBox") [x, p, v]
 
 > import -> OpCode where
 >   descOp :: Op

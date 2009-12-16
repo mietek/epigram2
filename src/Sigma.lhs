@@ -136,6 +136,7 @@ Coercion rule:
 
 > import -> CanCompile where
 >   makeBody (Pair x y) = Tuple [makeBody x, makeBody y]
+>   makeBody Void = Tuple []
 
 > import -> ElimComputation where
 >   PAIR x y $$ Fst = x

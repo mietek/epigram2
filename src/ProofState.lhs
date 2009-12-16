@@ -534,7 +534,7 @@ $\Pi S T$ and if so, adds a goal of type $S$ and applies $y$ to it.
 >     z <- make ("z" :<: bquote B0 s root)
 >     make ("w" :<: bquote B0 (t $$ A s) root)
 >     goIn
->     give (bquote B0 (pval ref $$ A (evTm z)) root)
+>     give (N (P ref :$ A z))
 >     return ()
 >   ) `replacePMF` "apply: last entry in the development must be a girl with a pi-type."
 

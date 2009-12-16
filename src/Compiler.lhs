@@ -127,7 +127,7 @@ Convert a term into the body of a function (need to add the argument names elsew
 
 We'll need to convert whatever representation was used for names into a name usable in C:
 
-> class CNameable n where
+> class Show n => CNameable n where
 >     cname :: n -> String
 
 > instance Show t => CNameable [(String, t)] where
@@ -147,7 +147,7 @@ We'll need to convert whatever representation was used for names into a name usa
 >     makeBody (op :@ args) = makeBody (op, args)
 >     makeBody (tm :? ty) = makeBody tm
 >     makeBody (L (K tm)) = App (Var "__const") [makeBody tm]
->     makeBody _ = error "Please don't do that"
+>     makeBody x = error ("Please don't do this: makeBody " ++ show x)
 
 Lots of canonical things are just there for the typechecker, and we don't care about them.
 So we'll just ignore everything that isn't otherwise explained.
