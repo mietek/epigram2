@@ -529,6 +529,10 @@ And similarly for operators with |@@|:
 
 > eval (op :@ vs)  = (|(op @@) (eval ^$ vs)|)
 
+Anything else is probably display syntax that we should not encounter:
+
+> eval x           = error ("eval: cannot evaluate " ++ show x)
+
 
 \subsubsection{Putting things together}
 
@@ -688,6 +692,7 @@ I think that this stuff should disappear with Tactics spreading.
 >   show (L s)       = "L (" ++ show s ++ ")"
 >   show (C c)       = "C (" ++ show c ++ ")"
 >   show (N n)       = "N (" ++ show n ++ ")"
+>   show (Q "")      = "?"
 >   show (Q x)       = "(? " ++ x ++ ")"
 >   show (P x)       = "P (" ++ show x ++ ")"
 >   show (V i)       = "V " ++ show i

@@ -44,9 +44,9 @@
 
 > elaborate top (ty :>: Q x) = subgoal (ty :>: x)
 
-> elaborate False (PI s (L (K t)) :>: L (K dtm)) = do
->     (tm :=>: tmv) <- elaborate False (t :>: dtm)
->     return (L (K tm) :=>: L (K tmv))
+< elaborate False (PI s (L (K t)) :>: L (K dtm)) = do
+<     (tm :=>: tmv) <- elaborate False (t :>: dtm)
+<     return (L (K tm) :=>: L (K tmv))
 
 > elaborate False (PI s t :>: L sc) = do
 >     let x :: String = case sc of { (x :. _) -> x ; K _ -> "_" }
@@ -64,7 +64,7 @@
 >     
     
 > elaborate top (w :>: N n) = do
->   (y :>: _) <- elabInfer n
+>   (y :>: n) <- elabInfer n
 >   eq <- withRoot (equal (SET :>: (w, y)))
 >   guard eq `replaceError` ("elaborate: inferred type " ++ show y ++ " of " ++ show n
 >                              ++ " is not " ++ show w)
@@ -83,12 +83,11 @@
 >     return (ty' :>: (t' :$ s''))
 
 > elabInfer (op :@ ts) = do
->   (vs, t) <- opTy op chev ts
->   let vs' = fmap (\((x :=>: _) :=>: _) -> x) vs
->   return (t :>: op :@ vs')
->       where chev (t :>: x) = do 
->               ch <- elaborate False (t :>: x)
->               return $ ch :=>: evTm x
+>   (vs, t) <- opTy op (elaborate False) ts
+>   let vs' = fmap (\(x :=>: _) -> x) vs
+>   return {-(trace ("\n\n\nelabInfer op:" ++ opName op ++ "\n" ++ (intercalate "\n\n" (map show vs')) ++ "\n\n\n\n\n") $-} (t :>: op :@ vs')
+
+
 
 > elabInfer (t :? ty) = do
 >   (ty' :=>: vty)  <- elaborate False (SET :>: ty)
@@ -102,25 +101,28 @@
 
 \subsubsection{Information}
 
-> infoElaborate :: INDTM -> ProofState INTM
+> infoElaborate :: INDTM -> ProofState String
 > infoElaborate (N tm) = do
 >     makeModule "elab"
 >     goIn
 >     _ :>: tm' <- elabInfer tm
 >     tm <- bquoteHere (evTm (N tm'))
+>     s <- prettyHere tm
 >     goOut
 >     dropModule
->     return tm
+>     return s
 > infoElaborate _ = throwError' "infoElaborate: can only elaborate neutral terms."
 
-> infoInfer :: INDTM -> ProofState TY
+> infoInfer :: INDTM -> ProofState String
 > infoInfer (N tm) = do
 >     makeModule "infer"
 >     goIn
 >     ty :>: _ <- elabInfer tm
+>     ty' <- bquoteHere ty
+>     s <- prettyHere ty'
 >     goOut
 >     dropModule
->     return ty
+>     return s
 > infoInfer _ = throwError' "infoInfer: can only infer the type of neutral terms."
 
 

@@ -20,22 +20,22 @@
 >     make ("nat" :<: SET)
 >     goIn
 >     nat' <- bquoteHere nat
->     refNat <- give nat'
+>     refNat <- elabGive nat'
 >     
->     make ("two" :<: refNat)
+>     elabMake ("two" :<: refNat)
 >     goIn
 >     two' <- bquoteHere two
->     give two'
+>     elabGive two'
 >
->     make ("four" :<: refNat)
+>     elabMake ("four" :<: refNat)
 >     goIn
 >     four' <- bquoteHere four
->     give four'
+>     elabGive four'
 >
->     make ("plus" :<: ARR refNat (ARR refNat refNat))
+>     elabMake ("plus" :<: ARR refNat (ARR refNat refNat))
 >     goIn
 >     plus' <- bquoteHere plus
->     give plus'
+>     elabGive plus'
 >   ) emptyContext 
 
 > Right loc = a

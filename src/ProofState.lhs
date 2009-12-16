@@ -553,7 +553,7 @@ the goal and updates the reference.
 >             putMother (GirlMother ref xn ty)
 >             updateRef ref
 >             goOut
->             return (N (P ref))
+>             return (N (P ref $:$ aunclesToElims (aus <>> F0)))
 >         _  -> throwError' "give: only possible for incomplete goals."
 
 > giveSilently :: INTM -> ProofState ()
