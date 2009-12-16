@@ -184,6 +184,21 @@ by hand in Epic - see epic/support.e
 > collectArgs acc B0 (Defined tm _) = Comp (map cname acc) (makeBody tm)
 > collectArgs acc (bs :< E name _ (Boy _) _) tip = collectArgs (name:acc) bs tip
 
+
+> missingThing = error "flatten: missing thing is missing"
+
+> flatten :: BoyKind -> Name -> Bwd Name -> Dev Fwd -> [(Name, Bwd Name, INTM)]
+> flatten b ma del (F0, Module, _) = []
+> flatten LAMB ma del (F0, Unknown _, _) = [(ma, del, missingThing)]
+> flatten LAMB ma del (F0, Defined tm _, _) = [(ma, del, tm)]
+> flatten PIB ma del (F0, _, _) = [(ma, del, SET)] -- nasty hack relying on SET erasure
+> flatten _ ma del (E (x := _) _ (Boy b) _ :> es, tip, root) =
+>     flatten b ma (del :< x) (es, tip, root)
+> flatten b ma del (E (her := _) _ (Girl LETG herDev) _ :> es, tip, root) = 
+>     flatten LAMB her del herDev ++ flatten b ma del (es, tip, root)
+
+
+
 %if False
 
 A simple test case
