@@ -85,7 +85,7 @@
 > elabInfer (op :@ ts) = do
 >   (vs, t) <- opTy op (elaborate False) ts
 >   let vs' = fmap (\(x :=>: _) -> x) vs
->   return {-(trace ("\n\n\nelabInfer op:" ++ opName op ++ "\n" ++ (intercalate "\n\n" (map show vs')) ++ "\n\n\n\n\n") $-} (t :>: op :@ vs')
+>   return (t :>: op :@ vs')
 
 
 
