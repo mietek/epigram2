@@ -161,12 +161,14 @@ left, and will do so with |littleInTm|.
 
 > littleExTm :: Parsley Token ExTmRN
 > littleExTm = 
->     (|id variableParse |)
+>     (|id variableParse
+>      |id (bracket Round bigExTm)
+>      |)
 
 > appParse :: Parsley Token ExTmRN
 > appParse =
 >     pLoop littleExTm $ \f -> 
->     (|(:$) ~ f (|A bigInTm|)|)
+>     (|(f :$) (|A littleInTm|)|)
 
 > ascriptionParse :: Parsley Token ExTmRN
 > ascriptionParse = (| (:?) littleInTm (%keyword ":"%) bigInTm |)
