@@ -73,6 +73,7 @@ left, and will do so with |littleInTm|.
 >      |id lamParse
 >      |(\t -> PRF t) (%keyword ":-"%) littleInTm
 >      |(\t -> CON t) (%keyword "@"%) littleInTm
+>      |(\t -> TAG t) (%keyword "`"%) ident
 >      |id tupleParse
 >      |id enumParse
 >      |N littleExTm

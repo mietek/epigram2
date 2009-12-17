@@ -131,9 +131,9 @@ first |Idenfitier foo| then |Keyword ,|. In |Parsley|, this translates
 to:
 
 > parseWord :: Parsley Char String
-> parseWord = (| id (some $ tokenFilter (\t -> not $ elem t $ space ++ brackets ++ protected)) 
->              | (: []) (tokenFilter (flip elem protected))|)
->     where protected = ",._^"
+> parseWord = (|id (some $ tokenFilter (\t -> not $ elem t $ space ++ brackets ++ protected)) 
+>              |(: []) (tokenFilter (flip elem protected))|)
+>     where protected = ",._^`"
 
 As we are at it, we can test for word equality, that is build a parser
 matching a given word:
@@ -155,7 +155,7 @@ thing. Don't forget to extend this list if you use new keywords in the
 grammar!
 
 > keywords :: [String]
-> keywords = [ ":", "*", "#", "@", ",", ";", "/", "^", ".", "_", "+"
+> keywords = [ ":", "*", "#", "@", ",", ";", "/", "^", ".", "_", "+", "`"
 >            , "\\", "->", "=>", "==", "&&", ":-", ":=", "?"
 >            , "TT", "FF"
 >            , "<->", ":->", ":=>" ]

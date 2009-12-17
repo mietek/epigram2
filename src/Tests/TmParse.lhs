@@ -94,6 +94,10 @@
 >         , "2 + x"                     -- Nat
 >         , "( * )"                     -- grouping
 >         , "((*))"                     -- grouping
+>         , "` x"                       -- tag
+>         , "` xy"                      -- tag
+>         , "`x"                        -- tag
+>         , "`xyz"                      -- tag
 >         , "? a"                       -- hole
 >         , "(? a : ? b) -> ? c"        -- more holes
 >         ]
