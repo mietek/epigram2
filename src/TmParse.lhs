@@ -163,7 +163,14 @@ left, and will do so with |littleInTm|.
 > littleExTm :: Parsley Token ExTmRN
 > littleExTm = 
 >     (|id variableParse
->      |id (bracket Round bigExTm)
+>  -- This rule is redundant:
+>  --    |||id (bracket Round bigExTm|
+>  -- it corresponds to:
+>  --    * littleInTm, followed by
+>  --    * bracketted bigInTm, followed by
+>  --    * bigExTm
+>  -- Interestingly, adding the code above makes some terms
+>  -- unparseable (see Tests/TmParse.lhs). That's a mystery for me.
 >      |)
 
 > appParse :: Parsley Token ExTmRN
