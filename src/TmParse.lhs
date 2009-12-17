@@ -52,10 +52,9 @@ left, and will do so with |littleInTm|.
 
 > bigInTm :: Parsley Token InTmRN
 > bigInTm = 
->     (|id piParse
+>     (|id piForallParse
 >      |id arrParse
 >      |id sigmaParse
->      |id forallParse
 >      |id blueEqParse
 >      |id andParse
 >      |N bigExTm
@@ -88,13 +87,12 @@ left, and will do so with |littleInTm|.
 > telescope :: Parsley Token [(String, InTmRN)]
 > telescope = some (bracket Round (|ident, (%keyword ":"%) bigInTm|))
 
-> piParse :: Parsley Token InTmRN
-> piParse = (|(flip $ foldr mkPi) telescope (%keyword "->"%) bigInTm|)
+> piForallParse :: Parsley Token InTmRN
+> piForallParse = (|mkPiForall telescope (|(,) ~mkPi (%keyword "->"%) bigInTm
+>                                         |(,) ~mkForall (%keyword "=>"%) bigInTm|)|)
 >     where mkPi (x,s) t = PI s (L (x :. t))
-
-> forallParse :: Parsley Token InTmRN
-> forallParse = (|(flip $ foldr mkForall) telescope (%keyword "=>"%) bigInTm|)
->     where mkForall (x,s) t = ALL s (L (x :. t))
+>           mkForall (x,s) t = ALL s (L (x :. t))
+>           mkPiForall xs (f,t) = foldr f t xs
 
 > arrParse :: Parsley Token InTmRN
 > arrParse = (|mkArr littleInTm (%keyword "->"%) bigInTm|)
