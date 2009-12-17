@@ -92,6 +92,7 @@
 >         , "0 + x"                     -- Nat
 >         , "1 + x"                     -- Nat
 >         , "2 + x"                     -- Nat
+>         , "f 1"                       -- Nat
 >         , "( * )"                     -- grouping
 >         , "((*))"                     -- grouping
 >         , "` x"                       -- tag

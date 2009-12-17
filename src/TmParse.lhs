@@ -58,7 +58,6 @@ left, and will do so with |littleInTm|.
 >      |id forallParse
 >      |id blueEqParse
 >      |id andParse
->      |id natParse
 >      |N bigExTm
 >      |id littleInTm
 >      |)
@@ -76,6 +75,7 @@ left, and will do so with |littleInTm|.
 >      |(\t -> TAG t) (%keyword "`"%) ident
 >      |id tupleParse
 >      |id enumParse
+>      |id natParse
 >      |N littleExTm
 >      |id (bracket Round bigInTm)
 >      |)

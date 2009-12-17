@@ -241,7 +241,7 @@ Parsing an identifier or a number is as simple as:
 
 > ident :: Parsley Token String
 > ident = pFilter filterIdent nextToken
->     where filterIdent (Identifier s) = Just s
+>     where filterIdent (Identifier s) | not (isDigit $ head s) = Just s
 >           filterIdent _ = Nothing
 >
 > digits :: Parsley Token String
