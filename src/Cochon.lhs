@@ -37,19 +37,22 @@
 Here we have a very basic command-driven interface to the proof state monad.
 
 > cochon :: ProofContext -> IO ()
-> cochon loc@(ls, dev) = do
+> cochon loc = cochon' loc "Hello!"
+
+> cochon' :: ProofContext -> String -> IO ()
+> cochon' loc@(ls, dev) msg = do
+>     --putStrLn (show loc)
 >     let Right s = evalStateT prettyProofState loc
 >     putStrLn s
+>     putStrLn msg
 >     putStr (showPrompt ls)
 >     hFlush stdout
 >     l <- getLine
 >     case parse tokenize l of 
->         Left pf ->  putStrLn ("Tokenize failure: " ++ describePFailure pf id) 
->                     >> cochon loc
+>         Left pf -> cochon' loc ("Tokenize failure: " ++ describePFailure pf id)
 >         Right ts ->
 >           case parse pCommand ts of
->               Left pf ->  putStrLn ("Parse failure: " ++ describePFailure pf (intercalate " " . map crushToken))
->                           >> cochon loc
+>               Left pf -> cochon' loc ("Parse failure: " ++ describePFailure pf (intercalate " " . map crushToken))
 >               Right Quit -> return ()
 >               Right (Compile rn fn) -> do
 >                   let  Right aus = evalStateT getAuncles loc
@@ -59,16 +62,14 @@ Here we have a very basic command-driven interface to the proof state monad.
 >                           let  Right loc' = execStateT gimme loc
 >                                Right dev = evalStateT getDev loc'
 >                           compileCommand n (reverseDev' dev) fn
->                       Nothing -> putStrLn "Can't resolve." >> cochon loc
+>                           cochon' loc "Probably compiled."
+>                       Nothing -> cochon' loc "Can't resolve."
 >               Right c -> case runStateT (doCommand c) loc of
 >                   Right (s, loc') -> do
->                       putStrLn s 
 >                       printChanges loc loc'
->                       cochon loc'
->                   Left ss ->  do
->                       putStrLn "I'm sorry, Dave. I'm afraid I can't do that."
->                       putStr (unlines ss)
->                       cochon loc
+>                       cochon' loc' s
+>                   Left ss ->
+>                       cochon' loc (unlines ("I'm sorry, Dave. I'm afraid I can't do that.":ss))
 
 > describePFailure :: PFailure a -> ([a] -> String) -> String
 > describePFailure (PFailure (ts, fail)) f = (case fail of
