@@ -46,4 +46,16 @@
 
 You might want to try
 
+< make suc := (\ x -> (@ ([ ? / ? ] ))) : nat -> nat
+< next
+< give 1
+< next
+< give [ x ]
+< root
 < make f := (@ (@ ([(\ r r y -> y) (\ r -> @ (\ h r y -> (suc (h y))))]))) : nat -> nat -> nat
+
+< make x := (f two two) : nat
+< elab x
+< compile x foo
+
+and run the "foo" executable.
