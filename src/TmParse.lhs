@@ -152,25 +152,18 @@ left, and will do so with |littleInTm|.
 
 > bigExTm :: Parsley Token ExTmRN
 > bigExTm = 
->     (|id ascriptionParse
->      |id operatorParse
->      |id appParse
->      |id greenEqParse 
+>     (|id appParse
+>      |id ascriptionParse
 >      |id littleExTm
 >      |)
 
 
 > littleExTm :: Parsley Token ExTmRN
 > littleExTm = 
->     (|id variableParse
->  -- This rule is redundant:
->  --    |||id (bracket Round bigExTm|
->  -- it corresponds to:
->  --    * littleInTm, followed by
->  --    * bracketted bigInTm, followed by
->  --    * bigExTm
->  -- Interestingly, adding the code above makes some terms
->  -- unparseable (see Tests/TmParse.lhs). That's a mystery for me.
+>     (|id operatorParse
+>      |id greenEqParse 
+>      |id variableParse
+>      |id (bracket Round bigExTm)
 >      |)
 
 > appParse :: Parsley Token ExTmRN
