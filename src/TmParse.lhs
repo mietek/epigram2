@@ -138,7 +138,7 @@ left, and will do so with |littleInTm|.
 
 > blueEqParse :: Parsley Token InTmRN
 > blueEqParse = (|mkBlueEq parseTerm (%keyword "=="%) parseTerm|)
->     where parseTerm = bracket Round (|(,) littleInTm (%keyword ":"%) littleInTm|)
+>     where parseTerm = bracket Round (|(,) bigInTm (%keyword ":"%) bigInTm|)
 >           mkBlueEq (x1,t1) (x2,t2) = EQBLUE (t1 :>: x1) (t2 :>: x2)
 
 > natParse :: Parsley Token InTmRN
@@ -181,7 +181,7 @@ left, and will do so with |littleInTm|.
 
 > greenEqParse :: Parsley Token ExTmRN
 > greenEqParse = (|mkGreenEq parseTerm (%keyword "<->"%) parseTerm|)
->     where parseTerm = bracket Round (|(,) littleInTm (%keyword ":"%) littleInTm|)
+>     where parseTerm = bracket Round (|(,) bigInTm (%keyword ":"%) bigInTm|)
 >           mkGreenEq (x1,t1) (x2,t2) = eqGreen :@ [t1, x1, t2, x2]
 
 > variableParse :: Parsley Token ExTmRN
