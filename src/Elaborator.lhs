@@ -7,6 +7,8 @@
 
 > module Elaborator where
 
+> import Debug.Trace
+
 > import Control.Applicative
 > import Control.Monad
 > import Control.Monad.Error
