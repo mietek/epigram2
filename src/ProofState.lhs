@@ -214,8 +214,10 @@ updated information, providing a friendlier interface than |get| and |put|.
 
 > getMother :: ProofState Mother
 > getMother = do
->     l <- getLayer
->     return (mother l)
+>     ls <- getLayers
+>     case ls of
+>         _ :< l  -> return (mother l)
+>         B0      -> return (ModuleMother []) 
 
 > getMotherEntry :: ProofState (Entry Bwd)
 > getMotherEntry = do

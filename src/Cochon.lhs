@@ -59,10 +59,13 @@ Here we have a very basic command-driven interface to the proof state monad.
 >                        mn = resolve aus rn
 >                   case mn of
 >                       Just (N (P (n := _))) -> do
->                           let  Right loc' = execStateT gimme loc
->                                Right dev = evalStateT getDev loc'
->                           compileCommand n (reverseDev' dev) fn
->                           cochon' loc "Probably compiled."
+>                           let mloc' = execStateT gimme loc
+>                           case mloc' of
+>                               Left ss -> error ("gimme failed: " ++ unlines ss)
+>                               Right loc' -> do
+>                                   let Right dev = evalStateT getDev loc'
+>                                   compileCommand n (reverseDev' dev) fn
+>                                   cochon' loc "Compiled."
 >                       Nothing -> cochon' loc "Can't resolve."
 >               Right c -> case runStateT (doCommand c) loc of
 >                   Right (s, loc') -> do
