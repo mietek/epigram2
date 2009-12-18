@@ -91,22 +91,21 @@ Coercion rule:
 >   prettyCan (Sigma s (L (x :. t)))  = parens (text x <+> colon <+> pretty s
 >                                           <+> semi <+> prettySigma t)
 >   prettyCan (Sigma s (L (K t)))     = parens (pretty s <+> semi <+> prettySigma t)
->   prettyCan (Sigma s t)             = text "BAD Sigma" <+> parens (pretty s)
+>   prettyCan (Sigma s t)             = parens (text "Sigma" <+> pretty s <+> pretty t)
 >   prettyCan (Pair a b)              = brackets (pretty a <+> prettyPair b)
 
 > import -> Pretty where
 >   prettyPair :: Tm {d, p} String -> Doc
+>   prettyPair VOID           = empty
 >   prettyPair (PAIR a VOID)  = pretty a
 >   prettyPair (PAIR a b)     = pretty a <+> prettyPair b
 >   prettyPair t              = text "/" <+> pretty t
-
+>
 >   prettySigma :: Tm {d, p} String -> Doc
 >   prettySigma UNIT = empty
 >   prettySigma (SIGMA s (L (x :. t)))  = text x <+> colon <+> pretty s
 >                                           <+> semi <+> prettySigma t
 >   prettySigma (SIGMA s (L (K t)))     = pretty s <+> semi <+> prettySigma t
->   prettySigma (SIGMA s t)             = text "BAD Sigma" <+> parens (pretty s)
->                                           <+> parens (pretty t)
 >   prettySigma t                       = pretty t
 
 > import -> ElimConstructors where

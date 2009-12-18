@@ -33,8 +33,8 @@ to allow extra canonical terms and eliminators to be pretty-printed.
 >     parens (sep [parens (text x <+> text ":" <+> pretty s) <+> text "->", pretty t])
 > prettyCan (Pi s (L (x :. t))) = 
 >     parens (sep [parens (text x <+> text ":" <+> pretty s) <+> text "->", pretty t])
-> prettyCan (Pi s t)  = text "Pi" <+> (parens (pretty s) $$ parens (pretty t))
-> prettyCan (Con x)   = pretty x
+> prettyCan (Pi s t)  = parens (text "Pi" <+> pretty s <+> pretty t)
+> prettyCan (Con x)   = text "@" <+> pretty x
 > import <- CanPretty
 > prettyCan can       = quotes . text .show $ can
 

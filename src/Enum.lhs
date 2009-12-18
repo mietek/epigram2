@@ -155,7 +155,7 @@ Equality rules:
 >   prettyEnumIndex :: Int -> Tm {d, p} String -> Doc
 >   prettyEnumIndex n ZE      = int n
 >   prettyEnumIndex n (SU t)  = prettyEnumIndex (succ n) t
->   prettyEnumIndex n tm      = parens (int n <+> text " + " <+> pretty tm)
+>   prettyEnumIndex n tm      = parens (int n <+> text "+" <+> pretty tm)
 
 > import -> CanTyRules where
 >   canTy _ (Set :>: EnumU)    = return EnumU
