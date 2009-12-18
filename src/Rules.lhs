@@ -481,6 +481,23 @@ Rooty. Provided with a Root and an Operator, we compute its type.
 >                   return $ (ty,r) :=>: pval r
 
 
+
+> inDesc :: VAL
+> inDesc = ARG (ENUMT constructors) $
+>              eval (L $ "" :. [.x. 
+>               N $ switchDOp :@ [constructors, cases, NV x]]) B0
+>     where constructors = (CONSE (TAG "done")
+>                           (CONSE (TAG "arg")
+>                            (CONSE (TAG "ind")
+>                             (CONSE (TAG "ind1")
+>                              NILE))))
+>           cases = PAIR DONE 
+>                   (PAIR (ARG SET (L $ "" :. [.s. IND (NV s) DONE]))
+>                    (PAIR (ARG SET (L $ "" :. [.h. IND1 DONE]))
+>                     (PAIR (IND1 DONE)
+>                      VOID)))
+
+
 \subsection{Observational Equality}
 
 \question{|mkEqConj| does not respect contravariance in the |Pi| rule,
