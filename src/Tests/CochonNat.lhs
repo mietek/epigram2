@@ -46,7 +46,7 @@
 
 You might want to try
 
-< make suc := (\ x -> ( @ [ 1 / [ x ] ] ) ) : nat -> nat
+< make suc := (\ x -> @ [1 x]) : nat -> nat
 < make f := @ @ [(\ r r y -> y) (\ r -> @ \ h r y -> suc (h y))] : nat -> nat -> nat
 < make x := (f two two) : nat
 < elab x
