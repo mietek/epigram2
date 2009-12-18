@@ -67,6 +67,24 @@ interesting types.
 >         isTuply (PAIR _ _) = True
 >         isTuply _ = False
 
+To elaborate a tag with an enumeration as its type, we search for the tag in the enumeration
+to determine the appropriate index.
+
+> elaborate b (ENUMT t :>: TAG a) = findTag a t 0
+>   where
+>     findTag :: String -> TY -> Int -> ProofState (INTM :=>: VAL)
+>     findTag a (CONSE (TAG b) t) n
+>       | a == b        = return (toNum n :=>: toNum n)
+>       | otherwise     = findTag a t (succ n)
+>     findTag a _ n  = throwError' ("elaborate: tag `" ++ a ++ " not found in enumeration.")
+>                         
+>     toNum :: Int -> Tm {In, p} x
+>     toNum 0  = ZE
+>     toNum n  = SU (toNum (n-1))
+
+
+Elaborating a canonical term with canonical type is a job for |canTy|.
+
 > elaborate top (C ty :>: C tm) = do
 >     v <- canTy (elaborate False) (ty :>: tm)
 >     return $ (C $ fmap (\(x :=>: _) -> x) v) :=>: (C $ fmap (\(_ :=>: x) -> x) v)

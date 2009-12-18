@@ -142,7 +142,7 @@ Equality rules:
 >   prettyCan EnumU      = text "Enum"
 >   prettyCan (EnumT t)  = braces (prettyEnum t)
 >   prettyCan Ze         = text "0"
->   prettyCan (Su t)     = parens (text "1+" <+> pretty t)
+>   prettyCan (Su t)     = prettyEnumIndex 1 t
 
 > import -> Pretty where
 >   prettyEnum :: Tm {d, p} String -> Doc
@@ -151,6 +151,11 @@ Equality rules:
 >   prettyEnum (CONSE (TAG t) ts@(CONSE _ _))  = text t <+> comma <+> prettyEnum ts
 >   prettyEnum (CONSE (TAG t) ts)              = text t <+> text "/" <+> pretty ts
 >   prettyEnum t                               = text "/" <+> pretty t
+>
+>   prettyEnumIndex :: Int -> Tm {d, p} String -> Doc
+>   prettyEnumIndex n ZE      = int n
+>   prettyEnumIndex n (SU t)  = prettyEnumIndex (succ n) t
+>   prettyEnumIndex n tm      = parens (int n <+> text " + " <+> pretty tm)
 
 > import -> CanTyRules where
 >   canTy _ (Set :>: EnumU)    = return EnumU
