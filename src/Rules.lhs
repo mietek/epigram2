@@ -483,7 +483,7 @@ Rooty. Provided with a Root and an Operator, we compute its type.
 >               Rooty.freshRef (s :<: ty) $ \r ->
 >                   return $ (ty,r) :=>: pval r
 
-
+\subsection{Bootstrapping Desc in Desc}
 
 > inDesc :: VAL
 > inDesc = ARG (ENUMT constructors) $
@@ -500,13 +500,8 @@ Rooty. Provided with a Root and an Operator, we compute its type.
 >                     (PAIR (IND1 DONE)
 >                      VOID)))
 
-> descInDesc :: VAL
-> descInDesc = MU inDesc
-
-> doneInDesc = CON (PAIR ZE VOID)
-> argInDesc s d = CON (PAIR (SU ZE) (PAIR s (PAIR d VOID)))
-> indInDesc h d = CON (PAIR (SU (SU ZE)) (PAIR h (PAIR d VOID)))
-> ind1InDesc d = CON (PAIR (SU (SU (SU ZE))) (PAIR d VOID))
+> desc :: VAL
+> desc = MU inDesc
 
 
 \subsection{Observational Equality}

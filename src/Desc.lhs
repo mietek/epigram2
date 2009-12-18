@@ -134,76 +134,37 @@ Equality rules:
 <             descOp @@ [d2, Mu d2], Out x2) 
 
 > import -> CanConstructors where
->   Desc   :: Can t
 >   Mu     :: t -> Can t
->   Done   :: Can t
->   Arg    :: t -> t -> Can t
->   Ind    :: t -> t -> Can t
->   Ind1   :: t -> Can t
 
 > import -> TraverseCan where
->   traverse _ Desc       = (|Desc|)
 >   traverse f (Mu x)     = (|Mu (f x)|)
->   traverse _ Done       = (|Done|)
->   traverse f (Arg x y)  = (|Arg (f x) (f y)|)
->   traverse f (Ind x y)  = (|Ind (f x) (f y)|)
->   traverse f (Ind1 x)   = (|Ind1 (f x)|)
 
 > import -> HalfZipCan where
->   halfZip Desc Desc = Just Desc
 >   halfZip (Mu t0) (Mu t1) = Just (Mu (t0,t1))
->   halfZip Done Done = Just Done
->   halfZip (Arg s0 t0) (Arg s1 t1) = Just (Arg (s0,s1) (t0,t1))
->   halfZip (Ind s0 t0) (Ind s1 t1) = Just (Ind (s0,s1) (t0,t1))
->   halfZip (Ind1 s0) (Ind1 s1) = Just (Ind1 (s0,s1))
 
 > import -> CanPats where
->   pattern DESC     = C Desc
 >   pattern MU x     = C (Mu x)
->   pattern DONE     = C Done
->   pattern ARG x y  = C (Arg x y)
->   pattern IND x y  = C (Ind x y)
->   pattern IND1 x   = C (Ind1 x)
+>   pattern DONE = CON (PAIR ZE VOID)
+>   pattern ARG s d = CON (PAIR (SU ZE) (PAIR s (PAIR d VOID)))
+>   pattern IND h d = CON (PAIR (SU (SU ZE)) (PAIR h (PAIR d VOID)))
+>   pattern IND1 d = CON (PAIR (SU (SU (SU ZE))) (PAIR d VOID))
 
-> import -> CanCompile where
->   makeBody Done = Tuple [CTag 0]
->   makeBody (Arg x y) = Tuple [CTag 1, makeBody y]
->   makeBody (Ind x y) = Tuple [CTag 2, makeBody y]
->   makeBody (Ind1 y) = Tuple [CTag 3, makeBody y]
 
 > import -> SugarTactics where
->   descTac = can Desc
 >   muTac t = can $ Mu t
->   doneTac = can Done
->   argTac h f = can $ Arg h (lambda f)
->   indTac x d = can $ Ind x d
->   ind1Tac d = can $ Ind1 d
+>   descTac = done (desc :<: SET)
+>   doneTac =  conTac (pairTac zeTac voidTac)
+>   argTac x y = conTac (pairTac (suTac zeTac) (pairTac x (pairTac y voidTac)))
+>   indTac x y = conTac (pairTac (suTac (suTac zeTac)) (pairTac x (pairTac y voidTac)))
+>   ind1Tac x = conTac (pairTac (suTac (suTac (suTac zeTac))) (pairTac x voidTac))
 
 > import -> CanPretty where
->   prettyCan Desc   = text "Desc"
 >   prettyCan (Mu t) = parens (text "Mu" <+> pretty t)
->   prettyCan Done   = text "Done"
->   prettyCan (Arg t1 t2) = parens (text "Arg" <+> pretty t1 <+> pretty t2)
->   prettyCan (Ind t1 t2) = parens (text "Ind" <+> pretty t1 <+> pretty t2)
->   prettyCan (Ind1 t) = parens (text "Ind1" <+> pretty t)
 
 > import -> CanTyRules where
->   canTy _ (Set :>: Desc)     = return Desc
 >   canTy chev (Set :>: Mu x)     = do
->     xxv@(x :=>: xv) <- chev (DESC :>: x)
+>     xxv@(x :=>: xv) <- chev (desc :>: x)
 >     return $ Mu xxv
->   canTy _ (Desc :>: Done)    = return Done
->   canTy chev (Desc :>: Arg x y) = do
->     xxv@(x :=>: xv) <- chev (SET :>: x)
->     yyv@(y :=>: yv) <- chev (ARR xv DESC :>: y)
->     return $ Arg xxv yyv
->   canTy chev (Desc :>: Ind x y) = do
->     xxv@(x :=>: xv) <- chev (SET :>: x)
->     yyv@(y :=>: yv) <- chev (DESC :>: y)
->     return $ Ind xxv yyv
->   canTy chev (Desc :>: Ind1 x) = do
->     xxv@(x :=>: xv) <- chev (DESC :>: x)
->     return $ Ind1 xxv
 >   canTy chev (Mu x :>: Con y) = do
 >     yyv@(y :=>: yv) <- chev (descOp @@ [x, MU x] :>: y)
 >     return $ Con yyv
@@ -231,54 +192,21 @@ Equality rules:
 >     , opRun = dOpRun
 >     } where
 >       dOpTy chev [x,y] = do
->                  (x :=>: xv) <- chev (DESC :>: x)
+>                  (x :=>: xv) <- chev (desc :>: x)
 >                  (y :=>: yv) <- chev (SET :>: y)
 >                  return $ ([ x :=>: xv
 >                            , y :=>: yv ]
 >                           , SET)
 >       dOpRun :: [VAL] -> Either NEU VAL
 >       dOpRun [DONE,y]    = Right UNIT
->       dOpRun [ARG x y,z] = Right $ trustMe (opRunArgType :>: opRunArgTac) $$ A x $$ A y $$ A z
->       dOpRun [IND x y,z] = Right $ trustMe (opRunIndType :>: opRunIndTac) $$ A x $$ A y $$ A z
->       dOpRun [IND1 y,z] = Right $ trustMe (opRunInd1Type :>: opRunInd1Tac) $$ A y $$ A z
+>       dOpRun [ARG x y,z] = Right $
+>         eval [.x.y.z. 
+>              SIGMA (NV x) . L $ "" :. [.a.
+>              (N (descOp :@ [y $# [a],NV z]))
+>              ]] $ B0 :< x :< y :< z
+>       dOpRun [IND x y,z] = Right (TIMES (ARR x z) (descOp @@ [y,z]))
+>       dOpRun [IND1 x,z] = Right (TIMES z (descOp @@ [x,z]))
 >       dOpRun [N x,_]     = Left x
->
->       opRunTypeTac arg = arrTac arg
->                                 (arrTac setTac
->                                         setTac)
->       opRunArgType = trustMe (SET :>: opRunArgTypeTac) 
->       opRunArgTypeTac = piTac setTac
->                               (\x ->
->                                opRunTypeTac (arrTac (use x done)
->                                                     descTac))
->       opRunArgTac = lambda $ \x ->
->                     lambda $ \f ->
->                     lambda $ \d ->
->                     sigmaTac (use x done)
->                              (\a ->
->                               useOp descOp [ f @@@ [use a done]
->                                            , use d done ] done)
->
->       opRunIndType = trustMe (SET :>: opRunIndTypeTac)
->       opRunIndTypeTac = arrTac (can Set) 
->                                (opRunTypeTac (can Desc))
->       opRunIndTac = lambda $ \h ->
->                     lambda $ \x ->
->                     lambda $ \d ->
->                     timesTac (arrTac (use h done)
->                                      (use d done))
->                              (useOp descOp [ use x done
->                                            , use d done ] done)
->
->       opRunInd1Type = trustMe (SET :>: opRunInd1TypeTac)
->       opRunInd1TypeTac = opRunTypeTac (can Desc)
->       opRunInd1Tac = lambda $ \x ->
->                      lambda $ \d ->
->                      timesTac (use d done)
->                               (useOp descOp [ use x done
->                                             , use d done ] done)
-
-
 
 
 >   boxOp :: Op
@@ -289,7 +217,7 @@ Equality rules:
 >     , opRun = boxOpRun
 >     } where
 >       boxOpTy chev [w,x,y,z] = do
->         (w :=>: wv) <- chev (DESC :>: w)
+>         (w :=>: wv) <- chev (desc :>: w)
 >         (x :=>: xv) <- chev (SET :>: x)
 >         (y :=>: yv) <- chev (ARR xv SET :>: y)
 >         (z :=>: zv) <- chev (descOp @@ [wv,xv] :>: z)
@@ -322,8 +250,8 @@ Equality rules:
 >                                piTac (arrTac (use x done)
 >                                              descTac) 
 >                                      (\f ->
->                                       opRunTypeTac (can $ Arg (use x done)
->                                                               (use f done))))
+>                                       opRunTypeTac (argTac (use x done)
+>                                                            (use f done))))
 >       opRunArgTac = lambda $ \a ->
 >                     lambda $ \f ->
 >                     lambda $ \d ->
@@ -377,7 +305,7 @@ Equality rules:
 >     , opRun = mapBoxOpRun
 >     } where
 >       mapBoxOpTy chev [x,d,bp,p,v] = do 
->           (x :=>: xv) <- chev (DESC :>: x)
+>           (x :=>: xv) <- chev (desc :>: x)
 >           (d :=>: dv) <- chev (SET :>: d)
 >           (bp :=>: bpv) <- chev (ARR dv SET :>: bp)
 >           (p :=>: pv) <- chev (PI dv (eval [.bpv. L $ "" :. 
@@ -462,8 +390,8 @@ Equality rules:
 >                                 piTac (arrTac (use a done)
 >                                               descTac)
 >                                       (\f -> 
->                                        mapBoxTypeTac (can $ Arg (use a done)
->                                                                 (use f done))))
+>                                        mapBoxTypeTac (argTac (use a done)
+>                                                              (use f done))))
 >       mapBoxArgTac = lambda $ \a ->
 >                      lambda $ \f ->
 >                      lambda $ \d ->
@@ -485,7 +413,7 @@ Equality rules:
 >     , opRun = elimOpRun
 >     } where
 >       elimOpTy chev [d,bp,p,v] = do
->         (d :=>: dv) <- chev (DESC :>: d)
+>         (d :=>: dv) <- chev (desc :>: d)
 >         (bp :=>: bpv) <- chev (ARR (MU dv) SET :>: bp)
 >         (v :=>: vv) <- chev (MU dv :>: v)
 >         (p :=>: pv) <- chev (PI (descOp @@ [dv,MU dv]) 
@@ -536,8 +464,6 @@ Equality rules:
 >                                                         , use x done ] done 
 >                                          , use v done ] done ]
 
-
-
 >   switchDOp = Op
 >     { opName = "SwitchD"
 >     , opArity = 3
@@ -546,32 +472,16 @@ Equality rules:
 >     } where
 >         sOpTy chev [e , b, x] = do
 >           (e :=>: ev) <- chev (ENUMU :>: e)
->           (b :=>: bv) <- chev (branchesOp @@ [ev , L (K DESC) ] :>: b)
+>           (b :=>: bv) <- chev (branchesOp @@ [ev , L (K desc) ] :>: b)
 >           (x :=>: xv) <- chev (ENUMT ev :>: x)
 >           return $ ([ e :=>: ev
 >                     , b :=>: bv
 >                     , x :=>: xv ] 
->                    , {-!!-} DESC {-!!-})
+>                     , desc)
 >         sOpRun :: [VAL] -> Either NEU VAL
 >         sOpRun [CONSE t e' , ps , ZE] = Right $ ps $$ Fst
->         sOpRun [CONSE t e' , ps , SU n] = Right $ trustMe (typeSwitch :>: tacSwitch) 
->                                                       $$ A t $$ A e' $$ A ps $$ A n
+>         sOpRun [CONSE t e' , ps , SU n] = Right $
+>           switchDOp @@ [ e' 
+>                        , ps $$ Snd
+>                        , n ]
 >         sOpRun [_ , _ , N n] = Left n
-
->         tacSwitch = lambda $ \t ->
->                     lambda $ \e' ->
->                     lambda $ \ps ->
->                     lambda $ \n ->
->                     useOp switchDOp [ use e' done
->                                     , use ps . apply Snd $ done
->                                     , use n done ]
->                     done
->         typeSwitch = trustMe (SET :>: tacTypeSwitch) 
->         tacTypeSwitch = piTac uidTac
->                               (\t ->
->                                piTac enumUTac
->                                      (\e -> 
->                                       arrTac (useOp branchesOp [ consETac (use t done) (use e done)
->                                                                , {-!!-} lambda $ \_ -> descTac {-!!-} ] done)
->                                              (piTac (enumTTac (use e done))
->                                                     (\x -> {-!!-} descTac {-!!-} )))))

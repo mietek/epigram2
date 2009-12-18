@@ -25,7 +25,7 @@ the case |csuc|, there is one subtree and that's it.
 This gives:
 
 > natdTac :: Tac VAL
-> natdTac = can $ Arg natEnumTac natcTac
+> natdTac = argTac natEnumTac natcTac
 >     where natEnumTac = enumTTac natConst 
 >               where natConst = consETac (tagTac "czero")
 >                                         (consETac (tagTac "csuc")
