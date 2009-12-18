@@ -536,3 +536,42 @@ Equality rules:
 >                                                         , use x done ] done 
 >                                          , use v done ] done ]
 
+
+
+>   switchDOp = Op
+>     { opName = "SwitchD"
+>     , opArity = 3
+>     , opTy = sOpTy
+>     , opRun = sOpRun
+>     } where
+>         sOpTy chev [e , b, x] = do
+>           (e :=>: ev) <- chev (ENUMU :>: e)
+>           (b :=>: bv) <- chev (branchesOp @@ [ev , L (K DESC) ] :>: b)
+>           (x :=>: xv) <- chev (ENUMT ev :>: x)
+>           return $ ([ e :=>: ev
+>                     , b :=>: bv
+>                     , x :=>: xv ] 
+>                    , {-!!-} DESC {-!!-})
+>         sOpRun :: [VAL] -> Either NEU VAL
+>         sOpRun [CONSE t e' , ps , ZE] = Right $ ps $$ Fst
+>         sOpRun [CONSE t e' , ps , SU n] = Right $ trustMe (typeSwitch :>: tacSwitch) 
+>                                                       $$ A t $$ A e' $$ A ps $$ A n
+>         sOpRun [_ , _ , N n] = Left n
+
+>         tacSwitch = lambda $ \t ->
+>                     lambda $ \e' ->
+>                     lambda $ \ps ->
+>                     lambda $ \n ->
+>                     useOp switchDOp [ use e' done
+>                                     , use ps . apply Snd $ done
+>                                     , use n done ]
+>                     done
+>         typeSwitch = trustMe (SET :>: tacTypeSwitch) 
+>         tacTypeSwitch = piTac uidTac
+>                               (\t ->
+>                                piTac enumUTac
+>                                      (\e -> 
+>                                       arrTac (useOp branchesOp [ consETac (use t done) (use e done)
+>                                                                , {-!!-} lambda $ \_ -> descTac {-!!-} ] done)
+>                                              (piTac (enumTTac (use e done))
+>                                                     (\x -> {-!!-} descTac {-!!-} )))))
