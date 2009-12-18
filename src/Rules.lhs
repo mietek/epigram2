@@ -282,6 +282,7 @@ as we can. Simple, easy.
 
 
 \subsection{Type checking}
+\label{subsec:type-checking}
 
 Here starts the bidirectional type-checking story. In this section, we
 address the Checking side. In the next section, we implement the
@@ -350,7 +351,9 @@ has matched, then we have to give up.
 > import <- Check
 > check _                     _ = Nothing
 
+
 \subsection{Type inference}
+\label{subsec:type-inference}
 
 On the inference side, we also have a valid typing environment
 $\Gamma$ that is used to pull types |TY| out of |Ex| terms:

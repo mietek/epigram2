@@ -32,14 +32,20 @@
 
 \subsection{Elaborator}
 
-> subgoal :: (TY :>: String) -> ProofState (INTM :=>: VAL)
-> subgoal (ty :>: x) = do
->     ty' <- bquoteHere ty
->     g <- make (x :<: ty')
->     return (g :=>: evTm g)
+The |elaborate| command elaborates a term in display syntax, given its type,
+to produce an elaborated term and its value representation. It behaves
+similarly to |check| from subsection~\ref{subsec:type-checking}, except that
+it operates in the |ProofState| monad, so it can create subgoals and
+$\lambda$-lift terms.
 
+The Boolean parameter indicates whether the elaborator is working at the top
+level of the term, because if so, it can create boys in the current development
+rather than creating a subgoal.
 
 > elaborate :: Bool -> (TY :>: INDTM) -> ProofState (INTM :=>: VAL)
+
+First, some special cases to provide a convenient syntax for writing functions from
+interesting types.
 
 > elaborate b (PI (MU d) t :>: CON f) = do
 >     d' <- bquoteHere d
@@ -65,11 +71,27 @@
 >     v <- canTy (elaborate False) (ty :>: tm)
 >     return $ (C $ fmap (\(x :=>: _) -> x) v) :=>: (C $ fmap (\(_ :=>: x) -> x) v)
 
-> elaborate top (ty :>: Q x) = subgoal (ty :>: x)
+
+If the elaborator encounters a question mark, it simply creates an appropriate subgoal.
+
+> elaborate top (ty :>: Q x) = do
+>     ty' <- bquoteHere ty
+>     g <- make (x :<: ty')
+>     return (g :=>: evTm g)
+
+
+There are a few possibilities for elaborating $\lambda$-abstractions. If both the
+range and term are constants, and we are not at top level, then we simply elaborate
+underneath. This avoids creating some trivial children. It means that elaboration
+will not produce a fully $\lambda$-lifted result, but luckily the compiler can deal
+with constant functions.
 
 > elaborate False (PI s (L (K t)) :>: L (K dtm)) = do
 >     (tm :=>: tmv) <- elaborate False (t :>: dtm)
 >     return (L (K tm) :=>: L (K tmv))
+
+If we are not at top level, we create a subgoal corresponding to the term, solve it
+by elaboration, then return the reference. 
 
 > elaborate False (PI s t :>: L sc) = do
 >     let x :: String = case sc of { (x :. _) -> x ; K _ -> "_" }
@@ -80,12 +102,19 @@
 >     h <- elabGive (underScope sc l)
 >     return (h :=>: evTm h)
 
+If we are at top level, we can simply create a |lambdaBoy| in the current development,
+and carry on elaborating.
+
 > elaborate True (PI s t :>: L sc) = do
 >     let x :: String = case sc of { (x :. _) -> x ; K _ -> "_" }
 >     l <- lambdaBoy x
 >     elaborate True (t $$ A (pval l) :>: underScope sc l)
 >     
     
+
+Much as with type-checking, we push types in to neutral terms by calling |elabInfer| on
+the term, then checking the inferred type is what we pushed in.
+
 > elaborate top (w :>: N n) = do
 >   (y :>: n) <- elabInfer n
 >   eq <- withRoot (equal (SET :>: (w, y)))
@@ -93,10 +122,19 @@
 >                              ++ " is not " ++ show w)
 >   return (N n :=>: evTm (N n))
 
+
+If nothing else matches, give up and report an error.
+
 > elaborate top tt = throwError' ("elaborate: can't cope with " ++ show tt)
 
 
+The |elabInfer| command is to |infer| in subsection~\ref{subsec:type-inference} 
+as |elaborate| is to |check|. It infers the type of a display term, calling on
+the elaborator rather than the type-checker. Most of the cases are similar to
+those of |infer|.
+
 > elabInfer :: EXDTM -> ProofState (TY :>: EXTM)
+
 > elabInfer (P x) = return (pty x :>: P x)
 
 > elabInfer (t :$ s) = do
@@ -109,8 +147,6 @@
 >   (vs, t) <- opTy op (elaborate False) ts
 >   let vs' = fmap (\(x :=>: _) -> x) vs
 >   return (t :>: op :@ vs')
-
-
 
 > elabInfer (t :? ty) = do
 >   (ty' :=>: vty)  <- elaborate False (SET :>: ty)
