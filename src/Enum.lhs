@@ -188,8 +188,9 @@ Equality rules:
 >         bOpTy _ _ = throwError' "branches: invalid arguments"
 >         bOpRun :: [VAL] -> Either NEU VAL
 >         bOpRun [NILE , _] = Right UNIT
->         bOpRun [CONSE t e' , p] = Right $ trustMe (typeBranches :>: tacBranches) $$ A t $$ A e' $$ A p
+>         bOpRun [CONSE t e' , p] = Right $ branchesTerm $$ A t $$ A e' $$ A p
 >         bOpRun [N e , _] = Left e 
+>         branchesTerm = trustMe (typeBranches :>: tacBranches)
 >         typeBranches = trustMe (SET :>: tacTypeBranches)
 >         tacTypeBranches = piTac uidTac
 >                                 (\t ->
@@ -226,10 +227,11 @@ Equality rules:
 >                    , pv $$ A xv)
 >         sOpRun :: [VAL] -> Either NEU VAL
 >         sOpRun [CONSE t e' , p , ps , ZE] = Right $ ps $$ Fst
->         sOpRun [CONSE t e' , p , ps , SU n] = Right $ trustMe (typeSwitch :>: tacSwitch) 
+>         sOpRun [CONSE t e' , p , ps , SU n] = Right $ switchTerm
 >                                                       $$ A t $$ A e' $$ A p $$ A ps $$ A n
 >         sOpRun [_ , _ , _ , N n] = Left n
-
+>
+>         switchTerm = trustMe (typeSwitch :>: tacSwitch) 
 >         tacSwitch = lambda $ \t ->
 >                     lambda $ \e' ->
 >                     lambda $ \p ->

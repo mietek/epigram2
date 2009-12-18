@@ -228,13 +228,16 @@ Equality rules:
 >                , SET)
 >       boxOpRun :: [VAL] -> Either NEU VAL
 >       boxOpRun [DONE   ,d,p,v] = Right UNIT
->       boxOpRun [ARG a f,d,p,v] = Right $ trustMe (opRunArgType :>: opRunArgTac) 
+>       boxOpRun [ARG a f,d,p,v] = Right $ opRunArgTerm
 >                                          $$ A a $$ A f $$ A d $$ A p $$ A v
->       boxOpRun [IND h x,d,p,v] = Right $ trustMe (opRunIndType :>: opRunIndTac)
+>       boxOpRun [IND h x,d,p,v] = Right $ opRunIndTerm
 >                                          $$ A h $$ A x $$ A d $$ A p $$ A v
->       boxOpRun [IND1 x,d,p,v] = Right $ trustMe (opRunInd1Type :>: opRunInd1Tac)
+>       boxOpRun [IND1 x,d,p,v] = Right $ opRunInd1Term
 >                                         $$ A x $$ A d $$ A p $$ A v
 >       boxOpRun [N x    ,_,_,_] = Left x
+>       opRunArgTerm = trustMe (opRunArgType :>: opRunArgTac) 
+>       opRunIndTerm = trustMe (opRunIndType :>: opRunIndTac)
+>       opRunInd1Term = trustMe (opRunInd1Type :>: opRunInd1Tac)
 >
 >       opRunTypeTac arg = piTac setTac
 >                                (\y ->
@@ -321,13 +324,16 @@ Equality rules:
 >                  , boxOp @@ [xv,dv,bpv,vv])
 >       mapBoxOpRun :: [VAL] -> Either NEU VAL
 >       mapBoxOpRun [DONE,d,bp,p,v] = Right VOID
->       mapBoxOpRun [ARG a f,d,bp,p,v] = Right $ trustMe (mapBoxArgType :>: mapBoxArgTac) 
+>       mapBoxOpRun [ARG a f,d,bp,p,v] = Right $ mapBoxArgTerm
 >                                                $$ A a $$ A f $$ A d $$ A bp $$ A p $$ A v
->       mapBoxOpRun [IND h x,d,bp,p,v] = Right $ trustMe (mapBoxIndType :>: mapBoxIndTac) 
+>       mapBoxOpRun [IND h x,d,bp,p,v] = Right $ mapBoxIndTerm 
 >                                                $$ A h $$ A x $$ A d $$ A bp $$ A p $$ A v
->       mapBoxOpRun [IND1 x,d,bp,p,v] = Right $ trustMe (mapBoxInd1Type :>: mapBoxInd1Tac) 
+>       mapBoxOpRun [IND1 x,d,bp,p,v] = Right $ mapBoxInd1Term
 >                                                 $$ A x $$ A d $$ A bp $$ A p $$ A v
 >       mapBoxOpRun [N x    ,_, _,_,_] = Left x
+>       mapBoxArgTerm = trustMe (mapBoxArgType :>: mapBoxArgTac) 
+>       mapBoxIndTerm = trustMe (mapBoxIndType :>: mapBoxIndTac)
+>       mapBoxInd1Term = trustMe (mapBoxInd1Type :>: mapBoxInd1Tac) 
 >
 >       mapBoxTypeTac arg = piTac setTac
 >                                 (\d ->
@@ -427,9 +433,11 @@ Equality rules:
 >                 , v :=>: vv ]
 >                 , bpv $$ A vv)
 >       elimOpRun :: [VAL] -> Either NEU VAL
->       elimOpRun [d,bp,p,CON v] = Right $ trustMe (elimOpType :>: elimOpTac) 
+>       elimOpRun [d,bp,p,CON v] = Right $ elimOpTerm
 >                                          $$ A d $$ A bp $$ A p $$ A v
 >       elimOpRun [_, _,_,N x] = Left x
+>
+>       elimOpTerm = trustMe (elimOpType :>: elimOpTac) 
 >       elimOpType = trustMe (SET :>: elimOpTypeTac)
 >       elimOpTypeTac = piTac descTac
 >                             (\d ->

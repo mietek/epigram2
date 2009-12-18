@@ -522,9 +522,10 @@ Rooty. Provided with a Root and an Operator, we compute its type.
 
 > opRunEqGreen :: [VAL] -> Either NEU VAL
 > import <- OpRunEqGreen
-> opRunEqGreen [C (Pi s1 t1),f1,C (Pi s2 t2),f2] = Right $ trustMe (runEqGreenType :>: runEqGreenTac)
+> opRunEqGreen [C (Pi s1 t1),f1,C (Pi s2 t2),f2] = Right $ runEqGreenTerm
 >                                                          $$ A s1 $$ A t1 $$ A f1 $$ A s2 $$ A t2 $$ A f2
->       where runEqGreenType = trustMe (SET :>: runEqGreenTypeTac)
+>       where runEqGreenTerm = trustMe (runEqGreenType :>: runEqGreenTac)
+>             runEqGreenType = trustMe (SET :>: runEqGreenTypeTac)
 >             runEqGreenTypeTac = piTac setTac
 >                                       (\s1 ->
 >                                        piTac (arrTac (use s1 done)
