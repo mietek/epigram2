@@ -178,6 +178,11 @@ those of |infer|.
 
 \subsubsection{Information}
 
+The |infoElaborate| command calls |elabInfer| on the given neutral display term,
+evaluates the resulting term, bquotes it and returns a pretty-printed string
+representation. Note that it works in its own module which it discards at the
+end, so it will not leave any subgoals lying around in the proof state.
+
 > infoElaborate :: INDTM -> ProofState String
 > infoElaborate (N tm) = do
 >     makeModule "elab"
@@ -189,6 +194,9 @@ those of |infer|.
 >     dropModule
 >     return s
 > infoElaborate _ = throwError' "infoElaborate: can only elaborate neutral terms."
+
+The |infoInfer| command is similar to |infoElaborate|, but it returns a string
+representation of the resulting type.
 
 > infoInfer :: INDTM -> ProofState String
 > infoInfer (N tm) = do
@@ -205,6 +213,11 @@ those of |infer|.
 
 \subsubsection{Construction}
 
+The |elabGive| command elaborates the given display term in the appropriate type for
+the current goal, and calls the |give| command on the resulting term. If its argument
+is a nameless question mark, it avoids creating a pointless subgoal by simply returning
+a reference to the current goal (applied to the appropriate shared parameters).
+
 > elabGive :: INDTM -> ProofState INTM
 > elabGive tm = do
 >     tip <- getDevTip
@@ -213,13 +226,18 @@ those of |infer|.
 >             case tm of
 >                 Q "" -> do
 >                     GirlMother ref _ _ <- getMother
+>                     aus <- getGreatAuncles
 >                     goOut
->                     return (N (P ref))
+>                     return (N (P ref $:$ aunclesToElims (aus <>> F0)))
 >                 _ -> do
 >                     (tm' :=>: tv) <- elaborate True (tipTy :>: tm)
 >                     give tm'
->         _  -> throwError' "give: only possible for incomplete goals."
+>         _  -> throwError' "elabGive: only possible for incomplete goals."
 
+
+The |elabMake| command elaborates the given display term in a module to produce a type,
+then converts the module to a goal with that type. Thus any subgoals produced by 
+elaboration will be children of the resulting goal.
 
 > elabMake :: (String :<: INDTM) -> ProofState INTM
 > elabMake (s :<: ty) = do
@@ -231,11 +249,16 @@ those of |infer|.
 >     return tm
 
 
+The |elabPiBoy| command elaborates the given display term to produce a type, and
+creates a $\Pi$-boy with that type.
+
 > elabPiBoy :: (String :<: INDTM) -> ProofState ()
 > elabPiBoy (s :<: ty) = do
 >     tt <- elaborate True (SET :>: ty)
 >     piBoy' (s :<: tt)
 
+
+\subsection{$\lambda$-lifting}
 
 The |gimme| operator elaborates every definition in the proof state, thereby
 ensuring it is fully $\lambda$-lifted. Starting from the root of the proof
