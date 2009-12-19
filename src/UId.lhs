@@ -50,7 +50,7 @@ Equality rules:
 >   tagTac t = can $ Tag t
 
 > import -> TraverseCan where
->   traverse f UId          = (|EnumU|)
+>   traverse f UId          = (|UId|)
 >   traverse f (Tag s)      = (|(Tag s)|)
 
 > import -> CanPretty where
