@@ -479,7 +479,7 @@ Equality rules:
 >     , opRun = sOpRun
 >     } where
 >         sOpTy chev [e , b, x] = do
->           (e :=>: ev) <- chev (ENUMU :>: e)
+>           (e :=>: ev) <- chev (enumU :>: e)
 >           (b :=>: bv) <- chev (branchesOp @@ [ev , L (K desc) ] :>: b)
 >           (x :=>: xv) <- chev (ENUMT ev :>: x)
 >           return $ ([ e :=>: ev

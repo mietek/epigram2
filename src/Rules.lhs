@@ -503,6 +503,23 @@ Rooty. Provided with a Root and an Operator, we compute its type.
 > desc :: VAL
 > desc = MU inDesc
 
+\subsection{Building Enum in Desc}
+
+> inEnumU :: VAL
+> inEnumU = ARG (ENUMT constructors) $
+>              eval (L $ "" :. [.x. 
+>               N $ switchDOp :@ [ constructors
+>                                , cases
+>                                , NV x]]) B0
+>                  where constructors = CONSE (TAG "nil")
+>                                       (CONSE (TAG "cons")
+>                                        NILE)
+>                        cases = PAIR DONE
+>                                (PAIR (ARG UID (L $ "" :. [.x. IND1 DONE]))
+>                                 VOID)
+
+> enumU :: VAL
+> enumU = MU inEnumU
 
 \subsection{Observational Equality}
 

@@ -95,26 +95,23 @@ Equality rules:
 
 
 > import -> CanConstructors where
->   EnumU  :: Can t
 >   EnumT  :: t -> Can t
->   NilE   :: Can t
->   ConsE  :: t -> t -> Can t
 >   Ze     :: Can t
 >   Su     :: t -> Can t 
 
 > import -> CanPats where
->   pattern ENUMU      = C EnumU 
 >   pattern ENUMT e    = C (EnumT e) 
->   pattern NILE       = C NilE
->   pattern CONSE t e  = C (ConsE t e) 
+>   pattern NILE       = CON (PAIR ZE VOID)
+>   pattern CONSE t e  = CON (PAIR (SU ZE) (PAIR t (PAIR e VOID)))
 >   pattern ZE         = C Ze
 >   pattern SU n       = C (Su n)
 
 > import -> SugarTactics where
->   enumUTac = can EnumU
+>   enumUTac = done (enumU :<: SET)
 >   enumTTac t = can $ EnumT t
->   nilETac = can NilE
->   consETac e t = can $ ConsE e t
+>   nilETac = conTac (pairTac zeTac voidTac)
+>   consETac e t = conTac (pairTac (suTac zeTac) 
+>                          (pairTac e (pairTac t voidTac)))
 >   zeTac = can Ze
 >   suTac t = can $ Su t
 
@@ -123,34 +120,23 @@ Equality rules:
 >   makeBody (Su x) = STag (makeBody x)
 
 > import -> TraverseCan where
->   traverse f EnumU        = (|EnumU|)
 >   traverse f (EnumT e)    = (|EnumT (f e)|)
->   traverse f NilE         = (|NilE|)
->   traverse f (ConsE t e)  = (|ConsE (f t) (f e)|)
 >   traverse f Ze           = (|Ze|)
 >   traverse f (Su n)       = (|Su (f n)|) 
 
 > import -> HalfZipCan where
->   halfZip EnumU EnumU = Just EnumU
 >   halfZip (EnumT t0) (EnumT t1) = Just (EnumT (t0,t1))
->   halfZip NilE NilE = Just NilE
->   halfZip (ConsE s0 t0) (ConsE s1 t1) = Just (ConsE (s0,s1) (t0,t1))
 >   halfZip Ze Ze = Just Ze
 >   halfZip (Su t0) (Su t1) = Just (Su (t0,t1))
 
 > import -> CanPretty where
->   prettyCan EnumU      = text "Enum"
 >   prettyCan (EnumT t)  = braces (prettyEnum t)
 >   prettyCan Ze         = text "0"
 >   prettyCan (Su t)     = prettyEnumIndex 1 t
 
 > import -> Pretty where
 >   prettyEnum :: Tm {d, p} String -> Doc
->   prettyEnum NILE                            = empty
->   prettyEnum (CONSE (TAG t) NILE)            = text t
->   prettyEnum (CONSE (TAG t) ts@(CONSE _ _))  = text t <+> comma <+> prettyEnum ts
->   prettyEnum (CONSE (TAG t) ts)              = text t <+> text "/" <+> pretty ts
->   prettyEnum t                               = text "/" <+> pretty t
+>   prettyEnum t                               = text "[" <+> pretty t <+> text "]"
 >
 >   prettyEnumIndex :: Int -> Tm {d, p} String -> Doc
 >   prettyEnumIndex n ZE      = int n
@@ -158,15 +144,9 @@ Equality rules:
 >   prettyEnumIndex n tm      = parens (int n <+> text "+" <+> pretty tm)
 
 > import -> CanTyRules where
->   canTy _ (Set :>: EnumU)    = return EnumU
 >   canTy chev (Set :>: EnumT e)  = do
->     eev@(e :=>: ev) <- chev (ENUMU :>: e)
+>     eev@(e :=>: ev) <- chev (enumU :>: e)
 >     return $ EnumT eev
->   canTy chev (EnumU :>: NilE)       = return NilE
->   canTy chev (EnumU :>: ConsE t e)  = do
->     ttv@(t :=>: tv) <- chev (UID :>: t)
->     eev@(e :=>: ev) <- chev (ENUMU :>: e)
->     return $ ConsE ttv eev
 >   canTy _ (EnumT (CONSE t e) :>: Ze)    = return Ze 
 >   canTy chev (EnumT (CONSE t e) :>: Su n)  = do
 >     nnv@(n :=>: nv) <- chev (ENUMT e :>: n)
@@ -180,7 +160,7 @@ Equality rules:
 >     , opRun    = bOpRun
 >     } where
 >         bOpTy chev [e , p] = do
->                  (e :=>: ev) <- chev (ENUMU :>: e)
+>                  (e :=>: ev) <- chev (enumU :>: e)
 >                  (p :=>: pv) <- chev (ARR (ENUMT ev) SET :>: p)
 >                  return ([ e :=>: ev
 >                          , p :=>: pv]
@@ -188,7 +168,10 @@ Equality rules:
 >         bOpTy _ _ = throwError' "branches: invalid arguments"
 >         bOpRun :: [VAL] -> Either NEU VAL
 >         bOpRun [NILE , _] = Right UNIT
->         bOpRun [CONSE t e' , p] = Right $ branchesTerm $$ A t $$ A e' $$ A p
+>         bOpRun [CONSE t e' , p] = 
+>           Right (TIMES (p $$ A ZE) 
+>                 (branchesOp @@ [e' , L (H (B0 :< p) 
+>                                  "" (N (V 1 :$ A ((C (Su (N (V 0))))))))]))
 >         bOpRun [N e , _] = Left e 
 >         branchesTerm = trustMe (typeBranches :>: tacBranches)
 >         typeBranches = trustMe (SET :>: tacTypeBranches)
@@ -216,7 +199,7 @@ Equality rules:
 >     , opRun = sOpRun
 >     } where
 >         sOpTy chev [e , p , b, x] = do
->           (e :=>: ev) <- chev (ENUMU :>: e)
+>           (e :=>: ev) <- chev (enumU :>: e)
 >           (p :=>: pv) <- chev (ARR (ENUMT ev) SET :>: p)
 >           (b :=>: bv) <- chev (branchesOp @@ [ev , pv] :>: b)
 >           (x :=>: xv) <- chev (ENUMT ev :>: x)
