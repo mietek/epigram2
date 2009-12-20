@@ -79,31 +79,33 @@
 >                 sequence_ $ map (putStrLn . show) targets)
 >     testCheckElimTerms
 
-> eliminators = [ "switchOp(e, p, b, x)",
->                 "splitOp(a, b, c, f, t)",
->                 "nEOp(p, t)",
->                 "(d, bp, v, p)" ]
+> testCheckElimTerms2 = [ ("Switch",[()])
+>                       , ("split",[(),()])
+>                       , ("elimOp",[()]) ]
 
 > testCheckElim2 = 
 >     Prelude.sequence_ $
->     map (\tm -> 
->         let Right tm' = parse (termParse B0) $ fromRight $ parse tokenize tm
->             r = evalStateT (checkElimWrap tm') emptyContext
+>     map (\(tm,ctxt) -> 
+>         let Just op = find (\o -> opName o == tm) operators
+>             ty = opType (B0 :< ("a",0),0) op
+>             e = [("eHa",1001)] := (DECL :<: ty)
+>             name = [("e",1000)] := (DEFN (N (P e)) :<: ty)
+>             r = evalStateT (checkElim ctxt name) emptyContext
 >         in do
 >           putStrLn $ "\n" ++ show tm
 >           case r of
 >            Left ss -> do
 >                 putStrLn $ "Error: " ++ intercalate "\n" ss
 >            Right x@(motive, methods, targets) -> do
+>                 putStrLn "Type: "
+>                 putStrLn $ show ty                                 
 >                 putStrLn "Motive: "
 >                 putStrLn $ show motive
 >                 putStrLn "Methods:"
 >                 sequence_ $ map (putStrLn . show) methods
 >                 putStrLn "Args:"
 >                 sequence_ $ map (putStrLn . show) targets)
->     testCheckElimTerms
->         where checkElimWrap tm = do
->                 
+>     testCheckElimTerms2
 
 
 These are not quite motive signature, but that's fine for this test:
