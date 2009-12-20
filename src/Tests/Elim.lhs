@@ -79,9 +79,9 @@
 >                 sequence_ $ map (putStrLn . show) targets)
 >     testCheckElimTerms
 
-> testCheckElimTerms2 = [ ("Switch",[()])
->                       , ("split",[(),()])
->                       , ("elimOp",[()]) ]
+> testCheckElimTerms2 = [ ("Switch",[(),()])
+>                       , ("split",[(),(),()])
+>                       , ("elimOp",[(),()]) ]
 
 > testCheckElim2 = 
 >     Prelude.sequence_ $
@@ -97,8 +97,6 @@
 >            Left ss -> do
 >                 putStrLn $ "Error: " ++ intercalate "\n" ss
 >            Right x@(motive, methods, targets) -> do
->                 putStrLn "Type: "
->                 putStrLn $ show ty                                 
 >                 putStrLn "Motive: "
 >                 putStrLn $ show motive
 >                 putStrLn "Methods:"
