@@ -242,23 +242,25 @@ These are not quite motive signature, but that's fine for this test:
 >                 putStrLn "Success.")
 >     testElimTerms
 >         where elimWrap goal globalHyps op opType = do
+>                   -- Make the eliminator
+>                   elimTy <- bquoteHere opType
+>                   make $ "elim" :<: elimTy
+>                   goIn
+>                   -- Introduce the global hypotheses
+>                   extHyps <- sequence $ map (const $ lambdaBoy "Gctxt") globalHyps
+>                   -- Introduce the arguments and give the applied elim/op-erator
+>                   (t :=>: _) <- getGoal "testElimTerms"
+>                   intHyps <- many $ lambdaBoy "elim"
+>                   () <- trace ("args: " ++ show (length extHyps) ++ " + " ++ show (length intHyps)) $ return ()
+>                   e <- give $ N (op :@ (map (\x -> N (P x))  (extHyps ++ intHyps)))
+>                   () <- trace ("t: " ++ show t ++ "\ne: " ++ show e) $ return ()
+>
 >                   -- Make the goal
 >                   make $ "goal" :<: goal
 >                   goIn
 >                   -- Introduce the global hypotheses
 >                   extHyps <- sequence $ map (const $ lambdaBoy "Gctxt") globalHyps
 >
->                   -- Make the eliminator
->                   elimTy <- bquoteHere opType
->                   make $ "elim" :<: elimTy
->                   goIn
->                   -- Introduce the global hypotheses
->                   sequence_ $ map (const $ lambdaBoy "Gctxt") globalHyps
->                   -- Introduce the arguments and give the applied elim/op-erator
->                   (t :=>: _) <- getGoal "testElimTerms"
->                   intHyps <- many $ lambdaBoy "elim"
->                   () <- trace ("t: " ++ show t ++ "\ne: " ++ show e) $ return ()
->                   e <- give $ N (op :@ (map (\x -> N (P x))  (extHyps ++ intHyps)))
 >                   -- We have e an eliminator ready to fire
 >                   -- We have a goal with internal hypotheses + goal
 >                   elim (t :>: e)
