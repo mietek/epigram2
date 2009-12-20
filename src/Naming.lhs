@@ -3,6 +3,7 @@
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
+> {-# LANGUAGE GADTs #-}
 
 > module Naming (
 >        Offs(Rel, Abs), RelName, InTmRN, ExTmRN,

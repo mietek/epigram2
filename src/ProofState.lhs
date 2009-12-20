@@ -1,7 +1,7 @@
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE FlexibleInstances, TypeOperators, TypeSynonymInstances #-}
+> {-# LANGUAGE FlexibleInstances, TypeOperators, TypeSynonymInstances, GADTs #-}
 
 > module ProofState where
 

@@ -3,7 +3,7 @@
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE TypeOperators, TypeSynonymInstances #-}
+> {-# LANGUAGE TypeOperators, TypeSynonymInstances, GADTs #-}
 
 > module Cochon where
 

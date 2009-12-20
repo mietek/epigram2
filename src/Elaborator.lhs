@@ -3,7 +3,7 @@
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE ScopedTypeVariables, TypeOperators, TypeSynonymInstances #-}
+> {-# LANGUAGE ScopedTypeVariables, TypeOperators, TypeSynonymInstances, GADTs #-}
 
 > module Elaborator where
 

@@ -3,7 +3,7 @@
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE ScopedTypeVariables #-}
+> {-# LANGUAGE ScopedTypeVariables, GADTs #-}
 
 > module PrettyPrint (pretty, prettyDev, prettyModule) where
 

@@ -3,7 +3,7 @@
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE TypeOperators #-}
+> {-# LANGUAGE TypeOperators, GADTs #-}
 
 > module TmParse where
 
