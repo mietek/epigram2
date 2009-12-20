@@ -131,6 +131,33 @@ These are not quite motive signature, but that's fine for this test:
 >                 sequence_ $ map (putStrLn . show) hyps)
 >     testCheckMotiveTerms
 
+> testCheckMotiveTerms2 = [ ("Switch",[(),()])
+>                         , ("split",[(),(),()])
+>                         , ("elimOp",[(),()]) ]
+
+> testCheckMotive2 = 
+>     Prelude.sequence_ $
+>     map (\(tm,ctxt) -> 
+>         let Just op = find (\o -> opName o == tm) operators
+>             ty = opType (B0 :< ("a",0),0) op
+>             e = [("eHa",1001)] := (DECL :<: ty)
+>             name = [("e",1000)] := (DEFN (N (P e)) :<: ty)
+>             r = evalStateT (checkMotiveWrap ctxt name) emptyContext
+>         in do
+>           putStrLn $ "\n" ++ show tm
+>           case r of
+>            Left ss -> do
+>                 putStrLn $ "Error: " ++ intercalate "\n" ss
+>            Right x@(motiveHyps) -> do
+>                 putStrLn "Motive hyps: "
+>                 sequence_ $ map (putStrLn . show) motiveHyps)
+>     testCheckMotiveTerms2
+>         where checkMotiveWrap internHyps e = do
+>                   (motive, methods, motiveArgs) <- checkElim internHyps e
+>                   motiveHyps <- checkMotive motive
+>                   return motiveHyps
+
+
 > testMkMotiveTerms = [ ("(N : *) -> N",
 >                        "(N : *)(P : N -> *)(x : N) -> P x")
 >                     ]
