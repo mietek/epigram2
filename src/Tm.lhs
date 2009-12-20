@@ -649,8 +649,8 @@ I think that this stuff should disappear with Tactics spreading.
 > ($#) :: Int -> [Int] -> InTm x
 > f $# xs = N (foldl (\ g x -> g :$ A (NV x)) (V f) xs)
 
-> ($##) :: REF -> [INTM] -> INTM
-> f $## xs = N (foldl (\g x -> g :$ A x) (P f) xs)
+> ($##) :: EXTM -> [INTM] -> INTM
+> f $## xs = N (foldl (\g x -> g :$ A x) f xs)
 
 > fortran :: Tm {In, p} x -> String
 > fortran (L (x :. _)) = x
