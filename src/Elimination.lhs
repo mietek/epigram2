@@ -22,6 +22,8 @@
 > import Rules
 > import Tm
 > import qualified Tactics as Tac
+> import ProofState
+
 > import MissingLibrary
 
 %endif
@@ -134,7 +136,7 @@ it's a hell to write the type of what will get out.
 [tested by testMMotive]
 %endif
 
-> mkMotive :: REF -> [REF] -> [REF] -> [REF] -> TY -> ProofState REF
+> mkMotive :: REF -> [REF] -> [REF] -> [REF] -> TY -> ProofState INTM
 > mkMotive p@(_ := DECL :<: ty) motiveHyps motiveArgs internHyps goal = do
 >     -- Now, it's serious, we make P
 >     tyP <- bquoteHere ty
@@ -157,7 +159,7 @@ it's a hell to write the type of what will get out.
 >               -- Make the term
 >               give constraints
 
-> applyElim :: [a] -> REF -> REF -> [REF] -> [REF] -> [REF] -> ProofState ()
+> applyElim :: [a] -> REF -> INTM -> [REF] -> [REF] -> [REF] -> ProofState ()
 > applyElim internHyps e motive motiveArgs methods elimArgs = do
 >     -- Make subgoal
 >     methods <- sequence $ map (\(_ := DECL :<: ty) -> do
@@ -168,16 +170,16 @@ it's a hell to write the type of what will get out.
 >     -- Get the goal, to feed to the Tactics
 >     (_ :=>: termType) <- getGoal "applyElim"
 >     -- Solve the elim problem
->     term <- bquoteHere $ mkTerm termType
+>     term <- withRoot mkTerm
 >     give term
 >     return ()
->         where termTac = e @@@ ([ var motive ] 
->                            ++ (map var methods)
->                            ++ (map var elimArgs)
->                            ++ (map (\t -> refl @@@ [ Tac.done (pty t :<: SET) 
->                                                    , var t ] ) motiveArgs))
->               mkTerm termType = Tac.trustMe (termType :>: termTac)
->     
+>         where mkTerm root = e $## (motive :
+>                                   (map NP methods)
+>                                ++ (map NP elimArgs)
+>                                ++ (map (\t -> refl $## [ bquote B0 (pty t) root
+>                                                        , NP t ]) motiveArgs))
+>                             
+     
 
 > elim :: REF -> ProofState ()
 > elim e = do

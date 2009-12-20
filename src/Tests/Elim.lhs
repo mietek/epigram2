@@ -6,11 +6,15 @@
 > import BwdFwd
 > import DevLoad
 > import Elaborator
+> import ProofState
+> import Elimination
 > import Parsley
 > import PrettyPrint
 > import Lexer
 > import TmParse
 > import Tm
+> import Rules
+
 
 > fromRight :: Either a b -> b
 > fromRight (Left x) = error "fromRight: haha!"
