@@ -56,7 +56,7 @@ interesting types.
 >     d' <- bquoteHere d
 >     r' <- bquoteHere r
 >     t' <- bquoteHere t
->     elaborate b (PI (SIGMA d r) t :>: L ("__elabPiSig" :. N (splitOp :@ [d', r', t', f, N (V 0)])))
+>     elaborate b (PI (SIGMA d r) t :>: L ("__elabPiSig" :. N (splitOp :@ [d', r', N (V 0), t', f])))
 
 > elaborate b (PI (ENUMT e) t :>: m) | isTuply m = do
 >     e' <- bquoteHere e

@@ -323,6 +323,7 @@
 >                         [ NV 8 , NV 7 , L (K SET) , NV 5 
 >                         , L ("oo" :. MU (NV 8) (NV 7) (NV 6) (NV 5) (NV 0))
 >                         , NV 0]))
+>                   , NV 0 
 >                   , L (K (N (sumTT 
 >                               :$ A (NV 3) 
 >                               :$ A (SIGMA (NV 6) 
@@ -345,8 +346,7 @@
 >                             LEFT (N (V 5 :$ A (PAIR (NV 1) (NV 0))))))
 >                         , L ("o''" :. L ("t''" :. 
 >                             RIGHT (PAIR (NV 1) (NV 0))))
->                         , NV 0]))
->                   , NV 0 ])) 
+>                         , NV 0])) ])) 
 >             , N (V 0 :$ Snd :$ Out) ]))))
 >         (PAIR oo t)
 >       eWOpRun [i , N d , j , x , c , t] = Left d

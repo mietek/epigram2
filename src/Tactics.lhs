@@ -490,9 +490,9 @@ Here is the eliminator for Sigmas:
 >          lambda $ \x -> do
 >            useOp splitOp [ return a
 >                          , return b
+>                          , use x done 
 >                          , return t
->                          , tacF
->                          , use x done ] done
+>                          , tacF ] done
 >     _ -> failTac $ "split: current goal is " ++
 >                     show t ++ " but expected a Pi (Sigma . .) ."
 
