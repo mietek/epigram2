@@ -90,14 +90,16 @@ it's a hell to write the type of what will get out.
 >     case target of 
 >       N ((P p) :$ args) -> do
 >         -- The target must apply things to the motive
->         guard (p == motive)
->         -- Grab the arguments of the motive
->         let targetArgs = matchArgs args 
->         -- Close the analysis by leaving the development (opened)
->         -- XXX: see point above on Module
->         goOut
->         -- Return the results
->         return (motive, methods, targetArgs)
+>         case p == motive of
+>           False -> throwError' "checkElim: elimination ill-defined, applied to another function"
+>           True -> do
+>                   -- Grab the arguments of the motive
+>                  let targetArgs = matchArgs args 
+>                  -- Close the analysis by leaving the development (opened)
+>                  -- XXX: see point above on Module
+>                  goOut
+>                  -- Return the results
+>                  return (motive, methods, targetArgs)
 >       _ -> throwError' $ "checkElim: elimination ill-defined, not using the motive"
 
 %if false
