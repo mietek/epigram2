@@ -68,6 +68,7 @@
 
 %include ProofState.lhs
 %include Elaborator.lhs
+%include Elimination.lhs
 %include Cochon.lhs
 
 \chapter{Main}
