@@ -199,7 +199,8 @@ Equality rules:
 >     , opRun = sOpRun
 >     } where
 >         sOpTy chev [e, x , p , b] = do
->           (e :=>: ev) <- chev (ENUMU :>: e)
+>           (e :=>: ev) <- chev (enumU :>: e)
+>           (x :=>: xv) <- chev (ENUMT ev :>: x)
 >           (p :=>: pv) <- chev (ARR (ENUMT ev) SET :>: p)
 >           (b :=>: bv) <- chev (branchesOp @@ [ev , pv] :>: b)
 >           return $ ([ e :=>: ev
@@ -208,9 +209,9 @@ Equality rules:
 >                     , b :=>: bv ] 
 >                    , pv $$ A xv)
 >         sOpRun :: [VAL] -> Either NEU VAL
->         sOpRun [CONSE t e' , p , ps , ZE] = Right $ ps $$ Fst
->         sOpRun [CONSE t e' , p , ps , SU n] = Right $ trustMe (typeSwitch :>: tacSwitch) 
->                                                       $$ A t $$ A e' $$ A p $$ A ps $$ A n
+>         sOpRun [CONSE t e' , ZE , p , ps] = Right $ ps $$ Fst
+>         sOpRun [CONSE t e' , SU n , p , ps] = Right $ switchTerm
+>                                                     $$ A t $$ A e' $$ A p $$ A ps $$ A n
 >         sOpRun [_ , N n , _ , _] = Left n
 >
 >         switchTerm = trustMe (typeSwitch :>: tacSwitch) 

@@ -419,8 +419,7 @@ Equality rules:
 >     , opRun = elimOpRun
 >     } where
 >       elimOpTy chev [d,v,bp,p] = do
->         (d :=>: dv) <- chev (DESC :>: d)
->         (bp :=>: bpv) <- chev (ARR (MU dv) SET :>: bp)
+>         (d :=>: dv) <- chev (desc :>: d)
 >         (v :=>: vv) <- chev (MU dv :>: v)
 >         (bp :=>: bpv) <- chev (ARR (MU dv) SET :>: bp)
 >         (p :=>: pv) <- chev (PI (descOp @@ [dv,MU dv]) 
@@ -434,9 +433,11 @@ Equality rules:
 >                 , p :=>: pv ]
 >                 , bpv $$ A vv)
 >       elimOpRun :: [VAL] -> Either NEU VAL
->       elimOpRun [d,bp,p,CON v] = Right $ trustMe (elimOpType :>: elimOpTac) 
+>       elimOpRun [d,CON v,bp,p] = Right $ elimOpTerm
 >                                          $$ A d $$ A bp $$ A p $$ A v
->       elimOpRun [_, _,_,N x] = Left x
+>       elimOpRun [_,N x, _,_] = Left x
+>
+>       elimOpTerm = trustMe (elimOpType :>: elimOpTac) 
 >       elimOpType = trustMe (SET :>: elimOpTypeTac)
 >       elimOpTypeTac = piTac descTac
 >                             (\d ->
