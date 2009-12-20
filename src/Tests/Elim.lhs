@@ -1,10 +1,13 @@
 > module  Tests.DevLoad where
 
 > import Control.Monad.State
+> import Control.Applicative
 > import Data.List
 
+> import Root
 > import BwdFwd
 > import DevLoad
+> import Developments
 > import Elaborator
 > import ProofState
 > import Elimination
@@ -15,6 +18,7 @@
 > import Tm
 > import Rules
 
+> import Debug.Trace
 
 > fromRight :: Either a b -> b
 > fromRight (Left x) = error "fromRight: haha!"
@@ -62,9 +66,7 @@
 >     Prelude.sequence_ $
 >     map (\(ty, ctxt) -> 
 >         let Right ty' = parse (termParse B0) $ fromRight $ parse tokenize ty
->             e = [("eHa",1001)] := (DECL :<: evTm ty')
->             name = [("e",1000)] := (DEFN (N (P e)) :<: evTm ty')
->             r = evalStateT (checkElim ctxt name) emptyContext
+>             r = evalStateT (checkElim ctxt ty') emptyContext
 >         in do
 >           putStrLn $ "\n" ++ show ty 
 >           case r of
@@ -88,9 +90,8 @@
 >     map (\(tm,ctxt) -> 
 >         let Just op = find (\o -> opName o == tm) operators
 >             ty = opType (B0 :< ("a",0),0) op
->             e = [("eHa",1001)] := (DECL :<: ty)
->             name = [("e",1000)] := (DEFN (N (P e)) :<: ty)
->             r = evalStateT (checkElim ctxt name) emptyContext
+>             ty' = bquote B0 ty ((B0 :< ("a",0),0) :: Root)
+>             r = evalStateT (checkElim ctxt ty') emptyContext
 >         in do
 >           putStrLn $ "\n" ++ show tm
 >           case r of
@@ -138,9 +139,8 @@ These are not quite motive signature, but that's fine for this test:
 >     map (\(tm,ctxt) -> 
 >         let Just op = find (\o -> opName o == tm) operators
 >             ty = opType (B0 :< ("a",0),0) op
->             e = [("eHa",1001)] := (DECL :<: ty)
->             name = [("e",1000)] := (DEFN (N (P e)) :<: ty)
->             r = evalStateT (checkMotiveWrap ctxt name) emptyContext
+>             ty' = bquote B0 ty ((B0 :< ("a",0),0) :: Root)
+>             r = evalStateT (checkMotiveWrap ctxt ty') emptyContext
 >         in do
 >           putStrLn $ "\n" ++ show tm
 >           case r of
@@ -172,9 +172,7 @@ These are not quite motive signature, but that's fine for this test:
 >     map (\(goal,eTy) -> 
 >         let Right goal' = parse (termParse B0) $ fromRight $ parse tokenize goal
 >             Right eTy' = parse (termParse B0) $ fromRight $ parse tokenize eTy
->             e = [("eHa",1001)] := (DECL :<: evTm eTy')
->             name = [("e",1000)] := (DEFN (N (P e)) :<: evTm eTy')
->             r = evalStateT (test goal' name) emptyContext
+>             r = evalStateT (test goal' eTy') emptyContext
 >         in do
 >           putStrLn $ "\n" ++ show goal
 >           case r of
@@ -204,9 +202,8 @@ These are not quite motive signature, but that's fine for this test:
 >         let Just op = find (\o -> opName o == tm) operators
 >             Right goal = parse (termParse B0) $ fromRight $ parse tokenize g
 >             ty = opType (B0 :< ("a",0),0) op
->             e = [("eHa",1001)] := (DECL :<: ty)
->             name = [("e",1000)] := (DEFN (N (P e)) :<: ty)
->             r = evalStateT (checkMotiveWrap goal ctxt name) emptyContext
+>             ty' = bquote B0 ty ((B0 :< ("a",0),0) :: Root)
+>             r = evalStateT (checkMotiveWrap goal ctxt ty') emptyContext
 >         in do
 >           putStrLn $ "\n" ++ show tm
 >           case r of
@@ -224,3 +221,44 @@ These are not quite motive signature, but that's fine for this test:
 >                   motiveHyps <- checkMotive motive
 >                   motive <- mkMotive motive motiveHyps motiveArgs internHyps goal
 >                   return motive
+
+> testElimTerms = [-- ("Switch",[()],"(e : EnumU)(x : EnumT e) -> x")
+>                  {- , -} ("split",[(),()], "(A : *)(B : A -> *)(t : (A ; B)) -> t") ]
+>                   -- , ("elimOp",[()],"(D : Desc)(v : Mu D) -> v") ]
+
+> testElim = 
+>     Prelude.sequence_ $
+>     map (\(tm,ctxt,g) -> 
+>         let Just op = find (\o -> opName o == tm) operators
+>             Right goal = parse (termParse B0) $ fromRight $ parse tokenize g
+>             ty = opType (B0 :< ("a",0),0) op
+>             r = evalStateT (elimWrap goal ctxt op ty) emptyContext
+>         in do
+>           putStrLn $ "\n" ++ show tm
+>           case r of
+>            Left ss -> do
+>                 putStrLn $ "Error: " ++ intercalate "\n" ss
+>            Right x@(motiveHyps) -> do
+>                 putStrLn "Success.")
+>     testElimTerms
+>         where elimWrap goal globalHyps op opType = do
+>                   -- Make the goal
+>                   make $ "goal" :<: goal
+>                   goIn
+>                   -- Introduce the global hypotheses
+>                   extHyps <- sequence $ map (const $ lambdaBoy "Gctxt") globalHyps
+>
+>                   -- Make the eliminator
+>                   elimTy <- bquoteHere opType
+>                   make $ "elim" :<: elimTy
+>                   goIn
+>                   -- Introduce the global hypotheses
+>                   sequence_ $ map (const $ lambdaBoy "Gctxt") globalHyps
+>                   -- Introduce the arguments and give the applied elim/op-erator
+>                   (t :=>: _) <- getGoal "testElimTerms"
+>                   intHyps <- many $ lambdaBoy "elim"
+>                   () <- trace ("t: " ++ show t ++ "\ne: " ++ show e) $ return ()
+>                   e <- give $ N (op :@ (map (\x -> N (P x))  (extHyps ++ intHyps)))
+>                   -- We have e an eliminator ready to fire
+>                   -- We have a goal with internal hypotheses + goal
+>                   elim (t :>: e)

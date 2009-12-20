@@ -72,12 +72,11 @@ it's a hell to write the type of what will get out.
 [tested by testCheckElim]
 %endif
 
-> checkElim :: [a] -> REF -> ProofState (REF, [REF], [REF])
-> checkElim ctxt e@(_ := (DEFN v) :<: ty) = do
+> checkElim :: [a] -> INTM -> ProofState (REF, [REF], [REF])
+> checkElim ctxt ty = do
 >     -- Explore e by making it a subgoal
 >     -- XXX: we should open a Module here and throw it away
->     ty' <- bquoteHere ty
->     make $ "elim" :<: ty'
+>     make $ "elim" :<: ty
 >     goIn
 >     -- Abstract over the internal hypotheses
 >     sequence_ $ map (const $ lambdaBoy "ctxt") ctxt 
@@ -161,8 +160,8 @@ it's a hell to write the type of what will get out.
 >               -- Make the term
 >               give constraints
 
-> applyElim :: [a] -> REF -> INTM -> [REF] -> [REF] -> [REF] -> ProofState ()
-> applyElim internHyps e motive motiveArgs methods elimArgs = do
+> applyElim :: [a] -> (INTM :>: INTM) -> INTM -> [REF] -> [REF] -> [REF] -> ProofState ()
+> applyElim internHyps (ty :>: e) motive motiveArgs methods elimArgs = do
 >     -- Make subgoal
 >     methods <- sequence $ map (\(_ := DECL :<: ty) -> do
 >                                  ty <- bquoteHere ty
@@ -175,19 +174,19 @@ it's a hell to write the type of what will get out.
 >     term <- withRoot mkTerm
 >     give term
 >     return ()
->         where mkTerm root = e $## (motive :
->                                   (map NP methods)
->                                ++ (map NP elimArgs)
->                                ++ (map (\t -> refl $## [ bquote B0 (pty t) root
->                                                        , NP t ]) motiveArgs))
+>         where mkTerm root = (e :? ty) $## (motive :
+>                                           (map NP methods)
+>                                        ++ (map NP elimArgs)
+>                                        ++ (map (\t -> (P refl) $## [ bquote B0 (pty t) root
+>                                                                    , NP t ]) motiveArgs))
 >                             
      
 
-> elim :: REF -> ProofState ()
-> elim e = do
+> elim :: (INTM :>: INTM) -> ProofState ()
+> elim (t :>: e) = do
 >     (internHyps, goal) <- chunkGoal
->     (motive, methods, motiveArgs) <- checkElim internHyps e
+>     (motive, methods, motiveArgs) <- checkElim internHyps t
 >     motiveHyps <- checkMotive motive
 >     checkMethods methods
 >     motive <- mkMotive motive motiveHyps motiveArgs internHyps goal
->     applyElim internHyps e motive motiveArgs methods motiveArgs
+>     applyElim internHyps (t :>: e) motive motiveArgs methods motiveArgs
