@@ -145,9 +145,9 @@
 >     L ("x" :. L ("y" :. 
 >       SIGMA boolT 
 >             (L ("b" :. (SIGMA (N (switchOp :@ [ boolE 
+>                                               , NV 0
 >                                               , L (K SET)
->                                               , PAIR (NV 2) (PAIR (NV 1) VOID)
->                                               , NV 0]))
+>                                               , PAIR (NV 2) (PAIR (NV 1) VOID) ]))
 >                               (L (K UNIT)))))))
 >     :? ARR SET (ARR SET SET)
 >

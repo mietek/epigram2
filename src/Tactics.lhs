@@ -444,9 +444,9 @@ the expected |P x|, we rely on |switchOp|. The argument |ps| of
 >       PI (ENUMT e) p ->
 >           lambda $ \x -> do
 >           useOp switchOp [ return e
+>                          , use x done
 >                          , return p
->                          , cases
->                          , use x done ] done
+>                          , cases ] done
 >       _ -> failTac $ "switch: current goal is " ++
 >                        show t ++ " when a Pi (EnumT e) was expected"
 

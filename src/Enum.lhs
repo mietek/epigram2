@@ -198,21 +198,20 @@ Equality rules:
 >     , opTy = sOpTy
 >     , opRun = sOpRun
 >     } where
->         sOpTy chev [e , p , b, x] = do
->           (e :=>: ev) <- chev (enumU :>: e)
+>         sOpTy chev [e, x , p , b] = do
+>           (e :=>: ev) <- chev (ENUMU :>: e)
 >           (p :=>: pv) <- chev (ARR (ENUMT ev) SET :>: p)
 >           (b :=>: bv) <- chev (branchesOp @@ [ev , pv] :>: b)
->           (x :=>: xv) <- chev (ENUMT ev :>: x)
 >           return $ ([ e :=>: ev
+>                     , x :=>: xv 
 >                     , p :=>: pv
->                     , b :=>: bv
->                     , x :=>: xv ] 
+>                     , b :=>: bv ] 
 >                    , pv $$ A xv)
 >         sOpRun :: [VAL] -> Either NEU VAL
 >         sOpRun [CONSE t e' , p , ps , ZE] = Right $ ps $$ Fst
->         sOpRun [CONSE t e' , p , ps , SU n] = Right $ switchTerm
+>         sOpRun [CONSE t e' , p , ps , SU n] = Right $ trustMe (typeSwitch :>: tacSwitch) 
 >                                                       $$ A t $$ A e' $$ A p $$ A ps $$ A n
->         sOpRun [_ , _ , _ , N n] = Left n
+>         sOpRun [_ , N n , _ , _] = Left n
 >
 >         switchTerm = trustMe (typeSwitch :>: tacSwitch) 
 >         tacSwitch = lambda $ \t ->
@@ -221,10 +220,10 @@ Equality rules:
 >                     lambda $ \ps ->
 >                     lambda $ \n ->
 >                     useOp switchOp [ use e' done
+>                                    , use n done 
 >                                    , lambda $ \x -> 
 >                                      p @@@ [ suTac (use x done) ]
->                                    , use ps . apply Snd $ done
->                                    , use n done ]
+>                                    , use ps . apply Snd $ done ]
 >                     done
 >         typeSwitch = trustMe (SET :>: tacTypeSwitch) 
 >         tacTypeSwitch = piTac uidTac
@@ -248,5 +247,5 @@ Equality rules:
 
 > import -> OpCompile where
 >     ("Branches", _) -> Ignore
->     ("Switch", [e, p, b, x]) -> App (Var "__switch") [b, x]
+>     ("Switch", [e, x, p, b]) -> App (Var "__switch") [b, x]
 

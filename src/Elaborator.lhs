@@ -61,7 +61,7 @@ interesting types.
 > elaborate b (PI (ENUMT e) t :>: m) | isTuply m = do
 >     e' <- bquoteHere e
 >     t' <- bquoteHere t
->     elaborate b (PI (ENUMT e) t :>: L ("__elabPiEnum" :. N (switchOp :@ [e', t', m, N (V 0)])))
+>     elaborate b (PI (ENUMT e) t :>: L ("__elabPiEnum" :. N (switchOp :@ [e', N (V 0), t', m])))
 >  where  isTuply :: INDTM -> Bool
 >         isTuply VOID = True
 >         isTuply (PAIR _ _) = True
