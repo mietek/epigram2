@@ -180,7 +180,7 @@ Equality rules:
 >   elimOp :
 
 > import -> OpCompile where
->   ("elimOp", [d,bp,p,v]) -> App (Var "__elim") [d, p, v]
+>   ("elimOp", [d,v,bp,p]) -> App (Var "__elim") [d, p, v]
 >   ("mapBox", [x,d,bp,p,v]) -> App (Var "__mapBox") [x, p, v]
 
 > import -> OpCode where
@@ -418,26 +418,25 @@ Equality rules:
 >     , opTy = elimOpTy
 >     , opRun = elimOpRun
 >     } where
->       elimOpTy chev [d,bp,p,v] = do
->         (d :=>: dv) <- chev (desc :>: d)
+>       elimOpTy chev [d,v,bp,p] = do
+>         (d :=>: dv) <- chev (DESC :>: d)
 >         (bp :=>: bpv) <- chev (ARR (MU dv) SET :>: bp)
 >         (v :=>: vv) <- chev (MU dv :>: v)
+>         (bp :=>: bpv) <- chev (ARR (MU dv) SET :>: bp)
 >         (p :=>: pv) <- chev (PI (descOp @@ [dv,MU dv]) 
 >                     (eval [.d.bp.v. L $ "" :. [.x. 
 >                         ARR (N (boxOp :@ [NV d,MU (NV d),NV bp,NV x]))
 >                             (N (V bp :$ A (CON (NV x))))]
 >                         ] $ B0 :< dv :< bpv :< vv) :>: p)
 >         return ([ d :=>: dv
+>                 , v :=>: vv 
 >                 , bp :=>: bpv
->                 , p :=>: pv
->                 , v :=>: vv ]
+>                 , p :=>: pv ]
 >                 , bpv $$ A vv)
 >       elimOpRun :: [VAL] -> Either NEU VAL
->       elimOpRun [d,bp,p,CON v] = Right $ elimOpTerm
+>       elimOpRun [d,bp,p,CON v] = Right $ trustMe (elimOpType :>: elimOpTac) 
 >                                          $$ A d $$ A bp $$ A p $$ A v
 >       elimOpRun [_, _,_,N x] = Left x
->
->       elimOpTerm = trustMe (elimOpType :>: elimOpTac) 
 >       elimOpType = trustMe (SET :>: elimOpTypeTac)
 >       elimOpTypeTac = piTac descTac
 >                             (\d ->
@@ -467,9 +466,9 @@ Equality rules:
 >                                          , use bp done
 >                                          , lambda $ \x ->
 >                                            useOp elimOp [ use d done
+>                                                         , use x done 
 >                                                         , use bp done
->                                                         , use p done
->                                                         , use x done ] done 
+>                                                         , use p done ] done 
 >                                          , use v done ] done ]
 
 >   switchDOp = Op

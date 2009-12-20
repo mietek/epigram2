@@ -50,7 +50,7 @@ interesting types.
 > elaborate b (PI (MU d) t :>: CON f) = do
 >     d' <- bquoteHere d
 >     t' <- bquoteHere t
->     elaborate b (PI (MU d) t :>: L ("__elabPiMu" :. N (elimOp :@ [d', t', f, N (V 0)])))
+>     elaborate b (PI (MU d) t :>: L ("__elabPiMu" :. N (elimOp :@ [d', N (V 0), t', f])))
 
 > elaborate b (PI (SIGMA d r) t :>: CON f) = do
 >     d' <- bquoteHere d

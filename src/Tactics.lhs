@@ -509,9 +509,9 @@ Same thing here, for the |Mu| eliminator:
 >     PI (MU d) bp ->
 >         lambda $ \v ->
 >             useOp elimOp [ return d
+>                          , use v done 
 >                          , return bp
->                          , p
->                          , use v done ] done
+>                          , p ] done
 >     _ -> failTac $ "foldDesc: current goal is " ++
 >                     show t ++ " but expected a Pi (Mu .) ."
 >     
