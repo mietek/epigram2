@@ -216,7 +216,7 @@ is not clear now, it should become clear after the definition of
 Meanwhile, the |opRun| argument implements the computational
 behavior: given suitable arguments, we should receive a value, or
 failing that, the neutral term to blame for the failure of
-computation. For example, if `append' were an operator, it would
+computation. For example, if |append| were an operator, it would
 compute if the first list is nil or cons, but complain about the first
 list if it is neutral.
 
@@ -230,6 +230,7 @@ We have some pattern synonyms for common, er, patterns.
 > pattern PI s t    = C (Pi s t)   -- dependent functions
 > pattern CON t     = C (Con t)
 > pattern NV n      = N (V n)
+> pattern NP n      = N (P n)
 > import <- CanPats
 
 We have some type synonyms for commonly occurring instances of |Tm|.
