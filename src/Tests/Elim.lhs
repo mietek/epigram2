@@ -194,3 +194,35 @@ These are not quite motive signature, but that's fine for this test:
 >                           checkMethods methods
 >                           motive <- mkMotive motive motiveHyps motiveArgs internHyps goal
 >                           return motive
+
+
+> testMkMotiveTerms2 = [-- ("Switch",[(),()],"(e : EnumU)(x : EnumT e) -> x")
+>                      {- , -} ("split",[(),(),()], "(A : *)(B : A -> *)(t : (A ; B)) -> t") ]
+>                      -- , ("elimOp",[(),()],"(D : Desc)(v : Mu D) -> v") ]
+
+> testMkMotive2 = 
+>     Prelude.sequence_ $
+>     map (\(tm,ctxt,g) -> 
+>         let Just op = find (\o -> opName o == tm) operators
+>             Right goal = parse (termParse B0) $ fromRight $ parse tokenize g
+>             ty = opType (B0 :< ("a",0),0) op
+>             e = [("eHa",1001)] := (DECL :<: ty)
+>             name = [("e",1000)] := (DEFN (N (P e)) :<: ty)
+>             r = evalStateT (checkMotiveWrap goal ctxt name) emptyContext
+>         in do
+>           putStrLn $ "\n" ++ show tm
+>           case r of
+>            Left ss -> do
+>                 putStrLn $ "Error: " ++ intercalate "\n" ss
+>            Right x@(motiveHyps) -> do
+>                 putStrLn "Motive: "
+>                 putStrLn $ show motiveHyps)
+>     testMkMotiveTerms2
+>         where checkMotiveWrap goal internHyps e = do
+>                   make $ "goal" :<: goal
+>                   goIn
+>                   (internHyps, goal) <- chunkGoal
+>                   (motive, methods, motiveArgs) <- checkElim internHyps e
+>                   motiveHyps <- checkMotive motive
+>                   motive <- mkMotive motive motiveHyps motiveArgs internHyps goal
+>                   return motive
