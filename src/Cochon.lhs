@@ -45,6 +45,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >     let Right s = evalStateT prettyProofState loc
 >     putStrLn s
 >     putStrLn msg
+>     showGoal loc
 >     putStr (showPrompt ls)
 >     hFlush stdout
 >     l <- getLine
@@ -225,6 +226,13 @@ Here we have a very basic command-driven interface to the proof state monad.
 > doCommandsAt [] = return ()
 > doCommandsAt ((_, []):ncs) = doCommandsAt ncs
 > doCommandsAt ((n, cs):ncs) = much goOut >> goTo n >> doCommands cs >> doCommandsAt ncs
+
+> showGoal :: ProofContext -> IO ()
+> showGoal loc = case evalStateT (getGoal "showGoal") loc of
+>     Right (_ :=>: ty) ->
+>         let Right s = evalStateT (bquoteHere ty >>= prettyHere) loc
+>         in putStrLn ("Goal: " ++ s)
+>     Left _ -> return ()
 
 > showPrompt :: Bwd Layer -> String
 > showPrompt (_ :< l)  = showName (motherName (mother l)) ++ " > "
