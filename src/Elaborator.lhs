@@ -59,9 +59,14 @@ interesting types.
 >     elaborate b (PI (SIGMA d r) t :>: L ("__elabPiSig" :. N (splitOp :@ [d', r', N (V 0), t', f])))
 
 > elaborate b (PI (ENUMT e) t :>: m) | isTuply m = do
+>     targetsDesc <- withRoot (equal (ARR (ENUMT e) SET :>: (t, L (K desc))))
 >     e' <- bquoteHere e
->     t' <- bquoteHere t
->     elaborate b (PI (ENUMT e) t :>: L ("__elabPiEnum" :. N (switchOp :@ [e', N (V 0), t', m])))
+>     if targetsDesc
+>        then 
+>            elaborate b (PI (ENUMT e) t :>: L ("__elabPiEnum" :. N (switchDOp :@ [e', m, N (V 0)])))
+>        else do
+>            t' <- bquoteHere t
+>            elaborate b (PI (ENUMT e) t :>: L ("__elabPiEnum" :. N (switchOp :@ [e', N (V 0), t', m])))
 >  where  isTuply :: INDTM -> Bool
 >         isTuply VOID = True
 >         isTuply (PAIR _ _) = True
