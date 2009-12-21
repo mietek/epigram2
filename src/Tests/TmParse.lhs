@@ -101,6 +101,7 @@
 >         , "`xyz"                      -- tag
 >         , "? a"                       -- hole
 >         , "(? a : ? b) -> ? c"        -- more holes
+>         , "Mu d"                      -- mu
 >         , "@ @ [(\\ r r y -> y) (\\ r -> @ \\ h r y -> suc (h y))] : nat -> nat -> nat"         -- performance bug
 >         , "(@ (@ ([(\\ r r y -> y) (\\ r -> @ (\\ h r y -> (suc (h y))))])))" -- performance bug
 >         , "(@ (@ ([(\\ r r y -> y) (\\ r -> @ (\\ h r y -> (suc (h y))))]))) : nat -> nat -> nat" -- performance bug

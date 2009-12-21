@@ -58,6 +58,8 @@ left, and will do so with |littleInTm|.
 >      |id blueEqParse
 >      |id andParse
 >      |N bigExTm
+>      |(\t -> PRF t) (%keyword ":-"%) bigInTm
+>      |(\t -> MU t)  (%keyword "Mu"%) bigInTm
 >      |id littleInTm
 >      |)
 
@@ -68,10 +70,9 @@ left, and will do so with |littleInTm|.
 >      |C ~ Absurd (%keyword "FF"%)
 >      |C ~ Trivial (%keyword "TT"%)
 >      |Q (%keyword "?"%) maybeIdent
->      |id lamParse
->      |(\t -> PRF t) (%keyword ":-"%) littleInTm
 >      |(\t -> CON t) (%keyword "@"%) littleInTm
 >      |(\t -> TAG t) (%keyword "`"%) ident
+>      |id lamParse
 >      |id tupleParse
 >      |id enumParse
 >      |id natParse
