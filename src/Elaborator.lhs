@@ -72,6 +72,12 @@ interesting types.
 >         isTuply (PAIR _ _) = True
 >         isTuply _ = False
 
+As some more syntactic sugar, we let inductive types elaborate lists (so |[]| becomes
+|@[0]| and |[s / t]| becomes |@ [1 s t]|).
+
+> elaborate b (MU d :>: VOID) = elaborate b (MU d :>: CON (PAIR ZE VOID))
+> elaborate b (MU d :>: (PAIR s t)) = elaborate b (MU d :>: CON (PAIR (SU ZE) (PAIR s t)))
+
 To elaborate a tag with an enumeration as its type, we search for the tag in the enumeration
 to determine the appropriate index.
 
