@@ -10,18 +10,18 @@ putStrLn (x:String) -> Unit =
 __dumpData (x:Data) -> Unit =
     foreign Unit "dumpRecord" (x:Data); putStrLn("")
 
-__switch (ps:Data, n:Int) -> Data =
+__switch (n:Int, ps:Data) -> Data =
    case n of {
       0 -> ps!0
-    | Default -> __switch (ps!1, (n-1))
+    | Default -> __switch ((n-1), ps!1)
    }
 
 __mapBox (D:Data, p:Data, d:Data) -> Data =
    case D!0 of
     { 0 -> []
-    | 1 -> __mapBox((D!1)(d!0), p, d!1)
-    | 2 -> [__mapBoxH(p, d!0), __mapBox(D!1, p, d!1)]
-    | 3 -> [p(d!0), __mapBox(D!1, p, d!1)]
+    | 1 -> __mapBox((((D!1)!1)!0)(d!0), p, d!1)
+    | 2 -> [__mapBoxH(p, d!0), __mapBox(((D!1)!1)!0, p, d!1)]
+    | 3 -> [p(d!0), __mapBox((D!1)!0, p, d!1)]
     }
 
 __mapBoxH (p:Data, f:Data, h:Data) -> Data = p(f(h))

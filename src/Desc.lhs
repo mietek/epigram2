@@ -178,10 +178,12 @@ Equality rules:
 >   boxOp :
 >   mapBoxOp :
 >   elimOp :
+>   switchDOp :
 
 > import -> OpCompile where
 >   ("elimOp", [d,v,bp,p]) -> App (Var "__elim") [d, p, v]
 >   ("mapBox", [x,d,bp,p,v]) -> App (Var "__mapBox") [x, p, v]
+>   ("SwitchD", [e,b,x]) -> App (Var "__switch") [x, b]
 
 > import -> OpCode where
 >   descOp :: Op

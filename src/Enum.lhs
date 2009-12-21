@@ -248,5 +248,5 @@ Equality rules:
 
 > import -> OpCompile where
 >     ("Branches", _) -> Ignore
->     ("Switch", [e, x, p, b]) -> App (Var "__switch") [b, x]
+>     ("Switch", [e, x, p, b]) -> App (Var "__switch") [x, b]
 
