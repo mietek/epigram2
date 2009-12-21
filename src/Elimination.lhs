@@ -54,20 +54,6 @@ it's a hell to write the type of what will get out.
 > matchArgs (A (N (P p))) = [p]
 > matchArgs _ = []
 
-
-%if false
-[trusted]
-%endif
-
-> getGoal :: String -> ProofState (INTM :=>: TY)
-> getGoal s = do
->     tip <- getDevTip
->     case tip of
->       Unknown (ty :=>: tyTy) -> return (ty :=>: tyTy)
->       Defined _ (ty :=>: tyTy) -> return (ty :=>: tyTy)
->       _ -> throwError' $ "getGoal: fail to match a goal in "
->                          ++ s
-
 %if false
 [tested by testCheckElim]
 %endif

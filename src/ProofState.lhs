@@ -201,6 +201,14 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     (_, tip, _) <- getDev
 >     return tip
 
+> getGoal :: String -> ProofState (INTM :=>: TY)
+> getGoal s = do
+>     tip <- getDevTip
+>     case tip of
+>       Unknown (ty :=>: tyTy) -> return (ty :=>: tyTy)
+>       Defined _ (ty :=>: tyTy) -> return (ty :=>: tyTy)
+>       _ -> throwError' $ "getGoal: fail to match a goal in " ++ s
+
 > getGreatAuncles :: ProofState Entries
 > getGreatAuncles = get >>= return . greatAuncles
 

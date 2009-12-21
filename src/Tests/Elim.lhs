@@ -1,4 +1,4 @@
-> module  Tests.DevLoad where
+> module Tests.Elim where
 
 > import Control.Monad.State
 > import Control.Applicative
