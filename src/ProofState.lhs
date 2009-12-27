@@ -674,6 +674,16 @@ current development, after checking that the purported type is in fact a type.
 >     Just (M _ _) <- removeDevEntry
 >     return ()
 
+> draftModule :: String -> ProofState t -> ProofState t
+> draftModule name draftyStuff = do
+>     makeModule name
+>     goIn
+>     t <- draftyStuff
+>     goOut
+>     dropModule
+>     return t
+
+
 
 The |piBoy| command checks that the current goal is of type SET, and that the supplied type
 is also a set; if so, it appends a $\Pi$-abstraction to the current development.
