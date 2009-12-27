@@ -678,18 +678,20 @@ current development, after checking that the purported type is in fact a type.
 The |piBoy| command checks that the current goal is of type SET, and that the supplied type
 is also a set; if so, it appends a $\Pi$-abstraction to the current development.
 
-> piBoy :: (String :<: INTM) -> ProofState ()
+> piBoy :: (String :<: INTM) -> ProofState REF
 > piBoy (s :<: ty) = piBoy' (s :<: (ty :=>: evTm ty))
 
-> piBoy' :: (String :<: (INTM :=>: TY)) -> ProofState ()
+> piBoy' :: (String :<: (INTM :=>: TY)) -> ProofState REF
 > piBoy' (s :<: (ty :=>: tv)) = do
 >     tip <- getDevTip
 >     case tip of
 >         Unknown (_ :=>: SET) -> do
 >             root <- getDevRoot
 >             Root.freshRef (s :<: tv)
->                 (\ref r ->  putDevEntry (E ref (lastName ref) (Boy PIB) ty)
->                             >> putDevRoot r) root
+>                 (\ref r ->  do
+>                    putDevEntry (E ref (lastName ref) (Boy PIB) ty)
+>                    putDevRoot r
+>                    return ref) root
 >         Unknown _  -> throwError' "piBoy: goal is not of type SET."
 >         _          -> throwError' "piBoy: only possible for incomplete goals."
 

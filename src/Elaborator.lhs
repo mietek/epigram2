@@ -267,6 +267,7 @@ creates a $\Pi$-boy with that type.
 > elabPiBoy (s :<: ty) = do
 >     tt <- elaborate True (SET :>: ty)
 >     piBoy' (s :<: tt)
+>     return ()
 
 
 \subsection{$\lambda$-lifting}
