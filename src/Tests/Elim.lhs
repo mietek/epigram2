@@ -72,7 +72,7 @@
 >           case r of
 >            Left ss -> do
 >                 putStrLn $ "Error: " ++ intercalate "\n" ss
->            Right x@(motive, methods, targets) -> do
+>            Right x@(_, motive, methods, targets) -> do
 >                 putStrLn "Motive: "
 >                 putStrLn $ show motive
 >                 putStrLn "Methods:"
@@ -97,7 +97,7 @@
 >           case r of
 >            Left ss -> do
 >                 putStrLn $ "Error: " ++ intercalate "\n" ss
->            Right x@(motive, methods, targets) -> do
+>            Right x@(_, motive, methods, targets) -> do
 >                 putStrLn "Motive: "
 >                 putStrLn $ show motive
 >                 putStrLn "Methods:"
@@ -151,7 +151,7 @@ These are not quite motive signature, but that's fine for this test:
 >                 sequence_ $ map (putStrLn . show) motiveHyps)
 >     testCheckMotiveTerms2
 >         where checkMotiveWrap internHyps e = do
->                   (motive, methods, motiveArgs) <- checkElim internHyps e
+>                   (_, motive, methods, motiveArgs) <- checkElim internHyps e
 >                   motiveHyps <- checkMotive motive
 >                   return motiveHyps
 
@@ -185,10 +185,10 @@ These are not quite motive signature, but that's fine for this test:
 >                           make ("" :<: tm)
 >                           goIn
 >                           (internHyps, goal) <- chunkGoal
->                           (motive, methods, motiveArgs) <- checkElim internHyps e
+>                           (motiveCtxt, motive, methods, motiveArgs) <- checkElim internHyps e
 >                           motiveHyps <- checkMotive motive
 >                           checkMethods methods
->                           motive <- mkMotive motive motiveHyps motiveArgs internHyps goal
+>                           motive <- mkMotive motiveCtxt motive motiveHyps motiveArgs internHyps goal
 >                           return motive
 
 
@@ -217,13 +217,15 @@ These are not quite motive signature, but that's fine for this test:
 >                   make $ "goal" :<: goal
 >                   goIn
 >                   (internHyps, goal) <- chunkGoal
->                   (motive, methods, motiveArgs) <- checkElim internHyps e
+>                   (motiveCtxt, motive, methods, motiveArgs) <- checkElim internHyps e
 >                   motiveHyps <- checkMotive motive
->                   motive <- mkMotive motive motiveHyps motiveArgs internHyps goal
+>                   motive <- mkMotive motiveCtxt motive motiveHyps motiveArgs internHyps goal
 >                   return motive
 
 > testElimTerms = [-- ("Switch",[()],"(e : EnumU)(x : EnumT e) -> x")
->                  {- , -} ("split",[(),()], "(A : *)(B : A -> *)(t : (A ; B)) -> t") ]
+>                  {- , -} ("split",[], "(A : *)(B : A -> *)(t : (A ; B)) -> t") 
+>                  , ("split", [], "(A : *)(B : A -> *)(a : A) -> a")
+>                  , ("split", [], "(A : *)(B : A -> *)(b : B) -> b") ]
 >                   -- , ("elimOp",[()],"(D : Desc)(v : Mu D) -> v") ]
 
 > testElim = 
@@ -238,29 +240,27 @@ These are not quite motive signature, but that's fine for this test:
 >           case r of
 >            Left ss -> do
 >                 putStrLn $ "Error: " ++ intercalate "\n" ss
->            Right x@(motiveHyps) -> do
->                 putStrLn "Success.")
+>            Right pfstate -> do
+>                 putStrLn "Success."
+>                 putStrLn pfstate)
 >     testElimTerms
 >         where elimWrap goal globalHyps op opType = do
 >                   -- Make the eliminator
 >                   elimTy <- bquoteHere opType
 >                   make $ "elim" :<: elimTy
 >                   goIn
->                   -- Introduce the global hypotheses
->                   extHyps <- sequence $ map (const $ lambdaBoy "Gctxt") globalHyps
 >                   -- Introduce the arguments and give the applied elim/op-erator
 >                   (t :=>: _) <- getGoal "testElimTerms"
->                   intHyps <- many $ lambdaBoy "elim"
->                   () <- trace ("args: " ++ show (length extHyps) ++ " + " ++ show (length intHyps)) $ return ()
->                   e <- give $ N (op :@ (map (\x -> N (P x))  (extHyps ++ intHyps)))
->                   () <- trace ("t: " ++ show t ++ "\ne: " ++ show e) $ return ()
+>                   eHyps <- many $ lambdaBoy "elim"
+>                   e <- give $ N (op :@ (map (\x -> N (P x))  eHyps))
 >
 >                   -- Make the goal
 >                   make $ "goal" :<: goal
 >                   goIn
->                   -- Introduce the global hypotheses
->                   extHyps <- sequence $ map (const $ lambdaBoy "Gctxt") globalHyps
+>                   -- Introduce the external hypotheses
+>                   extHyps <- sequence $ map (const $ lambdaBoy "extCtxt") globalHyps
 >
 >                   -- We have e an eliminator ready to fire
 >                   -- We have a goal with internal hypotheses + goal
 >                   elim (t :>: e)
+>                   prettyProofState
