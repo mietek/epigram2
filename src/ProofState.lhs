@@ -567,12 +567,17 @@ the goal and updates the reference.
 >         Unknown (tipTyTm :=>: tipTy) -> do
 >             putDevTip (Defined tm (tipTyTm :=>: tipTy))
 >             mc <- withRoot (check (tipTy :>: tm))
->             mc `catchMaybe` intercalate "\n" ["Typechecking failed:", show tm, "is not of type", show tipTy]
 >             aus <- getGreatAuncles
 >             sibs <- getDevEntries
 >             let tmv = evTm (parBind aus sibs tm)
 >             GirlMother (name := _ :<: tyv) xn ty <- getMother
 >             let ref = name := DEFN tmv :<: tyv
+>             prettyTm <- prettyHere tm
+>             prettyTipTyTm <- prettyHere tipTyTm
+>             mc `catchMaybe` intercalate "\n" [ "Typechecking failed:"
+>                                              , prettyTm
+>                                              , "is not of type"
+>                                              , prettyTipTyTm ]
 >             putMother (GirlMother ref xn ty)
 >             updateRef ref
 >             goOut
