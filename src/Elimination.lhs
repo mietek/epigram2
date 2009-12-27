@@ -59,9 +59,9 @@ it's a hell to write the type of what will get out.
 %endif
 
 > checkElim :: [a] -> INTM -> ProofState ([REF], REF, [REF], [REF])
-> checkElim ctxt ty = do
+> checkElim ctxt ty = 
+>     draftModule "checkElim" (do
 >     -- Explore e by making it a subgoal
->     -- XXX: we should open a Module here and throw it away
 >     make $ "elim" :<: ty
 >     goIn
 >     -- Abstract over the internal hypotheses
@@ -80,21 +80,20 @@ it's a hell to write the type of what will get out.
 >           True -> do
 >                   -- Grab the arguments of the motive
 >                  let targetArgs = matchArgs args 
->                  -- Close the analysis by leaving the development (opened)
->                  -- XXX: see point above on Module
+>                  -- Abandon the development
 >                  goOut
 >                  -- Return the results
 >                  return (motiveCtxt, motive, methods, targetArgs)
->       _ -> throwError' $ "checkElim: elimination ill-defined, not using the motive"
+>       _ -> throwError' $ "checkElim: elimination ill-defined, not using the motive")
 
 %if false
 [tested by testCheckMotive]
 %endif
 
 > checkMotive :: REF -> ProofState [REF]
-> checkMotive motive = do
+> checkMotive motive = 
+>     draftModule "checkMotive" (do
 >     -- Explore the motive by making it a subgoal
->     -- XXX: This should be replaced by a thrown away Module
 >     tyP <- bquoteHere $ pty motive
 >     make $ "P" :<: tyP
 >     goIn
@@ -102,11 +101,10 @@ it's a hell to write the type of what will get out.
 >     motiveHyps <- many $ lambdaBoy "motiveHyps"
 >     -- Check that the target is SET 
 >     (_ :=>: SET) <- getGoal "checkMotive"
->     -- Close the analysis by closing the development
->     -- XXX: Again, Module story
+>     -- Abandon the development
 >     goOut
 >     -- Return the results
->     return motiveHyps
+>     return motiveHyps)
 
 
 %if false
