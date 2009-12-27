@@ -234,14 +234,17 @@ applies it to the arguments, dropping any that are shared with the current locat
 > mangleP auncles me vs target args = 
 >     let  (prefix, (t, n):targetSuffix) = splitNames me target
 >          numBindersToSkip = getSum (foldMap (\x -> if x == t then Sum 1 else Sum 0) vs)
->          (ancestor, commonEntries, i) = findName auncles (prefix++[(t, n)]) t numBindersToSkip
->          args' = drop (bwdLength commonEntries) args
->     in  if targetSuffix == []
->         then  P (showRelName [(t, Rel i)]) $:$ args'
->         else
->             let  (kids, _, _) = entryDev ancestor
->                  n = (t, Rel i) : (searchKids kids targetSuffix 0)
->             in   P (showRelName n) $:$ args'
+>     in
+>       case findName auncles (prefix++[(t, n)]) t numBindersToSkip of
+>         Just (ancestor, commonEntries, i) -> 
+>             let args' = drop (bwdLength commonEntries) args
+>             in  if targetSuffix == []
+>                 then  P (showRelName [(t, Rel i)]) $:$ args'
+>                 else
+>                   let  (kids, _, _) = entryDev ancestor
+>                        n = (t, Rel i) : (searchKids kids targetSuffix 0)
+>                   in   P (showRelName n) $:$ args'
+>         Nothing -> P $ showName target
 
 
 The |searchKids| function searches a list of children to match a name suffix, producing
@@ -274,12 +277,12 @@ The |findName| function searches a list of entries for a name, incrementing the
 counter each time its string argument appears as the last component of an entry.
 It returns the entry found, its prefix in the list of entries, and the count.
 
-> findName :: Entries -> Name -> String -> Int -> (Entry Bwd, Entries, Int)
+> findName :: Entries -> Name -> String -> Int -> Maybe (Entry Bwd, Entries, Int)
 > findName (es :< e) p y i
->   | entryName e == p     = (e, es, i)                         
+>   | entryName e == p     = Just (e, es, i)                         
 >   | fst (entryLastName e) == y     = findName es p y (i+1)
 >   | otherwise  = findName es p y i
-> findName B0 p _ _ = error ("findName: ran out of ancestors seeking " ++ showName p)
+> findName B0 p _ _ = Nothing
 
 
 
