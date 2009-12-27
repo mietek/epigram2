@@ -5,7 +5,8 @@
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE ScopedTypeVariables, GADTs #-}
 
-> module PrettyPrint (pretty, prettyDev, prettyModule) where
+> module PrettyPrint (pretty, prettyDev, prettyModule,
+>                     prettyREF, prettyVAL, prettyINTM) where
 
 > import Data.Foldable
 > import Data.List
@@ -109,8 +110,19 @@ to allow extra canonical terms and eliminators to be pretty-printed.
 > pretty (n :$ el)      = parens (pretty n <+> prettyElim el)
 > pretty (t :? y)       = parens (pretty t <+> text ":" <+> pretty y)
 
-
 > import <- Pretty
 
 
 
+
+For debugging purpose, the following quick'n'dirty pretty-printers
+might be handy:
+
+> prettyINTM :: INTM -> String
+> prettyINTM = show . pretty . christenAbs
+>
+> prettyVAL :: VAL -> String
+> prettyVAL v = show $ pretty $ christenAbs $ bquote B0 v ((B0 :< ("prettyVAL",1),0) :: Root)
+>
+> prettyREF :: REF -> String
+> prettyREF (name := _) = showName name
