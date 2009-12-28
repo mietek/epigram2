@@ -21,7 +21,6 @@
 > import Rooty
 > import Rules
 > import Tm
-> import qualified Tactics as Tac
 > import ProofState
 
 > import MissingLibrary
