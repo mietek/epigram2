@@ -133,17 +133,23 @@ it's a hell to write the type of what will get out.
 >                              ty' <- bquoteHere ty
 >                              piBoy ("delta" :<: ty')) goalCtxt
 >     -- Make the list of equality constraints
->     constraints <- bquoteHere
->                    $ Data.List.foldr ARR (evTm $ rGoal delta) 
->                    $ map (\(i,t) -> PRF (EQBLUE (pty i :>: NP i) (pty t :>: NP t)))
->                    $ zip args (rMotiveArgs delta)
+>     let rMotiveArgs = mkMotiveArgs delta
+>     let rGoal = mkGoal delta
+>     (constraints, goal) <- withRoot $ simplifyEq args rMotiveArgs rGoal
+>     term <- bquoteHere
+>             $ Data.List.foldr ARR (evTm goal)
+>             $ map (\(i,t) -> PRF (EQBLUE (pty i :>: NP i) (pty t :>: NP t)))
+>              constraints
 >     -- Make the term
->     give constraints
->          where rGoal delta = renameVars goal $ zip goalCtxt delta
->                rMotiveArgs delta = map (\m -> unP $ renameVars (P m) (motiveCtxtDelta delta)) motiveArgs
+>     give term
+>          where mkGoal delta = renameVars goal $ zip goalCtxt delta
+>                mkMotiveArgs delta = map (\m -> unP $ renameVars (P m) (motiveCtxtDelta delta)) motiveArgs
 >                motiveCtxtDelta delta = zip motiveCtxt delta
 >                unP :: Tm {d,TT} REF -> REF
 >                unP (P x) = x
+
+> simplifyEq :: [REF] -> [REF] -> INTM -> Root -> ([(REF,REF)], INTM)
+> simplifyEq l1 l2 t root = (zip l1 l2, t)
 
 > applyElim :: [REF] -> (INTM :>: INTM) -> [REF] -> REF -> INTM -> [REF] -> [REF] -> ProofState ()
 > applyElim internHyps (ty :>: e) motiveCtxt emptyMotive motive motiveArgs methods = do
