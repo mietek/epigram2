@@ -124,7 +124,7 @@ it's a hell to write the type of what will get out.
 > mkMotive motiveCtxt p@(_ := DECL :<: ty) motiveHyps motiveArgs goalCtxt goal = do
 >     -- Now, it's serious, we make P
 >     tyP <- bquoteHere ty
->     motive <- make $ "P" :<: tyP
+>     motive <- make $ "P" :<: (renameVars tyP $ zip motiveCtxt goalCtxt)
 >     goIn
 >     -- Introduce hypotheses
 >     args <- sequence $ map (const $ lambdaBoy "motiveHyp") motiveHyps
@@ -145,12 +145,18 @@ it's a hell to write the type of what will get out.
 >                unP :: Tm {d,TT} REF -> REF
 >                unP (P x) = x
 
-> applyElim :: [REF] -> (INTM :>: INTM) -> [REF] -> INTM -> [REF] -> [REF] -> ProofState ()
-> applyElim internHyps (ty :>: e) motiveCtxt motive motiveArgs methods = do
+> applyElim :: [REF] -> (INTM :>: INTM) -> [REF] -> REF -> INTM -> [REF] -> [REF] -> ProofState ()
+> applyElim internHyps (ty :>: e) motiveCtxt emptyMotive motive motiveArgs methods = do
 >     -- Make subgoal
 >     methods <- sequence $ map (\m -> do
->                                 ty <- bquoteHere $ pty m
->                                 make ("method" :<:  ty)) methods
+>                                 root <- getDevRoot
+>                                 let -- Bring method's type from motiveCtxt to internHyps
+>                                     ty = bquote B0 (pty m) root
+>                                     tym = renameVars ty $ zip motiveCtxt internHyps
+>                                     -- Bring method's type from emptyMotive to the built Motive
+>                                     tym' = (L (H B0 "" (bquote (B0 :< emptyMotive) (evTm tym) root))) $$ A (evTm motive)
+>                                     tym'' = bquote B0 tym' root
+>                                 make ("method" :<: tym'')) methods
 >     -- Solve the elim problem
 >     term <- withRoot (mkTerm methods)
 >     (goal :=>: _) <- getGoal "applyElim"
@@ -175,8 +181,22 @@ it's a hell to write the type of what will get out.
 >     (motiveCtxt, motive, methods, motiveArgs) <- checkElim internHyps t
 >     motiveHyps <- checkMotive motive
 >     checkMethods methods
+>     let emptyMotive = motive
 >     motive <- mkMotive motiveCtxt motive motiveHyps motiveArgs internHyps goal
->     applyElim internHyps (t :>: e) motiveCtxt motive motiveArgs methods 
+>     applyElim internHyps (t :>: e) motiveCtxt emptyMotive motive motiveArgs methods 
+
+
+This function, and the places where it is used, is
+unsastisfactory. Its role is to transport a term built from a list of
+|REF|s to another term built from the associated list of |REF|s. It is
+used for terms analyzed by |lambdaBoy|-ification: we obtain an |INTM|
+containing the |REF|s of the associated |lambdaBoy|s. However, in the
+case of |checkElim| and |checkMotive|, we throw away these
+modules. Hence, the references are dangling and have to be replaced by
+the right context, depending on the usage of the given term. 
+
+This result in a quite messy and error prone code. I'm looking for a
+better solution.
 
 > renameVars :: Tm {d,TT} REF -> [(REF,REF)] -> Tm {d,TT} REF
 > renameVars tm assocList =
