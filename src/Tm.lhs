@@ -344,7 +344,8 @@ References are the key way we represent free variables, declared,
 defined, and deluded. References carry not only names, but types and
 values, and are shared.
 
-> data REF = Name := (RKind :<: TY) deriving Show -- is shared where possible
+> data REF = (:=) { refName :: Name, refBody :: (RKind :<: TY)}
+>   deriving Show -- is shared where possible
 > infix 2 :=
 >
 > type Name = [(String, Int)]

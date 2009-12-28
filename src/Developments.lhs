@@ -154,10 +154,15 @@ A |NewsBulletin| is a list of pairs of updated references and the news about the
 > type NewsBulletin = [(REF, News)]
 
 The |addNews| function adds the given news to the bulletin, if it is newsworthy.
+Conor made it delete old versions but minimize news goodness.
 
-> addNews :: NewsBulletin -> (REF, News) -> NewsBulletin
-> addNews news (_,    NoNews)    = news
-> addNews news (ref,  GoodNews)  = (ref, GoodNews):news
+> addNews :: (REF, News) -> NewsBulletin ->  NewsBulletin
+> addNews (_,  NoNews)  old  = old
+> addNews (r,  n)       old  = (r, min n n') : old' where
+>   (n', old') = seek old
+>   seek [] = (NoNews, [])
+>   seek ((r', n') : old) | r == r' = (n', old)
+>   seek (rn : old) = (n', rn : old') where (n', old') = seek old
 
 The |lookupNews| function returns the news about a reference contained in the
 bulletin, which may be |NoNews| if the reference is not present.
@@ -182,8 +187,7 @@ in either.
 
 > mergeNews :: NewsBulletin -> NewsBulletin -> NewsBulletin
 > mergeNews new [] = new
-> mergeNews [] old = old
-> mergeNews ((r, n):new) old = mergeNews new ((r, min n (lookupNews old r)):old)
+> mergeNews new old = Data.List.foldr addNews old new
 
 
 \subsection{Lambda-lifting and discharging}

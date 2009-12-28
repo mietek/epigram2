@@ -428,7 +428,7 @@ is not in the required form.
 >     e <- getMotherEntry
 >     l <- removeLayer
 >     putDev (elders l :< e, laytip l, layroot l)
->     propagateNews [] (cadets l)
+>     propagateNews [] (cadets l)  -- should update tip and pass on news
 >     return ()
 >   ) `replaceError` "goOut: you can't go that way."
 
@@ -766,7 +766,7 @@ point everyone knows the news anyway.
 A |Boy| is relatively easy to deal with, we just check to see if its type
 has become more defined, and pass on the good news if necessary.
 
-> propagateNews news (NF (Right e@(E (name := DECL :<: tv) sn (Boy k) ty) :> es)) = do
+> propagateNews news (NF (Right (E (name := DECL :<: tv) sn (Boy k) ty) :> es)) = do
 >     case tellNews news ty of
 >         (_, NoNews) -> putDevEntry (E (name := DECL :<: tv) sn (Boy k) ty) >> propagateNews news (NF es)
 >         (ty', GoodNews) -> do
@@ -807,7 +807,8 @@ Updating girls is a bit more complicated. We proceed as follows:
 Finally, if we encounter an older news bulletin when propagating news, we can simply
 merge the two together.
 
-> propagateNews news (NF (Left oldNews :> es)) = propagateNews (mergeNews news oldNews) (NF es)
+> propagateNews news (NF (Left oldNews :> es)) =
+>   propagateNews (mergeNews news oldNews) (NF es)
 
 
 > tellEntry :: NewsBulletin -> Entry Bwd -> ProofState (NewsBulletin, Entry Bwd)
@@ -834,7 +835,7 @@ should have already received. It will
 >                 let Defined tm _ = tip'
 >                 return (DEFN (evTm (parBind aus cs tm)))
 >     let ref = name := k' :<: tv'
->     return (addNews news (ref, min n n'), E ref sn (Girl LETG (cs, tip', root)) ty')
+>     return (addNews (ref, min n n') news, E ref sn (Girl LETG (cs, tip', root)) ty')
 >  where 
 >    tellTip :: NewsBulletin -> Tip -> (Tip, News)
 >    tellTip news (Unknown tt) =
