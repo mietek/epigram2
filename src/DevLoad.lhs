@@ -73,7 +73,7 @@ A module is similar, but has no definition.
 > pLines =  bracket Square (many (pGirl <|> pBoy <|> pModule)) <|> (keyword ":=" *> pure [])
 >
 > pDefn :: Parsley Token (Maybe InTmRN :<: InTmRN)
-> pDefn =  (| (%keyword "?"%) (%keyword ":"%) ~Nothing :<: bigInTm 
+> pDefn =  (| (%keyword "?"%) (%keyword ":"%) ~Nothing :<: pInTm 
 >               | id maybeAscriptionParse
 >               |)
 >

@@ -50,17 +50,16 @@ each of these cases allows us to unambiguously consume tokens. On the
 other hand, |bigInTm| typically contains operations which might go
 left, and will do so with |littleInTm|.
 
+
 > bigInTm :: Parsley Token InTmRN
 > bigInTm = 
 >     (|id piForallParse
->      |id arrParse
 >      |id sigmaParse
 >      |id blueEqParse
->      |id andParse
->      |N bigExTm
 >      |PRF (%keyword ":-"%) bigInTm
 >      |MU  (%keyword "Mu"%) bigInTm
->      |id littleInTm
+>      |id (pLoop littleInTm pLAfter)
+>      |N bigExTm
 >      |)
 
 > littleInTm :: Parsley Token InTmRN
@@ -83,7 +82,12 @@ left, and will do so with |littleInTm|.
 >     maybeIdent :: Parsley Token String
 >     maybeIdent = ident <|> pure ""
 
-
+> pLAfter :: InTmRN -> Parsley Token InTmRN
+> pLAfter s =
+>      (| (ARR s) (%keyword "->"%) bigInTm
+>       | (IMP s) (%keyword "=>"%) bigInTm
+>       | (AND s) (%keyword "&&"%) bigInTm
+>       |)
 
 > telescope :: Parsley Token [(String, InTmRN)]
 > telescope = some (bracket Round (|ident, (%keyword ":"%) bigInTm|))
@@ -96,8 +100,8 @@ left, and will do so with |littleInTm|.
 >           mkPiForall xs (f,t) = foldr f t xs
 
 > arrParse :: Parsley Token InTmRN
-> arrParse = (|mkArr littleInTm (%keyword "->"%) bigInTm|)
->     where mkArr s t = ARR s t
+> arrParse = (|ARR littleInTm (%keyword "->"%) bigInTm
+>             |IMP littleInTm (%keyword "=>"%) bigInTm|)
 
 > lamParse :: Parsley Token InTmRN
 > lamParse = (|(flip $ foldr mkLam) (%keyword "\\"%) (some ident) (%keyword "->"%) bigInTm|)
@@ -168,7 +172,10 @@ left, and will do so with |littleInTm|.
 > appParse :: Parsley Token ExTmRN
 > appParse =
 >     pLoop littleExTm $ \f -> 
->     (|(f :$) (|A littleInTm|)|)
+>     (|(f :$) (| (%keyword "!"%) Fst
+>               | (%keyword "-"%) Snd
+>               | (%keyword "%"%) Out
+>               | A littleInTm|)|)
 
 > ascriptionParse :: Parsley Token ExTmRN
 > ascriptionParse = (| (:?) littleInTm (%keyword ":"%) bigInTm |)
@@ -207,5 +214,123 @@ in the context all the names in the |InTm String| produced by |bigInTm|.
 
 > maybeAscriptionParse :: Parsley Token (Maybe InTmRN :<: InTmRN)
 > maybeAscriptionParse = do
->     tm :? ty <- ascriptionParse
+>     N (tm :? ty) <- pInTm -- ascriptionParse
 >     return (Just tm :<: ty)
+
+
+> iter :: (a -> b -> b) -> [a] -> b -> b
+> iter = flip . foldr
+
+> data Size = ArgSize | AppSize | EqSize | AndSize | ArrSize | PiSize | AscSize
+>   deriving (Show, Eq, Enum, Bounded, Ord)
+
+> pExTm :: Parsley Token ExTmRN
+> pExTm = sizedExTm maxBound
+
+> sizedExTm :: Size -> Parsley Token ExTmRN
+> sizedExTm z = specialExTm z <|>
+>       (if z > minBound  then pLoop (sizedExTm (pred z)) (moreExTm z)
+>                         else bracket Round pExTm)
+
+> sizedInTm :: Size -> Parsley Token InTmRN
+> sizedInTm z = specialInTm z <|> (| N (specialExTm z) |) <|>
+>       (if z > minBound  then pLoop (sizedInTm (pred z)) (moreInEx z)
+>                         else bracket Round pInTm)
+
+> moreInEx :: Size -> InTmRN -> Parsley Token InTmRN
+> moreInEx AscSize t =
+>   (|N (| (t :?) (%keyword ":"%) pInTm |)|) <|> moreInEx (pred AscSize) t
+> moreInEx z (N e) = N <$> moreExTm z e <|> moreInTm z (N e)
+> moreInEx z t = moreInTm z t
+
+> pInTm :: Parsley Token InTmRN
+> pInTm = sizedInTm maxBound
+
+> specialExTm :: Size -> Parsley Token ExTmRN
+> specialExTm ArgSize =
+>   (| pFilter findOp ident :@ bracket Round (pSep (keyword ",") pInTm)
+>    | P nameParse
+>    |)
+>   where
+>     findOp name = find (\op -> opName op == name) operators
+> -- specialExTm AscSize =
+>   -- (| sizedInTm (pred AscSize) (%keyword ":"%) :? pInTm |)
+> specialExTm z = (|)
+
+> moreExTm :: Size -> ExTmRN -> Parsley Token ExTmRN
+> moreExTm AscSize e =
+>   (| (N e :?) (%keyword ":"%) pInTm |) <|> moreExTm (pred AscSize) e
+> moreExTm AppSize e = (e :$) <$>
+>   (| Fst (%keyword "!"%)
+>    | Snd (%keyword "-"%)
+>    | Out (%keyword "%"%)
+>    | A (sizedInTm ArgSize)
+>    |)
+> moreExTm EqSize e =
+>   (|eqG  (pFilter isEqSide (pure (N e))) (%keyword "<->"%)
+>          (pFilter isEqSide (sizedInTm (pred EqSize)))
+>    |) <|> moreExTm (pred EqSize) e
+>   where
+>     eqG (y0 :>: t0) (y1 :>: t1) = eqGreen :@ [y0, t0, y1, t1]
+> moreExTm z _ = (|)
+
+> specialInTm :: Size -> Parsley Token InTmRN
+> specialInTm ArgSize =
+>     (|SET (%keyword "*"%) 
+>      |PROP (%keyword "#"%)
+>      |ABSURD (%keyword "FF"%)
+>      |TRIVIAL (%keyword "TT"%)
+>      |Q (%keyword "?"%) (ident <|> pure "")
+>      |CON (%keyword "@"%) (sizedInTm ArgSize)
+>      |TAG (%keyword "`"%) ident
+>      |(iter LAV) (%keyword "\\"%) (some ident) (%keyword "->"%) pInTm
+>      |id (bracket Square tuple)
+>      |ENUMT (bracket Curly (|  (iter (CONSE . TAG)) (pSep (keyword ",") ident)
+>                                (| id (%keyword "/"%) pInTm | NILE |)|))
+>      |mkNum (|read digits|) (optional $ (keyword "+") *> sizedInTm ArgSize)
+>      |id (bracket Round sigma)
+>      |)
+>   where
+>     tuple =
+>         (|PAIR (sizedInTm ArgSize) (| id (%keyword "/"%) pInTm | id tuple |)
+>          |VOID (% pEndOfStream %)
+>          |)
+>     sigma = (|mkSigma (optional (ident <* keyword ":")) pInTm sigmaMore
+>              |UNIT (% pEndOfStream %)
+>              |)
+>     sigmaMore = (|id (% keyword ";" %) (sigma <|> pInTm)
+>                  |(\p s -> mkSigma Nothing (PRF p) s) (% keyword ":-" %) pInTm sigmaMore
+>                  |(\x -> PRF x) (% keyword ":-" %) pInTm
+>                  |)
+>     mkSigma Nothing s t = C $ Sigma s (L (K t))
+>     mkSigma (Just x) s t = C (Sigma s (L (x :. t)))
+>     mkNum 0 Nothing = ZE
+>     mkNum 0 (Just t) = t
+>     mkNum n t = SU (mkNum (n-1) t)
+> specialInTm AndSize =
+>     (|PRF (%keyword ":-"%) (sizedInTm AndSize)
+>      |MU (%keyword "Mu"%) (sizedInTm ArgSize)
+>      |)
+> specialInTm PiSize =
+>     (|(flip iter)  (some (bracket Round (|ident, (%keyword ":"%) pInTm|)))
+>                    (| (uncurry PIV) (%keyword "->"%) | (uncurry ALLV) (%keyword "=>"%) |)
+>                    pInTm |)
+> specialInTm z = (|)
+
+> moreInTm :: Size -> InTmRN -> Parsley Token InTmRN
+> moreInTm EqSize t =
+>   (| EQBLUE  (pFilter isEqSide (pure t)) (%keyword "=="%)
+>              (pFilter isEqSide (sizedInTm (pred EqSize)))
+>    |) <|> moreInTm (pred EqSize) t
+> moreInTm AndSize s =
+>   (| (AND s) (%keyword "&&"%) (sizedInTm AndSize)
+>    |)
+> moreInTm ArrSize s =
+>   (| (ARR s) (%keyword "->"%) (sizedInTm ArrSize)
+>    | (IMP s) (%keyword "=>"%) (sizedInTm ArrSize)
+>    |)
+> moreInTm z _ = (|)
+
+> isEqSide :: InTmRN -> Maybe (InTmRN :>: InTmRN)
+> isEqSide (N (t0 :? y0)) = Just (y0 :>: t0)
+> isEqSide _ = Nothing

@@ -118,14 +118,15 @@ Elim forms inherited from elsewhere
 >   traverse f (Box p)   = (|Box (traverse f p)|)
 
 > import -> CanPats where
->   pattern PROP    = C Prop
->   pattern PRF p   = C (Prf p)
->   pattern IMP p q = C (All (PRF p) (L (K q)))
->   pattern ALL p q = C (All p q)
->   pattern AND p q = C (And p q)
->   pattern TRIVIAL = C Trivial
->   pattern ABSURD  = C Absurd
->   pattern BOX p   = C (Box p)
+>   pattern PROP        = C Prop
+>   pattern PRF p       = C (Prf p)
+>   pattern ALL p q     = C (All p q)
+>   pattern IMP p q     = ALL (PRF p) (L (K q))
+>   pattern ALLV x s p  = ALL s (LAV x p)
+>   pattern AND p q     = C (And p q)
+>   pattern TRIVIAL     = C Trivial
+>   pattern ABSURD      = C Absurd
+>   pattern BOX p       = C (Box p)
 
 > import -> SugarTactics where
 >   propTac = can Prop

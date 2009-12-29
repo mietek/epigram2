@@ -1,5 +1,7 @@
 > module  Tests.TmParse where
 
+> import Data.Foldable
+
 > import Parsley
 > import Lexer
 > import TmParse
@@ -108,13 +110,11 @@
 >         ]
 
 
-> main = do
->     Prelude.sequence_ $
->            map (\x -> 
->                 let tokenX = parse tokenize x in
->                 let parseX = parse bigInTm (fromRight tokenX) in
->                 putStrLn (x ++ "\t==>\t" ++ show tokenX ++ "\t==>\t" ++ show parseX))
->            tests
->                where fromRight (Right x) = x
->                      fromRight (Left x) = error $ show x
+> test :: Show x => Parsley Token x -> String -> IO ()
+> test p x =
+>   let (Right tox) = parse tokenize x in
+>     let parseX = parse p tox in
+>       putStrLn (x ++ "\t==>\t" ++ show tox ++ "\t==>\t" ++ show parseX)
 
+> main = do
+>     foldMap (test pInTm) tests

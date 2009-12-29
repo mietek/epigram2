@@ -163,6 +163,12 @@ predicate, and returning the result of |f| as tokens.
 >     Just b -> return b
 >     Nothing -> empty
 
+Here's a useful static operation:
+
+> pGuard :: Bool -> Parsley t ()
+> pGuard True   = (|()|)
+> pGuard False  = (|)
+
 
 \subsection{Token manipulation}
 

@@ -231,6 +231,8 @@ We have some pattern synonyms for common, er, patterns.
 > pattern CON t     = C (Con t)
 > pattern NV n      = N (V n)
 > pattern NP n      = N (P n)
+> pattern LAV x t   = L (x :. t)
+> pattern PIV x s t = PI s (LAV x t)
 > import <- CanPats
 
 We have some type synonyms for commonly occurring instances of |Tm|.
