@@ -52,7 +52,7 @@ With some computational behavior:
 
 < eqGreen(Set, C t0, Set, C t1) :-> {- $\wedge_{(t0',t1') \in [t0,t1]}$ -} eqGreen(canTy t0', t0', canTy t0', t1')
 < eqGreen(Pi s1 t1, f1, Pi s2 t2, f2) :-> All s1 (\x1 -> All s2 (\x2 ->
-<                                         Imp (EqBlue(s2 :>: x2) (s1 :>: x1))
+<                                         Imp (EqBlue(s1 :>: x1) (s2 :>: x2))
 <                                             (eqGreen(t1 x1, f1 x1, t2 x2, f2 x2))))
 < eqGreen(...) :-> (...) -- defined by aspect OpRunEqGreen
 
@@ -175,36 +175,29 @@ With no computational behavior.
 >            oprun [N x,y,q,s] = Left x
 >            oprun [x,N y,q,s] = Left y
 >            oprun _ = undefined
->
-> import -> Axioms where
->   coh = [("Axiom",0),("coh",0)] := (DECL :<: cohType)
->       where cohType = trustMe (SET :>: cohTypeTac)
->             cohTypeTac 
->              = piTac setTac
->                      (\x ->
->                       piTac setTac
->                             (\y ->
->                              piTac (prfTac (eqBlueTac (setTac :>: use x done)
->                                                       (setTac :>: use y done)))
->                                    (\q ->
->                                     piTac (use x done)
->                                           (\s ->
->                                            prfTac (eqBlueTac (use x done :>: use s done)
->                                                              (use y done :>: useOp coe [ use x done 
->                                                                                        , use y done
->                                                                                        , use q done
->                                                                                        , use s done ] done))))))
->
->   refl = [("Axiom",0),("refl",0)] := (DECL :<: reflType)
->          where reflType = trustMe (SET :>: reflTypeTac)
->                reflTypeTac = piTac setTac
->                                    (\s ->
->                                     piTac (use s done)
->                                           (\x ->
->                                            prfTac (eqBlueTac (use s done :>: use x done)
->                                                              (use s done :>: use x done))))
->
 
 > import -> Operators where
 >   eqGreen :
 >   coe :
+
+> import -> AxCode where
+>   coh = [("Axiom",0),("coh",0)] := (DECL :<: cohType) where
+>     cohType = trustMe (SET :>: cohTypeTac)
+>     cohTypeTac = prfTac $
+>       allTac setTac $ \ x ->
+>       allTac setTac $ \ y ->
+>       allTac
+>         (prfTac (eqBlueTac (setTac :>: var x) (setTac :>: var y))) $ \ q ->
+>       allTac (var x) $ \ s ->
+>       eqBlueTac (var x :>: var s)
+>         (var y :>: useOp coe [var x, var y, var q, var s] done)
+>   refl = [("Axiom",0),("refl",0)] := (DECL :<: reflType) where
+>     reflType = trustMe (SET :>: reflTypeTac)
+>     reflTypeTac = prfTac $
+>       allTac setTac $ \s ->
+>       allTac (var s) $ \x ->
+>       eqBlueTac (var s :>: var x) (var s :>: var x)
+
+> import -> Axioms where
+>   ("coh", coh) :
+>   ("refl", refl) :

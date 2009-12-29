@@ -435,13 +435,20 @@ In this section, we weave some She aspects. In particular, we bring
 inside @Rules.lhs@ the |OpCode|s and |Operators| defined in the
 various Features.
 
-> import <- Axioms
 > import <- OpCode
 >
 > operators :: [Op]
 > operators = (
 >   import <- Operators
 >   [])
+
+> import <- AxCode
+>
+> axioms :: [(String, REF)]
+> axioms = (
+>   import <- Axioms
+>   [])
+
 
 We also define and import some handy tactics, sugaring some canonical
 constructors to make them easier to swallow.
@@ -566,16 +573,11 @@ Rooty. Provided with a Root and an Operator, we compute its type.
 >                             lambda $ \s2 ->
 >                             lambda $ \t2 ->
 >                             lambda $ \f2 ->
->                             allTac (use s1 done)
->                                    (\x1 ->
->                                     allTac (use s2 done)
->                                            (\x2 ->
->                                             impTac (eqBlueTac (use s2 done :>: use x2 done)
->                                                               (use s1 done :>: use x1 done))
->                                                    (eqGreenTac ((t1 @@@ [ use x1 done ]) :>:
->                                                                 (f1 @@@ [ use x1 done ]))
->                                                                ((t2 @@@ [ use x2 done ]) :>:
->                                                                 (f2 @@@ [ use x2 done ])))))
+>                             allTac (var s1) $ \x1 ->
+>                             allTac (var s2) $ \x2 ->
+>                             impTac (eqBlueTac (var s1 :>: var x1) (var s2 :>: var x2)) $
+>                               eqGreenTac ((t1 @@@ [ var x1 ]) :>: (f1 @@@ [ var x1 ]))
+>                                          ((t2 @@@ [ var x2 ]) :>: (f2 @@@ [ var x2 ]))
 >             eqGreenTac (y0 :>: t0) (y1 :>: t1) = useOp eqGreen [y0,t0,y1,t1] done
 > opRunEqGreen [C ty0,C t0,C ty1,C t1] = case halfZip t0'' t1'' of
 >    Nothing -> Right ABSURD 
@@ -596,15 +598,15 @@ Rooty. Provided with a Root and an Operator, we compute its type.
 
 > coerce :: (Can (VAL,VAL)) -> VAL -> VAL -> VAL
 > coerce (Pi (x1,x2) (y1,y2))    q f = 
->              eval [.x1.x2.y1.y2.q.f.coh.
+>              eval [.x1.x2.y1.y2.q.f.
 >                   (L $ "" :. [.s.
 >                     (let
 >                     cs = N (coe :@ [NV x2,NV x1,N (V q :$ Fst :$ Sym),NV s])
->                     q2 = N (V coh :$ A (NV x2) :$ A (NV x1) :$ A (N (V q :$ Fst :$ Sym)) :$ A (NV s))
+>                     q2 = N (P coh :$ A (NV x2) :$ A (NV x1) :$ A (N (V q :$ Fst :$ Sym)) :$ A (NV s))
 >                     in
 >                     N $ coe :@ [N (V y1 :$ A cs),
 >                                 y2 $# [s],
 >                                 N (V q :$ Snd :$ A (NV s) :$ A cs :$ A q2),
 >                                 N (V f :$ A cs)])])]
->                    (B0 :< x1 :< x2 :< y1 :< y2 :< q :< f :< (pval coh))
+>                    (B0 :< x1 :< x2 :< y1 :< y2 :< q :< f)
 > import <- Coerce
