@@ -3,6 +3,7 @@
 %if False
 
 > {-# LANGUAGE FlexibleInstances, FlexibleContexts, MultiParamTypeClasses #-}
+> {-# LANGUAGE TypeFamilies #-}
 
 > module MissingLibrary where
 
@@ -18,6 +19,32 @@
 > import Data.Traversable
 
 %endif
+
+\subsection{Indicator Function}
+
+> indicator :: (x -> Bool) -> x -> Int
+> indicator p x = if p x then 1 else 0
+
+\subsection{Newtype Unwrapping}
+
+> class Newtype n where
+>   type Unwrap n
+>   wrap :: Unwrap n -> n
+>   unwrap :: n -> Unwrap n
+
+> ala :: Newtype v' =>
+>        (t -> t') -> ((s -> t') -> u -> v') -> (s -> t) -> u -> Unwrap v'
+> ala p h f u = unwrap (h (p . f) u)
+
+> instance Newtype (Sum a) where
+>   type Unwrap (Sum a) = a
+>   wrap    = Sum
+>   unwrap  = getSum
+
+> instance Newtype (Endo a) where
+>   type Unwrap (Endo a) = a -> a
+>   wrap    = Endo
+>   unwrap  = appEndo
 
 \subsection{Error Handling}
 
