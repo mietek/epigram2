@@ -220,7 +220,7 @@ does most of its work in the |mangleP| function.
 > christener :: Entries -> Name -> Bwd String -> Mangle Identity REF String
 > christener es me vs = Mang
 >     {  mangP = \(target := _) as -> pure (mangleP es me vs target (runIdentity as))
->     ,  mangV = \i _ -> pure (P (vs !. i))
+>     ,  mangV = \i as -> (| (P (vs !. i) $:$) as |)
 >     ,  mangB = \v -> christener es me (vs :< v)
 >     }
 
@@ -228,16 +228,18 @@ does most of its work in the |mangleP| function.
 The |mangleP| function takes a list of entries in scope, the name of the curent
 location, a list of local variables, the name of the parameter to christen and a
 spine of arguments. It gives an appropriate relative name to the parameter and
-applies it to the arguments, dropping any that are shared with the current location.
+applies it to the arguments --- \empf{for girls}, dropping any that are shared with the current location.
 
 > mangleP :: Entries -> Name -> Bwd String -> Name -> [Elim (InTm String)] -> ExTm String
 > mangleP auncles me vs target args = 
 >     let  (prefix, (t, n):targetSuffix) = splitNames me target
->          numBindersToSkip = getSum (foldMap (\x -> if x == t then Sum 1 else Sum 0) vs)
+>          numBindersToSkip = ala Sum foldMap (indicator (t ==)) vs
+>          boyCount = ala Sum foldMap (indicator (not. entryHasDev))
 >     in
 >       case findName auncles (prefix++[(t, n)]) t numBindersToSkip of
 >         Just (ancestor, commonEntries, i) -> 
->             let args' = drop (bwdLength commonEntries) args
+>             let args' | entryHasDev ancestor  = drop (boyCount commonEntries) args
+>                       | otherwise             = args
 >             in  if targetSuffix == []
 >                 then  P (showRelName [(t, Rel i)]) $:$ args'
 >                 else
