@@ -93,6 +93,8 @@ to determine the appropriate index.
 >     toNum 0  = ZE
 >     toNum n  = SU (toNum (n-1))
 
+> elaborate b (PRF p :>: VOID) = prove b p
+
 
 Elaborating a canonical term with canonical type is a job for |canTy|.
 
@@ -183,6 +185,57 @@ those of |infer|.
 >   return (vty :>: t' :? ty')
 
 > elabInfer tt = throwError' ("elabInfer: can't cope with " ++ show tt)
+
+
+\subsubsection{Proof Construction}
+
+This operation, part of elaboration, tries to prove a proposition, leaving the
+hard bits for the human.
+
+> prove :: Bool -> VAL -> ProofState (INTM :=>: VAL)
+> prove b TRIVIAL = return (VOID :=>: VOID)
+> prove b (AND p q) = do
+>   (pt :=>: pv) <- prove False p
+>   (qt :=>: qv) <- prove False q
+>   return (PAIR pt qt :=>: PAIR pv qv)
+> prove b p@(ALL _ _) = elaborate b (PRF p :>: L ("__prove" :. VOID))
+> prove b p@(EQBLUE (y0 :>: t0) (y1 :>: t1)) = useRefl <|> unroll <|> search p where
+>   useRefl = do
+>     guard =<< withRoot (equal (SET :>: (y0, y1)))
+>     guard =<< withRoot (equal (y0 :>: (t0, t1)))
+>     let w = pval refl $$ A y0 $$ A t0
+>     qw <- bquoteHere w
+>     return (qw :=>: w)
+>   unroll = do
+>     Right p <- return $ opRun eqGreen [y0, t0, y1, t1]
+>     (t :=>: v) <- prove False p
+>     return (CON t :=>: CON v)
+> prove b p@(N (qop :@ [y0, t0, y1, t1])) | qop == eqGreen = do
+>   let g = EQBLUE (y0 :>: t0) (y1 :>: t0)
+>   (_ :=>: v) <- prove False g
+>   let v' = v $$ Out
+>   t' <- bquoteHere v'
+>   return (t' :=>: v')
+> prove b p = search p
+
+> search :: VAL -> ProofState (INTM :=>: VAL)
+> search p = do
+>   es <- getAuncles
+>   aunclesProof es p <|> elaborate False (PRF p :>: Q "")
+
+> aunclesProof :: Entries -> VAL -> ProofState (INTM :=>: VAL)
+> aunclesProof B0 p = empty
+> aunclesProof (es :< E ref _ (Boy _) _) p =
+>   synthProof (pval ref :<: pty ref) p <|> aunclesProof es p
+> aunclesProof (es :< _) p = aunclesProof es p  -- for the time being
+
+> synthProof :: (VAL :<: TY) -> VAL -> ProofState (INTM :=>: VAL)
+> synthProof (v :<: PRF p) p' = do
+>   guard =<< withRoot (equal (PROP :>: (p, p')))
+>   t <- bquoteHere v
+>   return (t :=>: v)
+> synthProof _ _ = (|)
+
 
 
 \subsection{Display-Term Commands}
