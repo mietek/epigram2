@@ -534,6 +534,13 @@ Rooty. Provided with a Root and an Operator, we compute its type.
           and, in general, does not introduce quantifiers. At first
           glance, this contradicts the definition in the OTT paper.}
 
+That's true: this presentation is uniformly structural for canonical
+terms, ignoring contravariance. It will work out the same in the end,
+provided we remember to apply symmetry when we use the proofs in
+contravariant positions. It seemed cheap at the time, but perhaps it's
+a false economy.
+
+
 > mkEqConj :: [(TY :>: VAL,TY :>: VAL)] -> VAL
 > mkEqConj ((y0 :>: t0,y1 :>: t1) : []) = eqGreen @@ [y0,t0,y1,t1]
 > mkEqConj ((y0 :>: t0,y1 :>: t1) : xs) = 
@@ -595,6 +602,12 @@ Rooty. Provided with a Root and an Operator, we compute its type.
 
 \question{At first glance, the coerce rule for |Pi| does not respect
           the definition of the OTT paper.}
+
+We're applying symmetry for the equation on domain types because we
+need to coerce contravariantly. By contrast, the OTT paper twists the
+equation in the first place. It wouldn't kill us to do that: we'd have
+to add one special case, overriding the default structural behaviour,
+but we'd be able to drop |Sym|, which would be neater perhaps.
 
 > coerce :: (Can (VAL,VAL)) -> VAL -> VAL -> VAL
 > coerce (Pi (x1,x2) (y1,y2))    q f = 

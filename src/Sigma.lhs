@@ -72,12 +72,6 @@ Equality rules:
 
 Coercion rule:
 
-< coe(Sigma x1 y1, Sigma x2 y2, q, f) :-> 
-<     (something, but not that)
-<     \s1 -> coe(y2 s2, y1 s1, q s2 s1 q2, f s2)
-<         where s2 = coe(x2, x1, fst q, s1)
-<               q2 = coh(x2, x1, fst q, s1)
-
 
 > import -> CanConstructors where
 >   Unit   :: Can t

@@ -228,7 +228,7 @@ does most of its work in the |mangleP| function.
 The |mangleP| function takes a list of entries in scope, the name of the curent
 location, a list of local variables, the name of the parameter to christen and a
 spine of arguments. It gives an appropriate relative name to the parameter and
-applies it to the arguments --- \empf{for girls}, dropping any that are shared with the current location.
+applies it to the arguments --- \emph{for girls}, dropping any that are shared with the current location.
 
 > mangleP :: Entries -> Name -> Bwd String -> Name -> [Elim (InTm String)] -> ExTm String
 > mangleP auncles me vs target args = 
