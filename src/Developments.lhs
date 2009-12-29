@@ -4,7 +4,7 @@
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE FlexibleInstances, TypeOperators #-}
+> {-# LANGUAGE FlexibleInstances, TypeOperators, GADTs #-}
 
 > module Developments where
 
@@ -14,7 +14,7 @@
 > import Data.Foldable
 > import Data.List
 > import Data.Maybe
-> import Data.Monoid
+> import Data.Monoid hiding (All)
 > import Data.Traversable
 
 > import BwdFwd
@@ -122,7 +122,7 @@ over all following entries and the definition (if any) in its development.
 >   =  Boy   BoyKind
 >   |  Girl  GirlKind (Dev f)
 >
-> data BoyKind   = LAMB | PIB  deriving (Show, Eq)
+> data BoyKind   = LAMB | ALAB | PIB  deriving (Show, Eq)
 > data GirlKind  = LETG        deriving (Show, Eq)
 
 > instance Show (Entity Bwd) where
@@ -224,6 +224,8 @@ $\lambda$- and $\Pi$-binds over a list $\nabla$.
 >     help (delta   :< _)                         B0            t = help delta B0 t
 >     help (delnab  :< E _ (x, _)  (Boy LAMB) _)  (nabla :< _)  t = 
 >         help delnab nabla (L (x :. t))
+>     help (delnab  :< E _ (x, _)  (Boy ALAB) _)  (nabla :< _)  t = 
+>         help delnab nabla (L (x :. t))
 >     help (delnab  :< E _ (x, _)  (Boy PIB) s)   (nabla :< _)  t = 
 >         help delnab nabla (PI (delnab -| s) (L (x :. t)))
 >     help (delnab  :< _)                         (nabla :< _)  t = help delnab nabla t
@@ -242,9 +244,10 @@ in the list of entries, and produces |SET| when it encounters a $\Pi$-boy.
 
 > inferGoalType :: Bwd (Entry Bwd) -> INTM -> INTM
 > inferGoalType B0 t = t
-> inferGoalType (es :< E _ (x,_)  (Boy LAMB)  s)  t = inferGoalType es (PI s (L (x :. t)))
-> inferGoalType (es :< E _ (x,_)  (Boy PIB)   s)  t = inferGoalType es SET
-> inferGoalType (es :< _)                         t = inferGoalType es t
+> inferGoalType (es :< E _ (x,_)  (Boy LAMB)  s)  t        = inferGoalType es (PI (es -| s) (L (x :. t)))
+> inferGoalType (es :< E _ (x,_)  (Boy ALAB)  s)  (PRF t)  = inferGoalType es (PRF (ALL (es -| s) (L (x :. t))))
+> inferGoalType (es :< E _ (x,_)  (Boy PIB)   s)  SET      = inferGoalType es SET
+> inferGoalType (es :< _)                         t        = inferGoalType es t
 
 \subsection{Traversal}
 
@@ -269,6 +272,7 @@ its references:
 > traverseEntity f (Girl gk dv) = (|Girl (traverseGK f gk) (traverseDev f dv)|)
 
 > traverseBK :: Applicative f => (REF -> f REF) -> BoyKind -> f BoyKind
+> traverseBK f ALAB = pure ALAB
 > traverseBK f LAMB = pure LAMB
 > traverseBK f PIB =  pure PIB
 

@@ -122,25 +122,25 @@ with constant functions.
 If we are not at top level, we create a subgoal corresponding to the term, solve it
 by elaboration, then return the reference. 
 
-> elaborate False (PI s t :>: L sc) = do
->     let x :: String = case sc of { (x :. _) -> x ; K _ -> "_" }
->     pi' <- bquoteHere (PI s t)
+> elaborate False (ty :>: L sc) = do
+>     Just _ <- return $ lambdable ty
+>     pi' <- bquoteHere ty
 >     make ("h" :<: pi')
 >     goIn
->     l <- lambdaBoy x
+>     l <- lambdaBoy (fortran (L sc))
 >     h <- elabGive (underScope sc l)
 >     return (h :=>: evTm h)
 
 If we are at top level, we can simply create a |lambdaBoy| in the current development,
 and carry on elaborating.
 
-> elaborate True (PI s t :>: L sc) = do
->     let x :: String = case sc of { (x :. _) -> x ; K _ -> "_" }
->     l <- lambdaBoy x
->     elaborate True (t $$ A (pval l) :>: underScope sc l)
+> elaborate True (ty :>: L sc) = do
+>     Just _ <- return $ lambdable ty
+>     l <- lambdaBoy (fortran (L sc))
+>     _ :=>: ty <- getGoal "elaborate lambda"
+>     elaborate True (ty :>: underScope sc l)
 >     
     
-
 Much as with type-checking, we push types in to neutral terms by calling |elabInfer| on
 the term, then checking the inferred type is what we pushed in.
 

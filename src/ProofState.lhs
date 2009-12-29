@@ -606,17 +606,26 @@ appends a $\lambda$-abstraction with the appropriate type to the current develop
 > lambdaBoy x = do
 >     tip <- getDevTip
 >     case tip of
->         Unknown (pi :=>: PI s t) -> do
->             root <- getDevRoot
->             (Root.freshRef (x :<: s) (\ref r -> do
->                 putDevEntry (E ref (lastName ref) (Boy LAMB) (bquote B0 s r))
->                 let tipTyv = t $$ A (pval ref)
->                 putDevTip (Unknown (bquote B0 tipTyv r :=>: tipTyv))
->                 putDevRoot r
->                 return ref
->               ) root)
->         Unknown _  -> throwError' "lambdaBoy: goal is not a pi-type."
->         _          -> throwError' "lambdaBoy: only possible for incomplete goals."
+>       Unknown (pi :=>: ty) -> case lambdable ty of
+>         Just (k, s, t) -> do
+>           root <- getDevRoot
+>           Root.freshRef (x :<: s) (\ref r -> do
+>             putDevEntry (E ref (lastName ref) (Boy k) (bquote B0 s r))
+>             let tipTyv = t (pval ref)
+>             putDevTip (Unknown (bquote B0 tipTyv r :=>: tipTyv))
+>             putDevRoot r
+>             return ref
+>               ) root
+>         _  -> throwError' "lambdaBoy: goal is not a pi-type or all-proof."
+>       _          -> throwError' "lambdaBoy: only possible for incomplete goals."
+
+The following piece of kit might profitably be shifted to somewhere more
+general.
+
+> lambdable :: TY -> Maybe (BoyKind, TY, VAL -> TY)
+> lambdable (PI s t)         = Just (LAMB, s, (t $$) . A)
+> lambdable (PRF (ALL s p))  = Just (ALAB, s, \v -> PRF (p $$ A v))
+> lambdable _                = Nothing
 
 The |make| command adds a named goal of the given type to the bottom of the
 current development, after checking that the purported type is in fact a type.
@@ -771,7 +780,7 @@ has become more defined, and pass on the good news if necessary.
 >         (_, NoNews) -> putDevEntry (E (name := DECL :<: tv) sn (Boy k) ty) >> propagateNews news (NF es)
 >         (ty', GoodNews) -> do
 >             let ref = name := DECL :<: evTm ty'
->             putDevEntry (E ref sn (Boy LAMB) ty')
+>             putDevEntry (E ref sn (Boy k) ty')
 >             propagateNews ((ref, GoodNews):news) (NF es)
 
 Updating girls is a bit more complicated. We proceed as follows:

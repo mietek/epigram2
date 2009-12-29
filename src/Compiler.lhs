@@ -193,6 +193,7 @@ by hand in Epic - see epic/support.e
 > flatten b ma del (F0, Module, _) = []
 > flatten LAMB ma del (F0, Unknown _, _) = [(ma, del, Missing (show ma))]
 > flatten LAMB ma del (F0, Defined tm _, _) = [(ma, del, makeBody tm)]
+> flatten ALAB ma del (F0, _, _) = [(ma, del, Ignore)]
 > flatten PIB ma del (F0, _, _) = [(ma, del, Ignore)]
 > flatten _ ma del (E (x := _) _ (Boy b) _ :> es, tip, root) =
 >     flatten b ma (del :< x) (es, tip, root)

@@ -67,6 +67,7 @@ to allow extra canonical terms and eliminators to be pretty-printed.
 >
 >     prettyBKind :: BoyKind -> Doc -> Doc
 >     prettyBKind LAMB  d = text "\\" <+> d <+> text "->"
+>     prettyBKind ALAB  d = text "\\" <+> d <+> text "=>"
 >     prettyBKind PIB   d = parens d <+> text "->"
 
 
