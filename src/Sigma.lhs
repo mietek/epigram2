@@ -172,10 +172,9 @@ Coercion rule:
 >   elimTy chev (p :<: Sigma s t) Snd = return (Snd, t $$ A (p $$ Fst))
 
 > import -> EtaExpand where
->   etaExpand (VOID :>: v) r = Just (UNIT)
+>   etaExpand (UNIT :>: v) r = Just VOID
 >   etaExpand (ty@(SIGMA s t) :>: p) r = let x = p $$ Fst in 
->     (| (\x y -> PAIR x y) (etaExpand (s :>: x) r) 
->                   (etaExpand (t $$ (A x) :>: (p $$ Snd)) r) |)
+>     Just (PAIR (inQuote (s :>: x) r) (inQuote (t $$ (A x) :>: (p $$ Snd)) r))
 
 > import -> OpCompile where
 >   ("split", [_,_,y,_,f]) -> App (Var "__split") [f,y] 
