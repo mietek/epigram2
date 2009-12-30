@@ -142,14 +142,9 @@ entry's children to resolve the next component.
 > findGlobal B0 sos = empty
 > findGlobal (xs :< e) (y : ys) = case hits (entryLastName e) y of
 >     Right _  -> case e of
->         E r _ e _ -> findChild r (foldMap boy xs) e ys
->         M n (es, _, _) -> findD es ys (foldMap boy xs)
+>         E r _ e _ -> findChild r (boySpine xs) e ys
+>         M n (es, _, _) -> findD es ys (boySpine xs)
 >     Left y'  -> findGlobal xs (y' : ys)
->   where
->     boy :: Entry Bwd -> Spine {TT} REF
->     boy (E r _ (Boy _) _)  = [A (N (P r))]
->     boy _                = []
-
 
 The |findChild| function takes a reference to a containing entry, a spine of
 shared parameters, an entity |e| and the remainder of a relative name to
@@ -231,9 +226,9 @@ spine of arguments. It gives an appropriate relative name to the parameter and
 applies it to the arguments --- \emph{for girls}, dropping any that are shared with the current location.
 
 > mangleP :: Entries -> Name -> Bwd String -> Name -> [Elim (InTm String)] -> ExTm String
-> mangleP auncles me vs target args = 
->     let  (prefix, (t, n):targetSuffix) = splitNames me target
->          numBindersToSkip = ala Sum foldMap (indicator (t ==)) vs
+> mangleP auncles me vs target args = case  splitNames me target of
+>   (prefix, (t, n):targetSuffix) ->
+>     let  numBindersToSkip = ala Sum foldMap (indicator (t ==)) vs
 >          boyCount = ala Sum foldMap (indicator (not. entryHasDev))
 >     in
 >       case findName auncles (prefix++[(t, n)]) t numBindersToSkip of
@@ -247,6 +242,7 @@ applies it to the arguments --- \emph{for girls}, dropping any that are shared w
 >                        n = (t, Rel i) : (searchKids kids targetSuffix 0)
 >                   in   P (showRelName n) $:$ args'
 >         Nothing -> P $ showName target
+>   (prefix, []) -> P "!!!"
 
 
 The |searchKids| function searches a list of children to match a name suffix, producing

@@ -57,7 +57,7 @@ left, and will do so with |littleInTm|.
 >      |id sigmaParse
 >      |id blueEqParse
 >      |PRF (%keyword ":-"%) bigInTm
->      |MU  (%keyword "Mu"%) bigInTm
+>      |(MU Nothing)  (%keyword "Mu"%) bigInTm
 >      |id (pLoop littleInTm pLAfter)
 >      |N bigExTm
 >      |)
@@ -309,7 +309,7 @@ in the context all the names in the |InTm String| produced by |bigInTm|.
 >     mkNum n t = SU (mkNum (n-1) t)
 > specialInTm AndSize =
 >     (|PRF (%keyword ":-"%) (sizedInTm AndSize)
->      |MU (%keyword "Mu"%) (sizedInTm ArgSize)
+>      |(MU Nothing) (%keyword "Mu"%) (sizedInTm ArgSize)
 >      |)
 > specialInTm PiSize =
 >     (|(flip iter)  (some (bracket Round (|ident, (%keyword ":"%) pInTm|)))

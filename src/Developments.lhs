@@ -133,6 +133,16 @@ over all following entries and the definition (if any) in its development.
 >     show (Boy k) = "Boy " ++ show k
 >     show (Girl k d) = "Girl " ++ show k ++ " " ++ show d
 
+We often need to turn the sequence of boys (parameters) under which we
+work into the argument spine of a \(\lambda\)-lifted definition.
+
+> boySpine :: Entries -> Spine {TT} REF
+> boySpine = foldMap boy where
+>   boy :: Entry Bwd -> Spine {TT} REF
+>   boy (E r _ (Boy _) _)  = [A (N (P r))]
+>   boy _                = []
+
+
 \subsection{News about updated references}
 
 |News| represents possible changes to references. At the moment, it may be |GoodNews|

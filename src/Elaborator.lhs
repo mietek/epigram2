@@ -52,6 +52,17 @@ rather than creating a subgoal.
 
 > elaborate :: Bool -> (TY :>: INDTM) -> ProofState (INTM :=>: VAL)
 
+Here's a case which makes labelled datatypes
+
+> elaborate True (SET :>: MU Nothing d) = do
+>     GirlMother (nom := HOLE :<: ty) _ _ <- getMother
+>     let fr = nom := FAKE :<: ty
+>     xs <- (| boySpine getAuncles |)
+>     let lt = N (P fr $:$ xs)
+>     let lv = evTm lt
+>     (t :=>: v) <- elaborate False (desc :>: d)
+>     return (MU (Just lt) t :=>: MU (Just lv) v)
+
 First, some special cases to provide a convenient syntax for writing functions from
 interesting types.
 
@@ -65,8 +76,10 @@ interesting types.
 >     goIn
 >     elabbedT =<< elabGive t
 
-> elaborate True (PI (MU d) t :>: CON f) = do
->     (m' :=>: _) <- elaborate False (elimOpMethodType $$ A d $$ A t :>: f)
+> elaborate True (PI (MU l d) t :>: CON f) = do
+>     (m' :=>: _) <- elaborate False $ case l of
+>       Nothing  -> elimOpMethodType $$ A d $$ A t :>: f
+>       Just l   -> elimOpLabMethodType $$ A l $$ A d $$ A t :>: f
 >     d' <- bquoteHere d
 >     t' <- bquoteHere t
 >     x <- lambdaBoy (fortran t)
@@ -100,8 +113,8 @@ interesting types.
 As some more syntactic sugar, we let inductive types elaborate lists (so |[]| becomes
 |@[0]| and |[s / t]| becomes |@ [1 s t]|).
 
-> elaborate b (MU d :>: VOID) = elaborate b (MU d :>: CON (PAIR ZE VOID))
-> elaborate b (MU d :>: (PAIR s t)) = elaborate b (MU d :>: CON (PAIR (SU ZE) (PAIR s t)))
+> elaborate b (MU l d :>: VOID) = elaborate b (MU l d :>: CON (PAIR ZE VOID))
+> elaborate b (MU l d :>: (PAIR s t)) = elaborate b (MU l d :>: CON (PAIR (SU ZE) (PAIR s t)))
 
 To elaborate a tag with an enumeration as its type, we search for the tag in the enumeration
 to determine the appropriate index.

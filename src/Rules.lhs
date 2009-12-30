@@ -59,7 +59,8 @@ we can write any type-directed function in term of |canTy|. That is,
 any function traversing the types derivation tree can be expressed
 using |canTy|.
 
-> canTy :: MonadError [String] m => (TY :>: t -> m (s :=>: VAL)) -> (Can VAL :>: Can t) -> m (Can (s :=>: VAL))
+> canTy ::  (Alternative m, MonadError [String] m) =>
+>           (TY :>: t -> m (s :=>: VAL)) -> (Can VAL :>: Can t) -> m (Can (s :=>: VAL))
 > canTy chev (Set :>: Set)     = return Set
 > canTy chev (Set :>: Pi s t)  = do
 >   ssv@(s :=>: sv) <- chev (SET :>: s)
@@ -507,8 +508,11 @@ Rooty. Provided with a Root and an Operator, we compute its type.
 >                     (PAIR (IND1 DONE)
 >                      VOID)))
 
+> descFakeREF :: REF
+> descFakeREF = [("Primitive", 0), ("Desc", 0)] := (FAKE :<: SET)
+
 > desc :: VAL
-> desc = MU inDesc
+> desc = MU (Just (N (P descFakeREF))) inDesc
 
 \subsection{Building Enum in Desc}
 
@@ -525,8 +529,11 @@ Rooty. Provided with a Root and an Operator, we compute its type.
 >                                (PAIR (ARG UID (L $ "" :. [.x. IND1 DONE]))
 >                                 VOID)
 
+> enumFakeREF :: REF
+> enumFakeREF = [("Primitive", 0), ("Enum", 0)] := (FAKE :<: SET) -- List UID ?
+
 > enumU :: VAL
-> enumU = MU inEnumU
+> enumU = MU (Just (N (P enumFakeREF))) inEnumU
 
 \subsection{Observational Equality}
 

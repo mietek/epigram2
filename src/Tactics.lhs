@@ -102,6 +102,9 @@ we have a monad:
 >     pure = return
 >     (<*>) = ap
 
+> instance Alternative Tac where
+>   empty = throwError ["Alternative empty"]
+>   s <|> t = catchError s (const t)
 
 \subsection{The tactic combinators}
 
@@ -506,7 +509,7 @@ Same thing here, for the |Mu| eliminator:
 > foldDesc p = do
 >   t <- goal
 >   case t of 
->     PI (MU d) bp ->
+>     PI (MU l d) bp ->
 >         lambda $ \v ->
 >             useOp elimOp [ return d
 >                          , use v done 

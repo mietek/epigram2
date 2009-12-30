@@ -133,17 +133,18 @@ Equality rules:
 <     eqGreen(descOp @@ [d1, Mu d1], Out x1,
 <             descOp @@ [d2, Mu d2], Out x2) 
 
+
 > import -> CanConstructors where
->   Mu     :: t -> Can t
+>   Mu     :: Labelled t -> Can t
 
 > import -> TraverseCan where
->   traverse f (Mu x)     = (|Mu (f x)|)
+>   traverse f (Mu l) = (|Mu (traverse f l)|)
 
 > import -> HalfZipCan where
->   halfZip (Mu t0) (Mu t1) = Just (Mu (t0,t1))
+>   halfZip (Mu t0) (Mu t1) = (| Mu (halfZip t0 t1) |)
 
 > import -> CanPats where
->   pattern MU x     = C (Mu x)
+>   pattern MU l x  = C (Mu (l :?=: x))
 >   pattern DONE = CON (PAIR ZE VOID)
 >   pattern ARG s d = CON (PAIR (SU ZE) (PAIR s (PAIR d VOID)))
 >   pattern IND h d = CON (PAIR (SU (SU ZE)) (PAIR h (PAIR d VOID)))
@@ -151,7 +152,7 @@ Equality rules:
 
 
 > import -> SugarTactics where
->   muTac t = can $ Mu t
+>   muTac t = can $ Mu (Nothing :?=: t)
 >   descTac = done (desc :<: SET)
 >   doneTac =  conTac (pairTac zeTac voidTac)
 >   argTac x y = conTac (pairTac (suTac zeTac) (pairTac x (pairTac y voidTac)))
@@ -159,18 +160,20 @@ Equality rules:
 >   ind1Tac x = conTac (pairTac (suTac (suTac (suTac zeTac))) (pairTac x voidTac))
 
 > import -> CanPretty where
->   prettyCan (Mu t) = parens (text "Mu" <+> pretty t)
+>   prettyCan (Mu (Just l   :?=: _))  = parens (pretty l)
+>   prettyCan (Mu (Nothing  :?=: t))  = parens (text "Mu" <+> pretty t)
 
 > import -> CanTyRules where
->   canTy chev (Set :>: Mu x)     = do
+>   canTy chev (Set :>: Mu (ml :?=: x))     = do
+>     mlv <- traverse (chev . (SET :>:)) ml
 >     xxv@(x :=>: xv) <- chev (desc :>: x)
->     return $ Mu xxv
->   canTy chev (Mu x :>: Con y) = do
->     yyv@(y :=>: yv) <- chev (descOp @@ [x, MU x] :>: y)
+>     return $ Mu (mlv :?=: xxv)
+>   canTy chev (t@(Mu (_ :?=: x)) :>: Con y) = do
+>     yyv@(y :=>: yv) <- chev (descOp @@ [x, C t] :>: y)
 >     return $ Con yyv
 
 > import -> ElimTyRules where
->   elimTy chev (_ :<: Mu d) Out = return (Out, descOp @@ [d , MU d])
+>   elimTy chev (_ :<: t@(Mu (_ :?=: d))) Out = return (Out, descOp @@ [d , C t])
 
 
 > import -> Operators where
@@ -421,6 +424,14 @@ Equality rules:
 >     arrTac (useOp boxOp [ var d, muTac (var d), var pP, var x ] done) $
 >     pP @@@ [conTac (var x)]
 
+>   elimOpLabMethodTypeType = trustMe . (SET :>:) $
+>     arrTac setTac $ piTac descTac $ \d -> arrTac (arrTac (muTac (var d)) setTac) setTac
+>   elimOpLabMethodType = trustMe . (elimOpLabMethodTypeType :>:) $
+>     lambda $ \l -> lambda $ \d -> lambda $ \pP ->
+>     piTac (useOp descOp [var d, can $ Mu (Just (var l) :?=: var d)] done) $ \x ->
+>     arrTac (useOp boxOp [var d, can $ Mu (Just (var l) :?=: var d), var pP, var x ] done) $
+>     pP @@@ [conTac (var x)]
+
 >   elimOp :: Op
 >   elimOp = Op
 >     { opName = "elimOp"
@@ -430,8 +441,8 @@ Equality rules:
 >     } where
 >       elimOpTy chev [d,v,bp,p] = do
 >         (d :=>: dv) <- chev (desc :>: d)
->         (v :=>: vv) <- chev (MU dv :>: v)
->         (bp :=>: bpv) <- chev (ARR (MU dv) SET :>: bp)
+>         (v :=>: vv) <- chev (MU Nothing dv :>: v)
+>         (bp :=>: bpv) <- chev (ARR (MU Nothing dv) SET :>: bp)
 >         (p :=>: pv) <- chev (elimOpMethodType $$ A dv $$ A bpv :>: p)
 >         return ([ d :=>: dv
 >                 , v :=>: vv 

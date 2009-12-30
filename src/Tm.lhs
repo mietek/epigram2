@@ -359,16 +359,15 @@ A |REF| can either be:
 \begin{description}
 \item[|DECL|:] used a binder, a declaration
 \item[|DEFN|:] computed, a definition
-\item[|HOLE|:] manipulated, a hole in a zipper
+\item[|HOLE|:] not computed yet, a definition-to-be
+\item[|FAKE|:] a hysterectomized definition, used to make labels
 \end{description}
-
-\question{Is that right? Especially concerning |HOLE|, it was a wild
-          guess.}
 
 > data RKind
 >   =  DECL
 >   |  DEFN VAL
 >   |  HOLE
+>   |  FAKE
 >   deriving Show
 
 We can already define some handy operators on |REF|s. First, we can
@@ -385,6 +384,28 @@ code:
 
 > pty :: REF -> VAL
 > pty (_ := _ :<: ty) = ty
+
+
+\subsection{Labels}
+
+Labels are tucked into strange places, in order to record the
+high-level presentation of low-level stuff.  A typical label is the
+neutral application of a fake reference --- a definition whose
+hysterectomy stops it computing.
+
+> data Labelled t
+>   = Maybe t :?=: t
+>   deriving (Show)
+
+Label equality is sound but not complete for equality of what has been
+labelled.
+
+> instance Eq t => Eq (Labelled t) where
+>   (Just a  :?=: _)  ==  (Just b  :?=: _) | a == b  = True
+>   (_       :?=: s)  ==  (_       :?=: t)           = s == t
+
+
+
 
 
 \subsection{Computation}
@@ -722,6 +743,16 @@ I think that this stuff should disappear with Tactics spreading.
 >   traverse f (x :. t)   = (|(x :.) (traverse f t)|)
 >   traverse f (K t)      = (|K (traverse f t)|)
 
+> instance Functor Labelled where
+>   fmap = fmapDefault
+> instance Foldable Labelled where
+>   foldMap = foldMapDefault
+> instance Traversable Labelled where
+>   traverse f (mt :?=: t)  = (| traverse f mt :?=: f t |)
+
+> instance HalfZip Labelled where
+>   halfZip (Just a  :?=: s)  (Just b :?=: t)  = Just (Just (a, b)  :?=: (s, t))
+>   halfZip (_       :?=: s)  (_      :?=: t)  = Just (Nothing      :?=: (s, t))
 
 > instance Functor (Tm {d,TT}) where
 >   fmap = fmapDefault
