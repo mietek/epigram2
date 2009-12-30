@@ -526,7 +526,7 @@ Same thing here, for the |Mu| eliminator:
 
 At some point, we need to build a value. Here is the place where it is
 done. We trust you to provide |trustMe| with a correct type,
-corresponding to the type of the value built by the |Tac VAl|. If it
+corresponding to the type of the value built by the |Tac VAL|. If it
 doesn't, good luck to find the mistake.
 
 > trustMe :: (TY :>: Tac VAL) -> VAL

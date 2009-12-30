@@ -412,7 +412,15 @@ Equality rules:
 >                                     , use p done
 >                                     , use v . apply Snd $ done ] done
 
- 
+
+>   elimOpMethodTypeType = trustMe . (SET :>:) $
+>     piTac descTac $ \d -> arrTac (arrTac (muTac (var d)) setTac) setTac
+>   elimOpMethodType = trustMe . (elimOpMethodTypeType :>:) $
+>     lambda $ \d -> lambda $ \pP ->
+>     piTac (useOp descOp [ var d, muTac (var d) ] done) $ \x ->
+>     arrTac (useOp boxOp [ var d, muTac (var d), var pP, var x ] done) $
+>     pP @@@ [conTac (var x)]
+
 >   elimOp :: Op
 >   elimOp = Op
 >     { opName = "elimOp"
@@ -424,11 +432,7 @@ Equality rules:
 >         (d :=>: dv) <- chev (desc :>: d)
 >         (v :=>: vv) <- chev (MU dv :>: v)
 >         (bp :=>: bpv) <- chev (ARR (MU dv) SET :>: bp)
->         (p :=>: pv) <- chev (PI (descOp @@ [dv,MU dv]) 
->                     (eval [.d.bp.v. L $ "" :. [.x. 
->                         ARR (N (boxOp :@ [NV d,MU (NV d),NV bp,NV x]))
->                             (N (V bp :$ A (CON (NV x))))]
->                         ] $ B0 :< dv :< bpv :< vv) :>: p)
+>         (p :=>: pv) <- chev (elimOpMethodType $$ A dv $$ A bpv :>: p)
 >         return ([ d :=>: dv
 >                 , v :=>: vv 
 >                 , bp :=>: bpv
@@ -436,28 +440,17 @@ Equality rules:
 >                 , bpv $$ A vv)
 >       elimOpRun :: [VAL] -> Either NEU VAL
 >       elimOpRun [d,CON v,bp,p] = Right $ elimOpTerm
->                                          $$ A d $$ A bp $$ A p $$ A v
+>                                              $$ A d $$ A bp $$ A p $$ A v
 >       elimOpRun [_,N x, _,_] = Left x
 >
 >       elimOpTerm = trustMe (elimOpType :>: elimOpTac) 
 >       elimOpType = trustMe (SET :>: elimOpTypeTac)
->       elimOpTypeTac = piTac descTac
->                             (\d ->
->                              piTac (arrTac (muTac (use d done))
->                                            setTac)
->                                    (\bp ->
->                                     arrTac (piTac (useOp descOp [ use d done
->                                                                 , muTac (use d done) ] done)
->                                                   (\x ->
->                                                    arrTac (useOp boxOp [ use d done
->                                                                        , muTac (use d done)
->                                                                        , use bp done
->                                                                        , use x done ] done)
->                                                           (bp @@@ [conTac (use x done)])))
->                                            (piTac (useOp descOp [ use d done
->                                                                 , muTac (use d done) ] done)
->                                                   (\v ->
->                                                    bp @@@ [conTac $ use v done]))))
+>       elimOpTypeTac = piTac descTac $ \d ->
+>                       piTac (arrTac (muTac (var d)) setTac) $ \bp ->
+>                       arrTac (chk (return (elimOpMethodType :<: elimOpMethodTypeType)
+>                                    `useTac` A (var d) `useTac` A (var bp))) $
+>                       piTac (useOp descOp [var d, muTac (var d) ] done) $ \v ->
+>                       bp @@@ [conTac $ var v]
 >
 >       elimOpTac = lambda $ \d ->  -- (d : Desc)
 >                   lambda $ \bp -> -- (bp : Mu d -> Set)
@@ -495,3 +488,4 @@ Equality rules:
 >                        , ps $$ Snd
 >                        , n ]
 >         sOpRun [_ , _ , N n] = Left n
+

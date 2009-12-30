@@ -656,8 +656,8 @@ I think that this stuff should disappear with Tactics spreading.
 > f $## xs = N (foldl (\g x -> g :$ A x) f xs)
 
 > fortran :: Tm {In, p} x -> String
-> fortran (L (x :. _)) = x
-> fortran _ = ""
+> fortran (L (x :. _)) | not (null x) = x
+> fortran _ = "x"
 
 
 > instance Traversable Can where

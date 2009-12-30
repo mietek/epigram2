@@ -42,35 +42,60 @@ The Boolean parameter indicates whether the elaborator is working at the top
 level of the term, because if so, it can create boys in the current development
 rather than creating a subgoal.
 
+> elabbedT :: INTM -> ProofState (INTM :=>: VAL)
+> elabbedT t = return (t :=>: evTm t)
+
+> elabbedV :: VAL -> ProofState (INTM :=>: VAL)
+> elabbedV v = do
+>   t <- bquoteHere v
+>   return (t :=>: v)
+
 > elaborate :: Bool -> (TY :>: INDTM) -> ProofState (INTM :=>: VAL)
 
 First, some special cases to provide a convenient syntax for writing functions from
 interesting types.
 
-> elaborate b (PI (MU d) t :>: CON f) = do
+> elaborate b (PI UNIT t :>: CON f) = do
+>     (m' :=>: m) <- elaborate False (t $$ A VOID :>: f)
+>     return $ L (K m') :=>: L (K m)
+
+> elaborate False (y@(PI _ _) :>: t@(C _)) = do
+>     y' <- bquoteHere y
+>     make ("h" :<: y')
+>     goIn
+>     elabbedT =<< elabGive t
+
+> elaborate True (PI (MU d) t :>: CON f) = do
+>     (m' :=>: _) <- elaborate False (elimOpMethodType $$ A d $$ A t :>: f)
 >     d' <- bquoteHere d
 >     t' <- bquoteHere t
->     elaborate b (PI (MU d) t :>: L ("__elabPiMu" :. N (elimOp :@ [d', N (V 0), t', f])))
+>     x <- lambdaBoy (fortran t)
+>     elabbedT . N $ elimOp :@ [d', N (P x), t', m']
 
-> elaborate b (PI (SIGMA d r) t :>: CON f) = do
->     d' <- bquoteHere d
->     r' <- bquoteHere r
->     t' <- bquoteHere t
->     elaborate b (PI (SIGMA d r) t :>: L ("__elabPiSig" :. N (splitOp :@ [d', r', N (V 0), t', f])))
+> elaborate True (PI (SIGMA d r) t :>: CON f) = do
+>     let mt =   eval [.a.b.c.
+>                  PI (NV a) . L $ fortran r :. [.x.
+>                  PI (N (V b :$ A (NV x))) . L $ "" :. [.y.
+>                  N (V c :$ A (PAIR (NV x) (NV y)))
+>                ]]] $ B0 :< d :< r :< t
+>     (m' :=>: m) <- elaborate False (mt :>: f)
+>     x <- lambdaBoy (fortran t)
+>     elabbedV $ m $$ A (pval x $$ Fst) $$ A (pval x $$ Snd)
 
-> elaborate b (PI (ENUMT e) t :>: m) | isTuply m = do
+> elaborate True (PI (ENUMT e) t :>: m) | isTuply m = do
 >     targetsDesc <- withRoot (equal (ARR (ENUMT e) SET :>: (t, L (K desc))))
+>     (m' :=>: _) <- elaborate False (branchesOp @@ [e, t] :>: m)
 >     e' <- bquoteHere e
+>     x  <- lambdaBoy (fortran t)
 >     if targetsDesc
->        then 
->            elaborate b (PI (ENUMT e) t :>: L ("__elabPiEnum" :. N (switchDOp :@ [e', m, N (V 0)])))
->        else do
->            t' <- bquoteHere t
->            elaborate b (PI (ENUMT e) t :>: L ("__elabPiEnum" :. N (switchOp :@ [e', N (V 0), t', m])))
->  where  isTuply :: INDTM -> Bool
->         isTuply VOID = True
->         isTuply (PAIR _ _) = True
->         isTuply _ = False
+>       then elabbedT . N $ switchDOp :@ [e', m', N (P x)]
+>       else do
+>         t' <- bquoteHere t
+>         elabbedT . N $ switchOp :@ [e', N (P x), t', m']
+>  where   isTuply :: INDTM -> Bool
+>          isTuply VOID = True
+>          isTuply (PAIR _ _) = True
+>          isTuply _ = False
 
 As some more syntactic sugar, we let inductive types elaborate lists (so |[]| becomes
 |@[0]| and |[s / t]| becomes |@ [1 s t]|).
