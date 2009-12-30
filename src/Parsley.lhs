@@ -69,6 +69,7 @@ It's a |Monad| and all that.
 >     (sts, s', ts)  <- s ts
 >     (tts, t', ts)  <- runParsley (f s') ts
 >     return (sts ++ tts, t', ts)
+>   fail s = Parsley $ \ _ -> fail s
 >
 > instance Functor (Parsley t) where
 >   fmap = ap . return
