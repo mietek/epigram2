@@ -46,6 +46,18 @@
 >   wrap    = Endo
 >   unwrap  = appEndo
 
+> newtype AppLift a x = AppLift (a x)
+
+> instance (Applicative a, Monoid x) => Monoid (AppLift a x) where
+>   mempty = AppLift (pure mempty)
+>   mappend (AppLift ax) (AppLift ay) = AppLift (mappend <$> ax <*> ay)
+
+> instance Newtype (AppLift a x) where
+>   type Unwrap (AppLift a x) = a x
+>   wrap = AppLift
+>   unwrap (AppLift ax) = ax
+
+
 \subsection{Error Handling}
 
 > instance MonadError [String] Maybe where
