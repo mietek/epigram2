@@ -200,7 +200,7 @@ Elim forms inherited from elsewhere
 >   nEOp :
 
 > import -> EtaExpand where
->   etaExpand (PRF p :>: x) r = Just (BOX (Irr (bquote B0 x r)))
+>   etaExpand (Prf p :>: x) r = Just (BOX (Irr (bquote B0 x r)))
 
 > import -> Check where
 >   check (PRF (ALL p q) :>: L sc) r = do

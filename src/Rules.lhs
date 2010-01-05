@@ -131,7 +131,7 @@ Quoting a value consists in, if possible, $\eta$-expanding
 it. So it goes:
 
 > inQuote :: (TY :>: VAL) -> Root -> INTM
-> inQuote tyv              r | Just t    <- etaExpand tyv r = t
+> inQuote (C ty :>: v)          r | Just t    <- etaExpand (ty :>: v) r = t
 
 Needless to say, we can always $\eta$-expand a closure. Therefore, if
 $\eta$-expansion has failed, there are two possible cases: either we
@@ -169,8 +169,8 @@ function |f|, getting a value of type |t v|. At this point, we can
 safely quote this term. The result is a binding of |v| in the quoted
 term.
 
-> etaExpand :: (TY :>: VAL) -> Root -> Maybe INTM
-> etaExpand (PI s t :>: f) r = Just $
+> etaExpand :: (Can VAL :>: VAL) -> Root -> Maybe INTM
+> etaExpand (Pi s t :>: f) r = Just $
 >   L ("" :. fresh ("" :<: s) (\v  -> inQuote (t $$ A v :>: (f $$ A v))) r)
 > import <- EtaExpand
 > etaExpand _                  _ = Nothing
