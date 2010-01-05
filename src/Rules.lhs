@@ -310,8 +310,9 @@ to evaluate the well-typed terms.
 > check (C c :>: C c')        r = do
 >   canTy chev (c :>: c')
 >   return ()
->     where chev (t :>: x) = 
->             Just $ x :=>: evTm x
+>     where chev (t :>: x) = do 
+>               ch <- check (t :>: x) r 
+>               return $ ch :=>: evTm x
 
 As for lambda, we know it is simple too. We wish the code was simple
 too. But, hey, it isn't. The formal typing rule is the following:
@@ -394,8 +395,9 @@ term |t| and we type-check the eliminator, using |elimTy|. Because
 >   C ty <- infer t r
 >   (s',ty') <- elimTy chev (evTm t :<: ty) s
 >   return ty'
->       where chev (t :>: x) =
->               Just $ check (t :>: x) :=>: evTm x
+>       where chev (t :>: x) = do 
+>               ch <- check (t :>: x) r 
+>               return $ ch :=>: evTm x
 
 Following exactly the same principle, we can infer the result of an
 operator application:

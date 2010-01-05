@@ -241,7 +241,7 @@ applies it to the arguments --- \emph{for girls}, dropping any that are shared w
 >                   let  (kids, _, _) = entryDev ancestor
 >                        n = (t, Rel i) : (searchKids kids targetSuffix 0)
 >                   in   P (showRelName n) $:$ args'
->         Nothing -> P $ showName target
+>         Nothing -> P (showName target) $:$ args
 >   (prefix, []) -> P "!!!"
 
 
