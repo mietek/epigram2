@@ -34,8 +34,8 @@ Historically, canonical terms were type-checked by the following
 function:
 
 < canTy :: (t -> VAL) -> (Can VAL :>: Can t) -> Maybe (Can (TY :>: t))
-< canTy ev (Set,Set)    = Just Set
-< canTy ev (Pi s t,Set) = Just (Pi (SET :>: s) ((ARR (ev s) SET) :>: t)
+< canTy ev (Set :>: Set)    = Just Set
+< canTy ev (Set :>: Pi s t) = Just (Pi (SET :>: s) ((ARR (ev s) SET) :>: t)
 < canTy _  _            = Nothing
 
 If we temporally forget Features, we have here a type-checker that

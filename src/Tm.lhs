@@ -77,7 +77,7 @@ We can push types in to:
 And we can infer types from:
 \begin{itemize}
 \item variables, by reading the context;
-\item fully applied operator, by |opTy| defined below;
+\item fully applied operators, by |opTy| defined below;
 \item elimination, by the type of the eliminator; and
 \item type ascription on a checkable term, by the ascripted type.
 \end{itemize}
@@ -164,7 +164,7 @@ with \(\eta\)-laws go here.
 
 > data Elim :: * -> * where
 >   A     :: t -> Elim t                             -- application
->   Out   :: Elim t                                  -- upacks Con
+>   Out   :: Elim t                                  -- unpacks Con
 >   import <- ElimConstructors
 >   deriving (Show, Eq)
 
