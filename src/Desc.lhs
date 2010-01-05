@@ -499,4 +499,3 @@ Equality rules:
 >                        , ps $$ Snd
 >                        , n ]
 >         sOpRun [_ , _ , N n] = Left n
-

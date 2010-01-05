@@ -455,6 +455,7 @@ This translates into the following code:
 > C (Con t)    $$ Out  = t                -- By \ref{eqn:elim_con}
 > import <- ElimComputation               -- Extensions
 > N n          $$ e    = N (n :$ e)       -- By \ref{eqn:elim_stuck}
+> f            $$ e    = error ("Can't eliminate " ++ show f ++ " with eliminator " ++ show e)
 
 
 \subsubsection{Operators}
