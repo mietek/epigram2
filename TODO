@@ -1,0 +1,55 @@
+Miscellaneous tidying:
+* Add named projections from :=>: pairs (valOf and termOf, perhaps?).
+* Provide better name advice in place of "".
+
+Quotation:
+* Use idiom brackets on quote.
+* Write inQuote/exQuote more directly using themselves as chevs?
+  :: (Alternative m, Rooty m, MonadError [String] m) => TY :>: INTM -> m (INTM :=>: VAL)
+* Tidy exQuote: lhs2TeX alignment, match against C, not use unC (or is there a GADT problem?).
+
+Type-checker:
+* Change check and infer to fit the chev pattern.
+* Make infer ensure operators have the correct number of arguments.
+
+Features:
+* Create standard template for feature files and make them conform to it.
+* Update documentation for operators.
+* Create appropriate aspect and remove Desc in Desc stuff from Rules.
+
+Elaboration:
+2 Adam: Separate display syntax from evidence language.
+* Add reverse elaboration step.
+
+Cochon:
+1 Adam: Make give command do nexty thing immediately.
+1 Adam: time-based undo.
+1 Adam: only dump proof state when requested; always show boys, only show girls if asked
+* Tidy cochon up a lot.
+* Consider what output should be displayed after each cochon command. 
+* Make cochon accept semicolon-separated lists of commands (with what output?).
+* Prevent goal from appearing in cochon if not at a hole.
+* Use readline or similar library for command history and tab-completion.
+
+Programming with Desc:
+* Differentiate Desc.
+* Write predicates: is a description first-order, is equality decidable.
+
+Extending Desc:
+99: Special case arg in Desc for S an enumeration and D a tuple?
+1 Peter: Generalise Desc to dependent types (including a propositional argument to done?).
+1 James: Coinduction (Nu).
+1 Ulf+Conor: Implement the free monad Tm along with tmElim, subst and map operators.
+2: Extend operators with a new component,
+    opSimp  :: [VAL] -> Root -> Maybe NEU
+  that is used to simplify neutral operator applications; thus operators can preserve
+  relevant laws for neutral terms, so they hold definitionally.
+
+Compilation:
+1 Edwin: Integrate lambda-lifting phase.
+
+Programming Technology:
+2 Pierre: Elimination with a motive.
+1: Labelled types for programs.
+* Propositional simplification.
+* Matching.
