@@ -499,3 +499,4 @@ Equality rules:
 >                        , ps $$ Snd
 >                        , n ]
 >         sOpRun [_ , _ , N n] = Left n
+>         sOpRun vs = error ("Desc.SwitchD.sOpRun: couldn't handle " ++ show vs)
