@@ -835,7 +835,7 @@ should have already received. It will
 > tellGirl :: NewsBulletin -> Entry Bwd -> ProofState (NewsBulletin, Entry Bwd)
 > tellGirl news (E (name := k :<: tv) sn (Girl LETG (cs, tip, root)) ty) = do
 >     let  (tip', n)       = tellTip news tip
->          (ty', tv', n')  = tellNewsEval news ty tv
+>          (ty' :=>: tv', n')  = tellNewsEval news (ty :=>: tv)
 >     k' <- case k of
 >             HOLE    -> return HOLE
 >             DEFN _  -> do
@@ -847,18 +847,13 @@ should have already received. It will
 >  where 
 >    tellTip :: NewsBulletin -> Tip -> (Tip, News)
 >    tellTip news (Unknown tt) =
->        let (tt', n) = tellTipType news tt in
+>        let (tt', n) = tellNewsEval news tt in
 >            (Unknown tt', n)
 >    tellTip news (Defined tm tt) =
->        let (tt', n) = tellTipType news tt in
+>        let (tt', n) = tellNewsEval news tt in
 >            case tellNews news tm of
 >                (_,    NoNews)    -> (Defined tm   tt', n)
 >                (tm',  GoodNews)  -> (Defined tm'  tt', GoodNews)
->
->    tellTipType :: NewsBulletin -> (INTM :=>: TY) -> (INTM :=>: TY, News)
->    tellTipType news (tm :=>: ty) =
->        let (tm', ty', n) = tellNewsEval news tm ty in
->            (tm' :=>: ty',  n)
 
 
 > tellMother :: NewsBulletin -> ProofState NewsBulletin
@@ -882,7 +877,7 @@ term and the news about it.
 The |tellNewsEval| function takes a bulletin, term and its present value. It updates
 the term with the bulletin and re-evaluates it if necessary.
 
-> tellNewsEval :: NewsBulletin -> INTM -> VAL -> (INTM, VAL, News)
-> tellNewsEval news tm tv = case tellNews news tm of
->     (_,    NoNews)    -> (tm,   tv,        NoNews)
->     (tm',  GoodNews)  -> (tm',  evTm tm',  GoodNews)
+> tellNewsEval :: NewsBulletin -> INTM :=>: VAL -> (INTM :=>: VAL, News)
+> tellNewsEval news (tm :=>: tv) = case tellNews news tm of
+>     (_,    NoNews)    -> (tm   :=>: tv,        NoNews)
+>     (tm',  GoodNews)  -> (tm'  :=>: evTm tm',  GoodNews)
