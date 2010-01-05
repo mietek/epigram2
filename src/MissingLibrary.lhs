@@ -77,7 +77,7 @@
 > throwError' e = throwError [e]
 
 > replaceError :: MonadError [e] m => m a -> e -> m a
-> replaceError c e = catchError c (\x -> throwError' e)
+> replaceError c e = catchError c (\x -> throwError (e:x))
 
 > replacePMF :: MonadError [String] m => m a -> String -> m a
 > replacePMF c s = catchError c f
