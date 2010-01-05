@@ -37,11 +37,10 @@ development and perform local navigation easily.
 Each |Layer| of the structure is a record with the following fields:
 \begin{description}
 \item[|elders|] entries appearing above the working development
-\item[|mother|] the |REF| of the |Entry| that contains the working development
-\item[|motherTy|] the term representation of the type of |mother|
+\item[|mother|] data about the working development
 \item[|cadets|] entries appearing below the working development
-\item[|laytip|] the |Tip| of the containing development
-\item[|layroot|] the |Root| of the containing development
+\item[|laytip|] the |Tip| of the development that contains the mother
+\item[|layroot|] the |Root| of the development that contains the mother
 \end{description}
 
 > data Layer = Layer
