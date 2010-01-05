@@ -249,7 +249,7 @@ hard bits for the human.
 >     (t :=>: v) <- prove False p
 >     return (CON t :=>: CON v)
 > prove b p@(N (qop :@ [y0, t0, y1, t1])) | qop == eqGreen = do
->   let g = EQBLUE (y0 :>: t0) (y1 :>: t0)
+>   let g = EQBLUE (y0 :>: t0) (y1 :>: t1)
 >   (_ :=>: v) <- prove False g
 >   let v' = v $$ Out
 >   t' <- bquoteHere v'
