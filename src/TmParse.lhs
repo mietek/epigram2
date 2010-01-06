@@ -147,10 +147,15 @@ defined in Section~\ref{sec:language}.
 >     mkNum :: Int -> Maybe InDTmRN -> InDTmRN
 >     mkNum 0 Nothing = DZE
 >     mkNum 0 (Just t) = t
->     mkNum n t = SU (mkNum (n-1) t)
-> specialInTm AndSize =
->     (|PRF (%keyword ":-"%) (sizedInTm AndSize)
->      |(MU Nothing) (%keyword "Mu"%) (sizedInTm ArgSize)
+>     mkNum n t = DSU (mkNum (n-1) t)
+
+> specialInDTm AndSize =
+>     (|DPRF (%keyword ":-"%) (sizedInDTm AndSize)
+>      |(DMU Nothing) (%keyword "Mu"%) (sizedInDTm ArgSize)
+>      |DNU (%keyword "Nu"%) (sizedInDTm ArgSize)
+>      |(DCOIT DVOID) (%keyword "CoIt"%)
+>         (sizedInDTm ArgSize) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
+>      |DMONAD (%keyword "Monad"%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
 >      |)
 
 > specialInDTm PiSize =

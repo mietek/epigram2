@@ -21,6 +21,10 @@
 >   pattern NU t = C (Nu t)
 >   pattern COIT d sty f s = C (CoIt d sty f s)
 
+> import -> DisplayCanPats where
+>   pattern DNU t = DC (Nu t)
+>   pattern DCOIT d sty f s = DC (CoIt d sty f s)
+
 > import -> CanPretty where
 >   prettyCan (Nu t)  = parens (text "Nu" <+> pretty t)
 >   prettyCan (CoIt d sty f s) = parens (text "CoIt" <+>
