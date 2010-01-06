@@ -74,6 +74,11 @@
 > catchMaybe (Just x)  _ = return x
 > catchMaybe Nothing   s = throwError [s]
 
+> catchEither :: MonadError [e] m => Either [e] a -> e -> m a
+> catchEither (Right x) _ = return x
+> catchEither (Left s) e = throwError (e : s)
+
+
 > throwError' :: MonadError [e] m => e -> m a
 > throwError' e = throwError [e]
 
