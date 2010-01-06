@@ -37,13 +37,11 @@
 Here we have a very basic command-driven interface to the proof state monad.
 
 > cochon :: ProofContext -> IO ()
-> cochon loc = cochon' loc "Hello!"
+> cochon loc = cochon' (B0 :< loc) "Hello!"
 
-> cochon' :: ProofContext -> String -> IO ()
-> cochon' loc@(ls, dev) msg = do
+> cochon' :: Bwd ProofContext -> String -> IO ()
+> cochon' (locs :< loc@(ls, dev)) msg = do
 >     --putStrLn (show loc)
->     let Right s = evalStateT prettyProofState loc
->     putStrLn s
 >     putStrLn msg
 >     showGoal loc
 
@@ -59,11 +57,10 @@ Here we have a very basic command-driven interface to the proof state monad.
 >     hFlush stdout
 >     l <- getLine
 >     case parse tokenize l of 
->         Left pf -> cochon' loc ("Tokenize failure: " ++ describePFailure pf id)
+>         Left pf -> cochon' (locs :< loc) ("Tokenize failure: " ++ describePFailure pf id)
 >         Right ts ->
 >           case parse pCommand ts of
->               Left pf -> cochon' loc ("Parse failure: " ++ describePFailure pf (intercalate " " . map crushToken))
->               Right Quit -> return ()
+>               Left pf -> cochon' (locs :< loc) ("Parse failure: " ++ describePFailure pf (intercalate " " . map crushToken))
 >               Right (Compile rn fn) -> do
 >                   let  Right aus = evalStateT getAuncles loc
 >                        mn = resolve aus rn
@@ -75,14 +72,18 @@ Here we have a very basic command-driven interface to the proof state monad.
 >                               Right loc' -> do
 >                                   let Right dev = evalStateT getDev loc'
 >                                   compileCommand n (reverseDev' dev) fn
->                                   cochon' loc "Compiled."
->                       Nothing -> cochon' loc "Can't resolve."
+>                                   cochon' (locs :< loc) "Compiled."
+>                       Nothing -> cochon' (locs :< loc) "Can't resolve."
+>               Right Quit -> return ()
+>               Right Undo -> case locs of
+>                   B0  -> cochon' (locs :< loc) "Cannot undo." 
+>                   _   -> cochon' locs "Undone."
 >               Right c -> case runStateT (doCommand c) loc of
 >                   Right (s, loc') -> do
 >                       printChanges loc loc'
->                       cochon' loc' s
+>                       cochon' (locs :< loc :< loc') s
 >                   Left ss ->
->                       cochon' loc (unlines ("I'm sorry, Dave. I'm afraid I can't do that.":ss))
+>                       cochon' (locs :< loc) (unlines ("I'm sorry, Dave. I'm afraid I can't do that.":ss))
 
 > describePFailure :: PFailure a -> ([a] -> String) -> String
 > describePFailure (PFailure (ts, fail)) f = (case fail of
@@ -100,10 +101,24 @@ Here we have a very basic command-driven interface to the proof state monad.
 >            |  Prev | Next | First | Last
 >     deriving Show
 
+> data ShowC x = Auncles | Context | Dump | Hypotheses | Term x
+>     deriving Show
+
+> instance Traversable ShowC where
+>     traverse f Auncles     = (| Auncles |)
+>     traverse f Context     = (| Context |)
+>     traverse f Dump        = (| Dump |)
+>     traverse f Hypotheses  = (| Hypotheses |)
+>     traverse f (Term x)    = (| Term (f x) |)
+
+> instance Functor ShowC where
+>     fmap = fmapDefault
+
+> instance Foldable ShowC where
+>     foldMap = foldMapDefault
+
 > data Command x  =  Apply
->                 |  Auncles
 >                 |  DoneC
->                 |  Dump
 >                 |  Elaborate x
 >                 |  Compile x String
 >                 |  Give x
@@ -116,16 +131,15 @@ Here we have a very basic command-driven interface to the proof state monad.
 >                 |  PiBoy String x
 >                 |  Quit
 >                 |  Select x
->                 |  Show x
+>                 |  Show (ShowC x)
+>                 |  Undo
 >                 |  Ungawa
 >     deriving Show
 
 > instance Traversable Command where
 >     traverse f Apply                = (| Apply |)
->     traverse f Auncles              = (| Auncles |)
 >     traverse f (Compile x fn)       = (| Compile (f x) ~fn |)
 >     traverse f DoneC                = (| DoneC |)
->     traverse f Dump                 = (| Dump |)
 >     traverse f (Elaborate x)        = (| Elaborate (f x) |)
 >     traverse f (Give x)             = (| Give (f x) |)
 >     traverse f (Go d)               = (| (Go d) |)
@@ -137,7 +151,8 @@ Here we have a very basic command-driven interface to the proof state monad.
 >     traverse f (PiBoy s x)          = (| (PiBoy s) (f x) |)
 >     traverse f Quit                 = (| Quit |)
 >     traverse f (Select x)           = (| Select (f x) |)
->     traverse f (Show x)             = (| Show (f x) |)
+>     traverse f (Show sx)            = (| Show (traverse f sx) |)
+>     traverse f Undo                 = (| Undo |)
 >     traverse f Ungawa               = (| Ungawa |)
 
 > instance Functor Command where
@@ -151,12 +166,10 @@ Here we have a very basic command-driven interface to the proof state monad.
 >     x <- ident
 >     case x of
 >         "apply"    -> (| Apply |)
->         "auncles"  -> (| Auncles |)
 >         "bottom"   -> (| (Go Bottom) |)
 >         "compile"  -> (| Compile (| N variableParse |) pFileName |)
 >         "done"     -> (| DoneC |)
 >         "down"     -> (| (Go Down) |)
->         "dump"     -> (| Dump |)
 >         "elab"     -> (| Elaborate pInTm |)
 >         "first"    -> (| (Go First) |)
 >         "give"     -> (| Give pInTm |)
@@ -176,8 +189,9 @@ Here we have a very basic command-driven interface to the proof state monad.
 >         "root"     -> (| (Go RootC) |)
 >         "quit"     -> (| Quit |)
 >         "select"   -> (| Select (| N variableParse |) |)
->         "show"     -> (| Show pInTm |)
+>         "show"     -> (| Show pShow |)
 >         "top"      -> (| (Go Top) |)
+>         "undo"     -> (| Undo |)
 >         "ungawa"   -> (| Ungawa |)
 >         "up"       -> (| (Go Up) |)
 >         _          -> empty
@@ -185,11 +199,19 @@ Here we have a very basic command-driven interface to the proof state monad.
 > pFileName :: Parsley Token String
 > pFileName = ident
 
+> pShow :: Parsley Token (ShowC InTmRN)
+> pShow = do
+>     s <- ident
+>     case s of
+>         "auncles"  -> (| Auncles |)
+>         "context"  -> (| Context |)
+>         "dump"     -> (| Dump |)
+>         "hyps"     -> (| Hypotheses |)
+>         "term"     -> (| Term pInTm |)
+
 > evalCommand :: Command INTM -> ProofState String
 > evalCommand Apply           = apply             >> return "Applied."
-> evalCommand Auncles         = infoAuncles
 > evalCommand DoneC           = done              >> return "Done."
-> evalCommand Dump            = infoDump
 > evalCommand (Elaborate tm)  = infoElaborate tm
 > evalCommand (Give tm)       = elabGive tm       >> return "Thank you."
 > evalCommand (Go InC)        = goIn              >> return "Going in..."
@@ -218,7 +240,11 @@ Here we have a very basic command-driven interface to the proof state monad.
 > evalCommand (ModuleC s)     = makeModule s      >> return "Made module."
 > evalCommand (PiBoy x ty)    = elabPiBoy (x :<: ty)  >> return "Made pi boy!"
 > evalCommand (Select x)      = select x          >> return "Selected."
-> evalCommand (Show x)        = return (show x)
+> evalCommand (Show Auncles)  = infoAuncles
+> evalCommand (Show Context)  = prettyProofState 
+> evalCommand (Show Dump)     = infoDump
+> evalCommand (Show Hypotheses)  = infoHypotheses 
+> evalCommand (Show (Term x))    = return (show x)
 > evalCommand Ungawa          = ungawa            >> return "Ungawa!"
 
 > doCommand :: Command InTmRN -> ProofState String
@@ -237,7 +263,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 > doCommandsAt ((n, cs):ncs) = much goOut >> goTo n >> doCommands cs >> doCommandsAt ncs
 
 > showGoal :: ProofContext -> IO ()
-> showGoal loc = case evalStateT (getGoal "showGoal") loc of
+> showGoal loc = case evalStateT getHoleGoal loc of
 >     Right (_ :=>: ty) ->
 >         let Right s = evalStateT (bquoteHere ty >>= prettyHere) loc
 >         in putStrLn ("Goal: " ++ s)

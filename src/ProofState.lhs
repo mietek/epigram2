@@ -211,6 +211,11 @@ updated information, providing a friendlier interface than |get| and |put|.
 > getGreatAuncles :: ProofState Entries
 > getGreatAuncles = get >>= return . greatAuncles
 
+> getHoleGoal :: ProofState (INTM :=>: TY)
+> getHoleGoal = do
+>     GirlMother (_ := HOLE :<: _) _ _ <- getMother
+>     getGoal "getHoleGoal"
+
 > getLayer :: ProofState Layer
 > getLayer = do
 >     ls :< l <- getLayers
@@ -387,7 +392,9 @@ The |resolveHere| command resolves the relative names in a term.
 >     (es, dev) <- get
 >     return (foldMap ((++ "\n") . show) es ++ show dev)
 
-
+> infoHypotheses :: ProofState String
+> infoHypotheses = do
+>     return "Sorry, show hypotheses is not done yet."
 
 \subsection{Navigation Commands}
 

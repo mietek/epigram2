@@ -23,12 +23,10 @@ Elaboration:
 
 Cochon:
 1 Adam: Make give command do nexty thing immediately.
-1 Adam: time-based undo.
-1 Adam: only dump proof state when requested; always show boys, only show girls if asked
+1 Adam: Implement show hypotheses.
 * Tidy cochon up a lot.
 * Consider what output should be displayed after each cochon command. 
 * Make cochon accept semicolon-separated lists of commands (with what output?).
-* Prevent goal from appearing in cochon if not at a hole.
 * Use readline or similar library for command history and tab-completion.
 
 Programming with Desc:
