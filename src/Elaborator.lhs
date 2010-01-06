@@ -19,6 +19,7 @@
 
 > import BwdFwd
 > import Developments
+> import DisplayTm
 > import Naming
 > import PrettyPrint
 > import ProofState
@@ -54,7 +55,7 @@ rather than creating a subgoal.
 
 Here's a case which makes labelled datatypes
 
-> elaborate True (SET :>: MU Nothing d) = do
+> elaborate True (SET :>: DMU Nothing d) = do
 >     GirlMother (nom := HOLE :<: ty) _ _ <- getMother
 >     let fr = nom := FAKE :<: ty
 >     xs <- (| boySpine getAuncles |)
@@ -66,27 +67,27 @@ Here's a case which makes labelled datatypes
 First, some special cases to provide a convenient syntax for writing functions from
 interesting types.
 
-> elaborate b (PI UNIT t :>: CON f) = do
+> elaborate b (PI UNIT t :>: DCON f) = do
 >     (m' :=>: m) <- elaborate False (t $$ A VOID :>: f)
 >     return $ L (K m') :=>: L (K m)
 
-> elaborate False (y@(PI _ _) :>: t@(C _)) = do
+> elaborate False (y@(PI _ _) :>: t@(DC _)) = do
 >     y' <- bquoteHere y
 >     make ("h" :<: y')
 >     goIn
 >     elabbedT =<< elabGive t
 
-> elaborate True (PI (MU l d) t :>: CON f) = do
+> elaborate True (PI (MU l d) t :>: DCON f) = do
 >     (m' :=>: _) <- elaborate False $ case l of
 >       Nothing  -> elimOpMethodType $$ A d $$ A t :>: f
 >       Just l   -> elimOpLabMethodType $$ A l $$ A d $$ A t :>: f
 >     d' <- bquoteHere d
->     (dll :=>: _) <- elaborate False (desc :>: d') -- lambda lift that sucker
+>     (dll :=>: _) <- elaborate False (desc :>: DT d') -- lambda lift that sucker
 >     t' <- bquoteHere t
 >     x <- lambdaBoy (fortran t)
 >     elabbedT . N $ elimOp :@ [dll, N (P x), t', m']
 
-> elaborate True (PI (SIGMA d r) t :>: CON f) = do
+> elaborate True (PI (SIGMA d r) t :>: DCON f) = do
 >     let mt =   eval [.a.b.c.
 >                  PI (NV a) . L $ fortran r :. [.x.
 >                  PI (N (V b :$ A (NV x))) . L $ "" :. [.y.
@@ -107,22 +108,22 @@ interesting types.
 >         t' <- bquoteHere t
 >         elabbedT . N $ switchOp :@ [e', N (P x), t', m']
 >  where   isTuply :: INDTM -> Bool
->          isTuply VOID = True
->          isTuply (PAIR _ _) = True
+>          isTuply DVOID = True
+>          isTuply (DPAIR _ _) = True
 >          isTuply _ = False
 
 As some more syntactic sugar, we let inductive types elaborate lists (so |[]| becomes
 |@[0]| and |[s / t]| becomes |@ [1 s t]|).
 
-> elaborate b (MU l d :>: VOID) = elaborate b (MU l d :>: CON (PAIR ZE VOID))
-> elaborate b (MU l d :>: (PAIR s t)) = elaborate b (MU l d :>: CON (PAIR (SU ZE) (PAIR s t)))
+> elaborate b (MU l d :>: DVOID) = elaborate b (MU l d :>: DCON (DPAIR DZE DVOID))
+> elaborate b (MU l d :>: (DPAIR s t)) = elaborate b (MU l d :>: DCON (DPAIR (DSU DZE) (DPAIR s t)))
 
-> elaborate b (MONAD d x :>: CON t) = elaborate b (MONAD d x :>: COMPOSITE t)
+> elaborate b (MONAD d x :>: DCON t) = elaborate b (MONAD d x :>: DCOMPOSITE t)
 
 To elaborate a tag with an enumeration as its type, we search for the tag in the enumeration
 to determine the appropriate index.
 
-> elaborate b (ENUMT t :>: TAG a) = findTag a t 0
+> elaborate b (ENUMT t :>: DTAG a) = findTag a t 0
 >   where
 >     findTag :: String -> TY -> Int -> ProofState (INTM :=>: VAL)
 >     findTag a (CONSE (TAG b) t) n
@@ -134,7 +135,7 @@ to determine the appropriate index.
 >     toNum 0  = ZE
 >     toNum n  = SU (toNum (n-1))
 
-> elaborate b (PRF p :>: VOID) = prove b p
+> elaborate b (PRF p :>: DVOID) = prove b p
 
 > elaborate b (NU d :>: COIT VOID sty f s) = do
 >   d' <- bquoteHere d
@@ -142,14 +143,14 @@ to determine the appropriate index.
 
 Elaborating a canonical term with canonical type is a job for |canTy|.
 
-> elaborate top (C ty :>: C tm) = do
+> elaborate top (C ty :>: DC tm) = do
 >     v <- canTy (elaborate False) (ty :>: tm)
 >     return $ (C $ fmap (\(x :=>: _) -> x) v) :=>: (C $ fmap (\(_ :=>: x) -> x) v)
 
 
 If the elaborator encounters a question mark, it simply creates an appropriate subgoal.
 
-> elaborate top (ty :>: Q x) = do
+> elaborate top (ty :>: DQ x) = do
 >     ty' <- bquoteHere ty
 >     g <- make (x :<: ty')
 >     return (g :=>: evTm g)
@@ -161,36 +162,36 @@ underneath. This avoids creating some trivial children. It means that elaboratio
 will not produce a fully $\lambda$-lifted result, but luckily the compiler can deal
 with constant functions.
 
-> elaborate False (PI s (L (K t)) :>: L (K dtm)) = do
+> elaborate False (PI s (L (K t)) :>: DL (DK dtm)) = do
 >     (tm :=>: tmv) <- elaborate False (t :>: dtm)
 >     return (L (K tm) :=>: L (K tmv))
 
 If we are not at top level, we create a subgoal corresponding to the term, solve it
 by elaboration, then return the reference. 
 
-> elaborate False (ty :>: L sc) = do
+> elaborate False (ty :>: DL sc) = do
 >     Just _ <- return $ lambdable ty
 >     pi' <- bquoteHere ty
 >     make ("h" :<: pi')
 >     goIn
->     l <- lambdaBoy (fortran (L sc))
->     h <- elabGive (underScope sc l)
+>     l <- lambdaBoy (dfortran (DL sc))
+>     h <- elabGive (underDScope sc l)
 >     return (h :=>: evTm h)
 
 If we are at top level, we can simply create a |lambdaBoy| in the current development,
 and carry on elaborating.
 
-> elaborate True (ty :>: L sc) = do
+> elaborate True (ty :>: DL sc) = do
 >     Just _ <- return $ lambdable ty
->     l <- lambdaBoy (fortran (L sc))
+>     l <- lambdaBoy (dfortran (DL sc))
 >     _ :=>: ty <- getGoal "elaborate lambda"
->     elaborate True (ty :>: underScope sc l)
+>     elaborate True (ty :>: underDScope sc l)
 >     
     
 Much as with type-checking, we push types in to neutral terms by calling |elabInfer| on
 the term, then checking the inferred type is what we pushed in.
 
-> elaborate top (w :>: N n) = do
+> elaborate top (w :>: DN n) = do
 >   (y :>: n) <- elabInfer n
 >   eq <- withRoot (equal (SET :>: (w, y)))
 >   guard eq `replaceError` ("elaborate: inferred type " ++ show y ++ " of " ++ show n
@@ -210,20 +211,20 @@ those of |infer|.
 
 > elabInfer :: EXDTM -> ProofState (TY :>: EXTM)
 
-> elabInfer (P x) = return (pty x :>: P x)
+> elabInfer (DP x) = return (pty x :>: P x)
 
-> elabInfer (t :$ s) = do
+> elabInfer (t ::$ s) = do
 >     (C ty :>: t') <- elabInfer t
 >     (s', ty') <- elimTy (elaborate False) (evTm t' :<: ty) s
 >     let s'' = fmap (\(x :=>: _) -> x) s'
 >     return (ty' :>: (t' :$ s''))
 
-> elabInfer (op :@ ts) = do
+> elabInfer (op ::@ ts) = do
 >   (vs, t) <- opTy op (elaborate False) ts
 >   let vs' = fmap (\(x :=>: _) -> x) vs
 >   return (t :>: op :@ vs')
 
-> elabInfer (t :? ty) = do
+> elabInfer (t ::? ty) = do
 >   (ty' :=>: vty)  <- elaborate False (SET :>: ty)
 >   (t'  :=>: _)    <- elaborate False (vty :>: t)
 >   return (vty :>: t' :? ty')
@@ -242,7 +243,7 @@ hard bits for the human.
 >   (pt :=>: pv) <- prove False p
 >   (qt :=>: qv) <- prove False q
 >   return (PAIR pt qt :=>: PAIR pv qv)
-> prove b p@(ALL _ _) = elaborate b (PRF p :>: L ("__prove" :. VOID))
+> prove b p@(ALL _ _) = elaborate b (PRF p :>: DL ("__prove" ::. DVOID))
 > prove b p@(EQBLUE (y0 :>: t0) (y1 :>: t1)) = useRefl <|> unroll <|> search p where
 >   useRefl = do
 >     guard =<< withRoot (equal (SET :>: (y0, y1)))
@@ -265,7 +266,7 @@ hard bits for the human.
 > search :: VAL -> ProofState (INTM :=>: VAL)
 > search p = do
 >   es <- getAuncles
->   aunclesProof es p <|> elaborate False (PRF p :>: Q "")
+>   aunclesProof es p <|> elaborate False (PRF p :>: DQ "")
 
 > aunclesProof :: Entries -> VAL -> ProofState (INTM :=>: VAL)
 > aunclesProof B0 p = empty
@@ -292,7 +293,7 @@ representation. Note that it works in its own module which it discards at the
 end, so it will not leave any subgoals lying around in the proof state.
 
 > infoElaborate :: INDTM -> ProofState String
-> infoElaborate (N tm) = do
+> infoElaborate (DN tm) = do
 >     makeModule "elab"
 >     goIn
 >     _ :>: tm' <- elabInfer tm
@@ -307,7 +308,7 @@ The |infoInfer| command is similar to |infoElaborate|, but it returns a string
 representation of the resulting type.
 
 > infoInfer :: INDTM -> ProofState String
-> infoInfer (N tm) = do
+> infoInfer (DN tm) = do
 >     makeModule "infer"
 >     goIn
 >     ty :>: _ <- elabInfer tm
@@ -338,7 +339,7 @@ a reference to the current goal (applied to the appropriate shared parameters).
 >     case tip of         
 >         Unknown (tipTyTm :=>: tipTy) -> do
 >             case tm of
->                 Q "" -> do
+>                 DQ "" -> do
 >                     GirlMother ref _ _ <- getMother
 >                     aus <- getGreatAuncles
 >                     return (N (P ref $:$ aunclesToElims (aus <>> F0)))
@@ -380,7 +381,8 @@ state, it processes each node in turn, first processing any children, then
 the node itself.
 
 > gimme :: ProofState ()
-> gimme = much goOut >> processNode
+> gimme = error "gimme: undefined"
+> {-gimme = much goOut >> processNode
 >   where
 >     processNode :: ProofState ()
 >     processNode = do
@@ -403,4 +405,4 @@ the node itself.
 >                 (tm' :=>: tv) <- elaborate True (tipTy :>: tm)
 >                 Unknown tt <- getDevTip
 >                 putDevTip (Defined tm' tt)
->             _ -> return ()
+>             _ -> return () -}
