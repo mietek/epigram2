@@ -213,7 +213,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 > evalCommand Apply           = apply             >> return "Applied."
 > evalCommand DoneC           = done              >> return "Done."
 > evalCommand (Elaborate tm)  = infoElaborate tm
-> evalCommand (Give tm)       = elabGive tm       >> return "Thank you."
+> evalCommand (Give tm)       = elabGiveNext tm   >> return "Thank you."
 > evalCommand (Go InC)        = goIn              >> return "Going in..."
 > evalCommand (Go OutC)       = goOut             >> return "Going out..."
 > evalCommand (Go Up)         = goUp              >> return "Going up..."

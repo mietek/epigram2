@@ -22,7 +22,6 @@ Elaboration:
 * Add reverse elaboration step.
 
 Cochon:
-1 Adam: Make give command do nexty thing immediately.
 1 Adam: Implement show hypotheses.
 * Tidy cochon up a lot.
 * Consider what output should be displayed after each cochon command. 

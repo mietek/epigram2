@@ -564,10 +564,17 @@ fills in the goal with this entry.
 >  ) `replacePMF` "done: last entry in the development must be a girl."
 
 The |give| command checks the provided term has the goal type, and if so, fills in
-the goal and updates the reference.
+the goal, updates the reference and goes out. The |giveNext| variant moves to the
+next goal (if one exists) instead.
 
 > give :: INTM -> ProofState INTM
-> give tm = do
+> give tm = give' tm <* goOut
+
+> giveNext :: INTM -> ProofState INTM
+> giveNext tm = give' tm <* (nextGoal <|> goOut)
+
+> give' :: INTM -> ProofState INTM
+> give' tm = do
 >     tip <- getDevTip
 >     case tip of         
 >         Unknown (tipTyTm :=>: tipTy) -> do
@@ -586,7 +593,6 @@ the goal and updates the reference.
 >                                              , prettyTipTyTm ]
 >             putMother (GirlMother ref xn ty)
 >             updateRef ref
->             goOut
 >             return (N (P ref $:$ aunclesToElims (aus <>> F0)))
 >         _  -> throwError' "give: only possible for incomplete goals."
 

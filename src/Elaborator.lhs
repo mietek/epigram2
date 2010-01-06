@@ -322,7 +322,13 @@ is a nameless question mark, it avoids creating a pointless subgoal by simply re
 a reference to the current goal (applied to the appropriate shared parameters).
 
 > elabGive :: INDTM -> ProofState INTM
-> elabGive tm = do
+> elabGive tm = elabGive' tm <* goOut
+
+> elabGiveNext :: INDTM -> ProofState INTM
+> elabGiveNext tm = elabGive' tm <* (nextGoal <|> goOut)
+
+> elabGive' :: INDTM -> ProofState INTM
+> elabGive' tm = do
 >     tip <- getDevTip
 >     case tip of         
 >         Unknown (tipTyTm :=>: tipTy) -> do
@@ -330,11 +336,10 @@ a reference to the current goal (applied to the appropriate shared parameters).
 >                 Q "" -> do
 >                     GirlMother ref _ _ <- getMother
 >                     aus <- getGreatAuncles
->                     goOut
 >                     return (N (P ref $:$ aunclesToElims (aus <>> F0)))
 >                 _ -> do
 >                     (tm' :=>: tv) <- elaborate True (tipTy :>: tm)
->                     give tm'
+>                     give' tm'
 >         _  -> throwError' "elabGive: only possible for incomplete goals."
 
 
