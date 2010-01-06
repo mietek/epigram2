@@ -64,7 +64,7 @@ __const(x:Data, y:Data) -> Data = x
 %inline __split(f:Data, y:Data) -> Data =
    f(y!0, y!1)
 
-__coit(d:Data, f:Data, s:Data) -> Data = lazy(__lazyMap(d,__coit(d,f),f(s)))
+__coit(d:Data, f:Data, s:Data) -> Data = lazy(__map(d,__coit(d,f),f(s)))
 
 -- Some tests
 
