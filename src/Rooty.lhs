@@ -55,13 +55,18 @@ by a finer grained mechanism.
 >     forkRoot :: String -> m s -> (s -> m t) -> m t
 >     root :: m Root
 
+Sometimes you want a fresh value rather than a reference.
+
+> fresh :: Rooty m => (String :<: TY) -> (VAL -> m t) -> m t
+> fresh xty f = freshRef xty (f . pval)
+
 To illustrate the implementation of |Rooty|, we implement on the
 |Root| Reader monad. |freshRef| is straightforward, by the code in
 @Root.lhs@. |forkRoot| directly follows from its specification. |root|
 is trivial as well.
 
 > instance Rooty ((->) Root) where
->     freshRef = Root.freshRef
+>     freshRef (x :<: ty) f r = f (name r x := DECL :<: ty) (roos r)
 >     forkRoot s child dad root = (dad . child) (room root s) (roos root)
 >     root r = r
 

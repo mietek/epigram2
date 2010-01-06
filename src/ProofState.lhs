@@ -616,7 +616,7 @@ appends a $\lambda$-abstraction with the appropriate type to the current develop
 >       Unknown (pi :=>: ty) -> case lambdable ty of
 >         Just (k, s, t) -> do
 >           root <- getDevRoot
->           Root.freshRef (x :<: s) (\ref r -> do
+>           freshRef (x :<: s) (\ref r -> do
 >             putDevEntry (E ref (lastName ref) (Boy k) (bquote B0 s r))
 >             let tipTyv = t (pval ref)
 >             putDevTip (Unknown (bquote B0 tipTyv r :=>: tipTyv))
@@ -713,7 +713,7 @@ is also a set; if so, it appends a $\Pi$-abstraction to the current development.
 >     case tip of
 >         Unknown (_ :=>: SET) -> do
 >             root <- getDevRoot
->             Root.freshRef (s :<: tv)
+>             freshRef (s :<: tv)
 >                 (\ref r ->  do
 >                    putDevEntry (E ref (lastName ref) (Boy PIB) ty)
 >                    putDevRoot r

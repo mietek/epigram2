@@ -153,7 +153,7 @@ accumulating pairs of names and command lists along the way.
 >     ty <- resolveHere tys
 >     Right _ <- withRoot (inCheck $ check (SET :>: ty))     
 >     root <- getDevRoot
->     Root.freshRef (x :<: evTm ty)
+>     freshRef (x :<: evTm ty)
 >         (\ref r -> do 
 >            putDevEntry (E ref (lastName ref) (Boy LAMB) ty)
 >            putDevRoot r
@@ -164,7 +164,7 @@ accumulating pairs of names and command lists along the way.
 >     ty <- resolveHere tys
 >     Right _ <- withRoot (inCheck $ check (SET :>: ty))
 >     root <- getDevRoot
->     Root.freshRef (x :<: evTm ty)
+>     freshRef (x :<: evTm ty)
 >         (\ref r -> do
 >            putDevEntry (E ref (lastName ref) (Boy PIB) ty)
 >            putDevRoot r

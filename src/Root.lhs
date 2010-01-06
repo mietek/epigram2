@@ -51,17 +51,3 @@ a list of |(String, Int)|. Hence, on that structure, the effect of
 > name :: Root -> String -> Name
 > name (sis, i) s = trail (sis :< (s, i))
 
-Armed with this machinery, we can conveniently provide any function
-|f| with a fresh |REF| and a coherent namespace by using |freshRef|:
-the use and threading of the namespace is carefully crafted so as to
-guarantee that names and namespaces evolve coherently.
-
-> freshRef :: (String :<: TY) -> (REF -> Root -> t) -> Root -> t
-> freshRef (x :<: ty) f r = f (name r x := DECL :<: ty) (roos r)
-
-The following function provides a |VAL| instead of a |REF| but follows
-the same logic than above.
-
-> fresh :: (String :<: TY) -> (VAL -> Root -> t) -> Root -> t
-> fresh xty f = freshRef xty (f . pval)
-
