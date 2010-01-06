@@ -22,4 +22,4 @@ current version of the system.
 > import Desc
 > import Equality
 > import FreeMonad
-
+> import Nu
