@@ -191,6 +191,8 @@ their names.
 >     | ref == ref'  = ref'
 >     | otherwise    = getLatest news ref
 
+\conor{Need to modify this to update FAKEs correctly.}
+
 The |mergeNews| function takes older and newer bulletins, and composes them to
 produce a single bulletin with the worst news about every reference mentioned
 in either.

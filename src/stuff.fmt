@@ -1,6 +1,7 @@
 \newcommand{\question}[1]{\textcolor{red}{question: #1}}
 
 \newcommand{\pierre}[1]{\textcolor{red}{Pierre:} #1}
+\newcommand{\conor}[1]{\textcolor{red}{Conor:} #1}
 
 \DeclareMathAlphabet{\mathkw}{OT1}{cmss}{bx}{n}
 %subst keyword a = "\mathkw{" a "}"

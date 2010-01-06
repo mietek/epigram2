@@ -38,10 +38,6 @@ similarly to |check| from subsection~\ref{subsec:type-checking}, except that
 it operates in the |ProofState| monad, so it can create subgoals and
 $\lambda$-lift terms.
 
-The Boolean parameter indicates whether the elaborator is working at the top
-level of the term, because if so, it can create boys in the current development
-rather than creating a subgoal.
-
 > elabbedT :: INTM -> ProofState (INTM :=>: VAL)
 > elabbedT t = return (t :=>: evTm t)
 
@@ -49,6 +45,10 @@ rather than creating a subgoal.
 > elabbedV v = do
 >   t <- bquoteHere v
 >   return (t :=>: v)
+
+The Boolean parameter indicates whether the elaborator is working at the top
+level of the term, because if so, it can create boys in the current development
+rather than creating a subgoal.
 
 > elaborate :: Bool -> (TY :>: INDTM) -> ProofState (INTM :=>: VAL)
 
@@ -81,9 +81,10 @@ interesting types.
 >       Nothing  -> elimOpMethodType $$ A d $$ A t :>: f
 >       Just l   -> elimOpLabMethodType $$ A l $$ A d $$ A t :>: f
 >     d' <- bquoteHere d
+>     (dll :=>: _) <- elaborate False (desc :>: d') -- lambda lift that sucker
 >     t' <- bquoteHere t
 >     x <- lambdaBoy (fortran t)
->     elabbedT . N $ elimOp :@ [d', N (P x), t', m']
+>     elabbedT . N $ elimOp :@ [dll, N (P x), t', m']
 
 > elaborate True (PI (SIGMA d r) t :>: CON f) = do
 >     let mt =   eval [.a.b.c.
@@ -93,7 +94,7 @@ interesting types.
 >                ]]] $ B0 :< d :< r :< t
 >     (m' :=>: m) <- elaborate False (mt :>: f)
 >     x <- lambdaBoy (fortran t)
->     elabbedV $ m $$ A (pval x $$ Fst) $$ A (pval x $$ Snd)
+>     elabbedV $ m $$ A (pval x $$ Fst) $$ A (pval x $$ Snd)  -- lambda lift?
 
 > elaborate True (PI (ENUMT e) t :>: m) | isTuply m = do
 >     targetsDesc <- withRoot (equal (ARR (ENUMT e) SET :>: (t, L (K desc))))
