@@ -28,6 +28,168 @@
 
 %endif
 
+
+\subsection{Computation}
+
+In this section, we implement an interpreter for Epigram. As one would
+expect, it will become handy during type-checking. We assume that
+evaluated terms have been type-checked beforehand, that is: the
+interpreter always terminates.
+
+The interpreter is decomposed in four blocks. First, the application
+of eliminators, implemented by |$$|. Second, the execution of
+operators, implemented by |@@|. Third, reduction under binder,
+implemented by |body|. Finally, full term evaluation, implemented by
+|eval|. At the end, this is all wrapped inside |evTm|, to evaluate a
+given term in an empty environment.
+
+\subsubsection{Elimination}
+
+The |$$| function applies an elimination principle to a value. Note
+that it is open to further extension as we add new constructs and
+elimination principles to the language. Extensions are added through
+the |ElimComputation| aspect.
+
+Formally, the computation rules of the Core language are the
+following:
+
+\begin{eqnarray}
+(\lambda \_ . v) u & \mapsto & v                            \label{eqn:elim_cstt} \\
+(\lambda x . t) v  & \mapsto & \mbox{eval } t[x \mapsto v]  \label{eqn:elim_bind} \\
+\mbox{unpack}(Con\ t) & \mapsto & t                         \label{eqn:elim_con}  \\
+(N n) \$\$ ee      & \mapsto & N (n \:\$ e)                 \label{eqn:elim_stuck}
+\end{eqnarray}
+
+The rules \ref{eqn:elim_cstt} and \ref{eqn:elim_bind} are standard
+lambda calculus stories. Rule \ref{eqn:elim_stuck} is justified as
+follow: if no application rule applies, this means that we are
+stuck. This can happen if and only if the application is itself
+stuck. The stuckness therefore propagates to the whole elimination.
+
+\question{What is the story for |Con| and |out|?}
+
+This translates into the following code:
+
+> ($$) :: VAL -> Elim VAL -> VAL
+> L (K v)      $$ A _  = v                -- By \ref{eqn:elim_cstt}
+> L (H g _ t)  $$ A v  = eval t (g :< v)  -- By \ref{eqn:elim_bind}
+> C (Con t)    $$ Out  = t                -- By \ref{eqn:elim_con}
+> import <- ElimComputation               -- Extensions
+> N n          $$ e    = N (n :$ e)       -- By \ref{eqn:elim_stuck}
+> f            $$ e    = error ("Can't eliminate " ++ show f ++ " with eliminator " ++ show e)
+
+
+\subsubsection{Operators}
+
+Running an operator is quite simple, as operators come with the
+mechanics to be ran, through |opRun|. However, we are not ensured to
+get a value out of an applied operator: the operator might get stuck
+by a neutral argument. In such case, the operator will blame the
+argument by returning it on the |Left|. Otherwise, it returns the
+computed value on the |Right|. 
+
+Hence, the implementation of |@@| is as follow. First, run the
+operator. On the left, the operator is stuck, so return the neutral
+term consisting of the operation applied to its arguments. On the
+right, we have gone down to a value, so we simply return it.
+
+> (@@) :: Op -> [VAL] -> VAL
+> op @@ vs = either (\_ -> N (op :@ vs)) id (opRun op vs) 
+
+Note that we respect the invariant on |N| values: we have an |:@|
+that, for sure, is applying at least one stuck term to an operator
+that uses it.
+
+
+\subsubsection{Binders}
+
+Evaluation under binders needs to distinguish two cases:
+\begin{itemize}
+\item the binder ignores its argument, or
+\item a variable |x| is defined and bound in a term |t|
+\end{itemize}
+
+In the first case, we can trivially go under the binder and innocently
+evaluate. In the second case, we turn the binding -- a term -- into a
+closure -- a value. The closure environment will be the current
+evaluation environment, whereas the name and the binded terms remain
+the same.
+
+This naturally leads to the following code:
+
+> body :: Scope {TT} REF -> ENV -> Scope {VV} REF
+> body (K v)     g = K (eval v g)
+> body (x :. t)  g = H g x t
+
+\subsubsection{Evaluator}
+
+Putting the above pieces together, plus some machinery, we are finally
+able to implement an evaluator. 
+
+On a technical note, we are working in the Applicative |-> ENV| and
+use She's notation for writing applicatives.
+
+The evaluator is typed as follow: provided with a term and a variable
+binding environment, it reduces the term to a value.
+
+> eval :: Tm {d, TT} REF -> ENV -> VAL
+
+The implementation is simply a matter of pattern-matching and doing
+the right thing. Hence, we evaluate under lambdas by calling |body|:
+
+> eval (L b)       = (|L (body b)|)
+
+We reduce canonical term by evaluating under the constructor:
+
+> eval (C c)       = (|C (eval ^$ c)|)
+
+We drop off bidirectional annotations from Ex to In, just reducing the
+inner term |n|:
+
+\question{Any other subtlety here?}
+
+> eval (N n)       = eval n
+
+Similarly for type ascriptions, we ignore the type and just evaluate
+the term:
+
+> eval (t :? _)    = eval t
+
+
+If we reach a parameter, either it is already defined or it is still
+not binded. In both case, |pval| is the right tool: if the parameter is
+intrinsically associated to a value, we grab that value. Otherwise, we
+get the neutral term consisting of the stuck parameter.
+
+> eval (P x)       = (|(pval x)|)
+
+A bound variable simply requires to extract the corresponding value
+from the environment:
+
+> eval (V i)       = (!. i)
+
+Elimination is handled by |$$| defined above:
+
+> eval (t :$ e)    = (|eval t $$ (eval ^$ e)|)
+
+And similarly for operators with |@@|:
+
+> eval (op :@ vs)  = (|(op @@) (eval ^$ vs)|)
+
+Anything else is probably display syntax that we should not encounter:
+
+> eval x           = error ("eval: cannot evaluate " ++ show x)
+
+
+\subsubsection{Putting things together}
+
+Finally, the evaluation of a closed term simply consists in calling the
+interpreter defined above with the empty environment.
+
+> evTm :: Tm {d, TT} REF -> VAL
+> evTm t = eval t B0
+
+
 \subsection{Type-checking Canonicals and Eliminators}
 
 Historically, canonical terms were type-checked by the following
@@ -432,7 +594,6 @@ fishy.
 > infer _                   = throwError' "infer: unable to infer type"
 
 
-
 \subsection{Operators}
 
 In this section, we weave some She aspects. In particular, we bring
@@ -605,3 +766,25 @@ but we'd be able to drop |Sym|, which would be neater perhaps.
 >                                 N (V f :$ A cs)])])]
 >                    (B0 :< x1 :< x2 :< y1 :< y2 :< q :< f)
 > import <- Coerce
+
+
+
+%if false
+
+> traverseVal :: (Applicative f) => (REF -> f REF) -> Tm {d,VV} REF -> f VAL
+> traverseVal f (L sc)     = (|L (traverseScVal f sc)|)
+> traverseVal f (C c)      = (|C (traverse (traverseVal f) c)|)
+> traverseVal f (N n)      = traverseVal f n
+> traverseVal f (P x)      = (|pval (f x)|)
+> traverseVal f (t :$ u)   = 
+>   (|($$) (traverseVal f t) (traverse (traverseVal f) u)|)
+> traverseVal f (op :@ ts) = (|(op @@) (traverse (traverseVal f) ts)|)
+
+> traverseScVal :: (Applicative f) => (REF -> f REF) -> 
+>                                     Scope {VV} REF ->
+>                                     f (Scope {VV} REF)
+> traverseScVal f (H vs x t) = 
+>     (|H (traverse (traverseVal f) vs) ~x (traverse f t)|)
+> traverseScVal f (K t)      = (|K (traverseVal f t)|)
+
+%endif

@@ -19,8 +19,8 @@
 > import Features
 > import Naming
 > import Root
-> import Rules
-> import Tm hiding (($$))
+> import Rules hiding (($$))
+> import Tm
 
 %endif
 

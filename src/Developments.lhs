@@ -20,6 +20,7 @@
 > import BwdFwd
 > import MissingLibrary
 > import Tm
+> import Rules
 > import Root
 
 %endif
