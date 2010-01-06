@@ -21,6 +21,7 @@
 > import BwdFwd
 > import Cochon
 > import Developments
+> import Elaborator
 > import Lexer
 > import MissingLibrary
 > import Naming
@@ -43,15 +44,15 @@ to reconstruct it. Note that at this stage, we simply tag each girl with
 a list of commands to execute later.
 
 > data DevLine
->   =  DLBoy BoyKind String InTmRN
->   |  DLGirl String [DevLine] (Maybe InTmRN :<: InTmRN) [Command InTmRN]
->   |  DLModule String [DevLine] [Command InTmRN]
+>   =  DLBoy BoyKind String InDTmRN
+>   |  DLGirl String [DevLine] (Maybe InDTmRN :<: InDTmRN) [Command InDTmRN]
+>   |  DLModule String [DevLine] [Command InDTmRN]
 >      deriving Show
 
 A module may have a list of girls in square brackets, followed by an optional
 semicolon-separated list of commands.
 
-> pRootModule :: Parsley Token ([DevLine], [Command InTmRN])
+> pRootModule :: Parsley Token ([DevLine], [Command InDTmRN])
 > pRootModule = (| pTopDevLines, (pSep (keyword ";") pCommand) |)
 >   where
 >     pTopDevLines :: Parsley Token [DevLine]
@@ -73,20 +74,20 @@ A module is similar, but has no definition.
 > pLines :: Parsley Token [DevLine]
 > pLines =  bracket Square (many (pGirl <|> pBoy <|> pModule)) <|> (keyword ":=" *> pure [])
 >
-> pDefn :: Parsley Token (Maybe InTmRN :<: InTmRN)
-> pDefn =  (| (%keyword "?"%) (%keyword ":"%) ~Nothing :<: pInTm 
+> pDefn :: Parsley Token (Maybe InDTmRN :<: InDTmRN)
+> pDefn =  (| (%keyword "?"%) (%keyword ":"%) ~Nothing :<: pInDTm 
 >               | id maybeAscriptionParse
 >               |)
 >
-> pCommandSuffix :: Parsley Token [Command InTmRN]
+> pCommandSuffix :: Parsley Token [Command InDTmRN]
 > pCommandSuffix = bracket (SquareB "") (pSep (keyword ";") pCommand) <|> pure []
 
 A boy is a $\lambda$-abstraction (represented by \verb!\ x : T ->!) or a $\Pi$-abstraction
 (represented by \verb!(x : S) ->!). 
 
 > pBoy :: Parsley Token DevLine
-> pBoy =  (| (%keyword "\\"%) (DLBoy LAMB) (| fst namePartParse |) (%keyword ":"%) littleInTm (%keyword "->"%) |)
->         <|> (bracket Round (| (DLBoy PIB) (| fst namePartParse |) (%keyword ":"%) littleInTm |)) <* keyword "->"
+> pBoy =  (| (%keyword "\\"%) (DLBoy LAMB) (| fst namePartParse |) (%keyword ":"%) pInDTm (%keyword "->"%) |)
+>         <|> (bracket Round (| (DLBoy PIB) (| fst namePartParse |) (%keyword ":"%) pInDTm |)) <* keyword "->"
 
 
 \subsection{Construction}
@@ -107,11 +108,11 @@ up the proof state. The |devLoad| function takes care of this process.
 The |makeDev| function updates the proof state to represent the given list of |DevLine|s,
 accumulating pairs of names and command lists along the way.
 
-> makeDev :: [DevLine] -> [(Name, [Command InTmRN])] -> ProofState [(Name, [Command InTmRN])]
+> makeDev :: [DevLine] -> [(Name, [Command InDTmRN])] -> ProofState [(Name, [Command InDTmRN])]
 > makeDev []      ncs = return ncs
 > makeDev (l:ls)  ncs = makeEntry l ncs >>= makeDev ls
 
-> makeEntry :: DevLine -> [(Name, [Command InTmRN])] -> ProofState [(Name, [Command InTmRN])]
+> makeEntry :: DevLine -> [(Name, [Command InDTmRN])] -> ProofState [(Name, [Command InDTmRN])]
 > makeEntry (DLGirl x kids (mtipTm :<: tipTys) commands) ncs = do
 >     n <- withRoot (flip name x)
 >     let ref = n := HOLE :<: (error "makeEntry: ref undefined")
@@ -122,17 +123,22 @@ accumulating pairs of names and command lists along the way.
 >     putDevRoot (roos root)
 >     goIn
 >     ncs' <- makeDev kids ncs     
->     tipTy <- resolveHere tipTys 
+>     tipTyd <- resolveHere tipTys
+>     tipTy :=>: tipTyv <- elaborate False (SET :>: tipTyd) -- FIXME: This needs some thought
 >     aus <- getGreatAuncles
 >     kids' <- getDevEntries
 >     let goalTy = liftType aus (inferGoalType kids' tipTy)
 >     goOut
 >     Just (E _ _ (Girl LETG (es, _, root')) _) <- removeDevEntry
 >     putDevEntry (E (n := HOLE :<: evTm goalTy) (last n) 
->                    (Girl LETG (es, Unknown (tipTy :=>: evTm tipTy), root')) goalTy)
+>                    (Girl LETG (es, Unknown (tipTy :=>: tipTyv), root')) goalTy)
 >     case mtipTm of
 >         Nothing -> return ()
->         Just tm -> goIn >> resolveHere tm >>= giveSilently
+>         Just tms -> do
+>             goIn
+>             tmd <- resolveHere tms
+>             elabGive tmd
+>             return ()
 >     case commands of
 >         []  -> return ncs'
 >         _   -> return ((n, commands):ncs')
@@ -150,10 +156,10 @@ accumulating pairs of names and command lists along the way.
 >         _   -> return ((n, commands):ncs')
 
 > makeEntry (DLBoy LAMB x tys) ncs = do
->     ty <- resolveHere tys
->     Right _ <- withRoot (inCheck $ check (SET :>: ty))     
+>     tyd <- resolveHere tys
+>     ty :=>: tyv <- elaborate False (SET :>: tyd)
 >     root <- getDevRoot
->     freshRef (x :<: evTm ty)
+>     Root.freshRef (x :<: evTm ty)
 >         (\ref r -> do 
 >            putDevEntry (E ref (lastName ref) (Boy LAMB) ty)
 >            putDevRoot r
@@ -161,10 +167,10 @@ accumulating pairs of names and command lists along the way.
 >     return ncs
 
 > makeEntry (DLBoy PIB x tys) ncs = do 
->     ty <- resolveHere tys
->     Right _ <- withRoot (inCheck $ check (SET :>: ty))
+>     tyd <- resolveHere tys
+>     ty :=>: tyv <- elaborate False (SET :>: tyd)
 >     root <- getDevRoot
->     freshRef (x :<: evTm ty)
+>     Root.freshRef (x :<: evTm ty)
 >         (\ref r -> do
 >            putDevEntry (E ref (lastName ref) (Boy PIB) ty)
 >            putDevRoot r
