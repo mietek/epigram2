@@ -136,6 +136,9 @@ to determine the appropriate index.
 
 > elaborate b (PRF p :>: VOID) = prove b p
 
+> elaborate b (NU d :>: COIT VOID sty f s) = do
+>   d' <- bquoteHere d
+>   elaborate b (NU d :>: COIT d' sty f s)
 
 Elaborating a canonical term with canonical type is a job for |canTy|.
 

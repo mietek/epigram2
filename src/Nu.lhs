@@ -21,6 +21,11 @@
 >   pattern NU t = C (Nu t)
 >   pattern COIT d sty f s = C (CoIt d sty f s)
 
+> import -> CanPretty where
+>   prettyCan (Nu t)  = parens (text "Nu" <+> pretty t)
+>   prettyCan (CoIt d sty f s) = parens (text "CoIt" <+>
+>     pretty sty <+> pretty f <+> pretty s)
+
 > import -> CanTyRules where
 >   canTy chev (Set :>: Nu x)     = do
 >     xxv <- chev (desc :>: x)
@@ -39,7 +44,7 @@
 >   elimTy chev (_ :<: t@(Nu d)) Out = return (Out, descOp @@ [d , C t])
 
 > import -> ElimComputation where
->   C (CoIt d sty f s) $$ Out = eval [.d.sty.f.s.
+>   COIT d sty f s $$ Out = eval [.d.sty.f.s.
 >     mapOp :@ [NV d
 >              ,NV sty
 >              ,NU (NV d)

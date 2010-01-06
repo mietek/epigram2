@@ -159,7 +159,7 @@ grammar!
 >            , "\\", "->", "=>", "==", "&&", ":-", ":=", "?"
 >            , "TT", "FF"
 >            , "<->", ":->", ":=>"
->            , "Mu", "Monad", "'"
+>            , "Mu", "Nu", "CoIt", "Monad", "'"
 >            ]
 
 To implement |parseKeyword|, this is simply a matter of filtering by

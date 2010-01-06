@@ -312,6 +312,9 @@ in the context all the names in the |InTm String| produced by |bigInTm|.
 > specialInTm AndSize =
 >     (|PRF (%keyword ":-"%) (sizedInTm AndSize)
 >      |(MU Nothing) (%keyword "Mu"%) (sizedInTm ArgSize)
+>      |NU (%keyword "Nu"%) (sizedInTm ArgSize)
+>      |(COIT VOID) (%keyword "CoIt"%)
+>         (sizedInTm ArgSize) (sizedInTm ArgSize) (sizedInTm ArgSize)
 >      |MONAD (%keyword "Monad"%) (sizedInTm ArgSize) (sizedInTm ArgSize)
 >      |)
 > specialInTm PiSize =
