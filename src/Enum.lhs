@@ -94,6 +94,25 @@ Equality rules:
 <     eqGreen(EnumT e1, n1, EnumT e2, n2)
 
 
+> import -> BootstrapDesc where
+>   inEnumU :: VAL
+>   inEnumU = ARG (ENUMT constructors) $
+>                eval (L $ "" :. [.x. 
+>                 N $ switchDOp :@ [ constructors
+>                                  , cases
+>                                  , NV x]]) B0
+>                    where constructors = CONSE (TAG "nil")
+>                                         (CONSE (TAG "cons")
+>                                          NILE)
+>                          cases = PAIR DONE
+>                                  (PAIR (ARG UID (L $ "" :. [.x. IND1 DONE]))
+>                                   VOID)
+>   enumFakeREF :: REF
+>   enumFakeREF = [("Primitive", 0), ("Enum", 0)] := (FAKE :<: SET) 
+>   enumU :: VAL
+>   enumU = MU (Just (N (P enumFakeREF))) inEnumU
+
+
 > import -> CanConstructors where
 >   EnumT  :: t -> Can t
 >   Ze     :: Can t

@@ -495,47 +495,7 @@ Rooty. Provided with a Root and an Operator, we compute its type.
 
 \subsection{Bootstrapping Desc in Desc}
 
-> inDesc :: VAL
-> inDesc = ARG (ENUMT constructors) $
->              eval (L $ "" :. [.x. 
->               N $ switchDOp :@ [constructors, cases, NV x]]) B0
->     where constructors = (CONSE (TAG "done")
->                           (CONSE (TAG "arg")
->                            (CONSE (TAG "ind")
->                             (CONSE (TAG "ind1")
->                              NILE))))
->           cases = PAIR DONE 
->                   (PAIR (ARG SET (L $ "" :. [.s. IND (NV s) DONE]))
->                    (PAIR (ARG SET (L $ "" :. [.h. IND1 DONE]))
->                     (PAIR (IND1 DONE)
->                      VOID)))
-
-> descFakeREF :: REF
-> descFakeREF = [("Primitive", 0), ("Desc", 0)] := (FAKE :<: SET)
-
-> desc :: VAL
-> desc = MU (Just (N (P descFakeREF))) inDesc
-
-\subsection{Building Enum in Desc}
-
-> inEnumU :: VAL
-> inEnumU = ARG (ENUMT constructors) $
->              eval (L $ "" :. [.x. 
->               N $ switchDOp :@ [ constructors
->                                , cases
->                                , NV x]]) B0
->                  where constructors = CONSE (TAG "nil")
->                                       (CONSE (TAG "cons")
->                                        NILE)
->                        cases = PAIR DONE
->                                (PAIR (ARG UID (L $ "" :. [.x. IND1 DONE]))
->                                 VOID)
-
-> enumFakeREF :: REF
-> enumFakeREF = [("Primitive", 0), ("Enum", 0)] := (FAKE :<: SET) -- List UID ?
-
-> enumU :: VAL
-> enumU = MU (Just (N (P enumFakeREF))) inEnumU
+> import <- BootstrapDesc
 
 \subsection{Observational Equality}
 

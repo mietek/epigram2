@@ -143,6 +143,26 @@ Equality rules:
 > import -> HalfZipCan where
 >   halfZip (Mu t0) (Mu t1) = (| Mu (halfZip t0 t1) |)
 
+> import -> BootstrapDesc where
+>   inDesc :: VAL
+>   inDesc = ARG (ENUMT constructors) $
+>                eval (L $ "" :. [.x. 
+>                 N $ switchDOp :@ [constructors, cases, NV x]]) B0
+>       where constructors = (CONSE (TAG "done")
+>                             (CONSE (TAG "arg")
+>                              (CONSE (TAG "ind")
+>                               (CONSE (TAG "ind1")
+>                                NILE))))
+>             cases = PAIR DONE 
+>                     (PAIR (ARG SET (L $ "" :. [.s. IND (NV s) DONE]))
+>                      (PAIR (ARG SET (L $ "" :. [.h. IND1 DONE]))
+>                       (PAIR (IND1 DONE)
+>                        VOID)))
+>   descFakeREF :: REF
+>   descFakeREF = [("Primitive", 0), ("Desc", 0)] := (FAKE :<: SET)
+>   desc :: VAL
+>   desc = MU (Just (N (P descFakeREF))) inDesc
+
 > import -> CanPats where
 >   pattern MU l x  = C (Mu (l :?=: x))
 >   pattern DONE = CON (PAIR ZE VOID)
