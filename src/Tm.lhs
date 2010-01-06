@@ -20,6 +20,7 @@
 > import MissingLibrary
 > import BwdFwd
 > import Features
+> import Root
 
 %endif
 
@@ -358,8 +359,6 @@ values, and are shared.
 > data REF = (:=) { refName :: Name, refBody :: (RKind :<: TY)}
 >   deriving Show -- is shared where possible
 > infix 2 :=
->
-> type Name = [(String, Int)]
 >
 > instance Eq REF where
 >   (x := _) == (y := _) = x == y  -- could use cheeky pointer equality?

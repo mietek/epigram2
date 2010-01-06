@@ -12,7 +12,6 @@
 > import Control.Applicative
 
 > import BwdFwd
-> import Tm
 
 %endif
 
@@ -44,10 +43,12 @@ counter to |0|:
 
 Intuitively, the function |name| computes a fresh name out of a given
 name generator, decorating it with the human-readable label
-|s|. Technically, |Name| is defined in Section~\ref{sec:references} as
+|s|. Technically, |Name| is defined as
 a list of |(String, Int)|. Hence, on that structure, the effect of
 |trail| is to flatten the backward namespace into a (unique) |Name|.
 
+> type Name = [(String, Int)]
+>
 > name :: Root -> String -> Name
 > name (sis, i) s = trail (sis :< (s, i))
 

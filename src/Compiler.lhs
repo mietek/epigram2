@@ -27,6 +27,7 @@ generate an executable from a collection of supercombinator definitions.
 > import Developments
 > import BwdFwd
 > import Features
+> import Root
 
 %endif
 
