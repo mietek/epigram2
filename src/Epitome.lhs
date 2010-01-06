@@ -21,7 +21,7 @@
 
 \title{An Epigram Implementation}
 \author{Edwin Brady,  James Chapman, Pierre-\'{E}variste Dagand, \\
-   Adam Gundry, Conor McBride, Peter Morris
+   Adam Gundry, Conor McBride, Peter Morris, Ulf Norell
 }
 \maketitle
 
