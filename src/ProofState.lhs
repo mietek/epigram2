@@ -662,12 +662,13 @@ current development, after checking that the purported type is in fact a type.
 > aunclesToElims (_ :> es) = aunclesToElims es
 
 
-> makeModule :: String -> ProofState ()
+> makeModule :: String -> ProofState Name
 > makeModule s = do
 >     n <- withRoot (flip name s)
 >     root <- getDevRoot
 >     putDevEntry (M n (B0, Module, room root s))
 >     putDevRoot (roos root)
+>     return n
 
 > pickName :: String -> ProofState String
 > pickName ""  = do

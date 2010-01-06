@@ -86,7 +86,8 @@ A boy is a $\lambda$-abstraction (represented by \verb!\ x : T ->!) or a $\Pi$-a
 (represented by \verb!(x : S) ->!). 
 
 > pBoy :: Parsley Token DevLine
-> pBoy =  (| (%keyword "\\"%) (DLBoy LAMB) (| fst namePartParse |) (%keyword ":"%) pInDTm (%keyword "->"%) |)
+> pBoy =  (| (%keyword "\\"%) (DLBoy LAMB) (| fst namePartParse |) (%keyword ":"%)
+>                (sizedInDTm (pred ArrSize)) (%keyword "->"%) |)
 >         <|> (bracket Round (| (DLBoy PIB) (| fst namePartParse |) (%keyword ":"%) pInDTm |)) <* keyword "->"
 
 
@@ -114,28 +115,16 @@ accumulating pairs of names and command lists along the way.
 
 > makeEntry :: DevLine -> [(Name, [Command InDTmRN])] -> ProofState [(Name, [Command InDTmRN])]
 > makeEntry (DLGirl x kids (mtipTm :<: tipTys) commands) ncs = do
->     n <- withRoot (flip name x)
->     let ref = n := HOLE :<: (error "makeEntry: ref undefined")
->     root <- getDevRoot
->     putDevEntry (E ref (last n) (Girl LETG
->                     (B0, Unknown (error "makeEntry: tip undefined"), room root x))
->                     (error "makeEntry: type undefined"))
->     putDevRoot (roos root)
+>     n <- makeModule x
 >     goIn
 >     ncs' <- makeDev kids ncs     
 >     tipTyd <- resolveHere tipTys
 >     tipTy :=>: tipTyv <- elaborate False (SET :>: tipTyd) -- FIXME: This needs some thought
->     aus <- getGreatAuncles
 >     kids' <- getDevEntries
->     let goalTy = liftType aus (inferGoalType kids' tipTy)
->     goOut
->     Just (E _ _ (Girl LETG (es, _, root')) _) <- removeDevEntry
->     putDevEntry (E (n := HOLE :<: evTm goalTy) (last n) 
->                    (Girl LETG (es, Unknown (tipTy :=>: tipTyv), root')) goalTy)
+>     moduleToGoal (tipTy :=>: tipTyv)
 >     case mtipTm of
->         Nothing -> return ()
+>         Nothing -> goOut
 >         Just tms -> do
->             goIn
 >             tmd <- resolveHere tms
 >             elabGive tmd
 >             return ()
