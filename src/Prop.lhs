@@ -206,6 +206,7 @@ Elim forms inherited from elsewhere
 >   check (PRF (ALL p q) :>: L sc)  = do
 >     Rooty.freshRef ("" :<: p)
 >       (\ref -> check (PRF (q $$ A (pval ref)) :>: underScope sc ref))
+>     return $ () :=>: (evTm $ L sc)
 
 > import -> OpRunEqGreen where
 >   opRunEqGreen [PROP,t1,PROP,t2] = Right $ AND (IMP t1 t2) (IMP t2 t1)

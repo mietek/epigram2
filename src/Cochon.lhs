@@ -49,7 +49,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >         Right (GirlMother (_ := DEFN tm :<: ty) _ _) ->
 >             let qroot = (B0 :< ("quote",0), 1) :: Root in
 >             case evalStateT (withRoot (inCheck $ check (ty :>: bquote B0 tm qroot))) loc of
->                 Right (Right ()) -> return ()
+>                 Right (Right _) -> return ()
 >                 Right (Left _) -> putStrLn "*** Warning: definition failed to type-check! ***"
 >         _ -> return ()
 

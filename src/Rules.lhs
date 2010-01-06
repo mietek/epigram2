@@ -301,15 +301,15 @@ $$\Gamma \vdash \mbox{TY} \ni \mbox{Tm \{In,.\} p}$$
 Technically, we also need a root and handle failure with the |Maybe|
 monad:
 
-> check :: (TY :>: INTM) -> Check ()
+> check :: (TY :>: INTM) -> Check (() :=>: VAL)
 
 Type-checking a canonical term is rather easy, as we just have to
 delegate the hard work to |canTy|. The checker-evaluator simply needs
 to evaluate the well-typed terms.
 
 > check (C c :>: C c')         = do
->   canTy chev (c :>: c')
->   return ()
+>   cc' <- canTy chev (c :>: c')
+>   return $ () :=>: (C $ fmap valueOf cc')
 >     where chev (t :>: x) = do 
 >               ch <- check (t :>: x)  
 >               return $ ch :=>: evTm x
@@ -326,9 +326,10 @@ As for the implementation, we apply the by-now standard trick of
 making a fresh variable $x \in S$ and computing the type |T x|. Then,
 we simply have to check that $T\ x \ni t$.
 
-> check (PI s t :>: L sc) = 
+> check (PI s t :>: L sc) = do
 >   Rooty.freshRef ("" :<: s) 
 >            (\ref -> check (t $$ A (pval ref) :>: underScope sc ref)) 
+>   return $ () :=>: (evTm $ L sc)
 
 Formally, we can bring the |Ex| terms into the |In| world with the
 rule:
@@ -343,9 +344,9 @@ This translates naturally into the following code:
 
 > check (w :>: N n)            = do
 >   r <- root
->   y <- infer n
->   guard $ equal (SET :>: (w, y)) r
->   return ()
+>   yv :<: yt <- infer n
+>   guard $ equal (SET :>: (w, yt)) r
+>   return $ () :=>: yv
 
 Finally, we can extend the checker with the |Check| aspect. If no rule
 has matched, then we have to give up.
@@ -364,7 +365,7 @@ $$\Gamma \vdash \mbox{Tm \{Ex,.\} p} \in \mbox{TY}$$
 
 This translates into the following signature:
 
-> infer :: EXTM -> Check TY
+> infer :: EXTM -> Check (VAL :<: TY)
 
 We all know the rule to infer the type of a free variable from the
 context:
@@ -376,7 +377,7 @@ context:
 
 In Epigram, parameters carry there types, so it even easier:
 
-> infer (P x)               = return $ pty x
+> infer (P x)               = return $ pval x :<: pty x
 
 The rule for eliminators is a generalization of the rule for function
 application. Let us give a look at its formal rule:
@@ -392,9 +393,9 @@ term |t| and we type-check the eliminator, using |elimTy|. Because
 |elimTy| computes the result type, we have inferred the result type.
 
 > infer (t :$ s)           = do
->   C ty <- infer t
+>   val :<: C ty <- infer t
 >   (s',ty') <- elimTy chev (evTm t :<: ty) s
->   return ty'
+>   return $ (val $$ (fmap valueOf s')) :<: ty'
 >       where chev (t :>: x) = do 
 >               ch <- check (t :>: x) 
 >               return $ ch :=>: evTm x
@@ -404,7 +405,7 @@ operator application:
 
 > infer (op :@ ts)         = do
 >   (vs,t) <- opTy op chev ts
->   return t
+>   return $ (op @@ (fmap valueOf vs)) :<: t
 >       where chev (t :>: x) = do 
 >               ch <- check (t :>: x) 
 >               return $ ch :=>: evTm x
@@ -422,8 +423,8 @@ Which translates directly into the following code:
 > infer (t :? ty)           = do
 >   check (SET :>: ty)
 >   let vty = evTm ty
->   check (vty :>: t)
->   return vty
+>   () :=>: v <- check (vty :>: t)
+>   return $ v :<: vty
 
 Obviously, if none of the rule above applies, then there is something
 fishy.
