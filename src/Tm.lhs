@@ -66,15 +66,13 @@ signature for a term:
 We can push types in to:
 \begin{itemize}
 \item lambda terms;
-\item canonical terms;
-\item inferred terms; and
-\item holes.
+\item canonical terms; and
+\item inferred terms.
 \end{itemize}
 
 >   L     :: Scope p x             -> Tm {In, p}   x -- \(\lambda\)
 >   C     :: Can (Tm {In, p} x)    -> Tm {In, p}   x -- canonical
 >   N     :: Tm {Ex, p} x          -> Tm {In, p}   x -- |Ex| to |In|
->   Q     :: String                -> Tm {In, TT}  x -- hole
 
 And we can infer types from:
 \begin{itemize}
@@ -248,12 +246,6 @@ We have some type synonyms for commonly occurring instances of |Tm|.
 > type TY     = VAL
 > type NEU    = Tm {Ex, VV} REF
 > type ENV    = Bwd VAL
-
-At the moment we do not make a type distinction between display and
-elaborated terms, so using the following synonyms is optional.
-
-> type INDTM  = INTM
-> type EXDTM  = EXTM
 
 We have special pairs for types going into and coming out of
 stuff. That is, we write |typ :>: thing| to say that
@@ -448,7 +440,6 @@ appropriate fields of |Mangle| for each parameter, variable or binder encountere
 > m % L (x :. t)   = (|L (|(x :.) (mangB m x % t)|)|)
 > m % C c          = (|C ((m %) ^$ c)|)
 > m % N n          = (|N (exMang m n (|[]|))|)
-> m % Q x          = (|(Q x)|)
 >
 > exMang ::  Applicative f => Mangle f x y ->
 >            Tm {Ex, TT} x -> f [Elim (Tm {In, TT} y)] -> f (Tm {Ex, TT} y)
@@ -569,8 +560,6 @@ I think that this stuff should disappear with Tactics spreading.
 >   show (L s)       = "L (" ++ show s ++ ")"
 >   show (C c)       = "C (" ++ show c ++ ")"
 >   show (N n)       = "N (" ++ show n ++ ")"
->   show (Q "")      = "?"
->   show (Q x)       = "(? " ++ x ++ ")"
 >   show (P x)       = "P (" ++ show x ++ ")"
 >   show (V i)       = "V " ++ show i
 >   show (n :$ e)    = "(" ++ show n ++ " :$ " ++ show e ++ ")"

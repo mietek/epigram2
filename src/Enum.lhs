@@ -125,6 +125,13 @@ Equality rules:
 >   pattern ZE         = C Ze
 >   pattern SU n       = C (Su n)
 
+> import -> DisplayCanPats where
+>   pattern DENUMT e    = DC (EnumT e) 
+>   pattern DNILE       = DCON (DPAIR DZE DVOID)
+>   pattern DCONSE t e  = DCON (DPAIR (DSU DZE) (DPAIR t (DPAIR e DVOID)))
+>   pattern DZE         = DC Ze
+>   pattern DSU n       = DC (Su n)
+
 > import -> SugarTactics where
 >   enumUTac = done (enumU :<: SET)
 >   enumTTac t = can $ EnumT t

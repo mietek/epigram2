@@ -128,6 +128,17 @@ Elim forms inherited from elsewhere
 >   pattern ABSURD      = C Absurd
 >   pattern BOX p       = C (Box p)
 
+> import -> DisplayCanPats where
+>   pattern DPROP        = DC Prop
+>   pattern DPRF p       = DC (Prf p)
+>   pattern DALL p q     = DC (All p q)
+>   pattern DIMP p q     = DALL (DPRF p) (DL (DK q))
+>   pattern DALLV x s p  = DALL s (DLAV x p)
+>   pattern DAND p q     = DC (And p q)
+>   pattern DTRIVIAL     = DC Trivial
+>   pattern DABSURD      = DC Absurd
+>   pattern DBOX p       = DC (Box p)
+
 > import -> SugarTactics where
 >   propTac = can Prop
 >   prfTac p = can $ Prf p

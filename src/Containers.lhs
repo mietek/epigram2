@@ -51,6 +51,18 @@
 >   pattern MU i o d x oi  = C (Mu i o d x oi)
 >   pattern NU i o d x oi  = C (Nu i o d x oi)
 
+> import -> DisplayCanPats where
+>   pattern DCONTU i        = DC (ContU i)
+>   pattern DREQC i         = DC (ReqC i)
+>   pattern DUNITC          = DC UnitC
+>   pattern DTIMESC x y     = DC (TimesC x y)
+>   pattern DSIGMAC s t     = DC (SigmaC s t)
+>   pattern DPIC s t        = DC (PiC s t)
+>   pattern DMUC o x oi     = DC (MuC o x oi)
+>   pattern DNUC o x oi     = DC (NuC o x oi)
+>   pattern DMU i o d x oi  = DC (Mu i o d x oi)
+>   pattern DNU i o d x oi  = DC (Nu i o d x oi)
+
 > import -> CanTyRules where
 >   -- ContU Rules :
 >   canTy ev (Set :>: ContU i) = do

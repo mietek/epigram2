@@ -92,6 +92,9 @@ With no computational behavior.
 > import -> CanPats where
 >   pattern EQBLUE p q = C (EqBlue p q)
 
+> import -> DisplayCanPats where
+>   pattern DEQBLUE p q = DC (EqBlue p q)
+
 > import -> SugarTactics where
 >     eqBlueTac p q = can $ EqBlue p q
 

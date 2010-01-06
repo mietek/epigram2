@@ -118,6 +118,15 @@ Coercion rule:
 >   pattern Times x y = Sigma x (L (K y))
 >   pattern TIMES x y = C (Times x y)  
 
+> import -> DisplayCanPats where
+>   pattern DSIGMA p q = DC (Sigma p q)
+>   pattern DPAIR  p q = DC (Pair p q)
+>   pattern DUNIT      = DC Unit
+>   pattern DVOID      = DC Void
+>   pattern DTimes x y = Sigma x (DL (DK y))
+>   pattern DTIMES x y = DC (DTimes x y)  
+
+
 > import -> SugarTactics where
 >     sigmaTac p q 
 >         = can $ Sigma p (lambda q)

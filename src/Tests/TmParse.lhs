@@ -117,4 +117,4 @@
 >       putStrLn (x ++ "\t==>\t" ++ show tox ++ "\t==>\t" ++ show parseX)
 
 > main = do
->     foldMap (test pInTm) tests
+>     foldMap (test pInDTm) tests

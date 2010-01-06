@@ -176,6 +176,12 @@ Equality rules:
 >   pattern IND h d = CON (PAIR (SU (SU ZE)) (PAIR h (PAIR d VOID)))
 >   pattern IND1 d = CON (PAIR (SU (SU (SU ZE))) (PAIR d VOID))
 
+> import -> DisplayCanPats where
+>   pattern DMU l x  = DC (Mu (l :?=: Id x))
+>   pattern DDONE = DCON (DPAIR DZE DVOID)
+>   pattern DARG s d = DCON (DPAIR (DSU DZE) (DPAIR s (DPAIR d DVOID)))
+>   pattern DIND h d = DCON (DPAIR (DSU (DSU DZE)) (DPAIR h (DPAIR d DVOID)))
+>   pattern DIND1 d = DCON (DPAIR (DSU (DSU (DSU DZE))) (DPAIR d DVOID))
 
 > import -> SugarTactics where
 >   muTac t = can $ Mu (Nothing :?=: Id t)

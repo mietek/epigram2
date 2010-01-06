@@ -5,12 +5,7 @@
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE GADTs, PatternGuards #-}
 
-> module Naming (
->        Offs(Rel, Abs), RelName, InTmRN, ExTmRN,
->        christen, christenAbs, christenName, christenREF,
->        resolve,
->        showName, showEntries, showEntriesAbs
->    ) where
+> module Naming where
 
 > import Control.Applicative
 > import Control.Monad
@@ -23,6 +18,7 @@
 
 > import BwdFwd
 > import Developments
+> import DisplayTm
 > import MissingLibrary
 > import Tm
 > import Rules
@@ -46,7 +42,8 @@ component of the name.
 
 > type InTmRN = InTm RelName
 > type ExTmRN = ExTm RelName
-
+> type InDTmRN = InDTm RelName
+> type ExDTmRN = ExDTm RelName
 
 The |showRelName| function converts a relative name to a string by
 inserting the appropriate punctuation.

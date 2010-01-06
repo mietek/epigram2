@@ -42,8 +42,12 @@ Equality rules:
 >   Tag    :: String -> Can t
 
 > import -> CanPats where
->   pattern UID = C UId
->   pattern TAG s = C (Tag s)
+>   pattern UID    = C UId
+>   pattern TAG s  = C (Tag s)
+
+> import -> DisplayCanPats where
+>   pattern DUID    = DC UId
+>   pattern DTAG s  = DC (Tag s)
 
 > import -> SugarTactics where
 >   uidTac = can $ UId
