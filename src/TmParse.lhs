@@ -7,6 +7,7 @@
 
 > module TmParse where
 
+> import MissingLibrary
 > import Control.Applicative
 > import Data.Foldable hiding (foldr)
 > import Data.Traversable

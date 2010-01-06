@@ -13,6 +13,7 @@
 > import Control.Monad.Error
 > import Control.Monad.Identity
 > import Data.Either
+> import qualified Data.Monoid as M
 > import Data.Foldable hiding (foldl)
 > import Data.Traversable
 
@@ -393,19 +394,18 @@ high-level presentation of low-level stuff.  A typical label is the
 neutral application of a fake reference --- a definition whose
 hysterectomy stops it computing.
 
-> data Labelled t
->   = Maybe t :?=: t
+> data Labelled f t
+>   = Maybe t :?=: f t
 >   deriving (Show)
 
 Label equality is sound but not complete for equality of what has been
 labelled.
 
-> instance Eq t => Eq (Labelled t) where
+> instance (Traversable f, HalfZip f, Eq t) => Eq (Labelled f t) where
 >   (Just a  :?=: _)  ==  (Just b  :?=: _) | a == b  = True
->   (_       :?=: s)  ==  (_       :?=: t)           = s == t
-
-
-
+>   (_       :?=: s)  ==  (_       :?=: t)           = case halfZip s t of
+>     Nothing -> False 
+>     Just x -> M.getAll (crush (M.All . uncurry (==)) x) 
 
 
 \subsection{Computation}
@@ -744,16 +744,18 @@ I think that this stuff should disappear with Tactics spreading.
 >   traverse f (x :. t)   = (|(x :.) (traverse f t)|)
 >   traverse f (K t)      = (|K (traverse f t)|)
 
-> instance Functor Labelled where
+> instance Traversable f => Functor (Labelled f) where
 >   fmap = fmapDefault
-> instance Foldable Labelled where
+> instance (Traversable f, Foldable f) => Foldable (Labelled f) where
 >   foldMap = foldMapDefault
-> instance Traversable Labelled where
->   traverse f (mt :?=: t)  = (| traverse f mt :?=: f t |)
+> instance Traversable f => Traversable (Labelled f) where
+>   traverse f (mt :?=: ft)  = (| traverse f mt :?=: traverse f ft |)
 
-> instance HalfZip Labelled where
->   halfZip (Just a  :?=: s)  (Just b :?=: t)  = Just (Just (a, b)  :?=: (s, t))
->   halfZip (_       :?=: s)  (_      :?=: t)  = Just (Nothing      :?=: (s, t))
+> instance (Traversable f, HalfZip f) => HalfZip (Labelled f) where
+>   halfZip (Just a  :?=: fs)  (Just b :?=: ft)  = 
+>     (| (Just (a, b)  :?=:) (halfZip fs ft) |)
+>   halfZip (_       :?=: fs)  (_      :?=: ft)  = 
+>     (| (Nothing  :?=:) (halfZip fs ft) |)
 
 > instance Functor (Tm {d,TT}) where
 >   fmap = fmapDefault

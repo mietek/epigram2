@@ -135,7 +135,7 @@ Equality rules:
 
 
 > import -> CanConstructors where
->   Mu     :: Labelled t -> Can t
+>   Mu     :: Labelled Id t -> Can t
 
 > import -> TraverseCan where
 >   traverse f (Mu l) = (|Mu (traverse f l)|)
@@ -164,7 +164,7 @@ Equality rules:
 >   desc = MU (Just (N (P descFakeREF))) inDesc
 
 > import -> CanPats where
->   pattern MU l x  = C (Mu (l :?=: x))
+>   pattern MU l x  = C (Mu (l :?=: Id x))
 >   pattern DONE = CON (PAIR ZE VOID)
 >   pattern ARG s d = CON (PAIR (SU ZE) (PAIR s (PAIR d VOID)))
 >   pattern IND h d = CON (PAIR (SU (SU ZE)) (PAIR h (PAIR d VOID)))
@@ -172,7 +172,7 @@ Equality rules:
 
 
 > import -> SugarTactics where
->   muTac t = can $ Mu (Nothing :?=: t)
+>   muTac t = can $ Mu (Nothing :?=: Id t)
 >   descTac = done (desc :<: SET)
 >   doneTac =  conTac (pairTac zeTac voidTac)
 >   argTac x y = conTac (pairTac (suTac zeTac) (pairTac x (pairTac y voidTac)))
@@ -181,19 +181,19 @@ Equality rules:
 
 > import -> CanPretty where
 >   prettyCan (Mu (Just l   :?=: _))  = parens (pretty l)
->   prettyCan (Mu (Nothing  :?=: t))  = parens (text "Mu" <+> pretty t)
+>   prettyCan (Mu (Nothing  :?=: Id t))  = parens (text "Mu" <+> pretty t)
 
 > import -> CanTyRules where
->   canTy chev (Set :>: Mu (ml :?=: x))     = do
+>   canTy chev (Set :>: Mu (ml :?=: Id x))     = do
 >     mlv <- traverse (chev . (SET :>:)) ml
 >     xxv@(x :=>: xv) <- chev (desc :>: x)
->     return $ Mu (mlv :?=: xxv)
->   canTy chev (t@(Mu (_ :?=: x)) :>: Con y) = do
+>     return $ Mu (mlv :?=: Id xxv)
+>   canTy chev (t@(Mu (_ :?=: Id x)) :>: Con y) = do
 >     yyv@(y :=>: yv) <- chev (descOp @@ [x, C t] :>: y)
 >     return $ Con yyv
 
 > import -> ElimTyRules where
->   elimTy chev (_ :<: t@(Mu (_ :?=: d))) Out = return (Out, descOp @@ [d , C t])
+>   elimTy chev (_ :<: t@(Mu (_ :?=: Id d))) Out = return (Out, descOp @@ [d , C t])
 
 
 > import -> Operators where
@@ -450,8 +450,8 @@ Equality rules:
 >     arrTac setTac $ piTac descTac $ \d -> arrTac (arrTac (muTac (var d)) setTac) setTac
 >   elimOpLabMethodType = trustMe . (elimOpLabMethodTypeType :>:) $
 >     lambda $ \l -> lambda $ \d -> lambda $ \pP ->
->     piTac (useOp descOp [var d, can $ Mu (Just (var l) :?=: var d)] done) $ \x ->
->     arrTac (useOp boxOp [var d, can $ Mu (Just (var l) :?=: var d), var pP, var x ] done) $
+>     piTac (useOp descOp [var d, can $ Mu (Just (var l) :?=: Id (var d))] done) $ \x ->
+>     arrTac (useOp boxOp [var d, can $ Mu (Just (var l) :?=: Id (var d)), var pP, var x ] done) $
 >     pP @@@ [conTac (var x)]
 
 >   elimOp :: Op

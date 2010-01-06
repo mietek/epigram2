@@ -8,6 +8,7 @@
 > module PrettyPrint (pretty, prettyDev, prettyModule,
 >                     prettyREF, prettyVAL, prettyINTM) where
 
+> import MissingLibrary
 > import Data.Foldable
 > import Data.List
 > import Text.PrettyPrint.HughesPJ
