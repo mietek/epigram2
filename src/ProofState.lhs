@@ -434,7 +434,7 @@ is not in the required form.
 >     e <- getMotherEntry
 >     l <- removeLayer
 >     putDev (elders l :< e, laytip l, layroot l)
->     propagateNews [] (cadets l)  -- should update tip and pass on news
+>     propagateNews True [] (cadets l)  -- should update tip and pass on news
 >     return ()
 >   ) `replaceError` "goOut: you can't go that way."
 
@@ -459,27 +459,22 @@ is not in the required form.
 >   where
 >     goDownAcc :: Entries -> NewsBulletin -> ProofState ()
 >     goDownAcc acc news = do
->         l@(Layer elders _ (NF (e :> es)) _ _) <- getLayer
->         case e of
+>         l@(Layer elders _ (NF (ne :> es)) _ _) <- getLayer
+>         case ne of
 >             Left nb -> do
 >                 replaceLayer l{cadets=NF es}
 >                 goDownAcc acc (mergeNews news nb)
->             Right e' -> if entryHasDev e'
+>             Right e -> if entryHasDev e
 >               then do
 >                 me <- getMotherEntry
->                 let (NF es', tip', root') = entryDev e'
->                 oldDev <- replaceDev (B0, tip', root')
->                 news' <- propagateNews news (NF es')
->                 dev <- getDev
->                 let e'' = replaceEntryDev e' dev
->                 (news'', e''') <- tellEntry news' e''
->                 replaceDev (entryDev e''')
->                 replaceLayer  l{elders=(elders :< me) <+> acc,
->                               mother=entryToMother e''', cadets=NF (Left news'' :> es)}
+>                 replaceLayer l{elders=(elders :< me) <+> acc, mother=entryToMother e, cadets=NF es}
+>                 let (es, tip', root') = entryDev e
+>                 putDev (B0, tip', root')
+>                 news' <- propagateNews True news es
 >                 return ()
 >               else do
 >                 replaceLayer l{cadets=NF es}
->                 goDownAcc (acc :< coerceEntry e') news
+>                 goDownAcc (acc :< coerceEntry e) news
 
 > goTo :: Name -> ProofState ()
 > goTo [] = return ()
@@ -578,7 +573,6 @@ next goal (if one exists) instead.
 >     tip <- getDevTip
 >     case tip of         
 >         Unknown (tipTyTm :=>: tipTy) -> do
->             putDevTip (Defined tm (tipTyTm :=>: tipTy))
 >             mc <- withRoot (inCheck $ check (tipTy :>: tm))
 >             aus <- getGreatAuncles
 >             sibs <- getDevEntries
@@ -591,6 +585,7 @@ next goal (if one exists) instead.
 >                                              , prettyTm
 >                                              , "is not of type"
 >                                              , prettyTipTyTm ]
+>             putDevTip (Defined tm (tipTyTm :=>: tipTy))
 >             putMother (GirlMother ref xn ty)
 >             updateRef ref
 >             return (N (P ref $:$ aunclesToElims (aus <>> F0)))
@@ -768,18 +763,20 @@ in turn, picking up other bulletins along the way. This function should be calle
 when navigating to a development that may contain news bulletins, so they can be
 pushed out of sight.
 
-> propagateNews :: NewsBulletin -> NewsyEntries -> ProofState NewsBulletin
+> propagateNews :: Bool -> NewsBulletin -> NewsyEntries -> ProofState NewsBulletin
 
 If we have nothing to say and nobody to tell, we might as well give up and go home.
 
-> propagateNews [] (NF F0) = return []
+> propagateNews _ [] (NF F0) = return []
+
+> propagateNews False news (NF F0) = return news
 
 If there are no entries to process, we should tell the mother (if there is one),
 stash the bulletin after the current location and stop. Note that the insertion is
 optional because it will fail when we have reached the end of the module, at which
 point everyone knows the news anyway.
 
-> propagateNews news (NF F0) = do
+> propagateNews True news (NF F0) = do
 >     news' <- tellMother news
 >     optional (insertCadet news')
 >     return news'
@@ -787,49 +784,43 @@ point everyone knows the news anyway.
 A |Boy| is relatively easy to deal with, we just check to see if its type
 has become more defined, and pass on the good news if necessary.
 
-> propagateNews news (NF (Right (E (name := DECL :<: tv) sn (Boy k) ty) :> es)) = do
+> propagateNews top news (NF (Right (E (name := DECL :<: tv) sn (Boy k) ty) :> es)) = do
 >     case tellNews news ty of
->         (_, NoNews) -> putDevEntry (E (name := DECL :<: tv) sn (Boy k) ty) >> propagateNews news (NF es)
+>         (_, NoNews) -> putDevEntry (E (name := DECL :<: tv) sn (Boy k) ty) >> propagateNews top news (NF es)
 >         (ty', GoodNews) -> do
 >             let ref = name := DECL :<: evTm ty'
 >             putDevEntry (E ref sn (Boy k) ty')
->             propagateNews ((ref, GoodNews):news) (NF es)
+>             propagateNews top (addNews (ref, GoodNews) news) (NF es)
 
 Updating girls is a bit more complicated. We proceed as follows:
 \begin{enumerate}
-\item Recursively propagate the news to the children. \question{does this create spurious |R|s?}
+\item Recursively propagate the news to the children.
 \item Call |tellGirl| to update the tip and definition (including their types)
 \item Add the updated girl to the current development.
 \item Continue propagating the latest news.
 \end{enumerate}
 
-> propagateNews news (NF ((Right e@(E ref sn (Girl LETG (_, tip, root)) ty)) :> es)) = do
->     (news', cs) <- propagateIn
->     (news'', e') <- tellGirl news' (E ref sn (Girl LETG (cs, tip, root)) ty)
->     putDevEntry e'
->     propagateNews news'' (NF es)
->   where
->     propagateIn :: ProofState (NewsBulletin, Entries)
->     propagateIn = do
->         xs <- jumpIn e
->         news' <- propagateNews news xs
->         goOut
->         Just (E _ _ (Girl LETG (cs, _, _)) _) <- removeDevEntry
->         return (news', cs)
-
-
-> propagateNews news (NF (Right e@(M n d) :> es)) = do
+> propagateNews top news (NF ((Right e@(E ref sn (Girl LETG (_, tip, root)) ty)) :> es)) = do
 >     xs <- jumpIn e
->     news' <- propagateNews news xs
+>     news' <- propagateNews False news xs
 >     goOut
->     propagateNews news (NF es)
+>     Just e' <- removeDevEntry
+>     (news'', e'') <- tellGirl news' e'
+>     putDevEntry e'
+>     propagateNews top news'' (NF es)
+
+> propagateNews top news (NF (Right e@(M n d) :> es)) = do
+>     xs <- jumpIn e
+>     news' <- propagateNews False news xs
+>     goOut
+>     propagateNews top news (NF es)
 
 
 Finally, if we encounter an older news bulletin when propagating news, we can simply
 merge the two together.
 
-> propagateNews news (NF (Left oldNews :> es)) =
->   propagateNews (mergeNews news oldNews) (NF es)
+> propagateNews top news (NF (Left oldNews :> es)) =
+>   propagateNews top (mergeNews news oldNews) (NF es)
 
 
 > tellEntry :: NewsBulletin -> Entry Bwd -> ProofState (NewsBulletin, Entry Bwd)
@@ -876,7 +867,6 @@ should have already received. It will
 >     putMotherEntry e'
 >     return news'
 >  ) <|> return news
-
 
 The |tellNews| function applies a bulletin to a term. It returns the updated
 term and the news about it.
