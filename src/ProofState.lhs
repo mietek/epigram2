@@ -579,7 +579,7 @@ next goal (if one exists) instead.
 >     case tip of         
 >         Unknown (tipTyTm :=>: tipTy) -> do
 >             putDevTip (Defined tm (tipTyTm :=>: tipTy))
->             mc <- withRoot (check (tipTy :>: tm))
+>             mc <- withRoot (inCheck $ check (tipTy :>: tm))
 >             aus <- getGreatAuncles
 >             sibs <- getDevEntries
 >             let tmv = evTm (parBind aus sibs tm)
@@ -587,7 +587,7 @@ next goal (if one exists) instead.
 >             let ref = name := DEFN tmv :<: tyv
 >             prettyTm <- prettyHere tm
 >             prettyTipTyTm <- prettyHere tipTyTm
->             mc `catchMaybe` intercalate "\n" [ "Typechecking failed:"
+>             mc `catchEither` intercalate "\n" [ "Typechecking failed:"
 >                                              , prettyTm
 >                                              , "is not of type"
 >                                              , prettyTipTyTm ]
@@ -644,8 +644,8 @@ current development, after checking that the purported type is in fact a type.
 
 > make :: (String :<: INTM) -> ProofState INTM
 > make (s :<: ty) = do
->     m <- withRoot (check (SET :>: ty))
->     m `catchMaybe` ("make: " ++ show ty ++ " is not a set.")
+>     m <- withRoot (inCheck $ check (SET :>: ty))
+>     m `catchEither` ("make: " ++ show ty ++ " is not a set.")
 >     make' (s :<: (ty :=>: evTm ty))
 
 > make' :: (String :<: (INTM :=>: TY)) -> ProofState INTM

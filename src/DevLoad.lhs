@@ -30,6 +30,7 @@
 > import Rules
 > import Tm
 > import TmParse
+> import Rooty
 
 %endif
 
@@ -150,7 +151,7 @@ accumulating pairs of names and command lists along the way.
 
 > makeEntry (DLBoy LAMB x tys) ncs = do
 >     ty <- resolveHere tys
->     Just () <- withRoot (check (SET :>: ty))     
+>     Right () <- withRoot (inCheck $ check (SET :>: ty))     
 >     root <- getDevRoot
 >     Root.freshRef (x :<: evTm ty)
 >         (\ref r -> do 
@@ -161,7 +162,7 @@ accumulating pairs of names and command lists along the way.
 
 > makeEntry (DLBoy PIB x tys) ncs = do 
 >     ty <- resolveHere tys
->     Just () <- withRoot (check (SET :>: ty))
+>     Right () <- withRoot (inCheck $ check (SET :>: ty))
 >     root <- getDevRoot
 >     Root.freshRef (x :<: evTm ty)
 >         (\ref r -> do

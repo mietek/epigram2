@@ -203,10 +203,9 @@ Elim forms inherited from elsewhere
 >   etaExpand (Prf p :>: x) r = Just (BOX (Irr (bquote B0 x r)))
 
 > import -> Check where
->   check (PRF (ALL p q) :>: L sc) r = do
->     Root.freshRef ("" :<: p)
+>   check (PRF (ALL p q) :>: L sc)  = do
+>     Rooty.freshRef ("" :<: p)
 >       (\ref -> check (PRF (q $$ A (pval ref)) :>: underScope sc ref))
->       r
 
 > import -> OpRunEqGreen where
 >   opRunEqGreen [PROP,t1,PROP,t2] = Right $ AND (IMP t1 t2) (IMP t2 t1)

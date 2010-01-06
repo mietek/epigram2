@@ -301,17 +301,17 @@ $$\Gamma \vdash \mbox{TY} \ni \mbox{Tm \{In,.\} p}$$
 Technically, we also need a root and handle failure with the |Maybe|
 monad:
 
-> check :: (TY :>: INTM) -> Root -> Maybe ()
+> check :: (TY :>: INTM) -> Check ()
 
 Type-checking a canonical term is rather easy, as we just have to
 delegate the hard work to |canTy|. The checker-evaluator simply needs
 to evaluate the well-typed terms.
 
-> check (C c :>: C c')        r = do
+> check (C c :>: C c')         = do
 >   canTy chev (c :>: c')
 >   return ()
 >     where chev (t :>: x) = do 
->               ch <- check (t :>: x) r 
+>               ch <- check (t :>: x)  
 >               return $ ch :=>: evTm x
 
 As for lambda, we know it is simple too. We wish the code was simple
@@ -326,10 +326,9 @@ As for the implementation, we apply the by-now standard trick of
 making a fresh variable $x \in S$ and computing the type |T x|. Then,
 we simply have to check that $T\ x \ni t$.
 
-> check (PI s t :>: L sc) r = 
->   Root.freshRef ("" :<: s) 
+> check (PI s t :>: L sc) = 
+>   Rooty.freshRef ("" :<: s) 
 >            (\ref -> check (t $$ A (pval ref) :>: underScope sc ref)) 
->            r
 
 Formally, we can bring the |Ex| terms into the |In| world with the
 rule:
@@ -342,8 +341,9 @@ rule:
 
 This translates naturally into the following code:
 
-> check (w :>: N n)           r = do
->   y <- infer n r
+> check (w :>: N n)            = do
+>   r <- root
+>   y <- infer n
 >   guard $ equal (SET :>: (w, y)) r
 >   return ()
 
@@ -351,7 +351,7 @@ Finally, we can extend the checker with the |Check| aspect. If no rule
 has matched, then we have to give up.
 
 > import <- Check
-> check _                     _ = Nothing
+> check _                     = throwError' "check: type mismatch"
 
 
 \subsection{Type inference}
@@ -364,7 +364,7 @@ $$\Gamma \vdash \mbox{Tm \{Ex,.\} p} \in \mbox{TY}$$
 
 This translates into the following signature:
 
-> infer :: EXTM -> Root -> Maybe TY
+> infer :: EXTM -> Check TY
 
 We all know the rule to infer the type of a free variable from the
 context:
@@ -376,7 +376,7 @@ context:
 
 In Epigram, parameters carry there types, so it even easier:
 
-> infer (P x)              r = Just (pty x)
+> infer (P x)               = return $ pty x
 
 The rule for eliminators is a generalization of the rule for function
 application. Let us give a look at its formal rule:
@@ -391,22 +391,22 @@ The story is the same in the general case: we infer the eliminated
 term |t| and we type-check the eliminator, using |elimTy|. Because
 |elimTy| computes the result type, we have inferred the result type.
 
-> infer (t :$ s)           r = do
->   C ty <- infer t r
+> infer (t :$ s)           = do
+>   C ty <- infer t
 >   (s',ty') <- elimTy chev (evTm t :<: ty) s
 >   return ty'
 >       where chev (t :>: x) = do 
->               ch <- check (t :>: x) r 
+>               ch <- check (t :>: x) 
 >               return $ ch :=>: evTm x
 
 Following exactly the same principle, we can infer the result of an
 operator application:
 
-> infer (op :@ ts)         r = do
+> infer (op :@ ts)         = do
 >   (vs,t) <- opTy op chev ts
 >   return t
 >       where chev (t :>: x) = do 
->               ch <- check (t :>: x) r 
+>               ch <- check (t :>: x) 
 >               return $ ch :=>: evTm x
 
 Type ascription is formalized by the following rule:
@@ -419,16 +419,16 @@ Type ascription is formalized by the following rule:
 
 Which translates directly into the following code:
 
-> infer (t :? ty)          r = do
->   check (SET :>: ty) r
+> infer (t :? ty)           = do
+>   check (SET :>: ty)
 >   let vty = evTm ty
->   check (vty :>: t) r
+>   check (vty :>: t)
 >   return vty
 
 Obviously, if none of the rule above applies, then there is something
 fishy.
 
-> infer _                  _ = Nothing
+> infer _                   = throwError' "infer: unable to infer type"
 
 
 
