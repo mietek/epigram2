@@ -270,6 +270,14 @@ to'' symbol:
 > data t :=>: v = t :=>: v deriving (Show, Eq)
 > infix 4 :=>:
 
+With the associated projections:
+
+> valueOf :: (t :=>: v) -> v
+> valueOf (_ :=>: v) = v
+>
+> termOf :: (t :=>: v) -> t
+> termOf (t :=>: _) = t
+
 Intuitively, |t :=>: v| can be read as ``the term |t| reduces to the
 value |v|''.
 
