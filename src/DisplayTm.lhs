@@ -53,6 +53,19 @@
 > import <- DisplayCanPats
 
 
+> unelaborate :: Tm {d, TT} x -> DTm {d} x
+> unelaborate (L s)       = DL (scopeToDScope s)
+> unelaborate (C c)       = DC (fmap unelaborate c)
+> unelaborate (N n)       = DN (unelaborate n)
+> unelaborate (P s)       = DP s
+> unelaborate (V i)       = DV i
+> unelaborate (n :$ e)    = unelaborate n ::$ fmap unelaborate e
+> unelaborate (op :@ vs)  = op ::@ fmap unelaborate vs
+> unelaborate (t :? y)    = unelaborate t ::? unelaborate y
+
+> scopeToDScope :: Scope {TT} x -> DScope x
+> scopeToDScope (x :. t) = x ::. (unelaborate t)
+> scopeToDScope (K t)    = DK (unelaborate t)
 
 > instance Show x => Show (DTm d x) where
 >   show (DL s)       = "DL (" ++ show s ++ ")"

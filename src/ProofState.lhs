@@ -15,6 +15,7 @@
 
 > import BwdFwd
 > import Developments
+> import DisplayTm
 > import Naming
 > import PrettyPrint
 > import Root
@@ -357,7 +358,7 @@ to the pretty-printer.
 > prettyHere tm = do
 >     aus <- getAuncles
 >     me <- getMotherName
->     return (show (pretty (christen aus me tm)))
+>     return (show (pretty (unelaborate (christen aus me tm))))
 
 
 The |resolveHere| command resolves the relative names in a term.

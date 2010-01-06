@@ -82,24 +82,24 @@ Coercion rule:
 > import -> CanPretty where
 >   prettyCan Unit                    = parens empty
 >   prettyCan Void                    = brackets empty
->   prettyCan (Sigma s (L (x :. t)))  = parens (text x <+> colon <+> pretty s
+>   prettyCan (Sigma s (DL (x ::. t)))  = parens (text x <+> colon <+> pretty s
 >                                           <+> semi <+> prettySigma t)
->   prettyCan (Sigma s (L (K t)))     = parens (pretty s <+> semi <+> prettySigma t)
+>   prettyCan (Sigma s (DL (DK t)))     = parens (pretty s <+> semi <+> prettySigma t)
 >   prettyCan (Sigma s t)             = parens (text "Sigma" <+> pretty s <+> pretty t)
 >   prettyCan (Pair a b)              = brackets (pretty a <+> prettyPair b)
 
 > import -> Pretty where
->   prettyPair :: Tm {d, p} String -> Doc
->   prettyPair VOID           = empty
->   prettyPair (PAIR a VOID)  = pretty a
->   prettyPair (PAIR a b)     = pretty a <+> prettyPair b
->   prettyPair t              = text "/" <+> pretty t
+>   prettyPair :: DTm {d} String -> Doc
+>   prettyPair DVOID            = empty
+>   prettyPair (DPAIR a DVOID)  = pretty a
+>   prettyPair (DPAIR  a b)     = pretty a <+> prettyPair b
+>   prettyPair t                = text "/" <+> pretty t
 >
->   prettySigma :: Tm {d, p} String -> Doc
->   prettySigma UNIT = empty
->   prettySigma (SIGMA s (L (x :. t)))  = text x <+> colon <+> pretty s
+>   prettySigma :: DTm {d} String -> Doc
+>   prettySigma DUNIT = empty
+>   prettySigma (DSIGMA s (DL (x ::. t)))  = text x <+> colon <+> pretty s
 >                                           <+> semi <+> prettySigma t
->   prettySigma (SIGMA s (L (K t)))     = pretty s <+> semi <+> prettySigma t
+>   prettySigma (DSIGMA s (DL (DK t)))     = pretty s <+> semi <+> prettySigma t
 >   prettySigma t                       = pretty t
 
 > import -> ElimConstructors where

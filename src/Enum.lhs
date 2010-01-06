@@ -161,13 +161,13 @@ Equality rules:
 >   prettyCan (Su t)     = prettyEnumIndex 1 t
 
 > import -> Pretty where
->   prettyEnum :: Tm {d, p} String -> Doc
+>   prettyEnum :: DTm {d} String -> Doc
 >   prettyEnum t                               = text "[" <+> pretty t <+> text "]"
 >
->   prettyEnumIndex :: Int -> Tm {d, p} String -> Doc
->   prettyEnumIndex n ZE      = int n
->   prettyEnumIndex n (SU t)  = prettyEnumIndex (succ n) t
->   prettyEnumIndex n tm      = parens (int n <+> text "+" <+> pretty tm)
+>   prettyEnumIndex :: Int -> DTm {d} String -> Doc
+>   prettyEnumIndex n DZE      = int n
+>   prettyEnumIndex n (DSU t)  = prettyEnumIndex (succ n) t
+>   prettyEnumIndex n tm       = parens (int n <+> text "+" <+> pretty tm)
 
 > import -> CanTyRules where
 >   canTy chev (Set :>: EnumT e)  = do
