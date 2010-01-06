@@ -37,6 +37,14 @@ __map (D:Data, f:Data, x:Data) -> Data =
    | 3 -> [f(x!0), __map((D!1)!0, f, x!1)]
    }
 
+__lazyMap (D:Data, f:Data, x:Data) -> Data =
+  case D!0 of
+   { 0 -> []
+   | 1 -> [x!0, __lazyMap((((D!1)!1)!0)(x!0), f, x!1)]
+   | 2 -> [__mapH(f, x!0), __lazyMap(((D!1)!1)!0, f, x!1)]
+   | 3 -> [lazy(f(x!0)), __lazyMap((D!1)!0, f, x!1)]
+   }
+
 __mapH (f:Data, x:Data, h:Data) -> Data = f(x(h))
 
 __subst(D:Data, f:Data, t:Data) -> Data =
@@ -55,6 +63,8 @@ __const(x:Data, y:Data) -> Data = x
 
 %inline __split(f:Data, y:Data) -> Data =
    f(y!0, y!1)
+
+__coit(d:Data, f:Data, s:Data) -> Data = lazy(__lazyMap(d,__coit(d,f),f(s)))
 
 -- Some tests
 

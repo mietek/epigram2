@@ -40,6 +40,10 @@
 >     sv <- chev (styv :>: s)
 >     return (CoIt dv sstyv fv sv)
 
+> import -> CanCompile where
+>   makeBody (Nu t) = Ignore
+>   makeBody (CoIt d _ f s) = App (Var "__coit") (map makeBody [d,f,s])
+
 > import -> ElimTyRules where
 >   elimTy chev (_ :<: t@(Nu d)) Out = return (Out, descOp @@ [d , C t])
 

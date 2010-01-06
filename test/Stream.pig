@@ -22,6 +22,7 @@ make Prune := (\ D -> Mu (prune D)) : Desc -> * ;
 make prefix := (\ D -> @ @ [(@ @ \ n -> @[`stop])
   (\ p -> @ \ ih -> @ \ t ->
      @[`go / map(D, Nu D, Prune D, ih, t %)]) ] )
- : (D : Desc)(n : Nat) -> Nu D -> Mu (prune D) 
+ : (D : Desc)(n : Nat) -> Nu D -> Mu (prune D) ;
+make firstFour := prefix (StreamD Nat) four nats : Prune (StreamD Nat)
 
 
