@@ -105,16 +105,17 @@ defined in Section~\ref{sec:language}.
 >     eqG (y0 :>: t0) (y1 :>: t1) = eqGreen ::@ [y0, t0, y1, t1]
 > moreExDTm z _ = (|)
 
-> specialInTm :: Size -> Parsley Token InTmRN
-> specialInTm ArgSize =
->     (|SET (%keyword "*"%) 
->      |PROP (%keyword "#"%)
->      |ABSURD (%keyword "FF"%)
->      |TRIVIAL (%keyword "TT"%)
->      |Q (%keyword "?"%) (ident <|> pure "")
->      |CON (%keyword "@"%) (sizedInTm ArgSize)
->      |TAG (%keyword "`"%) ident
->      |(iter LAV) (%keyword "\\"%) (some ident) (%keyword "->"%) pInTm
+> specialInDTm :: Size -> Parsley Token InDTmRN
+> specialInDTm ArgSize =
+>     (|DSET (%keyword "*"%) 
+>      |DPROP (%keyword "#"%)
+>      |DABSURD (%keyword "FF"%)
+>      |DTRIVIAL (%keyword "TT"%)
+>      |DQ (%keyword "?"%) (ident <|> pure "")
+>      |DCON (%keyword "@"%) (sizedInDTm ArgSize)
+>      |DRETURN (%keyword "'"%) (sizedInDTm ArgSize)
+>      |DTAG (%keyword "`"%) ident
+>      |(iter DLAV) (%keyword "\\"%) (some ident) (%keyword "->"%) pInDTm
 >      |id (bracket Square tuple)
 >      |DENUMT (bracket Curly (|  (iter (DCONSE . DTAG)) (pSep (keyword ",") ident)
 >                                (| id (%keyword "/"%) pInDTm | DNILE |)|))
@@ -127,18 +128,22 @@ defined in Section~\ref{sec:language}.
 >         (|DPAIR (sizedInDTm ArgSize) (| id (%keyword "/"%) pInDTm | id tuple |)
 >          |DVOID (% pEndOfStream %)
 >          |)
+
 >     sigma :: Parsley Token InDTmRN
 >     sigma = (|mkSigma (optional (ident <* keyword ":")) pInDTm sigmaMore
 >              |DUNIT (% pEndOfStream %)
 >              |)
+
 >     sigmaMore :: Parsley Token InDTmRN
 >     sigmaMore = (|id (% keyword ";" %) (sigma <|> pInDTm)
 >                  |(\p s -> mkSigma Nothing (DPRF p) s) (% keyword ":-" %) pInDTm sigmaMore
 >                  |(\x -> DPRF x) (% keyword ":-" %) pInDTm
 >                  |)
+
 >     mkSigma :: Maybe String -> InDTmRN -> InDTmRN -> InDTmRN
 >     mkSigma Nothing s t = DSIGMA s (DL (DK t))
 >     mkSigma (Just x) s t = DSIGMA s (DL (x ::. t))
+
 >     mkNum :: Int -> Maybe InDTmRN -> InDTmRN
 >     mkNum 0 Nothing = DZE
 >     mkNum 0 (Just t) = t
@@ -147,10 +152,12 @@ defined in Section~\ref{sec:language}.
 >     (|PRF (%keyword ":-"%) (sizedInTm AndSize)
 >      |(MU Nothing) (%keyword "Mu"%) (sizedInTm ArgSize)
 >      |)
+
 > specialInDTm PiSize =
 >     (|(flip iter)  (some (bracket Round (|ident, (%keyword ":"%) pInDTm|)))
 >                    (| (uncurry DPIV) (%keyword "->"%) | (uncurry DALLV) (%keyword "=>"%) |)
 >                    pInDTm |)
+
 > specialInDTm z = (|)
 
 > moreInDTm :: Size -> InDTmRN -> Parsley Token InDTmRN

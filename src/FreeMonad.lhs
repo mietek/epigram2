@@ -20,6 +20,11 @@
 >   pattern RETURN x    = C (Return x)
 >   pattern COMPOSITE t = C (Composite t)
 
+> import -> DisplayCanPats where
+>   pattern DMONAD d x = DC (Monad d x)
+>   pattern DRETURN x  = DC (Return x)
+
+
 > import -> SugarTactics where
 
 > import -> CanCompile where
