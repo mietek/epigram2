@@ -10,6 +10,8 @@
 
 > import Control.Applicative
 > import Control.Monad.Identity
+> import Data.Foldable hiding (foldl)
+> import Data.Traversable
 
 > import BwdFwd
 > import Features
@@ -90,6 +92,8 @@
 > m %$ DL (x ::. t)   = (|DL (|(x ::.) (dmangB m x %$ t)|)|)
 > m %$ DC c          = (|DC ((m %$) ^$ c)|)
 > m %$ DN n          = (|DN (dexMang m n (|[]|))|)
+> m %$ DQ s          = pure (DQ s)
+> _ %$ tm            = error ("%$: can't dmangle " ++ show (fmap (\_ -> ".") tm)) 
 
 > dexMang ::  Applicative f => DMangle f x y ->
 >            DTm {Ex} x -> f [Elim (DTm {In} y)] -> f (DTm {Ex} y)
@@ -106,6 +110,7 @@
 >
 > ($::$) :: DTm {Ex} x -> DSpine p x -> DTm {Ex} x
 > ($::$) = foldl (::$)
+
 
 
 > dunder :: Int -> x -> DMangle Identity x x
@@ -138,3 +143,28 @@
 >   show (x ::. t)   = show x ++ " :. " ++ show t
 >   show (DK t) = "DK (" ++ show t ++")"
 
+
+
+> instance Functor DScope where
+>   fmap = fmapDefault
+> instance Foldable DScope where
+>   foldMap = foldMapDefault
+> instance Traversable DScope where
+>   traverse f (x ::. t)   = (|(x ::.) (traverse f t)|)
+>   traverse f (DK t)      = (|DK (traverse f t)|)
+
+
+> instance Functor (DTm {d}) where
+>   fmap = fmapDefault
+> instance Foldable (DTm {d}) where
+>   foldMap = foldMapDefault
+> instance Traversable (DTm {d}) where
+>   traverse f (DL sc)     = (|DL (traverse f sc)|)
+>   traverse f (DC c)      = (|DC (traverse (traverse f) c)|)
+>   traverse f (DN n)      = (|DN (traverse f n)|)
+>   traverse f (DQ s)      = pure (DQ s)
+>   traverse f (DP x)      = (|DP (f x)|)
+>   traverse f (DV i)      = pure (DV i)
+>   traverse f (t ::$ u)   = (|(::$) (traverse f t) (traverse (traverse f) u)|)
+>   traverse f (op ::@ ts) = (|(op ::@) (traverse (traverse f) ts)|)
+>   traverse f (tm ::? ty) = (|(::?) (traverse f tm) (traverse f ty)|)
