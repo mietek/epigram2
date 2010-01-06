@@ -614,6 +614,11 @@ various Features.
 >   import <- Axioms
 >   [])
 
+> primitives :: [(String, REF)]
+> primitives = (
+>   import <- Primitives
+>   [])
+
 
 We also define and import some handy tactics, sugaring some canonical
 constructors to make them easier to swallow.

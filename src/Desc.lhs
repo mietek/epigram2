@@ -162,6 +162,12 @@ Equality rules:
 >   descFakeREF = [("Primitive", 0), ("Desc", 0)] := (FAKE :<: SET)
 >   desc :: VAL
 >   desc = MU (Just (N (P descFakeREF))) inDesc
+>
+>   descREF :: REF
+>   descREF = [("Primitive", 0), ("Desc", 0)] := (DEFN desc :<: SET)
+
+> import -> Primitives where
+>   ("Desc", descREF) :
 
 > import -> CanPats where
 >   pattern MU l x  = C (Mu (l :?=: Id x))

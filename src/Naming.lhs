@@ -3,7 +3,7 @@
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE GADTs #-}
+> {-# LANGUAGE GADTs, PatternGuards #-}
 
 > module Naming (
 >        Offs(Rel, Abs), RelName, InTmRN, ExTmRN,
@@ -25,6 +25,7 @@
 > import Developments
 > import MissingLibrary
 > import Tm
+> import Rules
 
 %endif
 
@@ -123,6 +124,9 @@ returns a de Brujin indexed variable if it is present. Otherwise, it calls
 |findGlobal| to search the context.
 
 > findLocal :: Entries -> Bwd String -> RelName -> Maybe (ExTm REF)
+> findLocal ps B0 [(y, Rel 0)]
+>   | Just ref <- lookup y primitives = Just (P ref)
+>   | Just ref <- lookup y axioms     = Just (P ref)
 > findLocal ps B0 sos = findGlobal ps sos
 > findLocal ps (xs :< x) [(y, Rel 0)]       | x == y = (|(V 0)|)
 > findLocal ps (xs :< x) ((y, Rel i) : sos) | x == y =
