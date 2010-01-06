@@ -283,6 +283,7 @@ in the context all the names in the |InTm String| produced by |bigInTm|.
 >      |TRIVIAL (%keyword "TT"%)
 >      |Q (%keyword "?"%) (ident <|> pure "")
 >      |CON (%keyword "@"%) (sizedInTm ArgSize)
+>      |RETURN (%keyword "'"%) (sizedInTm ArgSize)
 >      |TAG (%keyword "`"%) ident
 >      |(iter LAV) (%keyword "\\"%) (some ident) (%keyword "->"%) pInTm
 >      |id (bracket Square tuple)
@@ -311,6 +312,7 @@ in the context all the names in the |InTm String| produced by |bigInTm|.
 > specialInTm AndSize =
 >     (|PRF (%keyword ":-"%) (sizedInTm AndSize)
 >      |(MU Nothing) (%keyword "Mu"%) (sizedInTm ArgSize)
+>      |MONAD (%keyword "Monad"%) (sizedInTm ArgSize) (sizedInTm ArgSize)
 >      |)
 > specialInTm PiSize =
 >     (|(flip iter)  (some (bracket Round (|ident, (%keyword ":"%) pInTm|)))

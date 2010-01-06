@@ -21,3 +21,5 @@ current version of the system.
 > import Prop
 > import Desc
 > import Equality
+> import FreeMonad
+
