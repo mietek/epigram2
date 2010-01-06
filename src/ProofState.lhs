@@ -351,6 +351,13 @@ The |bquoteHere| command $\beta$-quotes a term using the current root.
 > bquoteHere tm = withRoot (bquote B0 tm)
 
 
+> checkHere :: (TY :>: INTM) -> ProofState (INTM :=>: VAL)
+> checkHere (ty :>: tm) = do
+>     mc <- withRoot (inCheck $ check (ty :>: tm))
+>     () :=>: tmv <- lift mc
+>     return (tm :=>: tmv)
+
+
 The |prettyHere| command christens a term in the current context, then passes it
 to the pretty-printer.
 

@@ -199,6 +199,11 @@ the term, then checking the inferred type is what we pushed in.
 >   return (N n :=>: evTm (N n))
 
 
+If the elaborator made up a term, it does not require further elaboration, but we should
+type-check it for safety's sake. 
+
+> elaborate top (ty :>: DT tm) = checkHere (ty :>: tm)
+
 If nothing else matches, give up and report an error.
 
 > elaborate top tt = throwError' ("elaborate: can't cope with " ++ show tt)
@@ -373,36 +378,7 @@ creates a $\Pi$-boy with that type.
 >     return ()
 
 
-\subsection{$\lambda$-lifting}
-
-The |gimme| operator elaborates every definition in the proof state, thereby
-ensuring it is fully $\lambda$-lifted. Starting from the root of the proof
-state, it processes each node in turn, first processing any children, then
-the node itself.
+This should be removed.
 
 > gimme :: ProofState ()
 > gimme = error "gimme: undefined"
-> {-gimme = much goOut >> processNode
->   where
->     processNode :: ProofState ()
->     processNode = do
->         optional (do
->             goIn
->             much goUp
->             processNode
->             much (goDown >> processNode)
->             goOut
->           )
->         regive
->
->     regive :: ProofState ()
->     regive = do
->         tip <- getDevTip
->         m <- getMother
->         case {- |trace ("regive " ++ show (motherName m)) $| -} tip of
->             Defined tm (tipTyTm :=>: tipTy) -> do
->                 putDevTip (Unknown (tipTyTm :=>: tipTy))
->                 (tm' :=>: tv) <- elaborate True (tipTy :>: tm)
->                 Unknown tt <- getDevTip
->                 putDevTip (Defined tm' tt)
->             _ -> return () -}
