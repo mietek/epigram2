@@ -363,7 +363,7 @@ to the pretty-printer.
 
 The |resolveHere| command resolves the relative names in a term.
 
-> resolveHere :: InTmRN -> ProofState INTM
+> resolveHere :: InDTmRN -> ProofState INDTM
 > resolveHere tm = do
 >     aus <- getAuncles
 >     resolve aus tm `catchMaybe` "resolveHere: could not resolve names in term"

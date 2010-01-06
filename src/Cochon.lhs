@@ -18,6 +18,7 @@
 
 > import BwdFwd
 > import Developments
+> import DisplayTm
 > import Elaborator
 > import MissingLibrary
 > import Naming
@@ -65,7 +66,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >                   let  Right aus = evalStateT getAuncles loc
 >                        mn = resolve aus rn
 >                   case mn of
->                       Just (N (P (n := _))) -> do
+>                       Just (DN (DP (n := _))) -> do
 >                           let Right dev = evalStateT getDev loc
 >                           compileCommand n (reverseDev' dev) fn
 >                           cochon' (locs :< loc) "Compiled."
@@ -157,34 +158,34 @@ Here we have a very basic command-driven interface to the proof state monad.
 > instance Foldable Command where
 >     foldMap = foldMapDefault
 
-> pCommand :: Parsley Token (Command InTmRN)
+> pCommand :: Parsley Token (Command InDTmRN)
 > pCommand = do
 >     x <- ident
 >     case x of
 >         "apply"    -> (| Apply |)
 >         "bottom"   -> (| (Go Bottom) |)
->         "compile"  -> (| Compile (| N variableParse |) pFileName |)
+>         "compile"  -> (| Compile (| DN (|DP nameParse|) |) pFileName |)
 >         "done"     -> (| DoneC |)
 >         "down"     -> (| (Go Down) |)
->         "elab"     -> (| Elaborate pInTm |)
+>         "elab"     -> (| Elaborate pInDTm |)
 >         "first"    -> (| (Go First) |)
->         "give"     -> (| Give pInTm |)
+>         "give"     -> (| Give pInDTm |)
 >         "in"       -> (| (Go InC) |)
->         "infer"    -> (| Infer pInTm |)
->         "jump"     -> (| Jump (| N variableParse |) |)
+>         "infer"    -> (| Infer pInDTm |)
+>         "jump"     -> (| Jump (| DN (|DP nameParse|) |) |)
 >         "lambda"   -> (| Lambda ident |)
 >         "last"     -> (| (Go Last) |)
->         "make"     -> (| Make ident (%keyword ":"%) (| ~Nothing :<: pInTm |)
+>         "make"     -> (| Make ident (%keyword ":"%) (| ~Nothing :<: pInDTm |)
 >                        | Make ident (%keyword ":="%) maybeAscriptionParse
 >                        |)
 >         "module"   -> (| ModuleC ident |)
 >         "next"     -> (| (Go Next) |)
 >         "out"      -> (| (Go OutC) |)
->         "pi"       -> (| PiBoy ident (%keyword ":"%) pInTm |)
+>         "pi"       -> (| PiBoy ident (%keyword ":"%) pInDTm |)
 >         "prev"     -> (| (Go Prev) |)
 >         "root"     -> (| (Go RootC) |)
 >         "quit"     -> (| Quit |)
->         "select"   -> (| Select (| N variableParse |) |)
+>         "select"   -> (| Select (| DN (|DP nameParse|) |) |)
 >         "show"     -> (| Show pShow |)
 >         "top"      -> (| (Go Top) |)
 >         "undo"     -> (| Undo |)
@@ -195,7 +196,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 > pFileName :: Parsley Token String
 > pFileName = ident
 
-> pShow :: Parsley Token (ShowC InTmRN)
+> pShow :: Parsley Token (ShowC InDTmRN)
 > pShow = do
 >     s <- ident
 >     case s of
@@ -203,9 +204,10 @@ Here we have a very basic command-driven interface to the proof state monad.
 >         "context"  -> (| Context |)
 >         "dump"     -> (| Dump |)
 >         "hyps"     -> (| Hypotheses |)
->         "term"     -> (| Term pInTm |)
+>         "term"     -> (| Term pInDTm |)
+>         _          -> empty
 
-> evalCommand :: Command INTM -> ProofState String
+> evalCommand :: Command INDTM -> ProofState String
 > evalCommand Apply           = apply             >> return "Applied."
 > evalCommand DoneC           = done              >> return "Done."
 > evalCommand (Elaborate tm)  = infoElaborate tm
@@ -222,7 +224,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 > evalCommand (Go First)      = some prevGoal     >> return "Searching for first goal..."
 > evalCommand (Go Last)       = some nextGoal     >> return "Searching for last goal..."
 > evalCommand (Infer tm)      = infoInfer tm      
-> evalCommand (Jump (N (P (n := _)))) = do
+> evalCommand (Jump (DN (DP (n := _)))) = do
 >     much goOut
 >     goTo n
 >     return ("Going to " ++ showName n ++ "...")
@@ -235,7 +237,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >         Just tm  -> elabGive tm >> return "Yessir."
 > evalCommand (ModuleC s)     = makeModule s      >> return "Made module."
 > evalCommand (PiBoy x ty)    = elabPiBoy (x :<: ty)  >> return "Made pi boy!"
-> evalCommand (Select x)      = select x          >> return "Selected."
+> evalCommand (Select (DN (DP r)))      = select (N (P r))          >> return "Selected."
 > evalCommand (Show Auncles)  = infoAuncles
 > evalCommand (Show Context)  = prettyProofState 
 > evalCommand (Show Dump)     = infoDump
@@ -243,17 +245,17 @@ Here we have a very basic command-driven interface to the proof state monad.
 > evalCommand (Show (Term x))    = return (show x)
 > evalCommand Ungawa          = ungawa            >> return "Ungawa!"
 
-> doCommand :: Command InTmRN -> ProofState String
+> doCommand :: Command InDTmRN -> ProofState String
 > doCommand c = do
 >     aus <- getAuncles
 >     c' <- traverse (resolve aus) c
 >               `catchMaybe` "doCommand: could not resolve names in command."
 >     evalCommand c'
 
-> doCommands :: [Command InTmRN] -> ProofState [String]
+> doCommands :: [Command InDTmRN] -> ProofState [String]
 > doCommands cs = sequenceA (map doCommand cs)
 
-> doCommandsAt :: [(Name, [Command InTmRN])] -> ProofState ()
+> doCommandsAt :: [(Name, [Command InDTmRN])] -> ProofState ()
 > doCommandsAt [] = return ()
 > doCommandsAt ((_, []):ncs) = doCommandsAt ncs
 > doCommandsAt ((n, cs):ncs) = much goOut >> goTo n >> doCommands cs >> doCommandsAt ncs

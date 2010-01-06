@@ -85,19 +85,19 @@ are fully $\lambda$-lifted, but as $f$'s parameters are held in common
 with the point of reference, we automatically supply them.
 
 
-> resolve :: Entries -> InTm RelName -> Maybe INTM
-> resolve es tm = resolver es B0 % tm
+> resolve :: Entries -> InDTm RelName -> Maybe INDTM
+> resolve es tm = resolver es B0 %$ tm
 
 
 The |resolver| function takes a context and a list of binder names, and
 produces a mangle that, when applied, attempts to resolve the parameter
-names in an |InTmRN| to produce an |InTm REF|, i.e.\ an INTM.
+names in an |InDTmRN| to produce an |InDTm REF|, i.e.\ an INDTM.
 
-> resolver :: Entries -> Bwd String -> Mangle Maybe RelName REF
-> resolver ps vs = Mang
->     {  mangP  = \ x mes -> (| (findLocal ps vs x) $:$ mes |)
->     ,  mangV  = \ _ _ -> Nothing -- what's that index doing here?
->     ,  mangB  = \ x -> resolver ps (vs :< x)
+> resolver :: Entries -> Bwd String -> DMangle Maybe RelName REF
+> resolver ps vs = DMang
+>     {  dmangP  = \ x mes -> (| (findLocal ps vs x) $::$ mes |)
+>     ,  dmangV  = \ _ _ -> Nothing -- what's that index doing here?
+>     ,  dmangB  = \ x -> resolver ps (vs :< x)
 >     }
 
 
@@ -121,26 +121,26 @@ name to resolve. It first searches the binders for a |Rel| name, and
 returns a de Brujin indexed variable if it is present. Otherwise, it calls
 |findGlobal| to search the context.
 
-> findLocal :: Entries -> Bwd String -> RelName -> Maybe (ExTm REF)
+> findLocal :: Entries -> Bwd String -> RelName -> Maybe EXDTM
 > findLocal ps B0 [(y, Rel 0)]
->   | Just ref <- lookup y primitives = Just (P ref)
->   | Just ref <- lookup y axioms     = Just (P ref)
+>   | Just ref <- lookup y primitives = Just (DP ref)
+>   | Just ref <- lookup y axioms     = Just (DP ref)
 > findLocal ps B0 sos = findGlobal ps sos
-> findLocal ps (xs :< x) [(y, Rel 0)]       | x == y = (|(V 0)|)
+> findLocal ps (xs :< x) [(y, Rel 0)]       | x == y = (|(DV 0)|)
 > findLocal ps (xs :< x) ((y, Rel i) : sos) | x == y =
 >   vinc <$> findLocal ps xs ((y, Rel (i - 1)) : sos)
 > findLocal ps (xs :< x) sos = vinc <$> findLocal ps xs sos
 >
-> vinc :: EXTM -> EXTM
-> vinc (V i)  = V (i + 1)
-> vinc n      = n
+> vinc :: EXDTM -> EXDTM
+> vinc (DV i)  = DV (i + 1)
+> vinc n       = n
 
 
 The |findGlobal| function takes a context and a relative name to resolve. It
 searches the context for an entry that hits the name, then searches that
 entry's children to resolve the next component. 
 
-> findGlobal :: Entries -> RelName -> Maybe EXTM
+> findGlobal :: Entries -> RelName -> Maybe EXDTM
 > findGlobal B0 sos = empty
 > findGlobal (xs :< e) (y : ys) = case hits (entryLastName e) y of
 >     Right _  -> case e of
@@ -154,13 +154,13 @@ resolve. If the remainder is empty, it returns a parameter referring to the
 current entry (applied to the shared parameters if appropriate). Otherwise,
 the entity should be a |Girl|, and it searches her children for the name.
 
-> findChild :: REF -> Spine {TT} REF -> Entity Bwd -> RelName -> Maybe EXTM
-> findChild r  as (Boy _)              []  = (|(P r)|)
-> findChild r  as (Girl _ _)           []  = (|(P r $:$ as)|)
+> findChild :: REF -> Spine {TT} REF -> Entity Bwd -> RelName -> Maybe EXDTM
+> findChild r  as (Boy _)              []  = (|(DP r)|)
+> findChild r  as (Girl _ _)           []  = (|(DP r $::$ fmap (fmap unelaborate) as)|)
 > findChild r  as (Boy _)              ys  = empty
 > findChild r  as (Girl _ (es, _, _))  ys  = findD es ys as
 
-> findD :: Entries -> RelName -> Spine {TT} REF -> Maybe EXTM
+> findD :: Entries -> RelName -> Spine {TT} REF -> Maybe EXDTM
 > findD (xs :< E r x e@(Girl _ _) _) (y : ys) as = case hits x y of
 >     Right _  -> findChild r as e ys
 >     Left y'  -> findD xs (y' : ys) as
