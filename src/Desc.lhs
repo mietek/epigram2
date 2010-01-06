@@ -546,7 +546,7 @@ Equality rules:
 >                        show (length xs) ++ " should be 5"]
 >
 >         mapOpRun :: [VAL] -> Either NEU VAL
->         mapOpRun [DONE,    a, b, f, x] = Right UNIT
+>         mapOpRun [DONE,    a, b, f, x] = Right VOID
 >         mapOpRun [ARG s d, a, b, f, x] = Right $
 >           eval [.s.d.a.b.f.x.
 >                 PAIR (N (V x :$ Fst))
