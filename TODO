@@ -1,5 +1,4 @@
 Miscellaneous tidying:
-* Add named projections from :=>: pairs (valOf and termOf, perhaps?).
 * Provide better name advice in place of "".
 
 Quotation:
