@@ -117,6 +117,8 @@ As some more syntactic sugar, we let inductive types elaborate lists (so |[]| be
 > elaborate b (MU l d :>: VOID) = elaborate b (MU l d :>: CON (PAIR ZE VOID))
 > elaborate b (MU l d :>: (PAIR s t)) = elaborate b (MU l d :>: CON (PAIR (SU ZE) (PAIR s t)))
 
+> elaborate b (MONAD d x :>: CON t) = elaborate b (MONAD d x :>: COMPOSITE t)
+
 To elaborate a tag with an enumeration as its type, we search for the tag in the enumeration
 to determine the appropriate index.
 

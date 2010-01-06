@@ -11,28 +11,35 @@
 %endif
 
 > import -> CanConstructors where
->   Monad :: t -> t -> Can t
->   Return   :: t -> Can t
+>   Monad     :: t -> t -> Can t
+>   Return    :: t -> Can t
+>   Composite :: t -> Can t
 
 > import -> CanPats where
->   pattern MONAD d x = C (Monad d x)
->   pattern RETURN x  = C (Return x)
+>   pattern MONAD d x   = C (Monad d x)
+>   pattern RETURN x    = C (Return x)
+>   pattern COMPOSITE t = C (Composite t)
 
 > import -> SugarTactics where
 
 > import -> CanCompile where
+>   makeBody (Return x)    = Tuple [CTag 0, makeBody x]
+>   makeBody (Composite t) = Tuple [CTag 1, makeBody t]
 
 > import -> TraverseCan where
->   traverse f (Monad d x) = (| Monad (f d) (f x) |)
->   traverse f (Return x)  = (| Return (f x) |)
+>   traverse f (Monad d x)   = (| Monad (f d) (f x) |)
+>   traverse f (Return x)    = (| Return (f x) |)
+>   traverse f (Composite x) = (| Composite (f x) |)
 
 > import -> HalfZipCan where
 >   halfZip (Monad d1 x1) (Monad d2 x2) = Just (Monad (d1, d2) (x1, x2))
 >   halfZip (Return x) (Return y) = Just (Return (x, y))
+>   halfZip (Composite x) (Composite y) = Just (Composite (x, y))
 
 > import -> CanPretty where
->   prettyCan (Monad d x) = parens (text "Monad" <+> pretty d <+> pretty x)
->   prettyCan (Return x)     = parens (text "'" <+> pretty x)
+>   prettyCan (Monad d x)   = parens (text "Monad" <+> pretty d <+> pretty x)
+>   prettyCan (Return x)    = parens (text "'" <+> pretty x)
+>   prettyCan (Composite x) = parens (text "@" <+> pretty x)
 
 > import -> Pretty where
 
@@ -44,9 +51,9 @@
 >   canTy chev (Monad d x :>: Return v) = do
 >     vvv@(v :=>: vv) <- chev (x :>: v)
 >     return $ Return vvv
->   canTy chev (Monad d x :>: Con y) = do
+>   canTy chev (Monad d x :>: Composite y) = do
 >     yyv@(y :=>: yv) <- chev (descOp @@ [d, MONAD d x] :>: y)
->     return $ Con yyv
+>     return $ Composite yyv
 
 > import -> OpCode where
 >   substOp = Op
@@ -65,11 +72,12 @@
 >       substOpTy _ xs = throwError [ "subst: arity mismatch: " ++
 >                                     show (length xs) ++ " should be 5" ]
 >       substOpRun :: [VAL] -> Either NEU VAL
->       substOpRun [d, x, y, f, CON ts] = Right $ eval
+>       substOpRun [d, x, y, f, COMPOSITE ts] = Right $ eval
 >         [.d.x.y.f.ts.
->           CON . N $ mapOp :@ [ NV d, MONAD (NV d) (NV x), MONAD (NV d) (NV y)
->                              , L $ "t" :. [.t. N $ substOp :@ [NV d, NV x, NV y, NV f, NV t]]
->                              , NV ts ]
+>           COMPOSITE . N $
+>             mapOp :@ [ NV d, MONAD (NV d) (NV x), MONAD (NV d) (NV y)
+>                      , L $ "t" :. [.t. N $ substOp :@ [NV d, NV x, NV y, NV f, NV t]]
+>                      , NV ts ]
 >         ] $ B0 :< d :< x :< y :< f :< ts
 >       substOpRun [d, x, y, f, RETURN z]  = Right $ f $$ A z
 >       substOpRun [d, x, y, f, N t]    = Left t
@@ -94,7 +102,7 @@
 >         [.d.r.p.
 >          PI (N $ descOp :@ [NV d, NV r])
 >             (L $ "x" :. [.x. ARR (N $ boxOp :@ [NV d, NV r, NV p, NV x])
->                                  (N $ V p :$ A (CON (NV x)))
+>                                  (N $ V p :$ A (COMPOSITE (NV x)))
 >                         ])
 >         ] $ B0 :< d :< r :< p
 >
@@ -104,7 +112,7 @@
 >         ] $ B0 :< x :< p
 >
 >       elimMonadOpRun :: [VAL] -> Either NEU VAL
->       elimMonadOpRun [d,x,CON ts,bp,mc,mv] = Right $ eval
+>       elimMonadOpRun [d,x,COMPOSITE ts,bp,mc,mv] = Right $ eval
 >         [.d.x.ts.bp.mc.mv.
 >          N $ V mc
 >           :$ A (NV ts)
@@ -126,4 +134,6 @@
 >   elimMonadOp :
 
 > import -> OpCompile where
+>   ("subst", [d, x, y, f, t]) -> App (Var "__subst") [d, f, t]
+>   ("elimMonad", [d, x, v, p, mc, mv]) -> App (Var "__elimMonad") [d, mv, mc, v]
 

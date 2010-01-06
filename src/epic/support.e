@@ -39,6 +39,18 @@ __map (D:Data, f:Data, x:Data) -> Data =
 
 __mapH (f:Data, x:Data, h:Data) -> Data = f(x(h))
 
+__subst(D:Data, f:Data, t:Data) -> Data =
+  case t!0 of
+  { 0 -> f(t!1)
+  | 1 -> [1, __map(D, __subst(D,f), t!1)]
+  }
+
+__elimMonad(D:Data, mv:Data, mc:Data, t:Data) -> Data =
+  case t!0 of
+  { 0 -> mv(t!1)
+  | 1 -> mc(t!1, __mapBox(D, __elimMonad(D,mv,mc), t!1))
+  }
+
 __const(x:Data, y:Data) -> Data = x 
 
 %inline __split(f:Data, y:Data) -> Data =
