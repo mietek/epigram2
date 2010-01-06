@@ -183,6 +183,7 @@ Coercion rule:
 >   splitOp = Op
 >     { opName = "split" , opArity = 5
 >     , opTy = sOpTy , opRun = sOpRun 
+>     , opSimp = \_ _ -> empty
 >     } where
 >       sOpTy chev [a , b , t , c , f] = do
 >                    (a :=>: av) <- chev (SET :>: a)

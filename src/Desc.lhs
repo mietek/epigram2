@@ -223,6 +223,7 @@ Equality rules:
 >     , opArity = 2
 >     , opTy = dOpTy
 >     , opRun = dOpRun
+>     , opSimp = \_ _ -> empty
 >     } where
 >       dOpTy chev [x,y] = do
 >                  (x :=>: xv) <- chev (desc :>: x)
@@ -248,6 +249,7 @@ Equality rules:
 >     , opArity = 4
 >     , opTy = boxOpTy
 >     , opRun = boxOpRun
+>     , opSimp = \_ _ -> empty
 >     } where
 >       boxOpTy chev [w,x,y,z] = do
 >         (w :=>: wv) <- chev (desc :>: w)
@@ -339,6 +341,7 @@ Equality rules:
 >     , opArity = 5
 >     , opTy = mapBoxOpTy
 >     , opRun = mapBoxOpRun
+>     , opSimp = \_ _ -> empty
 >     } where
 >       mapBoxOpTy chev [x,d,bp,p,v] = do 
 >           (x :=>: xv) <- chev (desc :>: x)
@@ -466,6 +469,7 @@ Equality rules:
 >     , opArity = 4
 >     , opTy = elimOpTy
 >     , opRun = elimOpRun
+>     , opSimp = \_ _ -> empty
 >     } where
 >       elimOpTy chev [d,v,bp,p] = do
 >         (d :=>: dv) <- chev (desc :>: d)
@@ -511,6 +515,7 @@ Equality rules:
 >     , opArity = 3
 >     , opTy = sOpTy
 >     , opRun = sOpRun
+>     , opSimp = \_ _ -> empty
 >     } where
 >         sOpTy chev [e , b, x] = do
 >           (e :=>: ev) <- chev (enumU :>: e)
@@ -534,6 +539,7 @@ Equality rules:
 >     , opArity = 5
 >     , opTy    = mapOpTy
 >     , opRun   = mapOpRun
+>     , opSimp  = \_ _ -> empty
 >     } where
 >         mapOpTy chev [d, a, b, f, x] = do
 >           dd@(d :=>: dv) <- chev (desc :>: d)

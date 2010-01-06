@@ -177,6 +177,7 @@ Equality rules:
 >     , opArity  = 2 
 >     , opTy     = bOpTy
 >     , opRun    = bOpRun
+>     , opSimp   = \_ _ -> empty
 >     } where
 >         bOpTy chev [e , p] = do
 >                  (e :=>: ev) <- chev (enumU :>: e)
@@ -216,6 +217,7 @@ Equality rules:
 >     , opArity = 4
 >     , opTy = sOpTy
 >     , opRun = sOpRun
+>     , opSimp = \_ _ -> empty
 >     } where
 >         sOpTy chev [e, x , p , b] = do
 >           (e :=>: ev) <- chev (enumU :>: e)

@@ -140,6 +140,7 @@ With no computational behavior.
 >                , opArity = 4
 >                , opTy = opty
 >                , opRun = opRunEqGreen
+>                , opSimp = \_ _ -> empty
 >                } where
 >                opty chev [y0,t0,y1,t1] = do
 >                    (y0 :=>: y0v) <- chev (SET :>: y0)
@@ -157,6 +158,7 @@ With no computational behavior.
 >            , opArity = 4
 >            , opTy = opty
 >            , opRun = oprun
+>            , opSimp = \_ _ -> empty
 >            } where
 >            opty chev [x,y,q,s] = do
 >              (x :=>: xv) <- chev (SET :>: x)

@@ -179,7 +179,7 @@ Operators will, in many cases, just compile to an application of a function we w
 by hand in Epic - see epic/support.e
 
 > instance CNameable n => MakeBody (Op, [Tm {In, p} n]) where
->     makeBody (Op name arity _ _, args) 
+>     makeBody (Op name arity _ _ _, args) 
 >          = case (name, map makeBody args) of
 >                import <- OpCompile
 >                _ -> Lazy (Error ("Unknown operator" ++ show name))  -- |error ("Unknown operator" ++ show name)|

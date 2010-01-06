@@ -212,6 +212,7 @@ is not clear now, it should become clear after the definition of
 >   , opTy    :: MonadError [String] m =>  (TY :>: t -> m (s :=>: VAL)) -> 
 >                                        [t] -> 
 >                                        m ([s :=>: VAL] , TY)
+>   , opSimp  :: Alternative m => [VAL] -> Root -> m NEU
 >   , opRun   :: [VAL] -> Either NEU VAL
 >   }
 

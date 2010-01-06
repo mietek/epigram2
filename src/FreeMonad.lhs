@@ -61,6 +61,7 @@
 >     , opArity = 5
 >     , opTy = substOpTy
 >     , opRun = substOpRun
+>     , opSimp = \_ _ -> empty
 >     } where
 >       substOpTy chev [d, x, y, f, t] = do
 >         dd@(d :=>: dv) <- chev (desc :>: d)
@@ -88,6 +89,7 @@
 >     , opArity = 6
 >     , opTy = elimMonadOpTy
 >     , opRun = elimMonadOpRun
+>     , opSimp = \_ _ -> empty
 >     } where
 >       elimMonadOpTy chev [d,x,v,bp,mc,mv] = do
 >         dd@(d :=>: dv)    <- chev (desc :>: d)

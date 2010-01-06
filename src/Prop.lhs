@@ -185,6 +185,7 @@ Elim forms inherited from elsewhere
 >             , opArity = 2
 >             , opTy = opty
 >             , opRun = oprun
+>             , opSimp = \_ _ -> empty
 >             } where
 >               opty chev [z,ty] = do
 >                    (z :=>: zv) <- chev (PRF ABSURD :>: z)

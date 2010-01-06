@@ -443,6 +443,17 @@ as we can. Simple, easy.
 > bquote refs (op :@ vs) = (|(:@) (pure op)
 >                                   (traverse (bquote refs) vs)|)
 
+> simplify :: NEU -> Root -> NEU
+> simplify n r = exSimp n r
+>
+> inSimp :: VAL -> Root -> VAL
+> inSimp (N n) = (| N (exSimp n) |)
+> inSimp v     = (| v |)
+>
+> exSimp :: NEU -> Root -> NEU
+> exSimp (P x) = (| (P x) |)
+> exSimp (n :$ el) = (| exSimp n :$ (inSimp ^$ el) |)
+> exSimp n = (| n |)    -- TODO
 
 \subsection{Type checking}
 \label{subsec:type-checking}
