@@ -113,3 +113,45 @@ Then comes the usual junk, |Functor|, |Applicative|, and a fake
 > instance MonadError [String] Fresh  where
 >     throwError _ = Fresh $ const Nothing
 >     catchError = error "Fresh has no catchError"
+
+
+
+> data Check a = Check { inCheck :: Root -> Either [String] a }
+>
+> typeCheck :: Root -> Check a -> a
+> typeCheck root f = case inCheck f root of
+>                     Left x -> error $ "typeCheck: " ++ (head x)
+>                     Right l -> l
+>
+> instance Rooty Check where
+>     freshRef st f = Check $ Rooty.freshRef st (inCheck . f)
+>     forkRoot s child dad = Check $ \root -> do
+>                            c <- inCheck child (room root s)
+>                            d <- inCheck (dad c) (roos root)
+>                            return d
+>     root = Check $ Right
+>
+> instance Monad Check where
+>     return x = Check $ const $ Right x
+>     x >>= g = Check $ \r -> do
+>               a <- inCheck x r
+>               inCheck (g a) r
+>
+> instance Functor Check where
+>     fmap f (Check g) = Check $ (fmap f) . g 
+>
+> instance Applicative Check where
+>     pure = return
+>     (<*>) = ap
+>
+> instance MonadPlus Check where
+>     mzero = throwError ["empty"]
+>     x `mplus` y = Check $ \r -> inCheck x r `mplus` inCheck y r
+
+> instance Alternative Check where
+>     empty = mzero
+>     (<|>) = mplus
+
+> instance MonadError [String] Check  where
+>     throwError s = Check $ const $ Left s
+>     catchError = error "Check has no catchError"
