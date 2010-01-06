@@ -658,7 +658,7 @@ and leaves the term otherwise unchanged.
 The |underScope| function goes under a binding, instantiating the bound variable
 to the given reference.
 
-> underScope :: Scope {TT} REF -> REF -> INTM
+> underScope :: Scope {TT} x -> x -> InTm x
 > underScope (K t)     _ = t
 > underScope (_ :. t)  x = under 0 x %% t
 

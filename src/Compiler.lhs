@@ -18,6 +18,10 @@ generate an executable from a collection of supercombinator definitions.
 > import List
 > import Data.Foldable hiding (concatMap, concat)
 > import Data.Monoid
+> import Control.Monad.State
+> import Data.Traversable
+> import Control.Applicative
+> import Debug.Trace
 
 > import Tm
 > import Developments
@@ -192,7 +196,10 @@ by hand in Epic - see epic/support.e
 >            [(Name, Bwd Name, FnBody)]
 > flatten b ma del (F0, Module, _) = []
 > flatten LAMB ma del (F0, Unknown _, _) = [(ma, del, Missing (show ma))]
-> flatten LAMB ma del (F0, Defined tm _, _) = [(ma, del, makeBody tm)]
+> flatten LAMB ma del (F0, Defined tm _, _) = 
+>     let (t, (_, defs)) = runState (lambdaLift ma del (fmap refName tm)) 
+>                                   (ma ++ [("lift",0)],[]) in
+>            (ma, del, makeBody t) : defs
 > flatten ALAB ma del (F0, _, _) = [(ma, del, Ignore)]
 > flatten PIB ma del (F0, _, _) = [(ma, del, Ignore)]
 > flatten _ ma del (E (x := _) _ (Boy b) _ :> es, tip, root) =
@@ -200,7 +207,55 @@ by hand in Epic - see epic/support.e
 > flatten b ma del (E (her := _) _ (Girl LETG herDev) _ :> es, tip, root) = 
 >     flatten LAMB her del herDev ++ flatten b ma del (es, tip, root)
 
+Lambda lifting: every lambda which is not at the top level is lifted out as a
+new top level definition. We keep track of the new top level functions we've
+added, and the next available name,
 
+> type LiftState = (Name, [(Name, Bwd Name, FnBody)])
+
+> nextName xs = reverse (nextName' (reverse xs))
+>    where nextName' ((nm,i):xs) = (nm,i+1):xs
+
+> addDef :: Name -> (Bwd Name, InTm Name) -> 
+>           State LiftState ()
+> addDef nm (args, t) = do (n, fns) <- get
+>                          put (n, (nm, args, makeBody t):fns)
+
+> newName :: State LiftState Name
+> newName = do (nm, fns) <- get
+>              put (nextName nm, fns)
+>              return (nextName nm)
+
+When we encounter a lambda, we create a new top level definition with all
+the arguments we've collected so far, plus the arguments to the lambda.
+Then replace the lambda with an application of the new function to all
+the names in scope.
+
+> lambdaLift :: Name -> Bwd Name -> Tm {d,TT} Name -> 
+>               State LiftState (Tm {d,TT} Name)
+> lambdaLift nm args l@(L (x :. t)) = lift args args l where
+>     lift :: Bwd Name -> Bwd Name -> (InTm Name) -> 
+>             State LiftState (InTm Name)
+>     lift tlargs args (L sc@(x :. t)) 
+>       = let name = nm ++ [(x,bwdLength args)] in
+>             lift tlargs (args :< name) (underScope sc name)
+>     lift tlargs args t = do name <- newName
+>                             addDef name (args, t)
+>                             return (N (apply (P name) tlargs))
+>     apply f B0 = f
+>     apply f (args :< a) = apply f args :$ (A (N (P a)))
+
+Everything else is boring traversal of the term.
+
+> lambdaLift nm args (C can) = (|C (traverse (lambdaLift nm args) can) |)
+> lambdaLift nm args (N t) = (|N (lambdaLift nm args t) |)
+> lambdaLift nm args (op :@ as) = 
+>      (| ~op :@ (traverse (lambdaLift nm args) as) |)
+> lambdaLift nm args (t :$ el) = 
+>      (| lambdaLift nm args t :$ traverse (lambdaLift nm args) el |)
+> lambdaLift nm args (v :? t) = 
+>      (| lambdaLift nm args v :? lambdaLift nm args t |)
+> lambdaLift nm args tm = (| tm |)
 
 %if False
 
