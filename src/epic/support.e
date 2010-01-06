@@ -29,6 +29,16 @@ __mapBoxH (p:Data, f:Data, h:Data) -> Data = p(f(h))
 __elim(D:Data, m:Data, x:Data) -> Data =
    m(x,__mapBox(D, __elim(D,m), x))
 
+__map (D:Data, f:Data, x:Data) -> Data =
+  case D!0 of
+   { 0 -> []
+   | 1 -> [x!0, __map((((D!1)!1)!0)(x!0), f, x!1)]
+   | 2 -> [__mapH(f, x!0), __map(((D!1)!1)!0, f, x!1)]
+   | 3 -> [f(x!0), __map((D!1)!0, f, x!1)]
+   }
+
+__mapH (f:Data, x:Data, h:Data) -> Data = f(x(h))
+
 __const(x:Data, y:Data) -> Data = x 
 
 %inline __split(f:Data, y:Data) -> Data =

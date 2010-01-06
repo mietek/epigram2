@@ -202,11 +202,13 @@ Equality rules:
 >   mapBoxOp :
 >   elimOp :
 >   switchDOp :
+>   mapOp :
 
 > import -> OpCompile where
 >   ("elimOp", [d,v,bp,p]) -> App (Var "__elim") [d, p, v]
 >   ("mapBox", [x,d,bp,p,v]) -> App (Var "__mapBox") [x, p, v]
 >   ("SwitchD", [e,b,x]) -> App (Var "__switch") [x, b]
+>   ("map", [d,a,b,f,x]) -> App (Var "__map") [d, f, x]
 
 > import -> OpCode where
 >   descOp :: Op
@@ -520,3 +522,43 @@ Equality rules:
 >                        , n ]
 >         sOpRun [_ , _ , N n] = Left n
 >         sOpRun vs = error ("Desc.SwitchD.sOpRun: couldn't handle " ++ show vs)
+
+>   mapOp = Op
+>     { opName  = "map"
+>     , opArity = 5
+>     , opTy    = mapOpTy
+>     , opRun   = mapOpRun
+>     } where
+>         mapOpTy chev [d, a, b, f, x] = do
+>           dd@(d :=>: dv) <- chev (desc :>: d)
+>           aa@(a :=>: av) <- chev (SET :>: a)
+>           bb@(b :=>: bv) <- chev (SET :>: b)
+>           ff@(f :=>: fv) <- chev (ARR av bv :>: f)
+>           xx@(x :=>: xv) <- chev (descOp @@ [dv, av] :>: x)
+>           return ([dd, aa, bb, ff, xx], descOp @@ [dv, bv])
+>         mapOpTy _ xs = throwError ["mapOp: arity mismatch: " ++
+>                        show (length xs) ++ " should be 5"]
+>
+>         mapOpRun :: [VAL] -> Either NEU VAL
+>         mapOpRun [DONE,    a, b, f, x] = Right UNIT
+>         mapOpRun [ARG s d, a, b, f, x] = Right $
+>           eval [.s.d.a.b.f.x.
+>                 PAIR (N (V x :$ Fst))
+>                      (N $ mapOp :@ [ N $ V d :$ A (N $ V x :$ Fst)
+>                                    , NV a, NV b, NV f, N (V x :$ Snd)
+>                                    ])
+>           ] $ B0 :< s :< d :< a :< b :< f :< x
+>         mapOpRun [IND h d, a, b, f, x] = Right $
+>           eval [._H.d.a.b.f.x.
+>                 PAIR (L $ "h" :. [.h. N $ V f :$ A (N $ V x :$ Fst :$ A (NV h))])
+>                      (N $ mapOp :@ [ NV d, NV a, NV b, NV f
+>                                    , N (V x :$ Snd) ])
+>           ] $ B0 :< h :< d :< a :< b :< f :< x
+>         mapOpRun [IND1 d,  a, b, f, x] = Right $
+>           eval [.d.a.b.f.x.
+>                 PAIR (N $ V f :$ A (N $ V x :$ Fst))
+>                      (N $ mapOp :@ [ NV d, NV a, NV b, NV f
+>                                    , N (V x :$ Snd) ])
+>           ] $ B0 :< d :< a :< b :< f :< x
+>         mapOpRun [N d,     a, b, f, x] = Left d
+
