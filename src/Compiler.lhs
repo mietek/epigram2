@@ -240,14 +240,17 @@ the names in scope.
 >     lift tlargs args (L sc@(x :. t)) 
 >       = let name = nm ++ [(x,bwdLength args)] in
 >             lift tlargs (args :< name) (underScope sc name)
->     lift tlargs args t = do name <- newName
->                             addDef name (args, t)
+>     lift tlargs args t = do t' <- lambdaLift nm args t
+>                             name <- newName
+>                             addDef name (args, t')
 >                             return (N (apply (P name) tlargs))
 >     apply f B0 = f
 >     apply f (args :< a) = apply f args :$ (A (N (P a)))
 
 Everything else is boring traversal of the term.
 
+> lambdaLift nm args (L (K t)) = do t' <- lambdaLift nm args t
+>                                   return (L (K t'))
 > lambdaLift nm args (C can) = (|C (traverse (lambdaLift nm args) can) |)
 > lambdaLift nm args (N t) = (|N (lambdaLift nm args t) |)
 > lambdaLift nm args (op :@ as) = 
