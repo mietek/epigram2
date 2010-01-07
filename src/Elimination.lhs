@@ -160,7 +160,7 @@ it's a hell to write the type of what will get out.
 >                                     ty = bquote B0 (pty m) root
 >                                     tym = renameVars ty $ zip motiveCtxt internHyps
 >                                     -- Bring method's type from emptyMotive to the built Motive
->                                     tym' = undefined -- (L (H B0 "" (bquote (B0 :< emptyMotive) (evTm tym) root))) $$ A (evTm motive)
+>                                     tym' = (L (H B0 "" (bquote (B0 :< emptyMotive) (evTm tym) root))) $$ A (evTm motive)
 >                                     tym'' = bquote B0 tym' root
 >                                 make ("method" :<: tym'')) methods
 >     -- Solve the elim problem
