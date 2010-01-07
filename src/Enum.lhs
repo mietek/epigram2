@@ -156,15 +156,15 @@ Equality rules:
 >   halfZip (Su t0) (Su t1) = Just (Su (t0,t1))
 
 > import -> CanPretty where
->   prettyCan (EnumT t)  = braces (prettyEnum t)
->   prettyCan Ze         = text "0"
->   prettyCan (Su t)     = prettyEnumIndex 1 t
+>   pretty (EnumT t)  = braces (prettyEnum t)
+>   pretty Ze         = text "0"
+>   pretty (Su t)     = prettyEnumIndex 1 t
 
 > import -> Pretty where
->   prettyEnum :: DTm {d} String -> Doc
->   prettyEnum t                               = text "[" <+> pretty t <+> text "]"
+>   prettyEnum :: Pretty x => InDTm x -> Doc
+>   prettyEnum t = text "[" <+> pretty t <+> text "]"
 >
->   prettyEnumIndex :: Int -> DTm {d} String -> Doc
+>   prettyEnumIndex :: Pretty x => Int -> InDTm x -> Doc
 >   prettyEnumIndex n DZE      = int n
 >   prettyEnumIndex n (DSU t)  = prettyEnumIndex (succ n) t
 >   prettyEnumIndex n tm       = parens (int n <+> text "+" <+> pretty tm)

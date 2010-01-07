@@ -151,13 +151,13 @@ Elim forms inherited from elsewhere
 >   boxTac t = can $ Box t
 
 > import -> CanPretty where
->   prettyCan Prop           = text "#"
->   prettyCan (Prf p)        = parens (text ":-" <+> pretty p)
->   prettyCan (All p q)      = parens (text "All" <+> pretty p <+> pretty q)
->   prettyCan (And p q)      = parens (pretty p <+> text "&&" <+> pretty q)
->   prettyCan Trivial        = text "TT"
->   prettyCan Absurd         = text "FF"
->   prettyCan (Box (Irr p))  = parens (text "Box" <+> pretty p)
+>   pretty Prop           = text "#"
+>   pretty (Prf p)        = parens (text ":-" <+> pretty p)
+>   pretty (All p q)      = parens (text "All" <+> pretty p <+> pretty q)
+>   pretty (And p q)      = parens (pretty p <+> text "&&" <+> pretty q)
+>   pretty Trivial        = text "TT"
+>   pretty Absurd         = text "FF"
+>   pretty (Box (Irr p))  = parens (text "Box" <+> pretty p)
 
 > import -> CanTyRules where
 >   canTy _   (Set :>: Prop)           = return Prop

@@ -192,8 +192,8 @@ Equality rules:
 >   ind1Tac x = conTac (pairTac (suTac (suTac (suTac zeTac))) (pairTac x voidTac))
 
 > import -> CanPretty where
->   prettyCan (Mu (Just l   :?=: _))  = parens (pretty l)
->   prettyCan (Mu (Nothing  :?=: Id t))  = parens (text "Mu" <+> pretty t)
+>   pretty (Mu (Just l   :?=: _))  = parens (pretty l)
+>   pretty (Mu (Nothing  :?=: Id t))  = parens (text "Mu" <+> pretty t)
 
 > import -> CanTyRules where
 >   canTy chev (Set :>: Mu (ml :?=: Id x))     = do

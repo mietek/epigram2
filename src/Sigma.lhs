@@ -80,22 +80,22 @@ Coercion rule:
 >   Pair   :: t -> t -> Can t 
 
 > import -> CanPretty where
->   prettyCan Unit                    = parens empty
->   prettyCan Void                    = brackets empty
->   prettyCan (Sigma s (DL (x ::. t)))  = parens (text x <+> colon <+> pretty s
+>   pretty Unit                    = parens empty
+>   pretty Void                    = brackets empty
+>   pretty (Sigma s (DL (x ::. t)))  = parens (text x <+> colon <+> pretty s
 >                                           <+> semi <+> prettySigma t)
->   prettyCan (Sigma s (DL (DK t)))     = parens (pretty s <+> semi <+> prettySigma t)
->   prettyCan (Sigma s t)             = parens (text "Sigma" <+> pretty s <+> pretty t)
->   prettyCan (Pair a b)              = brackets (pretty a <+> prettyPair b)
+>   pretty (Sigma s (DL (DK t)))     = parens (pretty s <+> semi <+> prettySigma t)
+>   pretty (Sigma s t)             = parens (text "Sigma" <+> pretty s <+> pretty t)
+>   pretty (Pair a b)              = brackets (pretty a <+> prettyPair b)
 
 > import -> Pretty where
->   prettyPair :: DTm {d} String -> Doc
+>   prettyPair :: Pretty x => InDTm x -> Doc
 >   prettyPair DVOID            = empty
 >   prettyPair (DPAIR a DVOID)  = pretty a
 >   prettyPair (DPAIR  a b)     = pretty a <+> prettyPair b
 >   prettyPair t                = text "/" <+> pretty t
 >
->   prettySigma :: DTm {d} String -> Doc
+>   prettySigma :: Pretty x => InDTm x -> Doc
 >   prettySigma DUNIT = empty
 >   prettySigma (DSIGMA s (DL (x ::. t)))  = text x <+> colon <+> pretty s
 >                                           <+> semi <+> prettySigma t
@@ -107,8 +107,8 @@ Coercion rule:
 >   Snd    :: Elim t
 
 > import -> ElimPretty where
->   prettyElim Fst = text "!"
->   prettyElim Snd = text "-"
+>   pretty Fst = text "!"
+>   pretty Snd = text "-"
 
 > import -> CanPats where
 >   pattern SIGMA p q = C (Sigma p q)

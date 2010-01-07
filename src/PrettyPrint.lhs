@@ -3,7 +3,7 @@
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE ScopedTypeVariables, GADTs #-}
+> {-# LANGUAGE ScopedTypeVariables, GADTs, FlexibleInstances #-}
 
 > module PrettyPrint (pretty, prettyDev, prettyModule,
 >                     prettyREF, prettyVAL, prettyINTM) where
@@ -29,15 +29,21 @@ The following uses the |HughesPJ| pretty-printing combinators. We define how to
 pretty-print everything defined in the Core chapter here, and provide she aspects
 to allow extra canonical terms and eliminators to be pretty-printed.
 
-> prettyCan :: Can (DTm {d} String) -> Doc
-> prettyCan Set       = text "*"
-> prettyCan (Pi s (DL (DK t)))  = parens (sep [pretty s <+> text "->", pretty t])
-> prettyCan (Pi s (DL (x ::. t))) = 
->     parens (sep [parens (text x <+> text ":" <+> pretty s) <+> text "->", pretty t])
-> prettyCan (Pi s t)  = parens (text "Pi" <+> pretty s <+> pretty t)
-> prettyCan (Con x)   = text "@" <+> pretty x
-> import <- CanPretty
-> prettyCan can       = quotes . text .show $ can
+> class Show x => Pretty x where
+>     pretty :: x -> Doc
+
+> instance Pretty [Char] where
+>     pretty = text
+
+> instance Pretty x => Pretty (Can (InDTm x)) where
+>     pretty Set       = text "*"
+>     pretty (Pi s (DL (DK t)))  = parens (sep [pretty s <+> text "->", pretty t])
+>     pretty (Pi s (DL (x ::. t))) = 
+>         parens (sep [parens (text x <+> text ":" <+> pretty s) <+> text "->", pretty t])
+>     pretty (Pi s t)  = parens (text "Pi" <+> pretty s <+> pretty t)
+>     pretty (Con x)   = text "@" <+> pretty x
+>     import <- CanPretty
+>     pretty can       = quotes . text . show $ can
 
 > prettyModule :: Entries -> Name -> Dev Bwd -> Doc
 > prettyModule aus me (B0, _, _) = empty
@@ -70,12 +76,11 @@ to allow extra canonical terms and eliminators to be pretty-printed.
 >     prettyBKind ALAB  d = text "\\" <+> d <+> text "=>"
 >     prettyBKind PIB   d = parens d <+> text "->"
 
-
-> prettyElim :: Elim (DTm {d} String) -> Doc
-> prettyElim (A t)  = pretty t
-> prettyElim Out    = text "Out"
-> import <- ElimPretty
-> prettyElim elim   = quotes . text . show $ elim
+> instance Pretty x => Pretty (Elim (InDTm x)) where
+>     pretty (A t)  = pretty t
+>     pretty Out    = text "Out"
+>     import <- ElimPretty
+>     pretty elim   = quotes . text . show $ elim
 
 > prettyRef :: Entries -> Name -> Root -> REF -> Doc
 > prettyRef aus me root ref@(_ := k :<: ty) = text (christenREF aus me ref) <+> prettyRKind k 
@@ -86,7 +91,7 @@ to allow extra canonical terms and eliminators to be pretty-printed.
 >               <+> text ":"
 >           prettyRKind HOLE      = text ":= ? :"
 
-> prettyDScope :: DScope String -> Doc
+> prettyDScope :: Pretty x => DScope x -> Doc
 > prettyDScope (x ::. t)  = parens (text x <+> text "::." <+> pretty t)
 > prettyDScope (DK t)     = parens (text "\\_ ->" <+> pretty t)
 
@@ -96,17 +101,19 @@ to allow extra canonical terms and eliminators to be pretty-printed.
 > prettyTip aus me (Defined tm  (tv :=>: _))  = pretty (unelaborate (christen aus me tm))
 >     <+> text ":" <+> pretty (unelaborate (christen aus me tv))
 
-> pretty :: DTm {d} String -> Doc
-> pretty (DL s)          = prettyDScope s
-> pretty (DC c)          = prettyCan c
-> pretty (DN n)          = pretty n
-> pretty (DQ x)          = text ("?" ++ x)
-> pretty (DP x)          = text x
-> pretty (DV i)          = char 'V' <> int i
-> pretty (op ::@ vs)     = parens (text (opName op) 
->     <+> sep (punctuate comma (map (pretty) vs)))
-> pretty (n ::$ el)      = parens (pretty n <+> prettyElim el)
-> pretty (t ::? y)       = parens (pretty t <+> text ":" <+> pretty y)
+> instance Pretty x => Pretty (InDTm x) where
+>     pretty (DL s)          = prettyDScope s
+>     pretty (DC c)          = pretty c
+>     pretty (DN n)          = pretty n
+>     pretty (DQ x)          = text ("?" ++ x)
+
+> instance Pretty x => Pretty (ExDTm x) where
+>     pretty (DP x)          = pretty x
+>     pretty (DV i)          = char 'V' <> int i
+>     pretty (op ::@ vs)     = parens (text (opName op) 
+>         <+> sep (punctuate comma (map (pretty) vs)))
+>     pretty (n ::$ el)      = parens (pretty n <+> pretty el)
+>     pretty (t ::? y)       = parens (pretty t <+> text ":" <+> pretty y)
 
 > import <- Pretty
 

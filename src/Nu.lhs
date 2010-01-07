@@ -26,8 +26,8 @@
 >   pattern DCOIT d sty f s = DC (CoIt d sty f s)
 
 > import -> CanPretty where
->   prettyCan (Nu t)  = parens (text "Nu" <+> pretty t)
->   prettyCan (CoIt d sty f s) = parens (text "CoIt" <+>
+>   pretty (Nu t)  = parens (text "Nu" <+> pretty t)
+>   pretty (CoIt d sty f s) = parens (text "CoIt" <+>
 >     pretty sty <+> pretty f <+> pretty s)
 
 > import -> CanTyRules where

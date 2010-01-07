@@ -25,26 +25,24 @@
 %format ::? = ":\!:\!\in"
 %format ::. = ":\!\bullet"
 
-> data DTm :: {Dir} -> * -> * where
->   DL     :: DScope x                         -> DTm {In}  x -- \(\lambda\)
->   DC     :: Can (DTm {In} x)                 -> DTm {In}  x -- canonical
->   DN     :: DTm {Ex} x                       -> DTm {In}  x -- neutral
->   DQ     :: String                           -> DTm {In}  x -- hole
+> data InDTm :: * -> * where
+>     DL     :: DScope x                         -> InDTm  x -- \(\lambda\)
+>     DC     :: Can (InDTm x)                    -> InDTm  x -- canonical
+>     DN     :: ExDTm x                          -> InDTm  x -- neutral
+>     DQ     :: String                           -> InDTm  x -- hole
+>     DI     :: String                           -> InDTm  x -- underscore
+>     DT     :: InTm x                    -> InDTm  x -- embedding
 
->   DP     :: x                                -> DTm {Ex}  x -- parameter
->   DV     :: Int                              -> DTm {Ex}  x -- variable
->   (::@)  :: Op -> [DTm {In} x]               -> DTm {Ex}  x -- fully applied op
->   (::$)  :: DTm {Ex} x -> Elim (DTm {In} x)  -> DTm {Ex}  x -- elim
->   (::?)  :: DTm {In} x -> DTm {In} x         -> DTm {Ex}  x -- typing
-
->   DT     :: Tm {d, TT} x                     -> DTm {d}   x -- embedding
+> data ExDTm :: * -> * where
+>     DP     :: x                                -> ExDTm  x -- parameter
+>     DV     :: Int                              -> ExDTm  x -- variable
+>     (::@)  :: Op -> [InDTm x]            -> ExDTm  x -- fully applied op
+>     (::$)  :: ExDTm x -> Elim (InDTm x)  -> ExDTm  x -- elim
+>     (::?)  :: InDTm x -> InDTm x         -> ExDTm  x -- typing
 
 > data DScope :: * -> * where
->   (::.)  :: String -> DTm {In} x           -> DScope x  -- binding
->   DK     :: DTm {In} x                     -> DScope x  -- constant
-
-> type InDTm = DTm {In}
-> type ExDTm = DTm {Ex}
+>   (::.)  :: String -> InDTm x           -> DScope x  -- binding
+>   DK     :: InDTm x                     -> DScope x  -- constant
 
 > type INDTM  = InDTm REF 
 > type EXDTM  = ExDTm REF
@@ -61,21 +59,23 @@
 > import <- DisplayCanPats
 
 
-> unelaborate :: Tm {d, TT} x -> DTm {d} x
+> unelaborate :: InTm x -> InDTm x
 > unelaborate (L s)       = DL (scopeToDScope s)
 > unelaborate (C c)       = DC (fmap unelaborate c)
-> unelaborate (N n)       = DN (unelaborate n)
-> unelaborate (P s)       = DP s
-> unelaborate (V i)       = DV i
-> unelaborate (n :$ e)    = unelaborate n ::$ fmap unelaborate e
-> unelaborate (op :@ vs)  = op ::@ fmap unelaborate vs
-> unelaborate (t :? y)    = unelaborate t ::? unelaborate y
+> unelaborate (N n)       = DN (unelaborateEx n)
+
+> unelaborateEx :: ExTm x -> ExDTm x
+> unelaborateEx (P s)       = DP s
+> unelaborateEx (V i)       = DV i
+> unelaborateEx (n :$ e)    = unelaborateEx n ::$ fmap unelaborate e
+> unelaborateEx (op :@ vs)  = op ::@ fmap unelaborate vs
+> unelaborateEx (t :? y)    = unelaborate t ::? unelaborate y
 
 > scopeToDScope :: Scope {TT} x -> DScope x
 > scopeToDScope (x :. t) = x ::. (unelaborate t)
 > scopeToDScope (K t)    = DK (unelaborate t)
 
-> dfortran :: DTm {In} x -> String
+> dfortran :: InDTm x -> String
 > dfortran (DL (x ::. _)) | not (null x) = x
 > dfortran _ = "x"
 
@@ -87,7 +87,7 @@
 >   }
 
 
-> (%$) :: Applicative f => DMangle f x y -> DTm {In} x -> f (DTm {In} y)
+> (%$) :: Applicative f => DMangle f x y -> InDTm x -> f (InDTm y)
 > m %$ DL (DK t)      = (|DL (|DK (m %$ t)|)|)
 > m %$ DL (x ::. t)   = (|DL (|(x ::.) (dmangB m x %$ t)|)|)
 > m %$ DC c          = (|DC ((m %$) ^$ c)|)
@@ -96,19 +96,19 @@
 > _ %$ tm            = error ("%$: can't dmangle " ++ show (fmap (\_ -> ".") tm)) 
 
 > dexMang ::  Applicative f => DMangle f x y ->
->            DTm {Ex} x -> f [Elim (DTm {In} y)] -> f (DTm {Ex} y)
+>            ExDTm x -> f [Elim (InDTm y)] -> f (ExDTm y)
 > dexMang m (DP x)     es = dmangP m x es
 > dexMang m (DV i)     es = dmangV m i es
 > dexMang m (o ::@ a)  es = (|(| (o ::@) ((m %$) ^$ a) |) $::$ es|) 
 > dexMang m (t ::$ e)  es = dexMang m t (|((m %$) ^$ e) : es|)
 > dexMang m (t ::? y)  es = (|(|(m %$ t) ::? (m %$ y)|) $::$ es|)
 
-> (%%$) :: DMangle Identity x y -> DTm {In} x -> DTm {In} y
+> (%%$) :: DMangle Identity x y -> InDTm x -> InDTm y
 > m %%$ t = runIdentity $ m %$ t
 
-> type DSpine p x = [Elim (DTm {In} x)]
+> type DSpine p x = [Elim (InDTm x)]
 >
-> ($::$) :: DTm {Ex} x -> DSpine p x -> DTm {Ex} x
+> ($::$) :: ExDTm x -> DSpine p x -> ExDTm x
 > ($::$) = foldl (::$)
 
 
@@ -127,17 +127,20 @@
 
 
 
-> instance Show x => Show (DTm d x) where
+> instance Show x => Show (InDTm x) where
 >   show (DL s)       = "DL (" ++ show s ++ ")"
 >   show (DC c)       = "DC (" ++ show c ++ ")"
 >   show (DN n)       = "DN (" ++ show n ++ ")"
 >   show (DQ s)       = "?" ++ s
+>   show (DI s)       = "_" ++ s
+>   show (DT t)       = "DT (" ++ show t ++ ")"
+
+> instance Show x => Show (ExDTm x) where
 >   show (DP x)       = "DP (" ++ show x ++ ")"
 >   show (DV i)       = "DV " ++ show i
 >   show (n ::$ e)    = "(" ++ show n ++ " ::$ " ++ show e ++ ")"
 >   show (op ::@ vs)  = "(" ++ opName op ++ " ::@ " ++ show vs ++ ")"
 >   show (t ::? y)    = "(" ++ show t ++ " ::? " ++ show y ++ ")"
->   show (DT t)       = "DT (" ++ show t ++ ")"
 >
 > instance Show x => Show (DScope x) where
 >   show (x ::. t)   = show x ++ " :. " ++ show t
@@ -154,15 +157,23 @@
 >   traverse f (DK t)      = (|DK (traverse f t)|)
 
 
-> instance Functor (DTm {d}) where
+> instance Functor InDTm where
 >   fmap = fmapDefault
-> instance Foldable (DTm {d}) where
+> instance Foldable InDTm where
 >   foldMap = foldMapDefault
-> instance Traversable (DTm {d}) where
+> instance Traversable InDTm where
 >   traverse f (DL sc)     = (|DL (traverse f sc)|)
 >   traverse f (DC c)      = (|DC (traverse (traverse f) c)|)
 >   traverse f (DN n)      = (|DN (traverse f n)|)
 >   traverse f (DQ s)      = pure (DQ s)
+>   traverse f (DI s)      = pure (DI s)
+>   traverse f (DT t)      = (|DT (traverse f t)|)
+
+> instance Functor ExDTm where
+>   fmap = fmapDefault
+> instance Foldable ExDTm where
+>   foldMap = foldMapDefault
+> instance Traversable ExDTm where
 >   traverse f (DP x)      = (|DP (f x)|)
 >   traverse f (DV i)      = pure (DV i)
 >   traverse f (t ::$ u)   = (|(::$) (traverse f t) (traverse (traverse f) u)|)
