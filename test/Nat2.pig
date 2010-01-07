@@ -1,0 +1,21 @@
+make nat := (Mu @ [`arg { zero, suc } [ (@ [`done]) (@ [`ind1 @ [`done]]) ] ] ) : * ;
+make zero := @ [`zero] : nat ;
+make suc := (\ x -> @ [`suc x]) : nat -> nat ;
+make one := (suc zero) : nat ;
+make two := (suc one) : nat ;
+make plus : nat -> nat -> nat ;
+give @ ? ;
+give @ ? ;
+give [? ?] ;
+lambda r ;
+lambda r ;
+lambda y ;
+give y ;
+lambda r ;
+give @ ? ;
+lambda h ;
+lambda r ;
+lambda y ;
+give suc (h y) ;
+root ;
+make x := (plus two two) : nat
