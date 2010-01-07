@@ -67,7 +67,7 @@
 >     , opArity = 5
 >     , opTy = substOpTy
 >     , opRun = substOpRun
->     , opSimp = \_ _ -> empty
+>     , opSimp = substOpSimp
 >     } where
 >       substOpTy chev [d, x, y, f, t] = do
 >         dd@(d :=>: dv) <- chev (desc :>: d)
@@ -88,6 +88,22 @@
 >         ] $ B0 :< d :< x :< y :< f :< ts
 >       substOpRun [d, x, y, f, RETURN z]  = Right $ f $$ A z
 >       substOpRun [d, x, y, f, N t]    = Left t
+>
+>       substOpSimp :: Alternative m => [VAL] -> Root -> m NEU
+>       substOpSimp [d, x, y, f, N t] r
+>         | equal (SET :>: (x, y)) r &&
+>           equal (ARR x (MONAD d x) :>: (f, ret)) r = pure t
+>         where
+>           ret = eval (L ("x" :. [.x. RETURN (NV x)])) B0
+>       substOpSimp [d, y, z, f, N (sOp :@ [_, x, _, g, N t])] r
+>         | sOp == substOp = pure (substOp :@ [d, x, z, comp, N t])
+>         where
+>           comp = eval
+>             [.d.y.z.f.g.
+>              L $ "x" :. [.x. N $ substOp :@ [NV d, NV y, NV z, NV f,
+>                                              N $ V g :$ A (NV x)]]
+>             ] $ B0 :< d :< y :< z :< f :< g
+>       substOpSimp _ _ = empty
 
 >   elimMonadOp :: Op
 >   elimMonadOp = Op
