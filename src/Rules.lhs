@@ -72,7 +72,10 @@ This translates into the following code:
 
 > ($$) :: VAL -> Elim VAL -> VAL
 > L (K v)      $$ A _  = v                -- By \ref{eqn:elim_cstt}
-> L (H g _ t)  $$ A v  = eval t (g :< v)  -- By \ref{eqn:elim_bind}
+
+< L (H g _ t)  $$ A v  = eval t (g :< v)  -- By \ref{eqn:elim_bind}
+
+> L (HF _ f)   $$ A v  = f v
 > C (Con t)    $$ Out  = t                -- By \ref{eqn:elim_con}
 > import <- ElimComputation               -- Extensions
 > N n          $$ e    = N (n :$ e)       -- By \ref{eqn:elim_stuck}
@@ -119,7 +122,7 @@ This naturally leads to the following code:
 
 > body :: Scope {TT} REF -> ENV -> Scope {VV} REF
 > body (K v)     g = K (eval v g)
-> body (x :. t)  g = H g x t
+> body (x :. t)  g = HF x (\v -> eval t (g :< v)) -- H g x t
 
 \subsubsection{Evaluator}
 
@@ -426,11 +429,17 @@ Going under a closure is the usual story: we create a fresh variable,
 evaluate the applied term, quote the result, and bring everyone under
 a binder.
 
-> bquote refs (L (H vs x t)) = 
+< bquote refs (L (H vs x t)) = 
+<     (|(\t -> L (x :. t))
+<       (Rooty.freshRef (x :<: undefined) 
+<                       (\x -> bquote (refs :< x) 
+<                                     (eval t (vs :< pval x))))|)
+
+> bquote refs (L (HF x t)) = 
 >     (|(\t -> L (x :. t))
 >       (Rooty.freshRef (x :<: undefined) 
 >                       (\x -> bquote (refs :< x) 
->                                     (eval t (vs :< pval x))))|)
+>                                     (t (pval x))))|)
 
 For the other constructors, we simply go through and do as much damage
 as we can. Simple, easy.
@@ -668,9 +677,9 @@ Rooty. Provided with a Root and an Operator, we compute its type.
 >     where names = replicate (opArity op) "x"
 >           (args, ty) = runFresh root $ opTy op mkTypes names
 >           buildType [] t = t
->           buildType (((s,v) :=>: _) : ts) t = C (Pi s (L (H B0 "" (bquote (B0 :< v) 
->                                                                   (buildType ts t)
->                                                                   root))))
+>           buildType (((s,v) :=>: _) : ts) t = undefined  -- C (Pi s (L (H B0 "" (bquote (B0 :< v) 
+>                                                             --  (buildType ts t)
+>                                                             --  root))))
 >           mkTypes (ty :>: s) = 
 >               Rooty.freshRef (s :<: ty) $ \r ->
 >                   return $ (ty,r) :=>: pval r
@@ -778,23 +787,3 @@ but we'd be able to drop |Sym|, which would be neater perhaps.
 > import <- Coerce
 
 
-
-%if false
-
-> traverseVal :: (Applicative f) => (REF -> f REF) -> Tm {d,VV} REF -> f VAL
-> traverseVal f (L sc)     = (|L (traverseScVal f sc)|)
-> traverseVal f (C c)      = (|C (traverse (traverseVal f) c)|)
-> traverseVal f (N n)      = traverseVal f n
-> traverseVal f (P x)      = (|pval (f x)|)
-> traverseVal f (t :$ u)   = 
->   (|($$) (traverseVal f t) (traverse (traverseVal f) u)|)
-> traverseVal f (op :@ ts) = (|(op @@) (traverse (traverseVal f) ts)|)
-
-> traverseScVal :: (Applicative f) => (REF -> f REF) -> 
->                                     Scope {VV} REF ->
->                                     f (Scope {VV} REF)
-> traverseScVal f (H vs x t) = 
->     (|H (traverse (traverseVal f) vs) ~x (traverse f t)|)
-> traverseScVal f (K t)      = (|K (traverseVal f t)|)
-
-%endif

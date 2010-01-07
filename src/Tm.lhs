@@ -139,7 +139,7 @@ the stored term.
 
 > data Scope :: {Phase} -> * -> * where
 >   (:.)  :: String -> Tm {In, TT} x           -> Scope {TT} x  -- binding
->   H     :: ENV -> String -> Tm {In, TT} x    -> Scope {VV} x  -- closure
+>   HF    :: String -> (VAL -> Tm {In, VV} x)  -> Scope {VV} x   
 >   K     :: Tm {In, p} x                      -> Scope p x     -- constant
 
 The |Can| functor explains how canonical objects are constructed from
@@ -580,8 +580,7 @@ I think that this stuff should disappear with Tactics spreading.
 >
 > instance Show x => Show (Scope p x) where
 >   show (x :. t)   = show x ++ " :. " ++ show t
->   show (H g x t)  =
->     "H (" ++ show g ++ ") " ++ show x ++ " (" ++ show t ++ ")"
+>   show (HF x t)  = "..."
 >   show (K t) = "K (" ++ show t ++")"
 
 
