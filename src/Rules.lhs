@@ -676,16 +676,6 @@ Rooty. Provided with a Root and an Operator, we compute its type.
 >                   return $ (ty,r) :=>: pval r
 
 
-> data TEL x = Ret x
->            | TY :-: (VAL -> TEL x)
-
-> telCheck :: (TEL x :>: [INTM]) -> Check x 
-> telCheck (Ret x :>: []) = return x
-> telCheck ((sS :-: tT) :>: (s : t)) = do
->     check (sS :>: s) 
->     telCheck ((tT (evTm s)) :>: t)
-> telCheck _ = throwError' "telCheck: canTy mismatch"
-
 
 \subsection{Bootstrapping Desc in Desc}
 

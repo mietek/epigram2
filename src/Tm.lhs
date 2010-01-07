@@ -204,12 +204,24 @@ change impacts on |exQuote|, |infer|, and |useOp|. If this definition
 is not clear now, it should become clear after the definition of
 |canTy|.
 
+
+> data TEL x = Ret x
+>            | TY :-: (VAL -> TEL x)
+
+> telCheck ::  (Alternative m, MonadError [String] m) =>
+>              (TY :>: t -> m (s :=>: VAL)) -> 
+>              (TEL x :>: [t]) -> m ([s :=>: VAL] , x) 
+> telCheck chev (Ret x :>: []) = return ([] , x)
+> telCheck chev ((sS :-: tT) :>: (s : t)) = do
+>     ssv@(s :=>: sv) <- chev (sS :>: s) 
+>     (svs , x) <- telCheck chev ((tT sv) :>: t)
+>     return (ssv : svs , x) 
+> telCheck _ _ = throwError' "telCheck: canTy mismatch"
+
 > data Op = Op
 >   { opName  :: String
 >   , opArity :: Int
->   , opTy    :: MonadError [String] m =>  (TY :>: t -> m (s :=>: VAL)) -> 
->                                        [t] -> 
->                                        m ([s :=>: VAL] , TY)
+>   , opTyTel :: TEL TY
 >   , opSimp  :: Alternative m => [VAL] -> Root -> m NEU
 >   , opRun   :: [VAL] -> Either NEU VAL
 >   }
