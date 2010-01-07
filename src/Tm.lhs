@@ -204,9 +204,10 @@ change impacts on |exQuote|, |infer|, and |useOp|. If this definition
 is not clear now, it should become clear after the definition of
 |canTy|.
 
+> infix 3 :-:
 
 > data TEL x = Ret x
->            | TY :-: (VAL -> TEL x)
+>            | (String :<: TY) :-: (VAL -> TEL x)
 
 > telCheck ::  (Alternative m, MonadError [String] m) =>
 >              (TY :>: t -> m (s :=>: VAL)) -> 
