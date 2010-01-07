@@ -8,46 +8,58 @@ Quotation:
 * Tidy exQuote: lhs2TeX alignment, match against C, not use unC (or is there a GADT problem?).
 
 Type-checker:
-* Change check and infer to fit the chev pattern.
-* Make infer ensure operators have the correct number of arguments.
+* Change check and infer to fit the chev pattern. (DONE)
+* Make infer ensure operators have the correct number of arguments. (Switch to using telescopes.)
 
 Features:
 * Create standard template for feature files and make them conform to it.
 * Update documentation for operators.
-* Create appropriate aspect and remove Desc in Desc stuff from Rules.
+* Create appropriate aspect and remove Desc in Desc stuff from Rules. (DONE)
 
-Elaboration:
-1 Adam: Blue equality should work with EXTMs other than ascriptions
-2 Adam: Make elaborate aspect-based
-1 Adam: Add aspect for DTm 
+Display syntax and elaboration:
+1 Adam: Blue equality should work with EXTMs other than ascriptions.
+2 Adam: Make elaborate aspect-based.
+1 Adam: Add aspect for DTm.
+2: Schemes on entries.
+1 Adam: Add underscore with appropriate behaviour.
+1 Adam: distillation (reverse elaboration):
+    (TY :>: INTM) -> ProofState INDTM
+    EXTM -> ProofState (EXDTM :<: TY)
 
 Cochon:
 1 Adam: Implement show hypotheses.
 1 Adam: Allow comments in pig files.
 * Tidy cochon up a lot.
-* Consider what output should be displayed after each cochon command. 
-* Make cochon accept semicolon-separated lists of commands (with what output?).
+* Consider what output should be displayed after each cochon command. (DONE)
+* Make cochon accept tacticals (then (semicolon), else, skip, try) with progressive output.
 * Use readline or similar library for command history and tab-completion.
+* Command to export context in a reloadable format.
 
 Programming with Desc:
 * Differentiate Desc.
 * Write predicates: is a description first-order, is equality decidable.
 
 Extending Desc:
-99: Special case arg in Desc for S an enumeration and D a tuple?
+* Special case arg in Desc for S an enumeration and D a tuple?
 1 Peter: Generalise Desc to dependent types (including a propositional argument to done?).
-1 James: Coinduction (Nu).
-1 Ulf+Conor: Implement the free monad Tm along with tmElim, subst and map operators.
-2: Extend operators with a new component,
-    opSimp  :: [VAL] -> Root -> Maybe NEU
-  that is used to simplify neutral operator applications; thus operators can preserve
-  relevant laws for neutral terms, so they hold definitionally.
+0 James: Basic coinduction (Nu). (DONE)
+2 James: Equality for coinduction (once we have inhabitation and indexed Desc).
+0 Ulf+Conor: Implement the free monad Tm along with tmElim, subst and map operators. (DONE)
+0 Ulf: Extend operators with a new component, opSimp  :: [VAL] -> Root -> Maybe NEU
+   that is used to simplify neutral operator applications; thus operators preserve
+   relevant laws for neutral terms, so they hold definitionally. (DONE)
+0 Ulf: simplification for map. (DONE)
+1 Ulf: simplification for subst.
 
 Compilation:
-1 Edwin: Integrate lambda-lifting phase.
+0 Edwin: Integrate lambda-lifting phase. (DONE)
 
 Programming Technology:
-2 Pierre: Elimination with a motive.
-1: Labelled types for programs.
+1 Pierre: Elimination with a motive.
+1 Edwin: Labelled types for programs.
 * Propositional simplification.
 * Matching.
+
+Type-system Extensions:
+1 James: inhabitation propositions.
+* Quotients.
