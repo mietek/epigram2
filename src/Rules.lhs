@@ -302,7 +302,7 @@ neutral term, we simply switch to |exQuote|, which is designed to
 quote neutral terms:
 
 > inQuote (_ :>: N n)      r = N t
->     where (t :<: _) = exQuote n r
+>     where (t :<: _) = exQuote (simplify n r) r
 
 In the case of a canonical term, we use |canTy| to check that |cv| is
 of type |cty| and, more importantly, to evaluate |cty|. Then, it is
@@ -437,7 +437,7 @@ as we can. Simple, easy.
 
 > bquote refs (L (K t)) = (|(L . K) (bquote refs t) |)
 > bquote refs (C c) = (|C (traverse (bquote refs) c )|)
-> bquote refs (N n) = (|N (bquote refs n)|)
+> bquote refs (N n) = (|N (bquote refs =<< (| (simplify n) root |) )|)
 > bquote refs (n :$ v) = (|(:$) (bquote refs n)
 >                                 (traverse (bquote refs) v)|)
 > bquote refs (op :@ vs) = (|(:@) (pure op)
@@ -451,9 +451,13 @@ as we can. Simple, easy.
 > inSimp v     = (| v |)
 >
 > exSimp :: NEU -> Root -> NEU
-> exSimp (P x) = (| (P x) |)
-> exSimp (n :$ el) = (| exSimp n :$ (inSimp ^$ el) |)
-> exSimp n = (| n |)    -- TODO
+> exSimp (P x)      = (| (P x) |)
+> exSimp (n :$ el)  = (| exSimp n :$ (inSimp ^$ el) |)
+> exSimp (op :@ vs) = opS op <*> (inSimp ^$ vs)
+>   where
+>     opS op r vs = case opSimp op vs r of
+>       Nothing -> op :@ vs
+>       Just n  -> n
 
 \subsection{Type checking}
 \label{subsec:type-checking}
