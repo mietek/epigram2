@@ -54,6 +54,7 @@
 
 \chapter{Concrete Syntax}
 
+%include DisplayTm.lhs
 %include Lexer.lhs
 %include Naming.lhs
 %include TmParse.lhs

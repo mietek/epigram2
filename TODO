@@ -17,11 +17,13 @@ Features:
 * Create appropriate aspect and remove Desc in Desc stuff from Rules.
 
 Elaboration:
-2 Adam: Separate display syntax from evidence language.
-* Add reverse elaboration step.
+1 Adam: Blue equality should work with EXTMs other than ascriptions
+2 Adam: Make elaborate aspect-based
+1 Adam: Add aspect for DTm 
 
 Cochon:
 1 Adam: Implement show hypotheses.
+1 Adam: Allow comments in pig files.
 * Tidy cochon up a lot.
 * Consider what output should be displayed after each cochon command. 
 * Make cochon accept semicolon-separated lists of commands (with what output?).
