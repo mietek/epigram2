@@ -197,15 +197,15 @@ current location), the name of the current location and a term. It replaces
 the variables and parameters of the term with |String| names as described
 above, and removes common parameters.
 
-> christen :: Entries -> Name -> INTM -> InTm String
-> christen es n tm = christener es n B0 %% tm
+> christen :: Entries -> Name -> INDTM -> InDTm String
+> christen es n tm = christener es n B0 %%$ tm
 
 
 The |christenName| and |christenREF| functions do a similar job for names, and
 the name part of references, respectively.
 
 > christenName :: Entries -> Name -> Name -> String
-> christenName es me target = case mangleP es me B0 target [] of P x -> x
+> christenName es me target = case mangleP es me B0 target [] of DP x -> x
 >
 > christenREF :: Entries -> Name -> REF -> String
 > christenREF es me (target := _) = christenName es me target
@@ -214,11 +214,11 @@ the name part of references, respectively.
 The business of christening is actually done by the following mangle, which
 does most of its work in the |mangleP| function. 
 
-> christener :: Entries -> Name -> Bwd String -> Mangle Identity REF String
-> christener es me vs = Mang
->     {  mangP = \(target := _) as -> pure (mangleP es me vs target (runIdentity as))
->     ,  mangV = \i as -> (| (P (vs !. i) $:$) as |)
->     ,  mangB = \v -> christener es me (vs :< v)
+> christener :: Entries -> Name -> Bwd String -> DMangle Identity REF String
+> christener es me vs = DMang
+>     {  dmangP = \(target := _) as -> pure (mangleP es me vs target (runIdentity as))
+>     ,  dmangV = \i as -> (| (DP (vs !. i) $::$) as |)
+>     ,  dmangB = \v -> christener es me (vs :< v)
 >     }
 
 
@@ -227,7 +227,7 @@ location, a list of local variables, the name of the parameter to christen and a
 spine of arguments. It gives an appropriate relative name to the parameter and
 applies it to the arguments --- \emph{for girls}, dropping any that are shared with the current location.
 
-> mangleP :: Entries -> Name -> Bwd String -> Name -> [Elim (InTm String)] -> ExTm String
+> mangleP :: Entries -> Name -> Bwd String -> Name -> [Elim (InDTm String)] -> ExDTm String
 > mangleP auncles me vs target args = case  splitNames me target of
 >   (prefix, (t, n):targetSuffix) ->
 >     let  numBindersToSkip = ala Sum foldMap (indicator (t ==)) vs
@@ -238,13 +238,13 @@ applies it to the arguments --- \emph{for girls}, dropping any that are shared w
 >             let args' | entryHasDev ancestor  = drop (boyCount commonEntries) args
 >                       | otherwise             = args
 >             in  if targetSuffix == []
->                 then  P (showRelName [(t, Rel i)]) $:$ args'
+>                 then  DP (showRelName [(t, Rel i)]) $::$ args'
 >                 else
 >                   let  (kids, _, _) = entryDev ancestor
 >                        n = (t, Rel i) : (searchKids kids targetSuffix 0)
->                   in   P (showRelName n) $:$ args'
->         Nothing -> P (showName target) $:$ args
->   (prefix, []) -> P "!!!"
+>                   in   DP (showRelName n) $::$ args'
+>         Nothing -> DP (showName target) $::$ args
+>   (prefix, []) -> DP "!!!"
 
 
 The |searchKids| function searches a list of children to match a name suffix, producing

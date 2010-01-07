@@ -84,10 +84,10 @@ to allow extra canonical terms and eliminators to be pretty-printed.
 
 > prettyRef :: Entries -> Name -> Root -> REF -> Doc
 > prettyRef aus me root ref@(_ := k :<: ty) = text (christenREF aus me ref) <+> prettyRKind k 
->   <+> pretty (unelaborate (christen aus me (bquote B0 ty root)))
+>   <+> pretty (christen aus me (unelaborate (bquote B0 ty root)))
 >     where prettyRKind :: RKind -> Doc
 >           prettyRKind DECL      = text ":"
->           prettyRKind (DEFN v)  = text ":=" <+> pretty (unelaborate (christen aus me (bquote B0 v root)))
+>           prettyRKind (DEFN v)  = text ":=" <+> pretty (christen aus me (unelaborate (bquote B0 v root)))
 >               <+> text ":"
 >           prettyRKind HOLE      = text ":= ? :"
 
@@ -97,9 +97,9 @@ to allow extra canonical terms and eliminators to be pretty-printed.
 
 > prettyTip :: Entries -> Name -> Tip -> Doc
 > prettyTip aus me Module                     = empty
-> prettyTip aus me (Unknown     (tv :=>: _))  = text "? :" <+> pretty (unelaborate (christen aus me tv))
-> prettyTip aus me (Defined tm  (tv :=>: _))  = pretty (unelaborate (christen aus me tm))
->     <+> text ":" <+> pretty (unelaborate (christen aus me tv))
+> prettyTip aus me (Unknown     (tv :=>: _))  = text "? :" <+> pretty (christen aus me (unelaborate tv))
+> prettyTip aus me (Defined tm  (tv :=>: _))  = pretty (christen aus me (unelaborate tm))
+>     <+> text ":" <+> pretty (christen aus me (unelaborate tv))
 
 > instance Pretty x => Pretty (InDTm x) where
 >     pretty (DL s)          = prettyDScope s

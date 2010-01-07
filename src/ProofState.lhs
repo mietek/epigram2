@@ -358,15 +358,6 @@ The |bquoteHere| command $\beta$-quotes a term using the current root.
 >     return (tm :=>: tmv)
 
 
-The |prettyHere| command christens a term in the current context, then passes it
-to the pretty-printer.
-
-> prettyHere :: INTM -> ProofState String
-> prettyHere tm = do
->     aus <- getAuncles
->     me <- getMotherName
->     return (show (pretty (unelaborate (christen aus me tm))))
-
 
 The |resolveHere| command resolves the relative names in a term.
 
@@ -582,17 +573,15 @@ next goal (if one exists) instead.
 >     case tip of         
 >         Unknown (tipTyTm :=>: tipTy) -> do
 >             mc <- withRoot (inCheck $ check (tipTy :>: tm))
+>             mc `catchEither` intercalate "\n" [ "Typechecking failed:"
+>                                              , show tm
+>                                              , "is not of type"
+>                                              , show tipTyTm ]
 >             aus <- getGreatAuncles
 >             sibs <- getDevEntries
 >             let tmv = evTm (parBind aus sibs tm)
 >             GirlMother (name := _ :<: tyv) xn ty <- getMother
 >             let ref = name := DEFN tmv :<: tyv
->             prettyTm <- prettyHere tm
->             prettyTipTyTm <- prettyHere tipTyTm
->             mc `catchEither` intercalate "\n" [ "Typechecking failed:"
->                                              , prettyTm
->                                              , "is not of type"
->                                              , prettyTipTyTm ]
 >             putDevTip (Defined tm (tipTyTm :=>: tipTy))
 >             putMother (GirlMother ref xn ty)
 >             updateRef ref

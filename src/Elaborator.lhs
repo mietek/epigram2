@@ -31,7 +31,6 @@
 
 %endif
 
-\subsection{Elaborator}
 
 The |elaborate| command elaborates a term in display syntax, given its type,
 to produce an elaborated term and its value representation. It behaves
@@ -237,7 +236,7 @@ those of |infer|.
 > elabInfer tt = throwError' ("elabInfer: can't cope with " ++ show tt)
 
 
-\subsubsection{Proof Construction}
+\subsection{Proof Construction}
 
 This operation, part of elaboration, tries to prove a proposition, leaving the
 hard bits for the human.
@@ -287,45 +286,7 @@ hard bits for the human.
 > synthProof _ _ = (|)
 
 
-
-\subsection{Display-Term Commands}
-
-\subsubsection{Information}
-
-The |infoElaborate| command calls |elabInfer| on the given neutral display term,
-evaluates the resulting term, bquotes it and returns a pretty-printed string
-representation. Note that it works in its own module which it discards at the
-end, so it will not leave any subgoals lying around in the proof state.
-
-> infoElaborate :: INDTM -> ProofState String
-> infoElaborate (DN tm) = do
->     makeModule "elab"
->     goIn
->     _ :>: tm' <- elabInfer tm
->     tm <- bquoteHere (evTm (N tm'))
->     s <- prettyHere tm
->     goOut
->     dropModule
->     return s
-> infoElaborate _ = throwError' "infoElaborate: can only elaborate neutral terms."
-
-The |infoInfer| command is similar to |infoElaborate|, but it returns a string
-representation of the resulting type.
-
-> infoInfer :: INDTM -> ProofState String
-> infoInfer (DN tm) = do
->     makeModule "infer"
->     goIn
->     ty :>: _ <- elabInfer tm
->     ty' <- bquoteHere ty
->     s <- prettyHere ty'
->     goOut
->     dropModule
->     return s
-> infoInfer _ = throwError' "infoInfer: can only infer the type of neutral terms."
-
-
-\subsubsection{Construction}
+\subsection{Elaborated Construction Commands}
 
 The |elabGive| command elaborates the given display term in the appropriate type for
 the current goal, and calls the |give| command on the resulting term. If its argument
@@ -376,9 +337,3 @@ creates a $\Pi$-boy with that type.
 >     tt <- elaborate True (SET :>: ty)
 >     piBoy' (s :<: tt)
 >     return ()
-
-
-This should be removed.
-
-> gimme :: ProofState ()
-> gimme = error "gimme: undefined"

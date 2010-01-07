@@ -33,7 +33,6 @@
 \input{Docs/Language.tex}
 
 \chapter{Core}
-
 %include Root.lhs
 %include Rooty.lhs
 %include Tm.lhs
@@ -42,7 +41,6 @@
 %include Developments.lhs
 
 \chapter{Feature by Feature}
-
 %include Features.lhs
 %include UId.lhs
 %include Enum.lhs
@@ -52,8 +50,11 @@
 %include Desc.lhs
 %include Equality.lhs
 
-\chapter{Concrete Syntax}
+\chapter{Proof State}
+%include ProofState.lhs
+%include Elimination.lhs
 
+\chapter{Display Language}
 %include DisplayTm.lhs
 %include Lexer.lhs
 %include Naming.lhs
@@ -61,32 +62,23 @@
 %include DevLoad.lhs
 %include PrettyPrint.lhs
 
-\chapter{Compiler}
-
-%include Compiler.lhs
-
-\chapter{Proof State and Elaborator}
-
-%include ProofState.lhs
+\chapter{Cochon}
 %include Elaborator.lhs
-%include Elimination.lhs
+%include Distiller.lhs
+%include DisplayCommands.lhs
 %include Cochon.lhs
-
-\chapter{Main}
-
 %include Main.lhs
 
+\chapter{Compiler}
+%include Compiler.lhs
 
 \appendix
 
-
 \chapter{Perversity}
-
 %include BwdFwd.lhs
 %include Parsley.lhs
 %include MissingLibrary.lhs
 %include Nat.lhs
-
 
 \cleardoublepage
 \phantomsection

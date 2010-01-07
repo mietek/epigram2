@@ -93,6 +93,7 @@
 > m %$ DC c          = (|DC ((m %$) ^$ c)|)
 > m %$ DN n          = (|DN (dexMang m n (|[]|))|)
 > m %$ DQ s          = pure (DQ s)
+> m %$ DI s          = pure (DI s)
 > _ %$ tm            = error ("%$: can't dmangle " ++ show (fmap (\_ -> ".") tm)) 
 
 > dexMang ::  Applicative f => DMangle f x y ->

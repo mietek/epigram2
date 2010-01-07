@@ -18,7 +18,9 @@
 
 > import BwdFwd
 > import Developments
+> import DisplayCommands
 > import DisplayTm
+> import Distiller
 > import Elaborator
 > import MissingLibrary
 > import Naming
@@ -263,7 +265,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 > showGoal :: ProofContext -> IO ()
 > showGoal loc = case evalStateT getHoleGoal loc of
 >     Right (_ :=>: ty) ->
->         let Right s = evalStateT (bquoteHere ty >>= prettyHere) loc
+>         let Right s = evalStateT (bquoteHere ty >>= prettyHere . (SET :>:)) loc
 >         in putStrLn ("Goal: " ++ s)
 >     Left _ -> return ()
 
