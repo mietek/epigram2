@@ -148,7 +148,7 @@ accumulating pairs of names and command lists along the way.
 >     tyd <- resolveHere tys
 >     ty :=>: tyv <- elaborate False (SET :>: tyd)
 >     root <- getDevRoot
->     Root.freshRef (x :<: evTm ty)
+>     freshRef (x :<: tyv)
 >         (\ref r -> do 
 >            putDevEntry (E ref (lastName ref) (Boy LAMB) ty)
 >            putDevRoot r
@@ -159,7 +159,7 @@ accumulating pairs of names and command lists along the way.
 >     tyd <- resolveHere tys
 >     ty :=>: tyv <- elaborate False (SET :>: tyd)
 >     root <- getDevRoot
->     Root.freshRef (x :<: evTm ty)
+>     freshRef (x :<: tyv)
 >         (\ref r -> do
 >            putDevEntry (E ref (lastName ref) (Boy PIB) ty)
 >            putDevRoot r
