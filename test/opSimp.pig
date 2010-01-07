@@ -13,10 +13,12 @@ make lawswap :=
   (\ D A B x ->
       :- (map(D, (B ; A ;), (A ; B ;), swap B A,
           map(D, (A ; B ;), (B ; A ;), swap A B, x)) : descOp(D, (A ; B ;))) ==
-          (x : descOp(D, (A ; B ;)))
+         (x : descOp(D, (A ; B ;)))
   ) :
   (D : Desc)(A : *)(B : *)(x : descOp(D, (A ; B ;))) -> * ;
 
-make prf1 : (D : Desc)(A : *)(x : descOp(D, A)) -> law1 D A x ;
-give (\ D A x -> ?)
+make prf1 := (\ D A x -> []) : (D : Desc)(A : *)(x : descOp(D, A)) -> law1 D A x ;
+
+make prfswap : (D : Desc)(A : *)(B : *)(x : descOp(D, (A ; B ;))) -> lawswap D A B x ;
+give (\ D A B x -> [])
 

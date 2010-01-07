@@ -545,7 +545,7 @@ Equality rules:
 >     , opArity = 5
 >     , opTy    = mapOpTy
 >     , opRun   = mapOpRun
->     , opSimp  = \_ _ -> empty
+>     , opSimp  = mapOpSimp
 >     } where
 >         mapOpTy chev [d, a, b, f, x] = do
 >           dd@(d :=>: dv) <- chev (desc :>: d)
@@ -579,4 +579,19 @@ Equality rules:
 >                                    , N (V x :$ Snd) ])
 >           ] $ B0 :< d :< a :< b :< f :< x
 >         mapOpRun [N d,     a, b, f, x] = Left d
+>
+>         mapOpSimp :: Alternative m => [VAL] -> Root -> m NEU
+>         mapOpSimp [d, a, b, f, N x] r
+>           | equal (ARR a b :>: (f, identity)) r = pure x
+>           where
+>             identity = eval (L ("x" :. [.x. NV x])) B0
+>         mapOpSimp [d, _, c, f, N (mOp :@ [_, a, _, g, N x])] r
+>           | mOp == mapOp = mapOpSimp args r <|> pure (mapOp :@ args)
+>           where
+>             comp f g = eval
+>               [.f.g.
+>                L ("x" :. [.x. N (V f :$ A (N $ V g :$ A (NV x)))])
+>               ] $ B0 :< f :< g
+>             args = [d, a, c, comp f g, N x]
+>         mapOpSimp _ _ = empty
 
