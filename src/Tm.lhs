@@ -132,10 +132,12 @@ good reason.
 |Scope| represents bodies of binders, but the representation differs
 with phase. In \emph{terms}, |x :. t| is a \emph{binder}: the |t| is a
 de Bruijn term with a new bound variable 0, and the old ones
-incremented. The |x| is just advice for display-name selection.  In
+incremented. The |x| is just advice for display-name selection.
+
+\textbf{[out-of-date:  In
 values, computation halts at a binder: we store the environment which
 awaits an entry for the bound variable to support the evaluation of
-the stored term.
+the stored term.]}
 
 > data Scope :: {Phase} -> * -> * where
 >   (:.)  :: String -> Tm {In, TT} x           -> Scope {TT} x  -- binding
@@ -206,18 +208,23 @@ is not clear now, it should become clear after the definition of
 
 > infix 3 :-:
 
-> data TEL x = Ret x
->            | (String :<: TY) :-: (VAL -> TEL x)
+> data TEL x  = Ret x
+>             | (String :<: TY) :-: (VAL -> TEL x)
 
 > telCheck ::  (Alternative m, MonadError [String] m) =>
 >              (TY :>: t -> m (s :=>: VAL)) -> 
 >              (TEL x :>: [t]) -> m ([s :=>: VAL] , x) 
 > telCheck chev (Ret x :>: []) = return ([] , x)
-> telCheck chev ((sS :-: tT) :>: (s : t)) = do
+> telCheck chev ((_ :<: sS :-: tT) :>: (s : t)) = do
 >     ssv@(s :=>: sv) <- chev (sS :>: s) 
 >     (svs , x) <- telCheck chev ((tT sv) :>: t)
 >     return (ssv : svs , x) 
 > telCheck _ _ = throwError' "telCheck: canTy mismatch"
+
+> pity :: TEL TY -> TY
+> pity (Ret t)          = t
+> pity (x :<: s :-: t)  = PI s (L (HF x $ pity . t))
+
 
 > data Op = Op
 >   { opName  :: String
@@ -227,12 +234,21 @@ is not clear now, it should become clear after the definition of
 >   , opRun   :: [VAL] -> Either NEU VAL
 >   }
 
+
+
 Meanwhile, the |opRun| argument implements the computational
 behavior: given suitable arguments, we should receive a value, or
 failing that, the neutral term to blame for the failure of
 computation. For example, if |append| were an operator, it would
 compute if the first list is nil or cons, but complain about the first
 list if it is neutral.
+
+> opTy ::  (Alternative m, MonadError [String] m) =>
+>          Op -> (TY :>: t -> m (s :=>: VAL)) -> [t] ->
+>          m ([s :=>: VAL], TY)
+> opTy op chev ss
+>   | length ss == opArity op = telCheck chev (opTyTel op :>: ss)
+> opTy op _ _ = throwError ["operator arity error: " ++ opName op]
 
 
 \subsection{Useful Abbreviations}

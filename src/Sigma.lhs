@@ -191,26 +191,16 @@ Coercion rule:
 > import -> OpCode where
 >   splitOp = Op
 >     { opName = "split" , opArity = 5
->     , opTy = sOpTy , opRun = sOpRun 
+>     , opTyTel =  "A"   :<: SET :-: \ aA -> "B" :<: ARR aA SET :-: \ bB ->
+>                  "ab"  :<: SIGMA aA bB             :-: \ ab ->
+>                  "P"   :<: ARR (SIGMA aA bB) SET   :-: \ pP ->
+>                  "p"   :<: pity (
+>                    "a" :<: aA :-: \ a -> "b" :<: bB :-: \ b ->
+>                    pP $$ PAIR a b)                 :-: \ p ->
+>                  Ret $ pP $$ A ab
+>     , opRun = \ [_ , _ , ab , _ , p] -> Right $ p $$ A (ab $$ Fst) $$ A (ab $$ Snd)
 >     , opSimp = \_ _ -> empty
->     } where
->       sOpTy chev [a , b , t , c , f] = do
->                    (a :=>: av) <- chev (SET :>: a)
->                    (b :=>: bv) <- chev (ARR av SET :>: b)
->                    (t :=>: tv) <- chev (SIGMA av bv :>: t)
->                    (c :=>: cv) <- chev (ARR (SIGMA av bv) SET :>: c)
->                    (f :=>: fv) <- chev (PI av (L (H (B0 :< bv :< cv) "a" 
->                                         (PI (N (V 2 :$ A (NV 0))) (L $ "b" :.
->                                             (N (V 2 :$ A (PAIR (NV 1) 
->                                                          (NV 0)))))))) :>: f)
->                    return ([ a :=>: av
->                            , b :=>: bv
->                            , t :=>: tv 
->                            , c :=>: cv
->                            , f :=>: fv ]
->                           , cv $$ A tv)
->       sOpRun :: [VAL] -> Either NEU VAL
->       sOpRun [_ , _ , t , _ , f] = Right $ f $$ A (t $$ Fst) $$ A (t $$ Snd)
+>     }
 
 > import -> Operators where
 >   splitOp :
