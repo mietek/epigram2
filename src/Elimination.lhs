@@ -61,7 +61,9 @@ $$\Gamma, \Delta \vdash e : (P : \Xi \rightarrow *)
 Therefore, this eliminator is handled to the elimination machinery using a
 |REF|:
 
-< elim :: Maybe REF -> REF -> ProofState ()
+> type Eliminator = (INTM :=>: TY) :>: (INTM :=>: VAL)
+
+< elim :: Maybe REF -> Eliminator -> ProofState ()
 < elim comma eliminator = (...)
 
 \subsection{Analyzing the eliminator}
@@ -108,36 +110,46 @@ eliminator and then making the motive in two phases.
 
 The development transformation is achieved by the following code:
 
-> introElim :: REF -> ProofState [INTM]
-> introElim e@(_ := _ :<: eType) = do
+> introElim :: Eliminator -> ProofState [INTM]
+> introElim (eType :>: e) = do
 >     -- Jump in a girl (oh!) to chunk (and access) 
 >     -- the types of the eliminator
->     eTypeTm <- bquoteHere eType
->     make $ "h" :<: eTypeTm
+>     makeModule "h"
 >     goIn
 >     -- Get the type of the motive
->     p' <- lambdaBoy "(P)"
+>     -- And ask for making it real
+>     let (motiveType, telType) = unPi $ valueOf eType
+>     motiveTypeTm <- bquoteHere motiveType
+>     p <- make $ "P" :<: motiveTypeTm
 >     -- Get the type of the methods
->     ms' <- many $ lambdaBoy "(m)"
+>     -- And ask for making them real
+>     (ms, goal) <- mkMethods p motiveType telType []
 >     -- Check the motive, methods, and target shape
->     checkMotive p'
->     checkMethods p' ms'
->     checkTarget p'
->     -- Politely ask for making a real motive
->     -- We will build it, no worry
->     pTyTm <- bquoteHere $ pty p'
->     p <- make $ "P" :<: pTyTm
->     -- Politely ask for making real methods
->     -- These ones are up to the user
->     mTyTms <- sequence $ map (bquoteHere . pty) ms'
->     ms <- sequence $ map (\m -> make $ "m" :<: m) mTyTms
+>  --   checkMotive p
+>  --   checkMethods p ms
+>  --   checkTarget p
 >     -- Close the problem (Using the "made" subproblems!)
 >     -- And goes to the next subproblem, ie. making P
->     giveNext $ N $ P e $## (p : ms)
+>     moduleToGoal (goal :=>: (evTm goal))
+>     giveNext $ N $ (termOf e :? termOf eType) $## (p : ms)
 >     return ms
+>         where unPi :: VAL -> (VAL, VAL)
+>               unPi (PI s t) = (s, t)
+
+> mkMethods :: INTM -> VAL -> VAL -> [INTM] -> ProofState ([INTM], INTM)
+> mkMethods arg argTy f ms = 
+>   let r = f $$ A (evTm arg) in
+>   case r of 
+>     PI s t -> do
+>            sTm <- bquoteHere s
+>            m <- make $ "m" :<: sTm
+>            mkMethods m s t (m : ms)
+>     _ -> do
+>       r <- bquoteHere r
+>       return (reverse ms, r)
 
 The call to |checkMotive|, |checkMethods|, and |checkTarget| are here to
-ensure that we are handed ``stuffs´´ which fit our technology. They are dull
+ensure that we are handed "stuffs" which fit our technology. They are dull
 at the moment, because we only have nice users.
 
 |checkMotive| consists in veryfing that the motive is of type:
@@ -287,13 +299,14 @@ in $\Delta$ and apply |refl| to it.
 
 Then, it is straightforward to build the term we want and to give it:
 
-> applyElim :: REF -> INTM -> [INTM] -> [REF] -> ProofState ()
-> applyElim elim motive methods deltas = do
+> applyElim :: Eliminator -> INTM -> [INTM] -> [REF] -> ProofState ()
+> applyElim (elimTy :>: elim) motive methods deltas = do
 >     reflDeltas <- withRoot (mkRefls deltas)
->     giveSilently $ N $ (P elim) $## (motive : 
->                                      methods ++
->                                      (map NP deltas) ++
->                                      reflDeltas)
+>     giveSilently $ 
+>       N $ (termOf elim :? termOf elimTy) $## (motive : 
+>                                               methods ++
+>                                               (map NP deltas) ++
+>                                               reflDeltas)
 
 We (in theory) have solved the goal!
 
@@ -316,7 +329,7 @@ her: we look at her internals, check that everything is correct, and make
 sub-goals. Note that |introElim| make a girl and we carefully |goOut| her in
 |elimDoctor|.
 
-> elimDoctor :: [REF] -> VAL -> REF -> ProofState (INTM, [INTM])
+> elimDoctor :: [REF] -> VAL -> Eliminator -> ProofState (INTM, [INTM])
 > elimDoctor deltas goal eliminator = do
 >     -- Prepare the development by creating subgoals:
 >     --    1/ the motive
@@ -334,7 +347,7 @@ In a third part, we solve the problem. To that end, we simply have to use the
 Therefore, we get the |elim| commands, the one, the unique. It is simply a
 Frankenstein operation of these three parts:
 
-> elim :: Maybe REF -> REF -> ProofState ()
+> elim :: Maybe REF -> Eliminator -> ProofState ()
 > elim Nothing eliminator = do -- Nothing: no comma
 >     -- Where are we?
 >     (deltas, goal) <- elimContextGoal
@@ -344,3 +357,12 @@ Frankenstein operation of these three parts:
 >     applyElim eliminator motive methods deltas
 
 
+
+A small function to retrieve our scope. This might as well go in
+@ProofState@ if this is sufficiently useful:
+
+> getBoys = do  
+>     auncles <- getAuncles
+>     return $ foldMap boy auncles 
+>    where boy (E r _ (Boy _) _)  = [r]
+>          boy _ = []
