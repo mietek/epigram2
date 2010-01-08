@@ -68,11 +68,11 @@ Here we have a very basic command-driven interface to the proof state monad.
 >                   let  Right aus = evalStateT getAuncles loc
 >                        mn = resolve aus rn
 >                   case mn of
->                       Just (DN (DP (n := _))) -> do
+>                       Right (DN (DP (n := _))) -> do
 >                           let Right dev = evalStateT getDev loc
 >                           compileCommand n (reverseDev' dev) fn
 >                           cochon' (locs :< loc) "Compiled."
->                       Nothing -> cochon' (locs :< loc) "Can't resolve."
+>                       Left ss -> cochon' (locs :< loc) ("Cannot resolve:\n" ++ unlines ss)
 >               Right Quit -> return ()
 >               Right Undo -> case locs of
 >                   B0  -> cochon' (locs :< loc) "Cannot undo." 
@@ -251,7 +251,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 > doCommand c = do
 >     aus <- getAuncles
 >     c' <- traverse (resolve aus) c
->               `catchMaybe` "doCommand: could not resolve names in command."
+>               `catchEither` "doCommand: could not resolve names in command."
 >     evalCommand c'
 
 > doCommands :: [Command InDTmRN] -> ProofState [String]

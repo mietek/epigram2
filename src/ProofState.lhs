@@ -370,7 +370,7 @@ The |resolveHere| command resolves the relative names in a term.
 > resolveHere :: InDTmRN -> ProofState INDTM
 > resolveHere tm = do
 >     aus <- getAuncles
->     resolve aus tm `catchMaybe` "resolveHere: could not resolve names in term"
+>     resolve aus tm `catchEither` "resolveHere: could not resolve names in term"
 
 
 > prettyProofState :: ProofState String
