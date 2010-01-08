@@ -248,9 +248,10 @@ $\lambda$- and $\Pi$-binds over a list $\nabla$.
 The |liftType| function $\Pi$-binds a type over a list of entries.
 
 > liftType :: Bwd (Entry Bwd) -> INTM -> INTM
-> liftType B0 t = t
-> liftType (es :< E _ (x,_)  (Boy _)     s)  t = liftType es (PI s (L (x :. t)))
-> liftType (es :< _)                         t = liftType es t
+> liftType es t = pis es (es -| t) where
+>   pis B0 t = t
+>   pis (es :< E _ (x,_)  (Boy _)     s)  t = pis es (PI (es -| s) (L (x :. t)))
+>   pis (es :< _)                         t = pis es t
 
 The |inferGoalType| function $\Pi$-binds the type when it encounters a $\lambda$-boy
 in the list of entries, and produces |SET| when it encounters a $\Pi$-boy.
