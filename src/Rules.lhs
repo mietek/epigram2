@@ -668,22 +668,18 @@ constructors to make them easier to swallow.
 
 > import <- SugarTactics
 
-A neat thing to do, because |opTy| gives it for free, is to computeq
-the type of the operator. Here is how it goes, relying on the |Fresh|
-Rooty. Provided with a Root and an Operator, we compute its type.
 
-> opType ::  Root -> Op -> TY
-> opType root op = buildType args ty
->     where names = replicate (opArity op) "x"
->           (args, ty) = runFresh root $ opTy op mkTypes names
->           buildType [] t = t
->           buildType (((s,v) :=>: _) : ts) t = undefined  -- C (Pi s (L (H B0 "" (bquote (B0 :< v) 
->                                                             --  (buildType ts t)
->                                                             --  root))))
->           mkTypes (ty :>: s) = 
->               Rooty.freshRef (s :<: ty) $ \r ->
->                   return $ (ty,r) :=>: pval r
+> mkRef :: Op -> REF
+> mkRef op = [("Operators",0),(opName op,0)] := (DEFN opEta :<: opTy)
+>     where opTy = pity $ opTyTel op
+>           opEta = trustMe (opTy :>: (opEtaTac (opArity op) []))
+>           opEtaTac :: Int -> [Tac VAL] -> Tac VAL
+>           opEtaTac 0 args = useOp op (reverse args) done
+>           opEtaTac n args = lambda $ \l -> opEtaTac (n-1) (var l : args) 
 
+> import -> Primitives where
+>     (map (\op -> (opName op, mkRef op)) 
+>          operators) ++
 
 
 \subsection{Bootstrapping Desc in Desc}
