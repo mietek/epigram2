@@ -34,7 +34,7 @@
 > import Rules
 > import Tm hiding (In)
 > import TmParse
-
+> import Elimination
 
 %endif
 
@@ -121,6 +121,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >                 |  Show (ShowC x)
 >                 |  Undo
 >                 |  Ungawa
+>                 |  Elim x
 >     deriving Show
 
 > instance Traversable Command where
@@ -141,6 +142,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >     traverse f (Show sx)            = (| Show (traverse f sx) |)
 >     traverse f Undo                 = (| Undo |)
 >     traverse f Ungawa               = (| Ungawa |)
+>     traverse f (Elim x)             = (| Elim (f x) |)
 
 > instance Functor Command where
 >     fmap = fmapDefault
@@ -181,6 +183,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >         "undo"     -> (| Undo |)
 >         "ungawa"   -> (| Ungawa |)
 >         "up"       -> (| (Go Up) |)
+>         "elim"     -> (| Elim (| DN (|DP nameParse|) |)|)
 >         _          -> empty
 
 > pFileName :: Parsley Token String
@@ -214,7 +217,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 > evalCommand (Go Next)       = nextGoal          >> return "Searching for next goal..."
 > evalCommand (Go First)      = some prevGoal     >> return "Searching for first goal..."
 > evalCommand (Go Last)       = some nextGoal     >> return "Searching for last goal..."
-> evalCommand (Infer tm)      = infoInfer tm      
+> evalCommand (Infer tm)      = infoInfer tm
 > evalCommand (Jump (DN (DP (n := _)))) = do
 >     much goOut
 >     goTo n
@@ -235,7 +238,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 > evalCommand (Show Hypotheses)  = infoHypotheses
 > evalCommand (Show StateC)       = prettyProofState 
 > evalCommand (Show (Term x))    = return (show x)
-> evalCommand Ungawa             = ungawa            >> return "Ungawa!"
+> evalCommand Ungawa          = ungawa            >> return "Ungawa!"
 
 > doCommand :: Command InDTmRN -> ProofState String
 > doCommand c = do
