@@ -5,8 +5,7 @@
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE ScopedTypeVariables, GADTs, FlexibleInstances #-}
 
-> module PrettyPrint (pretty, prettyDev, prettyModule,
->                     prettyREF, prettyVAL, prettyINTM) where
+> module PrettyPrint where
 
 > import MissingLibrary
 > import Data.Foldable
@@ -29,21 +28,6 @@ The following uses the |HughesPJ| pretty-printing combinators. We define how to
 pretty-print everything defined in the Core chapter here, and provide she aspects
 to allow extra canonical terms and eliminators to be pretty-printed.
 
-> class Show x => Pretty x where
->     pretty :: x -> Doc
-
-> instance Pretty [Char] where
->     pretty = text
-
-> instance Pretty x => Pretty (Can (InDTm x)) where
->     pretty Set       = text "*"
->     pretty (Pi s (DL (DK t)))  = parens (sep [pretty s <+> text "->", pretty t])
->     pretty (Pi s (DL (x ::. t))) = 
->         parens (sep [parens (text x <+> text ":" <+> pretty s) <+> text "->", pretty t])
->     pretty (Pi s t)  = parens (text "Pi" <+> pretty s <+> pretty t)
->     pretty (Con x)   = text "@" <+> pretty x
->     import <- CanPretty
->     pretty can       = quotes . text . show $ can
 
 > prettyModule :: Entries -> Name -> Dev Bwd -> Doc
 > prettyModule aus me (B0, _, _) = empty
@@ -71,16 +55,10 @@ to allow extra canonical terms and eliminators to be pretty-printed.
 >
 >     prettyEntries B0 _ = empty
 >
->     prettyBKind :: BoyKind -> Doc -> Doc
->     prettyBKind LAMB  d = text "\\" <+> d <+> text "->"
->     prettyBKind ALAB  d = text "\\" <+> d <+> text "=>"
->     prettyBKind PIB   d = parens d <+> text "->"
-
-> instance Pretty x => Pretty (Elim (InDTm x)) where
->     pretty (A t)  = pretty t
->     pretty Out    = text "Out"
->     import <- ElimPretty
->     pretty elim   = quotes . text . show $ elim
+> prettyBKind :: BoyKind -> Doc -> Doc
+> prettyBKind LAMB  d = text "\\" <+> d <+> text "->"
+> prettyBKind ALAB  d = text "\\" <+> d <+> text "=>"
+> prettyBKind PIB   d = parens d <+> text "->"
 
 > prettyRef :: Entries -> Name -> Root -> REF -> Doc
 > prettyRef aus me root ref@(_ := k :<: ty) = text (christenREF aus me ref) <+> prettyRKind k 
@@ -101,6 +79,30 @@ to allow extra canonical terms and eliminators to be pretty-printed.
 > prettyTip aus me (Defined tm  (tv :=>: _))  = pretty (christen aus me (unelaborate tm))
 >     <+> text ":" <+> pretty (christen aus me (unelaborate tv))
 
+
+
+> class Show x => Pretty x where
+>     pretty :: x -> Doc
+
+> instance Pretty [Char] where
+>     pretty = text
+
+> instance Pretty x => Pretty (Can (InDTm x)) where
+>     pretty Set       = text "*"
+>     pretty (Pi s (DL (DK t)))  = parens (sep [pretty s <+> text "->", pretty t])
+>     pretty (Pi s (DL (x ::. t))) = 
+>         parens (sep [parens (text x <+> text ":" <+> pretty s) <+> text "->", pretty t])
+>     pretty (Pi s t)  = parens (text "Pi" <+> pretty s <+> pretty t)
+>     pretty (Con x)   = text "@" <+> pretty x
+>     import <- CanPretty
+>     pretty can       = quotes . text . show $ can
+
+> instance Pretty x => Pretty (Elim (InDTm x)) where
+>     pretty (A t)  = pretty t
+>     pretty Out    = text "Out"
+>     import <- ElimPretty
+>     pretty elim   = quotes . text . show $ elim
+
 > instance Pretty x => Pretty (InDTm x) where
 >     pretty (DL s)          = prettyDScope s
 >     pretty (DC c)          = pretty c
@@ -116,8 +118,6 @@ to allow extra canonical terms and eliminators to be pretty-printed.
 >     pretty (t ::? y)       = parens (pretty t <+> text ":" <+> pretty y)
 
 > import <- Pretty
-
-
 
 
 For debugging purpose, the following quick'n'dirty pretty-printers

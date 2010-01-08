@@ -391,10 +391,6 @@ The |resolveHere| command resolves the relative names in a term.
 >     (es, dev) <- get
 >     return (foldMap ((++ "\n") . show) es ++ show dev)
 
-> infoHypotheses :: ProofState String
-> infoHypotheses = do
->     return "Sorry, show hypotheses is not done yet."
-
 \subsection{Navigation Commands}
 
 Now we provide commands to navigate the proof state:

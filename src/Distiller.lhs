@@ -28,10 +28,10 @@ to a term in the display language; that is, it reverses |elaborate|.
 >     cc <- canTy distill (ty :>: c)
 >     return ((DC $ fmap termOf cc) :=>: evTm (C c))
 
-> distill (ty :>: L sc)  = do
->     (_, s, f) <- lambdable ty `catchMaybe` ("distill: type " ++ show ty ++ "is not lambdable.")
+> distill (ty :>: l@(L sc))  = do
+>     (_, s, f) <- lambdable ty `catchMaybe` ("distill: type " ++ show ty ++ " is not lambdable.")
 >     root <- getDevRoot
->     tm' :=>: _ <- freshRef ("__distill" :<: s) 
+>     tm' :=>: _ <- freshRef (fortran l :<: s) 
 >         (\ref root -> putDevRoot root >> distill (f (pval ref) :>: underScope sc ref)) root
 >     return $ DL (convScope sc tm')   :=>: (evTm $ L sc)
 >   where

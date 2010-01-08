@@ -266,7 +266,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 > showGoal loc = case evalStateT getHoleGoal loc of
 >     Right (_ :=>: ty) ->
 >         let Right s = evalStateT (bquoteHere ty >>= prettyHere . (SET :>:)) loc
->         in putStrLn ("Goal: " ++ s)
+>         in putStrLn ("Goal: " ++ show s)
 >     Left _ -> return ()
 
 > showPrompt :: Bwd Layer -> String
