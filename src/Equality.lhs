@@ -118,30 +118,16 @@ With no computational behavior.
 >     ppv@(p :=>: pv) <- chev (PRF (eqGreen @@ [y0, t0, y1, t1]) :>: p)
 >     return $ Con ppv
 
-> import -> ElimConstructors where
->  Sym :: Elim t 
-
-> import -> ElimComputation where
->   VOID $$ Sym = VOID
->   (PAIR a b) $$ Sym = PAIR (a $$ Sym) (b $$ Sym)
->   L body $$ Sym = eval [.f.
->                         (L $ "" :. [.y. 
->                          (L $ "" :. [.x.
->                           (L $ "" :. [.q.
->                             N $ V f :$ (A $ NV x)
->                                     :$ (A $ NV y) 
->                                     :$ (A $ N $ V q :$ Sym) 
->                                     :$ Sym  ])])])] $ 
->                         B0 :< (L body)
->   
-
 > import -> ElimTyRules where
->   elimTy chev (_ :<: Prf (EQBLUE (t0 :>: x0) (t1 :>: x1))) Out = return (Out, PRF (eqGreen @@ [t0 , x0 , t1 , x1]))
+>   elimTy chev (_ :<: Prf (EQBLUE (t0 :>: x0) (t1 :>: x1))) Out =
+>     return (Out, PRF (eqGreen @@ [t0 , x0 , t1 , x1]))
 
 > import -> OpCode where
 >   eqGreen = Op { opName = "eqGreen"
 >                , opArity = 4
->                , opTy = opty
+>                , opTyTel =  "S" :<: SET :-: \ sS -> "s" :<: sS :-: \ s ->
+>                             "T" :<: SET :-: \ tT -> "t" :<: tT :-: \ t ->
+>                             Ret PROP
 >                , opRun = opRunEqGreen
 >                , opSimp = \_ _ -> empty
 >                } where
@@ -159,24 +145,19 @@ With no computational behavior.
 
 >   coe = Op { opName = "coe"
 >            , opArity = 4
->            , opTy = opty
+>            , opTyTel =  "S" :<: SET :-: \ sS -> "T" :<: SET :-: \ tT ->
+>                         "Q" :<: PRF (EQBLUE (SET :>: sS) (SET :>: tT)) :-: \ _ ->
+>                         "s" :<: sS :-: \ _ -> Ret tT
 >            , opRun = oprun
->            , opSimp = \_ _ -> empty
+>            , opSimp = \ [sS, tT, _, s] r -> case s of
+>                N s | equal (SET :>: (sS, tT)) r -> pure s
+>                _ -> (|)
 >            } where
->            opty chev [x,y,q,s] = do
->              (x :=>: xv) <- chev (SET :>: x)
->              (y :=>: yv) <- chev (SET :>: y)
->              (q :=>: qv) <- chev (PRF (EQBLUE (SET :>: xv) (SET :>: yv)) :>: q)
->              (s :=>: sv) <- chev (xv :>: s)
->              return ([ x :=>: xv
->                      , y :=>: yv
->                      , q :=>: qv
->                      , s :=>: sv ]
->                     , yv)
 >            oprun :: [VAL] -> Either NEU VAL
->            oprun [C x,C y,q,s] = Right $ case halfZip x y of
->              Nothing  -> ABSURD
->              Just fxy -> coerce fxy q s
+>            oprun [_, _, N (P r :$ A _ :$ A _), v] | r == refl = Right v
+>            oprun [C x,C y,q,s] = case halfZip x y of
+>              Nothing  -> Right $ nEOp @@ [q, C y]
+>              Just fxy -> coerce fxy (q $$ Out) s
 >            oprun [N x,y,q,s] = Left x
 >            oprun [x,N y,q,s] = Left y
 >            oprun _ = undefined

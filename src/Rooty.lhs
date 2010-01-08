@@ -71,55 +71,6 @@ is trivial as well.
 >     root r = r
 
 
-As an other example, here is a monad which always provide your binders
-with a fresh reference. It starts as usual, with a |ReaderT Root|
-enclosing the |Maybe| monad. The motivation for the |Maybe| comes from
-its use in |opTy|, which asks for a |MonadTrace|.
-
-> data Fresh a = Fresh { inFresh :: Root -> Maybe a }
-
-This will, obviously, run the following way:
-
-> runFresh :: Root -> Fresh a -> a
-> runFresh root f = fromJust $ inFresh f root
-
-The instanciation of Rooty here is quite standard, actually relying on
-the Rootyness of |(->) Root|. 
-
-> instance Rooty Fresh where
->     freshRef st f = Fresh $ Rooty.freshRef st (inFresh . f)
->     forkRoot s child dad = Fresh $ \root -> do
->                            c <- inFresh child (room root s)
->                            d <- inFresh (dad c) (roos root)
->                            return d
->     root = Fresh $ Just
-
-The Monad instance is particular (hence preventing the use of |ReaderT
-Root|) in that it's not really a reader: going through each binder, we
-extend the namespace. Hence, each |freshRef| in subsequent bindings
-will be really fresh.
-
-> instance Monad Fresh where
->     return x = Fresh $ const $ Just x
->     x >>= g = Fresh $ \r -> do
->               a <- inFresh x r
->               inFresh (g a) (room r "z")
-
-Then comes the usual junk, |Functor|, |Applicative|, and a fake
-|MonadError|.
-
-> instance Functor Fresh where
->     fmap f (Fresh g) = Fresh $ (fmap f) . g 
->
-> instance Applicative Fresh where
->     pure = return
->     (<*>) = ap
->
-> instance MonadError [String] Fresh  where
->     throwError _ = Fresh $ const Nothing
->     catchError = error "Fresh has no catchError"
-
-
 
 > data Check a = Check { inCheck :: Root -> Either [String] a }
 >

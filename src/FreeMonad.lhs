@@ -65,27 +65,21 @@
 >   substOp = Op
 >     { opName = "subst"
 >     , opArity = 5
->     , opTy = substOpTy
+>     , opTyTel =  "D" :<: desc                  :-: \ dD ->
+>                  "X" :<: SET                   :-: \ xX ->
+>                  "Y" :<: SET                   :-: \ yY ->
+>                  "f" :<: ARR xX (MONAD dD yY)  :-: \ f ->
+>                  "t" :<: MONAD dD xX           :-: \ t ->
+>                  Ret $ MONAD dD yY
 >     , opRun = substOpRun
 >     , opSimp = substOpSimp
 >     } where
->       substOpTy chev [d, x, y, f, t] = do
->         dd@(d :=>: dv) <- chev (desc :>: d)
->         xx@(x :=>: xv) <- chev (SET :>: x)
->         yy@(y :=>: yv) <- chev (SET :>: y)
->         ff@(f :=>: fv) <- chev (ARR xv (MONAD dv yv) :>: f)
->         tt@(t :=>: tv) <- chev (MONAD dv xv :>: t)
->         return ([dd, xx, yy, ff, tt], MONAD dv yv)
->       substOpTy _ xs = throwError [ "subst: arity mismatch: " ++
->                                     show (length xs) ++ " should be 5" ]
 >       substOpRun :: [VAL] -> Either NEU VAL
->       substOpRun [d, x, y, f, COMPOSITE ts] = Right $ eval
->         [.d.x.y.f.ts.
->           COMPOSITE . N $
->             mapOp :@ [ NV d, MONAD (NV d) (NV x), MONAD (NV d) (NV y)
->                      , L $ "t" :. [.t. N $ substOp :@ [NV d, NV x, NV y, NV f, NV t]]
->                      , NV ts ]
->         ] $ B0 :< d :< x :< y :< f :< ts
+>       substOpRun [dD, xX, yY, f, COMPOSITE ts] = Right . COMPOSITE $
+>         mapOp @@ [  dD, MONAD dD xX, MONAD dD yY,
+>                     L . HF "t" $ \ t ->
+>                     substOp @@ [dD, xX, yY, f, t],
+>                     ts]
 >       substOpRun [d, x, y, f, RETURN z]  = Right $ f $$ A z
 >       substOpRun [d, x, y, f, N t]    = Left t
 >
@@ -96,61 +90,35 @@
 >         where
 >           ret = eval (L ("x" :. [.x. RETURN (NV x)])) B0
 >       substOpSimp [d, y, z, f, N (sOp :@ [_, x, _, g, N t])] r
->         | sOp == substOp = pure (substOp :@ [d, x, z, comp, N t])
->         where
->           comp = eval
->             [.d.y.z.f.g.
->              L $ "x" :. [.x. N $ substOp :@ [NV d, NV y, NV z, NV f,
->                                              N $ V g :$ A (NV x)]]
->             ] $ B0 :< d :< y :< z :< f :< g
+>         | sOp == substOp = pure $ substOp :@ [d, x, z, comp, N t]
+>         where  comp = L . HF "x" $ \ x -> substOp @@ [d, y, z, f, g $$ A x]
 >       substOpSimp _ _ = empty
 
 >   elimMonadOp :: Op
 >   elimMonadOp = Op
 >     { opName = "elimMonad"
 >     , opArity = 6
->     , opTy = elimMonadOpTy
+>     , opTyTel =  "D" :<: desc                       :-: \ dD ->
+>                  "X" :<: SET                        :-: \ xX ->
+>                  "t" :<: MONAD dD xX                :-: \ t ->
+>                  "P" :<: ARR (MONAD dD xX) SET      :-: \ pP ->
+>                  "c" :<: (pity $
+>                     "ts" :<: descOp @@ [dD, MONAD dD xX]         :-: \ ts ->
+>                     "hs" :<: boxOp @@ [dD, MONAD dD xX, pP, ts]  :-: \ _ ->
+>                      Ret $ pP $$ A (COMPOSITE ts))  :-: \ _ ->
+>                  "v" :<: (pity $
+>                     "x" :<: xX :-: \ x ->
+>                     Ret $ pP $$ A (RETURN x))       :-: \ _ ->
+>                  Ret $ pP $$ A t
 >     , opRun = elimMonadOpRun
 >     , opSimp = \_ _ -> empty
 >     } where
->       elimMonadOpTy chev [d,x,v,bp,mc,mv] = do
->         dd@(d :=>: dv)    <- chev (desc :>: d)
->         xx@(x :=>: xv)    <- chev (SET :>: x)
->         vvv@(v :=>: vv)   <- chev (MONAD dv xv :>: v)
->         bbp@(bp :=>: bpv) <- chev (ARR (MONAD dv xv) SET :>: bp)
->         mmc@(mc :=>: mcv) <- chev (elimMonadConMethodType dv (MONAD dv xv) bpv :>: mc)
->         mmv@(mv :=>: mvv) <- chev (elimMonadVarMethodType xv bpv :>: mv)
->         return ([ dd, xx, vvv, bbp, mmc, mmv ], bpv $$ A vv)
->
->       elimMonadConMethodType d r p = eval
->         [.d.r.p.
->          PI (N $ descOp :@ [NV d, NV r])
->             (L $ "x" :. [.x. ARR (N $ boxOp :@ [NV d, NV r, NV p, NV x])
->                                  (N $ V p :$ A (COMPOSITE (NV x)))
->                         ])
->         ] $ B0 :< d :< r :< p
->
->       elimMonadVarMethodType x p = eval
->         [.x.p.
->          PI (NV x) (L $ "z" :. [.z. N $ V p :$ A (RETURN (NV z))])
->         ] $ B0 :< x :< p
->
 >       elimMonadOpRun :: [VAL] -> Either NEU VAL
->       elimMonadOpRun [d,x,COMPOSITE ts,bp,mc,mv] = Right $ eval
->         [.d.x.ts.bp.mc.mv.
->          N $ V mc
->           :$ A (NV ts)
->           :$ A (N $ mapBoxOp :@
->                     [ NV d, MONAD (NV d) (NV x), NV bp
->                     , L $ "t" :. [.t.
->                         N $ elimMonadOp :@
->                           [ NV d, NV x, NV t, NV bp, NV mc, NV mv ] ]
->                     , NV ts ])
->         ] $ B0 :< d :< x :< ts :< bp :< mc :< mv
->       elimMonadOpRun [d,x,RETURN z,bp,mc,mv] = Right $ eval
->         [.mv.z.
->          N $ V mv :$ A (NV z)
->         ] $ B0 :< mv :< z
+>       elimMonadOpRun [d,x,COMPOSITE ts,bp,mc,mv] = Right $ 
+>         mc $$ A ts $$ A (mapBoxOp @@ [d, MONAD d x, bp,
+>           L . HF "t" $ \ t -> elimMonadOp @@ [d, x, t, bp, mc, mv],
+>           ts])
+>       elimMonadOpRun [d,x,RETURN z,bp,mc,mv] = Right $ mv $$ A z
 >       elimMonadOpRun [_,_,N n,_,_,_] = Left n
 
 > import -> Operators where

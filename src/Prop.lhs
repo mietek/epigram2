@@ -95,6 +95,8 @@ Equality rules:
 \question{Can we really say that all terms of any proofs are equal?
           Even if they are terms of distinct proofs?}
 
+Yes! Equality is only meaningful when the sets are equal.
+
 < eqGreen(Prf _, _, Prf _, _) :-> Trivial
 
 > import -> CanConstructors where
@@ -193,25 +195,17 @@ Elim forms inherited from elsewhere
 > import -> OpCode where
 >   nEOp = Op { opName = "naughtE"
 >             , opArity = 2
->             , opTy = opty
->             , opRun = oprun
+>             , opTyTel =  "z" :<: PRF ABSURD :-: \ _ ->
+>                          "X" :<: SET :-: \ xX -> Ret xX
+>             , opRun = \ [N z, ty] -> Left z
 >             , opSimp = \_ _ -> empty
->             } where
->               opty chev [z,ty] = do
->                    (z :=>: zv) <- chev (PRF ABSURD :>: z)
->                    (ty :=>: tyv) <- chev (SET :>: ty)
->                    return ([ z :=>: zv
->                            , ty :=>: tyv ]
->                           , tyv)
->               opty _ _      = throwError' "naughtE: invalid arguments"
->               oprun :: [VAL] -> Either NEU VAL
->               oprun [N z,ty] = Left z
+>             }
 
 > import -> Operators where
 >   nEOp :
 
 > import -> EtaExpand where
->   etaExpand (Prf p :>: x) r = Just (BOX (Irr (bquote B0 x r)))
+>   etaExpand (Prf p :>: x) r = Just (BOX (Irr (inQuote (PRF p :>: x) r)))
 
 > import -> Check where
 >   check (PRF (ALL p q) :>: L sc)  = do
@@ -222,3 +216,7 @@ Elim forms inherited from elsewhere
 > import -> OpRunEqGreen where
 >   opRunEqGreen [PROP,t1,PROP,t2] = Right $ AND (IMP t1 t2) (IMP t2 t1)
 >   opRunEqGreen [PRF _,_,PRF _,_] = Right TRIVIAL
+
+> import -> Coerce where
+>   coerce Prop              q pP  = Right pP
+>   coerce (Prf (pP1, pP2))  q p   = Right $ q $$ Fst $$ A p

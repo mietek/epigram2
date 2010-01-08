@@ -668,6 +668,7 @@ constructors to make them easier to swallow.
 
 > import <- SugarTactics
 
+
 \subsection{Bootstrapping Desc in Desc}
 
 > import <- BootstrapDesc
@@ -691,45 +692,21 @@ a false economy.
 >   AND (eqGreen @@ [y0,t0,y1,t1]) (mkEqConj xs)
 > mkEqConj []                           = TRIVIAL
 
-> eqGreenT :: (InTm x :>: InTm x) -> (InTm x :>: InTm x) -> InTm x
-> eqGreenT (y0 :>: t0) (y1 :>: t1) = N (eqGreen :@ [y0,t0,y1,t1])
+> (<->) :: (TY :>: VAL) -> (TY :>: VAL) -> VAL
+> (y0 :>: t0) <-> (y1 :>: t1) = eqGreen @@ [y0,t0,y1,t1]
 
 
 > opRunEqGreen :: [VAL] -> Either NEU VAL
 > import <- OpRunEqGreen
-> opRunEqGreen [C (Pi s1 t1),f1,C (Pi s2 t2),f2] = Right $ runEqGreenTerm
->                                                          $$ A s1 $$ A t1 $$ A f1 $$ A s2 $$ A t2 $$ A f2
->       where runEqGreenTerm = trustMe (runEqGreenType :>: runEqGreenTac)
->             runEqGreenType = trustMe (SET :>: runEqGreenTypeTac)
->             runEqGreenTypeTac = piTac setTac
->                                       (\s1 ->
->                                        piTac (arrTac (use s1 done)
->                                                      setTac)
->                                              (\t1 ->
->                                               piTac (can $ Pi (use s1 done)
->                                                               (use t1 done))
->                                                     (\f1 ->
->                                                      piTac setTac
->                                                            (\s2 ->
->                                                             piTac (arrTac (use s2 done)
->                                                                           setTac)
->                                                                   (\t2 ->
->                                                                    piTac (can $ Pi (use s2 done)
->                                                                                    (use t2 done))
->                                                                          (\f2 -> 
->                                                                           propTac))))))
->             runEqGreenTac = lambda $ \s1 ->
->                             lambda $ \t1 ->
->                             lambda $ \f1 ->
->                             lambda $ \s2 ->
->                             lambda $ \t2 ->
->                             lambda $ \f2 ->
->                             allTac (var s1) $ \x1 ->
->                             allTac (var s2) $ \x2 ->
->                             impTac (eqBlueTac (var s1 :>: var x1) (var s2 :>: var x2)) $
->                               eqGreenTac ((t1 @@@ [ var x1 ]) :>: (f1 @@@ [ var x1 ]))
->                                          ((t2 @@@ [ var x2 ]) :>: (f2 @@@ [ var x2 ]))
->             eqGreenTac (y0 :>: t0) (y1 :>: t1) = useOp eqGreen [y0,t0,y1,t1] done
+> opRunEqGreen [C (Pi sS1 tT1),f1,C (Pi sS2 tT2),f2] = Right $ 
+>   ALL sS1 . L . HF "s1" $  \ s1 -> ALL sS2 . L . HF "s2" $ \ s2 ->
+>   IMP  (EQBLUE (sS1 :>: s1) (sS2 :>: s2)) $
+>   (tT1 $$ A s1 :>: f1 $$ A s1) <-> (tT2 $$ A s2 :>: f1 $$ A s2)
+> opRunEqGreen [SET, PI sS1 tT1, SET, PI sS2 tT2] = Right $
+>    AND  ((SET :>: sS2) <-> (SET :>: sS1))
+>         (ALL sS2 . L . HF "s2" $ \ s2 -> ALL sS1 . L . HF "s1" $  \ s1 ->
+>            IMP  (EQBLUE (sS2 :>: s2) (sS1 :>: s1)) $
+>            (SET :>: tT1 $$ A s1) <-> (SET :>: tT2 $$ A s2))
 > opRunEqGreen [C ty0,C t0,C ty1,C t1] = case halfZip t0'' t1'' of
 >    Nothing -> Right ABSURD 
 >    Just x  -> Right $ mkEqConj (trail x)
@@ -744,28 +721,20 @@ a false economy.
 > opRunEqGreen [_,_,N y1,_] = Left y1 
 > opRunEqGreen [C y0,_,C y1,_] = Right TRIVIAL
 
-\question{At first glance, the coerce rule for |Pi| does not respect
-          the definition of the OTT paper.}
 
-We're applying symmetry for the equation on domain types because we
-need to coerce contravariantly. By contrast, the OTT paper twists the
-equation in the first place. It wouldn't kill us to do that: we'd have
-to add one special case, overriding the default structural behaviour,
-but we'd be able to drop |Sym|, which would be neater perhaps.
 
-> coerce :: (Can (VAL,VAL)) -> VAL -> VAL -> VAL
-> coerce (Pi (x1,x2) (y1,y2))    q f = 
->              eval [.x1.x2.y1.y2.q.f.
->                   (L $ "" :. [.s.
->                     (let
->                     cs = N (coe :@ [NV x2,NV x1,N (V q :$ Fst :$ Sym),NV s])
->                     q2 = N (P coh :$ A (NV x2) :$ A (NV x1) :$ A (N (V q :$ Fst :$ Sym)) :$ A (NV s))
->                     in
->                     N $ coe :@ [N (V y1 :$ A cs),
->                                 y2 $# [s],
->                                 N (V q :$ Snd :$ A (NV s) :$ A cs :$ A q2),
->                                 N (V f :$ A cs)])])]
->                    (B0 :< x1 :< x2 :< y1 :< y2 :< q :< f)
+> coeh :: TY -> TY -> VAL -> VAL -> (VAL, VAL)
+> coeh s t (N (P r :$ _ :$ _)) v | r == refl = (v, pval refl $$ A s $$ A v)
+> coeh s t q v = (coe @@ [s, t, q, v], pval coh $$ A s $$ A t $$ A q $$ A v)
+
+> coerce :: (Can (VAL,VAL)) -> VAL -> VAL -> Either NEU VAL
+> coerce Set q x = Right x
+> coerce (Pi (sS1,sS2) (tT1,tT2)) q f1 = Right . L . HF (fortran tT2) $ \ s2 ->
+>   let  (s1, sq) = coeh sS2 sS1 (q $$ Fst) s2
+>        t1 = f1 $$ A s1
+>   in   coe @@ [tT1 $$ A s1, tT2 $$ A s2, q $$ Snd $$ A s2 $$ A s1 $$ A sq]
 > import <- Coerce
+> coerce _ q (N x) = Left x
+
 
 

@@ -227,14 +227,14 @@ Equality rules:
 >   descOp = Op
 >     { opName = "descOp"
 >     , opArity = 2
->     , opTelTy = dOpTy
+>     , opTyTel = dOpTy
 >     , opRun = dOpRun
 >     , opSimp = \_ _ -> empty
 >     } where
 >       dOpTy =
->         x :<: desc :-: \x ->
->         y :<: SET :-: \y ->
->         RET SET
+>         "x" :<: desc :-: \x ->
+>         "y" :<: SET :-: \y ->
+>         Ret SET
 >       dOpRun :: [VAL] -> Either NEU VAL
 >       dOpRun [DONE,y]    = Right UNIT
 >       dOpRun [ARG x y,z] = Right $
@@ -260,7 +260,7 @@ Equality rules:
 >         "x" :<: SET :-: \x ->
 >         "y" :<: ARR x SET :-: \y ->
 >         "z" :<: (descOp @@ [w,x]) :-: \z ->
->         RET SET
+>         Ret SET
 >       boxOpRun :: [VAL] -> Either NEU VAL
 >       boxOpRun [DONE   ,d,p,v] = Right UNIT
 >       boxOpRun [ARG a f,d,p,v] = Right $ opRunArgTerm
@@ -344,14 +344,12 @@ Equality rules:
 >     , opSimp = \_ _ -> empty
 >     } where
 >       mapBoxOpTy =  
->         "x" :<: desc :-: \x ->
->         "d" :<: SET :-: \d ->
->         "bp" :<: ARR x SET :-: \bp ->
->         "p" :<: (PI d (eval [.bp. L $ "" :. 
->                               [.y. N (V bp :$ A (NV y))]
->                             ] $ B0 :< bp)) :-: \p ->
->         "v" :<: (descOp @@ [w,x]) :-: \v ->
->          RET (boxOp @@ [x,d,bp,v])
+>         "D" :<: desc :-: \ dD ->
+>         "X" :<: SET :-: \ xX ->
+>         "P" :<: ARR xX SET :-: \ pP ->
+>         "p" :<: (pity $ "x" :<: xX :-: \ x -> Ret $ pP $$ A x) :-: \ _ ->
+>         "v" :<: (descOp @@ [dD,xX]) :-: \v ->
+>          Ret (boxOp @@ [dD,xX,pP,v])
 >       mapBoxOpRun :: [VAL] -> Either NEU VAL
 >       mapBoxOpRun [DONE,d,bp,p,v] = Right VOID
 >       mapBoxOpRun [ARG a f,d,bp,p,v] = Right $ mapBoxArgTerm
@@ -467,10 +465,10 @@ Equality rules:
 >     } where
 >       elimOpTy = 
 >         "d" :<: desc :-: \d ->
->         "v" :<: (MU Nothing) :-: \v ->
->         "bp" :<: (ARR (MU Nothing d) SET) :-: \bp ->
+>         "v" :<: MU Nothing d :-: \v ->
+>         "P" :<: (ARR (MU Nothing d) SET) :-: \bp ->
 >         "p" :<: (elimOpMethodType $$ A d $$ A bp) :-: \p ->
->         RET (bp $$ A v)
+>         Ret (bp $$ A v)
 >       elimOpRun :: [VAL] -> Either NEU VAL
 >       elimOpRun [d,CON v,bp,p] = Right $ elimOpTerm
 >                                              $$ A d $$ A bp $$ A p $$ A v
@@ -511,7 +509,7 @@ Equality rules:
 >           "e" :<: enumU :-: \e ->
 >           "b" :<: (branchesOp @@ [e , L (K desc) ]) :-: \b ->
 >           "x" :<: ENUMT e :-: \x ->
->           RET desc
+>           Ret desc
 >         sOpRun :: [VAL] -> Either NEU VAL
 >         sOpRun [CONSE t e' , ps , ZE] = Right $ ps $$ Fst
 >         sOpRun [CONSE t e' , ps , SU n] = Right $
@@ -534,7 +532,7 @@ Equality rules:
 >           "b" :<: SET :-: \b ->
 >           "f" :<: ARR a b :-: \f ->
 >           "x" :<: (descOp @@ [d, a]) :-: \x -> 
->           RET (descOp @@ [d, b])
+>           Ret (descOp @@ [d, b])
 >
 >         mapOpRun :: [VAL] -> Either NEU VAL
 >         mapOpRun [DONE,    a, b, f, x] = Right VOID

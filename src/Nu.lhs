@@ -52,9 +52,6 @@
 >   elimTy chev (_ :<: t@(Nu d)) Out = return (Out, descOp @@ [d , C t])
 
 > import -> ElimComputation where
->   COIT d sty f s $$ Out = eval [.d.sty.f.s.
->     mapOp :@ [NV d
->              ,NV sty
->              ,NU (NV d)
->              ,L $ "x" :. [.x. COIT (NV d) (NV sty) (NV f)  (NV x)]
->              ,f $# [s]]] $ B0 :< d :< sty :< f :< s
+>   COIT d sty f s $$ Out = mapOp @@ [d, sty, NU d,
+>     L . HF "s" $ \ d -> COIT d sty f s,
+>     f $$ A s]

@@ -195,8 +195,8 @@ Coercion rule:
 >                  "ab"  :<: SIGMA aA bB             :-: \ ab ->
 >                  "P"   :<: ARR (SIGMA aA bB) SET   :-: \ pP ->
 >                  "p"   :<: pity (
->                    "a" :<: aA :-: \ a -> "b" :<: bB :-: \ b ->
->                    pP $$ PAIR a b)                 :-: \ p ->
+>                    "a" :<: aA :-: \ a -> "b" :<: bB :-: \ b -> Ret $
+>                    pP $$ A (PAIR a b))             :-: \ p ->
 >                  Ret $ pP $$ A ab
 >     , opRun = \ [_ , _ , ab , _ , p] -> Right $ p $$ A (ab $$ Fst) $$ A (ab $$ Snd)
 >     , opSimp = \_ _ -> empty
@@ -212,11 +212,9 @@ Coercion rule:
 >         (eqGreen @@ [t1 $$ A (p1 $$ Fst),p1 $$ Snd,t2 $$ A (p2 $$ Fst),p2 $$ Snd])
 
 > import -> Coerce where
->   coerce (Sigma (x1,x2) (y1,y2)) q p = 
->     PAIR s1
->          (coe @@ [ y1 $$ (A $ p $$ Fst)
->                  , y2 $$ (A s1)
->                  , q $$ Snd $$ (A (p $$ Fst)) $$ A s1 $$ A (pval coh $$ A x1 $$ A x2 $$ A (q $$ Fst) $$ A (p $$ Fst))
->                  , p $$ Snd]) 
->         where s1 = coe @@ [x1,x2,q $$ Fst,p $$ Fst]
->   coerce Unit        q s = s
+>   coerce (Sigma (sS1, sS2) (tT1, tT2)) q p = Right . PAIR s2 $
+>     coe @@ [  tT1 $$ A s1, tT2 $$ A s2, q $$ Snd $$ A s1 $$ A s2 $$ A sq,
+>               p $$ Snd] where
+>       s1 = p $$ Fst
+>       (s2, sq) = coeh sS1 sS2 (q $$ Fst) s1
+>   coerce Unit q s = Right s

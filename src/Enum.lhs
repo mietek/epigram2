@@ -182,13 +182,13 @@ Equality rules:
 >   branchesOp = Op 
 >     { opName   = "Branches"
 >     , opArity  = 2 
->     , opTelTy     = bOpTy
+>     , opTyTel     = bOpTy
 >     , opRun    = bOpRun
 >     , opSimp   = \_ _ -> empty
 >     } where
 >         bOpTy = "e" :<: enumU :-: \e ->
 >                 "p" :<: ARR (ENUMT e) SET :-: \p ->
->                 RET SET
+>                 Ret SET
 >         bOpRun :: [VAL] -> Either NEU VAL
 >         bOpRun [NILE , _] = Right UNIT
 >         bOpRun [CONSE t e' , p] = 
@@ -217,16 +217,16 @@ Equality rules:
 >   switchOp = Op
 >     { opName = "Switch"
 >     , opArity = 4
->     , opTelTy = sOpTy
+>     , opTyTel = sOpTy
 >     , opRun = sOpRun
 >     , opSimp = \_ _ -> empty
 >     } where
 >         sOpTy = 
 >           "e" :<: enumU :-: \e ->
 >           "x" :<: ENUMT e :-: \x ->
->           "p" :<: ARR (ENUMT ev) SET :-: \p ->
->           "b" :<: branchesOp @@ [ev , pv] :-: \b -> 
->           RET (pv $$ A xv)
+>           "p" :<: ARR (ENUMT e) SET :-: \p ->
+>           "b" :<: branchesOp @@ [e , p] :-: \b -> 
+>           Ret (p $$ A x)
 >         sOpRun :: [VAL] -> Either NEU VAL
 >         sOpRun [CONSE t e' , ZE , p , ps] = Right $ ps $$ Fst
 >         sOpRun [CONSE t e' , SU n , p , ps] = Right $ switchTerm
@@ -260,6 +260,16 @@ Equality rules:
 >                                                                       (\x -> 
 >                                                                        p @@@ [ suTac $ use x done ])))))
 
+
+> import -> Coerce where
+>   coerce (EnumT (CONSE _ _,   CONSE _ _))      _  ZE = Right ZE
+>   coerce (EnumT (CONSE _ e1,  CONSE _ e2))     q  (SU x) = Right . SU $
+>     coe @@ [ENUMT e1, ENUMT e2, q $$ Snd $$ Snd $$ Fst, x]  -- |CONSE| tails
+>   coerce (EnumT (NILE,        NILE))           q  x = Right x
+>   coerce (EnumT (NILE,        t@(CONSE _ _)))  q  x = Right $
+>     nEOp @@ [q, ENUMT t]
+>   coerce (EnumT (CONSE _ _,   NILE))           q  x = Right $
+>     nEOp @@ [q, ENUMT NILE]
 
 > import -> Operators where
 >   branchesOp :
