@@ -123,6 +123,10 @@ Elim forms inherited from elsewhere
 >   traverse f (Inh ty)  = (|Inh (f ty)|)
 >   traverse f (Wit t)   = (|Wit (f t)|)
 
+> import -> HalfZipCan where
+>   halfZip  Prop      Prop      = Just Prop
+>   halfZip  (Prf p0)  (Prf p1)  = Just (Prf (p0, p1))
+
 > import -> CanPats where
 >   pattern PROP        = C Prop
 >   pattern PRF p       = C (Prf p)
@@ -197,7 +201,9 @@ Elim forms inherited from elsewhere
 >             , opArity = 2
 >             , opTyTel =  "z" :<: PRF ABSURD :-: \ _ ->
 >                          "X" :<: SET :-: \ xX -> Ret xX
->             , opRun = \ [N z, ty] -> Left z
+>             , opRun = \ [q, ty] -> case q of
+>                 N z -> Left z
+>                 v -> error ("oh bugger: " ++ show v)
 >             , opSimp = \_ _ -> empty
 >             }
 >   inhEOp = Op { opName = "inhOp"

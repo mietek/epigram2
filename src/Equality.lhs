@@ -156,7 +156,7 @@ With no computational behavior.
 >            oprun :: [VAL] -> Either NEU VAL
 >            oprun [_, _, N (P r :$ A _ :$ A _), v] | r == refl = Right v
 >            oprun [C x,C y,q,s] = case halfZip x y of
->              Nothing  -> Right $ nEOp @@ [q, C y]
+>              Nothing  -> Right $ nEOp @@ [q $$ Out, C y]
 >              Just fxy -> coerce fxy (q $$ Out) s
 >            oprun [N x,y,q,s] = Left x
 >            oprun [x,N y,q,s] = Left y

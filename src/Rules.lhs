@@ -437,7 +437,7 @@ a binder.
 
 > bquote refs (L (HF x t)) = 
 >     (|(\t -> L (x :. t))
->       (Rooty.freshRef (x :<: undefined) 
+>       (Rooty.freshRef (x :<: Dummy) 
 >                       (\x -> bquote (refs :< x) 
 >                                     (t (pval x))))|)
 
@@ -446,7 +446,7 @@ as we can. Simple, easy.
 
 > bquote refs (L (K t)) = (|(L . K) (bquote refs t) |)
 > bquote refs (C c) = (|C (traverse (bquote refs) c )|)
-> bquote refs (N n) = (|N (bquote refs =<< (| (simplify n) root |) )|)
+> bquote refs (N n) = (|N (bquote refs n )|)
 > bquote refs (n :$ v) = (|(:$) (bquote refs n)
 >                                 (traverse (bquote refs) v)|)
 > bquote refs (op :@ vs) = (|(:@) (pure op)
@@ -714,7 +714,7 @@ a false economy.
 > opRunEqGreen [C (Pi sS1 tT1),f1,C (Pi sS2 tT2),f2] = Right $ 
 >   ALL sS1 . L . HF "s1" $  \ s1 -> ALL sS2 . L . HF "s2" $ \ s2 ->
 >   IMP  (EQBLUE (sS1 :>: s1) (sS2 :>: s2)) $
->   (tT1 $$ A s1 :>: f1 $$ A s1) <-> (tT2 $$ A s2 :>: f1 $$ A s2)
+>   (tT1 $$ A s1 :>: f1 $$ A s1) <-> (tT2 $$ A s2 :>: f2 $$ A s2)
 > opRunEqGreen [SET, PI sS1 tT1, SET, PI sS2 tT2] = Right $
 >    AND  ((SET :>: sS2) <-> (SET :>: sS1))
 >         (ALL sS2 . L . HF "s2" $ \ s2 -> ALL sS1 . L . HF "s1" $  \ s1 ->
