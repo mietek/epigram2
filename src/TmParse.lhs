@@ -95,6 +95,7 @@ defined in Section~\ref{sec:language}.
 >   (| Fst (%keyword "!"%)
 >    | Snd (%keyword "-"%)
 >    | Out (%keyword "%"%)
+>    | Call (%keyword "call"%) ~Dum
 >    | A (sizedInDTm ArgSize)
 >    |)
 > moreExDTm EqSize e =
@@ -115,6 +116,8 @@ defined in Section~\ref{sec:language}.
 >      |DCON (%keyword "@"%) (sizedInDTm ArgSize)
 >      |DRETURN (%keyword "'"%) (sizedInDTm ArgSize)
 >      |DTAG (%keyword "`"%) ident
+>      |DLABEL (%keyword "<"%) (sizedInDTm AppSize) (%keyword ":"%) (sizedInDTm ArgSize) (%keyword ">"%)
+>      |DLRET (%keyword "return"%) (sizedInDTm ArgSize)
 >      |(iter DLAV) (%keyword "\\"%) (some ident) (%keyword "->"%) pInDTm
 >      |id (bracket Square tuple)
 >      |DENUMT (bracket Curly (|  (iter (DCONSE . DTAG)) (pSep (keyword ",") ident)

@@ -234,6 +234,11 @@ those of |infer|.
 
 > elabInfer (DP x) = return (pty x :>: P x)
 
+> elabInfer (tm ::$ Call _) = do
+>     (LABEL l ty :>: tm') <- elabInfer tm
+>     l' <- bquoteHere l
+>     return (ty :>: (tm' :$ Call l'))
+
 > elabInfer (t ::$ s) = do
 >     (C ty :>: t') <- elabInfer t
 >     (s', ty') <- elimTy (elaborate False) (evTm t' :<: ty) s

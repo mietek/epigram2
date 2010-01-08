@@ -32,6 +32,7 @@
 >     DQ     :: String                           -> InDTm  x -- hole
 >     DI     :: String                           -> InDTm  x -- underscore
 >     DT     :: InTm x                    -> InDTm  x -- embedding
+>     Dum    ::                                     InDTm  x
 
 > data ExDTm :: * -> * where
 >     DP     :: x                                -> ExDTm  x -- parameter
@@ -95,6 +96,7 @@
 > m %$ DN n          = (|DN (dexMang m n (|[]|))|)
 > m %$ DQ s          = pure (DQ s)
 > m %$ DI s          = pure (DI s)
+> m %$ Dum           = (|Dum|)
 > _ %$ tm            = error ("%$: can't dmangle " ++ show (fmap (\_ -> ".") tm)) 
 
 > dexMang ::  Applicative f => DMangle f x y ->
@@ -136,6 +138,7 @@
 >   show (DQ s)       = "?" ++ s
 >   show (DI s)       = "_" ++ s
 >   show (DT t)       = "DT (" ++ show t ++ ")"
+>   show Dum          = "Dum"
 
 > instance Show x => Show (ExDTm x) where
 >   show (DP x)       = "DP (" ++ show x ++ ")"
@@ -170,6 +173,7 @@
 >   traverse f (DQ s)      = pure (DQ s)
 >   traverse f (DI s)      = pure (DI s)
 >   traverse f (DT t)      = (|DT (traverse f t)|)
+>   traverse f Dum         = (|Dum|)
 
 > instance Functor ExDTm where
 >   fmap = fmapDefault
