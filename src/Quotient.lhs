@@ -69,8 +69,36 @@ relation over |A|.
 >     return $ Con x
 
 > import -> Operators where
+>   qElimOp :
+
 > import -> OpCompile where
+>   ("qElim", [_, _, _, z, _, m, _]) -> App m [z]
+
 > import -> OpCode where
+>   qElimOp = Op
+>     { opName  = "qElim"
+>     , opArity = 7
+>     , opTyTel = "X" :<: SET                             :-: \_X ->
+>                 "R" :<: ARR _X (ARR _X PROP)            :-: \_R ->
+>                 "p" :<: PRF (equivalenceRelation _X _R) :-: \p ->
+>                 "z" :<: QUOTIENT _X _R p                :-: \z ->
+>                 "P" :<: ARR (QUOTIENT _X _R p) SET      :-: \_P ->
+>                 "m" :<: pity ("x" :<: _X :-: \x -> Ret $ _P $$ A (CLASS x))
+>                                                         :-: \m ->
+>                 "h" :<: PRF (allty ("x" :<: _X :-: \x ->
+>                                     "y" :<: _X :-: \y ->
+>                                     Ret $ IMP (_R $$ A x $$ A y)
+>                                               (EQBLUE (_P $$ A (CLASS x) :>: m $$ A x)
+>                                                       (_P $$ A (CLASS y) :>: m $$ A y))
+>                                    ))                   :-: \_ ->
+>                 Ret $ _P $$ A z
+>     , opRun = run
+>     , opSimp = \_ _ -> empty
+>     } where
+>       run :: [VAL] -> Either NEU VAL
+>       run [_, _, _, CLASS x, _, m, _] = Right (m $$ A x)
+>       run [_, _, _, N n, _, _, _]     = Left n
+
 
 > import -> OpRunEqGreen where
 >   opRunEqGreen [QUOTIENT a r _, CLASS x, QUOTIENT b s _, CLASS y] =

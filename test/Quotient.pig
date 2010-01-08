@@ -21,5 +21,12 @@ make thm : (X : *)(R : X -> X -> #)(p : :- Equiv X R) ->
 lambda X ; lambda R ; lambda p ;
 lambda x ; lambda y ; lambda eqxy ;
 give @ ? ; lambda x2 ; lambda eqxx2 ;
-give ship X x x2 eqxx2 (\ z -> :- R z y) eqxy
+give ship X x x2 eqxx2 (\ z -> :- R z y) eqxy ; root ;
+
+make qel : (X : *)(R : X -> X -> #)(p : :- Equiv X R)
+           (z : Q X R p)(P : Q X R p -> *)
+           (m : (x : X) -> P [x]) ->
+           :- ((x : X)(y : X) => R x y => (m x : P [x]) == (m y : P [y])) ->
+           P z ;
+give (\ X R p z P m h -> qElim(X, R, p, z, P, m, h))
 
