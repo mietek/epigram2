@@ -672,10 +672,11 @@ constructors to make them easier to swallow.
 > mkRef :: Op -> REF
 > mkRef op = [("Operators",0),(opName op,0)] := (DEFN opEta :<: opTy)
 >     where opTy = pity $ opTyTel op
->           opEta = trustMe (opTy :>: (opEtaTac (opArity op) []))
->           opEtaTac :: Int -> [Tac VAL] -> Tac VAL
->           opEtaTac 0 args = useOp op (reverse args) done
->           opEtaTac n args = lambda $ \l -> opEtaTac (n-1) (var l : args) 
+>           opEta = opEtaTac (opArity op) []
+>           opEtaTac :: Int -> [VAL] -> VAL
+>           opEtaTac 0 args = op @@ (reverse args) 
+>           opEtaTac n args = L $ HF "mkRef" $ \l -> opEtaTac (n-1) (l : args) 
+
 
 > import -> Primitives where
 >     (map (\op -> (opName op, mkRef op)) 
