@@ -61,6 +61,7 @@ representation of the resulting type.
 > infoInfer _ = throwError' "infoInfer: can only infer the type of neutral terms."
 
 
+The |infoHypotheses| command displays a distilled list of things in the context.
 
 > infoHypotheses :: ProofState String
 > infoHypotheses = do
@@ -99,20 +100,10 @@ representation of the resulting type.
 >            (es' :< _) -> putDevEntries es' >> hyps aus me
 
 
-The |christenHere| command christens a term in the current context.
-
-> christenHere :: INDTM -> ProofState (InDTm String)
-> christenHere dtm = do
->     aus <- getAuncles
->     me <- getMotherName
->     return (christen aus me dtm)
-
-
-The |prettyHere| command distills and christens a term in the current
-context, then passes it to the pretty-printer.
+The |prettyHere| command distills a term in the current context,
+then passes it to the pretty-printer.
 
 > prettyHere :: (TY :>: INTM) -> ProofState Doc
 > prettyHere tt = do
->     dtm :=>: _ <- distill tt
->     dtms <- christenHere dtm
->     return (pretty dtms)
+>     dtm :=>: _ <- distill B0 tt
+>     return (pretty dtm)
