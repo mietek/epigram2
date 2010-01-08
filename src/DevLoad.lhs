@@ -97,14 +97,16 @@ Once we have parsed a list of |DevLine|s, we need to construct a |Dev| from them
 The idea is to use commands defined in Section~\ref{sec:proofStateMonad} to build
 up the proof state. The |devLoad| function takes care of this process.
 
-> devLoad :: [Token] -> ProofState ()
-> devLoad ts = case parse pRootModule ts of
->   Left pf -> throwError' $ "Failed to parse development: " ++ show pf
->   Right (dls, cs) -> do
->     ncs <- makeDev dls []
->     doCommandsAt ncs
->     doCommands cs
->     much goOut
+> devLoad :: String -> ProofState ()
+> devLoad s = case parse tokenize s of
+>     Left pf -> throwError' $ "Failed to tokenize development:\n" ++ show pf
+>     Right toks -> case parse pRootModule toks of
+>         Left pf -> throwError' $ "Failed to parse development:\n" ++ show pf
+>         Right (dls, cs) -> do
+>             ncs <- makeDev dls []
+>             doCommandsAt ncs
+>             doCommands cs
+>             return ()
 
 The |makeDev| function updates the proof state to represent the given list of |DevLine|s,
 accumulating pairs of names and command lists along the way.
