@@ -23,15 +23,16 @@
 
 The |distill| command converts a typed INTM in the evidence language
 to a term in the display language; that is, it reverses |elaborate|.
-It performs christening at the same time.
+It performs christening at the same time. For this, it needs a list
+of entries in scope, which it will extend when going under a binder.
 
 > distill :: Entries -> (TY :>: INTM) -> ProofState (InDTm String :=>: VAL)
 
-> distill es (C ty :>: C c)  = do
+> distill es (C ty :>: C c) = do
 >     cc <- canTy (distill es) (ty :>: c)
 >     return ((DC $ fmap termOf cc) :=>: evTm (C c))
 
-> distill es (ty :>: l@(L sc))  = do
+> distill es (ty :>: l@(L sc)) = do
 >     (k, s, f) <- lambdable ty `catchMaybe` ("distill: type " ++ show ty ++ " is not lambdable.")
 >     root <- getDevRoot
 >     tm' :=>: _ <- freshRef (fortran l :<: s) (\ref root -> do
@@ -45,34 +46,40 @@ It performs christening at the same time.
 >     convScope (K _)     tm = DK tm
 
 > distill es (_ :>: N n) = do
->     (n' :<: _) <- boil es n
+>     (n' :<: _) <- boil es n []
 >     return (DN n' :=>: evTm n)
 
 > distill _ (ty :>: tm) = error ("distill: can't cope with\n" ++ show ty ++ "\n:>:\n" ++ show tm)
 
 
 The |boil| command is the |EXTM| version of |distill|, which also yields
-the type of the term. 
+the type of the term. It keeps track of a list of entries in scope, but
+also accumulates a spine so shared parameters can be removed.
 
-> boil :: Entries -> EXTM -> ProofState (ExDTm String :<: TY)
+> boil :: Entries -> EXTM -> Spine {TT} REF -> ProofState (ExDTm String :<: TY)
 
-> boil es (P s)       = do
->     aus <- getAuncles
+> boil es tm@(P (name := _ :<: ty)) as       = do
 >     me <- getMotherName
->     return (mangleP (aus <+> es) me B0 (refName s) [] :<: pty s)
+>     let (strName, argsToDrop) = baptise es me B0 name
+>     (e', ty') <- processArgs (evTm tm :<: ty) as
+>     return (DP strName $::$ (drop argsToDrop e') :<: ty')
+>   where
+>     processArgs :: (VAL :<: TY) -> Spine {TT} REF -> ProofState (DSpine String, TY)
+>     processArgs (_ :<: ty) [] = return ([], ty)
+>     processArgs (v :<: C ty) (a:as) = do
+>         (e', ty') <- elimTy (distill es) (v :<: ty) a
+>         (es, ty'') <- processArgs (v $$ (fmap valueOf e') :<: ty') as 
+>         return (fmap termOf e' : es, ty'')
 
-> boil es (t :$ e)    = do
->     (t' :<: C ty) <- boil es t
->     (e', ty') <- elimTy (distill es) (evTm t :<: ty) e
->     return ((t' ::$ fmap termOf e') :<: ty')
+> boil es (t :$ e) as    = boil es t (e : as)
 
-> boil es (op :@ ts)  = do
+> boil es (op :@ ts) as  = do
 >     (ts', ty) <- opTy op (distill es) ts
 >     return ((op ::@ fmap termOf ts') :<: ty) 
 
-> boil es (t :? ty)    = do
+> boil es (t :? ty) as   = do
 >     ty'  :=>: vty  <- distill es (SET :>: ty)
 >     t'   :=>: _    <- distill es (vty :>: t)
 >     return ((t' ::? ty') :<: vty)
 
-> boil _ tm = error ("boil: can't cope with " ++ show tm)
+> boil _ tm _ = error ("boil: can't cope with " ++ show tm)

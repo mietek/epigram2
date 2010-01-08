@@ -227,24 +227,34 @@ location, a list of local variables, the name of the parameter to christen and a
 spine of arguments. It gives an appropriate relative name to the parameter and
 applies it to the arguments --- \emph{for girls}, dropping any that are shared with the current location.
 
-> mangleP :: Entries -> Name -> Bwd String -> Name -> [Elim (InDTm String)] -> ExDTm String
-> mangleP auncles me vs target args = case  splitNames me target of
+> mangleP :: Entries -> Name -> Bwd String -> Name -> DSpine String -> ExDTm String
+> mangleP aus me vs target args = DP s $::$ drop n args
+>   where (s, n) = baptise aus me vs target
+
+
+The |baptise| function takes a list of entries in scope, the name of the curent
+location, a list of local variables and the name of the parameter to christen.
+It gives an appropriate relative name as a string, and returns the number
+of arguments to drop. 
+
+> baptise :: Entries -> Name -> Bwd String -> Name -> (String, Int)
+> baptise auncles me vs target = case  splitNames me target of
 >   (prefix, (t, n):targetSuffix) ->
 >     let  numBindersToSkip = ala Sum foldMap (indicator (t ==)) vs
 >          boyCount = ala Sum foldMap (indicator (not. entryHasDev))
 >     in
 >       case findName auncles (prefix++[(t, n)]) t numBindersToSkip of
 >         Just (ancestor, commonEntries, i) -> 
->             let args' | entryHasDev ancestor  = drop (boyCount commonEntries) args
->                       | otherwise             = args
+>             let argsToDrop | entryHasDev ancestor  = boyCount commonEntries
+>                            | otherwise             = 0
 >             in  if targetSuffix == []
->                 then  DP (showRelName [(t, Rel i)]) $::$ args'
+>                 then  (showRelName [(t, Rel i)], argsToDrop)
 >                 else
 >                   let  (kids, _, _) = entryDev ancestor
 >                        n = (t, Rel i) : (searchKids kids targetSuffix 0)
->                   in   DP (showRelName n) $::$ args'
->         Nothing -> DP (showName target) $::$ args
->   (prefix, []) -> DP "!!!"
+>                   in   (showRelName n, argsToDrop)
+>         Nothing -> ("???" ++ showName target, 0)
+>   (prefix, []) -> ("!!!", 0)
 
 
 The |searchKids| function searches a list of children to match a name suffix, producing

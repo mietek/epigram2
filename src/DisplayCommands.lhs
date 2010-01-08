@@ -105,5 +105,6 @@ then passes it to the pretty-printer.
 
 > prettyHere :: (TY :>: INTM) -> ProofState Doc
 > prettyHere tt = do
->     dtm :=>: _ <- distill B0 tt
+>     aus <- getAuncles
+>     dtm :=>: _ <- distill aus tt
 >     return (pretty dtm)

@@ -80,9 +80,10 @@
 > dfortran _ = "x"
 
 
+
 > data DMangle f x y = DMang
->   {  dmangP :: x -> f [Elim (InDTm y)] -> f (ExDTm y)
->   ,  dmangV :: Int -> f [Elim (InDTm y)] -> f (ExDTm y)
+>   {  dmangP :: x -> f (DSpine y) -> f (ExDTm y)
+>   ,  dmangV :: Int -> f (DSpine y) -> f (ExDTm y)
 >   ,  dmangB :: String -> DMangle f x y
 >   }
 
@@ -97,7 +98,7 @@
 > _ %$ tm            = error ("%$: can't dmangle " ++ show (fmap (\_ -> ".") tm)) 
 
 > dexMang ::  Applicative f => DMangle f x y ->
->            ExDTm x -> f [Elim (InDTm y)] -> f (ExDTm y)
+>            ExDTm x -> f (DSpine y) -> f (ExDTm y)
 > dexMang m (DP x)     es = dmangP m x es
 > dexMang m (DV i)     es = dmangV m i es
 > dexMang m (o ::@ a)  es = (|(| (o ::@) ((m %$) ^$ a) |) $::$ es|) 
@@ -107,9 +108,9 @@
 > (%%$) :: DMangle Identity x y -> InDTm x -> InDTm y
 > m %%$ t = runIdentity $ m %$ t
 
-> type DSpine p x = [Elim (InDTm x)]
+> type DSpine x = [Elim (InDTm x)]
 >
-> ($::$) :: ExDTm x -> DSpine p x -> ExDTm x
+> ($::$) :: ExDTm x -> DSpine x -> ExDTm x
 > ($::$) = foldl (::$)
 
 
