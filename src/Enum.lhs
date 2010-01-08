@@ -182,23 +182,18 @@ Equality rules:
 >   branchesOp = Op 
 >     { opName   = "Branches"
 >     , opArity  = 2 
->     , opTy     = bOpTy
+>     , opTelTy     = bOpTy
 >     , opRun    = bOpRun
 >     , opSimp   = \_ _ -> empty
 >     } where
->         bOpTy chev [e , p] = do
->                  (e :=>: ev) <- chev (enumU :>: e)
->                  (p :=>: pv) <- chev (ARR (ENUMT ev) SET :>: p)
->                  return ([ e :=>: ev
->                          , p :=>: pv]
->                          , SET)
->         bOpTy _ _ = throwError' "branches: invalid arguments"
+>         bOpTy = "e" :<: enumU :-: \e ->
+>                 "p" :<: ARR (ENUMT e) SET :-: \p ->
+>                 RET SET
 >         bOpRun :: [VAL] -> Either NEU VAL
 >         bOpRun [NILE , _] = Right UNIT
 >         bOpRun [CONSE t e' , p] = 
 >           Right (TIMES (p $$ A ZE) 
->                 (branchesOp @@ [e' , L (H (B0 :< p) 
->                                  "" (N (V 1 :$ A ((C (Su (N (V 0))))))))]))
+>                 (branchesOp @@ [e' , L (HF "x" $ \x -> p $$ A (SU x))]))
 >         bOpRun [N e , _] = Left e 
 >         branchesTerm = trustMe (typeBranches :>: tacBranches)
 >         typeBranches = trustMe (SET :>: tacTypeBranches)
@@ -222,20 +217,16 @@ Equality rules:
 >   switchOp = Op
 >     { opName = "Switch"
 >     , opArity = 4
->     , opTy = sOpTy
+>     , opTelTy = sOpTy
 >     , opRun = sOpRun
 >     , opSimp = \_ _ -> empty
 >     } where
->         sOpTy chev [e, x , p , b] = do
->           (e :=>: ev) <- chev (enumU :>: e)
->           (x :=>: xv) <- chev (ENUMT ev :>: x)
->           (p :=>: pv) <- chev (ARR (ENUMT ev) SET :>: p)
->           (b :=>: bv) <- chev (branchesOp @@ [ev , pv] :>: b)
->           return $ ([ e :=>: ev
->                     , x :=>: xv 
->                     , p :=>: pv
->                     , b :=>: bv ] 
->                    , pv $$ A xv)
+>         sOpTy = 
+>           "e" :<: enumU :-: \e ->
+>           "x" :<: ENUMT e :-: \x ->
+>           "p" :<: ARR (ENUMT ev) SET :-: \p ->
+>           "b" :<: branchesOp @@ [ev , pv] :-: \b -> 
+>           RET (pv $$ A xv)
 >         sOpRun :: [VAL] -> Either NEU VAL
 >         sOpRun [CONSE t e' , ZE , p , ps] = Right $ ps $$ Fst
 >         sOpRun [CONSE t e' , SU n , p , ps] = Right $ switchTerm

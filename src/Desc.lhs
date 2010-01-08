@@ -227,16 +227,14 @@ Equality rules:
 >   descOp = Op
 >     { opName = "descOp"
 >     , opArity = 2
->     , opTy = dOpTy
+>     , opTelTy = dOpTy
 >     , opRun = dOpRun
 >     , opSimp = \_ _ -> empty
 >     } where
->       dOpTy chev [x,y] = do
->                  (x :=>: xv) <- chev (desc :>: x)
->                  (y :=>: yv) <- chev (SET :>: y)
->                  return $ ([ x :=>: xv
->                            , y :=>: yv ]
->                           , SET)
+>       dOpTy =
+>         x :<: desc :-: \x ->
+>         y :<: SET :-: \y ->
+>         RET SET
 >       dOpRun :: [VAL] -> Either NEU VAL
 >       dOpRun [DONE,y]    = Right UNIT
 >       dOpRun [ARG x y,z] = Right $
@@ -253,20 +251,16 @@ Equality rules:
 >   boxOp = Op
 >     { opName = "boxOp"
 >     , opArity = 4
->     , opTy = boxOpTy
+>     , opTyTel = boxOpTy
 >     , opRun = boxOpRun
 >     , opSimp = \_ _ -> empty
 >     } where
->       boxOpTy chev [w,x,y,z] = do
->         (w :=>: wv) <- chev (desc :>: w)
->         (x :=>: xv) <- chev (SET :>: x)
->         (y :=>: yv) <- chev (ARR xv SET :>: y)
->         (z :=>: zv) <- chev (descOp @@ [wv,xv] :>: z)
->         return ([ w :=>: wv
->                 , x :=>: xv
->                 , y :=>: yv
->                 , z :=>: zv ]
->                , SET)
+>       boxOpTy =
+>         "w" :<: desc :-: \w ->
+>         "x" :<: SET :-: \x ->
+>         "y" :<: ARR x SET :-: \y ->
+>         "z" :<: (descOp @@ [w,x]) :-: \z ->
+>         RET SET
 >       boxOpRun :: [VAL] -> Either NEU VAL
 >       boxOpRun [DONE   ,d,p,v] = Right UNIT
 >       boxOpRun [ARG a f,d,p,v] = Right $ opRunArgTerm
@@ -345,25 +339,19 @@ Equality rules:
 >   mapBoxOp = Op
 >     { opName = "mapBoxOp"
 >     , opArity = 5
->     , opTy = mapBoxOpTy
+>     , opTyTel = mapBoxOpTy
 >     , opRun = mapBoxOpRun
 >     , opSimp = \_ _ -> empty
 >     } where
->       mapBoxOpTy chev [x,d,bp,p,v] = do 
->           (x :=>: xv) <- chev (desc :>: x)
->           (d :=>: dv) <- chev (SET :>: d)
->           (bp :=>: bpv) <- chev (ARR dv SET :>: bp)
->           (p :=>: pv) <- chev (PI dv (eval [.bpv. L $ "" :. 
->                                                 [.y. N (V bpv :$ A (NV y))]
->                                               ] $ B0 :< bpv)
->                                 :>: p)
->           (v :=>: vv) <- chev (descOp @@ [xv,dv] :>: v)
->           return ([ x :=>: xv
->                   , d :=>: dv
->                   , bp :=>: bpv
->                   , p :=>: pv
->                   , v :=>: vv ]
->                  , boxOp @@ [xv,dv,bpv,vv])
+>       mapBoxOpTy =  
+>         "x" :<: desc :-: \x ->
+>         "d" :<: SET :-: \d ->
+>         "bp" :<: ARR x SET :-: \bp ->
+>         "p" :<: (PI d (eval [.bp. L $ "" :. 
+>                               [.y. N (V bp :$ A (NV y))]
+>                             ] $ B0 :< bp)) :-: \p ->
+>         "v" :<: (descOp @@ [w,x]) :-: \v ->
+>          RET (boxOp @@ [x,d,bp,v])
 >       mapBoxOpRun :: [VAL] -> Either NEU VAL
 >       mapBoxOpRun [DONE,d,bp,p,v] = Right VOID
 >       mapBoxOpRun [ARG a f,d,bp,p,v] = Right $ mapBoxArgTerm
@@ -473,20 +461,16 @@ Equality rules:
 >   elimOp = Op
 >     { opName = "elimOp"
 >     , opArity = 4
->     , opTy = elimOpTy
+>     , opTyTel = elimOpTy
 >     , opRun = elimOpRun
 >     , opSimp = \_ _ -> empty
 >     } where
->       elimOpTy chev [d,v,bp,p] = do
->         (d :=>: dv) <- chev (desc :>: d)
->         (v :=>: vv) <- chev (MU Nothing dv :>: v)
->         (bp :=>: bpv) <- chev (ARR (MU Nothing dv) SET :>: bp)
->         (p :=>: pv) <- chev (elimOpMethodType $$ A dv $$ A bpv :>: p)
->         return ([ d :=>: dv
->                 , v :=>: vv 
->                 , bp :=>: bpv
->                 , p :=>: pv ]
->                 , bpv $$ A vv)
+>       elimOpTy = 
+>         "d" :<: desc :-: \d ->
+>         "v" :<: (MU Nothing) :-: \v ->
+>         "bp" :<: (ARR (MU Nothing d) SET) :-: \bp ->
+>         "p" :<: (elimOpMethodType $$ A d $$ A bp) :-: \p ->
+>         RET (bp $$ A v)
 >       elimOpRun :: [VAL] -> Either NEU VAL
 >       elimOpRun [d,CON v,bp,p] = Right $ elimOpTerm
 >                                              $$ A d $$ A bp $$ A p $$ A v
@@ -519,18 +503,15 @@ Equality rules:
 >   switchDOp = Op
 >     { opName = "SwitchD"
 >     , opArity = 3
->     , opTy = sOpTy
+>     , opTyTel = sOpTy
 >     , opRun = sOpRun
 >     , opSimp = \_ _ -> empty
 >     } where
->         sOpTy chev [e , b, x] = do
->           (e :=>: ev) <- chev (enumU :>: e)
->           (b :=>: bv) <- chev (branchesOp @@ [ev , L (K desc) ] :>: b)
->           (x :=>: xv) <- chev (ENUMT ev :>: x)
->           return $ ([ e :=>: ev
->                     , b :=>: bv
->                     , x :=>: xv ] 
->                     , desc)
+>         sOpTy = 
+>           "e" :<: enumU :-: \e ->
+>           "b" :<: (branchesOp @@ [e , L (K desc) ]) :-: \b ->
+>           "x" :<: ENUMT e :-: \x ->
+>           RET desc
 >         sOpRun :: [VAL] -> Either NEU VAL
 >         sOpRun [CONSE t e' , ps , ZE] = Right $ ps $$ Fst
 >         sOpRun [CONSE t e' , ps , SU n] = Right $
@@ -543,19 +524,17 @@ Equality rules:
 >   mapOp = Op
 >     { opName  = "map"
 >     , opArity = 5
->     , opTy    = mapOpTy
+>     , opTyTel    = mapOpTy
 >     , opRun   = mapOpRun
 >     , opSimp  = mapOpSimp
 >     } where
->         mapOpTy chev [d, a, b, f, x] = do
->           dd@(d :=>: dv) <- chev (desc :>: d)
->           aa@(a :=>: av) <- chev (SET :>: a)
->           bb@(b :=>: bv) <- chev (SET :>: b)
->           ff@(f :=>: fv) <- chev (ARR av bv :>: f)
->           xx@(x :=>: xv) <- chev (descOp @@ [dv, av] :>: x)
->           return ([dd, aa, bb, ff, xx], descOp @@ [dv, bv])
->         mapOpTy _ xs = throwError ["mapOp: arity mismatch: " ++
->                        show (length xs) ++ " should be 5"]
+>         mapOpTy = 
+>           "d" :<: desc :-: \d -> 
+>           "a" :<: SET :-: \a ->
+>           "b" :<: SET :-: \b ->
+>           "f" :<: ARR a b :-: \f ->
+>           "x" :<: (descOp @@ [d, a]) :-: \x -> 
+>           RET (descOp @@ [d, b])
 >
 >         mapOpRun :: [VAL] -> Either NEU VAL
 >         mapOpRun [DONE,    a, b, f, x] = Right VOID
