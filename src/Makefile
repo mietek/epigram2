@@ -32,6 +32,10 @@ Epitome.dvi : Epitome.tex
 Epitome.tex : $(SRCS) stuff.fmt
 	lhs2TeX --poly Epitome.lhs > Epitome.tex
 
+tome:
+	lhs2TeX --poly Epitome.lhs > Epitome.tex
+	pdflatex Epitome
+
 # Standard suffix rules
 .o.hi:
 	@:
