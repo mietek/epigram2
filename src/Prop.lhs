@@ -105,6 +105,8 @@ Equality rules:
 >   Trivial :: Can t
 >   Absurd  :: Can t
 >   Box     :: Irr t -> Can t
+>   Inh     :: t -> Can t
+>   Wit     :: t -> Can t
 
 Elim forms inherited from elsewhere
 
@@ -116,6 +118,8 @@ Elim forms inherited from elsewhere
 >   traverse _ Trivial   = (|Trivial|)
 >   traverse _ Absurd    = (|Absurd|)
 >   traverse f (Box p)   = (|Box (traverse f p)|)
+>   traverse f (Inh ty)  = (|Inh (f ty)|)
+>   traverse f (Wit t)   = (|Wit (f t)|)
 
 > import -> CanPats where
 >   pattern PROP        = C Prop
@@ -127,6 +131,8 @@ Elim forms inherited from elsewhere
 >   pattern TRIVIAL     = C Trivial
 >   pattern ABSURD      = C Absurd
 >   pattern BOX p       = C (Box p)
+>   pattern INH ty      = C (Inh ty)
+>   pattern WIT t       = C (Wit t)
 
 > import -> DisplayCanPats where
 >   pattern DPROP        = DC Prop
@@ -160,29 +166,22 @@ Elim forms inherited from elsewhere
 >   pretty (Box (Irr p))  = parens (text "Box" <+> pretty p)
 
 > import -> CanTyRules where
->   canTy _   (Set :>: Prop)           = return Prop
->   canTy chev  (Set :>: Prf p)         = do
->     ppv@(p :=>: pv) <- chev (PROP :>: p)
->     return $ Prf ppv
->   canTy chev  (Prop :>: All s p)       = do
->     ssv@(s :=>: sv) <- chev (SET :>: s)
->     ppv@(p :=>: pv) <- chev (ARR sv PROP :>: p)
+>   canTy _   (Set :>: Prop) = return Prop
+>   canTy chev  (Set :>: Prf p) = (|Prf (chev (PROP :>: p))|)
+>   canTy chev  (Prop :>: All s p) = do
+>     ssv@(_ :=>: sv) <- chev (SET :>: s)
+>     ppv <- chev (ARR sv PROP :>: p)
 >     return $ All ssv ppv
->   canTy chev  (Prop :>: And p q)       = do
->     ppv@(p :=>: pv) <- chev (PROP :>: p)
->     qqv@(q :=>: qv) <- chev (PROP :>: q)
->     return $ And ppv qqv
->   canTy _  (Prop :>: Trivial)       = return Trivial
->   canTy _   (Prop :>: Absurd)        = return Absurd
->   canTy chev  (Prf p :>: Box (Irr x))  = do
->     xxv@(x :=>: xv) <- chev (PRF p :>: x)
->     return $ Box (Irr (xxv))
->   canTy chev (Prf (AND p q) :>: Pair x y)   = do
->     xxv@(x :=>: xv) <- chev (PRF p :>: x)
->     yyv@(y :=>: yv) <- chev (PRF q :>: y)
->     return $ Pair xxv yyv
->   canTy _   (Prf TRIVIAL :>: Void)       = return Void
-
+>   canTy chev  (Prop :>: And p q) = 
+>     (|And (chev (PROP :>: p)) (chev (PROP :>: q))|)
+>   canTy _  (Prop :>: Trivial) = return Trivial
+>   canTy _   (Prop :>: Absurd) = return Absurd
+>   canTy chev  (Prf p :>: Box (Irr x)) = (|(Box . Irr) (chev (PRF p :>: x))|)
+>   canTy chev (Prf (AND p q) :>: Pair x y) = do
+>     (|Pair (chev (PRF p :>: x)) (chev (PRF q :>: y))|)
+>   canTy _   (Prf TRIVIAL :>: Void) = return Void
+>   canTy chev (Prop :>: Inh ty) = (|Inh (chev (SET :>: ty))|)
+>   canTy chev (Prf (INH ty) :>: Wit t) = (|Wit (chev (ty :>: t))|)
 
 > import -> ElimTyRules where
 >   elimTy chev (f :<: Prf (ALL p q))      (A e)  = do
