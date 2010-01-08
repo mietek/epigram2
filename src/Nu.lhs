@@ -53,5 +53,5 @@
 
 > import -> ElimComputation where
 >   COIT d sty f s $$ Out = mapOp @@ [d, sty, NU d,
->     L . HF "s" $ \ d -> COIT d sty f s,
+>     L . HF "s" $ \ s -> COIT d sty f s,
 >     f $$ A s]
