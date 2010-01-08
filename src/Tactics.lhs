@@ -149,7 +149,7 @@ corresponds to beta-quoting |val| with |ref|. Then, well, we put that
 under a lambda and we are discharged.
 
 > discharge :: Rooty m => REF -> VAL -> m VAL
-> discharge ref val = (| (L . (H B0 "discharge")) 
+> discharge ref val = (| ((\x -> eval x B0) . L . ("discharge" :.)) 
 >                        (bquote (B0 :< ref) val) |)
 
 As mentioned above, we should not forget that |Tac| is in |Rooty|: we
