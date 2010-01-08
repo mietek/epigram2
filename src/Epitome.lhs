@@ -46,7 +46,6 @@
 %include Enum.lhs
 %include Sigma.lhs
 %include Prop.lhs
-%include Containers.lhs
 %include Desc.lhs
 %include Equality.lhs
 
