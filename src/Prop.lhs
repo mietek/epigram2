@@ -200,9 +200,23 @@ Elim forms inherited from elsewhere
 >             , opRun = \ [N z, ty] -> Left z
 >             , opSimp = \_ _ -> empty
 >             }
+>   inhEOp = Op { opName = "inhOp"
+>               , opArity = 4
+>               , opTyTel = "S" :<: SET :-: \ ty ->
+>                           "p" :<: INH ty :-: \ p ->
+>                           "P" :<: IMP (PRF (INH ty)) PROP :-: \ pred ->
+>                           "m" :<: PI ty (L $ HF "s" $ \ t -> 
+>                                            pred $$ A (WIT t)) :-: \ _ -> 
+>                           Ret (PRF (pred $$ A p))
+>               , opRun = \[_,p,_,m] -> case p of
+>                                         WIT t -> Right $ m $$ A t
+>                                         N n   -> Left n
+>               , opSimp = \_ _ -> empty
+>               }
 
 > import -> Operators where
 >   nEOp :
+>   inhEOp :
 
 > import -> EtaExpand where
 >   etaExpand (Prf p :>: x) r = Just (BOX (Irr (inQuote (PRF p :>: x) r)))
