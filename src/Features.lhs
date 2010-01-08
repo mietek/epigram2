@@ -24,6 +24,7 @@ current version of the system.
 > import Equality
 > import FreeMonad
 > import Nu
+> import INu
 > import Labelled
 > import Quotient
 
