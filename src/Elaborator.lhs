@@ -194,8 +194,8 @@ the term, then checking the inferred type is what we pushed in.
 > elaborate top (w :>: DN n) = do
 >   (y :>: n) <- elabInfer n
 >   eq <- withRoot (equal (SET :>: (w, y)))
->   guard eq `replaceError` ("elaborate: inferred type " ++ show y ++ " of " ++ show n
->                              ++ " is not " ++ show w)
+>   guard eq `replaceError` ("elaborate: inferred type\n" ++ show y ++ "\nof\n" ++ show n
+>                              ++ "\nis not\n" ++ show w)
 >   return (N n :=>: evTm (N n))
 
 
