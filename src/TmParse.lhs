@@ -152,6 +152,12 @@ defined in Section~\ref{sec:language}.
 > specialInDTm AndSize =
 >     (|DPRF (%keyword ":-"%) (sizedInDTm AndSize)
 >      |(DMU Nothing) (%keyword "Mu"%) (sizedInDTm ArgSize)
+>      |(DIMU Nothing) (%keyword "IMu"%) (sizedInDTm ArgSize) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
+>      |DIDESC (%keyword "IDesc"%) (sizedInDTm ArgSize)
+>      |DIDONE (%keyword "IDone"%) (sizedInDTm ArgSize)
+>      |DIARG (%keyword "IArg"%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
+>      |DIIND1 (%keyword "IInd1"%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
+>      |DIIND (%keyword "IND"%) (sizedInDTm ArgSize) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
 >      |DNU (%keyword "Nu"%) (sizedInDTm ArgSize)
 >      |(DCOIT DVOID) (%keyword "CoIt"%)
 >         (sizedInDTm ArgSize) (sizedInDTm ArgSize) (sizedInDTm ArgSize)

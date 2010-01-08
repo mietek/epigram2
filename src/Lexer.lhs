@@ -160,6 +160,7 @@ grammar!
 >            , "TT", "FF"
 >            , "<->", ":->", ":=>"
 >            , "Mu", "Nu", "CoIt", "Monad", "'"
+>            , "IDesc" , "IMu", "IDone", "IArg", "IInd1", "IInd"
 >            ]
 
 To implement |parseKeyword|, this is simply a matter of filtering by

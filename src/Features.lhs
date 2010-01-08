@@ -20,7 +20,7 @@ current version of the system.
 > import Sigma
 > import Prop
 > import Desc
-> import DDesc
+> import IDesc
 > import Equality
 > import FreeMonad
 > import Nu

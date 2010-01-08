@@ -65,6 +65,10 @@ Equality rules:
 >   canTy _  (Set :>: UId)    = return UId
 >   canTy _  (UId :>: Tag s)  = return (Tag s)
 
+> import -> HalfZipCan where
+>   halfZip UId UId = Just UId
+>   halfZip (Tag s) (Tag s') | s == s' = Just (Tag s)
+
 > import -> OpRunEqGreen where
 >   opRunEqGreen [UID,TAG s1,UID,TAG s2] | s1 == s2 = Right $ TRIVIAL
 >   opRunEqGreen [UID,TAG _,UID,TAG _] = Right $ ABSURD
