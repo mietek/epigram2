@@ -49,7 +49,7 @@ Extending Desc:
    that is used to simplify neutral operator applications; thus operators preserve
    relevant laws for neutral terms, so they hold definitionally. (DONE)
 0 Ulf: simplification for map. (DONE)
-1 Ulf: simplification for subst.
+0 Ulf: simplification for subst. (DONE)
 
 Compilation:
 0 Edwin: Integrate lambda-lifting phase. (DONE)

@@ -159,7 +159,7 @@ grammar!
 >            , "\\", "->", "=>", "==", "&&", ":-", ":=", "?"
 >            , "TT", "FF"
 >            , "<->", ":->", ":=>"
->            , "Mu", "Nu", "CoIt", "Monad", "'"
+>            , "Mu", "Nu", "CoIt", "Monad", "'", "Quotient"
 >            , "IDesc" , "IMu", "IDone", "IArg", "IInd1", "IInd"
 >            ]
 

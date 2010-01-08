@@ -18,7 +18,7 @@ make add := (\ X a b -> @ [`add a b]) : (X : *) -> Expr X -> Expr X -> Expr X ;
 
 make xplusx := add Nat (var Nat (suc zero)) (var Nat (suc zero)) : Expr Nat ;
 make plus11 :=
-  subst (ExprD, Nat, { }, num { }, xplusx) : Expr { } ;
+  subst (ExprD, Nat, {}, num {}, xplusx) : Expr {} ;
 
 make eval : Expr {} -> Nat ;
 lambda t ;

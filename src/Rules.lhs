@@ -682,9 +682,10 @@ constructors to make them easier to swallow.
 >          operators) ++
 
 
-\subsection{Bootstrapping Desc in Desc}
+\subsection{Definitions from feature files}
 
 > import <- BootstrapDesc
+> import <- QuotientDefinitions
 
 \subsection{Observational Equality}
 

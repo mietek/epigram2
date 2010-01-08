@@ -133,6 +133,8 @@ As some more syntactic sugar, we let inductive types elaborate lists (so |[]| be
 > elaborate b (MU l d :>: (DPAIR s t)) = elaborate b (MU l d :>: DCON (DPAIR (DSU DZE) (DPAIR s t)))
 
 > elaborate b (MONAD d x :>: DCON t) = elaborate b (MONAD d x :>: DCOMPOSITE t)
+> elaborate b (QUOTIENT a r p :>: DPAIR x DVOID) =
+>   elaborate b (QUOTIENT a r p :>: DCLASS x)
 
 To elaborate a tag with an enumeration as its type, we search for the tag in the enumeration
 to determine the appropriate index.

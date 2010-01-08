@@ -162,6 +162,7 @@ defined in Section~\ref{sec:language}.
 >      |(DCOIT DVOID) (%keyword "CoIt"%)
 >         (sizedInDTm ArgSize) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
 >      |DMONAD (%keyword "Monad"%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
+>      |DQUOTIENT (%keyword "Quotient"%) (sizedInDTm ArgSize) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
 >      |)
 
 > specialInDTm PiSize =

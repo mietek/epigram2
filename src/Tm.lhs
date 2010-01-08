@@ -227,6 +227,12 @@ is not clear now, it should become clear after the definition of
 > pity (Ret t)          = t
 > pity (x :<: s :-: t)  = PI s (L (HF x $ pity . t))
 
+Build a forall from a telescope.
+
+> allty :: TEL VAL -> VAL
+> allty (Ret t)          = t
+> allty (x :<: s :-: t)  = ALL s (L (HF x $ allty . t))
+
 
 > data Op = Op
 >   { opName  :: String
