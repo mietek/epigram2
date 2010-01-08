@@ -344,12 +344,3 @@ Frankenstein operation of these three parts:
 >     applyElim eliminator motive methods deltas
 
 
-
-A small function to retrieve our scope. This might as well go in
-@ProofState@ if this is sufficiently useful:
-
-> getBoys = do  
->     auncles <- getAuncles
->     return $ foldMap boy auncles 
->    where boy (E r _ (Boy _) _)  = [r]
->          boy _ = []

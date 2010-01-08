@@ -212,6 +212,12 @@ updated information, providing a friendlier interface than |get| and |put|.
 > getGreatAuncles :: ProofState Entries
 > getGreatAuncles = get >>= return . greatAuncles
 
+> getBoys = do  
+>     auncles <- getAuncles
+>     return $ foldMap boy auncles 
+>    where boy (E r _ (Boy _) _)  = [r]
+>          boy _ = []
+
 > getHoleGoal :: ProofState (INTM :=>: TY)
 > getHoleGoal = do
 >     GirlMother (_ := HOLE :<: _) _ _ <- getMother
