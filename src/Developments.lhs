@@ -262,32 +262,3 @@ in the list of entries, and produces |SET| when it encounters a $\Pi$-boy.
 > inferGoalType (es :< E _ (x,_)  (Boy PIB)   s)  SET      = inferGoalType es SET
 > inferGoalType (es :< _)                         t        = inferGoalType es t
 
-\subsection{Traversal}
-
-A |Dev| is not truly |Traversable|, but it supports |traverse|-like operations that update
-its references:
-
-> traverseDev :: (Applicative f, Traversable g) => (REF -> f REF) -> (Dev g) -> f (Dev g)
-> traverseDev f (es, t, r) = 
->   (|(\x y z -> (x,y,z)) (traverse (traverseEntry f) es) (traverseTip f t) ~r|)
-
-> traverseTip :: Applicative f => (REF -> f REF) -> Tip -> f Tip
-> traverseTip f Module                   = pure Module
-> traverseTip f (Unknown (t :=>: v))     = (|Unknown (|traverse f t :=>: traverseVal f v|)|)
-> traverseTip f (Defined tm (t :=>: v))  =
->   (|Defined (traverse f tm) (|traverse f t :=>: traverseVal f v|)|)
-
-> traverseEntry :: (Applicative f, Traversable g) => (REF -> f REF) -> (Entry g) -> f (Entry g)
-> traverseEntry f (E r (x,i) e t) = (|E (f r) (pure (x,i)) (traverseEntity f e) (traverse f t)|)
-
-> traverseEntity :: (Applicative f, Traversable g) => (REF -> f REF) -> (Entity g) -> f (Entity g)
-> traverseEntity f (Boy bk)     = (|Boy (traverseBK f bk)|)
-> traverseEntity f (Girl gk dv) = (|Girl (traverseGK f gk) (traverseDev f dv)|)
-
-> traverseBK :: Applicative f => (REF -> f REF) -> BoyKind -> f BoyKind
-> traverseBK f ALAB = pure ALAB
-> traverseBK f LAMB = pure LAMB
-> traverseBK f PIB =  pure PIB
-
-> traverseGK :: Applicative f => (REF -> f REF) -> GirlKind -> f GirlKind
-> traverseGK f LETG = pure LETG
