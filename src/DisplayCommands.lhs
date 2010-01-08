@@ -8,6 +8,7 @@
 > module DisplayCommands where
 
 > import Control.Applicative hiding (empty)
+> import Control.Monad.State
 > import Text.PrettyPrint.HughesPJ
 
 > import BwdFwd hiding ((<+>))
@@ -62,37 +63,45 @@ representation of the resulting type.
 
 
 The |infoHypotheses| command displays a distilled list of things in the context.
+This is written using a horrible imperative hack that saves the state, throws
+away bits of the context to produce an answer, then restores the saved state.
 
 > infoHypotheses :: ProofState String
 > infoHypotheses = do
->     n <- getMotherName
+>     save <- get
 >     aus <- getAuncles
 >     me <- getMotherName
->     ds <- many (hypsHere aus me <* goOut)
+>     ds <- many (hypsHere aus me <* optional killCadets <* goOut <* removeDevEntry)
 >     d <- hypsHere aus me
->     goTo n
+>     put save
 >     return (show (vcat (d:reverse ds)))
 >  where
 >    hypsHere :: Entries -> Name -> ProofState Doc
 >    hypsHere aus me = do
->      es <- getDevEntries
->      d <- hyps aus me
->      putDevEntries es
->      return d
+>        es <- getDevEntries
+>        d <- hyps aus me
+>        putDevEntries es
+>        return d
+>    
+>    killCadets = do
+>        l <- getLayer
+>        replaceLayer (l { cadets = NF F0 })
 >
 >    hyps :: Entries -> Name -> ProofState Doc
 >    hyps aus me = do
 >        es <- getDevEntries
 >        case es of
 >            B0 -> return empty
->            (es' :< E ref _ (Boy k) ty) -> do
+>            (es' :< E ref _ (Boy k) _) -> do
 >                putDevEntries es'
->                docTy <- prettyHere (SET :>: ty)
+>                ty' <- bquoteHere (pty ref)
+>                docTy <- prettyHere (SET :>: ty')
 >                d <- hyps aus me
 >                return (d $$ prettyBKind k (text (christenREF aus me ref) <+> text ":" <+> docTy))
->            (es' :< E ref _ (Girl LETG d) ty) -> do
+>            (es' :< E ref _ (Girl LETG d) _) -> do
 >                goIn
->                docTy <- prettyHere (SET :>: ty)
+>                ty' <- bquoteHere (pty ref)
+>                docTy <- prettyHere (SET :>: ty')
 >                goOut
 >                putDevEntries es'
 >                d <- hyps aus me
