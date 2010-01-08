@@ -108,5 +108,10 @@ relation over |A|.
 >   opRunEqGreen [QUOTIENT a r _, N x, QUOTIENT b s _, _]   = Left x
 >   opRunEqGreen [QUOTIENT a r _, _,   QUOTIENT b s _, N y] = Left y
 
+> import -> Coerce where
+>   coerce (Quotient (_X, _Y) _ _) q (CLASS x) = Right $
+>     CLASS (coe @@ [_X, _Y, q $$ Fst, x])
+>   coerce (Quotient _ _ _) _ (N n) = Left n
+
 %endif
 
