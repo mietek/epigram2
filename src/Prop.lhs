@@ -150,6 +150,8 @@ Elim forms inherited from elsewhere
 >   pattern DTRIVIAL     = DC Trivial
 >   pattern DABSURD      = DC Absurd
 >   pattern DBOX p       = DC (Box p)
+>   pattern DINH ty      = DC (Inh ty)
+>   pattern DWIT t       = DC (Wit t)
 
 > import -> SugarTactics where
 >   propTac = can Prop
@@ -170,6 +172,8 @@ Elim forms inherited from elsewhere
 >   pretty Trivial        = text "TT"
 >   pretty Absurd         = text "FF"
 >   pretty (Box (Irr p))  = parens (text "Box" <+> pretty p)
+>   pretty (Inh ty)       = parens (text "Inh" <+> pretty ty)
+>   pretty (Wit t)        = parens (text "wit" <+> pretty t)
 
 > import -> CanTyRules where
 >   canTy _   (Set :>: Prop) = return Prop

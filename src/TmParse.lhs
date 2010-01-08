@@ -159,6 +159,8 @@ defined in Section~\ref{sec:language}.
 >      |DIIND1 (%keyword "IInd1"%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
 >      |DIIND (%keyword "IND"%) (sizedInDTm ArgSize) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
 >      |DNU (%keyword "Nu"%) (sizedInDTm ArgSize)
+>      |DINH (%keyword "Inh"%) (sizedInDTm ArgSize)
+>      |DWIT (%keyword "wit"%) (sizedInDTm ArgSize)
 >      |(DCOIT DVOID) (%keyword "CoIt"%)
 >         (sizedInDTm ArgSize) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
 >      |DMONAD (%keyword "Monad"%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
