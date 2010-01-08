@@ -28,5 +28,5 @@ make qel : (X : *)(R : X -> X -> #)(p : :- Equiv X R)
            (m : (x : X) -> P [x]) ->
            :- ((x : X)(y : X) => R x y => (m x : P [x]) == (m y : P [y])) ->
            P z ;
-give (\ X R p z P m h -> qElim(X, R, p, z, P, m, h))
+give (\ X R p z P m h -> qElim(X, R, p, z, P, m, h)) ; root
 
