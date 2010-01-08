@@ -67,7 +67,7 @@
 >     iiv <- chev (iiv :>: i)
 >     return $ IMu (mlv :?=: (Id iiiiv :& Id xxv)) iiv
 >   canTy chev (IMu tt@(_ :?=: (Id ii :& Id x)) i :>: Con y) = do
->     yyv <- chev (descOp @@ [ ii
+>     yyv <- chev (idescOp @@ [ ii
 >                            , x $$ A i 
 >                            , L $ HF "i" $ \i -> C (IMu tt i)
 >                            ] :>: y)
@@ -237,3 +237,50 @@
 >                   ])
 >       elimOpRun [_,N x, _,_] = Left x
 
+>   imapOp = Op
+>     { opName  = "imap"
+>     , opArity = 5
+>     , opTyTel    = mapOpTy
+>     , opRun   = mapOpRun
+>     , opSimp  = undefined 
+>     } where
+>         mapOpTy = 
+>           "iI" :<: SET :-: \iI ->
+>           "d" :<: IDESC iI :-: \d -> 
+>           "a" :<: ARR iI SET :-: \a ->
+>           "b" :<: ARR iI SET :-: \b ->
+>           "f" :<: PI iI (L (HF "i" $ \i -> ARR (a $$ A i) (b $$ A i))) 
+>                     :-: \f ->
+>           "x" :<: (descOp @@ [iI, d, a]) :-: \x -> 
+>           Ret (descOp @@ [iI, d, b])
+>
+>         mapOpRun :: [VAL] -> Either NEU VAL
+>         mapOpRun [iI,IDONE _,    a, b, f, x] = Right x
+>         mapOpRun [iI,IARG s d, a, b, f, x] = Right $
+>                 PAIR (x $$ Fst)
+>                      (mapOp @@ [iI, d $$ A (x $$ Fst), a, b, f, x $$ Snd])
+>         mapOpRun [iI,IIND h hi d, a, b, f, x] = Right $
+>                 PAIR (L $ HF "h" $ \h -> f $$ A (hi $$ A h) 
+>                                            $$ A (x $$ Fst $$ A h))
+>                      (mapOp @@ [iI, d, a, b, f, x $$ Snd])
+>         mapOpRun [iI,IIND1 i d,  a, b, f, x] = Right $
+>                 PAIR (f $$ A i $$ A (x $$ Fst))
+>                      (mapOp @@ [iI, d, a, b, f, x $$ Snd])
+>         mapOpRun [iI,N d,        a, b, f, x] = Left d
+> 
+>         mapOpSimp :: Alternative m => [VAL] -> Root -> m NEU
+>         mapOpSimp [iI, d, a, b, f, N x] r
+>           | equal (PI iI (L (HF "i" $ \i -> ARR (a $$ A i) (b $$ A i))) 
+>                      :>: (f, identity)) r = pure x
+>           where
+>             identity = L (HF "i" (\_ -> L (HF "x" (\x -> x))))
+>         mapOpSimp [iI, d, _, c, f, N (mOp :@ [_ , _, a, _, g, N x])] r
+>           | mOp == mapOp = mapOpSimp args r <|> pure (mapOp :@ args)
+>           where
+>             comp f g = 
+>                L (HF "i" $ \i -> 
+>                  L (HF "x" $ \x -> f $$ A i $$ A (g $$ A i $$ A x)))
+>             args = [iI, d, a, c, comp f g, N x]
+>         mapOpSimp _ _ = empty
+
+> 
