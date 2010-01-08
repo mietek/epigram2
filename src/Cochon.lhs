@@ -3,7 +3,8 @@
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE TypeOperators, TypeSynonymInstances, GADTs #-}
+> {-# LANGUAGE TypeOperators, TypeSynonymInstances, GADTs,
+>     DeriveFunctor, DeriveFoldable, DeriveTraversable #-}
 
 > module Cochon where
 
@@ -100,21 +101,8 @@ Here we have a very basic command-driven interface to the proof state monad.
 >            |  Prev | Next | First | Last
 >     deriving Show
 
-> data ShowC x = Auncles | Context | Dump | Hypotheses | Term x
->     deriving Show
-
-> instance Traversable ShowC where
->     traverse f Auncles     = (| Auncles |)
->     traverse f Context     = (| Context |)
->     traverse f Dump        = (| Dump |)
->     traverse f Hypotheses  = (| Hypotheses |)
->     traverse f (Term x)    = (| Term (f x) |)
-
-> instance Functor ShowC where
->     fmap = fmapDefault
-
-> instance Foldable ShowC where
->     foldMap = foldMapDefault
+> data ShowC x = Auncles | Context | Dump | Hypotheses | StateC | Term x
+>     deriving (Show, Functor, Foldable, Traversable)
 
 > data Command x  =  Apply
 >                 |  DoneC
@@ -206,6 +194,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >         "context"  -> (| Context |)
 >         "dump"     -> (| Dump |)
 >         "hyps"     -> (| Hypotheses |)
+>         "state"    -> (| StateC |)
 >         "term"     -> (| Term pInDTm |)
 >         _          -> empty
 
@@ -240,12 +229,13 @@ Here we have a very basic command-driven interface to the proof state monad.
 > evalCommand (ModuleC s)     = makeModule s      >> return "Made module."
 > evalCommand (PiBoy x ty)    = elabPiBoy (x :<: ty)  >> return "Made pi boy!"
 > evalCommand (Select (DN (DP r)))      = select (N (P r))          >> return "Selected."
-> evalCommand (Show Auncles)  = infoAuncles
-> evalCommand (Show Context)  = prettyProofState 
-> evalCommand (Show Dump)     = infoDump
-> evalCommand (Show Hypotheses)  = infoHypotheses 
+> evalCommand (Show Auncles)     = infoAuncles
+> evalCommand (Show Context)     = infoContext 
+> evalCommand (Show Dump)        = infoDump
+> evalCommand (Show Hypotheses)  = infoHypotheses
+> evalCommand (Show StateC)       = prettyProofState 
 > evalCommand (Show (Term x))    = return (show x)
-> evalCommand Ungawa          = ungawa            >> return "Ungawa!"
+> evalCommand Ungawa             = ungawa            >> return "Ungawa!"
 
 > doCommand :: Command InDTmRN -> ProofState String
 > doCommand c = do

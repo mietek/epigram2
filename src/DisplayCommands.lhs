@@ -62,12 +62,16 @@ representation of the resulting type.
 > infoInfer _ = throwError' "infoInfer: can only infer the type of neutral terms."
 
 
-The |infoHypotheses| command displays a distilled list of things in the context.
+The |infoContextual| command displays a distilled list of things in the context,
+boys if the argument is False or girls if the argument is True.
 This is written using a horrible imperative hack that saves the state, throws
 away bits of the context to produce an answer, then restores the saved state.
 
-> infoHypotheses :: ProofState String
-> infoHypotheses = do
+> infoHypotheses  = infoContextual False
+> infoContext     = infoContextual True
+
+> infoContextual :: Bool -> ProofState String
+> infoContextual gals = do
 >     save <- get
 >     aus <- getAuncles
 >     me <- getMotherName
@@ -90,15 +94,15 @@ away bits of the context to produce an answer, then restores the saved state.
 >    hyps :: Entries -> Name -> ProofState Doc
 >    hyps aus me = do
 >        es <- getDevEntries
->        case es of
->            B0 -> return empty
->            (es' :< E ref _ (Boy k) _) -> do
+>        case (gals, es) of
+>            (_, B0) -> return empty
+>            (False, es' :< E ref _ (Boy k) _) -> do
 >                putDevEntries es'
 >                ty' <- bquoteHere (pty ref)
 >                docTy <- prettyHere (SET :>: ty')
 >                d <- hyps aus me
 >                return (d $$ prettyBKind k (text (christenREF aus me ref) <+> text ":" <+> docTy))
->            (es' :< E ref _ (Girl LETG _) _) -> do
+>            (True, es' :< E ref _ (Girl LETG _) _) -> do
 >                goIn
 >                es <- getDevEntries
 >                (ty :=>: _) <- getGoal "hyps"
@@ -108,7 +112,7 @@ away bits of the context to produce an answer, then restores the saved state.
 >                putDevEntries es'
 >                d <- hyps aus me
 >                return (d $$ (text (christenREF aus me ref) <+> text ":" <+> docTy))
->            (es' :< _) -> putDevEntries es' >> hyps aus me
+>            (_, es' :< _) -> putDevEntries es' >> hyps aus me
 
 
 The |prettyHere| command distills a term in the current context,
