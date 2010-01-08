@@ -209,7 +209,7 @@ Elim forms inherited from elsewhere
 >   inhEOp = Op { opName = "inhOp"
 >               , opArity = 4
 >               , opTyTel = "S" :<: SET :-: \ ty ->
->                           "p" :<: INH ty :-: \ p ->
+>                           "p" :<: PRF (INH ty) :-: \ p ->
 >                           "P" :<: IMP (PRF (INH ty)) PROP :-: \ pred ->
 >                           "m" :<: PI ty (L $ HF "s" $ \ t -> 
 >                                            pred $$ A (WIT t)) :-: \ _ -> 
