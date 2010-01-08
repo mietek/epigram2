@@ -98,9 +98,11 @@ away bits of the context to produce an answer, then restores the saved state.
 >                docTy <- prettyHere (SET :>: ty')
 >                d <- hyps aus me
 >                return (d $$ prettyBKind k (text (christenREF aus me ref) <+> text ":" <+> docTy))
->            (es' :< E ref _ (Girl LETG d) _) -> do
+>            (es' :< E ref _ (Girl LETG _) _) -> do
 >                goIn
->                ty' <- bquoteHere (pty ref)
+>                es <- getDevEntries
+>                (ty :=>: _) <- getGoal "hyps"
+>                ty' <- bquoteHere (evTm (inferGoalType es ty))
 >                docTy <- prettyHere (SET :>: ty')
 >                goOut
 >                putDevEntries es'
