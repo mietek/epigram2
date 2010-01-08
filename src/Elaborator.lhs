@@ -72,7 +72,7 @@ Here's a case which makes labelled datatypes
 >     let lv = evTm lt
 >     (iI :=>: iIv) <- elaborate False (SET :>: iI)
 >     (d :=>: dv) <- elaborate False (ARR iIv (IDESC iIv) :>: d)
->     (i :=>: iv) <- elaborate False (iiv :>: i)
+>     (i :=>: iv) <- elaborate False (iIv :>: i)
 >     lastIsIndex <- withRoot (equal (SET :>: (iv,N (P (last xs)))))
 >     guard lastIsIndex
 >     -- should check i doesn't appear in d (fairly safe it's not in iI :))
