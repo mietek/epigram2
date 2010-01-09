@@ -79,9 +79,14 @@ with a |Dev| that has no type or value).
 > replaceEntryDev e@(E ref xn (Girl LETG _) ty) dev = E ref xn (Girl LETG dev) ty
 > replaceEntryDev (M n _) dev = M n dev
 
-> coerceEntry :: (Traversable f, Traversable g) => Entry f -> Entry g
-> coerceEntry (E ref xn (Boy k) ty) = E ref xn (Boy k) ty
-> coerceEntry _ = error "coerceEntry: only boys can be coerced"
+The |coerceEntry| function attempts to change the type of the |Dev| functor in an
+entry, yielding |Right entry| if this is possible (for boys) or |Left dev| if
+not (for girls and modules).  
+
+> coerceEntry :: (Traversable f, Traversable g) => Entry f -> Either (Dev f) (Entry g)
+> coerceEntry (E ref  xn  (Boy k)          ty)  = Right (E ref xn (Boy k) ty)
+> coerceEntry (E _    _   (Girl LETG dev)  _)   = Left dev
+> coerceEntry (M _ dev)                         = Left dev
 
 We can compare entities for equality by comparing their names.
 

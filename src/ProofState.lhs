@@ -465,17 +465,17 @@ is not in the required form.
 >             Left nb -> do
 >                 replaceLayer l{cadets=NF es}
 >                 goDownAcc acc (mergeNews news nb)
->             Right e -> if entryHasDev e
->               then do
+>             Right e -> case coerceEntry e of
+>               Left (es', tip', root') ->  do
 >                 me <- getMotherEntry
 >                 replaceLayer l{elders=(elders :< me) <+> acc, mother=entryToMother e, cadets=NF es}
->                 let (es, tip', root') = entryDev e
 >                 putDev (B0, tip', root')
->                 news' <- propagateNews True news es
+>                 news' <- propagateNews True news es'
 >                 return ()
->               else do
+>               Right e' -> do
+>                 (news', e'') <- tellEntry news e'
 >                 replaceLayer l{cadets=NF es}
->                 goDownAcc (acc :< coerceEntry e) news
+>                 goDownAcc (acc :< e'') news'
 
 > goTo :: Name -> ProofState ()
 > goTo [] = return ()
@@ -805,7 +805,7 @@ Updating girls is a bit more complicated. We proceed as follows:
 >     news' <- propagateNews False news xs
 >     goOut
 >     Just e' <- removeDevEntry
->     (news'', e'') <- tellGirl news' e'
+>     (news'', e'') <- tellEntry news' e'
 >     putDevEntry e'
 >     propagateNews top news'' (NF es)
 
@@ -823,12 +823,27 @@ merge the two together.
 >   propagateNews top (mergeNews news oldNews) (NF es)
 
 
-> tellEntry :: NewsBulletin -> Entry Bwd -> ProofState (NewsBulletin, Entry Bwd)
-> tellEntry news (M n d) = return (news, M n d)
-> tellEntry news e = tellGirl news e
+The |tellEntry| function informs an entry about a news bulletin that its children
+has already received. 
 
-The |tellGirl| function informs a girl about a news bulletin that her children
-should have already received. It will
+> tellEntry :: NewsBulletin -> Entry Bwd -> ProofState (NewsBulletin, Entry Bwd)
+
+Modules carry no type information, so they are easy:
+
+> tellEntry news (M n d) = return (news, M n d)
+
+To update a boy, we must:
+\begin{enumerate}
+\item update the overall type of the entry, and
+\item update the news bulletin with news about this girl.
+\end{enumerate}
+
+> tellEntry news (E (name := DECL :<: tv) sn (Boy k) ty) = do
+>     let (ty' :=>: tv', n)  = tellNewsEval news (ty :=>: tv)
+>     let ref = name := DECL :<: tv'
+>     return (addNews (ref, n) news, E ref sn (Boy k) ty')
+
+To update a girl, we must:
 \begin{enumerate}
 \item update the tip type (and term, if there is one);
 \item update the overall type of the entry;
@@ -836,8 +851,7 @@ should have already received. It will
 \item update the news bulletin with news about this girl.
 \end{enumerate}
 
-> tellGirl :: NewsBulletin -> Entry Bwd -> ProofState (NewsBulletin, Entry Bwd)
-> tellGirl news (E (name := k :<: tv) sn (Girl LETG (cs, tip, root)) ty) = do
+> tellEntry news (E (name := k :<: tv) sn (Girl LETG (cs, tip, root)) ty) = do
 >     let  (tip', n)       = tellTip news tip
 >          (ty' :=>: tv', n')  = tellNewsEval news (ty :=>: tv)
 >     k' <- case k of
