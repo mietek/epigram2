@@ -239,6 +239,12 @@ Here we have a very basic command-driven interface to the proof state monad.
 > evalCommand (Show StateC)       = prettyProofState 
 > evalCommand (Show (Term x))    = return (show x)
 > evalCommand Ungawa          = ungawa            >> return "Ungawa!"
+> evalCommand (Elim (DN r)) = do 
+>     (elimTy :>: e) <- elabInfer r
+>     elimTyTm <- bquoteHere elimTy
+>     elim Nothing ((elimTyTm :=>: elimTy) :>: (N e :=>: (evTm (N e))))
+>     return ("Elimination occured. Subgoals awaiting work...")
+
 
 > doCommand :: Command InDTmRN -> ProofState String
 > doCommand c = do
