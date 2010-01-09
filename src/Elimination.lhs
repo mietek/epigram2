@@ -110,7 +110,7 @@ eliminator and then making the motive in two phases.
 
 The development transformation is achieved by the following code:
 
-> introElim :: Eliminator -> ProofState [INTM]
+> introElim :: Eliminator -> ProofState (INTM, [INTM])
 > introElim (eType :>: e) = do
 >     -- Jump in a girl (oh!) to chunk (and access) 
 >     -- the types of the eliminator
@@ -132,7 +132,7 @@ The development transformation is achieved by the following code:
 >     -- And goes to the next subproblem, ie. making P
 >     moduleToGoal (goal :=>: (evTm goal))
 >     giveNext $ N $ (termOf e :? termOf eType) $## (p : ms)
->     return ms
+>     return (p, ms)
 >         where unPi :: VAL -> (VAL, VAL)
 >               unPi (PI s t) = (s, t)
 
@@ -240,21 +240,49 @@ consists in chaining the equalities, and ending with the goal:
 
 And we will just have to "give" that term when we are ready.
 
+
+> chunkDelta :: [REF] -> [INTM] -> [Either REF REF]
+> chunkDelta deltas argTypes = map usedInArgs deltas
+>     where usedInArgs r = case r `Data.List.elem` inArgsRef of
+>                            True -> Right r
+>                            False -> Left r
+>           inArgsRef = Data.Foldable.concatMap (foldMap (\x -> [x])) argTypes
+
+> filterDelta1 :: [Either REF REF] -> [REF]
+> filterDelta1 [] = []
+> filterDelta1 ((Left r) : t) = r : filterDelta1 t
+> filterDelta1 (_ : t) = filterDelta1 t
+
+> mkAssocCtxt :: [(REF, Either REF REF)] -> [(REF,REF)]
+> mkAssocCtxt [] = []
+> mkAssocCtxt ((r, Left r') : t) = mkAssocCtxt t
+> mkAssocCtxt ((r, Right r') : t) = (r,r') : mkAssocCtxt t
+
+> renameVars :: INTM -> [(REF,REF)] -> INTM
+> renameVars t assocContext = fmap renameVars' t
+>         where renameVars' r = case lookup r assocContext of
+>                                 Nothing -> r
+>                                 Just r' -> r'
+
 Finally, we can make the motive, that is close that subgoal. This simply
 consists in chaining the commands above, and give the computed term. Unless
 I've screwed up things, |give| should always be happy.
 
-> makeMotive :: VAL -> [REF] -> ProofState INTM
-> makeMotive goal deltas = do
+> makeMotive :: VAL -> [REF] -> [INTM] -> ProofState INTM
+> makeMotive goal deltas argTypes = do
 >     -- Gets the arguments in $\Xi$
 >     xis <- introMotive  
 >     -- Makes the body
 >     -- Starting with |Pi|s on $\Delta$
->     deltasTy <- sequence $ map (bquoteHere . pty) deltas
+>     goalTm <- bquoteHere goal
+>     let deltas01 = chunkDelta deltas argTypes
+>     let goal0 = renameVars goalTm $ mkAssocCtxt $ zip deltas deltas01
+>     let deltas1 = filterDelta1 deltas01
+>     deltasTy <- sequence $ map (bquoteHere . pty) deltas1
 >     deltas <- introInternalCtxt deltasTy
 >     -- Then, make the body of the term
 >     let constraints = mkEqualities $ zip xis deltas
->     let motive = mkTerm constraints goal
+>     let motive = mkTerm constraints (evTm goal0)
 >     -- And give it
 >     motive <- bquoteHere motive
 >     give motive
@@ -334,9 +362,9 @@ sub-goals. Note that |introElim| make a girl and we carefully |goOut| her in
 >     -- Prepare the development by creating subgoals:
 >     --    1/ the motive
 >     --    2/ the methods
->     methods <- introElim eliminator
+>     (motive, methods) <- introElim eliminator
 >     -- Build the motive
->     motive <- makeMotive goal deltas
+>     motive <- makeMotive goal deltas (motive : methods)
 >     -- Leave the development with the methods unimplemented
 >     goOut
 >     return (motive, methods)
