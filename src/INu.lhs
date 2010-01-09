@@ -54,9 +54,10 @@
 >     svv <- chev (styv $$ A iv :>: s)
 >     return (ICoIt ityvv dvv ivv styvv fvv svv)
 
-< import -> CanCompile where
-<   makeBody (INu t) = Ignore
-<   makeBody (ICoIt d _ f s) = App (Var "__icoit") (map makeBody [d,f,s])
+> import -> CanCompile where
+>   makeBody (INu ity d i) = Ignore
+>   makeBody (ICoIt ity d i sty f s) = 
+>     App (Var "__icoit") (map makeBody [d,i,f,s])
 
 > import -> ElimTyRules where
 >   elimTy chev (_ :<: INu ity d iv) Out = 
