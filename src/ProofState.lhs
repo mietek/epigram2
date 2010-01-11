@@ -590,21 +590,6 @@ next goal (if one exists) instead.
 >             return (N (P ref $:$ aunclesToElims (aus <>> F0)))
 >         _  -> throwError' "give: only possible for incomplete goals."
 
-> giveSilently :: INTM -> ProofState ()
-> giveSilently tm = do
->     tip <- getDevTip
->     case tip of         
->         Unknown (tipTyTm :=>: tipTy) -> do
->             putDevTip (Defined tm (tipTyTm :=>: tipTy))
->             aus <- getGreatAuncles
->             sibs <- getDevEntries
->             let tmv = evTm (parBind aus sibs tm)
->             GirlMother (name := _ :<: tyv) xn ty <- getMother
->             let ref = name := DEFN tmv :<: tyv
->             putMother (GirlMother ref xn ty)
->             goOut
->         _  -> throwError' "give: only possible for incomplete goals."
-
 The |lambdaBoy| command checks that the current goal is a $\Pi$-type, and if so,
 appends a $\lambda$-abstraction with the appropriate type to the current development.
 
@@ -675,8 +660,9 @@ current development, after checking that the purported type is in fact a type.
 > pickName s   = return s
 
 
-> moduleToGoal :: (INTM :=>: TY) -> ProofState INTM
-> moduleToGoal (ty :=>: tyv) = do
+> moduleToGoal :: INTM -> ProofState INTM
+> moduleToGoal ty = do
+>     Right (() :=>: tyv) <- withRoot (inCheck $ check (SET :>: ty))
 >     ModuleMother n <- getMother
 >     aus <- getAuncles
 >     let  ty' = liftType aus ty

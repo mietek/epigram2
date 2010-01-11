@@ -123,7 +123,7 @@ accumulating pairs of names and command lists along the way.
 >     tipTyd <- resolveHere tipTys
 >     tipTy :=>: tipTyv <- elaborate False (SET :>: tipTyd) -- FIXME: This needs some thought
 >     kids' <- getDevEntries
->     moduleToGoal (tipTy :=>: tipTyv)
+>     moduleToGoal tipTy
 >     case mtipTm of
 >         Nothing -> goOut
 >         Just tms -> do

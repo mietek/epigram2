@@ -130,7 +130,7 @@ The development transformation is achieved by the following code:
 >  --   checkTarget p
 >     -- Close the problem (Using the "made" subproblems!)
 >     -- And goes to the next subproblem, ie. making P
->     moduleToGoal (goal :=>: (evTm goal))
+>     moduleToGoal goal
 >     giveNext $ N $ (termOf e :? termOf eType) $## (p : ms)
 >     return (p, ms)
 >         where unPi :: VAL -> (VAL, VAL)
@@ -330,11 +330,12 @@ Then, it is straightforward to build the term we want and to give it:
 > applyElim :: Eliminator -> INTM -> [INTM] -> [REF] -> ProofState ()
 > applyElim (elimTy :>: elim) motive methods deltas = do
 >     reflDeltas <- withRoot (mkRefls deltas)
->     giveSilently $ 
+>     give $ 
 >       N $ (termOf elim :? termOf elimTy) $## (motive : 
 >                                               methods ++
 >                                               (map NP deltas) ++
 >                                               reflDeltas)
+>     return ()
 
 We (in theory) have solved the goal!
 

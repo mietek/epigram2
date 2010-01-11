@@ -345,8 +345,8 @@ elaboration will be children of the resulting goal.
 > elabMake (s :<: ty) = do
 >     makeModule s
 >     goIn
->     tt <- elaborate False (SET :>: ty)
->     tm <- moduleToGoal tt
+>     ty' :=>: _ <- elaborate False (SET :>: ty)
+>     tm <- moduleToGoal ty'
 >     goOut
 >     return tm
 
