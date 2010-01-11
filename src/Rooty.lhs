@@ -92,6 +92,7 @@ is trivial as well.
 >     x >>= g = Check $ \r -> do
 >               a <- inCheck x r
 >               inCheck (g a) r
+>     fail s = Check $ const $ Left [s]
 >
 > instance Functor Check where
 >     fmap f (Check g) = Check $ (fmap f) . g 
