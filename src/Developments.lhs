@@ -226,7 +226,8 @@ so that boys in the list of entries are represented by de Brujin indices.
 >     h (ys :< E y _ (Boy _) _)     x i
 >       | x == y     = V i
 >       | otherwise  = h ys x (i + 1)
->     h (ys :< E y _ (Girl _ _) _)  x i = h ys x i
+>     h (ys :< E _ _ (Girl _ _) _)  x i = h ys x i
+>     h (ys :< M _ _) x i = h ys x i
 
 The |parBind| function $\lambda$-binds over a list $\Delta$ of entries and
 $\lambda$- and $\Pi$-binds over a list $\nabla$.
