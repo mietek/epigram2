@@ -202,15 +202,16 @@ Construction tactics:
 >         "make"
 >         (| (| StrArg ident (%keyword ":"%) |) : (| (sing . InArg) pInDTm |)
 >          | (| StrArg ident (%keyword ":="%) |) : (| (sing . ExArg) pAscription |)
->          | (| StrArg ident (%keyword ":="%) |) : (| (sing . ExArg) pExDTm |)
 >          |)
 >         (\ [StrArg s, tyOrTm] -> case tyOrTm of
 >             InArg ty -> do
 >                 elabMake (s :<: ty)
 >                 goIn
 >                 return "Appended goal!"
->             ExArg tm -> do
->                 elabDefine s tm
+>             ExArg (tm ::? ty) -> do
+>                 elabMake (s :<: ty)
+>                 goIn
+>                 elabGive tm
 >                 return "Made."
 >         )
 >        ("make <x> : <type> - creates a new goal of the given type.\n"
