@@ -35,17 +35,15 @@ make EqUPair
                     ((p ! : A) == (q - : A) && (p - : A) == (q ! : A)))
   : (A : *) -> (A ; A) -> (A ; A) -> # ;
 
-make Module : (A : *)(isEquiv : :- Equiv (A ; A) (EqUPair A)) -> * ;
-lambda A ; lambda isEquiv ;
+make Module : (A : *)(isEquiv : :- Equiv (A ; A) (EqUPair A)) -> () ;
+lambda A ; lambda isEquiv ; 
 
-make UPair := Quotient (A ; A) (EqUPair A) isEquiv
-           :  * ;
+make UPair := Quotient (A ; A) (EqUPair A) isEquiv : * ;
 
 make upair := (\ x y -> [[x / y]]) : A -> A -> UPair ;
 
-make upairSym := (\ x y -> ?)
-  : (x : A)(y : A) ->
-    :- (upair x y : UPair) == (upair y x : UPair) ;
-  next ;
-  give eqQ (A ; A) (EqUPair A) isEquiv [x / y] [y / x] (wit @ [`inr []])
-  
+make upairSym := (\ x y -> ?) 
+  : (x : A)(y : A) -> :- (upair x y : UPair) == (upair y x : UPair) ;
+next ;
+give eqQ (A ; A) (EqUPair A) isEquiv [x / y] [y / x] (wit @ [`inr []]) 
+ 
