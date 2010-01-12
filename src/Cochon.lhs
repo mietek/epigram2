@@ -13,7 +13,7 @@
 > import Control.Monad
 > import Control.Monad.Error
 > import Control.Monad.State
-> import Data.Foldable
+> import Data.Foldable hiding (find)
 > import Data.List
 > import Data.Traversable
 > import System.Exit
@@ -267,8 +267,8 @@ Construction tactics:
 
 Navigation tactics:
 
->   : nullaryCT "inside" (goIn >> return "Going in...")
->       "inside - moves to the bottom-most development within the current one."
+>   : nullaryCT "in" (goIn >> return "Going in...")
+>       "in - moves to the bottom-most development within the current one."
 >   : nullaryCT "out" (goOut >> return "Going out...")
 >       "out - moves to the development containing the current one."
 >   : nullaryCT "up" (goUp >> return "Going up...")
