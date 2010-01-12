@@ -88,6 +88,9 @@ with the point of reference, we automatically supply them.
 > resolve :: Entries -> InDTm RelName -> Either [String] INDTM
 > resolve es tm = resolver es B0 %$ tm
 
+> resolveEx :: Entries -> ExDTm RelName -> Either [String] EXDTM
+> resolveEx es tm = (|unDN (resolve es (DN tm)) |)
+>   where unDN (DN tm) = tm
 
 The |resolver| function takes a context and a list of binder names, and
 produces a mangle that, when applied, attempts to resolve the parameter

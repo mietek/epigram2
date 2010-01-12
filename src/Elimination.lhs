@@ -15,6 +15,8 @@
 
 > import BwdFwd
 > import Developments
+> import DisplayTm
+> import Elaborator
 > import Naming
 > import PrettyPrint
 > import Root
@@ -385,3 +387,16 @@ Frankenstein operation of these three parts:
 >     -- Apply the motive, ie. solve the goal
 >     applyElim eliminator motive methods deltas
 
+
+We make elimination accessible to the user by adding it as a Cochon tactic:
+
+> elimCTactic :: EXDTM -> ProofState String
+> elimCTactic r = do 
+>     (elimTy :>: e) <- elabInfer r
+>     elimTyTm <- bquoteHere elimTy
+>     elim Nothing ((elimTyTm :=>: elimTy) :>: (N e :=>: (evTm (N e))))
+>     return "Elimination occured. Subgoals awaiting work..."
+
+> import -> CochonTactics where
+>   : unaryExCT "eliminate" elimCTactic
+>       "eliminate <name> - eliminates with a motive."

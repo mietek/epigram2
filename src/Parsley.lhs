@@ -46,6 +46,7 @@ tokens |t| to:
 >               | EndOfStream
 >               | EndOfParser
 >               | Expect t
+>               | Fail String
 >                 deriving Show
 > newtype Parsley t x = Parsley {runParsley :: [t] -> Either (PFailure t) ([t], x, [t])}
 
@@ -90,6 +91,7 @@ It's a |Monad| and all that.
 
 > instance Error (PFailure t) where
 >   noMsg = PFailure ([], Abort)
+>   strMsg s = PFailure ([], Fail s)
 
 \subsection{Low-level combinators}
 

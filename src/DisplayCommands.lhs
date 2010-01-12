@@ -33,8 +33,8 @@ evaluates the resulting term, bquotes it and returns a pretty-printed string
 representation. Note that it works in its own module which it discards at the
 end, so it will not leave any subgoals lying around in the proof state.
 
-> infoElaborate :: INDTM -> ProofState String
-> infoElaborate (DN tm) = do
+> infoElaborate :: EXDTM -> ProofState String
+> infoElaborate tm = do
 >     makeModule "__infoElaborate"
 >     goIn
 >     ty :>: tm' <- elabInfer tm
@@ -43,14 +43,13 @@ end, so it will not leave any subgoals lying around in the proof state.
 >     goOut
 >     dropModule
 >     return (show s)
-> infoElaborate _ = throwError' "infoElaborate: can only elaborate neutral terms."
 
 
 The |infoInfer| command is similar to |infoElaborate|, but it returns a string
 representation of the resulting type.
 
-> infoInfer :: INDTM -> ProofState String
-> infoInfer (DN tm) = do
+> infoInfer :: EXDTM -> ProofState String
+> infoInfer tm = do
 >     makeModule "__infoInfer"
 >     goIn
 >     ty :>: _ <- elabInfer tm
@@ -59,7 +58,6 @@ representation of the resulting type.
 >     goOut
 >     dropModule
 >     return (show s)
-> infoInfer _ = throwError' "infoInfer: can only infer the type of neutral terms."
 
 
 The |infoContextual| command displays a distilled list of things in the context,

@@ -42,9 +42,8 @@
 >     case getOpt inFile opts of
 >         Just fn -> do
 >             inp <- readFile fn
->             case execStateT (devLoad inp) emptyContext of
->                 Left ss -> putStrLn ("Failed to load development:\n" ++ unlines ss)
->                 Right loc -> cochon loc
+>             locs <- devLoad inp    
+>             cochon' locs
 >         Nothing -> cochon emptyContext
 
 

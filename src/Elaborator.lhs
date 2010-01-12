@@ -310,6 +310,19 @@ hard bits for the human.
 
 \subsection{Elaborated Construction Commands}
 
+The |elabDefine| command is like make followed by give.
+
+> elabDefine :: String -> EXDTM -> ProofState INTM
+> elabDefine s tm = do
+>     makeModule s
+>     goIn
+>     ty :>: tm' <- elabInfer tm
+>     ty' <- bquoteHere ty
+>     moduleToGoal ty'
+>     give (N tm')
+ 
+
+
 The |elabGive| command elaborates the given display term in the appropriate type for
 the current goal, and calls the |give| command on the resulting term. If its argument
 is a nameless question mark, it avoids creating a pointless subgoal by simply returning

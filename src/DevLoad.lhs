@@ -17,6 +17,7 @@
 > import Data.Maybe
 > import Data.Foldable hiding (elem)
 > import Data.Traversable
+> import System.Exit
 
 > import BwdFwd
 > import Cochon
@@ -45,15 +46,14 @@ a list of commands to execute later.
 
 > data DevLine
 >   =  DLBoy BoyKind String InDTmRN
->   |  DLGirl String [DevLine] (Maybe InDTmRN :<: InDTmRN) [Command InDTmRN]
->   |  DLModule String [DevLine] [Command InDTmRN]
->      deriving Show
+>   |  DLGirl String [DevLine] (Maybe InDTmRN :<: InDTmRN) [CTData]
+>   |  DLModule String [DevLine] [CTData]
 
 A module may have a list of girls in square brackets, followed by an optional
 semicolon-separated list of commands.
 
-> pRootModule :: Parsley Token ([DevLine], [Command InDTmRN])
-> pRootModule = (| pTopDevLines, (pSep (keyword ";") pCommand) |)
+> pRootModule :: Parsley Token ([DevLine], [CTData])
+> pRootModule = (| pTopDevLines, (pSep (keyword ";") pCochonTactic) (%optional (keyword ";")%) |)
 >   where
 >     pTopDevLines :: Parsley Token [DevLine]
 >     pTopDevLines =  bracket Square (many (pGirl <|> pModule)) <|> pure []
@@ -63,12 +63,12 @@ there are none), a definition (which may be \verb!?!), and optionally a list of 
 in \verb![| |]! brackets.
 
 > pGirl :: Parsley Token DevLine
-> pGirl = (| DLGirl (|fst namePartParse|) pLines pDefn pCommandSuffix (%keyword ";"%) |)
+> pGirl = (| DLGirl (|fst namePartParse|) pLines pDefn pCTSuffix (%keyword ";"%) |)
 
 A module is similar, but has no definition.
 
 > pModule :: Parsley Token DevLine
-> pModule = (| DLModule (|fst namePartParse|) pLines pCommandSuffix (%keyword ";"%) |)
+> pModule = (| DLModule (|fst namePartParse|) pLines pCTSuffix (%keyword ";"%) |)
 
 
 > pLines :: Parsley Token [DevLine]
@@ -79,8 +79,8 @@ A module is similar, but has no definition.
 >               | id maybeAscriptionParse
 >               |)
 >
-> pCommandSuffix :: Parsley Token [Command InDTmRN]
-> pCommandSuffix = bracket (SquareB "") (pSep (keyword ";") pCommand) <|> pure []
+> pCTSuffix :: Parsley Token [CTData]
+> pCTSuffix = bracket (SquareB "") (pSep (keyword ";") pCochonTactic <* optional (keyword ";")) <|> pure []
 
 A boy is a $\lambda$-abstraction (represented by \verb!\ x : T ->!) or a $\Pi$-abstraction
 (represented by \verb!(x : S) ->!). 
@@ -97,25 +97,30 @@ Once we have parsed a list of |DevLine|s, we need to construct a |Dev| from them
 The idea is to use commands defined in Section~\ref{sec:proofStateMonad} to build
 up the proof state. The |devLoad| function takes care of this process.
 
-> devLoad :: String -> ProofState ()
+> devLoad :: String -> IO (Bwd ProofContext)
 > devLoad s = case parse tokenize s of
->     Left pf -> throwError' $ "Failed to tokenize development:\n" ++ show pf
+>     Left pf -> do
+>         putStrLn ("Failed to tokenize development:\n" ++ show pf)
+>         exitFailure
 >     Right toks -> case parse pRootModule toks of
->         Left pf -> throwError' $ "Failed to parse development:\n" ++ show pf
+>         Left pf -> do
+>             putStrLn ("Failed to parse development:\n" ++ show pf)
+>             exitFailure
 >         Right (dls, cs) -> do
->             ncs <- makeDev dls []
->             doCommandsAt ncs
->             doCommands cs
->             return ()
+>             case runStateT (makeDev dls []) emptyContext of
+>                 Right (ncs, loc) -> doCTacticsAt (([], cs) : ncs) (B0 :< loc)
+>                 Left ss -> do
+>                     putStrLn (unlines ("Failed to load development:":ss))
+>                     exitFailure
 
 The |makeDev| function updates the proof state to represent the given list of |DevLine|s,
 accumulating pairs of names and command lists along the way.
 
-> makeDev :: [DevLine] -> [(Name, [Command InDTmRN])] -> ProofState [(Name, [Command InDTmRN])]
+> makeDev :: [DevLine] -> [(Name, [CTData])] -> ProofState [(Name, [CTData])]
 > makeDev []      ncs = return ncs
 > makeDev (l:ls)  ncs = makeEntry l ncs >>= makeDev ls
 
-> makeEntry :: DevLine -> [(Name, [Command InDTmRN])] -> ProofState [(Name, [Command InDTmRN])]
+> makeEntry :: DevLine -> [(Name, [CTData])] -> ProofState [(Name, [CTData])]
 > makeEntry (DLGirl x kids (mtipTm :<: tipTys) commands) ncs = do
 >     n <- makeModule x
 >     goIn
