@@ -1,7 +1,3 @@
-\newcommand{\question}[1]{\textcolor{red}{question: #1}}
-
-\newcommand{\pierre}[1]{\textcolor{red}{Pierre:} #1}
-
 \DeclareMathAlphabet{\mathkw}{OT1}{cmss}{bx}{n}
 %subst keyword a = "\mathkw{" a "}"
 %subst conid a = "\mathsf{" a "}"
