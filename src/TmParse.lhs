@@ -26,13 +26,11 @@
 %endif
 
 The Cochon's terms parser eats structured Tokens, as defined in
-@Lexer.lhs@. Using |parseTerm|, you will be able to build a nice
-|INDTM| in a correct context.
+@Lexer.lhs@. The code uses the applicative parser to translate
+the grammar of terms defined in Section~\ref{sec:language}.
 
-There is nothing fancy here. The code is simply using the applicative
-parser to translate the grammar of terms. The grammar was informally
-defined in Section~\ref{sec:language}.
-
+A relative name is a list of idents separated by dots, and possibly
+with |^| or |_| symbols (for relative or absolute offsets).
 
 > nameParse :: Parsley Token RelName
 > nameParse = (|namePartParse : (many $ keyword "." *> namePartParse)|)
@@ -43,20 +41,36 @@ defined in Section~\ref{sec:language}.
 >                   |(,) ident ~(Rel 0)
 >                   |)
 
-> maybeAscriptionParse :: Parsley Token (Maybe InDTmRN :<: InDTmRN)
-> maybeAscriptionParse = do
->     DN (tm ::? ty) <- pInDTm -- ascriptionParse
->     return (Just tm :<: ty)
-
 
 > iter :: (a -> b -> b) -> [a] -> b -> b
 > iter = flip . foldr
 
+
+To avoid nasty left-recursion, the parser keeps track of the current |Size|
+of term it is parsing. When going left, the size decreases. Brackets may be
+used to wrap an expression of higher size.
+
 > data Size = ArgSize | AppSize | EqSize | AndSize | ArrSize | PiSize | AscSize
 >   deriving (Show, Eq, Enum, Bounded, Ord)
 
+The |pExDTm| and |pInDTm| functions start parsing at the maximum size.
+
 > pExDTm :: Parsley Token ExDTmRN
 > pExDTm = sizedExDTm maxBound
+
+> pInDTm :: Parsley Token InDTmRN
+> pInDTm = sizedInDTm maxBound
+
+
+> pAscription :: Parsley Token ExDTmRN
+> pAscription = (| sizedInDTm (pred AscSize) (%keyword ":"%) ::? pInDTm |)
+
+
+
+Each |sized| parser tries the appropriate |special| parser for the size,
+then falls back to parsing at the previous size followed by a |more| parser.
+At the smallest size, brackets must be used to start parsing from the
+largest size again.
 
 > sizedExDTm :: Size -> Parsley Token ExDTmRN
 > sizedExDTm z = specialExDTm z <|>
@@ -74,8 +88,7 @@ defined in Section~\ref{sec:language}.
 > moreInEx z (DN e) = DN <$> moreExDTm z e <|> moreInDTm z (DN e)
 > moreInEx z t = moreInDTm z t
 
-> pInDTm :: Parsley Token InDTmRN
-> pInDTm = sizedInDTm maxBound
+
 
 > specialExDTm :: Size -> Parsley Token ExDTmRN
 > specialExDTm ArgSize =
@@ -84,8 +97,14 @@ defined in Section~\ref{sec:language}.
 >    |)
 >   where
 >     findOp name = find (\op -> opName op == name) operators
-> -- specialExTm AscSize =
->   -- (| sizedInTm (pred AscSize) (%keyword ":"%) :? pInTm |)
+
+This case causes a massive drop in performance, so it is temporarily
+switched off. To forcibly parse a type ascription, use |pAscription|.
+We need to sort out a better solution for ascription syntax.
+
+> -- specialExDTm AscSize =
+> --  (| sizedInDTm (pred AscSize) (%keyword ":"%) ::? pInDTm |)
+
 > specialExDTm z = (|)
 
 > moreExDTm :: Size -> ExDTmRN -> Parsley Token ExDTmRN

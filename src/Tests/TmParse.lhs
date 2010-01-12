@@ -104,11 +104,15 @@
 >         , "? a"                       -- hole
 >         , "(? a : ? b) -> ? c"        -- more holes
 >         , "Mu d"                      -- mu
+>         , "* : *"                     -- ascription
 >         , "@ @ [(\\ r r y -> y) (\\ r -> @ \\ h r y -> suc (h y))] : nat -> nat -> nat"         -- performance bug
 >         , "(@ (@ ([(\\ r r y -> y) (\\ r -> @ (\\ h r y -> (suc (h y))))])))" -- performance bug
 >         , "(@ (@ ([(\\ r r y -> y) (\\ r -> @ (\\ h r y -> (suc (h y))))]))) : nat -> nat -> nat" -- performance bug
 >         ]
 
+
+> testsEx = [ "* : *"                  -- another ascription
+>           ]
 
 > test :: Show x => Parsley Token x -> String -> IO ()
 > test p x =
@@ -118,3 +122,4 @@
 
 > main = do
 >     foldMap (test pInDTm) tests
+>     foldMap (test pExDTm) testsEx

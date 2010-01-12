@@ -63,12 +63,12 @@ Here we have a very basic command-driven interface to the proof state monad.
 >             putStrLn ("Tokenize failure: " ++ describePFailure pf id)
 >             cochon' (locs :< loc)
 >         Right ts ->
->           case parse pCochonTactic ts of
+>           case parse pCochonTactics ts of
 >               Left pf -> do
 >                   putStrLn ("Parse failure: " ++ describePFailure pf (intercalate " " . map crushToken))
 >                   cochon' (locs :< loc)
->               Right cd -> do
->                   locs' <- doCTactic cd (locs :< loc)
+>               Right cds -> do
+>                   locs' <- doCTactics cds (locs :< loc)
 >                   cochon' locs'
 
 > describePFailure :: PFailure a -> ([a] -> String) -> String
@@ -201,6 +201,7 @@ Construction tactics:
 >   : simpleCT
 >         "make"
 >         (| (| StrArg ident (%keyword ":"%) |) : (| (sing . InArg) pInDTm |)
+>          | (| StrArg ident (%keyword ":="%) |) : (| (sing . ExArg) pAscription |)
 >          | (| StrArg ident (%keyword ":="%) |) : (| (sing . ExArg) pExDTm |)
 >          |)
 >         (\ [StrArg s, tyOrTm] -> case tyOrTm of
@@ -367,6 +368,9 @@ given string, either exactly or as a prefix.
 >             return (ct, args)
 >         [] -> fail "unknown tactic name."
 >         cts -> fail ("ambiguous tactic name (could be " ++ tacticNames cts ++ ").")
+
+> pCochonTactics :: Parsley Token [CTData]
+> pCochonTactics = pSepTerminate (keyword ";") pCochonTactic
 
 
 > resolveArgs :: [CochonArg RelName] -> ProofState [CochonArg REF]

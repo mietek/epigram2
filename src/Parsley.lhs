@@ -142,6 +142,12 @@ or we return the empty list.
 >                |id ~ []
 >                |)
 
+We can also allow an optional terminator for a separated sequence.
+
+> pSepTerminate :: Parsley t s -> Parsley t x -> Parsley t [x]
+> pSepTerminate sep p = pSep sep p <* optional sep
+
+
 Thanks to the monadic nature of our parser, we can implement the
 following looping combinator. Hence, we can parse some input |a| with
 |p| and bind it. Then, we can try to use the dynamically generated

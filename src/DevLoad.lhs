@@ -22,6 +22,7 @@
 > import BwdFwd
 > import Cochon
 > import Developments
+> import DisplayTm
 > import Elaborator
 > import Lexer
 > import MissingLibrary
@@ -53,7 +54,7 @@ A module may have a list of girls in square brackets, followed by an optional
 semicolon-separated list of commands.
 
 > pRootModule :: Parsley Token ([DevLine], [CTData])
-> pRootModule = (| pTopDevLines, (pSep (keyword ";") pCochonTactic) (%optional (keyword ";")%) |)
+> pRootModule = (| pTopDevLines, pCochonTactics |)
 >   where
 >     pTopDevLines :: Parsley Token [DevLine]
 >     pTopDevLines =  bracket Square (many (pGirl <|> pModule)) <|> pure []
@@ -76,11 +77,15 @@ A module is similar, but has no definition.
 >
 > pDefn :: Parsley Token (Maybe InDTmRN :<: InDTmRN)
 > pDefn =  (| (%keyword "?"%) (%keyword ":"%) ~Nothing :<: pInDTm 
->               | id maybeAscriptionParse
+>               | id pAsc
 >               |)
+>   where
+>     pAsc = do
+>         tm ::? ty <- pAscription
+>         return (Just tm :<: ty)
 >
 > pCTSuffix :: Parsley Token [CTData]
-> pCTSuffix = bracket (SquareB "") (pSep (keyword ";") pCochonTactic <* optional (keyword ";")) <|> pure []
+> pCTSuffix = bracket (SquareB "") pCochonTactics <|> pure []
 
 A boy is a $\lambda$-abstraction (represented by \verb!\ x : T ->!) or a $\Pi$-abstraction
 (represented by \verb!(x : S) ->!). 
