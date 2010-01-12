@@ -49,12 +49,10 @@ Here we have a very basic command-driven interface to the proof state monad.
 > cochon' (locs :< loc@(ls, dev)) = do
 >     showGoal loc
 
->     case evalStateT getMother loc of
->         Right (GirlMother (_ := DEFN tm :<: ty) _ _) ->
->             let qroot = (B0 :< ("quote",0), 1) :: Root in
->             case evalStateT (withRoot (inCheck $ check (ty :>: bquote B0 tm qroot))) loc of
->                 Right (Right _) -> return ()
->                 Right (Left _) -> putStrLn "*** Warning: definition failed to type-check! ***"
+>     case evalStateT validateHere loc of
+>         Left ss -> do
+>             putStrLn "*** Warning: definition failed to type-check! ***"
+>             putStrLn (unlines ss)
 >         _ -> return ()
 
 >     putStr (showPrompt ls)
@@ -159,9 +157,9 @@ A Cochon tactic consinsts of:
 
 
 We have some shortcuts for building common kinds of tactics:
-|simpleCTac| builds a tactic that takes no arguments, while
-|monoExCTac| and |monoInCTac| build tactics that take one
-|In| or |Ex| argument respectively.
+|simpleCT| builds a tactic that works in the proof state,
+and there are various specialised versions of it for nullary and
+unary tactics.
 
 > sing x = [x]
 

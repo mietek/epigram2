@@ -384,6 +384,21 @@ The |resolveHere| command resolves the relative names in a term.
 >         _ :< _  -> return (show (prettyDev gaus me dev))
 
 
+The |validateHere| performs some checks on the current location, which
+may be useful for paranoia purposes.
+
+> validateHere :: ProofState ()
+> validateHere = do
+>     m <- getMother
+>     case m of
+>         GirlMother (_ := DEFN tm :<: ty) _ _ -> do
+>             tm' <- bquoteHere tm
+>             mc <- withRoot (inCheck $ check (ty :>: tm'))
+>             mc `catchEither` intercalate "\n" ["validateHere: definition failed to type-check:", show ty, "does not admit", show tm']
+>             return ()
+>         _ -> return ()
+
+
 \subsection{Information Commands}
 
 > infoAuncles :: ProofState String
