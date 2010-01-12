@@ -12,6 +12,7 @@
 > import Control.Applicative
 > import Control.Monad
 > import Control.Monad.Error
+> import Control.Monad.Reader
 > import Data.Maybe
 
 > import BwdFwd
@@ -55,15 +56,16 @@ by a finer grained mechanism.
 >     forkRoot :: String -> m s -> (s -> m t) -> m t
 >     root :: m Root
 
-Sometimes you want a fresh value rather than a reference.
+Sometimes you want a fresh value rather than a reference:
 
 > fresh :: Rooty m => (String :<: TY) -> (VAL -> m t) -> m t
 > fresh xty f = freshRef xty (f . pval)
 
+
+\subsection{|(->) Root| is Rooty}
+
 To illustrate the implementation of |Rooty|, we implement on the
-|Root| Reader monad. |freshRef| is straightforward, by the code in
-@Root.lhs@. |forkRoot| directly follows from its specification. |root|
-is trivial as well.
+|Root| Reader monad:
 
 > instance Rooty ((->) Root) where
 >     freshRef (x :<: ty) f r = f (name r x := DECL :<: ty) (roos r)
@@ -72,43 +74,26 @@ is trivial as well.
 
 
 
-> data Check a = Check { inCheck :: Root -> Either [String] a }
->
-> typeCheck :: Root -> Check a -> a
-> typeCheck root f = case inCheck f root of
->                     Left x -> error $ "typeCheck: " ++ (head x)
->                     Right l -> l
->
-> instance Rooty Check where
->     freshRef st f = Check $ Rooty.freshRef st (inCheck . f)
->     forkRoot s child dad = Check $ \root -> do
->                            c <- inCheck child (room root s)
->                            d <- inCheck (dad c) (roos root)
->                            return d
->     root = Check $ Right
->
-> instance Monad Check where
->     return x = Check $ const $ Right x
->     x >>= g = Check $ \r -> do
->               a <- inCheck x r
->               inCheck (g a) r
->     fail s = Check $ const $ Left [s]
->
-> instance Functor Check where
->     fmap f (Check g) = Check $ (fmap f) . g 
->
+\subsection{|Root -> Either StackError a| is Rooty}
+
+> type Check = ReaderT Root (Either StackError)
+
 > instance Applicative Check where
 >     pure = return
 >     (<*>) = ap
->
-> instance MonadPlus Check where
->     mzero = throwError ["empty"]
->     x `mplus` y = Check $ \r -> inCheck x r `mplus` inCheck y r
 
 > instance Alternative Check where
 >     empty = mzero
 >     (<|>) = mplus
 
-> instance MonadError [String] Check  where
->     throwError s = Check $ const $ Left s
->     catchError = error "Check has no catchError"
+
+> typeCheck :: Check a -> Root -> Either StackError a
+> typeCheck = runReaderT
+
+> instance Rooty Check where
+>     freshRef st body = do
+>         freshRef st body
+>     forkRoot s child dad = do
+>         c <- child
+>         dad c
+>     root = ask

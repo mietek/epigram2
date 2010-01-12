@@ -4,7 +4,7 @@
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE FlexibleInstances, FlexibleContexts, MultiParamTypeClasses #-}
-> {-# LANGUAGE TypeFamilies, TypeOperators, FlexibleContexts, UndecidableInstances #-}
+> {-# LANGUAGE TypeFamilies, TypeOperators, FlexibleContexts, UndecidableInstances, TypeSynonymInstances #-}
 
 > module MissingLibrary where
 
@@ -13,6 +13,7 @@
 > import Control.Monad.Error
 > import Control.Monad.Identity
 > import Control.Monad.State
+> import Control.Monad.Reader
 
 > import Data.Foldable
 > import Data.List
@@ -61,12 +62,14 @@
 
 \subsection{Error Handling}
 
-> instance MonadError [String] Maybe where
+> type StackError = [String]
+
+> instance MonadError StackError Maybe where
 >   throwError _ = Nothing
 >   catchError (Just x)  _ = Just x
 >   catchError Nothing   f = f []
 
-> instance Error [String] where
+> instance Error StackError where
 >   strMsg s = [s]
 
 

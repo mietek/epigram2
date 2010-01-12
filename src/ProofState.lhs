@@ -362,7 +362,7 @@ The |bquoteHere| command $\beta$-quotes a term using the current root.
 
 > checkHere :: (TY :>: INTM) -> ProofState (INTM :=>: VAL)
 > checkHere (ty :>: tm) = do
->     mc <- withRoot (inCheck $ check (ty :>: tm))
+>     mc <- withRoot (typeCheck $ check (ty :>: tm))
 >     () :=>: tmv <- lift mc
 >     return (tm :=>: tmv)
 
@@ -388,7 +388,7 @@ may be useful for paranoia purposes.
 >             mc <- withRoot (inCheck $ check (SET :>: ty'))
 >             mc `catchEither` intercalate "\n" ["validateHere: girl type failed to type-check: SET does not admit", show ty']
 >             tm' <- bquoteHere tm
->             mc <- withRoot (inCheck $ check (ty :>: tm'))
+>             mc <- withRoot (typeCheck $ check (ty :>: tm'))
 >             mc `catchEither` intercalate "\n" ["validateHere: definition failed to type-check:", show ty, "does not admit", show tm']
 >             return ()
 >         _ -> return ()
@@ -590,7 +590,7 @@ next goal (if one exists) instead.
 >     tip <- getDevTip
 >     case tip of         
 >         Unknown (tipTyTm :=>: tipTy) -> do
->             mc <- withRoot (inCheck $ check (tipTy :>: tm))
+>             mc <- withRoot (typeCheck $ check (tipTy :>: tm))
 >             mc `catchEither` intercalate "\n" [ "Typechecking failed:"
 >                                              , show tm
 >                                              , "is not of type"
@@ -666,7 +666,7 @@ current development, after checking that the purported type is in fact a type.
 
 > make :: (String :<: INTM) -> ProofState INTM
 > make (s :<: ty) = do
->     m <- withRoot (inCheck $ check (SET :>: ty))
+>     m <- withRoot (typeCheck $ check (SET :>: ty))
 >     m `catchEither` ("make: " ++ show ty ++ " is not a set.")
 >     make' (s :<: (ty :=>: evTm ty))
 
@@ -705,7 +705,7 @@ current development, after checking that the purported type is in fact a type.
 
 > moduleToGoal :: INTM -> ProofState INTM
 > moduleToGoal ty = do
->     Right (() :=>: tyv) <- withRoot (inCheck $ check (SET :>: ty))
+>     Right (() :=>: tyv) <- withRoot (typeCheck $ check (SET :>: ty))
 >     ModuleMother n <- getMother
 >     aus <- getAuncles
 >     let  ty' = liftType aus ty
