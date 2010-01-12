@@ -275,11 +275,12 @@ Information tactics:
 >       "infer <term> - elaborates <term> and infers its type."
 
 >   : unaryStringCT "show" (\s -> case s of
->         "auncles" -> infoAuncles
->         "context" -> infoContext 
->         "dump" -> infoDump
->         "hyps" -> infoHypotheses
->         "state" -> prettyProofState 
+>         "auncles"  -> infoAuncles
+>         "context"  -> infoContext 
+>         "dump"     -> infoDump
+>         "hyps"     -> infoHypotheses
+>         "state"    -> prettyProofState
+>         _          -> return "show: please specify exactly what to show."
 >       )
 >       "show <auncles/context/dump/hyps/state> - displays useless information."
 
