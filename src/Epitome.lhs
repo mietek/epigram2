@@ -5,17 +5,24 @@
 %endif
 
 \documentclass[a4paper]{report}
-\usepackage{stmaryrd,wasysym,url,
-            upgreek,palatino,alltt,
-            color, bussproofs}
+\usepackage{stmaryrd}
+\usepackage{wasysym}
+\usepackage{url}
+\usepackage{upgreek}
+\usepackage{palatino}
+\usepackage{alltt}
+\usepackage{color}
 \usepackage{hyperref}
 \usepackage{a4wide}
+\usepackage{bussproofs}
 
 %include lhs2TeX.fmt
 %include lhs2TeX.sty
 %include polycode.fmt
 
 %include stuff.fmt
+
+\input{Docs/Macros.tex}
 
 \begin{document}
 
