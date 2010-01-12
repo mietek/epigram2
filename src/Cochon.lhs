@@ -114,6 +114,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >                 |  Jump x
 >                 |  Lambda String
 >                 |  Make String (Maybe x :<: x)
+>                 |  Program [String]
 >                 |  ModuleC String
 >                 |  PiBoy String x
 >                 |  Quit
@@ -135,6 +136,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >     traverse f (Jump x)             = (| Jump (f x) |)
 >     traverse f (Lambda s)           = (| (Lambda s) |)
 >     traverse f (Make s (md :<: x))  = (| (Make s) (| (traverse f md) :<: (f x) |) |)
+>     traverse f (Program ns)         = (| Program ~ns |)
 >     traverse f (ModuleC s)          = (| (ModuleC s) |)
 >     traverse f (PiBoy s x)          = (| (PiBoy s) (f x) |)
 >     traverse f Quit                 = (| Quit |)
@@ -170,6 +172,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >         "make"     -> (| Make ident (%keyword ":"%) (| ~Nothing :<: pInDTm |)
 >                        | Make ident (%keyword ":="%) maybeAscriptionParse
 >                        |)
+>         "program"  -> (| Program (pSep (keyword ",") ident) |)
 >         "module"   -> (| ModuleC ident |)
 >         "next"     -> (| (Go Next) |)
 >         "out"      -> (| (Go OutC) |)
@@ -229,6 +232,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >     case mtm of
 >         Nothing  -> return "Appended goal!"
 >         Just tm  -> elabGive tm >> return "Yessir."
+> evalCommand (Program args)  = elabProgram args  >> return "Programming."
 > evalCommand (ModuleC s)     = makeModule s      >> return "Made module."
 > evalCommand (PiBoy x ty)    = elabPiBoy (x :<: ty)  >> return "Made pi boy!"
 > evalCommand (Select (DN (DP r)))      = select (N (P r))          >> return "Selected."

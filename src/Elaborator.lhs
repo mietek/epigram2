@@ -350,6 +350,37 @@ elaboration will be children of the resulting goal.
 >     goOut
 >     return tm
 
+elabProgram adds a label to a type, given a list of arguments.
+e.g. with a goal plus : nat -> nat -> nat, 
+program x,y will give a proof state of:
+
+[ plus : \ x y c -> c call : (x:N)->(y:N)-><plus x y : N>->N
+  g : (x:N)->(y:N)-><plus x y : N>
+  x : N
+  y : N  (from lambdaboy)
+] g x y call   (from giveNext, then we're ready to go).
+
+> elabProgram :: [String] -> ProofState INTM
+> elabProgram args = do
+>     n <- getMotherName
+>     (_ :=>: g) <- getHoleGoal
+>     let pn = P (n := FAKE :<: g)
+>     let newty = pity (mkTel pn g [] args)
+>     newty' <- bquoteHere newty
+>     (N g) <- make ("g" :<: newty') 
+>     argrefs <- traverse lambdaBoy args
+>     let fcall = pn $## (map NP argrefs) 
+>     let call = g $## (map NP argrefs) :$ Call (N fcall)
+>     giveNext (N call)
+>   where mkTel :: NEU -> TY -> [VAL] -> [String] -> TEL TY
+>         mkTel n (PI s t) args (x:xs)
+>            = (x :<: s) :-: (\val -> mkTel n (t $$ A val) (val:args) xs)
+>         mkTel n r args _ = Ret (LABEL (mkL n (reverse args)) r)
+>         
+>         mkL :: NEU -> [VAL] -> VAL
+>         mkL n [] = N n
+>         mkL n (x:xs) = mkL (n :$ (A x)) xs
+
 
 The |elabPiBoy| command elaborates the given display term to produce a type, and
 creates a $\Pi$-boy with that type.

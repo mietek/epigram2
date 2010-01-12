@@ -49,7 +49,7 @@
 >   LRET t $$ Call l = t
 
 > import -> ElimCompile where
->   makeBody (arg, Call l) = makeBody l
+>   makeBody (arg, Call l) = makeBody arg
 
 > import -> CanTyRules where
 >   canTy chev (Set :>: Label l t) = do
