@@ -33,7 +33,9 @@ OBJS := $(SRCS:.lhs=.o)
 #     * build dependency graph
 #     * make Epigram binary
 #     * make the literate document
-all: depend Pig Epitome
+all: 
+	$(MAKE) depend 
+	$(MAKE) Pig Epitome
 
 ## Dependency graph:
 # Ask GHC to compute the dependency graph.
@@ -76,7 +78,7 @@ Epitome.tex : $(SRCS) stuff.fmt
 	lhs2TeX --poly Epitome.lhs -o Epitome.tex
 
 ## Literate code in LaTeX:
-# Do we really need this?
+# Same, with 'latex'
 dvi : Epitome.dvi
 Epitome.dvi : Epitome.tex
 	latex Epitome
