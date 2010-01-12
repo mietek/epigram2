@@ -87,45 +87,12 @@ Because Cochon tactics can take different types of arguments,
 we need a tagging mechanism to distinguish them, together
 with projection functions.
 
-> data Command x  =  Apply
->                 |  DoneC
->                 |  Elaborate x
->                 |  Compile x String
->                 |  Give x
->                 |  Go NavC
->                 |  Infer x
->                 |  Jump x
->                 |  Lambda String
->                 |  Make String (Maybe x :<: x)
->                 |  ModuleC String
->                 |  PiBoy String x
->                 |  Quit
->                 |  Select x
->                 |  Show (ShowC x)
->                 |  Undo
->                 |  Ungawa
->                 |  Elim x
->     deriving Show
+> data CochonArg x = StrArg String | InArg (InDTm x) | ExArg (ExDTm x)
+>     deriving (Functor, Foldable, Traversable)
 
-> instance Traversable Command where
->     traverse f Apply                = (| Apply |)
->     traverse f (Compile x fn)       = (| Compile (f x) ~fn |)
->     traverse f DoneC                = (| DoneC |)
->     traverse f (Elaborate x)        = (| Elaborate (f x) |)
->     traverse f (Give x)             = (| Give (f x) |)
->     traverse f (Go d)               = (| (Go d) |)
->     traverse f (Infer x)            = (| Infer (f x) |)
->     traverse f (Jump x)             = (| Jump (f x) |)
->     traverse f (Lambda s)           = (| (Lambda s) |)
->     traverse f (Make s (md :<: x))  = (| (Make s) (| (traverse f md) :<: (f x) |) |)
->     traverse f (ModuleC s)          = (| (ModuleC s) |)
->     traverse f (PiBoy s x)          = (| (PiBoy s) (f x) |)
->     traverse f Quit                 = (| Quit |)
->     traverse f (Select x)           = (| Select (f x) |)
->     traverse f (Show sx)            = (| Show (traverse f sx) |)
->     traverse f Undo                 = (| Undo |)
->     traverse f Ungawa               = (| Ungawa |)
->     traverse f (Elim x)             = (| Elim (f x) |)
+
+> argToStr :: CochonArg x -> String
+> argToStr (StrArg s) = s
 
 > argToIn :: CochonArg x -> InDTm x
 > argToIn (InArg a) = a
@@ -257,6 +224,12 @@ Construction tactics:
 >         (\ [StrArg s, InArg ty] -> elabPiBoy (s :<: ty) >> return "Made pi boy!")
 >         "pi <x> : <type> - introduces a pi boy."
 
+>   : simpleCT
+>       "program"
+>       (pSep (keyword ",") (| StrArg ident |))
+>       (\ as -> elabProgram (map argToStr as) >> return "Programming.")
+>       "program <labels>: set up a programming problem."
+
 >   : unaryNameCT "select" (\r -> select (N (P r)) >> return "Selected.")
 >       "select <name> - defines a copy of <name> in the current development."
 >   : nullaryCT "ungawa" (ungawa >> return "Ungawa!")
@@ -368,89 +341,32 @@ Import more tactics from an aspect:
 >     import <- CochonTactics
 >     : []
 
-> pCommand :: Parsley Token (Command InDTmRN)
-> pCommand = do
->     x <- ident
->     case x of
->         "apply"    -> (| Apply |)
->         "bottom"   -> (| (Go Bottom) |)
->         "compile"  -> (| Compile (| DN (|DP nameParse|) |) pFileName |)
->         "done"     -> (| DoneC |)
->         "down"     -> (| (Go Down) |)
->         "elab"     -> (| Elaborate pInDTm |)
->         "first"    -> (| (Go First) |)
->         "give"     -> (| Give pInDTm |)
->         "in"       -> (| (Go InC) |)
->         "infer"    -> (| Infer pInDTm |)
->         "jump"     -> (| Jump (| DN (|DP nameParse|) |) |)
->         "lambda"   -> (| Lambda ident |)
->         "last"     -> (| (Go Last) |)
->         "make"     -> (| Make ident (%keyword ":"%) (| ~Nothing :<: pInDTm |)
->                        | Make ident (%keyword ":="%) maybeAscriptionParse
->                        |)
->         "module"   -> (| ModuleC ident |)
->         "next"     -> (| (Go Next) |)
->         "out"      -> (| (Go OutC) |)
->         "pi"       -> (| PiBoy ident (%keyword ":"%) pInDTm |)
->         "prev"     -> (| (Go Prev) |)
->         "root"     -> (| (Go RootC) |)
->         "quit"     -> (| Quit |)
->         "select"   -> (| Select (| DN (|DP nameParse|) |) |)
->         "show"     -> (| Show pShow |)
->         "top"      -> (| (Go Top) |)
->         "undo"     -> (| Undo |)
->         "ungawa"   -> (| Ungawa |)
->         "up"       -> (| (Go Up) |)
->         "elim"     -> (| Elim (| DN (|DP nameParse|) |)|)
->         _          -> empty
-
 > pFileName :: Parsley Token String
 > pFileName = ident
 
+The |tacticsMatching| function identifies Cochon tactics that match the
+given string, either exactly or as a prefix.
 
-> evalCommand :: Command INDTM -> ProofState String
-> evalCommand Apply           = apply             >> return "Applied."
-> evalCommand DoneC           = done              >> return "Done."
-> evalCommand (Elaborate tm)  = infoElaborate tm
-> evalCommand (Give tm)       = elabGiveNext tm   >> return "Thank you."
-> evalCommand (Go InC)        = goIn              >> return "Going in..."
-> evalCommand (Go OutC)       = goOut             >> return "Going out..."
-> evalCommand (Go Up)         = goUp              >> return "Going up..."
-> evalCommand (Go Down)       = goDown            >> return "Going down..."
-> evalCommand (Go Top)        = many goUp         >> return "Going to top..."
-> evalCommand (Go Bottom)     = many goDown       >> return "Going to bottom..."
-> evalCommand (Go Prev)       = prevGoal          >> return "Searching for previous goal..."
-> evalCommand (Go RootC)      = many goOut        >> return "Going to root..."
-> evalCommand (Go Next)       = nextGoal          >> return "Searching for next goal..."
-> evalCommand (Go First)      = some prevGoal     >> return "Searching for first goal..."
-> evalCommand (Go Last)       = some nextGoal     >> return "Searching for last goal..."
-> evalCommand (Infer tm)      = infoInfer tm
-> evalCommand (Jump (DN (DP (n := _)))) = do
->     much goOut
->     goTo n
->     return ("Going to " ++ showName n ++ "...")
-> evalCommand (Lambda x)      = lambdaBoy x       >> return "Made lambda boy!"
-> evalCommand (Make x (mtm :<: ty)) = do
->     elabMake (x :<: ty)
->     goIn
->     case mtm of
->         Nothing  -> return "Appended goal!"
->         Just tm  -> elabGive tm >> return "Yessir."
-> evalCommand (ModuleC s)     = makeModule s      >> return "Made module."
-> evalCommand (PiBoy x ty)    = elabPiBoy (x :<: ty)  >> return "Made pi boy!"
-> evalCommand (Select (DN (DP r)))      = select (N (P r))          >> return "Selected."
-> evalCommand (Show Auncles)     = infoAuncles
-> evalCommand (Show Context)     = infoContext 
-> evalCommand (Show Dump)        = infoDump
-> evalCommand (Show Hypotheses)  = infoHypotheses
-> evalCommand (Show StateC)       = prettyProofState 
-> evalCommand (Show (Term x))    = return (show x)
-> evalCommand Ungawa          = ungawa            >> return "Ungawa!"
-> evalCommand (Elim (DN r)) = do 
->     (elimTy :>: e) <- elabInfer r
->     elimTyTm <- bquoteHere elimTy
->     elim Nothing ((elimTyTm :=>: elimTy) :>: (N e :=>: (evTm (N e))))
->     return ("Elimination occured. Subgoals awaiting work...")
+> tacticsMatching :: String -> [CochonTactic]
+> tacticsMatching x = case find ((x ==) . ctName) cochonTactics of
+>     Just ct  -> [ct]
+>     Nothing  -> filter (isPrefixOf x . ctName) cochonTactics
+
+> tacticNames :: [CochonTactic] -> String
+> tacticNames = intercalate ", " . sort . map ctName
+
+
+> type CTData = (CochonTactic, [CochonArg RelName])
+
+> pCochonTactic :: Parsley Token CTData
+> pCochonTactic  = do
+>     x <- ident
+>     case tacticsMatching x of
+>         [ct] -> do
+>             args <- ctParse ct
+>             return (ct, args)
+>         [] -> fail "unknown tactic name."
+>         cts -> fail ("ambiguous tactic name (could be " ++ tacticNames cts ++ ").")
 
 
 > resolveArgs :: [CochonArg RelName] -> ProofState [CochonArg REF]
