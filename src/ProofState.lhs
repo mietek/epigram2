@@ -24,6 +24,8 @@
 > import Tm
 > import MissingLibrary
 
+> import Debug.Trace
+
 %endif
 
 \section{Proof Context}
@@ -240,9 +242,9 @@ updated information, providing a friendlier interface than |get| and |put|.
 
 > getMotherEntry :: ProofState (Entry Bwd)
 > getMotherEntry = do
->     l <- getLayer
+>     m <- getMother
 >     dev <- getDev
->     case mother l of
+>     case m of
 >         GirlMother ref xn ty -> return (E ref xn (Girl LETG dev) ty)
 >         ModuleMother n -> return (M n dev)
 
@@ -300,6 +302,7 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     l <- getLayer
 >     replaceLayer (l{mother=GirlMother ref xn ty})
 >     putDev dev
+> putMotherEntry (M [] dev) = putDev dev
 > putMotherEntry (M n dev) = do
 >     l <- getLayer
 >     replaceLayer (l{mother=ModuleMother n})
@@ -392,6 +395,9 @@ may be useful for paranoia purposes.
 >     m <- getMother
 >     case m of
 >         GirlMother (_ := DEFN tm :<: ty) _ _ -> do
+>             ty' <- bquoteHere ty
+>             mc <- withRoot (inCheck $ check (SET :>: ty'))
+>             mc `catchEither` intercalate "\n" ["validateHere: girl type failed to type-check: SET does not admit", show ty']
 >             tm' <- bquoteHere tm
 >             mc <- withRoot (inCheck $ check (ty :>: tm'))
 >             mc `catchEither` intercalate "\n" ["validateHere: definition failed to type-check:", show ty, "does not admit", show tm']
@@ -795,20 +801,21 @@ has become more defined, and pass on the good news if necessary.
 
 Updating girls is a bit more complicated. We proceed as follows:
 \begin{enumerate}
+\item Add the girl to the context, using |jumpIn|.
 \item Recursively propagate the news to the children.
-\item Call |tellGirl| to update the tip and definition (including their types)
-\item Add the updated girl to the current development.
+\item Call |tellMother| to update the girl herself.
 \item Continue propagating the latest news.
 \end{enumerate}
 
 > propagateNews top news (NF ((Right e@(E ref sn (Girl LETG (_, tip, root)) ty)) :> es)) = do
 >     xs <- jumpIn e
 >     news' <- propagateNews False news xs
+>     news'' <- tellMother news'
 >     goOut
->     Just e' <- removeDevEntry
->     (news'', e'') <- tellEntry news' e'
->     putDevEntry e'
 >     propagateNews top news'' (NF es)
+
+Modules do not carry type information so all we need to do is propagate
+the news to their children.
 
 > propagateNews top news (NF (Right e@(M n d) :> es)) = do
 >     xs <- jumpIn e
@@ -824,8 +831,10 @@ merge the two together.
 >   propagateNews top (mergeNews news oldNews) (NF es)
 
 
-The |tellEntry| function informs an entry about a news bulletin that its children
-has already received. 
+The |tellEntry| function informs an entry about a news bulletin that its
+children have already received. If the entry is a girl, she must be the
+mother of the current cursor position (i.e. the entry should come from
+getMotherEntry).
 
 > tellEntry :: NewsBulletin -> Entry Bwd -> ProofState (NewsBulletin, Entry Bwd)
 
@@ -844,44 +853,63 @@ To update a boy, we must:
 >     let ref = name := DECL :<: tv'
 >     return (addNews (ref, n) news, E ref sn (Boy k) ty')
 
-To update a girl, we must:
+To update a hole, we must:
 \begin{enumerate}
-\item update the tip type (and term, if there is one);
-\item update the overall type of the entry;
-\item re-evaluate the definition, if there is one; and
+\item update the tip type;
+\item update the overall type of the entry, as stored in the reference; and
 \item update the news bulletin with news about this girl.
 \end{enumerate}
 
-> tellEntry news (E (name := k :<: tv) sn (Girl LETG (cs, tip, root)) ty) = do
->     let  (tip', n)       = tellTip news tip
->          (ty' :=>: tv', n')  = tellNewsEval news (ty :=>: tv)
->     k' <- case k of
->             HOLE    -> return HOLE
->             DEFN _  -> do
->                 aus <- getGreatAuncles
->                 let Defined tm _ = tip'
->                 return (DEFN (evTm (parBind aus cs tm)))
->     let ref = name := k' :<: tv'
->     return (addNews (ref, min n n') news, E ref sn (Girl LETG (cs, tip', root)) ty')
->  where 
->    tellTip :: NewsBulletin -> Tip -> (Tip, News)
->    tellTip news (Unknown tt) =
->        let (tt', n) = tellNewsEval news tt in
->            (Unknown tt', n)
->    tellTip news (Defined tm tt) =
->        let (tt', n) = tellNewsEval news tt in
->            case tellNews news tm of
->                (_,    NoNews)    -> (Defined tm   tt', n)
->                (tm',  GoodNews)  -> (Defined tm'  tt', GoodNews)
+> tellEntry news (E (name := HOLE :<: tyv) sn (Girl LETG (cs, Unknown tt, root)) ty) = do
+>     let  (tt', n)             = tellNewsEval news tt
+>          (ty' :=>: tyv', n')  = tellNewsEval news (ty :=>: tyv)
+>          ref                  = name := HOLE :<: tyv'
+>     return (addNews (ref, min n n') news,
+>                 E ref sn (Girl LETG (cs, Unknown tt', root)) ty')
 
+To update a defined girl, we must:
+\begin{enumerate}
+\item update the tip type;
+\item update the overall type of the entry, as stored in the reference;
+\item update the definition and re-evaluate it
+         (\question{could this be made more efficient?}); and
+\item update the news bulletin with news about this girl.
+\end{enumerate}
+
+> tellEntry news (E (name := DEFN tmL :<: tyv) sn (Girl LETG (cs, Defined tm tt, root)) ty) = do
+>     let  (tt', n)             = tellNewsEval news tt
+>          (ty' :=>: tyv', n')  = tellNewsEval news (ty :=>: tyv)
+>          (tm', n'')           = tellNews news tm
+>     aus <- getGreatAuncles
+>     let tmL' = parBind aus cs tm'
+
+For paranoia purposes, the following test might be helpful:
+
+<     mc <- withRoot (inCheck $ check (tyv' :>: tmL'))
+<     mc `catchEither` unlines ["tellEntry " ++ showName name ++ ":",
+<                                 show tmL', "is not of type", show ty' ]
+
+>     let ref = name := DEFN (evTm tmL') :<: tyv'
+>     return (addNews (ref, GoodNews {-min (min n n') n''-}) news,
+>                 E ref sn (Girl LETG (cs, Defined tm' tt', root)) ty')
+
+
+> proofTrace :: String -> ProofState ()
+> proofTrace s = do
+>   () <- trace s $ return ()
+>   return ()
+
+
+The |tellMother| function informs the mother entry about a news bulletin
+that her children have already received, and returns the updated news.
 
 > tellMother :: NewsBulletin -> ProofState NewsBulletin
-> tellMother news = (do
+> tellMother news = do
 >     e <- getMotherEntry
 >     (news', e') <- tellEntry news e 
 >     putMotherEntry e'
 >     return news'
->  ) <|> return news
+
 
 The |tellNews| function applies a bulletin to a term. It returns the updated
 term and the news about it.
@@ -892,8 +920,8 @@ term and the news about it.
 >     NoNews  -> (tm, NoNews)
 >     n       -> (fmap (getLatest news) tm, n)
 
-The |tellNewsEval| function takes a bulletin, term and its present value. It updates
-the term with the bulletin and re-evaluates it if necessary.
+The |tellNewsEval| function takes a bulletin, term and its present value.
+It updates the term with the bulletin and re-evaluates it if necessary.
 
 > tellNewsEval :: NewsBulletin -> INTM :=>: VAL -> (INTM :=>: VAL, News)
 > tellNewsEval news (tm :=>: tv) = case tellNews news tm of
