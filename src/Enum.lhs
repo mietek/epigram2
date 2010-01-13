@@ -280,3 +280,33 @@ Equality rules:
 >     ("Branches", _) -> Ignore
 >     ("Switch", [e, x, p, b]) -> App (Var "__switch") [x, b]
 
+
+To elaborate a tag with an enumeration as its type, we search for the
+tag in the enumeration to determine the appropriate index.
+
+> import -> ElaborateRules where
+>   elaborate _ (ENUMT t :>: DTAG a) = findTag a t 0
+>     where
+>       findTag :: String -> TY -> Int -> ProofState (INTM :=>: VAL)
+>       findTag a (CONSE (TAG b) t) n
+>         | a == b        = return (toNum n :=>: toNum n)
+>         | otherwise     = findTag a t (succ n)
+>       findTag a _ n  = throwError' ("elaborate: tag `" ++ a ++
+>                                         " not found in enumeration.")
+>                         
+>       toNum :: Int -> Tm {In, p} x
+>       toNum 0  = ZE
+>       toNum n  = SU (toNum (n-1))
+
+
+Conversely, we can distill an index to a tag as follows. Note that if the
+index contains a stuck term, we simply give up and let the normal distillation
+rules take over; the pretty-printer will then do the right thing.
+
+> import -> DistillRules where
+>   distill _ (ENUMT t :>: tm) | Just r <- findIndex (t :>: tm) = return r
+>     where
+>       findIndex :: (VAL :>: INTM) -> Maybe (InDTm String :=>: VAL)
+>       findIndex (CONSE (TAG s)  _ :>: ZE)    = Just (DTAG s :=>: evTm tm)
+>       findIndex (CONSE _        a :>: SU b)  = findIndex (a :>: b)
+>       findIndex _                            = Nothing

@@ -138,21 +138,6 @@ As some more syntactic sugar, we let inductive types elaborate lists (so |[]| be
 > elaborate b (QUOTIENT a r p :>: DPAIR x DVOID) =
 >   elaborate b (QUOTIENT a r p :>: DCLASS x)
 
-To elaborate a tag with an enumeration as its type, we search for the tag in the enumeration
-to determine the appropriate index.
-
-> elaborate b (ENUMT t :>: DTAG a) = findTag a t 0
->   where
->     findTag :: String -> TY -> Int -> ProofState (INTM :=>: VAL)
->     findTag a (CONSE (TAG b) t) n
->       | a == b        = return (toNum n :=>: toNum n)
->       | otherwise     = findTag a t (succ n)
->     findTag a _ n  = throwError' ("elaborate: tag `" ++ a ++ " not found in enumeration.")
->                         
->     toNum :: Int -> Tm {In, p} x
->     toNum 0  = ZE
->     toNum n  = SU (toNum (n-1))
-
 > elaborate b (PRF p :>: DVOID) = prove b p
 
 > elaborate b (NU d :>: DCOIT DVOID sty f s) = do

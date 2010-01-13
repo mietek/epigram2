@@ -3,7 +3,7 @@
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE GADTs, TypeOperators #-}
+> {-# LANGUAGE GADTs, TypeOperators, PatternGuards #-}
 
 > module Distiller where
 
