@@ -47,7 +47,17 @@ to allow extra canonical terms and eliminators to be pretty-printed.
 >     prettyEntries (es' :< E ref _ (Boy k) _) (aus' :< _) =
 >         prettyEntries es' aus'
 >         $$ prettyBKind k (prettyRef aus me r ref) 
->                                          
+> 
+
+If enabled, this case will print the fully lifted definition and type
+(as contained in the reference) for each girl, which may be helpful
+for debugging.
+
+<     prettyEntries (es' :< E ref _ (Girl LETG dev) _) (aus' :< _) = 
+<         prettyEntries es' aus'
+<         $$ sep [prettyRef aus me r ref,
+<                 nest 2 (prettyDev aus' (refName ref) dev) <+> semi]
+                                         
 >     prettyEntries (es' :< e) (aus' :< _) = 
 >         prettyEntries es' aus'
 >         $$ sep [text (christenName aus me (entryName e)),
