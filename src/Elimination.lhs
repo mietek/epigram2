@@ -334,8 +334,8 @@ Then, it is straightforward to build the term we want and to give it:
 > applyElim elim motive methods deltas = do
 >     reflDeltas <- withRoot (mkRefls deltas)
 >     N e <- lookupName elim
->     give $ N $ e $## (map NP deltas ++
->                       reflDeltas)
+>     giveNext $ N $ e $## (map NP deltas ++
+>                           reflDeltas)
 >     return ()
 
 We (in theory) have solved the goal!
