@@ -274,6 +274,9 @@ Information tactics:
 >   : unaryExCT "infer" infoInfer
 >       "infer <term> - elaborates <term> and infers its type."
 
+>   : unaryInCT "parse" (return . show)
+>       "parse <term> - parses <term> and displays the internal display-sytnax representation."
+
 >   : unaryStringCT "show" (\s -> case s of
 >         "auncles"  -> infoAuncles
 >         "context"  -> infoContext 
@@ -283,8 +286,6 @@ Information tactics:
 >         _          -> return "show: please specify exactly what to show."
 >       )
 >       "show <auncles/context/dump/hyps/state> - displays useless information."
-
-> --evalCommand (Show (Term x))    = return (show x)
 
 
 Miscellaneous tactics:
