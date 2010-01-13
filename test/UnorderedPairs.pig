@@ -35,8 +35,9 @@ make EqUPair
                     ((p ! : A) == (q - : A) && (p - : A) == (q ! : A)))
   : (A : *) -> (A ; A) -> (A ; A) -> # ;
 
-make Module : (A : *)(isEquiv : :- Equiv (A ; A) (EqUPair A)) -> () ;
-lambda A ; lambda isEquiv ; 
+module UnorderedPair ;
+lambda A : * ; 
+lambda isEquiv : :- Equiv (A ; A) (EqUPair A) ; 
 
 make UPair := Quotient (A ; A) (EqUPair A) isEquiv : * ;
 

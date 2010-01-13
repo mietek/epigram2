@@ -195,8 +195,16 @@ Construction tactics:
 >       "done - solves the goal with the last entry in the development."
 >   : unaryInCT "give" (\tm -> elabGiveNext tm >> return "Thank you.")
 >       "give <term> - solves the goal with <term>."
->   : unaryStringCT "lambda" (\s -> lambdaBoy s >> return "Made lambda boy!")
->       "lambda <x> - introduces a new hypothesis <x>."
+>   : simpleCT 
+>         "lambda"
+>          (| (| StrArg ident (%keyword ":"%) |) : (| (sing . InArg) pInDTm |) 
+>           | (| StrArg ident |) : (| [] |) |)
+>          (\ args -> case args of
+>              [StrArg s] -> lambdaBoy s >> return "Made lambda boy!"
+>              [StrArg s, InArg ty] -> 
+>                elabLamBoy (s :<: ty) >> return "Made lambda boy!")
+>          ("lambda <x> - introduces a hypothesis.\n"++
+>           "lambda <x> : <type> - introduces a new module parameter or hyp.")
 
 >   : simpleCT
 >         "make"
@@ -217,7 +225,7 @@ Construction tactics:
 >        ("make <x> : <type> - creates a new goal of the given type.\n"
 >            ++ "make <x> := <term> - adds a definition to the context.")
 
->   : unaryStringCT "module" (\s -> makeModule s >> return "Made module.")
+>   : unaryStringCT "module" (\s -> makeModule s >> goIn >> return "Made module.")
 >       "module <x> - creates a module with name <x>."
 
 >   : simpleCT

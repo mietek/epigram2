@@ -645,6 +645,33 @@ general.
 > lambdable (PRF (ALL s p))  = Just (ALAB, s, \v -> PRF (p $$ A v))
 > lambdable _                = Nothing
 
+> lambdaBoy' :: (String :<: (INTM :=>: TY)) -> ProofState REF
+> lambdaBoy' (x :<: (ty :=>: tv))  = do
+>     tip <- getDevTip
+>     case tip of
+>       Module -> do
+>         root <- getDevRoot
+>         freshRef (x :<: tv) (\ref r -> do
+>           putDevEntry (E ref (lastName ref) (Boy LAMB) ty)
+>           putDevRoot r
+>           return ref
+>             ) root
+>       Unknown (pi :=>: gty) -> case lambdable gty of
+>         Just (k, s, t) -> do
+>           root <- getDevRoot
+>           case equal (SET :>: (tv,s)) root of
+>             True -> do 
+>               freshRef (x :<: tv) (\ref r -> do
+>               putDevEntry (E ref (lastName ref) (Boy k) ty)
+>               let tipTyv = t (pval ref)
+>               putDevTip (Unknown (bquote B0 tipTyv r :=>: tipTyv))
+>               putDevRoot r
+>               return ref) root
+>             False -> throwError' "Given type does not match domain of goal"
+>         _  -> throwError' "lambdaBoy: goal is not a pi-type or all-proof."
+>       _ -> throwError' "lambdaBoy: only possible at Tips"
+
+
 The |make| command adds a named goal of the given type to the bottom of the
 current development, after checking that the purported type is in fact a type.
 

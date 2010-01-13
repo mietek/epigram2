@@ -337,9 +337,9 @@ a reference to the current goal (applied to the appropriate shared parameters).
 >         _  -> throwError' "elabGive: only possible for incomplete goals."
 
 
-The |elabMake| command elaborates the given display term in a module to produce a type,
-then converts the module to a goal with that type. Thus any subgoals produced by 
-elaboration will be children of the resulting goal.
+The |elabMake| command elaborates the given display term in a module to
+produce a type, then converts the module to a goal with that type. Thus any
+subgoals produced by elaboration will be children of the resulting goal.
 
 > elabMake :: (String :<: INDTM) -> ProofState INTM
 > elabMake (s :<: ty) = do
@@ -390,3 +390,10 @@ creates a $\Pi$-boy with that type.
 >     tt <- elaborate True (SET :>: ty)
 >     piBoy' (s :<: tt)
 >     return ()
+
+> elabLamBoy :: (String :<: INDTM) -> ProofState ()
+> elabLamBoy (s :<: ty) = do
+>     tt <- elaborate True (SET :>: ty)
+>     lambdaBoy' (s :<: tt)
+>     return ()
+
