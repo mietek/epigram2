@@ -11,7 +11,7 @@
 > import Control.Monad
 > import Control.Monad.Identity
 > import Data.Char
-> import Data.Foldable hiding (elem)
+> import Data.Foldable hiding (elem, find)
 > import Data.List
 > import Data.Monoid
 > import Data.Traversable
@@ -241,7 +241,7 @@ It gives an appropriate relative name as a string, and returns the number
 of arguments to drop. 
 
 > baptise :: Entries -> Name -> Bwd String -> Name -> (String, Int)
-> baptise auncles me vs target = case  splitNames me target of
+> baptise auncles me vs target = case splitNames me target of
 >   (prefix, (t, n):targetSuffix) ->
 >     let  numBindersToSkip = ala Sum foldMap (indicator (t ==)) vs
 >          boyCount = ala Sum foldMap (indicator (not. entryHasDev))
@@ -256,8 +256,13 @@ of arguments to drop.
 >                   let  (kids, _, _) = entryDev ancestor
 >                        n = (t, Rel i) : (searchKids kids targetSuffix 0)
 >                   in   (showRelName n, argsToDrop)
->         Nothing -> ("???" ++ showName target, 0)
->   (prefix, []) -> ("!!!", 0)
+>         Nothing -> (tryBuiltins, 0)
+>   (prefix, []) -> (tryBuiltins, 0)
+>  where
+>    tryBuiltins :: String
+>    tryBuiltins = case find ((target ==) . refName . snd) (axioms ++ primitives) of
+>       Just (s, _)  -> s
+>       Nothing      -> "???" ++ showName target
 
 
 The |searchKids| function searches a list of children to match a name suffix, producing
