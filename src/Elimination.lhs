@@ -242,29 +242,32 @@ consists in chaining the equalities, and ending with the goal:
 
 And we will just have to "give" that term when we are ready.
 
+> renameVar :: REF -> INTM -> REF -> INTM
+> renameVar r t r' 
+>     = fmap (\rt -> if rt == r then r' else r) t
 
-> chunkDelta :: [REF] -> [INTM] -> [Either REF REF]
-> chunkDelta deltas argTypes = map usedInArgs deltas
->     where usedInArgs r = case r `Data.List.elem` inArgsRef of
->                            True -> Right r
->                            False -> Left r
->           inArgsRef = Data.Foldable.concatMap (foldMap (\x -> [x])) argTypes
+> collectRefs :: INTM -> [REF]
+> collectRefs r = foldMap (\x -> [x]) r
 
-> filterDelta1 :: [Either REF REF] -> [REF]
-> filterDelta1 [] = []
-> filterDelta1 ((Left r) : t) = r : filterDelta1 t
-> filterDelta1 (_ : t) = filterDelta1 t
+> simplifyPi :: INTM -> [REF] -> [INTM] -> ProofState (INTM, [REF])
+> simplifyPi goalTm deltasOld argTypes = do
+>   let deps = foldMap collectRefs argTypes
+>   (goal, deltas) <- simplifyPi' F0 goalTm (bwdList deltasOld) deps
+>   return (goal, trail deltas)
 
-> mkAssocCtxt :: [(REF, Either REF REF)] -> [(REF,REF)]
-> mkAssocCtxt [] = []
-> mkAssocCtxt ((r, Left r') : t) = mkAssocCtxt t
-> mkAssocCtxt ((r, Right r') : t) = (r,r') : mkAssocCtxt t
+> usedIn = Data.Foldable.elem
 
-> renameVars :: INTM -> [(REF,REF)] -> INTM
-> renameVars t assocContext = fmap renameVars' t
->         where renameVars' r = case lookup r assocContext of
->                                 Nothing -> r
->                                 Just r' -> r'
+> simplifyPi' :: Fwd REF -> INTM -> Bwd REF -> [REF] -> ProofState (INTM, Fwd REF)
+> simplifyPi' deltas goal (rs :< r) deps | r `usedIn` deps = do
+>     rTyTm <- bquoteHere $ pty r
+>     let deps' = deps `union` collectRefs rTyTm
+>     simplifyPi' deltas goal rs deps'
+>                                        | otherwise = do
+>     rTyTm <- bquoteHere $ pty r
+>     delta <- piBoy ("delta" :<: rTyTm)
+>     let goal' = renameVar r goal delta
+>     return (goal', delta :> deltas)
+> simplifyPi' deltas goal B0 deps = return (goal, deltas)
 
 Finally, we can make the motive, that is close that subgoal. This simply
 consists in chaining the commands above, and give the computed term. Unless
@@ -277,14 +280,10 @@ I've screwed up things, |give| should always be happy.
 >     -- Makes the body
 >     -- Starting with |Pi|s on $\Delta$
 >     goalTm <- bquoteHere goal
->     let deltas01 = chunkDelta deltas argTypes
->     let goal0 = renameVars goalTm $ mkAssocCtxt $ zip deltas deltas01
->     let deltas1 = filterDelta1 deltas01
->     deltasTy <- sequence $ map (bquoteHere . pty) deltas1
->     deltas <- introInternalCtxt deltasTy
+>     (goal, deltas) <- simplifyPi goalTm deltas argTypes
 >     -- Then, make the body of the term
 >     let constraints = mkEqualities $ zip xis deltas
->     let motive = mkTerm constraints (evTm goal0)
+>     let motive = mkTerm constraints (evTm goal)
 >     -- And give it
 >     motive <- bquoteHere motive
 >     motive <- give motive
