@@ -111,7 +111,11 @@ Equality rules:
 >   enumFakeREF = [("Primitive", 0), ("Enum", 0)] := (FAKE :<: SET) 
 >   enumU :: VAL
 >   enumU = MU (Just (N (P enumFakeREF))) inEnumU
+>   enumREF :: REF
+>   enumREF = [("Primitive", 0), ("Enum", 0)] := (DEFN enumU :<: SET) 
 
+> import -> Primitives where
+>   ("Enum", enumREF) :
 
 > import -> CanConstructors where
 >   EnumT  :: t -> Can t
@@ -127,8 +131,8 @@ Equality rules:
 
 > import -> DisplayCanPats where
 >   pattern DENUMT e    = DC (EnumT e) 
->   pattern DNILE       = DCON (DPAIR DZE DVOID)
->   pattern DCONSE t e  = DCON (DPAIR (DSU DZE) (DPAIR t (DPAIR e DVOID)))
+>   pattern DNILE       = DCON (DPAIR (DTAG "nil") DVOID)
+>   pattern DCONSE t e  = DCON (DPAIR (DTAG "cons") (DPAIR t (DPAIR e DVOID)))
 >   pattern DZE         = DC Ze
 >   pattern DSU n       = DC (Su n)
 
@@ -156,13 +160,18 @@ Equality rules:
 >   halfZip (Su t0) (Su t1) = Just (Su (t0,t1))
 
 > import -> CanPretty where
->   pretty (EnumT t)  = braces (prettyEnum t)
+>   pretty (EnumT t)  = braces (hsep (punctuate comma (map text ss))
+>       <+> maybe empty ((text "/" <+>) . pretty) mtm)
+>     where  (ss, mtm) = enumBits t
 >   pretty Ze         = text "0"
 >   pretty (Su t)     = prettyEnumIndex 1 t
 
 > import -> Pretty where
->   prettyEnum :: Pretty x => InDTm x -> Doc
->   prettyEnum t = text "[" <+> pretty t <+> text "]"
+>   enumBits :: Pretty x => InDTm x -> ([String], Maybe (InDTm x))
+>   enumBits DNILE = ([], Nothing)
+>   enumBits (DCONSE (DTAG s) t) = (s:ss, mtm)
+>       where (ss, mtm) = enumBits t
+>   enumBits tm = ([], Just tm)
 >
 >   prettyEnumIndex :: Pretty x => Int -> InDTm x -> Doc
 >   prettyEnumIndex n DZE      = int n
