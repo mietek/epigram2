@@ -92,9 +92,6 @@ With no computational behavior.
 > import -> CanPats where
 >   pattern EQBLUE p q = C (EqBlue p q)
 
-> import -> DisplayCanPats where
->   pattern DEQBLUE p q = DC (EqBlue p q)
-
 > import -> SugarTactics where
 >     eqBlueTac p q = can $ EqBlue p q
 
@@ -187,3 +184,37 @@ With no computational behavior.
 > import -> Axioms where
 >   ("coh", coh) :
 >   ("refl", refl) :
+
+
+In the display syntax, a blue equality can be between arbitrary ExDTms,
+rather than ascriptions. To allow this, we add a suitable constructor
+to InDTm, along with elaboration and distillation rules.
+
+> import -> InDTmConstructors where
+>   DEqBlue :: ExDTm x -> ExDTm x -> InDTm x
+
+> import -> InDTmPretty where
+>   pretty (DEqBlue t u) = pretty t <+> text "==" <+> pretty u
+
+> import -> DMangleRules where
+>   m %$ (DEqBlue t u) = (| DEqBlue (dexMang m t (pure [])) (dexMang m u (pure [])) |)
+
+> import -> ElaborateRules where
+>   elaborate top (PROP :>: DEqBlue t u) = do
+>       (tty :>: ttm) <- elabInfer t
+>       (uty :>: utm) <- elabInfer u
+>       tty' <- bquoteHere tty
+>       uty' <- bquoteHere uty
+>       return ((EQBLUE (tty' :>: N ttm) (uty' :>: N utm))
+>               :=>: (EQBLUE (tty :>: evTm ttm) (uty :>: evTm utm)))
+
+
+The usual distillation machinery will work correctly, but we can define
+the following special case to recover the original representation when
+a blue equality is between two neutral terms.
+
+> import -> DistillRules where
+>   distill es (PROP :>: tm@(EQBLUE (_ :>: N t) (_ :>: N u))) = do
+>       (ttm :<: tty) <- distillInfer es t []
+>       (utm :<: uty) <- distillInfer es u []
+>       return (DEqBlue ttm utm :=>: evTm tm)

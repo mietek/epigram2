@@ -613,6 +613,8 @@ I think that this stuff should disappear with Tactics spreading.
 >   show (HF x t)  = "..."
 >   show (K t) = "K (" ++ show t ++")"
 
+> instance Show Op where
+>   show = opName
 
 > instance Functor (Scope {TT}) where
 >   fmap = fmapDefault

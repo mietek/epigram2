@@ -28,6 +28,8 @@ of entries in scope, which it will extend when going under a binder.
 
 > distill :: Entries -> (TY :>: INTM) -> ProofState (InDTm String :=>: VAL)
 
+> import <- DistillRules
+
 > distill es (C ty :>: C c) = do
 >     cc <- canTy (distill es) (ty :>: c)
 >     return ((DC $ fmap termOf cc) :=>: evTm (C c))
@@ -46,19 +48,21 @@ of entries in scope, which it will extend when going under a binder.
 >     convScope (K _)     tm = DK tm
 
 > distill es (_ :>: N n) = do
->     (n' :<: _) <- boil es n []
+>     (n' :<: _) <- distillInfer es n []
 >     return (DN n' :=>: evTm n)
 
 > distill _ (ty :>: tm) = error ("distill: can't cope with\n" ++ show ty ++ "\n:>:\n" ++ show tm)
 
 
-The |boil| command is the |EXTM| version of |distill|, which also yields
+The |distillInfer| command is the |EXTM| version of |distill|, which also yields
 the type of the term. It keeps track of a list of entries in scope, but
 also accumulates a spine so shared parameters can be removed.
 
-> boil :: Entries -> EXTM -> Spine {TT} REF -> ProofState (ExDTm String :<: TY)
+> distillInfer :: Entries -> EXTM -> Spine {TT} REF -> ProofState (ExDTm String :<: TY)
 
-> boil es tm@(P (name := _ :<: ty)) as       = do
+> import <- DistillInferRules
+
+> distillInfer es tm@(P (name := _ :<: ty)) as       = do
 >     me <- getMotherName
 >     let (strName, argsToDrop) = baptise es me B0 name
 >     (e', ty') <- processArgs (evTm tm :<: ty) as
@@ -71,15 +75,15 @@ also accumulates a spine so shared parameters can be removed.
 >         (es, ty'') <- processArgs (v $$ (fmap valueOf e') :<: ty') as 
 >         return (fmap termOf e' : es, ty'')
 
-> boil es (t :$ e) as    = boil es t (e : as)
+> distillInfer es (t :$ e) as    = distillInfer es t (e : as)
 
-> boil es (op :@ ts) as  = do
+> distillInfer es (op :@ ts) as  = do
 >     (ts', ty) <- opTy op (distill es) ts
 >     return ((op ::@ fmap termOf ts') :<: ty) 
 
-> boil es (t :? ty) as   = do
+> distillInfer es (t :? ty) as   = do
 >     ty'  :=>: vty  <- distill es (SET :>: ty)
 >     t'   :=>: _    <- distill es (vty :>: t)
 >     return ((t' ::? ty') :<: vty)
 
-> boil _ tm _ = error ("boil: can't cope with " ++ show tm)
+> distillInfer _ tm _ = error ("distillInfer: can't cope with " ++ show tm)

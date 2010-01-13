@@ -4,7 +4,9 @@
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE TypeOperators, GADTs, KindSignatures, RankNTypes,
->     TypeSynonymInstances, FlexibleInstances, FlexibleContexts, ScopedTypeVariables #-}
+>     TypeSynonymInstances, FlexibleInstances, FlexibleContexts,
+>     ScopedTypeVariables,
+>     DeriveFunctor, DeriveFoldable, DeriveTraversable #-}
 
 > module DisplayTm where
 
@@ -26,24 +28,31 @@
 %format ::. = ":\!\bullet"
 
 > data InDTm :: * -> * where
->     DL     :: DScope x                         -> InDTm  x -- \(\lambda\)
->     DC     :: Can (InDTm x)                    -> InDTm  x -- canonical
->     DN     :: ExDTm x                          -> InDTm  x -- neutral
->     DQ     :: String                           -> InDTm  x -- hole
->     DI     :: String                           -> InDTm  x -- underscore
->     DT     :: InTm x                    -> InDTm  x -- embedding
->     Dum    ::                                     InDTm  x
+>     DL     :: DScope x                   -> InDTm  x -- \(\lambda\)
+>     DC     :: Can (InDTm x)              -> InDTm  x -- canonical
+>     DN     :: ExDTm x                    -> InDTm  x -- neutral
+>     DQ     :: String                     -> InDTm  x -- hole
+>     DI     :: String                     -> InDTm  x -- underscore
+>     DT     :: InTmWrap x                 -> InDTm  x -- embedding
+>     Dum    ::                               InDTm  x -- dummy
+>     import <- InDTmConstructors
+>  deriving (Functor, Foldable, Traversable, Show)
+
+
 
 > data ExDTm :: * -> * where
->     DP     :: x                                -> ExDTm  x -- parameter
->     DV     :: Int                              -> ExDTm  x -- variable
+>     DP     :: x                          -> ExDTm  x -- parameter
+>     DV     :: Int                        -> ExDTm  x -- variable
 >     (::@)  :: Op -> [InDTm x]            -> ExDTm  x -- fully applied op
 >     (::$)  :: ExDTm x -> Elim (InDTm x)  -> ExDTm  x -- elim
 >     (::?)  :: InDTm x -> InDTm x         -> ExDTm  x -- typing
+>     import <- ExDTmConstructors
+>  deriving (Functor, Foldable, Traversable, Show)
 
 > data DScope :: * -> * where
->   (::.)  :: String -> InDTm x           -> DScope x  -- binding
->   DK     :: InDTm x                     -> DScope x  -- constant
+>     (::.)  :: String -> InDTm x          -> DScope x  -- binding
+>     DK     :: InDTm x                    -> DScope x  -- constant
+>   deriving (Functor, Foldable, Traversable, Show)
 
 > type INDTM  = InDTm REF 
 > type EXDTM  = ExDTm REF
@@ -97,6 +106,7 @@
 > m %$ DQ s          = pure (DQ s)
 > m %$ DI s          = pure (DI s)
 > m %$ Dum           = (|Dum|)
+> import <- DMangleRules
 > _ %$ tm            = error ("%$: can't dmangle " ++ show (fmap (\_ -> ".") tm)) 
 
 > dexMang ::  Applicative f => DMangle f x y ->
@@ -106,6 +116,9 @@
 > dexMang m (o ::@ a)  es = (|(| (o ::@) ((m %$) ^$ a) |) $::$ es|) 
 > dexMang m (t ::$ e)  es = dexMang m t (|((m %$) ^$ e) : es|)
 > dexMang m (t ::? y)  es = (|(|(m %$ t) ::? (m %$ y)|) $::$ es|)
+> import <- DExMangleRules
+> dexMang _ tm         es = error ("dexMang: can't cope with " ++ show (fmap (\_ -> ".") tm))
+
 
 > (%%$) :: DMangle Identity x y -> InDTm x -> InDTm y
 > m %%$ t = runIdentity $ m %$ t
@@ -130,58 +143,13 @@
 
 
 
+> data InTmWrap x = InTmWrap (InTm x)
 
-> instance Show x => Show (InDTm x) where
->   show (DL s)       = "DL (" ++ show s ++ ")"
->   show (DC c)       = "DC (" ++ show c ++ ")"
->   show (DN n)       = "DN (" ++ show n ++ ")"
->   show (DQ s)       = "?" ++ s
->   show (DI s)       = "_" ++ s
->   show (DT t)       = "DT (" ++ show t ++ ")"
->   show Dum          = "Dum"
-
-> instance Show x => Show (ExDTm x) where
->   show (DP x)       = "DP (" ++ show x ++ ")"
->   show (DV i)       = "DV " ++ show i
->   show (n ::$ e)    = "(" ++ show n ++ " ::$ " ++ show e ++ ")"
->   show (op ::@ vs)  = "(" ++ opName op ++ " ::@ " ++ show vs ++ ")"
->   show (t ::? y)    = "(" ++ show t ++ " ::? " ++ show y ++ ")"
->
-> instance Show x => Show (DScope x) where
->   show (x ::. t)   = show x ++ " :. " ++ show t
->   show (DK t) = "DK (" ++ show t ++")"
-
-
-
-> instance Functor DScope where
+> instance Functor InTmWrap where
 >   fmap = fmapDefault
-> instance Foldable DScope where
+> instance Foldable InTmWrap where
 >   foldMap = foldMapDefault
-> instance Traversable DScope where
->   traverse f (x ::. t)   = (|(x ::.) (traverse f t)|)
->   traverse f (DK t)      = (|DK (traverse f t)|)
-
-
-> instance Functor InDTm where
->   fmap = fmapDefault
-> instance Foldable InDTm where
->   foldMap = foldMapDefault
-> instance Traversable InDTm where
->   traverse f (DL sc)     = (|DL (traverse f sc)|)
->   traverse f (DC c)      = (|DC (traverse (traverse f) c)|)
->   traverse f (DN n)      = (|DN (traverse f n)|)
->   traverse f (DQ s)      = pure (DQ s)
->   traverse f (DI s)      = pure (DI s)
->   traverse f (DT t)      = (|DT (traverse f t)|)
->   traverse f Dum         = (|Dum|)
-
-> instance Functor ExDTm where
->   fmap = fmapDefault
-> instance Foldable ExDTm where
->   foldMap = foldMapDefault
-> instance Traversable ExDTm where
->   traverse f (DP x)      = (|DP (f x)|)
->   traverse f (DV i)      = pure (DV i)
->   traverse f (t ::$ u)   = (|(::$) (traverse f t) (traverse (traverse f) u)|)
->   traverse f (op ::@ ts) = (|(op ::@) (traverse (traverse f) ts)|)
->   traverse f (tm ::? ty) = (|(::?) (traverse f tm) (traverse f ty)|)
+> instance Traversable InTmWrap where
+>   traverse f (InTmWrap x) = (| InTmWrap (traverse f x) |)
+> instance Show x => Show (InTmWrap x) where
+>   show (InTmWrap t) = show t

@@ -198,8 +198,8 @@ We need to sort out a better solution for ascription syntax.
 
 > moreInDTm :: Size -> InDTmRN -> Parsley Token InDTmRN
 > moreInDTm EqSize t =
->   (| DEQBLUE  (pFilter isEqSide (pure t)) (%keyword "=="%)
->              (pFilter isEqSide (sizedInDTm (pred EqSize)))
+>   (| DEqBlue  (pFilter isEx (pure t)) (%keyword "=="%)
+>              (pFilter isEx (sizedInDTm (pred EqSize)))
 >    |) <|> moreInDTm (pred EqSize) t
 > moreInDTm AndSize s =
 >   (| (DAND s) (%keyword "&&"%) (sizedInDTm AndSize)
@@ -213,3 +213,7 @@ We need to sort out a better solution for ascription syntax.
 > isEqSide :: InDTmRN -> Maybe (InDTmRN :>: InDTmRN)
 > isEqSide (DN (t0 ::? y0)) = Just (y0 :>: t0)
 > isEqSide _ = Nothing
+
+> isEx :: InDTmRN -> Maybe ExDTmRN
+> isEx (DN tm)  = Just tm
+> isEx _        = Nothing

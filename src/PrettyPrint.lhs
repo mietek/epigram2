@@ -118,6 +118,8 @@ for debugging.
 >     pretty (DC c)          = pretty c
 >     pretty (DN n)          = pretty n
 >     pretty (DQ x)          = text ("?" ++ x)
+>     import <- InDTmPretty
+>     pretty indtm           = quotes . text . show $ indtm
 
 > instance Pretty x => Pretty (ExDTm x) where
 >     pretty (DP x)          = pretty x
@@ -126,6 +128,8 @@ for debugging.
 >         <+> sep (punctuate comma (map (pretty) vs)))
 >     pretty (n ::$ el)      = parens (pretty n <+> pretty el)
 >     pretty (t ::? y)       = parens (pretty t <+> text ":" <+> pretty y)
+>     import <- ExDTmPretty
+>     pretty exdtm           = quotes . text . show $ exdtm
 
 > import <- Pretty
 

@@ -52,6 +52,8 @@ rather than creating a subgoal.
 
 > elaborate :: Bool -> (TY :>: INDTM) -> ProofState (INTM :=>: VAL)
 
+> import <- ElaborateRules
+
 Here's a case which makes labelled datatypes
 
 > elaborate True (SET :>: DMU Nothing d) = do
@@ -96,7 +98,7 @@ interesting types.
 >       Nothing  -> elimOpMethodType $$ A d $$ A t :>: f
 >       Just l   -> elimOpLabMethodType $$ A l $$ A d $$ A t :>: f
 >     d' <- bquoteHere d
->     (dll :=>: _) <- elaborate False (desc :>: DT d') -- lambda lift that sucker
+>     (dll :=>: _) <- elaborate False (desc :>: DT (InTmWrap d')) -- lambda lift that sucker
 >     t' <- bquoteHere t
 >     x <- lambdaBoy (fortran t)
 >     elabbedT . N $ elimOp :@ [dll, N (P x), t', m']
@@ -155,7 +157,7 @@ to determine the appropriate index.
 
 > elaborate b (NU d :>: DCOIT DVOID sty f s) = do
 >   d' <- bquoteHere d
->   elaborate b (NU d :>: DCOIT (DT d') sty f s)
+>   elaborate b (NU d :>: DCOIT (DT (InTmWrap d')) sty f s)
 
 Elaborating a canonical term with canonical type is a job for |canTy|.
 
@@ -218,7 +220,7 @@ the term, then checking the inferred type is what we pushed in.
 If the elaborator made up a term, it does not require further elaboration, but we should
 type-check it for safety's sake. 
 
-> elaborate top (ty :>: DT tm) = checkHere (ty :>: tm)
+> elaborate top (ty :>: DT (InTmWrap tm)) = checkHere (ty :>: tm)
 
 If nothing else matches, give up and report an error.
 
