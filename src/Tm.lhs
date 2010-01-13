@@ -15,6 +15,7 @@
 > import Data.Either
 > import qualified Data.Monoid as M
 > import Data.Foldable hiding (foldl)
+> import Data.List
 > import Data.Traversable
 
 > import MissingLibrary
@@ -387,11 +388,14 @@ defined, and deluded. References carry not only names, but types and
 values, and are shared.
 
 > data REF = (:=) { refName :: Name, refBody :: (RKind :<: TY)}
->   deriving Show -- is shared where possible
+>   {-deriving Show-} -- is shared where possible
 > infix 2 :=
 >
 > instance Eq REF where
 >   (x := _) == (y := _) = x == y  -- could use cheeky pointer equality?
+
+> instance Show REF where
+>   show (n := kt) = intercalate "." (map fst n) ++ " := " ++ show kt
 
 A |REF| can either be:
 \begin{description}
