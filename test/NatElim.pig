@@ -1,0 +1,22 @@
+make NatD := @ [`arg { zero, suc } [ (@ [`done]) (@ [`ind1 @ [`done]]) ] ] : Desc ;
+make Nat := (Mu NatD ) : * ;
+make suc := (\ x -> [x]) : Nat -> Nat ;
+make zero := [] : Nat ;
+make one := (suc zero) : Nat ;
+make two := (suc one) : Nat ;
+make add := ? : Nat -> Nat -> Nat ;
+in ;
+lambda x ;
+lambda y ;
+elim elimOp NatD x ;
+give @ ? ;
+give [ ? ? ] ;
+give @ @ ? ;
+give y ;
+lambda r ;
+give @ ? ;
+lambda xy ;
+give @ ? ;
+give (suc xy) ;
+root ;
+elab add two two 
