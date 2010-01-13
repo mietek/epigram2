@@ -112,11 +112,11 @@ eliminator and then making the motive in two phases.
 
 The development transformation is achieved by the following code:
 
-> introElim :: Eliminator -> ProofState (INTM, [INTM])
+> introElim :: Eliminator -> ProofState (Name, INTM, [INTM])
 > introElim (eType :>: e) = do
 >     -- Jump in a girl (oh!) to chunk (and access) 
 >     -- the types of the eliminator
->     makeModule "h"
+>     elimName <- makeModule "makeE"
 >     goIn
 >     -- Get the type of the motive
 >     -- And ask for making it real
@@ -134,7 +134,7 @@ The development transformation is achieved by the following code:
 >     -- And goes to the next subproblem, ie. making P
 >     moduleToGoal goal
 >     giveNext $ N $ (termOf e :? termOf eType) $## (p : ms)
->     return (p, ms)
+>     return (elimName, p, ms)
 >         where unPi :: VAL -> (VAL, VAL)
 >               unPi (PI s t) = (s, t)
 
@@ -270,7 +270,7 @@ Finally, we can make the motive, that is close that subgoal. This simply
 consists in chaining the commands above, and give the computed term. Unless
 I've screwed up things, |give| should always be happy.
 
-> makeMotive :: VAL -> [REF] -> [INTM] -> ProofState INTM
+> makeMotive :: VAL -> [REF] -> [INTM] -> ProofState ([REF], INTM)
 > makeMotive goal deltas argTypes = do
 >     -- Gets the arguments in $\Xi$
 >     xis <- introMotive  
@@ -287,7 +287,8 @@ I've screwed up things, |give| should always be happy.
 >     let motive = mkTerm constraints (evTm goal0)
 >     -- And give it
 >     motive <- bquoteHere motive
->     give motive
+>     motive <- give motive
+>     return (deltas, motive)
 
 \subsection{Applying the motive}
 
@@ -329,14 +330,12 @@ in $\Delta$ and apply |refl| to it.
 
 Then, it is straightforward to build the term we want and to give it:
 
-> applyElim :: Eliminator -> INTM -> [INTM] -> [REF] -> ProofState ()
-> applyElim (elimTy :>: elim) motive methods deltas = do
+> applyElim :: Name -> INTM -> [INTM] -> [REF] -> ProofState ()
+> applyElim elim motive methods deltas = do
 >     reflDeltas <- withRoot (mkRefls deltas)
->     give $ 
->       N $ (termOf elim :? termOf elimTy) $## (motive : 
->                                               methods ++
->                                               (map NP deltas) ++
->                                               reflDeltas)
+>     N e <- lookupName elim
+>     give $ N $ e $## (map NP deltas ++
+>                       reflDeltas)
 >     return ()
 
 We (in theory) have solved the goal!
@@ -360,17 +359,17 @@ her: we look at her internals, check that everything is correct, and make
 sub-goals. Note that |introElim| make a girl and we carefully |goOut| her in
 |elimDoctor|.
 
-> elimDoctor :: [REF] -> VAL -> Eliminator -> ProofState (INTM, [INTM])
+> elimDoctor :: [REF] -> VAL -> Eliminator -> ProofState (Name, INTM, [INTM], [REF])
 > elimDoctor deltas goal eliminator = do
 >     -- Prepare the development by creating subgoals:
 >     --    1/ the motive
 >     --    2/ the methods
->     (motive, methods) <- introElim eliminator
+>     (eliminator, motive, methods) <- introElim eliminator
 >     -- Build the motive
->     motive <- makeMotive goal deltas (motive : methods)
+>     (deltas, motive) <- makeMotive goal deltas (motive : methods)
 >     -- Leave the development with the methods unimplemented
 >     goOut
->     return (motive, methods)
+>     return (eliminator, motive, methods, deltas)
 
 In a third part, we solve the problem. To that end, we simply have to use the
 |applyElim| command we have developed above.
@@ -383,7 +382,8 @@ Frankenstein operation of these three parts:
 >     -- Where are we?
 >     (deltas, goal) <- elimContextGoal
 >     -- What is the eliminator?
->     (motive, methods) <- elimDoctor deltas goal eliminator
+>     (eliminator, motive, methods, deltas) <- 
+>         elimDoctor deltas goal eliminator
 >     -- Apply the motive, ie. solve the goal
 >     applyElim eliminator motive methods deltas
 
