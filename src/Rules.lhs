@@ -79,7 +79,7 @@ This translates into the following code:
 > C (Con t)    $$ Out  = t                -- By \ref{eqn:elim_con}
 > import <- ElimComputation               -- Extensions
 > N n          $$ e    = N (n :$ e)       -- By \ref{eqn:elim_stuck}
-> f            $$ e    = error ("Can't eliminate " ++ show f ++ " with eliminator " ++ show e)
+> f            $$ e    = error ("Can't eliminate\n" ++ show f ++ "\nwith eliminator\n" ++ show e)
 
 
 \subsubsection{Operators}
@@ -336,7 +336,7 @@ term.
 
 > etaExpand :: (Can VAL :>: VAL) -> Root -> Maybe INTM
 > etaExpand (Pi s t :>: f) r = Just $
->   L ("" :. fresh ("" :<: s) (\v  -> inQuote (t $$ A v :>: (f $$ A v))) r)
+>   L ("__etaExpandA" :. fresh ("__etaExpandB" :<: s) (\v  -> inQuote (t $$ A v :>: (f $$ A v))) r)
 > import <- EtaExpand
 > etaExpand _                  _ = Nothing
 
@@ -513,7 +513,7 @@ making a fresh variable $x \in S$ and computing the type |T x|. Then,
 we simply have to check that $T\ x \ni t$.
 
 > check (PI s t :>: L sc) = do
->   Rooty.freshRef ("" :<: s) 
+>   Rooty.freshRef ("__check" :<: s) 
 >            (\ref -> check (t $$ A (pval ref) :>: underScope sc ref)) 
 >   return $ () :=>: (evTm $ L sc)
 
