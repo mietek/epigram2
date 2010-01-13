@@ -167,6 +167,9 @@ Elim forms inherited from elsewhere
 > import -> CanPretty where
 >   pretty Prop           = text "#"
 >   pretty (Prf p)        = parens (text ":-" <+> pretty p)
+>   pretty (All s (DL (DK t)))  = parens (sep [pretty s <+> text "=>", pretty t])
+>   pretty (All s (DL (x ::. t))) = 
+>     parens (sep [parens (text x <+> text ":" <+> pretty s) <+> text "=>", pretty t])
 >   pretty (All p q)      = parens (text "All" <+> pretty p <+> pretty q)
 >   pretty (And p q)      = parens (pretty p <+> text "&&" <+> pretty q)
 >   pretty Trivial        = text "TT"
