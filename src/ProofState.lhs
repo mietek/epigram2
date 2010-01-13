@@ -418,6 +418,12 @@ may be useful for paranoia purposes.
 >     (es, dev) <- get
 >     return (foldMap ((++ "\n") . show) es ++ show dev)
 
+> lookupName :: Name -> ProofState INTM
+> lookupName name = do
+>   aus <- getAuncles
+>   let Just (E ref _ _ _) = Data.Foldable.find ((name ==) . entryName) aus
+>   return $ (N (P ref $:$ aunclesToElims (aus <>> F0)))
+
 \subsection{Navigation Commands}
 
 Now we provide commands to navigate the proof state:
