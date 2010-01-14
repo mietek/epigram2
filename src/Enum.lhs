@@ -167,13 +167,13 @@ Equality rules:
 >   pretty (Su t)     = prettyEnumIndex 1 t
 
 > import -> Pretty where
->   enumBits :: Pretty x => InDTm x -> ([String], Maybe (InDTm x))
+>   enumBits :: InDTm x -> ([String], Maybe (InDTm x))
 >   enumBits DNILE = ([], Nothing)
 >   enumBits (DCONSE (DTAG s) t) = (s:ss, mtm)
 >       where (ss, mtm) = enumBits t
 >   enumBits tm = ([], Just tm)
 >
->   prettyEnumIndex :: Pretty x => Int -> InDTm x -> Doc
+>   prettyEnumIndex :: Int -> InDTm String -> Doc
 >   prettyEnumIndex n DZE      = int n
 >   prettyEnumIndex n (DSU t)  = prettyEnumIndex (succ n) t
 >   prettyEnumIndex n tm       = parens (int n <+> text "+" <+> pretty tm)

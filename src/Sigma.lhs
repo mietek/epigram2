@@ -89,13 +89,13 @@ Coercion rule:
 >   pretty (Pair a b)              = brackets (pretty a <+> prettyPair b)
 
 > import -> Pretty where
->   prettyPair :: Pretty x => InDTm x -> Doc
+>   prettyPair :: InDTm String -> Doc
 >   prettyPair DVOID            = empty
 >   prettyPair (DPAIR a DVOID)  = pretty a
 >   prettyPair (DPAIR  a b)     = pretty a <+> prettyPair b
 >   prettyPair t                = text "/" <+> pretty t
 >
->   prettySigma :: Pretty x => InDTm x -> Doc
+>   prettySigma :: InDTm String -> Doc
 >   prettySigma DUNIT = empty
 >   prettySigma (DSIGMA s (DL (x ::. t)))  = text x <+> colon <+> pretty s
 >                                           <+> semi <+> prettySigma t

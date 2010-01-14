@@ -82,7 +82,7 @@ for debugging.
 >               <+> text ":"
 >           prettyRKind HOLE      = text ":= ? :"
 
-> prettyDScope :: Pretty x => DScope x -> Doc
+> prettyDScope :: DScope String -> Doc
 > prettyDScope (x ::. t)  = parens (text x <+> text "::." <+> pretty t)
 > prettyDScope (DK t)     = parens (text "\\_ ->" <+> pretty t)
 
@@ -100,23 +100,20 @@ for debugging.
 > instance Pretty [Char] where
 >     pretty = text
 
-> instance Pretty x => Pretty (Can (InDTm x)) where
+> instance Pretty (Can (InDTm String)) where
 >     pretty Set       = text "*"
->     pretty (Pi s (DL (DK t)))  = parens (sep [pretty s <+> text "->", pretty t])
->     pretty (Pi s (DL (x ::. t))) = 
->         parens (sep [parens (text x <+> text ":" <+> pretty s) <+> text "->", pretty t])
->     pretty (Pi s t)  = parens (text "Pi" <+> pretty s <+> pretty t)
+>     pretty (Pi s t)  = prettyPi empty (DPI s t)
 >     pretty (Con x)   = text "@" <+> pretty x
 >     import <- CanPretty
 >     pretty can       = quotes . text . show $ can
 
-> instance Pretty x => Pretty (Elim (InDTm x)) where
+> instance Pretty (Elim (InDTm String)) where
 >     pretty (A t)  = pretty t
 >     pretty Out    = text "Out"
 >     import <- ElimPretty
 >     pretty elim   = quotes . text . show $ elim
 
-> instance Pretty x => Pretty (InDTm x) where
+> instance Pretty (InDTm String) where
 >     pretty (DL s)          = prettyDScope s
 >     pretty (DC c)          = pretty c
 >     pretty (DN n)          = pretty n
@@ -124,7 +121,7 @@ for debugging.
 >     import <- InDTmPretty
 >     pretty indtm           = quotes . text . show $ indtm
 
-> instance Pretty x => Pretty (ExDTm x) where
+> instance Pretty (ExDTm String) where
 >     pretty (DP x)          = pretty x
 >     pretty (DV i)          = char 'V' <> int i
 >     pretty (op ::@ vs)     = parens (text (opName op) 
@@ -133,6 +130,17 @@ for debugging.
 >     pretty (t ::? y)       = parens (pretty t <+> text ":" <+> pretty y)
 >     import <- ExDTmPretty
 >     pretty exdtm           = quotes . text . show $ exdtm
+
+
+> prettyPi :: Doc -> InDTm String -> Doc
+> prettyPi bs (DPI s (DL (DK t))) = prettyPi (bs <> parens (pretty s)) t
+> prettyPi bs (DPI s (DL (x ::. t))) =
+>     prettyPi (bs <> parens (text x <+> text ":" <+> pretty s)) t
+> prettyPi bs (DPI s (DN t))  =
+>     prettyPi bs (DPI s (DL ("__x" ::. DN (t ::$ A (DN (DP "__x"))))))
+> prettyPi bs (DPI s t)  = bs <+> text "->" <+>
+>     parens (text "BadPi" <+> pretty s <+> pretty t)
+> prettyPi bs tm = bs <+> text "->" <+> pretty tm
 
 > import <- Pretty
 
