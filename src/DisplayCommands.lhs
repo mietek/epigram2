@@ -42,7 +42,7 @@ end, so it will not leave any subgoals lying around in the proof state.
 >     s <- prettyHere (ty :>: tm'')
 >     goOut
 >     dropModule
->     return (show s)
+>     return (renderHouseStyle s)
 
 
 The |infoInfer| command is similar to |infoElaborate|, but it returns a string
@@ -57,7 +57,7 @@ representation of the resulting type.
 >     s <- prettyHere (SET :>: ty')
 >     goOut
 >     dropModule
->     return (show s)
+>     return (renderHouseStyle s)
 
 
 The |infoContextual| command displays a distilled list of things in the context,
@@ -76,7 +76,7 @@ away bits of the context to produce an answer, then restores the saved state.
 >     ds <- many (hypsHere aus me <* optional killCadets <* goOut <* removeDevEntry)
 >     d <- hypsHere aus me
 >     put save
->     return (show (vcat (d:reverse ds)))
+>     return (renderHouseStyle (vcat (d:reverse ds)))
 >  where
 >    hypsHere :: Entries -> Name -> ProofState Doc
 >    hypsHere aus me = do

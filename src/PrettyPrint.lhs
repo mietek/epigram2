@@ -29,6 +29,9 @@ pretty-print everything defined in the Core chapter here, and provide she aspect
 to allow extra canonical terms and eliminators to be pretty-printed.
 
 
+> renderHouseStyle :: Doc -> String
+> renderHouseStyle = render
+
 > prettyModule :: Entries -> Name -> Dev Bwd -> Doc
 > prettyModule aus me (B0, _, _) = empty
 > prettyModule aus me dev = prettyDev aus me dev
