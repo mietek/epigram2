@@ -155,7 +155,7 @@ The |Elim| functor is straightforward.
 
 
 To pretty-print a scope, we accumulate arguments until something other
-than a $\lamda$-term is reached.
+than a $\lambda$-term is reached.
 
 > instance Pretty (DScope String) where
 >     pretty s = prettyLambda (B0 :< dScopeName s) (dScopeTm s)
