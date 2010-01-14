@@ -318,12 +318,14 @@ cautious. Hence, this is |Just| a mess.
 
 > inQuote (C cty :>: C cv) r = fromJust $ do
 >     ct <- canTy chev (cty :>: cv)
->     c <- traverse (\(c :=>: _) -> Just $ inQuote c r)  ct
->     return $ C c
+>     return $ C $ fmap termOf ct
 >         where chev (t :>: v) = do
->                 return $ (t :>: v) :=>: v
-> inQuote (C x :>: t) r = error $ "inQuote: type "
->     ++ show (fmap (\_ -> ()) x) ++ " doesn't admit " ++ show t
+>                 let tv = inQuote (t :>: v) r
+>                 return $ tv :=>: v
+>
+> inQuote (C x :>: t) r = error $ 
+>     "inQuote: type " ++ show (fmap (\_ -> ()) x) ++ 
+>     " doesn't admit " ++ show t
 
 As mentioned above, |\eta|-expansion is the first sensible thing to do
 when quoting. Sometimes it works, especially for closures and features
@@ -336,7 +338,9 @@ term.
 
 > etaExpand :: (Can VAL :>: VAL) -> Root -> Maybe INTM
 > etaExpand (Pi s t :>: f) r = Just $
->   L ("__etaExpandA" :. fresh ("__etaExpandB" :<: s) (\v  -> inQuote (t $$ A v :>: (f $$ A v))) r)
+>   L ("__etaExpandA" :.
+>      fresh ("__etaExpandB" :<: s) 
+>      (\v  -> inQuote (t $$ A v :>: (f $$ A v))) r)
 > import <- EtaExpand
 > etaExpand _                  _ = Nothing
 
@@ -376,11 +380,13 @@ If an elimination is stuck, it is because the function is stuck while
 the arguments are ready to go. So, we have to recursively |exQuote|
 the neutral application, while |inQuote|-ing the arguments. 
 
-> exQuote (n :$ v)    r = (n' :$ traverse (\(tx :=>: _) -> inQuote tx) e r) :<: ty'
+> exQuote (n :$ v)    r = (n' :$ e') :<: ty'
 >     where (n' :<: ty)  = exQuote n r
+>           e' = fmap termOf e
 >           Just (e,ty') = elimTy chev (N n :<: unC ty) v
->           chev (t :>: x) =
->             Just $ (t :>: x) :=>: x
+>           chev (t :>: x) = do
+>             let tx = inQuote (t :>: x) r
+>             return $ tx :=>: x
 >           unC :: VAL -> Can VAL
 >           unC (C ty) = ty
 
@@ -390,11 +396,12 @@ passed as an argument needs to be |inQuote|-ed. So it goes. Note that
 the operation itself cannot be stuck: it is a simple fully-applied
 constructor which can always compute.
 
-> exQuote (op :@ vs)  r = (op :@ vals) :<: v where
->    (vs',v) = fromJust $ opTy op chev vs 
->    vals = map (\(t :=>: v) -> t) vs'
->    chev (t :>: x) = do
->      return $ inQuote (t :>: x) r :=>: x
+> exQuote (op :@ vs)  r = (op :@ vals) :<: v 
+>     where (vs',v) = fromJust $ opTy op chev vs 
+>           vals = map termOf vs'
+>           chev (t :>: x) = do
+>               let tx = inQuote (t :>: x) r
+>               return $ tx :=>: x
 
 
 As we are in the quotation business, let us define $\beta$-quotation,
