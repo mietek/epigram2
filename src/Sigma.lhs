@@ -80,33 +80,37 @@ Coercion rule:
 >   Pair   :: t -> t -> Can t 
 
 > import -> CanPretty where
->   pretty Unit                      = const (parens empty)
->   pretty Void                      = const (brackets empty)
->   pretty (Sigma s (DL (x ::. t)))  = wrapDoc
->       (text "Sig" <+> parens (text x <+> colon <+> pretty s ArgSize <+> semi <+> prettySigma t))
->       ArgSize
->   pretty (Sigma s (DL (DK t)))     = wrapDoc
->       (text "Sig" <+> parens (pretty s ArgSize <+> semi <+> prettySigma t))
->       ArgSize
->   pretty (Sigma s t)               = wrapDoc
->       (text "BadSig" <+> pretty s minBound <+> pretty t minBound)
->       ArgSize
->   pretty (Pair a b)  = const
->       (brackets (pretty a ArgSize <+> prettyPair b))
+>   pretty Unit         = prettySigma DUNIT
+>   pretty Void         = prettyPair DVOID
+>   pretty (Sigma s t)  = prettySigma (DSIGMA s t)
+>   pretty (Pair a b)   = prettyPair (DPAIR a b)
 
 > import -> Pretty where
->   prettyPair :: InDTm String -> Doc
->   prettyPair DVOID        = empty
->   prettyPair (DPAIR a b)  = pretty a ArgSize <+> prettyPair b
->   prettyPair t            = text "," <+> pretty t ArgSize
->
->   prettySigma :: InDTm String -> Doc
->   prettySigma DUNIT                      = empty
->   prettySigma (DSIGMA s (DL (x ::. t)))  =
->       text x <+> colon <+> pretty s ArgSize <+> semi <+> prettySigma t
->   prettySigma (DSIGMA s (DL (DK t)))     =
->       pretty s ArgSize <+> semi <+> prettySigma t
->   prettySigma t                          = pretty t ArgSize
+>   prettyPair :: InDTm String -> Size -> Doc
+>   prettyPair p = const (brackets (prettyPairMore empty p))
+
+>   prettyPairMore :: Doc -> InDTm String -> Doc
+>   prettyPairMore d DVOID        = d
+>   prettyPairMore d (DPAIR a b)  = prettyPairMore (d <+> pretty a minBound) b
+>   prettyPairMore d t            = d <+> comma <+> pretty t maxBound
+
+>   prettySigma :: InDTm String -> Size -> Doc
+>   prettySigma s = wrapDoc
+>       (text "Sig" <+> parens (prettySigMore empty s))
+>       AppSize
+
+>   prettySigMore :: Doc -> InDTm String -> Doc
+>   prettySigMore d DUNIT                      = d
+>   prettySigMore d (DSIGMA s (DL (x ::. t)))  = prettySigMore
+>       (d <+> text x <+> colon <+> pretty s maxBound <+> semi) t
+>   prettySigMore d (DSIGMA s (DL (DK t)))     = prettySigMore
+>       (d <+> pretty s maxBound <+> semi) t
+>   prettySigMore d (DSIGMA s (DN t))     = prettySigMore d
+>       (DSIGMA s (DL ("__y" ::. DN (t ::$ A (DN (DP "__y"))))))
+>   prettySigMore d (DSIGMA s t) = d <+> text "BadSigma"
+>       <+> pretty s minBound <+> pretty t minBound
+>   prettySigMore d t = d <+> pretty t maxBound
+
 
 > import -> ElimConstructors where
 >   Fst    :: Elim t

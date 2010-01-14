@@ -1,4 +1,4 @@
-make f := (\ x -> ?) : * -> * -> * ;
+make f := (\ x -> ?) : * -> * ;
 make g := (\ x y -> ?) : * -> * -> * ;
 make h := ? : * -> * -> * ;
 make h2 := ? : (* -> *) -> * ;
@@ -15,8 +15,15 @@ make G := ? : :- P ;
 
 make k := ? : (x : *)(y : *) -> :- x == y -> * ;
 
-elab A ;
-show context ;
+make B := (x : * ; x -> *) : * ;
+make y := [* / f] : B ;
 
-make nat : Desc ;
-give @ ? ;
+make C := (x : * ; * ; * ;) : * ;
+make z := [* * *] : C ;
+
+show context ;
+elab A ;
+elab B ;
+elab f B ;
+elab y ;
+elab z ;
