@@ -376,17 +376,6 @@ The |resolveHere| command resolves the relative names in a term.
 >     resolve aus tm `catchEither` "resolveHere: could not resolve names in term"
 
 
-> prettyProofState :: ProofState String
-> prettyProofState = do
->     me <- getMotherName
->     gaus <- getGreatAuncles
->     ls <- gets fst
->     dev <- getDev
->     case ls of
->         B0      -> return (show (prettyModule gaus me dev))
->         _ :< _  -> return (show (prettyDev gaus me dev))
-
-
 The |validateHere| performs some checks on the current location, which
 may be useful for paranoia purposes.
 

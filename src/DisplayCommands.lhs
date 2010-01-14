@@ -150,3 +150,67 @@ then passes it to the pretty-printer.
 > prettyHere tt = do
 >     dtm :=>: _ <- distillHere tt
 >     return (pretty dtm maxBound)
+
+
+The |prettyProofState| command generates a pretty-printed representation
+of the proof state at the current location.
+
+> prettyProofState :: ProofState String
+> prettyProofState = do
+>     aus <- getAuncles
+>     me <- getMotherName
+>     d <- prettyPS aus me
+>     return (renderHouseStyle d)
+>
+> prettyPS :: Entries -> Name -> ProofState Doc
+> prettyPS aus me = do
+>         es <- replaceDevEntries B0
+>         case es of
+>             B0 -> prettyEmptyTip
+>             _ -> do
+>                 d <- prettyEs empty (es <>> F0)
+>                 tip <- prettyTip
+>                 return (lbrack <+> d $$ rbrack <+> tip)
+>  where
+>     prettyEs :: Doc -> Fwd (Entry Bwd) -> ProofState Doc
+>     prettyEs d F0         = return d
+>     prettyEs d (e :> es) = do
+>         putDevEntry e
+>         ed <- prettyE e
+>         prettyEs (d $$ ed) es
+>
+>     prettyE (E (_ := DECL :<: ty) (x, _) (Boy k) _)  = do
+>         ty' <- bquoteHere ty
+>         tyd <- prettyHere (SET :>: ty')
+>         return (prettyBKind k
+>                  (text x <+> colon <+> tyd))
+>                                       
+>     prettyE e = do
+>         goIn
+>         d <- prettyPS aus me
+>         goOut
+>         return (sep  [  text (fst (entryLastName e))
+>                      ,  nest 2 d <+> semi
+>                      ])
+>
+>     prettyEmptyTip :: ProofState Doc
+>     prettyEmptyTip = do
+>         tip <- getDevTip
+>         case tip of
+>             Module -> return (brackets empty)
+>             _ -> do
+>                 tip <- prettyTip
+>                 return (text ":=" <+> tip)
+
+>     prettyTip :: ProofState Doc
+>     prettyTip = do
+>         tip <- getDevTip
+>         case tip of
+>             Module -> return empty
+>             Unknown (ty :=>: _) -> do
+>                 tyd <- prettyHere (SET :>: ty)
+>                 return (text "? :" <+> tyd)
+>             Defined tm (ty :=>: tyv) -> do
+>                 tyd <- prettyHere (SET :>: ty)
+>                 tmd <- prettyHere (tyv :>: tm)
+>                 return (tmd <+> text ":" <+> tyd)

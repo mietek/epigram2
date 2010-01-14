@@ -24,69 +24,9 @@
 
 %endif
 
-The following uses the |HughesPJ| pretty-printing combinators. We define how to
-pretty-print everything defined in the Core chapter here, and provide she aspects
-to allow extra canonical terms and eliminators to be pretty-printed.
-
-
-> renderHouseStyle :: Doc -> String
-> renderHouseStyle = render
-
-> prettyModule :: Entries -> Name -> Dev Bwd -> Doc
-> prettyModule aus me (B0, _, _) = empty
-> prettyModule aus me dev = prettyDev aus me dev
-
-> prettyDev :: Entries -> Name -> Dev Bwd -> Doc
-> prettyDev gaus me (B0, Module,  _) = text "[]"
-> prettyDev gaus me (B0, t,       _) = text ":=" <+> prettyTip gaus me t
-> prettyDev gaus me dev@(es, t, r) =
->     lbrack <+> prettyEntries es aus $$ rbrack 
->     <+> prettyTip aus me t
->   where
->     aus = gaus BwdFwd.<+> es
->
->     prettyEntries :: Entries -> Entries -> Doc
->
->     prettyEntries (es' :< E ref _ (Boy k) _) (aus' :< _) =
->         prettyEntries es' aus'
->         $$ prettyBKind k (prettyRef aus me r ref) 
-> 
-
-If enabled, this case will print the fully lifted definition and type
-(as contained in the reference) for each girl, which may be helpful
-for debugging.
-
-<     prettyEntries (es' :< E ref _ (Girl LETG dev) _) (aus' :< _) = 
-<         prettyEntries es' aus'
-<         $$ sep [prettyRef aus me r ref,
-<                 nest 2 (prettyDev aus' (refName ref) dev) <+> semi]
-                                         
->     prettyEntries (es' :< e) (aus' :< _) = 
->         prettyEntries es' aus'
->         $$ sep [text (christenName aus me (entryName e)),
->                 nest 2 (prettyDev aus' (entryName e) (entryDev e)) <+> semi]
->
->     prettyEntries B0 _ = empty
->
-> prettyBKind :: BoyKind -> Doc -> Doc
-> prettyBKind LAMB  d = text "\\" <+> d <+> text "->"
-> prettyBKind ALAB  d = text "\\" <+> d <+> text "=>"
-> prettyBKind PIB   d = parens d <+> text "->"
-
-> prettyRef :: Entries -> Name -> Root -> REF -> Doc
-> prettyRef aus me root ref@(_ := k :<: ty) = text (christenREF aus me ref) <+> prettyRKind k 
->   <+> pretty (christen aus me (unelaborate (bquote B0 ty root))) ArgSize
->     where prettyRKind :: RKind -> Doc
->           prettyRKind DECL      = text ":"
->           prettyRKind (DEFN v)  = text ":=" <+> pretty (christen aus me (unelaborate (bquote B0 v root))) ArgSize
->               <+> text ":"
->           prettyRKind HOLE      = text ":= ? :"
-
-> prettyTip :: Entries -> Name -> Tip -> Doc
-> prettyTip aus me Module                     = empty
-> prettyTip aus me (Unknown     (tv :=>: _))  = text "? :" <+> pretty (christen aus me (unelaborate tv)) ArgSize
-> prettyTip aus me (Defined tm  (tv :=>: _))  = pretty (christen aus me (unelaborate tm)) ArgSize
->     <+> text ":" <+> pretty (christen aus me (unelaborate tv)) ArgSize
+We use the |HughesPJ| pretty-printing combinators. This section defines how
+to pretty-print everything defined in the Core chapter, and provides she
+aspects to allow features to add their own pretty-printing support.
 
 
 The |Pretty| class describes things that can be pretty-printed. The
@@ -197,6 +137,15 @@ than a $\lambda$-term is reached.
 > import <- Pretty
 
 
+The |prettyBKind| function pretty-prints a |BoyKind| if supplied
+with a document representing its name and type.
+
+> prettyBKind :: BoyKind -> Doc -> Doc
+> prettyBKind LAMB  d = text "\\" <+> d <+> text "->"
+> prettyBKind ALAB  d = text "\\" <+> d <+> text "=>"
+> prettyBKind PIB   d = parens d <+> text "->"
+
+
 For debugging purpose, the following quick'n'dirty pretty-printers
 might be handy:
 
@@ -208,3 +157,10 @@ might be handy:
 >
 > prettyREF :: REF -> String
 > prettyREF (name := _) = showName name
+
+
+The |renderHouseStyle| hook allows us to customise the document rendering
+if necessary.
+
+> renderHouseStyle :: Doc -> String
+> renderHouseStyle = render
