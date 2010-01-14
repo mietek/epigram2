@@ -1,0 +1,30 @@
+
+\begin{itemize}
+\item \verb!*! for the universe of sets
+\item \verb!#! for the universe of propositions
+\item \verb|()| for the unit type
+\item \verb!\ x -> t! for the $\lambda$-term $\lambda x.t$
+\item \verb|f a| for $f$ applied to $a$ (no surprises here)
+\item \verb!(x : S) -> T! for the $\Pi$-type $\Pi x:S. T$
+\item \verb!S -> T! for the same $\Pi$-type if $T$ is independent of $x$
+\item \verb!(x : S)(y : T) -> U! for the nested $\Pi$-type $\Pi x:S. \Pi y:T. U$
+\item \verb!{| P}! for the type of proofs of $P$ (cf.\ set notation)
+\item \verb!{x : S | P}! for the $\Sigma$-type $\Sigma x:S. P$
+\item \verb!{x : S, y : T | P}! for the nested $\Sigma$-type $\Sigma x:S. \Sigma y:T. P$
+\item \verb![a, b, c]! for the tuple $(a, (b, (c, ())))$ (think LISP lists)
+\item \verb![a, c, c |]! for the tuple $(a, (b, c))$ (maybe?)
+\item \verb!Enum! for the universe of enumerations
+\item \verb!{}! for the empty enumerated type
+\item \verb!{x, y, z}! for an enumerated type
+\item \verb!0, 1, 2, ...! for \verb!zero!, \verb!suc zero!, \verb!suc (suc zero)!, et cetera
+\item \verb!2 + tm! for \verb!suc (suc tm)!
+\item \verb!@id! for a tag
+\item \verb!F(..., ...)! for a fully applied operator
+\end{itemize}
+
+\question{Does this notation for $\Sigma$-types make sense, or should we go with the
+original proposal of using an ampersand?}
+
+\question{Perhaps we could use $[a, b, c, ]$ with a trailing comma to mean
+$(a, (b, c))$? Using a vertical bar is problematic because it clashes with the
+``such that'' interpretation.}
