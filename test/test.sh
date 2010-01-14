@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 
 
@@ -19,16 +19,18 @@ mkdir ".tests"
 ## Run the test cases
 for script in `ls *.pig`
 do
-    echo -n "Running test $script..."
+    # echo -n "Running test $script..."
     ../src/Pig --check "$script" > ".tests/$script.log"
-    echo " Done."
+    # echo " Done."
     if [ ! -f "results/$script.log" ]
     then
-	echo "[UNDEFINED] Please provide the desired output for $script"
+	echo -e "\e[00;34m[UNDEFINED]\e[00m Please provide the desired output for $script"
     else
 	if ! diff ".tests/$script.log" "results/$script.log" > /dev/null 
 	then
-	    echo "[FAILED] $script does not match the expected output"
+	    echo -e "\e[00;31m[FAILED]\e[00m $script does not match the expected output"
+	else
+	    echo -e "\e[00;32m[PASSED]\e[00m $script looks alright!"
 	fi
     fi
 done
