@@ -80,10 +80,13 @@ it for any |ReaderT Root|. This is as simple as:
 
 > instance (Monad m, Applicative m) => Rooty (ReaderT Root m) where
 >     freshRef st body = do
->         freshRef st body
+>         r <- ask
+>         lift $ freshRef st (runReaderT . body) r
 >     forkRoot s child dad = do
->         c <- child
->         dad c
+>         root <- ask
+>         c <- local (flip room s) child
+>         d <- local roos (dad c)
+>         return d
 >     root = ask
 
 \subsection{|Root -> Either StackError a| is Rooty}
