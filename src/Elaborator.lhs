@@ -128,12 +128,6 @@ interesting types.
 >          isTuply (DPAIR _ _) = True
 >          isTuply _ = False
 
-As some more syntactic sugar, we let inductive types elaborate lists (so |[]| becomes
-|@[0]| and |[s / t]| becomes |@ [1 s t]|).
-
-> elaborate b (MU l d :>: DVOID) = elaborate b (MU l d :>: DCON (DPAIR DZE DVOID))
-> elaborate b (MU l d :>: (DPAIR s t)) = elaborate b (MU l d :>: DCON (DPAIR (DSU DZE) (DPAIR s t)))
-
 > elaborate b (MONAD d x :>: DCON t) = elaborate b (MONAD d x :>: DCOMPOSITE t)
 > elaborate b (QUOTIENT a r p :>: DPAIR x DVOID) =
 >   elaborate b (QUOTIENT a r p :>: DCLASS x)

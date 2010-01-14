@@ -574,3 +574,24 @@ Equality rules:
 >             args = [d, a, c, comp f g, N x]
 >         mapOpSimp _ _ = empty
 
+
+
+As some useful syntactic sugar, we let inductive types elaborate
+lists (so |[]| becomes |@[0]| and |[s / t]| becomes |@ [1 s t]|).
+
+> import -> ElaborateRules where
+>     elaborate b (MU l d :>: DVOID) =
+>         elaborate b (MU l d :>: DCON (DPAIR DZE DVOID))
+>     elaborate b (MU l d :>: DPAIR s t) =
+>         elaborate b (MU l d :>: DCON (DPAIR (DSU DZE) (DPAIR s t)))
+
+To avoid an infinite loop when distilling, we have to be a little cleverer
+and call canTy directly rather than letting distill do it for us.
+
+> import -> DistillRules where
+>     distill _ (MU _ _ :>: CON (PAIR ZE VOID)) =
+>         return (DVOID :=>: CON (PAIR ZE VOID))
+>     distill es (C ty@(Mu _) :>: C c@(Con (PAIR (SU ZE) (PAIR _ (PAIR _ VOID))))) = do
+>         Con (DPAIR _ (DPAIR s (DPAIR t DVOID)) :=>: v) <- canTy (distill es) (ty :>: c)
+>         return (DPAIR s t :=>: CON v)
+>         
