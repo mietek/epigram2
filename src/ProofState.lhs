@@ -1,7 +1,8 @@
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE FlexibleInstances, TypeOperators, TypeSynonymInstances, GADTs #-}
+> {-# LANGUAGE FlexibleInstances, TypeOperators, TypeSynonymInstances,
+>              GADTs, RankNTypes #-}
 
 > module ProofState where
 
@@ -101,32 +102,31 @@ to contain cadets.
 %endif
 
 
-When moving the cursor backwards, we sometimes need to reverse the direction of contained
-entries, using the |reverseEntry|, |reverseEntries| and |reverseDev| functions.
+When moving the cursor, we sometimes need to change the structure that
+contains entries, using the following rearrangement functions.
 
 > reverseEntry :: Entry Bwd -> Entry NewsyFwd
-> reverseEntry (E ref xn (Boy k) ty)          = E ref xn (Boy k) ty
-> reverseEntry (E ref xn (Girl LETG dev) ty)  = E ref xn (Girl LETG (reverseDev dev)) ty
-> reverseEntry (M n d)                        = M n (reverseDev d)
-
-> reverseEntries :: Entries -> NewsyEntries
-> reverseEntries xs = NF (fmap (Right . reverseEntry) xs <>> F0)
-
-> reverseDev :: Dev Bwd -> Dev NewsyFwd
-> reverseDev (xs, tip, root) = (reverseEntries xs, tip, root)
-
+> reverseEntry = rearrangeEntry (NF . (fmap Right) . (<>> F0))
 
 > reverseEntry' :: Entry Bwd -> Entry Fwd
-> reverseEntry' (E ref xn (Boy k) ty)          = E ref xn (Boy k) ty
-> reverseEntry' (E ref xn (Girl LETG dev) ty)  = E ref xn (Girl LETG (reverseDev' dev)) ty
-> reverseEntry' (M n d)                        = M n (reverseDev' d)
-
-> reverseEntries' :: Entries -> Fwd (Entry Fwd)
-> reverseEntries' xs = fmap reverseEntry' xs <>> F0
+> reverseEntry' = rearrangeEntry (<>> F0)
 
 > reverseDev' :: Dev Bwd -> Dev Fwd
-> reverseDev' (xs, tip, root) = (reverseEntries' xs, tip, root)
+> reverseDev' = rearrangeDev (<>> F0)
 
+> rearrangeEntry :: (Traversable f, Traversable g) =>
+>     (forall a. f a -> g a) -> Entry f -> Entry g
+> rearrangeEntry h (E ref xn (Boy k) ty)          = E ref xn (Boy k) ty
+> rearrangeEntry h (E ref xn (Girl LETG dev) ty)  = E ref xn (Girl LETG (rearrangeDev h dev)) ty
+> rearrangeEntry h (M n d)                        = M n (rearrangeDev h d)
+
+> rearrangeEntries :: (Traversable f, Traversable g) =>
+>     (forall a. f a -> g a) -> f (Entry f) -> g (Entry g)
+> rearrangeEntries h xs = h (fmap (rearrangeEntry h) xs)
+
+> rearrangeDev :: (Traversable f, Traversable g) =>
+>     (forall a. f a -> g a) -> Dev f -> Dev g
+> rearrangeDev h (xs, tip, root) = (rearrangeEntries h xs, tip, root)
 
 
 The current proof context is represented by a stack of |Layer|s, along with the
