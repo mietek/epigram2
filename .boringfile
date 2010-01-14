@@ -1,6 +1,9 @@
 # Boring compilation results:
 ^src/Pig$
 
+# Boring test cache:
+^test/.tests$
+
 # (lhs2TeX) Boring file regexps:
 Epitome\.aux
 Epitome\.bbl
