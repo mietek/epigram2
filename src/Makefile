@@ -96,6 +96,9 @@ Atome:
 	lhs2TeX --poly Epitome.lhs -o Epitome.tex
 	pdflatex Epitome
 
+## Unit testing (haha):
+test:
+	cd ../test && ./test.sh
 
 ## Clean:
 clean:
