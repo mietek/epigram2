@@ -17,18 +17,17 @@ Features:
 0 Ulf: Create appropriate aspect and remove Desc in Desc stuff from Rules. (DONE)
 
 Display syntax and elaboration:
-1 Adam: Blue equality should work with EXTMs other than ascriptions.
-2 Adam: Make elaborate aspect-based.
-1 Adam: Add aspect for DTm.
+0 Adam: Blue equality should work with EXTMs other than ascriptions. (DONE)
+0 Adam: Make elaborate aspect-based. (DONE)
+0 Adam: Add aspect for DTm. (DONE)
 2: Schemes on entries.
 1 Adam: Add underscore with appropriate behaviour.
 0 Adam: distillation (reverse elaboration). (DONE)
 
 Cochon:
 0 Adam: Implement show hypotheses. (DONE)
-1 Adam: Allow comments in pig files.
-* Tidy cochon up a lot.
-* Consider what output should be displayed after each cochon command. (DONE)
+1 Pierre: Allow comments in pig files.
+0: Consider what output should be displayed after each cochon command. (DONE)
 * Make cochon accept tacticals (then (semicolon), else, skip, try) with progressive output.
 * Use readline or similar library for command history and tab-completion.
 * Command to export context in a reloadable format.
@@ -36,7 +35,7 @@ Cochon:
 Proof State:
 * Make should return an EXTM.
 * Construction commands should return value form as well as term form.
-* Mysterious news propagation bug in elimination.
+0 Adam: Fix mysterious news propagation bug in elimination. (DONE)
 
 Programming with Desc:
 * Differentiate Desc.
