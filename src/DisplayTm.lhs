@@ -49,10 +49,20 @@
 >     import <- ExDTmConstructors
 >  deriving (Functor, Foldable, Traversable, Show)
 
+
 > data DScope :: * -> * where
 >     (::.)  :: String -> InDTm x          -> DScope x  -- binding
 >     DK     :: InDTm x                    -> DScope x  -- constant
 >   deriving (Functor, Foldable, Traversable, Show)
+
+> dScopeName :: DScope String -> String
+> dScopeName (x ::. _)  = x
+> dScopeName (DK _)      = "_"
+
+> dScopeTm :: DScope x -> InDTm x
+> dScopeTm (_ ::. tm)  = tm
+> dScopeTm (DK tm)      = tm
+
 
 > type INDTM  = InDTm REF 
 > type EXDTM  = ExDTm REF
@@ -67,6 +77,19 @@
 > pattern DPIV x s t = DPI s (DLAV x t)
 
 > import <- DisplayCanPats
+
+
+
+We keeps track of the |Size| of terms when parsing and pretty-printing, to
+avoid nasty left recursion and minimise the number of brackets we output.
+When going left, the size decreases. Brackets may be used to wrap an
+ expression of higher size.
+
+> data Size = ArgSize | AppSize | EqSize | AndSize | ArrSize | PiSize | AscSize
+>   deriving (Show, Eq, Enum, Bounded, Ord)
+
+
+
 
 
 > unelaborate :: InTm x -> InDTm x

@@ -46,13 +46,6 @@ with |^| or |_| symbols (for relative or absolute offsets).
 > iter = flip . foldr
 
 
-To avoid nasty left-recursion, the parser keeps track of the current |Size|
-of term it is parsing. When going left, the size decreases. Brackets may be
-used to wrap an expression of higher size.
-
-> data Size = ArgSize | AppSize | EqSize | AndSize | ArrSize | PiSize | AscSize
->   deriving (Show, Eq, Enum, Bounded, Ord)
-
 The |pExDTm| and |pInDTm| functions start parsing at the maximum size.
 
 > pExDTm :: Parsley Token ExDTmRN
@@ -64,8 +57,6 @@ The |pExDTm| and |pInDTm| functions start parsing at the maximum size.
 
 > pAscription :: Parsley Token ExDTmRN
 > pAscription = (| sizedInDTm (pred AscSize) (%keyword ":"%) ::? pInDTm |)
-
-
 
 Each |sized| parser tries the appropriate |special| parser for the size,
 then falls back to parsing at the previous size followed by a |more| parser.

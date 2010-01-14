@@ -43,9 +43,15 @@
 >   halfZip (Composite x) (Composite y) = Just (Composite (x, y))
 
 > import -> CanPretty where
->   pretty (Monad d x)   = parens (text "Monad" <+> pretty d <+> pretty x)
->   pretty (Return x)    = parens (text "'" <+> pretty x)
->   pretty (Composite x) = parens (text "@" <+> pretty x)
+>   pretty (Monad d x)   = wrapDoc
+>       (text "Monad" <+> pretty d ArgSize <+> pretty x ArgSize)
+>       ArgSize
+>   pretty (Return x)    = wrapDoc
+>       (text "'" <+> pretty x ArgSize)
+>       ArgSize
+>   pretty (Composite x) = wrapDoc
+>       (text "@" <+> pretty x ArgSize)
+>       ArgSize
 
 > import -> Pretty where
 

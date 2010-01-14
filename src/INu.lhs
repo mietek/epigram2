@@ -28,11 +28,15 @@
 >   pattern DICOIT ity d i sty f s = DC (ICoIt ity d i sty f s)
 
 > import -> CanPretty where
->   pretty (INu ity d i)  = parens (text "INu" <+> 
->     pretty ity <+> pretty d <+> pretty i)
->   pretty (ICoIt ity d i sty f s) = parens (text "ICoIt" <+>
->     pretty ity <+> pretty d <+> pretty i <+>
->     pretty sty <+> pretty f <+> pretty s)
+>   pretty (INu ity d i)  = wrapDoc
+>       (text "INu" <+> pretty ity ArgSize <+> pretty d ArgSize
+>            <+> pretty i ArgSize)
+>       ArgSize
+>   pretty (ICoIt ity d i sty f s) = wrapDoc
+>       (text "ICoIt" <+>
+>           pretty ity ArgSize <+> pretty d ArgSize <+> pretty i ArgSize <+>
+>           pretty sty ArgSize <+> pretty f ArgSize <+> pretty s ArgSize)
+>       ArgSize
 
 > import -> CanTyRules where
 >   canTy chev (Set :>: INu ity d i) = do

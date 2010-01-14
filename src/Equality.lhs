@@ -100,9 +100,11 @@ With no computational behavior.
 >     (|EqBlue (|(:>:) (f pty) (f p)|) (|(:>:) (f qty) (f q)|)|)
 
 > import -> CanPretty where
->   pretty (EqBlue (y0 :>: t0) (y1 :>: t1)) = parens (
->       parens (pretty t0 <+> text ":" <+> pretty y0) <+> text "=="
->       <+> parens (pretty t1 <+> text ":" <+> pretty y1))
+>   pretty (EqBlue (y0 :>: t0) (y1 :>: t1)) = wrapDoc (
+>       parens (pretty t0 ArgSize <+> text ":" <+> pretty y0 ArgSize)
+>       <+> text "==" <+>
+>       parens (pretty t1 ArgSize <+> text ":" <+> pretty y1 ArgSize))
+>       ArgSize
 
 > import -> CanTyRules where
 >   canTy chev (Prop :>: EqBlue (y0 :>: t0) (y1 :>: t1)) = do
@@ -194,7 +196,9 @@ to InDTm, along with elaboration and distillation rules.
 >   DEqBlue :: ExDTm x -> ExDTm x -> InDTm x
 
 > import -> InDTmPretty where
->   pretty (DEqBlue t u) = pretty t <+> text "==" <+> pretty u
+>   pretty (DEqBlue t u) = wrapDoc
+>       (pretty t ArgSize <+> text "==" <+> pretty u ArgSize)
+>       ArgSize
 
 > import -> DMangleRules where
 >   m %$ (DEqBlue t u) = (| DEqBlue (dexMang m t (pure [])) (dexMang m u (pure [])) |)

@@ -30,10 +30,11 @@
 > import -> SugarTactics where
 
 > import -> CanPretty where
->   pretty (Quotient x r p) =
->     parens (sep [ text "Quotient"
->                 , nest 2 $ fsep $ map pretty [x,r,p]
->                 ])
+>   pretty (Quotient x r p) = wrapDoc
+>       (sep [ text "Quotient"
+>            , nest 2 $ fsep $ map (\x -> pretty x ArgSize) [x,r,p]
+>            ])
+>       ArgSize
 
 |equivalenceRelation A R| is the proposition that |R| is an equivalence
 relation over |A|.

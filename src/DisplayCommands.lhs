@@ -120,4 +120,4 @@ then passes it to the pretty-printer.
 > prettyHere tt = do
 >     aus <- getAuncles
 >     dtm :=>: _ <- distill aus tt
->     return (pretty dtm)
+>     return (pretty dtm maxBound)

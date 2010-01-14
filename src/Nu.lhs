@@ -26,9 +26,11 @@
 >   pattern DCOIT d sty f s = DC (CoIt d sty f s)
 
 > import -> CanPretty where
->   pretty (Nu t)  = parens (text "Nu" <+> pretty t)
->   pretty (CoIt d sty f s) = parens (text "CoIt" <+>
->     pretty sty <+> pretty f <+> pretty s)
+>   pretty (Nu t)  = wrapDoc (text "Nu" <+> pretty t ArgSize) ArgSize
+>   pretty (CoIt d sty f s) = wrapDoc
+>       (text "CoIt" <+> pretty sty ArgSize
+>            <+> pretty f ArgSize <+> pretty s ArgSize)
+>       ArgSize
 
 > import -> CanTyRules where
 >   canTy chev (Set :>: Nu x)     = do

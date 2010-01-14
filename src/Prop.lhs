@@ -165,18 +165,26 @@ Elim forms inherited from elsewhere
 >   boxTac t = can $ Box t
 
 > import -> CanPretty where
->   pretty Prop           = text "#"
->   pretty (Prf p)        = parens (text ":-" <+> pretty p)
->   pretty (All s (DL (DK t)))  = parens (sep [pretty s <+> text "=>", pretty t])
->   pretty (All s (DL (x ::. t))) = 
->     parens (sep [parens (text x <+> text ":" <+> pretty s) <+> text "=>", pretty t])
->   pretty (All p q)      = parens (text "All" <+> pretty p <+> pretty q)
->   pretty (And p q)      = parens (pretty p <+> text "&&" <+> pretty q)
->   pretty Trivial        = text "TT"
->   pretty Absurd         = text "FF"
->   pretty (Box (Irr p))  = parens (text "Box" <+> pretty p)
->   pretty (Inh ty)       = parens (text "Inh" <+> pretty ty)
->   pretty (Wit t)        = parens (text "wit" <+> pretty t)
+>   pretty Prop           = const (text "Prop")
+>   pretty (Prf p)        = wrapDoc (text ":-" <+> pretty p ArgSize) ArgSize
+>   pretty (All s (DL (DK t)))  = wrapDoc
+>       (sep [pretty s ArgSize <+> text "=>", pretty t ArgSize])
+>       ArgSize
+>   pretty (All s (DL (x ::. t))) = wrapDoc
+>       (sep [parens (text x <+> text ":" <+> pretty s ArgSize)
+>           <+> text "=>", pretty t ArgSize])
+>       ArgSize
+>   pretty (All p q)      = wrapDoc
+>       (text "BadAll" <+> pretty p ArgSize <+> pretty q ArgSize)
+>       ArgSize
+>   pretty (And p q)      = wrapDoc
+>       (pretty p ArgSize <+> text "&&" <+> pretty q ArgSize)
+>       ArgSize
+>   pretty Trivial        = const (text "TT")
+>   pretty Absurd         = const (text "FF")
+>   pretty (Box (Irr p))  = wrapDoc (text "Box" <+> pretty p ArgSize) ArgSize
+>   pretty (Inh ty)       = wrapDoc (text "Inh" <+> pretty ty ArgSize) ArgSize
+>   pretty (Wit t)        = wrapDoc (text "wit" <+> pretty t ArgSize) ArgSize
 
 > import -> CanTyRules where
 >   canTy _   (Set :>: Prop) = return Prop

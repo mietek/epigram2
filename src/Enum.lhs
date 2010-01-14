@@ -160,23 +160,17 @@ Equality rules:
 >   halfZip (Su t0) (Su t1) = Just (Su (t0,t1))
 
 > import -> CanPretty where
->   pretty (EnumT t)  = braces (hsep (punctuate comma (map text ss))
->       <+> maybe empty ((text "/" <+>) . pretty) mtm)
->     where  (ss, mtm) = enumBits t
->   pretty Ze         = text "0"
+>   pretty (EnumT t)  = wrapDoc (text "Enum" <+> pretty t ArgSize) ArgSize
+>   pretty Ze         = const (text "0")
 >   pretty (Su t)     = prettyEnumIndex 1 t
 
 > import -> Pretty where
->   enumBits :: InDTm x -> ([String], Maybe (InDTm x))
->   enumBits DNILE = ([], Nothing)
->   enumBits (DCONSE (DTAG s) t) = (s:ss, mtm)
->       where (ss, mtm) = enumBits t
->   enumBits tm = ([], Just tm)
->
->   prettyEnumIndex :: Int -> InDTm String -> Doc
->   prettyEnumIndex n DZE      = int n
+>   prettyEnumIndex :: Int -> InDTm String -> Size -> Doc
+>   prettyEnumIndex n DZE      = const (int n)
 >   prettyEnumIndex n (DSU t)  = prettyEnumIndex (succ n) t
->   prettyEnumIndex n tm       = parens (int n <+> text "+" <+> pretty tm)
+>   prettyEnumIndex n tm       = wrapDoc
+>       (int n <+> text "+" <+> pretty tm ArgSize)
+>       ArgSize
 
 > import -> CanTyRules where
 >   canTy chev (Set :>: EnumT e)  = do

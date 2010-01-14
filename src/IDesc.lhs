@@ -89,14 +89,25 @@
 >     (|(IInd hhv hihiv ddv)|)  
 
 > import -> CanPretty where
->   pretty (IDesc ii) = parens (text "IDesc" <+> pretty ii)
->   pretty (IMu (Just l   :?=: _) i)  = parens (pretty l <+> pretty i)
->   pretty (IMu (Nothing  :?=: (Id ii :& Id d)) i)  = 
->     parens (text "IMu" <+> pretty ii <+> pretty d <+> pretty i)
->   pretty (IDone p) = parens (text "IDone" <+> pretty p)
->   pretty (IArg a d) = parens (text "IArg" <+> pretty a <+> pretty d)
->   pretty (IInd1 i d) = parens (text "IInd1" <+> pretty i <+> pretty d)
->   pretty (IInd h hi d) = parens (text "IInd" <+> pretty h <+> pretty hi <+> pretty d)
+>   pretty (IDesc ii) = wrapDoc (text "IDesc" <+> pretty ii ArgSize) ArgSize
+>   pretty (IMu (Just l   :?=: _) i)  = wrapDoc
+>       (pretty l ArgSize <+> pretty i ArgSize)
+>       ArgSize
+>   pretty (IMu (Nothing  :?=: (Id ii :& Id d)) i)  = wrapDoc
+>       (text "IMu" <+> pretty ii ArgSize <+> pretty d ArgSize <+> pretty i ArgSize)
+>       ArgSize
+>   pretty (IDone p) = wrapDoc
+>       (text "IDone" <+> pretty p ArgSize)
+>       ArgSize
+>   pretty (IArg a d) = wrapDoc
+>       (text "IArg" <+> pretty a ArgSize <+> pretty d ArgSize)
+>       ArgSize
+>   pretty (IInd1 i d) = wrapDoc
+>       (text "IInd1" <+> pretty i ArgSize <+> pretty d ArgSize)
+>       ArgSize
+>   pretty (IInd h hi d) = wrapDoc
+>       (text "IInd" <+> pretty h ArgSize <+> pretty hi ArgSize <+> pretty d ArgSize)
+>       ArgSize
 
 > import -> ElimTyRules where
 >   elimTy chev (_ :<: (IMu tt@(_ :?=: (Id ii :& Id x)) i)) Out = 

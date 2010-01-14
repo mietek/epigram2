@@ -39,11 +39,14 @@
 >   halfZip (LRet x) (LRet y)           = Just (LRet (x,y))
 
 > import -> CanPretty where
->   pretty (Label l t) = brackets (pretty l <+> text ":" <+> pretty t)
->   pretty (LRet x) = parens (text "return" <+> pretty x)
+>   pretty (Label l t) = const
+>       (brackets (pretty l ArgSize <+> text ":" <+> pretty t ArgSize))
+>   pretty (LRet x) = wrapDoc (text "return" <+> pretty x ArgSize) ArgSize
 
 > import -> ElimPretty where
->   pretty (Call l) = parens (text "call" <+> brackets (pretty l))
+>   pretty (Call l) = wrapDoc
+>       (text "call" <+> brackets (pretty l ArgSize))
+>       ArgSize
 
 > import -> ElimComputation where
 >   LRET t $$ Call l = t

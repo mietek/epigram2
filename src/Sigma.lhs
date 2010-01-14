@@ -80,35 +80,42 @@ Coercion rule:
 >   Pair   :: t -> t -> Can t 
 
 > import -> CanPretty where
->   pretty Unit                    = parens empty
->   pretty Void                    = brackets empty
->   pretty (Sigma s (DL (x ::. t)))  = parens (text x <+> colon <+> pretty s
->                                           <+> semi <+> prettySigma t)
->   pretty (Sigma s (DL (DK t)))     = parens (pretty s <+> semi <+> prettySigma t)
->   pretty (Sigma s t)             = parens (text "Sigma" <+> pretty s <+> pretty t)
->   pretty (Pair a b)              = brackets (pretty a <+> prettyPair b)
+>   pretty Unit                      = const (parens empty)
+>   pretty Void                      = const (brackets empty)
+>   pretty (Sigma s (DL (x ::. t)))  = wrapDoc
+>       (text x <+> colon <+> pretty s ArgSize <+> semi <+> prettySigma t)
+>       ArgSize
+>   pretty (Sigma s (DL (DK t)))     = wrapDoc
+>       (pretty s ArgSize <+> semi <+> prettySigma t)
+>       ArgSize
+>   pretty (Sigma s t)               = wrapDoc
+>       (text "BadSigma" <+> pretty s ArgSize <+> pretty t ArgSize)
+>       ArgSize
+>   pretty (Pair a b)                = const
+>       (brackets (pretty a ArgSize <+> prettyPair b))
 
 > import -> Pretty where
 >   prettyPair :: InDTm String -> Doc
 >   prettyPair DVOID            = empty
->   prettyPair (DPAIR a DVOID)  = pretty a
->   prettyPair (DPAIR  a b)     = pretty a <+> prettyPair b
->   prettyPair t                = text "/" <+> pretty t
+>   prettyPair (DPAIR a DVOID)  = pretty a ArgSize
+>   prettyPair (DPAIR  a b)     = pretty a ArgSize <+> prettyPair b
+>   prettyPair t                = text "/" <+> pretty t ArgSize
 >
 >   prettySigma :: InDTm String -> Doc
->   prettySigma DUNIT = empty
->   prettySigma (DSIGMA s (DL (x ::. t)))  = text x <+> colon <+> pretty s
->                                           <+> semi <+> prettySigma t
->   prettySigma (DSIGMA s (DL (DK t)))     = pretty s <+> semi <+> prettySigma t
->   prettySigma t                       = pretty t
+>   prettySigma DUNIT                      = empty
+>   prettySigma (DSIGMA s (DL (x ::. t)))  =
+>       text x <+> colon <+> pretty s ArgSize <+> semi <+> prettySigma t
+>   prettySigma (DSIGMA s (DL (DK t)))     =
+>       pretty s ArgSize <+> semi <+> prettySigma t
+>   prettySigma t                          = pretty t ArgSize
 
 > import -> ElimConstructors where
 >   Fst    :: Elim t
 >   Snd    :: Elim t
 
 > import -> ElimPretty where
->   pretty Fst = text "!"
->   pretty Snd = text "-"
+>   pretty Fst = const (text "!")
+>   pretty Snd = const (text "-")
 
 > import -> CanPats where
 >   pattern SIGMA p q = C (Sigma p q)
