@@ -385,7 +385,7 @@ may be useful for paranoia purposes.
 >     case m of
 >         GirlMother (_ := DEFN tm :<: ty) _ _ -> do
 >             ty' <- bquoteHere ty
->             mc <- withRoot (inCheck $ check (SET :>: ty'))
+>             mc <- withRoot (typeCheck $ check (SET :>: ty'))
 >             mc `catchEither` intercalate "\n" ["validateHere: girl type failed to type-check: SET does not admit", show ty']
 >             tm' <- bquoteHere tm
 >             mc <- withRoot (typeCheck $ check (ty :>: tm'))
