@@ -73,27 +73,29 @@ To illustrate the implementation of |Rooty|, we implement on the
 >     root r = r
 
 
+\subsection{|ReaderT Root| is Rooty}
 
-\subsection{|Root -> Either StackError a| is Rooty}
+Once we have |Rooty| for the |Root| Reader monad, we can actually get
+it for any |ReaderT Root|. This is as simple as:
 
-> type Check = ReaderT Root (Either StackError)
-
-> instance Applicative Check where
->     pure = return
->     (<*>) = ap
-
-> instance Alternative Check where
->     empty = mzero
->     (<|>) = mplus
-
-
-> typeCheck :: Check a -> Root -> Either StackError a
-> typeCheck = runReaderT
-
-> instance Rooty Check where
+> instance (Monad m, Applicative m) => Rooty (ReaderT Root m) where
 >     freshRef st body = do
 >         freshRef st body
 >     forkRoot s child dad = do
 >         c <- child
 >         dad c
 >     root = ask
+
+\subsection{|Root -> Either StackError a| is Rooty}
+
+One such example is the |Check| monad:
+
+> type Check = ReaderT Root (Either StackError)
+
+That is, a Reader of |Root| on top of an Error of
+|StackError|. Running a type-checking process is therefore is simple
+|runReader| operation:
+
+> typeCheck :: Check a -> Root -> Either StackError a
+> typeCheck = runReaderT
+
