@@ -278,7 +278,7 @@ Navigation tactics:
 Information tactics:
 
 >   : unaryExCT "elaborate" infoElaborate
->       "elaborate <term> - elaborates, evaluates, quotes and distills <term>."
+>       "elaborate <term> - elaborates, evaluates, quotes, distills and pretty-prints <term>."
 >   : unaryExCT "infer" infoInfer
 >       "infer <term> - elaborates <term> and infers its type."
 
@@ -294,6 +294,9 @@ Information tactics:
 >         _          -> return "show: please specify exactly what to show."
 >       )
 >       "show <auncles/context/dump/hyps/state> - displays useless information."
+
+>   : unaryExCT "whatis" infoWhatIs
+>       "whatis <term> - prints the various representations of <term>."
 
 
 Miscellaneous tactics:

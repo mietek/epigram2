@@ -113,11 +113,40 @@ away bits of the context to produce an answer, then restores the saved state.
 >            (_, es' :< _) -> putDevEntries es' >> hyps aus me
 
 
+The |infoWhatIs| command displays a term in various representations.
+
+> infoWhatIs :: EXDTM -> ProofState String
+> infoWhatIs tmd = draftModule "__infoWhatIs" (do
+>     (tyv :>: tm) <- elabInfer tmd
+>     tmq <- bquoteHere (evTm tm)
+>     tms :=>: _ <- distillHere (tyv :>: tmq)
+>     ty <- bquoteHere tyv
+>     tys :=>: _ <- distillHere (SET :>: ty)
+>     return (unlines
+>         [  "Parsed term:", show tmd
+>         ,  "Elaborated term:", show tm
+>         ,  "Quoted term:", show tmq
+>         ,  "Distilled term:", show tms
+>         ,  "Pretty-printed term:", renderHouseStyle (pretty tms maxBound)
+>         ,  "Inferred type:", show tyv
+>         ,   "Quoted type:", show ty
+>         ,   "Distilled type:", show tys
+>         ,   "Pretty-printed type:", renderHouseStyle (pretty tys maxBound)
+>         ])
+>   )
+
+
+The |distillHere| command distills a term in the current context.
+
+> distillHere :: (TY :>: INTM) -> ProofState (InDTm String :=>: VAL)
+> distillHere tt = do
+>     aus <- getAuncles
+>     distill aus tt
+
 The |prettyHere| command distills a term in the current context,
 then passes it to the pretty-printer.
 
 > prettyHere :: (TY :>: INTM) -> ProofState Doc
 > prettyHere tt = do
->     aus <- getAuncles
->     dtm :=>: _ <- distill aus tt
+>     dtm :=>: _ <- distillHere tt
 >     return (pretty dtm maxBound)
