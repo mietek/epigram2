@@ -117,6 +117,13 @@ so we have to do things the long way...
 >   pure = return
 >   (<*>) = ap
 
+> instance Monad m => Applicative (ReaderT r m) where
+>     pure = return 
+>     (<*>) = ap
+
+> instance MonadPlus m => Alternative (ReaderT r m) where
+>     empty = mzero
+>     (<|>) = mplus
 
 \subsection{Missing Instances}
 
