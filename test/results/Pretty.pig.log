@@ -15,26 +15,26 @@ Made.
 Made.
 Made.
 Made.
-f : ((x : *) -> *)
-g : ((x : *) -> ((y : *) -> *))
-h : (* -> (* -> *))
-h2 : ((* -> *) -> *)
-h3 : (* -> ((* -> *) -> *))
-h4 : ((* -> (* -> *)) -> *)
-h5 : ((* -> *) -> (* -> *))
-h6 : (((* -> *) -> *) -> *)
-A : *
-a : *
-P : #
-G : (:- a == a)
-k : ((x : *) -> ((y : *) -> ((:- x == y) -> *)))
-B : *
-y : (x : * ; (x -> *))
-C : *
-z : (x : * ; * ; * ;)
-{a, b}
-(x : * ; (x -> *))
-(f.G1 (x : * ; (x -> *)))
-[* / (x ::. (f.G1 x))]
-[* * *]
+f : (x : Set) -> Set
+g : (x : Set)(y : Set) -> Set
+h : Set -> Set -> Set
+h2 : (Set -> Set) -> Set
+h3 : Set -> (Set -> Set) -> Set
+h4 : (Set -> Set -> Set) -> Set
+h5 : (Set -> Set) -> Set -> Set
+h6 : ((Set -> Set) -> Set) -> Set
+A : Set
+a : Set
+P : Prop
+G : :- a == a
+k : (x : Set)(y : Set) -> :- x == y -> Set
+B : Set
+y : Sig (x : Set ; x -> Set)
+C : Set
+z : Sig (x : Set ; Set ; Set ;)
+Enum ['a 'b]
+Sig (x : Set ; x -> Set)
+f.G1 (Sig (x : Set ; x -> Set))
+[Set , \ x -> f.G1 x]
+[Set Set Set]
 Loaded.

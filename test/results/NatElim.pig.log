@@ -19,5 +19,5 @@ Made lambda boy!
 Thank you.
 Thank you.
 Going to root...
-@ [`suc @ [`suc @ [`suc @ [`suc @ [`zero]]]]]
+con ['suc (con ['suc (con ['suc (con ['suc []])])])]
 Loaded.
