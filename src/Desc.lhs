@@ -577,13 +577,13 @@ Equality rules:
 
 
 As some useful syntactic sugar, we let inductive types elaborate
-lists (so |[]| becomes |@[0]| and |[s / t]| becomes |@ [1 s t]|).
+lists (so |[]| becomes |@[0]| and |[s , t]| becomes |@ [1 s t]|).
 
 > import -> ElaborateRules where
 >     elaborate b (MU l d :>: DVOID) =
 >         elaborate b (MU l d :>: DCON (DPAIR DZE DVOID))
 >     elaborate b (MU l d :>: DPAIR s t) =
->         elaborate b (MU l d :>: DCON (DPAIR (DSU DZE) (DPAIR s t)))
+>         elaborate b (MU l d :>: DCON (DPAIR (DSU DZE) (DPAIR s (DPAIR t DVOID))))
 
 To avoid an infinite loop when distilling, we have to be a little cleverer
 and call canTy directly rather than letting distill do it for us.
