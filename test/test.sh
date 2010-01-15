@@ -1,6 +1,20 @@
 #!/bin/bash
 
+failed="[FAILED]"
+undefined="[UNDEFINED]"
+passed="[PASSED]"
 
+case ${TERM} in
+        dumb*) # emacs shell is "dumb"
+	# no color for the dumbs
+        ;;
+        *)
+	# otherwise, assume that we have colors
+	failed="\e[00;31m${failed}\e[00m"
+	undefined="\e[00;34m${undefined}\e[00m"
+	passed="\e[00;32m${passed}\e[00m"
+        ;;
+esac
 
 ## Check that Pig is nearby
 if [ ! -f "../src/Pig" ]
@@ -24,14 +38,13 @@ do
     # echo " Done."
     if [ ! -f "results/$script.log" ]
     then
-	echo -e "\e[00;34m[UNDEFINED]\e[00m Please provide the desired output for $script"
+	echo -e "$undefined Please provide the desired output for $script"
     else
 	if ! diff -u "results/$script.log" ".tests/$script.log" > ".tests/$script.diff"
 	then
 	    echo -e "\e[00;31m[FAILED]\e[00m $script does not match the expected output"
-	    cat ".tests/$script.diff"
 	else
-	    echo -e "\e[00;32m[PASSED]\e[00m $script looks alright!"
+	    echo -e "$passed $script looks alright!"
 	fi
     fi
 done
