@@ -166,14 +166,16 @@ Punctuation for relative names:
 |InDTm ArgSize|:
 
 >     KwSet | KwProp | KwAbsurd | KwTrivial | KwQ | KwCon | KwReturn |
->     KwTag | KwLabel | KwLabelEnd | KwRet | KwLambda | KwEnum | 
->     KwPlus | KwSig |
+>     KwTag | KwLabel | KwLabelEnd | KwRet | KwLambda | KwPlus | KwSig |
 
 |InDTm AndSize|:
 
 >     KwPrf | KwMu | KwIMu | KwIDesc | KwIDone | KwIArg | KwIInd1 | KwIInd |
->     KwNu | KwInh | KwWit | KwCoIt | KwMonad | KwQuotient | KwEqBlue |
->     KwAnd | KwArr | KwImp |
+>     KwNu | KwInh | KwWit | KwCoIt | KwMonad | KwQuotient | KwEnum |
+
+Other |InDTm|s:
+
+>     KwEqBlue | KwAnd | KwArr | KwImp |
 
 Things that can be pretty-printed but not parsed (at the moment):
 
@@ -188,14 +190,17 @@ Things that can be pretty-printed but not parsed (at the moment):
 > key KwComma     = ","
 > key KwSemi      = ";"
 > key KwDefn      = ":="
+
 > key KwNameSep   = "."
 > key KwRelSep    = "^"
 > key KwAbsSep    = "_"
+
 > key KwFst       = "!"
 > key KwSnd       = "-"
 > key KwOut       = "%"
 > key KwCall      = "call"
 > key KwEqGreen   = "<->"
+
 > key KwSet       = "Set"
 > key KwProp      = "Prop"
 > key KwAbsurd    = "FF"
@@ -208,9 +213,9 @@ Things that can be pretty-printed but not parsed (at the moment):
 > key KwLabelEnd  = ">"
 > key KwRet       = "return"
 > key KwLambda    = "\\"
-> key KwEnum      = "Enum"
 > key KwPlus      = "+"
 > key KwSig       = "Sig"
+
 > key KwPrf       = ":-"
 > key KwMu        = "Mu"
 > key KwIMu       = "IMu"
@@ -225,14 +230,18 @@ Things that can be pretty-printed but not parsed (at the moment):
 > key KwCoIt      = "CoIt"
 > key KwMonad     = "Monad"
 > key KwQuotient  = "Quotient"
+> key KwEnum      = "Enum"
+
 > key KwEqBlue    = "=="
 > key KwAnd       = "&&"
 > key KwArr       = "->"
 > key KwImp       = "=>"
+
 > key KwUId       = "UId"
 > key KwBox       = "Box"
 > key KwINu       = "INu"
 > key KwICoIt     = "ICoIt"
+
 > key k           = error ("key: missing keyword " ++ show k)
 
 It is straightforward to make a translation table, |keywords|:

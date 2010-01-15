@@ -130,7 +130,6 @@ We need to sort out a better solution for ascription syntax.
 >      |DLRET (%keyword KwRet%) (sizedInDTm ArgSize)
 >      |(iter DLAV) (%keyword KwLambda%) (some ident) (%keyword KwArr%) pInDTm
 >      |id (bracket Square tuple)
->      |DENUMT (%keyword KwEnum%) pInDTm
 >      |mkNum (|read digits|) (optional $ (keyword KwPlus) *> sizedInDTm ArgSize)
 >      |id (%keyword KwSig%) (bracket Round sigma)
 >      |)
@@ -178,6 +177,7 @@ We need to sort out a better solution for ascription syntax.
 >         (sizedInDTm ArgSize) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
 >      |DMONAD (%keyword KwMonad%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
 >      |DQUOTIENT (%keyword KwQuotient%) (sizedInDTm ArgSize) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
+>      |DENUMT (%keyword KwEnum%) (sizedInDTm ArgSize)
 >      |)
 
 > specialInDTm PiSize =
