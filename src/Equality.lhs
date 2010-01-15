@@ -101,9 +101,9 @@ With no computational behavior.
 
 > import -> CanPretty where
 >   pretty (EqBlue (y0 :>: t0) (y1 :>: t1)) = wrapDoc (
->       parens (pretty t0 ArgSize <+> text ":" <+> pretty y0 ArgSize)
->       <+> text "==" <+>
->       parens (pretty t1 ArgSize <+> text ":" <+> pretty y1 ArgSize))
+>       parens (pretty t0 ArgSize <+> kword KwAsc <+> pretty y0 ArgSize)
+>       <+> kword KwEqBlue <+>
+>       parens (pretty t1 ArgSize <+> kword KwAsc <+> pretty y1 ArgSize))
 >       ArgSize
 
 > import -> CanTyRules where
@@ -197,7 +197,7 @@ to InDTm, along with elaboration and distillation rules.
 
 > import -> InDTmPretty where
 >   pretty (DEqBlue t u) = wrapDoc
->       (pretty t ArgSize <+> text "==" <+> pretty u ArgSize)
+>       (pretty t ArgSize <+> kword KwEqBlue <+> pretty u ArgSize)
 >       ArgSize
 
 > import -> DMangleRules where

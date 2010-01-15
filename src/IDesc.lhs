@@ -89,24 +89,24 @@
 >     (|(IInd hhv hihiv ddv)|)  
 
 > import -> CanPretty where
->   pretty (IDesc ii) = wrapDoc (text "IDesc" <+> pretty ii ArgSize) ArgSize
+>   pretty (IDesc ii) = wrapDoc (kword KwIDesc <+> pretty ii ArgSize) ArgSize
 >   pretty (IMu (Just l   :?=: _) i)  = wrapDoc
 >       (pretty l ArgSize <+> pretty i ArgSize)
 >       ArgSize
 >   pretty (IMu (Nothing  :?=: (Id ii :& Id d)) i)  = wrapDoc
->       (text "IMu" <+> pretty ii ArgSize <+> pretty d ArgSize <+> pretty i ArgSize)
+>       (kword KwIMu <+> pretty ii ArgSize <+> pretty d ArgSize <+> pretty i ArgSize)
 >       ArgSize
 >   pretty (IDone p) = wrapDoc
->       (text "IDone" <+> pretty p ArgSize)
+>       (kword KwIDone <+> pretty p ArgSize)
 >       ArgSize
 >   pretty (IArg a d) = wrapDoc
->       (text "IArg" <+> pretty a ArgSize <+> pretty d ArgSize)
+>       (kword KwIArg <+> pretty a ArgSize <+> pretty d ArgSize)
 >       ArgSize
 >   pretty (IInd1 i d) = wrapDoc
->       (text "IInd1" <+> pretty i ArgSize <+> pretty d ArgSize)
+>       (kword KwIInd1 <+> pretty i ArgSize <+> pretty d ArgSize)
 >       ArgSize
 >   pretty (IInd h hi d) = wrapDoc
->       (text "IInd" <+> pretty h ArgSize <+> pretty hi ArgSize <+> pretty d ArgSize)
+>       (kword KwIInd <+> pretty h ArgSize <+> pretty hi ArgSize <+> pretty d ArgSize)
 >       ArgSize
 
 > import -> ElimTyRules where

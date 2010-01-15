@@ -17,6 +17,7 @@
 > import Developments
 > import DisplayTm
 > import Features
+> import Lexer
 > import Naming
 > import Root
 > import Rules hiding (($$))
@@ -28,6 +29,10 @@ We use the |HughesPJ| pretty-printing combinators. This section defines how
 to pretty-print everything defined in the Core chapter, and provides she
 aspects to allow features to add their own pretty-printing support.
 
+The |kword| function gives the document representing a |Keyword|.
+
+> kword :: Keyword -> Doc
+> kword = text . key
 
 The |Pretty| class describes things that can be pretty-printed. The
 |pretty| function takes a value |x| and the |Size| at which it should be
@@ -54,9 +59,9 @@ The |Can| functor is fairly easy to pretty-print, the only complexity
 being with $\Pi$-types.
 
 > instance Pretty (Can (InDTm String)) where
->     pretty Set       = const (text "Set")
+>     pretty Set       = const (kword KwSet)
 >     pretty (Pi s t)  = prettyPi empty (DPI s t)
->     pretty (Con x)   = wrapDoc (text "con" <+> pretty x ArgSize) AppSize
+>     pretty (Con x)   = wrapDoc (kword KwCon <+> pretty x ArgSize) AppSize
 >     import <- CanPretty
 >     pretty can       = const (quotes . text . show $ can)
 
@@ -67,9 +72,9 @@ produce the final document.
 
 > prettyPi :: Doc -> InDTm String -> Size -> Doc
 > prettyPi bs (DPI s (DL (DK t))) = prettyPiMore bs
->     (pretty s (pred PiSize) <+> text "->" <+> pretty t PiSize)
+>     (pretty s (pred PiSize) <+> kword KwArr <+> pretty t PiSize)
 > prettyPi bs (DPI s (DL (x ::. t))) =
->     prettyPi (bs <> parens (text x <+> text ":" <+> pretty s maxBound)) t
+>     prettyPi (bs <> parens (text x <+> kword KwAsc <+> pretty s maxBound)) t
 > prettyPi bs (DPI s (DN t))  =
 >     prettyPi bs (DPI s (DL ("__x" ::. DN (t ::$ A (DN (DP "__x"))))))
 > prettyPi bs (DPI s t) = prettyPiMore bs
@@ -82,14 +87,14 @@ and a codomain, and represents them appropriately for the current size.
 > prettyPiMore :: Doc -> Doc -> Size -> Doc
 > prettyPiMore bs d
 >   | isEmpty bs = wrapDoc d PiSize
->   | otherwise = wrapDoc (bs <+> text "->" <+> d) PiSize
+>   | otherwise = wrapDoc (bs <+> kword KwArr <+> d) PiSize
 
 
 The |Elim| functor is straightforward.
 
 > instance Pretty (Elim (InDTm String)) where
 >     pretty (A t)  = pretty t
->     pretty Out    = const (text "%")
+>     pretty Out    = const (kword KwOut)
 >     import <- ElimPretty
 >     pretty elim   = const (quotes . text . show $ elim)
 
@@ -103,7 +108,7 @@ than a $\lambda$-term is reached.
 > prettyLambda :: Bwd String -> InDTm String -> Size -> Doc
 > prettyLambda vs (DL s) = prettyLambda (vs :< dScopeName s) (dScopeTm s)
 > prettyLambda vs tm = wrapDoc
->     (text "\\" <+> text (intercalate " " (trail vs)) <+> text "->"
+>     (kword KwLambda <+> text (intercalate " " (trail vs)) <+> kword KwArr
 >         <+> pretty tm ArrSize)
 >     minBound
 
@@ -112,7 +117,7 @@ than a $\lambda$-term is reached.
 >     pretty (DL s)          = pretty s
 >     pretty (DC c)          = pretty c
 >     pretty (DN n)          = pretty n
->     pretty (DQ x)          = const (text ("?" ++ x))
+>     pretty (DQ x)          = const (kword KwQ <> text x)
 >     import <- InDTmPretty
 >     pretty indtm           = const (quotes . text . show $ indtm)
 
@@ -122,13 +127,13 @@ than a $\lambda$-term is reached.
 >     pretty (DV i)       = const (text "BadV" <> int i)
 >     pretty (op ::@ vs)  = wrapDoc
 >         (text (opName op) <+> parens
->             (fsep (punctuate comma (map (flip pretty ArgSize) vs))))
+>             (fsep (punctuate (kword KwComma) (map (flip pretty ArgSize) vs))))
 >         ArgSize
 >     pretty (n ::$ el)   = (\curSize -> wrapDoc
 >         (pretty n curSize <+> pretty el ArgSize)
 >         AppSize curSize)
 >     pretty (t ::? y)    = wrapDoc
->         (pretty t AscSize <+> text ":" <+> pretty y AscSize)
+>         (pretty t AscSize <+> kword KwAsc <+> pretty y AscSize)
 >         AscSize
 >     import <- ExDTmPretty
 >     pretty exdtm        = const (quotes . text . show $ exdtm)
@@ -141,9 +146,9 @@ The |prettyBKind| function pretty-prints a |BoyKind| if supplied
 with a document representing its name and type.
 
 > prettyBKind :: BoyKind -> Doc -> Doc
-> prettyBKind LAMB  d = text "\\" <+> d <+> text "->"
-> prettyBKind ALAB  d = text "\\" <+> d <+> text "=>"
-> prettyBKind PIB   d = parens d <+> text "->"
+> prettyBKind LAMB  d = kword KwLambda <+> d <+> kword KwArr
+> prettyBKind ALAB  d = kword KwLambda <+> d <+> kword KwImp
+> prettyBKind PIB   d = parens d <+> kword KwArr
 
 
 For debugging purpose, the following quick'n'dirty pretty-printers

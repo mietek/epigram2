@@ -16,6 +16,7 @@
 > import DisplayTm
 > import Distiller
 > import Elaborator
+> import Lexer
 > import MissingLibrary
 > import Naming
 > import PrettyPrint
@@ -99,7 +100,7 @@ away bits of the context to produce an answer, then restores the saved state.
 >                ty' <- bquoteHere (pty ref)
 >                docTy <- prettyHere (SET :>: ty')
 >                d <- hyps aus me
->                return (d $$ prettyBKind k (text (christenREF aus me ref) <+> text ":" <+> docTy))
+>                return (d $$ prettyBKind k (text (christenREF aus me ref) <+> kword KwAsc <+> docTy))
 >            (True, es' :< E ref _ (Girl LETG _) _) -> do
 >                goIn
 >                es <- getDevEntries
@@ -109,7 +110,7 @@ away bits of the context to produce an answer, then restores the saved state.
 >                goOut
 >                putDevEntries es'
 >                d <- hyps aus me
->                return (d $$ (text (christenREF aus me ref) <+> text ":" <+> docTy))
+>                return (d $$ (text (christenREF aus me ref) <+> kword KwAsc <+> docTy))
 >            (_, es' :< _) -> putDevEntries es' >> hyps aus me
 
 
@@ -183,14 +184,14 @@ of the proof state at the current location.
 >         ty' <- bquoteHere ty
 >         tyd <- prettyHere (SET :>: ty')
 >         return (prettyBKind k
->                  (text x <+> colon <+> tyd))
+>                  (text x <+> kword KwAsc <+> tyd))
 >                                       
 >     prettyE e = do
 >         goIn
 >         d <- prettyPS aus me
 >         goOut
 >         return (sep  [  text (fst (entryLastName e))
->                      ,  nest 2 d <+> semi
+>                      ,  nest 2 d <+> kword KwSemi
 >                      ])
 >
 >     prettyEmptyTip :: ProofState Doc
@@ -200,7 +201,7 @@ of the proof state at the current location.
 >             Module -> return (brackets empty)
 >             _ -> do
 >                 tip <- prettyTip
->                 return (text ":=" <+> tip)
+>                 return (kword KwDefn <+> tip)
 
 >     prettyTip :: ProofState Doc
 >     prettyTip = do
@@ -209,8 +210,8 @@ of the proof state at the current location.
 >             Module -> return empty
 >             Unknown (ty :=>: _) -> do
 >                 tyd <- prettyHere (SET :>: ty)
->                 return (text "? :" <+> tyd)
+>                 return (kword KwQ <+> kword KwAsc <+> tyd)
 >             Defined tm (ty :=>: tyv) -> do
 >                 tyd <- prettyHere (SET :>: ty)
 >                 tmd <- prettyHere (tyv :>: tm)
->                 return (tmd <+> text ":" <+> tyd)
+>                 return (tmd <+> kword KwAsc <+> tyd)

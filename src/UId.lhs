@@ -58,8 +58,8 @@ Equality rules:
 >   traverse f (Tag s)      = (|(Tag s)|)
 
 > import -> CanPretty where
->   pretty UId      = const (text "UId")
->   pretty (Tag s)  = const (text ("'" ++ s))
+>   pretty UId      = const (kword KwUId)
+>   pretty (Tag s)  = const (kword KwTag <> text s)
 
 > import -> CanTyRules where
 >   canTy _  (Set :>: UId)    = return UId

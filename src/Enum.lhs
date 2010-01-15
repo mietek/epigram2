@@ -160,8 +160,8 @@ Equality rules:
 >   halfZip (Su t0) (Su t1) = Just (Su (t0,t1))
 
 > import -> CanPretty where
->   pretty (EnumT t)  = wrapDoc (text "Enum" <+> pretty t ArgSize) ArgSize
->   pretty Ze         = const (text "0")
+>   pretty (EnumT t)  = wrapDoc (kword KwEnum <+> pretty t ArgSize) ArgSize
+>   pretty Ze         = const (int 0)
 >   pretty (Su t)     = prettyEnumIndex 1 t
 
 > import -> Pretty where
@@ -169,7 +169,7 @@ Equality rules:
 >   prettyEnumIndex n DZE      = const (int n)
 >   prettyEnumIndex n (DSU t)  = prettyEnumIndex (succ n) t
 >   prettyEnumIndex n tm       = wrapDoc
->       (int n <+> text "+" <+> pretty tm ArgSize)
+>       (int n <+> kword KwPlus <+> pretty tm ArgSize)
 >       ArgSize
 
 > import -> CanTyRules where

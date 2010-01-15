@@ -127,7 +127,7 @@ first |Idenfitier foo| then |Keyword ,|. In |Parsley|, this translates
 to:
 
 > parseWord :: Parsley Char String
-> parseWord = (|id (some $ tokenFilter (\t -> not $ elem t $ space ++ brackets ++ protected)) 
+> parseWord = (|id (some $ tokenFilter (\t -> not $ elem t $ space ++ bracketChars ++ protected)) 
 >              |(: []) (tokenFilter (flip elem protected))|)
 >     where protected = ",._^`'"
 
@@ -149,27 +149,35 @@ level of abstraction, working on words instead of characters.
 Keywords are slightly more involved. A keyword is one of the following
 things...
 
-> data Keyword = KwAsc | KwComma | KwSemi | KwDefn |
+> data Keyword =
 
-Name parts
+Punctuation used all over the place:
+
+> KwAsc | KwComma | KwSemi | KwDefn |
+
+Punctuation for relative names:
 
 >     KwNameSep | KwRelSep | KwAbsSep |
 
-ExDTm
+|ExDTm|s:
 
 >     KwFst | KwSnd | KwOut | KwCall | KwEqGreen |
 
-InDTm ArgSize
+|InDTm ArgSize|:
 
 >     KwSet | KwProp | KwAbsurd | KwTrivial | KwQ | KwCon | KwReturn |
 >     KwTag | KwLabel | KwLabelEnd | KwRet | KwLambda | KwEnum | 
 >     KwPlus | KwSig |
 
-InDTm AndSize
+|InDTm AndSize|:
 
 >     KwPrf | KwMu | KwIMu | KwIDesc | KwIDone | KwIArg | KwIInd1 | KwIInd |
 >     KwNu | KwInh | KwWit | KwCoIt | KwMonad | KwQuotient | KwEqBlue |
->     KwAnd | KwArr | KwImp
+>     KwAnd | KwArr | KwImp |
+
+Things that can be pretty-printed but not parsed (at the moment):
+
+>     KwUId | KwBox | KwINu | KwICoIt
 
 >   deriving (Bounded, Enum, Eq, Show)
 
@@ -221,6 +229,10 @@ InDTm AndSize
 > key KwAnd       = "&&"
 > key KwArr       = "->"
 > key KwImp       = "=>"
+> key KwUId       = "UId"
+> key KwBox       = "Box"
+> key KwINu       = "INu"
+> key KwICoIt     = "ICoIt"
 > key k           = error ("key: missing keyword " ++ show k)
 
 It is straightforward to make a translation table, |keywords|:
@@ -248,10 +260,10 @@ word -- which is not a keyword -- and saying ``oh! it's an
 
 Brackets, open and closed, are one of the following.
 
-> openBracket, closeBracket, brackets :: String
+> openBracket, closeBracket, bracketChars :: String
 > openBracket = "([{"
 > closeBracket = "}])"
-> brackets = "|" ++ openBracket ++ closeBracket
+> bracketChars = "|" ++ openBracket ++ closeBracket
 
 Parsing brackets, as you would expect, requires a monad: we're not
 context-free my friend. This is slight variation around the |pLoop|

@@ -40,12 +40,12 @@
 
 > import -> CanPretty where
 >   pretty (Label l t) = const
->       (brackets (pretty l ArgSize <+> text ":" <+> pretty t ArgSize))
->   pretty (LRet x) = wrapDoc (text "return" <+> pretty x ArgSize) ArgSize
+>       (brackets (pretty l ArgSize <+> kword KwAsc <+> pretty t ArgSize))
+>   pretty (LRet x) = wrapDoc (kword KwRet <+> pretty x ArgSize) ArgSize
 
 > import -> ElimPretty where
 >   pretty (Call l) = wrapDoc
->       (text "call" <+> brackets (pretty l ArgSize))
+>       (kword KwCall <+> brackets (pretty l ArgSize))
 >       ArgSize
 
 > import -> ElimComputation where

@@ -92,19 +92,19 @@ Coercion rule:
 >   prettyPairMore :: Doc -> InDTm String -> Doc
 >   prettyPairMore d DVOID        = d
 >   prettyPairMore d (DPAIR a b)  = prettyPairMore (d <+> pretty a minBound) b
->   prettyPairMore d t            = d <+> comma <+> pretty t maxBound
+>   prettyPairMore d t            = d <+> kword KwComma <+> pretty t maxBound
 
 >   prettySigma :: InDTm String -> Size -> Doc
 >   prettySigma s = wrapDoc
->       (text "Sig" <+> parens (prettySigMore empty s))
+>       (kword KwSig <+> parens (prettySigMore empty s))
 >       AppSize
 
 >   prettySigMore :: Doc -> InDTm String -> Doc
 >   prettySigMore d DUNIT                      = d
 >   prettySigMore d (DSIGMA s (DL (x ::. t)))  = prettySigMore
->       (d <+> text x <+> colon <+> pretty s maxBound <+> semi) t
+>       (d <+> text x <+> kword KwAsc <+> pretty s maxBound <+> kword KwSemi) t
 >   prettySigMore d (DSIGMA s (DL (DK t)))     = prettySigMore
->       (d <+> pretty s maxBound <+> semi) t
+>       (d <+> pretty s maxBound <+> kword KwSemi) t
 >   prettySigMore d (DSIGMA s (DN t))     = prettySigMore d
 >       (DSIGMA s (DL ("__y" ::. DN (t ::$ A (DN (DP "__y"))))))
 >   prettySigMore d (DSIGMA s t) = d <+> text "BadSigma"
@@ -117,8 +117,8 @@ Coercion rule:
 >   Snd    :: Elim t
 
 > import -> ElimPretty where
->   pretty Fst = const (text "!")
->   pretty Snd = const (text "-")
+>   pretty Fst = const (kword KwFst)
+>   pretty Snd = const (kword KwSnd)
 
 > import -> CanPats where
 >   pattern SIGMA p q = C (Sigma p q)

@@ -29,11 +29,11 @@
 
 > import -> CanPretty where
 >   pretty (INu ity d i)  = wrapDoc
->       (text "INu" <+> pretty ity ArgSize <+> pretty d ArgSize
+>       (kword KwINu <+> pretty ity ArgSize <+> pretty d ArgSize
 >            <+> pretty i ArgSize)
 >       ArgSize
 >   pretty (ICoIt ity d i sty f s) = wrapDoc
->       (text "ICoIt" <+>
+>       (kword KwICoIt <+>
 >           pretty ity ArgSize <+> pretty d ArgSize <+> pretty i ArgSize <+>
 >           pretty sty ArgSize <+> pretty f ArgSize <+> pretty s ArgSize)
 >       ArgSize

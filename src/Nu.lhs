@@ -26,9 +26,9 @@
 >   pattern DCOIT d sty f s = DC (CoIt d sty f s)
 
 > import -> CanPretty where
->   pretty (Nu t)  = wrapDoc (text "Nu" <+> pretty t ArgSize) ArgSize
+>   pretty (Nu t)  = wrapDoc (kword KwNu <+> pretty t ArgSize) ArgSize
 >   pretty (CoIt d sty f s) = wrapDoc
->       (text "CoIt" <+> pretty sty ArgSize
+>       (kword KwCoIt <+> pretty sty ArgSize
 >            <+> pretty f ArgSize <+> pretty s ArgSize)
 >       ArgSize
 

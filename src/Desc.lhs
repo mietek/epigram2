@@ -194,7 +194,7 @@ Equality rules:
 > import -> CanPretty where
 >   pretty (Mu (Just l   :?=: _))     = pretty l
 >   pretty (Mu (Nothing  :?=: Id t))  = wrapDoc
->       (text "Mu" <+> pretty t ArgSize)
+>       (kword KwMu <+> pretty t ArgSize)
 >       ArgSize
 
 > import -> CanTyRules where

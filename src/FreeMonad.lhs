@@ -44,13 +44,13 @@
 
 > import -> CanPretty where
 >   pretty (Monad d x)   = wrapDoc
->       (text "Monad" <+> pretty d ArgSize <+> pretty x ArgSize)
+>       (kword KwMonad <+> pretty d ArgSize <+> pretty x ArgSize)
 >       ArgSize
 >   pretty (Return x)    = wrapDoc
->       (text "'" <+> pretty x ArgSize)
+>       (kword KwReturn <+> pretty x ArgSize)
 >       ArgSize
 >   pretty (Composite x) = wrapDoc
->       (text "@" <+> pretty x ArgSize)
+>       (kword KwCon <+> pretty x ArgSize)
 >       ArgSize
 
 > import -> Pretty where

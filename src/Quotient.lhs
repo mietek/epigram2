@@ -31,8 +31,8 @@
 
 > import -> CanPretty where
 >   pretty (Quotient x r p) = wrapDoc
->       (sep [ text "Quotient"
->            , nest 2 $ fsep $ map (\x -> pretty x ArgSize) [x,r,p]
+>       (sep [ kword KwQuotient
+>            , nest 2 $ fsep $ map (flip pretty ArgSize) [x,r,p]
 >            ])
 >       ArgSize
 
