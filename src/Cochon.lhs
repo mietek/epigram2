@@ -323,9 +323,8 @@ Miscellaneous tactics:
 >             case as of
 >                 [] -> putStrLn ("Tactics available: " ++ tacticNames cochonTactics)
 >                 [StrArg s] -> case tacticsMatching s of
->                     [ct] -> putStrLn (ctHelp ct)
 >                     [] -> putStrLn "There is no tactic by that name."
->                     cts -> putStrLn ("Tactics matching: " ++ tacticNames cts)
+>                     cts -> putStrLn (unlines (map ctHelp cts))
 >             return locs
 >           )
 >         ,  ctHelp = "help - displays a list of supported tactics.\n"
