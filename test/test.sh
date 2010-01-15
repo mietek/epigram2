@@ -42,7 +42,8 @@ do
     else
 	if ! diff -u "results/$script.log" ".tests/$script.log" > ".tests/$script.diff"
 	then
-	    echo -e "\e[00;31m[FAILED]\e[00m $script does not match the expected output"
+	    echo -e "$failed $script does not match the expected output"
+	    cat ".tests/$script.diff"
 	else
 	    echo -e "$passed $script looks alright!"
 	fi
