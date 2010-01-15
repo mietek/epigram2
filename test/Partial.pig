@@ -1,5 +1,5 @@
 [ f
-    [ \ x : * ->
-    ] ? : (* -> *) [| lambda y ; give x |] ;
-  g := ? : * [| pi z : * |] ; 
+    [ \ x : Set ->
+    ] ? : (Set -> Set) [| lambda y ; give x |] ;
+  g := ? : Set [| pi z : Set |] ; 
 ]

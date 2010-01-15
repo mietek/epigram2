@@ -64,19 +64,19 @@ there are none), a definition (which may be \verb!?!), and optionally a list of 
 in \verb![| |]! brackets.
 
 > pGirl :: Parsley Token DevLine
-> pGirl = (| DLGirl (|fst namePartParse|) pLines pDefn pCTSuffix (%keyword ";"%) |)
+> pGirl = (| DLGirl (|fst namePartParse|) pLines pDefn pCTSuffix (%keyword KwSemi%) |)
 
 A module is similar, but has no definition.
 
 > pModule :: Parsley Token DevLine
-> pModule = (| DLModule (|fst namePartParse|) pLines pCTSuffix (%keyword ";"%) |)
+> pModule = (| DLModule (|fst namePartParse|) pLines pCTSuffix (%keyword KwSemi%) |)
 
 
 > pLines :: Parsley Token [DevLine]
-> pLines =  bracket Square (many (pGirl <|> pBoy <|> pModule)) <|> (keyword ":=" *> pure [])
+> pLines =  bracket Square (many (pGirl <|> pBoy <|> pModule)) <|> (keyword KwDefn *> pure [])
 >
 > pDefn :: Parsley Token (Maybe InDTmRN :<: InDTmRN)
-> pDefn =  (| (%keyword "?"%) (%keyword ":"%) ~Nothing :<: pInDTm 
+> pDefn =  (| (%keyword KwQ%) (%keyword KwAsc%) ~Nothing :<: pInDTm 
 >               | id pAsc
 >               |)
 >   where
@@ -91,9 +91,10 @@ A boy is a $\lambda$-abstraction (represented by \verb!\ x : T ->!) or a $\Pi$-a
 (represented by \verb!(x : S) ->!). 
 
 > pBoy :: Parsley Token DevLine
-> pBoy =  (| (%keyword "\\"%) (DLBoy LAMB) (| fst namePartParse |) (%keyword ":"%)
->                (sizedInDTm (pred ArrSize)) (%keyword "->"%) |)
->         <|> (bracket Round (| (DLBoy PIB) (| fst namePartParse |) (%keyword ":"%) pInDTm |)) <* keyword "->"
+> pBoy =  (| (%keyword KwLambda%) (DLBoy LAMB) (| fst namePartParse |)
+>                (%keyword KwAsc%) (sizedInDTm (pred ArrSize)) (%keyword KwArr%) |)
+>         <|> (bracket Round (| (DLBoy PIB) (| fst namePartParse |)
+>                (%keyword KwAsc%) pInDTm |)) <* keyword KwArr
 
 
 \subsection{Construction}

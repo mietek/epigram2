@@ -1,4 +1,4 @@
-make a : * ;
+make a : Set ;
 out ; 
 make f : a -> a ;
 lambda x ;

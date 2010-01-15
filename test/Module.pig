@@ -1,6 +1,6 @@
 [ f
-    [ \ x : * ->
-      g := ? : * ;
-    ] [| make h : * |] ;
-  a := ? : f.g * ;
+    [ \ x : Set ->
+      g := ? : Set ;
+    ] [| make h : Set |] ;
+  a := ? : f.g Set ;
 ]

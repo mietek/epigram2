@@ -1,25 +1,25 @@
-make f := (\ x -> ?) : * -> * ;
-make g := (\ x y -> ?) : * -> * -> * ;
-make h := ? : * -> * -> * ;
-make h2 := ? : (* -> *) -> * ;
-make h3 := ? : * -> (* -> *) -> * ;
-make h4 := ? : (* -> * -> *) -> * ;
-make h5 := ? : (* -> *) -> * -> * ;
-make h6 := ? : ((* -> *) -> *) -> * ;
+make f := (\ x -> ?) : Set -> Set ;
+make g := (\ x y -> ?) : Set -> Set -> Set ;
+make h := ? : Set -> Set -> Set ;
+make h2 := ? : (Set -> Set) -> Set ;
+make h3 := ? : Set -> (Set -> Set) -> Set ;
+make h4 := ? : (Set -> Set -> Set) -> Set ;
+make h5 := ? : (Set -> Set) -> Set -> Set ;
+make h6 := ? : ((Set -> Set) -> Set) -> Set ;
 
-make A := {a, b} : * ;
+make A := (Enum ['a 'b]) : Set ;
 
-make a := ? : * ;
-make P := a == a : # ;
+make a := ? : Set ;
+make P := a == a : Prop ;
 make G := ? : :- P ;
 
-make k := ? : (x : *)(y : *) -> :- x == y -> * ;
+make k := ? : (x : Set)(y : Set) -> :- x == y -> Set ;
 
-make B := (x : * ; x -> *) : * ;
-make y := [* / f] : B ;
+make B := Sig (x : Set ; x -> Set) : Set ;
+make y := [Set , f] : B ;
 
-make C := (x : * ; * ; * ;) : * ;
-make z := [* * *] : C ;
+make C := Sig (x : Set ; Set ; Set ;) : Set ;
+make z := [Set Set Set] : C ;
 
 show context ;
 elab A ;

@@ -1,9 +1,9 @@
-make A : * ;
-make B : * ;
+make A : Set ;
+make B : Set ;
 out ;
 give B ;
 root ;
 make x : A ;
 prev ;
-give * ;
-give *
+give Set ;
+give Set

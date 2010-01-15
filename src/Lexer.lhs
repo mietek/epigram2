@@ -21,11 +21,7 @@ identifiers unless they're keywords.
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE TypeSynonymInstances #-}
 
-> module Lexer (Token(..),
->               Bracket(..),
->               crushToken,
->               tokenize,
->               keyword, ident, digits, bracket) where
+> module Lexer where
 
 > import Control.Monad
 > import Control.Applicative
@@ -44,7 +40,7 @@ We lex into tokens, classified as follows.
 
 > data Token
 >   =  Identifier String                    -- identifiers
->   |  Keyword String                       -- keywords
+>   |  Keyword Keyword                      -- keywords
 >   |  Brackets Bracket [Token]             -- bracketted tokens
 >      deriving (Eq, Show)
 
@@ -61,7 +57,7 @@ implement a function to crush tokens down to strings.
 
 > crushToken :: Token -> String
 > crushToken (Identifier s) = s
-> crushToken (Keyword s) = s
+> crushToken (Keyword s) = show s
 > crushToken (Brackets bra toks) = showOpenB bra ++ (show =<< toks) ++ showCloseB bra 
 >          where  showOpenB Round = "("
 >                 showOpenB Square = "["
@@ -151,25 +147,92 @@ level of abstraction, working on words instead of characters.
 \subsubsection{Lexing keywords}
 
 Keywords are slightly more involved. A keyword is one of the following
-thing. Don't forget to extend this list if you use new keywords in the
-grammar!
+things...
 
-> keywords :: [String]
-> keywords = [ ":", "*", "#", "@", ",", ";", "/", "^", ".", "_", "+", "`", "!", "-", "%"
->            , "\\", "->", "=>", "==", "&&", ":-", ":=", "?"
->            , "TT", "FF"
->            , "<->", ":->", ":=>"
->            , "Mu", "Nu", "CoIt", "Monad", "'", "Quotient"
->            , "IDesc" , "IMu", "IDone", "IArg", "IInd1", "IInd"
->            , "<", ">", "call", "return"
->            , "Inh", "wit"
->            ]
+> data Keyword = KwAsc | KwComma | KwSemi | KwDefn |
 
-To implement |parseKeyword|, this is simply a matter of filtering by
-words that can be found in the |keywords| list.
+Name parts
+
+>     KwNameSep | KwRelSep | KwAbsSep |
+
+ExDTm
+
+>     KwFst | KwSnd | KwOut | KwCall | KwEqGreen |
+
+InDTm ArgSize
+
+>     KwSet | KwProp | KwAbsurd | KwTrivial | KwQ | KwCon | KwReturn |
+>     KwTag | KwLabel | KwLabelEnd | KwRet | KwLambda | KwEnum | 
+>     KwPlus | KwSig |
+
+InDTm AndSize
+
+>     KwPrf | KwMu | KwIMu | KwIDesc | KwIDone | KwIArg | KwIInd1 | KwIInd |
+>     KwNu | KwInh | KwWit | KwCoIt | KwMonad | KwQuotient | KwEqBlue |
+>     KwAnd | KwArr | KwImp
+
+>   deriving (Bounded, Enum, Eq, Show)
+
+...and they look like this:
+
+> key :: Keyword -> String
+> key KwAsc       = ":"
+> key KwComma     = ","
+> key KwSemi      = ";"
+> key KwDefn      = ":="
+> key KwNameSep   = "."
+> key KwRelSep    = "^"
+> key KwAbsSep    = "_"
+> key KwFst       = "!"
+> key KwSnd       = "-"
+> key KwOut       = "%"
+> key KwCall      = "call"
+> key KwEqGreen   = "<->"
+> key KwSet       = "Set"
+> key KwProp      = "Prop"
+> key KwAbsurd    = "FF"
+> key KwTrivial   = "TT"
+> key KwQ         = "?"
+> key KwCon       = "con"
+> key KwReturn    = "`"
+> key KwTag       = "'"
+> key KwLabel     = "<"
+> key KwLabelEnd  = ">"
+> key KwRet       = "return"
+> key KwLambda    = "\\"
+> key KwEnum      = "Enum"
+> key KwPlus      = "+"
+> key KwSig       = "Sig"
+> key KwPrf       = ":-"
+> key KwMu        = "Mu"
+> key KwIMu       = "IMu"
+> key KwIDesc     = "IDesc"
+> key KwIDone     = "IDone"
+> key KwIArg      = "IArg"
+> key KwIInd1     = "IInd1"
+> key KwIInd      = "IND"
+> key KwNu        = "Nu"
+> key KwInh       = "Inh"
+> key KwWit       = "wit"
+> key KwCoIt      = "CoIt"
+> key KwMonad     = "Monad"
+> key KwQuotient  = "Quotient"
+> key KwEqBlue    = "=="
+> key KwAnd       = "&&"
+> key KwArr       = "->"
+> key KwImp       = "=>"
+> key k           = error ("key: missing keyword " ++ show k)
+
+It is straightforward to make a translation table, |keywords|:
+
+> keywords :: [(String, Keyword)]
+> keywords = map (\k -> (key k, k)) (enumFromTo minBound maxBound)
+
+To implement |parseKeyword|, we can simply filter by words that
+can be found in the |keywords| list.
 
 > parseKeyword :: Parsley Char Token
-> parseKeyword = pFilter (\t -> fmap Keyword $ find (t ==) keywords) parseWord
+> parseKeyword = pFilter (\t -> fmap (Keyword . snd) $ find ((t ==) . fst) keywords) parseWord
 
 \subsubsection{Lexing identifiers}
 
@@ -239,7 +302,7 @@ As we are very likely to use these tokens in a parser, let us readily
 define parser combinators for them. Hence, looking for a given keyword
 is not more difficult than that:
 
-> keyword :: String -> Parsley Token ()
+> keyword :: Keyword -> Parsley Token ()
 > keyword s = tokenEq (Keyword s)
 
 Parsing an identifier or a number is as simple as:

@@ -33,11 +33,11 @@ A relative name is a list of idents separated by dots, and possibly
 with |^| or |_| symbols (for relative or absolute offsets).
 
 > nameParse :: Parsley Token RelName
-> nameParse = (|namePartParse : (many $ keyword "." *> namePartParse)|)
+> nameParse = (|namePartParse : (many $ keyword KwNameSep *> namePartParse)|)
 
 > namePartParse :: Parsley Token (String, Offs)
-> namePartParse =  (|(,) ident (%keyword "^"%) (| Rel (| read digits |) |)
->                   |(,) ident (%keyword "_"%) (| Abs (| read digits |) |)
+> namePartParse =  (|(,) ident (%keyword KwRelSep%) (| Rel (| read digits |) |)
+>                   |(,) ident (%keyword KwAbsSep%) (| Abs (| read digits |) |)
 >                   |(,) ident ~(Rel 0)
 >                   |)
 
@@ -56,7 +56,7 @@ The |pExDTm| and |pInDTm| functions start parsing at the maximum size.
 
 
 > pAscription :: Parsley Token ExDTmRN
-> pAscription = (| sizedInDTm (pred AscSize) (%keyword ":"%) ::? pInDTm |)
+> pAscription = (| sizedInDTm (pred AscSize) (%keyword KwAsc%) ::? pInDTm |)
 
 Each |sized| parser tries the appropriate |special| parser for the size,
 then falls back to parsing at the previous size followed by a |more| parser.
@@ -75,7 +75,7 @@ largest size again.
 
 > moreInEx :: Size -> InDTmRN -> Parsley Token InDTmRN
 > moreInEx AscSize t =
->   (|DN (| (t ::?) (%keyword ":"%) pInDTm |)|) <|> moreInEx (pred AscSize) t
+>   (|DN (| (t ::?) (%keyword KwAsc%) pInDTm |)|) <|> moreInEx (pred AscSize) t
 > moreInEx z (DN e) = DN <$> moreExDTm z e <|> moreInDTm z (DN e)
 > moreInEx z t = moreInDTm z t
 
@@ -83,7 +83,7 @@ largest size again.
 
 > specialExDTm :: Size -> Parsley Token ExDTmRN
 > specialExDTm ArgSize =
->   (| pFilter findOp ident ::@ bracket Round (pSep (keyword ",") pInDTm)
+>   (| pFilter findOp ident ::@ bracket Round (pSep (keyword KwComma) pInDTm)
 >    | DP nameParse
 >    |)
 >   where
@@ -94,22 +94,22 @@ switched off. To forcibly parse a type ascription, use |pAscription|.
 We need to sort out a better solution for ascription syntax.
 
 > -- specialExDTm AscSize =
-> --  (| sizedInDTm (pred AscSize) (%keyword ":"%) ::? pInDTm |)
+> --  (| sizedInDTm (pred AscSize) (%keyword KwAsc%) ::? pInDTm |)
 
 > specialExDTm z = (|)
 
 > moreExDTm :: Size -> ExDTmRN -> Parsley Token ExDTmRN
 > moreExDTm AscSize e =
->   (| (DN e ::?) (%keyword ":"%) pInDTm |) <|> moreExDTm (pred AscSize) e
+>   (| (DN e ::?) (%keyword KwAsc%) pInDTm |) <|> moreExDTm (pred AscSize) e
 > moreExDTm AppSize e = (e ::$) <$>
->   (| Fst (%keyword "!"%)
->    | Snd (%keyword "-"%)
->    | Out (%keyword "%"%)
->    | Call (%keyword "call"%) ~Dum
+>   (| Fst (%keyword KwFst%)
+>    | Snd (%keyword KwSnd%)
+>    | Out (%keyword KwOut%)
+>    | Call (%keyword KwCall%) ~Dum
 >    | A (sizedInDTm ArgSize)
 >    |)
 > moreExDTm EqSize e =
->   (|eqG  (pFilter isEqSide (pure (DN e))) (%keyword "<->"%)
+>   (|eqG  (pFilter isEqSide (pure (DN e))) (%keyword KwEqGreen%)
 >          (pFilter isEqSide (sizedInDTm (pred EqSize)))
 >    |) <|> moreExDTm (pred EqSize) e
 >   where
@@ -118,39 +118,39 @@ We need to sort out a better solution for ascription syntax.
 
 > specialInDTm :: Size -> Parsley Token InDTmRN
 > specialInDTm ArgSize =
->     (|DSET (%keyword "*"%) 
->      |DPROP (%keyword "#"%)
->      |DABSURD (%keyword "FF"%)
->      |DTRIVIAL (%keyword "TT"%)
->      |DQ (%keyword "?"%) (ident <|> pure "")
->      |DCON (%keyword "@"%) (sizedInDTm ArgSize)
->      |DRETURN (%keyword "'"%) (sizedInDTm ArgSize)
->      |DTAG (%keyword "`"%) ident
->      |DLABEL (%keyword "<"%) (sizedInDTm AppSize) (%keyword ":"%) (sizedInDTm ArgSize) (%keyword ">"%)
->      |DLRET (%keyword "return"%) (sizedInDTm ArgSize)
->      |(iter DLAV) (%keyword "\\"%) (some ident) (%keyword "->"%) pInDTm
+>     (|DSET (%keyword KwSet%) 
+>      |DPROP (%keyword KwProp%)
+>      |DABSURD (%keyword KwAbsurd%)
+>      |DTRIVIAL (%keyword KwTrivial%)
+>      |DQ (%keyword KwQ%) (ident <|> pure "")
+>      |DCON (%keyword KwCon%) (sizedInDTm ArgSize)
+>      |DRETURN (%keyword KwReturn%) (sizedInDTm ArgSize)
+>      |DTAG (%keyword KwTag%) ident
+>      |DLABEL (%keyword KwLabel%) (sizedInDTm AppSize) (%keyword KwAsc%) (sizedInDTm ArgSize) (%keyword KwLabelEnd%)
+>      |DLRET (%keyword KwRet%) (sizedInDTm ArgSize)
+>      |(iter DLAV) (%keyword KwLambda%) (some ident) (%keyword KwArr%) pInDTm
 >      |id (bracket Square tuple)
->      |DENUMT (bracket Curly (|  (iter (DCONSE . DTAG)) (pSep (keyword ",") ident)
->                                (| id (%keyword "/"%) pInDTm | DNILE |)|))
->      |mkNum (|read digits|) (optional $ (keyword "+") *> sizedInDTm ArgSize)
->      |id (bracket Round sigma)
+>      |DENUMT (%keyword KwEnum%) pInDTm
+>      |mkNum (|read digits|) (optional $ (keyword KwPlus) *> sizedInDTm ArgSize)
+>      |id (%keyword KwSig%) (bracket Round sigma)
 >      |)
 >   where
 >     tuple :: Parsley Token InDTmRN
 >     tuple =
->         (|DPAIR (sizedInDTm ArgSize) (| id (%keyword "/"%) pInDTm | id tuple |)
+>         (|DPAIR (sizedInDTm ArgSize) (| id (%keyword KwComma%) pInDTm
+>                                       | id tuple |)
 >          |DVOID (% pEndOfStream %)
 >          |)
 
 >     sigma :: Parsley Token InDTmRN
->     sigma = (|mkSigma (optional (ident <* keyword ":")) pInDTm sigmaMore
+>     sigma = (|mkSigma (optional (ident <* keyword KwAsc)) pInDTm sigmaMore
 >              |DUNIT (% pEndOfStream %)
 >              |)
 
 >     sigmaMore :: Parsley Token InDTmRN
->     sigmaMore = (|id (% keyword ";" %) (sigma <|> pInDTm)
->                  |(\p s -> mkSigma Nothing (DPRF p) s) (% keyword ":-" %) pInDTm sigmaMore
->                  |(\x -> DPRF x) (% keyword ":-" %) pInDTm
+>     sigmaMore = (|id (% keyword KwSemi %) (sigma <|> pInDTm)
+>                  |(\p s -> mkSigma Nothing (DPRF p) s) (% keyword KwPrf %) pInDTm sigmaMore
+>                  |(\x -> DPRF x) (% keyword KwPrf %) pInDTm
 >                  |)
 
 >     mkSigma :: Maybe String -> InDTmRN -> InDTmRN -> InDTmRN
@@ -163,41 +163,41 @@ We need to sort out a better solution for ascription syntax.
 >     mkNum n t = DSU (mkNum (n-1) t)
 
 > specialInDTm AndSize =
->     (|DPRF (%keyword ":-"%) (sizedInDTm AndSize)
->      |(DMU Nothing) (%keyword "Mu"%) (sizedInDTm ArgSize)
->      |(DIMU Nothing) (%keyword "IMu"%) (sizedInDTm ArgSize) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
->      |DIDESC (%keyword "IDesc"%) (sizedInDTm ArgSize)
->      |DIDONE (%keyword "IDone"%) (sizedInDTm ArgSize)
->      |DIARG (%keyword "IArg"%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
->      |DIIND1 (%keyword "IInd1"%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
->      |DIIND (%keyword "IND"%) (sizedInDTm ArgSize) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
->      |DNU (%keyword "Nu"%) (sizedInDTm ArgSize)
->      |DINH (%keyword "Inh"%) (sizedInDTm ArgSize)
->      |DWIT (%keyword "wit"%) (sizedInDTm ArgSize)
->      |(DCOIT DVOID) (%keyword "CoIt"%)
+>     (|DPRF (%keyword KwPrf%) (sizedInDTm AndSize)
+>      |(DMU Nothing) (%keyword KwMu%) (sizedInDTm ArgSize)
+>      |(DIMU Nothing) (%keyword KwIMu%) (sizedInDTm ArgSize) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
+>      |DIDESC (%keyword KwIDesc%) (sizedInDTm ArgSize)
+>      |DIDONE (%keyword KwIDone%) (sizedInDTm ArgSize)
+>      |DIARG (%keyword KwIArg%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
+>      |DIIND1 (%keyword KwIInd1%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
+>      |DIIND (%keyword KwIInd%) (sizedInDTm ArgSize) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
+>      |DNU (%keyword KwNu%) (sizedInDTm ArgSize)
+>      |DINH (%keyword KwInh%) (sizedInDTm ArgSize)
+>      |DWIT (%keyword KwWit%) (sizedInDTm ArgSize)
+>      |(DCOIT DVOID) (%keyword KwCoIt%)
 >         (sizedInDTm ArgSize) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
->      |DMONAD (%keyword "Monad"%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
->      |DQUOTIENT (%keyword "Quotient"%) (sizedInDTm ArgSize) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
+>      |DMONAD (%keyword KwMonad%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
+>      |DQUOTIENT (%keyword KwQuotient%) (sizedInDTm ArgSize) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
 >      |)
 
 > specialInDTm PiSize =
->     (|(flip iter)  (some (bracket Round (|ident, (%keyword ":"%) pInDTm|)))
->                    (| (uncurry DPIV) (%keyword "->"%) | (uncurry DALLV) (%keyword "=>"%) |)
+>     (|(flip iter)  (some (bracket Round (|ident, (%keyword KwAsc%) pInDTm|)))
+>                    (| (uncurry DPIV) (%keyword KwArr%) | (uncurry DALLV) (%keyword KwImp%) |)
 >                    pInDTm |)
 
 > specialInDTm z = (|)
 
 > moreInDTm :: Size -> InDTmRN -> Parsley Token InDTmRN
 > moreInDTm EqSize t =
->   (| DEqBlue  (pFilter isEx (pure t)) (%keyword "=="%)
+>   (| DEqBlue  (pFilter isEx (pure t)) (%keyword KwEqBlue%)
 >              (pFilter isEx (sizedInDTm (pred EqSize)))
 >    |) <|> moreInDTm (pred EqSize) t
 > moreInDTm AndSize s =
->   (| (DAND s) (%keyword "&&"%) (sizedInDTm AndSize)
+>   (| (DAND s) (%keyword KwAnd%) (sizedInDTm AndSize)
 >    |)
 > moreInDTm ArrSize s =
->   (| (DARR s) (%keyword "->"%) (sizedInDTm ArrSize)
->    | (DIMP s) (%keyword "=>"%) (sizedInDTm ArrSize)
+>   (| (DARR s) (%keyword KwArr%) (sizedInDTm ArrSize)
+>    | (DIMP s) (%keyword KwImp%) (sizedInDTm ArrSize)
 >    |)
 > moreInDTm z _ = (|)
 

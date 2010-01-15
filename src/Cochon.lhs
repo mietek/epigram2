@@ -199,7 +199,7 @@ Construction tactics:
 >       "give <term> - solves the goal with <term>."
 >   : simpleCT 
 >         "lambda"
->          (| (| StrArg ident (%keyword ":"%) |) : (| (sing . InArg) pInDTm |) 
+>          (| (| StrArg ident (%keyword KwAsc%) |) : (| (sing . InArg) pInDTm |) 
 >           | (| StrArg ident |) : (| [] |) |)
 >          (\ args -> case args of
 >              [StrArg s] -> lambdaBoy s >> return "Made lambda boy!"
@@ -210,8 +210,8 @@ Construction tactics:
 
 >   : simpleCT
 >         "make"
->         (| (| StrArg ident (%keyword ":"%) |) : (| (sing . InArg) pInDTm |)
->          | (| StrArg ident (%keyword ":="%) |) : (| (sing . ExArg) pAscription |)
+>         (| (| StrArg ident (%keyword KwAsc%) |) : (| (sing . InArg) pInDTm |)
+>          | (| StrArg ident (%keyword KwDefn%) |) : (| (sing . ExArg) pAscription |)
 >          |)
 >         (\ [StrArg s, tyOrTm] -> case tyOrTm of
 >             InArg ty -> do
@@ -232,13 +232,13 @@ Construction tactics:
 
 >   : simpleCT
 >         "pi"
->          (| (| StrArg ident (%keyword ":"%) |) : (| (sing . InArg) pInDTm |) |)
+>          (| (| StrArg ident (%keyword KwAsc%) |) : (| (sing . InArg) pInDTm |) |)
 >         (\ [StrArg s, InArg ty] -> elabPiBoy (s :<: ty) >> return "Made pi boy!")
 >         "pi <x> : <type> - introduces a pi boy."
 
 >   : simpleCT
 >       "program"
->       (pSep (keyword ",") (| StrArg ident |))
+>       (pSep (keyword KwComma) (| StrArg ident |))
 >       (\ as -> elabProgram (map argToStr as) >> return "Programming.")
 >       "program <labels>: set up a programming problem."
 
@@ -398,7 +398,7 @@ given string, either exactly or as a prefix.
 >         cts -> fail ("ambiguous tactic name (could be " ++ tacticNames cts ++ ").")
 
 > pCochonTactics :: Parsley Token [CTData]
-> pCochonTactics = pSepTerminate (keyword ";") pCochonTactic
+> pCochonTactics = pSepTerminate (keyword KwSemi) pCochonTactic
 
 
 > resolveArgs :: [CochonArg RelName] -> ProofState [CochonArg REF]

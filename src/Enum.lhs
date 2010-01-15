@@ -108,14 +108,14 @@ Equality rules:
 >                                  (PAIR (ARG UID (L $ "" :. [.x. IND1 DONE]))
 >                                   VOID)
 >   enumFakeREF :: REF
->   enumFakeREF = [("Primitive", 0), ("Enum", 0)] := (FAKE :<: SET) 
+>   enumFakeREF = [("Primitive", 0), ("EnumU", 0)] := (FAKE :<: SET) 
 >   enumU :: VAL
 >   enumU = MU (Just (N (P enumFakeREF))) inEnumU
 >   enumREF :: REF
->   enumREF = [("Primitive", 0), ("Enum", 0)] := (DEFN enumU :<: SET) 
+>   enumREF = [("Primitive", 0), ("EnumU", 0)] := (DEFN enumU :<: SET) 
 
 > import -> Primitives where
->   ("Enum", enumREF) :
+>   ("EnumU", enumREF) :
 
 > import -> CanConstructors where
 >   EnumT  :: t -> Can t
