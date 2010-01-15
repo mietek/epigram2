@@ -122,6 +122,8 @@ A Cochon tactic consinsts of:
 > instance Eq CochonTactic where
 >     ct1 == ct2  =  ctName ct1 == ctName ct2
 
+> instance Ord CochonTactic where
+>     compare ct1 ct2 = compare (ctName ct1) (ctName ct2)
 
 We have some shortcuts for building common kinds of tactics:
 |simpleCT| builds a tactic that works in the proof state,
@@ -185,7 +187,7 @@ unary tactics.
 The master list of Cochon tactics.
 
 > cochonTactics :: [CochonTactic]
-> cochonTactics = 
+> cochonTactics = sort (
 
 Construction tactics:
 
@@ -339,6 +341,19 @@ Miscellaneous tactics:
 >         ,  ctHelp = "quit - terminates the program."
 >         }
 
+>     : CochonTactic
+>         {  ctName = "save"
+>         ,  ctParse = (| (sing . StrArg) pFileName |)
+>         ,  ctIO = (\ [StrArg fn] (locs :< loc) -> do
+>             let Right s = evalStateT (much goOut >> prettyProofState) loc
+>             writeFile fn s
+>             putStrLn "Saved."
+>             return (locs :< loc)
+>           )
+>         ,  ctHelp = "save <file> - saves proof state to the given file."
+>         }
+>             
+
 >     : CochonTactic 
 >         {  ctName = "undo"
 >         ,  ctParse = pure []
@@ -353,7 +368,7 @@ Miscellaneous tactics:
 Import more tactics from an aspect:
 
 >     import <- CochonTactics
->     : []
+>     : [] )
 
 > pFileName :: Parsley Token String
 > pFileName = ident
@@ -367,7 +382,7 @@ given string, either exactly or as a prefix.
 >     Nothing  -> filter (isPrefixOf x . ctName) cochonTactics
 
 > tacticNames :: [CochonTactic] -> String
-> tacticNames = intercalate ", " . sort . map ctName
+> tacticNames = intercalate ", " . map ctName
 
 
 > type CTData = (CochonTactic, [CochonArg RelName])
