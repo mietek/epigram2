@@ -7,21 +7,15 @@
 
 > module DisplayLang.Distiller where
 
-> import Kit.BwdFwd
-> import Kit.MissingLibrary
-
-> import ProofState.Developments
-> import ProofState.ProofState
-> import ProofState.ProofKit
-
-> import DisplayLang.DisplayTm
-> import DisplayLang.Naming
-
-> import NameSupply.NameSupplier
-
-> import Evidences.Rules
-> import Evidences.Tm
-> import Evidences.Mangler
+> import BwdFwd
+> import Developments
+> import DisplayTm
+> import MissingLibrary
+> import Naming
+> import ProofState
+> import Rooty
+> import Rules
+> import Tm
 
 %endif
 

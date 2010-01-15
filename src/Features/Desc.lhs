@@ -595,4 +595,19 @@ and call canTy directly rather than letting distill do it for us.
 >     distill es (C ty@(Mu _) :>: C c@(Con (PAIR (SU ZE) (PAIR _ (PAIR _ VOID))))) = do
 >         Con (DPAIR _ (DPAIR s (DPAIR t DVOID)) :=>: v) <- canTy (distill es) (ty :>: c)
 >         return (DPAIR s t :=>: CON v)
->         
+
+>     distill es (SET :>: tm@(MU (Just l) t)) = do
+>         let name = extractName (unN l)
+>         aus <- getAuncles
+>         case find ((name ==) . entryName) aus of
+>             Nothing  -> distill es (SET :>: MU Nothing t)
+>             _        -> do
+>                 cc <- canTy (distill es) (Set :>: Mu (Just l :?=: Id t))
+>                 return ((DC $ fmap termOf cc) :=>: evTm tm)
+>       where
+>         unN :: INTM -> EXTM
+>         unN (N t) = t
+>
+>         extractName :: EXTM -> Name
+>         extractName (P ref) = refName ref
+>         extractName (tm :$ _) = extractName tm
