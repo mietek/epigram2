@@ -189,13 +189,12 @@ Coercion rule:
 >   splitOp = Op
 >     { opName = "split" , opArity = 5
 >     , opTyTel =  "A"   :<: SET :-: \ aA ->
->                  "B"   :<: ARR aA SET :-: \ bB ->
+>                  "B" :<: ARR aA SET :-: \ bB ->
 >                  "ab"  :<: SIGMA aA bB             :-: \ ab ->
->                  "P"   :<: ARR (SIGMA aA bB) SET   :-: \ pP ->
+>                  "P"   :<: ARR ab SET   :-: \ pP ->
 >                  "p"   :<: pity (
->                    "a" :<: aA :-: \ a -> 
->                    "b" :<: (bB $$ A a) :-: \ b -> 
->                    Target $ pP $$ A (PAIR a b))    :-: \ p ->
+>                    "a" :<: aA :-: \ a -> "b" :<: (bB $$ A a) :-: \ b -> Ret $
+>                    pP $$ A (PAIR a b))             :-: \ p ->
 >                  Target $ pP $$ A ab
 >     , opRun = \ [_ , _ , ab , _ , p] -> Right $ p $$ A (ab $$ Fst) $$ A (ab $$ Snd)
 >     , opSimp = \_ _ -> empty
