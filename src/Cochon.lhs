@@ -158,7 +158,7 @@ unary tactics.
 > unaryExCT :: String -> (EXDTM -> ProofState String) -> String -> CochonTactic
 > unaryExCT name eval help = simpleCT
 >     name
->     (| (sing . ExArg) pExDTm |)
+>     (| (sing . ExArg) pExDTm | (sing . ExArg) pAscription |)
 >     (eval . argToEx . head)
 >     help
 
