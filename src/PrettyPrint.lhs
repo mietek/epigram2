@@ -75,10 +75,8 @@ produce the final document.
 >     (pretty s (pred PiSize) <+> kword KwArr <+> pretty t PiSize)
 > prettyPi bs (DPI s (DL (x ::. t))) =
 >     prettyPi (bs <> parens (text x <+> kword KwAsc <+> pretty s maxBound)) t
-> prettyPi bs (DPI s (DN t))  =
->     prettyPi bs (DPI s (DL ("__x" ::. DN (t ::$ A (DN (DP "__x"))))))
 > prettyPi bs (DPI s t) = prettyPiMore bs
->     (parens (text "BadPi" <+> pretty s minBound <+> pretty t minBound))
+>     (kword KwPi <+> pretty s minBound <+> pretty t minBound)
 > prettyPi bs tm = prettyPiMore bs (pretty tm PiSize)
 
 The |prettyPiMore| function takes a bunch of domains (which may be empty)

@@ -132,6 +132,7 @@ We need to sort out a better solution for ascription syntax.
 >      |id (bracket Square tuple)
 >      |mkNum (|read digits|) (optional $ (keyword KwPlus) *> sizedInDTm ArgSize)
 >      |id (%keyword KwSig%) (bracket Round sigma)
+>      |DSIGMA (%keyword KwSig%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
 >      |)
 >   where
 >     tuple :: Parsley Token InDTmRN
@@ -178,6 +179,7 @@ We need to sort out a better solution for ascription syntax.
 >      |DMONAD (%keyword KwMonad%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
 >      |DQUOTIENT (%keyword KwQuotient%) (sizedInDTm ArgSize) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
 >      |DENUMT (%keyword KwEnum%) (sizedInDTm ArgSize)
+>      |DPI (%keyword KwPi%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
 >      |)
 
 > specialInDTm PiSize =

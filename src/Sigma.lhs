@@ -80,9 +80,9 @@ Coercion rule:
 >   Pair   :: t -> t -> Can t 
 
 > import -> CanPretty where
->   pretty Unit         = prettySigma DUNIT
+>   pretty Unit         = prettySigma empty DUNIT
 >   pretty Void         = prettyPair DVOID
->   pretty (Sigma s t)  = prettySigma (DSIGMA s t)
+>   pretty (Sigma s t)  = prettySigma empty (DSIGMA s t)
 >   pretty (Pair a b)   = prettyPair (DPAIR a b)
 
 > import -> Pretty where
@@ -94,23 +94,20 @@ Coercion rule:
 >   prettyPairMore d (DPAIR a b)  = prettyPairMore (d <+> pretty a minBound) b
 >   prettyPairMore d t            = d <+> kword KwComma <+> pretty t maxBound
 
->   prettySigma :: InDTm String -> Size -> Doc
->   prettySigma s = wrapDoc
->       (kword KwSig <+> parens (prettySigMore empty s))
->       AppSize
-
->   prettySigMore :: Doc -> InDTm String -> Doc
->   prettySigMore d DUNIT                      = d
->   prettySigMore d (DSIGMA s (DL (x ::. t)))  = prettySigMore
+>   prettySigma :: Doc -> InDTm String -> Size -> Doc
+>   prettySigma d DUNIT                      = prettySigmaDone d empty
+>   prettySigma d (DSIGMA s (DL (x ::. t)))  = prettySigma
 >       (d <+> text x <+> kword KwAsc <+> pretty s maxBound <+> kword KwSemi) t
->   prettySigMore d (DSIGMA s (DL (DK t)))     = prettySigMore
+>   prettySigma d (DSIGMA s (DL (DK t)))     = prettySigma
 >       (d <+> pretty s maxBound <+> kword KwSemi) t
->   prettySigMore d (DSIGMA s (DN t))     = prettySigMore d
->       (DSIGMA s (DL ("__y" ::. DN (t ::$ A (DN (DP "__y"))))))
->   prettySigMore d (DSIGMA s t) = d <+> text "BadSigma"
->       <+> pretty s minBound <+> pretty t minBound
->   prettySigMore d t = d <+> pretty t maxBound
+>   prettySigma d (DSIGMA s t) = prettySigmaDone d 
+>       (kword KwSig <+> pretty s minBound <+> pretty t minBound)
+>   prettySigma d t = prettySigmaDone d (pretty t maxBound)
 
+>   prettySigmaDone :: Doc -> Doc -> Size -> Doc
+>   prettySigmaDone s t
+>     | isEmpty s  = wrapDoc t AppSize
+>     | otherwise  = wrapDoc (kword KwSig <+> parens (s <+> t)) AppSize
 
 > import -> ElimConstructors where
 >   Fst    :: Elim t
