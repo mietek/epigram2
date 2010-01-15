@@ -153,7 +153,7 @@ things...
 
 Punctuation used all over the place:
 
-> KwAsc | KwComma | KwSemi | KwDefn |
+>     KwAsc | KwComma | KwSemi | KwDefn |
 
 Punctuation for relative names:
 
