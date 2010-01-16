@@ -8,14 +8,11 @@
 > module DevLoad (devLoad) where
 
 > import Control.Monad.State
+> import Control.Monad.Error
 > import Control.Applicative
-> import Data.Char
-> import Data.Maybe
-> import Data.Foldable hiding (elem)
-> import Data.Traversable
 > import System.Exit
 > import System.IO
-> 
+> import System.FilePath.Posix
 
 > import BwdFwd
 > import Cochon

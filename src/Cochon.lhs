@@ -14,7 +14,6 @@
 > import Data.Foldable hiding (find)
 > import Data.List
 > import Data.Traversable hiding (sequence)
-> import System.FilePath.Posix
 > import System.Exit
 > import System.IO 
 
