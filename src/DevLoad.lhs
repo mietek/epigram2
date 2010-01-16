@@ -9,7 +9,13 @@
 
 > import Control.Monad.State
 > import Control.Applicative
+> import Data.Char
+> import Data.Maybe
+> import Data.Foldable hiding (elem)
+> import Data.Traversable
 > import System.Exit
+> import System.IO
+> 
 
 > import BwdFwd
 > import Cochon
@@ -28,7 +34,7 @@
 %endif
 
 
-\subsection{Parsing}
+\subsection{Parsing a Development}
 
 To parse a development, we represent it as a list of |DevLine|s, each of
 which corresponds to a |Boy| or |Girl| entry and stores enough information
@@ -43,11 +49,9 @@ a list of commands to execute later.
 A module may have a list of girls in square brackets, followed by an optional
 semicolon-separated list of commands.
 
-> pRootModule :: Parsley Token ([DevLine], [CTData])
-> pRootModule = (| pTopDevLines, pCochonTactics |)
->   where
->     pTopDevLines :: Parsley Token [DevLine]
->     pTopDevLines =  bracket Square (many (pGirl <|> pModule)) <|> pure []
+> parseDevelopment :: Parsley Token [DevLine]
+> parseDevelopment = bracket Square (many (pGirl <|> pModule)) 
+>                    <|> pure []
 
 A girl is an identifier, followed by a list of children (or the \verb!:=! symbol if
 there are none), a definition (which may be \verb!?!), and optionally a list of commands
@@ -67,8 +71,8 @@ A module is similar, but has no definition.
 >
 > pDefn :: Parsley Token (Maybe InDTmRN :<: InDTmRN)
 > pDefn =  (| (%keyword KwQ%) (%keyword KwAsc%) ~Nothing :<: pInDTm 
->               | id pAsc
->               |)
+>           | id pAsc
+>           |)
 >   where
 >     pAsc = do
 >         tm ::? ty <- pAscription
@@ -94,20 +98,88 @@ The idea is to use commands defined in Section~\ref{sec:proofStateMonad} to buil
 up the proof state. The |devLoad| function takes care of this process.
 
 > devLoad :: String -> IO (Bwd ProofContext)
-> devLoad s = case parse tokenize s of
->     Left pf -> do
->         putStrLn ("Failed to tokenize development:\n" ++ show pf)
+> devLoad file = do
+>   let devFile = dropExtension file ++ ".dev" 
+>   dev <- withFile devFile ReadMode loadDevelopment
+>          `catchError` \ _ -> return []
+>   case runStateT (makeDev dev []) emptyContext of
+>     Left errs -> do
+>       putStrLn $ unlines $ "Failed to load development:" : errs
+>       exitFailure
+>     Right (ncs, loc) -> do
+>       commands <- withFile file ReadMode readCommands
+>       doCTacticsAt (([], commands) : ncs) (B0 :< loc)
+
+
+> loadDevelopment :: Handle -> IO [DevLine]
+> loadDevelopment file = do
+>     f <- hGetContents file
+>     case parse tokenize f of
+>       Left err -> do
+>         putStrLn $ "loadDevelopment: failed to tokenize:\n" ++ 
+>                    show err
 >         exitFailure
->     Right toks -> case parse pRootModule toks of
->         Left pf -> do
->             putStrLn ("Failed to parse development:\n" ++ show pf)
+>       Right toks ->
+>           case parse parseDevelopment toks of
+>             Left err -> do
+>               putStrLn $ "loadDevelopment: failed to parse:\n" ++
+>                            show err
+>               exitFailure
+>             Right dev -> do
+>               return dev
+
+> readCommands :: Handle -> IO [CTData]
+> readCommands file = do
+>   f <- hGetContents file
+>   case parse tokenizeCommands f of
+>     Left err -> do
+>       putStrLn $ "readCommands: failed to tokenize:\n" ++
+>                  show err
+>       exitFailure
+>     Right lines -> do
+>          sequence $ map (\s -> putStrLn $ "[" ++ s ++ "]")lines
+>          sequence $ map readCommand lines
+
+> readCommand :: String -> IO CTData
+> readCommand command =
+>     case parse tokenize command of
+>       Left err -> do
+>         putStrLn $ "readCommand: failed to tokenize:\n" ++
+>                    show err
+>         exitFailure
+>       Right toks -> do
+>         case parse pCochonTactic toks of
+>           Left err -> do
+>             putStrLn $ "readCommand: failed to parse:\n" ++
+>                        show err
 >             exitFailure
->         Right (dls, cs) -> do
->             case runStateT (makeDev dls []) emptyContext of
->                 Right (ncs, loc) -> doCTacticsAt (([], cs) : ncs) (B0 :< loc)
->                 Left ss -> do
->                     putStrLn (unlines ("Failed to load development:":ss))
->                     exitFailure
+>           Right command -> do
+>             return command
+
+                           
+
+
+> tokenizeCommands :: Parsley Char [String]
+> tokenizeCommands = (|id ~ [] (% pEndOfStream %)
+>                     |id (% oneLineComment %) 
+>                         (% consumeUntil' endOfLine %)
+>                         tokenizeCommands
+>                     |id (% openBlockComment %) 
+>                         (% consumeUntil' closeBlockComment %) 
+>                         tokenizeCommands
+>                     |consumeUntil' endOfCommand : 
+>                      tokenizeCommands
+>                     |)
+>     where endOfCommand = tokenEq ';' *> spaces *> endOfLine
+>                      <|> pEndOfStream *> pure ()
+>           endOfLine = tokenEq '\n' <|> pEndOfStream 
+>           oneLineComment = tokenEq '-' *> tokenEq '-' 
+>           openBlockComment = tokenEq '{' *> tokenEq '-'
+>           closeBlockComment = tokenEq '-' *> tokenEq '}'
+>           spaces = many $ tokenEq ' '
+
+
+
 
 The |makeDev| function updates the proof state to represent the given list of |DevLine|s,
 accumulating pairs of names and command lists along the way.

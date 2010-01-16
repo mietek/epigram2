@@ -145,6 +145,15 @@ We can also allow an optional terminator for a separated sequence.
 > pSepTerminate :: Parsley t s -> Parsley t x -> Parsley t [x]
 > pSepTerminate sep p = pSep sep p <* optional sep
 
+Similarly, one is often willing to consume some data up to some
+delimiter. This is the role of |consumeUntil|. It runs the parser |p|
+up to hitting a delimiter recognized by |delim|.
+
+> consumeUntil :: Parsley t a -> Parsley t eol -> Parsley t [a]
+> consumeUntil p delim = (|id ~ [] (% delim %)
+>                         |p : (consumeUntil p delim)|)
+>
+> consumeUntil' = consumeUntil nextToken 
 
 Thanks to the monadic nature of our parser, we can implement the
 following looping combinator. Hence, we can parse some input |a| with

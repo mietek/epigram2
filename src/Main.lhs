@@ -79,7 +79,7 @@ either.
 >  where
 >    withFile :: String -> (Bwd ProofContext -> IO a) -> IO a
 >    withFile "-" g = getContents >>= devLoad >>= g
->    withFile file g = readFile file >>= devLoad >>= g
+>    withFile file g = devLoad file >>= g
 
 >    loadDev :: String -> IO ()
 >    loadDev file = withFile file cochon'
