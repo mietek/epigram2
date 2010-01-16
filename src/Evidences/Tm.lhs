@@ -89,8 +89,6 @@ And we can infer types from:
 >   (:$)  :: Tm {Ex, p} x -> Elim (Tm {In, p} x) -> Tm {Ex, p} x  -- elim
 >   (:?)  :: Tm {In, TT} x -> Tm {In, TT} x -> Tm {Ex, TT} x      -- typing
 
->   Dummy :: Tm {In, VV} x
-
 In the world of values, ie. |Tm {In, VV} p|, the neutral terms are
 exactly the |N t| terms. Actually, it requires some caution in the way
 we deal with operator and how we turn them into values, so this
@@ -606,7 +604,6 @@ I think that this stuff should disappear with Tactics spreading.
 >   show (n :$ e)    = "(" ++ show n ++ " :$ " ++ show e ++ ")"
 >   show (op :@ vs)  = "(" ++ opName op ++ " :@ " ++ show vs ++ ")"
 >   show (t :? y)    = "(" ++ show t ++ " :? " ++ show y ++ ")"
->   show Dummy       = "Dummy"
 >
 > instance Show x => Show (Scope p x) where
 >   show (x :. t)   = show x ++ " :. " ++ show t

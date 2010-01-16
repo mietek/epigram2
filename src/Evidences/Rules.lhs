@@ -442,7 +442,7 @@ a binder.
 
 > bquote refs (L (HF x t)) = 
 >     (|(\t -> L (x :. t))
->       (NameSupply.NameSupplier.freshRef (x :<: Dummy) 
+>       (NameSupply.NameSupplier.freshRef (x :<: undefined) 
 >                       (\x -> bquote (refs :< x) 
 >                                     (t (pval x))))|)
 
