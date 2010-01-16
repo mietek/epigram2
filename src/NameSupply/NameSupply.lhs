@@ -46,5 +46,5 @@ a list of |(String, Int)|. Hence, on that structure, the effect of
 > type Name = [(String, Int)]
 >
 > mkName :: NameSupply -> String -> Name
-> mkName (sis, i) s = trail (sis :< (s, i))
+> mkName (sis, i) s = trail $ sis :< (s, i)
 
