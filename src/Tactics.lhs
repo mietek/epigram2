@@ -22,9 +22,7 @@
 > import Control.Applicative
 > import Control.Monad
 > import Control.Monad.Error
-
 > import Data.List
-> import Data.Traversable
 
 > import BwdFwd
 > import Rooty

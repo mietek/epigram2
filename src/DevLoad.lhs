@@ -7,16 +7,8 @@
 
 > module DevLoad (devLoad) where
 
-> import Control.Monad
-> import Control.Monad.Error
-> import Control.Monad.Writer
 > import Control.Monad.State
-> import Control.Monad.Instances
 > import Control.Applicative
-> import Data.Char
-> import Data.Maybe
-> import Data.Foldable hiding (elem)
-> import Data.Traversable
 > import System.Exit
 
 > import BwdFwd
@@ -25,12 +17,10 @@
 > import DisplayTm
 > import Elaborator
 > import Lexer
-> import MissingLibrary
 > import Naming
 > import Parsley
 > import ProofState
 > import Root
-> import Rules
 > import Tm
 > import TmParse
 > import Rooty

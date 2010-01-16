@@ -9,10 +9,8 @@
 > module Tm where
 
 > import Control.Applicative
-> import Control.Monad
 > import Control.Monad.Error
 > import Control.Monad.Identity
-> import Data.Either
 > import qualified Data.Monoid as M
 > import Data.Foldable hiding (foldl)
 > import Data.List

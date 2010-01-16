@@ -16,12 +16,9 @@ generate an executable from a collection of supercombinator definitions.
 > import System
 > import Char
 > import List
-> import Data.Foldable hiding (concatMap, concat)
-> import Data.Monoid
 > import Control.Monad.State
 > import Data.Traversable
 > import Control.Applicative
-> import Debug.Trace
 
 > import Tm
 > import Developments

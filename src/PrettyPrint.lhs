@@ -8,12 +8,10 @@
 > module PrettyPrint where
 
 > import MissingLibrary
-> import Data.Foldable
 > import Data.List
 > import Text.PrettyPrint.HughesPJ
 
 > import BwdFwd hiding ((<+>))
-> import qualified BwdFwd ((<+>))
 > import Developments
 > import DisplayTm
 > import Features

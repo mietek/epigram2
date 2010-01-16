@@ -9,7 +9,6 @@
 > module Developments where
 
 > import Control.Applicative
-> import Control.Monad
 > import Control.Monad.Identity
 > import Data.Foldable
 > import Data.List
@@ -18,9 +17,7 @@
 > import Data.Traversable
 
 > import BwdFwd
-> import MissingLibrary
 > import Tm
-> import Rules
 > import Root
 
 %endif

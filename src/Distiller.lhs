@@ -12,7 +12,6 @@
 > import DisplayTm
 > import MissingLibrary
 > import Naming
-> import PrettyPrint
 > import ProofState
 > import Rooty
 > import Rules

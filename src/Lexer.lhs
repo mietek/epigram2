@@ -23,7 +23,6 @@ identifiers unless they're keywords.
 
 > module Lexer where
 
-> import Control.Monad
 > import Control.Applicative
 > import Data.List
 > import Data.Char

@@ -10,12 +10,9 @@
 > module Rooty where
 
 > import Control.Applicative
-> import Control.Monad
 > import Control.Monad.Error
 > import Control.Monad.Reader
-> import Data.Maybe
 
-> import BwdFwd
 > import Root
 > import Tm
 > import MissingLibrary

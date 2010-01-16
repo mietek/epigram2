@@ -8,9 +8,7 @@
 > module Naming where
 
 > import Control.Applicative
-> import Control.Monad
 > import Control.Monad.Identity
-> import Data.Char
 > import Data.Foldable hiding (elem, find)
 > import Data.List
 > import Data.Monoid

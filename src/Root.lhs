@@ -7,10 +7,6 @@
 
 > module Root where
 
-> import Data.Foldable
-> import Control.Monad
-> import Control.Applicative
-
 > import BwdFwd
 
 %endif

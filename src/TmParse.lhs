@@ -10,11 +10,7 @@
 > import MissingLibrary
 > import Control.Applicative
 > import Data.Foldable hiding (foldr)
-> import Data.Traversable
-> import Data.Char
 
-> import BwdFwd
-> import Developments
 > import DisplayTm
 > import Features
 > import Lexer

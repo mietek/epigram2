@@ -7,24 +7,14 @@
 
 > module Elaborator where
 
-> import Debug.Trace
-
 > import Control.Applicative
 > import Control.Monad
-> import Control.Monad.Error
-> import Control.Monad.State
-> import Data.Foldable
-> import Data.List
 > import Data.Traversable
 
 > import BwdFwd
 > import Developments
 > import DisplayTm
-> import Naming
-> import PrettyPrint
 > import ProofState
-> import Root
-> import Rooty
 > import Rules
 > import Tm
 > import MissingLibrary

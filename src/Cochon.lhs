@@ -10,8 +10,6 @@
 
 > import Compiler
 > import Control.Applicative
-> import Control.Monad
-> import Control.Monad.Error
 > import Control.Monad.State
 > import Data.Foldable hiding (find)
 > import Data.List
@@ -23,17 +21,13 @@
 > import Developments
 > import DisplayCommands
 > import DisplayTm
-> import Distiller
 > import Elaborator
 > import MissingLibrary
 > import Naming
 > import Lexer
 > import Parsley
-> import PrettyPrint
 > import ProofState
 > import Root
-> import Rooty
-> import Rules
 > import Tm hiding (In)
 > import TmParse
 > import Elimination

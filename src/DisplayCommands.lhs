@@ -17,12 +17,10 @@
 > import Distiller
 > import Elaborator
 > import Lexer
-> import MissingLibrary
 > import Naming
 > import PrettyPrint
 > import ProofState
 > import Root
-> import Rooty
 > import Rules hiding (($$))
 > import Tm
 

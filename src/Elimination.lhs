@@ -6,26 +6,16 @@
 > module Elimination where
 
 > import Control.Applicative
-> import Control.Monad
-> import Control.Monad.Error
-> import Control.Monad.State
 > import Data.Foldable hiding (sequence_)
 > import Data.List
-> import Data.Traversable hiding (sequence)
 
 > import BwdFwd
-> import Developments
 > import DisplayTm
 > import Elaborator
-> import Naming
-> import PrettyPrint
 > import Root
-> import Rooty
 > import Rules
 > import Tm
 > import ProofState
-
-> import MissingLibrary
 
 > import Debug.Trace
 

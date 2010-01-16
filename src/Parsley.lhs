@@ -16,9 +16,7 @@ represent extents numerically.
 > import Control.Applicative
 > import Control.Monad
 > import Control.Monad.Error
-> import Control.Monad.State
 
-> import MissingLibrary
 
 %endif
 

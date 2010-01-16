@@ -18,7 +18,6 @@
 > import Developments
 > import DisplayTm
 > import Naming
-> import PrettyPrint
 > import Root
 > import Rooty
 > import Rules
