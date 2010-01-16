@@ -1,11 +1,11 @@
-\section{Root}
+\section{NameSupply}
 
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE TypeOperators #-}
 
-> module NameSupply.Root where
+> module NameSupply.NameSupply where
 
 > import Kit.BwdFwd
 
@@ -22,20 +22,20 @@ that namespace. The structure of the namespace stack is justified as
 follow. The |String| component is simply here for readability
 purposes, while the |Int| uniquely identifies the namespace.
 
-> type Root = (Bwd (String, Int), Int)
+> type NameSupply = (Bwd (String, Int), Int)
 
 Therefore, creating a fresh name in a given namespace simply consists
 in incrementing the name counter:
 
-> roos :: Root -> Root
-> roos (sis, i) = (sis, i + 1)
+> freshName :: NameSupply -> NameSupply
+> freshName (sis, i) = (sis, i + 1)
 
 Whereas creating a fresh namespace involves stacking up a new name
 |s|, uniquely identified by |i|, and initializing the per-namespace
 counter to |0|:
 
-> room :: Root -> String -> Root
-> room (sis, i) s = (sis :< (s,i), 0)
+> freshNSpace :: NameSupply -> String -> NameSupply
+> freshNSpace (sis, i) s = (sis :< (s,i), 0)
 
 Intuitively, the function |name| computes a fresh name out of a given
 name generator, decorating it with the human-readable label
@@ -45,6 +45,6 @@ a list of |(String, Int)|. Hence, on that structure, the effect of
 
 > type Name = [(String, Int)]
 >
-> name :: Root -> String -> Name
-> name (sis, i) s = trail (sis :< (s, i))
+> mkName :: NameSupply -> String -> Name
+> mkName (sis, i) s = trail (sis :< (s, i))
 

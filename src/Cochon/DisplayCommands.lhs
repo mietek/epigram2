@@ -23,7 +23,7 @@
 > import DisplayLang.Naming
 > import DisplayLang.PrettyPrint
 
-> import NameSupply.Root
+> import NameSupply.NameSupply
 
 > import Evidences.Rules hiding (($$))
 > import Evidences.Tm

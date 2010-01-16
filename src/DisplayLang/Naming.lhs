@@ -17,14 +17,14 @@
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
 
+> import NameSupply.NameSupply
+
 > import ProofState.Developments
 
 > import DisplayLang.DisplayTm
 
 > import Evidences.Tm
 > import Evidences.Rules
-
-> import NameSupply.Root
 
 %endif
 

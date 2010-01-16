@@ -12,10 +12,10 @@
 
 > import Kit.BwdFwd
 
+> import NameSupply.NameSupply
+
 > import DisplayLang.DisplayTm
 > import DisplayLang.Elaborator
-
-> import NameSupply.Root
 
 > import Evidences.Tm
 > import Evidences.Rules
@@ -315,7 +315,7 @@ context $\Delta$ and the reflexivity proofs.
 Let us build these proofs first. This simply consists in taking each variable
 in $\Delta$ and apply |refl| to it.
 
-> mkRefls :: [REF] -> Root -> [INTM]
+> mkRefls :: [REF] -> NameSupply -> [INTM]
 > mkRefls deltas r = map mkRefl deltas
 >     where mkRefl delta = N $ (P refl) $## [ bquote B0 (pty delta) r
 >                                           , NP delta ]
@@ -324,7 +324,7 @@ Then, it is straightforward to build the term we want and to give it:
 
 > applyElim :: Name -> INTM -> [INTM] -> [REF] -> ProofState ()
 > applyElim elim motive methods deltas = do
->     reflDeltas <- withRoot (mkRefls deltas)
+>     reflDeltas <- withNSupply (mkRefls deltas)
 >     N e <- lookupName elim
 >     giveNext $ N $ e $## (map NP deltas ++
 >                           reflDeltas)

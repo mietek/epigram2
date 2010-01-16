@@ -16,7 +16,7 @@
 > import DisplayLang.DisplayTm
 > import DisplayLang.Naming
 
-> import NameSupply.Rooty
+> import NameSupply.NameSupplier
 
 > import Evidences.Rules
 > import Evidences.Tm
@@ -39,9 +39,9 @@ of entries in scope, which it will extend when going under a binder.
 
 > distill es (ty :>: l@(L sc)) = do
 >     (k, s, f) <- lambdable ty `catchMaybe` ("distill: type " ++ show ty ++ " is not lambdable.")
->     root <- getDevRoot
+>     root <- getDevNSupply
 >     tm' :=>: _ <- freshRef (fortran l :<: s) (\ref root -> do
->         putDevRoot root
+>         putDevNSupply root
 >         distill (es :< E ref (lastName ref) (Boy k) (error "distill: boy type undefined")) (f (pval ref) :>: underScope sc ref)
 >       ) root
 >     return $ DL (convScope sc tm')   :=>: (evTm $ L sc)

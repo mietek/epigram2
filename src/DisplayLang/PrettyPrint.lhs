@@ -13,16 +13,15 @@
 > import Kit.BwdFwd hiding ((<+>))
 > import Kit.MissingLibrary
 
+> import NameSupply.NameSupply
+
 > import ProofState.Developments
 
 > import DisplayLang.DisplayTm
 > import DisplayLang.Lexer
 > import DisplayLang.Naming
 
-
 > import Features.Features
-
-> import NameSupply.Root
 
 > import Evidences.Rules hiding (($$))
 > import Evidences.Tm
@@ -160,7 +159,11 @@ might be handy:
 > prettyINTM = renderHouseStyle . flip pretty maxBound . unelaborate . christenAbs
 >
 > prettyVAL :: VAL -> String
-> prettyVAL v = renderHouseStyle $ flip pretty maxBound $ unelaborate $ christenAbs $ bquote B0 v ((B0 :< ("prettyVAL",1),0) :: Root)
+> prettyVAL v  = renderHouseStyle 
+>              $ flip pretty maxBound 
+>              $ unelaborate 
+>              $ christenAbs 
+>              $ bquote B0 v ((B0 :< ("prettyVAL",1),0) :: NameSupply)
 >
 > prettyREF :: REF -> String
 > prettyREF (name := _) = showName name

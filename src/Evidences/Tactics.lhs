@@ -27,8 +27,8 @@
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
 
-> import NameSupply.Rooty
-> import NameSupply.Root
+> import NameSupply.NameSupply
+> import NameSupply.NameSupplier
 
 > import Evidences.Tm
 > import Evidences.Rules
@@ -46,9 +46,9 @@ structure. In a second section, we implement the combinators.
 
 A Tactic is something that (might) builds a term of a given type. In
 this process, it might be required to create fresh names, hence the
-availability of a |Root|. All in all, this goes like this:
+availability of a |NameSupply|. All in all, this goes like this:
 
-> newtype Tac x = Tac { runTac :: Root -> TY -> Either [String] x }
+> newtype Tac x = Tac { runTac :: NameSupply -> TY -> Either [String] x }
 
 In other words, we have two @Reader@ monads stacked on an @Error@
 monad. I don't know for you but I'm quite happy to reinvent the wheel
@@ -77,21 +77,21 @@ Then we have a monad:
 >     catchError (Tac f) g = Tac { runTac = \r t -> either (\x -> runTac (g x) r t) Right (f r t) }
 
 
-\subsubsection{Going rooty}
+\subsubsection{Going |NameSupplier|}
 
-Because a tactic is some sort of |(->) Root |, it is also a
-|Rooty|. Therefore, we abstractly get |freshRef| and |forkRoot|
+Because a tactic is some sort of |(->) NameSupply|, it is also a
+|NameSupply|. Therefore, we abstractly get |freshRef| and |forkSupply|
 operations on it. 
 
 Let us work out the implementation:
 
-> instance Rooty Tac where
->     root = Tac { runTac = \root _ -> Right root }
->     freshRef x tacF = Tac { runTac = NameSupply.Rooty.freshRef x (runTac . tacF) }
->     forkRoot s child dad = Tac { runTac = \root typ -> 
+> instance NameSupplier Tac where
+>     askNSupply = Tac { runTac = \supply _ -> Right supply }
+>     freshRef x tacF = Tac { runTac = NameSupply.NameSupplier.freshRef x (runTac . tacF) }
+>     forkNSupply s child dad = Tac { runTac = \nsupply typ -> 
 >                                           do 
->                                           c <- runTac child (room root s) typ
->                                           runTac (dad c) (roos root) typ
+>                                           c <- runTac child (freshNSpace nsupply s) typ
+>                                           runTac (dad c) (freshName nsupply) typ
 >                                }
 
 Which requires |Tac| to be applicative. This is not a trouble now that
@@ -112,9 +112,9 @@ concerned by the lower-level layer: we implement the only combinators
 which are allowed to manipulate the inner structure of |Tac {...}|.
 
 This is roughly decomposed in three parts: one to deal with the |TY ->|
-part of |Tac|, one to deal with the |Root ->| part, and one to deal
-with the Error part. The |Root| aspect might seem poorly equipped:
-bear in mind that |Tac| is also |Rooty|. Similarly, the Error side
+part of |Tac|, one to deal with the |NameSupply ->| part, and one to deal
+with the Error part. The |NameSupply| aspect might seem poorly equipped:
+bear in mind that |Tac| is also |NameSupplier|. Similarly, the Error side
 inherits the monadic nature of |Either [String]|.
 
 \subsubsection{Setting goals}
@@ -124,7 +124,7 @@ combinators. Hence, we can |ask| what is the current type goal with,
 well, |goal|. 
 
 > goal :: Tac TY
-> goal = Tac { runTac = \root typ -> Right typ }
+> goal = Tac { runTac = \nsupply typ -> Right typ }
 
 |subgoal| is the |local| of Reader that runs |tacX| in a local |typ|
 environment. Conor is concerned about the fact that, apart from
@@ -132,8 +132,8 @@ Inference rules, nobody should be using this guy.
 
 > subgoal :: (TY :>: Tac x) -> Tac x
 > subgoal (typ :>: tacX) = 
->     Tac { runTac = \root _ -> 
->             case runTac tacX root typ of
+>     Tac { runTac = \nsupply _ -> 
+>             case runTac tacX nsupply typ of
 >               Left x -> Left $ ("subgoal: unable to build an " ++
 >                                 "inhabitant of " ++ show typ) : x
 >               k -> k
@@ -147,12 +147,12 @@ inside |val| and, when found, bind it to the De Bruijn index 0. This
 corresponds to beta-quoting |val| with |ref|. Then, well, we put that
 under a lambda and we are discharged.
 
-> discharge :: Rooty m => REF -> VAL -> m VAL
+> discharge :: NameSupplier m => REF -> VAL -> m VAL
 > discharge ref val = (| ((\x -> eval x B0) . L . ("discharge" :.)) 
 >                        (bquote (B0 :< ref) val) |)
 
-As mentioned above, we should not forget that |Tac| is in |Rooty|: we
-have |freshRef| and |forkRoot| for free.
+As mentioned above, we should not forget that |Tac| is in |NameSupplier|: we
+have |freshRef| and |forkNSupply| for free.
 
 \subsubsection{Failing, loudly}
 
@@ -196,7 +196,7 @@ you got the idea now.
 >   pi <- goal
 >   case pi of
 >     PI s t ->
->         NameSupply.Rooty.freshRef ("" :<: s) $
+>         NameSupply.NameSupplier.freshRef ("" :<: s) $
 >                        \x -> do
 >                              body <- subgoal (t $$ A (pval x) :>: body x)
 >                              discharge x body
@@ -261,7 +261,7 @@ work and comparing the inferred type with the current goal.
 >                            " for value " ++ show v ++ 
 >                            " is not equal to the current goal " ++ show typ'
 >     where equalR x = do
->             r <- root
+>             r <- askNSupply
 >             return $ equal x r
 
 On the other hand, |apply| builds up the continuation. Provided with
@@ -380,7 +380,7 @@ known.
 > tyLambda :: (String :<: TY) -> (REF -> Tac (VAL :<: TY))
 >                             -> Tac (VAL :<: TY)
 > tyLambda (name :<: s) body =
->     NameSupply.Rooty.freshRef ("" :<: s) $ \x -> do
+>     NameSupply.NameSupplier.freshRef ("" :<: s) $ \x -> do
 >         (vx :<: tx) <- body x -- out of context
 >         v <- discharge x vx
 >         t <- discharge x tx

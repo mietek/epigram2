@@ -22,13 +22,13 @@ generate an executable from a collection of supercombinator definitions.
 
 > import Kit.BwdFwd
 
+> import NameSupply.NameSupply
+
 > import Evidences.Tm
 
 > import ProofState.Developments
 
 > import Features.Features
-
-> import NameSupply.Root
 
 %endif
 

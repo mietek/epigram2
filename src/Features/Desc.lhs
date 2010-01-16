@@ -559,7 +559,7 @@ Equality rules:
 >           ] $ B0 :< d :< a :< b :< f :< x
 >         mapOpRun [N d,     a, b, f, x] = Left d
 >
->         mapOpSimp :: Alternative m => [VAL] -> Root -> m NEU
+>         mapOpSimp :: Alternative m => [VAL] -> NameSupply -> m NEU
 >         mapOpSimp [d, a, b, f, N x] r
 >           | equal (ARR a b :>: (f, identity)) r = pure x
 >           where

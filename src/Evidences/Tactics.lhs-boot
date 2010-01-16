@@ -18,8 +18,8 @@
 
 > import Evidences.Tm
 
-> import NameSupply.Root
-> import NameSupply.Rooty
+> import NameSupply.NameSupply
+> import NameSupply.NameSupplier
 
 > data Tac x
 
@@ -27,13 +27,13 @@
 > instance Monad Tac
 > instance Applicative Tac
 
-> runTac :: Tac x -> Root -> TY -> Either [String] x
+> runTac :: Tac x -> NameSupply -> TY -> Either [String] x
 
 
 > goal :: Tac TY
 > subgoal :: (TY :>: Tac x) -> Tac x
 
-> discharge :: Rooty m => REF -> VAL -> m VAL
+> discharge :: NameSupplier m => REF -> VAL -> m VAL
 > lambda :: (REF -> Tac VAL) -> Tac VAL
 > can :: Can (Tac VAL) -> Tac VAL
 

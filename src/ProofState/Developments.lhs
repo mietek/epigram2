@@ -18,21 +18,21 @@
 
 > import Kit.BwdFwd
 
-> import Evidences.Tm
+> import NameSupply.NameSupply
 
-> import NameSupply.Root
+> import Evidences.Tm
 
 %endif
 
 A |Dev| is a structure containing entries, some of which may have their own developments,
 creating a nested tree-like structure. It also carries a |Tip| representing the type of
-structure, and its |Root| for namespace handling purposes. Initially we had
+structure, and its |NameSupply| for namespace handling purposes. Initially we had
 
-< type Dev = (Bwd Entry, Tip, Root)
+< type Dev = (Bwd Entry, Tip, NameSupply)
 
 but generalised this to allow other |Traversable| functors |f| in place of |Bwd|, giving
 
-> type Dev f = (f (Entry f), Tip, Root)
+> type Dev f = (f (Entry f), Tip, NameSupply)
 
 
 A |Module| is a development that cannot have a type or value; this may be at the top level

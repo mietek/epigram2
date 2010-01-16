@@ -244,7 +244,7 @@ Elim forms inherited from elsewhere
 
 > import -> Check where
 >   check (PRF (ALL p q) :>: L sc)  = do
->     NameSupply.Rooty.freshRef ("" :<: p)
+>     NameSupply.NameSupplier.freshRef ("" :<: p)
 >       (\ref -> check (PRF (q $$ A (pval ref)) :>: underScope sc ref))
 >     return $ () :=>: (evTm $ L sc)
 

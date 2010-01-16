@@ -18,13 +18,13 @@
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
 
+> import NameSupply.NameSupply
+> import NameSupply.NameSupplier
+
 > import ProofState.Developments
 
 > import DisplayLang.DisplayTm
 > import DisplayLang.Naming
-
-> import NameSupply.Root
-> import NameSupply.Rooty
 
 > import Evidences.Tm
 > import Evidences.Rules
@@ -35,7 +35,7 @@
 
 Recall from Section~\ref{sec:developments} that
 
-< type Dev = (f (Entry f), Tip, Root)
+< type Dev = (f (Entry f), Tip, NameSupply)
 
 We ``unzip`` (cf. Huet's Zipper) this type to produce a type representing its
 one-hole context, which allows us to keep track of the location of a working
@@ -46,7 +46,7 @@ Each |Layer| of the structure is a record with the following fields:
 \item[|mother|] data about the working development
 \item[|cadets|] entries appearing below the working development
 \item[|laytip|] the |Tip| of the development that contains the mother
-\item[|layroot|] the |Root| of the development that contains the mother
+\item[|layroot|] the |NameSupply| of the development that contains the mother
 \end{description}
 
 > data Layer = Layer
@@ -54,7 +54,7 @@ Each |Layer| of the structure is a record with the following fields:
 >   ,  mother    :: Mother
 >   ,  cadets    :: NewsyEntries
 >   ,  laytip    :: Tip
->   ,  layroot   :: Root }
+>   ,  layroot   :: NameSupply }
 >  deriving Show
 
 > data Mother =  GirlMother REF (String, Int) INTM 
@@ -195,10 +195,10 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     (_ :< e, _, _) <- getDev
 >     return e
 
-> getDevRoot :: ProofState Root
-> getDevRoot = do
->     (_, _, root) <- getDev
->     return root
+> getDevNSupply :: ProofState NameSupply
+> getDevNSupply = do
+>     (_, _, ns) <- getDev
+>     return ns
 
 > getDevTip :: ProofState Tip
 > getDevTip = do
@@ -278,10 +278,10 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     (_, tip, root) <- getDev
 >     putDev (es, tip, root)
 
-> putDevRoot :: Root -> ProofState ()
-> putDevRoot r = do
+> putDevNSupply :: NameSupply -> ProofState ()
+> putDevNSupply ns = do
 >     (es, tip, _) <- getDev
->     putDev (es, tip, r)
+>     putDev (es, tip, ns)
 
 > putDevTip :: Tip -> ProofState ()
 > putDevTip tip = do
@@ -346,25 +346,25 @@ updated information, providing a friendlier interface than |get| and |put|.
 
 \subsection{Proof State Technology}
 
-A |ProofState| is not |Rooty| because the semantics of the latter are not compatible
-with the caching of |Root|s in the proof context. However, it can provide the current
-|Root| to a function that requires it. Note that this function has no way to return
+A |ProofState| is not a |NameSupplier| because the semantics of the latter are not compatible
+with the caching of |NameSupply|s in the proof context. However, it can provide the current
+|NameSupply| to a function that requires it. Note that this function has no way to return
 an updated root to the proof context, so it must not leave any references around
 when it has finished.
 
-> withRoot :: (Root -> x) -> ProofState x
-> withRoot f = getDevRoot >>= return . f
+> withNSupply :: (NameSupply -> x) -> ProofState x
+> withNSupply f = getDevNSupply >>= return . f
 
 
 The |bquoteHere| command $\beta$-quotes a term using the current root.
 
 > bquoteHere :: Tm {d, VV} REF -> ProofState (Tm {d, TT} REF)
-> bquoteHere tm = withRoot (bquote B0 tm)
+> bquoteHere tm = withNSupply (bquote B0 tm)
 
 
 > checkHere :: (TY :>: INTM) -> ProofState (INTM :=>: VAL)
 > checkHere (ty :>: tm) = do
->     mc <- withRoot (typeCheck $ check (ty :>: tm))
+>     mc <- withNSupply (typeCheck $ check (ty :>: tm))
 >     () :=>: tmv <- lift mc
 >     return (tm :=>: tmv)
 
@@ -387,10 +387,10 @@ may be useful for paranoia purposes.
 >     case m of
 >         GirlMother (_ := DEFN tm :<: ty) _ _ -> do
 >             ty' <- bquoteHere ty
->             mc <- withRoot (typeCheck $ check (SET :>: ty'))
+>             mc <- withNSupply (typeCheck $ check (SET :>: ty'))
 >             mc `catchEither` intercalate "\n" ["validateHere: girl type failed to type-check: SET does not admit", show ty']
 >             tm' <- bquoteHere tm
->             mc <- withRoot (typeCheck $ check (ty :>: tm'))
+>             mc <- withNSupply (typeCheck $ check (ty :>: tm'))
 >             mc `catchEither` intercalate "\n" ["validateHere: definition failed to type-check:", show ty, "does not admit", show tm']
 >             return ()
 >         _ -> return ()
@@ -444,8 +444,8 @@ is not in the required form.
 > jumpIn :: Entry NewsyFwd -> ProofState NewsyEntries
 > jumpIn e = do
 >     (ls, (es, tip, root)) <- get
->     let (cs, newTip, newRoot) = entryDev e
->     put (ls :< Layer es (entryToMother e) (NF F0) tip root, (B0, newTip, newRoot))
+>     let (cs, newTip, newNSupply) = entryDev e
+>     put (ls :< Layer es (entryToMother e) (NF F0) tip root, (B0, newTip, newNSupply))
 >     return cs
 
 > goOut :: ProofState ()
@@ -560,7 +560,7 @@ $\Pi S T$ and if so, adds a goal of type $S$ and applies $y$ to it.
 > apply :: ProofState()
 > apply = (do
 >     E ref@(name := k :<: (PI s t)) _ (Girl LETG _) _ <- getDevEntry
->     root <- getDevRoot
+>     root <- getDevNSupply
 >     z <- make ("z" :<: bquote B0 s root)
 >     make ("w" :<: bquote B0 (t $$ A s) root)
 >     goIn
@@ -592,7 +592,7 @@ next goal (if one exists) instead.
 >     tip <- getDevTip
 >     case tip of         
 >         Unknown (tipTyTm :=>: tipTy) -> do
->             mc <- withRoot (typeCheck $ check (tipTy :>: tm))
+>             mc <- withNSupply (typeCheck $ check (tipTy :>: tm))
 >             mc `catchEither` intercalate "\n" [ "Typechecking failed:"
 >                                              , show tm
 >                                              , "is not of type"
@@ -617,12 +617,12 @@ appends a $\lambda$-abstraction with the appropriate type to the current develop
 >     case tip of
 >       Unknown (pi :=>: ty) -> case lambdable ty of
 >         Just (k, s, t) -> do
->           root <- getDevRoot
+>           root <- getDevNSupply
 >           freshRef (x :<: s) (\ref r -> do
 >             putDevEntry (E ref (lastName ref) (Boy k) (bquote B0 s r))
 >             let tipTyv = t (pval ref)
 >             putDevTip (Unknown (bquote B0 tipTyv r :=>: tipTyv))
->             putDevRoot r
+>             putDevNSupply r
 >             return ref
 >               ) root
 >         _  -> throwError' "lambdaBoy: goal is not a pi-type or all-proof."
@@ -641,22 +641,22 @@ general.
 >     tip <- getDevTip
 >     case tip of
 >       Module -> do
->         root <- getDevRoot
+>         root <- getDevNSupply
 >         freshRef (x :<: tv) (\ref r -> do
 >           putDevEntry (E ref (lastName ref) (Boy LAMB) ty)
->           putDevRoot r
+>           putDevNSupply r
 >           return ref
 >             ) root
 >       Unknown (pi :=>: gty) -> case lambdable gty of
 >         Just (k, s, t) -> do
->           root <- getDevRoot
+>           root <- getDevNSupply
 >           case equal (SET :>: (tv,s)) root of
 >             True -> do 
 >               freshRef (x :<: tv) (\ref r -> do
 >               putDevEntry (E ref (lastName ref) (Boy k) ty)
 >               let tipTyv = t (pval ref)
 >               putDevTip (Unknown (bquote B0 tipTyv r :=>: tipTyv))
->               putDevRoot r
+>               putDevNSupply r
 >               return ref) root
 >             False -> throwError' "Given type does not match domain of goal"
 >         _  -> throwError' "lambdaBoy: goal is not a pi-type or all-proof."
@@ -668,7 +668,7 @@ current development, after checking that the purported type is in fact a type.
 
 > make :: (String :<: INTM) -> ProofState INTM
 > make (s :<: ty) = do
->     m <- withRoot (typeCheck $ check (SET :>: ty))
+>     m <- withNSupply (typeCheck $ check (SET :>: ty))
 >     m `catchEither` ("make: " ++ show ty ++ " is not a set.")
 >     make' (s :<: (ty :=>: evTm ty))
 
@@ -676,12 +676,12 @@ current development, after checking that the purported type is in fact a type.
 > make' (s :<: (ty :=>: tyv)) = do
 >     aus <- getAuncles
 >     s' <- pickName s
->     n <- withRoot (flip name s')
+>     n <- withNSupply (flip mkName s')
 >     let  ty'  = liftType aus ty
 >          ref  = n := HOLE :<: evTm ty'
->     root <- getDevRoot
->     putDevEntry (E ref (last n) (Girl LETG (B0, Unknown (ty :=>: tyv), room root s')) ty')
->     putDevRoot (roos root)
+>     root <- getDevNSupply
+>     putDevEntry (E ref (last n) (Girl LETG (B0, Unknown (ty :=>: tyv), freshNSpace root s')) ty')
+>     putDevNSupply (freshName root)
 >     return (N (P ref $:$ aunclesToElims (aus <>> F0)))
 
 > aunclesToElims :: Fwd (Entry Bwd) -> [Elim INTM]
@@ -692,22 +692,22 @@ current development, after checking that the purported type is in fact a type.
 
 > makeModule :: String -> ProofState Name
 > makeModule s = do
->     n <- withRoot (flip name s)
->     root <- getDevRoot
->     putDevEntry (M n (B0, Module, room root s))
->     putDevRoot (roos root)
+>     n <- withNSupply (flip mkName s)
+>     root <- getDevNSupply
+>     putDevEntry (M n (B0, Module, freshNSpace root s))
+>     putDevNSupply (freshName root)
 >     return n
 
 > pickName :: String -> ProofState String
 > pickName ""  = do
->     r <- getDevRoot
+>     r <- getDevNSupply
 >     return ("G" ++ show (snd r))
 > pickName s   = return s
 
 
 > moduleToGoal :: INTM -> ProofState INTM
 > moduleToGoal ty = do
->     Right (() :=>: tyv) <- withRoot (typeCheck $ check (SET :>: ty))
+>     Right (() :=>: tyv) <- withNSupply (typeCheck $ check (SET :>: ty))
 >     ModuleMother n <- getMother
 >     aus <- getAuncles
 >     let  ty' = liftType aus ty
@@ -743,11 +743,11 @@ is also a set; if so, it appends a $\Pi$-abstraction to the current development.
 >     tip <- getDevTip
 >     case tip of
 >         Unknown (_ :=>: SET) -> do
->             root <- getDevRoot
+>             root <- getDevNSupply
 >             freshRef (s :<: tv)
 >                 (\ref r ->  do
 >                    putDevEntry (E ref (lastName ref) (Boy PIB) ty)
->                    putDevRoot r
+>                    putDevNSupply r
 >                    return ref) root
 >         Unknown _  -> throwError' "piBoy: goal is not of type SET."
 >         _          -> throwError' "piBoy: only possible for incomplete goals."
@@ -757,7 +757,7 @@ same type, and fills it in with the parameter. \question{Is bquote really right 
 
 > select :: INTM -> ProofState INTM
 > select tm@(N (P (name := k :<: ty))) = do
->     root <- getDevRoot
+>     root <- getDevNSupply
 >     make (fst (last name) :<: bquote B0 ty root)
 >     goIn
 >     give tm
@@ -909,7 +909,7 @@ To update a defined girl, we must:
 
 For paranoia purposes, the following test might be helpful:
 
-<     mc <- withRoot (inCheck $ check (tyv' :>: tmL'))
+<     mc <- withNSupply (inCheck $ check (tyv' :>: tmL'))
 <     mc `catchEither` unlines ["tellEntry " ++ showName name ++ ":",
 <                                 show tmL', "is not of type", show ty' ]
 

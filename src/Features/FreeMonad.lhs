@@ -89,7 +89,7 @@
 >       substOpRun [d, x, y, f, RETURN z]  = Right $ f $$ A z
 >       substOpRun [d, x, y, f, N t]    = Left t
 >
->       substOpSimp :: Alternative m => [VAL] -> Root -> m NEU
+>       substOpSimp :: Alternative m => [VAL] -> NameSupply -> m NEU
 >       substOpSimp [d, x, y, f, N t] r
 >         | equal (SET :>: (x, y)) r &&
 >           equal (ARR x (MONAD d x) :>: (f, ret)) r = pure t

@@ -22,8 +22,8 @@
 
 > import Evidences.Tm
 
-> import NameSupply.Root
-> import NameSupply.Rooty
+> import NameSupply.NameSupply
+> import NameSupply.NameSupplier
 
 > import Features.Features
 
@@ -270,7 +270,7 @@ to compare two values, we first bring them to their normal form. Then,
 it is a simple matter of syntactic equality, defined in Section
 \ref{sec:syntactic_equality}, to compare the normal forms.
 
-> equal :: (TY :>: (VAL,VAL)) -> Root -> Bool
+> equal :: (TY :>: (VAL,VAL)) -> NameSupply -> Bool
 > equal (ty :>: (v1,v2)) r = quote (ty :>: v1) r == quote (ty :>: v2) r
 
 
@@ -285,21 +285,21 @@ performed.
 This is performed by two mutually recursive functions, |inQuote| and
 |exQuote|:
 
-< inQuote :: (TY :>: VAL) -> Root -> INTM
-< exQuote :: NEU -> Root -> (EXTM :<: TY)
+< inQuote :: (TY :>: VAL) -> NameSupply -> INTM
+< exQuote :: NEU -> NameSupply -> (EXTM :<: TY)
 
 Where |inQuote| quotes values and |exQuote| quotes neutral terms. As
 we are initially provided with a value, we quote it with |inQuote|, in
 a fresh namespace.
 
-> quote :: (TY :>: VAL) -> Root -> INTM
-> quote vty r = inQuote vty (room r "quote")
+> quote :: (TY :>: VAL) -> NameSupply -> INTM
+> quote vty r = inQuote vty (freshNSpace r "quote")
 
 
 Quoting a value consists in, if possible, $\eta$-expanding
 it. So it goes:
 
-> inQuote :: (TY :>: VAL) -> Root -> INTM
+> inQuote :: (TY :>: VAL) -> NameSupply -> INTM
 > inQuote (C ty :>: v)          r | Just t    <- etaExpand (ty :>: v) r = t
 
 Needless to say, we can always $\eta$-expand a closure. Therefore, if
@@ -340,7 +340,7 @@ function |f|, getting a value of type |t v|. At this point, we can
 safely quote this term. The result is a binding of |v| in the quoted
 term.
 
-> etaExpand :: (Can VAL :>: VAL) -> Root -> Maybe INTM
+> etaExpand :: (Can VAL :>: VAL) -> NameSupply -> Maybe INTM
 > etaExpand (Pi s t :>: f) r = Just $
 >   L ("__etaExpandA" :.
 >      fresh ("__etaExpandB" :<: s) 
@@ -353,7 +353,7 @@ Now, let us examine the quotation of neutral terms. Remember that a
 neutral term is either a parameter, a stuck elimination, or a stuck
 operation. Hence, we consider each cases in turn.
 
-> exQuote :: NEU -> Root -> (EXTM :<: TY)
+> exQuote :: NEU -> NameSupply -> (EXTM :<: TY)
 
 To quote a free variable, ie. a parameter, the idea is the
 following. If we are asked to quote a free variable |P|, there are two
@@ -364,7 +364,7 @@ with the right De Bruijn index. Second case, we have not introduced
 it: we can simply return it as such.
 
 > exQuote (P x)       r = quop x r :<: pty x
->     where quop :: REF -> Root -> EXTM
+>     where quop :: REF -> NameSupply -> EXTM
 >           quop ref@(ns := _) r = help (bwdList ns) r
 >               where
 >               help (ns :< (_,i)) (r,j) = if ns == r then V (j-i-1) else P ref
@@ -426,7 +426,7 @@ assumptions inside a term. The typical use-case is |discharge| in
 
 Apart from that, this is a standard $\beta$-quotation: 
 
-> bquote :: Rooty m => Bwd REF -> Tm {d,VV} REF -> m (Tm {d,TT} REF)
+> bquote :: NameSupplier m => Bwd REF -> Tm {d,VV} REF -> m (Tm {d,TT} REF)
 
 If binded by one of our lambda, we bind the free variables to the
 (hopefully) correct lambda. We don't do anything otherwise.
@@ -448,7 +448,7 @@ a binder.
 
 > bquote refs (L (HF x t)) = 
 >     (|(\t -> L (x :. t))
->       (NameSupply.Rooty.freshRef (x :<: Dummy) 
+>       (NameSupply.NameSupplier.freshRef (x :<: Dummy) 
 >                       (\x -> bquote (refs :< x) 
 >                                     (t (pval x))))|)
 
@@ -463,14 +463,14 @@ as we can. Simple, easy.
 > bquote refs (op :@ vs) = (|(:@) (pure op)
 >                                   (traverse (bquote refs) vs)|)
 
-> simplify :: NEU -> Root -> NEU
+> simplify :: NEU -> NameSupply -> NEU
 > simplify n r = exSimp n r
 >
-> inSimp :: VAL -> Root -> VAL
+> inSimp :: VAL -> NameSupply -> VAL
 > inSimp (N n) = (| N (exSimp n) |)
 > inSimp v     = (| v |)
 >
-> exSimp :: NEU -> Root -> NEU
+> exSimp :: NEU -> NameSupply -> NEU
 > exSimp (P x)      = (| (P x) |)
 > exSimp (n :$ el)  = (| exSimp n :$ (inSimp ^$ el) |)
 > exSimp (op :@ vs) = opS op <*> (inSimp ^$ vs)
@@ -524,7 +524,7 @@ making a fresh variable $x \in S$ and computing the type |T x|. Then,
 we simply have to check that $T\ x \ni t$.
 
 > check (PI s t :>: L sc) = do
->   NameSupply.Rooty.freshRef ("__check" :<: s) 
+>   NameSupply.NameSupplier.freshRef ("__check" :<: s) 
 >            (\ref -> check (t $$ A (pval ref) :>: underScope sc ref)) 
 >   return $ () :=>: (evTm $ L sc)
 
@@ -540,7 +540,7 @@ rule:
 This translates naturally into the following code:
 
 > check (w :>: N n)            = do
->   r <- root
+>   r <- askNSupply
 >   yv :<: yt <- infer n
 >   guard $ equal (SET :>: (w, yt)) r
 >   return $ () :=>: yv

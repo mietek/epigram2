@@ -68,7 +68,7 @@ Here's a case which makes labelled datatypes
 >     (iI :=>: iIv) <- elaborate False (SET :>: iI)
 >     (d :=>: dv) <- elaborate False (ARR iIv (IDESC iIv) :>: d)
 >     (i :=>: iv) <- elaborate False (iIv :>: i)
->     lastIsIndex <- withRoot (equal (SET :>: (iv,N (P (last xs)))))
+>     lastIsIndex <- withNSupply (equal (SET :>: (iv,N (P (last xs)))))
 >     guard lastIsIndex
 >     -- should check i doesn't appear in d (fairly safe it's not in iI :))
 >     return (IMU (Just lt) iI d i :=>: IMU (Just lv) iIv dv iv)
@@ -107,7 +107,7 @@ interesting types.
 >     elabbedV $ m $$ A (pval x $$ Fst) $$ A (pval x $$ Snd)  -- lambda lift?
 
 > elaborate True (PI (ENUMT e) t :>: m) | isTuply m = do
->     targetsDesc <- withRoot (equal (ARR (ENUMT e) SET :>: (t, L (K desc))))
+>     targetsDesc <- withNSupply (equal (ARR (ENUMT e) SET :>: (t, L (K desc))))
 >     (m' :=>: _) <- elaborate False (branchesOp @@ [e, t] :>: m)
 >     e' <- bquoteHere e
 >     x  <- lambdaBoy (fortran t)
@@ -183,7 +183,7 @@ the term, then checking the inferred type is what we pushed in.
 
 > elaborate top (w :>: DN n) = do
 >   (y :>: n) <- elabInfer n
->   eq <- withRoot (equal (SET :>: (w, y)))
+>   eq <- withNSupply (equal (SET :>: (w, y)))
 >   guard eq `replaceError` ("elaborate: inferred type\n" ++ show y ++ "\nof\n" ++ show n
 >                              ++ "\nis not\n" ++ show w)
 >   return (N n :=>: evTm (N n))
@@ -246,8 +246,8 @@ hard bits for the human.
 > prove b p@(ALL _ _) = elaborate b (PRF p :>: DL ("__prove" ::. DVOID))
 > prove b p@(EQBLUE (y0 :>: t0) (y1 :>: t1)) = useRefl <|> unroll <|> search p where
 >   useRefl = do
->     guard =<< withRoot (equal (SET :>: (y0, y1)))
->     guard =<< withRoot (equal (y0 :>: (t0, t1)))
+>     guard =<< withNSupply (equal (SET :>: (y0, y1)))
+>     guard =<< withNSupply (equal (y0 :>: (t0, t1)))
 >     let w = pval refl $$ A y0 $$ A t0
 >     qw <- bquoteHere w
 >     return (qw :=>: w)
@@ -276,7 +276,7 @@ hard bits for the human.
 
 > synthProof :: (VAL :<: TY) -> VAL -> ProofState (INTM :=>: VAL)
 > synthProof (v :<: PRF p) p' = do
->   guard =<< withRoot (equal (PROP :>: (p, p')))
+>   guard =<< withNSupply (equal (PROP :>: (p, p')))
 >   t <- bquoteHere v
 >   return (t :=>: v)
 > synthProof _ _ = (|)

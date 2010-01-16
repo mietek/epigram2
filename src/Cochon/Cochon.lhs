@@ -20,7 +20,7 @@
 > import Kit.Parsley
 > import Kit.MissingLibrary
 
-> import NameSupply.Root
+> import NameSupply.NameSupply
 
 > import Evidences.Tm hiding (In)
 

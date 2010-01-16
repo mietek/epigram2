@@ -21,7 +21,7 @@
 
 > import Features.Features
 
-> import NameSupply.Root
+> import NameSupply.NameSupply
 
 %endif
 
@@ -239,7 +239,7 @@ Build a forall from a telescope.
 >   { opName  :: String
 >   , opArity :: Int
 >   , opTyTel :: TEL TY
->   , opSimp  :: Alternative m => [VAL] -> Root -> m NEU
+>   , opSimp  :: Alternative m => [VAL] -> NameSupply -> m NEU
 >   , opRun   :: [VAL] -> Either NEU VAL
 >   }
 

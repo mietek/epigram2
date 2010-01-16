@@ -279,7 +279,7 @@
 >                      (mapOp @@ [iI, d, a, b, f, x $$ Snd])
 >         mapOpRun [iI,N d,        a, b, f, x] = Left d
 > 
->         mapOpSimp :: Alternative m => [VAL] -> Root -> m NEU
+>         mapOpSimp :: Alternative m => [VAL] -> NameSupply -> m NEU
 >         mapOpSimp [iI, d, a, b, f, N x] r
 >           | equal (PI iI (L (HF "i" $ \i -> ARR (a $$ A i) (b $$ A i))) 
 >                      :>: (f, identity)) r = pure x
