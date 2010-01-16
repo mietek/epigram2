@@ -13,9 +13,10 @@
 > import Control.Monad.State
 > import Data.Foldable hiding (find)
 > import Data.List
-> import Data.Traversable
+> import Data.Traversable hiding (sequence)
+> import System.FilePath.Posix
 > import System.Exit
-> import System.IO (hFlush, stdout)
+> import System.IO 
 
 > import BwdFwd
 > import Developments
@@ -380,6 +381,58 @@ given string, either exactly or as a prefix.
 
 
 > type CTData = (CochonTactic, [CochonArg RelName])
+
+> readCommands :: Handle -> IO [CTData]
+> readCommands file = do
+>   f <- hGetContents file
+>   case parse tokenizeCommands f of
+>     Left err -> do
+>       putStrLn $ "readCommands: failed to tokenize:\n" ++
+>                  show err
+>       exitFailure
+>     Right lines -> do
+>          t <- sequence $ map readCommand lines
+>          return $ Data.List.concat t
+
+> readCommand :: String -> IO [CTData]
+> readCommand command =
+>     case parse tokenize command of
+>       Left err -> do
+>         putStrLn $ "readCommand: failed to tokenize:\n" ++
+>                    show err
+>         exitFailure
+>       Right toks -> do
+>         case parse pCochonTactics toks of
+>           Left err -> do
+>             putStrLn $ "readCommand: failed to parse:\n" ++
+>                        show err
+>             exitFailure
+>           Right command -> do
+>             return command
+
+                           
+
+
+> tokenizeCommands :: Parsley Char [String]
+> tokenizeCommands = (|id ~ [] (% pEndOfStream %)
+>                     |id (% oneLineComment %) 
+>                         (% consumeUntil' endOfLine %)
+>                         tokenizeCommands
+>                     |id (% openBlockComment %) 
+>                         (% consumeUntil' closeBlockComment %) 
+>                         tokenizeCommands
+>                     |consumeUntil' endOfCommand : 
+>                      tokenizeCommands
+>                     |)
+>     where endOfCommand = tokenEq ';' *> spaces *> endOfLine
+>                      <|> pEndOfStream *> pure ()
+>           endOfLine = tokenEq (head "\n") <|> pEndOfStream 
+>           oneLineComment = tokenEq '-' *> tokenEq '-' 
+>           openBlockComment = tokenEq '{' *> tokenEq '-'
+>           closeBlockComment = tokenEq '-' *> tokenEq '}'
+>           spaces = many $ tokenEq ' '
+
+
 
 > pCochonTactic :: Parsley Token CTData
 > pCochonTactic  = do

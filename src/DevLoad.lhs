@@ -33,13 +33,12 @@
 
 %endif
 
-
 \subsection{Parsing a Development}
 
-To parse a development, we represent it as a list of |DevLine|s, each of
-which corresponds to a |Boy| or |Girl| entry and stores enough information
-to reconstruct it. Note that at this stage, we simply tag each girl with
-a list of commands to execute later.
+To parse a development, we represent it as a list of |DevLine|s, each
+of which corresponds to a |Boy| or |Girl| entry and stores enough
+information to reconstruct it. Note that at this stage, we simply tag
+each girl with a list of commands to execute later.
 
 > data DevLine
 >   =  DLBoy BoyKind String InDTmRN
@@ -51,135 +50,91 @@ semicolon-separated list of commands.
 
 > parseDevelopment :: Parsley Token [DevLine]
 > parseDevelopment = bracket Square (many (pGirl <|> pModule)) 
->                    <|> pure []
+>                 <|> pure []
 
-A girl is an identifier, followed by a list of children (or the \verb!:=! symbol if
-there are none), a definition (which may be \verb!?!), and optionally a list of commands
-in \verb![| |]! brackets.
+\subsubsection{Parsing Girls}
+
+A girl is an identifier, followed by a list of children, a definition
+(which may be @?@), and optionally a list of commands:
 
 > pGirl :: Parsley Token DevLine
-> pGirl = (| DLGirl (|fst namePartParse|) pLines pDefn pCTSuffix (%keyword KwSemi%) |)
+> pGirl = (| DLGirl (|fst namePartParse|) -- identifier
+>                   pLines                -- childrens (optional)
+>                   pDefn                 -- definition
+>                   pCTSuffix             -- commands (optional)
+>                   (%keyword KwSemi%) 
+>          |)
 
-A module is similar, but has no definition.
+\paragraph{Parsing children:}
 
-> pModule :: Parsley Token DevLine
-> pModule = (| DLModule (|fst namePartParse|) pLines pCTSuffix (%keyword KwSemi%) |)
-
+Children, if any, are enclosed inside square brackets. They can be of
+several types: girl and module, that we have already defined, or
+boy. Boy are defined below. The absence of children is signaled by the
+@:=@ symbol.
 
 > pLines :: Parsley Token [DevLine]
-> pLines =  bracket Square (many (pGirl <|> pBoy <|> pModule)) <|> (keyword KwDefn *> pure [])
->
+> pLines =  bracket Square (many (pGirl <|> pBoy <|> pModule)) 
+>       <|> (keyword KwDefn *> pure [])
+
+\paragraph{Parsing definitions:}
+
+A definition is either a question mark or a term, ascripted by a
+type. The question mark corresponds to an open goal. On the other
+hand, giving a term corresponds to explicitly solving the goal.
+
 > pDefn :: Parsley Token (Maybe InDTmRN :<: InDTmRN)
 > pDefn =  (| (%keyword KwQ%) (%keyword KwAsc%) ~Nothing :<: pInDTm 
 >           | id pAsc
 >           |)
->   where
->     pAsc = do
+>   where pAsc = do
 >         tm ::? ty <- pAscription
->         return (Just tm :<: ty)
->
-> pCTSuffix :: Parsley Token [CTData]
-> pCTSuffix = bracket (SquareB "") pCochonTactics <|> pure []
+>         return $ Just tm :<: ty
 
-A boy is a $\lambda$-abstraction (represented by \verb!\ x : T ->!) or a $\Pi$-abstraction
-(represented by \verb!(x : S) ->!). 
+\paragraph{Parsing commands:}
+
+Commands can be typed directly in the developments by enclosing them
+inside @[| ... |]@ brackets. They are parsed in one go by
+|pCochonTactics|, so this is quite fragile. This is better used when
+we know things work.
+
+> pCTSuffix :: Parsley Token [CTData]
+> pCTSuffix = bracket (SquareB "") pCochonTactics 
+>          <|> pure []
+
+
+\subsubsection{Parsing Modules}
+
+A module is similar, but has no definition.
+
+> pModule :: Parsley Token DevLine
+> pModule = (| DLModule (|fst namePartParse|) -- identifier
+>                       pLines                -- childrens (optional)
+>                       pCTSuffix             -- commands (optional)
+>                       (%keyword KwSemi%) 
+>            |)
+
+\subsubsection{Parsing Boys}
+
+A boy is a $\lambda$-abstraction (represented by @\ x : T ->@) or a
+$\Pi$-abstraction (represented by @(x : S) ->@).
 
 > pBoy :: Parsley Token DevLine
-> pBoy =  (| (%keyword KwLambda%) (DLBoy LAMB) (| fst namePartParse |)
->                (%keyword KwAsc%) (sizedInDTm (pred ArrSize)) (%keyword KwArr%) |)
->         <|> (bracket Round (| (DLBoy PIB) (| fst namePartParse |)
->                (%keyword KwAsc%) pInDTm |)) <* keyword KwArr
+> pBoy =  (| (%keyword KwLambda%)          -- \
+>            (DLBoy LAMB)              
+>            (| fst namePartParse |)       -- x
+>            (%keyword KwAsc%)             -- :
+>            (sizedInDTm (pred ArrSize))   -- T
+>            (%keyword KwArr%) |)          -- ->
+>         <|> 
+>             (bracket Round               -- (
+>              (| (DLBoy PIB)              
+>                 (| fst namePartParse |)  -- x
+>                 (%keyword KwAsc%)        -- :
+>                 pInDTm |)) <*            -- S)
+>                 keyword KwArr            -- ->
 
 
 \subsection{Construction}
-
-Once we have parsed a list of |DevLine|s, we need to construct a |Dev| from them.
-The idea is to use commands defined in Section~\ref{sec:proofStateMonad} to build
-up the proof state. The |devLoad| function takes care of this process.
-
-> devLoad :: String -> IO (Bwd ProofContext)
-> devLoad file = do
->   let devFile = dropExtension file ++ ".dev" 
->   dev <- withFile devFile ReadMode loadDevelopment
->          `catchError` \ _ -> return []
->   case runStateT (makeDev dev []) emptyContext of
->     Left errs -> do
->       putStrLn $ unlines $ "Failed to load development:" : errs
->       exitFailure
->     Right (ncs, loc) -> do
->       commands <- withFile file ReadMode readCommands
->       doCTacticsAt (([], commands) : ncs) (B0 :< loc)
-
-
-> loadDevelopment :: Handle -> IO [DevLine]
-> loadDevelopment file = do
->     f <- hGetContents file
->     case parse tokenize f of
->       Left err -> do
->         putStrLn $ "loadDevelopment: failed to tokenize:\n" ++ 
->                    show err
->         exitFailure
->       Right toks ->
->           case parse parseDevelopment toks of
->             Left err -> do
->               putStrLn $ "loadDevelopment: failed to parse:\n" ++
->                            show err
->               exitFailure
->             Right dev -> do
->               return dev
-
-> readCommands :: Handle -> IO [CTData]
-> readCommands file = do
->   f <- hGetContents file
->   case parse tokenizeCommands f of
->     Left err -> do
->       putStrLn $ "readCommands: failed to tokenize:\n" ++
->                  show err
->       exitFailure
->     Right lines -> do
->          sequence $ map (\s -> putStrLn $ "[" ++ s ++ "]")lines
->          sequence $ map readCommand lines
-
-> readCommand :: String -> IO CTData
-> readCommand command =
->     case parse tokenize command of
->       Left err -> do
->         putStrLn $ "readCommand: failed to tokenize:\n" ++
->                    show err
->         exitFailure
->       Right toks -> do
->         case parse pCochonTactic toks of
->           Left err -> do
->             putStrLn $ "readCommand: failed to parse:\n" ++
->                        show err
->             exitFailure
->           Right command -> do
->             return command
-
-                           
-
-
-> tokenizeCommands :: Parsley Char [String]
-> tokenizeCommands = (|id ~ [] (% pEndOfStream %)
->                     |id (% oneLineComment %) 
->                         (% consumeUntil' endOfLine %)
->                         tokenizeCommands
->                     |id (% openBlockComment %) 
->                         (% consumeUntil' closeBlockComment %) 
->                         tokenizeCommands
->                     |consumeUntil' endOfCommand : 
->                      tokenizeCommands
->                     |)
->     where endOfCommand = tokenEq ';' *> spaces *> endOfLine
->                      <|> pEndOfStream *> pure ()
->           endOfLine = tokenEq '\n' <|> pEndOfStream 
->           oneLineComment = tokenEq '-' *> tokenEq '-' 
->           openBlockComment = tokenEq '{' *> tokenEq '-'
->           closeBlockComment = tokenEq '-' *> tokenEq '}'
->           spaces = many $ tokenEq ' '
-
-
-
 
 The |makeDev| function updates the proof state to represent the given list of |DevLine|s,
 accumulating pairs of names and command lists along the way.
@@ -240,3 +195,53 @@ accumulating pairs of names and command lists along the way.
 >            putDevRoot r
 >          ) root
 >     return ncs
+
+\subsection{Loading the files}
+
+Once we have parsed a list of |DevLine|s, we need to construct a |Dev| from them.
+The idea is to use commands defined in Section~\ref{sec:proofStateMonad} to build
+up the proof state. 
+
+> devLoad :: String -> IO (Bwd ProofContext)
+> devLoad file = do
+>   -- Load the development file
+>   let devFile = dropExtension file ++ ".dev" 
+>   dev <- withFile devFile ReadMode loadDevelopment
+>          `catchError` \ _ -> return []
+>   -- Load the development in an empty proof state
+>   case runStateT (makeDev dev []) emptyContext of
+>     Left errs -> do
+>       putStrLn $ unlines $ "Failed to load development:" : errs
+>       exitFailure
+>     Right (ncs, loc) -> do
+>       -- Load the commands file
+>       commands <- withFile file ReadMode readCommands
+>       -- Play them in the development
+>       doCTacticsAt (([], commands) : ncs) (B0 :< loc)
+
+The following companion function takes care of the dirty details: 
+\begin{itemize}
+\item Loading the content of the file;
+\item Tokenizing the file
+\item Parsing the development
+\end{itemize}
+
+> loadDevelopment :: Handle -> IO [DevLine]
+> loadDevelopment file = do
+>     f <- hGetContents file
+>     -- Tokenize the development file
+>     case parse tokenize f of
+>       Left err -> do
+>         putStrLn $ "loadDevelopment: failed to tokenize:\n" ++ 
+>                    show err
+>         exitFailure
+>       Right toks ->
+>           -- Parse the development
+>           case parse parseDevelopment toks of
+>             Left err -> do
+>               putStrLn $ "loadDevelopment: failed to parse:\n" ++
+>                            show err
+>               exitFailure
+>             Right dev -> do
+>               -- Return the result
+>               return dev
