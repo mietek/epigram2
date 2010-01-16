@@ -1,8 +1,0 @@
-[ f
-    [ a := ? : Set ;
-      \ x : Set ->
-      b := ? : Set ;
-      \ y : Set ->
-      c := ? : Set ;
-    ] ? : Set ;
-]
