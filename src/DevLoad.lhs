@@ -49,8 +49,8 @@ A module may have a list of girls in square brackets, followed by an optional
 semicolon-separated list of commands.
 
 > parseDevelopment :: Parsley Token [DevLine]
-> parseDevelopment = bracket Square (many (pGirl <|> pModule)) 
->                 <|> pure []
+> parseDevelopment  = bracket Square (many (pGirl <|> pModule)) 
+>                   <|> pure []
 
 \subsubsection{Parsing Girls}
 
@@ -58,11 +58,11 @@ A girl is an identifier, followed by a list of children, a definition
 (which may be @?@), and optionally a list of commands:
 
 > pGirl :: Parsley Token DevLine
-> pGirl = (| DLGirl (|fst namePartParse|) -- identifier
->                   pLines                -- childrens (optional)
->                   pDefn                 -- definition
->                   pCTSuffix             -- commands (optional)
->                   (%keyword KwSemi%) 
+> pGirl =  (| DLGirl  (|fst namePartParse|)  -- identifier
+>                     pLines                 -- childrens (optional)
+>                     pDefn                  -- definition
+>                     pCTSuffix              -- commands (optional)
+>                     (%keyword KwSemi%) 
 >          |)
 
 \paragraph{Parsing children:}
@@ -72,9 +72,9 @@ several types: girl and module, that we have already defined, or
 boy. Boy are defined below. The absence of children is signaled by the
 @:=@ symbol.
 
-> pLines :: Parsley Token [DevLine]
-> pLines =  bracket Square (many (pGirl <|> pBoy <|> pModule)) 
->       <|> (keyword KwDefn *> pure [])
+> pLines  :: Parsley Token [DevLine]
+> pLines  =  bracket Square (many (pGirl <|> pBoy <|> pModule)) 
+>         <|> (keyword KwDefn *> pure [])
 
 \paragraph{Parsing definitions:}
 
@@ -83,12 +83,12 @@ type. The question mark corresponds to an open goal. On the other
 hand, giving a term corresponds to explicitly solving the goal.
 
 > pDefn :: Parsley Token (Maybe InDTmRN :<: InDTmRN)
-> pDefn =  (| (%keyword KwQ%) (%keyword KwAsc%) ~Nothing :<: pInDTm 
->           | id pAsc
+> pDefn  =  (|  (%keyword KwQ%) (%keyword KwAsc%) ~Nothing :<: pInDTm 
+>           |  id pAsc
 >           |)
 >   where pAsc = do
->         tm ::? ty <- pAscription
->         return $ Just tm :<: ty
+>          tm ::? ty <- pAscription
+>          return $ Just tm :<: ty
 
 \paragraph{Parsing commands:}
 
@@ -97,9 +97,9 @@ inside @[| ... |]@ brackets. They are parsed in one go by
 |pCochonTactics|, so this is quite fragile. This is better used when
 we know things work.
 
-> pCTSuffix :: Parsley Token [CTData]
-> pCTSuffix = bracket (SquareB "") pCochonTactics 
->          <|> pure []
+> pCTSuffix  :: Parsley Token [CTData]
+> pCTSuffix  = bracket (SquareB "") pCochonTactics 
+>            <|> pure []
 
 
 \subsubsection{Parsing Modules}
@@ -107,10 +107,10 @@ we know things work.
 A module is similar, but has no definition.
 
 > pModule :: Parsley Token DevLine
-> pModule = (| DLModule (|fst namePartParse|) -- identifier
->                       pLines                -- childrens (optional)
->                       pCTSuffix             -- commands (optional)
->                       (%keyword KwSemi%) 
+> pModule =  (| DLModule  (|fst namePartParse|)  -- identifier
+>                         pLines                 -- childrens (optional)
+>                         pCTSuffix              -- commands (optional)
+>                         (%keyword KwSemi%) 
 >            |)
 
 \subsubsection{Parsing Boys}
@@ -119,82 +119,149 @@ A boy is a $\lambda$-abstraction (represented by @\ x : T ->@) or a
 $\Pi$-abstraction (represented by @(x : S) ->@).
 
 > pBoy :: Parsley Token DevLine
-> pBoy =  (| (%keyword KwLambda%)          -- \
->            (DLBoy LAMB)              
->            (| fst namePartParse |)       -- x
->            (%keyword KwAsc%)             -- :
->            (sizedInDTm (pred ArrSize))   -- T
->            (%keyword KwArr%) |)          -- ->
+> pBoy =  (|  (%keyword KwLambda%)          -- @\@
+>             (DLBoy LAMB)              
+>             (| fst namePartParse |)       -- @x@
+>             (%keyword KwAsc%)             -- @:@
+>             (sizedInDTm (pred ArrSize))   -- @T@
+>             (%keyword KwArr%) |)          -- @->@
 >         <|> 
->             (bracket Round               -- (
->              (| (DLBoy PIB)              
->                 (| fst namePartParse |)  -- x
->                 (%keyword KwAsc%)        -- :
->                 pInDTm |)) <*            -- S)
->                 keyword KwArr            -- ->
+>             (bracket Round                -- @(@
+>              (|  (DLBoy PIB)              
+>                  (| fst namePartParse |)  -- @x@
+>                  (%keyword KwAsc%)        -- @:@
+>                  pInDTm |)) <*            -- @S)@
+>                  keyword KwArr            -- @->@
 
 
 \subsection{Construction}
 
-The |makeDev| function updates the proof state to represent the given list of |DevLine|s,
+Once we have parsed a development as a list of |DevLine|, we interpret
+it in the |ProofState| monad. This is the role of |makeDev|. It
+updates the proof state to represent the given list of |DevLine|s,
 accumulating pairs of names and command lists along the way.
 
-> makeDev :: [DevLine] -> [(Name, [CTData])] -> ProofState [(Name, [CTData])]
+> type NamedCommand = (Name, [CTData])
+>
+> makeDev :: [DevLine] -> [NamedCommand] -> ProofState [NamedCommand]
 > makeDev []      ncs = return ncs
 > makeDev (l:ls)  ncs = makeEntry l ncs >>= makeDev ls
 
-> makeEntry :: DevLine -> [(Name, [CTData])] -> ProofState [(Name, [CTData])]
+Each line of development is processed by |makeEntry|. This is where
+the magic happen and the |ProofState| is updated.
+
+> makeEntry :: DevLine -> [NamedCommand] -> ProofState [NamedCommand]
+
+\paragraph{Making a Girl:}
+
+To make a girl, we operate in 4 steps. First of all, we jump in a
+module in which we make our kids. Once this is done, we resolve our
+display syntax goal into a term: we are therefore able to turn the
+module in a girl. The third step consists in solving the problem if we
+were provided a solution, or give up if not. Finally, we accumulate
+the commands which might have been issued.
+
+\question{Why is there a FIXME?}
+
 > makeEntry (DLGirl x kids (mtipTm :<: tipTys) commands) ncs = do
+>     -- Open a module named by her name
 >     n <- makeModule x
 >     goIn
->     ncs' <- makeDev kids ncs     
+>     -- Recursively build the kids
+>     ncs' <- makeDev kids ncs
+>     -- Translate |tipTys| into a real |INTM|
 >     tipTyd <- resolveHere tipTys
->     tipTy :=>: tipTyv <- elaborate False (SET :>: tipTyd) -- FIXME: This needs some thought
->     kids' <- getDevEntries
+>     -- FIXME: This needs some thought:
+>     tipTy :=>: tipTyv <- elaborate False (SET :>: tipTyd)
+>     -- Turn the module into a Girl of |tipTy|
 >     moduleToGoal tipTy
+>     -- Were we provided a solution?
 >     case mtipTm of
->         Nothing -> goOut
->         Just tms -> do
+>         Nothing -> do -- No.
+>                    -- Leave
+>                    goOut
+>         Just tms -> do -- Yes!
+>             -- Translate the solution |tms| to an |INTM|
+>             -- And give it
 >             tmd <- resolveHere tms
 >             elabGive tmd
 >             return ()
+>     -- Is there any tactics to be executed?
 >     case commands of
->         []  -> return ncs'
->         _   -> return ((n, commands):ncs')
+>         []  -> do -- No.
+>                -- Return the kids' commands
+>                return ncs'
+>         _   -> do -- Yes!
+>                -- Accumulate our commands 
+>                -- With the ones from the kids
+>                return $ (n, commands) : ncs'
+
+\paragraph{Making a Module:}
+
+Making a module involves much less effort than to make a girl. This is
+indeed a stripped-down version of the above code for girls. 
 
 > makeEntry (DLModule x kids commands) ncs = do
->     n <- withRoot (flip name x)
->     root <- getDevRoot
->     putDevEntry (M n (B0, Module, room root x))
->     putDevRoot (roos root)
+>     -- Make the module
+>     n <- makeModule x
 >     goIn
->     ncs' <- makeDev kids ncs     
+>     -- Recursively build the kids
+>     ncs' <- makeDev kids ncs
+>     -- Leave
 >     goOut
+>     -- Is there any tactics to be executed?
 >     case commands of
->         []  -> return ncs'
->         _   -> return ((n, commands):ncs')
+>         []  -> do -- No.
+>                -- Return the kids' commands
+>                return ncs'
+>         _   -> do -- Yes!
+>                -- Accumulate our commands 
+>                -- With the ones from the kids
+>                return $ (n, commands) : ncs'
+
+\paragraph{Making a Boy:}
+
+To make a boy, be him Lambda or Pi, is straightforward. First, we need
+to translate the type in display syntax to an |INTM|. Then, we make a
+fresh reference of that type. Finally, we store that reference in the
+development. 
+
+Note that we have to be careful when manipulating |root|: better be
+sure that we maintain a coherent state of our name supply.
 
 > makeEntry (DLBoy LAMB x tys) ncs = do
+>     -- Translate the display |tys| into an |INTM|
 >     tyd <- resolveHere tys
 >     ty :=>: tyv <- elaborate False (SET :>: tyd)
+>     -- Make a fresh reference of that type
 >     root <- getDevRoot
 >     freshRef (x :<: tyv)
 >         (\ref r -> do 
+>            -- Register |ref| as a Lambda boy
 >            putDevEntry (E ref (lastName ref) (Boy LAMB) ty)
+>            -- Save the updated root!
 >            putDevRoot r
 >          ) root
+>     -- Pass the accumulated commands
 >     return ncs
-
+>
 > makeEntry (DLBoy PIB x tys) ncs = do 
+>     -- Translate the display |tys| into an |INTM|
 >     tyd <- resolveHere tys
 >     ty :=>: tyv <- elaborate False (SET :>: tyd)
+>     -- Make a fresh reference of that type
 >     root <- getDevRoot
 >     freshRef (x :<: tyv)
 >         (\ref r -> do
+>            -- Register |ref| as a Pi boy
 >            putDevEntry (E ref (lastName ref) (Boy PIB) ty)
+>            -- Save the updated root!
 >            putDevRoot r
 >          ) root
+>     -- Pass the accumulated commands
 >     return ncs
+
+
 
 \subsection{Loading the files}
 
