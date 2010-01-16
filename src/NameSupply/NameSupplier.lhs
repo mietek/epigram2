@@ -71,7 +71,7 @@ To illustrate the implementation of a |NameSupplier|, we implement the
 
 > instance NameSupplier ((->) NameSupply) where
 >     freshRef (x :<: ty) f r = f (mkName r x := DECL :<: ty) (freshName r)
->     forkNSupply s child dad root = (dad . child) (freshNSpace root s) (freshName root)
+>     forkNSupply s child dad nsupply = (dad . child) (freshNSpace nsupply s) (freshName nsupply)
 >     askNSupply r = r
 
 
@@ -83,10 +83,9 @@ as:
 
 > instance (Monad m, Applicative m) => NameSupplier (ReaderT NameSupply m) where
 >     freshRef st body = do
->         r <- ask
->         lift $ freshRef st (runReaderT . body) r
+>         nsupply <- ask
+>         lift $ freshRef st (runReaderT . body) nsupply
 >     forkNSupply s child dad = do
->         root <- ask
 >         c <- local (flip freshNSpace s) child
 >         d <- local freshName (dad c)
 >         return d

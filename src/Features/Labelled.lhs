@@ -92,7 +92,7 @@
 -- >       callOpRun [ty, lbl, LRET t] = Right t
 -- >       callOpRun [ty, lbl, N t] = Left t
 
--- >       callOpSimp :: Alternative m => [VAL] -> Root -> m NEU
+-- >       callOpSimp :: Alternative m => [VAL] -> NameSupply -> m NEU
 -- >       callOpSimp _ _ = empty
 
 -- > import -> Operators where

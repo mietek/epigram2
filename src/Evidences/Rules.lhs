@@ -371,13 +371,13 @@ it: we can simply return it as such.
 
 Let's be clear. The code above is, in my opinion, a hack.
 Technically, we know that a free variable has been created by |quote|
-if and only if the current root and the namespace |ns| of the variable
-are the same. Hence, the test |ns == r|. Then, we compute the De
-Bruijn index of the bound variable by counting the number of lambdas
-traversed up to now -- by looking at |j-1| in our current root |(r,j)|
--- minus the number of lambdas traversed at the time of the parameter
-creation, ie. |i|. Do some math, pray, and you get the right De Bruijn
-index.
+if and only if the current name supply and the namespace |ns| of the
+variable are the same. Hence, the test |ns == r|. Then, we compute the
+De Bruijn index of the bound variable by counting the number of
+lambdas traversed up to now -- by looking at |j-1| in our current name
+supply |(r,j)| -- minus the number of lambdas traversed at the time of
+the parameter creation, ie. |i|. Do some math, pray, and you get the
+right De Bruijn index.
 
 
 If an elimination is stuck, it is because the function is stuck while
@@ -415,10 +415,10 @@ form. Therefore, the code is much more simpler than |quote|, although
 the idea is the same.
 
 From a technical point of view, it is important to note that we are in
-|Rooty| and we don't require a specially crafted |Root| (unlike
-|quote| and |quop|, as described above). Because of that, we have to
-maintain the variables we have generated and to which De Bruijn index
-they correspond. This is the role of the backward list of
+a |NameSupplier| and we don't require a specially crafted |NameSupply|
+(unlike |quote| and |quop|, as described above). Because of that, we
+have to maintain the variables we have generated and to which De
+Bruijn index they correspond. This is the role of the backward list of
 references. Note also that we let the user provide an initial
 environment of references: this is useful to discharge a bunch of
 assumptions inside a term. The typical use-case is |discharge| in
@@ -439,12 +439,6 @@ If binded by one of our lambda, we bind the free variables to the
 Going under a closure is the usual story: we create a fresh variable,
 evaluate the applied term, quote the result, and bring everyone under
 a binder.
-
-< bquote refs (L (H vs x t)) = 
-<     (|(\t -> L (x :. t))
-<       (NameSupply.Rooty.freshRef (x :<: undefined) 
-<                       (\x -> bquote (refs :< x) 
-<                                     (eval t (vs :< pval x))))|)
 
 > bquote refs (L (HF x t)) = 
 >     (|(\t -> L (x :. t))
@@ -495,7 +489,7 @@ pushed into $T$: |T :>: t|:
 
 $$\Gamma \vdash \mbox{TY} \ni \mbox{Tm \{In,.\} p}$$
 
-Technically, we also need a root and handle failure with the |Maybe|
+Technically, we also need a name supply and handle failure with the |Maybe|
 monad:
 
 > check :: (TY :>: INTM) -> Check (() :=>: VAL)

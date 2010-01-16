@@ -11,12 +11,12 @@
 
 %endif
 
-The |Root| is the name generator used throughout Epigram. It is
+The |NameSupply| is the name generator used throughout Epigram. It is
 inspired by the \emph{hierarchical names}~\cite{mcbride:free_variable}
 used in Epigram the First. The aim of this structure is to,
 conveniently, provide unique free variable names.
 
-A |Root| is composed by a backward list of |(String, Int)| and an
+A |NameSupply| is composed by a backward list of |(String, Int)| and an
 |Int|. This corresponds to a hierarchical namespace and a free name in
 that namespace. The structure of the namespace stack is justified as
 follow. The |String| component is simply here for readability

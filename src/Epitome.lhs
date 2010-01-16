@@ -44,8 +44,8 @@
 
 \input{NameSupply/Introduction.tex}
 
-%include NameSupply/Root.lhs
-%include NameSupply/Rooty.lhs
+%include NameSupply/NameSupply.lhs
+%include NameSupply/NameSupplier.lhs
 
 \chapter{The Evidence Language}
 

@@ -46,7 +46,7 @@ Each |Layer| of the structure is a record with the following fields:
 \item[|mother|] data about the working development
 \item[|cadets|] entries appearing below the working development
 \item[|laytip|] the |Tip| of the development that contains the mother
-\item[|layroot|] the |NameSupply| of the development that contains the mother
+\item[|laynsupply|] the |NameSupply| of the development that contains the mother
 \end{description}
 
 > data Layer = Layer
@@ -54,7 +54,7 @@ Each |Layer| of the structure is a record with the following fields:
 >   ,  mother    :: Mother
 >   ,  cadets    :: NewsyEntries
 >   ,  laytip    :: Tip
->   ,  layroot   :: NameSupply }
+>   ,  laynsupply   :: NameSupply }
 >  deriving Show
 
 > data Mother =  GirlMother REF (String, Int) INTM 
@@ -128,7 +128,7 @@ contains entries, using the following rearrangement functions.
 
 > rearrangeDev :: (Traversable f, Traversable g) =>
 >     (forall a. f a -> g a) -> Dev f -> Dev g
-> rearrangeDev h (xs, tip, root) = (rearrangeEntries h xs, tip, root)
+> rearrangeDev h (xs, tip, nsupply) = (rearrangeEntries h xs, tip, nsupply)
 
 
 The current proof context is represented by a stack of |Layer|s, along with the
@@ -270,13 +270,13 @@ updated information, providing a friendlier interface than |get| and |put|.
 
 > putDevEntry :: Entry Bwd -> ProofState ()
 > putDevEntry e = do
->     (es, tip, root) <- getDev
->     putDev (es :< e, tip, root)
+>     (es, tip, nsupply) <- getDev
+>     putDev (es :< e, tip, nsupply)
 
 > putDevEntries :: Entries -> ProofState ()
 > putDevEntries es = do
->     (_, tip, root) <- getDev
->     putDev (es, tip, root)
+>     (_, tip, nsupply) <- getDev
+>     putDev (es, tip, nsupply)
 
 > putDevNSupply :: NameSupply -> ProofState ()
 > putDevNSupply ns = do
@@ -349,14 +349,14 @@ updated information, providing a friendlier interface than |get| and |put|.
 A |ProofState| is not a |NameSupplier| because the semantics of the latter are not compatible
 with the caching of |NameSupply|s in the proof context. However, it can provide the current
 |NameSupply| to a function that requires it. Note that this function has no way to return
-an updated root to the proof context, so it must not leave any references around
+an updated name supply to the proof context, so it must not leave any references around
 when it has finished.
 
 > withNSupply :: (NameSupply -> x) -> ProofState x
 > withNSupply f = getDevNSupply >>= return . f
 
 
-The |bquoteHere| command $\beta$-quotes a term using the current root.
+The |bquoteHere| command $\beta$-quotes a term using the current name supply.
 
 > bquoteHere :: Tm {d, VV} REF -> ProofState (Tm {d, TT} REF)
 > bquoteHere tm = withNSupply (bquote B0 tm)
@@ -434,25 +434,25 @@ is not in the required form.
 >   where
 >     goInAcc :: NewsyEntries -> ProofState ()
 >     goInAcc (NF cadets) = do
->         (ls, (es :< e, tip, root)) <- get
+>         (ls, (es :< e, tip, nsupply)) <- get
 >         if entryHasDev e
->            then  put (ls :< Layer es (entryToMother e) (NF cadets) tip root, entryDev e)
->            else  put (ls, (es, tip, root))
+>            then  put (ls :< Layer es (entryToMother e) (NF cadets) tip nsupply, entryDev e)
+>            else  put (ls, (es, tip, nsupply))
 >                  >> goInAcc (NF (Right (reverseEntry e) :> cadets)) 
 
 
 > jumpIn :: Entry NewsyFwd -> ProofState NewsyEntries
 > jumpIn e = do
->     (ls, (es, tip, root)) <- get
+>     (ls, (es, tip, nsupply)) <- get
 >     let (cs, newTip, newNSupply) = entryDev e
->     put (ls :< Layer es (entryToMother e) (NF F0) tip root, (B0, newTip, newNSupply))
+>     put (ls :< Layer es (entryToMother e) (NF F0) tip nsupply, (B0, newTip, newNSupply))
 >     return cs
 
 > goOut :: ProofState ()
 > goOut = (do
 >     e <- getMotherEntry
 >     l <- removeLayer
->     putDev (elders l :< e, laytip l, layroot l)
+>     putDev (elders l :< e, laytip l, laynsupply l)
 >     propagateNews True [] (cadets l)  -- should update tip and pass on news
 >     return ()
 >   ) `replaceError` "goOut: you can't go that way."
@@ -462,7 +462,7 @@ is not in the required form.
 >   where
 >     goUpAcc :: NewsyEntries -> ProofState ()
 >     goUpAcc (NF acc) = do
->         l@(Layer (es :< e) m (NF cadets) tip root) <- getLayer
+>         l@(Layer (es :< e) m (NF cadets) tip nsupply) <- getLayer
 >         if entryHasDev e
 >             then do
 >                 me <- getMotherEntry
@@ -484,10 +484,10 @@ is not in the required form.
 >                 replaceLayer l{cadets=NF es}
 >                 goDownAcc acc (mergeNews news nb)
 >             Right e -> case coerceEntry e of
->               Left (es', tip', root') ->  do
+>               Left (es', tip', nsupply') ->  do
 >                 me <- getMotherEntry
 >                 replaceLayer l{elders=(elders :< me) <+> acc, mother=entryToMother e, cadets=NF es}
->                 putDev (B0, tip', root')
+>                 putDev (B0, tip', nsupply')
 >                 news' <- propagateNews True news es'
 >                 return ()
 >               Right e' -> do
@@ -560,9 +560,9 @@ $\Pi S T$ and if so, adds a goal of type $S$ and applies $y$ to it.
 > apply :: ProofState()
 > apply = (do
 >     E ref@(name := k :<: (PI s t)) _ (Girl LETG _) _ <- getDevEntry
->     root <- getDevNSupply
->     z <- make ("z" :<: bquote B0 s root)
->     make ("w" :<: bquote B0 (t $$ A s) root)
+>     nsupply <- getDevNSupply
+>     z <- make ("z" :<: bquote B0 s nsupply)
+>     make ("w" :<: bquote B0 (t $$ A s) nsupply)
 >     goIn
 >     give (N (P ref :$ A z))
 >     return ()
@@ -617,14 +617,14 @@ appends a $\lambda$-abstraction with the appropriate type to the current develop
 >     case tip of
 >       Unknown (pi :=>: ty) -> case lambdable ty of
 >         Just (k, s, t) -> do
->           root <- getDevNSupply
+>           nsupply <- getDevNSupply
 >           freshRef (x :<: s) (\ref r -> do
 >             putDevEntry (E ref (lastName ref) (Boy k) (bquote B0 s r))
 >             let tipTyv = t (pval ref)
 >             putDevTip (Unknown (bquote B0 tipTyv r :=>: tipTyv))
 >             putDevNSupply r
 >             return ref
->               ) root
+>               ) nsupply
 >         _  -> throwError' "lambdaBoy: goal is not a pi-type or all-proof."
 >       _          -> throwError' "lambdaBoy: only possible for incomplete goals."
 
@@ -641,23 +641,23 @@ general.
 >     tip <- getDevTip
 >     case tip of
 >       Module -> do
->         root <- getDevNSupply
+>         nsupply <- getDevNSupply
 >         freshRef (x :<: tv) (\ref r -> do
 >           putDevEntry (E ref (lastName ref) (Boy LAMB) ty)
 >           putDevNSupply r
 >           return ref
->             ) root
+>             ) nsupply
 >       Unknown (pi :=>: gty) -> case lambdable gty of
 >         Just (k, s, t) -> do
->           root <- getDevNSupply
->           case equal (SET :>: (tv,s)) root of
+>           nsupply <- getDevNSupply
+>           case equal (SET :>: (tv,s)) nsupply of
 >             True -> do 
 >               freshRef (x :<: tv) (\ref r -> do
 >               putDevEntry (E ref (lastName ref) (Boy k) ty)
 >               let tipTyv = t (pval ref)
 >               putDevTip (Unknown (bquote B0 tipTyv r :=>: tipTyv))
 >               putDevNSupply r
->               return ref) root
+>               return ref) nsupply
 >             False -> throwError' "Given type does not match domain of goal"
 >         _  -> throwError' "lambdaBoy: goal is not a pi-type or all-proof."
 >       _ -> throwError' "lambdaBoy: only possible at Tips"
@@ -679,9 +679,9 @@ current development, after checking that the purported type is in fact a type.
 >     n <- withNSupply (flip mkName s')
 >     let  ty'  = liftType aus ty
 >          ref  = n := HOLE :<: evTm ty'
->     root <- getDevNSupply
->     putDevEntry (E ref (last n) (Girl LETG (B0, Unknown (ty :=>: tyv), freshNSpace root s')) ty')
->     putDevNSupply (freshName root)
+>     nsupply <- getDevNSupply
+>     putDevEntry (E ref (last n) (Girl LETG (B0, Unknown (ty :=>: tyv), freshNSpace nsupply s')) ty')
+>     putDevNSupply (freshName nsupply)
 >     return (N (P ref $:$ aunclesToElims (aus <>> F0)))
 
 > aunclesToElims :: Fwd (Entry Bwd) -> [Elim INTM]
@@ -693,9 +693,9 @@ current development, after checking that the purported type is in fact a type.
 > makeModule :: String -> ProofState Name
 > makeModule s = do
 >     n <- withNSupply (flip mkName s)
->     root <- getDevNSupply
->     putDevEntry (M n (B0, Module, freshNSpace root s))
->     putDevNSupply (freshName root)
+>     nsupply <- getDevNSupply
+>     putDevEntry (M n (B0, Module, freshNSpace nsupply s))
+>     putDevNSupply (freshName nsupply)
 >     return n
 
 > pickName :: String -> ProofState String
@@ -743,12 +743,12 @@ is also a set; if so, it appends a $\Pi$-abstraction to the current development.
 >     tip <- getDevTip
 >     case tip of
 >         Unknown (_ :=>: SET) -> do
->             root <- getDevNSupply
+>             nsupply <- getDevNSupply
 >             freshRef (s :<: tv)
 >                 (\ref r ->  do
 >                    putDevEntry (E ref (lastName ref) (Boy PIB) ty)
 >                    putDevNSupply r
->                    return ref) root
+>                    return ref) nsupply
 >         Unknown _  -> throwError' "piBoy: goal is not of type SET."
 >         _          -> throwError' "piBoy: only possible for incomplete goals."
 
@@ -757,8 +757,8 @@ same type, and fills it in with the parameter. \question{Is bquote really right 
 
 > select :: INTM -> ProofState INTM
 > select tm@(N (P (name := k :<: ty))) = do
->     root <- getDevNSupply
->     make (fst (last name) :<: bquote B0 ty root)
+>     nsupply <- getDevNSupply
+>     make (fst (last name) :<: bquote B0 ty nsupply)
 >     goIn
 >     give tm
 > select _ = throwError' "select: term is not a parameter."
@@ -831,7 +831,7 @@ Updating girls is a bit more complicated. We proceed as follows:
 \item Continue propagating the latest news.
 \end{enumerate}
 
-> propagateNews top news (NF ((Right e@(E ref sn (Girl LETG (_, tip, root)) ty)) :> es)) = do
+> propagateNews top news (NF ((Right e@(E ref sn (Girl LETG (_, tip, nsupply)) ty)) :> es)) = do
 >     xs <- jumpIn e
 >     news' <- propagateNews False news xs
 >     news'' <- tellMother news'
@@ -884,12 +884,12 @@ To update a hole, we must:
 \item update the news bulletin with news about this girl.
 \end{enumerate}
 
-> tellEntry news (E (name := HOLE :<: tyv) sn (Girl LETG (cs, Unknown tt, root)) ty) = do
+> tellEntry news (E (name := HOLE :<: tyv) sn (Girl LETG (cs, Unknown tt, nsupply)) ty) = do
 >     let  (tt', n)             = tellNewsEval news tt
 >          (ty' :=>: tyv', n')  = tellNewsEval news (ty :=>: tyv)
 >          ref                  = name := HOLE :<: tyv'
 >     return (addNews (ref, min n n') news,
->                 E ref sn (Girl LETG (cs, Unknown tt', root)) ty')
+>                 E ref sn (Girl LETG (cs, Unknown tt', nsupply)) ty')
 
 To update a defined girl, we must:
 \begin{enumerate}
@@ -900,7 +900,7 @@ To update a defined girl, we must:
 \item update the news bulletin with news about this girl.
 \end{enumerate}
 
-> tellEntry news (E (name := DEFN tmL :<: tyv) sn (Girl LETG (cs, Defined tm tt, root)) ty) = do
+> tellEntry news (E (name := DEFN tmL :<: tyv) sn (Girl LETG (cs, Defined tm tt, nsupply)) ty) = do
 >     let  (tt', n)             = tellNewsEval news tt
 >          (ty' :=>: tyv', n')  = tellNewsEval news (ty :=>: tyv)
 >          (tm', n'')           = tellNews news tm
@@ -915,7 +915,7 @@ For paranoia purposes, the following test might be helpful:
 
 >     let ref = name := DEFN (evTm tmL') :<: tyv'
 >     return (addNews (ref, GoodNews {-min (min n n') n''-}) news,
->                 E ref sn (Girl LETG (cs, Defined tm' tt', root)) ty')
+>                 E ref sn (Girl LETG (cs, Defined tm' tt', nsupply)) ty')
 
 
 > proofTrace :: String -> ProofState ()

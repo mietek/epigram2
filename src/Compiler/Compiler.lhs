@@ -204,10 +204,10 @@ by hand in Epic - see epic/support.e
 >            (ma, del, makeBody t) : defs
 > flatten ALAB ma del (F0, _, _) = [(ma, del, Ignore)]
 > flatten PIB ma del (F0, _, _) = [(ma, del, Ignore)]
-> flatten _ ma del (E (x := _) _ (Boy b) _ :> es, tip, root) =
->     flatten b ma (del :< x) (es, tip, root)
-> flatten b ma del (E (her := _) _ (Girl LETG herDev) _ :> es, tip, root) = 
->     flatten LAMB her del herDev ++ flatten b ma del (es, tip, root)
+> flatten _ ma del (E (x := _) _ (Boy b) _ :> es, tip, nsupply) =
+>     flatten b ma (del :< x) (es, tip, nsupply)
+> flatten b ma del (E (her := _) _ (Girl LETG herDev) _ :> es, tip, nsupply) = 
+>     flatten LAMB her del herDev ++ flatten b ma del (es, tip, nsupply)
 
 Lambda lifting: every lambda which is not at the top level is lifted out as a
 new top level definition. We keep track of the new top level functions we've
