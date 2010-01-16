@@ -22,7 +22,7 @@
 
 %include stuff.fmt
 
-\input{Docs/Macros.tex}
+\input{Documentation/Macros.tex}
 
 \begin{document}
 
@@ -36,55 +36,82 @@
 
 \chapter{Introduction}
 
-\input{Docs/Intro.tex}
-\input{Docs/Language.tex}
+\input{Documentation/Introduction.tex}
 
-\chapter{Core}
-%include Root.lhs
-%include Rooty.lhs
-%include Tm.lhs
-%include Rules.lhs
-%include Tactics.lhs
-%include Developments.lhs
+\input{Documentation/Language.tex}
+
+\chapter{The Name Supply}
+
+\input{NameSupply/Introduction.tex}
+
+%include NameSupply/Root.lhs
+%include NameSupply/Rooty.lhs
+
+\chapter{The Evidence Language}
+
+\input{Evidences/Introduction.tex}
+
+%include Evidences/Tm.lhs
+%include Evidences/Rules.lhs
+%include Evidences/Tactics.lhs
 
 \chapter{Feature by Feature}
-%include Features.lhs
-%include UId.lhs
-%include Enum.lhs
-%include Sigma.lhs
-%include Prop.lhs
-%include Desc.lhs
-%include Equality.lhs
 
-\chapter{Proof State}
-%include ProofState.lhs
-%include Elimination.lhs
+\input{Features/Introduction.tex}
 
-\chapter{Display Language}
-%include DisplayTm.lhs
-%include Lexer.lhs
-%include Naming.lhs
-%include TmParse.lhs
-%include DevLoad.lhs
-%include PrettyPrint.lhs
+%include Features/Features.lhs
+%include Features/Skeleton.lhs
+%include Features/UId.lhs
+%include Features/Enum.lhs
+%include Features/Sigma.lhs
+%include Features/Prop.lhs
+%include Features/Desc.lhs
+%include Features/Equality.lhs
+%include Features/Labelled.lhs
+
+\chapter{The Proof State}
+
+\input{ProofState/Introduction.tex}
+
+%include ProofState/Developments.lhs
+%include ProofState/ProofState.lhs
+%include ProofState/Elimination.lhs
+
+\chapter{The Display Language}
+
+\input{DisplayLang/Introduction.tex}
+
+%include DisplayLang/DisplayTm.lhs
+%include DisplayLang/Lexer.lhs
+%include DisplayLang/Naming.lhs
+%include DisplayLang/TmParse.lhs
+%include DisplayLang/PrettyPrint.lhs
+%include DisplayLang/Distiller.lhs
+%include DisplayLang/Elaborator.lhs
 
 \chapter{Cochon}
-%include Elaborator.lhs
-%include Distiller.lhs
-%include DisplayCommands.lhs
-%include Cochon.lhs
+
+\input{Cochon/Introduction.tex}
+
+%include Cochon/DevLoad.lhs
+%include Cochon/DisplayCommands.lhs
+%include Cochon/Cochon.lhs
 %include Main.lhs
 
 \chapter{Compiler}
-%include Compiler.lhs
+
+\input{Compiler/Introduction.tex}
+
+%include Compiler/Compiler.lhs
 
 \appendix
 
-\chapter{Perversity}
-%include BwdFwd.lhs
-%include Parsley.lhs
-%include MissingLibrary.lhs
-%include Nat.lhs
+\chapter{Kit}
+
+%include Kit/BwdFwd.lhs
+%include Kit/Parsley.lhs
+%include Kit/MissingLibrary.lhs
+
 
 \cleardoublepage
 \phantomsection

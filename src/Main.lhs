@@ -12,11 +12,13 @@
 > import System
 > import System.Console.GetOpt
 
-> import BwdFwd
-> import DevLoad
-> import DisplayCommands
-> import Cochon
-> import ProofState
+> import Kit.BwdFwd
+
+> import ProofState.ProofState
+
+> import Cochon.DisplayCommands
+> import Cochon.DevLoad
+> import Cochon.Cochon
 
 %endif
 

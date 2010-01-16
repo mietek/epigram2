@@ -19,7 +19,15 @@ LATEXOPTS = -interaction=nonstopmode
 # Configuration
 ################################################################
 
-SRCS := $(wildcard *.lhs) 
+SRCS := $(wildcard *.lhs) \
+	$(wildcard Cochon/*.lhs) \
+	$(wildcard Compiler/*.lhs) \
+	$(wildcard DisplayLang/*.lhs) \
+	$(wildcard Evidences/*.lhs) \
+	$(wildcard Features/*.lhs) \
+	$(wildcard Kit/*.lhs) \
+	$(wildcard ProofState/*.lhs) \
+	$(wildcard NameSupply/*.lhs)
 OBJS := $(SRCS:.lhs=.o) 
 
 .SUFFIXES : .o .hs .hi .lhs .hc .s\
@@ -102,8 +110,11 @@ test:
 
 ## Clean:
 clean:
-	rm -f *.o *.hers *.hi\
-	      *.o-boot *.hi-boot\
+	rm -f $(SRCS:.lhs=.o)       \
+	      $(SRCS:.lhs=.hers)    \
+	      $(SRCS:.lhs=.hi)      \
+	      $(SRCS:.lhs=.o-boot)  \
+              $(SRCS:.lhs=.hi-boot) \
 	      *.aux *.bbl\
 	      *.blg *.log *.ptb\
 	      Epitome.tex \
