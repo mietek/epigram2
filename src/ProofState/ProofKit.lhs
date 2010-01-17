@@ -36,34 +36,47 @@
 
 %endif
 
+\question{There are some serious re-ordering of functions to be done
+here, in order to improve the narrative.}
 
-\subsection{Proof State Technology}
 
-A |ProofState| is not a |NameSupplier| because the semantics of the latter are not compatible
-with the caching of |NameSupply|s in the proof context. However, it can provide the current
-|NameSupply| to a function that requires it. Note that this function has no way to return
-an updated name supply to the proof context, so it must not leave any references around
-when it has finished.
+\subsection{Asking for Evidences}
+
+
+A |ProofState| is not a |NameSupplier| because the semantics of the
+latter are not compatible with the caching of |NameSupply|s in the
+proof context. However, it can provide the current |NameSupply| to a
+function that requires it. 
 
 > withNSupply :: (NameSupply -> x) -> ProofState x
 > withNSupply f = getDevNSupply >>= return . f
+
+\begin{danger}[Read-only name supply]
+
+Note that this function has no way to return an updated name supply to
+the proof context, so it must not leave any references around when it
+has finished.
+
+\end{danger}
 
 
 The |bquoteHere| command $\beta$-quotes a term using the current name supply.
 
 > bquoteHere :: Tm {d, VV} REF -> ProofState (Tm {d, TT} REF)
-> bquoteHere tm = withNSupply (bquote B0 tm)
+> bquoteHere tm = withNSupply $ bquote B0 tm
 
+
+Similarly, |checkHere| type-checks a term using the local name supply.
 
 > checkHere :: (TY :>: INTM) -> ProofState (INTM :=>: VAL)
 > checkHere (ty :>: tm) = do
->     mc <- withNSupply (typeCheck $ check (ty :>: tm))
+>     mc <- withNSupply $ typeCheck $ check (ty :>: tm)
 >     () :=>: tmv <- lift mc
 >     return (tm :=>: tmv)
 
 
-
-The |resolveHere| command resolves the relative names in a term.
+The |resolveHere| command resolves the relative names in a term. This
+is not quite an evidence, but we are one step closer.
 
 > resolveHere :: InDTmRN -> ProofState INDTM
 > resolveHere tm = do
@@ -89,26 +102,9 @@ may be useful for paranoia purposes.
 >         _ -> return ()
 
 
-\subsection{Information Commands}
-
-> infoAuncles :: ProofState String
-> infoAuncles = do
->     aus <- getAuncles
->     me <- getMotherName
->     return (showEntries aus me (aus <>> F0))
-
-> infoDump :: ProofState String
-> infoDump = do
->     (es, dev) <- get
->     return (foldMap ((++ "\n") . show) es ++ show dev)
-
-> lookupName :: Name -> ProofState INTM
-> lookupName name = do
->   aus <- getAuncles
->   let Just (E ref _ _ _) = Data.Foldable.find ((name ==) . entryName) aus
->   return $ (N (P ref $:$ aunclesToElims (aus <>> F0)))
 
 \subsection{Navigation Commands}
+
 
 Now we provide commands to navigate the proof state:
 \begin{itemize}
@@ -200,6 +196,7 @@ is not in the required form.
 >             then return ()
 >             else removeDevEntry >> seek xn
 
+
 \subsection{Goal Search Commands}
 
 To implement goal search, we need a few useful bits of kit...
@@ -243,6 +240,52 @@ several alternatives for where to go next and continuing until a goal is reached
 >
 > nextGoal :: ProofState ()
 > nextGoal = (nextStep `untilA` isGoal) `replaceError` "nextGoal: no more goals."
+
+
+
+\subsection{Module Commands}
+
+
+> makeModule :: String -> ProofState Name
+> makeModule s = do
+>     n <- withNSupply (flip mkName s)
+>     nsupply <- getDevNSupply
+>     putDevEntry (M n (B0, Module, freshNSpace nsupply s))
+>     putDevNSupply (freshName nsupply)
+>     return n
+
+> moduleToGoal :: INTM -> ProofState INTM
+> moduleToGoal ty = do
+>     Right (() :=>: tyv) <- withNSupply (typeCheck $ check (SET :>: ty))
+>     ModuleMother n <- getMother
+>     aus <- getAuncles
+>     let  ty' = liftType aus ty
+>          ref = n := HOLE :<: evTm ty'
+>     putMother (GirlMother ref (last n) ty')
+>     putDevTip (Unknown (ty :=>: tyv))
+>     return (N (P ref $:$ aunclesToElims (aus <>> F0)))
+
+> dropModule :: ProofState ()
+> dropModule = do
+>     Just (M _ _) <- removeDevEntry
+>     return ()
+
+> draftModule :: String -> ProofState t -> ProofState t
+> draftModule name draftyStuff = do
+>     makeModule name
+>     goIn
+>     t <- draftyStuff
+>     goOut
+>     dropModule
+>     return t
+
+> lookupName :: Name -> ProofState INTM
+> lookupName name = do
+>   aus <- getAuncles
+>   let Just (E ref _ _ _) = Data.Foldable.find ((name ==) . entryName) aus
+>   return $ (N (P ref $:$ aunclesToElims (aus <>> F0)))
+
+
 
 
 \subsection{Construction Commands}
@@ -382,47 +425,11 @@ current development, after checking that the purported type is in fact a type.
 > aunclesToElims (E ref _ (Boy _) _ :> es) = (A (N (P ref))) : aunclesToElims es
 > aunclesToElims (_ :> es) = aunclesToElims es
 
-
-> makeModule :: String -> ProofState Name
-> makeModule s = do
->     n <- withNSupply (flip mkName s)
->     nsupply <- getDevNSupply
->     putDevEntry (M n (B0, Module, freshNSpace nsupply s))
->     putDevNSupply (freshName nsupply)
->     return n
-
 > pickName :: String -> ProofState String
 > pickName ""  = do
 >     r <- getDevNSupply
 >     return ("G" ++ show (snd r))
 > pickName s   = return s
-
-
-> moduleToGoal :: INTM -> ProofState INTM
-> moduleToGoal ty = do
->     Right (() :=>: tyv) <- withNSupply (typeCheck $ check (SET :>: ty))
->     ModuleMother n <- getMother
->     aus <- getAuncles
->     let  ty' = liftType aus ty
->          ref = n := HOLE :<: evTm ty'
->     putMother (GirlMother ref (last n) ty')
->     putDevTip (Unknown (ty :=>: tyv))
->     return (N (P ref $:$ aunclesToElims (aus <>> F0)))
-
-> dropModule :: ProofState ()
-> dropModule = do
->     Just (M _ _) <- removeDevEntry
->     return ()
-
-> draftModule :: String -> ProofState t -> ProofState t
-> draftModule name draftyStuff = do
->     makeModule name
->     goIn
->     t <- draftyStuff
->     goOut
->     dropModule
->     return t
-
 
 
 The |piBoy| command checks that the current goal is of type SET, and that the supplied type
@@ -467,3 +474,17 @@ The |ungawa| command looks for a truly obvious thing to do, and does it.
 > ungawa = (ignore done <|> ignore apply <|> ignore (lambdaBoy "ug"))
 >     `replaceError` "ungawa: no can do."
 
+
+
+\subsection{Information Commands}
+
+> infoAuncles :: ProofState String
+> infoAuncles = do
+>     aus <- getAuncles
+>     me <- getMotherName
+>     return (showEntries aus me (aus <>> F0))
+
+> infoDump :: ProofState String
+> infoDump = do
+>     (es, dev) <- get
+>     return (foldMap ((++ "\n") . show) es ++ show dev)
