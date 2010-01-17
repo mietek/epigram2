@@ -21,6 +21,7 @@
 > import Evidences.Rules
 
 > import ProofState.ProofState
+> import ProofState.ProofKit
 
 %endif
 

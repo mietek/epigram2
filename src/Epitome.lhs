@@ -81,6 +81,7 @@
 %include ProofState/Lifting.lhs
 %include ProofState/ProofContext.lhs
 %include ProofState/ProofState.lhs
+%include ProofState/ProofKit.lhs
 %include ProofState/Elimination.lhs
 
 \chapter{The Display Language}

@@ -17,6 +17,7 @@
 > import ProofState.Developments
 > import ProofState.ProofContext
 > import ProofState.ProofState
+> import ProofState.ProofKit
 
 > import DisplayLang.DisplayTm
 

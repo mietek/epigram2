@@ -29,6 +29,7 @@
 
 > import ProofState.ProofContext
 > import ProofState.ProofState
+> import ProofState.ProofKit
 
 > import NameSupply.NameSupply
 > import NameSupply.NameSupplier
