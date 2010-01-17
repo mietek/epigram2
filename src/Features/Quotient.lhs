@@ -43,17 +43,17 @@ relation over |A|.
 >   equivalenceRelation :: VAL -> VAL -> VAL
 >   equivalenceRelation a r =
 >     -- refl
->     AND (allty $ "x" :<: a :-: \x -> Ret $ x =~ x) $
+>     AND (allty $ "x" :<: a :-: \x -> Target $ x =~ x) $
 >     -- sym
 >     AND (allty $ "x" :<: a :-: \x ->
 >                  "y" :<: a :-: \y ->
->                  Ret $ IMP (x =~ y) (y =~ x)
+>                  Target $ IMP (x =~ y) (y =~ x)
 >         ) $
 >     -- trans
 >         (allty $ "x" :<: a :-: \x ->
 >                  "y" :<: a :-: \y ->
 >                  "z" :<: a :-: \z ->
->                  Ret $ IMP (x =~ y) (IMP (y =~ z) (x =~ z))
+>                  Target $ IMP (x =~ y) (IMP (y =~ z) (x =~ z))
 >         )
 >     where
 >       x =~ y = r $$ A x $$ A y
@@ -84,15 +84,15 @@ relation over |A|.
 >                 "p" :<: PRF (equivalenceRelation _X _R) :-: \p ->
 >                 "z" :<: QUOTIENT _X _R p                :-: \z ->
 >                 "P" :<: ARR (QUOTIENT _X _R p) SET      :-: \_P ->
->                 "m" :<: pity ("x" :<: _X :-: \x -> Ret $ _P $$ A (CLASS x))
+>                 "m" :<: pity ("x" :<: _X :-: \x -> Target $ _P $$ A (CLASS x))
 >                                                         :-: \m ->
 >                 "h" :<: PRF (allty ("x" :<: _X :-: \x ->
 >                                     "y" :<: _X :-: \y ->
->                                     Ret $ IMP (_R $$ A x $$ A y)
+>                                     Target $ IMP (_R $$ A x $$ A y)
 >                                               (EQBLUE (_P $$ A (CLASS x) :>: m $$ A x)
 >                                                       (_P $$ A (CLASS y) :>: m $$ A y))
 >                                    ))                   :-: \_ ->
->                 Ret $ _P $$ A z
+>                 Target $ _P $$ A z
 >     , opRun = run
 >     , opSimp = \_ _ -> empty
 >     } where

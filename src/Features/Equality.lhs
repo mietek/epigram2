@@ -126,7 +126,7 @@ With no computational behavior.
 >                , opArity = 4
 >                , opTyTel =  "S" :<: SET :-: \ sS -> "s" :<: sS :-: \ s ->
 >                             "T" :<: SET :-: \ tT -> "t" :<: tT :-: \ t ->
->                             Ret PROP
+>                             Target PROP
 >                , opRun = opRunEqGreen
 >                , opSimp = \_ _ -> empty
 >                } where
@@ -146,7 +146,7 @@ With no computational behavior.
 >            , opArity = 4
 >            , opTyTel =  "S" :<: SET :-: \ sS -> "T" :<: SET :-: \ tT ->
 >                         "Q" :<: PRF (EQBLUE (SET :>: sS) (SET :>: tT)) :-: \ _ ->
->                         "s" :<: sS :-: \ _ -> Ret tT
+>                         "s" :<: sS :-: \ _ -> Target tT
 >            , opRun = oprun
 >            , opSimp = \ [sS, tT, _, s] r -> case s of
 >                N s | equal (SET :>: (sS, tT)) r -> pure s

@@ -64,7 +64,7 @@ signature for a term:
 
 > data Tm :: {Dir, Phase} -> * -> * where
 
-We can push types in to:
+We can push types into:
 \begin{itemize}
 \item lambda terms;
 \item canonical terms; and
@@ -89,11 +89,18 @@ And we can infer types from:
 >   (:$)  :: Tm {Ex, p} x -> Elim (Tm {In, p} x) -> Tm {Ex, p} x  -- elim
 >   (:?)  :: Tm {In, TT} x -> Tm {In, TT} x -> Tm {Ex, TT} x      -- typing
 
+To put some flesh on these bones, we define and use the |Scope|,
+|Can|, |Op|, and |Elim| data-types. Their role is described
+below. Before that, let us point out an important invariant. Non
+implementers are advised to skip the following.
+
+\begin{danger}[Neutral terms and Operators]
+
 In the world of values, ie. |Tm {In, VV} p|, the neutral terms are
-exactly the |N t| terms. Actually, it requires some caution in the way
-we deal with operator and how we turn them into values, so this
-statement relies on the hypothesis that the evaluation of operators is
-correct. More detail below.
+exactly the |N t| terms. Enforcing this invariant requires some
+caution in the way we deal with operator and how we turn them into
+values, so this statement relies on the hypothesis that the evaluation
+of operators is correct: it is not enforced by Haskell type-system.
 
 To prove that statement, we first show that any |Tm {In, VV} p| which
 is not a |N t| is not a neutral term. This obvious as we are left with
@@ -114,36 +121,58 @@ the eliminator is stuck too.
 
 \item The case for fully applied operator is more problematic: we need
 one of the arguments to be a |N t|, and to be used by |Op|. This way,
-the operation is indeed a neutral term. We can hardly enforce these
-constraints in types, so we have to deal with this approximation.
+the operation is indeed a neutral term. We can hardly enforce this
+constraint in Haskell type system, so we have to deal with this
+approximation.
 
 \end{itemize}
 
-Fully applied operators call for some care with |:@|. If you are to
-explicitly write a |:@| term wrapped inside a |N|, you must be sure
-that the operator is indeed applied to a stuck term \emph{which is
-used} by the operator. Similarly, when evaluating for example, we have
-been careful in returning a neutral operator if and only if the
-operator was consuming a stuck term. As a corollary, if the operator
-can be fully computed, then it \emph{must} be so. More tricky but for
-the same reason: when building tactics, we are building terms. So,
-again, we should be careful of not building a stuck operator for no
-good reason.
+As a consequence, fully applied operators call for some care. If you
+are to explicitly write a |:@| term wrapped inside a |N|, you must be
+sure that the operator is indeed applied to a stuck term \emph{which
+is used} by the operator. During evaluation, for example, we have been
+careful in returning a neutral operator if and only if the operator
+was consuming a stuck term. As a corollary, if the operator can be
+fully computed, then it \emph{must} be so. 
 
-|Scope| represents bodies of binders, but the representation differs
+More tricky but for the same reason: when \emph{implementing} term
+builders (not when using them), we are indeed making terms,
+potentially involving operators. Again, we must be careful of not
+building a stuck operator for no good reason.
+
+\end{danger}
+
+
+\subsubsection{Scopes}
+
+A |Scope| represents bodies of binders, but the representation differs
 with phase. In \emph{terms}, |x :. t| is a \emph{binder}: the |t| is a
 de Bruijn term with a new bound variable 0, and the old ones
 incremented. The |x| is just advice for display-name selection.
 
-\textbf{[out-of-date:  In
-values, computation halts at a binder: we store the environment which
-awaits an entry for the bound variable to support the evaluation of
-the stored term.]}
+In values, |HF x body| is an higher-order binding. As previously, |x|
+is just a name advice. On the other hand, |body| is a stored function
+awaiting a value, the bound variable, to compute a \emph{fully
+evaluated} value. The substitution is therefore partially inherited
+from Haskell. 
+
+\begin{danger}
+It is important to ensure that |body| computes to a
+fully evaluated value, otherwise say "good bye" to strong
+normalisation.
+\end{danger}
+
+In both cases, we represent constant functions with |K t|, equivalent
+of |\ _ -> t |.
 
 > data Scope :: {Phase} -> * -> * where
 >   (:.)  :: String -> Tm {In, TT} x           -> Scope {TT} x  -- binding
 >   HF    :: String -> (VAL -> Tm {In, VV} x)  -> Scope {VV} x   
 >   K     :: Tm {In, p} x                      -> Scope p x     -- constant
+
+
+
+\subsubsection{Canonical objects}
 
 The |Can| functor explains how canonical objects are constructed from
 sub-objects (terms or values, as appropriate). Lambda is not included
@@ -155,15 +184,16 @@ in using a She aspect.
 > data Can :: * -> * where
 >   Set   :: Can t                                   -- set of sets
 >   Pi    :: t -> t -> Can t                         -- functions
->   Con   :: t -> Can t
+>   Con   :: t -> Can t                              -- packing
 >   import <- CanConstructors
 >   deriving (Show, Eq)
 
-The |Elim| functor explains how eliminators are constructed from their
-sub-objects. It's a sort of logarithm. Projective eliminators for types
-with \(\eta\)-laws go here.
 
-\question{What is that story with logarithms?}
+\subsubsection{Eliminators}
+
+The |Elim| functor explains how eliminators are constructed from their
+sub-objects. It's a sort of logarithm~\cite{hancock:amen}. Projective
+eliminators for types with \(\eta\)-laws go here.
 
 > data Elim :: * -> * where
 >   A     :: t -> Elim t                             -- application
@@ -171,67 +201,28 @@ with \(\eta\)-laws go here.
 >   import <- ElimConstructors
 >   deriving (Show, Eq)
 
+Just as |Con| was packing things up, we define here |Out| to unpack
+them.
+
+%format $:$ = "\mathbin{\$\!:\!\$}"
+
+Eliminators can be chained up in a \emph{spine}. A |Spine| is a list
+of eliminators for terms, typically representing a list of arguments
+that can be applied to a term with the |$:$| operator.
+
+> type Spine p x = [Elim (Tm {In, p} x)]
+>
+> ($:$) :: Tm {Ex, p} x -> Spine p x -> Tm {Ex, p} x
+> ($:$) = foldl (:$)
+
+
+\subsubsection{Operators}
+
 Other computation is performed by a fixed repertoire of operators. To
 construct an operator, you need a name (for scope resolution and
 printing), an arity (so the resolver can manage fully applied usage),
-a typing rule, and a computation strategy. 
-
-
-The |opTy| field explains how to label the operator's arguments with
-the types they must have and delivers the type of the whole
-application: to do that, one must be able to evaluate arguments. It is
-vital to check the sub-terms (left to right) before trusting the type
-at the end. This corresponds to the following type:
-
-< opTy :: forall t. (t -> VAL) -> [t] -> Maybe ([TY :>: t] , TY)
-< opTy ev args = (...)
-
-Where we are provided an evaluator |ev| and the list of arguments,
-which length should be the arity of the operator. If the type of the
-arguments is correct, we return them labelled with their type and the
-type of the result.
-
-However, in order to use |opTy| directly in the tactics, we had to
-generalize it. Following the evolution of |canTy| in @Rules.lhs@, we
-have adopted the following scheme:
-
-< opTy    :: MonadPlus m => (TY :>: t -> m (s :=>: VAL)) -> 
-<                           [t] -> 
-<                           m ([s :=>: VAL] , TY)
-
-First, being |MonadPlus| allows a seamless integration in the Tactics
-world. Second, we have extended the evaluation function to perform
-type-checking at the same time. We also liberalize the return type to
-|s|, to give more freedom in the choice of the checker-evaluator. This
-change impacts on |exQuote|, |infer|, and |useOp|. If this definition
-is not clear now, it should become clear after the definition of
-|canTy|.
-
-> infix 3 :-:
-
-> data TEL x  = Ret x
->             | (String :<: TY) :-: (VAL -> TEL x)
-
-> telCheck ::  (Alternative m, MonadError [String] m) =>
->              (TY :>: t -> m (s :=>: VAL)) -> 
->              (TEL x :>: [t]) -> m ([s :=>: VAL] , x) 
-> telCheck chev (Ret x :>: []) = return ([] , x)
-> telCheck chev ((_ :<: sS :-: tT) :>: (s : t)) = do
->     ssv@(s :=>: sv) <- chev (sS :>: s) 
->     (svs , x) <- telCheck chev ((tT sv) :>: t)
->     return (ssv : svs , x) 
-> telCheck _ _ = throwError' "telCheck: canTy mismatch"
-
-> pity :: TEL TY -> TY
-> pity (Ret t)          = t
-> pity (x :<: s :-: t)  = PI s (L (HF x $ pity . t))
-
-Build a forall from a telescope.
-
-> allty :: TEL VAL -> VAL
-> allty (Ret t)          = t
-> allty (x :<: s :-: t)  = ALL s (L (HF x $ allty . t))
-
+a typing telescope, a computation strategy, and a simplification
+method.
 
 > data Op = Op
 >   { opName  :: String
@@ -241,21 +232,104 @@ Build a forall from a telescope.
 >   , opRun   :: [VAL] -> Either NEU VAL
 >   }
 
+A key component of the definition of operators is the typing
+telescope. Hence, we first describe the implementation of the
+telescope.
+
+\paragraph{Telescope}
+
+A telescope |TEL| represents the standard notion of telescope in Type
+Theory. This consists in a sequence of types which definition might
+rely on any term inhabiting the previous types. A telescope is
+terminated by a |Target|.
+
+> data TEL x  = Target x
+>             | (String :<: TY) :-: (VAL -> TEL x)
+> infix 3 :-:
+
+\question{Couldn't we derive |TEL| in |Foldable| or equivalent and get
+|telCheck| as a |fold|?}
+
+Easily, a telescope can be turned into a sequence of $\Pi$ types:
+
+> pity :: TEL TY -> TY
+> pity (Target t)          = t
+> pity (x :<: s :-: t)  = PI s (L (HF x $ pity . t))
+
+And, similarly, as a sequence of $\forall$s:
+
+> allty :: TEL VAL -> VAL
+> allty (Target t)          = t
+> allty (x :<: s :-: t)  = ALL s (L (HF x $ allty . t))
+
+The interpretation of the telescope is carried by |telCheck|. On the
+model of |opTy| defined below, this interpretation uses a generic
+checker-evaluator |chev|. Based on this chev, it simply goes over the
+telescope, checking and evaluating as it moves further.
+
+> telCheck ::  (Alternative m, MonadError [String] m) =>
+>              (TY :>: t -> m (s :=>: VAL)) -> 
+>              (TEL x :>: [t]) -> m ([s :=>: VAL] , x) 
+> telCheck chev (Target x :>: []) = return ([] , x)
+> telCheck chev ((_ :<: sS :-: tT) :>: (s : t)) = do
+>     ssv@(s :=>: sv) <- chev (sS :>: s) 
+>     (svs , x) <- telCheck chev ((tT sv) :>: t)
+>     return (ssv : svs , x) 
+> telCheck _ _ = throwError' "telCheck: opTy mismatch"
 
 
-Meanwhile, the |opRun| argument implements the computational
-behavior: given suitable arguments, we should receive a value, or
-failing that, the neutral term to blame for the failure of
-computation. For example, if |append| were an operator, it would
-compute if the first list is nil or cons, but complain about the first
-list if it is neutral.
+\paragraph{Type-checking operators}
 
-> opTy ::  (Alternative m, MonadError [String] m) =>
+The |opTy| function explains how to interpret the telescope |opTyTel|:
+it labels the operator's arguments with the types they must have and
+delivers the type of the whole application. To do that, one must be
+able to evaluate arguments. It is vital to type-check the sub-terms
+(left to right) before trusting the type at the end. This corresponds
+to the following type:
+
+< opTy :: forall t. (t -> VAL) -> [t] -> Maybe ([TY :>: t] , TY)
+< opTy ev args = (...)
+
+Where we are provided an evaluator |ev| and the list of arguments,
+which length should be the arity of the operator. If the type of the
+arguments is correct, we return them labelled with their type and the
+type of the result.
+
+However, we had to generalize it. Following the evolution of |canTy|
+in Section~\ref{sec:canTy}, we have adopted the following scheme:
+
+< opTy    :: (Alternative m, MonadError StackError m) =>
+<            (TY :>: t -> m (s :=>: VAL)) -> 
+<            [t] -> 
+<            m ([s :=>: VAL] , TY)
+
+First, being kind of |MonadPlus| allows a seamless integration in the
+world of things that might fail. Second, we have extended the
+evaluation function to perform type-checking at the same time. We also
+liberalize the return type to |s|, to give more freedom in the choice
+of the checker-evaluator. This change impacts on |exQuote|, |infer|,
+and |useOp|. If this definition is not clear now, it should become
+clear after the definition of |canTy| in Section~\ref{sec:canTy}.
+
+> opTy ::  (Alternative m, MonadError StackError m) =>
 >          Op -> (TY :>: t -> m (s :=>: VAL)) -> [t] ->
 >          m ([s :=>: VAL], TY)
 > opTy op chev ss
 >   | length ss == opArity op = telCheck chev (opTyTel op :>: ss)
 > opTy op _ _ = throwError ["operator arity error: " ++ opName op]
+
+
+\paragraph{Running the operator}
+
+The |opRun| argument implements the computational behavior: given
+suitable arguments, we should receive a value, or failing that, the
+neutral term to blame for the failure of computation. For example, if
+|append| were an operator, it would compute if the first list is nil
+or cons, but complain about the first list if it is neutral.
+
+
+
+
 
 
 \subsection{Useful Abbreviations}
@@ -284,14 +358,15 @@ We have some type synonyms for commonly occurring instances of |Tm|.
 > type ENV    = Bwd VAL
 
 We have special pairs for types going into and coming out of
-stuff. That is, we write |typ :>: thing| to say that
-|typ| accepts the term |thing|. Conversely, we write |thing :<: typ|
-to say that |thing| is of infered type |typ|. Therefore, we can read
+stuff. That is, we write |typ :>: thing| to say that |typ| accepts the
+term |thing| -- we can push the |typ| in the |thing|. Conversely, we
+write |thing :<: typ| to say that |thing| is of infered type |typ| --
+we can pull the type |typ| out of the |thing|. Therefore, we can read
 |:>:| as ``accepts'' and |:<:| as ``has inferred type''.
 
-> data y :>: t = y :>: t  deriving (Show,Eq)
+> data ty :>: tm = ty :>: tm  deriving (Show,Eq)
 > infix 4 :>:
-> data t :<: y = t :<: y  deriving (Show,Eq)
+> data tm :<: ty = tm :<: ty  deriving (Show,Eq)
 > infix 4 :<:
 
 As we are discussing syntactic sugar, let me introduce the ``reduces
@@ -311,16 +386,9 @@ With the associated projections:
 Intuitively, |t :=>: v| can be read as ``the term |t| reduces to the
 value |v|''.
 
-\pierre{This implicit conversion is not yet enforced everywhere in the
-code. If you find opportunities to enforce it, go ahead. Typically,
-you can recognize such case when there is a |(t, VAL)| where the value
-in |VAL| has been obtained by evaluation of a thing in |t|}
 
 \subsection{Syntactic Equality}
 \label{sec:syntactic_equality}
-
-We use syntactic equality on \(\eta\)-quoted values to implement the
-definitional equality.
 
 
 In the following, we implement definitional equality on terms. In this
@@ -342,8 +410,7 @@ Then, equality in a set means having equal canonical element:
 
 >   (t0 :? _)     == (t1 :? _)     = t0 == t1
 
-Finally, a place-holder, as all terms should be matched by one of the
-previous patterns:
+Otherwise, they are clearly not equal:
 
 >   _             == _             = False
 
@@ -386,22 +453,30 @@ defined, and deluded. References carry not only names, but types and
 values, and are shared.
 
 > data REF = (:=) { refName :: Name, refBody :: (RKind :<: TY)}
->   {-deriving Show-} -- is shared where possible
 > infix 2 :=
->
+
+References are compared by name, as the |NameSupply| guarantees a
+source of unique, fresh names. Note however that |REF|s being shared,
+one could thing of using physical pointer equality to implement this
+test (!).
+
 > instance Eq REF where
->   (x := _) == (y := _) = x == y  -- could use cheeky pointer equality?
+>   (x := _) == (y := _) = x == y
+
+%if false 
 
 > instance Show REF where
 >   show (n := kt) = intercalate "." (map fst n) ++ " := " ++ show kt
 
-A |REF| can either be:
-\begin{description}
-\item[|DECL|:] used a binder, a declaration
-\item[|DEFN|:] computed, a definition
-\item[|HOLE|:] not computed yet, a definition-to-be
-\item[|FAKE|:] a hysterectomized definition, used to make labels
-\end{description}
+%endif
+
+A |REF| can be of one of those kinds:
+\begin{itemize}
+\item |DECL|: used a binder, a declaration
+\item |DEFN|: computed, a definition
+\item |HOLE|: not computed yet, a definition-to-be
+\item |FAKE|: a hysterectomized definition, used to make labels
+\end{itemize}
 
 > data RKind
 >   =  DECL
@@ -412,12 +487,12 @@ A |REF| can either be:
 
 We can already define some handy operators on |REF|s. First, we can
 turn a |REF| to a |VAL|ue by using |pval|. If the reference is already
-reduced, then we simply pick the computed value. Otherwise, it is
-dealt as a neutral parameter.
+defined, then we pick the computed value. Otherwise, it is dealt as a
+neutral parameter.
 
 > pval :: REF -> VAL
 > pval (_ := DEFN v :<: _)  = v
-> pval r                    = N (P r)
+> pval r                    = NP r
 
 Second, we can extract the type of a reference thanks to the following
 code:
@@ -426,7 +501,9 @@ code:
 > pty (_ := _ :<: ty) = ty
 
 
+
 \subsection{Labels}
+
 
 Labels are tucked into strange places, in order to record the
 high-level presentation of low-level stuff.  A typical label is the
@@ -436,6 +513,13 @@ hysterectomy stops it computing.
 > data Labelled f t
 >   = Maybe t :?=: f t
 >   deriving (Show)
+
+For example, labels are used in the presentation of the |Enum|
+(Section~\ref{sec:enum}) and |Desc| (Section~\ref{sec:desc})
+data-types. These data-types are themselves implemented as fix-points
+of non human-readable descriptions, hence we hide the details behind a
+label. The curious reader is referred to their implementation. Any
+body in his right mind would ignore labels for now.
 
 Label equality is sound but not complete for equality of what has been
 labelled.
@@ -450,18 +534,26 @@ labelled.
 
 \subsection{Variable Manipulation}
 
-This is the Very Nice Mangler. A |Mangle f x y| is a record that describes how to deal with
-parameters of type |x|, variables and binders, producing terms with parameters
-of type |y| and wrapping the results in some applicative functor |f|. It 
-contains three fields:
+Variable manipulation, in all its forms, ought be handled by a
+mangler. A |Mangle f x y| is a record that describes how to deal with
+parameters of type |x|, variables and binders, producing terms with
+parameters of type |y| and wrapping the results in some applicative
+functor |f|.
+
+It contains three fields: 
 \begin{description}
-\item{|mangP|} describes what to do with parameters. It takes a parameter value
-               and a spine (a list of eliminators) that this parameter is applied to
-               (handy for christening); it must produce an appropriate term.
-\item{|mangV|} describes what to do with variables. It takes a de Brujin index
-               and a spine as before, and must produce a term.
-\item{|mangB|} describes how to update the |Mangle| in response to a given
-               binder name.
+
+\item{|mangP|} describes what to do with parameters. It takes a
+parameter value and a spine (a list of eliminators) that this
+parameter is applied to (handy for christening); it must produce an
+appropriate term.
+
+\item{|mangV|} describes what to do with variables. It takes a de
+Brujin index and a spine as before, and must produce a term.
+
+\item{|mangB|} describes how to update the |Mangle| in response to a
+given binder name.  
+
 \end{description}
 
 > data Mangle f x y = Mang
@@ -470,9 +562,15 @@ contains three fields:
 >   ,  mangB :: String -> Mangle f x y
 >   }
 
-The |%| operator mangles a term, produing a term with the appropriate parameter
-type in the relevant idiom. This is basically a traversal, but calling the
-appropriate fields of |Mangle| for each parameter, variable or binder encountered.
+Note that, morally, a |[Elim InTm y]| is a |Spine TT y|. However, we
+cannot write that in Haskell. 
+\question{Why do I get: @Not in scope: type constructor or class `TT'@? }
+
+The interpretation of |Mangle| is given by the following function
+|%|. The |%| operator mangles a term, produing a term with the
+appropriate parameter type in the relevant idiom. This is basically a
+traversal, but calling the appropriate fields of |Mangle| for each
+parameter, variable or binder encountered.
 
 > (%) :: Applicative f => Mangle f x y -> Tm {In, TT} x -> f (Tm {In, TT} y)
 > m % L (K t)      = (|L (|K (m % t)|)|)
@@ -495,32 +593,31 @@ The |%%| operator applies a mangle that uses the identity functor.
 > m %% t = runIdentity $ m % t
 
 
-%format $:$ = "\mathbin{\$\!:\!\$}"
 
-A |Spine| is a list of eliminators for terms, typically representing a list of
-arguments that can be applied to a term with the |$:$| operator.
+%if false
 
-> type Spine p x = [Elim (Tm {In, p} x)]
->
-> ($:$) :: Tm {Ex, p} x -> Spine p x -> Tm {Ex, p} x
-> ($:$) = foldl (:$)
+Dead code, waiting to be burried
 
+\subsubsection{The Capture mangler}
 
 Given a list |xs| of |String| parameter names, the |capture| function produces a mangle
 that captures those parameters as de Brujin indexed variables.
 \question{Do we ever need to do this?}
 
-> capture :: Bwd String -> Mangle Identity String String
-> capture xs = Mang
->   {  mangP = \ x ies  -> (|(either P V (h xs x) $:$) ies|)
->   ,  mangV = \ i ies  -> (|(V i $:$) ies|)
->   ,  mangB = \ x -> capture (xs :< x)
->   } where
->   h B0         x  = Left x
->   h (ys :< y)  x
->     | x == y      = Right 0
->     | otherwise   = (|succ (h ys y)|)
+< capture :: Bwd String -> Mangle Identity String String
+< capture xs = Mang
+<   {  mangP = \ x ies  -> (|(either P V (h xs x) $:$) ies|)
+<   ,  mangV = \ i ies  -> (|(V i $:$) ies|)
+<   ,  mangB = \ x -> capture (xs :< x)
+<   } where
+<   h B0         x  = Left x
+<   h (ys :< y)  x
+<     | x == y      = Right 0
+<     | otherwise   = (|succ (h ys y)|)
 
+%end
+
+\subsubsection{The Under mangler}
 
 The |under i y| mangle binds the variable with de Brujin index |i| to the parameter |y|
 and leaves the term otherwise unchanged.

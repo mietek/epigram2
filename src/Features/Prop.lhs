@@ -215,7 +215,7 @@ Elim forms inherited from elsewhere
 >   nEOp = Op { opName = "naughtE"
 >             , opArity = 2
 >             , opTyTel =  "z" :<: PRF ABSURD :-: \ _ ->
->                          "X" :<: SET :-: \ xX -> Ret xX
+>                          "X" :<: SET :-: \ xX -> Target xX
 >             , opRun = \ [q, ty] -> case q of
 >                 N z -> Left z
 >                 v -> error ("oh bugger: " ++ show v)
@@ -228,7 +228,7 @@ Elim forms inherited from elsewhere
 >                           "P" :<: IMP (PRF (INH ty)) PROP :-: \ pred ->
 >                           "m" :<: PI ty (L $ HF "s" $ \ t -> 
 >                                            pred $$ A (WIT t)) :-: \ _ -> 
->                           Ret (PRF (pred $$ A p))
+>                           Target (PRF (pred $$ A p))
 >               , opRun = \[_,p,_,m] -> case p of
 >                                         WIT t -> Right $ m $$ A t
 >                                         N n   -> Left n

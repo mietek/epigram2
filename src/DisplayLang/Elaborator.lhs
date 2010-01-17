@@ -362,7 +362,7 @@ program x,y will give a proof state of:
 >   where mkTel :: NEU -> TY -> [VAL] -> [String] -> TEL TY
 >         mkTel n (PI s t) args (x:xs)
 >            = (x :<: s) :-: (\val -> mkTel n (t $$ A val) (val:args) xs)
->         mkTel n r args _ = Ret (LABEL (mkL n (reverse args)) r)
+>         mkTel n r args _ = Target (LABEL (mkL n (reverse args)) r)
 >         
 >         mkL :: NEU -> [VAL] -> VAL
 >         mkL n [] = N n

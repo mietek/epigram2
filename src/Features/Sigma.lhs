@@ -203,9 +203,9 @@ Coercion rule:
 >                  "ab"  :<: SIGMA aA bB             :-: \ ab ->
 >                  "P"   :<: ARR (SIGMA aA bB) SET   :-: \ pP ->
 >                  "p"   :<: pity (
->                    "a" :<: aA :-: \ a -> "b" :<: (bB $$ A a) :-: \ b -> Ret $
+>                    "a" :<: aA :-: \ a -> "b" :<: (bB $$ A a) :-: \ b -> Target $
 >                    pP $$ A (PAIR a b))             :-: \ p ->
->                  Ret $ pP $$ A ab
+>                  Target $ pP $$ A ab
 >     , opRun = \ [_ , _ , ab , _ , p] -> Right $ p $$ A (ab $$ Fst) $$ A (ab $$ Snd)
 >     , opSimp = \_ _ -> empty
 >     }

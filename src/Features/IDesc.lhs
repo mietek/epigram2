@@ -137,7 +137,7 @@
 >        "i" :<: SET :-: \i ->
 >        "d" :<: IDESC i :-: \d ->
 >        "x" :<: ARR i SET :-: \x ->
->        Ret SET
+>        Target SET
 >       idOpRun :: [VAL] -> Either NEU VAL
 >       idOpRun [ii,IDONE p,x]    = Right $ PRF p
 >       idOpRun [ii,IARG aa d,x] = Right $
@@ -164,7 +164,7 @@
 >         "d" :<: IDESC ii :-: \d ->
 >         "x" :<: ARR ii SET :-: \x ->
 >         "v" :<: (descOp @@ [ii,d,x]) :-: \v ->
->         Ret $ IDESC (SIGMA ii (L $ HF "i" (\i -> x $$ A i)))
+>         Target $ IDESC (SIGMA ii (L $ HF "i" (\i -> x $$ A i)))
 >       iboxOpRun :: [VAL] -> Either NEU VAL
 >       iboxOpRun [ii,IDONE _ ,x,v] = Right (IDONE TRIVIAL)
 >       iboxOpRun [ii,IARG a d,x,v] = Right $ 
@@ -192,7 +192,7 @@
 >           "bp" :<: ARR sigiix SET :-: \bp ->
 >           "p" :<: (PI sigiix (L (HF "t" $ \t -> bp $$ A t))) :-: \p ->
 >           "v" :<: (idescOp @@ [ii,d,x]) :-: \v ->
->           Ret $ idescOp @@ [sigiix,iboxOp @@ [ii,d,x,v],bp]
+>           Target $ idescOp @@ [sigiix,iboxOp @@ [ii,d,x,v],bp]
 >       mapBoxOpRun :: [VAL] -> Either NEU VAL
 >       mapBoxOpRun [IDONE _,x,bp,p,v] = Right VOID
 >       mapBoxOpRun [IARG a d,x,bp,p,v] = Right $ 
@@ -235,8 +235,8 @@
 >                                  ]
 >                             , bp 
 >                             ]) :-: \hs ->
->                  Ret (bp $$ A (PAIR i' (CON x))))) :-: \m ->
->          Ret (bp $$ A (PAIR i v))
+>                  Target (bp $$ A (PAIR i' (CON x))))) :-: \m ->
+>          Target (bp $$ A (PAIR i v))
 >       elimOpRun :: [VAL] -> Either NEU VAL
 >       elimOpRun [ii,d,i,CON x,bp,m] = Right $ 
 >         m $$ A i $$ A x 
@@ -263,7 +263,7 @@
 >           "f" :<: PI iI (L (HF "i" $ \i -> ARR (a $$ A i) (b $$ A i))) 
 >                     :-: \f ->
 >           "x" :<: (descOp @@ [iI, d, a]) :-: \x -> 
->           Ret (descOp @@ [iI, d, b])
+>           Target (descOp @@ [iI, d, b])
 >
 >         mapOpRun :: [VAL] -> Either NEU VAL
 >         mapOpRun [iI,IDONE _,    a, b, f, x] = Right x

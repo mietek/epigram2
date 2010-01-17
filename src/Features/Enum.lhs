@@ -1,4 +1,5 @@
 \section{Enum}
+\label{sec:enum}
 
 %if False
 
@@ -191,7 +192,7 @@ Equality rules:
 >     } where
 >         bOpTy = "e" :<: enumU :-: \e ->
 >                 "p" :<: ARR (ENUMT e) SET :-: \p ->
->                 Ret SET
+>                 Target SET
 >         bOpRun :: [VAL] -> Either NEU VAL
 >         bOpRun [NILE , _] = Right UNIT
 >         bOpRun [CONSE t e' , p] = 
@@ -229,7 +230,7 @@ Equality rules:
 >           "x" :<: ENUMT e :-: \x ->
 >           "p" :<: ARR (ENUMT e) SET :-: \p ->
 >           "b" :<: branchesOp @@ [e , p] :-: \b -> 
->           Ret (p $$ A x)
+>           Target (p $$ A x)
 >         sOpRun :: [VAL] -> Either NEU VAL
 >         sOpRun [CONSE t e' , ZE , p , ps] = Right $ ps $$ Fst
 >         sOpRun [CONSE t e' , SU n , p , ps] = Right $ switchTerm

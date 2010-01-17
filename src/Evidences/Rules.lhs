@@ -198,6 +198,7 @@ interpreter defined above with the empty environment.
 
 
 \subsection{Type-checking Canonicals and Eliminators}
+\label{sec:canTy}
 
 Historically, canonical terms were type-checked by the following
 function:

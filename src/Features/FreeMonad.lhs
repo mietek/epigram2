@@ -76,7 +76,7 @@
 >                  "Y" :<: SET                   :-: \ yY ->
 >                  "f" :<: ARR xX (MONAD dD yY)  :-: \ f ->
 >                  "t" :<: MONAD dD xX           :-: \ t ->
->                  Ret $ MONAD dD yY
+>                  Target $ MONAD dD yY
 >     , opRun = substOpRun
 >     , opSimp = substOpSimp
 >     } where
@@ -111,11 +111,11 @@
 >                  "c" :<: (pity $
 >                     "ts" :<: descOp @@ [dD, MONAD dD xX]         :-: \ ts ->
 >                     "hs" :<: boxOp @@ [dD, MONAD dD xX, pP, ts]  :-: \ _ ->
->                      Ret $ pP $$ A (COMPOSITE ts))  :-: \ _ ->
+>                      Target $ pP $$ A (COMPOSITE ts))  :-: \ _ ->
 >                  "v" :<: (pity $
 >                     "x" :<: xX :-: \ x ->
->                     Ret $ pP $$ A (RETURN x))       :-: \ _ ->
->                  Ret $ pP $$ A t
+>                     Target $ pP $$ A (RETURN x))       :-: \ _ ->
+>                  Target $ pP $$ A t
 >     , opRun = elimMonadOpRun
 >     , opSimp = \_ _ -> empty
 >     } where

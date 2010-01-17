@@ -1,4 +1,5 @@
 \section{Desc}
+\label{sec:desc}
 
 %if False
 
@@ -236,7 +237,7 @@ Equality rules:
 >       dOpTy =
 >         "x" :<: desc :-: \x ->
 >         "y" :<: SET :-: \y ->
->         Ret SET
+>         Target SET
 >       dOpRun :: [VAL] -> Either NEU VAL
 >       dOpRun [DONE,y]    = Right UNIT
 >       dOpRun [ARG x y,z] = Right $
@@ -262,7 +263,7 @@ Equality rules:
 >         "x" :<: SET :-: \x ->
 >         "y" :<: ARR x SET :-: \y ->
 >         "z" :<: (descOp @@ [w,x]) :-: \z ->
->         Ret SET
+>         Target SET
 >       boxOpRun :: [VAL] -> Either NEU VAL
 >       boxOpRun [DONE   ,d,p,v] = Right UNIT
 >       boxOpRun [ARG a f,d,p,v] = Right $ opRunArgTerm
@@ -349,9 +350,9 @@ Equality rules:
 >         "D" :<: desc :-: \ dD ->
 >         "X" :<: SET :-: \ xX ->
 >         "P" :<: ARR xX SET :-: \ pP ->
->         "p" :<: (pity $ "x" :<: xX :-: \ x -> Ret $ pP $$ A x) :-: \ _ ->
+>         "p" :<: (pity $ "x" :<: xX :-: \ x -> Target $ pP $$ A x) :-: \ _ ->
 >         "v" :<: (descOp @@ [dD,xX]) :-: \v ->
->          Ret (boxOp @@ [dD,xX,pP,v])
+>          Target (boxOp @@ [dD,xX,pP,v])
 >       mapBoxOpRun :: [VAL] -> Either NEU VAL
 >       mapBoxOpRun [DONE,d,bp,p,v] = Right VOID
 >       mapBoxOpRun [ARG a f,d,bp,p,v] = Right $ mapBoxArgTerm
@@ -470,7 +471,7 @@ Equality rules:
 >         "v" :<: MU Nothing d :-: \v ->
 >         "P" :<: (ARR (MU Nothing d) SET) :-: \bp ->
 >         "p" :<: (elimOpMethodType $$ A d $$ A bp) :-: \p ->
->         Ret (bp $$ A v)
+>         Target (bp $$ A v)
 >       elimOpRun :: [VAL] -> Either NEU VAL
 >       elimOpRun [d,CON v,bp,p] = Right $ elimOpTerm
 >                                              $$ A d $$ A bp $$ A p $$ A v
@@ -511,7 +512,7 @@ Equality rules:
 >           "e" :<: enumU :-: \e ->
 >           "b" :<: (branchesOp @@ [e , L (K desc) ]) :-: \b ->
 >           "x" :<: ENUMT e :-: \x ->
->           Ret desc
+>           Target desc
 >         sOpRun :: [VAL] -> Either NEU VAL
 >         sOpRun [CONSE t e' , ps , ZE] = Right $ ps $$ Fst
 >         sOpRun [CONSE t e' , ps , SU n] = Right $
@@ -534,7 +535,7 @@ Equality rules:
 >           "b" :<: SET :-: \b ->
 >           "f" :<: ARR a b :-: \f ->
 >           "x" :<: (descOp @@ [d, a]) :-: \x -> 
->           Ret (descOp @@ [d, b])
+>           Target (descOp @@ [d, b])
 >
 >         mapOpRun :: [VAL] -> Either NEU VAL
 >         mapOpRun [DONE,    a, b, f, x] = Right VOID
