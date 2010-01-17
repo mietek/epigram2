@@ -20,6 +20,7 @@
 
 > import Evidences.Rules
 > import Evidences.Tm
+> import Evidences.Mangler
 
 %endif
 

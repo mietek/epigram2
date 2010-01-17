@@ -21,6 +21,7 @@
 > import Kit.MissingLibrary
 
 > import Evidences.Tm
+> import Evidences.Mangler
 
 > import NameSupply.NameSupply
 > import NameSupply.NameSupplier

@@ -21,6 +21,7 @@
 > import NameSupply.NameSupply
 
 > import Evidences.Tm
+> import Evidences.Mangler
 
 %endif
 

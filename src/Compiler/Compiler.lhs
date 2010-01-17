@@ -25,6 +25,7 @@ generate an executable from a collection of supercombinator definitions.
 > import NameSupply.NameSupply
 
 > import Evidences.Tm
+> import Evidences.Mangler
 
 > import ProofState.Developments
 
