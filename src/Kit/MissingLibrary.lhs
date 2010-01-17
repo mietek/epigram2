@@ -125,6 +125,15 @@ so we have to do things the long way...
 >     empty = mzero
 >     (<|>) = mplus
 
+> instance Monad m => Applicative (StateT r m) where
+>     pure = return 
+>     (<*>) = ap
+
+> instance MonadPlus m => Alternative (StateT r m) where
+>     empty = mzero
+>     (<|>) = mplus
+
+
 \subsection{Missing Instances}
 
 > instance Traversable (Either x) where

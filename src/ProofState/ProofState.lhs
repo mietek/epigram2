@@ -1,5 +1,5 @@
-\section{Proof State Monad}
-\label{sec:proofStateMonad}
+\section{The |ProofState| monad}
+\label{sec:proof_state_monad}
 
 %if False
 
@@ -29,27 +29,25 @@
 %endif
 
 
-The proof state monad provides access to the |ProofContext| as in a |State| monad,
-but with the possibility of command failure represented by |Either [String]|. 
+\subsection{Defining the Proof State monad}
 
-> type ProofState = StateT ProofContext (Either [String])
 
-Handily, |Either [String]| is a |MonadPlus|, and |StateT| preserves this, so we can easily
-make |ProofState| an |Alternative|:
+The proof state monad provides access to the |ProofContext| as in a
+|State| monad, but with the possibility of command failure represented
+by |Either StackError|.
 
-> instance Applicative ProofState where
->     pure = return
->     (<*>) = ap
-
-> instance Alternative ProofState where
->     empty = mzero
->     (<|>) = mplus
+> type ProofState = StateT ProofContext (Either StackError)
 
 
 \subsection{Getters and Setters}
 
 We provide various functions to get information from the proof state and store
 updated information, providing a friendlier interface than |get| and |put|.
+
+\question{That would be great to have an illustration of the behavior
+          of each of these functions on a development.}
+
+\subsubsection{Getters}
 
 > getAuncles :: ProofState (Entries)
 > getAuncles = get >>= return . auncles
@@ -129,6 +127,10 @@ updated information, providing a friendlier interface than |get| and |put|.
 >         (_ :< Layer{mother=m}) -> return (motherName m)
 >         B0 -> return []
 
+
+\subsubsection{Putters}
+
+
 > insertCadet :: NewsBulletin -> ProofState ()
 > insertCadet news = do
 >     l <- getLayer
@@ -182,6 +184,10 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     replaceLayer (l{mother=ModuleMother n})
 >     putDev dev
 
+
+\subsubsection{Removers}
+
+
 > removeDevEntry :: ProofState (Maybe (Entry Bwd))
 > removeDevEntry = do
 >     es <- getDevEntries
@@ -196,6 +202,8 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     (ls :< l, dev) <- get
 >     put (ls, dev)
 >     return l
+
+\subsubsection{Replacers}
 
 > replaceDev :: Dev Bwd -> ProofState (Dev Bwd)
 > replaceDev dev = do
@@ -214,6 +222,8 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     (ls :< l', dev) <- get
 >     put (ls :< l, dev)
 >     return l'
+
+\subsubsection{Tracing in the |ProofState| monad}
 
 > proofTrace :: String -> ProofState ()
 > proofTrace s = do
