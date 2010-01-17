@@ -15,7 +15,6 @@
 > import Control.Monad.State
 > import Data.Foldable
 > import Data.List
-> import Data.Traversable
 > import Debug.Trace
 
 > import Kit.BwdFwd

@@ -8,7 +8,6 @@
 
 > module ProofState.News where
 
-> import Data.List
 > import Data.Maybe
 > import Data.Monoid hiding (All)
 
