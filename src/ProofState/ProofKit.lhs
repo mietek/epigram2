@@ -10,12 +10,10 @@
 > module ProofState.ProofKit where
 
 > import Control.Applicative
-> import Control.Monad
 > import Control.Monad.Error
 > import Control.Monad.State
 > import Data.Foldable
 > import Data.List
-> import Debug.Trace
 
 > import Kit.BwdFwd
 > import Kit.MissingLibrary

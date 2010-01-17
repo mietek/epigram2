@@ -10,18 +10,9 @@
 > module ProofState.Wire where
 
 > import Control.Applicative
-> import Control.Monad
-> import Control.Monad.Error
-> import Control.Monad.State
 > import Data.Foldable
-> import Data.List
-> import Debug.Trace
 
 > import Kit.BwdFwd
-> import Kit.MissingLibrary
-
-> import NameSupply.NameSupply
-> import NameSupply.NameSupplier
 
 > import ProofState.Developments
 > import ProofState.News
@@ -29,9 +20,6 @@
 > import ProofState.ProofContext
 > import ProofState.ProofState
 > import {-# SOURCE #-} ProofState.ProofKit
-
-> import DisplayLang.DisplayTm
-> import DisplayLang.Naming
 
 > import Evidences.Tm
 > import Evidences.Rules
