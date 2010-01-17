@@ -34,6 +34,7 @@
 %endif
 
 \section{Proof Context}
+\label{sec:proof_context}
 
 Recall from Section~\ref{sec:developments} that
 
@@ -485,7 +486,7 @@ is not in the required form.
 >             Left nb -> do
 >                 replaceLayer l{cadets=NF es}
 >                 goDownAcc acc (mergeNews news nb)
->             Right e -> case coerceEntry e of
+>             Right e -> case entryCoerce e of
 >               Left (es', tip', nsupply') ->  do
 >                 me <- getMotherEntry
 >                 replaceLayer l{elders=(elders :< me) <+> acc, mother=entryToMother e, cadets=NF es}
