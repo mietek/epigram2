@@ -20,6 +20,8 @@
 
 > import NameSupply.NameSupply
 
+> import DisplayLang.DisplayTm
+
 > import ProofState.Developments
 > import ProofState.News
 > import ProofState.ProofContext
