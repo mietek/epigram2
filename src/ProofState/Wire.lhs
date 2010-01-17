@@ -1,0 +1,207 @@
+\section{Wire Service}
+\label{sec:wire_service}
+
+%if False
+
+> {-# OPTIONS_GHC -F -pgmF she #-}
+> {-# LANGUAGE FlexibleInstances, TypeOperators, TypeSynonymInstances,
+>              GADTs, RankNTypes #-}
+
+> module ProofState.Wire where
+
+> import Control.Applicative
+> import Control.Monad
+> import Control.Monad.Error
+> import Control.Monad.State
+> import Data.Foldable
+> import Data.List
+> import Debug.Trace
+
+> import Kit.BwdFwd
+> import Kit.MissingLibrary
+
+> import NameSupply.NameSupply
+> import NameSupply.NameSupplier
+
+> import ProofState.Developments
+> import ProofState.News
+> import ProofState.Lifting
+> import ProofState.ProofContext
+> import ProofState.ProofState
+> import {-# SOURCE #-} ProofState.ProofKit
+
+> import DisplayLang.DisplayTm
+> import DisplayLang.Naming
+
+> import Evidences.Tm
+> import Evidences.Rules
+
+%endif
+
+
+Here we describe how to handle updates to references in the proof state, caused by
+refinement commands like |give|. The idea is to deal with updates lazily, to avoid
+unnecessary traversals of the proof tree. When |updateRef| is called to announce
+a changed reference (that the current development has already processed), it simply
+inserts a news bulletin below the current development.
+
+> updateRef :: REF -> ProofState ()
+> updateRef ref = insertCadet [(ref, GoodNews)]
+
+
+The |propagateNews| function takes a current news bulletin and a list of entries
+to add to the current development. It applies the news bulletin to each entry
+in turn, picking up other bulletins along the way. This function should be called
+when navigating to a development that may contain news bulletins, so they can be
+pushed out of sight.
+
+> propagateNews :: Bool -> NewsBulletin -> NewsyEntries -> ProofState NewsBulletin
+
+If we have nothing to say and nobody to tell, we might as well give up and go home.
+
+> propagateNews _ [] (NF F0) = return []
+
+> propagateNews False news (NF F0) = return news
+
+If there are no entries to process, we should tell the mother (if there is one),
+stash the bulletin after the current location and stop. Note that the insertion is
+optional because it will fail when we have reached the end of the module, at which
+point everyone knows the news anyway.
+
+> propagateNews True news (NF F0) = do
+>     news' <- tellMother news
+>     optional (insertCadet news')
+>     return news'
+
+A |Boy| is relatively easy to deal with, we just check to see if its type
+has become more defined, and pass on the good news if necessary.
+
+> propagateNews top news (NF (Right (E (name := DECL :<: tv) sn (Boy k) ty) :> es)) = do
+>     case tellNews news ty of
+>         (_, NoNews) -> putDevEntry (E (name := DECL :<: tv) sn (Boy k) ty) >> propagateNews top news (NF es)
+>         (ty', GoodNews) -> do
+>             let ref = name := DECL :<: evTm ty'
+>             putDevEntry (E ref sn (Boy k) ty')
+>             propagateNews top (addNews (ref, GoodNews) news) (NF es)
+
+Updating girls is a bit more complicated. We proceed as follows:
+\begin{enumerate}
+\item Add the girl to the context, using |jumpIn|.
+\item Recursively propagate the news to the children.
+\item Call |tellMother| to update the girl herself.
+\item Continue propagating the latest news.
+\end{enumerate}
+
+> propagateNews top news (NF ((Right e@(E ref sn (Girl LETG (_, tip, nsupply)) ty)) :> es)) = do
+>     xs <- jumpIn e
+>     news' <- propagateNews False news xs
+>     news'' <- tellMother news'
+>     goOut
+>     propagateNews top news'' (NF es)
+
+Modules do not carry type information so all we need to do is propagate
+the news to their children.
+
+> propagateNews top news (NF (Right e@(M n d) :> es)) = do
+>     xs <- jumpIn e
+>     news' <- propagateNews False news xs
+>     goOut
+>     propagateNews top news (NF es)
+
+
+Finally, if we encounter an older news bulletin when propagating news, we can simply
+merge the two together.
+
+> propagateNews top news (NF (Left oldNews :> es)) =
+>   propagateNews top (mergeNews news oldNews) (NF es)
+
+
+The |tellEntry| function informs an entry about a news bulletin that its
+children have already received. If the entry is a girl, she must be the
+mother of the current cursor position (i.e. the entry should come from
+getMotherEntry).
+
+> tellEntry :: NewsBulletin -> Entry Bwd -> ProofState (NewsBulletin, Entry Bwd)
+
+Modules carry no type information, so they are easy:
+
+> tellEntry news (M n d) = return (news, M n d)
+
+To update a boy, we must:
+\begin{enumerate}
+\item update the overall type of the entry, and
+\item update the news bulletin with news about this girl.
+\end{enumerate}
+
+> tellEntry news (E (name := DECL :<: tv) sn (Boy k) ty) = do
+>     let (ty' :=>: tv', n)  = tellNewsEval news (ty :=>: tv)
+>     let ref = name := DECL :<: tv'
+>     return (addNews (ref, n) news, E ref sn (Boy k) ty')
+
+To update a hole, we must:
+\begin{enumerate}
+\item update the tip type;
+\item update the overall type of the entry, as stored in the reference; and
+\item update the news bulletin with news about this girl.
+\end{enumerate}
+
+> tellEntry news (E (name := HOLE :<: tyv) sn (Girl LETG (cs, Unknown tt, nsupply)) ty) = do
+>     let  (tt', n)             = tellNewsEval news tt
+>          (ty' :=>: tyv', n')  = tellNewsEval news (ty :=>: tyv)
+>          ref                  = name := HOLE :<: tyv'
+>     return (addNews (ref, min n n') news,
+>                 E ref sn (Girl LETG (cs, Unknown tt', nsupply)) ty')
+
+To update a defined girl, we must:
+\begin{enumerate}
+\item update the tip type;
+\item update the overall type of the entry, as stored in the reference;
+\item update the definition and re-evaluate it
+         (\question{could this be made more efficient?}); and
+\item update the news bulletin with news about this girl.
+\end{enumerate}
+
+> tellEntry news (E (name := DEFN tmL :<: tyv) sn (Girl LETG (cs, Defined tm tt, nsupply)) ty) = do
+>     let  (tt', n)             = tellNewsEval news tt
+>          (ty' :=>: tyv', n')  = tellNewsEval news (ty :=>: tyv)
+>          (tm', n'')           = tellNews news tm
+>     aus <- getGreatAuncles
+>     let tmL' = parBind aus cs tm'
+
+For paranoia purposes, the following test might be helpful:
+
+<     mc <- withNSupply (inCheck $ check (tyv' :>: tmL'))
+<     mc `catchEither` unlines ["tellEntry " ++ showName name ++ ":",
+<                                 show tmL', "is not of type", show ty' ]
+
+>     let ref = name := DEFN (evTm tmL') :<: tyv'
+>     return (addNews (ref, GoodNews {-min (min n n') n''-}) news,
+>                 E ref sn (Girl LETG (cs, Defined tm' tt', nsupply)) ty')
+
+The |tellMother| function informs the mother entry about a news bulletin
+that her children have already received, and returns the updated news.
+
+> tellMother :: NewsBulletin -> ProofState NewsBulletin
+> tellMother news = do
+>     e <- getMotherEntry
+>     (news', e') <- tellEntry news e 
+>     putMotherEntry e'
+>     return news'
+
+
+The |tellNews| function applies a bulletin to a term. It returns the updated
+term and the news about it.
+
+> tellNews :: NewsBulletin -> Tm {d, TT} REF -> (Tm {d, TT} REF, News)
+> tellNews []    tm = (tm, NoNews)
+> tellNews news  tm = case foldMap (lookupNews news) tm of
+>     NoNews  -> (tm, NoNews)
+>     n       -> (fmap (getLatest news) tm, n)
+
+The |tellNewsEval| function takes a bulletin, term and its present value.
+It updates the term with the bulletin and re-evaluates it if necessary.
+
+> tellNewsEval :: NewsBulletin -> INTM :=>: VAL -> (INTM :=>: VAL, News)
+> tellNewsEval news (tm :=>: tv) = case tellNews news tm of
+>     (_,    NoNews)    -> (tm   :=>: tv,        NoNews)
+>     (tm',  GoodNews)  -> (tm'  :=>: evTm tm',  GoodNews)

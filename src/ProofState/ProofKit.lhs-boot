@@ -1,0 +1,8 @@
+> module ProofState.ProofKit where
+
+> import ProofState.Developments
+> import ProofState.ProofContext
+> import ProofState.ProofState
+
+> goOut :: ProofState ()
+> jumpIn :: Entry NewsyFwd -> ProofState NewsyEntries
