@@ -22,6 +22,8 @@
 > import NameSupply.NameSupplier
 
 > import ProofState.Developments
+> import ProofState.News
+> import ProofState.Lifting
 
 > import DisplayLang.DisplayTm
 > import DisplayLang.Naming

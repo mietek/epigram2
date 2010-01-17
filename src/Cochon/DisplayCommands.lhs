@@ -14,6 +14,7 @@
 > import Kit.BwdFwd hiding ((<+>))
 
 > import ProofState.Developments
+> import ProofState.Lifting
 > import ProofState.ProofState
 
 > import DisplayLang.DisplayTm

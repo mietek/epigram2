@@ -8,12 +8,8 @@
 
 > module ProofState.Developments where
 
-> import Control.Applicative
-> import Control.Monad.Identity
 > import Data.Foldable
 > import Data.List
-> import Data.Maybe
-> import Data.Monoid hiding (All)
 > import Data.Traversable
 
 > import Kit.BwdFwd
@@ -21,13 +17,17 @@
 > import NameSupply.NameSupply
 
 > import Evidences.Tm
-> import Evidences.Mangler
 
 %endif
 
-A |Dev| is a structure containing entries, some of which may have their own developments,
-creating a nested tree-like structure. It also carries a |Tip| representing the type of
-structure, and its |NameSupply| for namespace handling purposes. Initially we had
+
+\subsection{The |Dev| data-structure}
+
+A |Dev|elopment is a structure containing entries, some of which may
+have their own developments, creating a nested tree-like
+structure. Developments can be of different nature: hence, their type
+is indicated by the |Tip|. Finally, its |NameSupply| for namespace handling
+purposes. Initially we had
 
 < type Dev = (Bwd Entry, Tip, NameSupply)
 
@@ -36,9 +36,12 @@ but generalised this to allow other |Traversable| functors |f| in place of |Bwd|
 > type Dev f = (f (Entry f), Tip, NameSupply)
 
 
+\subsubsection{|Tip|}
+
 A |Module| is a development that cannot have a type or value; this may be at the top level
 or further in. Developments contained within a female |Entity| may represent |Unknown|s
 of a given type, or may be |Defined| as a term with a given type.
+
 
 > data Tip
 >   = Module
@@ -47,9 +50,22 @@ of a given type, or may be |Defined| as a term with a given type.
 >   deriving Show
 
 
-An |Entry| is either an |Entity| with its |REF|, the last component of its |Name|
-and the |INTM| representation of its type, or it is a module (a |Name| associated
-with a |Dev| that has no type or value).
+
+\subsubsection{|Entry|}
+
+
+An |Entry| is either:
+
+\begin{itemize}
+
+\item an |Entity| with its |REF|, the last component of its |Name|
+(playing the role of a cache, for performance reasons), and the |INTM|
+representation of its type,
+
+\item a module, ie. a |Name| associated with a |Dev| that has no type
+or value
+
+\end{itemize}
 
 > data Traversable f => Entry f
 >   =  E REF (String, Int) (Entity f) INTM
@@ -118,6 +134,8 @@ display purposes. We can easily (but inefficiently) extract it from a reference:
 > lastName (n := _) = last n
 
 
+\subsubsection{|Entity|}
+
 An |Entity| may be a |Boy| (which does not have children) or a |Girl| (which may do).
 A |Girl| is a definition, with a (possibly empty) development of sub-objects, which
 has a |Tip| that is |Unknown| or |Defined|.
@@ -131,6 +149,8 @@ over all following entries and the definition (if any) in its development.
 > data BoyKind   = LAMB | ALAB | PIB  deriving (Show, Eq)
 > data GirlKind  = LETG        deriving (Show, Eq)
 
+%if False
+
 > instance Show (Entity Bwd) where
 >     show (Boy k) = "Boy " ++ show k
 >     show (Girl k d) = "Girl " ++ show k ++ " " ++ show d
@@ -138,6 +158,8 @@ over all following entries and the definition (if any) in its development.
 > instance Show (Entity Fwd) where
 >     show (Boy k) = "Boy " ++ show k
 >     show (Girl k d) = "Girl " ++ show k ++ " " ++ show d
+
+%endif
 
 We often need to turn the sequence of boys (parameters) under which we
 work into the argument spine of a \(\lambda\)-lifted definition.
@@ -148,124 +170,4 @@ work into the argument spine of a \(\lambda\)-lifted definition.
 >   boy (E r _ (Boy _) _)  = [A (N (P r))]
 >   boy _                = []
 
-
-\subsection{News about updated references}
-
-|News| represents possible changes to references. At the moment, it may be |GoodNews|
-(the reference has become more defined) or |NoNews| (even better from our perspective,
-as the reference has not changed). Note that |News| is ordered by increasing ``niceness''.
-
-When we come to implement functionality to remove definitions from the proof state,
-we will also need |BadNews| (the reference has changed but is not more informative)
-and |DeletedNews| (the reference has gone completely).
-
-> data News = DeletedNews | BadNews | GoodNews | NoNews deriving (Eq, Ord, Show)
-
-> instance Monoid News where
->     mempty   = NoNews
->     mappend  = min
-
-A |NewsBulletin| is a list of pairs of updated references and the news about them.
-
-> type NewsBulletin = [(REF, News)]
-
-The |addNews| function adds the given news to the bulletin, if it is newsworthy.
-Conor made it delete old versions but minimize news goodness.
-
-> addNews :: (REF, News) -> NewsBulletin ->  NewsBulletin
-> addNews (_,  NoNews)  old  = old
-> addNews (r,  n)       old  = (r, min n n') : old' where
->   (n', old') = seek old
->   seek [] = (NoNews, [])
->   seek ((r', n') : old) | r == r' = (n', old)
->   seek (rn : old) = (n', rn : old') where (n', old') = seek old
-
-The |lookupNews| function returns the news about a reference contained in the
-bulletin, which may be |NoNews| if the reference is not present.
-
-> lookupNews :: NewsBulletin -> REF -> News
-> lookupNews nb ref = fromMaybe NoNews (lookup ref nb)
-
-The |getLatest| function returns the most up-to-date copy of the given reference,
-either the one from the bulletin if it is present, or the one passed in otherwise.
-The slightly odd recursive case arises because equality for references just compares
-their names.
-
-> getLatest :: NewsBulletin -> REF -> REF
-> getLatest []                ref = ref
-> getLatest ((ref', _):news)  ref
->     | ref == ref'  = ref'
->     | otherwise    = getLatest news ref
-
-\conor{Need to modify this to update FAKEs correctly.}
-
-The |mergeNews| function takes older and newer bulletins, and composes them to
-produce a single bulletin with the worst news about every reference mentioned
-in either.
-
-> mergeNews :: NewsBulletin -> NewsBulletin -> NewsBulletin
-> mergeNews new [] = new
-> mergeNews new old = Data.List.foldr addNews old new
-
-
-\subsection{Lambda-lifting and discharging}
-
-The |(-||)| operator takes a list of entries and a term, and changes the term
-so that boys in the list of entries are represented by de Brujin indices.
-
-> (-|) :: Bwd (Entry Bwd) -> INTM -> INTM
-> es -| t = disMangle es 0 %% t
->   where
->     disMangle :: Bwd (Entry Bwd) -> Int -> Mangle Identity REF REF
->     disMangle ys i = Mang
->       {  mangP = \ x ies -> (|(h ys x i $:$) ies|)
->       ,  mangV = \ i ies -> (|(V i $:$) ies|)
->       ,  mangB = \ _ -> disMangle ys (i + 1)
->       }
->     h B0                        x i  = P x
->     h (ys :< E y _ (Boy _) _)     x i
->       | x == y     = V i
->       | otherwise  = h ys x (i + 1)
->     h (ys :< E _ _ (Girl _ _) _)  x i = h ys x i
->     h (ys :< M _ _) x i = h ys x i
-
-The |parBind| function $\lambda$-binds over a list $\Delta$ of entries and
-$\lambda$- and $\Pi$-binds over a list $\nabla$.
-
-> parBind ::  {- $\Delta$ :: -} Bwd (Entry Bwd) {- $\Gamma$ -} -> 
->             {- $\nabla$ :: -} Bwd (Entry Bwd) {- $\Gamma, \Delta$ -} -> 
->             INTM {- $\Gamma, \Delta, \nabla$ -} ->
->             INTM {- $\Gamma$ -}
-> parBind delta nabla t = help delnab nabla (delnab -| t) where
->     delnab = delta <+> nabla
->     help B0                                     B0            t = t
->     help (delta   :< E _ (x, _)  (Boy _) _)     B0            t = help delta B0 (L (x :. t))
->     help (delta   :< _)                         B0            t = help delta B0 t
->     help (delnab  :< E _ (x, _)  (Boy LAMB) _)  (nabla :< _)  t = 
->         help delnab nabla (L (x :. t))
->     help (delnab  :< E _ (x, _)  (Boy ALAB) _)  (nabla :< _)  t = 
->         help delnab nabla (L (x :. t))
->     help (delnab  :< E _ (x, _)  (Boy PIB) s)   (nabla :< _)  t = 
->         help delnab nabla (PI (delnab -| s) (L (x :. t)))
->     help (delnab  :< _)                         (nabla :< _)  t = help delnab nabla t
-
-
-
-The |liftType| function $\Pi$-binds a type over a list of entries.
-
-> liftType :: Bwd (Entry Bwd) -> INTM -> INTM
-> liftType es t = pis es (es -| t) where
->   pis B0 t = t
->   pis (es :< E _ (x,_)  (Boy _)     s)  t = pis es (PI (es -| s) (L (x :. t)))
->   pis (es :< _)                         t = pis es t
-
-The |inferGoalType| function $\Pi$-binds the type when it encounters a $\lambda$-boy
-in the list of entries, and produces |SET| when it encounters a $\Pi$-boy.
-
-> inferGoalType :: Bwd (Entry Bwd) -> INTM -> INTM
-> inferGoalType B0 t = t
-> inferGoalType (es :< E _ (x,_)  (Boy LAMB)  s)  t        = inferGoalType es (PI (es -| s) (L (x :. t)))
-> inferGoalType (es :< E _ (x,_)  (Boy ALAB)  s)  (PRF t)  = inferGoalType es (PRF (ALL (es -| s) (L (x :. t))))
-> inferGoalType (es :< E _ (x,_)  (Boy PIB)   s)  SET      = inferGoalType es SET
-> inferGoalType (es :< _)                         t        = inferGoalType es t
 

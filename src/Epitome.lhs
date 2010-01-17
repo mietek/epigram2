@@ -77,6 +77,8 @@
 \input{ProofState/Introduction.tex}
 
 %include ProofState/Developments.lhs
+%include ProofState/News.lhs
+%include ProofState/Lifting.lhs
 %include ProofState/ProofState.lhs
 %include ProofState/Elimination.lhs
 
