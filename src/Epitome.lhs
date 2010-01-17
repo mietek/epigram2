@@ -79,6 +79,7 @@
 %include ProofState/Developments.lhs
 %include ProofState/News.lhs
 %include ProofState/Lifting.lhs
+%include ProofState/ProofContext.lhs
 %include ProofState/ProofState.lhs
 %include ProofState/Elimination.lhs
 

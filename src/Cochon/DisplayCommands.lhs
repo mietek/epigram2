@@ -15,6 +15,7 @@
 
 > import ProofState.Developments
 > import ProofState.Lifting
+> import ProofState.ProofContext
 > import ProofState.ProofState
 
 > import DisplayLang.DisplayTm

@@ -15,6 +15,7 @@
 > import Kit.MissingLibrary
 
 > import ProofState.Developments
+> import ProofState.ProofContext
 > import ProofState.ProofState
 
 > import DisplayLang.DisplayTm

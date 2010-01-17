@@ -14,6 +14,7 @@
 
 > import Kit.BwdFwd
 
+> import ProofState.ProofContext
 > import ProofState.ProofState
 
 > import Cochon.DisplayCommands

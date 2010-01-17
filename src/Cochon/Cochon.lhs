@@ -31,6 +31,7 @@
 > import DisplayLang.DisplayTm
 
 > import ProofState.Developments
+> import ProofState.ProofContext
 > import ProofState.ProofState
 > import ProofState.Elimination
 

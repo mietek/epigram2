@@ -27,6 +27,7 @@
 > import DisplayLang.Naming
 > import DisplayLang.TmParse
 
+> import ProofState.ProofContext
 > import ProofState.ProofState
 
 > import NameSupply.NameSupply
