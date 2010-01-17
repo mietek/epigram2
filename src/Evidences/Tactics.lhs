@@ -1,4 +1,5 @@
 \section{Tactics}
+\label{sec:tactics}
 
 %if False
 
@@ -16,7 +17,9 @@
 >                           switch, cases,               -- dealing with Enum
 >                           split,                       -- dealing with Sigma
 >                           foldDesc,                    -- dealing with Desc
->                           trustMe                      -- build terms
+>                           trustMe,                     -- build terms
+>                           setTac, conTac, piTac,
+>                           arrTac, (@@@), var           -- brainless shortcuts
 >                          ) where
 
 > import Control.Applicative
@@ -524,6 +527,7 @@ Same thing here, for the |Mu| eliminator:
         if you have seen Switch, Split, and Fold, you know that
         something is happening.}
 
+
 \subsection{Using |Tac|}
 
 At some point, we need to build a value. Here is the place where it is
@@ -537,3 +541,28 @@ doesn't, good luck to find the mistake.
 >       Left e -> error $ concat $ intersperse "\n" $ reverse e
 >       Right x -> x
 
+
+
+\subsection{Some handy combinators}
+
+The following combinators are brain-less shortcuts. There is nothing
+really exciting about that. Just that they exist.
+
+> setTac :: Tac VAL
+> setTac = can Set
+>
+> conTac :: Tac VAL -> Tac VAL
+> conTac t = can $ Con t
+>
+> piTac :: Tac VAL -> (REF -> Tac VAL) -> Tac VAL
+> piTac s t = can $ Pi s (lambda t)
+>
+> arrTac :: Tac VAL -> Tac VAL -> Tac VAL
+> arrTac s t = piTac s (\_ -> t)
+>
+> (@@@) :: REF -> [Tac VAL] -> Tac VAL
+> f @@@ xs = foldl' app (use f) xs $ done
+>     where app f x = f . apply (A x)
+>
+> var :: REF -> Tac VAL
+> var r = use r done

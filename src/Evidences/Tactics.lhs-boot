@@ -11,7 +11,9 @@
 >                 switch, cases,                -- dealing with Enum
 >                 split,                        -- dealing with Sigma		  	 
 >		  foldDesc,                     -- dealing with Desc
->                 trustMe                       -- build terms
+>                 trustMe,                      -- build terms
+>                 setTac, conTac, piTac,
+>                 arrTac, (@@@), var            -- brainless shortcuts  
 >                 ) where
 
 > import Control.Applicative
@@ -59,3 +61,12 @@
 > foldDesc :: Tac VAL -> Tac VAL
 
 > trustMe :: (TY :>: Tac VAL) -> VAL
+
+\subsection{Some handy }
+
+> setTac :: Tac VAL
+> conTac :: Tac VAL -> Tac VAL
+> piTac :: Tac VAL -> (REF -> Tac VAL) -> Tac VAL
+> arrTac :: Tac VAL -> Tac VAL -> Tac VAL
+> (@@@) :: REF -> [Tac VAL] -> Tac VAL
+> var :: REF -> Tac VAL

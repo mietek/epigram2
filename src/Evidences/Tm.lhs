@@ -615,7 +615,7 @@ that captures those parameters as de Brujin indexed variables.
 <     | x == y      = Right 0
 <     | otherwise   = (|succ (h ys y)|)
 
-%end
+%endif
 
 \subsubsection{The Under mangler}
 
