@@ -1,4 +1,4 @@
-
+\section{Variable Manipulation}
 
 %if False
 
@@ -17,8 +17,6 @@
 > import Kit.MissingLibrary
 
 %endif
-
-\subsection{Variable Manipulation}
 
 Variable manipulation, in all its forms, ought be handled by a
 mangler. A |Mangle f x y| is a record that describes how to deal with
@@ -52,6 +50,8 @@ Note that, morally, a |[Elim InTm y]| is a |Spine TT y|. However, we
 cannot write that in Haskell. 
 \question{Why do I get: @Not in scope: type constructor or class `TT'@? }
 
+
+
 The interpretation of |Mangle| is given by the following function
 |%|. The |%| operator mangles a term, produing a term with the
 appropriate parameter type in the relevant idiom. This is basically a
@@ -84,7 +84,7 @@ The |%%| operator applies a mangle that uses the identity functor.
 
 Dead code, waiting to be burried
 
-\subsubsection{The Capture mangler}
+\subsection{The Capture mangler}
 
 Given a list |xs| of |String| parameter names, the |capture| function produces a mangle
 that captures those parameters as de Brujin indexed variables.
@@ -103,7 +103,7 @@ that captures those parameters as de Brujin indexed variables.
 
 %endif
 
-\subsubsection{The Under mangler}
+\subsection{The Under mangler}
 
 The |under i y| mangle binds the variable with de Brujin index |i| to the parameter |y|
 and leaves the term otherwise unchanged.
