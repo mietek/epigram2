@@ -21,10 +21,19 @@
 %endif
 
 
+In the following, we define 4 useful functions manipulating terms in a
+context of entries. These functions provide the basic toolkit for
+operations like lambda-lifting, or the manipulation of the proof
+state. Therefore, this section has to be read with the tired eye of
+the implementer.
 
 
-The |(-||)| operator takes a list of entries and a term, and changes the term
-so that boys in the list of entries are represented by de Brujin indices.
+\subsection{Discharging entries in a term}
+
+
+The |(-||)| operator takes a list of entries and a term, and changes
+the term so that boys in the list of entries are represented by de
+Brujin indices.
 
 > (-|) :: Bwd (Entry Bwd) -> INTM -> INTM
 > es -| t = disMangle es 0 %% t
@@ -42,8 +51,15 @@ so that boys in the list of entries are represented by de Brujin indices.
 >     h (ys :< E _ _ (Girl _ _) _)  x i = h ys x i
 >     h (ys :< M _ _) x i = h ys x i
 
-The |parBind| function $\lambda$-binds over a list $\Delta$ of entries and
-$\lambda$- and $\Pi$-binds over a list $\nabla$.
+\question{How do we read the |(-||)| operator? "discharge into"?}
+
+
+\subsection{Binding a term}
+
+
+The |parBind| function $\lambda$-binds a term over a list $\Delta$ of
+entries and $\lambda$- and $\Pi$-binds over a list $\nabla$ of
+entries.
 
 > parBind ::  {- $\Delta$ :: -} Bwd (Entry Bwd) {- $\Gamma$ -} -> 
 >             {- $\nabla$ :: -} Bwd (Entry Bwd) {- $\Gamma, \Delta$ -} -> 
@@ -63,6 +79,7 @@ $\lambda$- and $\Pi$-binds over a list $\nabla$.
 >     help (delnab  :< _)                         (nabla :< _)  t = help delnab nabla t
 
 
+\subsection{Binding a type}
 
 The |liftType| function $\Pi$-binds a type over a list of entries.
 
@@ -73,8 +90,11 @@ The |liftType| function $\Pi$-binds a type over a list of entries.
 >   pis (es :< _)                         t = pis es t
 
 
-The |inferGoalType| function $\Pi$-binds the type when it encounters a $\lambda$-boy
-in the list of entries, and produces |SET| when it encounters a $\Pi$-boy.
+\subsection{Making a type out of a goal}
+
+The |inferGoalType| function $\Pi$-binds the type when it encounters a
+$\lambda$-boy in the list of entries, and produces |SET| when it
+encounters a $\Pi$-boy.
 
 > inferGoalType :: Bwd (Entry Bwd) -> INTM -> INTM
 > inferGoalType B0 t = t
