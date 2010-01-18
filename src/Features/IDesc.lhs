@@ -1,10 +1,8 @@
-\section{Desc}
+\section{IDesc}
 
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE TypeOperators, GADTs, KindSignatures,
->     TypeSynonymInstances, FlexibleInstances, ScopedTypeVariables #-}
 
 > module Features.IDesc where
 
@@ -119,10 +117,10 @@
 >   imapBoxOp :
 >   ielimOp :
 
-> import -> OpCompile where
->   -- ("elimOp", [d,v,bp,p]) -> App (Var "__elim") [d, p, v]
->   -- ("mapBox", [x,d,bp,p,v]) -> App (Var "__mapBox") [x, p, v]
->   -- ("SwitchD", [e,b,x]) -> App (Var "__switch") [x, b]
+< import -> OpCompile where
+<   ("elimOp", [d,v,bp,p]) -> App (Var "__elim") [d, p, v]
+<   ("mapBox", [x,d,bp,p,v]) -> App (Var "__mapBox") [x, p, v]
+<   ("SwitchD", [e,b,x]) -> App (Var "__switch") [x, b]
 
 > import -> OpCode where
 >   idescOp :: Op

@@ -3,7 +3,6 @@
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE TypeOperators, GADTs #-}
 
 > module Features.Equality where
 

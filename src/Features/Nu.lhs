@@ -1,8 +1,12 @@
+\section{Nu}
+
+%if False
+
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE TypeOperators, GADTs, KindSignatures,
->     TypeSynonymInstances, FlexibleInstances, ScopedTypeVariables #-}
 
 > module Features.Nu where
+
+%endif
 
 > import -> CanConstructors where
 >   Nu :: t -> Can t
