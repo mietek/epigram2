@@ -160,7 +160,7 @@ Punctuation used all over the place:
 
 |InDTm ArgSize|:
 
->     KwSet | KwProp | KwUId | KwAbsurd | KwTrivial | KwQ | KwCon | KwReturn |
+>     KwSet | KwProp | KwUId | KwAbsurd | KwTrivial | KwCon | KwReturn |
 >     KwTag | KwLabel | KwLabelEnd | KwRet | KwLambda | KwPlus | KwSig |
 
 |InDTm AndSize|:
@@ -195,7 +195,6 @@ Other |InDTm|s:
 > key KwUId       = "UId"
 > key KwAbsurd    = "FF"
 > key KwTrivial   = "TT"
-> key KwQ         = "?"
 > key KwCon       = "con"
 > key KwReturn    = "`"
 > key KwTag       = "'"
@@ -327,6 +326,10 @@ Parsing an identifier or a number is as simple as:
 >     where filterInt (Identifier s) | all isDigit s = Just s
 >           filterInt _ = Nothing
 
+Occasionally we may want to match a specific identifier:
+
+> identEq :: String -> Parsley Token ()
+> identEq s = ident >>= pGuard . (== s)
 
 Finally, we can match a bracketted expression and use a specific
 parser for the bracketted tokens:

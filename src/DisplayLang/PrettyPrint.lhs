@@ -118,7 +118,7 @@ than a $\lambda$-term is reached.
 >     pretty (DL s)          = pretty s
 >     pretty (DC c)          = pretty c
 >     pretty (DN n)          = pretty n
->     pretty (DQ x)          = const (kword KwQ <> text x)
+>     pretty (DQ x)          = const (char '?' <> text x)
 >     import <- InDTmPretty
 >     pretty indtm           = const (quotes . text . show $ indtm)
 

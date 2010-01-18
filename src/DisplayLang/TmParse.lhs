@@ -137,7 +137,7 @@ We need to sort out a better solution for ascription syntax.
 >      |DUID (%keyword KwUId%)
 >      |DABSURD (%keyword KwAbsurd%)
 >      |DTRIVIAL (%keyword KwTrivial%)
->      |DQ (%keyword KwQ%) (ident <|> pure "")
+>      |DQ (pFilter question ident)
 >      |DCON (%keyword KwCon%) (sizedInDTm ArgSize)
 >      |DRETURN (%keyword KwReturn%) (sizedInDTm ArgSize)
 >      |DTAG (%keyword KwTag%) ident
@@ -150,6 +150,10 @@ We need to sort out a better solution for ascription syntax.
 >      |DSIGMA (%keyword KwSig%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
 >      |)
 >   where
+>     question :: String -> Maybe String
+>     question ('?':s)  = Just s
+>     question _        = Nothing
+>
 >     underscore :: Parsley Token String
 >     underscore = keyword KwUnderscore >> pure "_"
 >

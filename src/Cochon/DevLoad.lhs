@@ -88,7 +88,8 @@ type. The question mark corresponds to an open goal. On the other
 hand, giving a term corresponds to explicitly solving the goal.
 
 > pDefn :: Parsley Token (Maybe InDTmRN :<: InDTmRN)
-> pDefn  =  (|  (%keyword KwQ%) (%keyword KwAsc%) ~Nothing :<: pInDTm 
+> pDefn  =  (| (%identEq "?"%) (%keyword KwAsc%)
+>                   ~Nothing :<: pInDTm 
 >           |  id pAsc
 >           |)
 >   where pAsc = do

@@ -218,7 +218,7 @@ of the proof state at the current location.
 >             Module -> return empty
 >             Unknown (ty :=>: _) -> do
 >                 tyd <- prettyHere (SET :>: ty)
->                 return (kword KwQ <+> kword KwAsc <+> tyd)
+>                 return (char '?' <+> kword KwAsc <+> tyd)
 >             Defined tm (ty :=>: tyv) -> do
 >                 tyd <- prettyHere (SET :>: ty)
 >                 tmd <- prettyHereAt (pred ArrSize) (tyv :>: tm)
