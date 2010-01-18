@@ -2,9 +2,11 @@
 
 > import Data.Foldable
 
-> import Parsley
-> import Lexer
-> import TmParse
+> import DisplayLang.Lexer
+> import DisplayLang.TmParse
+
+> import Kit.Parsley
+
 
 > tests = [ "*"                         -- Set
 >         , "#"                         -- Prop
@@ -118,7 +120,7 @@
 > test p x =
 >   let (Right tox) = parse tokenize x in
 >     let parseX = parse p tox in
->       putStrLn (x ++ "\t==>\t" ++ show tox ++ "\t==>\t" ++ show parseX)
+>       putStrLn (x ++ "\n==>\t" ++ show tox ++ "\n==>\t" ++ show parseX)
 
 > main = do
 >     foldMap (test pInDTm) tests
