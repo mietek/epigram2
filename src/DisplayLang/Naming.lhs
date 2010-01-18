@@ -151,8 +151,9 @@ entry's children to resolve the next component.
 > findGlobal (xs :< e) (y : ys) = case hits (entryLastName e) y of
 >     Right _  -> case e of
 >         E r _ e _ -> findChild r (boySpine xs) e ys
->         M n (es, _, _) -> findD es ys (boySpine xs)
+>         M n (es, _, _) -> findInEntries es ys (boySpine xs)
 >     Left y'  -> findGlobal xs (y' : ys)
+
 
 The |findChild| function takes a reference to a containing entry, a spine of
 shared parameters, an entity |e| and the remainder of a relative name to
@@ -162,18 +163,30 @@ the entity should be a |Girl|, and it searches her children for the name.
 
 > findChild :: REF -> Spine {TT} REF -> Entity Bwd -> RelName -> Either [String] EXDTM
 > findChild r  as (Boy _)              []  = (|(DP r)|)
-> findChild r  as (Girl _ _)           []  = (|(DP r $::$ fmap (fmap unelaborate) as)|)
+> findChild r  as (Girl _ _)           []  = (|(DP r $::$ fmap (fmap (DT . InTmWrap)) as)|)
 > findChild r  as (Boy _)              ys  = Left ["findChild: " ++ show r ++ " is a boy so it has no children!"]
-> findChild r  as (Girl _ (es, _, _))  ys  = findD es ys as
+> findChild r  as (Girl _ (es, _, _))  ys  = findInEntries es ys as
 
-> findD :: Entries -> RelName -> Spine {TT} REF -> Either [String] EXDTM
-> findD (xs :< E r x e@(Girl _ _) _) (y : ys) as = case hits x y of
+
+The |findInEntries| function takes a list of entries to search, a relative name
+to look for and a spine of shared parameters. If it finds that the first
+component of the name refers to a girl, it calls |findChild| to check if she or
+one of her children is the target. Note that boys within other developments are
+not in scope, but they may affect relative name offsets.
+
+> findInEntries :: Entries -> RelName -> Spine {TT} REF -> Either [String] EXDTM
+> findInEntries (xs :< M n (es, _, _)) (y : ys) as = case hits (last n) y of
+>     Right _  -> findInEntries es ys as
+>     Left y'  -> findInEntries xs (y' : ys) as
+> findInEntries (xs :< E r x e@(Girl _ _) _) (y : ys) as = case hits x y of
 >     Right _  -> findChild r as e ys
->     Left y'  -> findD xs (y' : ys) as
-> findD (xs :< E _ x (Boy _) _) (y : ys) as = case hits x y of
->     Right _  -> Left ["findD: " ++ show x ++ " is a boy, so it has no children!"]
->     Left y'  -> findD xs (y' : ys) as
-> findD B0 sos as = Left ["findD: ran out of entries looking for " ++ showRelName sos]
+>     Left y'  -> findInEntries xs (y' : ys) as
+> findInEntries (xs :< E _ x (Boy _) _) (y : ys) as = case hits x y of
+>     Right _  -> Left ["findInEntries: " ++ show x ++ " is a boy, so it has no children!"]
+>     Left y'  -> findInEntries xs (y' : ys) as
+> findInEntries B0  sos  as = Left ["findInEntries: ran out of entries looking for "
+>                                     ++ showRelName sos]
+> findInEntries _   []   as = Left ["findInEntries: modules have no term representation."]
 
 
 \subsection{Christening (Generating Local Longnames)}
