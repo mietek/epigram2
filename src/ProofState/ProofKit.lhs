@@ -263,7 +263,7 @@ several alternatives for where to go next and continuing until a goal is reached
 >          ref = n := HOLE :<: evTm ty'
 >     putMother (GirlMother ref (last n) ty')
 >     putDevTip (Unknown (ty :=>: tyv))
->     return (N (P ref $:$ aunclesToElims (aus <>> F0)))
+>     return (applyAuncles ref aus)
 
 > dropModule :: ProofState ()
 > dropModule = do
@@ -279,12 +279,20 @@ several alternatives for where to go next and continuing until a goal is reached
 >     dropModule
 >     return t
 
-> lookupName :: Name -> ProofState INTM
-> lookupName name = do
->   aus <- getAuncles
->   let Just (E ref _ _ _) = Data.Foldable.find ((name ==) . entryName) aus
->   return $ (N (P ref $:$ aunclesToElims (aus <>> F0)))
 
+The |lookupName| function looks up a name in the context (including axioms and
+primitives); if found, it returns the reference applied to the spine of
+shared parameters.
+
+> lookupName :: Name -> ProofState (Maybe INTM)
+> lookupName name = do
+>     aus <- getAuncles
+>     case Data.Foldable.find ((name ==) . entryName) aus of
+>       Just (E ref _ _ _)  -> return (Just (applyAuncles ref aus))
+>       Nothing             ->
+>         case Data.Foldable.find ((name ==) . refName . snd) (axioms ++ primitives) of
+>           Just (_, ref)  -> return (Just (applyAuncles ref aus))
+>           Nothing        -> return Nothing
 
 
 
@@ -341,7 +349,7 @@ next goal (if one exists) instead.
 >             putDevTip (Defined tm (tipTyTm :=>: tipTy))
 >             putMother (GirlMother ref xn ty)
 >             updateRef ref
->             return (N (P ref $:$ aunclesToElims (aus <>> F0)))
+>             return (applyAuncles ref aus)
 >         _  -> throwError' "give: only possible for incomplete goals."
 
 The |lambdaBoy| command checks that the current goal is a $\Pi$-type, and if so,
@@ -418,7 +426,14 @@ current development, after checking that the purported type is in fact a type.
 >     nsupply <- getDevNSupply
 >     putDevEntry (E ref (last n) (Girl LETG (B0, Unknown (ty :=>: tyv), freshNSpace nsupply s')) ty')
 >     putDevNSupply (freshName nsupply)
->     return (N (P ref $:$ aunclesToElims (aus <>> F0)))
+>     return (applyAuncles ref aus)
+
+
+The |applyAuncles| command applies a reference to the given
+spine of shared parameters.
+
+> applyAuncles :: REF -> Entries -> INTM
+> applyAuncles ref aus = N (P ref $:$ aunclesToElims (aus <>> F0))
 
 > aunclesToElims :: Fwd (Entry Bwd) -> [Elim INTM]
 > aunclesToElims F0 = []

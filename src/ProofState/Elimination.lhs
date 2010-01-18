@@ -326,7 +326,7 @@ Then, it is straightforward to build the term we want and to give it:
 > applyElim :: Name -> INTM -> [INTM] -> [REF] -> ProofState ()
 > applyElim elim motive methods deltas = do
 >     reflDeltas <- withNSupply (mkRefls deltas)
->     N e <- lookupName elim
+>     Just (N e) <- lookupName elim
 >     giveNext $ N $ e $## (map NP deltas ++
 >                           reflDeltas)
 >     return ()

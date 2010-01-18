@@ -594,12 +594,15 @@ and call canTy directly rather than letting distill do it for us.
 >         Con (DPAIR _ (DPAIR s (DPAIR t DVOID)) :=>: v) <- canTy (distill es) (ty :>: c)
 >         return (DPAIR s t :=>: CON v)
 
+
+If a label is not in scope, we remove it, so the definition appears at the
+appropriate place when the proof state is printed.
+
 >     distill es (SET :>: tm@(MU (Just l) t)) = do
->         let name = extractName (unN l)
->         aus <- getAuncles
->         case find ((name ==) . entryName) aus of
+>         mtm <- lookupName . extractName . unN $ l
+>         case mtm of
 >             Nothing  -> distill es (SET :>: MU Nothing t)
->             _        -> do
+>             Just _   -> do
 >                 cc <- canTy (distill es) (Set :>: Mu (Just l :?=: Id t))
 >                 return ((DC $ fmap termOf cc) :=>: evTm tm)
 >       where
