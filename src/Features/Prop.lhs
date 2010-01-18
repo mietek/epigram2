@@ -177,8 +177,8 @@ Elim forms inherited from elsewhere
 
 > import -> Pretty where
 >   prettyAll :: Doc -> InDTm String -> Size -> Doc
->   prettyAll bs (DALL s (DL (DK t))) = prettyAllMore bs
->     (pretty s (pred PiSize) <+> kword KwImp <+> pretty t PiSize)
+>   prettyAll bs (DALL (DPRF p) (DL (DK q))) = prettyAllMore bs
+>     (pretty p (pred PiSize) <+> kword KwImp <+> pretty q PiSize)
 >   prettyAll bs (DALL s (DL (x ::. t))) =
 >     prettyAll (bs <> parens (text x <+> kword KwAsc <+> pretty s maxBound)) t
 >   prettyAll bs (DALL s t) = prettyAllMore bs
