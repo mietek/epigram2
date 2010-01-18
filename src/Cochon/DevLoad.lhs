@@ -166,8 +166,6 @@ module in a girl. The third step consists in solving the problem if we
 were provided a solution, or give up if not. Finally, we accumulate
 the commands which might have been issued.
 
-\question{Why is there a FIXME?}
-
 > makeEntry (DLGirl x kids (mtipTm :<: tipTys) commands) ncs = do
 >     -- Open a module named by her name
 >     n <- makeModule x
@@ -176,7 +174,6 @@ the commands which might have been issued.
 >     ncs' <- makeDev kids ncs
 >     -- Translate |tipTys| into a real |INTM|
 >     tipTyd <- resolveHere tipTys
->     -- FIXME: This needs some thought:
 >     tipTy :=>: tipTyv <- elaborate False (SET :>: tipTyd)
 >     -- Turn the module into a Girl of |tipTy|
 >     moduleToGoal tipTy
