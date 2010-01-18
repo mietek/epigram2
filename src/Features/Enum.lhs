@@ -159,7 +159,7 @@ Equality rules:
 >   halfZip (Su t0) (Su t1) = Just (Su (t0,t1))
 
 > import -> CanPretty where
->   pretty (EnumT t)  = wrapDoc (kword KwEnum <+> pretty t ArgSize) ArgSize
+>   pretty (EnumT t)  = wrapDoc (kword KwEnum <+> pretty t ArgSize) AppSize
 >   pretty Ze         = const (int 0)
 >   pretty (Su t)     = prettyEnumIndex 1 t
 

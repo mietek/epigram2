@@ -78,7 +78,7 @@ Coercion rule:
 >   Pair   :: t -> t -> Can t 
 
 > import -> CanPretty where
->   pretty Unit         = prettySigma empty DUNIT
+>   pretty Unit         = wrapDoc (kword KwSig <+> parens empty) AppSize
 >   pretty Void         = prettyPair DVOID
 >   pretty (Sigma s t)  = prettySigma empty (DSIGMA s t)
 >   pretty (Pair a b)   = prettyPair (DPAIR a b)
