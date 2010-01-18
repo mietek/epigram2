@@ -46,15 +46,16 @@ of entries in scope, which it will extend when going under a binder.
 > distill es (ty :>: l@(L sc)) = do
 >     (k, s, f) <- lambdable ty `catchMaybe` ("distill: type " ++ show ty ++ " is not lambdable.")
 >     nsupply <- getDevNSupply
->     tm' :=>: _ <- freshRef (fortran l :<: s) (\ref nsupply -> do
+>     let x = fortran l
+>     tm' :=>: _ <- freshRef (x :<: s) (\ref nsupply -> do
 >         putDevNSupply nsupply
 >         distill (es :< E ref (lastName ref) (Boy k) (error "distill: boy type undefined")) (f (pval ref) :>: underScope sc ref)
 >       ) nsupply
->     return $ DL (convScope sc tm')   :=>: (evTm $ L sc)
+>     return $ DL (convScope sc x tm')   :=>: (evTm $ L sc)
 >   where
->     convScope :: Scope {TT} REF -> InDTm String -> DScope String
->     convScope (x :. _)  tm = x ::. tm
->     convScope (K _)     tm = DK tm
+>     convScope :: Scope {TT} REF -> String -> InDTm String -> DScope String
+>     convScope (_ :. _)  x  tm = x ::. tm
+>     convScope (K _)     _  tm = DK tm
 
 > distill es (_ :>: N n) = do
 >     (n' :<: _) <- distillInfer es n []
