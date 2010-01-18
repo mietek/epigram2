@@ -128,7 +128,7 @@ to:
 > parseWord :: Parsley Char String
 > parseWord = (|id (some $ tokenFilter (\t -> not $ elem t $ space ++ bracketChars ++ protected)) 
 >              |(: []) (tokenFilter (flip elem protected))|)
->     where protected = ",._^`'"
+>     where protected = ",`'"
 
 As we are at it, we can test for word equality, that is build a parser
 matching a given word:
@@ -152,11 +152,7 @@ things...
 
 Punctuation used all over the place:
 
->     KwAsc | KwComma | KwSemi | KwDefn |
-
-Punctuation for relative names:
-
->     KwNameSep | KwRelSep | KwAbsSep |
+>     KwAsc | KwComma | KwSemi | KwDefn | KwUnderscore |
 
 |ExDTm|s:
 
@@ -186,10 +182,7 @@ Other |InDTm|s:
 > key KwComma     = ","
 > key KwSemi      = ";"
 > key KwDefn      = ":="
-
-> key KwNameSep   = "."
-> key KwRelSep    = "^"
-> key KwAbsSep    = "_"
+> key KwUnderscore  = "_"
 
 > key KwFst       = "!"
 > key KwSnd       = "-"

@@ -8,7 +8,8 @@
 > module DisplayLang.TmParse where
 
 > import Control.Applicative
-> import Data.Foldable hiding (foldr)
+> import Data.Foldable hiding (elem, foldr)
+> import Data.Char
 
 > import Kit.MissingLibrary
 > import Kit.Parsley
@@ -32,13 +33,27 @@ A relative name is a list of idents separated by dots, and possibly
 with |^| or |_| symbols (for relative or absolute offsets).
 
 > nameParse :: Parsley Token RelName
-> nameParse = (|namePartParse : (many $ keyword KwNameSep *> namePartParse)|)
+> nameParse = do
+>     s <- ident
+>     case parse pName s of
+>         Right rn  -> return rn
+>         Left e    -> fail "nameParse failed"
 
-> namePartParse :: Parsley Token (String, Offs)
-> namePartParse =  (|(,) ident (%keyword KwRelSep%) (| Rel (| read digits |) |)
->                   |(,) ident (%keyword KwAbsSep%) (| Abs (| read digits |) |)
->                   |(,) ident ~(Rel 0)
->                   |)
+> pName :: Parsley Char RelName
+> pName = (| pNamePart : (many (tokenEq '.' *> pNamePart)) |)
+
+> pNamePart :: Parsley Char (String, Offs)
+> pNamePart = (|(,) pNameWord (%tokenEq '^'%) (| Rel (| read pNameOffset |) |)
+>              |(,) pNameWord (%tokenEq '_'%) (| Abs (| read pNameOffset |) |)
+>              |(,) pNameWord ~(Rel 0)
+>              |)
+
+> pNameWord :: Parsley Char String
+> pNameWord = some (tokenFilter (\c -> not (c `elem` "_^.")))
+
+> pNameOffset :: Parsley Char String
+> pNameOffset = some (tokenFilter isDigit)
+
 
 
 > iter :: (a -> b -> b) -> [a] -> b -> b
@@ -128,13 +143,20 @@ We need to sort out a better solution for ascription syntax.
 >      |DTAG (%keyword KwTag%) ident
 >      |DLABEL (%keyword KwLabel%) (sizedInDTm AppSize) (%keyword KwAsc%) (sizedInDTm ArgSize) (%keyword KwLabelEnd%)
 >      |DLRET (%keyword KwRet%) (sizedInDTm ArgSize)
->      |(iter DLAV) (%keyword KwLambda%) (some ident) (%keyword KwArr%) pInDTm
+>      |(iter mkLambda) (%keyword KwLambda%) (some (ident <|> underscore)) (%keyword KwArr%) pInDTm
 >      |id (bracket Square tuple)
 >      |mkNum (|read digits|) (optional $ (keyword KwPlus) *> sizedInDTm ArgSize)
 >      |id (%keyword KwSig%) (bracket Round sigma)
 >      |DSIGMA (%keyword KwSig%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
 >      |)
 >   where
+>     underscore :: Parsley Token String
+>     underscore = keyword KwUnderscore >> pure "_"
+>
+>     mkLambda :: String -> InDTmRN -> InDTmRN
+>     mkLambda "_"  t = DL (DK t)
+>     mkLambda x    t = DLAV x t
+>
 >     tuple :: Parsley Token InDTmRN
 >     tuple =
 >         (|DPAIR (sizedInDTm ArgSize) (| id (%keyword KwComma%) pInDTm

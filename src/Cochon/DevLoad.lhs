@@ -63,7 +63,7 @@ A girl is an identifier, followed by a list of children, a definition
 (which may be @?@), and optionally a list of commands:
 
 > pGirl :: Parsley Token DevLine
-> pGirl =  (| DLGirl  (|fst namePartParse|)  -- identifier
+> pGirl =  (| DLGirl  ident                  -- identifier
 >                     pLines                 -- childrens (optional)
 >                     pDefn                  -- definition
 >                     pCTSuffix              -- commands (optional)
@@ -112,8 +112,8 @@ we know things work.
 A module is similar, but has no definition.
 
 > pModule :: Parsley Token DevLine
-> pModule =  (| DLModule  (|fst namePartParse|)  -- identifier
->                         pLines                 -- childrens (optional)
+> pModule =  (| DLModule  ident                  -- identifier
+>                         pLines                 -- children (optional)
 >                         pCTSuffix              -- commands (optional)
 >                         (%keyword KwSemi%) 
 >            |)
@@ -126,14 +126,14 @@ $\Pi$-abstraction (represented by @(x : S) ->@).
 > pBoy :: Parsley Token DevLine
 > pBoy =  (|  (%keyword KwLambda%)          -- @\@
 >             (DLBoy LAMB)              
->             (| fst namePartParse |)       -- @x@
+>             ident                         -- @x@
 >             (%keyword KwAsc%)             -- @:@
 >             (sizedInDTm (pred ArrSize))   -- @T@
 >             (%keyword KwArr%) |)          -- @->@
 >         <|> 
 >             (bracket Round                -- @(@
 >              (|  (DLBoy PIB)              
->                  (| fst namePartParse |)  -- @x@
+>                  ident                    -- @x@
 >                  (%keyword KwAsc%)        -- @:@
 >                  pInDTm |)) <*            -- @S)@
 >                  keyword KwArr            -- @->@
