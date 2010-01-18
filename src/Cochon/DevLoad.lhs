@@ -229,41 +229,17 @@ to translate the type in display syntax to an |INTM|. Then, we make a
 fresh reference of that type. Finally, we store that reference in the
 development. 
 
-Note that we have to be careful when manipulating the |NameSupply|:
-better be sure that we maintain a coherent state of our name supply.
-
-> makeEntry (DLBoy LAMB x tys) ncs = do
+> makeEntry (DLBoy k x tys) ncs = do
 >     -- Translate the display |tys| into an |INTM|
 >     tyd <- resolveHere tys
 >     ty :=>: tyv <- elaborate False (SET :>: tyd)
 >     -- Make a fresh reference of that type
->     nsupply <- getDevNSupply
->     freshRef (x :<: tyv)
->         (\ref r -> do 
->            -- Register |ref| as a Lambda boy
->            putDevEntry (E ref (lastName ref) (Boy LAMB) ty)
->            -- Save the updated |NameSupply|!
->            putDevNSupply r
->          ) nsupply
+>     freshRef (x :<: tyv) (\ref ->
+>         -- Register |ref| as a Lambda boy
+>         putDevEntry (E ref (lastName ref) (Boy k) ty)
+>       ) 
 >     -- Pass the accumulated commands
 >     return ncs
->
-> makeEntry (DLBoy PIB x tys) ncs = do 
->     -- Translate the display |tys| into an |INTM|
->     tyd <- resolveHere tys
->     ty :=>: tyv <- elaborate False (SET :>: tyd)
->     -- Make a fresh reference of that type
->     nsupply <- getDevNSupply
->     freshRef (x :<: tyv)
->         (\ref r -> do
->            -- Register |ref| as a Pi boy
->            putDevEntry (E ref (lastName ref) (Boy PIB) ty)
->            -- Save the updated |NameSupply|!
->            putDevNSupply r
->          ) nsupply
->     -- Pass the accumulated commands
->     return ncs
-
 
 
 \subsection{Loading the files}

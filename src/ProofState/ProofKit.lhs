@@ -51,6 +51,18 @@ function that requires it.
 > withNSupply :: (NameSupply -> x) -> ProofState x
 > withNSupply f = getDevNSupply >>= return . f
 
+> instance NameSupplier ProofState where
+>     freshRef (s :<: ty) f = do
+>         nsupply <- getDevNSupply
+>         freshRef (s :<: ty) (\ref nsupply' -> do
+>             putDevNSupply nsupply'
+>             f ref
+>           ) nsupply
+>
+>     forkNSupply = error "ProofState does not provide forkNSupply"
+>     
+>     askNSupply = getDevNSupply
+
 \begin{danger}[Read-only name supply]
 
 Note that this function has no way to return an updated name supply to
@@ -360,17 +372,44 @@ appends a $\lambda$-abstraction with the appropriate type to the current develop
 >     tip <- getDevTip
 >     case tip of
 >       Unknown (pi :=>: ty) -> case lambdable ty of
->         Just (k, s, t) -> do
->           nsupply <- getDevNSupply
->           freshRef (x :<: s) (\ref r -> do
->             putDevEntry (E ref (lastName ref) (Boy k) (bquote B0 s r))
+>         Just (k, s, t) -> freshRef (x :<: s) (\ref -> do
+>             s' <- bquoteHere s
+>             putDevEntry (E ref (lastName ref) (Boy k) s')
 >             let tipTyv = t (pval ref)
->             putDevTip (Unknown (bquote B0 tipTyv r :=>: tipTyv))
->             putDevNSupply r
+>             tipTy <- bquoteHere tipTyv
+>             putDevTip (Unknown (tipTy :=>: tipTyv))
 >             return ref
->               ) nsupply
+>           )
 >         _  -> throwError' "lambdaBoy: goal is not a pi-type or all-proof."
->       _          -> throwError' "lambdaBoy: only possible for incomplete goals."
+>       _    -> throwError' "lambdaBoy: only possible for incomplete goals."
+
+The |lambdaBoy'| variant allows a type to be specified, so it can
+be used with modules. If used at an |Unknown| tip, it will check
+that the supplied type matches the one at the tip.
+
+> lambdaBoy' :: (String :<: (INTM :=>: TY)) -> ProofState REF
+> lambdaBoy' (x :<: (ty :=>: tv))  = do
+>     tip <- getDevTip
+>     case tip of
+>       Module -> freshRef (x :<: tv) (\ref -> do
+>           putDevEntry (E ref (lastName ref) (Boy LAMB) ty)
+>           return ref
+>         )
+>       Unknown (pi :=>: gty) -> case lambdable gty of
+>         Just (k, s, t) -> do
+>           eq <- withNSupply (equal (SET :>: (tv, s)))
+>           if eq
+>             then freshRef (x :<: tv) (\ref -> do
+>                 putDevEntry (E ref (lastName ref) (Boy k) ty)
+>                 let tipTyv = t (pval ref)
+>                 tipTy <- bquoteHere tipTyv
+>                 putDevTip (Unknown (tipTy :=>: tipTyv))
+>                 return ref
+>               )
+>             else throwError' "lambdaBoy': given type does not match domain of goal."
+>         _  -> throwError' "lambdaBoy': goal is not a pi-type or all-proof."
+>       _    -> throwError' "lambdaBoy': only possible for modules or incomplete goals."
+
 
 The following piece of kit might profitably be shifted to somewhere more
 general.
@@ -379,32 +418,6 @@ general.
 > lambdable (PI s t)         = Just (LAMB, s, (t $$) . A)
 > lambdable (PRF (ALL s p))  = Just (ALAB, s, \v -> PRF (p $$ A v))
 > lambdable _                = Nothing
-
-> lambdaBoy' :: (String :<: (INTM :=>: TY)) -> ProofState REF
-> lambdaBoy' (x :<: (ty :=>: tv))  = do
->     tip <- getDevTip
->     case tip of
->       Module -> do
->         nsupply <- getDevNSupply
->         freshRef (x :<: tv) (\ref r -> do
->           putDevEntry (E ref (lastName ref) (Boy LAMB) ty)
->           putDevNSupply r
->           return ref
->             ) nsupply
->       Unknown (pi :=>: gty) -> case lambdable gty of
->         Just (k, s, t) -> do
->           nsupply <- getDevNSupply
->           case equal (SET :>: (tv,s)) nsupply of
->             True -> do 
->               freshRef (x :<: tv) (\ref r -> do
->               putDevEntry (E ref (lastName ref) (Boy k) ty)
->               let tipTyv = t (pval ref)
->               putDevTip (Unknown (bquote B0 tipTyv r :=>: tipTyv))
->               putDevNSupply r
->               return ref) nsupply
->             False -> throwError' "Given type does not match domain of goal"
->         _  -> throwError' "lambdaBoy: goal is not a pi-type or all-proof."
->       _ -> throwError' "lambdaBoy: only possible at Tips"
 
 
 The |make| command adds a named goal of the given type to the bottom of the
@@ -464,13 +477,10 @@ is also a set; if so, it appends a $\Pi$-abstraction to the current development.
 > piBoy' (s :<: (ty :=>: tv)) = do
 >     tip <- getDevTip
 >     case tip of
->         Unknown (_ :=>: SET) -> do
->             nsupply <- getDevNSupply
->             freshRef (s :<: tv)
->                 (\ref r ->  do
->                    putDevEntry (E ref (lastName ref) (Boy PIB) ty)
->                    putDevNSupply r
->                    return ref) nsupply
+>         Unknown (_ :=>: SET) -> freshRef (s :<: tv) (\ref -> do
+>             putDevEntry (E ref (lastName ref) (Boy PIB) ty)
+>             return ref
+>           )
 >         Unknown _  -> throwError' "piBoy: goal is not of type SET."
 >         _          -> throwError' "piBoy: only possible for incomplete goals."
 
