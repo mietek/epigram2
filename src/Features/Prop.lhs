@@ -182,7 +182,7 @@ Elim forms inherited from elsewhere
 >       ArgSize
 >   pretty Trivial        = const (kword KwTrivial)
 >   pretty Absurd         = const (kword KwAbsurd)
->   pretty (Box (Irr p))  = wrapDoc (kword KwBox <+> pretty p ArgSize) ArgSize
+>   pretty (Box (Irr p))  = pretty p
 >   pretty (Inh ty)       = wrapDoc (kword KwInh <+> pretty ty ArgSize) ArgSize
 >   pretty (Wit t)        = wrapDoc (kword KwWit <+> pretty t ArgSize) ArgSize
 

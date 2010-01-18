@@ -164,21 +164,18 @@ Punctuation for relative names:
 
 |InDTm ArgSize|:
 
->     KwSet | KwProp | KwAbsurd | KwTrivial | KwQ | KwCon | KwReturn |
+>     KwSet | KwProp | KwUId | KwAbsurd | KwTrivial | KwQ | KwCon | KwReturn |
 >     KwTag | KwLabel | KwLabelEnd | KwRet | KwLambda | KwPlus | KwSig |
 
 |InDTm AndSize|:
 
 >     KwPrf | KwMu | KwIMu | KwIDesc | KwIDone | KwIArg | KwIInd1 | KwIInd |
->     KwNu | KwInh | KwWit | KwCoIt | KwMonad | KwQuotient | KwEnum | KwPi |
+>     KwNu | KwINu | KwInh | KwWit | KwCoIt | KwICoIt | KwMonad | KwQuotient |
+>     KwEnum | KwPi |
 
 Other |InDTm|s:
 
->     KwEqBlue | KwAnd | KwArr | KwImp |
-
-Things that can be pretty-printed but not parsed (at the moment):
-
->     KwUId | KwBox | KwINu | KwICoIt
+>     KwEqBlue | KwAnd | KwArr | KwImp
 
 >   deriving (Bounded, Enum, Eq, Show)
 
@@ -202,6 +199,7 @@ Things that can be pretty-printed but not parsed (at the moment):
 
 > key KwSet       = "Set"
 > key KwProp      = "Prop"
+> key KwUId       = "UId"
 > key KwAbsurd    = "FF"
 > key KwTrivial   = "TT"
 > key KwQ         = "?"
@@ -224,9 +222,11 @@ Things that can be pretty-printed but not parsed (at the moment):
 > key KwIInd1     = "IInd1"
 > key KwIInd      = "IND"
 > key KwNu        = "Nu"
+> key KwINu       = "INu"
 > key KwInh       = "Inh"
 > key KwWit       = "wit"
 > key KwCoIt      = "CoIt"
+> key KwICoIt     = "ICoIt"
 > key KwMonad     = "Monad"
 > key KwQuotient  = "Quotient"
 > key KwEnum      = "Enum"
@@ -236,11 +236,6 @@ Things that can be pretty-printed but not parsed (at the moment):
 > key KwAnd       = "&&"
 > key KwArr       = "->"
 > key KwImp       = "=>"
-
-> key KwUId       = "UId"
-> key KwBox       = "Box"
-> key KwINu       = "INu"
-> key KwICoIt     = "ICoIt"
 
 > key k           = error ("key: missing keyword " ++ show k)
 
