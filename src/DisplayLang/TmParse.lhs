@@ -184,6 +184,7 @@ We need to sort out a better solution for ascription syntax.
 >      |DQUOTIENT (%keyword KwQuotient%) (sizedInDTm ArgSize) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
 >      |DENUMT (%keyword KwEnum%) (sizedInDTm ArgSize)
 >      |DPI (%keyword KwPi%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
+>      |DALL (%keyword KwAll%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
 >      |)
 
 > specialInDTm PiSize =

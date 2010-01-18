@@ -171,7 +171,7 @@ Punctuation for relative names:
 
 >     KwPrf | KwMu | KwIMu | KwIDesc | KwIDone | KwIArg | KwIInd1 | KwIInd |
 >     KwNu | KwINu | KwInh | KwWit | KwCoIt | KwICoIt | KwMonad | KwQuotient |
->     KwEnum | KwPi |
+>     KwEnum | KwPi | KwAll |
 
 Other |InDTm|s:
 
@@ -231,6 +231,7 @@ Other |InDTm|s:
 > key KwQuotient  = "Quotient"
 > key KwEnum      = "Enum"
 > key KwPi        = "Pi"
+> key KwAll       = "All"
 
 > key KwEqBlue    = "=="
 > key KwAnd       = "&&"

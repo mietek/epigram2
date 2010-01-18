@@ -165,16 +165,7 @@ Elim forms inherited from elsewhere
 > import -> CanPretty where
 >   pretty Prop           = const (kword KwProp)
 >   pretty (Prf p)        = wrapDoc (kword KwPrf <+> pretty p ArgSize) ArgSize
->   pretty (All s (DL (DK t)))  = wrapDoc
->       (sep [pretty s ArgSize <+> kword KwImp, pretty t ArgSize])
->       ArgSize
->   pretty (All s (DL (x ::. t))) = wrapDoc
->       (sep [parens (text x <+> kword KwAsc <+> pretty s ArgSize)
->           <+> kword KwImp, pretty t ArgSize])
->       ArgSize
->   pretty (All p q)      = wrapDoc
->       (text "BadAll" <+> pretty p ArgSize <+> pretty q ArgSize)
->       ArgSize
+>   pretty (All p q)      = prettyAll empty (DALL p q)
 >   pretty (And p q)      = wrapDoc
 >       (pretty p ArgSize <+> kword KwAnd <+> pretty q ArgSize)
 >       ArgSize
@@ -183,6 +174,22 @@ Elim forms inherited from elsewhere
 >   pretty (Box (Irr p))  = pretty p
 >   pretty (Inh ty)       = wrapDoc (kword KwInh <+> pretty ty ArgSize) ArgSize
 >   pretty (Wit t)        = wrapDoc (kword KwWit <+> pretty t ArgSize) ArgSize
+
+> import -> Pretty where
+>   prettyAll :: Doc -> InDTm String -> Size -> Doc
+>   prettyAll bs (DALL s (DL (DK t))) = prettyAllMore bs
+>     (pretty s (pred PiSize) <+> kword KwImp <+> pretty t PiSize)
+>   prettyAll bs (DALL s (DL (x ::. t))) =
+>     prettyAll (bs <> parens (text x <+> kword KwAsc <+> pretty s maxBound)) t
+>   prettyAll bs (DALL s t) = prettyAllMore bs
+>     (kword KwAll <+> pretty s minBound <+> pretty t minBound)
+>   prettyAll bs tm = prettyAllMore bs (pretty tm PiSize)
+>
+>   prettyAllMore :: Doc -> Doc -> Size -> Doc
+>   prettyAllMore bs d
+>     | isEmpty bs  = wrapDoc d PiSize
+>     | otherwise   = wrapDoc (bs <+> kword KwImp <+> d) PiSize
+
 
 > import -> CanTyRules where
 >   canTy _   (Set :>: Prop) = return Prop

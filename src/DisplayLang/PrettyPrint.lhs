@@ -87,8 +87,8 @@ and a codomain, and represents them appropriately for the current size.
 
 > prettyPiMore :: Doc -> Doc -> Size -> Doc
 > prettyPiMore bs d
->   | isEmpty bs = wrapDoc d PiSize
->   | otherwise = wrapDoc (bs <+> kword KwArr <+> d) PiSize
+>   | isEmpty bs  = wrapDoc d PiSize
+>   | otherwise   = wrapDoc (bs <+> kword KwArr <+> d) PiSize
 
 
 The |Elim| functor is straightforward.
