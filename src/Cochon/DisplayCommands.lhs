@@ -221,5 +221,5 @@ of the proof state at the current location.
 >                 return (kword KwQ <+> kword KwAsc <+> tyd)
 >             Defined tm (ty :=>: tyv) -> do
 >                 tyd <- prettyHere (SET :>: ty)
->                 tmd <- prettyHere (tyv :>: tm)
+>                 tmd <- prettyHereAt (pred ArrSize) (tyv :>: tm)
 >                 return (tmd <+> kword KwAsc <+> tyd)

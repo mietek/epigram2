@@ -419,7 +419,7 @@ current development, after checking that the purported type is in fact a type.
 > make' :: (String :<: (INTM :=>: TY)) -> ProofState INTM
 > make' (s :<: (ty :=>: tyv)) = do
 >     aus <- getAuncles
->     s' <- pickName s
+>     s' <- pickName "G" s
 >     n <- withNSupply (flip mkName s')
 >     let  ty'  = liftType aus ty
 >          ref  = n := HOLE :<: evTm ty'
@@ -440,11 +440,18 @@ spine of shared parameters.
 > aunclesToElims (E ref _ (Boy _) _ :> es) = (A (N (P ref))) : aunclesToElims es
 > aunclesToElims (_ :> es) = aunclesToElims es
 
-> pickName :: String -> ProofState String
-> pickName ""  = do
+
+The |pickName| command takes a prefix suggestion and a name suggestion
+(either of which may be empty), and returns a more-likely-to-be-unique
+name if the name suggestion is empty.
+
+> pickName :: String -> String -> ProofState String
+> pickName "" s = pickName "x" s
+> pickName prefix ""  = do
+>     m <- getMotherName
 >     r <- getDevNSupply
->     return ("G" ++ show (snd r))
-> pickName s   = return s
+>     return (prefix ++ foldMap (show . snd) m ++ show (snd r))
+> pickName _ s   = return s
 
 
 The |piBoy| command checks that the current goal is of type SET, and that the supplied type

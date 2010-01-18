@@ -111,7 +111,7 @@ than a $\lambda$-term is reached.
 > prettyLambda vs tm = wrapDoc
 >     (kword KwLambda <+> text (intercalate " " (trail vs)) <+> kword KwArr
 >         <+> pretty tm ArrSize)
->     minBound
+>     ArrSize
 
 
 > instance Pretty (InDTm String) where

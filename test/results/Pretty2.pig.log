@@ -22,13 +22,13 @@
         [ \ x : Set ->
           h
             [ \ y : Set ->
-            ] :- x == y -> Set : Set ;
-        ] Pi Set h : Set ;
+            ] (:- x == y -> Set) : Set ;
+        ] (Pi Set h) : Set ;
     ] ? : Pi Set h ;
   B
     [ h
         [ \ x : Set ->
-        ] x -> Set : Set ;
+        ] (x -> Set) : Set ;
     ] Sig Set h : Set ;
   y := [Set , f] : B ;
   C

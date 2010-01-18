@@ -84,7 +84,8 @@ interesting types.
 
 > elaborate False (y@(PI _ _) :>: t@(DC _)) = do
 >     y' <- bquoteHere y
->     make ("h" :<: y')
+>     h <- pickName "h" ""
+>     make (h :<: y')
 >     goIn
 >     elabbedT =<< elabGive t
 
@@ -164,7 +165,8 @@ by elaboration, then return the reference.
 > elaborate False (ty :>: DL sc) = do
 >     Just _ <- return $ lambdable ty
 >     pi' <- bquoteHere ty
->     make ("h" :<: pi')
+>     h <- pickName "h" ""
+>     make (h :<: pi')
 >     goIn
 >     l <- lambdaBoy (dfortran (DL sc))
 >     h <- elabGive (underDScope sc l)
