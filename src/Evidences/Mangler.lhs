@@ -40,15 +40,10 @@ given binder name.
 \end{description}
 
 > data Mangle f x y = Mang
->   {  mangP :: x -> f [Elim (InTm y)] -> f (ExTm y)
->   ,  mangV :: Int -> f [Elim (InTm y)] -> f (ExTm y)
+>   {  mangP :: x -> f (Spine {TT} y) -> f (ExTm y)
+>   ,  mangV :: Int -> f (Spine {TT} y) -> f (ExTm y)
 >   ,  mangB :: String -> Mangle f x y
 >   }
-
-Note that, morally, a |[Elim InTm y]| is a |Spine TT y|. However, we
-cannot write that in Haskell. 
-\question{Why do I get: @Not in scope: type constructor or class `TT'@? }
-
 
 
 The interpretation of |Mangle| is given by the following function
