@@ -223,8 +223,8 @@ largest size again.
 >   (| (DAND s) (%keyword KwAnd%) (sizedInDTm AndSize)
 >    |)
 > moreInDTm ArrSize s =
->   (| (DARR s) (%keyword KwArr%) (sizedInDTm ArrSize)
->    | (DIMP s) (%keyword KwImp%) (sizedInDTm ArrSize)
+>   (| (DARR s) (%keyword KwArr%) (sizedInDTm PiSize)
+>    | (DIMP s) (%keyword KwImp%) (sizedInDTm PiSize)
 >    |)
 > moreInDTm z _ = (|)
 

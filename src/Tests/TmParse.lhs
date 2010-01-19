@@ -105,10 +105,13 @@
 >         , "(: nat -> nat -> nat) con con [(\\ r r y -> y) (\\ r -> con \\ h r y -> suc (h y))]"         -- no longer a performance bug
 >         , "(: nat -> nat -> nat) (con (con ([(\\ r r y -> y) (\\ r -> con (\\ h r y -> (suc (h y))))])))" -- no longer a performance bug
 >         , "(: nat -> nat -> nat) (con (con ([(\\ r r y -> y) (\\ r -> con (\\ h r y -> (suc (h y))))])))" -- no longer a performance bug
-
->         , "A -> B -> C"               -- mixed pi-type
->         , "(x : A) -> (y : B) -> C"         -- mixed pi-type
->         , "A -> (x : B) -> C"         -- mixed pi-type
+>         , "A -> B -> C"                -- mixed pi-type
+>         , "(x : A) -> (y : B) -> C"    -- mixed pi-type
+>         , "A -> (x : B) -> C"          -- mixed pi-type
+>         , "A -> ((x : B) -> C)"        -- mixed pi-type
+>         , "Pi Set h"                   -- neutral pi-type
+>         , "All Set h"                   -- neutral forall
+>         , "Sig Set h"                   -- neutral sigma
 >         ]
 
 > test :: (Pretty x, Show x) => Parsley Token x -> String -> IO ()
