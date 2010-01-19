@@ -228,10 +228,10 @@ those of |infer|.
 >   let vs' = fmap (\(x :=>: _) -> x) vs
 >   return (t :>: op :@ vs')
 
-> elabInfer (t ::? ty) = do
+> elabInfer (DType ty) = do
 >   (ty' :=>: vty)  <- elaborate False (SET :>: ty)
->   (t'  :=>: _)    <- elaborate False (vty :>: t)
->   return (vty :>: t' :? ty')
+>   x <- pickName "x" ""
+>   return (ARR vty vty :>: (L (x :. (N (V 0))) :? ARR ty' ty'))
 
 > elabInfer tt = throwError' ("elabInfer: can't cope with " ++ show tt)
 

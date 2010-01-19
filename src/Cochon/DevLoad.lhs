@@ -93,7 +93,7 @@ hand, giving a term corresponds to explicitly solving the goal.
 >           |  id pAsc
 >           |)
 >   where pAsc = do
->          tm ::? ty <- pAscription
+>          tm :<: ty <- pAscription
 >          return $ Just tm :<: ty
 
 \paragraph{Parsing commands:}

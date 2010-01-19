@@ -160,7 +160,7 @@ unary tactics.
 > unaryExCT :: String -> (EXDTM -> ProofState String) -> String -> CochonTactic
 > unaryExCT name eval help = simpleCT
 >     name
->     (| (sing . ExArg) pExDTm | (sing . ExArg) pAscription |)
+>     (| (sing . ExArg) pExDTm | (sing . ExArg) pAscriptionTC |)
 >     (eval . argToEx . head)
 >     help
 
@@ -213,14 +213,15 @@ Construction tactics:
 >   : simpleCT
 >         "make"
 >         (| (| StrArg ident (%keyword KwAsc%) |) : (| (sing . InArg) pInDTm |)
->          | (| StrArg ident (%keyword KwDefn%) |) : (| (sing . ExArg) pAscription |)
+>          | (| StrArg ident (%keyword KwDefn%) |) : 
+>                     (| (\ (tm :<: ty) -> [InArg tm, InArg ty]) pAscription |)
 >          |)
->         (\ [StrArg s, tyOrTm] -> case tyOrTm of
->             InArg ty -> do
+>         (\ (StrArg s:tyOrTm) -> case tyOrTm of
+>             [InArg ty] -> do
 >                 elabMake (s :<: ty)
 >                 goIn
 >                 return "Appended goal!"
->             ExArg (tm ::? ty) -> do
+>             [InArg tm, InArg ty] -> do
 >                 elabMake (s :<: ty)
 >                 goIn
 >                 elabGive tm

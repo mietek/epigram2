@@ -26,7 +26,6 @@
 
 %format ::$ = ":\!\!:\!\!\$"
 %format ::@ = ":\!\!:\!\!@"
-%format ::? = ":\!:\!\in"
 %format ::. = ":\!\bullet"
 
 > data InDTm :: * -> * where
@@ -47,7 +46,7 @@
 >     DV     :: Int                        -> ExDTm  x -- variable
 >     (::@)  :: Op -> [InDTm x]            -> ExDTm  x -- fully applied op
 >     (::$)  :: ExDTm x -> Elim (InDTm x)  -> ExDTm  x -- elim
->     (::?)  :: InDTm x -> InDTm x         -> ExDTm  x -- typing
+>     DType  :: InDTm x                    -> ExDTm  x -- type cast
 >     import <- ExDTmConstructors
 >  deriving (Functor, Foldable, Traversable, Show)
 
@@ -104,7 +103,7 @@ When going left, the size decreases. Brackets may be used to wrap an
 > unelaborateEx (V i)       = DV i
 > unelaborateEx (n :$ e)    = unelaborateEx n ::$ fmap unelaborate e
 > unelaborateEx (op :@ vs)  = op ::@ fmap unelaborate vs
-> unelaborateEx (t :? y)    = unelaborate t ::? unelaborate y
+> unelaborateEx (t :? y)    = DType (unelaborate y) ::$ A (unelaborate t)
 
 > scopeToDScope :: Scope {TT} x -> DScope x
 > scopeToDScope (x :. t) = x ::. (unelaborate t)
@@ -140,7 +139,7 @@ When going left, the size decreases. Brackets may be used to wrap an
 > dexMang m (DV i)     es = dmangV m i es
 > dexMang m (o ::@ a)  es = (|(| (o ::@) ((m %$) ^$ a) |) $::$ es|) 
 > dexMang m (t ::$ e)  es = dexMang m t (|((m %$) ^$ e) : es|)
-> dexMang m (t ::? y)  es = (|(|(m %$ t) ::? (m %$ y)|) $::$ es|)
+> dexMang m (DType ty) es = (| (| DType (m %$ ty) |) $::$ es |)
 > import <- DExMangleRules
 > dexMang _ tm         es = error ("dexMang: can't cope with " ++ show (fmap (\_ -> ".") tm))
 

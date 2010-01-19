@@ -6,13 +6,13 @@ make two := (suc one) : Nat ;
 module Vec ;
 lambda A : Set ;
 make Vec : Nat -> Set ;
-make VecD := (\ n -> IArg (Enum ['nil 'cons]) [ (IDone ((n : Nat) == (zero : Nat))) (IArg Nat (\ m -> IArg A (\ a -> IInd1 m (IDone ((n : Nat) == (suc m : Nat)))))) ]) : Nat -> IDesc Nat ;
+make VecD := (\ n -> IArg (Enum ['nil 'cons]) [ (IDone (n == zero)) (IArg Nat (\ m -> IArg A (\ a -> IInd1 m (IDone (n == suc m ))))) ]) : Nat -> IDesc Nat ;
 lambda n ;
 give IMu Nat VecD n ;
 make vnil := con [ 0 , [] ] : Vec zero ;
 make vcons := (\ n a as -> con [ 1 n a as , [] ]) : (n : Nat) -> A -> Vec n -> Vec (suc n) ;
 root ;
-make ex := Vec.vcons Nat one zero (Vec.vcons Nat zero one (Vec.vnil Nat)) : Vec.Vec Nat two ; 
+make ex := Vec.vcons Nat one zero (Vec.vcons Nat zero one (Vec.vnil Nat)) : Vec.Vec Nat two ;
 module BVec  ;
 lambda A : Set ;
 make Vec : Nat -> Set ;
@@ -23,6 +23,4 @@ give IMu Nat VecD n ;
 make vnil := con [] : Vec zero ;
 make vcons := (\ n a as -> con [ a as , [] ]) : (n : Nat) -> A -> Vec n -> Vec (suc n) ;
 root ;
-make ex2 := BVec.vcons Nat one zero (BVec.vcons Nat zero one (BVec.vnil Nat)) : BVec.Vec Nat two  
-
-
+make ex2 := BVec.vcons Nat one zero (BVec.vcons Nat zero one (BVec.vnil Nat)) : BVec.Vec Nat two

@@ -133,9 +133,7 @@ than a $\lambda$-term is reached.
 >     pretty (n ::$ el)   = (\curSize -> wrapDoc
 >         (pretty n curSize <+> pretty el ArgSize)
 >         AppSize curSize)
->     pretty (t ::? y)    = wrapDoc
->         (pretty t AscSize <+> kword KwAsc <+> pretty y AscSize)
->         AscSize
+>     pretty (DType ty)   = const (parens (kword KwAsc <+> pretty ty maxBound))
 >     import <- ExDTmPretty
 >     pretty exdtm        = const (quotes . text . show $ exdtm)
 

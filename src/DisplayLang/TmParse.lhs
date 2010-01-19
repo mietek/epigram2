@@ -69,8 +69,12 @@ The |pExDTm| and |pInDTm| functions start parsing at the maximum size.
 > pInDTm = sizedInDTm maxBound
 
 
-> pAscription :: Parsley Token ExDTmRN
-> pAscription = (| sizedInDTm (pred AscSize) (%keyword KwAsc%) ::? pInDTm |)
+> pAscription :: Parsley Token (InDTmRN :<: InDTmRN)
+> pAscription = (| (sizedInDTm (pred AscSize)) (%keyword KwAsc%) :<: pInDTm |)
+
+> pAscriptionTC :: Parsley Token ExDTmRN
+> pAscriptionTC = (| (| DType (sizedInDTm (pred AscSize)) (%keyword KwAsc%) |) 
+>                      ::$ (| A pInDTm |) |)
 
 Each |sized| parser tries the appropriate |special| parser for the size,
 then falls back to parsing at the previous size followed by a |more| parser.
@@ -88,8 +92,6 @@ largest size again.
 >                         else bracket Round pInDTm)
 
 > moreInEx :: Size -> InDTmRN -> Parsley Token InDTmRN
-> moreInEx AscSize t =
->   (|DN (| (t ::?) (%keyword KwAsc%) pInDTm |)|) <|> moreInEx (pred AscSize) t
 > moreInEx z (DN e) = DN <$> moreExDTm z e <|> moreInDTm z (DN e)
 > moreInEx z t = moreInDTm z t
 
@@ -98,23 +100,15 @@ largest size again.
 > specialExDTm :: Size -> Parsley Token ExDTmRN
 > specialExDTm ArgSize =
 >   (| pFilter findOp ident ::@ bracket Round (pSep (keyword KwComma) pInDTm)
+>    | DType (bracket Round (keyword KwAsc *> pInDTm))
 >    | DP nameParse
 >    |)
 >   where
 >     findOp name = find (\op -> opName op == name) operators
 
-This case causes a massive drop in performance, so it is temporarily
-switched off. To forcibly parse a type ascription, use |pAscription|.
-We need to sort out a better solution for ascription syntax.
-
-> -- specialExDTm AscSize =
-> --  (| sizedInDTm (pred AscSize) (%keyword KwAsc%) ::? pInDTm |)
-
 > specialExDTm z = (|)
 
 > moreExDTm :: Size -> ExDTmRN -> Parsley Token ExDTmRN
-> moreExDTm AscSize e =
->   (| (DN e ::?) (%keyword KwAsc%) pInDTm |) <|> moreExDTm (pred AscSize) e
 > moreExDTm AppSize e = (e ::$) <$>
 >   (| Fst (%keyword KwFst%)
 >    | Snd (%keyword KwSnd%)
@@ -235,7 +229,7 @@ We need to sort out a better solution for ascription syntax.
 > moreInDTm z _ = (|)
 
 > isEqSide :: InDTmRN -> Maybe (InDTmRN :>: InDTmRN)
-> isEqSide (DN (t0 ::? y0)) = Just (y0 :>: t0)
+> -- isEqSide (DN (DTC y0 t0)) = Just (y0 :>: t0)
 > isEqSide _ = Nothing
 
 > isEx :: InDTmRN -> Maybe ExDTmRN

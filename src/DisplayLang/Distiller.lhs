@@ -94,6 +94,6 @@ also accumulates a spine so shared parameters can be removed.
 > distillInfer es (t :? ty) as   = do
 >     ty'  :=>: vty  <- distill es (SET :>: ty)
 >     t'   :=>: _    <- distill es (vty :>: t)
->     return ((t' ::? ty') :<: vty)
+>     return ((DType ty' ::$ A t') :<: vty)
 
 > distillInfer _ tm _ = error ("distillInfer: can't cope with " ++ show tm)
