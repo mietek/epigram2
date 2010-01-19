@@ -47,6 +47,7 @@
 >     (::@)  :: Op -> [InDTm x]            -> ExDTm  x -- fully applied op
 >     (::$)  :: ExDTm x -> Elim (InDTm x)  -> ExDTm  x -- elim
 >     DType  :: InDTm x                    -> ExDTm  x -- type cast
+>     DTEx   :: ExTmWrap x                 -> ExDTm  x -- embedding
 >     import <- ExDTmConstructors
 >  deriving (Functor, Foldable, Traversable, Show)
 
@@ -89,25 +90,6 @@ When going left, the size decreases. Brackets may be used to wrap an
 > data Size = ArgSize | AppSize | EqSize | AndSize | ArrSize | PiSize | AscSize
 >   deriving (Show, Eq, Enum, Bounded, Ord)
 
-
-
-
-
-> unelaborate :: InTm x -> InDTm x
-> unelaborate (L s)       = DL (scopeToDScope s)
-> unelaborate (C c)       = DC (fmap unelaborate c)
-> unelaborate (N n)       = DN (unelaborateEx n)
-
-> unelaborateEx :: ExTm x -> ExDTm x
-> unelaborateEx (P s)       = DP s
-> unelaborateEx (V i)       = DV i
-> unelaborateEx (n :$ e)    = unelaborateEx n ::$ fmap unelaborate e
-> unelaborateEx (op :@ vs)  = op ::@ fmap unelaborate vs
-> unelaborateEx (t :? y)    = DType (unelaborate y) ::$ A (unelaborate t)
-
-> scopeToDScope :: Scope {TT} x -> DScope x
-> scopeToDScope (x :. t) = x ::. (unelaborate t)
-> scopeToDScope (K t)    = DK (unelaborate t)
 
 > dfortran :: InDTm x -> String
 > dfortran (DL (x ::. _)) | not (null x) = x
@@ -154,26 +136,38 @@ When going left, the size decreases. Brackets may be used to wrap an
 
 
 
-> dunder :: Int -> x -> DMangle Identity x x
+> dunder :: Int -> REF -> DMangle Identity x x
 > dunder i y = DMang
 >   {  dmangP = \ x ies -> (|(DP x $::$) ies|)
->   ,  dmangV = \ j ies -> (|((if i == j then DP y else DV j) $::$) ies|)
+>   ,  dmangV = \ j ies -> (|((if i == j then DTEx (ExTmWrap (P y)) else DV j) $::$) ies|)
 >   ,  dmangB = \ _ -> dunder (i + 1) y
 >   }
 
-> underDScope :: DScope x -> x -> InDTm x
+> underDScope :: DScope x -> REF -> InDTm x
 > underDScope (DK t)     _ = t
 > underDScope (_ ::. t)  x = dunder 0 x %%$ t
 
 
 
-> data InTmWrap x = InTmWrap (InTm x)
+> data InTmWrap x = InTmWrap INTM
 
 > instance Functor InTmWrap where
 >   fmap = fmapDefault
 > instance Foldable InTmWrap where
 >   foldMap = foldMapDefault
 > instance Traversable InTmWrap where
->   traverse f (InTmWrap x) = (| InTmWrap (traverse f x) |)
+>   traverse f (InTmWrap x) = pure (InTmWrap x)
 > instance Show x => Show (InTmWrap x) where
 >   show (InTmWrap t) = show t
+
+
+> data ExTmWrap x = ExTmWrap EXTM
+
+> instance Functor ExTmWrap where
+>   fmap = fmapDefault
+> instance Foldable ExTmWrap where
+>   foldMap = foldMapDefault
+> instance Traversable ExTmWrap where
+>   traverse f (ExTmWrap x) = pure (ExTmWrap x)
+> instance Show x => Show (ExTmWrap x) where
+>   show (ExTmWrap t) = show t

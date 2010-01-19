@@ -20,9 +20,12 @@
 > import ProofState.ProofKit
 
 > import DisplayLang.DisplayTm
+> import DisplayLang.Naming
 
 > import Evidences.Rules
 > import Evidences.Tm
+
+> import NameSupply.NameSupplier
 
 %endif
 
@@ -45,7 +48,7 @@ The Boolean parameter indicates whether the elaborator is working at the top
 level of the term, because if so, it can create boys in the current development
 rather than creating a subgoal.
 
-> elaborate :: Bool -> (TY :>: INDTM) -> ProofState (INTM :=>: VAL)
+> elaborate :: Bool -> (TY :>: InDTmRN) -> ProofState (INTM :=>: VAL)
 
 > import <- ElaborateRules
 
@@ -119,7 +122,7 @@ interesting types.
 >       else do
 >         t' <- bquoteHere t
 >         elabbedT . N $ switchOp :@ [e', N (P x), t', m']
->  where   isTuply :: INDTM -> Bool
+>  where   isTuply :: InDTmRN -> Bool
 >          isTuply DVOID = True
 >          isTuply (DPAIR _ _) = True
 >          isTuply _ = False
@@ -208,9 +211,14 @@ as |elaborate| is to |check|. It infers the type of a display term, calling on
 the elaborator rather than the type-checker. Most of the cases are similar to
 those of |infer|.
 
-> elabInfer :: EXDTM -> ProofState (TY :>: EXTM)
+> elabInfer :: ExDTmRN -> ProofState (TY :>: EXTM)
 
-> elabInfer (DP x) = return (pty x :>: P x)
+> elabInfer (DP x) = do
+>     (ref, as) <- elabResolve x
+>     let tm = P ref $:$ as
+>     ty <- withNSupply (typeCheck $ infer tm)
+>     (_ :<: ty') <- ty `catchEither` "elabInfer: inference failed!"
+>     return (ty' :>: tm)
 
 > elabInfer (tm ::$ Call _) = do
 >     (LABEL l ty :>: tm') <- elabInfer tm
@@ -286,19 +294,17 @@ hard bits for the human.
 > synthProof _ _ = (|)
 
 
+The |elabResolve| command resolves a relative name to a reference
+and a spine of shared parameters to which it should be applied.
+
+> elabResolve :: RelName -> ProofState (REF, Spine {TT} REF)
+> elabResolve x = do
+>    aus <- getAuncles
+>    findGlobal aus x `catchEither` "elabInfer: cannot resolve name"
+>    
+
+
 \subsection{Elaborated Construction Commands}
-
-The |elabDefine| command is like make followed by give.
-
-> elabDefine :: String -> EXDTM -> ProofState INTM
-> elabDefine s tm = do
->     makeModule s
->     goIn
->     ty :>: tm' <- elabInfer tm
->     ty' <- bquoteHere ty
->     moduleToGoal ty'
->     give (N tm')
- 
 
 
 The |elabGive| command elaborates the given display term in the appropriate type for
@@ -306,13 +312,13 @@ the current goal, and calls the |give| command on the resulting term. If its arg
 is a nameless question mark, it avoids creating a pointless subgoal by simply returning
 a reference to the current goal (applied to the appropriate shared parameters).
 
-> elabGive :: INDTM -> ProofState INTM
+> elabGive :: InDTmRN -> ProofState INTM
 > elabGive tm = elabGive' tm <* goOut
 
-> elabGiveNext :: INDTM -> ProofState INTM
+> elabGiveNext :: InDTmRN -> ProofState INTM
 > elabGiveNext tm = elabGive' tm <* (nextGoal <|> goOut)
 
-> elabGive' :: INDTM -> ProofState INTM
+> elabGive' :: InDTmRN -> ProofState INTM
 > elabGive' tm = do
 >     tip <- getDevTip
 >     case tip of         
@@ -332,7 +338,7 @@ The |elabMake| command elaborates the given display term in a module to
 produce a type, then converts the module to a goal with that type. Thus any
 subgoals produced by elaboration will be children of the resulting goal.
 
-> elabMake :: (String :<: INDTM) -> ProofState INTM
+> elabMake :: (String :<: InDTmRN) -> ProofState INTM
 > elabMake (s :<: ty) = do
 >     makeModule s
 >     goIn
@@ -376,13 +382,13 @@ program x,y will give a proof state of:
 The |elabPiBoy| command elaborates the given display term to produce a type, and
 creates a $\Pi$-boy with that type.
 
-> elabPiBoy :: (String :<: INDTM) -> ProofState ()
+> elabPiBoy :: (String :<: InDTmRN) -> ProofState ()
 > elabPiBoy (s :<: ty) = do
 >     tt <- elaborate True (SET :>: ty)
 >     piBoy' (s :<: tt)
 >     return ()
 
-> elabLamBoy :: (String :<: INDTM) -> ProofState ()
+> elabLamBoy :: (String :<: InDTmRN) -> ProofState ()
 > elabLamBoy (s :<: ty) = do
 >     tt <- elaborate True (SET :>: ty)
 >     lambdaBoy' (s :<: tt)

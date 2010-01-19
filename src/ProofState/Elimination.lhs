@@ -16,6 +16,7 @@
 
 > import DisplayLang.DisplayTm
 > import DisplayLang.Elaborator
+> import DisplayLang.Naming
 
 > import Evidences.Tm
 > import Evidences.Rules
@@ -383,7 +384,7 @@ Frankenstein operation of these three parts:
 
 We make elimination accessible to the user by adding it as a Cochon tactic:
 
-> elimCTactic :: EXDTM -> ProofState String
+> elimCTactic :: ExDTmRN -> ProofState String
 > elimCTactic r = do 
 >     (elimTy :>: e) <- elabInfer r
 >     elimTyTm <- bquoteHere elimTy

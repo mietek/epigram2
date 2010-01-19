@@ -174,8 +174,7 @@ the commands which might have been issued.
 >     -- Recursively build the kids
 >     ncs' <- makeDev kids ncs
 >     -- Translate |tipTys| into a real |INTM|
->     tipTyd <- resolveHere tipTys
->     tipTy :=>: tipTyv <- elaborate False (SET :>: tipTyd)
+>     tipTy :=>: tipTyv <- elaborate False (SET :>: tipTys)
 >     -- Turn the module into a Girl of |tipTy|
 >     moduleToGoal tipTy
 >     -- Were we provided a solution?
@@ -184,10 +183,8 @@ the commands which might have been issued.
 >                    -- Leave
 >                    goOut
 >         Just tms -> do -- Yes!
->             -- Translate the solution |tms| to an |INTM|
->             -- And give it
->             tmd <- resolveHere tms
->             elabGive tmd
+>             -- Give the solution |tms|
+>             elabGive tms
 >             return ()
 >     -- Is there any tactics to be executed?
 >     case commands of
@@ -231,8 +228,7 @@ development.
 
 > makeEntry (DLBoy k x tys) ncs = do
 >     -- Translate the display |tys| into an |INTM|
->     tyd <- resolveHere tys
->     ty :=>: tyv <- elaborate False (SET :>: tyd)
+>     ty :=>: tyv <- elaborate False (SET :>: tys)
 >     -- Make a fresh reference of that type
 >     freshRef (x :<: tyv) (\ref ->
 >         -- Register |ref| as a Lambda boy

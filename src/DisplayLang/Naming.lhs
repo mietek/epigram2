@@ -88,25 +88,6 @@ are fully $\lambda$-lifted, but as $f$'s parameters are held in common
 with the point of reference, we automatically supply them.
 
 
-> resolve :: Entries -> InDTm RelName -> Either [String] INDTM
-> resolve es tm = resolver es B0 %$ tm
-
-> resolveEx :: Entries -> ExDTm RelName -> Either [String] EXDTM
-> resolveEx es tm = (|unDN (resolve es (DN tm)) |)
->   where unDN (DN tm) = tm
-
-The |resolver| function takes a context and a list of binder names, and
-produces a mangle that, when applied, attempts to resolve the parameter
-names in an |InDTmRN| to produce an |InDTm REF|, i.e.\ an INDTM.
-
-> resolver :: Entries -> Bwd String -> DMangle (Either [String]) RelName REF
-> resolver ps vs = DMang
->     {  dmangP  = \ x mes -> (| (findLocal ps vs x) $::$ mes |)
->     ,  dmangV  = \ _ _ -> Left ["resolver: what's that index doing here?"]
->     ,  dmangB  = \ x -> resolver ps (vs :< x)
->     }
-
-
 The |hits| function determines whether a name component matches a
 relative name component. It returns |Right ()| if this is the right
 name, and |Left x| if the search should continue (to the left) with
@@ -122,31 +103,14 @@ index to be decremented if it is relative.)
 > hits _ yo = Left yo
 
 
-The |findLocal| function takes a context, a list of binder names and a relative
-name to resolve. It first searches the binders for a |Rel| name, and
-returns a de Brujin indexed variable if it is present. Otherwise, it calls
-|findGlobal| to search the context.
-
-> findLocal :: Entries -> Bwd String -> RelName -> Either [String] EXDTM
-> findLocal ps B0 [(y, Rel 0)]
->   | Just ref <- lookup y primitives = Right (DP ref)
->   | Just ref <- lookup y axioms     = Right (DP ref)
-> findLocal ps B0 sos = findGlobal ps sos
-> findLocal ps (xs :< x) [(y, Rel 0)]       | x == y = (|(DV 0)|)
-> findLocal ps (xs :< x) ((y, Rel i) : sos) | x == y =
->   vinc <$> findLocal ps xs ((y, Rel (i - 1)) : sos)
-> findLocal ps (xs :< x) sos = vinc <$> findLocal ps xs sos
->
-> vinc :: EXDTM -> EXDTM
-> vinc (DV i)  = DV (i + 1)
-> vinc n       = n
-
-
 The |findGlobal| function takes a context and a relative name to resolve. It
 searches the context for an entry that hits the name, then searches that
 entry's children to resolve the next component. 
 
-> findGlobal :: Entries -> RelName -> Either [String] EXDTM
+> findGlobal :: Entries -> RelName -> Either [String] (REF, Spine {TT} REF)
+> findGlobal xs [(y, Rel 0)]
+>   | Just ref <- lookup y primitives = Right (ref, [])
+>   | Just ref <- lookup y axioms     = Right (ref, [])
 > findGlobal B0 sos = Left ["findGlobal: couldn't find " ++ showRelName sos]
 > findGlobal (xs :< e) (y : ys) = case hits (entryLastName e) y of
 >     Right _  -> case e of
@@ -161,9 +125,9 @@ resolve. If the remainder is empty, it returns a parameter referring to the
 current entry (applied to the shared parameters if appropriate). Otherwise,
 the entity should be a |Girl|, and it searches her children for the name.
 
-> findChild :: REF -> Spine {TT} REF -> Entity Bwd -> RelName -> Either [String] EXDTM
-> findChild r  as (Boy _)              []  = (|(DP r)|)
-> findChild r  as (Girl _ _)           []  = (|(DP r $::$ fmap (fmap (DT . InTmWrap)) as)|)
+> findChild :: REF -> Spine {TT} REF -> Entity Bwd -> RelName -> Either [String] (REF, Spine {TT} REF)
+> findChild r  as (Boy _)              []  = Right (r,  [])
+> findChild r  as (Girl _ _)           []  = Right (r,  as)
 > findChild r  as (Boy _)              ys  = Left ["findChild: " ++ show r ++ " is a boy so it has no children!"]
 > findChild r  as (Girl _ (es, _, _))  ys  = findInEntries es ys as
 
@@ -174,7 +138,7 @@ component of the name refers to a girl, it calls |findChild| to check if she or
 one of her children is the target. Note that boys within other developments are
 not in scope, but they may affect relative name offsets.
 
-> findInEntries :: Entries -> RelName -> Spine {TT} REF -> Either [String] EXDTM
+> findInEntries :: Entries -> RelName -> Spine {TT} REF -> Either [String] (REF, Spine {TT} REF)
 > findInEntries (xs :< M n (es, _, _)) (y : ys) as = case hits (last n) y of
 >     Right _  -> findInEntries es ys as
 >     Left y'  -> findInEntries xs (y' : ys) as

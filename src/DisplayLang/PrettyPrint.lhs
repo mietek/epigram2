@@ -151,20 +151,22 @@ with a document representing its name and type.
 
 
 For debugging purpose, the following quick'n'dirty pretty-printers
-might be handy:
+might be handy. Unfortunately, they are broken without some kind of
+unelaboration that doesn't require a proof state. You could always
+try |prettyHere|?
 
-> prettyINTM :: INTM -> String
-> prettyINTM = renderHouseStyle . flip pretty maxBound . unelaborate . christenAbs
->
-> prettyVAL :: VAL -> String
-> prettyVAL v  = renderHouseStyle 
->              $ flip pretty maxBound 
->              $ unelaborate 
->              $ christenAbs 
->              $ bquote B0 v ((B0 :< ("prettyVAL",1),0) :: NameSupply)
->
-> prettyREF :: REF -> String
-> prettyREF (name := _) = showName name
+< prettyINTM :: INTM -> String
+< prettyINTM = renderHouseStyle . flip pretty maxBound . unelaborate . christenAbs
+<
+< prettyVAL :: VAL -> String
+< prettyVAL v  = renderHouseStyle 
+<              $ flip pretty maxBound 
+<              $ unelaborate 
+<              $ christenAbs 
+<              $ bquote B0 v ((B0 :< ("prettyVAL",1),0) :: NameSupply)
+<
+< prettyREF :: REF -> String
+< prettyREF (name := _) = showName name
 
 
 The |renderHouseStyle| hook allows us to customise the document rendering

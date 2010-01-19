@@ -89,17 +89,16 @@ Because Cochon tactics can take different types of arguments,
 we need a tagging mechanism to distinguish them, together
 with projection functions.
 
-> data CochonArg x = StrArg String | InArg (InDTm x) | ExArg (ExDTm x)
->     deriving (Functor, Foldable, Traversable)
+> data CochonArg = StrArg String | InArg InDTmRN | ExArg ExDTmRN
 
 
-> argToStr :: CochonArg x -> String
+> argToStr :: CochonArg -> String
 > argToStr (StrArg s) = s
 
-> argToIn :: CochonArg x -> InDTm x
+> argToIn :: CochonArg -> InDTmRN
 > argToIn (InArg a) = a
 
-> argToEx :: CochonArg x -> ExDTm x
+> argToEx :: CochonArg -> ExDTmRN
 > argToEx (ExArg a) = a
 
 
@@ -113,8 +112,8 @@ A Cochon tactic consinsts of:
 
 > data CochonTactic =
 >     CochonTactic  {  ctName   :: String
->                   ,  ctParse  :: Parsley Token [CochonArg RelName]
->                   ,  ctIO     :: [CochonArg REF] -> Bwd ProofContext -> IO (Bwd ProofContext)
+>                   ,  ctParse  :: Parsley Token [CochonArg]
+>                   ,  ctIO     :: [CochonArg] -> Bwd ProofContext -> IO (Bwd ProofContext)
 >                   ,  ctHelp   :: String
 >                   }
 
@@ -145,8 +144,8 @@ unary tactics.
 >             return (locs :< loc)
 >             
 
-> simpleCT :: String -> Parsley Token [CochonArg RelName]
->     -> ([CochonArg REF] -> ProofState String) -> String -> CochonTactic
+> simpleCT :: String -> Parsley Token [CochonArg]
+>     -> ([CochonArg] -> ProofState String) -> String -> CochonTactic
 > simpleCT name parser eval help = CochonTactic
 >     {  ctName = name
 >     ,  ctParse = parser
@@ -157,21 +156,21 @@ unary tactics.
 > nullaryCT :: String -> ProofState String -> String -> CochonTactic
 > nullaryCT name eval help = simpleCT name (pure []) (const eval) help
 
-> unaryExCT :: String -> (EXDTM -> ProofState String) -> String -> CochonTactic
+> unaryExCT :: String -> (ExDTmRN -> ProofState String) -> String -> CochonTactic
 > unaryExCT name eval help = simpleCT
 >     name
 >     (| (sing . ExArg) pExDTm | (sing . ExArg) pAscriptionTC |)
 >     (eval . argToEx . head)
 >     help
 
-> unaryInCT :: String -> (INDTM -> ProofState String) -> String -> CochonTactic
+> unaryInCT :: String -> (InDTmRN -> ProofState String) -> String -> CochonTactic
 > unaryInCT name eval help = simpleCT
 >     name
 >     (| (sing . InArg) pInDTm |)
 >     (eval . argToIn . head)
 >     help
 
-> unaryNameCT :: String -> (REF -> ProofState String) -> String -> CochonTactic
+> unaryNameCT :: String -> (RelName -> ProofState String) -> String -> CochonTactic
 > unaryNameCT name eval help = simpleCT
 >     name
 >     (| (sing . ExArg . DP) nameParse |)
@@ -245,7 +244,7 @@ Construction tactics:
 >       (\ as -> elabProgram (map argToStr as) >> return "Programming.")
 >       "program <labels>: set up a programming problem."
 
->   : unaryNameCT "select" (\r -> select (N (P r)) >> return "Selected.")
+>   : unaryNameCT "select" (\ x -> resolveHere x >>= select . N . P >> return "Selected.")
 >       "select <name> - defines a copy of <name> in the current development."
 >   : nullaryCT "ungawa" (ungawa >> return "Ungawa!")
 >       "ungawa - tries to solve the current goal in a stupid way."
@@ -276,7 +275,12 @@ Navigation tactics:
 >   : nullaryCT "last"   (some nextGoal >> return "Going to last goal...")
 >       "last - searches for the last goal in the proof state."
 
->   : unaryNameCT "jump" (\(n := _) -> much goOut >> goTo n >> return ("Jumping to " ++ showName n ++ "..."))
+>   : unaryNameCT "jump" (\ x -> do
+>       much goOut
+>       (n := _) <- resolveHere x
+>       goTo n
+>       return ("Jumping to " ++ showName n ++ "...")
+>     )
 >       "jump <name> - moves to the definition of <name>."
 
 
@@ -312,7 +316,8 @@ Miscellaneous tactics:
 >         ,  ctIO = (\ [ExArg (DP r), StrArg fn] (locs :< loc) -> do
 >             let  Right aus = evalStateT getAuncles loc
 >                  Right dev = evalStateT getDev loc
->             compileCommand (refName r) (reverseDev' dev) fn
+>                  Right (n := _) = evalStateT (resolveHere r) loc
+>             compileCommand n (reverseDev' dev) fn
 >             putStrLn "Compiled."
 >             return (locs :< loc)
 >           )
@@ -388,7 +393,7 @@ given string, either exactly or as a prefix.
 > tacticNames = intercalate ", " . map ctName
 
 
-> type CTData = (CochonTactic, [CochonArg RelName])
+> type CTData = (CochonTactic, [CochonArg])
 
 > readCommands :: Handle -> IO [CTData]
 > readCommands file = do
@@ -456,29 +461,8 @@ given string, either exactly or as a prefix.
 > pCochonTactics = pSepTerminate (keyword KwSemi) pCochonTactic
 
 
-> resolveArgs :: [CochonArg RelName] -> ProofState [CochonArg REF]
-> resolveArgs args = do
->     aus <- getAuncles
->     args' <- resolveArgs' aus args 
->               `catchEither` "doCTactic: could not resolve names in command."
->     return args' 
->  where
->    resolveArgs' :: Entries -> [CochonArg RelName] -> Either [String] [CochonArg REF]
->    resolveArgs' aus (StrArg s : args) = (| ~(StrArg s) : (resolveArgs' aus args) |)
->    resolveArgs' aus (InArg tm : args) = (| (|InArg (resolve aus tm) |) : (resolveArgs' aus args) |)
->    resolveArgs' aus (ExArg tm : args) = (| (|ExArg (resolveEx aus tm) |) : (resolveArgs' aus args) |)
->    resolveArgs' aus [] = pure []
-
 > doCTactic :: CTData -> Bwd ProofContext -> IO (Bwd ProofContext)
-> doCTactic (ct, args) (locs :< loc) = do
->     case evalStateT (resolveArgs args) loc of
->         Right args' -> do
->             locs' <- ctIO ct args' (locs :< loc)
-> --                    printChanges loc loc'
->             return locs'
->         Left ss -> do
->             putStrLn (unlines ("I'm sorry, Dave. I'm afraid I can't do that.":ss))
->             return (locs :< loc) 
+> doCTactic (ct, args) (locs :< loc) = ctIO ct args (locs :< loc)
 
 > doCTactics :: [CTData] -> Bwd ProofContext -> IO (Bwd ProofContext)
 > doCTactics [] locs = return locs

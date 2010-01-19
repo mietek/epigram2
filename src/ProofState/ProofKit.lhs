@@ -87,15 +87,6 @@ Similarly, |checkHere| type-checks a term using the local name supply.
 >     return (tm :=>: tmv)
 
 
-The |resolveHere| command resolves the relative names in a term. This
-is not quite an evidence, but we are one step closer.
-
-> resolveHere :: InDTmRN -> ProofState INDTM
-> resolveHere tm = do
->     aus <- getAuncles
->     resolve aus tm `catchEither` "resolveHere: could not resolve names in term"
-
-
 The |validateHere| performs some checks on the current location, which
 may be useful for paranoia purposes.
 

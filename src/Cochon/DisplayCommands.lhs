@@ -39,7 +39,7 @@ evaluates the resulting term, bquotes it and returns a pretty-printed string
 representation. Note that it works in its own module which it discards at the
 end, so it will not leave any subgoals lying around in the proof state.
 
-> infoElaborate :: EXDTM -> ProofState String
+> infoElaborate :: ExDTmRN -> ProofState String
 > infoElaborate tm = do
 >     makeModule "__infoElaborate"
 >     goIn
@@ -54,7 +54,7 @@ end, so it will not leave any subgoals lying around in the proof state.
 The |infoInfer| command is similar to |infoElaborate|, but it returns a string
 representation of the resulting type.
 
-> infoInfer :: EXDTM -> ProofState String
+> infoInfer :: ExDTmRN -> ProofState String
 > infoInfer tm = do
 >     makeModule "__infoInfer"
 >     goIn
@@ -121,7 +121,7 @@ away bits of the context to produce an answer, then restores the saved state.
 
 The |infoWhatIs| command displays a term in various representations.
 
-> infoWhatIs :: EXDTM -> ProofState String
+> infoWhatIs :: ExDTmRN -> ProofState String
 > infoWhatIs tmd = draftModule "__infoWhatIs" (do
 >     (tyv :>: tm) <- elabInfer tmd
 >     tmq <- bquoteHere (evTm tm)
@@ -159,6 +159,12 @@ then passes it to the pretty-printer.
 > prettyHereAt size tt = do
 >     dtm :=>: _ <- distillHere tt
 >     return (pretty dtm size)
+
+The |resolveHere| command resolves a relative name to a reference,
+discarding any shared parameters it should be applied to.
+
+> resolveHere :: RelName -> ProofState REF
+> resolveHere x = elabResolve x >>= return . fst
 
 
 The |prettyProofState| command generates a pretty-printed representation
