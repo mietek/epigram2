@@ -1,0 +1,84 @@
+[ nat
+    [ h00
+        [ \ x : Enum ['zero 'suc] ->
+        ] SwitchD (['zero 'suc], [[] (con ['ind1 []])], x) : Desc ;
+    ] Mu [(Enum ['zero 'suc]) , h00] : Set ;
+  zero := [] : nat ;
+  suc
+    [ \ x : nat ->
+    ] con ['suc x] : nat ;
+  one := suc zero : nat ;
+  two := suc one : nat ;
+  plus
+    [ G50
+        [ G500
+            [ G5000
+                [ \ r : Sig () ->
+                  \ r : Sig () ->
+                  \ y : nat ->
+                ] y : nat ;
+              G5001
+                [ \ r : Sig (nat ;) ->
+                  G50011
+                    [ \ h : (nat -> nat) ->
+                      \ r : Sig () ->
+                      \ y : nat ->
+                    ] suc (h y) : nat ;
+                  h50012
+                    [ \ discharge : (nat -> nat) ->
+                    ] Sig () : Set ;
+                  \ x : Sig (discharge : nat -> nat ;) ->
+                ] G50011 (x !) (x -) : nat -> nat ;
+              \ x : Enum ['zero 'suc] ->
+              h5003
+                [ \ x : descOp (SwitchD (['zero 'suc], [[] (con ['ind1 []])], x^1),
+                                nat) ->
+                  h50031
+                    [ \ discharge : boxOp (SwitchD (['zero 'suc],
+                                                    [[] (con ['ind1 []])], x^1),
+                                           nat, (\ _ -> (nat -> nat)), x) ->
+                    ] (nat -> nat) : Set ;
+                ] (Pi boxOp (SwitchD (['zero 'suc], [[] (con ['ind1 []])], x^1),
+                             nat, (\ _ -> (nat -> nat)), x) h50031) : Set ;
+              h5004
+                [ \ x : Enum ['zero 'suc] ->
+                  h50041
+                    [ \ x : descOp (SwitchD (['zero 'suc], [[] (con ['ind1 []])], x^1),
+                                    nat) ->
+                      h500411
+                        [ \ discharge : boxOp (SwitchD (['zero 'suc],
+                                                        [[] (con ['ind1 []])], x^1),
+                                               nat, (\ _ -> (nat -> nat)), x) ->
+                        ] (nat -> nat) : Set ;
+                    ] (Pi boxOp (SwitchD (['zero 'suc], [[] (con ['ind1 []])], x^1),
+                                 nat, (\ _ -> (nat -> nat)), x) h500411) : Set ;
+                ] (Pi descOp (SwitchD (['zero 'suc], [[] (con ['ind1 []])], x),
+                              nat) h50041) : Set ;
+            ] Switch (['zero 'suc], x, h5004,
+                      [G5000 G5001]) : Pi descOp (SwitchD (['zero 'suc],
+                                                           [[] (con ['ind1 []])], x),
+                                                  nat) h5003 ;
+          h501
+            [ \ x : Enum ['zero 'suc] ->
+            ] descOp (SwitchD (['zero 'suc], [[] (con ['ind1 []])], x),
+                      nat) : Set ;
+          \ x : Sig (x : Enum ['zero 'suc] ; descOp (SwitchD (['zero 'suc],
+                                                              [[] (con ['ind1 []])], x),
+                                                     nat)) ->
+          h503
+            [ \ discharge : boxOp (SwitchD (['zero 'suc],
+                                            [[] (con ['ind1 []])], (x !)),
+                                   nat, (\ _ -> (nat -> nat)), (x -)) ->
+            ] (nat -> nat) : Set ;
+        ] G500 (x !) (x -) : Pi boxOp (SwitchD (['zero 'suc],
+                                                [[] (con ['ind1 []])], (x !)),
+                                       nat, (\ _ -> (nat -> nat)), (x -)) h503 ;
+      \ x : nat ->
+      h52
+        [ \ x : Enum ['zero 'suc] ->
+        ] SwitchD (['zero 'suc], [[] (con ['ind1 []])], x) : Desc ;
+    ] elimOp ([(Enum ['zero 'suc]) , h52], x, (\ _ -> (nat -> nat)),
+              G50) : nat -> nat ;
+  x := plus two two : nat ;
+]
+Loaded.

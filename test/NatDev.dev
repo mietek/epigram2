@@ -1,0 +1,57 @@
+[ nat
+    [ h00
+        [ \ x : Enum ['zero 'suc] ->
+        ] SwitchD (['zero 'suc], [[] (con ['ind1 []])], x) : Desc ;
+    ] Mu [(Enum ['zero 'suc]) , h00] : Set ;
+  zero := [] : nat ;
+  suc
+    [ \ x : nat ->
+    ] con ['suc x] : nat ;
+  one := suc zero : nat ;
+  two := suc one : nat ;
+  plus
+    [ G50
+        [ G500
+            [ G5000
+                [ \ r : Sig () ->
+                  \ r : Sig () ->
+                  \ y : nat ->
+                ] y : nat ;
+              G5001
+                [ \ r : Sig (nat ;) ->
+                  G50011
+                    [ \ h : (nat -> nat) ->
+                      \ r : Sig () ->
+                      \ y : nat ->
+                    ] suc (h y) : nat ;
+                  \ x : Sig (discharge : nat -> nat ;) ->
+                ] G50011 (x !) (x -) : nat -> nat ;
+              \ x : Enum ['zero 'suc] ->
+            ] Switch (['zero 'suc], x,
+                      (\ x -> ((x : descOp (SwitchD (['zero 'suc], [[] (con ['ind1 []])],
+                                                     x),
+                                            nat))(discharge : boxOp (SwitchD (['zero 'suc],
+                                                                              [[] (con ['ind1 []])],
+                                                                              x^1),
+                                                                     nat, (\ _ -> (nat -> nat)),
+                                                                     x)) -> nat -> nat)),
+                      [G5000 G5001]) : (x : descOp (SwitchD (['zero 'suc],
+                                                             [[] (con ['ind1 []])], x),
+                                                    nat))(discharge : boxOp (SwitchD (['zero 'suc],
+                                                                                      [[] (con ['ind1 []])],
+                                                                                      x^1),
+                                                                             nat,
+                                                                             (\ _ -> (nat -> nat)),
+                                                                             x)) -> nat -> nat ;
+          \ x : Sig (x : Enum ['zero 'suc] ; descOp (SwitchD (['zero 'suc],
+                                                              [[] (con ['ind1 []])], x),
+                                                     nat)) ->
+        ] G500 (x !) (x -) : (discharge : boxOp (SwitchD (['zero 'suc],
+                                                          [[] (con ['ind1 []])], (x !)),
+                                                 nat, (\ _ -> (nat -> nat)), (x -))) -> nat -> nat ;
+      \ x : nat ->
+    ] elimOp ([(Enum ['zero 'suc]) , \ x -> SwitchD (['zero 'suc],
+                                                     [[] (con ['ind1 []])], x)],
+              x, (\ _ -> (nat -> nat)), G50) : nat -> nat ;
+  x := plus two two : nat ;
+]
