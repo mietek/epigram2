@@ -73,8 +73,8 @@ The |pExDTm| and |pInDTm| functions start parsing at the maximum size.
 > pAscription = (| (sizedInDTm (pred AscSize)) (%keyword KwAsc%) :<: pInDTm |)
 
 > pAscriptionTC :: Parsley Token ExDTmRN
-> pAscriptionTC = (| (| DType (sizedInDTm (pred AscSize)) (%keyword KwAsc%) |) 
->                      ::$ (| A pInDTm |) |)
+> pAscriptionTC = (| typecast (sizedInDTm (pred AscSize)) (%keyword KwAsc%) pInDTm |)
+>   where typecast tm ty = (DType ty) ::$ A tm
 
 Each |sized| parser tries the appropriate |special| parser for the size,
 then falls back to parsing at the previous size followed by a |more| parser.
