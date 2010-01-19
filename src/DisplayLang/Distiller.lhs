@@ -35,7 +35,7 @@ to a term in the display language; that is, it reverses |elaborate|.
 It performs christening at the same time. For this, it needs a list
 of entries in scope, which it will extend when going under a binder.
 
-> distill :: Entries -> (TY :>: INTM) -> ProofState (InDTm String :=>: VAL)
+> distill :: Entries -> (TY :>: INTM) -> ProofState (InDTmRN :=>: VAL)
 
 > import <- DistillRules
 
@@ -53,7 +53,7 @@ of entries in scope, which it will extend when going under a binder.
 >       )
 >     return $ DL (convScope sc x tm') :=>: (evTm $ L sc)
 >   where
->     convScope :: Scope {TT} REF -> String -> InDTm String -> DScope String
+>     convScope :: Scope {TT} REF -> String -> InDTmRN -> DScope RelName
 >     convScope (_ :. _)  x  tm = x ::. tm
 >     convScope (K _)     _  tm = DK tm
 
@@ -68,17 +68,17 @@ The |distillInfer| command is the |EXTM| version of |distill|, which also yields
 the type of the term. It keeps track of a list of entries in scope, but
 also accumulates a spine so shared parameters can be removed.
 
-> distillInfer :: Entries -> EXTM -> Spine {TT} REF -> ProofState (ExDTm String :<: TY)
+> distillInfer :: Entries -> EXTM -> Spine {TT} REF -> ProofState (ExDTmRN :<: TY)
 
 > import <- DistillInferRules
 
 > distillInfer es tm@(P (name := _ :<: ty)) as       = do
 >     me <- getMotherName
->     let (strName, argsToDrop) = baptise es me B0 name
+>     let (relName, argsToDrop) = baptise es me B0 name
 >     (e', ty') <- processArgs (evTm tm :<: ty) as
->     return (DP strName $::$ (drop argsToDrop e') :<: ty')
+>     return (DP relName $::$ (drop argsToDrop e') :<: ty')
 >   where
->     processArgs :: (VAL :<: TY) -> Spine {TT} REF -> ProofState (DSpine String, TY)
+>     processArgs :: (VAL :<: TY) -> Spine {TT} REF -> ProofState (DSpine RelName, TY)
 >     processArgs (_ :<: ty) [] = return ([], ty)
 >     processArgs (v :<: C ty) (a:as) = do
 >         (e', ty') <- elimTy (distill es) (v :<: ty) a

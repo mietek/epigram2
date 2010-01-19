@@ -176,7 +176,7 @@ Elim forms inherited from elsewhere
 >   pretty (Wit t)        = wrapDoc (kword KwWit <+> pretty t ArgSize) ArgSize
 
 > import -> Pretty where
->   prettyAll :: Doc -> InDTm String -> Size -> Doc
+>   prettyAll :: Doc -> InDTmRN -> Size -> Doc
 >   prettyAll bs (DALL (DPRF p) (DL (DK q))) = prettyAllMore bs
 >     (pretty p (pred PiSize) <+> kword KwImp <+> pretty q PiSize)
 >   prettyAll bs (DALL s (DL (x ::. t))) =

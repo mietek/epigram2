@@ -84,15 +84,15 @@ Coercion rule:
 >   pretty (Pair a b)   = prettyPair (DPAIR a b)
 
 > import -> Pretty where
->   prettyPair :: InDTm String -> Size -> Doc
+>   prettyPair :: InDTmRN -> Size -> Doc
 >   prettyPair p = const (brackets (prettyPairMore empty p))
 
->   prettyPairMore :: Doc -> InDTm String -> Doc
+>   prettyPairMore :: Doc -> InDTmRN -> Doc
 >   prettyPairMore d DVOID        = d
 >   prettyPairMore d (DPAIR a b)  = prettyPairMore (d <+> pretty a minBound) b
 >   prettyPairMore d t            = d <+> kword KwComma <+> pretty t maxBound
 
->   prettySigma :: Doc -> InDTm String -> Size -> Doc
+>   prettySigma :: Doc -> InDTmRN -> Size -> Doc
 >   prettySigma d DUNIT                      = prettySigmaDone d empty
 >   prettySigma d (DSIGMA s (DL (x ::. t)))  = prettySigma
 >       (d <+> text x <+> kword KwAsc <+> pretty s maxBound <+> kword KwSemi) t

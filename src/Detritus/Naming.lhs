@@ -1,3 +1,4 @@
+
 > resolve :: Entries -> InDTm RelName -> Either [String] INDTM
 > resolve es tm = trace ("Resolving " ++ show tm ++ " gave " ++ show tm') $ tm'
 >     where tm' = resolver es B0 %$ tm
@@ -36,3 +37,26 @@ returns a de Brujin indexed variable if it is present. Otherwise, it calls
 > vinc :: EXTM -> EXTM
 > vinc (V i)  = V (i + 1)
 > vinc n      = n
+
+
+
+
+
+The |christen| function takea a list of entries in scope (the auncles of the
+current location), the name of the current location and a term. It replaces
+the variables and parameters of the term with relative names as described
+above, and removes common parameters.
+
+> christen :: Entries -> Name -> INDTM -> InDTmRN
+> christen es n tm = christener es n B0 %%$ tm
+
+
+The business of christening is actually done by the following mangle, which
+does most of its work in the |mangleP| function. 
+
+> christener :: Entries -> Name -> Bwd String -> DMangle Identity REF RelName
+> christener es me vs = DMang
+>     {  dmangP = \(target := _) as -> pure (mangleP es me vs target (runIdentity as))
+>     ,  dmangV = \i as -> (| (DP (vs !. i) $::$) as |)
+>     ,  dmangB = \v -> christener es me (vs :< v)
+>     }

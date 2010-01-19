@@ -57,7 +57,7 @@
 >     DK     :: InDTm x                    -> DScope x  -- constant
 >   deriving (Functor, Foldable, Traversable, Show)
 
-> dScopeName :: DScope String -> String
+> dScopeName :: DScope x -> String
 > dScopeName (x ::. _)  = x
 > dScopeName (DK _)      = "_"
 

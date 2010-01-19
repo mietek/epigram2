@@ -105,7 +105,7 @@ away bits of the context to produce an answer, then restores the saved state.
 >                ty' <- bquoteHere (pty ref)
 >                docTy <- prettyHere (SET :>: ty')
 >                d <- hyps aus me
->                return (d $$ prettyBKind k (text (christenREF aus me ref) <+> kword KwAsc <+> docTy))
+>                return (d $$ prettyBKind k (text (showRelName (christenREF aus me ref)) <+> kword KwAsc <+> docTy))
 >            (True, es' :< E ref _ (Girl LETG _) _) -> do
 >                goIn
 >                es <- getDevEntries
@@ -115,7 +115,7 @@ away bits of the context to produce an answer, then restores the saved state.
 >                goOut
 >                putDevEntries es'
 >                d <- hyps aus me
->                return (d $$ (text (christenREF aus me ref) <+> kword KwAsc <+> docTy))
+>                return (d $$ (text (showRelName (christenREF aus me ref)) <+> kword KwAsc <+> docTy))
 >            (_, es' :< _) -> putDevEntries es' >> hyps aus me
 
 
@@ -144,7 +144,7 @@ The |infoWhatIs| command displays a term in various representations.
 
 The |distillHere| command distills a term in the current context.
 
-> distillHere :: (TY :>: INTM) -> ProofState (InDTm String :=>: VAL)
+> distillHere :: (TY :>: INTM) -> ProofState (InDTmRN :=>: VAL)
 > distillHere tt = do
 >     aus <- getAuncles
 >     distill aus tt

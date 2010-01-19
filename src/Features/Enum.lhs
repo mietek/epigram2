@@ -164,7 +164,7 @@ Equality rules:
 >   pretty (Su t)     = prettyEnumIndex 1 t
 
 > import -> Pretty where
->   prettyEnumIndex :: Int -> InDTm String -> Size -> Doc
+>   prettyEnumIndex :: Int -> InDTmRN -> Size -> Doc
 >   prettyEnumIndex n DZE      = const (int n)
 >   prettyEnumIndex n (DSU t)  = prettyEnumIndex (succ n) t
 >   prettyEnumIndex n tm       = wrapDoc
@@ -308,7 +308,7 @@ rules take over; the pretty-printer will then do the right thing.
 > import -> DistillRules where
 >   distill _ (ENUMT t :>: tm) | Just r <- findIndex (t :>: tm) = return r
 >     where
->       findIndex :: (VAL :>: INTM) -> Maybe (InDTm String :=>: VAL)
+>       findIndex :: (VAL :>: INTM) -> Maybe (InDTmRN :=>: VAL)
 >       findIndex (CONSE (TAG s)  _ :>: ZE)    = Just (DTAG s :=>: evTm tm)
 >       findIndex (CONSE _        a :>: SU b)  = findIndex (a :>: b)
 >       findIndex _                            = Nothing

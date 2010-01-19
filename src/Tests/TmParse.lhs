@@ -3,77 +3,73 @@
 > import Data.Foldable
 
 > import DisplayLang.Lexer
+> import DisplayLang.Naming
+> import DisplayLang.PrettyPrint
 > import DisplayLang.TmParse
+
 
 > import Kit.Parsley
 
 
-> tests = [ "*"                         -- Set
->         , "#"                         -- Prop
->         , "(x : *) -> *"              -- Function space
->         , "( x : *) -> *"             -- Function space
->         , "( x : * ) -> *"            -- Function space
->         , "( x : * )( y : #) -> *"    -- Function space
->         , "( x : * ) ( y : *) -> #"   -- Function space
->         , "* -> *"                    -- Function space (non dep)
->         , "* -> * -> *"               -- Function space (non dep)
->         , "(* -> *) -> *"             -- Function space (non dep)
->         , "\\ x -> *"                 -- Lambda
->         , "\\ x y -> *"               -- Lambda
->         , "\\ x y z -> *"             -- Lambda
->         , "\\ x y -> \\ z -> *"       -- Lambda
->         , "()"                        -- unit
->         , "( * ; #)"                  -- sigma
->         , "( * ; ())"                 -- sigma
->         , "( * ; )"                   -- sigma
->         , "( * ; # ; * )"             -- sigma
->         , "( * :- #)"                 -- sigma
->         , "( * :- # ; * )"            -- sigma
->         , "( * :- # :- # )"           -- sigma
->         , "( x : * ; #)"              -- sigma
->         , "( x : * ; y : # ; *)"      -- sigma
->         , "( x : * ; z : () ; )"      -- sigma
->         , "( y : * ; )"               -- sigma
->         , "( x : * ; # ; z : * ; )"   -- sigma
->         , "( x : * :- #)"             -- sigma
->         , "( x : * :- # ; y : * ;)"   -- sigma
->         , "( x : * :- # :- # )"       -- sigma
->         , ":- #"                      -- proposition
->         , ":- (# -> #)"               -- proposition
->         , "* : *"                     -- ExTm
->         , "(* : *)"                   -- ExTm
->         , "(* -> * : *)"              -- ExTm
->         , "@ *"                       -- Con
->         , "@(\\ x -> *)"              -- Con
+> tests = [ "Set"                         -- Set
+>         , "Prop"                      -- Prop
+>         , "(x : Set) -> Set"              -- Function space
+>         , "( x : Set) -> Set"             -- Function space
+>         , "( x : Set ) -> Set"            -- Function space
+>         , "( x : Set )( y : Prop) -> Set"    -- Function space
+>         , "( x : Set ) ( y : Set) -> Prop"   -- Function space
+>         , "Set -> Set"                    -- Function space (non dep)
+>         , "Set -> Set -> Set"               -- Function space (non dep)
+>         , "(Set -> Set) -> Set"             -- Function space (non dep)
+>         , "\\ x -> Set"                 -- Lambda
+>         , "\\ x y -> Set"               -- Lambda
+>         , "\\ x y z -> Set"             -- Lambda
+>         , "\\ x y -> \\ z -> Set"       -- Lambda
+>         , "Sig ()"                        -- unit
+>         , "Sig ( Set ; Prop)"                  -- sigma
+>         , "Sig ( Set ; Sig ())"                 -- sigma
+>         , "Sig ( Set ; )"                   -- sigma
+>         , "Sig ( Set ; Prop ; Set )"             -- sigma
+>         , "Sig ( Set :- Prop)"                 -- sigma
+>         , "Sig ( Set :- Prop ; Set )"            -- sigma
+>         , "Sig ( Set :- Prop :- Prop )"           -- sigma
+>         , "Sig ( x : Set ; Prop)"              -- sigma
+>         , "Sig ( x : Set ; y : Prop ; Set)"      -- sigma
+>         , "Sig ( x : Set ; z : Sig () ; )"      -- sigma
+>         , "Sig ( y : Set ; )"               -- sigma
+>         , "Sig ( x : Set ; Prop ; z : Set ; )"   -- sigma
+>         , "Sig ( x : Set :- Prop)"             -- sigma
+>         , "Sig ( x : Set :- Prop ; y : Set ;)"   -- sigma
+>         , "Sig ( x : Set :- Prop :- Prop )"       -- sigma
+>         , ":- Prop"                      -- proposition
+>         , ":- (Prop -> Prop)"               -- proposition
+>         , "(: Set) Set"                     -- ExTm
+>         , "(: Set) Set -> Set"              -- ExTm
+>         , "con Set"                       -- Con
+>         , "con (\\ x -> Set)"              -- Con
 >         , "[]"                        -- Tuple
->         , "[ * # ]"                   -- Tuple
->         , "[ * # * ]"                 -- Tuple
->         , "[ * (* -> *) (* -> * -> *) ]" -- Tuple
->         , "[ * / # ]"                 -- Tuple
->         , "[ # * / #]"                -- Tuple
->         , "{}"                        -- Enum
->         , "{x}"                       -- Enum
->         , "{x , y}"                   -- Enum
->         , "{x, y}"                    -- Enum
->         , "{x , y , z}"               -- Enum
->         , "{ x , y , z }"             -- Enum
->         , "{ x , y , z / * }"         -- Enum
->         , "{ x , y , z / {} }"        -- Enum
->         , "(x : *) => *"              -- Forall
->         , "( x : *) => *"             -- Forall
->         , "( x : * ) => *"            -- Forall
->         , "( x : * )( y : #) => *"    -- Forall
->         , "( x : * ) ( y : *) => #"   -- Forall
->         , "* && #"                    -- And
->         , "((x : *) => *) && *"       -- And
+>         , "[ Set Prop ]"                   -- Tuple
+>         , "[ Set Prop Set ]"                 -- Tuple
+>         , "[ Set (Set -> Set) (Set -> Set -> Set) ]" -- Tuple
+>         , "[ Set / Prop ]"                 -- Tuple
+>         , "[ Prop Set / Prop]"                -- Tuple
+>         , "Enum []"                        -- Enum
+>         , "Enum ['x]"                       -- Enum
+>         , "Enum ['x 'y]"                   -- Enum
+>         , "Enum ['x 'y 'z / Set]"         -- Enum
+>         , "(x : Set) => Set"              -- Forall
+>         , "( x : Set) => Set"             -- Forall
+>         , "( x : Set ) => Set"            -- Forall
+>         , "( x : Set )( y : Prop) => Set"    -- Forall
+>         , "( x : Set ) ( y : Set) => Prop"   -- Forall
+>         , "Set && Prop"                    -- And
+>         , "((x : Set) => Set) && Set"       -- And
 >         , "TT && FF"                  -- And
 >         , "FF && FF"                  -- And
 >         , "TT"                        -- Trivial
 >         , "FF"                        -- Absurd
->         , "(* : *) == (* : *)"        -- EqBlue
->         , "((* -> *) : *) == (# : *)" -- EqBlue
->         , "* : *"                     -- Annotate
->         , "(* -> *) : *"              -- Annotate
+>         , "(: Set) Set == (: Set) Set"        -- EqBlue
+>         , "(: Set) (Set -> Set) == (: Set) Prop" -- EqBlue
 >         , "x"                         -- Name
 >         , "x^2"                       -- Name
 >         , "xx^242"                    -- Name
@@ -82,9 +78,9 @@
 >         , "x -> y"                    -- Name
 >         , "x y"                       -- Application
 >         , "x y z"                     -- Application
->         , "f * *"                     -- Application
->         , "(* : *) <-> (* : *)"       -- EqGreen
->         , "((* -> *) : *) <-> (# : *)"-- EqGreen
+>         , "f Set Set"                     -- Application
+>         , "(Set : Set) <-> (Set : Set)"       -- EqGreen
+>         , "((Set -> Set) : Set) <-> (Prop : Set)"-- EqGreen
 >         , "eqGreen(x , y , z)"        -- Operator
 >         , "elimOp()"                  -- Operator
 >         , "elimOp(x)"                 -- Operator
@@ -97,31 +93,29 @@
 >         , "1 + x"                     -- Nat
 >         , "2 + x"                     -- Nat
 >         , "f 1"                       -- Nat
->         , "( * )"                     -- grouping
->         , "((*))"                     -- grouping
+>         , "( Set )"                     -- grouping
+>         , "((Set))"                     -- grouping
 >         , "` x"                       -- tag
 >         , "` xy"                      -- tag
 >         , "`x"                        -- tag
 >         , "`xyz"                      -- tag
->         , "? a"                       -- hole
->         , "(? a : ? b) -> ? c"        -- more holes
+>         , "?a"                       -- hole
+>         , "(: ?a) ?b -> ?c"        -- more holes
 >         , "Mu d"                      -- mu
->         , "* : *"                     -- ascription
->         , "@ @ [(\\ r r y -> y) (\\ r -> @ \\ h r y -> suc (h y))] : nat -> nat -> nat"         -- performance bug
->         , "(@ (@ ([(\\ r r y -> y) (\\ r -> @ (\\ h r y -> (suc (h y))))])))" -- performance bug
->         , "(@ (@ ([(\\ r r y -> y) (\\ r -> @ (\\ h r y -> (suc (h y))))]))) : nat -> nat -> nat" -- performance bug
+>         , "(: nat -> nat -> nat) con con [(\\ r r y -> y) (\\ r -> con \\ h r y -> suc (h y))]"         -- no longer a performance bug
+>         , "(: nat -> nat -> nat) (con (con ([(\\ r r y -> y) (\\ r -> con (\\ h r y -> (suc (h y))))])))" -- no longer a performance bug
+>         , "(: nat -> nat -> nat) (con (con ([(\\ r r y -> y) (\\ r -> con (\\ h r y -> (suc (h y))))])))" -- no longer a performance bug
+
+>         , "A -> B -> C"               -- mixed pi-type
+>         , "(x : A) -> (y : B) -> C"         -- mixed pi-type
+>         , "A -> (x : B) -> C"         -- mixed pi-type
 >         ]
 
-
-> testsEx = [ "* : *"                  -- another ascription
->           ]
-
-> test :: Show x => Parsley Token x -> String -> IO ()
+> test :: (Pretty x, Show x) => Parsley Token x -> String -> IO ()
 > test p x =
 >   let (Right tox) = parse tokenize x in
->     let parseX = parse p tox in
->       putStrLn (x ++ "\n==>\t" ++ show tox ++ "\n==>\t" ++ show parseX)
+>     case parse p tox of
+>       Left err -> putStrLn ("[FAILED] " ++ x ++ "\t==>\t" ++ show tox ++ "\t==>\t" ++ show err)
+>       Right tm -> putStrLn ("[PASSED] " ++ x ++ "\t==>\t" ++ renderHouseStyle (pretty tm maxBound))
 
-> main = do
->     foldMap (test pInDTm) tests
->     foldMap (test pExDTm) testsEx
+> main = foldMap (test pInDTm) tests

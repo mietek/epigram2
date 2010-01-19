@@ -68,7 +68,8 @@ The |showEntries| function folds over a bunch of entries, christening them with 
 given auncles and current name, and intercalating to produce a comma-separated list.
 
 > showEntries :: (Traversable f, Traversable g) => Entries -> Name -> f (Entry g) -> String
-> showEntries aus me = intercalate ", " . foldMap (\(E ref _ _ _) -> [christenREF aus me ref])
+> showEntries aus me = intercalate ", " . foldMap
+>     (\(E ref _ _ _) -> [showRelName (christenREF aus me ref)])
 
 The |showEntriesAbs| function works similarly, but uses absolute names instead of
 christening them.
@@ -175,34 +176,14 @@ common prefix of the name may thus be omitted, as may any common
 parameters.
 
 
-The |christen| function takea a list of entries in scope (the auncles of the
-current location), the name of the current location and a term. It replaces
-the variables and parameters of the term with |String| names as described
-above, and removes common parameters.
-
-> christen :: Entries -> Name -> INDTM -> InDTm String
-> christen es n tm = christener es n B0 %%$ tm
-
-
 The |christenName| and |christenREF| functions do a similar job for names, and
 the name part of references, respectively.
 
-> christenName :: Entries -> Name -> Name -> String
+> christenName :: Entries -> Name -> Name -> RelName
 > christenName es me target = case mangleP es me B0 target [] of DP x -> x
 >
-> christenREF :: Entries -> Name -> REF -> String
+> christenREF :: Entries -> Name -> REF -> RelName
 > christenREF es me (target := _) = christenName es me target
-
-
-The business of christening is actually done by the following mangle, which
-does most of its work in the |mangleP| function. 
-
-> christener :: Entries -> Name -> Bwd String -> DMangle Identity REF String
-> christener es me vs = DMang
->     {  dmangP = \(target := _) as -> pure (mangleP es me vs target (runIdentity as))
->     ,  dmangV = \i as -> (| (DP (vs !. i) $::$) as |)
->     ,  dmangB = \v -> christener es me (vs :< v)
->     }
 
 
 The |mangleP| function takes a list of entries in scope, the name of the curent
@@ -210,17 +191,16 @@ location, a list of local variables, the name of the parameter to christen and a
 spine of arguments. It gives an appropriate relative name to the parameter and
 applies it to the arguments --- \emph{for girls}, dropping any that are shared with the current location.
 
-> mangleP :: Entries -> Name -> Bwd String -> Name -> DSpine String -> ExDTm String
+> mangleP :: Entries -> Name -> Bwd String -> Name -> DSpine RelName -> ExDTmRN
 > mangleP aus me vs target args = DP s $::$ drop n args
 >   where (s, n) = baptise aus me vs target
 
 
 The |baptise| function takes a list of entries in scope, the name of the curent
 location, a list of local variables and the name of the parameter to christen.
-It gives an appropriate relative name as a string, and returns the number
-of arguments to drop. 
+It returns an appropriate relative name and the number of arguments to drop. 
 
-> baptise :: Entries -> Name -> Bwd String -> Name -> (String, Int)
+> baptise :: Entries -> Name -> Bwd String -> Name -> (RelName, Int)
 > baptise auncles me vs target = case splitNames me target of
 >   (prefix, (t, n):targetSuffix) ->
 >     let  numBindersToSkip = ala Sum foldMap (indicator (t ==)) vs
@@ -231,18 +211,18 @@ of arguments to drop.
 >             let argsToDrop | entryHasDev ancestor  = boyCount commonEntries
 >                            | otherwise             = 0
 >             in  if targetSuffix == []
->                 then  (showRelName [(t, Rel i)], argsToDrop)
+>                 then  ([(t, Rel i)], argsToDrop)
 >                 else
 >                   let  (kids, _, _) = entryDev ancestor
 >                        n = (t, Rel i) : (searchKids kids targetSuffix 0)
->                   in   (showRelName n, argsToDrop)
->         Nothing -> (tryBuiltins, 0)
->   (prefix, []) -> (tryBuiltins, 0)
+>                   in   (n, argsToDrop)
+>         Nothing -> tryBuiltins
+>   (prefix, []) -> tryBuiltins
 >  where
->    tryBuiltins :: String
+>    tryBuiltins :: (RelName, Int)
 >    tryBuiltins = case find ((target ==) . refName . snd) (axioms ++ primitives) of
->       Just (s, _)  -> s
->       Nothing      -> "???" ++ showName target
+>       Just (s, _)  -> ([(s, Rel 0)], 0)
+>       Nothing      -> ([("???" ++ showName target, Rel 0)], 0)
 
 
 The |searchKids| function searches a list of children to match a name suffix, producing
