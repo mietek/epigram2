@@ -40,16 +40,10 @@
 here, in order to improve the narrative.}
 
 
-\subsection{Asking for Evidences}
+\subsection{Asking for Evidence}
 
-
-A |ProofState| is not a |NameSupplier| because the semantics of the
-latter are not compatible with the caching of |NameSupply|s in the
-proof context. However, it can provide the current |NameSupply| to a
-function that requires it. 
-
-> withNSupply :: (NameSupply -> x) -> ProofState x
-> withNSupply f = getDevNSupply >>= return . f
+A |ProofState| is almost a |NameSupplier|, but it cannot fork the
+name supply.
 
 > instance NameSupplier ProofState where
 >     freshRef (s :<: ty) f = do
@@ -62,6 +56,12 @@ function that requires it.
 >     forkNSupply = error "ProofState does not provide forkNSupply"
 >     
 >     askNSupply = getDevNSupply
+
+We also provide an operator to lift functions from a name supply
+to proof state commands.
+
+> withNSupply :: (NameSupply -> x) -> ProofState x
+> withNSupply f = getDevNSupply >>= return . f
 
 \begin{danger}[Read-only name supply]
 
