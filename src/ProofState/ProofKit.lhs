@@ -197,7 +197,7 @@ is not in the required form.
 >         m <- getMotherName
 >         if xn == last m
 >             then return ()
->             else removeDevEntry >> seek xn
+>             else seek xn
 
 
 \subsection{Goal Search Commands}
