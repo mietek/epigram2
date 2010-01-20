@@ -35,6 +35,7 @@
 > import ProofState.ProofState
 > import ProofState.ProofKit
 > import ProofState.Elimination
+> import ProofState.PropSimp
 
 > import Cochon.DisplayCommands
 

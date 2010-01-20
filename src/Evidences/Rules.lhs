@@ -553,7 +553,8 @@ This translates naturally into the following code:
 >   yv :<: yt <- infer n
 >   case (equal (SET :>: (w, yt)) r) of
 >     True -> return $ () :=>: yv
->     False -> throwError' $ "check: cannot make an In of this Ex"
+>     False -> throwError' $ unlines ["check: inferred type", show yt,
+>                                     "of", show n, "is not", show w]
 
 Finally, we can extend the checker with the |Check| aspect. If no rule
 has matched, then we have to give up.
