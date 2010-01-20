@@ -71,10 +71,14 @@ to |FF|, it will complain.
 >         SimplifyTrivial prf  -> do
 >             let equiv = coe @@ [PRF TRIVIAL, PRF p,
 >                                          CON (PAIR (L (K prf)) (L (K VOID))), VOID]
->             proofTrace . unlines $ ["Simplified to TRIVIAL with proof", show prf]
+
+<             proofTrace . unlines $ ["Simplified to TRIVIAL with proof", show prf]
+
 >             equiv' <- bquoteHere equiv
 >             prf' <- bquoteHere prf
->             proofTrace . unlines $ ["which bquotes to", show prf']
+
+<             proofTrace . unlines $ ["which bquotes to", show prf']
+
 >             give equiv'
 >             return ()
 >         SimplifyTo q prfQP prfPQ  -> do
@@ -82,15 +86,19 @@ to |FF|, it will complain.
 >             x <- pickName "q" ""
 >             qr <- make (x :<: q')
 >             let equiv = coe @@ [PRF q, PRF p, CON (PAIR prfQP prfPQ), evTm qr]
->             proofTrace . unlines $ ["Simplified to", show q, "with Q => P by",
->                                     show prfQP, "and P => Q by", show prfPQ,
->                                     "yielding equivalence", show equiv]
+
+<             proofTrace . unlines $ ["Simplified to", show q, "with Q => P by",
+<                                     show prfQP, "and P => Q by", show prfPQ,
+<                                     "yielding equivalence", show equiv]
+
 >             equiv' <- bquoteHere equiv
 >             prfQP' <- bquoteHere prfQP
 >             prfPQ' <- bquoteHere prfPQ
->             proofTrace . unlines $ ["(BQ) Simplified to", show q', "with Q => P by",
->                                     show prfQP', "and P => Q by", show prfPQ',
->                                     "yielding equivalence", show equiv']
+
+<             proofTrace . unlines $ ["(BQ) Simplified to", show q', "with Q => P by",
+<                                     show prfQP', "and P => Q by", show prfPQ',
+<                                     "yielding equivalence", show equiv']
+
 >             giveNext equiv'
 >             return ()
 >         SimplifyNone    _ -> throwError' "propSimplifyHere: cannot simplify."
