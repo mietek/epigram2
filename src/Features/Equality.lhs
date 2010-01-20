@@ -158,7 +158,8 @@ With no computational behavior.
 >              Just fxy -> coerce fxy (q $$ Out) s
 >            oprun [N x,y,q,s] = Left x
 >            oprun [x,N y,q,s] = Left y
->            oprun _ = undefined
+>            oprun vs = error ("coe: undefined for arguments"
+>                                  ++ unlines (map show vs))
 
 > import -> Operators where
 >   eqGreen :

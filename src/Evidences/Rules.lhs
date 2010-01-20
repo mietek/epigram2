@@ -450,7 +450,7 @@ a binder.
 
 > bquote refs (L (HF x t)) = 
 >     (|(\t -> L (x :. t))
->       (freshRef  (x :<: undefined) 
+>       (freshRef  (x :<: error "bquote: type undefined") 
 >                  (\x -> bquote  (refs :< x) 
 >                                 (t (pval x))))|)
 

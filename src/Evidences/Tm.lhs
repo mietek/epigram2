@@ -344,6 +344,7 @@ We have some pattern synonyms for common, er, patterns.
 > pattern NP n      = N (P n)
 > pattern LAV x t   = L (x :. t)
 > pattern PIV x s t = PI s (LAV x t)
+> pattern LK t      = L (K t)
 > import <- CanPats
 
 We have some type synonyms for commonly occurring instances of |Tm|.
@@ -540,7 +541,7 @@ I think that this stuff should disappear with Tactics spreading.
 > ($#) :: Int -> [Int] -> InTm x
 > f $# xs = N (foldl (\ g x -> g :$ A (NV x)) (V f) xs)
 
-> ($##) :: EXTM -> [INTM] -> EXTM
+> ($##) :: Tm {Ex, p} x -> [Tm {In, p} x] -> Tm {Ex, p} x
 > f $## xs = f $:$ (map A xs)
 
 > fortran :: Tm {In, p} x -> String
