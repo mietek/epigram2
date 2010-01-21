@@ -27,3 +27,20 @@ root ;
 
 make oops : :- ((TT && P => Q && FF) => FF) ;
 simplify ;
+root ;
+
+make f : :- ((TT => P) => TT) ;
+simplify ;
+
+make g : :- (TT => TT) ;
+simplify ;
+
+make h : :- (P => TT) ;
+simplify ;
+
+make k : :- (P => FF) ;
+simplify ;
+root ; 
+
+make x : :- (((P && TT) && (TT && Q)) && R && P) ;
+simplify ;
