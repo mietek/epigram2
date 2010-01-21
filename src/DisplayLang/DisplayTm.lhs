@@ -77,6 +77,7 @@
 > pattern DNP n      = DN (DP n)
 > pattern DLAV x t   = DL (x ::. t)
 > pattern DPIV x s t = DPI s (DLAV x t)
+> pattern DTY ty tm  = (DType ty) ::$ A tm
 
 > import <- DisplayCanPats
 

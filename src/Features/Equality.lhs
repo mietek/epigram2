@@ -98,12 +98,12 @@ With no computational behavior.
 >   traverse f (EqBlue (pty :>: p) (qty :>: q)) =
 >     (|EqBlue (|(:>:) (f pty) (f p)|) (|(:>:) (f qty) (f q)|)|)
 
-> import -> CanPretty where
->   pretty (EqBlue (y0 :>: t0) (y1 :>: t1)) = wrapDoc (
->       parens (pretty t0 ArgSize <+> kword KwAsc <+> pretty y0 ArgSize)
->       <+> kword KwEqBlue <+>
->       parens (pretty t1 ArgSize <+> kword KwAsc <+> pretty y1 ArgSize))
->       ArgSize
+
+We do not pretty-print |EqBlue| because it is replaced in the display syntax
+by |DEqBlue| defined below.
+
+< import -> CanPretty where
+
 
 > import -> CanTyRules where
 >   canTy chev (Prop :>: EqBlue (y0 :>: t0) (y1 :>: t1)) = do
@@ -189,8 +189,8 @@ With no computational behavior.
 
 
 In the display syntax, a blue equality can be between arbitrary ExDTms,
-rather than ascriptions. To allow this, we add a suitable constructor
-to InDTm, along with elaboration and distillation rules.
+rather than ascriptions. To allow this, we add a suitable constructor |DEqBlue|
+to InDTm, along with appropriate elaboration and distillation rules.
 
 > import -> InDTmConstructors where
 >   DEqBlue :: ExDTm x -> ExDTm x -> InDTm x
@@ -212,13 +212,8 @@ to InDTm, along with elaboration and distillation rules.
 >       return ((EQBLUE (tty' :>: N ttm) (uty' :>: N utm))
 >               :=>: (EQBLUE (tty :>: evTm ttm) (uty :>: evTm utm)))
 
-
-The usual distillation machinery will work correctly, but we can define
-the following special case to recover the original representation when
-a blue equality is between two neutral terms.
-
 > import -> DistillRules where
->   distill es (PROP :>: tm@(EQBLUE (_ :>: N t) (_ :>: N u))) = do
->       (ttm :<: tty) <- distillInfer es t []
->       (utm :<: uty) <- distillInfer es u []
->       return (DEqBlue ttm utm :=>: evTm tm)
+>   distill es (PROP :>: tm@(EQBLUE (tty :>: t) (uty :>: u))) = do
+>       t' <- toExDTm es (tty :>: t)
+>       u' <- toExDTm es (uty :>: u)
+>       return (DEqBlue t' u' :=>: evTm tm)

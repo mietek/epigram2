@@ -164,16 +164,16 @@ Elim forms inherited from elsewhere
 
 > import -> CanPretty where
 >   pretty Prop           = const (kword KwProp)
->   pretty (Prf p)        = wrapDoc (kword KwPrf <+> pretty p ArgSize) ArgSize
+>   pretty (Prf p)        = wrapDoc (kword KwPrf <+> pretty p AndSize) AppSize
 >   pretty (All p q)      = prettyAll empty (DALL p q)
 >   pretty (And p q)      = wrapDoc
->       (pretty p ArgSize <+> kword KwAnd <+> pretty q ArgSize)
->       ArgSize
+>       (pretty p (pred AndSize) <+> kword KwAnd <+> pretty q AndSize)
+>       AndSize
 >   pretty Trivial        = const (kword KwTrivial)
 >   pretty Absurd         = const (kword KwAbsurd)
 >   pretty (Box (Irr p))  = pretty p
->   pretty (Inh ty)       = wrapDoc (kword KwInh <+> pretty ty ArgSize) ArgSize
->   pretty (Wit t)        = wrapDoc (kword KwWit <+> pretty t ArgSize) ArgSize
+>   pretty (Inh ty)       = wrapDoc (kword KwInh <+> pretty ty AndSize) AppSize
+>   pretty (Wit t)        = wrapDoc (kword KwWit <+> pretty t AndSize) AppSize
 
 > import -> Pretty where
 >   prettyAll :: Doc -> InDTmRN -> Size -> Doc

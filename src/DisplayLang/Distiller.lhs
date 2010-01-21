@@ -97,3 +97,16 @@ also accumulates a spine so shared parameters can be removed.
 >     return ((DType ty' ::$ A t') :<: vty)
 
 > distillInfer _ tm _ = error ("distillInfer: can't cope with " ++ show tm)
+
+
+The |toExDTm| helper function will distill a term to produce an
+|Ex| representation by applying a type-cast if necessary.
+
+> toExDTm :: Entries -> (INTM :>: INTM) -> ProofState ExDTmRN
+> toExDTm es (_ :>: N tm) = do
+>     (tm' :<: _) <- distillInfer es tm []
+>     return tm'
+> toExDTm es (ty :>: tm) = do
+>     (ty'  :=>: tyv)  <- distill es (SET :>: ty)
+>     (tm'  :=>: _)    <- distill es (tyv :>: tm)
+>     return (DTY ty' tm')
