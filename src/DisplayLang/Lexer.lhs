@@ -56,20 +56,22 @@ implement a function to crush tokens down to strings.
 
 > crushToken :: Token -> String
 > crushToken (Identifier s) = s
-> crushToken (Keyword s) = show s
-> crushToken (Brackets bra toks) = showOpenB bra ++ (show =<< toks) ++ showCloseB bra 
->          where  showOpenB Round = "("
->                 showOpenB Square = "["
->                 showOpenB Curly = "{"
->                 showOpenB (RoundB s) = "(" ++ s ++ "|"
->                 showOpenB (SquareB s) = "[" ++ s ++ "|"
->                 showOpenB (CurlyB s) = "{" ++ s ++ "|"
->                 showCloseB Round = ")"
->                 showCloseB Square = "]"
->                 showCloseB Curly = "}"
->                 showCloseB (RoundB s) = "|" ++ s ++ ")"
->                 showCloseB (SquareB s) = "|" ++ s ++ "]"
->                 showCloseB (CurlyB s) = "|" ++ s ++ "}"
+> crushToken (Keyword s) = key s
+> crushToken (Brackets bra toks) = showOpenB bra ++
+>     (intercalate " " (map crushToken toks)) ++ showCloseB bra 
+>   where
+>     showOpenB   Round        = "("
+>     showOpenB   Square       = "["
+>     showOpenB   Curly        = "{"
+>     showOpenB   (RoundB s)   = "(" ++ s ++ "|"
+>     showOpenB   (SquareB s)  = "[" ++ s ++ "|"
+>     showOpenB   (CurlyB s)   = "{" ++ s ++ "|"
+>     showCloseB  Round        = ")"
+>     showCloseB  Square       = "]"
+>     showCloseB  Curly        = "}"
+>     showCloseB  (RoundB s)   = "|" ++ s ++ ")"
+>     showCloseB  (SquareB s)  = "|" ++ s ++ "]"
+>     showCloseB  (CurlyB s)   = "|" ++ s ++ "}"
 
 
 \subsection{Lexer}
