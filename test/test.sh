@@ -3,6 +3,7 @@
 failed="[FAILED]"
 undefined="[UNDEFINED]"
 passed="[PASSED]"
+disabled="[DISABLED]"
 
 case ${TERM} in
         dumb*) # emacs shell is "dumb"
@@ -13,6 +14,7 @@ case ${TERM} in
 	failed="\e[00;31m${failed}\e[00m"
 	undefined="\e[00;34m${undefined}\e[00m"
 	passed="\e[00;32m${passed}\e[00m"
+	disabled="\e[00;35m${disabled}\e[00m"
         ;;
 esac
 
@@ -33,6 +35,11 @@ mkdir ".tests"
 ## Run the test cases
 for script in `ls *.pig`
 do
+    if [ -f "${script}.disabled" ]
+    then 
+	echo -e "$disabled $script is disabled"
+	continue
+    fi
     # echo -n "Running test $script..."
     ../src/Pig --check "$script" > ".tests/$script.log"
     # echo " Done."
