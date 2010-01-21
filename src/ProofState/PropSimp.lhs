@@ -88,8 +88,6 @@ to |FF|, it will complain.
 >             give equiv'
 >             return ()
 
-<--       SimplifyNone    _ -> throwError' "propSimplifyHere: cannot simplify."
-
 >         SimplyAbsurd _ _ _ -> throwError' "propSimplifyHere: oh no, goal is absurd!"
 
 >         SimplifyTo _ q prfQP prfPQ -> do
@@ -229,6 +227,16 @@ To simplify an implication, we do lots of slightly dubious magic.
 >
 >             _ -> return (simplifyNone p)
 >       )
+
+> propSimplify p@(EQBLUE (sty :>: s) (tty :>: t))
+>   | not (isNeutral s || isNeutral t) = return (SimplifyTo p
+>         (eqGreen @@ [sty, s, tty, t])
+>         (\egv -> CON egv)
+>         (\ebv -> ebv $$ Out))
+>   where
+>     isNeutral :: VAL -> Bool
+>     isNeutral (N _)  = True
+>     isNeutral _      = False
 
 If nothing matches, we are unable to simplify this term.
 
