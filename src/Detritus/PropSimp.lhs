@@ -1,3 +1,65 @@
+
+
+The |flattenAnd| function takes a conjunction and splits it into a list of conjuncts.
+
+> flattenAnd :: VAL -> [VAL]
+> flattenAnd (AND p q) = flattenAnd p ++ flattenAnd q
+> flattenAnd p = [p]
+
+
+The |proveConjunction| function takes a conjunction and a list of proofs of its
+conjuncts, and produces a proof of the conjunction.
+
+> proveConjunction :: VAL -> [VAL] -> VAL
+> proveConjunction p qrs = r
+>   where
+>     (r, []) = help p qrs
+>
+>     help :: VAL -> [VAL] -> (VAL, [VAL])
+>     help (AND p q) qrs = let
+>         (x, qrs')   = help p qrs
+>         (y, qrs'')  = help q qrs'
+>       in (PAIR x y, qrs'')
+>     help _ (qr:qrs) = (qr, qrs)
+
+The |curryProp| function takes a conjunction and a consequent, and produces a
+curried proposition that has the pieces of the conjunction as individual
+antecedents, followed by the given consequent. Thus
+|curryProp (A && B && C) D == (A => B => C => D)|.
+
+> curryProp :: VAL -> VAL -> VAL
+> curryProp ps q = curryList $ flattenAnd (AND ps q)
+>   where
+>     curryList :: [VAL] -> VAL
+>     curryList [p] = p
+>     curryList (p:ps) = ALL (PRF p) (L (HF "__curry" (\v -> curryList ps))) 
+
+
+The |curryArg| function takes a proof of a conjunction |P|, and produces a spine
+of arguments suitable to apply to a proof of type |curryProp P _|.
+
+> curryArg :: VAL -> [Elim VAL]
+> curryArg (PAIR a b) = curryArg a ++ curryArg b
+> curryArg a = [A a]
+
+
+The |uncurryProp| function takes a conjunction |P| and a function |f|. It produces
+a function that accepts arguments in a curried style (as required by |curryProp P _|)
+and uncurries them to produce a proof of |P|, which it passes to |f|. Thus
+|uncurryProp ((A && B) && (C && D)) f == \ w x y z -> f [[w , x] , [y , z]|.
+
+You are not expected to understand this.
+
+> uncurryProp :: VAL -> (VAL -> VAL) -> VAL
+> uncurryProp (AND p q) f = uncurryProp p (\v -> uncurryProp q (f . PAIR v))
+> uncurryProp _ f = L (HF "__uncurry" f)
+
+
+
+
+
+
+
 > propSimplifyHere :: ProofState ()
 > propSimplifyHere = do
 >     (_ :=>: PRF p) <- getHoleGoal

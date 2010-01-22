@@ -20,7 +20,6 @@ root ;
 
 make andy : :- (TT && P && TT) && (TT && Q) ;
 simplify ;
-simplify ;
 root ;
 
 make ethel : :- (TT && P => Q && FF) ;
@@ -43,10 +42,42 @@ make h : :- (P => TT) ;
 simplify ;
 root ;
 
-make k : :- (P => FF) ;
+make k : :- (P => FF && P) ;
 simplify ;
 root ; 
 
 make x : :- (((P && TT) && (TT && Q)) && R && P) ;
+simplify ;
+root ;
+
+make y : :- ((x : Set)(y : Set) => TT) ;
+simplify ; 
+root ;
+
+make z : :- ((x : Set) => TT && P && Q) ;
+simplify ; 
+root ;
+
+make a : :- ((TT => FF) => P) ;
+simplify ;
+root ;
+
+make b : :- (TT => TT && P) ;
+simplify ;
+root ;
+
+make eek : :- ((P => FF) => FF) ;
+simplify ;
+root ;
+
+make d : :- (P && Q => TT) ;
+simplify ;
+root ;
+
+make e : :- (TT && P => Q && TT) ;
+simplify ;
+root ;
+
+make f : :- (P => P) ;
 simplify ;
 root ;

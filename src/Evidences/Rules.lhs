@@ -82,6 +82,10 @@ This translates into the following code:
 > N n          $$ e    = N (n :$ e)       -- By \ref{eqn:elim_stuck}
 > f            $$ e    = error ("Can't eliminate\n" ++ show f ++ "\nwith eliminator\n" ++ show e)
 
+The left fold of |$$| applies a value to a bunch of eliminators:
+
+> ($$$) :: (Foldable f) => VAL -> f (Elim VAL) -> VAL
+> ($$$) = Data.Foldable.foldl ($$)
 
 \subsubsection{Operators}
 
