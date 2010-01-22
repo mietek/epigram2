@@ -189,6 +189,17 @@ in using a She aspect.
 >   deriving (Show, Eq)
 
 
+The |Con| object is used and abused in many circumstances. However,
+all ilts usages share the same pattern: |Con| is used wheneveer we
+need to ''pack'' an object |t| into something else, to avoid
+ambiguities. For example, we use |Con| in the following case:
+
+\begin{prooftree}
+\AxiomC{|desc x (Mu x) :>: y|}
+\UnaryInfC{|Mu x :>: Con y|}
+\end{prooftree}
+
+
 \subsubsection{Eliminators}
 
 The |Elim| functor explains how eliminators are constructed from their
