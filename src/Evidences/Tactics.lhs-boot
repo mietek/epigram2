@@ -4,7 +4,7 @@
 
 > module Evidences.Tactics (Tac,                          -- abstract Tactic
 >                 runTac,                       -- run tactics
->                 goal, subgoal, discharge,     -- low-level combinators
+>                 goal, subgoal,                -- low-level combinators
 >                 lambda, can,                  -- introduction rules
 >                 done, use, useOp, apply,      -- elimination rules
 >                 tyLambda, infr, chk, useTac,  -- out of context
@@ -35,7 +35,6 @@
 > goal :: Tac TY
 > subgoal :: (TY :>: Tac x) -> Tac x
 
-> discharge :: NameSupplier m => REF -> VAL -> m VAL
 > lambda :: (REF -> Tac VAL) -> Tac VAL
 > can :: Can (Tac VAL) -> Tac VAL
 

@@ -10,7 +10,7 @@
 
 > module Evidences.Tactics (Tac,                         -- abstract Tactic
 >                           runTac,                      -- run tactics
->                           goal, subgoal, discharge,    -- low-level combinators
+>                           goal, subgoal,               -- low-level combinators
 >                           lambda, can,                 -- introduction rules
 >                           done, use, useOp, apply,     -- elimination rules
 >                           tyLambda, infr, chk, useTac, -- out of context
@@ -141,21 +141,6 @@ Inference rules, nobody should be using this guy.
 >                                 "inhabitant of " ++ show typ) : x
 >               k -> k
 >         }
-
-\subsubsection{Making lambdas}
-
-Given a value, we might want to discharge an hypothesis used deep down
-in it. That is, provided a free variable |ref|, we have to track it
-inside |val| and, when found, bind it to the De Bruijn index 0. This
-corresponds to beta-quoting |val| with |ref|. Then, well, we put that
-under a lambda and we are discharged.
-
-> discharge :: NameSupplier m => REF -> VAL -> m VAL
-> discharge ref val = (| ((\x -> eval x B0) . L . ("discharge" :.)) 
->                        (bquote (B0 :< ref) val) |)
-
-As mentioned above, we should not forget that |Tac| is in |NameSupplier|: we
-have |freshRef| and |forkNSupply| for free.
 
 \subsubsection{Failing, loudly}
 

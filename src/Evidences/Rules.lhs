@@ -284,7 +284,7 @@ a fresh namespace.
 > quote vty r = inQuote vty (freshNSpace r "quote")
 
 
-\subsubsection{|inQuote|}
+\subsubsection{inQuote}
 
 Quoting a value consists in, if possible, $\eta$-expanding
 it. So it goes:
@@ -348,7 +348,7 @@ term.
 
 
 
-\subsubsection{|exQuote|}
+\subsubsection{exQuote}
 
 Now, let us examine the quotation of neutral terms. Remember that a
 neutral term is either a parameter, a stuck elimination, or a stuck
@@ -412,6 +412,8 @@ constructor which can always compute.
 >               return $ tx :=>: x
 
 
+\subsubsection{bquote}
+
 As we are in the quotation business, let us define $\beta$-quotation,
 ie. |bquote|. Unlike |quote|, |bquote| does not perform
 $\eta$-expansion, it just brings the term in $\beta$-normal
@@ -427,8 +429,7 @@ variables we have generated and to which De Bruijn index they
 correspond. This is the role of the backward list of references. Note
 also that we let the user provide an initial environment of
 references: this is useful to discharge a bunch of assumptions inside
-a term. The typical use-case is |discharge| in
-Section~\ref{sec:tactics}.
+a term. The typical use-case is |discharge|, below.
 
 \end{danger}
 
@@ -465,8 +466,19 @@ as we can. Simple, easy.
 > bquote refs (op :@ vs) = (|(:@) (pure op)
 >                                   (traverse (bquote refs) vs)|)
 
+\subsubsection{discharge}
 
-\subsubsection{Simplification of stuck terms}
+Given a value, we might want to discharge an hypothesis used deep down
+in it. That is, provided a free variable |ref|, we have to track it
+inside |val| and, when found, bind it to the De Bruijn index 0. This
+corresponds to beta-quoting |val| with |ref|. Then, well, we put that
+under a lambda and we are discharged.
+
+> discharge :: NameSupplier m => REF -> VAL -> m VAL
+> discharge ref val = (| (evTm . L . (fst (last (refName ref)) :.)) (bquote (B0 :< ref) val) |)
+
+
+\subsection{Simplification of stuck terms}
 
 \question{Got to write something about that. Me tired. Another time.}
 
