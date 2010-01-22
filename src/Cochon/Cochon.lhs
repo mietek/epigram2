@@ -171,6 +171,8 @@ unary tactics.
 >     (eval . argToIn . head)
 >     help
 
+> unDP (DP ref) = ref
+
 > unaryNameCT :: String -> (RelName -> ProofState String) -> String -> CochonTactic
 > unaryNameCT name eval help = simpleCT
 >     name

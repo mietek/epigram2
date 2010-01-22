@@ -27,6 +27,8 @@
 > import ProofState.ProofState
 > import ProofState.ProofKit
 
+> import Cochon.DisplayCommands
+
 %endif
 
 \section{Elimination with a Motive}
@@ -841,14 +843,18 @@ We (in theory) have solved the goal!
 Here we go. In a first part, we need to retrieve some information about our
 goal and its context. 
 
-> elimContextGoal :: ProofState ([REF], VAL)
-> elimContextGoal = do
+> elimContextGoal :: Maybe REF -> ProofState ([REF], VAL)
+> elimContextGoal comma = do
 >     -- The motive needs to know our goal
 >     (_ :=>: goal) <- getGoal "T"
 >     -- Lacking a comma term, we assume that 
 >     -- the whole context is internal
 >     deltas <- getBoys 
->     return (deltas, goal)
+>     let deltas' = case comma of 
+>                     Nothing -> deltas
+>                     Just comma -> dropWhile (comma /=) deltas
+>     proofTrace $ show deltas'
+>     return (deltas', goal)
 
 In a second part, we turn the eliminator into a girl and play the
 doctor with her: we look at her internals, check that everything is
@@ -878,25 +884,31 @@ Therefore, we get the |elim| commands, the one, the unique. It is simply a
 Frankenstein operation of these three parts:
 
 > elim :: Maybe REF -> Eliminator -> ProofState ()
-> elim Nothing eliminator = do -- Nothing: no comma
+> elim comma eliminator = do 
 >     -- Where are we?
->     (deltas, goal) <- elimContextGoal
+>     (deltas, goal) <- elimContextGoal comma
 >     -- What is the eliminator?
 >     (eliminator, motive, methods, deltas, args) <- 
 >         elimDoctor deltas goal eliminator
 >     -- Apply the motive, ie. solve the goal
 >     applyElim eliminator motive methods deltas args
+>   
 
 
 We make elimination accessible to the user by adding it as a Cochon tactic:
 
-> elimCTactic :: ExDTmRN -> ProofState String
-> elimCTactic r = do 
+> elimCTactic :: RelName -> ExDTmRN -> ProofState String
+> elimCTactic c r = do 
+>     c <- resolveHere c
 >     (elimTy :>: e) <- elabInfer r
 >     elimTyTm <- bquoteHere elimTy
->     elim Nothing ((elimTyTm :=>: elimTy) :>: (N e :=>: (evTm (N e))))
+>     elim (Just c) ((elimTyTm :=>: elimTy) :>: (N e :=>: (evTm (N e))))
 >     return "Elimination occured. Subgoals awaiting work..."
 
 > import -> CochonTactics where
->   : unaryExCT "eliminate" elimCTactic
->       "eliminate <name> - eliminates with a motive."
+>   : (simpleCT
+>     "eliminate"
+>     (|(\n e -> ((ExArg . DP) n) : ExArg e : []) nameParse pExDTm 
+>      |(\n e -> ((ExArg . DP) n) : ExArg e : []) nameParse pAscriptionTC |)
+>     (\[n,e] -> elimCTactic ((unDP . argToEx) n) (argToEx e))
+>     "eliminate <name> - eliminates with a motive.")
