@@ -563,7 +563,8 @@ I think that this stuff should disappear with Tactics spreading.
 > f $## xs = f $:$ (map A xs)
 
 > fortran :: Tm {In, p} x -> String
-> fortran (L (x :. _)) | not (null x) = x
+> fortran (L (x :. _))   | not (null x) = x
+> fortran (L (HF x  _))  | not (null x) = x
 > fortran _ = "x"
 
 
