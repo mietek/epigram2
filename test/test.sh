@@ -22,7 +22,7 @@ esac
 if [ ! -f "../src/Pig" ]
 then
     echo "Pig is absent. Please 'make' it."
-    exit
+    exit 2
 fi
 
 ## Make a clean cache directory 
@@ -31,6 +31,12 @@ then
     rm -fR ".tests"
 fi
 mkdir ".tests"
+
+## Status:
+# 0: success
+# 1: at least one test failed
+# 2: no Pig binary
+status=0
 
 ## Run the test cases
 for script in `ls *.pig`
@@ -50,9 +56,12 @@ do
 	if ! diff -u "results/$script.log" ".tests/$script.log" > ".tests/$script.diff"
 	then
 	    echo -e "$failed $script does not match the expected output"
+	    status=1
 	    cat ".tests/$script.diff"
 	else
 	    echo -e "$passed $script looks alright!"
 	fi
     fi
 done
+
+exit $status
