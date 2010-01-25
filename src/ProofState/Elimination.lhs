@@ -149,7 +149,7 @@ extracting the interesting bits.
 
 The development transformation is achieved by the following code:
 
-> introElim :: Eliminator -> ProofState (Name, INTM :<: TY, [INTM] :<: [INTM], Bwd INTM)
+> introElim :: Eliminator -> ProofState (Name, INTM :<: TY, [INTM], Bwd INTM)
 > introElim (eType :>: e) = do
 >     -- Make an (un-goaled) module
 >     -- We will turn it in a (goaled T) girl at the end
@@ -162,17 +162,17 @@ The development transformation is achieved by the following code:
 >     p <- make $ "P" :<: motiveTypeTm
 >     -- Get the type of the methods and the target
 >     -- And ask for making them real
->     (ms :<: mTys, target) <- mkMethods $ telType $$ (A $ evTm p)
+>     (methods, target) <- mkMethods $ telType $$ (A $ evTm p)
 >     -- Check the motive, and target shape
 >     checkMotive motiveType
 >     checkTarget target p motiveType
 >     -- Grab the terms which are applied to the motive
->     args <- matchArgs target motiveType
+>     patterns <- matchPatterns target motiveType
 >     -- Close the problem (using the "made" subproblems!)
 >     -- And go to the next subproblem, ie. making P
 >     moduleToGoal target
->     giveNext $ N $ (termOf e :? termOf eType) $## (p : ms)
->     return (elimName, p :<: motiveType, ms :<: mTys, args)
+>     giveNext $ N $ (termOf e :? termOf eType) $## (p : methods)
+>     return (elimName, p :<: motiveType, methods, patterns)
 >         where unPi :: VAL -> (VAL, VAL)
 >               unPi (PI s t) = (s, t)
 
@@ -183,34 +183,34 @@ matched the first component of the telescope. To get the methods, we
 simply iterate that process, up to the point where all the $\Pi$s have
 been consummed.
 
-> mkMethods :: TY -> ProofState ([INTM] :<: [INTM], INTM)
-> mkMethods = mkMethods' [] []
->     where mkMethods' :: [INTM] -> [INTM] -> TY -> ProofState ([INTM] :<: [INTM], INTM)
->           mkMethods' ms mTys t = 
+> mkMethods :: TY -> ProofState ([INTM], INTM)
+> mkMethods = mkMethods' [] 
+>     where mkMethods' :: [INTM] -> TY -> ProofState ([INTM], INTM)
+>           mkMethods' ms t = 
 >               case t of 
 >                 PI s t -> do
 >                     sTm <- bquoteHere s
 >                     m <- make $ "m" :<: sTm
->                     mkMethods' (m : ms) (sTm : mTys) (t $$ (A $ evTm m))
+>                     mkMethods' (m : ms) (t $$ (A $ evTm m))
 >                 target -> do
 >                     targetTm <- bquoteHere target
->                     return (reverse ms :<: reverse mTys, targetTm)
+>                     return (reverse ms, targetTm)
 
-Another helper function has been |matchArgs|. We know that the target
+Another helper function has been |matchPatterns|. We know that the target
 is the following term:
 
 $$P \vec{t}$$
 
-Hence, |matchArgs| is given the target as well as the telescope-type
-of |P|. |matchArgs| recursively unfolds the telescope, accumulating
-the arguments of the target along the way. When reaching $\Set$, we
-have accumulated all arguments of |P|.
+Hence, |matchPatterns| is given the target as well as the
+telescope-type of |P|. |matchPatterns| recursively unfolds the
+telescope, accumulating the arguments of the target along the
+way. When reaching $\Set$, we have accumulated all arguments of |P|.
 
-> matchArgs :: INTM -> VAL -> ProofState (Bwd INTM)
-> matchArgs _ SET = return B0
-> matchArgs (N (t :$ A x)) (PI s r) = 
+> matchPatterns :: INTM -> VAL -> ProofState (Bwd INTM)
+> matchPatterns _ SET = return B0
+> matchPatterns (N (t :$ A x)) (PI s r) = 
 >   freshRef ("s" :<: s) $ \y -> do
->       args <- matchArgs (N t) (r $$ (A $ pval y))
+>       args <- matchPatterns (N t) (r $$ (A $ pval y))
 >       return $ args :< x
 >       
 
@@ -741,9 +741,9 @@ Finally, we can make the motive, hence closing the subgoal. This
 simply consists in chaining the commands above, and give the computed
 term. Unless I've screwed up things, |give| should always be happy.
 
-> makeMotive ::  TY -> VAL -> [REF] -> [INTM] -> Bwd INTM -> TY ->
+> makeMotive ::  TY -> VAL -> [REF] -> Bwd INTM -> TY ->
 >                ProofState ([REF], INTM, [INTM :>: INTM])
-> makeMotive xi goal deltas argTypes args elimTy = do
+> makeMotive xi goal deltas args elimTy = do
 >   -- Extract $\Delta_1$ from $\Delta$
 >   deltas1 <- extractDelta1 (bwdList deltas) elimTy
 >   -- Transform $\Delta$ into Binder form
@@ -895,11 +895,9 @@ presence. Observe the damages).
 >     --    1/ the motive
 >     --    2/ the methods
 >     --    3/ the arguments of the motive
->     (eliminator, motive :<: xi, methods :<: methodsTy, args) <- introElim eliminator
+>     (eliminator, motive :<: xi, methods, args) <- introElim eliminator
 >     -- Build the motive
->     xiTm <- bquoteHere xi
->     methodsPP <- sequence $ map (\methodTy -> prettyHere (SET :>: methodTy)) methodsTy
->     (deltas, motive, constraints) <- makeMotive xi goal deltas (xiTm : methodsTy) args elimTy
+>     (deltas, motive, constraints) <- makeMotive xi goal deltas args elimTy
 >     -- Leave the development with the methods unimplemented
 >     goOut
 >     return (eliminator, motive, methods, deltas, constraints)
