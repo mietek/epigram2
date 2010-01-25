@@ -33,7 +33,10 @@
 
 \section{Propositional Simplification}
 
+\subsection{Setting the Scene}
+
 \question{What should the terminology be?}
+
 A \emph{normal} proposition is either |FF| or a conjunction of \emph{q-neutral}
 propositions. A q-neutral context is a context all of whose propositions are q-neutral.
 A \emph{q-neutral} proposition is either:
@@ -63,45 +66,13 @@ where $\Gamma = \{q_i\}_i$, represented by |Right (qs, gs, h)|.
 
 > simplifyNone :: (NameSupplier m) => VAL -> m Simplify
 > simplifyNone p = freshRef (nameHint p :<: PRF p) (\ref ->
->     return (SimplyOne ref idVAL (NP ref)))
+>     return (SimplyOne ref (L (HF "__id" id)) (NP ref)))
 >   where
 >     nameHint :: VAL -> String
 >     nameHint (NP (n := _)) = "__" ++ fst (last n)
 >     nameHint (L (HF s _)) = "__" ++ s
 >     nameHint _ = "__simplifyNone"
 
-The |propSimplifyHere| command attempts propositional simplification on the
-current location, which must be an open goal of type |PRF p| for some |p|.
-If it successfully simplifies the goal proposition, it will create a new goal
-and solve the current one with an appropriate coercion. If it simplifies the
-goal to |TT|, it will simply solve the current goal. If it simplifies the goal
-to |FF|, it will complain.
-
-> propSimplifyHere :: ProofState ()
-> propSimplifyHere = do
->     (_ :=>: PRF p) <- getHoleGoal
->     nsupply <- askNSupply
->     let simp = propSimplify B0 p nsupply
->     case simp of
->         SimplyTrivial prf -> do
->             prf' <- bquoteHere prf
->             give prf'
->             return ()
-
->         SimplyAbsurd _ -> throwError' "propSimplifyHere: oh no, goal is absurd!"
-
->         si@(Simply qs _ h) -> do
->             qrs <- mapM (\ref -> do
->                 q' <- bquoteHere (pty ref)
->                 x <- pickName "q" ""
->                 qr <- make (x :<: q')
->                 return (A (evTm qr))
->               ) qs
-
->             h' <- dischargeLots qs h
->             prf <- bquoteHere (h' $$$ qrs)
->             giveNext prf
->             return ()
                  
 
 The |dischargeLots| function discharges and $\lambda$-binds a list of references over a |VAL|.
@@ -144,15 +115,22 @@ The |magic ty| function takes a proof of |FF| and yields a value of type |ty|.
 > magic :: TY -> VAL -> VAL
 > magic ty no = nEOp @@ [no, ty]
 
-> idVAL :: VAL
-> idVAL = L (HF "__id" id)
 
-> instance Show (VAL -> VAL) where
->   show v = "(...)"
+The |...| operator is composition of |VAL| functions.
+
+> (...) :: VAL -> VAL -> VAL
+> f ... g = L (HF "__x" (\x -> f $$ A (g $$ A x)))
+
+The curiously more useful |..!| operator is composition of a genuine |VAL|
+function with a |VAL -> VAL| function.
+
+> (..!) :: VAL -> (VAL -> VAL) -> VAL
+> f ..! g = L (HF "__x" (\x -> f $$ A (g x)))
 
 
-The |propSimplify| command takes a proposition and attempts to simplify it. At the
-moment it only requires a name supply, but it really should take a context as well.
+\subsection{Simplification in Action}
+
+The |propSimplify| command takes a proposition and attempts to simplify it.
 
 > propSimplify :: (NameSupplier m) => Bwd REF -> VAL -> m Simplify
 
@@ -170,6 +148,22 @@ To simplify a conjunction, we simplify each conjunct separately, then call the
 >     (\ p1Simp -> forkNSupply "__psAnd2" (propSimplify delta p2)
 >         (\ p2Simp ->
 >             return (simplifyAnd p1Simp p2Simp)))
+>   where
+>     simplifyAnd :: Simplify -> Simplify -> Simplify
+
+If either |p| or |q| is absurd, then we can easily show that |p && q| is absurd:
+
+>     simplifyAnd (SimplyAbsurd prf) _ = SimplyAbsurd (prf . ($$ Fst))
+>     simplifyAnd _ (SimplyAbsurd prf) = SimplyAbsurd (prf . ($$ Snd))
+         
+Otherwise, we can simplify the conjunction, post-composing the proofs with
+the application of |Fst| or |Snd| as appropriate.
+
+>     simplifyAnd (Simply q1s g1s h1) (Simply q2s g2s h2) =
+>         Simply (q1s <+> q2s)
+>             (fmap (..! ($$ Fst)) g1s <+> (fmap (..! ($$ Snd)) g2s))
+>             (PAIR h1 h2)
+
 
 
 To simplify |p = (x :- s) => t|, we first try to simplify |s|:
@@ -179,29 +173,32 @@ To simplify |p = (x :- s) => t|, we first try to simplify |s|:
 >   where
 >     antecedent :: (NameSupplier m) => Simplify -> m Simplify
 
-If |s| is absurd then |p| is trivial, which we can prove by doing |magic| whenever someone
-gives us an element of |s|.
+If |s| is absurd then |p| is trivial, which we can prove by doing |magic|
+whenever someone gives us an element of |s|.
 
 >     antecedent (SimplyAbsurd prfAbsurdS) = return (SimplyTrivial
->             (L (HF "__antecedentAbsurd" (\sv -> magic (PRF (l $$ A sv)) (prfAbsurdS sv)))))
+>         (L (HF "__antecedentAbsurd" (\sv ->
+>             magic (PRF (l $$ A sv)) (prfAbsurdS sv)))))
 
-If |s| is trivial, then we go under the binder by applying the proof, and then simplify |t|.
-Then |p| simplifies to the result of simplifying |t|, with the proofs constructed by 
-$\lambda$-abstracting in one direction and applying the proof of |s| in the other direction.
+If |s| is trivial, then we go under the binder by applying the proof, and then
+simplify |t|. Then |p| simplifies to the result of simplifying |t|, with the
+proofs constructed by $\lambda$-abstracting in one direction and applying the
+proof of |s| in the other direction.
 
 >     antecedent (SimplyTrivial prfS) =
 >         forkNSupply "__psImp2" (propSimplify delta (l $$ A prfS)) consequentTrivial
 >       where
 >         consequentTrivial :: (NameSupplier m) => Simplify -> m Simplify
->         consequentTrivial (SimplyAbsurd prfAbsurdT)  = return (SimplyAbsurd (prfAbsurdT . ($$ A prfS)))
->         consequentTrivial (SimplyTrivial prfT)       = return (SimplyTrivial (LK prfT))
->         consequentTrivial (Simply tqs tgs th)        = return (Simply tqs
->             (fmap (\g -> L (HF "__x" (\v -> g $$ A (v $$ A prfS)))) tgs)
+>         consequentTrivial (SimplyAbsurd prfAbsurdT) =
+>             return (SimplyAbsurd (prfAbsurdT . ($$ A prfS)))
+>         consequentTrivial (SimplyTrivial prfT)  = return (SimplyTrivial (LK prfT))
+>         consequentTrivial (Simply tqs tgs th)   = return (Simply tqs
+>             (fmap (..! ($$ A prfS)) tgs)
 >             (LK th))
 
-If |s| simplifies nontrivially, we have a bit more work to do. We simplify |t| under the binder
-by adding the simplified conjuncts of |s| to the context and applying |l| to |sh| (the proof of
-|s| in the extended context). 
+If |s| simplifies nontrivially, we have a bit more work to do. We simplify |t|
+under the binder by adding the simplified conjuncts of |s| to the context and
+applying |l| to |sh| (the proof of |s| in the extended context). 
 
 >     antecedent (Simply sqs sgs sh) =
 >         forkNSupply "__psImp3" (propSimplify (delta <+> sqs) (l $$ A sh)) consequent
@@ -219,8 +216,8 @@ by adding the simplified conjuncts of |s| to the context and applying |l| to |sh
 >                   )
 >               )
 
-If the consequent |t| is trivial, then the implication is trivial, which we can prove as
-follows:
+If the consequent |t| is trivial, then the implication is trivial, which we can
+prove as follows:
 \begin{enumerate}
 \item Discharge the proof of |t| over the conjuncts |sqs| to get a $\lambda$-lifted proof |prfT'|.
 \item Construct a proof of |(x :\!\!- s) => t| that takes a proof of |s| and applies the proofs
@@ -342,30 +339,75 @@ To simplify a neutral parameter, we look for a proof in the context.
 >         if b then return (Just ref) else seekType rs ty
 
 
+To simplify an equation between non-neutral terms, we apply the |eqGreen|
+operator and see what happens. If we get |TRIVIAL| then we are done, otherwise
+we simplify the resulting proposition and wrap the results with |Con| or |Out|
+as appropriate.
+
+> propSimplify delta p@(EQBLUE (sty :>: s) (tty :>: t))
+>   | not (isNeutral s || isNeutral t) =
+>       case eqGreen @@ [sty, s, tty, t] of
+>           TRIVIAL  -> return (SimplyTrivial (CON VOID))
+>
+>           q        -> forkNSupply "__psEq" (propSimplify delta q) equality
+>         where 
+>           equality :: (NameSupplier m) => Simplify -> m Simplify
+>           equality (SimplyAbsurd prf) = return (SimplyAbsurd (prf . ($$ Out)))
+>           equality (Simply qs gs h) = return (Simply qs
+>               (fmap (..! ($$ Out)) gs)
+>               (CON h))
+>     
+>           isNeutral :: VAL -> Bool
+>           isNeutral (N _)  = True
+>           isNeutral _      = False 
+
+
 If nothing matches, we are unable to simplify this term.
 
 > propSimplify _ tm = simplifyNone tm
 
 
-The |simplifyAnd| function takes the results of simplifying two conjuncts and
-returns a simplified conjunction.
+\subsection{Invoking Simplification}
 
-> simplifyAnd :: Simplify -> Simplify -> Simplify
+The |propSimplifyHere| command attempts propositional simplification on the
+current location, which must be an open goal of type |PRF p| for some |p|.
+If it simplifies the goal to |TT|, it will simply solve the goal and return |True|.
+If it simplifies the goal to |FF|, it will fail and throw an error.
+Otherwise, it will create one or more new subgoals (from the conjuncts of the
+simplified proposition) and solve the current goal with them.
 
-If either |p| or |q| is absurd, then we can easily show that |p && q| is absurd:
+> propSimplifyHere :: ProofState Bool
+> propSimplifyHere = do
+>     (_ :=>: PRF p) <- getHoleGoal
+>     nsupply <- askNSupply
+>     case propSimplify B0 p nsupply of
+>         SimplyAbsurd _ -> throwError' "propSimplifyHere: oh no, goal is absurd!"
+>
+>         SimplyTrivial prf -> bquoteHere prf >>= give >> return True
+>
+>         Simply qs _ h -> do
+>             qrs  <- mapM makeSubgoal qs
+>             h'   <- dischargeLots qs h
+>             prf  <- bquoteHere (h' $$$ qrs)
+>             giveNext prf
+>             return False
+>  where
 
-> simplifyAnd (SimplyAbsurd prf) _ = SimplyAbsurd (prf . ($$ Fst))
-> simplifyAnd _ (SimplyAbsurd prf) = SimplyAbsurd (prf . ($$ Snd))
-         
-Otherwise, we can simplify the conjunction:
+The |makeSubgoal| command makes a new subgoal whose type corresponds to the type
+of the given reference, and returns the eliminator that applies a reference to
+the new subgoal.
 
-> simplifyAnd (Simply q1s g1s h1) (Simply q2s g2s h2) =
->     Simply (q1s <+> q2s)
->         (fmap (\g -> L (HF "__x" (\v -> g $$ A (v $$ Fst)))) g1s <+> (fmap (\g -> L (HF "__x" (\v -> g $$ A (v $$ Snd)))) g2s))
->         (PAIR h1 h2)
+>    makeSubgoal :: REF -> ProofState (Elim VAL)
+>    makeSubgoal ref = do
+>        q'  <- bquoteHere (pty ref)
+>        x   <- pickName "q" ""
+>        qr  <- make (x :<: q')
+>        return (A (evTm qr))
 
 
+The |simplify| tactic attempts to simplify the type of the current goal, which
+should be propositional.
 
 > import -> CochonTactics where
->   : nullaryCT "simplify" (propSimplifyHere >> return "Simplified.")
+>   : nullaryCT "simplify" (propSimplifyHere >>= \b -> return (if b then "Solved." else "Simplified."))
 >       "simplify - applies propositional simplification to the current goal."

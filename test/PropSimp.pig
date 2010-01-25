@@ -97,3 +97,15 @@ root ;
 make l : :- (P => Q) ;
 simplify ;
 root ;
+
+make m : :- ((: Set) Set == (: Set) Set) ;
+simplify ; 
+root ;
+
+make p : :- (((: Set -> Prop) \ x -> P) == ((: Set -> Prop) \ x -> Q)) ;
+simplify ;
+root ;
+
+make q : :- ((: Set) Set == (: Set) (Set -> Set)) ;
+simplify ;
+root ;
