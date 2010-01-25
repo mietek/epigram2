@@ -728,7 +728,7 @@ and |p|. Then, we can start the hard work.
 >         s'Tm <- bquote B0 s'
 >         let constraints' = constraints :< Just (x, s'Tm :>: p)
 >         -- Continue with the updated structure, unfolding the telescope
->         simplify  ((t $$ A (pval x)), t' $$ A (pval x), xts)
+>         simplify  ((t $$ A (pval x)), t' $$ A (evTm p), xts)
 >                   delta1 
 >                   constraints'
 >                   goal) 
