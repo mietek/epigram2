@@ -17,7 +17,7 @@ make T := ? : Fin (suc zero) -> Set ;
 make goal : (x : Fin (suc zero)) -> T x ;
 
 lambda x ;
-elim x fin-elim (suc zero) x ;
+elim fin-elim (suc zero) x ;
 show state ;
 next ;
 show state ;

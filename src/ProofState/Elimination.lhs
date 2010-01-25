@@ -975,18 +975,22 @@ Frankenstein operation of these three parts:
 
 We make elimination accessible to the user by adding it as a Cochon tactic:
 
-> elimCTactic :: RelName -> ExDTmRN -> ProofState String
+> elimCTactic :: Maybe RelName -> ExDTmRN -> ProofState String
 > elimCTactic c r = do 
->     c <- resolveHere c
+>     c' <- case c of 
+>           Nothing -> return Nothing
+>           Just c -> do
+>              c <- resolveHere c
+>              return $ Just c
 >     (elimTy :>: e) <- elabInfer r
 >     elimTyTm <- bquoteHere elimTy
->     elim (Just c) ((elimTyTm :=>: elimTy) :>: (N e :=>: (evTm (N e))))
+>     elim c' ((elimTyTm :=>: elimTy) :>: (N e :=>: (evTm (N e))))
 >     return "Elimination occured. Subgoals awaiting work..."
 
 > import -> CochonTactics where
 >   : (simpleCT
 >     "eliminate"
->     (|(\n e -> ((ExArg . DP) n) : ExArg e : []) nameParse pExDTm 
->      |(\n e -> ((ExArg . DP) n) : ExArg e : []) nameParse pAscriptionTC |)
->     (\[n,e] -> elimCTactic ((unDP . argToEx) n) (argToEx e))
+>     (|(|(B0 :<) (parseOption parseName)|) :< (|id parseExTm
+>                                               |id parseAscription |)|)
+>     (\[n,e] -> elimCTactic (argOption (unDP . argToEx) n) (argToEx e))
 >     "eliminate <name> - eliminates with a motive.")

@@ -9,7 +9,7 @@ make N-induction := ? : (n : N)(P : N -> Set) ->
 
 make plus : N -> N -> N;
 lambda x ;
-elim x N-induction x ;
+elim N-induction x ;
 give \ _ -> x ;
 give \ _ ih y -> suc (ih y) ;
 

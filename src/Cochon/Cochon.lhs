@@ -90,7 +90,11 @@ Because Cochon tactics can take different types of arguments,
 we need a tagging mechanism to distinguish them, together
 with projection functions.
 
-> data CochonArg = StrArg String | InArg InDTmRN | ExArg ExDTmRN
+> data CochonArg = StrArg String 
+>                | InArg InDTmRN 
+>                | ExArg ExDTmRN
+>                | Optional CochonArg
+>                | NoCochonArg
 
 
 > argToStr :: CochonArg -> String
@@ -101,6 +105,30 @@ with projection functions.
 
 > argToEx :: CochonArg -> ExDTmRN
 > argToEx (ExArg a) = a
+
+> argOption :: (CochonArg -> a) -> CochonArg -> Maybe a
+> argOption p (Optional x) = Just $ p x
+> argOption _ NoCochonArg = Nothing
+
+
+> parseExTm :: Parsley Token CochonArg
+> parseExTm = (| ExArg pExDTm |)
+
+> parseAscription :: Parsley Token CochonArg
+> parseAscription = (| ExArg pAscriptionTC |)
+
+> parseInTm :: Parsley Token CochonArg
+> parseInTm = (| InArg pInDTm |)
+
+> parseName :: Parsley Token CochonArg
+> parseName = (| (ExArg . DP) nameParse |)
+
+> parseString :: Parsley Token CochonArg
+> parseString = (| StrArg ident |)
+
+> parseOption :: Parsley Token CochonArg -> Parsley Token CochonArg
+> parseOption p = (| Optional (bracket Square p) 
+>                  | NoCochonArg |)
 
 
 A Cochon tactic consinsts of:
@@ -113,7 +141,7 @@ A Cochon tactic consinsts of:
 
 > data CochonTactic =
 >     CochonTactic  {  ctName   :: String
->                   ,  ctParse  :: Parsley Token [CochonArg]
+>                   ,  ctParse  :: Parsley Token (Bwd CochonArg)
 >                   ,  ctIO     :: [CochonArg] -> Bwd ProofContext -> IO (Bwd ProofContext)
 >                   ,  ctHelp   :: String
 >                   }
@@ -127,12 +155,13 @@ A Cochon tactic consinsts of:
 > instance Ord CochonTactic where
 >     compare ct1 ct2 = compare (ctName ct1) (ctName ct2)
 
+
+
 We have some shortcuts for building common kinds of tactics:
 |simpleCT| builds a tactic that works in the proof state,
 and there are various specialised versions of it for nullary and
 unary tactics.
 
-> sing x = [x]
 
 > simpleOutput :: ProofState String -> Bwd ProofContext -> IO (Bwd ProofContext)
 > simpleOutput eval (locs :< loc) = do
@@ -145,7 +174,7 @@ unary tactics.
 >             return (locs :< loc)
 >             
 
-> simpleCT :: String -> Parsley Token [CochonArg]
+> simpleCT :: String -> Parsley Token (Bwd CochonArg)
 >     -> ([CochonArg] -> ProofState String) -> String -> CochonTactic
 > simpleCT name parser eval help = CochonTactic
 >     {  ctName = name
@@ -155,19 +184,20 @@ unary tactics.
 >     } 
 
 > nullaryCT :: String -> ProofState String -> String -> CochonTactic
-> nullaryCT name eval help = simpleCT name (pure []) (const eval) help
+> nullaryCT name eval help = simpleCT name (pure B0) (const eval) help
 
 > unaryExCT :: String -> (ExDTmRN -> ProofState String) -> String -> CochonTactic
 > unaryExCT name eval help = simpleCT
 >     name
->     (| (sing . ExArg) pExDTm | (sing . ExArg) pAscriptionTC |)
+>     (| (B0 :<) parseExTm
+>      | (B0 :<) parseAscription |)
 >     (eval . argToEx . head)
 >     help
 
 > unaryInCT :: String -> (InDTmRN -> ProofState String) -> String -> CochonTactic
 > unaryInCT name eval help = simpleCT
 >     name
->     (| (sing . InArg) pInDTm |)
+>     (| (B0 :<) parseInTm |)
 >     (eval . argToIn . head)
 >     help
 
@@ -176,7 +206,7 @@ unary tactics.
 > unaryNameCT :: String -> (RelName -> ProofState String) -> String -> CochonTactic
 > unaryNameCT name eval help = simpleCT
 >     name
->     (| (sing . ExArg . DP) nameParse |)
+>     (| (B0 :<) parseName |)
 >     (eval . unDP . argToEx . head)
 >     help
 >   where unDP (DP ref) = ref
@@ -184,7 +214,7 @@ unary tactics.
 > unaryStringCT :: String -> (String -> ProofState String) -> String -> CochonTactic
 > unaryStringCT name eval help = simpleCT
 >     name
->     (| (sing . StrArg) ident |)
+>     (| (B0 :<) parseString |)
 >     (eval . argToStr . head)
 >     help
 
@@ -195,6 +225,7 @@ The master list of Cochon tactics.
 
 Construction tactics:
 
+
 >     nullaryCT "apply" (apply >> return "Applied.")
 >       "apply - applies the last entry in the development to a new subgoal."
 >   : nullaryCT "done" (done >> return "Done.")
@@ -203,8 +234,8 @@ Construction tactics:
 >       "give <term> - solves the goal with <term>."
 >   : simpleCT 
 >         "lambda"
->          (| (| StrArg ident (%keyword KwAsc%) |) : (| (sing . InArg) pInDTm |) 
->           | (| StrArg ident |) : (| [] |) |)
+>          (| (|(B0 :<) parseString (%keyword KwAsc%)|) :< parseInTm 
+>           | (B0 :<) parseString |)
 >          (\ args -> case args of
 >              [StrArg s] -> lambdaBoy s >> return "Made lambda boy!"
 >              [StrArg s, InArg ty] -> 
@@ -214,9 +245,9 @@ Construction tactics:
 
 >   : simpleCT
 >         "make"
->         (| (| StrArg ident (%keyword KwAsc%) |) : (| (sing . InArg) pInDTm |)
->          | (| StrArg ident (%keyword KwDefn%) |) : 
->                     (| (\ (tm :<: ty) -> [InArg tm, InArg ty]) pAscription |)
+>         (| (|(B0 :<) parseString (%keyword KwAsc%)|) :< parseInTm
+>          | (|(B0 :<) parseString (%keyword KwDefn%) |) <>< 
+>              (| (\ (tm :<: ty) -> InArg tm :> InArg ty :> F0) pAscription |)
 >          |)
 >         (\ (StrArg s:tyOrTm) -> case tyOrTm of
 >             [InArg ty] -> do
@@ -237,13 +268,13 @@ Construction tactics:
 
 >   : simpleCT
 >         "pi"
->          (| (| StrArg ident (%keyword KwAsc%) |) : (| (sing . InArg) pInDTm |) |)
+>          (| (|(B0 :<) parseString (%keyword KwAsc%)|) :< parseInTm |)
 >         (\ [StrArg s, InArg ty] -> elabPiBoy (s :<: ty) >> return "Made pi boy!")
 >         "pi <x> : <type> - introduces a pi boy."
 
 >   : simpleCT
 >       "program"
->       (pSep (keyword KwComma) (| StrArg ident |))
+>       (|bwdList (pSep (keyword KwComma) parseString)|)
 >       (\ as -> elabProgram (map argToStr as) >> return "Programming.")
 >       "program <labels>: set up a programming problem."
 
@@ -315,7 +346,7 @@ Miscellaneous tactics:
 
 >   : CochonTactic
 >         {  ctName = "compile"
->         ,  ctParse = (| (| (ExArg . DP) nameParse |) : (| (sing . StrArg) pFileName |) |)
+>         ,  ctParse = (|(|(B0 :<) parseName|) :< parseString|)
 >         ,  ctIO = (\ [ExArg (DP r), StrArg fn] (locs :< loc) -> do
 >             let  Right aus = evalStateT getAuncles loc
 >                  Right dev = evalStateT getDev loc
@@ -329,8 +360,8 @@ Miscellaneous tactics:
 
 >     : CochonTactic
 >         {  ctName = "help"
->         ,  ctParse = (| (sing . StrArg) ident
->                       | []
+>         ,  ctParse = (| (B0 :<) parseString
+>                       | B0
 >                       |)
 >         ,  ctIO = (\ as locs -> do
 >             case as of
@@ -347,14 +378,14 @@ Miscellaneous tactics:
 
 >     : CochonTactic
 >         {  ctName = "quit"
->         ,  ctParse = pure []
+>         ,  ctParse = pure B0
 >         ,  ctIO = (\ _ _ -> exitSuccess)
 >         ,  ctHelp = "quit - terminates the program."
 >         }
 
 >     : CochonTactic
 >         {  ctName = "save"
->         ,  ctParse = (| (sing . StrArg) pFileName |)
+>         ,  ctParse = (| (B0 :<) parseString |)
 >         ,  ctIO = (\ [StrArg fn] (locs :< loc) -> do
 >             let Right s = evalStateT (much goOut >> prettyProofState) loc
 >             writeFile fn s
@@ -367,7 +398,7 @@ Miscellaneous tactics:
 
 >     : CochonTactic 
 >         {  ctName = "undo"
->         ,  ctParse = pure []
+>         ,  ctParse = pure B0
 >         ,  ctIO = (\ _ (locs :< loc) -> case locs of
 >             B0  -> putStrLn "Cannot undo."  >> return (locs :< loc) 
 >             _   -> putStrLn "Undone."       >> return locs
@@ -456,7 +487,7 @@ given string, either exactly or as a prefix.
 >     case tacticsMatching x of
 >         [ct] -> do
 >             args <- ctParse ct
->             return (ct, args)
+>             return (ct, trail args)
 >         [] -> fail "unknown tactic name."
 >         cts -> fail ("ambiguous tactic name (could be " ++ tacticNames cts ++ ").")
 

@@ -7,6 +7,6 @@ make goal : (P : Set)(Q : Set) -> or P Q -> or Q P ;
 lambda P ;
 lambda Q ;
 lambda PorQ ;
-elim P or-elim P Q PorQ ;
+elim or-elim P Q PorQ ;
 give \ p _ -> or-right Q P^1 p ;
 give \ q _ -> or-left Q P^1 q ;
