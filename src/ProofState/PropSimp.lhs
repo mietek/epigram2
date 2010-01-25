@@ -281,9 +281,9 @@ simplifies to |(x : s) => FF|. If |t| is trivial, then |p| is trivial. Otherwise
 |p| simplifies to a conjunction of propositions |(x : s) => q| for each |q| in
 the simplification of |t|.
 
-> propSimplify delta p@(ALL s l@(L sc)) = freshRef (fortran l :<: s) (\refS -> do
->     simpL <- propSimplify (delta :< refS) (l $$ A (NP refS))
->     case simpL of
+> propSimplify delta p@(ALL s l@(L sc)) = freshRef (fortran l :<: s) (\refS -> 
+>   forkNSupply "__psAll" (propSimplify (delta :< refS) (l $$ A (NP refS)))
+>     (\simpL -> case simpL of
 >         SimplyAbsurd prf -> freshRef ("__psA" :<: PRF (ALL s (LK ABSURD))) (\refA ->
 >             return (SimplyOne refA
 >                 (L (HF "__p" (\pv -> magic (PRF (ALL s (LK ABSURD))) (prf (pv $$ A (NP refS))))))
@@ -301,12 +301,13 @@ the simplification of |t|.
 >             h''' <- discharge refS h''
 >             return (Simply qs' gs' h''')
 >             
->   )
+>   
+>   ))
 
 
 To simplify a neutral parameter, we look for a proof in the context. 
 
-> {-|propSimplify delta (NP p) = do
+> propSimplify delta (NP p) = do
 >     nsupply <- askNSupply
 >     case seekType delta (PRF (NP p)) nsupply of
 >         Just ref -> return (SimplyTrivial (pval ref))
@@ -316,7 +317,7 @@ To simplify a neutral parameter, we look for a proof in the context.
 >     seekType B0 _ = return Nothing
 >     seekType (rs :< ref) ty = do
 >         b <- equal (SET :>: (pty ref, ty))
->         if b then return (Just ref) else seekType rs ty|-}
+>         if b then return (Just ref) else seekType rs ty
 
 
 If nothing matches, we are unable to simplify this term.
