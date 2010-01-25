@@ -485,7 +485,7 @@ test (!).
 %if false 
 
 > instance Show REF where
->   show (n := kt) = intercalate "." (map fst n) ++ " := " ++ show kt
+>   show (name := kt) = intercalate "." (map (\(x,n) -> x ++ "_" ++ show n) name) ++ " := " ++ show kt
 
 %endif
 
