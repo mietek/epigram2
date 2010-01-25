@@ -576,7 +576,8 @@ Finally, we can extend the checker with the |Check| aspect. If no rule
 has matched, then we have to give up.
 
 > import <- Check
-> check _                     = throwError' "check: type mismatch"
+> check (ty :>: tm) = throwError' . unlines $
+>     ["check: type mismatch: type", show ty, "does not admit", show tm]
 
 
 \subsection{Type inference}
