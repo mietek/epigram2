@@ -657,10 +657,13 @@ At this stage, we have computed no |Constraints|:
 
 Where |Constraints| represents the equalities we want to generate. The
 |REF| is a term of $\lambda (\Xi)$ whereas the |INTM :>: INTM| on the
-right is a term of $\vec{t}$ together with its type. Note that we have
-to be careful to rename the $\vec{t}$ and their types as we
-simplify. Our goal is to compute a (valid) set of simplified
-constraints.
+right is a term of $\vec{t}$ together with its type. The whole is
+wrapped into a |Maybe|: when we simplify a constraint, we notify the
+simplification by putting a |Nothing|. Hence, at the end of the
+simplification process, we know which |refl|-proofs are not
+needed. Note that we have to be careful to rename the $\vec{t}$ and
+their types as we simplify. Our goal is to compute a (valid) set of
+simplified constraints.
 
 Finally, we are initially given the goal to solve, |T|. In the end, we
 want a valid goal with no dangling references: when simplifications
@@ -714,12 +717,12 @@ and |p|. Then, we can start the hard work.
 >         --     * the constraints so far
 >         --     * the goal
 >         let xts' = fmap (mapSnd renamer) xts
->         let constraints' = fmap (fmap . mapSnd $ mapBoth renamer) constraints
+>         let constraints' = fmap (fmap.mapSnd $ mapBoth renamer) constraints :< Nothing
 >         let goal' = renamer goal
 >         -- Continue with the updated structures, unfolding the telescope
 >         simplify  (t $$ (A $ pval x), t' $$ (A $ pval x), xts')
 >                   delta1' 
->                   (constraints' :< Nothing)
+>                   constraints'
 >                   goal'
 >       _ -> do
 >         -- Case 2: we cannot simplify
