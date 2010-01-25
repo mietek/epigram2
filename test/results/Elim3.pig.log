@@ -1,0 +1,15 @@
+Made.
+Made.
+Made.
+Made.
+Made.
+Made.
+Made.
+Made.
+Appended goal!
+Made lambda boy!
+Elimination occured. Subgoals awaiting work...
+:= ? : (k : N) -> P (suc k) (f0 k)
+Going to next goal...
+:= ? : (k : N)(y : Fin k) -> P k y -> P (suc k) ((fs k) y)
+Loaded.
