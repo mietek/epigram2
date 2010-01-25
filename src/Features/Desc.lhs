@@ -205,6 +205,31 @@ Equality rules:
 >     yyv@(y :=>: yv) <- chev (descOp @@ [x, C t] :>: y)
 >     return $ Con yyv
 
+> import -> Coerce where
+>   -- coerce :: (Can (VAL,VAL)) -> VAL -> VAL -> Either NEU VAL
+>   coerce (Mu (Just (l0,l1) :?=: Id (d0,d1))) q (CON x) =
+>     let (typ :>: vap) = laty ("d" :<: desc :-: \d ->
+>                               "l" :<: SET :-: \l ->
+>                               Target (SET :>: descOp @@ [d,MU (Just l) d])) 
+>     in Right . CON $ 
+>       coe @@ [ descOp @@ [ d0 , MU (Just l0) d0 ] 
+>              , descOp @@ [ d1 , MU (Just l1) d1 ]
+>              , CON $ pval refl $$ A typ $$ A vap $$ Out 
+>                                $$ A d0 $$ A d1 $$ A (CON $ q $$ Snd)
+>                                $$ A l0 $$ A l1 $$ A (CON $ q $$ Fst)
+>              , x ]
+>   coerce (Mu (Nothing :?=: Id (d0,d1))) q (CON x) =
+>     let (typ :>: vap) = laty ("d" :<: desc :-: \d ->
+>                               Target (SET :>: descOp @@ [d,MU Nothing d]))  
+>     in Right . CON $ 
+>       coe @@ [ descOp @@ [ d0 , MU Nothing d0 ] 
+>              , descOp @@ [ d1 , MU Nothing d1 ]
+>              , CON $ pval refl $$ A typ $$ A vap $$ Out 
+>                                $$ A d0 $$ A d1 $$ A (CON q)
+>              , x ]
+
+
+
 > import -> ElimTyRules where
 >   elimTy chev (_ :<: t@(Mu (_ :?=: Id d))) Out = return (Out, descOp @@ [d , C t])
 

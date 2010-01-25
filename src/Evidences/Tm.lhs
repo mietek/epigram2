@@ -256,6 +256,13 @@ Easily, a telescope can be turned into a sequence of $\Pi$ types:
 > pity (Target t)          = t
 > pity (x :<: s :-: t)  = PI s (L (HF x $ pity . t))
 
+> laty :: TEL (TY :>: VAL) -> (TY :>: VAL)
+> laty (Target t)        = t
+> laty (x :<: s :-: t)   =
+>   PI s (body (\(ty :>: _) -> ty)) :>: body (\(_ :>: val) -> val)
+>     where body f = L (HF x $ f . laty . t)
+
+
 And, similarly, as a sequence of $\forall$s:
 
 > allty :: TEL VAL -> VAL

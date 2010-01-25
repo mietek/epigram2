@@ -86,6 +86,51 @@
 >     ddv <- chev (IDESC ii :>: d)
 >     (|(IInd hhv hihiv ddv)|)  
 
+> import -> Coerce where
+>   -- coerce :: (Can (VAL,VAL)) -> VAL -> VAL -> Either NEU VAL
+>   coerce (IMu (Just (l0,l1) :?=: (Id (iI0,iI1) :& Id (d0,d1))) (i0,i1)) q (CON x) = 
+>     let ql  = CON $ q $$ Fst
+>         qiI = CON $ q $$ Snd $$ Fst
+>         qi  = CON $ q $$ Snd $$ Snd $$ Snd
+>         qd = CON $ q $$ Snd $$ Snd $$ Fst
+>         (typ :>: vap) = laty ("I" :<: SET :-: \iI ->
+>                               "d" :<: ARR iI (IDESC iI) :-: \d ->
+>                               "i" :<: iI :-: \i ->
+>                               "l" :<: ARR iI SET :-: \l ->
+>                               Target (SET :>: 
+>                                        N (idescOp :@ [ iI , d $$ A i
+>                                                      , L $ HF "i" $ IMU (|l|) iI d
+>                                                      ]))) 
+>     in Right . CON $ 
+>       coe @@ [ idescOp @@ [ iI0 , d0 $$ A i0 , L $ HF "i" $ IMU (|l0|) iI0 d0 ] 
+>              , idescOp @@ [ iI1 , d1 $$ A i1 , L $ HF "i" $ IMU (|l1|) iI1 d1 ] 
+>              , CON $ pval refl $$ A typ $$ A vap $$ Out 
+>                                $$ A iI0 $$ A iI1 $$ A qiI
+>                                $$ A d0 $$ A d1 $$ A qd
+>                                $$ A i0 $$ A i1 $$ A qi
+>                                $$ A l0 $$ A l1 $$ A ql
+>              , x ]
+>   coerce (IMu (Nothing :?=: (Id (iI0,iI1) :& Id (d0,d1))) (i0,i1)) q (CON x) =
+>     let qiI = CON $ q $$ Fst
+>         qi  = CON $ q $$ Snd $$ Snd
+>         qd = CON $ q $$ Snd $$ Fst
+>         (typ :>: vap) = laty ("I" :<: SET :-: \iI ->
+>                               "d" :<: ARR iI (IDESC iI) :-: \d ->
+>                               "i" :<: iI :-: \i ->
+>                               Target (SET :>: 
+>                                        N (idescOp :@ [ iI , d $$ A i
+>                                                      , L $ HF "i" $ IMU Nothing iI d
+>                                                      ]))) 
+>     in Right . CON $ 
+>       coe @@ [ idescOp @@ [ iI0 , d0 $$ A i0 , L $ HF "i" $ IMU Nothing iI0 d0 ] 
+>              , idescOp @@ [ iI1 , d1 $$ A i1 , L $ HF "i" $ IMU Nothing iI1 d1 ] 
+>              , CON $ pval refl $$ A typ $$ A vap $$ Out 
+>                                $$ A iI0 $$ A iI1 $$ A qiI
+>                                $$ A d0 $$ A d1 $$ A qd
+>                                $$ A i0 $$ A i1 $$ A qi
+>              , x ]
+
+
 > import -> CanPretty where
 >   pretty (IDesc ii) = wrapDoc (kword KwIDesc <+> pretty ii ArgSize) ArgSize
 >   pretty (IMu (Just l   :?=: _) i)  = wrapDoc
@@ -109,7 +154,7 @@
 
 > import -> ElimTyRules where
 >   elimTy chev (_ :<: (IMu tt@(_ :?=: (Id ii :& Id x)) i)) Out = 
->     return (Out, descOp @@ [ii , x $$ A i , L $ HF "i" $ \i -> C (IMu tt i)])
+>     return (Out, idescOp @@ [ii , x $$ A i , L $ HF "i" $ \i -> C (IMu tt i)])
 
 > import -> Operators where
 >   idescOp :
@@ -117,10 +162,9 @@
 >   imapBoxOp :
 >   ielimOp :
 
-< import -> OpCompile where
-<   ("elimOp", [d,v,bp,p]) -> App (Var "__elim") [d, p, v]
-<   ("mapBox", [x,d,bp,p,v]) -> App (Var "__mapBox") [x, p, v]
-<   ("SwitchD", [e,b,x]) -> App (Var "__switch") [x, b]
+> import -> OpCompile where
+>   ("ielimOp", [iI,d,i,v,bp,p]) -> App (Var "__ielim") [d, p, i, v]
+>   ("imapBox", [iI,d,x,bp,p,v]) -> App (Var "__imapBox") [d, p, v]
 
 > import -> OpCode where
 >   idescOp :: Op
@@ -140,7 +184,7 @@
 >       idOpRun [ii,IDONE p,x]    = Right $ PRF p
 >       idOpRun [ii,IARG aa d,x] = Right $
 >          eval [.ii.aa.d.x. 
->               SIGMA (NV aa) . L $ "" :. [.a.
+>               SIGMA (NV aa) . L $ "a" :. [.a.
 >               (N (idescOp :@ [NV ii,d $# [a],NV x]))
 >               ]] $ B0 :< ii :< aa :< d :< x
 >       idOpRun [ii,IIND1 i d,x] = Right (TIMES (x $$ A i) (idescOp @@ [ii,d,x]))
@@ -161,7 +205,7 @@
 >         "ii" :<: SET :-: \ii ->
 >         "d" :<: IDESC ii :-: \d ->
 >         "x" :<: ARR ii SET :-: \x ->
->         "v" :<: (descOp @@ [ii,d,x]) :-: \v ->
+>         "v" :<: (idescOp @@ [ii,d,x]) :-: \v ->
 >         Target $ IDESC (SIGMA ii (L $ HF "i" (\i -> x $$ A i)))
 >       iboxOpRun :: [VAL] -> Either NEU VAL
 >       iboxOpRun [ii,IDONE _ ,x,v] = Right (IDONE TRIVIAL)
@@ -192,49 +236,49 @@
 >           "v" :<: (idescOp @@ [ii,d,x]) :-: \v ->
 >           Target $ idescOp @@ [sigiix,iboxOp @@ [ii,d,x,v],bp]
 >       mapBoxOpRun :: [VAL] -> Either NEU VAL
->       mapBoxOpRun [IDONE _,x,bp,p,v] = Right VOID
->       mapBoxOpRun [IARG a d,x,bp,p,v] = Right $ 
->         imapBoxOp @@ [d $$ (A (v $$ Fst)),x,bp,p,v $$ Snd]
->       mapBoxOpRun [IIND h hi d,x,bp,p,v] = Right $ 
+>       mapBoxOpRun [ii,IDONE _,x,bp,p,v] = Right VOID
+>       mapBoxOpRun [ii,IARG a d,x,bp,p,v] = Right $ 
+>         imapBoxOp @@ [ii,d $$ (A (v $$ Fst)),x,bp,p,v $$ Snd]
+>       mapBoxOpRun [ii,IIND h hi d,x,bp,p,v] = Right $ 
 >         PAIR (L (HF "x" $ \x -> p $$ A (PAIR (hi $$ A x) (v $$ Fst $$ A x)))) 
->              (imapBoxOp @@ [d,x,bp,p,v $$ Snd]) 
->       mapBoxOpRun [IIND1 i d,x,bp,p,v] = Right $ 
->         PAIR (p $$ A (PAIR i (v $$ Fst))) (imapBoxOp @@ [d,x,bp,p,v $$ Snd]) 
->       mapBoxOpRun [N d    ,_, _,_,_] = Left d
+>              (imapBoxOp @@ [ii,d,x,bp,p,v $$ Snd]) 
+>       mapBoxOpRun [ii,IIND1 i d,x,bp,p,v] = Right $ 
+>         PAIR (p $$ A (PAIR i (v $$ Fst))) (imapBoxOp @@ [ii,d,x,bp,p,v $$ Snd]) 
+>       mapBoxOpRun [_,N d    ,_, _,_,_] = Left d
 
+>   ielimOpTy :: Maybe VAL -> TEL TY
+>   ielimOpTy l = 
+>     "ii" :<: SET :-: \ii ->
+>     "d" :<: (ARR ii (IDESC ii)) :-: \d ->
+>     "i" :<: ii :-: \i ->
+>     "v" :<: (IMU l ii d i) :-: \v ->
+>     "bp" :<: (ARR (SIGMA ii (L (HF "i'" $ \i' -> IMU l ii d i')))
+>                   SET) 
+>                :-: \bp ->
+>     "m" :<: 
+>       (pity ("i'" :<: ii :-: \i' ->
+>              "x" :<: (idescOp @@ 
+>                        [ ii , d $$ A i'
+>                        , L $ HF "i''" $ \i'' -> IMU l ii d i''
+>                        ]) :-: \x ->
+>              "hs" :<: (idescOp @@ 
+>                         [ SIGMA ii (L $ HF "i" $ \i -> IMU l ii d i) 
+>                         , iboxOp @@
+>                              [ ii , d $$ A i'
+>                              , L $ HF "i''" $ \i'' -> IMU l ii d i''
+>                              , x
+>                              ]
+>                         , bp ]) :-: \hs ->
+>              Target (bp $$ A (PAIR i' (CON x))))) :-: \m ->
+>      Target (bp $$ A (PAIR i v))
 >   ielimOp :: Op
 >   ielimOp = Op
 >     { opName = "ielimOp"
 >     , opArity = 6
->     , opTyTel = elimOpTy
+>     , opTyTel = ielimOpTy Nothing
 >     , opRun = elimOpRun
 >     , opSimp = \_ _ -> empty
 >     } where
->       elimOpTy = 
->         "ii" :<: SET :-: \ii ->
->         "d" :<: (ARR ii (IDESC ii)) :-: \d ->
->         "i" :<: ii :-: \i ->
->         "v" :<: (IMU Nothing ii d i) :-: \v ->
->         "bp" :<: (ARR (SIGMA ii (L (HF "i'" $ \i' -> IMU Nothing ii d i')))
->                       SET) 
->                    :-: \bp ->
->         "m" :<: 
->           (pity ("i'" :<: ii :-: \i' ->
->                  "x" :<: (idescOp @@ 
->                            [ ii , d $$ A i'
->                            , L $ HF "i''" $ \i'' -> IMU Nothing ii d i''
->                            ]) :-: \x ->
->                  "hs" :<: (idescOp @@ 
->                             [ SIGMA ii (L $ HF "i" $ \i -> IMU Nothing ii d i) 
->                             , iboxOp @@
->                                  [ ii , d $$ A i'
->                                  , L $ HF "i''" $ \i'' -> IMU Nothing ii d i''
->                                  , x
->                                  ]
->                             , bp 
->                             ]) :-: \hs ->
->                  Target (bp $$ A (PAIR i' (CON x))))) :-: \m ->
->          Target (bp $$ A (PAIR i v))
 >       elimOpRun :: [VAL] -> Either NEU VAL
 >       elimOpRun [ii,d,i,CON x,bp,m] = Right $ 
 >         m $$ A i $$ A x 
@@ -244,7 +288,7 @@
 >                            elimOp @@ [ii,d,t $$ Fst,t $$ Snd,bp,m] 
 >                   , x
 >                   ])
->       elimOpRun [_,N x, _,_] = Left x
+>       elimOpRun [_,_,_,N x, _,_] = Left x
 
 >   imapOp = Op
 >     { opName  = "imap"

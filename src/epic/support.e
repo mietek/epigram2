@@ -37,6 +37,19 @@ __map (D:Data, f:Data, x:Data) -> Data =
    | 3 -> [f(x!0), __map((D!1)!0, f, x!1)]
    }
 
+__imapBox (D:Data, p:Data, d:Data) -> Data =
+   case D!0 of
+    { 0 -> []
+    | 1 -> __imapBox((((D!1)!1)!0)(d!0), p, d!1)
+    | 2 -> [__imapBoxH(p, d!0, (d!1)!0), __mapBox((((D!1)!1)!1)!0, p, d!1)]
+    | 3 -> [p([(D!1)!0,d!0]), __imapBox(((D!1)!1)!0, p, d!1)]
+    }
+
+__imapBoxH (p:Data, hi:Data, f:Data, h:Data) -> Data = p([hi(h),f(h)])
+
+__ielim(D:Data, m:Data, i :Data, x:Data) -> Data =
+   m(i,x,__imapBox(D(i), __ielim(D,m), x))
+
 __lazyMap (D:Data, f:Data, x:Data) -> Data =
   case D!0 of
    { 0 -> []
