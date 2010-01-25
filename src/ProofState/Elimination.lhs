@@ -702,13 +702,13 @@ and |p|. Then, we can start the hard work.
 >     -- (the pattern guard is overcrowed, I could not put that one there)
 >     let delta1FDelta1B = lookupInContext (unNP p) delta1
 >     (case p of
->       NP y | isJust delta1FDelta1B && isSequalS' -> do
+>       NP y@(yn := _) | isJust delta1FDelta1B && isSequalS' -> do
 >         -- Case 1: S and S' are equal and |p| sits in $\Delta_1$:
 >         -- We can simplify!
 >
 >         -- Normalize the context and get a renamer
 >         let  Just (delta1F, delta1B) = delta1FDelta1B
->              (delta1', renamer) = normalizeDelta1 delta1F (xn `renameVar` y) delta1B
+>              (delta1', renamer) = normalizeDelta1 delta1F (yn `renameVar` x) delta1B
 >         -- Apply the renamer to:
 >         --     * the constraints to come
 >         --     * the constraints so far
