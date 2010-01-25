@@ -174,46 +174,50 @@ To simplify a conjunction, we simplify each conjunct separately, then call the
 
 To simplify |p = (x :- s) => t|, we first try to simplify |s|:
 
-> propSimplify delta p@(ALL (PRF s) l@(L sc)) = forkNSupply "__psImp1" (propSimplify delta s)
->     (\simpS -> case {-|trace ("\npropSimplify: simpS = " ++ show simpS)|-} simpS of
+> propSimplify delta p@(ALL (PRF s) l@(L sc)) =
+>     forkNSupply "__psImp1" (propSimplify delta s) antecedent
+>   where
+>     antecedent :: (NameSupplier m) => Simplify -> m Simplify
 
 If |s| is absurd then |p| is trivial, which we can prove by doing |magic| whenever someone
 gives us an element of |s|.
 
->         SimplyAbsurd prfAbsurdS -> return (SimplyTrivial
+>     antecedent (SimplyAbsurd prfAbsurdS) = return (SimplyTrivial
 >             (L (HF "__antecedentAbsurd" (\sv -> magic (PRF (l $$ A sv)) (prfAbsurdS sv)))))
 
 If |s| is trivial, then we go under the binder by applying the proof, and then simplify |t|.
 Then |p| simplifies to the result of simplifying |t|, with the proofs constructed by 
 $\lambda$-abstracting in one direction and applying the proof of |s| in the other direction.
 
->         SimplyTrivial prfS -> forkNSupply "__psImp2" (propSimplify delta (l $$ A prfS))
->             (\simpT -> case {-|trace ("\ntrivial, simpT = " ++ show simpT)|-} simpT of
->                 SimplyAbsurd prfAbsurdT -> return (SimplyAbsurd (prfAbsurdT . ($$ A prfS)))
->                 SimplyTrivial prfT -> return (SimplyTrivial (LK prfT))
->                 Simply tqs tgs th -> return (Simply tqs
->                     (fmap (\g -> L (HF "__x" (\v -> g $$ A (v $$ A prfS)))) tgs)
->                     (LK th))
->             )
+>     antecedent (SimplyTrivial prfS) =
+>         forkNSupply "__psImp2" (propSimplify delta (l $$ A prfS)) consequentTrivial
+>       where
+>         consequentTrivial :: (NameSupplier m) => Simplify -> m Simplify
+>         consequentTrivial (SimplyAbsurd prfAbsurdT)  = return (SimplyAbsurd (prfAbsurdT . ($$ A prfS)))
+>         consequentTrivial (SimplyTrivial prfT)       = return (SimplyTrivial (LK prfT))
+>         consequentTrivial (Simply tqs tgs th)        = return (Simply tqs
+>             (fmap (\g -> L (HF "__x" (\v -> g $$ A (v $$ A prfS)))) tgs)
+>             (LK th))
 
 If |s| simplifies nontrivially, we have a bit more work to do. We simplify |t| under the binder
 by adding the simplified conjuncts of |s| to the context and applying |l| to |sh| (the proof of
 |s| in the extended context). 
 
->         Simply sqs sgs sh -> forkNSupply "__psImp3" (propSimplify (delta <+> sqs) (l $$ A sh))
->             (\simpT -> case {-|trace ("\nsimplified, simpT = " ++ show simpT)|-} simpT of
->                 SimplyAbsurd prfAbsurdT -> do
->                     madness <- dischargeAllLots sqs (PRF ABSURD)
->                     freshRef ("__madness" :<: madness) (\ref -> 
->                         freshRef ("__pref" :<: p) (\pref -> do
->                             g <- dischargeLots sqs (prfAbsurdT (NP pref $$ A sh))
->                             g' <- discharge pref g
->                             return (SimplyOne ref
->                                 (L (HF "__p" (\pv -> g' $$ A pv)))
->                                 (L (HF "__consequentAbsurd" (\sv -> magic (PRF (l $$ A sv))
->                                 (NP ref $$$ (fmap (A . ($$ A sv)) sgs))))))
->                           )
->                       )
+>     antecedent (Simply sqs sgs sh) =
+>         forkNSupply "__psImp3" (propSimplify (delta <+> sqs) (l $$ A sh)) consequent
+>       where
+>         consequent (SimplyAbsurd prfAbsurdT) = do
+>             madness <- dischargeAllLots sqs (PRF ABSURD)
+>             freshRef ("__madness" :<: madness) (\ref -> 
+>                 freshRef ("__pref" :<: p) (\pref -> do
+>                     g <- dischargeLots sqs (prfAbsurdT (NP pref $$ A sh))
+>                     g' <- discharge pref g
+>                     return (SimplyOne ref
+>                         (L (HF "__p" (\pv -> g' $$ A pv)))
+>                         (L (HF "__consequentAbsurd" (\sv -> magic (PRF (l $$ A sv))
+>                         (NP ref $$$ (fmap (A . ($$ A sv)) sgs))))))
+>                   )
+>               )
 
 If the consequent |t| is trivial, then the implication is trivial, which we can prove as
 follows:
@@ -223,13 +227,14 @@ follows:
 |sgs| to get proofs of the |sqs|, which can then be passed to |prfT'| to get a proof of |t|.
 \end{enumerate}
 
->                 SimplyTrivial prfT -> do
->                     prfT' <- dischargeLots sqs prfT
->                     return (SimplyTrivial (L (HF "__consequentTrivial" (\sv ->
->                         prfT' $$$ (fmap (A . ($$ A sv)) sgs)))))
+>         consequent (SimplyTrivial prfT) = do
+>             prfT' <- dischargeLots sqs prfT
+>             return (SimplyTrivial (L (HF "__consequentTrivial" (\sv ->
+>                 prfT' $$$ (fmap (A . ($$ A sv)) sgs)))))
 
 Otherwise, if the consequent |t| simplifies to a conjunction |tqs| with proofs |tg : t -> tq|,
-and proof |th| of |t| in the context |delta <+> sqs|, we proceed as follows:
+and proof |th| of |t| in the context |delta <+> sqs|, we proceed as follows.
+\question{Is there a better way of explaining this than a bunch of scribbles on a whiteboard?}
 \begin{enumerate}
 \item Discharge the antecedents |sqs| over each conjunct in the consequent to produce a
       conjunction |pqs|.
@@ -239,70 +244,87 @@ and proof |th| of |t| in the context |delta <+> sqs|, we proceed as follows:
         \item Apply |pref| to the proof of |s| in the context |delta <+> sqs|, giving a value
               of type |t|, to which |tg| can be applied to produce a proof of |tq|.
         \item Discharge the proof of |tq| over the |sqs| to produce a proof of |pq|.
-        \item Discharge |pref| and return the function that, given a proof of |p|, applies
-              the discharged term to it.
+        \item Discharge |pref| to produce the required proof.
       \end{enumerate}
 \item Construct the proof |ph| of |p| in the context |pqs| thus:
       \begin{enumerate}
+        \item Declare |sref| to be a reference of type |s|.
         \item Discharge the proof |th| of |t| over the conjuncts |tqs| to produce |th'|.
-        \item Apply |th'| to the proofs of the |tqs| (created by applying the |pqs| to the |sqs|)
+        \item Let |sgSpine| be the spine of |sgs| applied to |sref| to produce proofs of the |sqs|.
+        \item Apply |th'| to each proof of a |tq| (created by applying a |pq| to the |sgSpine|),
               to produce |th''|.
         \item Discharge |th''| over the |sqs| to give a function |th'''| from proofs of the |sqs|
               to proofs of |t|.
-        \item Construct the proof of |p| that, given a proof of |s|, applies the |sgs| to it to
-              produce proofs of the |sqs|, and applies them to |th'''| to get a proof of |t|.
+        \item Apply |th'''| to the |sgSpine| and discharge |sref| to produce a function |ph| that,
+              given a proof of |s|, yields a proof of |t|.
       \end{enumerate}
 \end{enumerate}
 
->                 Simply tqs tgs th -> do
->                     pqs <- mapM (dischargeRefAlls sqs) tqs
+>         consequent (Simply tqs tgs th) = do
+>             pqs <- mapM (dischargeRefAlls sqs) tqs
+>             pgs <- mapM wrapper tgs
 >
->                     pgs <- mapM (\tg -> freshRef ("__pref" :<: p) (\pref -> do
->                         pg <- dischargeLots sqs (tg $$ A (NP pref $$ A sh))
->                         discharge pref pg
->                       )) tgs
+>             freshRef ("__sref" :<: PRF s) (\sref -> do
+>                 th' <- dischargeLots tqs th
+>                 let  sgSpine  = fmap (\sg -> A (sg $$ A (NP sref))) sgs
+>                      th''     = th' $$$ fmap (\pq -> A (NP pq $$$ sgSpine)) pqs
+>                 th''' <- dischargeLots sqs th''
+>                 let th'''' = th''' $$$ sgSpine
+>                 ph <- discharge sref th''''
+>                 return (Simply pqs pgs ph)
+>               )
 >
->                     freshRef ("__sref" :<: PRF s) (\sref -> do
->                         let sgSpine = fmap (\sg -> A (sg $$ A (NP sref))) sgs
->                         th' <- dischargeLots tqs th
->                         let th'' = th' $$$ fmap (\pq -> A (NP pq $$$ sgSpine)) pqs
->                         th''' <- dischargeLots sqs th''
->                         let th'''' = th''' $$$ sgSpine
->                         ph <- discharge sref th''''
->                         return (Simply pqs pgs ph)
->                       )
-
->               ) -- simpT
->       ) -- simpS
+>           where
+>             wrapper :: (NameSupplier m) => VAL -> m VAL
+>             wrapper tg = freshRef ("__pref" :<: p) (\pref -> do
+>                 pg <- dischargeLots sqs (tg $$ A (NP pref $$ A sh))
+>                 discharge pref pg
+>               )
 
 To simplify |p = (x : s) => t| where |s| is not a proof set, we generate a fresh
-reference and simplify |t| under the binder. If |t| is absurd, then |p|
-simplifies to |(x : s) => FF|. If |t| is trivial, then |p| is trivial. Otherwise,
-|p| simplifies to a conjunction of propositions |(x : s) => q| for each |q| in
+reference and simplify |t| under the binder.
+
+> propSimplify delta p@(ALL s l@(L sc)) = freshRef (fortran l :<: s)
+>     (\refS -> forkNSupply "__psAll" (propSimplify (delta :< refS) (l $$ A (NP refS))) (thingy refS))
+>   where
+>     thingy :: (NameSupplier m) => REF -> Simplify -> m Simplify
+
+If |t| is absurd, then |p| simplifies to |(x : s) => FF|. 
+
+>     thingy refS (SimplyAbsurd prf) = freshRef ("__psA" :<: PRF (ALL s (LK ABSURD)))
+>         (\refA -> return (SimplyOne refA
+>             (L (HF "__p" (\pv -> magic (PRF (ALL s (LK ABSURD))) (prf (pv $$ A (NP refS))))))
+>             (L (HF "__consequentAbsurd2" (\sv -> magic (PRF (l $$ A sv)) (pval refA $$ A sv)))))
+>         )
+
+If |t| is trivial, then |p| is trivial.
+
+>     thingy refS (SimplyTrivial prf) = do
+>         prf' <- discharge refS prf
+>         return (SimplyTrivial prf')
+
+Otherwise, |p| simplifies to a conjunction of propositions |(x : s) => q| for each |q| in
 the simplification of |t|.
 
-> propSimplify delta p@(ALL s l@(L sc)) = freshRef (fortran l :<: s) (\refS -> 
->   forkNSupply "__psAll" (propSimplify (delta :< refS) (l $$ A (NP refS)))
->     (\simpL -> case simpL of
->         SimplyAbsurd prf -> freshRef ("__psA" :<: PRF (ALL s (LK ABSURD))) (\refA ->
->             return (SimplyOne refA
->                 (L (HF "__p" (\pv -> magic (PRF (ALL s (LK ABSURD))) (prf (pv $$ A (NP refS))))))
->                 (L (HF "__consequentAbsurd2" (\sv -> magic (PRF (l $$ A sv)) (pval refA $$ A sv))))))
+>     thingy refS (Simply qs gs h) = do
+>         pqs <- mapM (dischargeRefAlls (B0 :< refS)) qs
+>         let pgs = fmap wrapper gs
+>         h' <- dischargeLots qs h
+>         let h'' = h' $$$ fmap (\q -> A (NP q $$ A (NP refS))) pqs
+>         ph <- discharge refS h''
+>         return (Simply pqs pgs ph)
+>       where
 
->         SimplyTrivial prf -> do
->             prf' <- discharge refS prf
->             return (SimplyTrivial prf')
+The |wrapper| says how to get a proof |pg : p -> pq| given a proof |g : t -> q|.
+Since |pq == (x : s) => q| we can give back a function that takes proofs
+|pv : p| and |sv : s|, applies |pv| to |sv| to give a proof of |t|, then
+applies |g| to this proof to get a proof of |q|.
 
->         Simply qs gs h -> do
->             qs' <- mapM (dischargeRefAlls (B0 :< refS)) qs
->             let gs' = fmap (\g -> (L (HF "__p" (\pv -> (L (HF "__consequentSimplified2" (\sv -> g $$ A (pv $$ A sv)))))))) gs
->             h' <- dischargeLots qs h
->             let h'' = h' $$$ fmap (\q -> (A (NP q $$ A (NP refS)))) qs'
->             h''' <- discharge refS h''
->             return (Simply qs' gs' h''')
->             
->   
->   ))
+>         wrapper :: VAL -> VAL
+>         wrapper g = L (HF "__p" (\pv ->
+>                        L (HF "__s" (\sv ->
+>                            g $$ A (pv $$ A sv)))))
+
 
 
 To simplify a neutral parameter, we look for a proof in the context. 
