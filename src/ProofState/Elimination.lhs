@@ -149,7 +149,7 @@ extracting the interesting bits.
 
 The development transformation is achieved by the following code:
 
-> introElim :: Eliminator -> ProofState (Name, INTM :<: TY, [INTM], Bwd INTM)
+> introElim :: Eliminator -> ProofState (Name, INTM :<: TY, [INTM] :<: [INTM], Bwd INTM)
 > introElim (eType :>: e) = do
 >     -- Make an (un-goaled) module
 >     -- We will turn it in a (goaled T) girl at the end
@@ -162,7 +162,7 @@ The development transformation is achieved by the following code:
 >     p <- make $ "P" :<: motiveTypeTm
 >     -- Get the type of the methods and the target
 >     -- And ask for making them real
->     (ms, target) <- mkMethods $ telType $$ (A $ evTm p)
+>     (ms :<: mTys, target) <- mkMethods $ telType $$ (A $ evTm p)
 >     -- Check the motive, and target shape
 >     checkMotive motiveType
 >     checkTarget target p motiveType
@@ -172,7 +172,7 @@ The development transformation is achieved by the following code:
 >     -- And go to the next subproblem, ie. making P
 >     moduleToGoal target
 >     giveNext $ N $ (termOf e :? termOf eType) $## (p : ms)
->     return (elimName, p :<: motiveType, ms, args)
+>     return (elimName, p :<: motiveType, ms :<: mTys, args)
 >         where unPi :: VAL -> (VAL, VAL)
 >               unPi (PI s t) = (s, t)
 
@@ -183,18 +183,18 @@ matched the first component of the telescope. To get the methods, we
 simply iterate that process, up to the point where all the $\Pi$s have
 been consummed.
 
-> mkMethods :: TY -> ProofState ([INTM], INTM)
-> mkMethods = mkMethods' []
->     where mkMethods' :: [INTM] -> TY -> ProofState ([INTM], INTM)
->           mkMethods' ms t = 
+> mkMethods :: TY -> ProofState ([INTM] :<: [INTM], INTM)
+> mkMethods = mkMethods' [] []
+>     where mkMethods' :: [INTM] -> [INTM] -> TY -> ProofState ([INTM] :<: [INTM], INTM)
+>           mkMethods' ms mTys t = 
 >               case t of 
 >                 PI s t -> do
 >                     sTm <- bquoteHere s
 >                     m <- make $ "m" :<: sTm
->                     mkMethods' (m : ms) (t $$ (A $ evTm m))
+>                     mkMethods' (m : ms) (sTm : mTys) (t $$ (A $ evTm m))
 >                 target -> do
 >                     targetTm <- bquoteHere target
->                     return (reverse ms, targetTm)
+>                     return (reverse ms :<: reverse mTys, targetTm)
 
 Another helper function has been |matchArgs|. We know that the target
 is the following term:
@@ -436,13 +436,24 @@ bag of |REF|s:
 
 Obviously, we get |extractDelta1| from there:
 
-> extractDelta1 :: Bwd REF -> [INTM] -> ProofState [REF]
-> extractDelta1 delta argTypes = extractDelta1' delta deps
->     where deps = foldMap collectRefs argTypes
+> extractDelta1 :: Bwd REF -> TY -> ProofState [REF]
+> extractDelta1 delta elimTy = do
+>   argTypes <- unfoldTelescope elimTy
+>   let deps = foldMap collectRefs argTypes
+>   d <- extractDelta1' delta deps
+>   return $ trail d
+
+> unfoldTelescope :: TY -> ProofState [INTM]
+> unfoldTelescope (PI _S _T) = do
+>   _Stm <- bquoteHere _S
+>   freshRef ("s" :<: _S) $ \s -> do
+>       t <- unfoldTelescope (_T $$ (A $ pval s))
+>       return $ _Stm : t
+> unfoldTelescope _ = return []
 
 We are left with implementing |extractDelta1'|. 
 
-> extractDelta1' :: Bwd REF -> [REF] -> ProofState [REF]
+> extractDelta1' :: Bwd REF -> [REF] -> ProofState (Bwd REF)
 
 First, we treat the case where $r \in \Delta$ belongs to the
 dependency set. As expected, we ignore $r$ from
@@ -469,12 +480,12 @@ $\Delta_1$.
 >     -- Get delta1'
 >     delta1' <- extractDelta1' rs deps
 >     -- And add r to it                   
->     return $ r : delta1'
+>     return $ delta1' :< r
 >         where usedIn = Data.Foldable.elem
 
 Trivially, on an empty context, there is nothing to say.
 
-> extractDelta1' B0 deps = return []
+> extractDelta1' B0 deps = return B0
 
 
 
@@ -624,7 +635,7 @@ $\Pi$ quantifying an element which has been simplified.
 
 At this stage, we have computed no |Constraints|:
 
-> type Constraints = Bwd (REF, INTM :>: INTM)
+> type Constraints = Bwd (Maybe (REF, INTM :>: INTM))
 
 Where |Constraints| represents the equalities we want to generate. The
 |REF| is a term of $\lambda (\Xi)$ whereas the |INTM :>: INTM| on the
@@ -685,19 +696,19 @@ and |p|. Then, we can start the hard work.
 >         --     * the constraints so far
 >         --     * the goal
 >         let xts' = fmap (mapSnd renamer) xts
->         let constraints' = fmap (mapSnd $ mapBoth renamer) constraints
+>         let constraints' = fmap (fmap . mapSnd $ mapBoth renamer) constraints
 >         let goal' = renamer goal
 >         -- Continue with the updated structures, unfolding the telescope
 >         simplify  (t $$ (A $ pval x), t' $$ (A $ pval x), xts')
 >                   delta1' 
->                   constraints'
+>                   (constraints' :< Nothing)
 >                   goal'
 >       _ -> do
 >         -- Case 2: we cannot simplify
 >
 >         -- That's one more constraint my friend
 >         s'Tm <- bquote B0 s'
->         let constraints' = constraints :< (x, s'Tm :>: p)
+>         let constraints' = constraints :< Just (x, s'Tm :>: p)
 >         -- Continue with the updated structure, unfolding the telescope
 >         simplify  ((t $$ A (pval x)), t' $$ A (pval x), xts)
 >                   delta1 
@@ -730,10 +741,11 @@ Finally, we can make the motive, hence closing the subgoal. This
 simply consists in chaining the commands above, and give the computed
 term. Unless I've screwed up things, |give| should always be happy.
 
-> makeMotive :: TY -> VAL -> [REF] -> [INTM] -> Bwd INTM -> ProofState ([REF], INTM)
-> makeMotive xi goal deltas argTypes args = do
+> makeMotive ::  TY -> VAL -> [REF] -> [INTM] -> Bwd INTM -> TY ->
+>                ProofState ([REF], INTM, [INTM :>: INTM])
+> makeMotive xi goal deltas argTypes args elimTy = do
 >   -- Extract $\Delta_1$ from $\Delta$
->   deltas1 <- extractDelta1 (bwdList deltas) argTypes
+>   deltas1 <- extractDelta1 (bwdList deltas) elimTy
 >   -- Transform $\Delta$ into Binder form
 >   binders <- withNSupply $ toBinders deltas1
 >   -- Introduce $\Xi$
@@ -752,9 +764,22 @@ term. Unless I've screwed up things, |give| should always be happy.
 >   solution <- makeEq constraints goal
 >   -- Rename solution from the dummy |binders| to the fresh |deltas|
 >   let motive = transportToLocal bindersL deltas1' solution
+>   constraints' <- filterInd xi (trail args) (trail constraints)
 >   -- And we are done
 >   motive <- give motive
->   return (deltas1, motive)
+>   let deltas1R = filter (\(rn := _) -> rn `Data.List.elem` (map (\(n :<: _) -> n) bindersL)) deltas1
+>   return (deltas1R, motive, constraints')
+
+
+> filterInd :: TY -> [INTM] -> [Maybe (REF, INTM :>: INTM)] -> ProofState [INTM :>: INTM]
+> filterInd (PI _S _T) (x : xs) (Nothing : cs)= do
+>     ts <- filterInd (_T $$ (A (evTm x))) xs cs
+>     return $ ts
+> filterInd (PI _S _T) (x : xs) (Just (_, _ :>: _) : cs) = do
+>     _Stm <- bquoteHere _S
+>     ts <- filterInd (_T $$ (A (evTm x))) xs cs
+>     return $ (_Stm :>: x) : ts
+> filterInd SET [] [] = return []
 
 
 Along the way, we have used 3 helper functions. Let us look at them in
@@ -773,9 +798,10 @@ An important step is to build the term $(\Xi == \vec{t}) -> T$. This
 consists in going over the |Bwd| list of constraints and make the
 thing:
 
-> makeEq :: Bwd (REF, INTM :>: INTM) -> INTM -> ProofState INTM
+> makeEq :: Constraints -> INTM -> ProofState INTM
 > makeEq B0 t = return t
-> makeEq (cstrt :< (r, sTy :>: s)) t = do
+> makeEq (cstrt :< Nothing) t = makeEq cstrt t
+> makeEq (cstrt :< Just (r, sTy :>: s)) t = do
 >   rTy <- bquoteHere $ pty r
 >   makeEq cstrt (ARR (PRF (EQBLUE (rTy :>: NP r) (sTy :>: s))) t)
 
@@ -818,18 +844,18 @@ partial internal context $\Delta_1$, and the reflexivity proofs. Let
 us build these proofs first. This simply consists in taking each
 variable $\vec{t}$ and apply |refl| to it.
 
-> mkRefls :: [INTM] -> VAL -> NameSupply -> [INTM]
-> mkRefls (t : args) (PI s s') r =  (N $ (P refl) $##  [ bquote B0 s r 
->                                                      , t ])
->                                   : mkRefls args (s' $$ (A (evTm t))) r
-> mkRefls [] SET r = []
+> mkRefls :: [INTM :>: INTM] -> NameSupply -> [INTM]
+> mkRefls ((t :>: v) : eqs) r =  (N $ (P refl) $##  [ t 
+>                                           , v ])
+>                                   : mkRefls eqs r
+> mkRefls [] r = []
 
 
 Then, it is straightforward to build the term we want and to give it:
 
-> applyElim :: Name -> INTM -> [INTM] -> [REF] -> ([INTM] :<: VAL) -> ProofState ()
-> applyElim elim motive methods deltas (args :<: xi) = do
->     reflArgs <- withNSupply $ mkRefls args xi
+> applyElim :: Name -> INTM -> [INTM] -> [REF] -> [INTM :>: INTM] -> ProofState ()
+> applyElim elim motive methods deltas args = do
+>     reflArgs <- withNSupply $ mkRefls args
 >     Just (N e) <- lookupName elim
 >     giveNext $ N $ e $##  (map NP deltas ++
 >                           reflArgs)
@@ -853,7 +879,6 @@ goal and its context.
 >     let deltas' = case comma of 
 >                     Nothing -> deltas
 >                     Just comma -> dropWhile (comma /=) deltas
->     proofTrace $ show deltas'
 >     return (deltas', goal)
 
 In a second part, we turn the eliminator into a girl and play the
@@ -864,18 +889,20 @@ of too much time spend in the lab, too far from any feminine
 presence. Observe the damages).
 
 > elimDoctor ::  [REF] -> VAL -> Eliminator -> 
->                ProofState (Name, INTM, [INTM], [REF], [INTM] :<: VAL)
-> elimDoctor deltas goal eliminator = do
+>                ProofState (Name, INTM, [INTM], [REF], [INTM :>: INTM])
+> elimDoctor deltas goal eliminator@((_ :=>: elimTy) :>: _) = do
 >     -- Prepare the development by creating subgoals:
 >     --    1/ the motive
 >     --    2/ the methods
 >     --    3/ the arguments of the motive
->     (eliminator, motive :<: xi, methods, args) <- introElim eliminator
+>     (eliminator, motive :<: xi, methods :<: methodsTy, args) <- introElim eliminator
 >     -- Build the motive
->     (deltas, motive) <- makeMotive xi goal deltas (motive : methods) args
+>     xiTm <- bquoteHere xi
+>     methodsPP <- sequence $ map (\methodTy -> prettyHere (SET :>: methodTy)) methodsTy
+>     (deltas, motive, constraints) <- makeMotive xi goal deltas (xiTm : methodsTy) args elimTy
 >     -- Leave the development with the methods unimplemented
 >     goOut
->     return (eliminator, motive, methods, deltas, trail args :<: xi)
+>     return (eliminator, motive, methods, deltas, constraints)
 
 In a third part, we solve the problem. To that end, we simply have to use the
 |applyElim| command we have developed above.

@@ -88,6 +88,7 @@ updated information, providing a friendlier interface than |get| and |put|.
 > getGreatAuncles :: ProofState Entries
 > getGreatAuncles = get >>= return . greatAuncles
 
+> getBoys :: ProofState [REF]
 > getBoys = do  
 >     auncles <- getAuncles
 >     return $ foldMap boy auncles 
