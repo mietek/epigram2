@@ -756,9 +756,9 @@ a false economy.
 > coerce :: (Can (VAL,VAL)) -> VAL -> VAL -> Either NEU VAL
 > coerce Set q x = Right x
 > coerce (Pi (sS1,sS2) (tT1,tT2)) q f1 = Right . L . HF (fortran tT2) $ \ s2 ->
->   let  (s1, sq) = coeh sS2 sS1 (q $$ Fst) s2
+>   let  (s1, sq) = coeh sS2 sS1 (CON $ q $$ Fst) s2
 >        t1 = f1 $$ A s1
->   in   coe @@ [tT1 $$ A s1, tT2 $$ A s2, q $$ Snd $$ A s2 $$ A s1 $$ A sq]
+>   in   coe @@ [tT1 $$ A s1, tT2 $$ A s2, CON $ q $$ Snd $$ A s2 $$ A s1 $$ A sq, t1]
 > import <- Coerce
 > coerce _ q (N x) = Left x
 

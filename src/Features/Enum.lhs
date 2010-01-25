@@ -267,7 +267,7 @@ Equality rules:
 >   coerce (EnumT (CONSE _ _,   CONSE _ _))      _  (N x) = Left x
 >   coerce (EnumT (CONSE _ _,   CONSE _ _))      _  ZE = Right ZE
 >   coerce (EnumT (CONSE _ e1,  CONSE _ e2))     q  (SU x) = Right . SU $
->     coe @@ [ENUMT e1, ENUMT e2, q $$ Snd $$ Snd $$ Fst, x]  -- |CONSE| tails
+>     coe @@ [ENUMT e1, ENUMT e2, CON $ q $$ Snd $$ Snd $$ Fst, x]  -- |CONSE| tails
 >   coerce (EnumT (NILE,        NILE))           q  x = Right x
 >   coerce (EnumT (NILE,        t@(CONSE _ _)))  q  x = Right $
 >     nEOp @@ [q, ENUMT t]

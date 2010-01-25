@@ -109,7 +109,7 @@ relation over |A|.
 
 > import -> Coerce where
 >   coerce (Quotient (_X, _Y) _ _) q (CLASS x) = Right $
->     CLASS (coe @@ [_X, _Y, q $$ Fst, x])
+>     CLASS (coe @@ [_X, _Y, CON $ q $$ Fst, x])
 >   coerce (Quotient _ _ _) _ (N n) = Left n
 
 %endif

@@ -219,8 +219,9 @@ Coercion rule:
 
 > import -> Coerce where
 >   coerce (Sigma (sS1, sS2) (tT1, tT2)) q p = Right . PAIR s2 $
->     coe @@ [  tT1 $$ A s1, tT2 $$ A s2, q $$ Snd $$ A s1 $$ A s2 $$ A sq,
->               p $$ Snd] where
+>     coe @@ [  tT1 $$ A s1, tT2 $$ A s2
+>            ,  CON $ q $$ Snd $$ A s1 $$ A s2 $$ A sq
+>            ,  p $$ Snd] where
 >       s1 = p $$ Fst
->       (s2, sq) = coeh sS1 sS2 (q $$ Fst) s1
+>       (s2, sq) = coeh sS1 sS2 (CON $ q $$ Fst) s1
 >   coerce Unit q s = Right s
