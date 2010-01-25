@@ -149,7 +149,7 @@ extracting the interesting bits.
 
 The development transformation is achieved by the following code:
 
-> introElim :: Eliminator -> ProofState (Name, INTM :<: TY, [INTM], Bwd INTM)
+> introElim :: Eliminator -> ProofState (Name, INTM :<: TY, [INTM], [INTM])
 > introElim (eType :>: e) = do
 >     -- Make an (un-goaled) module
 >     -- We will turn it in a (goaled T) girl at the end
@@ -167,12 +167,12 @@ The development transformation is achieved by the following code:
 >     checkMotive motiveType
 >     checkTarget target p motiveType
 >     -- Grab the terms which are applied to the motive
->     patterns <- matchPatterns target motiveType
+>     patterns <- matchPatterns target motiveType 
 >     -- Close the problem (using the "made" subproblems!)
 >     -- And go to the next subproblem, ie. making P
 >     moduleToGoal target
 >     giveNext $ N $ (termOf e :? termOf eType) $## (p : methods)
->     return (elimName, p :<: motiveType, methods, patterns)
+>     return (elimName, p :<: motiveType, methods, trail patterns)
 >         where unPi :: VAL -> (VAL, VAL)
 >               unPi (PI s t) = (s, t)
 
@@ -747,8 +747,8 @@ and |p|. Then, we can start the hard work.
 
 And that's all.
 
-Sooner or later, the following bit will be integrated where the |case
-p of| is currently sitting:
+Sooner or later, the following bit will be integrated where the 
+|case p of| is currently sitting:
 
 < matchRef :: (TY :>: VAL) -> Spine -> ProofState REF
 < matchRef (_ :>: NP r) F0 = return r
@@ -762,9 +762,9 @@ Finally, we can make the motive, hence closing the subgoal. This
 simply consists in chaining the commands above, and give the computed
 term. Unless I've screwed up things, |give| should always be happy.
 
-> makeMotive ::  TY -> VAL -> [REF] -> Bwd INTM -> TY ->
+> makeMotive ::  TY -> VAL -> [REF] -> [INTM] -> TY ->
 >                ProofState ([REF], INTM, [INTM :>: INTM])
-> makeMotive xi goal deltas args elimTy = do
+> makeMotive xi goal deltas patterns elimTy = do
 >   -- Extract $\Delta_1$ from $\Delta$
 >   deltas1 <- extractDelta1 (bwdList deltas) elimTy
 >   -- Transform $\Delta$ into Binder form
@@ -772,7 +772,7 @@ term. Unless I've screwed up things, |give| should always be happy.
 >   -- Introduce $\Xi$
 >   xis <- introMotive 
 >   -- Make the initial list of constraints
->   let constraintsI = zip xis (trail args)
+>   let constraintsI = zip xis patterns
 >   let teleConstraints = (xi, xi, constraintsI)
 >   -- Get goal in |INTM| form
 >   goalTm <- bquoteHere goal
@@ -785,28 +785,19 @@ term. Unless I've screwed up things, |give| should always be happy.
 >   solution <- makeEq constraints goal
 >   -- Rename solution from the dummy |binders| to the fresh |deltas|
 >   let motive = transportToLocal bindersL deltas1' solution
->   constraints' <- filterInd xi (trail args) (trail constraints)
 >   -- And we are done
 >   motive <- give motive
->   let deltas1R = filter (\(rn := _) -> rn `Data.List.elem` (map (\(n :<: _) -> n) bindersL)) deltas1
->   return (deltas1R, motive, constraints')
+>   -- Filter out the simplified deltas and patterns (for elimination application)
+>   let deltas1R = filterDeltas bindersL deltas1
+>   patterns <- filterPatterns xi patterns (trail constraints)
+>   -- Return
+>   return (deltas1R, motive, patterns)
 
 
-> filterInd :: TY -> [INTM] -> [Maybe (REF, INTM :>: INTM)] -> ProofState [INTM :>: INTM]
-> filterInd (PI _S _T) (x : xs) (Nothing : cs)= do
->     ts <- filterInd (_T $$ (A (evTm x))) xs cs
->     return $ ts
-> filterInd (PI _S _T) (x : xs) (Just (_, _ :>: _) : cs) = do
->     _Stm <- bquoteHere _S
->     ts <- filterInd (_T $$ (A (evTm x))) xs cs
->     return $ (_Stm :>: x) : ts
-> filterInd SET [] [] = return []
-
-
-Along the way, we have used 3 helper functions. Let us look at them in
-turn. First, we have used |mkPiDelta1| to turn the |Binders| we have
-computed into $\Pi$-boys in the development. This is achieved by the
-following code:
+Along the way, we have used a bunch of helper functions. Let us look
+at them in turn. First, we have used |mkPiDelta1| to turn the
+|Binders| we have computed into $\Pi$-boys in the development. This is
+achieved by the following code:
 
 > mkPiDelta1 :: [Binder] -> ProofState [REF]
 > mkPiDelta1 binders = 
@@ -826,11 +817,11 @@ thing:
 >   rTy <- bquoteHere $ pty r
 >   makeEq cstrt (ARR (PRF (EQBLUE (rTy :>: NP r) (sTy :>: s))) t)
 
-Finally, remember that we have build the term above in the context
-|bindersL|, which is a genetic mutant of $\Delta_1$. Meanwhile, we
-have introduced $\Delta_1'$, a bunch of fresh $\Pi$-boys. The last
-step is therefore to transport the term from |bindersL| to
-$\Delta_1'$. This is simply a vast renaming operation:
+Recall that we have build the term above in the context |bindersL|,
+which is a genetic mutant of $\Delta_1$. Meanwhile, we have introduced
+$\Delta_1'$, a bunch of fresh $\Pi$-boys. The last step is therefore
+to transport the term from |bindersL| to $\Delta_1'$. This is simply a
+vast renaming operation:
 
 > transportToLocal :: [Name :<: a] -> [REF] -> INTM -> INTM
 > transportToLocal binders = rename nameBinders
@@ -838,6 +829,47 @@ $\Delta_1'$. This is simply a vast renaming operation:
 >           rename [] [] t = t
 >           rename (n : ns) (r : rs) t = rename ns rs (renameVar n r t)
 >           nameBinders = map (\(n :<: _) -> n) binders
+
+Finally, we do a bit of work to simplify the next step, which is of
+applying the eliminator. I think I can spoil the fact that the
+elimination will be of this form:
+
+$$ e P \vec{m} \Delta_1 \vec{\mbox{refl}(t)}$$
+
+Therefore, we need to know \emph{which} $\Delta_1$ and \emph{which}
+$t$s have been simplified. This is not at all trivial, unless we have
+a way to link the outputs of |simplify| with its inputs. We do have
+this link, in two different forms.
+
+For $\Delta_1$, we rely on the names: the name of the simplified
+binders and the name of $\Delta_1$ are the same. Hence, we filter out
+the names of $\Delta_1$ that are absent of the |binders|:
+
+> filterDeltas :: [(Name :<: a)] -> [REF] -> [REF]
+> filterDeltas binders deltas1 = filter inBinders deltas1
+>     where inBinders (rn := _) = rn `Data.List.elem` bindersNames
+>           bindersNames = map (\(n :<: _) -> n) binders
+
+On the other hand, we have arranged the code of |simplify| in such a
+way that when a constraint is simplified, a |Nothing| notifies the
+deletion. Therefore, after simplification, we could still zip the
+initial list of patterns and the simplified one. 
+
+> filterPatterns :: TY -> [INTM] -> [Maybe (REF, INTM :>: INTM)] -> ProofState [INTM :>: INTM]
+> filterPatterns motiveTy initialPatterns simplifiedPatterns | False = undefined
+
+We filter the initial list of patterns by dropping the ones zipped
+with a Nothing. Because |refl| needs both a term and a type, we also
+require the type of the motive, which is unfolded along our way.
+
+> filterPatterns (PI _S _T) (x : xs) (Nothing : cs)= do
+>     ts <- filterPatterns (_T $$ (A (evTm x))) xs cs
+>     return $ ts
+> filterPatterns (PI _S _T) (x : xs) (Just (_, _ :>: _) : cs) = do
+>     _Stm <- bquoteHere _S
+>     ts <- filterPatterns (_T $$ (A (evTm x))) xs cs
+>     return $ (_Stm :>: x) : ts
+> filterPatterns SET [] [] = return []
 
 
 
@@ -878,8 +910,8 @@ Then, it is straightforward to build the term we want and to give it:
 > applyElim elim motive methods deltas args = do
 >     reflArgs <- withNSupply $ mkRefls args
 >     Just (N e) <- lookupName elim
->     giveNext $ N $ e $##  (map NP deltas ++
->                           reflArgs)
+>     giveNext $ N $ e $## (  map NP deltas ++
+>                             reflArgs)
 >     return ()
 
 We (in theory) have solved the goal!
