@@ -51,10 +51,10 @@ Given $\Delta \vdash p$, the propositional simplifier will either
 $\Delta \vdash f :\!\!-~ p \Rightarrow \bot$, represented by |Left f|; or
 \item simplify $p$ to a conjunction $\bigwedge_i q_i$ together with proofs
 $\Delta \vdash g_i :\!\!-~ p \Rightarrow q_i$ and $\Delta, \Gamma \vdash h :\!\!-~ p$,
-where $\Gamma = \{q_i\}_i$, represented by |Right (... :< (q_i, g_i) :< ... , h)|.
+where $\Gamma = \{q_i\}_i$, represented by |Right (qs, gs, h)|.
 \end{itemize}
 
-> type Simplify = Either (VAL -> VAL) (Bwd REF, Bwd (VAL -> VAL), VAL)
+> type Simplify = Either (VAL -> VAL) (Bwd REF, Bwd VAL, VAL)
 
 > pattern Simply qs gs h     = Right (qs, gs, h)
 > pattern SimplyAbsurd prf   = Left prf
@@ -63,7 +63,7 @@ where $\Gamma = \{q_i\}_i$, represented by |Right (... :< (q_i, g_i) :< ... , h)
 
 > simplifyNone :: (NameSupplier m) => VAL -> m Simplify
 > simplifyNone p = freshRef (nameHint p :<: PRF p) (\ref ->
->     return (SimplyOne ref id (pval ref)))
+>     return (SimplyOne ref idVAL (NP ref)))
 >   where
 >     nameHint :: VAL -> String
 >     nameHint (NP (n := _)) = "__" ++ fst (last n)
@@ -90,7 +90,7 @@ to |FF|, it will complain.
 
 >         SimplyAbsurd _ -> throwError' "propSimplifyHere: oh no, goal is absurd!"
 
->         Simply qs _ h -> do
+>         si@(Simply qs _ h) -> do
 >             qrs <- mapM (\ref -> do
 >                 q' <- bquoteHere (pty ref)
 >                 x <- pickName "q" ""
@@ -144,7 +144,8 @@ The |magic ty| function takes a proof of |FF| and yields a value of type |ty|.
 > magic :: TY -> VAL -> VAL
 > magic ty no = nEOp @@ [no, ty]
 
-
+> idVAL :: VAL
+> idVAL = L (HF "__id" id)
 
 > instance Show (VAL -> VAL) where
 >   show v = "(...)"
@@ -165,17 +166,16 @@ Simplifying |TT| and |FF| is remarkably easy.
 To simplify a conjunction, we simplify each conjunct separately, then call the
 |simplifyAnd| helper function to combine the results.
 
-> propSimplify delta (AND p1 p2) = forkNSupply "__propSimp" (propSimplify delta p1)
->     (\ p1Simp -> forkNSupply "__propSimp" (propSimplify delta p2)
+> propSimplify delta (AND p1 p2) = forkNSupply "__psAnd1" (propSimplify delta p1)
+>     (\ p1Simp -> forkNSupply "__psAnd2" (propSimplify delta p2)
 >         (\ p2Simp ->
 >             return (simplifyAnd p1Simp p2Simp)))
 
 
 To simplify |p = (x :- s) => t|, we first try to simplify |s|:
 
-> propSimplify delta p@(ALL (PRF s) l@(L sc)) = do
->     simpS <- propSimplify delta s
->     case {-|trace ("\npropSimplify: simpS = " ++ show simpS)|-} simpS of
+> propSimplify delta p@(ALL (PRF s) l@(L sc)) = forkNSupply "__psImp1" (propSimplify delta s)
+>     (\simpS -> case {-|trace ("\npropSimplify: simpS = " ++ show simpS)|-} simpS of
 
 If |s| is absurd then |p| is trivial, which we can prove by doing |magic| whenever someone
 gives us an element of |s|.
@@ -187,34 +187,33 @@ If |s| is trivial, then we go under the binder by applying the proof, and then s
 Then |p| simplifies to the result of simplifying |t|, with the proofs constructed by 
 $\lambda$-abstracting in one direction and applying the proof of |s| in the other direction.
 
->         SimplyTrivial prfS -> do
->             simpT <- propSimplify delta (l $$ A prfS)
->             case {-|trace ("\ntrivial, simpT = " ++ show simpT)|-} simpT of
+>         SimplyTrivial prfS -> forkNSupply "__psImp2" (propSimplify delta (l $$ A prfS))
+>             (\simpT -> case {-|trace ("\ntrivial, simpT = " ++ show simpT)|-} simpT of
 >                 SimplyAbsurd prfAbsurdT -> return (SimplyAbsurd (prfAbsurdT . ($$ A prfS)))
 >                 SimplyTrivial prfT -> return (SimplyTrivial (LK prfT))
 >                 Simply tqs tgs th -> return (Simply tqs
->                     (fmap (\g -> g . ($$ A prfS)) tgs)
+>                     (fmap (\g -> L (HF "__x" (\v -> g $$ A (v $$ A prfS)))) tgs)
 >                     (LK th))
+>             )
 
 If |s| simplifies nontrivially, we have a bit more work to do. We simplify |t| under the binder
 by adding the simplified conjuncts of |s| to the context and applying |l| to |sh| (the proof of
 |s| in the extended context). 
 
->         Simply sqs sgs sh -> do
->             simpT <- propSimplify (delta <+> sqs) (l $$ A sh)
->             case {-|trace ("\nsimplified, simpT = " ++ show simpT)|-} simpT of
+>         Simply sqs sgs sh -> forkNSupply "__psImp3" (propSimplify (delta <+> sqs) (l $$ A sh))
+>             (\simpT -> case {-|trace ("\nsimplified, simpT = " ++ show simpT)|-} simpT of
 >                 SimplyAbsurd prfAbsurdT -> do
 >                     madness <- dischargeAllLots sqs (PRF ABSURD)
->                     ref <- freshRef ("__madness" :<: madness) return
-
->                     pref <- freshRef ("__pref" :<: p) return
->                     g <- dischargeLots sqs (prfAbsurdT (NP pref $$ A sh))
->                     g' <- discharge pref g
->                     
->                     return (SimplyOne ref
->                         (\pv -> g' $$ A pv)
->                         (L (HF "__consequentAbsurd" (\sv -> magic (PRF (l $$ A sv))
->                             (NP ref $$$ (fmap (A . ($ sv)) sgs))))))
+>                     freshRef ("__madness" :<: madness) (\ref -> 
+>                         freshRef ("__pref" :<: p) (\pref -> do
+>                             g <- dischargeLots sqs (prfAbsurdT (NP pref $$ A sh))
+>                             g' <- discharge pref g
+>                             return (SimplyOne ref
+>                                 (L (HF "__p" (\pv -> g' $$ A pv)))
+>                                 (L (HF "__consequentAbsurd" (\sv -> magic (PRF (l $$ A sv))
+>                                 (NP ref $$$ (fmap (A . ($$ A sv)) sgs))))))
+>                           )
+>                       )
 
 If the consequent |t| is trivial, then the implication is trivial, which we can prove as
 follows:
@@ -227,7 +226,7 @@ follows:
 >                 SimplyTrivial prfT -> do
 >                     prfT' <- dischargeLots sqs prfT
 >                     return (SimplyTrivial (L (HF "__consequentTrivial" (\sv ->
->                         prfT' $$$ (fmap (A . ($ sv)) sgs)))))
+>                         prfT' $$$ (fmap (A . ($$ A sv)) sgs)))))
 
 Otherwise, if the consequent |t| simplifies to a conjunction |tqs| with proofs |tg : t -> tq|,
 and proof |th| of |t| in the context |delta <+> sqs|, we proceed as follows:
@@ -258,20 +257,23 @@ and proof |th| of |t| in the context |delta <+> sqs|, we proceed as follows:
 >                 Simply tqs tgs th -> do
 >                     pqs <- mapM (dischargeRefAlls sqs) tqs
 >
->                     pgs <- mapM (\tg -> do
->                         pref <- freshRef ("__pref" :<: p) return
->                         pg <- dischargeLots sqs (tg (NP pref $$ A sh))
->                         pg' <- discharge pref pg
->                         return (\pv -> pg' $$ A pv)
->                       ) tgs
+>                     pgs <- mapM (\tg -> freshRef ("__pref" :<: p) (\pref -> do
+>                         pg <- dischargeLots sqs (tg $$ A (NP pref $$ A sh))
+>                         discharge pref pg
+>                       )) tgs
 >
->                     th' <- dischargeLots tqs th
->                     let th'' = th' $$$ fmap (\pq -> (A (NP pq $$$ fmap (A . NP) sqs))) pqs
->                     th''' <- dischargeLots sqs th''
->                     let ph = L (HF "__consequentSimplified"
->                                    (\sv -> th''' $$$ fmap (A . ($ sv)) sgs))
->                     return (Simply pqs pgs ph)
+>                     freshRef ("__sref" :<: PRF s) (\sref -> do
+>                         let sgSpine = fmap (\sg -> A (sg $$ A (NP sref))) sgs
+>                         th' <- dischargeLots tqs th
+>                         let th'' = th' $$$ fmap (\pq -> A (NP pq $$$ sgSpine)) pqs
+>                         th''' <- dischargeLots sqs th''
+>                         let th'''' = th''' $$$ sgSpine
+>                         ph <- discharge sref th''''
+>                         return (Simply pqs pgs ph)
+>                       )
 
+>               ) -- simpT
+>       ) -- simpS
 
 To simplify |p = (x : s) => t| where |s| is not a proof set, we generate a fresh
 reference and simplify |t| under the binder. If |t| is absurd, then |p|
@@ -284,7 +286,7 @@ the simplification of |t|.
 >     case simpL of
 >         SimplyAbsurd prf -> freshRef ("__psA" :<: PRF (ALL s (LK ABSURD))) (\refA ->
 >             return (SimplyOne refA
->                 (\pv -> magic (PRF (ALL s (LK ABSURD))) (prf (pv $$ A (NP refS))))
+>                 (L (HF "__p" (\pv -> magic (PRF (ALL s (LK ABSURD))) (prf (pv $$ A (NP refS))))))
 >                 (L (HF "__consequentAbsurd2" (\sv -> magic (PRF (l $$ A sv)) (pval refA $$ A sv))))))
 
 >         SimplyTrivial prf -> do
@@ -293,7 +295,7 @@ the simplification of |t|.
 
 >         Simply qs gs h -> do
 >             qs' <- mapM (dischargeRefAlls (B0 :< refS)) qs
->             let gs' = fmap (\g -> (\pv -> (L (HF "__consequentSimplified2" (\sv -> g (pv $$ A sv)))))) gs
+>             let gs' = fmap (\g -> (L (HF "__p" (\pv -> (L (HF "__consequentSimplified2" (\sv -> g $$ A (pv $$ A sv)))))))) gs
 >             h' <- dischargeLots qs h
 >             let h'' = h' $$$ fmap (\q -> (A (NP q $$ A (NP refS)))) qs'
 >             h''' <- discharge refS h''
@@ -304,7 +306,7 @@ the simplification of |t|.
 
 To simplify a neutral parameter, we look for a proof in the context. 
 
-> propSimplify delta (NP p) = do
+> {-|propSimplify delta (NP p) = do
 >     nsupply <- askNSupply
 >     case seekType delta (PRF (NP p)) nsupply of
 >         Just ref -> return (SimplyTrivial (pval ref))
@@ -314,7 +316,7 @@ To simplify a neutral parameter, we look for a proof in the context.
 >     seekType B0 _ = return Nothing
 >     seekType (rs :< ref) ty = do
 >         b <- equal (SET :>: (pty ref, ty))
->         if b then return (Just ref) else seekType rs ty
+>         if b then return (Just ref) else seekType rs ty|-}
 
 
 If nothing matches, we are unable to simplify this term.
@@ -336,7 +338,7 @@ Otherwise, we can simplify the conjunction:
 
 > simplifyAnd (Simply q1s g1s h1) (Simply q2s g2s h2) =
 >     Simply (q1s <+> q2s)
->         (fmap (. ($$ Fst)) g1s <+> (fmap (. ($$ Snd)) g2s))
+>         (fmap (\g -> L (HF "__x" (\v -> g $$ A (v $$ Fst)))) g1s <+> (fmap (\g -> L (HF "__x" (\v -> g $$ A (v $$ Snd)))) g2s))
 >         (PAIR h1 h2)
 
 

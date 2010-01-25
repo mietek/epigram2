@@ -85,3 +85,15 @@ root ;
 make g : :- (P && Q => R && Q && P) ;
 simplify ;
 root ;
+
+make h : :- ((P => Q) => P => Q) ;
+simplify ;
+root ;
+
+make k : :- (P == Q => P == Q) ;
+simplify ;
+root ;
+
+make l : :- (P => Q) ;
+simplify ;
+root ;
