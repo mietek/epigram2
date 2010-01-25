@@ -411,20 +411,20 @@ proposal. That's not for the faint heart.
 \subsubsection{Chunking the context}
 
 We have the internal context $\Delta$ lying around. We also have
-access to the motive and the methods. Therefore, we can already chunk
-$\Delta$ into its parametric and non-parametric parts, $\Delta_0$ and
-$\Delta_1$. As we are not interested in $\Delta_0$, we fearlessly
-throw it away.
+access to the type of the eliminator, that is the type of the motive
+and the methods. Therefore, we can already chunk $\Delta$ into its
+parametric and non-parametric parts, $\Delta_0$ and $\Delta_1$. As we
+are not interested in $\Delta_0$, we fearlessly throw it away.
 
 We aim at implementing the following function:
 
-< extractDelta1 :: Bwd REF -> [INTM] -> ProofState [REF]
-< extractDelta1 delta dependencies = (...)
+< extractDelta1 :: Bwd REF -> TY -> ProofState [REF]
+< extractDelta1 delta elimType = (...)
 
-The |dependencies|, corresponding to the motive and the methods, are
-in term form. However, we are only interested in the references
-appearing inside them. To collect the references, we write the
-following helper function:
+The dependencies needs to be extracted from terms, in |INTM|
+form. However, we are only interested in the references appearing
+inside them. To collect the references, we write the following helper
+function:
 
 > collectRefs :: INTM -> [REF]
 > collectRefs r = foldMap (\x -> [x]) r
@@ -443,6 +443,20 @@ Obviously, we get |extractDelta1| from there:
 >   d <- extractDelta1' delta deps
 >   return $ trail d
 
+\begin{danger}
+
+Note that we have been careful in asking for |elimTy| here, the type
+of the eliminator. One could have thought of getting the type of the
+motive and methods during |introElim|. That would not work: the motive
+is defined under the scope of $\Delta$, hence lambda-lifted to
+it. Then, the type of the methods are defined in term of the
+motive. Hence, all $\Delta$ is innocently included into these types,
+making them useless. 
+
+The real solution is to go back to the type of the eliminator. We
+unfold it with fresh references. Doing so, we are ensured that there
+is no pollution, and we get what we asked for.
+
 > unfoldTelescope :: TY -> ProofState [INTM]
 > unfoldTelescope (PI _S _T) = do
 >   _Stm <- bquoteHere _S
@@ -451,7 +465,11 @@ Obviously, we get |extractDelta1| from there:
 >       return $ _Stm : t
 > unfoldTelescope _ = return []
 
-We are left with implementing |extractDelta1'|. 
+
+\end{danger}
+
+
+Now, we are left with implementing |extractDelta1'|.
 
 > extractDelta1' :: Bwd REF -> [REF] -> ProofState (Bwd REF)
 
