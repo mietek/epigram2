@@ -94,7 +94,6 @@ to |FF|, it will complain.
 >             qrs <- mapM (\ref -> do
 >                 q' <- bquoteHere (pty ref)
 >                 x <- pickName "q" ""
->                 proofTrace ("subgoal " ++ x ++ ": " ++ show q')
 >                 qr <- make (x :<: q')
 >                 return (A (evTm qr))
 >               ) qs
@@ -176,7 +175,7 @@ To simplify |p = (x :- s) => t|, we first try to simplify |s|:
 
 > propSimplify delta p@(ALL (PRF s) l@(L sc)) = do
 >     simpS <- propSimplify delta s
->     case trace ("\npropSimplify: simpS = " ++ show simpS) simpS of
+>     case {-|trace ("\npropSimplify: simpS = " ++ show simpS)|-} simpS of
 
 If |s| is absurd then |p| is trivial, which we can prove by doing |magic| whenever someone
 gives us an element of |s|.
@@ -190,7 +189,7 @@ $\lambda$-abstracting in one direction and applying the proof of |s| in the othe
 
 >         SimplyTrivial prfS -> do
 >             simpT <- propSimplify delta (l $$ A prfS)
->             case trace ("\ntrivial, simpT = " ++ show simpT) simpT of
+>             case {-|trace ("\ntrivial, simpT = " ++ show simpT)|-} simpT of
 >                 SimplyAbsurd prfAbsurdT -> return (SimplyAbsurd (prfAbsurdT . ($$ A prfS)))
 >                 SimplyTrivial prfT -> return (SimplyTrivial (LK prfT))
 >                 Simply tqs tgs th -> return (Simply tqs
@@ -203,7 +202,7 @@ by adding the simplified conjuncts of |s| to the context and applying |l| to |sh
 
 >         Simply sqs sgs sh -> do
 >             simpT <- propSimplify (delta <+> sqs) (l $$ A sh)
->             case trace ("\nsimplified, simpT = " ++ show simpT) simpT of
+>             case {-|trace ("\nsimplified, simpT = " ++ show simpT)|-} simpT of
 >                 SimplyAbsurd prfAbsurdT -> do
 >                     madness <- dischargeAllLots sqs (PRF ABSURD)
 >                     ref <- freshRef ("__madness" :<: madness) return
@@ -246,20 +245,26 @@ and proof |th| of |t| in the context |delta <+> sqs|, we proceed as follows:
       \end{enumerate}
 \item Construct the proof |ph| of |p| in the context |pqs| thus:
       \begin{enumerate}
-        \item Discharge the proof |th| over the conjuncts |tqs|.
-        \item ...
+        \item Discharge the proof |th| of |t| over the conjuncts |tqs| to produce |th'|.
+        \item Apply |th'| to the proofs of the |tqs| (created by applying the |pqs| to the |sqs|)
+              to produce |th''|.
+        \item Discharge |th''| over the |sqs| to give a function |th'''| from proofs of the |sqs|
+              to proofs of |t|.
+        \item Construct the proof of |p| that, given a proof of |s|, applies the |sgs| to it to
+              produce proofs of the |sqs|, and applies them to |th'''| to get a proof of |t|.
       \end{enumerate}
 \end{enumerate}
 
 >                 Simply tqs tgs th -> do
 >                     pqs <- mapM (dischargeRefAlls sqs) tqs
+>
 >                     pgs <- mapM (\tg -> do
 >                         pref <- freshRef ("__pref" :<: p) return
 >                         pg <- dischargeLots sqs (tg (NP pref $$ A sh))
 >                         pg' <- discharge pref pg
 >                         return (\pv -> pg' $$ A pv)
 >                       ) tgs
-
+>
 >                     th' <- dischargeLots tqs th
 >                     let th'' = th' $$$ fmap (\pq -> (A (NP pq $$$ fmap (A . NP) sqs))) pqs
 >                     th''' <- dischargeLots sqs th''
@@ -297,10 +302,20 @@ the simplification of |t|.
 >   )
 
 
+To simplify a neutral parameter, we look for a proof in the context. 
 
-< propSimplify delta (NP p) = case find (== p) delta of
-<     Just ref -> return (SimplyTrivial (pval ref))
-<     Nothing -> simplifyNone (NP p)
+> propSimplify delta (NP p) = do
+>     nsupply <- askNSupply
+>     case seekType delta (PRF (NP p)) nsupply of
+>         Just ref -> return (SimplyTrivial (pval ref))
+>         Nothing -> simplifyNone (NP p)
+>   where
+>     seekType :: Bwd REF -> TY -> NameSupply -> Maybe REF
+>     seekType B0 _ = return Nothing
+>     seekType (rs :< ref) ty = do
+>         b <- equal (SET :>: (pty ref, ty))
+>         if b then return (Just ref) else seekType rs ty
+
 
 If nothing matches, we are unable to simplify this term.
 

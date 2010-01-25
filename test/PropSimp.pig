@@ -81,3 +81,7 @@ root ;
 make f : :- (P => P) ;
 simplify ;
 root ;
+
+make g : :- (P && Q => R && Q && P) ;
+simplify ;
+root ;
