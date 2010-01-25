@@ -132,7 +132,7 @@ re-building the eliminator in the current development:
 \begin{alltt}
 [ \((\Gamma)\) \(\rightarrow\) 
   \((\Delta)\) \(\rightarrow\)
-  makeE [   P := ? : \(\Xi \rightarrow *\)
+  makeE [   P := ? : \(\Xi \rightarrow Set\)
             \(m\sb{1}\) := ? : \(M\sb{1}\) P
             (...)  
             \(m\sb{n}\) := ? : \(M\sb{n}\) P
@@ -223,7 +223,7 @@ at the moment, because we only have nice users.
 
 |checkMotive| consists in veryfing that the motive is of type:
 
-$$P : \Xi \rightarrow *$$
+$$P : \Xi \rightarrow Set$$
 
 > checkMotive :: VAL -> ProofState ()
 > checkMotive SET = return ()
@@ -824,7 +824,7 @@ $\Delta_1'$. This is simply a vast renaming operation:
 
 Remember our eliminator:
 
-$$\Gamma, \Delta \vdash e : (P : \Xi \rightarrow *) 
+$$\Gamma, \Delta \vdash e : (P : \Xi \rightarrow \Set) 
                             \rightarrow \vec{m} 
                             \rightarrow P \vec{t}$$
 
