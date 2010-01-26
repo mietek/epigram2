@@ -4,19 +4,30 @@ make suc := (\ x -> con ['suc x]) : Nat -> Nat ;
 make zero := [] : Nat ;
 make one := (suc zero) : Nat ;
 make two := (suc one) : Nat ;
-make add := ? : Nat -> Nat -> Nat ;
-in ;
+make add : Nat -> Nat -> Nat ;
 lambda x ;
 lambda y ;
 elim elimOp NatD x ;
-give con ? ;
-give [ ? ? ] ;
-give con con ? ;
-give y ;
-lambda r ;
-give con ? ;
-lambda xy ;
-give con ? ;
-give (suc xy) ;
+    give con ? ;
+    lambda x ;
+    elim Switch ['zero 'suc] x ;
+
+        give [? ?] ;
+	lambda m  ;
+        lambda n ;
+        give con ? ;
+        give con ? ;
+        lambda y ;
+        give y ; 
+
+        lambda m ;
+        lambda n ;
+        lambda k ;
+        give con ? ;
+        lambda ih ;
+        give con ? ; 
+        lambda y ; 
+        give suc (ih y) ;
+
 root ;
-elab add two two 
+elab add two two ;
