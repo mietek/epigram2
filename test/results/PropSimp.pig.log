@@ -12,19 +12,31 @@ propSimplifyHere: oh no, goal is absurd!
 
 Going to root...
 Appended goal!
-Simplified.
+Simplified to:
+:- P
+
 Going to root...
 Appended goal!
 Solved.
 Going to root...
 Appended goal!
-Simplified.
+Simplified to:
+:- P
+:- Q
+
 Going to root...
 Appended goal!
-Simplified.
+Simplified to:
+:- ((__P : :- P) => FF)
+
 Going to root...
 Appended goal!
-Simplified.
+Simplified to:
+:- ((__madness : :- ((__P : :- P) => FF)) => FF)
+
+Going to root...
+Appended goal!
+Solved.
 Going to root...
 Appended goal!
 Solved.
@@ -33,55 +45,80 @@ Appended goal!
 Solved.
 Going to root...
 Appended goal!
-Solved.
+Simplified to:
+:- ((__P : :- P) => FF)
+
 Going to root...
 Appended goal!
-Simplified.
-Going to root...
-Appended goal!
-Simplified.
-Going to root...
-Appended goal!
-Solved.
-Going to root...
-Appended goal!
-Simplified.
-Going to root...
-Appended goal!
-Solved.
-Going to root...
-Appended goal!
-Simplified.
-Going to root...
-Appended goal!
-Simplified.
+Simplified to:
+:- P
+:- Q
+:- R
+:- P
+
 Going to root...
 Appended goal!
 Solved.
 Going to root...
 Appended goal!
-Simplified.
+Simplified to:
+:- ((x : Set) => P)
+:- ((x : Set) => Q)
+
 Going to root...
 Appended goal!
 Solved.
 Going to root...
 Appended goal!
-Simplified.
+Simplified to:
+:- P
+
 Going to root...
 Appended goal!
-Simplified.
-Going to root...
-Appended goal!
-Simplified.
-Going to root...
-Appended goal!
-Simplified.
+Simplified to:
+:- ((__madness : :- ((__P : :- P) => FF)) => FF)
+
 Going to root...
 Appended goal!
 Solved.
 Going to root...
 Appended goal!
-Simplified.
+Simplified to:
+:- ((__P : :- P) => Q)
+
+Going to root...
+Appended goal!
+Solved.
+Going to root...
+Appended goal!
+Simplified to:
+:- ((__P : :- P)(__Q : :- Q) => R)
+
+Going to root...
+Appended goal!
+Simplified to:
+:- ((__Q : :- ((__P : :- P) => Q))(__P : :- P) => Q)
+
+Going to root...
+Appended goal!
+Simplified to:
+:- ((__Q : :- ((__P : :- P) => Q))(__P : :- ((__Q : :- Q) => P))(__P : :- P) => Q)
+:- ((__Q : :- ((__P : :- P) => Q))(__P : :- ((__Q : :- Q) => P))(__Q : :- Q) => P)
+
+Going to root...
+Appended goal!
+Simplified to:
+:- ((__P : :- P) => Q)
+
+Going to root...
+Appended goal!
+Solved.
+Going to root...
+Appended goal!
+Simplified to:
+:- ((s1 : Set)(s2 : Set)(__simplifyNone : :- s1 == s2)(__P : :- P) => Q)
+:- ((s1 : Set)(s2 : Set)(__simplifyNone : :- s1 == s2)(__Q : :- Q) => P)
+
 Going to root...
 Appended goal!
 I'm sorry, Dave. I'm afraid I can't do that.
@@ -100,6 +137,9 @@ propSimplifyHere: unable to simplify.
 
 Going to root...
 Appended goal!
-Simplified.
+Simplified to:
+:- (x !) == (y !)
+:- (x -) == (y -)
+
 Going to root...
 Loaded.

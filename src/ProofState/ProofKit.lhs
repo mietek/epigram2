@@ -78,13 +78,22 @@ The |bquoteHere| command $\beta$-quotes a term using the current name supply.
 > bquoteHere tm = withNSupply $ bquote B0 tm
 
 
-Similarly, |checkHere| type-checks a term using the local name supply.
+Similarly, |checkHere| type-checks a term using the local name supply...
 
 > checkHere :: (TY :>: INTM) -> ProofState (INTM :=>: VAL)
 > checkHere (ty :>: tm) = do
 >     mc <- withNSupply $ typeCheck $ check (ty :>: tm)
 >     () :=>: tmv <- lift mc
 >     return (tm :=>: tmv)
+
+... and |inferHere| infers the type of a term using the local name supply.
+
+> inferHere :: EXTM -> ProofState (VAL :<: TY)
+> inferHere tm = do
+>     mc <- withNSupply $ typeCheck $ infer tm
+>     lift mc
+
+
 
 
 The |validateHere| performs some checks on the current location, which

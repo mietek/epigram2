@@ -21,12 +21,15 @@
 > import DisplayLang.DisplayTm
 > import DisplayLang.Elaborator
 > import DisplayLang.Naming
+> import DisplayLang.PrettyPrint
 
 > import Evidences.Tm
 > import Evidences.Rules
 
 > import ProofState.ProofState
 > import ProofState.ProofKit
+
+> import Cochon.DisplayCommands
 
 > import Prelude hiding (foldl, mapM)
 
@@ -417,7 +420,7 @@ current goal with the subgoals, and return a list of them.
 >             qrs  <- mapM makeSubgoal qs
 >             h'   <- dischargeLots qs h
 >             prf  <- bquoteHere (h' $$$ fmap (A . valueOf) qrs)
->             giveNext prf
+>             give' prf
 >             return qrs
 >  where
 
@@ -440,7 +443,18 @@ should be propositional.
 >     subs <- propSimplifyHere 
 >     case subs of
 >         B0  -> return "Solved."
->         _   -> return "Simplified."
+>         _   -> do
+>             subStrs <- mapM (prettyType . termOf)  subs
+>             nextGoal
+>             return ("Simplified to:\n" ++ 
+>                         foldMap (\s -> s ++ "\n") subStrs)
+>   where
+>     prettyType :: EXTM -> ProofState String
+>     prettyType tm = do
+>         (_ :<: ty) <- inferHere tm
+>         ty' <- bquoteHere ty
+>         d <- prettyHere (SET :>: ty')
+>         return (renderHouseStyle d)
 
 > import -> CochonTactics where
 >   : nullaryCT "simplify" simplifyCTactic
