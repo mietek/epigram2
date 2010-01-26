@@ -339,32 +339,27 @@ To simplify a neutral parameter, we look for a proof in the context.
 >         if b then return (Just ref) else seekType rs ty
 
 
-To simplify an equation between non-neutral terms, we apply the |eqGreen|
-operator and see what happens. If we get |TRIVIAL| then we are done, otherwise
-we simplify the resulting proposition and wrap the results with |Con| or |Out|
-as appropriate.
+To simplify an equation, we apply the |eqGreen| operator and see what happens.
+If the operator gets stuck, we give up. If we get |TRIVIAL| then we are done.
+Otherwise we simplify the resulting proposition and wrap the resulting proofs
+with |Con| or |Out| as appropriate.
 
-> propSimplify delta p@(EQBLUE (sty :>: s) (tty :>: t))
->   | not (isNeutral s || isNeutral t) =
->       case eqGreen @@ [sty, s, tty, t] of
->           TRIVIAL  -> return (SimplyTrivial (CON VOID))
->
->           q        -> forkNSupply "__psEq" (propSimplify delta q) equality
+> propSimplify delta p@(EQBLUE (sty :>: s) (tty :>: t)) =
+>       case opRunEqGreen [sty, s, tty, t] of
+>           Left _         -> simplifyNone p
+>           Right TRIVIAL  -> return (SimplyTrivial (CON VOID))
+>           Right q        -> forkNSupply "__psEq" (propSimplify delta q) equality
 >         where 
 >           equality :: (NameSupplier m) => Simplify -> m Simplify
 >           equality (SimplyAbsurd prf) = return (SimplyAbsurd (prf . ($$ Out)))
 >           equality (Simply qs gs h) = return (Simply qs
 >               (fmap (..! ($$ Out)) gs)
 >               (CON h))
->     
->           isNeutral :: VAL -> Bool
->           isNeutral (N _)  = True
->           isNeutral _      = False 
 
 
 If nothing matches, we are unable to simplify this term.
 
-> propSimplify _ tm = simplifyNone tm
+> propSimplify _ p = simplifyNone p
 
 
 \subsection{Invoking Simplification}
