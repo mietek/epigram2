@@ -1,6 +1,8 @@
 make P := ? : Prop ;
 make Q := ? : Prop ;
 make R := ? : Prop ;
+make A := ? : Set ;
+make B := ? : Set ;
 
 make easy : :- TT ;
 simplify ;
@@ -109,3 +111,20 @@ root ;
 make q : :- ((: Set) Set == (: Set) (Set -> Set)) ;
 simplify ;
 root ;
+
+make r : :- (P == P) ;
+simplify ;
+root ;
+
+make s : :- (A == A) ;
+simplify ;
+root ;
+
+make t : :- (A == B) ;
+simplify ;
+root ;
+
+make u : :- ((: Sig (A ; B)) ?x == (: Sig (A ; B)) ?y) ;
+simplify ;
+root ;
+

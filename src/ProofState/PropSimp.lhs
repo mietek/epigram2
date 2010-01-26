@@ -8,6 +8,7 @@
 > import Debug.Trace
 
 > import Control.Applicative 
+> import Control.Monad.Reader hiding (mapM)
 > import Data.Foldable
 > import Data.Traversable
 
@@ -73,6 +74,8 @@ where $\Gamma = \{q_i\}_i$, represented by |Right (qs, gs, h)|.
 >     nameHint (L (HF s _)) = "__" ++ s
 >     nameHint _ = "__simplifyNone"
 
+
+> type Simplifier x = ReaderT NameSupply Maybe x
                  
 
 The |dischargeLots| function discharges and $\lambda$-binds a list of references over a |VAL|.
@@ -132,7 +135,7 @@ function with a |VAL -> VAL| function.
 
 The |propSimplify| command takes a proposition and attempts to simplify it.
 
-> propSimplify :: (NameSupplier m) => Bwd REF -> VAL -> m Simplify
+> propSimplify :: Bwd REF -> VAL -> Simplifier Simplify
 
 
 Simplifying |TT| and |FF| is remarkably easy.
@@ -144,8 +147,8 @@ Simplifying |TT| and |FF| is remarkably easy.
 To simplify a conjunction, we simplify each conjunct separately, then call the
 |simplifyAnd| helper function to combine the results.
 
-> propSimplify delta (AND p1 p2) = forkNSupply "__psAnd1" (propSimplify delta p1)
->     (\ p1Simp -> forkNSupply "__psAnd2" (propSimplify delta p2)
+> propSimplify delta (AND p1 p2) = forkNSupply "__psAnd1" (forceSimplify delta p1)
+>     (\ p1Simp -> forkNSupply "__psAnd2" (forceSimplify delta p2)
 >         (\ p2Simp ->
 >             return (simplifyAnd p1Simp p2Simp)))
 >   where
@@ -169,9 +172,9 @@ the application of |Fst| or |Snd| as appropriate.
 To simplify |p = (x :- s) => t|, we first try to simplify |s|:
 
 > propSimplify delta p@(ALL (PRF s) l@(L sc)) =
->     forkNSupply "__psImp1" (propSimplify delta s) antecedent
+>     forkNSupply "__psImp1" (forceSimplify delta s) antecedent
 >   where
->     antecedent :: (NameSupplier m) => Simplify -> m Simplify
+>     antecedent :: Simplify -> Simplifier Simplify
 
 If |s| is absurd then |p| is trivial, which we can prove by doing |magic|
 whenever someone gives us an element of |s|.
@@ -186,9 +189,9 @@ proofs constructed by $\lambda$-abstracting in one direction and applying the
 proof of |s| in the other direction.
 
 >     antecedent (SimplyTrivial prfS) =
->         forkNSupply "__psImp2" (propSimplify delta (l $$ A prfS)) consequentTrivial
+>         forkNSupply "__psImp2" (forceSimplify delta (l $$ A prfS)) consequentTrivial
 >       where
->         consequentTrivial :: (NameSupplier m) => Simplify -> m Simplify
+>         consequentTrivial :: Simplify -> Simplifier Simplify
 >         consequentTrivial (SimplyAbsurd prfAbsurdT) =
 >             return (SimplyAbsurd (prfAbsurdT . ($$ A prfS)))
 >         consequentTrivial (SimplyTrivial prfT)  = return (SimplyTrivial (LK prfT))
@@ -201,8 +204,9 @@ under the binder by adding the simplified conjuncts of |s| to the context and
 applying |l| to |sh| (the proof of |s| in the extended context). 
 
 >     antecedent (Simply sqs sgs sh) =
->         forkNSupply "__psImp3" (propSimplify (delta <+> sqs) (l $$ A sh)) consequent
+>         forkNSupply "__psImp3" (forceSimplify (delta <+> sqs) (l $$ A sh)) consequent
 >       where
+>         consequent :: Simplify -> Simplifier Simplify
 >         consequent (SimplyAbsurd prfAbsurdT) = do
 >             madness <- dischargeAllLots sqs (PRF ABSURD)
 >             freshRef ("__madness" :<: madness) (\ref -> 
@@ -282,7 +286,7 @@ To simplify |p = (x : s) => t| where |s| is not a proof set, we generate a fresh
 reference and simplify |t| under the binder.
 
 > propSimplify delta p@(ALL s l@(L sc)) = freshRef (fortran l :<: s)
->     (\refS -> forkNSupply "__psAll" (propSimplify (delta :< refS) (l $$ A (NP refS))) (thingy refS))
+>     (\refS -> forkNSupply "__psAll" (forceSimplify (delta :< refS) (l $$ A (NP refS))) (thingy refS))
 >   where
 >     thingy :: (NameSupplier m) => REF -> Simplify -> m Simplify
 
@@ -323,43 +327,71 @@ applies |g| to this proof to get a proof of |q|.
 >                            g $$ A (pv $$ A sv)))))
 
 
-
-To simplify a neutral parameter, we look for a proof in the context. 
-
-> propSimplify delta (NP p) = do
->     nsupply <- askNSupply
->     case seekType delta (PRF (NP p)) nsupply of
->         Just ref -> return (SimplyTrivial (pval ref))
->         Nothing -> simplifyNone (NP p)
->   where
->     seekType :: Bwd REF -> TY -> NameSupply -> Maybe REF
->     seekType B0 _ = return Nothing
->     seekType (rs :< ref) ty = do
->         b <- equal (SET :>: (pty ref, ty))
->         if b then return (Just ref) else seekType rs ty
-
-
-To simplify an equation, we apply the |eqGreen| operator and see what happens.
+To simplify a blue equation, we apply the |eqGreen| operator and see what happens.
 If the operator gets stuck, we give up. If we get |TRIVIAL| then we are done.
 Otherwise we simplify the resulting proposition and wrap the resulting proofs
 with |Con| or |Out| as appropriate.
 
-> propSimplify delta p@(EQBLUE (sty :>: s) (tty :>: t)) =
->       case opRunEqGreen [sty, s, tty, t] of
->           Left _         -> simplifyNone p
+> propSimplify delta p@(EQBLUE (sty :>: s) (tty :>: t)) = 
+>     useRefl <|> unroll <|> propSearch delta p
+>  where
+>    useRefl :: Simplifier Simplify
+>    useRefl = do
+>        guard =<< (asks . equal $ SET :>: (sty, tty))
+>        guard =<< (asks . equal $ sty :>: (s, t))
+>        let w = pval refl $$ A sty $$ A s
+>        return (SimplyTrivial w)
+
+>    unroll :: Simplifier Simplify
+>    unroll = case opRun eqGreen [sty, s, tty, t] of
+>           Left _         -> mzero
 >           Right TRIVIAL  -> return (SimplyTrivial (CON VOID))
->           Right q        -> forkNSupply "__psEq" (propSimplify delta q) equality
->         where 
->           equality :: (NameSupplier m) => Simplify -> m Simplify
->           equality (SimplyAbsurd prf) = return (SimplyAbsurd (prf . ($$ Out)))
->           equality (Simply qs gs h) = return (Simply qs
->               (fmap (..! ($$ Out)) gs)
->               (CON h))
+>           Right q        -> forkNSupply "__psEq" (forceSimplify delta q) equality
+>          
+>    equality :: Simplify -> Simplifier Simplify
+>    equality (SimplyAbsurd prf) = return (SimplyAbsurd (prf . ($$ Out)))
+>    equality (Simply qs gs h) = return (Simply qs
+>        (fmap (..! ($$ Out)) gs)
+>        (CON h))
 
 
-If nothing matches, we are unable to simplify this term.
+> propSimplify delta p@(N (op :@ [sty, s, tty, t]))
+>   | op == eqGreen = freshRef ("__q" :<: PRF (EQBLUE (sty :>: s) (tty :>: t)))
+>       (\qRef -> return (SimplyOne qRef
+>           (L (HF "__p" CON))
+>           (NP qRef $$ Out)
+>       ))
 
-> propSimplify _ p = simplifyNone p
+
+If nothing matches, we can always try searching the context.
+
+> propSimplify delta p = propSearch delta p
+
+
+As a variant of |propSimplify|, |forceSimplify| guarantees to give a result
+by trying to simplify the proposition and yielding an identical copy if
+simplification fails.
+
+> forceSimplify :: Bwd REF -> VAL -> Simplifier Simplify
+> forceSimplify delta p = propSimplify delta p <|> simplifyNone p
+
+
+The |propSearch| operation looks in the context for a proof of the proposition,
+and if it finds one, returns the trivial simplification.
+
+> propSearch :: Bwd REF -> VAL -> Simplifier Simplify
+> propSearch delta p = do
+>     ref <- seekType delta (PRF p)
+>     return (SimplyTrivial (pval ref))
+>   where
+>     seekType :: Bwd REF -> TY -> Simplifier REF
+>     seekType B0 _ = mzero
+>     seekType (rs :< ref) ty = (do
+>         guard =<< (asks . equal $ SET :>: (pty ref, ty))
+>         return ref
+>       ) <|> seekType rs ty
+
+
 
 
 \subsection{Invoking Simplification}
@@ -375,12 +407,13 @@ simplified proposition) and solve the current goal with them.
 > propSimplifyHere = do
 >     (_ :=>: PRF p) <- getHoleGoal
 >     nsupply <- askNSupply
->     case propSimplify B0 p nsupply of
->         SimplyAbsurd _ -> throwError' "propSimplifyHere: oh no, goal is absurd!"
+>     case runReaderT (propSimplify B0 p) nsupply of
+>         Nothing -> throwError' "propSimplifyHere: unable to simplify"
+>         Just (SimplyAbsurd _) -> throwError' "propSimplifyHere: oh no, goal is absurd!"
 >
->         SimplyTrivial prf -> bquoteHere prf >>= give >> return True
+>         Just (SimplyTrivial prf) -> bquoteHere prf >>= give >> return True
 >
->         Simply qs _ h -> do
+>         Just (Simply qs _ h) -> do
 >             qrs  <- mapM makeSubgoal qs
 >             h'   <- dischargeLots qs h
 >             prf  <- bquoteHere (h' $$$ qrs)
