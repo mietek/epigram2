@@ -403,7 +403,7 @@ throw an error. Otherwise, it will create zero or more new subgoals
 (from the conjuncts of the simplified proposition, if any), solve the
 current goal with the subgoals, and return a list of them.
 
-> propSimplifyHere :: ProofState (Bwd (INTM :=>: VAL))
+> propSimplifyHere :: ProofState (Bwd (EXTM :=>: VAL))
 > propSimplifyHere = do
 >     (_ :=>: PRF p) <- getHoleGoal
 >     nsupply <- askNSupply
@@ -424,7 +424,7 @@ current goal with the subgoals, and return a list of them.
 The |makeSubgoal| command makes a new subgoal whose type corresponds to the type
 of the given reference, and returns its term and value representations.
 
->    makeSubgoal :: REF -> ProofState (INTM :=>: VAL)
+>    makeSubgoal :: REF -> ProofState (EXTM :=>: VAL)
 >    makeSubgoal ref = do
 >        q'  <- bquoteHere (pty ref)
 >        x   <- pickName "q" ""

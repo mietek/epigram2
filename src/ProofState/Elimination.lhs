@@ -171,8 +171,8 @@ The development transformation is achieved by the following code:
 >     -- Close the problem (using the "made" subproblems!)
 >     -- And go to the next subproblem, ie. making P
 >     moduleToGoal target
->     giveNext $ N $ (termOf e :? termOf eType) $## (p : methods)
->     return (elimName, p :<: motiveType, methods, trail patterns)
+>     giveNext $ N $ (termOf e :? termOf eType) $## (N p : methods)
+>     return (elimName, N p :<: motiveType, methods, trail patterns)
 >         where unPi :: VAL -> (VAL, VAL)
 >               unPi (PI s t) = (s, t)
 
@@ -191,7 +191,7 @@ been consummed.
 >                 PI s t -> do
 >                     sTm <- bquoteHere s
 >                     m <- make $ "m" :<: sTm
->                     mkMethods' (m : ms) (t $$ (A $ evTm m))
+>                     mkMethods' (N m : ms) (t $$ (A $ evTm m))
 >                 target -> do
 >                     targetTm <- bquoteHere target
 >                     return (reverse ms, targetTm)
@@ -237,7 +237,7 @@ On the other hand, |checkTarget| consists in verifying that the target
 consists of the motive applied to some stuff. Note that |checkTarget|
 is a |matchArgs| on paranoid. 
 
-> checkTarget :: INTM -> INTM -> VAL -> ProofState ()
+> checkTarget :: INTM -> EXTM -> VAL -> ProofState ()
 > checkTarget goal motive motiveType = checkTarget' (evTm goal) motiveType 
 >     where checkTarget' :: VAL -> VAL -> ProofState ()
 >           checkTarget' goal SET = do
@@ -791,7 +791,7 @@ term. Unless I've screwed up things, |give| should always be happy.
 >   let deltas1R = filterDeltas bindersL deltas1
 >   patterns <- filterPatterns xi patterns (trail constraints)
 >   -- Return
->   return (deltas1R, motive, patterns)
+>   return (deltas1R, N motive, patterns)
 
 
 Along the way, we have used a bunch of helper functions. Let us look
@@ -909,7 +909,7 @@ Then, it is straightforward to build the term we want and to give it:
 > applyElim :: Name -> INTM -> [INTM] -> [REF] -> [INTM :>: INTM] -> ProofState ()
 > applyElim elim motive methods deltas args = do
 >     reflArgs <- withNSupply $ mkRefls args
->     Just (N e) <- lookupName elim
+>     Just e <- lookupName elim
 >     giveNext $ N $ e $## (  map NP deltas ++
 >                             reflArgs)
 >     return ()

@@ -257,7 +257,7 @@ several alternatives for where to go next and continuing until a goal is reached
 >     putDevNSupply (freshName nsupply)
 >     return n
 
-> moduleToGoal :: INTM -> ProofState INTM
+> moduleToGoal :: INTM -> ProofState EXTM
 > moduleToGoal ty = do
 >     Right (() :=>: tyv) <- withNSupply (typeCheck $ check (SET :>: ty))
 >     ModuleMother n <- getMother
@@ -287,7 +287,7 @@ The |lookupName| function looks up a name in the context (including axioms and
 primitives); if found, it returns the reference applied to the spine of
 shared parameters.
 
-> lookupName :: Name -> ProofState (Maybe INTM)
+> lookupName :: Name -> ProofState (Maybe EXTM)
 > lookupName name = do
 >     aus <- getAuncles
 >     case Data.Foldable.find ((name ==) . entryName) aus of
@@ -304,21 +304,21 @@ shared parameters.
 The |apply| command checks if the last entry in the development is a girl $y$ with type
 $\Pi S T$ and if so, adds a goal of type $S$ and applies $y$ to it.
 
-> apply :: ProofState()
+> apply :: ProofState ()
 > apply = (do
 >     E ref@(name := k :<: (PI s t)) _ (Girl LETG _) _ <- getDevEntry
 >     nsupply <- getDevNSupply
 >     z <- make ("z" :<: bquote B0 s nsupply)
 >     make ("w" :<: bquote B0 (t $$ A s) nsupply)
 >     goIn
->     give (N (P ref :$ A z))
+>     give (N (P ref :$ A (N z)))
 >     return ()
 >   ) `replacePMF` "apply: last entry in the development must be a girl with a pi-type."
 
 The |done| command checks if the last entry in the development is a girl, and if so,
 fills in the goal with this entry.
 
-> done :: ProofState INTM
+> done :: ProofState EXTM
 > done = (do
 >     E ref _ (Girl LETG _) _ <- getDevEntry
 >     give (N (P ref))
@@ -328,13 +328,13 @@ The |give| command checks the provided term has the goal type, and if so, fills 
 the goal, updates the reference and goes out. The |giveNext| variant moves to the
 next goal (if one exists) instead.
 
-> give :: INTM -> ProofState INTM
+> give :: INTM -> ProofState EXTM
 > give tm = give' tm <* goOut
 
-> giveNext :: INTM -> ProofState INTM
+> giveNext :: INTM -> ProofState EXTM
 > giveNext tm = give' tm <* (nextGoal <|> goOut)
 
-> give' :: INTM -> ProofState INTM
+> give' :: INTM -> ProofState EXTM
 > give' tm = do
 >     tip <- getDevTip
 >     case tip of         
@@ -414,13 +414,13 @@ general.
 The |make| command adds a named goal of the given type to the bottom of the
 current development, after checking that the purported type is in fact a type.
 
-> make :: (String :<: INTM) -> ProofState INTM
+> make :: (String :<: INTM) -> ProofState EXTM
 > make (s :<: ty) = do
 >     m <- withNSupply (typeCheck $ check (SET :>: ty))
 >     m `catchEither` ("make: " ++ show ty ++ " is not a set.")
 >     make' (s :<: (ty :=>: evTm ty))
 
-> make' :: (String :<: (INTM :=>: TY)) -> ProofState INTM
+> make' :: (String :<: (INTM :=>: TY)) -> ProofState EXTM
 > make' (s :<: (ty :=>: tyv)) = do
 >     aus <- getAuncles
 >     s' <- pickName "G" s
@@ -436,8 +436,8 @@ current development, after checking that the purported type is in fact a type.
 The |applyAuncles| command applies a reference to the given
 spine of shared parameters.
 
-> applyAuncles :: REF -> Entries -> INTM
-> applyAuncles ref aus = N (P ref $:$ aunclesToElims (aus <>> F0))
+> applyAuncles :: REF -> Entries -> EXTM
+> applyAuncles ref aus = P ref $:$ aunclesToElims (aus <>> F0)
 
 > aunclesToElims :: Fwd (Entry Bwd) -> [Elim INTM]
 > aunclesToElims F0 = []
@@ -478,7 +478,7 @@ is also a set; if so, it appends a $\Pi$-abstraction to the current development.
 The |select| command takes a term representing a neutral parameter, makes a new goal of the
 same type, and fills it in with the parameter. \question{Is bquote really right here?}
 
-> select :: INTM -> ProofState INTM
+> select :: INTM -> ProofState EXTM
 > select tm@(N (P (name := k :<: ty))) = do
 >     nsupply <- getDevNSupply
 >     make (fst (last name) :<: bquote B0 ty nsupply)

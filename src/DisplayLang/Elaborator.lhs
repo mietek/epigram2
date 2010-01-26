@@ -90,7 +90,7 @@ interesting types.
 >     h <- pickName "h" ""
 >     make (h :<: y')
 >     goIn
->     elabbedT =<< elabGive t
+>     elabbedT . N =<< elabGive t
 
 > elaborate True (PI (MU l d) t :>: DCON f) = do
 >     (m' :=>: _) <- elaborate False $ case l of
@@ -149,7 +149,7 @@ If the elaborator encounters a question mark, it simply creates an appropriate s
 > elaborate top (ty :>: DQ x) = do
 >     ty' <- bquoteHere ty
 >     g <- make (x :<: ty')
->     return (g :=>: evTm g)
+>     return (N g :=>: evTm g)
 
 
 There are a few possibilities for elaborating $\lambda$-abstractions. If both the
@@ -173,7 +173,7 @@ by elaboration, then return the reference.
 >     goIn
 >     l <- lambdaBoy (dfortran (DL sc))
 >     h <- elabGive (underDScope sc l)
->     return (h :=>: evTm h)
+>     return (N h :=>: evTm h)
 
 If we are at top level, we can simply create a |lambdaBoy| in the current development,
 and carry on elaborating.
@@ -312,13 +312,13 @@ the current goal, and calls the |give| command on the resulting term. If its arg
 is a nameless question mark, it avoids creating a pointless subgoal by simply returning
 a reference to the current goal (applied to the appropriate shared parameters).
 
-> elabGive :: InDTmRN -> ProofState INTM
+> elabGive :: InDTmRN -> ProofState EXTM
 > elabGive tm = elabGive' tm <* goOut
 
-> elabGiveNext :: InDTmRN -> ProofState INTM
+> elabGiveNext :: InDTmRN -> ProofState EXTM
 > elabGiveNext tm = elabGive' tm <* (nextGoal <|> goOut)
 
-> elabGive' :: InDTmRN -> ProofState INTM
+> elabGive' :: InDTmRN -> ProofState EXTM
 > elabGive' tm = do
 >     tip <- getDevTip
 >     case tip of         
@@ -327,7 +327,7 @@ a reference to the current goal (applied to the appropriate shared parameters).
 >                 DQ "" -> do
 >                     GirlMother ref _ _ <- getMother
 >                     aus <- getGreatAuncles
->                     return (N (P ref $:$ aunclesToElims (aus <>> F0)))
+>                     return (applyAuncles ref aus)
 >                 _ -> do
 >                     (tm' :=>: tv) <- elaborate True (tipTy :>: tm)
 >                     give' tm'
@@ -338,7 +338,7 @@ The |elabMake| command elaborates the given display term in a module to
 produce a type, then converts the module to a goal with that type. Thus any
 subgoals produced by elaboration will be children of the resulting goal.
 
-> elabMake :: (String :<: InDTmRN) -> ProofState INTM
+> elabMake :: (String :<: InDTmRN) -> ProofState EXTM
 > elabMake (s :<: ty) = do
 >     makeModule s
 >     goIn
@@ -357,14 +357,14 @@ program x,y will give a proof state of:
   y : N  (from lambdaboy)
 ] g x y call   (from giveNext, then we're ready to go).
 
-> elabProgram :: [String] -> ProofState INTM
+> elabProgram :: [String] -> ProofState EXTM
 > elabProgram args = do
 >     n <- getMotherName
 >     (_ :=>: g) <- getHoleGoal
 >     let pn = P (n := FAKE :<: g)
 >     let newty = pity (mkTel pn g [] args)
 >     newty' <- bquoteHere newty
->     (N g) <- make ("g" :<: newty') 
+>     g <- make ("g" :<: newty') 
 >     argrefs <- traverse lambdaBoy args
 >     let fcall = pn $## (map NP argrefs) 
 >     let call = g $## (map NP argrefs) :$ Call (N fcall)
