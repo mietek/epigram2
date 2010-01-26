@@ -9,14 +9,27 @@ make add : (x : Nat) -> (y : Nat) -> < add x y : Nat > ;
 lambda x ;
 lambda y ;
 elim elimOp NatD x ;
-give con ? ;
-give [ ? ? ] ;
-give con con ? ;
-give return y ;
-lambda r ;
-give con ? ;
-lambda xy ;
-give con ? ;
-give return (suc ((xy) call))  ;
+
+    give con ? ;
+    lambda x ;
+    elim Switch ['zero 'suc] x ;
+
+        give [? ?] ;
+	lambda m  ;
+        lambda n ;
+        give con ? ;
+        give con ? ;
+        lambda y ;
+        give return y ; 
+
+        lambda m ;
+        lambda n ;
+        lambda k ;
+        give con ? ;
+        lambda ih ;
+        give con ? ; 
+        lambda y ; 
+        give return (suc ((ih y) call)) ;
+
 root ;
-elab add two two 
+elab add two two ;
