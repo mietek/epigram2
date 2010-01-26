@@ -157,7 +157,7 @@ The development transformation is achieved by the following code:
 >     goIn
 >     -- Get the type of the motive
 >     -- And ask for making it real
->     let (motiveType, telType) = unPi $ valueOf eType
+>     (motiveType, telType) <- unPi $ valueOf eType
 >     motiveTypeTm <- bquoteHere motiveType
 >     p <- make $ "P" :<: motiveTypeTm
 >     -- Get the type of the methods and the target
@@ -173,8 +173,9 @@ The development transformation is achieved by the following code:
 >     moduleToGoal target
 >     giveNext $ N $ (termOf e :? termOf eType) $## (N p : methods)
 >     return (elimName, N p :<: motiveType, methods, trail patterns)
->         where unPi :: VAL -> (VAL, VAL)
->               unPi (PI s t) = (s, t)
+>         where unPi :: VAL -> ProofState (VAL, VAL)
+>               unPi (PI s t) = return (s, t)
+>               unPi _ = throwError' "Elimination: eliminator not a Pi-type??"
 
 Above, we have used |mkMethods| to introduce the methods and retrieve
 the target of the eliminator. Remember that the eliminator is a
