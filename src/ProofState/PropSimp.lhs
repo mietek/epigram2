@@ -65,15 +65,6 @@ where $\Gamma = \{q_i\}_i$, represented by |Right (qs, gs, h)|.
 > pattern SimplyTrivial prf  = Simply B0 B0 prf
 > pattern SimplyOne q g h    = Simply (B0 :< q) (B0 :< g) h
 
-> simplifyNone :: (NameSupplier m) => VAL -> m Simplify
-> simplifyNone p = freshRef (nameHint p :<: PRF p) (\ref ->
->     return (SimplyOne ref (L (HF "__id" id)) (NP ref)))
->   where
->     nameHint :: VAL -> String
->     nameHint (NP (n := _)) = "__" ++ fst (last n)
->     nameHint (L (HF s _)) = "__" ++ s
->     nameHint _ = "__simplifyNone"
-
 
 > type Simplifier x = ReaderT NameSupply Maybe x
                  
@@ -368,14 +359,6 @@ If nothing matches, we can always try searching the context.
 > propSimplify delta p = propSearch delta p
 
 
-As a variant of |propSimplify|, |forceSimplify| guarantees to give a result
-by trying to simplify the proposition and yielding an identical copy if
-simplification fails.
-
-> forceSimplify :: Bwd REF -> VAL -> Simplifier Simplify
-> forceSimplify delta p = propSimplify delta p <|> simplifyNone p
-
-
 The |propSearch| operation looks in the context for a proof of the proposition,
 and if it finds one, returns the trivial simplification.
 
@@ -392,50 +375,73 @@ and if it finds one, returns the trivial simplification.
 >       ) <|> seekType rs ty
 
 
+As a variant of |propSimplify|, |forceSimplify| guarantees to give a result,
+by trying to simplify the proposition and yielding an identical copy if
+simplification fails. This is useful in cases such as |&&|, where we know
+we can do some simplification even if the conjuncts do not simplify.
+
+> forceSimplify :: Bwd REF -> VAL -> Simplifier Simplify
+> forceSimplify delta p = propSimplify delta p <|> simplifyNone p
+>   where
+>     simplifyNone :: (NameSupplier m) => VAL -> m Simplify
+>     simplifyNone p = freshRef (nameHint p :<: PRF p) (\ref ->
+>         return (SimplyOne ref (L (HF "__id" id)) (NP ref)))
+>   
+>     nameHint :: VAL -> String
+>     nameHint (NP (n := _)) = "__" ++ fst (last n)
+>     nameHint (L (HF s _)) = "__" ++ s
+>     nameHint _ = "__simplifyNone"
+
 
 
 \subsection{Invoking Simplification}
 
 The |propSimplifyHere| command attempts propositional simplification on the
 current location, which must be an open goal of type |PRF p| for some |p|.
-If it simplifies the goal to |TT|, it will simply solve the goal and return |True|.
-If it simplifies the goal to |FF|, it will fail and throw an error.
-Otherwise, it will create one or more new subgoals (from the conjuncts of the
-simplified proposition) and solve the current goal with them.
+If it is unable to simplify |p| or simplifies it to |FF|, it will fail and
+throw an error. Otherwise, it will create zero or more new subgoals
+(from the conjuncts of the simplified proposition, if any), solve the
+current goal with the subgoals, and return a list of them.
 
-> propSimplifyHere :: ProofState Bool
+> propSimplifyHere :: ProofState (Bwd (INTM :=>: VAL))
 > propSimplifyHere = do
 >     (_ :=>: PRF p) <- getHoleGoal
 >     nsupply <- askNSupply
 >     case runReaderT (propSimplify B0 p) nsupply of
->         Nothing -> throwError' "propSimplifyHere: unable to simplify"
->         Just (SimplyAbsurd _) -> throwError' "propSimplifyHere: oh no, goal is absurd!"
+>         Nothing                   -> throwError' "propSimplifyHere: unable to simplify."
+>         Just (SimplyAbsurd _)     -> throwError' "propSimplifyHere: oh no, goal is absurd!"
 >
->         Just (SimplyTrivial prf) -> bquoteHere prf >>= give >> return True
+>         Just (SimplyTrivial prf)  -> bquoteHere prf >>= give >> return B0
 >
 >         Just (Simply qs _ h) -> do
 >             qrs  <- mapM makeSubgoal qs
 >             h'   <- dischargeLots qs h
->             prf  <- bquoteHere (h' $$$ qrs)
+>             prf  <- bquoteHere (h' $$$ fmap (A . valueOf) qrs)
 >             giveNext prf
->             return False
+>             return qrs
 >  where
 
 The |makeSubgoal| command makes a new subgoal whose type corresponds to the type
-of the given reference, and returns the eliminator that applies a reference to
-the new subgoal.
+of the given reference, and returns its term and value representations.
 
->    makeSubgoal :: REF -> ProofState (Elim VAL)
+>    makeSubgoal :: REF -> ProofState (INTM :=>: VAL)
 >    makeSubgoal ref = do
 >        q'  <- bquoteHere (pty ref)
 >        x   <- pickName "q" ""
 >        qr  <- make (x :<: q')
->        return (A (evTm qr))
+>        return (qr :=>: evTm qr)
 
 
 The |simplify| tactic attempts to simplify the type of the current goal, which
 should be propositional.
 
+> simplifyCTactic :: ProofState String
+> simplifyCTactic = do
+>     subs <- propSimplifyHere 
+>     case subs of
+>         B0  -> return "Solved."
+>         _   -> return "Simplified."
+
 > import -> CochonTactics where
->   : nullaryCT "simplify" (propSimplifyHere >>= \b -> return (if b then "Solved." else "Simplified."))
+>   : nullaryCT "simplify" simplifyCTactic
 >       "simplify - applies propositional simplification to the current goal."
