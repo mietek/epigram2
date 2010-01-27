@@ -103,14 +103,14 @@ interesting types.
 >     elabbedT . N $ elimOp :@ [dll, N (P x), t', m']
 
 > elaborate True (PI (SIGMA d r) t :>: DCON f) = do
->     let mt =   eval [.a.b.c.
->                  PI (NV a) . L $ fortran r :. [.x.
->                  PI (N (V b :$ A (NV x))) . L $ "" :. [.y.
->                  N (V c :$ A (PAIR (NV x) (NV y)))
->                ]]] $ B0 :< d :< r :< t
+>     let mt =  PI d . L . HF (fortran r) $ \ a ->
+>               PI (r $$ A a) . L . HF (fortran t) $ \ b ->
+>               t $$ A (PAIR a b)
+>     mt' <- bquoteHere mt
 >     (m' :=>: m) <- elaborate False (mt :>: f)
 >     x <- lambdaBoy (fortran t)
->     elabbedV $ m $$ A (pval x $$ Fst) $$ A (pval x $$ Snd)  -- lambda lift?
+>     checkHere (t $$ A (PAIR (NP x $$ Fst) (NP x $$ Snd)) :>: N (((m' :? mt') :$ A (N (P x :$ Fst))) :$ A (N (P x :$ Snd))))
+>         -- lambda lift?
 
 > elaborate True (PI (ENUMT e) t :>: m) | isTuply m = do
 >     targetsDesc <- withNSupply (equal (ARR (ENUMT e) SET :>: (t, L (K desc))))
