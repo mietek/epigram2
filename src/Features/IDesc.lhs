@@ -285,7 +285,7 @@
 >           $$ A (imapBoxOp @@ 
 >                   [ ii , d $$ A i , L $ HF "i'" $ \i' -> IMU Nothing ii d i'
 >                   , bp , L $ HF "t" $ \t -> 
->                            elimOp @@ [ii,d,t $$ Fst,t $$ Snd,bp,m] 
+>                            ielimOp @@ [ii,d,t $$ Fst,t $$ Snd,bp,m] 
 >                   , x
 >                   ])
 >       elimOpRun [_,_,_,N x, _,_] = Left x
