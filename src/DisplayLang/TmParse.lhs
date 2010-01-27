@@ -137,7 +137,7 @@ largest size again.
 >      |DTAG (%keyword KwTag%) ident
 >      |DLABEL (%keyword KwLabel%) (sizedInDTm AppSize) (%keyword KwAsc%) (sizedInDTm ArgSize) (%keyword KwLabelEnd%)
 >      |DLRET (%keyword KwRet%) (sizedInDTm ArgSize)
->      |(iter mkLambda) (%keyword KwLambda%) (some (ident <|> underscore)) (%keyword KwArr%) pInDTm
+>      |(iter mkDLAV) (%keyword KwLambda%) (some (ident <|> underscore)) (%keyword KwArr%) pInDTm
 >      |id (bracket Square tuple)
 >      |mkNum (|read digits|) (optional $ (keyword KwPlus) *> sizedInDTm ArgSize)
 >      |id (%keyword KwSig%) (bracket Round sigma)
@@ -147,13 +147,6 @@ largest size again.
 >     question :: String -> Maybe String
 >     question ('?':s)  = Just s
 >     question _        = Nothing
->
->     underscore :: Parsley Token String
->     underscore = keyword KwUnderscore >> pure "_"
->
->     mkLambda :: String -> InDTmRN -> InDTmRN
->     mkLambda "_"  t = DL (DK t)
->     mkLambda x    t = DLAV x t
 >
 >     tuple :: Parsley Token InDTmRN
 >     tuple =
@@ -208,8 +201,8 @@ largest size again.
 >      |)
 
 > specialInDTm PiSize =
->     (|(flip iter)  (some (bracket Round (|ident, (%keyword KwAsc%) pInDTm|)))
->                    (| (uncurry DPIV) (%keyword KwArr%) | (uncurry DALLV) (%keyword KwImp%) |)
+>     (|(flip iter)  (some (bracket Round (|(ident <|> underscore) , (%keyword KwAsc%) pInDTm|)))
+>                    (| (uncurry mkDPIV) (%keyword KwArr%) | (uncurry mkDALLV) (%keyword KwImp%) |)
 >                    pInDTm |)
 
 > specialInDTm z = (|)
@@ -235,3 +228,20 @@ largest size again.
 > isEx :: InDTmRN -> Maybe ExDTmRN
 > isEx (DN tm)  = Just tm
 > isEx _        = Nothing
+
+
+
+> underscore :: Parsley Token String
+> underscore = keyword KwUnderscore >> pure "_"
+
+> mkDLAV :: String -> InDTmRN -> InDTmRN
+> mkDLAV "_"  t = DL (DK t)
+> mkDLAV x    t = DLAV x t
+
+> mkDPIV :: String -> InDTmRN -> InDTmRN -> InDTmRN
+> mkDPIV   "_"  s t = DPI s (DL (DK t))
+> mkDPIV   x    s t = DPIV x s t
+
+> mkDALLV :: String -> InDTmRN -> InDTmRN -> InDTmRN
+> mkDALLV  "_"  s p = DALL s (DL (DK p))
+> mkDALLV  x    s p = DALLV x s p

@@ -62,8 +62,8 @@ Solved.
 Going to root...
 Appended goal!
 Simplified to:
-:- (All Set (\ _ -> P))
-:- (All Set (\ _ -> Q))
+:- ((_ : Set) => P)
+:- ((_ : Set) => Q)
 
 Going to root...
 Appended goal!

@@ -181,6 +181,7 @@ Elim forms inherited from elsewhere
 >     (pretty p (pred PiSize) <+> kword KwImp <+> pretty q PiSize)
 >   prettyAll bs (DALL s (DL (x ::. t))) =
 >     prettyAll (bs <> parens (text x <+> kword KwAsc <+> pretty s maxBound)) t
+>   prettyAll bs (DALL s (DL (DK t))) = prettyAll bs (DALL s (DL ("_" ::. t)))
 >   prettyAll bs (DALL s t) = prettyAllMore bs
 >     (kword KwAll <+> pretty s minBound <+> pretty t minBound)
 >   prettyAll bs tm = prettyAllMore bs (pretty tm PiSize)
