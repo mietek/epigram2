@@ -128,3 +128,11 @@ make u : :- ((: Sig (A ; B)) ?x == (: Sig (A ; B)) ?y) ;
 simplify ;
 root ;
 
+make v : :- (P => (x : :- P)(y : :- P) => x == y) ;
+simplify ;
+root ;
+
+make g := ? : (:- P) -> Prop ;
+make w : :- ((x : :- P) => g x) ;
+simplify ;
+root ;

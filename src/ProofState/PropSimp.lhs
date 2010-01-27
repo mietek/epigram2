@@ -31,7 +31,7 @@
 
 > import Cochon.DisplayCommands
 
-> import Prelude hiding (foldl, mapM)
+> import Prelude hiding (any, foldl, mapM)
 
 %endif
 
@@ -85,18 +85,25 @@ The |dischargeLots| function discharges and $\lambda$-binds a list of references
 
 
 The |dischargeAllLots| function discharges and $\forall$-binds a list of references over a |VAL|.
+It checks to see which are actually used, and inserts constant scopes |K| where possible.
 
 > dischargeAllLots :: (NameSupplier m) => Bwd REF -> VAL -> m VAL
 > dischargeAllLots bs v = do
+>     temp <- bquote B0 v
+>     let cs = fmap (contains temp) bs
 >     v' <- bquote bs v
->     v'' <- wrapAlls bs v'
+>     v'' <- wrapAlls bs cs v'
 >     return (evTm v'')
 >   where
->     wrapAlls :: (NameSupplier m) => Bwd REF -> INTM -> m INTM
->     wrapAlls B0 tm = return tm
->     wrapAlls (bs :< (n := _ :<: ty)) (PRF tm) = do
+>     wrapAlls :: (NameSupplier m) => Bwd REF -> Bwd Bool -> INTM -> m INTM
+>     wrapAlls B0 _ tm = return tm
+>     wrapAlls (bs :< (n := _ :<: ty)) (cs :< c) (PRF tm) = do
 >         ty' <- bquote B0 ty
->         wrapAlls bs (PRF (ALL ty' (L (fst (last n) :. tm))))
+>         let sc = if c then (fst (last n) :. tm) else (K tm)
+>         wrapAlls bs cs (PRF (ALL ty' (L sc)))
+
+>     contains :: INTM -> REF -> Bool
+>     contains tm ref = any (== ref) tm
 
 
 The |dischargeRefAlls| function calls |dischargeAllLots| on the type of a reference.
@@ -165,8 +172,8 @@ the application of |Fst| or |Snd| as appropriate.
 
 To simplify |p = (x :- s) => t|, we first try to simplify |s|:
 
-> propSimplify delta p@(ALL (PRF s) l@(L sc)) =
->     forkNSupply "__psImp1" (forceSimplify delta s) antecedent
+> propSimplify delta p@(ALL (PRF s) l) =
+>     forkNSupply "__psImp1" (forceSimplifyNamed delta s (fortran l)) antecedent
 >   where
 >     antecedent :: Simplify -> Simplifier Simplify
 
@@ -279,7 +286,7 @@ and proof |th| of |t| in the context |delta <+> sqs|, we proceed as follows.
 To simplify |p = (x : s) => t| where |s| is not a proof set, we generate a fresh
 reference and simplify |t| under the binder.
 
-> propSimplify delta p@(ALL s l@(L sc)) = freshRef (fortran l :<: s)
+> propSimplify delta p@(ALL s l) = freshRef (fortran l :<: s)
 >     (\refS -> forkNSupply "__psAll" (forceSimplify (delta :< refS) (l $$ A (NP refS))) (thingy refS))
 >   where
 >     thingy :: (NameSupplier m) => REF -> Simplify -> m Simplify
@@ -383,14 +390,20 @@ by trying to simplify the proposition and yielding an identical copy if
 simplification fails. This is useful in cases such as |&&|, where we know
 we can do some simplification even if the conjuncts do not simplify.
 
-> forceSimplify :: Bwd REF -> VAL -> Simplifier Simplify
-> forceSimplify delta p = propSimplify delta p <|> simplifyNone p
+The |forceSimplifyNamed| variant takes a name hint that will be
+used if simplification fails.
+
+> forceSimplify delta p = forceSimplifyNamed delta p ""
+
+> forceSimplifyNamed :: Bwd REF -> VAL -> String -> Simplifier Simplify
+> forceSimplifyNamed delta p hint = propSimplify delta p <|> simplifyNone p
 >   where
 >     simplifyNone :: (NameSupplier m) => VAL -> m Simplify
 >     simplifyNone p = freshRef (nameHint p :<: PRF p) (\ref ->
 >         return (SimplyOne ref (L (HF "__id" id)) (NP ref)))
 >   
 >     nameHint :: VAL -> String
+>     nameHint _ | not (null hint) = hint
 >     nameHint (NP (n := _)) = "__" ++ fst (last n)
 >     nameHint (L (HF s _)) = "__" ++ s
 >     nameHint _ = "__simplifyNone"

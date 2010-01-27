@@ -27,12 +27,12 @@ Simplified to:
 Going to root...
 Appended goal!
 Simplified to:
-:- ((__P : :- P) => FF)
+:- (P => FF)
 
 Going to root...
 Appended goal!
 Simplified to:
-:- ((__madness : :- ((__P : :- P) => FF)) => FF)
+:- ((P => FF) => FF)
 
 Going to root...
 Appended goal!
@@ -46,7 +46,7 @@ Solved.
 Going to root...
 Appended goal!
 Simplified to:
-:- ((__P : :- P) => FF)
+:- (P => FF)
 
 Going to root...
 Appended goal!
@@ -62,8 +62,8 @@ Solved.
 Going to root...
 Appended goal!
 Simplified to:
-:- ((x : Set) => P)
-:- ((x : Set) => Q)
+:- (All Set (\ _ -> P))
+:- (All Set (\ _ -> Q))
 
 Going to root...
 Appended goal!
@@ -76,7 +76,7 @@ Simplified to:
 Going to root...
 Appended goal!
 Simplified to:
-:- ((__madness : :- ((__P : :- P) => FF)) => FF)
+:- ((P => FF) => FF)
 
 Going to root...
 Appended goal!
@@ -84,7 +84,7 @@ Solved.
 Going to root...
 Appended goal!
 Simplified to:
-:- ((__P : :- P) => Q)
+:- (P => Q)
 
 Going to root...
 Appended goal!
@@ -92,23 +92,23 @@ Solved.
 Going to root...
 Appended goal!
 Simplified to:
-:- ((__P : :- P)(__Q : :- Q) => R)
+:- (P => Q => R)
 
 Going to root...
 Appended goal!
 Simplified to:
-:- ((__Q : :- ((__P : :- P) => Q))(__P : :- P) => Q)
+:- ((P => Q) => P => Q)
 
 Going to root...
 Appended goal!
 Simplified to:
-:- ((__Q : :- ((__P : :- P) => Q))(__P : :- ((__Q : :- Q) => P))(__P : :- P) => Q)
-:- ((__Q : :- ((__P : :- P) => Q))(__P : :- ((__Q : :- Q) => P))(__Q : :- Q) => P)
+:- ((P => Q) => (Q => P) => P => Q)
+:- ((P => Q) => (Q => P) => Q => P)
 
 Going to root...
 Appended goal!
 Simplified to:
-:- ((__P : :- P) => Q)
+:- (P => Q)
 
 Going to root...
 Appended goal!
@@ -116,8 +116,8 @@ Solved.
 Going to root...
 Appended goal!
 Simplified to:
-:- ((s1 : Set)(s2 : Set)(__simplifyNone : :- s1 == s2)(__P : :- P) => Q)
-:- ((s1 : Set)(s2 : Set)(__simplifyNone : :- s1 == s2)(__Q : :- Q) => P)
+:- ((s1 : Set)(s2 : Set) => s1 == s2 => P => Q)
+:- ((s1 : Set)(s2 : Set) => s1 == s2 => Q => P)
 
 Going to root...
 Appended goal!
@@ -140,6 +140,15 @@ Appended goal!
 Simplified to:
 :- (x !) == (y !)
 :- (x -) == (y -)
+
+Going to root...
+Appended goal!
+Solved.
+Going to root...
+Made.
+Appended goal!
+Simplified to:
+:- ((x : :- P) => g x)
 
 Going to root...
 Loaded.
