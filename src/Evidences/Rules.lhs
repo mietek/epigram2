@@ -106,6 +106,9 @@ This translates into the following code:
 > isReflProof (PAIR a b) = {-# SCC "isReflProof-PAIR" #-} isReflProof a && isReflProof b
 > isReflProof (BOX (Irr q)) = {-# SCC "isReflProof-box" #-} isReflProof q
 > isReflProof (CON t) = {-# SCC "isReflProof-CON" #-} isReflProof t
+> isReflProof (N (t :$ Fst)) = {-# SCC "isReflProof-Fst" #-} isReflProof (N t)
+> isReflProof (N (t :$ Snd)) = {-# SCC "isReflProof-Snd" #-} isReflProof (N t)
+> isReflProof (N (t :$ Out)) = {-# SCC "isReflProof-Out" #-} isReflProof (N t)
 > isReflProof _ = {-# SCC "isReflProof-miss" #-} False
 
 
