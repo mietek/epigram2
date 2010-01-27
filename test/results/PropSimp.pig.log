@@ -96,15 +96,10 @@ Simplified to:
 
 Going to root...
 Appended goal!
-Simplified to:
-:- ((P => Q) => P => Q)
-
+Solved.
 Going to root...
 Appended goal!
-Simplified to:
-:- ((P => Q) => (Q => P) => P => Q)
-:- ((P => Q) => (Q => P) => Q => P)
-
+Solved.
 Going to root...
 Appended goal!
 Simplified to:

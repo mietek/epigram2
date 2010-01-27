@@ -234,33 +234,26 @@ prove as follows:
 >             return (SimplyTrivial (L (HF "__consequentTrivial" (\sv ->
 >                 prfT' $$$ (fmap (A . ($$ A sv)) sgs)))))
 
-Otherwise, if the consequent |t| simplifies to a conjunction |tqs| with proofs |tg : t -> tq|,
-and proof |th| of |t| in the context |delta <+> sqs|, we proceed as follows.
-\question{Is there a better way of explaining this than a bunch of scribbles on a whiteboard?}
-\begin{enumerate}
-\item Discharge the antecedents |sqs| over each conjunct in the consequent to produce a
-      conjunction |pqs|.
-\item Construct the proofs |pg : p -> pq| from the |tgs| thus:
-      \begin{enumerate}
-        \item Declare |pref| to be a reference of type |(x : s) => t|.
-        \item Apply |pref| to the proof of |s| in the context |delta <+> sqs|, giving a value
-              of type |t|, to which |tg| can be applied to produce a proof of |tq|.
-        \item Discharge the proof of |tq| over the |sqs| to produce a proof of |pq|.
-        \item Discharge |pref| to produce the required proof.
-      \end{enumerate}
-\item Construct the proof |ph| of |p| in the context |pqs| thus:
-      \begin{enumerate}
-        \item Declare |sref| to be a reference of type |s|.
-        \item Discharge the proof |th| of |t| over the conjuncts |tqs| to produce |th'|.
-        \item Let |sgSpine| be the spine of |sgs| applied to |sref| to produce proofs of the |sqs|.
-        \item Apply |th'| to each proof of a |tq| (created by applying a |pq| to the |sgSpine|),
-              to produce |th''|.
-        \item Discharge |th''| over the |sqs| to give a function |th'''| from proofs of the |sqs|
-              to proofs of |t|.
-        \item Apply |th'''| to the |sgSpine| and discharge |sref| to produce a function |ph| that,
-              given a proof of |s|, yields a proof of |t|.
-      \end{enumerate}
-\end{enumerate}
+Otherwise, if the consequent simplifies, we proceed as follows.
+
+Suppose that $\Delta \vdash s \leadsto \bigwedge_i sq_i$
+with proofs $\Delta \vdash sg_i : s \Rightarrow sq_i$ and
+$\Delta, \Gamma \vdash sh : s$ where $\Gamma = x_0 : sq_0, ..., x_n : sq_n$.
+
+Suppose further that $\Delta, \Gamma \vdash t \leadsto \bigwedge_j tq_j$
+with proofs $\Delta \vdash tg_j : t \Rightarrow tq_j$ and
+$\Delta, \Gamma, \Xi \vdash sh : s$ where $\Xi = y_0 : tq_0, ..., y_m : tq_m$.
+
+Let $\overline t ^ \Gamma$ denote $t$ discharged over all the hypotheses in $\Gamma$.
+Then $\Delta \vdash (x :\!\!\!- s) \Rightarrow t \leadsto \bigwedge_j pq_j$
+where $pq_j \cong \Gamma \Rightarrow tq_j$, with proofs
+$\Delta \vdash pg_j \cong \lambda pv . 
+    \overline { tg_j (pv \; sh) } ^ \Gamma : p \rightarrow pq_j$
+and
+$\Delta, \Theta \vdash \lambda sv .
+     \overline { \overline {th}^\Xi \overrightarrow { 
+         (pg_j \overrightarrow { (sg_i \; sv) } ) } }^\Gamma$
+where $\Theta \cong z_0 : pq_0, ..., z_m : pq_m$.
 
 >         consequent (Simply tqs tgs th) = do
 >             pqs <- mapM (dischargeRefAlls sqs) tqs
@@ -342,7 +335,7 @@ with |Con| or |Out| as appropriate.
 >        guard =<< (asks . equal $ sty :>: (s, t))
 >        let w = pval refl $$ A sty $$ A s
 >        return (SimplyTrivial w)
-
+>
 >    unroll :: Simplifier Simplify
 >    unroll = case opRun eqGreen [sty, s, tty, t] of
 >           Left _         -> mzero
@@ -369,20 +362,33 @@ If nothing matches, we can always try searching the context.
 > propSimplify delta p = propSearch delta p
 
 
-The |propSearch| operation looks in the context for a proof of the proposition,
-and if it finds one, returns the trivial simplification.
+The |propSearch| operation searches the context for a proof of the proposition,
+and if it finds one, returns the trivial simplification. When |seekProof| finds
+a proof in the context, it calls |backchain| to go under any implications and
+test if the consequent matches the goal; if so, |backchain| then calls
+|seekProof| to attempt to prove the hypotheses, in the context with the
+backchained proposition removed. 
 
 > propSearch :: Bwd REF -> VAL -> Simplifier Simplify
-> propSearch delta p = do
->     ref <- seekType delta (PRF p)
->     return (SimplyTrivial (pval ref))
+> propSearch delta p = seekProof delta F0 p >>= return . SimplyTrivial
 >   where
->     seekType :: Bwd REF -> TY -> Simplifier REF
->     seekType B0 _ = mzero
->     seekType (rs :< ref) ty = (do
->         guard =<< (asks . equal $ SET :>: (pty ref, ty))
->         return ref
->       ) <|> seekType rs ty
+>     seekProof :: Bwd REF -> Fwd REF -> VAL -> Simplifier VAL
+>     seekProof B0 _ _ = mzero
+>     seekProof (rs :< ref@(_ := DECL :<: PRF q)) fs p =
+>         backchain (rs :< ref) fs B0 p q <|> seekProof rs (ref :> fs) p
+>     seekProof (rs :< ref) fs p = seekProof rs (ref :> fs) p
+>  
+>     backchain :: Bwd REF -> Fwd REF -> Bwd REF -> VAL -> VAL -> Simplifier VAL
+>     backchain rs fs ss p (ALL (PRF s) l) = freshRef ("__bc" :<: PRF s)
+>         (\sRef -> backchain rs fs (ss :< sRef) p (l $$ A (NP sRef)))
+>                                                                       
+>     backchain (rs :< ref) fs ss p q = do
+>         guard =<< (asks . equal $ PROP :>: (p, q))
+>         ssPrfs <- mapM (seekProof (rs <>< fs) F0 . unPRF . pty) ss
+>         return (pval ref $$$ fmap A ssPrfs)
+>
+>     unPRF :: VAL -> VAL
+>     unPRF (PRF p) = p
 
 
 As a variant of |propSimplify|, |forceSimplify| guarantees to give a result,

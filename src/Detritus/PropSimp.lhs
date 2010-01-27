@@ -176,3 +176,32 @@ You are not expected to understand this.
 >     isNeutral :: VAL -> Bool
 >     isNeutral (N _)  = True
 >     isNeutral _      = False 
+
+
+
+
+
+\begin{enumerate}
+\item Discharge the antecedents |sqs| over each conjunct in the consequent to produce a
+      conjunction |pqs|.
+\item Construct the proofs |pg : p -> pq| from the |tgs| thus:
+      \begin{enumerate}
+        \item Declare |pref| to be a reference of type |(x : s) => t|.
+        \item Apply |pref| to the proof of |s| in the context |delta <+> sqs|, giving a value
+              of type |t|, to which |tg| can be applied to produce a proof of |tq|.
+        \item Discharge the proof of |tq| over the |sqs| to produce a proof of |pq|.
+        \item Discharge |pref| to produce the required proof.
+      \end{enumerate}
+\item Construct the proof |ph| of |p| in the context |pqs| thus:
+      \begin{enumerate}
+        \item Declare |sref| to be a reference of type |s|.
+        \item Discharge the proof |th| of |t| over the conjuncts |tqs| to produce |th'|.
+        \item Let |sgSpine| be the spine of |sgs| applied to |sref| to produce proofs of the |sqs|.
+        \item Apply |th'| to each proof of a |tq| (created by applying a |pq| to the |sgSpine|),
+              to produce |th''|.
+        \item Discharge |th''| over the |sqs| to give a function |th'''| from proofs of the |sqs|
+              to proofs of |t|.
+        \item Apply |th'''| to the |sgSpine| and discharge |sref| to produce a function |ph| that,
+              given a proof of |s|, yields a proof of |t|.
+      \end{enumerate}
+\end{enumerate}
