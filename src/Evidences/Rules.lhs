@@ -75,80 +75,63 @@ stuck. The stuckness therefore propagates to the whole elimination.
 This translates into the following code:
 
 > ($$) :: VAL -> Elim VAL -> VAL
+
+\pierre{These special cases need to be explained:}
+
 > N (P r  :$ A (PI s t) 
 >         :$ A fun 
 >         :$ Out  
 >         :$ A a1 
->         :$ A a2) $$ A q | r == refl && isReflProof q = {-# SCC "$$-refl-pi" #-}
+>         :$ A a2) $$ A q | r == refl && isReflProof q =
 >     N (P r :$ A (t $$ A a1) :$ A (fun $$ A a1) :$ Out)
+> N (P r  :$ A (PRF (AND p q)) 
+>         :$ A pf
+>         :$ Out  
+>         :$ A a1 
+>         :$ A a2) $$ Fst =
+>     N (P r :$ A (PRF p) :$ A (pf $$ Fst) :$ Out)
+> N (P r  :$ A (PRF (AND p q)) 
+>         :$ A pf
+>         :$ Out  
+>         :$ A a1 
+>         :$ A a2) $$ Snd = 
+>     N (P r :$ A (PRF q) :$ A (pf $$ Snd) :$ Out)
 > N (P r  :$ A (SIGMA a b) 
 >         :$ A sig
 >         :$ Out  
 >         :$ A a1 
->         :$ A a2) $$ Fst = {-# SCC "$$-refl-fst" #-}
+>         :$ A a2) $$ Fst = 
 >     N (P r :$ A a :$ A (sig $$ Fst) :$ Out)
 > N (P r  :$ A (SIGMA a b) 
 >         :$ A sig
 >         :$ Out  
 >         :$ A a1 
->         :$ A a2) $$ Snd = {-# SCC "$$-refl-snd" #-}
+>         :$ A a2) $$ Snd = 
 >     N (P r :$ A (b $$ A (sig $$ Fst)) :$ A (sig $$ Snd) :$ Out)
-> L (K v)      $$ A _  = {-# SCC "$$-K" #-} v                -- By \ref{eqn:elim_cstt}
-> L (HF _ f)   $$ A v  = {-# SCC "$$-HF" #-} f v             -- By \ref{eqn:elim_bind}
-> C (Con t)    $$ Out  = {-# SCC "$$-Con" #-} t              -- By \ref{eqn:elim_con}
-> import <- ElimComputation                                  -- Extensions
-> N n          $$ e    = {-# SCC "$$-N" #-} N (n :$ e)       -- By \ref{eqn:elim_stuck}
+
+\pierre{Back to normal, thanks for your comprehension.}
+
+> L (K v)      $$ A _  = v                -- By \ref{eqn:elim_cstt}
+> L (HF _ f)   $$ A v  = f v              -- By \ref{eqn:elim_bind}
+> C (Con t)    $$ Out  = t                -- By \ref{eqn:elim_con}
+> import <- ElimComputation               -- Extensions
+> N n          $$ e    = N (n :$ e)       -- By \ref{eqn:elim_stuck}
 > f            $$ e    = error ("Can't eliminate\n" ++ show f ++ "\nwith eliminator\n" ++ show e)
 
+\pierre{Again, need explanation.}
+
 > isReflProof :: VAL -> Bool
-> isReflProof (N (P r :$ A _ :$ A _)) | r == refl = {-# SCC "isReflProof-refl" #-} True
-> isReflProof VOID = {-# SCC "isReflProof-VOID" #-} True
-> isReflProof (PAIR a b) = {-# SCC "isReflProof-PAIR" #-} isReflProof a && isReflProof b
-> isReflProof (BOX (Irr q)) = {-# SCC "isReflProof-box" #-} isReflProof q
-> isReflProof (CON t) = {-# SCC "isReflProof-CON" #-} isReflProof t
-> isReflProof (N (t :$ Fst)) = {-# SCC "isReflProof-Fst" #-} isReflProof (N t)
-> isReflProof (N (t :$ Snd)) = {-# SCC "isReflProof-Snd" #-} isReflProof (N t)
-> isReflProof (N (t :$ Out)) = {-# SCC "isReflProof-Out" #-} isReflProof (N t)
-> isReflProof _ = {-# SCC "isReflProof-miss" #-} False
+> isReflProof (N (P r :$ A _ :$ A _)) | r == refl  = True
+> isReflProof VOID                                 = True
+> isReflProof (PAIR a b)                           = isReflProof a && isReflProof b
+> isReflProof (BOX (Irr q))                        = isReflProof q
+> isReflProof (CON t)                              = isReflProof t
+> isReflProof (N (t :$ Fst))                       = isReflProof $ N t
+> isReflProof (N (t :$ Snd))                       = isReflProof $ N t
+> isReflProof (N (t :$ Out))                       = isReflProof $ N t
+> isReflProof _                                    = False
 
 
-%if False 
-
-%%%%%%%%%%%%%%%%
-On VecAppend:
-%%%%%%%%%%%%%%%%
-
-Without ($$)modif:
-user    2m2.943s
-
-With ($$)modif:
-user    2m4.776s
-
-With ($$)modif + isReflProof in coe:
-user    4m24.221s
-
-With ($$)modif + isReflProof in coe + ($$) Fst
-user    3m59.067s
-
-With ($$)modif + isReflProof in coe + ($$) Fst + ($$) Snd
-user    4m0.775s
-
-
-%%%%%%%%%%%%%%%%
-On Fin:
-%%%%%%%%%%%%%%%%
-
-Without ($$)modif:
-user    0m4.036s
-
-With ($$)modif - coe isRefl:
-user    0m3.236s
-
-With ($$)modif + coe isRefl:
-user    0m3.332s
-
-
-%endif
 
 The left fold of |$$| applies a value to a bunch of eliminators:
 
