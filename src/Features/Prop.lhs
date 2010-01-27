@@ -172,8 +172,8 @@ Elim forms inherited from elsewhere
 >   pretty Trivial        = const (kword KwTrivial)
 >   pretty Absurd         = const (kword KwAbsurd)
 >   pretty (Box (Irr p))  = pretty p
->   pretty (Inh ty)       = wrapDoc (kword KwInh <+> pretty ty AndSize) AppSize
->   pretty (Wit t)        = wrapDoc (kword KwWit <+> pretty t AndSize) AppSize
+>   pretty (Inh ty)       = wrapDoc (kword KwInh <+> pretty ty ArgSize) AppSize
+>   pretty (Wit t)        = wrapDoc (kword KwWit <+> pretty t ArgSize) AppSize
 
 > import -> Pretty where
 >   prettyAll :: Doc -> InDTmRN -> Size -> Doc
