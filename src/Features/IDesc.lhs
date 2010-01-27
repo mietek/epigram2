@@ -336,4 +336,16 @@
 >             args = [iI, d, a, c, comp f g, N x]
 >         mapOpSimp _ _ = empty
 
-> 
+
+If a label is not in scope, we remove it, so the definition appears at the
+appropriate place when the proof state is printed.
+
+> import -> DistillRules where
+>     distill es (SET :>: tm@(C (IMu l i)))
+>       | Just name <- extractLabelName l = do
+>           mtm <- lookupName name
+>           case mtm of
+>               Nothing  -> distill es (SET :>: C (IMu (dropLabel l) i))
+>               Just _   -> do
+>                   cc <- canTy (distill es) (Set :>: IMu l i)
+>                   return ((DC $ fmap termOf cc) :=>: evTm tm)

@@ -519,8 +519,8 @@ code:
 > pty :: REF -> VAL
 > pty (_ := _ :<: ty) = ty
 
-\subsection{Labels}
 
+\subsection{Labels}
 
 Labels are tucked into strange places, in order to record the
 high-level presentation of low-level stuff.  A typical label is the
@@ -547,7 +547,21 @@ labelled.
 >     Nothing -> False 
 >     Just x -> M.getAll (crush (M.All . uncurry (==)) x) 
 
+If we have a labelled |INTM|, we can try to extract the name from the label.
 
+> extractLabelName :: Labelled f INTM -> Maybe Name
+> extractLabelName (Just (N l) :?=: _) = extractName l
+>   where
+>     extractName :: EXTM -> Maybe Name
+>     extractName (P ref)    = Just (refName ref)
+>     extractName (tm :$ _)  = extractName tm
+>     extractName _          = Nothing
+> extractLabelName _ = Nothing
+
+We can also throw away a label, should we want to.
+
+> dropLabel :: Labelled f t -> Labelled f t
+> dropLabel (_ :?=: a) = (Nothing :?=: a)
 
 %if False
 

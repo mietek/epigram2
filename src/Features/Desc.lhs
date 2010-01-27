@@ -623,17 +623,11 @@ and call canTy directly rather than letting distill do it for us.
 If a label is not in scope, we remove it, so the definition appears at the
 appropriate place when the proof state is printed.
 
->     distill es (SET :>: tm@(MU (Just l) t)) = do
->         mtm <- lookupName . extractName . unN $ l
->         case mtm of
->             Nothing  -> distill es (SET :>: MU Nothing t)
->             Just _   -> do
->                 cc <- canTy (distill es) (Set :>: Mu (Just l :?=: Id t))
->                 return ((DC $ fmap termOf cc) :=>: evTm tm)
->       where
->         unN :: INTM -> EXTM
->         unN (N t) = t
->
->         extractName :: EXTM -> Name
->         extractName (P ref) = refName ref
->         extractName (tm :$ _) = extractName tm
+>     distill es (SET :>: tm@(C (Mu ltm))) 
+>       | Just name <- extractLabelName ltm = do
+>           mtm <- lookupName name
+>           case mtm of
+>               Nothing  -> distill es (SET :>: C (Mu (dropLabel ltm)))
+>               Just _   -> do
+>                   cc <- canTy (distill es) (Set :>: Mu ltm)
+>                   return ((DC $ fmap termOf cc) :=>: evTm tm)
