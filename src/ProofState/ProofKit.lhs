@@ -111,6 +111,11 @@ may be useful for paranoia purposes.
 >             mc <- withNSupply (typeCheck $ check (ty :>: tm'))
 >             mc `catchEither` intercalate "\n" ["validateHere: definition failed to type-check:", show ty, "does not admit", show tm']
 >             return ()
+>         GirlMother (_ := HOLE :<: ty) _ _ -> do
+>             ty' <- bquoteHere ty
+>             mc <- withNSupply (typeCheck $ check (SET :>: ty'))
+>             mc `catchEither` intercalate "\n" ["validateHere: hole type failed to type-check: SET does not admit", show ty']
+>             return ()
 >         _ -> return ()
 
 
