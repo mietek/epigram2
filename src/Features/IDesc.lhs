@@ -98,9 +98,9 @@
 >                               "i" :<: iI :-: \i ->
 >                               "l" :<: ARR iI SET :-: \l ->
 >                               Target (SET :>: 
->                                        N (idescOp :@ [ iI , d $$ A i
+>                                        idescOp @@ [ iI , d $$ A i
 >                                                      , L $ HF "i" $ IMU (|l|) iI d
->                                                      ]))) 
+>                                                      ]))
 >     in Right . CON $ 
 >       coe @@ [ idescOp @@ [ iI0 , d0 $$ A i0 , L $ HF "i" $ IMU (|l0|) iI0 d0 ] 
 >              , idescOp @@ [ iI1 , d1 $$ A i1 , L $ HF "i" $ IMU (|l1|) iI1 d1 ] 
