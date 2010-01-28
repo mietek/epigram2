@@ -573,18 +573,16 @@ Technically, we also need a name supply and handle failure with a
 convenient monad. Therefore, we jump in the |Check| monad defined in
 Section~\ref{sec:check_monad}.
 
-> check :: (TY :>: INTM) -> Check (() :=>: VAL)
+> check :: (TY :>: INTM) -> Check (INTM :=>: VAL)
 
 Type-checking a canonical term is rather easy, as we just have to
 delegate the hard work to |canTy|. The checker-evaluator simply needs
 to evaluate the well-typed terms.
 
-> check (C c :>: C c')         = do
->   cc' <- canTy chev (c :>: c')
->   return $ () :=>: (C $ fmap valueOf cc')
->     where chev (t :>: x) = do 
->               ch <- check (t :>: x)  
->               return $ ch :=>: evTm x
+> check (C cty :>: C ctm) = do
+>   cc' <- canTy check (cty :>: ctm)
+>   return $ C ctm :=>: (C $ fmap valueOf cc')
+
 
 As for lambda, it is simple too. We wish the code was simple
 too. But, hey, it isn't. The formal typing rule is the following:
@@ -602,7 +600,7 @@ we simply have to check that $T\ x \ni t$.
 >   freshRef  ("__check" :<: s) 
 >             (\ref -> check (  t $$ A (pval ref) :>: 
 >                               underScope sc ref)) 
->   return $ () :=>: (evTm $ L sc)
+>   return $ L sc :=>: (evTm $ L sc)
 
 Formally, we can bring the |Ex| terms into the |In| world with the
 rule:
@@ -615,11 +613,11 @@ rule:
 
 This translates naturally into the following code:
 
-> check (w :>: N n)            = do
+> check (w :>: N n) = do
 >   r <- askNSupply
 >   yv :<: yt <- infer n
 >   case (equal (SET :>: (w, yt)) r) of
->     True -> return $ () :=>: yv
+>     True -> return $ N n :=>: yv
 >     False -> throwError' $ unlines ["check: inferred type", show yt,
 >                                     "of", show n, "is not", show w]
 
@@ -699,7 +697,7 @@ Which translates directly into the following code:
 > infer (t :? ty)           = do
 >   check (SET :>: ty)
 >   let vty = evTm ty
->   () :=>: v <- check (vty :>: t)
+>   _ :=>: v <- check (vty :>: t)
 >   return $ v :<: vty
 
 Obviously, if none of the rule above applies, then there is something

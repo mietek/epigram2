@@ -159,10 +159,10 @@ The development transformation is achieved by the following code:
 >     -- And ask for making it real
 >     (motiveType, telType) <- unPi $ valueOf eType
 >     motiveTypeTm <- bquoteHere motiveType
->     p <- make $ "P" :<: motiveTypeTm
+>     p :=>: pv <- make $ "P" :<: motiveTypeTm
 >     -- Get the type of the methods and the target
 >     -- And ask for making them real
->     (methods, target) <- mkMethods $ telType $$ (A $ evTm p)
+>     (methods, target) <- mkMethods $ telType $$ (A pv)
 >     -- Check the motive, and target shape
 >     checkMotive motiveType
 >     checkTarget target p motiveType
@@ -191,8 +191,8 @@ been consummed.
 >               case t of 
 >                 PI s t -> do
 >                     sTm <- bquoteHere s
->                     m <- make $ "m" :<: sTm
->                     mkMethods' (N m : ms) (t $$ (A $ evTm m))
+>                     m :=>: mv <- make $ "m" :<: sTm
+>                     mkMethods' (N m : ms) (t $$ A mv)
 >                 target -> do
 >                     targetTm <- bquoteHere target
 >                     return (reverse ms, targetTm)
@@ -787,7 +787,7 @@ term. Unless I've screwed up things, |give| should always be happy.
 >   -- Rename solution from the dummy |binders| to the fresh |deltas|
 >   let motive = transportToLocal bindersL deltas1' solution
 >   -- And we are done
->   motive <- give motive
+>   motive :=>: _ <- give motive
 >   -- Filter out the simplified deltas and patterns (for elimination application)
 >   let deltas1R = filterDeltas bindersL deltas1
 >   patterns <- filterPatterns xi patterns (trail constraints)
@@ -910,7 +910,7 @@ Then, it is straightforward to build the term we want and to give it:
 > applyElim :: Name -> INTM -> [INTM] -> [REF] -> [INTM :>: INTM] -> ProofState ()
 > applyElim elim motive methods deltas args = do
 >     reflArgs <- withNSupply $ mkRefls args
->     Just e <- lookupName elim
+>     Just (e :=>: _) <- lookupName elim
 >     giveNext $ N $ e $## (  map NP deltas ++
 >                             reflArgs)
 >     return ()
@@ -983,9 +983,9 @@ We make elimination accessible to the user by adding it as a Cochon tactic:
 >           Just c -> do
 >              c <- resolveHere c
 >              return $ Just c
->     (elimTy :>: e) <- elabInfer r
+>     (e :=>: ev) :<: elimTy <- elabInfer r
 >     elimTyTm <- bquoteHere elimTy
->     elim c' ((elimTyTm :=>: elimTy) :>: (N e :=>: (evTm (N e))))
+>     elim c' ((elimTyTm :=>: elimTy) :>: (N e :=>: ev))
 >     return "Elimination occured. Subgoals awaiting work..."
 
 > import -> CochonTactics where

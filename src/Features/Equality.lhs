@@ -208,12 +208,12 @@ to InDTm, along with appropriate elaboration and distillation rules.
 
 > import -> ElaborateRules where
 >   elaborate top (PROP :>: DEqBlue t u) = do
->       (tty :>: ttm) <- elabInfer t
->       (uty :>: utm) <- elabInfer u
+>       ((ttm :=>: tv) :<: tty) <- elabInfer t
+>       ((utm :=>: uv) :<: uty) <- elabInfer u
 >       tty' <- bquoteHere tty
 >       uty' <- bquoteHere uty
 >       return ((EQBLUE (tty' :>: N ttm) (uty' :>: N utm))
->               :=>: (EQBLUE (tty :>: evTm ttm) (uty :>: evTm utm)))
+>               :=>: (EQBLUE (tty :>: tv) (uty :>: uv)))
 
 > import -> DistillRules where
 >   distill es (PROP :>: tm@(EQBLUE (tty :>: t) (uty :>: u))) = do

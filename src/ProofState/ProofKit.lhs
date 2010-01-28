@@ -83,8 +83,7 @@ Similarly, |checkHere| type-checks a term using the local name supply...
 > checkHere :: (TY :>: INTM) -> ProofState (INTM :=>: VAL)
 > checkHere (ty :>: tm) = do
 >     mc <- withNSupply $ typeCheck $ check (ty :>: tm)
->     () :=>: tmv <- lift mc
->     return (tm :=>: tmv)
+>     lift mc
 
 ... and |inferHere| infers the type of a term using the local name supply.
 
@@ -271,9 +270,9 @@ several alternatives for where to go next and continuing until a goal is reached
 >     putDevNSupply (freshName nsupply)
 >     return n
 
-> moduleToGoal :: INTM -> ProofState EXTM
+> moduleToGoal :: INTM -> ProofState (EXTM :=>: VAL)
 > moduleToGoal ty = do
->     Right (() :=>: tyv) <- withNSupply (typeCheck $ check (SET :>: ty))
+>     Right (_ :=>: tyv) <- withNSupply (typeCheck $ check (SET :>: ty))
 >     ModuleMother n <- getMother
 >     aus <- getAuncles
 >     let  ty' = liftType aus ty
@@ -301,7 +300,7 @@ The |lookupName| function looks up a name in the context (including axioms and
 primitives); if found, it returns the reference applied to the spine of
 shared parameters.
 
-> lookupName :: Name -> ProofState (Maybe EXTM)
+> lookupName :: Name -> ProofState (Maybe (EXTM :=>: VAL))
 > lookupName name = do
 >     aus <- getAuncles
 >     case Data.Foldable.find ((name ==) . entryName) aus of
@@ -318,21 +317,21 @@ shared parameters.
 The |apply| command checks if the last entry in the development is a girl $y$ with type
 $\Pi S T$ and if so, adds a goal of type $S$ and applies $y$ to it.
 
-> apply :: ProofState ()
+> apply :: ProofState (EXTM :=>: VAL)
 > apply = (do
 >     E ref@(name := k :<: (PI s t)) _ (Girl LETG _) _ <- getDevEntry
->     nsupply <- getDevNSupply
->     z <- make ("z" :<: bquote B0 s nsupply)
->     make ("w" :<: bquote B0 (t $$ A s) nsupply)
+>     s' <- bquoteHere s
+>     t' <- bquoteHere (t $$ A s)
+>     z :=>: _ <- make ("z" :<: s')
+>     make ("w" :<: t')
 >     goIn
 >     give (N (P ref :$ A (N z)))
->     return ()
 >   ) `replacePMF` "apply: last entry in the development must be a girl with a pi-type."
 
 The |done| command checks if the last entry in the development is a girl, and if so,
 fills in the goal with this entry.
 
-> done :: ProofState EXTM
+> done :: ProofState (EXTM :=>: VAL)
 > done = (do
 >     E ref _ (Girl LETG _) _ <- getDevEntry
 >     give (N (P ref))
@@ -342,13 +341,13 @@ The |give| command checks the provided term has the goal type, and if so, fills 
 the goal, updates the reference and goes out. The |giveNext| variant moves to the
 next goal (if one exists) instead.
 
-> give :: INTM -> ProofState EXTM
+> give :: INTM -> ProofState (EXTM :=>: VAL)
 > give tm = give' tm <* goOut
 
-> giveNext :: INTM -> ProofState EXTM
+> giveNext :: INTM -> ProofState (EXTM :=>: VAL)
 > giveNext tm = give' tm <* (nextGoal <|> goOut)
 
-> give' :: INTM -> ProofState EXTM
+> give' :: INTM -> ProofState (EXTM :=>: VAL)
 > give' tm = do
 >     tip <- getDevTip
 >     case tip of         
@@ -428,13 +427,13 @@ general.
 The |make| command adds a named goal of the given type to the bottom of the
 current development, after checking that the purported type is in fact a type.
 
-> make :: (String :<: INTM) -> ProofState EXTM
+> make :: (String :<: INTM) -> ProofState (EXTM :=>: VAL)
 > make (s :<: ty) = do
->     m <- withNSupply (typeCheck $ check (SET :>: ty))
->     m `catchEither` ("make: " ++ show ty ++ " is not a set.")
->     make' (s :<: (ty :=>: evTm ty))
+>     mty <- withNSupply (typeCheck $ check (SET :>: ty))
+>     tt <- mty `catchEither` ("make: " ++ show ty ++ " is not a set.")
+>     make' (s :<: tt)
 
-> make' :: (String :<: (INTM :=>: TY)) -> ProofState EXTM
+> make' :: (String :<: (INTM :=>: TY)) -> ProofState (EXTM :=>: VAL)
 > make' (s :<: (ty :=>: tyv)) = do
 >     aus <- getAuncles
 >     s' <- pickName "G" s
@@ -450,8 +449,9 @@ current development, after checking that the purported type is in fact a type.
 The |applyAuncles| command applies a reference to the given
 spine of shared parameters.
 
-> applyAuncles :: REF -> Entries -> EXTM
-> applyAuncles ref aus = P ref $:$ aunclesToElims (aus <>> F0)
+> applyAuncles :: REF -> Entries -> EXTM :=>: VAL
+> applyAuncles ref aus = tm :=>: evTm tm
+>   where tm = P ref $:$ aunclesToElims (aus <>> F0)
 
 > aunclesToElims :: Fwd (Entry Bwd) -> [Elim INTM]
 > aunclesToElims F0 = []
@@ -489,13 +489,13 @@ is also a set; if so, it appends a $\Pi$-abstraction to the current development.
 >         Unknown _  -> throwError' "piBoy: goal is not of type SET."
 >         _          -> throwError' "piBoy: only possible for incomplete goals."
 
-The |select| command takes a term representing a neutral parameter, makes a new goal of the
-same type, and fills it in with the parameter. \question{Is bquote really right here?}
+The |select| command takes a term representing a neutral parameter, makes a new
+goal of the same type, and fills it in with the parameter.
 
-> select :: INTM -> ProofState EXTM
+> select :: INTM -> ProofState (EXTM :=>: VAL)
 > select tm@(N (P (name := k :<: ty))) = do
->     nsupply <- getDevNSupply
->     make (fst (last name) :<: bquote B0 ty nsupply)
+>     ty' <- bquoteHere ty
+>     make (fst (last name) :<: ty')
 >     goIn
 >     give tm
 > select _ = throwError' "select: term is not a parameter."

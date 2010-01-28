@@ -1,4 +1,10 @@
 
+> elabbedV :: VAL -> ProofState (INTM :=>: VAL)
+> elabbedV v = do
+>   t <- bquoteHere v
+>   return (t :=>: v)
+
+
 \subsection{$\lambda$-lifting}
 
 The |gimme| operator elaborates every definition in the proof state, thereby

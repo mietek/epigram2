@@ -450,8 +450,7 @@ of the given reference, and returns its term and value representations.
 >    makeSubgoal ref = do
 >        q'  <- bquoteHere (pty ref)
 >        x   <- pickName "q" ""
->        qr  <- make (x :<: q')
->        return (qr :=>: evTm qr)
+>        make (x :<: q')
 
 
 The |simplify| tactic attempts to simplify the type of the current goal, which

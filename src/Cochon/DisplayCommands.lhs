@@ -43,8 +43,8 @@ end, so it will not leave any subgoals lying around in the proof state.
 > infoElaborate tm = do
 >     makeModule "__infoElaborate"
 >     goIn
->     ty :>: tm' <- elabInfer tm
->     tm'' <- bquoteHere (evTm (N tm'))
+>     (tm' :=>: tmv) :<: ty <- elabInfer tm
+>     tm'' <- bquoteHere tmv
 >     s <- prettyHere (ty :>: tm'')
 >     goOut
 >     dropModule
@@ -58,7 +58,7 @@ representation of the resulting type.
 > infoInfer tm = do
 >     makeModule "__infoInfer"
 >     goIn
->     ty :>: _ <- elabInfer tm
+>     _ :<: ty <- elabInfer tm
 >     ty' <- bquoteHere ty
 >     s <- prettyHere (SET :>: ty')
 >     goOut
@@ -123,8 +123,8 @@ The |infoWhatIs| command displays a term in various representations.
 
 > infoWhatIs :: ExDTmRN -> ProofState String
 > infoWhatIs tmd = draftModule "__infoWhatIs" (do
->     (tyv :>: tm) <- elabInfer tmd
->     tmq <- bquoteHere (evTm tm)
+>     (tm :=>: tmv) :<: tyv <- elabInfer tmd
+>     tmq <- bquoteHere tmv
 >     tms :=>: _ <- distillHere (tyv :>: tmq)
 >     ty <- bquoteHere tyv
 >     tys :=>: _ <- distillHere (SET :>: ty)

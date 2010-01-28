@@ -39,10 +39,8 @@ $\lambda$-lift terms.
 > elabbedT :: INTM -> ProofState (INTM :=>: VAL)
 > elabbedT t = return (t :=>: evTm t)
 
-> elabbedV :: VAL -> ProofState (INTM :=>: VAL)
-> elabbedV v = do
->   t <- bquoteHere v
->   return (t :=>: v)
+> elabbedN :: (EXTM :=>: VAL) -> ProofState (INTM :=>: VAL)
+> elabbedN (n :=>: v) = return (N n :=>: v)
 
 The Boolean parameter indicates whether the elaborator is working at the top
 level of the term, because if so, it can create boys in the current development
@@ -90,17 +88,16 @@ interesting types.
 >     h <- pickName "h" ""
 >     make (h :<: y')
 >     goIn
->     elabbedT . N =<< elabGive t
+>     elabbedN =<< elabGive t
 
 > elaborate True (PI (MU l d) t :>: DCON f) = do
 >     (m' :=>: _) <- elaborate False $ case l of
 >       Nothing  -> elimOpMethodType $$ A d $$ A t :>: f
 >       Just l   -> elimOpLabMethodType $$ A l $$ A d $$ A t :>: f
 >     d' <- bquoteHere d
->     (dll :=>: _) <- elaborate False (desc :>: DT (InTmWrap d')) -- lambda lift that sucker
 >     t' <- bquoteHere t
 >     x <- lambdaBoy (fortran t)
->     elabbedT . N $ elimOp :@ [dll, N (P x), t', m']
+>     elabbedT . N $ elimOp :@ [d', N (P x), t', m']
 
 > elaborate True (PI (SIGMA d r) t :>: DCON f) = do
 >     let mt =  PI d . L . HF (fortran r) $ \ a ->
@@ -109,8 +106,7 @@ interesting types.
 >     mt' <- bquoteHere mt
 >     (m' :=>: m) <- elaborate False (mt :>: f)
 >     x <- lambdaBoy (fortran t)
->     checkHere (t $$ A (PAIR (NP x $$ Fst) (NP x $$ Snd)) :>: N (((m' :? mt') :$ A (N (P x :$ Fst))) :$ A (N (P x :$ Snd))))
->         -- lambda lift?
+>     elabbedT . N $ ((m' :? mt') :$ A (N (P x :$ Fst))) :$ A (N (P x :$ Snd))
 
 > elaborate True (PI (ENUMT e) t :>: m) | isTuply m = do
 >     targetsDesc <- withNSupply (equal (ARR (ENUMT e) SET :>: (t, L (K desc))))
@@ -148,8 +144,7 @@ If the elaborator encounters a question mark, it simply creates an appropriate s
 
 > elaborate top (ty :>: DQ x) = do
 >     ty' <- bquoteHere ty
->     g <- make (x :<: ty')
->     return (N g :=>: evTm g)
+>     elabbedN =<< make (x :<: ty')
 
 
 There are a few possibilities for elaborating $\lambda$-abstractions. If both the
@@ -172,8 +167,7 @@ by elaboration, then return the reference.
 >     make (h :<: pi')
 >     goIn
 >     l <- lambdaBoy (dfortran (DL sc))
->     h <- elabGive (underDScope sc l)
->     return (N h :=>: evTm h)
+>     elabbedN =<< elabGive (underDScope sc l)
 
 If we are at top level, we can simply create a |lambdaBoy| in the current development,
 and carry on elaborating.
@@ -185,19 +179,19 @@ and carry on elaborating.
 >     elaborate True (ty :>: underDScope sc l)
 >     
     
-Much as with type-checking, we push types in to neutral terms by calling |elabInfer| on
-the term, then checking the inferred type is what we pushed in.
+Much as with type-checking, we push types in to neutral terms by calling
+|elabInfer| on the term, then checking the inferred type is what we pushed in.
 
 > elaborate top (w :>: DN n) = do
->   (y :>: n) <- elabInfer n
+>   (nn :<: y) <- elabInfer n
 >   eq <- withNSupply (equal (SET :>: (w, y)))
->   guard eq `replaceError` ("elaborate: inferred type\n" ++ show y ++ "\nof\n" ++ show n
->                              ++ "\nis not\n" ++ show w)
->   return (N n :=>: evTm (N n))
+>   guard eq `replaceError` unlines ["elaborate: inferred type", show y,
+>                                    "of", show n, "is not", show w]
+>   elabbedN nn
 
 
-If the elaborator made up a term, it does not require further elaboration, but we should
-type-check it for safety's sake. 
+If the elaborator made up a term, it does not require further elaboration, but
+we should type-check it for safety's sake. 
 
 > elaborate top (ty :>: DT (InTmWrap tm)) = checkHere (ty :>: tm)
 
@@ -211,35 +205,33 @@ as |elaborate| is to |check|. It infers the type of a display term, calling on
 the elaborator rather than the type-checker. Most of the cases are similar to
 those of |infer|.
 
-> elabInfer :: ExDTmRN -> ProofState (TY :>: EXTM)
+> elabInfer :: ExDTmRN -> ProofState ((EXTM :=>: VAL) :<: TY)
 
 > elabInfer (DP x) = do
 >     (ref, as) <- elabResolve x
 >     let tm = P ref $:$ as
 >     ty <- withNSupply (typeCheck $ infer tm)
->     (_ :<: ty') <- ty `catchEither` "elabInfer: inference failed!"
->     return (ty' :>: tm)
+>     (tmv :<: ty') <- ty `catchEither` "elabInfer: inference failed!"
+>     return $ (tm :=>: tmv) :<: ty'
 
 > elabInfer (tm ::$ Call _) = do
->     (LABEL l ty :>: tm') <- elabInfer tm
+>     ((tm' :=>: tmv) :<: LABEL l ty) <- elabInfer tm
 >     l' <- bquoteHere l
->     return (ty :>: (tm' :$ Call l'))
+>     return $ ((tm' :$ Call l') :=>: (tmv $$ Call l)) :<: ty
 
 > elabInfer (t ::$ s) = do
->     (C ty :>: t') <- elabInfer t
->     (s', ty') <- elimTy (elaborate False) (evTm t' :<: ty) s
->     let s'' = fmap (\(x :=>: _) -> x) s'
->     return (ty' :>: (t' :$ s''))
+>     ((t' :=>: tv) :<: C ty) <- elabInfer t
+>     (s', ty') <- elimTy (elaborate False) (tv :<: ty) s
+>     return $ ((t' :$ fmap termOf s') :=>: (tv $$ fmap valueOf s')) :<: ty'
 
 > elabInfer (op ::@ ts) = do
 >   (vs, t) <- opTy op (elaborate False) ts
->   let vs' = fmap (\(x :=>: _) -> x) vs
->   return (t :>: op :@ vs')
+>   return $ ((op :@ fmap termOf vs) :=>: (op @@ fmap valueOf vs)) :<: t
 
 > elabInfer (DType ty) = do
 >   (ty' :=>: vty)  <- elaborate False (SET :>: ty)
 >   x <- pickName "x" ""
->   return (ARR vty vty :>: (L (x :. (N (V 0))) :? ARR ty' ty'))
+>   return $ ((L (x :. (N (V 0))) :? ARR ty' ty') :=>: (L (HF "__id" id))) :<: ARR vty vty
 
 > elabInfer tt = throwError' ("elabInfer: can't cope with " ++ show tt)
 
@@ -300,7 +292,7 @@ and a spine of shared parameters to which it should be applied.
 > elabResolve :: RelName -> ProofState (REF, Spine {TT} REF)
 > elabResolve x = do
 >    aus <- getAuncles
->    findGlobal aus x `catchEither` "elabInfer: cannot resolve name"
+>    findGlobal aus x `catchEither` "elabResolve: cannot resolve name"
 >    
 
 
@@ -312,13 +304,13 @@ the current goal, and calls the |give| command on the resulting term. If its arg
 is a nameless question mark, it avoids creating a pointless subgoal by simply returning
 a reference to the current goal (applied to the appropriate shared parameters).
 
-> elabGive :: InDTmRN -> ProofState EXTM
+> elabGive :: InDTmRN -> ProofState (EXTM :=>: VAL)
 > elabGive tm = elabGive' tm <* goOut
 
-> elabGiveNext :: InDTmRN -> ProofState EXTM
+> elabGiveNext :: InDTmRN -> ProofState (EXTM :=>: VAL)
 > elabGiveNext tm = elabGive' tm <* (nextGoal <|> goOut)
 
-> elabGive' :: InDTmRN -> ProofState EXTM
+> elabGive' :: InDTmRN -> ProofState (EXTM :=>: VAL)
 > elabGive' tm = do
 >     tip <- getDevTip
 >     case tip of         
@@ -338,7 +330,7 @@ The |elabMake| command elaborates the given display term in a module to
 produce a type, then converts the module to a goal with that type. Thus any
 subgoals produced by elaboration will be children of the resulting goal.
 
-> elabMake :: (String :<: InDTmRN) -> ProofState EXTM
+> elabMake :: (String :<: InDTmRN) -> ProofState (EXTM :=>: VAL)
 > elabMake (s :<: ty) = do
 >     makeModule s
 >     goIn
@@ -357,14 +349,14 @@ program x,y will give a proof state of:
   y : N  (from lambdaboy)
 ] g x y call   (from giveNext, then we're ready to go).
 
-> elabProgram :: [String] -> ProofState EXTM
+> elabProgram :: [String] -> ProofState (EXTM :=>: VAL)
 > elabProgram args = do
 >     n <- getMotherName
 >     (_ :=>: g) <- getHoleGoal
 >     let pn = P (n := FAKE :<: g)
 >     let newty = pity (mkTel pn g [] args)
 >     newty' <- bquoteHere newty
->     g <- make ("g" :<: newty') 
+>     g :=>: _ <- make ("g" :<: newty') 
 >     argrefs <- traverse lambdaBoy args
 >     let fcall = pn $## (map NP argrefs) 
 >     let call = g $## (map NP argrefs) :$ Call (N fcall)
@@ -382,15 +374,13 @@ program x,y will give a proof state of:
 The |elabPiBoy| command elaborates the given display term to produce a type, and
 creates a $\Pi$-boy with that type.
 
-> elabPiBoy :: (String :<: InDTmRN) -> ProofState ()
+> elabPiBoy :: (String :<: InDTmRN) -> ProofState REF
 > elabPiBoy (s :<: ty) = do
 >     tt <- elaborate True (SET :>: ty)
 >     piBoy' (s :<: tt)
->     return ()
 
-> elabLamBoy :: (String :<: InDTmRN) -> ProofState ()
+> elabLamBoy :: (String :<: InDTmRN) -> ProofState REF
 > elabLamBoy (s :<: ty) = do
 >     tt <- elaborate True (SET :>: ty)
 >     lambdaBoy' (s :<: tt)
->     return ()
 
