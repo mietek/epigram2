@@ -205,7 +205,7 @@ as |elaborate| is to |check|. It infers the type of a display term, calling on
 the elaborator rather than the type-checker. Most of the cases are similar to
 those of |infer|.
 
-> elabInfer :: ExDTmRN -> ProofState ((EXTM :=>: VAL) :<: TY)
+> elabInfer :: ExDTmRN -> ProofState (EXTM :=>: VAL :<: TY)
 
 > elabInfer (DP x) = do
 >     (ref, as) <- elabResolve x
@@ -217,21 +217,24 @@ those of |infer|.
 > elabInfer (tm ::$ Call _) = do
 >     ((tm' :=>: tmv) :<: LABEL l ty) <- elabInfer tm
 >     l' <- bquoteHere l
->     return $ ((tm' :$ Call l') :=>: (tmv $$ Call l)) :<: ty
+>     return $ (tm' :$ Call l') :=>: (tmv $$ Call l) :<: ty
 
 > elabInfer (t ::$ s) = do
 >     ((t' :=>: tv) :<: C ty) <- elabInfer t
 >     (s', ty') <- elimTy (elaborate False) (tv :<: ty) s
->     return $ ((t' :$ fmap termOf s') :=>: (tv $$ fmap valueOf s')) :<: ty'
+>     return $ (t' :$ fmap termOf s') :=>: (tv $$ fmap valueOf s') :<: ty'
 
 > elabInfer (op ::@ ts) = do
->   (vs, t) <- opTy op (elaborate False) ts
->   return $ ((op :@ fmap termOf vs) :=>: (op @@ fmap valueOf vs)) :<: t
+>     (vs, t) <- opTy op (elaborate False) ts
+>     return $ (op :@ fmap termOf vs) :=>: (op @@ fmap valueOf vs) :<: t
 
 > elabInfer (DType ty) = do
->   (ty' :=>: vty)  <- elaborate False (SET :>: ty)
->   x <- pickName "x" ""
->   return $ ((L (x :. (N (V 0))) :? ARR ty' ty') :=>: (L (HF "__id" id))) :<: ARR vty vty
+>     (ty' :=>: vty)  <- elaborate False (SET :>: ty)
+>     x <- pickName "x" ""
+>     return $ (idTM x :? ARR ty' ty') :=>: idVAL :<: ARR vty vty
+>   where
+>     idTM x = L (x :. (N (V 0)))
+>     idVAL = L (HF "__id" id)
 
 > elabInfer tt = throwError' ("elabInfer: can't cope with " ++ show tt)
 

@@ -51,9 +51,6 @@ typing context. We push types in checkable terms, pull types from
 inferable terms.
 
 We also distinguish the representations of |TT| terms and |VV| values.
-We may consider distinguishing (unelaborated) display terms from those which
-have been elaborated and hence can be evaluated, but for the moment we
-conflate the two cases.
 
 
 > data Phase  = TT | VV
@@ -77,17 +74,18 @@ We can push types into:
 
 And we can infer types from:
 \begin{itemize}
+\item parameters, because they carry their types;
 \item variables, by reading the context;
 \item fully applied operators, by |opTy| defined below;
 \item elimination, by the type of the eliminator; and
 \item type ascription on a checkable term, by the ascripted type.
 \end{itemize}
 
->   P     :: x                     -> Tm {Ex, p}   x -- parameter
->   V     :: Int                   -> Tm {Ex, TT}  x -- variable
->   (:@)  :: Op -> [Tm {In, p} x]  -> Tm {Ex, p}   x -- fully applied op
->   (:$)  :: Tm {Ex, p} x -> Elim (Tm {In, p} x) -> Tm {Ex, p} x  -- elim
->   (:?)  :: Tm {In, TT} x -> Tm {In, TT} x -> Tm {Ex, TT} x      -- typing
+>   P     :: x                                    -> Tm {Ex, p}   x -- parameter
+>   V     :: Int                                  -> Tm {Ex, TT}  x -- variable
+>   (:@)  :: Op -> [Tm {In, p} x]                 -> Tm {Ex, p}   x -- fully applied op
+>   (:$)  :: Tm {Ex, p} x -> Elim (Tm {In, p} x)  -> Tm {Ex, p}   x -- elim
+>   (:?)  :: Tm {In, TT} x -> Tm {In, TT} x       -> Tm {Ex, TT}  x -- typing
 
 To put some flesh on these bones, we define and use the |Scope|,
 |Can|, |Op|, and |Elim| data-types. Their role is described
@@ -98,7 +96,7 @@ implementers are advised to skip the following.
 
 In the world of values, ie. |Tm {In, VV} p|, the neutral terms are
 exactly the |N t| terms. Enforcing this invariant requires some
-caution in the way we deal with operator and how we turn them into
+caution in the way we deal with operators and how we turn them into
 values, so this statement relies on the hypothesis that the evaluation
 of operators is correct: it is not enforced by Haskell type-system.
 
@@ -354,9 +352,9 @@ or cons, but complain about the first list if it is neutral.
 
 We have some pattern synonyms for common, er, patterns.
 
-> pattern SET       = C Set                   -- set of sets
-> pattern ARR s t   = C (Pi s (L (K t)))      -- simple arrow
-> pattern PI s t    = C (Pi s t)   -- dependent functions
+> pattern SET       = C Set                -- set of sets
+> pattern ARR s t   = C (Pi s (L (K t)))   -- simple arrow
+> pattern PI s t    = C (Pi s t)           -- dependent functions
 > pattern CON t     = C (Con t)
 > pattern NV n      = N (V n)
 > pattern NP n      = N (P n)
@@ -392,7 +390,7 @@ As we are discussing syntactic sugar, let me introduce the ``reduces
 to'' symbol:
 
 > data t :=>: v = t :=>: v deriving (Show, Eq)
-> infix 4 :=>:
+> infix 5 :=>:
 
 With the associated projections:
 
