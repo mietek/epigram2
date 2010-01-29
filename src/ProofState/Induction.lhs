@@ -200,7 +200,7 @@ flatten the structure made by the interpretation of |D'|.
 
 
 
-> introData branch (ARG (ENUMT _X) _F) = do
+> introData branch (ARGF _X _F) = do
 >   withGoal $ unpackSigma $ do
 >     (_ :=>: goal) <- getGoal "introData:Done 2"
 >     case goal of
