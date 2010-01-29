@@ -75,15 +75,9 @@ also accumulates a spine so shared parameters can be removed.
 > distillInfer es tm@(P (name := _ :<: ty)) as       = do
 >     me <- getMotherName
 >     let (relName, argsToDrop) = baptise es me B0 name
->     (e', ty') <- processArgs (evTm tm :<: ty) as
->     return (DP relName $::$ (drop argsToDrop e') :<: ty')
->   where
->     processArgs :: (VAL :<: TY) -> Spine {TT} REF -> ProofState (DSpine RelName, TY)
->     processArgs (_ :<: ty) [] = return ([], ty)
->     processArgs (v :<: C ty) (a:as) = do
->         (e', ty') <- elimTy (distill es) (v :<: ty) a
->         (es, ty'') <- processArgs (v $$ (fmap valueOf e') :<: ty') as 
->         return (fmap termOf e' : es, ty'')
+>     (e', ty') <- processArgs es (evTm tm :<: ty) as
+>     return ((DP relName $::$ drop argsToDrop e') :<: ty')
+>     
 
 > distillInfer es (t :$ e) as    = distillInfer es t (e : as)
 
@@ -91,12 +85,22 @@ also accumulates a spine so shared parameters can be removed.
 
 > distillInfer es (N t :? _) as  = distillInfer es t as
 
-> distillInfer es (t :? ty) []   = do
+> distillInfer es (t :? ty) as   = do
 >     ty'  :=>: vty  <- distill es (SET :>: ty)
->     t'   :=>: _    <- distill es (vty :>: t)
->     return ((DType ty' ::$ A t') :<: vty)
+>     t'   :=>: vt   <- distill es (vty :>: t)
+>     (e', ty'')     <- processArgs es (vt :<: vty) as
+>     return ((DType ty' ::$ A t') $::$ e' :<: ty'')
 
 > distillInfer _ tm _ = error ("distillInfer: can't cope with " ++ show tm)
+
+
+
+> processArgs :: Entries -> (VAL :<: TY) -> Spine {TT} REF -> ProofState (DSpine RelName, TY)
+> processArgs _ (_ :<: ty) [] = return ([], ty)
+> processArgs es (v :<: C ty) (a:as) = do
+>     (e', ty') <- elimTy (distill es) (v :<: ty) a
+>     (es, ty'') <- processArgs es (v $$ (fmap valueOf e') :<: ty') as 
+>     return (fmap termOf e' : es, ty'')
 
 
 The |toExDTm| helper function will distill a term to produce an
