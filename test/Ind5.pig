@@ -1,4 +1,4 @@
-make TestD := con ['arg (Enum ['zero 'suc]) [ (con ['done]) (con ['ind1 con ['done]])] ] : Desc ;
+make TestD := con ['argf ['zero 'suc] [ (con ['done]) (con ['ind1 con ['done]])] ] : Desc ;
 make Test := (Mu TestD) : Set ;
 make add : Test -> Test ;
 lambda x ;
