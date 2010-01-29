@@ -118,6 +118,11 @@ may be useful for paranoia purposes.
 >         _ -> return ()
 
 
+> withGoal :: (VAL -> ProofState ()) -> ProofState ()
+> withGoal f = do
+>   (_ :=>: goal) <- getGoal "withGoal"
+>   f goal
+
 
 \subsection{Navigation Commands}
 
