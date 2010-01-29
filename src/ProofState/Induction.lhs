@@ -5,20 +5,9 @@
 
 > module ProofState.Induction where
 
-> import Control.Applicative
-> import Data.Foldable hiding (sequence_)
-> import Data.List
-> import Data.Maybe
-> import Debug.Trace
-
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
 
-> import NameSupply.NameSupply
-> import NameSupply.NameSupplier
-
-> import DisplayLang.DisplayTm
-> import DisplayLang.Elaborator
 > import DisplayLang.Naming
 
 > import Evidences.Tm
