@@ -314,6 +314,12 @@ shared parameters.
 
 \subsection{Construction Commands}
 
+Various commands yield an |EXTM :=>: VAL|, and we sometimes need to convert
+this to an |INTM :=>: VAL|:
+
+> neutralise :: (EXTM :=>: VAL) -> ProofState (INTM :=>: VAL)
+> neutralise (n :=>: v) = return (N n :=>: v)
+
 The |apply| command checks if the last entry in the development is a girl $y$ with type
 $\Pi S T$ and if so, adds a goal of type $S$ and applies $y$ to it.
 
@@ -444,19 +450,6 @@ current development, after checking that the purported type is in fact a type.
 >     putDevEntry (E ref (last n) (Girl LETG (B0, Unknown (ty :=>: tyv), freshNSpace nsupply s')) ty')
 >     putDevNSupply (freshName nsupply)
 >     return (applyAuncles ref aus)
-
-
-The |applyAuncles| command applies a reference to the given
-spine of shared parameters.
-
-> applyAuncles :: REF -> Entries -> EXTM :=>: VAL
-> applyAuncles ref aus = tm :=>: evTm tm
->   where tm = P ref $:$ aunclesToElims (aus <>> F0)
-
-> aunclesToElims :: Fwd (Entry Bwd) -> [Elim INTM]
-> aunclesToElims F0 = []
-> aunclesToElims (E ref _ (Boy _) _ :> es) = (A (N (P ref))) : aunclesToElims es
-> aunclesToElims (_ :> es) = aunclesToElims es
 
 
 The |pickName| command takes a prefix suggestion and a name suggestion

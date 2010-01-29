@@ -205,3 +205,48 @@ You are not expected to understand this.
               given a proof of |s|, yields a proof of |t|.
       \end{enumerate}
 \end{enumerate}
+
+
+
+> problemSimplify :: ProofState ()
+> problemSimplify = do
+>     lams <- many (pickName "h" "" >>= lambdaBoy)
+>     simplifyHypotheses
+>     _ :=>: ty <- getHoleGoal
+>     (refs, sol) <- simplifyGoal "" ty
+>     proofTrace ("refs: " ++ show refs)
+>     subgoals <- dischargeTelescope refs
+>     proofTrace ("subgoals: " ++ show subgoals)
+>     sol' <- dischargeLots refs sol
+>     sol'' <- bquoteHere (sol' $$$ fmap (A . valueOf) subgoals)
+>     give' sol''
+>     return ()
+
+
+> dischargeTelescope :: Bwd REF -> ProofState (Bwd (EXTM :=>: VAL))
+> dischargeTelescope B0 = return B0
+> dischargeTelescope (refs :< ref) = do
+>     ref' <- dischargeRefPis refs ref
+>     subgoal <- makeSubgoal ref'
+>     subgoals <- dischargeTelescope refs
+>     return (subgoals :< subgoal)
+
+
+> simplifyHypotheses :: ProofState ()
+> simplifyHypotheses = return ()
+
+> simplifyGoal :: String -> TY -> ProofState (Bwd REF, VAL)
+> simplifyGoal _ UNIT = return (B0, VOID)
+> simplifyGoal _ (SIGMA s t) = do
+>     (sRefs, sVal) <- simplifyGoal (fortran t) s
+>     (tRefs, tVal) <- simplifyGoal "" (t $$ A sVal)
+>     --tVal' <- dischargeLots tRefs tVal
+>     --tRefs' <- mapM (dischargeRefPis sRefs) tRefs
+>     --let tVal'' = tVal' $$$ fmap (\tref -> A (NP tref $$$ fmap (A . NP) sRefs)) tRefs'
+>     return (sRefs <+> tRefs, PAIR sVal tVal)
+> simplifyGoal _ (PRF p) = do
+>     nsupply <- askNSupply
+>     case runReaderT (propSimplify B0 p) nsupply of
+>         Nothing                   -> cannotSimplify "" (PRF p)
+>         Just (SimplyAbsurd _)     -> throwError' "simlpifyGoal: oh no, goal is absurd!"
+>         Just (Simply qs _ h)      -> return (qs, h)

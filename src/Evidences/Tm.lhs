@@ -561,12 +561,14 @@ We can also throw away a label, should we want to.
 > dropLabel :: Labelled f t -> Labelled f t
 > dropLabel (_ :?=: a) = (Nothing :?=: a)
 
-%if False
-
 
 \subsection{Term Construction}
 
-I think that this stuff should disappear with Tactics spreading.
+> idTM :: String -> INTM
+> idTM x   = L (x :. (N (V 0)))
+
+> idVAL :: String -> VAL
+> idVAL x  = L (HF x id)
 
 > ($#) :: Int -> [Int] -> InTm x
 > f $# xs = N (foldl (\ g x -> g :$ A (NV x)) (V f) xs)
@@ -579,6 +581,8 @@ I think that this stuff should disappear with Tactics spreading.
 > fortran (L (HF x  _))  | not (null x) = x
 > fortran _ = "x"
 
+
+%if False
 
 > instance Traversable Can where
 >   traverse f Set       = (|Set|)

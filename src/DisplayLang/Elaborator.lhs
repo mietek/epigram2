@@ -39,8 +39,6 @@ $\lambda$-lift terms.
 > elabbedT :: INTM -> ProofState (INTM :=>: VAL)
 > elabbedT t = return (t :=>: evTm t)
 
-> elabbedN :: (EXTM :=>: VAL) -> ProofState (INTM :=>: VAL)
-> elabbedN (n :=>: v) = return (N n :=>: v)
 
 The Boolean parameter indicates whether the elaborator is working at the top
 level of the term, because if so, it can create boys in the current development
@@ -62,7 +60,7 @@ interesting types.
 >     h <- pickName "h" ""
 >     make (h :<: y')
 >     goIn
->     elabbedN =<< elabGive t
+>     neutralise =<< elabGive t
 
 > elaborate True (PI (MU l d) t :>: DCON f) = do
 >     (m' :=>: _) <- elaborate False $ case l of
@@ -118,7 +116,7 @@ If the elaborator encounters a question mark, it simply creates an appropriate s
 
 > elaborate top (ty :>: DQ x) = do
 >     ty' <- bquoteHere ty
->     elabbedN =<< make (x :<: ty')
+>     neutralise =<< make (x :<: ty')
 
 
 There are a few possibilities for elaborating $\lambda$-abstractions. If both the
@@ -141,7 +139,7 @@ by elaboration, then return the reference.
 >     make (h :<: pi')
 >     goIn
 >     l <- lambdaBoy (dfortran (DL sc))
->     elabbedN =<< elabGive (underDScope sc l)
+>     neutralise =<< elabGive (underDScope sc l)
 
 If we are at top level, we can simply create a |lambdaBoy| in the current development,
 and carry on elaborating.
@@ -161,7 +159,7 @@ Much as with type-checking, we push types in to neutral terms by calling
 >   eq <- withNSupply (equal (SET :>: (w, y)))
 >   guard eq `replaceError` unlines ["elaborate: inferred type", show y,
 >                                    "of", show n, "is not", show w]
->   elabbedN nn
+>   neutralise nn
 
 
 If the elaborator made up a term, it does not require further elaboration, but
@@ -205,10 +203,7 @@ those of |infer|.
 > elabInfer (DType ty) = do
 >     (ty' :=>: vty)  <- elaborate False (SET :>: ty)
 >     x <- pickName "x" ""
->     return $ (idTM x :? ARR ty' ty') :=>: idVAL :<: ARR vty vty
->   where
->     idTM x = L (x :. (N (V 0)))
->     idVAL = L (HF "__id" id)
+>     return $ (idTM x :? ARR ty' ty') :=>: idVAL x :<: ARR vty vty
 
 > elabInfer tt = throwError' ("elabInfer: can't cope with " ++ show tt)
 

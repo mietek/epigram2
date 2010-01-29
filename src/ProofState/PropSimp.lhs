@@ -26,6 +26,7 @@
 > import Evidences.Tm
 > import Evidences.Rules
 
+> import ProofState.ProofContext
 > import ProofState.ProofState
 > import ProofState.ProofKit
 
@@ -87,23 +88,45 @@ The |dischargeLots| function discharges and $\lambda$-binds a list of references
 The |dischargeAllLots| function discharges and $\forall$-binds a list of references over a |VAL|.
 It checks to see which are actually used, and inserts constant scopes |K| where possible.
 
-> dischargeAllLots :: (NameSupplier m) => Bwd REF -> VAL -> m VAL
-> dischargeAllLots bs v = do
+> dischargeFLots :: (NameSupplier m) => (Bool -> String -> INTM -> INTM -> INTM) -> Bwd REF -> VAL -> m VAL
+> dischargeFLots f bs v = do
 >     temp <- bquote B0 v
 >     let cs = fmap (contains temp) bs
 >     v' <- bquote bs v
->     v'' <- wrapAlls bs cs v'
+>     v'' <- wrapFs bs cs v'
 >     return (evTm v'')
 >   where
->     wrapAlls :: (NameSupplier m) => Bwd REF -> Bwd Bool -> INTM -> m INTM
->     wrapAlls B0 _ tm = return tm
->     wrapAlls (bs :< (n := _ :<: ty)) (cs :< c) (PRF tm) = do
+>     wrapFs :: (NameSupplier m) => Bwd REF -> Bwd Bool -> INTM -> m INTM
+>     wrapFs B0 _ tm = return tm
+>     wrapFs (bs :< (n := _ :<: ty)) (cs :< c) tm = do
 >         ty' <- bquote B0 ty
->         let sc = if c then (fst (last n) :. tm) else (K tm)
->         wrapAlls bs cs (PRF (ALL ty' (L sc)))
+>         wrapFs bs cs (f c (fst (last n)) ty' tm)
 
 >     contains :: INTM -> REF -> Bool
 >     contains tm ref = any (== ref) tm
+
+
+> dischargeAllLots :: (NameSupplier m) => Bwd REF -> VAL -> m VAL
+> dischargeAllLots = dischargeFLots f
+>   where 
+>     f :: Bool -> String -> INTM -> INTM -> INTM
+>     f True   x p (PRF q) = PRF (ALLV x p q)
+>     f False  x p (PRF q) = PRF (ALL p (LK q))
+
+> dischargePiLots :: (NameSupplier m) => Bwd REF -> VAL -> m VAL
+> dischargePiLots = dischargeFLots f
+>   where
+>     f :: Bool -> String -> INTM -> INTM -> INTM
+>     f True   x p q = PIV x p q
+>     f False  x p q = PI p (LK q)
+
+
+The |dischargeRef| function calls |dischargeLots| on the type of a reference.
+
+> dischargeRef :: (NameSupplier m) => Bwd REF -> REF -> m REF
+> dischargeRef bs (n := DECL :<: ty) = do
+>     ty' <- dischargeLots bs ty
+>     return (n := DECL :<: ty')
 
 
 The |dischargeRefAlls| function calls |dischargeAllLots| on the type of a reference.
@@ -112,6 +135,15 @@ The |dischargeRefAlls| function calls |dischargeAllLots| on the type of a refere
 > dischargeRefAlls bs (n := DECL :<: ty) = do
 >     ty' <- dischargeAllLots bs ty
 >     return (n := DECL :<: ty')
+
+The |dischargeRefPis| function calls |dischargePiLots| on the type of a reference.
+
+> dischargeRefPis :: (NameSupplier m) => Bwd REF -> REF -> m REF
+> dischargeRefPis bs (n := DECL :<: ty) = do
+>     ty' <- dischargePiLots bs ty
+>     return (n := DECL :<: ty')
+
+
 
 
 The |magic ty| function takes a proof of |FF| and yields a value of type |ty|.
@@ -402,17 +434,122 @@ used if simplification fails.
 > forceSimplify delta p = forceSimplifyNamed delta p ""
 
 > forceSimplifyNamed :: Bwd REF -> VAL -> String -> Simplifier Simplify
-> forceSimplifyNamed delta p hint = propSimplify delta p <|> simplifyNone p
->   where
->     simplifyNone :: (NameSupplier m) => VAL -> m Simplify
->     simplifyNone p = freshRef (nameHint p :<: PRF p) (\ref ->
->         return (SimplyOne ref (L (HF "__id" id)) (NP ref)))
+> forceSimplifyNamed delta p hint = propSimplify delta p
+>                                   <|> simplifyNone hint (PRF p)
+> 
+> simplifyNone :: (NameSupplier m) => String -> TY -> m Simplify
+> simplifyNone hint ty = freshRef (nameHint hint ty :<: ty) (\ref ->
+>     return (SimplyOne ref (idVAL "__id") (NP ref)))
 >   
->     nameHint :: VAL -> String
->     nameHint _ | not (null hint) = hint
->     nameHint (NP (n := _)) = "__" ++ fst (last n)
->     nameHint (L (HF s _)) = "__" ++ s
->     nameHint _ = "__simplifyNone"
+> nameHint :: String -> VAL -> String
+> nameHint hint _ | not (null hint) = hint
+> nameHint _ (NP (n := _)) = "__" ++ fst (last n)
+> nameHint _ (L (HF s _)) = "__" ++ s
+> nameHint _ _ = "__x"
+
+
+
+\subsection{Problem Simplification}
+
+Now that we have considered how to simplify propositions, we wish to use this
+technology to simplify programming problems. Suppose we have a goal of type
+$\Delta \rightarrow T$, where $\Delta$ is some telescope of hypotheses.
+There are various things we can do to simplify the problem:
+\begin{itemize}
+\item Split up $\Sigma$-types into their components.
+\item Simplify propositions in the hypotheses and goal.
+\item Solve the problem completely if it depends on a proof of false.
+\item Discard uninformative hypotheses and solve trivial goals
+      (of type unit or proof of trivial, for example).
+\end{itemize}
+
+The |problemSimplify| command performs these simplifications. It works by
+constructing a bunch of subgoals that together solve the current goal.
+
+> problemSimplify :: ProofState (EXTM :=>: VAL)
+> problemSimplify = simplifyGoal'
+
+> simplifyGoal' :: ProofState (EXTM :=>: VAL)
+> simplifyGoal' = getHoleGoal >>= simplifyGoal . valueOf
+
+
+The |simplifyHypothesis| command takes the type of a hypothesis, and
+returns:
+\begin{itemize}
+\item a list of references representing components of the type;
+\itme a list of projections from the hypothesis type to each component; and
+\item a value representing the combination of the components to form
+      the hypothesis.
+\end{itemize}
+
+> simplifyHypothesis :: TY -> ProofState Simplify
+
+> simplifyHypothesis UNIT = return (SimplyTrivial VOID)
+
+> simplifyHypothesis (SIGMA s t) = do
+>     sSimp <- simplifyHypothesis s
+>     case sSimp of
+>         SimplyAbsurd prf -> return (SimplyAbsurd (prf . ($$ Fst)))
+>         Simply srefs sbits sv -> do
+>             tSimp <- simplifyHypothesis (t $$ A sv)
+>             case tSimp of
+>                 SimplyAbsurd prf -> return (SimplyAbsurd (prf . ($$ Snd)))
+>                 Simply trefs tbits tv ->
+>                     return (Simply
+>                         (srefs <+> trefs)
+>                         (fmap (..! ($$ Fst)) sbits
+>                             <+> fmap (..! ($$ Snd)) tbits) 
+>                         (PAIR sv tv))
+
+> simplifyHypothesis (PRF p) = do
+>     nsupply <- askNSupply
+>     let Just s = runReaderT (forceSimplify B0 p) nsupply
+>     return s
+
+> simplifyHypothesis ty = simplifyNone "" ty
+
+
+
+> simplifyGoal :: TY -> ProofState (EXTM :=>: VAL)
+
+> simplifyGoal (PI s t) = do
+>     sSimp <- simplifyHypothesis s
+>     case sSimp of
+>         SimplyAbsurd prf -> do
+>             ff <- bquoteHere (L (HF "__ff" (\sv ->
+>                                             magic (t $$ A sv) (prf sv))))
+>             give ff
+>         Simply srefs bits sv -> do
+>             st <- dischargePiLots srefs (t $$ A sv)
+>             st' <- bquoteHere st
+>             make ("" :<: st')
+>             goIn
+>             mapM (const (lambdaBoy "__x")) srefs
+>             _ :=>: tv <- simplifyGoal'
+>             freshRef ("__s" :<: s) (\sref -> do
+>                 let v = tv $$$ fmap (A . ($$ A NP sref)) bits
+>                 v' <- bquote (B0 :< sref) v
+>                 give (L (fortran t :. v'))
+>               )
+
+> simplifyGoal UNIT = give VOID
+> simplifyGoal (SIGMA s t) = do
+>     stm <- bquoteHere s
+>     make (fortran t :<: stm)
+>     goIn
+>     stm' :=>: sv <- simplifyGoal s
+>     let t' = t $$ A sv
+>     ttm <- bquoteHere t'
+>     make ("" :<: ttm)
+>     goIn
+>     ttm' :=>: tv <- simplifyGoal t'
+>     give (PAIR (N stm') (N ttm'))
+
+> simplifyGoal (PRF p) = do
+>     optional propSimplifyHere
+>     getMotherDefinition <* goOut
+
+> simplifyGoal _ = getMotherDefinition <* goOut
 
 
 
@@ -433,7 +570,7 @@ current goal with the subgoals, and return a list of them.
 >         Nothing                   -> throwError' "propSimplifyHere: unable to simplify."
 >         Just (SimplyAbsurd _)     -> throwError' "propSimplifyHere: oh no, goal is absurd!"
 >
->         Just (SimplyTrivial prf)  -> bquoteHere prf >>= give >> return B0
+>         Just (SimplyTrivial prf)  -> bquoteHere prf >>= give' >> return B0
 >
 >         Just (Simply qs _ h) -> do
 >             qrs  <- mapM makeSubgoal qs
@@ -441,16 +578,15 @@ current goal with the subgoals, and return a list of them.
 >             prf  <- bquoteHere (h' $$$ fmap (A . valueOf) qrs)
 >             give' prf
 >             return qrs
->  where
 
 The |makeSubgoal| command makes a new subgoal whose type corresponds to the type
 of the given reference, and returns its term and value representations.
 
->    makeSubgoal :: REF -> ProofState (EXTM :=>: VAL)
->    makeSubgoal ref = do
->        q'  <- bquoteHere (pty ref)
->        x   <- pickName "q" ""
->        make (x :<: q')
+> makeSubgoal :: REF -> ProofState (EXTM :=>: VAL)
+> makeSubgoal ref = do
+>     q'  <- bquoteHere (pty ref)
+>     x   <- pickName "q" (fst (last (refName ref)))
+>     make (x :<: q')
 
 
 The |simplify| tactic attempts to simplify the type of the current goal, which
@@ -475,5 +611,7 @@ should be propositional.
 >         return (renderHouseStyle d)
 
 > import -> CochonTactics where
->   : nullaryCT "simplify" simplifyCTactic
->       "simplify - applies propositional simplification to the current goal."
+>   : nullaryCT "propsimplify" simplifyCTactic
+>       "propsimplify - applies propositional simplification to the current goal."
+>   : nullaryCT "simplify" (problemSimplify >> return "Simplified.")
+>       "simplify - simplifies the current problem."

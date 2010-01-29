@@ -5,134 +5,134 @@ make A := ? : Set ;
 make B := ? : Set ;
 
 make easy : :- TT ;
-simplify ;
+propsimplify ;
 root ;
 
 make hard : :- FF ;
-simplify ;
+propsimplify ;
 root ;
 
 make useless : :- (TT => P) ;
-simplify ;
+propsimplify ;
 root ;
 
 make easyish : :- (FF => P) ;
-simplify ;
+propsimplify ;
 root ; 
 
 make andy : :- (TT && P && TT) && (TT && Q) ;
-simplify ;
+propsimplify ;
 root ;
 
 make ethel : :- (TT && P => Q && FF) ;
-simplify ;
+propsimplify ;
 root ;
 
 make oops : :- ((TT && P => Q && FF) => FF) ;
-simplify ;
+propsimplify ;
 root ;
 
 make f : :- ((TT => P) => TT) ;
-simplify ;
+propsimplify ;
 root ;
 
 make g : :- (TT => TT) ;
-simplify ;
+propsimplify ;
 root ;
 
 make h : :- (P => TT) ;
-simplify ;
+propsimplify ;
 root ;
 
 make k : :- (P => FF && P) ;
-simplify ;
+propsimplify ;
 root ; 
 
 make x : :- (((P && TT) && (TT && Q)) && R && P) ;
-simplify ;
+propsimplify ;
 root ;
 
 make y : :- ((x : Set)(y : Set) => TT) ;
-simplify ; 
+propsimplify ; 
 root ;
 
 make z : :- ((x : Set) => TT && P && Q) ;
-simplify ; 
+propsimplify ; 
 root ;
 
 make a : :- ((TT => FF) => P) ;
-simplify ;
+propsimplify ;
 root ;
 
 make b : :- (TT => TT && P) ;
-simplify ;
+propsimplify ;
 root ;
 
 make eek : :- ((P => FF) => FF) ;
-simplify ;
+propsimplify ;
 root ;
 
 make d : :- (P && Q => TT) ;
-simplify ;
+propsimplify ;
 root ;
 
 make e : :- (TT && P => Q && TT) ;
-simplify ;
+propsimplify ;
 root ;
 
 make f : :- (P => P) ;
-simplify ;
+propsimplify ;
 root ;
 
 make g : :- (P && Q => R && Q && P) ;
-simplify ;
+propsimplify ;
 root ;
 
 make h : :- ((P => Q) => P => Q) ;
-simplify ;
+propsimplify ;
 root ;
 
 make k : :- (P == Q => P == Q) ;
-simplify ;
+propsimplify ;
 root ;
 
 make l : :- (P => Q) ;
-simplify ;
+propsimplify ;
 root ;
 
 make m : :- ((: Set) Set == (: Set) Set) ;
-simplify ; 
+propsimplify ; 
 root ;
 
 make p : :- (((: Set -> Prop) \ x -> P) == ((: Set -> Prop) \ x -> Q)) ;
-simplify ;
+propsimplify ;
 root ;
 
 make q : :- ((: Set) Set == (: Set) (Set -> Set)) ;
-simplify ;
+propsimplify ;
 root ;
 
 make r : :- (P == P) ;
-simplify ;
+propsimplify ;
 root ;
 
 make s : :- (A == A) ;
-simplify ;
+propsimplify ;
 root ;
 
 make t : :- (A == B) ;
-simplify ;
+propsimplify ;
 root ;
 
 make u : :- ((: Sig (A ; B)) ?x == (: Sig (A ; B)) ?y) ;
-simplify ;
+propsimplify ;
 root ;
 
 make v : :- (P => (x : :- P)(y : :- P) => x == y) ;
-simplify ;
+propsimplify ;
 root ;
 
 make g := ? : (:- P) -> Prop ;
 make w : :- ((x : :- P) => g x) ;
-simplify ;
+propsimplify ;
 root ;

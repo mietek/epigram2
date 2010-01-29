@@ -26,6 +26,7 @@
 > import ProofState.News
 > import ProofState.ProofContext
 
+> import Evidences.Rules
 > import Evidences.Tm
 
 %endif
@@ -114,6 +115,12 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     case ls of
 >         _ :< l  -> return (mother l)
 >         B0      -> return (ModuleMother []) 
+
+> getMotherDefinition :: ProofState (EXTM :=>: VAL)
+> getMotherDefinition = do
+>     GirlMother ref _ _ <- getMother
+>     aus <- getGreatAuncles
+>     return (applyAuncles ref aus)
 
 > getMotherEntry :: ProofState (Entry Bwd)
 > getMotherEntry = do
@@ -232,3 +239,17 @@ updated information, providing a friendlier interface than |get| and |put|.
 > proofTrace s = do
 >   () <- trace s $ return ()
 >   return ()
+
+\subsubsection{Useful odds and ends}
+
+The |applyAuncles| command applies a reference to the given
+spine of shared parameters.
+
+> applyAuncles :: REF -> Entries -> EXTM :=>: VAL
+> applyAuncles ref aus = tm :=>: evTm tm
+>   where tm = P ref $:$ aunclesToElims (aus <>> F0)
+
+> aunclesToElims :: Fwd (Entry Bwd) -> [Elim INTM]
+> aunclesToElims F0 = []
+> aunclesToElims (E ref _ (Boy _) _ :> es) = (A (N (P ref))) : aunclesToElims es
+> aunclesToElims (_ :> es) = aunclesToElims es
