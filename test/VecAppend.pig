@@ -2,9 +2,16 @@ make ship := (\ X x y q P p ->
                coe(P x, P y, con (((: :- P == P) [])
                                 % x y []), p))
            : (X : Set)(x : X)(y : X)(q : :- x == y)(P : X -> Set) -> P x -> P y ;
-make Nat := (Mu con ['arg (Enum ['zero 'suc]) [ (con ['done]) (con ['ind1 con ['done]]) ] ] ) : Set ;
+make Nat : Set ;
+make NatD := con ['arg (Enum ['zero 'suc]) [ (con ['done]) (con ['ind1 con ['done]]) ] ] : Desc ;
+give Mu NatD ;
 make zero := con ['zero] : Nat ;
 make suc := (\ x -> con ['suc x]) : Nat -> Nat ;
+make N-case := (\ n P m0 ms -> elimOp(Nat.NatD,n,P,con [ (con con m0) (con \ k -> con \ _ -> ms k) ] )) 
+                : (n : Nat)(P : Nat -> Set) -> 
+                   P [] -> 
+                   ((k : Nat) -> P (con ['suc k])) ->
+                   P n ;
 make one := (suc zero) : Nat ;
 make two := (suc one) : Nat ;
 make plus := con con [(\ _ _ y -> y) (\ _ -> con \ h _ y -> suc (h y))] : Nat -> Nat -> Nat ;
@@ -19,14 +26,3 @@ make vcons := (\ n a as -> con [ 1 n a as , [] ]) : (n : Nat) -> A -> Vec n -> V
 make vappend := (\ m as -> ielimOp(Nat, Vec.VecD, m, as, \ mas -> (n : Nat) -> Vec n -> Vec (plus (mas !) n), \ m -> con [ (\ p _ n as -> ship Nat zero m p (\ mm -> Vec (plus mm n)) as) (con \ mm -> con \ a -> con \ as p -> con \ appp _ n as -> ship Nat (con ['suc mm]) m p (\ mmm -> Vec (plus  mmm n)) (vcons (plus mm n) a (appp n as))) ])) : (m : Nat) -> Vec m -> (n : Nat) -> Vec n -> Vec (plus m n) ;
 root ;
 make ex := Vec.vcons Nat one zero (Vec.vcons Nat zero one (Vec.vnil Nat)) : Vec.Vec Nat two ;
-module BVec  ;
-lambda A : Set ;
-make Vec : Nat -> Set ;
-make VecD : Nat -> IDesc Nat ;
-give con con [ (con con (IDone TT)) (con (\ m -> con (\ h -> IArg A (\ a -> IInd1 m (IDone TT))))) ] ;
-lambda n ;
-give IMu Nat VecD n ;
-make vnil := con [] : Vec zero ;
-make vcons := (\ n a as -> con [ a as , [] ]) : (n : Nat) -> A -> Vec n -> Vec (suc n) ;
-root ;
-make ex2 := BVec.vcons Nat one zero (BVec.vcons Nat zero one (BVec.vnil Nat)) : BVec.Vec Nat two
