@@ -38,8 +38,20 @@ mkdir ".tests"
 # 2: no Pig binary
 status=0
 
+## Quiet flag:
+# 0: verbose
+# 1: quiet
+quiet=0
+if [ $# -le 1 ]
+then
+    if [ "$1" = "-q" ]
+    then
+	quiet=1
+    fi
+fi
+
 ## Test cases:
-if [ $# -eq 0 ]
+if [ $# -eq 0 ] || ( [ $# -eq 1 ] && [ $quiet -eq 1 ] )
 then
     scripts=`ls *.pig`
 else
@@ -65,7 +77,10 @@ do
 	then
 	    echo -e "$failed $script does not match the expected output"
 	    status=1
-	    cat ".tests/$script.diff"
+	    if [ $quiet -eq 0 ]
+	    then
+		cat ".tests/$script.diff"
+	    fi
 	else
 	    echo -e "$passed $script looks alright!"
 	fi
