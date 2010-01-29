@@ -196,10 +196,6 @@ those of |infer|.
 >     (s', ty') <- elimTy (elaborate False) (tv :<: ty) s
 >     return $ (t' :$ fmap termOf s') :=>: (tv $$ fmap valueOf s') :<: ty'
 
-> elabInfer (op ::@ ts) = do
->     (vs, t) <- opTy op (elaborate False) ts
->     return $ (op :@ fmap termOf vs) :=>: (op @@ fmap valueOf vs) :<: t
-
 > elabInfer (DType ty) = do
 >     (ty' :=>: vty)  <- elaborate False (SET :>: ty)
 >     x <- pickName "x" ""

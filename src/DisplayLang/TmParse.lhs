@@ -99,12 +99,9 @@ largest size again.
 
 > specialExDTm :: Size -> Parsley Token ExDTmRN
 > specialExDTm ArgSize =
->   (| pFilter findOp ident ::@ bracket Round (pSep (keyword KwComma) pInDTm)
->    | DType (bracket Round (keyword KwAsc *> pInDTm))
+>   (| DType (bracket Round (keyword KwAsc *> pInDTm))
 >    | DP nameParse
 >    |)
->   where
->     findOp name = find (\op -> opName op == name) operators
 
 > specialExDTm z = (|)
 
@@ -116,12 +113,6 @@ largest size again.
 >    | Call (%keyword KwCall%) ~Dum
 >    | A (sizedInDTm ArgSize)
 >    |)
-> moreExDTm EqSize e =
->   (|eqG  (pFilter isEqSide (pure (DN e))) (%keyword KwEqGreen%)
->          (pFilter isEqSide (sizedInDTm (pred EqSize)))
->    |) <|> moreExDTm (pred EqSize) e
->   where
->     eqG (y0 :>: t0) (y1 :>: t1) = eqGreen ::@ [y0, t0, y1, t1]
 > moreExDTm z _ = (|)
 
 > specialInDTm :: Size -> Parsley Token InDTmRN
@@ -221,9 +212,6 @@ largest size again.
 >    |)
 > moreInDTm z _ = (|)
 
-> isEqSide :: InDTmRN -> Maybe (InDTmRN :>: InDTmRN)
-> -- isEqSide (DN (DTC y0 t0)) = Just (y0 :>: t0)
-> isEqSide _ = Nothing
 
 > isEx :: InDTmRN -> Maybe ExDTmRN
 > isEx (DN tm)  = Just tm

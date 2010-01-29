@@ -12,8 +12,8 @@ make cl := (\ X R p x -> [x])
         : (X : Set)(R : X -> X -> Prop)(p : :- Equiv X R)(x : X) -> Q X R p ;
 
 make ship := (\ X x y q P p ->
-               coe(P x, P y, con ((refl (X -> Set) P)
-                                % x y []), p))
+               coe (P x) (P y) (con ((refl (X -> Set) P)
+                                % x y [])) p)
            : (X : Set)(x : X)(y : X)(q : :- (x == y))(P : X -> Set) -> P x -> P y ;
 
 make thm : (X : Set)(R : X -> X -> Prop)(p : :- Equiv X R) ->
@@ -28,5 +28,5 @@ make qel : (X : Set)(R : X -> X -> Prop)(p : :- Equiv X R)
            (m : (x : X) -> P [x]) ->
            :- ((x : X)(y : X) => R x y => (m x == m y)) ->
            P z ;
-give (\ X R p z P m h -> qElim(X, R, p, z, P, m, h)) ; root
+give (\ X R p z P m h -> qElim X R p z P m h) ; root
 

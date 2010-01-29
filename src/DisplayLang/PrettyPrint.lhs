@@ -127,10 +127,6 @@ than a $\lambda$-term is reached.
 > instance Pretty ExDTmRN where
 >     pretty (DP x)       = const (text (showRelName x))
 >     pretty (DV i)       = const (text "BadV" <> int i)
->     pretty (op ::@ vs)  = wrapDoc
->         (text (opName op) <+> parens
->             (fsep (punctuate (kword KwComma) (map (flip pretty ArgSize) vs))))
->         ArgSize
 >     pretty (n ::$ el)   = (\curSize -> wrapDoc
 >         (pretty n curSize <+> pretty el ArgSize)
 >         AppSize curSize)

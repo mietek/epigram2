@@ -3,7 +3,7 @@ make NatD := con ['arg (Enum ['zero 'suc]) [ (con ['done]) (con ['ind1 con ['don
 give Mu NatD ;
 make zero := con ['zero] : Nat ;
 make suc := (\ x -> con ['suc x]) : Nat -> Nat ;
-make N-case := (\ n P m0 ms -> elimOp(Nat.NatD,n,P,con [ (con con m0) (con \ k -> con \ _ -> ms k) ] )) 
+make N-case := (\ n P m0 ms -> elimOp Nat.NatD n P (con [ (con con m0) (con \ k -> con \ _ -> ms k) ] )) 
                 : (n : Nat)(P : Nat -> Set) -> 
                    P [] -> 
                    ((k : Nat) -> P (con ['suc k])) ->
@@ -26,7 +26,7 @@ make vnil := con [] : Vec zero ;
 make vcons := (\ n a as -> con [ a as , [] ]) : (n : Nat) -> A -> Vec n -> Vec (suc n) ;
 make vappend : (m : Nat) -> Vec m -> (n : Nat) -> Vec n -> Vec (plus m n) ;
 lambda A ;
-give (\ m as -> ielimOp(Nat, Vec.VecD, m, as, \ mas -> (n : Nat) -> Vec n -> Vec (plus (mas !) n),?)) ;
+give (\ m as -> ielimOp Nat Vec.VecD m as (\ mas -> (n : Nat) -> Vec n -> Vec (plus (mas !) n)) ?) ;
 lambda m ;
 elim N-case m ;
 give \ _ _ _ _ _ n bs -> bs ;

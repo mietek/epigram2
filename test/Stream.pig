@@ -12,7 +12,7 @@ make prune := (\ D -> con['arg (Enum ['stop 'go]) [con['done] D]]) : Desc -> Des
 make Prune := (\ D -> Mu (prune D)) : Desc -> Set ;
 make prefix := (\ D -> con con [(con con \ n -> con['stop])
   (\ p -> con \ ih -> con \ t ->
-     con['go , map(D, Nu D, Prune D, ih, t %)]) ] )
+     con['go , map D (Nu D) (Prune D) ih (t %)]) ] )
  : (D : Desc)(n : Nat) -> Nu D -> Mu (prune D) ;
 make firstFour := prefix (StreamD Nat) four nats : Prune (StreamD Nat)
 

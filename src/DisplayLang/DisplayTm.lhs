@@ -25,7 +25,6 @@
 %endif
 
 %format ::$ = ":\!\!:\!\!\$"
-%format ::@ = ":\!\!:\!\!@"
 %format ::. = ":\!\bullet"
 
 > data InDTm :: * -> * where
@@ -44,7 +43,6 @@
 > data ExDTm :: * -> * where
 >     DP     :: x                          -> ExDTm  x -- parameter
 >     DV     :: Int                        -> ExDTm  x -- variable
->     (::@)  :: Op -> [InDTm x]            -> ExDTm  x -- fully applied op
 >     (::$)  :: ExDTm x -> Elim (InDTm x)  -> ExDTm  x -- elim
 >     DType  :: InDTm x                    -> ExDTm  x -- type cast
 >     DTEx   :: ExTmWrap x                 -> ExDTm  x -- embedding
@@ -120,7 +118,6 @@ When going left, the size decreases. Brackets may be used to wrap an
 >            ExDTm x -> f (DSpine y) -> f (ExDTm y)
 > dexMang m (DP x)     es = dmangP m x es
 > dexMang m (DV i)     es = dmangV m i es
-> dexMang m (o ::@ a)  es = (|(| (o ::@) ((m %$) ^$ a) |) $::$ es|) 
 > dexMang m (t ::$ e)  es = dexMang m t (|((m %$) ^$ e) : es|)
 > dexMang m (DType ty) es = (| (| DType (m %$ ty) |) $::$ es |)
 > import <- DExMangleRules

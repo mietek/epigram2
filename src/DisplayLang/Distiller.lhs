@@ -87,11 +87,11 @@ also accumulates a spine so shared parameters can be removed.
 
 > distillInfer es (t :$ e) as    = distillInfer es t (e : as)
 
-> distillInfer es (op :@ ts) as  = do
->     (ts', ty) <- opTy op (distill es) ts
->     return ((op ::@ fmap termOf ts') :<: ty) 
+> distillInfer es (op :@ ts) as  = distillInfer es (P (mkRef op)) (map A ts ++ as)
 
-> distillInfer es (t :? ty) as   = do
+> distillInfer es (N t :? _) as  = distillInfer es t as
+
+> distillInfer es (t :? ty) []   = do
 >     ty'  :=>: vty  <- distill es (SET :>: ty)
 >     t'   :=>: _    <- distill es (vty :>: t)
 >     return ((DType ty' ::$ A t') :<: vty)

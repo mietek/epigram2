@@ -1,6 +1,6 @@
 make ship := (\ X x y q P p ->
-               coe(P x, P y, con (((: :- P == P) [])
-                                % x y []), p))
+               coe (P x) (P y) (con (((: :- P == P) [])
+                                % x y [])) p)
            : (X : Set)(x : X)(y : X)(q : :- x == y)(P : X -> Set) -> P x -> P y ;
 make Nat := (Mu con ['arg (Enum ['zero 'suc]) [ (con ['done]) (con ['ind1 con ['done]]) ] ] ) : Set ;
 make zero := con ['zero] : Nat ;
@@ -19,7 +19,7 @@ make vcons := (\ n a as -> con [ 1 n a as , [] ]) : (n : Nat) -> A -> Vec n -> V
 make vappend : (m : Nat) -> Vec m -> (n : Nat) -> Vec n -> Vec (plus m n) ;
 lambda m ;
 lambda as ;
- give ielimOp(Nat, Vec.VecD, m, as, \ mas -> (n : Nat) -> Vec n -> Vec (plus (mas !) n), ?) ;
+ give ielimOp Nat Vec.VecD m as (\ mas -> (n : Nat) -> Vec n -> Vec (plus (mas !) n)) ? ;
 lambda m ;
 give con ? ;
 give [ ?a ?b ] ;

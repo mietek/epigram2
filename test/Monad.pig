@@ -19,11 +19,11 @@ make add := (\ X a b -> con ['add a b]) : (X : Set) -> Expr X -> Expr X -> Expr 
 
 make xplusx := add Nat (var Nat (suc zero)) (var Nat (suc zero)) : Expr Nat ;
 make plus11 :=
-  subst (ExprD, Nat, Enum [], num (Enum []), xplusx) : Expr (Enum []) ;
+  subst ExprD Nat (Enum []) (num (Enum [])) xplusx : Expr (Enum []) ;
 
 make eval : Expr (Enum []) -> Nat ;
 lambda t ;
-give elimMonad(ExprD, (Enum []), t, (\ x -> Nat), ?, ?) ;
+give elimMonad ExprD (Enum []) t (\ x -> Nat) ? ? ;
 give con [ con (\ n -> con con n) (\ t -> con (\ x -> con (\ y -> con (plus x y)))) ] ;
 give [] ; root ;
 
