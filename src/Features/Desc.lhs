@@ -267,15 +267,16 @@ Equality rules:
 >         "X" :<: SET :-: \xX ->
 >         Target SET
 >       dOpRun :: [VAL] -> Either NEU VAL
->       dOpRun [DONE,y]    = Right UNIT
->       dOpRun [ARG x y,z] = Right $
->         eval [.x.y.z. 
->              SIGMA (NV x) . L $ "" :. [.a.
->              (N (descOp :@ [y $# [a],NV z]))
->              ]] $ B0 :< x :< y :< z
->       dOpRun [IND x y,z] = Right (TIMES (ARR x z) (descOp @@ [y,z]))
->       dOpRun [IND1 x,z] = Right (TIMES z (descOp @@ [x,z]))
->       dOpRun [N x,_]     = Left x
+>       dOpRun [DONE,xX]    = Right UNIT
+>       dOpRun [ARG aA dD,xX] = Right $
+>              SIGMA aA . L $ HF "a" $ \a ->
+>                descOp @@ [dD $$ A a,xX]
+>       dOpRun [ARGF aA dD,xX] = Right $
+>              SIGMA (ENUMT aA) . L $ HF "a" $ \a ->
+>                descOp @@ [dD $$ A a,xX]
+>       dOpRun [IND hH dD,xX] = Right (TIMES (ARR hH xX) (descOp @@ [dD,xX]))
+>       dOpRun [IND1 dD,xX] = Right (TIMES xX (descOp @@ [dD,xX]))
+>       dOpRun [N dD,_]     = Left dD
 
 
 >   boxOp :: Op
@@ -293,13 +294,16 @@ Equality rules:
 >         "v" :<: (descOp @@ [dD,xX]) :-: \v ->
 >         Target SET
 >       boxOpRun :: [VAL] -> Either NEU VAL
->       boxOpRun [DONE   ,d,p,v] = Right UNIT
->       boxOpRun [ARG a f,d,p,v] = Right $ opRunArgTerm
->                                          $$ A a $$ A f $$ A d $$ A p $$ A v
->       boxOpRun [IND h x,d,p,v] = Right $ opRunIndTerm
->                                          $$ A h $$ A x $$ A d $$ A p $$ A v
->       boxOpRun [IND1 x,d,p,v] = Right $ opRunInd1Term
->                                         $$ A x $$ A d $$ A p $$ A v
+>       boxOpRun [DONE   ,_,_,_] = Right UNIT
+>       boxOpRun [ARG aA dD,xX,pP,v] = Right $ 
+>         boxOp @@ [ dD $$ A (v $$ Fst) , xX , pP , v $$ Snd ] 
+>       boxOpRun [ARGF aA dD,xX,pP,v] = Right $ 
+>         boxOp @@ [ dD $$ A (v $$ Fst) , xX , pP , v $$ Snd ] 
+>       boxOpRun [IND hH dD,xX,pP,v] = Right $ 
+>         TIMES (PI hH (L $ HF "h" $ \h -> pP $$ A (v $$ Fst $$ A h))) 
+>               (boxOp @@ [dD, xX, pP, v $$ Snd])
+>       boxOpRun [IND1 dD,xX,pP,v] = Right $ 
+>         TIMES (pP $$ A (v $$ Fst)) (boxOp @@ [dD, xX, pP, v $$ Snd]) 
 >       boxOpRun [N x    ,_,_,_] = Left x
 
 
@@ -319,13 +323,17 @@ Equality rules:
 >         "v" :<: (descOp @@ [dD,xX]) :-: \v ->
 >          Target (boxOp @@ [dD,xX,pP,v])
 >       mapBoxOpRun :: [VAL] -> Either NEU VAL
->       mapBoxOpRun [DONE,d,bp,p,v] = Right VOID
->       mapBoxOpRun [ARG a f,d,bp,p,v] = Right $ mapBoxArgTerm
->                                                $$ A a $$ A f $$ A d $$ A bp $$ A p $$ A v
->       mapBoxOpRun [IND h x,d,bp,p,v] = Right $ mapBoxIndTerm 
->                                                $$ A h $$ A x $$ A d $$ A bp $$ A p $$ A v
->       mapBoxOpRun [IND1 x,d,bp,p,v] = Right $ mapBoxInd1Term
->                                                 $$ A x $$ A d $$ A bp $$ A p $$ A v
+>       mapBoxOpRun [DONE,xX,pP,p,v] = Right VOID
+>       mapBoxOpRun [ARG aA dD,xX,pP,p,v] = Right $ 
+>         mapBoxOp @@ [dD $$ A (v $$ Fst), xX, pP, p, v $$ Snd]  
+>       mapBoxOpRun [ARGF aA dD,xX,pP,p,v] = Right $ 
+>         mapBoxOp @@ [dD $$ A (v $$ Fst), xX, pP, p, v $$ Snd]  
+>       mapBoxOpRun [IND hH dD,xX,pP,p,v] = Right $ 
+>         PAIR (PI hH (L $ HF "h" $ \h -> p $$ A (v $$ Fst $$ A h))) 
+>              (mapBoxOp @@ [dD, xX, pP, p, v $$ Snd])
+>       mapBoxOpRun [IND1 dD,xX,pP,p,v] = Right $ 
+>         PAIR (p $$ A (v $$ Fst)) 
+>              (mapBoxOp @@ [dD, xX, pP, p, v $$ Snd])
 >       mapBoxOpRun [N x    ,_, _,_,_] = Left x
 
 >   elimOpMethodTypeType = trustMe . (SET :>:) $
@@ -401,26 +409,19 @@ Equality rules:
 >           Target (descOp @@ [dD, yY])
 >
 >         mapOpRun :: [VAL] -> Either NEU VAL
->         mapOpRun [DONE,    a, b, f, x] = Right VOID
->         mapOpRun [ARG s d, a, b, f, x] = Right $
->           eval [.s.d.a.b.f.x.
->                 PAIR (N (V x :$ Fst))
->                      (N $ mapOp :@ [ N $ V d :$ A (N $ V x :$ Fst)
->                                    , NV a, NV b, NV f, N (V x :$ Snd)
->                                    ])
->           ] $ B0 :< s :< d :< a :< b :< f :< x
->         mapOpRun [IND h d, a, b, f, x] = Right $
->           eval [._H.d.a.b.f.x.
->                 PAIR (L $ "h" :. [.h. N $ V f :$ A (N $ V x :$ Fst :$ A (NV h))])
->                      (N $ mapOp :@ [ NV d, NV a, NV b, NV f
->                                    , N (V x :$ Snd) ])
->           ] $ B0 :< h :< d :< a :< b :< f :< x
->         mapOpRun [IND1 d,  a, b, f, x] = Right $
->           eval [.d.a.b.f.x.
->                 PAIR (N $ V f :$ A (N $ V x :$ Fst))
->                      (N $ mapOp :@ [ NV d, NV a, NV b, NV f
->                                    , N (V x :$ Snd) ])
->           ] $ B0 :< d :< a :< b :< f :< x
+>         mapOpRun [DONE,    _, _, _, _] = Right VOID
+>         mapOpRun [ARG aA dD, xX, yY, f, v] = Right $
+>           PAIR (v $$ Fst)
+>                (mapOp @@ [ dD $$ A (v $$ Fst), xX, yY, f, v $$ Snd])
+>         mapOpRun [ARGF aA dD, xX, yY, f, v] = Right $
+>           PAIR (v $$ Fst)
+>                (mapOp @@ [ dD $$ A (v $$ Fst), xX, yY, f, v $$ Snd])
+>         mapOpRun [IND hH dD, xX, yY, f, v] = Right $
+>           PAIR (L $ HF "h" $ \h -> f $$ A (v $$ Fst $$ A h))
+>                (mapOp @@ [ dD, xX, yY, f, v $$ Snd])
+>         mapOpRun [IND1 dD, xX, yY, f, v] = Right $
+>           PAIR (f $$ A (v $$ Fst))
+>                (mapOp @@ [dD, xX, yY, f, v $$ Snd])
 >         mapOpRun [N d,     a, b, f, x] = Left d
 >
 >         mapOpSimp :: Alternative m => [VAL] -> NameSupply -> m NEU
