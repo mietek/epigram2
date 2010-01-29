@@ -123,6 +123,7 @@ largest size again.
 >      |DABSURD (%keyword KwAbsurd%)
 >      |DTRIVIAL (%keyword KwTrivial%)
 >      |DQ (pFilter question ident)
+>      |DU (%keyword KwUnderscore%)
 >      |DCON (%keyword KwCon%) (sizedInDTm ArgSize)
 >      |DRETURN (%keyword KwReturn%) (sizedInDTm ArgSize)
 >      |DTAG (%keyword KwTag%) ident

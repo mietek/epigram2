@@ -99,7 +99,8 @@ interesting types.
 > elaborate b (QUOTIENT a r p :>: DPAIR x DVOID) =
 >   elaborate b (QUOTIENT a r p :>: DCLASS x)
 
-> elaborate b (PRF p :>: DVOID) = prove b p
+> elaborate b (PRF p :>: DVOID)  = prove b p -- for backwards compatibility
+> elaborate b (PRF p :>: DU)     = prove b p
 
 > elaborate b (NU d :>: DCOIT DVOID sty f s) = do
 >   d' <- bquoteHere d

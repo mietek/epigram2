@@ -110,8 +110,9 @@
 >         , "A -> (x : B) -> C"          -- mixed pi-type
 >         , "A -> ((x : B) -> C)"        -- mixed pi-type
 >         , "Pi Set h"                   -- neutral pi-type
->         , "All Set h"                   -- neutral forall
->         , "Sig Set h"                   -- neutral sigma
+>         , "All Set h"                  -- neutral forall
+>         , "Sig Set h"                  -- neutral sigma
+>         , "_"                          -- underscore
 >         ]
 
 > test :: (Pretty x, Show x) => Parsley Token x -> String -> IO ()

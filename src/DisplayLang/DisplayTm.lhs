@@ -32,7 +32,7 @@
 >     DC     :: Can (InDTm x)              -> InDTm  x -- canonical
 >     DN     :: ExDTm x                    -> InDTm  x -- neutral
 >     DQ     :: String                     -> InDTm  x -- hole
->     DI     :: String                     -> InDTm  x -- underscore
+>     DU     ::                               InDTm  x -- underscore
 >     DT     :: InTmWrap x                 -> InDTm  x -- embedding
 >     Dum    ::                               InDTm  x -- dummy
 >     import <- InDTmConstructors
@@ -109,7 +109,7 @@ When going left, the size decreases. Brackets may be used to wrap an
 > m %$ DC c          = (|DC ((m %$) ^$ c)|)
 > m %$ DN n          = (|DN (dexMang m n (|[]|))|)
 > m %$ DQ s          = pure (DQ s)
-> m %$ DI s          = pure (DI s)
+> m %$ DU            = (|DU|)
 > m %$ Dum           = (|Dum|)
 > import <- DMangleRules
 > _ %$ tm            = error ("%$: can't dmangle " ++ show (fmap (\_ -> ".") tm)) 

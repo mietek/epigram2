@@ -155,13 +155,13 @@ The |magic ty| function takes a proof of |FF| and yields a value of type |ty|.
 The |...| operator is composition of |VAL| functions.
 
 > (...) :: VAL -> VAL -> VAL
-> f ... g = L (HF "__x" (\x -> f $$ A (g $$ A x)))
+> f ... g = L (HF "x" (\x -> f $$ A (g $$ A x)))
 
 The curiously more useful |..!| operator is composition of a genuine |VAL|
 function with a |VAL -> VAL| function.
 
 > (..!) :: VAL -> (VAL -> VAL) -> VAL
-> f ..! g = L (HF "__x" (\x -> f $$ A (g x)))
+> f ..! g = L (HF "x" (\x -> f $$ A (g x)))
 
 
 \subsection{Simplification in Action}
@@ -180,8 +180,8 @@ Simplifying |TT| and |FF| is remarkably easy.
 To simplify a conjunction, we simplify each conjunct separately, then call the
 |simplifyAnd| helper function to combine the results.
 
-> propSimplify delta (AND p1 p2) = forkNSupply "__psAnd1" (forceSimplify delta p1)
->     (\ p1Simp -> forkNSupply "__psAnd2" (forceSimplify delta p2)
+> propSimplify delta (AND p1 p2) = forkNSupply "psAnd1" (forceSimplify delta p1)
+>     (\ p1Simp -> forkNSupply "psAnd2" (forceSimplify delta p2)
 >         (\ p2Simp ->
 >             return (simplifyAnd p1Simp p2Simp)))
 >   where
@@ -205,7 +205,7 @@ the application of |Fst| or |Snd| as appropriate.
 To simplify |p = (x :- s) => t|, we first try to simplify |s|:
 
 > propSimplify delta p@(ALL (PRF s) l) =
->     forkNSupply "__psImp1" (forceSimplifyNamed delta s (fortran l)) antecedent
+>     forkNSupply "psImp1" (forceSimplifyNamed delta s (fortran l)) antecedent
 >   where
 >     antecedent :: Simplify -> Simplifier Simplify
 
@@ -213,7 +213,7 @@ If |s| is absurd then |p| is trivial, which we can prove by doing |magic|
 whenever someone gives us an element of |s|.
 
 >     antecedent (SimplyAbsurd prfAbsurdS) = return (SimplyTrivial
->         (L (HF "__antecedentAbsurd" (\sv ->
+>         (L (HF "antecedentAbsurd" (\sv ->
 >             magic (PRF (l $$ A sv)) (prfAbsurdS sv)))))
 
 If |s| is trivial, then we go under the binder by applying the proof, and then
@@ -222,7 +222,7 @@ proofs constructed by $\lambda$-abstracting in one direction and applying the
 proof of |s| in the other direction.
 
 >     antecedent (SimplyTrivial prfS) =
->         forkNSupply "__psImp2" (forceSimplify delta (l $$ A prfS)) consequentTrivial
+>         forkNSupply "psImp2" (forceSimplify delta (l $$ A prfS)) consequentTrivial
 >       where
 >         consequentTrivial :: Simplify -> Simplifier Simplify
 >         consequentTrivial (SimplyAbsurd prfAbsurdT) =
@@ -237,18 +237,18 @@ under the binder by adding the simplified conjuncts of |s| to the context and
 applying |l| to |sh| (the proof of |s| in the extended context). 
 
 >     antecedent (Simply sqs sgs sh) =
->         forkNSupply "__psImp3" (forceSimplify (delta <+> sqs) (l $$ A sh)) consequent
+>         forkNSupply "psImp3" (forceSimplify (delta <+> sqs) (l $$ A sh)) consequent
 >       where
 >         consequent :: Simplify -> Simplifier Simplify
 >         consequent (SimplyAbsurd prfAbsurdT) = do
 >             madness <- dischargeAllLots sqs (PRF ABSURD)
->             freshRef ("__madness" :<: madness) (\ref -> 
->                 freshRef ("__pref" :<: p) (\pref -> do
+>             freshRef ("madness" :<: madness) (\ref -> 
+>                 freshRef ("pref" :<: p) (\pref -> do
 >                     g <- dischargeLots sqs (prfAbsurdT (NP pref $$ A sh))
 >                     g' <- discharge pref g
 >                     return (SimplyOne ref
->                         (L (HF "__p" (\pv -> g' $$ A pv)))
->                         (L (HF "__consequentAbsurd" (\sv -> magic (PRF (l $$ A sv))
+>                         (L (HF "p" (\pv -> g' $$ A pv)))
+>                         (L (HF "consequentAbsurd" (\sv -> magic (PRF (l $$ A sv))
 >                         (NP ref $$$ (fmap (A . ($$ A sv)) sgs))))))
 >                   )
 >               )
@@ -263,7 +263,7 @@ prove as follows:
 
 >         consequent (SimplyTrivial prfT) = do
 >             prfT' <- dischargeLots sqs prfT
->             return (SimplyTrivial (L (HF "__consequentTrivial" (\sv ->
+>             return (SimplyTrivial (L (HF "consequentTrivial" (\sv ->
 >                 prfT' $$$ (fmap (A . ($$ A sv)) sgs)))))
 
 Otherwise, if the consequent simplifies, we proceed as follows.
@@ -291,7 +291,7 @@ where $\Theta \cong z_0 : pq_0, ..., z_m : pq_m$.
 >             pqs <- mapM (dischargeRefAlls sqs) tqs
 >             pgs <- mapM wrapper tgs
 >
->             freshRef ("__sref" :<: PRF s) (\sref -> do
+>             freshRef ("sref" :<: PRF s) (\sref -> do
 >                 th' <- dischargeLots tqs th
 >                 let  sgSpine  = fmap (\sg -> A (sg $$ A (NP sref))) sgs
 >                      th''     = th' $$$ fmap (\pq -> A (NP pq $$$ sgSpine)) pqs
@@ -303,7 +303,7 @@ where $\Theta \cong z_0 : pq_0, ..., z_m : pq_m$.
 >
 >           where
 >             wrapper :: (NameSupplier m) => VAL -> m VAL
->             wrapper tg = freshRef ("__pref" :<: p) (\pref -> do
+>             wrapper tg = freshRef ("pref" :<: p) (\pref -> do
 >                 pg <- dischargeLots sqs (tg $$ A (NP pref $$ A sh))
 >                 discharge pref pg
 >               )
@@ -312,16 +312,16 @@ To simplify |p = (x : s) => t| where |s| is not a proof set, we generate a fresh
 reference and simplify |t| under the binder.
 
 > propSimplify delta p@(ALL s l) = freshRef (fortran l :<: s)
->     (\refS -> forkNSupply "__psAll" (forceSimplify (delta :< refS) (l $$ A (NP refS))) (thingy refS))
+>     (\refS -> forkNSupply "psAll" (forceSimplify (delta :< refS) (l $$ A (NP refS))) (thingy refS))
 >   where
 >     thingy :: (NameSupplier m) => REF -> Simplify -> m Simplify
 
 If |t| is absurd, then |p| simplifies to |(x : s) => FF|. 
 
->     thingy refS (SimplyAbsurd prf) = freshRef ("__psA" :<: PRF (ALL s (LK ABSURD)))
+>     thingy refS (SimplyAbsurd prf) = freshRef ("psA" :<: PRF (ALL s (LK ABSURD)))
 >         (\refA -> return (SimplyOne refA
->             (L (HF "__p" (\pv -> magic (PRF (ALL s (LK ABSURD))) (prf (pv $$ A (NP refS))))))
->             (L (HF "__consequentAbsurd2" (\sv -> magic (PRF (l $$ A sv)) (pval refA $$ A sv)))))
+>             (L (HF "p" (\pv -> magic (PRF (ALL s (LK ABSURD))) (prf (pv $$ A (NP refS))))))
+>             (L (HF "consequentAbsurd2" (\sv -> magic (PRF (l $$ A sv)) (pval refA $$ A sv)))))
 >         )
 
 If |t| is trivial, then |p| is trivial.
@@ -348,8 +348,8 @@ Since |pq == (x : s) => q| we can give back a function that takes proofs
 applies |g| to this proof to get a proof of |q|.
 
 >         wrapper :: VAL -> VAL
->         wrapper g = L (HF "__p" (\pv ->
->                        L (HF "__s" (\sv ->
+>         wrapper g = L (HF "p" (\pv ->
+>                        L (HF "s" (\sv ->
 >                            g $$ A (pv $$ A sv)))))
 
 
@@ -372,7 +372,7 @@ with |Con| or |Out| as appropriate.
 >    unroll = case opRun eqGreen [sty, s, tty, t] of
 >           Left _         -> mzero
 >           Right TRIVIAL  -> return (SimplyTrivial (CON VOID))
->           Right q        -> forkNSupply "__psEq" (forceSimplify delta q) equality
+>           Right q        -> forkNSupply "psEq" (forceSimplify delta q) equality
 >          
 >    equality :: Simplify -> Simplifier Simplify
 >    equality (SimplyAbsurd prf) = return (SimplyAbsurd (prf . ($$ Out)))
@@ -382,9 +382,9 @@ with |Con| or |Out| as appropriate.
 
 
 > propSimplify delta p@(N (op :@ [sty, s, tty, t]))
->   | op == eqGreen = freshRef ("__q" :<: PRF (EQBLUE (sty :>: s) (tty :>: t)))
+>   | op == eqGreen = freshRef ("q" :<: PRF (EQBLUE (sty :>: s) (tty :>: t)))
 >       (\qRef -> return (SimplyOne qRef
->           (L (HF "__p" CON))
+>           (L (HF "p" CON))
 >           (NP qRef $$ Out)
 >       ))
 
@@ -411,7 +411,7 @@ backchained proposition removed.
 >     seekProof (rs :< ref) fs p = seekProof rs (ref :> fs) p
 >  
 >     backchain :: Bwd REF -> Fwd REF -> Bwd REF -> VAL -> VAL -> Simplifier VAL
->     backchain rs fs ss p (ALL (PRF s) l) = freshRef ("__bc" :<: PRF s)
+>     backchain rs fs ss p (ALL (PRF s) l) = freshRef ("bc" :<: PRF s)
 >         (\sRef -> backchain rs fs (ss :< sRef) p (l $$ A (NP sRef)))
 >                                                                       
 >     backchain (rs :< ref) fs ss p q = do
@@ -439,13 +439,13 @@ used if simplification fails.
 > 
 > simplifyNone :: (NameSupplier m) => String -> TY -> m Simplify
 > simplifyNone hint ty = freshRef (nameHint hint ty :<: ty) (\ref ->
->     return (SimplyOne ref (idVAL "__id") (NP ref)))
+>     return (SimplyOne ref (idVAL "id") (NP ref)))
 >   
 > nameHint :: String -> VAL -> String
 > nameHint hint _ | not (null hint) = hint
-> nameHint _ (NP (n := _)) = "__" ++ fst (last n)
-> nameHint _ (L (HF s _)) = "__" ++ s
-> nameHint _ _ = "__x"
+> nameHint _ (NP (n := _)) = "" ++ fst (last n)
+> nameHint _ (L (HF s _)) = "" ++ s
+> nameHint _ _ = "x"
 
 
 
@@ -508,7 +508,7 @@ constructing a bunch of subgoals that together solve the current goal.
 >     sSimp <- simplifyHypothesis s
 >     case sSimp of
 >         SimplyAbsurd prf -> do
->             ff <- bquoteHere (L (HF "__ff" (\sv ->
+>             ff <- bquoteHere (L (HF "ff" (\sv ->
 >                                             magic (t $$ A sv) (prf sv))))
 >             give ff
 >         Simply srefs bits sv -> do
@@ -516,9 +516,9 @@ constructing a bunch of subgoals that together solve the current goal.
 >             st' <- bquoteHere st
 >             make ("" :<: st')
 >             goIn
->             mapM (const (lambdaBoy "__x")) srefs
+>             mapM (const (lambdaBoy "x")) srefs
 >             _ :=>: tv <- simplifyGoal'
->             freshRef ("__s" :<: s) (\sref -> do
+>             freshRef ("s" :<: s) (\sref -> do
 >                 let v = tv $$$ fmap (A . ($$ A NP sref)) bits
 >                 v' <- bquote (B0 :< sref) v
 >                 give (L (fortran t :. v'))
