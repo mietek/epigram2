@@ -473,14 +473,6 @@ constructing a bunch of subgoals that together solve the current goal.
 > simplifyGoal' = getHoleGoal >>= simplifyGoal . valueOf
 
 
-The |simplifyHypothesis| command takes the type of a hypothesis, and
-returns:
-\begin{itemize}
-\item a list of references representing components of the type;
-\itme a list of projections from the hypothesis type to each component; and
-\item a value representing the combination of the components to form
-      the hypothesis.
-\end{itemize}
 
 > simplifyHypothesis :: TY -> ProofState Simplify
 
