@@ -50,32 +50,6 @@ rather than creating a subgoal.
 
 > import <- ElaborateRules
 
-Here's a case which makes labelled datatypes
-
-> elaborate True (SET :>: DMU Nothing d) = do
->     GirlMother (nom := HOLE :<: ty) _ _ <- getMother
->     let fr = nom := FAKE :<: ty
->     xs <- (| boySpine getAuncles |)
->     let lt = N (P fr $:$ xs)
->     let lv = evTm lt
->     (t :=>: v) <- elaborate False (desc :>: d)
->     return (MU (Just lt) t :=>: MU (Just lv) v)
-
-> elaborate True (SET :>: DIMU Nothing iI d i) = do
->     GirlMother (nom := HOLE :<: ty) _ _ <- getMother
->     let fr = nom := FAKE :<: ty
->     xs <- getBoys
->     guard (not (null xs))
->     let lt = N (P fr $:$ (map (\x -> A (N (P x))) (init xs)))
->     let lv = evTm lt
->     (iI :=>: iIv) <- elaborate False (SET :>: iI)
->     (d :=>: dv) <- elaborate False (ARR iIv (IDESC iIv) :>: d)
->     (i :=>: iv) <- elaborate False (iIv :>: i)
->     lastIsIndex <- withNSupply (equal (SET :>: (iv,N (P (last xs)))))
->     guard lastIsIndex
->     -- should check i doesn't appear in d (fairly safe it's not in iI :))
->     return (IMU (Just lt) iI d i :=>: IMU (Just lv) iIv dv iv)
-
 First, some special cases to provide a convenient syntax for writing functions from
 interesting types.
 

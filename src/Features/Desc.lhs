@@ -258,19 +258,17 @@ Equality rules:
 >     , opSimp = \_ _ -> empty
 >     } where
 >       dOpTy =
->         "x" :<: desc :-: \x ->
->         "y" :<: SET :-: \y ->
+>         "D" :<: desc :-: \dD ->
+>         "X" :<: SET :-: \xX ->
 >         Target SET
 >       dOpRun :: [VAL] -> Either NEU VAL
->       dOpRun [DONE,y]    = Right UNIT
->       dOpRun [ARG x y,z] = Right $
->         eval [.x.y.z. 
->              SIGMA (NV x) . L $ "" :. [.a.
->              (N (descOp :@ [y $# [a],NV z]))
->              ]] $ B0 :< x :< y :< z
->       dOpRun [IND x y,z] = Right (TIMES (ARR x z) (descOp @@ [y,z]))
->       dOpRun [IND1 x,z] = Right (TIMES z (descOp @@ [x,z]))
->       dOpRun [N x,_]     = Left x
+>       dOpRun [DONE,xX]    = Right UNIT
+>       dOpRun [ARG aA dD,xX] = Right $
+>              SIGMA aA . L $ HF "a" $ \a ->
+>                descOp @@ [dD $$ A a,xX]
+>       dOpRun [IND hH dD,xX] = Right (TIMES (ARR hH xX) (descOp @@ [dD,xX]))
+>       dOpRun [IND1 dD,xX] = Right (TIMES xX (descOp @@ [dD,xX]))
+>       dOpRun [N dD,_]     = Left dD
 
 
 >   boxOp :: Op
@@ -282,83 +280,21 @@ Equality rules:
 >     , opSimp = \_ _ -> empty
 >     } where
 >       boxOpTy =
->         "w" :<: desc :-: \w ->
->         "x" :<: SET :-: \x ->
->         "y" :<: ARR x SET :-: \y ->
->         "z" :<: (descOp @@ [w,x]) :-: \z ->
+>         "D" :<: desc :-: \dD ->
+>         "X" :<: SET :-: \xX ->
+>         "P" :<: ARR xX SET :-: \pP ->
+>         "v" :<: (descOp @@ [dD,xX]) :-: \v ->
 >         Target SET
 >       boxOpRun :: [VAL] -> Either NEU VAL
->       boxOpRun [DONE   ,d,p,v] = Right UNIT
->       boxOpRun [ARG a f,d,p,v] = Right $ opRunArgTerm
->                                          $$ A a $$ A f $$ A d $$ A p $$ A v
->       boxOpRun [IND h x,d,p,v] = Right $ opRunIndTerm
->                                          $$ A h $$ A x $$ A d $$ A p $$ A v
->       boxOpRun [IND1 x,d,p,v] = Right $ opRunInd1Term
->                                         $$ A x $$ A d $$ A p $$ A v
+>       boxOpRun [DONE   ,_,_,_] = Right UNIT
+>       boxOpRun [ARG aA dD,xX,pP,v] = Right $ 
+>         boxOp @@ [ dD $$ A (v $$ Fst) , xX , pP , v $$ Snd ] 
+>       boxOpRun [IND hH dD,xX,pP,v] = Right $ 
+>         TIMES (PI hH (L $ HF "h" $ \h -> pP $$ A (v $$ Fst $$ A h))) 
+>               (boxOp @@ [dD, xX, pP, v $$ Snd])
+>       boxOpRun [IND1 dD,xX,pP,v] = Right $ 
+>         TIMES (pP $$ A (v $$ Fst)) (boxOp @@ [dD, xX, pP, v $$ Snd]) 
 >       boxOpRun [N x    ,_,_,_] = Left x
->       opRunArgTerm = trustMe (opRunArgType :>: opRunArgTac) 
->       opRunIndTerm = trustMe (opRunIndType :>: opRunIndTac)
->       opRunInd1Term = trustMe (opRunInd1Type :>: opRunInd1Tac)
->
->       opRunTypeTac arg = piTac setTac
->                                (\y ->
->                                 piTac (arrTac (use y done)
->                                               setTac)
->                                       (\z -> 
->                                        arrTac (useOp descOp [ arg
->                                                             , use y done ] done)
->                                               setTac))
->       opRunArgType = trustMe (SET :>: opRunArgTypeTac)
->       opRunArgTypeTac = piTac setTac
->                               (\x ->
->                                piTac (arrTac (use x done)
->                                              descTac) 
->                                      (\f ->
->                                       opRunTypeTac (argTac (use x done)
->                                                            (use f done))))
->       opRunArgTac = lambda $ \a ->
->                     lambda $ \f ->
->                     lambda $ \d ->
->                     lambda $ \p ->
->                     lambda $ \v -> 
->                     useOp boxOp [ f @@@ [use v . apply Fst $ done]
->                                 , use d done 
->                                 , use p done
->                                 , use v . apply Snd $ done ] done
->
->       opRunIndType = trustMe (SET :>: opRunIndTypeTac) 
->       opRunIndTypeTac = piTac setTac
->                               (\h ->
->                                piTac descTac
->                                      (\x ->
->                                       opRunTypeTac (indTac (use h done)
->                                                            (use x done))))
->       opRunIndTac = lambda $ \h ->
->                     lambda $ \x ->
->                     lambda $ \d ->
->                     lambda $ \p ->
->                     lambda $ \v ->
->                     timesTac (piTac (use h done)
->                                     (\y -> 
->                                      p @@@ [use v . apply Fst . 
->                                                     apply (A $ use y done) $ done]))
->                              (useOp boxOp [ use x done
->                                           , use d done
->                                           , use p done
->                                           , use v . apply Snd $ done ] done)
->       opRunInd1Type = trustMe (SET :>: opRunInd1TypeTac) 
->       opRunInd1TypeTac = piTac descTac
->                                (\x ->
->                                 opRunTypeTac (ind1Tac (use x done)))
->       opRunInd1Tac = lambda $ \x ->
->                      lambda $ \d ->
->                      lambda $ \p ->
->                      lambda $ \v ->
->                      timesTac (p @@@ [use v . apply Fst $ done])
->                               (useOp boxOp [ use x done
->                                            , use d done
->                                            , use p done
->                                            , use v . apply Snd $ done ] done)
 
 
 >   mapBoxOp :: Op
@@ -377,93 +313,16 @@ Equality rules:
 >         "v" :<: (descOp @@ [dD,xX]) :-: \v ->
 >          Target (boxOp @@ [dD,xX,pP,v])
 >       mapBoxOpRun :: [VAL] -> Either NEU VAL
->       mapBoxOpRun [DONE,d,bp,p,v] = Right VOID
->       mapBoxOpRun [ARG a f,d,bp,p,v] = Right $ mapBoxArgTerm
->                                                $$ A a $$ A f $$ A d $$ A bp $$ A p $$ A v
->       mapBoxOpRun [IND h x,d,bp,p,v] = Right $ mapBoxIndTerm 
->                                                $$ A h $$ A x $$ A d $$ A bp $$ A p $$ A v
->       mapBoxOpRun [IND1 x,d,bp,p,v] = Right $ mapBoxInd1Term
->                                                 $$ A x $$ A d $$ A bp $$ A p $$ A v
+>       mapBoxOpRun [DONE,xX,pP,p,v] = Right VOID
+>       mapBoxOpRun [ARG aA dD,xX,pP,p,v] = Right $ 
+>         mapBoxOp @@ [dD $$ A (v $$ Fst), xX, pP, p, v $$ Snd]  
+>       mapBoxOpRun [IND hH dD,xX,pP,p,v] = Right $ 
+>         PAIR (PI hH (L $ HF "h" $ \h -> p $$ A (v $$ Fst $$ A h))) 
+>              (mapBoxOp @@ [dD, xX, pP, p, v $$ Snd])
+>       mapBoxOpRun [IND1 dD,xX,pP,p,v] = Right $ 
+>         PAIR (p $$ A (v $$ Fst)) 
+>              (mapBoxOp @@ [dD, xX, pP, p, v $$ Snd])
 >       mapBoxOpRun [N x    ,_, _,_,_] = Left x
->       mapBoxArgTerm = trustMe (mapBoxArgType :>: mapBoxArgTac) 
->       mapBoxIndTerm = trustMe (mapBoxIndType :>: mapBoxIndTac)
->       mapBoxInd1Term = trustMe (mapBoxInd1Type :>: mapBoxInd1Tac) 
->
->       mapBoxTypeTac arg = piTac setTac
->                                 (\d ->
->                                  piTac (arrTac (use d done)
->                                                setTac)
->                                        (\bp ->
->                                         arrTac (piTac (use d done)
->                                                       (\y ->
->                                                        bp @@@ [use y done]))
->                                                (piTac (useOp descOp [ arg
->                                                                     , use d done ] done)
->                                                       (\v ->
->                                                        useOp boxOp [ arg
->                                                                    , use d done
->                                                                    , use bp done
->                                                                    , use v done] done))))
->       mapBoxIndType = trustMe (SET :>: mapBoxIndTypeTac)
->       mapBoxIndTypeTac = piTac setTac
->                                (\h ->
->                                 piTac descTac
->                                       (\x ->
->                                        mapBoxTypeTac (indTac (use h done)
->                                                              (use x done))))
->       mapBoxIndTac = lambda $ \h ->
->                      lambda $ \x ->
->                      lambda $ \d ->
->                      lambda $ \bp ->
->                      lambda $ \p ->
->                      lambda $ \v ->
->                      pairTac (lambda $ \y ->
->                               p @@@ [use v .
->                                      apply Fst .
->                                      apply (A (use y done)) 
->                                      $ done])
->                               (useOp mapBoxOp [ use x done
->                                               , use d done
->                                               , use bp done
->                                               , use p done
->                                               , use v . apply Snd $ done ] done)
->       mapBoxInd1Type = trustMe (SET :>: mapBoxInd1TypeTac)
->       mapBoxInd1TypeTac = piTac descTac
->                                 (\x ->
->                                  mapBoxTypeTac (ind1Tac (use x done)))
->       mapBoxInd1Tac = lambda $ \x ->
->                       lambda $ \d ->
->                       lambda $ \bp ->
->                       lambda $ \p ->
->                       lambda $ \v ->
->                       pairTac (p @@@ [use v .
->                                       apply Fst 
->                                       $ done])
->                               (useOp mapBoxOp [ use x done
->                                               , use d done
->                                               , use bp done
->                                               , use p done
->                                               , use v . apply Snd $ done ] done)
->       mapBoxArgType = trustMe (SET :>: mapBoxArgTypeTac)
->       mapBoxArgTypeTac = piTac setTac
->                                (\a -> 
->                                 piTac (arrTac (use a done)
->                                               descTac)
->                                       (\f -> 
->                                        mapBoxTypeTac (argTac (use a done)
->                                                              (use f done))))
->       mapBoxArgTac = lambda $ \a ->
->                      lambda $ \f ->
->                      lambda $ \d ->
->                      lambda $ \bp ->
->                      lambda $ \p ->
->                      lambda $ \v ->
->                      useOp mapBoxOp [ f @@@ [ use v . apply Fst $ done ]
->                                     , use d done
->                                     , use bp done
->                                     , use p done
->                                     , use v . apply Snd $ done ] done
-
 
 >   elimOpMethodTypeType = trustMe . (SET :>:) $
 >     piTac descTac $ \d -> arrTac (arrTac (muTac (var d)) setTac) setTac
@@ -490,39 +349,18 @@ Equality rules:
 >     , opSimp = \_ _ -> empty
 >     } where
 >       elimOpTy = 
->         "d" :<: desc :-: \d ->
->         "v" :<: MU Nothing d :-: \v ->
->         "P" :<: (ARR (MU Nothing d) SET) :-: \bp ->
->         "p" :<: (elimOpMethodType $$ A d $$ A bp) :-: \p ->
->         Target (bp $$ A v)
+>         "D" :<: desc :-: \dD ->
+>         "v" :<: MU Nothing dD :-: \v ->
+>         "P" :<: (ARR (MU Nothing dD) SET) :-: \pP ->
+>         "p" :<: (elimOpMethodType $$ A dD $$ A pP) :-: \p ->
+>         Target (pP $$ A v)
 >       elimOpRun :: [VAL] -> Either NEU VAL
->       elimOpRun [d,CON v,bp,p] = Right $ elimOpTerm
->                                              $$ A d $$ A bp $$ A p $$ A v
+>       elimOpRun [dD,CON v,pP,p] = Right $ 
+>         p $$ A v $$ A (mapBoxOp @@ [ dD , MU Nothing dD , pP
+>                                    , L $ HF "w" $ \w -> 
+>                                        elimOp @@ [ dD , w , pP , p ]
+>                                    , v]) 
 >       elimOpRun [_,N x, _,_] = Left x
->
->       elimOpTerm = trustMe (elimOpType :>: elimOpTac) 
->       elimOpType = trustMe (SET :>: elimOpTypeTac)
->       elimOpTypeTac = piTac descTac $ \d ->
->                       piTac (arrTac (muTac (var d)) setTac) $ \bp ->
->                       arrTac (chk (return (elimOpMethodType :<: elimOpMethodTypeType)
->                                    `useTac` A (var d) `useTac` A (var bp))) $
->                       piTac (useOp descOp [var d, muTac (var d) ] done) $ \v ->
->                       bp @@@ [conTac $ var v]
->
->       elimOpTac = lambda $ \d ->  -- (d : Desc)
->                   lambda $ \bp -> -- (bp : Mu d -> Set)
->                   lambda $ \p ->  -- (x : descOp d (Mu d)) -> (boxOp d (Mu d) bp x) -> bp (Con x)
->                   lambda $ \v ->  -- (v : descOp d (Mu d))
->                   p @@@ [ use v done
->                         , useOp mapBoxOp [ use d done
->                                          , muTac (use d done)
->                                          , use bp done
->                                          , lambda $ \x ->
->                                            useOp elimOp [ use d done
->                                                         , use x done 
->                                                         , use bp done
->                                                         , use p done ] done 
->                                          , use v done ] done ]
 
 >   switchDOp = Op
 >     { opName = "SwitchD"
@@ -539,9 +377,7 @@ Equality rules:
 >         sOpRun :: [VAL] -> Either NEU VAL
 >         sOpRun [CONSE t e' , ps , ZE] = Right $ ps $$ Fst
 >         sOpRun [CONSE t e' , ps , SU n] = Right $
->           switchDOp @@ [ e' 
->                        , ps $$ Snd
->                        , n ]
+>           switchDOp @@ [ e' , ps $$ Snd , n ]
 >         sOpRun [_ , _ , N n] = Left n
 >         sOpRun vs = error ("Desc.SwitchD.sOpRun: couldn't handle " ++ show vs)
 
@@ -553,49 +389,36 @@ Equality rules:
 >     , opSimp  = mapOpSimp
 >     } where
 >         mapOpTy = 
->           "d" :<: desc :-: \d -> 
->           "a" :<: SET :-: \a ->
->           "b" :<: SET :-: \b ->
->           "f" :<: ARR a b :-: \f ->
->           "x" :<: (descOp @@ [d, a]) :-: \x -> 
->           Target (descOp @@ [d, b])
+>           "dD" :<: desc :-: \dD -> 
+>           "xX" :<: SET :-: \xX ->
+>           "yY" :<: SET :-: \yY ->
+>           "f" :<: ARR xX yY :-: \f ->
+>           "v" :<: (descOp @@ [dD, xX]) :-: \v -> 
+>           Target (descOp @@ [dD, yY])
 >
 >         mapOpRun :: [VAL] -> Either NEU VAL
->         mapOpRun [DONE,    a, b, f, x] = Right VOID
->         mapOpRun [ARG s d, a, b, f, x] = Right $
->           eval [.s.d.a.b.f.x.
->                 PAIR (N (V x :$ Fst))
->                      (N $ mapOp :@ [ N $ V d :$ A (N $ V x :$ Fst)
->                                    , NV a, NV b, NV f, N (V x :$ Snd)
->                                    ])
->           ] $ B0 :< s :< d :< a :< b :< f :< x
->         mapOpRun [IND h d, a, b, f, x] = Right $
->           eval [._H.d.a.b.f.x.
->                 PAIR (L $ "h" :. [.h. N $ V f :$ A (N $ V x :$ Fst :$ A (NV h))])
->                      (N $ mapOp :@ [ NV d, NV a, NV b, NV f
->                                    , N (V x :$ Snd) ])
->           ] $ B0 :< h :< d :< a :< b :< f :< x
->         mapOpRun [IND1 d,  a, b, f, x] = Right $
->           eval [.d.a.b.f.x.
->                 PAIR (N $ V f :$ A (N $ V x :$ Fst))
->                      (N $ mapOp :@ [ NV d, NV a, NV b, NV f
->                                    , N (V x :$ Snd) ])
->           ] $ B0 :< d :< a :< b :< f :< x
+>         mapOpRun [DONE,    _, _, _, _] = Right VOID
+>         mapOpRun [ARG aA dD, xX, yY, f, v] = Right $
+>           PAIR (v $$ Fst)
+>                (mapOp @@ [ dD $$ A (v $$ Fst), xX, yY, f, v $$ Snd])
+>         mapOpRun [IND hH dD, xX, yY, f, v] = Right $
+>           PAIR (L $ HF "h" $ \h -> f $$ A (v $$ Fst $$ A h))
+>                (mapOp @@ [ dD, xX, yY, f, v $$ Snd])
+>         mapOpRun [IND1 dD, xX, yY, f, v] = Right $
+>           PAIR (f $$ A (v $$ Fst))
+>                (mapOp @@ [dD, xX, yY, f, v $$ Snd])
 >         mapOpRun [N d,     a, b, f, x] = Left d
 >
 >         mapOpSimp :: Alternative m => [VAL] -> NameSupply -> m NEU
->         mapOpSimp [d, a, b, f, N x] r
->           | equal (ARR a b :>: (f, identity)) r = pure x
+>         mapOpSimp [dD, xX, yY, f, N v] r
+>           | equal (ARR xX yY :>: (f, identity)) r = pure v
 >           where
->             identity = eval (L ("x" :. [.x. NV x])) B0
->         mapOpSimp [d, _, c, f, N (mOp :@ [_, a, _, g, N x])] r
+>             identity = L (HF "x" $ \x -> x)
+>         mapOpSimp [dD, _, zZ, f, N (mOp :@ [_, xX, _, g, N v])] r
 >           | mOp == mapOp = mapOpSimp args r <|> pure (mapOp :@ args)
 >           where
->             comp f g = eval
->               [.f.g.
->                L ("x" :. [.x. N (V f :$ A (N $ V g :$ A (NV x)))])
->               ] $ B0 :< f :< g
->             args = [d, a, c, comp f g, N x]
+>             comp f g = L (HF "x" $ \x -> f $$ A (g $$ A x))
+>             args = [dD, xX, zZ, comp f g, N v]
 >         mapOpSimp _ _ = empty
 
 
@@ -608,6 +431,14 @@ lists (so |[]| becomes |@[0]| and |[s , t]| becomes |@ [1 s t]|).
 >         elaborate b (MU l d :>: DCON (DPAIR DZE DVOID))
 >     elaborate b (MU l d :>: DPAIR s t) =
 >         elaborate b (MU l d :>: DCON (DPAIR (DSU DZE) (DPAIR s (DPAIR t DVOID))))
+>     elaborate True (SET :>: DMU Nothing d) = do
+>         GirlMother (nom := HOLE :<: ty) _ _ <- getMother
+>         let fr = nom := FAKE :<: ty
+>         xs <- (| boySpine getAuncles |)
+>         let lt = N (P fr $:$ xs)
+>         let lv = evTm lt
+>         (t :=>: v) <- elaborate False (desc :>: d)
+>         return (MU (Just lt) t :=>: MU (Just lv) v)
 
 To avoid an infinite loop when distilling, we have to be a little cleverer
 and call canTy directly rather than letting distill do it for us.

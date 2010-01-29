@@ -88,22 +88,24 @@
 
 > import -> Coerce where
 >   -- coerce :: (Can (VAL,VAL)) -> VAL -> VAL -> Either NEU VAL
->   coerce (IMu (Just (l0,l1) :?=: (Id (iI0,iI1) :& Id (d0,d1))) (i0,i1)) q (CON x) = 
+>   coerce (IMu (Just (l0,l1) :?=: 
+>               (Id (iI0,iI1) :& Id (d0,d1))) (i0,i1)) q (CON x) = 
 >     let ql  = CON $ q $$ Fst
 >         qiI = CON $ q $$ Snd $$ Fst
 >         qi  = CON $ q $$ Snd $$ Snd $$ Snd
 >         qd = CON $ q $$ Snd $$ Snd $$ Fst
->         (typ :>: vap) = laty ("I" :<: SET :-: \iI ->
->                               "d" :<: ARR iI (IDESC iI) :-: \d ->
->                               "i" :<: iI :-: \i ->
->                               "l" :<: ARR iI SET :-: \l ->
->                               Target (SET :>: 
->                                        idescOp @@ [ iI , d $$ A i
->                                                      , L $ HF "i" $ IMU (|l|) iI d
->                                                      ]))
+>         (typ :>: vap) = 
+>           laty ("I" :<: SET :-: \iI ->
+>                 "d" :<: ARR iI (IDESC iI) :-: \d ->
+>                 "i" :<: iI :-: \i ->
+>                 "l" :<: ARR iI SET :-: \l ->
+>                 Target (SET :>: 
+>                           idescOp @@ [ iI , d $$ A i
+>                                      , L $ HF "i" $ IMU (|l|) iI d
+>                                      ]))
 >     in Right . CON $ 
->       coe @@ [ idescOp @@ [ iI0 , d0 $$ A i0 , L $ HF "i" $ IMU (|l0|) iI0 d0 ] 
->              , idescOp @@ [ iI1 , d1 $$ A i1 , L $ HF "i" $ IMU (|l1|) iI1 d1 ] 
+>       coe @@ [ idescOp @@ [iI0, d0 $$ A i0, L $ HF "i" $ IMU (|l0|) iI0 d0] 
+>              , idescOp @@ [iI1, d1 $$ A i1, L $ HF "i" $ IMU (|l1|) iI1 d1] 
 >              , CON $ pval refl $$ A typ $$ A vap $$ Out 
 >                                $$ A iI0 $$ A iI1 $$ A qiI
 >                                $$ A d0 $$ A d1 $$ A qd
@@ -114,13 +116,14 @@
 >     let qiI = CON $ q $$ Fst
 >         qi  = CON $ q $$ Snd $$ Snd
 >         qd = CON $ q $$ Snd $$ Fst
->         (typ :>: vap) = laty ("I" :<: SET :-: \iI ->
->                               "d" :<: ARR iI (IDESC iI) :-: \d ->
->                               "i" :<: iI :-: \i ->
->                               Target (SET :>: 
->                                        N (idescOp :@ [ iI , d $$ A i
->                                                      , L $ HF "i" $ IMU Nothing iI d
->                                                      ]))) 
+>         (typ :>: vap) = 
+>           laty ("I" :<: SET :-: \iI ->
+>                 "d" :<: ARR iI (IDESC iI) :-: \d ->
+>                 "i" :<: iI :-: \i ->
+>                 Target (SET :>: 
+>                           (idescOp @@ [ iI , d $$ A i
+>                                       , L $ HF "i" $ IMU Nothing iI d
+>                                       ]))) 
 >     in Right . CON $ 
 >       coe @@ [ idescOp @@ [ iI0 , d0 $$ A i0 , L $ HF "i" $ IMU Nothing iI0 d0 ] 
 >              , idescOp @@ [ iI1 , d1 $$ A i1 , L $ HF "i" $ IMU Nothing iI1 d1 ] 
@@ -176,21 +179,19 @@
 >     , opSimp = \_ _ -> empty
 >     } where
 >       idOpTy = 
->        "i" :<: SET :-: \i ->
->        "d" :<: IDESC i :-: \d ->
->        "x" :<: ARR i SET :-: \x ->
+>        "I" :<: SET :-: \iI ->
+>        "d" :<: IDESC iI :-: \d ->
+>        "X" :<: ARR iI SET :-: \x ->
 >        Target SET
 >       idOpRun :: [VAL] -> Either NEU VAL
->       idOpRun [ii,IDONE p,x]    = Right $ PRF p
->       idOpRun [ii,IARG aa d,x] = Right $
->          eval [.ii.aa.d.x. 
->               SIGMA (NV aa) . L $ "a" :. [.a.
->               (N (idescOp :@ [NV ii,d $# [a],NV x]))
->               ]] $ B0 :< ii :< aa :< d :< x
->       idOpRun [ii,IIND1 i d,x] = Right (TIMES (x $$ A i) (idescOp @@ [ii,d,x]))
->       idOpRun [ii,IIND h hi d,x] = 
+>       idOpRun [iI,IDONE p,x]    = Right $ PRF p
+>       idOpRun [iI,IARG aA d,x] = Right $
+>          SIGMA aA . L . HF "a" $ \a ->
+>            idescOp @@ [iI,d $$ A a, x]
+>       idOpRun [iI,IIND1 i d,x] = Right (TIMES (x $$ A i) (idescOp @@ [iI,d,x]))
+>       idOpRun [iI,IIND h hi d,x] = 
 >         Right (TIMES (PI h (L $ HF "h" (\h -> x $$ (A (hi $$ (A h)))))) 
->                      (idescOp @@ [ii,d,x]))
+>                      (idescOp @@ [iI,d,x]))
 >       idOpRun [_,N x,_]     = Left x
 
 >   iboxOp :: Op
@@ -336,6 +337,21 @@
 >             args = [iI, d, a, c, comp f g, N x]
 >         mapOpSimp _ _ = empty
 
+> import -> ElaborateRules where
+>   elaborate True (SET :>: DIMU Nothing iI d i) = do
+>       GirlMother (nom := HOLE :<: ty) _ _ <- getMother
+>       let fr = nom := FAKE :<: ty
+>       xs <- getBoys
+>       guard (not (null xs))
+>       let lt = N (P fr $:$ (map (\x -> A (N (P x))) (init xs)))
+>       let lv = evTm lt
+>       (iI :=>: iIv) <- elaborate False (SET :>: iI)
+>       (d :=>: dv) <- elaborate False (ARR iIv (IDESC iIv) :>: d)
+>       (i :=>: iv) <- elaborate False (iIv :>: i)
+>       lastIsIndex <- withNSupply (equal (SET :>: (iv,N (P (last xs)))))
+>       guard lastIsIndex
+>       -- should check i doesn't appear in d (fairly safe it's not in iI :))
+>       return (IMU (Just lt) iI d i :=>: IMU (Just lv) iIv dv iv)
 
 If a label is not in scope, we remove it, so the definition appears at the
 appropriate place when the proof state is printed.
