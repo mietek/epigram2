@@ -38,8 +38,16 @@ mkdir ".tests"
 # 2: no Pig binary
 status=0
 
+## Test cases:
+if [ $# -eq 0 ]
+then
+    scripts=`ls *.pig`
+else
+    scripts=$@
+fi
+
 ## Run the test cases
-for script in `ls *.pig`
+for script in $scripts
 do
     if [ -f "${script}.disabled" ]
     then 
