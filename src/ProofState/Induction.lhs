@@ -188,7 +188,7 @@ this non-dependent |Sigma|. Then, we can bring the element of |Mu D|
 in the context: this is flattened data. Finally, we recursively
 flatten the structure made by the interpretation of |D'|.
 
-> introData branch (IND1 _D') = do
+> introData branch (IND1 _D') = 
 >   withGoal $ 
 >   unpackSigma $ do
 >                 -- Bring (x : Mu D) in context
