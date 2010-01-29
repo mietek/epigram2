@@ -106,7 +106,7 @@ Atome:
 
 ## Unit testing (haha):
 test:
-	cd ../test && ./test.sh
+	cd ../test && ./test.sh -q
 
 ## Clean:
 clean:
