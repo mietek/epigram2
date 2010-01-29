@@ -39,9 +39,15 @@ of entries in scope, which it will extend when going under a binder.
 
 > import <- DistillRules
 
+Just like in any other checker-evaluator, canonical terms can be distilled
+using |canTy|.
+
 > distill es (C ty :>: C c) = do
 >     cc <- canTy (distill es) (ty :>: c)
 >     return ((DC $ fmap termOf cc) :=>: evTm (C c))
+
+To distill a $lambda$-abstraction, we speculate a fresh reference and distill
+under the binder, then convert the scope appropriately.
 
 > distill es (ty :>: l@(L sc)) = do
 >     (k, s, f) <- lambdable ty `catchMaybe` ("distill: type " ++ show ty ++ " is not lambdable.")
@@ -57,9 +63,13 @@ of entries in scope, which it will extend when going under a binder.
 >     convScope (_ :. _)  x  tm = x ::. tm
 >     convScope (K _)     _  tm = DK tm
 
+If we encounter a neutral term, we switch to |distillInfer|.
+
 > distill es (_ :>: N n) = do
 >     (n' :<: _) <- distillInfer es n []
 >     return (DN n' :=>: evTm n)
+
+If none of the cases match, we complain loudly.
 
 > distill _ (ty :>: tm) = error ("distill: can't cope with\n" ++ show ty ++ "\n:>:\n" ++ show tm)
 
@@ -72,6 +82,10 @@ also accumulates a spine so shared parameters can be removed.
 
 > import <- DistillInferRules
 
+To distill a parameter with a spine of eliminators, we use |baptise| to determine
+a name for the reference and the number of shared parameters, then process the
+arguments and return the distilled application with the shared parameters dropped.
+
 > distillInfer es tm@(P (name := _ :<: ty)) as       = do
 >     me <- getMotherName
 >     let (relName, argsToDrop) = baptise es me B0 name
@@ -79,11 +93,22 @@ also accumulates a spine so shared parameters can be removed.
 >     return ((DP relName $::$ drop argsToDrop e') :<: ty')
 >     
 
+To distill an elimination, we simply push the eliminator on to the spine.
+
 > distillInfer es (t :$ e) as    = distillInfer es t (e : as)
+
+Because there are no operators in the display syntax, we replace them with
+parameters containing the appropriate primitive references.
 
 > distillInfer es (op :@ ts) as  = distillInfer es (P (mkRef op)) (map A ts ++ as)
 
+Unnecessary type ascriptions can simply be dropped; this also ensures that shared
+parameters are handled correctly when the head is a parameter. 
+
 > distillInfer es (N t :? _) as  = distillInfer es t as
+
+Otherwise, type ascriptions are converted into type casts and the spine of
+eliminators is applied in its entirety.
 
 > distillInfer es (t :? ty) as   = do
 >     ty'  :=>: vty  <- distill es (SET :>: ty)
@@ -91,9 +116,15 @@ also accumulates a spine so shared parameters can be removed.
 >     (e', ty'')     <- processArgs es (vt :<: vty) as
 >     return ((DType ty' ::$ A t') $::$ e' :<: ty'')
 
+If nothing matches, we are unable to distill this term, so we complain loudly.
+
 > distillInfer _ tm _ = error ("distillInfer: can't cope with " ++ show tm)
 
 
+The |processArgs| command takes a list of entries in scope, a typed value
+and a spine of arguments for the value. It distills the spine, using
+|elimTy| to determine the appropriate type to push in at each step, and returns
+the distilled spine and the overall type of the application.
 
 > processArgs :: Entries -> (VAL :<: TY) -> Spine {TT} REF -> ProofState (DSpine RelName, TY)
 > processArgs _ (_ :<: ty) [] = return ([], ty)
