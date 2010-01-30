@@ -182,7 +182,7 @@ Equality rules:
 
 > import -> OpCode where
 >   branchesOp = Op 
->     { opName   = "Branches"
+>     { opName   = "branches"
 >     , opArity  = 2 
 >     , opTyTel     = bOpTy
 >     , opRun    = bOpRun
@@ -217,7 +217,7 @@ Equality rules:
 >                                 done)
 
 >   switchOp = Op
->     { opName = "Switch"
+>     { opName = "switch"
 >     , opArity = 4
 >     , opTyTel = sOpTy
 >     , opRun = sOpRun
@@ -279,8 +279,8 @@ Equality rules:
 >   switchOp :
 
 > import -> OpCompile where
->     ("Branches", _) -> Ignore
->     ("Switch", [e, x, p, b]) -> App (Var "__switch") [x, b]
+>     ("branches", _) -> Ignore
+>     ("switch", [e, x, p, b]) -> App (Var "__switch") [x, b]
 
 
 To elaborate a tag with an enumeration as its type, we search for the

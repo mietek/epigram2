@@ -27,7 +27,7 @@
                   \ x : Sig (nat -> nat ;) ->
                 ] G50011 (x !) (x -) : nat -> nat ;
               \ a : Enum ['zero 'suc] ->
-            ] Switch ['zero 'suc] a (\ a -> ((x : desc (((switchD ['zero 'suc]) [[] (con ['ind1 []])]) a) nat)(x : box (((switchD ['zero 'suc]) [[] (con ['ind1 []])]) a) nat (\ _ -> (nat -> nat)) x) -> nat -> nat)) [G5000 G5001] : (x : desc (((switchD ['zero 'suc]) [[] (con ['ind1 []])]) a) nat)(x : box (((switchD ['zero 'suc]) [[] (con ['ind1 []])]) a) nat (\ _ -> (nat -> nat)) x) -> nat -> nat ;
+            ] switch ['zero 'suc] a (\ a -> ((x : desc (((switchD ['zero 'suc]) [[] (con ['ind1 []])]) a) nat)(x : box (((switchD ['zero 'suc]) [[] (con ['ind1 []])]) a) nat (\ _ -> (nat -> nat)) x) -> nat -> nat)) [G5000 G5001] : (x : desc (((switchD ['zero 'suc]) [[] (con ['ind1 []])]) a) nat)(x : box (((switchD ['zero 'suc]) [[] (con ['ind1 []])]) a) nat (\ _ -> (nat -> nat)) x) -> nat -> nat ;
           \ x : Sig (a : Enum ['zero 'suc] ; desc (((switchD ['zero 'suc]) [[] (con ['ind1 []])]) a) nat) ->
         ] G500 (x !) (x -) : (x : box (((switchD ['zero 'suc]) [[] (con ['ind1 []])]) (x !)) nat (\ _ -> (nat -> nat)) (x -)) -> nat -> nat ;
       \ x : nat ->

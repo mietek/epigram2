@@ -42,7 +42,7 @@
                         ] (nat -> nat) : Set ;
                     ] (Pi ((((box (((switchD ['zero 'suc]) [[] (con ['ind1 []])]) a)) nat) (\ _ -> (nat -> nat))) x) h500411) : Set ;
                 ] (Pi ((desc (((switchD ['zero 'suc]) [[] (con ['ind1 []])]) a)) nat) h50041) : Set ;
-            ] Switch ['zero 'suc] a h5004 [G5000 G5001] : Pi ((desc (((switchD ['zero 'suc]) [[] (con ['ind1 []])]) a)) nat) h5003 ;
+            ] switch ['zero 'suc] a h5004 [G5000 G5001] : Pi ((desc (((switchD ['zero 'suc]) [[] (con ['ind1 []])]) a)) nat) h5003 ;
           h501
             [ \ a : Enum ['zero 'suc] ->
             ] desc (((switchD ['zero 'suc]) [[] (con ['ind1 []])]) a) nat : Set ;

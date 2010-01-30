@@ -10,7 +10,7 @@ lambda y ;
 elim fold NatD x ;
     give con ? ;
     lambda x ;
-    elim Switch ['zero 'suc] x ;
+    elim switch ['zero 'suc] x ;
     give [? ?] ;
 
 	lambda m  ;
