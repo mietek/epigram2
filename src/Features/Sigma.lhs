@@ -165,7 +165,7 @@ Coercion rule:
 >   halfZip Void Void = Just Void
 >   halfZip (Pair s0 t0) (Pair s1 t1) = Just (Pair (s0,s1) (t0,t1))
 
-> import -> TraverseElim where
+> import -> ElimTraverse where
 >   traverse f Fst  = (|Fst|)
 >   traverse f Snd  = (|Snd|)
 

@@ -29,7 +29,7 @@
 >   traverse f (Label l t) = (| Label (f l) (f t) |)
 >   traverse f (LRet t)    = (| LRet (f t) |)
 
-> import -> TraverseElim where
+> import -> ElimTraverse where
 >   traverse f (Call l) = (| Call (f l) |)
 
 > import -> CanHalfZip where

@@ -605,7 +605,7 @@ We can also throw away a label, should we want to.
 > instance Traversable Elim where
 >   traverse f (A s)  = (|A (f s)|)
 >   traverse _ Out    = (|Out|)
->   import <- TraverseElim
+>   import <- ElimTraverse
 
 > instance Functor Irr where
 >   fmap = fmapDefault

@@ -37,7 +37,7 @@
 
 > import -> ElimCompile where
 
-> import -> TraverseElim where
+> import -> ElimTraverse where
 
 > import -> ElimPretty where
 
