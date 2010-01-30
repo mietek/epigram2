@@ -9,7 +9,7 @@
 > import -> CanConstructors where
 >   Quotient :: t -> t -> t -> Can t
 
-> import -> TraverseCan where
+> import -> CanTraverse where
 >   traverse f (Quotient x r p) = (| Quotient (f x) (f r) (f p) |)
 
 > import -> HalfZipCan where

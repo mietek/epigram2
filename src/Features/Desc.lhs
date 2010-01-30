@@ -136,7 +136,7 @@ Equality rules:
 > import -> CanConstructors where
 >   Mu     :: Labelled Id t -> Can t
 
-> import -> TraverseCan where
+> import -> CanTraverse where
 >   traverse f (Mu l) = (|Mu (traverse f l)|)
 
 > import -> HalfZipCan where

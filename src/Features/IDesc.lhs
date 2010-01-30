@@ -16,7 +16,7 @@
 >   IInd1   :: t -> t -> Can t
 >   IInd    :: t -> t -> t -> Can t
 
-> import -> TraverseCan where
+> import -> CanTraverse where
 >   traverse f (IDesc i) = (|IDesc (f i)|)
 >   traverse f (IMu l i) = (|IMu (traverse f l) (f i)|)
 >   traverse f (IDone p) = (|IDone (f p)|)

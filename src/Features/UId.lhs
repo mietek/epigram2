@@ -51,7 +51,7 @@ Equality rules:
 >   uidTac = can $ UId
 >   tagTac t = can $ Tag t
 
-> import -> TraverseCan where
+> import -> CanTraverse where
 >   traverse f UId          = (|UId|)
 >   traverse f (Tag s)      = (|(Tag s)|)
 

@@ -94,7 +94,7 @@ With no computational behavior.
 > import -> SugarTactics where
 >     eqBlueTac p q = can $ EqBlue p q
 
-> import -> TraverseCan where
+> import -> CanTraverse where
 >   traverse f (EqBlue (pty :>: p) (qty :>: q)) =
 >     (|EqBlue (|(:>:) (f pty) (f p)|) (|(:>:) (f qty) (f q)|)|)
 

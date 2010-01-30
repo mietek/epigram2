@@ -148,7 +148,7 @@ Equality rules:
 >   makeBody Ze = CTag 0
 >   makeBody (Su x) = STag (makeBody x)
 
-> import -> TraverseCan where
+> import -> CanTraverse where
 >   traverse f (EnumT e)    = (|EnumT (f e)|)
 >   traverse f Ze           = (|Ze|)
 >   traverse f (Su n)       = (|Su (f n)|) 

@@ -30,7 +30,7 @@
 >   makeBody (Return x)    = Tuple [CTag 0, makeBody x]
 >   makeBody (Composite t) = Tuple [CTag 1, makeBody t]
 
-> import -> TraverseCan where
+> import -> CanTraverse where
 >   traverse f (Monad d x)   = (| Monad (f d) (f x) |)
 >   traverse f (Return x)    = (| Return (f x) |)
 >   traverse f (Composite x) = (| Composite (f x) |)

@@ -110,7 +110,7 @@ Yes! Equality is only meaningful when the sets are equal.
 
 Elim forms inherited from elsewhere
 
-> import -> TraverseCan where
+> import -> CanTraverse where
 >   traverse _ Prop      = (|Prop|)
 >   traverse f (Prf p)   = (|Prf (f p)|)
 >   traverse f (All p q) = (|All (f p) (f q)|)

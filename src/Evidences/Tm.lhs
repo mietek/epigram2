@@ -588,7 +588,7 @@ We can also throw away a label, should we want to.
 >   traverse f Set       = (|Set|)
 >   traverse f (Pi s t)  = (|Pi (f s) (f t)|)
 >   traverse f (Con t)   = (|Con (f t)|)
->   import <- TraverseCan
+>   import <- CanTraverse
 
 > instance HalfZip Can where
 >    halfZip Set        Set        = Just Set

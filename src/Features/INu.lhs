@@ -12,7 +12,7 @@
 >   INu :: t -> t -> t -> Can t
 >   ICoIt :: t -> t -> t -> t -> t -> t -> Can t
 
-> import -> TraverseCan where
+> import -> CanTraverse where
 >   traverse f (INu ity d i) = (|INu (f ity) (f d) (f i)|)
 >   traverse f (ICoIt ity d i sty g s) = 
 >     (|ICoIt (f ity) (f d) (f i) (f sty) (f g) (f s)|)

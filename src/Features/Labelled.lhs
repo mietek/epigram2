@@ -25,7 +25,7 @@
 >   makeBody (Label l t) = makeBody t
 >   makeBody (LRet t)    = makeBody t
 
-> import -> TraverseCan where
+> import -> CanTraverse where
 >   traverse f (Label l t) = (| Label (f l) (f t) |)
 >   traverse f (LRet t)    = (| LRet (f t) |)
 

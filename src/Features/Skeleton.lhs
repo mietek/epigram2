@@ -25,7 +25,7 @@
 
 > import -> CanDisplayPats where
 
-> import -> TraverseCan where
+> import -> CanTraverse where
 
 > import -> HalfZipCan where
 

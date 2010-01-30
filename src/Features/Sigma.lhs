@@ -153,7 +153,7 @@ Coercion rule:
 >   makeBody (arg, Fst) = Proj (makeBody arg) 0
 >   makeBody (arg, Snd) = Proj (makeBody arg) 1
 
-> import -> TraverseCan where
+> import -> CanTraverse where
 >   traverse f Unit         = (|Unit|)
 >   traverse f Void         = (|Void|)
 >   traverse f (Sigma s t)  = (|Sigma (f s) (f t)|)
