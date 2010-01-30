@@ -138,7 +138,7 @@ Elim forms inherited from elsewhere
 >   pattern INH ty      = C (Inh ty)
 >   pattern WIT t       = C (Wit t)
 
-> import -> DisplayCanPats where
+> import -> CanDisplayPats where
 >   pattern DPROP        = DC Prop
 >   pattern DPRF p       = DC (Prf p)
 >   pattern DALL p q     = DC (All p q)

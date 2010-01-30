@@ -123,7 +123,7 @@ Coercion rule:
 >   pattern Times x y = Sigma x (L (K y))
 >   pattern TIMES x y = C (Times x y)  
 
-> import -> DisplayCanPats where
+> import -> CanDisplayPats where
 >   pattern DSIGMA p q = DC (Sigma p q)
 >   pattern DPAIR  p q = DC (Pair p q)
 >   pattern DUNIT      = DC Unit

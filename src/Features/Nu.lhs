@@ -25,7 +25,7 @@
 >   pattern NU t = C (Nu t)
 >   pattern COIT d sty f s = C (CoIt d sty f s)
 
-> import -> DisplayCanPats where
+> import -> CanDisplayPats where
 >   pattern DNU t = DC (Nu t)
 >   pattern DCOIT d sty f s = DC (CoIt d sty f s)
 

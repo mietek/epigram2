@@ -23,7 +23,7 @@
 
 > import -> CanPats where
 
-> import -> DisplayCanPats where
+> import -> CanDisplayPats where
 
 > import -> TraverseCan where
 

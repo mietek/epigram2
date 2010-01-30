@@ -18,7 +18,7 @@
 >   pattern RETURN x    = C (Return x)
 >   pattern COMPOSITE t = C (Composite t)
 
-> import -> DisplayCanPats where
+> import -> CanDisplayPats where
 >   pattern DMONAD d x = DC (Monad d x)
 >   pattern DRETURN x  = DC (Return x)
 >   pattern DCOMPOSITE t = DC (Composite t)

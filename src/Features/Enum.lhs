@@ -128,7 +128,7 @@ Equality rules:
 >   pattern ZE         = C Ze
 >   pattern SU n       = C (Su n)
 
-> import -> DisplayCanPats where
+> import -> CanDisplayPats where
 >   pattern DENUMT e    = DC (EnumT e) 
 >   pattern DNILE       = DCON (DPAIR (DTAG "nil") DVOID)
 >   pattern DCONSE t e  = DCON (DPAIR (DTAG "cons") (DPAIR t (DPAIR e DVOID)))

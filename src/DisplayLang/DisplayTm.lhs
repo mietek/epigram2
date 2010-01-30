@@ -77,7 +77,7 @@
 > pattern DPIV x s t = DPI s (DLAV x t)
 > pattern DTY ty tm  = (DType ty) ::$ A tm
 
-> import <- DisplayCanPats
+> import <- CanDisplayPats
 
 
 

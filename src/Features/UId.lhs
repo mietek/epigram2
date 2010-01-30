@@ -43,7 +43,7 @@ Equality rules:
 >   pattern UID    = C UId
 >   pattern TAG s  = C (Tag s)
 
-> import -> DisplayCanPats where
+> import -> CanDisplayPats where
 >   pattern DUID    = DC UId
 >   pattern DTAG s  = DC (Tag s)
 

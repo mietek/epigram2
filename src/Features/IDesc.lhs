@@ -40,7 +40,7 @@
 >   pattern IIND h hi d = C (IInd h hi d) 
 >   pattern IIND1 i d = C (IInd1 i d) 
 
-> import -> DisplayCanPats where
+> import -> CanDisplayPats where
 >   pattern DIDESC i = DC (IDesc i)
 >   pattern DIMU l ii x i = DC (IMu (l :?=: (Id ii :& Id x)) i) 
 >   pattern DIDONE p = DC (IDone p) 

@@ -178,7 +178,7 @@ Equality rules:
 >   pattern IND h d = CON (PAIR (SU (SU (SU ZE))) (PAIR h (PAIR d VOID)))
 >   pattern IND1 d = CON (PAIR (SU (SU (SU (SU ZE)))) (PAIR d VOID))
 
-> import -> DisplayCanPats where
+> import -> CanDisplayPats where
 >   pattern DMU l x  = DC (Mu (l :?=: Id x))
 >   pattern DDONE = DCON (DPAIR DZE DVOID)
 >   pattern DARG s d = DCON (DPAIR (DSU DZE) (DPAIR s (DPAIR d DVOID)))

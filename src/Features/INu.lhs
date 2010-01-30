@@ -27,7 +27,7 @@
 >   pattern INU ity d i = C (INu ity d i)
 >   pattern ICOIT ity d i sty f s = C (ICoIt ity d i sty f s)
 
-> import -> DisplayCanPats where
+> import -> CanDisplayPats where
 >   pattern DINU ity d i = DC (INu ity d i)
 >   pattern DICOIT ity d i sty f s = DC (ICoIt ity d i sty f s)
 
