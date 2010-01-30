@@ -227,7 +227,7 @@ Elim forms inherited from elsewhere
 >                 v -> error ("oh bugger: " ++ show v)
 >             , opSimp = \_ _ -> empty
 >             }
->   inhEOp = Op { opName = "inhOp"
+>   inhEOp = Op { opName = "inh"
 >               , opArity = 4
 >               , opTyTel = "S" :<: SET :-: \ ty ->
 >                           "p" :<: PRF (INH ty) :-: \ p ->
