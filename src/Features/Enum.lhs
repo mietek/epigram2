@@ -184,44 +184,27 @@ Equality rules:
 >   branchesOp = Op 
 >     { opName   = "branches"
 >     , opArity  = 2 
->     , opTyTel     = bOpTy
+>     , opTyTel  = bOpTy
 >     , opRun    = bOpRun
 >     , opSimp   = \_ _ -> empty
 >     } where
 >         bOpTy = "e" :<: enumU :-: \e ->
 >                 "p" :<: ARR (ENUMT e) SET :-: \p ->
 >                 Target SET
+
 >         bOpRun :: [VAL] -> Either NEU VAL
 >         bOpRun [NILE , _] = Right UNIT
 >         bOpRun [CONSE t e' , p] = 
 >           Right (TIMES (p $$ A ZE) 
 >                 (branchesOp @@ [e' , L (HF "x" $ \x -> p $$ A (SU x))]))
 >         bOpRun [N e , _] = Left e 
->         branchesTerm = trustMe (typeBranches :>: tacBranches)
->         typeBranches = trustMe (SET :>: tacTypeBranches)
->         tacTypeBranches = piTac uidTac
->                                 (\t ->
->                                  piTac enumUTac
->                                        (\e ->
->                                         arrTac (arrTac (enumTTac (consETac (use t done)
->                                                                            (use e done)))
->                                                        setTac)
->                                                setTac))
->         tacBranches = lambda $ \t ->
->                       lambda $ \e' ->
->                       lambda $ \p ->
->                       timesTac (p @@@ [zeTac])
->                                (useOp branchesOp [ use e' done
->                                                  , lambda $ \x -> 
->                                                    p @@@ [suTac (use x done)]]
->                                 done)
 
 >   switchOp = Op
->     { opName = "switch"
+>     { opName  = "switch"
 >     , opArity = 4
 >     , opTyTel = sOpTy
->     , opRun = sOpRun
->     , opSimp = \_ _ -> empty
+>     , opRun   = sOpRun
+>     , opSimp  = \_ _ -> empty
 >     } where
 >         sOpTy = 
 >           "e" :<: enumU :-: \e ->
@@ -229,38 +212,15 @@ Equality rules:
 >           "p" :<: ARR (ENUMT e) SET :-: \p ->
 >           "b" :<: branchesOp @@ [e , p] :-: \b -> 
 >           Target (p $$ A x)
+
 >         sOpRun :: [VAL] -> Either NEU VAL
 >         sOpRun [CONSE t e' , ZE , p , ps] = Right $ ps $$ Fst
->         sOpRun [CONSE t e' , SU n , p , ps] = Right $ switchTerm
->                                                     $$ A t $$ A e' $$ A p $$ A ps $$ A n
+>         sOpRun [CONSE t e' , SU n , p , ps] =
+>             Right $ switchOp @@ [ e'
+>                                 , n
+>                                 , L . HF "x" $ \x -> p $$ A (SU x)
+>                                 , ps $$ Snd ]
 >         sOpRun [_ , N n , _ , _] = Left n
->
->         switchTerm = trustMe (typeSwitch :>: tacSwitch) 
->         tacSwitch = lambda $ \t ->
->                     lambda $ \e' ->
->                     lambda $ \p ->
->                     lambda $ \ps ->
->                     lambda $ \n ->
->                     useOp switchOp [ use e' done
->                                    , use n done 
->                                    , lambda $ \x -> 
->                                      p @@@ [ suTac (use x done) ]
->                                    , use ps . apply Snd $ done ]
->                     done
->         typeSwitch = trustMe (SET :>: tacTypeSwitch) 
->         tacTypeSwitch = piTac uidTac
->                               (\t ->
->                                piTac enumUTac
->                                      (\e -> 
->                                       piTac (arrTac (enumTTac (consETac (use t done) 
->                                                                         (use e done)))
->                                                     setTac)
->                                             (\p ->
->                                              arrTac (useOp branchesOp [ consETac (use t done) (use e done)
->                                                                       , use p done] done)
->                                                      (piTac (enumTTac (use e done))
->                                                                       (\x -> 
->                                                                        p @@@ [ suTac $ use x done ])))))
 
 
 > import -> Coerce where
