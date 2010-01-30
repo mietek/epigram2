@@ -166,7 +166,7 @@
 >   ielimOp :
 
 > import -> OpCompile where
->   ("ielimOp", [iI,d,i,v,bp,p]) -> App (Var "__ielim") [d, p, i, v]
+>   ("ifold", [iI,d,i,v,bp,p]) -> App (Var "__ifold") [d, p, i, v]
 >   ("imapBox", [iI,d,x,bp,p,v]) -> App (Var "__imapBox") [d, p, v]
 
 > import -> OpCode where
