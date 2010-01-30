@@ -19,7 +19,7 @@
 
 > import -> CanCompile where
 
-> import -> EtaExpand where
+> import -> CanEtaExpand where
 
 > import -> CanPats where
 

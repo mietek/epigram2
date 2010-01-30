@@ -185,7 +185,7 @@ Coercion rule:
 >   elimTy chev (_ :<: Sigma s t) Fst = return (Fst, s)
 >   elimTy chev (p :<: Sigma s t) Snd = return (Snd, t $$ A (p $$ Fst))
 
-> import -> EtaExpand where
+> import -> CanEtaExpand where
 >   etaExpand (Unit :>: v) r = Just VOID
 >   etaExpand (Sigma s t :>: p) r = let x = p $$ Fst in 
 >     Just (PAIR (inQuote (s :>: x) r) (inQuote (t $$ (A x) :>: (p $$ Snd)) r))

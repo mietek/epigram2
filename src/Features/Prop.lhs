@@ -245,7 +245,7 @@ Elim forms inherited from elsewhere
 >   nEOp :
 >   inhEOp :
 
-> import -> EtaExpand where
+> import -> CanEtaExpand where
 >   etaExpand (Prf p :>: x) r = Just (BOX (Irr (inQuote (PRF p :>: x) r)))
 
 > import -> Check where

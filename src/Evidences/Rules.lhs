@@ -386,7 +386,7 @@ we cannot fail in this code, but we have to be artificially cautious.
 
 As mentioned above, |\eta|-expansion is the first sensible thing to do
 when quoting. Sometimes it works, especially for closures and features
-for which an |EtaExpand| aspect is defined. Quoting a closure is a bit
+for which a |CanEtaExpand| aspect is defined. Quoting a closure is a bit
 tricky: you cannot compute under a binder as you would like to. So, we
 first have to generate a fresh variable |v|. Then, we apply |v| to the
 function |f|, getting a value of type |t v|. At this point, we can
@@ -398,7 +398,7 @@ term.
 >   L ("__etaExpandA" :.
 >      fresh ("__etaExpandB" :<: s) 
 >      (\v  -> inQuote (t $$ A v :>: (f $$ A v))) r)
-> import <- EtaExpand
+> import <- CanEtaExpand
 > etaExpand _                  _ = Nothing
 
 
