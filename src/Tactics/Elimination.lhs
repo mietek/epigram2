@@ -991,7 +991,7 @@ We make elimination accessible to the user by adding it as a Cochon tactic:
 > import -> CochonTactics where
 >   : (simpleCT
 >     "eliminate"
->     (|(|(B0 :<) (parseOption parseName)|) :< (|id parseExTm
->                                               |id parseAscription |)|)
+>     (|(|(B0 :<) (tokenOption tokenName)|) :< (|id tokenExTm
+>                                               |id tokenAscription |)|)
 >     (\[n,e] -> elimCTactic (argOption (unDP . argToEx) n) (argToEx e))
 >     "eliminate <name> - eliminates with a motive.")

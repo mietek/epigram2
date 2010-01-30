@@ -63,23 +63,23 @@ with projection functions.
 
 \subsection{Tokenizer combinators}
 
-> parseExTm :: Parsley Token CochonArg
-> parseExTm = (| ExArg pExDTm |)
+> tokenExTm :: Parsley Token CochonArg
+> tokenExTm = (| ExArg pExDTm |)
 
-> parseAscription :: Parsley Token CochonArg
-> parseAscription = (| ExArg pAscriptionTC |)
+> tokenAscription :: Parsley Token CochonArg
+> tokenAscription = (| ExArg pAscriptionTC |)
 
-> parseInTm :: Parsley Token CochonArg
-> parseInTm = (| InArg pInDTm |)
+> tokenInTm :: Parsley Token CochonArg
+> tokenInTm = (| InArg pInDTm |)
 
-> parseName :: Parsley Token CochonArg
-> parseName = (| (ExArg . DP) nameParse |)
+> tokenName :: Parsley Token CochonArg
+> tokenName = (| (ExArg . DP) nameParse |)
 
-> parseString :: Parsley Token CochonArg
-> parseString = (| StrArg ident |)
+> tokenString :: Parsley Token CochonArg
+> tokenString = (| StrArg ident |)
 
-> parseOption :: Parsley Token CochonArg -> Parsley Token CochonArg
-> parseOption p = (| Optional (bracket Square p) 
+> tokenOption :: Parsley Token CochonArg -> Parsley Token CochonArg
+> tokenOption p = (| Optional (bracket Square p) 
 >                  | NoCochonArg |)
 
 

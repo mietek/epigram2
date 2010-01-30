@@ -135,6 +135,20 @@ unary tactics.
 >             return (locs :< loc)
 >             
 
+The |tacticsMatching| function identifies Cochon tactics that match the
+given string, either exactly or as a prefix.
+
+> tacticsMatching :: String -> [CochonTactic]
+> tacticsMatching x = case find ((x ==) . ctName) cochonTactics of
+>     Just ct  -> [ct]
+>     Nothing  -> filter (isPrefixOf x . ctName) cochonTactics
+
+> tacticNames :: [CochonTactic] -> String
+> tacticNames = intercalate ", " . map ctName
+
+
+
+
 > simpleCT :: String -> Parsley Token (Bwd CochonArg)
 >     -> ([CochonArg] -> ProofState String) -> String -> CochonTactic
 > simpleCT name parser eval help = CochonTactic
@@ -150,15 +164,15 @@ unary tactics.
 > unaryExCT :: String -> (ExDTmRN -> ProofState String) -> String -> CochonTactic
 > unaryExCT name eval help = simpleCT
 >     name
->     (| (B0 :<) parseExTm
->      | (B0 :<) parseAscription |)
+>     (| (B0 :<) tokenExTm
+>      | (B0 :<) tokenAscription |)
 >     (eval . argToEx . head)
 >     help
 
 > unaryInCT :: String -> (InDTmRN -> ProofState String) -> String -> CochonTactic
 > unaryInCT name eval help = simpleCT
 >     name
->     (| (B0 :<) parseInTm |)
+>     (| (B0 :<) tokenInTm |)
 >     (eval . argToIn . head)
 >     help
 
@@ -167,7 +181,7 @@ unary tactics.
 > unaryNameCT :: String -> (RelName -> ProofState String) -> String -> CochonTactic
 > unaryNameCT name eval help = simpleCT
 >     name
->     (| (B0 :<) parseName |)
+>     (| (B0 :<) tokenName |)
 >     (eval . unDP . argToEx . head)
 >     help
 >   where unDP (DP ref) = ref
@@ -175,7 +189,7 @@ unary tactics.
 > unaryStringCT :: String -> (String -> ProofState String) -> String -> CochonTactic
 > unaryStringCT name eval help = simpleCT
 >     name
->     (| (B0 :<) parseString |)
+>     (| (B0 :<) tokenString |)
 >     (eval . argToStr . head)
 >     help
 
@@ -195,8 +209,8 @@ Construction tactics:
 >       "give <term> - solves the goal with <term>."
 >   : simpleCT 
 >         "lambda"
->          (| (|(B0 :<) parseString (%keyword KwAsc%)|) :< parseInTm 
->           | (B0 :<) parseString |)
+>          (| (|(B0 :<) tokenString (%keyword KwAsc%)|) :< tokenInTm 
+>           | (B0 :<) tokenString |)
 >          (\ args -> case args of
 >              [StrArg s] -> lambdaBoy s >> return "Made lambda boy!"
 >              [StrArg s, InArg ty] -> 
@@ -206,8 +220,8 @@ Construction tactics:
 
 >   : simpleCT
 >         "make"
->         (| (|(B0 :<) parseString (%keyword KwAsc%)|) :< parseInTm
->          | (|(B0 :<) parseString (%keyword KwDefn%) |) <>< 
+>         (| (|(B0 :<) tokenString (%keyword KwAsc%)|) :< tokenInTm
+>          | (|(B0 :<) tokenString (%keyword KwDefn%) |) <>< 
 >              (| (\ (tm :<: ty) -> InArg tm :> InArg ty :> F0) pAscription |)
 >          |)
 >         (\ (StrArg s:tyOrTm) -> case tyOrTm of
@@ -229,13 +243,13 @@ Construction tactics:
 
 >   : simpleCT
 >         "pi"
->          (| (|(B0 :<) parseString (%keyword KwAsc%)|) :< parseInTm |)
+>          (| (|(B0 :<) tokenString (%keyword KwAsc%)|) :< tokenInTm |)
 >         (\ [StrArg s, InArg ty] -> elabPiBoy (s :<: ty) >> return "Made pi boy!")
 >         "pi <x> : <type> - introduces a pi boy."
 
 >   : simpleCT
 >       "program"
->       (|bwdList (pSep (keyword KwComma) parseString)|)
+>       (|bwdList (pSep (keyword KwComma) tokenString)|)
 >       (\ as -> elabProgram (map argToStr as) >> return "Programming.")
 >       "program <labels>: set up a programming problem."
 
@@ -307,7 +321,7 @@ Miscellaneous tactics:
 
 >   : CochonTactic
 >         {  ctName = "compile"
->         ,  ctParse = (|(|(B0 :<) parseName|) :< parseString|)
+>         ,  ctParse = (|(|(B0 :<) tokenName|) :< tokenString|)
 >         ,  ctIO = (\ [ExArg (DP r), StrArg fn] (locs :< loc) -> do
 >             let  Right aus = evalStateT getAuncles loc
 >                  Right dev = evalStateT getDev loc
@@ -321,7 +335,7 @@ Miscellaneous tactics:
 
 >     : CochonTactic
 >         {  ctName = "help"
->         ,  ctParse = (| (B0 :<) parseString
+>         ,  ctParse = (| (B0 :<) tokenString
 >                       | B0
 >                       |)
 >         ,  ctIO = (\ as locs -> do
@@ -346,7 +360,7 @@ Miscellaneous tactics:
 
 >     : CochonTactic
 >         {  ctName = "save"
->         ,  ctParse = (| (B0 :<) parseString |)
+>         ,  ctParse = (| (B0 :<) tokenString |)
 >         ,  ctIO = (\ [StrArg fn] (locs :< loc) -> do
 >             let Right s = evalStateT (much goOut >> prettyProofState) loc
 >             writeFile fn s
@@ -369,7 +383,7 @@ Miscellaneous tactics:
 
 >     : CochonTactic 
 >         {  ctName = "load"
->         ,  ctParse = (| (B0 :<) parseString |)
+>         ,  ctParse = (| (B0 :<) tokenString |)
 >         ,  ctIO = (\ [StrArg file] locs -> do
 >                    commands <- withFile file ReadMode readCommands
 >                                `catchError` \_ -> do
@@ -385,19 +399,11 @@ Import more tactics from an aspect:
 >     : [] )
 
 
+
+
 > pFileName :: Parsley Token String
 > pFileName = ident
 
-The |tacticsMatching| function identifies Cochon tactics that match the
-given string, either exactly or as a prefix.
-
-> tacticsMatching :: String -> [CochonTactic]
-> tacticsMatching x = case find ((x ==) . ctName) cochonTactics of
->     Just ct  -> [ct]
->     Nothing  -> filter (isPrefixOf x . ctName) cochonTactics
-
-> tacticNames :: [CochonTactic] -> String
-> tacticNames = intercalate ", " . map ctName
 
 
 > type CTData = (CochonTactic, [CochonArg])
