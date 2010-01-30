@@ -71,7 +71,7 @@ relation over |A|.
 >   qElimOp :
 
 > import -> OpCompile where
->   ("qElim", [_, _, _, z, _, m, _]) -> App m [z]
+>   ("elimQuotient", [_, _, _, z, _, m, _]) -> App m [z]
 
 > import -> OpCode where
 >   qElimOp = Op
