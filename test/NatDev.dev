@@ -1,7 +1,7 @@
 [ nat
     [ h00
         [ \ x : Enum ['zero 'suc] ->
-        ] SwitchD ['zero 'suc] [[] (con ['ind1 []])] x : Desc ;
+        ] switchD ['zero 'suc] [[] (con ['ind1 []])] x : Desc ;
     ] Mu [(Enum ['zero 'suc]) , h00] : Set ;
   zero := [] : nat ;
   suc
@@ -27,10 +27,10 @@
                   \ x : Sig (nat -> nat ;) ->
                 ] G50011 (x !) (x -) : nat -> nat ;
               \ a : Enum ['zero 'suc] ->
-            ] Switch ['zero 'suc] a (\ a -> ((x : descOp (((SwitchD ['zero 'suc]) [[] (con ['ind1 []])]) a) nat)(x : boxOp (((SwitchD ['zero 'suc]) [[] (con ['ind1 []])]) a) nat (\ _ -> (nat -> nat)) x) -> nat -> nat)) [G5000 G5001] : (x : descOp (((SwitchD ['zero 'suc]) [[] (con ['ind1 []])]) a) nat)(x : boxOp (((SwitchD ['zero 'suc]) [[] (con ['ind1 []])]) a) nat (\ _ -> (nat -> nat)) x) -> nat -> nat ;
-          \ x : Sig (a : Enum ['zero 'suc] ; descOp (((SwitchD ['zero 'suc]) [[] (con ['ind1 []])]) a) nat) ->
-        ] G500 (x !) (x -) : (x : boxOp (((SwitchD ['zero 'suc]) [[] (con ['ind1 []])]) (x !)) nat (\ _ -> (nat -> nat)) (x -)) -> nat -> nat ;
+            ] Switch ['zero 'suc] a (\ a -> ((x : desc (((switchD ['zero 'suc]) [[] (con ['ind1 []])]) a) nat)(x : box (((switchD ['zero 'suc]) [[] (con ['ind1 []])]) a) nat (\ _ -> (nat -> nat)) x) -> nat -> nat)) [G5000 G5001] : (x : desc (((switchD ['zero 'suc]) [[] (con ['ind1 []])]) a) nat)(x : box (((switchD ['zero 'suc]) [[] (con ['ind1 []])]) a) nat (\ _ -> (nat -> nat)) x) -> nat -> nat ;
+          \ x : Sig (a : Enum ['zero 'suc] ; desc (((switchD ['zero 'suc]) [[] (con ['ind1 []])]) a) nat) ->
+        ] G500 (x !) (x -) : (x : box (((switchD ['zero 'suc]) [[] (con ['ind1 []])]) (x !)) nat (\ _ -> (nat -> nat)) (x -)) -> nat -> nat ;
       \ x : nat ->
-    ] elimOp [(Enum ['zero 'suc]) , \ x -> SwitchD ['zero 'suc] [[] (con ['ind1 []])] x] x (\ _ -> (nat -> nat)) G50 : nat -> nat ;
+    ] fold [(Enum ['zero 'suc]) , \ x -> switchD ['zero 'suc] [[] (con ['ind1 []])] x] x (\ _ -> (nat -> nat)) G50 : nat -> nat ;
   x := plus two two : nat ;
 ]

@@ -6,7 +6,7 @@ make id := (\ A x -> x) : (A : Set) -> A -> A ;
 
 make law1 :=
   (\ D A x -> :- map D A A (id A) x == x) :
-  (D : Desc)(A : Set)(x : descOp D A) -> Set ;
+  (D : Desc)(A : Set)(x : desc D A) -> Set ;
 
 make lawswap :=
   (\ D A B x ->
@@ -14,11 +14,11 @@ make lawswap :=
           (map D (Sig (A ; B ;)) (Sig (B ; A ;)) (swap A B) x)) ==
          x
   ) :
-  (D : Desc)(A : Set)(B : Set)(x : descOp D (Sig (A ; B ;))) -> Set ;
+  (D : Desc)(A : Set)(B : Set)(x : desc D (Sig (A ; B ;))) -> Set ;
 
-make prf1 := (\ D A x -> []) : (D : Desc)(A : Set)(x : descOp D A) -> law1 D A x ;
+make prf1 := (\ D A x -> []) : (D : Desc)(A : Set)(x : desc D A) -> law1 D A x ;
 
-make prfswap : (D : Desc)(A : Set)(B : Set)(x : descOp D (Sig (A ; B ;))) -> lawswap D A B x ;
+make prfswap : (D : Desc)(A : Set)(B : Set)(x : desc D (Sig (A ; B ;))) -> lawswap D A B x ;
 give (\ D A B x -> []) ;
 
 make monad1 :=

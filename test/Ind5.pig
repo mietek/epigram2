@@ -2,7 +2,7 @@ make TestD := con ['argf ['zero 'suc] [ (con ['done]) (con ['ind1 con ['done]])]
 make Test := (Mu TestD) : Set ;
 make add : Test -> Test ;
 lambda x ;
-elim elimOp TestD x ;
+elim fold TestD x ;
 ind Test ;
 show hyps ;
 show state ;

@@ -256,7 +256,7 @@ Equality rules:
 > import -> OpCode where
 >   descOp :: Op
 >   descOp = Op
->     { opName = "descOp"
+>     { opName = "desc"
 >     , opArity = 2
 >     , opTyTel = dOpTy
 >     , opRun = dOpRun
@@ -281,7 +281,7 @@ Equality rules:
 
 >   boxOp :: Op
 >   boxOp = Op
->     { opName = "boxOp"
+>     { opName = "box"
 >     , opArity = 4
 >     , opTyTel = boxOpTy
 >     , opRun = boxOpRun
@@ -309,7 +309,7 @@ Equality rules:
 
 >   mapBoxOp :: Op
 >   mapBoxOp = Op
->     { opName = "mapBoxOp"
+>     { opName = "mapBox"
 >     , opArity = 5
 >     , opTyTel = mapBoxOpTy
 >     , opRun = mapBoxOpRun
@@ -354,7 +354,7 @@ Equality rules:
 
 >   elimOp :: Op
 >   elimOp = Op
->     { opName = "elimOp"
+>     { opName = "fold"
 >     , opArity = 4
 >     , opTyTel = elimOpTy
 >     , opRun = elimOpRun
@@ -375,7 +375,7 @@ Equality rules:
 >       elimOpRun [_,N x, _,_] = Left x
 
 >   switchDOp = Op
->     { opName = "SwitchD"
+>     { opName = "switchD"
 >     , opArity = 3
 >     , opTyTel = sOpTy
 >     , opRun = sOpRun

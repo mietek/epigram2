@@ -7,7 +7,7 @@ make two := (suc one) : Nat ;
 make add : Nat -> Nat -> Nat ;
 lambda x ;
 lambda y ;
-elim elimOp NatD x ;
+elim fold NatD x ;
     give con ? ;
     lambda x ;
     elim Switch ['zero 'suc] x ;

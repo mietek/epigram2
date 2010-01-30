@@ -6,6 +6,6 @@ make one := (suc zero) : Nat ;
 make two := (suc one) : Nat ;
 make add : Nat -> Nat -> Nat ;
 lambda x ;
-elim elimOp NatD x ;
+elim fold NatD x ;
 ind Nat ;
 show state ;
