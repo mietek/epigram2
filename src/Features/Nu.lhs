@@ -16,7 +16,7 @@
 >   traverse f (Nu t) = (|Nu (f t)|)
 >   traverse f (CoIt d sty g s) = (|CoIt (f d) (f sty) (f g) (f s)|)
 
-> import -> HalfZipCan where
+> import -> CanHalfZip where
 >   halfZip (Nu t0) (Nu t1)  = Just (Nu (t0,t1))
 >   halfZip (CoIt d0 sty0 g0 s0) (CoIt d1 sty1 g1 s1) = 
 >     Just (CoIt (d0,d1) (sty0,sty1) (g0,g1) (s0,s1))

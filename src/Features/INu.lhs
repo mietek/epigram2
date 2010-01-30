@@ -17,7 +17,7 @@
 >   traverse f (ICoIt ity d i sty g s) = 
 >     (|ICoIt (f ity) (f d) (f i) (f sty) (f g) (f s)|)
 
-> import -> HalfZipCan where
+> import -> CanHalfZip where
 >   halfZip (INu ity0 d0 i0) (INu ity1 d1 i1)  = 
 >     Just (INu (ity0,ity1) (i0,i1) (d0,d1))
 >   halfZip (ICoIt ity0 d0 i0 sty0 g0 s0) (ICoIt ity1 d1 i1 sty1 g1 s1) = 

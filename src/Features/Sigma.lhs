@@ -159,7 +159,7 @@ Coercion rule:
 >   traverse f (Sigma s t)  = (|Sigma (f s) (f t)|)
 >   traverse f (Pair x y)   = (|Pair (f x) (f y)|) 
 
-> import -> HalfZipCan where
+> import -> CanHalfZip where
 >   halfZip Unit Unit = Just Unit
 >   halfZip (Sigma s0 t0) (Sigma s1 t1) = Just (Sigma (s0,s1) (t0,t1))
 >   halfZip Void Void = Just Void

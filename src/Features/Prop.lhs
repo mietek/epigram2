@@ -121,7 +121,7 @@ Elim forms inherited from elsewhere
 >   traverse f (Inh ty)  = (|Inh (f ty)|)
 >   traverse f (Wit t)   = (|Wit (f t)|)
 
-> import -> HalfZipCan where
+> import -> CanHalfZip where
 >   halfZip  Prop      Prop      = Just Prop
 >   halfZip  (Prf p0)  (Prf p1)  = Just (Prf (p0, p1))
 

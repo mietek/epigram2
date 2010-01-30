@@ -153,7 +153,7 @@ Equality rules:
 >   traverse f Ze           = (|Ze|)
 >   traverse f (Su n)       = (|Su (f n)|) 
 
-> import -> HalfZipCan where
+> import -> CanHalfZip where
 >   halfZip (EnumT t0) (EnumT t1) = Just (EnumT (t0,t1))
 >   halfZip Ze Ze = Just Ze
 >   halfZip (Su t0) (Su t1) = Just (Su (t0,t1))

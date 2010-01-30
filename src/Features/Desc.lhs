@@ -139,7 +139,7 @@ Equality rules:
 > import -> CanTraverse where
 >   traverse f (Mu l) = (|Mu (traverse f l)|)
 
-> import -> HalfZipCan where
+> import -> CanHalfZip where
 >   halfZip (Mu t0) (Mu t1) = (| Mu (halfZip t0 t1) |)
 
 > import -> BootstrapDesc where

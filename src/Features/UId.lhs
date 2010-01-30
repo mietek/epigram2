@@ -63,7 +63,7 @@ Equality rules:
 >   canTy _  (Set :>: UId)    = return UId
 >   canTy _  (UId :>: Tag s)  = return (Tag s)
 
-> import -> HalfZipCan where
+> import -> CanHalfZip where
 >   halfZip UId UId = Just UId
 >   halfZip (Tag s) (Tag s') | s == s' = Just (Tag s)
 

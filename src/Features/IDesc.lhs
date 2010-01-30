@@ -24,7 +24,7 @@
 >   traverse f (IInd1 x y) = (|IInd1 (f x) (f y)|)
 >   traverse f (IInd x y z) = (|IInd (f x) (f y) (f z)|)
 
-> import -> HalfZipCan where
+> import -> CanHalfZip where
 >   halfZip (IDesc i0) (IDesc i1) = (|(IDesc (i0,i1))|)
 >   halfZip (IMu l0 i0) (IMu l1 i1) = (|(\p -> IMu p (i0,i1)) (halfZip l0 l1)|)
 >   halfZip (IDone p0) (IDone p1) = (|(IDone (p0,p1))|)

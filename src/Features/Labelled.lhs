@@ -32,7 +32,7 @@
 > import -> TraverseElim where
 >   traverse f (Call l) = (| Call (f l) |)
 
-> import -> HalfZipCan where
+> import -> CanHalfZip where
 >   halfZip (Label l1 t1) (Label l2 t2) = Just (Label (l1,l2) (t1,t2))
 >   halfZip (LRet x) (LRet y)           = Just (LRet (x,y))
 

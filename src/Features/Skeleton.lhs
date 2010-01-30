@@ -27,7 +27,7 @@
 
 > import -> CanTraverse where
 
-> import -> HalfZipCan where
+> import -> CanHalfZip where
 
 \subsection{Plugging Eliminators in}
 
