@@ -40,6 +40,7 @@
 > import Tactics.Induction
 > import Tactics.PropSimp
 
+> import Cochon.CommandLexer
 > import Cochon.DisplayCommands
 
 > import Compiler.Compiler
@@ -89,49 +90,6 @@ Here we have a very basic command-driven interface to the proof state monad.
 >        else "")
 
 
-Because Cochon tactics can take different types of arguments,
-we need a tagging mechanism to distinguish them, together
-with projection functions.
-
-> data CochonArg = StrArg String 
->                | InArg InDTmRN 
->                | ExArg ExDTmRN
->                | Optional CochonArg
->                | NoCochonArg
-
-
-> argToStr :: CochonArg -> String
-> argToStr (StrArg s) = s
-
-> argToIn :: CochonArg -> InDTmRN
-> argToIn (InArg a) = a
-
-> argToEx :: CochonArg -> ExDTmRN
-> argToEx (ExArg a) = a
-
-> argOption :: (CochonArg -> a) -> CochonArg -> Maybe a
-> argOption p (Optional x) = Just $ p x
-> argOption _ NoCochonArg = Nothing
-
-
-> parseExTm :: Parsley Token CochonArg
-> parseExTm = (| ExArg pExDTm |)
-
-> parseAscription :: Parsley Token CochonArg
-> parseAscription = (| ExArg pAscriptionTC |)
-
-> parseInTm :: Parsley Token CochonArg
-> parseInTm = (| InArg pInDTm |)
-
-> parseName :: Parsley Token CochonArg
-> parseName = (| (ExArg . DP) nameParse |)
-
-> parseString :: Parsley Token CochonArg
-> parseString = (| StrArg ident |)
-
-> parseOption :: Parsley Token CochonArg -> Parsley Token CochonArg
-> parseOption p = (| Optional (bracket Square p) 
->                  | NoCochonArg |)
 
 
 A Cochon tactic consinsts of:

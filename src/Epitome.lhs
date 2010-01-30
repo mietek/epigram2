@@ -115,6 +115,7 @@
 
 %include Cochon/DevLoad.lhs
 %include Cochon/DisplayCommands.lhs
+%include Cochon/CommandLexer.lhs
 %include Cochon/Cochon.lhs
 %include Main.lhs
 
