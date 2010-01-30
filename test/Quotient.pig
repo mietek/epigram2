@@ -28,5 +28,5 @@ make qel : (X : Set)(R : X -> X -> Prop)(p : :- Equiv X R)
            (m : (x : X) -> P [x]) ->
            :- ((x : X)(y : X) => R x y => (m x == m y)) ->
            P z ;
-give (\ X R p z P m h -> qElim X R p z P m h) ; root
+give (\ X R p z P m h -> elimQuotient X R p z P m h) ; root
 

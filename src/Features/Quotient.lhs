@@ -75,7 +75,7 @@ relation over |A|.
 
 > import -> OpCode where
 >   qElimOp = Op
->     { opName  = "qElim"
+>     { opName  = "elimQuotient"
 >     , opArity = 7
 >     , opTyTel = "X" :<: SET                             :-: \_X ->
 >                 "R" :<: ARR _X (ARR _X PROP)            :-: \_R ->
