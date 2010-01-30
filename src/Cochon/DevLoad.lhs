@@ -5,7 +5,7 @@
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE TypeOperators #-}
 
-> module Cochon.DevLoad (devLoad) where
+> module Cochon.DevLoad (devLoad, devLoad') where
 
 > import Control.Monad.State
 > import Control.Monad.Error
@@ -248,18 +248,28 @@ up the proof state.
 > devLoad file = do
 >   -- Load the development file
 >   let devFile = dropExtension file ++ ".dev" 
->   dev <- withFile devFile ReadMode loadDevelopment
->          `catchError` \ _ -> return []
+>   devFileH <- (openFile devFile ReadMode >>= return . Just)
+>               `catchError` \ _ -> return Nothing   
+>   devLoad' devFileH $
+>       withFile file ReadMode readCommands
+
+> devLoad' :: Maybe Handle -> IO [CTData] -> IO (Bwd ProofContext)
+> devLoad'  fileH commandLoad = do
+>   -- Load the development file
+>   dev <- case fileH of
+>            Just f   -> loadDevelopment f
+>            Nothing  -> return []
 >   -- Load the development in an empty proof state
 >   case runStateT (makeDev dev []) emptyContext of
 >     Left errs -> do
 >       putStrLn $ unlines $ "Failed to load development:" : errs
 >       exitFailure
 >     Right (ncs, loc) -> do
->       -- Load the commands file
->       commands <- withFile file ReadMode readCommands
->       -- Play them in the development
+>       -- Load the commands
+>       commands <- commandLoad
+>       -- Run them
 >       doCTacticsAt (([], commands) : ncs) (B0 :< loc)
+
 
 The following companion function takes care of the dirty details: 
 \begin{itemize}

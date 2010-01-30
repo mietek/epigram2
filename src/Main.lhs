@@ -10,6 +10,7 @@
 
 > import Control.Monad.State
 > import System
+> import System.IO
 > import System.Console.GetOpt
 
 > import Kit.BwdFwd
@@ -62,25 +63,30 @@ either.
 >        argv <- System.getArgs
 >        case getOpt RequireOrder options argv of
 >          -- Help:
->          (Help : _, _, []) -> do
+>          (Help : _, _, [])            -> do
 >            putStrLn $ usageInfo message options
 >          -- Load a development:
->          (LoadFile file : _, _, []) -> loadDev file
+>          (LoadFile file : _, _, [])   -> do
+>            loadDev file
 >          -- Check a development:
->          (CheckFile file : _, _, []) -> withFile file (const (putStrLn "Loaded."))
+>          (CheckFile file : _, _, [])  -> do
+>            withFile file (const (putStrLn "Loaded."))
 >          -- Print a development:
->          (PrintFile file : _, _, []) -> withFile file printTopDev
+>          (PrintFile file : _, _, [])  -> do
+>            withFile file printTopDev
 >          -- Load a development (no flag provided):
->          ([],(file:[]),[]) -> loadDev file
+>          ([],(file:[]),[])            -> do
+>            loadDev file
 >          -- Empty development:
->          ([],[],[]) -> cochon emptyContext            
+>          ([],[],[])                   -> do
+>            cochon emptyContext            
 >          -- Error:
->          (_,_,errs) -> do
+>          (_,_,errs)                   -> do
 >            ioError (userError (concat errs ++
 >                                usageInfo message options))
 >  where
 >    withFile :: String -> (Bwd ProofContext -> IO a) -> IO a
->    withFile "-" g = getContents >>= devLoad >>= g
+>    withFile "-" g = devLoad' (Just stdin) (return []) >>= g
 >    withFile file g = devLoad file >>= g
 
 >    loadDev :: String -> IO ()
@@ -90,3 +96,4 @@ either.
 >    printTopDev (_ :< loc) = do
 >        let Right s = evalStateT prettyProofState loc
 >        putStrLn s
+
