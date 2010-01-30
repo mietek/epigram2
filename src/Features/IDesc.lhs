@@ -172,7 +172,7 @@
 > import -> OpCode where
 >   idescOp :: Op
 >   idescOp = Op
->     { opName = "idescOp"
+>     { opName = "idesc"
 >     , opArity = 3
 >     , opTyTel = idOpTy
 >     , opRun = idOpRun
@@ -196,7 +196,7 @@
 
 >   iboxOp :: Op
 >   iboxOp = Op
->     { opName = "iboxOp"
+>     { opName = "ibox"
 >     , opArity = 4
 >     , opTyTel = iboxOpTy
 >     , opRun = iboxOpRun
@@ -221,7 +221,7 @@
 
 >   imapBoxOp :: Op
 >   imapBoxOp = Op
->     { opName = "imapBoxOp"
+>     { opName = "imapBox"
 >     , opArity = 6
 >     , opTyTel = mapBoxOpTy
 >     , opRun = mapBoxOpRun
@@ -274,7 +274,7 @@
 >      Target (bp $$ A (PAIR i v))
 >   ielimOp :: Op
 >   ielimOp = Op
->     { opName = "ielimOp"
+>     { opName = "ifold"
 >     , opArity = 6
 >     , opTyTel = ielimOpTy Nothing
 >     , opRun = elimOpRun

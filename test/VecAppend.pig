@@ -23,6 +23,6 @@ lambda n ;
 give IMu Nat VecD n ;
 make vnil := con [ 0 , [] ] : Vec zero ;
 make vcons := (\ n a as -> con [ 1 n a as , [] ]) : (n : Nat) -> A -> Vec n -> Vec (suc n) ;
-make vappend := (\ m as -> ielimOp Nat Vec.VecD m as (\ mas -> (n : Nat) -> Vec n -> Vec (plus (mas !) n)) (\ m -> con [ (\ p _ n as -> ship Nat zero m p (\ mm -> Vec (plus mm n)) as) (con \ mm -> con \ a -> con \ as p -> con \ appp _ n as -> ship Nat (con ['suc mm]) m p (\ mmm -> Vec (plus  mmm n)) (vcons (plus mm n) a (appp n as))) ])) : (m : Nat) -> Vec m -> (n : Nat) -> Vec n -> Vec (plus m n) ;
+make vappend := (\ m as -> ifold Nat Vec.VecD m as (\ mas -> (n : Nat) -> Vec n -> Vec (plus (mas !) n)) (\ m -> con [ (\ p _ n as -> ship Nat zero m p (\ mm -> Vec (plus mm n)) as) (con \ mm -> con \ a -> con \ as p -> con \ appp _ n as -> ship Nat (con ['suc mm]) m p (\ mmm -> Vec (plus  mmm n)) (vcons (plus mm n) a (appp n as))) ])) : (m : Nat) -> Vec m -> (n : Nat) -> Vec n -> Vec (plus m n) ;
 root ;
 make ex := Vec.vcons Nat one zero (Vec.vcons Nat zero one (Vec.vnil Nat)) : Vec.Vec Nat two ;

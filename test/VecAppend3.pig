@@ -27,7 +27,7 @@ make vcons := (\ n a as -> con [ a as , [] ]) : (n : Nat) -> A -> Vec n -> Vec (
 root ;
 make bvappend : (A : Set) -> (m : Nat) -> Vec.Vec A m -> (n : Nat) -> Vec.Vec A n -> Vec.Vec A (plus m n) ;
 lambda A ;
-give (\ m as -> ielimOp Nat (Vec.Vec.VecD A) m as (\ mas -> (n : Nat) -> Vec.Vec A n -> Vec.Vec A (plus (mas !) n)) ?) ;
+give (\ m as -> ifold Nat (Vec.Vec.VecD A) m as (\ mas -> (n : Nat) -> Vec.Vec A n -> Vec.Vec A (plus (mas !) n)) ?) ;
 lambda m ;
 elim N-case m ;
 give \ _ _ _ _ _ n bs -> bs ;

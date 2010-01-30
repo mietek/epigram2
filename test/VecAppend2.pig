@@ -19,7 +19,7 @@ make vcons := (\ n a as -> con [ 1 n a as , [] ]) : (n : Nat) -> A -> Vec n -> V
 make vappend : (m : Nat) -> Vec m -> (n : Nat) -> Vec n -> Vec (plus m n) ;
 lambda m ;
 lambda as ;
- give ielimOp Nat Vec.VecD m as (\ mas -> (n : Nat) -> Vec n -> Vec (plus (mas !) n)) ? ;
+ give ifold Nat Vec.VecD m as (\ mas -> (n : Nat) -> Vec n -> Vec (plus (mas !) n)) ? ;
 lambda m ;
 give con ? ;
 give [ ?a ?b ] ;
