@@ -34,9 +34,10 @@
 > import ProofState.ProofContext
 > import ProofState.ProofState
 > import ProofState.ProofKit
-> import ProofState.Elimination
-> import ProofState.Induction
-> import ProofState.PropSimp
+
+> import Tactics.Elimination
+> import Tactics.Induction
+> import Tactics.PropSimp
 
 > import Cochon.DisplayCommands
 

@@ -3,7 +3,7 @@
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE TypeOperators, TypeSynonymInstances, GADTs #-}
 
-> module ProofState.Induction where
+> module Tactics.Induction where
 
 > import Kit.BwdFwd
 > import Kit.MissingLibrary

@@ -3,7 +3,7 @@
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE TypeOperators, TypeSynonymInstances, GADTs #-}
 
-> module ProofState.Elimination where
+> module Tactics.Elimination where
 
 > import Control.Applicative
 > import Data.Foldable hiding (sequence_)

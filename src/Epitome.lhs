@@ -88,9 +88,14 @@
 %include ProofState/ProofState.lhs
 %include ProofState/ProofKit.lhs
 %include ProofState/Wire.lhs
-%include ProofState/Elimination.lhs
-%include ProofState/Induction.lhs
-%include ProofState/PropSimp.lhs
+
+\chapter{The Proof Tactics}
+
+\input{Tactics/Introduction.tex}
+
+%include Tactics/Elimination.lhs
+%include Tactics/Induction.lhs
+%include Tactics/PropSimp.lhs
 
 \chapter{The Display Language}
 

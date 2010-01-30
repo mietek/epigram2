@@ -3,7 +3,7 @@
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE TypeOperators, TypeSynonymInstances, GADTs, FlexibleInstances #-}
 
-> module ProofState.PropSimp where
+> module Tactics.PropSimp where
 
 > import Debug.Trace
 

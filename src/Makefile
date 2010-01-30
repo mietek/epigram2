@@ -27,7 +27,8 @@ SRCS := $(wildcard *.lhs) \
 	$(wildcard Features/*.lhs) \
 	$(wildcard Kit/*.lhs) \
 	$(wildcard ProofState/*.lhs) \
-	$(wildcard NameSupply/*.lhs)
+	$(wildcard NameSupply/*.lhs) \
+	$(wildcard Tactics/*.lhs)
 OBJS := $(SRCS:.lhs=.o) 
 
 .SUFFIXES : .o .hs .hi .lhs .hc .s\
