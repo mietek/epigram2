@@ -248,9 +248,9 @@ Equality rules:
 >   mapOp :
 
 > import -> OpCompile where
->   ("elimOp", [d,v,bp,p]) -> App (Var "__elim") [d, p, v]
+>   ("fold", [d,v,bp,p]) -> App (Var "__fold") [d, p, v]
 >   ("mapBox", [x,d,bp,p,v]) -> App (Var "__mapBox") [x, p, v]
->   ("SwitchD", [e,b,x]) -> App (Var "__switch") [x, b]
+>   ("switchD", [e,b,x]) -> App (Var "__switch") [x, b]
 >   ("map", [d,a,b,f,x]) -> App (Var "__map") [d, f, x]
 
 > import -> OpCode where
