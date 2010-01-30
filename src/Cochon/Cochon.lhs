@@ -10,6 +10,7 @@
 
 > import Control.Applicative
 > import Control.Monad.State
+> import Control.Monad.Error
 > import Data.Foldable hiding (find)
 > import Data.List
 > import Data.Traversable hiding (sequence)
@@ -408,11 +409,23 @@ Miscellaneous tactics:
 >         ,  ctHelp = "undo - goes back to a previous state."
 >         }
 
+>     : CochonTactic 
+>         {  ctName = "load"
+>         ,  ctParse = (| (B0 :<) parseString |)
+>         ,  ctIO = (\ [StrArg file] locs -> do
+>                    commands <- withFile file ReadMode readCommands
+>                                `catchError` \_ -> do
+>                                  putStrLn $ "File " ++ file ++ " does not exist. Ignored."
+>                                  return []
+>                    doCTactics commands locs)
+>         ,  ctHelp = "load <f> - load the commands stored in <f>"
+>         }
 
 Import more tactics from an aspect:
 
 >     import <- CochonTactics
 >     : [] )
+
 
 > pFileName :: Parsley Token String
 > pFileName = ident
