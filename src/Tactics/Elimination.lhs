@@ -17,7 +17,6 @@
 > import NameSupply.NameSupply
 > import NameSupply.NameSupplier
 
-> import DisplayLang.DisplayTm
 > import DisplayLang.Elaborator
 > import DisplayLang.Naming
 

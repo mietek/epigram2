@@ -9,8 +9,6 @@
 
 > module ProofState.ProofState where
 
-> import Control.Applicative
-> import Control.Monad
 > import Control.Monad.State
 > import Data.Foldable
 > import Debug.Trace
@@ -20,7 +18,8 @@
 
 > import NameSupply.NameSupply
 
-> import DisplayLang.DisplayTm
+> -- XXX: bug "fix" of the dependency graph:
+> import DisplayLang.DisplayTm 
 
 > import ProofState.Developments
 > import ProofState.News

@@ -11,15 +11,12 @@
 > import Control.Applicative
 > import Control.Monad.State
 > import Control.Monad.Error
-> import Data.Foldable hiding (find)
 > import Data.List
-> import Data.Traversable hiding (sequence)
 > import System.Exit
 > import System.IO 
 
 > import Kit.BwdFwd
 > import Kit.Parsley
-> import Kit.MissingLibrary
 
 > import NameSupply.NameSupply
 
@@ -31,7 +28,6 @@
 > import DisplayLang.Elaborator
 > import DisplayLang.DisplayTm
 
-> import ProofState.Developments
 > import ProofState.ProofContext
 > import ProofState.ProofState
 > import ProofState.ProofKit

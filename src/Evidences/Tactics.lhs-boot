@@ -21,7 +21,6 @@
 > import Evidences.Tm
 
 > import NameSupply.NameSupply
-> import NameSupply.NameSupplier
 
 > data Tac x
 

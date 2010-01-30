@@ -28,7 +28,6 @@
 > import ProofState.ProofState
 > import ProofState.Wire
 
-> import DisplayLang.DisplayTm
 > import DisplayLang.Naming
 
 > import Evidences.Tm

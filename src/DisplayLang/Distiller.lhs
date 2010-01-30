@@ -7,8 +7,6 @@
 
 > module DisplayLang.Distiller where
 
-> import Data.Foldable
-
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
 
@@ -19,7 +17,6 @@
 > import DisplayLang.DisplayTm
 > import DisplayLang.Naming
 
-> import NameSupply.NameSupply
 > import NameSupply.NameSupplier
 
 > import Evidences.Rules

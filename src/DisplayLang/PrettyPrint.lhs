@@ -14,8 +14,6 @@
 > import Kit.BwdFwd hiding ((<+>))
 > import Kit.MissingLibrary
 
-> import NameSupply.NameSupply
-
 > import ProofState.Developments
 
 > import DisplayLang.DisplayTm
@@ -24,7 +22,6 @@
 
 > import Features.Features
 
-> import Evidences.Rules hiding (($$))
 > import Evidences.Tm
 
 %endif

@@ -9,40 +9,13 @@
 > module Cochon.CommandLexer where
 
 > import Control.Applicative
-> import Control.Monad.State
-> import Control.Monad.Error
-> import Data.Foldable hiding (find)
-> import Data.List
-> import Data.Traversable hiding (sequence)
-> import System.Exit
-> import System.IO 
 
-> import Kit.BwdFwd
 > import Kit.Parsley
-> import Kit.MissingLibrary
-
-> import NameSupply.NameSupply
-
-> import Evidences.Tm hiding (In)
 
 > import DisplayLang.Lexer
 > import DisplayLang.Naming
 > import DisplayLang.TmParse
-> import DisplayLang.Elaborator
 > import DisplayLang.DisplayTm
-
-> import ProofState.Developments
-> import ProofState.ProofContext
-> import ProofState.ProofState
-> import ProofState.ProofKit
-
-> import Tactics.Elimination
-> import Tactics.Induction
-> import Tactics.PropSimp
-
-> import Cochon.DisplayCommands
-
-> import Compiler.Compiler
 
 %endif
 

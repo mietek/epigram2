@@ -8,7 +8,6 @@
 > module DisplayLang.TmParse where
 
 > import Control.Applicative
-> import Data.Foldable hiding (elem, foldr)
 > import Data.Char
 
 > import Kit.MissingLibrary
@@ -21,7 +20,6 @@
 > import Features.Features
 
 > import Evidences.Tm
-> import Evidences.Rules
 
 %endif
 
