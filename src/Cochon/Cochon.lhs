@@ -443,6 +443,7 @@ Import more tactics from an aspect:
 >                     |id (% openBlockComment %) 
 >                         (% consumeUntil' closeBlockComment %) 
 >                         tokenizeCommands
+>                     |id (spaces *> endOfLine *> tokenizeCommands)
 >                     |consumeUntil' endOfCommand : 
 >                      tokenizeCommands
 >                     |)
