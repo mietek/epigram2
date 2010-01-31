@@ -20,6 +20,7 @@
 
 > -- XXX: bug "fix" of the dependency graph:
 > import DisplayLang.DisplayTm 
+> import DisplayLang.Naming
 
 > import ProofState.Developments
 > import ProofState.News
@@ -38,7 +39,7 @@ The proof state monad provides access to the |ProofContext| as in a
 |State| monad, but with the possibility of command failure represented
 by |Either StackError|.
 
-> type ProofState = StateT ProofContext (Either StackError)
+> type ProofStateT e = StateT ProofContext (Either (StackError e))
 
 
 \subsection{Getters and Setters}
@@ -83,7 +84,8 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     case tip of
 >       Unknown (ty :=>: tyTy) -> return (ty :=>: tyTy)
 >       Defined _ (ty :=>: tyTy) -> return (ty :=>: tyTy)
->       _ -> throwError' $ "getGoal: fail to match a goal in " ++ s
+>       _ -> throwError'  $ err "getGoal: fail to match a goal in " 
+>                         ++ err s
 
 > getGreatAuncles :: ProofState Entries
 > getGreatAuncles = get >>= return . greatAuncles

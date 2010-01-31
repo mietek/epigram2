@@ -112,7 +112,7 @@ entry's children to resolve the next component.
 > findGlobal xs [(y, Rel 0)]
 >   | Just ref <- lookup y primitives = Right (ref, [])
 >   | Just ref <- lookup y axioms     = Right (ref, [])
-> findGlobal B0 sos = Left ["findGlobal: couldn't find " ++ showRelName sos]
+> findGlobal B0 sos = Left [err $ "findGlobal: couldn't find " ++ showRelName sos]
 > findGlobal (xs :< e) (y : ys) = case hits (entryLastName e) y of
 >     Right _  -> case e of
 >         E r _ e _ -> findChild r (boySpine xs) e ys
@@ -126,10 +126,13 @@ resolve. If the remainder is empty, it returns a parameter referring to the
 current entry (applied to the shared parameters if appropriate). Otherwise,
 the entity should be a |Girl|, and it searches her children for the name.
 
-> findChild :: REF -> Spine {TT} REF -> Entity Bwd -> RelName -> Either [String] (REF, Spine {TT} REF)
+> findChild ::  REF -> Spine {TT} REF -> Entity Bwd -> RelName -> 
+>               Either (StackError t) (REF, Spine {TT} REF)
 > findChild r  as (Boy _)              []  = Right (r,  [])
 > findChild r  as (Girl _ _)           []  = Right (r,  as)
-> findChild r  as (Boy _)              ys  = Left ["findChild: " ++ show r ++ " is a boy so it has no children!"]
+> findChild r  as (Boy _)              ys  = Left  [err "findChild: " 
+>                                                  ++ errRef r 
+>                                                  ++ err " is a boy so it has no children!"]
 > findChild r  as (Girl _ (es, _, _))  ys  = findInEntries es ys as
 
 
@@ -139,19 +142,22 @@ component of the name refers to a girl, it calls |findChild| to check if she or
 one of her children is the target. Note that boys within other developments are
 not in scope, but they may affect relative name offsets.
 
-> findInEntries :: Entries -> RelName -> Spine {TT} REF -> Either [String] (REF, Spine {TT} REF)
+> findInEntries ::  Entries -> RelName -> Spine {TT} REF -> 
+>                   Either (StackError t) (REF, Spine {TT} REF)
 > findInEntries (xs :< M n (es, _, _)) (y : ys) as = case hits (last n) y of
 >     Right _  -> findInEntries es ys as
 >     Left y'  -> findInEntries xs (y' : ys) as
 > findInEntries (xs :< E r x e@(Girl _ _) _) (y : ys) as = case hits x y of
 >     Right _  -> findChild r as e ys
 >     Left y'  -> findInEntries xs (y' : ys) as
-> findInEntries (xs :< E _ x (Boy _) _) (y : ys) as = case hits x y of
->     Right _  -> Left ["findInEntries: " ++ show x ++ " is a boy, so it has no children!"]
+> findInEntries (xs :< E r x (Boy _) _) (y : ys) as = case hits x y of
+>     Right _  -> Left  [err "findInEntries: " 
+>                       ++ errRef r 
+>                       ++ err "is a boy, so it has no children!"]
 >     Left y'  -> findInEntries xs (y' : ys) as
-> findInEntries B0  sos  as = Left ["findInEntries: ran out of entries looking for "
->                                     ++ showRelName sos]
-> findInEntries _   []   as = Left ["findInEntries: modules have no term representation."]
+> findInEntries B0  sos  as = Left  [err $ "findInEntries: ran out of entries looking for "
+>                                   ++ showRelName sos]
+> findInEntries _   []   as = Left  [err "findInEntries: modules have no term representation."]
 
 
 \subsection{Christening (Generating Local Longnames)}

@@ -258,7 +258,7 @@ we can write any type-directed function in term of |canTy|. That is,
 any function traversing the types derivation tree can be expressed
 using |canTy|.
 
-> canTy ::  (Alternative m, MonadError StackError m) =>
+> canTy ::  (Alternative m, MonadError (StackError t) m) =>
 >           (TY :>: t -> m (s :=>: VAL)) -> 
 >           (Can VAL :>: Can t) ->
 >           m (Can (s :=>: VAL))
@@ -268,9 +268,10 @@ using |canTy|.
 >   ttv@(t :=>: tv) <- chev (ARR sv SET :>: t)
 >   return $ Pi ssv ttv
 > import <- CanTyRules
-> canTy  chev (ty :>: x)  = throwError'  $ "canTy: the proposed value "
->                                        ++ show (fmap (\x -> ".") x)
->                                        ++ " is not of type " ++ show ty
+> canTy  chev (ty :>: x)  = throwError'  $ err "canTy: the proposed value "
+>                                        ++ errCan x
+>                                        ++ err " is not of type " 
+>                                        ++ errVal (C ty)
 
 
 \subsubsection{Eliminators}
@@ -286,7 +287,7 @@ it computes the type of the argument,
 ie. the eliminator, in |Elim (s :=>: VAL)| and the type of the result in
 |TY|.
 
-> elimTy ::  MonadError StackError m =>
+> elimTy ::  MonadError (StackError t) m =>
 >            (TY :>: t -> m (s :=>: VAL)) -> 
 >            (VAL :<: Can VAL) -> Elim t ->
 >            m (Elim (s :=>: VAL),TY)
@@ -294,10 +295,10 @@ ie. the eliminator, in |Elim (s :=>: VAL)| and the type of the result in
 >   eev@(e :=>: ev) <- chev (s :>: e)
 >   return $ (A eev, t $$ A ev) 
 > import <- ElimTyRules
-> elimTy _  (v :<: t) e = throwError'  $ "elimTy: failed to eliminate " 
->                                      ++ show v ++ 
->                                      " with " ++ 
->                                      (show $ fmap (\t -> ".") e)
+> elimTy _  (v :<: t) e = throwError'  $ err "elimTy: failed to eliminate " 
+>                                      ++ errTyVal (v :<: (C t)) 
+>                                      ++ err " with " 
+>                                      ++ errElim e
 
 \question{Why not asking |m| to be |Alternative| too?}
 
@@ -367,12 +368,14 @@ constructor, and returning the fully quoted term. The reason for the
 presence of |Just| is that |canTy| asks for a |MonadError|. Obviously,
 we cannot fail in this code, but we have to be artificially cautious.
 
-> inQuote (C cty :>: C cv) r = fromJust $ do
->     ct <- canTy chev (cty :>: cv)
->     return $ C $ fmap termOf ct
->         where chev (t :>: v) = do
->                 let tv = inQuote (t :>: v) r
->                 return $ tv :=>: v
+> inQuote (C cty :>: C cv) r = either 
+>     (error "inQuote: impossible!") 
+>     id $ do
+>          ct <- canTy chev (cty :>: cv)
+>          return $ C $ fmap termOf ct
+>              where chev (t :>: v) = do
+>                    let tv = inQuote (t :>: v) r
+>                    return $ tv :=>: v
 >
 > inQuote (C x :>: t) r = error $ 
 >     "inQuote: type " ++ show (fmap (\_ -> ()) x) ++ 
@@ -443,7 +446,7 @@ the neutral application, while |inQuote|-ing the arguments.
 > exQuote (n :$ v)    r = (n' :$ e') :<: ty'
 >     where (n' :<: ty)  = exQuote n r
 >           e' = fmap termOf e
->           Just (e,ty') = elimTy chev (N n :<: unC ty) v
+>           Right (e,ty') = elimTy chev (N n :<: unC ty) v
 >           chev (t :>: x) = do
 >             let tx = inQuote (t :>: x) r
 >             return $ tx :=>: x
@@ -457,7 +460,8 @@ the operation itself cannot be stuck: it is a simple fully-applied
 constructor which can always compute.
 
 > exQuote (op :@ vs)  r = (op :@ vals) :<: v 
->     where (vs',v) = fromJust $ opTy op chev vs 
+>     where (vs',v) = either  (error "exQuote: impossible happened.")
+>                             id $ opTy op chev vs 
 >           vals = map termOf vs'
 >           chev (t :>: x) = do
 >               let tx = inQuote (t :>: x) r
@@ -570,7 +574,7 @@ Technically, we also need a name supply and handle failure with a
 convenient monad. Therefore, we jump in the |Check| monad defined in
 Section~\ref{sec:check_monad}.
 
-> check :: (TY :>: INTM) -> Check (INTM :=>: VAL)
+> check :: (TY :>: INTM) -> Check INTM (INTM :=>: VAL)
 
 Type-checking a canonical term is rather easy, as we just have to
 delegate the hard work to |canTy|. The checker-evaluator simply needs
@@ -615,15 +619,21 @@ This translates naturally into the following code:
 >   yv :<: yt <- infer n
 >   case (equal (SET :>: (w, yt)) r) of
 >     True -> return $ N n :=>: yv
->     False -> throwError' $ unlines ["check: inferred type", show yt,
->                                     "of", show n, "is not", show w]
+>     False -> throwError'  $   err "check: inferred type "
+>                           ++  errVal yt
+>                           ++  err "of"
+>                           ++  errTm (N n)
+>                           ++  err "is not"
+>                           ++  errVal w
 
 Finally, we can extend the checker with the |Check| aspect. If no rule
 has matched, then we have to give up.
 
 > import <- Check
-> check (ty :>: tm) = throwError' . unlines $
->     ["check: type mismatch: type", show ty, "does not admit", show tm]
+> check (ty :>: tm) = throwError'  $ err "check: type mismatch: type"
+>                                  ++ errVal ty
+>                                  ++ err "does not admit"
+>                                  ++ errTm tm
 
 
 \subsection{Type inference}
@@ -636,7 +646,7 @@ $$\Gamma \vdash \mbox{Tm \{Ex,.\} p} \in \mbox{TY}$$
 
 This translates into the following signature:
 
-> infer :: EXTM -> Check (VAL :<: TY)
+> infer :: EXTM -> Check INTM (VAL :<: TY)
 
 We all know the rule to infer the type of a free variable from the
 context:
@@ -700,7 +710,7 @@ Which translates directly into the following code:
 Obviously, if none of the rule above applies, then there is something
 fishy.
 
-> infer _                   = throwError' "infer: unable to infer type"
+> infer _                   = throwError' $ err "infer: unable to infer type"
 
 
 %if false
@@ -794,9 +804,9 @@ a false economy.
 >    Nothing -> Right ABSURD 
 >    Just x  -> Right $ mkEqConj (trail x)
 >    where
->    Just t0' = canTy (\tx@(t :>: x) -> Just (tx :=>: x)) (ty0 :>: t0)
+>    Right t0' = canTy (\tx@(t :>: x) -> Right (tx :=>: x)) (ty0 :>: t0)
 >    t0'' = fmap (\(x :=>: y) -> x) t0'
->    Just t1' = canTy (\tx@(t :>: x) -> Just (tx :=>: x)) (ty1 :>: t1)
+>    Right t1' = canTy (\tx@(t :>: x) -> Right (tx :=>: x)) (ty1 :>: t1)
 >    t1'' = fmap (\(x :=>: y) -> x) t1'
 > opRunEqGreen [C _,N t0,C _,_] = Left t0
 > opRunEqGreen [C _,_,C _,N t1] = Left t1

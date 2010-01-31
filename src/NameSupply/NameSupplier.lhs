@@ -103,12 +103,12 @@ as:
 
 One such example is the |Check| monad:
 
-> type Check = ReaderT NameSupply (Either StackError)
+> type Check e = ReaderT NameSupply (Either (StackError e))
 
 That is, a Reader of |NameSupply| on top of an Error of
 |StackError|. Running a type-checking process is therefore a simple
 |runReader| operation:
 
-> typeCheck :: Check a -> NameSupply -> Either StackError a
+> typeCheck :: Check e a -> NameSupply -> Either (StackError e) a
 > typeCheck = runReaderT
 

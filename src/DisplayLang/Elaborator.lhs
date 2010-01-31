@@ -10,6 +10,7 @@
 
 > import Control.Applicative
 > import Control.Monad
+> import Control.Monad.Error
 > import Data.Traversable
 
 > import Kit.BwdFwd
@@ -160,10 +161,13 @@ Much as with type-checking, we push types in to neutral terms by calling
 > elaborate top (w :>: DN n) = do
 >   (nn :<: y) <- elabInfer n
 >   eq <- withNSupply (equal (SET :>: (w, y)))
->   guard eq `replaceError` unlines ["elaborate: inferred type", show y,
->                                    "of", show n, "is not", show w]
+>   guard eq `replaceError`  (err "elaborate: inferred type"
+>                            ++ errVal y
+>                            ++ err " of "
+>                            ++ errVal (valueOf nn)
+>                            ++ err " is not " 
+>                            ++ errVal w)
 >   neutralise nn
-
 
 If the elaborator made up a term, it does not require further elaboration, but
 we should type-check it for safety's sake. 
@@ -172,7 +176,10 @@ we should type-check it for safety's sake.
 
 If nothing else matches, give up and report an error.
 
-> elaborate top tt = throwError' ("elaborate: can't cope with " ++ show tt)
+> elaborate top (ty :>: t) = throwError'  $ err "elaborate: can't cope with " 
+>                                         ++ err (show t) -- XXX: could be improved
+>                                         ++ err " of type "
+>                                         ++ errVal ty
 
 
 The |elabInfer| command is to |infer| in subsection~\ref{subsec:type-inference} 
@@ -186,7 +193,7 @@ those of |infer|.
 >     (ref, as) <- elabResolve x
 >     let tm = P ref $:$ as
 >     ty <- withNSupply (typeCheck $ infer tm)
->     (tmv :<: ty') <- ty `catchEither` "elabInfer: inference failed!"
+>     (tmv :<: ty') <- ty `catchEither` (err "elabInfer: inference failed!")
 >     return $ (tm :=>: tmv) :<: ty'
 
 > elabInfer (tm ::$ Call _) = do
@@ -204,7 +211,8 @@ those of |infer|.
 >     x <- pickName "x" ""
 >     return $ (idTM x :? ARR ty' ty') :=>: idVAL x :<: ARR vty vty
 
-> elabInfer tt = throwError' ("elabInfer: can't cope with " ++ show tt)
+> elabInfer tt = throwError'  (err "elabInfer: can't cope with " 
+>                             ++ err (show tt) {- XXX: Could be improved -})
 
 
 \subsection{Proof Construction}
@@ -238,7 +246,7 @@ hard bits for the human.
 >   return (t' :=>: v')
 > prove b p = search p
 
-> search :: VAL -> ProofState (INTM :=>: VAL)
+> search :: VAL -> ProofStateD (INTM :=>: VAL)
 > search p = do
 >   es <- getAuncles
 >   aunclesProof es p <|> elaborate False (PRF p :>: DQ "")
@@ -263,7 +271,7 @@ and a spine of shared parameters to which it should be applied.
 > elabResolve :: RelName -> ProofState (REF, Spine {TT} REF)
 > elabResolve x = do
 >    aus <- getAuncles
->    findGlobal aus x `catchEither` "elabResolve: cannot resolve name"
+>    findGlobal aus x `catchEither` (err "elabResolve: cannot resolve name")
 >    
 
 
@@ -294,7 +302,7 @@ a reference to the current goal (applied to the appropriate shared parameters).
 >                 _ -> do
 >                     (tm' :=>: tv) <- elaborate True (tipTy :>: tm)
 >                     give' tm'
->         _  -> throwError' "elabGive: only possible for incomplete goals."
+>         _  -> throwError' $ err "elabGive: only possible for incomplete goals."
 
 
 The |elabMake| command elaborates the given display term in a module to

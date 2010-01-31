@@ -62,17 +62,6 @@
 
 \subsection{Error Handling}
 
-> type StackError = [String]
-
-> instance MonadError StackError Maybe where
->   throwError _ = Nothing
->   catchError (Just x)  _ = Just x
->   catchError Nothing   f = f []
-
-> instance Error StackError where
->   strMsg s = [s]
-
-
 > catchMaybe :: MonadError [e] m => Maybe a -> e -> m a
 > catchMaybe (Just x)  _ = return x
 > catchMaybe Nothing   s = throwError [s]
@@ -88,13 +77,6 @@
 > replaceError :: MonadError [e] m => m a -> e -> m a
 > replaceError c e = catchError c (\x -> throwError (e:x))
 
-> replacePMF :: MonadError [String] m => m a -> String -> m a
-> replacePMF c s = catchError c f
->   where
->     f (x:xs) =  if "Pattern match failure" `isPrefixOf` x
->                 then throwError' s
->                 else throwError (x:xs)
->     f [] = throwError []
 
 \subsection{Missing Applicatives}
 
@@ -105,9 +87,6 @@ Ah, if only
 were possible. Unfortunately it isn't (at least without |UndecidableInstances|)
 so we have to do things the long way...
 
-> instance Error x => Applicative (Either x) where
->   pure = return
->   (<*>) = ap
 
 > instance Applicative (State s) where
 >   pure = return
@@ -132,6 +111,15 @@ so we have to do things the long way...
 > instance MonadPlus m => Alternative (StateT r m) where
 >     empty = mzero
 >     (<|>) = mplus
+
+> instance Error x => Applicative (Either x) where
+>   pure = return
+>   (<*>) = ap
+
+> instance Error x => Alternative (Either x) where
+>     empty = Left $ strMsg "empty alternative"
+>     (Left _) <|> p = p
+>     p@(Right _) <|> _ = p
 
 
 \subsection{Missing Instances}

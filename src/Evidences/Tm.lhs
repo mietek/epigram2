@@ -3,7 +3,7 @@
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE TypeOperators, GADTs, KindSignatures, RankNTypes,
+> {-# LANGUAGE TypeOperators, GADTs, KindSignatures, RankNTypes, MultiParamTypeClasses ,
 >     TypeSynonymInstances, FlexibleInstances, FlexibleContexts, ScopedTypeVariables #-}
 
 > module Evidences.Tm where
@@ -283,7 +283,7 @@ model of |opTy| defined below, this interpretation uses a generic
 checker-evaluator |chev|. Based on this chev, it simply goes over the
 telescope, checking and evaluating as it moves further.
 
-> telCheck ::  (Alternative m, MonadError [String] m) =>
+> telCheck ::  (Alternative m, MonadError (StackError t) m) =>
 >              (TY :>: t -> m (s :=>: VAL)) -> 
 >              (TEL x :>: [t]) -> m ([s :=>: VAL] , x) 
 > telCheck chev (Target x :>: []) = return ([] , x)
@@ -291,7 +291,7 @@ telescope, checking and evaluating as it moves further.
 >     ssv@(s :=>: sv) <- chev (sS :>: s) 
 >     (svs , x) <- telCheck chev ((tT sv) :>: t)
 >     return (ssv : svs , x) 
-> telCheck _ _ = throwError' "telCheck: opTy mismatch"
+> telCheck _ _ = throwError' $ err "telCheck: opTy mismatch"
 
 
 \paragraph{Type-checking operators}
@@ -327,12 +327,13 @@ of the checker-evaluator. This change impacts on |exQuote|, |infer|,
 and |useOp|. If this definition is not clear now, it should become
 clear after the definition of |canTy| in Section~\ref{sec:canTy}.
 
-> opTy ::  (Alternative m, MonadError StackError m) =>
+> opTy ::  (Alternative m, MonadError (StackError t) m) =>
 >          Op -> (TY :>: t -> m (s :=>: VAL)) -> [t] ->
 >          m ([s :=>: VAL], TY)
 > opTy op chev ss
 >   | length ss == opArity op = telCheck chev (opTyTel op :>: ss)
-> opTy op _ _ = throwError ["operator arity error: " ++ opName op]
+> opTy op _ _ = throwError' $  (err "operator arity error: ")
+>                              ++ (err $ opName op)
 
 
 \paragraph{Running the operator}
@@ -583,6 +584,72 @@ We can also throw away a label, should we want to.
 
 
 %if False
+
+
+
+> data ErrorTok t = StrMsg String
+>                 | TypedTm (t :<: t)
+>                 | UntypedTm t
+>               --  | TypedDTm (InDTmRN :<: TY)
+>               --  | UntypedDTm InDTmRN
+>                 | TypedCan (Can t :<: Can t)
+>                 | UntypedCan (Can t)
+>                 | TypedVal (VAL :<: TY)
+>                 | UntypedVal VAL
+>                 | UntypedElim (Elim t)
+>                 | ERef REF
+>                 | UntypedINTM INTM
+
+> type ErrorTm t = [ErrorTok t]
+
+> err :: String -> ErrorTm t
+> err s = [StrMsg s]
+
+> errTyTm :: (t :<: t) -> ErrorTm t
+> errTyTm tt = [TypedTm tt]
+
+> errTm :: t -> ErrorTm t
+> errTm t = [UntypedTm t]
+
+> errTyCan :: (Can t :<: Can t) -> ErrorTm t
+> errTyCan tt = [TypedCan tt]
+
+> errCan :: Can t -> ErrorTm t
+> errCan t = [UntypedCan t]
+
+> errTyVal :: (VAL :<: VAL) -> ErrorTm t
+> errTyVal tt = [TypedVal tt]
+
+> errVal :: VAL -> ErrorTm t
+> errVal t = [UntypedVal t]
+
+> errElim :: Elim t -> ErrorTm t
+> errElim t = [UntypedElim t]
+
+> errRef :: REF -> ErrorTm t
+> errRef r = [ERef r]
+
+> errInTm :: INTM -> ErrorTm t
+> errInTm t = [UntypedINTM t]
+
+> {-
+> errDTm :: InDTmRN -> ErrorTm t
+> errDTm t = [IntypedDTm t]
+> errTyDTm :: (InDTmRN :<: TY) -> ErrorTm t
+> errTyDTm tt = [TypedDTm tt]
+> -}
+
+> type StackError t = [ErrorTm t]
+
+> instance Error (StackError t) where
+>   strMsg s = [err s]
+
+> {-
+> instance MonadError (StackError INTM) Maybe where
+>   throwError _ = Nothing
+>   catchError (Just x)  _ = Just x
+>   catchError Nothing   f = f []
+> -}
 
 > instance Traversable Can where
 >   traverse f Set       = (|Set|)

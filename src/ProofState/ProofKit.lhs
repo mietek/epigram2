@@ -104,15 +104,20 @@ may be useful for paranoia purposes.
 >         GirlMother (_ := DEFN tm :<: ty) _ _ -> do
 >             ty' <- bquoteHere ty
 >             mc <- withNSupply (typeCheck $ check (SET :>: ty'))
->             mc `catchEither` intercalate "\n" ["validateHere: girl type failed to type-check: SET does not admit", show ty']
+>             mc `catchEither`  (err "validateHere: girl type failed to type-check: SET does not admit"
+>                               ++ errVal ty)
 >             tm' <- bquoteHere tm
 >             mc <- withNSupply (typeCheck $ check (ty :>: tm'))
->             mc `catchEither` intercalate "\n" ["validateHere: definition failed to type-check:", show ty, "does not admit", show tm']
+>             mc `catchEither`  (err "validateHere: definition failed to type-check:"
+>                               ++ errVal ty
+>                               ++ err "does not admit"
+>                               ++ errVal tm)
 >             return ()
 >         GirlMother (_ := HOLE :<: ty) _ _ -> do
 >             ty' <- bquoteHere ty
 >             mc <- withNSupply (typeCheck $ check (SET :>: ty'))
->             mc `catchEither` intercalate "\n" ["validateHere: hole type failed to type-check: SET does not admit", show ty']
+>             mc `catchEither` (err "validateHere: hole type failed to type-check: SET does not admit" 
+>                              ++ errVal ty)
 >             return ()
 >         _ -> return ()
 
@@ -139,7 +144,7 @@ These commands fail (yielding |Nothing|) if they are impossible because the proo
 is not in the required form.
 
 > goIn :: ProofState ()
-> goIn = goInAcc (NF F0) `replaceError` "goIn: you can't go that way."
+> goIn = goInAcc (NF F0) `replaceError` (err "goIn: you can't go that way.")
 >   where
 >     goInAcc :: NewsyEntries -> ProofState ()
 >     goInAcc (NF cadets) = do
@@ -164,10 +169,10 @@ is not in the required form.
 >     putDev (elders l :< e, laytip l, laynsupply l)
 >     propagateNews True [] (cadets l)  -- should update tip and pass on news
 >     return ()
->   ) `replaceError` "goOut: you can't go that way."
+>   ) `replaceError` (err "goOut: you can't go that way.")
 
 > goUp :: ProofState ()
-> goUp = goUpAcc (NF F0) `replaceError` "goUp: you can't go that way."
+> goUp = goUpAcc (NF F0) `replaceError` (err "goUp: you can't go that way.")
 >   where
 >     goUpAcc :: NewsyEntries -> ProofState ()
 >     goUpAcc (NF acc) = do
@@ -183,7 +188,7 @@ is not in the required form.
 >                   >> goUpAcc (NF (Right (reverseEntry e) :> acc))
 
 > goDown :: ProofState ()
-> goDown = goDownAcc B0 [] `replaceError` "goDown: you can't go that way."
+> goDown = goDownAcc B0 [] `replaceError` (err "goDown: you can't go that way.")
 >   where
 >     goDownAcc :: Entries -> NewsBulletin -> ProofState ()
 >     goDownAcc acc news = do
@@ -207,7 +212,7 @@ is not in the required form.
 > goTo :: Name -> ProofState ()
 > goTo [] = return ()
 > goTo (xn:xns) = (seek xn >> goTo xns)
->     `replaceError` ("goTo: could not find " ++ showName (xn:xns))
+>     `replaceError` (err "goTo: could not find " ++ err (showName (xn:xns)))
 >   where
 >     seek :: (String, Int) -> ProofState ()
 >     seek xn = (goUp <|> goIn) >> do
@@ -249,17 +254,17 @@ We can now compactly describe how to search the proof state for goals, by giving
 several alternatives for where to go next and continuing until a goal is reached.
 
 > prevStep :: ProofState ()
-> prevStep = ((goUp >> much goIn) <|> goOut) `replaceError` "prevStep: no previous steps."
+> prevStep = ((goUp >> much goIn) <|> goOut) `replaceError` (err "prevStep: no previous steps.")
 >
 > prevGoal :: ProofState ()
-> prevGoal = (prevStep `untilA` isGoal) `replaceError` "prevGoal: no previous goals."
+> prevGoal = (prevStep `untilA` isGoal) `replaceError` (err "prevGoal: no previous goals.")
 >
 > nextStep :: ProofState ()
 > nextStep = ((goIn >> much goUp) <|> goDown <|> (goOut `untilA` goDown))
->                `replaceError` "nextStep: no more steps."
+>                `replaceError` (err "nextStep: no more steps.")
 >
 > nextGoal :: ProofState ()
-> nextGoal = (nextStep `untilA` isGoal) `replaceError` "nextGoal: no more goals."
+> nextGoal = (nextStep `untilA` isGoal) `replaceError` (err "nextGoal: no more goals.")
 
 
 
@@ -328,24 +333,28 @@ The |apply| command checks if the last entry in the development is a girl $y$ wi
 $\Pi S T$ and if so, adds a goal of type $S$ and applies $y$ to it.
 
 > apply :: ProofState (EXTM :=>: VAL)
-> apply = (do
->     E ref@(name := k :<: (PI s t)) _ (Girl LETG _) _ <- getDevEntry
->     s' <- bquoteHere s
->     t' <- bquoteHere (t $$ A s)
->     z :=>: _ <- make ("z" :<: s')
->     make ("w" :<: t')
->     goIn
->     give (N (P ref :$ A (N z)))
->   ) `replacePMF` "apply: last entry in the development must be a girl with a pi-type."
+> apply = do
+>   devEntry <- getDevEntry
+>   case devEntry of
+>     E ref@(name := k :<: (PI s t)) _ (Girl LETG _) _ -> do
+>         s' <- bquoteHere s
+>         t' <- bquoteHere (t $$ A s)
+>         z :=>: _ <- make ("z" :<: s')
+>         make ("w" :<: t')
+>         goIn
+>         give (N (P ref :$ A (N z)))
+>     _ -> throwError' $ err  $ "apply: last entry in the development" 
+>                             ++ " must be a girl with a pi-type."
 
 The |done| command checks if the last entry in the development is a girl, and if so,
 fills in the goal with this entry.
 
 > done :: ProofState (EXTM :=>: VAL)
-> done = (do
->     E ref _ (Girl LETG _) _ <- getDevEntry
->     give (N (P ref))
->  ) `replacePMF` "done: last entry in the development must be a girl."
+> done = do
+>   devEntry <- getDevEntry
+>   case devEntry of
+>     E ref _ (Girl LETG _) _ -> give (N (P ref))
+>     _ -> throwError' $ err "done: last entry in the development must be a girl."
 
 The |give| command checks the provided term has the goal type, and if so, fills in
 the goal, updates the reference and goes out. The |giveNext| variant moves to the
@@ -363,10 +372,10 @@ next goal (if one exists) instead.
 >     case tip of         
 >         Unknown (tipTyTm :=>: tipTy) -> do
 >             mc <- withNSupply (typeCheck $ check (tipTy :>: tm))
->             mc `catchEither` intercalate "\n" [ "Typechecking failed:"
->                                              , show tm
->                                              , "is not of type"
->                                              , show tipTyTm ]
+>             mc `catchEither`  (err "Typechecking failed:"
+>                               ++ errTm tm
+>                               ++ err "is not of type"
+>                               ++ errTm tipTyTm)
 >             aus <- getGreatAuncles
 >             sibs <- getDevEntries
 >             let tmv = evTm (parBind aus sibs tm)
@@ -376,7 +385,7 @@ next goal (if one exists) instead.
 >             putMother (GirlMother ref xn ty)
 >             updateRef ref
 >             return (applyAuncles ref aus)
->         _  -> throwError' "give: only possible for incomplete goals."
+>         _  -> throwError' $ err "give: only possible for incomplete goals."
 
 The |lambdaBoy| command checks that the current goal is a $\Pi$-type, and if so,
 appends a $\lambda$-abstraction with the appropriate type to the current development.
@@ -394,8 +403,8 @@ appends a $\lambda$-abstraction with the appropriate type to the current develop
 >             putDevTip (Unknown (tipTy :=>: tipTyv))
 >             return ref
 >           )
->         _  -> throwError' "lambdaBoy: goal is not a pi-type or all-proof."
->       _    -> throwError' "lambdaBoy: only possible for incomplete goals."
+>         _  -> throwError' $ err "lambdaBoy: goal is not a pi-type or all-proof."
+>       _    -> throwError' $ err "lambdaBoy: only possible for incomplete goals."
 
 The |lambdaBoy'| variant allows a type to be specified, so it can
 be used with modules. If used at an |Unknown| tip, it will check
@@ -420,9 +429,9 @@ that the supplied type matches the one at the tip.
 >                 putDevTip (Unknown (tipTy :=>: tipTyv))
 >                 return ref
 >               )
->             else throwError' "lambdaBoy': given type does not match domain of goal."
->         _  -> throwError' "lambdaBoy': goal is not a pi-type or all-proof."
->       _    -> throwError' "lambdaBoy': only possible for modules or incomplete goals."
+>             else throwError' $ err "lambdaBoy': given type does not match domain of goal."
+>         _  -> throwError' $ err "lambdaBoy': goal is not a pi-type or all-proof."
+>       _    -> throwError' $ err "lambdaBoy': only possible for modules or incomplete goals."
 
 
 The following piece of kit might profitably be shifted to somewhere more
@@ -440,7 +449,7 @@ current development, after checking that the purported type is in fact a type.
 > make :: (String :<: INTM) -> ProofState (EXTM :=>: VAL)
 > make (s :<: ty) = do
 >     mty <- withNSupply (typeCheck $ check (SET :>: ty))
->     tt <- mty `catchEither` ("make: " ++ show ty ++ " is not a set.")
+>     tt <- mty `catchEither` (err "make: " ++ errInTm ty ++ err " is not a set.")
 >     make' (s :<: tt)
 
 > make' :: (String :<: (INTM :=>: TY)) -> ProofState (EXTM :=>: VAL)
@@ -483,8 +492,8 @@ is also a set; if so, it appends a $\Pi$-abstraction to the current development.
 >             putDevEntry (E ref (lastName ref) (Boy PIB) ty)
 >             return ref
 >           )
->         Unknown _  -> throwError' "piBoy: goal is not of type SET."
->         _          -> throwError' "piBoy: only possible for incomplete goals."
+>         Unknown _  -> throwError' $ err "piBoy: goal is not of type SET."
+>         _          -> throwError' $ err "piBoy: only possible for incomplete goals."
 
 The |select| command takes a term representing a neutral parameter, makes a new
 goal of the same type, and fills it in with the parameter.
@@ -495,7 +504,7 @@ goal of the same type, and fills it in with the parameter.
 >     make (fst (last name) :<: ty')
 >     goIn
 >     give tm
-> select _ = throwError' "select: term is not a parameter."
+> select _ = throwError' $ err "select: term is not a parameter."
      
 The |ungawa| command looks for a truly obvious thing to do, and does it.
 
@@ -506,7 +515,7 @@ The |ungawa| command looks for a truly obvious thing to do, and does it.
 
 > ungawa :: ProofState ()
 > ungawa = (ignore done <|> ignore apply <|> ignore (lambdaBoy "ug"))
->     `replaceError` "ungawa: no can do."
+>     `replaceError` (err "ungawa: no can do.")
 
 
 
