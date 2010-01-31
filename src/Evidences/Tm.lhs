@@ -600,6 +600,18 @@ We can also throw away a label, should we want to.
 >                 | ERef REF
 >                 | UntypedINTM INTM
 
+> instance Functor ErrorTok where -- deriving Functor broken?
+>     fmap f (TypedTm (t1 :<: t2)) = TypedTm (f t1 :<: f t2)
+>     fmap f (UntypedTm t) = UntypedTm (f t)
+>     fmap f (TypedCan (t1 :<: t2)) = TypedCan (fmap f t1 :<: fmap f t2)
+>     fmap f (UntypedCan t) = UntypedCan (fmap f t)
+>     fmap f (UntypedElim t) = UntypedElim (fmap f t)
+>     fmap f (StrMsg x) = StrMsg x
+>     fmap f (TypedVal (t1 :<: t2)) = TypedVal (t1 :<: t2)
+>     fmap f (UntypedVal t) = UntypedVal t
+>     fmap f (ERef r) = ERef r
+>     fmap f (UntypedINTM i) = UntypedINTM i
+
 > type ErrorTm t = [ErrorTok t]
 
 > err :: String -> ErrorTm t

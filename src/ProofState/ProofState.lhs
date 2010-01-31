@@ -41,6 +41,12 @@ by |Either StackError|.
 
 > type ProofStateT e = StateT ProofContext (Either (StackError e))
 
+> type ProofState = ProofStateT InDTmRN
+
+
+> mliftError :: ProofStateT INTM a -> ProofState a
+> mliftError = mapStateT liftError
+
 
 \subsection{Getters and Setters}
 

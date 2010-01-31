@@ -192,7 +192,7 @@ those of |infer|.
 > elabInfer (DP x) = do
 >     (ref, as) <- elabResolve x
 >     let tm = P ref $:$ as
->     ty <- withNSupply (typeCheck $ infer tm)
+>     ty <- withNSupply $ liftError . (typeCheck $ infer tm)
 >     (tmv :<: ty') <- ty `catchEither` (err "elabInfer: inference failed!")
 >     return $ (tm :=>: tmv) :<: ty'
 
@@ -246,7 +246,7 @@ hard bits for the human.
 >   return (t' :=>: v')
 > prove b p = search p
 
-> search :: VAL -> ProofStateD (INTM :=>: VAL)
+> search :: VAL -> ProofState (INTM :=>: VAL)
 > search p = do
 >   es <- getAuncles
 >   aunclesProof es p <|> elaborate False (PRF p :>: DQ "")

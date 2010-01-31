@@ -244,8 +244,9 @@ tag in the enumeration to determine the appropriate index.
 >       findTag a (CONSE (TAG b) t) n
 >         | a == b        = return (toNum n :=>: toNum n)
 >         | otherwise     = findTag a t (succ n)
->       findTag a _ n  = throwError' ("elaborate: tag `" ++ a ++
->                                         " not found in enumeration.")
+>       findTag a _ n  = throwError'  $ err "elaborate: tag `" 
+>                                     ++ err a 
+>                                     ++ err " not found in enumeration."
 >                         
 >       toNum :: Int -> Tm {In, p} x
 >       toNum 0  = ZE

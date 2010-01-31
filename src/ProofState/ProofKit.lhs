@@ -81,14 +81,14 @@ Similarly, |checkHere| type-checks a term using the local name supply...
 
 > checkHere :: (TY :>: INTM) -> ProofState (INTM :=>: VAL)
 > checkHere (ty :>: tm) = do
->     mc <- withNSupply $ typeCheck $ check (ty :>: tm)
+>     mc <- withNSupply $ liftError . (typeCheck $ check (ty :>: tm))
 >     lift mc
 
 ... and |inferHere| infers the type of a term using the local name supply.
 
 > inferHere :: EXTM -> ProofState (VAL :<: TY)
 > inferHere tm = do
->     mc <- withNSupply $ typeCheck $ infer tm
+>     mc <- withNSupply $ liftError . (typeCheck $ infer tm)
 >     lift mc
 
 
@@ -103,11 +103,11 @@ may be useful for paranoia purposes.
 >     case m of
 >         GirlMother (_ := DEFN tm :<: ty) _ _ -> do
 >             ty' <- bquoteHere ty
->             mc <- withNSupply (typeCheck $ check (SET :>: ty'))
+>             mc <- withNSupply $ liftError . (typeCheck $ check (SET :>: ty'))
 >             mc `catchEither`  (err "validateHere: girl type failed to type-check: SET does not admit"
 >                               ++ errVal ty)
 >             tm' <- bquoteHere tm
->             mc <- withNSupply (typeCheck $ check (ty :>: tm'))
+>             mc <- withNSupply $ liftError . (typeCheck $ check (ty :>: tm'))
 >             mc `catchEither`  (err "validateHere: definition failed to type-check:"
 >                               ++ errVal ty
 >                               ++ err "does not admit"
@@ -115,7 +115,7 @@ may be useful for paranoia purposes.
 >             return ()
 >         GirlMother (_ := HOLE :<: ty) _ _ -> do
 >             ty' <- bquoteHere ty
->             mc <- withNSupply (typeCheck $ check (SET :>: ty'))
+>             mc <- withNSupply $ liftError . (typeCheck $ check (SET :>: ty'))
 >             mc `catchEither` (err "validateHere: hole type failed to type-check: SET does not admit" 
 >                              ++ errVal ty)
 >             return ()
@@ -281,7 +281,7 @@ several alternatives for where to go next and continuing until a goal is reached
 
 > moduleToGoal :: INTM -> ProofState (EXTM :=>: VAL)
 > moduleToGoal ty = do
->     Right (_ :=>: tyv) <- withNSupply (typeCheck $ check (SET :>: ty))
+>     Right (_ :=>: tyv) <- withNSupply $ liftError . (typeCheck $ check (SET :>: ty))
 >     ModuleMother n <- getMother
 >     aus <- getAuncles
 >     let  ty' = liftType aus ty
@@ -371,11 +371,11 @@ next goal (if one exists) instead.
 >     tip <- getDevTip
 >     case tip of         
 >         Unknown (tipTyTm :=>: tipTy) -> do
->             mc <- withNSupply (typeCheck $ check (tipTy :>: tm))
+>             mc <- withNSupply $ liftError . (typeCheck $ check (tipTy :>: tm))
 >             mc `catchEither`  (err "Typechecking failed:"
->                               ++ errTm tm
+>                               ++ errInTm tm
 >                               ++ err "is not of type"
->                               ++ errTm tipTyTm)
+>                               ++ errInTm tipTyTm)
 >             aus <- getGreatAuncles
 >             sibs <- getDevEntries
 >             let tmv = evTm (parBind aus sibs tm)
@@ -448,8 +448,10 @@ current development, after checking that the purported type is in fact a type.
 
 > make :: (String :<: INTM) -> ProofState (EXTM :=>: VAL)
 > make (s :<: ty) = do
->     mty <- withNSupply (typeCheck $ check (SET :>: ty))
->     tt <- mty `catchEither` (err "make: " ++ errInTm ty ++ err " is not a set.")
+>     mty <- withNSupply $ liftError . (typeCheck $ check (SET :>: ty))
+>     tt <- mty `catchEither`  (err "make: " 
+>                              ++ errInTm ty 
+>                              ++ err " is not a set.")
 >     make' (s :<: tt)
 
 > make' :: (String :<: (INTM :=>: TY)) -> ProofState (EXTM :=>: VAL)
