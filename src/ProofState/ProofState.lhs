@@ -41,6 +41,8 @@ by |Either StackError|.
 
 > type ProofStateT e = StateT ProofContext (Either (StackError e))
 
+> type ProofState = ProofStateT INTM
+> type ProofStateD = ProofStateT InDTmRN
 
 \subsection{Getters and Setters}
 
@@ -52,33 +54,33 @@ updated information, providing a friendlier interface than |get| and |put|.
 
 \subsubsection{Getters}
 
-> getAuncles :: ProofState (Entries)
+> getAuncles :: ProofStateT e (Entries)
 > getAuncles = get >>= return . auncles
 
-> getDev :: ProofState (Dev Bwd)
+> getDev :: ProofStateT e (Dev Bwd)
 > getDev = gets snd
 
-> getDevEntries :: ProofState (Entries)
+> getDevEntries :: ProofStateT e (Entries)
 > getDevEntries = do
 >     (es, _, _) <- getDev
 >     return es
 
-> getDevEntry :: ProofState (Entry Bwd)
+> getDevEntry :: ProofStateT e (Entry Bwd)
 > getDevEntry = do
 >     (_ :< e, _, _) <- getDev
 >     return e
 
-> getDevNSupply :: ProofState NameSupply
+> getDevNSupply :: ProofStateT e NameSupply
 > getDevNSupply = do
 >     (_, _, ns) <- getDev
 >     return ns
 
-> getDevTip :: ProofState Tip
+> getDevTip :: ProofStateT e Tip
 > getDevTip = do
 >     (_, tip, _) <- getDev
 >     return tip
 
-> getGoal :: String -> ProofState (INTM :=>: TY)
+> getGoal :: String -> ProofStateT e (INTM :=>: TY)
 > getGoal s = do
 >     tip <- getDevTip
 >     case tip of
@@ -87,43 +89,43 @@ updated information, providing a friendlier interface than |get| and |put|.
 >       _ -> throwError'  $ err "getGoal: fail to match a goal in " 
 >                         ++ err s
 
-> getGreatAuncles :: ProofState Entries
+> getGreatAuncles :: ProofStateT e Entries
 > getGreatAuncles = get >>= return . greatAuncles
 
-> getBoys :: ProofState [REF]
+> getBoys :: ProofStateT e [REF]
 > getBoys = do  
 >     auncles <- getAuncles
 >     return $ foldMap boy auncles 
 >    where boy (E r _ (Boy _) _)  = [r]
 >          boy _ = []
 
-> getHoleGoal :: ProofState (INTM :=>: TY)
+> getHoleGoal :: ProofStateT e (INTM :=>: TY)
 > getHoleGoal = do
 >     GirlMother (_ := HOLE :<: _) _ _ <- getMother
 >     getGoal "getHoleGoal"
 
-> getLayer :: ProofState Layer
+> getLayer :: ProofStateT e Layer
 > getLayer = do
 >     ls :< l <- getLayers
 >     return l
 
-> getLayers :: ProofState (Bwd Layer)
+> getLayers :: ProofStateT e (Bwd Layer)
 > getLayers = gets fst
 
-> getMother :: ProofState Mother
+> getMother :: ProofStateT e Mother
 > getMother = do
 >     ls <- getLayers
 >     case ls of
 >         _ :< l  -> return (mother l)
 >         B0      -> return (ModuleMother []) 
 
-> getMotherDefinition :: ProofState (EXTM :=>: VAL)
+> getMotherDefinition :: ProofStateT e (EXTM :=>: VAL)
 > getMotherDefinition = do
 >     GirlMother ref _ _ <- getMother
 >     aus <- getGreatAuncles
 >     return (applyAuncles ref aus)
 
-> getMotherEntry :: ProofState (Entry Bwd)
+> getMotherEntry :: ProofStateT e (Entry Bwd)
 > getMotherEntry = do
 >     m <- getMother
 >     dev <- getDev
@@ -131,7 +133,7 @@ updated information, providing a friendlier interface than |get| and |put|.
 >         GirlMother ref xn ty -> return (E ref xn (Girl LETG dev) ty)
 >         ModuleMother n -> return (M n dev)
 
-> getMotherName :: ProofState Name
+> getMotherName :: ProofStateT e Name
 > getMotherName = do
 >     ls <- gets fst
 >     case ls of
@@ -142,49 +144,49 @@ updated information, providing a friendlier interface than |get| and |put|.
 \subsubsection{Putters}
 
 
-> insertCadet :: NewsBulletin -> ProofState ()
+> insertCadet :: NewsBulletin -> ProofStateT e ()
 > insertCadet news = do
 >     l <- getLayer
 >     replaceLayer l{cadets = NF (Left news :> unNF (cadets l))}
 >     return ()
 
-> putDev :: Dev Bwd -> ProofState ()
+> putDev :: Dev Bwd -> ProofStateT e ()
 > putDev dev = do
 >     ls <- gets fst
 >     put (ls, dev)
 
-> putDevEntry :: Entry Bwd -> ProofState ()
+> putDevEntry :: Entry Bwd -> ProofStateT e ()
 > putDevEntry e = do
 >     (es, tip, nsupply) <- getDev
 >     putDev (es :< e, tip, nsupply)
 
-> putDevEntries :: Entries -> ProofState ()
+> putDevEntries :: Entries -> ProofStateT e ()
 > putDevEntries es = do
 >     (_, tip, nsupply) <- getDev
 >     putDev (es, tip, nsupply)
 
-> putDevNSupply :: NameSupply -> ProofState ()
+> putDevNSupply :: NameSupply -> ProofStateT e ()
 > putDevNSupply ns = do
 >     (es, tip, _) <- getDev
 >     putDev (es, tip, ns)
 
-> putDevTip :: Tip -> ProofState ()
+> putDevTip :: Tip -> ProofStateT e ()
 > putDevTip tip = do
 >     (es, _, r) <- getDev
 >     putDev (es, tip, r)
 
-> putLayer :: Layer -> ProofState ()
+> putLayer :: Layer -> ProofStateT e ()
 > putLayer l = do
 >     (ls, dev) <- get
 >     put (ls :< l, dev)
 
-> putMother :: Mother -> ProofState ()
+> putMother :: Mother -> ProofStateT e ()
 > putMother m = do
 >     l <- getLayer
 >     _ <- replaceLayer l{mother=m}
 >     return ()
 
-> putMotherEntry :: Entry Bwd -> ProofState ()
+> putMotherEntry :: Entry Bwd -> ProofStateT e ()
 > putMotherEntry (E ref xn (Girl LETG dev) ty) = do
 >     l <- getLayer
 >     replaceLayer (l{mother=GirlMother ref xn ty})
@@ -199,7 +201,7 @@ updated information, providing a friendlier interface than |get| and |put|.
 \subsubsection{Removers}
 
 
-> removeDevEntry :: ProofState (Maybe (Entry Bwd))
+> removeDevEntry :: ProofStateT e (Maybe (Entry Bwd))
 > removeDevEntry = do
 >     es <- getDevEntries
 >     case es of
@@ -208,7 +210,7 @@ updated information, providing a friendlier interface than |get| and |put|.
 >         putDevEntries es'
 >         return (Just e)
 
-> removeLayer :: ProofState Layer
+> removeLayer :: ProofStateT e Layer
 > removeLayer = do
 >     (ls :< l, dev) <- get
 >     put (ls, dev)
@@ -216,27 +218,27 @@ updated information, providing a friendlier interface than |get| and |put|.
 
 \subsubsection{Replacers}
 
-> replaceDev :: Dev Bwd -> ProofState (Dev Bwd)
+> replaceDev :: Dev Bwd -> ProofStateT e (Dev Bwd)
 > replaceDev dev = do
 >     (ls, dev') <- get
 >     put (ls, dev)
 >     return dev'
 
-> replaceDevEntries :: Entries -> ProofState Entries
+> replaceDevEntries :: Entries -> ProofStateT e Entries
 > replaceDevEntries es = do
 >     es' <- getDevEntries
 >     putDevEntries es
 >     return es'
 
-> replaceLayer :: Layer -> ProofState Layer
+> replaceLayer :: Layer -> ProofStateT e Layer
 > replaceLayer l = do
 >     (ls :< l', dev) <- get
 >     put (ls :< l, dev)
 >     return l'
 
-\subsubsection{Tracing in the |ProofState| monad}
+\subsubsection{Tracing in the |ProofStateT e| monad}
 
-> proofTrace :: String -> ProofState ()
+> proofTrace :: String -> ProofStateT e ()
 > proofTrace s = do
 >   () <- trace s $ return ()
 >   return ()

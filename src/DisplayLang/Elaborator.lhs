@@ -47,7 +47,7 @@ The Boolean parameter indicates whether the elaborator is working at the top
 level of the term, because if so, it can create boys in the current development
 rather than creating a subgoal.
 
-> elaborate :: Bool -> (TY :>: InDTmRN) -> ProofState (INTM :=>: VAL)
+> elaborate :: Bool -> (TY :>: InDTmRN) -> ProofStateD (INTM :=>: VAL)
 
 > import <- ElaborateRules
 
@@ -187,7 +187,7 @@ as |elaborate| is to |check|. It infers the type of a display term, calling on
 the elaborator rather than the type-checker. Most of the cases are similar to
 those of |infer|.
 
-> elabInfer :: ExDTmRN -> ProofState (EXTM :=>: VAL :<: TY)
+> elabInfer :: ExDTmRN -> ProofStateD (EXTM :=>: VAL :<: TY)
 
 > elabInfer (DP x) = do
 >     (ref, as) <- elabResolve x
@@ -220,7 +220,7 @@ those of |infer|.
 This operation, part of elaboration, tries to prove a proposition, leaving the
 hard bits for the human.
 
-> prove :: Bool -> VAL -> ProofState (INTM :=>: VAL)
+> prove :: Bool -> VAL -> ProofStateD (INTM :=>: VAL)
 > prove b TRIVIAL = return (VOID :=>: VOID)
 > prove b (AND p q) = do
 >   (pt :=>: pv) <- prove False p
@@ -251,13 +251,13 @@ hard bits for the human.
 >   es <- getAuncles
 >   aunclesProof es p <|> elaborate False (PRF p :>: DQ "")
 
-> aunclesProof :: Entries -> VAL -> ProofState (INTM :=>: VAL)
+> aunclesProof :: Entries -> VAL -> ProofStateD (INTM :=>: VAL)
 > aunclesProof B0 p = empty
 > aunclesProof (es :< E ref _ (Boy _) _) p =
 >   synthProof (pval ref :<: pty ref) p <|> aunclesProof es p
 > aunclesProof (es :< _) p = aunclesProof es p  -- for the time being
 
-> synthProof :: (VAL :<: TY) -> VAL -> ProofState (INTM :=>: VAL)
+> synthProof :: (VAL :<: TY) -> VAL -> ProofStateD (INTM :=>: VAL)
 > synthProof (v :<: PRF p) p' = do
 >   guard =<< withNSupply (equal (PROP :>: (p, p')))
 >   t <- bquoteHere v
@@ -268,7 +268,7 @@ hard bits for the human.
 The |elabResolve| command resolves a relative name to a reference
 and a spine of shared parameters to which it should be applied.
 
-> elabResolve :: RelName -> ProofState (REF, Spine {TT} REF)
+> elabResolve :: RelName -> ProofStateD (REF, Spine {TT} REF)
 > elabResolve x = do
 >    aus <- getAuncles
 >    findGlobal aus x `catchEither` (err "elabResolve: cannot resolve name")
@@ -283,13 +283,13 @@ the current goal, and calls the |give| command on the resulting term. If its arg
 is a nameless question mark, it avoids creating a pointless subgoal by simply returning
 a reference to the current goal (applied to the appropriate shared parameters).
 
-> elabGive :: InDTmRN -> ProofState (EXTM :=>: VAL)
+> elabGive :: InDTmRN -> ProofStateD (EXTM :=>: VAL)
 > elabGive tm = elabGive' tm <* goOut
 
-> elabGiveNext :: InDTmRN -> ProofState (EXTM :=>: VAL)
+> elabGiveNext :: InDTmRN -> ProofStateD (EXTM :=>: VAL)
 > elabGiveNext tm = elabGive' tm <* (nextGoal <|> goOut)
 
-> elabGive' :: InDTmRN -> ProofState (EXTM :=>: VAL)
+> elabGive' :: InDTmRN -> ProofStateD (EXTM :=>: VAL)
 > elabGive' tm = do
 >     tip <- getDevTip
 >     case tip of         
@@ -309,7 +309,7 @@ The |elabMake| command elaborates the given display term in a module to
 produce a type, then converts the module to a goal with that type. Thus any
 subgoals produced by elaboration will be children of the resulting goal.
 
-> elabMake :: (String :<: InDTmRN) -> ProofState (EXTM :=>: VAL)
+> elabMake :: (String :<: InDTmRN) -> ProofStateD (EXTM :=>: VAL)
 > elabMake (s :<: ty) = do
 >     makeModule s
 >     goIn
@@ -331,7 +331,7 @@ state of:
 ] g x y call   (from giveNext, then we're ready to go).
 \end{verbatim}
 
-> elabProgram :: [String] -> ProofState (EXTM :=>: VAL)
+> elabProgram :: [String] -> ProofStateD (EXTM :=>: VAL)
 > elabProgram args = do
 >     n <- getMotherName
 >     (_ :=>: g) <- getHoleGoal
@@ -356,12 +356,12 @@ state of:
 The |elabPiBoy| command elaborates the given display term to produce a type, and
 creates a $\Pi$-boy with that type.
 
-> elabPiBoy :: (String :<: InDTmRN) -> ProofState REF
+> elabPiBoy :: (String :<: InDTmRN) -> ProofStateD REF
 > elabPiBoy (s :<: ty) = do
 >     tt <- elaborate True (SET :>: ty)
 >     piBoy' (s :<: tt)
 
-> elabLamBoy :: (String :<: InDTmRN) -> ProofState REF
+> elabLamBoy :: (String :<: InDTmRN) -> ProofStateD REF
 > elabLamBoy (s :<: ty) = do
 >     tt <- elaborate True (SET :>: ty)
 >     lambdaBoy' (s :<: tt)
