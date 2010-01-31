@@ -44,7 +44,7 @@ here, in order to improve the narrative.}
 A |ProofState| is almost a |NameSupplier|, but it cannot fork the
 name supply.
 
-> instance NameSupplier (ProofStateT e) where
+> instance NameSupplier ProofState where
 >     freshRef (s :<: ty) f = do
 >         nsupply <- getDevNSupply
 >         freshRef (s :<: ty) (\ref nsupply' -> do
@@ -59,7 +59,7 @@ name supply.
 We also provide an operator to lift functions from a name supply
 to proof state commands.
 
-> withNSupply :: (NameSupply -> x) -> ProofStateT e x
+> withNSupply :: (NameSupply -> x) -> ProofState x
 > withNSupply f = getDevNSupply >>= return . f
 
 \begin{danger}[Read-only name supply]
@@ -73,20 +73,20 @@ has finished.
 
 The |bquoteHere| command $\beta$-quotes a term using the current name supply.
 
-> bquoteHere :: Tm {d, VV} REF -> ProofStateT e (Tm {d, TT} REF)
+> bquoteHere :: Tm {d, VV} REF -> ProofState (Tm {d, TT} REF)
 > bquoteHere tm = withNSupply $ bquote B0 tm
 
 
 Similarly, |checkHere| type-checks a term using the local name supply...
 
-> checkHere :: (TY :>: INTM) -> ProofStateT e (INTM :=>: VAL)
+> checkHere :: (TY :>: INTM) -> ProofState (INTM :=>: VAL)
 > checkHere (ty :>: tm) = do
 >     mc <- withNSupply $ typeCheck $ check (ty :>: tm)
 >     lift mc
 
 ... and |inferHere| infers the type of a term using the local name supply.
 
-> inferHere :: EXTM -> ProofStateT e (VAL :<: TY)
+> inferHere :: EXTM -> ProofState (VAL :<: TY)
 > inferHere tm = do
 >     mc <- withNSupply $ typeCheck $ infer tm
 >     lift mc
@@ -97,7 +97,7 @@ Similarly, |checkHere| type-checks a term using the local name supply...
 The |validateHere| performs some checks on the current location, which
 may be useful for paranoia purposes.
 
-> validateHere :: ProofStateT e ()
+> validateHere :: ProofState ()
 > validateHere = do
 >     m <- getMother
 >     case m of
@@ -122,7 +122,7 @@ may be useful for paranoia purposes.
 >         _ -> return ()
 
 
-> withGoal :: (VAL -> ProofStateT e ()) -> ProofStateT e ()
+> withGoal :: (VAL -> ProofState ()) -> ProofState ()
 > withGoal f = do
 >   (_ :=>: goal) <- getGoal "withGoal"
 >   f goal
@@ -143,10 +143,10 @@ the current working location;
 These commands fail (yielding |Nothing|) if they are impossible because the proof context
 is not in the required form.
 
-> goIn :: ProofStateT e ()
+> goIn :: ProofState ()
 > goIn = goInAcc (NF F0) `replaceError` (err "goIn: you can't go that way.")
 >   where
->     goInAcc :: NewsyEntries -> ProofStateT e ()
+>     goInAcc :: NewsyEntries -> ProofState ()
 >     goInAcc (NF cadets) = do
 >         (ls, (es :< e, tip, nsupply)) <- get
 >         if entryHasDev e
@@ -155,14 +155,14 @@ is not in the required form.
 >                  >> goInAcc (NF (Right (reverseEntry e) :> cadets)) 
 
 
-> jumpIn :: Entry NewsyFwd -> ProofStateT e NewsyEntries
+> jumpIn :: Entry NewsyFwd -> ProofState NewsyEntries
 > jumpIn e = do
 >     (ls, (es, tip, nsupply)) <- get
 >     let (cs, newTip, newNSupply) = entryDev e
 >     put (ls :< Layer es (entryToMother e) (NF F0) tip nsupply, (B0, newTip, newNSupply))
 >     return cs
 
-> goOut :: ProofStateT e ()
+> goOut :: ProofState ()
 > goOut = (do
 >     e <- getMotherEntry
 >     l <- removeLayer
@@ -171,10 +171,10 @@ is not in the required form.
 >     return ()
 >   ) `replaceError` (err "goOut: you can't go that way.")
 
-> goUp :: ProofStateT e ()
+> goUp :: ProofState ()
 > goUp = goUpAcc (NF F0) `replaceError` (err "goUp: you can't go that way.")
 >   where
->     goUpAcc :: NewsyEntries -> ProofStateT e ()
+>     goUpAcc :: NewsyEntries -> ProofState ()
 >     goUpAcc (NF acc) = do
 >         l@(Layer (es :< e) m (NF cadets) tip nsupply) <- getLayer
 >         if entryHasDev e
@@ -187,10 +187,10 @@ is not in the required form.
 >             else  replaceLayer l{elders=es}
 >                   >> goUpAcc (NF (Right (reverseEntry e) :> acc))
 
-> goDown :: ProofStateT e ()
+> goDown :: ProofState ()
 > goDown = goDownAcc B0 [] `replaceError` (err "goDown: you can't go that way.")
 >   where
->     goDownAcc :: Entries -> NewsBulletin -> ProofStateT e ()
+>     goDownAcc :: Entries -> NewsBulletin -> ProofState ()
 >     goDownAcc acc news = do
 >         l@(Layer elders _ (NF (ne :> es)) _ _) <- getLayer
 >         case ne of
@@ -209,12 +209,12 @@ is not in the required form.
 >                 replaceLayer l{cadets=NF es}
 >                 goDownAcc (acc :< e'') news'
 
-> goTo :: Name -> ProofStateT e ()
+> goTo :: Name -> ProofState ()
 > goTo [] = return ()
 > goTo (xn:xns) = (seek xn >> goTo xns)
 >     `replaceError` (err "goTo: could not find " ++ err (showName (xn:xns)))
 >   where
->     seek :: (String, Int) -> ProofStateT e ()
+>     seek :: (String, Int) -> ProofState ()
 >     seek xn = (goUp <|> goIn) >> do
 >         m <- getMotherName
 >         if xn == last m
@@ -244,7 +244,7 @@ results.
 The |isGoal| command succeeds (returning |()|) if the current location is a goal,
 and fails (yielding |Nothing|) if not.
 
-> isGoal :: ProofStateT e ()
+> isGoal :: ProofState ()
 > isGoal = do
 >     Unknown _ <- getDevTip
 >     return ()
@@ -253,17 +253,17 @@ and fails (yielding |Nothing|) if not.
 We can now compactly describe how to search the proof state for goals, by giving
 several alternatives for where to go next and continuing until a goal is reached.
 
-> prevStep :: ProofStateT e ()
+> prevStep :: ProofState ()
 > prevStep = ((goUp >> much goIn) <|> goOut) `replaceError` (err "prevStep: no previous steps.")
 >
-> prevGoal :: ProofStateT e ()
+> prevGoal :: ProofState ()
 > prevGoal = (prevStep `untilA` isGoal) `replaceError` (err "prevGoal: no previous goals.")
 >
-> nextStep :: ProofStateT e ()
+> nextStep :: ProofState ()
 > nextStep = ((goIn >> much goUp) <|> goDown <|> (goOut `untilA` goDown))
 >                `replaceError` (err "nextStep: no more steps.")
 >
-> nextGoal :: ProofStateT e ()
+> nextGoal :: ProofState ()
 > nextGoal = (nextStep `untilA` isGoal) `replaceError` (err "nextGoal: no more goals.")
 
 
@@ -271,7 +271,7 @@ several alternatives for where to go next and continuing until a goal is reached
 \subsection{Module Commands}
 
 
-> makeModule :: String -> ProofStateT e Name
+> makeModule :: String -> ProofState Name
 > makeModule s = do
 >     n <- withNSupply (flip mkName s)
 >     nsupply <- getDevNSupply
@@ -279,7 +279,7 @@ several alternatives for where to go next and continuing until a goal is reached
 >     putDevNSupply (freshName nsupply)
 >     return n
 
-> moduleToGoal :: INTM -> ProofStateT e (EXTM :=>: VAL)
+> moduleToGoal :: INTM -> ProofState (EXTM :=>: VAL)
 > moduleToGoal ty = do
 >     Right (_ :=>: tyv) <- withNSupply (typeCheck $ check (SET :>: ty))
 >     ModuleMother n <- getMother
@@ -290,12 +290,12 @@ several alternatives for where to go next and continuing until a goal is reached
 >     putDevTip (Unknown (ty :=>: tyv))
 >     return (applyAuncles ref aus)
 
-> dropModule :: ProofStateT e ()
+> dropModule :: ProofState ()
 > dropModule = do
 >     Just (M _ _) <- removeDevEntry
 >     return ()
 
-> draftModule :: String -> ProofStateT e t -> ProofStateT e t
+> draftModule :: String -> ProofState t -> ProofState t
 > draftModule name draftyStuff = do
 >     makeModule name
 >     goIn
@@ -309,7 +309,7 @@ The |lookupName| function looks up a name in the context (including axioms and
 primitives); if found, it returns the reference applied to the spine of
 shared parameters.
 
-> lookupName :: Name -> ProofStateT e (Maybe (EXTM :=>: VAL))
+> lookupName :: Name -> ProofState (Maybe (EXTM :=>: VAL))
 > lookupName name = do
 >     aus <- getAuncles
 >     case Data.Foldable.find ((name ==) . entryName) aus of
@@ -326,13 +326,13 @@ shared parameters.
 Various commands yield an |EXTM :=>: VAL|, and we sometimes need to convert
 this to an |INTM :=>: VAL|:
 
-> neutralise :: (EXTM :=>: VAL) -> ProofStateT e (INTM :=>: VAL)
+> neutralise :: (EXTM :=>: VAL) -> ProofState (INTM :=>: VAL)
 > neutralise (n :=>: v) = return (N n :=>: v)
 
 The |apply| command checks if the last entry in the development is a girl $y$ with type
 $\Pi S T$ and if so, adds a goal of type $S$ and applies $y$ to it.
 
-> apply :: ProofStateT e (EXTM :=>: VAL)
+> apply :: ProofState (EXTM :=>: VAL)
 > apply = do
 >   devEntry <- getDevEntry
 >   case devEntry of
@@ -349,7 +349,7 @@ $\Pi S T$ and if so, adds a goal of type $S$ and applies $y$ to it.
 The |done| command checks if the last entry in the development is a girl, and if so,
 fills in the goal with this entry.
 
-> done :: ProofStateT e (EXTM :=>: VAL)
+> done :: ProofState (EXTM :=>: VAL)
 > done = do
 >   devEntry <- getDevEntry
 >   case devEntry of
@@ -360,13 +360,13 @@ The |give| command checks the provided term has the goal type, and if so, fills 
 the goal, updates the reference and goes out. The |giveNext| variant moves to the
 next goal (if one exists) instead.
 
-> give :: INTM -> ProofStateT e (EXTM :=>: VAL)
+> give :: INTM -> ProofState (EXTM :=>: VAL)
 > give tm = give' tm <* goOut
 
-> giveNext :: INTM -> ProofStateT e (EXTM :=>: VAL)
+> giveNext :: INTM -> ProofState (EXTM :=>: VAL)
 > giveNext tm = give' tm <* (nextGoal <|> goOut)
 
-> give' :: INTM -> ProofStateT e (EXTM :=>: VAL)
+> give' :: INTM -> ProofState (EXTM :=>: VAL)
 > give' tm = do
 >     tip <- getDevTip
 >     case tip of         
@@ -390,7 +390,7 @@ next goal (if one exists) instead.
 The |lambdaBoy| command checks that the current goal is a $\Pi$-type, and if so,
 appends a $\lambda$-abstraction with the appropriate type to the current development.
 
-> lambdaBoy :: String -> ProofStateT e REF
+> lambdaBoy :: String -> ProofState REF
 > lambdaBoy x = do
 >     tip <- getDevTip
 >     case tip of
@@ -410,7 +410,7 @@ The |lambdaBoy'| variant allows a type to be specified, so it can
 be used with modules. If used at an |Unknown| tip, it will check
 that the supplied type matches the one at the tip.
 
-> lambdaBoy' :: (String :<: (INTM :=>: TY)) -> ProofStateT e REF
+> lambdaBoy' :: (String :<: (INTM :=>: TY)) -> ProofState REF
 > lambdaBoy' (x :<: (ty :=>: tv))  = do
 >     tip <- getDevTip
 >     case tip of
@@ -446,13 +446,13 @@ general.
 The |make| command adds a named goal of the given type to the bottom of the
 current development, after checking that the purported type is in fact a type.
 
-> make :: (String :<: INTM) -> ProofStateT e (EXTM :=>: VAL)
+> make :: (String :<: INTM) -> ProofState (EXTM :=>: VAL)
 > make (s :<: ty) = do
 >     mty <- withNSupply (typeCheck $ check (SET :>: ty))
 >     tt <- mty `catchEither` (err "make: " ++ errInTm ty ++ err " is not a set.")
 >     make' (s :<: tt)
 
-> make' :: (String :<: (INTM :=>: TY)) -> ProofStateT e (EXTM :=>: VAL)
+> make' :: (String :<: (INTM :=>: TY)) -> ProofState (EXTM :=>: VAL)
 > make' (s :<: (ty :=>: tyv)) = do
 >     aus <- getAuncles
 >     s' <- pickName "G" s
@@ -469,7 +469,7 @@ The |pickName| command takes a prefix suggestion and a name suggestion
 (either of which may be empty), and returns a more-likely-to-be-unique
 name if the name suggestion is empty.
 
-> pickName :: String -> String -> ProofStateT e String
+> pickName :: String -> String -> ProofState String
 > pickName "" s = pickName "x" s
 > pickName prefix ""  = do
 >     m <- getMotherName
@@ -481,10 +481,10 @@ name if the name suggestion is empty.
 The |piBoy| command checks that the current goal is of type SET, and that the supplied type
 is also a set; if so, it appends a $\Pi$-abstraction to the current development.
 
-> piBoy :: (String :<: INTM) -> ProofStateT e REF
+> piBoy :: (String :<: INTM) -> ProofState REF
 > piBoy (s :<: ty) = piBoy' (s :<: (ty :=>: evTm ty))
 
-> piBoy' :: (String :<: (INTM :=>: TY)) -> ProofStateT e REF
+> piBoy' :: (String :<: (INTM :=>: TY)) -> ProofState REF
 > piBoy' (s :<: (ty :=>: tv)) = do
 >     tip <- getDevTip
 >     case tip of
@@ -498,7 +498,7 @@ is also a set; if so, it appends a $\Pi$-abstraction to the current development.
 The |select| command takes a term representing a neutral parameter, makes a new
 goal of the same type, and fills it in with the parameter.
 
-> select :: INTM -> ProofStateT e (EXTM :=>: VAL)
+> select :: INTM -> ProofState (EXTM :=>: VAL)
 > select tm@(N (P (name := k :<: ty))) = do
 >     ty' <- bquoteHere ty
 >     make (fst (last name) :<: ty')
@@ -508,12 +508,12 @@ goal of the same type, and fills it in with the parameter.
      
 The |ungawa| command looks for a truly obvious thing to do, and does it.
 
-> ignore :: ProofStateT e a -> ProofStateT e ()
+> ignore :: ProofState a -> ProofState ()
 > ignore f = do
 >     f
 >     return ()
 
-> ungawa :: ProofStateT e ()
+> ungawa :: ProofState ()
 > ungawa = (ignore done <|> ignore apply <|> ignore (lambdaBoy "ug"))
 >     `replaceError` (err "ungawa: no can do.")
 
@@ -521,13 +521,13 @@ The |ungawa| command looks for a truly obvious thing to do, and does it.
 
 \subsection{Information Commands}
 
-> infoAuncles :: ProofStateT e String
+> infoAuncles :: ProofState String
 > infoAuncles = do
 >     aus <- getAuncles
 >     me <- getMotherName
 >     return (showEntries aus me (aus <>> F0))
 
-> infoDump :: ProofStateT e String
+> infoDump :: ProofState String
 > infoDump = do
 >     (es, dev) <- get
 >     return (foldMap ((++ "\n") . show) es ++ show dev)

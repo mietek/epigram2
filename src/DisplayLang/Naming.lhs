@@ -108,7 +108,7 @@ The |findGlobal| function takes a context and a relative name to resolve. It
 searches the context for an entry that hits the name, then searches that
 entry's children to resolve the next component. 
 
-> findGlobal :: Entries -> RelName -> Either (StackError t) (REF, Spine {TT} REF)
+> findGlobal :: Entries -> RelName -> Either [String] (REF, Spine {TT} REF)
 > findGlobal xs [(y, Rel 0)]
 >   | Just ref <- lookup y primitives = Right (ref, [])
 >   | Just ref <- lookup y axioms     = Right (ref, [])
