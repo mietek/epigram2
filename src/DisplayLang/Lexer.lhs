@@ -1,4 +1,5 @@
 \section{Lexer}
+\label{sec:lexer}
 
 The lexical structure is extremely simple. The reason is that Cochon
 being an interactive theorem prover, its inputs will be

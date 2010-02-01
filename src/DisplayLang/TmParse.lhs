@@ -1,4 +1,5 @@
 \section{Parsing Terms}
+\label{sec:parser}
 
 %if False
 
@@ -66,13 +67,18 @@ The |pExDTm| and |pInDTm| functions start parsing at the maximum size.
 > pInDTm :: Parsley Token InDTmRN
 > pInDTm = sizedInDTm maxBound
 
+We do not allow ascriptions in the term syntax, but they are useful in
+commands, so we provide |pAscription| to parse an ascription into
+separate components, and |pAscriptionTC| to parse an ascription as an
+appropriate type-cast.
 
 > pAscription :: Parsley Token (InDTmRN :<: InDTmRN)
-> pAscription = (| (sizedInDTm (pred AscSize)) (%keyword KwAsc%) :<: pInDTm |)
+> pAscription = (| pInDTm (%keyword KwAsc%) :<: pInDTm |)
 
 > pAscriptionTC :: Parsley Token ExDTmRN
-> pAscriptionTC = (| typecast (sizedInDTm (pred AscSize)) (%keyword KwAsc%) pInDTm |)
+> pAscriptionTC = (| typecast pInDTm (%keyword KwAsc%) pInDTm |)
 >   where typecast tm ty = (DType ty) ::$ A tm
+
 
 Each |sized| parser tries the appropriate |special| parser for the size,
 then falls back to parsing at the previous size followed by a |more| parser.
@@ -108,7 +114,7 @@ largest size again.
 >   (| Fst (%keyword KwFst%)
 >    | Snd (%keyword KwSnd%)
 >    | Out (%keyword KwOut%)
->    | Call (%keyword KwCall%) ~Dum
+>    | Call (%keyword KwCall%) ~DU
 >    | A (sizedInDTm ArgSize)
 >    |)
 > moreExDTm z _ = (|)

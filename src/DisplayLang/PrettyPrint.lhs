@@ -1,4 +1,5 @@
 \section{Pretty-printing}
+\label{sec:pretty_printer}
 
 %if False
 

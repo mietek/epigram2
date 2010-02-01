@@ -1,4 +1,5 @@
 \section{Elaboration}
+\label{sec:elaborator}
 
 %if False
 
@@ -20,6 +21,7 @@
 > import ProofState.ProofKit
 
 > import DisplayLang.DisplayTm
+> import DisplayLang.DisplayMangler
 > import DisplayLang.Naming
 
 > import Evidences.Rules

@@ -103,12 +103,14 @@
 \input{DisplayLang/Introduction.tex}
 
 %include DisplayLang/DisplayTm.lhs
-%include DisplayLang/Lexer.lhs
+%include DisplayLang/DisplayMangler.lhs
 %include DisplayLang/Naming.lhs
+%include DisplayLang/Lexer.lhs
 %include DisplayLang/TmParse.lhs
-%include DisplayLang/PrettyPrint.lhs
-%include DisplayLang/Distiller.lhs
 %include DisplayLang/Elaborator.lhs
+%include DisplayLang/Distiller.lhs
+%include DisplayLang/PrettyPrint.lhs
+
 
 \chapter{Cochon}
 
