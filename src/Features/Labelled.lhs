@@ -68,10 +68,10 @@
 >      return (Call llv, t)
 
 
-The following is all commented out. Is it detritus?
+\question{The following is all commented out. Is it detritus?}
 
 <   canTy chev (ty :>: Call c tm) = do
-<      -- tytv@(ty :=>: tyv) <- chev (SET :>: ty)
+<      tytv@(ty :=>: tyv) <- chev (SET :>: ty)
 <      ccv@(c :=>: cv) <- chev (ty :>: c)
 <      tmtv@(tm :=>: tmv) <- chev (LABEL cv ty :>: tm)
 <      return (Call ccv tmtv)
