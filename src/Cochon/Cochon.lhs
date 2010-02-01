@@ -37,7 +37,6 @@
 > import Tactics.PropSimp
 > import Tactics.Information
 
-
 > import Cochon.CommandLexer
 
 > import Compiler.Compiler
@@ -206,14 +205,17 @@ Construction tactics:
 >       "give <term> - solves the goal with <term>."
 >   : simpleCT 
 >         "lambda"
->          (| (|(B0 :<) tokenString (%keyword KwAsc%)|) :< tokenInTm 
->           | (B0 :<) tokenString |)
->          (\ args -> case args of
->              [StrArg s] -> lambdaBoy s >> return "Made lambda boy!"
->              [StrArg s, InArg ty] -> 
->                elabLamBoy (s :<: ty) >> return "Made lambda boy!")
->          ("lambda <x> - introduces a hypothesis.\n"++
->           "lambda <x> : <type> - introduces a new module parameter or hyp.")
+>          (| (|bwdList (pSep (keyword KwComma) tokenString) (%keyword KwAsc%)|) :< tokenInTm 
+>           | bwdList (pSep (keyword KwComma) tokenString)
+>           |)
+>          (\ args -> case last args of
+>              InArg ty  -> mapM (elabLamBoy . (:<: ty) . argToStr) (init args)
+>                               >> return "Made lambda boy!"
+>              _         -> mapM (lambdaBoy . argToStr) args
+>                               >> return "Made lambda boy!"
+>            )
+>          ("lambda <labels> - introduces one or more hypotheses.\n"++
+>           "lambda <labels> : <type> - introduces new module parameters or hypotheses.")
 
 >   : simpleCT
 >         "make"
