@@ -96,6 +96,7 @@
 %include Tactics/Elimination.lhs
 %include Tactics/Induction.lhs
 %include Tactics/PropSimp.lhs
+%include Tactics/Information.lhs
 
 \chapter{The Display Language}
 
@@ -114,7 +115,6 @@
 \input{Cochon/Introduction.tex}
 
 %include Cochon/DevLoad.lhs
-%include Cochon/DisplayCommands.lhs
 %include Cochon/CommandLexer.lhs
 %include Cochon/Cochon.lhs
 %include Main.lhs

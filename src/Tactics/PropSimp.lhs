@@ -26,7 +26,7 @@
 > import ProofState.ProofState
 > import ProofState.ProofKit
 
-> import Cochon.DisplayCommands
+> import Tactics.Information
 
 > import Prelude hiding (any, foldl, mapM)
 

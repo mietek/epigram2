@@ -35,9 +35,10 @@
 > import Tactics.Elimination
 > import Tactics.Induction
 > import Tactics.PropSimp
+> import Tactics.Information
+
 
 > import Cochon.CommandLexer
-> import Cochon.DisplayCommands
 
 > import Compiler.Compiler
 
@@ -287,30 +288,6 @@ Navigation tactics:
 >       return ("Jumping to " ++ showName n ++ "...")
 >     )
 >       "jump <name> - moves to the definition of <name>."
-
-
-Information tactics:
-
->   : unaryExCT "elaborate" infoElaborate
->       "elaborate <term> - elaborates, evaluates, quotes, distills and pretty-prints <term>."
->   : unaryExCT "infer" infoInfer
->       "infer <term> - elaborates <term> and infers its type."
-
->   : unaryInCT "parse" (return . show)
->       "parse <term> - parses <term> and displays the internal display-sytnax representation."
-
->   : unaryStringCT "show" (\s -> case s of
->         "auncles"  -> infoAuncles
->         "context"  -> infoContext 
->         "dump"     -> infoDump
->         "hyps"     -> infoHypotheses
->         "state"    -> prettyProofState
->         _          -> return "show: please specify exactly what to show."
->       )
->       "show <auncles/context/dump/hyps/state> - displays useless information."
-
->   : unaryExCT "whatis" infoWhatIs
->       "whatis <term> - prints the various representations of <term>."
 
 
 Miscellaneous tactics:

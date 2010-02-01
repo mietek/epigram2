@@ -17,7 +17,8 @@
 
 > import ProofState.ProofContext
 
-> import Cochon.DisplayCommands
+> import Tactics.Information
+
 > import Cochon.DevLoad
 > import Cochon.Cochon
 

@@ -1,11 +1,11 @@
-\section{Display Commands}
+\section{Presenting Information}
 
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE GADTs, TypeOperators #-}
 
-> module Cochon.DisplayCommands where
+> module Tactics.Information where
 
 > import Control.Applicative hiding (empty)
 > import Control.Monad.State
@@ -229,3 +229,26 @@ of the proof state at the current location.
 >                 tyd <- prettyHere (SET :>: ty)
 >                 tmd <- prettyHereAt (pred ArrSize) (tyv :>: tm)
 >                 return (tmd <+> kword KwAsc <+> tyd)
+
+
+> import -> CochonTactics where
+>   : unaryExCT "elaborate" infoElaborate
+>       "elaborate <term> - elaborates, evaluates, quotes, distills and pretty-prints <term>."
+>   : unaryExCT "infer" infoInfer
+>       "infer <term> - elaborates <term> and infers its type."
+
+>   : unaryInCT "parse" (return . show)
+>       "parse <term> - parses <term> and displays the internal display-sytnax representation."
+
+>   : unaryStringCT "show" (\s -> case s of
+>         "auncles"  -> infoAuncles
+>         "context"  -> infoContext 
+>         "dump"     -> infoDump
+>         "hyps"     -> infoHypotheses
+>         "state"    -> prettyProofState
+>         _          -> return "show: please specify exactly what to show."
+>       )
+>       "show <auncles/context/dump/hyps/state> - displays useless information."
+
+>   : unaryExCT "whatis" infoWhatIs
+>       "whatis <term> - prints the various representations of <term>."
