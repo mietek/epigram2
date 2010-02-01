@@ -51,7 +51,7 @@ A Tactic is something that (might) builds a term of a given type. In
 this process, it might be required to create fresh names, hence the
 availability of a |NameSupply|. All in all, this goes like this:
 
-> newtype Tac x = Tac { runTac :: NameSupply -> TY -> Either [String] x }
+> newtype Tac x = Tac { runTac :: NameSupply -> TY -> Either (StackError (Tac VAL)) x }
 
 In other words, we have two @Reader@ monads stacked on an @Error@
 monad. I don't know for you but I'm quite happy to reinvent the wheel
@@ -74,8 +74,8 @@ Then we have a monad:
 >                                do -- in Either monad
 >                                x <- runTac x r t
 >                                runTac (f x) r t }
->
-> instance MonadError [String] Tac where
+
+> instance MonadError (StackError (Tac VAL)) Tac where
 >     throwError s = Tac { runTac = \_ _ -> Left s }
 >     catchError (Tac f) g = Tac { runTac = \r t -> either (\x -> runTac (g x) r t) Right (f r t) }
 
@@ -105,7 +105,7 @@ we have a monad:
 >     (<*>) = ap
 
 > instance Alternative Tac where
->   empty = throwError ["Alternative empty"]
+>   empty = throwError' $ err "Alternative empty"
 >   s <|> t = catchError s (const t)
 
 \subsection{The tactic combinators}
@@ -137,8 +137,8 @@ Inference rules, nobody should be using this guy.
 > subgoal (typ :>: tacX) = 
 >     Tac { runTac = \nsupply _ -> 
 >             case runTac tacX nsupply typ of
->               Left x -> Left $ ("subgoal: unable to build an " ++
->                                 "inhabitant of " ++ show typ) : x
+>               Left x -> Left $ (err "subgoal: unable to build an " ++
+>                                 err "inhabitant of " ++ errVal typ) : x
 >               k -> k
 >         }
 
@@ -148,7 +148,7 @@ When a tactic fails, it is good to know why. So, we provide this
 combinator to report a failure.
 
 > failTac :: String -> Tac x
-> failTac = throwError'
+> failTac = throwError' . err
 
 We are not entirely satisfied with this solution, so this will
 probably change (for the better) in future iterations. The problem
@@ -523,7 +523,7 @@ doesn't, good luck to find the mistake.
 > trustMe :: (TY :>: Tac VAL) -> VAL
 > trustMe (typ :>: tacV) = 
 >     case runTac tacV (B0 :< ("tactics",0),0) typ of
->       Left e -> error $ concat $ intersperse "\n" $ reverse e
+>       Left e -> error $ "Something bad happened." -- concat $ intersperse "\n" $ reverse e
 >       Right x -> x
 
 

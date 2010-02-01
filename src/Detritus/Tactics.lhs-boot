@@ -3,7 +3,7 @@
 
 
 > module Evidences.Tactics (Tac,                          -- abstract Tactic
->                 runTac,                       -- run tactics
+>    --             runTac,                       -- run tactics
 >                 goal, subgoal,                -- low-level combinators
 >                 lambda, can,                  -- introduction rules
 >                 done, use, useOp, apply,      -- elimination rules
@@ -28,7 +28,7 @@
 > instance Monad Tac
 > instance Applicative Tac
 
-> runTac :: Tac x -> NameSupply -> TY -> Either [String] x
+> -- runTac :: Tac x -> NameSupply -> TY -> Either [String] x
 
 
 > goal :: Tac TY
