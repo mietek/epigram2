@@ -6,6 +6,8 @@
 
 > module Features.Labelled where
 
+%endif
+
 > import -> CanConstructors where
 >   Label  :: t -> t -> Can t
 >   LRet   :: t -> Can t
@@ -37,14 +39,13 @@
 >   halfZip (LRet x) (LRet y)           = Just (LRet (x,y))
 
 > import -> CanPretty where
->   pretty (Label l t) = const
->       (brackets (pretty l ArgSize <+> kword KwAsc <+> pretty t ArgSize))
+>   pretty (Label l t) = const (kword KwLabel <+>
+>       pretty l maxBound <+> kword KwAsc <+> pretty t maxBound
+>       <+> kword KwLabelEnd)
 >   pretty (LRet x) = wrapDoc (kword KwRet <+> pretty x ArgSize) ArgSize
 
 > import -> ElimPretty where
->   pretty (Call l) = wrapDoc
->       (kword KwCall <+> brackets (pretty l ArgSize))
->       ArgSize
+>   pretty (Call _) = const (kword KwCall)
 
 > import -> ElimComputation where
 >   LRET t $$ Call l = t
@@ -66,38 +67,39 @@
 >      llv@(l :=>: lv) <- chev (t :>: l)
 >      return (Call llv, t)
 
-   canTy chev (ty :>: Call c tm) = do
-      -- tytv@(ty :=>: tyv) <- chev (SET :>: ty)
-      ccv@(c :=>: cv) <- chev (ty :>: c)
-      tmtv@(tm :=>: tmv) <- chev (LABEL cv ty :>: tm)
-      return (Call ccv tmtv)
 
--- > import -> OpCode where
--- >   callOp = Op
--- >     { opName = "call"
--- >     , opArity = 3
--- >     , opTy = callOpTy
--- >     , opRun = callOpRun       
--- >     , opSimp = callOpSimp
--- >     } where
--- >       callOpTy chev [ty, lbl, tm] = do
--- >            tytv@(ty :=>: tyv) <- chev (SET :>: ty)
--- >            lbltv@(lbl :=>: lblv) <- chev (tytv :>: lbl)
--- >            tmtv@(tm :=>: tmv) <- chev (LABEL lbltv tytv :>: tm)
--- >            return ([tytv, lbltv, tmtv], tyv)
+The following is all commented out. Is it detritus?
 
--- >       callOpRun :: [VAL] -> Either NEU VAL
--- >       callOpRun [ty, lbl, LRET t] = Right t
--- >       callOpRun [ty, lbl, N t] = Left t
+<   canTy chev (ty :>: Call c tm) = do
+<      -- tytv@(ty :=>: tyv) <- chev (SET :>: ty)
+<      ccv@(c :=>: cv) <- chev (ty :>: c)
+<      tmtv@(tm :=>: tmv) <- chev (LABEL cv ty :>: tm)
+<      return (Call ccv tmtv)
 
--- >       callOpSimp :: Alternative m => [VAL] -> NameSupply -> m NEU
--- >       callOpSimp _ _ = empty
+< import -> OpCode where
+<   callOp = Op
+<     { opName = "call"
+<     , opArity = 3
+<     , opTy = callOpTy
+<     , opRun = callOpRun       
+<     , opSimp = callOpSimp
+<     } where
+<       callOpTy chev [ty, lbl, tm] = do
+<            tytv@(ty :=>: tyv) <- chev (SET :>: ty)
+<            lbltv@(lbl :=>: lblv) <- chev (tytv :>: lbl)
+<            tmtv@(tm :=>: tmv) <- chev (LABEL lbltv tytv :>: tm)
+<            return ([tytv, lbltv, tmtv], tyv)
 
--- > import -> Operators where
--- >   callOp :
+<       callOpRun :: [VAL] -> Either NEU VAL
+<       callOpRun [ty, lbl, LRET t] = Right t
+<       callOpRun [ty, lbl, N t] = Left t
 
--- > import -> OpCompile where
--- >   ("call", [ty, l, t]) -> l
+<       callOpSimp :: Alternative m => [VAL] -> NameSupply -> m NEU
+<       callOpSimp _ _ = empty
 
-%endif
+< import -> Operators where
+<   callOp :
+
+< import -> OpCompile where
+<   ("call", [ty, l, t]) -> l
 

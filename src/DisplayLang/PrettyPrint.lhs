@@ -125,9 +125,9 @@ than a $\lambda$-term is reached.
 > instance Pretty ExDTmRN where
 >     pretty (DP x)       = const (text (showRelName x))
 >     pretty (DV i)       = const (text "BadV" <> int i)
->     pretty (n ::$ el)   = (\curSize -> wrapDoc
->         (pretty n curSize <+> pretty el ArgSize)
->         AppSize curSize)
+>     pretty (n ::$ el)   = wrapDoc
+>         (pretty n AppSize <+> pretty el ArgSize)
+>         AppSize
 >     pretty (DType ty)   = const (parens (kword KwAsc <+> pretty ty maxBound))
 >     import <- ExDTmPretty
 >     pretty exdtm        = const (quotes . text . show $ exdtm)
