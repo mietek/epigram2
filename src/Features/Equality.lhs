@@ -170,21 +170,15 @@ by |DEqBlue| defined below.
 
 > import -> AxCode where
 >   coh = [("Axiom",0),("coh",0)] := (DECL :<: cohType) where
->     cohType = trustMe (SET :>: cohTypeTac)
->     cohTypeTac = prfTac $
->       allTac setTac $ \ x ->
->       allTac setTac $ \ y ->
->       allTac
->         (prfTac (eqBlueTac (setTac :>: var x) (setTac :>: var y))) $ \ q ->
->       allTac (var x) $ \ s ->
->       eqBlueTac (var x :>: var s)
->         (var y :>: useOp coe [var x, var y, var q, var s] done)
+>     cohType = ALL SET (L . HF "x" $ \x ->
+>               ALL SET (L . HF "y" $ \y ->
+>               ALL (PRF (EQBLUE (SET :>: x) (SET :>: y))) (L . HF "q" $ \q ->
+>               ALL x (L . HF "s" $ \s ->
+>               EQBLUE (x :>: s) (y :>: (coe @@ [x, y, q, s]))))))
 >   refl = [("Axiom",0),("refl",0)] := (DECL :<: reflType) where
->     reflType = trustMe (SET :>: reflTypeTac)
->     reflTypeTac = prfTac $
->       allTac setTac $ \s ->
->       allTac (var s) $ \x ->
->       eqBlueTac (var s :>: var x) (var s :>: var x)
+>     reflType = PRF (ALL SET (L . HF "s" $ \s ->
+>                     ALL s   (L . HF "x" $ \x ->
+>                     EQBLUE (s :>: x) (s :>: x))))
 
 > import -> Axioms where
 >   ("coh", coh) :

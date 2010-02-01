@@ -336,21 +336,20 @@ Equality rules:
 >              (mapBoxOp @@ [dD, xX, pP, p, v $$ Snd])
 >       mapBoxOpRun [N x    ,_, _,_,_] = Left x
 
->   elimOpMethodTypeType = trustMe . (SET :>:) $
->     piTac descTac $ \d -> arrTac (arrTac (muTac (var d)) setTac) setTac
->   elimOpMethodType = trustMe . (elimOpMethodTypeType :>:) $
->     lambda $ \d -> lambda $ \pP ->
->     piTac (useOp descOp [ var d, muTac (var d) ] done) $ \x ->
->     arrTac (useOp boxOp [ var d, muTac (var d), var pP, var x ] done) $
->     pP @@@ [conTac (var x)]
+>   elimOpMethodType = L . HF "d" $ \d ->
+>                      L . HF "P" $ \_P ->
+>                      PI (descOp @@ [d, MU Nothing d])
+>                         (L . HF "x" $ \x ->
+>                          ARR (boxOp @@ [d, MU Nothing d, _P, x])
+>                              (_P $$ A (CON x)))
 
->   elimOpLabMethodTypeType = trustMe . (SET :>:) $
->     arrTac setTac $ piTac descTac $ \d -> arrTac (arrTac (muTac (var d)) setTac) setTac
->   elimOpLabMethodType = trustMe . (elimOpLabMethodTypeType :>:) $
->     lambda $ \l -> lambda $ \d -> lambda $ \pP ->
->     piTac (useOp descOp [var d, can $ Mu (Just (var l) :?=: Id (var d))] done) $ \x ->
->     arrTac (useOp boxOp [var d, can $ Mu (Just (var l) :?=: Id (var d)), var pP, var x ] done) $
->     pP @@@ [conTac (var x)]
+>   elimOpLabMethodType = L . HF "l" $ \l ->
+>                         L . HF "d" $ \d ->
+>                         L . HF "P" $ \_P ->
+>                         PI (descOp @@ [d, MU (Just l) d])
+>                            (L . HF "x" $ \x ->
+>                             ARR (boxOp @@ [d, MU (Just l) d, _P, x])
+>                                 (_P $$ A (CON x)))
 
 >   elimOp :: Op
 >   elimOp = Op
