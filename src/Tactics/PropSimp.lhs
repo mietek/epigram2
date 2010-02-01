@@ -555,8 +555,8 @@ current goal with the subgoals, and return a list of them.
 >     (_ :=>: PRF p) <- getHoleGoal
 >     nsupply <- askNSupply
 >     case runReaderT (propSimplify B0 p) nsupply of
->         Nothing                   -> throwError' "propSimplifyHere: unable to simplify."
->         Just (SimplyAbsurd _)     -> throwError' "propSimplifyHere: oh no, goal is absurd!"
+>         Nothing                   -> throwError' $ err "propSimplifyHere: unable to simplify."
+>         Just (SimplyAbsurd _)     -> throwError' $ err "propSimplifyHere: oh no, goal is absurd!"
 >
 >         Just (SimplyTrivial prf)  -> bquoteHere prf >>= give' >> return B0
 >

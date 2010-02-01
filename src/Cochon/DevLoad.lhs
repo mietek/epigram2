@@ -262,7 +262,8 @@ up the proof state.
 >   -- Load the development in an empty proof state
 >   case runStateT (makeDev dev []) emptyContext of
 >     Left errs -> do
->       putStrLn $ unlines $ "Failed to load development:" : errs
+>       putStrLn "Failed to load development:"
+>       putStrLn $ prettyStackError errs
 >       exitFailure
 >     Right (ncs, loc) -> do
 >       -- Load the commands

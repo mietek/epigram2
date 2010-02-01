@@ -43,6 +43,9 @@
 
 %endif
 
+> prettyStackError :: StackError InDTmRN -> String
+> prettyStackError e = "Something bad happened"
+
 Here we have a very basic command-driven interface to the proof state monad.
 
 > cochon :: ProofContext -> IO ()
@@ -55,7 +58,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >     case evalStateT validateHere loc of
 >         Left ss -> do
 >             putStrLn "*** Warning: definition failed to type-check! ***"
->             putStrLn (unlines ss)
+>             putStrLn $ prettyStackError ss
 >         _ -> return ()
 
 >     putStr (showPrompt ls)
@@ -127,7 +130,8 @@ unary tactics.
 >             putStrLn s
 >             return (locs :< loc :< loc')
 >         Left ss -> do
->             putStrLn (unlines ("I'm sorry, Dave. I'm afraid I can't do that.":ss))
+>             putStrLn "I'm sorry, Dave. I'm afraid I can't do that."
+>             putStrLn $ prettyStackError ss
 >             return (locs :< loc)
 >             
 

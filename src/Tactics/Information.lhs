@@ -147,7 +147,7 @@ The |distillHere| command distills a term in the current context.
 > distillHere :: (TY :>: INTM) -> ProofState (InDTmRN :=>: VAL)
 > distillHere tt = do
 >     aus <- getAuncles
->     distill aus tt
+>     mliftError $ distill aus tt
 
 The |prettyHere| command distills a term in the current context,
 then passes it to the pretty-printer.

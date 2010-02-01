@@ -35,7 +35,7 @@ to a term in the display language; that is, it reverses |elaborate|.
 It performs christening at the same time. For this, it needs a list
 of entries in scope, which it will extend when going under a binder.
 
-> distill :: Entries -> (TY :>: INTM) -> ProofState (InDTmRN :=>: VAL)
+> distill :: Entries -> (TY :>: INTM) -> ProofStateT INTM (InDTmRN :=>: VAL)
 
 > import <- DistillRules
 
@@ -43,14 +43,16 @@ Just like in any other checker-evaluator, canonical terms can be distilled
 using |canTy|.
 
 > distill es (C ty :>: C c) = do
->     cc <- mliftError $ canTy (distill es) (ty :>: c)
+>     cc <- {- mliftError $ -} canTy (distill es) (ty :>: c)
 >     return ((DC $ fmap termOf cc) :=>: evTm (C c))
 
 To distill a $lambda$-abstraction, we speculate a fresh reference and distill
 under the binder, then convert the scope appropriately.
 
 > distill es (ty :>: l@(L sc)) = do
->     (k, s, f) <- lambdable ty `catchMaybe` ("distill: type " ++ show ty ++ " is not lambdable.")
+>     (k, s, f) <- lambdable ty `catchMaybe`  (err "distill: type " 
+>                                             ++ errVal ty 
+>                                             ++ err " is not lambdable.")
 >     let x = fortran l
 >     tm' :=>: _ <- freshRef (x :<: s) (\ref ->
 >         distill (es :< E ref (lastName ref) (Boy k)
@@ -78,7 +80,7 @@ The |distillInfer| command is the |EXTM| version of |distill|, which also yields
 the type of the term. It keeps track of a list of entries in scope, but
 also accumulates a spine so shared parameters can be removed.
 
-> distillInfer :: Entries -> EXTM -> Spine {TT} REF -> ProofState (ExDTmRN :<: TY)
+> distillInfer :: Entries -> EXTM -> Spine {TT} REF -> ProofStateT INTM (ExDTmRN :<: TY)
 
 > import <- DistillInferRules
 
@@ -126,10 +128,10 @@ and a spine of arguments for the value. It distills the spine, using
 |elimTy| to determine the appropriate type to push in at each step, and returns
 the distilled spine and the overall type of the application.
 
-> processArgs :: Entries -> (VAL :<: TY) -> Spine {TT} REF -> ProofState (DSpine RelName, TY)
+> processArgs :: Entries -> (VAL :<: TY) -> Spine {TT} REF -> ProofStateT INTM (DSpine RelName, TY)
 > processArgs _ (_ :<: ty) [] = return ([], ty)
 > processArgs es (v :<: C ty) (a:as) = do
->     (e', ty') <- mliftError $ elimTy (distill es) (v :<: ty) a
+>     (e', ty') <- {- mliftError $ -} elimTy (distill es) (v :<: ty) a
 >     (es, ty'') <- processArgs es (v $$ (fmap valueOf e') :<: ty') as 
 >     return (fmap termOf e' : es, ty'')
 
@@ -137,7 +139,7 @@ the distilled spine and the overall type of the application.
 The |toExDTm| helper function will distill a term to produce an
 |Ex| representation by applying a type-cast if necessary.
 
-> toExDTm :: Entries -> (INTM :>: INTM) -> ProofState ExDTmRN
+> toExDTm :: Entries -> (INTM :>: INTM) -> ProofStateT INTM ExDTmRN
 > toExDTm es (_ :>: N tm) = do
 >     (tm' :<: _) <- distillInfer es tm []
 >     return tm'

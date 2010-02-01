@@ -72,9 +72,10 @@ subgoal. This allows further simplifications on the subgoal.
 >     -- Solve the first goal
 >     give' $ L $ K (N t)
 >     return ()
-> eatUnit _ err = 
->     throwError' $  "eatUnit: expecting a (Sig () -> T)," ++
->                    " got a " ++ show err
+> eatUnit _ e = 
+>     throwError' $  err "eatUnit: expecting a (Sig () -> T)," 
+>                    ++ err " got a " 
+>                    ++ errVal e
 
 Similarly, the function |unpackSigma| turns a goal |Sig (A ; B) -> T|
 into a goal |(a : A)(b : B a) -> T'|. 
@@ -97,8 +98,9 @@ into a goal |(a : A)(b : B a) -> T'|.
 >   give' $ N (t  :$ A (N (P ab :$ Fst))
 >                 :$ A (N (P ab :$ Snd)))
 >   return ()
-> unpackSigma _ err = throwError' $ "unpackSigma: expecting a (Sig (A ; B) -> T)," 
->                                   ++ " got a " ++ show err
+> unpackSigma _ e = throwError' $ err "unpackSigma: expecting a (Sig (A ; B) -> T)," 
+>                                 ++ err " got a " 
+>                                 ++ errVal e
 
 
 
@@ -264,7 +266,7 @@ flatten the structure made by the interpretation of |D'|.
 >       _ := (DEFN (MU _ v) :<: _) -> do
 >                    introData B0 v
 >                    nextGoal
->       _ -> throwError' "induction: undefined Desc"
+>       _ -> throwError' $ err "induction: undefined Desc"
 
 > import -> CochonTactics where
 >   : (unaryNameCT  "induction"

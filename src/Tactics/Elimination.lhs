@@ -174,7 +174,7 @@ The development transformation is achieved by the following code:
 >     return (elimName, N p :<: motiveType, methods, trail patterns)
 >         where unPi :: VAL -> ProofState (VAL, VAL)
 >               unPi (PI s t) = return (s, t)
->               unPi _ = throwError' "Elimination: eliminator not a Pi-type??"
+>               unPi _ = throwError' $ err "Elimination: eliminator not a Pi-type??"
 
 Above, we have used |mkMethods| to introduce the methods and retrieve
 the target of the eliminator. Remember that the eliminator is a
@@ -230,7 +230,7 @@ $$P : \Xi \rightarrow Set$$
 > checkMotive (PI s t) =
 >     freshRef ("s" :<: s) $ \x ->
 >         checkMotive (t $$ (A $ pval x))
-> checkMotive _ = throwError' "elimination: your motive is suspicious"
+> checkMotive _ = throwError' $ err "elimination: your motive is suspicious"
 
 
 On the other hand, |checkTarget| consists in verifying that the target
@@ -244,11 +244,11 @@ is a |matchArgs| on paranoid.
 >               isEqual <- withNSupply $ equal (motiveType :>: (goal, evTm motive))
 >               case isEqual of
 >                 True -> return ()
->                 False -> throwError' "elimination: your target is not using the motive?!"
+>                 False -> throwError' $ err "elimination: your target is not using the motive?!"
 >           checkTarget' (N (f :$ A _)) (PI s t) = do
 >               freshRef ("s" :<: s) $ \x ->
 >                   checkTarget' (N f) (t $$ (A $ pval x))
->           checkTarget' _ _ = throwError' "eliminator: your target is suspicious"
+>           checkTarget' _ _ = throwError' $ err "eliminator: your target is suspicious"
 
 \pierre{There are also some conditions on the variables that can be used in
 these terms! I have to look that up too. This is a matter of traversing the

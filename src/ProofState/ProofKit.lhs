@@ -44,7 +44,7 @@ here, in order to improve the narrative.}
 A |ProofState| is almost a |NameSupplier|, but it cannot fork the
 name supply.
 
-> instance NameSupplier ProofState where
+> instance NameSupplier (ProofStateT e) where
 >     freshRef (s :<: ty) f = do
 >         nsupply <- getDevNSupply
 >         freshRef (s :<: ty) (\ref nsupply' -> do
@@ -309,7 +309,7 @@ The |lookupName| function looks up a name in the context (including axioms and
 primitives); if found, it returns the reference applied to the spine of
 shared parameters.
 
-> lookupName :: Name -> ProofState (Maybe (EXTM :=>: VAL))
+> lookupName :: Name -> ProofStateT e (Maybe (EXTM :=>: VAL))
 > lookupName name = do
 >     aus <- getAuncles
 >     case Data.Foldable.find ((name ==) . entryName) aus of
