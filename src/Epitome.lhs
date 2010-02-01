@@ -56,7 +56,6 @@
 %include Evidences/Tm.lhs
 %include Evidences/Mangler.lhs
 %include Evidences/Rules.lhs
-%include Evidences/Tactics.lhs
 
 \chapter{Feature by Feature}
 

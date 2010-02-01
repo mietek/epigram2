@@ -28,9 +28,6 @@
 
 > import Features.Features
 
-
-> import {-# SOURCE #-} Evidences.Tactics
-
 %endif
 
 
