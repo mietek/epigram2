@@ -64,8 +64,8 @@
 >     return $ Composite yyv
 
 > import -> OpCode where
->   substOp = Op
->     { opName = "subst"
+>   substMonadOp = Op
+>     { opName = "substMonad"
 >     , opArity = 5
 >     , opTyTel =  "D" :<: desc                  :-: \ dD ->
 >                  "X" :<: SET                   :-: \ xX ->
@@ -73,28 +73,28 @@
 >                  "f" :<: ARR xX (MONAD dD yY)  :-: \ f ->
 >                  "t" :<: MONAD dD xX           :-: \ t ->
 >                  Target $ MONAD dD yY
->     , opRun = substOpRun
->     , opSimp = substOpSimp
+>     , opRun = substMonadOpRun
+>     , opSimp = substMonadOpSimp
 >     } where
->       substOpRun :: [VAL] -> Either NEU VAL
->       substOpRun [dD, xX, yY, f, COMPOSITE ts] = Right . COMPOSITE $
+>       substMonadOpRun :: [VAL] -> Either NEU VAL
+>       substMonadOpRun [dD, xX, yY, f, COMPOSITE ts] = Right . COMPOSITE $
 >         mapOp @@ [  dD, MONAD dD xX, MONAD dD yY,
 >                     L . HF "t" $ \ t ->
->                     substOp @@ [dD, xX, yY, f, t],
+>                     substMonadOp @@ [dD, xX, yY, f, t],
 >                     ts]
->       substOpRun [d, x, y, f, RETURN z]  = Right $ f $$ A z
->       substOpRun [d, x, y, f, N t]    = Left t
+>       substMonadOpRun [d, x, y, f, RETURN z]  = Right $ f $$ A z
+>       substMonadOpRun [d, x, y, f, N t]    = Left t
 >
->       substOpSimp :: Alternative m => [VAL] -> NameSupply -> m NEU
->       substOpSimp [d, x, y, f, N t] r
+>       substMonadOpSimp :: Alternative m => [VAL] -> NameSupply -> m NEU
+>       substMonadOpSimp [d, x, y, f, N t] r
 >         | equal (SET :>: (x, y)) r &&
 >           equal (ARR x (MONAD d x) :>: (f, ret)) r = pure t
 >         where
 >           ret = eval (L ("x" :. [.x. RETURN (NV x)])) B0
->       substOpSimp [d, y, z, f, N (sOp :@ [_, x, _, g, N t])] r
->         | sOp == substOp = pure $ substOp :@ [d, x, z, comp, N t]
->         where  comp = L . HF "x" $ \ x -> substOp @@ [d, y, z, f, g $$ A x]
->       substOpSimp _ _ = empty
+>       substMonadOpSimp [d, y, z, f, N (sOp :@ [_, x, _, g, N t])] r
+>         | sOp == substMonadOp = pure $ substMonadOp :@ [d, x, z, comp, N t]
+>         where  comp = L . HF "x" $ \ x -> substMonadOp @@ [d, y, z, f, g $$ A x]
+>       substMonadOpSimp _ _ = empty
 
 >   elimMonadOp :: Op
 >   elimMonadOp = Op
@@ -124,10 +124,10 @@
 >       elimMonadOpRun [_,_,N n,_,_,_] = Left n
 
 > import -> Operators where
->   substOp :
+>   substMonadOp :
 >   elimMonadOp :
 
 > import -> OpCompile where
->   ("subst", [d, x, y, f, t]) -> App (Var "__subst") [d, f, t]
+>   ("substMonad", [d, x, y, f, t]) -> App (Var "__substMonad") [d, f, t]
 >   ("elimMonad", [d, x, v, p, mc, mv]) -> App (Var "__elimMonad") [d, mv, mc, v]
 

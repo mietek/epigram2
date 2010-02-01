@@ -22,7 +22,7 @@ make prfswap : (D : Desc)(A : Set)(B : Set)(x : desc D (Sig (A ; B ;))) -> lawsw
 give (\ D A B x -> []) ;
 
 make monad1 :=
-  \ D X t -> :- subst D X X (\ x -> ` x) t == t :
+  \ D X t -> :- substMonad D X X (\ x -> ` x) t == t :
   (D : Desc)(X : Set)(t : Monad D X) -> Set ;
 
 make prfmonad1 := (\ D X t -> []) :
@@ -30,8 +30,8 @@ make prfmonad1 := (\ D X t -> []) :
 
 make monad3 :=
   (\ D X Y Z f g t -> :-
-    (subst D Y Z f (subst D X Y g t)) ==
-    (subst D X Z (\ x -> subst D Y Z f (g x)) t)
+    (substMonad D Y Z f (substMonad D X Y g t)) ==
+    (substMonad D X Z (\ x -> substMonad D Y Z f (g x)) t)
   ) :
   (D : Desc)(X : Set)(Y : Set)(Z : Set)
   (f : Y -> Monad D Z)(g : X -> Monad D Y)(t : Monad D X) -> Set ;

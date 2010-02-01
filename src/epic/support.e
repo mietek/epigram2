@@ -60,10 +60,10 @@ __lazyMap (D:Data, f:Data, x:Data) -> Data =
 
 __mapH (f:Data, x:Data, h:Data) -> Data = f(x(h))
 
-__subst(D:Data, f:Data, t:Data) -> Data =
+__substMonad(D:Data, f:Data, t:Data) -> Data =
   case t!0 of
   { 0 -> f(t!1)
-  | 1 -> [1, __map(D, __subst(D,f), t!1)]
+  | 1 -> [1, __map(D, __substMonad(D,f), t!1)]
   }
 
 __elimMonad(D:Data, mv:Data, mc:Data, t:Data) -> Data =
