@@ -310,15 +310,18 @@ subgoals produced by elaboration will be children of the resulting goal.
 >     goOut
 >     return tm
 
-elabProgram adds a label to a type, given a list of arguments.
-e.g. with a goal plus : nat -> nat -> nat, 
-program x,y will give a proof state of:
 
+The |elabProgram| command adds a label to a type, given a list of arguments.
+e.g. with a goal |plus : nat -> nat -> nat|, |program x,y| will give a proof
+state of:
+
+\begin{verbatim}
 [ plus : \ x y c -> c call : (x:N)->(y:N)-><plus x y : N>->N
   g : (x:N)->(y:N)-><plus x y : N>
   x : N
   y : N  (from lambdaboy)
 ] g x y call   (from giveNext, then we're ready to go).
+\end{verbatim}
 
 > elabProgram :: [String] -> ProofState (EXTM :=>: VAL)
 > elabProgram args = do

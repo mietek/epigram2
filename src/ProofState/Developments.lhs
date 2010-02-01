@@ -137,18 +137,16 @@ A |Girl| represents a \emph{definition}, with a (possibly empty)
 development of sub-objects. The |Tip| of this sub-development will
 either be of |Unknown| or |Defined| kind. 
 
-> data GirlKind  = LETG        deriving (Show, Eq)
+> data GirlKind = LETG deriving (Show, Eq)
 
 
 \paragraph{Boys for parameters:}
 
-A |Boy| represents a parameter (either a $\lambda$ or $\Pi$
+A |Boy| represents a parameter (either a $\lambda$, $\forall$ or $\Pi$
 abstraction), which scopes over all following entries and the
 definition (if any) in the enclosing development.
 
-\question{What is an |ALAB|?}
-
-> data BoyKind   = LAMB | ALAB | PIB  deriving (Show, Eq)
+> data BoyKind = LAMB | ALAB | PIB deriving (Show, Eq)
 
 
 %if False
