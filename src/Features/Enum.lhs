@@ -135,15 +135,6 @@ Equality rules:
 >   pattern DZE         = DC Ze
 >   pattern DSU n       = DC (Su n)
 
-> import -> SugarTactics where
->   enumUTac = done (enumU :<: SET)
->   enumTTac t = can $ EnumT t
->   nilETac = conTac (pairTac zeTac voidTac)
->   consETac e t = conTac (pairTac (suTac zeTac) 
->                          (pairTac e (pairTac t voidTac)))
->   zeTac = can Ze
->   suTac t = can $ Su t
-
 > import -> CanCompile where
 >   makeBody Ze = CTag 0
 >   makeBody (Su x) = STag (makeBody x)

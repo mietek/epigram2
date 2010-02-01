@@ -734,12 +734,6 @@ various Features.
 >   [])
 
 
-We also define and import some handy tactics, sugaring some canonical
-constructors to make them easier to swallow.
-
-> import <- SugarTactics
-
-
 > mkRef :: Op -> REF
 > mkRef op = [("Operators",0),(opName op,0)] := (DEFN opEta :<: opTy)
 >     where opTy = pity $ opTyTel op

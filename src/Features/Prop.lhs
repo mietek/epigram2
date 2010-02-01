@@ -151,17 +151,6 @@ Elim forms inherited from elsewhere
 >   pattern DINH ty      = DC (Inh ty)
 >   pattern DWIT t       = DC (Wit t)
 
-> import -> SugarTactics where
->   propTac = can Prop
->   prfTac p = can $ Prf p
->   impTac p q = can $ All (can $ Prf p)
->                          (lambda $ \_ -> q)
->   allTac p q = can $ All p (lambda q)
->   andTac p q = can $ And p q
->   trivialTac = can Trivial
->   absurdTac = can Absurd
->   boxTac t = can $ Box t
-
 > import -> CanPretty where
 >   pretty Prop           = const (kword KwProp)
 >   pretty (Prf p)        = wrapDoc (kword KwPrf <+> pretty p AndSize) AppSize

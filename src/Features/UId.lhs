@@ -47,10 +47,6 @@ Equality rules:
 >   pattern DUID    = DC UId
 >   pattern DTAG s  = DC (Tag s)
 
-> import -> SugarTactics where
->   uidTac = can $ UId
->   tagTac t = can $ Tag t
-
 > import -> CanTraverse where
 >   traverse f UId          = (|UId|)
 >   traverse f (Tag s)      = (|(Tag s)|)

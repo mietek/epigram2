@@ -24,8 +24,6 @@
 >   pattern DCOMPOSITE t = DC (Composite t)
 
 
-> import -> SugarTactics where
-
 > import -> CanCompile where
 >   makeBody (Return x)    = Tuple [CTag 0, makeBody x]
 >   makeBody (Composite t) = Tuple [CTag 1, makeBody t]

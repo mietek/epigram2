@@ -48,15 +48,6 @@
 >   pattern DIIND h hi d = DC (IInd h hi d) 
 >   pattern DIIND1 i d = DC (IInd1 i d) 
 
-> import -> SugarTactics where
->   dmuTac ii t i = can $ IMu (Nothing :?=: (Id ii :& Id t)) i
->   dmuTacL l i = can $ IMu l i
->   idescTac i = can $ IDesc i 
->   ddoneTac p = can $ IDone p 
->   dargTac x y = can $ IArg x y 
->   dindTac x y z = can $ IInd x y z 
->   dind1Tac x y = can $ IInd1 x y 
-
 > import -> CanTyRules where
 >   canTy chev (Set :>: IMu (ml :?=: (Id ii :& Id x)) i)  = do
 >     iiiiv@(ii :=>: iiv) <- chev (SET :>: ii)

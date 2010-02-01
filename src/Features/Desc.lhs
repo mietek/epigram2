@@ -186,15 +186,6 @@ Equality rules:
 >   pattern DIND h d = DCON (DPAIR (DSU (DSU (DSU DZE))) (DPAIR h (DPAIR d DVOID)))
 >   pattern DIND1 d = DCON (DPAIR (DSU (DSU (DSU (DSU DZE)))) (DPAIR d DVOID))
 
-> import -> SugarTactics where
->   muTac t = can $ Mu (Nothing :?=: Id t)
->   descTac = done (desc :<: SET)
->   doneTac =  conTac (pairTac zeTac voidTac)
->   argTac x y = conTac (pairTac (suTac zeTac) (pairTac x (pairTac y voidTac)))
->   argfTac x y = conTac (pairTac (suTac (suTac zeTac)) (pairTac x (pairTac y voidTac)))
->   indTac x y = conTac (pairTac (suTac (suTac (suTac zeTac))) (pairTac x (pairTac y voidTac)))
->   ind1Tac x = conTac (pairTac (suTac (suTac (suTac (suTac zeTac)))) (pairTac x voidTac))
-
 > import -> CanPretty where
 >   pretty (Mu (Just l   :?=: _))     = pretty l
 >   pretty (Mu (Nothing  :?=: Id t))  = wrapDoc

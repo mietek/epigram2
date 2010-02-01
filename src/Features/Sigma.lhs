@@ -132,15 +132,6 @@ Coercion rule:
 >   pattern DTIMES x y = DC (DTimes x y)
 
 
-> import -> SugarTactics where
->     sigmaTac p q 
->         = can $ Sigma p (lambda q)
->     pairTac p q = can $ Pair p q
->     unitTac = can Unit
->     voidTac = can Void
->     timesTac p q
->         = can $ Sigma p (lambda $ \_ -> q)
-
 > import -> CanCompile where
 >   makeBody (Pair x y) = Tuple [makeBody x, makeBody y]
 >   makeBody Void = Tuple []

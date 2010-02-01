@@ -89,6 +89,3 @@
 
 > import -> DMangleRules where
 
-\subsection{Extending the Term Builder}
-
-> import -> SugarTactics where

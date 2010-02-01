@@ -27,8 +27,6 @@
 >   pattern DQUOTIENT x r p = DC (Quotient x r p)
 >   pattern DCLASS x        = DC (Con x)
 
-> import -> SugarTactics where
-
 > import -> CanPretty where
 >   pretty (Quotient x r p) = wrapDoc
 >       (sep [ kword KwQuotient

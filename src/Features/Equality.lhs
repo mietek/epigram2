@@ -91,9 +91,6 @@ With no computational behavior.
 > import -> CanPats where
 >   pattern EQBLUE p q = C (EqBlue p q)
 
-> import -> SugarTactics where
->     eqBlueTac p q = can $ EqBlue p q
-
 > import -> CanTraverse where
 >   traverse f (EqBlue (pty :>: p) (qty :>: q)) =
 >     (|EqBlue (|(:>:) (f pty) (f p)|) (|(:>:) (f qty) (f q)|)|)
