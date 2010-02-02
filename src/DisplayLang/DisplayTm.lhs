@@ -135,6 +135,9 @@ manually.
 > newtype InTmWrap  x = InTmWrap  INTM  deriving Show
 > newtype ExTmWrap  x = ExTmWrap  EXTM  deriving Show
 
+> pattern DTIN x = DT (InTmWrap x)
+> pattern DTEX x = DTEx (ExTmWrap x)
+
 %if False
 
 > instance Functor InTmWrap where

@@ -159,7 +159,7 @@ Much as with type-checking, we push types in to neutral terms by calling
 |elabInfer| on the term, then checking the inferred type is what we pushed in.
 
 > elaborate top (w :>: DN n) = do
->   (nn :<: y) <- elabInfer n
+>   (nn :<: y, _) <- elabInfer n
 >   eq <- withNSupply (equal (SET :>: (w, y)))
 >   guard eq `pushError`  (err "elaborate: inferred type "
 >                         ++ errTyVal (y :<: SET)
@@ -184,32 +184,47 @@ If nothing else matches, give up and report an error.
 
 The |elabInfer| command is to |infer| in subsection~\ref{subsec:type-inference} 
 as |elaborate| is to |check|. It infers the type of a display term, calling on
-the elaborator rather than the type-checker. Most of the cases are similar to
-those of |infer|.
+the elaborator rather than the type-checker. In addition to returning the
+evidence term, value and type, it returns the scheme with which to interpret
+implicit syntax.
 
 > elabInfer :: ExDTmRN -> ProofState (EXTM :=>: VAL :<: TY)
 
-> elabInfer (DP x) = do
->     (ref, as) <- elabResolve x
->     let tm = P ref $:$ as
+> elabInfer (DTEX tm) = do
 >     ty <- withNSupply $ liftError . (typeCheck $ infer tm)
 >     (tmv :<: ty') <- ty `catchEither` (err "elabInfer: inference failed!")
->     return $ (tm :=>: tmv) :<: ty'
+>     return (tm :=>: tmv :<: ty', Nothing)
+
+> elabInfer (DP x) = do
+>     (ref, as, ms) <- elabResolve x
+>     processScheme (DTEX (P ref $:$ as)) ms
+>   where
+>     processScheme :: ExDTmRN -> Maybe (Scheme INTM)
+>         -> ProofState (EXTM :=>: VAL :<: TY, Maybe (Scheme INTM))
+>     processScheme tm Nothing                     = elabInfer tm
+>     processScheme tm (Just (SchType _))          = elabInfer tm
+>     processScheme tm ms@(Just (SchExplicitPi _ _))  = do
+>         (ttt, _) <- elabInfer tm
+>         return (ttt, ms)
+>     processScheme tm (Just (SchImplicitPi (_ :<: s) sch)) = 
+>         processScheme (tm ::$ A DU) (Just sch)
+
+
 
 > elabInfer (tm ::$ Call _) = do
->     ((tm' :=>: tmv) :<: LABEL l ty) <- elabInfer tm
+>     (tm' :=>: tmv :<: LABEL l ty, _) <- elabInfer tm
 >     l' <- bquoteHere l
->     return $ (tm' :$ Call l') :=>: (tmv $$ Call l) :<: ty
+>     return ((tm' :$ Call l') :=>: (tmv $$ Call l) :<: ty, Nothing)
 
 > elabInfer (t ::$ s) = do
->     ((t' :=>: tv) :<: C ty) <- elabInfer t
+>     (t' :=>: tv :<: C ty, _) <- elabInfer t
 >     (s', ty') <- elimTy (elaborate False) (tv :<: ty) s
->     return $ (t' :$ fmap termOf s') :=>: (tv $$ fmap valueOf s') :<: ty'
+>     return ((t' :$ fmap termOf s') :=>: (tv $$ fmap valueOf s') :<: ty', Nothing)
 
 > elabInfer (DType ty) = do
 >     (ty' :=>: vty)  <- elaborate False (SET :>: ty)
 >     x <- pickName "x" ""
->     return $ (idTM x :? ARR ty' ty') :=>: idVAL x :<: ARR vty vty
+>     return ((idTM x :? ARR ty' ty') :=>: idVAL x :<: ARR vty vty, Nothing)
 
 > elabInfer tt = throwError'  (err "elabInfer: can't cope with " 
 >                             ++ errTm (DN tt))
@@ -265,8 +280,9 @@ hard bits for the human.
 > synthProof _ _ = (|)
 
 
-The |elabResolve| command resolves a relative name to a reference
-and a spine of shared parameters to which it should be applied.
+The |elabResolve| command resolves a relative name to a reference,
+a spine of shared parameters to which it should be applied, and
+possibly a scheme.
 
 > elabResolve :: RelName -> ProofState (REF, Spine {TT} REF)
 > elabResolve x = do
