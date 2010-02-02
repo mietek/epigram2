@@ -15,7 +15,6 @@
 > import Data.Foldable hiding (foldl)
 > import Data.Traversable
 
-> import Kit.BwdFwd
 > import Kit.MissingLibrary
 
 > import Features.Features

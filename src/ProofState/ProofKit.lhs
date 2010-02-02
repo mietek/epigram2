@@ -13,7 +13,6 @@
 > import Control.Monad.Error
 > import Control.Monad.State
 > import Data.Foldable
-> import Data.List
 
 > import Kit.BwdFwd
 > import Kit.MissingLibrary

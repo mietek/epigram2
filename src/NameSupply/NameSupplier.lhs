@@ -13,8 +13,6 @@
 > import Control.Monad.Error
 > import Control.Monad.Reader
 
-> import Kit.MissingLibrary
-
 > import NameSupply.NameSupply
 
 > import Evidences.Tm

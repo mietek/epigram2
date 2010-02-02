@@ -8,8 +8,6 @@
 
 > module DisplayLang.Distiller where
 
-> import Control.Monad.Error
-
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
 

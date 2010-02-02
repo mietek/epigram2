@@ -15,7 +15,6 @@
 
 > import Data.Foldable
 > import Data.Traversable
-> import Data.Maybe
 
 > import Kit.BwdFwd
 > import Kit.MissingLibrary

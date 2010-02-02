@@ -16,7 +16,6 @@
 > import Control.Monad.Reader
 
 > import Data.Foldable
-> import Data.List
 > import Data.Monoid
 > import Data.Traversable
 

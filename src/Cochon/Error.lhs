@@ -8,43 +8,25 @@
 
 > module Cochon.Error where
 
-> import Control.Applicative
-> import Control.Monad.State
 > import Control.Monad.Error
-> import Data.List
-> import System.Exit
-> import System.IO 
 > import Text.PrettyPrint.HughesPJ
-
-
-> import Kit.BwdFwd hiding ((<+>))
-> import Kit.Parsley
-
-> import NameSupply.NameSupply
 
 > import Evidences.Tm hiding (In)
 
-> import DisplayLang.Lexer
 > import DisplayLang.Naming
-> import DisplayLang.TmParse
-> import DisplayLang.Elaborator
-> import DisplayLang.DisplayTm
 > import DisplayLang.PrettyPrint
 
-> import ProofState.ProofContext
+> import Tactics.Information
+
 > import ProofState.ProofState
 > import ProofState.ProofKit
 
-> import Tactics.Elimination
-> import Tactics.Induction
-> import Tactics.PropSimp
-> import Tactics.Information
+%endif
 
 > import Cochon.CommandLexer
 
 > import Compiler.Compiler
 
-%endif
 
 > prettyStackError :: StackError InDTmRN -> Doc
 > prettyStackError e = 

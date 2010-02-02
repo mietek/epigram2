@@ -10,7 +10,6 @@
 
 > import Control.Applicative
 > import Control.Monad
-> import Control.Monad.Error
 > import Data.Traversable
 
 > import Kit.BwdFwd
