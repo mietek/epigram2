@@ -15,7 +15,7 @@
 > import System.Exit
 > import System.IO 
 > import Text.PrettyPrint.HughesPJ
-> import Debug.Trace
+
 
 > import Kit.BwdFwd hiding ((<+>))
 > import Kit.Parsley
@@ -73,7 +73,7 @@
 
 
 > catchUnprettyErrors :: StackError InDTmRN -> ProofState a
-> catchUnprettyErrors e = trace "Catch" $ do
+> catchUnprettyErrors e = do
 >                   e' <- distillErrors e
 >                   throwError e'
 
