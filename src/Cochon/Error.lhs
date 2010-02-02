@@ -23,9 +23,28 @@
 
 %endif
 
-> import Cochon.CommandLexer
 
-> import Compiler.Compiler
+\subsection{Catching the gremlins before they leave |ProofState|}
+
+
+> catchUnprettyErrors :: StackError InDTmRN -> ProofState a
+> catchUnprettyErrors e = do
+>                   e' <- distillErrors e
+>                   throwError e'
+
+> distillErrors :: StackError InDTmRN -> ProofState (StackError InDTmRN)
+> distillErrors e = sequence $ fmap (sequence . fmap distillError) e
+
+> distillError :: ErrorTok InDTmRN -> ProofState (ErrorTok InDTmRN)
+> distillError (TypedVal (v :<: t)) = do
+>   vTm <- bquoteHere v
+>   vDTm :=>: _ <- distillHere (t :>: vTm)
+>   return $ UntypedTm vDTm
+> distillError e = return e
+
+
+
+\subsection{Pretty-printing the stack trace}
 
 
 > prettyStackError :: StackError InDTmRN -> Doc
@@ -45,6 +64,9 @@
 > prettyErrorTok (TypedCan (v :<: t)) = pretty v maxBound
 > prettyErrorTok (UntypedCan c) = pretty c maxBound
 > prettyErrorTok (UntypedElim e) = pretty e maxBound
+
+The following cases should be avoided as much as possible:
+
 > prettyErrorTok (TypedVal (v :<: t)) = brackets $ text "typedV" <> (brackets $ text $ show v)
 > prettyErrorTok (UntypedVal v) = brackets $ text "untypedV" <> (brackets $ text $ show v)
 > prettyErrorTok (ERef (name := _)) = hcat $ punctuate  (char '.') 
@@ -53,18 +75,3 @@
 >                                                                        int n) name) 
 > prettyErrorTok (UntypedINTM t) = brackets $ text "untypedT" <> (brackets $ text $ show t)
 
-
-> catchUnprettyErrors :: StackError InDTmRN -> ProofState a
-> catchUnprettyErrors e = do
->                   e' <- distillErrors e
->                   throwError e'
-
-> distillErrors :: StackError InDTmRN -> ProofState (StackError InDTmRN)
-> distillErrors e = sequence $ fmap (sequence . fmap distillError) e
-
-> distillError :: ErrorTok InDTmRN -> ProofState (ErrorTok InDTmRN)
-> distillError (TypedVal (v :<: t)) = do
->   vTm <- bquoteHere v
->   vDTm :=>: _ <- distillHere (t :>: vTm)
->   return $ UntypedTm vDTm
-> distillError e = return e
