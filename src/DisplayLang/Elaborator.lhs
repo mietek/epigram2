@@ -160,12 +160,12 @@ Much as with type-checking, we push types in to neutral terms by calling
 > elaborate top (w :>: DN n) = do
 >   (nn :<: y) <- elabInfer n
 >   eq <- withNSupply (equal (SET :>: (w, y)))
->   guard eq `replaceError`  (err "elaborate: inferred type "
->                            ++ errTyVal (y :<: SET)
->                            ++ err " of "
->                            ++ errTyVal ((valueOf nn) :<: SET)
->                            ++ err " is not " 
->                            ++ errTyVal (w :<: SET))
+>   guard eq `pushError`  (err "elaborate: inferred type "
+>                         ++ errTyVal (y :<: SET)
+>                         ++ err " of "
+>                         ++ errTyVal ((valueOf nn) :<: SET)
+>                         ++ err " is not " 
+>                         ++ errTyVal (w :<: SET))
 >   neutralise nn
 
 If the elaborator made up a term, it does not require further elaboration, but

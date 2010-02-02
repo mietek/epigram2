@@ -143,7 +143,7 @@ These commands fail (yielding |Nothing|) if they are impossible because the proo
 is not in the required form.
 
 > goIn :: ProofState ()
-> goIn = goInAcc (NF F0) `replaceError` (err "goIn: you can't go that way.")
+> goIn = goInAcc (NF F0) `pushError` (err "goIn: you can't go that way.")
 >   where
 >     goInAcc :: NewsyEntries -> ProofState ()
 >     goInAcc (NF cadets) = do
@@ -168,10 +168,10 @@ is not in the required form.
 >     putDev (elders l :< e, laytip l, laynsupply l)
 >     propagateNews True [] (cadets l)  -- should update tip and pass on news
 >     return ()
->   ) `replaceError` (err "goOut: you can't go that way.")
+>   ) `pushError` (err "goOut: you can't go that way.")
 
 > goUp :: ProofState ()
-> goUp = goUpAcc (NF F0) `replaceError` (err "goUp: you can't go that way.")
+> goUp = goUpAcc (NF F0) `pushError` (err "goUp: you can't go that way.")
 >   where
 >     goUpAcc :: NewsyEntries -> ProofState ()
 >     goUpAcc (NF acc) = do
@@ -187,7 +187,7 @@ is not in the required form.
 >                   >> goUpAcc (NF (Right (reverseEntry e) :> acc))
 
 > goDown :: ProofState ()
-> goDown = goDownAcc B0 [] `replaceError` (err "goDown: you can't go that way.")
+> goDown = goDownAcc B0 [] `pushError` (err "goDown: you can't go that way.")
 >   where
 >     goDownAcc :: Entries -> NewsBulletin -> ProofState ()
 >     goDownAcc acc news = do
@@ -211,7 +211,7 @@ is not in the required form.
 > goTo :: Name -> ProofState ()
 > goTo [] = return ()
 > goTo (xn:xns) = (seek xn >> goTo xns)
->     `replaceError` (err "goTo: could not find " ++ err (showName (xn:xns)))
+>     `pushError` (err "goTo: could not find " ++ err (showName (xn:xns)))
 >   where
 >     seek :: (String, Int) -> ProofState ()
 >     seek xn = (goUp <|> goIn) >> do
@@ -253,17 +253,17 @@ We can now compactly describe how to search the proof state for goals, by giving
 several alternatives for where to go next and continuing until a goal is reached.
 
 > prevStep :: ProofState ()
-> prevStep = ((goUp >> much goIn) <|> goOut) `replaceError` (err "prevStep: no previous steps.")
+> prevStep = ((goUp >> much goIn) <|> goOut) `pushError` (err "prevStep: no previous steps.")
 >
 > prevGoal :: ProofState ()
-> prevGoal = (prevStep `untilA` isGoal) `replaceError` (err "prevGoal: no previous goals.")
+> prevGoal = (prevStep `untilA` isGoal) `pushError` (err "prevGoal: no previous goals.")
 >
 > nextStep :: ProofState ()
 > nextStep = ((goIn >> much goUp) <|> goDown <|> (goOut `untilA` goDown))
->                `replaceError` (err "nextStep: no more steps.")
+>                `pushError` (err "nextStep: no more steps.")
 >
 > nextGoal :: ProofState ()
-> nextGoal = (nextStep `untilA` isGoal) `replaceError` (err "nextGoal: no more goals.")
+> nextGoal = (nextStep `untilA` isGoal) `pushError` (err "nextGoal: no more goals.")
 
 
 
@@ -516,7 +516,7 @@ The |ungawa| command looks for a truly obvious thing to do, and does it.
 
 > ungawa :: ProofState ()
 > ungawa = (ignore done <|> ignore apply <|> ignore (lambdaBoy "ug"))
->     `replaceError` (err "ungawa: no can do.")
+>     `pushError` (err "ungawa: no can do.")
 
 
 

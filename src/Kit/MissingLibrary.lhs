@@ -73,8 +73,8 @@
 > throwError' :: MonadError [e] m => e -> m a
 > throwError' e = throwError [e]
 
-> replaceError :: MonadError [e] m => m a -> e -> m a
-> replaceError c e = catchError c (\x -> throwError (e:x))
+> pushError :: MonadError [e] m => m a -> e -> m a
+> pushError c e = catchError c (\x -> throwError (e:x))
 
 
 \subsection{Missing Applicatives}
