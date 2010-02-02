@@ -437,7 +437,7 @@ lists (so |[]| becomes |@[0]| and |[s , t]| becomes |@ [1 s t]|).
 >     elaborate b (MU l d :>: DPAIR s t) =
 >         elaborate b (MU l d :>: DCON (DPAIR (DSU DZE) (DPAIR s (DPAIR t DVOID))))
 >     elaborate True (SET :>: DMU Nothing d) = do
->         GirlMother (nom := HOLE :<: ty) _ _ <- getMother
+>         GirlMother (nom := HOLE :<: ty) _ _ _ <- getMother
 >         let fr = nom := FAKE :<: ty
 >         xs <- (| boySpine getAuncles |)
 >         let lt = N (P fr $:$ xs)

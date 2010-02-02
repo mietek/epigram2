@@ -128,7 +128,17 @@ cannot.
 
 > data Traversable f => Entity f
 >   =  Boy   BoyKind
->   |  Girl  GirlKind (Dev f)
+>   |  Girl  GirlKind (Dev f) (Maybe (Scheme INTM))
+
+> data Scheme x  =  SchType x
+>                |  SchExplicitPi (String :<: Scheme x) (Scheme x)
+>                |  SchImplicitPi (String :<: x) (Scheme x)
+>   deriving Show
+
+> schemeToType :: Scheme INTM -> INTM
+> schemeToType (SchType ty) = ty
+> schemeToType (SchExplicitPi (x :<: s) t) = PIV x (schemeToType s) (schemeToType t)
+> schemeToType (SchImplicitPi (x :<: s) t) = PIV x s (schemeToType t)
 
 
 \paragraph{Girls for definitions:}
@@ -153,11 +163,11 @@ definition (if any) in the enclosing development.
 
 > instance Show (Entity Bwd) where
 >     show (Boy k) = "Boy " ++ show k
->     show (Girl k d) = "Girl " ++ show k ++ " " ++ show d
+>     show (Girl k d _) = "Girl " ++ show k ++ " " ++ show d
 
 > instance Show (Entity Fwd) where
 >     show (Boy k) = "Boy " ++ show k
->     show (Girl k d) = "Girl " ++ show k ++ " " ++ show d
+>     show (Girl k d _) = "Girl " ++ show k ++ " " ++ show d
 
 %endif
 
@@ -184,7 +194,7 @@ boy.
 > entryDev :: Traversable f => Entry f -> Dev f
 > entryDev (E _ _ (Boy _) _)        = 
 >     error "entryDev: boys have no development"
-> entryDev (E _ _ (Girl LETG d) _)  = d
+> entryDev (E _ _ (Girl LETG d _) _)  = d
 > entryDev (M _ d)                  = d
 
 Before shooting oneself in the foot, one can ask if there are
@@ -197,7 +207,7 @@ sell.}
 
 > entryHasDev :: Traversable f => Entry f -> Bool
 > entryHasDev (E _ _ (Boy _)     _)  = False
-> entryHasDev (E _ _ (Girl _ _)  _)  = True
+> entryHasDev (E _ _ (Girl _ _ _)  _)  = True
 > entryHasDev (M _ _)                = True
 
 For display purposes, we often ask the last name or the whole name of
@@ -235,9 +245,9 @@ we return a |Right entry|. It is not for girls and modules, in which
 case we return an unchanged |Left dev|.
 
 > entryCoerce :: (Traversable f, Traversable g) => Entry f -> Either (Dev f) (Entry g)
-> entryCoerce (E ref  xn  (Boy k)          ty)  = Right (E ref xn (Boy k) ty)
-> entryCoerce (E _    _   (Girl LETG dev)  _)   = Left dev
-> entryCoerce (M _ dev)                         = Left dev
+> entryCoerce (E ref  xn  (Boy k)          ty)   = Right (E ref xn (Boy k) ty)
+> entryCoerce (E _    _   (Girl LETG dev _)  _)  = Left dev
+> entryCoerce (M _ dev)                          = Left dev
 
 
 Finally, we can compare entities for equality by comparing their

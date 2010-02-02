@@ -48,7 +48,7 @@ Brujin indices.
 >     h (ys :< E y _ (Boy _) _)     x i
 >       | x == y     = V i
 >       | otherwise  = h ys x (i + 1)
->     h (ys :< E _ _ (Girl _ _) _)  x i = h ys x i
+>     h (ys :< E _ _ (Girl _ _ _) _)  x i = h ys x i
 >     h (ys :< M _ _) x i = h ys x i
 
 \question{How do we read the |(-||)| operator? "discharge into"?}

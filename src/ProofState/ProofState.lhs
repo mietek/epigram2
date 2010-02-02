@@ -105,7 +105,7 @@ updated information, providing a friendlier interface than |get| and |put|.
 
 > getHoleGoal :: ProofStateT e (INTM :=>: TY)
 > getHoleGoal = do
->     GirlMother (_ := HOLE :<: _) _ _ <- getMother
+>     GirlMother (_ := HOLE :<: _) _ _ _ <- getMother
 >     getGoal "getHoleGoal"
 
 > getLayer :: ProofStateT e Layer
@@ -125,7 +125,7 @@ updated information, providing a friendlier interface than |get| and |put|.
 
 > getMotherDefinition :: ProofStateT e (EXTM :=>: VAL)
 > getMotherDefinition = do
->     GirlMother ref _ _ <- getMother
+>     GirlMother ref _ _ _ <- getMother
 >     aus <- getGreatAuncles
 >     return (applyAuncles ref aus)
 
@@ -134,7 +134,7 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     m <- getMother
 >     dev <- getDev
 >     case m of
->         GirlMother ref xn ty -> return (E ref xn (Girl LETG dev) ty)
+>         GirlMother ref xn ty ms -> return (E ref xn (Girl LETG dev ms) ty)
 >         ModuleMother n -> return (M n dev)
 
 > getMotherName :: ProofStateT e Name
@@ -191,9 +191,9 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     return ()
 
 > putMotherEntry :: Entry Bwd -> ProofStateT e ()
-> putMotherEntry (E ref xn (Girl LETG dev) ty) = do
+> putMotherEntry (E ref xn (Girl LETG dev ms) ty) = do
 >     l <- getLayer
->     replaceLayer (l{mother=GirlMother ref xn ty})
+>     replaceLayer (l{mother=GirlMother ref xn ty ms})
 >     putDev dev
 > putMotherEntry (M [] dev) = putDev dev
 > putMotherEntry (M n dev) = do

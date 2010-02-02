@@ -80,7 +80,7 @@ Updating girls is a bit more complicated. We proceed as follows:
 \item Continue propagating the latest news.
 \end{enumerate}
 
-> propagateNews top news (NF ((Right e@(E ref sn (Girl LETG (_, tip, nsupply)) ty)) :> es)) = do
+> propagateNews top news (NF ((Right e@(E ref sn (Girl LETG (_, tip, nsupply) _) ty)) :> es)) = do
 >     xs <- jumpIn e
 >     news' <- propagateNews False news xs
 >     news'' <- tellMother news'
@@ -133,12 +133,12 @@ To update a hole, we must:
 \item update the news bulletin with news about this girl.
 \end{enumerate}
 
-> tellEntry news (E (name := HOLE :<: tyv) sn (Girl LETG (cs, Unknown tt, nsupply)) ty) = do
+> tellEntry news (E (name := HOLE :<: tyv) sn (Girl LETG (cs, Unknown tt, nsupply) ms) ty) = do
 >     let  (tt', n)             = tellNewsEval news tt
 >          (ty' :=>: tyv', n')  = tellNewsEval news (ty :=>: tyv)
 >          ref                  = name := HOLE :<: tyv'
 >     return (addNews (ref, min n n') news,
->                 E ref sn (Girl LETG (cs, Unknown tt', nsupply)) ty')
+>                 E ref sn (Girl LETG (cs, Unknown tt', nsupply) ms) ty')
 
 To update a defined girl, we must:
 \begin{enumerate}
@@ -149,7 +149,7 @@ To update a defined girl, we must:
 \item update the news bulletin with news about this girl.
 \end{enumerate}
 
-> tellEntry news (E (name := DEFN tmL :<: tyv) sn (Girl LETG (cs, Defined tm tt, nsupply)) ty) = do
+> tellEntry news (E (name := DEFN tmL :<: tyv) sn (Girl LETG (cs, Defined tm tt, nsupply) ms) ty) = do
 >     let  (tt', n)             = tellNewsEval news tt
 >          (ty' :=>: tyv', n')  = tellNewsEval news (ty :=>: tyv)
 >          (tm', n'')           = tellNews news tm
@@ -164,7 +164,7 @@ For paranoia purposes, the following test might be helpful:
 
 >     let ref = name := DEFN (evTm tmL') :<: tyv'
 >     return (addNews (ref, GoodNews {-min (min n n') n''-}) news,
->                 E ref sn (Girl LETG (cs, Defined tm' tt', nsupply)) ty')
+>                 E ref sn (Girl LETG (cs, Defined tm' tt', nsupply) ms) ty')
 
 The |tellMother| function informs the mother entry about a news bulletin
 that her children have already received, and returns the updated news.

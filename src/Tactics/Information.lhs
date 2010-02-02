@@ -106,7 +106,7 @@ away bits of the context to produce an answer, then restores the saved state.
 >                docTy <- prettyHere (SET :>: ty')
 >                d <- hyps aus me
 >                return (d $$ prettyBKind k (text (showRelName (christenREF aus me ref)) <+> kword KwAsc <+> docTy))
->            (True, es' :< E ref _ (Girl LETG _) _) -> do
+>            (True, es' :< E ref _ (Girl LETG _ _) _) -> do
 >                goIn
 >                es <- getDevEntries
 >                (ty :=>: _) <- getGoal "hyps"

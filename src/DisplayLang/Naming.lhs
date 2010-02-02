@@ -130,11 +130,11 @@ the entity should be a |Girl|, and it searches her children for the name.
 > findChild ::  REF -> Spine {TT} REF -> Entity Bwd -> RelName -> 
 >               Either (StackError t) (REF, Spine {TT} REF)
 > findChild r  as (Boy _)              []  = Right (r,  [])
-> findChild r  as (Girl _ _)           []  = Right (r,  as)
+> findChild r  as (Girl _ _ _)           []  = Right (r,  as)
 > findChild r  as (Boy _)              ys  = Left  [err "findChild: " 
 >                                                  ++ errRef r 
 >                                                  ++ err " is a boy so it has no children!"]
-> findChild r  as (Girl _ (es, _, _))  ys  = findInEntries es ys as
+> findChild r  as (Girl _ (es, _, _) _)  ys  = findInEntries es ys as
 
 
 The |findInEntries| function takes a list of entries to search, a relative name
@@ -148,7 +148,7 @@ not in scope, but they may affect relative name offsets.
 > findInEntries (xs :< M n (es, _, _)) (y : ys) as = case hits (last n) y of
 >     Right _  -> findInEntries es ys as
 >     Left y'  -> findInEntries xs (y' : ys) as
-> findInEntries (xs :< E r x e@(Girl _ _) _) (y : ys) as = case hits x y of
+> findInEntries (xs :< E r x e@(Girl _ _ _) _) (y : ys) as = case hits x y of
 >     Right _  -> findChild r as e ys
 >     Left y'  -> findInEntries xs (y' : ys) as
 > findInEntries (xs :< E r x (Boy _) _) (y : ys) as = case hits x y of
@@ -244,7 +244,7 @@ to zero, which then is incremented to determine the relative offset of each name
 >       Boy _                     ->  if yms == []
 >                                     then [(x, Rel i)]
 >                                     else error "searchKids: it's mad uncle Quentin!"
->       (Girl LETG (kids, _, _))  ->  (x, Rel i):searchKids kids yms 0
+>       (Girl LETG (kids, _, _) _)  ->  (x, Rel i):searchKids kids yms 0
 >   | x == y            = searchKids es ((y, m):yms) (succ i)
 >   | otherwise         = searchKids es ((y, m):yms) i
 

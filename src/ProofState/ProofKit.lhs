@@ -100,7 +100,7 @@ may be useful for paranoia purposes.
 > validateHere = do
 >     m <- getMother
 >     case m of
->         GirlMother (_ := DEFN tm :<: ty) _ _ -> do
+>         GirlMother (_ := DEFN tm :<: ty) _ _ _ -> do
 >             ty' <- bquoteHere ty
 >             mc <- withNSupply $ liftError . (typeCheck $ check (SET :>: ty'))
 >             mc `catchEither`  (err "validateHere: girl type failed to type-check: SET does not admit"
@@ -112,7 +112,7 @@ may be useful for paranoia purposes.
 >                               ++ err "does not admit"
 >                               ++ errVal tm)
 >             return ()
->         GirlMother (_ := HOLE :<: ty) _ _ -> do
+>         GirlMother (_ := HOLE :<: ty) _ _ _ -> do
 >             ty' <- bquoteHere ty
 >             mc <- withNSupply $ liftError . (typeCheck $ check (SET :>: ty'))
 >             mc `catchEither` (err "validateHere: hole type failed to type-check: SET does not admit" 
@@ -285,7 +285,7 @@ several alternatives for where to go next and continuing until a goal is reached
 >     aus <- getAuncles
 >     let  ty' = liftType aus ty
 >          ref = n := HOLE :<: evTm ty'
->     putMother (GirlMother ref (last n) ty')
+>     putMother (GirlMother ref (last n) ty' Nothing)
 >     putDevTip (Unknown (ty :=>: tyv))
 >     return (applyAuncles ref aus)
 
@@ -332,28 +332,24 @@ The |apply| command checks if the last entry in the development is a girl $y$ wi
 $\Pi S T$ and if so, adds a goal of type $S$ and applies $y$ to it.
 
 > apply :: ProofState (EXTM :=>: VAL)
-> apply = do
->   devEntry <- getDevEntry
->   case devEntry of
->     E ref@(name := k :<: (PI s t)) _ (Girl LETG _) _ -> do
->         s' <- bquoteHere s
->         t' <- bquoteHere (t $$ A s)
->         z :=>: _ <- make ("z" :<: s')
->         make ("w" :<: t')
->         goIn
->         give (N (P ref :$ A (N z)))
->     _ -> throwError' $ err  $ "apply: last entry in the development" 
->                             ++ " must be a girl with a pi-type."
+> apply = (do
+>     E ref@(name := k :<: (PI s t)) _ (Girl LETG _) _ <- getDevEntry
+>     s' <- bquoteHere s
+>     t' <- bquoteHere (t $$ A s)
+>     z :=>: _ <- make ("z" :<: s')
+>     make ("w" :<: t')
+>     goIn
+>     give (N (P ref :$ A (N z)))
+>   ) `replacePMF` "apply: last entry in the development must be a girl with a pi-type."
 
 The |done| command checks if the last entry in the development is a girl, and if so,
 fills in the goal with this entry.
 
 > done :: ProofState (EXTM :=>: VAL)
-> done = do
->   devEntry <- getDevEntry
->   case devEntry of
->     E ref _ (Girl LETG _) _ -> give (N (P ref))
->     _ -> throwError' $ err "done: last entry in the development must be a girl."
+> done = (do
+>     E ref _ (Girl LETG _) _ <- getDevEntry
+>     give (N (P ref))
+>  ) `replacePMF` "done: last entry in the development must be a girl."
 
 The |give| command checks the provided term has the goal type, and if so, fills in
 the goal, updates the reference and goes out. The |giveNext| variant moves to the
@@ -378,10 +374,10 @@ next goal (if one exists) instead.
 >             aus <- getGreatAuncles
 >             sibs <- getDevEntries
 >             let tmv = evTm (parBind aus sibs tm)
->             GirlMother (name := _ :<: tyv) xn ty <- getMother
+>             GirlMother (name := _ :<: tyv) xn ty ms <- getMother
 >             let ref = name := DEFN tmv :<: tyv
 >             putDevTip (Defined tm (tipTyTm :=>: tipTy))
->             putMother (GirlMother ref xn ty)
+>             putMother (GirlMother ref xn ty ms)
 >             updateRef ref
 >             return (applyAuncles ref aus)
 >         _  -> throwError' $ err "give: only possible for incomplete goals."
@@ -461,7 +457,7 @@ current development, after checking that the purported type is in fact a type.
 >     let  ty'  = liftType aus ty
 >          ref  = n := HOLE :<: evTm ty'
 >     nsupply <- getDevNSupply
->     putDevEntry (E ref (last n) (Girl LETG (B0, Unknown (ty :=>: tyv), freshNSpace nsupply s')) ty')
+>     putDevEntry (E ref (last n) (Girl LETG (B0, Unknown (ty :=>: tyv), freshNSpace nsupply s') Nothing) ty')
 >     putDevNSupply (freshName nsupply)
 >     return (applyAuncles ref aus)
 

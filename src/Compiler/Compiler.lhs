@@ -207,7 +207,7 @@ by hand in Epic - see epic/support.e
 > flatten PIB ma del (F0, _, _) = [(ma, del, Ignore)]
 > flatten _ ma del (E (x := _) _ (Boy b) _ :> es, tip, nsupply) =
 >     flatten b ma (del :< x) (es, tip, nsupply)
-> flatten b ma del (E (her := _) _ (Girl LETG herDev) _ :> es, tip, nsupply) = 
+> flatten b ma del (E (her := _) _ (Girl LETG herDev _) _ :> es, tip, nsupply) = 
 >     flatten LAMB her del herDev ++ flatten b ma del (es, tip, nsupply)
 
 Lambda lifting: every lambda which is not at the top level is lifted out as a

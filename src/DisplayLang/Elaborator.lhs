@@ -295,7 +295,7 @@ a reference to the current goal (applied to the appropriate shared parameters).
 >         Unknown (tipTyTm :=>: tipTy) -> do
 >             case tm of
 >                 DQ "" -> do
->                     GirlMother ref _ _ <- getMother
+>                     GirlMother ref _ _ _ <- getMother
 >                     aus <- getGreatAuncles
 >                     return (applyAuncles ref aus)
 >                 _ -> do
