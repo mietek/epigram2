@@ -582,16 +582,14 @@ We can also throw away a label, should we want to.
 > fortran (L (HF x  _))  | not (null x) = x
 > fortran _ = "x"
 
+\subsection{Error Stack}
 
-%if False
-
-
+This is a first try, with some shortcomings. Feel free to modify the
+following to make it suit your need.
 
 > data ErrorTok t = StrMsg String
 >                 | TypedTm (t :<: t)
 >                 | UntypedTm t
->               --  | TypedDTm (InDTmRN :<: TY)
->               --  | UntypedDTm InDTmRN
 >                 | TypedCan (Can t :<: Can t)
 >                 | UntypedCan (Can t)
 >                 | TypedVal (VAL :<: TY)
@@ -600,7 +598,8 @@ We can also throw away a label, should we want to.
 >                 | ERef REF
 >                 | UntypedINTM INTM
 
-> instance Functor ErrorTok where -- deriving Functor broken?
+> instance Functor ErrorTok where 
+>       -- "deriving Functor" refused to make it for me
 >     fmap f (TypedTm (t1 :<: t2)) = TypedTm (f t1 :<: f t2)
 >     fmap f (UntypedTm t) = UntypedTm (f t)
 >     fmap f (TypedCan (t1 :<: t2)) = TypedCan (fmap f t1 :<: fmap f t2)
@@ -612,7 +611,22 @@ We can also throw away a label, should we want to.
 >     fmap f (ERef r) = ERef r
 >     fmap f (UntypedINTM i) = UntypedINTM i
 
+An error is list of error tokens:
+
 > type ErrorTm t = [ErrorTok t]
+
+Errors a reported in a stack, as failure is likely to be followed by
+further failures. The top of the stack is the head of the list.
+
+> type StackError t = [ErrorTm t]
+
+
+
+> instance Error (StackError t) where
+>   strMsg s = [err s]
+
+
+To ease the writing of error terms, we have a bunch of combinators:
 
 > err :: String -> ErrorTm t
 > err s = [StrMsg s]
@@ -645,24 +659,8 @@ We can also throw away a label, should we want to.
 > errInTm t = [UntypedINTM t]
 
 
-> {-
-> errDTm :: InDTmRN -> ErrorTm t
-> errDTm t = [IntypedDTm t]
-> errTyDTm :: (InDTmRN :<: TY) -> ErrorTm t
-> errTyDTm tt = [TypedDTm tt]
-> -}
 
-> type StackError t = [ErrorTm t]
-
-> instance Error (StackError t) where
->   strMsg s = [err s]
-
-> {-
-> instance MonadError (StackError INTM) Maybe where
->   throwError _ = Nothing
->   catchError (Just x)  _ = Just x
->   catchError Nothing   f = f []
-> -}
+%if False
 
 > instance Traversable Can where
 >   traverse f Set       = (|Set|)
