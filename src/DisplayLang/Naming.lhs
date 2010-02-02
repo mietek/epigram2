@@ -110,7 +110,8 @@ The |findGlobal| function takes a context and a relative name to resolve. It
 searches the context for an entry that hits the name, then searches that
 entry's children to resolve the next component. 
 
-> findGlobal :: Entries -> RelName -> Either [String] (REF, Spine {TT} REF)
+> findGlobal :: Entries -> RelName
+>     -> Either (StackError t) (REF, Spine {TT} REF, Maybe (Scheme INTM))
 > findGlobal xs [(y, Rel 0)]
 >   | Just ref <- lookup y primitives = Right (ref, [], Nothing)
 >   | Just ref <- lookup y axioms     = Right (ref, [], Nothing)
@@ -128,10 +129,13 @@ resolve. If the remainder is empty, it returns a parameter referring to the
 current entry (applied to the shared parameters if appropriate). Otherwise,
 the entity should be a |Girl|, and it searches her children for the name.
 
-> findChild :: REF -> Spine {TT} REF -> Entity Bwd -> RelName -> Either [String] (REF, Spine {TT} REF)
-> findChild r  as (Boy _)              []  = Right (r,  [])
-> findChild r  as (Girl _ _ _)           []  = Right (r,  as)
-> findChild r  as (Boy _)              ys  = Left ["findChild: " ++ show r ++ " is a boy so it has no children!"]
+> findChild :: REF -> Spine {TT} REF -> Entity Bwd -> RelName
+>     -> Either (StackError t) (REF, Spine {TT} REF, Maybe (Scheme INTM))
+> findChild r  as (Boy _)                []  = Right (r,  [], Nothing)
+> findChild r  as (Girl _ _ ms)          []  = Right (r,  as, ms)
+> findChild r  as (Boy _)              ys  = Left  [err "findChild: " 
+>                                                  ++ errRef r 
+>                                                  ++ err " is a boy so it has no children!"]
 > findChild r  as (Girl _ (es, _, _) _)  ys  = findInEntries es ys as
 
 
@@ -141,7 +145,8 @@ component of the name refers to a girl, it calls |findChild| to check if she or
 one of her children is the target. Note that boys within other developments are
 not in scope, but they may affect relative name offsets.
 
-> findInEntries :: Entries -> RelName -> Spine {TT} REF -> Either [String] (REF, Spine {TT} REF)
+> findInEntries ::  Entries -> RelName -> Spine {TT} REF -> 
+>                   Either (StackError t) (REF, Spine {TT} REF, Maybe (Scheme INTM))
 > findInEntries (xs :< M n (es, _, _)) (y : ys) as = case hits (last n) y of
 >     Right _  -> findInEntries es ys as
 >     Left y'  -> findInEntries xs (y' : ys) as

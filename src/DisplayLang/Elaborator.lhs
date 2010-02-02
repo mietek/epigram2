@@ -188,7 +188,7 @@ the elaborator rather than the type-checker. In addition to returning the
 evidence term, value and type, it returns the scheme with which to interpret
 implicit syntax.
 
-> elabInfer :: ExDTmRN -> ProofState (EXTM :=>: VAL :<: TY)
+> elabInfer :: ExDTmRN -> ProofState (EXTM :=>: VAL :<: TY, Maybe (Scheme INTM))
 
 > elabInfer (DTEX tm) = do
 >     ty <- withNSupply $ liftError . (typeCheck $ infer tm)
@@ -284,7 +284,7 @@ The |elabResolve| command resolves a relative name to a reference,
 a spine of shared parameters to which it should be applied, and
 possibly a scheme.
 
-> elabResolve :: RelName -> ProofState (REF, Spine {TT} REF)
+> elabResolve :: RelName -> ProofState (REF, Spine {TT} REF, Maybe (Scheme INTM))
 > elabResolve x = do
 >    aus <- getAuncles
 >    findGlobal aus x `catchEither` (err "elabResolve: cannot resolve name")
