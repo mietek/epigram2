@@ -479,7 +479,7 @@ The |piBoy| command checks that the current goal is of type SET, and that the su
 is also a set; if so, it appends a $\Pi$-abstraction to the current development.
 
 > piBoy :: (String :<: INTM) -> ProofState REF
-> piBoy (s :<: ty) = piBoy' (s :<: (ty :=>: evTm ty))
+> piBoy (s :<: ty) = checkHere (SET :>: ty) >>= piBoy' . (s :<:)
 
 > piBoy' :: (String :<: (INTM :=>: TY)) -> ProofState REF
 > piBoy' (s :<: (ty :=>: tv)) = do
