@@ -8,8 +8,7 @@ Solved.
 Going to root...
 Appended goal!
 I'm sorry, Dave. I'm afraid I can't do that.
-propSimplifyHere: oh no, goal is absurd!
-
+Error: propSimplifyHere: oh no, goal is absurd!
 Going to root...
 Appended goal!
 Simplified to:
@@ -117,8 +116,7 @@ Simplified to:
 Going to root...
 Appended goal!
 I'm sorry, Dave. I'm afraid I can't do that.
-propSimplifyHere: oh no, goal is absurd!
-
+Error: propSimplifyHere: oh no, goal is absurd!
 Going to root...
 Appended goal!
 Solved.
@@ -128,8 +126,7 @@ Solved.
 Going to root...
 Appended goal!
 I'm sorry, Dave. I'm afraid I can't do that.
-propSimplifyHere: unable to simplify.
-
+Error: propSimplifyHere: unable to simplify.
 Going to root...
 Appended goal!
 Simplified to:
