@@ -199,10 +199,39 @@ We need fewer type synoyms:
 
 \subsection{Schemes}
 
+A definition may have a |Scheme|, which allows us to handle implicit syntax.
+A |Scheme| is either a type, an explicit $\Pi$ whose domain and codomain are
+schemes, or an implicit $\Pi$ whose domain is a type and whose codomain is
+a scheme. The |Scheme| data type is parameterised by the representation of
+types it uses.
+
+> data Scheme x  =  SchType x
+>                |  SchExplicitPi (String :<: Scheme x) (Scheme x)
+>                |  SchImplicitPi (String :<: x) (Scheme x)
+>   deriving Show
+
+Given a scheme, we can extract the names of its $\Pi$s:
+
+> schemeNames :: Scheme x -> [String]
+> schemeNames (SchType _) = []
+> schemeNames (SchExplicitPi (x :<: _) sch) = x : schemeNames sch
+> schemeNames (SchImplicitPi (x :<: _) sch) = x : schemeNames sch
+
+We can also convert a |Scheme x| to an |x|, if we are given a way to
+interpret $\Pi$-bindings:
+
+> schemeToType :: (String -> x -> x -> x) -> Scheme x -> x
+> schemeToType _ (SchType ty) = ty
+> schemeToType piv (SchExplicitPi (x :<: s) t) = 
+>     piv x (schemeToType piv s) (schemeToType piv t)
+> schemeToType piv (SchImplicitPi (x :<: s) t) =
+>     piv x s (schemeToType piv t)
+
+> schemeToInTm :: Scheme (InTm x) -> InTm x
+> schemeToInTm = schemeToType PIV
+
 > schemeToInDTm :: Scheme (InDTm x) -> InDTm x
-> schemeToInDTm (SchType ty) = ty
-> schemeToInDTm (SchExplicitPi (x :<: s) t) = DPIV x (schemeToInDTm s) (schemeToInDTm t)
-> schemeToInDTm (SchImplicitPi (x :<: s) t) = DPIV x s (schemeToInDTm t)
+> schemeToInDTm = schemeToType DPIV
 
 
 \subsection{Sizes}

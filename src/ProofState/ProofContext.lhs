@@ -23,6 +23,8 @@
 
 > import Evidences.Tm
 
+> import DisplayLang.DisplayTm
+
 %endif
 
 Recall from Section~\ref{sec:developments} the definition of a

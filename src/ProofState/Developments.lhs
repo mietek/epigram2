@@ -18,6 +18,8 @@
 
 > import Evidences.Tm
 
+> import DisplayLang.DisplayTm
+
 %endif
 
 
