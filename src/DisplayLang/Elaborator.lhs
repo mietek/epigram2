@@ -177,7 +177,7 @@ we should type-check it for safety's sake.
 If nothing else matches, give up and report an error.
 
 > elaborate top (ty :>: t) = throwError'  $ err "elaborate: can't cope with " 
->                                         ++ err (show t) -- XXX: could be improved
+>                                         ++ errTm t
 >                                         ++ err " of type "
 >                                         ++ errVal ty
 
@@ -212,7 +212,7 @@ those of |infer|.
 >     return $ (idTM x :? ARR ty' ty') :=>: idVAL x :<: ARR vty vty
 
 > elabInfer tt = throwError'  (err "elabInfer: can't cope with " 
->                             ++ err (show tt) {- XXX: Could be improved -})
+>                             ++ errTm (DN tt))
 
 
 \subsection{Proof Construction}

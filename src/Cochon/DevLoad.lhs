@@ -18,6 +18,7 @@
 > import Kit.Parsley
 
 > import Cochon.Cochon
+> import Cochon.Error
 
 > import ProofState.Developments
 
@@ -26,6 +27,7 @@
 > import DisplayLang.Lexer
 > import DisplayLang.Naming
 > import DisplayLang.TmParse
+> import DisplayLang.PrettyPrint
 
 > import ProofState.ProofContext
 > import ProofState.ProofState
@@ -263,7 +265,7 @@ up the proof state.
 >   case runStateT (makeDev dev []) emptyContext of
 >     Left errs -> do
 >       putStrLn "Failed to load development:"
->       putStrLn $ prettyStackError errs
+>       putStrLn $ renderHouseStyle $ prettyStackError errs
 >       exitFailure
 >     Right (ncs, loc) -> do
 >       -- Load the commands

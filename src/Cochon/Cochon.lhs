@@ -27,6 +27,7 @@
 > import DisplayLang.TmParse
 > import DisplayLang.Elaborator
 > import DisplayLang.DisplayTm
+> import DisplayLang.PrettyPrint
 
 > import ProofState.ProofContext
 > import ProofState.ProofState
@@ -38,13 +39,12 @@
 > import Tactics.Information
 
 > import Cochon.CommandLexer
+> import Cochon.Error
 
 > import Compiler.Compiler
 
 %endif
 
-> prettyStackError :: StackError InDTmRN -> String
-> prettyStackError e = "Something bad happened"
 
 Here we have a very basic command-driven interface to the proof state monad.
 
@@ -58,7 +58,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >     case evalStateT validateHere loc of
 >         Left ss -> do
 >             putStrLn "*** Warning: definition failed to type-check! ***"
->             putStrLn $ prettyStackError ss
+>             putStrLn $ renderHouseStyle $ prettyStackError ss
 >         _ -> return ()
 
 >     putStr (showPrompt ls)
@@ -131,7 +131,7 @@ unary tactics.
 >             return (locs :< loc :< loc')
 >         Left ss -> do
 >             putStrLn "I'm sorry, Dave. I'm afraid I can't do that."
->             putStrLn $ prettyStackError ss
+>             putStrLn $ renderHouseStyle $ prettyStackError ss
 >             return (locs :< loc)
 >             
 
