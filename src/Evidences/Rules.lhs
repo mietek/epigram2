@@ -199,19 +199,17 @@ get the neutral term consisting of the stuck parameter (e).
 
 A bound variable simply requires to extract the corresponding value
 from the environment (f). Elimination is handled by |$$| defined above
-(e). And similarly for operators with |@@| (f). Anything else is
-probably display syntax that we should not encounter (g).
+(g). And similarly for operators with |@@| (h).
 
 > eval :: Tm {d, TT} REF -> ENV -> VAL
-> eval (L b)       = (|L (body b)|)                              -- By (a)
-> eval (C c)       = (|C (eval ^$ c)|)                           -- By (b)
-> eval (N n)       = eval n                                      -- By (c)
-> eval (t :? _)    = eval t                                      -- By (d)
-> eval (P x)       = (|(pval x)|)                                -- By (e)
-> eval (V i)       = (!. i)                                      -- By (f)
-> eval (t :$ e)    = (|eval t $$ (eval ^$ e)|)                   -- By (g)
-> eval (op :@ vs)  = (|(op @@) (eval ^$ vs)|)                    -- By (h)
-> eval x           = error $ "eval: cannot evaluate " ++ show x  -- By (i)
+> eval (L b)       = (|L (body b)|)                                -- By (a)
+> eval (C c)       = (|C (eval ^$ c)|)                             -- By (b)
+> eval (N n)       = eval n                                        -- By (c)
+> eval (t :? _)    = eval t                                        -- By (d)
+> eval (P x)       = (|(pval x)|)                                  -- By (e)
+> eval (V i)       = fromMaybe (error "eval: bad index") . (!. i)  -- By (f)
+> eval (t :$ e)    = (|eval t $$ (eval ^$ e)|)                     -- By (g)
+> eval (op :@ vs)  = (|(op @@) (eval ^$ vs)|)                      -- By (h)
 
 
 Finally, the evaluation of a closed term simply consists in calling the

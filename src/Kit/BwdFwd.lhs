@@ -68,13 +68,14 @@ Backward and forward lists, applicative with zipping.
 
 > class Applicative f => Naperian f where
 >   type Log f
->   (!.) :: f x -> Log f -> x
+>   (!.) :: f x -> Log f -> Maybe x
 >   logTable :: f (Log f)
 
 > instance Naperian Bwd where -- cheeky!
 >   type Log Bwd = Int
->   (xs :< x) !. 0 = x
->   (xs :< x) !. i = xs !. (i - 1)
+>   (xs :< x)  !. 0  = Just x
+>   (xs :< x)  !. i  = xs !. (i - 1)
+>   _          !. _  = Nothing
 >   logTable = (1 + logTable) :< 0
 
 > bwdLength :: Bwd x -> Int

@@ -11,6 +11,7 @@
 > import Control.Monad.Identity
 > import Data.Foldable hiding (elem, find)
 > import Data.List
+> import Data.Maybe
 > import Data.Monoid
 > import Data.Traversable
 
@@ -279,7 +280,7 @@ Just in case it is useful, here is a simple christener that assigns absolute nam
 > christenerAbs :: Bwd String -> Mangle Identity REF String
 > christenerAbs vs = Mang
 >     {  mangP = \(name := _) as -> pure (P (showName name))
->     ,  mangV = \i _ -> pure (P (vs !. i))
+>     ,  mangV = \i _ -> pure (P (fromMaybe (error "christenerAbs: bad index") (vs !. i)))
 >     ,  mangB = \v -> christenerAbs (vs :< v)
 >     }
 
