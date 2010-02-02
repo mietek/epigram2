@@ -48,15 +48,6 @@ component of the name.
 > type InDTmRN = InDTm RelName
 > type ExDTmRN = ExDTm RelName
 
-> wrapError :: StackError INTM -> StackError InDTmRN
-> wrapError = fmap $           -- on the stack
->             fmap $           -- on the list of token
->             fmap             -- on a token
->             (DT . InTmWrap)  -- turning INTM into InDTmRN
-
-> liftError :: Either (StackError INTM) a -> Either (StackError InDTmRN) a
-> liftError = either (Left . wrapError) Right
-
 
 The |showRelName| function converts a relative name to a string by
 inserting the appropriate punctuation.
@@ -291,3 +282,23 @@ Just in case it is useful, here is a simple christener that assigns absolute nam
 >     ,  mangV = \i _ -> pure (P (vs !. i))
 >     ,  mangB = \v -> christenerAbs (vs :< v)
 >     }
+
+
+
+
+\subsection{Moving |StackError| from |INTM| to |InDTmRN|}
+
+Some functions, such as |distill|, are defined in the |ProofStateT
+INTM| monad. However, Cochon lives in a |ProofStateT InDTmRN|
+monad. Therefore, in order to use it, we will need to lift from the
+former to the latter.
+
+> liftError :: Either (StackError INTM) a -> Either (StackError InDTmRN) a
+> liftError = either (Left . wrapError) Right
+>     where wrapError :: StackError INTM -> StackError InDTmRN
+>           wrapError = fmap $           -- on the stack
+>                       fmap $           -- on the list of token
+>                       fmap             -- on a token
+>                       (DT . InTmWrap)  -- turning INTM into InDTmRN
+
+

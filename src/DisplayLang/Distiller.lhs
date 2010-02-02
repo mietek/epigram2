@@ -41,7 +41,7 @@ Just like in any other checker-evaluator, canonical terms can be distilled
 using |canTy|.
 
 > distill es (C ty :>: C c) = do
->     cc <- {- mliftError $ -} canTy (distill es) (ty :>: c)
+>     cc <- canTy (distill es) (ty :>: c)
 >     return ((DC $ fmap termOf cc) :=>: evTm (C c))
 
 To distill a $lambda$-abstraction, we speculate a fresh reference and distill
@@ -129,7 +129,7 @@ the distilled spine and the overall type of the application.
 > processArgs :: Entries -> (VAL :<: TY) -> Spine {TT} REF -> ProofStateT INTM (DSpine RelName, TY)
 > processArgs _ (_ :<: ty) [] = return ([], ty)
 > processArgs es (v :<: C ty) (a:as) = do
->     (e', ty') <- {- mliftError $ -} elimTy (distill es) (v :<: ty) a
+>     (e', ty') <- elimTy (distill es) (v :<: ty) a
 >     (es, ty'') <- processArgs es (v $$ (fmap valueOf e') :<: ty') as 
 >     return (fmap termOf e' : es, ty'')
 
@@ -145,3 +145,4 @@ The |toExDTm| helper function will distill a term to produce an
 >     (ty'  :=>: tyv)  <- distill es (SET :>: ty)
 >     (tm'  :=>: _)    <- distill es (tyv :>: tm)
 >     return (DTY ty' tm')
+
