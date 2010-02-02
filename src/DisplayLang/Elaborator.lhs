@@ -358,7 +358,7 @@ state of:
 >     argrefs <- traverse lambdaBoy args
 >     let fcall = pn $## (map NP argrefs) 
 >     let call = g $## (map NP argrefs) :$ Call (N fcall)
->     giveNext (N call)
+>     give' (N call)
 >   where mkTel :: NEU -> TY -> [VAL] -> [String] -> TEL TY
 >         mkTel n (PI s t) args (x:xs)
 >            = (x :<: s) :-: (\val -> mkTel n (t $$ A val) (val:args) xs)
@@ -392,9 +392,11 @@ creates a $\Pi$-boy with that type.
 >     make ("tau" :<: SET)
 >     goIn
 >     (sch', ty :=>: _) <- elabScheme B0 sch
->     moduleToGoal (N ty)
+>     moduleToGoal (N ty)     
+>     r <- elabProgram (schemeNames sch')
 >     putMotherScheme sch'
->     elabProgram (schemeNames sch')
+>     nextGoal
+>     return r
 
 
 > elabScheme :: Entries -> Scheme InDTmRN -> ProofState (Scheme INTM, EXTM :=>: VAL)

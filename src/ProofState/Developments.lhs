@@ -213,6 +213,12 @@ an |Entry|:
 > entryName (E (n := _) _ _ _)  = n
 > entryName (M n _)             = n
 
+Some girls have |Scheme|s, and we can extract them thus:
+
+> entryScheme :: Traversable f => Entry f -> Maybe (Scheme INTM)
+> entryScheme (E _ _ (Girl _ _ ms) _)  = ms
+> entryScheme _                      = Nothing
+
 %if False
 
 Is that dead code Jim? Then that should go away.

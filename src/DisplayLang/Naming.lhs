@@ -197,51 +197,54 @@ applies it to the arguments --- \emph{for girls}, dropping any that are shared w
 
 > mangleP :: Entries -> Name -> Bwd String -> Name -> DSpine RelName -> ExDTmRN
 > mangleP aus me vs target args = DP s $::$ drop n args
->   where (s, n) = baptise aus me vs target
+>   where (s, n, _) = baptise aus me vs target
 
 
 The |baptise| function takes a list of entries in scope, the name of the curent
 location, a list of local variables and the name of the parameter to christen.
 It returns an appropriate relative name and the number of arguments to drop. 
 
-> baptise :: Entries -> Name -> Bwd String -> Name -> (RelName, Int)
+> baptise :: Entries -> Name -> Bwd String -> Name
+>     -> (RelName, Int, Maybe (Scheme INTM))
 > baptise auncles me vs target = case splitNames me target of
 >   (prefix, (t, n):targetSuffix) ->
 >     let  numBindersToSkip = ala Sum foldMap (indicator (t ==)) vs
 >          boyCount = ala Sum foldMap (indicator (not. entryHasDev))
 >     in
 >       case findName auncles (prefix++[(t, n)]) t numBindersToSkip of
->         Just (ancestor, commonEntries, i) -> 
+>         Just (ancestor, commonEntries, i, ms) -> 
 >             let argsToDrop | entryHasDev ancestor  = boyCount commonEntries
 >                            | otherwise             = 0
 >             in  if targetSuffix == []
->                 then  ([(t, Rel i)], argsToDrop)
+>                 then  ([(t, Rel i)], argsToDrop, ms)
 >                 else
 >                   let  (kids, _, _) = entryDev ancestor
->                        n = (t, Rel i) : (searchKids kids targetSuffix 0)
->                   in   (n, argsToDrop)
+>                        (n, ms) = searchKids kids targetSuffix 0
+>                   in   ((t, Rel i) : n, argsToDrop, ms)
 >         Nothing -> tryBuiltins
 >   (prefix, []) -> tryBuiltins
 >  where
->    tryBuiltins :: (RelName, Int)
+>    tryBuiltins :: (RelName, Int, Maybe (Scheme INTM))
 >    tryBuiltins = case find ((target ==) . refName . snd) (axioms ++ primitives) of
->       Just (s, _)  -> ([(s, Rel 0)], 0)
->       Nothing      -> ([("???" ++ showName target, Rel 0)], 0)
+>       Just (s, _)  -> ([(s, Rel 0)], 0, Nothing)
+>       Nothing      -> ([("???" ++ showName target, Rel 0)], 0, Nothing)
 
 
 The |searchKids| function searches a list of children to match a name suffix, producing
 a relative name corresponding to the suffix. It should be called with the counter set
 to zero, which then is incremented to determine the relative offset of each name component.
 
-> searchKids :: Entries -> [(String, Int)] -> Int -> RelName
-> searchKids _   []  _ = []
+> searchKids :: Entries -> [(String, Int)] -> Int -> (RelName, Maybe (Scheme INTM))
+> searchKids _   []  _ = ([], Nothing)
 > searchKids B0  _   _ = error "searchKids: ran out of children"
 > searchKids (es :< E _ (x, n) entity _) ((y, m):yms) i
->   | (x, n) == (y, m)  = case entity of
->       Boy _                     ->  if yms == []
->                                     then [(x, Rel i)]
->                                     else error "searchKids: it's mad uncle Quentin!"
->       (Girl LETG (kids, _, _) _)  ->  (x, Rel i):searchKids kids yms 0
+>   | (x, n) == (y, m)  = case (yms, entity) of
+>       ([], Boy _)  -> ([(x, Rel i)], Nothing)
+>       ([], Girl _ _ ms) -> ([(x, Rel i)], ms)
+>       (_, Boy _) -> error "searchKids: it's mad uncle Quentin!"
+>       (_, (Girl LETG (kids, _, _) _)) ->
+>               let (n, ms) = searchKids kids yms 0
+>               in ((x, Rel i):n, ms)
 >   | x == y            = searchKids es ((y, m):yms) (succ i)
 >   | otherwise         = searchKids es ((y, m):yms) i
 
@@ -259,11 +262,12 @@ The |findName| function searches a list of entries for a name, incrementing the
 counter each time its string argument appears as the last component of an entry.
 It returns the entry found, its prefix in the list of entries, and the count.
 
-> findName :: Entries -> Name -> String -> Int -> Maybe (Entry Bwd, Entries, Int)
+> findName :: Entries -> Name -> String -> Int
+>     -> Maybe (Entry Bwd, Entries, Int, Maybe (Scheme INTM))
 > findName (es :< e) p y i
->   | entryName e == p     = Just (e, es, i)                         
->   | fst (entryLastName e) == y     = findName es p y (i+1)
->   | otherwise  = findName es p y i
+>   | entryName e == p            = Just (e, es, i, entryScheme e)
+>   | fst (entryLastName e) == y  = findName es p y (i+1)
+>   | otherwise                   = findName es p y i
 > findName B0 p _ _ = Nothing
 
 

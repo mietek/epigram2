@@ -262,7 +262,7 @@ Construction tactics:
 >   : simpleCT
 >       "program"
 >       (|bwdList (pSep (keyword KwComma) tokenString)|)
->       (\ as -> elabProgram (map argToStr as) >> return "Programming.")
+>       (\ as -> elabProgram (map argToStr as) >> nextGoal >> return "Programming.")
 >       "program <labels>: set up a programming problem."
 
 >   : unaryNameCT "select" (\ x -> resolveHere x >>= select . N . P >> return "Selected.")

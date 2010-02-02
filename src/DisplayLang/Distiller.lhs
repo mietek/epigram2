@@ -88,10 +88,19 @@ arguments and return the distilled application with the shared parameters droppe
 
 > distillInfer es tm@(P (name := _ :<: ty)) as       = do
 >     me <- getMotherName
->     let (relName, argsToDrop) = baptise es me B0 name
+>     let (relName, argsToDrop, ms) = baptise es me B0 name
 >     (e', ty') <- processArgs es (evTm tm :<: ty) as
->     return ((DP relName $::$ drop argsToDrop e') :<: ty')
->     
+>     let  as'   = drop argsToDrop e'
+>          as''  = case ms of
+>                    Just sch  -> removeImplicit sch as'
+>                    Nothing   -> as'
+>     return ((DP relName $::$ as'') :<: ty')
+>   where
+>     removeImplicit :: Scheme x -> DSpine RelName -> DSpine RelName
+>     removeImplicit (SchType _)           as      = as
+>     removeImplicit (SchExplicitPi _ sch) (a:as)  = a : removeImplicit sch as
+>     removeImplicit (SchImplicitPi _ sch) (a:as)  = removeImplicit sch as
+>     removeImplicit _                     []      = []
 
 To distill an elimination, we simply push the eliminator on to the spine.
 
