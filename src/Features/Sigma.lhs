@@ -88,6 +88,7 @@ Coercion rule:
 >   prettyPair p = const (brackets (prettyPairMore empty p))
 
 >   prettyPairMore :: Doc -> InDTmRN -> Doc
+>   prettyPairMore d DU           = d
 >   prettyPairMore d DVOID        = d
 >   prettyPairMore d (DPAIR a b)  = prettyPairMore (d <+> pretty a minBound) b
 >   prettyPairMore d t            = d <+> kword KwComma <+> pretty t maxBound
@@ -217,3 +218,10 @@ Coercion rule:
 >       s1 = p $$ Fst
 >       (s2, sq) = coeh sS1 sS2 (CON $ q $$ Fst) s1
 >   coerce Unit q s = Right s
+
+
+> import -> ElaborateRules where
+>   elaborate b (UNIT :>: DU) = return (VOID :=>: VOID)
+
+> import -> DistillRules where
+>   distill es (UNIT :>: _) = return (DU :=>: VOID)

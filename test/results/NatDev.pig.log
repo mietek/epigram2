@@ -25,7 +25,7 @@
                       \ y : nat ->
                     ] suc (h y) : nat ;
                   \ x : Sig (nat -> nat ;) ->
-                ] G50011 (x !) (x -) : nat -> nat ;
+                ] G50011 (x !) _ : nat -> nat ;
               \ a : Enum ['zero 'suc] ->
               h5003
                 [ \ x : desc (switchD ['zero 'suc] [[] (con ['ind1 []])] a) nat ->

@@ -252,3 +252,6 @@ Elim forms inherited from elsewhere
 >   coerce Prop              q pP  = Right pP
 >   coerce (Prf (pP1, pP2))  q p   = Right $ q $$ Fst $$ A p
 
+
+> import -> DistillRules where
+>   distill es (PRF TRIVIAL :>: _) = return (DU :=>: VOID)

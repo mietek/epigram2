@@ -452,7 +452,7 @@ and call canTy directly rather than letting distill do it for us.
 >     distill _ (MU _ _ :>: CON (PAIR ZE VOID)) =
 >         return (DVOID :=>: CON (PAIR ZE VOID))
 >     distill es (C ty@(Mu _) :>: C c@(Con (PAIR (SU ZE) (PAIR _ (PAIR _ VOID))))) = do
->         Con (DPAIR _ (DPAIR s (DPAIR t DVOID)) :=>: v) <- canTy (distill es) (ty :>: c)
+>         Con (DPAIR _ (DPAIR s (DPAIR t _)) :=>: v) <- canTy (distill es) (ty :>: c)
 >         return (DPAIR s t :=>: CON v)
 
 
