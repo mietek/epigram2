@@ -55,7 +55,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 > cochon' (locs :< loc@(ls, dev)) = do
 >     showGoal loc
 
->     case evalStateT validateHere loc of
+>     case evalStateT (validateHere `catchError` catchUnprettyErrors) loc of
 >         Left ss -> do
 >             putStrLn "*** Warning: definition failed to type-check! ***"
 >             putStrLn $ renderHouseStyle $ prettyStackError ss
@@ -125,7 +125,7 @@ unary tactics.
 
 > simpleOutput :: ProofState String -> Bwd ProofContext -> IO (Bwd ProofContext)
 > simpleOutput eval (locs :< loc) = do
->     case runStateT eval loc of
+>     case runStateT (eval `catchError` catchUnprettyErrors) loc of
 >         Right (s, loc') -> do
 >             putStrLn s
 >             return (locs :< loc :< loc')

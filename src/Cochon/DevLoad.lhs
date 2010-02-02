@@ -262,7 +262,7 @@ up the proof state.
 >            Just f   -> loadDevelopment f
 >            Nothing  -> return []
 >   -- Load the development in an empty proof state
->   case runStateT (makeDev dev []) emptyContext of
+>   case runStateT (makeDev dev [] `catchError` catchUnprettyErrors) emptyContext of
 >     Left errs -> do
 >       putStrLn "Failed to load development:"
 >       putStrLn $ renderHouseStyle $ prettyStackError errs

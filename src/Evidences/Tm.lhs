@@ -644,6 +644,7 @@ We can also throw away a label, should we want to.
 > errInTm :: INTM -> ErrorTm t
 > errInTm t = [UntypedINTM t]
 
+
 > {-
 > errDTm :: InDTmRN -> ErrorTm t
 > errDTm t = [IntypedDTm t]

@@ -271,7 +271,7 @@ using |canTy|.
 > canTy  chev (ty :>: x)  = throwError'  $ err "canTy: the proposed value "
 >                                        ++ errCan x
 >                                        ++ err " is not of type " 
->                                        ++ errVal (C ty)
+>                                        ++ errTyVal ((C ty) :<: SET)
 
 
 \subsubsection{Eliminators}
@@ -620,18 +620,18 @@ This translates naturally into the following code:
 >   case (equal (SET :>: (w, yt)) r) of
 >     True -> return $ N n :=>: yv
 >     False -> throwError'  $   err "check: inferred type "
->                           ++  errVal yt
+>                           ++  errTyVal (yt :<: SET)
 >                           ++  err "of"
 >                           ++  errTm (N n)
 >                           ++  err "is not"
->                           ++  errVal w
+>                           ++  errTyVal (w :<: SET)
 
 Finally, we can extend the checker with the |Check| aspect. If no rule
 has matched, then we have to give up.
 
 > import <- Check
 > check (ty :>: tm) = throwError'  $ err "check: type mismatch: type"
->                                  ++ errVal ty
+>                                  ++ errTyVal (ty :<: SET)
 >                                  ++ err "does not admit"
 >                                  ++ errTm tm
 

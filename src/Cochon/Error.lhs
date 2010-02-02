@@ -15,6 +15,7 @@
 > import System.Exit
 > import System.IO 
 > import Text.PrettyPrint.HughesPJ
+> import Debug.Trace
 
 > import Kit.BwdFwd hiding ((<+>))
 > import Kit.Parsley
@@ -48,11 +49,11 @@
 > prettyStackError :: StackError InDTmRN -> Doc
 > prettyStackError e = 
 >     vcat $
->     fmap (text "Error:" <+>) (
->     fmap hsep (
+>     fmap (text "Error:" <+>) $
+>     fmap hsep $
 >     fmap -- on the stack
 >     (fmap -- on the token
->      prettyErrorTok) e))
+>      prettyErrorTok) e
 
 
 > prettyErrorTok :: ErrorTok InDTmRN -> Doc
@@ -69,3 +70,19 @@
 >                                                                        char '_' <> 
 >                                                                        int n) name) 
 > prettyErrorTok (UntypedINTM t) = brackets $ text "untypedT" <> (brackets $ text $ show t)
+
+
+> catchUnprettyErrors :: StackError InDTmRN -> ProofState a
+> catchUnprettyErrors e = trace "Catch" $ do
+>                   e' <- distillErrors e
+>                   throwError e'
+
+> distillErrors :: StackError InDTmRN -> ProofState (StackError InDTmRN)
+> distillErrors e = sequence $ fmap (sequence . fmap distillError) e
+
+> distillError :: ErrorTok InDTmRN -> ProofState (ErrorTok InDTmRN)
+> distillError (TypedVal (v :<: t)) = do
+>   vTm <- bquoteHere v
+>   vDTm :=>: _ <- distillHere (t :>: vTm)
+>   return $ UntypedTm vDTm
+> distillError e = return e
