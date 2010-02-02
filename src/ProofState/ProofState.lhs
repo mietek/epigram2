@@ -37,15 +37,15 @@
 
 The proof state monad provides access to the |ProofContext| as in a
 |State| monad, but with the possibility of command failure represented
-by |Either StackError|.
+by |Either (StackError e)|. 
 
 > type ProofStateT e = StateT ProofContext (Either (StackError e))
 
+Most of the time, we will work in a |ProofStateT| carrying errors
+composed with Strings and terms in display syntax. Hence the following
+type synonym:
+
 > type ProofState = ProofStateT InDTmRN
-
-
-> mliftError :: ProofStateT INTM a -> ProofState a
-> mliftError = mapStateT liftError
 
 
 \subsection{Getters and Setters}

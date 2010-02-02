@@ -148,6 +148,9 @@ The |distillHere| command distills a term in the current context.
 > distillHere tt = do
 >     aus <- getAuncles
 >     mliftError $ distill aus tt
+>         where mliftError :: ProofStateT INTM a -> ProofState a
+>               mliftError = mapStateT liftError
+
 
 The |prettyHere| command distills a term in the current context,
 then passes it to the pretty-printer.
