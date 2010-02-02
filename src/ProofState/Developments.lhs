@@ -130,16 +130,6 @@ cannot.
 >   =  Boy   BoyKind
 >   |  Girl  GirlKind (Dev f) (Maybe (Scheme INTM))
 
-> data Scheme x  =  SchType x
->                |  SchExplicitPi (String :<: Scheme x) (Scheme x)
->                |  SchImplicitPi (String :<: x) (Scheme x)
->   deriving Show
-
-> schemeToType :: Scheme INTM -> INTM
-> schemeToType (SchType ty) = ty
-> schemeToType (SchExplicitPi (x :<: s) t) = PIV x (schemeToType s) (schemeToType t)
-> schemeToType (SchImplicitPi (x :<: s) t) = PIV x s (schemeToType t)
-
 
 \paragraph{Girls for definitions:}
 

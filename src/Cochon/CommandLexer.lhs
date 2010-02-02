@@ -10,6 +10,8 @@
 
 > import Control.Applicative
 
+> import Evidences.Tm
+
 > import Kit.Parsley
 
 > import DisplayLang.Lexer
@@ -30,8 +32,10 @@ with projection functions.
 > data CochonArg = StrArg String 
 >                | InArg InDTmRN 
 >                | ExArg ExDTmRN
+>                | SchemeArg (Scheme InDTmRN)
 >                | Optional CochonArg
 >                | NoCochonArg
+>   deriving Show
 
 
 \subsection{Tokenizer combinators}
@@ -50,6 +54,9 @@ with projection functions.
 
 > tokenString :: Parsley Token CochonArg
 > tokenString = (| StrArg ident |)
+
+> tokenScheme :: Parsley Token CochonArg
+> tokenScheme = (| SchemeArg pScheme |)
 
 > tokenOption :: Parsley Token CochonArg -> Parsley Token CochonArg
 > tokenOption p = (| Optional (bracket Square p) 

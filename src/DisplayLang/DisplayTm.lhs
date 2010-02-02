@@ -194,6 +194,14 @@ We need fewer type synoyms:
 > dfortran _ = "x"
 
 
+\subsection{Schemes}
+
+> schemeToInDTm :: Scheme (InDTm x) -> InDTm x
+> schemeToInDTm (SchType ty) = ty
+> schemeToInDTm (SchExplicitPi (x :<: s) t) = DPIV x (schemeToInDTm s) (schemeToInDTm t)
+> schemeToInDTm (SchImplicitPi (x :<: s) t) = DPIV x s (schemeToInDTm t)
+
+
 \subsection{Sizes}
 
 We keep track of the |Size| of terms when parsing, to avoid nasty left

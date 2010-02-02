@@ -238,3 +238,18 @@ largest size again.
 > mkDALLV :: String -> InDTmRN -> InDTmRN -> InDTmRN
 > mkDALLV  "_"  s p = DALL s (DL (DK p))
 > mkDALLV  x    s p = DALLV x s p
+
+
+
+
+> pScheme :: Parsley Token (Scheme InDTmRN)
+> pScheme = (|mkScheme (many pSchemeBit) (%keyword KwAsc%) pInDTm|)
+>   where
+>     pSchemeBit :: Parsley Token (String, Either (Scheme InDTmRN) InDTmRN)
+>     pSchemeBit = bracket Round (| ident , (%keyword KwAsc%) (| (Left . SchType) pInDTm |) |)
+>                  <|> bracket Curly (| ident , (%keyword KwAsc%) (| Right pInDTm |) |)
+>     
+>     mkScheme :: [(String, Either (Scheme InDTmRN) InDTmRN)] -> InDTmRN -> Scheme InDTmRN
+>     mkScheme [] ty = SchType ty
+>     mkScheme ((x, Left   s) : bits) ty = SchExplicitPi  (x :<: s) (mkScheme bits ty)
+>     mkScheme ((x, Right  s) : bits) ty = SchImplicitPi  (x :<: s) (mkScheme bits ty)

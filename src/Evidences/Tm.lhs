@@ -582,7 +582,6 @@ We can also throw away a label, should we want to.
 > fortran (L (HF x  _))  | not (null x) = x
 > fortran _ = "x"
 
-\subsection{Error Stack}
 
 This is a first try, with some shortcomings. Feel free to modify the
 following to make it suit your need.

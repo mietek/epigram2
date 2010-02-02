@@ -16,6 +16,7 @@
 > import Kit.MissingLibrary
 
 > import ProofState.Developments
+> import ProofState.Lifting
 > import ProofState.ProofContext
 > import ProofState.ProofState
 > import ProofState.ProofKit
@@ -365,3 +366,40 @@ creates a $\Pi$-boy with that type.
 >     tt <- elaborate True (SET :>: ty)
 >     lambdaBoy' (s :<: tt)
 
+
+\subsection{Elaborating Schemes}
+
+> elabLet :: (String :<: Scheme InDTmRN) -> ProofState (EXTM :=>: VAL)
+> elabLet (x :<: sch) = do
+>     makeModule x
+>     goIn
+>     make ("tau" :<: SET)
+>     goIn
+>     (sch', ty :=>: _) <- elabScheme B0 sch
+>     moduleToGoal (N ty)
+>     putMotherScheme sch'
+>     elabProgram (schemeNames sch')
+
+
+> elabScheme :: Entries -> Scheme InDTmRN -> ProofState (Scheme INTM, EXTM :=>: VAL)
+
+> elabScheme es (SchType ty) = do
+>     ty' :=>: _ <- elaborate False (SET :>: ty)
+>     tt <- give ty'
+>     return (SchType (es -| ty'), tt)
+
+> elabScheme es (SchExplicitPi (x :<: s) t) = do
+>     make ("tau" :<: SET)
+>     goIn
+>     (s', ty :=>: _) <- elabScheme es s
+>     piBoy (x :<: N ty)
+>     e <- getDevEntry
+>     (t', tt) <- elabScheme (es :< e) t
+>     return (SchExplicitPi (x :<: s') t', tt)
+
+> elabScheme es (SchImplicitPi (x :<: s) t) = do
+>     ss <- elaborate False (SET :>: s)
+>     piBoy (x :<: termOf ss)
+>     e <- getDevEntry
+>     (t', tt) <- elabScheme (es :< e) t
+>     return (SchImplicitPi (x :<: (es -| termOf ss)) t', tt)

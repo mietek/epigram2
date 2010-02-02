@@ -222,6 +222,13 @@ Construction tactics:
 >           "lambda <labels> : <type> - introduces new module parameters or hypotheses.")
 
 >   : simpleCT
+>         "let"
+>         (| (| (B0 :< ) tokenString |) :< tokenScheme |)
+>         (\ [StrArg x, SchemeArg s] -> elabLet (x :<: s)
+>                 >> return ("Let there be " ++ x ++ "."))
+>         "let <label> <scheme> : <type> - set up a programming problem with a scheme."
+
+>   : simpleCT
 >         "make"
 >         (| (|(B0 :<) tokenString (%keyword KwAsc%)|) :< tokenInTm
 >          | (|(B0 :<) tokenString (%keyword KwDefn%) |) <>< 

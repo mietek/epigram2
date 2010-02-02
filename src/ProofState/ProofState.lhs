@@ -201,6 +201,10 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     replaceLayer (l{mother=ModuleMother n})
 >     putDev dev
 
+> putMotherScheme :: Scheme INTM -> ProofState ()
+> putMotherScheme sch = do
+>     GirlMother ref xn ty _ <- getMother
+>     putMother (GirlMother ref xn ty (Just sch))
 
 \subsubsection{Removers}
 
