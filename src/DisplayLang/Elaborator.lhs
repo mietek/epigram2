@@ -32,6 +32,7 @@
 
 %endif
 
+\subsection{Elaborating |INDTM|s}
 
 The |elaborate| command elaborates a term in display syntax, given its type,
 to produce an elaborated term and its value representation. It behaves
@@ -52,7 +53,7 @@ rather than creating a subgoal.
 > import <- ElaborateRules
 
 First, some special cases to provide a convenient syntax for writing functions from
-interesting types.
+interesting types. \question{Can we move these to more appropriate places?}
 
 > elaborate b (PI UNIT t :>: DCON f) = do
 >     (m' :=>: m) <- elaborate False (t $$ A VOID :>: f)
@@ -102,12 +103,19 @@ interesting types.
 > elaborate b (QUOTIENT a r p :>: DPAIR x DVOID) =
 >   elaborate b (QUOTIENT a r p :>: DCLASS x)
 
-> elaborate b (PRF p :>: DVOID)  = prove b p -- for backwards compatibility
-> elaborate b (PRF p :>: DU)     = prove b p
-
 > elaborate b (NU d :>: DCOIT DVOID sty f s) = do
 >   d' <- bquoteHere d
 >   elaborate b (NU d :>: DCOIT (DT (InTmWrap d')) sty f s)
+
+
+We use underscores |DU| in elaboration to mean "figure this out yourself". At
+the moment, we can try to prove things, but not much else:
+
+> elaborate b (PRF p :>: DVOID)  = prove b p -- for backwards compatibility
+> elaborate b (PRF p :>: DU)     = prove b p
+
+> elaborate b (ty :>: DU)        = elaborate b (ty :>: DQ "underscore")
+
 
 Elaborating a canonical term with canonical type is a job for |canTy|.
 
@@ -182,11 +190,13 @@ If nothing else matches, give up and report an error.
 >                                         ++ errTyVal (ty :<: SET)
 
 
+\subsection{Elaborating |EXDTM|s}
+
 The |elabInfer| command is to |infer| in subsection~\ref{subsec:type-inference} 
 as |elaborate| is to |check|. It infers the type of a display term, calling on
 the elaborator rather than the type-checker. In addition to returning the
-evidence term, value and type, it returns the scheme with which to interpret
-implicit syntax.
+evidence term, value and type, it may return a scheme with which to interpret
+implicit syntax; this will have no implicit arguments at the start.
 
 > elabInfer :: ExDTmRN -> ProofState (EXTM :=>: VAL :<: TY, Maybe (Scheme INTM))
 
@@ -198,18 +208,6 @@ implicit syntax.
 > elabInfer (DP x) = do
 >     (ref, as, ms) <- elabResolve x
 >     processScheme (DTEX (P ref $:$ as)) ms
->   where
->     processScheme :: ExDTmRN -> Maybe (Scheme INTM)
->         -> ProofState (EXTM :=>: VAL :<: TY, Maybe (Scheme INTM))
->     processScheme tm Nothing                     = elabInfer tm
->     processScheme tm (Just (SchType _))          = elabInfer tm
->     processScheme tm ms@(Just (SchExplicitPi _ _))  = do
->         (ttt, _) <- elabInfer tm
->         return (ttt, ms)
->     processScheme tm (Just (SchImplicitPi (_ :<: s) sch)) = 
->         processScheme (tm ::$ A DU) (Just sch)
-
-
 
 > elabInfer (tm ::$ Call _) = do
 >     (tm' :=>: tmv :<: LABEL l ty, _) <- elabInfer tm
@@ -217,9 +215,12 @@ implicit syntax.
 >     return ((tm' :$ Call l') :=>: (tmv $$ Call l) :<: ty, Nothing)
 
 > elabInfer (t ::$ s) = do
->     (t' :=>: tv :<: C ty, _) <- elabInfer t
+>     (t' :=>: tv :<: C ty, ms) <- elabInfer t
 >     (s', ty') <- elimTy (elaborate False) (tv :<: ty) s
->     return ((t' :$ fmap termOf s') :=>: (tv $$ fmap valueOf s') :<: ty', Nothing)
+>     let tm = t' :$ fmap termOf s'
+>     case (s, ms) of
+>         (A _, Just (SchExplicitPi _ sch)) -> processScheme (DTEX tm) (Just sch)
+>         _ -> return (tm :=>: (tv $$ fmap valueOf s') :<: ty', Nothing)
 
 > elabInfer (DType ty) = do
 >     (ty' :=>: vty)  <- elaborate False (SET :>: ty)
@@ -229,6 +230,16 @@ implicit syntax.
 > elabInfer tt = throwError'  (err "elabInfer: can't cope with " 
 >                             ++ errTm (DN tt))
 
+
+> processScheme :: ExDTmRN -> Maybe (Scheme INTM)
+>     -> ProofState (EXTM :=>: VAL :<: TY, Maybe (Scheme INTM))
+> processScheme tm Nothing                     = elabInfer tm
+> processScheme tm (Just (SchType _))          = elabInfer tm
+> processScheme tm ms@(Just (SchExplicitPi _ _))  = do
+>     (ttt, _) <- elabInfer tm
+>     return (ttt, ms)
+> processScheme tm (Just (SchImplicitPi (_ :<: s) sch)) = 
+>     processScheme (tm ::$ A DU) (Just sch)
 
 \subsection{Proof Construction}
 
@@ -397,7 +408,7 @@ creates a $\Pi$-boy with that type.
 >     moduleToGoal (N ty)     
 >     putMotherScheme sch'
 >     r <- elabProgram (schemeNames sch')
->     putMotherScheme sch'
+>     putMotherScheme sch' -- this is wrong but does it matter?
 >     return r
 
 
