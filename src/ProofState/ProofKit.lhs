@@ -209,16 +209,20 @@ is not in the required form.
 >                 goDownAcc (acc :< e'') news'
 
 > goTo :: Name -> ProofState ()
-> goTo [] = return ()
-> goTo (xn:xns) = (seek xn >> goTo xns)
+> goTo name = much goOut >> goTo' name
+
+> goTo' :: Name -> ProofState ()
+> goTo' [] = return ()
+> goTo' (xn:xns) = (seek xn >> goTo' xns)
 >     `pushError` (err "goTo: could not find " ++ err (showName (xn:xns)))
 >   where
 >     seek :: (String, Int) -> ProofState ()
->     seek xn = (goUp <|> goIn) >> do
+>     seek xn = do
+>         goIn
 >         m <- getMotherName
 >         if xn == last m
 >             then return ()
->             else seek xn
+>             else goUp `untilA` (guard . (== xn) . last =<< getMotherName)
 
 
 \subsection{Goal Search Commands}

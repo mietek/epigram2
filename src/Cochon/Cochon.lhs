@@ -297,7 +297,6 @@ Navigation tactics:
 >       "last - searches for the last goal in the proof state."
 
 >   : unaryNameCT "jump" (\ x -> do
->       much goOut
 >       (n := _) <- resolveHere x
 >       goTo n
 >       return ("Jumping to " ++ showName n ++ "...")
@@ -476,7 +475,7 @@ Import more tactics from an aspect:
 > doCTacticsAt [] locs = return locs
 > doCTacticsAt ((_, []):ncs) locs = doCTacticsAt ncs locs
 > doCTacticsAt ((n, cs):ncs) (locs :< loc) = do
->     let Right loc' = execStateT (much goOut >> goTo n) loc
+>     let Right loc' = execStateT (goTo n) loc
 >     locs' <- doCTactics cs (locs :< loc :< loc')
 >     doCTacticsAt ncs locs'
 
