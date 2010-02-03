@@ -120,6 +120,16 @@ away bits of the context to produce an answer, then restores the saved state.
 >            (_, es' :< _) -> putDevEntries es' >> hyps aus me
 
 
+> infoScheme :: RelName -> ProofState String
+> infoScheme x = do
+>     (_, _, ms) <- elabResolve x
+>     case ms of
+>         Just sch -> do
+>             d <- prettySchemeHere sch
+>             return (renderHouseStyle d)
+>         Nothing -> return (showRelName x ++ " does not have a scheme.")
+
+
 The |infoWhatIs| command displays a term in various representations.
 
 > infoWhatIs :: ExDTmRN -> ProofState String
@@ -217,11 +227,8 @@ of the proof state at the current location.
 >     prettyE e = do
 >         goIn
 >         d <- prettyPS aus me
->         s <- case entryScheme e of
->                Just sch  -> prettySchemeHere sch
->                Nothing   -> return empty
 >         goOut
->         return (sep  [  text (fst (entryLastName e)) <+> s
+>         return (sep  [  text (fst (entryLastName e))
 >                      ,  nest 2 d <+> kword KwSemi
 >                      ])
 >
@@ -256,6 +263,9 @@ of the proof state at the current location.
 
 >   : unaryInCT "parse" (return . show)
 >       "parse <term> - parses <term> and displays the internal display-sytnax representation."
+
+>   : unaryNameCT "scheme" infoScheme
+>       "scheme <name> - looks up the scheme on the definition <name>."
 
 >   : unaryStringCT "show" (\s -> case s of
 >         "auncles"  -> infoAuncles
