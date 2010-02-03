@@ -232,7 +232,7 @@ It returns an appropriate relative name and the number of arguments to drop.
 >    tryBuiltins :: (RelName, Int, Maybe (Scheme INTM))
 >    tryBuiltins = case find ((target ==) . refName . snd) (axioms ++ primitives) of
 >       Just (s, _)  -> ([(s, Rel 0)], 0, Nothing)
->       Nothing      -> ([("???" ++ showName target, Rel 0)], 0, Nothing)
+>       Nothing      -> ([(showName target, Rel 0)], 0, Nothing)
 
 
 The |searchKids| function searches a list of children to match a name suffix, producing
