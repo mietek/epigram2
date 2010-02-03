@@ -121,7 +121,7 @@ entry's children to resolve the next component.
 >         E r _ e _ -> findChild r (boySpine xs) e ys
 >         M n (es, _, _) -> findInEntries es ys (boySpine xs)
 >     Left y'  -> findGlobal xs (y' : ys)
-
+> findGlobal _ [] = Left [err "findGlobal: missing name!"]
 
 The |findChild| function takes a reference to a containing entry, a spine of
 shared parameters, an entity |e| and the remainder of a relative name to

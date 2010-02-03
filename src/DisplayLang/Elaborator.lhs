@@ -293,12 +293,20 @@ hard bits for the human.
 
 The |elabResolve| command resolves a relative name to a reference,
 a spine of shared parameters to which it should be applied, and
-possibly a scheme.
+possibly a scheme. If the name ends with "./", the scheme will be
+discarded, so all parameters can be provided explicitly.
+\question{What should the syntax be for this, and where should it be handled?}
 
 > elabResolve :: RelName -> ProofState (REF, Spine {TT} REF, Maybe (Scheme INTM))
 > elabResolve x = do
->    aus <- getAuncles
->    findGlobal aus x `catchEither` (err "elabResolve: cannot resolve name")
+>     aus <- getAuncles
+>     if fst (last x) == "/"
+>         then do
+>             (r, s, _) <- findGlobal aus (init x)
+>                 `catchEither` (err "elabResolve: cannot resolve name")
+>             return (r, s, Nothing)
+>         else findGlobal aus x
+>                 `catchEither` (err "elabResolve: cannot resolve name")
 >    
 
 
