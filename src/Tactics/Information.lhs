@@ -9,6 +9,7 @@
 
 > import Control.Applicative hiding (empty)
 > import Control.Monad.State
+> import Data.Traversable
 > import Text.PrettyPrint.HughesPJ
 
 > import Kit.BwdFwd hiding ((<+>))
@@ -151,6 +152,10 @@ The |distillHere| command distills a term in the current context.
 >         where mliftError :: ProofStateT INTM a -> ProofState a
 >               mliftError = mapStateT liftError
 
+> distillSchemeHere :: Scheme INTM -> ProofState (Scheme InDTmRN)
+> distillSchemeHere = Data.Traversable.mapM
+>     (\tm -> distillHere (SET :>: tm) >>= return . termOf)
+
 
 The |prettyHere| command distills a term in the current context,
 then passes it to the pretty-printer.
@@ -162,6 +167,11 @@ then passes it to the pretty-printer.
 > prettyHereAt size tt = do
 >     dtm :=>: _ <- distillHere tt
 >     return (pretty dtm size)
+
+> prettySchemeHere :: Scheme INTM -> ProofState Doc
+> prettySchemeHere sch = do
+>     sch' <- distillSchemeHere sch
+>     return (pretty sch' maxBound)
 
 The |resolveHere| command resolves a relative name to a reference,
 discarding any shared parameters it should be applied to.
@@ -202,12 +212,15 @@ of the proof state at the current location.
 >         tyd <- prettyHereAt (pred ArrSize) (SET :>: ty')
 >         return (prettyBKind k
 >                  (text x <+> kword KwAsc <+> tyd))
->                                       
+>      
 >     prettyE e = do
 >         goIn
 >         d <- prettyPS aus me
+>         s <- case entryScheme e of
+>                Just sch  -> prettySchemeHere sch
+>                Nothing   -> return empty
 >         goOut
->         return (sep  [  text (fst (entryLastName e))
+>         return (sep  [  text (fst (entryLastName e)) <+> s
 >                      ,  nest 2 d <+> kword KwSemi
 >                      ])
 >

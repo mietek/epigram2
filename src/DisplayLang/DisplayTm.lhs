@@ -202,13 +202,30 @@ We need fewer type synoyms:
 A definition may have a |Scheme|, which allows us to handle implicit syntax.
 A |Scheme| is either a type, an explicit $\Pi$ whose domain and codomain are
 schemes, or an implicit $\Pi$ whose domain is a type and whose codomain is
-a scheme. The |Scheme| data type is parameterised by the representation of
+a scheme. A |Scheme| is a functor, parameterised by the representation of
 types it uses.
 
 > data Scheme x  =  SchType x
 >                |  SchExplicitPi (String :<: Scheme x) (Scheme x)
 >                |  SchImplicitPi (String :<: x) (Scheme x)
 >   deriving Show
+
+%if False
+
+> instance Functor Scheme where
+>     fmap = fmapDefault
+
+> instance Foldable Scheme where
+>     foldMap = foldMapDefault
+
+> instance Traversable Scheme where
+>     traverse f (SchType t) = (|SchType (f t)|)
+>     traverse f (SchExplicitPi (x :<: schS) schT) =
+>         (| SchExplicitPi (| (x :<:) (traverse f schS) |) (traverse f schT) |)
+>     traverse f (SchImplicitPi (x :<: s) schT) = 
+>         (| SchImplicitPi (| (x :<:) (f s) |) (traverse f schT) |)
+
+%endif
 
 Given a scheme, we can extract the names of its $\Pi$s:
 

@@ -393,9 +393,10 @@ creates a $\Pi$-boy with that type.
 >     goIn
 >     (sch', ty :=>: _) <- elabScheme B0 sch
 >     moduleToGoal (N ty)     
->     r <- elabProgram (schemeNames sch')
 >     putMotherScheme sch'
->     nextGoal
+>     r <- elabProgram (schemeNames sch')
+>     goIn
+>     putMotherScheme sch'
 >     return r
 
 

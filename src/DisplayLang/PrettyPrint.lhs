@@ -133,6 +133,16 @@ than a $\lambda$-term is reached.
 >     import <- ExDTmPretty
 >     pretty exdtm        = const (quotes . text . show $ exdtm)
 
+> instance Pretty (Scheme InDTmRN) where
+>     pretty (SchType ty) = wrapDoc (kword KwAsc <+> pretty ty maxBound) ArrSize
+>     pretty (SchExplicitPi (x :<: schS) schT) = wrapDoc (
+>         parens (text x <+> pretty schS maxBound)
+>             <+> pretty schT maxBound
+>         ) ArrSize
+>     pretty (SchImplicitPi (x :<: s) schT) = wrapDoc (
+>         braces (text x <+> kword KwAsc <+> pretty s maxBound)
+>             <+> pretty schT maxBound
+>         ) ArrSize         
 
 > import <- Pretty
 
