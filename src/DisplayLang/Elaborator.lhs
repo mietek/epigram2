@@ -114,7 +114,11 @@ the moment, we can try to prove things, but not much else:
 > elaborate b (PRF p :>: DVOID)  = prove b p -- for backwards compatibility
 > elaborate b (PRF p :>: DU)     = prove b p
 
-> elaborate b (ty :>: DU)        = elaborate b (ty :>: DQ "underscore")
+> elaborate b (ty :>: DU) = do
+>     ty' <- bquoteHere ty
+>     x <- pickName "underscore" ""
+>     neutralise =<< make' Hoping (x :<: ty' :=>: ty)
+>     
 
 
 Elaborating a canonical term with canonical type is a job for |canTy|.
@@ -163,19 +167,41 @@ and carry on elaborating.
 >     elaborate True (ty :>: underDScope sc l)
 >     
     
-Much as with type-checking, we push types in to neutral terms by calling
-|elabInfer| on the term, then checking the inferred type is what we pushed in.
+We push types in to neutral terms by calling |elabInfer| on the term, then
+checking how the inferred type compares to what we pushed in. If they are
+definitionally equal, we are done. Otherwise, we run |eqGreen|: if the
+equality is obviously absurd then we complain, and if not we hope for
+a solution to the required equation and return a coercion.
 
 > elaborate top (w :>: DN n) = do
->   (nn :<: y, _) <- elabInfer n
->   eq <- withNSupply (equal (SET :>: (w, y)))
->   guard eq `pushError`  (err "elaborate: inferred type "
->                         ++ errTyVal (y :<: SET)
->                         ++ err " of "
->                         ++ errTyVal ((valueOf nn) :<: SET)
->                         ++ err " is not " 
->                         ++ errTyVal (w :<: SET))
->   neutralise nn
+>     (n' :=>: nv :<: y, _) <- elabInfer n
+>     eq <- withNSupply (equal (SET :>: (w, y)))
+>     if eq
+>         then return (N n' :=>: nv)
+>         else case opRunEqGreen [SET, y, SET, w] of
+>             Right ABSURD -> throwError' $ err "elaborate: inferred type "
+>                                             ++ errTyVal (y :<: SET)
+>                                             ++ err " of "
+>                                             ++ errTyVal (nv :<: y)
+>                                             ++ err " is not " 
+>                                             ++ errTyVal (w :<: SET)
+>             Right p -> do
+>                 p' <- bquoteHere p
+>                 y' <- bquoteHere y
+>                 w' <- bquoteHere w
+>                 x <- pickName "underscore" ""
+>                 q' :=>: q <- make' Hoping (x :<: PRF p' :=>: PRF p)
+>                 return (N (coe :@ [y', w', N q', N n']) :=>: coe @@ [y, w, q, nv])
+
+>             Left _ -> do
+>                 y' <- bquoteHere y
+>                 w' <- bquoteHere w
+>                 x <- pickName "underscore" ""
+>                 q' :=>: q <- make' Hoping (x :<:
+>                     (PRF (EQBLUE (SET :>: y') (SET :>: w')) :=>:
+>                      PRF (EQBLUE (SET :>: y) (SET :>: w))))
+>                 return (N (coe :@ [y', w', N q', N n']) :=>: coe @@ [y, w, q, nv])
+
 
 If the elaborator made up a term, it does not require further elaboration, but
 we should type-check it for safety's sake. 

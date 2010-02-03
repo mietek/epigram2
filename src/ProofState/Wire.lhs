@@ -133,10 +133,10 @@ To update a hole, we must:
 \item update the news bulletin with news about this girl.
 \end{enumerate}
 
-> tellEntry news (E (name := HOLE :<: tyv) sn (Girl LETG (cs, Unknown tt, nsupply) ms) ty) = do
+> tellEntry news (E (name := HOLE h :<: tyv) sn (Girl LETG (cs, Unknown tt, nsupply) ms) ty) = do
 >     let  (tt', n)             = tellNewsEval news tt
 >          (ty' :=>: tyv', n')  = tellNewsEval news (ty :=>: tyv)
->          ref                  = name := HOLE :<: tyv'
+>          ref                  = name := HOLE h :<: tyv'
 >     return (addNews (ref, min n n') news,
 >                 E ref sn (Girl LETG (cs, Unknown tt', nsupply) ms) ty')
 

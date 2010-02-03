@@ -330,7 +330,7 @@
 
 > import -> ElaborateRules where
 >   elaborate True (SET :>: DIMU Nothing iI d i) = do
->       GirlMother (nom := HOLE :<: ty) _ _ _ <- getMother
+>       GirlMother (nom := HOLE _ :<: ty) _ _ _ <- getMother
 >       let fr = nom := FAKE :<: ty
 >       xs <- getBoys
 >       guard (not (null xs))

@@ -105,7 +105,7 @@ updated information, providing a friendlier interface than |get| and |put|.
 
 > getHoleGoal :: ProofStateT e (INTM :=>: TY)
 > getHoleGoal = do
->     GirlMother (_ := HOLE :<: _) _ _ _ <- getMother
+>     GirlMother (_ := HOLE _ :<: _) _ _ _ <- getMother
 >     getGoal "getHoleGoal"
 
 > getLayer :: ProofStateT e Layer

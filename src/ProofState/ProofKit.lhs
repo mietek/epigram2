@@ -112,7 +112,7 @@ may be useful for paranoia purposes.
 >                               ++ err "does not admit"
 >                               ++ errVal tm)
 >             return ()
->         GirlMother (_ := HOLE :<: ty) _ _ _ -> do
+>         GirlMother (_ := HOLE _ :<: ty) _ _ _ -> do
 >             ty' <- bquoteHere ty
 >             mc <- withNSupply $ liftError . (typeCheck $ check (SET :>: ty'))
 >             mc `catchEither` (err "validateHere: hole type failed to type-check: SET does not admit" 
@@ -208,6 +208,7 @@ is not in the required form.
 >                 replaceLayer l{cadets=NF es}
 >                 goDownAcc (acc :< e'') news'
 
+
 > goTo :: Name -> ProofState ()
 > goTo name = much goOut >> goTo' name
 
@@ -288,7 +289,7 @@ several alternatives for where to go next and continuing until a goal is reached
 >     ModuleMother n <- getMother
 >     aus <- getAuncles
 >     let  ty' = liftType aus ty
->          ref = n := HOLE :<: evTm ty'
+>          ref = n := HOLE Waiting :<: evTm ty'
 >     putMother (GirlMother ref (last n) ty' Nothing)
 >     putDevTip (Unknown (ty :=>: tyv))
 >     return (applyAuncles ref aus)
@@ -455,15 +456,15 @@ current development, after checking that the purported type is in fact a type.
 >     tt <- mty `catchEither`  (err "make: " 
 >                              ++ errInTm ty 
 >                              ++ err " is not a set.")
->     make' (s :<: tt)
+>     make' Waiting (s :<: tt)
 
-> make' :: (String :<: (INTM :=>: TY)) -> ProofState (EXTM :=>: VAL)
-> make' (s :<: (ty :=>: tyv)) = do
+> make' :: HKind -> (String :<: (INTM :=>: TY)) -> ProofState (EXTM :=>: VAL)
+> make' hk (s :<: (ty :=>: tyv)) = do
 >     aus <- getAuncles
 >     s' <- pickName "G" s
 >     n <- withNSupply (flip mkName s')
 >     let  ty'  = liftType aus ty
->          ref  = n := HOLE :<: evTm ty'
+>          ref  = n := HOLE hk :<: evTm ty'
 >     nsupply <- getDevNSupply
 >     putDevEntry (E ref (last n) (Girl LETG (B0, Unknown (ty :=>: tyv), freshNSpace nsupply s') Nothing) ty')
 >     putDevNSupply (freshName nsupply)
