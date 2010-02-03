@@ -153,8 +153,9 @@ The |distillHere| command distills a term in the current context.
 >               mliftError = mapStateT liftError
 
 > distillSchemeHere :: Scheme INTM -> ProofState (Scheme InDTmRN)
-> distillSchemeHere = Data.Traversable.mapM
->     (\tm -> distillHere (SET :>: tm) >>= return . termOf)
+> distillSchemeHere sch = do
+>     aus <- getAuncles
+>     return . fst =<< (mapStateT liftError $ distillScheme aus B0 sch)
 
 
 The |prettyHere| command distills a term in the current context,

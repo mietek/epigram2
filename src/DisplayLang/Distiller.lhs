@@ -24,9 +24,9 @@
 > import Evidences.Tm
 > import Evidences.Mangler
 
-
 %endif
 
+\subsection{Distilling |INTM|s}
 
 The |distill| command converts a typed INTM in the evidence language
 to a term in the display language; that is, it reverses |elaborate|.
@@ -73,6 +73,8 @@ If none of the cases match, we complain loudly.
 
 > distill _ (ty :>: tm) = error ("distill: can't cope with\n" ++ show ty ++ "\n:>:\n" ++ show tm)
 
+
+\subsection{Distilling |EXTM|s}
 
 The |distillInfer| command is the |EXTM| version of |distill|, which also yields
 the type of the term. It keeps track of a list of entries in scope, but
@@ -131,6 +133,8 @@ If nothing matches, we are unable to distill this term, so we complain loudly.
 >                                      ++ errTm (N tm))
 
 
+\subsection{Distillation Support}
+
 The |processArgs| command takes a list of entries in scope, a typed value
 and a spine of arguments for the value. It distills the spine, using
 |elimTy| to determine the appropriate type to push in at each step, and returns
@@ -156,3 +160,34 @@ The |toExDTm| helper function will distill a term to produce an
 >     (tm'  :=>: _)    <- distill es (tyv :>: tm)
 >     return (DTY ty' tm')
 
+
+\subsection{Distilling Schemes}
+
+> distillScheme :: Entries -> Bwd REF -> Scheme INTM -> ProofStateT INTM (Scheme InDTmRN, INTM)
+
+> distillScheme es rs (SchType ty) = do
+>     let ty' = underneath 0 rs ty
+>     ty'' :=>: _ <- distill es (SET :>: ty')
+>     return (SchType ty'', ty')
+
+> distillScheme es rs (SchExplicitPi (x :<: schS) schT) = do
+>     (schS', s') <- distillScheme es rs schS
+>     freshRef (x :<: evTm s')(\ref -> do
+>         (schT', t') <- distillScheme (es :< E ref (lastName ref) (Boy PIB) s')
+>                            (rs :< ref) schT
+>         return (SchExplicitPi (x :<: schS') schT', PIV x s' t')
+>       )
+
+> distillScheme es rs (SchImplicitPi (x :<: s) schT) = do
+>     let s' = underneath 0 rs s
+>     sd :=>: sv <- distill es (SET :>: s')
+>     freshRef (x :<: sv) (\ref -> do
+>         (schT', t') <- distillScheme (es :< E ref (lastName ref) (Boy PIB) s')
+>                            (rs :< ref) schT
+>         return (SchImplicitPi (x :<: sd) schT', PIV x s' t')
+>       )
+
+
+> underneath :: Int -> Bwd REF -> INTM -> INTM
+> underneath _ B0 tm = tm
+> underneath n (rs :< ref) tm = underneath (n+1) rs (under n ref %% tm)
