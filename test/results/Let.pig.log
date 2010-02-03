@@ -1,0 +1,17 @@
+Let there be a.
+Going to root...
+: Set
+Let there be f.
+Going to root...
+(X : Set) (x : X) : Set
+Let there be g.
+Going to root...
+{q : :- TT} (X : Set) : X
+Let there be h.
+Going to root...
+(X : Set) {q : :- (FF => Inh X)} : X
+Let there be coe2.
+Made lambda boy!
+Ta.
+Going to root...
+Loaded.
