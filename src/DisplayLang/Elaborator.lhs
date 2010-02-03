@@ -336,15 +336,15 @@ subgoals produced by elaboration will be children of the resulting goal.
 
 
 The |elabProgram| command adds a label to a type, given a list of arguments.
-e.g. with a goal |plus : nat -> nat -> nat|, |program x,y| will give a proof
+e.g. with a goal |plus : Nat -> Nat -> Nat|, |program x,y| will give a proof
 state of:
 
 \begin{verbatim}
-[ plus : \ x y c -> c call : (x:N)->(y:N)-><plus x y : N>->N
-  g : (x:N)->(y:N)-><plus x y : N>
-  x : N
-  y : N  (from lambdaboy)
-] g x y call   (from giveNext, then we're ready to go).
+plus [
+  plus := ? : (x : Nat) -> (y : Nat) -> <plus x y : Nat>
+  \ x : Nat
+  \ y : Nat
+] plus x y call : Nat
 \end{verbatim}
 
 > elabProgram :: [String] -> ProofState (EXTM :=>: VAL)
@@ -354,11 +354,13 @@ state of:
 >     let pn = P (n := FAKE :<: g)
 >     let newty = pity (mkTel pn g [] args)
 >     newty' <- bquoteHere newty
->     g :=>: _ <- make ("g" :<: newty') 
+>     g :=>: _ <- make (fst (last n) :<: newty') 
 >     argrefs <- traverse lambdaBoy args
 >     let fcall = pn $## (map NP argrefs) 
 >     let call = g $## (map NP argrefs) :$ Call (N fcall)
->     give' (N call)
+>     r <- give' (N call)
+>     goIn
+>     return r
 >   where mkTel :: NEU -> TY -> [VAL] -> [String] -> TEL TY
 >         mkTel n (PI s t) args (x:xs)
 >            = (x :<: s) :-: (\val -> mkTel n (t $$ A val) (val:args) xs)
@@ -395,7 +397,6 @@ creates a $\Pi$-boy with that type.
 >     moduleToGoal (N ty)     
 >     putMotherScheme sch'
 >     r <- elabProgram (schemeNames sch')
->     goIn
 >     putMotherScheme sch'
 >     return r
 
