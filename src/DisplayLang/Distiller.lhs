@@ -127,7 +127,8 @@ eliminators is applied in its entirety.
 
 If nothing matches, we are unable to distill this term, so we complain loudly.
 
-> distillInfer _ tm _ = error ("distillInfer: can't cope with " ++ show tm)
+> distillInfer _ tm _ = throwError' $ (err "distillInfer: can't cope with "
+>                                      ++ errTm (N tm))
 
 
 The |processArgs| command takes a list of entries in scope, a typed value

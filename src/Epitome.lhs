@@ -118,6 +118,7 @@
 %include Cochon/DevLoad.lhs
 %include Cochon/CommandLexer.lhs
 %include Cochon/Cochon.lhs
+%include Cochon/Error.lhs
 %include Main.lhs
 
 \chapter{Compiler}
