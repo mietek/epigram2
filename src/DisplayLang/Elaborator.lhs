@@ -120,7 +120,6 @@ the moment, we can try to prove things, but not much else:
 >     neutralise =<< make' Hoping (x :<: ty' :=>: ty)
 >     
 
-
 Elaborating a canonical term with canonical type is a job for |canTy|.
 
 > elaborate top (C ty :>: DC tm) = do
@@ -178,29 +177,22 @@ a solution to the required equation and return a coercion.
 >     eq <- withNSupply (equal (SET :>: (w, y)))
 >     if eq
 >         then return (N n' :=>: nv)
->         else case opRunEqGreen [SET, y, SET, w] of
->             Right ABSURD -> throwError' $ err "elaborate: inferred type "
+>         else do
+>             p <- (case opRunEqGreen [SET, y, SET, w] of
+>                         Right ABSURD ->
+>                             throwError' $ err "elaborate: inferred type "
 >                                             ++ errTyVal (y :<: SET)
 >                                             ++ err " of "
 >                                             ++ errTyVal (nv :<: y)
 >                                             ++ err " is not " 
 >                                             ++ errTyVal (w :<: SET)
->             Right p -> do
->                 p' <- bquoteHere p
->                 y' <- bquoteHere y
->                 w' <- bquoteHere w
->                 x <- pickName "underscore" ""
->                 q' :=>: q <- make' Hoping (x :<: PRF p' :=>: PRF p)
->                 return (N (coe :@ [y', w', N q', N n']) :=>: coe @@ [y, w, q, nv])
-
->             Left _ -> do
->                 y' <- bquoteHere y
->                 w' <- bquoteHere w
->                 x <- pickName "underscore" ""
->                 q' :=>: q <- make' Hoping (x :<:
->                     (PRF (EQBLUE (SET :>: y') (SET :>: w')) :=>:
->                      PRF (EQBLUE (SET :>: y) (SET :>: w))))
->                 return (N (coe :@ [y', w', N q', N n']) :=>: coe @@ [y, w, q, nv])
+>                         Right p  -> return p
+>                         Left _   -> return (EQBLUE (SET :>: y) (SET :>: w))
+>                  ) :: ProofState VAL
+>             _ :=>: q <- prove False p 
+>             let r = coe @@ [y, w, q, nv]
+>             r' <- bquoteHere r
+>             return (r' :=>: r)
 
 
 If the elaborator made up a term, it does not require further elaboration, but
