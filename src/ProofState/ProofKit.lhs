@@ -13,6 +13,7 @@
 > import Control.Monad.Error
 > import Control.Monad.State
 > import Data.Foldable
+> import Data.Traversable
 
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
@@ -129,46 +130,122 @@ may be useful for paranoia purposes.
 
 \subsection{Navigation Commands}
 
+\subsubsection{Single-step Navigation}
 
-Now we provide commands to navigate the proof state:
+First, some vocabulary. The \emph{focus} is the current development; it contains
+a \emph{cursor} which is the point at which changes take place. Consider
+the following example:
+
+\begin{verbatim}
+[
+  A := ? : S
+  B [
+    D := ? : S
+    \ x : S
+    E := ? : S
+    \ y : S ___ cursor here
+  ] : S
+  C := ? : S
+]
+\end{verbatim}
+
+Suppose the cursor is initially at the bottom of the development |B|, which
+is in focus. We provide the following commands to navigate the proof state:
 \begin{itemize}
-\item |goIn| changes the current location to the bottom-most girl in the current development;
-\item |goOut| goes up a layer, so the focus changes to the development containing
-the current working location;
-\item |goUp| moves the focus to the next eldest girl;
-\item |goDown| moves the focus to the next youngest girl.
+\item |cursorUp| moves the cursor up by one entry (under |E| in the example);
+\item |cursorDown| moves the cursor down by one entry (illegal in the example);
+\item |goIn| moves the focus into the girl or module above the cursor,
+      and leaves the cursor at the bottom of the development
+      (inside |E| in the example);
+\item |goOut| moves the focus out to the development that contains it, with
+      the cursor at the bottom of the development (under |C| in the example);
+\item |goOutProperly| moves the focus out to the development that contains
+      it, with the cursor under the previously focused entry
+      (under |B| in the example);
+\item |goUp| moves the focus to the next eldest girl or module and leaves the
+      cursor at the bottom (inside |A| in the example); and
+\item |goDown| moves the focus to the next youngest girl or module and leaves
+      the cursor at the bottom (inside |C| in the example).
 \end{itemize}
 
-These commands fail (yielding |Nothing|) if they are impossible because the proof context
-is not in the required form.
+These commands fail with an error if they are impossible because the
+proof context is not in the required form. Things are slightly more complicated
+than the above description because of the possibility of news bulletins below
+the cursor; as these are propagated lazily, they must be pushed down when the
+cursor or focus move.
+
+The |cursorUp| and |cursorDown| commands are straightforward, because there
+is no news to worry about. We simply move an entry above the cursor to one
+below, or vice versa.
+
+> cursorUp :: ProofState ()
+> cursorUp = (do
+>     es :< e <- getDevEntries
+>     cadets <- getDevCadets
+>     putDevEntries es
+>     putDevCadets (e :> cadets)
+>     return ()
+>   ) `pushError` (err "cursorUp: cannot move cursor up.")
+
+> cursorDown :: ProofState ()
+> cursorDown = (do
+>     es <- getDevEntries
+>     cadet :> cadets <- getDevCadets
+>     putDevEntries (es :< cadet)
+>     putDevCadets cadets
+>     return ()
+>   ) `pushError` (err "cursorDown: cannot move cursor down.")
+
+The |goIn| command has no news to worry about either; it simply moves the
+cursor upwards until it finds an entry with a development, then enters it.
 
 > goIn :: ProofState ()
-> goIn = goInAcc (NF F0) `pushError` (err "goIn: you can't go that way.")
->   where
->     goInAcc :: NewsyEntries -> ProofState ()
->     goInAcc (NF cadets) = do
->         (ls, (es :< e, tip, nsupply)) <- get
->         if entryHasDev e
->            then  put (ls :< Layer es (entryToMother e) (NF cadets) tip nsupply, entryDev e)
->            else  put (ls, (es, tip, nsupply))
->                  >> goInAcc (NF (Right (reverseEntry e) :> cadets)) 
+> goIn = (do
+>     es :< e <- getDevEntries
+>     case entryDev e of
+>         Nothing   -> cursorUp >> goIn
+>         Just dev  -> do
+>              cadets <- getDevCadets
+>              tip <- getDevTip
+>              nsupply <- getDevNSupply
+>              putLayer (Layer es (entryToMother e) (reverseEntries cadets)
+>                            tip nsupply)
+>              putDev dev
+>              putDevCadets F0
+>              return ()
+>   )  `pushError` (err "goIn: you can't go that way.")
 
 
-> jumpIn :: Entry NewsyFwd -> ProofState NewsyEntries
-> jumpIn e = do
->     (ls, (es, tip, nsupply)) <- get
->     let (cs, newTip, newNSupply) = entryDev e
->     put (ls :< Layer es (entryToMother e) (NF F0) tip nsupply, (B0, newTip, newNSupply))
->     return cs
+The |goOut| command has to deal with any news that may be present in the cadets
+of the current layer (i.e. down from the focus). It updates the cadets,
+starting with the empty bulletin, so it ends up with the cursor at the bottom
+of the new focus.
 
 > goOut :: ProofState ()
 > goOut = (do
 >     e <- getMotherEntry
 >     l <- removeLayer
 >     putDev (elders l :< e, laytip l, laynsupply l)
->     propagateNews True [] (cadets l)  -- should update tip and pass on news
+>     putDevCadets F0
+>     propagateNews True [] (cadets l)
 >     return ()
 >   ) `pushError` (err "goOut: you can't go that way.")
+
+
+The |goOutProperly| variant calls |goOut|, then moves the cursor back up to
+just below the previous focus.
+
+> goOutProperly :: ProofState ()
+> goOutProperly = do
+>     Layer{cadets=cadets} <- getLayer
+>     goOut
+>     Data.Traversable.mapM (const cursorUp) cadets
+>     return ()
+
+
+The |goUp| command looks through the layer elders for one that has a
+development, accumulating boys it passes over so they be put back as
+layer cadets at the new focus.
 
 > goUp :: ProofState ()
 > goUp = goUpAcc (NF F0) `pushError` (err "goUp: you can't go that way.")
@@ -176,15 +253,21 @@ is not in the required form.
 >     goUpAcc :: NewsyEntries -> ProofState ()
 >     goUpAcc (NF acc) = do
 >         l@(Layer (es :< e) m (NF cadets) tip nsupply) <- getLayer
->         if entryHasDev e
->             then do
+>         case entryDev e of
+>             Just dev -> do
 >                 me <- getMotherEntry
->                 putDev (entryDev e)
->                 replaceLayer l{elders=es, mother=entryToMother e, cadets=NF (acc <+> 
->                     (Right (reverseEntry me) :> cadets))}
+>                 putDev dev
+>                 replaceLayer l{elders=es, mother=entryToMother e,
+>                     cadets=NF (acc <+> (Right (reverseEntry me) :> cadets))}
 >                 return ()
->             else  replaceLayer l{elders=es}
->                   >> goUpAcc (NF (Right (reverseEntry e) :> acc))
+>             Nothing -> do
+>                 replaceLayer l{elders=es}
+>                 goUpAcc (NF (Right (reverseEntry e) :> acc))
+
+
+The |goDown| command looks through the layer cadets for one that has a
+development, passing on news it encounters as it goes and accumulating
+boys so they can be put back as layer elders at the new focus.
 
 > goDown :: ProofState ()
 > goDown = goDownAcc B0 [] `pushError` (err "goDown: you can't go that way.")
@@ -199,7 +282,8 @@ is not in the required form.
 >             Right e -> case entryCoerce e of
 >               Left (es', tip', nsupply') ->  do
 >                 me <- getMotherEntry
->                 replaceLayer l{elders=(elders :< me) <+> acc, mother=entryToMother e, cadets=NF es}
+>                 replaceLayer l{elders=(elders :< me) <+> acc,
+>                                    mother=entryToMother e, cadets=NF es}
 >                 putDev (B0, tip', nsupply')
 >                 news' <- propagateNews True news es'
 >                 return ()
@@ -209,14 +293,38 @@ is not in the required form.
 >                 goDownAcc (acc :< e'') news'
 
 
-> goTo :: Name -> ProofState ()
-> goTo name = much goOut >> goTo' name
+\subsubsection{Many-step Navigation}
 
-> goTo' :: Name -> ProofState ()
-> goTo' [] = return ()
-> goTo' (xn:xns) = (seek xn >> goTo' xns)
->     `pushError` (err "goTo: could not find " ++ err (showName (xn:xns)))
+The |cursorTop|, |cursorBottom|, |goTop|, |goBottom| and |goRoot| commands
+apply the corresponding single-step commands zero or more times.
+
+> cursorTop :: ProofState ()
+> cursorTop = much cursorUp
+
+> cursorBottom :: ProofState ()
+> cursorBottom = much cursorDown
+
+> goTop :: ProofState ()
+> goTop = much goUp
+
+> goBottom :: ProofState ()
+> goBottom = much goDown
+
+> goRoot :: ProofState ()
+> goRoot = much goOut
+
+
+The |goTo| command moves the focus to the entry with the given long name,
+starting from the root module.
+
+> goTo :: Name -> ProofState ()
+> goTo name = goRoot >> goTo' name
 >   where
+>     goTo' :: Name -> ProofState ()
+>     goTo' [] = return ()
+>     goTo' (xn:xns) = (seek xn >> goTo' xns)
+>         `pushError` (err "goTo: could not find " ++ err (showName (xn:xns)))
+>
 >     seek :: (String, Int) -> ProofState ()
 >     seek xn = do
 >         goIn
@@ -264,7 +372,7 @@ several alternatives for where to go next and continuing until a goal is reached
 > prevGoal = (prevStep `untilA` isGoal) `pushError` (err "prevGoal: no previous goals.")
 >
 > nextStep :: ProofState ()
-> nextStep = ((goIn >> much goUp) <|> goDown <|> (goOut `untilA` goDown))
+> nextStep = ((goIn >> goTop) <|> goDown <|> (goOut `untilA` goDown))
 >                `pushError` (err "nextStep: no more steps.")
 >
 > nextGoal :: ProofState ()
@@ -534,6 +642,4 @@ The |ungawa| command looks for a truly obvious thing to do, and does it.
 >     return (showEntries aus me (aus <>> F0))
 
 > infoDump :: ProofState String
-> infoDump = do
->     (es, dev) <- get
->     return (foldMap ((++ "\n") . show) es ++ show dev)
+> infoDump = gets show

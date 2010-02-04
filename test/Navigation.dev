@@ -5,4 +5,5 @@
       \ y : Set ->
       c := ? : Set ;
     ] ? : Set ;
+  g := ? : Set ;
 ]

@@ -214,16 +214,16 @@ It returns an appropriate relative name and the number of arguments to drop.
 > baptise auncles me vs target = case splitNames me target of
 >   (prefix, (t, n):targetSuffix) ->
 >     let  numBindersToSkip = ala Sum foldMap (indicator (t ==)) vs
->          boyCount = ala Sum foldMap (indicator (not. entryHasDev))
+>          boyCount = ala Sum foldMap (indicator isBoy)
 >     in
 >       case findName auncles (prefix++[(t, n)]) t numBindersToSkip of
 >         Just (ancestor, commonEntries, i, ms) -> 
->             let argsToDrop | entryHasDev ancestor  = boyCount commonEntries
+>             let argsToDrop | not (isBoy ancestor)  = boyCount commonEntries
 >                            | otherwise             = 0
 >             in  if targetSuffix == []
 >                 then  ([(t, Rel i)], argsToDrop, ms)
 >                 else
->                   let  (kids, _, _) = entryDev ancestor
+>                   let  Just (kids, _, _) = entryDev ancestor
 >                        (n, ms) = searchKids kids targetSuffix 0
 >                   in   ((t, Rel i) : n, argsToDrop, ms)
 >         Nothing -> tryBuiltins

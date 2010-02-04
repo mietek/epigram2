@@ -179,28 +179,20 @@ In the following, we define a handful of functions which are quite
 handy, yet not grandiose. This section can be skipped on a first
 reading.
 
+We sometimes wish to determine whether an entry is a |Boy|:
+
+> isBoy :: Traversable f => Entry f -> Bool
+> isBoy (E _ _ (Boy _) _)  = True
+> isBoy _                  = False
+
 Given an |Entry|, a natural operation is to extract its
 sub-developments. This works for girls and modules, but will not for
 boy.
 
-> entryDev :: Traversable f => Entry f -> Dev f
-> entryDev (E _ _ (Boy _) _)        = 
->     error "entryDev: boys have no development"
-> entryDev (E _ _ (Girl LETG d _) _)  = d
-> entryDev (M _ d)                  = d
-
-Before shooting oneself in the foot, one can ask if there are
-ammunitions:
-
-\pierre{This is not dependent-type-ish. One would expect |entryHasDev|
-to give an evidence, hence being |entryDev| wrapped in a Maybe. But
-looking at the code using |entryHasDev|, I agree that this is a hard
-sell.}
-
-> entryHasDev :: Traversable f => Entry f -> Bool
-> entryHasDev (E _ _ (Boy _)     _)  = False
-> entryHasDev (E _ _ (Girl _ _ _)  _)  = True
-> entryHasDev (M _ _)                = True
+> entryDev :: Traversable f => Entry f -> Maybe (Dev f)
+> entryDev (E _ _ (Boy _) _)          = Nothing
+> entryDev (E _ _ (Girl LETG d _) _)  = Just d
+> entryDev (M _ d)                    = Just d
 
 For display purposes, we often ask the last name or the whole name of
 an |Entry|:
@@ -217,19 +209,7 @@ Some girls have |Scheme|s, and we can extract them thus:
 
 > entryScheme :: Traversable f => Entry f -> Maybe (Scheme INTM)
 > entryScheme (E _ _ (Girl _ _ ms) _)  = ms
-> entryScheme _                      = Nothing
-
-%if False
-
-Is that dead code Jim? Then that should go away.
-
-< replaceEntryDev :: (Traversable f, Traversable g) => Entry f -> Dev g -> Entry g
-< replaceEntryDev (E _ _ (Boy _) _) _                = 
-<     error "replaceEntryDev: boys have no development"
-< replaceEntryDev (E ref xn (Girl LETG _) ty) dev  = E ref xn (Girl LETG dev) ty
-< replaceEntryDev (M n _) dev                        = M n dev
-
-%endif
+> entryScheme _                        = Nothing
 
 The |entryCoerce| function is quite a thing. When defining |Dev|, we
 have been picky in letting any Traversable |f| be the carrier of the

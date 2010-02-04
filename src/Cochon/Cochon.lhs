@@ -53,7 +53,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 > cochon loc = cochon' (B0 :< loc)
 
 > cochon' :: Bwd ProofContext -> IO ()
-> cochon' (locs :< loc@(ls, dev)) = do
+> cochon' (locs :< loc) = do
 >     showGoal loc
 
 >     case evalStateT (validateHere `catchError` catchUnprettyErrors) loc of
@@ -62,7 +62,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >             putStrLn $ renderHouseStyle $ prettyStackError ss
 >         _ -> return ()
 
->     putStr (showPrompt ls)
+>     putStr (showPrompt (pcLayers loc))
 >     hFlush stdout
 >     l <- getLine
 >     case parse tokenize l of 
@@ -274,9 +274,13 @@ Construction tactics:
 
 Navigation tactics:
 
+>   : nullaryCT "cup" (cursorUp >> return "Moving cursor up...")
+>       "cup - moves the cursor one entry upwards."
+>   : nullaryCT "cdown" (cursorDown >> return "Moving cursor down...")
+>       "cdown - moves the cursor one entry downwards."
 >   : nullaryCT "in" (goIn >> return "Going in...")
 >       "in - moves to the bottom-most development within the current one."
->   : nullaryCT "out" (goOut >> return "Going out...")
+>   : nullaryCT "out" (goOutProperly >> return "Going out...")
 >       "out - moves to the development containing the current one."
 >   : nullaryCT "up" (goUp >> return "Going up...")
 >       "up - moves to the development above the current one."

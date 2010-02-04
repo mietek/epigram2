@@ -147,6 +147,9 @@ Or we can change the carrier of a whole |Dev| from |Bwd| to |Fwd|:
 > reverseDev' = rearrangeDev (<>> F0)
 
 
+> reverseEntries :: Fwd (Entry Bwd) -> NewsyEntries
+> reverseEntries es = NF (fmap (Right . reverseEntry) es)
+
 More generally, we can use one of these perverse functions:
 
 > rearrangeEntry :: (Traversable f, Traversable g) =>
@@ -172,10 +175,15 @@ Once we have the derivative, the zipper is almost here. Hence, the
 current proof context is represented by a stack of |Layer|s, along
 with the current working development (above the cursor).
 
-> type ProofContext = (Bwd Layer, Dev Bwd)
+> data ProofContext = PC
+>     {  pcLayers :: Bwd Layer
+>     ,  pcDev :: Dev Bwd
+>     ,  pcCadets :: Fwd (Entry Bwd)
+>     }
+>   deriving Show
 >
 > emptyContext :: ProofContext
-> emptyContext = (B0, (B0, Module, (B0, 0)))
+> emptyContext = PC B0 (B0, Module, (B0, 0)) F0
 
 
 \subsubsection{Genealogical kit}
@@ -185,12 +193,12 @@ The |greatAuncles| function returns the elder aunts or uncles of the
 current development, not including its contents.
 
 > greatAuncles :: ProofContext -> Entries
-> greatAuncles (ls, _) = foldMap elders ls
+> greatAuncles pc = foldMap elders (pcLayers pc)
 
 The |auncles| function returns the elder aunts or uncles of the
 cursor, including the contents of the current development, thereby
 giving a list of entries that are currently in scope.
 
 > auncles :: ProofContext -> Entries
-> auncles c@(_, (es, _, _)) = greatAuncles c <+> es
+> auncles pc@PC{pcDev=(es,_,_)} = greatAuncles pc <+> es
 

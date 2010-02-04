@@ -58,13 +58,16 @@ updated information, providing a friendlier interface than |get| and |put|.
 
 \subsubsection{Getters}
 
-> getAuncles :: ProofStateT e (Entries)
-> getAuncles = get >>= return . auncles
+> getAuncles :: ProofStateT e Entries
+> getAuncles = gets auncles
 
 > getDev :: ProofStateT e (Dev Bwd)
-> getDev = gets snd
+> getDev = gets pcDev
 
-> getDevEntries :: ProofStateT e (Entries)
+> getDevCadets :: ProofStateT e (Fwd (Entry Bwd))
+> getDevCadets = gets pcCadets
+
+> getDevEntries :: ProofStateT e Entries
 > getDevEntries = do
 >     (es, _, _) <- getDev
 >     return es
@@ -94,7 +97,7 @@ updated information, providing a friendlier interface than |get| and |put|.
 >                         ++ err s
 
 > getGreatAuncles :: ProofStateT e Entries
-> getGreatAuncles = get >>= return . greatAuncles
+> getGreatAuncles = gets greatAuncles
 
 > getBoys :: ProofStateT e [REF]
 > getBoys = do  
@@ -114,7 +117,7 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     return l
 
 > getLayers :: ProofStateT e (Bwd Layer)
-> getLayers = gets fst
+> getLayers = gets pcLayers
 
 > getMother :: ProofStateT e Mother
 > getMother = do
@@ -132,14 +135,17 @@ updated information, providing a friendlier interface than |get| and |put|.
 > getMotherEntry :: ProofStateT e (Entry Bwd)
 > getMotherEntry = do
 >     m <- getMother
->     dev <- getDev
+>     (es, tip, root) <- getDev
+>     cadets <- getDevCadets
+>     let dev = (es <>< cadets, tip, root)
 >     case m of
->         GirlMother ref xn ty ms -> return (E ref xn (Girl LETG dev ms) ty)
+>         GirlMother ref xn ty ms -> return
+>             (E ref xn (Girl LETG dev ms) ty)
 >         ModuleMother n -> return (M n dev)
 
 > getMotherName :: ProofStateT e Name
 > getMotherName = do
->     ls <- gets fst
+>     ls <- getLayers
 >     case ls of
 >         (_ :< Layer{mother=m}) -> return (motherName m)
 >         B0 -> return []
@@ -156,8 +162,20 @@ updated information, providing a friendlier interface than |get| and |put|.
 
 > putDev :: Dev Bwd -> ProofStateT e ()
 > putDev dev = do
->     ls <- gets fst
->     put (ls, dev)
+>     pc <- get
+>     put pc{pcDev=dev}
+
+> putDevCadet :: Entry Bwd -> ProofStateT e ()
+> putDevCadet e = do
+>     cadets <- getDevCadets
+>     putDevCadets (e :> cadets)
+>     return ()
+
+> putDevCadets :: Fwd (Entry Bwd) -> ProofStateT e (Fwd (Entry Bwd))
+> putDevCadets cadets = do
+>     pc <- get
+>     put pc{pcCadets=cadets}
+>     return (pcCadets pc)
 
 > putDevEntry :: Entry Bwd -> ProofStateT e ()
 > putDevEntry e = do
@@ -181,8 +199,13 @@ updated information, providing a friendlier interface than |get| and |put|.
 
 > putLayer :: Layer -> ProofStateT e ()
 > putLayer l = do
->     (ls, dev) <- get
->     put (ls :< l, dev)
+>     pc@PC{pcLayers=ls} <- get
+>     put pc{pcLayers=ls :< l}
+
+> putLayers :: Bwd Layer -> ProofStateT e ()
+> putLayers ls = do
+>     pc <- get
+>     put pc{pcLayers=ls}
 
 > putMother :: Mother -> ProofStateT e ()
 > putMother m = do
@@ -220,17 +243,17 @@ updated information, providing a friendlier interface than |get| and |put|.
 
 > removeLayer :: ProofStateT e Layer
 > removeLayer = do
->     (ls :< l, dev) <- get
->     put (ls, dev)
+>     pc@PC{pcLayers=ls :< l} <- get
+>     put pc{pcLayers=ls}
 >     return l
 
 \subsubsection{Replacers}
 
 > replaceDev :: Dev Bwd -> ProofStateT e (Dev Bwd)
 > replaceDev dev = do
->     (ls, dev') <- get
->     put (ls, dev)
->     return dev'
+>     pc <- get
+>     put pc{pcDev=dev}
+>     return (pcDev pc)
 
 > replaceDevEntries :: Entries -> ProofStateT e Entries
 > replaceDevEntries es = do
@@ -240,8 +263,8 @@ updated information, providing a friendlier interface than |get| and |put|.
 
 > replaceLayer :: Layer -> ProofStateT e Layer
 > replaceLayer l = do
->     (ls :< l', dev) <- get
->     put (ls :< l, dev)
+>     (ls :< l') <- getLayers
+>     putLayers (ls :< l)
 >     return l'
 
 \subsubsection{Tracing in the |ProofState| monad}

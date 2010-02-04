@@ -104,6 +104,20 @@ merge the two together.
 >   propagateNews top (mergeNews news oldNews) (NF es)
 
 
+The |jumpIn| command adds the given entry at the cursor position without
+its children, moves the focus inside it and returns its children. This is
+a slightly strange thing to do, but is useful for news propagation.
+
+> jumpIn :: Entry NewsyFwd -> ProofState NewsyEntries
+> jumpIn e = do
+>     (es, tip, nsupply) <- getDev
+>     cadets <- getDevCadets
+>     putLayer (Layer es (entryToMother e) (reverseEntries cadets) tip nsupply)
+>     let Just (cs, newTip, newNSupply) = entryDev e
+>     putDev (B0, newTip, newNSupply)
+>     return cs
+
+
 The |tellEntry| function informs an entry about a news bulletin that its
 children have already received. If the entry is a girl, she must be the
 mother of the current cursor position (i.e. the entry should come from

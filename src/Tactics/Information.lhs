@@ -204,12 +204,20 @@ of the proof state at the current location.
 > prettyPS :: Entries -> Name -> ProofState Doc
 > prettyPS aus me = do
 >         es <- replaceDevEntries B0
->         case es of
->             B0 -> prettyEmptyTip
->             _ -> do
+>         cs <- putDevCadets F0
+>         case (es, cs) of
+>             (B0, F0)  -> prettyEmptyTip
+>             _   -> do
 >                 d <- prettyEs empty (es <>> F0)
+>                 d' <- case cs of
+>                     F0  -> return d
+>                     _   -> do
+>                         d'' <- prettyEs empty cs
+>                         return (d $$ text "---" $$ d'')
 >                 tip <- prettyTip
->                 return (lbrack <+> d $$ rbrack <+> tip)
+>                 putDevEntries es
+>                 putDevCadets cs
+>                 return (lbrack <+> d' $$ rbrack <+> tip)
 >  where
 >     prettyEs :: Doc -> Fwd (Entry Bwd) -> ProofState Doc
 >     prettyEs d F0         = return d
