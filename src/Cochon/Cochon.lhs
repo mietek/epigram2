@@ -37,6 +37,7 @@
 > import Tactics.Induction
 > import Tactics.PropSimp
 > import Tactics.Information
+> import Tactics.Solution
 
 > import Cochon.CommandLexer
 > import Cochon.Error
