@@ -167,8 +167,12 @@ Equality rules:
 >   descREF :: REF
 >   descREF = [("Primitive", 0), ("Desc", 0)] := (DEFN desc :<: SET)
 
+>   descDREF :: REF
+>   descDREF = [("Primitive", 0), ("DescD", 0)] := (DEFN inDesc :<: desc)
+
 > import -> Primitives where
 >   ("Desc", descREF) :
+>   ("DescD", descDREF) :
 
 > import -> CanPats where
 >   pattern MU l x  = C (Mu (l :?=: Id x))
