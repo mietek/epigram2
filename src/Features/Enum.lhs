@@ -95,17 +95,13 @@ Equality rules:
 
 > import -> BootstrapDesc where
 >   inEnumU :: VAL
->   inEnumU = ARG (ENUMT constructors) $
->                eval (L $ "" :. [.x. 
->                 N $ switchDOp :@ [ constructors
->                                  , cases
->                                  , NV x]]) B0
->                    where constructors = CONSE (TAG "nil")
->                                         (CONSE (TAG "cons")
->                                          NILE)
->                          cases = PAIR DONE
->                                  (PAIR (ARG UID (L $ "" :. [.x. IND1 DONE]))
->                                   VOID)
+>   inEnumU = ARGF constructors cases
+>       where constructors = CONSE (TAG "nil")
+>                            (CONSE (TAG "cons")
+>                                   NILE)
+>             cases = PAIR DONE
+>                     (PAIR (ARG UID (L . HF "" $ \_ -> IND1 DONE))
+>                           VOID)
 >   enumFakeREF :: REF
 >   enumFakeREF = [("Primitive", 0), ("EnumU", 0)] := (FAKE :<: SET) 
 >   enumU :: VAL
