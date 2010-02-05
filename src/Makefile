@@ -109,6 +109,10 @@ Atome:
 test:
 	cd ../test && ./test.sh -q
 
+## Tags (emacs):
+etags:
+	hasktags -e `find . -name "*.lhs"`
+
 ## Clean:
 clean:
 	rm -f $(SRCS:.lhs=.o)       \
