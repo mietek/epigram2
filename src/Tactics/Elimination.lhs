@@ -1,3 +1,5 @@
+\section{Elimination with a Motive}
+
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
@@ -30,7 +32,6 @@
 
 %endif
 
-\section{Elimination with a Motive}
 
 Elimination with a motive works on a goal prepared \emph{by the user} in the
 following form:
@@ -993,4 +994,4 @@ We make elimination accessible to the user by adding it as a Cochon tactic:
 >     (|(|(B0 :<) (tokenOption tokenName)|) :< (|id tokenExTm
 >                                               |id tokenAscription |)|)
 >     (\[n,e] -> elimCTactic (argOption (unDP . argToEx) n) (argToEx e))
->     "eliminate <name> - eliminates with a motive.")
+>     "eliminate [<comma>] <eliminator> - eliminates with a motive.")
