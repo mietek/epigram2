@@ -38,6 +38,7 @@
 > import Tactics.PropSimp
 > import Tactics.Information
 > import Tactics.Solution
+> import Tactics.Gadgets
 
 > import Cochon.CommandLexer
 > import Cochon.Error
@@ -208,8 +209,6 @@ Construction tactics:
 >       "done - solves the goal with the last entry in the development."
 >   : unaryInCT "give" (\tm -> elabGiveNext tm >> return "Thank you.")
 >       "give <term> - solves the goal with <term>."
->   : unaryInCT "=" (\tm -> elabGiveNext (DLRET tm) >> return "Ta.")
->       "= <term> - solves the programming problem by returning <term>."
 >   : simpleCT 
 >         "lambda"
 >          (| (|bwdList (pSep (keyword KwComma) tokenString) (%keyword KwAsc%)|) :< tokenInTm 

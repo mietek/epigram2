@@ -92,10 +92,11 @@
 
 \input{Tactics/Introduction.tex}
 
+%include Tactics/Information.lhs
 %include Tactics/Elimination.lhs
 %include Tactics/Induction.lhs
 %include Tactics/PropSimp.lhs
-%include Tactics/Information.lhs
+%include Tactics/Gadgets.lhs
 
 \chapter{The Display Language}
 
