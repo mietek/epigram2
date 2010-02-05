@@ -191,7 +191,7 @@ Coercion rule:
 >     , opTyTel =  "A"   :<: SET :-: \ aA ->
 >                  "B" :<: ARR aA SET :-: \ bB ->
 >                  "ab"  :<: SIGMA aA bB             :-: \ ab ->
->                  "P"   :<: ARR ab SET   :-: \ pP ->
+>                  "P"   :<: ARR (SIGMA aA bB) SET   :-: \ pP ->
 >                  "p"   :<: pity (
 >                    "a" :<: aA :-: \ a -> "b" :<: (bB $$ A a) :-: \ b -> Target $
 >                    pP $$ A (PAIR a b))             :-: \ p ->
