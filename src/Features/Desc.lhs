@@ -144,9 +144,7 @@ Equality rules:
 
 > import -> BootstrapDesc where
 >   inDesc :: VAL
->   inDesc = ARG (ENUMT constructors) $
->                eval (L $ "" :. [.x. 
->                 N $ switchDOp :@ [constructors, cases, NV x]]) B0
+>   inDesc = ARGF constructors (evTm cases)
 >       where constructors = (CONSE (TAG "done")
 >                             (CONSE (TAG "arg")
 >                              (CONSE (TAG "argf")
