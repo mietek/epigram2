@@ -44,19 +44,24 @@ then write an interpreter to run the syntax in the |ProofState| monad.
 < lambda : String -> REF
 < goal : TY
 < hope : TY -> VAL
-< cry : a
-< elab : TY -> (LOC, EPROB) -> VAL
-< compute : TY -> CPROB -> VAL
+< cry : StackError -> a
+< elab : TY -> (Loc, EProb) -> VAL
+< compute : TY -> CProb -> VAL
 < can : VAL -> Can VAL
 < solve : REF -> VAL -> REF
 < ensure : VAL -> Can () -> (Can VAL, VAL)
 
+We will eventually need to keep track of which elaboration problems correspond
+to which source code locations.
 
 > newtype Loc = Loc Int deriving Show
 
 > data EProb = CheckProb () deriving Show
 
 > data CProb = ElabProb (Elab VAL) | ResolveProb RelName
+
+The command signature given above defines the following free monad, which
+gives the syntax for commands.
 
 > data Elab x
 >     =  Bale x
@@ -70,6 +75,8 @@ then write an interpreter to run the syntax in the |ProofState| monad.
 >     |  EElab TY  (Loc, EProb) (VAL -> Elab x)
 >     |  ECan VAL (Can VAL -> Elab x)
 >     |  EEnsure VAL (Can ()) ((Can VAL, VAL) -> Elab x)
+
+%if False
 
 > instance Show x => Show (Elab x) where
 >     show (Bale x)           = "Bale (" ++ show x ++ ")"
@@ -97,7 +104,6 @@ then write an interpreter to run the syntax in the |ProofState| monad.
 >     ESolve r v f    >>= k = ESolve r v     ((k =<<) . f)
 >     EEnsure v c f   >>= k = EEnsure v c    ((k =<<) . f)
 
-
 > instance Functor Elab where
 >     fmap = ap . return
 >
@@ -115,9 +121,11 @@ then write an interpreter to run the syntax in the |ProofState| monad.
 >     catchError (ECry e) f  = f e
 >     catchError x _         = x
 
+%endif
+
 
 The |runElab| proof state command actually interprets an |Elab x| in
-the proof state.
+the proof state. That is, it defines the semantics of the |Elab| syntax.
 
 > runElab :: Elab VAL -> ProofState (INTM :=>: VAL)
 > runElab (Bale x) = bquoteHere x >>= return . (:=>: x)
@@ -143,7 +151,6 @@ the proof state.
 > runElab (ECan (C c) f) = runElab (f c)
 
 
-
 > runElabCompute :: TY -> CProb -> ProofState VAL
 > runElabCompute ty (ElabProb e) = do
 >     ty' <- bquoteHere ty
@@ -156,10 +163,10 @@ the proof state.
 >     (tm :<: ty) <- inferHere (P ref $:$ as)
 >     return (PAIR ty tm)
 
-> chevElab :: Loc -> (TY :>: InDTmRN) -> Elab (() :=>: VAL)
-> chevElab loc (ty :>: tm) = ECompute ty (ElabProb (makeElab loc (ty :>: tm)))
->                            (return . (() :=>:))
 
+The |suspend| command can be used to delay elaboration, by creating a subgoal
+of the given type and attaching a suspended elaboration process to its tip.
+When a news update hits the goal, the elaboration process will restart.
 
 > suspend :: TY -> Elab VAL -> ProofState VAL
 > suspend ty elab = do
@@ -170,11 +177,22 @@ the proof state.
 >     return v
 
 
+
+The |chevElab| helper function is a checker-evaluator version of |makeElab|
+that can be passed to |canTy| and |elimTy|. It creates appropriate subgoals
+for each component and continues elaborating.
+
+> chevElab :: Loc -> (TY :>: InDTmRN) -> Elab (() :=>: VAL)
+> chevElab loc (ty :>: tm) = ECompute ty (ElabProb (makeElab loc (ty :>: tm)))
+>                            (return . (() :=>:))
+
+
 The |makeElab| function produces an |Elab| in a type-directed way.
 
 > makeElab :: Loc -> (TY :>: InDTmRN) -> Elab VAL
 
 > makeElab loc (ty :>: DU) = EHope ty Bale
+> makeElab loc (ty :>: DQ) = EHope ty Bale
 
 > makeElab loc (C ty :>: DC tm) = do
 >     v <- canTy (chevElab loc) (ty :>: tm)
