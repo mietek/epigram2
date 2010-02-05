@@ -188,8 +188,8 @@ Coercion rule:
 > import -> OpCode where
 >   splitOp = Op
 >     { opName = "split" , opArity = 5
->     , opTyTel =  "A"   :<: SET :-: \ aA ->
->                  "B" :<: ARR aA SET :-: \ bB ->
+>     , opTyTel =  "A"   :<: SET                     :-: \ aA ->
+>                  "B"   :<: ARR aA SET              :-: \ bB ->
 >                  "ab"  :<: SIGMA aA bB             :-: \ ab ->
 >                  "P"   :<: ARR (SIGMA aA bB) SET   :-: \ pP ->
 >                  "p"   :<: pity (
