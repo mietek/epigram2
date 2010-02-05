@@ -237,13 +237,11 @@ Equality rules:
 >   boxOp :
 >   mapBoxOp :
 >   elimOp :
->   switchDOp :
 >   mapOp :
 
 > import -> OpCompile where
 >   ("fold", [d,v,bp,p]) -> App (Var "__fold") [d, p, v]
 >   ("mapBox", [x,d,bp,p,v]) -> App (Var "__mapBox") [x, p, v]
->   ("switchD", [e,b,x]) -> App (Var "__switch") [x, b]
 >   ("map", [d,a,b,f,x]) -> App (Var "__map") [d, f, x]
 
 > import -> OpCode where
@@ -383,26 +381,6 @@ Equality rules:
 >           Right (TIMES desc 
 >                 (branchesDOp @@ [e']))
 >         bOpRun [N e] = Left e 
-
-
->   switchDOp = Op
->     { opName = "switchD"
->     , opArity = 3
->     , opTyTel = sOpTy
->     , opRun = sOpRun
->     , opSimp = \_ _ -> empty
->     } where
->         sOpTy = 
->           "e" :<: enumU :-: \e ->
->           "b" :<: (branchesOp @@ [e , L (K desc) ]) :-: \b ->
->           "x" :<: ENUMT e :-: \x ->
->           Target desc
->         sOpRun :: [VAL] -> Either NEU VAL
->         sOpRun [CONSE t e' , ps , ZE] = Right $ ps $$ Fst
->         sOpRun [CONSE t e' , ps , SU n] = Right $
->           switchDOp @@ [ e' , ps $$ Snd , n ]
->         sOpRun [_ , _ , N n] = Left n
->         sOpRun vs = error ("Desc.SwitchD.sOpRun: couldn't handle " ++ show vs)
 
 >   mapOp = Op
 >     { opName  = "map"

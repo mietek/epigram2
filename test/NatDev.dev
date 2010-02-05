@@ -1,7 +1,7 @@
 [ nat
     [ h00
         [ \ x : Enum ['zero 'suc] ->
-        ] switchD ['zero 'suc] [[] (con ['ind1 []])] x : Desc ;
+        ] switch ['zero 'suc] x (\ _ -> Desc) [[] (con ['ind1 []])] : Desc ;
     ] Mu [(Enum ['zero 'suc]) , h00] : Set ;
   zero := [] : nat ;
   suc
@@ -25,12 +25,12 @@
                       \ y : nat ->
                     ] suc (h y) : nat ;
                   \ x : Sig (nat -> nat ;) ->
-                ] G50011 (x !) (x -) : nat -> nat ;
+                ] G50011 (x !) _ : nat -> nat ;
               \ a : Enum ['zero 'suc] ->
-            ] switch ['zero 'suc] a (\ a -> ((x : desc (((switchD ['zero 'suc]) [[] (con ['ind1 []])]) a) nat)(x : box (((switchD ['zero 'suc]) [[] (con ['ind1 []])]) a) nat (\ _ -> (nat -> nat)) x) -> nat -> nat)) [G5000 G5001] : (x : desc (((switchD ['zero 'suc]) [[] (con ['ind1 []])]) a) nat)(x : box (((switchD ['zero 'suc]) [[] (con ['ind1 []])]) a) nat (\ _ -> (nat -> nat)) x) -> nat -> nat ;
-          \ x : Sig (a : Enum ['zero 'suc] ; desc (((switchD ['zero 'suc]) [[] (con ['ind1 []])]) a) nat) ->
-        ] G500 (x !) (x -) : (x : box (((switchD ['zero 'suc]) [[] (con ['ind1 []])]) (x !)) nat (\ _ -> (nat -> nat)) (x -)) -> nat -> nat ;
+            ] switch ['zero 'suc] a (\ a -> ((x : desc (switch ['zero 'suc] a (\ _ -> Desc) [[] (con ['ind1 []])]) nat) -> box (switch ['zero 'suc] a (\ _ -> Desc) [[] (con ['ind1 []])]) nat (\ _ -> (nat -> nat)) x -> nat -> nat)) [G5000 G5001] : (x : desc (switch ['zero 'suc] a (\ _ -> Desc) [[] (con ['ind1 []])]) nat) -> box (switch ['zero 'suc] a (\ _ -> Desc) [[] (con ['ind1 []])]) nat (\ _ -> (nat -> nat)) x -> nat -> nat ;
+          \ x : Sig (a : Enum ['zero 'suc] ; desc (switch ['zero 'suc] a (\ _ -> Desc) [[] (con ['ind1 []])]) nat) ->
+        ] G500 (x !) (x -) : box (switch ['zero 'suc] (x !) (\ _ -> Desc) [[] (con ['ind1 []])]) nat (\ _ -> (nat -> nat)) (x -) -> nat -> nat ;
       \ x : nat ->
-    ] fold [(Enum ['zero 'suc]) , \ x -> switchD ['zero 'suc] [[] (con ['ind1 []])] x] x (\ _ -> (nat -> nat)) G50 : nat -> nat ;
+    ] fold [(Enum ['zero 'suc]) , \ x -> switch ['zero 'suc] x (\ _ -> Desc) [[] (con ['ind1 []])]] x (\ _ -> (nat -> nat)) G50 : nat -> nat ;
   x := plus two two : nat ;
 ]
