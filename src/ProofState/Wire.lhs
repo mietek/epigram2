@@ -150,14 +150,9 @@ To update a hole, we must:
 > tellEntry news (E (name := HOLE h :<: tyv) sn (Girl LETG (cs, Unknown tt, nsupply) ms) ty) = do
 >     let  (tt', n)             = tellNewsEval news tt
 >          (ty' :=>: tyv', n')  = tellNewsEval news (ty :=>: tyv)
->          h'                   = tellHKind news h
->          ref                  = name := HOLE h' :<: tyv'
+>          ref                  = name := HOLE h :<: tyv'
 >     return (addNews (ref, min n n') news,
 >         E ref sn (Girl LETG (cs, Unknown tt', nsupply) ms) ty')
->  where
->    tellHKind :: NewsBulletin -> HKind -> HKind
->    tellHKind news (WaitingFor vs) = WaitingFor (map (fst . tellNews news) vs)
->    tellHKind _ hk = hk
 
 To update a defined girl, we must:
 \begin{enumerate}

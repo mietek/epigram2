@@ -506,10 +506,8 @@ A |REF| can be of one of those kinds:
 Stealing documentation from http://www.e-pig.org/epilogue/?p=147 might be
 a good idea at this point.
 
-> data HKind = Crying | WaitingFor [INTM] | Hoping
+> data HKind = Crying | Waiting | Hoping
 >   deriving Show
-
-> pattern Waiting = WaitingFor []
 
 We can already define some handy operators on |REF|s. First, we can
 turn a |REF| to a |VAL|ue by using |pval|. If the reference is already
