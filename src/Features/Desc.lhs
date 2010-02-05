@@ -155,7 +155,7 @@ Equality rules:
 >                                 NILE)))))
 >             cases = PAIR DONE 
 >                     (PAIR (ARG SET (L $ "" :. [.s. IND (NV s) DONE]))
->                      (PAIR (ARG (NP enumREF) (L $ "" :. [.s. IND (ENUMT (NV s)) DONE]))
+>                      (PAIR (ARG (NP enumREF) (L $ "" :. [.e. ARG (N (branchesDOp :@ [NV e])) (L $ "" :. [.t. DONE])]))
 >                       (PAIR (ARG SET (L $ "" :. [.h. IND1 DONE]))
 >                        (PAIR (IND1 DONE)
 >                         VOID))))
@@ -268,7 +268,7 @@ Equality rules:
 >                descOp @@ [dD $$ A a,xX]
 >       dOpRun [ARGF aA dD,xX] = Right $
 >              SIGMA (ENUMT aA) . L $ HF "a" $ \a ->
->                descOp @@ [dD $$ A a,xX]
+>                descOp @@ [switchOp @@ [aA, a, L (K desc), dD],xX]
 >       dOpRun [IND hH dD,xX] = Right (TIMES (ARR hH xX) (descOp @@ [dD,xX]))
 >       dOpRun [IND1 dD,xX] = Right (TIMES xX (descOp @@ [dD,xX]))
 >       dOpRun [N dD,_]     = Left dD
@@ -293,7 +293,7 @@ Equality rules:
 >       boxOpRun [ARG aA dD,xX,pP,v] = Right $ 
 >         boxOp @@ [ dD $$ A (v $$ Fst) , xX , pP , v $$ Snd ] 
 >       boxOpRun [ARGF aA dD,xX,pP,v] = Right $ 
->         boxOp @@ [ dD $$ A (v $$ Fst) , xX , pP , v $$ Snd ] 
+>         boxOp @@ [ switchOp @@ [aA, v $$ Fst, L (K desc), dD] , xX , pP , v $$ Snd ] 
 >       boxOpRun [IND hH dD,xX,pP,v] = Right $ 
 >         TIMES (PI hH (L $ HF "h" $ \h -> pP $$ A (v $$ Fst $$ A h))) 
 >               (boxOp @@ [dD, xX, pP, v $$ Snd])
@@ -322,7 +322,7 @@ Equality rules:
 >       mapBoxOpRun [ARG aA dD,xX,pP,p,v] = Right $ 
 >         mapBoxOp @@ [dD $$ A (v $$ Fst), xX, pP, p, v $$ Snd]  
 >       mapBoxOpRun [ARGF aA dD,xX,pP,p,v] = Right $ 
->         mapBoxOp @@ [dD $$ A (v $$ Fst), xX, pP, p, v $$ Snd]  
+>         mapBoxOp @@ [switchOp @@ [aA, v $$ Fst, L (K desc), dD], xX, pP, p, v $$ Snd]  
 >       mapBoxOpRun [IND hH dD,xX,pP,p,v] = Right $ 
 >         PAIR (PI hH (L $ HF "h" $ \h -> p $$ A (v $$ Fst $$ A h))) 
 >              (mapBoxOp @@ [dD, xX, pP, p, v $$ Snd])
@@ -368,6 +368,25 @@ Equality rules:
 >                                    , v]) 
 >       elimOpRun [_,N x, _,_] = Left x
 
+
+>   branchesDOp = Op 
+>     { opName   = "branchesD"
+>     , opArity  = 1 
+>     , opTyTel  = bOpTy
+>     , opRun    = bOpRun
+>     , opSimp   = \_ _ -> empty
+>     } where
+>         bOpTy = "e" :<: enumU :-: \e ->
+>                 Target SET
+
+>         bOpRun :: [VAL] -> Either NEU VAL
+>         bOpRun [NILE ] = Right UNIT
+>         bOpRun [CONSE t e' ] = 
+>           Right (TIMES desc 
+>                 (branchesDOp @@ [e']))
+>         bOpRun [N e] = Left e 
+
+
 >   switchDOp = Op
 >     { opName = "switchD"
 >     , opArity = 3
@@ -409,7 +428,7 @@ Equality rules:
 >                (mapOp @@ [ dD $$ A (v $$ Fst), xX, yY, f, v $$ Snd])
 >         mapOpRun [ARGF aA dD, xX, yY, f, v] = Right $
 >           PAIR (v $$ Fst)
->                (mapOp @@ [ dD $$ A (v $$ Fst), xX, yY, f, v $$ Snd])
+>                (mapOp @@ [switchOp @@ [aA, v $$ Fst, L (K desc), dD], xX, yY, f, v $$ Snd])
 >         mapOpRun [IND hH dD, xX, yY, f, v] = Right $
 >           PAIR (L $ HF "h" $ \h -> f $$ A (v $$ Fst $$ A h))
 >                (mapOp @@ [ dD, xX, yY, f, v $$ Snd])

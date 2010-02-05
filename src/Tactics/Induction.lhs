@@ -209,11 +209,11 @@ flatten the structure made by the interpretation of |D'|.
 >       PI _ _T -> do
 >                  _Xtm <- bquoteHere _X
 >                  _Ttm <- bquoteHere _T
->                  branches <- bquoteHere $ branchesOp @@ [ _X, _T]
+>                  branches <- bquoteHere $ branchesOp @@ [_X, _T]
 >                  (m :=>: _) <- make $ "branches" :<: branches
 >                  goIn
 >                  (_ :=>: goal) <- getGoal "introData:Done 3"
->                  cases <- mkCases (branch :< ReadArg) ZE goal _F
+>                  cases <- mkCases (branch :< ReadArg) ZE goal (\n -> switchOp @@ [_X, n, L (K desc), _F])
 >                  give' $ cases
 >                  goOut
 >                  x <- lambdaBoy "x"
@@ -225,15 +225,15 @@ flatten the structure made by the interpretation of |D'|.
 
 
 
-> mkCases :: Bwd Branch -> VAL -> VAL -> VAL -> ProofState INTM
+> mkCases :: Bwd Branch -> VAL -> VAL -> (VAL -> VAL) -> ProofState INTM
 > mkCases _ _ UNIT _F = return VOID
-> mkCases branch n (TIMES goal t) _F = do
+> mkCases branch n (TIMES goal t) accF = do
 >   goalTm <- bquoteHere goal
 >   subgoalTm :=>: subgoal <- make $ "case" :<: goalTm
 >   goIn 
->   introData  branch (_F $$ A n)
+>   introData  branch (accF n)
 >   goOut 
->   cases <- mkCases branch (SU n) t _F
+>   cases <- mkCases branch (SU n) t accF
 >   return $ PAIR (N subgoalTm) cases
 > mkCases _ t v _ = error $ "mkCases: " ++ show t ++ "\n" ++ show v
 
