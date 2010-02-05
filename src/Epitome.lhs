@@ -109,6 +109,7 @@
 %include DisplayLang/Lexer.lhs
 %include DisplayLang/TmParse.lhs
 %include DisplayLang/Elaborator.lhs
+%include DisplayLang/ElabMonad.lhs
 %include DisplayLang/Distiller.lhs
 %include DisplayLang/PrettyPrint.lhs
 

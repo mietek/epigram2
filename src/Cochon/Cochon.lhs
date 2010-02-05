@@ -28,6 +28,7 @@
 > import DisplayLang.Elaborator
 > import DisplayLang.DisplayTm
 > import DisplayLang.PrettyPrint
+> import DisplayLang.ElabMonad
 
 > import ProofState.ProofContext
 > import ProofState.ProofState
