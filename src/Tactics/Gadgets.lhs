@@ -20,3 +20,13 @@
 >       "= <term> - solves the programming problem by returning <term>."
 
 
+
+\subsection{The |By| gadget}
+
+> import -> CochonTactics where
+>   : (simpleCT
+>     "<="
+>     (|(|(B0 :<) (tokenOption tokenName)|) :< (|id tokenExTm
+>                                               |id tokenAscription |)|)
+>     (\[n,e] -> elimCTactic (argOption (unDP . argToEx) n) (argToEx e))
+>     "<= [<comma>] <eliminator> - eliminates with a motive.")
