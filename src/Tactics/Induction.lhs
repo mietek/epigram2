@@ -134,7 +134,7 @@ have made. We will keep track of this path using the following
 data-type, accumulated in |Bwd| list:
 
 > data Branch = ReadArg
->             | ReadInd1
+>             | ReadInd
 
 Implicity, the |B0| of a |Bwd Branch| is taken as a |ReadDone|.
 
@@ -196,7 +196,17 @@ flatten the structure made by the interpretation of |D'|.
 >                 -- Bring (x : Mu D) in context
 >                 lambdaBoy "x"
 >                 -- Flatten the subsequent record
->                 introData (branch :< ReadInd1) _D'
+>                 introData (branch :< ReadInd) _D'
+>                 return ()
+
+
+> introData branch (IND _H _D') = 
+>   withGoal $ 
+>   unpackSigma $ do
+>                 -- Bring (xh : H -> Mu D) in context
+>                 lambdaBoy "xh"
+>                 -- Flatten the subsequent record
+>                 introData (branch :< ReadInd) _D'
 >                 return ()
 
 
@@ -219,6 +229,12 @@ flatten the structure made by the interpretation of |D'|.
 >                  x <- lambdaBoy "x"
 >                  give' $ N $ switchOp :@ [ _Xtm, NP x, _Ttm, N m ]
 >                  return ()
+
+> introData branch (ARG _X _F) = do
+>   withGoal $ unpackSigma $ do
+>     x <- lambdaBoy "x"
+>     introData (branch :< ReadArg) (_F $$ A (NP x))
+>     return ()
             
 
 
@@ -246,7 +262,7 @@ flatten the structure made by the interpretation of |D'|.
 
 > introHyps F0 = withGoal $ eatUnit $ return ()
 
-> introHyps (ReadInd1 :> bs) = do
+> introHyps (ReadInd :> bs) = do
 >     withGoal $ unpackSigma $ do
 >       lambdaBoy "Px"
 >       introHyps bs
