@@ -506,7 +506,7 @@ A |REF| can be of one of those kinds:
 Stealing documentation from http://www.e-pig.org/epilogue/?p=147 might be
 a good idea at this point.
 
-> data HKind = Crying String | Waiting | Hoping
+> data HKind = Crying | Waiting | Hoping
 >   deriving Show
 
 

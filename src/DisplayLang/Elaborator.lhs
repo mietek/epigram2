@@ -124,7 +124,7 @@ Elaborating a canonical term with canonical type is a job for |canTy|.
 
 > elaborate top (C ty :>: DC tm) = do
 >     v <- canTy (elaborate False) (ty :>: tm)
->     return $ (C $ fmap (\(x :=>: _) -> x) v) :=>: (C $ fmap (\(_ :=>: x) -> x) v)
+>     return $ (C $ fmap termOf v) :=>: (C $ fmap valueOf v)
 
 
 If the elaborator encounters a question mark, it simply creates an appropriate subgoal.
