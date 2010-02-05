@@ -1,0 +1,5 @@
+> module DisplayLang.ElabMonad where
+
+> data Elab x
+
+> instance (Show x) => Show (Elab x)

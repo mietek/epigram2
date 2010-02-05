@@ -19,6 +19,7 @@
 > import Evidences.Tm
 
 > import DisplayLang.DisplayTm
+> import {-# SOURCE #-} DisplayLang.ElabMonad
 
 %endif
 
@@ -58,6 +59,7 @@ Finally, a development can be finalised, in which case it is
 > data Tip
 >   = Module
 >   | Unknown (INTM :=>: TY)
+>   | UnknownElab (INTM :=>: TY) (Elab VAL)
 >   | Defined INTM (INTM :=>: TY)
 >   deriving Show
 
@@ -160,7 +162,7 @@ definition (if any) in the enclosing development.
 
 > instance Show (Entity Fwd) where
 >     show (Boy k) = "Boy " ++ show k
->     show (Girl k d _) = "Girl " ++ show k ++ " " ++ show d
+>     show (Girl k d _) = "Girl " ++ show k ++ " " ++ show d 
 
 %endif
 

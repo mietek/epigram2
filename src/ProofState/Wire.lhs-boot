@@ -1,0 +1,14 @@
+> module ProofState.Wire where
+
+> import Evidences.Tm
+> import ProofState.Developments
+> import ProofState.News
+> import ProofState.ProofContext
+> import ProofState.ProofState
+> import Kit.BwdFwd
+
+> updateRef :: REF -> ProofState ()
+
+> propagateNews :: Bool -> NewsBulletin -> NewsyEntries -> ProofState NewsBulletin
+
+> tellEntry :: NewsBulletin -> Entry Bwd -> ProofState (NewsBulletin, Entry Bwd)

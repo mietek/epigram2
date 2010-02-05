@@ -17,6 +17,7 @@
 > import Evidences.Tm
 > import Evidences.Rules
 
+> import ProofState.Developments
 > import ProofState.ProofContext
 > import ProofState.ProofState
 > import ProofState.ProofKit
@@ -55,9 +56,7 @@ then write an interpreter to run the syntax in the |ProofState| monad.
 
 > data EProb = CheckProb () deriving Show
 
-> data CProb x where
->     ElabProb :: Elab VAL -> CProb VAL
->     ResolveProb :: RelName -> CProb VAL
+> data CProb = ElabProb (Elab VAL) | ResolveProb RelName
 
 > data Elab x
 >     =  Bale x
@@ -65,36 +64,39 @@ then write an interpreter to run the syntax in the |ProofState| monad.
 >     |  EGoal (TY -> Elab x)
 >     |  EHope TY (VAL -> Elab x)
 >     |  ECry (StackError InDTmRN)
+>     |  ECompute TY CProb (VAL -> Elab x)
+>     |  ESolve REF VAL (VAL -> Elab x)
 
 >     |  EElab TY  (Loc, EProb) (VAL -> Elab x)
->     |  forall y. ECompute TY (CProb y) (y -> Elab x)
 >     |  ECan VAL (Can VAL -> Elab x)
->     |  ESolve REF VAL (REF -> Elab x)
 >     |  EEnsure VAL (Can ()) ((Can VAL, VAL) -> Elab x)
 
 > instance Show x => Show (Elab x) where
->     show (Bale x) = "Bale (" ++ show x ++ ")"
->     show (ELambda s _) = "ELambda " ++ s ++ " (...)"
->     show (EGoal _) = "EGoal (...)"
->     show (EHope ty _) = "EHope (" ++ show ty ++ ") (...)"
->     show (ECry _) = "ECry (...)"
->     show (ECompute ty _ _) = "ECompute (" ++ show ty ++ ") (...) (...)"
+>     show (Bale x)           = "Bale (" ++ show x ++ ")"
+>     show (ELambda s _)      = "ELambda " ++ s ++ " (...)"
+>     show (EGoal _)          = "EGoal (...)"
+>     show (EHope ty _)       = "EHope (" ++ show ty ++ ") (...)"
+>     show (ECry _)           = "ECry (...)"
+>     show (ECompute ty _ _)  = "ECompute (" ++ show ty ++ ") (...) (...)"
+>     show (ESolve ref v _)   = "ESolve (" ++ show ref ++ ") (" ++ show v ++ ") (...)"
+>     show (ECan v _)         = "ECan (" ++ show v ++ ") (...)"
+>     show (EEnsure v c _)    = "EEnsure (" ++ show v ++ ") (" ++ show c ++ ") (...)"
 
 > instance Monad Elab where
->     return = Bale
+>     fail s  = ECry [err $ "fail: " ++ s]
+>     return  = Bale
+>
 >     Bale x          >>= k = k x
 >     ELambda s f     >>= k = ELambda s      ((k =<<) . f)
 >     EGoal f         >>= k = EGoal          ((k =<<) . f)
 >     EHope t  f      >>= k = EHope t        ((k =<<) . f)
 >     ECry errs       >>= k = ECry errs
-
 >     EElab t lp f    >>= k = EElab t lp     ((k =<<) . f)
 >     ECompute t p f  >>= k = ECompute t p   ((k =<<) . f)
 >     ECan v f        >>= k = ECan v         ((k =<<) . f)
 >     ESolve r v f    >>= k = ESolve r v     ((k =<<) . f)
 >     EEnsure v c f   >>= k = EEnsure v c    ((k =<<) . f)
 
->     fail s = ECry [err $ "fail: " ++ s]
 
 > instance Functor Elab where
 >     fmap = ap . return
@@ -117,17 +119,14 @@ then write an interpreter to run the syntax in the |ProofState| monad.
 The |runElab| proof state command actually interprets an |Elab x| in
 the proof state.
 
-> runElab :: Elab x -> ProofState x
-> runElab (Bale x) = return x
+> runElab :: Elab VAL -> ProofState (INTM :=>: VAL)
+> runElab (Bale x) = bquoteHere x >>= return . (:=>: x)
 > runElab (ELambda s f) = lambdaBoy s >>= runElab . f
 > runElab (EGoal f) = getHoleGoal >>= runElab . f . valueOf
 
-> runElab (EHope ty@(PRF (EQBLUE (_S :>: s) (_T :>: (NP ref@(_ := HOLE Hoping :<: _))))) f) = do
->     ty' <- bquoteHere ty
->     s' <- bquoteHere s
->     _ :=>: v <- make' Waiting ("suspend" :<: ty' :=>: ty)
->     suspend $ ESolve ref s $ const . Bale $ pval refl $$ A _S $$ A s
->     runElab (f v)
+> runElab (EHope ty@(PRF (EQBLUE (_S :>: s) (_T :>: (NP ref@(_ := HOLE Hoping :<: _))))) f) =
+>     (suspend ty $ ESolve ref s $ const . Bale $ pval refl $$ A _S $$ A s)
+>     >>= runElab . f
 
 > runElab (EHope (PRF p) f) = prove False p >>= runElab . f . valueOf
 
@@ -139,15 +138,19 @@ the proof state.
 > runElab (ECry e)  = throwError e
 > runElab (ECompute ty prob f) = runElabCompute ty prob >>= runElab . f
 
+> runElab (ESolve ref val f) = bquoteHere val >>= solveHole ref >>= runElab . f . valueOf
 
-> runElabCompute :: TY -> CProb x -> ProofState x
+> runElab (ECan (C c) f) = runElab (f c)
+
+
+
+> runElabCompute :: TY -> CProb -> ProofState VAL
 > runElabCompute ty (ElabProb e) = do
 >     ty' <- bquoteHere ty
 >     make' Waiting ("ElabProb" :<: ty' :=>: ty)
 >     goIn
->     x <- runElab e
->     x' <- bquoteHere x
->     return . valueOf =<< give x'
+>     tm :=>: _ <- runElab e
+>     return . valueOf =<< give tm
 > runElabCompute ty (ResolveProb rn) = do
 >     (ref, as, ms) <- elabResolve rn
 >     (tm :<: ty) <- inferHere (P ref $:$ as)
@@ -158,8 +161,14 @@ the proof state.
 >                            (return . (() :=>:))
 
 
-> suspend :: Elab VAL -> ProofState ()
-> suspend elab = return ()
+> suspend :: TY -> Elab VAL -> ProofState VAL
+> suspend ty elab = do
+>     ty' <- bquoteHere ty
+>     _ :=>: v <- make' Waiting ("suspend" :<: ty' :=>: ty)
+>     Just (E ref xn (Girl LETG (es, Unknown tt, nsupply) ms) tm) <- removeDevEntry
+>     putDevEntry (E ref xn (Girl LETG (es, UnknownElab tt elab, nsupply) ms) tm)
+>     return v
+
 
 The |makeElab| function produces an |Elab| in a type-directed way.
 
@@ -193,9 +202,20 @@ The |makeElab| function produces an |Elab| in a type-directed way.
 > makeElabInfer loc (DP rn) = ECompute sigSetVAL (ResolveProb rn) Bale
 
 > makeElabInfer loc (t ::$ s) = do
->     PAIR (C ty) tv <- makeElabInfer loc t
->     (s', ty') <- elimTy (chevElab loc) (tv :<: ty) s
->     return $ PAIR ty' (tv $$ fmap valueOf s')
+>     tytv <- makeElabInfer loc t
+>     let tv = tytv $$ Snd
+>     case tytv $$ Fst of
+>         C cty -> do
+>             (s', ty') <- elimTy (chevElab loc) (tv :<: cty) s
+>             return $ PAIR ty' (tv $$ fmap valueOf s')
+>         ty -> case s of
+>             A a -> do
+>                 s <- EHope SET Bale
+>                 t <- EHope (PI s (LK SET)) Bale
+>                 q <- EHope (PRF (EQBLUE (SET :>: PI s t) (SET :>: ty))) Bale
+>                 av <- makeElab loc (s :>: a)
+>                 return $ PAIR (t $$ A av) (tv $$ A av)
+>             _ -> throwError' $ err "I give up."
 
 > makeElabInfer loc (DType ty) = do
 >     tyv <- ECompute SET (ElabProb (makeElab loc (SET :>: ty))) Bale
@@ -211,11 +231,11 @@ The |makeElab| function produces an |Elab| in a type-directed way.
 >     let el = makeElabInfer (Loc 0) tm
 >     make ("elab" :<: sigSetTM)
 >     goIn
->     x <- runElab el
->     x' <- bquoteHere x
->     d <- prettyHere (sigSetVAL :>: x')
->     proofTrace $ "Elaborated to " ++ renderHouseStyle d
->     give x'
+>     tm :=>: _ <- runElab el
+>     proofTrace $ "Elaborated to " ++ show tm
+>     d <- prettyHere (sigSetVAL :>: tm)
+>     proofTrace $ "or, more prettily, " ++ renderHouseStyle d
+>     give tm
 >     return "Okay."
 
 

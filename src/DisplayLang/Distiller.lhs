@@ -150,7 +150,10 @@ the distilled spine and the overall type of the application.
 >     (e', ty') <- elimTy (distill es) (v :<: ty) a
 >     (es, ty'') <- processArgs es (v $$ (fmap valueOf e') :<: ty') as 
 >     return (fmap termOf e' : es, ty'')
-
+> processArgs es (v :<: ty) as = throwError' $
+>     err "processArgs: cannot cope with" ++ errTyVal (v :<: ty)
+>     ++ err "which has non-canonical type" ++ errTyVal (ty :<: SET)
+>     ++ err "applied to spine" ++ map UntypedElim as
 
 The |toExDTm| helper function will distill a term to produce an
 |Ex| representation by applying a type-cast if necessary.

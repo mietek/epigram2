@@ -26,7 +26,7 @@
 > import ProofState.Lifting
 > import ProofState.ProofContext
 > import ProofState.ProofState
-> import ProofState.Wire
+> import {-# SOURCE #-} ProofState.Wire
 
 > import DisplayLang.Naming
 

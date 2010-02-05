@@ -19,10 +19,12 @@
 > import ProofState.Lifting
 > import ProofState.ProofContext
 > import ProofState.ProofState
-> import {-# SOURCE #-} ProofState.ProofKit
+> import ProofState.ProofKit
 
 > import Evidences.Tm
 > import Evidences.Rules
+
+> import DisplayLang.ElabMonad
 
 %endif
 
@@ -154,6 +156,13 @@ To update a hole, we must:
 >     return (addNews (ref, min n n') news,
 >         E ref sn (Girl LETG (cs, Unknown tt', nsupply) ms) ty')
 
+> tellEntry news (E (name := HOLE h :<: tyv) sn (Girl LETG (cs, UnknownElab tt elab, nsupply) ms) ty) = do
+>     let  (tt', n)             = tellNewsEval news tt
+>          (ty' :=>: tyv', n')  = tellNewsEval news (ty :=>: tyv)
+>          ref                  = name := HOLE h :<: tyv'
+>     return (addNews (ref, min n n') news,
+>         E ref sn (Girl LETG (cs, UnknownElab tt' elab, nsupply) ms) ty')
+
 To update a defined girl, we must:
 \begin{enumerate}
 \item update the tip type;
@@ -188,7 +197,17 @@ that her children have already received, and returns the updated news.
 >     e <- getMotherEntry
 >     (news', e') <- tellEntry news e 
 >     putMotherEntry e'
->     return news'
+>     tip <- getDevTip
+>     case tip of
+>         UnknownElab tt elab -> do
+>             putDevTip (Unknown tt)
+>             proofTrace $ unlines ["Interrupting suspended elaboration on",
+>                                   show (entryName e'), "with",
+>                                   show elab]
+>             tm :=>: _ <- runElab elab
+>             give' tm
+>             return news'
+>         _ -> return news'
 
 
 The |tellNews| function applies a bulletin to a term. It returns the updated

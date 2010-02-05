@@ -255,6 +255,9 @@ of the proof state at the current location.
 >             Unknown (ty :=>: _) -> do
 >                 tyd <- prettyHere (SET :>: ty)
 >                 return (char '?' <+> kword KwAsc <+> tyd)
+>             UnknownElab (ty :=>: _) _ -> do
+>                 tyd <- prettyHere (SET :>: ty)
+>                 return (text "(SUSPENDED)" <+> kword KwAsc <+> tyd)
 >             Defined tm (ty :=>: tyv) -> do
 >                 tyd <- prettyHere (SET :>: ty)
 >                 tmd <- prettyHereAt (pred ArrSize) (tyv :>: tm)
