@@ -243,6 +243,26 @@
 >           imcurryDOp @@ [_I, _D, _P, L . HF "d" $ \d ->
 >            imcurryDOp @@ [_I, _D', _P, L . HF "d'" $ \d' -> _R $$ A (PAIR d d')]]
 
+>   imboxOp :: Op
+>   imboxOp = Op
+>     { opName = "imbox"
+>     , opArity = 4
+>     , opTyTel = imboxOpTy
+>     , opRun = imboxOpRun
+>     , opSimp = \_ _ -> empty
+>     } where
+>       imboxOpTy = 
+>         "I" :<: SET                     :-: \ _I ->
+>         "D" :<: IMDESC _I               :-: \ _D ->
+>         "P" :<: ARR _I SET              :-: \ _P ->
+>         "v" :<: imdescOp @@ [_I,_D,_P]  :-: \v ->
+>         Target $ IDESC (SIGMA _I (L . HF "i" $ \i -> _P $$ A i))
+
+>       imboxOpRun :: [VAL] -> Either NEU VAL
+>       imboxOpRun [_,N x    ,_,_] = Left x
+>       imboxOpRun [_I,_D,_P,v] = Right $ undefined
+>           
+  
 
 \subsection{Plugging Axioms in}
 
