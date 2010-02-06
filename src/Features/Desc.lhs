@@ -308,6 +308,25 @@ Equality rules:
 >                             , L . HF "d" $ \d -> _R $$ A (PAIR h d)])
 >       descCOpRun [N x        , _ , _ ] = Left x 
 
+>   undescCOp :: Op
+>   undescCOp = Op
+>     { opName  = "undescC"
+>     , opArity = 5
+>     , opTyTel = undescCOpTy
+>     , opRun   = undescCOpRun
+>     , opSimp  = \_ _ -> empty
+>     } where
+>       undescCOpTy =
+>         "D"  :<: desc :-: \ _D ->
+>         "X"  :<: SET  :-: \ _X ->
+>         "R"  :<: (ARR (descOp @@ [_D, _X]) SET) :-: \ _R ->
+>         "c"  :<: (descCOp @@ [_D, _X, _R]) :-: \c ->
+>         "xs" :<: (descOp @@ [_D, _X]) :-: \xs ->
+>         Target (_R $$ A xs)
+>       undescCOpRun :: [VAL] -> Either NEU VAL
+>       undescCOpRun [_D, _X, _R, c, i] = undefined
+>       undescCOpRun [N x,_,_,_,_] = Left x
+
 >   boxOp :: Op
 >   boxOp = Op
 >     { opName = "box"
