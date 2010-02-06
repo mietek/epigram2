@@ -69,6 +69,7 @@
 %include Features/Prop.lhs
 %include Features/Desc.lhs
 %include Features/IDesc.lhs
+%include Features/IMDesc.lhs
 %include Features/Equality.lhs
 %include Features/FreeMonad.lhs
 %include Features/Nu.lhs

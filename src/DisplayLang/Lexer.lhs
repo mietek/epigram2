@@ -150,6 +150,8 @@ level of abstraction, working on words instead of characters.
 
 \question{Presumably, one could make an |import ->| of these things?}
 
+\question{What is a |InDTm ArgSize|? a |InDTm AndSize|?}
+
 Keywords are slightly more involved. A keyword is one of the following
 things...
 
@@ -167,6 +169,7 @@ Punctuation used all over the place:
 
 >     KwSet | KwProp | KwUId | KwAbsurd | KwTrivial | KwCon | KwReturn |
 >     KwTag | KwLabel | KwLabelEnd | KwRet | KwLambda | KwPlus | KwSig |
+>     KwIMDesc | KwIMMu | KwIMAt | KwIMPi | KwIMSigma | KwIMFSigma | KwIMProp | KwIMProd |
 
 |InDTm AndSize|:
 
@@ -229,6 +232,14 @@ Other |InDTm|s:
 > key KwEnum      = "Enum"
 > key KwPi        = "Pi"
 > key KwAll       = "All"
+
+> key KwIMDesc    = "IMDescs"
+> key KwIMMu      = "IMMu"
+> key KwIMAt      = "IMPi"
+> key KwIMSigma   = "IMSigma"
+> key KwIMFSigma  = "IMFSigma"
+> key KwIMProp    = "IMProp"
+> key KwIMProd    = "IMProd"
 
 > key KwEqBlue    = "=="
 > key KwAnd       = "&&"

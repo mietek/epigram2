@@ -19,6 +19,7 @@ current version of the system.
 > import Features.Prop
 > import Features.Desc
 > import Features.IDesc
+> import Features.IMDesc
 > import Features.Equality
 > import Features.FreeMonad
 > import Features.Nu
