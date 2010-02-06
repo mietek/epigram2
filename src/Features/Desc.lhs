@@ -324,7 +324,48 @@ Equality rules:
 >         "xs" :<: (descOp @@ [_D, _X]) :-: \xs ->
 >         Target (_R $$ A xs)
 >       undescCOpRun :: [VAL] -> Either NEU VAL
->       undescCOpRun [_D, _X, _R, c, i] = undefined
+>       undescCOpRun [DONE       , _Z, _R, r, xs] = Right $ r
+>       undescCOpRun [ARG _X _F  , _Z, _R, f, sd] = Right $
+>         let s = sd $$ Fst
+>             d = sd $$ Snd in
+>         undescCOp @@ [ _F $$ A s
+>                      , _Z
+>                      , L . HF "d" $ \d -> _R $$ A (PAIR s d)
+>                      , f $$ A s
+>                      , d ]
+>       undescCOpRun [ARGF _E _B , _Z, _R, b, sd] = Right $
+>         let s  = sd $$ Fst
+>             d  = sd $$ Snd 
+>             br = \ e -> switchOp @@ [ _E, e, L (K desc), _B ]
+>             x  = switchOp @@ [ _E
+>                              , s
+>                              , L . HF "e" $ \e -> 
+>                                descCOp @@ [ br e
+>                                           , _Z
+>                                           , L . HF "d" $ \d -> _R $$ A (PAIR e d)]
+>                              , b ] 
+>         in
+>         undescCOp @@ [ br s
+>                      , _Z
+>                      , L . HF "d" $ \d -> _R $$ A (PAIR s d)
+>                      , x
+>                      , d ]
+>       undescCOpRun [IND _H _D  , _Z, _R, f, hd] = Right $
+>         let h = hd $$ Fst
+>             d = hd $$ Snd in
+>         undescCOp @@ [ _D
+>                      , _Z
+>                      , L . HF "d" $ \d -> _R $$ A (PAIR h d)
+>                      , f $$ A h
+>                      , d ]
+>       undescCOpRun [IND1 _D    , _Z, _R, f, hd] = Right $
+>         let h = hd $$ Fst
+>             d = hd $$ Snd in
+>         undescCOp @@ [ _D
+>                      , _Z
+>                      , L . HF "d" $ \d -> _R $$ A (PAIR h d)
+>                      , f $$ A h
+>                      , d ]
 >       undescCOpRun [N x,_,_,_,_] = Left x
 
 >   boxOp :: Op
