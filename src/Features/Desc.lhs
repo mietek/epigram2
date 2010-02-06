@@ -399,6 +399,34 @@ Equality rules:
 >                             ARR (boxOp @@ [d, MU (Just l) d, _P, x])
 >                                 (_P $$ A (CON x)))
 
+>   elimCOp :: Op
+>   elimCOp = Op
+>     { opName  = "inductionC"
+>     , opArity = 4
+>     , opTyTel = elimCOpTy
+>     , opRun   = elimCOpRun
+>     , opSimp  = \ _ _ -> empty
+>     } where
+>       elimCOpTy = 
+>         "D"  :<: desc                               :-: \ _D ->
+>         "v"  :<: MU Nothing _D                      :-: \ v ->
+>         "P"  :<: ARR (MU Nothing _D) SET            :-: \ _P ->
+>         "ih" :<: (descCOp @@ [ _D
+>                              , MU Nothing _D
+>                              , L . HF "xs" $ \xs ->
+>                                _P $$ A (CON xs) ])        :-: \ ih ->
+>         Target (_P $$ A v)
+>       elimCOpRun :: [VAL] -> Either NEU VAL
+>       elimCOpRun [_D, CON v, _P, ih] = Right $ 
+>         undescCOp @@ [ _D
+>                      , MU Nothing _D
+>                      , L . HF "xs" $ \xs ->
+>                        _P $$ A (CON xs)
+>                      , ih
+>                      , v ]
+>       elimCOpRun [_, N x, _, _] = Left x
+
+
 >   elimOp :: Op
 >   elimOp = Op
 >     { opName = "fold"
