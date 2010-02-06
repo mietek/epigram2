@@ -235,7 +235,8 @@ Other |InDTm|s:
 
 > key KwIMDesc    = "IMDescs"
 > key KwIMMu      = "IMMu"
-> key KwIMAt      = "IMPi"
+> key KwIMAt      = "IMAt"
+> key KwIMPi      = "IMPi"
 > key KwIMSigma   = "IMSigma"
 > key KwIMFSigma  = "IMFSigma"
 > key KwIMProp    = "IMProp"
