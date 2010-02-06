@@ -235,9 +235,11 @@ Equality rules:
 > import -> Operators where
 >   descOp :
 >   descCOp :
+>   undescCOp :
 >   boxOp :
 >   mapBoxOp :
 >   elimOp :
+>   elimCOp :
 >   mapOp :
 
 > import -> OpCompile where
