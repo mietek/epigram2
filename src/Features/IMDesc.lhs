@@ -261,7 +261,39 @@
 >       imboxOpRun :: [VAL] -> Either NEU VAL
 >       imboxOpRun [_,N x    ,_,_] = Left x
 >       imboxOpRun [_I,_D,_P,v] = Right $ undefined
->           
+           
+>   imelimOp :: Op
+>   imelimOp = Op
+>     { opName = "iinductionC"
+>     , opArity = 6
+>     , opTyTel = imelimOpTy 
+>     , opRun = imelimOpRun
+>     , opSimp = \_ _ -> empty
+>     } where
+>       imelimOpTy = 
+>           "I" :<: SET                       :-: \ _I ->
+>           "D" :<: ARR _I (IMDESC _I)        :-: \ _D ->
+>           "i" :<: _I                        :-: \ i ->
+>           "v" :<: IMMU Nothing _I _D i      :-: \ v ->
+>           "P" :<: ARR  (SIGMA _I (L . HF "i'" $ \i' -> IMMU Nothing _I _D i'))
+>                        SET                  :-: \ _P ->
+>           "m" :<: PI _I (L . HF "i'" $ \i' ->
+>                          imcurryDOp @@ [ _I
+>                                        , _D $$ A i'
+>                                        , L . HF "i" $ \i -> IMMU Nothing _I _D i
+>                                        , L . HF "xs" $ \xs ->
+>                                          imcurryDOp @@ [ _I
+>                                                        , imboxOp @@ [ _I
+>                                                                     , _D $$ A i'
+>                                                                     , L . HF "i" $ \i -> IMMU Nothing _I _D i
+>                                                                     , xs ]
+>                                                        , _P 
+>                                                        , L (K (_P $$ A (PAIR i' (CON xs))))]]) :-: \m ->
+>           Target $ _P $$ A (PAIR i v)
+>       imelimOpRun :: [VAL] -> Either NEU VAL
+>       imelimOpRun [_,_,_,N x, _,_] = Left x
+>       imelimOpRun [ii,d,i,CON x,bp,m] = Right $ undefined
+
   
 
 \subsection{Plugging Axioms in}
