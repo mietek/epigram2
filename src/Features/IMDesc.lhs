@@ -168,6 +168,7 @@
 >        "d" :<: IMDESC iI :-: \d ->
 >        "X" :<: ARR iI SET :-: \x ->
 >        Target SET
+
 >       idOpRun :: [VAL] -> Either NEU VAL
 >       idOpRun [_I, IMAT i          , _P] = Right $
 >           _P $$ A i
@@ -195,6 +196,52 @@
 >           TIMES  (imdescOp @@ [ _I, _D, _P ])
 >                  (imdescOp @@ [ _I, _D', _P ])
 >       idOpRun [_,N x               ,_]   = Left x
+
+>   imcurryDOp :: Op
+>   imcurryDOp = Op
+>     { opName = "imcurryD"
+>     , opArity = 4
+>     , opTyTel = imcurryDOpTy
+>     , opRun = imcurryDOpRun
+>     , opSimp = \_ _ -> empty
+>     } where
+>       imcurryDOpTy =
+>           "I" :<: SET                               :-: \ _I ->
+>           "D" :<: IMDESC _I                         :-: \ _D ->
+>           "P" :<: ARR _I SET                        :-: \ _P ->
+>           "R" :<: ARR (imdescOp @@ [_I,_D,_P]) SET  :-: \ _R ->
+>           Target SET
+>       imcurryDOpRun :: [VAL] -> Either NEU VAL
+>       imcurryDOpRun [_I, N x, _P, _R] = Left x
+>       imcurryDOpRun [_I, IMAT i, _P, _R] = Right $
+>           PI (_P $$ A i) (L . HF "x" $ \x -> _R $$ A x)
+>       imcurryDOpRun [_I, IMPI _S _T, _P, _R] = Right $
+>           PI _S (L . HF "s" $ \s ->
+>                  imcurryDOp @@ [ _I
+>                                , _T $$ A s
+>                                , _P
+>                                , L . HF "d" $ \d -> _R $$ A s $$ A d ])
+>       imcurryDOpRun [_I, IMSIGMA _S _T, _P, _R] = Right $
+>           PI _S (L . HF "s" $ \s ->
+>                  imcurryDOp @@ [ _I
+>                                , _T $$ A s
+>                                , _P
+>                                , L . HF "d" $ \d -> _R $$ A (PAIR s d)])
+>       imcurryDOpRun [_I, IMFSIGMA _E _B, _P, _R] = Right $
+>           branchesOp @@ [ _E
+>                         , L . HF "e" $ \e ->
+>                           imcurryDOp @@ [ _I
+>                                         , switchOp @@ [ _E
+>                                                       , e
+>                                                       , L (K (IMDESC _I))
+>                                                       , _B ]
+>                                         , _P
+>                                         , L . HF "d" $ \d -> _R $$ A (PAIR e d)]]
+>       imcurryDOpRun [_I, IMPROP q, _P, _R] = Right $
+>           PI (PRF q) (L . HF "x" $ \x -> _R $$ A x)
+>       imcurryDOpRun [_I, IMPROD _D _D', _P, _R] = Right $
+>           imcurryDOp @@ [_I, _D, _P, L . HF "d" $ \d ->
+>            imcurryDOp @@ [_I, _D', _P, L . HF "d'" $ \d' -> _R $$ A (PAIR d d')]]
 
 
 \subsection{Plugging Axioms in}
