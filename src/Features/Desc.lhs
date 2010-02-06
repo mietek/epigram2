@@ -449,22 +449,39 @@ Equality rules:
 >     , opSimp  = \ _ _ -> empty
 >     } where
 >       elimCOpTy = 
->         "D"  :<: desc                               :-: \ _D ->
->         "v"  :<: MU Nothing _D                      :-: \ v ->
->         "P"  :<: ARR (MU Nothing _D) SET            :-: \ _P ->
+>         "D"  :<: desc                                    :-: \ _D ->
+>         "v"  :<: MU Nothing _D                           :-: \ v ->
+>         "P"  :<: ARR (MU Nothing _D) SET                 :-: \ _P ->
 >         "ih" :<: (descCOp @@ [ _D
 >                              , MU Nothing _D
 >                              , L . HF "xs" $ \xs ->
->                                _P $$ A (CON xs) ])        :-: \ ih ->
+>                                ARR (boxOp @@ [ _D
+>                                      , MU Nothing _D
+>                                      , _P
+>                                      , xs ])
+>                                    (_P $$ A (CON xs)) ]) :-: \ ih ->
 >         Target (_P $$ A v)
 >       elimCOpRun :: [VAL] -> Either NEU VAL
 >       elimCOpRun [_D, CON v, _P, ih] = Right $ 
 >         undescCOp @@ [ _D
 >                      , MU Nothing _D
 >                      , L . HF "xs" $ \xs ->
->                        _P $$ A (CON xs)
+>                        ARR (boxOp @@ [ _D
+>                                      , MU Nothing _D
+>                                      , _P
+>                                      , xs ])
+>                            (_P $$ A (CON xs))
 >                      , ih
 >                      , v ]
+>         $$ A (mapBoxOp @@ [ _D
+>                           , MU Nothing _D
+>                           , _P 
+>                           , L . HF "x" $ \x ->
+>                             elimCOp @@ [ _D
+>                                        , x
+>                                        , _P
+>                                        , ih ]
+>                           , v ])
 >       elimCOpRun [_, N x, _, _] = Left x
 
 
