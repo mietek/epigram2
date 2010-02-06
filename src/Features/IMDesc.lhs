@@ -260,7 +260,32 @@
 
 >       imboxOpRun :: [VAL] -> Either NEU VAL
 >       imboxOpRun [_,N x    ,_,_] = Left x
->       imboxOpRun [_I,_D,_P,v] = Right $ undefined
+>       imboxOpRun [_I, IMAT i, _P, v] = Right $ 
+>           IMAT (PAIR i v)
+>       imboxOpRun [_I, IMPI _S _T, _P, f] = Right $
+>           IMPI _S (L . HF "s" $ \s ->
+>                    imboxOp @@ [_I, _T $$ A s, _P, f $$ A s])
+>       imboxOpRun [_I, IMSIGMA _S _T, _P, sd] = Right $
+>           let s = sd $$ Fst
+>               d = sd $$ Snd in
+>           imboxOp @@ [_I, _T $$ A s, _P, d]
+>       imboxOpRun [_I, IMFSIGMA _E _B, _P, ed] = Right $
+>            let e = ed $$ Fst
+>                d = ed $$ Snd in
+>            imboxOp @@ [_I
+>                       , switchOp @@ [ _E
+>                                     , e
+>                                     , L (K (IMDESC _I))
+>                                     , _B ]
+>                       , _P 
+>                       , d ]
+>       imboxOpRun [_I, IMPROP _Q, _P, q] = Right $
+>           IMPROP TRIVIAL
+>       imboxOpRun [_I, IMPROD _D _D', _P, dd'] = Right $
+>           let d = dd' $$ Fst
+>               d' = dd' $$ Snd in
+>           IMPROD  (imboxOp @@ [_I, _D, _P, d])
+>                   (imboxOp @@ [_I, _D', _P, d'])
            
 >   imelimOp :: Op
 >   imelimOp = Op
@@ -294,7 +319,7 @@
 >       imelimOpRun [_,_,_,N x, _,_] = Left x
 >       imelimOpRun [ii,d,i,CON x,bp,m] = Right $ undefined
 
-  
+
 
 \subsection{Plugging Axioms in}
 
