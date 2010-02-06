@@ -13,8 +13,6 @@
 
 > import -> CanConstructors where
 
-> import -> CanPretty where
-
 > import -> CanTyRules where
 
 > import -> CanCompile where
@@ -24,6 +22,8 @@
 > import -> CanPats where
 
 > import -> CanDisplayPats where
+
+> import -> CanPretty where
 
 > import -> CanTraverse where
 
