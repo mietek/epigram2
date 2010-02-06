@@ -151,8 +151,13 @@
 >   imdescOp :
 
 > import -> OpCompile where
->  -- ("imfold", [iI,d,i,v,bp,p]) -> App (Var "__imfold") [d, p, i, v]
->  -- ("immapBox", [iI,d,x,bp,p,v]) -> App (Var "__immapBox") [d, p, v]
+
+%if False
+
+<  ("imfold", [iI,d,i,v,bp,p]) -> App (Var "__imfold") [d, p, i, v]
+<  ("immapBox", [iI,d,x,bp,p,v]) -> App (Var "__immapBox") [d, p, v]
+
+%endif
 
 > import -> OpCode where
 >   imdescOp :: Op
