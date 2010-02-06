@@ -234,6 +234,7 @@ Equality rules:
 
 > import -> Operators where
 >   descOp :
+>   descCOp :
 >   boxOp :
 >   mapBoxOp :
 >   elimOp :
@@ -269,6 +270,43 @@ Equality rules:
 >       dOpRun [IND1 dD,xX] = Right (TIMES xX (descOp @@ [dD,xX]))
 >       dOpRun [N dD,_]     = Left dD
 
+>   descCOp :: Op
+>   descCOp = Op
+>     { opName  = "descC"
+>     , opArity = 3
+>     , opTyTel = descCOpTy
+>     , opRun   = descCOpRun
+>     , opSimp  = \_ _ -> empty
+>     } where
+>       descCOpTy =
+>         "D" :<: desc                            :-: \ _D ->
+>         "X" :<: SET                             :-: \ _X ->
+>         "R" :<: (ARR (descOp @@ [_D, _X]) SET)  :-: \ _R ->
+>         Target SET
+>       descCOpRun :: [VAL] -> Either NEU VAL
+>       descCOpRun [DONE       , _T, _R] = Right $
+>           _R $$ A VOID
+>       descCOpRun [ARG _X _F  , _T, _R] = Right $ 
+>           PI _X (L . HF "s" $ \s -> 
+>                  descCOp @@ [ _F $$ A s
+>                             , _T, L . HF "d" $ \d -> _R $$ A (PAIR s d)])
+>       descCOpRun [ARGF _E _B , _T, _R] = Right $
+>           branchesOp @@ [ _E
+>                         , L . HF "e" $ \e -> 
+>                           descCOp @@ [ switchOp @@ [_E, e, L (K desc), _B]
+>                                      , _T
+>                                      , L . HF "d" $ \d -> _R $$ A (PAIR e d)]]
+>       descCOpRun [IND _H _D  , _T, _R] = Right $
+>           PI (ARR _H _T) (L . HF "h" $ \h -> 
+>                           descCOp @@ [ _D
+>                                      , _T
+>                                      , L . HF "d" $ \d -> _R $$ A (PAIR h d)])
+>       descCOpRun [IND1 _D    , _T, _R] = Right $
+>           PI _T (L . HF "h" $ \h ->
+>                  descCOp @@ [ _D
+>                             , _T
+>                             , L . HF "d" $ \d -> _R $$ A (PAIR h d)])
+>       descCOpRun [N x        , _ , _ ] = Left x 
 
 >   boxOp :: Op
 >   boxOp = Op
