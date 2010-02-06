@@ -148,6 +148,8 @@ level of abstraction, working on words instead of characters.
 
 \subsubsection{Lexing keywords}
 
+\question{Presumably, one could make an |import ->| of these things?}
+
 Keywords are slightly more involved. A keyword is one of the following
 things...
 
