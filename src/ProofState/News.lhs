@@ -8,9 +8,11 @@
 
 > module ProofState.News where
 
+> import Data.Foldable hiding (foldr)
 > import Data.Maybe
 > import Data.Monoid hiding (All)
 
+> import Evidences.Rules
 > import Evidences.Tm
 
 %endif
@@ -110,3 +112,22 @@ in either.
 > mergeNews new [] = new
 > mergeNews new old = foldr addNews old new
 
+
+\subsubsection{o news}
+
+The |tellNews| function applies a bulletin to a term. It returns the updated
+term and the news about it.
+
+> tellNews :: NewsBulletin -> Tm {d, TT} REF -> (Tm {d, TT} REF, News)
+> tellNews []    tm = (tm, NoNews)
+> tellNews news  tm = case foldMap (lookupNews news) tm of
+>     NoNews  -> (tm, NoNews)
+>     n       -> (fmap (getLatest news) tm, n)
+
+The |tellNewsEval| function takes a bulletin, term and its present value.
+It updates the term with the bulletin and re-evaluates it if necessary.
+
+> tellNewsEval :: NewsBulletin -> INTM :=>: VAL -> (INTM :=>: VAL, News)
+> tellNewsEval news (tm :=>: tv) = case tellNews news tm of
+>     (_,    NoNews)    -> (tm   :=>: tv,        NoNews)
+>     (tm',  GoodNews)  -> (tm'  :=>: evTm tm',  GoodNews)

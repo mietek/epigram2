@@ -208,21 +208,3 @@ that her children have already received, and returns the updated news.
 >             give' tm
 >             return news'
 >         _ -> return news'
-
-
-The |tellNews| function applies a bulletin to a term. It returns the updated
-term and the news about it.
-
-> tellNews :: NewsBulletin -> Tm {d, TT} REF -> (Tm {d, TT} REF, News)
-> tellNews []    tm = (tm, NoNews)
-> tellNews news  tm = case foldMap (lookupNews news) tm of
->     NoNews  -> (tm, NoNews)
->     n       -> (fmap (getLatest news) tm, n)
-
-The |tellNewsEval| function takes a bulletin, term and its present value.
-It updates the term with the bulletin and re-evaluates it if necessary.
-
-> tellNewsEval :: NewsBulletin -> INTM :=>: VAL -> (INTM :=>: VAL, News)
-> tellNewsEval news (tm :=>: tv) = case tellNews news tm of
->     (_,    NoNews)    -> (tm   :=>: tv,        NoNews)
->     (tm',  GoodNews)  -> (tm'  :=>: evTm tm',  GoodNews)
