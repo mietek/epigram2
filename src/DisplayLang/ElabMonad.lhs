@@ -132,9 +132,11 @@ the proof state. That is, it defines the semantics of the |Elab| syntax.
 > runElab (ELambda s f) = lambdaBoy s >>= runElab . f
 > runElab (EGoal f) = getHoleGoal >>= runElab . f . valueOf
 
-> runElab (EHope ty@(PRF (EQBLUE (_S :>: s) (_T :>: (NP ref@(_ := HOLE Hoping :<: _))))) f) =
->     (suspend ty $ ESolve ref s $ const . Bale $ pval refl $$ A _S $$ A s)
->     >>= runElab . f
+> runElab (EHope ty@(PRF (EQBLUE (_S :>: s)
+>                          (_T :>: (NP ref@(_ := HOLE Hoping :<: _))))) f) = do
+>     ty' <- bquoteHere ty
+>     _ :=>: v <- suspend ("hope" :<: ty' :=>: ty) (ESolve ref s $ const . Bale $ pval refl $$ A _S $$ A s)
+>     runElab (f v)
 
 > runElab (EHope (PRF p) f) = prove False p >>= runElab . f . valueOf
 
@@ -166,15 +168,14 @@ the proof state. That is, it defines the semantics of the |Elab| syntax.
 
 The |suspend| command can be used to delay elaboration, by creating a subgoal
 of the given type and attaching a suspended elaboration process to its tip.
-When a news update hits the goal, the elaboration process will restart.
+When the scheduler hits the goal, the elaboration process will restart.
 
-> suspend :: TY -> Elab VAL -> ProofState VAL
-> suspend ty elab = do
->     ty' <- bquoteHere ty
->     _ :=>: v <- make' Waiting ("suspend" :<: ty' :=>: ty)
->     Just (E ref xn (Girl LETG (es, Unknown tt, nsupply) ms) tm) <- removeDevEntry
->     putDevEntry (E ref xn (Girl LETG (es, UnknownElab tt elab, nsupply) ms) tm)
->     return v
+> suspend :: (String :<: INTM :=>: TY) -> Elab VAL -> ProofState (EXTM :=>: VAL)
+> suspend (x :<: tt) elab = do
+>     r <- make' Waiting (x :<: tt)
+>     Just (E ref xn (Girl LETG (es, Unknown utt, nsupply) ms) tm) <- removeDevEntry
+>     putDevEntry (E ref xn (Girl LETG (es, UnknownElab utt elab, nsupply) ms) tm)
+>     return r
 
 
 
@@ -247,14 +248,28 @@ The |makeElab| function produces an |Elab| in a type-directed way.
 > elmCT :: ExDTmRN -> ProofState String
 > elmCT tm = do
 >     let el = makeElabInfer (Loc 0) tm
->     make ("elab" :<: sigSetTM)
->     goIn
->     tm :=>: _ <- runElab el
->     proofTrace $ "Elaborated to " ++ show tm
->     d <- prettyHere (sigSetVAL :>: tm)
->     proofTrace $ "or, more prettily, " ++ renderHouseStyle d
->     give tm
+>     suspend ("elab" :<: sigSetTM :=>: sigSetVAL) el
+>     cursorTop
+>     scheduler 0
 >     return "Okay."
+
+> scheduler :: Int -> ProofState ()
+> scheduler n = do
+>     cs <- getDevCadets
+>     case cs of
+>         F0      -> if n == 0 then return () else goOutProperly >> scheduler (n-1)
+>         E _ _ (Boy _) _ :> _  -> cursorDown >> scheduler n
+>         E ref _ (Girl _ (_, UnknownElab tt elab, _) _) _ :> _ -> do
+>             cursorDown
+>             goIn
+>             putDevTip (Unknown tt)
+>             proofTrace $ "scheduler: resuming elaboration on " ++ show (refName ref)
+>                 ++ ":\n" ++ show elab
+>             tm :=>: _ <- runElab elab
+>             give' tm
+>             cursorTop
+>             scheduler (n+1)
+>         _ :> _ -> cursorDown >> goIn >> cursorTop >> scheduler (n+1)
 
 
 > sigSetTM :: INTM
