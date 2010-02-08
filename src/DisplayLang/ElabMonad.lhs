@@ -146,7 +146,7 @@ the proof state. That is, it defines the semantics of the |Elab| syntax.
 > runElab (ECry e)  = throwError e
 > runElab (ECompute ty prob f) = runElabCompute ty prob >>= runElab . f
 
-> runElab (ESolve ref val f) = bquoteHere val >>= solveHole ref >>= runElab . f . valueOf
+> runElab (ESolve ref val f) = bquoteHere val >>= forceHole ref >>= runElab . f . valueOf
 
 > runElab (ECan (C c) f) = runElab (f c)
 
