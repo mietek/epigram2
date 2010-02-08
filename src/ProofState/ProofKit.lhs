@@ -257,6 +257,7 @@ layer cadets at the new focus.
 >             Just dev -> do
 >                 me <- getMotherEntry
 >                 putDev dev
+>                 putDevCadets F0
 >                 replaceLayer l{elders=es, mother=entryToMother e,
 >                     cadets=NF (acc <+> (Right (reverseEntry me) :> cadets))}
 >                 return ()
@@ -285,6 +286,7 @@ boys so they can be put back as layer elders at the new focus.
 >                 replaceLayer l{elders=(elders :< me) <+> acc,
 >                                    mother=entryToMother e, cadets=NF es}
 >                 putDev (B0, tip', nsupply')
+>                 putDevCadets F0
 >                 news' <- propagateNews True news es'
 >                 return ()
 >               Right e' -> do
