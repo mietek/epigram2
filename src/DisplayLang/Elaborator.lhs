@@ -368,7 +368,7 @@ subgoals produced by elaboration will be children of the resulting goal.
 >     goIn
 >     ty' :=>: _ <- elaborate False (SET :>: ty)
 >     tm <- moduleToGoal ty'
->     goOut
+>     goOutProperly
 >     return tm
 
 
