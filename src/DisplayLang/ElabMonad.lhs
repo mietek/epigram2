@@ -192,7 +192,7 @@ The |makeElab| function produces an |Elab| in a type-directed way.
 > makeElab :: Loc -> (TY :>: InDTmRN) -> Elab VAL
 
 > makeElab loc (ty :>: DU) = EHope ty Bale
-> makeElab loc (ty :>: DQ) = EHope ty Bale
+> makeElab loc (ty :>: DQ _) = EHope ty Bale
 
 > makeElab loc (C ty :>: DC tm) = do
 >     v <- canTy (chevElab loc) (ty :>: tm)
