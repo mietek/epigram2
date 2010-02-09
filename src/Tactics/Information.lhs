@@ -12,7 +12,10 @@
 > import Data.Traversable
 > import Text.PrettyPrint.HughesPJ
 
-> import Kit.BwdFwd hiding ((<+>))
+> import NameSupply.NameSupply
+
+> import Evidences.Rules hiding (($$))
+> import Evidences.Tm
 
 > import ProofState.Developments
 > import ProofState.Lifting
@@ -22,15 +25,13 @@
 
 > import DisplayLang.DisplayTm
 > import DisplayLang.Distiller
-> import DisplayLang.Elaborator
 > import DisplayLang.Lexer
 > import DisplayLang.Naming
 > import DisplayLang.PrettyPrint
 
-> import NameSupply.NameSupply
+> import Elaboration.Elaborator
 
-> import Evidences.Rules hiding (($$))
-> import Evidences.Tm
+> import Kit.BwdFwd hiding ((<+>))
 
 %endif
 

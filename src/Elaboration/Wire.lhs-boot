@@ -1,4 +1,4 @@
-> module ProofState.Wire where
+> module Elaboration.Wire where
 
 > import Evidences.Tm
 > import ProofState.Developments

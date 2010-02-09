@@ -10,7 +10,6 @@
 
 > import Control.Applicative
 > import Control.Monad.Error
-> import Control.Monad.Identity
 > import qualified Data.Monoid as M
 > import Data.Foldable hiding (foldl)
 > import Data.List

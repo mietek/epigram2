@@ -19,8 +19,7 @@
 > import NameSupply.NameSupply
 
 > -- XXX: bug "fix" of the dependency graph:
-> import DisplayLang.DisplayTm 
-> import DisplayLang.Naming
+> import DisplayLang.DisplayTm
 
 > import ProofState.Developments
 > import ProofState.News

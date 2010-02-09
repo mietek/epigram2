@@ -7,7 +7,7 @@
 > {-# LANGUAGE FlexibleInstances, TypeOperators, TypeSynonymInstances,
 >              GADTs, RankNTypes, PatternGuards #-}
 
-> module ProofState.Wire where
+> module Elaboration.Wire where
 
 > import Control.Applicative
 > import Data.Foldable
@@ -20,11 +20,12 @@
 > import ProofState.ProofContext
 > import ProofState.ProofState
 > import ProofState.ProofKit
+> import ProofState.ElabMonad
 
 > import Evidences.Tm
 > import Evidences.Rules
 
-> import DisplayLang.ElabMonad
+> import Elaboration.ElabLanguage
 
 %endif
 

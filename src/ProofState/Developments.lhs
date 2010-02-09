@@ -18,8 +18,9 @@
 
 > import Evidences.Tm
 
+> import ProofState.ElabMonad
+
 > import DisplayLang.DisplayTm
-> import {-# SOURCE #-} DisplayLang.ElabMonad
 
 %endif
 

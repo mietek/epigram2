@@ -19,9 +19,6 @@
 > import NameSupply.NameSupply
 > import NameSupply.NameSupplier
 
-> import DisplayLang.Elaborator
-> import DisplayLang.Naming
-
 > import Evidences.Tm
 > import Evidences.Rules hiding (simplify)
 
@@ -29,6 +26,12 @@
 > import ProofState.ProofKit
 
 > import Tactics.Information
+
+> import DisplayLang.DisplayTm
+
+> import Elaboration.Elaborator
+
+
 
 %endif
 

@@ -26,9 +26,10 @@
 > import ProofState.Lifting
 > import ProofState.ProofContext
 > import ProofState.ProofState
-> import {-# SOURCE #-} ProofState.Wire
 
 > import DisplayLang.Naming
+
+> import {-# SOURCE #-} Elaboration.Wire
 
 > import Evidences.Tm
 > import Evidences.Rules
@@ -179,32 +180,38 @@ is no news to worry about. We simply move an entry above the cursor to one
 below, or vice versa.
 
 > cursorUp :: ProofState ()
-> cursorUp = (do
->     es :< e <- getDevEntries
->     cadets <- getDevCadets
->     putDevEntries es
->     putDevCadets (e :> cadets)
->     return ()
->   ) `pushError` (err "cursorUp: cannot move cursor up.")
+> cursorUp = do
+>     es' <- getDevEntries
+>     case es' of
+>         es :< e -> do
+>             cadets <- getDevCadets
+>             putDevEntries es
+>             putDevCadets (e :> cadets)
+>             return ()
+>         B0 -> throwError' $ err "cursorUp: cannot move cursor up."
 
 > cursorDown :: ProofState ()
-> cursorDown = (do
+> cursorDown = do
 >     es <- getDevEntries
->     cadet :> cadets <- getDevCadets
->     putDevEntries (es :< cadet)
->     putDevCadets cadets
->     return ()
->   ) `pushError` (err "cursorDown: cannot move cursor down.")
+>     cadets' <- getDevCadets
+>     case cadets' of
+>         cadet :> cadets -> do
+>             putDevEntries (es :< cadet)
+>             putDevCadets cadets
+>             return ()
+>         F0 -> throwError' $ err "cursorDown: cannot move cursor down."
 
 The |goIn| command has no news to worry about either; it simply moves the
 cursor upwards until it finds an entry with a development, then enters it.
 
 > goIn :: ProofState ()
-> goIn = (do
->     es :< e <- getDevEntries
->     case entryDev e of
->         Nothing   -> cursorUp >> goIn
->         Just dev  -> do
+> goIn = do
+>     es' <- getDevEntries
+>     case es' of
+>         B0 -> throwError' $ err "goIn: you can't go that way."
+>         es :< e -> case entryDev e of
+>           Nothing   -> cursorUp >> goIn
+>           Just dev  -> do
 >              cadets <- getDevCadets
 >              tip <- getDevTip
 >              nsupply <- getDevNSupply
@@ -213,7 +220,6 @@ cursor upwards until it finds an entry with a development, then enters it.
 >              putDev dev
 >              putDevCadets F0
 >              return ()
->   )  `pushError` (err "goIn: you can't go that way.")
 
 
 The |goOut| command has to deal with any news that may be present in the cadets
@@ -222,14 +228,16 @@ starting with the empty bulletin, so it ends up with the cursor at the bottom
 of the new focus.
 
 > goOut :: ProofState ()
-> goOut = (do
+> goOut = do
 >     e <- getMotherEntry
->     l <- removeLayer
->     putDev (elders l :< e, laytip l, laynsupply l)
->     putDevCadets F0
->     propagateNews True [] (cadets l)
->     return ()
->   ) `pushError` (err "goOut: you can't go that way.")
+>     ml <- optional removeLayer
+>     case ml of
+>         Just l -> do
+>             putDev (elders l :< e, laytip l, laynsupply l)
+>             putDevCadets F0
+>             propagateNews True [] (cadets l)
+>             return ()
+>         Nothing -> throwError' $ err "goOut: you can't go that way."
 
 
 The |goOutProperly| variant calls |goOut|, then moves the cursor back up to
@@ -237,10 +245,13 @@ just below the previous focus.
 
 > goOutProperly :: ProofState ()
 > goOutProperly = do
->     Layer{cadets=cadets} <- getLayer
->     goOut
->     Data.Traversable.mapM (const cursorUp) cadets
->     return ()
+>     ls <- getLayers
+>     case ls of
+>         _ :< Layer{cadets=cadets} -> do
+>             goOut
+>             Data.Traversable.mapM (const cursorUp) cadets
+>             return ()
+>         B0 -> throwError' $ err "goOutProperly: you can't go that way."
 
 
 The |goUp| command looks through the layer elders for one that has a
@@ -248,12 +259,13 @@ development, accumulating boys it passes over so they be put back as
 layer cadets at the new focus.
 
 > goUp :: ProofState ()
-> goUp = goUpAcc (NF F0) `pushError` (err "goUp: you can't go that way.")
+> goUp = goUpAcc (NF F0)
 >   where
 >     goUpAcc :: NewsyEntries -> ProofState ()
 >     goUpAcc (NF acc) = do
->         l@(Layer (es :< e) m (NF cadets) tip nsupply) <- getLayer
->         case entryDev e of
+>         l <- getLayer
+>         case l of
+>           (Layer (es :< e) m (NF cadets) tip nsupply) -> case entryDev e of
 >             Just dev -> do
 >                 me <- getMotherEntry
 >                 putDev dev
@@ -264,6 +276,7 @@ layer cadets at the new focus.
 >             Nothing -> do
 >                 replaceLayer l{elders=es}
 >                 goUpAcc (NF (Right (reverseEntry e) :> acc))
+>           _ -> throwError' $ err "goUp: you can't go that way."
 
 
 The |goDown| command looks through the layer cadets for one that has a
@@ -271,12 +284,13 @@ development, passing on news it encounters as it goes and accumulating
 boys so they can be put back as layer elders at the new focus.
 
 > goDown :: ProofState ()
-> goDown = goDownAcc B0 [] `pushError` (err "goDown: you can't go that way.")
+> goDown = goDownAcc B0 []
 >   where
 >     goDownAcc :: Entries -> NewsBulletin -> ProofState ()
 >     goDownAcc acc news = do
->         l@(Layer elders _ (NF (ne :> es)) _ _) <- getLayer
->         case ne of
+>         l <- getLayer
+>         case l of
+>           (Layer elders _ (NF (ne :> es)) _ _) -> case ne of
 >             Left nb -> do
 >                 replaceLayer l{cadets=NF es}
 >                 goDownAcc acc (mergeNews news nb)
@@ -293,6 +307,7 @@ boys so they can be put back as layer elders at the new focus.
 >                 (news', e'') <- tellEntry news e'
 >                 replaceLayer l{cadets=NF es}
 >                 goDownAcc (acc :< e'') news'
+>           _ -> throwError' $ err "goDown: you can't go that way."
 
 
 \subsubsection{Many-step Navigation}

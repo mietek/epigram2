@@ -71,10 +71,8 @@ Going in...
 a, x
 I'm sorry, Dave. I'm afraid I can't do that.
 Error: cursorDown: cannot move cursor down.
-Error: Pattern match failure in do expression at ProofState/ProofKit.lhs:193:6-20
 I'm sorry, Dave. I'm afraid I can't do that.
 Error: cursorUp: cannot move cursor up.
-Error: Pattern match failure in do expression at ProofState/ProofKit.lhs:183:6-12
 Going down...
 := ? : Set
 Going out...
@@ -88,11 +86,9 @@ Going down...
 := ? : Set
 I'm sorry, Dave. I'm afraid I can't do that.
 Error: goDown: you can't go that way.
-Error: Pattern match failure in do expression at ProofState/ProofKit.lhs:278:10-47
 Going up...
 I'm sorry, Dave. I'm afraid I can't do that.
 Error: goUp: you can't go that way.
-Error: Pattern match failure in do expression at ProofState/ProofKit.lhs:255:10-54
 [ a := ? : Set ;
   \ x : Set ->
   b := ? : Set ;
@@ -101,12 +97,11 @@ Error: Pattern match failure in do expression at ProofState/ProofKit.lhs:255:10-
 ] ? : Set
 Going out...
 I'm sorry, Dave. I'm afraid I can't do that.
-Error: Pattern match failure in do expression at ProofState/ProofState.lhs:116:6-12
+Error: goOutProperly: you can't go that way.
 Going in...
 Going in...
 I'm sorry, Dave. I'm afraid I can't do that.
 Error: goIn: you can't go that way.
-Error: Pattern match failure in do expression at ProofState/ProofKit.lhs:204:6-12
 a, x, b, y
 Going to root...
 [ f

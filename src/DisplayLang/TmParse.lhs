@@ -16,7 +16,6 @@
 
 > import DisplayLang.DisplayTm
 > import DisplayLang.Lexer
-> import DisplayLang.Naming
 
 > import Features.Features
 

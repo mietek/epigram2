@@ -7,8 +7,6 @@
 
 > module Tactics.Gadgets where
 
-> import Tactics.Elimination
-
 %endif
 
 

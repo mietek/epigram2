@@ -23,15 +23,15 @@
 > import ProofState.Developments
 
 > import DisplayLang.DisplayTm
-> import DisplayLang.Elaborator
 > import DisplayLang.Lexer
-> import DisplayLang.Naming
 > import DisplayLang.TmParse
 > import DisplayLang.PrettyPrint
 
 > import ProofState.ProofContext
 > import ProofState.ProofState
 > import ProofState.ProofKit
+
+> import Elaboration.Elaborator
 
 > import NameSupply.NameSupply
 > import NameSupply.NameSupplier

@@ -25,10 +25,8 @@
 > import DisplayLang.Lexer
 > import DisplayLang.Naming
 > import DisplayLang.TmParse
-> import DisplayLang.Elaborator
 > import DisplayLang.DisplayTm
 > import DisplayLang.PrettyPrint
-> import DisplayLang.ElabMonad
 
 > import ProofState.ProofContext
 > import ProofState.ProofState
@@ -40,6 +38,9 @@
 > import Tactics.Information
 > import Tactics.Solution
 > import Tactics.Gadgets
+
+> import Elaboration.Elaborator
+> import Elaboration.ElabLanguage
 
 > import Cochon.CommandLexer
 > import Cochon.Error

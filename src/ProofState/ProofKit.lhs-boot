@@ -1,9 +1,0 @@
-> {-# LANGUAGE TypeOperators #-}
-
-> module ProofState.ProofKit where
-
-> import Evidences.Tm
-> import ProofState.ProofState
-
-> goOut :: ProofState ()
-> give :: INTM -> ProofState (EXTM :=>: VAL)

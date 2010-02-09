@@ -13,7 +13,7 @@
 
 > import Evidences.Tm hiding (In)
 
-> import DisplayLang.Naming
+> import DisplayLang.DisplayTm
 > import DisplayLang.PrettyPrint
 
 > import Tactics.Information

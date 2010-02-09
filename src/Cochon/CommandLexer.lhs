@@ -10,12 +10,9 @@
 
 > import Control.Applicative
 
-> import Evidences.Tm
-
 > import Kit.Parsley
 
 > import DisplayLang.Lexer
-> import DisplayLang.Naming
 > import DisplayLang.TmParse
 > import DisplayLang.DisplayTm
 

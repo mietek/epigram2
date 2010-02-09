@@ -42,7 +42,7 @@ as |x|, but |x|\textasciicircum|1| skips past it and refers to the next thing na
 An absolute offset |_n|, by contrast, refers to the exact numerical
 component of the name. 
 
-> data Offs = Rel Int | Abs Int deriving (Show, Eq)
+> data Offs = Rel Int | Abs Int deriving Show
 > type RelName = [(String,Offs)]
 
 > type InTmRN = InTm RelName

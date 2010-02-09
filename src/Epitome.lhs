@@ -87,7 +87,7 @@
 %include ProofState/ProofContext.lhs
 %include ProofState/ProofState.lhs
 %include ProofState/ProofKit.lhs
-%include ProofState/Wire.lhs
+%include ProofState/ElabMonad.lhs
 
 \chapter{The Proof Tactics}
 
@@ -109,11 +109,14 @@
 %include DisplayLang/Naming.lhs
 %include DisplayLang/Lexer.lhs
 %include DisplayLang/TmParse.lhs
-%include DisplayLang/Elaborator.lhs
-%include DisplayLang/ElabMonad.lhs
 %include DisplayLang/Distiller.lhs
 %include DisplayLang/PrettyPrint.lhs
 
+\chapter{Elaboration}
+
+%include Elaboration/Elaborator.lhs
+%include Elaboration/ElabLanguage.lhs
+%include Elaboration/Wire.lhs
 
 \chapter{Cochon}
 

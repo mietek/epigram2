@@ -9,31 +9,23 @@
 
 > import Prelude hiding (any)
 
-> import Control.Applicative
 > import Data.Foldable
-> import Data.Maybe
 > import Data.Monoid
-> import Data.Traversable
-
-> import Kit.BwdFwd
-
-> import ProofState.Developments
-> import ProofState.News
-> import ProofState.ProofContext
-> import ProofState.ProofState
-> import ProofState.ProofKit
-
-> import DisplayLang.DisplayTm
-> import DisplayLang.Elaborator
-> import DisplayLang.Naming
-
-> import NameSupply.NameSupply
 
 > import Evidences.Rules
 > import Evidences.Tm
 
-> import Tactics.Information
+> import ProofState.Developments
+> import ProofState.News
+> import ProofState.ProofState
+> import ProofState.ProofKit
 
+> import DisplayLang.DisplayTm
+> import DisplayLang.Naming
+
+> import Elaboration.Elaborator
+
+> import Kit.BwdFwd
 > import Kit.MissingLibrary
 
 %endif

@@ -8,7 +8,7 @@
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
 
-> import DisplayLang.Naming
+> import DisplayLang.DisplayTm
 
 > import Evidences.Tm
 > import Evidences.Rules

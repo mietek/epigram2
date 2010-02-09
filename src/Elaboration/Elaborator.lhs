@@ -6,7 +6,7 @@
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE ScopedTypeVariables, TypeOperators, TypeSynonymInstances, GADTs #-}
 
-> module DisplayLang.Elaborator where
+> module Elaboration.Elaborator where
 
 > import Control.Applicative
 > import Control.Monad
