@@ -389,9 +389,11 @@ the name part of references, respectively.
 > nomRel' o (x,i) (es:<e) = nomRel' o (x,i) es
 > nomRel' _ _ _ = Nothing
 
+
+
 \subsection{Moving |StackError| from |INTM| to |InDTmRN|}
 
-Some functions, such as |resolve|, are defined in the |ProofStateT
+Some functions, such as |distill|, are defined in the |ProofStateT
 INTM| monad. However, Cochon lives in a |ProofStateT InDTmRN|
 monad. Therefore, in order to use it, we will need to lift from the
 former to the latter.
