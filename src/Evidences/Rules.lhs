@@ -570,7 +570,7 @@ This translates naturally into the following code:
 >     False -> throwError'  $   err "check: inferred type"
 >                           ++  errTyVal (yt :<: SET)
 >                           ++  err "of"
->                           ++  errTyVal (evTm n :<: yt)
+>                           ++  errTyVal (yv :<: yt)
 >                           ++  err "is not"
 >                           ++  errTyVal (w :<: SET)
 
@@ -622,10 +622,17 @@ term |t| and we type-check the eliminator, using |elimTy|. Because
 |elimTy| computes the result type, we have inferred the result type.
 
 > infer (t :$ s)           = do
->   val :<: C ty <- infer t
->   (s',ty') <- elimTy chev (evTm t :<: ty) s
->   return $ (val $$ (fmap valueOf s')) :<: ty'
->       where chev (t :>: x) = do 
+>     val :<: ty <- infer t
+>     case ty of
+>         C cty -> do
+>             (s', ty') <- elimTy chev (evTm t :<: cty) s
+>             return $ (val $$ (fmap valueOf s')) :<: ty'
+>         _ -> throwError' $ err "infer: inferred type"
+>                            ++ errTyVal (ty :<: SET)
+>                            ++ err "of"
+>                            ++ errTyVal (val :<: ty)
+>                            ++ err "is not canonical."
+>  where chev (t :>: x) = do 
 >               ch <- check (t :>: x) 
 >               return $ ch :=>: evTm x
 
