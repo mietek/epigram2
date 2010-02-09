@@ -80,6 +80,8 @@
 >     makeDeps _ _ = throwError' $ err "makeDeps: bad reference kind! Perhaps "
 >         ++ err "solveHole was called with a term containing unexpanded definitions?"
 
+> solveHole ref _ _ = throwError' $ err "solveHole:" ++ errRef ref
+>                                           ++ err "is not a hole."
 
 > elabSolveHole :: RelName -> InDTmRN -> ProofState (EXTM :=>: VAL)
 > elabSolveHole rn tm = do

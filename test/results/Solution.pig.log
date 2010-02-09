@@ -1,0 +1,44 @@
+Made.
+Made.
+Made.
+Solved.
+[ B := ? : Set -> Set ;
+  A := (B Set -> B Set) : Set ;
+  ---
+  B := B : Set -> Set ;
+  C := B Set : Set ;
+]
+I'm sorry, Dave. I'm afraid I can't do that.
+Error: solveHole: A_0 is not a hole.
+Moving cursor down...
+Moving cursor down...
+Made module.
+Made.
+Made.
+I'm sorry, Dave. I'm afraid I can't do that.
+Error: solveHole: you can't define something in terms of itself!
+Made lambda boy!
+I'm sorry, Dave. I'm afraid I can't do that.
+Error: solveHole: boy M_4.X_2 occurs illegally.
+[ D := ? : Set ;
+  d := ? : D ;
+  \ X : Set ->
+]
+Going out...
+Made.
+Solved.
+[ B := ? : Set -> Set ;
+  A := (B Set -> B Set) : Set ;
+  B := B : Set -> Set ;
+  C := B Set : Set ;
+  M
+    [ D := ? : Set ;
+      d := ? : D ;
+      \ X : Set ->
+    ] ;
+  G6 := ? : :- M.D == ((: Set) Set) ;
+  G := coe M.D Set G6 M.d : Set ;
+  ---
+  G6 := G6 : :- M.D == ((: Set) Set) ;
+]
+Loaded.
