@@ -51,7 +51,7 @@ then write an interpreter to run the syntax in the |ProofState| monad.
 < solve : REF -> VAL -> REF
 < ensure : VAL -> Can () -> (Can VAL, VAL)
 
-We will eventually need to keep track of which elaboration problems correspond
+ We will eventually need to keep track of which elaboration problems correspond
 to which source code locations.
 
 > newtype Loc = Loc Int deriving Show
@@ -128,34 +128,32 @@ The |runElab| proof state command actually interprets an |Elab x| in
 the proof state. That is, it defines the semantics of the |Elab| syntax.
 
 > runElab :: Elab VAL -> ProofState (Maybe (INTM :=>: VAL))
-> runElab (Bale x) = bquoteHere x >>= return . Just . (:=>: x)
-> runElab (ELambda s f) = lambdaBoy s >>= runElab . f
-> runElab (EGoal f) = getHoleGoal >>= runElab . f . valueOf
+> runElab (Bale x)            = bquoteHere x >>= return . Just . (:=>: x)
+> runElab (ELambda s f)       = lambdaBoy s >>= runElab . f
+> runElab (EGoal f)           = getHoleGoal >>= runElab . f . valueOf
+> runElab (EHope ty f)        = runElabHope ty >>= runElab . f . valueOf
+> runElab (ECry e)            = throwError e
+> runElab (ECompute ty p f)   = runElabCompute ty p >>= runElab . f
+> runElab (ESolve ref val f)  = bquoteHere val >>= forceHole ref >>= runElab . f . valueOf
+> runElab (ECan (C c) f)      = runElab (f c)
+> runElab (ECan tm f)         = suspendMe (ECan tm f)
 
-> runElab (EHope ty@(PRF (EQBLUE (_S :>: s)
->                          (_T :>: (NP ref@(_ := HOLE Hoping :<: _))))) f) = do
+
+The |EHope| command hopes for an element of a given type. If it is asking for a
+proof, we might be able to find one, but otherwise we just create a hole.
+
+> runElabHope :: TY -> ProofState (INTM :=>: VAL)
+> runElabHope ty@(PRF (EQBLUE (_S :>: s) (_T :>: (NP ref@(_ := HOLE Hoping :<: _))))) = do
 >     ty' <- bquoteHere ty
->     _ :=>: v <- suspend ("hope" :<: ty' :=>: ty) (ESolve ref s $ const . Bale $ pval refl $$ A _S $$ A s)
->     runElab (f v)
-
-> runElab (EHope (PRF p) f) = prove False p >>= runElab . f . valueOf
-
-> runElab (EHope ty f) = do
+>     neutralise =<< suspend ("hope" :<: ty' :=>: ty)
+>         (ESolve ref s $ const . Bale $ pval refl $$ A _S $$ A s)
+> runElabHope (PRF p) = prove False p
+> runElabHope ty = do
 >     ty' <- bquoteHere ty
->     tm <- make' Hoping ("hope" :<: ty' :=>: ty)
->     runElab . f . valueOf $ tm
+>     neutralise =<< make' Hoping ("hope" :<: ty' :=>: ty)
 
-> runElab (ECry e)  = throwError e
-> runElab (ECompute ty prob f) = runElabCompute ty prob >>= runElab . f
 
-> runElab (ESolve ref val f) = bquoteHere val >>= forceHole ref >>= runElab . f . valueOf
-
-> runElab (ECan (C c) f) = runElab (f c)
-
-> runElab (ECan tm f) = do
->     suspendHere (ECan tm f)
->     return Nothing
-
+The |ECompute| command computes the solution to a problem, given its type. 
 
 > runElabCompute :: TY -> CProb -> ProofState VAL
 > runElabCompute ty (ElabProb e) = do
@@ -184,10 +182,11 @@ When the scheduler hits the goal, the elaboration process will restart.
 >     return r
 
 
-> suspendHere :: Elab VAL -> ProofState ()
-> suspendHere elab = do
+> suspendMe :: Elab VAL -> ProofState (Maybe a)
+> suspendMe elab = do
 >     Unknown tt <- getDevTip
 >     putDevTip (UnknownElab tt elab)
+>     return Nothing
 
 
 The |chevElab| helper function is a checker-evaluator version of |makeElab|

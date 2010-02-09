@@ -200,12 +200,31 @@ that her children have already received, and returns the updated news.
 >     tip <- getDevTip
 >     case tip of
 >         UnknownElab tt elab -> do
->             putDevTip (Unknown tt)
->             proofTrace $ "tellMother: resuming elaboration on "
->                 ++ show (entryName e') ++ ":\n" ++ show elab
->             mtm <- runElab elab
->             case mtm of
->                 Just (tm :=>: _ ) -> give' tm >> return ()
->                 Nothing -> proofTrace "tellMother: elaboration suspended."
->             return news'
->         _ -> return news'
+>             melab <- tellElab news elab
+>             case melab of
+>                 Just elab' -> do
+>                     putDevTip (Unknown tt)
+>                     proofTrace $ "tellMother: resuming elaboration on "
+>                         ++ show (entryName e') ++ ":\n" ++ show elab'
+>                     mtm <- runElab elab'
+>                     case mtm of
+>                         Just (tm :=>: _ ) -> give' tm >> return ()
+>                         Nothing -> proofTrace
+>                             "tellMother: elaboration suspended."
+>                 Nothing -> return ()
+>         _ -> return ()
+>     return news'
+
+
+> tellElab :: NewsBulletin -> Elab VAL -> ProofState (Maybe (Elab VAL))
+> tellElab news (Bale v) = do
+>     v' <- bquoteHere v
+>     case tellNews news v' of
+>         (v'', GoodNews)  -> return . Just . Bale . evTm $ v''
+>         (_, NoNews)      -> return Nothing
+> tellElab news (ECan v f) = do
+>     v' <- bquoteHere v
+>     case tellNews news v' of
+>         (v'', GoodNews)  -> return $ Just (ECan (evTm v'') f)
+>         (_, NoNews)      -> return Nothing
+> tellElab news elab = return $ Just elab
