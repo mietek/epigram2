@@ -42,30 +42,24 @@ representation. Note that it works in its own module which it discards at the
 end, so it will not leave any subgoals lying around in the proof state.
 
 > infoElaborate :: ExDTmRN -> ProofState String
-> infoElaborate tm = do
->     makeModule "__infoElaborate"
->     goIn
+> infoElaborate tm = draftModule "__infoElaborate" (do
 >     (tm' :=>: tmv :<: ty, _) <- elabInfer tm
 >     tm'' <- bquoteHere tmv
 >     s <- prettyHere (ty :>: tm'')
->     goOut
->     dropModule
 >     return (renderHouseStyle s)
+>  )
 
 
 The |infoInfer| command is similar to |infoElaborate|, but it returns a string
 representation of the resulting type.
 
 > infoInfer :: ExDTmRN -> ProofState String
-> infoInfer tm = do
->     makeModule "__infoInfer"
->     goIn
+> infoInfer tm = draftModule "__infoInfer" (do
 >     (_ :<: ty, _) <- elabInfer tm
 >     ty' <- bquoteHere ty
 >     s <- prettyHere (SET :>: ty')
->     goOut
->     dropModule
 >     return (renderHouseStyle s)
+>  )
 
 
 The |infoContextual| command displays a distilled list of things in the context,

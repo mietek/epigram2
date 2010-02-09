@@ -425,18 +425,13 @@ several alternatives for where to go next and continuing until a goal is reached
 >     putDevTip (Unknown (ty :=>: tyv))
 >     return (applyAuncles ref aus)
 
-> dropModule :: ProofState ()
-> dropModule = do
->     Just (M _ _) <- removeDevEntry
->     return ()
-
 > draftModule :: String -> ProofState t -> ProofState t
 > draftModule name draftyStuff = do
 >     makeModule name
 >     goIn
 >     t <- draftyStuff
->     goOut
->     dropModule
+>     goOutProperly
+>     Just (M _ _) <- removeDevEntry
 >     return t
 
 
