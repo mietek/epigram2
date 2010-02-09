@@ -242,9 +242,9 @@ ie. the eliminator, in |Elim (s :=>: VAL)| and the type of the result in
 >   eev@(e :=>: ev) <- chev (s :>: e)
 >   return $ (A eev, t $$ A ev) 
 > import <- ElimTyRules
-> elimTy _  (v :<: t) e = throwError'  $ err "elimTy: failed to eliminate " 
+> elimTy _  (v :<: t) e = throwError'  $ err "elimTy: failed to eliminate" 
 >                                      ++ errTyVal (v :<: (C t)) 
->                                      ++ err " with " 
+>                                      ++ err "with" 
 >                                      ++ errElim e
 
 \question{Why not asking |m| to be |Alternative| too?}

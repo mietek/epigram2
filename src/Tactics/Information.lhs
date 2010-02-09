@@ -254,15 +254,22 @@ of the proof state at the current location.
 >         case tip of
 >             Module -> return empty
 >             Unknown (ty :=>: _) -> do
+>                 hk <- getHoleKind
 >                 tyd <- prettyHere (SET :>: ty)
->                 return (char '?' <+> kword KwAsc <+> tyd)
+>                 return (prettyHKind hk <+> kword KwAsc <+> tyd)
 >             UnknownElab (ty :=>: _) _ -> do
+>                 hk <- getHoleKind
 >                 tyd <- prettyHere (SET :>: ty)
->                 return (text "(SUSPENDED)" <+> kword KwAsc <+> tyd)
+>                 return (text "(SUSPENDED)" <+> prettyHKind hk <+> kword KwAsc <+> tyd)
 >             Defined tm (ty :=>: tyv) -> do
 >                 tyd <- prettyHere (SET :>: ty)
 >                 tmd <- prettyHereAt (pred ArrSize) (tyv :>: tm)
 >                 return (tmd <+> kword KwAsc <+> tyd)
+
+>     prettyHKind :: HKind -> Doc
+>     prettyHKind Waiting     = text "?"
+>     prettyHKind Hoping      = text "HOPE?"
+>     prettyHKind (Crying s)  = text ("CRY <<" ++ s ++ ">>")
 
 
 > import -> CochonTactics where

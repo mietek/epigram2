@@ -110,6 +110,11 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     GirlMother (_ := HOLE _ :<: _) _ _ _ <- getMother
 >     getGoal "getHoleGoal"
 
+> getHoleKind :: ProofStateT e HKind
+> getHoleKind = do
+>     GirlMother (_ := HOLE hk :<: _) _ _ _ <- getMother
+>     return hk
+
 > getLayer :: ProofStateT e Layer
 > getLayer = do
 >     ls :< l <- getLayers
@@ -195,6 +200,11 @@ updated information, providing a friendlier interface than |get| and |put|.
 > putDevTip tip = do
 >     (es, _, r) <- getDev
 >     putDev (es, tip, r)
+
+> putHoleKind :: HKind -> ProofStateT e ()
+> putHoleKind hk = do
+>     GirlMother (name := HOLE _ :<: ty) xn tm ms <- getMother
+>     putMother $ GirlMother (name := HOLE hk :<: ty) xn tm ms
 
 > putLayer :: Layer -> ProofStateT e ()
 > putLayer l = do

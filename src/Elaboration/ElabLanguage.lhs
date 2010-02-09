@@ -8,13 +8,12 @@
 
 > module Elaboration.ElabLanguage where
 
-> import Control.Monad.Error
-
 > import Evidences.Tm
 > import Evidences.Rules
 
 > import ProofState.Developments
 > import ProofState.ElabMonad
+> import ProofState.ProofContext
 > import ProofState.ProofState
 > import ProofState.ProofKit
 
@@ -24,6 +23,8 @@
 > import Tactics.Solution
 
 > import Elaboration.Elaborator
+
+> import Cochon.Error
 
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
@@ -39,12 +40,16 @@ the proof state. That is, it defines the semantics of the |Elab| syntax.
 > runElab (ELambda s f)       = lambdaBoy s >>= runElab . f
 > runElab (EGoal f)           = getHoleGoal >>= runElab . f . valueOf
 > runElab (EHope ty f)        = runElabHope ty >>= runElab . f . valueOf
-> runElab (ECry e)            = throwError e
 > runElab (ECompute ty p f)   = runElabCompute ty p >>= runElab . f
 > runElab (ESolve ref val f)  = bquoteHere val >>= forceHole ref >>= runElab . f . valueOf
 > runElab (ECan (C c) f)      = runElab (f c)
 > runElab (ECan tm f)         = suspendMe (ECan tm f)
-
+> runElab (ECry e)            = do
+>     GirlMother (name := HOLE _ :<: ty) xn tm ms <- getMother
+>     e' <- distillErrors e
+>     let msg = show (prettyStackError e')
+>     putMother $ GirlMother (name := HOLE (Crying msg) :<: ty) xn tm ms
+>     return Nothing
 
 The |EHope| command hopes for an element of a given type. If it is asking for a
 proof, we might be able to find one, but otherwise we just create a hole.
