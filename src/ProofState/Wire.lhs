@@ -203,7 +203,9 @@ that her children have already received, and returns the updated news.
 >             putDevTip (Unknown tt)
 >             proofTrace $ "tellMother: resuming elaboration on "
 >                 ++ show (entryName e') ++ ":\n" ++ show elab
->             tm :=>: _ <- runElab elab
->             give' tm
+>             mtm <- runElab elab
+>             case mtm of
+>                 Just (tm :=>: _ ) -> give' tm >> return ()
+>                 Nothing -> proofTrace "tellMother: elaboration suspended."
 >             return news'
 >         _ -> return news'

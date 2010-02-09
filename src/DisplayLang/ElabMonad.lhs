@@ -58,7 +58,7 @@ to which source code locations.
 
 > data EProb = CheckProb () deriving Show
 
-> data CProb = ElabProb (Elab VAL) | ResolveProb RelName
+> data CProb = ElabProb (Elab VAL) | ResolveProb RelName deriving Show
 
 The command signature given above defines the following free monad, which
 gives the syntax for commands.
@@ -71,7 +71,6 @@ gives the syntax for commands.
 >     |  ECry (StackError InDTmRN)
 >     |  ECompute TY CProb (VAL -> Elab x)
 >     |  ESolve REF VAL (VAL -> Elab x)
-
 >     |  EElab TY  (Loc, EProb) (VAL -> Elab x)
 >     |  ECan VAL (Can VAL -> Elab x)
 >     |  EEnsure VAL (Can ()) ((Can VAL, VAL) -> Elab x)
@@ -84,8 +83,9 @@ gives the syntax for commands.
 >     show (EGoal _)          = "EGoal (...)"
 >     show (EHope ty _)       = "EHope (" ++ show ty ++ ") (...)"
 >     show (ECry _)           = "ECry (...)"
->     show (ECompute ty _ _)  = "ECompute (" ++ show ty ++ ") (...) (...)"
+>     show (ECompute ty p _)  = "ECompute (" ++ show ty ++ ") (" ++ show p ++ ") (...)"
 >     show (ESolve ref v _)   = "ESolve (" ++ show ref ++ ") (" ++ show v ++ ") (...)"
+>     show (EElab ty lp _)    = "EElab (" ++ show ty ++ ") " ++ show lp ++ " (...)"
 >     show (ECan v _)         = "ECan (" ++ show v ++ ") (...)"
 >     show (EEnsure v c _)    = "EEnsure (" ++ show v ++ ") (" ++ show c ++ ") (...)"
 
@@ -98,10 +98,10 @@ gives the syntax for commands.
 >     EGoal f         >>= k = EGoal          ((k =<<) . f)
 >     EHope t  f      >>= k = EHope t        ((k =<<) . f)
 >     ECry errs       >>= k = ECry errs
->     EElab t lp f    >>= k = EElab t lp     ((k =<<) . f)
 >     ECompute t p f  >>= k = ECompute t p   ((k =<<) . f)
->     ECan v f        >>= k = ECan v         ((k =<<) . f)
 >     ESolve r v f    >>= k = ESolve r v     ((k =<<) . f)
+>     EElab t lp f    >>= k = EElab t lp     ((k =<<) . f)
+>     ECan v f        >>= k = ECan v         ((k =<<) . f)
 >     EEnsure v c f   >>= k = EEnsure v c    ((k =<<) . f)
 
 > instance Functor Elab where
@@ -127,8 +127,8 @@ gives the syntax for commands.
 The |runElab| proof state command actually interprets an |Elab x| in
 the proof state. That is, it defines the semantics of the |Elab| syntax.
 
-> runElab :: Elab VAL -> ProofState (INTM :=>: VAL)
-> runElab (Bale x) = bquoteHere x >>= return . (:=>: x)
+> runElab :: Elab VAL -> ProofState (Maybe (INTM :=>: VAL))
+> runElab (Bale x) = bquoteHere x >>= return . Just . (:=>: x)
 > runElab (ELambda s f) = lambdaBoy s >>= runElab . f
 > runElab (EGoal f) = getHoleGoal >>= runElab . f . valueOf
 
@@ -152,14 +152,20 @@ the proof state. That is, it defines the semantics of the |Elab| syntax.
 
 > runElab (ECan (C c) f) = runElab (f c)
 
+> runElab (ECan tm f) = do
+>     suspendHere (ECan tm f)
+>     return Nothing
+
 
 > runElabCompute :: TY -> CProb -> ProofState VAL
 > runElabCompute ty (ElabProb e) = do
 >     ty' <- bquoteHere ty
->     make' Waiting ("ElabProb" :<: ty' :=>: ty)
+>     _ :=>: ptv <- make' Waiting ("ElabProb" :<: ty' :=>: ty)
 >     goIn
->     tm :=>: _ <- runElab e
->     return . valueOf =<< give tm
+>     mtm <- runElab e
+>     case mtm of
+>         Just (tm :=>: _)  -> return . valueOf =<< give tm
+>         Nothing           -> return ptv
 > runElabCompute ty (ResolveProb rn) = do
 >     (ref, as, ms) <- elabResolve rn
 >     (tm :<: ty) <- inferHere (P ref $:$ as)
@@ -177,6 +183,11 @@ When the scheduler hits the goal, the elaboration process will restart.
 >     putDevEntry (E ref xn (Girl LETG (es, UnknownElab utt elab, nsupply) ms) tm)
 >     return r
 
+
+> suspendHere :: Elab VAL -> ProofState ()
+> suspendHere elab = do
+>     Unknown tt <- getDevTip
+>     putDevTip (UnknownElab tt elab)
 
 
 The |chevElab| helper function is a checker-evaluator version of |makeElab|
@@ -222,19 +233,10 @@ The |makeElab| function produces an |Elab| in a type-directed way.
 
 > makeElabInfer loc (t ::$ s) = do
 >     tytv <- makeElabInfer loc t
+>     cty <- ECan (tytv $$ Fst) Bale
 >     let tv = tytv $$ Snd
->     case tytv $$ Fst of
->         C cty -> do
->             (s', ty') <- elimTy (chevElab loc) (tv :<: cty) s
->             return $ PAIR ty' (tv $$ fmap valueOf s')
->         ty -> case s of
->             A a -> do
->                 s <- EHope SET Bale
->                 t <- EHope (PI s (LK SET)) Bale
->                 q <- EHope (PRF (EQBLUE (SET :>: PI s t) (SET :>: ty))) Bale
->                 av <- makeElab loc (s :>: a)
->                 return $ PAIR (t $$ A av) (tv $$ A av)
->             _ -> throwError' $ err "I give up."
+>     (s', ty') <- elimTy (chevElab loc) (tv :<: cty) s
+>     return $ PAIR ty' (tv $$ fmap valueOf s')
 
 > makeElabInfer loc (DType ty) = do
 >     tyv <- ECompute SET (ElabProb (makeElab loc (SET :>: ty))) Bale
@@ -259,17 +261,33 @@ The |makeElab| function produces an |Elab| in a type-directed way.
 >     case cs of
 >         F0      -> if n == 0 then return () else goOutProperly >> scheduler (n-1)
 >         E _ _ (Boy _) _ :> _  -> cursorDown >> scheduler n
->         E ref _ (Girl _ (_, UnknownElab tt elab, _) _) _ :> _ -> do
+>         E ref _ (Girl _ (_, UnknownElab tt elab, _) _) _ :> _
+>           | isUnstable elab -> do
 >             cursorDown
 >             goIn
 >             putDevTip (Unknown tt)
 >             proofTrace $ "scheduler: resuming elaboration on " ++ show (refName ref)
 >                 ++ ":\n" ++ show elab
->             tm :=>: _ <- runElab elab
->             give' tm
+>             mtm <- runElab elab
+>             case mtm of
+>                 Just (tm :=>: _) -> give' tm >> return ()
+>                 Nothing -> proofTrace "scheduler: elaboration suspended."
 >             cursorTop
 >             scheduler (n+1)
 >         _ :> _ -> cursorDown >> goIn >> cursorTop >> scheduler (n+1)
+>   where
+>     isUnstable :: Elab x -> Bool
+>     isUnstable (Bale _) = True
+>     isUnstable (ELambda _ _) = True
+>     isUnstable (EGoal _) = True
+>     isUnstable (EHope _ _) = True
+>     isUnstable (ECry _) = True
+>     isUnstable (ECompute _ _ _) = True
+>     isUnstable (ESolve _ _ _) = True
+>     isUnstable (EElab _ _ _) = True
+>     isUnstable (ECan (C _) _) = True
+>     isUnstable (ECan _ _) = False
+>     isUnstable (EEnsure _ _ _) = True
 
 
 > sigSetTM :: INTM

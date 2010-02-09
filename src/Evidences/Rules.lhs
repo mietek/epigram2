@@ -567,10 +567,10 @@ This translates naturally into the following code:
 >   yv :<: yt <- infer n
 >   case (equal (SET :>: (w, yt)) r) of
 >     True -> return $ N n :=>: yv
->     False -> throwError'  $   err "check: inferred type "
+>     False -> throwError'  $   err "check: inferred type"
 >                           ++  errTyVal (yt :<: SET)
 >                           ++  err "of"
->                           ++  errTm (N n)
+>                           ++  errTyVal (evTm n :<: yt)
 >                           ++  err "is not"
 >                           ++  errTyVal (w :<: SET)
 
