@@ -37,6 +37,11 @@
 >        (t -> t') -> ((s -> t') -> u -> v') -> (s -> t) -> u -> Unwrap v'
 > ala p h f u = unwrap (h (p . f) u)
 
+> instance Newtype Any where
+>   type Unwrap Any = Bool
+>   wrap    = Any
+>   unwrap  = getAny
+
 > instance Newtype (Sum a) where
 >   type Unwrap (Sum a) = a
 >   wrap    = Sum

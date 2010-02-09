@@ -48,7 +48,7 @@
 >     return r
 
 
-> solveHole :: REF -> [(REF, INTM)] -> INTM -> ProofState (EXTM :=>: VAL)
+> solveHole :: REF -> [(REF, INTM, Maybe INTM)] -> INTM -> ProofState (EXTM :=>: VAL)
 > solveHole ref@(name := HOLE _ :<: _) deps tm = do
 >     es <- getDevEntries
 >     case es of
@@ -56,7 +56,7 @@
 >         _ :< e  -> pass e
 >   where
 >     pass :: Entry Bwd -> ProofState (EXTM :=>: VAL)
->     pass (E girl@(girlName := _) _ (Girl LETG _ _) girlTm)
+>     pass (E girl@(girlName := _) _ (Girl LETG (_, tip, _) _) girlTyTm)
 >       | name == girlName && occurs girl = throwError' $
 >           err "solveHole: you can't define something in terms of itself!"
 >       | name == girlName = do
@@ -68,7 +68,7 @@
 >           let (tm', _) = tellNews news tm
 >           tm'' <- bquoteHere (evTm tm')
 >           give tm''
->       | occurs girl = goIn >> solveHole ref ((girl, girlTm):deps) tm
+>       | occurs girl = goIn >> solveHole ref ((girl, girlTyTm, tipDefn tip):deps) tm
 >       | otherwise = goIn >> solveHole ref deps tm
 >     pass (E boy _ (Boy _) _)
 >       | occurs boy = throwError' $
@@ -77,11 +77,20 @@
 >     pass (M modName _) = goIn >> solveHole ref deps tm
 >
 >     occurs :: REF -> Bool
->     occurs ref = any (== ref) tm || getAny (foldMap (Any . any (== ref) . snd) deps)
+>     occurs ref = any (== ref) tm || ala Any foldMap occ deps
+>       where
+>         occ :: (REF, INTM, Maybe INTM) -> Bool
+>         occ (_, ty, Nothing) = any (== ref) ty
+>         occ (_, ty, Just tm) = any (== ref) ty || any (== ref) tm
+
 >             
->     makeDeps :: [(REF, INTM)] -> NewsBulletin -> ProofState NewsBulletin
+>     tipDefn :: Tip -> Maybe INTM
+>     tipDefn (Defined tm _)  = Just tm
+>     tipDefn _               = Nothing
+
+>     makeDeps :: [(REF, INTM, Maybe INTM)] -> NewsBulletin -> ProofState NewsBulletin
 >     makeDeps [] news = return news
->     makeDeps ((name := HOLE _ :<: tyv, ty): deps) news = do
+>     makeDeps ((name := HOLE _ :<: tyv, ty, Nothing): deps) news = do
 >         let (ty', _) = tellNews news ty
 >         rtm :=>: rv <- make (fst (last name) :<: ty')
 >         makeDeps deps ((name := DEFN rv :<: tyv, GoodNews) : news)
