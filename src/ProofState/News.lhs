@@ -70,9 +70,7 @@ necessary. Using |seek|, we enforce the invariant that any reference
 is subject to at most one news in a |NewsBulletin|. Hence, as we add a
 news about a reference, we eagerly merge it in the |NewsBulletin|.
 
-
-\subsubsection{Looking for news}
-
+\subsubsection{Grabbing the freshest news}
 
 The |lookupNews| function returns the news about a reference contained
 in the bulletin, which may be |NoNews| if the reference is not
@@ -82,7 +80,12 @@ present.
 > lookupNews nb ref = fromMaybe NoNews (lookup ref nb)
 
 
-\subsubsection{Grabbing the freshed news}
+The |getNews| function looks for a reference in the news bulletin,
+and returns it with its news if it is found, or returns |Nothing| if
+not.
+
+> getNews :: NewsBulletin -> REF -> Maybe (REF, News)
+> getNews nb ref = find ((== ref) . fst) nb
 
 
 The |getLatest| function returns the most up-to-date copy of the given

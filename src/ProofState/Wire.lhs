@@ -5,7 +5,7 @@
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE FlexibleInstances, TypeOperators, TypeSynonymInstances,
->              GADTs, RankNTypes #-}
+>              GADTs, RankNTypes, PatternGuards #-}
 
 > module ProofState.Wire where
 
@@ -142,14 +142,23 @@ To update a boy, we must:
 >     let ref = name := DECL :<: tv'
 >     return (addNews (ref, n) news, E ref sn (Boy k) ty')
 
-To update a hole, we must:
+To update a hole, we must first check to see if the news bulletin contains a
+definition for it. If so, we fill in the definition (and do not need to
+update the news bulletin). If not, we must:
 \begin{enumerate}
 \item update the tip type;
 \item update the overall type of the entry, as stored in the reference; and
 \item update the news bulletin with news about this girl.
 \end{enumerate}
 
-> tellEntry news (E (name := HOLE h :<: tyv) sn (Girl LETG (cs, Unknown tt, nsupply) ms) ty) = do
+> tellEntry news (E ref@(name := HOLE h :<: tyv) sn (Girl LETG (cs, Unknown tt, nsupply) ms) ty)
+>   | Just (ref'@(_ := DEFN tm :<: _), GoodNews) <- getNews news ref = do
+>     tm' <- bquoteHere tm
+>     let  (tt', _) = tellNewsEval news tt
+>          (ty', _) = tellNews news ty
+>     return (news, E ref' sn (Girl LETG (cs, Defined tm' tt', nsupply) ms) ty')
+>
+>   | otherwise = do
 >     let  (tt', n)             = tellNewsEval news tt
 >          (ty' :=>: tyv', n')  = tellNewsEval news (ty :=>: tyv)
 >          ref                  = name := HOLE h :<: tyv'
