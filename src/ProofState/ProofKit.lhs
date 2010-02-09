@@ -496,7 +496,7 @@ the goal, updates the reference and goes out. The |giveNext| variant moves to th
 next goal (if one exists) instead.
 
 > give :: INTM -> ProofState (EXTM :=>: VAL)
-> give tm = give' tm <* goOut
+> give tm = give' tm <* goOutProperly
 
 > giveNext :: INTM -> ProofState (EXTM :=>: VAL)
 > giveNext tm = give' tm <* (nextGoal <|> goOut)
