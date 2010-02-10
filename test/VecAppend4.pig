@@ -1,5 +1,5 @@
 make Nat : Set ;
-make NatD := con ['arg (Enum ['zero 'suc]) [ (con ['done]) (con ['ind1 con ['done]]) ] ] : Desc ;
+make NatD := con ['argf ['zero 'suc] [ (con ['done]) (con ['ind1 con ['done]]) ] ] : Desc ;
 give Mu NatD ;
 make zero := con ['zero] : Nat ;
 make suc := (\ x -> con ['suc x]) : Nat -> Nat ;
@@ -25,11 +25,10 @@ give IMu Nat VecD n ;
 make vnil := con [] : Vec zero ;
 make vcons := (\ n a as -> con [ a as , [] ]) : (n : Nat) -> A -> Vec n -> Vec (suc n) ;
 make vappend : (m : Nat) -> Vec m -> (n : Nat) -> Vec n -> Vec (plus m n) ;
-lambda A ;
 give (\ m as -> ifold Nat Vec.VecD m as (\ mas -> (n : Nat) -> Vec n -> Vec (plus (mas !) n)) ?) ;
 lambda m ;
 elim N-case m ;
 give \ _ _ _ _ _ n bs -> bs ;
-give \ k A _ _ -> con \ a as -> con \ appp _ n bs -> vcons (plus k n) a (appp n bs) ;
+give \ k A _ _ -> con \ a -> con \ as _ -> con \ appp _ n bs -> Vec^1.vcons A (plus k n) a (appp n bs) ;
 root ;
 make ex := Vec.vcons Nat one zero (Vec.vcons Nat zero one (Vec.vnil Nat)) : Vec.Vec Nat two

@@ -10,6 +10,7 @@
 
 > import Control.Applicative
 > import Control.Monad
+> import Control.Monad.State
 > import Data.Traversable
 
 > import Kit.BwdFwd
@@ -313,15 +314,11 @@ discarded, so all parameters can be provided explicitly.
 
 > elabResolve :: RelName -> ProofState (REF, Spine {TT} REF, Maybe (Scheme INTM))
 > elabResolve x = do
->     aus <- getAuncles
->     if fst (last x) == "/"
->         then do
->             (r, s, _) <- findGlobal aus (init x)
->                 `catchEither` (err "elabResolve: cannot resolve name")
->             return (r, s, Nothing)
->         else findGlobal aus x
->                 `catchEither` (err "elabResolve: cannot resolve name")
->    
+>    pc <- get
+>    let uess = inBScope pc
+>    ans@(r, s, ms) <- resolve x (Just $ uess) (inBFScope uess)  
+>      `catchEither` (err $ "elabResolve: cannot resolve name: " ++ showRelName x)
+>    if fst (last x) == "/" then return (r, s, Nothing) else return ans
 
 
 \subsection{Elaborated Construction Commands}

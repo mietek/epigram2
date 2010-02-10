@@ -639,9 +639,9 @@ The |ungawa| command looks for a truly obvious thing to do, and does it.
 
 > infoAuncles :: ProofState String
 > infoAuncles = do
+>     pc <- get
 >     aus <- getAuncles
->     me <- getMotherName
->     return (showEntries aus me (aus <>> F0))
+>     return (showEntries (inBScope pc) aus)
 
 > infoDump :: ProofState String
 > infoDump = gets show

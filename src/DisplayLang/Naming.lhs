@@ -21,6 +21,7 @@
 > import NameSupply.NameSupply
 
 > import ProofState.Developments
+> import ProofState.ProofContext
 
 > import DisplayLang.DisplayTm
 
@@ -54,11 +55,11 @@ The |showRelName| function converts a relative name to a string by
 inserting the appropriate punctuation.
 
 > showRelName :: RelName -> String
-> showRelName = intercalate "." . map f
->   where
->     f (x, Rel 0) = x
->     f (x, Rel i) = x ++ "^" ++ show i
->     f (x, Abs i) = x ++ "_" ++ show i
+> showRelName = intercalate "." . map showOffName
+
+> showOffName (x, Rel 0) = x
+> showOffName (x, Rel i) = x ++ "^" ++ show i
+> showOffName (x, Abs i) = x ++ "_" ++ show i
 
 The |showName| function converts a name to a string absolutely (without christening).
 
@@ -69,9 +70,9 @@ The |showName| function converts a name to a string absolutely (without christen
 The |showEntries| function folds over a bunch of entries, christening them with the
 given auncles and current name, and intercalating to produce a comma-separated list.
 
-> showEntries :: (Traversable f, Traversable g) => Entries -> Name -> f (Entry g) -> String
-> showEntries aus me = intercalate ", " . foldMap
->     (\(E ref _ _ _) -> [showRelName (christenREF aus me ref)])
+> showEntries :: (Traversable f, Traversable g) => BScopeContext -> f (Entry g) -> String
+> showEntries bsc = intercalate ", " . foldMap
+>     (\(E ref _ _ _) -> [showRelName (christenREF bsc ref)])
 
 The |showEntriesAbs| function works similarly, but uses absolute names instead of
 christening them.
@@ -90,77 +91,129 @@ inwards for a child $x$, $x$'s child $y$, $y$'s child $z$. References
 are fully $\lambda$-lifted, but as $f$'s parameters are held in common
 with the point of reference, we automatically supply them.
 
+\subsection{A New Hope}
 
-The |hits| function determines whether a name component matches a
-relative name component. It returns |Right ()| if this is the right
-name, and |Left x| if the search should continue (to the left) with
-new relative name component |x|. (Changing the component allows its
-index to be decremented if it is relative.)
+This needs documenting I (Peter) am on it.
 
-> hits :: (String, Int) -> (String, Offs) -> Either (String, Offs) ()
-> hits (x, i) (y, o) | x == y = case o of
->   Abs j  | i == j     -> Right  ()
->          | otherwise  -> Left   (y, o)
->   Rel 0               -> Right  ()
->   Rel j               -> Left   (y, Rel (j - 1))
-> hits _ yo = Left yo
-
-
-The |findGlobal| function takes a context and a relative name to resolve. It
-searches the context for an entry that hits the name, then searches that
-entry's children to resolve the next component. 
-
-> findGlobal :: Entries -> RelName
->     -> Either (StackError t) (REF, Spine {TT} REF, Maybe (Scheme INTM))
-> findGlobal xs [(y, Rel 0)]
+> resolve :: RelName -> Maybe BScopeContext -> FScopeContext -> 
+>             Either (StackError t) (REF, Spine {TT} REF, Maybe (Scheme INTM))
+> resolve [(y, Rel 0)] _ _
 >   | Just ref <- lookup y primitives = Right (ref, [], Nothing)
 >   | Just ref <- lookup y axioms     = Right (ref, [], Nothing)
-> findGlobal B0 sos = Left [err $ "findGlobal: couldn't find " ++ showRelName sos]
-> findGlobal (xs :< e) (y : ys) = case hits (entryLastName e) y of
->     Right _  -> case e of
->         E r _ e _ -> findChild r (boySpine xs) e ys
->         M n (es, _, _) -> findInEntries es ys (boySpine xs)
->     Left y'  -> findGlobal xs (y' : ys)
-> findGlobal _ [] = Left [err "findGlobal: missing name!"]
-
-The |findChild| function takes a reference to a containing entry, a spine of
-shared parameters, an entity |e| and the remainder of a relative name to
-resolve. If the remainder is empty, it returns a parameter referring to the
-current entry (applied to the shared parameters if appropriate). Otherwise,
-the entity should be a |Girl|, and it searches her children for the name.
-
-> findChild :: REF -> Spine {TT} REF -> Entity Bwd -> RelName
->     -> Either (StackError t) (REF, Spine {TT} REF, Maybe (Scheme INTM))
-> findChild r  as (Boy _)                []  = Right (r,  [], Nothing)
-> findChild r  as (Girl _ _ ms)          []  = Right (r,  as, ms)
-> findChild r  as (Boy _)              ys  = Left  [err "findChild: " 
->                                                  ++ errRef r 
->                                                  ++ err " is a boy so it has no children!"]
-> findChild r  as (Girl _ (es, _, _) _)  ys  = findInEntries es ys as
+> resolve us bsc fsc = lookFor us bsc fsc
 
 
-The |findInEntries| function takes a list of entries to search, a relative name
-to look for and a spine of shared parameters. If it finds that the first
-component of the name refers to a girl, it calls |findChild| to check if she or
-one of her children is the target. Note that boys within other developments are
-not in scope, but they may affect relative name offsets.
+> lookFor :: RelName -> Maybe BScopeContext -> FScopeContext -> 
+>            Either (StackError t) (REF, Spine {TT} REF, Maybe (Scheme INTM))
+> lookFor ((x,Rel i):us) (Just bsc) fsc = lookUp (x,i) bsc fsc >>= (lookFor' us)
+> lookFor ((x,Rel 0):us) _ fsc = lookDown (x,0) fsc [] >>= (lookFor' us)
+> lookFor ((x,Rel i):us) Nothing fsc = Left [err "Yeah, good luck with that"]
+> lookFor ((x,Abs i):us) _ fsc = lookDown (x,i) fsc [] >>= (lookFor' us)
 
-> findInEntries ::  Entries -> RelName -> Spine {TT} REF -> 
->                   Either (StackError t) (REF, Spine {TT} REF, Maybe (Scheme INTM))
-> findInEntries (xs :< M n (es, _, _)) (y : ys) as = case hits (last n) y of
->     Right _  -> findInEntries es ys as
->     Left y'  -> findInEntries xs (y' : ys) as
-> findInEntries (xs :< E r x e@(Girl _ _ _) _) (y : ys) as = case hits x y of
->     Right _  -> findChild r as e ys
->     Left y'  -> findInEntries xs (y' : ys) as
-> findInEntries (xs :< E r x (Boy _) _) (y : ys) as = case hits x y of
->     Right _  -> Left  [err "findInEntries: " 
->                       ++ errRef r 
->                       ++ err "is a boy, so it has no children!"]
->     Left y'  -> findInEntries xs (y' : ys) as
-> findInEntries B0  sos  as = Left  [err $ "findInEntries: ran out of entries looking for "
->                                   ++ showRelName sos]
-> findInEntries _   []   as = Left  [err "findInEntries: modules have no term representation."]
+> lookFor' :: RelName -> ( Either FScopeContext Entries
+>                        , Spine {TT} REF
+>                        , Maybe REF 
+>                        , Maybe (Scheme INTM)) ->
+>             Either (StackError t) (REF, Spine {TT} REF, Maybe (Scheme INTM))
+> lookFor' us (Left fsc,sp,Nothing,_) | null us = 
+>   Left [err "Direct ancestors are not in scope!"]
+> lookFor' us (_,sp,Just r,ms) | null us  = Right (r,sp,ms) 
+> lookFor' us (Left fsc,sp,_,_) = do 
+>   (x,_,z) <- lookFor us Nothing fsc
+>   return (x,sp,z)
+> lookFor' us (Right es,sp,mr,ms) = lookLocal us es sp mr ms
+
+> flat :: Bwd (Entries, (String,Int)) -> Entries -> Entries
+> flat B0 es = es
+> flat (esus :< (es',_)) es = flat esus (es' <+> es)
+
+> lookUp :: (String, Int) -> BScopeContext -> FScopeContext -> 
+>                            Either (StackError t) 
+>                                   ( Either FScopeContext Entries
+>                                   , Spine {TT} REF
+>                                   , Maybe REF 
+>                                   , Maybe (Scheme INTM))
+> lookUp (x,i) (B0,B0) fs = Left [err $ "Not is scope " ++ x]
+> lookUp (x,i) ((esus :< (es,(y,j))),B0) (fs,vfss) | x == y = 
+>   if i == 0 then Right (Left (fs,vfss), boySpine (flat esus es), Nothing, Nothing)
+>             else lookUp (x,i-1) (esus,es) (F0,((y,j),fs) :> vfss)
+> lookUp (x,i) ((esus :< (es,(y,j))),B0) (fs,vfss) = 
+>   lookUp (x,i) (esus,es) (F0,((y,j),fs) :> vfss)
+> lookUp (x,i) (esus, es :< e@(M n (es', _, _))) (fs,vfss) | (fst $ last n) == x =
+>   if i == 0 then Right (Right es', boySpine (flat esus es), Nothing, Nothing)
+>             else lookUp (x,i-1) (esus,es) (e:>fs,vfss)
+> lookUp (x,i) (esus, es :< e@(E r (y,j) (Girl _ (es',_,_) ms) _)) (fs,vfss) | x == y =
+>   if i == 0 then Right (Right es', boySpine (flat esus es), Just r, ms)
+>             else lookUp (x,i-1) (esus,es) (e:>fs,vfss)
+> lookUp (x,i) (esus, es :< e@(E r (y,j) (Boy _) _)) (fs,vfss) | x == y =
+>   if i == 0 then Right (Right B0, [], Just r, Nothing)
+>             else lookUp (x,i-1) (esus,es) (e:>fs,vfss)
+> lookUp u (esus, es :< e) (fs,vfss) = lookUp u (esus,es) (e:>fs,vfss)
+
+> lookDown :: (String,Int) -> FScopeContext -> Spine {TT} REF -> 
+>                             Either (StackError t) 
+>                                    ( Either FScopeContext Entries
+>                                    , Spine {TT} REF
+>                                    , Maybe REF
+>                                    , Maybe (Scheme INTM) )
+> lookDown (x,i) (F0,F0) fs = Left [err $ "Not is scope " ++ x]
+> lookDown (x, i) (M n (es', _, _) :> es , uess) sp | x == (fst $ last n) =
+>   if i == 0 then Right (Right es', sp, Nothing, Nothing) 
+>             else lookDown (x, i-1) (es, uess) sp 
+> lookDown (x, i) (E r (y, _) (Girl _ (es', _, _) ms) _ :> es , uess) sp | x == y =
+>   if i == 0 then Right (Right es', sp, Just r, ms) 
+>             else lookDown (x, i-1) (es, uess) sp
+> lookDown (x, i) (E r (y, _) (Boy _) _ :> es , uess) sp | x == y =
+>   if i == 0 then Right (Right B0, [], Just r, Nothing) 
+>             else lookDown (x, i-1) (es,uess) (A (N (P r)) : sp)
+> lookDown u (E r _ (Boy _) _ :> es, uess) sp = 
+>   lookDown u (es, uess) (A (N (P r)) : sp)
+> lookDown u (_ :> es, uess) sp = lookDown u (es, uess) sp
+> lookDown (x, i) (F0 , (((y, j),es) :> uess)) sp | x == y =
+>   if i == 0 then Right (Left (es,uess), sp, Nothing, Nothing)
+>             else lookDown (x, i-1) (es, uess) sp
+> lookDown u (F0, ((_,es) :> uess)) sp = lookDown u (es, uess) sp 
+
+
+> lookLocal :: RelName -> Entries -> Spine {TT} REF -> 
+>              Maybe REF -> Maybe (Scheme INTM) -> 
+>                           Either (StackError t) 
+>                                  (REF, Spine {TT} REF, Maybe (Scheme INTM))
+> lookLocal ((x, Rel i) : ys) es sp _ _ = lookUpLocal (x,i) ys es sp
+> lookLocal ((x, Abs i) : ys) es sp _ _ = lookDownLocal (x,i) ys (es <>> F0) sp 
+> lookLocal [] _ sp (Just r) ms = Right (r, sp, ms)
+> lookLocal [] _ _ Nothing _ = Left [err "Modules have not term representaion"]
+
+> lookUpLocal :: (String,Int) -> RelName -> Entries -> Spine {TT} REF -> 
+>                           Either (StackError t) 
+>                                  (REF, Spine {TT} REF, Maybe (Scheme INTM))
+> lookUpLocal (x, i) ys (xs :< M n (es, _, _)) as | x == (fst $ last n) =
+>     if i == 0 then lookLocal ys es as Nothing Nothing
+>               else lookUpLocal (x,i-1) ys xs as
+> lookUpLocal (x, i) ys (xs :< E r (y,j) e@(Girl _ (es,_,_) ms) _) as | x == y = 
+>     if i == 0 then lookLocal ys es as (Just r) ms
+>               else lookUpLocal (x,i-1) ys xs as
+> lookUpLocal (x, i) ys (xs :< E r (y,j) (Boy _) _) as | x == y = 
+>     if i == 0 then Left  [err "Boys in other Devs are not in scope"]
+>               else lookUpLocal (x,i-1) ys xs as 
+> lookUpLocal (x, i) ys (xs :< e) as = lookUpLocal (x, i) ys xs as 
+> lookUpLocal (x, i) ys B0 as = Left  [err $ "Had to give up looking for " ++ x]
+
+> lookDownLocal :: (String,Int) -> RelName -> Fwd (Entry Bwd) -> 
+>                  Spine {TT} REF ->
+>                  Either (StackError t) 
+>                         (REF, Spine {TT} REF, Maybe (Scheme INTM))
+> lookDownLocal (x, i) ys (M n (es, _, _) :> xs) as | x == (fst $ last n) =
+>     if i == 0 then lookLocal ys es as Nothing Nothing
+>               else lookDownLocal (x,i-1) ys xs as
+> lookDownLocal (x, i) ys (E r (y,j) e@(Girl _ (es,_,_) ms) _ :> xs) as | x == y = 
+>     if i == 0 then lookLocal ys es as (Just r) ms
+>               else lookDownLocal (x,i-1) ys xs as
+> lookDownLocal (x, i) ys (E r (y,j) (Boy _) _ :> xs) as | x == y = 
+>     if i == 0 then Left  [err "Boys in other Devs are not in scope"]
+>               else lookDownLocal (x,i-1) ys xs as
+> lookDownLocal (x, i) ys (e :> xs) as = lookDownLocal (x, i) ys xs as 
+> lookDownLocal (x, i) ys F0 as = Left  [err $ "Had to give up looking for " ++ x]
 
 
 \subsection{Christening (Generating Local Longnames)}
@@ -179,122 +232,142 @@ f [
 
 $g$ is actually represented as $f.g f.x$, but should be displayed as, er, $g$.
 
-Christening is thus the business of choosing a name for a reference in
-scope by finding the shortest path to it from the referring term. The
-common prefix of the name may thus be omitted, as may any common
-parameters.
-
-
 The |christenName| and |christenREF| functions do a similar job for names, and
 the name part of references, respectively.
 
-> christenName :: Entries -> Name -> Name -> RelName
-> christenName es me target = case mangleP es me B0 target [] of DP x -> x
+> christenName :: BScopeContext -> Name -> RKind -> RelName
+> christenName bsc target rk = case mangleP bsc target rk [] of DP x -> x
 >
-> christenREF :: Entries -> Name -> REF -> RelName
-> christenREF es me (target := _) = christenName es me target
+> christenREF :: BScopeContext -> REF -> RelName
+> christenREF bsc (target := rk :<: _) = christenName bsc target rk
 
 
-The |mangleP| function takes a list of entries in scope, the name of the curent
-location, a list of local variables, the name of the parameter to christen and a
-spine of arguments. It gives an appropriate relative name to the parameter and
-applies it to the arguments --- \emph{for girls}, dropping any that are shared with the current location.
-
-> mangleP :: Entries -> Name -> Bwd String -> Name -> DSpine RelName -> ExDTmRN
-> mangleP aus me vs target args = DP s $::$ drop n args
->   where (s, n, _) = baptise aus me vs target
+> mangleP :: BScopeContext -> Name -> RKind -> DSpine RelName -> ExDTmRN
+> mangleP bsc target rk args = DP s $::$ drop n args
+>   where (s, n, _) = unresolve target rk [] bsc B0
 
 
-The |baptise| function takes a list of entries in scope, the name of the curent
-location, a list of local variables and the name of the parameter to christen.
-It returns an appropriate relative name and the number of arguments to drop. 
+> type BwdName = Bwd (String,Int)
 
-> baptise :: Entries -> Name -> Bwd String -> Name
->     -> (RelName, Int, Maybe (Scheme INTM))
-> baptise auncles me vs target = case splitNames me target of
->   (prefix, (t, n):targetSuffix) ->
->     let  numBindersToSkip = ala Sum foldMap (indicator (t ==)) vs
->          boyCount = ala Sum foldMap (indicator isBoy)
->     in
->       case findName auncles (prefix++[(t, n)]) t numBindersToSkip of
->         Just (ancestor, commonEntries, i, ms) -> 
->             let argsToDrop | not (isBoy ancestor)  = boyCount commonEntries
->                            | otherwise             = 0
->             in  if targetSuffix == []
->                 then  ([(t, Rel i)], argsToDrop, ms)
->                 else
->                   let  Just (kids, _, _) = entryDev ancestor
->                        (n, ms) = searchKids kids targetSuffix 0
->                   in   ((t, Rel i) : n, argsToDrop, ms)
->         Nothing -> tryBuiltins
->   (prefix, []) -> tryBuiltins
->  where
->    tryBuiltins :: (RelName, Int, Maybe (Scheme INTM))
->    tryBuiltins = case find ((target ==) . refName . snd) (axioms ++ primitives) of
->       Just (s, _)  -> ([(s, Rel 0)], 0, Nothing)
->       Nothing      -> ([(showName target, Rel 0)], 0, Nothing)
+> unresolve :: Name -> RKind -> Spine {TT} REF -> BScopeContext
+>                   -> Entries -> (RelName, Int, Maybe (Scheme INTM))
+> unresolve tar DECL _ (esus,es) les = 
+>   case find ((tar ==) . refName . snd) (axioms ++ primitives) of
+>     Just (s, _)  -> ([(s, Rel 0)], 0, Nothing)
+>     Nothing      -> ([fst $ nomTop tar (esus, es<+>les)],0,Nothing)
+> unresolve tar _ [] (esus,es) les = 
+>   case find ((tar ==) . refName . snd) (axioms ++ primitives) of
+>     Just (s, _)  -> ([(s, Rel 0)], 0, Nothing)
+>     Nothing      -> let (topr,ms) = nomTop tar (esus, es<+>les) in
+>                       ([topr],0,ms)
+> unresolve tar rk tas msc@(mesus,mes) les = 
+>   case find ((tar ==) . refName . snd) (axioms ++ primitives) of
+>     Just (s, _)  -> ([(s, Rel 0)], 0, Nothing)
+>     Nothing      -> 
+>       let (xs,(top,nom,sp,es)) = partNoms tar msc [] B0 in
+>         case sp `isPrefixOf` tas of
+>           True -> let (topr, ms) = nomTop top (mesus,mes<+>les) in
+>                     (topr : (nomRel nom (es<+>les) []), length sp
+>                     , if null nom then ms else findScheme nom es)
+>           False -> let (top',nom',i,fsc) = matchUp xs tas in
+>                      (((fst $ nomTop top' (mesus,mes<+>les)) : 
+>                        (nomAbs (take (length nom' - length nom) nom') fsc)) ++
+>                         nomRel nom (es<+>les) [],i,Nothing)
+
+> partNoms :: Name -> BScopeContext -> Name 
+>                  -> Bwd (Name, Name, Spine {TT} REF, FScopeContext)
+>                  -> ( Bwd (Name, Name, Spine {TT} REF, FScopeContext) 
+>                     , (Name,Name, Spine {TT} REF, Entries) ) 
+> partNoms nom@(top:rest) bsc n xs = case partNom top bsc (F0,F0) of
+>  (sp, Left es) -> (xs, (n ++ [top], rest, sp, es))
+>  (sp, Right fsc) -> 
+>    partNoms rest bsc (n ++ [top]) (xs:<(n ++ [top], rest, sp, fsc))
+
+> matchUp :: Bwd (Name, Name, Spine {TT} REF, FScopeContext) 
+>              -> Spine {TT} REF ->  (Name, Name, Int, FScopeContext)
+> matchUp (xs :< (x, nom, sp, fsc)) tas | sp `isPrefixOf` tas =
+>   (x, nom, length sp, fsc)
+> matchUp (xs :< _) tas = matchUp xs tas
+
+> partNom :: (String, Int) -> BScopeContext -> FScopeContext
+>                 -> (Spine {TT} REF, Either Entries FScopeContext)
+> partNom top ((esus :< (es,top')), B0) fsc | top == top' =
+>   (boySpine (flat esus es),Right fsc)
+> partNom top ((esus :< (es,not)), B0) (js,vjss) =
+>   partNom top (esus,es) (F0,(not,js):>vjss)
+> partNom top (esus, es :< M n (es',_,_)) fsc | top == last n =
+>   (boySpine (flat esus es),Left es')
+> partNom top (esus, es :< E _ top' (Girl _ (es',_,_) _) _) fsc | top == top' =
+>   (boySpine (flat esus es),Left es')
+> partNom top (esus, es :< e) (fs, vfss)  = partNom top (esus, es) (e:>fs,vfss)
+
+> nomAbs :: Name -> FScopeContext -> RelName
+> nomAbs [u] (es,(_,es'):>uess) = [findF 0 u es]
+> nomAbs ((x,_):nom) (es,(_,es'):>uess) = case countF x es of
+>  0 -> (x,Rel 0) : (nomAbs nom (es',uess))
+>  j -> (x,Abs j) : (nomAbs nom (es',uess))
+> nomAbs [] _ = []
+
+> countF :: String -> Fwd (Entry Bwd) -> Int
+> countF x F0 = 0
+> countF x (M n _ :> es) | (fst . last $ n) == x = 1 + countF x es
+> countF x (E _ (y,_) _ _ :> es) | y == x = 1 + countF x es
+> countF x (_ :> es) = countF x es
+
+> findF :: Int -> (String,Int) -> Fwd (Entry Bwd) -> (String,Offs)
+> findF i u (M n _ :> es) | (last $ n) == u = 
+>   (fst u, if i == 0 then Rel 0 else Abs i)
+> findF i u@(x,_) (M n _ :> es) | (fst . last $ n) == x = findF (i+1) u es
+> findF i u (E _ v _ _ :> es) | v == u = 
+>   (fst u, if i == 0 then Rel 0 else Abs i)
+> findF i u@(x,_) (E _ (y,_) _ _ :> es) | y == x = findF (i+1) u es
+> findF i u (_ :> es) = findF i u es
+
+> nomTop :: Name -> BScopeContext -> ((String,Offs),Maybe (Scheme INTM))
+> nomTop n bsc = let (i,_,ms) = countB 0 n bsc in ((fst . last $ n, Rel i), ms)
+
+> countB :: Int -> Name -> BScopeContext -> (Int,Entries, Maybe (Scheme INTM))
+> countB i n (esus:<(es',u'),B0) | fst u' == (fst . last $ n) = 
+>   countB (i+1) n (esus,es')
+> countB i n (esus:<(es',u'),B0) = countB i n (esus,es')
+> countB i n (esus,es:<M n' (es',_,_)) | n == n' = (i,es',Nothing)
+> countB i n (esus,es:<M n' _) | (fst . last $ n') == (fst . last $ n) =
+>   countB (i+1) n (esus,es)
+> countB i n (esus,es:<E r u' (Girl _ (es',_,_) ms) _) | last n == u' &&
+>                                                        refName r == n = 
+>   (i,es',ms)
+> countB i n (esus,es:<E r u' _ _) | last n == u' && refName r == n = 
+>   (i,B0,Nothing)
+> countB i n (esus,es:<E _ u' _ _) | (fst . last $ n) == fst u' = 
+>   countB (i+1) n (esus,es)
+> countB i n (esus,es:<_) = countB i n (esus,es)
+
+> nomRel :: Name -> Entries -> RelName -> RelName
+> nomRel [] _ rom = rom 
+> nomRel (x : nom) es rom = let (i,es') = nomRel' 0 x es in
+>   nomRel nom es' ((fst x,Rel i):rom)
+
+> nomRel' :: Int -> (String,Int) -> Entries -> (Int,Entries)
+> nomRel' o (x,i) (es:<M n (es',_,_)) | (fst . last $ n) == x  = 
+>   if i == (snd . last $ n) then (o,es') else nomRel' (o+1) (x,i) es
+> nomRel' o (x,i) (es:<E _ (y,j) (Girl _ (es',_,_) _) _) | y == x =
+>   if i == j then (o,es') else nomRel' (o+1) (x,i) es
+> nomRel' o (x,i) (es:<E _ (y,j) _ _) | y == x = 
+>   if i == j then (o,B0) else nomRel' (o+1) (x,i) es
+> nomRel' o (x,i) (es:<e) = nomRel' o (x,i) es
 
 
-The |searchKids| function searches a list of children to match a name suffix, producing
-a relative name corresponding to the suffix. It should be called with the counter set
-to zero, which then is incremented to determine the relative offset of each name component.
-
-> searchKids :: Entries -> [(String, Int)] -> Int -> (RelName, Maybe (Scheme INTM))
-> searchKids _   []  _ = ([], Nothing)
-> searchKids B0  _   _ = error "searchKids: ran out of children"
-> searchKids (es :< E _ (x, n) entity _) ((y, m):yms) i
->   | (x, n) == (y, m)  = case (yms, entity) of
->       ([], Boy _)  -> ([(x, Rel i)], Nothing)
->       ([], Girl _ _ ms) -> ([(x, Rel i)], ms)
->       (_, Boy _) -> error "searchKids: it's mad uncle Quentin!"
->       (_, (Girl LETG (kids, _, _) _)) ->
->               let (n, ms) = searchKids kids yms 0
->               in ((x, Rel i):n, ms)
->   | x == y            = searchKids es ((y, m):yms) (succ i)
->   | otherwise         = searchKids es ((y, m):yms) i
-
-
-The |splitNames| function takes two names and returns their common prefix
-along with the suffix of the second name.
-
-> splitNames :: Name -> Name -> (Name, [(String, Int)])
-> splitNames (x:xs) (y:ys)
->   | x == y        = let (p, s) = splitNames xs ys in (x:p, s)
-> splitNames xs ys  = ([], ys)
-
-
-The |findName| function searches a list of entries for a name, incrementing the
-counter each time its string argument appears as the last component of an entry.
-It returns the entry found, its prefix in the list of entries, and the count.
-
-> findName :: Entries -> Name -> String -> Int
->     -> Maybe (Entry Bwd, Entries, Int, Maybe (Scheme INTM))
-> findName (es :< e) p y i
->   | entryName e == p            = Just (e, es, i, entryScheme e)
->   | fst (entryLastName e) == y  = findName es p y (i+1)
->   | otherwise                   = findName es p y i
-> findName B0 p _ _ = Nothing
-
-
-
-Just in case it is useful, here is a simple christener that assigns absolute names.
-
-> christenAbs :: INTM -> InTm String
-> christenAbs tm = christenerAbs B0 %% tm
-
-> christenerAbs :: Bwd String -> Mangle Identity REF String
-> christenerAbs vs = Mang
->     {  mangP = \(name := _) as -> pure (P (showName name))
->     ,  mangV = \i _ -> pure (P (fromMaybe (error "christenerAbs: bad index") (vs !. i)))
->     ,  mangB = \v -> christenerAbs (vs :< v)
->     }
-
-
-
+> findScheme :: Name -> Entries -> Maybe (Scheme INTM)
+> findScheme (u:nom) (es:<M n (es',_,_)) | u == last n  = 
+>   findScheme nom es'
+> findScheme (u:nom) (es:<E _ v (Girl _ (es',_,_) ms) _) | u == v =
+>   if null nom then ms else findScheme nom es'
+> findScheme (u:nom) (es:<E _ v _ _) | u == v = Nothing 
+> findScheme (u:nom) (es:<_) = findScheme nom es
 
 \subsection{Moving |StackError| from |INTM| to |InDTmRN|}
 
-Some functions, such as |distill|, are defined in the |ProofStateT
+Some functions, such as |resolve|, are defined in the |ProofStateT
 INTM| monad. However, Cochon lives in a |ProofStateT InDTmRN|
 monad. Therefore, in order to use it, we will need to lift from the
 former to the latter.

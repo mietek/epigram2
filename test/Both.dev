@@ -1,7 +1,7 @@
 [ f
     [ \ x : Set ->
       g := ? : Set ;
-      g := g : Set ;
+      g := g^1 : Set ;
     ] ? : Set ;
 
   h [ (y : Set) ->

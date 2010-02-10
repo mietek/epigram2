@@ -78,17 +78,17 @@ away bits of the context to produce an answer, then restores the saved state.
 > infoContextual :: Bool -> ProofState String
 > infoContextual gals = do
 >     save <- get
->     aus <- getAuncles
+>     let bsc = inBScope save
 >     me <- getMotherName
->     ds <- many (hypsHere aus me <* optional killCadets <* goOut <* removeDevEntry)
->     d <- hypsHere aus me
+>     ds <- many (hypsHere bsc me <* optional killCadets <* goOut <* removeDevEntry)
+>     d <- hypsHere bsc me
 >     put save
 >     return (renderHouseStyle (vcat (d:reverse ds)))
 >  where
->    hypsHere :: Entries -> Name -> ProofState Doc
->    hypsHere aus me = do
+>    hypsHere :: BScopeContext -> Name -> ProofState Doc
+>    hypsHere bsc me = do
 >        es <- getDevEntries
->        d <- hyps aus me
+>        d <- hyps bsc me
 >        putDevEntries es
 >        return d
 >    
@@ -96,8 +96,8 @@ away bits of the context to produce an answer, then restores the saved state.
 >        l <- getLayer
 >        replaceLayer (l { cadets = NF F0 })
 >
->    hyps :: Entries -> Name -> ProofState Doc
->    hyps aus me = do
+>    hyps :: BScopeContext -> Name -> ProofState Doc
+>    hyps bsc me = do
 >        es <- getDevEntries
 >        case (gals, es) of
 >            (_, B0) -> return empty
@@ -105,8 +105,8 @@ away bits of the context to produce an answer, then restores the saved state.
 >                putDevEntries es'
 >                ty' <- bquoteHere (pty ref)
 >                docTy <- prettyHere (SET :>: ty')
->                d <- hyps aus me
->                return (d $$ prettyBKind k (text (showRelName (christenREF aus me ref)) <+> kword KwAsc <+> docTy))
+>                d <- hyps bsc me
+>                return (d $$ prettyBKind k (text (showRelName (christenREF bsc ref)) <+> kword KwAsc <+> docTy))
 >            (True, es' :< E ref _ (Girl LETG _ _) _) -> do
 >                goIn
 >                es <- getDevEntries
@@ -115,9 +115,9 @@ away bits of the context to produce an answer, then restores the saved state.
 >                docTy <- prettyHere (SET :>: ty')
 >                goOut
 >                putDevEntries es'
->                d <- hyps aus me
->                return (d $$ (text (showRelName (christenREF aus me ref)) <+> kword KwAsc <+> docTy))
->            (_, es' :< _) -> putDevEntries es' >> hyps aus me
+>                d <- hyps bsc me
+>                return (d $$ (text (showRelName (christenREF bsc ref)) <+> kword KwAsc <+> docTy))
+>            (_, es' :< _) -> putDevEntries es' >> hyps bsc me
 
 
 > infoScheme :: RelName -> ProofState String
@@ -157,15 +157,13 @@ The |distillHere| command distills a term in the current context.
 
 > distillHere :: (TY :>: INTM) -> ProofState (InDTmRN :=>: VAL)
 > distillHere tt = do
->     aus <- getAuncles
->     mliftError $ distill aus tt
+>     mliftError $ distill B0 tt
 >         where mliftError :: ProofStateT INTM a -> ProofState a
 >               mliftError = mapStateT liftError
 
 > distillSchemeHere :: Scheme INTM -> ProofState (Scheme InDTmRN)
 > distillSchemeHere sch = do
->     aus <- getAuncles
->     return . fst =<< (mapStateT liftError $ distillScheme aus B0 sch)
+>     return . fst =<< (mapStateT liftError $ distillScheme B0 B0 sch)
 
 
 The |prettyHere| command distills a term in the current context,

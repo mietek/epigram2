@@ -202,3 +202,17 @@ giving a list of entries that are currently in scope.
 > auncles :: ProofContext -> Entries
 > auncles pc@PC{pcDev=(es,_,_)} = greatAuncles pc <+> es
 
+> type BScopeContext = (Bwd (Entries, (String,Int)), Entries) 
+> type FScopeContext = ( Fwd (Entry Bwd)
+>                      , Fwd ((String, Int), Fwd (Entry Bwd))) 
+
+
+> inBScope :: ProofContext -> BScopeContext
+> inBScope (PC ls (es,_,_) _) = 
+>   (fmap (\l -> (elders l,last . motherName . mother $ l)) ls,es)
+
+> inBFScope :: BScopeContext -> FScopeContext
+> inBFScope (uess :< (es,u),es') = let (fs, vfss) = inBFScope (uess,es) in 
+>   (fs, (u,es' <>> F0) :> vfss)
+> inBFScope (B0,es) = (es <>> F0,F0) 
+

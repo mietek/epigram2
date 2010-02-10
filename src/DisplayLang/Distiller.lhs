@@ -8,11 +8,14 @@
 
 > module DisplayLang.Distiller where
 
+> import Control.Monad.State
+
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
 
 > import ProofState.Developments
 > import ProofState.ProofState
+> import ProofState.ProofContext
 > import ProofState.ProofKit
 
 > import DisplayLang.DisplayTm
@@ -31,7 +34,7 @@
 The |distill| command converts a typed INTM in the evidence language
 to a term in the display language; that is, it reverses |elaborate|.
 It performs christening at the same time. For this, it needs a list
-of entries in scope, which it will extend when going under a binder.
+of entries in local(!) scope, which it will extend when going under a binder.
 
 > distill :: Entries -> (TY :>: INTM) -> ProofStateT INTM (InDTmRN :=>: VAL)
 
@@ -88,10 +91,11 @@ To distill a parameter with a spine of eliminators, we use |baptise| to determin
 a name for the reference and the number of shared parameters, then process the
 arguments and return the distilled application with the shared parameters dropped.
 
-> distillInfer es tm@(P (name := _ :<: ty)) as       = do
->     me <- getMotherName
->     let (relName, argsToDrop, ms) = baptise es me B0 name
->     (e', ty') <- processArgs es (evTm tm :<: ty) as
+> distillInfer les tm@(P (name := rk :<: ty)) as       = do
+>     pc <- get
+>     let (relName, argsToDrop, ms) = 
+>           unresolve name rk as (inBScope pc) les
+>     (e', ty') <- processArgs les (evTm tm :<: ty) as
 >     let  as'   = drop argsToDrop e'
 >          as''  = case ms of
 >                    Just sch  -> removeImplicit sch as'

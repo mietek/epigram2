@@ -5,7 +5,7 @@ make zero := [] : Nat ;
 make one := (suc zero) : Nat ;
 make two := (suc one) : Nat ;
 make add := ? : Nat -> Nat -> Nat ;
-make add : (x : Nat) -> (y : Nat) -> < add x y : Nat > ;
+make add : (x : Nat) -> (y : Nat) -> < add^1 x y : Nat > ;
 lambda x ;
 lambda y ;
 elim fold NatD x ;

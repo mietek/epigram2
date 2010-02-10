@@ -6,7 +6,7 @@ make two := (suc one) : Nat ;
 root ;
 make plus : Nat -> Nat -> Nat ;
 root ;
-make plus : (x : Nat) -> (y : Nat) -> < plus x y : Nat > ;
+make plus : (x : Nat) -> (y : Nat) -> < plus^1 x y : Nat > ;
 give con ? ;
 give con ? ;
 give [? ?] ;
