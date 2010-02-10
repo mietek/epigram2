@@ -236,15 +236,16 @@ The |christenName| and |christenREF| functions do a similar job for names, and
 the name part of references, respectively.
 
 > christenName :: BScopeContext -> Name -> RKind -> RelName
-> christenName bsc target rk = case mangleP bsc target rk [] of DP x -> x
+> christenName bsc target rk = 
+>   case mangleP bsc target rk (boySpine . (uncurry flat) $ bsc) of DP x -> x
 >
 > christenREF :: BScopeContext -> REF -> RelName
 > christenREF bsc (target := rk :<: _) = christenName bsc target rk
 
+> mangleP :: BScopeContext -> Name -> RKind -> Spine {TT} REF -> ExDTmRN
+> mangleP bsc target rk args = DP s
+>   where (s, n, _) = unresolve target rk args bsc B0
 
-> mangleP :: BScopeContext -> Name -> RKind -> DSpine RelName -> ExDTmRN
-> mangleP bsc target rk args = DP s $::$ drop n args
->   where (s, n, _) = unresolve target rk [] bsc B0
 
 
 > type BwdName = Bwd (String,Int)
@@ -255,11 +256,6 @@ the name part of references, respectively.
 >   case find ((tar ==) . refName . snd) (axioms ++ primitives) of
 >     Just (s, _)  -> ([(s, Rel 0)], 0, Nothing)
 >     Nothing      -> ([fst $ nomTop tar (esus, es<+>les)],0,Nothing)
-> unresolve tar _ [] (esus,es) les = 
->   case find ((tar ==) . refName . snd) (axioms ++ primitives) of
->     Just (s, _)  -> ([(s, Rel 0)], 0, Nothing)
->     Nothing      -> let (topr,ms) = nomTop tar (esus, es<+>les) in
->                       ([topr],0,ms)
 > unresolve tar rk tas msc@(mesus,mes) les = 
 >   case find ((tar ==) . refName . snd) (axioms ++ primitives) of
 >     Just (s, _)  -> ([(s, Rel 0)], 0, Nothing)
