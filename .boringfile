@@ -5,15 +5,16 @@
 ^test/.tests$
 
 # (lhs2TeX) Boring file regexps:
-Epitome\.aux
-Epitome\.bbl
-Epitome\.blg
-Epitome\.log
+\.aux
+\.bbl
+\.blg
+\.log
 Epitome\.pdf
-Epitome\.ptb
-Epitome\.tex
-Epitome\.toc
-Epitome\.out
+paper\.pdf
+\.ptb
+\.tex
+\.toc
+\.out
 
 # (She) Boring file regexps:
 \.hers
