@@ -250,7 +250,8 @@ the name part of references, respectively.
 > mangleP bsc target rk args = DP s
 >   where (s, n, _) = unresolve target rk args bsc B0
 
-
+> failNom :: Name -> RelName
+> failNom nom = ("!!!",Abs 0):(map (\(a,b) -> (a,Abs b)) nom)
 
 > type BwdName = Bwd (String,Int)
 
@@ -259,34 +260,39 @@ the name part of references, respectively.
 > unresolve tar DECL _ (esus,es) les = 
 >   case find ((tar ==) . refName . snd) (axioms ++ primitives) of
 >     Just (s, _)  -> ([(s, Rel 0)], 0, Nothing)
->     Nothing      -> ([fst $ nomTop tar (esus, es<+>les)],0,Nothing)
+>     Nothing      -> maybe (failNom tar,0,Nothing) id 
+>                       (nomTop tar (esus, es<+>les) >>= 
+>                         \(x,_) -> (| ([x],0,Nothing) |))
 > unresolve tar rk tas msc@(mesus,mes) les = 
 >   case find ((tar ==) . refName . snd) (axioms ++ primitives) of
 >     Just (s, _)  -> ([(s, Rel 0)], 0, Nothing)
 >     Nothing      -> case (partNoms tar msc [] B0, rk) of
 >       ((xs,Just (top,nom,sp,es)),_) | sp `isPrefixOf` tas ->
->         let (tn, tms) = nomTop top (mesus,mes<+>les) 
->             (rn, rms) = nomRel nom (es <+> les) [] Nothing 
->             in  (tn : rn, length sp, if null nom then tms else rms)
+>         maybe (failNom tar,0,Nothing) id 
+>           (do (tn, tms) <- nomTop top (mesus,mes<+>les) 
+>               (rn, rms) <- nomRel nom (es <+> les) [] Nothing 
+>               (| (tn : rn, length sp, if null nom then tms else rms) |))
 >       ((xs,Just (top,nom,sp,es)),_) ->
->         let (top',nom',i,fsc) = matchUp xs tas 
->             (tn,tms) = nomTop top' (mesus,mes<+>les)
->             mnom = take (length nom' - length nom) nom'
->             (an,ams) = nomAbs mnom fsc
->             tams = if null mnom then tms else ams  
->             (rn, rms) = nomRel nom (es <+> les) [] Nothing 
->         in ((tn : an) ++ rn, i, if null nom then tams else rms) 
+>         maybe (failNom tar,0,Nothing) id 
+>           (do let (top',nom',i,fsc) = matchUp xs tas 
+>               (tn,tms) <- nomTop top' (mesus,mes<+>les)
+>               let mnom = take (length nom' - length nom) nom'
+>               (an,ams) <- nomAbs mnom fsc
+>               let tams = if null mnom then tms else ams  
+>               (rn, rms) <- nomRel nom (es <+> les) [] Nothing 
+>               (| ((tn : an) ++ rn, i, if null nom then tams else rms) |)) 
 >       ((xs, Nothing),FAKE) ->
->         let (top',nom',i,fsc) = matchUp xs tas 
->             (tn,tms) = nomTop top' (mesus,mes<+>les)
->             (an,ams) = nomAbs nom' fsc
->         in ((tn : an), i, if null nom' then tms else ams) 
+>         maybe (failNom tar,0,Nothing) id 
+>           (do let (top',nom',i,fsc) = matchUp xs tas 
+>               (tn,tms) <- nomTop top' (mesus,mes<+>les)
+>               (an,ams) <- nomAbs nom' fsc
+>               (| ((tn : an), i, if null nom' then tms else ams) |) )
 
 > partNoms :: Name -> BScopeContext -> Name 
 >                  -> Bwd (Name, Name, Spine {TT} REF, FScopeContext)
 >                  -> ( Bwd (Name, Name, Spine {TT} REF, FScopeContext) 
 >                     , Maybe (Name,Name, Spine {TT} REF, Entries) ) 
-> partNoms[] bsc _ xs = (xs, Nothing)
+> partNoms [] bsc _ xs = (xs, Nothing)
 > partNoms nom@(top:rest) bsc n xs = case partNom top bsc (F0,F0) of
 >  (sp, Left es) -> (xs, Just (n ++ [top], rest, sp, es))
 >  (sp, Right fsc) -> 
@@ -310,14 +316,16 @@ the name part of references, respectively.
 >   (boySpine (flat esus es),Left es')
 > partNom top (esus, es :< e) (fs, vfss)  = partNom top (esus, es) (e:>fs,vfss)
 
-> nomAbs :: Name -> FScopeContext -> (RelName, Maybe (Scheme INTM))
-> nomAbs [u] (es,(_,es'):>uess) = let (v,ms) = findF 0 u es in ([v],ms)
-> nomAbs ((x,_):nom) (es,(_,es'):>uess) = 
->   let (nom',ms) = nomAbs nom (es',uess)
->   in  case countF x es of
->         0 -> ((x,Rel 0) : nom', ms)
->         j -> ((x,Abs j) : nom', ms)
-> nomAbs [] _ = ([], Nothing)
+> nomAbs :: Name -> FScopeContext -> Maybe (RelName, Maybe (Scheme INTM))
+> nomAbs [u] (es,(_,es'):>uess) = do
+>   (v,ms) <- findF 0 u es
+>   (| ([v],ms) |)
+> nomAbs ((x,_):nom) (es,(_,es'):>uess) = do 
+>   (nom',ms) <- nomAbs nom (es',uess)
+>   case countF x es of
+>     0 -> (| ((x,Rel 0) : nom', ms) |)
+>     j -> (| ((x,Abs j) : nom', ms) |)
+> nomAbs [] _ = Just ([], Nothing)
 
 > countF :: String -> Fwd (Entry Bwd) -> Int
 > countF x F0 = 0
@@ -326,54 +334,60 @@ the name part of references, respectively.
 > countF x (_ :> es) = countF x es
 
 > findF :: Int -> (String,Int) -> Fwd (Entry Bwd) 
->              -> ((String,Offs), Maybe (Scheme INTM))
+>              -> Maybe ((String,Offs), Maybe (Scheme INTM))
 > findF i u (M n _ :> es) | (last $ n) == u = 
->   ((fst u, if i == 0 then Rel 0 else Abs i), Nothing)
+>   Just ((fst u, if i == 0 then Rel 0 else Abs i), Nothing)
 > findF i u@(x,_) (M n _ :> es) | (fst . last $ n) == x = findF (i+1) u es
 > findF i u (E _ v (Girl _ _ ms) _ :> es) | v == u = 
->   ((fst u, if i == 0 then Rel 0 else Abs i), ms)
+>   Just ((fst u, if i == 0 then Rel 0 else Abs i), ms)
 > findF i u (E _ v _ _ :> es) | v == u = 
->   ((fst u, if i == 0 then Rel 0 else Abs i), Nothing)
+>   Just ((fst u, if i == 0 then Rel 0 else Abs i), Nothing)
 > findF i u@(x,_) (E _ (y,_) _ _ :> es) | y == x = findF (i+1) u es
 > findF i u (_ :> es) = findF i u es
+> findF _ _ _ = Nothing
 
-> nomTop :: Name -> BScopeContext -> ((String,Offs),Maybe (Scheme INTM))
-> nomTop n bsc = let (i,ms) = countB 0 n bsc in ((fst . last $ n, Rel i), ms)
+> nomTop :: Name -> BScopeContext -> Maybe ((String,Offs),Maybe (Scheme INTM))
+> nomTop n bsc = do
+>   (i,ms) <- countB 0 n bsc
+>   (| ((fst . last $ n, Rel i), ms) |)
 
-> countB :: Int -> Name -> BScopeContext -> (Int, Maybe (Scheme INTM))
+> countB :: Int -> Name -> BScopeContext -> Maybe (Int, Maybe (Scheme INTM))
 > countB i n (esus:<(es',u'),B0) | u' == last n && 
->                                  flatNom esus [] == init n = (i, Nothing)
+>                                  flatNom esus [] == init n = (| (i,Nothing) |)
 > countB i n (esus:<(es',u'),B0) | fst u' == (fst . last $ n) = 
 >   countB (i+1) n (esus,es')
 > countB i n (esus:<(es',u'),B0) = countB i n (esus,es')
-> countB i n (esus,es:<M n' (es',_,_)) | n == n' = (i, Nothing)
+> countB i n (esus,es:<M n' (es',_,_)) | n == n' = (| (i, Nothing) |)
 > countB i n (esus,es:<M n' _) | (fst . last $ n') == (fst . last $ n) =
 >   countB (i+1) n (esus,es)
 > countB i n (esus,es:<E r u' (Girl _ (es',_,_) ms) _) | last n == u' &&
 >                                                        refName r == n = 
->   (i, ms)
+>   (| (i, ms) |)
 > countB i n (esus,es:<E r u' _ _) | last n == u' && refName r == n = 
->   (i, Nothing)
+>   (| (i, Nothing) |)
 > countB i n (esus,es:<E _ u' _ _) | (fst . last $ n) == fst u' = 
 >   countB (i+1) n (esus,es)
 > countB i n (esus,es:<_) = countB i n (esus,es)
-> countB _ n _ = error $ show n 
+> countB _ n _ = Nothing 
 
 > nomRel :: Name -> Entries -> RelName 
->                -> Maybe (Scheme INTM) -> (RelName, Maybe (Scheme INTM)) 
-> nomRel [] _ rom ms = (rom, ms) 
-> nomRel (x : nom) es rom _ = let (i,es',ms) = nomRel' 0 x es in
+>                -> Maybe (Scheme INTM) -> Maybe (RelName, Maybe (Scheme INTM)) 
+> nomRel [] _ rom ms = (| (rom, ms) |)
+> nomRel (x : nom) es rom _ = do
+>   (i,es',ms) <- nomRel' 0 x es
 >   nomRel nom es' ((fst x,Rel i):rom) ms
 
 > nomRel' :: Int -> (String,Int) -> Entries 
->                -> (Int,Entries, Maybe (Scheme INTM))
+>                -> Maybe (Int,Entries, Maybe (Scheme INTM))
 > nomRel' o (x,i) (es:<M n (es',_,_)) | (fst . last $ n) == x  = 
->   if i == (snd . last $ n) then (o,es',Nothing) else nomRel' (o+1) (x,i) es
+>   if i == (snd . last $ n) then (| (o,es',Nothing) |) 
+>                            else nomRel' (o+1) (x,i) es
 > nomRel' o (x,i) (es:<E _ (y,j) (Girl _ (es',_,_) ms) _) | y == x =
->   if i == j then (o,es',ms) else nomRel' (o+1) (x,i) es
+>   if i == j then (| (o,es',ms) |) else nomRel' (o+1) (x,i) es
 > nomRel' o (x,i) (es:<E _ (y,j) _ _) | y == x = 
->   if i == j then (o,B0,Nothing) else nomRel' (o+1) (x,i) es
+>   if i == j then (| (o,B0,Nothing) |) else nomRel' (o+1) (x,i) es
 > nomRel' o (x,i) (es:<e) = nomRel' o (x,i) es
+> nomRel' _ _ _ = Nothing
 
 \subsection{Moving |StackError| from |INTM| to |InDTmRN|}
 
