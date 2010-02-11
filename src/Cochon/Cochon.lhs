@@ -185,7 +185,8 @@ given string, either exactly or as a prefix.
 >     (eval . argToIn . head)
 >     help
 
-> unDP (DP ref) = ref
+> unDP :: ExDTm x -> x
+> unDP (DP ref ::$ []) = ref
 
 > unaryNameCT :: String -> (RelName -> ProofState String) -> String -> CochonTactic
 > unaryNameCT name eval help = simpleCT
@@ -193,7 +194,6 @@ given string, either exactly or as a prefix.
 >     (| (B0 :<) tokenName |)
 >     (eval . unDP . argToEx . head)
 >     help
->   where unDP (DP ref) = ref
 
 > unaryStringCT :: String -> (String -> ProofState String) -> String -> CochonTactic
 > unaryStringCT name eval help = simpleCT
@@ -320,7 +320,7 @@ Miscellaneous tactics:
 >   : CochonTactic
 >         {  ctName = "compile"
 >         ,  ctParse = (|(|(B0 :<) tokenName|) :< tokenString|)
->         ,  ctIO = (\ [ExArg (DP r), StrArg fn] (locs :< loc) -> do
+>         ,  ctIO = (\ [ExArg (DP r ::$ []), StrArg fn] (locs :< loc) -> do
 >             let  Right aus = evalStateT getAuncles loc
 >                  Right dev = evalStateT getDev loc
 >                  Right (n := _) = evalStateT (resolveHere r) loc

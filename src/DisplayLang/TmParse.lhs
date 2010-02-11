@@ -76,7 +76,7 @@ appropriate type-cast.
 
 > pAscriptionTC :: Parsley Token ExDTmRN
 > pAscriptionTC = (| typecast pInDTm (%keyword KwAsc%) pInDTm |)
->   where typecast tm ty = (DType ty) ::$ A tm
+>   where typecast tm ty = DType ty ::$ [A tm]
 
 
 Each |sized| parser tries the appropriate |special| parser for the size,
@@ -85,12 +85,12 @@ At the smallest size, brackets must be used to start parsing from the
 largest size again.
 
 > sizedExDTm :: Size -> Parsley Token ExDTmRN
-> sizedExDTm z = specialExDTm z <|>
+> sizedExDTm z = (|(::$ []) (specialExDTm z) |) <|>
 >       (if z > minBound  then pLoop (sizedExDTm (pred z)) (moreExDTm z)
 >                         else bracket Round pExDTm)
 
 > sizedInDTm :: Size -> Parsley Token InDTmRN
-> sizedInDTm z = specialInDTm z <|> (| DN (specialExDTm z) |) <|>
+> sizedInDTm z = specialInDTm z <|> (| (DN . (::$ [])) (specialExDTm z) |) <|>
 >       (if z > minBound  then pLoop (sizedInDTm (pred z)) (moreInEx z)
 >                         else bracket Round pInDTm)
 
@@ -100,16 +100,15 @@ largest size again.
 
 
 
-> specialExDTm :: Size -> Parsley Token ExDTmRN
+> specialExDTm :: Size -> Parsley Token (DHead RelName)
 > specialExDTm ArgSize =
 >   (| DType (bracket Round (keyword KwAsc *> pInDTm))
 >    | DP nameParse
 >    |)
-
 > specialExDTm z = (|)
 
 > moreExDTm :: Size -> ExDTmRN -> Parsley Token ExDTmRN
-> moreExDTm AppSize e = (e ::$) <$>
+> moreExDTm AppSize e = (e $::$) <$>
 >   (| Fst (%keyword KwFst%)
 >    | Snd (%keyword KwSnd%)
 >    | Out (%keyword KwOut%)

@@ -103,5 +103,5 @@
 >     : simpleCT
 >         "solve"
 >         (| (| (B0 :<) tokenName |) :< tokenInTm |)
->         (\ [ExArg (DP rn), InArg tm] -> elabSolveHole rn tm >> return "Solved.")
+>         (\ [ExArg (DP rn ::$ []), InArg tm] -> elabSolveHole rn tm >> return "Solved.")
 >         "solve <name> <term> - solves the hole <name> with <term>."

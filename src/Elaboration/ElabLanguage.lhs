@@ -18,7 +18,6 @@
 > import ProofState.ProofKit
 
 > import DisplayLang.DisplayTm
-> import DisplayLang.DisplayMangler
 
 > import Tactics.Solution
 
@@ -46,10 +45,9 @@ the proof state. That is, it defines the semantics of the |Elab| syntax.
 > runElab (ECan (C c) f)      = runElab (f c)
 > runElab (ECan tm f)         = suspendMe (ECan tm f)
 > runElab (ECry e)            = do
->     GirlMother (name := HOLE _ :<: ty) xn tm ms <- getMother
 >     e' <- distillErrors e
 >     let msg = show (prettyStackError e')
->     putMother $ GirlMother (name := HOLE (Crying msg) :<: ty) xn tm ms
+>     putHoleKind (Crying msg)
 >     return Nothing
 
 The |EHope| command hopes for an element of a given type. If it is asking for a
@@ -147,7 +145,7 @@ The |makeElab| function produces an |Elab| in a type-directed way.
 > makeElab loc (ty :>: DL sc) = do
 >     Just (_, s, f) <- return $ lambdable ty
 >     ref <- ELambda (dfortran (DL sc)) Bale
->     makeElab loc (s :>: underDScope sc ref)
+>     makeElab loc (s :>: dScopeTm sc)
 
 > makeElab loc (w :>: DN n) = do
 >     yn <- makeElabInfer loc n
@@ -159,32 +157,33 @@ The |makeElab| function produces an |Elab| in a type-directed way.
 
 
 > makeElabInfer :: Loc -> ExDTmRN -> Elab VAL
-> makeElabInfer loc (DP rn) = ECompute sigSetVAL (ResolveProb rn) Bale
 
-> {-| makeElabInfer loc (t ::$ s@(A _)) = do
->     tytv <- makeElabInfer loc t
->     (cty, p) <- elabEnsure (tytv $$ Fst) (Set :>: Pi () ())
->     tytv <- makeElabInfer loc t
->     let tv = tytv $$ Snd
->     (s', ty') <- elimTy (chevElab loc) (tv :<: cty) s
->     return $ PAIR ty' (tv $$ fmap valueOf s') |-}
-
-
-> makeElabInfer loc (t ::$ s) = do
->     tytv <- makeElabInfer loc t
->     cty <- ECan (tytv $$ Fst) Bale
->     tytv <- makeElabInfer loc t
->     let tv = tytv $$ Snd
->     (s', ty') <- elimTy (chevElab loc) (tv :<: cty) s
->     return $ PAIR ty' (tv $$ fmap valueOf s')
-
-> makeElabInfer loc (DType ty) = do
->     tyv <- ECompute SET (ElabRunProb (makeElab loc (SET :>: ty))) Bale
->     return $ PAIR (ARR tyv tyv) (idVAL "typecast")
-
+> makeElabInfer loc (t ::$ ss) = do
+>     tytv <- makeElabHeadInfer loc t
+>     (v :<: ty) <- handleArgs (tytv $$ Snd :<: tytv $$ Fst) ss
+>     return (PAIR ty v)
+>   where
+>     handleArgs :: (VAL :<: TY) -> DSpine RelName -> Elab (VAL :<: TY)
+>     handleArgs (v :<: ty) [] = return (v :<: ty)
+>     handleArgs (v :<: C cty) (a : as) = do
+>         (a', ty') <- elimTy (chevElab loc) (v :<: cty) a
+>         handleArgs (v $$ fmap valueOf a' :<: ty') as
+>     handleArgs (v :<: ty) as = do
+>         cty <- ECan ty Bale
+>         handleArgs (v :<: C cty) as
 
 > makeElabInfer loc tm = throwError' $ err "makeElabInfer: can't cope with"
 >     ++ errTm (DN tm)
+
+> makeElabHeadInfer :: Loc -> DHead RelName -> Elab VAL
+> makeElabHeadInfer loc (DP rn) = ECompute sigSetVAL (ResolveProb rn) Bale
+
+> makeElabHeadInfer loc (DType ty) = do
+>     tyv <- ECompute SET (ElabRunProb (makeElab loc (SET :>: ty))) Bale
+>     return $ PAIR (ARR tyv tyv) (idVAL "typecast")
+
+> makeElabHeadInfer loc tm = throwError' $ err "makeElabHeadInfer: can't cope with"
+>     ++ errTm (DN (tm ::$ []))
 
 
 > elmCT :: ExDTmRN -> ProofState String

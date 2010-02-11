@@ -218,7 +218,10 @@ that her children have already received, and returns the updated news.
 >                         ++ show (entryName e') ++ ":\n" ++ show elab'
 >                     mtm <- runElab elab'
 >                     case mtm of
->                         Just (tm :=>: _ ) -> give' tm >> return ()
+>                         Just (tm :=>: _ ) -> do
+>                             let (tm', _) = tellNews news tm
+>                             give' tm'
+>                             return ()
 >                         Nothing -> proofTrace
 >                             "tellMother: elaboration suspended."
 >                 Nothing -> return ()

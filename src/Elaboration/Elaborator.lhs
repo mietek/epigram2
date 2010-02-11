@@ -25,7 +25,6 @@
 > import ProofState.ProofKit
 
 > import DisplayLang.DisplayTm
-> import DisplayLang.DisplayMangler
 > import DisplayLang.Naming
 
 > import Evidences.Rules
@@ -158,7 +157,7 @@ by elaboration, then return the reference.
 >     make (h :<: pi')
 >     goIn
 >     l <- lambdaBoy (dfortran (DL sc))
->     neutralise =<< elabGive (underDScope sc l)
+>     neutralise =<< elabGive (dScopeTm sc)
 
 If we are at top level, we can simply create a |lambdaBoy| in the current development,
 and carry on elaborating.
@@ -167,7 +166,7 @@ and carry on elaborating.
 >     Just _ <- return $ lambdable ty
 >     l <- lambdaBoy (dfortran (DL sc))
 >     _ :=>: ty <- getGoal "elaborate lambda"
->     elaborate True (ty :>: underDScope sc l)
+>     elaborate True (ty :>: dScopeTm sc)
 >     
     
 We push types in to neutral terms by calling |elabInfer| on the term, then
@@ -222,29 +221,29 @@ implicit syntax; this will have no implicit arguments at the start.
 
 > elabInfer :: ExDTmRN -> ProofState (EXTM :=>: VAL :<: TY, Maybe (Scheme INTM))
 
-> elabInfer (DTEX tm) = do
+> elabInfer (DTEX tm ::$ []) = do
 >     ty <- withNSupply $ liftError . (typeCheck $ infer tm)
 >     (tmv :<: ty') <- ty `catchEither` (err "elabInfer: inference failed!")
 >     return (tm :=>: tmv :<: ty', Nothing)
 
-> elabInfer (DP x) = do
+> elabInfer (DP x ::$ []) = do
 >     (ref, as, ms) <- elabResolve x
->     processScheme (DTEX (P ref $:$ as)) ms
+>     processScheme (DTEX (P ref $:$ as) ::$ []) ms
 
-> elabInfer (tm ::$ Call _) = do
->     (tm' :=>: tmv :<: LABEL l ty, _) <- elabInfer tm
+> elabInfer (tm ::$ [Call _]) = do
+>     (tm' :=>: tmv :<: LABEL l ty, _) <- elabInfer (tm ::$ [])
 >     l' <- bquoteHere l
 >     return ((tm' :$ Call l') :=>: (tmv $$ Call l) :<: ty, Nothing)
 
-> elabInfer (t ::$ s) = do
->     (t' :=>: tv :<: C ty, ms) <- elabInfer t
+> elabInfer (t ::$ [s]) = do
+>     (t' :=>: tv :<: C ty, ms) <- elabInfer (t ::$ [])
 >     (s', ty') <- elimTy (elaborate False) (tv :<: ty) s
 >     let tm = t' :$ fmap termOf s'
 >     case (s, ms) of
->         (A _, Just (SchExplicitPi _ sch)) -> processScheme (DTEX tm) (Just sch)
+>         (A _, Just (SchExplicitPi _ sch)) -> processScheme (DTEX tm ::$ []) (Just sch)
 >         _ -> return (tm :=>: (tv $$ fmap valueOf s') :<: ty', Nothing)
 
-> elabInfer (DType ty) = do
+> elabInfer (DType ty ::$ []) = do
 >     (ty' :=>: vty)  <- elaborate False (SET :>: ty)
 >     x <- pickName "x" ""
 >     return ((idTM x :? ARR ty' ty') :=>: idVAL x :<: ARR vty vty, Nothing)
@@ -261,7 +260,7 @@ implicit syntax; this will have no implicit arguments at the start.
 >     (ttt, _) <- elabInfer tm
 >     return (ttt, ms)
 > processScheme tm (Just (SchImplicitPi (_ :<: s) sch)) = 
->     processScheme (tm ::$ A DU) (Just sch)
+>     processScheme (tm $::$ A DU) (Just sch)
 
 \subsection{Proof Construction}
 

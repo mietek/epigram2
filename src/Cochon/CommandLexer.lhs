@@ -54,7 +54,7 @@ with projection functions.
 > tokenAppInTm = (| InArg (sizedInDTm AppSize) |)
 
 > tokenName :: Parsley Token CochonArg
-> tokenName = (| (ExArg . DP) nameParse |)
+> tokenName = (| (ExArg . (::$ []) . DP) nameParse |)
 
 > tokenString :: Parsley Token CochonArg
 > tokenString = (| StrArg ident |)

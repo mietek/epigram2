@@ -240,15 +240,12 @@ The |christenName| and |christenREF| functions do a similar job for names, and
 the name part of references, respectively.
 
 > christenName :: BScopeContext -> Name -> RKind -> RelName
-> christenName bsc target rk = 
->   case mangleP bsc target rk (boySpine . (uncurry flat) $ bsc) of DP x -> x
+> christenName bsc target rk = s
+>   where (s, _, _) = unresolve target rk (boySpine . (uncurry flat) $ bsc) bsc B0
 >
 > christenREF :: BScopeContext -> REF -> RelName
 > christenREF bsc (target := rk :<: _) = christenName bsc target rk
 
-> mangleP :: BScopeContext -> Name -> RKind -> Spine {TT} REF -> ExDTmRN
-> mangleP bsc target rk args = DP s
->   where (s, n, _) = unresolve target rk args bsc B0
 
 > failNom :: Name -> RelName
 > failNom nom = ("!!!",Rel 0):(map (\(a,b) -> (a,Abs b)) nom)

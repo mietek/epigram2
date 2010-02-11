@@ -100,7 +100,7 @@ arguments and return the distilled application with the shared parameters droppe
 >          as''  = case ms of
 >                    Just sch  -> removeImplicit sch as'
 >                    Nothing   -> as'
->     return ((DP relName $::$ as'') :<: ty')
+>     return ((DP relName ::$ as'') :<: ty')
 >   where
 >     removeImplicit :: Scheme x -> DSpine RelName -> DSpine RelName
 >     removeImplicit (SchType _)           as      = as
@@ -129,7 +129,7 @@ eliminators is applied in its entirety.
 >     ty'  :=>: vty  <- distill es (SET :>: ty)
 >     t'   :=>: vt   <- distill es (vty :>: t)
 >     (e', ty'')     <- processArgs es (vt :<: vty) as
->     return ((DType ty' ::$ A t') $::$ e' :<: ty'')
+>     return (DType ty' ::$ (A t' : e') :<: ty'')
 
 If nothing matches, we are unable to distill this term, so we complain loudly.
 

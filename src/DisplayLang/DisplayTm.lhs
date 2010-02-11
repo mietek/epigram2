@@ -83,13 +83,13 @@ However, we have removed the following:
 >     import <- InDTmConstructors
 >  deriving (Functor, Foldable, Traversable, Show)
 
-> data ExDTm :: * -> * where
->     DP     :: x                          -> ExDTm  x -- parameter
->     DV     :: Int                        -> ExDTm  x -- variable
->     (::$)  :: ExDTm x -> Elim (InDTm x)  -> ExDTm  x -- elim
->     DType  :: InDTm x                    -> ExDTm  x -- type cast
->     DTEx   :: ExTmWrap x                 -> ExDTm  x -- embedding
->     import <- ExDTmConstructors
+> data ExDTm x = DHead x ::$ DSpine x
+>   deriving (Functor, Foldable, Traversable, Show)
+
+> data DHead :: * -> * where
+>     DP     :: x                          -> DHead  x -- parameter
+>     DType  :: InDTm x                    -> DHead  x -- type cast
+>     DTEx   :: ExTmWrap x                 -> DHead  x -- embedding
 >  deriving (Functor, Foldable, Traversable, Show)
 
 
@@ -118,9 +118,9 @@ We provide handy projection functions to get the name and body of a scope:
 Spines of eliminators are just like in the evidence language:
 
 > type DSpine x = [Elim (InDTm x)]
->
-> ($::$) :: ExDTm x -> DSpine x -> ExDTm x
-> ($::$) = foldl (::$)
+
+> ($::$) :: ExDTm x -> Elim (InDTm x) -> ExDTm x
+> (h ::$ s) $::$ a = h ::$ (s ++ [a])
 
 
 \subsubsection{Embedding evidence terms}
@@ -175,12 +175,11 @@ places.
 > pattern DARR s t    = DPI s (DL (DK t)) 
 > pattern DPI s t     = DC (Pi s t)         
 > pattern DCON t      = DC (Con t)
-> pattern DNV n       = DN (DV n)
-> pattern DNP n       = DN (DP n)
+> pattern DNP n       = DN (DP n ::$ [])
 > pattern DLAV x t    = DL (x ::. t)
 > pattern DPIV x s t  = DPI s (DLAV x t)
 > pattern DLK t       = DL (DK t)
-> pattern DTY ty tm   = (DType ty) ::$ A tm
+> pattern DTY ty tm   = DType ty ::$ [A tm]
 > import <- CanDisplayPats
 
 We need fewer type synoyms:
