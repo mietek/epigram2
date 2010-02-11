@@ -5,7 +5,7 @@ Solved.
 [ B := ? : Set -> Set ;
   A := (B Set -> B Set) : Set ;
   ---
-  B := B : Set -> Set ;
+  B := B^1 : Set -> Set ;
   C := B Set : Set ;
 ]
 I'm sorry, Dave. I'm afraid I can't do that.
@@ -29,7 +29,7 @@ Made.
 Solved.
 [ B := ? : Set -> Set ;
   A := (B Set -> B Set) : Set ;
-  B := B : Set -> Set ;
+  B := B^1 : Set -> Set ;
   C := B Set : Set ;
   M
     [ D := ? : Set ;
@@ -39,6 +39,6 @@ Solved.
   G6 := ? : :- M.D == ((: Set) Set) ;
   G := coe M.D Set G6 M.d : Set ;
   ---
-  G6 := G6 : :- M.D == ((: Set) Set) ;
+  G6 := G6^1 : :- M.D == ((: Set) Set) ;
 ]
 Loaded.
