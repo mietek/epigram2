@@ -266,37 +266,31 @@ the name part of references, respectively.
 > unresolve tar rk tas msc@(mesus,mes) les = 
 >   case find ((tar ==) . refName . snd) (axioms ++ primitives) of
 >     Just (s, _)  -> ([(s, Rel 0)], 0, Nothing)
->     Nothing      -> case (partNoms tar msc [] B0, rk) of
->       ((xs,Just (top,nom,sp,es)),_) | sp `isPrefixOf` tas ->
->         maybe (failNom tar,0,Nothing) id 
->           (do (tn, tms) <- nomTop top (mesus,mes<+>les) 
->               (rn, rms) <- nomRel nom (es <+> les) [] Nothing 
->               (| (tn : rn, length sp, if null nom then tms else rms) |))
->       ((xs,Just (top,nom,sp,es)),_) ->
->         maybe (failNom tar,0,Nothing) id 
->           (do let (top',nom',i,fsc) = matchUp xs tas 
->               (tn,tms) <- nomTop top' (mesus,mes<+>les)
->               let mnom = take (length nom' - length nom) nom'
->               (an,ams) <- nomAbs mnom fsc
->               let tams = if null mnom then tms else ams  
->               (rn, rms) <- nomRel nom (es <+> les) [] Nothing 
->               (| ((tn : an) ++ rn, i, if null nom then tams else rms) |)) 
->       ((xs, Nothing),FAKE) ->
->         maybe (failNom tar,0,Nothing) id 
->           (do let (top',nom',i,fsc) = matchUp xs tas 
->               (tn,tms) <- nomTop top' (mesus,mes<+>les)
->               (an,ams) <- nomAbs nom' fsc
->               (| ((tn : an), i, if null nom' then tms else ams) |) )
+>     Nothing      -> 
+>       let (xs,(top,nom,sp,es)) = partNoms tar msc [] B0 in
+>         case sp `isPrefixOf` tas of
+>           True -> let (tn, tms) = nomTop top (mesus,mes<+>les) 
+>                       (rn, rms) = nomRel nom (es <+> les) [] Nothing 
+>                   in  (tn : rn, length sp, if null nom then tms else rms)
+>           False -> let (top',nom',i,fsc) = matchUp xs tas 
+>                        (tn,tms) = nomTop top' (mesus,mes<+>les)
+>                        mnom = take (length nom' - length nom) nom'
+>                        (an,ams) = nomAbs mnom fsc
+>                        tams = if null mnom then tms else ams  
+>                        (rn, rms) = nomRel nom (es <+> les) [] Nothing 
+>                    in ((tn : an) ++ rn, i, if null nom then tams else rms) 
 
 > partNoms :: Name -> BScopeContext -> Name 
 >                  -> Bwd (Name, Name, Spine {TT} REF, FScopeContext)
->                  -> ( Bwd (Name, Name, Spine {TT} REF, FScopeContext) 
+>                  -> Maybe ( Bwd (Name, Name, Spine {TT} REF, FScopeContext) 
 >                     , Maybe (Name,Name, Spine {TT} REF, Entries) ) 
 > partNoms [] bsc _ xs = (xs, Nothing)
 > partNoms nom@(top:rest) bsc n xs = case partNom top bsc (F0,F0) of
->  (sp, Left es) -> (xs, Just (n ++ [top], rest, sp, es))
+>  (sp, Left es) -> (xs, (n ++ [top], rest, sp, es))
 >  (sp, Right fsc) -> 
 >    partNoms rest bsc (n ++ [top]) (xs:<(n ++ [top], rest, sp, fsc))
+>  Nothing -> Nothing
+> partNoms _ _ _ _ = Nothing
 
 > matchUp :: Bwd (Name, Name, Spine {TT} REF, FScopeContext) 
 >              -> Spine {TT} REF ->  (Name, Name, Int, FScopeContext)
@@ -305,18 +299,17 @@ the name part of references, respectively.
 > matchUp (xs :< _) tas = matchUp xs tas
 
 > partNom :: (String, Int) -> BScopeContext -> FScopeContext
->                 -> (Spine {TT} REF, Either Entries FScopeContext)
+>                 -> Maybe (Spine {TT} REF, Either Entries FScopeContext)
 > partNom top ((esus :< (es,top')), B0) fsc | top == top' =
->   (boySpine (flat esus es),Right fsc)
+>   Just (boySpine (flat esus es),Right fsc)
 > partNom top ((esus :< (es,not)), B0) (js,vjss) =
 >   partNom top (esus,es) (F0,(not,js):>vjss)
 > partNom top (esus, es :< M n (es',_,_)) fsc | top == last n =
->   (boySpine (flat esus es),Left es')
+>   Just (boySpine (flat esus es),Left es')
 > partNom top (esus, es :< E _ top' (Girl _ (es',_,_) _) _) fsc | top == top' =
->   (boySpine (flat esus es),Left es')
+>   Just (boySpine (flat esus es),Left es')
 > partNom top (esus, es :< e) (fs, vfss)  = partNom top (esus, es) (e:>fs,vfss)
-> partNom top bsc fsc = error $ "partNom failed, top = " ++ show top
->     ++ ",\nbsc = " ++ show bsc ++ ",\nfsc = " ++ show fsc
+> partNom top bsc fsc = Nothing
 
 > nomAbs :: Name -> FScopeContext -> Maybe (RelName, Maybe (Scheme INTM))
 > nomAbs [u] (es,(_,es'):>uess) = do
