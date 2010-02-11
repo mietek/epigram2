@@ -380,22 +380,3 @@ the name part of references, respectively.
 >   if i == j then (| (o,B0,Nothing) |) else nomRel' (o+1) (x,i) es
 > nomRel' o (x,i) (es:<e) = nomRel' o (x,i) es
 > nomRel' _ _ _ = Nothing
-
-
-
-\subsection{Moving |StackError| from |INTM| to |InDTmRN|}
-
-Some functions, such as |distill|, are defined in the |ProofStateT
-INTM| monad. However, Cochon lives in a |ProofStateT InDTmRN|
-monad. Therefore, in order to use it, we will need to lift from the
-former to the latter.
-
-> liftError :: Either (StackError INTM) a -> Either (StackError InDTmRN) a
-> liftError = either (Left . wrapError) Right
->     where wrapError :: StackError INTM -> StackError InDTmRN
->           wrapError = fmap $           -- on the stack
->                       fmap $           -- on the list of token
->                       fmap             -- on a token
->                       (DT . InTmWrap)  -- turning INTM into InDTmRN
-
-
