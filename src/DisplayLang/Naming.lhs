@@ -127,13 +127,17 @@ This needs documenting I (Peter) am on it.
 > flat B0 es = es
 > flat (esus :< (es',_)) es = flat esus (es' <+> es)
 
+> flatNom :: Bwd (Entries, (String,Int)) -> Name -> Name
+> flatNom B0 nom = nom
+> flatNom (esus :< (_,u)) nom = flatNom esus (u : nom)
+
 > lookUp :: (String, Int) -> BScopeContext -> FScopeContext -> 
 >                            Either (StackError t) 
 >                                   ( Either FScopeContext Entries
 >                                   , Spine {TT} REF
 >                                   , Maybe REF 
 >                                   , Maybe (Scheme INTM))
-> lookUp (x,i) (B0,B0) fs = Left [err $ "Not is scope " ++ x]
+> lookUp (x,i) (B0,B0) fs = Left [err $ "Not in scope " ++ x]
 > lookUp (x,i) ((esus :< (es,(y,j))),B0) (fs,vfss) | x == y = 
 >   if i == 0 then Right (Left (fs,vfss), boySpine (flat esus es), Nothing, Nothing)
 >             else lookUp (x,i-1) (esus,es) (F0,((y,j),fs) :> vfss)
@@ -259,26 +263,32 @@ the name part of references, respectively.
 > unresolve tar rk tas msc@(mesus,mes) les = 
 >   case find ((tar ==) . refName . snd) (axioms ++ primitives) of
 >     Just (s, _)  -> ([(s, Rel 0)], 0, Nothing)
->     Nothing      -> 
->       let (xs,(top,nom,sp,es)) = partNoms tar msc [] B0 in
->         case sp `isPrefixOf` tas of
->           True -> let (tn, tms) = nomTop top (mesus,mes<+>les) 
->                       (rn, rms) = nomRel nom (es <+> les) [] Nothing 
->                   in  (tn : rn, length sp, if null nom then tms else rms)
->           False -> let (top',nom',i,fsc) = matchUp xs tas 
->                        (tn,tms) = nomTop top' (mesus,mes<+>les)
->                        mnom = take (length nom' - length nom) nom'
->                        (an,ams) = nomAbs mnom fsc
->                        tams = if null mnom then tms else ams  
->                        (rn, rms) = nomRel nom (es <+> les) [] Nothing 
->                    in ((tn : an) ++ rn, i, if null nom then tams else rms) 
+>     Nothing      -> case (partNoms tar msc [] B0, rk) of
+>       ((xs,Just (top,nom,sp,es)),_) | sp `isPrefixOf` tas ->
+>         let (tn, tms) = nomTop top (mesus,mes<+>les) 
+>             (rn, rms) = nomRel nom (es <+> les) [] Nothing 
+>             in  (tn : rn, length sp, if null nom then tms else rms)
+>       ((xs,Just (top,nom,sp,es)),_) ->
+>         let (top',nom',i,fsc) = matchUp xs tas 
+>             (tn,tms) = nomTop top' (mesus,mes<+>les)
+>             mnom = take (length nom' - length nom) nom'
+>             (an,ams) = nomAbs mnom fsc
+>             tams = if null mnom then tms else ams  
+>             (rn, rms) = nomRel nom (es <+> les) [] Nothing 
+>         in ((tn : an) ++ rn, i, if null nom then tams else rms) 
+>       ((xs, Nothing),FAKE) ->
+>         let (top',nom',i,fsc) = matchUp xs tas 
+>             (tn,tms) = nomTop top' (mesus,mes<+>les)
+>             (an,ams) = nomAbs nom' fsc
+>         in ((tn : an), i, if null nom' then tms else ams) 
 
 > partNoms :: Name -> BScopeContext -> Name 
 >                  -> Bwd (Name, Name, Spine {TT} REF, FScopeContext)
 >                  -> ( Bwd (Name, Name, Spine {TT} REF, FScopeContext) 
->                     , (Name,Name, Spine {TT} REF, Entries) ) 
+>                     , Maybe (Name,Name, Spine {TT} REF, Entries) ) 
+> partNoms[] bsc _ xs = (xs, Nothing)
 > partNoms nom@(top:rest) bsc n xs = case partNom top bsc (F0,F0) of
->  (sp, Left es) -> (xs, (n ++ [top], rest, sp, es))
+>  (sp, Left es) -> (xs, Just (n ++ [top], rest, sp, es))
 >  (sp, Right fsc) -> 
 >    partNoms rest bsc (n ++ [top]) (xs:<(n ++ [top], rest, sp, fsc))
 
@@ -328,23 +338,26 @@ the name part of references, respectively.
 > findF i u (_ :> es) = findF i u es
 
 > nomTop :: Name -> BScopeContext -> ((String,Offs),Maybe (Scheme INTM))
-> nomTop n bsc = let (i,_,ms) = countB 0 n bsc in ((fst . last $ n, Rel i), ms)
+> nomTop n bsc = let (i,ms) = countB 0 n bsc in ((fst . last $ n, Rel i), ms)
 
-> countB :: Int -> Name -> BScopeContext -> (Int,Entries, Maybe (Scheme INTM))
+> countB :: Int -> Name -> BScopeContext -> (Int, Maybe (Scheme INTM))
+> countB i n (esus:<(es',u'),B0) | u' == last n && 
+>                                  flatNom esus [] == init n = (i, Nothing)
 > countB i n (esus:<(es',u'),B0) | fst u' == (fst . last $ n) = 
 >   countB (i+1) n (esus,es')
 > countB i n (esus:<(es',u'),B0) = countB i n (esus,es')
-> countB i n (esus,es:<M n' (es',_,_)) | n == n' = (i,es',Nothing)
+> countB i n (esus,es:<M n' (es',_,_)) | n == n' = (i, Nothing)
 > countB i n (esus,es:<M n' _) | (fst . last $ n') == (fst . last $ n) =
 >   countB (i+1) n (esus,es)
 > countB i n (esus,es:<E r u' (Girl _ (es',_,_) ms) _) | last n == u' &&
 >                                                        refName r == n = 
->   (i,es',ms)
+>   (i, ms)
 > countB i n (esus,es:<E r u' _ _) | last n == u' && refName r == n = 
->   (i,B0,Nothing)
+>   (i, Nothing)
 > countB i n (esus,es:<E _ u' _ _) | (fst . last $ n) == fst u' = 
 >   countB (i+1) n (esus,es)
 > countB i n (esus,es:<_) = countB i n (esus,es)
+> countB _ n _ = error $ show n 
 
 > nomRel :: Name -> Entries -> RelName 
 >                -> Maybe (Scheme INTM) -> (RelName, Maybe (Scheme INTM)) 
