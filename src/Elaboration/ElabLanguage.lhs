@@ -42,6 +42,7 @@ the proof state. That is, it defines the semantics of the |Elab| syntax.
 > runElab (EHope ty f)        = runElabHope ty >>= runElab . f . valueOf
 > runElab (ECompute ty p f)   = runElabCompute ty p >>= runElab . f
 > runElab (ESolve ref val f)  = bquoteHere val >>= forceHole ref >>= runElab . f . valueOf
+> runElab (EElab ty (l,p) f)  = runElabElab ty l p >>= runElab . (>>= f)
 > runElab (ECan (C c) f)      = runElab (f c)
 > runElab (ECan tm f)         = suspendMe (ECan tm f)
 > runElab (ECry e)            = do
@@ -68,9 +69,9 @@ proof, we might be able to find one, but otherwise we just create a hole.
 The |ECompute| command computes the solution to a problem, given its type. 
 
 > runElabCompute :: TY -> CProb -> ProofState VAL
-> runElabCompute ty (ElabProb e) = do
+> runElabCompute ty (ElabRunProb e) = do
 >     ty' <- bquoteHere ty
->     _ :=>: ptv <- make' Waiting ("ElabProb" :<: ty' :=>: ty)
+>     _ :=>: ptv <- make' Waiting ("ElabRunProb" :<: ty' :=>: ty)
 >     goIn
 >     mtm <- runElab e
 >     case mtm of
@@ -81,6 +82,24 @@ The |ECompute| command computes the solution to a problem, given its type.
 >     (tm :<: ty) <- inferHere (P ref $:$ as)
 >     return (PAIR ty tm)
 
+
+> runElabElab :: TY -> Loc -> EProb -> ProofState (Elab VAL)
+> runElabElab ty loc (ElabProb tm)       = return (makeElab loc (ty :>: tm))
+> runElabElab ty loc (ElabInferProb tm)  = return (makeElabInfer loc tm)
+
+
+> elabEnsure :: VAL -> (Can VAL :>: Can ()) -> Elab (Can VAL, VAL)
+> elabEnsure (C v) (ty :>: t) = case halfZip v t of
+>     Nothing  -> throwError' $ err "elabEnsure: failed to match!"
+>     Just _   -> return (v, pval refl $$ A (C ty) $$ A (C v))
+> elabEnsure nv (ty :>: t) = do
+>     vu <- unWrapElab $ canTy chev (ty :>: t)
+>     let v = fmap valueOf vu
+>     p <- EHope (PRF (EQBLUE (C ty :>: nv) (C ty :>: C v))) Bale
+>     return (v, p)
+>  where
+>    chev :: (TY :>: ()) -> WrapElab (() :=>: VAL)
+>    chev (ty :>: ()) = WrapElab (EHope ty (return . (() :=>:)))
 
 The |suspend| command can be used to delay elaboration, by creating a subgoal
 of the given type and attaching a suspended elaboration process to its tip.
@@ -106,7 +125,7 @@ that can be passed to |canTy| and |elimTy|. It creates appropriate subgoals
 for each component and continues elaborating.
 
 > chevElab :: Loc -> (TY :>: InDTmRN) -> Elab (() :=>: VAL)
-> chevElab loc (ty :>: tm) = ECompute ty (ElabProb (makeElab loc (ty :>: tm)))
+> chevElab loc (ty :>: tm) = ECompute ty (ElabRunProb (makeElab loc (ty :>: tm)))
 >                            (return . (() :=>:))
 
 
@@ -142,15 +161,25 @@ The |makeElab| function produces an |Elab| in a type-directed way.
 > makeElabInfer :: Loc -> ExDTmRN -> Elab VAL
 > makeElabInfer loc (DP rn) = ECompute sigSetVAL (ResolveProb rn) Bale
 
+> {-| makeElabInfer loc (t ::$ s@(A _)) = do
+>     tytv <- makeElabInfer loc t
+>     (cty, p) <- elabEnsure (tytv $$ Fst) (Set :>: Pi () ())
+>     tytv <- makeElabInfer loc t
+>     let tv = tytv $$ Snd
+>     (s', ty') <- elimTy (chevElab loc) (tv :<: cty) s
+>     return $ PAIR ty' (tv $$ fmap valueOf s') |-}
+
+
 > makeElabInfer loc (t ::$ s) = do
 >     tytv <- makeElabInfer loc t
 >     cty <- ECan (tytv $$ Fst) Bale
+>     tytv <- makeElabInfer loc t
 >     let tv = tytv $$ Snd
 >     (s', ty') <- elimTy (chevElab loc) (tv :<: cty) s
 >     return $ PAIR ty' (tv $$ fmap valueOf s')
 
 > makeElabInfer loc (DType ty) = do
->     tyv <- ECompute SET (ElabProb (makeElab loc (SET :>: ty))) Bale
+>     tyv <- ECompute SET (ElabRunProb (makeElab loc (SET :>: ty))) Bale
 >     return $ PAIR (ARR tyv tyv) (idVAL "typecast")
 
 
@@ -198,7 +227,6 @@ The |makeElab| function produces an |Elab| in a type-directed way.
 >     isUnstable (EElab _ _ _) = True
 >     isUnstable (ECan (C _) _) = True
 >     isUnstable (ECan _ _) = False
->     isUnstable (EEnsure _ _ _) = True
 
 
 > sigSetTM :: INTM

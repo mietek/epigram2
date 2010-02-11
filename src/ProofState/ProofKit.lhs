@@ -502,10 +502,10 @@ next goal (if one exists) instead.
 >     case tip of         
 >         Unknown (tipTyTm :=>: tipTy) -> do
 >             mc <- withNSupply $ liftError . (typeCheck $ check (tipTy :>: tm))
->             mc `catchEither`  (err "Typechecking failed:"
+>             mc `catchEither`  (err "give: typechecking failed:"
 >                               ++ errInTm tm
 >                               ++ err "is not of type"
->                               ++ errInTm tipTyTm)
+>                               ++ errTyVal (tipTy :<: SET))
 >             aus <- getGreatAuncles
 >             sibs <- getDevEntries
 >             let tmv = evTm (parBind aus sibs tm)

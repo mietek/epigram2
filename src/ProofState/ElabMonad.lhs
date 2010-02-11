@@ -5,7 +5,7 @@
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE TypeOperators, TypeSynonymInstances, FlexibleInstances,
->              MultiParamTypeClasses #-}
+>              MultiParamTypeClasses, GeneralizedNewtypeDeriving #-}
 
 > module ProofState.ElabMonad where
 
@@ -39,9 +39,13 @@ to which source code locations.
 
 > newtype Loc = Loc Int deriving Show
 
-> data EProb = CheckProb () deriving Show
+> data EProb  =  ElabProb InDTmRN
+>             |  ElabInferProb ExDTmRN
+>   deriving Show
 
-> data CProb = ElabProb (Elab VAL) | ResolveProb RelName deriving Show
+> data CProb  =  ElabRunProb (Elab VAL)
+>             |  ResolveProb RelName
+>   deriving Show
 
 The command signature given above defines the following free monad, which
 gives the syntax for commands.
@@ -56,7 +60,6 @@ gives the syntax for commands.
 >     |  ESolve REF VAL (VAL -> Elab x)
 >     |  EElab TY  (Loc, EProb) (VAL -> Elab x)
 >     |  ECan VAL (Can VAL -> Elab x)
->     |  EEnsure VAL (Can ()) ((Can VAL, VAL) -> Elab x)
 
 %if False
 
@@ -70,7 +73,7 @@ gives the syntax for commands.
 >     show (ESolve ref v _)   = "ESolve (" ++ show ref ++ ") (" ++ show v ++ ") (...)"
 >     show (EElab ty lp _)    = "EElab (" ++ show ty ++ ") " ++ show lp ++ " (...)"
 >     show (ECan v _)         = "ECan (" ++ show v ++ ") (...)"
->     show (EEnsure v c _)    = "EEnsure (" ++ show v ++ ") (" ++ show c ++ ") (...)"
+
 
 > instance Monad Elab where
 >     fail s  = ECry [err $ "fail: " ++ s]
@@ -85,7 +88,6 @@ gives the syntax for commands.
 >     ESolve r v f    >>= k = ESolve r v     ((k =<<) . f)
 >     EElab t lp f    >>= k = EElab t lp     ((k =<<) . f)
 >     ECan v f        >>= k = ECan v         ((k =<<) . f)
->     EEnsure v c f   >>= k = EEnsure v c    ((k =<<) . f)
 
 > instance Functor Elab where
 >     fmap = ap . return
@@ -103,5 +105,13 @@ gives the syntax for commands.
 >     throwError e           = ECry e
 >     catchError (ECry e) f  = f e
 >     catchError x _         = x
+
+
+> newtype WrapElab x = WrapElab {unWrapElab :: Elab x}
+>     deriving (Functor, Applicative, Alternative, Monad)
+
+> instance (MonadError (StackError ())) WrapElab where
+>     throwError e = WrapElab (throwError [err "WrapElab: cannot unwrap error."])
+>     catchError _ _ = WrapElab (throwError [err "WrapElab: cannot catch error."])
 
 %endif
