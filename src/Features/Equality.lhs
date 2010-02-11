@@ -167,7 +167,8 @@ by |DEqBlue| defined below.
 
 > import -> AxCode where
 >   coh = [("Axiom",0),("coh",0)] := (DECL :<: cohType) where
->     cohType = ALL SET (L . HF "x" $ \x ->
+>     cohType = PRF $ 
+>               ALL SET (L . HF "x" $ \x ->
 >               ALL SET (L . HF "y" $ \y ->
 >               ALL (PRF (EQBLUE (SET :>: x) (SET :>: y))) (L . HF "q" $ \q ->
 >               ALL x (L . HF "s" $ \s ->
