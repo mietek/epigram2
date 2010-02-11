@@ -315,6 +315,8 @@ the name part of references, respectively.
 > partNom top (esus, es :< E _ top' (Girl _ (es',_,_) _) _) fsc | top == top' =
 >   (boySpine (flat esus es),Left es')
 > partNom top (esus, es :< e) (fs, vfss)  = partNom top (esus, es) (e:>fs,vfss)
+> partNom top bsc fsc = error $ "partNom failed, top = " ++ show top
+>     ++ ",\nbsc = " ++ show bsc ++ ",\nfsc = " ++ show fsc
 
 > nomAbs :: Name -> FScopeContext -> Maybe (RelName, Maybe (Scheme INTM))
 > nomAbs [u] (es,(_,es'):>uess) = do
