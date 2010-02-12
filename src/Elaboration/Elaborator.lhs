@@ -499,11 +499,12 @@ discarded, so all parameters can be provided explicitly.
 
 > elabResolve :: RelName -> ProofState (REF, Spine {TT} REF, Maybe (Scheme INTM))
 > elabResolve x = do
->    pc <- get
->    let uess = inBScope pc
->    ans@(r, s, ms) <- resolve x (Just $ uess) (inBFScope uess)  
->      `catchEither` (err $ "elabResolve: cannot resolve name: " ++ showRelName x)
->    if fst (last x) == "/" then return (r, s, Nothing) else return ans
+>     pc <- get
+>     let  x'    = if fst (last x) == "/" then init x else x
+>          uess  = inBScope pc
+>     ans@(r, s, ms) <- resolve x' (Just $ uess) (inBFScope uess)  
+>        `catchEither` (err $ "elabResolve: cannot resolve name: " ++ showRelName x')
+>     if fst (last x) == "/" then return (r, s, Nothing) else return ans
 
 
 \subsection{Elaborated Construction Commands}
