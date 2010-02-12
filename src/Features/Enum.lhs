@@ -233,16 +233,16 @@ Equality rules:
 To elaborate a tag with an enumeration as its type, we search for the
 tag in the enumeration to determine the appropriate index.
 
-> import -> ElaborateRules where
->   elaborate _ (ENUMT t :>: DTAG a) = findTag a t 0
+> import -> MakeElabRules where
+>   makeElab loc (ENUMT t :>: DTAG a) = findTag a t 0
 >     where
->       findTag :: String -> TY -> Int -> ProofState (INTM :=>: VAL)
+>       findTag :: String -> TY -> Int -> Elab VAL
 >       findTag a (CONSE (TAG b) t) n
->         | a == b        = return (toNum n :=>: toNum n)
+>         | a == b        = return (toNum n)
 >         | otherwise     = findTag a t (succ n)
->       findTag a _ n  = throwError'  $ err "elaborate: tag `" 
->                                     ++ err a 
->                                     ++ err " not found in enumeration."
+>       findTag a _ n  = throwError' . err $ "elaborate: tag `" 
+>                                             ++ a 
+>                                             ++ " not found in enumeration."
 >                         
 >       toNum :: Int -> Tm {In, p} x
 >       toNum 0  = ZE

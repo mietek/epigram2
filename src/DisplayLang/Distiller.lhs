@@ -9,6 +9,7 @@
 > module DisplayLang.Distiller where
 
 > import Control.Monad.State
+> import Text.PrettyPrint.HughesPJ (Doc)
 
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
@@ -20,6 +21,7 @@
 
 > import DisplayLang.DisplayTm
 > import DisplayLang.Naming
+> import DisplayLang.PrettyPrint
 
 > import NameSupply.NameSupplier
 
@@ -198,3 +200,35 @@ The |toExDTm| helper function will distill a term to produce an
 > underneath :: Int -> Bwd REF -> INTM -> INTM
 > underneath _ B0 tm = tm
 > underneath n (rs :< ref) tm = underneath (n+1) rs (under n ref %% tm)
+
+
+
+
+The |distillHere| command distills a term in the current context.
+
+> distillHere :: (TY :>: INTM) -> ProofState (InDTmRN :=>: VAL)
+> distillHere tt = do
+>     mliftError $ distill B0 tt
+>         where mliftError :: ProofStateT INTM a -> ProofState a
+>               mliftError = mapStateT liftError
+
+> distillSchemeHere :: Scheme INTM -> ProofState (Scheme InDTmRN)
+> distillSchemeHere sch = do
+>     return . fst =<< (mapStateT liftError $ distillScheme B0 B0 sch)
+
+
+The |prettyHere| command distills a term in the current context,
+then passes it to the pretty-printer.
+
+> prettyHere :: (TY :>: INTM) -> ProofState Doc
+> prettyHere = prettyHereAt maxBound
+
+> prettyHereAt :: Size -> (TY :>: INTM) -> ProofState Doc
+> prettyHereAt size tt = do
+>     dtm :=>: _ <- distillHere tt
+>     return (pretty dtm size)
+
+> prettySchemeHere :: Scheme INTM -> ProofState Doc
+> prettySchemeHere sch = do
+>     sch' <- distillSchemeHere sch
+>     return (pretty sch' maxBound)

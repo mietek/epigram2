@@ -25,7 +25,7 @@
 > import Evidences.Tm
 > import Evidences.Rules
 
-> import Elaboration.ElabLanguage
+> import Elaboration.Elaborator
 
 %endif
 

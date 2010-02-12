@@ -124,8 +124,9 @@ than a $\lambda$-term is reached.
 
 
 > instance Pretty ExDTmRN where
->     pretty (n ::$ els)   = wrapDoc
->         (pretty n AppSize <+> fsep (map (flip pretty ArgSize) els))
+>     pretty (n ::$ [])   = pretty n
+>     pretty (n ::$ els)  = wrapDoc
+>         (pretty n AppSize <+> hsep (map (flip pretty ArgSize) els))
 >         AppSize
 
 > instance Pretty (DHead RelName) where

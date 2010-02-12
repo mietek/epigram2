@@ -14,9 +14,8 @@
 > import Evidences.Tm hiding (In)
 
 > import DisplayLang.DisplayTm
+> import DisplayLang.Distiller
 > import DisplayLang.PrettyPrint
-
-> import Tactics.Information
 
 > import ProofState.ProofState
 > import ProofState.ProofKit

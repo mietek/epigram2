@@ -71,7 +71,7 @@
 
 \subsection{Extending the Display Language}
 
-> import -> ElaborateRules where
+> import -> MakeElabRules where
  
 > import -> DistillRules where
 
@@ -84,8 +84,3 @@
 \subsection{Adding Primitive references in Cochon}
 
 > import -> Primitives where
-
-\subsection{Extending the Mangler}
-
-> import -> DMangleRules where
-

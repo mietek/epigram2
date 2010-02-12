@@ -1,12 +1,12 @@
 make ship := (\ X x y q P p ->
-               coe (P x) (P y) (con (((: :- P == P) [])
-                                % x y [])) p)
+               coe (P x) (P y) (con (((: :- P == P) _)
+                                % x y _)) p)
            : (X : Set)(x : X)(y : X)(q : :- x == y)(P : X -> Set) -> P x -> P y ;
 make NatF : :- TT -> Set ;
-make NatD := (\ _ -> IArg (Enum ['zero 'suc]) [ (IDone TT) (IInd1 [] (IDone TT)) ]) : (:- TT) -> IDesc (:- TT) ;
+make NatD := (\ _ -> IArg (Enum ['zero 'suc]) [ (IDone TT) (IInd1 _ (IDone TT)) ]) : (:- TT) -> IDesc (:- TT) ;
 lambda v ;
 give IMu (:- TT) NatD v ;
-make Nat := NatF [] : Set ;
+make Nat := NatF _ : Set ;
 make zero := con ['zero] : Nat ;
 make suc := (\ x -> con ['suc x]) : Nat -> Nat ;
 make one := (suc zero) : Nat ;

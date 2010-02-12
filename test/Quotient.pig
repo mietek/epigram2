@@ -13,7 +13,7 @@ make cl := (\ X R p x -> [x])
 
 make ship := (\ X x y q P p ->
                coe (P x) (P y) (con ((refl (X -> Set) P)
-                                % x y [])) p)
+                                % x y _)) p)
            : (X : Set)(x : X)(y : X)(q : :- (x == y))(P : X -> Set) -> P x -> P y ;
 
 make thm : (X : Set)(R : X -> X -> Prop)(p : :- Equiv X R) ->

@@ -176,7 +176,7 @@ the commands which might have been issued.
 >     -- Recursively build the kids
 >     ncs' <- makeDev kids ncs
 >     -- Translate |tipTys| into a real |INTM|
->     tipTy :=>: tipTyv <- elaborate False (SET :>: tipTys)
+>     tipTy :=>: tipTyv <- elaborate' "makeEntry" (SET :>: tipTys)
 >     -- Turn the module into a Girl of |tipTy|
 >     moduleToGoal tipTy
 >     -- Were we provided a solution?
@@ -230,7 +230,7 @@ development.
 
 > makeEntry (DLBoy k x tys) ncs = do
 >     -- Translate the display |tys| into an |INTM|
->     ty :=>: tyv <- elaborate False (SET :>: tys)
+>     ty :=>: tyv <- elaborate' "makeEntry" (SET :>: tys)
 >     -- Make a fresh reference of that type
 >     freshRef (x :<: tyv) (\ref ->
 >         -- Register |ref| as a Lambda boy

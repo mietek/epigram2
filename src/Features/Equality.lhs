@@ -192,17 +192,11 @@ to InDTm, along with appropriate elaboration and distillation rules.
 >       (pretty t ArgSize <+> kword KwEqBlue <+> pretty u ArgSize)
 >       ArgSize
 
-> import -> DMangleRules where
->   m %$ (DEqBlue t u) = (| DEqBlue (dexMang m t (pure [])) (dexMang m u (pure [])) |)
-
-> import -> ElaborateRules where
->   elaborate top (PROP :>: DEqBlue t u) = do
->       ((ttm :=>: tv) :<: tty, _) <- elabInfer t
->       ((utm :=>: uv) :<: uty, _) <- elabInfer u
->       tty' <- bquoteHere tty
->       uty' <- bquoteHere uty
->       return ((EQBLUE (tty' :>: N ttm) (uty' :>: N utm))
->               :=>: (EQBLUE (tty :>: tv) (uty :>: uv)))
+> import -> MakeElabRules where
+>   makeElab loc (PROP :>: DEqBlue t u) = do
+>       t' <- makeElabInfer loc t
+>       u' <- makeElabInfer loc u
+>       return (EQBLUE (t' $$ Fst  :>: t' $$ Snd) (u' $$ Fst :>: u' $$ Snd))
 
 > import -> DistillRules where
 >   distill es (PROP :>: tm@(EQBLUE (tty :>: t) (uty :>: u))) = do

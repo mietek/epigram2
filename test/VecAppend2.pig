@@ -1,6 +1,6 @@
 make ship := (\ X x y q P p ->
-               coe (P x) (P y) (con (((: :- P == P) [])
-                                % x y [])) p)
+               coe (P x) (P y) (con (((: :- P == P) _)
+                                % x y _)) p)
            : (X : Set)(x : X)(y : X)(q : :- x == y)(P : X -> Set) -> P x -> P y ;
 make Nat := (Mu con ['arg (Enum ['zero 'suc]) [ (con ['done]) (con ['ind1 con ['done]]) ] ] ) : Set ;
 make zero := con ['zero] : Nat ;
@@ -14,8 +14,8 @@ make Vec : Nat -> Set ;
 make VecD := (\ n -> IArg (Enum ['nil 'cons]) [ (IDone (zero == n)) (IArg Nat (\ m -> IArg A (\ a -> IInd1 m (IDone (suc m == n))))) ]) : Nat -> IDesc Nat ;
 lambda n ;
 give IMu Nat VecD n ;
-make vnil := con [ 0 , [] ] : Vec zero ;
-make vcons := (\ n a as -> con [ 1 n a as , [] ]) : (n : Nat) -> A -> Vec n -> Vec (suc n) ;
+make vnil := con [ 0 , _ ] : Vec zero ;
+make vcons := (\ n a as -> con [ 1 n a as , _ ]) : (n : Nat) -> A -> Vec n -> Vec (suc n) ;
 make vappend : (m : Nat) -> Vec m -> (n : Nat) -> Vec n -> Vec (plus m n) ;
 lambda m ;
 lambda as ;

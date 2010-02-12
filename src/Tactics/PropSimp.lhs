@@ -19,6 +19,7 @@
 > import NameSupply.NameSupplier
 
 > import DisplayLang.PrettyPrint
+> import DisplayLang.Distiller
 
 > import Evidences.Tm
 > import Evidences.Rules

@@ -567,19 +567,16 @@ Equality rules:
 As some useful syntactic sugar, we let inductive types elaborate
 lists (so |[]| becomes |@[0]| and |[s , t]| becomes |@ [1 s t]|).
 
-> import -> ElaborateRules where
->     elaborate b (MU l d :>: DVOID) =
->         elaborate b (MU l d :>: DCON (DPAIR DZE DVOID))
->     elaborate b (MU l d :>: DPAIR s t) =
->         elaborate b (MU l d :>: DCON (DPAIR (DSU DZE) (DPAIR s (DPAIR t DVOID))))
->     elaborate True (SET :>: DMU Nothing d) = do
->         GirlMother (nom := HOLE _ :<: ty) _ _ _ <- getMother
->         let fr = nom := FAKE :<: ty
->         xs <- (| boySpine getAuncles |)
->         let lt = N (P fr $:$ xs)
->         let lv = evTm lt
->         (t :=>: v) <- elaborate False (desc :>: d)
->         return (MU (Just lt) t :=>: MU (Just lv) v)
+> import -> MakeElabRules where
+>     makeElab loc (MU l d :>: DVOID) =
+>         makeElab loc (MU l d :>: DCON (DPAIR DZE DVOID))
+>     makeElab loc (MU l d :>: DPAIR s t) =
+>         makeElab loc (MU l d :>: DCON (DPAIR (DSU DZE) (DPAIR s (DPAIR t DVOID))))
+>     makeElab loc (SET :>: DMU Nothing d) = do
+>         l <- EFake Bale
+>         v <- subElab loc (desc :>: d)
+>         return (MU (Just l) v)
+
 
 > import -> ElabCode where
 >     elabData :: String -> [ (String , InDTmRN) ] -> 

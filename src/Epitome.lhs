@@ -98,14 +98,12 @@
 %include Tactics/Induction.lhs
 %include Tactics/PropSimp.lhs
 %include Tactics/Gadgets.lhs
-%include Tactics/Solution.lhs
 
 \chapter{The Display Language}
 
 \input{DisplayLang/Introduction.tex}
 
 %include DisplayLang/DisplayTm.lhs
-%include DisplayLang/DisplayMangler.lhs
 %include DisplayLang/Naming.lhs
 %include DisplayLang/Lexer.lhs
 %include DisplayLang/TmParse.lhs
@@ -115,8 +113,8 @@
 \chapter{Elaboration}
 
 %include Elaboration/Elaborator.lhs
-%include Elaboration/ElabLanguage.lhs
 %include Elaboration/Wire.lhs
+%include Elaboration/Unification.lhs
 
 \chapter{Cochon}
 

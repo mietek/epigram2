@@ -1,11 +1,11 @@
-\section{Solution Tactics}
+\section{Unification}
 
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE TypeOperators #-}
 
-> module Tactics.Solution where
+> module Elaboration.Unification where
 
 > import Prelude hiding (any)
 
@@ -22,8 +22,6 @@
 
 > import DisplayLang.DisplayTm
 > import DisplayLang.Naming
-
-> import Elaboration.Elaborator
 
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
@@ -89,19 +87,3 @@
 
 > solveHole' ref _ _ = throwError' $ err "solveHole:" ++ errRef ref
 >                                           ++ err "is not a hole."
-
-> elabSolveHole :: RelName -> InDTmRN -> ProofState (EXTM :=>: VAL)
-> elabSolveHole rn tm = do
->     (ref, spine, _) <- elabResolve rn
->     _ :<: ty <- inferHere (P ref $:$ spine)
->     _ :=>: tv <- elaborate False (ty :>: tm)
->     tm' <- bquoteHere tv -- force definitional expansion
->     solveHole ref tm'
-
-
-> import -> CochonTactics where
->     : simpleCT
->         "solve"
->         (| (| (B0 :<) tokenName |) :< tokenInTm |)
->         (\ [ExArg (DP rn ::$ []), InArg tm] -> elabSolveHole rn tm >> return "Solved.")
->         "solve <name> <term> - solves the hole <name> with <term>."

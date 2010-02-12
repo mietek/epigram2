@@ -27,6 +27,7 @@
 > import DisplayLang.TmParse
 > import DisplayLang.DisplayTm
 > import DisplayLang.PrettyPrint
+> import DisplayLang.Distiller
 
 > import ProofState.ProofContext
 > import ProofState.ProofState
@@ -36,11 +37,10 @@
 > -- import Tactics.Induction -- waiting for tis to be fixed :)
 > import Tactics.PropSimp
 > import Tactics.Information
-> import Tactics.Solution
 > import Tactics.Gadgets
 
 > import Elaboration.Elaborator
-> import Elaboration.ElabLanguage
+> import Elaboration.Unification
 
 > import Cochon.CommandLexer
 > import Cochon.Error

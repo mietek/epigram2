@@ -1,6 +1,6 @@
 make ship := (\ X x y q P p ->
-coe (P x) (P y) (con (((: :- ((: X -> Set) P == (: X -> Set) P)) [])
-                                % x y [])) p)
+coe (P x) (P y) (con (((: :- ((: X -> Set) P == (: X -> Set) P)) _)
+                                % x y _)) p)
            : (X : Set)(x : X)(y : X)(q : :- (x == y))(P : X -> Set) -> P x -> P y ;
 
 make Equiv :=
@@ -46,5 +46,5 @@ make upair := (\ x y -> [[x , y]]) : A -> A -> UPair ;
 make upairSym := (\ x y -> ?) 
   : (x : A)(y : A) -> :- (upair x y) == (upair y x) ;
 next ;
-give eqQ (Sig (A ; A)) (EqUPair A) isEquiv [x , y] [y , x] (wit con ['inr []]) 
+give eqQ (Sig (A ; A)) (EqUPair A) isEquiv [x , y] [y , x] (wit con ['inr _]) 
  

@@ -43,7 +43,7 @@ end, so it will not leave any subgoals lying around in the proof state.
 
 > infoElaborate :: ExDTmRN -> ProofState String
 > infoElaborate tm = draftModule "__infoElaborate" (do
->     (tm' :=>: tmv :<: ty, _) <- elabInfer tm
+>     (tm' :=>: tmv :<: ty) <- elabInfer' "infoElaborate" tm
 >     tm'' <- bquoteHere tmv
 >     s <- prettyHere (ty :>: tm'')
 >     return (renderHouseStyle s)
@@ -55,7 +55,7 @@ representation of the resulting type.
 
 > infoInfer :: ExDTmRN -> ProofState String
 > infoInfer tm = draftModule "__infoInfer" (do
->     (_ :<: ty, _) <- elabInfer tm
+>     (_ :<: ty) <- elabInfer' "infoInfer" tm
 >     ty' <- bquoteHere ty
 >     s <- prettyHere (SET :>: ty')
 >     return (renderHouseStyle s)
@@ -129,7 +129,7 @@ The |infoWhatIs| command displays a term in various representations.
 
 > infoWhatIs :: ExDTmRN -> ProofState String
 > infoWhatIs tmd = draftModule "__infoWhatIs" (do
->     (tm :=>: tmv :<: tyv, _) <- elabInfer tmd
+>     (tm :=>: tmv :<: tyv) <- elabInfer' "infoWhatIs" tmd
 >     tmq <- bquoteHere tmv
 >     tms :=>: _ <- distillHere (tyv :>: tmq)
 >     ty <- bquoteHere tyv
@@ -146,42 +146,6 @@ The |infoWhatIs| command displays a term in various representations.
 >         ,   "Pretty-printed type:", renderHouseStyle (pretty tys maxBound)
 >         ])
 >   )
-
-
-The |distillHere| command distills a term in the current context.
-
-> distillHere :: (TY :>: INTM) -> ProofState (InDTmRN :=>: VAL)
-> distillHere tt = do
->     mliftError $ distill B0 tt
->         where mliftError :: ProofStateT INTM a -> ProofState a
->               mliftError = mapStateT liftError
-
-> distillSchemeHere :: Scheme INTM -> ProofState (Scheme InDTmRN)
-> distillSchemeHere sch = do
->     return . fst =<< (mapStateT liftError $ distillScheme B0 B0 sch)
-
-
-The |prettyHere| command distills a term in the current context,
-then passes it to the pretty-printer.
-
-> prettyHere :: (TY :>: INTM) -> ProofState Doc
-> prettyHere = prettyHereAt maxBound
-
-> prettyHereAt :: Size -> (TY :>: INTM) -> ProofState Doc
-> prettyHereAt size tt = do
->     dtm :=>: _ <- distillHere tt
->     return (pretty dtm size)
-
-> prettySchemeHere :: Scheme INTM -> ProofState Doc
-> prettySchemeHere sch = do
->     sch' <- distillSchemeHere sch
->     return (pretty sch' maxBound)
-
-The |resolveHere| command resolves a relative name to a reference,
-discarding any shared parameters it should be applied to.
-
-> resolveHere :: RelName -> ProofState REF
-> resolveHere x = elabResolve x >>= (\ (r, _, _) -> return r)
 
 
 The |prettyProofState| command generates a pretty-printed representation

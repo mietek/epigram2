@@ -28,3 +28,20 @@
 >                                               |id tokenAscription |)|)
 >     (\[n,e] -> elimCTactic (argOption (unDP . argToEx) n) (argToEx e))
 >     "<= [<comma>] <eliminator> - eliminates with a motive.")
+
+
+\subsection{The |solve| gadet}
+
+> import -> CochonTactics where
+>     : simpleCT
+>         "solve"
+>         (| (| (B0 :<) tokenName |) :< tokenInTm |)
+>         (\ [ExArg (DP rn ::$ []), InArg tm] -> do
+>             (ref, spine, _) <- elabResolve rn
+>             _ :<: ty <- inferHere (P ref $:$ spine)
+>             _ :=>: tv <- elaborate' "solve" (ty :>: tm)
+>             tm' <- bquoteHere tv -- force definitional expansion
+>             solveHole ref tm'
+>             return "Solved."
+>           )
+>         "solve <name> <term> - solves the hole <name> with <term>."

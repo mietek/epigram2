@@ -16,6 +16,8 @@
 > import ProofState.ProofState
 > import ProofState.ProofKit
 
+> import Elaboration.Elaborator
+
 > import Tactics.Information
 
 %endif

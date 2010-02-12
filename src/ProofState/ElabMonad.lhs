@@ -27,6 +27,7 @@ then write an interpreter to run the syntax in the |ProofState| monad.
 < lambda : String -> REF
 < goal : TY
 < hope : TY -> VAL
+< wait : String -> TY -> VAL
 < cry : StackError -> a
 < elab : TY -> (Loc, EProb) -> VAL
 < compute : TY -> CProb -> VAL
@@ -55,11 +56,13 @@ gives the syntax for commands.
 >     |  ELambda String (REF -> Elab x)
 >     |  EGoal (TY -> Elab x)
 >     |  EHope TY (VAL -> Elab x)
+>     |  EWait String TY (VAL -> Elab x)
 >     |  ECry (StackError InDTmRN)
 >     |  ECompute TY CProb (VAL -> Elab x)
 >     |  ESolve REF VAL (VAL -> Elab x)
 >     |  EElab TY  (Loc, EProb) (VAL -> Elab x)
 >     |  ECan VAL (Can VAL -> Elab x)
+>     |  EFake (VAL -> Elab x)
 
 %if False
 
@@ -68,12 +71,13 @@ gives the syntax for commands.
 >     show (ELambda s _)      = "ELambda " ++ s ++ " (...)"
 >     show (EGoal _)          = "EGoal (...)"
 >     show (EHope ty _)       = "EHope (" ++ show ty ++ ") (...)"
+>     show (EWait s ty _)     = "EHope " ++ show s ++ " (" ++ show ty ++ ") (...)"
 >     show (ECry _)           = "ECry (...)"
 >     show (ECompute ty p _)  = "ECompute (" ++ show ty ++ ") (" ++ show p ++ ") (...)"
 >     show (ESolve ref v _)   = "ESolve (" ++ show ref ++ ") (" ++ show v ++ ") (...)"
 >     show (EElab ty lp _)    = "EElab (" ++ show ty ++ ") " ++ show lp ++ " (...)"
 >     show (ECan v _)         = "ECan (" ++ show v ++ ") (...)"
-
+>     show (EFake _)          = "EFake (...)"
 
 > instance Monad Elab where
 >     fail s  = ECry [err $ "fail: " ++ s]
@@ -82,12 +86,14 @@ gives the syntax for commands.
 >     Bale x          >>= k = k x
 >     ELambda s f     >>= k = ELambda s      ((k =<<) . f)
 >     EGoal f         >>= k = EGoal          ((k =<<) . f)
->     EHope t  f      >>= k = EHope t        ((k =<<) . f)
+>     EHope t f       >>= k = EHope t        ((k =<<) . f)
+>     EWait s t f     >>= k = EWait s t      ((k =<<) . f)
 >     ECry errs       >>= k = ECry errs
 >     ECompute t p f  >>= k = ECompute t p   ((k =<<) . f)
 >     ESolve r v f    >>= k = ESolve r v     ((k =<<) . f)
 >     EElab t lp f    >>= k = EElab t lp     ((k =<<) . f)
 >     ECan v f        >>= k = ECan v         ((k =<<) . f)
+>     EFake f         >>= k = EFake          ((k =<<) . f)
 
 > instance Functor Elab where
 >     fmap = ap . return

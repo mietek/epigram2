@@ -219,8 +219,8 @@ Coercion rule:
 >   coerce Unit q s = Right s
 
 
-> import -> ElaborateRules where
->   elaborate b (UNIT :>: DU) = return (VOID :=>: VOID)
+> import -> MakeElabRules where
+>   makeElab loc (UNIT :>: DU) = return VOID
 
 > import -> DistillRules where
 >   distill es (UNIT :>: _) = return (DU :=>: VOID)
