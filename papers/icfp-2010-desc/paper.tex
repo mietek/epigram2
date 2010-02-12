@@ -61,6 +61,66 @@ This is the text of the abstract.
 %\keywords
 %keyword1, keyword2
 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Inference Rules (some ancient macros by Conor)                        %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newlength{\rulevgap}
+\setlength{\rulevgap}{0.05in}
+\newlength{\ruleheight}
+\newlength{\ruledepth}
+\newsavebox{\rulebox}
+\newlength{\GapLength}
+\newcommand{\gap}[1]{\settowidth{\GapLength}{#1} \hspace*{\GapLength}}
+\newcommand{\dotstep}[2]{\begin{tabular}[b]{@{}c@{}}
+                         #1\\$\vdots$\\#2
+                         \end{tabular}}
+\newlength{\fracwid}
+\newcommand{\dotfrac}[2]{\settowidth{\fracwid}{$\frac{#1}{#2}$}
+                         \addtolength{\fracwid}{0.1in}
+                         \begin{tabular}[b]{@{}c@{}}
+                         $#1$\\
+                         \parbox[c][0.02in][t]{\fracwid}{\dotfill} \\
+                         $#2$\\
+                         \end{tabular}}
+\newcommand{\Rule}[2]{\savebox{\rulebox}[\width][b]                         %
+                              {\( \frac{\raisebox{0in} {\( #1 \)}}       %
+                                       {\raisebox{-0.03in}{\( #2 \)}} \)}   %
+                      \settoheight{\ruleheight}{\usebox{\rulebox}}          %
+                      \addtolength{\ruleheight}{\rulevgap}                  %
+                      \settodepth{\ruledepth}{\usebox{\rulebox}}            %
+                      \addtolength{\ruledepth}{\rulevgap}                   %
+                      \raisebox{0in}[\ruleheight][\ruledepth]               %
+                               {\usebox{\rulebox}}}
+\newcommand{\Case}[2]{\savebox{\rulebox}[\width][b]                         %
+                              {\( \dotfrac{\raisebox{0in} {\( #1 \)}}       %
+                                       {\raisebox{-0.03in}{\( #2 \)}} \)}   %
+                      \settoheight{\ruleheight}{\usebox{\rulebox}}          %
+                      \addtolength{\ruleheight}{\rulevgap}                  %
+                      \settodepth{\ruledepth}{\usebox{\rulebox}}            %
+                      \addtolength{\ruledepth}{\rulevgap}                   %
+                      \raisebox{0in}[\ruleheight][\ruledepth]               %
+                               {\usebox{\rulebox}}}
+\newcommand{\Axiom}[1]{\savebox{\rulebox}[\width][b]                        %
+                               {$\frac{}{\raisebox{-0.03in}{$#1$}}$}        %
+                      \settoheight{\ruleheight}{\usebox{\rulebox}}          %
+                      \addtolength{\ruleheight}{\rulevgap}                  %
+                      \settodepth{\ruledepth}{\usebox{\rulebox}}            %
+                      \addtolength{\ruledepth}{\rulevgap}                   %
+                      \raisebox{0in}[\ruleheight][\ruledepth]               %
+                               {\usebox{\rulebox}}}
+\newcommand{\RuleSide}[3]{\gap{\mbox{$#2$}} \hspace*{0.1in}               %
+                            \Rule{#1}{#3}                          %
+                          \hspace*{0.1in}\mbox{$#2$}}
+\newcommand{\AxiomSide}[2]{\gap{\mbox{$#1$}} \hspace*{0.1in}              %
+                             \Axiom{#2}                            %
+                           \hspace*{0.1in}\mbox{$#1$}}
+\newcommand{\RULE}[1]{\textbf{#1}}
+\newcommand{\hg}{\hspace{0.2in}}
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Introduction
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -87,6 +147,76 @@ ACM bullet points, we offer:
     /> not Epigram specific 
         <- having OTT just buys you more stuffs
 \end{structure}
+
+\newcommand{\Valid}{\textsc{valid}}
+\newcommand{\Set}{\textsc{Set}}
+\newcommand{\Type}[1]{{#1}:\Set}
+\newcommand{\x}{x}
+\newcommand{\bnd}[2]{{#1}\!:\!{#2}}
+\newcommand{\xS}{\bnd{x}{S}}
+\newcommand{\stkl}[1]{\begin{array}[b]{@{}l@{}}#1\end{array}}
+\newcommand{\stkc}[1]{\begin{array}[b]{@{}c@{}}#1\end{array}}
+\newcommand{\pr}[2]{\left[{#1},{#2}\right]}
+
+\[
+\begin{array}{ll}
+\Gamma\vdash\Valid & \mbox{\(\Gamma\) is a valid context, giving types to
+                    variables} \\
+\Gamma\vdash t:T & \mbox{term \(t\) has type \(T\) in context \(\Gamma\)} \\
+\Gamma\vdash s\equiv t : T & \mbox{\(s\) and \(t\) are equal at type \(T\)
+   in context \(\Gamma\)} \\
+\end{array}
+\]
+
+The systems of inference rules will be formulated to ensure that that the
+following implications always hold by induction on derivations.
+\[\begin{array}{l@{\;\;\Rightarrow\;\;}l}
+\Gamma\vdash t:T & \Gamma\vdash\Valid \;\wedge\; \Gamma\vdash\Type{T} \\
+\Gamma\vdash s\equiv t:T & \Gamma\vdash s:T \;\wedge\; \Gamma\vdash t:T \\
+\Gamma;\xS;\Delta \vdash J &
+  \Gamma\vdash s:S \;\Rightarrow\; \Gamma;\Delta[s/x] \vdash J[s/x] \\
+\end{array}\]
+
+
+\[
+\Axiom{\vdash\Valid}\qquad
+\Rule{\Gamma\vdash\Type{S}}
+     {\Gamma;\xS\vdash\Valid}\;x\not\in\Gamma
+\]
+
+\[\stkc{\stkl{
+\Rule{\Gamma\Valid}
+     {\Gamma\vdash\Type{\Set}}\qquad
+\Rule{\Gamma\vdash\Type{S}\quad\Gamma,\xS\vdash\Type{T}}
+     {\Gamma\vdash\Type{(\xS)\to T, (\xS)\times T} }}
+}\]
+
+\[
+\Rule{\Gamma;\xS;\Delta\vdash\Valid}
+     {\Gamma;\xS;\Delta\vdash x:S}\qquad
+\Rule{\Gamma\vdash s:S \quad \Gamma\vdash\Type{S\equiv T}}
+     {\Gamma\vdash s:T}
+\]
+
+\[
+\Rule{\stkl{\Gamma\vdash\Type{S}\\\Gamma;\xS\vdash t:T}}
+     {\Gamma\vdash \lambda_S x.\,t:(\xS)\to T} \qquad
+\Rule{\stkl{\Gamma\vdash f:(\xS)\to T \\
+      \Gamma\vdash s:S}}
+     {\Gamma\vdash f\:s \vdash T[s/x]} \qquad
+\Rule{\stkl{\Gamma\vdash\Type{S}\quad\Gamma;\xS\vdash t:T\\
+      \Gamma\vdash s:S}}
+     {\Gamma\vdash (\lambda_S x.\,t)\:s \equiv t[s/x] \vdash T[s/x]}
+\]
+
+\[\Rule{\Gamma\vdash s:S \quad \Gamma;\xS\vdash\Type{T}\quad
+      \Gamma\vdash t:T[s/x]}
+     {\Gamma\vdash \pr{s}{t}_{x.T} : (\xS)\times T} \qquad
+\Rule{\Gamma\vdash p:(\xS)\times T}
+     {\Gamma\vdash \pi_0 p : S} \qquad
+\Rule{\Gamma\vdash p:(\xS)\times T}
+     {\Gamma\vdash \pi_1 p : T[\pi_0 p/x]}
+\]
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
