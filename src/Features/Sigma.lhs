@@ -23,7 +23,7 @@ Formation rules:
 
 \begin{prooftree}
 \AxiomC{|Set :>: S|}
-\AxiomC{|Set -> Set :>: T|}
+\AxiomC{|S -> Set :>: T|}
 \RightLabel{Sigma-formation}
 \BinaryInfC{|Set :>: Sigma S T|}
 \end{prooftree}
