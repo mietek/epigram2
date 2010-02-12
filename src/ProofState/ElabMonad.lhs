@@ -44,8 +44,7 @@ to which source code locations.
 >             |  ElabInferProb ExDTmRN
 >   deriving Show
 
-> data CProb  =  ElabRunProb (Elab VAL)
->             |  ResolveProb RelName
+> data CProb  =  ResolveProb RelName
 >             |  SubProb (Elab VAL)
 >   deriving Show
 

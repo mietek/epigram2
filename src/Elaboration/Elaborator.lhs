@@ -1,7 +1,7 @@
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE GADTs, TypeOperators #-}
+> {-# LANGUAGE GADTs, TypeOperators, TupleSections #-}
 
 > module Elaboration.Elaborator where
 
@@ -53,8 +53,7 @@ the proof state. That is, it defines the semantics of the |Elab| syntax.
 >     Nothing -> throwError' $ err "runElab: type" ++ errTyVal (ty :<: SET)
 >                                  ++ err "is not lambdable!"
 
-> runElab False (ty :>: ELambda s f) = runElab False
->     (ty :>: ECompute ty (ElabRunProb (ELambda s f)) Bale)
+> runElab False (ty :>: ELambda s f) = runElabTop (ty :>: ELambda s f)
 
 > runElab top (ty :>: EGoal f) = runElab top (ty :>: f ty)
 
@@ -89,8 +88,7 @@ the proof state. That is, it defines the semantics of the |Elab| syntax.
 >     t :=>: tv <- getMotherDefinition
 >     return (N t :=>: tv, False)
 
-> runElab False (ty :>: ECry e) = runElab False
->     (ty :>: ECompute ty (ElabRunProb (ECry e)) Bale)
+> runElab False (ty :>: ECry e) = runElabTop (ty :>: ECry e)
 
 > runElab True (ty :>: EFake f)           = do
 >     GirlMother (nom := HOLE _ :<: ty) _ _ _ <- getMother
@@ -98,8 +96,19 @@ the proof state. That is, it defines the semantics of the |Elab| syntax.
 >     xs <- (| boySpine getAuncles |)
 >     runElab True . (ty :>:) . f . evTm $ P fr $:$ xs
 
-> runElab False (ty :>: EFake f) = runElab False
->     (ty :>: ECompute ty (ElabRunProb (EFake f)) Bale)
+> runElab False (ty :>: EFake f) = runElabTop (ty :>: EFake f)
+
+
+> runElabTop :: (TY :>: Elab VAL) -> ProofState (INTM :=>: VAL, Bool)
+> runElabTop (ty :>: elab) = do
+>     ty' <- bquoteHere ty
+>     _ :=>: ptv <- make' Waiting ("subproblem" :<: ty' :=>: ty)
+>     goIn
+>     (tm :=>: _, okay) <- runElab True (ty :>: elab)
+>     if okay
+>         then return . (, True)   =<< neutralise =<< give tm
+>         else return . (, False)  =<< neutralise =<< getMotherDefinition
+
 
 The |EHope| command hopes for an element of a given type. If it is asking for a
 proof, we might be able to find one, but otherwise we just create a hole.
@@ -173,17 +182,10 @@ proof, we might be able to find one, but otherwise we just create a hole.
 The |ECompute| command computes the solution to a problem, given its type. 
 
 > runElabCompute :: TY -> CProb -> ProofState VAL
-> runElabCompute ty (ElabRunProb e) = do
->     ty' <- bquoteHere ty
->     _ :=>: ptv <- make' Waiting ("ElabRunProb" :<: ty' :=>: ty)
->     goIn
->     (tm :=>: _, _) <- runElab True (ty :>: e)
->     return . valueOf =<< give tm
 > runElabCompute ty (ResolveProb rn) = do
 >     (ref, as, ms) <- elabResolve rn
 >     (tm :<: ty) <- inferHere (P ref $:$ as)
 >     return (PAIR ty tm)
-
 > runElabCompute ty (SubProb elab) =
 >     return . valueOf . fst =<< runElab False (ty :>: elab)
 
@@ -389,7 +391,7 @@ the elaborator rather than the type-checker.
 > makeElabInferHead loc (DP rn) = ECompute sigSetVAL (ResolveProb rn) Bale
 
 > makeElabInferHead loc (DType ty) = do
->     tyv <- ECompute SET (ElabRunProb (makeElab loc (SET :>: ty))) Bale
+>     tyv <- subElab loc (SET :>: ty)
 >     return $ PAIR (ARR tyv tyv) (idVAL "typecast")
 
 > makeElabInferHead loc tm = throwError' $ err "makeElabInferHead: can't cope with"
