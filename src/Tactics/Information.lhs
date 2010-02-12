@@ -43,7 +43,7 @@ end, so it will not leave any subgoals lying around in the proof state.
 
 > infoElaborate :: ExDTmRN -> ProofState String
 > infoElaborate tm = draftModule "__infoElaborate" (do
->     (tm' :=>: tmv :<: ty) <- elabInfer' "infoElaborate" tm
+>     (tm' :=>: tmv :<: ty) <- elabInfer' tm
 >     tm'' <- bquoteHere tmv
 >     s <- prettyHere (ty :>: tm'')
 >     return (renderHouseStyle s)
@@ -55,7 +55,7 @@ representation of the resulting type.
 
 > infoInfer :: ExDTmRN -> ProofState String
 > infoInfer tm = draftModule "__infoInfer" (do
->     (_ :<: ty) <- elabInfer' "infoInfer" tm
+>     (_ :<: ty) <- elabInfer' tm
 >     ty' <- bquoteHere ty
 >     s <- prettyHere (SET :>: ty')
 >     return (renderHouseStyle s)
@@ -129,7 +129,7 @@ The |infoWhatIs| command displays a term in various representations.
 
 > infoWhatIs :: ExDTmRN -> ProofState String
 > infoWhatIs tmd = draftModule "__infoWhatIs" (do
->     (tm :=>: tmv :<: tyv) <- elabInfer' "infoWhatIs" tmd
+>     (tm :=>: tmv :<: tyv) <- elabInfer' tmd
 >     tmq <- bquoteHere tmv
 >     tms :=>: _ <- distillHere (tyv :>: tmq)
 >     ty <- bquoteHere tyv

@@ -6,7 +6,7 @@ elab elab ;
 make f := ? : ?a ;
 elm f Set ;
 elab elab ;
-jump f.f-type.a ;
+jump f.a ;
 give Set -> Set ;
 root ;
 elab elab ;

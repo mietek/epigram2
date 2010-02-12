@@ -4,8 +4,6 @@ make C := B Set : Set ;
 solve A C -> C ;
 show state ;
 solve A B Set ;
-cdown ;
-cdown ;
 module M ;
 make D := ? : Set ;
 make d := ? : D ;

@@ -16,16 +16,16 @@ make lawswap :=
   ) :
   (D : Desc)(A : Set)(B : Set)(x : desc D (Sig (A ; B ;))) -> Set ;
 
-make prf1 := (\ D A x -> []) : (D : Desc)(A : Set)(x : desc D A) -> law1 D A x ;
+make prf1 := (\ D A x -> _) : (D : Desc)(A : Set)(x : desc D A) -> law1 D A x ;
 
 make prfswap : (D : Desc)(A : Set)(B : Set)(x : desc D (Sig (A ; B ;))) -> lawswap D A B x ;
-give (\ D A B x -> []) ;
+give (\ D A B x -> _) ;
 
 make monad1 :=
   \ D X t -> :- substMonad D X X (\ x -> ` x) t == t :
   (D : Desc)(X : Set)(t : Monad D X) -> Set ;
 
-make prfmonad1 := (\ D X t -> []) :
+make prfmonad1 := (\ D X t -> _) :
       (D : Desc)(X : Set)(t : Monad D X) -> monad1 D X t ;
 
 make monad3 :=
@@ -37,7 +37,7 @@ make monad3 :=
   (f : Y -> Monad D Z)(g : X -> Monad D Y)(t : Monad D X) -> Set ;
 
 make monad3prf :=
-  (\ D X Y Z f g t -> []) :
+  (\ D X Y Z f g t -> _) :
   (D : Desc)(X : Set)(Y : Set)(Z : Set)
   (f : Y -> Monad D Z)(g : X -> Monad D Y)(t : Monad D X) -> monad3 D X Y Z f g t
 

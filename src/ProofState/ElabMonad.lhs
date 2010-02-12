@@ -46,6 +46,7 @@ to which source code locations.
 
 > data CProb  =  ElabRunProb (Elab VAL)
 >             |  ResolveProb RelName
+>             |  SubProb (Elab VAL)
 >   deriving Show
 
 The command signature given above defines the following free monad, which

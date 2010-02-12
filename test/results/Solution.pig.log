@@ -4,14 +4,11 @@ Made.
 Solved.
 [ B := ? : Set -> Set ;
   A := (B Set -> B Set) : Set ;
-  ---
   B := B^1 : Set -> Set ;
   C := B Set : Set ;
 ]
 I'm sorry, Dave. I'm afraid I can't do that.
 Error: solveHole: A_0 is not a hole.
-Moving cursor down...
-Moving cursor down...
 Made module.
 Made.
 Made.
@@ -36,9 +33,8 @@ Solved.
       d := ? : D ;
       \ X : Set ->
     ] ;
-  G6 := ? : :- M.D == ((: Set) Set) ;
-  G := coe M.D Set G6 M.d : Set ;
-  ---
-  G6 := G6^1 : :- M.D == ((: Set) Set) ;
+  hope := ? : :- M.D == ((: Set) Set) ;
+  G := coe M.D Set hope M.d : Set ;
+  hope := hope^1 : :- M.D == ((: Set) Set) ;
 ]
 Loaded.

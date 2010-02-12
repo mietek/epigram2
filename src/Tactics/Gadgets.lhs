@@ -39,7 +39,7 @@
 >         (\ [ExArg (DP rn ::$ []), InArg tm] -> do
 >             (ref, spine, _) <- elabResolve rn
 >             _ :<: ty <- inferHere (P ref $:$ spine)
->             _ :=>: tv <- elaborate' "solve" (ty :>: tm)
+>             _ :=>: tv <- elaborate' (ty :>: tm)
 >             tm' <- bquoteHere tv -- force definitional expansion
 >             solveHole ref tm'
 >             return "Solved."
