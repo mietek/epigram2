@@ -72,8 +72,15 @@ the proof state. That is, it defines the semantics of the |Elab| syntax.
 > runElab top (ty :>: ECompute tyComp p f) = runElabCompute tyComp p
 >     >>= runElab top . (ty :>:) . f
 
-> runElab top (ty :>: ESolve ref val f)  = bquoteHere val >>= forceHole ref
->     >>= runElab top . (ty :>:) . f . valueOf
+> runElab top (ty :>: ESolve ref@(_ := HOLE Hoping :<: _) v f) = do
+>     v' <- bquoteHere v
+>     _ :=>: t <- solveHole ref v'
+>     runElab top (ty :>: f t)
+
+> runElab top (ty :>: ESolve ref@(_ := DEFN tv :<: rty) v f) = do
+>     -- _ :=>: p <- runElabHope (PRF (EQBLUE (ty :>: tv) (ty :>: v)))
+>     -- we should check tv == v in some fashion
+>     runElab top (ty :>: f tv)
 
 > runElab top (ty :>: EElab tyElab (l, p) f)  = runElabElab tyElab l p
 >     >>= runElab top . (ty :>:) . (>>= f)
@@ -87,10 +94,12 @@ the proof state. That is, it defines the semantics of the |Elab| syntax.
 
 > runElab True (ty :>: ECry e)            = do
 >     e' <- distillErrors e
->     let msg = show (prettyStackError e')
->     putHoleKind (Crying msg)
->     t :=>: tv <- getMotherDefinition
->     return (N t :=>: tv, False)
+>     throwError e'
+
+<     let msg = show (prettyStackError e')
+<     putHoleKind (Crying msg)
+<     t :=>: tv <- getMotherDefinition
+<     return (N t :=>: tv, False)
 
 > runElab False (ty :>: ECry e) = runElabTop (ty :>: ECry e)
 
@@ -102,6 +111,12 @@ the proof state. That is, it defines the semantics of the |Elab| syntax.
 
 > runElab False (ty :>: EFake f) = runElabTop (ty :>: EFake f)
 
+
+> runElab top (ty :>: EResolve rn f) = do
+>     (ref, as, ms) <- elabResolve rn
+>     (tm :<: ty) <- inferHere (P ref $:$ as)
+>     runElab top (ty :>: f (PAIR ty tm, ms))
+>   
 
 > runElabTop :: (TY :>: Elab VAL) -> ProofState (INTM :=>: VAL, Bool)
 > runElabTop (ty :>: elab) = do
@@ -130,6 +145,11 @@ proof, we might be able to find one, but otherwise we just create a hole.
 > hopeProof :: VAL -> ProofState (INTM :=>: VAL)
 
 > hopeProof p@(EQBLUE (_S :>: s) (_T :>: (NP ref@(_ := HOLE Hoping :<: _)))) = do
+>     p' <- bquoteHere p
+>     neutralise =<< suspend ("hope" :<: PRF p' :=>: PRF p)
+>         (ESolve ref s $ const . Bale $ pval refl $$ A _S $$ A s)
+
+> hopeProof p@(EQBLUE (_T :>: (NP ref@(_ := HOLE Hoping :<: _))) (_S :>: s)) = do
 >     p' <- bquoteHere p
 >     neutralise =<< suspend ("hope" :<: PRF p' :=>: PRF p)
 >         (ESolve ref s $ const . Bale $ pval refl $$ A _S $$ A s)
@@ -185,10 +205,6 @@ proof, we might be able to find one, but otherwise we just create a hole.
 The |ECompute| command computes the solution to a problem, given its type. 
 
 > runElabCompute :: TY -> CProb -> ProofState VAL
-> runElabCompute ty (ResolveProb rn) = do
->     (ref, as, ms) <- elabResolve rn
->     (tm :<: ty) <- inferHere (P ref $:$ as)
->     return (PAIR ty tm)
 > runElabCompute ty (SubProb elab) =
 >     return . valueOf . fst =<< runElab False (ty :>: elab)
 
@@ -384,10 +400,21 @@ the elaborator rather than the type-checker.
 > makeElabInfer :: Loc -> ExDTmRN -> Elab VAL
 
 > makeElabInfer loc (t ::$ ss) = do
->     tytv <- makeElabInferHead loc t
->     (v :<: ty) <- handleArgs (tytv $$ Snd :<: tytv $$ Fst) ss
+>     (tytv, ms) <- makeElabInferHead loc t
+>     let ss' = case ms of
+>                   Just sch  -> schemer sch ss
+>                   Nothing   -> ss
+>     (v :<: ty) <- handleArgs (tytv $$ Snd :<: tytv $$ Fst) ss'
 >     return (PAIR ty v)
 >   where
+>     schemer :: Scheme INTM -> DSpine RelName -> DSpine RelName
+>     schemer (SchType _) as = as
+>     schemer (SchImplicitPi (x :<: s) schT) as =
+>         A DU : schemer schT as
+>     schemer (SchExplicitPi (x :<: schS) schT) (a:as) =
+>         a : schemer schT as
+>     schemer (SchExplicitPi (x :<: schS) schT) [] = []
+
 >     handleArgs :: (VAL :<: TY) -> DSpine RelName -> Elab (VAL :<: TY)
 >     handleArgs (v :<: ty) [] = return (v :<: ty)
 >     handleArgs (v :<: C cty) (a : as) = do
@@ -398,13 +425,13 @@ the elaborator rather than the type-checker.
 >         handleArgs (v :<: C cty) as
 
 
-> makeElabInferHead :: Loc -> DHead RelName -> Elab VAL
+> makeElabInferHead :: Loc -> DHead RelName -> Elab (VAL, Maybe (Scheme INTM))
 
-> makeElabInferHead loc (DP rn) = ECompute sigSetVAL (ResolveProb rn) Bale
+> makeElabInferHead loc (DP rn) = EResolve rn Bale
 
 > makeElabInferHead loc (DType ty) = do
 >     tyv <- subElab loc (SET :>: ty)
->     return $ PAIR (ARR tyv tyv) (idVAL "typecast")
+>     return (PAIR (ARR tyv tyv) (idVAL "typecast"), Nothing)
 
 > makeElabInferHead loc tm = throwError' $ err "makeElabInferHead: can't cope with"
 >     ++ errTm (DN (tm ::$ []))

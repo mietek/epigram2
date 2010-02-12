@@ -44,8 +44,7 @@ to which source code locations.
 >             |  ElabInferProb ExDTmRN
 >   deriving Show
 
-> data CProb  =  ResolveProb RelName
->             |  SubProb (Elab VAL)
+> data CProb  = SubProb (Elab VAL)
 >   deriving Show
 
 The command signature given above defines the following free monad, which
@@ -63,6 +62,7 @@ gives the syntax for commands.
 >     |  EElab TY  (Loc, EProb) (VAL -> Elab x)
 >     |  ECan VAL (Can VAL -> Elab x)
 >     |  EFake (VAL -> Elab x)
+>     |  EResolve RelName ((VAL, Maybe (Scheme INTM)) -> Elab x)
 
 %if False
 
@@ -78,6 +78,7 @@ gives the syntax for commands.
 >     show (EElab ty lp _)    = "EElab (" ++ show ty ++ ") " ++ show lp ++ " (...)"
 >     show (ECan v _)         = "ECan (" ++ show v ++ ") (...)"
 >     show (EFake _)          = "EFake (...)"
+>     show (EResolve rn _)    = "EResolve " ++ show rn ++ " (...)"
 
 > instance Monad Elab where
 >     fail s  = ECry [err $ "fail: " ++ s]
@@ -94,6 +95,7 @@ gives the syntax for commands.
 >     EElab t lp f    >>= k = EElab t lp     ((k =<<) . f)
 >     ECan v f        >>= k = ECan v         ((k =<<) . f)
 >     EFake f         >>= k = EFake          ((k =<<) . f)
+>     EResolve rn f   >>= k = EResolve rn    ((k =<<) . f)
 
 > instance Functor Elab where
 >     fmap = ap . return

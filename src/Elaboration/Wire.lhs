@@ -239,4 +239,9 @@ that her children have already received, and returns the updated news.
 >     case tellNews news v' of
 >         (v'', GoodNews)  -> return $ Just (ECan (evTm v'') f)
 >         (_, NoNews)      -> return Nothing
+> tellElab news (ESolve ref v f) = do
+>     v' <- bquoteHere v
+>     let  v''   = fst (tellNews news v')
+>          ref'  = getLatest news ref
+>     return $ Just (ESolve ref' (evTm v'') f)
 > tellElab news elab = return $ Just elab

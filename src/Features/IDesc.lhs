@@ -328,8 +328,8 @@
 >             args = [iI, d, a, c, comp f g, N x]
 >         mapOpSimp _ _ = empty
 
-> import -> MakeElabRules where
->   {-makeElab loc (SET :>: DIMU Nothing iI d i) = do
+> import -> BrokenMakeElabRules where
+>   makeElab loc (SET :>: DIMU Nothing iI d i) = do
 >       GirlMother (nom := HOLE _ :<: ty) _ _ _ <- getMother
 >       let fr = nom := FAKE :<: ty
 >       xs <- getBoys
@@ -342,7 +342,7 @@
 >       lastIsIndex <- withNSupply (equal (SET :>: (iv,N (P (last xs)))))
 >       guard lastIsIndex
 >       -- should check i doesn't appear in d (fairly safe it's not in iI :))
->       return (IMU (Just lt) iI d i :=>: IMU (Just lv) iIv dv iv) -}
+>       return (IMU (Just lt) iI d i :=>: IMU (Just lv) iIv dv iv)
 
 If a label is not in scope, we remove it, so the definition appears at the
 appropriate place when the proof state is printed.

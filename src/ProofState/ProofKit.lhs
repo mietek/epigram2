@@ -431,8 +431,11 @@ several alternatives for where to go next and continuing until a goal is reached
 >     goIn
 >     t <- draftyStuff
 >     goOutProperly
->     Just (M _ _) <- removeDevEntry
->     return t
+>     mm <- removeDevEntry
+>     case mm of
+>         Just (M _ _) -> return t
+>         _ -> throwError' . err $ "draftModule: drafty " ++ name
+>                                  ++ " did not end up in the right place!"
 
 
 The |lookupName| function looks up a name in the context (including axioms and

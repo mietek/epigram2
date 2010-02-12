@@ -393,8 +393,8 @@
 
 \subsection{Extending the Display Language}
 
-> import -> MakeElabRules where
->   {-makeElab loc (SET :>: DIMMU Nothing iI d i) = do
+> import -> BrokenMakeElabRules where
+>   makeElab loc (SET :>: DIMMU Nothing iI d i) = do
 >       GirlMother (nom := HOLE _ :<: ty) _ _ _ <- getMother
 >       let fr = nom := FAKE :<: ty
 >       xs <- getBoys
@@ -407,7 +407,7 @@
 >       lastIsIndex <- withNSupply (equal (SET :>: (iv,N (P (last xs)))))
 >       guard lastIsIndex
 >       -- should check i doesn't appear in d (fairly safe it's not in iI :))
->       return (IMMU (Just lt) iI d i :=>: IMMU (Just lv) iIv dv iv) -}
+>       return (IMMU (Just lt) iI d i :=>: IMMU (Just lv) iIv dv iv) 
  
 > import -> DistillRules where
 >     distill es (SET :>: tm@(C (IMMu l i)))
