@@ -7,8 +7,12 @@
 
 > import Control.Applicative
 > import Control.Monad
+> import Control.Monad.Error
 > import Control.Monad.State
 > import Data.Traversable
+
+> import NameSupply.NameSupply
+> import NameSupply.NameSupplier
 
 > import Evidences.Tm
 > import Evidences.Rules
@@ -114,8 +118,8 @@ The |EHope| command hopes for an element of a given type. If it is asking for a
 proof, we might be able to find one, but otherwise we just create a hole.
 
 > runElabHope :: TY -> ProofState (INTM :=>: VAL)
-> runElabHope (PRF p) = hopeProof p <|> lastHope (PRF p)
-> runElabHope ty = lastHope ty
+> runElabHope (PRF p)  = hopeProof p <|> lastHope (PRF p)
+> runElabHope ty       = lastHope ty
 
 > lastHope :: TY -> ProofState (INTM :=>: VAL)
 > lastHope ty = do
@@ -163,7 +167,6 @@ proof, we might be able to find one, but otherwise we just create a hole.
 >   es <- getAuncles
 >   aunclesProof es p -}
 
-<      <|> elaborate' (PRF p :>: DQ "") 
 
 > aunclesProof :: Entries -> VAL -> ProofState (INTM :=>: VAL)
 > aunclesProof B0 p = empty
@@ -298,8 +301,7 @@ These rules should be moved to features.
 >     return $ (m $$ A (NP x $$ Fst)) $$ A (NP x $$ Snd)
 
 > makeElab loc (PI (ENUMT e) t :>: m) | isTuply m = do
->     let ty = branchesOp @@ [e, t]
->     m <- subElab loc (ty :>: m)
+>     m <- subElab loc (branchesOp @@ [e, t] :>: m)
 >     x <- ELambda (fortran t) Bale
 >     return $ switchOp @@ [e, NP x, t, m]
 >   where
@@ -312,9 +314,10 @@ These rules should be moved to features.
 > makeElab loc (QUOTIENT a r p :>: DPAIR x DVOID) =
 >   makeElab loc (QUOTIENT a r p :>: DCLASS x)
 
-> {- makeElab loc (NU d :>: DCOIT DVOID sty f s) = do
->   d' <- bquoteHere d
->   elaborate b (NU d :>: DCOIT (DT (InTmWrap d')) sty f s) -}
+> makeElab loc (NU d :>: DCOIT DU sty f s) = do
+>   let  nsupply = (B0 :< ("__makeElab", 0), 0) :: NameSupply
+>        d' = bquote B0 d nsupply
+>   makeElab loc (NU d :>: DCOIT (DTIN d') sty f s)
 
 
 
@@ -355,6 +358,15 @@ hoping that the result type is equal to the type we pushed in.
 >     yn <- makeElabInfer loc n
 >     q <- EHope (PRF (EQBLUE (SET :>: yn $$ Fst) (SET :>: w))) Bale
 >     return (coe @@ [yn $$ Fst, w, q, yn $$ Snd])
+
+
+If we already have an evidence term, we just have to type-check it.
+
+> makeElab loc (ty :>: DTIN tm) = do
+>     let nsupply = (B0 :< ("__makeElabDTIN", 0), 0) :: NameSupply
+>     case liftError (typeCheck (check (ty :>: tm)) nsupply) of
+>         Left e -> throwError e
+>         Right (_ :=>: v) -> return v
 
 
 If nothing else matches, give up and report an error.
