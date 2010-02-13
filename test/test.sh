@@ -120,6 +120,7 @@ done
 if [ $advanced -eq 1 ] 
 then
   ./hpc.sh $time
+  ./stats.sh $time
 fi
 
 if [ $advanced -eq 1 ]
