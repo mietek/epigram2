@@ -116,6 +116,8 @@ do
     fi
 done
 
+echo ""
+
 ## Delegate post-processing of measurements
 if [ $advanced -eq 1 ] 
 then
@@ -128,13 +130,17 @@ then
 
     if [ -f "./.measures/hpc/${time}/all.coverage" ]
     then
-
+	
+	echo ""
 	echo "Code coverage:"
 	echo "=============="
 
 	cat "./.measures/hpc/${time}/all.coverage"
 
     fi
+
+    echo ""
+    ./report_stats.sh
 
 fi
 
