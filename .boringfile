@@ -1,3 +1,6 @@
+# Boring BUILD flags
+BUILD_*
+
 # Boring compilation results:
 ^src/Pig$
 
