@@ -14,13 +14,16 @@ cd "./.measures/hpc/${time}/"
 tixes=`ls *.tix`
 
 
-# Per-test case report (could be useful?):
+## Per-test case report (could be useful?):
 #for file in $tixes
 #do
 #    hpc report --srcdir "../src/" $file > $(basename $file).coverage
 #done
 
-# Global coverage
+
+
+## Global coverage
+
 echo -n "Computing global code coverage... "
 
 hpc sum *.pig.tix --output=all.tix
