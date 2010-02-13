@@ -25,7 +25,7 @@ do
     for field in "bytes allocated" "init_cpu_seconds" "mutator_cpu_seconds" "GC_cpu_seconds"
     do
 	data=`sed -ne 's/.*"'"$field"'", "\(.*\)".*/\1/p' $file`
-	echo $data > $(basename $file).$(echo ${field} | sed -e 's/ /_/g')
+	echo $data > $file.$(echo ${field} | sed -e 's/ /_/g')
     done
 done
 
