@@ -116,4 +116,25 @@ do
     fi
 done
 
+## Delegate post-processing of measurements
+if [ $advanced -eq 1 ] 
+then
+  ./hpc.sh $time
+fi
+
+if [ $advanced -eq 1 ]
+then
+
+    if [ -f "./.measures/hpc/${time}/all.coverage" ]
+    then
+
+	echo "Code coverage:"
+	echo "=============="
+
+	cat "./.measures/hpc/${time}/all.coverage"
+
+    fi
+
+fi
+
 exit $status
