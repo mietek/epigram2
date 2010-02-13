@@ -7,6 +7,9 @@ BUILD_*
 # Boring test cache:
 ^test/.tests$
 
+# Boring performance measures
+^test/.measures$
+
 # (lhs2TeX) Boring file regexps:
 \.aux
 \.bbl
