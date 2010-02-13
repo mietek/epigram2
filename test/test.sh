@@ -58,6 +58,27 @@ else
     scripts=$@
 fi
 
+## Time
+time=`date +%Y%m%d_%k%M`
+
+## Check if we have RTS support for:
+#   * coverage with HPC
+#   * collect statistics on GC and time
+advanced=0
+if [ -f "../src/BUILD_TEST" ]
+then
+    advanced=1
+
+    ## Ensure that measures can be stored
+    mkdir -p "./.measures/hpc/${time}" \
+	     "./.measures/stats/${time}" 
+
+fi
+
+## RTS option(s)
+PIG_OPTS=""
+
+
 ## Run the test cases
 for script in $scripts
 do
@@ -67,7 +88,15 @@ do
 	continue
     fi
     # echo -n "Running test $script..."
-    ../src/Pig --check "$script" > ".tests/$script.log"
+    if [ $advanced -eq 1 ]
+    then
+	PIG_OPTS="+RTS -t./.measures/stats/${time}/${script}.stat --machine-readable -RTS"
+    fi
+    ../src/Pig $PIG_OPTS --check "$script" > ".tests/$script.log"    
+    if [ $advanced -eq 1 ]
+    then
+	mv "./Pig.tix" "./.measures/hpc/${time}/${script}.tix"
+    fi
     # echo " Done."
     if [ ! -f "results/$script.log" ]
     then
