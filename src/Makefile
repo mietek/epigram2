@@ -10,6 +10,7 @@ HC_PACKAGE      = -package mtl -package pretty
 HC_OPTS_DEV     = $(HC_PACKAGE)
 HC_OPTS_TEST    = $(HC_PACKAGE) -fhpc
 HC_OPTS_RELEASE = $(HC_PACKAGE) -O2
+HC_OPTS_WARNING = $(HC_PACKAGE) -fwarn-unused-imports
 HC_OPTS         = $(HC_OPTS_DEV)
 BUILD_MODE	= BUILD_DEV
 
@@ -94,6 +95,11 @@ btest: .depend
 	$(MAKE) HC_OPTS="$(HC_OPTS_TEST)"\
 	        BUILD_MODE="BUILD_TEST" Pig
 
+# Warning: cautious build mode
+warning: .depend
+	$(MAKE) HC_OPTS="$(HC_OPTS_WARNING)"\
+	        BUILD_MODE="BUILD_WARNING" Pig
+
 
 ## Literate code:
 # Try to stop as soon as possible, but it's still 2-3
@@ -148,6 +154,7 @@ clean:
 	      BUILD_DEV                \
 	      BUILD_RELEASE            \
 	      BUILD_TEST               \
+	      BUILD_WARNING            \
 	      *.aux *.bbl              \
 	      *.blg *.log *.ptb        \
 	      Epitome.tex              \
