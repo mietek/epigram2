@@ -72,62 +72,12 @@ stuck. The stuckness therefore propagates to the whole elimination.
 This translates into the following code:
 
 > ($$) :: VAL -> Elim VAL -> VAL
-
-\pierre{These special cases need to be explained:}
-
-> N (P r  :$ A (PI s t) 
->         :$ A fun 
->         :$ Out  
->         :$ A a1 
->         :$ A a2) $$ A q | r == refl && isReflProof q =
->     N (P r :$ A (t $$ A a1) :$ A (fun $$ A a1) :$ Out)
-> N (P r  :$ A (PRF (AND p q)) 
->         :$ A pf
->         :$ Out  
->         :$ A a1 
->         :$ A a2) $$ Fst =
->     N (P r :$ A (PRF p) :$ A (pf $$ Fst) :$ Out)
-> N (P r  :$ A (PRF (AND p q)) 
->         :$ A pf
->         :$ Out  
->         :$ A a1 
->         :$ A a2) $$ Snd = 
->     N (P r :$ A (PRF q) :$ A (pf $$ Snd) :$ Out)
-> N (P r  :$ A (SIGMA a b) 
->         :$ A sig
->         :$ Out  
->         :$ A a1 
->         :$ A a2) $$ Fst = 
->     N (P r :$ A a :$ A (sig $$ Fst) :$ Out)
-> N (P r  :$ A (SIGMA a b) 
->         :$ A sig
->         :$ Out  
->         :$ A a1 
->         :$ A a2) $$ Snd = 
->     N (P r :$ A (b $$ A (sig $$ Fst)) :$ A (sig $$ Snd) :$ Out)
-
-\pierre{Back to normal, thanks for your comprehension.}
-
 > L (K v)      $$ A _  = v                -- By \ref{eqn:elim_cstt}
 > L (HF _ f)   $$ A v  = f v              -- By \ref{eqn:elim_bind}
 > C (Con t)    $$ Out  = t                -- By \ref{eqn:elim_con}
 > import <- ElimComputation               -- Extensions
 > N n          $$ e    = N (n :$ e)       -- By \ref{eqn:elim_stuck}
 > f            $$ e    = error ("Can't eliminate\n" ++ show f ++ "\nwith eliminator\n" ++ show e)
-
-\pierre{Again, need explanation.}
-
-> isReflProof :: VAL -> Bool
-> isReflProof (N (P r :$ A _ :$ A _)) | r == refl  = True
-> isReflProof VOID                                 = True
-> isReflProof (PAIR a b)                           = isReflProof a && isReflProof b
-> isReflProof (BOX (Irr q))                        = isReflProof q
-> isReflProof (CON t)                              = isReflProof t
-> isReflProof (N (t :$ Fst))                       = isReflProof $ N t
-> isReflProof (N (t :$ Snd))                       = isReflProof $ N t
-> isReflProof (N (t :$ Out))                       = isReflProof $ N t
-> isReflProof _                                    = False
-
 
 
 The left fold of |$$| applies a value to a bunch of eliminators:

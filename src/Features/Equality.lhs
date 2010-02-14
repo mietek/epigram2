@@ -149,10 +149,7 @@ by |DEqBlue| defined below.
 >                _ -> (|)
 >            } where
 >            oprun :: [VAL] -> Either NEU VAL
->            oprun [_, _, t, v] | isReflProof t = Right v
-
-<            oprun [_, _, N (P r :$ A _ :$ A _) , v] | r == refl = Right v -- (Perform better)
-
+>            oprun [_, _, N (P r :$ A _ :$ A _) , v] | r == refl = Right v
 >            oprun [C x,C y,q,s] = case halfZip x y of
 >              Nothing  -> Right $ nEOp @@ [q $$ Out, C y]
 >              Just fxy -> coerce fxy (q $$ Out) s
