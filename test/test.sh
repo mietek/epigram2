@@ -59,7 +59,7 @@ else
 fi
 
 ## Time
-time=`date +%Y%m%d_%k%M`
+time=`date +%Y%m%d_%H%M`
 
 ## Check if we have RTS support for:
 #   * coverage with HPC
