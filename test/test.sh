@@ -140,6 +140,8 @@ then
     fi
 
     echo ""
+    echo "Performance variation:"
+    echo "======================"
     ./report_stats.sh
 
 fi
