@@ -61,8 +61,8 @@ echo ""
 ## Sum up the result, if possible
 if [ $counter -ne 0 ] 
 then
-    time_var=`echo "scale=2; $time_total / $counter" | bc -l`
-    space_var=`echo "scale=0; $space_total / $counter" | bc -l`
+    time_var=`echo "scale=1; $time_total / $counter" | bc -l`
+    space_var=`echo "scale=0; ($space_total / $counter) / 1024" | bc -l`
 
     echo -n "Time variation: "
     if [[ $time_var != -* ]] 
@@ -78,5 +78,5 @@ then
 	echo -n "+"
     fi
     echo -n $space_var
-    echo " bytes."
+    echo " kbytes."
 fi
