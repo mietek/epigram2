@@ -243,7 +243,7 @@ development.
 \subsection{Loading the files}
 
 Once we have parsed a list of |DevLine|s, we need to construct a |Dev| from them.
-The idea is to use commands defined in Section~\ref{sec:proofStateMonad} to build
+The idea is to use commands defined in Section~\ref{sec:proof_state_monad} to build
 up the proof state. 
 
 > devLoad :: String -> IO (Bwd ProofContext)

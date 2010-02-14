@@ -62,6 +62,7 @@ Finally, a development can be finalised, in which case it is
 >   deriving Show
 
 \subsubsection{|Entry|}
+\label{sec:developments_entry}
 
 As mentionned above, a |Dev| is a kind of tree. The branches are
 introduced by the container |f (Entry f)| where |f| is Traversable,
