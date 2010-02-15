@@ -104,6 +104,13 @@ ACM bullet points, we offer:
 \newcommand{\stkc}[1]{\begin{array}[b]{@{}c@{}}#1\end{array}}
 \newcommand{\pr}[2]{\left[{#1},{#2}\right]}
 
+\newcommand{\Prop}{\textsc{Prop}}
+\newcommand{\prf}[1]{{:\!\!-}~#1}
+\newcommand{\True}{\mathsf{TT}}
+
+
+\subsection{Base theory}
+
 \[
 \begin{array}{ll}
 \Gamma\vdash\Valid & \mbox{\(\Gamma\) is a valid context, giving types to
@@ -157,6 +164,7 @@ following implications always hold by induction on derivations.
       \Gamma\vdash s:S}}
      {\Gamma\vdash (\lambda_S x.\,t)\:s \equiv t[s/x] \vdash T[s/x]} 
 \]
+
 \[
 \Rule{\Gamma\vdash s:S \quad \Gamma;\xS\vdash\Type{T}\quad
       \Gamma\vdash t:T[s/x]}
@@ -168,6 +176,13 @@ following implications always hold by induction on derivations.
      {\Gamma\vdash \pi_0 p : S} \qquad
 \Rule{\Gamma\vdash p:(\xS)\times T}
      {\Gamma\vdash \pi_1 p : T[\pi_0 p/x]}
+\]
+
+\[
+\Rule{\Gamma\vdash q : \Prop}
+     {\Gamma\vdash \prf{q} : \Set}\qquad
+\Rule{\Gamma \vdash \Valid}
+     {\Gamma \vdash \True : \Prop}
 \]
 
 
