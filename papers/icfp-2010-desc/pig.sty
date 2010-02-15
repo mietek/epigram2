@@ -78,12 +78,18 @@
 \newcommand{\LAMBINDER}{\red{\uplambda}}
 \newcommand{\Bhab}[2]{#1\!:\!#2}
 \newcommand{\To}{\mathop{\blue{\rightarrow}}}
+\newcommand{\Prod}{\mathop{\blue{\times}}}
 \newcommand{\mto}{\mathop{\red{\mapsto}}}
 
 \newcommand{\PI}[2]{\blue{(}\Bhab{#1}{#2}\blue{)}\To}
 \newcommand{\PIS}[1]{\blue{(}#1\blue{)}\To}
+
+\newcommand{\SIGMA}[2]{\blue{(}\Bhab{#1}{#2}\blue{)}\Prod}
+\newcommand{\SIGMAS}[1]{\blue{(}#1\blue{)}\Prod}
+
 \newcommand{\LLAM}[2]{\LAMBINDER\Bhab{#1}{#2}\mto}
 \newcommand{\LAM}[1]{\LAMBINDER #1 \mto}
+\newcommand{\PLAM}[2]{\LAMBINDER_{#2} #1 .\,}
 
 \newcommand{\TYPE}{\blue{\star}}
 \newcommand{\EQ}{\mathrel{\D{=}}}
