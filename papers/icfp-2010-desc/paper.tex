@@ -203,15 +203,21 @@ following implications always hold by induction on derivations.
      {\Gamma\vdash \lambda_S x.\,t:(\xS)\to T} \qquad
 \Rule{\stkl{\Gamma\vdash f:(\xS)\to T \\
       \Gamma\vdash s:S}}
-     {\Gamma\vdash f\:s \vdash T[s/x]} \qquad
-\Rule{\stkl{\Gamma\vdash\Type{S}\quad\Gamma;\xS\vdash t:T\\
-      \Gamma\vdash s:S}}
-     {\Gamma\vdash (\lambda_S x.\,t)\:s \equiv t[s/x] \vdash T[s/x]}
+     {\Gamma\vdash f\:s \vdash T[s/x]} 
 \]
 
-\[\Rule{\Gamma\vdash s:S \quad \Gamma;\xS\vdash\Type{T}\quad
+\[
+\Rule{\stkl{\Gamma\vdash\Type{S}\quad\Gamma;\xS\vdash t:T\\
+      \Gamma\vdash s:S}}
+     {\Gamma\vdash (\lambda_S x.\,t)\:s \equiv t[s/x] \vdash T[s/x]} 
+\]
+\[
+\Rule{\Gamma\vdash s:S \quad \Gamma;\xS\vdash\Type{T}\quad
       \Gamma\vdash t:T[s/x]}
-     {\Gamma\vdash \pr{s}{t}_{x.T} : (\xS)\times T} \qquad
+     {\Gamma\vdash \pr{s}{t}_{x.T} : (\xS)\times T}
+\]
+
+\[
 \Rule{\Gamma\vdash p:(\xS)\times T}
      {\Gamma\vdash \pi_0 p : S} \qquad
 \Rule{\Gamma\vdash p:(\xS)\times T}
