@@ -340,7 +340,16 @@ following implications always hold by induction on derivations.
     <- Elaboration for data
 \end{structure}
 
+\subsection{Induction for $\Mu{D}$}
 
+\[
+\begin{array}{lcl}
+\F{induction} & : & \PITEL{D}{\Desc}                \\
+              &   & \PITEL{P}{\Mu{D} \To \Set}      \\
+              &   & \PITEL{p}{\PI{xs}{\descop{D}{(\Mu{D})}} \All{(\Mu{D})}{P}{xs} \To P (\Con{xs})} \\
+              &   & \PI{x}{\Mu{D}} P x
+\end{array}
+\]
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Desc

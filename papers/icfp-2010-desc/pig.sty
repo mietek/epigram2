@@ -81,7 +81,8 @@
 \newcommand{\Prod}{\mathop{\blue{\times}}}
 \newcommand{\mto}{\mathop{\red{\mapsto}}}
 
-\newcommand{\PI}[2]{\blue{(}\Bhab{#1}{#2}\blue{)}\To}
+\newcommand{\PITEL}[2]{\blue{(}\Bhab{#1}{#2}\blue{)}}
+\newcommand{\PI}[2]{\PITEL{#1}{#2}\To}
 \newcommand{\PIS}[1]{\blue{(}#1\blue{)}\To}
 
 \newcommand{\LLAM}[2]{\LAMBINDER\Bhab{#1}{#2}.\,}
@@ -191,6 +192,7 @@
 %% Mu
 \newcommand{\Mu}[1]{\D{Mu}~#1}
 \newcommand{\Con}[1]{\C{Con}~#1}
+\newcommand{\All}[3]{\C{All}~#1~#2~#3}
 
 %% Agda-style data-type declaration
 \newcommand{\data}{\mathkw{data}\;}
