@@ -145,6 +145,36 @@
 \newcommand{\rZ}{\red{\mathsf{0}}}
 \newcommand{\rS}{\red{\mathsf{S}}}
 
+%% Context
+\newcommand{\Valid}{\textsc{valid}}
+
+%% Set
+\newcommand{\Set}{\blue{\textsc{Set}}}
+\newcommand{\Type}[1]{{#1}:\Set}
+\newcommand{\stkl}[1]{\begin{array}[b]{@{}l@{}}#1\end{array}}
+\newcommand{\stkc}[1]{\begin{array}[b]{@{}c@{}}#1\end{array}}
+\newcommand{\pair}[3]{\left[{#1},{#2}\right]_{#3}}
+
+%% Prop
+\newcommand{\Prop}{\blue{\textsc{Prop}}}
+\newcommand{\prf}[1]{{:\!\!-}~#1}
+\newcommand{\True}{\CN{TT}}
+
+%% UId
+\newcommand{\UId}{\D{UId}}
+\newcommand{\Tag}[1]{\red{\CN{Tag}}~#1}
+
+%% Enum
+\newcommand{\EnumU}{\D{EnumU}}
+\newcommand{\NilE}{\etag{NilE}}
+\newcommand{\ConsE}[2]{\etag{ConsE}~#1~#2}
+
+\newcommand{\EnumT}[1]{\D{EnumT}~#1}
+\newcommand{\Ze}{\etag{0}}
+\newcommand{\Su}[1]{\etag{1\!+}~#1}
+
+\newcommand{\spi}[2]{\red{\pi}~#1~#2}
+\newcommand{\switch}[4]{\green{\CN{switch}}\green{(} #1 , #2 , #3 , #4 \green{)}}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Grammars                                                              %%%
