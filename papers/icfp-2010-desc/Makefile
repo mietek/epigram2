@@ -2,7 +2,7 @@
 #### PDFLaTeX
 
 LATEXC = pdflatex
-LATEXOPTS = -interaction=nonstopmode
+LATEXOPTS = #-interaction=nonstopmode
 
 
 paper : paper.tex paper.bib
