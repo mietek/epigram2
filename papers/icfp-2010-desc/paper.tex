@@ -554,7 +554,41 @@ Pierre: Really? Can't we just say "look at the transformation below, that's obvi
         /> What is Fin??
 \end{structure}
 
+\subsection{Constrained constructors, bis}
 
+\begin{structure}
+<- Presbyterianism, Episcopalism, Catholicism
+<- Brady-optimization: source-to-source
+    -> Anglo-catholicism
+\end{structure}
+
+
+\[
+\stk{
+\data \IDesc{} : \PI{\V{I}}{\Set} \Set \where \\
+\;\;\begin{array}{@{}l@{\::\:}l@{\quad}l}
+    \DConst{}       & \Set \To \IDesc{I}                                \\
+    \DVar{}         & I \To \IDesc{I}                                   \\
+    \DPrf{}         & \Prop \To \IDesc{I}                               \\
+    \DProd{}{}      & \PI{\V{D}, \V{D'}}{\IDesc{I}} \IDesc{I}           \\
+    \DSigma         & \PI{\V{S}}{\Set} \PIS{S \To \IDesc{I}} \IDesc{I}  \\
+    \DPi            & \PI{\V{S}}{\Set} \PIS{S \To \IDesc{I}} \IDesc{I} 
+\end{array}
+}
+\]
+
+
+\[\stk{
+\:\:\idescop{\_\:}{}{} : \PI{\V{I}}{\Set} \IDesc{I} \To \Set \To \Set                \\
+\begin{array}{l@{\:=\:\:}ll}
+\idescop{\DConst{X}}{I}{P}    &  X                                                   \\
+\idescop{\DVar{i}}{I}{P}      &  P~i                                                 \\
+\idescop{\DPrf{q}}{I}{P}      &  \prf{q}                                             \\
+\idescop{\DProd{D}{D'}}{I}{P} &  \TIMES{\idescop{D}{I}{P}}{\idescop{D'}{I}{P}}       \\
+\idescop{\DSigma{S}{D}}{I}{P} &  \SIGMA{\V{s}}{S} \idescop{D s}{I}{P}                \\
+\idescop{\DPi{S}{D}}{I}{P}    &  \PI{\V{s}}{S} \idescop{D s}{I}{P}            
+\end{array}
+}\]
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Desc
