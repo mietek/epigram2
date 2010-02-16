@@ -437,8 +437,8 @@ following implications always hold by induction on derivations.
 \descop{\DUnit}{X}        &  \Unit                                       \\
 \descop{\DId}{X}          &  X                                           \\
 \descop{\DProd{D}{D'}}{X} &  \TIMES{\descop{D}{X}}{\descop{D'}{X}}       \\
-\descop{\DSigma{S}{D}}{X} &  \SIGMA{s}{S} \descop{D s}{X}                \\
-\descop{\DPi{S}{D}}{X}    &  \PI{s}{S} \descop{D s}{X}            
+\descop{\DSigma{S}{D}}{X} &  \SIGMA{\V{s}}{S} \descop{D s}{X}                \\
+\descop{\DPi{S}{D}}{X}    &  \PI{\V{s}}{S} \descop{D s}{X}            
 \end{array}
 }\]
 
@@ -456,6 +456,104 @@ Pierre: Really? Can't we just say "look at the transformation below, that's obvi
 \DHindx{H}{D}     & \DProd{(\DPi{H}{(\LAM{\_} \DId)})}{D}
 \end{array}
 \]
+
+
+\subsection{From Desc to IDesc}
+
+\begin{structure}
+<- Labelling the \DId
+\end{structure}
+
+\[
+\stk{
+\data \IDesc{} : \PI{\V{I}}{\Set}{\Set} \where \\
+\;\;\begin{array}{@{}l@{\::\:}l@{\quad}l}
+    \DUnit          & \IDesc{I}                                         \\
+    \DVar           & I \To \IDesc{I}                                   \\
+    \DProd{}{}      & \PI{\V{D}, \V{D'}}{\IDesc{I}} \IDesc{I}           \\
+    \DSigma         & \PI{\V{S}}{\Set} \PIS{S \To \IDesc{I}} \IDesc{I}  \\
+    \DPi            & \PI{\V{S}}{\Set} \PIS{S \To \IDesc{I}} \IDesc{I} 
+\end{array}
+}
+\]
+
+
+\[\stk{
+\:\:\idescop{\_\:}{}{} : \PI{\V{I}}{\Set} \IDesc{I} \To \Set \To \Set          \\
+\begin{array}{l@{\:=\:\:}ll}
+\idescop{\DUnit}{I}{P}        &  \Unit                                       \\
+\idescop{\DVar{i}}{I}{P}      &  P~i                                         \\
+\idescop{\DProd{D}{D'}}{I}{P} &  \TIMES{\idescop{D}{I}{P}}{\idescop{D'}{I}{P}}       \\
+\idescop{\DSigma{S}{D}}{I}{P} &  \SIGMA{\V{s}}{S} \idescop{D s}{I}{P}                \\
+\idescop{\DPi{S}{D}}{I}{P}    &  \PI{\V{s}}{S} \idescop{D s}{I}{P}            
+\end{array}
+}\]
+
+\begin{structure}
+<- I -> IDesc I describes an inductive family
+\end{structure}
+
+\begin{structure}
+<- Replace DUnit by const
+\end{structure}
+
+
+\[
+\stk{
+\data \IDesc{} : \PI{\V{I}}{\Set} \Set \where \\
+\;\;\begin{array}{@{}l@{\::\:}l@{\quad}l}
+    \DConst{}       & \Set \To \IDesc{I}                                \\
+    \DVar{}         & I \To \IDesc{I}                                   \\
+    \DProd{}{}      & \PI{\V{D}, \V{D'}}{\IDesc{I}} \IDesc{I}           \\
+    \DSigma         & \PI{\V{S}}{\Set} \PIS{S \To \IDesc{I}} \IDesc{I}  \\
+    \DPi            & \PI{\V{S}}{\Set} \PIS{S \To \IDesc{I}} \IDesc{I} 
+\end{array}
+}
+\]
+
+
+\[\stk{
+\:\:\idescop{\_\:}{}{} : \PI{\V{I}}{\Set} \IDesc{I} \To \Set \To \Set                  \\
+\begin{array}{l@{\:=\:\:}ll}
+\idescop{\DConst{X}}{I}{P}    &  X                                                   \\
+\idescop{\DVar{i}}{I}{P}      &  P~i                                                 \\
+\idescop{\DProd{D}{D'}}{I}{P} &  \TIMES{\idescop{D}{I}{P}}{\idescop{D'}{I}{P}}       \\
+\idescop{\DSigma{S}{D}}{I}{P} &  \SIGMA{\V{s}}{S} \idescop{D s}{I}{P}                    \\
+\idescop{\DPi{S}{D}}{I}{P}    &  \PI{\V{s}}{S} \idescop{D s}{I}{P}            
+\end{array}
+}\]
+
+\begin{structure}
+<- Examples
+    -> Point out that our old examples fit in 1 -> IDesc 1
+    -> Levitate: no big deal
+\end{structure}
+
+%% \[\stk{
+%% \IDescD : \PI{\V{I}}{\Set} \IDesc{I} \\
+%% \begin{array}{ll}
+%% \IDescD~I \mapsto \DSigma{}{} & (\EnumT [ \DConst{},
+%%                                           \DVar{},
+%%                                           \DProd{}{},
+%%                                           \DSigma{}{}, 
+%%                                           \DPi{}{} ]) \\
+%%                               & \left[\begin{array}{l}
+%%                                       \DConst{\Set} \\
+%%                                       \DConst{I}    \\
+%%                                       \DProd{\DSigma{\Unit}{}}{}
+%%                                    \DIndx{\DUnit}                                  \\
+%%                                    \DSigma{\Set}{(\LAM{\_} \DIndx{\DUnit})}
+%%                                    \end{array}
+%%                              \right]
+%% \end{array}
+%% }
+%% \]
+
+\begin{structure}
+    -> untyped lambda terms
+        /> What is Fin??
+\end{structure}
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
