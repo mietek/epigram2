@@ -5,7 +5,6 @@
 \usepackage{pig}
 
 \include{macros}
-\include{symbols}
 
 %% Structure
 \newenvironment{structure}{\footnotesize\verbatim}{\endverbatim}
@@ -175,10 +174,51 @@ following implications always hold by induction on derivations.
 
 \[
 \Rule{\Gamma\vdash \Bhab{q}{\Prop}}
-     {\Gamma\vdash \Bhab{\prf{q}}{\Set}}\qquad
+     {\Gamma\vdash \Type{\prf{q}}}\qquad
 \Rule{\Gamma \vdash \Valid}
      {\Gamma \vdash \Bhab{\True}{\Prop}}
 \]
+
+\subsection{Enumerations}
+
+\[
+\Axiom{\Gamma\vdash\Type{\UId}}\qquad
+\Axiom{\Gamma\vdash\Bhab{\Tag{s}}{\UId}}\;s \mbox{ unique identifier}
+\]
+
+
+\[
+\Axiom{\Gamma \vdash \Type{\EnumU}} \quad
+\Axiom{\Gamma \vdash \Bhab{\NilE}{\EnumU}} \quad
+\Rule{\Gamma \vdash \Bhab{t}{\UId} \quad
+      \Gamma \vdash \Bhab{e}{\EnumU}}
+     {\Gamma \vdash \Bhab{\ConsE{t}{e}}{\EnumU}}
+\]
+
+\[
+\stkc{
+\Rule{\Gamma \vdash \Bhab{e}{\EnumU}}
+     {\Gamma \vdash \Type{\EnumT{e}}} \\
+\Axiom{\Gamma \vdash \Bhab{\Ze}{\EnumT{\ConsE{t}{e}}}} \quad
+\Rule{\Gamma \vdash \Bhab{n}{\EnumT{e}}}
+     {\Gamma \vdash \Bhab{\Su{n}}{\EnumT{\ConsE{t}{e}}}}
+}
+\]
+
+\[
+\stkc{
+\Rule{\Gamma \vdash \Bhab{e}{\EnumU} \quad
+      \Gamma \vdash \Bhab{P}{\EnumT{e} \To \Set}}
+     {\Gamma \vdash \Bhab{\spi{e}{P}}{\Set}} \\
+\Rule{\stkc{
+      \Gamma \vdash \Bhab{e}{\EnumU} \quad
+      \Gamma \vdash \Bhab{P}{\EnumT{e} \To \Set} \\
+      \Gamma \vdash \Bhab{b}{\spi{e}{P}} \quad
+      \Gamma \vdash \Bhab{x}{\EnumT{e}}}}
+     {\Gamma \vdash \Bhab{\switch{e}{P}{b}{x}}{P x}}
+}
+\]
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
