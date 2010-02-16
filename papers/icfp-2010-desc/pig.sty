@@ -84,11 +84,8 @@
 \newcommand{\PI}[2]{\blue{(}\Bhab{#1}{#2}\blue{)}\To}
 \newcommand{\PIS}[1]{\blue{(}#1\blue{)}\To}
 
-\newcommand{\SIGMA}[2]{\blue{(}\Bhab{#1}{#2}\blue{)}\Prod}
-\newcommand{\SIGMAS}[1]{\blue{(}#1\blue{)}\Prod}
-
-\newcommand{\LLAM}[2]{\LAMBINDER\Bhab{#1}{#2}\mto}
-\newcommand{\LAM}[1]{\LAMBINDER #1 \mto}
+\newcommand{\LLAM}[2]{\LAMBINDER\Bhab{#1}{#2}.\,}
+\newcommand{\LAM}[1]{\LAMBINDER #1 .\,}
 \newcommand{\PLAM}[2]{\LAMBINDER_{#2} #1 .\,}
 
 \newcommand{\TYPE}{\blue{\star}}
@@ -106,8 +103,8 @@
 \newcommand{\V}[1]{\purple{\mathit{#1}}}
 \newcommand{\p}{\purple{'}}
 \newcommand{\D}[1]{\blue{\CN{#1}}}
-\newcommand{\etag}[1]{\red{\CN{#1}}}
-\newcommand{\C}[2]{\ang{\etag{#1}#2}}
+\newcommand{\etag}[1]{\red{\bquote #1}}
+\newcommand{\C}[1]{\red{\CN{#1}}}
 \newcommand{\F}[1]{\green{\CN{#1}}}
 \newcommand{\U}[1]{\orange{\CN{#1}}}
 
@@ -151,8 +148,11 @@
 %% Set
 \newcommand{\Set}{\blue{\textsc{Set}}}
 \newcommand{\Type}[1]{{#1}:\Set}
-\newcommand{\stkl}[1]{\begin{array}[b]{@{}l@{}}#1\end{array}}
-\newcommand{\stkc}[1]{\begin{array}[b]{@{}c@{}}#1\end{array}}
+
+%% Sigma
+\newcommand{\SIGMA}[2]{\blue{(}\Bhab{#1}{#2}\blue{)}\Prod}
+\newcommand{\SIGMAS}[1]{\blue{(}#1\blue{)}\Prod}
+\newcommand{\TIMES}[1]{#1 \Prod}
 \newcommand{\pair}[3]{\left[{#1},{#2}\right]_{#3}}
 
 %% Prop
@@ -166,15 +166,53 @@
 
 %% Enum
 \newcommand{\EnumU}{\D{EnumU}}
-\newcommand{\NilE}{\etag{NilE}}
-\newcommand{\ConsE}[2]{\etag{ConsE}~#1~#2}
+\newcommand{\NilE}{\C{NilE}}
+\newcommand{\ConsE}[2]{\C{ConsE}~#1~#2}
 
 \newcommand{\EnumT}[1]{\D{EnumT}~#1}
-\newcommand{\Ze}{\etag{0}}
-\newcommand{\Su}[1]{\etag{1\!+}~#1}
+\newcommand{\Ze}{\C{$0$}}
+\newcommand{\Su}[1]{\C{$1\!+$}~#1}
 
 \newcommand{\spi}[2]{\red{\pi}~#1~#2}
 \newcommand{\switch}[4]{\green{\CN{switch}}\green{(} #1 , #2 , #3 , #4 \green{)}}
+
+\newcommand{\Unit}{\D{Unit}}
+
+%% Desc
+\usepackage{stmaryrd}
+
+\newcommand{\bquote}{\textrm{\textquoteright}}
+\newcommand{\Desc}{\D{Desc}}
+\newcommand{\DUnit}{\etag{1}}
+\newcommand{\DSigma}[2]{\etag{\Sigma}~#1~#2}
+\newcommand{\DIndx}[1]{\etag{\CN{ind}\!\times}~#1}
+\newcommand{\descop}[2]{\green{\llbracket} #1 \green{\rrbracket}~#2}
+
+%% Mu
+\newcommand{\Mu}[1]{\D{Mu}~#1}
+\newcommand{\Con}[1]{\C{Con}~#1}
+
+%% Agda-style data-type declaration
+\newcommand{\data}{\mathkw{data}\;}
+\newcommand{\where}{\;\mathkw{where}}
+
+
+%% Nat
+\newcommand{\Nat}{\D{Nat}}
+\newcommand{\NatZero}{\etag{\CN{zero}}}
+\newcommand{\NatSuc}{\etag{\CN{suc}}}
+
+%% List
+\newcommand{\List}{\D{List}}
+\newcommand{\ListNil}{\etag{\CN{nil}}}
+\newcommand{\ListCons}{\etag{\CN{cons}}}
+
+%% Tree
+\newcommand{\Tree}{\D{Tree}}
+\newcommand{\TreeLeaf}{\etag{\CN{leaf}}}
+\newcommand{\TreeNode}{\etag{\CN{node}}}
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Grammars                                                              %%%
@@ -259,6 +297,10 @@
 \newcommand{\STL}[1]{\begin{array}[t]{@{}l@{}}#1\end{array}}
 \newcommand{\STC}[1]{\begin{array}[t]{@{}c@{}}#1\end{array}}
 \newcommand{\CASES}[1]{\begin{array}[t]{@{}l@{\;\mapsto\;}l@{}}#1\end{array}}
+
+\newcommand{\stk}[1]{\begin{array}[t]{@{}l@{}}#1\end{array}}
+\newcommand{\stkl}[1]{\begin{array}[b]{@{}l@{}}#1\end{array}}
+\newcommand{\stkc}[1]{\begin{array}[b]{@{}c@{}}#1\end{array}}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

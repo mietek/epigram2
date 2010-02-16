@@ -100,6 +100,13 @@ ACM bullet points, we offer:
 
 \subsection{Base theory}
 
+\begin{structure}
+<- Base theory is:
+    <- Pi, Sigma, Prop, True, Prf
+<- Make it as standard as possible
+    -> Avoid waste of space
+\end{structure}
+
 \[
 \begin{array}{ll}
 \Gamma\vdash\Valid & \mbox{\(\Gamma\) is a valid context, giving types to
@@ -181,6 +188,13 @@ following implications always hold by induction on derivations.
 
 \subsection{Enumerations}
 
+\begin{structure}
+<- Introduce Enumerations straight-away
+    <- We need it all over the place
+    <- See next section: Type propagation
+        -> Nice appetizer 
+\end{structure}
+
 \[
 \Axiom{\Gamma\vdash\Type{\UId}}\qquad
 \Axiom{\Gamma\vdash\Bhab{\Tag{s}}{\UId}}\;s \mbox{ unique identifier}
@@ -218,6 +232,113 @@ following implications always hold by induction on derivations.
      {\Gamma \vdash \Bhab{\switch{e}{P}{b}{x}}{P x}}
 }
 \]
+
+\subsection{Type propagation}
+
+\begin{structure}
+<- Bidirectional basics
+    -> Show how we can *infer* stuffs 
+        <- Propagation of type information
+    <- (A stripped-down version of Elaboration)
+<- Examples:
+    -> Propagation for tags
+    -> Propagation for switch
+\end{structure}
+
+\subsection{In praise for $\Sigma$}
+
+\begin{structure}
+<- What is Sigma in the end?
+    <- Sigma generalizes sum over arbitrary ranges
+    <- Sigma generalizes product to have dependent second component
+<- Impact for data-types?
+    <- Simply-typed languages have sums-of-product
+    -> Dependently-types languages have Sigmas-of-Sigmas
+\end{structure}
+
+\subsection{Desc}
+
+\begin{structure}
+<- Without hind!
+    <- Simple, first-order version first
+    -> See Levitation Section for hind motivation
+<- Presented as a signature
+    -> ``We promise, this will be realized''
+\end{structure}
+
+\[
+\stk{
+\data \Desc : \Set \where \\
+\;\;\begin{array}{@{}l@{\::\:}l@{\quad}l}
+    \DUnit          & \Desc \\
+    \DSigma         & \PI{\V{S}}{\Set} \PIS{S \To \Set} \Desc \\
+    \DIndx          & \Desc \To \Desc
+\end{array}
+}
+\]
+
+\begin{structure}
+<- Interpretation
+    -> Object action of a functor
+\end{structure}
+
+
+\[\stk{
+\:\:\descop{\_\:}{} : \Desc \To \Set \To \Set \\
+\begin{array}{l@{\:=\:\:}ll}
+\descop{\DUnit}{X}        &  \Unit                                       \\
+\descop{\DSigma{S}{D}}{X} &  \SIGMAS{\V{s} : S}{\descop{D s}{X}}         \\
+\descop{\DIndx{D}}{X}     &  \TIMES{X}{\descop{D}{X}}
+\end{array}
+}\]
+
+\begin{structure}
+<- Examples
+    -> Nat
+\end{structure}
+
+\[\stk{
+\Nat : \Desc \\
+\Nat \mapsto \DSigma{(\EnumT [ \NatZero, \NatSuc ])}
+                    {[ \DUnit \quad (\DIndx{\DUnit}) ]}
+}\]
+
+\begin{structure}
+    -> List
+\end{structure}
+
+\[\stk{
+\List : \Set \To \Desc \\
+\List \: X \mapsto \DSigma{(\EnumT [ \ListNil, \ListCons ])}
+                       {[ \DUnit \quad (\DSigma{X}{\LAM{\_} \DIndx{\DUnit}}) ]}
+}\]
+
+\begin{structure}
+    -> Tree
+\end{structure}
+
+\[\stk{
+\Tree : \Set \To \Desc \\
+\Tree \: X \mapsto \DSigma{(\EnumT [ \TreeLeaf, \TreeNode ])}
+                          {[ \DUnit \quad (\DSigma{(\TIMES{X}{X})}{\LAM{\_} \DIndx{\DUnit}}) ]}
+}\]
+
+\begin{structure}
+<- Mu
+    <- Definition
+\end{structure}
+
+\[
+\Rule{\Gamma \vdash \Bhab{D}{\Desc}}
+     {\Gamma \vdash \Bhab{\Mu{D}}{\Set}} \qquad
+\Rule{\Gamma \vdash \Bhab{D}{\Desc} \quad 
+      \Gamma \vdash \Bhab{x}{\descop{D}{(\Mu{D})}}}
+     {\Gamma \vdash \Bhab{\Con{x}}{\Mu{D}}}
+\]
+
+\begin{structure}
+    <- Elaboration for data
+\end{structure}
 
 
 
