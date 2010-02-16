@@ -351,6 +351,68 @@ following implications always hold by induction on derivations.
 \end{array}
 \]
 
+\subsection{Describing enumerations}
+
+\[\stk{
+\EnumU : \Set \\
+\EnumU \mapsto \Mu{(\List~\UId)}
+}\]
+
+
+\begin{structure}
+<- Bye-bye \spi
+    /> Keep switch
+<- Content stays the same
+    /> type naming scheme condenses
+\end{structure}
+
+
+\subsection{Can we describe Desc? Obstacles}
+
+\begin{structure}
+<- 'Sigma does higher-order recursion
+    -> Introduce hindx
+\end{structure}
+
+\[
+\stk{
+\data \Desc : \Set \where \\
+\;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
+    \ldots          & \:\:\ldots \\
+    \DHindx         & \PI{H}{Set} \Desc \To \Desc
+\end{array}
+}
+\]
+
+\[\stk{
+\:\:\descop{\_\:}{} : \Desc \To \Set \To \Set \\
+\begin{array}{l@{\:=\:\:}ll}
+\ldots                        &  \ldots \\
+\descop{\DHindx{H}{D}}{X}     &  \TIMES{(H \To X)}{\descop{D}{X}}
+\end{array}
+}\]
+
+\begin{structure}
+    -> Need a special-purpose switchD
+\end{structure}
+
+
+\[\stk{
+\DescD : \Desc \\
+\begin{array}{ll}
+\DescD \mapsto \DSigma{}{} & (\EnumT [ \DUnit, \DSigma{}{}, \DIndx{}, \DHindx{}{} ]) \\
+                           & \left[\begin{array}{l}
+                                   \DUnit                                \\
+                                   \DSigma{\Set}{(\LAM{\V{X}} \DHindx{X}{\DUnit})} \\
+                                   \DIndx{\DUnit}                                  \\
+                                   \DSigma{\Set}{(\LAM{\_} \DIndx{\DUnit})}
+                                   \end{array}
+                             \right]
+\end{array}
+}
+\]
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Desc
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
