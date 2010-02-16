@@ -104,6 +104,7 @@
 \newcommand{\V}[1]{\purple{\mathit{#1}}}
 \newcommand{\p}{\purple{'}}
 \newcommand{\D}[1]{\blue{\CN{#1}}}
+\newcommand{\bquote}{\textrm{\textquoteright}}
 \newcommand{\etag}[1]{\red{\bquote #1}}
 \newcommand{\C}[1]{\red{\CN{#1}}}
 \newcommand{\F}[1]{\green{\CN{#1}}}
@@ -182,14 +183,21 @@
 %% Desc
 \usepackage{stmaryrd}
 
-\newcommand{\bquote}{\textrm{\textquoteright}}
 \newcommand{\Desc}{\D{Desc}}
 \newcommand{\DescD}{\D{DescD}}
+
+\newcommand{\descop}[2]{\green{\llbracket} #1 \green{\rrbracket}~#2}
+
 \newcommand{\DUnit}{\etag{1}}
 \newcommand{\DSigma}[2]{\etag{\Sigma}~#1~#2}
 \newcommand{\DIndx}[1]{\etag{\CN{ind}\!\times}~#1}
+
 \newcommand{\DHindx}[2]{\etag{\CN{hind}\!\times}~#1~#2}
-\newcommand{\descop}[2]{\green{\llbracket} #1 \green{\rrbracket}~#2}
+
+\newcommand{\DPi}[2]{\etag{\Pi}~#1~#2}
+\newcommand{\DProd}[2]{#1 \mathop{\etag{\!\times}} #2}
+\newcommand{\DId}{\etag{\CN{id}}}
+
 
 %% Mu
 \newcommand{\Mu}[1]{\D{Mu}~#1}

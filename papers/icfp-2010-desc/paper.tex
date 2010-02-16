@@ -271,7 +271,7 @@ following implications always hold by induction on derivations.
 \data \Desc : \Set \where \\
 \;\;\begin{array}{@{}l@{\::\:}l@{\quad}l}
     \DUnit          & \Desc \\
-    \DSigma         & \PI{\V{S}}{\Set} \PIS{S \To \Set} \Desc \\
+    \DSigma         & \PI{\V{S}}{\Set} \PIS{S \To \Desc} \Desc \\
     \DIndx          & \Desc \To \Desc
 \end{array}
 }
@@ -410,6 +410,51 @@ following implications always hold by induction on derivations.
                              \right]
 \end{array}
 }
+\]
+
+\subsection{Bringing the Free Monad in}
+
+\begin{structure}
+<- Re-engineer indx-hindx into Pi, x, id
+\end{structure}
+
+\[
+\stk{
+\data \Desc : \Set \where \\
+\;\;\begin{array}{@{}l@{\::\:}l@{\quad}l}
+    \DUnit          & \Desc                                   \\
+    \DId            & \Desc                                   \\
+    \DProd{}{}      & \PI{\V{D}, \V{D'}}{\Desc} \Desc         \\
+    \DSigma         & \PI{\V{S}}{\Set} \PIS{S \To \Desc} \Desc \\
+    \DPi            & \PI{\V{S}}{\Set} \PIS{S \To \Desc} \Desc 
+\end{array}
+}
+\]
+
+\[\stk{
+\:\:\descop{\_\:}{} : \Desc \To \Set \To \Set \\
+\begin{array}{l@{\:=\:\:}ll}
+\descop{\DUnit}{X}        &  \Unit                                       \\
+\descop{\DId}{X}          &  X                                           \\
+\descop{\DProd{D}{D'}}{X} &  \TIMES{\descop{D}{X}}{\descop{D'}{X}}       \\
+\descop{\DSigma{S}{D}}{X} &  \SIGMA{s}{S} \descop{D s}{X}                \\
+\descop{\DPi{S}{D}}{X}    &  \PI{s}{S} \descop{D s}{X}            
+\end{array}
+}\]
+
+\begin{structure}
+<- Rebuild the examples
+Pierre: Really? Can't we just say "look at the transformation below, that's obvious" ?
+\end{structure}
+
+\begin{structure}
+<- Show the transformation from the previous combinators to the new one
+\end{structure}
+
+\[\begin{array}{l@{\:\mapsto\:\:}l}
+\DIndx{D}         & \DProd{\DId}{D}                      \\
+\DHindx{H}{D}     & \DProd{(\DPi{H}{(\LAM{\_} \DId)})}{D}
+\end{array}
 \]
 
 
