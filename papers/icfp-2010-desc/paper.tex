@@ -529,25 +529,24 @@ Pierre: Really? Can't we just say "look at the transformation below, that's obvi
     -> Levitate: no big deal
 \end{structure}
 
-%% \[\stk{
-%% \IDescD : \PI{\V{I}}{\Set} \IDesc{I} \\
-%% \begin{array}{ll}
-%% \IDescD~I \mapsto \DSigma{}{} & (\EnumT [ \DConst{},
-%%                                           \DVar{},
-%%                                           \DProd{}{},
-%%                                           \DSigma{}{}, 
-%%                                           \DPi{}{} ]) \\
-%%                               & \left[\begin{array}{l}
-%%                                       \DConst{\Set} \\
-%%                                       \DConst{I}    \\
-%%                                       \DProd{\DSigma{\Unit}{}}{}
-%%                                    \DIndx{\DUnit}                                  \\
-%%                                    \DSigma{\Set}{(\LAM{\_} \DIndx{\DUnit})}
-%%                                    \end{array}
-%%                              \right]
-%% \end{array}
-%% }
-%% \]
+\[\stk{
+\IDescD : \PI{\V{I}}{\Set} \IDesc{I} \\
+\begin{array}{ll}
+\IDescD~i \mapsto \DSigma{}{} & (\EnumT [ \DConst{},
+                                          \DVar{},
+                                          \DProd{}{},
+                                          \DSigma{}{}, 
+                                          \DPi{}{} ]) \\
+                              & \left[\begin{array}{l}
+                                      \DConst{\Set}               \\
+                                      \DConst{I}                  \\
+                                      \DProd{\DVar{i}}{\DVar{i}}  \\
+                                      \DSigma{\Set}{(\LAM{S} \DPi{S}{(\LAM{\_} \DVar{i})})} \\
+                                      \DSigma{\Set}{(\LAM{S} \DPi{S}{(\LAM{\_} \DVar{i})})}
+                                   \end{array}
+                             \right]
+\end{array}
+}\]
 
 \begin{structure}
     -> untyped lambda terms
