@@ -23,3 +23,8 @@ let id {X : Set}(x : X) : X ;
 lambda X, x ;
 = x ;
 root ;
+
+make A := ? : Set ;
+make a := ? : id A ;
+make b := ? : id./ _ A ;
+make c := ? : id./ Set Set ;
