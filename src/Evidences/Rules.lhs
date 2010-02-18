@@ -782,6 +782,8 @@ a false economy.
 >   in   coe @@ [tT1 $$ A s1, tT2 $$ A s2, CON $ q $$ Snd $$ A s2 $$ A s1 $$ A sq, t1]
 > import <- Coerce
 > coerce _ q (N x) = Left x
+> coerce cvv q r = error $ unlines ["coerce: can't cope with",
+>                                   show cvv, "and", show q, "and", show r]
 
 
 

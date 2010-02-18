@@ -123,6 +123,7 @@
 >                                $$ A d0 $$ A d1 $$ A qd
 >                                $$ A i0 $$ A i1 $$ A qi
 >              , x ]
+>   coerce (IDesc (d0, d1)) q x = Right x
 
 
 > import -> CanPretty where
