@@ -144,7 +144,7 @@ Equality rules:
 
 > import -> BootstrapDesc where
 >   inDesc :: VAL
->   inDesc = ARGF constructors (evTm cases)
+>   inDesc = ARGF constructors (L $ HF "c" $ \c -> switchDOp @@ [ constructors , cases , c ])
 >       where constructors = (CONSE (TAG "done")
 >                             (CONSE (TAG "arg")
 >                              (CONSE (TAG "argf")
@@ -152,9 +152,9 @@ Equality rules:
 >                                (CONSE (TAG "ind1")
 >                                 NILE)))))
 >             cases = PAIR DONE 
->                     (PAIR (ARG SET (L $ "" :. [.s. IND (NV s) DONE]))
->                      (PAIR (ARG (NP enumREF) (L $ "" :. [.e. ARG (N (branchesDOp :@ [NV e])) (L $ "" :. [.t. DONE])]))
->                       (PAIR (ARG SET (L $ "" :. [.h. IND1 DONE]))
+>                     (PAIR (ARG SET (L $ HF "" $ \s -> IND s DONE))
+>                      (PAIR (ARG enumU (L $ HF "" $ \e -> IND (ENUMT e) DONE))
+>                       (PAIR (ARG SET (L $ K IND1 DONE))
 >                        (PAIR (IND1 DONE)
 >                         VOID))))
 >   descFakeREF :: REF
@@ -235,16 +235,17 @@ Equality rules:
 > import -> Operators where
 >   descOp :
 >   descCOp :
->   undescCOp :
 >   boxOp :
 >   mapBoxOp :
 >   elimOp :
 >   elimCOp :
+>   switchDOp :
 >   mapOp :
 
 > import -> OpCompile where
 >   ("fold", [d,v,bp,p]) -> App (Var "__fold") [d, p, v]
 >   ("mapBox", [x,d,bp,p,v]) -> App (Var "__mapBox") [x, p, v]
+>   ("switchD", [e,b,x]) -> App (Var "__switch") [x, b]
 >   ("map", [d,a,b,f,x]) -> App (Var "__map") [d, f, x]
 
 > import -> OpCode where
@@ -267,10 +268,11 @@ Equality rules:
 >                descOp @@ [dD $$ A a,xX]
 >       dOpRun [ARGF aA dD,xX] = Right $
 >              SIGMA (ENUMT aA) . L $ HF "a" $ \a ->
->                descOp @@ [switchOp @@ [aA, a, L (K desc), dD],xX]
+>                descOp @@ [dD $$ A a,xX]
 >       dOpRun [IND hH dD,xX] = Right (TIMES (ARR hH xX) (descOp @@ [dD,xX]))
 >       dOpRun [IND1 dD,xX] = Right (TIMES xX (descOp @@ [dD,xX]))
 >       dOpRun [N dD,_]     = Left dD
+>       dOpRun vs = error ("Desc.descOp.dOpRun: couldn't handle " ++ show vs)
 
 >   descCOp :: Op
 >   descCOp = Op
@@ -292,12 +294,10 @@ Equality rules:
 >           PI _X (L . HF "s" $ \s -> 
 >                  descCOp @@ [ _F $$ A s
 >                             , _T, L . HF "d" $ \d -> _R $$ A (PAIR s d)])
->       descCOpRun [ARGF _E _B , _T, _R] = Right $
->           branchesOp @@ [ _E
->                         , L . HF "e" $ \e -> 
->                           descCOp @@ [ switchOp @@ [_E, e, L (K desc), _B]
->                                      , _T
->                                      , L . HF "d" $ \d -> _R $$ A (PAIR e d)]]
+>       descCOpRun [ARGF _E _F , _T, _R] = Right $
+>           PI (ENUMT _E) (L . HF "s" $ \s -> 
+>                  descCOp @@ [ _F $$ A s
+>                             , _T, L . HF "d" $ \d -> _R $$ A (PAIR s d)])
 >       descCOpRun [IND _H _D  , _T, _R] = Right $
 >           PI (ARR _H _T) (L . HF "h" $ \h -> 
 >                           descCOp @@ [ _D
@@ -335,22 +335,13 @@ Equality rules:
 >                      , L . HF "d" $ \d -> _R $$ A (PAIR s d)
 >                      , f $$ A s
 >                      , d ]
->       undescCOpRun [ARGF _E _B , _Z, _R, b, sd] = Right $
->         let s  = sd $$ Fst
->             d  = sd $$ Snd 
->             br = \ e -> switchOp @@ [ _E, e, L (K desc), _B ]
->             x  = switchOp @@ [ _E
->                              , s
->                              , L . HF "e" $ \e -> 
->                                descCOp @@ [ br e
->                                           , _Z
->                                           , L . HF "d" $ \d -> _R $$ A (PAIR e d)]
->                              , b ] 
->         in
->         undescCOp @@ [ br s
+>       undescCOpRun [ARGF _E _F , _Z, _R, f, sd] = Right $
+>         let s = sd $$ Fst
+>             d = sd $$ Snd in
+>         undescCOp @@ [ _F $$ A s
 >                      , _Z
 >                      , L . HF "d" $ \d -> _R $$ A (PAIR s d)
->                      , x
+>                      , f $$ A s
 >                      , d ]
 >       undescCOpRun [IND _H _D  , _Z, _R, f, hd] = Right $
 >         let h = hd $$ Fst
@@ -389,7 +380,7 @@ Equality rules:
 >       boxOpRun [ARG aA dD,xX,pP,v] = Right $ 
 >         boxOp @@ [ dD $$ A (v $$ Fst) , xX , pP , v $$ Snd ] 
 >       boxOpRun [ARGF aA dD,xX,pP,v] = Right $ 
->         boxOp @@ [ switchOp @@ [aA, v $$ Fst, L (K desc), dD] , xX , pP , v $$ Snd ] 
+>         boxOp @@ [ dD $$ A (v $$ Fst) , xX , pP , v $$ Snd ] 
 >       boxOpRun [IND hH dD,xX,pP,v] = Right $ 
 >         TIMES (PI hH (L $ HF "h" $ \h -> pP $$ A (v $$ Fst $$ A h))) 
 >               (boxOp @@ [dD, xX, pP, v $$ Snd])
@@ -418,7 +409,7 @@ Equality rules:
 >       mapBoxOpRun [ARG aA dD,xX,pP,p,v] = Right $ 
 >         mapBoxOp @@ [dD $$ A (v $$ Fst), xX, pP, p, v $$ Snd]  
 >       mapBoxOpRun [ARGF aA dD,xX,pP,p,v] = Right $ 
->         mapBoxOp @@ [switchOp @@ [aA, v $$ Fst, L (K desc), dD], xX, pP, p, v $$ Snd]  
+>         mapBoxOp @@ [dD $$ A (v $$ Fst), xX, pP, p, v $$ Snd]  
 >       mapBoxOpRun [IND hH dD,xX,pP,p,v] = Right $ 
 >         PAIR (PI hH (L $ HF "h" $ \h -> p $$ A (v $$ Fst $$ A h))) 
 >              (mapBoxOp @@ [dD, xX, pP, p, v $$ Snd])
@@ -509,23 +500,24 @@ Equality rules:
 >                                    , v]) 
 >       elimOpRun [_,N x, _,_] = Left x
 
-
->   branchesDOp = Op 
->     { opName   = "branchesD"
->     , opArity  = 1 
->     , opTyTel  = bOpTy
->     , opRun    = bOpRun
->     , opSimp   = \_ _ -> empty
+>   switchDOp = Op
+>     { opName = "switchD"
+>     , opArity = 3
+>     , opTyTel = sOpTy
+>     , opRun = sOpRun
+>     , opSimp = \_ _ -> empty
 >     } where
->         bOpTy = "e" :<: enumU :-: \e ->
->                 Target SET
-
->         bOpRun :: [VAL] -> Either NEU VAL
->         bOpRun [NILE ] = Right UNIT
->         bOpRun [CONSE t e' ] = 
->           Right (TIMES desc 
->                 (branchesDOp @@ [e']))
->         bOpRun [N e] = Left e 
+>         sOpTy = 
+>           "e" :<: enumU :-: \e ->
+>           "b" :<: (branchesOp @@ [e , L (K desc) ]) :-: \b ->
+>           "x" :<: ENUMT e :-: \x ->
+>           Target desc
+>         sOpRun :: [VAL] -> Either NEU VAL
+>         sOpRun [CONSE t e' , ps , ZE] = Right $ ps $$ Fst
+>         sOpRun [CONSE t e' , ps , SU n] = Right $
+>           switchDOp @@ [ e' , ps $$ Snd , n ]
+>         sOpRun [_ , _ , N n] = Left n
+>         sOpRun vs = error ("Desc.SwitchD.sOpRun: couldn't handle " ++ show vs)
 
 >   mapOp = Op
 >     { opName  = "map"
@@ -549,7 +541,7 @@ Equality rules:
 >                (mapOp @@ [ dD $$ A (v $$ Fst), xX, yY, f, v $$ Snd])
 >         mapOpRun [ARGF aA dD, xX, yY, f, v] = Right $
 >           PAIR (v $$ Fst)
->                (mapOp @@ [switchOp @@ [aA, v $$ Fst, L (K desc), dD], xX, yY, f, v $$ Snd])
+>                (mapOp @@ [ dD $$ A (v $$ Fst), xX, yY, f, v $$ Snd])
 >         mapOpRun [IND hH dD, xX, yY, f, v] = Right $
 >           PAIR (L $ HF "h" $ \h -> f $$ A (v $$ Fst $$ A h))
 >                (mapOp @@ [ dD, xX, yY, f, v $$ Snd])

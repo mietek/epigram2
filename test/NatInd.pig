@@ -4,7 +4,7 @@ make suc := (\ x -> con ['suc x]) : Nat -> Nat ;
 make zero := [] : Nat ;
 make one := (suc zero) : Nat ;
 make two := (suc one) : Nat ;
-make ind : (n : Nat)(P : Nat -> Set) -> P zero -> ((k : Nat) -> P k -> P (suc k)) -> P n;
+make ind : (n : Nat) -> (P : Nat -> Set) -> P zero -> ((k : Nat) -> P k -> P (suc k)) -> P n ;
 lambda n ;
 elim fold NatD n ;
     give con ? ;

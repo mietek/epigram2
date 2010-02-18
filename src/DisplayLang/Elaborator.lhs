@@ -86,11 +86,15 @@ interesting types. \question{Can we move these to more appropriate places?}
 >     elabbedT . N $ ((m' :? mt') :$ A (N (P x :$ Fst))) :$ A (N (P x :$ Snd))
 
 > elaborate True (PI (ENUMT e) t :>: m) | isTuply m = do
+>     targetsDesc <- withNSupply (equal (ARR (ENUMT e) SET :>: (t, L (K desc))))
 >     (m' :=>: _) <- elaborate False (branchesOp @@ [e, t] :>: m)
 >     e' <- bquoteHere e
 >     x  <- lambdaBoy (fortran t)
->     t' <- bquoteHere t
->     elabbedT . N $ switchOp :@ [e', N (P x), t', m']
+>     if targetsDesc
+>       then elabbedT . N $ switchDOp :@ [e', m', N (P x)]
+>       else do
+>         t' <- bquoteHere t
+>         elabbedT . N $ switchOp :@ [e', N (P x), t', m']
 >  where   isTuply :: InDTmRN -> Bool
 >          isTuply DVOID = True
 >          isTuply (DPAIR _ _) = True

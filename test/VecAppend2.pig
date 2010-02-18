@@ -31,3 +31,4 @@ give ship Nat zero m p (\ mm -> Vec (plus mm n)) as ;
 give con \ mm -> con \ a -> con \ as p -> con \ appp _ n as -> ? ;
 give ship Nat (con ['suc mm]) m p (\ mmm -> Vec (plus mmm n)) ? ;
 give vcons (plus mm n) a (appp n as) ;
+root ;

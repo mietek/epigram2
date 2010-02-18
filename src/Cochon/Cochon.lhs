@@ -34,7 +34,7 @@
 > import ProofState.ProofKit
 
 > import Tactics.Elimination
-> import Tactics.Induction
+> -- import Tactics.Induction -- waiting for tis to be fixed :)
 > import Tactics.PropSimp
 > import Tactics.Information
 > import Tactics.Solution

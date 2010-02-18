@@ -1,7 +1,7 @@
 [ nat
     [ h00
         [ \ x : Enum ['zero 'suc] ->
-        ] switch ['zero 'suc] x (\ _ -> Desc) [[] (con ['ind1 []])] : Desc ;
+        ] switchD ['zero 'suc] [[] (con ['ind1 []])] x : Desc ;
     ] Mu [(Enum ['zero 'suc]) , h00] : Set ;
   zero := [] : nat ;
   suc
@@ -28,24 +28,33 @@
                 ] G50011 (x !) _ : nat -> nat ;
               \ a : Enum ['zero 'suc] ->
               h5003
-                [ \ x : desc (switch ['zero 'suc] a (\ _ -> Desc) [[] (con ['ind1 []])]) nat ->
-                ] (box (switch ['zero 'suc] a (\ _ -> Desc) [[] (con ['ind1 []])]) nat (\ _ -> (nat -> nat)) x -> nat -> nat) : Set ;
+                [ \ x : desc (switchD ['zero 'suc] [[] (con ['ind1 []])] a) nat ->
+                  h50031
+                    [ \ x : box (switchD ['zero 'suc] [[] (con ['ind1 []])] a) nat (\ _ -> (nat -> nat)) x^1 ->
+                    ] (nat -> nat) : Set ;
+                ] (Pi (box (switchD ['zero 'suc] [[] (con ['ind1 []])] a) nat (\ _ -> (nat -> nat)) x) h50031) : Set ;
               h5004
                 [ \ a : Enum ['zero 'suc] ->
                   h50041
-                    [ \ x : desc (switch ['zero 'suc] a (\ _ -> Desc) [[] (con ['ind1 []])]) nat ->
-                    ] (box (switch ['zero 'suc] a (\ _ -> Desc) [[] (con ['ind1 []])]) nat (\ _ -> (nat -> nat)) x -> nat -> nat) : Set ;
-                ] (Pi (desc (switch ['zero 'suc] a (\ _ -> Desc) [[] (con ['ind1 []])]) nat) h50041) : Set ;
-            ] switch ['zero 'suc] a h5004 [G5000 G5001] : Pi (desc (switch ['zero 'suc] a (\ _ -> Desc) [[] (con ['ind1 []])]) nat) h5003 ;
+                    [ \ x : desc (switchD ['zero 'suc] [[] (con ['ind1 []])] a) nat ->
+                      h500411
+                        [ \ x : box (switchD ['zero 'suc] [[] (con ['ind1 []])] a) nat (\ _ -> (nat -> nat)) x^1 ->
+                        ] (nat -> nat) : Set ;
+                    ] (Pi (box (switchD ['zero 'suc] [[] (con ['ind1 []])] a) nat (\ _ -> (nat -> nat)) x) h500411) : Set ;
+                ] (Pi (desc (switchD ['zero 'suc] [[] (con ['ind1 []])] a) nat) h50041) : Set ;
+            ] switch ['zero 'suc] a h5004 [G5000 G5001] : Pi (desc (switchD ['zero 'suc] [[] (con ['ind1 []])] a) nat) h5003 ;
           h501
             [ \ a : Enum ['zero 'suc] ->
-            ] desc (switch ['zero 'suc] a (\ _ -> Desc) [[] (con ['ind1 []])]) nat : Set ;
-          \ x : Sig (a : Enum ['zero 'suc] ; desc (switch ['zero 'suc] a (\ _ -> Desc) [[] (con ['ind1 []])]) nat) ->
-        ] G500 (x !) (x -) : box (switch ['zero 'suc] (x !) (\ _ -> Desc) [[] (con ['ind1 []])]) nat (\ _ -> (nat -> nat)) (x -) -> nat -> nat ;
+            ] desc (switchD ['zero 'suc] [[] (con ['ind1 []])] a) nat : Set ;
+          \ x : Sig (a : Enum ['zero 'suc] ; desc (switchD ['zero 'suc] [[] (con ['ind1 []])] a) nat) ->
+          h503
+            [ \ x : box (switchD ['zero 'suc] [[] (con ['ind1 []])] (x^1 !)) nat (\ _ -> (nat -> nat)) (x^1 -) ->
+            ] (nat -> nat) : Set ;
+        ] G500 (x !) (x -) : Pi (box (switchD ['zero 'suc] [[] (con ['ind1 []])] (x !)) nat (\ _ -> (nat -> nat)) (x -)) h503 ;
       \ x : nat ->
       h52
         [ \ x : Enum ['zero 'suc] ->
-        ] switch ['zero 'suc] x (\ _ -> Desc) [[] (con ['ind1 []])] : Desc ;
+        ] switchD ['zero 'suc] [[] (con ['ind1 []])] x : Desc ;
     ] fold [(Enum ['zero 'suc]) , h52] x (\ _ -> (nat -> nat)) G50 : nat -> nat ;
   x := plus two two : nat ;
 ]
