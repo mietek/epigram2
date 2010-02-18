@@ -216,9 +216,10 @@ that her children have already received, and returns the updated news.
 >                     putDevTip (Unknown tt)
 >                     proofTrace $ "tellMother: resuming elaboration on "
 >                         ++ show (entryName e') ++ ":\n" ++ show elab'
->                     (tm :=>: _, okay) <- runElab True (valueOf tt :>: elab')
+>                     (mtm, okay) <- runElab True (valueOf tt :>: elab')
 >                     if okay
 >                         then do
+>                             tm :=>: _ <- forceTerm mtm
 >                             let (tm', _) = tellNews news tm
 >                             give' tm'
 >                             return ()
