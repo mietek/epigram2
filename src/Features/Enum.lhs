@@ -64,7 +64,7 @@ Elimination rules:
 With the following computational behavior:
 
 < branches NilE _ :-> Unit
-< branches (ConsE t e') P :-> (p Ze , \x -> branches (e', P (Su x)))
+< branches (ConsE t e') P :-> (P Ze , branches (e', \x -> P (Su x)))
 
 \begin{prooftree}
 \AxiomC{|EnumU :>: e|}
