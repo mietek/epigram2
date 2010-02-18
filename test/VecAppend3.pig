@@ -5,7 +5,7 @@ make zero := con ['zero] : Nat ;
 make suc := (\ x -> con ['suc x]) : Nat -> Nat ;
 make N-case := (\ n P m0 ms -> induction Nat.NatD n P (con [ (con con m0) (con \ k -> con \ _ -> ms k) ] )) 
                 : (n : Nat)(P : Nat -> Set) -> 
-                   P _ -> 
+                   P [] -> 
                    ((k : Nat) -> P (con ['suc k])) ->
                    P n ;
 make one := (suc zero) : Nat ;
