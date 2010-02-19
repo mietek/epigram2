@@ -284,7 +284,7 @@ the name part of references, respectively.
 >               (tn,tms) <- nomTop top' (mesus,mes<+>les)
 >               (an,ams) <- nomAbs nom' fsc
 >               (| ((tn : an), i, if null nom' then tms else ams) |) )
->       (Nothing, _) -> (failNom tar, 0, Nothing)
+>       _ -> (failNom tar, 0, Nothing)
 
 > partNoms :: Name -> BScopeContext -> Name 
 >                  -> Bwd (Name, Name, Spine {TT} REF, FScopeContext)
