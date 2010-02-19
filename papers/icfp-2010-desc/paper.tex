@@ -530,9 +530,9 @@ Pierre: Really? Can't we just say "look at the transformation below, that's obvi
 \end{structure}
 
 \[\stk{
-\IDescD : \PI{\V{I}}{\Set} \IDesc{I} \\
+\IDescD : \PI{\V{I}}{\Set} \IDesc{\Unit} \\
 \begin{array}{ll}
-\IDescD~i \mapsto \DSigma{}{} & (\EnumT [ \DConst{},
+\IDescD~I \mapsto \DSigma{}{} & (\EnumT [ \DConst{},
                                           \DVar{},
                                           \DProd{}{},
                                           \DSigma{}{}, 
@@ -540,9 +540,9 @@ Pierre: Really? Can't we just say "look at the transformation below, that's obvi
                               & \left[\begin{array}{l}
                                       \DConst{\Set}               \\
                                       \DConst{I}                  \\
-                                      \DProd{\DVar{i}}{\DVar{i}}  \\
-                                      \DSigma{\Set}{(\LAM{S} \DPi{S}{(\LAM{\_} \DVar{i})})} \\
-                                      \DSigma{\Set}{(\LAM{S} \DPi{S}{(\LAM{\_} \DVar{i})})}
+                                      \DProd{\DVar{\Void}}{\DVar{\Void}}  \\
+                                      \DSigma{\Set}{(\LAM{S} \DPi{S}{(\LAM{\_} \DVar{\Void})})} \\
+                                      \DSigma{\Set}{(\LAM{S} \DPi{S}{(\LAM{\_} \DVar{\Void})})}
                                    \end{array}
                              \right]
 \end{array}
