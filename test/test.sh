@@ -75,6 +75,16 @@ then
 
 fi
 
+## Check if we have RTS support for profiling
+profiling=0
+if [ -f "../src/BUILD_PROFILE" ]
+then
+    profiling=1
+
+    ## Ensure that measures can be stored
+    mkdir -p "./.measures/prof/${time}"
+fi
+
 ## RTS option(s)
 PIG_OPTS=""
 
@@ -91,11 +101,17 @@ do
     if [ $advanced -eq 1 ]
     then
 	PIG_OPTS="+RTS -t./.measures/stats/${time}/${script}.stat --machine-readable -RTS"
+    elif [ $profiling -eq 1 ]
+    then
+	PIG_OPTS="+RTS -p -RTS"
     fi
     ../src/Pig $PIG_OPTS --check "$script" > ".tests/$script.log"    
     if [ $advanced -eq 1 ]
     then
 	mv "./Pig.tix" "./.measures/hpc/${time}/${script}.tix"
+    elif [ $profiling -eq 1 ]
+    then
+        mv "./Pig.prof" "./.measures/prof/${time}/${script}.prof"
     fi
     # echo " Done."
     if [ ! -f "results/$script.log" ]
