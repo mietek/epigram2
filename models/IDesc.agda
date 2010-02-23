@@ -60,19 +60,19 @@ data _+_ {i j : Level}(A : Set i)(B : Set j) : Set (max i j) where
 -- Desc code
 --********************************************
 
-data IDesc {i : Level}(I : Set i) : Set (suc i) where
+data IDesc (I : Set) : Set1 where
   var : I -> IDesc I
-  const : Set i -> IDesc I
+  const : Set -> IDesc I
   prod : IDesc I -> IDesc I -> IDesc I
-  sigma : (S : Set i) -> (S -> IDesc I) -> IDesc I
-  pi : (S : Set i) -> (S -> IDesc I) -> IDesc I
+  sigma : (S : Set) -> (S -> IDesc I) -> IDesc I
+  pi : (S : Set) -> (S -> IDesc I) -> IDesc I
 
 
 --********************************************
 -- Desc interpretation
 --********************************************
 
-desc : {i : Level}(I : Set i) -> IDesc I -> (I -> Set i) -> Set i
+desc : (I : Set) -> IDesc I -> (I -> Set) -> Set
 desc I (var i) P = P i
 desc I (const X) P = X
 desc I (prod D D') P = desc I D P * desc I D' P
@@ -83,7 +83,8 @@ desc I (pi S T) P = (s : S) -> desc I (T s) P
 -- Fixpoint construction
 --********************************************
 
-data IMu {i : Level}(I : Set i)(R : I -> IDesc I) : IDesc I -> Set (suc i) where
+{-
+data IMu (I : Set)(R : I -> IDesc I) : IDesc I -> Set1 where
   rec : (i : I) -> IMu I R (R i) -> IMu I R (var i)
   lambda : (S : Set i)(D : S -> IDesc I) -> ((s : S) -> IMu I R (D s)) -> IMu I R (pi S D)
   pair : (S : Set i)(D : S -> IDesc I) -> (Sigma S (\s -> IMu I R (D s))) -> IMu I R (sigma S D)
