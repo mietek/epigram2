@@ -6,7 +6,7 @@ make one := (suc zero) : Nat ;
 make two := (suc one) : Nat ;
 make ind : (n : Nat) -> (P : Nat -> Set) -> P zero -> ((k : Nat) -> P k -> P (suc k)) -> P n ;
 lambda n ;
-elim fold NatD n ;
+elim induction NatD n ;
     give con ? ;
     lambda x ;
     elim switch ['zero 'suc] x ;

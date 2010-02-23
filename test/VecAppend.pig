@@ -7,7 +7,7 @@ make NatD := con ['arg (Enum ['zero 'suc]) [ (con ['done]) (con ['ind1 con ['don
 give Mu NatD ;
 make zero := con ['zero] : Nat ;
 make suc := (\ x -> con ['suc x]) : Nat -> Nat ;
-make N-case := (\ n P m0 ms -> fold Nat.NatD n P (con [ (con con m0) (con \ k -> con \ _ -> ms k) ] )) 
+make N-case := (\ n P m0 ms -> induction Nat.NatD n P (con [ (con con m0) (con \ k -> con \ _ -> ms k) ] )) 
                 : (n : Nat)(P : Nat -> Set) -> 
                    P [] -> 
                    ((k : Nat) -> P (con ['suc k])) ->

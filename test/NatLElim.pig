@@ -8,7 +8,7 @@ make add := ? : Nat -> Nat -> Nat ;
 make add : (x : Nat) -> (y : Nat) -> < add^1 x y : Nat > ;
 lambda x ;
 lambda y ;
-elim fold NatD x ;
+elim induction NatD x ;
 
     give con ? ;
     lambda x ;

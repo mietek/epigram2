@@ -243,7 +243,7 @@ Equality rules:
 >   mapOp :
 
 > import -> OpCompile where
->   ("fold", [d,v,bp,p]) -> App (Var "__fold") [d, p, v]
+>   ("induction", [d,v,bp,p]) -> App (Var "__induction") [d, p, v]
 >   ("mapBox", [x,d,bp,p,v]) -> App (Var "__mapBox") [x, p, v]
 >   ("switchD", [e,b,x]) -> App (Var "__switch") [x, b]
 >   ("map", [d,a,b,f,x]) -> App (Var "__map") [d, f, x]
@@ -480,7 +480,7 @@ Equality rules:
 
 >   elimOp :: Op
 >   elimOp = Op
->     { opName = "fold"
+>     { opName = "induction"
 >     , opArity = 4
 >     , opTyTel = elimOpTy
 >     , opRun = elimOpRun

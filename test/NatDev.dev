@@ -31,6 +31,6 @@
           \ x : Sig (a : Enum ['zero 'suc] ; desc (((switchD ['zero 'suc]) [[] (con ['ind1 []])]) a) nat) ->
         ] G500 (x !) (x -) : (x : box (((switchD ['zero 'suc]) [[] (con ['ind1 []])]) (x !)) nat (\ _ -> (nat -> nat)) (x -)) -> nat -> nat ;
       \ x : nat ->
-    ] fold [(Enum ['zero 'suc]) , \ x -> switchD ['zero 'suc] [[] (con ['ind1 []])] x] x (\ _ -> (nat -> nat)) G50 : nat -> nat ;
+    ] induction [(Enum ['zero 'suc]) , \ x -> switchD ['zero 'suc] [[] (con ['ind1 []])] x] x (\ _ -> (nat -> nat)) G50 : nat -> nat ;
   x := plus two two : nat ;
 ]

@@ -55,7 +55,7 @@
       h52
         [ \ x : Enum ['zero 'suc] ->
         ] switchD ['zero 'suc] [[] (con ['ind1 []])] x : Desc ;
-    ] fold [(Enum ['zero 'suc]) , h52] x (\ _ -> (nat -> nat)) G50 : nat -> nat ;
+    ] induction [(Enum ['zero 'suc]) , h52] x (\ _ -> (nat -> nat)) G50 : nat -> nat ;
   x := plus two two : nat ;
 ]
 Loaded.

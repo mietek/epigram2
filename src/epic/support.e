@@ -26,8 +26,8 @@ __mapBox (D:Data, p:Data, d:Data) -> Data =
 
 __mapBoxH (p:Data, f:Data, h:Data) -> Data = p(f(h))
 
-__fold(D:Data, m:Data, x:Data) -> Data =
-   m(x,__mapBox(D, __fold(D,m), x))
+__induction(D:Data, m:Data, x:Data) -> Data =
+   m(x,__mapBox(D, __induction(D,m), x))
 
 __map (D:Data, f:Data, x:Data) -> Data =
   case D!0 of
@@ -91,7 +91,7 @@ NatP (d:Data) -> Data =
      }
 
 plus (x:Data, y:Data) -> Data =
-   __fold(Nat, plusH(y), x)
+   __induction(Nat, plusH(y), x)
 
 plusH (y:Data, x:Data, h:Data) -> Data =
    case x!0 of
