@@ -157,7 +157,7 @@
 >   ielimOp :
 
 > import -> OpCompile where
->   ("ifold", [iI,d,i,v,bp,p]) -> App (Var "__ifold") [d, p, i, v]
+>   ("iinduction", [iI,d,i,v,bp,p]) -> App (Var "__iinduction") [d, p, i, v]
 >   ("imapBox", [iI,d,x,bp,p,v]) -> App (Var "__imapBox") [d, p, v]
 
 > import -> OpCode where
@@ -265,7 +265,7 @@
 >      Target (bp $$ A (PAIR i v))
 >   ielimOp :: Op
 >   ielimOp = Op
->     { opName = "ifold"
+>     { opName = "iinduction"
 >     , opArity = 6
 >     , opTyTel = ielimOpTy Nothing
 >     , opRun = elimOpRun

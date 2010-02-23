@@ -25,7 +25,7 @@ give IMu Nat VecD n ;
 make vnil := con [] : Vec zero ;
 make vcons := (\ n a as -> con [ a as , [] ]) : (n : Nat) -> A -> Vec n -> Vec (suc n) ;
 make vappend : (m : Nat) -> Vec m -> (n : Nat) -> Vec n -> Vec (plus m n) ;
-give (\ m as -> ifold Nat Vec.VecD m as (\ mas -> (n : Nat) -> Vec n -> Vec (plus (mas !) n)) ?) ;
+give (\ m as -> iinduction Nat Vec.VecD m as (\ mas -> (n : Nat) -> Vec n -> Vec (plus (mas !) n)) ?) ;
 lambda m ;
 elim N-case m ;
 give \ _ _ _ _ _ n bs -> bs ;
