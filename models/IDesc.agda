@@ -34,13 +34,13 @@ max (suc n) (suc m) = suc (max n m)
 data Sigma {i j : Level}(A : Set i) (B : A -> Set j) : Set (max i j) where
   _,_ : (x : A) (y : B x) -> Sigma A B
 
-_*_ : {i : Level}(A B : Set i) -> Set i
+_*_ : {i j : Level}(A : Set i)(B : Set j) -> Set (max i j)
 A * B = Sigma A \_ -> B
 
-fst : {i : Level}{A : Set i}{B : A -> Set i} -> Sigma A B -> A
+fst : {i j : Level}{A : Set i}{B : A -> Set j} -> Sigma A B -> A
 fst (a , _) = a
 
-snd : {i : Level}{A : Set i}{B : A -> Set i} (p : Sigma A B) -> B (fst p)
+snd : {i j : Level}{A : Set i}{B : A -> Set j} (p : Sigma A B) -> B (fst p)
 snd (a , b) = b
 
 data Zero {i : Level} : Set i where
@@ -50,7 +50,7 @@ record One  {i : Level} : Set i where
 -- Sum and friends
 --****************
 
-data _+_ {i : Level}(A B : Set i) : Set i where
+data _+_ {i j : Level}(A : Set i)(B : Set j) : Set (max i j) where
   l : A -> A + B
   r : B -> A + B
 
