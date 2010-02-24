@@ -988,7 +988,7 @@ We make elimination accessible to the user by adding it as a Cochon tactic:
 >              return $ Just c
 >     (e :=>: ev :<: elimTy) <- elabInfer' r
 >     elimTyTm <- bquoteHere elimTy
->     elim c' ((elimTyTm :=>: elimTy) :>: (N e :=>: ev))
+>     elim c' ((elimTyTm :=>: elimTy) :>: (e :=>: ev))
 >     return "Eliminated. Subgoals awaiting work..."
 
 > import -> CochonTactics where

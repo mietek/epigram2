@@ -573,9 +573,9 @@ lists (so |[]| becomes |@[0]| and |[s , t]| becomes |@ [1 s t]|).
 >     makeElab loc (MU l d :>: DPAIR s t) =
 >         makeElab loc (MU l d :>: DCON (DPAIR (DSU DZE) (DPAIR s (DPAIR t DVOID))))
 >     makeElab loc (SET :>: DMU Nothing d) = do
->         l <- EFake Bale
->         v <- subElab loc (desc :>: d)
->         return (MU (Just l) v)
+>         lt :=>: lv <- EFake True Bale
+>         dt :=>: dv <- subElab loc (desc :>: d)
+>         return $ MU (Just (N lt)) dt :=>: MU (Just lv) dv
 
 
 > import -> ElabCode where

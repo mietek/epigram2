@@ -459,7 +459,7 @@ shared parameters.
 Various commands yield an |EXTM :=>: VAL|, and we sometimes need to convert
 this to an |INTM :=>: VAL|:
 
-> neutralise :: (EXTM :=>: VAL) -> ProofState (INTM :=>: VAL)
+> neutralise :: Monad m => (EXTM :=>: VAL) -> m (INTM :=>: VAL)
 > neutralise (n :=>: v) = return (N n :=>: v)
 
 The |apply| command checks if the last entry in the development is a girl $y$ with type

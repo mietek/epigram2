@@ -220,7 +220,7 @@ Coercion rule:
 
 
 > import -> MakeElabRules where
->   makeElab loc (UNIT :>: DU) = return VOID
+>   makeElab loc (UNIT :>: DU) = return $ VOID :=>: VOID
 
 > import -> DistillRules where
->   distill es (UNIT :>: _) = return (DU :=>: VOID)
+>   distill es (UNIT :>: _) = return $ DU :=>: VOID

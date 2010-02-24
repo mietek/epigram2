@@ -194,12 +194,15 @@ to InDTm, along with appropriate elaboration and distillation rules.
 
 > import -> MakeElabRules where
 >   makeElab loc (PROP :>: DEqBlue t u) = do
->       t' <- makeElabInfer loc t
->       u' <- makeElabInfer loc u
->       return (EQBLUE (t' $$ Fst  :>: t' $$ Snd) (u' $$ Fst :>: u' $$ Snd))
+>       ttt <- makeElabInfer loc t
+>       utt <- makeElabInfer loc u
+>       let ttm :=>: tv :<: tty :=>: ttyv = extractNeutral ttt
+>       let utm :=>: uv :<: uty :=>: utyv = extractNeutral utt
+>       return $  EQBLUE (tty   :>: ttm)  (uty   :>: utm)
+>           :=>:  EQBLUE (ttyv  :>: tv)   (utyv  :>: uv)
 
 > import -> DistillRules where
 >   distill es (PROP :>: tm@(EQBLUE (tty :>: t) (uty :>: u))) = do
 >       t' <- toExDTm es (tty :>: t)
 >       u' <- toExDTm es (uty :>: u)
->       return (DEqBlue t' u' :=>: evTm tm)
+>       return $ DEqBlue t' u' :=>: evTm tm

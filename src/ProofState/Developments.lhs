@@ -60,7 +60,7 @@ Finally, a development can be finalised, in which case it is
 > data Tip
 >   = Module
 >   | Unknown (INTM :=>: TY)
->   | UnknownElab (INTM :=>: TY) (Elab VAL)
+>   | UnknownElab (INTM :=>: TY) (Elab (INTM :=>: VAL))
 >   | Defined INTM (INTM :=>: TY)
 >   deriving Show
 

@@ -11,7 +11,9 @@
 > import Control.Applicative
 > import Control.Monad.State
 > import Control.Monad.Error
-> import Data.List
+> import Data.Foldable
+> import Data.Traversable
+> import Data.List hiding (find)
 > import System.Exit
 > import System.IO 
 
@@ -222,9 +224,9 @@ Construction tactics:
 >           | bwdList (pSep (keyword KwComma) tokenString)
 >           |)
 >          (\ args -> case last args of
->              InArg ty  -> mapM (elabLamBoy . (:<: ty) . argToStr) (init args)
+>              InArg ty  -> Data.Traversable.mapM (elabLamBoy . (:<: ty) . argToStr) (init args)
 >                               >> return "Made lambda boy!"
->              _         -> mapM (lambdaBoy . argToStr) args
+>              _         -> Data.Traversable.mapM (lambdaBoy . argToStr) args
 >                               >> return "Made lambda boy!"
 >            )
 >          ("lambda <labels> - introduces one or more hypotheses.\n"++
@@ -396,7 +398,7 @@ Import more tactics from an aspect:
 >     import <- CochonTactics
 >     : [] )
 
-
+> import <- CochonTacticsCode
 
 
 > pFileName :: Parsley Token String
@@ -415,7 +417,7 @@ Import more tactics from an aspect:
 >                  show err
 >       exitFailure
 >     Right lines -> do
->          t <- sequence $ map readCommand lines
+>          t <- Data.Traversable.sequence $ map readCommand lines
 >          return $ Data.List.concat t
 
 > readCommand :: String -> IO [CTData]

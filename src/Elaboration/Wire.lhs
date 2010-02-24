@@ -216,10 +216,9 @@ that her children have already received, and returns the updated news.
 >                     putDevTip (Unknown tt)
 >                     proofTrace $ "tellMother: resuming elaboration on "
 >                         ++ show (entryName e') ++ ":\n" ++ show elab'
->                     (mtm, okay) <- runElab True (valueOf tt :>: elab')
+>                     (tm :=>: _, okay) <- runElab True (valueOf tt :>: elab')
 >                     if okay
 >                         then do
->                             tm :=>: _ <- forceTerm mtm
 >                             let (tm', _) = tellNews news tm
 >                             give' tm'
 >                             return ()
@@ -229,12 +228,11 @@ that her children have already received, and returns the updated news.
 >     return news'
 
 
-> tellElab :: NewsBulletin -> Elab VAL -> ProofState (Maybe (Elab VAL))
-> tellElab news (Bale v) = do
->     v' <- bquoteHere v
->     case tellNews news v' of
->         (v'', GoodNews)  -> return . Just . Bale . evTm $ v''
->         (_, NoNews)      -> return Nothing
+> tellElab :: NewsBulletin -> Elab (INTM :=>: VAL) -> ProofState (Maybe (Elab (INTM :=>: VAL)))
+> tellElab news (Bale (tm :=>: _)) = do
+>     case tellNews news tm of
+>         (tm', GoodNews)  -> return . Just . Bale  $ tm' :=>: evTm tm'
+>         (_, NoNews)     -> return Nothing
 > tellElab news (ECan v f) = do
 >     v' <- bquoteHere v
 >     case tellNews news v' of

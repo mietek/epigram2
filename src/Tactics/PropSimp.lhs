@@ -5,10 +5,8 @@
 
 > module Tactics.PropSimp where
 
-> import Debug.Trace
-
 > import Control.Applicative 
-> import Control.Monad.Reader hiding (mapM)
+> import Control.Monad.Reader
 > import Data.Foldable
 > import Data.Traversable
 
@@ -18,18 +16,13 @@
 > import NameSupply.NameSupply
 > import NameSupply.NameSupplier
 
-> import DisplayLang.PrettyPrint
-> import DisplayLang.Distiller
-
 > import Evidences.Tm
 > import Evidences.Rules
 
 > import ProofState.ProofState
 > import ProofState.ProofKit
 
-> import Tactics.Information
-
-> import Prelude hiding (any, foldl, mapM)
+> import Prelude hiding (any, foldl)
 
 %endif
 
@@ -285,8 +278,8 @@ $\Delta, \Theta \vdash \lambda sv .
 where $\Theta \cong z_0 : pq_0, ..., z_m : pq_m$.
 
 >         consequent (Simply tqs tgs th) = do
->             pqs <- mapM (dischargeRefAlls sqs) tqs
->             pgs <- mapM wrapper tgs
+>             pqs <- Data.Traversable.mapM (dischargeRefAlls sqs) tqs
+>             pgs <- Data.Traversable.mapM wrapper tgs
 >
 >             freshRef ("sref" :<: PRF s) (\sref -> do
 >                 th' <- dischargeLots tqs th
@@ -331,7 +324,7 @@ Otherwise, |p| simplifies to a conjunction of propositions |(x : s) => q| for ea
 the simplification of |t|.
 
 >     thingy refS (Simply qs gs h) = do
->         pqs <- mapM (dischargeRefAlls (B0 :< refS)) qs
+>         pqs <- Data.Traversable.mapM (dischargeRefAlls (B0 :< refS)) qs
 >         let pgs = fmap wrapper gs
 >         h' <- dischargeLots qs h
 >         let h'' = h' $$$ fmap (\q -> A (NP q $$ A (NP refS))) pqs
@@ -413,7 +406,7 @@ backchained proposition removed.
 >                                                                       
 >     backchain (rs :< ref) fs ss p q = do
 >         guard =<< (asks . equal $ PROP :>: (p, q))
->         ssPrfs <- mapM (seekProof (rs <>< fs) F0 . unPRF . pty) ss
+>         ssPrfs <- Data.Traversable.mapM (seekProof (rs <>< fs) F0 . unPRF . pty) ss
 >         return (pval ref $$$ fmap A ssPrfs)
 >
 >     unPRF :: VAL -> VAL
@@ -513,7 +506,7 @@ constructing a bunch of subgoals that together solve the current goal.
 >             st' <- bquoteHere st
 >             make ("" :<: st')
 >             goIn
->             mapM (const (lambdaBoy "x")) srefs
+>             Data.Traversable.mapM (const (lambdaBoy "x")) srefs
 >             _ :=>: tv <- simplifyGoal'
 >             freshRef ("s" :<: s) (\sref -> do
 >                 let v = tv $$$ fmap (A . ($$ A NP sref)) bits
@@ -544,6 +537,11 @@ constructing a bunch of subgoals that together solve the current goal.
 
 \subsection{Invoking Simplification}
 
+> runPropSimplify :: VAL -> ProofState (Maybe Simplify)
+> runPropSimplify p = do
+>     nsupply <- askNSupply
+>     return (runReaderT (propSimplify B0 p) nsupply)
+
 The |propSimplifyHere| command attempts propositional simplification on the
 current location, which must be an open goal of type |PRF p| for some |p|.
 If it is unable to simplify |p| or simplifies it to |FF|, it will fail and
@@ -554,15 +552,15 @@ current goal with the subgoals, and return a list of them.
 > propSimplifyHere :: ProofState (Bwd (EXTM :=>: VAL))
 > propSimplifyHere = do
 >     (_ :=>: PRF p) <- getHoleGoal
->     nsupply <- askNSupply
->     case runReaderT (propSimplify B0 p) nsupply of
+>     pSimp <- runPropSimplify p
+>     case pSimp of
 >         Nothing                   -> throwError' $ err "propSimplifyHere: unable to simplify."
 >         Just (SimplyAbsurd _)     -> throwError' $ err "propSimplifyHere: oh no, goal is absurd!"
 >
 >         Just (SimplyTrivial prf)  -> bquoteHere prf >>= give' >> return B0
 >
 >         Just (Simply qs _ h) -> do
->             qrs  <- mapM makeSubgoal qs
+>             qrs  <- Data.Traversable.mapM makeSubgoal qs
 >             h'   <- dischargeLots qs h
 >             prf  <- bquoteHere (h' $$$ fmap (A . valueOf) qrs)
 >             give' prf
@@ -581,23 +579,24 @@ of the given reference, and returns its term and value representations.
 The |simplify| tactic attempts to simplify the type of the current goal, which
 should be propositional.
 
-> simplifyCTactic :: ProofState String
-> simplifyCTactic = do
->     subs <- propSimplifyHere 
->     case subs of
->         B0  -> return "Solved."
->         _   -> do
->             subStrs <- mapM (prettyType . termOf)  subs
->             nextGoal
->             return ("Simplified to:\n" ++ 
->                         foldMap (\s -> s ++ "\n") subStrs)
->   where
->     prettyType :: EXTM -> ProofState String
->     prettyType tm = do
->         (_ :<: ty) <- inferHere tm
->         ty' <- bquoteHere ty
->         d <- prettyHere (SET :>: ty')
->         return (renderHouseStyle d)
+> import -> CochonTacticsCode where
+>     simplifyCTactic :: ProofState String
+>     simplifyCTactic = do
+>         subs <- propSimplifyHere 
+>         case subs of
+>             B0  -> return "Solved."
+>             _   -> do
+>                 subStrs <- Data.Traversable.mapM (prettyType . termOf)  subs
+>                 nextGoal
+>                 return ("Simplified to:\n" ++ 
+>                     foldMap (\s -> s ++ "\n") subStrs)
+>       where
+>         prettyType :: EXTM -> ProofState String
+>         prettyType tm = do
+>             (_ :<: ty) <- inferHere tm
+>             ty' <- bquoteHere ty
+>             d <- prettyHere (SET :>: ty')
+>             return (renderHouseStyle d)
 
 > import -> CochonTactics where
 >   : nullaryCT "propsimplify" simplifyCTactic

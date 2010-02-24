@@ -236,9 +236,9 @@ tag in the enumeration to determine the appropriate index.
 > import -> MakeElabRules where
 >   makeElab loc (ENUMT t :>: DTAG a) = findTag a t 0
 >     where
->       findTag :: String -> TY -> Int -> Elab VAL
+>       findTag :: String -> TY -> Int -> Elab (INTM :=>: VAL)
 >       findTag a (CONSE (TAG b) t) n
->         | a == b        = return (toNum n)
+>         | a == b        = return (toNum n :=>: toNum n)
 >         | otherwise     = findTag a t (succ n)
 >       findTag a _ n  = throwError' . err $ "elaborate: tag `" 
 >                                             ++ a 

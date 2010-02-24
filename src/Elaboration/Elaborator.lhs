@@ -29,6 +29,8 @@
 > import DisplayLang.DisplayTm
 > import DisplayLang.Naming
 
+> import Tactics.PropSimp
+
 > import Elaboration.Unification
 
 > import Cochon.Error
@@ -42,19 +44,12 @@
 \section{Implementing the |Elab| monad}
 \label{sec:elab_monad}
 
-> justTerm :: INTM :=>: VAL -> Maybe INTM :=>: VAL
-> justTerm (tm :=>: v) = (Just tm :=>: v)
-
-> forceTerm :: Maybe INTM :=>: VAL -> ProofState (INTM :=>: VAL)
-> forceTerm (Just tm  :=>: v)  = return (tm :=>: v)
-> forceTerm (Nothing  :=>: v)  = bquoteHere v >>= return . (:=>: v)
-
-
 The |runElab| proof state command actually interprets an |Elab x| in
 the proof state. That is, it defines the semantics of the |Elab| syntax.
 
-> runElab :: Bool -> (TY :>: Elab VAL) -> ProofState (Maybe INTM :=>: VAL, Bool)
-> runElab _ (_ :>: Bale x) = return (Nothing :=>: x, True)
+> runElab :: Bool -> (TY :>: Elab (INTM :=>: VAL))
+>                       -> ProofState (INTM :=>: VAL, Bool)
+> runElab _ (_ :>: Bale x) = return (x, True)
 
 > runElab True (ty :>: ELambda x f) = case lambdable ty of
 >     Just (_, s, tyf) -> do
@@ -68,34 +63,36 @@ the proof state. That is, it defines the semantics of the |Elab| syntax.
 > runElab top (ty :>: EGoal f) = runElab top (ty :>: f ty)
 
 > runElab top (ty :>: EHope tyHope f) = runElabHope tyHope
->     >>= runElab top . (ty :>:) . f . valueOf
+>     >>= runElab top . (ty :>:) . f
 
 > runElab top (ty :>: EWait s tyWait f) = do
 >     tyWait' <- bquoteHere tyWait
->     _ :=>: v <- make' Waiting (s :<: tyWait' :=>: tyWait)
->     runElab top (ty :>: f v)
+>     tt <- make' Waiting (s :<: tyWait' :=>: tyWait)
+>     runElab top (ty :>: f tt)
 
 > runElab top (ty :>: ECompute tyComp p f) = runElabCompute tyComp p
 >     >>= runElab top . (ty :>:) . f
 
 > runElab top (ty :>: ESolve ref@(_ := HOLE Hoping :<: _) v f) = do
 >     v' <- bquoteHere v
->     _ :=>: t <- solveHole ref v'
->     runElab top (ty :>: f t)
+>     tt <- solveHole ref v'
+>     runElab top (ty :>: f tt)
 
-> runElab top (ty :>: ESolve ref@(_ := DEFN tv :<: rty) v f) = do
+>{- runElab top (ty :>: ESolve ref@(_ := DEFN tv :<: rty) v f) = do
 >     -- we should check tv == v in some fashion
->     runElab top (ty :>: f tv)
+>     runElab top (ty :>: f tv) -}
 
 > runElab top (ty :>: EElab tyElab (l, p) f)  = runElabElab tyElab l p
 >     >>= runElab top . (ty :>:) . (>>= f)
 
 > runElab top (ty :>: ECan (C c) f) = runElab top (ty :>: f c)
-> runElab True (ty :>: ECan tm f) = return . (, False) . justTerm =<< suspendMe (ECan tm f)
+> runElab True (ty :>: ECan tm f) = do
+>     t :=>: tv <- suspendMe (ECan tm f)
+>     return (N t :=>: tv, False)
 > runElab False (ty :>: ECan tm f) = do
 >     ty' <- bquoteHere ty
 >     t :=>: tv <- suspend ("can" :<: ty' :=>: ty) (ECan tm f)
->     return (justTerm (N t :=>: tv), False)
+>     return (N t :=>: tv, False)
 
 > runElab True (ty :>: ECry e)            = do
 >     e' <- distillErrors e
@@ -108,62 +105,92 @@ the proof state. That is, it defines the semantics of the |Elab| syntax.
 
 > runElab False (ty :>: ECry e) = runElabTop (ty :>: ECry e)
 
-> runElab True (ty :>: EFake f)           = do
+> runElab True (ty :>: EFake b f)           = do
 >     GirlMother (nom := HOLE _ :<: ty) _ _ _ <- getMother
 >     let fr = nom := FAKE :<: ty
->     xs <- (| boySpine getAuncles |)
->     runElab True . (ty :>:) . f . evTm $ P fr $:$ xs
+>     xs <- if b  then  (| boySpine getAuncles |)
+>                 else  (| (init . boySpine) getAuncles |)
+>     let tm = P fr $:$ xs
+>     runElab True . (ty :>:) . f $ tm :=>: evTm tm
 
-> runElab False (ty :>: EFake f) = runElabTop (ty :>: EFake f)
+> runElab False (ty :>: EFake b f) = runElabTop (ty :>: EFake b f)
 
 
 > runElab top (ty :>: EResolve rn f) = do
 >     (ref, as, ms) <- elabResolve rn
->     (tm :<: ty) <- inferHere (P ref $:$ as)
->     runElab top (ty :>: f (PAIR ty tm, ms))
+>     let tm = P ref $:$ as
+>     (tmv :<: tyv) <- inferHere tm
+>     tyv'  <- bquoteHere tyv
+>     runElab top (ty :>: f (PAIR tyv' (N tm) :=>: PAIR tyv tmv, ms))
 >   
 
-> runElabTop :: (TY :>: Elab VAL) -> ProofState (Maybe INTM :=>: VAL, Bool)
+> runElab top (ty :>: EQuote v f) = do
+>     tm <- bquoteHere v
+>     -- proofTrace ("\nEQuote: " ++ show tm)
+>     runElab top (ty :>: f (tm :=>: v))
+
+> runElab top (ty :>: tm) = throwError' . err $ "runElab: cannot evaluate "
+>                                                 ++ show tm
+
+> runElabTop :: (TY :>: Elab (INTM :=>: VAL)) -> ProofState (INTM :=>: VAL, Bool)
 > runElabTop (ty :>: elab) = do
 >     ty' <- bquoteHere ty
->     _ :=>: ptv <- make' Waiting ("subproblem" :<: ty' :=>: ty)
+>     make' Waiting ("subproblem" :<: ty' :=>: ty)
 >     goIn
->     (mm, okay) <- runElab True (ty :>: elab)
+>     (tm :=>: tmv, okay) <- runElab True (ty :>: elab)
 >     if okay
->         then  return . (, True)  . justTerm  =<< neutralise =<< give . termOf =<< forceTerm mm
->         else  return . (, False)  . justTerm =<< neutralise =<< getMotherDefinition
+>         then  return . (, True)  =<< neutralise =<< give tm
+>         else  return . (, False) =<< neutralise =<< getMotherDefinition
 
 
 The |EHope| command hopes for an element of a given type. If it is asking for a
 proof, we might be able to find one, but otherwise we just create a hole.
 
-> runElabHope :: TY -> ProofState (Maybe INTM :=>: VAL)
+> runElabHope :: TY -> ProofState (INTM :=>: VAL)
 > runElabHope (PRF p)  = hopeProof p <|> lastHope (PRF p)
 > runElabHope ty       = lastHope ty
 
-> lastHope :: TY -> ProofState (Maybe INTM :=>: VAL)
+> lastHope :: TY -> ProofState (INTM :=>: VAL)
 > lastHope ty = do
 >     ty' <- bquoteHere ty
->     return . justTerm =<< neutralise =<< make' Hoping ("hope" :<: ty' :=>: ty)
+>     neutralise =<< make' Hoping ("hope" :<: ty' :=>: ty)
 
 
-> hopeProof :: VAL -> ProofState (Maybe INTM :=>: VAL)
+> hopeProof :: VAL -> ProofState (INTM :=>: VAL)
 
 > hopeProof p@(EQBLUE (_S :>: s) (_T :>: (NP ref@(_ := HOLE Hoping :<: _)))) = do
 >     p' <- bquoteHere p
->     return . justTerm =<< neutralise =<< suspend ("hope" :<: PRF p' :=>: PRF p)
->         (ESolve ref s $ const . Bale $ pval refl $$ A _S $$ A s)
+>     neutralise =<< suspend ("hope" :<: PRF p' :=>: PRF p)
+>         (ESolve ref s . const $ EQuote (pval refl $$ A _S $$ A s) Bale)
 
 > hopeProof p@(EQBLUE (_T :>: (NP ref@(_ := HOLE Hoping :<: _))) (_S :>: s)) = do
 >     p' <- bquoteHere p
->     return . justTerm =<< neutralise =<< suspend ("hope" :<: PRF p' :=>: PRF p)
->         (ESolve ref s $ const . Bale $ pval refl $$ A _S $$ A s)
+>     neutralise =<< suspend ("hope" :<: PRF p' :=>: PRF p)
+>         (ESolve ref s . const $ EQuote (pval refl $$ A _S $$ A s) Bale)
 
-> hopeProof TRIVIAL = return . justTerm $ VOID :=>: VOID
+> hopeProof p = do
+>     pSimp <- runPropSimplify p
+>     case pSimp of
+>         Just (SimplyTrivial prf) -> do
+>             prf' <- bquoteHere prf
+>             return $ prf' :=>: prf
+>         Just (SimplyAbsurd _) -> do
+>             throwError' $ err "hopeProof: proposition is absurd!"
+>         Just (Simply qs _ h) -> do
+>             qrs <- Data.Traversable.mapM (hopeProof . pty) qs
+>             h' <- dischargeLots qs h
+>             let prf = h' $$$ fmap (A . valueOf) qrs
+>             prf' <- bquoteHere prf
+>             return $ prf' :=>: prf
+>         Nothing -> (|)
+>         
+
+> {-
+> hopeProof TRIVIAL = return $ VOID :=>: VOID
 > hopeProof (AND p q) = do
->   (mpt :=>: pv) <- hopeProof p
->   (mqt :=>: qv) <- hopeProof q
->   return ( (| PAIR mpt mqt |) :=>: PAIR pv qv)
+>   (pt :=>: pv) <- hopeProof p
+>   (qt :=>: qv) <- hopeProof q
+>   return $ PAIR pt qt :=>: PAIR pv qv
 
 < hopeProof p@(ALL _ _) = elaborate' (PRF p :>: DL ("hopeProof" ::. DU))
 
@@ -173,19 +200,21 @@ proof, we might be able to find one, but otherwise we just create a hole.
 >     guard =<< withNSupply (equal (SET :>: (y0, y1)))
 >     guard =<< withNSupply (equal (y0 :>: (t0, t1)))
 >     let w = pval refl $$ A y0 $$ A t0
->     return (Nothing :=>: w)
+>     w' <- bquoteHere w
+>     return $ w' :=>: w
 >   unroll = do
 >     Right p <- return $ opRun eqGreen [y0, t0, y1, t1]
->     (mt :=>: v) <- hopeProof p
->     return ( (|CON mt|) :=>: CON v)
+>     (tm :=>: tmv) <- hopeProof p
+>     return $ CON tm :=>: CON tmv
 > hopeProof p@(N (qop :@ [y0, t0, y1, t1])) | qop == eqGreen = do
 >   let g = EQBLUE (y0 :>: t0) (y1 :>: t1)
->   (_ :=>: v) <- hopeProof g
->   let v' = v $$ Out
->   return (Nothing :=>: v')
+>   (tm :=>: tmv) <- hopeProof g
+>   let w = tmv $$ Out
+>   w' <- bquoteHere w
+>   return $ w' :=>: w
 > hopeProof p = search p
 
-> search :: VAL -> ProofState (Maybe INTM :=>: VAL)
+> search :: VAL -> ProofState (INTM :=>: VAL)
 > search p = (|) {-do
 >   es <- getAuncles
 >   aunclesProof es p -}
@@ -202,21 +231,21 @@ proof, we might be able to find one, but otherwise we just create a hole.
 >   guard =<< withNSupply (equal (PROP :>: (p, p')))
 >   t <- bquoteHere v
 >   return (t :=>: v)
-> synthProof _ _ = (|)
+> synthProof _ _ = (|) -}
 
 
 The |ECompute| command computes the solution to a problem, given its type. 
 
-> runElabCompute :: TY -> CProb -> ProofState VAL
+> runElabCompute :: TY -> CProb -> ProofState (INTM :=>: VAL)
 > runElabCompute ty (SubProb elab) =
->     return . valueOf . fst =<< runElab False (ty :>: elab)
+>     return . fst =<< runElab False (ty :>: elab)
 
-> runElabElab :: TY -> Loc -> EProb -> ProofState (Elab VAL)
+> runElabElab :: TY -> Loc -> EProb -> ProofState (Elab (INTM :=>: VAL))
 > runElabElab ty loc (ElabProb tm)       = return (makeElab loc (ty :>: tm))
 > runElabElab ty loc (ElabInferProb tm)  = return (makeElabInfer loc tm)
 
 
-> elabEnsure :: VAL -> (Can VAL :>: Can ()) -> Elab (Can VAL, VAL)
+> {- elabEnsure :: VAL -> (Can VAL :>: Can ()) -> Elab (Can VAL, VAL)
 > elabEnsure (C v) (ty :>: t) = case halfZip v t of
 >     Nothing  -> throwError' $ err "elabEnsure: failed to match!"
 >     Just _   -> return (v, pval refl $$ A (C ty) $$ A (C v))
@@ -227,13 +256,14 @@ The |ECompute| command computes the solution to a problem, given its type.
 >     return (v, p)
 >  where
 >    chev :: (TY :>: ()) -> WrapElab (() :=>: VAL)
->    chev (ty :>: ()) = WrapElab (EHope ty (return . (() :=>:)))
+>    chev (ty :>: ()) = WrapElab (EHope ty (return . (() :=>:))) -}
 
 The |suspend| command can be used to delay elaboration, by creating a subgoal
 of the given type and attaching a suspended elaboration process to its tip.
 When the scheduler hits the goal, the elaboration process will restart.
 
-> suspend :: (String :<: INTM :=>: TY) -> Elab VAL -> ProofState (EXTM :=>: VAL)
+> suspend :: (String :<: INTM :=>: TY) -> Elab(INTM :=>: VAL)
+>                -> ProofState (EXTM :=>: VAL)
 > suspend (x :<: tt) elab = do
 >     r <- make' Waiting (x :<: tt)
 >     Just (E ref xn (Girl LETG (es, Unknown utt, nsupply) ms) tm) <- removeDevEntry
@@ -241,20 +271,11 @@ When the scheduler hits the goal, the elaboration process will restart.
 >     return r
 
 
-> suspendMe :: Elab VAL -> ProofState (INTM :=>: VAL)
+> suspendMe :: Elab (INTM :=>: VAL) -> ProofState (EXTM :=>: VAL)
 > suspendMe elab = do
 >     Unknown tt <- getDevTip
 >     putDevTip (UnknownElab tt elab)
->     t :=>: tv <- getMotherDefinition
->     return (N t :=>: tv)
-
-
-The |chevElab| helper function is a checker-evaluator version of |makeElab|
-that can be passed to |canTy| and |elimTy|. It creates appropriate subgoals
-for each component and continues elaborating.
-
-> chevElab :: Loc -> (TY :>: InDTmRN) -> Elab (() :=>: VAL)
-> chevElab loc (ty :>: tm) = subElab loc (ty :>: tm) >>= return . (() :=>:)
+>     getMotherDefinition
 
 
 \section{Elaboration}
@@ -270,60 +291,74 @@ $\lambda$-lift terms.
 
 > elaborate :: Loc -> (TY :>: InDTmRN) -> ProofState (INTM :=>: VAL)
 > elaborate loc (ty :>: tm) = runElab False (ty :>: makeElab loc (ty :>: tm))
->     >>= forceTerm . fst
+>     >>= return . fst
 
 > elaborate' = elaborate (Loc 0)
 
 > elaborateHere :: Loc -> InDTmRN -> ProofState (INTM :=>: VAL)
 > elaborateHere loc tm = do
 >     _ :=>: ty <- getHoleGoal
->     forceTerm . fst =<< runElab True (ty :>: makeElab loc (ty :>: tm))
+>     return . fst =<< runElab True (ty :>: makeElab loc (ty :>: tm))
 
 > elaborateHere' = elaborateHere (Loc 0)
 
-> elabInfer :: Loc -> ExDTmRN -> ProofState (EXTM :=>: VAL :<: TY)
+> elabInfer :: Loc -> ExDTmRN -> ProofState (INTM :=>: VAL :<: TY)
 > elabInfer loc tm = do
->     (mm, _) <- runElab False (sigSetVAL :>: makeElabInfer loc tm)
->     t :=>: tv <- forceTerm mm
->     return ((t :? sigSetTM) :$ Snd :=>: tv $$ Snd :<: tv $$ Fst)
+>     (tt, _) <- runElab False (sigSetVAL :>: makeElabInfer loc tm)
+>     let (tt' :<: _ :=>: ty) = extractNeutral tt
+>     return (tt' :<: ty)
 
 > elabInfer' = elabInfer (Loc 0)
 
 
 
-> subElab :: Loc -> (TY :>: InDTmRN) -> Elab VAL
+> subElab :: Loc -> (TY :>: InDTmRN) -> Elab (INTM :=>: VAL)
 > subElab loc (ty :>: tm) = ECompute ty (SubProb (makeElab loc (ty :>: tm))) Bale
 
 
-> makeElab :: Loc -> (TY :>: InDTmRN) -> Elab VAL
+> makeElab :: Loc -> (TY :>: InDTmRN) -> Elab (INTM :=>: VAL)
 
 > import <- MakeElabRules
 
 These rules should be moved to features.
 
+> makeElab loc (SET :>: DIMU Nothing iI d i) = do
+>       l :=>: lv <- EFake False Bale
+>       iI :=>: iIv <- subElab loc (SET :>: iI)
+>       d :=>: dv <- subElab loc (ARR iIv (IDESC iIv) :>: d)
+>       i :=>: iv <- subElab loc (iIv :>: i)
+
+<       lastIsIndex <- withNSupply (equal (SET :>: (iv,N (P (last xs)))))
+<       guard lastIsIndex
+<       -- should check i doesn't appear in d (fairly safe it's not in iI :))
+
+>       return $ IMU (Just (N l)) iI d i :=>: IMU (Just lv) iIv dv iv
+
 > makeElab loc (PI UNIT t :>: DCON f) = do
->     m <- subElab loc (t $$ A VOID :>: f)
->     return $ LK m
+>     tm :=>: tmv <- subElab loc (t $$ A VOID :>: f)
+>     return $ LK tm :=>: LK tmv
 
 > makeElab loc (PI (MU l d) t :>: DCON f) = do
->     m <- subElab loc $ case l of
+>     _ :=>: tmv <- subElab loc $ case l of
 >         Nothing  -> elimOpMethodType $$ A d $$ A t :>: f
 >         Just l   -> elimOpLabMethodType $$ A l $$ A d $$ A t :>: f
 >     x <- ELambda (fortran t) Bale
->     return $ elimOp @@ [d, NP x, t, m]
+>     EQuote (elimOp @@ [d, NP x, t, tmv]) Bale
 
 > makeElab loc (PI (SIGMA d r) t :>: DCON f) = do
 >     let mt =  PI d . L . HF (fortran r) $ \ a ->
 >               PI (r $$ A a) . L . HF (fortran t) $ \ b ->
 >               t $$ A (PAIR a b)
->     m <- subElab loc (mt :>: f)
+>     tm :=>: tmv <- subElab loc (mt :>: f)
+>     mt' :=>: _ <- EQuote mt Bale
 >     x <- ELambda (fortran t) Bale
->     return $ (m $$ A (NP x $$ Fst)) $$ A (NP x $$ Snd)
+>     return $ N ((tm :? mt') :$ A (N (P x :$ Fst)) :$ A (N (P x :$ Snd)))
+>                     :=>: tmv $$ A (NP x $$ Fst) $$ A (NP x $$ Snd)
 
 > makeElab loc (PI (ENUMT e) t :>: m) | isTuply m = do
->     m <- subElab loc (branchesOp @@ [e, t] :>: m)
+>     _ :=>: tmv <- subElab loc (branchesOp @@ [e, t] :>: m)
 >     x <- ELambda (fortran t) Bale
->     return $ switchOp @@ [e, NP x, t, m]
+>     EQuote (switchOp @@ [e, NP x, t, tmv]) Bale
 >   where
 >     isTuply :: InDTmRN -> Bool
 >     isTuply DVOID        = True
@@ -335,8 +370,7 @@ These rules should be moved to features.
 >   makeElab loc (QUOTIENT a r p :>: DCLASS x)
 
 > makeElab loc (NU d :>: DCOIT DU sty f s) = do
->   let  nsupply = (B0 :< ("__makeElab", 0), 0) :: NameSupply
->        d' = bquote B0 d nsupply
+>   d' :=>: _ <- EQuote d Bale
 >   makeElab loc (NU d :>: DCOIT (DTIN d') sty f s)
 
 
@@ -344,14 +378,14 @@ These rules should be moved to features.
 We use underscores |DU| in elaboration to mean "figure this out yourself".
 
 > makeElab loc (ty :>: DU) = EHope ty Bale
-> makeElab loc (ty :>: DQ s) = EWait s ty Bale
+> makeElab loc (ty :>: DQ s) = EWait s ty neutralise
 
 
 Elaborating a canonical term with canonical type is a job for |canTy|.
 
 > makeElab loc (C ty :>: DC tm) = do
->     v <- canTy (chevElab loc) (ty :>: tm)
->     return $ C $ fmap valueOf v
+>     v <- canTy (subElab loc) (ty :>: tm)
+>     return $ (C $ fmap termOf v) :=>: (C $ fmap valueOf v)
 
 
 There are a few possibilities for elaborating $\lambda$-abstractions. If both the
@@ -359,8 +393,8 @@ range and term are constants, then we simply |makeElab| underneath. This avoids
 creating some trivial children. 
 
 > makeElab loc (PI s (L (K t)) :>: DL (DK dtm)) = do
->     tm <- subElab loc (t :>: dtm)
->     return $ LK tm
+>     tm :=>: tmv <- subElab loc (t :>: dtm)
+>     return $ LK tm :=>: LK tmv
 
 Otherwise, we can simply create a |lambdaBoy| in the current
 development, and carry on elaborating.
@@ -375,9 +409,20 @@ We push types in to neutral terms by calling |makeElabInfer| on the term, then
 hoping that the result type is equal to the type we pushed in.
 
 > makeElab loc (w :>: DN n) = do
->     yn <- makeElabInfer loc n
->     q <- EHope (PRF (EQBLUE (SET :>: yn $$ Fst) (SET :>: w))) Bale
->     return (coe @@ [yn $$ Fst, w, q, yn $$ Snd])
+>     tt <- makeElabInfer loc n
+>     let (yt :=>: yn :<: ty :=>: tyv) = extractNeutral tt
+>     case opRunEqGreen [SET, tyv, SET, w] of
+>         Right TRIVIAL -> return (yt :=>: yn)
+>         _ -> do
+>             qt :=>: q <- EHope (PRF (EQBLUE (SET :>: tyv) (SET :>: w))) Bale
+>             w' :=>: _ <- EQuote w Bale
+>             return $ N (coe :@ [ty, w', qt, yt])
+>                             :=>: coe @@ [tyv, w, q, yn]
+
+> {-makeElab loc (w :>: DN n) = do
+>     yt :=>: yn <- makeElabInfer loc n
+>     qq :=>: q <- EHope (PRF (EQBLUE (SET :>: yn $$ Fst) (SET :>: w))) Bale
+>     EQuote (coe @@ [yn $$ Fst, w, q, yn $$ Snd]) Bale -}
 
 
 If we already have an evidence term, we just have to type-check it.
@@ -386,7 +431,7 @@ If we already have an evidence term, we just have to type-check it.
 >     let nsupply = (B0 :< ("__makeElabDTIN", 0), 0) :: NameSupply
 >     case liftError (typeCheck (check (ty :>: tm)) nsupply) of
 >         Left e -> throwError e
->         Right (_ :=>: v) -> return v
+>         Right tt -> return tt
 
 
 If nothing else matches, give up and report an error.
@@ -401,15 +446,22 @@ The |makeElabInfer| command is to |infer| in subsection~\ref{subsec:type-inferen
 as |elaborate| is to |check|. It infers the type of a display term, calling on
 the elaborator rather than the type-checker.
 
-> makeElabInfer :: Loc -> ExDTmRN -> Elab VAL
+> extractNeutral :: INTM :=>: VAL -> INTM :=>: VAL :<: INTM :=>: TY
+> extractNeutral (PAIR ty tm :=>: tv) = tm :=>: tv $$ Snd :<: ty :=>: tv $$ Fst
+> extractNeutral (tm :=>: tv) = N (tm' :$ Snd) :=>: tv $$ Snd :<: N (tm' :$ Fst) :=>: tv $$ Fst
+>   where tm' = tm :? sigSetTM
+
+> makeElabInfer :: Loc -> ExDTmRN -> Elab (INTM :=>: VAL)
 
 > makeElabInfer loc (t ::$ ss) = do
->     (tytv, ms) <- makeElabInferHead loc t
->     let ss' = case ms of
+>     tt <- makeElabInferHead loc t
+>     let (tm :=>: tmv :<: ty :=>: tyv) = extractNeutral tt
+>     let ss' = {-case ms of
 >                   Just sch  -> schemer sch ss
->                   Nothing   -> ss
->     (v :<: ty) <- handleArgs (tytv $$ Snd :<: tytv $$ Fst) ss'
->     return (PAIR ty v)
+>                   Nothing   -> -} ss
+>     (t :=>: v :<: y) <- handleArgs (tm :? ty :=>: tmv :<: tyv) ss'
+>     y' :=>: _ <- EQuote y Bale
+>     return $ PAIR y' (N t) :=>: PAIR y v
 >   where
 >     schemer :: Scheme INTM -> DSpine RelName -> DSpine RelName
 >     schemer (SchType _) as = as
@@ -419,27 +471,34 @@ the elaborator rather than the type-checker.
 >         a : schemer schT as
 >     schemer (SchExplicitPi (x :<: schS) schT) [] = []
 
->     handleArgs :: (VAL :<: TY) -> DSpine RelName -> Elab (VAL :<: TY)
->     handleArgs (v :<: ty) [] = return (v :<: ty)
->     handleArgs (v :<: C cty) (a : as) = do
->         (a', ty') <- elimTy (chevElab loc) (v :<: cty) a
->         handleArgs (v $$ fmap valueOf a' :<: ty') as
->     handleArgs (v :<: ty) as = do
+>     handleArgs :: (EXTM :=>: VAL :<: TY) -> DSpine RelName -> Elab (EXTM :=>: VAL :<: TY)
+>     handleArgs (tt :<: ty) [] = return (tt :<: ty)
+>     handleArgs (t :=>: v :<: C cty) (a : as) = do
+>         (a', ty') <- elimTy (subElab loc) (v :<: cty) a
+>         handleArgs (t :$ fmap termOf a' :=>: v $$ fmap valueOf a' :<: ty') as
+>     handleArgs (tt :<: ty) as = do
 >         cty <- ECan ty Bale
->         handleArgs (v :<: C cty) as
+>         handleArgs (tt :<: C cty) as
 
+> makeElabInferHead :: Loc -> DHead RelName -> Elab (INTM :=>: VAL)
 
-> makeElabInferHead :: Loc -> DHead RelName -> Elab (VAL, Maybe (Scheme INTM))
-
-> makeElabInferHead loc (DP rn) = EResolve rn Bale
+> makeElabInferHead loc (DP rn) = do
+>     (tm :=>: tmv, ms) <- EResolve rn Bale
+>     return $ tm :=>: tmv
 
 > makeElabInferHead loc (DType ty) = do
->     tyv <- subElab loc (SET :>: ty)
->     return (PAIR (ARR tyv tyv) (idVAL "typecast"), Nothing)
+>     tm :=>: tmv <- subElab loc (SET :>: ty)
+>     return $ PAIR (ARR tm tm) (idTM "typecast")
+>                  :=>: PAIR (ARR tmv tmv) (idVAL "typecast")
 
 > makeElabInferHead loc tm = throwError' $ err "makeElabInferHead: can't cope with"
 >     ++ errTm (DN (tm ::$ []))
 
+
+> neutraliseElab :: Elab (EXTM :=>: VAL) -> Elab (INTM :=>: VAL)
+> neutraliseElab f = do
+>     tm :=>: tmv <- f
+>     return (N tm :=>: tmv)
 
 > elmCT :: ExDTmRN -> ProofState String
 > elmCT tm = do
@@ -462,9 +521,9 @@ the elaborator rather than the type-checker.
 >             putDevTip (Unknown tt)
 >             proofTrace $ "scheduler: resuming elaboration on " ++ show (refName ref)
 >                 ++ ":\n" ++ show elab
->             (mm, okay) <- runElab True (valueOf tt :>: elab)
+>             (tm :=>: tmv, okay) <- runElab True (valueOf tt :>: elab)
 >             if okay
->                 then forceTerm mm >>= give' . termOf >> return ()
+>                 then give' tm >> return ()
 >                 else proofTrace "scheduler: elaboration suspended."
 >             cursorTop
 >             scheduler (n+1)

@@ -44,25 +44,26 @@ to which source code locations.
 >             |  ElabInferProb ExDTmRN
 >   deriving Show
 
-> data CProb  = SubProb (Elab VAL)
+> data CProb  = SubProb (Elab (INTM :=>: VAL))
 >   deriving Show
 
-The command signature given above defines the following free monad, which
+The command signature given above defines the following monad, which
 gives the syntax for commands.
 
 > data Elab x
 >     =  Bale x
 >     |  ELambda String (REF -> Elab x)
 >     |  EGoal (TY -> Elab x)
->     |  EHope TY (VAL -> Elab x)
->     |  EWait String TY (VAL -> Elab x)
+>     |  EHope TY (INTM :=>: VAL -> Elab x)
+>     |  EWait String TY (EXTM :=>: VAL -> Elab x)
 >     |  ECry (StackError InDTmRN)
->     |  ECompute TY CProb (VAL -> Elab x)
->     |  ESolve REF VAL (VAL -> Elab x)
->     |  EElab TY  (Loc, EProb) (VAL -> Elab x)
+>     |  ECompute TY CProb (INTM :=>: VAL -> Elab x)
+>     |  ESolve REF VAL (EXTM :=>: VAL -> Elab x)
+>     |  EElab TY  (Loc, EProb) (INTM :=>: VAL -> Elab x)
 >     |  ECan VAL (Can VAL -> Elab x)
->     |  EFake (VAL -> Elab x)
->     |  EResolve RelName ((VAL, Maybe (Scheme INTM)) -> Elab x)
+>     |  EFake Bool (EXTM :=>: VAL -> Elab x)
+>     |  EResolve RelName ((INTM :=>: VAL, Maybe (Scheme INTM)) -> Elab x)
+>     |  EQuote VAL (INTM :=>: VAL -> Elab x)
 
 %if False
 
@@ -77,8 +78,9 @@ gives the syntax for commands.
 >     show (ESolve ref v _)   = "ESolve (" ++ show ref ++ ") (" ++ show v ++ ") (...)"
 >     show (EElab ty lp _)    = "EElab (" ++ show ty ++ ") " ++ show lp ++ " (...)"
 >     show (ECan v _)         = "ECan (" ++ show v ++ ") (...)"
->     show (EFake _)          = "EFake (...)"
+>     show (EFake b _)        = "EFake " ++ show b ++ " (...)"
 >     show (EResolve rn _)    = "EResolve " ++ show rn ++ " (...)"
+>     show (EQuote q _)       = "EQuote (" ++ show q ++ ") (...)"
 
 > instance Monad Elab where
 >     fail s  = ECry [err $ "fail: " ++ s]
@@ -94,8 +96,9 @@ gives the syntax for commands.
 >     ESolve r v f    >>= k = ESolve r v     ((k =<<) . f)
 >     EElab t lp f    >>= k = EElab t lp     ((k =<<) . f)
 >     ECan v f        >>= k = ECan v         ((k =<<) . f)
->     EFake f         >>= k = EFake          ((k =<<) . f)
+>     EFake b f       >>= k = EFake b        ((k =<<) . f)
 >     EResolve rn f   >>= k = EResolve rn    ((k =<<) . f)
+>     EQuote q f      >>= k = EQuote q       ((k =<<) . f)
 
 > instance Functor Elab where
 >     fmap = ap . return
