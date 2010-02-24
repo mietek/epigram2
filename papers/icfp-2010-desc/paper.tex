@@ -287,7 +287,7 @@ following implications always hold by induction on derivations.
 \descop{\_\:}{} : \Desc \To \Set \To \Set \\
 \begin{array}{@{}ll@{\:=\:\:}ll}
 \descop{\DUnit}{& X}        &  \Unit                                       \\
-\descop{\DSigma{S}{D}}{& X} &  \SIGMAS{\V{s} : S}{\descop{D s}{X}}         \\
+\descop{\DSigma{S}{D}}{& X} &  \SIGMAS{\V{s} : S}{\descop{D~s}{X}}         \\
 \descop{\DIndx{D}}{& X}     &  \TIMES{X}{\descop{D}{X}}
 \end{array}
 }\]
@@ -346,7 +346,7 @@ following implications always hold by induction on derivations.
 \begin{array}{lcl}
 \F{induction} & : & \PITEL{D}{\Desc}                \\
               &   & \PITEL{P}{\Mu{D} \To \Set}      \\
-              &   & \PITEL{p}{\PI{xs}{\descop{D}{(\Mu{D})}} \All{(\Mu{D})}{P}{xs} \To P (\Con{xs})} \\
+              &   & \PITEL{m}{\PI{xs}{\descop{D}{(\Mu{D})}} \All{(\Mu{D})}{P}{xs} \To P (\Con{xs})} \\
               &   & \PI{x}{\Mu{D}} P x
 \end{array}
 \]
@@ -399,7 +399,7 @@ following implications always hold by induction on derivations.
 
 \[\stk{
 \DescD : \Desc \\
-\begin{array}{ll}
+\begin{array}{@{}ll}
 \DescD \mapsto \DSigma{}{} & (\EnumT [ \DUnit, \DSigma{}{}, \DIndx{}, \DHindx{}{} ]) \\
                            & \left[\begin{array}{l}
                                    \DUnit                                \\
