@@ -20,7 +20,6 @@
 > import Features.Features ()
 
 > import ProofState.Developments
-> import ProofState.ElabMonad
 > import ProofState.Lifting
 > import ProofState.ProofContext
 > import ProofState.ProofState
@@ -31,6 +30,7 @@
 
 > import Tactics.PropSimp
 
+> import Elaboration.ElabMonad
 > import Elaboration.Unification
 
 > import Cochon.Error
@@ -42,7 +42,7 @@
 
 
 \section{Implementing the |Elab| monad}
-\label{sec:elab_monad}
+\label{sec:implementing_elab_monad}
 
 The |runElab| proof state command actually interprets an |Elab x| in
 the proof state. That is, it defines the semantics of the |Elab| syntax.
@@ -78,9 +78,9 @@ the proof state. That is, it defines the semantics of the |Elab| syntax.
 >     tt <- solveHole ref v'
 >     runElab top (ty :>: f tt)
 
->{- runElab top (ty :>: ESolve ref@(_ := DEFN tv :<: rty) v f) = do
->     -- we should check tv == v in some fashion
->     runElab top (ty :>: f tv) -}
+< runElab top (ty :>: ESolve ref@(_ := DEFN tv :<: rty) v f) = do
+<     -- we should check tv == v in some fashion
+<     runElab top (ty :>: f tv)
 
 > runElab top (ty :>: EElab tyElab (l, p) f)  = runElabElab tyElab l p
 >     >>= runElab top . (ty :>:) . (>>= f)
@@ -207,18 +207,18 @@ The |ECompute| command computes the solution to a problem, given its type.
 > runElabElab ty loc (ElabInferProb tm)  = return (makeElabInfer loc tm)
 
 
-> {- elabEnsure :: VAL -> (Can VAL :>: Can ()) -> Elab (Can VAL, VAL)
-> elabEnsure (C v) (ty :>: t) = case halfZip v t of
->     Nothing  -> throwError' $ err "elabEnsure: failed to match!"
->     Just _   -> return (v, pval refl $$ A (C ty) $$ A (C v))
-> elabEnsure nv (ty :>: t) = do
->     vu <- unWrapElab $ canTy chev (ty :>: t)
->     let v = fmap valueOf vu
->     p <- EHope (PRF (EQBLUE (C ty :>: nv) (C ty :>: C v))) Bale
->     return (v, p)
->  where
->    chev :: (TY :>: ()) -> WrapElab (() :=>: VAL)
->    chev (ty :>: ()) = WrapElab (EHope ty (return . (() :=>:))) -}
+< elabEnsure :: VAL -> (Can VAL :>: Can ()) -> Elab (Can VAL, VAL)
+< elabEnsure (C v) (ty :>: t) = case halfZip v t of
+<     Nothing  -> throwError' $ err "elabEnsure: failed to match!"
+<     Just _   -> return (v, pval refl $$ A (C ty) $$ A (C v))
+< elabEnsure nv (ty :>: t) = do
+<     vu <- unWrapElab $ canTy chev (ty :>: t)
+<     let v = fmap valueOf vu
+<     p <- EHope (PRF (EQBLUE (C ty :>: nv) (C ty :>: C v))) Bale
+<     return (v, p)
+<  where
+<    chev :: (TY :>: ()) -> WrapElab (() :=>: VAL)
+<    chev (ty :>: ()) = WrapElab (EHope ty (return . (() :=>:)))
 
 The |suspend| command can be used to delay elaboration, by creating a subgoal
 of the given type and attaching a suspended elaboration process to its tip.

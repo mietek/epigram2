@@ -7,7 +7,7 @@
 > {-# LANGUAGE TypeOperators, TypeSynonymInstances, FlexibleInstances,
 >              MultiParamTypeClasses, GeneralizedNewtypeDeriving #-}
 
-> module ProofState.ElabMonad where
+> module Elaboration.ElabMonad where
 
 > import Control.Applicative
 > import Control.Monad
@@ -35,7 +35,7 @@ then write an interpreter to run the syntax in the |ProofState| monad.
 < solve : REF -> VAL -> REF
 < ensure : VAL -> Can () -> (Can VAL, VAL)
 
- We will eventually need to keep track of which elaboration problems correspond
+We will eventually need to keep track of which elaboration problems correspond
 to which source code locations.
 
 > newtype Loc = Loc Int deriving Show

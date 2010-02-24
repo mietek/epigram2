@@ -18,7 +18,7 @@
 
 > import Evidences.Tm
 
-> import ProofState.ElabMonad
+> import Elaboration.ElabMonad
 
 > import DisplayLang.DisplayTm
 

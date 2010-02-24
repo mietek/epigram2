@@ -87,7 +87,6 @@
 %include ProofState/ProofContext.lhs
 %include ProofState/ProofState.lhs
 %include ProofState/ProofKit.lhs
-%include ProofState/ElabMonad.lhs
 
 \chapter{The Proof Tactics}
 
@@ -112,6 +111,7 @@
 
 \chapter{Elaboration}
 
+%include Elaboration/ElabMonad.lhs
 %include Elaboration/Elaborator.lhs
 %include Elaboration/Wire.lhs
 %include Elaboration/Unification.lhs

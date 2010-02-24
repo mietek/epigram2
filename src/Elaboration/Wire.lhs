@@ -20,11 +20,11 @@
 > import ProofState.ProofContext
 > import ProofState.ProofState
 > import ProofState.ProofKit
-> import ProofState.ElabMonad
 
 > import Evidences.Tm
 > import Evidences.Rules
 
+> import Elaboration.ElabMonad
 > import Elaboration.Elaborator
 
 %endif
