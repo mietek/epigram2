@@ -47,8 +47,8 @@ __imapBox (D:Data, p:Data, d:Data) -> Data =
 
 __imapBoxH (p:Data, hi:Data, f:Data, h:Data) -> Data = p([hi(h),f(h)])
 
-__ifold(D:Data, m:Data, i :Data, x:Data) -> Data =
-   m(i,x,__imapBox(D(i), __ifold(D,m), x))
+__iinduction(D:Data, m:Data, i :Data, x:Data) -> Data =
+   m(i,x,__imapBox(D(i), __iinduction(D,m), x))
 
 __lazyMap (D:Data, f:Data, x:Data) -> Data =
   case D!0 of
