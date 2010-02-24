@@ -316,7 +316,9 @@ presence of |Just| is that |canTy| asks for a |MonadError|. Obviously,
 we cannot fail in this code, but we have to be artificially cautious.
 
 > inQuote (C cty :>: C cv) r = either 
->     (error "inQuote: impossible!") 
+>     (error $ 
+>         "inQuote: impossible! Type " ++ show (fmap (\_ -> ()) cty) ++ 
+>         " doesn't admit " ++ show cv)
 >     id $ do
 >          ct <- canTy chev (cty :>: cv)
 >          return $ C $ fmap termOf ct

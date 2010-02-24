@@ -105,6 +105,13 @@ updated information, providing a friendlier interface than |get| and |put|.
 >    where boy (E r _ (Boy _) _)  = [r]
 >          boy _ = []
 
+> getBoysBwd :: ProofStateT e (Bwd REF)
+> getBoysBwd = do  
+>     auncles <- getAuncles
+>     return $ foldMap boy auncles 
+>    where boy (E r _ (Boy _) _)  = (B0 :< r)
+>          boy _ = B0
+
 > getHoleGoal :: ProofStateT e (INTM :=>: TY)
 > getHoleGoal = do
 >     GirlMother (_ := HOLE _ :<: _) _ _ _ <- getMother

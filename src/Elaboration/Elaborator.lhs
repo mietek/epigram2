@@ -177,7 +177,7 @@ proof, we might be able to find one, but otherwise we just create a hole.
 >         Just (SimplyAbsurd _) -> do
 >             throwError' $ err "hopeProof: proposition is absurd!"
 >         Just (Simply qs _ h) -> do
->             qrs <- Data.Traversable.mapM (hopeProof . pty) qs
+>             qrs <- Data.Traversable.mapM (runElabHope . pty) qs
 >             h' <- dischargeLots qs h
 >             let prf = h' $$$ fmap (A . valueOf) qrs
 >             prf' <- bquoteHere prf

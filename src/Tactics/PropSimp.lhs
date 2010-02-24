@@ -158,22 +158,23 @@ function with a |VAL -> VAL| function.
 
 The |propSimplify| command takes a proposition and attempts to simplify it.
 
-> propSimplify :: Bwd REF -> VAL -> Simplifier Simplify
+> propSimplify :: Bwd REF -> Bwd REF -> VAL -> Simplifier Simplify
 
 
 Simplifying |TT| and |FF| is remarkably easy.
 
-> propSimplify _ ABSURD   = return (SimplyAbsurd   id)
-> propSimplify _ TRIVIAL  = return (SimplyTrivial  VOID)
+> propSimplify _ _ ABSURD   = return (SimplyAbsurd   id)
+> propSimplify _ _ TRIVIAL  = return (SimplyTrivial  VOID)
 
 
 To simplify a conjunction, we simplify each conjunct separately, then call the
 |simplifyAnd| helper function to combine the results.
 
-> propSimplify delta (AND p1 p2) = forkNSupply "psAnd1" (forceSimplify delta p1)
->     (\ p1Simp -> forkNSupply "psAnd2" (forceSimplify delta p2)
->         (\ p2Simp ->
->             return (simplifyAnd p1Simp p2Simp)))
+> propSimplify gamma delta (AND p1 p2) = forkNSupply "psAnd1"
+>     (forceSimplify gamma delta p1)
+>     (\ p1Simp -> forkNSupply "psAnd2"
+>         (forceSimplify gamma delta p2)
+>         (\ p2Simp -> return (simplifyAnd p1Simp p2Simp)))
 >   where
 >     simplifyAnd :: Simplify -> Simplify -> Simplify
 
@@ -194,8 +195,8 @@ the application of |Fst| or |Snd| as appropriate.
 
 To simplify |p = (x :- s) => t|, we first try to simplify |s|:
 
-> propSimplify delta p@(ALL (PRF s) l) =
->     forkNSupply "psImp1" (forceSimplifyNamed delta s (fortran l)) antecedent
+> propSimplify gamma delta p@(ALL (PRF s) l) =
+>     forkNSupply "psImp1" (forceSimplifyNamed gamma delta s (fortran l)) antecedent
 >   where
 >     antecedent :: Simplify -> Simplifier Simplify
 
@@ -212,7 +213,7 @@ proofs constructed by $\lambda$-abstracting in one direction and applying the
 proof of |s| in the other direction.
 
 >     antecedent (SimplyTrivial prfS) =
->         forkNSupply "psImp2" (forceSimplify delta (l $$ A prfS)) consequentTrivial
+>         forkNSupply "psImp2" (forceSimplify gamma delta (l $$ A prfS)) consequentTrivial
 >       where
 >         consequentTrivial :: Simplify -> Simplifier Simplify
 >         consequentTrivial (SimplyAbsurd prfAbsurdT) =
@@ -227,7 +228,7 @@ under the binder by adding the simplified conjuncts of |s| to the context and
 applying |l| to |sh| (the proof of |s| in the extended context). 
 
 >     antecedent (Simply sqs sgs sh) =
->         forkNSupply "psImp3" (forceSimplify (delta <+> sqs) (l $$ A sh)) consequent
+>         forkNSupply "psImp3" (forceSimplify gamma (delta <+> sqs) (l $$ A sh)) consequent
 >       where
 >         consequent :: Simplify -> Simplifier Simplify
 >         consequent (SimplyAbsurd prfAbsurdT) = do
@@ -301,8 +302,8 @@ where $\Theta \cong z_0 : pq_0, ..., z_m : pq_m$.
 To simplify |p = (x : s) => t| where |s| is not a proof set, we generate a fresh
 reference and simplify |t| under the binder.
 
-> propSimplify delta p@(ALL s l) = freshRef (fortran l :<: s)
->     (\refS -> forkNSupply "psAll" (forceSimplify (delta :< refS) (l $$ A (NP refS))) (thingy refS))
+> propSimplify gamma delta p@(ALL s l) = freshRef (fortran l :<: s)
+>     (\refS -> forkNSupply "psAll" (forceSimplify gamma (delta :< refS) (l $$ A (NP refS))) (thingy refS))
 >   where
 >     thingy :: (NameSupplier m) => REF -> Simplify -> m Simplify
 
@@ -348,8 +349,8 @@ If the operator gets stuck, we give up. If we get |TRIVIAL| then we are done.
 Otherwise we simplify the resulting proposition and wrap the resulting proofs
 with |Con| or |Out| as appropriate.
 
-> propSimplify delta p@(EQBLUE (sty :>: s) (tty :>: t)) = 
->     useRefl <|> unroll <|> propSearch delta p
+> propSimplify gamma delta p@(EQBLUE (sty :>: s) (tty :>: t)) = 
+>     useRefl <|> unroll <|> propSearch gamma delta p
 >  where
 >    useRefl :: Simplifier Simplify
 >    useRefl = do
@@ -362,7 +363,7 @@ with |Con| or |Out| as appropriate.
 >    unroll = case opRun eqGreen [sty, s, tty, t] of
 >           Left _         -> mzero
 >           Right TRIVIAL  -> return (SimplyTrivial (CON VOID))
->           Right q        -> forkNSupply "psEq" (forceSimplify delta q) equality
+>           Right q        -> forkNSupply "psEq" (forceSimplify gamma delta q) equality
 >          
 >    equality :: Simplify -> Simplifier Simplify
 >    equality (SimplyAbsurd prf) = return (SimplyAbsurd (prf . ($$ Out)))
@@ -371,7 +372,7 @@ with |Con| or |Out| as appropriate.
 >        (CON h))
 
 
-> propSimplify delta p@(N (op :@ [sty, s, tty, t]))
+> propSimplify gamma delta p@(N (op :@ [sty, s, tty, t]))
 >   | op == eqGreen = freshRef ("q" :<: PRF (EQBLUE (sty :>: s) (tty :>: t)))
 >       (\qRef -> return (SimplyOne qRef
 >           (L (HF "p" CON))
@@ -381,7 +382,7 @@ with |Con| or |Out| as appropriate.
 
 If nothing matches, we can always try searching the context.
 
-> propSimplify delta p = propSearch delta p
+> propSimplify gamma delta p = propSearch gamma delta p
 
 
 The |propSearch| operation searches the context for a proof of the proposition,
@@ -391,8 +392,8 @@ test if the consequent matches the goal; if so, |backchain| then calls
 |seekProof| to attempt to prove the hypotheses, in the context with the
 backchained proposition removed. 
 
-> propSearch :: Bwd REF -> VAL -> Simplifier Simplify
-> propSearch delta p = seekProof delta F0 p >>= return . SimplyTrivial
+> propSearch :: Bwd REF -> Bwd REF -> VAL -> Simplifier Simplify
+> propSearch gamma delta p = seekProof (gamma <+> delta) F0 p >>= return . SimplyTrivial
 >   where
 >     seekProof :: Bwd REF -> Fwd REF -> VAL -> Simplifier VAL
 >     seekProof B0 _ _ = mzero
@@ -421,10 +422,10 @@ we can do some simplification even if the conjuncts do not simplify.
 The |forceSimplifyNamed| variant takes a name hint that will be
 used if simplification fails.
 
-> forceSimplify delta p = forceSimplifyNamed delta p ""
+> forceSimplify gamma delta p = forceSimplifyNamed gamma delta p ""
 
-> forceSimplifyNamed :: Bwd REF -> VAL -> String -> Simplifier Simplify
-> forceSimplifyNamed delta p hint = propSimplify delta p
+> forceSimplifyNamed :: Bwd REF -> Bwd REF -> VAL -> String -> Simplifier Simplify
+> forceSimplifyNamed gamma delta p hint = propSimplify gamma delta p
 >                                   <|> simplifyNone hint (PRF p)
 > 
 > simplifyNone :: (NameSupplier m) => String -> TY -> m Simplify
@@ -485,7 +486,8 @@ constructing a bunch of subgoals that together solve the current goal.
 
 > simplifyHypothesis (PRF p) = do
 >     nsupply <- askNSupply
->     let Just s = runReaderT (forceSimplify B0 p) nsupply
+>     es <- getBoysBwd
+>     let Just s = runReaderT (forceSimplify es B0 p) nsupply
 >     return s
 
 > simplifyHypothesis ty = simplifyNone "" ty
@@ -540,7 +542,8 @@ constructing a bunch of subgoals that together solve the current goal.
 > runPropSimplify :: VAL -> ProofState (Maybe Simplify)
 > runPropSimplify p = do
 >     nsupply <- askNSupply
->     return (runReaderT (propSimplify B0 p) nsupply)
+>     es <- getBoysBwd
+>     return (runReaderT (propSimplify es B0 p) nsupply)
 
 The |propSimplifyHere| command attempts propositional simplification on the
 current location, which must be an open goal of type |PRF p| for some |p|.
