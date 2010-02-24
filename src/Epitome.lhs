@@ -112,6 +112,7 @@
 \chapter{Elaboration}
 
 %include Elaboration/ElabMonad.lhs
+%include Elaboration/MakeElab.lhs
 %include Elaboration/Elaborator.lhs
 %include Elaboration/Wire.lhs
 %include Elaboration/Unification.lhs

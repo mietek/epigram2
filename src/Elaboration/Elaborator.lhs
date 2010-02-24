@@ -1,3 +1,6 @@
+\section{Implementing the |Elab| monad}
+\label{sec:implementing_elab_monad}
+
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
@@ -6,13 +9,9 @@
 > module Elaboration.Elaborator where
 
 > import Control.Applicative
-> import Control.Monad
 > import Control.Monad.Error
 > import Control.Monad.State
 > import Data.Traversable
-
-> import NameSupply.NameSupply
-> import NameSupply.NameSupplier
 
 > import Evidences.Tm
 > import Evidences.Rules
@@ -31,6 +30,7 @@
 > import Tactics.PropSimp
 
 > import Elaboration.ElabMonad
+> import Elaboration.MakeElab
 > import Elaboration.Unification
 
 > import Cochon.Error
@@ -40,9 +40,6 @@
 
 %endif
 
-
-\section{Implementing the |Elab| monad}
-\label{sec:implementing_elab_monad}
 
 The |runElab| proof state command actually interprets an |Elab x| in
 the proof state. That is, it defines the semantics of the |Elab| syntax.
@@ -273,181 +270,6 @@ $\lambda$-lift terms.
 > elabInfer' = elabInfer (Loc 0)
 
 
-
-> subElab :: Loc -> (TY :>: InDTmRN) -> Elab (INTM :=>: VAL)
-> subElab loc (ty :>: tm) = ECompute ty (SubProb (makeElab loc (ty :>: tm))) Bale
-
-
-> makeElab :: Loc -> (TY :>: InDTmRN) -> Elab (INTM :=>: VAL)
-
-> import <- MakeElabRules
-
-These rules should be moved to features.
-
-> makeElab loc (SET :>: DIMU Nothing iI d i) = do
->       l :=>: lv <- EFake False Bale
->       iI :=>: iIv <- subElab loc (SET :>: iI)
->       d :=>: dv <- subElab loc (ARR iIv (IDESC iIv) :>: d)
->       i :=>: iv <- subElab loc (iIv :>: i)
-
-<       lastIsIndex <- withNSupply (equal (SET :>: (iv,N (P (last xs)))))
-<       guard lastIsIndex
-<       -- should check i doesn't appear in d (fairly safe it's not in iI :))
-
->       return $ IMU (Just (N l)) iI d i :=>: IMU (Just lv) iIv dv iv
-
-> makeElab loc (PI UNIT t :>: DCON f) = do
->     tm :=>: tmv <- subElab loc (t $$ A VOID :>: f)
->     return $ LK tm :=>: LK tmv
-
-> makeElab loc (PI (MU l d) t :>: DCON f) = do
->     _ :=>: tmv <- subElab loc $ case l of
->         Nothing  -> elimOpMethodType $$ A d $$ A t :>: f
->         Just l   -> elimOpLabMethodType $$ A l $$ A d $$ A t :>: f
->     x <- ELambda (fortran t) Bale
->     EQuote (elimOp @@ [d, NP x, t, tmv]) Bale
-
-> makeElab loc (PI (SIGMA d r) t :>: DCON f) = do
->     let mt =  PI d . L . HF (fortran r) $ \ a ->
->               PI (r $$ A a) . L . HF (fortran t) $ \ b ->
->               t $$ A (PAIR a b)
->     mt' :=>: _ <- EQuote mt Bale
->     tm :=>: tmv <- subElab loc (mt :>: f)
->     x <- ELambda (fortran t) Bale
->     return $ N ((tm :? mt') :$ A (N (P x :$ Fst)) :$ A (N (P x :$ Snd)))
->                     :=>: tmv $$ A (NP x $$ Fst) $$ A (NP x $$ Snd)
-
-> makeElab loc (PI (ENUMT e) t :>: m) | isTuply m = do
->     _ :=>: tmv <- subElab loc (branchesOp @@ [e, t] :>: m)
->     x <- ELambda (fortran t) Bale
->     EQuote (switchOp @@ [e, NP x, t, tmv]) Bale
->   where
->     isTuply :: InDTmRN -> Bool
->     isTuply DVOID        = True
->     isTuply (DPAIR _ _)  = True
->     isTuply _            = False
-
-> makeElab loc (MONAD d x :>: DCON t) = makeElab loc (MONAD d x :>: DCOMPOSITE t)
-> makeElab loc (QUOTIENT a r p :>: DPAIR x DVOID) =
->   makeElab loc (QUOTIENT a r p :>: DCLASS x)
-
-> makeElab loc (NU d :>: DCOIT DU sty f s) = do
->   d' :=>: _ <- EQuote d Bale
->   makeElab loc (NU d :>: DCOIT (DTIN d') sty f s)
-
-
-
-We use underscores |DU| in elaboration to mean "figure this out yourself".
-
-> makeElab loc (ty :>: DU) = EHope ty Bale
-> makeElab loc (ty :>: DQ s) = EWait s ty neutralise
-
-
-Elaborating a canonical term with canonical type is a job for |canTy|.
-
-> makeElab loc (C ty :>: DC tm) = do
->     v <- canTy (subElab loc) (ty :>: tm)
->     return $ (C $ fmap termOf v) :=>: (C $ fmap valueOf v)
-
-
-There are a few possibilities for elaborating $\lambda$-abstractions. If both the
-range and term are constants, then we simply |makeElab| underneath. This avoids
-creating some trivial children. 
-
-> makeElab loc (PI s (L (K t)) :>: DL (DK dtm)) = do
->     tm :=>: tmv <- subElab loc (t :>: dtm)
->     return $ LK tm :=>: LK tmv
-
-Otherwise, we can simply create a |lambdaBoy| in the current
-development, and carry on elaborating.
-
-> makeElab loc (ty :>: DL sc) = do
->     ref <- ELambda (dfortran (DL sc)) Bale
->     ty' <- EGoal Bale
->     makeElab loc (ty' :>: dScopeTm sc)
-
-
-We push types in to neutral terms by calling |makeElabInfer| on the term, then
-coercing the result to the required type. (Note that |ECoerce| will check if the
-types are equal, and if so it will not insert a redundant coercion.)
-
-> makeElab loc (w :>: DN n) = do
->     tt <- makeElabInfer loc n
->     let (yt :=>: yn :<: ty :=>: tyv) = extractNeutral tt
->     w' :=>: _ <- EQuote w Bale
->     ECoerce (ty :=>: tyv) (w' :=>: w) (yt :=>: yn) Bale
-
-
-If we already have an evidence term, we just have to type-check it.
-
-> makeElab loc (ty :>: DTIN tm) = do
->     let nsupply = (B0 :< ("__makeElabDTIN", 0), 0) :: NameSupply
->     case liftError (typeCheck (check (ty :>: tm)) nsupply) of
->         Left e -> throwError e
->         Right tt -> return tt
-
-
-If nothing else matches, give up and report an error.
-
-> makeElab loc (ty :>: tm) = throwError' $ err "makeElab: can't push"
->     ++ errTyVal (ty :<: SET) ++ err "into" ++ errTm tm 
-
-
-\subsection{Elaborating |EXDTM|s}
-
-The |makeElabInfer| command is to |infer| in subsection~\ref{subsec:type-inference} 
-as |elaborate| is to |check|. It infers the type of a display term, calling on
-the elaborator rather than the type-checker.
-
-> extractNeutral :: INTM :=>: VAL -> INTM :=>: VAL :<: INTM :=>: TY
-> extractNeutral (PAIR ty tm :=>: tv) = tm :=>: tv $$ Snd :<: ty :=>: tv $$ Fst
-> extractNeutral (tm :=>: tv) = N (tm' :$ Snd) :=>: tv $$ Snd :<: N (tm' :$ Fst) :=>: tv $$ Fst
->   where tm' = tm :? sigSetTM
-
-> makeElabInfer :: Loc -> ExDTmRN -> Elab (INTM :=>: VAL)
-
-> makeElabInfer loc (t ::$ ss) = do
->     tt <- makeElabInferHead loc t
->     let (tm :=>: tmv :<: ty :=>: tyv) = extractNeutral tt
->     let ss' = {-case ms of
->                   Just sch  -> schemer sch ss
->                   Nothing   -> -} ss
->     (t :=>: v :<: y) <- handleArgs (tm :? ty :=>: tmv :<: tyv) ss'
->     y' :=>: _ <- EQuote y Bale
->     return $ PAIR y' (N t) :=>: PAIR y v
->   where
->     schemer :: Scheme INTM -> DSpine RelName -> DSpine RelName
->     schemer (SchType _) as = as
->     schemer (SchImplicitPi (x :<: s) schT) as =
->         A DU : schemer schT as
->     schemer (SchExplicitPi (x :<: schS) schT) (a:as) =
->         a : schemer schT as
->     schemer (SchExplicitPi (x :<: schS) schT) [] = []
-
->     handleArgs :: (EXTM :=>: VAL :<: TY) -> DSpine RelName -> Elab (EXTM :=>: VAL :<: TY)
->     handleArgs (tt :<: ty) [] = return (tt :<: ty)
->     handleArgs (t :=>: v :<: C cty) (a : as) = do
->         (a', ty') <- elimTy (subElab loc) (v :<: cty) a
->         handleArgs (t :$ fmap termOf a' :=>: v $$ fmap valueOf a' :<: ty') as
->     handleArgs (tt :<: ty) as = do
->         cty <- ECan ty Bale
->         handleArgs (tt :<: C cty) as
-
-> makeElabInferHead :: Loc -> DHead RelName -> Elab (INTM :=>: VAL)
-
-> makeElabInferHead loc (DP rn) = do
->     (tm :=>: tmv, ms) <- EResolve rn Bale
->     return $ tm :=>: tmv
-
-> makeElabInferHead loc (DType ty) = do
->     tm :=>: tmv <- subElab loc (SET :>: ty)
->     return $ PAIR (ARR tm tm) (idTM "typecast")
->                  :=>: PAIR (ARR tmv tmv) (idVAL "typecast")
-
-> makeElabInferHead loc tm = throwError' $ err "makeElabInferHead: can't cope with"
->     ++ errTm (DN (tm ::$ []))
-
-
 > neutraliseElab :: Elab (EXTM :=>: VAL) -> Elab (INTM :=>: VAL)
 > neutraliseElab f = do
 >     tm :=>: tmv <- f
@@ -495,11 +317,7 @@ the elaborator rather than the type-checker.
 >     isUnstable (ECan _ _) = False
 
 
-> sigSetTM :: INTM
-> sigSetTM = SIGMA SET (idTM "sst")
 
-> sigSetVAL :: VAL
-> sigSetVAL = SIGMA SET (idVAL "ssv")
 
 
 > import -> CochonTactics where
