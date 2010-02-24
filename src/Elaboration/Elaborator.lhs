@@ -156,7 +156,7 @@ The |EHope| command hopes for an element of a given type. If it is asking for a
 proof, we might be able to find one, but otherwise we just create a hole.
 
 > runElabHope :: TY -> ProofState (INTM :=>: VAL)
-> runElabHope (PRF p)  = hopeProof p <|> lastHope (PRF p)
+> runElabHope (PRF p)  = flexiProof p <|> simplifyProof p <|> lastHope (PRF p)
 > runElabHope ty       = lastHope ty
 
 > lastHope :: TY -> ProofState (INTM :=>: VAL)
@@ -164,20 +164,19 @@ proof, we might be able to find one, but otherwise we just create a hole.
 >     ty' <- bquoteHere ty
 >     neutralise =<< make' Hoping ("hope" :<: ty' :=>: ty)
 
-
-> hopeProof :: VAL -> ProofState (INTM :=>: VAL)
-
-> hopeProof p@(EQBLUE (_S :>: s) (_T :>: (NP ref@(_ := HOLE Hoping :<: _)))) = do
+> flexiProof :: VAL -> ProofState (INTM :=>: VAL)
+> flexiProof p@(EQBLUE (_S :>: s) (_T :>: (NP ref@(_ := HOLE Hoping :<: _)))) = do
 >     p' <- bquoteHere p
 >     neutralise =<< suspend ("hope" :<: PRF p' :=>: PRF p)
 >         (ESolve ref s . const $ EQuote (pval refl $$ A _S $$ A s) Bale)
-
-> hopeProof p@(EQBLUE (_T :>: (NP ref@(_ := HOLE Hoping :<: _))) (_S :>: s)) = do
+> flexiProof p@(EQBLUE (_T :>: (NP ref@(_ := HOLE Hoping :<: _))) (_S :>: s)) = do
 >     p' <- bquoteHere p
 >     neutralise =<< suspend ("hope" :<: PRF p' :=>: PRF p)
 >         (ESolve ref s . const $ EQuote (pval refl $$ A _S $$ A s) Bale)
+> flexiProof _ = (|)
 
-> hopeProof p = do
+> simplifyProof :: VAL -> ProofState (INTM :=>: VAL)
+> simplifyProof p = do
 >     pSimp <- runPropSimplify p
 >     case pSimp of
 >         Just (SimplyTrivial prf) -> do
@@ -186,13 +185,15 @@ proof, we might be able to find one, but otherwise we just create a hole.
 >         Just (SimplyAbsurd _) -> do
 >             throwError' $ err "hopeProof: proposition is absurd!"
 >         Just (Simply qs _ h) -> do
->             qrs <- Data.Traversable.mapM (runElabHope . pty) qs
+>             qrs <- Data.Traversable.mapM (subProof  . pty) qs
 >             h' <- dischargeLots qs h
 >             let prf = h' $$$ fmap (A . valueOf) qrs
 >             prf' <- bquoteHere prf
 >             return $ prf' :=>: prf
 >         Nothing -> (|)
->         
+>   where
+>     subProof :: VAL -> ProofState (INTM :=>: VAL)
+>     subProof (PRF p) = flexiProof p <|> lastHope (PRF p)
 
 
 The |ECompute| command computes the solution to a problem, given its type. 
