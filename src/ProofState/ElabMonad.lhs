@@ -64,6 +64,8 @@ gives the syntax for commands.
 >     |  EFake Bool (EXTM :=>: VAL -> Elab x)
 >     |  EResolve RelName ((INTM :=>: VAL, Maybe (Scheme INTM)) -> Elab x)
 >     |  EQuote VAL (INTM :=>: VAL -> Elab x)
+>     |  ECoerce (INTM :=>: VAL) (INTM :=>: VAL) (INTM :=>: VAL)
+>            (INTM :=>: VAL -> Elab x)
 
 %if False
 
@@ -81,24 +83,26 @@ gives the syntax for commands.
 >     show (EFake b _)        = "EFake " ++ show b ++ " (...)"
 >     show (EResolve rn _)    = "EResolve " ++ show rn ++ " (...)"
 >     show (EQuote q _)       = "EQuote (" ++ show q ++ ") (...)"
+>     show (ECoerce (s :=>: _) (t :=>: _) (u :=>: _) _) = "ECoerce (" ++ show s ++ ") (" ++ show t ++ ") (" ++ show u ++ ") (...)"
 
 > instance Monad Elab where
 >     fail s  = ECry [err $ "fail: " ++ s]
 >     return  = Bale
 >
->     Bale x          >>= k = k x
->     ELambda s f     >>= k = ELambda s      ((k =<<) . f)
->     EGoal f         >>= k = EGoal          ((k =<<) . f)
->     EHope t f       >>= k = EHope t        ((k =<<) . f)
->     EWait s t f     >>= k = EWait s t      ((k =<<) . f)
->     ECry errs       >>= k = ECry errs
->     ECompute t p f  >>= k = ECompute t p   ((k =<<) . f)
->     ESolve r v f    >>= k = ESolve r v     ((k =<<) . f)
->     EElab t lp f    >>= k = EElab t lp     ((k =<<) . f)
->     ECan v f        >>= k = ECan v         ((k =<<) . f)
->     EFake b f       >>= k = EFake b        ((k =<<) . f)
->     EResolve rn f   >>= k = EResolve rn    ((k =<<) . f)
->     EQuote q f      >>= k = EQuote q       ((k =<<) . f)
+>     Bale x           >>= k = k x
+>     ELambda s f      >>= k = ELambda s      ((k =<<) . f)
+>     EGoal f          >>= k = EGoal          ((k =<<) . f)
+>     EHope t f        >>= k = EHope t        ((k =<<) . f)
+>     EWait s t f      >>= k = EWait s t      ((k =<<) . f)
+>     ECry errs        >>= k = ECry errs
+>     ECompute t p f   >>= k = ECompute t p   ((k =<<) . f)
+>     ESolve r v f     >>= k = ESolve r v     ((k =<<) . f)
+>     EElab t lp f     >>= k = EElab t lp     ((k =<<) . f)
+>     ECan v f         >>= k = ECan v         ((k =<<) . f)
+>     EFake b f        >>= k = EFake b        ((k =<<) . f)
+>     EResolve rn f    >>= k = EResolve rn    ((k =<<) . f)
+>     EQuote q f       >>= k = EQuote q       ((k =<<) . f)
+>     ECoerce s t v f  >>= k = ECoerce s t v  ((k =<<) . f)
 
 > instance Functor Elab where
 >     fmap = ap . return

@@ -126,8 +126,16 @@ the proof state. That is, it defines the semantics of the |Elab| syntax.
 
 > runElab top (ty :>: EQuote v f) = do
 >     tm <- bquoteHere v
->     -- proofTrace ("\nEQuote: " ++ show tm)
 >     runElab top (ty :>: f (tm :=>: v))
+
+> runElab top (ty :>: ECoerce (_S :=>: _Sv) (_T :=>: _Tv) (s :=>: sv) f) = do
+>     eq <- withNSupply (equal $ SET :>: (_Sv, _Tv))
+>     tt <- if eq
+>         then return (s :=>: sv)
+>         else do
+>             q :=>: qv <- runElabHope (PRF (EQBLUE (SET :>: _Sv) (SET :>: _Tv)))
+>             return $ N (coe :@ [_S, _T, q, s]) :=>: coe @@ [_Sv, _Tv, qv, sv]
+>     runElab top (ty :>: f tt)
 
 > runElab top (ty :>: tm) = throwError' . err $ "runElab: cannot evaluate "
 >                                                 ++ show tm
@@ -135,7 +143,8 @@ the proof state. That is, it defines the semantics of the |Elab| syntax.
 > runElabTop :: (TY :>: Elab (INTM :=>: VAL)) -> ProofState (INTM :=>: VAL, Bool)
 > runElabTop (ty :>: elab) = do
 >     ty' <- bquoteHere ty
->     make' Waiting ("subproblem" :<: ty' :=>: ty)
+>     x <- pickName "h" ""
+>     make' Waiting (x :<: ty' :=>: ty)
 >     goIn
 >     (tm :=>: tmv, okay) <- runElab True (ty :>: elab)
 >     if okay
@@ -184,54 +193,6 @@ proof, we might be able to find one, but otherwise we just create a hole.
 >             return $ prf' :=>: prf
 >         Nothing -> (|)
 >         
-
-> {-
-> hopeProof TRIVIAL = return $ VOID :=>: VOID
-> hopeProof (AND p q) = do
->   (pt :=>: pv) <- hopeProof p
->   (qt :=>: qv) <- hopeProof q
->   return $ PAIR pt qt :=>: PAIR pv qv
-
-< hopeProof p@(ALL _ _) = elaborate' (PRF p :>: DL ("hopeProof" ::. DU))
-
-> hopeProof p@(EQBLUE (y0 :>: t0) (y1 :>: t1)) = useRefl <|> unroll <|> search p
->  where
->   useRefl = do
->     guard =<< withNSupply (equal (SET :>: (y0, y1)))
->     guard =<< withNSupply (equal (y0 :>: (t0, t1)))
->     let w = pval refl $$ A y0 $$ A t0
->     w' <- bquoteHere w
->     return $ w' :=>: w
->   unroll = do
->     Right p <- return $ opRun eqGreen [y0, t0, y1, t1]
->     (tm :=>: tmv) <- hopeProof p
->     return $ CON tm :=>: CON tmv
-> hopeProof p@(N (qop :@ [y0, t0, y1, t1])) | qop == eqGreen = do
->   let g = EQBLUE (y0 :>: t0) (y1 :>: t1)
->   (tm :=>: tmv) <- hopeProof g
->   let w = tmv $$ Out
->   w' <- bquoteHere w
->   return $ w' :=>: w
-> hopeProof p = search p
-
-> search :: VAL -> ProofState (INTM :=>: VAL)
-> search p = (|) {-do
->   es <- getAuncles
->   aunclesProof es p -}
-
-
-> aunclesProof :: Entries -> VAL -> ProofState (INTM :=>: VAL)
-> aunclesProof B0 p = empty
-> aunclesProof (es :< E ref _ (Boy _) _) p =
->   synthProof (pval ref :<: pty ref) p <|> aunclesProof es p
-> aunclesProof (es :< _) p = aunclesProof es p  -- for the time being
-
-> synthProof :: (VAL :<: TY) -> VAL -> ProofState (INTM :=>: VAL)
-> synthProof (v :<: PRF p) p' = do
->   guard =<< withNSupply (equal (PROP :>: (p, p')))
->   t <- bquoteHere v
->   return (t :=>: v)
-> synthProof _ _ = (|) -}
 
 
 The |ECompute| command computes the solution to a problem, given its type. 
@@ -349,8 +310,8 @@ These rules should be moved to features.
 >     let mt =  PI d . L . HF (fortran r) $ \ a ->
 >               PI (r $$ A a) . L . HF (fortran t) $ \ b ->
 >               t $$ A (PAIR a b)
->     tm :=>: tmv <- subElab loc (mt :>: f)
 >     mt' :=>: _ <- EQuote mt Bale
+>     tm :=>: tmv <- subElab loc (mt :>: f)
 >     x <- ELambda (fortran t) Bale
 >     return $ N ((tm :? mt') :$ A (N (P x :$ Fst)) :$ A (N (P x :$ Snd)))
 >                     :=>: tmv $$ A (NP x $$ Fst) $$ A (NP x $$ Snd)
@@ -406,23 +367,14 @@ development, and carry on elaborating.
 
 
 We push types in to neutral terms by calling |makeElabInfer| on the term, then
-hoping that the result type is equal to the type we pushed in.
+coercing the result to the required type. (Note that |ECoerce| will check if the
+types are equal, and if so it will not insert a redundant coercion.)
 
 > makeElab loc (w :>: DN n) = do
 >     tt <- makeElabInfer loc n
 >     let (yt :=>: yn :<: ty :=>: tyv) = extractNeutral tt
->     case opRunEqGreen [SET, tyv, SET, w] of
->         Right TRIVIAL -> return (yt :=>: yn)
->         _ -> do
->             qt :=>: q <- EHope (PRF (EQBLUE (SET :>: tyv) (SET :>: w))) Bale
->             w' :=>: _ <- EQuote w Bale
->             return $ N (coe :@ [ty, w', qt, yt])
->                             :=>: coe @@ [tyv, w, q, yn]
-
-> {-makeElab loc (w :>: DN n) = do
->     yt :=>: yn <- makeElabInfer loc n
->     qq :=>: q <- EHope (PRF (EQBLUE (SET :>: yn $$ Fst) (SET :>: w))) Bale
->     EQuote (coe @@ [yn $$ Fst, w, q, yn $$ Snd]) Bale -}
+>     w' :=>: _ <- EQuote w Bale
+>     ECoerce (ty :=>: tyv) (w' :=>: w) (yt :=>: yn) Bale
 
 
 If we already have an evidence term, we just have to type-check it.
