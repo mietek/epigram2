@@ -27,9 +27,11 @@ max (suc n) (suc m) = suc (max n m)
 
 {-# BUILTIN LEVELMAX max #-}
 
-lift : {i : Level} -> Set i -> Set (suc i) 
-lift = {!!}
+data Lifted {l : Level} (A : Set l) : Set (suc l) where
+       lifter : A → Lifted A
 
+lift : {i : Level} -> Set i -> Set (suc i) 
+lift x =  Lifted x
 
 --****************
 -- Sigma and friends
@@ -171,13 +173,33 @@ descD x I = sigma (DescDConst (suc x)) (descDChoice x I)
 IDescl : (l : Level)(I : Set l) -> Set (suc l)
 IDescl x I = IMu (suc x) Unit (\_ -> descD x I) Void
 
-{-
-varl : (l : Level)(I : Set l) -> IDescl l I
-varl x I = con (lvar , {!!})
--}
+varl : (l : Level)(I : Set l)(i : I) -> IDescl l I
+varl x I i = con (lv , lifter i) 
+     where lv : DescDConst (suc x)
+           lv = lvar
 
 constl : (l : Level)(I : Set l)(X : Set l) -> IDescl l I
-constl x I X = con (lconst , X)
+constl x I X = con (lc , X)
+       where lc : DescDConst (suc x)
+             lc = lconst
 
 prodl : (l : Level)(I : Set l)(D D' : IDescl l I) -> IDescl l I
-prodl x I D D' = con (lprod , (D , D'))
+prodl x I D D' = con (lp , (D , D'))
+      where lp : DescDConst (suc x)
+            lp = lprod
+
+
+pil : (l : Level)(I : Set l)(S : Set l)(T : S -> IDescl l I) -> IDescl l I
+pil x I S T = con (lp , ( S , Tl))
+    where lp : DescDConst (suc x)
+          lp = lpi
+          Tl : Lifted S -> IDescl x I
+          Tl (lifter s) = T s
+
+sigmal : (l : Level)(I : Set l)(S : Set l)(T : S -> IDescl l I) -> IDescl l I
+sigmal x I S T = con (ls , ( S , Tl))
+       where ls : DescDConst (suc x)
+             ls = lsigma
+             Tl : Lifted S -> IDescl x I
+             Tl (lifter s) = T s
+             
