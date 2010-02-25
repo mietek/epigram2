@@ -167,3 +167,17 @@ descDChoice x _ lsigma = sigma (Set x) (\S -> pi (lift S) (\s -> var Void))
 
 descD : (l : Level)(I : Set l) -> IDesc (suc l) Unit
 descD x I = sigma (DescDConst (suc x)) (descDChoice x I)
+
+IDescl : (l : Level)(I : Set l) -> Set (suc l)
+IDescl x I = IMu (suc x) Unit (\_ -> descD x I) Void
+
+{-
+varl : (l : Level)(I : Set l) -> IDescl l I
+varl x I = con (lvar , {!!})
+-}
+
+constl : (l : Level)(I : Set l)(X : Set l) -> IDescl l I
+constl x I X = con (lconst , X)
+
+prodl : (l : Level)(I : Set l)(D D' : IDescl l I) -> IDescl l I
+prodl x I D D' = con (lprod , (D , D'))
