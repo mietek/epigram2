@@ -88,13 +88,6 @@ desc x I (pi S T) P = (s : S) -> desc x I (T s) P
 -- Fixpoint construction
 --********************************************
 
-{-
-data IMu (I : Set)(R : I -> IDesc I) : IDesc I -> Set1 where
-  rec : (i : I) -> IMu I R (R i) -> IMu I R (var i)
-  lambda : (S : Set)(D : S -> IDesc I) -> ((s : S) -> IMu I R (D s)) -> IMu I R (pi S D)
-  pair : (S : Set)(D : S -> IDesc I) -> (Sigma S (\s -> IMu I R (D s))) -> IMu I R (sigma S D)
--}
-
 data IMu (l : Level)(I : Set l)(R : I -> IDesc l I)(i : I) : Set l where
   con : desc l I (R i) (\j -> IMu l I R j) -> IMu l I R i
 
