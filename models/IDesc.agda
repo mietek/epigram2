@@ -75,12 +75,12 @@ data IDesc (l : Level)(I : Set l) : Set (suc l) where
 -- Desc interpretation
 --********************************************
 
-desc : (I : Set) -> IDesc zero I -> (I -> Set) -> Set
-desc I (var i) P = P i
-desc I (const X) P = X
-desc I (prod D D') P = desc I D P * desc I D' P
-desc I (sigma S T) P = Sigma S (\s -> desc I (T s) P)
-desc I (pi S T) P = (s : S) -> desc I (T s) P
+desc : (l : Level)(I : Set l) -> IDesc l I -> (I -> Set l) -> Set l
+desc _ I (var i) P = P i
+desc _ I (const X) P = X
+desc x I (prod D D') P = desc x I D P * desc x I D' P
+desc x I (sigma S T) P = Sigma S (\s -> desc x I (T s) P)
+desc x I (pi S T) P = (s : S) -> desc x I (T s) P
 
 --********************************************
 -- Fixpoint construction
@@ -93,35 +93,41 @@ data IMu (I : Set)(R : I -> IDesc I) : IDesc I -> Set1 where
   pair : (S : Set)(D : S -> IDesc I) -> (Sigma S (\s -> IMu I R (D s))) -> IMu I R (sigma S D)
 -}
 
-data IMu (I : Set)(R : I -> IDesc zero I)(i : I) : Set where
-  con : desc I (R i) (\j -> IMu I R j) -> IMu I R i
+data IMu (l : Level)(I : Set l)(R : I -> IDesc l I)(i : I) : Set l where
+  con : desc l I (R i) (\j -> IMu l I R j) -> IMu l I R i
 
 --********************************************
 -- Predicate: Box
 --********************************************
 
-box : (I : Set)(D : IDesc zero I)(P : I -> Set) -> desc I D P -> IDesc zero (Sigma I P)
-box I (var i)     P x        = var (i , x)
-box I (const X)   P x        = const X
-box I (prod D D') P (d , d') = prod (box I D P d) (box I D' P d')
-box I (sigma S T) P (a , b)  = box I (T a) P b
-box I (pi S T)    P f        = pi S (\s -> box I (T s) P (f s))
+box : (l : Level)(I : Set l)(D : IDesc l I)(P : I -> Set l) -> desc l I D P -> IDesc l (Sigma I P)
+box _ I (var i)     P x        = var (i , x)
+box _ I (const X)   P x        = const X
+box x I (prod D D') P (d , d') = prod (box x I D P d) (box x I D' P d')
+box x I (sigma S T) P (a , b)  = box x I (T a) P b
+box x I (pi S T)    P f        = pi S (\s -> box x I (T s) P (f s))
 
 --********************************************
 -- Elimination principle: induction
 --********************************************
 
-module Elim (I : Set)
-            (R : I -> IDesc zero I)
-            (P : Sigma I (IMu I R) -> Set)
-            (m : (i : I)(xs : desc I (R i) (IMu I R))(hs : desc (Sigma I (IMu I R)) (box I (R i) (IMu I R) xs) P) -> P ( i , con xs ))
+module Elim (l : Level)
+            (I : Set l)
+            (R : I -> IDesc l I)
+            (P : Sigma I (IMu l I R) -> Set l)
+            (m : (i : I)
+                 (xs : desc l I (R i) (IMu l I R))
+                 (hs : desc l (Sigma I (IMu l I R)) (box l I (R i) (IMu l I R) xs) P) ->
+                 P ( i , con xs ))
        where
 
   mutual
-    induction : (i : I)(x : IMu I R i) -> P (i , x)
+    induction : (i : I)(x : IMu l I R i) -> P (i , x)
     induction i (con xs) = m i xs (hyps (R i) xs)
 
-    hyps : (D : IDesc zero I) -> (xs : desc I D (IMu I R)) -> desc (Sigma I (IMu I R)) (box I D (IMu I R) xs) P
+    hyps : (D : IDesc l I) -> 
+           (xs : desc l I D (IMu l I R)) -> 
+           desc l (Sigma I (IMu l I R)) (box l I D (IMu l I R) xs) P
     hyps (var i) x = induction i x
     hyps (const X) x = x -- ??
     hyps (prod D D') (d , d') =  hyps D d , hyps D' d'
@@ -129,12 +135,15 @@ module Elim (I : Set)
     hyps (sigma S R) ( a , b ) = hyps (R a) b
 
 
-induction : (I : Set)(R : I -> IDesc zero I)(P : Sigma I (IMu I R) -> Set)
+induction : (l : Level)
+            (I : Set l)
+            (R : I -> IDesc l I)
+            (P : Sigma I (IMu l I R) -> Set l)
             (m : (i : I)
-                 (xs : desc I (R i) (IMu I R))
-                 (hs : desc (Sigma I (IMu I R)) (box I (R i) (IMu I R) xs) P) ->
+                 (xs : desc l I (R i) (IMu l I R))
+                 (hs : desc l (Sigma I (IMu l I R)) (box l I (R i) (IMu l I R) xs) P) ->
                  P ( i , con xs)) ->
-            (i : I)(x : IMu I R i) -> P ( i , x )
+            (i : I)(x : IMu l I R i) -> P ( i , x )
 induction = Elim.induction
 
 
@@ -142,20 +151,19 @@ induction = Elim.induction
 -- DescD
 --********************************************
 
-data DescDConst : Set1 where
-  lvar   : DescDConst
-  lconst : DescDConst
-  lprod  : DescDConst
-  lpi    : DescDConst
-  lsigma : DescDConst
+data DescDConst (l : Level) : Set l where
+  lvar   : DescDConst l
+  lconst : DescDConst l
+  lprod  : DescDConst l
+  lpi    : DescDConst l
+  lsigma : DescDConst l
 
-descDChoice : Set -> DescDConst -> IDesc (suc zero) Unit
-descDChoice I lvar = const (lift I)
-descDChoice _ lconst = const Set
-descDChoice _ lprod = prod (var Void) (var Void)
-descDChoice _ lpi = sigma Set (\S -> pi (lift S) (\s -> var Void))
-descDChoice _ lsigma = sigma Set (\S -> pi (lift S) (\s -> var Void))
+descDChoice : (l : Level) -> Set l -> DescDConst (suc l) -> IDesc (suc l) Unit
+descDChoice _ I lvar = const (lift I)
+descDChoice x _ lconst = const (Set x)
+descDChoice _ _ lprod = prod (var Void) (var Void)
+descDChoice x _ lpi = sigma (Set x) (\S -> pi (lift S) (\s -> var Void))
+descDChoice x _ lsigma = sigma (Set x) (\S -> pi (lift S) (\s -> var Void))
 
-descD : (I : Set) -> IDesc (suc zero) Unit
-descD I = sigma DescDConst (descDChoice I)
-
+descD : (l : Level)(I : Set l) -> IDesc (suc l) Unit
+descD x I = sigma (DescDConst (suc x)) (descDChoice x I)
