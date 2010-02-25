@@ -141,6 +141,25 @@ induction : (l : Level)
             (i : I)(x : IMu l I R i) -> P ( i , x )
 induction = Elim.induction
 
+--********************************************
+-- List
+--********************************************
+
+data ListDConst (l : Level) : Set l where
+  cnil : ListDConst l
+  ccons : ListDConst l
+
+listDChoice : (l : Level) -> Set l -> ListDConst l -> IDesc l Unit
+listDChoice x X cnil = const Unit
+listDChoice x X ccons = sigma X (\_ -> var Void)
+
+listD : (l : Level) -> Set l -> IDesc l Unit
+listD x X = sigma (ListDConst x) (listDChoice x X)
+
+list : (l : Level) -> Set l -> Set l
+list x X = IMu x Unit (\_ -> listD x X) Void
+
+
 
 --********************************************
 -- DescD
