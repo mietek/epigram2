@@ -42,6 +42,7 @@
 > import Tactics.Gadgets
 
 > import Elaboration.Elaborator
+> import Elaboration.Scheduler
 > import Elaboration.Unification
 
 > import Cochon.CommandLexer

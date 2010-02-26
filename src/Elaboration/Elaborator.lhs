@@ -234,70 +234,6 @@ location.
 
 
 
-\subsection{The Scheduler}
-
-> scheduler :: Int -> ProofState ()
-> scheduler n = do
->     cs <- getDevCadets
->     case cs of
->         F0      -> if n == 0 then return () else goOutProperly >> scheduler (n-1)
->         E _ _ (Boy _) _ :> _  -> cursorDown >> scheduler n
->         E ref _ (Girl _ (_, Suspended tt prob, _) _) _ :> _
->           | isUnstable prob -> do
->             cursorDown
->             goIn            
->             mtt <- resumeEProb
->             case mtt of
->                 Just (tm :=>: _) -> do
->                     proofTrace "scheduler: elaboration done."
->                     give' tm
->                     cursorTop
->                     scheduler (n+1)
->                 Nothing -> do
->                     proofTrace "scheduler: elaboration suspended."
->                     goOutProperly
->                     cursorTop
->                     scheduler n
-
->         _ :> _ -> cursorDown >> goIn >> cursorTop >> scheduler (n+1)
-
-
-> resumeEProb :: ProofState (Maybe (INTM :=>: VAL))
-> resumeEProb = do
->     Suspended (ty :=>: tyv) prob <- getDevTip
->     putDevTip (Unknown (ty :=>: tyv))
->     mn <- getMotherName
->     proofTrace $ "Resuming elaboration on " ++ showName mn ++ ":  \n" ++ show prob
->     resume (ty :=>: tyv) prob
->   where
->     resume :: (INTM :=>: VAL) -> EProb -> ProofState (Maybe (INTM :=>: VAL))
->     resume _ (ElabDone tt) = return $ Just tt
->     resume (ty :=>: tyv) (ElabProb tm) =
->         return . ifSnd =<< runElab True (tyv :>: makeElab (Loc 0) (tyv :>: tm))
->     resume (ty :=>: tyv) (ElabInferProb tm) =
->         return . ifSnd =<< runElab True (tyv :>: makeElabInfer (Loc 0) tm)
->     resume (ty :=>: tyv) (WaitCan (tm :=>: C v) prob) = resume (ty :=>: tyv) prob
->     resume _ prob@(WaitCan (tm :=>: _) _) = do
->         proofTrace $ "Suspended waiting for " ++ show tm ++ " to become canonical."
->         suspendMe prob
->         return Nothing
->     resume _ (WaitSolve ref@(_ := HOLE _ :<: _) (_ :=>: tmv) prob) = do
->         suspendMe prob
->         tm <- bquoteHere tmv -- force definitional expansion
->         solveHole ref tm
->         return Nothing
->     resume tt (WaitSolve ref@(_ := DEFN tmv' :<: ty) (_ :=>: tmv) prob) = do
->         eq <- withNSupply $ equal (ty :>: (tmv, tmv'))
->         if eq
->             then  resume tt prob
->             else  throwError' $ err "resume: hole has been solved inconsistently! We should do something clever here."
->                 
-
-> ifSnd :: (a, Bool) -> Maybe a
-> ifSnd (a,  True)   = Just a
-> ifSnd (_,  False)  = Nothing
-
-
 \subsection{Elaborating terms}
 
 The |elaborate| command elaborates a term in display syntax, given its type,
@@ -329,23 +265,6 @@ $\lambda$-lift terms.
 
 > elabInfer' = elabInfer (Loc 0)
 
-
-> elmCT :: ExDTmRN -> ProofState String
-> elmCT tm = do
->     suspend ("elab" :<: sigSetTM :=>: sigSetVAL) (ElabInferProb tm)
->     cursorTop
->     scheduler 0
->     return "Okay."
-
-> kickCT :: ProofState String
-> kickCT = do
->     cursorTop
->     scheduler 0
->     return "Kicked."
-
-> import -> CochonTactics where
->   : unaryExCT "elm" elmCT "elm <term> - elaborate <term> using the Elab monad."
->   : nullaryCT "kick" kickCT "kick - kick off the scheduler."
 
 
 \subsection{Elaborated Construction Commands}
