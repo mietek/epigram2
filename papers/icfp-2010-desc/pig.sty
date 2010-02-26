@@ -194,7 +194,7 @@
 \usepackage{stmaryrd}
 
 \newcommand{\Desc}{\D{Desc}}
-\newcommand{\DescD}{\D{DescD}}
+\newcommand{\DescD}{\C{DescD}}
 
 \newcommand{\descop}[2]{\green{\llbracket} #1 \green{\rrbracket}~#2}
 
@@ -210,7 +210,7 @@
 
 %% IDesc
 \newcommand{\IDesc}[1]{\D{IDesc}~#1}
-\newcommand{\IDescD}{\D{IDescD}}
+\newcommand{\IDescD}{\C{IDescD}}
 
 \newcommand{\idescop}[3]{\green{\llbracket} #1 \green{\rrbracket}_{#2}~#3}
 
@@ -230,16 +230,19 @@
 
 %% Nat
 \newcommand{\Nat}{\D{Nat}}
+\newcommand{\NatD}{\C{NatD}}
 \newcommand{\NatZero}{\etag{\CN{zero}}}
 \newcommand{\NatSuc}{\etag{\CN{suc}}}
 
 %% List
 \newcommand{\List}{\D{List}}
+\newcommand{\ListD}{\C{ListD}}
 \newcommand{\ListNil}{\etag{\CN{nil}}}
 \newcommand{\ListCons}{\etag{\CN{cons}}}
 
 %% Tree
 \newcommand{\Tree}{\D{Tree}}
+\newcommand{\TreeD}{\C{TreeD}}
 \newcommand{\TreeLeaf}{\etag{\CN{leaf}}}
 \newcommand{\TreeNode}{\etag{\CN{node}}}
 

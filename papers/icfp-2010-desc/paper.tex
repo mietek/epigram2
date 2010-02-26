@@ -296,9 +296,9 @@ following implications always hold by induction on derivations.
 \end{structure}
 
 \[\stk{
-\Nat : \Desc \\
-\Nat \mapsto \DSigma{(\EnumT [ \NatZero, \NatSuc ])}
-                    {[ \DUnit \quad (\DIndx{\DUnit}) ]}
+\NatD : \Desc \\
+\NatD \mapsto \DSigma{(\EnumT [ \NatZero, \NatSuc ])}
+                     {[ \DUnit \quad (\DIndx{\DUnit}) ]}
 }\]
 
 \begin{structure}
@@ -306,9 +306,9 @@ following implications always hold by induction on derivations.
 \end{structure}
 
 \[\stk{
-\List : \Set \To \Desc \\
-\List \: X \mapsto \DSigma{(\EnumT [ \ListNil, \ListCons ])}
-                       {[ \DUnit \quad (\DSigma{X}{\LAM{\_} \DIndx{\DUnit}}) ]}
+\ListD : \Set \To \Desc \\
+\ListD \: X \mapsto \DSigma{(\EnumT [ \ListNil, \ListCons ])}
+                           {[ \DUnit \quad (\DSigma{X}{\LAM{\_} \DIndx{\DUnit}}) ]}
 }\]
 
 \begin{structure}
@@ -316,9 +316,9 @@ following implications always hold by induction on derivations.
 \end{structure}
 
 \[\stk{
-\Tree : \Set \To \Desc \\
-\Tree \: X \mapsto \DSigma{(\EnumT [ \TreeLeaf, \TreeNode ])}
-                          {[ \DUnit \quad (\DSigma{(\TIMES{X}{X})}{\LAM{\_} \DIndx{\DUnit}}) ]}
+\TreeD : \Set \To \Desc \\
+\TreeD \: X \mapsto \DSigma{(\EnumT [ \TreeLeaf, \TreeNode ])}
+                           {[ \DUnit \quad (\DSigma{(\TIMES{X}{X})}{\LAM{\_} \DIndx{\DUnit}}) ]}
 }\]
 
 \begin{structure}
