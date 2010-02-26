@@ -1,5 +1,12 @@
+# ICFP paper
+papers/icfp-2010-desc/propagation\.pdf
+papers/icfp-2010-desc/type_theory\.pdf
+
+# Agdai files
+\.agdai
+
 # (hpc) HPC results
-^src/.hpc$
+^src/\.hpc$
 
 # Boring BUILD flags
 BUILD_*
