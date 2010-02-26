@@ -39,6 +39,10 @@ Type checking:
                            {q'}}
      {\Gamma \Vdash \propag{\push{\prf{q}}{\Set}}
                            {\prf{q'}}}
+\qquad
+%% True
+\Axiom{\Gamma \Vdash \propag{\push{\True}{\Prop}}
+                            {\True}}
 \\
 %% Pi
 \Rule{\Gamma \Vdash \propag{\push{S}{\Set}}
@@ -135,10 +139,6 @@ Type synthesis:
                            {\pull{p'}{\SigmaTy{S}{T}}}}
      {\Gamma \Vdash \propag{\snd{p}}
                            {\pull{\snd{p'}}{T\:(\fst{p'})}}}
-\\
-%% True
-\Axiom{\Gamma \Vdash \propag{\True}
-                            {\pull{\True}{\Prop}}}
 }\]
 
 \end{document}
