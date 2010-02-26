@@ -113,18 +113,22 @@ $\PiTy{S}{(\PLAM{\x}{S} T)}$ and $\SigmaTy{S}{(\PLAM{\x}{S} T)}$.
 
 \[
 %% UId
-\Axiom{\Gamma \vdash \Type{\UId}}
+\Rule{\Gamma \vdash \Valid}
+     {\Gamma \vdash \Type{\UId}}
 \qquad
 %% Tag
-\Axiom{\Gamma \vdash \Bhab{\Tag{s}}{\UId}}\;s \mbox{ unique identifier}
+\Rule{\Gamma \vdash \Valid}
+     {\Gamma \vdash \Bhab{\Tag{s}}{\UId}}\;s \mbox{ unique identifier}
 \]
 
 \[
 %% EnumU
-\Axiom{\Gamma \vdash \Type{\EnumU}} 
+\Rule{\Gamma \vdash \Valid}
+     {\Gamma \vdash \Type{\EnumU}} 
 \quad
 %% NilE
-\Axiom{\Gamma \vdash \Bhab{\NilE}{\EnumU}} \quad
+\Rule{\Gamma \vdash \Valid}
+     {\Gamma \vdash \Bhab{\NilE}{\EnumU}} \quad
 %% ConsE
 \Rule{\Gamma \vdash \Bhab{t}{\UId} \quad
       \Gamma \vdash \Bhab{e}{\EnumU}}
@@ -138,7 +142,8 @@ $\PiTy{S}{(\PLAM{\x}{S} T)}$ and $\SigmaTy{S}{(\PLAM{\x}{S} T)}$.
      {\Gamma \vdash \Type{\EnumT{e}}} 
 \\
 %% Ze
-\Axiom{\Gamma \vdash \Bhab{\Ze}{\EnumT{\ConsE{t}{e}}}} 
+\Rule{\Gamma \vdash \Valid}
+     {\Gamma \vdash \Bhab{\Ze}{\EnumT{\ConsE{t}{e}}}} 
 \quad
 %% Su
 \Rule{\Gamma \vdash \Bhab{n}{\EnumT{e}}}
