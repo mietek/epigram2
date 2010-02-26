@@ -416,7 +416,7 @@ several alternatives for where to go next and continuing until a goal is reached
 
 > moduleToGoal :: INTM -> ProofState (EXTM :=>: VAL)
 > moduleToGoal ty = do
->     Right (_ :=>: tyv) <- withNSupply $ liftError . (typeCheck $ check (SET :>: ty))
+>     (_ :=>: tyv) <- checkHere (SET :>: ty)
 >     ModuleMother n <- getMother
 >     aus <- getAuncles
 >     let  ty' = liftType aus ty

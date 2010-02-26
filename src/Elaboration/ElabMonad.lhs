@@ -4,7 +4,7 @@
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE TypeOperators, TypeSynonymInstances, FlexibleInstances,
+> {-# LANGUAGE GADTs, TypeOperators, TypeSynonymInstances, FlexibleInstances,
 >              MultiParamTypeClasses, GeneralizedNewtypeDeriving #-}
 
 > module Elaboration.ElabMonad where
@@ -13,9 +13,14 @@
 > import Control.Monad
 > import Control.Monad.Error
 
+> import Data.Traversable
+
 > import Evidences.Tm
+> import Evidences.Rules
 
 > import DisplayLang.DisplayTm
+
+> import Kit.MissingLibrary
 
 %endif
 
@@ -40,9 +45,54 @@ to which source code locations.
 
 > newtype Loc = Loc Int deriving Show
 
-> data EProb  =  ElabProb InDTmRN
+> data EProb  =  ElabDone (INTM :=>: VAL)
+>             |  ElabProb InDTmRN
 >             |  ElabInferProb ExDTmRN
+>             |  WaitCan (INTM :=>: VAL) EProb
+>             |  WaitSolve REF (INTM :=>: VAL) EProb
 >   deriving Show
+
+> traverseEProb :: Applicative f => (REF -> f REF) -> EProb -> f EProb
+> traverseEProb f (ElabDone tt) = (|ElabDone (travEval f tt)|)
+> traverseEProb f (ElabProb tm) = (|ElabProb (traverseDTIN f tm)|)
+> traverseEProb f (ElabInferProb tm) = (|ElabInferProb (traverseDTEX f tm)|)
+> traverseEProb f (WaitCan tt prob) = (|WaitCan (travEval f tt) (traverseEProb f prob)|)
+> traverseEProb f (WaitSolve ref tt prob) = (|WaitSolve (f ref) (travEval f tt) (traverseEProb f prob)|)
+
+> travEval :: Applicative f => (REF -> f REF) -> INTM :=>: VAL -> f (INTM :=>: VAL)
+> travEval f (tm :=>: _) = (|tm' :=>: (|evTm tm'|)|)
+>     where tm' = traverse f tm
+
+> traverseDTIN :: Applicative f => (REF -> f REF) -> InDTm x -> f (InDTm x)
+> traverseDTIN f (DL (x ::. tm)) = (|DL (|(x ::.) (traverseDTIN f tm)|)|)
+> traverseDTIN f (DL (DK tm)) = (|DL (|DK (traverseDTIN f tm)|)|)
+> traverseDTIN f (DC c) = (|DC (traverse (traverseDTIN f) c)|)
+> traverseDTIN f (DN n) = (|DN (traverseDTEX f n)|)
+> traverseDTIN f (DQ s) = (|(DQ s)|)
+> traverseDTIN f DU     = (|DU|)
+> traverseDTIN f (DTIN tm) = (|DTIN (traverse f tm)|)
+
+> traverseDTEX :: Applicative f => (REF -> f REF) -> ExDTm x -> f (ExDTm x)
+> traverseDTEX f (h ::$ as) = (|(traverseDHead f h) ::$ (traverse (traverse (traverseDTIN f)) as)|)
+
+> traverseDHead :: Applicative f => (REF -> f REF) -> DHead x -> f (DHead x)
+> traverseDHead f (DP x) = (|(DP x)|)
+> traverseDHead f (DType tm) = (|DType (traverseDTIN f tm)|)
+> traverseDHead f (DTEX tm) = (|DTEX (traverse f tm)|)
+
+
+> mapEProb :: (REF -> REF) -> EProb -> EProb
+> mapEProb f = ala Id traverseEProb f
+
+
+> isUnstable :: EProb -> Bool
+> isUnstable (ElabDone _) = True
+> isUnstable (ElabProb _) = True
+> isUnstable (ElabInferProb _) = True
+> isUnstable (WaitCan (_ :=>: C _) _) = True
+> isUnstable (WaitCan _ _) = False
+> isUnstable (WaitSolve _ _ _) = True
+
 
 > data CProb  = SubProb (Elab (INTM :=>: VAL))
 >   deriving Show
@@ -60,7 +110,7 @@ gives the syntax for commands.
 >     |  ECompute TY CProb (INTM :=>: VAL -> Elab x)
 >     |  ESolve REF VAL (EXTM :=>: VAL -> Elab x)
 >     |  EElab TY  (Loc, EProb) (INTM :=>: VAL -> Elab x)
->     |  ECan VAL (Can VAL -> Elab x)
+>     |  ECan (INTM :=>: VAL) EProb (INTM :=>: VAL -> Elab x)
 >     |  EFake Bool (EXTM :=>: VAL -> Elab x)
 >     |  EResolve RelName ((INTM :=>: VAL, Maybe (Scheme INTM)) -> Elab x)
 >     |  EQuote VAL (INTM :=>: VAL -> Elab x)
@@ -79,7 +129,7 @@ gives the syntax for commands.
 >     show (ECompute ty p _)  = "ECompute (" ++ show ty ++ ") (" ++ show p ++ ") (...)"
 >     show (ESolve ref v _)   = "ESolve (" ++ show ref ++ ") (" ++ show v ++ ") (...)"
 >     show (EElab ty lp _)    = "EElab (" ++ show ty ++ ") " ++ show lp ++ " (...)"
->     show (ECan v _)         = "ECan (" ++ show v ++ ") (...)"
+>     show (ECan v p _)       = "ECan (" ++ show v ++ ") (" ++ show p ++ ") (...)"
 >     show (EFake b _)        = "EFake " ++ show b ++ " (...)"
 >     show (EResolve rn _)    = "EResolve " ++ show rn ++ " (...)"
 >     show (EQuote q _)       = "EQuote (" ++ show q ++ ") (...)"
@@ -98,7 +148,7 @@ gives the syntax for commands.
 >     ECompute t p f   >>= k = ECompute t p   ((k =<<) . f)
 >     ESolve r v f     >>= k = ESolve r v     ((k =<<) . f)
 >     EElab t lp f     >>= k = EElab t lp     ((k =<<) . f)
->     ECan v f         >>= k = ECan v         ((k =<<) . f)
+>     ECan v p f       >>= k = ECan v p       ((k =<<) . f)
 >     EFake b f        >>= k = EFake b        ((k =<<) . f)
 >     EResolve rn f    >>= k = EResolve rn    ((k =<<) . f)
 >     EQuote q f       >>= k = EQuote q       ((k =<<) . f)

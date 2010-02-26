@@ -29,6 +29,24 @@
 
 %endif
 
+> elabEnsure :: INTM :=>: VAL -> (Can VAL :>: Can ()) -> Elab (INTM :=>: Can VAL, INTM :=>: VAL)
+> elabEnsure (tm :=>: C v) (ty :>: t) = case halfZip v t of
+>     Nothing  -> throwError' $ err "elabEnsure: halfZip failed!"
+>     Just _   -> do
+>         ty' :=>: _ <- EQuote (C ty) Bale
+>         return (tm :=>: v, N (P refl :$ A ty' :$ A tm)
+>                                  :=>: pval refl $$ A (C ty) $$ A (C v))
+> elabEnsure (_ :=>: L _) _ = throwError' $ err "elabEnsure: failed to match lambda!"
+> elabEnsure (_ :=>: nv) (ty :>: t) = do
+>     vu <- unWrapElab $ canTy chev (ty :>: t)
+>     let v = fmap valueOf vu
+>     pp <- EHope (PRF (EQBLUE (C ty :>: nv) (C ty :>: C v))) Bale
+>     return (C (fmap termOf vu) :=>: v, pp)
+>  where
+>    chev :: (TY :>: ()) -> WrapElab (INTM :=>: VAL)
+>    chev (ty :>: ()) = WrapElab (EHope ty Bale)
+
+
 \subsection{Elaborating |InDTm|s}
 
 We can use the |Elab| language to describe how to elaborate a display term to
@@ -143,6 +161,10 @@ If we already have an evidence term, we just have to type-check it.
 >         Right tt -> return tt
 
 
+> makeElab loc (N ty :>: tm) = do
+>     tt <- EQuote (N ty) Bale
+>     ECan tt (ElabProb tm) Bale
+
 If nothing else matches, give up and report an error.
 
 > makeElab loc (ty :>: tm) = throwError' $ err "makeElab: can't push"
@@ -174,9 +196,8 @@ to produce a type-term pair in the evidence language.
 >     let ss' = {-case ms of
 >                   Just sch  -> schemer sch ss
 >                   Nothing   -> -} ss
->     (t :=>: v :<: y) <- handleArgs (tm :? ty :=>: tmv :<: tyv) ss'
->     y' :=>: _ <- EQuote y Bale
->     return $ PAIR y' (N t) :=>: PAIR y v
+>     handleArgs (tm :? ty :=>: tmv :<: tyv) ss'
+>     
 >   where
 >     schemer :: Scheme INTM -> DSpine RelName -> DSpine RelName
 >     schemer (SchType _) as = as
@@ -186,14 +207,22 @@ to produce a type-term pair in the evidence language.
 >         a : schemer schT as
 >     schemer (SchExplicitPi (x :<: schS) schT) [] = []
 
->     handleArgs :: (EXTM :=>: VAL :<: TY) -> DSpine RelName -> Elab (EXTM :=>: VAL :<: TY)
->     handleArgs (tt :<: ty) [] = return (tt :<: ty)
+>     handleArgs :: (EXTM :=>: VAL :<: TY) -> DSpine RelName -> Elab (INTM :=>: VAL)
+>     handleArgs (tm :=>: tv :<: ty) [] = do
+>         ty' :=>: _ <- EQuote ty Bale
+>         return $ PAIR ty' (N tm) :=>: PAIR ty tv
 >     handleArgs (t :=>: v :<: C cty) (a : as) = do
 >         (a', ty') <- elimTy (subElab loc) (v :<: cty) a
 >         handleArgs (t :$ fmap termOf a' :=>: v $$ fmap valueOf a' :<: ty') as
->     handleArgs (tt :<: ty) as = do
->         cty <- ECan ty Bale
->         handleArgs (tt :<: C cty) as
+
+<     handleArgs (tm :=>: tv :<: ty) (A a : as) = do
+<         ty' :=>: _ <- EQuote ty Bale
+<         (cty :=>: ctyv, q :=>: qv) <- elabEnsure (ty' :=>: ty) (Set :>: Pi () ())
+<         handleArgs (coe :@ [ty', cty, q, N tm] :=>: coe @@ [ty, C ctyv, qv, tv] :<: C ctyv) (A a : as)
+
+>     handleArgs (tm :=>: tv :<: ty) as = do
+>         tt <- EQuote ty Bale
+>         ECan tt (ElabInferProb (DTEX tm ::$ as)) Bale
 
 > makeElabInferHead :: Loc -> DHead RelName -> Elab (INTM :=>: VAL)
 
@@ -205,6 +234,15 @@ to produce a type-term pair in the evidence language.
 >     tm :=>: tmv <- subElab loc (SET :>: ty)
 >     return $ PAIR (ARR tm tm) (idTM "typecast")
 >                  :=>: PAIR (ARR tmv tmv) (idVAL "typecast")
+
+> makeElabInferHead loc (DTEX tm) = do
+>     let nsupply = (B0 :< ("__makeElabInferHeadDTEX", 0), 0) :: NameSupply
+>     case liftError (typeCheck (infer tm) nsupply) of
+>         Left e -> throwError e
+>         Right (tv :<: ty) -> do
+>             ty' :=>: _ <- EQuote ty Bale
+>             return $ PAIR ty' (N tm) :=>: PAIR ty tv
+>     
 
 > makeElabInferHead loc tm = throwError' $ err "makeElabInferHead: can't cope with"
 >     ++ errTm (DN (tm ::$ []))
@@ -221,10 +259,11 @@ represent as an evidence term or value (|sigSetTM| or |sigSetVAL|, respectively)
 
 
 The |extractNeutral| function separates type-term pairs in both term and value forms.
-It avoids clutter in the term representation by spliiting it up if it happens to be
+It avoids clutter in the term representation by splitting it up if it happens to be
 a canonical pair, or applying the appropriate eliminators if not.
 
 > extractNeutral :: INTM :=>: VAL -> INTM :=>: VAL :<: INTM :=>: TY
+> extractNeutral (PAIR ty tm :=>: PAIR tyv tmv) = tm :=>: tmv :<: ty :=>: tyv
 > extractNeutral (PAIR ty tm :=>: tv) = tm :=>: tv $$ Snd :<: ty :=>: tv $$ Fst
 > extractNeutral (tm :=>: tv) = N (tm' :$ Snd) :=>: tv $$ Snd :<: N (tm' :$ Fst) :=>: tv $$ Fst
 >   where tm' = tm :? sigSetTM

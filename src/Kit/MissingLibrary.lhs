@@ -37,6 +37,11 @@
 >        (t -> t') -> ((s -> t') -> u -> v') -> (s -> t) -> u -> Unwrap v'
 > ala p h f u = unwrap (h (p . f) u)
 
+> instance Newtype (Id a) where
+>   type Unwrap (Id a) = a
+>   wrap = Id
+>   unwrap = unId
+
 > instance Newtype Any where
 >   type Unwrap Any = Bool
 >   wrap    = Any

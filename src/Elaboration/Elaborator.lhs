@@ -82,16 +82,14 @@ the proof state. That is, it defines the semantics of the |Elab| syntax.
 > runElab top (ty :>: EElab tyElab (l, p) f)  = runElabElab tyElab l p
 >     >>= runElab top . (ty :>:) . (>>= f)
 
-> runElab top (ty :>: ECan (C c) f) = runElab top (ty :>: f c)
-> runElab True (ty :>: ECan tm f) = do
->     t :=>: tv <- suspendMe (ECan tm f)
->     return (N t :=>: tv, False)
-> runElab False (ty :>: ECan tm f) = do
+> runElab top (ty :>: ECan (_ :=>: C c) prob f) = runElabElab ty (Loc 0) prob
+>     >>= runElab top . (ty :>:) . (>>= f)
+> runElab top (ty :>: ECan tt prob f) = do
 >     ty' <- bquoteHere ty
->     t :=>: tv <- suspend ("can" :<: ty' :=>: ty) (ECan tm f)
->     return (N t :=>: tv, False)
+>     tm :=>: tmv <- suspend ("can" :<: ty' :=>: ty) (WaitCan tt prob)
+>     runElab top (ty :>: f (N tm :=>: tmv))
 
-> runElab True (ty :>: ECry e)            = do
+> runElab True (ty :>: ECry e) = do
 >     e' <- distillErrors e
 >     throwError e'
 
@@ -163,13 +161,23 @@ proof, we might be able to find one, but otherwise we just create a hole.
 
 > flexiProof :: VAL -> ProofState (INTM :=>: VAL)
 > flexiProof p@(EQBLUE (_S :>: s) (_T :>: (NP ref@(_ := HOLE Hoping :<: _)))) = do
->     p' <- bquoteHere p
+>     s' <- bquoteHere s
+>     _S' <- bquoteHere _S
+>     _T' <- bquoteHere _T
+>     let p' = EQBLUE (_S' :>: s') (_T' :>: NP ref)
 >     neutralise =<< suspend ("hope" :<: PRF p' :=>: PRF p)
->         (ESolve ref s . const $ EQuote (pval refl $$ A _S $$ A s) Bale)
+>         (WaitSolve ref (s' :=>: s) (ElabDone (N (P refl :$ A _S' :$ A s')
+>                                               :=>: pval refl $$ A _S $$ A s)))
+
 > flexiProof p@(EQBLUE (_T :>: (NP ref@(_ := HOLE Hoping :<: _))) (_S :>: s)) = do
->     p' <- bquoteHere p
+>     s' <- bquoteHere s
+>     _S' <- bquoteHere _S
+>     _T' <- bquoteHere _T
+>     let p' = EQBLUE (_T' :>: NP ref) (_S' :>: s')
 >     neutralise =<< suspend ("hope" :<: PRF p' :=>: PRF p)
->         (ESolve ref s . const $ EQuote (pval refl $$ A _S $$ A s) Bale)
+>         (WaitSolve ref (s' :=>: s) (ElabDone (N (P refl :$ A _S' :$ A s')
+>                                               :=>: pval refl $$ A _S $$ A s)))
+
 > flexiProof _ = (|)
 
 > simplifyProof :: VAL -> ProofState (INTM :=>: VAL)
@@ -204,36 +212,23 @@ The |ECompute| command computes the solution to a problem, given its type.
 > runElabElab ty loc (ElabInferProb tm)  = return (makeElabInfer loc tm)
 
 
-< elabEnsure :: VAL -> (Can VAL :>: Can ()) -> Elab (Can VAL, VAL)
-< elabEnsure (C v) (ty :>: t) = case halfZip v t of
-<     Nothing  -> throwError' $ err "elabEnsure: failed to match!"
-<     Just _   -> return (v, pval refl $$ A (C ty) $$ A (C v))
-< elabEnsure nv (ty :>: t) = do
-<     vu <- unWrapElab $ canTy chev (ty :>: t)
-<     let v = fmap valueOf vu
-<     p <- EHope (PRF (EQBLUE (C ty :>: nv) (C ty :>: C v))) Bale
-<     return (v, p)
-<  where
-<    chev :: (TY :>: ()) -> WrapElab (() :=>: VAL)
-<    chev (ty :>: ()) = WrapElab (EHope ty (return . (() :=>:)))
-
 The |suspend| command can be used to delay elaboration, by creating a subgoal
-of the given type and attaching a suspended elaboration process to its tip.
-When the scheduler hits the goal, the elaboration process will restart.
+of the given type and attaching a suspended elaboration problem to its tip.
+When the scheduler hits the goal, the elaboration problem will restart.
 
-> suspend :: (String :<: INTM :=>: TY) -> Elab(INTM :=>: VAL)
+> suspend :: (String :<: INTM :=>: TY) -> EProb
 >                -> ProofState (EXTM :=>: VAL)
-> suspend (x :<: tt) elab = do
+> suspend (x :<: tt) prob = do
 >     r <- make' Waiting (x :<: tt)
 >     Just (E ref xn (Girl LETG (es, Unknown utt, nsupply) ms) tm) <- removeDevEntry
->     putDevEntry (E ref xn (Girl LETG (es, UnknownElab utt elab, nsupply) ms) tm)
+>     putDevEntry (E ref xn (Girl LETG (es, Suspended utt prob, nsupply) ms) tm)
 >     return r
 
 
-> suspendMe :: Elab (INTM :=>: VAL) -> ProofState (EXTM :=>: VAL)
-> suspendMe elab = do
+> suspendMe :: EProb -> ProofState (EXTM :=>: VAL)
+> suspendMe prob = do
 >     Unknown tt <- getDevTip
->     putDevTip (UnknownElab tt elab)
+>     putDevTip (Suspended tt prob)
 >     getMotherDefinition
 
 
@@ -275,53 +270,84 @@ $\lambda$-lift terms.
 >     tm :=>: tmv <- f
 >     return (N tm :=>: tmv)
 
-> elmCT :: ExDTmRN -> ProofState String
-> elmCT tm = do
->     let el = makeElabInfer (Loc 0) tm
->     suspend ("elab" :<: sigSetTM :=>: sigSetVAL) el
->     cursorTop
->     scheduler 0
->     return "Okay."
-
 > scheduler :: Int -> ProofState ()
 > scheduler n = do
 >     cs <- getDevCadets
 >     case cs of
 >         F0      -> if n == 0 then return () else goOutProperly >> scheduler (n-1)
 >         E _ _ (Boy _) _ :> _  -> cursorDown >> scheduler n
->         E ref _ (Girl _ (_, UnknownElab tt elab, _) _) _ :> _
->           | isUnstable elab -> do
+>         E ref _ (Girl _ (_, Suspended tt prob, _) _) _ :> _
+>           | isUnstable prob -> do
 >             cursorDown
->             goIn
->             putDevTip (Unknown tt)
->             proofTrace $ "scheduler: resuming elaboration on " ++ show (refName ref)
->                 ++ ":\n" ++ show elab
->             (tm :=>: tmv, okay) <- runElab True (valueOf tt :>: elab)
->             if okay
->                 then give' tm >> return ()
->                 else proofTrace "scheduler: elaboration suspended."
->             cursorTop
->             scheduler (n+1)
+>             goIn            
+>             mtt <- resumeEProb
+>             case mtt of
+>                 Just (tm :=>: _) -> do
+>                     proofTrace "scheduler: elaboration done."
+>                     give' tm
+>                     cursorTop
+>                     scheduler (n+1)
+>                 Nothing -> do
+>                     proofTrace "scheduler: elaboration suspended."
+>                     goOutProperly
+>                     cursorTop
+>                     scheduler n
+
 >         _ :> _ -> cursorDown >> goIn >> cursorTop >> scheduler (n+1)
+
+
+> resumeEProb :: ProofState (Maybe (INTM :=>: VAL))
+> resumeEProb = do
+>     Suspended (ty :=>: tyv) prob <- getDevTip
+>     putDevTip (Unknown (ty :=>: tyv))
+>     mn <- getMotherName
+>     proofTrace $ "Resuming elaboration on " ++ showName mn ++ ":  \n" ++ show prob
+>     resume (ty :=>: tyv) prob
 >   where
->     isUnstable :: Elab x -> Bool
->     isUnstable (Bale _) = True
->     isUnstable (ELambda _ _) = True
->     isUnstable (EGoal _) = True
->     isUnstable (EHope _ _) = True
->     isUnstable (ECry _) = True
->     isUnstable (ECompute _ _ _) = True
->     isUnstable (ESolve _ _ _) = True
->     isUnstable (EElab _ _ _) = True
->     isUnstable (ECan (C _) _) = True
->     isUnstable (ECan _ _) = False
+>     resume :: (INTM :=>: VAL) -> EProb -> ProofState (Maybe (INTM :=>: VAL))
+>     resume _ (ElabDone tt) = return $ Just tt
+>     resume (ty :=>: tyv) (ElabProb tm) =
+>         return . ifSnd =<< runElab True (tyv :>: makeElab (Loc 0) (tyv :>: tm))
+>     resume (ty :=>: tyv) (ElabInferProb tm) =
+>         return . ifSnd =<< runElab True (tyv :>: makeElabInfer (Loc 0) tm)
+>     resume (ty :=>: tyv) (WaitCan (tm :=>: C v) prob) = resume (ty :=>: tyv) prob
+>     resume _ prob@(WaitCan (tm :=>: _) _) = do
+>         proofTrace $ "Suspended waiting for " ++ show tm ++ " to become canonical."
+>         suspendMe prob
+>         return Nothing
+>     resume _ (WaitSolve ref@(_ := HOLE _ :<: _) (_ :=>: tmv) prob) = do
+>         suspendMe prob
+>         tm <- bquoteHere tmv -- force definitional expansion
+>         solveHole ref tm
+>         return Nothing
+>     resume tt (WaitSolve ref@(_ := DEFN tmv' :<: ty) (_ :=>: tmv) prob) = do
+>         eq <- withNSupply $ equal (ty :>: (tmv, tmv'))
+>         if eq
+>             then  resume tt prob
+>             else  throwError' $ err "resume: hole has been solved inconsistently! We should do something clever here."
+>                 
+
+> ifSnd :: (a, Bool) -> Maybe a
+> ifSnd (a,  True)   = Just a
+> ifSnd (_,  False)  = Nothing
 
 
+> elmCT :: ExDTmRN -> ProofState String
+> elmCT tm = do
+>     suspend ("elab" :<: sigSetTM :=>: sigSetVAL) (ElabInferProb tm)
+>     cursorTop
+>     scheduler 0
+>     return "Okay."
 
-
+> kickCT :: ProofState String
+> kickCT = do
+>     cursorTop
+>     scheduler 0
+>     return "Kicked."
 
 > import -> CochonTactics where
 >   : unaryExCT "elm" elmCT "elm <term> - elaborate <term> using the Elab monad."
+>   : nullaryCT "kick" kickCT "kick - kick off the scheduler."
 
 
 

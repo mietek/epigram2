@@ -11,6 +11,7 @@
 
 > import Control.Applicative
 > import Data.Foldable
+> import Data.Traversable
 
 > import Kit.BwdFwd
 
@@ -166,12 +167,13 @@ update the news bulletin). If not, we must:
 >     return (addNews (ref, min n n') news,
 >         E ref sn (Girl LETG (cs, Unknown tt', nsupply) ms) ty')
 
-> tellEntry news (E (name := HOLE h :<: tyv) sn (Girl LETG (cs, UnknownElab tt elab, nsupply) ms) ty) = do
+> tellEntry news (E (name := HOLE h :<: tyv) sn (Girl LETG (cs, Suspended tt prob, nsupply) ms) ty) = do
 >     let  (tt', n)             = tellNewsEval news tt
 >          (ty' :=>: tyv', n')  = tellNewsEval news (ty :=>: tyv)
 >          ref                  = name := HOLE h :<: tyv'
+>          prob'                = tellEProb news prob
 >     return (addNews (ref, min n n') news,
->         E ref sn (Girl LETG (cs, UnknownElab tt' elab, nsupply) ms) ty')
+>         E ref sn (Girl LETG (cs, Suspended tt' prob', nsupply) ms) ty')
 
 To update a defined girl, we must:
 \begin{enumerate}
@@ -207,40 +209,18 @@ that her children have already received, and returns the updated news.
 >     e <- getMotherEntry
 >     (news', e') <- tellEntry news e 
 >     putMotherEntry e'
->     tip <- getDevTip
->     case tip of
->         UnknownElab tt elab -> do
->             melab <- tellElab news elab
->             case melab of
->                 Just elab' -> do
->                     putDevTip (Unknown tt)
->                     proofTrace $ "tellMother: resuming elaboration on "
->                         ++ show (entryName e') ++ ":\n" ++ show elab'
->                     (tm :=>: _, okay) <- runElab True (valueOf tt :>: elab')
->                     if okay
->                         then do
->                             let (tm', _) = tellNews news tm
->                             give' tm'
->                             return ()
->                         else proofTrace "tellMother: elaboration suspended."
->                 Nothing -> return ()
->         _ -> return ()
+
+<     tip <- getDevTip
+<     case tip of
+<         Suspended tt prob | isUnstable prob -> do
+<             mtt <- resumeEProb
+<             case mtt of
+<                 Just (tm :=>: _) -> give' tm >> return ()
+<                 Nothing -> proofTrace "tellMother: elaboration suspended."
+<         _ -> return ()
+
 >     return news'
 
 
-> tellElab :: NewsBulletin -> Elab (INTM :=>: VAL) -> ProofState (Maybe (Elab (INTM :=>: VAL)))
-> tellElab news (Bale (tm :=>: _)) = do
->     case tellNews news tm of
->         (tm', GoodNews)  -> return . Just . Bale  $ tm' :=>: evTm tm'
->         (_, NoNews)     -> return Nothing
-> tellElab news (ECan v f) = do
->     v' <- bquoteHere v
->     case tellNews news v' of
->         (v'', GoodNews)  -> return $ Just (ECan (evTm v'') f)
->         (_, NoNews)      -> return Nothing
-> tellElab news (ESolve ref v f) = do
->     v' <- bquoteHere v
->     let  v''   = fst (tellNews news v')
->          ref'  = getLatest news ref
->     return $ Just (ESolve ref' (evTm v'') f)
-> tellElab news elab = return $ Just elab
+> tellEProb :: NewsBulletin -> EProb -> EProb
+> tellEProb news = mapEProb (getLatest news)

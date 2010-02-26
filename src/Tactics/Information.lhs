@@ -215,10 +215,11 @@ of the proof state at the current location.
 >                 hk <- getHoleKind
 >                 tyd <- prettyHere (SET :>: ty)
 >                 return (prettyHKind hk <+> kword KwAsc <+> tyd)
->             UnknownElab (ty :=>: _) _ -> do
+>             Suspended (ty :=>: _) prob -> do
 >                 hk <- getHoleKind
 >                 tyd <- prettyHere (SET :>: ty)
->                 return (text "(SUSPENDED)" <+> prettyHKind hk <+> kword KwAsc <+> tyd)
+>                 return (text ("(SUSPENDED: " ++ show prob ++ ")")
+>                             <+> prettyHKind hk <+> kword KwAsc <+> tyd)
 >             Defined tm (ty :=>: tyv) -> do
 >                 tyd <- prettyHere (SET :>: ty)
 >                 tmd <- prettyHereAt (pred ArrSize) (tyv :>: tm)
