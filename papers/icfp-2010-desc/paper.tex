@@ -219,19 +219,17 @@ following implications always hold by induction on derivations.
 }
 \]
 
-\[
-\stkc{
-\Rule{\Gamma \vdash \Bhab{e}{\EnumU} \quad
-      \Gamma \vdash \Bhab{P}{\EnumT{e} \To \Set}}
-     {\Gamma \vdash \Bhab{\spi{e}{P}}{\Set}} \\
-\Rule{\stkc{
-      \Gamma \vdash \Bhab{e}{\EnumU} \quad
-      \Gamma \vdash \Bhab{P}{\EnumT{e} \To \Set} \\
-      \Gamma \vdash \Bhab{b}{\spi{e}{P}} \quad
-      \Gamma \vdash \Bhab{x}{\EnumT{e}}}}
-     {\Gamma \vdash \Bhab{\switch{e}{P}{b}{x}}{P x}}
-}
-\]
+\[\stk{
+%% spi
+\F{$\pi$} : \PITEL{\V{e}}{\EnumU}
+            \PITEL{\V{P}}{\EnumT{e} \To \Set} \To \Set \\
+\\
+%% switch
+\F{switch} : \PITEL{\V{e}}{\EnumU}
+             \PITEL{\V{P}}{\EnumT{e} \To \Set}
+             \PITEL{\V{b}}{\spi{e}{P}}
+             \PITEL{\V{x}}{\EnumT{e}} \To P~x
+}\]
 
 \subsection{Type propagation}
 
