@@ -81,6 +81,11 @@
 \newcommand{\Prod}{\mathop{\blue{\times}}}
 \newcommand{\mto}{\mathop{\red{\mapsto}}}
 
+\newcommand{\push}[2]{#2 \ni #1}
+\newcommand{\pull}[2]{#1 \in #2}
+\newcommand{\propag}[2]{#1 \triangleright #2}
+
+\newcommand{\PiTy}[2]{\blue{\Pi}\: #1\: #2}
 \newcommand{\PITEL}[2]{\blue{(}\Bhab{#1}{#2}\blue{)}}
 \newcommand{\PI}[2]{\PITEL{#1}{#2}\To}
 \newcommand{\PIS}[1]{\blue{(}#1\blue{)}\To}
@@ -152,10 +157,13 @@
 \newcommand{\Type}[1]{{#1}:\Set}
 
 %% Sigma
+\newcommand{\SigmaTy}[2]{\blue{\Sigma}\: #1\: #2}
 \newcommand{\SIGMA}[2]{\blue{(}\Bhab{#1}{#2}\blue{)}\Prod}
 \newcommand{\SIGMAS}[1]{\blue{(}#1\blue{)}\Prod}
 \newcommand{\TIMES}[1]{#1 \Prod}
 \newcommand{\pair}[3]{\left[{#1},{#2}\right]_{#3}}
+\newcommand{\fst}[1]{\pi_0\: #1}
+\newcommand{\snd}[1]{\pi_1\: #1}
 
 %% Prop
 \newcommand{\Prop}{\blue{\textsc{Prop}}}
