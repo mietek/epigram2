@@ -9,6 +9,7 @@
 
 > import Control.Applicative
 > import Control.Monad.Identity
+> import Control.Monad.State
 > import Data.Foldable hiding (elem, find)
 > import Data.List
 > import Data.Maybe
@@ -22,6 +23,7 @@
 
 > import ProofState.Developments
 > import ProofState.ProofContext
+> import ProofState.ProofState
 
 > import DisplayLang.DisplayTm
 
@@ -92,6 +94,28 @@ are fully $\lambda$-lifted, but as $f$'s parameters are held in common
 with the point of reference, we automatically supply them.
 
 \subsection{A New Hope}
+
+The |resolveHere| command resolves a relative name to a reference,
+a spine of shared parameters to which it should be applied, and
+possibly a scheme. If the name ends with "./", the scheme will be
+discarded, so all parameters can be provided explicitly.
+\question{What should the syntax be for this, and where should it be handled?}
+
+> resolveHere :: RelName -> ProofState (REF, Spine {TT} REF, Maybe (Scheme INTM))
+> resolveHere x = do
+>     pc <- get
+>     let  x'    = if fst (last x) == "/" then init x else x
+>          uess  = inBScope pc
+>     ans@(r, s, ms) <- resolve x' (Just $ uess) (inBFScope uess)  
+>        `catchEither` (err $ "resolveHere: cannot resolve name: " ++ showRelName x')
+>     if fst (last x) == "/" then return (r, s, Nothing) else return ans
+
+The |resolveDiscard| command resolves a relative name to a reference,
+discarding any shared parameters it should be applied to.
+
+> resolveDiscard :: RelName -> ProofState REF
+> resolveDiscard x = resolveHere x >>= (\ (r, _, _) -> return r)
+
 
 This needs documenting I (Peter) am on it.
 

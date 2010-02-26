@@ -16,6 +16,8 @@
 > import ProofState.ProofState
 > import ProofState.ProofKit
 
+> import DisplayLang.Naming
+
 > import Elaboration.Elaborator
 
 > import Tactics.Information
@@ -279,7 +281,7 @@ flatten the structure made by the interpretation of |D'|.
 
 > induction :: RelName -> ProofState ()
 > induction desc = do
->     _D <- resolveHere desc
+>     _D <- resolveDiscard desc
 >     case _D of 
 >       _ := (DEFN (MU _ v) :<: _) -> do
 >                    introData B0 v

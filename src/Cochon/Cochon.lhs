@@ -274,7 +274,7 @@ Construction tactics:
 >       (\ as -> elabProgram (map argToStr as) >> return "Programming.")
 >       "program <labels>: set up a programming problem."
 
->   : unaryNameCT "select" (\ x -> resolveHere x >>= select . N . P >> return "Selected.")
+>   : unaryNameCT "select" (\ x -> resolveDiscard x >>= select . N . P >> return "Selected.")
 >       "select <name> - defines a copy of <name> in the current development."
 >   : nullaryCT "ungawa" (ungawa >> return "Ungawa!")
 >       "ungawa - tries to solve the current goal in a stupid way."
@@ -310,7 +310,7 @@ Navigation tactics:
 >       "last - searches for the last goal in the proof state."
 
 >   : unaryNameCT "jump" (\ x -> do
->       (n := _) <- resolveHere x
+>       (n := _) <- resolveDiscard x
 >       goTo n
 >       return ("Jumping to " ++ showName n ++ "...")
 >     )
@@ -325,7 +325,7 @@ Miscellaneous tactics:
 >         ,  ctIO = (\ [ExArg (DP r ::$ []), StrArg fn] (locs :< loc) -> do
 >             let  Right aus = evalStateT getAuncles loc
 >                  Right dev = evalStateT getDev loc
->                  Right (n := _) = evalStateT (resolveHere r) loc
+>                  Right (n := _) = evalStateT (resolveDiscard r) loc
 >             compileCommand n (reverseDev' dev) fn
 >             putStrLn "Compiled."
 >             return (locs :< loc)

@@ -1,5 +1,4 @@
-\section{Implementing the |Elab| monad}
-\label{sec:implementing_elab_monad}
+\section{The Elaborator}
 
 %if False
 
@@ -10,7 +9,6 @@
 
 > import Control.Applicative
 > import Control.Monad.Error
-> import Control.Monad.State
 > import Data.Traversable
 
 > import Evidences.Tm
@@ -40,6 +38,7 @@
 
 %endif
 
+\subsection{Implementing the |Elab| monad}
 
 The |runElab| proof state command actually interprets an |Elab x| in
 the proof state. That is, it defines the semantics of the |Elab| syntax.
@@ -69,10 +68,7 @@ and |False| if the problem was suspended.
 >     tt <- make' Waiting (s :<: tyWait' :=>: tyWait)
 >     runElab top (ty :>: f tt)
 
-> runElab top (ty :>: ECompute tyComp p f) = runElabCompute tyComp p
->     >>= runElab top . (ty :>:) . f
-
-> runElab top (ty :>: EElab l p f)  = runElabElab l p
+> runElab top (ty :>: EElab l p f)  = runElabProb l p
 >     >>= runElab top . (ty :>:) . f . fst
 
 > runElab True (ty :>: ECry e) = do
@@ -98,7 +94,7 @@ and |False| if the problem was suspended.
 
 
 > runElab top (ty :>: EResolve rn f) = do
->     (ref, as, ms) <- elabResolve rn
+>     (ref, as, ms) <- resolveHere rn
 >     let tm = P ref $:$ as
 >     (tmv :<: tyv) <- inferHere tm
 >     tyv'  <- bquoteHere tyv
@@ -194,18 +190,16 @@ find one, but otherwise we just create a hole.
 >     subProof (PRF p) = flexiProof p <|> lastHope (PRF p)
 
 
-The |runElabCompute| command interprets computes the solution to a problem, given its type. 
+The |runElabProb| command interprets the |EElab| instruction, which holds a syntactic
+representation of an elaboration problem. 
+\question{How should this relate to the |internalElab| instruction?}
 
-> runElabCompute :: TY -> CProb -> ProofState (INTM :=>: VAL)
-> runElabCompute ty (SubProb elab) =
->     return . fst =<< runElab False (ty :>: elab)
-
-> runElabElab :: Loc -> (TY :>: EProb) -> ProofState (INTM :=>: VAL, Bool)
-> runElabElab loc (ty :>: ElabDone tt) = return (tt, True)
-> runElabElab loc (ty :>: ElabProb tm) = runElab False (ty :>: makeElab loc (ty :>: tm))
-> runElabElab loc (ty :>: ElabInferProb tm) = runElab False (ty :>: makeElabInfer loc tm)
-> runElabElab loc (ty :>: WaitCan (_ :=>: C _) prob) = runElabElab loc (ty :>: prob)
-> runElabElab loc (ty :>: prob) = do
+> runElabProb :: Loc -> (TY :>: EProb) -> ProofState (INTM :=>: VAL, Bool)
+> runElabProb loc (ty :>: ElabDone tt) = return (tt, True)
+> runElabProb loc (ty :>: ElabProb tm) = runElab False (ty :>: makeElab loc (ty :>: tm))
+> runElabProb loc (ty :>: ElabInferProb tm) = runElab False (ty :>: makeElabInfer loc tm)
+> runElabProb loc (ty :>: WaitCan (_ :=>: C _) prob) = runElabProb loc (ty :>: prob)
+> runElabProb loc (ty :>: prob) = do
 >     ty' <- bquoteHere ty
 >     return . (, False) =<< neutralise =<< suspend (name prob :<: ty' :=>: ty) prob
 >   where
@@ -217,7 +211,8 @@ The |runElabCompute| command interprets computes the solution to a problem, give
 
 The |suspend| command can be used to delay elaboration, by creating a subgoal
 of the given type and attaching a suspended elaboration problem to its tip.
-When the scheduler hits the goal, the elaboration problem will restart.
+When the scheduler hits the goal, the elaboration problem will restart if it
+is unstable.
 
 > suspend :: (String :<: INTM :=>: TY) -> EProb
 >                -> ProofState (EXTM :=>: VAL)
@@ -228,6 +223,9 @@ When the scheduler hits the goal, the elaboration problem will restart.
 >     return r
 
 
+The |suspendMe| command attaches a suspended elaboration problem to the current
+location.
+
 > suspendMe :: EProb -> ProofState (EXTM :=>: VAL)
 > suspendMe prob = do
 >     Unknown tt <- getDevTip
@@ -235,43 +233,8 @@ When the scheduler hits the goal, the elaboration problem will restart.
 >     getMotherDefinition
 
 
-\section{Elaboration}
-\label{sec:elaborator}
 
-\subsection{Elaborating |INDTM|s}
-
-The |elaborate| command elaborates a term in display syntax, given its type,
-to produce an elaborated term and its value representation. It behaves
-similarly to |check| from subsection~\ref{subsec:type-checking}, except that
-it operates in the |Elab| monad, so it can create subgoals and
-$\lambda$-lift terms.
-
-> elaborate :: Loc -> (TY :>: InDTmRN) -> ProofState (INTM :=>: VAL)
-> elaborate loc (ty :>: tm) = runElab False (ty :>: makeElab loc (ty :>: tm))
->     >>= return . fst
-
-> elaborate' = elaborate (Loc 0)
-
-> elaborateHere :: Loc -> InDTmRN -> ProofState (INTM :=>: VAL)
-> elaborateHere loc tm = do
->     _ :=>: ty <- getHoleGoal
->     return . fst =<< runElab True (ty :>: makeElab loc (ty :>: tm))
-
-> elaborateHere' = elaborateHere (Loc 0)
-
-> elabInfer :: Loc -> ExDTmRN -> ProofState (INTM :=>: VAL :<: TY)
-> elabInfer loc tm = do
->     (tt, _) <- runElab False (sigSetVAL :>: makeElabInfer loc tm)
->     let (tt' :<: _ :=>: ty) = extractNeutral tt
->     return (tt' :<: ty)
-
-> elabInfer' = elabInfer (Loc 0)
-
-
-> neutraliseElab :: Elab (EXTM :=>: VAL) -> Elab (INTM :=>: VAL)
-> neutraliseElab f = do
->     tm :=>: tmv <- f
->     return (N tm :=>: tmv)
+\subsection{The Scheduler}
 
 > scheduler :: Int -> ProofState ()
 > scheduler n = do
@@ -335,6 +298,38 @@ $\lambda$-lift terms.
 > ifSnd (_,  False)  = Nothing
 
 
+\subsection{Elaborating terms}
+
+The |elaborate| command elaborates a term in display syntax, given its type,
+to produce an elaborated term and its value representation. It behaves
+similarly to |check| from subsection~\ref{subsec:type-checking}, except that
+it operates in the |Elab| monad, so it can create subgoals and
+$\lambda$-lift terms.
+
+> elaborate :: Loc -> (TY :>: InDTmRN) -> ProofState (INTM :=>: VAL)
+> elaborate loc (ty :>: tm) = runElab False (ty :>: makeElab loc (ty :>: tm))
+>     >>= return . fst
+
+> elaborate' = elaborate (Loc 0)
+
+
+> elaborateHere :: Loc -> InDTmRN -> ProofState (INTM :=>: VAL)
+> elaborateHere loc tm = do
+>     _ :=>: ty <- getHoleGoal
+>     return . fst =<< runElab True (ty :>: makeElab loc (ty :>: tm))
+
+> elaborateHere' = elaborateHere (Loc 0)
+
+
+> elabInfer :: Loc -> ExDTmRN -> ProofState (INTM :=>: VAL :<: TY)
+> elabInfer loc tm = do
+>     (tt, _) <- runElab False (sigSetVAL :>: makeElabInfer loc tm)
+>     let (tt' :<: _ :=>: ty) = extractNeutral tt
+>     return (tt' :<: ty)
+
+> elabInfer' = elabInfer (Loc 0)
+
+
 > elmCT :: ExDTmRN -> ProofState String
 > elmCT tm = do
 >     suspend ("elab" :<: sigSetTM :=>: sigSetVAL) (ElabInferProb tm)
@@ -351,23 +346,6 @@ $\lambda$-lift terms.
 > import -> CochonTactics where
 >   : unaryExCT "elm" elmCT "elm <term> - elaborate <term> using the Elab monad."
 >   : nullaryCT "kick" kickCT "kick - kick off the scheduler."
-
-
-
-The |elabResolve| command resolves a relative name to a reference,
-a spine of shared parameters to which it should be applied, and
-possibly a scheme. If the name ends with "./", the scheme will be
-discarded, so all parameters can be provided explicitly.
-\question{What should the syntax be for this, and where should it be handled?}
-
-> elabResolve :: RelName -> ProofState (REF, Spine {TT} REF, Maybe (Scheme INTM))
-> elabResolve x = do
->     pc <- get
->     let  x'    = if fst (last x) == "/" then init x else x
->          uess  = inBScope pc
->     ans@(r, s, ms) <- resolve x' (Just $ uess) (inBFScope uess)  
->        `catchEither` (err $ "elabResolve: cannot resolve name: " ++ showRelName x')
->     if fst (last x) == "/" then return (r, s, Nothing) else return ans
 
 
 \subsection{Elaborated Construction Commands}
@@ -502,12 +480,3 @@ creates a $\Pi$-boy with that type.
 >     e <- getDevEntry
 >     (t', tt) <- elabScheme (es :< e) t
 >     return (SchImplicitPi (x :<: (es -| termOf ss)) t', tt)
-
-
-
-
-The |resolveHere| command resolves a relative name to a reference,
-discarding any shared parameters it should be applied to.
-
-> resolveHere :: RelName -> ProofState REF
-> resolveHere x = elabResolve x >>= (\ (r, _, _) -> return r)

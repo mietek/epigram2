@@ -10,8 +10,6 @@
 > module Elaboration.Wire where
 
 > import Control.Applicative
-> import Data.Foldable
-> import Data.Traversable
 
 > import Kit.BwdFwd
 

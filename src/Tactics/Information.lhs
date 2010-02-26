@@ -117,7 +117,7 @@ away bits of the context to produce an answer, then restores the saved state.
 
 > infoScheme :: RelName -> ProofState String
 > infoScheme x = do
->     (_, _, ms) <- elabResolve x
+>     (_, _, ms) <- resolveHere x
 >     case ms of
 >         Just sch -> do
 >             d <- prettySchemeHere sch

@@ -11,7 +11,6 @@
 > import Data.Foldable hiding (sequence_)
 > import Data.List
 > import Data.Maybe
-> import Debug.Trace
 
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
@@ -25,9 +24,8 @@
 > import ProofState.ProofState
 > import ProofState.ProofKit
 
-> import Tactics.Information
-
 > import DisplayLang.DisplayTm
+> import DisplayLang.Naming
 
 > import Elaboration.Elaborator
 
@@ -984,7 +982,7 @@ We make elimination accessible to the user by adding it as a Cochon tactic:
 >     c' <- case c of 
 >           Nothing -> return Nothing
 >           Just c -> do
->              c <- resolveHere c
+>              c <- resolveDiscard c
 >              return $ Just c
 >     (e :=>: ev :<: elimTy) <- elabInfer' r
 >     elimTyTm <- bquoteHere elimTy

@@ -107,7 +107,6 @@ gives the syntax for commands.
 >     |  EHope TY (INTM :=>: VAL -> Elab x)
 >     |  EWait String TY (EXTM :=>: VAL -> Elab x)
 >     |  ECry (StackError InDTmRN)
->     |  ECompute TY CProb (INTM :=>: VAL -> Elab x)
 >     |  EElab Loc (TY :>: EProb) (INTM :=>: VAL -> Elab x)
 >     |  EFake Bool (EXTM :=>: VAL -> Elab x)
 >     |  EResolve RelName ((INTM :=>: VAL, Maybe (Scheme INTM)) -> Elab x)
@@ -124,7 +123,6 @@ gives the syntax for commands.
 >     show (EHope ty _)       = "EHope (" ++ show ty ++ ") (...)"
 >     show (EWait s ty _)     = "EHope " ++ show s ++ " (" ++ show ty ++ ") (...)"
 >     show (ECry _)           = "ECry (...)"
->     show (ECompute ty p _)  = "ECompute (" ++ show ty ++ ") (" ++ show p ++ ") (...)"
 >     show (EElab l tp _)     = "EElab " ++ show l ++ " (" ++ show tp ++ ") (...)"
 >     show (EFake b _)        = "EFake " ++ show b ++ " (...)"
 >     show (EResolve rn _)    = "EResolve " ++ show rn ++ " (...)"
@@ -141,7 +139,6 @@ gives the syntax for commands.
 >     EHope t f        >>= k = EHope t        ((k =<<) . f)
 >     EWait s t f      >>= k = EWait s t      ((k =<<) . f)
 >     ECry errs        >>= k = ECry errs
->     ECompute t p f   >>= k = ECompute t p   ((k =<<) . f)
 >     EElab l tp f     >>= k = EElab l tp     ((k =<<) . f)
 >     EFake b f        >>= k = EFake b        ((k =<<) . f)
 >     EResolve rn f    >>= k = EResolve rn    ((k =<<) . f)
