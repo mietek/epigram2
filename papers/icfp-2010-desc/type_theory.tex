@@ -1,0 +1,150 @@
+\documentclass{report}
+
+\usepackage{amsmath}
+\usepackage{pig}
+
+\include{macros}
+
+\begin{document}
+
+\ColourEpigram
+
+\[
+\begin{array}{ll}
+\Gamma\vdash\Valid & \mbox{\(\Gamma\) is a valid context, giving types to
+                    variables} \\
+\Gamma\vdash \Bhab{t}{T} & \mbox{term \(t\) has type \(T\) in context \(\Gamma\)} \\
+\Gamma\vdash \Bhab{s \equiv t}{T} & \mbox{\(s\) and \(t\) are equal at type \(T\)
+   in context \(\Gamma\)} \\
+\end{array}
+\]
+
+The systems of inference rules will be formulated to ensure that the
+following implications always hold by induction on derivations.
+\[
+\begin{array}{l@{\;\;\Rightarrow\;\;}l}
+\Gamma\vdash \Bhab{t}{T}            & \Gamma\vdash\Valid \;\wedge\; \Gamma\vdash\Type{T} \\
+\Gamma\vdash s \equiv \Bhab{t}{T}   & \Gamma\vdash \Bhab{s}{T} \;\wedge\; \Gamma\vdash \Bhab{t}{T} \\
+\Gamma;\xS;\Delta \vdash J          & \Gamma\vdash \Bhab{s}{S} \;\Rightarrow\; 
+                                           \Gamma;\Delta[s/x] \vdash J[s/x] \\
+\end{array}
+\]
+
+
+\[
+%% Empty context validity
+\Axiom{\vdash \Valid}
+\qquad
+%% Extend context
+\Rule{\Gamma       \vdash \Type{S}}
+     {\Gamma ; \xS \vdash \Valid}\;x\not\in\Gamma
+\]
+
+\[\stkc{\stkl{
+%% Girard's favorite
+\Rule{\Gamma \vdash \Valid}
+     {\Gamma \vdash \Type{\Set}}
+\qquad
+%% Pi-Sigma
+\Rule{\Gamma \vdash \Type{S} \quad
+      \Gamma \vdash \Bhab{T}{S \To \Set}}
+     {\Gamma \vdash \Type{\PiTy{S}{T}, \SigmaTy{S}{T}}}}
+}\]
+
+$\PIS{\xS} T$ and $\SIGMAS{\xS} T$ are sugar for 
+$\PiTy{S}{(\PLAM{\x}{S} T)}$ and $\SigmaTy{S}{(\PLAM{\x}{S} T)}$.
+
+\[
+%% Context
+\Rule{\Gamma ; \xS ; \Delta \vdash \Valid}
+     {\Gamma ; \xS ; \Delta \vdash \Bhab{x}{S}}
+\qquad
+%% Conversion
+\Rule{\Gamma \vdash \Bhab{s}{S} \quad 
+      \Gamma \vdash \Type{S \equiv T}}
+     {\Gamma \vdash \Bhab{s}{T}}
+\]
+
+\[
+%% Lambda
+\Rule{\stkl{\Gamma       \vdash \Type{S} \\
+            \Gamma ; \xS \vdash \Bhab{t}{T\: \x}}}
+     {\Gamma \vdash \Bhab{\PLAM{\x}{S} t}{\PiTy{S}{T}}}
+\qquad
+%% Application
+\Rule{\stkl{\Gamma \vdash \Bhab{f}{\PiTy{S}{T}} \\
+            \Gamma \vdash \Bhab{s}{S}}}
+     {\Gamma \vdash \Bhab{f\: s}{T\: s}} 
+\]
+
+\[
+%% Beta-reduction
+\Rule{\stkl{\Gamma       \vdash \Type{S} \quad
+            \Gamma ; \xS \vdash \Bhab{t}{T\: \x} \\
+            \Gamma       \vdash \Bhab{s}{S}}}
+     {\Gamma \vdash \Bhab{(\PLAM{\x}{S} t)\:s \equiv t[s/x]}{T\: s}} 
+\]
+
+\[
+%% Pair
+\Rule{\Gamma \vdash \Bhab{s}{S} \quad 
+      \Gamma \vdash \Bhab{T}{S \To \Set}    \quad
+      \Gamma \vdash \Bhab{t}{T\: s}}
+     {\Gamma \vdash \Bhab{\pair{s}{t}{T}}{\SigmaTy{S}{T}}}
+\qquad
+%% First projection
+\Rule{\Gamma \vdash \Bhab{p}{\SigmaTy{S}{T}}}
+     {\Gamma \vdash \Bhab{\fst{p}}{S}} 
+\qquad
+%% Second projection
+\Rule{\Gamma \vdash \Bhab{p}{\SigmaTy{S}{T}}}
+     {\Gamma \vdash \Bhab{\snd{p}}{T\: (\fst{p})}}
+\]
+
+\[
+%% Prop
+\Rule{\Gamma \vdash \Bhab{q}{\Prop}}
+     {\Gamma \vdash \Type{\prf{q}}}
+\qquad
+%% True
+\Rule{\Gamma \vdash \Valid}
+     {\Gamma \vdash \Bhab{\True}{\Prop}}
+\]
+
+\[
+%% UId
+\Axiom{\Gamma \vdash \Type{\UId}}
+\qquad
+%% Tag
+\Axiom{\Gamma \vdash \Bhab{\Tag{s}}{\UId}}\;s \mbox{ unique identifier}
+\]
+
+\[
+%% EnumU
+\Axiom{\Gamma \vdash \Type{\EnumU}} 
+\quad
+%% NilE
+\Axiom{\Gamma \vdash \Bhab{\NilE}{\EnumU}} \quad
+%% ConsE
+\Rule{\Gamma \vdash \Bhab{t}{\UId} \quad
+      \Gamma \vdash \Bhab{e}{\EnumU}}
+     {\Gamma \vdash \Bhab{\ConsE{t}{e}}{\EnumU}}
+\]
+
+\[
+\stkc{
+%% EnumT
+\Rule{\Gamma \vdash \Bhab{e}{\EnumU}}
+     {\Gamma \vdash \Type{\EnumT{e}}} 
+\\
+%% Ze
+\Axiom{\Gamma \vdash \Bhab{\Ze}{\EnumT{\ConsE{t}{e}}}} 
+\quad
+%% Su
+\Rule{\Gamma \vdash \Bhab{n}{\EnumT{e}}}
+     {\Gamma \vdash \Bhab{\Su{n}}{\EnumT{\ConsE{t}{e}}}}
+}
+\]
+
+
+\end{document}
