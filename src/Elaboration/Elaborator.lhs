@@ -43,6 +43,8 @@
 
 The |runElab| proof state command actually interprets an |Elab x| in
 the proof state. That is, it defines the semantics of the |Elab| syntax.
+It returns |True| in the second component if elaboration was successful,
+and |False| if the problem was suspended.
 
 > runElab :: Bool -> (TY :>: Elab (INTM :=>: VAL))
 >                       -> ProofState (INTM :=>: VAL, Bool)
@@ -70,24 +72,8 @@ the proof state. That is, it defines the semantics of the |Elab| syntax.
 > runElab top (ty :>: ECompute tyComp p f) = runElabCompute tyComp p
 >     >>= runElab top . (ty :>:) . f
 
-> runElab top (ty :>: ESolve ref@(_ := HOLE Hoping :<: _) v f) = do
->     v' <- bquoteHere v
->     tt <- solveHole ref v'
->     runElab top (ty :>: f tt)
-
-< runElab top (ty :>: ESolve ref@(_ := DEFN tv :<: rty) v f) = do
-<     -- we should check tv == v in some fashion
-<     runElab top (ty :>: f tv)
-
-> runElab top (ty :>: EElab tyElab (l, p) f)  = runElabElab tyElab l p
->     >>= runElab top . (ty :>:) . (>>= f)
-
-> runElab top (ty :>: ECan (_ :=>: C c) prob f) = runElabElab ty (Loc 0) prob
->     >>= runElab top . (ty :>:) . (>>= f)
-> runElab top (ty :>: ECan tt prob f) = do
->     ty' <- bquoteHere ty
->     tm :=>: tmv <- suspend ("can" :<: ty' :=>: ty) (WaitCan tt prob)
->     runElab top (ty :>: f (N tm :=>: tmv))
+> runElab top (ty :>: EElab l p f)  = runElabElab l p
+>     >>= runElab top . (ty :>:) . f . fst
 
 > runElab True (ty :>: ECry e) = do
 >     e' <- distillErrors e
@@ -135,6 +121,12 @@ the proof state. That is, it defines the semantics of the |Elab| syntax.
 > runElab top (ty :>: tm) = throwError' . err $ "runElab: cannot evaluate "
 >                                                 ++ show tm
 
+
+The |runElabTop| command interprets the |Elab| monad at the top level, by
+creating a new subgoal corresponding to the solution. This is necessary
+when commands that need to modify the proof state (such as |ELambda|)
+are encountered below the top level.
+
 > runElabTop :: (TY :>: Elab (INTM :=>: VAL)) -> ProofState (INTM :=>: VAL, Bool)
 > runElabTop (ty :>: elab) = do
 >     ty' <- bquoteHere ty
@@ -147,8 +139,9 @@ the proof state. That is, it defines the semantics of the |Elab| syntax.
 >         else  return . (, False) =<< neutralise =<< getMotherDefinition
 
 
-The |EHope| command hopes for an element of a given type. If it is asking for a
-proof, we might be able to find one, but otherwise we just create a hole.
+The |runElabHope| command interprets the |EHope| instruction, which hopes for
+an element of a given type. If it is asking for a proof, we might be able to
+find one, but otherwise we just create a hole.
 
 > runElabHope :: TY -> ProofState (INTM :=>: VAL)
 > runElabHope (PRF p)  = flexiProof p <|> simplifyProof p <|> lastHope (PRF p)
@@ -201,15 +194,25 @@ proof, we might be able to find one, but otherwise we just create a hole.
 >     subProof (PRF p) = flexiProof p <|> lastHope (PRF p)
 
 
-The |ECompute| command computes the solution to a problem, given its type. 
+The |runElabCompute| command interprets computes the solution to a problem, given its type. 
 
 > runElabCompute :: TY -> CProb -> ProofState (INTM :=>: VAL)
 > runElabCompute ty (SubProb elab) =
 >     return . fst =<< runElab False (ty :>: elab)
 
-> runElabElab :: TY -> Loc -> EProb -> ProofState (Elab (INTM :=>: VAL))
-> runElabElab ty loc (ElabProb tm)       = return (makeElab loc (ty :>: tm))
-> runElabElab ty loc (ElabInferProb tm)  = return (makeElabInfer loc tm)
+> runElabElab :: Loc -> (TY :>: EProb) -> ProofState (INTM :=>: VAL, Bool)
+> runElabElab loc (ty :>: ElabDone tt) = return (tt, True)
+> runElabElab loc (ty :>: ElabProb tm) = runElab False (ty :>: makeElab loc (ty :>: tm))
+> runElabElab loc (ty :>: ElabInferProb tm) = runElab False (ty :>: makeElabInfer loc tm)
+> runElabElab loc (ty :>: WaitCan (_ :=>: C _) prob) = runElabElab loc (ty :>: prob)
+> runElabElab loc (ty :>: prob) = do
+>     ty' <- bquoteHere ty
+>     return . (, False) =<< neutralise =<< suspend (name prob :<: ty' :=>: ty) prob
+>   where
+>     name :: EProb -> String
+>     name (WaitCan _ _)      = "can"
+>     name (WaitSolve _ _ _)  = "solve"
+>     name _                  = "suspend"
 
 
 The |suspend| command can be used to delay elaboration, by creating a subgoal

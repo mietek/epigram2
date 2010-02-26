@@ -10,3 +10,5 @@ jump f.a ;
 give Set -> Set ;
 root ;
 elab elab ;
+kick ; 
+elab elab ;

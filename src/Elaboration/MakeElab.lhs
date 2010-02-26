@@ -1,4 +1,4 @@
-\section{Using the Elab language}
+\section{Using the |Elab| language}
 \label{sec:make_elab}
 
 %if False
@@ -28,6 +28,37 @@
 > import Kit.MissingLibrary
 
 %endif
+
+\subsection{Tools for writing elaborators}
+
+When part of the display syntax needs to be elaborated as a subproblem, we call
+|subElab| rather than |makeElab| to ensure the elaboration does not take place
+at the top level. This means that if the subproblem needs to modify the proof
+state (for example, to introduce a $\lambda$-boy) it will create a new girl
+to work in.
+
+> subElab :: Loc -> (TY :>: InDTmRN) -> Elab (INTM :=>: VAL)
+> subElab loc (ty :>: tm) = EElab loc (ty :>: ElabProb tm) Bale
+
+> internalElab :: Loc -> (TY :>: EProb) -> Elab (INTM :=>: VAL)
+> internalElab loc (ty :>: ElabDone tt)                = return tt
+> internalElab loc (ty :>: ElabProb tm)                = makeElab loc (ty :>: tm)
+> internalElab loc (ty :>: ElabInferProb tm)           = makeElabInfer loc tm
+> internalElab loc (ty :>: WaitCan (_ :=>: C _) prob)  = internalElab loc (ty :>: prob)
+> internalElab loc (ty :>: prob)                       = EElab loc (ty :>: prob) Bale
+
+
+The |elabCan| instruction asks for an elaboration problem to be solved when the
+supplied value is canonical, and returns the result of solving the problem
+(which may well be a suspended definition if the value is not currently canonical).
+
+> elabCan :: INTM :=>: VAL -> (TY :>: EProb) -> Elab (INTM :=>: VAL)
+> elabCan tt (ty :>: prob) = internalElab (Loc 0) (ty :>: WaitCan tt prob)
+
+
+The |elabEnsure| instruction demands that a value should be equal to a canonical
+value with the given shape. It returns a term and value with the required shape,
+together with a proof that these equal the input.
 
 > elabEnsure :: INTM :=>: VAL -> (Can VAL :>: Can ()) -> Elab (INTM :=>: Can VAL, INTM :=>: VAL)
 > elabEnsure (tm :=>: C v) (ty :>: t) = case halfZip v t of
@@ -163,23 +194,12 @@ If we already have an evidence term, we just have to type-check it.
 
 > makeElab loc (N ty :>: tm) = do
 >     tt <- EQuote (N ty) Bale
->     ECan tt (ElabProb tm) Bale
+>     elabCan tt (N ty :>: ElabProb tm)
 
 If nothing else matches, give up and report an error.
 
 > makeElab loc (ty :>: tm) = throwError' $ err "makeElab: can't push"
 >     ++ errTyVal (ty :<: SET) ++ err "into" ++ errTm tm 
-
-
-When part of the display syntax needs to be elaborated as a subproblem, we call
-|subElab| rather than |makeElab| to ensure the elaboration does not take place
-at the top level. This means that if the subproblem needs to modify the proof
-state (for example, to introduce a $\lambda$-boy) it will create a new girl
-to work in.
-
-> subElab :: Loc -> (TY :>: InDTmRN) -> Elab (INTM :=>: VAL)
-> subElab loc (ty :>: tm) = ECompute ty (SubProb (makeElab loc (ty :>: tm))) Bale
-
 
 
 \subsection{Elaborating |ExDTm|s}
@@ -222,7 +242,7 @@ to produce a type-term pair in the evidence language.
 
 >     handleArgs (tm :=>: tv :<: ty) as = do
 >         tt <- EQuote ty Bale
->         ECan tt (ElabInferProb (DTEX tm ::$ as)) Bale
+>         elabCan tt (sigSetVAL :>: ElabInferProb (DTEX tm ::$ as))
 
 > makeElabInferHead :: Loc -> DHead RelName -> Elab (INTM :=>: VAL)
 

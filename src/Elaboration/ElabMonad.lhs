@@ -108,9 +108,7 @@ gives the syntax for commands.
 >     |  EWait String TY (EXTM :=>: VAL -> Elab x)
 >     |  ECry (StackError InDTmRN)
 >     |  ECompute TY CProb (INTM :=>: VAL -> Elab x)
->     |  ESolve REF VAL (EXTM :=>: VAL -> Elab x)
->     |  EElab TY  (Loc, EProb) (INTM :=>: VAL -> Elab x)
->     |  ECan (INTM :=>: VAL) EProb (INTM :=>: VAL -> Elab x)
+>     |  EElab Loc (TY :>: EProb) (INTM :=>: VAL -> Elab x)
 >     |  EFake Bool (EXTM :=>: VAL -> Elab x)
 >     |  EResolve RelName ((INTM :=>: VAL, Maybe (Scheme INTM)) -> Elab x)
 >     |  EQuote VAL (INTM :=>: VAL -> Elab x)
@@ -127,9 +125,7 @@ gives the syntax for commands.
 >     show (EWait s ty _)     = "EHope " ++ show s ++ " (" ++ show ty ++ ") (...)"
 >     show (ECry _)           = "ECry (...)"
 >     show (ECompute ty p _)  = "ECompute (" ++ show ty ++ ") (" ++ show p ++ ") (...)"
->     show (ESolve ref v _)   = "ESolve (" ++ show ref ++ ") (" ++ show v ++ ") (...)"
->     show (EElab ty lp _)    = "EElab (" ++ show ty ++ ") " ++ show lp ++ " (...)"
->     show (ECan v p _)       = "ECan (" ++ show v ++ ") (" ++ show p ++ ") (...)"
+>     show (EElab l tp _)     = "EElab " ++ show l ++ " (" ++ show tp ++ ") (...)"
 >     show (EFake b _)        = "EFake " ++ show b ++ " (...)"
 >     show (EResolve rn _)    = "EResolve " ++ show rn ++ " (...)"
 >     show (EQuote q _)       = "EQuote (" ++ show q ++ ") (...)"
@@ -146,9 +142,7 @@ gives the syntax for commands.
 >     EWait s t f      >>= k = EWait s t      ((k =<<) . f)
 >     ECry errs        >>= k = ECry errs
 >     ECompute t p f   >>= k = ECompute t p   ((k =<<) . f)
->     ESolve r v f     >>= k = ESolve r v     ((k =<<) . f)
->     EElab t lp f     >>= k = EElab t lp     ((k =<<) . f)
->     ECan v p f       >>= k = ECan v p       ((k =<<) . f)
+>     EElab l tp f     >>= k = EElab l tp     ((k =<<) . f)
 >     EFake b f        >>= k = EFake b        ((k =<<) . f)
 >     EResolve rn f    >>= k = EResolve rn    ((k =<<) . f)
 >     EQuote q f       >>= k = EQuote q       ((k =<<) . f)
