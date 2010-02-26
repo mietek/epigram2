@@ -1,0 +1,127 @@
+\documentclass{report}
+
+\usepackage{amsmath}
+\usepackage{pig}
+
+\include{macros}
+
+\begin{document}
+
+\ColourEpigram
+
+
+Context validity:
+
+\[\stkc{
+%% Form
+\boxed{\Gamma \Vdash \Valid} \\
+%% Valid context
+\Axiom{\Vdash \Valid}    \qquad
+%% Extend valid context
+\Rule{\Gamma       \Vdash \push{S}{\Set}}
+     {\Gamma ; \xS \Vdash \Valid}\;x\not\in\Gamma
+}
+\]
+
+Type checking:
+
+\[\stkc{
+%% Form
+\boxed{\Gamma \Vdash \push{\CN{term}}{\CN{type}}} 
+\\
+%% Set in Set
+\Rule{\Gamma \Vdash \Valid}
+     {\Gamma \Vdash \push{\Set}{\Set}}  \qquad
+%% Pi - Sigma
+\Rule{\Gamma \Vdash \push{S}{\Set} \quad
+      \Gamma \Vdash \push{T}{S \To \Set}}
+     {\Gamma \Vdash \push{\PIS{\xS} T}{\Set},
+                    \push{\SIGMAS{\xS} T}{\Set}} 
+\\
+%% EnumU
+\Axiom{\Gamma \Vdash \push{\EnumU}{\Set}} \qquad
+%% EnumT
+\Rule{\Gamma \Vdash \push{e}{\EnumU}}
+     {\Gamma \Vdash \push{\EnumT{e}}{\Set}} %%\qquad
+%% %% UId
+%% \Axiom{\Gamma \Vdash \push{\UId}{\Set}}  \qquad
+%% %% Tag
+%% \Axiom{\Gamma \Vdash \push{\etag{s}}{\UId}}
+\\
+%% Prop
+\Rule{\Gamma \Vdash \push{q}{\Prop}}
+     {\Gamma \Vdash \push{\prf{q}}{\Set}} \qquad
+%% True
+\Rule{\Gamma \Vdash \Valid}
+     {\Gamma \Vdash \push{\True}{\Prop}}
+\\
+%% Conversion
+\Rule{\Gamma \Vdash \push{s}{S} \quad 
+      \Gamma \Vdash \push{S \equiv T}{\Set}}
+     {\Gamma \Vdash \push{s}{T}} \qquad
+%% Propagation/elaboration
+\Rule{\Gamma \Vdash \propag{\push{e}{T}}{t}}
+     {\Gamma \Vdash \push{e}{T}}
+}
+\]
+
+Type inference:
+
+\[\stkc{
+%% Form
+\boxed{\Gamma \Vdash \pull{\CN{term}}{\CN{type}}}
+\\
+%% Reversal
+\Rule{\Gamma \Vdash \push{T}{\Set} \quad
+      \Gamma \Vdash \push{t}{T}}
+     {\Gamma \Vdash \pull{(\Bhab{t}{T})}{T}} \qquad
+%% Context
+\Rule{\Gamma ; \xS ; \Delta \Vdash \Valid}
+     {\Gamma ; \xS ; \Delta \Vdash \pull{x}{S}}
+\\
+%% Application
+\Rule{\stkl{\Gamma \Vdash \pull{f}{\PIS{\xS} T} \\
+            \Gamma \Vdash \push{s}{S}}}
+     {\Gamma \Vdash \pull{f\:s}{T\:s}} \qquad
+%% First projection
+\Rule{\Gamma \Vdash \pull{p}{\SIGMAS{\xS} T}}
+     {\Gamma \Vdash \pull{\fst{p}}{S}} \qquad 
+%% Second projection
+\Rule{\Gamma\Vdash \pull{p}{\SIGMAS{\xS} T}}
+     {\Gamma\Vdash \pull{\snd{p}}{T\:(\fst{p})}}
+}\]
+
+Type propagation:
+
+\[\stkc{
+%% Form
+\boxed{\Gamma \Vdash \propag{\push{\CN{expr}}{\CN{type}}}{\CN{term}}}
+\\
+%% Lambda
+\Rule{\Gamma \Vdash \push{t}{T\: x}}
+     {\Gamma \Vdash \propag{\push{\LAM{\x} t}{\PIS{\xS} T}}{\PLAM{\x}{S} t}} \qquad
+%% Pair
+\Rule{\Gamma \Vdash \push{t}{T\: x}}
+     {\Gamma \Vdash \propag{\push{\pair{s}{t}{}}{\SIGMAS{\xS} T}}{\pair{s}{t}{x.T}}}
+\\
+%% Tag
+\Rule{\stkl{\Gamma \Vdash \Valid \\
+            t \in \mbox{tags}(e)}}
+     {\Gamma \Vdash \propag{\push{\etag{t}}{\EnumT{e}}}{\Su{\ldots~\Ze}}} \qquad
+%% EnumU
+\Rule{\Gamma \Vdash \Valid}
+     {\Gamma \Vdash \propag{\push{\Enum [ \etag{t_1} \ldots \etag{t_n} ]}{\EnumU}}{\ConsE{t_1}{\ldots~\ConsE{t_n}{\NilE}}}} \\
+%% Switch
+\Rule{\Gamma \Vdash \push{c_i}{P\:i} \quad |e| = n}
+     {\Gamma \Vdash \propag{\push{[c_1 \ldots c_n]}
+                                 {\PI{\V{x}}{\EnumT{e}} P\:x}}
+                           {\PLAM{x}{(\EnumT{e})} \switch{e}{P}{(c_1,(\ldots,(c_n,\Void)\ldots))}{x}}}
+}\]
+
+%% \[
+%% \Rule{\stkl{\Gamma\Vdash\Type{S}\quad\Gamma;\xS\Vdash \Bhab{t}{T}\\
+%%       \Gamma\Vdash \Bhab{s}{S}}}
+%%      {\Gamma\Vdash (\PLAM{\x}{S} t)\:s \equiv t[s/x] \Vdash T[s/x]} 
+%% \]
+
+\end{document}
