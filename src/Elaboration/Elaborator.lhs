@@ -73,12 +73,12 @@ and |False| if the problem was suspended.
 
 > runElab True (ty :>: ECry e) = do
 >     e' <- distillErrors e
->     throwError e'
-
-<     let msg = show (prettyStackError e')
-<     putHoleKind (Crying msg)
-<     t :=>: tv <- getMotherDefinition
-<     return (N t :=>: tv, False)
+>     let msg = show (prettyStackError e')
+>     mn <- getMotherName
+>     proofTrace ("Hole " ++ showName mn ++ " started crying:\n" ++ msg)
+>     putHoleKind (Crying msg)
+>     t :=>: tv <- getMotherDefinition
+>     return (N t :=>: tv, False)
 
 > runElab False (ty :>: ECry e) = runElabTop (ty :>: ECry e)
 
@@ -132,7 +132,7 @@ are encountered below the top level.
 >     (tm :=>: tmv, okay) <- runElab True (ty :>: elab)
 >     if okay
 >         then  return . (, True)  =<< neutralise =<< give tm
->         else  return . (, False) =<< neutralise =<< getMotherDefinition
+>         else  return . (, False) =<< neutralise =<< getMotherDefinition <* goOut
 
 
 The |runElabHope| command interprets the |EHope| instruction, which hopes for
@@ -140,7 +140,7 @@ an element of a given type. If it is asking for a proof, we might be able to
 find one, but otherwise we just create a hole.
 
 > runElabHope :: TY -> ProofState (INTM :=>: VAL)
-> runElabHope (PRF p)  = flexiProof p <|> simplifyProof p <|> lastHope (PRF p)
+> runElabHope (PRF p)  = flexiProof p <|> simplifyProof p
 > runElabHope ty       = lastHope ty
 
 > lastHope :: TY -> ProofState (INTM :=>: VAL)
@@ -176,15 +176,15 @@ find one, but otherwise we just create a hole.
 >         Just (SimplyTrivial prf) -> do
 >             prf' <- bquoteHere prf
 >             return $ prf' :=>: prf
->         Just (SimplyAbsurd _) -> do
->             throwError' $ err "hopeProof: proposition is absurd!"
+>         Just (SimplyAbsurd _) -> return . fst =<< runElabTop (PRF p :>:
+>             ECry [err "lastHope: proposition is absurd!"])
 >         Just (Simply qs _ h) -> do
 >             qrs <- Data.Traversable.mapM (subProof  . pty) qs
 >             h' <- dischargeLots qs h
 >             let prf = h' $$$ fmap (A . valueOf) qrs
 >             prf' <- bquoteHere prf
 >             return $ prf' :=>: prf
->         Nothing -> (|)
+>         Nothing -> lastHope (PRF p)
 >   where
 >     subProof :: VAL -> ProofState (INTM :=>: VAL)
 >     subProof (PRF p) = flexiProof p <|> lastHope (PRF p)
