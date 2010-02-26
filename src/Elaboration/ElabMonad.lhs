@@ -94,9 +94,6 @@ to which source code locations.
 > isUnstable (WaitSolve _ _ _) = True
 
 
-> data CProb  = SubProb (Elab (INTM :=>: VAL))
->   deriving Show
-
 The command signature given above defines the following monad, which
 gives the syntax for commands.
 
