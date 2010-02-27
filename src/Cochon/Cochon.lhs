@@ -55,14 +55,10 @@ Here we have a very basic command-driven interface to the proof state monad.
 
 > cochon' :: Bwd ProofContext -> IO ()
 > cochon' (locs :< loc) = do
+>     -- Safety belt: this *must* type-check!      
+>     validateDevelopment (locs :< loc)
+>     -- Show current goal
 >     showGoal loc
-
->     case evalStateT (validateHere `catchError` catchUnprettyErrors) loc of
->         Left ss -> do
->             putStrLn "*** Warning: definition failed to type-check! ***"
->             putStrLn $ renderHouseStyle $ prettyStackError ss
->         _ -> return ()
-
 >     putStr (showPrompt (pcLayers loc))
 >     hFlush stdout
 >     l <- getLine
@@ -78,6 +74,15 @@ Here we have a very basic command-driven interface to the proof state monad.
 >               Right cds -> do
 >                   locs' <- doCTactics cds (locs :< loc)
 >                   cochon' locs'
+
+> validateDevelopment :: Bwd ProofContext -> IO ()
+> validateDevelopment locs = sequence_ $ map validateCtxt (trail locs) -- XXX: there must be a better way to do that
+>     where validateCtxt loc = do
+>             case evalStateT (validateHere `catchError` catchUnprettyErrors) loc of
+>               Left ss -> do
+>                          putStrLn "*** Warning: definition failed to type-check! ***"
+>                          putStrLn $ renderHouseStyle $ prettyStackError ss
+>               _ -> return ()
 
 > describePFailure :: PFailure a -> ([a] -> String) -> String
 > describePFailure (PFailure (ts, fail)) f = (case fail of

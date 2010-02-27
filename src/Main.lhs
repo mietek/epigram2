@@ -71,7 +71,9 @@ either.
 >            loadDev file
 >          -- Check a development:
 >          (CheckFile file : _, _, [])  -> do
->            withFile file (const (putStrLn "Loaded."))
+>            withFile file (\loc -> do
+>                                   validateDevelopment loc
+>                                   putStrLn "Loaded.")
 >          -- Print a development:
 >          (PrintFile file : _, _, [])  -> do
 >            withFile file printTopDev
