@@ -78,14 +78,6 @@ $\PiTy{S}{(\PLAM{\x}{S} T)}$ and $\SigmaTy{S}{(\PLAM{\x}{S} T)}$.
 \]
 
 \[
-%% Beta-reduction
-\Rule{\stkl{\Gamma       \vdash \Type{S} \quad
-            \Gamma ; \xS \vdash \Bhab{t}{T\: \x} \\
-            \Gamma       \vdash \Bhab{s}{S}}}
-     {\Gamma \vdash \Bhab{(\PLAM{\x}{S} t)\:s \equiv t[s/x]}{T\: s}} 
-\]
-
-\[
 %% Pair
 \Rule{\Gamma \vdash \Bhab{s}{S} \quad 
       \Gamma \vdash \Bhab{T}{S \To \Set}    \quad
@@ -150,6 +142,31 @@ $\PiTy{S}{(\PLAM{\x}{S} T)}$ and $\SigmaTy{S}{(\PLAM{\x}{S} T)}$.
      {\Gamma \vdash \Bhab{\Su{n}}{\EnumT{\ConsE{t}{e}}}}
 }
 \]
+
+\[\stkc{
+%% Beta-reduction
+\Rule{\stkl{\Gamma       \vdash \Type{S} \quad
+            \Gamma ; \xS \vdash \Bhab{t}{T\: \x} \\
+            \Gamma       \vdash \Bhab{s}{S}}}
+     {\Gamma \vdash \Bhab{(\PLAM{\x}{S} t)\:s \equiv t[s/x]}{T\: s}} 
+\qquad
+%% Eta-reduction
+\Rule{\Gamma       \vdash \Type{S} \quad
+      \Gamma ; \xS \vdash \Bhab{f \equiv g}{T\: \x}}
+     {\Gamma \vdash \Bhab{(\PLAM{\x}{S} f) \equiv (\PLAM{\x}{S} g)}{\PiTy{S}{T}}}
+\\
+%% Projections
+\Rule{\stkl{\Gamma                 \vdash \Bhab{s}{S} \quad
+            \Gamma                 \vdash \Bhab{T}{S \To \Set} \\
+            \Gamma ; \Bhab{s}{S}   \vdash \Bhab{t}{T s}}}
+     {\Gamma \vdash \Bhab{\fst{(\pair{s}{t}{T})} \equiv s}{S}} 
+\qquad
+\Rule{\stkl{\Gamma                 \vdash \Bhab{s}{S} \quad
+            \Gamma                 \vdash \Bhab{T}{S \To \Set} \\
+            \Gamma ; \Bhab{s}{S}   \vdash \Bhab{t}{T s}}}
+     {\Gamma \vdash \Bhab{\snd{(\pair{s}{t}{T})} \equiv t}{T\: s}}
+}\]
+
 
 
 \end{document}
