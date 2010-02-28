@@ -40,19 +40,16 @@ following implications always hold by induction on derivations.
      {\Gamma ; \xS \vdash \Valid}\;x\not\in\Gamma
 \]
 
-\[\stkc{\stkl{
+\[\stkc{
 %% Girard's favorite
 \Rule{\Gamma \vdash \Valid}
      {\Gamma \vdash \Type{\Set}}
 \qquad
 %% Pi-Sigma
-\Rule{\Gamma \vdash \Type{S} \quad
-      \Gamma \vdash \Bhab{T}{S \To \Set}}
-     {\Gamma \vdash \Type{\PiTy{S}{T}, \SigmaTy{S}{T}}}}
+\Rule{\Gamma       \vdash \Type{S} \quad
+      \Gamma ; \xS \vdash \Type{T}}
+     {\Gamma \vdash \Type{\PIS{\xS} T, \SIGMAS{\xS} T}}
 }\]
-
-$\PIS{\xS} T$ and $\SIGMAS{\xS} T$ are sugar for 
-$\PiTy{S}{(\PLAM{\x}{S} T)}$ and $\SigmaTy{S}{(\PLAM{\x}{S} T)}$.
 
 \[
 %% Context
@@ -68,29 +65,29 @@ $\PiTy{S}{(\PLAM{\x}{S} T)}$ and $\SigmaTy{S}{(\PLAM{\x}{S} T)}$.
 \[
 %% Lambda
 \Rule{\stkl{\Gamma       \vdash \Type{S} \\
-            \Gamma ; \xS \vdash \Bhab{t}{T\: \x}}}
-     {\Gamma \vdash \Bhab{\PLAM{\x}{S} t}{\PiTy{S}{T}}}
+            \Gamma ; \xS \vdash \Bhab{t}{T}}}
+     {\Gamma \vdash \Bhab{\PLAM{\x}{S} t}{\PIS{\xS} T}}
 \qquad
 %% Application
-\Rule{\stkl{\Gamma \vdash \Bhab{f}{\PiTy{S}{T}} \\
+\Rule{\stkl{\Gamma \vdash \Bhab{f}{\PIS{\xS} T} \\
             \Gamma \vdash \Bhab{s}{S}}}
-     {\Gamma \vdash \Bhab{f\: s}{T\: s}} 
+     {\Gamma \vdash \Bhab{f\: s}{T[s/x]}} 
 \]
 
 \[
 %% Pair
-\Rule{\Gamma \vdash \Bhab{s}{S} \quad 
-      \Gamma \vdash \Bhab{T}{S \To \Set}    \quad
-      \Gamma \vdash \Bhab{t}{T\: s}}
-     {\Gamma \vdash \Bhab{\pair{s}{t}{T}}{\SigmaTy{S}{T}}}
+\Rule{\Gamma       \vdash \Bhab{s}{S} \quad 
+      \Gamma ; \xS \vdash \Bhab{T}{\Set}    \quad
+      \Gamma       \vdash \Bhab{t}{T[s/x]}}
+     {\Gamma \vdash \Bhab{\pair{s}{t}{x.T}}{\SIGMAS{\xS} T}}
 \qquad
 %% First projection
-\Rule{\Gamma \vdash \Bhab{p}{\SigmaTy{S}{T}}}
+\Rule{\Gamma \vdash \Bhab{p}{\SIGMAS{\xS} T}}
      {\Gamma \vdash \Bhab{\fst{p}}{S}} 
 \qquad
 %% Second projection
-\Rule{\Gamma \vdash \Bhab{p}{\SigmaTy{S}{T}}}
-     {\Gamma \vdash \Bhab{\snd{p}}{T\: (\fst{p})}}
+\Rule{\Gamma \vdash \Bhab{p}{\SIGMAS{\xS} T}}
+     {\Gamma \vdash \Bhab{\snd{p}}{T[\fst{p}/x]}}
 \]
 
 \[
@@ -146,25 +143,25 @@ $\PiTy{S}{(\PLAM{\x}{S} T)}$ and $\SigmaTy{S}{(\PLAM{\x}{S} T)}$.
 \[\stkc{
 %% Beta-reduction
 \Rule{\stkl{\Gamma       \vdash \Type{S} \quad
-            \Gamma ; \xS \vdash \Bhab{t}{T\: \x} \\
+            \Gamma ; \xS \vdash \Bhab{t}{T} \\
             \Gamma       \vdash \Bhab{s}{S}}}
-     {\Gamma \vdash \Bhab{(\PLAM{\x}{S} t)\:s \equiv t[s/x]}{T\: s}} 
+     {\Gamma \vdash \Bhab{(\PLAM{\x}{S} t)\:s \equiv t[s/x]}{T[s/x]}}
 \qquad
 %% Eta-reduction
 \Rule{\Gamma       \vdash \Type{S} \quad
-      \Gamma ; \xS \vdash \Bhab{f \equiv g}{T\: \x}}
-     {\Gamma \vdash \Bhab{(\PLAM{\x}{S} f) \equiv (\PLAM{\x}{S} g)}{\PiTy{S}{T}}}
+      \Gamma ; \xS \vdash \Bhab{f \equiv g}{T}}
+     {\Gamma \vdash \Bhab{(\PLAM{\x}{S} f) \equiv (\PLAM{\x}{S} g)}{\PIS{\xS} T}}
 \\
 %% Projections
 \Rule{\stkl{\Gamma                 \vdash \Bhab{s}{S} \quad
-            \Gamma                 \vdash \Bhab{T}{S \To \Set} \\
-            \Gamma ; \Bhab{s}{S}   \vdash \Bhab{t}{T s}}}
-     {\Gamma \vdash \Bhab{\fst{(\pair{s}{t}{T})} \equiv s}{S}} 
+            \Gamma ; \xS           \vdash \Bhab{T}{\Set} \\
+            \Gamma ; \Bhab{s}{S}   \vdash \Bhab{t}{T[s/x]}}}
+     {\Gamma \vdash \Bhab{\fst{(\pair{s}{t}{T})} \equiv s}{S}}
 \qquad
-\Rule{\stkl{\Gamma                 \vdash \Bhab{s}{S} \quad
-            \Gamma                 \vdash \Bhab{T}{S \To \Set} \\
-            \Gamma ; \Bhab{s}{S}   \vdash \Bhab{t}{T s}}}
-     {\Gamma \vdash \Bhab{\snd{(\pair{s}{t}{T})} \equiv t}{T\: s}}
+\Rule{\stkl{\Gamma               \vdash \Bhab{s}{S} \quad
+            \Gamma ; \xS         \vdash \Bhab{T}{\Set} \\
+            \Gamma ; \Bhab{s}{S} \vdash \Bhab{t}{T[s/x]}}}
+     {\Gamma \vdash \Bhab{\snd{(\pair{s}{t}{T})} \equiv t}{T[s/x]}}
 }\]
 
 
