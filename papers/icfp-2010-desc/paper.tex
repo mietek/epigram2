@@ -318,7 +318,7 @@ following implications always hold by induction on derivations.
 \[\stk{
 \TreeD : \Set \To \Desc \\
 \TreeD \: X \mapsto \DSigma{(\EnumT [ \TreeLeaf, \TreeNode ])}
-                           {[ \DUnit \quad (\DSigma{(\TIMES{X}{X})}{\LAM{\_} \DIndx{\DUnit}}) ]}
+                           {[ \DUnit \quad (\DSigma{X}{\LAM{\_} \DIndx{(\DIndx{\DUnit})}}) ]}
 }\]
 
 \begin{structure}
