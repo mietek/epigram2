@@ -85,12 +85,23 @@ Type checking:
                            {\EnumT{e'}}}
 \\
 %% Tag
-\Rule{t \in \mbox{tags}(e)}
-     {\Gamma \Vdash \propag{\push{\etag{t}}{\EnumT{e}}}
-                           {\Su{\ldots~\Ze}}} \qquad
+\Axiom{\Gamma \Vdash \propag{\push{\etag{t}}{\EnumT{\ConsE{t'}{e}}}}
+                            {\Ze}}\;t = t'
+\qquad
+\Rule{\Gamma \Vdash \propag{\push{\etag{t}}{\EnumT{e}}}
+                           {n}}
+     {\Gamma \Vdash \propag{\push{\etag{t}}{\EnumT{\ConsE{t'}{e}}}}
+                            {\Su{n}}}\;t \neq t'
+\\
 %% EnumU
-\Axiom{\Gamma \Vdash \propag{\push{\Enum [ \etag{t_1} \ldots \etag{t_n} ]}{\EnumU}}
-                            {\ConsE{t_1}{\ldots~\ConsE{t_n}{\NilE}}}} \\
+\Axiom{\Gamma \Vdash \propag{\push{\Enum []}{\EnumU}}
+                            {\NilE}}
+\qquad
+\Rule{\Gamma \Vdash \propag{\push{\Enum [ ts ]}{\EnumU}}
+                                 {cs}}
+     {\Gamma \Vdash \propag{\push{\Enum [ \etag{t_1} ts ]}{\EnumU}}
+                                 {\ConsE{t_1}{cs}}}
+\\
 %% Switch
 \Rule{\Gamma \Vdash \propag{\push{t}{\spi{e}{P}}}
                            {t'}}
