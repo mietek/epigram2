@@ -29,21 +29,89 @@ domain-specific language to write them with. We use the following set of
 commands to define a monad that follows the syntax of this language,
 then write an interpreter to run the syntax in the |ProofState| monad.
 
-< lambda : String -> REF
-< goal : TY
-< hope : TY -> VAL
-< wait : String -> TY -> VAL
-< cry : StackError -> a
-< elab : TY -> (Loc, EProb) -> VAL
-< compute : TY -> CProb -> VAL
-< can : VAL -> Can VAL
-< solve : REF -> VAL -> REF
-< ensure : VAL -> Can () -> (Can VAL, VAL)
+\begin{description}
+\item[|eLambda|] - create a $\lambda$-boy and return its REF
+\item[|eGoal|] - return the type of the goal
+\item[|eHope|] - hope for any element of a given type
+\item[|eWait|] - create a subgoal corresponding to a question mark
+\item[|eCry|] - give up with an error
+\item[|eElab|] - solve a suspendable elaboration problem and return the result
+\item[|eCompute|] - execute commands to produce an element of a given type
+\item[|eFake|] - return a fake reference to the current goal
+\item[|eResolve|] - resolve a name to a term and maybe a scheme
+\item[|eQuote|] - quote a value to produce a term
+\item[|eCoerce S T s|] - coerce s : S to produce an element of T, hoping for a
+    proof of S == T if necessary
+\end{description}
+
 
 We will eventually need to keep track of which elaboration problems correspond
-to which source code locations.
+to which source code locations. For the moment, |Loc|s are just ignored.
 
 > newtype Loc = Loc Int deriving Show
+
+
+The command signature given above is implemented using the following monad.
+
+> data Elab x
+>     =  Bale x
+>     |  ELambda String (REF -> Elab x)
+>     |  EGoal (TY -> Elab x)
+>     |  EHope TY (INTM :=>: VAL -> Elab x)
+>     |  EWait String TY (EXTM :=>: VAL -> Elab x)
+>     |  ECry (StackError InDTmRN)
+>     |  EElab Loc (TY :>: EProb) (INTM :=>: VAL -> Elab x)
+>     |  ECompute (TY :>: Elab (INTM :=>: VAL)) (INTM :=>: VAL -> Elab x)
+>     |  EFake Bool (EXTM :=>: VAL -> Elab x)
+>     |  EResolve RelName ((INTM :=>: VAL, Maybe (Scheme INTM)) -> Elab x)
+>     |  EQuote VAL (INTM :=>: VAL -> Elab x)
+>     |  ECoerce (INTM :=>: VAL) (INTM :=>: VAL) (INTM :=>: VAL)
+>            (INTM :=>: VAL -> Elab x)
+
+
+> eLambda :: String -> Elab REF
+> eLambda = flip ELambda Bale
+
+> eGoal :: Elab TY
+> eGoal = EGoal Bale
+
+> eHope :: TY -> Elab (INTM :=>: VAL)
+> eHope = flip EHope Bale
+
+> eWait :: String -> TY -> Elab (EXTM :=>: VAL)
+> eWait x ty = EWait x ty Bale
+
+> eCry :: StackError InDTmRN -> Elab a
+> eCry = ECry
+
+> eElab :: Loc -> (TY :>: EProb) -> Elab (INTM :=>: VAL)
+> eElab loc tp = EElab loc tp Bale
+
+> eCompute :: (TY :>: Elab (INTM :=>: VAL)) -> Elab (INTM :=>: VAL)
+> eCompute = flip ECompute Bale
+
+> eFake :: Bool -> Elab (EXTM :=>: VAL)
+> eFake = flip EFake Bale
+
+> eResolve :: RelName -> Elab (INTM :=>: VAL, Maybe (Scheme INTM))
+> eResolve = flip EResolve Bale
+
+> eQuote :: VAL -> Elab (INTM :=>: VAL)
+> eQuote = flip EQuote Bale
+
+> eCoerce :: INTM :=>: VAL -> INTM :=>: VAL -> INTM :=>: VAL -> Elab (INTM :=>: VAL)
+> eCoerce _S _T s = ECoerce _S _T s Bale
+
+
+An |EProb| is a syntactic representation of an elaboration problem, which
+can be suspended and later updated with news. Problems may be:
+\begin{description}
+\item[|ElabDone|] - succeed with the given term
+\item[|ElabProb|] - elaborate some |In| display syntax
+\item[|ElabInferProb|] - elaborate and infer the type of some |Ex| display syntax
+\item[|WaitCan|] - wait for the given term to become canonical before proceeding
+\item[|WaitSolve|] - wait for the reference to be solved with the given term
+\end{description}
 
 > data EProb  =  ElabDone (INTM :=>: VAL)
 >             |  ElabProb InDTmRN
@@ -51,6 +119,22 @@ to which source code locations.
 >             |  WaitCan (INTM :=>: VAL) EProb
 >             |  WaitSolve REF (INTM :=>: VAL) EProb
 >   deriving Show
+
+An elaboration problem is said to be \emph{unstable} if the scheduler can make
+progress on it, and \emph{stable} if not. At present, the only kind of stable
+elaboration problem is waiting for a non-canonical term to become canonical.
+
+> isUnstable :: EProb -> Bool
+> isUnstable (ElabDone _) = True
+> isUnstable (ElabProb _) = True
+> isUnstable (ElabInferProb _) = True
+> isUnstable (WaitCan (_ :=>: C _) _) = True
+> isUnstable (WaitCan _ _) = False
+> isUnstable (WaitSolve _ _ _) = True
+
+
+Since |EProb|s are full of terms, we can update their references using
+a |traverse|-like operation.
 
 > traverseEProb :: Applicative f => (REF -> f REF) -> EProb -> f EProb
 > traverseEProb f (ElabDone tt) = (|ElabDone (travEval f tt)|)
@@ -84,33 +168,6 @@ to which source code locations.
 > mapEProb :: (REF -> REF) -> EProb -> EProb
 > mapEProb f = ala Id traverseEProb f
 
-
-> isUnstable :: EProb -> Bool
-> isUnstable (ElabDone _) = True
-> isUnstable (ElabProb _) = True
-> isUnstable (ElabInferProb _) = True
-> isUnstable (WaitCan (_ :=>: C _) _) = True
-> isUnstable (WaitCan _ _) = False
-> isUnstable (WaitSolve _ _ _) = True
-
-
-The command signature given above defines the following monad, which
-gives the syntax for commands.
-
-> data Elab x
->     =  Bale x
->     |  ELambda String (REF -> Elab x)
->     |  EGoal (TY -> Elab x)
->     |  EHope TY (INTM :=>: VAL -> Elab x)
->     |  EWait String TY (EXTM :=>: VAL -> Elab x)
->     |  ECry (StackError InDTmRN)
->     |  EElab Loc (TY :>: EProb) (INTM :=>: VAL -> Elab x)
->     |  ECompute (TY :>: Elab (INTM :=>: VAL)) (INTM :=>: VAL -> Elab x)
->     |  EFake Bool (EXTM :=>: VAL -> Elab x)
->     |  EResolve RelName ((INTM :=>: VAL, Maybe (Scheme INTM)) -> Elab x)
->     |  EQuote VAL (INTM :=>: VAL -> Elab x)
->     |  ECoerce (INTM :=>: VAL) (INTM :=>: VAL) (INTM :=>: VAL)
->            (INTM :=>: VAL -> Elab x)
 
 %if False
 

@@ -38,22 +38,22 @@ state (for example, to introduce a $\lambda$-boy) it will create a new girl
 to work in.
 
 > subElab :: Loc -> (TY :>: InDTmRN) -> Elab (INTM :=>: VAL)
-> subElab loc (ty :>: tm) = EElab loc (ty :>: ElabProb tm) Bale
+> subElab loc (ty :>: tm) = eElab loc (ty :>: ElabProb tm)
 
 > internalElab :: Loc -> (TY :>: EProb) -> Elab (INTM :=>: VAL)
 > internalElab loc (ty :>: ElabDone tt)                = return tt
 > internalElab loc (ty :>: ElabProb tm)                = makeElab loc (ty :>: tm)
 > internalElab loc (ty :>: ElabInferProb tm)           = makeElabInfer loc tm
 > internalElab loc (ty :>: WaitCan (_ :=>: C _) prob)  = internalElab loc (ty :>: prob)
-> internalElab loc (ty :>: prob)                       = EElab loc (ty :>: prob) Bale
+> internalElab loc (ty :>: prob)                       = eElab loc (ty :>: prob)
 
 
-The |elabCan| instruction asks for an elaboration problem to be solved when the
+The |eCan| instruction asks for an elaboration problem to be solved when the
 supplied value is canonical, and returns the result of solving the problem
 (which may well be a suspended definition if the value is not currently canonical).
 
-> elabCan :: INTM :=>: VAL -> (TY :>: EProb) -> Elab (INTM :=>: VAL)
-> elabCan tt (ty :>: prob) = internalElab (Loc 0) (ty :>: WaitCan tt prob)
+> eCan :: INTM :=>: VAL -> (TY :>: EProb) -> Elab (INTM :=>: VAL)
+> eCan tt (ty :>: prob) = internalElab (Loc 0) (ty :>: WaitCan tt prob)
 
 
 The |elabEnsure| instruction demands that a value should be equal to a canonical
@@ -64,18 +64,18 @@ together with a proof that these equal the input.
 > elabEnsure (tm :=>: C v) (ty :>: t) = case halfZip v t of
 >     Nothing  -> throwError' $ err "elabEnsure: halfZip failed!"
 >     Just _   -> do
->         ty' :=>: _ <- EQuote (C ty) Bale
+>         ty' :=>: _ <- eQuote (C ty)
 >         return (tm :=>: v, N (P refl :$ A ty' :$ A tm)
 >                                  :=>: pval refl $$ A (C ty) $$ A (C v))
 > elabEnsure (_ :=>: L _) _ = throwError' $ err "elabEnsure: failed to match lambda!"
 > elabEnsure (_ :=>: nv) (ty :>: t) = do
 >     vu <- unWrapElab $ canTy chev (ty :>: t)
 >     let v = fmap valueOf vu
->     pp <- EHope (PRF (EQBLUE (C ty :>: nv) (C ty :>: C v))) Bale
+>     pp <- eHope . PRF $ EQBLUE (C ty :>: nv) (C ty :>: C v)
 >     return (C (fmap termOf vu) :=>: v, pp)
 >  where
 >    chev :: (TY :>: ()) -> WrapElab (INTM :=>: VAL)
->    chev (ty :>: ()) = WrapElab (EHope ty Bale)
+>    chev (ty :>: ()) = WrapElab (eHope ty)
 
 
 \subsection{Elaborating |InDTm|s}
@@ -90,10 +90,12 @@ produce an evidence term.
 These rules should be moved to features.
 
 > makeElab loc (SET :>: DIMU Nothing iI d i) = do
->       l :=>: lv <- EFake False Bale
+>       l :=>: lv <- eFake False
 >       iI :=>: iIv <- subElab loc (SET :>: iI)
 >       d :=>: dv <- subElab loc (ARR iIv (IDESC iIv) :>: d)
 >       i :=>: iv <- subElab loc (iIv :>: i)
+
+\question{What is this check for, and how can we implement it in |Elab|?}
 
 <       lastIsIndex <- withNSupply (equal (SET :>: (iv,N (P (last xs)))))
 <       guard lastIsIndex
@@ -106,29 +108,29 @@ These rules should be moved to features.
 >     return $ LK tm :=>: LK tmv
 
 > makeElab loc (PI (MU l d) t :>: DCON f) = do
->     d' :=>: _ <- EQuote d Bale
->     t' :=>: _ <- EQuote t Bale
+>     d' :=>: _ <- eQuote d
+>     t' :=>: _ <- eQuote t
 >     tm :=>: tmv <- subElab loc $ case l of
 >         Nothing  -> elimOpMethodType $$ A d $$ A t :>: f
 >         Just l   -> elimOpLabMethodType $$ A l $$ A d $$ A t :>: f
->     x <- ELambda (fortran t) Bale
+>     x <- eLambda (fortran t)
 >     return $ N (elimOp :@ [d', NP x, t', tm]) :=>: elimOp @@ [d, NP x, t, tmv]
 
 > makeElab loc (PI (SIGMA d r) t :>: DCON f) = do
 >     let mt =  PI d . L . HF (fortran r) $ \ a ->
 >               PI (r $$ A a) . L . HF (fortran t) $ \ b ->
 >               t $$ A (PAIR a b)
->     mt' :=>: _ <- EQuote mt Bale
+>     mt' :=>: _ <- eQuote mt
 >     tm :=>: tmv <- subElab loc (mt :>: f)
->     x <- ELambda (fortran t) Bale
+>     x <- eLambda (fortran t)
 >     return $ N ((tm :? mt') :$ A (N (P x :$ Fst)) :$ A (N (P x :$ Snd)))
 >                     :=>: tmv $$ A (NP x $$ Fst) $$ A (NP x $$ Snd)
 
 > makeElab loc (PI (ENUMT e) t :>: m) | isTuply m = do
->     t' :=>: _ <- EQuote t Bale
->     e' :=>: _ <- EQuote e Bale
+>     t' :=>: _ <- eQuote t
+>     e' :=>: _ <- eQuote e
 >     tm :=>: tmv <- subElab loc (branchesOp @@ [e, t] :>: m)
->     x <- ELambda (fortran t) Bale
+>     x <- eLambda (fortran t)
 >     return $ N (switchOp :@ [e', NP x, t', tm]) :=>: switchOp @@ [e, NP x, t, tmv]
 >   where
 >     isTuply :: InDTmRN -> Bool
@@ -141,14 +143,14 @@ These rules should be moved to features.
 >   makeElab loc (QUOTIENT a r p :>: DCLASS x)
 
 > makeElab loc (NU d :>: DCOIT DU sty f s) = do
->   d' :=>: _ <- EQuote d Bale
+>   d' :=>: _ <- eQuote d
 >   makeElab loc (NU d :>: DCOIT (DTIN d') sty f s)
 
 
 
 We use underscores |DU| in elaboration to mean "figure this out yourself".
 
-> makeElab loc (ty :>: DU) = EHope ty Bale
+> makeElab loc (ty :>: DU) = eHope ty
 > makeElab loc (ty :>: DQ s) = EWait s ty neutralise
 
 
@@ -171,8 +173,8 @@ Otherwise, we can simply create a |lambdaBoy| in the current
 development, and carry on elaborating.
 
 > makeElab loc (ty :>: DL sc) = do
->     ref <- ELambda (dfortran (DL sc)) Bale
->     ty' <- EGoal Bale
+>     ref <- eLambda (dfortran (DL sc))
+>     ty' <- eGoal
 >     makeElab loc (ty' :>: dScopeTm sc)
 
 
@@ -181,10 +183,10 @@ coercing the result to the required type. (Note that |ECoerce| will check if the
 types are equal, and if so it will not insert a redundant coercion.)
 
 > makeElab loc (w :>: DN n) = do
->     w' :=>: _ <- EQuote w Bale
+>     w' :=>: _ <- eQuote w
 >     tt <- makeElabInfer loc n
 >     let (yt :=>: yn :<: ty :=>: tyv) = extractNeutral tt
->     ECoerce (ty :=>: tyv) (w' :=>: w) (yt :=>: yn) Bale
+>     eCoerce (ty :=>: tyv) (w' :=>: w) (yt :=>: yn)
 
 
 If we already have an evidence term, we just have to type-check it.
@@ -197,8 +199,8 @@ If we already have an evidence term, we just have to type-check it.
 
 
 > makeElab loc (N ty :>: tm) = do
->     tt <- EQuote (N ty) Bale
->     elabCan tt (N ty :>: ElabProb tm)
+>     tt <- eQuote (N ty)
+>     eCan tt (N ty :>: ElabProb tm)
 
 If nothing else matches, give up and report an error.
 
@@ -224,17 +226,17 @@ to produce a type-term pair in the evidence language.
 >     handleSchemeArgs :: Bwd (INTM :=>: VAL) -> Scheme INTM -> (EXTM :=>: VAL :<: TY)
 >         -> DSpine RelName -> Elab (INTM :=>: VAL)
 >     handleSchemeArgs es (SchType _) (tm :=>: tv :<: ty) [] = do
->         ty' :=>: _ <- EQuote ty Bale
+>         ty' :=>: _ <- eQuote ty
 >         return $ PAIR ty' (N tm) :=>: PAIR ty tv
 >     handleSchemeArgs es (SchExplicitPi (x :<: schS) schT) (tm :=>: tv :<: PI sd t) [] = do
 >         let sv = eval (schemeToInTm schS) (fmap valueOf es)
->         tm :=>: tv <- ECompute
+>         tm :=>: tv <- eCompute
 >             (PI sv (L . HF x . const $ sigSetVAL) :>: do
->                 ref <- ELambda x Bale
+>                 ref <- eLambda x
 >                 handleSchemeArgs (es :< (NP ref :=>: NP ref)) schT
 >                     (tm :$ A (NP ref) :=>: tv $$ A (NP ref) :<: t $$ A (NP ref)) []
->             ) Bale
->         s' :=>: _ <- EQuote sv Bale
+>             )
+>         s' :=>: _ <- eQuote sv
 >         let  atm  = tm :? PIV x s' sigSetTM :$ A (NV 0)
 >              rtm  = PAIR (PIV x s' (N (atm :$ Fst))) (LAV x (N (atm :$ Snd)))
 >         return $ rtm :=>: evTm rtm
@@ -243,7 +245,7 @@ to produce a type-term pair in the evidence language.
 >         atm :=>: av <- subElab loc (eval s' (fmap valueOf es) :>: a)
 >         handleSchemeArgs (es :< (atm :=>: av)) schT (tm :$ A atm :=>: tv $$ A av :<: t $$ A av) as
 >     handleSchemeArgs es (SchImplicitPi (x :<: s) schT) (tm :=>: tv :<: PI sd t) as = do
->         stm :=>: sv <- EHope (eval s (fmap valueOf es)) Bale
+>         stm :=>: sv <- eHope (eval s (fmap valueOf es))
 >         handleSchemeArgs (es :< (stm :=>: sv)) schT (tm :$ A stm :=>: tv $$ A sv :<: t $$ A sv) as
 >     handleSchemeArgs _ _ (t :=>: v :<: C cty) (a : as) = do
 >         (a', ty') <- elimTy (subElab loc) (v :<: cty) a
@@ -251,7 +253,7 @@ to produce a type-term pair in the evidence language.
 
 >     handleArgs :: (EXTM :=>: VAL :<: TY) -> DSpine RelName -> Elab (INTM :=>: VAL)
 >     handleArgs (tm :=>: tv :<: ty) [] = do
->         ty' :=>: _ <- EQuote ty Bale
+>         ty' :=>: _ <- eQuote ty
 >         return $ PAIR ty' (N tm) :=>: PAIR ty tv
 >     handleArgs (t :=>: v :<: C cty) (a : as) = do
 >         (a', ty') <- elimTy (subElab loc) (v :<: cty) a
@@ -263,12 +265,12 @@ to produce a type-term pair in the evidence language.
 <         handleArgs (coe :@ [ty', cty, q, N tm] :=>: coe @@ [ty, C ctyv, qv, tv] :<: C ctyv) (A a : as)
 
 >     handleArgs (tm :=>: tv :<: ty) as = do
->         tt <- EQuote ty Bale
->         elabCan tt (sigSetVAL :>: ElabInferProb (DTEX tm ::$ as))
+>         tt <- eQuote ty
+>         eCan tt (sigSetVAL :>: ElabInferProb (DTEX tm ::$ as))
 
 > makeElabInferHead :: Loc -> DHead RelName -> Elab (INTM :=>: VAL, Maybe (Scheme INTM))
 
-> makeElabInferHead loc (DP rn) = EResolve rn Bale
+> makeElabInferHead loc (DP rn) = eResolve rn
 
 > makeElabInferHead loc (DType ty) = do
 >     tm :=>: tmv <- subElab loc (SET :>: ty)
@@ -281,7 +283,7 @@ to produce a type-term pair in the evidence language.
 >     case liftError (typeCheck (infer tm) nsupply) of
 >         Left e -> throwError e
 >         Right (tv :<: ty) -> do
->             ty' :=>: _ <- EQuote ty Bale
+>             ty' :=>: _ <- eQuote ty
 >             return (PAIR ty' (N tm) :=>: PAIR ty tv, Nothing)
 >     
 
