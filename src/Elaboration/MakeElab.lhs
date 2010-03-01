@@ -106,11 +106,13 @@ These rules should be moved to features.
 >     return $ LK tm :=>: LK tmv
 
 > makeElab loc (PI (MU l d) t :>: DCON f) = do
->     _ :=>: tmv <- subElab loc $ case l of
+>     d' :=>: _ <- EQuote d Bale
+>     t' :=>: _ <- EQuote t Bale
+>     tm :=>: tmv <- subElab loc $ case l of
 >         Nothing  -> elimOpMethodType $$ A d $$ A t :>: f
 >         Just l   -> elimOpLabMethodType $$ A l $$ A d $$ A t :>: f
 >     x <- ELambda (fortran t) Bale
->     EQuote (elimOp @@ [d, NP x, t, tmv]) Bale
+>     return $ N (elimOp :@ [d', NP x, t', tm]) :=>: elimOp @@ [d, NP x, t, tmv]
 
 > makeElab loc (PI (SIGMA d r) t :>: DCON f) = do
 >     let mt =  PI d . L . HF (fortran r) $ \ a ->
@@ -123,9 +125,11 @@ These rules should be moved to features.
 >                     :=>: tmv $$ A (NP x $$ Fst) $$ A (NP x $$ Snd)
 
 > makeElab loc (PI (ENUMT e) t :>: m) | isTuply m = do
->     _ :=>: tmv <- subElab loc (branchesOp @@ [e, t] :>: m)
+>     t' :=>: _ <- EQuote t Bale
+>     e' :=>: _ <- EQuote e Bale
+>     tm :=>: tmv <- subElab loc (branchesOp @@ [e, t] :>: m)
 >     x <- ELambda (fortran t) Bale
->     EQuote (switchOp @@ [e, NP x, t, tmv]) Bale
+>     return $ N (switchOp :@ [e', NP x, t', tm]) :=>: switchOp @@ [e, NP x, t, tmv]
 >   where
 >     isTuply :: InDTmRN -> Bool
 >     isTuply DVOID        = True
@@ -177,9 +181,9 @@ coercing the result to the required type. (Note that |ECoerce| will check if the
 types are equal, and if so it will not insert a redundant coercion.)
 
 > makeElab loc (w :>: DN n) = do
+>     w' :=>: _ <- EQuote w Bale
 >     tt <- makeElabInfer loc n
 >     let (yt :=>: yn :<: ty :=>: tyv) = extractNeutral tt
->     w' :=>: _ <- EQuote w Bale
 >     ECoerce (ty :=>: tyv) (w' :=>: w) (yt :=>: yn) Bale
 
 
