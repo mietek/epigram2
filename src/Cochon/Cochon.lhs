@@ -80,9 +80,14 @@ Here we have a very basic command-driven interface to the proof state monad.
 >                   locs' <- doCTactics cds (locs :< loc)
 >                   cochon' locs'
 
+
+> paranoid = False
+
 > validateDevelopment :: Bwd ProofContext -> IO ()
-> validateDevelopment locs = sequence_ $ map validateCtxt (trail locs) -- XXX: there must be a better way to do that
->     where validateCtxt loc = do
+> validateDevelopment locs@(_ :< loc) = if paranoid
+>     then Data.Foldable.mapM_ validateCtxt locs -- XXX: there must be a better way to do that
+>     else validateCtxt loc
+>   where validateCtxt loc = do
 >             case evalStateT (validateHere `catchError` catchUnprettyErrors) loc of
 >               Left ss -> do
 >                          putStrLn "*** Warning: definition failed to type-check! ***"
