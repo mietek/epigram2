@@ -35,6 +35,10 @@ with projection functions.
 >                | SchemeArg (Scheme InDTmRN)
 >                | Optional CochonArg
 >                | NoCochonArg
+>                | ListArgs [ CochonArg ]
+>                | LeftArg CochonArg 
+>                | RightArg CochonArg
+>                | PairArgs CochonArg CochonArg 
 >   deriving Show
 
 
@@ -49,6 +53,9 @@ with projection functions.
 > tokenInTm :: Parsley Token CochonArg
 > tokenInTm = (| InArg pInDTm |)
 
+> tokenAppInTm :: Parsley Token CochonArg
+> tokenAppInTm = (| InArg (sizedInDTm AppSize) |)
+
 > tokenName :: Parsley Token CochonArg
 > tokenName = (| (ExArg . DP) nameParse |)
 
@@ -62,6 +69,16 @@ with projection functions.
 > tokenOption p = (| Optional (bracket Square p) 
 >                  | NoCochonArg |)
 
+> tokenEither :: Parsley Token CochonArg -> Parsley Token CochonArg
+>                                        -> Parsley Token CochonArg
+> tokenEither p q = (| LeftArg p | RightArg q |)
+
+> tokenListArgs :: Parsley Token CochonArg -> Parsley Token () -> Parsley Token CochonArg
+> tokenListArgs p sep = (| ListArgs (pSep sep p) |) 
+
+> tokenPairArgs :: Parsley Token CochonArg -> Parsley Token () -> 
+>                  Parsley Token CochonArg -> Parsley Token CochonArg
+> tokenPairArgs p sep q = (| PairArgs p (% sep %) q |)
 
 \subsection{Printers}
 
@@ -78,4 +95,12 @@ with projection functions.
 > argOption p (Optional x) = Just $ p x
 > argOption _ NoCochonArg = Nothing
 
+> argList :: (CochonArg -> a) -> CochonArg -> [a]
+> argList f (ListArgs as) = map f as
 
+> argEither :: (CochonArg -> a) -> (CochonArg -> a) -> CochonArg -> a
+> argEither f g (LeftArg a) = f a
+> argEither f g (RightArg b) = g b
+
+> argPair :: (CochonArg -> a) -> (CochonArg -> b) -> CochonArg -> (a , b)
+> argPair f g (PairArgs a b) = (f a , g b) 
