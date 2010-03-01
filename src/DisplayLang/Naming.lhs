@@ -42,7 +42,7 @@ as |x|, but |x|\textasciicircum|1| skips past it and refers to the next thing na
 An absolute offset |_n|, by contrast, refers to the exact numerical
 component of the name. 
 
-> data Offs = Rel Int | Abs Int deriving Show
+> data Offs = Rel Int | Abs Int deriving (Show, Eq)
 > type RelName = [(String,Offs)]
 
 > type InTmRN = InTm RelName
@@ -251,7 +251,7 @@ the name part of references, respectively.
 >   where (s, n, _) = unresolve target rk args bsc B0
 
 > failNom :: Name -> RelName
-> failNom nom = ("!!!",Abs 0):(map (\(a,b) -> (a,Abs b)) nom)
+> failNom nom = ("!!!",Rel 0):(map (\(a,b) -> (a,Abs b)) nom)
 
 > type BwdName = Bwd (String,Int)
 
