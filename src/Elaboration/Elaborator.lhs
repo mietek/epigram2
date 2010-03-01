@@ -71,6 +71,9 @@ and |False| if the problem was suspended.
 > runElab top (ty :>: EElab l p f)  = runElabProb l p
 >     >>= runElab top . (ty :>:) . f . fst
 
+> runElab top (ty :>: ECompute (tyComp :>: elab) f) = runElabTop (tyComp :>: elab)
+>     >>= runElab top . (ty :>:) . f . fst
+
 > runElab True (ty :>: ECry e) = do
 >     e' <- distillErrors e
 >     let msg = show (prettyStackError e')

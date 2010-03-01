@@ -211,21 +211,39 @@ to produce a type-term pair in the evidence language.
 > makeElabInfer :: Loc -> ExDTmRN -> Elab (INTM :=>: VAL)
 
 > makeElabInfer loc (t ::$ ss) = do
->     tt <- makeElabInferHead loc t
+>     (tt, ms) <- makeElabInferHead loc t
 >     let (tm :=>: tmv :<: ty :=>: tyv) = extractNeutral tt
->     let ss' = {-case ms of
->                   Just sch  -> schemer sch ss
->                   Nothing   -> -} ss
->     handleArgs (tm :? ty :=>: tmv :<: tyv) ss'
->     
+>     case ms of
+>         Just sch  -> handleSchemeArgs B0 sch  (tm :? ty :=>: tmv :<: tyv) ss
+>         Nothing   -> handleArgs               (tm :? ty :=>: tmv :<: tyv) ss
 >   where
->     schemer :: Scheme INTM -> DSpine RelName -> DSpine RelName
->     schemer (SchType _) as = as
->     schemer (SchImplicitPi (x :<: s) schT) as =
->         A DU : schemer schT as
->     schemer (SchExplicitPi (x :<: schS) schT) (a:as) =
->         a : schemer schT as
->     schemer (SchExplicitPi (x :<: schS) schT) [] = []
+>     handleSchemeArgs :: Bwd (INTM :=>: VAL) -> Scheme INTM -> (EXTM :=>: VAL :<: TY)
+>         -> DSpine RelName -> Elab (INTM :=>: VAL)
+>     handleSchemeArgs es (SchType _) (tm :=>: tv :<: ty) [] = do
+>         ty' :=>: _ <- EQuote ty Bale
+>         return $ PAIR ty' (N tm) :=>: PAIR ty tv
+>     handleSchemeArgs es (SchExplicitPi (x :<: schS) schT) (tm :=>: tv :<: PI sd t) [] = do
+>         let sv = eval (schemeToInTm schS) (fmap valueOf es)
+>         tm :=>: tv <- ECompute
+>             (PI sv (L . HF x . const $ sigSetVAL) :>: do
+>                 ref <- ELambda x Bale
+>                 handleSchemeArgs (es :< (NP ref :=>: NP ref)) schT
+>                     (tm :$ A (NP ref) :=>: tv $$ A (NP ref) :<: t $$ A (NP ref)) []
+>             ) Bale
+>         s' :=>: _ <- EQuote sv Bale
+>         let  atm  = tm :? PIV x s' sigSetTM :$ A (NV 0)
+>              rtm  = PAIR (PIV x s' (N (atm :$ Fst))) (LAV x (N (atm :$ Snd)))
+>         return $ rtm :=>: evTm rtm
+>     handleSchemeArgs es (SchExplicitPi (x :<: schS) schT) (tm :=>: tv :<: PI sd t) (A a : as) = do
+>         let s' = schemeToInTm schS
+>         atm :=>: av <- subElab loc (eval s' (fmap valueOf es) :>: a)
+>         handleSchemeArgs (es :< (atm :=>: av)) schT (tm :$ A atm :=>: tv $$ A av :<: t $$ A av) as
+>     handleSchemeArgs es (SchImplicitPi (x :<: s) schT) (tm :=>: tv :<: PI sd t) as = do
+>         stm :=>: sv <- EHope (eval s (fmap valueOf es)) Bale
+>         handleSchemeArgs (es :< (stm :=>: sv)) schT (tm :$ A stm :=>: tv $$ A sv :<: t $$ A sv) as
+>     handleSchemeArgs _ _ (t :=>: v :<: C cty) (a : as) = do
+>         (a', ty') <- elimTy (subElab loc) (v :<: cty) a
+>         handleArgs (t :$ fmap termOf a' :=>: v $$ fmap valueOf a' :<: ty') as
 
 >     handleArgs :: (EXTM :=>: VAL :<: TY) -> DSpine RelName -> Elab (INTM :=>: VAL)
 >     handleArgs (tm :=>: tv :<: ty) [] = do
@@ -244,16 +262,15 @@ to produce a type-term pair in the evidence language.
 >         tt <- EQuote ty Bale
 >         elabCan tt (sigSetVAL :>: ElabInferProb (DTEX tm ::$ as))
 
-> makeElabInferHead :: Loc -> DHead RelName -> Elab (INTM :=>: VAL)
+> makeElabInferHead :: Loc -> DHead RelName -> Elab (INTM :=>: VAL, Maybe (Scheme INTM))
 
-> makeElabInferHead loc (DP rn) = do
->     (tm :=>: tmv, ms) <- EResolve rn Bale
->     return $ tm :=>: tmv
+> makeElabInferHead loc (DP rn) = EResolve rn Bale
 
 > makeElabInferHead loc (DType ty) = do
 >     tm :=>: tmv <- subElab loc (SET :>: ty)
->     return $ PAIR (ARR tm tm) (idTM "typecast")
+>     return (PAIR (ARR tm tm) (idTM "typecast")
 >                  :=>: PAIR (ARR tmv tmv) (idVAL "typecast")
+>            , Nothing)
 
 > makeElabInferHead loc (DTEX tm) = do
 >     let nsupply = (B0 :< ("__makeElabInferHeadDTEX", 0), 0) :: NameSupply
@@ -261,7 +278,7 @@ to produce a type-term pair in the evidence language.
 >         Left e -> throwError e
 >         Right (tv :<: ty) -> do
 >             ty' :=>: _ <- EQuote ty Bale
->             return $ PAIR ty' (N tm) :=>: PAIR ty tv
+>             return (PAIR ty' (N tm) :=>: PAIR ty tv, Nothing)
 >     
 
 > makeElabInferHead loc tm = throwError' $ err "makeElabInferHead: can't cope with"
