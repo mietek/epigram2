@@ -7,24 +7,8 @@
     ] ? : Set ;
   g := ? : Set ;
 ]
-Moving cursor up...
-[ f
-    [ a := ? : Set ;
-      \ x : Set ->
-      b := ? : Set ;
-      \ y : Set ->
-      c := ? : Set ;
-    ] ? : Set ;
-  ---
-  g := ? : Set ;
-]
 Going in...
-[ a := ? : Set ;
-  \ x : Set ->
-  b := ? : Set ;
-  \ y : Set ->
-  c := ? : Set ;
-] ? : Set
+:= ? : Set
 Going out...
 [ f
     [ a := ? : Set ;
@@ -33,10 +17,10 @@ Going out...
       \ y : Set ->
       c := ? : Set ;
     ] ? : Set ;
-  ---
   g := ? : Set ;
 ]
 Going in...
+Going up...
 [ a := ? : Set ;
   \ x : Set ->
   b := ? : Set ;
@@ -55,25 +39,13 @@ Going out...
 [ a := ? : Set ;
   \ x : Set ->
   b := ? : Set ;
-  ---
   \ y : Set ->
-  c := ? : Set ;
-] ? : Set
-Moving cursor down...
-[ a := ? : Set ;
-  \ x : Set ->
-  b := ? : Set ;
-  \ y : Set ->
-  ---
   c := ? : Set ;
 ] ? : Set
 Going in...
-a, x
+a, x, b, y
 I'm sorry, Dave. I'm afraid I can't do that.
-Error: cursorDown: cannot move cursor down.
-I'm sorry, Dave. I'm afraid I can't do that.
-Error: cursorUp: cannot move cursor up.
-Going down...
+Error: goDown: you can't go that way.
 := ? : Set
 Going out...
 [ a := ? : Set ;
@@ -99,10 +71,11 @@ Going out...
 I'm sorry, Dave. I'm afraid I can't do that.
 Error: goOutProperly: you can't go that way.
 Going in...
-Going in...
 I'm sorry, Dave. I'm afraid I can't do that.
 Error: goIn: you can't go that way.
-a, x, b, y
+I'm sorry, Dave. I'm afraid I can't do that.
+Error: goIn: you can't go that way.
+f
 Going to root...
 [ f
     [ a := ? : Set ;
@@ -115,7 +88,6 @@ Going to root...
 ]
 Going in...
 Going up...
-Moving cursor up...
 Going down...
 := ? : Set
 Going to root...

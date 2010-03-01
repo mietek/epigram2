@@ -137,7 +137,7 @@ unary tactics.
 
 > simpleOutput :: ProofState String -> Bwd ProofContext -> IO (Bwd ProofContext)
 > simpleOutput eval (locs :< loc) = do
->     case runStateT (eval `catchError` catchUnprettyErrors) loc of
+>     case runStateT ((eval <* startScheduler) `catchError` catchUnprettyErrors) loc of
 >         Right (s, loc') -> do
 >             putStrLn s
 >             return (locs :< loc :< loc')
@@ -283,10 +283,6 @@ Construction tactics:
 
 Navigation tactics:
 
->   : nullaryCT "cup" (cursorUp >> return "Moving cursor up...")
->       "cup - moves the cursor one entry upwards."
->   : nullaryCT "cdown" (cursorDown >> return "Moving cursor down...")
->       "cdown - moves the cursor one entry downwards."
 >   : nullaryCT "in" (goIn >> return "Going in...")
 >       "in - moves to the bottom-most development within the current one."
 >   : nullaryCT "out" (goOutProperly >> return "Going out...")

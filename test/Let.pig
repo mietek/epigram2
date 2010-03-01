@@ -26,5 +26,14 @@ root ;
 
 make A := ? : Set ;
 make a := ? : id A ;
+elab a ;
+infer a ;
 make b := ? : id./ _ A ;
+elab b ;
+infer b ;
 make c := ? : id./ Set Set ;
+elab c ;
+infer c ;
+make d := ? : id Set ;
+elab d ;
+infer d ;
