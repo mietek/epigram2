@@ -9,10 +9,15 @@
 
 > import Control.Applicative
 > import Control.Monad.Error
+> import Control.Monad.Identity
 > import Data.Traversable
+> import Data.Monoid hiding (All)
+
+> import NameSupply.NameSupplier
 
 > import Evidences.Tm
 > import Evidences.Rules
+> import Evidences.Mangler
 
 > import Features.Features ()
 
@@ -402,3 +407,6 @@ creates a $\Pi$-boy with that type.
 >     e <- getDevEntry
 >     (t', tt) <- elabScheme (es :< e) t
 >     return (SchImplicitPi (x :<: (es -| termOf ss)) t', tt)
+
+
+> import <- ElabCode
