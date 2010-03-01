@@ -19,6 +19,8 @@
 > import DisplayLang.DisplayTm
 > import DisplayLang.Naming
 
+> import Tactics.Information
+
 > import Elaboration.ElabMonad
 > import Elaboration.MakeElab
 > import Elaboration.Elaborator
@@ -99,13 +101,7 @@
 > elmCT tm = do
 >     suspend ("elab" :<: sigSetTM :=>: sigSetVAL) (ElabInferProb tm)
 >     startScheduler
->     return "Okay."
-
-> kickCT :: ProofState String
-> kickCT = do
->     startScheduler
->     return "Kicked."
+>     infoElaborate (DP [("elab", Rel 0)] ::$ [])
 
 > import -> CochonTactics where
->   : unaryExCT "elm" elmCT "elm <term> - elaborate <term> using the Elab monad."
->   : nullaryCT "kick" kickCT "kick - kick off the scheduler."
+>   : unaryExCT "elm" elmCT "elm <term> - elaborate <term>, stabilise and print type-term pair."
