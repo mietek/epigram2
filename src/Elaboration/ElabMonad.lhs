@@ -13,6 +13,8 @@
 > import Control.Monad
 > import Control.Monad.Error
 
+> import NameSupply.NameSupply
+
 > import Data.Traversable
 
 > import Evidences.Tm
@@ -23,6 +25,8 @@
 > import Kit.MissingLibrary
 
 %endif
+
+\subsection{Defining a DSL}
 
 Because writing elaborators is a tricky business, we would like to have a
 domain-specific language to write them with. We use the following set of
@@ -39,7 +43,7 @@ then write an interpreter to run the syntax in the |ProofState| monad.
 \item[|eCompute|] - execute commands to produce an element of a given type
 \item[|eFake|] - return a fake reference to the current goal
 \item[|eResolve|] - resolve a name to a term and maybe a scheme
-\item[|eQuote|] - quote a value to produce a term
+\item[|eAskNSupply|] - return a fresh name supply
 \item[|eCoerce S T s|] - coerce s : S to produce an element of T, hoping for a
     proof of S == T if necessary
 \end{description}
@@ -64,10 +68,11 @@ The command signature given above is implemented using the following monad.
 >     |  ECompute (TY :>: Elab (INTM :=>: VAL)) (INTM :=>: VAL -> Elab x)
 >     |  EFake Bool (EXTM :=>: VAL -> Elab x)
 >     |  EResolve RelName ((INTM :=>: VAL, Maybe (Scheme INTM)) -> Elab x)
->     |  EQuote VAL (INTM :=>: VAL -> Elab x)
->     |  ECoerce (INTM :=>: VAL) (INTM :=>: VAL) (INTM :=>: VAL)
->            (INTM :=>: VAL -> Elab x)
+>     |  EAskNSupply (NameSupply -> Elab x)
 
+
+For syntactic convenience, we give a function corresponding to each instruction
+in the syntax:
 
 > eLambda :: String -> Elab REF
 > eLambda = flip ELambda Bale
@@ -96,12 +101,11 @@ The command signature given above is implemented using the following monad.
 > eResolve :: RelName -> Elab (INTM :=>: VAL, Maybe (Scheme INTM))
 > eResolve = flip EResolve Bale
 
-> eQuote :: VAL -> Elab (INTM :=>: VAL)
-> eQuote = flip EQuote Bale
+> eAskNSupply :: Elab NameSupply
+> eAskNSupply = EAskNSupply Bale
 
-> eCoerce :: INTM :=>: VAL -> INTM :=>: VAL -> INTM :=>: VAL -> Elab (INTM :=>: VAL)
-> eCoerce _S _T s = ECoerce _S _T s Bale
 
+\subsection{Syntactic representation of elaboration problems}
 
 An |EProb| is a syntactic representation of an elaboration problem, which
 can be suspended and later updated with news. Problems may be:
@@ -182,8 +186,7 @@ a |traverse|-like operation.
 >     show (ECompute te _)    = "ECompute (" ++ show te ++ ") (...)"
 >     show (EFake b _)        = "EFake " ++ show b ++ " (...)"
 >     show (EResolve rn _)    = "EResolve " ++ show rn ++ " (...)"
->     show (EQuote q _)       = "EQuote (" ++ show q ++ ") (...)"
->     show (ECoerce (s :=>: _) (t :=>: _) (u :=>: _) _) = "ECoerce (" ++ show s ++ ") (" ++ show t ++ ") (" ++ show u ++ ") (...)"
+>     show (EAskNSupply _)    = "EAskNSupply (...)"
 
 > instance Monad Elab where
 >     fail s  = ECry [err $ "fail: " ++ s]
@@ -199,8 +202,7 @@ a |traverse|-like operation.
 >     ECompute te f    >>= k = ECompute te    ((k =<<) . f)
 >     EFake b f        >>= k = EFake b        ((k =<<) . f)
 >     EResolve rn f    >>= k = EResolve rn    ((k =<<) . f)
->     EQuote q f       >>= k = EQuote q       ((k =<<) . f)
->     ECoerce s t v f  >>= k = ECoerce s t v  ((k =<<) . f)
+>     EAskNSupply f    >>= k = EAskNSupply    ((k =<<) . f)
 
 > instance Functor Elab where
 >     fmap = ap . return

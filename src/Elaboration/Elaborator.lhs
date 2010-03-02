@@ -109,18 +109,9 @@ and |False| if the problem was suspended.
 >     runElab top (ty :>: f (PAIR tyv' (N tm) :=>: PAIR tyv tmv, ms))
 >   
 
-> runElab top (ty :>: EQuote v f) = do
->     tm <- bquoteHere v
->     runElab top (ty :>: f (tm :=>: v))
-
-> runElab top (ty :>: ECoerce (_S :=>: _Sv) (_T :=>: _Tv) (s :=>: sv) f) = do
->     eq <- withNSupply (equal $ SET :>: (_Sv, _Tv))
->     tt <- if eq
->         then return (s :=>: sv)
->         else do
->             q :=>: qv <- runElabHope (PRF (EQBLUE (SET :>: _Sv) (SET :>: _Tv)))
->             return $ N (coe :@ [_S, _T, q, s]) :=>: coe @@ [_Sv, _Tv, qv, sv]
->     runElab top (ty :>: f tt)
+> runElab top (ty :>: EAskNSupply f) = do
+>     nsupply <- askNSupply
+>     runElab top (ty :>: f nsupply)
 
 > runElab top (ty :>: tm) = throwError' . err $ "runElab: cannot evaluate "
 >                                                 ++ show tm

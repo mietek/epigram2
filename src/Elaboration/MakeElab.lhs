@@ -56,6 +56,30 @@ supplied value is canonical, and returns the result of solving the problem
 > eCan tt (ty :>: prob) = internalElab (Loc 0) (ty :>: WaitCan tt prob)
 
 
+We can type-check a term using the |eCheck| instruction.
+
+> eCheck :: (TY :>: INTM) -> Elab (INTM :=>: VAL)
+> eCheck tytm = do
+>     nsupply <- eAskNSupply
+>     case liftError (typeCheck (check tytm) nsupply) of
+>         Left e    -> throwError e
+>         Right tt  -> return tt
+
+
+The |eCoerce| instruction attempts to coerce a value from the first type to
+the second type, either trivially (if the types are definitionally equal) or by
+hoping for a proof of the appropriate equation and inserting a coercion.
+
+> eCoerce :: INTM :=>: VAL -> INTM :=>: VAL -> INTM :=>: VAL -> Elab (INTM :=>: VAL)
+> eCoerce (_S :=>: _Sv) (_T :=>: _Tv) (s :=>: sv) = do
+>     eq <- eEqual $ SET :>: (_Sv, _Tv)
+>     if eq
+>         then return (s :=>: sv)
+>         else do
+>             q :=>: qv <- eHope $ PRF (EQBLUE (SET :>: _Sv) (SET :>: _Tv))
+>             return $ N (coe :@ [_S, _T, q, s]) :=>: coe @@ [_Sv, _Tv, qv, sv]
+
+
 The |elabEnsure| instruction demands that a value should be equal to a canonical
 value with the given shape. It returns a term and value with the required shape,
 together with a proof that these equal the input.
@@ -78,6 +102,34 @@ together with a proof that these equal the input.
 >    chev (ty :>: ()) = WrapElab (eHope ty)
 
 
+The |eEqual| instruction determines if two types are definitionally equal.
+
+> eEqual :: (TY :>: (VAL, VAL)) -> Elab Bool
+> eEqual tyvv = do
+>     nsupply <- eAskNSupply
+>     return (equal tyvv nsupply)
+
+
+The |eInfer| instruction infers the type of an evidence term.
+
+> eInfer :: EXTM -> Elab (INTM :=>: VAL)
+> eInfer tm = do
+>     nsupply <- eAskNSupply
+>     case liftError (typeCheck (infer tm) nsupply) of
+>         Left e    -> throwError e
+>         Right (tv :<: ty)  -> do
+>             ty' :=>: _ <- eQuote ty
+>             return $ PAIR ty' (N tm) :=>: PAIR ty tv
+
+
+The |eQuote| instruction $\beta$-quotes a value to produce a term representation.
+
+> eQuote :: VAL -> Elab (INTM :=>: VAL)
+> eQuote v = do
+>     nsupply <- eAskNSupply
+>     return (bquote B0 v nsupply :=>: v)
+
+
 \subsection{Elaborating |InDTm|s}
 
 We can use the |Elab| language to describe how to elaborate a display term to
@@ -97,7 +149,7 @@ These rules should be moved to features.
 
 \question{What is this check for, and how can we implement it in |Elab|?}
 
-<       lastIsIndex <- withNSupply (equal (SET :>: (iv,N (P (last xs)))))
+<       lastIsIndex <- eEqual (SET :>: (iv,N (P (last xs))))
 <       guard lastIsIndex
 <       -- should check i doesn't appear in d (fairly safe it's not in iI :))
 
@@ -179,7 +231,7 @@ development, and carry on elaborating.
 
 
 We push types in to neutral terms by calling |makeElabInfer| on the term, then
-coercing the result to the required type. (Note that |ECoerce| will check if the
+coercing the result to the required type. (Note that |eCoerce| will check if the
 types are equal, and if so it will not insert a redundant coercion.)
 
 > makeElab loc (w :>: DN n) = do
@@ -191,16 +243,16 @@ types are equal, and if so it will not insert a redundant coercion.)
 
 If we already have an evidence term, we just have to type-check it.
 
-> makeElab loc (ty :>: DTIN tm) = do
->     let nsupply = (B0 :< ("__makeElabDTIN", 0), 0) :: NameSupply
->     case liftError (typeCheck (check (ty :>: tm)) nsupply) of
->         Left e -> throwError e
->         Right tt -> return tt
+> makeElab loc (ty :>: DTIN tm) = eCheck (ty :>: tm)
 
+
+If the type is neutral and none of the preceding cases match,
+there is nothing we can do but wait for the type to become canonical.
 
 > makeElab loc (N ty :>: tm) = do
 >     tt <- eQuote (N ty)
 >     eCan tt (N ty :>: ElabProb tm)
+
 
 If nothing else matches, give up and report an error.
 
@@ -260,7 +312,7 @@ to produce a type-term pair in the evidence language.
 >         handleArgs (t :$ fmap termOf a' :=>: v $$ fmap valueOf a' :<: ty') as
 
 <     handleArgs (tm :=>: tv :<: ty) (A a : as) = do
-<         ty' :=>: _ <- EQuote ty Bale
+<         ty' :=>: _ <- eQuote ty
 <         (cty :=>: ctyv, q :=>: qv) <- elabEnsure (ty' :=>: ty) (Set :>: Pi () ())
 <         handleArgs (coe :@ [ty', cty, q, N tm] :=>: coe @@ [ty, C ctyv, qv, tv] :<: C ctyv) (A a : as)
 
@@ -279,13 +331,8 @@ to produce a type-term pair in the evidence language.
 >            , Nothing)
 
 > makeElabInferHead loc (DTEX tm) = do
->     let nsupply = (B0 :< ("__makeElabInferHeadDTEX", 0), 0) :: NameSupply
->     case liftError (typeCheck (infer tm) nsupply) of
->         Left e -> throwError e
->         Right (tv :<: ty) -> do
->             ty' :=>: _ <- eQuote ty
->             return (PAIR ty' (N tm) :=>: PAIR ty tv, Nothing)
->     
+>     tt <- eInfer tm
+>     return (tt, Nothing)
 
 > makeElabInferHead loc tm = throwError' $ err "makeElabInferHead: can't cope with"
 >     ++ errTm (DN (tm ::$ []))
