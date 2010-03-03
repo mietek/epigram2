@@ -154,8 +154,11 @@ descDChoice _ lsigma = sigma Set (\S -> pi S (\s -> var Void))
 descD : (I : Set) -> IDesc Unit
 descD I = sigma DescDConst (descDChoice I)
 
+IDescl0 : (I : Set) -> Unit -> Set
+IDescl0 I = IMu (\_ -> descD I) 
+
 IDescl : (I : Set) -> Set
-IDescl I = IMu (\_ -> descD I) Void
+IDescl I = IDescl0 I _
 
 varl : {I : Set}(i : I) -> IDescl I
 varl i = con (lvar ,  i)
@@ -229,39 +232,23 @@ proof-phi-psi (sigma S T) = cong (sigma S)
 proof-psi-phi : (I : Set) -> (D : IDescl I) -> psi (phi D) == D
 proof-psi-phi I D =  induction (\ _ -> descD I)
                                P
-                               proof-psi-phi-casesW
+                               proof-psi-phi-cases
                                Void
                                D
                 where P : Sigma Unit (IMu (\ x -> descD I)) -> Set
                       P ( Void , D ) = psi (phi D) == D
-                      proof-psi-phi-cases : (xs : Sigma DescDConst 
-                                                  (λ s → desc (descDChoice I s)
-                                                  (IMu (λ x → sigma DescDConst (descDChoice I)))))
-                                            (hs : desc 
-                                                  (box (sigma DescDConst (descDChoice I))
-                                                  (IMu (λ x → sigma DescDConst (descDChoice I))) xs)
-                                                  P)
-                                            → P (Void , con xs)
-                      proof-psi-phi-cases (lvar , i) hs = refl
-                      proof-psi-phi-cases (lconst , x) hs = refl
-                      proof-psi-phi-cases (lprod , ( D , D' )) ( p , q ) = cong2 prodl p q 
-                      proof-psi-phi-cases (lpi , ( S , T )) hs = cong (pil S) 
-                                                                          (reflFun (λ s → psi (phi (T s)))
-                                                                                   T
-                                                                                   hs)
-                      proof-psi-phi-cases (lsigma , ( S , T )) hs = cong (sigmal S) 
-                                                                             (reflFun (λ s → psi (phi (T s)))
-                                                                                      T
-                                                                                      hs)
-                      proof-psi-phi-casesW : (i : Unit)
-                                             (xs : Sigma DescDConst
-                                                   (λ s → desc (descDChoice I s)
-                                                   (IMu (λ x → sigma DescDConst (descDChoice I)))))
-                                             (hs : desc 
-                                                   (box (sigma DescDConst (descDChoice I))
-                                                   (IMu (λ x → sigma DescDConst (descDChoice I))) xs)
-                                                   P)
-                                              →  P (i , con xs)
-                      proof-psi-phi-casesW Void = proof-psi-phi-cases
-                      
-
+                      proof-psi-phi-cases : (i : Unit)
+                                            (xs : desc (descD I) (IDescl0 I))
+                                            (hs : desc (box (descD I) (IDescl0 I) xs) P)
+                                            -> P (i , con xs)
+                      proof-psi-phi-cases Void (lvar , i) hs = refl
+                      proof-psi-phi-cases Void (lconst , x) hs = refl
+                      proof-psi-phi-cases Void (lprod , ( D , D' )) ( p , q ) = cong2 prodl p q 
+                      proof-psi-phi-cases Void (lpi , ( S , T )) hs = cong (pil S) 
+                                                                           (reflFun (\ s -> psi (phi (T s)))
+                                                                                    T
+                                                                                    hs)
+                      proof-psi-phi-cases Void (lsigma , ( S , T )) hs = cong (sigmal S) 
+                                                                              (reflFun (λ s -> psi (phi (T s)))
+                                                                                       T
+                                                                                       hs)
