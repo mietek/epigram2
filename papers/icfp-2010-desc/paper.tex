@@ -246,41 +246,68 @@ following implications always hold by induction on derivations.
         -> Nice appetizer 
 \end{structure}
 
-\[
-\Axiom{\Gamma\vdash\Type{\UId}}\qquad
-\Axiom{\Gamma\vdash\Bhab{\Tag{s}}{\UId}}\;s \mbox{ unique identifier}
-\]
+\begin{figure}
 
-
-\[
-\Axiom{\Gamma \vdash \Type{\EnumU}} \quad
-\Axiom{\Gamma \vdash \Bhab{\NilE}{\EnumU}} \quad
+\[\stkc{
+%% UId
+\Rule{\Gamma \vdash \Valid}
+     {\Gamma \vdash \Type{\UId}}
+\qquad
+%% Tag
+\Rule{\Gamma \vdash \Valid}
+     {\Gamma \vdash \Bhab{\Tag{s}}{\UId}}\;s \mbox{ unique identifier}
+\\
+%% EnumU
+\Rule{\Gamma \vdash \Valid}
+     {\Gamma \vdash \Type{\EnumU}} 
+\qquad
+%% EnumT
+\Rule{\Gamma \vdash \Bhab{e}{\EnumU}}
+     {\Gamma \vdash \Type{\EnumT{e}}} 
+\\
+%% NilE
+\Rule{\Gamma \vdash \Valid}
+     {\Gamma \vdash \Bhab{\NilE}{\EnumU}} 
+\qquad
+%% ConsE
 \Rule{\Gamma \vdash \Bhab{t}{\UId} \quad
       \Gamma \vdash \Bhab{e}{\EnumU}}
      {\Gamma \vdash \Bhab{\ConsE{t}{e}}{\EnumU}}
-\]
-
-\[
-\stkc{
-\Rule{\Gamma \vdash \Bhab{e}{\EnumU}}
-     {\Gamma \vdash \Type{\EnumT{e}}} \\
-\Axiom{\Gamma \vdash \Bhab{\Ze}{\EnumT{\ConsE{t}{e}}}} \quad
+\\
+%% Ze
+\Rule{\Gamma \vdash \Valid}
+     {\Gamma \vdash \Bhab{\Ze}{\EnumT{\ConsE{t}{e}}}} 
+\qquad
+%% Su
 \Rule{\Gamma \vdash \Bhab{n}{\EnumT{e}}}
      {\Gamma \vdash \Bhab{\Su{n}}{\EnumT{\ConsE{t}{e}}}}
-}
-\]
+}\]
 
-\[\stk{
+\caption{Typing rules for finite sets}
+\label{fig:typing-finite-set}
+
+\end{figure}
+
+\begin{figure}
+
+\[\stkl{
 %% spi
 \F{$\pi$} : \PITEL{\V{e}}{\EnumU}
-            \PITEL{\V{P}}{\EnumT{e} \To \Set} \To \Set \\
+            \PITEL{\V{P}}{\EnumT{e} \To \Set} \To \Set 
 \\
 %% switch
-\F{switch} : \PITEL{\V{e}}{\EnumU}
-             \PITEL{\V{P}}{\EnumT{e} \To \Set}
-             \PITEL{\V{b}}{\spi{e}{P}}
-             \PITEL{\V{x}}{\EnumT{e}} \To P~x
+\begin{array}{@{}ll}
+\F{switch} : & \PITEL{\V{e}}{\EnumU}
+               \PITEL{\V{P}}{\EnumT{e} \To \Set} \\
+             & \PITEL{\V{b}}{\spi{e}{P}}
+               \PITEL{\V{x}}{\EnumT{e}} \To P~x
+\end{array}
 }\]
+
+\caption{Operators on finite sets}
+\label{fig:operator-finite-set}
+
+\end{figure}
 
 \subsection{Type propagation}
 
@@ -293,6 +320,8 @@ following implications always hold by induction on derivations.
     -> Propagation for tags
     -> Propagation for switch
 \end{structure}
+
+
 
 \subsection{In praise for $\Sigma$}
 
