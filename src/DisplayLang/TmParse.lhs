@@ -17,7 +17,7 @@
 > import DisplayLang.DisplayTm
 > import DisplayLang.Lexer
 
-> import Features.Features
+> import Features.Features ()
 
 > import Evidences.Tm
 

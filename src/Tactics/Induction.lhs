@@ -18,10 +18,6 @@
 
 > import DisplayLang.Naming
 
-> import Elaboration.Elaborator
-
-> import Tactics.Information
-
 %endif
 
 \section{Induction on |Desc|}

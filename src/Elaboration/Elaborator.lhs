@@ -34,7 +34,6 @@
 
 > import Elaboration.ElabMonad
 > import Elaboration.MakeElab
-> import Elaboration.Unification
 
 > import Cochon.Error
 
@@ -112,9 +111,6 @@ and |False| if the problem was suspended.
 > runElab top (ty :>: EAskNSupply f) = do
 >     nsupply <- askNSupply
 >     runElab top (ty :>: f nsupply)
-
-> runElab top (ty :>: tm) = throwError' . err $ "runElab: cannot evaluate "
->                                                 ++ show tm
 
 
 The |runElabTop| command interprets the |Elab| monad at the top level, by

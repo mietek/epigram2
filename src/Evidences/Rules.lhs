@@ -25,7 +25,7 @@
 > import NameSupply.NameSupply
 > import NameSupply.NameSupplier
 
-> import Features.Features
+> import Features.Features ()
 
 %endif
 

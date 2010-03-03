@@ -9,7 +9,6 @@
 
 > import Control.Applicative hiding (empty)
 > import Control.Monad.State
-> import Data.Traversable
 > import Text.PrettyPrint.HughesPJ
 
 > import NameSupply.NameSupply

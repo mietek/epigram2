@@ -18,7 +18,7 @@
 > import Kit.MissingLibrary
 > import Kit.BwdFwd
 
-> import Features.Features
+> import Features.Features ()
 
 > import NameSupply.NameSupply
 
@@ -440,7 +440,6 @@ issues.
 >   (_ :. t0)  == (_ :. t1)  = t0 == t1
 >   K t0       == _          = error "unexpected K"
 >   _          == K t1       = error "unexpected K"
->   _          == _          = False
 
 Operators are compared by name!
 

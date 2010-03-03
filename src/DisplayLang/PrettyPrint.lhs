@@ -21,7 +21,7 @@
 > import DisplayLang.Lexer
 > import DisplayLang.Naming
 
-> import Features.Features
+> import Features.Features ()
 
 > import Evidences.Tm
 

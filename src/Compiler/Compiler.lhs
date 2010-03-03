@@ -29,7 +29,7 @@ generate an executable from a collection of supercombinator definitions.
 
 > import ProofState.Developments
 
-> import Features.Features
+> import Features.Features ()
 
 %endif
 

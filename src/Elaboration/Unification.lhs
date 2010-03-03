@@ -20,7 +20,6 @@
 > import ProofState.ProofState
 > import ProofState.ProofKit
 
-> import DisplayLang.DisplayTm
 > import DisplayLang.Naming
 
 > import Kit.BwdFwd

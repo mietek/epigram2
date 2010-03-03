@@ -8,12 +8,9 @@
 > module DisplayLang.Naming where
 
 > import Control.Applicative
-> import Control.Monad.Identity
 > import Control.Monad.State
 > import Data.Foldable hiding (elem, find)
 > import Data.List
-> import Data.Maybe
-> import Data.Monoid
 > import Data.Traversable
 
 > import Kit.BwdFwd
@@ -29,7 +26,6 @@
 
 > import Evidences.Tm
 > import Evidences.Rules
-> import Evidences.Mangler
 
 %endif
 

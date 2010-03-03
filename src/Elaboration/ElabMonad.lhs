@@ -5,7 +5,8 @@
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE GADTs, TypeOperators, TypeSynonymInstances, FlexibleInstances,
->              MultiParamTypeClasses, GeneralizedNewtypeDeriving #-}
+>              MultiParamTypeClasses, GeneralizedNewtypeDeriving,
+>              PatternGuards #-}
 
 > module Elaboration.ElabMonad where
 
@@ -17,14 +18,10 @@
 
 > import NameSupply.NameSupply
 
-> import Data.Traversable
-
 > import Evidences.Tm
 > import Evidences.Rules
 
 > import DisplayLang.DisplayTm
-
-> import Kit.MissingLibrary
 
 %endif
 

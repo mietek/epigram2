@@ -24,7 +24,6 @@
 > import Evidences.Rules
 
 > import Elaboration.ElabMonad
-> import Elaboration.Elaborator
 
 %endif
 

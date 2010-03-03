@@ -10,7 +10,6 @@
 
 > import Control.Monad.Error
 
-> import NameSupply.NameSupply
 > import NameSupply.NameSupplier
 
 > import Evidences.Tm
@@ -322,21 +321,16 @@ to produce a type-term pair in the evidence language.
 >         eCan tt (sigSetVAL :>: ElabInferProb (DTEX tm ::$ as))
 
 > makeElabInferHead :: Loc -> DHEAD -> Elab (INTM :=>: VAL, Maybe (Scheme INTM))
-
 > makeElabInferHead loc (DP rn) = eResolve rn
-
 > makeElabInferHead loc (DType ty) = do
 >     tm :=>: tmv <- subElab loc (SET :>: ty)
 >     return (PAIR (ARR tm tm) (idTM "typecast")
 >                  :=>: PAIR (ARR tmv tmv) (idVAL "typecast")
 >            , Nothing)
-
 > makeElabInferHead loc (DTEX tm) = do
 >     tt <- eInfer tm
 >     return (tt, Nothing)
 
-> makeElabInferHead loc tm = throwError' $ err "makeElabInferHead: can't cope with"
->     ++ errTm (DN (tm ::$ []))
 
 
 The result of |makeElabInfer| is of type $\Sigma X \!\! : \!\! Set . X$, which we can
