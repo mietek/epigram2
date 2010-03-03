@@ -209,19 +209,19 @@ psi (sigma S T) = sigmal S (\s -> psi (T s))
 
 -- From host to host
 
-proof-phi-psi : (I : Set) -> (D : IDesc I) -> phi (psi D) == D
-proof-phi-psi I (var i) = refl
-proof-phi-psi I (const x) = refl
-proof-phi-psi I (prod D D') with proof-phi-psi I D | proof-phi-psi I D'
-...                             | p | q = cong2 prod p q
-proof-phi-psi I (pi S T) = cong (pi S)  
-                                  (reflFun (λ s → phi (psi (T s)))
-                                           T
-                                           (\s -> proof-phi-psi I (T s)))
-proof-phi-psi I (sigma S T) = cong (sigma S) 
-                                     (reflFun (λ s → phi (psi (T s)))
-                                              T
-                                              (\s -> proof-phi-psi I (T s)))
+proof-phi-psi : {I : Set} -> (D : IDesc I) -> phi (psi D) == D
+proof-phi-psi (var i) = refl
+proof-phi-psi (const x) = refl
+proof-phi-psi (prod D D') with proof-phi-psi D | proof-phi-psi D'
+...  | p | q = cong2 prod p q
+proof-phi-psi (pi S T) = cong (pi S)  
+                                (reflFun (\ s -> phi (psi (T s)))
+                                         T
+                                         (\s -> proof-phi-psi (T s)))
+proof-phi-psi (sigma S T) = cong (sigma S) 
+                                   (reflFun (\ s -> phi (psi (T s)))
+                                            T
+                                            (\s -> proof-phi-psi (T s)))
 
 
 -- From embedding to embedding
