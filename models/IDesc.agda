@@ -61,6 +61,26 @@ data _+_ {i j : Level}(A : Set i)(B : Set j) : Set (max i j) where
   l : A -> A + B
   r : B -> A + B
 
+--****************
+-- Equality
+--****************
+
+data _==_ {l : Level}{A : Set l}(x : A) : A -> Set l where
+  refl : x == x
+
+cong : {l : Level}{A B : Set l}(f : A -> B){x y : A} -> x == y -> f x == f y
+cong f refl = refl
+
+cong2 : {l : Level}{A B C : Set l}(f : A -> B -> C){x y : A}{z t : B} -> 
+        x == y -> z == t -> f x z == f y t
+cong2 f refl refl = refl
+
+
+-- Intensionally extensional
+postulate 
+  reflFun : {l : Level}{A B : Set l}(f : A -> B)(g : A -> B)-> ((a : A) -> f a == g a) -> f == g 
+
+
 --********************************************
 -- Desc code
 --********************************************
@@ -142,26 +162,6 @@ induction : (l : Level)
 induction = Elim.induction
 
 --********************************************
--- List
---********************************************
-
-data ListDConst (l : Level) : Set l where
-  cnil : ListDConst l
-  ccons : ListDConst l
-
-listDChoice : (l : Level) -> Set l -> ListDConst l -> IDesc l Unit
-listDChoice x X cnil = const Unit
-listDChoice x X ccons = sigma X (\_ -> var Void)
-
-listD : (l : Level) -> Set l -> IDesc l Unit
-listD x X = sigma (ListDConst x) (listDChoice x X)
-
-list : (l : Level) -> Set l -> Set l
-list x X = IMu x Unit (\_ -> listD x X) Void
-
-
-
---********************************************
 -- DescD
 --********************************************
 
@@ -215,3 +215,4 @@ sigmal x I S T = con (ls , ( S , Tl))
              Tl : Lifted S -> IDescl x I
              Tl (lifter s) = T s
              
+
