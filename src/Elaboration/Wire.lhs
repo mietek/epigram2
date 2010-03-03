@@ -25,6 +25,8 @@
 
 > import Elaboration.ElabMonad
 
+> import Kit.MissingLibrary
+
 %endif
 
 
@@ -150,7 +152,8 @@ update the news bulletin). If not, we must:
 \item update the news bulletin with news about this girl.
 \end{enumerate}
 
-> tellEntry news (E ref@(name := HOLE h :<: tyv) sn (Girl LETG (cs, Unknown tt, nsupply) ms) ty)
+> tellEntry news (E ref@(name := HOLE h :<: tyv) sn
+>                    (Girl LETG (cs, Unknown tt, nsupply) ms) ty)
 >   | Just (ref'@(_ := DEFN tm :<: _), GoodNews) <- getNews news ref = do
 >     tm' <- bquoteHere tm
 >     let  (tt', _) = tellNewsEval news tt
@@ -168,7 +171,11 @@ To update a hole with a suspended elaboration problem attached, we proceed
 similarly to the previous case, but we also update the elaboration problem.
 \question{What if the news bulletin defines this hole?}
 
-> tellEntry news (E (name := HOLE h :<: tyv) sn (Girl LETG (cs, Suspended tt prob, nsupply) ms) ty) = do
+> tellEntry news (E ref@(name := HOLE h :<: tyv) sn
+>                    (Girl LETG (cs, Suspended tt prob, nsupply) ms) ty)
+>   | Just _ <- getNews news ref = throwError' $ err
+>       "tellEntry: news bulletin contains update to hole with suspended computation"
+>   | otherwise = do
 >     let  (tt', n)             = tellNewsEval news tt
 >          (ty' :=>: tyv', n')  = tellNewsEval news (ty :=>: tyv)
 >          ref                  = name := HOLE h :<: tyv'
