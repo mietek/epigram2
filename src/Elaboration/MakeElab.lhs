@@ -37,23 +37,15 @@ state (for example, to introduce a $\lambda$-boy) it will create a new girl
 to work in.
 
 > subElab :: Loc -> (TY :>: InDTmRN) -> Elab (INTM :=>: VAL)
-> subElab loc (ty :>: tm) = eElab loc (ty :>: ElabProb tm)
-
-> internalElab :: Loc -> (TY :>: EProb) -> Elab (INTM :=>: VAL)
-> internalElab loc (ty :>: ElabDone tt)                = return (maybeEval tt)
-> internalElab loc (ty :>: ElabProb tm)                = makeElab loc (ty :>: tm)
-> internalElab loc (ty :>: ElabInferProb tm)           = makeElabInfer loc tm
-> internalElab loc (ty :>: WaitCan (_ :=>: Just (C _)) prob)  = internalElab loc (ty :>: prob)
-> internalElab loc (ty :>: WaitCan (tm :=>: Nothing) prob) = internalElab loc (ty :>: WaitCan (tm :=>: Just (evTm tm)) prob)
-> internalElab loc (ty :>: prob)                       = eElab loc (ty :>: prob)
+> subElab loc (ty :>: tm) = eCompute (ty :>: makeElab loc tm)
 
 
-The |eCan| instruction asks for an elaboration problem to be solved when the
-supplied value is canonical, and returns the result of solving the problem
-(which may well be a suspended definition if the value is not currently canonical).
+The |eCan| instruction asks for the current goal to be solved by the given
+elaboration problem when the supplied value is canonical.
 
-> eCan :: INTM :=>: VAL -> (TY :>: EProb) -> Elab (INTM :=>: VAL)
-> eCan tt (ty :>: prob) = internalElab (Loc 0) (ty :>: WaitCan (justEval tt) prob)
+> eCan :: INTM :=>: VAL -> EProb -> Elab a
+> eCan (_ :=>: C _)  prob = eElab (Loc 0) prob
+> eCan tt            prob = eElab (Loc 0) (WaitCan (justEval tt) prob)
 
 
 We can type-check a term using the |eCheck| instruction.
@@ -76,30 +68,30 @@ hoping for a proof of the appropriate equation and inserting a coercion.
 >     if eq
 >         then return (s :=>: sv)
 >         else do
->             q :=>: qv <- eHope $ PRF (EQBLUE (SET :>: _Sv) (SET :>: _Tv))
+>             q :=>: qv <- eHopeFor $ PRF (EQBLUE (SET :>: _Sv) (SET :>: _Tv))
 >             return $ N (coe :@ [_S, _T, q, s]) :=>: coe @@ [_Sv, _Tv, qv, sv]
 
 
-The |elabEnsure| instruction demands that a value should be equal to a canonical
+The |eEnsure| instruction demands that a value should be equal to a canonical
 value with the given shape. It returns a term and value with the required shape,
 together with a proof that these equal the input.
 
-> elabEnsure :: INTM :=>: VAL -> (Can VAL :>: Can ()) -> Elab (INTM :=>: Can VAL, INTM :=>: VAL)
-> elabEnsure (tm :=>: C v) (ty :>: t) = case halfZip v t of
->     Nothing  -> throwError' $ err "elabEnsure: halfZip failed!"
+> eEnsure :: INTM :=>: VAL -> (Can VAL :>: Can ()) -> Elab (INTM :=>: Can VAL, INTM :=>: VAL)
+> eEnsure (tm :=>: C v) (ty :>: t) = case halfZip v t of
+>     Nothing  -> throwError' $ err "eEnsure: halfZip failed!"
 >     Just _   -> do
 >         ty' :=>: _ <- eQuote (C ty)
 >         return (tm :=>: v, N (P refl :$ A ty' :$ A tm)
 >                                  :=>: pval refl $$ A (C ty) $$ A (C v))
-> elabEnsure (_ :=>: L _) _ = throwError' $ err "elabEnsure: failed to match lambda!"
-> elabEnsure (_ :=>: nv) (ty :>: t) = do
+> eEnsure (_ :=>: L _) _ = throwError' $ err "eEnsure: failed to match lambda!"
+> eEnsure (_ :=>: nv) (ty :>: t) = do
 >     vu <- unWrapElab $ canTy chev (ty :>: t)
 >     let v = fmap valueOf vu
->     pp <- eHope . PRF $ EQBLUE (C ty :>: nv) (C ty :>: C v)
+>     pp <- eHopeFor . PRF $ EQBLUE (C ty :>: nv) (C ty :>: C v)
 >     return (C (fmap termOf vu) :=>: v, pp)
 >  where
 >    chev :: (TY :>: ()) -> WrapElab (INTM :=>: VAL)
->    chev (ty :>: ()) = WrapElab (eHope ty)
+>    chev (ty :>: ()) = WrapElab (eHopeFor ty)
 
 
 The |eEqual| instruction determines if two types are definitionally equal.
@@ -108,6 +100,18 @@ The |eEqual| instruction determines if two types are definitionally equal.
 > eEqual tyvv = do
 >     nsupply <- eAskNSupply
 >     return (equal tyvv nsupply)
+
+
+The |eHope| instruction hopes that the current goal can be solved.
+
+> eHope :: Elab a
+> eHope = eElab (Loc 0) ElabHope
+
+
+The |eHopeFor| instruction hopes for an element of a type.
+
+> eHopeFor :: TY -> Elab (INTM :=>: VAL)
+> eHopeFor ty = eCompute (ty :>: eHope)
 
 
 The |eInfer| instruction infers the type of an evidence term.
@@ -135,13 +139,16 @@ The |eQuote| instruction $\beta$-quotes a value to produce a term representation
 We can use the |Elab| language to describe how to elaborate a display term to
 produce an evidence term.
 
-> makeElab :: Loc -> (TY :>: InDTmRN) -> Elab (INTM :=>: VAL)
+> makeElab :: Loc -> InDTmRN -> Elab (INTM :=>: VAL)
+> makeElab loc tm = makeElab' loc . (:>: tm) =<< eGoal
+
+> makeElab' :: Loc -> (TY :>: InDTmRN) -> Elab (INTM :=>: VAL)
 
 > import <- MakeElabRules
 
 These rules should be moved to features.
 
-> makeElab loc (SET :>: DIMU Nothing iI d i) = do
+> makeElab' loc (SET :>: DIMU Nothing iI d i) = do
 >       l :=>: lv <- eFake False
 >       iI :=>: iIv <- subElab loc (SET :>: iI)
 >       d :=>: dv <- subElab loc (ARR iIv (IDESC iIv) :>: d)
@@ -155,11 +162,11 @@ These rules should be moved to features.
 
 >       return $ IMU (Just (N l)) iI d i :=>: IMU (Just lv) iIv dv iv
 
-> makeElab loc (PI UNIT t :>: DCON f) = do
+> makeElab' loc (PI UNIT t :>: DCON f) = do
 >     tm :=>: tmv <- subElab loc (t $$ A VOID :>: f)
 >     return $ LK tm :=>: LK tmv
 
-> makeElab loc (PI (MU l d) t :>: DCON f) = do
+> makeElab' loc (PI (MU l d) t :>: DCON f) = do
 >     d' :=>: _ <- eQuote d
 >     t' :=>: _ <- eQuote t
 >     tm :=>: tmv <- subElab loc $ case l of
@@ -168,7 +175,7 @@ These rules should be moved to features.
 >     x <- eLambda (fortran t)
 >     return $ N (elimOp :@ [d', NP x, t', tm]) :=>: elimOp @@ [d, NP x, t, tmv]
 
-> makeElab loc (PI (SIGMA d r) t :>: DCON f) = do
+> makeElab' loc (PI (SIGMA d r) t :>: DCON f) = do
 >     let mt =  PI d . L . HF (fortran r) $ \ a ->
 >               PI (r $$ A a) . L . HF (fortran t) $ \ b ->
 >               t $$ A (PAIR a b)
@@ -178,7 +185,7 @@ These rules should be moved to features.
 >     return $ N ((tm :? mt') :$ A (N (P x :$ Fst)) :$ A (N (P x :$ Snd)))
 >                     :=>: tmv $$ A (NP x $$ Fst) $$ A (NP x $$ Snd)
 
-> makeElab loc (PI (ENUMT e) t :>: m) | isTuply m = do
+> makeElab' loc (PI (ENUMT e) t :>: m) | isTuply m = do
 >     t' :=>: _ <- eQuote t
 >     e' :=>: _ <- eQuote e
 >     tm :=>: tmv <- subElab loc (branchesOp @@ [e, t] :>: m)
@@ -190,25 +197,25 @@ These rules should be moved to features.
 >     isTuply (DPAIR _ _)  = True
 >     isTuply _            = False
 
-> makeElab loc (MONAD d x :>: DCON t) = makeElab loc (MONAD d x :>: DCOMPOSITE t)
-> makeElab loc (QUOTIENT a r p :>: DPAIR x DVOID) =
->   makeElab loc (QUOTIENT a r p :>: DCLASS x)
+> makeElab' loc (MONAD d x :>: DCON t) = makeElab' loc (MONAD d x :>: DCOMPOSITE t)
+> makeElab' loc (QUOTIENT a r p :>: DPAIR x DVOID) =
+>   makeElab' loc (QUOTIENT a r p :>: DCLASS x)
 
-> makeElab loc (NU d :>: DCOIT DU sty f s) = do
+> makeElab' loc (NU d :>: DCOIT DU sty f s) = do
 >   d' :=>: _ <- eQuote d
->   makeElab loc (NU d :>: DCOIT (DTIN d') sty f s)
+>   makeElab' loc (NU d :>: DCOIT (DTIN d') sty f s)
 
 
 
 We use underscores |DU| in elaboration to mean "figure this out yourself".
 
-> makeElab loc (ty :>: DU) = eHope ty
-> makeElab loc (ty :>: DQ s) = EWait s ty neutralise
+> makeElab' loc (ty :>: DU) = eHope
+> makeElab' loc (ty :>: DQ s) = eWait s ty >>= neutralise
 
 
 Elaborating a canonical term with canonical type is a job for |canTy|.
 
-> makeElab loc (C ty :>: DC tm) = do
+> makeElab' loc (C ty :>: DC tm) = do
 >     v <- canTy (subElab loc) (ty :>: tm)
 >     return $ (C $ fmap termOf v) :=>: (C $ fmap valueOf v)
 
@@ -217,24 +224,23 @@ There are a few possibilities for elaborating $\lambda$-abstractions. If both th
 range and term are constants, then we simply |makeElab| underneath. This avoids
 creating some trivial children. 
 
-> makeElab loc (PI s (L (K t)) :>: DL (DK dtm)) = do
+> makeElab' loc (PI s (L (K t)) :>: DL (DK dtm)) = do
 >     tm :=>: tmv <- subElab loc (t :>: dtm)
 >     return $ LK tm :=>: LK tmv
 
 Otherwise, we can simply create a |lambdaBoy| in the current
 development, and carry on elaborating.
 
-> makeElab loc (ty :>: DL sc) = do
+> makeElab' loc (ty :>: DL sc) = do
 >     ref <- eLambda (dfortran (DL sc))
->     ty' <- eGoal
->     makeElab loc (ty' :>: dScopeTm sc)
+>     makeElab loc (dScopeTm sc)
 
 
 We push types in to neutral terms by calling |makeElabInfer| on the term, then
 coercing the result to the required type. (Note that |eCoerce| will check if the
 types are equal, and if so it will not insert a redundant coercion.)
 
-> makeElab loc (w :>: DN n) = do
+> makeElab' loc (w :>: DN n) = do
 >     w' :=>: _ <- eQuote w
 >     tt <- makeElabInfer loc n
 >     let (yt :=>: yn :<: ty :=>: tyv) = extractNeutral tt
@@ -243,20 +249,20 @@ types are equal, and if so it will not insert a redundant coercion.)
 
 If we already have an evidence term, we just have to type-check it.
 
-> makeElab loc (ty :>: DTIN tm) = eCheck (ty :>: tm)
+> makeElab' loc (ty :>: DTIN tm) = eCheck (ty :>: tm)
 
 
 If the type is neutral and none of the preceding cases match,
 there is nothing we can do but wait for the type to become canonical.
 
-> makeElab loc (N ty :>: tm) = do
+> makeElab' loc (N ty :>: tm) = do
 >     tt <- eQuote (N ty)
->     eCan tt (N ty :>: ElabProb tm)
+>     eCan tt (ElabProb tm)
 
 
 If nothing else matches, give up and report an error.
 
-> makeElab loc (ty :>: tm) = throwError' $ err "makeElab: can't push"
+> makeElab' loc (ty :>: tm) = throwError' $ err "makeElab: can't push"
 >     ++ errTyVal (ty :<: SET) ++ err "into" ++ errTm tm 
 
 
@@ -297,7 +303,7 @@ to produce a type-term pair in the evidence language.
 >         atm :=>: av <- subElab loc (eval s' (fmap valueOf es) :>: a)
 >         handleSchemeArgs (es :< (atm :=>: av)) schT (tm :$ A atm :=>: tv $$ A av :<: t $$ A av) as
 >     handleSchemeArgs es (SchImplicitPi (x :<: s) schT) (tm :=>: tv :<: PI sd t) as = do
->         stm :=>: sv <- eHope (eval s (fmap valueOf es))
+>         stm :=>: sv <- eHopeFor (eval s (fmap valueOf es))
 >         handleSchemeArgs (es :< (stm :=>: sv)) schT (tm :$ A stm :=>: tv $$ A sv :<: t $$ A sv) as
 >     handleSchemeArgs _ _ (t :=>: v :<: C cty) (a : as) = do
 >         (a', ty') <- elimTy (subElab loc) (v :<: cty) a
@@ -313,12 +319,12 @@ to produce a type-term pair in the evidence language.
 
 <     handleArgs (tm :=>: tv :<: ty) (A a : as) = do
 <         ty' :=>: _ <- eQuote ty
-<         (cty :=>: ctyv, q :=>: qv) <- elabEnsure (ty' :=>: ty) (Set :>: Pi () ())
+<         (cty :=>: ctyv, q :=>: qv) <- eEnsure (ty' :=>: ty) (Set :>: Pi () ())
 <         handleArgs (coe :@ [ty', cty, q, N tm] :=>: coe @@ [ty, C ctyv, qv, tv] :<: C ctyv) (A a : as)
 
 >     handleArgs (tm :=>: tv :<: ty) as = do
 >         tt <- eQuote ty
->         eCan tt (sigSetVAL :>: ElabInferProb (DTEX tm ::$ as))
+>         eCan tt (ElabInferProb (DTEX tm ::$ as))
 
 > makeElabInferHead :: Loc -> DHEAD -> Elab (INTM :=>: VAL, Maybe (Scheme INTM))
 > makeElabInferHead loc (DP rn) = eResolve rn

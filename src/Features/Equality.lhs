@@ -193,7 +193,7 @@ to InDTm, along with appropriate elaboration and distillation rules.
 >       ArgSize
 
 > import -> MakeElabRules where
->   makeElab loc (PROP :>: DEqBlue t u) = do
+>   makeElab' loc (PROP :>: DEqBlue t u) = do
 >       ttt <- makeElabInfer loc t
 >       utt <- makeElabInfer loc u
 >       let ttm :=>: tv :<: tty :=>: ttyv = extractNeutral ttt

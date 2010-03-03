@@ -568,11 +568,11 @@ As some useful syntactic sugar, we let inductive types elaborate
 lists (so |[]| becomes |@[0]| and |[s , t]| becomes |@ [1 s t]|).
 
 > import -> MakeElabRules where
->     makeElab loc (MU l d :>: DVOID) =
->         makeElab loc (MU l d :>: DCON (DPAIR DZE DVOID))
->     makeElab loc (MU l d :>: DPAIR s t) =
->         makeElab loc (MU l d :>: DCON (DPAIR (DSU DZE) (DPAIR s (DPAIR t DVOID))))
->     makeElab loc (SET :>: DMU Nothing d) = do
+>     makeElab' loc (MU l d :>: DVOID) =
+>         makeElab' loc (MU l d :>: DCON (DPAIR DZE DVOID))
+>     makeElab' loc (MU l d :>: DPAIR s t) =
+>         makeElab' loc (MU l d :>: DCON (DPAIR (DSU DZE) (DPAIR s (DPAIR t DVOID))))
+>     makeElab' loc (SET :>: DMU Nothing d) = do
 >         lt :=>: lv <- EFake True Bale
 >         dt :=>: dv <- subElab loc (desc :>: d)
 >         return $ MU (Just (N lt)) dt :=>: MU (Just lv) dv

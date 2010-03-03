@@ -36,13 +36,11 @@ then write an interpreter to run the syntax in the |ProofState| monad.
 >              -- create a $\lambda$-boy and return its REF
 > eGoal        :: Elab TY
 >              -- return the type of the goal
-> eHope        :: TY -> Elab (INTM :=>: VAL) 
->              -- hope for any element of a given type
 > eWait        :: String -> TY -> Elab (EXTM :=>: VAL)
 >              -- create a subgoal corresponding to a question mark
 > eCry         :: StackError InDTmRN -> Elab a
 >              -- give up with an error
-> eElab        :: Loc -> (TY :>: EProb) -> Elab (INTM :=>: VAL)
+> eElab        :: Loc -> EProb -> Elab a
 >              -- solve a suspendable elaboration problem and return the result
 > eCompute     :: (TY :>: Elab (INTM :=>: VAL)) -> Elab (INTM :=>: VAL)
 >              -- execute commands to produce an element of a given type
@@ -60,10 +58,9 @@ The instruction signature given above is implemented using the following monad.
 >     =  Bale x
 >     |  ELambda String (REF -> Elab x)
 >     |  EGoal (TY -> Elab x)
->     |  EHope TY (INTM :=>: VAL -> Elab x)
 >     |  EWait String TY (EXTM :=>: VAL -> Elab x)
 >     |  ECry (StackError InDTmRN)
->     |  EElab Loc (TY :>: EProb) (INTM :=>: VAL -> Elab x)
+>     |  EElab Loc EProb
 >     |  ECompute (TY :>: Elab (INTM :=>: VAL)) (INTM :=>: VAL -> Elab x)
 >     |  EFake Bool (EXTM :=>: VAL -> Elab x)
 >     |  EResolve RelName ((INTM :=>: VAL, Maybe (Scheme INTM)) -> Elab x)
@@ -74,10 +71,9 @@ Now we can define the instructions we wanted:
 
 > eLambda       = flip ELambda Bale
 > eGoal         = EGoal Bale
-> eHope         = flip EHope Bale
 > eWait x ty    = EWait x ty Bale
 > eCry          = ECry
-> eElab loc tp  = EElab loc tp Bale
+> eElab loc p   = EElab loc p
 > eCompute      = flip ECompute Bale
 > eFake         = flip EFake Bale
 > eResolve      = flip EResolve Bale
@@ -98,6 +94,7 @@ caches the value representations of terms it contains.
 
 > data ElabProb x
 >     =  ElabDone (InTm x :=>: Maybe VAL)                  -- succeed with given term
+>     |  ElabHope                                          -- hope for a solution to turn up
 >     |  ElabProb (InDTm x RelName)                        -- elaborate |In| display term
 >     |  ElabInferProb (ExDTm x RelName)                   -- elaborate and infer type of |Ex| display term
 >     |  WaitCan (InTm x :=>: Maybe VAL) (ElabProb x)      -- wait for value to become canonical
@@ -116,13 +113,15 @@ progress on it, and \emph{stable} if not. At present, the only kind of stable
 elaboration problem is waiting for a non-canonical term to become canonical.
 
 > isUnstable :: EProb -> Bool
-> isUnstable (ElabDone _)              = True
-> isUnstable (ElabProb _)              = True
-> isUnstable (ElabInferProb _)         = True
-> isUnstable (WaitCan (_ :=>: Just (C _)) _)  = True
+> isUnstable (ElabDone _)                                    = True
+> isUnstable ElabHope                                        = True
+> isUnstable (ElabProb _)                                    = True
+> isUnstable (ElabInferProb _)                               = True
+> isUnstable (WaitCan (_ :=>: Just (C _)) _)                 = True
 > isUnstable (WaitCan (tm :=>: Nothing) _) | C _ <- evTm tm  = True
-> isUnstable (WaitCan _ _)             = False
-> isUnstable (WaitSolve _ _ _)         = True
+> isUnstable (WaitCan _ _)                                   = False
+> isUnstable (WaitSolve _ _ _)                               = True
+
 
 
 Since |ElabProb| caches value representations of its terms, we define some handy
@@ -146,6 +145,7 @@ functions for producing and manipulating these.
 
 > instance Traversable ElabProb where
 >     traverse f (ElabDone tt)            = (|ElabDone (travEval f tt)|)
+>     traverse f ElabHope                 = (|ElabHope|)
 >     traverse f (ElabProb tm)            = (|ElabProb (traverseDTIN f tm)|)
 >     traverse f (ElabInferProb tm)       = (|ElabInferProb (traverseDTEX f tm)|)
 >     traverse f (WaitCan tt prob)        = (|WaitCan (travEval f tt) (traverse f prob)|)
@@ -179,10 +179,9 @@ argument, as well as its second.
 >     show (Bale x)           = "Bale (" ++ show x ++ ")"
 >     show (ELambda s _)      = "ELambda " ++ s ++ " (...)"
 >     show (EGoal _)          = "EGoal (...)"
->     show (EHope ty _)       = "EHope (" ++ show ty ++ ") (...)"
 >     show (EWait s ty _)     = "EHope " ++ show s ++ " (" ++ show ty ++ ") (...)"
 >     show (ECry _)           = "ECry (...)"
->     show (EElab l tp _)     = "EElab " ++ show l ++ " (" ++ show tp ++ ") (...)"
+>     show (EElab l tp)       = "EElab " ++ show l ++ " (" ++ show tp ++ ")"
 >     show (ECompute te _)    = "ECompute (" ++ show te ++ ") (...)"
 >     show (EFake b _)        = "EFake " ++ show b ++ " (...)"
 >     show (EResolve rn _)    = "EResolve " ++ show rn ++ " (...)"
@@ -195,10 +194,9 @@ argument, as well as its second.
 >     Bale x           >>= k = k x
 >     ELambda s f      >>= k = ELambda s      ((k =<<) . f)
 >     EGoal f          >>= k = EGoal          ((k =<<) . f)
->     EHope t f        >>= k = EHope t        ((k =<<) . f)
 >     EWait s t f      >>= k = EWait s t      ((k =<<) . f)
 >     ECry errs        >>= k = ECry errs
->     EElab l tp f     >>= k = EElab l tp     ((k =<<) . f)
+>     EElab l p        >>= k = error "EElab: cannot bind!"
 >     ECompute te f    >>= k = ECompute te    ((k =<<) . f)
 >     EFake b f        >>= k = EFake b        ((k =<<) . f)
 >     EResolve rn f    >>= k = EResolve rn    ((k =<<) . f)

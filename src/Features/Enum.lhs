@@ -234,7 +234,7 @@ To elaborate a tag with an enumeration as its type, we search for the
 tag in the enumeration to determine the appropriate index.
 
 > import -> MakeElabRules where
->   makeElab loc (ENUMT t :>: DTAG a) = findTag a t 0
+>   makeElab' loc (ENUMT t :>: DTAG a) = findTag a t 0
 >     where
 >       findTag :: String -> TY -> Int -> Elab (INTM :=>: VAL)
 >       findTag a (CONSE (TAG b) t) n

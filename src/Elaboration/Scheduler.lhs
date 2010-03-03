@@ -108,7 +108,7 @@ been suspended) then the cursor could be anywhere earlier in the proof state.
 > resume :: (INTM :=>: VAL) -> EProb -> ProofState (Maybe (INTM :=>: VAL))
 > resume _ (ElabDone tt) = return . Just . maybeEval $ tt
 > resume (ty :=>: tyv) (ElabProb tm) = 
->     return . ifSnd =<< runElab True (tyv :>: makeElab (Loc 0) (tyv :>: tm))
+>     return . ifSnd =<< runElab True (tyv :>: makeElab (Loc 0) tm)
 > resume (ty :=>: tyv) (ElabInferProb tm) =
 >     return . ifSnd =<< runElab True (tyv :>: makeElabInfer (Loc 0) tm)
 > resume (ty :=>: tyv) (WaitCan (tm :=>: Just (C v)) prob) =

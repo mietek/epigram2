@@ -65,18 +65,14 @@ and |False| if the problem was suspended.
 
 > runElab top (ty :>: EGoal f) = runElab top (ty :>: f ty)
 
-> runElab top (ty :>: EHope tyHope f) = runElabHope tyHope
->     >>= runElab top . (ty :>:) . f
-
 > runElab top (ty :>: EWait s tyWait f) = do
 >     tyWait' <- bquoteHere tyWait
 >     tt <- make' Waiting (s :<: tyWait' :=>: tyWait)
 >     runElab top (ty :>: f tt)
 
-> runElab top (ty :>: EElab l p f)  = runElabProb l p
->     >>= runElab top . (ty :>:) . f . fst
+> runElab top (ty :>: EElab l p)  = runElabProb top l (ty :>: p)
 
-> runElab top (ty :>: ECompute (tyComp :>: elab) f) = runElabTop (tyComp :>: elab)
+> runElab top (ty :>: ECompute (tyComp :>: elab) f) = runElab False (tyComp :>: elab)
 >     >>= runElab top . (ty :>:) . f . fst
 
 > runElab True (ty :>: ECry e) = do
@@ -131,98 +127,109 @@ are encountered below the top level.
 >         else  return . (, False) =<< neutralise =<< getMotherDefinition <* goOut
 
 
+\subsubsection{Interpreting elaboration problems}
+
+The |runElabProb| command interprets the |EElab| instruction, which holds a syntactic
+representation of an elaboration problem. 
+
+> runElabProb :: Bool -> Loc -> (TY :>: EProb) -> ProofState (INTM :=>: VAL, Bool)
+> runElabProb top loc (ty :>: ElabDone tt)  = return (maybeEval tt, True)
+> runElabProb top loc (ty :>: ElabHope)     = runElabHope top ty
+> runElabProb top loc (ty :>: ElabProb tm)  = runElab top (ty :>: makeElab loc tm)
+> runElabProb top loc (ty :>: ElabInferProb tm) =
+>     runElab top (ty :>: makeElabInfer loc tm)
+> runElabProb top loc (ty :>: WaitCan (_ :=>: Just (C _)) prob) =
+>     runElabProb top loc (ty :>: prob)
+> runElabProb top loc (ty :>: WaitCan (tm :=>: Nothing) prob) =
+>     runElabProb top loc (ty :>: WaitCan (tm :=>: Just (evTm tm)) prob)
+> runElabProb True loc (ty :>: prob) =
+>     return . (, False) =<< neutralise =<< suspendMe prob
+> runElabProb False loc (ty :>: prob) = do
+>     ty' <- bquoteHere ty
+>     return . (, True) =<< neutralise =<< suspend (name prob :<: ty' :=>: ty) prob
+>   where
+>     name :: EProb -> String
+>     name (WaitCan _ _)      = "can"
+>     name (WaitSolve _ _ _)  = "solve"
+>     name _                  = "suspend"
+
+
 \subsubsection{Hoping, hoping, hoping}
 
 The |runElabHope| command interprets the |EHope| instruction, which hopes for
 an element of a given type. If it is asking for a proof, we might be able to
 find one, but otherwise we just create a hole.
 
-> runElabHope :: TY -> ProofState (INTM :=>: VAL)
-> runElabHope (PRF p)  = simplifyProof p
-> runElabHope ty       = lastHope ty
+> runElabHope :: Bool -> TY -> ProofState (INTM :=>: VAL, Bool)
+> runElabHope top (PRF p)  = simplifyProof top p
+> runElabHope top ty       = lastHope top ty
 
 If we are hoping for a proof of a proposition, we first try simplifying it using
 the propositional simplification machinery.
 
-> simplifyProof :: VAL -> ProofState (INTM :=>: VAL)
-> simplifyProof p = do
+> simplifyProof :: Bool -> VAL -> ProofState (INTM :=>: VAL, Bool)
+> simplifyProof top p = do
 >     pSimp <- runPropSimplify p
 >     case pSimp of
 >         Just (SimplyTrivial prf) -> do
 >             prf' <- bquoteHere prf
->             return $ prf' :=>: prf
->         Just (SimplyAbsurd _) -> return . fst =<< runElabTop (PRF p :>:
+>             return (prf' :=>: prf, True)
+>         Just (SimplyAbsurd _) -> runElab top (PRF p :>:
 >             ECry [err "lastHope: proposition is absurd!"])
 >         Just (Simply qs _ h) -> do
->             qrs <- Data.Traversable.mapM (subProof  . pty) qs
+>             qrs <- Data.Traversable.mapM partProof qs
 >             h' <- dischargeLots qs h
->             let prf = h' $$$ fmap (A . valueOf) qrs
+>             let prf = h' $$$ qrs
 >             prf' <- bquoteHere prf
->             return $ prf' :=>: prf
->         Nothing -> subProof (PRF p)
+>             return (prf' :=>: prf, True)
+>         Nothing -> subProof top (PRF p)
 >   where
->     subProof :: VAL -> ProofState (INTM :=>: VAL)
->     subProof (PRF p) = flexiProof p <|> lastHope (PRF p)
+>     partProof :: REF -> ProofState (Elim VAL)
+>     partProof ref = return . A . valueOf . fst =<< subProof False (pty ref)
+
+>     subProof :: Bool -> VAL -> ProofState (INTM :=>: VAL, Bool)
+>     subProof top (PRF p) = flexiProof top p <|> lastHope top (PRF p)
 
 After simplification has dealt with the easy stuff, it calls |flexiProof| to
 solve any flex-rigid equations (by suspending a solution process on a subgoal
 and returning the subgoal). \question{Can we hope for a proof of equality and
 insert a coercion rather than demanding definitional equality of the sets?}
 
-> flexiProof :: VAL -> ProofState (INTM :=>: VAL)
-> flexiProof p@(EQBLUE (_S :>: s) (_T :>: (NP ref@(_ := HOLE Hoping :<: _)))) = do
+> flexiProof :: Bool -> VAL -> ProofState (INTM :=>: VAL, Bool)
+> flexiProof top p@(EQBLUE (_S :>: s) (_T :>: (NP ref@(_ := HOLE Hoping :<: _)))) = do
 >     guard =<< withNSupply (equal (SET :>: (_S, _T)))
 >     s' <- bquoteHere s
 >     _S' <- bquoteHere _S
 >     _T' <- bquoteHere _T
 >     let p' = EQBLUE (_S' :>: s') (_T' :>: NP ref)
->     neutralise =<< suspend ("eq" :<: PRF p' :=>: PRF p)
+>     return . (, False) =<< neutralise =<< suspend ("eq" :<: PRF p' :=>: PRF p)
 >         (WaitSolve ref (s' :=>: Just s)
 >             (ElabDone (N (P refl :$ A _S' :$ A s')
 >                           :=>: Just (pval refl $$ A _S $$ A s))))
 
-> flexiProof p@(EQBLUE (_T :>: (NP ref@(_ := HOLE Hoping :<: _))) (_S :>: s)) = do
+> flexiProof top p@(EQBLUE (_T :>: (NP ref@(_ := HOLE Hoping :<: _))) (_S :>: s)) = do
 >     guard =<< withNSupply (equal (SET :>: (_S, _T)))
 >     s' <- bquoteHere s
 >     _S' <- bquoteHere _S
 >     _T' <- bquoteHere _T
 >     let p' = EQBLUE (_T' :>: NP ref) (_S' :>: s')
->     neutralise =<< suspend ("eq" :<: PRF p' :=>: PRF p)
+>     return . (, False) =<< neutralise =<< suspend ("eq" :<: PRF p' :=>: PRF p)
 >         (WaitSolve ref (s' :=>: Just s)
 >             (ElabDone (N (P refl :$ A _S' :$ A s')
 >                           :=>: Just (pval refl $$ A _S $$ A s))))
 
-> flexiProof _ = (|)
+> flexiProof _ _ = (|)
 
 If all else fails, we can hope for anything we like by creating a subgoal, though
 ideally we should cry rather than hoping for something patently absurd.
 
-> lastHope :: TY -> ProofState (INTM :=>: VAL)
-> lastHope ty = do
+> lastHope :: Bool -> TY -> ProofState (INTM :=>: VAL, Bool)
+> lastHope True ty = do
+>     putHoleKind Hoping
+>     return . (, False) =<< neutralise =<< getMotherDefinition
+> lastHope False ty = do
 >     ty' <- bquoteHere ty
->     neutralise =<< make' Hoping ("hope" :<: ty' :=>: ty)
-
-
-\subsubsection{Interpreting elaboration problems}
-
-The |runElabProb| command interprets the |EElab| instruction, which holds a syntactic
-representation of an elaboration problem. 
-\question{How should this relate to the |internalElab| instruction?}
-
-> runElabProb :: Loc -> (TY :>: EProb) -> ProofState (INTM :=>: VAL, Bool)
-> runElabProb loc (ty :>: ElabDone tt) = return (maybeEval tt, True)
-> runElabProb loc (ty :>: ElabProb tm) = runElab False (ty :>: makeElab loc (ty :>: tm))
-> runElabProb loc (ty :>: ElabInferProb tm) = runElab False (ty :>: makeElabInfer loc tm)
-> runElabProb loc (ty :>: WaitCan (_ :=>: Just (C _)) prob) = runElabProb loc (ty :>: prob)
-> runElabProb loc (ty :>: WaitCan (tm :=>: Nothing) prob) = runElabProb loc (ty :>: WaitCan (tm :=>: Just (evTm tm)) prob)
-> runElabProb loc (ty :>: prob) = do
->     ty' <- bquoteHere ty
->     return . (, False) =<< neutralise =<< suspend (name prob :<: ty' :=>: ty) prob
->   where
->     name :: EProb -> String
->     name (WaitCan _ _)      = "can"
->     name (WaitSolve _ _ _)  = "solve"
->     name _                  = "suspend"
+>     return . (, True) =<< neutralise =<< make' Hoping ("hope" :<: ty' :=>: ty)
 
 
 \subsubsection{Suspending computation}
@@ -261,16 +268,16 @@ it operates in the |Elab| monad, so it can create subgoals and
 $\lambda$-lift terms.
 
 > elaborate :: Loc -> (TY :>: InDTmRN) -> ProofState (INTM :=>: VAL)
-> elaborate loc (ty :>: tm) = runElab False (ty :>: makeElab loc (ty :>: tm))
+> elaborate loc (ty :>: tm) = runElab False (ty :>: makeElab loc tm)
 >     >>= return . fst
 
 > elaborate' = elaborate (Loc 0)
 
 
-> elaborateHere :: Loc -> InDTmRN -> ProofState (INTM :=>: VAL)
+> elaborateHere :: Loc -> InDTmRN -> ProofState (INTM :=>: VAL, Bool)
 > elaborateHere loc tm = do
 >     _ :=>: ty <- getHoleGoal
->     return . fst =<< runElab True (ty :>: makeElab loc (ty :>: tm))
+>     runElab True (ty :>: makeElab loc tm)
 
 > elaborateHere' = elaborateHere (Loc 0)
 
@@ -302,17 +309,18 @@ a reference to the current goal (applied to the appropriate shared parameters).
 > elabGive' :: InDTmRN -> ProofState (EXTM :=>: VAL)
 > elabGive' tm = do
 >     tip <- getDevTip
->     case tip of         
->         Unknown _ -> do
->             case tm of
->                 DQ "" -> do
->                     GirlMother ref _ _ _ <- getMother
->                     aus <- getGreatAuncles
->                     return (applyAuncles ref aus)
->                 _ -> do
->                     tm' :=>: _ <- elaborateHere' tm
->                     give' tm'
+>     case (tip, tm) of         
+>         (Unknown _, DQ "")  -> getDefn
+>         (Unknown _, _)      -> do
+>             (tm' :=>: _, done) <- elaborateHere' tm
+>             if done then give' tm' else getDefn
 >         _  -> throwError' $ err "elabGive: only possible for incomplete goals."
+>   where
+>     getDefn :: ProofState (EXTM :=>: VAL)
+>     getDefn = do
+>         GirlMother ref _ _ _ <- getMother
+>         aus <- getGreatAuncles
+>         return (applyAuncles ref aus)
 
 
 The |elabMake| command elaborates the given display term in a module to

@@ -2,7 +2,7 @@ Made.
 Made.
 [Set , A]
 Made.
-elab.can
+elab
 Jumping to f_4.a_0...
 Thank you.
 Going to root...
@@ -27,28 +27,19 @@ Made.
   f
     [ a := (Set -> Set) : Set ;
     ] ? : a ;
-  elab
-    [ can := [Set , f Set] : Sig (ssv : Set ; ssv) ;
-    ] can : Sig (sst : Set ; sst) ;
+  elab := [Set , f Set] : Sig (sst : Set ; sst) ;
   x
     [ hope := Set : Set ;
       can := Set : hope ;
       eq := refl Set Set : :- hope == ((: Set) Set) ;
     ] ? : coe hope Set eq (id hope can) ;
-  B
-    [ hope := HOPE? : Set ;
-    ] hope : Set ;
-  C
-    [ hope := HOPE? : Prop ;
-    ] hope : Prop ;
-  p
-    [ hope := HOPE? : :- B.hope == C.hope ;
-    ] hope : :- B == C ;
+  B := HOPE? : Set ;
+  C := HOPE? : Prop ;
+  p := HOPE? : :- B == C ;
   q
     [ hope := HOPE? : Set ;
       can
         := (SUSPENDED: WaitCan (N (P (q_12.hope_0 := HOLE Hoping :<: C (Set))) :=>: Nothing) (ElabProb (DC Set))) ? : hope ;
-      hope := HOPE? : :- B.hope == can ;
-    ] hope : :- B == ((: hope^1 -> hope^1) (\ typecast -> typecast) can) ;
+    ] HOPE? : :- B == ((: hope -> hope) (\ typecast -> typecast) can) ;
 ]
 Loaded.
