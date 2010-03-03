@@ -131,41 +131,18 @@ are encountered below the top level.
 >         else  return . (, False) =<< neutralise =<< getMotherDefinition <* goOut
 
 
+\subsubsection{Hoping, hoping, hoping}
+
 The |runElabHope| command interprets the |EHope| instruction, which hopes for
 an element of a given type. If it is asking for a proof, we might be able to
 find one, but otherwise we just create a hole.
 
 > runElabHope :: TY -> ProofState (INTM :=>: VAL)
-> runElabHope (PRF p)  = flexiProof p <|> simplifyProof p
+> runElabHope (PRF p)  = simplifyProof p
 > runElabHope ty       = lastHope ty
 
-> lastHope :: TY -> ProofState (INTM :=>: VAL)
-> lastHope ty = do
->     ty' <- bquoteHere ty
->     neutralise =<< make' Hoping ("hope" :<: ty' :=>: ty)
-
-> flexiProof :: VAL -> ProofState (INTM :=>: VAL)
-> flexiProof p@(EQBLUE (_S :>: s) (_T :>: (NP ref@(_ := HOLE Hoping :<: _)))) = do
->     s' <- bquoteHere s
->     _S' <- bquoteHere _S
->     _T' <- bquoteHere _T
->     let p' = EQBLUE (_S' :>: s') (_T' :>: NP ref)
->     neutralise =<< suspend ("hope" :<: PRF p' :=>: PRF p)
->         (WaitSolve ref (s' :=>: Just s)
->             (ElabDone (N (P refl :$ A _S' :$ A s')
->                           :=>: Just (pval refl $$ A _S $$ A s))))
-
-> flexiProof p@(EQBLUE (_T :>: (NP ref@(_ := HOLE Hoping :<: _))) (_S :>: s)) = do
->     s' <- bquoteHere s
->     _S' <- bquoteHere _S
->     _T' <- bquoteHere _T
->     let p' = EQBLUE (_T' :>: NP ref) (_S' :>: s')
->     neutralise =<< suspend ("hope" :<: PRF p' :=>: PRF p)
->         (WaitSolve ref (s' :=>: Just s)
->             (ElabDone (N (P refl :$ A _S' :$ A s')
->                           :=>: Just (pval refl $$ A _S $$ A s))))
-
-> flexiProof _ = (|)
+If we are hoping for a proof of a proposition, we first try simplifying it using
+the propositional simplification machinery.
 
 > simplifyProof :: VAL -> ProofState (INTM :=>: VAL)
 > simplifyProof p = do
@@ -182,11 +159,51 @@ find one, but otherwise we just create a hole.
 >             let prf = h' $$$ fmap (A . valueOf) qrs
 >             prf' <- bquoteHere prf
 >             return $ prf' :=>: prf
->         Nothing -> lastHope (PRF p)
+>         Nothing -> subProof (PRF p)
 >   where
 >     subProof :: VAL -> ProofState (INTM :=>: VAL)
 >     subProof (PRF p) = flexiProof p <|> lastHope (PRF p)
 
+After simplification has dealt with the easy stuff, it calls |flexiProof| to
+solve any flex-rigid equations (by suspending a solution process on a subgoal
+and returning the subgoal). \question{Can we hope for a proof of equality and
+insert a coercion rather than demanding definitional equality of the sets?}
+
+> flexiProof :: VAL -> ProofState (INTM :=>: VAL)
+> flexiProof p@(EQBLUE (_S :>: s) (_T :>: (NP ref@(_ := HOLE Hoping :<: _)))) = do
+>     guard =<< withNSupply (equal (SET :>: (_S, _T)))
+>     s' <- bquoteHere s
+>     _S' <- bquoteHere _S
+>     _T' <- bquoteHere _T
+>     let p' = EQBLUE (_S' :>: s') (_T' :>: NP ref)
+>     neutralise =<< suspend ("eq" :<: PRF p' :=>: PRF p)
+>         (WaitSolve ref (s' :=>: Just s)
+>             (ElabDone (N (P refl :$ A _S' :$ A s')
+>                           :=>: Just (pval refl $$ A _S $$ A s))))
+
+> flexiProof p@(EQBLUE (_T :>: (NP ref@(_ := HOLE Hoping :<: _))) (_S :>: s)) = do
+>     guard =<< withNSupply (equal (SET :>: (_S, _T)))
+>     s' <- bquoteHere s
+>     _S' <- bquoteHere _S
+>     _T' <- bquoteHere _T
+>     let p' = EQBLUE (_T' :>: NP ref) (_S' :>: s')
+>     neutralise =<< suspend ("eq" :<: PRF p' :=>: PRF p)
+>         (WaitSolve ref (s' :=>: Just s)
+>             (ElabDone (N (P refl :$ A _S' :$ A s')
+>                           :=>: Just (pval refl $$ A _S $$ A s))))
+
+> flexiProof _ = (|)
+
+If all else fails, we can hope for anything we like by creating a subgoal, though
+ideally we should cry rather than hoping for something patently absurd.
+
+> lastHope :: TY -> ProofState (INTM :=>: VAL)
+> lastHope ty = do
+>     ty' <- bquoteHere ty
+>     neutralise =<< make' Hoping ("hope" :<: ty' :=>: ty)
+
+
+\subsubsection{Interpreting elaboration problems}
 
 The |runElabProb| command interprets the |EElab| instruction, which holds a syntactic
 representation of an elaboration problem. 
@@ -207,6 +224,8 @@ representation of an elaboration problem.
 >     name (WaitSolve _ _ _)  = "solve"
 >     name _                  = "suspend"
 
+
+\subsubsection{Suspending computation}
 
 The |suspend| command can be used to delay elaboration, by creating a subgoal
 of the given type and attaching a suspended elaboration problem to its tip.

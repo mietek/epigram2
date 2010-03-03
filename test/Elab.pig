@@ -10,4 +10,11 @@ root ;
 elab elab ;
 
 make x := ? : id _ Set ;
+
+make B := _ : Set ;
+make C := _ : Prop ;
+
+make p := _ : :- (B == C) ;
+make q := _ : :- (B == (: _) Set) ;
+
 show state ;
