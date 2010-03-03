@@ -41,10 +41,11 @@ to work in.
 > subElab loc (ty :>: tm) = eElab loc (ty :>: ElabProb tm)
 
 > internalElab :: Loc -> (TY :>: EProb) -> Elab (INTM :=>: VAL)
-> internalElab loc (ty :>: ElabDone tt)                = return tt
+> internalElab loc (ty :>: ElabDone tt)                = return (maybeEval tt)
 > internalElab loc (ty :>: ElabProb tm)                = makeElab loc (ty :>: tm)
 > internalElab loc (ty :>: ElabInferProb tm)           = makeElabInfer loc tm
-> internalElab loc (ty :>: WaitCan (_ :=>: C _) prob)  = internalElab loc (ty :>: prob)
+> internalElab loc (ty :>: WaitCan (_ :=>: Just (C _)) prob)  = internalElab loc (ty :>: prob)
+> internalElab loc (ty :>: WaitCan (tm :=>: Nothing) prob) = internalElab loc (ty :>: WaitCan (tm :=>: Just (evTm tm)) prob)
 > internalElab loc (ty :>: prob)                       = eElab loc (ty :>: prob)
 
 
@@ -53,7 +54,7 @@ supplied value is canonical, and returns the result of solving the problem
 (which may well be a suspended definition if the value is not currently canonical).
 
 > eCan :: INTM :=>: VAL -> (TY :>: EProb) -> Elab (INTM :=>: VAL)
-> eCan tt (ty :>: prob) = internalElab (Loc 0) (ty :>: WaitCan tt prob)
+> eCan tt (ty :>: prob) = internalElab (Loc 0) (ty :>: WaitCan (justEval tt) prob)
 
 
 We can type-check a term using the |eCheck| instruction.
@@ -276,7 +277,7 @@ to produce a type-term pair in the evidence language.
 >         Nothing   -> handleArgs               (tm :? ty :=>: tmv :<: tyv) ss
 >   where
 >     handleSchemeArgs :: Bwd (INTM :=>: VAL) -> Scheme INTM -> (EXTM :=>: VAL :<: TY)
->         -> DSpine RelName -> Elab (INTM :=>: VAL)
+>         -> DSPINE -> Elab (INTM :=>: VAL)
 >     handleSchemeArgs es (SchType _) (tm :=>: tv :<: ty) [] = do
 >         ty' :=>: _ <- eQuote ty
 >         return $ PAIR ty' (N tm) :=>: PAIR ty tv
@@ -303,7 +304,7 @@ to produce a type-term pair in the evidence language.
 >         (a', ty') <- elimTy (subElab loc) (v :<: cty) a
 >         handleArgs (t :$ fmap termOf a' :=>: v $$ fmap valueOf a' :<: ty') as
 
->     handleArgs :: (EXTM :=>: VAL :<: TY) -> DSpine RelName -> Elab (INTM :=>: VAL)
+>     handleArgs :: (EXTM :=>: VAL :<: TY) -> DSPINE -> Elab (INTM :=>: VAL)
 >     handleArgs (tm :=>: tv :<: ty) [] = do
 >         ty' :=>: _ <- eQuote ty
 >         return $ PAIR ty' (N tm) :=>: PAIR ty tv
@@ -320,7 +321,7 @@ to produce a type-term pair in the evidence language.
 >         tt <- eQuote ty
 >         eCan tt (sigSetVAL :>: ElabInferProb (DTEX tm ::$ as))
 
-> makeElabInferHead :: Loc -> DHead RelName -> Elab (INTM :=>: VAL, Maybe (Scheme INTM))
+> makeElabInferHead :: Loc -> DHEAD -> Elab (INTM :=>: VAL, Maybe (Scheme INTM))
 
 > makeElabInferHead loc (DP rn) = eResolve rn
 

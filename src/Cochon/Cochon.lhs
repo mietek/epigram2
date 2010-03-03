@@ -193,7 +193,7 @@ given string, either exactly or as a prefix.
 >     (eval . argToIn . head)
 >     help
 
-> unDP :: ExDTm x -> x
+> unDP :: ExDTm p x -> x
 > unDP (DP ref ::$ []) = ref
 
 > unaryNameCT :: String -> (RelName -> ProofState String) -> String -> CochonTactic

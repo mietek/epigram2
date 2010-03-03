@@ -154,8 +154,9 @@ find one, but otherwise we just create a hole.
 >     _T' <- bquoteHere _T
 >     let p' = EQBLUE (_S' :>: s') (_T' :>: NP ref)
 >     neutralise =<< suspend ("hope" :<: PRF p' :=>: PRF p)
->         (WaitSolve ref (s' :=>: s) (ElabDone (N (P refl :$ A _S' :$ A s')
->                                               :=>: pval refl $$ A _S $$ A s)))
+>         (WaitSolve ref (s' :=>: Just s)
+>             (ElabDone (N (P refl :$ A _S' :$ A s')
+>                           :=>: Just (pval refl $$ A _S $$ A s))))
 
 > flexiProof p@(EQBLUE (_T :>: (NP ref@(_ := HOLE Hoping :<: _))) (_S :>: s)) = do
 >     s' <- bquoteHere s
@@ -163,8 +164,9 @@ find one, but otherwise we just create a hole.
 >     _T' <- bquoteHere _T
 >     let p' = EQBLUE (_T' :>: NP ref) (_S' :>: s')
 >     neutralise =<< suspend ("hope" :<: PRF p' :=>: PRF p)
->         (WaitSolve ref (s' :=>: s) (ElabDone (N (P refl :$ A _S' :$ A s')
->                                               :=>: pval refl $$ A _S $$ A s)))
+>         (WaitSolve ref (s' :=>: Just s)
+>             (ElabDone (N (P refl :$ A _S' :$ A s')
+>                           :=>: Just (pval refl $$ A _S $$ A s))))
 
 > flexiProof _ = (|)
 
@@ -194,10 +196,11 @@ representation of an elaboration problem.
 \question{How should this relate to the |internalElab| instruction?}
 
 > runElabProb :: Loc -> (TY :>: EProb) -> ProofState (INTM :=>: VAL, Bool)
-> runElabProb loc (ty :>: ElabDone tt) = return (tt, True)
+> runElabProb loc (ty :>: ElabDone tt) = return (maybeEval tt, True)
 > runElabProb loc (ty :>: ElabProb tm) = runElab False (ty :>: makeElab loc (ty :>: tm))
 > runElabProb loc (ty :>: ElabInferProb tm) = runElab False (ty :>: makeElabInfer loc tm)
-> runElabProb loc (ty :>: WaitCan (_ :=>: C _) prob) = runElabProb loc (ty :>: prob)
+> runElabProb loc (ty :>: WaitCan (_ :=>: Just (C _)) prob) = runElabProb loc (ty :>: prob)
+> runElabProb loc (ty :>: WaitCan (tm :=>: Nothing) prob) = runElabProb loc (ty :>: WaitCan (tm :=>: Just (evTm tm)) prob)
 > runElabProb loc (ty :>: prob) = do
 >     ty' <- bquoteHere ty
 >     return . (, False) =<< neutralise =<< suspend (name prob :<: ty' :=>: ty) prob

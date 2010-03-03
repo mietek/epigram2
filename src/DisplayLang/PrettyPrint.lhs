@@ -102,7 +102,7 @@ The |Elim| functor is straightforward.
 To pretty-print a scope, we accumulate arguments until something other
 than a $\lambda$-term is reached.
 
-> instance Pretty (DScope RelName) where
+> instance Pretty DSCOPE where
 >     pretty s = prettyLambda (B0 :< dScopeName s) (dScopeTm s)
 
 > prettyLambda :: Bwd String -> InDTmRN -> Size -> Doc
@@ -129,7 +129,7 @@ than a $\lambda$-term is reached.
 >         (pretty n AppSize <+> hsep (map (flip pretty ArgSize) els))
 >         AppSize
 
-> instance Pretty (DHead RelName) where
+> instance Pretty DHEAD where
 >     pretty (DP x)       = const (text (showRelName x)) 
 >     pretty (DType ty)   = const (parens (kword KwAsc <+> pretty ty maxBound))
 >     pretty (DTEx ex)    = const (quotes . text . show $ ex)

@@ -12,6 +12,8 @@
 > import Control.Applicative
 > import Control.Monad
 > import Control.Monad.Error
+> import Data.Foldable
+> import Data.Traversable
 
 > import NameSupply.NameSupply
 
@@ -30,32 +32,32 @@
 
 Because writing elaborators is a tricky business, we would like to have a
 domain-specific language to write them with. We use the following set of
-commands to define a monad that follows the syntax of this language,
+instructions to define a monad that follows the syntax of this language,
 then write an interpreter to run the syntax in the |ProofState| monad.
 
-\begin{description}
-\item[|eLambda|] - create a $\lambda$-boy and return its REF
-\item[|eGoal|] - return the type of the goal
-\item[|eHope|] - hope for any element of a given type
-\item[|eWait|] - create a subgoal corresponding to a question mark
-\item[|eCry|] - give up with an error
-\item[|eElab|] - solve a suspendable elaboration problem and return the result
-\item[|eCompute|] - execute commands to produce an element of a given type
-\item[|eFake|] - return a fake reference to the current goal
-\item[|eResolve|] - resolve a name to a term and maybe a scheme
-\item[|eAskNSupply|] - return a fresh name supply
-\item[|eCoerce S T s|] - coerce s : S to produce an element of T, hoping for a
-    proof of S == T if necessary
-\end{description}
+> eLambda      :: String -> Elab REF
+>              -- create a $\lambda$-boy and return its REF
+> eGoal        :: Elab TY
+>              -- return the type of the goal
+> eHope        :: TY -> Elab (INTM :=>: VAL) 
+>              -- hope for any element of a given type
+> eWait        :: String -> TY -> Elab (EXTM :=>: VAL)
+>              -- create a subgoal corresponding to a question mark
+> eCry         :: StackError InDTmRN -> Elab a
+>              -- give up with an error
+> eElab        :: Loc -> (TY :>: EProb) -> Elab (INTM :=>: VAL)
+>              -- solve a suspendable elaboration problem and return the result
+> eCompute     :: (TY :>: Elab (INTM :=>: VAL)) -> Elab (INTM :=>: VAL)
+>              -- execute commands to produce an element of a given type
+> eFake        :: Bool -> Elab (EXTM :=>: VAL)
+>              -- return a fake reference to the current goal
+> eResolve     :: RelName -> Elab (INTM :=>: VAL, Maybe (Scheme INTM))
+>              -- resolve a name to a term and maybe a scheme
+> eAskNSupply  :: Elab NameSupply
+>              -- return a fresh name supply
 
 
-We will eventually need to keep track of which elaboration problems correspond
-to which source code locations. For the moment, |Loc|s are just ignored.
-
-> newtype Loc = Loc Int deriving Show
-
-
-The command signature given above is implemented using the following monad.
+The instruction signature given above is implemented using the following monad.
 
 > data Elab x
 >     =  Bale x
@@ -71,87 +73,94 @@ The command signature given above is implemented using the following monad.
 >     |  EAskNSupply (NameSupply -> Elab x)
 
 
-For syntactic convenience, we give a function corresponding to each instruction
-in the syntax:
+Now we can define the instructions we wanted:
 
-> eLambda :: String -> Elab REF
-> eLambda = flip ELambda Bale
+> eLambda       = flip ELambda Bale
+> eGoal         = EGoal Bale
+> eHope         = flip EHope Bale
+> eWait x ty    = EWait x ty Bale
+> eCry          = ECry
+> eElab loc tp  = EElab loc tp Bale
+> eCompute      = flip ECompute Bale
+> eFake         = flip EFake Bale
+> eResolve      = flip EResolve Bale
+> eAskNSupply   = EAskNSupply Bale
 
-> eGoal :: Elab TY
-> eGoal = EGoal Bale
 
-> eHope :: TY -> Elab (INTM :=>: VAL)
-> eHope = flip EHope Bale
+We will eventually need to keep track of which elaboration problems correspond
+to which source code locations. For the moment, |Loc|s are just ignored.
 
-> eWait :: String -> TY -> Elab (EXTM :=>: VAL)
-> eWait x ty = EWait x ty Bale
-
-> eCry :: StackError InDTmRN -> Elab a
-> eCry = ECry
-
-> eElab :: Loc -> (TY :>: EProb) -> Elab (INTM :=>: VAL)
-> eElab loc tp = EElab loc tp Bale
-
-> eCompute :: (TY :>: Elab (INTM :=>: VAL)) -> Elab (INTM :=>: VAL)
-> eCompute = flip ECompute Bale
-
-> eFake :: Bool -> Elab (EXTM :=>: VAL)
-> eFake = flip EFake Bale
-
-> eResolve :: RelName -> Elab (INTM :=>: VAL, Maybe (Scheme INTM))
-> eResolve = flip EResolve Bale
-
-> eAskNSupply :: Elab NameSupply
-> eAskNSupply = EAskNSupply Bale
+> newtype Loc = Loc Int deriving Show
 
 
 \subsection{Syntactic representation of elaboration problems}
 
-An |EProb| is a syntactic representation of an elaboration problem, which
-can be suspended and later updated with news. Problems may be:
-\begin{description}
-\item[|ElabDone|] - succeed with the given term
-\item[|ElabProb|] - elaborate some |In| display syntax
-\item[|ElabInferProb|] - elaborate and infer the type of some |Ex| display syntax
-\item[|WaitCan|] - wait for the given term to become canonical before proceeding
-\item[|WaitSolve|] - wait for the reference to be solved with the given term
-\end{description}
+An |ElabProb| is a syntactic representation of an elaboration problem, which
+can be suspended, stored in the proof state and later updated with news. It
+caches the value representations of terms it contains.
 
-> data EProb  =  ElabDone (INTM :=>: VAL)
->             |  ElabProb InDTmRN
->             |  ElabInferProb ExDTmRN
->             |  WaitCan (INTM :=>: VAL) EProb
->             |  WaitSolve REF (INTM :=>: VAL) EProb
+> data ElabProb x
+>     =  ElabDone (InTm x :=>: Maybe VAL)                  -- succeed with given term
+>     |  ElabProb (InDTm x RelName)                        -- elaborate |In| display term
+>     |  ElabInferProb (ExDTm x RelName)                   -- elaborate and infer type of |Ex| display term
+>     |  WaitCan (InTm x :=>: Maybe VAL) (ElabProb x)      -- wait for value to become canonical
+>     |  WaitSolve x (InTm x :=>: Maybe VAL) (ElabProb x)  -- wait for reference to be solved with term
 >   deriving Show
+
+It is a traversable functor, parameterised by the type of references, which
+are typically |REF|s. Note that traversal will discard the cached values, but
+this is okay because the terms need to be re-evaluated after they have been
+updated anyway.
+
+> type EProb = ElabProb REF
 
 An elaboration problem is said to be \emph{unstable} if the scheduler can make
 progress on it, and \emph{stable} if not. At present, the only kind of stable
 elaboration problem is waiting for a non-canonical term to become canonical.
 
 > isUnstable :: EProb -> Bool
-> isUnstable (ElabDone _) = True
-> isUnstable (ElabProb _) = True
-> isUnstable (ElabInferProb _) = True
-> isUnstable (WaitCan (_ :=>: C _) _) = True
-> isUnstable (WaitCan _ _) = False
-> isUnstable (WaitSolve _ _ _) = True
+> isUnstable (ElabDone _)              = True
+> isUnstable (ElabProb _)              = True
+> isUnstable (ElabInferProb _)         = True
+> isUnstable (WaitCan (_ :=>: Just (C _)) _)  = True
+> isUnstable (WaitCan (tm :=>: Nothing) _) | C _ <- evTm tm  = True
+> isUnstable (WaitCan _ _)             = False
+> isUnstable (WaitSolve _ _ _)         = True
 
 
-Since |EProb|s are full of terms, we can update their references using
-a |traverse|-like operation.
+Since |ElabProb| caches value representations of its terms, we define some handy
+functions for producing and manipulating these.
 
-> traverseEProb :: Applicative f => (REF -> f REF) -> EProb -> f EProb
-> traverseEProb f (ElabDone tt) = (|ElabDone (travEval f tt)|)
-> traverseEProb f (ElabProb tm) = (|ElabProb (traverseDTIN f tm)|)
-> traverseEProb f (ElabInferProb tm) = (|ElabInferProb (traverseDTEX f tm)|)
-> traverseEProb f (WaitCan tt prob) = (|WaitCan (travEval f tt) (traverseEProb f prob)|)
-> traverseEProb f (WaitSolve ref tt prob) = (|WaitSolve (f ref) (travEval f tt) (traverseEProb f prob)|)
+> justEval :: INTM :=>: VAL -> INTM :=>: Maybe VAL
+> justEval (tm :=>: v) = tm :=>: Just v
+>
+> maybeEval :: INTM :=>: Maybe VAL -> INTM :=>: VAL
+> maybeEval (tm :=>: Just v)   =  tm :=>:  v
+> maybeEval (tm :=>: Nothing)  =  tm :=>:  evTm tm
 
-> travEval :: Applicative f => (REF -> f REF) -> INTM :=>: VAL -> f (INTM :=>: VAL)
-> travEval f (tm :=>: _) = (|tm' :=>: (|evTm tm'|)|)
->     where tm' = traverse f tm
 
-> traverseDTIN :: Applicative f => (REF -> f REF) -> InDTm x -> f (InDTm x)
+%if False
+
+> instance Functor ElabProb where
+>     fmap = fmapDefault
+
+> instance Foldable ElabProb where
+>     foldMap = foldMapDefault
+
+> instance Traversable ElabProb where
+>     traverse f (ElabDone tt)            = (|ElabDone (travEval f tt)|)
+>     traverse f (ElabProb tm)            = (|ElabProb (traverseDTIN f tm)|)
+>     traverse f (ElabInferProb tm)       = (|ElabInferProb (traverseDTEX f tm)|)
+>     traverse f (WaitCan tt prob)        = (|WaitCan (travEval f tt) (traverse f prob)|)
+>     traverse f (WaitSolve ref tt prob)  = (|WaitSolve (f ref) (travEval f tt) (traverse f prob)|)
+
+> travEval :: Applicative f => (p -> f q) -> InTm p :=>: Maybe VAL -> f (InTm q :=>: Maybe VAL)
+> travEval f (tm :=>: _) = (|traverse f tm :=>: ~Nothing|)
+
+The following are essentially saying that |InDTm| is traversable in its first
+argument, as well as its second.
+
+> traverseDTIN :: Applicative f => (p -> f q) -> InDTm p x -> f (InDTm q x)
 > traverseDTIN f (DL (x ::. tm)) = (|DL (|(x ::.) (traverseDTIN f tm)|)|)
 > traverseDTIN f (DL (DK tm)) = (|DL (|DK (traverseDTIN f tm)|)|)
 > traverseDTIN f (DC c) = (|DC (traverse (traverseDTIN f) c)|)
@@ -160,20 +169,14 @@ a |traverse|-like operation.
 > traverseDTIN f DU     = (|DU|)
 > traverseDTIN f (DTIN tm) = (|DTIN (traverse f tm)|)
 
-> traverseDTEX :: Applicative f => (REF -> f REF) -> ExDTm x -> f (ExDTm x)
+> traverseDTEX :: Applicative f => (p -> f q) -> ExDTm p x -> f (ExDTm q x)
 > traverseDTEX f (h ::$ as) = (|(traverseDHead f h) ::$ (traverse (traverse (traverseDTIN f)) as)|)
 
-> traverseDHead :: Applicative f => (REF -> f REF) -> DHead x -> f (DHead x)
+> traverseDHead :: Applicative f => (p -> f q) -> DHead p x -> f (DHead q x)
 > traverseDHead f (DP x) = (|(DP x)|)
 > traverseDHead f (DType tm) = (|DType (traverseDTIN f tm)|)
 > traverseDHead f (DTEX tm) = (|DTEX (traverse f tm)|)
 
-
-> mapEProb :: (REF -> REF) -> EProb -> EProb
-> mapEProb f = ala Id traverseEProb f
-
-
-%if False
 
 > instance Show x => Show (Elab x) where
 >     show (Bale x)           = "Bale (" ++ show x ++ ")"

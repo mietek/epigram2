@@ -185,7 +185,7 @@ rather than ascriptions. To allow this, we add a suitable constructor |DEqBlue|
 to InDTm, along with appropriate elaboration and distillation rules.
 
 > import -> InDTmConstructors where
->   DEqBlue :: ExDTm x -> ExDTm x -> InDTm x
+>   DEqBlue :: ExDTm p x -> ExDTm p x -> InDTm p x
 
 > import -> InDTmPretty where
 >   pretty (DEqBlue t u) = wrapDoc

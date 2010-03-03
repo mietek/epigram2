@@ -70,23 +70,24 @@
 >     resume (ty :=>: tyv) prob
 >   where
 >     resume :: (INTM :=>: VAL) -> EProb -> ProofState (Maybe (INTM :=>: VAL))
->     resume _ (ElabDone tt) = return $ Just tt
+>     resume _ (ElabDone tt) = return $ Just (maybeEval tt)
 >     resume (ty :=>: tyv) (ElabProb tm) =
 >         return . ifSnd =<< runElab True (tyv :>: makeElab (Loc 0) (tyv :>: tm))
 >     resume (ty :=>: tyv) (ElabInferProb tm) =
 >         return . ifSnd =<< runElab True (tyv :>: makeElabInfer (Loc 0) tm)
->     resume (ty :=>: tyv) (WaitCan (tm :=>: C v) prob) = resume (ty :=>: tyv) prob
+>     resume (ty :=>: tyv) (WaitCan (tm :=>: Just (C v)) prob) = resume (ty :=>: tyv) prob
+>     resume (ty :=>: tyv) (WaitCan (tm :=>: Nothing) prob) = resume (ty :=>: tyv) (WaitCan (tm :=>: Just (evTm tm)) prob)
 >     resume _ prob@(WaitCan (tm :=>: _) _) = do
 >         proofTrace $ "Suspended waiting for " ++ show tm ++ " to become canonical."
 >         suspendMe prob
 >         return Nothing
->     resume _ (WaitSolve ref@(_ := HOLE _ :<: _) (_ :=>: tmv) prob) = do
+>     resume _ (WaitSolve ref@(_ := HOLE _ :<: _) stt prob) = do
 >         suspendMe prob
->         tm <- bquoteHere tmv -- force definitional expansion
+>         tm <- bquoteHere (valueOf . maybeEval $ stt) -- force definitional expansion
 >         solveHole ref tm
 >         return Nothing
->     resume tt (WaitSolve ref@(_ := DEFN tmv' :<: ty) (_ :=>: tmv) prob) = do
->         eq <- withNSupply $ equal (ty :>: (tmv, tmv'))
+>     resume tt (WaitSolve ref@(_ := DEFN tmv' :<: ty) stt prob) = do
+>         eq <- withNSupply $ equal (ty :>: (valueOf . maybeEval $ stt , tmv'))
 >         if eq
 >             then  resume tt prob
 >             else  throwError' $ err "resume: hole has been solved inconsistently! We should do something clever here."

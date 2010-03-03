@@ -165,6 +165,10 @@ update the news bulletin). If not, we must:
 >     return (addNews (ref, min n n') news,
 >         E ref sn (Girl LETG (cs, Unknown tt', nsupply) ms) ty')
 
+To update a hole with a suspended elaboration problem attached, we proceed
+similarly to the previous case, but we also update the elaboration problem.
+\question{What if the news bulletin defines this hole?}
+
 > tellEntry news (E (name := HOLE h :<: tyv) sn (Girl LETG (cs, Suspended tt prob, nsupply) ms) ty) = do
 >     let  (tt', n)             = tellNewsEval news tt
 >          (ty' :=>: tyv', n')  = tellNewsEval news (ty :=>: tyv)
@@ -207,18 +211,8 @@ that her children have already received, and returns the updated news.
 >     e <- getMotherEntry
 >     (news', e') <- tellEntry news e 
 >     putMotherEntry e'
-
-<     tip <- getDevTip
-<     case tip of
-<         Suspended tt prob | isUnstable prob -> do
-<             mtt <- resumeEProb
-<             case mtt of
-<                 Just (tm :=>: _) -> give' tm >> return ()
-<                 Nothing -> proofTrace "tellMother: elaboration suspended."
-<         _ -> return ()
-
 >     return news'
 
 
 > tellEProb :: NewsBulletin -> EProb -> EProb
-> tellEProb news = mapEProb (getLatest news)
+> tellEProb news = fmap (getLatest news)

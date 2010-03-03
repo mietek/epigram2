@@ -100,7 +100,7 @@ largest size again.
 
 
 
-> specialExDTm :: Size -> Parsley Token (DHead RelName)
+> specialExDTm :: Size -> Parsley Token DHEAD
 > specialExDTm ArgSize =
 >   (| DType (bracket Round (keyword KwAsc *> pInDTm))
 >    | DP nameParse

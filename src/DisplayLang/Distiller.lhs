@@ -64,7 +64,7 @@ under the binder, then convert the scope appropriately.
 >       )
 >     return $ DL (convScope sc x tm') :=>: (evTm $ L sc)
 >   where
->     convScope :: Scope {TT} REF -> String -> InDTmRN -> DScope RelName
+>     convScope :: Scope {TT} REF -> String -> InDTmRN -> DSCOPE
 >     convScope (_ :. _)  x  tm = x ::. tm
 >     convScope (K _)     _  tm = DK tm
 
@@ -104,7 +104,7 @@ arguments and return the distilled application with the shared parameters droppe
 >                    Nothing   -> as'
 >     return ((DP relName ::$ as'') :<: ty')
 >   where
->     removeImplicit :: Scheme x -> DSpine RelName -> DSpine RelName
+>     removeImplicit :: Scheme x -> DSPINE -> DSPINE
 >     removeImplicit (SchType _)           as      = as
 >     removeImplicit (SchExplicitPi _ sch) (a:as)  = a : removeImplicit sch as
 >     removeImplicit (SchImplicitPi _ sch) (a:as)  = removeImplicit sch as
@@ -146,7 +146,7 @@ and a spine of arguments for the value. It distills the spine, using
 |elimTy| to determine the appropriate type to push in at each step, and returns
 the distilled spine and the overall type of the application.
 
-> processArgs :: Entries -> (VAL :<: TY) -> Spine {TT} REF -> ProofStateT INTM (DSpine RelName, TY)
+> processArgs :: Entries -> (VAL :<: TY) -> Spine {TT} REF -> ProofStateT INTM (DSPINE, TY)
 > processArgs _ (_ :<: ty) [] = return ([], ty)
 > processArgs es (v :<: C ty) (a:as) = do
 >     (e', ty') <- elimTy (distill es) (v :<: ty) a

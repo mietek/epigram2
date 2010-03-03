@@ -73,23 +73,23 @@ However, we have removed the following:
 \item Operators (use parameters with appropriate references instead).
 \end{itemize}
 
-> data InDTm :: * -> * where
->     DL     :: DScope x                   -> InDTm  x -- \(\lambda\)
->     DC     :: Can (InDTm x)              -> InDTm  x -- canonical
->     DN     :: ExDTm x                    -> InDTm  x -- neutral
->     DQ     :: String                     -> InDTm  x -- hole
->     DU     ::                               InDTm  x -- underscore
->     DT     :: InTmWrap x                 -> InDTm  x -- embedding
+> data InDTm :: * -> * -> * where
+>     DL     :: DScope p x       ->  InDTm p x -- \(\lambda\)
+>     DC     :: Can (InDTm p x)  ->  InDTm p x -- canonical
+>     DN     :: ExDTm p x        ->  InDTm p x -- neutral
+>     DQ     :: String           ->  InDTm p x -- hole
+>     DU     ::                      InDTm p x -- underscore
+>     DT     :: InTmWrap p x     ->  InDTm p x -- embedding
 >     import <- InDTmConstructors
 >  deriving (Functor, Foldable, Traversable, Show)
 
-> data ExDTm x = DHead x ::$ DSpine x
+> data ExDTm p x = DHead p x ::$ DSpine p x
 >   deriving (Functor, Foldable, Traversable, Show)
 
-> data DHead :: * -> * where
->     DP     :: x                          -> DHead  x -- parameter
->     DType  :: InDTm x                    -> DHead  x -- type cast
->     DTEx   :: ExTmWrap x                 -> DHead  x -- embedding
+> data DHead :: * -> * -> * where
+>     DP     :: x                -> DHead  p x -- parameter
+>     DType  :: InDTm p x        -> DHead  p x -- type cast
+>     DTEx   :: ExTmWrap p x     -> DHead  p x -- embedding
 >  deriving (Functor, Foldable, Traversable, Show)
 
 
@@ -100,26 +100,26 @@ Note that we reuse the |Can| and |Elim| functors from |Tm|.
 The |DScope| functor is a simpler version of the |Scope| functor because it
 doesn't need to deal with the |VV| phase.
 
-> data DScope :: * -> * where
->     (::.)  :: String -> InDTm x          -> DScope x  -- binding
->     DK     :: InDTm x                    -> DScope x  -- constant
+> data DScope :: * -> * -> * where
+>     (::.)  :: String -> InDTm p x  -> DScope p x  -- binding
+>     DK     :: InDTm p x            -> DScope p x  -- constant
 >   deriving (Functor, Foldable, Traversable, Show)
 
 We provide handy projection functions to get the name and body of a scope:
 
-> dScopeName :: DScope x -> String
+> dScopeName :: DScope p x -> String
 > dScopeName (x ::. _)  = x
 > dScopeName (DK _)     = "_"
 
-> dScopeTm :: DScope x -> InDTm x
+> dScopeTm :: DScope p x -> InDTm p x
 > dScopeTm (_ ::. tm)  = tm
 > dScopeTm (DK tm)     = tm
 
 Spines of eliminators are just like in the evidence language:
 
-> type DSpine x = [Elim (InDTm x)]
+> type DSpine p x = [Elim (InDTm p x)]
 
-> ($::$) :: ExDTm x -> Elim (InDTm x) -> ExDTm x
+> ($::$) :: ExDTm p x -> Elim (InDTm p x) -> ExDTm p x
 > (h ::$ s) $::$ a = h ::$ (s ++ [a])
 
 
@@ -131,26 +131,26 @@ cannot be pretty-printed. To make |deriving Traversable| work properly, we have
 to |newtype|-wrap them and give trivial |Traversable| instances for the wrappers
 manually.
 
-> newtype InTmWrap  x = InTmWrap  INTM  deriving Show
-> newtype ExTmWrap  x = ExTmWrap  EXTM  deriving Show
+> newtype InTmWrap  p x = InTmWrap  (InTm p)  deriving Show
+> newtype ExTmWrap  p x = ExTmWrap  (ExTm p)  deriving Show
 
 > pattern DTIN x = DT (InTmWrap x)
 > pattern DTEX x = DTEx (ExTmWrap x)
 
 %if False
 
-> instance Functor InTmWrap where
+> instance Functor (InTmWrap p) where
 >   fmap = fmapDefault
-> instance Foldable InTmWrap where
+> instance Foldable (InTmWrap p) where
 >   foldMap = foldMapDefault
-> instance Traversable InTmWrap where
+> instance Traversable (InTmWrap p) where
 >   traverse f (InTmWrap x) = pure (InTmWrap x)
 
-> instance Functor ExTmWrap where
+> instance Functor (ExTmWrap p) where
 >   fmap = fmapDefault
-> instance Foldable ExTmWrap where
+> instance Foldable (ExTmWrap p) where
 >   foldMap = foldMapDefault
-> instance Traversable ExTmWrap where
+> instance Traversable (ExTmWrap p) where
 >   traverse f (ExTmWrap x) = pure (ExTmWrap x)
 
 %endif
@@ -182,15 +182,17 @@ places.
 > pattern DTY ty tm   = DType ty ::$ [A tm]
 > import <- CanDisplayPats
 
-We need fewer type synoyms:
-
-> type INDTM  = InDTm REF 
-> type EXDTM  = ExDTm REF
-
+> type InTmRN = InTm RelName
+> type ExTmRN = ExTm RelName
+> type InDTmRN = InDTm REF RelName
+> type ExDTmRN = ExDTm REF RelName
+> type DSPINE = DSpine REF RelName
+> type DHEAD = DHead REF RelName
+> type DSCOPE = DScope REF RelName
 
 \subsection{Term Construction} 
 
-> dfortran :: InDTm x -> String
+> dfortran :: InDTm p x -> String
 > dfortran (DL (x ::. _)) | not (null x) = x
 > dfortran _ = "x"
 
@@ -245,7 +247,7 @@ interpret $\Pi$-bindings:
 > schemeToInTm :: Scheme (InTm x) -> InTm x
 > schemeToInTm = schemeToType PIV
 
-> schemeToInDTm :: Scheme (InDTm x) -> InDTm x
+> schemeToInDTm :: Scheme (InDTm p x) -> InDTm p x
 > schemeToInDTm = schemeToType DPIV
 
 
@@ -278,11 +280,6 @@ component of the name.
 
 > data Offs = Rel Int | Abs Int deriving (Show, Eq)
 > type RelName = [(String,Offs)]
-
-> type InTmRN = InTm RelName
-> type ExTmRN = ExTm RelName
-> type InDTmRN = InDTm RelName
-> type ExDTmRN = ExDTm RelName
 
 
 \subsection{Moving |StackError| from |INTM| to |InDTmRN|}
