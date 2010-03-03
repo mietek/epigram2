@@ -27,14 +27,10 @@
 
 %endif
 
-> forceHole :: REF -> INTM -> ProofState (EXTM :=>: VAL)
-> forceHole (name := HOLE _ :<: _) tm = do
->     proofTrace ("Forcing " ++ showName name ++ " to be " ++ show tm ++ ".")
->     here <- getMotherName
->     goTo name
->     r <- give' tm
->     goTo here
->     return r
+The |solveHole| command solves a flex-rigid problem by filling in the reference
+(which must be a hole) with the given term, which must contain no defined
+references. It records the current location in the proof state (but not the
+cursor position) and returns there afterwards.
 
 > solveHole :: REF -> INTM -> ProofState (EXTM :=>: VAL)
 > solveHole ref tm = do
@@ -43,6 +39,12 @@
 >     cursorBottom
 >     goTo here
 >     return r
+
+The |solveHole'| command actually fills in the hole, accumulating a list of
+dependencies (references the solution depends on) as it passes them. It moves
+the dependencies to before the hole by creating new holes earlier in
+the proof state and inserting a news bulletin that solves the old dependency
+holes with the new ones.
 
 > solveHole' :: REF -> [(REF, INTM)] -> INTM -> ProofState (EXTM :=>: VAL)
 > solveHole' ref@(name := HOLE _ :<: _) deps tm = do
