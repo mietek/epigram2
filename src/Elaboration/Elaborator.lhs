@@ -1,4 +1,5 @@
 \section{The Elaborator}
+\label{sec:elaborator}
 
 %if False
 

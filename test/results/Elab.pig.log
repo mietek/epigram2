@@ -7,4 +7,29 @@ Jumping to f_4.a_0...
 Thank you.
 Going to root...
 [Set , f Set]
+Made.
+[ id
+    [ h00
+        [ \ X : Set ->
+        ] (X -> X) : Set ;
+      \ X : Set ->
+      \ x : X ->
+    ] x : X ;
+  A := ? : Set ;
+  elab
+    [ hope := Set : Set ;
+      hope := refl Set Set : :- ((: Set) Set) == hope^1 ;
+    ] [hope^1 , id hope^1 (coe Set hope^1 hope A)] : Sig (sst : Set ; sst) ;
+  f
+    [ a := (Set -> Set) : Set ;
+    ] ? : a ;
+  elab
+    [ can := [Set , f Set] : Sig (ssv : Set ; ssv) ;
+    ] can : Sig (sst : Set ; sst) ;
+  x
+    [ hope := Set : Set ;
+      can := Set : hope ;
+      hope := refl Set Set : :- hope^1 == ((: Set) Set) ;
+    ] ? : coe hope^1 Set hope (id hope^1 can) ;
+]
 Loaded.

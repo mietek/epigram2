@@ -8,3 +8,6 @@ jump f.a ;
 give Set -> Set ;
 root ;
 elab elab ;
+
+make x := ? : id _ Set ;
+show state ;
