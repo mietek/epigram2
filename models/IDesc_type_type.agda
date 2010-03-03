@@ -178,18 +178,18 @@ sigmal S T = con (lsigma , ( S , T))
 -- From the embedding to the host
 --********************************************
 
-cases : (I : Set) 
+cases : {I : Set}
         (xs : desc (descD I) (IMu (λ _ -> descD I)))
         (hs : desc (box (descD I) (IMu (λ _ -> descD I)) xs) (λ _ -> IDesc I)) ->
         IDesc I
-cases I ( lvar , i ) hs =  var i
-cases I ( lconst , X ) hs =  const X
-cases I ( lprod , (D , D') ) ( d , d' ) =  prod d d'
-cases I ( lpi , ( S , T ) ) hs =  pi S hs
-cases I ( lsigma , ( S , T ) ) hs = sigma S hs
+cases ( lvar , i ) hs =  var i
+cases ( lconst , X ) hs =  const X
+cases ( lprod , (D , D') ) ( d , d' ) =  prod d d'
+cases ( lpi , ( S , T ) ) hs =  pi S hs
+cases ( lsigma , ( S , T ) ) hs = sigma S hs
 
 iso1 : (I : Set) -> IDescl I -> IDesc I
-iso1 I d = induction (\_ -> descD I) (\_ -> IDesc I) (\_ -> cases I) Void d
+iso1 I d = induction (\_ -> descD I) (\_ -> IDesc I) (\_ -> cases) Void d
 
 
 --********************************************
