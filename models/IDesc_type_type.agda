@@ -100,7 +100,7 @@ box (pi S T)    P f        = pi S (\s -> box (T s) P (f s))
 -- Elimination principle: induction
 --********************************************
 
-module Elim (I : Set)
+module Elim {I : Set}
             (R : I -> IDesc I)
             (P : Sigma I (IMu R) -> Set)
             (m : (i : I)
@@ -123,7 +123,7 @@ module Elim (I : Set)
     hyps (sigma S R) ( a , b ) = hyps (R a) b
 
 
-induction : (I : Set)
+induction : {I : Set}
             (R : I -> IDesc I)
             (P : Sigma I (IMu R) -> Set)
             (m : (i : I)
@@ -172,6 +172,12 @@ pil I S T = con (lpi , ( S , T))
 sigmal : (I : Set)(S : Set)(T : S -> IDescl I) -> IDescl I
 sigmal I S T = con (lsigma , ( S , T))
 
+
+
+--********************************************
+-- From the embedding to the host
+--********************************************
+
 cases : (I : Set) 
         (xs : desc (descD I) (IMu (λ _ -> descD I)))
         (hs : desc (box (descD I) (IMu (λ _ -> descD I)) xs) (λ _ -> IDesc I)) ->
@@ -183,7 +189,12 @@ cases I ( lpi , ( S , T ) ) hs =  pi S hs
 cases I ( lsigma , ( S , T ) ) hs = sigma S hs
 
 iso1 : (I : Set) -> IDescl I -> IDesc I
-iso1 I d = induction Unit (\_ -> descD I) (\_ -> IDesc I) (\_ -> cases I) Void d
+iso1 I d = induction (\_ -> descD I) (\_ -> IDesc I) (\_ -> cases I) Void d
+
+
+--********************************************
+-- From the host to the embedding
+--********************************************
 
 iso2 : (I : Set) -> IDesc I -> IDescl I
 iso2 I (var i) = varl I i
@@ -193,6 +204,11 @@ iso2 I (pi S T) = pil I S (\s -> iso2 I (T s))
 iso2 I (sigma S T) = sigmal I S (\s -> iso2 I (T s))
 
 
+--********************************************
+-- Isomorphism proof
+--********************************************
+
+-- From host to host
 
 proof-iso1-iso2 : (I : Set) -> (D : IDesc I) -> iso1 I (iso2 I D) == D
 proof-iso1-iso2 I (var i) = refl
@@ -209,13 +225,13 @@ proof-iso1-iso2 I (sigma S T) = cong (sigma S)
                                               (\s -> proof-iso1-iso2 I (T s)))
 
 
+-- From embedding to embedding
+
 P : (I : Set) -> Sigma Unit (IMu (λ x → sigma DescDConst (descDChoice I))) → Set
 P I ( Void , D ) = iso2 I (iso1 I D) == D
 
-
 proof-iso2-iso1 : (I : Set) -> (D : IDescl I) -> iso2 I (iso1 I D) == D
-proof-iso2-iso1 I D =  induction Unit 
-                                 (λ _ → descD I)
+proof-iso2-iso1 I D =  induction (λ _ → descD I)
                                  (P I)
                                  (proof-iso2-iso1-casesW I) 
                                  Void
