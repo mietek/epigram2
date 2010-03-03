@@ -322,6 +322,148 @@ following implications always hold by induction on derivations.
 \end{structure}
 
 
+\begin{figure}
+
+\[\stkc{
+%% Form
+\boxed{\Gamma \Vdash \propag{\push{\CN{exprIn}}{\CN{type}}}{\CN{term}}} 
+\\
+\\
+%% Set in Set
+%% \Axiom{\Gamma \Vdash \propag{\push{\Set}{\Set}}
+%%                             {\Set}}
+%% \\
+%% Prop
+%% \Rule{\Gamma \Vdash \propag{\push{q}{\Prop}}
+%%                            {q'}}
+%%      {\Gamma \Vdash \propag{\push{\prf{q}}{\Set}}
+%%                            {\prf{q'}}}
+%% \qquad
+%% True
+%% \Axiom{\Gamma \Vdash \propag{\push{\True}{\Prop}}
+%%                             {\True}}
+%% \\
+%% Pi
+%% \Rule{\Gamma \Vdash \propag{\push{S}{\Set}}
+%%                            {S'} \quad
+%%       \Gamma \Vdash \propag{\push{T}{S' \To \Set}}
+%%                            {T'}}
+%%      {\Gamma \Vdash \propag{\push{\PiTy{S}{T}}{\Set}}
+%%                            {\PiTy{S'}{T'}}} 
+%% \\
+%% %% Sigma
+%% \Rule{\Gamma \Vdash \propag{\push{S}{\Set}}
+%%                            {S'} \quad
+%%       \Gamma \Vdash \propag{\push{T}{S' \To \Set}}
+%%                            {T'}}
+%%      {\Gamma \Vdash \propag{\push{\SigmaTy{S}{T}}{\Set}}
+%%                            {\SigmaTy{S'}{T'}}}
+%% \\
+%% Lambda
+\Rule{\Gamma ; \xS \Vdash \propag{\push{t}{T\: x}}
+                                 {t'}}
+     {\Gamma \Vdash \propag{\push{\LAM{\x} t}{\PiTy{S}{T}}}
+                           {\PLAM{\x}{S} t'}} 
+\\
+%% Pair
+\Rule{\stkl{ \Gamma \Vdash \propag{\push{s}{S}}
+                                  {s'} \\
+             \Gamma \Vdash \propag{\push{t}{T\: s'}}
+                                  {t'}}}
+     {\Gamma \Vdash \propag{\push{\pair{s}{t}{}}{\SigmaTy{S}{T}}}
+                           {\pair{s'}{t'}{T}}}
+\\
+%% EnumU
+%% \Axiom{\Gamma \Vdash \propag{\push{\EnumU}{\Set}}
+%%                             {\EnumU}} 
+%% \qquad
+%% %% EnumT
+%% \Rule{\Gamma \Vdash \propag{\push{e}{\EnumU}}
+%%                            {e'}}
+%%      {\Gamma \Vdash \propag{\push{\EnumT{e}}{\Set}}
+%%                            {\EnumT{e'}}}
+%% \\
+%% Tag
+\Axiom{\Gamma \Vdash \propag{\push{\etag{t}}{\EnumT{\ConsE{t'}{e}}}}
+                            {\Ze}}\;t = t'
+\\
+\Rule{\Gamma \Vdash \propag{\push{\etag{t}}{\EnumT{e}}}
+                           {n}}
+     {\Gamma \Vdash \propag{\push{\etag{t}}{\EnumT{\ConsE{t'}{e}}}}
+                            {\Su{n}}}\;t \neq t'
+\\
+%% EnumU
+\Axiom{\Gamma \Vdash \propag{\push{\Enum []}{\EnumU}}
+                            {\NilE}}
+\\
+\Rule{\Gamma \Vdash \propag{\push{\Enum [ ts ]}{\EnumU}}
+                                 {cs}}
+     {\Gamma \Vdash \propag{\push{\Enum [ \etag{t_1}\:\: ts ]}{\EnumU}}
+                                 {\ConsE{t_1}{cs}}}
+\\
+%% Switch
+\Rule{\Gamma \Vdash \propag{\push{t}{\spi{e}{P}}}
+                           {t'}}
+     {\Gamma \Vdash \begin{array}{@{}l} 
+                        \propag{\push{t}{\PI{\V{x}}{\EnumT{e}} P\:x}}
+                               {\\ \PLAM{x}{(\EnumT{e})} \switch{e}{P}{t'}{x}}
+                    \end{array}}\;\mbox{t is $[]$ or $[a,b]$}
+\\
+%% Conversion
+\Rule{\Gamma \Vdash \propag{s}
+                           {\pull{s'}{S}} \quad 
+      \Gamma \Vdash \push{S \equiv T}{\Set}}
+     {\Gamma \Vdash \propag{\push{s}{T}}
+                           {s'}}
+}\]
+
+\caption{Type checking}
+\label{fig:type-checking}
+
+\end{figure}
+
+\begin{figure}
+
+\[\stkc{
+%% Form
+\boxed{\Gamma \Vdash \propag{\CN{exprEx}}{\pull{\CN{term}}{\CN{type}}}}
+\\
+\\
+%% Reversal
+%% \Rule{\Gamma \Vdash \propag{\push{T}{\Set}}
+%%                            {T'} \quad
+%%       \Gamma \Vdash \propag{\push{t}{T'}}
+%%                            {t'}}
+%%      {\Gamma \Vdash \propag{(\Bhab{t}{T})}
+%%                            {\pull{t'}{T'}}} 
+%% \\
+%% Context
+\Axiom{\Gamma ; \xS ; \Delta \Vdash \propag{\x}
+                                           {\pull{\x}{S}}}
+\qquad
+%% Application
+\Rule{\stkl{\Gamma \Vdash \propag{f}
+                                 {\pull{f'}{\PiTy{S}{T}}} \\
+            \Gamma \Vdash \propag{\push{s}{S}}
+                                 {s'}}}
+     {\Gamma \Vdash \propag{f\: s}{\pull{f'\: s'}{T\: s'}}} 
+\\
+%% First projection
+\Rule{\Gamma \Vdash \propag{p}
+                           {\pull{p'}{\SigmaTy{S}{T}}}}
+     {\Gamma \Vdash \propag{\fst{p}}
+                           {\pull{\fst{p'}}{S}}} \qquad 
+%% Second projection
+\Rule{\Gamma \Vdash \propag{p}
+                           {\pull{p'}{\SigmaTy{S}{T}}}}
+     {\Gamma \Vdash \propag{\snd{p}}
+                           {\pull{\snd{p'}}{T\:(\fst{p'})}}}
+}\]
+
+\caption{Type synthesis}
+\label{fig:type-synthesis}
+
+\end{figure}
 
 \subsection{In praise for $\Sigma$}
 
