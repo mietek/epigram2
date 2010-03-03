@@ -43,17 +43,17 @@ data _+_ (A : Set)(B : Set) : Set where
 data _==_ {A : Set}(x : A) : A -> Set where
   refl : x == x
 
-cong : (A : Set)(B : Set)(f : A -> B)(x y : A) -> x == y -> f x == f y
-cong A B f x .x refl = refl
+cong : {A B : Set}(f : A -> B){x y : A} -> x == y -> f x == f y
+cong f refl = refl
 
-cong2 : (A B C : Set)(f : A -> B -> C)(x y : A)(z t : B) -> 
+cong2 : {A B C : Set}(f : A -> B -> C){x y : A}{z t : B} -> 
         x == y -> z == t -> f x z == f y t
-cong2 A B C f x .x z .z refl refl = refl
+cong2 f refl refl = refl
 
 
 -- Intensionally extensional
 postulate 
-  reflFun : (A : Set)(B : Set)(f : A -> B)(g : A -> B)-> ((a : A) -> f a == g a) -> f == g 
+  reflFun : {A B : Set}(f : A -> B)(g : A -> B)-> ((a : A) -> f a == g a) -> f == g 
 
 --********************************************
 -- Desc code
@@ -71,25 +71,25 @@ data IDesc (I : Set) : Set where
 -- Desc interpretation
 --********************************************
 
-desc : (I : Set) -> IDesc I -> (I -> Set) -> Set
-desc I (var i) P = P i
-desc I (const X) P = X
-desc I (prod D D') P = desc I D P * desc I D' P
-desc I (sigma S T) P = Sigma S (\s -> desc I (T s) P)
-desc I (pi S T) P = (s : S) -> desc I (T s) P
+desc : {I : Set} -> IDesc I -> (I -> Set) -> Set
+desc (var i) P = P i
+desc (const X) P = X
+desc (prod D D') P = desc D P * desc D' P
+desc (sigma S T) P = Sigma S (\s -> desc (T s) P)
+desc (pi S T) P = (s : S) -> desc (T s) P
 
 --********************************************
 -- Fixpoint construction
 --********************************************
 
-data IMu (I : Set)(R : I -> IDesc I)(i : I) : Set where
-  con : desc I (R i) (\j -> IMu I R j) -> IMu I R i
+data IMu {I : Set}(R : I -> IDesc I)(i : I) : Set where
+  con : desc (R i) (\j -> IMu R j) -> IMu R i
 
 --********************************************
 -- Predicate: Box
 --********************************************
 
-box : (I : Set)(D : IDesc I)(P : I -> Set) -> desc I D P -> IDesc (Sigma I P)
+box : (I : Set)(D : IDesc I)(P : I -> Set) -> desc D P -> IDesc (Sigma I P)
 box I (var i)     P x        = var (i , x)
 box I (const X)   P x        = const X
 box I (prod D D') P (d , d') = prod (box I D P d) (box I D' P d')
@@ -102,20 +102,20 @@ box I (pi S T)    P f        = pi S (\s -> box I (T s) P (f s))
 
 module Elim (I : Set)
             (R : I -> IDesc I)
-            (P : Sigma I (IMu I R) -> Set)
+            (P : Sigma I (IMu R) -> Set)
             (m : (i : I)
-                 (xs : desc I (R i) (IMu I R))
-                 (hs : desc (Sigma I (IMu I R)) (box I (R i) (IMu I R) xs) P) ->
+                 (xs : desc (R i) (IMu R))
+                 (hs : desc (box I (R i) (IMu R) xs) P) ->
                  P ( i , con xs ))
        where
 
   mutual
-    induction : (i : I)(x : IMu I R i) -> P (i , x)
+    induction : (i : I)(x : IMu R i) -> P (i , x)
     induction i (con xs) = m i xs (hyps (R i) xs)
 
     hyps : (D : IDesc I) -> 
-           (xs : desc I D (IMu I R)) -> 
-           desc (Sigma I (IMu I R)) (box I D (IMu I R) xs) P
+           (xs : desc D (IMu R)) -> 
+           desc (box I D (IMu R) xs) P
     hyps (var i) x = induction i x
     hyps (const X) x = x -- ??
     hyps (prod D D') (d , d') =  hyps D d , hyps D' d'
@@ -125,12 +125,12 @@ module Elim (I : Set)
 
 induction : (I : Set)
             (R : I -> IDesc I)
-            (P : Sigma I (IMu I R) -> Set)
+            (P : Sigma I (IMu R) -> Set)
             (m : (i : I)
-                 (xs : desc I (R i) (IMu I R))
-                 (hs : desc (Sigma I (IMu I R)) (box I (R i) (IMu I R) xs) P) ->
+                 (xs : desc (R i) (IMu R))
+                 (hs : desc (box I (R i) (IMu R) xs) P) ->
                  P ( i , con xs)) ->
-            (i : I)(x : IMu I R i) -> P ( i , x )
+            (i : I)(x : IMu R i) -> P ( i , x )
 induction = Elim.induction
 
 --********************************************
@@ -155,7 +155,7 @@ descD : (I : Set) -> IDesc Unit
 descD I = sigma DescDConst (descDChoice I)
 
 IDescl : (I : Set) -> Set
-IDescl I = IMu Unit (\_ -> descD I) Void
+IDescl I = IMu (\_ -> descD I) Void
 
 varl : (I : Set)(i : I) -> IDescl I
 varl I i = con (lvar ,  i)
@@ -173,9 +173,8 @@ sigmal : (I : Set)(S : Set)(T : S -> IDescl I) -> IDescl I
 sigmal I S T = con (lsigma , ( S , T))
 
 cases : (I : Set) 
-        (xs : desc Unit (descD I) (IMu Unit (λ _ -> descD I)))
-        (hs : desc (Sigma Unit (IMu Unit (λ _ -> descD I)))
-              (box Unit (descD I) (IMu Unit (λ _ -> descD I)) xs) (λ _ -> IDesc I)) ->
+        (xs : desc (descD I) (IMu (λ _ -> descD I)))
+        (hs : desc (box Unit (descD I) (IMu (λ _ -> descD I)) xs) (λ _ -> IDesc I)) ->
         IDesc I
 cases I ( lvar , i ) hs =  var i
 cases I ( lconst , X ) hs =  const X
@@ -199,46 +198,18 @@ proof-iso1-iso2 : (I : Set) -> (D : IDesc I) -> iso1 I (iso2 I D) == D
 proof-iso1-iso2 I (var i) = refl
 proof-iso1-iso2 I (const x) = refl
 proof-iso1-iso2 I (prod D D') with proof-iso1-iso2 I D | proof-iso1-iso2 I D'
-...                             | p | q = cong2 (IDesc I) 
-                                                (IDesc I)
-                                                (IDesc I) 
-                                                prod 
-                                                (iso1 I (iso2 I D))
-                                                D 
-                                                (iso1 I (iso2 I D'))
-                                                D' p q
-proof-iso1-iso2 I (pi S T) = cong (S → IDesc I)
-                                  (IDesc I)
-                                  (pi S) 
-                                  (\x -> iso1 I (iso2 I (T x)))
-                                  T 
-                                  (reflFun S (IDesc I)
-                                             (λ s → iso1 I (iso2 I (T s)))
-                                             T
-                                             (\s -> proof-iso1-iso2 I (T s)))
-proof-iso1-iso2 I (sigma S T) = cong (S → IDesc I)
-                                     (IDesc I)
-                                     (sigma S) 
-                                     (\x -> iso1 I (iso2 I (T x)))
-                                     T 
-                                     (reflFun S 
-                                              (IDesc I)
-                                              (λ s → iso1 I (iso2 I (T s)))
+...                             | p | q = cong2 prod p q
+proof-iso1-iso2 I (pi S T) = cong (pi S)  
+                                  (reflFun (λ s → iso1 I (iso2 I (T s)))
+                                           T
+                                           (\s -> proof-iso1-iso2 I (T s)))
+proof-iso1-iso2 I (sigma S T) = cong (sigma S) 
+                                     (reflFun (λ s → iso1 I (iso2 I (T s)))
                                               T
                                               (\s -> proof-iso1-iso2 I (T s)))
 
 
--- induction : (I : Set)
---             (R : I -> IDesc I)
---             (P : Sigma I (IMu I R) -> Set)
---             (m : (i : I)
---                  (xs : desc I (R i) (IMu I R))
---                  (hs : desc (Sigma I (IMu I R)) (box I (R i) (IMu I R) xs) P) ->
---                  P ( i , con xs)) ->
---             (i : I)(x : IMu I R i) -> P ( i , x )
-
-
-P : (I : Set) -> Sigma Unit (IMu Unit (λ x → sigma DescDConst (descDChoice I))) → Set
+P : (I : Set) -> Sigma Unit (IMu (λ x → sigma DescDConst (descDChoice I))) → Set
 P I ( Void , D ) = iso2 I (iso1 I D) == D
 
 
@@ -251,51 +222,32 @@ proof-iso2-iso1 I D =  induction Unit
                                  D
                 where proof-iso2-iso1-cases : (I : Set)
                                               (xs : Sigma DescDConst 
-                                                    (λ s → desc Unit (descDChoice I s)
-                                                    (IMu Unit (λ x → sigma DescDConst (descDChoice I)))))
-                                              (hs : desc (Sigma Unit (IMu Unit (λ x → sigma DescDConst (descDChoice I))))
+                                                    (λ s → desc (descDChoice I s)
+                                                    (IMu (λ x → sigma DescDConst (descDChoice I)))))
+                                              (hs : desc 
                                                     (box Unit (sigma DescDConst (descDChoice I))
-                                                    (IMu Unit (λ x → sigma DescDConst (descDChoice I))) xs)
+                                                    (IMu (λ x → sigma DescDConst (descDChoice I))) xs)
                                                     (P I))
                                               → P I (Void , con xs)
                       proof-iso2-iso1-cases I (lvar , i) hs = refl
                       proof-iso2-iso1-cases I (lconst , x) hs = refl
-                      proof-iso2-iso1-cases I (lprod , ( D , D' )) ( p , q ) = cong2 (IDescl I) 
-                                          (IDescl I) 
-                                          (IDescl I)
-                                          (prodl I) 
-                                          (iso2 I (iso1 I D))
-                                          D 
-                                          (iso2 I (iso1 I D'))
-                                          D' p q 
-                      proof-iso2-iso1-cases I (lpi , ( S , T )) hs = cong (S → IDescl I)
-                                                                          (IDescl I)
-                                                                          (pil I S) 
-                                                                          (\x -> iso2 I (iso1 I (T x)))
-                                                                          T 
-                                                                          (reflFun S 
-                                                                                   (IDescl I)
-                                                                                   (λ s → iso2 I (iso1 I (T s)))
+                      proof-iso2-iso1-cases I (lprod , ( D , D' )) ( p , q ) = cong2 (prodl I) p q 
+                      proof-iso2-iso1-cases I (lpi , ( S , T )) hs = cong (pil I S) 
+                                                                          (reflFun (λ s → iso2 I (iso1 I (T s)))
                                                                                    T
                                                                                    hs)
-                      proof-iso2-iso1-cases I (lsigma , ( S , T )) hs = cong (S → IDescl I)
-                                                                             (IDescl I)
-                                                                             (sigmal I S) 
-                                                                             (\x -> iso2 I (iso1 I (T x)))
-                                                                             T 
-                                                                             (reflFun S 
-                                                                                      (IDescl I)
-                                                                                      (λ s → iso2 I (iso1 I (T s)))
+                      proof-iso2-iso1-cases I (lsigma , ( S , T )) hs = cong (sigmal I S) 
+                                                                             (reflFun (λ s → iso2 I (iso1 I (T s)))
                                                                                       T
                                                                                       hs)
                       proof-iso2-iso1-casesW : (I : Set)
                                                (i : Unit)
                                                (xs : Sigma DescDConst
-                                                     (λ s → desc Unit (descDChoice I s)
-                                                     (IMu Unit (λ x → sigma DescDConst (descDChoice I)))))
-                                               (hs : desc (Sigma Unit (IMu Unit (λ x → sigma DescDConst (descDChoice I))))
+                                                     (λ s → desc (descDChoice I s)
+                                                     (IMu (λ x → sigma DescDConst (descDChoice I)))))
+                                               (hs : desc 
                                                      (box Unit (sigma DescDConst (descDChoice I))
-                                                     (IMu Unit (λ x → sigma DescDConst (descDChoice I))) xs)
+                                                     (IMu (λ x → sigma DescDConst (descDChoice I))) xs)
                                                      (P I))
                                                 →  P I (i , con xs)
                       proof-iso2-iso1-casesW I Void = proof-iso2-iso1-cases I
