@@ -226,45 +226,42 @@ proof-phi-psi (sigma S T) = cong (sigma S)
 
 -- From embedding to embedding
 
-P : (I : Set) -> Sigma Unit (IMu (λ x → sigma DescDConst (descDChoice I))) → Set
-P I ( Void , D ) = psi (phi D) == D
-
 proof-psi-phi : (I : Set) -> (D : IDescl I) -> psi (phi D) == D
-proof-psi-phi I D =  induction (λ _ → descD I)
-                                 (P I)
-                                 (proof-psi-phi-casesW I) 
-                                 Void
-                                 D
-                where proof-psi-phi-cases : (I : Set)
-                                              (xs : Sigma DescDConst 
-                                                    (λ s → desc (descDChoice I s)
-                                                    (IMu (λ x → sigma DescDConst (descDChoice I)))))
-                                              (hs : desc 
-                                                    (box (sigma DescDConst (descDChoice I))
-                                                    (IMu (λ x → sigma DescDConst (descDChoice I))) xs)
-                                                    (P I))
-                                              → P I (Void , con xs)
-                      proof-psi-phi-cases I (lvar , i) hs = refl
-                      proof-psi-phi-cases I (lconst , x) hs = refl
-                      proof-psi-phi-cases I (lprod , ( D , D' )) ( p , q ) = cong2 prodl p q 
-                      proof-psi-phi-cases I (lpi , ( S , T )) hs = cong (pil S) 
+proof-psi-phi I D =  induction (\ _ -> descD I)
+                               P
+                               proof-psi-phi-casesW
+                               Void
+                               D
+                where P : Sigma Unit (IMu (\ x -> descD I)) -> Set
+                      P ( Void , D ) = psi (phi D) == D
+                      proof-psi-phi-cases : (xs : Sigma DescDConst 
+                                                  (λ s → desc (descDChoice I s)
+                                                  (IMu (λ x → sigma DescDConst (descDChoice I)))))
+                                            (hs : desc 
+                                                  (box (sigma DescDConst (descDChoice I))
+                                                  (IMu (λ x → sigma DescDConst (descDChoice I))) xs)
+                                                  P)
+                                            → P (Void , con xs)
+                      proof-psi-phi-cases (lvar , i) hs = refl
+                      proof-psi-phi-cases (lconst , x) hs = refl
+                      proof-psi-phi-cases (lprod , ( D , D' )) ( p , q ) = cong2 prodl p q 
+                      proof-psi-phi-cases (lpi , ( S , T )) hs = cong (pil S) 
                                                                           (reflFun (λ s → psi (phi (T s)))
                                                                                    T
                                                                                    hs)
-                      proof-psi-phi-cases I (lsigma , ( S , T )) hs = cong (sigmal S) 
+                      proof-psi-phi-cases (lsigma , ( S , T )) hs = cong (sigmal S) 
                                                                              (reflFun (λ s → psi (phi (T s)))
                                                                                       T
                                                                                       hs)
-                      proof-psi-phi-casesW : (I : Set)
-                                               (i : Unit)
-                                               (xs : Sigma DescDConst
-                                                     (λ s → desc (descDChoice I s)
-                                                     (IMu (λ x → sigma DescDConst (descDChoice I)))))
-                                               (hs : desc 
-                                                     (box (sigma DescDConst (descDChoice I))
-                                                     (IMu (λ x → sigma DescDConst (descDChoice I))) xs)
-                                                     (P I))
-                                                →  P I (i , con xs)
-                      proof-psi-phi-casesW I Void = proof-psi-phi-cases I
+                      proof-psi-phi-casesW : (i : Unit)
+                                             (xs : Sigma DescDConst
+                                                   (λ s → desc (descDChoice I s)
+                                                   (IMu (λ x → sigma DescDConst (descDChoice I)))))
+                                             (hs : desc 
+                                                   (box (sigma DescDConst (descDChoice I))
+                                                   (IMu (λ x → sigma DescDConst (descDChoice I))) xs)
+                                                   P)
+                                              →  P (i , con xs)
+                      proof-psi-phi-casesW Void = proof-psi-phi-cases
                       
 
