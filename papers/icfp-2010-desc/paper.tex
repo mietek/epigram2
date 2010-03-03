@@ -129,62 +129,113 @@ following implications always hold by induction on derivations.
 \]
 
 
+\begin{figure}
+
 \[
-\Axiom{\vdash\Valid}\qquad
-\Rule{\Gamma\vdash\Type{S}}
-     {\Gamma;\xS\vdash\Valid}\;x\not\in\Gamma
+%% Empty context validity
+\Axiom{\vdash \Valid}
+\qquad
+%% Extend context
+\Rule{\Gamma       \vdash \Type{S}}
+     {\Gamma ; \xS \vdash \Valid}\;x\not\in\Gamma
 \]
 
-\[\stkc{\stkl{
-\Rule{\Gamma\vdash\Valid}
-     {\Gamma\vdash\Type{\Set}}\qquad
-\Rule{\Gamma\vdash\Type{S} \quad
-      \Gamma,\xS\vdash\Type{T}}
-     {\Gamma\vdash\Type{\PIS{\xS} T, \SIGMAS{\xS} T} }}
-}\]
+\caption{Context validity}
+\label{fig:context-validity}
+\end{figure}
 
-\[
-\Rule{\Gamma;\xS;\Delta\vdash\Valid}
-     {\Gamma;\xS;\Delta\vdash \Bhab{x}{S}}\qquad
-\Rule{\Gamma\vdash \Bhab{s}{S} \quad 
-      \Gamma\vdash\Type{S \equiv T}}
-     {\Gamma\vdash \Bhab{s}{T}}
-\]
 
-\[
-\Rule{\stkl{\Gamma\vdash\Type{S}\\
-            \Gamma;\xS\vdash \Bhab{t}{T}}}
-     {\Gamma\vdash \Bhab{\PLAM{\x}{S} t}{\PIS{\xS} T}} \qquad
-\Rule{\stkl{\Gamma\vdash \Bhab{f}{\PIS{\xS} T} \\
-      \Gamma\vdash \Bhab{s}{S}}}
-     {\Gamma\vdash \Bhab{f\:s }{T[s/x]}} 
-\]
+\begin{figure}
 
-\[
-\Rule{\stkl{\Gamma\vdash\Type{S}\quad\Gamma;\xS\vdash \Bhab{t}{T}\\
-      \Gamma\vdash \Bhab{s}{S}}}
-     {\Gamma\vdash (\PLAM{\x}{S} t)\:s \equiv t[s/x] \vdash T[s/x]} 
-\]
-
-\[
-\Rule{\Gamma\vdash \Bhab{s}{S} \quad \Gamma;\xS\vdash\Type{T}\quad
-      \Gamma\vdash \Bhab{t}{T[s/x]}}
-     {\Gamma\vdash \Bhab{\pair{s}{t}{x.T}}{\SIGMAS{\xS} T}}
-\]
-
-\[
-\Rule{\Gamma\vdash \Bhab{p}{\SIGMAS{\xS} T}}
-     {\Gamma\vdash \Bhab{\pi_0 p}{S}} \qquad
-\Rule{\Gamma\vdash \Bhab{p}{\SIGMAS{\xS} T}}
-     {\Gamma\vdash \Bhab{\pi_1 p}{T[\pi_0 p/x]}}
-\]
-
-\[
-\Rule{\Gamma\vdash \Bhab{q}{\Prop}}
-     {\Gamma\vdash \Type{\prf{q}}}\qquad
+\[\stkc{
+%% Girard's favorite
+\Rule{\Gamma \vdash \Valid}
+     {\Gamma \vdash \Type{\Set}}
+\qquad
+%% Pi-Sigma
+\Rule{\Gamma       \vdash \Type{S} \quad
+      \Gamma ; \xS \vdash \Type{T}}
+     {\Gamma \vdash \Type{\PIS{\xS} T, \SIGMAS{\xS} T}}
+\\
+%% Prop
+\Rule{\Gamma \vdash \Bhab{q}{\Prop}}
+     {\Gamma \vdash \Type{\prf{q}}}
+\qquad
+%% True
 \Rule{\Gamma \vdash \Valid}
      {\Gamma \vdash \Bhab{\True}{\Prop}}
-\]
+\\
+%% Context
+\Rule{\Gamma ; \xS ; \Delta \vdash \Valid}
+     {\Gamma ; \xS ; \Delta \vdash \Bhab{x}{S}}
+\qquad
+%% Conversion
+\Rule{\Gamma \vdash \Bhab{s}{S} \quad 
+      \Gamma \vdash \Type{S \equiv T}}
+     {\Gamma \vdash \Bhab{s}{T}}
+\\
+%% Lambda
+\Rule{\stkl{\Gamma       \vdash \Type{S} \\
+            \Gamma ; \xS \vdash \Bhab{t}{T}}}
+     {\Gamma \vdash \Bhab{\PLAM{\x}{S} t}{\PIS{\xS} T}}
+\qquad
+%% Application
+\Rule{\stkl{\Gamma \vdash \Bhab{f}{\PIS{\xS} T} \\
+            \Gamma \vdash \Bhab{s}{S}}}
+     {\Gamma \vdash \Bhab{f\: s}{T[s/x]}} 
+\\
+%% Pair
+\Rule{\Gamma       \vdash \Bhab{s}{S} \quad 
+      \Gamma ; \xS \vdash \Bhab{T}{\Set}    \quad
+      \Gamma       \vdash \Bhab{t}{T[s/x]}}
+     {\Gamma \vdash \Bhab{\pair{s}{t}{x.T}}{\SIGMAS{\xS} T}}
+\\
+%% First projection
+\Rule{\Gamma \vdash \Bhab{p}{\SIGMAS{\xS} T}}
+     {\Gamma \vdash \Bhab{\fst{p}}{S}} 
+\qquad
+%% Second projection
+\Rule{\Gamma \vdash \Bhab{p}{\SIGMAS{\xS} T}}
+     {\Gamma \vdash \Bhab{\snd{p}}{T[\fst{p}/x]}}
+\\
+}\]
+
+\caption{Typing judgements}
+\label{fig:typing-judgements}
+
+\end{figure}
+
+\begin{figure}
+
+\[\stkc{
+%% Beta-reduction
+\Rule{\stkl{\Gamma       \vdash \Type{S} \quad
+            \Gamma ; \xS \vdash \Bhab{t}{T} \\
+            \Gamma       \vdash \Bhab{s}{S}}}
+     {\Gamma \vdash \Bhab{(\PLAM{\x}{S} t)\:s \equiv t[s/x]}{T[s/x]}}
+\\
+%% Eta-reduction
+\Rule{\Gamma       \vdash \Type{S} \quad
+      \Gamma ; \xS \vdash \Bhab{f \equiv g}{T}}
+     {\Gamma \vdash \Bhab{(\PLAM{\x}{S} f) \equiv (\PLAM{\x}{S} g)}{\PIS{\xS} T}}
+\\
+%% Projections
+\Rule{\stkl{\Gamma                 \vdash \Bhab{s}{S} \quad
+            \Gamma ; \xS           \vdash \Bhab{T}{\Set} \\
+            \Gamma ; \Bhab{s}{S}   \vdash \Bhab{t}{T[s/x]}}}
+     {\Gamma \vdash \Bhab{\fst{(\pair{s}{t}{T})} \equiv s}{S}}
+\qquad
+\Rule{\stkl{\Gamma               \vdash \Bhab{s}{S} \quad
+            \Gamma ; \xS         \vdash \Bhab{T}{\Set} \\
+            \Gamma ; \Bhab{s}{S} \vdash \Bhab{t}{T[s/x]}}}
+     {\Gamma \vdash \Bhab{\snd{(\pair{s}{t}{T})} \equiv t}{T[s/x]}}
+}\]
+
+\caption{Judgemental equality}
+\label{fig:judgemental-equality}
+
+\end{figure}
+
 
 \subsection{Enumerations}
 
