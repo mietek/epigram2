@@ -89,12 +89,12 @@ data IMu {I : Set}(R : I -> IDesc I)(i : I) : Set where
 -- Predicate: Box
 --********************************************
 
-box : (I : Set)(D : IDesc I)(P : I -> Set) -> desc D P -> IDesc (Sigma I P)
-box I (var i)     P x        = var (i , x)
-box I (const X)   P x        = const X
-box I (prod D D') P (d , d') = prod (box I D P d) (box I D' P d')
-box I (sigma S T) P (a , b)  = box I (T a) P b
-box I (pi S T)    P f        = pi S (\s -> box I (T s) P (f s))
+box : {I : Set}(D : IDesc I)(P : I -> Set) -> desc D P -> IDesc (Sigma I P)
+box (var i)     P x        = var (i , x)
+box (const X)   P x        = const X
+box (prod D D') P (d , d') = prod (box D P d) (box D' P d')
+box (sigma S T) P (a , b)  = box (T a) P b
+box (pi S T)    P f        = pi S (\s -> box (T s) P (f s))
 
 --********************************************
 -- Elimination principle: induction
@@ -105,7 +105,7 @@ module Elim (I : Set)
             (P : Sigma I (IMu R) -> Set)
             (m : (i : I)
                  (xs : desc (R i) (IMu R))
-                 (hs : desc (box I (R i) (IMu R) xs) P) ->
+                 (hs : desc (box (R i) (IMu R) xs) P) ->
                  P ( i , con xs ))
        where
 
@@ -115,7 +115,7 @@ module Elim (I : Set)
 
     hyps : (D : IDesc I) -> 
            (xs : desc D (IMu R)) -> 
-           desc (box I D (IMu R) xs) P
+           desc (box D (IMu R) xs) P
     hyps (var i) x = induction i x
     hyps (const X) x = x -- ??
     hyps (prod D D') (d , d') =  hyps D d , hyps D' d'
@@ -128,7 +128,7 @@ induction : (I : Set)
             (P : Sigma I (IMu R) -> Set)
             (m : (i : I)
                  (xs : desc (R i) (IMu R))
-                 (hs : desc (box I (R i) (IMu R) xs) P) ->
+                 (hs : desc (box (R i) (IMu R) xs) P) ->
                  P ( i , con xs)) ->
             (i : I)(x : IMu R i) -> P ( i , x )
 induction = Elim.induction
@@ -174,7 +174,7 @@ sigmal I S T = con (lsigma , ( S , T))
 
 cases : (I : Set) 
         (xs : desc (descD I) (IMu (λ _ -> descD I)))
-        (hs : desc (box Unit (descD I) (IMu (λ _ -> descD I)) xs) (λ _ -> IDesc I)) ->
+        (hs : desc (box (descD I) (IMu (λ _ -> descD I)) xs) (λ _ -> IDesc I)) ->
         IDesc I
 cases I ( lvar , i ) hs =  var i
 cases I ( lconst , X ) hs =  const X
@@ -225,7 +225,7 @@ proof-iso2-iso1 I D =  induction Unit
                                                     (λ s → desc (descDChoice I s)
                                                     (IMu (λ x → sigma DescDConst (descDChoice I)))))
                                               (hs : desc 
-                                                    (box Unit (sigma DescDConst (descDChoice I))
+                                                    (box (sigma DescDConst (descDChoice I))
                                                     (IMu (λ x → sigma DescDConst (descDChoice I))) xs)
                                                     (P I))
                                               → P I (Void , con xs)
@@ -246,7 +246,7 @@ proof-iso2-iso1 I D =  induction Unit
                                                      (λ s → desc (descDChoice I s)
                                                      (IMu (λ x → sigma DescDConst (descDChoice I)))))
                                                (hs : desc 
-                                                     (box Unit (sigma DescDConst (descDChoice I))
+                                                     (box (sigma DescDConst (descDChoice I))
                                                      (IMu (λ x → sigma DescDConst (descDChoice I))) xs)
                                                      (P I))
                                                 →  P I (i , con xs)
