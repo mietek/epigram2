@@ -195,13 +195,12 @@ phi {I} d = induction (\_ -> descD I) (\_ -> IDesc I) (\_ -> cases) Void d
 --********************************************
 -- From the host to the embedding
 --********************************************
-
-iso2 : {I : Set} -> IDesc I -> IDescl I
-iso2 (var i) = varl i
-iso2 (const X) = constl X
-iso2 (prod D D') = prodl (iso2 D) (iso2 D')
-iso2 (pi S T) = pil S (\s -> iso2 (T s))
-iso2 (sigma S T) = sigmal S (\s -> iso2 (T s))
+psi : {I : Set} -> IDesc I -> IDescl I
+psi (var i) = varl i
+psi (const X) = constl X
+psi (prod D D') = prodl (psi D) (psi D')
+psi (pi S T) = pil S (\s -> psi (T s))
+psi (sigma S T) = sigmal S (\s -> psi (T s))
 
 
 --********************************************
@@ -210,33 +209,33 @@ iso2 (sigma S T) = sigmal S (\s -> iso2 (T s))
 
 -- From host to host
 
-proof-iso1-iso2 : (I : Set) -> (D : IDesc I) -> phi (iso2 D) == D
-proof-iso1-iso2 I (var i) = refl
-proof-iso1-iso2 I (const x) = refl
-proof-iso1-iso2 I (prod D D') with proof-iso1-iso2 I D | proof-iso1-iso2 I D'
+proof-phi-psi : (I : Set) -> (D : IDesc I) -> phi (psi D) == D
+proof-phi-psi I (var i) = refl
+proof-phi-psi I (const x) = refl
+proof-phi-psi I (prod D D') with proof-phi-psi I D | proof-phi-psi I D'
 ...                             | p | q = cong2 prod p q
-proof-iso1-iso2 I (pi S T) = cong (pi S)  
-                                  (reflFun (λ s → phi (iso2 (T s)))
+proof-phi-psi I (pi S T) = cong (pi S)  
+                                  (reflFun (λ s → phi (psi (T s)))
                                            T
-                                           (\s -> proof-iso1-iso2 I (T s)))
-proof-iso1-iso2 I (sigma S T) = cong (sigma S) 
-                                     (reflFun (λ s → phi (iso2 (T s)))
+                                           (\s -> proof-phi-psi I (T s)))
+proof-phi-psi I (sigma S T) = cong (sigma S) 
+                                     (reflFun (λ s → phi (psi (T s)))
                                               T
-                                              (\s -> proof-iso1-iso2 I (T s)))
+                                              (\s -> proof-phi-psi I (T s)))
 
 
 -- From embedding to embedding
 
 P : (I : Set) -> Sigma Unit (IMu (λ x → sigma DescDConst (descDChoice I))) → Set
-P I ( Void , D ) = iso2 (phi D) == D
+P I ( Void , D ) = psi (phi D) == D
 
-proof-iso2-iso1 : (I : Set) -> (D : IDescl I) -> iso2 (phi D) == D
-proof-iso2-iso1 I D =  induction (λ _ → descD I)
+proof-psi-phi : (I : Set) -> (D : IDescl I) -> psi (phi D) == D
+proof-psi-phi I D =  induction (λ _ → descD I)
                                  (P I)
-                                 (proof-iso2-iso1-casesW I) 
+                                 (proof-psi-phi-casesW I) 
                                  Void
                                  D
-                where proof-iso2-iso1-cases : (I : Set)
+                where proof-psi-phi-cases : (I : Set)
                                               (xs : Sigma DescDConst 
                                                     (λ s → desc (descDChoice I s)
                                                     (IMu (λ x → sigma DescDConst (descDChoice I)))))
@@ -245,18 +244,18 @@ proof-iso2-iso1 I D =  induction (λ _ → descD I)
                                                     (IMu (λ x → sigma DescDConst (descDChoice I))) xs)
                                                     (P I))
                                               → P I (Void , con xs)
-                      proof-iso2-iso1-cases I (lvar , i) hs = refl
-                      proof-iso2-iso1-cases I (lconst , x) hs = refl
-                      proof-iso2-iso1-cases I (lprod , ( D , D' )) ( p , q ) = cong2 prodl p q 
-                      proof-iso2-iso1-cases I (lpi , ( S , T )) hs = cong (pil S) 
-                                                                          (reflFun (λ s → iso2 (phi (T s)))
+                      proof-psi-phi-cases I (lvar , i) hs = refl
+                      proof-psi-phi-cases I (lconst , x) hs = refl
+                      proof-psi-phi-cases I (lprod , ( D , D' )) ( p , q ) = cong2 prodl p q 
+                      proof-psi-phi-cases I (lpi , ( S , T )) hs = cong (pil S) 
+                                                                          (reflFun (λ s → psi (phi (T s)))
                                                                                    T
                                                                                    hs)
-                      proof-iso2-iso1-cases I (lsigma , ( S , T )) hs = cong (sigmal S) 
-                                                                             (reflFun (λ s → iso2 (phi (T s)))
+                      proof-psi-phi-cases I (lsigma , ( S , T )) hs = cong (sigmal S) 
+                                                                             (reflFun (λ s → psi (phi (T s)))
                                                                                       T
                                                                                       hs)
-                      proof-iso2-iso1-casesW : (I : Set)
+                      proof-psi-phi-casesW : (I : Set)
                                                (i : Unit)
                                                (xs : Sigma DescDConst
                                                      (λ s → desc (descDChoice I s)
@@ -266,6 +265,6 @@ proof-iso2-iso1 I D =  induction (λ _ → descD I)
                                                      (IMu (λ x → sigma DescDConst (descDChoice I))) xs)
                                                      (P I))
                                                 →  P I (i , con xs)
-                      proof-iso2-iso1-casesW I Void = proof-iso2-iso1-cases I
+                      proof-psi-phi-casesW I Void = proof-psi-phi-cases I
                       
 
