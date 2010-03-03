@@ -344,10 +344,38 @@ following implications always hold by induction on derivations.
 \begin{array}{lcl}
 \F{induction} & : & \PITEL{D}{\Desc}                \\
               &   & \PITEL{P}{\Mu{D} \To \Set}      \\
-              &   & \PITEL{m}{\PI{xs}{\descop{D}{(\Mu{D})}} \All{(\Mu{D})}{P}{xs} \To P (\Con{xs})} \\
+              &   & \PITEL{m}{\PI{xs}{\descop{D}{(\Mu{D})}} \All{D}{(\Mu{D})}{P}{xs} \To P (\Con{xs})} \\
               &   & \PI{x}{\Mu{D}} P x
 \end{array}
 \]
+
+This \(\F{induction}\) operator is the natural dependent elimination
+principle, but we might also benefit from the traditional \emph{catamorphism}
+or `fold operator' which accompanies a (weakly) initial algebra. We should
+like to have
+\[\stk{
+\F{cata} : \PITEL{D}{\Desc}\PI{T}{\Set}
+           (\descop{D}{T}\To T)\To \Mu{D}\To T\\
+\F{cata}\:D\:T\:f \mapsto
+  \F{induction}\:D\:(\LAM{\_}T)\:(\LAM{xs\:ts}f\:?)
+}\]
+but what should \(?\) be? We have \(xs:\descop{D}{\Mu{D}}\)
+and \(ts:\All{D}{(\Mu{D})}{(\LAM{\_}T)}{xs}\), so surely we can construct
+an element of \(\descop{D}{T}\) by replacing each recursive component from
+\(xs\) with its counterpart from \(ts\).
+
+\[\stk{
+\F{replace} : 
+\stk{\PITEL{D}{\Desc}\PITEL{X,Y}{\Set}\\
+           \PI{xs}{\descop{D}{X}} \All{D}{X}{(\LAM{\_}Y)}{xs} \To
+           \descop{D}{Y}}
+\\
+\F{replace}\:\DUnit\: X\:Y\:\Void\:\Void\mapsto\Void \\
+\F{replace}\:(\DSigma{S}{D})\:X\:Y\:\pair{s}{xs}{}\:ys\mapsto
+ \pair{s}{\F{replace}\:{D~s}\:X\:Y\:xs\:ys}{}         \\
+\F{replace}\:(\DIndx{D})\:X\:Y\:\pair{x}{xs}{}\:\pair{y}{ys}{} \mapsto
+    \pair{y}{\F{replace}\:D\:X\:Y\:xs\:ys}{}
+}\]
 
 \subsection{Describing enumerations}
 
@@ -420,8 +448,8 @@ following implications always hold by induction on derivations.
 \stk{
 \data \Desc : \Set \where \\
 \;\;\begin{array}{@{}l@{\::\:}l@{\quad}l}
-    \DUnit          & \Desc                                   \\
     \DId            & \Desc                                   \\
+    \DUnit          & \Desc                                   \\
     \DProd{}{}      & \PI{\V{D}, \V{D'}}{\Desc} \Desc         \\
     \DSigma         & \PI{\V{S}}{\Set} \PIS{S \To \Desc} \Desc \\
     \DPi            & \PI{\V{S}}{\Set} \PIS{S \To \Desc} \Desc 
@@ -432,11 +460,11 @@ following implications always hold by induction on derivations.
 \[\stk{
 \descop{\_\:}{} : \Desc \To \Set \To \Set \\
 \begin{array}{@{}l@{\:=\:\:}ll}
-\descop{\DUnit}{X}        &  \Unit                                       \\
 \descop{\DId}{X}          &  X                                           \\
+\descop{\DUnit}{X}        &  \Unit                                       \\
 \descop{\DProd{D}{D'}}{X} &  \TIMES{\descop{D}{X}}{\descop{D'}{X}}       \\
-\descop{\DSigma{S}{D}}{X} &  \SIGMA{\V{s}}{S} \descop{D s}{X}                \\
-\descop{\DPi{S}{D}}{X}    &  \PI{\V{s}}{S} \descop{D s}{X}            
+\descop{\DSigma{S}{D}}{X} &  \SIGMA{\V{s}}{S} \descop{D\: s}{X}                \\
+\descop{\DPi{S}{D}}{X}    &  \PI{\V{s}}{S} \descop{D\: s}{X}            
 \end{array}
 }\]
 
@@ -444,6 +472,24 @@ following implications always hold by induction on derivations.
 <- Rebuild the examples
 Pierre: Really? Can't we just say "look at the transformation below, that's obvious" ?
 \end{structure}
+
+A \emph{tagged} description is given by an inhabitant of
+\[
+ \F{TagDesc} \mapsto \SIGMA{\V{E}}{\EnumU}\spi{\V{E}}{\LAM{\_}\Desc}
+\]
+
+
+\newcommand{\FM}[1]{{#1}^{\F{\(\ast\)}}}
+Datatypes specified in the conventional `sum of products' style naturally give rise to tagged descriptions. Of course, every description can be dorced into this style with a singleton choice of tag.
+
+We may then implement the \emph{free monad} construction as a
+transformation on \(\F{TagDesc}\).
+\[\stk{
+\FM{\_} : \F{TagDesc} \To \Set \To \F{TagDesc} \\
+\FM{\pair{E}{D}{}}\:X \mapsto
+\pair{\ListCons{\:\DVar{}}{E}}{\pair{\DConst{X}}{D}{}}{}
+}\]
+Of course, we must equip the resulting datatypes with operations delivering a monadic interface. As usual, \(\LAM{\x}\DVar{\x}\) performs the r\^ole of `return', embedding variables into terms. We shall also need a generic \emph{substitution} operator.
 
 \begin{structure}
 <- Show the transformation from the previous combinators to the new one
@@ -466,8 +512,8 @@ Pierre: Really? Can't we just say "look at the transformation below, that's obvi
 \stk{
 \data \IDesc{} : \PI{\V{I}}{\Set}{\Set} \where \\
 \;\;\begin{array}{@{}l@{\::\:}l@{\quad}l}
-    \DUnit          & \IDesc{I}                                         \\
     \DVar           & I \To \IDesc{I}                                   \\
+    \DUnit          & \IDesc{I}                                         \\
     \DProd{}{}      & \PI{\V{D}, \V{D'}}{\IDesc{I}} \IDesc{I}           \\
     \DSigma         & \PI{\V{S}}{\Set} \PIS{S \To \IDesc{I}} \IDesc{I}  \\
     \DPi            & \PI{\V{S}}{\Set} \PIS{S \To \IDesc{I}} \IDesc{I} 
@@ -479,11 +525,11 @@ Pierre: Really? Can't we just say "look at the transformation below, that's obvi
 \[\stk{
 \idescop{\_\:}{}{} : \PI{\V{I}}{\Set} \IDesc{I} \To \Set \To \Set          \\
 \begin{array}{@{}l@{\:=\:\:}ll}
-\idescop{\DUnit}{I}{P}        &  \Unit                                       \\
 \idescop{\DVar{i}}{I}{P}      &  P~i                                         \\
+\idescop{\DUnit}{I}{P}        &  \Unit                                       \\
 \idescop{\DProd{D}{D'}}{I}{P} &  \TIMES{\idescop{D}{I}{P}}{\idescop{D'}{I}{P}}       \\
-\idescop{\DSigma{S}{D}}{I}{P} &  \SIGMA{\V{s}}{S} \idescop{D s}{I}{P}                \\
-\idescop{\DPi{S}{D}}{I}{P}    &  \PI{\V{s}}{S} \idescop{D s}{I}{P}            
+\idescop{\DSigma{S}{D}}{I}{P} &  \SIGMA{\V{s}}{S} \idescop{D\: s}{I}{P}                \\
+\idescop{\DPi{S}{D}}{I}{P}    &  \PI{\V{s}}{S} \idescop{D\: s}{I}{P}            
 \end{array}
 }\]
 
@@ -500,8 +546,8 @@ Pierre: Really? Can't we just say "look at the transformation below, that's obvi
 \stk{
 \data \IDesc{} : \PI{\V{I}}{\Set} \Set \where \\
 \;\;\begin{array}{@{}l@{\::\:}l@{\quad}l}
-    \DConst{}       & \Set \To \IDesc{I}                                \\
     \DVar{}         & I \To \IDesc{I}                                   \\
+    \DConst{}       & \Set \To \IDesc{I}                                \\
     \DProd{}{}      & \PI{\V{D}, \V{D'}}{\IDesc{I}} \IDesc{I}           \\
     \DSigma         & \PI{\V{S}}{\Set} \PIS{S \To \IDesc{I}} \IDesc{I}  \\
     \DPi            & \PI{\V{S}}{\Set} \PIS{S \To \IDesc{I}} \IDesc{I} 
@@ -513,11 +559,11 @@ Pierre: Really? Can't we just say "look at the transformation below, that's obvi
 \[\stk{
 \idescop{\_\:}{}{} : \PI{\V{I}}{\Set} \IDesc{I} \To \Set \To \Set                  \\
 \begin{array}{@{}l@{\:=\:\:}ll}
-\idescop{\DConst{X}}{I}{P}    &  X                                                   \\
 \idescop{\DVar{i}}{I}{P}      &  P~i                                                 \\
+\idescop{\DConst{X}}{I}{P}    &  X                                                   \\
 \idescop{\DProd{D}{D'}}{I}{P} &  \TIMES{\idescop{D}{I}{P}}{\idescop{D'}{I}{P}}       \\
-\idescop{\DSigma{S}{D}}{I}{P} &  \SIGMA{\V{s}}{S} \idescop{D s}{I}{P}                    \\
-\idescop{\DPi{S}{D}}{I}{P}    &  \PI{\V{s}}{S} \idescop{D s}{I}{P}            
+\idescop{\DSigma{S}{D}}{I}{P} &  \SIGMA{\V{s}}{S} \idescop{D\: s}{I}{P}                    \\
+\idescop{\DPi{S}{D}}{I}{P}    &  \PI{\V{s}}{S} \idescop{D\: s}{I}{P}            
 \end{array}
 }\]
 
@@ -530,14 +576,14 @@ Pierre: Really? Can't we just say "look at the transformation below, that's obvi
 \[\stk{
 \IDescD : \PI{\V{I}}{\Set} \IDesc{\Unit} \\
 \begin{array}{ll}
-\IDescD~I \mapsto \DSigma{}{} & (\EnumT [ \DConst{},
-                                          \DVar{},
-                                          \DProd{}{},
+\IDescD~I \mapsto \DSigma{}{} & (\EnumT [ \DVar{},
+\DConst{},
+                                                                                    \DProd{}{},
                                           \DSigma{}{}, 
                                           \DPi{}{} ]) \\
                               & \left[\begin{array}{l}
-                                      \DConst{\Set}               \\
                                       \DConst{I}                  \\
+                                      \DConst{\Set}               \\
                                       \DProd{\DVar{\Void}}{\DVar{\Void}}  \\
                                       \DSigma{\Set}{(\LAM{S} \DPi{S}{(\LAM{\_} \DVar{\Void})})} \\
                                       \DSigma{\Set}{(\LAM{S} \DPi{S}{(\LAM{\_} \DVar{\Void})})}
