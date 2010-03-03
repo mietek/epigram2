@@ -196,12 +196,12 @@ iso1 I d = induction (\_ -> descD I) (\_ -> IDesc I) (\_ -> cases) Void d
 -- From the host to the embedding
 --********************************************
 
-iso2 : (I : Set) -> IDesc I -> IDescl I
-iso2 I (var i) = varl i
-iso2 I (const X) = constl X
-iso2 I (prod D D') = prodl (iso2 I D) (iso2 I D')
-iso2 I (pi S T) = pil S (\s -> iso2 I (T s))
-iso2 I (sigma S T) = sigmal S (\s -> iso2 I (T s))
+iso2 : {I : Set} -> IDesc I -> IDescl I
+iso2 (var i) = varl i
+iso2 (const X) = constl X
+iso2 (prod D D') = prodl (iso2 D) (iso2 D')
+iso2 (pi S T) = pil S (\s -> iso2 (T s))
+iso2 (sigma S T) = sigmal S (\s -> iso2 (T s))
 
 
 --********************************************
@@ -210,17 +210,17 @@ iso2 I (sigma S T) = sigmal S (\s -> iso2 I (T s))
 
 -- From host to host
 
-proof-iso1-iso2 : (I : Set) -> (D : IDesc I) -> iso1 I (iso2 I D) == D
+proof-iso1-iso2 : (I : Set) -> (D : IDesc I) -> iso1 I (iso2 D) == D
 proof-iso1-iso2 I (var i) = refl
 proof-iso1-iso2 I (const x) = refl
 proof-iso1-iso2 I (prod D D') with proof-iso1-iso2 I D | proof-iso1-iso2 I D'
 ...                             | p | q = cong2 prod p q
 proof-iso1-iso2 I (pi S T) = cong (pi S)  
-                                  (reflFun (λ s → iso1 I (iso2 I (T s)))
+                                  (reflFun (λ s → iso1 I (iso2 (T s)))
                                            T
                                            (\s -> proof-iso1-iso2 I (T s)))
 proof-iso1-iso2 I (sigma S T) = cong (sigma S) 
-                                     (reflFun (λ s → iso1 I (iso2 I (T s)))
+                                     (reflFun (λ s → iso1 I (iso2 (T s)))
                                               T
                                               (\s -> proof-iso1-iso2 I (T s)))
 
@@ -228,9 +228,9 @@ proof-iso1-iso2 I (sigma S T) = cong (sigma S)
 -- From embedding to embedding
 
 P : (I : Set) -> Sigma Unit (IMu (λ x → sigma DescDConst (descDChoice I))) → Set
-P I ( Void , D ) = iso2 I (iso1 I D) == D
+P I ( Void , D ) = iso2 (iso1 I D) == D
 
-proof-iso2-iso1 : (I : Set) -> (D : IDescl I) -> iso2 I (iso1 I D) == D
+proof-iso2-iso1 : (I : Set) -> (D : IDescl I) -> iso2 (iso1 I D) == D
 proof-iso2-iso1 I D =  induction (λ _ → descD I)
                                  (P I)
                                  (proof-iso2-iso1-casesW I) 
@@ -249,11 +249,11 @@ proof-iso2-iso1 I D =  induction (λ _ → descD I)
                       proof-iso2-iso1-cases I (lconst , x) hs = refl
                       proof-iso2-iso1-cases I (lprod , ( D , D' )) ( p , q ) = cong2 prodl p q 
                       proof-iso2-iso1-cases I (lpi , ( S , T )) hs = cong (pil S) 
-                                                                          (reflFun (λ s → iso2 I (iso1 I (T s)))
+                                                                          (reflFun (λ s → iso2 (iso1 I (T s)))
                                                                                    T
                                                                                    hs)
                       proof-iso2-iso1-cases I (lsigma , ( S , T )) hs = cong (sigmal S) 
-                                                                             (reflFun (λ s → iso2 I (iso1 I (T s)))
+                                                                             (reflFun (λ s → iso2 (iso1 I (T s)))
                                                                                       T
                                                                                       hs)
                       proof-iso2-iso1-casesW : (I : Set)
