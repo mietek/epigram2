@@ -157,20 +157,20 @@ descD I = sigma DescDConst (descDChoice I)
 IDescl : (I : Set) -> Set
 IDescl I = IMu (\_ -> descD I) Void
 
-varl : (I : Set)(i : I) -> IDescl I
-varl I i = con (lvar ,  i)
+varl : {I : Set}(i : I) -> IDescl I
+varl i = con (lvar ,  i)
 
-constl : (I : Set)(X : Set) -> IDescl I
-constl I X = con (lconst , X)
+constl : {I : Set}(X : Set) -> IDescl I
+constl X = con (lconst , X)
 
-prodl : (I : Set)(D D' : IDescl I) -> IDescl I
-prodl I D D' = con (lprod , (D , D'))
+prodl : {I : Set}(D D' : IDescl I) -> IDescl I
+prodl D D' = con (lprod , (D , D'))
 
-pil : (I : Set)(S : Set)(T : S -> IDescl I) -> IDescl I
-pil I S T = con (lpi , ( S , T))
+pil : {I : Set}(S : Set)(T : S -> IDescl I) -> IDescl I
+pil S T = con (lpi , ( S , T))
 
-sigmal : (I : Set)(S : Set)(T : S -> IDescl I) -> IDescl I
-sigmal I S T = con (lsigma , ( S , T))
+sigmal : {I : Set}(S : Set)(T : S -> IDescl I) -> IDescl I
+sigmal S T = con (lsigma , ( S , T))
 
 
 
@@ -197,11 +197,11 @@ iso1 I d = induction (\_ -> descD I) (\_ -> IDesc I) (\_ -> cases I) Void d
 --********************************************
 
 iso2 : (I : Set) -> IDesc I -> IDescl I
-iso2 I (var i) = varl I i
-iso2 I (const X) = constl I X
-iso2 I (prod D D') = prodl I (iso2 I D) (iso2 I D')
-iso2 I (pi S T) = pil I S (\s -> iso2 I (T s))
-iso2 I (sigma S T) = sigmal I S (\s -> iso2 I (T s))
+iso2 I (var i) = varl i
+iso2 I (const X) = constl X
+iso2 I (prod D D') = prodl (iso2 I D) (iso2 I D')
+iso2 I (pi S T) = pil S (\s -> iso2 I (T s))
+iso2 I (sigma S T) = sigmal S (\s -> iso2 I (T s))
 
 
 --********************************************
@@ -247,12 +247,12 @@ proof-iso2-iso1 I D =  induction (λ _ → descD I)
                                               → P I (Void , con xs)
                       proof-iso2-iso1-cases I (lvar , i) hs = refl
                       proof-iso2-iso1-cases I (lconst , x) hs = refl
-                      proof-iso2-iso1-cases I (lprod , ( D , D' )) ( p , q ) = cong2 (prodl I) p q 
-                      proof-iso2-iso1-cases I (lpi , ( S , T )) hs = cong (pil I S) 
+                      proof-iso2-iso1-cases I (lprod , ( D , D' )) ( p , q ) = cong2 prodl p q 
+                      proof-iso2-iso1-cases I (lpi , ( S , T )) hs = cong (pil S) 
                                                                           (reflFun (λ s → iso2 I (iso1 I (T s)))
                                                                                    T
                                                                                    hs)
-                      proof-iso2-iso1-cases I (lsigma , ( S , T )) hs = cong (sigmal I S) 
+                      proof-iso2-iso1-cases I (lsigma , ( S , T )) hs = cong (sigmal S) 
                                                                              (reflFun (λ s → iso2 I (iso1 I (T s)))
                                                                                       T
                                                                                       hs)
