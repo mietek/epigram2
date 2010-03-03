@@ -244,9 +244,9 @@ P I ( Void , D ) = iso2 I (iso1 I D) == D
 
 proof-iso2-iso1 : (I : Set) -> (D : IDescl I) -> iso2 I (iso1 I D) == D
 proof-iso2-iso1 I D =  induction Unit 
-                                 (λ x → sigma DescDConst (descDChoice I))
+                                 (λ _ → descD I)
                                  (P I)
-                                 ( proof-iso2-iso1-casesW I) 
+                                 (proof-iso2-iso1-casesW I) 
                                  Void
                                  D
                 where proof-iso2-iso1-cases : (I : Set)
@@ -260,15 +260,14 @@ proof-iso2-iso1 I D =  induction Unit
                                               → P I (Void , con xs)
                       proof-iso2-iso1-cases I (lvar , i) hs = refl
                       proof-iso2-iso1-cases I (lconst , x) hs = refl
-                      proof-iso2-iso1-cases I (lprod , ( D , D' )) hs with proof-iso2-iso1 I D | proof-iso2-iso1 I D' 
-                      ... | p | q = cong2 (IDescl I) 
+                      proof-iso2-iso1-cases I (lprod , ( D , D' )) ( p , q ) = cong2 (IDescl I) 
                                           (IDescl I) 
                                           (IDescl I)
                                           (prodl I) 
                                           (iso2 I (iso1 I D))
                                           D 
                                           (iso2 I (iso1 I D'))
-                                          D' p q
+                                          D' p q 
                       proof-iso2-iso1-cases I (lpi , ( S , T )) hs = cong (S → IDescl I)
                                                                           (IDescl I)
                                                                           (pil I S) 
@@ -278,7 +277,7 @@ proof-iso2-iso1 I D =  induction Unit
                                                                                    (IDescl I)
                                                                                    (λ s → iso2 I (iso1 I (T s)))
                                                                                    T
-                                                                                   (\s -> proof-iso2-iso1 I (T s)))
+                                                                                   hs)
                       proof-iso2-iso1-cases I (lsigma , ( S , T )) hs = cong (S → IDescl I)
                                                                              (IDescl I)
                                                                              (sigmal I S) 
@@ -288,7 +287,7 @@ proof-iso2-iso1 I D =  induction Unit
                                                                                       (IDescl I)
                                                                                       (λ s → iso2 I (iso1 I (T s)))
                                                                                       T
-                                                                                      (\s -> proof-iso2-iso1 I (T s)))
+                                                                                      hs)
                       proof-iso2-iso1-casesW : (I : Set)
                                                (i : Unit)
                                                (xs : Sigma DescDConst
