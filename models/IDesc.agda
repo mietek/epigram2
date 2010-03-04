@@ -234,14 +234,14 @@ cases ( lprod , (D , D') ) ( d , d' ) =  prod d d'
 cases ( lpi , ( S , T ) ) hs =  pi S (\s -> hs (lifter s))
 cases ( lsigma , ( S , T ) ) hs = sigma S (\s -> hs (lifter s))
 
-phi : {I : Set} -> IDescl I -> IDesc I
-phi {I} d = induction (\_ -> descD I) (\_ -> IDesc I) (\_ -> cases) Void d
+phi : {l : Level}{I : Set l} -> IDescl I -> IDesc I
+phi {x} {I} d = induction (\_ -> descD I) (\_ -> IDesc I) (\_ -> cases) Void d
 
 --********************************************
 -- From the host to the embedding
 --********************************************
 
-psi : {I : Set} -> IDesc I -> IDescl I
+psi : {l : Level}{I : Set l} -> IDesc I -> IDescl I
 psi (var i) = varl i
 psi (const X) = constl X
 psi (prod D D') = prodl (psi D) (psi D')
