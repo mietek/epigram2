@@ -179,11 +179,11 @@ descDChoice _ lprod = prod (var Void) (var Void)
 descDChoice _ lpi = sigma (Set _) (\S -> pi (lift S) (\s -> var Void))
 descDChoice _ lsigma = sigma (Set _) (\S -> pi (lift S) (\s -> var Void))
 
-descD : (l : Level)(I : Set l) -> IDesc Unit
-descD x I = sigma DescDConst (descDChoice I)
+descD : {l : Level}(I : Set l) -> IDesc Unit
+descD I = sigma DescDConst (descDChoice I)
 
 IDescl : (l : Level)(I : Set l) -> Set (suc l)
-IDescl x I = IMu (\_ -> descD x I) Void
+IDescl x I = IMu (\_ -> descD I) Void
 
 varl : (l : Level)(I : Set l)(i : I) -> IDescl l I
 varl x I i = con (lv , lifter i) 
