@@ -71,17 +71,18 @@ data _+_ {i j : Level}(A : Set i)(B : Set j) : Set (max i j) where
 data _==_ {l : Level}{A : Set l}(x : A) : A -> Set l where
   refl : x == x
 
-cong : {l : Level}{A B : Set l}(f : A -> B){x y : A} -> x == y -> f x == f y
+cong : {l m : Level}{A : Set l}{B : Set m}
+       (f : A -> B){x y : A} -> x == y -> f x == f y
 cong f refl = refl
 
-cong2 : {l : Level}{A B C : Set l}(f : A -> B -> C){x y : A}{z t : B} -> 
+cong2 : {l m n : Level}{A : Set l}{B : Set m}{C : Set n}
+        (f : A -> B -> C){x y : A}{z t : B} -> 
         x == y -> z == t -> f x z == f y t
 cong2 f refl refl = refl
 
-
 -- Intensionally extensional
 postulate 
-  reflFun : {l : Level}{A B : Set l}(f : A -> B)(g : A -> B)-> ((a : A) -> f a == g a) -> f == g 
+  reflFun : {l m : Level}{A : Set l}{B : Set m}(f : A -> B)(g : A -> B)-> ((a : A) -> f a == g a) -> f == g 
 
 
 --********************************************
@@ -185,8 +186,12 @@ descDChoice _ lsigma = sigma (Set _) (\S -> pi (lift S) (\s -> var Void))
 descD : {l : Level}(I : Set l) -> IDesc Unit
 descD I = sigma DescDConst (descDChoice I)
 
+
+IDescl0 : {l : Level}(I : Set l) -> Unit -> Set (suc l)
+IDescl0 I = IMu (\_ -> descD I)
+
 IDescl : {l : Level}(I : Set l) -> Set (suc l)
-IDescl I = IMu (\_ -> descD I) Void
+IDescl I = IDescl0 I Void
 
 varl : {l : Level}{I : Set l}(i : I) -> IDescl I
 varl {x} i = con (lv , lifter i) 
@@ -248,3 +253,58 @@ psi (prod D D') = prodl (psi D) (psi D')
 psi (pi S T) = pil S (\s -> psi (T s))
 psi (sigma S T) = sigmal S (\s -> psi (T s))
 
+--********************************************
+-- Isomorphism proof
+--********************************************
+
+-- From host to host
+
+proof-phi-psi : {l : Level}{I : Set l} -> (D : IDesc I) -> phi (psi D) == D
+proof-phi-psi (var i) = refl
+proof-phi-psi (const x) = refl
+proof-phi-psi (prod D D') with proof-phi-psi D | proof-phi-psi D'
+...  | p | q = cong2 prod p q
+proof-phi-psi {x} (pi S T) = cong (pi S) 
+                                  (reflFun (\s -> phi (psi (T s)))
+                                           T
+                                           (\s -> proof-phi-psi (T s)))
+proof-phi-psi (sigma S T) = cong (sigma S)
+                                 (reflFun (\ s -> phi (psi (T s)))
+                                          T
+                                          (\s -> proof-phi-psi (T s)))
+
+-- From embedding to embedding
+
+proof-lift-unlift-eq : {l : Level}{A : Set l}(x : Lifted A) -> lifter (unlift x) == x
+proof-lift-unlift-eq (lifter a) = refl
+
+proof-psi-phi : {l : Level}(I : Set l) -> (D : IDescl I) -> psi (phi D) == D
+proof-psi-phi {x} I D =  induction (\ _ -> descD I)
+                               P
+                               proof-psi-phi-cases
+                               Void
+                               D
+                where P : Sigma Unit (IMu (\ x -> descD I)) -> Set (suc x)
+                      P ( Void , D ) = psi (phi D) == D
+                      lvar' : DescDConst {l = suc x}
+                      lvar' = lvar
+                      lpi' : DescDConst {l = suc x}
+                      lpi' = lpi
+                      lsigma' : DescDConst {l = suc x}
+                      lsigma' = lsigma
+                      proof-psi-phi-cases : (i : Unit)
+                                            (xs : desc (descD I) (IDescl0 I))
+                                            (hs : desc (box (descD I) (IDescl0 I) xs) P)
+                                            -> P (i , con xs)
+                      proof-psi-phi-cases Void (lvar , i) hs = cong (\t -> con (lvar' , t)) 
+                                                                    (proof-lift-unlift-eq i)
+                      proof-psi-phi-cases Void (lconst , x) hs = refl
+                      proof-psi-phi-cases Void (lprod , ( D , D' )) ( p , q ) = cong2 prodl p q 
+                      proof-psi-phi-cases Void (lpi , ( S , T )) hs = cong (\t ->  con ((lpi' , ((S , \ s -> t s))))) 
+                                                                          (reflFun (\s -> psi (phi (T s)))
+                                                                                    T
+                                                                                    hs)
+                      proof-psi-phi-cases Void (lsigma , ( S , T )) hs = {!!} {- cong (\t -> con (lsigma' , ( S , \s -> t (unlift s) ))) 
+                                                                              (reflFun (\s -> psi (phi (T (lifter s)))) 
+                                                                                       (\s -> T (lifter s)) 
+                                                                                       (\s -> hs (lifter s))) -}
