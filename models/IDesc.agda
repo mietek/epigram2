@@ -236,3 +236,15 @@ cases ( lsigma , ( S , T ) ) hs = sigma S (\s -> hs (lifter s))
 
 phi : {I : Set} -> IDescl I -> IDesc I
 phi {I} d = induction (\_ -> descD I) (\_ -> IDesc I) (\_ -> cases) Void d
+
+--********************************************
+-- From the host to the embedding
+--********************************************
+
+psi : {I : Set} -> IDesc I -> IDescl I
+psi (var i) = varl i
+psi (const X) = constl X
+psi (prod D D') = prodl (psi D) (psi D')
+psi (pi S T) = pil S (\s -> psi (T s))
+psi (sigma S T) = sigmal S (\s -> psi (T s))
+
