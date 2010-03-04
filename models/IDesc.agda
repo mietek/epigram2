@@ -33,6 +33,9 @@ data Lifted {l : Level} (A : Set l) : Set (suc l) where
 lift : {i : Level} -> Set i -> Set (suc i) 
 lift x =  Lifted x
 
+unlift : {l : Level}{A : Set l} -> Lifted A -> A
+unlift (lifter a) = a
+
 --****************
 -- Sigma and friends
 --****************
@@ -220,20 +223,16 @@ sigmal {x} S T = con (ls , ( S , Tl))
 -- From the embedding to the host
 --********************************************
 
--- desc : (l : Level)(I : Set l) -> IDesc l I -> (I -> Set l) -> Set l
--- descD : (l : Level)(I : Set l) -> IDesc (suc l) Unit
--- IMu (l : Level)(I : Set l)(R : I -> IDesc l I)(i : I) : Set l
+cases : {l : Level}
+        {I : Set l}
+        (xs : desc (descD I) (IMu (λ _ -> descD I)))
+        (hs : desc (box (descD I) (IMu (λ _ -> descD I)) xs) (λ _ -> IDesc I)) ->
+        IDesc I
+cases ( lvar , i ) hs =  var (unlift i)
+cases ( lconst , X ) hs =  const X
+cases ( lprod , (D , D') ) ( d , d' ) =  prod d d'
+cases ( lpi , ( S , T ) ) hs =  pi S (\s -> hs (lifter s))
+cases ( lsigma , ( S , T ) ) hs = sigma S (\s -> hs (lifter s))
 
--- cases : (l : Level)
---         (I : Set l)
---         (xs : desc (suc l) (lift I) (descD l I) (IMu (suc l) Unit (\ _ -> descD l I)))
---         (hs : desc l I (box l I (descD l I) (IMu l Unit (λ _ -> descD l I)) xs) (λ _ -> IDesc (suc l) I)) ->
---         IDesc (suc l) I
--- cases x I ( lvar , i ) hs =  var i
--- cases x I ( lconst , X ) hs =  const X
--- cases x I ( lprod , (D , D') ) ( d , d' ) =  prod d d'
--- cases x I ( lpi , ( S , T ) ) hs =  pi S hs
--- cases x I ( lsigma , ( S , T ) ) hs = sigma S hs
-
--- phi : {I : Set} -> IDescl I -> IDesc I
--- phi {I} d = induction (\_ -> descD I) (\_ -> IDesc I) (\_ -> cases) Void d
+phi : {I : Set} -> IDescl I -> IDesc I
+phi {I} d = induction (\_ -> descD I) (\_ -> IDesc I) (\_ -> cases) Void d
