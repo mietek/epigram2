@@ -185,34 +185,34 @@ descD I = sigma DescDConst (descDChoice I)
 IDescl : {l : Level}(I : Set l) -> Set (suc l)
 IDescl I = IMu (\_ -> descD I) Void
 
-varl : (l : Level)(I : Set l)(i : I) -> IDescl I
-varl x I i = con (lv , lifter i) 
-     where lv : DescDConst  {l = suc x}
+varl : {l : Level}{I : Set l}(i : I) -> IDescl I
+varl {x} i = con (lv , lifter i) 
+     where lv : DescDConst {l = suc x}
            lv = lvar
 
-constl : (l : Level)(I : Set l)(X : Set l) -> IDescl I
-constl x I X = con (lc , X)
+constl : {l : Level}{I : Set l}(X : Set l) -> IDescl I
+constl {x} X = con (lc , X)
        where lc : DescDConst {l = suc x}
              lc = lconst
 
-prodl : (l : Level)(I : Set l)(D D' : IDescl I) -> IDescl I
-prodl x I D D' = con (lp , (D , D'))
+prodl : {l : Level}{I : Set l}(D D' : IDescl I) -> IDescl I
+prodl {x} D D' = con (lp , (D , D'))
       where lp : DescDConst {l = suc x}
             lp = lprod
 
 
-pil : (l : Level)(I : Set l)(S : Set l)(T : S -> IDescl I) -> IDescl I
-pil x I S T = con (lp , ( S , Tl))
+pil : {l : Level}{I : Set l}(S : Set l)(T : S -> IDescl I) -> IDescl I
+pil {x} S T = con (lp , ( S , Tl))
     where lp : DescDConst {l = suc x}
           lp = lpi
-          Tl : Lifted S -> IDescl I
+          Tl : Lifted S -> IDescl _
           Tl (lifter s) = T s
 
-sigmal : (l : Level)(I : Set l)(S : Set l)(T : S -> IDescl I) -> IDescl I
-sigmal x I S T = con (ls , ( S , Tl))
+sigmal : {l : Level}{I : Set l}(S : Set l)(T : S -> IDescl I) -> IDescl I
+sigmal {x} S T = con (ls , ( S , Tl))
        where ls : DescDConst {l = suc x}
              ls = lsigma
-             Tl : Lifted S -> IDescl I
+             Tl : Lifted S -> IDescl _
              Tl (lifter s) = T s
              
 
