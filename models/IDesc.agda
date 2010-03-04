@@ -172,15 +172,15 @@ data DescDConst {l : Level} : Set l where
   lpi    : DescDConst
   lsigma : DescDConst
 
-descDChoice : (l : Level) -> Set l -> DescDConst -> IDesc Unit
-descDChoice _ I lvar = const (lift I)
-descDChoice x _ lconst = const (Set x)
-descDChoice _ _ lprod = prod (var Void) (var Void)
-descDChoice x _ lpi = sigma (Set x) (\S -> pi (lift S) (\s -> var Void))
-descDChoice x _ lsigma = sigma (Set x) (\S -> pi (lift S) (\s -> var Void))
+descDChoice : {l : Level} -> Set l -> DescDConst -> IDesc Unit
+descDChoice I lvar = const (lift I)
+descDChoice _ lconst = const (Set _)
+descDChoice _ lprod = prod (var Void) (var Void)
+descDChoice _ lpi = sigma (Set _) (\S -> pi (lift S) (\s -> var Void))
+descDChoice _ lsigma = sigma (Set _) (\S -> pi (lift S) (\s -> var Void))
 
 descD : (l : Level)(I : Set l) -> IDesc Unit
-descD x I = sigma DescDConst (descDChoice x I)
+descD x I = sigma DescDConst (descDChoice I)
 
 IDescl : (l : Level)(I : Set l) -> Set (suc l)
 IDescl x I = IMu (\_ -> descD x I) Void
