@@ -43,6 +43,10 @@ unlift (lifter a) = a
 data Sigma {i j : Level}(A : Set i) (B : A -> Set j) : Set (max i j) where
   _,_ : (x : A) (y : B x) -> Sigma A B
 
+pair : {i j : Level}{A : Set i}{B : A -> Set j} -> 
+       (x : A) (y : B x) -> Sigma {i = i}{j = j} A B
+pair x y = x , y
+
 _*_ : {i j : Level}(A : Set i)(B : Set j) -> Set (max i j)
 A * B = Sigma A \_ -> B
 
@@ -95,19 +99,18 @@ postulate
 -- Desc code
 --********************************************
 
-data IDesc {l : Level}(I : Set l) : Set (suc l) where
+data IDesc {l : Level}(I : Set (suc l)) : Set (suc l) where
   var : I -> IDesc I
   const : Set l -> IDesc I
   prod : IDesc I -> IDesc I -> IDesc I
   sigma : (S : Set l) -> (S -> IDesc I) -> IDesc I
   pi : (S : Set l) -> (S -> IDesc I) -> IDesc I
 
-
 --********************************************
 -- Desc interpretation
 --********************************************
 
-desc : {l : Level}{I : Set l} -> IDesc I -> (I -> Set l) -> Set l
+desc : {l : Level}{I : Set (suc l)} -> IDesc I -> (I -> Set l) -> Set l
 desc (var i) P = P i
 desc (const X) P = X
 desc (prod D D') P = desc D P * desc D' P
@@ -118,14 +121,14 @@ desc (pi S T) P = (s : S) -> desc (T s) P
 -- Fixpoint construction
 --********************************************
 
-data IMu {l : Level}{I : Set l}(R : I -> IDesc I)(i : I) : Set l where
+data IMu {l : Level}{I : Set (suc l)}(R : I -> IDesc {l = l} I)(i : I) : Set l where
   con : desc (R i) (\j -> IMu R j) -> IMu R i
 
 --********************************************
 -- Predicate: Box
 --********************************************
 
-box : {l : Level}{I : Set l}(D : IDesc I)(P : I -> Set l) -> desc D P -> IDesc (Sigma I P)
+box : {l : Level}{I : Set (suc l)}(D : IDesc I)(P : I -> Set l) -> desc D P -> IDesc (Sigma I P)
 box (var i)     P x        = var (i , x)
 box (const X)   P x        = const X
 box (prod D D') P (d , d') = prod (box D P d) (box D' P d')
@@ -137,7 +140,7 @@ box (pi S T)    P f        = pi S (\s -> box (T s) P (f s))
 --********************************************
 
 module Elim {l : Level}
-            {I : Set l}
+            {I : Set (suc l)}
             (R : I -> IDesc I)
             (P : Sigma I (IMu R) -> Set l)
             (m : (i : I)
@@ -161,7 +164,7 @@ module Elim {l : Level}
 
 
 induction : {l : Level}
-            {I : Set l}
+            {I : Set (suc l)}
             (R : I -> IDesc I)
             (P : Sigma I (IMu R) -> Set l)
             (m : (i : I)
@@ -182,82 +185,68 @@ data DescDConst {l : Level} : Set l where
   lpi    : DescDConst
   lsigma : DescDConst
 
-descDChoice : {l : Level} -> Set l -> DescDConst -> IDesc Unit
-descDChoice I lvar = const (lift I)
+descDChoice : {l : Level} -> Set (suc l) -> DescDConst -> IDesc Unit
+descDChoice I lvar = const I
 descDChoice _ lconst = const (Set _)
 descDChoice _ lprod = prod (var Void) (var Void)
 descDChoice _ lpi = sigma (Set _) (\S -> pi (lift S) (\s -> var Void))
 descDChoice _ lsigma = sigma (Set _) (\S -> pi (lift S) (\s -> var Void))
 
-descD : {l : Level}(I : Set l) -> IDesc Unit
-descD I = sigma DescDConst (descDChoice I)
+IDescD : {l : Level}(I : Set (suc l)) -> IDesc {l = suc l} Unit
+IDescD I = sigma DescDConst (descDChoice I)
 
+IDescl0 : {l : Level}(I : Set (suc l)) -> Unit -> Set (suc l)
+IDescl0 {x} I = IMu {l = suc x} (\_ -> IDescD {l = x} I)
 
-IDescl0 : {l : Level}(I : Set l) -> Unit -> Set (suc l)
-IDescl0 I = IMu (\_ -> descD I)
-
-IDescl : {l : Level}(I : Set l) -> Set (suc l)
+IDescl : {l : Level}(I : Set (suc l)) -> Set (suc l)
 IDescl I = IDescl0 I Void
 
-varl : {l : Level}{I : Set l}(i : I) -> IDescl I
-varl {x} i = con (lv , lifter i) 
-     where lv : DescDConst {l = suc x}
-           lv = lvar
+varl : {l : Level}{I : Set (suc l)}(i : I) -> IDescl I
+varl {x} i = con (lvar {l = suc x} , i) 
 
-constl : {l : Level}{I : Set l}(X : Set l) -> IDescl I
-constl {x} X = con (lc , X)
-       where lc : DescDConst {l = suc x}
-             lc = lconst
+constl : {l : Level}{I : Set (suc l)}(X : Set l) -> IDescl I
+constl {x} X = con (lconst {l = suc x} , X)
 
-prodl : {l : Level}{I : Set l}(D D' : IDescl I) -> IDescl I
-prodl {x} D D' = con (lp , (D , D'))
-      where lp : DescDConst {l = suc x}
-            lp = lprod
+prodl : {l : Level}{I : Set (suc l)}(D D' : IDescl I) -> IDescl I
+prodl {x} D D' = con (lprod {l = suc x} , (D , D'))
 
 
-pil : {l : Level}{I : Set l}(S : Set l)(T : S -> IDescl I) -> IDescl I
-pil {x} S T = con (lp , ( S , Tl))
-    where lp : DescDConst {l = suc x}
-          lp = lpi
-          Tl : Lifted S -> IDescl _
-          Tl (lifter s) = T s
+pil : {l : Level}{I : Set (suc l)}(S : Set l)(T : S -> IDescl I) -> IDescl I
+pil {x} S T = con (lpi {l = suc x} , pair {i = suc x}{j = suc x} S (\s -> T (unlift s)))
 
-sigmal : {l : Level}{I : Set l}(S : Set l)(T : S -> IDescl I) -> IDescl I
-sigmal {x} S T = con (ls , ( S , Tl))
-       where ls : DescDConst {l = suc x}
-             ls = lsigma
-             Tl : Lifted S -> IDescl _
-             Tl (lifter s) = T s
-             
-
+sigmal : {l : Level}{I : Set (suc l)}(S : Set l)(T : S -> IDescl I) -> IDescl I
+sigmal {x} S T = con (lsigma {l = suc x} , pair {i = suc x}{j = suc x} S (\s -> T (unlift s)))
+           
 --********************************************
 -- From the embedding to the host
 --********************************************
 
 cases : {l : Level}
-        {I : Set l}
-        (xs : desc (descD I) (IMu (λ _ -> descD I)))
-        (hs : desc (box (descD I) (IMu (λ _ -> descD I)) xs) (λ _ -> IDesc I)) ->
+        {I : Set (suc l)}
+        (xs : desc (IDescD I) (IMu (λ _ -> IDescD I)))
+        (hs : desc (box (IDescD I) (IMu (λ _ -> IDescD I)) xs) (λ _ -> IDesc I)) ->
         IDesc I
-cases ( lvar , i ) hs =  var (unlift i)
+cases ( lvar , i ) hs =  var i
 cases ( lconst , X ) hs =  const X
 cases ( lprod , (D , D') ) ( d , d' ) =  prod d d'
-cases ( lpi , ( S , T ) ) hs =  pi S (\s -> hs (lifter s))
+cases ( lpi , ( S , T ) ) hs =  pi S (\s -> hs (lifter s) )
 cases ( lsigma , ( S , T ) ) hs = sigma S (\s -> hs (lifter s))
 
-phi : {l : Level}{I : Set l} -> IDescl I -> IDesc I
-phi {x} {I} d = induction (\_ -> descD I) (\_ -> IDesc I) (\_ -> cases) Void d
+phi : {l : Level}{I : Set (suc l)} -> IDescl I -> IDesc I
+phi {x} {I} d = induction (\_ -> IDescD I) (\_ -> IDesc I) (\_ -> cases) Void d
+
 
 --********************************************
 -- From the host to the embedding
 --********************************************
 
-psi : {l : Level}{I : Set l} -> IDesc I -> IDescl I
+psi : {l : Level}{I : Set (suc l)} -> IDesc I -> IDescl I
 psi (var i) = varl i
 psi (const X) = constl X
 psi (prod D D') = prodl (psi D) (psi D')
 psi (pi S T) = pil S (\s -> psi (T s))
 psi (sigma S T) = sigmal S (\s -> psi (T s))
+
 
 --********************************************
 -- Isomorphism proof
@@ -265,7 +254,7 @@ psi (sigma S T) = sigmal S (\s -> psi (T s))
 
 -- From host to host
 
-proof-phi-psi : {l : Level}{I : Set l} -> (D : IDesc I) -> phi (psi D) == D
+proof-phi-psi : {l : Level}{I : Set (suc l)} -> (D : IDesc I) -> phi (psi D) == D
 proof-phi-psi (var i) = refl
 proof-phi-psi (const x) = refl
 proof-phi-psi (prod D D') with proof-phi-psi D | proof-phi-psi D'
@@ -281,23 +270,19 @@ proof-phi-psi (sigma S T) = cong (sigma S)
 
 -- From embedding to embedding
 
-proof-lift-unlift-eq : {l : Level}{A : Set l}(x : Lifted A) -> lifter (unlift x) == x
-proof-lift-unlift-eq (lifter a) = refl
-
-proof-psi-phi : {l : Level}(I : Set l) -> (D : IDescl I) -> psi (phi D) == D
-proof-psi-phi {x} I D =  induction (\ _ -> descD I)
+proof-psi-phi : {l : Level}(I : Set (suc l)) -> (D : IDescl I) -> psi (phi D) == D
+proof-psi-phi {x} I D =  induction (\ _ -> IDescD I)
                                P
                                proof-psi-phi-cases
                                Void
                                D
-                where P : Sigma Unit (IMu (\ x -> descD I)) -> Set (suc x)
+                where P : Sigma Unit (IMu (\ x -> IDescD I)) -> Set (suc x)
                       P ( Void , D ) = psi (phi D) == D
                       proof-psi-phi-cases : (i : Unit)
-                                            (xs : desc (descD I) (IDescl0 I))
-                                            (hs : desc (box (descD I) (IDescl0 I) xs) P)
+                                            (xs : desc (IDescD I) (IDescl0 I))
+                                            (hs : desc (box (IDescD I) (IDescl0 I) xs) P)
                                             -> P (i , con xs)
-                      proof-psi-phi-cases Void (lvar , i) hs = cong (\t -> con (lvar' , t)) 
-                                                                    (proof-lift-unlift-eq i)
+                      proof-psi-phi-cases Void (lvar , i) hs = refl
                       proof-psi-phi-cases Void (lconst , x) hs = refl
                       proof-psi-phi-cases Void (lprod , ( D , D' )) ( p , q ) = cong2 prodl p q 
                       proof-psi-phi-cases Void (lpi , ( S , T )) hs = cong (\T -> con (lpi {l = suc x} , ( S , T ) )) 
