@@ -80,6 +80,12 @@ cong2 : {l m n : Level}{A : Set l}{B : Set m}{C : Set n}
         x == y -> z == t -> f x z == f y t
 cong2 f refl refl = refl
 
+trans : {l : Level}{A : Set l}{x y z : A} -> x == y -> y == z -> x == z
+trans refl refl = refl
+
+proof-lift-unlift-eq : {l : Level}{A : Set l}(x : Lifted A) -> lifter (unlift x) == x
+proof-lift-unlift-eq (lifter a) = refl
+
 -- Intensionally extensional
 postulate 
   reflFun : {l m : Level}{A : Set l}{B : Set m}(f : A -> B)(g : A -> B)-> ((a : A) -> f a == g a) -> f == g 
@@ -286,12 +292,6 @@ proof-psi-phi {x} I D =  induction (\ _ -> descD I)
                                D
                 where P : Sigma Unit (IMu (\ x -> descD I)) -> Set (suc x)
                       P ( Void , D ) = psi (phi D) == D
-                      lvar' : DescDConst {l = suc x}
-                      lvar' = lvar
-                      lpi' : DescDConst {l = suc x}
-                      lpi' = lpi
-                      lsigma' : DescDConst {l = suc x}
-                      lsigma' = lsigma
                       proof-psi-phi-cases : (i : Unit)
                                             (xs : desc (descD I) (IDescl0 I))
                                             (hs : desc (box (descD I) (IDescl0 I) xs) P)
@@ -300,11 +300,19 @@ proof-psi-phi {x} I D =  induction (\ _ -> descD I)
                                                                     (proof-lift-unlift-eq i)
                       proof-psi-phi-cases Void (lconst , x) hs = refl
                       proof-psi-phi-cases Void (lprod , ( D , D' )) ( p , q ) = cong2 prodl p q 
-                      proof-psi-phi-cases Void (lpi , ( S , T )) hs = cong (\t ->  con ((lpi' , ((S , \ s -> t s))))) 
-                                                                          (reflFun (\s -> psi (phi (T s)))
-                                                                                    T
-                                                                                    hs)
-                      proof-psi-phi-cases Void (lsigma , ( S , T )) hs = {!!} {- cong (\t -> con (lsigma' , ( S , \s -> t (unlift s) ))) 
-                                                                              (reflFun (\s -> psi (phi (T (lifter s)))) 
-                                                                                       (\s -> T (lifter s)) 
-                                                                                       (\s -> hs (lifter s))) -}
+                      proof-psi-phi-cases Void (lpi , ( S , T )) hs = cong (\T -> con (lpi {l = suc x} , ( S , T ) )) 
+                                                                           (trans (reflFun (λ s → psi (phi (T (lifter (unlift s)))))
+                                                                                           (λ s → psi (phi (T (s))))
+                                                                                           (\s -> cong (λ s → psi (phi (T (s))))
+                                                                                                       (proof-lift-unlift-eq s)))
+                                                                                  (reflFun (\s -> psi (phi (T s))) 
+                                                                                           T 
+                                                                                           hs)) 
+                      proof-psi-phi-cases Void (lsigma , ( S , T )) hs = cong (\T -> con (lsigma {l = suc x} , ( S , T ) )) 
+                                                                              (trans (reflFun (λ s → psi (phi (T (lifter (unlift s)))))
+                                                                                              (λ s → psi (phi (T (s))))
+                                                                                              (\s -> cong (λ s → psi (phi (T (s))))
+                                                                                                          (proof-lift-unlift-eq s)))
+                                                                                     (reflFun (\s -> psi (phi (T s))) 
+                                                                                              T 
+                                                                                              hs))
