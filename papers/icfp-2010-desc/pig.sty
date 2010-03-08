@@ -232,7 +232,7 @@
 \newcommand{\Nat}{\D{Nat}}
 \newcommand{\NatD}{\C{NatD}}
 \newcommand{\NatZero}{\etag{\CN{zero}}}
-\newcommand{\NatSuc}{\etag{\CN{suc}}}
+\newcommand{\NatSuc}[1]{\etag{\CN{suc}}\:#1}
 
 %% List
 \newcommand{\List}{\D{List}}
@@ -246,6 +246,15 @@
 \newcommand{\TreeLeaf}{\etag{\CN{leaf}}}
 \newcommand{\TreeNode}{\etag{\CN{node}}}
 
+%% Lambda terms
+\newcommand{\LambdaT}{\D{LambdaT}}
+\newcommand{\LambdaTD}{\C{LambdaTD}}
+\newcommand{\LambdaTVar}{\etag{\CN{v}}}
+\newcommand{\LambdaTApp}{\etag{\CN{app}}}
+\newcommand{\LambdaTLam}{\etag{\CN{lam}}}
+
+%% Fin
+\newcommand{\Fin}[1]{\D{Fin}\:#1}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

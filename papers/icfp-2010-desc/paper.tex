@@ -519,7 +519,7 @@ following implications always hold by induction on derivations.
 
 \[\stk{
 \NatD : \Desc \\
-\NatD \mapsto \DSigma{(\EnumT [ \NatZero, \NatSuc ])}
+\NatD \mapsto \DSigma{(\EnumT [ \NatZero, \NatSuc{} ])}
                      {[ \DUnit \quad (\DIndx{\DUnit}) ]}
 }\]
 
@@ -818,6 +818,18 @@ Of course, we must equip the resulting datatypes with operations delivering a mo
     -> untyped lambda terms
         /> What is Fin??
 \end{structure}
+
+\[\stk{
+\LambdaTD : \Nat \To \IDesc{\Nat} \\
+\begin{array}{@{}ll}
+\LambdaTD\: n = \DSigma{}{} & (\EnumT [ \LambdaTVar, \LambdaTApp, \LambdaTLam ]) \\
+                            & \left[\begin{array}{l}
+                                  \DConst{\Fin{n}} \\
+                                  \DProd{\DVar{n}}{\DVar{n}} \\
+                                  \DVar{(\NatSuc{n})}
+                              \end{array}\right]
+\end{array}
+}\]
 
 \subsection{Constrained constructors, bis}
 
