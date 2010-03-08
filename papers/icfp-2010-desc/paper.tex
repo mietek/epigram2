@@ -906,8 +906,32 @@ Of course, we must equip the resulting datatypes with operations delivering a mo
 \end{array}
 }\]
 
-\[\LambdaTD\: \mapsto \FreeMonad{[\LambdaTFreeD]}{\Fin{}}\]
+\[\stk{
+\LambdaTD : \Nat \To \IDesc{\Nat} \\
+\LambdaTD\: \mapsto \FreeMonad{[\LambdaTFreeD]}{\Fin{}}
+}\]
 
+
+\[\stk{
+\IDescFreeD : \PI{\V{I}}{\Set} \IDesc{\Unit} \\
+\begin{array}{@{}ll}
+\IDescFreeD~I \mapsto \DSigma{}{} & (\EnumT [ \DConst{},
+                                              \DProd{}{},
+                                              \DSigma{}{}, 
+                                              \DPi{}{} ]) \\
+                                  & \left[\begin{array}{l}
+                                        \DConst{\Set}               \\
+                                        \DProd{\DVar{\Void}}{\DVar{\Void}}  \\
+                                        \DSigma{\Set}{(\LAM{S} \DPi{S}{(\LAM{\_} \DVar{\Void})})} \\
+                                        \DSigma{\Set}{(\LAM{S} \DPi{S}{(\LAM{\_} \DVar{\Void})})}
+                                    \end{array}\right]
+\end{array}
+}\]
+
+\[\stk{
+\IDescD : \PI{\V{I}}{\Set} \IDesc{\Unit} \\
+\IDescD\: I \mapsto \FreeMonad{[\IDescFreeD]}{I}\: I
+}\]
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Desc
