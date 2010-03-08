@@ -576,10 +576,12 @@ principle, but we might also benefit from the traditional \emph{catamorphism}
 or `fold operator' which accompanies a (weakly) initial algebra. We should
 like to have
 \[\stk{
-\F{cata} : \PITEL{D}{\Desc}\PI{T}{\Set}
-           (\descop{D}{T}\To T)\To \Mu{D}\To T\\
-\F{cata}\:D\:T\:f \mapsto
-  \F{induction}\:D\:(\LAM{\_}T)\:(\LAM{xs\:ts}f\:?)
+\F{cata} : \PITEL{D}{\Desc}
+           \PI{T}{\Set}
+           (\descop{D}{T}\To T) \To 
+           \Mu{D} \To T \\
+\F{cata}\: D\: T\: f \mapsto
+  \F{induction}\: D\: (\LAM{\_}T)\: (\LAM{xs\:ts} f\: ?)
 }\]
 but what should \(?\) be? We have \(xs:\descop{D}{\Mu{D}}\)
 and \(ts:\All{D}{(\Mu{D})}{(\LAM{\_}T)}{xs}\), so surely we can construct
@@ -587,16 +589,16 @@ an element of \(\descop{D}{T}\) by replacing each recursive component from
 \(xs\) with its counterpart from \(ts\).
 
 \[\stk{
-\F{replace} : 
-\stk{\PITEL{D}{\Desc}\PITEL{X,Y}{\Set}\\
-           \PI{xs}{\descop{D}{X}} \All{D}{X}{(\LAM{\_}Y)}{xs} \To
-           \descop{D}{Y}}
-\\
-\F{replace}\:\DUnit\: X\:Y\:\Void\:\Void\mapsto\Void \\
-\F{replace}\:(\DSigma{S}{D})\:X\:Y\:\pair{s}{xs}{}\:ys\mapsto
- \pair{s}{\F{replace}\:{D~s}\:X\:Y\:xs\:ys}{}         \\
-\F{replace}\:(\DIndx{D})\:X\:Y\:\pair{x}{xs}{}\:\pair{y}{ys}{} \mapsto
-    \pair{y}{\F{replace}\:D\:X\:Y\:xs\:ys}{}
+\F{replace} : \stk{\PITEL{D}{\Desc}
+                   \PITEL{X,Y}{\Set}\\
+                   \PI{xs}{\descop{D}{X}} 
+                   \All{D}{X}{(\LAM{\_}Y)}{xs} \To
+                   \descop{D}{Y}} \\
+\F{replace}\: \DUnit\:          X\: Y\: \Void\:          \Void          \mapsto \Void \\
+\F{replace}\: (\DSigma{S}{D})\: X\: Y\: \pair{s}{xs}{}\: ys             \mapsto
+    \pair{s}{\F{replace}\: {D~s}\: X\: Y\: xs\: ys}{}         \\
+\F{replace}\: (\DIndx{D})\:     X\: Y\: \pair{x}{xs}{}\: \pair{y}{ys}{} \mapsto
+    \pair{y}{\F{replace}\: D\: X\: Y\: xs\: ys}{}
 }\]
 
 \subsection{Describing enumerations}
