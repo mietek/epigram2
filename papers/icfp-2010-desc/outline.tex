@@ -554,12 +554,19 @@ Proust.
 
 \begin{structure}
 <- Untyped lambda terms [figure]
-    ???
+    <- Indexed by Nat
+        <- De Bruijn "encoding"
+    <- Variable in Fin n
+        -> Correct by construction lambda term
+    /> Lack the monadic structure [Altenkirch & Reus ???]
+        -> Miss substitution operator
+        /> Will be fixed later
 \end{structure}
 
 \subsection{Constrained constructors}
 
 \begin{structure}
+!!! Need Help !!!
 <- Assuming a suitable notion of definitional equality for I
     ???
 \end{structure}
@@ -567,36 +574,72 @@ Proust.
 \begin{structure}
 <- Fin [figure]
     <- Presentation with equality constraints
+    <- Example of constrained constructor
+        -> Constraints are translated into equalities
     ???
 \end{structure}
 
 \begin{structure}
 <- Vectors
-    ???
+    Do we treat them in the end? 
+    What can we say here we haven't with Fin?
 \end{structure}
 
 \begin{structure}
-<- GADTS
-    ???
+<- GADT-style data-type definition
+    <- We directly support it
+        <- Constraints turned into equalities
+            <- Fin example
+    <- Again, smooth transition from "today" data-types to advanced ones
+        <- Same grammar
+        /> More power
+    /> Equations in data-types are not a blessing
+        <- Complexify induction principle
+        <- Lose match between data-type definition and the elimination form
 \end{structure}
 
 \begin{structure}
-<- Brady optimization
+!!! Need Help !!!
+<- Brady optimization: forcing
     <- Source to source translation
     <- Able to remove some constraints
     -> Example: Fin [figure]
+    ??? More technical detail needed
 \end{structure}
 
 \subsection{Free IMonad}
 
 \begin{structure}
+<- Variation on a theme: free imonad construction
+    <- Recall existence of generic free monad construction
+    -> Present its generalization to IDesc [equation]
+        <- \I -> IDesc I as describing an indexed endofunctor
+        <- Free indexed monad construction
+    -> Still a suitable, generic notion of substitution
+        <- show type signature
+        <- show implementation?? (space! space!)
+\end{structure}
+
+\begin{structure}
 <- Untyped lambda terms
-    ???
+    <- Obvious instance of free monad
+        <- Variable: Return
+        <- App and Abst: indexed functor
+        <- Bind: substitution
+    -> Get a correct-by-construction lambda term
+        /> With substitution for free!
+        <- We should not pay for the structure which *is* here
 \end{structure}
 
 \begin{structure}
 <- IDesc
-    ???
+    <- Another instance of free monad
+        <- Var: Return
+        <- Remaining: (not even indexed) functor
+    -> Madness just starts
+        <- map operation
+        <- [ subst sigma D ] X = [D] (\x -> [subst sigma x] X)
+        ???
 \end{structure}
 
 \section{Discussion}
