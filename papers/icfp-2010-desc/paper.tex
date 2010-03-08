@@ -852,6 +852,20 @@ Of course, we must equip the resulting datatypes with operations delivering a mo
     -> Anglo-catholicism
 \end{structure}
 
+\[\stk{
+\FinD : \Nat \To \IDesc{\Nat} \\
+\begin{array}{@{}llll}
+\FinD\: 0            & = & \multicolumn{2}{l}{\DSigma{\Void}{\Void} } \\
+\FinD\: (\NatSuc{n}) & = & \DSigma{}{} & (\EnumT [ \FinZero , \FinSuc{} ]) \\
+                     &   &             & \left[
+                                         \begin{array}{l}
+                                         \DConst{\Unit} \\
+                                         \DVar{n}
+                                         \end{array}
+                                         \right]
+\end{array}
+}\]
+
 
 %% \[
 %% \stk{
