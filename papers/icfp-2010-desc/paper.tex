@@ -701,14 +701,13 @@ A \emph{tagged} description is given by an inhabitant of
 \]
 
 
-\newcommand{\FM}[1]{{#1}^{\F{\(\ast\)}}}
 Datatypes specified in the conventional `sum of products' style naturally give rise to tagged descriptions. Of course, every description can be dorced into this style with a singleton choice of tag.
 
 We may then implement the \emph{free monad} construction as a
 transformation on \(\F{TagDesc}\).
 \[\stk{
-\FM{\_} : \F{TagDesc} \To \Set \To \F{TagDesc} \\
-\FM{\pair{E}{D}{}}\:X \mapsto
+\FreeMonad{\_} : \F{TagDesc} \To \Set \To \F{TagDesc} \\
+\FreeMonad{\pair{E}{D}{}}\:X \mapsto
 \pair{\ListCons{\:\DVar{}}{E}}{\pair{\DConst{X}}{D}{}}{}
 }\]
 Of course, we must equip the resulting datatypes with operations delivering a monadic interface. As usual, \(\LAM{\x}\DVar{\x}\) performs the r\^ole of `return', embedding variables into terms. We shall also need a generic \emph{substitution} operator.
@@ -866,7 +865,7 @@ Of course, we must equip the resulting datatypes with operations delivering a mo
 \end{array}
 }\]
 
-
+ 
 %% \[
 %% \stk{
 %% \data \IDesc{} : \PI{\V{I}}{\Set} \Set \where \\
@@ -893,6 +892,22 @@ Of course, we must equip the resulting datatypes with operations delivering a mo
 %% \idescop{\DPi{S}{D}}{I}{P}    &  \PI{\V{s}}{S} \idescop{D s}{I}{P}            
 %% \end{array}
 %% }\]
+
+
+
+\[\stk{
+\LambdaTFreeD : \Nat \To \IDesc{\Nat} \\
+\begin{array}{@{}ll}
+\LambdaTFreeD\: n = \DSigma{}{} & (\EnumT [ \LambdaTApp, \LambdaTLam ]) \\
+                                & \left[\begin{array}{l}
+                                  \DProd{\DVar{n}}{\DVar{n}} \\
+                                  \DVar{(\NatSuc{n})}
+                                  \end{array}\right]
+\end{array}
+}\]
+
+\[\LambdaTD\: \mapsto \FreeMonad{[\LambdaTFreeD]}{\Fin{}}\]
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Desc
