@@ -54,7 +54,7 @@ Proust.
     <- Set in Set
         -> For simplicity of presentation
         -> Assume that a valid stratification can be inferred
-            <- Implicit syntax, Pollack (?, or better reference)
+            <- Harper-Pollack, Luo, Courant
         -> See later discussion
     <- Standard presentation of Pi and Sigma types
 \end{structure}
@@ -64,7 +64,6 @@ Proust.
     <- symmetry, reflexivity, and transitivity
     <- beta-rules for lambda and pair
     <- xi-rule for functions
-    /> Assume transitivity, reflexity, and symmetry
     -> Agnostic in the notion of equality
         <- Doesn't rely on a ``propositional'' equality
 \end{structure}
@@ -73,7 +72,6 @@ Proust.
 !!! Need Help !!!
 <- Meta-theoretical properties
     <- Assuming a stratified discipline
-        <- Harper-Pollack, Luo, Courant
     <> The point here is to reassert that dependent types are not evil, 
        there is no non-terminating type-checker, or such horrible lies <>
     -> Strongly normalizing
@@ -96,7 +94,7 @@ Proust.
 \end{structure}
 
 \begin{structure}
-<- Implementation
+<- Implementation [figure]      
     <- Tags
         -> Purely informational token
     <- EnumU
@@ -308,6 +306,7 @@ Proust.
         <- Everywhere/All
         <- Induction
     -> *Generic*
+    ???
 \end{structure}
 
 \section{Levitating the universe of descriptions}
@@ -426,7 +425,26 @@ Proust.
 
 \begin{structure}
 <- Making cata
-    ???
+    <- Present the type signature
+    <- Starts with a call to generic induction
+        <- induction on Desc!
+        /> Show types at hand
+        -> Explain how to use inductive hypothesis
+    <- Implement the 'replace' function
+    -> Dependent-typeless catamorphism 
+\end{structure}
+
+\begin{structure}
+<- Deriving generic functions
+    <- Taking a Desc and computing a function
+        <- Desc comes equipped with an induction principle
+        -> Ability to compute more functions from it
+            -> More generic functions
+    <- Inspecting data-types
+        <- All described by a Desc code
+        -> Ability to explore the code
+            <- Desc equipped with an induction principle
+            -> Build new objects based on that structure
 \end{structure}
 
 \subsection{The generic Free Monad}
@@ -460,8 +478,25 @@ Proust.
 \begin{structure}
 <- A generic program: monadic substitution [equation]
     <- subst : \forall T X Y. mu ([T]* X) -> (X -> mu ([T]* Y)) -> mu ([T]* Y)
-    -> Using Fold
-    
+        -> Using Fold
+    -> Consequences
+        <- We have free monad data-type
+            <- Term + variables
+        <- We have monad operations
+            <- Return / var
+            <- Substitution / bind
+\end{structure}
+
+\begin{structure}
+<- Deriving new data-structure and functions on them
+    <- Computing the Free Monad of a data-type
+        <- Derive new data-structure from previous one
+            <- It is just code
+        /> New data-structure comes with some equipment
+    <- Computing new functions on computed data-types
+        <- If data comes with structure, we ought to be able to capture it
+            <- Induction on Desc
+            -> Ability to compute over data
 \end{structure}
 
 \section{Indexing descriptions}
