@@ -730,30 +730,30 @@ Of course, we must equip the resulting datatypes with operations delivering a mo
 <- Labelling the \DId
 \end{structure}
 
-\[
-\stk{
-\data \IDesc{} : \PI{\V{I}}{\Set}{\Set} \where \\
-\;\;\begin{array}{@{}l@{\::\:}l@{\quad}l}
-    \DVar           & I \To \IDesc{I}                                   \\
-    \DUnit          & \IDesc{I}                                         \\
-    \DProd{}{}      & \PI{\V{D}, \V{D'}}{\IDesc{I}} \IDesc{I}           \\
-    \DSigma         & \PI{\V{S}}{\Set} \PIS{S \To \IDesc{I}} \IDesc{I}  \\
-    \DPi            & \PI{\V{S}}{\Set} \PIS{S \To \IDesc{I}} \IDesc{I} 
-\end{array}
-}
-\]
+%% \[
+%% \stk{
+%% \data \IDesc{} : \PI{\V{I}}{\Set}{\Set} \where \\
+%% \;\;\begin{array}{@{}l@{\::\:}l@{\quad}l}
+%%     \DVar           & I \To \IDesc{I}                                   \\
+%%     \DUnit          & \IDesc{I}                                         \\
+%%     \DProd{}{}      & \PI{\V{D}, \V{D'}}{\IDesc{I}} \IDesc{I}           \\
+%%     \DSigma         & \PI{\V{S}}{\Set} \PIS{S \To \IDesc{I}} \IDesc{I}  \\
+%%     \DPi            & \PI{\V{S}}{\Set} \PIS{S \To \IDesc{I}} \IDesc{I} 
+%% \end{array}
+%% }
+%% \]
 
 
-\[\stk{
-\idescop{\_\:}{}{} : \PI{\V{I}}{\Set} \IDesc{I} \To \Set \To \Set          \\
-\begin{array}{@{}l@{\:=\:\:}ll}
-\idescop{\DVar{i}}{I}{P}      &  P~i                                         \\
-\idescop{\DUnit}{I}{P}        &  \Unit                                       \\
-\idescop{\DProd{D}{D'}}{I}{P} &  \TIMES{\idescop{D}{I}{P}}{\idescop{D'}{I}{P}}       \\
-\idescop{\DSigma{S}{D}}{I}{P} &  \SIGMA{\V{s}}{S} \idescop{D\: s}{I}{P}                \\
-\idescop{\DPi{S}{D}}{I}{P}    &  \PI{\V{s}}{S} \idescop{D\: s}{I}{P}            
-\end{array}
-}\]
+%% \[\stk{
+%% \idescop{\_\:}{}{} : \PI{\V{I}}{\Set} \IDesc{I} \To \Set \To \Set          \\
+%% \begin{array}{@{}l@{\:=\:\:}ll}
+%% \idescop{\DVar{i}}{I}{P}      &  P~i                                         \\
+%% \idescop{\DUnit}{I}{P}        &  \Unit                                       \\
+%% \idescop{\DProd{D}{D'}}{I}{P} &  \TIMES{\idescop{D}{I}{P}}{\idescop{D'}{I}{P}}       \\
+%% \idescop{\DSigma{S}{D}}{I}{P} &  \SIGMA{\V{s}}{S} \idescop{D\: s}{I}{P}                \\
+%% \idescop{\DPi{S}{D}}{I}{P}    &  \PI{\V{s}}{S} \idescop{D\: s}{I}{P}            
+%% \end{array}
+%% }\]
 
 \begin{structure}
 <- I -> IDesc I describes an inductive family
