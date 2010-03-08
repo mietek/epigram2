@@ -833,6 +833,19 @@ Of course, we must equip the resulting datatypes with operations delivering a mo
 
 \subsection{Constrained constructors, bis}
 
+\[\stk{
+\FinD : \Nat \To \IDesc{\Nat} \\
+\begin{array}{@{}ll}
+\FinD\: n = \DSigma{}{} & (\EnumT [ \FinZero , \FinSuc{} ]) \\
+                        & \left[
+                          \begin{array}{l}
+                            \DSigma{\Nat}{\LAM{m} \DConst{(n \PropEq \NatSuc{m})}} \\
+                            \DSigma{\Nat}{\LAM{m} \DProd{\DVar{m}}{\DConst{(n \PropEq \NatSuc{m})}}}
+                          \end{array}
+                          \right]
+\end{array}
+}\]
+
 \begin{structure}
 <- Presbyterianism, Episcopalism, Catholicism
 <- Brady-optimization: source-to-source
