@@ -1,0 +1,275 @@
+\section{The Type Theory}
+
+\subsection{Base theory}
+
+\begin{structure}
+<- Presentation of the formalism
+    <- Standard presentation
+        -> No novelty here
+    <- 3 judgments [equation]
+        -> Context validity
+        -> Typing judgements
+        -> Equality judgements
+\end{structure}
+
+\[
+\begin{array}{ll}
+\Gamma\vdash\Valid & \mbox{\(\Gamma\) is a valid context, giving types to variables} \\
+\Gamma\vdash \Bhab{t}{T} & \mbox{term \(t\) has type \(T\) in context \(\Gamma\)} \\
+\Gamma\vdash \Bhab{s \equiv t}{T} & \mbox{\(s\) and \(t\) are equal at type \(T\) in context \(\Gamma\)} \\
+\end{array}
+\]
+
+\begin{structure}
+    <- Invariants [equation]
+        -> By induction on derivations
+\end{structure}
+
+The systems of inference rules will be formulated to ensure that that the
+following implications always hold by induction on derivations.
+\[
+\begin{array}{l@{\;\;\Rightarrow\;\;}l}
+\Gamma\vdash \Bhab{t}{T}            & \Gamma\vdash\Valid \;\wedge\; \Gamma\vdash\Type{T} \\
+\Gamma\vdash s \equiv \Bhab{t}{T}   & \Gamma\vdash \Bhab{s}{T} \;\wedge\; \Gamma\vdash \Bhab{t}{T} \\
+\Gamma;\xS;\Delta \vdash J          & \Gamma\vdash \Bhab{s}{S} \;\Rightarrow\; 
+                                           \Gamma;\Delta[s/x] \vdash J[s/x] \\
+\end{array}
+\]
+
+
+\begin{structure}
+    <- Judgemental equality
+        <- Presentation independant of particular implementation choice
+        -> Model in Agda, intensional
+        -> Used in Epigram, OTT
+\end{structure}
+
+\begin{structure}
+<- Context validity [figure]
+    <- Not much to be said
+\end{structure}
+
+\begin{figure}
+
+\[
+%% Empty context validity
+\Axiom{\vdash \Valid}
+\qquad
+%% Extend context
+\Rule{\Gamma       \vdash \Type{S}}
+     {\Gamma ; \xS \vdash \Valid}\;x\not\in\Gamma
+\]
+
+\caption{Context validity}
+\label{fig:context-validity}
+\end{figure}
+
+
+\begin{structure}
+<- Typing judgements [figure]
+    <- Set in Set
+        -> For simplicity of presentation
+        -> Assume that a valid stratification can be inferred
+            <- Harper-Pollack, Luo, Courant
+        -> See later discussion
+    <- Standard presentation of Pi and Sigma types
+\end{structure}
+
+\begin{figure}
+
+\input{figure_typing_judgements}
+
+\caption{Typing judgements}
+\label{fig:typing-judgements}
+
+\end{figure}
+
+
+\begin{structure}
+<- Judgemental equality [figure]
+    <- symmetry, reflexivity, and transitivity
+    <- beta-rules for lambda and pair
+    <- xi-rule for functions
+    -> Agnostic in the notion of equality
+        <- Doesn't rely on a ``propositional'' equality
+\end{structure}
+
+
+\begin{figure}
+
+\input{figure_judgemental_equality}
+
+\caption{Judgemental equality}
+\label{fig:judgemental-equality}
+
+\end{figure}
+
+
+
+\begin{structure}
+!!! Need Help !!!
+<- Meta-theoretical properties
+    <- Assuming a stratified discipline
+    <> The point here is to reassert that dependent types are not evil, 
+       there is no non-terminating type-checker, or such horrible lies <>
+    -> Strongly normalizing
+        -> Every program terminates
+    -> Type-checking terminates
+    ???
+\end{structure}
+
+\subsection{Finite sets}
+
+\begin{structure}
+<- Motivation
+    <- Finite sets could be encoded with Unit and Bool
+        /> Hinder the ability to name things
+    -> For convenience
+        <- Named elements
+        <- Referring by name instead of code
+        -> Types as coding presentation
+            /> Also as coding representation!
+\end{structure}
+
+\begin{structure}
+<- Implementation [figure]      
+    <- Tags
+        -> Purely informational token
+    <- EnumU
+        -> Universe of finite sets
+    <- EnumT e
+        -> Elements of finite set e
+\end{structure}
+
+\begin{figure}
+
+\input{figure_finite_sets}
+
+\caption{Typing rules for finite sets}
+\label{fig:typing-finite-set}
+
+\end{figure}
+
+
+\begin{structure}
+<- Equipment
+    <- \spi operator
+        <- Equivalent of Pi on finite sets
+        <- First argument: (finite) domain
+        <- Second argument: for each element of the domain, a co-domain
+        -> Inhabitant of \spi: right-nested tuple of solutions
+            <- Skip code for space reasons
+    <- switch operator
+        <- case analyses over x
+        <- index into the \spi tuple to retrieve the corresponding result
+\end{structure}
+
+\begin{figure}
+
+\[\stkl{
+%% spi
+\F{$\pi$} : \PITEL{\V{e}}{\EnumU}
+            \PITEL{\V{P}}{\EnumT{e} \To \Set} \To \Set 
+\\
+%% switch
+\begin{array}{@{}ll}
+\F{switch} : & \PITEL{\V{e}}{\EnumU}
+               \PITEL{\V{P}}{\EnumT{e} \To \Set} \\
+             & \PITEL{\V{b}}{\spi{e}{P}}
+               \PITEL{\V{x}}{\EnumT{e}} \To P~x
+\end{array}
+}\]
+
+\caption{Operators on finite sets}
+\label{fig:operator-finite-set}
+
+\end{figure}
+
+
+\begin{structure}
+<- Equivalent to having a function space over finite sets
+    /> Made non-obvious by low-level encodings
+        <- General issue with codes
+             -> Need to provide an attractive presentation to the user
+    -> Types seem to obfuscate our reading
+        <- Provide ``too much'' information
+        /> False impression: information is actually waiting to be used more widely
+        -> See next Section
+\end{structure}
+
+\subsection{Type propagation}
+
+\begin{structure}
+<- Bidirectional type-checking [ref. Turner,Pierce]
+    -> Separating type-checking from type synthesis
+    <- Type checking: push terms into types
+        <- Example: |Pi S T :>: \ x . t| allows us to drop annotation on lambda
+    <- Type inference: pull types out of terms
+        <- Example: |x : S l- x :<: S| gives us the type of x
+\end{structure}
+
+\begin{structure}
+<- Formalization: type propagation
+    <- Motivation
+        -> High-level syntax
+            -> exprIn: types are pushed in
+                <- Subject to type *checking*
+            -> exprEx: types are pulled from
+                <- Subject to type *synthesis*
+        -> Translated into our low-level type theory
+        -> Presented as judgements
+    -> Presentation mirors typing rule of [figure] 
+        -> Ignore identitical judgements
+\end{structure}
+
+\begin{structure}
+<- Type checking [figure]
+    <- Push a type in an exprIn
+    <- Result in a full term
+    -> *Use* the type to build the term!
+        -> Domain and co-domain propagation for Pi and Sigma
+        -> Translation of 'tags into EnumTs
+        -> Translation of ['tags ...] into EnumUs
+        -> Finite function space into switch
+\end{structure}
+
+\begin{figure}
+
+\input{figure_type_checking}
+
+\caption{Type checking}
+\label{fig:type-checking}
+
+\end{figure}
+
+
+\begin{structure}
+<- Type synthesis [figure]
+    <- Pull a type out of an exprEx
+    <- Result in a full term, together with its type
+    -> Do *not* need to specify types
+        -> Extracting a term from the context
+        -> Function application
+        -> Projections
+\end{structure}
+
+\begin{figure}
+
+\input{figure_type_synthesis}
+
+\caption{Type synthesis}
+\label{fig:type-synthesis}
+
+\end{figure}
+
+
+\begin{structure}
+<- Summary
+    -> Not a novel technique [refs?]
+        /> Used as a boilerplate scrapper
+    -> Make dealing with codes *practical*
+        <- Example: Finite sets/finite function space
+        -> We should not restrain ourself in using codes
+            <- We know how to present them to the user
+-> Will extend this machinery in further sections
+\end{structure}

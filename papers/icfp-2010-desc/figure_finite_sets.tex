@@ -1,0 +1,34 @@
+\[\stkc{
+%% UId
+\Rule{\Gamma \vdash \Valid}
+     {\Gamma \vdash \Type{\UId}}
+\qquad
+%% Tag
+\Rule{\Gamma \vdash \Valid}
+     {\Gamma \vdash \Bhab{\Tag{s}}{\UId}}\;s \mbox{ unique identifier}
+\\
+%% EnumU
+\Rule{\Gamma \vdash \Valid}
+     {\Gamma \vdash \Type{\EnumU}} 
+\qquad
+%% EnumT
+\Rule{\Gamma \vdash \Bhab{e}{\EnumU}}
+     {\Gamma \vdash \Type{\EnumT{e}}} 
+\\
+%% NilE
+\Rule{\Gamma \vdash \Valid}
+     {\Gamma \vdash \Bhab{\NilE}{\EnumU}} 
+\qquad
+%% ConsE
+\Rule{\Gamma \vdash \Bhab{t}{\UId} \quad
+      \Gamma \vdash \Bhab{e}{\EnumU}}
+     {\Gamma \vdash \Bhab{\ConsE{t}{e}}{\EnumU}}
+\\
+%% Ze
+\Rule{\Gamma \vdash \Valid}
+     {\Gamma \vdash \Bhab{\Ze}{\EnumT{\ConsE{t}{e}}}} 
+\qquad
+%% Su
+\Rule{\Gamma \vdash \Bhab{n}{\EnumT{e}}}
+     {\Gamma \vdash \Bhab{\Su{n}}{\EnumT{\ConsE{t}{e}}}}
+}\]

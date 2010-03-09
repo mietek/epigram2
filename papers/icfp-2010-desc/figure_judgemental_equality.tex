@@ -1,0 +1,23 @@
+\[\stkc{
+%% Beta-reduction
+\Rule{\stkl{\Gamma       \vdash \Type{S} \quad
+            \Gamma ; \xS \vdash \Bhab{t}{T} \\
+            \Gamma       \vdash \Bhab{s}{S}}}
+     {\Gamma \vdash \Bhab{(\PLAM{\x}{S} t)\:s \equiv t[s/x]}{T[s/x]}}
+\\
+%% Eta-reduction
+\Rule{\Gamma       \vdash \Type{S} \quad
+      \Gamma ; \xS \vdash \Bhab{f \equiv g}{T}}
+     {\Gamma \vdash \Bhab{(\PLAM{\x}{S} f) \equiv (\PLAM{\x}{S} g)}{\PIS{\xS} T}}
+\\
+%% Projections
+\Rule{\stkl{\Gamma                 \vdash \Bhab{s}{S} \quad
+            \Gamma ; \xS           \vdash \Bhab{T}{\Set} \\
+            \Gamma ; \Bhab{s}{S}   \vdash \Bhab{t}{T[s/x]}}}
+     {\Gamma \vdash \Bhab{\fst{(\pair{s}{t}{T})} \equiv s}{S}}
+\qquad
+\Rule{\stkl{\Gamma               \vdash \Bhab{s}{S} \quad
+            \Gamma ; \xS         \vdash \Bhab{T}{\Set} \\
+            \Gamma ; \Bhab{s}{S} \vdash \Bhab{t}{T[s/x]}}}
+     {\Gamma \vdash \Bhab{\snd{(\pair{s}{t}{T})} \equiv t}{T[s/x]}}
+}\]
