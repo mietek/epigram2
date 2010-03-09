@@ -110,143 +110,14 @@ ACM bullet points, we offer:
 %% A Universe of simple data-types
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{In praise for $\Sigma$}
+\input{paper_desc}
 
-\begin{structure}
-<- What is Sigma in the end?
-    <- Sigma generalizes sum over arbitrary ranges
-    <- Sigma generalizes product to have dependent second component
-<- Impact for data-types?
-    <- Simply-typed languages have sums-of-product
-    -> Dependently-types languages have Sigmas-of-Sigmas
-\end{structure}
-
-\subsection{Desc}
-
-\begin{structure}
-<- Without hind!
-    <- Simple, first-order version first
-    -> See Levitation Section for hind motivation
-<- Presented as a signature
-    -> ``We promise, this will be realized''
-\end{structure}
-
-\[
-\stk{
-\data \Desc : \Set \where \\
-\;\;\begin{array}{@{}l@{\::\:}l@{\quad}l}
-    \DUnit          & \Desc \\
-    \DSigma         & \PI{\V{S}}{\Set} \PIS{S \To \Desc} \Desc \\
-    \DIndx          & \Desc \To \Desc
-\end{array}
-}
-\]
-
-\begin{structure}
-<- Interpretation
-    -> Object action of a functor
-\end{structure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Levitating the universe of descriptions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-\[\stk{
-\descop{\_\:}{} : \Desc \To \Set \To \Set \\
-\begin{array}{@{}ll@{\:=\:\:}ll}
-\descop{\DUnit}{& X}        &  \Unit                                       \\
-\descop{\DSigma{S}{D}}{& X} &  \SIGMAS{\V{s} : S}{\descop{D~s}{X}}         \\
-\descop{\DIndx{D}}{& X}     &  \TIMES{X}{\descop{D}{X}}
-\end{array}
-}\]
-
-\begin{structure}
-<- Examples
-    -> Nat
-\end{structure}
-
-\[\stk{
-\NatD : \Desc \\
-\NatD \mapsto \DSigma{(\EnumT [ \NatZero, \NatSuc{} ])}
-                     {[ \DUnit \quad (\DIndx{\DUnit}) ]}
-}\]
-
-\begin{structure}
-    -> List
-\end{structure}
-
-\[\stk{
-\ListD : \Set \To \Desc \\
-\ListD \: X \mapsto \DSigma{(\EnumT [ \ListNil, \ListCons ])}
-                           {[ \DUnit \quad (\DSigma{X}{\LAM{\_} \DIndx{\DUnit}}) ]}
-}\]
-
-\begin{structure}
-    -> Tree
-\end{structure}
-
-\[\stk{
-\TreeD : \Set \To \Desc \\
-\TreeD \: X \mapsto \DSigma{(\EnumT [ \TreeLeaf, \TreeNode ])}
-                           {[ \DUnit \quad (\DSigma{X}{\LAM{\_} \DIndx{(\DIndx{\DUnit})}}) ]}
-}\]
-
-\begin{structure}
-<- Mu
-    <- Definition
-\end{structure}
-
-\[
-\Rule{\Gamma \vdash \Bhab{D}{\Desc}}
-     {\Gamma \vdash \Bhab{\Mu{D}}{\Set}} \qquad
-\Rule{\Gamma \vdash \Bhab{D}{\Desc} \quad 
-      \Gamma \vdash \Bhab{x}{\descop{D}{(\Mu{D})}}}
-     {\Gamma \vdash \Bhab{\Con{x}}{\Mu{D}}}
-\]
-
-\begin{structure}
-    <- Elaboration for data
-\end{structure}
-
-\subsection{Induction for $\Mu{D}$}
-
-\[
-\begin{array}{lcl}
-\F{induction} & : & \PITEL{D}{\Desc}                \\
-              &   & \PITEL{P}{\Mu{D} \To \Set}      \\
-              &   & \PITEL{m}{\PI{xs}{\descop{D}{(\Mu{D})}} \All{D}{(\Mu{D})}{P}{xs} \To P (\Con{xs})} \\
-              &   & \PI{x}{\Mu{D}} P x
-\end{array}
-\]
-
-This \(\F{induction}\) operator is the natural dependent elimination
-principle, but we might also benefit from the traditional \emph{catamorphism}
-or `fold operator' which accompanies a (weakly) initial algebra. We should
-like to have
-\[\stk{
-\F{cata} : \PITEL{D}{\Desc}
-           \PI{T}{\Set}
-           (\descop{D}{T}\To T) \To 
-           \Mu{D} \To T \\
-\F{cata}\: D\: T\: f \mapsto
-  \F{induction}\: D\: (\LAM{\_}T)\: (\LAM{xs\:ts} f\: ?)
-}\]
-but what should \(?\) be? We have \(xs:\descop{D}{\Mu{D}}\)
-and \(ts:\All{D}{(\Mu{D})}{(\LAM{\_}T)}{xs}\), so surely we can construct
-an element of \(\descop{D}{T}\) by replacing each recursive component from
-\(xs\) with its counterpart from \(ts\).
-
-\[\stk{
-\F{replace} : \stk{\PITEL{D}{\Desc}
-                   \PITEL{X,Y}{\Set}\\
-                   \PI{xs}{\descop{D}{X}} 
-                   \All{D}{X}{(\LAM{\_}Y)}{xs} \To
-                   \descop{D}{Y}} \\
-\F{replace}\: \DUnit\:          X\: Y\: \Void\:          \Void          \mapsto \Void \\
-\F{replace}\: (\DSigma{S}{D})\: X\: Y\: \pair{s}{xs}{}\: ys             \mapsto
-    \pair{s}{\F{replace}\: {D~s}\: X\: Y\: xs\: ys}{}         \\
-\F{replace}\: (\DIndx{D})\:     X\: Y\: \pair{x}{xs}{}\: \pair{y}{ys}{} \mapsto
-    \pair{y}{\F{replace}\: D\: X\: Y\: xs\: ys}{}
-}\]
-
-\subsection{Describing enumerations}
+\section{Describing enumerations}
 
 \[\stk{
 \EnumU : \Set \\
@@ -358,6 +229,38 @@ transformation on \(\F{TagDesc}\).
 \pair{\ListCons{\:\DVar{}}{E}}{\pair{\DConst{X}}{D}{}}{}
 }\]
 Of course, we must equip the resulting datatypes with operations delivering a monadic interface. As usual, \(\LAM{\x}\DVar{\x}\) performs the r\^ole of `return', embedding variables into terms. We shall also need a generic \emph{substitution} operator.
+
+
+This \(\F{induction}\) operator is the natural dependent elimination
+principle, but we might also benefit from the traditional \emph{catamorphism}
+or `fold operator' which accompanies a (weakly) initial algebra. We should
+like to have
+\[\stk{
+\F{cata} : \PITEL{D}{\Desc}
+           \PI{T}{\Set}
+           (\descop{D}{T}\To T) \To 
+           \Mu{D} \To T \\
+\F{cata}\: D\: T\: f \mapsto
+  \F{induction}\: D\: (\LAM{\_}T)\: (\LAM{xs\:ts} f\: ?)
+}\]
+but what should \(?\) be? We have \(xs:\descop{D}{\Mu{D}}\)
+and \(ts:\All{D}{(\Mu{D})}{(\LAM{\_}T)}{xs}\), so surely we can construct
+an element of \(\descop{D}{T}\) by replacing each recursive component from
+\(xs\) with its counterpart from \(ts\).
+
+\[\stk{
+\F{replace} : \stk{\PITEL{D}{\Desc}
+                   \PITEL{X,Y}{\Set}\\
+                   \PI{xs}{\descop{D}{X}} 
+                   \All{D}{X}{(\LAM{\_}Y)}{xs} \To
+                   \descop{D}{Y}} \\
+\F{replace}\: \DUnit\:          X\: Y\: \Void\:          \Void          \mapsto \Void \\
+\F{replace}\: (\DSigma{S}{D})\: X\: Y\: \pair{s}{xs}{}\: ys             \mapsto
+    \pair{s}{\F{replace}\: {D~s}\: X\: Y\: xs\: ys}{}         \\
+\F{replace}\: (\DIndx{D})\:     X\: Y\: \pair{x}{xs}{}\: \pair{y}{ys}{} \mapsto
+    \pair{y}{\F{replace}\: D\: X\: Y\: xs\: ys}{}
+}\]
+
 
 \begin{structure}
 <- Show the transformation from the previous combinators to the new one

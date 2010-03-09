@@ -1,0 +1,191 @@
+\section{A universe of simple data-types}
+
+\begin{structure}
+<- Why starting with simple data-types
+    <- For pedagogical purposes
+        <- Data-types as we know them every day
+        /> Target dependent types
+    -> Cut down version of Induction Recursion
+        -> Presentation evolves independently as we go to dependent types
+\end{structure}
+
+\subsection{The power of $\Sigma$}
+
+\begin{structure}
+<- The duality of Sigma
+    <- Sigma generalizes sum over arbitrary arities
+        -> \Sigma A B == \Sigma_{x : A} B x
+    <- Sigma generalizes product to have a dependant second component
+        -> \Sigma A B == (x : A) \times (B x)
+\end{structure}
+
+\begin{structure}
+<- Data-types in the simply-typed world
+    -> "sums-of-product"
+        <- Sum of constructors
+        <- Product of arguments
+<- Data-types in the dependently-typed world
+    -> "sigmas-of-sigmas"
+    /> Need ability to manipulate these sigmas
+        -> Define a Code for data-types
+        -> Together with a sigma-based Interpretation
+\end{structure}
+
+\subsection{A universe of descriptions}
+
+\begin{structure}
+<- Introduction to Universe construction
+    <- Define a Code
+        -> Name objects
+    <- Define an Interpretation of codes into the type theory
+        -> Give a semantics to objects
+    -> Ability to manipulate code
+    -> Ability to compute with these objects
+\end{structure}
+
+\begin{structure}
+<- Justification of the code 
+    <- [both figures]: cannot be read separately
+    <- Mimic the standard grammar of data-types description
+        -> Just as we already know it
+        <- '\Sigma for making sigmas-of-sigmas
+        <- 'indx for exhibiting the functoriality
+            -> For recursive arguments
+        <- '1 for end of description
+\end{structure}
+
+\[
+\stk{
+\data \Desc : \Set \where \\
+\;\;\begin{array}{@{}l@{\::\:}l@{\quad}l}
+    \DUnit          & \Desc \\
+    \DSigma         & \PI{\V{S}}{\Set} \PIS{S \To \Desc} \Desc \\
+    \DIndx          & \Desc \To \Desc
+\end{array}
+}
+\]
+
+\[\stk{
+\descop{\_\:}{} : \Desc \To \Set \To \Set \\
+\begin{array}{@{}ll@{\:=\:\:}ll}
+\descop{\DUnit}{& X}        &  \Unit                                       \\
+\descop{\DSigma{S}{D}}{& X} &  \SIGMAS{\V{s} : S}{\descop{D~s}{X}}         \\
+\descop{\DIndx{D}}{& X}     &  \TIMES{X}{\descop{D}{X}}
+\end{array}
+}\]
+
+
+\subsection{Examples}
+
+\begin{structure}
+<- Nat
+    <- Sum of zero, suc
+    <- zero case: done
+    <- suc case: leave open and done
+    -> NatD Z = 1 + Z
+\end{structure}
+
+\[\stk{
+\NatD : \Desc \\
+\NatD \mapsto \DSigma{(\EnumT [ \NatZero, \NatSuc{} ])}
+                     {[ \DUnit \quad (\DIndx{\DUnit}) ]}
+}\]
+
+
+\begin{structure}
+<- List
+    <- Sum of nil, cons
+    <- nil case: done
+    <- cons case: product of X with leave open and done
+    -> ListD X Z = 1 + X * Z
+\end{structure}
+
+\[\stk{
+\ListD : \Set \To \Desc \\
+\ListD \: X \mapsto \DSigma{(\EnumT [ \ListNil, \ListCons ])}
+                           {[ \DUnit \quad (\DSigma{X}{\LAM{\_} \DIndx{\DUnit}}) ]}
+}\]
+
+
+\begin{structure}
+<- Tree
+    <- sum of leaf, node
+    <- leaf case: done
+    <- node case: product of X with two leave open and done
+    -> TreeD X Z = 1 + X * Z * Z
+\end{structure}
+
+\[\stk{
+\TreeD : \Set \To \Desc \\
+\TreeD \: X \mapsto \DSigma{(\EnumT [ \TreeLeaf, \TreeNode ])}
+                           {[ \DUnit \quad (\DSigma{X}{\LAM{\_} \DIndx{(\DIndx{\DUnit})}}) ]}
+}\]
+
+
+\begin{structure}
+<- Fictive object [figure 'data Desc']
+    -> Must be read as a type signature
+    -> See further for its actual implementation
+        <- Subject to our levitation exercise
+\end{structure}
+
+\subsection{Fix-point}
+
+\begin{structure}
+<- Build the fix-point of functors
+    <- See examples: need to build their initial algebra
+    -> Extend the type theory with Mu/Con [figure]
+        <- Straightforward definition of a fixpoint
+            <- Interpret D with (Mu D) as subobjects
+\end{structure}
+
+\[
+\Rule{\Gamma \vdash \Bhab{D}{\Desc}}
+     {\Gamma \vdash \Bhab{\Mu{D}}{\Set}} \qquad
+\Rule{\Gamma \vdash \Bhab{D}{\Desc} \quad 
+      \Gamma \vdash \Bhab{x}{\descop{D}{(\Mu{D})}}}
+     {\Gamma \vdash \Bhab{\Con{x}}{\Mu{D}}}
+\]
+
+
+\begin{structure}
+<- Extending type propagation
+    <- Data-type declaration turns into definitions
+        -> Straightforward translation to Desc
+        -> Creation of a variable referring to the structure
+    <- Push Mu to an applied name [figure]
+        -> Direct integration into the type propagation machinery
+    <- Labelled Mu
+        /> Just mention the possibility of labelling, no details required
+        -> For the user, objects have names rather than Mu of codes
+    -> Coded presentation is practical
+        <- The user never see a code
+\end{structure}
+
+\begin{structure}
+<- Elimination on Mu
+    <- We are used to foldD : \forall X. (desc D X -> X) -> mu D -> X
+        /> Not dependent
+        -> Cannot express some (which one again?) properties
+    -> Develop a dependent induction
+        <- Everywhere/All
+        <- Induction
+    -> *Generic*
+    ???
+\end{structure}
+
+\[
+\F{cata} : \PITEL{D}{\Desc}
+           \PI{T}{\Set}
+           (\descop{D}{T}\To T) \To 
+           \Mu{D} \To T 
+\]
+
+\[
+\begin{array}{lcl}
+\F{induction} & : & \PITEL{D}{\Desc}                \\
+              &   & \PITEL{P}{\Mu{D} \To \Set}      \\
+              &   & \PITEL{m}{\PI{xs}{\descop{D}{(\Mu{D})}} \All{D}{(\Mu{D})}{P}{xs} \To P (\Con{xs})} \\
+              &   & \PI{x}{\Mu{D}} P x
+\end{array}
+\]
