@@ -84,8 +84,10 @@
     -> Show DescD code
 \end{structure}
 
+\begin{figure*}
 
 \[
+\begin{array}{ll}
 \stk{
 \data \Desc : \Set \where \\
 \;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
@@ -93,16 +95,21 @@
     \DHindx         & \PI{H}{Set} \Desc \To \Desc
 \end{array}
 }
-\]
-
-\[\stk{
+&
+\stk{
 \descop{\_\:}{} : \Desc \To \Set \To \Set \\
 \begin{array}{@{}l@{\:=\:\:}ll}
 \ldots                        &  \ldots \\
 \descop{\DHindx{H}{D}}{X}     &  \TIMES{(H \To X)}{\descop{D}{X}}
 \end{array}
-}\]
+}
+\end{array}
+\]
 
+\caption{Higher-order universe of descriptions}
+\label{fig:hindx_desc}
+
+\end{figure*}
 
 \[\stk{
 \DescD : \Desc \\
@@ -165,7 +172,10 @@
     -> Straightforward translation to the new system [equation]
 \end{structure}
 
+\begin{figure*}
+
 \[
+\begin{array}{ll}
 \stk{
 \data \Desc : \Set \where \\
 \;\;\begin{array}{@{}l@{\::\:}l@{\quad}l}
@@ -176,9 +186,8 @@
     \DPi            & \PI{\V{S}}{\Set} \PIS{S \To \Desc} \Desc 
 \end{array}
 }
-\]
-
-\[\stk{
+&
+\stk{
 \descop{\_\:}{} : \Desc \To \Set \To \Set \\
 \begin{array}{@{}l@{\:=\:\:}ll}
 \descop{\DId}{X}          &  X                                           \\
@@ -187,7 +196,15 @@
 \descop{\DSigma{S}{D}}{X} &  \SIGMA{\V{s}}{S} \descop{D\: s}{X}                \\
 \descop{\DPi{S}{D}}{X}    &  \PI{\V{s}}{S} \descop{D\: s}{X}            
 \end{array}
-}\]
+}
+\end{array}
+\]
+
+\caption{Factorized universe of descriptions}
+\label{fig:factor_desc}
+
+\end{figure*}
+
 
 \[\begin{array}{l@{\:\mapsto\:\:}l}
 \DIndx{D}         & \DProd{\DId}{D}                      \\

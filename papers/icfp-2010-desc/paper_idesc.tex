@@ -35,7 +35,10 @@
 \end{structure}
 
 
+\begin{figure*}
+
 \[
+\begin{array}{ll}
 \stk{
 \data \IDesc{} : \PI{\V{I}}{\Set} \Set \where \\
 \;\;\begin{array}{@{}l@{\::\:}l@{\quad}l}
@@ -46,10 +49,8 @@
     \DPi            & \PI{\V{S}}{\Set} \PIS{S \To \IDesc{I}} \IDesc{I} 
 \end{array}
 }
-\]
-
-
-\[\stk{
+&
+\stk{
 \idescop{\_\:}{}{} : \PI{\V{I}}{\Set} \IDesc{I} \To \Set \To \Set                  \\
 \begin{array}{@{}l@{\:=\:\:}ll}
 \idescop{\DVar{i}}{I}{P}      &  P~i                                                 \\
@@ -58,8 +59,14 @@
 \idescop{\DSigma{S}{D}}{I}{P} &  \SIGMA{\V{s}}{S} \idescop{D\: s}{I}{P}                    \\
 \idescop{\DPi{S}{D}}{I}{P}    &  \PI{\V{s}}{S} \idescop{D\: s}{I}{P}            
 \end{array}
-}\]
+}
+\end{array}
+\]
 
+\caption{Indexed universe of description}
+\label{fig:idesc}
+
+\end{figure*}
 
 \subsection{Examples}
 
