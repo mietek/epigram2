@@ -1,0 +1,271 @@
+\section{Indexing descriptions}
+
+\begin{structure}
+!!! Need Help !!!
+<- Motivation
+    <- Desc: expressivity of simply-typed data-types: inductive types
+        <- Values do not influence types
+    /> Example: Vectors
+        <- Cannot be defined by just induction
+            <- Vectors of all size need to be defined at the *same* time
+            -> Defined as a *family* of types
+                -> Index
+        -> I -> IDesc I: Inductive family
+    ???
+\end{structure}
+
+\subsection{From Desc to IDesc}
+
+\begin{structure}
+<- Labelling Id
+    <- We had: data Desc : Set -> Set
+    -> We want: data IDesc : (I -> Set) -> Set
+        <- Indexed functor (?)
+        -> It is sufficient to label Id
+            <- Where the functor is built
+\end{structure}
+
+\begin{structure}
+<- Also replacing '1 by 'const  [figure]
+    <- For convenience
+        <- 'const X equivalent to 'sigma X (\_ -> '1)
+        /> Easier to abstract
+            <- Extensionally same
+            /> 'const more useful in practice
+\end{structure}
+
+
+\[
+\stk{
+\data \IDesc{} : \PI{\V{I}}{\Set} \Set \where \\
+\;\;\begin{array}{@{}l@{\::\:}l@{\quad}l}
+    \DVar{}         & I \To \IDesc{I}                                   \\
+    \DConst{}       & \Set \To \IDesc{I}                                \\
+    \DProd{}{}      & \PI{\V{D}, \V{D'}}{\IDesc{I}} \IDesc{I}           \\
+    \DSigma         & \PI{\V{S}}{\Set} \PIS{S \To \IDesc{I}} \IDesc{I}  \\
+    \DPi            & \PI{\V{S}}{\Set} \PIS{S \To \IDesc{I}} \IDesc{I} 
+\end{array}
+}
+\]
+
+
+\[\stk{
+\idescop{\_\:}{}{} : \PI{\V{I}}{\Set} \IDesc{I} \To \Set \To \Set                  \\
+\begin{array}{@{}l@{\:=\:\:}ll}
+\idescop{\DVar{i}}{I}{P}      &  P~i                                                 \\
+\idescop{\DConst{X}}{I}{P}    &  X                                                   \\
+\idescop{\DProd{D}{D'}}{I}{P} &  \TIMES{\idescop{D}{I}{P}}{\idescop{D'}{I}{P}}       \\
+\idescop{\DSigma{S}{D}}{I}{P} &  \SIGMA{\V{s}}{S} \idescop{D\: s}{I}{P}                    \\
+\idescop{\DPi{S}{D}}{I}{P}    &  \PI{\V{s}}{S} \idescop{D\: s}{I}{P}            
+\end{array}
+}\]
+
+
+\subsection{Examples}
+
+\begin{structure}
+<- Nat
+    -> [equation]
+    <- Non-indexed types lives in IDesc 1
+        -> This applies to all previous examples
+\end{structure}
+
+\begin{structure}
+<- Levitation [figure]
+    <- Following Desc encoding
+        /> Note: simple data-type
+            -> Live in IDesc 1
+    -> Behind the scene, relies on the special purpose switchD
+\end{structure}
+
+\[\stk{
+\IDescD : \PI{\V{I}}{\Set} \IDesc{\Unit} \\
+\begin{array}{ll}
+\IDescD~I \mapsto \DSigma{}{} & (\EnumT [ \DVar{},
+\DConst{},
+                                                                                    \DProd{}{},
+                                          \DSigma{}{}, 
+                                          \DPi{}{} ]) \\
+                              & \left[\begin{array}{l}
+                                      \DConst{I}                  \\
+                                      \DConst{\Set}               \\
+                                      \DProd{\DVar{\Void}}{\DVar{\Void}}  \\
+                                      \DSigma{\Set}{(\LAM{S} \DPi{S}{(\LAM{\_} \DVar{\Void})})} \\
+                                      \DSigma{\Set}{(\LAM{S} \DPi{S}{(\LAM{\_} \DVar{\Void})})}
+                                   \end{array}
+                             \right]
+\end{array}
+}\]
+
+
+\begin{structure}
+<- Untyped lambda terms [figure]
+    <- Indexed by Nat
+        <- De Bruijn "encoding"
+    <- Variable in Fin n
+        -> Correct by construction lambda term
+    /> Lack the monadic structure [Altenkirch & Reus ???]
+        -> Miss substitution operator
+        /> Will be fixed later
+\end{structure}
+
+\[\stk{
+\LambdaTD : \Nat \To \IDesc{\Nat} \\
+\begin{array}{@{}ll}
+\LambdaTD\: n = \DSigma{}{} & (\EnumT [ \LambdaTVar, \LambdaTApp, \LambdaTLam ]) \\
+                            & \left[\begin{array}{l}
+                                  \DConst{\Fin{n}} \\
+                                  \DProd{\DVar{n}}{\DVar{n}} \\
+                                  \DVar{(\NatSuc{n})}
+                              \end{array}\right]
+\end{array}
+}\]
+
+
+\subsection{Constrained constructors}
+
+\begin{structure}
+!!! Need Help !!!
+<- Assuming a suitable notion of definitional equality for I
+    ???
+\end{structure}
+
+\begin{structure}
+<- Fin [figure]
+    <- Presentation with equality constraints
+    <- Example of constrained constructor
+        -> Constraints are translated into equalities
+    ???
+\end{structure}
+
+\[\stk{
+\FinD : \Nat \To \IDesc{\Nat} \\
+\begin{array}{@{}ll}
+\FinD\: n = \DSigma{}{} & (\EnumT [ \FinZero , \FinSuc{} ]) \\
+                        & \left[
+                          \begin{array}{l}
+                            \DSigma{\Nat}{\LAM{m} \DConst{(n \PropEq \NatSuc{m})}} \\
+                            \DSigma{\Nat}{\LAM{m} \DProd{\DVar{m}}{\DConst{(n \PropEq \NatSuc{m})}}}
+                          \end{array}
+                          \right]
+\end{array}
+}\]
+
+
+\begin{structure}
+<- Vectors
+    Do we treat them in the end? 
+    What can we say here we haven't with Fin?
+\end{structure}
+
+\begin{structure}
+<- GADT-style data-type definition
+    <- We directly support it
+        <- Constraints turned into equalities
+            <- Fin example
+    <- Again, smooth transition from "today" data-types to advanced ones
+        <- Same grammar
+        /> More power
+    /> Equations in data-types are not a blessing
+        <- Complexify induction principle
+        <- Lose match between data-type definition and the elimination form
+\end{structure}
+
+\begin{structure}
+!!! Need Help !!!
+<- Brady optimization: forcing
+    <- Source to source translation
+    <- Able to remove some constraints
+    -> Example: Fin [figure]
+    ??? More technical detail needed
+\end{structure}
+
+\[\stk{
+\FinD : \Nat \To \IDesc{\Nat} \\
+\begin{array}{@{}llll}
+\FinD\: 0            & = & \multicolumn{2}{l}{\DSigma{\Void}{\Void} } \\
+\FinD\: (\NatSuc{n}) & = & \DSigma{}{} & (\EnumT [ \FinZero , \FinSuc{} ]) \\
+                     &   &             & \left[
+                                         \begin{array}{l}
+                                         \DConst{\Unit} \\
+                                         \DVar{n}
+                                         \end{array}
+                                         \right]
+\end{array}
+}\]
+
+
+\subsection{Free IMonad}
+
+\begin{structure}
+<- Variation on a theme: free imonad construction
+    <- Recall existence of generic free monad construction
+    -> Present its generalization to IDesc [equation]
+        <- \I -> IDesc I as describing an indexed endofunctor
+        <- Free indexed monad construction
+    -> Still a suitable, generic notion of substitution
+        <- show type signature
+        <- show implementation?? (space! space!)
+\end{structure}
+
+\begin{structure}
+<- Untyped lambda terms
+    <- Obvious instance of free monad
+        <- Variable: Return
+        <- App and Abst: indexed functor
+        <- Bind: substitution
+    -> Get a correct-by-construction lambda term
+        /> With substitution for free!
+        <- We should not pay for the structure which *is* here
+\end{structure}
+
+\[\stk{
+\LambdaTFreeD : \Nat \To \IDesc{\Nat} \\
+\begin{array}{@{}ll}
+\LambdaTFreeD\: n = \DSigma{}{} & (\EnumT [ \LambdaTApp, \LambdaTLam ]) \\
+                                & \left[\begin{array}{l}
+                                  \DProd{\DVar{n}}{\DVar{n}} \\
+                                  \DVar{(\NatSuc{n})}
+                                  \end{array}\right]
+\end{array}
+}\]
+
+\[\stk{
+\LambdaTD : \Nat \To \IDesc{\Nat} \\
+\LambdaTD\: \mapsto \FreeMonad{[\LambdaTFreeD]}{\Fin{}}
+}\]
+
+
+
+\begin{structure}
+<- IDesc
+    <- Another instance of free monad
+        <- Var: Return
+        <- Remaining: (not even indexed) functor
+    -> Madness just starts
+        <- map operation
+        <- [ subst sigma D ] X = [D] (\x -> [subst sigma x] X)
+        ???
+\end{structure}
+
+
+\[\stk{
+\IDescFreeD : \PI{\V{I}}{\Set} \IDesc{\Unit} \\
+\begin{array}{@{}ll}
+\IDescFreeD~I \mapsto \DSigma{}{} & (\EnumT [ \DConst{},
+                                              \DProd{}{},
+                                              \DSigma{}{}, 
+                                              \DPi{}{} ]) \\
+                                  & \left[\begin{array}{l}
+                                        \DConst{\Set}               \\
+                                        \DProd{\DVar{\Void}}{\DVar{\Void}}  \\
+                                        \DSigma{\Set}{(\LAM{S} \DPi{S}{(\LAM{\_} \DVar{\Void})})} \\
+                                        \DSigma{\Set}{(\LAM{S} \DPi{S}{(\LAM{\_} \DVar{\Void})})}
+                                    \end{array}\right]
+\end{array}
+}\]
+
+\[\stk{
+\IDescD : \PI{\V{I}}{\Set} \IDesc{\Unit} \\
+\IDescD\: I \mapsto \FreeMonad{[\IDescFreeD]}{I}\: I
+}\]
