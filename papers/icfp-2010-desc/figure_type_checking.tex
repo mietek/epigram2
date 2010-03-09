@@ -67,12 +67,12 @@
                             {\Su{n}}}\;t \neq t'
 \\
 %% EnumU
-\Axiom{\Gamma \Vdash \propag{\push{\Enum []}{\EnumU}}
+\Axiom{\Gamma \Vdash \propag{\push{\Enum\: []}{\EnumU}}
                             {\NilE}}
 \\
 \Rule{\Gamma \Vdash \propag{\push{\Enum [ ts ]}{\EnumU}}
                                  {cs}}
-     {\Gamma \Vdash \propag{\push{\Enum [ \etag{t_1}\:\: ts ]}{\EnumU}}
+     {\Gamma \Vdash \propag{\push{\Enum\: [ \etag{t_1}\:\: ts ]}{\EnumU}}
                                  {\ConsE{t_1}{cs}}}
 \\
 %% Switch

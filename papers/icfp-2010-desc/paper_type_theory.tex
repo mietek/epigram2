@@ -1,8 +1,21 @@
 \section{The Type Theory}
 
+Our work is deeply rooted in the realm of dependently-typed functional
+languages. In particular, we have developped this technology in our
+on-going work on Epigram~\cite{pigs:epigram}. However, in this paper,
+we strive to present our technology in the broadest setting
+possible. To this end, we are going to present a type theory from the
+ground-up.
+
+To the reader new to type theory, this first section will provide a
+gentle introduction to dependently-typed systems. To the reader
+familiar with type theory, she will recognize the basis of her
+favorite type theory, be it Agda or Coq for instance. This scene sets,
+we have a common ground for discussion.
+
 \subsection{Base theory}
 
-\begin{structure}
+\begin{wstructure}
 <- Presentation of the formalism
     <- Standard presentation
         -> No novelty here
@@ -10,44 +23,67 @@
         -> Context validity
         -> Typing judgements
         -> Equality judgements
-\end{structure}
+\end{wstructure}
+
+In the following, we adopt a standard presentation for our type
+theory. It is defined by three forms of judgements: context validity
+judgements, typing judgements, and equality judgements. Formally,
+these judgments are presented as follow:
 
 \[
 \begin{array}{ll}
-\Gamma\vdash\Valid & \mbox{\(\Gamma\) is a valid context, giving types to variables} \\
-\Gamma\vdash \Bhab{t}{T} & \mbox{term \(t\) has type \(T\) in context \(\Gamma\)} \\
-\Gamma\vdash \Bhab{s \equiv t}{T} & \mbox{\(s\) and \(t\) are equal at type \(T\) in context \(\Gamma\)} \\
+\Gamma \vdash \Valid                & \mbox{\(\Gamma\) is a valid context, giving types to variables} \\
+\Gamma \vdash \Bhab{t}{T}           & \mbox{term \(t\) has type \(T\) in context \(\Gamma\)} \\
+\Gamma \vdash \Bhab{s \equiv t}{T}  & \mbox{\(s\) and \(t\) are equal at type \(T\) in context \(\Gamma\)} \\
 \end{array}
 \]
 
-\begin{structure}
+\begin{wstructure}
     <- Invariants [equation]
         -> By induction on derivations
-\end{structure}
+\end{wstructure}
 
-The systems of inference rules will be formulated to ensure that that the
-following implications always hold by induction on derivations.
+Each of these judgements is populated by a respective system of
+inferences rules. These rules are formulated so as to ensure that the
+following implications always hold by induction on derivations:
+
 \[
 \begin{array}{l@{\;\;\Rightarrow\;\;}l}
-\Gamma\vdash \Bhab{t}{T}            & \Gamma\vdash\Valid \;\wedge\; \Gamma\vdash\Type{T} \\
-\Gamma\vdash s \equiv \Bhab{t}{T}   & \Gamma\vdash \Bhab{s}{T} \;\wedge\; \Gamma\vdash \Bhab{t}{T} \\
-\Gamma;\xS;\Delta \vdash J          & \Gamma\vdash \Bhab{s}{S} \;\Rightarrow\; 
-                                           \Gamma;\Delta[s/x] \vdash J[s/x] \\
+\Gamma            \vdash \Bhab{t}{T}            
+    & \Gamma \vdash \Valid\; \wedge\; \Gamma\vdash\Type{T} \\
+\Gamma            \vdash s \equiv \Bhab{t}{T}   
+    & \Gamma \vdash \Bhab{s}{T} \;\wedge\; \Gamma\vdash \Bhab{t}{T} \\
+\Gamma ; \xS ; \Delta \vdash J                      
+    & \Gamma \vdash \Bhab{s}{S} \;\Rightarrow\; 
+          \Gamma ; \Delta[s/x] \vdash J[s/x] \\
 \end{array}
 \]
 
+We are not going to prove the validity of these invariants. They
+follow rather straightforwardly from the induction rules. For formal
+proofs, we refer the reader to standard presentations of type theory,
+such as Luo's seminal work \cite{luo:utt}.
 
-\begin{structure}
+\begin{wstructure}
     <- Judgemental equality
         <- Presentation independant of particular implementation choice
         -> Model in Agda, intensional
         -> Used in Epigram, OTT
-\end{structure}
+\end{wstructure}
 
-\begin{structure}
+Noticeably, we have adopted a judgemental presentation of
+equality. Therefore, we are not tied to a particular implementation
+choice. In particular, our system has been modeled in Agda, which
+features an intensional equality. On the other hand, it is used in
+Epigram, which equality has a slightly extensional
+flavor~\cite{altenkirch:ott}. We expect users of propositional or even
+fully extensional systems to also find their way through this
+presentation.
+
+\begin{wstructure}
 <- Context validity [figure]
     <- Not much to be said
-\end{structure}
+\end{wstructure}
 
 \begin{figure}
 
@@ -64,8 +100,12 @@ following implications always hold by induction on derivations.
 \label{fig:context-validity}
 \end{figure}
 
+The rules ensuring Context Validity (Fig.\ref{fig:context-validity})
+are unsurprisingly common. They simply garantee the validity of the
+empty context, as well as the linear extension of a context by a
+well-typed variable.
 
-\begin{structure}
+\begin{wstructure}
 <- Typing judgements [figure]
     <- Set in Set
         -> For simplicity of presentation
@@ -73,7 +113,24 @@ following implications always hold by induction on derivations.
             <- Harper-Pollack, Luo, Courant
         -> See later discussion
     <- Standard presentation of Pi and Sigma types
-\end{structure}
+\end{wstructure}
+
+The typing judgements (Fig.\ref{fig:typing-judgements}) are just as
+familiar. We recognize the standard presentation of $\Pi$ and $\Sigma$
+types, respectively inhabited by lambda terms and dependent
+pairs. Naturally, there are rules for function application and
+projections of $\Sigma$-types. Equal types can be substituted, thanks
+to the conversion rule.
+
+For the sake of presentation, we postulate a $\Set$ in $\Set$
+rule. Having this rule makes our type theory inconsistent, by Girard's
+paradox~\cite{girard:set-in-set}. However, it has been
+shown~\cite{harper:implicit-universe, luo:utt,
+  courant:explicit-universe} that a valid stratification can be
+inferred, automatically or semi-automatically. In the remaining of our
+presentation, we will assume that such a stratification exists, even
+though we will keep it implicit. We shall discuss this assumption in
+Section~\ref{sec:discussion}.
 
 \begin{figure}
 
@@ -85,15 +142,31 @@ following implications always hold by induction on derivations.
 \end{figure}
 
 
-\begin{structure}
+\begin{wstructure}
 <- Judgemental equality [figure]
     <- symmetry, reflexivity, and transitivity
     <- beta-rules for lambda and pair
     <- xi-rule for functions
     -> Agnostic in the notion of equality
         <- Doesn't rely on a ``propositional'' equality
-\end{structure}
+        -> Key: wide applicability of our proposal
+\end{wstructure}
 
+Finally, we define the rules governing judgemental equality in
+Figure~\ref{fig:judgemental-equality}. As one would expect,
+judgemental equality is respects symmety, reflexivity, and
+transitivity. Further, it also encompasses the $β$-rules for function
+application and pairs. Finally, equality under lambda is dealt by the
+$ξ$-rule. 
+
+Crucially, being judgemental, this presentation is agnostic in the
+notion of equality actually implemented. Indeed, our typing and
+equality judgements do not rely on a ``propositional'' equality. This
+freedom is a key point in favour of the wide applicability of our
+proposal. Obviously, when implementing our technology in an existing
+type-theory, some opportunities arise. We will present some of them
+along the course of the paper, clearly specifying which extensions we
+require.
 
 \begin{figure}
 
@@ -106,7 +179,7 @@ following implications always hold by induction on derivations.
 
 
 
-\begin{structure}
+\begin{wstructure}
 !!! Need Help !!!
 <- Meta-theoretical properties
     <- Assuming a stratified discipline
@@ -116,22 +189,58 @@ following implications always hold by induction on derivations.
         -> Every program terminates
     -> Type-checking terminates
     ???
-\end{structure}
+\end{wstructure}
+
+This completes our presentation of the type theory. Assuming a
+stratified discpline of universe, the system we have described enjoy
+some very strong meta-theoretical properties. Unlike simply typed
+languages, such as Haskell, dependently-typed systems are
+\emph{strongly normalizing}: every program that type-checks
+terminates. Moreover, type-checking is decidable and can therefore be
+implemented by a terminating algorithm.
+
 
 \subsection{Finite sets}
 
-\begin{structure}
+\begin{wstructure}
 <- Motivation
     <- Finite sets could be encoded with Unit and Bool
         /> Hinder the ability to name things
+    <- W-types considered harmful?
+        ???
     -> For convenience
         <- Named elements
         <- Referring by name instead of code
         -> Types as coding presentation
             /> Also as coding representation!
-\end{structure}
+\end{wstructure}
 
-\begin{structure}
+As a motivating example, we are now going to extend the type theory
+with a notion of finite set. One could argue that there is no need for
+such an extension: finite sets, just as any data-structure, can be
+encoded inside the type theory. A well-known example of such encoding
+is the Church encoding of natural numbers, which is isomorphic to
+finite sets. 
+
+% Another example is Martin-Löf's W-types~\cite{}.
+
+However, using encodings is impractical. In the case of finite sets,
+for instance, we would like to name the elements of the sets. Then, we
+need to be able to manipulate these elements by their name, instead of
+their encoding. While we are able to give names to encodings, it is
+extremely tedious to map the encodings back to a name. Whereas these
+objects have a structure, the structure is lost during the encoding,
+when they become anonymous inhabitants of a $Π$ or $Σ$-type.
+
+In the simply-typed world, we are used to see types as a coding
+presentation -- presentation of invariants, presentation of
+properties. In the dependently-typed world, we also learn to use types
+as a coding representation: finite sets being good citizens, they
+ought to be democratically represented at the type level. As we will
+see, this gives us the ability to name and manipulate them (this is
+were the democracy analogy goes crazy, I think).
+
+\begin{wstructure}
 <- Implementation [figure]      
     <- Tags
         -> Purely informational token
@@ -139,7 +248,16 @@ following implications always hold by induction on derivations.
         -> Universe of finite sets
     <- EnumT e
         -> Elements of finite set e
-\end{structure}
+\end{wstructure}
+
+The implementation of finite sets is presented in
+Figure~\ref{fig:typing-finite-set}. It is composed by three
+components. First, we define tags as inhabitants of the $\UId$ type. A
+tag is solely an informative token, used for display purposes. Finite
+sets inhabits the $\EnumU$ type. Unfolding the definition, we get that
+a finite set is a list of tags. Finally, elements of a finite set $u$
+belong to the corresponding $\EnumT{u}$ type. Intuitively, it
+corresponds to an index, a number, pointing to an element of $u$.
 
 \begin{figure}
 
@@ -151,7 +269,7 @@ following implications always hold by induction on derivations.
 \end{figure}
 
 
-\begin{structure}
+\begin{wstructure}
 <- Equipment
     <- \spi operator
         <- Equivalent of Pi on finite sets
@@ -162,15 +280,30 @@ following implications always hold by induction on derivations.
     <- switch operator
         <- case analyses over x
         <- index into the \spi tuple to retrieve the corresponding result
-\end{structure}
+\end{wstructure}
 
-\begin{figure}
+The $\Enum$ type comes with further machinery. Indeed, to manipulate
+the $\EnumU$ and $\EnumT{}$ objects, we need to equip our type theory
+with an appropriate \emph{elimination principle}. A first step
+consists in defining the $\spi{}{}$ operator:
 
-\[\stkl{
+\[
 %% spi
-\F{$\pi$} : \PITEL{\V{e}}{\EnumU}
-            \PITEL{\V{P}}{\EnumT{e} \To \Set} \To \Set 
-\\
+\spi{}{} : \PITEL{\V{e}}{\EnumU}
+           \PITEL{\V{P}}{\EnumT{e} \To \Set} \To \Set 
+\]
+
+A closer look to its type should reveal a certain familiarity with its
+equivalent for sets, $\Pi$. Indeed, $\spi{}{}$ defines a \emph{finite
+  function space}, mapping elements of finite sets to objects in
+$\Set$. Intuitively, this operator build a right-nested tuple,
+effectively mapping an object of $P\:i$ for each $i$ the finite
+domain.
+
+Having understood the meaning of $\spi{}{}$, the definition of the
+$\F{switch}$ eliminator is not surprising:
+
+\[
 %% switch
 \begin{array}{@{}ll}
 \F{switch} : & \PITEL{\V{e}}{\EnumU}
@@ -178,15 +311,15 @@ following implications always hold by induction on derivations.
              & \PITEL{\V{b}}{\spi{e}{P}}
                \PITEL{\V{x}}{\EnumT{e}} \To P~x
 \end{array}
-}\]
+\]
 
-\caption{Operators on finite sets}
-\label{fig:operator-finite-set}
+Again, there is a clear equivalent in the full-$\Set$ world: function
+application. The operational behavior of $\F{switch}$ is
+straightforward: $x$ is peeled off as we move deeper inside the nested
+tuple $b$. When $x$ equals $\Ze$, we simply return the value we are
+pointing to.
 
-\end{figure}
-
-
-\begin{structure}
+\begin{wstructure}
 <- Equivalent to having a function space over finite sets
     /> Made non-obvious by low-level encodings
         <- General issue with codes
@@ -195,20 +328,77 @@ following implications always hold by induction on derivations.
         <- Provide ``too much'' information
         /> False impression: information is actually waiting to be used more widely
         -> See next Section
-\end{structure}
+\end{wstructure}
+
+As we have seen, finite sets are not just a way of making
+data. Through the $\spi{}{}$ and $\F{switch}$ operators, they also
+come with a notion of finite function space. However, we had to
+extract that intuition from the type, by a careful reading. At a first
+glance, this seems to contradict our argument in favor of types for
+coding representation. Here, we are overflown by low-level, very
+precise type information. 
+
+However, our situation is significantly different from the one we
+faced with encoded data: while we were suffering from a crucial lack
+of information, we are here facing too much information, hence loosing
+focus. This is a general issue with the usage of codes, as they convey
+much more information than what the user is used to see. 
+
+As we will see in the following section, there exists a cure to this
+problem. In a nutshell, instead of being overflown by typing
+information, we will put it at work, automatically. The consequence is
+that, in such system, working with codes is \emph{practical}: one
+should not be worried by information overload, but how to use it as
+much as possible. Having mastered this difficulty, we should not be
+afraid by code for practical purposes.
+
 
 \subsection{Type propagation}
 
-\begin{structure}
+\begin{wstructure}
 <- Bidirectional type-checking [ref. Turner,Pierce]
     -> Separating type-checking from type synthesis
     <- Type checking: push terms into types
         <- Example: |Pi S T :>: \ x . t| allows us to drop annotation on lambda
-    <- Type inference: pull types out of terms
+    <- Type synthesis: pull types out of terms
         <- Example: |x : S l- x :<: S| gives us the type of x
-\end{structure}
+\end{wstructure}
 
-\begin{structure}
+Our proposal to tame the problem of codes is deeply rooted in the
+bidirectional presentation of type-checking of Pierce and
+Turner~\cite{pierce:bidirectional-tc}. In this formalism,
+type-checking is divided into two complementary phases. In the
+\emph{type inference} phase, types are \emph{pulled} out of terms. A
+typical example is a variable in the context:
+
+\[
+\Axiom{\Gamma ; \xS ; \Delta \Vdash \propag{\x}
+                                           {\pull{\x}{S}}}
+\]
+
+Because the variable and its type are stored in the context, whenever
+this variable is used, we can pull its type out of it.
+
+On the other hand, in the \emph{type checking} phase, terms are
+\emph{pushed} into types. We are handed a type together with a term,
+our task consists in checking that the term is indeed of this type. We
+are therefore allowed, and actually encouraged, to use the information
+provided by the type. Therefore, we can relax our requirements on the
+term. A typical example is the lambda:
+
+\[
+\Rule{\Gamma ; \xS \Vdash \propag{\push{t}{T\: x}}
+                                 {t'}}
+     {\Gamma \Vdash \propag{\push{\LAM{\x} t}{\PiTy{S}{T}}}
+                           {\PLAM{\x}{S} t'}} 
+\]
+
+In our formal presentation of the type theory, we were forced to
+annotate the lambda by the type of its domain. In a bidirectional
+setting, the domain is provided by the $\Pi$ type we are pushing the
+lambda into. Hence we do not need to annotate the lambda.
+
+\begin{wstructure}
 <- Formalization: type propagation
     <- Motivation
         -> High-level syntax
@@ -220,9 +410,56 @@ following implications always hold by induction on derivations.
         -> Presented as judgements
     -> Presentation mirors typing rule of [figure] 
         -> Ignore identitical judgements
-\end{structure}
+\end{wstructure}
 
-\begin{structure}
+We adapt and formalize this \emph{type propagation} mechanism to our
+richer type theory. First of all, we define a high-level syntax,
+composed by \emph{expressions}. Expressions divided into two syntactic
+categories: $\exprIn$ into which types are pushed in, and $\exprEx$
+from which types are pulled out. Following the bidirectional
+presentation, $\exprIn$ are subject to type \emph{checking}, while
+$\exprEx$ are subject to type \emph{synthesis}.
+
+The purpose of type propagation is to \emph{elaborate} an high-level
+expression into a term of the type theory, together with its
+type. This presentation builds on the experience gained in
+implementing Epigram 1~\cite{mcbride:view-from-the-left}. Being
+entirely syntax driven, we present our formalism as a system of
+syntax-directed inference rules. As the presentation largely mirrors
+the inference rules of the type theory, we will ignore the judgements
+which are identical. We refer our reader to the associated technical
+report~\cite{chapman:desc-tech-report} for the complete system of
+rules.
+
+\begin{wstructure}
+<- Type synthesis [figure]
+    <- Pull a type out of an exprEx
+    <- Result in a full term, together with its type
+    -> Do *not* need to specify types
+        -> Extracting a term from the context
+        -> Function application
+        -> Projections
+\end{wstructure}
+
+The type synthesis rules are presented
+Figure~\ref{fig:type-synthesis}. As illustrated by the judgement form,
+a type synthesis problem is provided an expression $\exprEx$ in a
+context, which is elaborated into a low-level term together with its
+type. These terms act as \emph{sources} for the type propagation
+machinery: they make types out of expressions. We have already studied
+the case of a variable in context. This also include function
+application as well as projections. Further down the line, these types
+might propagate to other terms, thanks to type checking.
+
+\begin{figure}
+\input{figure_type_synthesis}
+\caption{Type synthesis}
+\label{fig:type-synthesis}
+\end{figure}
+
+
+
+\begin{wstructure}
 <- Type checking [figure]
     <- Push a type in an exprIn
     <- Result in a full term
@@ -231,37 +468,40 @@ following implications always hold by induction on derivations.
         -> Translation of 'tags into EnumTs
         -> Translation of ['tags ...] into EnumUs
         -> Finite function space into switch
-\end{structure}
+\end{wstructure}
+
+Dually to type synthesis, type checking judgements
+(Fig.\ref{fig:type-checking}) act as \emph{sinks}. From an expression
+$\exprIn$ and a type propagated down to it, they elaborate a low-level
+term. This is precisely the availability of the type we are pushed
+into that makes the power of this technique. Its benefit on lambda
+abstraction and pairs is well-known. Let us explore the consequences
+on our coding scheme for finite sets.
+
+A first consequence is that we can actually denote elements of finite
+sets \emph{by their name}. Indeed, such expression will be pushed into
+a $\EnumT{u}$, where $\Bhab{u}{\EnumU}$ contains all the names
+populating the finite set. It is therefore easy to elaborate a name
+into the corresponding index.
+
+A second consequence concerns the definition of a finite set. We can
+abstract away the details of code and use a familiar syntax
+instead. Hence, we use the syntax $\Enum\: [t_1 \ldots t_n]$ to denote
+the finite sets composed by the nammed elements $t_1$, \ldots,
+$t_n$. The translation to elements of $\EnumU$ is straightforward.
+
+Finally, and more importantly, we are able to present our user an
+abstraction of \emph{finite} function space. This work as follow. When
+an expression $t$ is pushed into a function which domain is a finite
+set, we instead elaborate it as a term in a small $\pi$-type. That is,
+a finite function. To realize our promise of a big $\Pi$-type, we
+elaborate a call to the $\F{switch}$ eliminator. 
 
 \begin{figure}
-
 \input{figure_type_checking}
-
 \caption{Type checking}
 \label{fig:type-checking}
-
 \end{figure}
-
-
-\begin{structure}
-<- Type synthesis [figure]
-    <- Pull a type out of an exprEx
-    <- Result in a full term, together with its type
-    -> Do *not* need to specify types
-        -> Extracting a term from the context
-        -> Function application
-        -> Projections
-\end{structure}
-
-\begin{figure}
-
-\input{figure_type_synthesis}
-
-\caption{Type synthesis}
-\label{fig:type-synthesis}
-
-\end{figure}
-
 
 \begin{structure}
 <- Summary

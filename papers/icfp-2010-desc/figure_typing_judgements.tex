@@ -8,14 +8,14 @@
       \Gamma ; \xS \vdash \Type{T}}
      {\Gamma \vdash \Type{\PIS{\xS} T, \SIGMAS{\xS} T}}
 \\
-%% Prop
-\Rule{\Gamma \vdash \Bhab{q}{\Prop}}
-     {\Gamma \vdash \Type{\prf{q}}}
-\qquad
-%% True
-\Rule{\Gamma \vdash \Valid}
-     {\Gamma \vdash \Bhab{\True}{\Prop}}
-\\
+%% %% Prop
+%% \Rule{\Gamma \vdash \Bhab{q}{\Prop}}
+%%      {\Gamma \vdash \Type{\prf{q}}}
+%% \qquad
+%% %% True
+%% \Rule{\Gamma \vdash \Valid}
+%%      {\Gamma \vdash \Bhab{\True}{\Prop}}
+%% \\
 %% Context
 \Rule{\Gamma ; \xS ; \Delta \vdash \Valid}
      {\Gamma ; \xS ; \Delta \vdash \Bhab{x}{S}}

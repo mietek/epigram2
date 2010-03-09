@@ -1,6 +1,6 @@
 \documentclass[preprint
               , authoryear
-              , onecolumn
+%              , onecolumn
               ]{sigplanconf}
 
 \usepackage{amsmath}
@@ -13,6 +13,8 @@
 \newenvironment{structure}{\footnotesize\verbatim}{\endverbatim}
 %\newenvironment{structure}{\comment}{\endcomment}
 
+%% Written bits of Structure
+\newenvironment{wstructure}{\comment}{\endcomment}
 
 \begin{document}
 
@@ -107,7 +109,6 @@ ACM bullet points, we offer:
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \input{paper_type_theory}
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% A Universe of simple data-types

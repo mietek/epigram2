@@ -1,4 +1,17 @@
 \[\stkc{
+%% Reflexivity
+\Rule{\Gamma \vdash \Bhab{x}{T}}
+     {\Gamma \vdash \Bhab{x \equiv x}{T}}
+\qquad
+%% Symmetry
+\Rule{\Gamma \vdash \Bhab{x \equiv y}{T}}
+     {\Gamma \vdash \Bhab{y \equiv x}{T}}
+\qquad
+%% Transitivity
+\Rule{\stkl{\Gamma \vdash \Bhab{z \equiv y}{T} \\
+            \Gamma \vdash \Bhab{y \equiv z}{T} }}
+     {\Gamma \vdash \Bhab{x \equiv z}{T}}
+\\
 %% Beta-reduction
 \Rule{\stkl{\Gamma       \vdash \Type{S} \quad
             \Gamma ; \xS \vdash \Bhab{t}{T} \\
