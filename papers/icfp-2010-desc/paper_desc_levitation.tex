@@ -1,0 +1,327 @@
+\section{Levitating the universe of descriptions}
+
+\subsection{Implementing finite sets}
+
+\begin{structure}
+<- Recall typing rules of 1st section
+    -> Make clear they were just promises
+    -> Can be implemented now
+        <- Simply List UId
+\end{structure}
+
+\[\stk{
+\EnumU : \Set \\
+\EnumU \mapsto \Mu{(\List~\UId)}
+}\]
+
+
+\begin{structure}
+<- Consequences
+    -> Type theory doesn't need to be extended with EnumU, NilE, and ConsE
+        <- EnumU == Mu EnumUD
+        <- NilE, ConsE are just tags
+    -> Do not need a specific \spi eliminator
+        <- \spi is an instance of the generic eliminator
+            <- Code?
+    -> Anything else remains the same (switch, EnumT, 0, 1+)
+\end{structure}
+
+\begin{structure}
+<- Summary of the operation
+    <- The content of the type theory is exactly the same
+        <- before == after
+    /> type naming scheme condenses
+        <- Replace named constructors by codes in the universe of data-types
+    -> Our next step is a similar move (in essence)
+        /> Condenses the entire naming scheme of data-types
+\end{structure}
+
+\subsection{Implementing descriptions}
+
+\begin{structure}
+<- Realizing our promises
+    <- We are going to implement Desc
+    /> Desc is itself a data-type
+        <- Same situation as EnumU
+            <- We want to benefit from generic operations
+        -> It ought to be encoded in itself
+\end{structure}
+
+\subsubsection{First try}
+
+\begin{structure}
+<- A partial implementation
+    <- '1 and 'indx are easy
+    <- 'sigma is partially doable
+        /> lack the ability to do an higher-order inductive call
+    -> Show partial code [figure]
+\end{structure}
+
+\[\stk{
+\DescD : \Desc \\
+\begin{array}{@{}ll}
+\DescD \mapsto \DSigma{}{} & (\EnumT [ \DUnit, \DSigma{}{}, \DIndx{} ]) \\
+                           & \left[\begin{array}{l}
+                                   \DUnit                                \\
+                                   \DSigma{\Set}{(\LAM{\V{X}} ???)} \\
+                                   \DIndx{\DUnit}                                  \\
+                                   \end{array}
+                             \right]
+\end{array}
+}\]
+
+\subsubsection{Second try}
+
+\begin{structure}
+<- Extending the universe of description
+    -> With higher-order induction
+    <- Intuition: index elements in X by H, and go on reading
+        -> indx is isomorph to hindx for H = 1
+    /> Keep indx
+        <- First order!
+        -> Extensionally equal to hindx 1
+        /> Practically, definitional equality on Sigma/Pi cannot cope with it
+    -> Show DescD code
+\end{structure}
+
+
+\[
+\stk{
+\data \Desc : \Set \where \\
+\;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
+    \ldots          & \:\:\ldots \\
+    \DHindx         & \PI{H}{Set} \Desc \To \Desc
+\end{array}
+}
+\]
+
+\[\stk{
+\descop{\_\:}{} : \Desc \To \Set \To \Set \\
+\begin{array}{@{}l@{\:=\:\:}ll}
+\ldots                        &  \ldots \\
+\descop{\DHindx{H}{D}}{X}     &  \TIMES{(H \To X)}{\descop{D}{X}}
+\end{array}
+}\]
+
+
+\[\stk{
+\DescD : \Desc \\
+\begin{array}{@{}ll}
+\DescD \mapsto \DSigma{}{} & (\EnumT [ \DUnit, \DSigma{}{}, \DIndx{}, \DHindx{}{} ]) \\
+                           & \left[\begin{array}{l}
+                                   \DUnit                                \\
+                                   \DSigma{\Set}{(\LAM{\V{X}} \DHindx{X}{\DUnit})} \\
+                                   \DIndx{\DUnit}                                  \\
+                                   \DSigma{\Set}{(\LAM{\_} \DIndx{\DUnit})}
+                                   \end{array}
+                             \right]
+\end{array}
+}
+\]
+
+
+\subsubsection{Final move}
+
+\begin{structure}
+<- Subtlety: translation of [ ... ]
+    -> Let us do it manually
+        -> Code with problem for the motive of switch
+\end{structure}
+
+\begin{structure}
+<- The magician trick
+    <- Our problem is to give a motive for switch
+        /> We perfectly know what it ought to be: \_ -> DescD
+    -> Solution: extend the type theory with a special purpose switchD
+        -> Only extension required to the type theory!
+        -> Hidden away to the user by the syntactic sugar
+            -> Sufficient to ensure unavailability as a raw operator
+            <- Another instance of type propagation
+\end{structure}
+
+\begin{structure}
+<- Generic programming now!
+    <- Desc is just data
+        -> Can be manipulated
+    <- Free induction scheme on Desc
+        -> Ability to inspect data-types
+        -> Ability to program on data-types
+\end{structure}
+
+\subsubsection{Desc, atomically}
+
+\begin{structure}
+<- Adding hindx have introduced some duplication
+    <- indx == hindx 1
+    -> We can factor out commonalities 
+        /> Obtain an equivalent presentation
+        /> Still embeddable (refer to the Agda model)
+\end{structure}
+
+\begin{structure}
+<- Give new presentation [figure]
+    <- hindx have introduced the notion of function space: 'Pi
+    <- hindx and indx are both composed by a binary product and a left open term: 'x and 'id 
+    -> Straightforward translation to the new system [equation]
+\end{structure}
+
+\[
+\stk{
+\data \Desc : \Set \where \\
+\;\;\begin{array}{@{}l@{\::\:}l@{\quad}l}
+    \DId            & \Desc                                   \\
+    \DUnit          & \Desc                                   \\
+    \DProd{}{}      & \PI{\V{D}, \V{D'}}{\Desc} \Desc         \\
+    \DSigma         & \PI{\V{S}}{\Set} \PIS{S \To \Desc} \Desc \\
+    \DPi            & \PI{\V{S}}{\Set} \PIS{S \To \Desc} \Desc 
+\end{array}
+}
+\]
+
+\[\stk{
+\descop{\_\:}{} : \Desc \To \Set \To \Set \\
+\begin{array}{@{}l@{\:=\:\:}ll}
+\descop{\DId}{X}          &  X                                           \\
+\descop{\DUnit}{X}        &  \Unit                                       \\
+\descop{\DProd{D}{D'}}{X} &  \TIMES{\descop{D}{X}}{\descop{D'}{X}}       \\
+\descop{\DSigma{S}{D}}{X} &  \SIGMA{\V{s}}{S} \descop{D\: s}{X}                \\
+\descop{\DPi{S}{D}}{X}    &  \PI{\V{s}}{S} \descop{D\: s}{X}            
+\end{array}
+}\]
+
+\[\begin{array}{l@{\:\mapsto\:\:}l}
+\DIndx{D}         & \DProd{\DId}{D}                      \\
+\DHindx{H}{D}     & \DProd{(\DPi{H}{(\LAM{\_} \DId)})}{D}
+\end{array}
+\]
+
+
+\subsection{The generic catamorphism}
+
+\begin{structure}
+<- Making cata
+    <- Present the type signature
+    <- Starts with a call to generic induction
+        <- induction on Desc!
+        /> Show types at hand
+        -> Explain how to use inductive hypothesis
+    <- Implement the 'replace' function
+    -> Dependent-typeless catamorphism 
+\end{structure}
+
+This \(\F{induction}\) operator is the natural dependent elimination
+principle, but we might also benefit from the traditional \emph{catamorphism}
+or `fold operator' which accompanies a (weakly) initial algebra. We should
+like to have
+\[\stk{
+\F{cata} : \PITEL{D}{\Desc}
+           \PI{T}{\Set}
+           (\descop{D}{T}\To T) \To 
+           \Mu{D} \To T \\
+\F{cata}\: D\: T\: f \mapsto
+  \F{induction}\: D\: (\LAM{\_}T)\: (\LAM{xs\:ts} f\: ?)
+}\]
+but what should \(?\) be? We have \(xs:\descop{D}{\Mu{D}}\)
+and \(ts:\All{D}{(\Mu{D})}{(\LAM{\_}T)}{xs}\), so surely we can construct
+an element of \(\descop{D}{T}\) by replacing each recursive component from
+\(xs\) with its counterpart from \(ts\).
+
+\[\stk{
+\F{replace} : \stk{\PITEL{D}{\Desc}
+                   \PITEL{X,Y}{\Set}\\
+                   \PI{xs}{\descop{D}{X}} 
+                   \All{D}{X}{(\LAM{\_}Y)}{xs} \To
+                   \descop{D}{Y}} \\
+\F{replace}\: \DUnit\:          X\: Y\: \Void\:          \Void          \mapsto \Void \\
+\F{replace}\: (\DSigma{S}{D})\: X\: Y\: \pair{s}{xs}{}\: ys             \mapsto
+    \pair{s}{\F{replace}\: {D~s}\: X\: Y\: xs\: ys}{}         \\
+\F{replace}\: (\DIndx{D})\:     X\: Y\: \pair{x}{xs}{}\: \pair{y}{ys}{} \mapsto
+    \pair{y}{\F{replace}\: D\: X\: Y\: xs\: ys}{}
+}\]
+
+
+
+\begin{structure}
+<- Deriving generic functions
+    <- Taking a Desc and computing a function
+        <- Desc comes equipped with an induction principle
+        -> Ability to compute more functions from it
+            -> More generic functions
+    <- Inspecting data-types
+        <- All described by a Desc code
+        -> Ability to explore the code
+            <- Desc equipped with an induction principle
+            -> Build new objects based on that structure
+\end{structure}
+
+\subsection{The generic Free Monad}
+
+\begin{structure}
+!!! EARLIER !!!
+<- Tagged description
+    <- Form TDesc = List (UId x Desc) [equation]
+    <- Follow usual sums-of-product presentation of data-type
+        <- Finite set of constructors
+        <- Then whatever you want
+    -> Any Desc data-type can be turned into this form
+        -> No loss of expressive power
+        /> Garantee a ``constructor form''
+\end{structure}
+
+A \emph{tagged} description is given by an inhabitant of
+\[
+ \F{TagDesc} \mapsto \List{\TIMES{\UId}{\Desc}}
+\]
+
+
+Datatypes specified in the conventional `sum of products' style naturally give rise to tagged descriptions. Of course, every description can be dorced into this style with a singleton choice of tag.
+
+
+\begin{structure}
+<- A generic program: the free monad construction
+    <- Recall free monad construction in Haskell
+        -> Based on a functor F
+    <- Note that the free monad construction is itself defined by a functor
+        -> Extract it
+    <- Encode it in the Desc world [equation]
+        <- F is the Desc we start with
+        <- The free monad functor is what we have just defined
+        <- [\_]* : Desc -> Set -> Desc
+           [\_]* D X = 'cons ['var ('sigma X (\_ -> '1))] D
+        -> Mu does the fix-point
+\end{structure}
+
+
+We may then implement the \emph{free monad} construction as a
+transformation on \(\F{TagDesc}\).
+\[\stk{
+\FreeMonad{\_} : \F{TagDesc} \To \Set \To \F{TagDesc} \\
+\FreeMonad{\pair{E}{D}{}}\:X \mapsto
+\pair{\ListCons{\:\DVar{}}{E}}{\pair{\DConst{X}}{D}{}}{}
+}\]
+Of course, we must equip the resulting datatypes with operations delivering a monadic interface. As usual, \(\LAM{\x}\DVar{\x}\) performs the r\^ole of `return', embedding variables into terms. We shall also need a generic \emph{substitution} operator.
+
+
+\begin{structure}
+<- A generic program: monadic substitution [equation]
+    <- subst : \forall T X Y. mu ([T]* X) -> (X -> mu ([T]* Y)) -> mu ([T]* Y)
+        -> Using Fold
+    -> Consequences
+        <- We have free monad data-type
+            <- Term + variables
+        <- We have monad operations
+            <- Return / var
+            <- Substitution / bind
+\end{structure}
+
+\begin{structure}
+<- Deriving new data-structure and functions on them
+    <- Computing the Free Monad of a data-type
+        <- Derive new data-structure from previous one
+            <- It is just code
+        /> New data-structure comes with some equipment
+    <- Computing new functions on computed data-types
+        <- If data comes with structure, we ought to be able to capture it
+            <- Induction on Desc
+            -> Ability to compute over data
+\end{structure}
