@@ -20,7 +20,7 @@ dependently-typed languages.
 Our proposal is based on induction-recursion~\cite{dybjer:general-ir,
   dybjer:axiom-ir, dybjer:ir-initial-algebra, dybjer:iir}. However, in
 the context of simple data-types, the full power of
-induction-recursion is not required. Therefore, we will present a
+induction-recursion is not necessary. Therefore, we will present a
 stripped-down version. As we extend the scope of our universe of
 data-types, our presentation will diverge from induction-recursion. We
 shall compare both approaches in Section~\ref{sec:discussion}
@@ -279,22 +279,38 @@ interpretation of this code corresponds to the following functor:
 So far, for conveniency, we have taken as granted the existence of
 $\Desc$, as presented in Figure~\ref{fig:desc_universe}. In
 particular, we have considered its code, $\DSigma{}{}$, $\DIndx{}$,
-and $\DUnit$ as standard type constructors. Hence, we would expect the
-type theory to be extended by these constructors and their typing
-rules. Although it makes no conceptual difference, the code of
-description should rather be read as a \emph{promise}. We promise the
-existence of such objects, satisfying the typing rules. It will be the
-subject of Section~\ref{sec:desc-levitate} to fulfill these promises.
+and $\DUnit$ as type formers, extending the basic type theory. Hence,
+in an implementation of this type theory, we would have extended it
+with these constructors and their typing rules. Although it makes no
+conceptual difference, the code of description should rather be read
+as a specification. We promise the existence of such objects,
+satisfying the typing rules. It will be the subject of
+Section~\ref{sec:desc-levitate} to fulfill this promise, by actually
+implementing the specification.
 
 \subsection{Fix-point}
 
-\begin{structure}
+\begin{wstructure}
 <- Build the fix-point of functors
     <- See examples: need to build their initial algebra
     -> Extend the type theory with Mu/Con [figure]
         <- Straightforward definition of a fixpoint
             <- Interpret D with (Mu D) as subobjects
-\end{structure}
+\end{wstructure}
+
+%%! Strictly positive types anyone?
+
+So far, we have used our universe of descriptions to build
+functors. To illustrate its usage, we have implemented the signature
+functors of natural numbers, lists, and binary trees. However, the
+class of functors expressible with descriptions enjoy another
+property: they all admit a fix-point.
+
+Let us constructively prove this. First of all, for an object $D$
+describing a signature functor, we define its fix-point by the type
+former $\Mu{D}$. Inhabitants of the fix-point are materialized by the
+structure map: $\Con{x}$ inhabits $\Mu{D}$ if $x$ belongs to the
+interpretation of $D$ with the carrier of the initial algebra:
 
 \[
 \Rule{\Gamma \vdash \Bhab{D}{\Desc}}
@@ -304,22 +320,13 @@ subject of Section~\ref{sec:desc-levitate} to fulfill these promises.
      {\Gamma \vdash \Bhab{\Con{x}}{\Mu{D}}}
 \]
 
+For the less categorically inclined reader, we can simply read this
+construction as \emph{tying the knot}: the holes left open by the
+functor are filled by its own recursive definition. Hence, we have
+recovered the data-types we are usually able to define in simply-typed
+languages.
 
-\begin{structure}
-<- Extending type propagation
-    <- Data-type declaration turns into definitions
-        -> Straightforward translation to Desc
-        -> Creation of a variable referring to the structure
-    <- Push Mu to an applied name [figure]
-        -> Direct integration into the type propagation machinery
-    <- Labelled Mu
-        /> Just mention the possibility of labelling, no details required
-        -> For the user, objects have names rather than Mu of codes
-    -> Coded presentation is practical
-        <- The user never see a code
-\end{structure}
-
-\begin{structure}
+\begin{wstructure}
 <- Elimination on Mu
     <- We are used to foldD : \forall X. (desc D X -> X) -> mu D -> X
         /> Not dependent
@@ -329,21 +336,139 @@ subject of Section~\ref{sec:desc-levitate} to fulfill these promises.
         <- Induction
     -> *Generic*
     ???
-\end{structure}
+\end{wstructure}
+
+Together with the type formers defined above, we would legibly expect
+an elimination principle. Following the categorical intuition, we
+could be tempted to provide it as a catamorphism:
 
 \[
 \F{cata} : \PITEL{D}{\Desc}
            \PI{T}{\Set}
-           (\descop{D}{T}\To T) \To 
+           (\descop{D}{T} \To T) \To 
            \Mu{D} \To T 
 \]
 
+Whereas this definition is amply sufficient in the simply-typed world,
+it comes short of its promises in the dependently-typed realm. Indeed,
+this type is absolutely non dependent. As this operator will be the
+corner stone of any inductive definition, we are better off sharping
+it before use.
+
+The first step consists in turning $T$ into a predicate
+$\Bhab{P}{\Mu{D} \To \Set}$, hence introducing a dependency on the
+descriptions. Consequently, we strengthen the algebra $\descop{D}{T}
+\To T$ by a similar process. We start with turning the arrow into a
+dependenty arrow, hence offering $\Bhab{xs}{\descop{D}{(\Mu{D})}}$ to
+further analysis. 
+
+Then, we have to translate the notion of algebra in our dependent
+setting. This is achieved by the $\All{D}{X}{P}{x}$ predicate that,
+intuitively, states that $\Bhab{P}{X \To \Set}$ holds everywhere in
+the sub-structures of $x$. Based on that knowledge, we ought to be
+able to prove that $P$ holds for $\Con{xs}$. We close our elimination
+principle by taking an argument $x$ in $\Mu{D}$ and claiming that the
+motive $P$ is realized on $x$.
+
 \[
-\begin{array}{lcl}
-\F{induction} & : & \PITEL{D}{\Desc}                \\
-              &   & \PITEL{P}{\Mu{D} \To \Set}      \\
-              &   & \PITEL{m}{\PI{xs}{\descop{D}{(\Mu{D})}} \All{D}{(\Mu{D})}{P}{xs} \To P (\Con{xs})} \\
-              &   & \PI{x}{\Mu{D}} P x
+\begin{array}{lcll}
+\F{induction} & : & \multicolumn{2}{l}{\PITEL{D}{\Desc}}                   \\
+              &   & \multicolumn{2}{l}{\PITEL{P}{\Mu{D} \To \Set}}         \\
+              &   & \PITEL{m}{& \PI{xs}{\descop{D}{(\Mu{D})}}              \\
+              &   &           & \All{D}{(\Mu{D})}{P}{xs} \To P (\Con{xs})} \\
+              &   & \multicolumn{2}{l}{\PI{x}{\Mu{D}} P x}
 \end{array}
 \]
 
+At this stage, we are still left with implementing $\F{All}$ and the
+$\F{induction}$ principle. For space reason, we refer the reader to
+our technical report for the actual code. Having this dependent
+catamorphism, we are empowered with the ability to $\emph{compute}$
+over descriptions. Note that this induction principle is the first
+manifestation of a generic operation over descriptions. Thanks to
+$\F{induction}$, any data-type we define automatically comes equipped
+with an induction principle.
+
+
+\begin{wstructure}
+<- Extending type propagation
+    <- Data-type declaration turns into definitions
+        -> Straightforward translation to Desc
+        -> Creation of a variable referring to the structure
+    <- Labelled Mu
+        /> Just mention the possibility of labelling, no details required
+        -> For the user, objects have names rather than Mu of codes
+    <- Push Mu to an applied name [figure]
+        -> Direct integration into the type propagation machinery
+    -> Coded presentation is practical
+        <- The user never see a code
+\end{wstructure}
+
+
+In this section, we have introduced a universe of description. We have
+shown how to manipulate these codes to build data-types. We have also
+presented a fix-point construction and its associated dependent
+catamorphism. However, one could argue that programming with these
+objects is not practical. 
+
+Whereas simply-typed languages feature a convenient grammar for
+defining data-types and manipulating them, our proposal could be seen
+as a step backward. In our setting, the user would have to write a
+description instead of a sugared data-type definition. Then, to
+recognize an element of $\Nat$ for instance, she would have to
+identify $\Mu{}$ of a description as indeed the fix-point of the
+functor signature of natural numbers. Finally, she would have to write
+codes instead of the natural data-type constructor.
+
+As for finite sets previously, these symptoms clearly indicate that we
+suffer from too much type information. Just as for finite, the cure
+lies in rationalizing this information. Let us first tackle the issue
+of data-type declaration: unsurprisingly, the grammar of data-types we
+are used can be straighforwardly translated to the
+``sigmas-of-sigmas'' paradigm. Hence, a data-type definition is turned
+into the corresponding description. Then, at the level of definitions,
+we associate the name of the data-type to the fix-point of the
+description. The induction principle as well as other generic
+operations follow for free.
+
+Doing so, we seal data-type definition behind a convenient
+abstraction. We take advantage of this abstraction barrier to tamper
+the second issue. Namely, our user would rather be presented a name
+rather that a fix-point of a signature functor. Rather surprisingly,
+it is sufficient to \emph{label} the $\Mu{}$ constructor with the
+user-provided name. When pretty-printing this object, we just expose
+the label, instead of the definition in full.
+
+Regaining the ability to write data-type constructor is simply a
+matter of type propagation. We therefore extends the type-checking
+framework of Figure~\ref{fig:type-checking} with the following
+inference rule:
+
+%% I'm kind of shafted (haha) by this:
+%%     - We have not yet introduced tagged descriptions
+%%     - Tagged descriptions are much more complex now
+%%     - "cases.i" is a syntax I just made up
+\[
+\Rule{\forall e_i \in \vec{e}, \propag{\push{\descop{cases.i}{\Mu{(\DSigma{(\Enum\: \CN{const})}{\CN{cases}})}}}{e_i}}
+                        {e'_i}}
+     {\propag{\push{C\: \vec{e}}{\Mu{(\DSigma{(\Enum\: \CN{const})}{\CN{cases}})}}}
+             {\Con{(\etag{C}, \widetilde{e'})}}}\;\etag{C} \in \CN{cases}
+\]
+
+Hence, in the high-level expression language, the user types a
+familiar type constructors, applied to a telescope of arguments. In
+the type propagation setting, this expression will be pushed to a
+$\Mu{}$ type of a tagged description. It is then straightforward to
+lookup the tag and turn the constructor form into the appropriate
+code.
+
+This concludes our presentation of the universe of descriptions. In
+this section, we have seen how data-types from the simply-typed world
+can be expressed in our dependent-type setting. By relying on a
+universe construction technique, we benefit from the ability to
+inspect and manipulate these codes. This opens some appealing
+opportunities for generic programming. Finally, we have demonstrated
+that programming with codes is practical. To this end, we have
+extended the type propagation machinery. In this setting, we can
+define, interact, and build data-types as transparently as in the
+simply-typed world.
