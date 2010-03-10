@@ -1,25 +1,58 @@
 \section{A universe of simple data-types}
 
-\begin{structure}
+\begin{wstructure}
 <- Why starting with simple data-types
     <- For pedagogical purposes
         <- Data-types as we know them every day
         /> Target dependent types
     -> Cut down version of Induction Recursion
         -> Presentation evolves independently as we go to dependent types
-\end{structure}
+\end{wstructure}
+
+In this section, we describe an alternative implementation of
+inductive types, as we know them in simply-typed languages such as
+Haskell or OCaml. This choice is motivated by pedagogical
+considerations: by describing the layman data-types in our setting, we
+build on our intuition of data-types we are familiar with. However,
+our goal is and remains to discuss data-types as we find them in
+dependently-typed languages.
+
+Our proposal is based on induction-recursion~\cite{dybjer:general-ir,
+  dybjer:axiom-ir, dybjer:ir-initial-algebra, dybjer:iir}. However, in
+the context of simple data-types, the full power of
+induction-recursion is not required. Therefore, we will present a
+stripped-down version. As we extend the scope of our universe of
+data-types, our presentation will diverge from induction-recursion. We
+shall compare both approaches in Section~\ref{sec:discussion}
 
 \subsection{The power of $\Sigma$}
 
-\begin{structure}
+\begin{wstructure}
 <- The duality of Sigma
     <- Sigma generalizes sum over arbitrary arities
         -> \Sigma A B == \Sigma_{x : A} B x
     <- Sigma generalizes product to have a dependant second component
         -> \Sigma A B == (x : A) \times (B x)
-\end{structure}
+\end{wstructure}
 
-\begin{structure}
+In dependently-typed language, $\Sigma$-types can be read in two
+rather different ways. This duality is actually reflected in the
+notation we can find in the literature, depending on the sensibility
+of the author. Hence, the type $\SigmaTy{A}{B}$ is sometimes written
+$\Sigma_{x : A} (B x)$. This notation stresses the fact that
+$\Sigma$-types are a generalization of sums over arbitrary
+arities. When simply-typed languages have finite sums,
+dependently-typed languages have sums of indexed by any set.
+
+On the other hand, $\SigmaTy{A}{B}$ is sometimes written
+$\SIGMA{\V{x}}{A} (B x)$. Under this perspective, $\Sigma$-types can
+be read as a generalization of products, where the second component
+can depend on the first one. When simply-typed languages pack data
+into non-dependent tuples, dependently-types languages tolerate this
+non-dependent usage. However, they also give the rather novel ability
+for data to influence further data.
+
+\begin{wstructure}
 <- Data-types in the simply-typed world
     -> "sums-of-product"
         <- Sum of constructors
@@ -29,11 +62,30 @@
     /> Need ability to manipulate these sigmas
         -> Define a Code for data-types
         -> Together with a sigma-based Interpretation
-\end{structure}
+\end{wstructure}
+
+In the simply-typed world, the essence of data-type definition can be
+sumed up by the term ``sum-of-product''. A data-type is defined by a
+finite sum, choice, of constructors, each of them composed by a
+product, a tuple, of arguments. Therefore, the grammar of data-types
+definition in simply-typed languages, such as Haskell or OCaml, follow
+this form.
+
+To model these data-types, we are simply left with capturing this
+grammar in a dependently-typed setting. Hence, the notion of
+``sum-of-product'' naturally translates into
+\emph{sigmas-of-sigmas}. However, beyond this intuition, it should be
+clear that a direct encoding of data-types through raw $\Sigma$-types
+is not a viable option. Indeed, just as for finite sets, encoding
+throw away information when we crucially need it. In the realm of
+data-types, things become even more tougher, as one could legitimately
+expect an induction principle, for instance. Anonymous in a see of
+$\Sigma$s, our data-types have little chance of survival.
+
 
 \subsection{A universe of descriptions}
 
-\begin{structure}
+\begin{wstructure}
 <- Introduction to Universe construction
     <- Define a Code
         -> Name objects
@@ -41,9 +93,36 @@
         -> Give a semantics to objects
     -> Ability to manipulate code
     -> Ability to compute with these objects
-\end{structure}
+\end{wstructure}
 
-\begin{structure}
+%%! Check Martin-Lof reference
+
+For our sigma-of-sigmas to be known, we crucially need the ability to
+name them. To this end, we will use a standard technique in
+dependently-typed programming: we construct an ad-hoc universe. This
+technique dates back to Martin-L\"of definition of type
+theory~\cite{martin-lof:itt}. Since then, it has been fruitful as a
+programming technique~\cite{}. We refer the reader to Agda's
+tutorial~\cite{norell:agda-tutorial} for a pedagogical presentation of
+universe construction.
+
+The key idea behind universe construction is our ability to make names
+by defining new types. These names are called \emph{codes}. By
+defining a set of codes, we somehow define the syntax of a
+language. However, as such, a system of code is useless as it lacks a
+semantics. Instead of equiping the universe of codes with some
+computational behavior, we pragmatically chose to \emph{interpret}
+these codes back into the standard type theory. Hence, codes act only
+as labels, while the type theory provides the computational machinery.
+
+Codes being simple labels, we have the ability to inspect them, hence
+taking advantage of their structural information. Being able to
+inspect them, we are therefore free to compute over them: deriving new
+codes from previous ones, or even new functions on them. In several
+occasions, we will have the opportunity to witness the power of
+universes.
+
+\begin{wstructure}
 <- Justification of the code 
     <- [both figures]: cannot be read separately
     <- Mimic the standard grammar of data-types description
@@ -52,7 +131,21 @@
         <- 'indx for exhibiting the functoriality
             -> For recursive arguments
         <- '1 for end of description
-\end{structure}
+\end{wstructure}
+
+Hence, we propose to embed inductive types as a universe in our
+dependent type theory, the universe of \emph{descriptions}
+(Figure~\ref{fig:desc_universe}). As expected, the code of this
+universe mimics the standard grammar of data-types definitions in
+simply-typed languages. Hence, we have a $\DSigma{}{}$ code,
+interpreted as a $\Sigma$-type, to build the
+sigmas-of-sigmas. Descriptions are terminated by $\DUnit$, which
+contains no useful payload. The functoriality of the data-types is
+introduced by $\DIndx$. When we tie the knot with a fix-point, the
+hole left open by $\DIndx$ will be turned into a standard recursive
+argument. We notice that this functoriality appears in the type of
+$\descop{D}{}$ itself, for a given data-type definition $D$. This
+corresponds to the morphism part of the functor described by $D$.
 
 \begin{figure*}
 
@@ -84,15 +177,27 @@
 
 \end{figure*}
 
+To give some intuition on this universe of descriptions, we now turn
+to some examples. For obvious pedagogical reasons, we will manually
+build these descriptions. However, it should be clear that, in
+practice, these definitions can be automatically constructed an
+Haskell-like $\data$ definition.
+
 \subsection{Examples}
 
-\begin{structure}
+\begin{wstructure}
 <- Nat
     <- Sum of zero, suc
     <- zero case: done
     <- suc case: leave open and done
     -> NatD Z = 1 + Z
-\end{structure}
+\end{wstructure}
+
+Our first example is the natural numbers, or rather its carrier
+functor. Our code is presented in the high-level expression language
+of Section~\ref{sec:type-propagation}. The translation back to the raw
+terms is laborious but should not pose any difficulty. The code is the
+following:
 
 \[\stk{
 \NatD : \Desc \\
@@ -100,14 +205,29 @@
                      {[ \DUnit \quad (\DIndx{\DUnit}) ]}
 }\]
 
+Let us explain its construction. First, we use $\DSigma{}{}$ to build
+a sum between $\NatZero$ and $\NatSuc{}$. In the $\NatZero$ case, we
+reach the end of the description: there is no useful payload in that
+case. In the $\NatSuc{}$ case, we left one hole open for the recursive
+argument, and we close the description.
 
-\begin{structure}
+In a more synthetic notation, we have simply implemented the following
+functor:
+
+\[    \NatD\: Z = 1 + Z    \]
+
+
+
+\begin{wstructure}
 <- List
     <- Sum of nil, cons
     <- nil case: done
     <- cons case: product of X with leave open and done
     -> ListD X Z = 1 + X * Z
-\end{structure}
+\end{wstructure}
+
+With a small change to the definition of $\NatD$, we obtain the
+carrier of lists:
 
 \[\stk{
 \ListD : \Set \To \Desc \\
@@ -115,28 +235,56 @@
                            {[ \DUnit \quad (\DSigma{X}{\LAM{\_} \DIndx{\DUnit}}) ]}
 }\]
 
+The modification consists in turning the $\NatSuc{}$ into a proper
+$\ListCons$ taking an argument in X followed by an inductive
+argument. In this case, we use $\DSigma{}{}$ in its product
+interpretation: we pack an element of $X$ together with the recursive
+argument. Easily, one sees that this code actually defines the
+following functor:
 
-\begin{structure}
+\[    \ListD\: X Z = 1 + X \times Z     \]
+
+\begin{wstructure}
 <- Tree
     <- sum of leaf, node
     <- leaf case: done
     <- node case: product of X with two leave open and done
     -> TreeD X Z = 1 + X * Z * Z
-\end{structure}
+\end{wstructure}
+
+Finally, we are not limited to one recursive argument. This is
+demonstated by our description of a binary tree functor below:
 
 \[\stk{
 \TreeD : \Set \To \Desc \\
-\TreeD \: X \mapsto \DSigma{(\EnumT [ \TreeLeaf, \TreeNode ])}
-                           {[ \DUnit \quad (\DSigma{X}{\LAM{\_} \DIndx{(\DIndx{\DUnit})}}) ]}
+\begin{array}{@{}ll}
+\TreeD \: X \mapsto \DSigma{ & (\EnumT [ \TreeLeaf, \TreeNode ]) \\}
+                           { & [ \DUnit \quad (\DSigma{X}{\LAM{\_} \DIndx{(\DIndx{\DUnit})}}) ]}
+\end{array}
 }\]
 
+Again, we are at one evolutionary step away from $\ListD$. However,
+instead of single appeal to the induction code, we call it twice. The
+interpretation of this code corresponds to the following functor:
 
-\begin{structure}
+\[    \TreeD\: X Z = 1 + X \times Z \times Z     \]
+
+\begin{wstructure}
 <- Fictive object [figure 'data Desc']
     -> Must be read as a type signature
     -> See further for its actual implementation
         <- Subject to our levitation exercise
-\end{structure}
+\end{wstructure}
+
+So far, for conveniency, we have taken as granted the existence of
+$\Desc$, as presented in Figure~\ref{fig:desc_universe}. In
+particular, we have considered its code, $\DSigma{}{}$, $\DIndx{}$,
+and $\DUnit$ as standard type constructors. Hence, we would expect the
+type theory to be extended by these constructors and their typing
+rules. Although it makes no conceptual difference, the code of
+description should rather be read as a \emph{promise}. We promise the
+existence of such objects, satisfying the typing rules. It will be the
+subject of Section~\ref{sec:desc-levitate} to fulfill these promises.
 
 \subsection{Fix-point}
 
@@ -198,3 +346,4 @@
               &   & \PI{x}{\Mu{D}} P x
 \end{array}
 \]
+
