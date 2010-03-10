@@ -354,6 +354,7 @@ afraid by code for practical purposes.
 
 
 \subsection{Type propagation}
+\label{sec:type-propagation}
 
 \begin{wstructure}
 <- Bidirectional type-checking [ref. Turner,Pierce]
@@ -490,6 +491,8 @@ instead. Hence, we use the syntax $\Enum\: [t_1 \ldots t_n]$ to denote
 the finite sets composed by the nammed elements $t_1$, \ldots,
 $t_n$. The translation to elements of $\EnumU$ is straightforward.
 
+%%! This might deserve a more thorough explanation, with snippet of code.
+
 Finally, and more importantly, we are able to present our user an
 abstraction of \emph{finite} function space. This work as follow. When
 an expression $t$ is pushed into a function which domain is a finite
@@ -497,13 +500,21 @@ set, we instead elaborate it as a term in a small $\pi$-type. That is,
 a finite function. To realize our promise of a big $\Pi$-type, we
 elaborate a call to the $\F{switch}$ eliminator. 
 
+The abstraction we have developed in this section are entirely
+transparent to the user. In the case of finite function space, the
+user has never to explicitly \emph{call} the $\F{switch}$
+eliminator. Nor will she \emph{be presented} the elaborated term, only
+the high-level . Bidirectional type-checking and type-directed
+pretty-printing seal the low-level type theory behind the high-level
+expressions.
+
 \begin{figure}
 \input{figure_type_checking}
 \caption{Type checking}
 \label{fig:type-checking}
 \end{figure}
 
-\begin{structure}
+\begin{wstructure}
 <- Summary
     -> Not a novel technique [refs?]
         /> Used as a boilerplate scrapper
@@ -512,4 +523,19 @@ elaborate a call to the $\F{switch}$ eliminator.
         -> We should not restrain ourself in using codes
             <- We know how to present them to the user
 -> Will extend this machinery in further sections
-\end{structure}
+\end{wstructure}
+
+In this section, we have developped a type propagation system, based
+on bidirectional type-checking. Using bidirectional type-checking as a
+boilerplate scrapper is a well-known technique~\cite{}. In our case,
+we have shown how to instrument bidirectionality to rationalize the
+expressivity of dependent types. We have illustrated our approach with
+finite sets. We have successfully abstracted away the low-level
+presentation of finite sets, offering a convenient syntax instead.
+
+This example teaches us that we should not be afraid by codes, as far
+as type information is available. We have shown how to rationalize
+this information in a formal presentation. Hence, we have proved that
+programming with such objects is practical. As we introduce more codes
+in our theory, we will show how to extend the framework we have
+developped so far.
