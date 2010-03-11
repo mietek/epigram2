@@ -184,6 +184,7 @@ practice, these definitions can be automatically constructed an
 Haskell-like $\data$ definition.
 
 \subsection{Examples}
+\label{sec:desc-examples}
 
 \begin{wstructure}
 <- Nat
@@ -269,6 +270,33 @@ interpretation of this code corresponds to the following functor:
 
 \[    \TreeD\: X Z = 1 + X \times Z \times Z     \]
 
+
+\begin{wstructure}
+<- Tagged description
+    <- Form TDesc = List (UId x Desc) [equation]
+    <- Follow usual sums-of-product presentation of data-type
+        <- Finite set of constructors
+        <- Then whatever you want
+    -> Any Desc data-type can be turned into this form
+        -> No loss of expressive power
+        /> Garantee a ``constructor form''
+\end{wstructure}
+
+From the examples above, we observe that data-types are defined by a
+$\DSigma$ which first argument is a finite set of constructor. The
+descriptions fitting into this pattern are called \emph{tagged}
+description. Formally, we have:
+
+\[
+ \TagDesc \mapsto \SIGMA{\V{E}}{\EnumU} \spi{\V{E}}{\LAM{\_} \Desc}
+\]
+
+Again, this is a clear reminiscence of the ``sum-of-products'' style:
+we have a finite sum of constructors. Of course, every description can
+be expressed into this style, by using a singleton as single
+constructor.
+
+
 \begin{wstructure}
 <- Fictive object [figure 'data Desc']
     -> Must be read as a type signature
@@ -289,6 +317,7 @@ Section~\ref{sec:desc-levitate} to fulfill this promise, by actually
 implementing the specification.
 
 \subsection{Fix-point}
+\label{sec:desc-fix-point}
 
 \begin{wstructure}
 <- Build the fix-point of functors
@@ -446,13 +475,13 @@ inference rule:
 
 %% I'm kind of shafted (haha) by this:
 %%     - We have not yet introduced tagged descriptions
-%%     - Tagged descriptions are much more complex now
-%%     - "cases.i" is a syntax I just made up
+%%     - Tagged description in a Mu, that just doesn't work...
 \[
-\Rule{\forall e_i \in \vec{e}, \propag{\push{\descop{cases.i}{\Mu{(\DSigma{(\Enum\: \CN{const})}{\CN{cases}})}}}{e_i}}
-                        {e'_i}}
-     {\propag{\push{C\: \vec{e}}{\Mu{(\DSigma{(\Enum\: \CN{const})}{\CN{cases}})}}}
-             {\Con{(\etag{C}, \widetilde{e'})}}}\;\etag{C} \in \CN{cases}
+\Rule{\forall e_i \in \vec{e}, \propag{\push{e_i}
+                                            {\descop{f\: i}{(\Mu{(\DSigma{(\Enum\: b)}{f})})}}}
+                                      {e'_i}}
+     {\propag{\push{C\: \vec{e}}{\Mu{(\DSigma{(\Enum\: b)}{f})}}}
+             {\Con{(\etag{C}, \widetilde{e'})}}}\;\etag{C} \in b
 \]
 
 Hence, in the high-level expression language, the user types a
