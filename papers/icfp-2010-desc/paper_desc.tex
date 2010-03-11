@@ -95,7 +95,7 @@ $\Sigma$s, our data-types have little chance of survival.
     -> Ability to compute with these objects
 \end{wstructure}
 
-%%! Check Martin-Lof reference
+\note{Check Martin-Lof reference}
 
 For our sigma-of-sigmas to be known, we crucially need the ability to
 name them. To this end, we will use a standard technique in
@@ -327,7 +327,7 @@ implementing the specification.
             <- Interpret D with (Mu D) as subobjects
 \end{wstructure}
 
-%%! Strictly positive types anyone?
+\note{ Strictly positive types anyone? }
 
 So far, we have used our universe of descriptions to build
 functors. To illustrate its usage, we have implemented the signature
@@ -473,9 +473,7 @@ matter of type propagation. We therefore extends the type-checking
 framework of Figure~\ref{fig:type-checking} with the following
 inference rule:
 
-%% I'm kind of shafted (haha) by this:
-%%     - We have not yet introduced tagged descriptions
-%%     - Tagged description in a Mu, that just doesn't work...
+\note{ This is rather drafty }
 \[
 \Rule{\forall e_i \in \vec{e}, \propag{\push{e_i}
                                             {\descop{f\: i}{(\Mu{(\DSigma{(\Enum\: b)}{f})})}}}

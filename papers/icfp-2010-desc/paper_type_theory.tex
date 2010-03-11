@@ -199,6 +199,9 @@ languages, such as Haskell, dependently-typed systems are
 terminates. Moreover, type-checking is decidable and can therefore be
 implemented by a terminating algorithm.
 
+\note{Need some care here. Expansion would be good too. I wanted to
+  carry the intuition that we are not the bad guys with a
+  non-terminating type-checker.}
 
 \subsection{Finite sets}
 \label{sec:finite-sets}
@@ -492,7 +495,8 @@ instead. Hence, we use the syntax $\Enum\: [t_1 \ldots t_n]$ to denote
 the finite sets composed by the nammed elements $t_1$, \ldots,
 $t_n$. The translation to elements of $\EnumU$ is straightforward.
 
-%%! This might deserve a more thorough explanation, with snippet of code.
+\note{ This might deserve a more thorough explanation, with snippet of
+       code. }
 
 Finally, and more importantly, we are able to present our user an
 abstraction of \emph{finite} function space. This work as follow. When

@@ -351,9 +351,12 @@ following inference rule:
         -> Ability to program on data-types
 \end{wstructure}
 
-%%! Maybe a bit of perspective would be good
-%%    <- Everything stands up with the Mu
-%%    <- Induction principle defined over Mu-things
+
+\note{
+Maybe a bit of perspective would be good: 
+Everything stands up with the Mu.
+Induction principle defined over Mu-things.
+}
 
 This concludes our levitation work. Beyond the beauty of the exercise,
 there is also several practical outcomes. First of all, this exercise
@@ -416,7 +419,7 @@ last version as our de facto universe of inductive types. In
 particular, we are going to demonstrate several instances of generic
 programming. 
 
-%%! Shall we talk about the Type Theory being Desc Zero? or such story?
+\note{Shall we talk about the Type Theory being Desc Zero? or such story?}
 
 \begin{figure*}
 
@@ -501,7 +504,7 @@ hypotheses''. Therefore, to construct an element of \(\descop{D}{T}\),
 we replace the recursive components of \(xs\) by their counterpart in
 \(hs\):
 
-%%! Update to the factorized presentation
+\note{Update to the factorized presentation}
 
 \[\stk{
 \F{replace} : \stk{\PITEL{D}{\Desc}
@@ -585,7 +588,7 @@ free monad over $F$ is defined by the following data-type:
 }
 \]
 
-%%! Recall monadic structure of this object
+\note{Recall monadic structure of this object}
 
 Being an inductive type, this $\FMFreeMonad$ data-type is itself
 defined by a functor signature. It is given by:
@@ -643,7 +646,7 @@ arguments to $\cata$ as possible:
 \newcommand{\subst}{\F{subst}}
 \newcommand{\apply}{\F{apply}}
 
-%%! This is not quite Mu of a tagged description
+\note{This is not quite Mu of a tagged description}
 
 \[\stk{
 \begin{array}{@{}ll}
@@ -663,7 +666,7 @@ $\DVar{x}$, to replace it by $\sigma x$. Otherwise, it should simply
 appeal to the induction hypothesis. This corresponds to the following
 definition:
 
-%%! Triple check. That doesn't work, right?
+\note{ Triple check. That doesn't work, right? }
 
 \[\stk{
 \begin{array}{@{}ll}
