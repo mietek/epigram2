@@ -102,9 +102,10 @@ name them. To this end, we will use a standard technique in
 dependently-typed programming: we construct an ad-hoc universe. This
 technique dates back to Martin-L\"of definition of type
 theory~\cite{martin-lof:itt}. Since then, it has been fruitful as a
-programming technique~\cite{who?}. We refer the reader to Agda's
-tutorial~\cite{norell:agda-tutorial} for a pedagogical presentation of
-universe construction.
+programming technique~\cite{who?} \note{I would need some other
+  example of universe construction for practical purposes}. We refer
+the reader to Agda's tutorial~\cite{norell:agda-tutorial} for a
+pedagogical presentation of universe construction.
 
 The key idea behind universe construction is our ability to make names
 by defining new types. These names are called \emph{codes}. By
@@ -121,6 +122,9 @@ inspect them, we are therefore free to compute over them: deriving new
 codes from previous ones, or even new functions on them. In several
 occasions, we will have the opportunity to witness the power of
 universes.
+
+\note{Is that really a motivating motivation for the usage of universe
+  construction? }
 
 \begin{wstructure}
 <- Justification of the code 
@@ -287,6 +291,12 @@ $\DSigma$ which first argument is a finite set of constructor. The
 descriptions fitting into this pattern are called \emph{tagged}
 description. Formally, we have:
 
+\note{We have talked about a tagged description based on $\List (\UId
+  \times \Desc)$. It makes the free monad easier to construct but,
+  imho, considerably clutters anything else. I've reverted back to a
+  more sigma-friendly presentation.}
+
+
 \[
  \TagDesc \mapsto \SIGMA{\V{E}}{\EnumU} \spi{\V{E}}{\LAM{\_} \Desc}
 \]
@@ -296,6 +306,8 @@ we have a finite sum of constructors. Of course, every description can
 be expressed into this style, by using a singleton as single
 constructor.
 
+\note{I think we need a function mapping a $\TagDesc$ to the
+  corresponding $\Desc$. This function should go here.}
 
 \begin{wstructure}
 <- Fictive object [figure 'data Desc']
@@ -334,6 +346,8 @@ functors. To illustrate its usage, we have implemented the signature
 functors of natural numbers, lists, and binary trees. However, the
 class of functors expressible with descriptions enjoy another
 property: they all admit a fix-point.
+
+\note{ I'm afraid that this section is killed by my categorical gibberish. }
 
 Let us constructively prove this. First of all, for an object $D$
 describing a signature functor, we define its fix-point by the type
@@ -418,6 +432,7 @@ manifestation of a generic operation over descriptions. Thanks to
 $\F{induction}$, any data-type we define automatically comes equipped
 with an induction principle.
 
+\note{Shall we give the code of $\All$?}
 
 \begin{wstructure}
 <- Extending type propagation

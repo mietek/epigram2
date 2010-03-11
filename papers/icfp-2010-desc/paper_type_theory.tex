@@ -228,6 +228,8 @@ finite sets.
 
 % Another example is Martin-Löf's W-types~\cite{}.
 
+\note{Shall we talk about W-types encoding?}
+
 However, using encodings is impractical. In the case of finite sets,
 for instance, we would like to name the elements of the sets. Then, we
 need to be able to manipulate these elements by their name, instead of
@@ -243,6 +245,9 @@ as a coding representation: finite sets being good citizens, they
 ought to be democratically represented at the type level. As we will
 see, this gives us the ability to name and manipulate them (this is
 were the democracy analogy goes crazy, I think).
+
+\note{Did I got the coding presentation vs. coding representation
+  story right?}
 
 \begin{wstructure}
 <- Implementation [figure]      
@@ -513,6 +518,10 @@ the high-level . Bidirectional type-checking and type-directed
 pretty-printing seal the low-level type theory behind the high-level
 expressions.
 
+\note{And suddenly, type-directed pretty printing comes into the
+  picture. Surely, it should ``just'' be the inverse of
+  elaboration. But is it? And how do we present it?}
+
 \begin{figure}
 \input{figure_type_checking}
 \caption{Type checking}
@@ -532,11 +541,13 @@ expressions.
 
 In this section, we have developped a type propagation system, based
 on bidirectional type-checking. Using bidirectional type-checking as a
-boilerplate scrapper is a well-known technique~\cite{who?}. In our case,
-we have shown how to instrument bidirectionality to rationalize the
-expressivity of dependent types. We have illustrated our approach with
-finite sets. We have successfully abstracted away the low-level
-presentation of finite sets, offering a convenient syntax instead.
+boilerplate scrapper is a well-known technique~\cite{who?} \note{I
+  would need some citation of people using bidirectional presentation
+  of their type theory}. In our case, we have shown how to instrument
+bidirectionality to rationalize the expressivity of dependent
+types. We have illustrated our approach with finite sets. We have
+successfully abstracted away the low-level presentation of finite
+sets, offering a convenient syntax instead.
 
 This example teaches us that we should not be afraid by codes, as far
 as type information is available. We have shown how to rationalize
