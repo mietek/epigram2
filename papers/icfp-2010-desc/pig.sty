@@ -219,6 +219,7 @@
 \newcommand{\IDesc}[1]{\D{IDesc}~#1}
 \newcommand{\IDescD}{\C{IDescD}}
 \newcommand{\IDescFreeD}{\C{IDescD}_{\C{Free}}}
+\newcommand{\TagIDesc}[1]{\F{TagIDesc}~#1}
 
 \newcommand{\idescop}[3]{\green{\llbracket} #1 \green{\rrbracket}_{#2}~#3}
 
@@ -237,18 +238,20 @@
 
 %% Free monad
 \newcommand{\FreeMonad}[2]{{#1}^{\F{\(\ast\)}}~#2}
+\newcommand{\FreeIMonad}[3]{{#1}^{\F{\(\ast\)}}_{#2}~#3}
+
 
 %% Nat
 \newcommand{\Nat}{\D{Nat}}
 \newcommand{\NatD}{\C{NatD}}
 \newcommand{\NatZero}{\etag{\CN{zero}}}
-\newcommand{\NatSuc}[1]{\etag{\CN{suc}}\:#1}
+\newcommand{\NatSuc}[1]{\etag{\CN{suc}}~#1}
 
 %% List
 \newcommand{\List}{\D{List}}
 \newcommand{\ListD}{\C{ListD}}
 \newcommand{\ListNil}{\etag{\CN{nil}}}
-\newcommand{\ListCons}{\etag{\CN{cons}}}
+\newcommand{\ListCons}[2]{\etag{\CN{cons}}~#1~#2}
 
 %% Tree
 \newcommand{\Tree}{\D{Tree}}

@@ -1,6 +1,6 @@
 \section{Indexing descriptions}
 
-\begin{structure}
+\begin{wstructure}
 !!! Need Help !!!
 <- Motivation
     <- Desc: expressivity of simply-typed data-types: inductive types
@@ -12,28 +12,98 @@
                 -> Index
         -> I -> IDesc I: Inductive family
     ???
-\end{structure}
+\end{wstructure}
+
+So far, we have explored the well-known realm of inductive types. We
+have built upon the experience gained in using simply-typed languages,
+such as Haskell or OCaml. In our dependent setting, we provided these
+data-types by the mean of $\Desc$, a universe of descriptions. 
+
+While inductive types are the alpha and omega of the simply-typed
+languages, evolving in a dependent setting fosters new
+opportunities. The typical example is bounded lists, also known as
+vectors. A vector is a list decorated by its length. Having this
+information prevents hazardous operations, such as taking the head of
+an empty vector: the head function only takes vectors of length
+$\NatSuc{n}$, as enforced by its type. This is made possible by the
+very specificity of dependently-typed systems: terms -- the length --
+are allowed to influence types -- the vector type.
+
+However, this new class of objects cannot be defined by mere
+induction. In the case of vectors, for instance, we have to define the
+whole \emph{family} of vector in one go: vectors of all size needs to
+be defined at the same time. Where simply-typed languages have
+inductive types, we adopt inductive family of types as our basic
+grammar of data-types. To this end, we rely on \emph{indexing}. We are
+going to transform the $\Desc$ universe into an indexed $\IDesc$
+universe. We express inductive families by the $I \To \IDesc{I}$ type.
+
 
 \subsection{From Desc to IDesc}
 
-\begin{structure}
+\begin{wstructure}
 <- Labelling Id
     <- We had: data Desc : Set -> Set
     -> We want: data IDesc : (I -> Set) -> Set
         <- Indexed functor (?)
         -> It is sufficient to label Id
             <- Where the functor is built
-\end{structure}
+\end{wstructure}
 
-\begin{structure}
+In the previous section, we have presented the $\Desc$ universe as the
+grammar of functors in the category $\Set$. We have seen how to encode
+inductive types in this setting. To encode an inductive family indexed
+by $\Bhab{\V{I}}{\Set}$, we rely on functors in the category
+$\Set^I$. We call these \emph{indexed functors}. When $\Desc$ was
+defining a grammar a functor, we need $I \To \IDesc{I}$ to define a
+grammar of indexed functors:
+
+\[\stk{
+\data \IDesc{} : \PI{\V{I}}{\Set} \Set \where \\
+\;\;\ldots \\
+\\
+\idescop{\_\:}{}{} : \PI{\V{I}}{\Set} \IDesc{I} \To (\V{I} \To \Set) \To \Set    \\
+\ldots
+}\]
+
+This generalization can be achieved by a minor evolution of $\Desc$
+(Fig.~\ref{fig:factor-desc}). Indeed, the functorial nature of $\Desc$
+is entirely captured by the $\DId$ code. We get an indexed functor
+by turning $\DId$ into an index-dependent $\DVar$ code:
+
+\[\stk{
+\data \IDesc{} : \PI{\V{I}}{\Set} \Set \where \\
+\;\;\begin{array}{@{}l@{\::\:}l@{\quad}l}
+    \DVar{}         & I \To \IDesc{I}                                   \\
+    \ldots          & \ldots
+\end{array} \\
+\\
+\idescop{\_\:}{}{} : \PI{\V{I}}{\Set} \IDesc{I} \To (\V{I} \To \Set) \To \Set        \\
+\begin{array}{@{}l@{\:=\:\:}ll}
+\idescop{\DVar{i}}{I}{P}      &  P~i                                                 \\
+\ldots                        &  \ldots
+\end{array}
+}\]
+
+\begin{wstructure}
 <- Also replacing '1 by 'const  [figure]
     <- For convenience
         <- 'const X equivalent to 'sigma X (\_ -> '1)
         /> Easier to abstract
             <- Extensionally same
             /> 'const more useful in practice
-\end{structure}
+\end{wstructure}
 
+The resulting code of $\IDesc$ is presented in
+Figure~\ref{fig:idesc}. The reader will notice that we have also
+replaced $\DUnit$ by a more general $\DConst$ code. Whereas $\DUnit$
+was interpreted as the unit set, $\DConst{X}$ is interpreted as $X$,
+for any $\Bhab{X}{\Set}$. Extensionally, $\DConst{X}$ and
+$\DSigma{X}{\DUnit}$ are equivalent. However, $\DConst$ is more
+succinct. More importantly, $\DConst$ is \emph{first-order}, unlike
+its equivalent encoding. From a definitional perspective, we are
+giving more opportunities to the type-system, hence reducing the
+burden on the programmer in practice.
 
 \begin{figure*}
 
@@ -51,7 +121,7 @@
 }
 &
 \stk{
-\idescop{\_\:}{}{} : \PI{\V{I}}{\Set} \IDesc{I} \To \Set \To \Set                  \\
+\idescop{\_\:}{}{} : \PI{\V{I}}{\Set} \IDesc{I} \To (\V{I} \To \Set) \To \Set                  \\
 \begin{array}{@{}l@{\:=\:\:}ll}
 \idescop{\DVar{i}}{I}{P}      &  P~i                                                 \\
 \idescop{\DConst{X}}{I}{P}    &  X                                                   \\
@@ -63,34 +133,57 @@
 \end{array}
 \]
 
-\caption{Indexed universe of description}
+\caption{Universe of indexed description}
 \label{fig:idesc}
 
 \end{figure*}
 
 \subsection{Examples}
+\label{sec:idesc-examples}
 
-\begin{structure}
+\begin{wstructure}
 <- Nat
     -> [equation]
     <- Non-indexed types lives in IDesc 1
         -> This applies to all previous examples
-\end{structure}
+\end{wstructure}
 
-\begin{structure}
+In order to gain some intuition with $\IDesc$, let us re-implement the
+signature functor of natural numbers. We refer the reader to
+Section~\ref{sec:desc-examples} for its incarnation in the universe of
+descriptions. The code is the following:
+
+\[\stk{
+\NatD : \IDesc{\Unit} \\
+\NatD \mapsto \DSigma{(\EnumT [ \NatZero, \NatSuc{} ])}
+                     {[ \DConst{\Unit} \quad (\DVar{\Void}) ]}
+}\]
+
+Because $\Nat$ is just an inductive type, we make no use of the index:
+it is the trivial inhabitant of $\Unit$. Therefore, the recursive
+argument is materialized by $\DVar{\Void}$, where we were using $\DId$
+in the $\Desc$ presentation. This transformation applies to all
+inductive types: we have not lost in expressive power during the
+transition.
+
+\begin{wstructure}
 <- Levitation [figure]
     <- Following Desc encoding
         /> Note: simple data-type
             -> Live in IDesc 1
     -> Behind the scene, relies on the special purpose switchD
-\end{structure}
+\end{wstructure}
+
+A mandatory exercise consists in describing $\IDesc$ in itself. With
+the experience gained in Section~\ref{sec:desc-levitate}, this
+levitation does not pose any issue:
 
 \[\stk{
 \IDescD : \PI{\V{I}}{\Set} \IDesc{\Unit} \\
-\begin{array}{ll}
+\begin{array}{@{}ll}
 \IDescD~I \mapsto \DSigma{}{} & (\EnumT [ \DVar{},
-\DConst{},
-                                                                                    \DProd{}{},
+                                          \DConst{},
+                                          \DProd{}{},
                                           \DSigma{}{}, 
                                           \DPi{}{} ]) \\
                               & \left[\begin{array}{l}
@@ -104,8 +197,12 @@
 \end{array}
 }\]
 
+Note that this description also lives in $\IDesc{\Unit}$. Indeed,
+$\IDesc$ is merely an inductive type. As for the $\Desc$ levitation,
+the finite function space $[ \ldots ]$ elaborates into a special
+purpose $\F{switchID}$ operator. 
 
-\begin{structure}
+\begin{wstructure}
 <- Untyped lambda terms [figure]
     <- Indexed by Nat
         <- De Bruijn "encoding"
@@ -114,7 +211,12 @@
     /> Lack the monadic structure [Altenkirch & Reus ???]
         -> Miss substitution operator
         /> Will be fixed later
-\end{structure}
+\end{wstructure}
+
+Our next example is, for once, building an inductive family. We
+present the implementation of untyped lambda terms, as a family
+indexed by natural numbers. The natural numbers play the role of De
+Bruijn indexes. The indexed description is the following:
 
 \[\stk{
 \LambdaTD : \Nat \To \IDesc{\Nat} \\
@@ -122,28 +224,65 @@
 \LambdaTD\: n = \DSigma{}{} & (\EnumT [ \LambdaTVar, \LambdaTApp, \LambdaTLam ]) \\
                             & \left[\begin{array}{l}
                                   \DConst{\Fin{n}} \\
-                                  \DProd{\DVar{n}}{\DVar{n}} \\
+                                  \DProd{\DVar{\NatSuc{n}}}{\DVar{n}} \\
                                   \DVar{(\NatSuc{n})}
                               \end{array}\right]
 \end{array}
 }\]
 
+A variable is any number between $0$ and $n$, hence forbidding the
+reference of out-of-scope binders. Making a lambda increases by one
+the possible index choice of the underlying term. A function
+application applies a term with $n+1$ binders, resulting in a term
+with $n$ binders.
+
+We have therefore given a representation of lambda terms as a
+data-type. Any inhabitant of this data-type is a valid lambda term,
+forbidding out-of-scope reference in variables. While we have the
+data-type, we can regret the absence of structure. As shown by
+Altenkirch and Reus~\cite{altenkirch:monadic-lambda}, the lambda terms
+actually enjoy a monadic structure. In this setting, the ``bind''
+corresponds to substitution. We shall remedy to this situation
+shortly.
 
 \subsection{Constrained constructors}
 
-\begin{structure}
+\begin{wstructure}
 !!! Need Help !!!
 <- Assuming a suitable notion of definitional equality for I
     ???
-\end{structure}
+\end{wstructure}
 
-\begin{structure}
+However, before entering the realm of generic structures, let us
+further explore the universe of indexed descriptions. In the
+following, we ask $I$ to come equipped with a notion of definitional
+equality. Hence, we can legibly equates elements of $I$.
+
+
+\begin{wstructure}
 <- Fin [figure]
     <- Presentation with equality constraints
     <- Example of constrained constructor
         -> Constraints are translated into equalities
     ???
-\end{structure}
+\end{wstructure}
+ 
+In our implementation of lambda terms, variables were elements of
+$\Fin{n}$, with $n$ the number of binders. Let us now implement
+$\Fin$. $\Fin$ is a typical example of an inductive family using
+\emph{constrained constructors}. The constructors $\FinZero$ and
+$\FinSuc$ are only defined for an index distinct from $\NatZero$:
+
+\[
+\Rule{\Bhab{n}{\Nat}}
+     {\Bhab{\FinZero}{\Fin{(\NatSuc{n})}}}
+\qquad
+\Rule{\Bhab{n}{\Nat} \quad 
+      \Bhab{i}{\Fin{n}}}
+     {\Bhab{\FinSuc{}}{\Fin{(\NatSuc{n})}}}
+\]
+
+In order to code this data-type, we have to appeal to equality:
 
 \[\stk{
 \FinD : \Nat \To \IDesc{\Nat} \\
@@ -158,14 +297,23 @@
 \end{array}
 }\]
 
+Intuitively, the constraint is captured as follow. First, we store an
+element $m$ of $\Nat$, thanks to a $\DSigma$. However, the constraint
+stipulates that $m$ cannot be \emph{any} natural numbers: it must be
+``the index minus one''. This translates into the constraint $n
+\PropEq \NatSuc{m}$. 
 
-\begin{structure}
+
+
+\begin{wstructure}
 <- Vectors
     Do we treat them in the end? 
     What can we say here we haven't with Fin?
-\end{structure}
+\end{wstructure}
 
-\begin{structure}
+%%! I suspect we don't, space-wise
+
+\begin{wstructure}
 <- GADT-style data-type definition
     <- We directly support it
         <- Constraints turned into equalities
@@ -176,16 +324,45 @@
     /> Equations in data-types are not a blessing
         <- Complexify induction principle
         <- Lose match between data-type definition and the elimination form
-\end{structure}
+\end{wstructure}
 
-\begin{structure}
+The $\Fin$ example is also a well-known example of Generalized
+Abstract Data-Type (GADT), in Haskell. It comes as no surprise that
+our universe of indexed description supports this restricted class of
+dependent data-types. As we have shown with $\Fin$, constrained
+constructors are straightforwardly translated into equality
+constraints.
+
+While we support the same grammar, indexed descriptions embraces a
+much wider class of data-types. Indeed, we pose no constraint apart
+from strict positivity. This suggests that, based on the familiar
+grammar of GADTs, we can simply lift off the restrictions and
+translates the user's input to a code in our universe of indexed
+description. 
+
+However, one could, quite rightfully, be worried by the introduction
+of equations in the picture. In the context of programming, these
+equations will come back and haunt us, begging for proofs. Hence,
+whereas the user typed a constructor-constrained data-type, the
+elimination form will involve equations and their proofs. This
+introduces a loophole in our abstraction we should try to address.
+
+\begin{wstructure}
 !!! Need Help !!!
 <- Brady optimization: forcing
     <- Source to source translation
     <- Able to remove some constraints
     -> Example: Fin [figure]
     ??? More technical detail needed
-\end{structure}
+\end{wstructure}
+
+To get a clue of a solution, let us look back at $\Fin$. We note that
+the equation is introduced because we are \emph{storing} the index of
+the inductive family, through $m$. Hence the constraint. However,
+\emph{inductive families need not store their
+  indices}~\cite{brady:index-inductive-families}. Applying the
+\emph{forcing} optimization to our definition of $\Fin$ gives the
+following, equivalent definition:
 
 \[\stk{
 \FinD : \Nat \To \IDesc{\Nat} \\
@@ -201,21 +378,65 @@
 \end{array}
 }\]
 
+Equations have simply disappeared! We should precise that forcing a
+description is not garanteed to remove all constraints. It is subject
+of future work to see if constraints can be entirely eradicated, or
+presented more conveniently to the user.
+
+Finally, it is worth mentioning that the forcing optimization is a
+\emph{source-to-source} transformation of the description. 
+
+%%! Actual implementation as a generic function??!
 
 \subsection{Free IMonad}
 
-\begin{structure}
+\begin{wstructure}
 <- Variation on a theme: free imonad construction
     <- Recall existence of generic free monad construction
     -> Present its generalization to IDesc [equation]
         <- \I -> IDesc I as describing an indexed endofunctor
-        <- Free indexed monad construction
+        <- Free monad construction
     -> Still a suitable, generic notion of substitution
         <- show type signature
         <- show implementation?? (space! space!)
-\end{structure}
+\end{wstructure}
 
-\begin{structure}
+In this section, we develop some more structure for our indexed
+data-types. In Section~\ref{sec:desc-free-monad}, we have constructed
+a free monad operation on simple descriptions. Building on this
+experience, we are going to present its equivalent in the indexed
+world. The processus is the same. Namely, given an indexed functor, we
+derive the indexed functor coding its free monad:
+
+\[\stk{
+\begin{array}{ll}
+\FreeIMonad{\_}{} : & \PITEL{\V{I}}{\Set}
+                      \PITEL{\V{X}}{\V{I} \To \Set} \\
+                    & \PITEL{\V{R}}{\V{I} \To \TagIDesc{I}} \To
+                      (\V{I} \To \TagIDesc{I})
+\end{array} \\
+\FreeIMonad{R}{I}{X} \mapsto
+    \LAM{i}
+    \pair{\ListCons{\DVar{}}{(\fst{(R\: i)})}}
+         {\pair{(\DConst{X\: i})}
+               {(\snd{(R\: i)})}{}}{}
+}\]
+
+Just as in the universe of descriptions, this construction comes with
+an obvious ``return'' and a substitution operation, the ``bind''. Its
+type signature is the following:
+
+\newcommand{\substI}{\F{substI}}
+
+\[
+\substI : \PITEL{\V{I}, \V{J}}{\Set}
+          \PITEL{\sigma}{\V{I} \To \IDesc{\V{J}}}
+          \PITEL{\V{D}}{\IDesc{I}} \To
+          \IDesc{J}
+\]
+
+
+\begin{wstructure}
 <- Untyped lambda terms
     <- Obvious instance of free monad
         <- Variable: Return
@@ -224,7 +445,14 @@
     -> Get a correct-by-construction lambda term
         /> With substitution for free!
         <- We should not pay for the structure which *is* here
-\end{structure}
+\end{wstructure}
+
+In Section~\ref{sec:idesc-examples}, we were missing the monadic
+structure of lambda terms. In particular, we wish we were given a
+substitution principle for free. Above, we have generically built such
+substitution operation for free monads. Can we be rewarded for our
+effort? Let us define the following $\LambdaTFreeD$ description,
+largely inspired by $\LambdaTD$:
 
 \[\stk{
 \LambdaTFreeD : \Nat \To \IDesc{\Nat} \\
@@ -237,14 +465,26 @@
 \end{array}
 }\]
 
+In essence, we have forgotten variables, just keeping the nodes of
+lambda terms: abstraction and application. Our hope is that taking the
+free monad of this indexed functor gives us our lambda terms back:
+
+%%! FreeMonad takes a damned tagged description
+
 \[\stk{
 \LambdaTD : \Nat \To \IDesc{\Nat} \\
-\LambdaTD\: \mapsto \FreeMonad{[\LambdaTFreeD]}{\Fin{}}
+\LambdaTD\: \mapsto \FreeIMonad{[\LambdaTFreeD]}{\Nat}{\Fin{}}
 }\]
 
+By a straightforward unfolding of definitions, the reader will
+convince herself that we recover the initial definition. However, this
+time, we have a substitution operation. In summary, we have done less
+work in defining $\LambdaTFreeD$ but we have pointed out its
+structure, so, rightfully, we have been rewarded in our effort. The
+lesson is that, when structure there is, one should be allowed to get
+it for free.
 
-
-\begin{structure}
+\begin{wstructure}
 <- IDesc
     <- Another instance of free monad
         <- Var: Return
@@ -253,8 +493,12 @@
         <- map operation
         <- [ subst sigma D ] X = [D] (\x -> [subst sigma x] X)
         ???
-\end{structure}
+\end{wstructure}
 
+Another instance of free monad is $\IDesc$ itself. Indeed, $\DVar$ is
+nothing but the ``return''. The remaining constructors are simply the
+freed functor, trivially indexed by $\Unit$. Hence, amusingly, we can
+define the $\IDesc$ freed functor by the following code:
 
 \[\stk{
 \IDescFreeD : \PI{\V{I}}{\Set} \IDesc{\Unit} \\
@@ -272,7 +516,12 @@
 \end{array}
 }\]
 
+Then, we get $\IDesc$ by building its free monad:
+
 \[\stk{
 \IDescD : \PI{\V{I}}{\Set} \IDesc{\Unit} \\
 \IDescD\: I \mapsto \FreeMonad{[\IDescFreeD]}{I}\: I
 }\]
+
+
+%%! Should we stop here? Or show off some madness?
