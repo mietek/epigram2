@@ -201,10 +201,6 @@ These rules should be moved to features.
 > makeElab' loc (QUOTIENT a r p :>: DPAIR x DVOID) =
 >   makeElab' loc (QUOTIENT a r p :>: DCLASS x)
 
-> makeElab' loc (NU d :>: DCOIT DU sty f s) = do
->   d' :=>: _ <- eQuote d
->   makeElab' loc (NU d :>: DCOIT (DTIN d') sty f s)
-
 
 
 We use underscores |DU| in elaboration to mean "figure this out yourself".
