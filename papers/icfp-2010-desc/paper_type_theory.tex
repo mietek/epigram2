@@ -1,7 +1,7 @@
 \section{The Type Theory}
 
 Our work is deeply rooted in the realm of dependently-typed functional
-languages. In particular, we have developped this technology in our
+languages. In particular, we have developed this technology in our
 on-going work on Epigram~\cite{pigs:epigram}. However, in this paper,
 we strive to present our technology in the broadest setting
 possible. To this end, we are going to present a type theory from the
@@ -9,8 +9,8 @@ ground-up.
 
 To the reader new to type theory, this first section will provide a
 gentle introduction to dependently-typed systems. To the reader
-familiar with type theory, she will recognize the basis of her
-favorite type theory, be it Agda or Coq for instance. This scene sets,
+familiar with type theory, she will recognise the basis of her
+favourite type theory, be it Agda or Coq for instance. This scene sets,
 we have a common ground for discussion.
 
 \subsection{Base theory}
@@ -28,7 +28,7 @@ we have a common ground for discussion.
 In the following, we adopt a standard presentation for our type
 theory. It is defined by three forms of judgements: context validity
 judgements, typing judgements, and equality judgements. Formally,
-these judgments are presented as follow:
+these judgements are presented as follow:
 
 \[
 \begin{array}{ll}
@@ -66,19 +66,18 @@ such as Luo's seminal work \cite{luo:utt}.
 
 \begin{wstructure}
     <- Judgemental equality
-        <- Presentation independant of particular implementation choice
-        -> Model in Agda, intensional
+        <- Presentation independent of particular implementation choice
+        -> Model in Agda, intentional
         -> Used in Epigram, OTT
 \end{wstructure}
 
 Noticeably, we have adopted a judgemental presentation of
 equality. Therefore, we are not tied to a particular implementation
-choice. In particular, our system has been modeled in Agda, which
-features an intensional equality. On the other hand, it is used in
+choice. In particular, our system has been modelled in Agda, which
+features an in-tensional equality. On the other hand, it is used in
 Epigram, which equality has a slightly extensional
-flavor~\cite{altenkirch:ott}. We expect users of propositional or even
-fully extensional systems to also find their way through this
-presentation.
+flavor~\cite{altenkirch:ott}. We expect users of fully extensional
+systems to also find their way through this presentation.
 
 \begin{wstructure}
 <- Context validity [figure]
@@ -101,7 +100,7 @@ presentation.
 \end{figure}
 
 The rules ensuring Context Validity (Fig.\ref{fig:context-validity})
-are unsurprisingly common. They simply garantee the validity of the
+are unsurprisingly common. They simply guarantee the validity of the
 empty context, as well as the linear extension of a context by a
 well-typed variable.
 
@@ -116,7 +115,7 @@ well-typed variable.
 \end{wstructure}
 
 The typing judgements (Fig.\ref{fig:typing-judgements}) are just as
-familiar. We recognize the standard presentation of $\Pi$ and $\Sigma$
+familiar. We recognise the standard presentation of $\Pi$ and $\Sigma$
 types, respectively inhabited by lambda terms and dependent
 pairs. Naturally, there are rules for function application and
 projections of $\Sigma$-types. Equal types can be substituted, thanks
@@ -154,10 +153,10 @@ Section~\ref{sec:discussion}.
 
 Finally, we define the rules governing judgemental equality in
 Figure~\ref{fig:judgemental-equality}. As one would expect,
-judgemental equality is respects symmety, reflexivity, and
-transitivity. Further, it also encompasses the $β$-rules for function
-application and pairs. Finally, equality under lambda is dealt by the
-$ξ$-rule. 
+judgemental equality respects symmetry, reflexivity, and
+transitivity. Further, it also encompasses the $\beta$-rules for
+function application and pairs. Finally, equality under lambda is
+dealt with by the $\xi$-rule.
 
 Crucially, being judgemental, this presentation is agnostic in the
 notion of equality actually implemented. Indeed, our typing and
@@ -165,8 +164,7 @@ equality judgements do not rely on a ``propositional'' equality. This
 freedom is a key point in favour of the wide applicability of our
 proposal. Obviously, when implementing our technology in an existing
 type-theory, some opportunities arise. We will present some of them
-along the course of the paper, clearly specifying which extensions we
-require.
+along the course of the paper.
 
 \begin{figure}
 
@@ -185,17 +183,17 @@ require.
     <- Assuming a stratified discipline
     <> The point here is to reassert that dependent types are not evil, 
        there is no non-terminating type-checker, or such horrible lies <>
-    -> Strongly normalizing
+    -> Strongly normalising
         -> Every program terminates
     -> Type-checking terminates
     ???
 \end{wstructure}
 
 This completes our presentation of the type theory. Assuming a
-stratified discpline of universe, the system we have described enjoy
+stratified discipline of universe, the system we have described enjoy
 some very strong meta-theoretical properties. Unlike simply typed
 languages, such as Haskell, dependently-typed systems are
-\emph{strongly normalizing}: every program that type-checks
+\emph{strongly normalising}: every program that type-checks
 terminates. Moreover, type-checking is decidable and can therefore be
 implemented by a terminating algorithm.
 
@@ -323,7 +321,7 @@ $\F{switch}$ eliminator is not surprising:
 \]
 
 Again, there is a clear equivalent in the full-$\Set$ world: function
-application. The operational behavior of $\F{switch}$ is
+application. The operational behaviour of $\F{switch}$ is
 straightforward: $x$ is peeled off as we move deeper inside the nested
 tuple $b$. When $x$ equals $\Ze$, we simply return the value we are
 pointing to.
@@ -343,7 +341,7 @@ As we have seen, finite sets are not just a way of making
 data. Through the $\spi{}{}$ and $\F{switch}$ operators, they also
 come with a notion of finite function space. However, we had to
 extract that intuition from the type, by a careful reading. At a first
-glance, this seems to contradict our argument in favor of types for
+glance, this seems to contradict our argument in favour of types for
 coding representation. Here, we are overflown by low-level, very
 precise type information. 
 
@@ -409,7 +407,7 @@ setting, the domain is provided by the $\Pi$ type we are pushing the
 lambda into. Hence we do not need to annotate the lambda.
 
 \begin{wstructure}
-<- Formalization: type propagation
+<- Formalisation: type propagation
     <- Motivation
         -> High-level syntax
             -> exprIn: types are pushed in
@@ -418,17 +416,19 @@ lambda into. Hence we do not need to annotate the lambda.
                 <- Subject to type *synthesis*
         -> Translated into our low-level type theory
         -> Presented as judgements
-    -> Presentation mirors typing rule of [figure] 
-        -> Ignore identitical judgements
+    -> Presentation mirrors typing rule of [figure] 
+        -> Ignore identical judgements
 \end{wstructure}
 
-We adapt and formalize this \emph{type propagation} mechanism to our
+We adapt and formalise this \emph{type propagation} mechanism to our
 richer type theory. First of all, we define a high-level syntax,
 composed by \emph{expressions}. Expressions divided into two syntactic
 categories: $\exprIn$ into which types are pushed in, and $\exprEx$
 from which types are pulled out. Following the bidirectional
 presentation, $\exprIn$ are subject to type \emph{checking}, while
 $\exprEx$ are subject to type \emph{synthesis}.
+
+\note{Why don't we need a context validity judgement, again?}
 
 The purpose of type propagation is to \emph{elaborate} an high-level
 expression into a term of the type theory, together with its
@@ -497,7 +497,7 @@ into the corresponding index.
 A second consequence concerns the definition of a finite set. We can
 abstract away the details of code and use a familiar syntax
 instead. Hence, we use the syntax $\Enum\: [t_1 \ldots t_n]$ to denote
-the finite sets composed by the nammed elements $t_1$, \ldots,
+the finite sets composed by the named elements $t_1$, \ldots,
 $t_n$. The translation to elements of $\EnumU$ is straightforward.
 
 \note{ This might deserve a more thorough explanation, with snippet of
@@ -507,7 +507,7 @@ Finally, and more importantly, we are able to present our user an
 abstraction of \emph{finite} function space. This work as follow. When
 an expression $t$ is pushed into a function which domain is a finite
 set, we instead elaborate it as a term in a small $\pi$-type. That is,
-a finite function. To realize our promise of a big $\Pi$-type, we
+a finite function. To realise our promise of a big $\Pi$-type, we
 elaborate a call to the $\F{switch}$ eliminator. 
 
 The abstraction we have developed in this section are entirely
@@ -534,24 +534,24 @@ expressions.
         /> Used as a boilerplate scrapper
     -> Make dealing with codes *practical*
         <- Example: Finite sets/finite function space
-        -> We should not restrain ourself in using codes
+        -> We should not restrain our self in using codes
             <- We know how to present them to the user
 -> Will extend this machinery in further sections
 \end{wstructure}
 
-In this section, we have developped a type propagation system, based
+In this section, we have developed a type propagation system, based
 on bidirectional type-checking. Using bidirectional type-checking as a
 boilerplate scrapper is a well-known technique~\cite{who?} \note{I
   would need some citation of people using bidirectional presentation
   of their type theory}. In our case, we have shown how to instrument
-bidirectionality to rationalize the expressivity of dependent
+bi-directionality to rationalise the expressivity of dependent
 types. We have illustrated our approach with finite sets. We have
 successfully abstracted away the low-level presentation of finite
 sets, offering a convenient syntax instead.
 
 This example teaches us that we should not be afraid by codes, as far
-as type information is available. We have shown how to rationalize
+as type information is available. We have shown how to rationalise
 this information in a formal presentation. Hence, we have proved that
 programming with such objects is practical. As we introduce more codes
 in our theory, we will show how to extend the framework we have
-developped so far.
+developed so far.

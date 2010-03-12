@@ -1,7 +1,7 @@
 \section{Levitating the universe of descriptions}
 \label{sec:desc-levitate}
 
-In this section, we will fulfill several promises. One promise we made
+In this section, we will fulfil several promises. One promise we made
 was to effectively implement the code of the $\Desc$ universe. Another
 promise we tacitly made is to implement the type former of finite
 sets. Despite being a perilous pedagogical exercise for the authors,
@@ -39,7 +39,7 @@ their specification:
 }\]
 
 The names $\NilE$ and $\ConsE{}{}$ are absolutely not a
-coincidence. $\EnumU$ is indeed simply isomorph to a list, with
+coincidence. $\EnumU$ is indeed simply isomorphic to a list, with
 $\UId$s as parameter. However, in Section~\ref{sec:desc-examples}, we
 have shown how to build lists in the universe of
 description. Therefore, the actual implementation of $\EnumU$ sums up
@@ -105,7 +105,7 @@ objects in the type theory.
 
 If not on the content, this modification had an effect on the
 names. The type naming scheme of the type theory has condensed: named
-type formes ($\EnumU$) and constructors ($\NilE$ and $\ConsE$) are now
+type formers ($\EnumU$) and constructors ($\NilE$ and $\ConsE$) are now
 replaced by codes and their fix-point in the universe of
 descriptions. Our next step is similar, in essence: we are going to
 condense the entire naming scheme of data-types \emph{in itself}.
@@ -113,7 +113,7 @@ condense the entire naming scheme of data-types \emph{in itself}.
 \subsection{Implementing descriptions}
 
 \begin{wstructure}
-<- Realizing our promises
+<- Realising our promises
     <- We are going to implement Desc
     /> Desc is itself a data-type
         <- Same situation as EnumU
@@ -121,7 +121,7 @@ condense the entire naming scheme of data-types \emph{in itself}.
         -> It ought to be encoded in itself
 \end{wstructure}
 
-We shall now fulfill our promises. We are going to implement the codes
+We shall now fulfil our promises. We are going to implement the codes
 of the universe of descriptions. Interestingly, in and by itself, a
 code is nothing but a data-type. We are in the same situation than
 with $\EnumU$: we ought to be able to describe the codes of $\Desc$ in
@@ -154,7 +154,7 @@ Our first tentative is the following:
 }\]
 
 Let us explain how we have proceeded and the obstacle we face. Much as
-the data-types we have seen so far, $\DescD$ first consists in chosing
+the data-types we have seen so far, $\DescD$ first consists in choosing
 a constructor. Constructors correspond to the code's cases: $\DUnit$,
 $\DSigma$, and $\DIndx$. The reader will notice that the tagged
 notation we have used so far for $\Desc$ constructors now fully make
@@ -222,7 +222,7 @@ of $H$ to index as many recursive arguments.
 \end{figure*}
 
 
-Note that $\DIndx$ is isomorph to $\DHindx{\Unit}$. However, we
+Note that $\DIndx$ is isomorphic to $\DHindx{\Unit}$. However, we
 tolerate this duplication and do not replace $\DIndx$ by the more
 general $\DHindx$. Indeed, unlike its counterpart, $DIndx$ is
 first-order. Therefore, while both codes are \emph{extensionally} the
@@ -237,7 +237,7 @@ universe of data-types, as shown in Figure~\ref{fig:desc-levitate}.
 The $\DUnit$ and $\DIndx$ cases remains unchanged, as expected. We
 achieve the description of the $\DSigma$ case, by a simple appeal to
 the higher-order induction on $S$. The $\DHindx$ case consists in
-packing the $H$ in $\Set$ with a recursive arguement.
+packing the $H$ in $\Set$ with a recursive argument.
 
 In a first glance, we have achieved our goal. We have described the
 codes of the universe of description. Taking the fix-point of this
@@ -293,9 +293,9 @@ What happens if we unfold the definition? We ought to build the following term:
 \]
 
 But this is rather problematic! We are still in the process of
-constructing $\DescD$, and the motive of $\F{switch}$ is abruptely
+constructing $\DescD$, and the motive of $\F{switch}$ is abruptly
 begging for an $\eta$-expanded $\Desc$. Despite our willingness, we
-will never be able to materialize such motive.
+will never be able to materialise such motive.
 
 \begin{wstructure}
 <- The magician trick
@@ -384,7 +384,7 @@ carry out some maintenance work. The extension of $\Desc$ with
 $\DHindx$ have introduced some duplication of functionality. In order
 to remove this clutter, we will factor out these commonalities. This
 results in a new definition of the $\Desc$ universe. This
-reorganization is strictly equivalent to the previous one
+reorganisation is strictly equivalent to the previous one
 (Fig.~\ref{fig:hindx_desc}). Just as the previous version, it is also
 self-descriptive. We refer the reader to our companion technical
 report for details.
@@ -396,7 +396,7 @@ report for details.
     -> Straightforward translation to the new system [equation]
 \end{wstructure}
 
-The factorized universe of description is presented in
+The factorised universe of description is presented in
 Figure~\ref{fig:factor-desc}. The modifications are justified as
 follow. First, $\DHindx$ have introduced a notion of function space:
 we capture this notion by the $\DPi$ constructor. Second, both
@@ -413,7 +413,7 @@ $\DHindx$ as follow:
 \end{array}
 \]
 
-Consequently, the examples developped above can be straightforwardly
+Consequently, the examples developed above can be straightforwardly
 translated into this new presentation. \note{We might want to re-do
   the Nat example here, as we encode once again in $\IDesc$} In the
 following, we adopt this last version as our de facto universe of
@@ -450,7 +450,7 @@ instances of generic programming.
 \end{array}
 \]
 
-\caption{Factorized universe of descriptions}
+\caption{Factorised universe of descriptions}
 \label{fig:factor-desc}
 
 \end{figure*}
@@ -476,8 +476,8 @@ circumstances, the full-power of a dependent elimination is not
 necessary. In the following, we propose to derive the catamorphism
 from the generic induction principle. 
 
-The catamorphism can be characterized as an induction on the
-description $D$, with a non-dependent motive targetting $T$. Given a
+The catamorphism can be characterised as an induction on the
+description $D$, with a non-dependent motive targeting $T$. Given a
 node $xs$ and the induction hypotheses, the method ought to build an
 element of $T$. Provided we know how to make an element of
 $\descop{D}{T}$, this step will be performed by the algebra $f$. Let
@@ -505,7 +505,7 @@ hypotheses''. Therefore, to construct an element of \(\descop{D}{T}\),
 we replace the recursive components of \(xs\) by their counterpart in
 \(hs\):
 
-\note{Update to the factorized presentation}
+\note{Update to the factorised presentation}
 
 \[\stk{
 \F{replace} : \stk{\PITEL{D}{\Desc}
@@ -634,13 +634,13 @@ gives us the full-blown free monad construction.
         -> Using Fold
 \end{wstructure}
 
-Of course, we must equip the resulting datatypes with operations
+Of course, we must equip the resulting data-types with operations
 delivering a monadic interface. As usual, \(\LAM{\x}\DVar{\x}\)
 performs the r\^ole of ``return'', embedding variables into terms. The
 ``bind'' operation corresponds to \emph{substitution}. We will now
 implement it, as a generic function.
 
-Our implementation will appeal to the $\cata$ function developped
+Our implementation will appeal to the $\cata$ function developed
 previously. So, let us write down the types, and fill as much
 arguments to $\cata$ as possible:
 
@@ -692,7 +692,7 @@ definition:
             <- Substitution / bind
 \end{wstructure}
 
-Filling the $???$ subgoal with $\apply\: D\: X\: Y\: \sigma$ finishes
+Filling the $???$ sub-goal with $\apply\: D\: X\: Y\: \sigma$ finishes
 the implementation. To sum up, we have implemented the free monad
 construction for an arbitrary tagged description. This gives our user
 the ability, for any data-type, to extend it with a notion of

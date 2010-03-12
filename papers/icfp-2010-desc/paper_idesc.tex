@@ -68,7 +68,7 @@ grammar of indexed functors:
 \ldots
 }\]
 
-This generalization can be achieved by a minor evolution of $\Desc$
+This generalisation can be achieved by a minor evolution of $\Desc$
 (Fig.~\ref{fig:factor-desc}). Indeed, the functorial nature of $\Desc$
 is entirely captured by the $\DId$ code. We get an indexed functor
 by turning $\DId$ into an index-dependent $\DVar$ code:
@@ -168,7 +168,7 @@ descriptions. The code is the following:
 
 Because $\Nat$ is just an inductive type, we make no use of the index:
 it is the trivial inhabitant of $\Unit$. Therefore, the recursive
-argument is materialized by $\DVar{\Void}$, where we were using $\DId$
+argument is materialised by $\DVar{\Void}$, where we were using $\DId$
 in the $\Desc$ presentation. This transformation applies to all
 inductive types: we have not lost in expressive power during the
 transition.
@@ -335,7 +335,7 @@ stipulates that $m$ cannot be \emph{any} natural numbers: it must be
         <- Lose match between data-type definition and the elimination form
 \end{wstructure}
 
-The $\Fin$ example is also a well-known example of Generalized
+The $\Fin$ example is also a well-known example of Generalised
 Abstract Data-Type (GADT), in Haskell. It comes as no surprise that
 our universe of indexed description supports this restricted class of
 dependent data-types. As we have shown with $\Fin$, constrained
@@ -360,7 +360,7 @@ introduces a loophole in our abstraction we should try to address.
 
 \begin{wstructure}
 !!! Need Help !!!
-<- Brady optimization: forcing
+<- Brady optimisation: forcing
     <- Source to source translation
     <- Able to remove some constraints
     -> Example: Fin [figure]
@@ -372,7 +372,7 @@ the equation is introduced because we are \emph{storing} the index of
 the inductive family, through $m$. Hence the constraint. However,
 \emph{inductive families need not store their
   indices}~\cite{brady:index-inductive-families}. Applying the
-\emph{forcing} optimization to our definition of $\Fin$ gives the
+\emph{forcing} optimisation to our definition of $\Fin$ gives the
 following, equivalent definition:
 
 \note{ I'm not familiar with this, I need to get into the paper. }
@@ -392,11 +392,11 @@ following, equivalent definition:
 }\]
 
 Equations have simply disappeared! We should precise that forcing a
-description is not garanteed to remove all constraints. It is subject
+description is not guaranteed to remove all constraints. It is subject
 of future work to see if constraints can be entirely eradicated, or
 presented more conveniently to the user.
 
-Finally, it is worth mentioning that the forcing optimization is a
+Finally, it is worth mentioning that the forcing optimisation is a
 \emph{source-to-source} transformation of the description. 
 
 \note{ Actual implementation of forcing as a generic function??! }
@@ -406,7 +406,7 @@ Finally, it is worth mentioning that the forcing optimization is a
 \begin{wstructure}
 <- Variation on a theme: free imonad construction
     <- Recall existence of generic free monad construction
-    -> Present its generalization to IDesc [equation]
+    -> Present its generalisation to IDesc [equation]
         <- \I -> IDesc I as describing an indexed endofunctor
         <- Free monad construction
     -> Still a suitable, generic notion of substitution
