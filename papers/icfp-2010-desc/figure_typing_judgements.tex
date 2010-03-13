@@ -1,4 +1,13 @@
 \[\stkc{
+%% Context
+\Rule{\Gamma ; \xS ; \Delta \vdash \Valid}
+     {\Gamma ; \xS ; \Delta \vdash \Bhab{x}{S}}
+\qquad
+%% Conversion
+\Rule{\Gamma \vdash \Bhab{s}{S} \quad 
+      \Gamma \vdash \Type{S \equiv T}}
+     {\Gamma \vdash \Bhab{s}{T}}
+\\
 %% Girard's favorite
 \Rule{\Gamma \vdash \Valid}
      {\Gamma \vdash \Type{\Set}}
@@ -16,14 +25,13 @@
 %% \Rule{\Gamma \vdash \Valid}
 %%      {\Gamma \vdash \Bhab{\True}{\Prop}}
 %% \\
-%% Context
-\Rule{\Gamma ; \xS ; \Delta \vdash \Valid}
-     {\Gamma ; \xS ; \Delta \vdash \Bhab{x}{S}}
+%% Unit
+\Rule{\Gamma \vdash \Valid}
+     {\Gamma \vdash \Bhab{\Unit}{\Set}}
 \qquad
-%% Conversion
-\Rule{\Gamma \vdash \Bhab{s}{S} \quad 
-      \Gamma \vdash \Type{S \equiv T}}
-     {\Gamma \vdash \Bhab{s}{T}}
+%% Void
+\Rule{\Gamma \vdash \Valid}
+     {\Gamma \vdash \Bhab{\Void}{\Unit}}
 \\
 %% Lambda
 \Rule{\stkl{\Gamma       \vdash \Type{S} \\

@@ -1,28 +1,28 @@
 \[\stkc{
-%% Reflexivity
-\Rule{\Gamma \vdash \Bhab{x}{T}}
-     {\Gamma \vdash \Bhab{x \equiv x}{T}}
-\qquad
-%% Symmetry
-\Rule{\Gamma \vdash \Bhab{x \equiv y}{T}}
-     {\Gamma \vdash \Bhab{y \equiv x}{T}}
-\qquad
-%% Transitivity
-\Rule{\stkl{\Gamma \vdash \Bhab{z \equiv y}{T} \\
-            \Gamma \vdash \Bhab{y \equiv z}{T} }}
-     {\Gamma \vdash \Bhab{x \equiv z}{T}}
-\\
+%% %% Reflexivity
+%% \Rule{\Gamma \vdash \Bhab{x}{T}}
+%%      {\Gamma \vdash \Bhab{x \equiv x}{T}}
+%% \qquad
+%% %% Symmetry
+%% \Rule{\Gamma \vdash \Bhab{x \equiv y}{T}}
+%%      {\Gamma \vdash \Bhab{y \equiv x}{T}}
+%% \qquad
+%% %% Transitivity
+%% \Rule{\stkl{\Gamma \vdash \Bhab{z \equiv y}{T} \\
+%%             \Gamma \vdash \Bhab{y \equiv z}{T} }}
+%%      {\Gamma \vdash \Bhab{x \equiv z}{T}}
+%% \\
 %% Beta-reduction
 \Rule{\stkl{\Gamma       \vdash \Type{S} \quad
             \Gamma ; \xS \vdash \Bhab{t}{T} \\
             \Gamma       \vdash \Bhab{s}{S}}}
      {\Gamma \vdash \Bhab{(\PLAM{\x}{S} t)\:s \equiv t[s/x]}{T[s/x]}}
 \\
-%% Eta-reduction
-\Rule{\Gamma       \vdash \Type{S} \quad
-      \Gamma ; \xS \vdash \Bhab{f \equiv g}{T}}
-     {\Gamma \vdash \Bhab{(\PLAM{\x}{S} f) \equiv (\PLAM{\x}{S} g)}{\PIS{\xS} T}}
-\\
+%% Xi rule
+%% \Rule{\Gamma       \vdash \Type{S} \quad
+%%       \Gamma ; \xS \vdash \Bhab{t \equiv t'}{T}}
+%%      {\Gamma \vdash \Bhab{(\PLAM{\x}{S} t) \equiv (\PLAM{\x}{S} t')}{\PIS{\xS} T}}
+%% \\
 %% Projections
 \Rule{\stkl{\Gamma                 \vdash \Bhab{s}{S} \quad
             \Gamma ; \xS           \vdash \Bhab{T}{\Set} \\

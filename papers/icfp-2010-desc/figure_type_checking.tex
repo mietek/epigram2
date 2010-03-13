@@ -34,17 +34,17 @@
 %%                            {\SigmaTy{S'}{T'}}}
 %% \\
 %% Lambda
-\Rule{\Gamma ; \xS \Vdash \propag{\push{t}{T\: x}}
+\Rule{\Gamma ; \xS \Vdash \propag{\push{t}{T}}
                                  {t'}}
-     {\Gamma \Vdash \propag{\push{\LAM{\x} t}{\PiTy{S}{T}}}
+     {\Gamma \Vdash \propag{\push{\LAM{\x} t}{\PIS{\xS}{T}}}
                            {\PLAM{\x}{S} t'}} 
 \\
 %% Pair
 \Rule{\stkl{ \Gamma \Vdash \propag{\push{s}{S}}
                                   {s'} \\
-             \Gamma \Vdash \propag{\push{t}{T\: s'}}
+             \Gamma \Vdash \propag{\push{t}{T[s'/x]}}
                                   {t'}}}
-     {\Gamma \Vdash \propag{\push{\pair{s}{t}{}}{\SigmaTy{S}{T}}}
+     {\Gamma \Vdash \propag{\push{\pair{s}{t}{}}{\SIGMAS{\xS}{T}}}
                            {\pair{s'}{t'}{T}}}
 \\
 %% EnumU
@@ -58,21 +58,21 @@
 %%                            {\EnumT{e'}}}
 %% \\
 %% Tag
-\Axiom{\Gamma \Vdash \propag{\push{\etag{t}}{\EnumT{\ConsE{t'}{e}}}}
+\Axiom{\Gamma \Vdash \propag{\push{\etag{t}}{\EnumT{(\ConsE{t'}{e})}}}
                             {\Ze}}\;t = t'
 \\
 \Rule{\Gamma \Vdash \propag{\push{\etag{t}}{\EnumT{e}}}
                            {n}}
-     {\Gamma \Vdash \propag{\push{\etag{t}}{\EnumT{\ConsE{t'}{e}}}}
+     {\Gamma \Vdash \propag{\push{\etag{t}}{\EnumT{(\ConsE{t'}{e})}}}
                             {\Su{n}}}\;t \neq t'
 \\
 %% EnumU
-\Axiom{\Gamma \Vdash \propag{\push{\Enum\: []}{\EnumU}}
+\Axiom{\Gamma \Vdash \propag{\push{[]}{\EnumU}}
                             {\NilE}}
 \\
-\Rule{\Gamma \Vdash \propag{\push{\Enum [ ts ]}{\EnumU}}
+\Rule{\Gamma \Vdash \propag{\push{ts}{\EnumU}}
                                  {cs}}
-     {\Gamma \Vdash \propag{\push{\Enum\: [ \etag{t_1}\:\: ts ]}{\EnumU}}
+     {\Gamma \Vdash \propag{\push{[ \etag{t_1},\: ts ]}{\EnumU}}
                                  {\ConsE{t_1}{cs}}}
 \\
 %% Switch

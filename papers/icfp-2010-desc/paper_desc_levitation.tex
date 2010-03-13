@@ -72,7 +72,7 @@ $\ListCons$ constructors of lists.
 Another interesting consequence concerns the $\spi{}{}$ operator: it
 can actually be implemented with the generic $\F{induction}$
 principle. From an implementation perspective, this means that we
-remove an operator, hard-coded in the host language. This operator is
+remove an operator hard-coded in the host language. This operator is
 simply implemented in the dependently-typed target language, as any
 other function.
 
@@ -105,9 +105,9 @@ objects in the type theory.
 
 If not on the content, this modification had an effect on the
 names. The type naming scheme of the type theory has condensed: named
-type formers ($\EnumU$) and constructors ($\NilE$ and $\ConsE$) are now
-replaced by codes and their fix-point in the universe of
-descriptions. Our next step is similar, in essence: we are going to
+type formers ($\EnumU$) and constructors ($\NilE$ and $\ConsE$) are
+now replaced by codes and their fix-point in the universe of
+descriptions. In essence, our next step is similar: we are going to
 condense the entire naming scheme of data-types \emph{in itself}.
 
 \subsection{Implementing descriptions}
@@ -154,11 +154,12 @@ Our first tentative is the following:
 }\]
 
 Let us explain how we have proceeded and the obstacle we face. Much as
-the data-types we have seen so far, $\DescD$ first consists in choosing
-a constructor. Constructors correspond to the code's cases: $\DUnit$,
+the data-types we have seen so far, we first have to choose a
+constructor. Constructors correspond to the code's cases: $\DUnit$,
 $\DSigma$, and $\DIndx$. The reader will notice that the tagged
 notation we have used so far for $\Desc$ constructors now fully make
-sense: these were actually the tags we are defining.
+sense: these were actually the tags we are defining. \note{This
+  sentence badly needs a rephrasing.}
 
 The case of $\DUnit$ is trivial: we immediately reach the end of the
 data-type. $\DUnit$ has no payload. The case of $\DIndx{}$ comes
@@ -224,20 +225,19 @@ of $H$ to index as many recursive arguments.
 
 Note that $\DIndx$ is isomorphic to $\DHindx{\Unit}$. However, we
 tolerate this duplication and do not replace $\DIndx$ by the more
-general $\DHindx$. Indeed, unlike its counterpart, $DIndx$ is
+general $\DHindx$. Indeed, unlike its counterpart, $\DIndx$ is
 first-order. Therefore, while both codes are \emph{extensionally} the
-same, in most practical implementation, they would be dealt with
-rather differently. While we can definitional equality to cope with
-first order objects, the functional presentation introduced by
-$\DHindx$ is unlikely to be amenable to a purely definitional
-treatment. 
+same, in most practical implementation they would be dealt with rather
+differently. While definitional equality can cope with first order
+objects, the functional presentation introduced by $\DHindx$ is
+unlikely to be amenable to a purely definitional treatment.
 
 Equipped with $\DHindx$, we can describe the extended code of our
 universe of data-types, as shown in Figure~\ref{fig:desc-levitate}.
 The $\DUnit$ and $\DIndx$ cases remains unchanged, as expected. We
-achieve the description of the $\DSigma$ case, by a simple appeal to
-the higher-order induction on $S$. The $\DHindx$ case consists in
-packing the $H$ in $\Set$ with a recursive argument.
+successfully describe the $\DSigma$ case, by a simple appeal to the
+higher-order induction on $S$. The $\DHindx$ case consists in packing
+the $H$ in $\Set$ with a recursive argument.
 
 In a first glance, we have achieved our goal. We have described the
 codes of the universe of description. Taking the fix-point of this
@@ -277,19 +277,19 @@ cable. Let us reveal it, hence finishing our implementation.
 
 Our reader might be slightly confused to learn that the trick is
 visible in the definition of $\DescD$
-(Fig.\ref{fig:desc-levitate}). Or rather, it is made invisible by a
+(Fig.\ref{fig:desc-levitate}). Or rather, it is made invisible by
 careful usage of type propagation. Indeed, let us elaborate this term
 down to the low-level type theory. The $\EnumT [ \ldots ]$ construct
 elaborates to a finite set $e$ in $\EnumU$, inhabited by the
 codes. Then, we can type-check the case definition, between square
 brackets $[ \ldots ]$. This term $f$ is pushed into the type
-$\EnumT{e} \To \Desc$. This corresponds to a finite function set we
-have implemented in Figure~\ref{fig:type-checking}.
+$\EnumT{e} \To \Desc$. This corresponds to a finite function
+definition we have implemented in Figure~\ref{fig:type-checking}.
 
 What happens if we unfold the definition? We ought to build the following term:
 
 \[
-\PLAM{x}{(\EnumT{e})} \switch{e}{\PLAM{\_} \Desc}{\pi^f}{x}
+\PLAM{x}{(\EnumT{e})} \switch{e}{\LAM{\_} \Mu{\DescD}}{\pi^f}{x}
 \]
 
 But this is rather problematic! We are still in the process of
@@ -309,29 +309,26 @@ will never be able to materialise such motive.
 \end{wstructure}
 
 If we cannot make it happen, we simply do not make it happen. We
-perfectly know what the motive ought to be. So, straightforwardly, we
-extend the type theory with two special-purpose operators:
+perfectly know what the motive ought to be. Consequently, we extend
+the type theory with a special-purpose operator:
 
 \[
 \begin{array}{@{}ll}
-%% piD
-\green{\pi_D} : & \PITEL{\V{e}}{\EnumU} \To \Set \\
 %% switchD
 \F{switchD} : & \PITEL{\V{e}}{\EnumU}               
-                \PITEL{\V{b}}{\spiD{e}}
+                \PITEL{\V{b}}{\spi{e}{\LAM{\_} \Desc}}
                 \PITEL{\V{x}}{\EnumT{e}} \To \Desc
 \end{array}
 \]
 
-The entire work of the magician stands here, in these two
-extensions. One could be worried by the availability of such
-operations in our type theory. Indeed, it would be inconvenient for
-the user to have to decide between these two variants. In fact, we
-give no choice to the user, hence no inconvenience. Just as the
-$\F{switch}$ operator was sealed off by the type propagation
-machinery, $\F{switchD}$ is not provided to the user. We simply extend
-the type-checking rules (Fig.~\ref{fig:type-checking}) with the
-following inference rule:
+The entire work of the magician stands here, in this extension. One
+could be worried by the availability of such operations in our type
+theory. Indeed, it would be inconvenient for the user to have to
+decide between two variants. In fact, we give no choice to the user,
+hence no inconvenience. Just as the $\F{switch}$ operator was sealed
+off by the type propagation machinery, $\F{switchD}$ is not provided
+to the user. We simply extend the type-checking rules
+(Fig.~\ref{fig:type-checking}) with the following inference rule:
 
 \[
 \Rule{\Gamma \Vdash \propag{\push{t}{\spiD{e}}}
@@ -359,7 +356,7 @@ Induction principle defined over Mu-things.
 }
 
 This concludes our levitation work. Beyond the beauty of the exercise,
-there is also several practical outcomes. First of all, this exercise
+there are several practical outcomes. First of all, this exercise
 reveals that the $\Desc$ universe is just plain data. Just as any
 piece of data, it can therefore be inspected and manipulated. However,
 unlike any data, it is expressed in the $\Desc$ universe. As a
@@ -386,7 +383,7 @@ to remove this clutter, we will factor out these commonalities. This
 results in a new definition of the $\Desc$ universe. This
 reorganisation is strictly equivalent to the previous one
 (Fig.~\ref{fig:hindx_desc}). Just as the previous version, it is also
-self-descriptive. We refer the reader to our companion technical
+self-descriptive. We refer the reader to the companion technical
 report for details.
 
 \begin{wstructure}
@@ -531,7 +528,7 @@ data-type will now come equipped with this operation, for free.
         -> Ability to compute more functions from it
             -> More generic functions
     <- Inspecting data-types
-        <- All described by a Desc code
+        <- All described byu a Desc code
         -> Ability to explore the code
             <- Desc equipped with an induction principle
             -> Build new objects based on that structure
@@ -543,9 +540,9 @@ the induction principle. This has been made possible by our ability to
 manipulate descriptions as first-class objects: the catamorphism is,
 basically, a function mapping a $\Desc$ to a data-type specific
 operation. Having the ability to program on $\Desc$ is the key to
-define such function. The induction principle of $\Desc$, inherited by
-levitation, plays a central role here: without an induction principle,
-it would be impossible to program on $\Desc$.
+define such function. The induction principle of $\Desc$ -- inherited
+by levitation -- plays a central role here: without an induction
+principle, it would be impossible to program on $\Desc$.
 
 Moreover, the $\F{replace}$ function demonstrates the benefit of an
 approach based on universes. The data-types living in the universe of
@@ -623,7 +620,7 @@ Implementing this function is surprisingly easy:
 
 We simply add a constructor, $\DVar{}$, and define its argument to be
 a $\DSigma{X}{\Unit}$, that is an element of $X$. We keep $E$ and $D$
-as they were, hence leaving the functor untouched. The interpretation
+as they were, hence leaving the functor unchanged. The interpretation
 of this definition convince us that we have built the functor
 signature of the free monad. The fix-point operation ties the knot and
 gives us the full-blown free monad construction.
@@ -696,7 +693,7 @@ Filling the $???$ sub-goal with $\apply\: D\: X\: Y\: \sigma$ finishes
 the implementation. To sum up, we have implemented the free monad
 construction for an arbitrary tagged description. This gives our user
 the ability, for any data-type, to extend it with a notion of
-variable. Then, with have equipped this structure with the
+variable. Then, we have equipped this structure with the
 corresponding monadic operation, ``bind'' and ``return''. Whereas the
 ``return'' is a trivial variable former, the ``bind'' operation
 corresponds to the substitution of variables by terms. We have shown
@@ -719,11 +716,11 @@ With the free monad construction, we have seen two kind of generic
 operations. Firstly, we have derived a new data-structure from another
 one: we make the free monad from its underlying functor. To do so, we
 crucially rely on the fact that data-types are nothing but codes. We
-are therefore entitled to modify it and, in this case, extend
-it. Extending a data-type might give raise to a more
-structured object, as was the case here. 
+are therefore entitled to modify this code and, in this case, extend
+it. Extending a data-type might give rise to a more structured
+object, as was the case here.
 
 So, secondly, we have equipped this new data-type with its inherent
 structure: the bind and return operations. We have been able to build
-them as generic functions. Here, we rely on the ability to compute
+them as generic functions. Here, we rely on our ability to compute
 over descriptions, thanks to the induction principle.

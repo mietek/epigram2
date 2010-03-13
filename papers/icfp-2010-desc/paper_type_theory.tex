@@ -154,9 +154,9 @@ Section~\ref{sec:discussion}.
 Finally, we define the rules governing judgemental equality in
 Figure~\ref{fig:judgemental-equality}. As one would expect,
 judgemental equality respects symmetry, reflexivity, and
-transitivity. Further, it also encompasses the $\beta$-rules for
-function application and pairs. Finally, equality under lambda is
-dealt with by the $\xi$-rule.
+transitivity. Further, it encompasses the $\beta$-rules for function
+application and pairs. Finally, it respects structural equality,
+including equality under lambda ($\xi$-rule).
 
 Crucially, being judgemental, this presentation is agnostic in the
 notion of equality actually implemented. Indeed, our typing and
@@ -164,7 +164,11 @@ equality judgements do not rely on a ``propositional'' equality. This
 freedom is a key point in favour of the wide applicability of our
 proposal. Obviously, when implementing our technology in an existing
 type-theory, some opportunities arise. We will present some of them
-along the course of the paper.
+along the course of the paper. \note{It is just a specification. We
+  expect the propositional theory to provide a decidable machinery to
+  implement it.}
+
+\note{plus structural rules, including lambda ($\xi$-rule)}
 
 \begin{figure}
 
@@ -234,7 +238,7 @@ need to be able to manipulate these elements by their name, instead of
 their encoding. While we are able to give names to encodings, it is
 extremely tedious to map the encodings back to a name. Whereas these
 objects have a structure, the structure is lost during the encoding,
-when they become anonymous inhabitants of a $Π$ or $Σ$-type.
+when they become anonymous inhabitants of a $\Pi$ or $\Sigma$-type.
 
 In the simply-typed world, we are used to see types as a coding
 presentation -- presentation of invariants, presentation of
@@ -289,16 +293,22 @@ corresponds to an index, a number, pointing to an element of $u$.
         <- index into the \spi tuple to retrieve the corresponding result
 \end{wstructure}
 
-The $\Enum$ type comes with further machinery. Indeed, to manipulate
-the $\EnumU$ and $\EnumT{}$ objects, we need to equip our type theory
-with an appropriate \emph{elimination principle}. A first step
-consists in defining the $\spi{}{}$ operator:
+The type of finite sets comes with further machinery. Indeed, to
+manipulate the $\EnumU$ and $\EnumT{}$ objects, we need to equip our
+type theory with an appropriate \emph{elimination principle}. A first
+step consists in defining the $\spi{}{}$ operator:
 
-\[
+\[\stk{
 %% spi
 \spi{}{} : \PITEL{\V{e}}{\EnumU}
-           \PITEL{\V{P}}{\EnumT{e} \To \Set} \To \Set 
-\]
+           \PITEL{\V{P}}{\EnumT{e} \To \Set} \To \Set \\
+\begin{array}{@{}ll@{\:\mapsto\:\:}l}
+\spi{\NilE}{& P}        & \Unit \\
+\spi{(\ConsE{t}{e})}{& P} & \TIMES{P\: \Ze}{\spi{e}{(\LAM{x} P\: (\Su{x}))}}
+\end{array}
+}\]
+
+\note{Needs to be defined.}
 
 A closer look to its type should reveal a certain familiarity with its
 equivalent for sets, $\Pi$. Indeed, $\spi{}{}$ defines a \emph{finite
@@ -310,15 +320,20 @@ domain.
 Having understood the meaning of $\spi{}{}$, the definition of the
 $\F{switch}$ eliminator is not surprising:
 
-\[
+\[\stk{
 %% switch
 \begin{array}{@{}ll}
 \F{switch} : & \PITEL{\V{e}}{\EnumU}
                \PITEL{\V{P}}{\EnumT{e} \To \Set} \\
              & \PITEL{\V{b}}{\spi{e}{P}}
                \PITEL{\V{x}}{\EnumT{e}} \To P~x
+\end{array} \\
+\begin{array}{@{}l@{\:\mapsto\:\:}l}
+\switch{(\ConsE{t}{e})}{P}{b}{\Ze}      & \fst{b} \\
+\switch{(\ConsE{t}{e})}{P}{b}{(\Su{x})} & \switch{e}{(\LAM{x} P
+  (\Su{x}))}{(\snd{b})}{x}
 \end{array}
-\]
+}\]
 
 Again, there is a clear equivalent in the full-$\Set$ world: function
 application. The operational behaviour of $\F{switch}$ is
@@ -340,24 +355,24 @@ pointing to.
 As we have seen, finite sets are not just a way of making
 data. Through the $\spi{}{}$ and $\F{switch}$ operators, they also
 come with a notion of finite function space. However, we had to
-extract that intuition from the type, by a careful reading. At a first
-glance, this seems to contradict our argument in favour of types for
-coding representation. Here, we are overflown by low-level, very
-precise type information. 
+extract that intuition from the type, by a careful reading. This seems
+to contradict our argument in favour of types for coding
+representation. Here, we are overflown by low-level, very precise type
+information.
 
 However, our situation is significantly different from the one we
 faced with encoded data: while we were suffering from a crucial lack
-of information, we are here facing too much information, hence loosing
+of information, we are now facing too much information, hence loosing
 focus. This is a general issue with the usage of codes, as they convey
-much more information than what the user is used to see. 
+much more information than what the user is willing to see. 
 
 As we will see in the following section, there exists a cure to this
 problem. In a nutshell, instead of being overflown by typing
 information, we will put it at work, automatically. The consequence is
 that, in such system, working with codes is \emph{practical}: one
 should not be worried by information overload, but how to use it as
-much as possible. Having mastered this difficulty, we should not be
-afraid by code for practical purposes.
+much as possible. Therefore, we should not be afraid by using code for
+practical purposes.
 
 
 \subsection{Type propagation}
@@ -389,22 +404,22 @@ this variable is used, we can pull its type out of it.
 
 On the other hand, in the \emph{type checking} phase, terms are
 \emph{pushed} into types. We are handed a type together with a term,
-our task consists in checking that the term is indeed of this type. We
-are therefore allowed, and actually encouraged, to use the information
-provided by the type. Therefore, we can relax our requirements on the
-term. A typical example is the lambda:
+our task consists in checking that the term is indeed of this
+type. Doing so, we are allowed, and actually encouraged, to use the
+information provided by the type. Therefore, we can relax our
+requirements on the term. A typical example is the lambda abstraction:
 
 \[
-\Rule{\Gamma ; \xS \Vdash \propag{\push{t}{T\: x}}
+\Rule{\Gamma ; \xS \Vdash \propag{\push{t}{T}}
                                  {t'}}
-     {\Gamma \Vdash \propag{\push{\LAM{\x} t}{\PiTy{S}{T}}}
+     {\Gamma \Vdash \propag{\push{\LAM{\x} t}{\PIS{\xS}{T}}}
                            {\PLAM{\x}{S} t'}} 
 \]
 
 In our formal presentation of the type theory, we were forced to
-annotate the lambda by the type of its domain. In a bidirectional
-setting, the domain is provided by the $\Pi$ type we are pushing the
-lambda into. Hence we do not need to annotate the lambda.
+annotate lambda abstractions by the type of the domain. In a
+bidirectional setting, the domain is provided by the $\Pi$ type we are
+pushing the abstraction into. Hence we do not need the annotation.
 
 \begin{wstructure}
 <- Formalisation: type propagation
@@ -483,8 +498,8 @@ might propagate to other terms, thanks to type checking.
 Dually to type synthesis, type checking judgements
 (Fig.\ref{fig:type-checking}) act as \emph{sinks}. From an expression
 $\exprIn$ and a type propagated down to it, they elaborate a low-level
-term. This is precisely the availability of the type we are pushed
-into that makes the power of this technique. Its benefit on lambda
+term. The strength of this approach comes from the availability of the
+type to drive the elaboration of expressions. Its benefit on lambda
 abstraction and pairs is well-known. Let us explore the consequences
 on our coding scheme for finite sets.
 
@@ -514,7 +529,7 @@ The abstraction we have developed in this section are entirely
 transparent to the user. In the case of finite function space, the
 user has never to explicitly \emph{call} the $\F{switch}$
 eliminator. Nor will she \emph{be presented} the elaborated term, only
-the high-level . Bidirectional type-checking and type-directed
+the high-level one. Bidirectional type-checking and type-directed
 pretty-printing seal the low-level type theory behind the high-level
 expressions.
 
@@ -549,7 +564,7 @@ types. We have illustrated our approach with finite sets. We have
 successfully abstracted away the low-level presentation of finite
 sets, offering a convenient syntax instead.
 
-This example teaches us that we should not be afraid by codes, as far
+This example teaches us that we should not be afraid by codes, as soon
 as type information is available. We have shown how to rationalise
 this information in a formal presentation. Hence, we have proved that
 programming with such objects is practical. As we introduce more codes

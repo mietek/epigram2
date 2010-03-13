@@ -17,19 +17,19 @@
 \qquad
 %% Application
 \Rule{\stkl{\Gamma \Vdash \propag{f}
-                                 {\pull{f'}{\PiTy{S}{T}}} \\
+                                 {\pull{f'}{\PIS{\xS}{T}}} \\
             \Gamma \Vdash \propag{\push{s}{S}}
                                  {s'}}}
-     {\Gamma \Vdash \propag{f\: s}{\pull{f'\: s'}{T\: s'}}} 
+     {\Gamma \Vdash \propag{f\: s}{\pull{f'\: s'}{T [s'/x]}}} 
 \\
 %% First projection
 \Rule{\Gamma \Vdash \propag{p}
-                           {\pull{p'}{\SigmaTy{S}{T}}}}
+                           {\pull{p'}{\SIGMAS{\xS}{T}}}}
      {\Gamma \Vdash \propag{\fst{p}}
                            {\pull{\fst{p'}}{S}}} \qquad 
 %% Second projection
 \Rule{\Gamma \Vdash \propag{p}
-                           {\pull{p'}{\SigmaTy{S}{T}}}}
+                           {\pull{p'}{\SIGMAS{\xS}{T}}}}
      {\Gamma \Vdash \propag{\snd{p}}
-                           {\pull{\snd{p'}}{T\:(\fst{p'})}}}
+                           {\pull{\snd{p'}}{T [\fst{p'}/x]}}}
 }\]

@@ -17,13 +17,15 @@ build on our intuition of data-types we are familiar with. However,
 our goal is and remains to discuss data-types as we find them in
 dependently-typed languages.
 
-Our proposal is based on induction-recursion~\cite{dybjer:general-ir,
-  dybjer:axiom-ir, dybjer:ir-initial-algebra, dybjer:iir}. However, in
-the context of simple data-types, the full power of
-induction-recursion is not necessary. Therefore, we will present a
-stripped-down version. As we extend the scope of our universe of
-data-types, our presentation will diverge from induction-recursion. We
-shall compare both approaches in Section~\ref{sec:discussion}
+Our proposal is inspired by, but less involved than, Dybjer and
+Setzer's closed formulation of
+induction-recursion~\cite{dybjer:general-ir, dybjer:axiom-ir,
+  dybjer:ir-initial-algebra, dybjer:iir}. In the context of simple
+data-types, the full power of induction-recursion is not
+necessary. Therefore, we adopt a stripped-down version of it. As we
+extend the scope of our universe of data-types, our presentation will
+diverge from induction-recursion. We shall compare both approaches in
+Section~\ref{sec:discussion}
 
 \subsection{The power of $\Sigma$}
 
@@ -39,13 +41,13 @@ In dependently-typed language, $\Sigma$-types can be read in two
 rather different ways. This duality is actually reflected in the
 notation we can find in the literature, depending on the sensibility
 of the author. Hence, the type $\SigmaTy{A}{B}$ is sometimes written
-$\Sigma_{x : A} (B x)$. This notation stresses the fact that
+$\Sigma_{x : A} (B\: x)$. This notation stresses the fact that
 $\Sigma$-types are a generalisation of sums over arbitrary
 arities. When simply-typed languages have finite sums,
-dependently-typed languages have sums of indexed by any set.
+dependently-typed languages have sums indexed by any set.
 
 On the other hand, $\SigmaTy{A}{B}$ is sometimes written
-$\SIGMA{\V{x}}{A} (B x)$. Under this perspective, $\Sigma$-types can
+$\SIGMA{\V{x}}{A} (B\: x)$. Under this perspective, $\Sigma$-types can
 be read as a generalisation of products, where the second component
 can depend on the first one. When simply-typed languages pack data
 into non-dependent tuples, dependently-types languages tolerate this
@@ -66,10 +68,10 @@ for data to influence further data.
 
 In the simply-typed world, the essence of data-type definition can be
 summed up by the term ``sum-of-product''. A data-type is defined by a
-finite sum, choice, of constructors, each of them composed by a
-product, a tuple, of arguments. Therefore, the grammar of data-types
-definition in simply-typed languages, such as Haskell or OCaml, follow
-this form.
+finite sum -- a choice -- of constructors, each of them is composed by
+a product -- a tuple -- of arguments. Therefore, the grammar of
+data-types definition in simply-typed languages, such as Haskell or
+OCaml, follow this form.
 
 To model these data-types, we are simply left with capturing this
 grammar in a dependently-typed setting. Hence, the notion of
@@ -102,10 +104,11 @@ name them. To this end, we will use a standard technique in
 dependently-typed programming: we construct an ad-hoc universe. This
 technique dates back to Martin-L\"of definition of type
 theory~\cite{martin-lof:itt}. Since then, it has been fruitful as a
-programming technique~\cite{who?} \note{I would need some other
-  example of universe construction for practical purposes}. We refer
-the reader to Agda's tutorial~\cite{norell:agda-tutorial} for a
-pedagogical presentation of universe construction.
+programming technique~\cite{benke:universe-generic-prog, whoelse?}
+\note{I would need some other example of universe construction for
+  practical purposes}. We refer the reader to Agda's
+tutorial~\cite{norell:agda-tutorial} for a pedagogical presentation of
+universe construction.
 
 The key idea behind universe construction is our ability to make names
 by defining new types. These names are called \emph{codes}. By
@@ -149,7 +152,7 @@ introduced by $\DIndx$. When we tie the knot with a fix-point, the
 hole left open by $\DIndx$ will be turned into a standard recursive
 argument. We notice that this functoriality appears in the type of
 $\descop{D}{}$ itself, for a given data-type definition $D$. This
-corresponds to the morphism part of the functor described by $D$.
+corresponds to the object part of the functor described by $D$.
 
 \begin{figure*}
 
@@ -184,7 +187,7 @@ corresponds to the morphism part of the functor described by $D$.
 To give some intuition on this universe of descriptions, we now turn
 to some examples. For obvious pedagogical reasons, we will manually
 build these descriptions. However, it should be clear that, in
-practice, these definitions can be automatically constructed an
+practice, these definitions can be automatically constructed from an
 Haskell-like $\data$ definition.
 
 \subsection{Examples}
@@ -198,7 +201,7 @@ Haskell-like $\data$ definition.
     -> NatD Z = 1 + Z
 \end{wstructure}
 
-Our first example is the natural numbers, or rather its carrier
+Our first example is the natural numbers, or rather its signature
 functor. Our code is presented in the high-level expression language
 of Section~\ref{sec:type-propagation}. The translation back to the raw
 terms is laborious but should not pose any difficulty. The code is the
@@ -219,7 +222,7 @@ argument, and we close the description.
 In a more synthetic notation, we have simply implemented the following
 functor:
 
-\[    \NatD\: Z = 1 + Z    \]
+\[    \NatD\: Z \mapsto 1 + Z    \]
 
 
 
@@ -232,7 +235,7 @@ functor:
 \end{wstructure}
 
 With a small change to the definition of $\NatD$, we obtain the
-carrier of lists:
+signature of lists:
 
 \[\stk{
 \ListD : \Set \To \Desc \\
@@ -240,14 +243,14 @@ carrier of lists:
                            {[ \DUnit \quad (\DSigma{X}{\LAM{\_} \DIndx{\DUnit}}) ]}
 }\]
 
-The modification consists in turning the $\NatSuc{}$ into a proper
-$\ListCons$ taking an argument in X followed by an inductive
+The modification consists in turning the $\NatSuc{}$ constructor into
+a proper $\ListCons$ taking an argument in X followed by a recursive
 argument. In this case, we use $\DSigma{}{}$ in its product
 interpretation: we pack an element of $X$ together with the recursive
 argument. Easily, one sees that this code actually defines the
 following functor:
 
-\[    \ListD\: X Z = 1 + X \times Z     \]
+\[    \ListD\: X\: Z \mapsto 1 + X \times Z     \]
 
 \begin{wstructure}
 <- Tree
@@ -258,7 +261,7 @@ following functor:
 \end{wstructure}
 
 Finally, we are not limited to one recursive argument. This is
-demonstrated by our description of a binary tree functor below:
+demonstrated by our description of binary trees:
 
 \[\stk{
 \TreeD : \Set \To \Desc \\
@@ -269,10 +272,10 @@ demonstrated by our description of a binary tree functor below:
 }\]
 
 Again, we are at one evolutionary step away from $\ListD$. However,
-instead of single appeal to the induction code, we call it twice. The
+instead of a single call to the induction code, we call it twice. The
 interpretation of this code corresponds to the following functor:
 
-\[    \TreeD\: X Z = 1 + X \times Z \times Z     \]
+\[    \TreeD\: X\: Z \mapsto 1 + X \times Z \times Z     \]
 
 
 \begin{wstructure}
@@ -287,7 +290,7 @@ interpretation of this code corresponds to the following functor:
 \end{wstructure}
 
 From the examples above, we observe that data-types are defined by a
-$\DSigma$ which first argument is a finite set of constructor. The
+$\DSigma$ which first argument is a finite set of constructors. The
 descriptions fitting into this pattern are called \emph{tagged}
 description. Formally, we have:
 
@@ -298,13 +301,13 @@ description. Formally, we have:
 
 
 \[
- \TagDesc \mapsto \SIGMA{\V{E}}{\EnumU} \spi{\V{E}}{\LAM{\_} \Desc}
+ \TagDesc \mapsto \SIGMA{\V{E}}{\EnumU} (\spi{\V{E}}{(\LAM{\_} \Desc)})
 \]
 
 Again, this is a clear reminiscence of the ``sum-of-products'' style:
 we have a finite sum of constructors. Of course, every description can
-be expressed into this style, by using a singleton as single
-constructor.
+be expressed into this style, using a singleton as single constructor
+if necessary.
 
 \note{I think we need a function mapping a $\TagDesc$ to the
   corresponding $\Desc$. This function should go here.}
@@ -320,8 +323,8 @@ So far, for convenience, we have taken as granted the existence of
 $\Desc$, as presented in Figure~\ref{fig:desc_universe}. In
 particular, we have considered its code, $\DSigma{}{}$, $\DIndx{}$,
 and $\DUnit$ as type formers, extending the basic type theory. Hence,
-in an implementation of this type theory, we would have extended it
-with these constructors and their typing rules. Although it makes no
+in an implementation of this type theory, we need to extended it with
+these constructors and their typing rules. Although it makes no
 conceptual difference, the code of description should rather be read
 as a specification. We promise the existence of such objects,
 satisfying the typing rules. It will be the subject of
@@ -402,16 +405,16 @@ The first step consists in turning $T$ into a predicate
 $\Bhab{P}{\Mu{D} \To \Set}$, hence introducing a dependency on the
 descriptions. Consequently, we strengthen the algebra $\descop{D}{T}
 \To T$ by a similar process. We start with turning the arrow into a
-dependently arrow, hence offering $\Bhab{xs}{\descop{D}{(\Mu{D})}}$ to
+dependent arrow, hence offering $\Bhab{xs}{\descop{D}{(\Mu{D})}}$ to
 further analysis. 
 
 Then, we have to translate the notion of algebra in our dependent
-setting. This is achieved by the $\All{D}{X}{P}{x}$ predicate that,
+setting. This is achieved by the predicate $\All{D}{X}{P}{x}$ that,
 intuitively, states that $\Bhab{P}{X \To \Set}$ holds everywhere in
-the sub-structures of $x$. Based on that knowledge, we ought to be
-able to prove that $P$ holds for $\Con{xs}$. We close our elimination
-principle by taking an argument $x$ in $\Mu{D}$ and claiming that the
-motive $P$ is realised on $x$.
+$x$. Based on that knowledge, we ought to be able to prove that $P$
+holds for $\Con{xs}$. We close our elimination principle by taking an
+argument $x$ in $\Mu{D}$ and claiming that the motive $P$ is realised
+on $x$.
 
 \[
 \begin{array}{lcll}
@@ -423,14 +426,14 @@ motive $P$ is realised on $x$.
 \end{array}
 \]
 
-At this stage, we are still left with implementing $\F{All}$ and the
+At this stage, we are still left with implementing this
 $\F{induction}$ principle. For space reason, we refer the reader to
-our technical report for the actual code. Having this dependent
-catamorphism, we are empowered with the ability to $\emph{compute}$
-over descriptions. Note that this induction principle is the first
-manifestation of a generic operation over descriptions. Thanks to
-$\F{induction}$, any data-type we define automatically comes equipped
-with an induction principle.
+our technical report for the actual code, hence the proof of (weak)
+initiality. Having this dependent catamorphism, we are empowered with
+the ability to $\emph{compute}$ over descriptions. Note that this
+induction principle is the first manifestation of a generic operation
+over descriptions. Thanks to $\F{induction}$, any data-type we define
+automatically comes equipped with an induction principle.
 
 \note{Shall we give the code of $\All$?}
 
@@ -465,21 +468,21 @@ functor signature of natural numbers. Finally, she would have to write
 codes instead of the natural data-type constructor.
 
 As for finite sets previously, these symptoms clearly indicate that we
-suffer from too much type information. Just as for finite, the cure
-lies in rationalising this information. Let us first tackle the issue
-of data-type declaration: unsurprisingly, the grammar of data-types we
-are used can be straightforwardly translated to the
-``sigmas-of-sigmas'' paradigm. Hence, a data-type definition is turned
-into the corresponding description. Then, at the level of definitions,
-we associate the name of the data-type to the fix-point of the
+suffer from too much type information. Just as for finite sets, the
+cure lies in rationalising this information. Let us first tackle the
+issue of data-type declaration. The grammar of data-types we are used
+to can be straightforwardly translated to the ``sigmas-of-sigmas''
+paradigm. Hence, a data-type definition can be turned into the
+corresponding description. Then, at the level of definitions, we
+associate the name of the data-type to the fix-point of the
 description. The induction principle as well as other generic
 operations follow for free.
 
 Doing so, we seal data-type definition behind a convenient
 abstraction. We take advantage of this abstraction barrier to tamper
 the second issue. Namely, our user would rather be presented a name
-rather that a fix-point of a signature functor. Rather surprisingly,
-it is sufficient to \emph{label} the $\Mu{}$ constructor with the
+rather than a fix-point of a signature functor. Surprisingly, it is
+sufficient to \emph{label} the $\Mu{}$ constructor with the
 user-provided name. When pretty-printing this object, we just expose
 the label, instead of the definition in full.
 

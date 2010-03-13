@@ -180,15 +180,15 @@
 
 %% Enum
 \newcommand{\EnumU}{\D{EnumU}}
-\newcommand{\NilE}{\C{NilE}}
-\newcommand{\ConsE}[2]{\C{ConsE}~#1~#2}
+\newcommand{\NilE}{\C{nilE}}
+\newcommand{\ConsE}[2]{\C{consE}~#1~#2}
 
 \newcommand{\EnumT}[1]{\D{EnumT}~#1}
 \newcommand{\Ze}{\C{$0$}}
 \newcommand{\Su}[1]{\C{$1\!+$}~#1}
 
 \newcommand{\spi}[2]{\F{$\pi$}~#1~#2}
-\newcommand{\switch}[4]{\green{\CN{switch}}\green{(} #1 , #2 , #3 , #4 \green{)}}
+\newcommand{\switch}[4]{\green{\CN{switch}}~#1~#2~#3~#4}
 \newcommand{\spiD}[1]{\F{$\pi_D$}~#1}
 \newcommand{\switchD}[3]{\green{\CN{switchD}}\green{(} #1 , #2 , #3 \green{)}}
 
@@ -229,7 +229,7 @@
 
 %% Mu
 \newcommand{\Mu}[1]{\D{Mu}~#1}
-\newcommand{\Con}[1]{\C{Con}~#1}
+\newcommand{\Con}[1]{\C{con}~#1}
 \newcommand{\All}[4]{\F{All}~#1~#2~#3~#4}
 
 %% Agda-style data-type declaration

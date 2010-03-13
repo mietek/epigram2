@@ -61,7 +61,7 @@ defining a grammar a functor, we need $I \To \IDesc{I}$ to define a
 grammar of indexed functors:
 
 \[\stk{
-\data \IDesc{} : \PI{\V{I}}{\Set} \Set \where \\
+\data \IDesc{} (\Bhab{\V{I}}{\Set}) : \Set \where \\
 \;\;\ldots \\
 \\
 \idescop{\_\:}{}{} : \PI{\V{I}}{\Set} \IDesc{I} \To (\V{I} \To \Set) \To \Set    \\
@@ -74,7 +74,7 @@ is entirely captured by the $\DId$ code. We get an indexed functor
 by turning $\DId$ into an index-dependent $\DVar$ code:
 
 \[\stk{
-\data \IDesc{} : \PI{\V{I}}{\Set} \Set \where \\
+\data \IDesc{} (\Bhab{\V{I}}{\Set}) : \Set \where \\
 \;\;\begin{array}{@{}l@{\::\:}l@{\quad}l}
     \DVar{}         & I \To \IDesc{I}                                   \\
     \ldots          & \ldots
@@ -112,7 +112,7 @@ burden on the programmer in practice.
 \[
 \begin{array}{ll}
 \stk{
-\data \IDesc{} : \PI{\V{I}}{\Set} \Set \where \\
+\data \IDesc{} (\Bhab{\V{I}}{\Set}) : \Set \where \\
 \;\;\begin{array}{@{}l@{\::\:}l@{\quad}l}
     \DVar{}         & I \To \IDesc{I}                                   \\
     \DConst{}       & \Set \To \IDesc{I}                                \\
@@ -230,8 +230,8 @@ Bruijn indexes. The indexed description is the following:
 \begin{array}{@{}ll}
 \LambdaTD\: n = \DSigma{}{} & (\EnumT [ \LambdaTVar, \LambdaTApp, \LambdaTLam ]) \\
                             & \left[\begin{array}{l}
-                                  \DConst{\Fin{n}} \\
-                                  \DProd{\DVar{\NatSuc{n}}}{\DVar{n}} \\
+                                  \DConst{(\Fin{n})} \\
+                                  \DProd{\DVar{n}}{\DVar{n}} \\
                                   \DVar{(\NatSuc{n})}
                               \end{array}\right]
 \end{array}
@@ -472,7 +472,7 @@ largely inspired by $\LambdaTD$:
 \begin{array}{@{}ll}
 \LambdaTFreeD\: n = \DSigma{}{} & (\EnumT [ \LambdaTApp, \LambdaTLam ]) \\
                                 & \left[\begin{array}{l}
-                                  \DProd{\DVar{\NatSuc{n}}}{\DVar{n}} \\
+                                  \DProd{\DVar{n}}{\DVar{n}} \\
                                   \DVar{(\NatSuc{n})}
                                   \end{array}\right]
 \end{array}
