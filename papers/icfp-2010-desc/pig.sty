@@ -215,6 +215,12 @@
 \newcommand{\DProd}[2]{#1 \mathop{\etag{\!\times}} #2}
 \newcommand{\DId}{\etag{\CN{id}}}
 
+%% Mu
+\newcommand{\Mu}[1]{\D{Mu}~#1}
+\newcommand{\Con}[1]{\C{con}~#1}
+\newcommand{\All}[4]{\F{All}~#1~#2~#3~#4}
+
+
 %% IDesc
 \newcommand{\IDesc}[1]{\D{IDesc}~#1}
 \newcommand{\IDescD}{\C{IDescD}}
@@ -227,10 +233,9 @@
 \newcommand{\DConst}[1]{\etag{\CN{const}}~#1}
 \newcommand{\DPrf}[1]{\etag{\prf{}}~#1}
 
-%% Mu
-\newcommand{\Mu}[1]{\D{Mu}~#1}
-\newcommand{\Con}[1]{\C{con}~#1}
-\newcommand{\All}[4]{\F{All}~#1~#2~#3~#4}
+%% IMu
+\newcommand{\IMu}[3]{\D{IMu}_{#1}~#2~#3}
+
 
 %% Agda-style data-type declaration
 \newcommand{\data}{\mathkw{data}\;}

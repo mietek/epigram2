@@ -442,10 +442,16 @@ type signature is the following:
 \newcommand{\substI}{\F{substI}}
 
 \[
-\substI : \PITEL{\V{I}, \V{J}}{\Set}
-          \PITEL{\sigma}{\V{I} \To \IDesc{\V{J}}}
-          \PITEL{\V{D}}{\IDesc{I}} \To
-          \IDesc{J}
+\begin{array}{@{}ll}
+\substI : & \PITEL{\V{I}}{\Set}
+            \PITEL{\V{X}, \V{Y}}{\V{I} \To \Set}
+            \PITEL{\V{R}}{\V{I} \To \TagIDesc{\V{I}}} \\
+          & \PITEL{\V{\sigma}}{\PI{\V{i}}{\V{I}} \V{X}\:\V{i} \To 
+                               \IMu{I}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}{\V{i}}} \\
+          & \PITEL{\V{i}}{\V{I}}
+            \PITEL{\V{D}}{\IMu{I}{(\FreeIMonad{\V{R}}{\V{I}}{\V{X}})}{\V{i}}} \To
+            \IMu{I}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}{\V{i}}
+\end{array}
 \]
 
 
