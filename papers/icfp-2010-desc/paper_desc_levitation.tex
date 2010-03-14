@@ -615,11 +615,11 @@ Implementing this function is surprisingly easy:
 \FreeMonad{\_} : \TagDesc \To \Set \To \TagDesc \\
 \FreeMonad{\pair{E}{D}{}}\:X \mapsto
     \pair{\ListCons{\DVar{}}{E}}
-         {\pair{\DSigma{X}{\Unit}}{D}{}}{}
+         {\pair{\DSigma{X}{\DUnit}}{D}{}}{}
 }\]
 
 We simply add a constructor, $\DVar{}$, and define its argument to be
-a $\DSigma{X}{\Unit}$, that is an element of $X$. We keep $E$ and $D$
+a $\DSigma{X}{\DUnit}$, that is an element of $X$. We keep $E$ and $D$
 as they were, hence leaving the functor unchanged. The interpretation
 of this definition convince us that we have built the functor
 signature of the free monad. The fix-point operation ties the knot and
@@ -664,8 +664,6 @@ $\DVar{x}$, to replace it by $\sigma x$. Otherwise, it should simply
 appeal to the induction hypothesis. This corresponds to the following
 definition:
 
-\note{ Triple check. That doesn't work, right? }
-
 \[\stk{
 \begin{array}{@{}ll}
 \apply : & \PITEL{\V{D}}{\TagDesc} 
@@ -675,8 +673,8 @@ definition:
            \Mu{(\FreeMonad{D}{Y})}                            \\
 \end{array} \\
 \begin{array}{@{}l@{\:\:\mapsto\:}l}
-\apply\: \DVar{}\: X\: Y\: \sigma\: x  & \sigma x     \\
-\apply\: xs\:      X\: Y\: \sigma\: ys & ys
+\apply\: D\: X\: Y\: \sigma\: \pair{\DVar{}}{x}{}     & \sigma\: x                   \\
+\apply\: D\: X\: Y\: \sigma\: \pair{\etag{t}}{ys}{} & \Con{\pair{\etag{t}}{ys}{}}
 \end{array}
 }\]
 
