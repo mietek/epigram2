@@ -304,14 +304,14 @@
 >         mapOpRun [iI,IDONE _,    a, b, f, x] = Right x
 >         mapOpRun [iI,IARG s d, a, b, f, x] = Right $
 >                 PAIR (x $$ Fst)
->                      (mapOp @@ [iI, d $$ A (x $$ Fst), a, b, f, x $$ Snd])
+>                      (imapOp @@ [iI, d $$ A (x $$ Fst), a, b, f, x $$ Snd])
 >         mapOpRun [iI,IIND h hi d, a, b, f, x] = Right $
 >                 PAIR (L $ HF "h" $ \h -> f $$ A (hi $$ A h) 
 >                                            $$ A (x $$ Fst $$ A h))
->                      (mapOp @@ [iI, d, a, b, f, x $$ Snd])
+>                      (imapOp @@ [iI, d, a, b, f, x $$ Snd])
 >         mapOpRun [iI,IIND1 i d,  a, b, f, x] = Right $
 >                 PAIR (f $$ A i $$ A (x $$ Fst))
->                      (mapOp @@ [iI, d, a, b, f, x $$ Snd])
+>                      (imapOp @@ [iI, d, a, b, f, x $$ Snd])
 >         mapOpRun [iI,N d,        a, b, f, x] = Left d
 > 
 >         mapOpSimp :: Alternative m => [VAL] -> NameSupply -> m NEU
@@ -321,7 +321,7 @@
 >           where
 >             identity = L (HF "i" (\_ -> L (HF "x" (\x -> x))))
 >         mapOpSimp [iI, d, _, c, f, N (mOp :@ [_ , _, a, _, g, N x])] r
->           | mOp == mapOp = mapOpSimp args r <|> pure (mapOp :@ args)
+>           | mOp == imapOp = mapOpSimp args r <|> pure (imapOp :@ args)
 >           where
 >             comp f g = 
 >                L (HF "i" $ \i -> 
