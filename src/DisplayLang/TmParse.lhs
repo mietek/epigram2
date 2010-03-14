@@ -178,7 +178,7 @@ largest size again.
 >      |DIARG (%keyword KwIArg%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
 >      |DIIND1 (%keyword KwIInd1%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
 >      |DIIND (%keyword KwIInd%) (sizedInDTm ArgSize) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
->      |DNU (%keyword KwNu%) (sizedInDTm ArgSize)
+>      |(DNU Nothing) (%keyword KwNu%) (sizedInDTm ArgSize)
 >      |DINU (%keyword KwINu%) (sizedInDTm ArgSize) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
 >      |DINH (%keyword KwInh%) (sizedInDTm ArgSize)
 >      |DWIT (%keyword KwWit%) (sizedInDTm ArgSize)
