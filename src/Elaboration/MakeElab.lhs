@@ -170,10 +170,10 @@ These rules should be moved to features.
 >     d' :=>: _ <- eQuote d
 >     t' :=>: _ <- eQuote t
 >     tm :=>: tmv <- subElab loc $ case l of
->         Nothing  -> elimOpMethodType $$ A d $$ A t :>: f
->         Just l   -> elimOpLabMethodType $$ A l $$ A d $$ A t :>: f
+>         Nothing  -> inductionOpMethodType $$ A d $$ A t :>: f
+>         Just l   -> inductionOpLabMethodType $$ A l $$ A d $$ A t :>: f
 >     x <- eLambda (fortran t)
->     return $ N (elimOp :@ [d', NP x, t', tm]) :=>: elimOp @@ [d, NP x, t, tmv]
+>     return $ N (inductionOp :@ [d', NP x, t', tm]) :=>: inductionOp @@ [d, NP x, t, tmv]
 
 > makeElab' loc (PI (SIGMA d r) t :>: DCON f) = do
 >     let mt =  PI d . L . HF (fortran r) $ \ a ->
