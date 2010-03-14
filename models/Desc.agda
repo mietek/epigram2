@@ -1,6 +1,4 @@
-{-# OPTIONS --type-in-type
-            --no-termination-check
-            --no-positivity-check #-}
+ {-# OPTIONS --type-in-type #-}
 
 module Desc where
 
@@ -17,7 +15,7 @@ module Desc where
 data Sigma (A : Set) (B : A -> Set) : Set where
   _,_ : (x : A) (y : B x) -> Sigma A B
 
-_*_ : (A B : Set) -> Set
+_*_ : (A : Set)(B : Set) -> Set
 A * B = Sigma A \_ -> B
 
 fst : {A : Set}{B : A -> Set} -> Sigma A B -> A
@@ -27,154 +25,304 @@ snd : {A : Set}{B : A -> Set} (p : Sigma A B) -> B (fst p)
 snd (a , b) = b
 
 data Zero : Set where
-record One : Set where
+data Unit  : Set where
+  Void : Unit
 
 --****************
 -- Sum and friends
 --****************
 
-data _+_ (A B : Set) : Set where
+data _+_ (A : Set)(B : Set) : Set where
   l : A -> A + B
   r : B -> A + B
 
+--****************
+-- Equality
+--****************
+
+data _==_ {A : Set}(x : A) : A -> Set where
+  refl : x == x
+
+cong : {A B : Set}(f : A -> B){x y : A} -> x == y -> f x == f y
+cong f refl = refl
+
+cong2 : {A B C : Set}(f : A -> B -> C){x y : A}{z t : B} -> 
+        x == y -> z == t -> f x z == f y t
+cong2 f refl refl = refl
+
+postulate 
+  reflFun : {A B : Set}(f : A -> B)(g : A -> B)-> ((a : A) -> f a == g a) -> f == g 
 
 
 --********************************************
 -- Desc code
 --********************************************
 
--- Inductive types are implemented as a Universe. Hence, in this
--- section, we implement their code.
-
--- We can read this code as follow (see Conor's "Ornamental
--- algebras"): a description in |Desc| is a program to read one node
--- of the described tree.
-
 data Desc : Set where
-  Arg : (X : Set) -> (X -> Desc) -> Desc
-  -- Read a field in |X|; continue, given its value
-
-  -- Often, |X| is an |EnumT|, hence allowing to choose a constructor
-  -- among a finite set of constructors
-
-  Ind : (H : Set) -> Desc -> Desc
-  -- Read a field in H; read a recursive subnode given the field,
-  -- continue regarless of the subnode
-
-  -- Often, |H| is |1|, hence |Ind| simplifies to |Inf : Desc -> Desc|,
-  -- meaning: read a recursive subnode and continue regardless
-
-  Done : Desc
-  -- Stop reading
+  id : Desc
+  const : Set -> Desc
+  prod : Desc -> Desc -> Desc
+  sigma : (S : Set) -> (S -> Desc) -> Desc
+  pi : (S : Set) -> (S -> Desc) -> Desc
 
 
 --********************************************
--- Desc decoder
+-- Desc interpretation
 --********************************************
-
--- Provided the type of the recursive subnodes |R|, we decode a
--- description as a record describing the node.
 
 [|_|]_ : Desc -> Set -> Set
-[| Arg A D |] R = Sigma A (\ a -> [| D a |] R)
-[| Ind H D |] R = (H -> R) * [| D |] R
-[| Done |] R = One
-
+[| id |] Z        = Z
+[| const X |] Z   = X
+[| prod D D' |] Z = [| D |] Z * [| D' |] Z
+[| sigma S T |] Z = Sigma S (\s -> [| T s |] Z)
+[| pi S T |] Z    = (s : S) -> [| T s |] Z
 
 --********************************************
--- Functions on codes
+-- Fixpoint construction
 --********************************************
-
--- Saying that a "predicate" |p| holds everywhere in |v| amounts to
--- write something of the following type:
-
-Everywhere : (d : Desc) (D : Set) (bp : D -> Set) (V : [| d |] D) -> Set
-Everywhere (Arg A f) d p v =  Everywhere (f (fst v)) d p (snd v)
--- It must hold for this constructor
-
-Everywhere (Ind H x) d p v =  ((y : H) -> p (fst v y)) * Everywhere x d p (snd v)
--- It must hold for the subtrees 
-
-Everywhere Done _ _ _ =  _
--- It trivially holds at endpoints
-
--- Then, we can build terms that inhabits this type. That is, a
--- function that takes a "predicate" |bp| and makes it hold everywhere
--- in the data-structure. It is the equivalent of a "map", but in a
--- dependently-typed setting.
-
-everywhere : (d : Desc) (D : Set) (bp : D -> Set) ->
-           ((y : D) -> bp y) -> (v : [| d |] D) ->
-           Everywhere d D bp v
-everywhere (Arg a f) d bp p v =  everywhere (f (fst v)) d bp p (snd v)
--- It holds everywhere on this constructor
-
-everywhere (Ind H x) d bp p v = (\y -> p (fst v y)) ,  everywhere x d bp p (snd v)
--- It holds here, and down in the recursive subtrees
-
-everywhere Done _ _ _ _ =  One
--- Nothing needs to be done on endpoints
-
-
--- Looking at the decoder, a natural thing to do is to define its
--- fixpoint |Mu D|, hence instantiating |R| with |Mu D| itself.
 
 data Mu (D : Desc) : Set where
-  Con : [| D |] (Mu D) -> Mu D
+  con : [| D |] (Mu D) -> Mu D
 
--- Using the "map" defined by |everywhere|, we can implement a "fold"
--- over the |Mu| fixpoint:
+--********************************************
+-- Predicate: All
+--********************************************
 
-foldDesc : (D : Desc) (bp : Mu D -> Set) ->
-         ((x : [| D |] (Mu D)) -> Everywhere D (Mu D) bp x -> bp (Con x)) ->
-         (v : Mu D) ->
-         bp v
-foldDesc D bp p (Con v) =  p v (everywhere D (Mu D) bp (\x -> foldDesc D bp p x) v) 
+All : (D : Desc)(X : Set)(P : X -> Set) -> [| D |] X -> Set
+All id          X P x        = P x
+All (const Z)   X P x        = Z
+All (prod D D') X P (d , d') = (All D X P d) * (All D' X P d')
+All (sigma S T) X P (a , b)  = All (T a) X P b
+All (pi S T)    X P f        = (s : S) -> All (T s) X P (f s)
+
+all : (D : Desc)(X : Set)(P : X -> Set)(R : (x : X) -> P x)(x : [| D |] X) -> All D X P x
+all id X P R x = R x
+all (const Z) X P R z = z
+all (prod D D') X P R (d , d') = all D X P R d , all D' X P R d'
+all (sigma S T) X P R (a , b) = all (T a) X P R b
+all (pi S T) X P R f = \ s -> all (T s) X P R (f s)
+
+--********************************************
+-- Elimination principle: induction
+--********************************************
+
+{-
+induction : (D : Desc) 
+            (P : Mu D -> Set) ->
+            ( (x : [| D |] (Mu D)) -> 
+              All D (Mu D) P x -> P (con x)) ->
+            (v : Mu D) ->
+            P v
+induction D P ms (con xs) = ms xs (all D (Mu D) P (\x -> induction D P ms x) xs)
+-}
+
+module Elim (D : Desc)
+            (P : Mu D -> Set)
+            (ms : (x : [| D |] (Mu D)) -> 
+                  All D (Mu D) P x -> P (con x))
+       where
+
+    mutual
+        induction : (x : Mu D) -> P x
+        induction (con xs) =  ms xs (hyps D xs)
+    
+        hyps : (D' : Desc)
+               (xs : [| D' |] (Mu D)) ->
+               All D' (Mu D) P xs
+        hyps id x = induction x
+        hyps (const Z) z = z
+        hyps (prod D D') (d , d') = hyps D d , hyps D' d'
+        hyps (sigma S T) (a , b) = hyps (T a) b
+        hyps (pi S T) f = \s -> hyps (T s) (f s)
+            
+induction : (D : Desc) 
+            (P : Mu D -> Set) ->
+            ( (x : [| D |] (Mu D)) -> 
+              All D (Mu D) P x -> P (con x)) ->
+            (v : Mu D) ->
+            P v
+induction D P ms x = Elim.induction D P ms x
 
 
 --********************************************
+-- Examples
+--********************************************
+
+--****************
 -- Nat
---********************************************
+--****************
 
 data NatConst : Set where
-  ZE : NatConst
-  SU : NatConst
+  Ze : NatConst
+  Suc : NatConst
 
-natc : NatConst -> Desc
-natc ZE = Done
-natc SU = Ind One Done
+natCases : NatConst -> Desc
+natCases Ze = const Unit
+natCases Suc = id
 
-natd : Desc
-natd = Arg NatConst natc
+NatD : Desc
+NatD = sigma NatConst natCases
 
-nat : Set
-nat = Mu natd
+Nat : Set
+Nat = Mu NatD
 
-zero : nat
-zero = Con ( ZE ,  _ )
+ze : Nat
+ze = con (Ze , Void)
 
-suc : nat -> nat
-suc n = Con ( SU , ( (\_ -> n) ,  _ ) )
+suc : Nat -> Nat
+suc n = con (Suc , n)
 
-two : nat
-two = suc (suc zero)
+--****************
+-- List
+--****************
 
-four : nat
-four = suc (suc (suc (suc zero)))
+data ListConst : Set where
+  Nil : ListConst
+  Cons : ListConst
 
-sum : nat -> 
-      ((x : Sigma NatConst (\ a -> [| natc a |] Mu (Arg NatConst natc))) ->
-      Everywhere (natc (fst x)) (Mu (Arg NatConst natc)) (\ _ -> Mu (Arg NatConst natc)) (snd x) ->
-      Mu (Arg NatConst natc))
-sum n2 (ZE , _) p =  n2
-sum n2 (SU , f) p =  suc ( fst p _) 
+listCases : Set -> ListConst -> Desc
+listCases X Nil = const Unit
+listCases X Cons = sigma X (\_ -> id)
+
+ListD : Set -> Desc
+ListD X = sigma ListConst (listCases X)
+
+List : Set -> Set
+List X = Mu (ListD X)
+
+nil : {X : Set} -> List X
+nil = con ( Nil , Void )
+
+cons : {X : Set} -> X -> List X -> List X
+cons x t = con ( Cons , ( x , t ))
+
+--****************
+-- Tree
+--****************
+
+data TreeConst : Set where
+  Leaf : TreeConst
+  Node : TreeConst
+
+treeCases : Set -> TreeConst -> Desc
+treeCases X Leaf = const Unit
+treeCases X Node = sigma X (\_ -> prod id id)
+
+TreeD : Set -> Desc
+TreeD X = sigma TreeConst (treeCases X)
+
+Tree : Set -> Set
+Tree X = Mu (TreeD X)
+
+leaf : {X : Set} -> Tree X
+leaf = con (Leaf , Void)
+
+node : {X : Set} -> X -> Tree X -> Tree X -> Tree X
+node x le ri = con (Node , (x , (le , ri)))
+
+--********************************************
+-- Finite sets
+--********************************************
+
+EnumU : Set
+EnumU = Nat
+
+nilE : EnumU
+nilE = ze
+
+consE : EnumU -> EnumU
+consE e = suc e
+
+{-
+data EnumU : Set where
+  nilE : EnumU
+  consE : EnumU -> EnumU
+-}
+
+data EnumT : (e : EnumU) -> Set where
+  EZe : {e : EnumU} -> EnumT (consE e)
+  ESu : {e : EnumU} -> EnumT e -> EnumT (consE e)
+
+casesSpi : (xs : [| NatD |] Nat) -> 
+           All NatD Nat (\e -> (P' : EnumT e -> Set) -> Set) xs -> 
+           (P' : EnumT (con xs) -> Set) -> Set
+casesSpi (Ze , Void) hs P' = Unit
+casesSpi (Suc , n) hs P' = P' EZe * hs (\e -> P' (ESu e))
+
+spi : (e : EnumU)(P : EnumT e -> Set) -> Set
+spi e P = induction NatD (\e -> (P : EnumT e -> Set) -> Set) casesSpi e  P
+
+{-
+spi : (e : EnumU)(P : EnumT e -> Set) -> Set
+spi nilE P = Unit
+spi (consE e) P = P EZe * spi e (\e -> P (ESu e))
+-}
 
 
-plus : nat -> nat -> nat
-plus n1 n2 = foldDesc natd (\_ -> nat) (sum n2) n1 
+casesSwitch : (xs : [| NatD |] Nat) ->
+              All NatD Nat (\e -> (P' : EnumT e -> Set)(b' : spi e P')(x' : EnumT e) -> P' x') xs ->
+              (P' : EnumT (con xs) -> Set)(b' : spi (con xs) P')(x' : EnumT (con xs)) -> P' x'
+casesSwitch (Ze , Void) hs P' b' ()
+casesSwitch (Suc , n) hs P' b' EZe = fst b'
+casesSwitch (Suc , n) hs P' b' (ESu e') = hs (\e -> P' (ESu e)) (snd b') e'
 
-x : nat
-x = plus two two
+switch : (e : EnumU)(P : EnumT e -> Set)(b : spi e P)(x : EnumT e) -> P x
+switch e P b x = induction NatD (\e -> (P : EnumT e -> Set)(b : spi e P)(x : EnumT e) -> P x) casesSwitch e P b x
+
+{-
+switch : (e : EnumU)(P : EnumT e -> Set)(b : spi e P)(x : EnumT e) -> P x
+switch nilE P b ()
+switch (consE e) P b EZe = fst b
+switch (consE e) P b (ESu n) = switch e (\e -> P (ESu e)) (snd b) n
+-}
+
+--********************************************
+-- Tagged description
+--********************************************
+
+TagDesc : Set
+TagDesc = Sigma EnumU (\e -> spi e (\_ -> Desc))
+
+toDesc : TagDesc -> Desc
+toDesc (B , F) = sigma (EnumT B) (\e -> switch B (\_ -> Desc) F e)
+
+--********************************************
+-- Catamorphism
+--********************************************
+
+cata : (D : Desc)
+       (T : Set) ->
+       ([| D |] T -> T) ->
+       (Mu D) -> T
+cata D T phi x = induction D (\_ -> T) (\x ms -> phi (replace D T x ms )) x
+  where replace : (D' : Desc)(T : Set)(xs : [| D' |] (Mu D))(ms : All D' (Mu D) (\_ -> T) xs) -> [| D' |] T
+        replace id T x y = y
+        replace (const Z) T z z' = z'
+        replace (prod D D') T (x , x') (y , y') = replace D T x y , replace D' T x' y'
+        replace (sigma A B) T (a , b) t = a , replace (B a) T b t
+        replace (pi A B) T f t = \s -> replace (B s) T (f s) (t s)
 
 
+--********************************************
+-- Free monad construction
+--********************************************
 
+_**_ : TagDesc -> (X : Set) -> TagDesc
+(e , D) ** X = consE e , (const X , D)
+
+--********************************************
+-- Substitution
+--********************************************
+
+apply : (D : TagDesc)(X Y : Set) ->
+        (X -> Mu (toDesc (D ** Y))) ->
+        [| toDesc (D ** X) |] (Mu (toDesc (D ** Y))) ->
+        Mu (toDesc (D ** Y))
+apply (E , B) X Y sig (EZe , x) = sig x
+apply (E , B) X Y sig (ESu n , t) = con (ESu n , t)
+
+subst : (D : TagDesc)(X Y : Set) ->
+        Mu (toDesc (D ** X)) ->
+        (X -> Mu (toDesc (D ** Y))) ->
+        Mu (toDesc (D ** Y))
+subst D X Y x sig = cata (toDesc (D ** X)) (Mu (toDesc (D ** Y))) (apply D X Y sig) x
