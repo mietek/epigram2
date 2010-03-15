@@ -1,0 +1,93 @@
+\begin{wstructure}
+<- Untyped lambda terms [figure]
+    <- Indexed by Nat
+        <- De Bruijn "encoding"
+    <- Variable in Fin n
+        -> Correct by construction lambda term
+    /> Lack the monadic structure [Altenkirch & Reus ???]
+        -> Miss substitution operator
+        /> Will be fixed later
+\end{wstructure}
+
+Our next example is, for once, building an inductive family. We
+present the implementation of untyped lambda terms, as a family
+indexed by natural numbers. The natural numbers play the role of De
+Bruijn indexes. The indexed description is the following:
+
+\[\stk{
+\LambdaTD : \Nat \To \IDesc{\Nat} \\
+\begin{array}{@{}ll}
+\LambdaTD\: n = \DSigma{}{} & (\EnumT [ \LambdaTVar, \LambdaTApp, \LambdaTLam ]) \\
+                            & \left[\begin{array}{l}
+                                  \DConst{(\Fin{n})} \\
+                                  \DProd{\DVar{n}}{\DVar{n}} \\
+                                  \DVar{(\NatSuc{n})}
+                              \end{array}\right]
+\end{array}
+}\]
+
+A variable is any number between $0$ and $n$, hence forbidding the
+reference of out-of-scope binders. Making a lambda increases by one
+the possible index choice of the underlying term. A function
+application applies a term with $n+1$ binders, resulting in a term
+with $n$ binders.
+
+We have therefore given a representation of lambda terms as a
+data-type. Any inhabitant of this data-type is a valid lambda term,
+forbidding out-of-scope reference in variables. While we have the
+data-type, we can regret the absence of structure. As shown by
+Altenkirch and Reus~\cite{altenkirch:monadic-lambda}, the lambda terms
+actually enjoy a monadic structure. In this setting, the ``bind''
+corresponds to substitution. We shall remedy to this situation
+shortly.
+
+
+
+
+\begin{wstructure}
+<- Untyped lambda terms
+    <- Obvious instance of free monad
+        <- Variable: Return
+        <- App and Abst: indexed functor
+        <- Bind: substitution
+    -> Get a correct-by-construction lambda term
+        /> With substitution for free!
+        <- We should not pay for the structure which *is* here
+\end{wstructure}
+
+In Section~\ref{sec:idesc-examples}, we were missing the monadic
+structure of lambda terms. In particular, we wish we were given a
+substitution principle for free. Above, we have generically built such
+substitution operation for free monads. Can we be rewarded for our
+effort? Let us define the following $\LambdaTFreeD$ description,
+largely inspired by $\LambdaTD$:
+
+\[\stk{
+\LambdaTFreeD : \Nat \To \IDesc{\Nat} \\
+\begin{array}{@{}ll}
+\LambdaTFreeD\: n = \DSigma{}{} & (\EnumT [ \LambdaTApp, \LambdaTLam ]) \\
+                                & \left[\begin{array}{l}
+                                  \DProd{\DVar{n}}{\DVar{n}} \\
+                                  \DVar{(\NatSuc{n})}
+                                  \end{array}\right]
+\end{array}
+}\]
+
+In essence, we have forgotten variables, just keeping the nodes of
+lambda terms: abstraction and application. Our hope is that taking the
+free monad of this indexed functor gives us our lambda terms back:
+
+\note{ FreeMonad takes a damned tagged description }
+
+\[\stk{
+\LambdaTD : \Nat \To \IDesc{\Nat} \\
+\LambdaTD\: \mapsto \FreeIMonad{[\LambdaTFreeD]}{\Nat}{\Fin{}}
+}\]
+
+By a straightforward unfolding of definitions, the reader will
+convince herself that we recover the initial definition. However, this
+time, we have a substitution operation. In summary, we have done less
+work in defining $\LambdaTFreeD$ but we have pointed out its
+structure, so, rightfully, we have been rewarded in our effort. The
+lesson is that, when structure there is, one should be allowed to get
+it for free.
