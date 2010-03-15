@@ -409,12 +409,12 @@ dependent arrow, hence offering $\Bhab{xs}{\descop{D}{(\Mu{D})}}$ to
 further analysis. 
 
 Then, we have to translate the notion of algebra in our dependent
-setting. This is achieved by the predicate $\All{D}{X}{P}{x}$ that,
-intuitively, states that $\Bhab{P}{X \To \Set}$ holds everywhere in
-$x$. Based on that knowledge, we ought to be able to prove that $P$
-holds for $\Con{xs}$. We close our elimination principle by taking an
-argument $x$ in $\Mu{D}$ and claiming that the motive $P$ is realised
-on $x$.
+setting. This is achieved by the predicate $\All{D}{X}{P}{x}$
+(Fig.\ref{fig:all-predicates}) that, intuitively, states that
+$\Bhab{P}{X \To \Set}$ holds everywhere in $x$. Based on that
+knowledge, we ought to be able to prove that $P$ holds for
+$\Con{xs}$. We close our elimination principle by taking an argument
+$x$ in $\Mu{D}$ and claiming that the motive $P$ is realised on $x$.
 
 \[
 \begin{array}{lcll}
@@ -426,6 +426,50 @@ on $x$.
 \end{array}
 \]
 
+\begin{figure*}
+
+\[
+\begin{array}{ll}
+%%
+\stk{
+\begin{array}{@{}ll}
+\All{}{}{}{} : & \PITEL{\V{D}}{\Desc}
+                 \PITEL{\V{X}}{\Set}
+                 \PITEL{\V{P}}{\V{X} \To \Set} \\
+               & \PI{\V{xs}}{\descop{D}{\Mu{X}}} 
+                 \Set 
+\end{array} \\
+\All{\DId}{X}{P}{x} \mapsto P\: x \\
+\All{(\DConst{Z})}{X}{P}{x} \mapsto Z \\
+\All{(\DProd{D}{D'})}{X}{P}{\pair{d}{d'}{}} \mapsto \TIMES{\All{D}{X}{P}{d}}{\All{D'}{X}{P}{d'}} \\
+\All{(\DSigma{S}{T})}{X}{P}{\pair{a}{b}{}} \mapsto \All{(T\: a)}{X}{P}{b} \\
+\All{(\DPi{S}{T})}{X}{P}{f} \mapsto \PI{\V{s}}{S} \All{(T\: a)}{X}{P}{(f\: s)}
+}
+&
+%%
+\stk{
+\begin{array}{@{}ll}
+\all{}{}{}{}{} : & \PITEL{\V{D}}{\Desc}
+                   \PITEL{\V{X}}{\Set}
+                   \PITEL{\V{P}}{\V{X} \To \Set} \\
+                 & \PITEL{\V{R}}{\PI{\V{x}}{X} P\: x}
+                   \PI{\V{xs}}{\descop{D}{\Mu{X}}} 
+                   \All{D}{X}{P}{xs} 
+\end{array} \\
+\all{\DId}{X}{P}{R}{x} = R x \\
+\all{(\DConst{Z})}{X}{P}{R}{x} = z \\
+\all{(\DProd{D}{D'})}{X}{P}{R}{\pair{d}{d'}{}} = \pair{\all{D}{X}{P}{R}{d}}{\all{D'}{X}{P}{R}{d'}}{} \\
+\all{(\DSigma{S}{T})}{X}{P}{R}{\pair{a}{b}{}} = \all{(T\: a)}{X}{P}{R}{b} \\
+\all{(\DPi{S}{T})}{X}{P}{R}{f} = \LAM{s} \all{(T\: s)}{X}{P}{R}{(f\: s)}
+\end{array}
+}
+\]
+
+\caption{Induction predicates}
+\label{fig:all-predicates}
+
+\end{figure*}
+
 At this stage, we are still left with implementing this
 $\F{induction}$ principle. For space reason, we refer the reader to
 our technical report for the actual code, hence the proof of (weak)
@@ -434,8 +478,6 @@ the ability to $\emph{compute}$ over descriptions. Note that this
 induction principle is the first manifestation of a generic operation
 over descriptions. Thanks to $\F{induction}$, any data-type we define
 automatically comes equipped with an induction principle.
-
-\note{Shall we give the code of $\All$?}
 
 \begin{wstructure}
 <- Extending type propagation
