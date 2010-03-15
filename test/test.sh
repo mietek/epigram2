@@ -105,7 +105,7 @@ do
     then
 	PIG_OPTS="+RTS -p -RTS"
     fi
-    ../src/Pig $PIG_OPTS --check "$script" > ".tests/$script.log"    
+    ../src/Pig $PIG_OPTS --check "$script" &> ".tests/$script.log"    
     if [ $advanced -eq 1 ]
     then
 	mv "./Pig.tix" "./.measures/hpc/${time}/${script}.tix"
