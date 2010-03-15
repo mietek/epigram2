@@ -528,14 +528,10 @@ elaborate a call to the $\F{switch}$ eliminator.
 The abstraction we have developed in this section are entirely
 transparent to the user. In the case of finite function space, the
 user has never to explicitly \emph{call} the $\F{switch}$
-eliminator. Nor will she \emph{be presented} the elaborated term, only
-the high-level one. Bidirectional type-checking and type-directed
-pretty-printing seal the low-level type theory behind the high-level
-expressions.
-
-\note{And suddenly, type-directed pretty printing comes into the
-  picture. Surely, it should ``just'' be the inverse of
-  elaboration. But is it? And how do we present it?}
+eliminator. For diagnosis purposes, a similar, reverse mechanism turns
+low-level terms into high-level expressions. Hence, this system, which
+presentation is out of the scope of this paper, seals the low-level
+type theory behind the high-level expressions.
 
 \begin{figure}
 \input{figure_type_checking}
