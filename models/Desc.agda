@@ -103,6 +103,17 @@ all (sigma S T) X P R (a , b) = all (T a) X P R b
 all (pi S T) X P R f = \ s -> all (T s) X P R (f s)
 
 --********************************************
+-- Map
+--********************************************
+
+map : (D : Desc)(X Y : Set)(f : X -> Y)(v : [| D |] X) -> [| D |] Y
+map id X Y sig x = sig x
+map (const Z) X Y sig z = z
+map (prod D D') X Y sig (d , d') = map D X Y sig d , map D' X Y sig d'
+map (sigma S T) X Y sig (a , b) = (a , map (T a) X Y sig b)
+map (pi S T) X Y sig f = \x -> map (T x) X Y sig (f x)
+
+--********************************************
 -- Elimination principle: induction
 --********************************************
 
