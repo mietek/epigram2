@@ -141,6 +141,53 @@ burden on the programmer in practice.
 \end{figure*}
 
 
+\begin{structure}
+<- Tagged constructor choice
+    <- Index available when defining the data-type
+        -> Can influence the choice of constructors
+        -> Dependently-typed data-types
+            <- term (index) influence types
+    -> Two parts
+        <- Always on the menu
+            <- E : EnumU 
+            <- ED : E -> IDesc I
+        <- Index-dependent
+            <- F : I -> EnumU 
+            <- FD : (i : I) -> spi (F i) (\_ -> IDesc I)
+        -> taggedIDesc I == Sigma E ED x Sigma F FD
+        -> toIDesc : (I : Set) -> taggedIDesc I -> (I -> IDesc I)
+\end{structure}
+
+In Section~\ref{sec:desc-examples}, we have defined a \emph{tagged}
+form for descriptions. This format follows the usual presentation of
+inductive types as sums of product. With indexed description, this
+definition can be generalized. Indeed, when defining an indexed
+data-type, we have access to this index. Therefore, we can use this
+index to influence the choice of constructors. This captures the
+essence of dependent data-types: a term -- the index -- has the
+ability to influence the data-type.
+
+For convenience, we divide a tagged indexed description in two parts:
+first, the constructors that do not depend on the index; then, the
+constructors that do. The non-dependent part mirrors the definition
+for non-indexed descriptions: we are provided a finite choice of
+constructors. The index-depend part simply indexes the choice of
+constructors by $I$. Hence, by inspecting the index, it is possible to
+enable or disable the constructors. 
+
+\[\stk{
+ \ATagIDesc{I} \mapsto \SIGMA{\V{E}}{\EnumU} (\spi{\V{E}}{(\LAM{\_} \IDesc{I})}) \\
+ \ITagIDesc{I} \mapsto \SIGMA{\V{F}}{I \To \EnumU} (\PI{\V{i}}{I} \spi{(F\: i)}{(\LAM{\_} \IDesc{I})})  \\
+ \TagIDesc{I}  \mapsto \TIMES{\ATagIDesc{I}}{\ITagIDesc{I}}
+}\]
+
+In the case of vectors, for instance, for the index $n = \NatZero$, we
+would only offer the constructor $\ListNil$. Similarly, for $n =
+\NatSuc{n'}$, we only offer the constructor $\ListCons{}{}$. We will
+see more instances of this pattern in the following.
+
+
+
 \note{Should we say something about IMu, fixed-points, and their
   elimination before moving on? If so, where should we put it?}
 
@@ -209,22 +256,6 @@ $\IDesc$ is merely an inductive type. As for the $\Desc$ levitation,
 the finite function space $[ \ldots ]$ elaborates into a special
 purpose $\F{switchID}$ operator. 
 
-\begin{structure}
-<- Tagged constructor choice
-    <- Index available when defining the data-type
-        -> Can influence the choice of constructors
-        -> Dependently-typed data-types
-            <- term (index) influence types
-    -> Two parts
-        <- Always on the menu
-            <- E : EnumU 
-            <- ED : E -> IDesc I
-        <- Index-dependent
-            <- F : I -> EnumU 
-            <- FD : (i : I) -> spi (F i) (\_ -> IDesc I)
-        -> taggedIDesc I == Sigma E ED x Sigma F FD
-        -> toIDesc : (I : Set) -> taggedIDesc I -> (I -> IDesc I)
-\end{structure}
 
 \begin{structure}
 <- Hutton's razor
@@ -464,6 +495,10 @@ type signature is the following:
             \IMu{I}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}{\V{i}}
 \end{array}
 \]
+
+
+\subsubsection{Examples}
+
 
 \begin{structure}
 <- Hutton's razor is a free monad
