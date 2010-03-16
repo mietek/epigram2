@@ -302,3 +302,140 @@ proof-psi-phi I D =  induction (\ _ -> descD I)
                                                                               (reflFun (λ s -> psi (phi (T s)))
                                                                                        T
                                                                                        hs)
+
+--********************************************
+-- Catamorphism
+--********************************************
+
+cata : (I : Set)
+       (R : I -> IDesc I)
+       (T : I -> Set) ->
+       ((i : I) -> desc (R i) T -> T i) ->
+       (i : I) -> IMu R i -> T i
+cata I R T phi i x = induction R (\it -> T (fst it)) (\i xs ms -> phi i (replace (R i) T xs ms)) i x
+  where replace : (D : IDesc I)(T : I -> Set)
+                  (xs : desc D (IMu R))
+                  (ms : desc (box D (IMu R) xs) (\it -> T (fst it))) -> 
+                  desc D T
+        replace (var i) T x y = y
+        replace (const Z) T z z' = z'
+        replace (prod D D') T (x , x') (y , y') = replace D T x y , replace D' T x' y'
+        replace (sigma A B) T (a , b) t = a , replace (B a) T b t
+        replace (pi A B) T f t = \s -> replace (B s) T (f s) (t s)
+
+--********************************************
+-- Hutton's razor
+--********************************************
+
+--********************************
+-- Meta-language
+--********************************
+
+data Nat : Set where
+  ze : Nat
+  su : Nat -> Nat
+
+data Bool : Set where
+  true : Bool
+  false : Bool
+
+plus : Nat -> Nat -> Nat
+plus ze n' = n'
+plus (su n) n' = su (plus n n')
+
+le : Nat -> Nat -> Bool
+le ze _ = true
+le (su _) ze = false
+le (su n) (su n') = le n n'
+
+
+--********************************
+-- Types code
+--********************************
+
+data Type : Set where
+  nat : Type
+  bool : Type
+
+
+--********************************
+-- Typed expressions
+--********************************
+
+exprFixMenu : (Type -> Set) -> FixMenu Type
+exprFixMenu constt = ( consE (consE nilE) , 
+                       \ty -> (const (constt ty),
+                              (prod (var bool) (prod (var ty) (var ty)), 
+                               Void)))
+
+choiceMenu : Type -> EnumU
+choiceMenu nat = consE nilE
+choiceMenu bool = consE nilE
+
+choiceDessert : (ty : Type) -> spi (choiceMenu ty) (\ _ -> IDesc Type)
+choiceDessert nat = (prod (var nat) (var nat) , Void)
+choiceDessert bool = (prod (var nat) (var nat) , Void )
+
+exprSensitiveMenu : SensitiveMenu Type
+exprSensitiveMenu = ( choiceMenu ,  choiceDessert )
+
+expr : (Type -> Set) -> TagIDesc Type
+expr constt = exprFixMenu constt , exprSensitiveMenu
+
+exprIDesc : (Type -> Set) -> ((Type -> Set) -> TagIDesc Type) -> (Type -> IDesc Type)
+exprIDesc constt D = toIDesc Type  (D constt)
+
+
+--********************************
+-- Closed terms
+--********************************
+
+Val : Type -> Set
+Val nat = Nat
+Val bool = Bool
+
+closeTerm : Type -> IDesc Type
+closeTerm = exprIDesc Val expr
+
+
+--********************************
+-- Closed term evaluation
+--********************************
+
+eval : (ty : Type) -> IMu closeTerm ty -> Val ty
+eval ty term = cata Type closeTerm Val evalOneStep ty term
+        where evalOneStep : (ty : Type) -> desc (closeTerm ty) Val -> Val ty
+              evalOneStep nat (EZe , t) = t
+              evalOneStep nat ((ESu EZe) , (true , ( x , _))) = x
+              evalOneStep nat ((ESu EZe) , (false , ( _ , y ))) = y
+              evalOneStep nat ((ESu (ESu EZe)) , (x , y)) = plus x y
+              evalOneStep nat ((ESu (ESu (ESu ()))) , t) 
+              evalOneStep bool (EZe , t ) = t
+              evalOneStep bool ((ESu EZe) , (true , (x , _))) = x
+              evalOneStep bool ((ESu EZe) , (false , (_ , y))) = y
+              evalOneStep bool ((ESu (ESu EZe)) , (x , y) ) =   le x y
+              evalOneStep bool ((ESu (ESu (ESu ()))) , _) 
+
+
+--********************************
+-- Open terms
+--********************************
+
+Var : EnumU -> Type -> Set
+Var dom _ = EnumT dom
+
+openTerm : EnumU -> Type -> IDesc Type
+openTerm dom = exprIDesc (\ty -> Val ty + Var dom ty) expr
+
+--********************************
+-- Evaluation of open terms
+--********************************
+
+assgnmt : (ty : Type)
+          (vars : EnumU)
+          (context : spi vars (\_ -> IMu closeTerm ty)) ->
+          (Val ty + Var vars ty) -> 
+          IMu closeTerm ty
+assgnmt ty vars context (l value) = con ( EZe , value )
+assgnmt ty vars context (r variable) = switch vars (\_ -> IMu closeTerm ty) context variable 
+
