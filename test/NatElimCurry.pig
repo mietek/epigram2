@@ -5,7 +5,6 @@ make zero := [] : Nat ;
 make one := (suc zero) : Nat ;
 make two := (suc one) : Nat ;
 let plus (x : Nat)(y : Nat) : Nat ;
-lambda x, y ;
 elim inductionC NatD x ;
 give [? ?] ;
      lambda r, y ;

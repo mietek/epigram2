@@ -6,14 +6,9 @@ make one := (suc zero) : Nat ;
 make two := (suc one) : Nat ;
 
 let add (x : Nat)(y : Nat) : Nat ;
-lambda x, y ;
-<= fold NatD x ;
-induction Nat ;
-    lambda y ;
-    = y ;
-
-    lambda y ;
-    = suc ((Px y) call) ;
+<= induction NatD x ;
+= delta ;
+= suc (x delta call) ;
 
 root;
 elab add two two ;

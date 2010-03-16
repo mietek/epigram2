@@ -402,6 +402,12 @@ several alternatives for where to go next and continuing until a goal is reached
 > nextGoal = (nextStep `untilA` isGoal) `pushError` (err "nextGoal: no more goals.")
 
 
+Sometimes we want to stay at the current location if it is a goal, and go
+to the next goal otherwise.
+
+> seekGoal :: ProofState ()
+> seekGoal = isGoal <|> nextGoal
+
 
 \subsection{Module Commands}
 

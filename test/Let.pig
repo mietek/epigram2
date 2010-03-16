@@ -15,12 +15,10 @@ root ;
 scheme h;
 
 let coe2 {S : Set}(T : Set){Q : :- S == T}(s : S) : T ;
-lambda S, T, Q, s ;
 = coe S T Q s ;
 root ;
 
 let id {X : Set}(x : X) : X ;
-lambda X, x ;
 = x ;
 root ;
 

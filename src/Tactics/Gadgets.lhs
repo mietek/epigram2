@@ -26,7 +26,12 @@
 >     "<="
 >     (|(|(B0 :<) (tokenOption tokenName)|) :< (|id tokenExTm
 >                                               |id tokenAscription |)|)
->     (\[n,e] -> elimCTactic (argOption (unDP . argToEx) n) (argToEx e))
+>     (\ [n,e] -> do
+>         elimCTactic (argOption (unDP . argToEx) n) (argToEx e)
+>         optional problemSimplify
+>         optional seekGoal
+>         return "Eliminated and simplified."
+>     )
 >     "<= [<comma>] <eliminator> - eliminates with a motive.")
 
 

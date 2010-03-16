@@ -241,8 +241,11 @@ Construction tactics:
 >   : simpleCT
 >         "let"
 >         (| (| (B0 :< ) tokenString |) :< tokenScheme |)
->         (\ [StrArg x, SchemeArg s] -> elabLet (x :<: s)
->                 >> return ("Let there be " ++ x ++ "."))
+>         (\ [StrArg x, SchemeArg s] -> do
+>             elabLet (x :<: s)
+>             optional problemSimplify
+>             optional seekGoal
+>             return ("Let there be " ++ x ++ "."))
 >         "let <label> <scheme> : <type> - set up a programming problem with a scheme."
 
 >   : simpleCT

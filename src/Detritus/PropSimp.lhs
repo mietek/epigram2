@@ -250,3 +250,85 @@ You are not expected to understand this.
 >         Nothing                   -> cannotSimplify "" (PRF p)
 >         Just (SimplyAbsurd _)     -> throwError' "simlpifyGoal: oh no, goal is absurd!"
 >         Just (Simply qs _ h)      -> return (qs, h)
+
+
+
+
+
+> problemSimplify :: ProofState (EXTM :=>: VAL)
+> problemSimplify = simplifyGoal'
+
+> simplifyGoal' :: ProofState (EXTM :=>: VAL)
+> simplifyGoal' = getHoleGoal >>= simplifyGoal . valueOf
+
+
+
+> simplifyHypothesis :: TY -> ProofState Simplify
+
+> simplifyHypothesis UNIT = return (SimplyTrivial VOID)
+
+> simplifyHypothesis (SIGMA s t) = do
+>     sSimp <- simplifyHypothesis s
+>     case sSimp of
+>         SimplyAbsurd prf -> return (SimplyAbsurd (prf . ($$ Fst)))
+>         Simply srefs sbits sv -> do
+>             tSimp <- simplifyHypothesis (t $$ A sv)
+>             case tSimp of
+>                 SimplyAbsurd prf -> return (SimplyAbsurd (prf . ($$ Snd)))
+>                 Simply trefs tbits tv ->
+>                     return (Simply
+>                         (srefs <+> trefs)
+>                         (fmap (..! ($$ Fst)) sbits
+>                             <+> fmap (..! ($$ Snd)) tbits) 
+>                         (PAIR sv tv))
+
+> simplifyHypothesis (PRF p) = do
+>     nsupply <- askNSupply
+>     es <- getBoysBwd
+>     let Just s = runReaderT (forceSimplify es B0 p) nsupply
+>     return s
+
+> simplifyHypothesis ty = simplifyNone "" ty
+
+
+
+> simplifyGoal :: TY -> ProofState (EXTM :=>: VAL)
+
+> simplifyGoal (PI s t) = do
+>     sSimp <- simplifyHypothesis s
+>     case sSimp of
+>         SimplyAbsurd prf -> do
+>             ff <- bquoteHere (L (HF "ff" (\sv ->
+>                                             magic (t $$ A sv) (prf sv))))
+>             give ff
+>         Simply srefs bits sv -> do
+>             st <- dischargePiLots srefs (t $$ A sv)
+>             st' <- bquoteHere st
+>             make ("" :<: st')
+>             goIn
+>             Data.Traversable.mapM (const (lambdaBoy (fortran t))) srefs
+>             _ :=>: tv <- simplifyGoal'
+>             freshRef ("s" :<: s) (\sref -> do
+>                 let v = tv $$$ fmap (A . ($$ A NP sref)) bits
+>                 v' <- bquote (B0 :< sref) v
+>                 give (L (fortran t :. v'))
+>               )
+
+> simplifyGoal UNIT = give VOID
+> simplifyGoal (SIGMA s t) = do
+>     stm <- bquoteHere s
+>     make (fortran t :<: stm)
+>     goIn
+>     stm' :=>: sv <- simplifyGoal s
+>     let t' = t $$ A sv
+>     ttm <- bquoteHere t'
+>     make ("" :<: ttm)
+>     goIn
+>     ttm' :=>: tv <- simplifyGoal t'
+>     give (PAIR (N stm') (N ttm'))
+
+> simplifyGoal (PRF p) = do
+>     optional propSimplifyHere
+>     getMotherDefinition <* goOut
+
+> simplifyGoal _ = getMotherDefinition <* goOut
