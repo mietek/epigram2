@@ -97,6 +97,40 @@ box (sigma S T) P (a , b)  = box (T a) P b
 box (pi S T)    P f        = pi S (\s -> box (T s) P (f s))
 
 --********************************************
+-- Enumerations (hard-coded)
+--********************************************
+
+data EnumU : Set where
+  nilE : EnumU
+  consE : EnumU -> EnumU
+
+data EnumT : (e : EnumU) -> Set where
+  EZe : {e : EnumU} -> EnumT (consE e)
+  ESu : {e : EnumU} -> EnumT e -> EnumT (consE e)
+
+_++_ : EnumU -> EnumU -> EnumU
+nilE ++ e' = e'
+(consE e) ++ e' = consE (e ++ e')
+
+spi : (e : EnumU)(P : EnumT e -> Set) -> Set
+spi nilE P = Unit
+spi (consE e) P = P EZe * spi e (\e -> P (ESu e))
+
+switch : (e : EnumU)(P : EnumT e -> Set)(b : spi e P)(x : EnumT e) -> P x
+switch nilE P b ()
+switch (consE e) P b EZe = fst b
+switch (consE e) P b (ESu n) = switch e (\e -> P (ESu e)) (snd b) n
+
+sswitch : (e : EnumU)(e' : EnumU)(P : Set)
+       (b : spi e (\_ -> P))(b' : spi e' (\_ -> P))(x : EnumT (e ++ e')) -> P
+sswitch nilE nilE P b b' ()
+sswitch nilE (consE e') P b b' EZe = fst b'
+sswitch nilE (consE e') P b b' (ESu n) = sswitch nilE e' P b (snd b') n
+sswitch (consE e) e' P b b' EZe = fst b
+sswitch (consE e) e' P b b' (ESu n) = sswitch e e' P (snd b) b' n
+
+
+--********************************************
 -- Elimination principle: induction
 --********************************************
 
