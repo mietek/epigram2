@@ -129,6 +129,22 @@ sswitch nilE (consE e') P b b' (ESu n) = sswitch nilE e' P b (snd b') n
 sswitch (consE e) e' P b b' EZe = fst b
 sswitch (consE e) e' P b b' (ESu n) = sswitch e e' P (snd b) b' n
 
+--********************************************
+-- Tagged indexed description
+--********************************************
+
+FixMenu : Set -> Set
+FixMenu I = Sigma EnumU (\e -> (i : I) -> spi e (\_ -> IDesc I))
+
+SensitiveMenu : Set -> Set
+SensitiveMenu I = Sigma (I -> EnumU) (\F -> (i : I) -> spi (F i) (\_ -> IDesc I))
+
+TagIDesc : Set -> Set
+TagIDesc I = FixMenu I * SensitiveMenu I
+
+toIDesc : (I : Set) -> TagIDesc I -> (I -> IDesc I)
+toIDesc I ((E , ED) , (F , FD)) i = sigma (EnumT (E ++ F i)) 
+                                          (\x -> sswitch E (F i) (IDesc I) (ED i) (FD i) x)
 
 --********************************************
 -- Elimination principle: induction
