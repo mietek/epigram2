@@ -210,11 +210,58 @@ the finite function space $[ \ldots ]$ elaborates into a special
 purpose $\F{switchID}$ operator. 
 
 \begin{structure}
-<- Hutton's razor
-    ???
+<- Tagged constructor choice
+    <- Index available when defining the data-type
+        -> Can influence the choice of constructors
+        -> Dependently-typed data-types
+            <- term (index) influence types
+    -> Two parts
+        <- Always on the menu
+            <- E : EnumU 
+            <- ED : E -> IDesc I
+        <- Index-dependent
+            <- F : I -> EnumU 
+            <- FD : (i : I) -> spi (F i) (\_ -> IDesc I)
+        -> taggedIDesc I == Sigma E ED x Sigma F FD
+        -> toIDesc : (I : Set) -> taggedIDesc I -> (I -> IDesc I)
 \end{structure}
 
-\note{Begging for a transtion here.}
+\begin{structure}
+<- Hutton's razor
+    <- Types
+        <- 'Nat
+        <- 'Bool
+    <- Term [figure]
+        <- val : Val a -> 'a  for Val : Ty -> Set, mapping to Nat and Bool
+        <- cond : 'Bool -> a -> a -> a
+        <- plus : 'Nat -> 'Nat -> 'Nat
+        <- le : 'Nat -> 'Nat -> 'Bool
+    -> evaluation: IMu TermD -> Val
+        -> it is a catamorphism
+            <- Look closer at the type
+        -> implementation [code]
+            <- Just define one reduction step
+            -> cata does the rest
+                /> cata is for free!
+    /> Closed term
+        <- only constants and operations on them
+        -> Extend Val with Var : Ty -> Set, mapping to EnumU
+            -> Open term
+            -> Language of well-typed terms
+                <- By construction
+        <- evaluator, with a context
+            -> First, close variables
+                -> Perform assignment
+                <- subst [code]
+            /> Then, perform subst everywhere in the term
+                -> Show type [code]
+                /> This is a bind!?
+                -> There is some more structure 
+                    -> We should try to get it
+\end{structure}
+
+
+\note{Begging for a transition here.}
 
 \subsection{Constrained constructors}
 
@@ -420,9 +467,21 @@ type signature is the following:
 
 \begin{structure}
 <- Hutton's razor is a free monad
-    <- What is it?
-        -> It's an evaluator
-    ???
+    <- substI was our candidate bind
+        -> Massage the definition of expr to get it for free
+    <- Finding the functor
+        <- 'val is the return
+        <- The other components are the action
+        -> Updated tagged description [figure]
+    -> Compute the free monad Hutton * X
+        -> With X = Val: We get back our closed terms
+        -> With X = Val + Var vars: We get back our open terms
+    /> On open terms, we get a substitution
+        -> Apply substI on assgnmt
+            -> Have a well-typed language
+            -> Get a safe evaluator 
+                <- for well-typed terms 
+                <- in well-typed contexts
 \end{structure}
 
 
