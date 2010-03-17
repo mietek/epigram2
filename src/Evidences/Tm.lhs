@@ -584,7 +584,7 @@ We can also throw away a label, should we want to.
 > fortran :: Tm {In, p} x -> String
 > fortran (L (x :. _))   | not (null x) = x
 > fortran (L (HF x  _))  | not (null x) = x
-> fortran _ = "x"
+> fortran _ = "xf"
 
 
 \subsection{Error Stack}

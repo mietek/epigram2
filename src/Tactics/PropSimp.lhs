@@ -145,13 +145,13 @@ The |magic ty| function takes a proof of |FF| and yields a value of type |ty|.
 The |...| operator is composition of |VAL| functions.
 
 > (...) :: VAL -> VAL -> VAL
-> f ... g = L (HF "x" (\x -> f $$ A (g $$ A x)))
+> f ... g = L (HF "xc" (\x -> f $$ A (g $$ A x)))
 
 The curiously more useful |..!| operator is composition of a genuine |VAL|
 function with a |VAL -> VAL| function.
 
 > (..!) :: VAL -> (VAL -> VAL) -> VAL
-> f ..! g = L (HF "x" (\x -> f $$ A (g x)))
+> f ..! g = L (HF "xc2" (\x -> f $$ A (g x)))
 
 
 \subsection{Simplification in Action}
@@ -446,7 +446,7 @@ used if simplification fails.
 > nameHint hint _ | not (null hint) = hint
 > nameHint _ (NP (n := _)) = "" ++ fst (last n)
 > nameHint _ (L (HF s _)) = "" ++ s
-> nameHint _ _ = "x"
+> nameHint _ _ = "xnh"
 
 
 

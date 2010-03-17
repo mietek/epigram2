@@ -5,17 +5,17 @@ make zero := [] : Nat ;
 make one := (suc zero) : Nat ;
 make two := (suc one) : Nat ;
 
-let add (x : Nat)(y : Nat) : Nat ;
-<= induction NatD x ;
-= delta ;
-= suc (x delta call) ;
+let add (m : Nat)(n : Nat) : Nat ;
+<= induction NatD m ;
+= n ;
+= suc (xf n call) ;
 
 root;
 
-let mul (x : Nat)(y : Nat) : Nat ;
-<= induction NatD x;
+let mul (m : Nat)(n : Nat) : Nat ;
+<= induction NatD m;
 = zero ;
-= add y (x delta call) ;
+= add n (xf n call) ;
 
 root;
 

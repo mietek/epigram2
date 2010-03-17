@@ -804,8 +804,7 @@ achieved by the following code:
 > mkPiDelta1 :: [Binder] -> ProofState [REF]
 > mkPiDelta1 binders = 
 >     sequence $                           
->     map (\t -> piBoy $ "delta" :<: t) $  -- make $\Pi$s
->     map (\(_ :<: t) -> t) $              -- keep only the type
+>     map (\(n :<: t) -> piBoy $ (fst (last n)) :<: t) $  -- make $\Pi$s
 >     binders
 
 An important step is to build the term $(\Xi == \vec{t}) -> T$. This
