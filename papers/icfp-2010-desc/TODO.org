@@ -54,8 +54,8 @@ Finite set motivation stinks. I should sit down with Conor and find a
 clear motivation for it. This will also impact on the motivation for a
 universe of descriptions.
 
-* TODO Cool down the many "intuitively"
-* TODO composed by/composed of
+* DONE Cool down the many "intuitively"
+* DONE composed by/composed of
 * TODO Shall we present EnumU with tags as constructors, directly?
 * TODO Finite set declaration: should be EnumT [a, b, c]
 * TODO Simply-typed Haskell??
