@@ -83,3 +83,27 @@ and choose one or the other.
 
 It's un-readable. Probably one should be an exponent.
 
+
+* TODO Fix every \note{} in the paper
+* TODO Improve finite sets motivation (encoding vs. codes)
+
+Section sec:finite-sets
+
+* TODO Improve motivation for the use of codes for inductive types
+
+Pedagogically answer the question:
+"Why using codes instead of raw sigmas?"
+
+Section sec:desc-universe
+
+* TODO Improve motivation and high-level picture of indexing
+
+Section sec:indexing-desc
+
+* TODO Fix substitution for Hutton expressions
+
+It should use the pieces we have developped, such as discharge.
+
+* TODO Discuss stratification
+* TODO Discuss induction/recursion
+* TODO Introduction/conclusion
