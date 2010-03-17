@@ -168,6 +168,11 @@
 \newcommand{\fst}[1]{\pi_0\: #1}
 \newcommand{\snd}[1]{\pi_1\: #1}
 
+%% Sum
+\newcommand{\SUM}[1]{#1 \blue{+}}
+\newcommand{\SumLeft}[1]{\C{left}~#1}
+\newcommand{\SumRight}[1]{\C{right}~#1}
+
 %% Prop
 \newcommand{\Prop}{\blue{\textsc{Prop}}}
 \newcommand{\prf}[1]{{:\!\!-}~#1}
@@ -226,7 +231,10 @@
 \newcommand{\IDesc}[1]{\D{IDesc}~#1}
 \newcommand{\IDescD}{\C{IDescD}}
 \newcommand{\IDescFreeD}{\C{IDescD}_{\C{Free}}}
+\newcommand{\ATagIDesc}[1]{\F{ATagIDesc}~#1}
+\newcommand{\ITagIDesc}[1]{\F{ITagIDesc}~#1}
 \newcommand{\TagIDesc}[1]{\F{TagIDesc}~#1}
+\newcommand{\toIDesc}[1]{\overline{#1}}
 
 \newcommand{\idescop}[3]{\green{\llbracket} #1 \green{\rrbracket}_{#2}~#3}
 
@@ -241,10 +249,19 @@
 %% Agda-style data-type declaration
 \newcommand{\data}{\mathkw{data}\;}
 \newcommand{\where}{\;\mathkw{where}}
+\newcommand{\case}[2]{\mathkw{case}~#1~\mathkw{of} 
+  \begin{array}{l}
+    #2
+  \end{array}}
 
 %% Free monad
 \newcommand{\FreeMonad}[2]{{#1}^{\F{\(\ast\)}}~#2}
 \newcommand{\FreeIMonad}[3]{{#1}^{\F{\(\ast\)}}_{#2}~#3}
+
+%% Bool
+\newcommand{\Bool}{\D{Bool}}
+\newcommand{\BoolTrue}{\etag{\CN{true}}}
+\newcommand{\BoolFalse}{\etag{\CN{false}}}
 
 
 %% Nat

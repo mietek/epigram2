@@ -141,7 +141,7 @@ burden on the programmer in practice.
 \end{figure*}
 
 
-\begin{structure}
+\begin{wstructure}
 <- Tagged constructor choice
     <- Index available when defining the data-type
         -> Can influence the choice of constructors
@@ -156,7 +156,7 @@ burden on the programmer in practice.
             <- FD : (i : I) -> spi (F i) (\_ -> IDesc I)
         -> taggedIDesc I == Sigma E ED x Sigma F FD
         -> toIDesc : (I : Set) -> taggedIDesc I -> (I -> IDesc I)
-\end{structure}
+\end{wstructure}
 
 In Section~\ref{sec:desc-examples}, we have defined a \emph{tagged}
 form for descriptions. This format follows the usual presentation of
@@ -176,7 +176,7 @@ constructors by $I$. Hence, by inspecting the index, it is possible to
 enable or disable the constructors. 
 
 \[\stk{
- \ATagIDesc{I} \mapsto \SIGMA{\V{E}}{\EnumU} (\spi{\V{E}}{(\LAM{\_} \IDesc{I})}) \\
+ \ATagIDesc{I} \mapsto \SIGMA{\V{E}}{\EnumU} (\PI{\V{i}}{I} \spi{\V{E}}{(\LAM{\_} \IDesc{I})}) \\
  \ITagIDesc{I} \mapsto \SIGMA{\V{F}}{I \To \EnumU} (\PI{\V{i}}{I} \spi{(F\: i)}{(\LAM{\_} \IDesc{I})})  \\
  \TagIDesc{I}  \mapsto \TIMES{\ATagIDesc{I}}{\ITagIDesc{I}}
 }\]
@@ -192,8 +192,10 @@ see more instances of this pattern in the following.
   elimination before moving on? If so, where should we put it?}
 
 
-\subsection{Examples}
+\subsubsection{Examples}
 \label{sec:idesc-examples}
+
+\paragraph{Natural numbers:}
 
 \begin{wstructure}
 <- Nat
@@ -219,6 +221,8 @@ argument is materialised by $\DVar{\Void}$, where we were using $\DId$
 in the $\Desc$ presentation. This transformation applies to all
 inductive types: we have not lost in expressive power during the
 transition.
+
+\paragraph{Indexed descriptions:}
 
 \begin{wstructure}
 <- Levitation [figure]
@@ -256,17 +260,149 @@ $\IDesc$ is merely an inductive type. As for the $\Desc$ levitation,
 the finite function space $[ \ldots ]$ elaborates into a special
 purpose $\F{switchID}$ operator. 
 
+\paragraph{Typed expressions:}
 
-\begin{structure}
+\begin{wstructure}
 <- Hutton's razor
     <- Types
         <- 'Nat
         <- 'Bool
     <- Term [figure]
-        <- val : Val a -> 'a  for Val : Ty -> Set, mapping to Nat and Bool
+        <- val : Val 'a -> 'a  for Val : Ty -> Set, mapping to Nat and Bool
         <- cond : 'Bool -> a -> a -> a
         <- plus : 'Nat -> 'Nat -> 'Nat
         <- le : 'Nat -> 'Nat -> 'Bool
+\end{wstructure}
+
+%% Types
+\newcommand{\Ty}{\C{Ty}}
+\newcommand{\Ebool}{\etag{\CN{bool}}}
+\newcommand{\Enat}{\etag{\CN{nat}}}
+\newcommand{\Epolym}{\etag{\alpha}}
+
+%% Constructors
+\newcommand{\Eval}[1]{\etag{\CN{val}}~#1}
+\newcommand{\Econd}[3]{\etag{\CN{cond}}~#1~#2~#3}
+\newcommand{\Eplus}[2]{\etag{\CN{plus}}~#1~#2}
+\newcommand{\Ele}[2]{\etag{\CN{le}}~#1~#2}
+
+%% Index mapper (terminology?)
+\newcommand{\Val}[1]{\D{Val}~#1}
+\newcommand{\Var}[2]{\D{Var}_{#1}~#2}
+
+%% Hutton expressions
+\newcommand{\HExprD}{\C{ExprD}}
+\newcommand{\HExprAD}{\C{ExprAlwaysD}}
+\newcommand{\HExprID}{\C{ExprIndexedD}}
+\newcommand{\HExprVarD}{\C{ExprD}_{\C{Var}}}
+\newcommand{\HExprFreeD}{\C{ExprD}_{\C{Free}}}
+\newcommand{\HExprAFreeD}{\C{ExprAlwaysD}_{\C{Free}}}
+
+So far, the examples we have seen lives in $\IDesc{\Unit}$, hence are
+not using any indexing. We are going to define a syntax for a small
+typed language. We consider two types, natural numbers and booleans:
+
+\[
+\Ty \mapsto \EnumT{[\Enat \quad \Ebool]}
+\]
+
+An expression of this language is either a value, a conditional
+expression, addition of numbers, or comparison of numbers. Informally,
+their type is the following:
+
+\[
+\begin{array}{l@{\::\:\:}l}
+\Econd{}{}{}     & \Ebool \To \Epolym \To \Epolym \To \Epolym  \\ 
+\Eplus{}{}       & \Enat \To \Enat \To \Enat                   \\
+\Ele{}{}         & \Enat \To \Enat \To \Ebool                  \\
+\Eval{}          & \Val{\Epolym} \To \Epolym
+\end{array}
+\]
+
+The notation $\Epolym$ represents a form of ``polymorphism'', meaning
+that $\alpha$ can be any type. \note{Polymorph? Will any ghost try to
+  haunt me with that?  A ghost under a mixed prefix?
+  Aaaaaaaaaaargh\ldots}
+
+The function $\Val{}$, used in the definition of $\Eval{}$, simply
+maps $\Epolym$ to the corresponding type in the host language. Hence,
+the argument of $\Eval{}$ are ensured to be of the expected type. We
+assume $\Nat$ and $\Bool$ represent natural numbers and booleans in
+the host language. Further, we also assume the existence of an
+addition and comparison operator in $\Nat$, respectively name
+$\F{plusHost}$ and $\F{leHost}$. We define $\Val{}$ as follow:
+
+\[\stk{
+\Val{} : \Ty \To \Set \\
+\begin{array}{@{}l@{\:=\:\:}l}
+\Val{\Enat}   & \Nat \\
+\Val{\Ebool}  & \Bool
+\end{array}
+}\]
+
+In our universe of descriptions, this data-type is represented by a
+tagged indexed description. We use the index to carry the type: the
+resulting description is indexed by $\Ty$. We observe that some
+constructors are ``polymorph'', namely $\Econd{}{}{}$ and $\Eval{}$. On the
+other hand, the $\Eplus$ and $\Ele$ constructors are
+index-dependent. $\Eplus$ is defined if and only if the result type --
+the index -- is $\Enat$, whereas $\Ele$ is defined if and only if the
+index is $\Ebool$. The actual code precisely follows this intuition,
+as shown in Figure~\ref{fig:hexpr-full}. For brevity, we use an
+informal $\case{\ldots}{\ldots}$ notation, simulating a definition by
+pattern-matching. Formally, this corresponds to a call to the
+$\switch{}{}{}{}$ eliminator.
+
+\begin{figure*}
+
+\[\stkc{
+\stk{
+\HExprD : \TagIDesc{\Ty} \\
+\HExprD \mapsto ( \HExprAD , \HExprID ) \\
+} \\
+\\
+\begin{array}{ll}
+\stk{
+\HExprAD : \ATagIDesc{\Ty} \\
+\HExprAD \mapsto \left[
+                 \begin{array}{l}
+                   \EnumT{[\Eval{}  \Econd{}{}{}]} \red{,} \\
+                   \LAM{ty}
+                   \left[ %%! Should be read
+                   \begin{array}{l}
+                   \DConst{(\Val{ty})} \\
+                   \DProd{\DVar{\Ebool}}{\DProd{\DVar{ty}}{\DVar{ty}}}
+                   \end{array}
+                   \right]
+                 \end{array}
+                 \right] %%! Should be \red
+\\
+\\
+} &
+\stk{
+\HExprID : \ITagIDesc{\Ty} \\
+\HExprID \mapsto \left[
+                 \begin{array}{l}
+                   \LAM{ty} \case{ty}{\Enat \To \EnumT{[\Eplus{}{}]} \\ \Ebool \To \EnumT{[\Ele{}{}]}} \red{,} \\
+                   \LAM{ty}
+                   \case{ty}{
+                     \Enat \To \DProd{\DVar{nat}}{\DVar{nat}} \\
+                     \Ebool \To \DProd{\DVar{nat}}{\DVar{nat}}
+                   }
+                   \end{array}
+                   \right]
+}
+\end{array}
+}\]
+
+\caption{Syntax of typed expressions}
+\label{fig:hexpr-full}
+
+\end{figure*}
+
+\note{the big square brackets should be red}
+
+\begin{wstructure}
     -> evaluation: IMu TermD -> Val
         -> it is a catamorphism
             <- Look closer at the type
@@ -274,25 +410,161 @@ purpose $\F{switchID}$ operator.
             <- Just define one reduction step
             -> cata does the rest
                 /> cata is for free!
+\end{wstructure}
+
+\newcommand{\evalH}{\F{eval}_{\green{\Downarrow}}}
+\newcommand{\evalOne}{\F{eval}_{\green{\downarrow}}}
+
+Having implemented the syntax, we would like to describe its
+semantics. To do so, we implement an evaluator. The type of the
+evaluator is:
+
+\[
+\evalH : \PI{\V{ty}}{\Ty} 
+         \IMu{\Ty}{\toIDesc{\HExprD}}{ty} \To
+         \Val{ty}
+\]
+
+The type of $\F{eval}$ is strikingly similar to a
+catamorphism. Indeed, implementing a single step of evaluation -- the
+algebra -- is sufficient, as $\F{cataI}$ gives, for free, the
+full evaluator. The implementation is as follow:
+
+
+\[\stk{
+\evalOne : \PI{\V{ty}}{\Ty} \idescop{\toIDesc{\HExprD}}{\Ty}{ty} \To {\Val{ty}} \\
+\begin{array}{@{}l@{\:=\:\:}l}
+\evalOne\: \_\: \pair{\Eval{}}{x}{}                                         & x \\
+\evalOne\: \_\: \pair{\Econd{}{}{}}{\pair{\BoolTrue}{\pair{x}{\_}{}}{}}{}   & x \\
+\evalOne\: \_\: \pair{\Econd{}{}{}}{\pair{\BoolFalse}{\pair{\_}{y}{}}{}}{}  & x \\
+\evalOne\: \Enat\: \pair{\Eplus{}{}}{\pair{x}{y}{}}{}                       & \F{plusHost}\: x y \\
+\evalOne\: \Ebool\: \pair{\Ele{}{}}{\pair{x}{y}{}}{}                        & \F{leHost}\: x y 
+\end{array} \\
+\\
+\evalH : \PI{\V{ty}}{\Ty} 
+           \IMu{\Ty}{\toIDesc{\HExprD}}{ty} \To
+           \Val{ty} \\
+\evalH\: ty\: term = \F{cataI}\: \Ty\: 
+                                 \toIDesc{\HExprD}\: 
+                                 \Val{}\: 
+                                 \evalOne\: 
+                                 ty\: 
+                                 term
+}\]
+
+\note{We have not defined \F{cataI}!}
+
+\begin{wstructure}
     /> Closed term
         <- only constants and operations on them
         -> Extend Val with Var : Ty -> Set, mapping to EnumU
             -> Open term
             -> Language of well-typed terms
                 <- By construction
+\end{wstructure}
+
+Hence, we have defined the syntax of a typed language of arithmetic
+and boolean operations. We have given its semantics through an
+evaluation function. Provided a one step semantic of the language, the
+big step evaluation is granted without effort thanks to the generic
+catamorphism. 
+
+However, so far, we are only able to define and manipulate
+\emph{closed} terms. By abstracting over $\Var{}$, it is possible to
+build and manipulate \emph{open} terms, that is terms with symbolic
+variables. On the model of $\Val{}$, we define $\Var{}{}$:
+
+\[\stk{
+\Var{}{} : \EnumU \To \Ty \To \Set \\
+\Var{dom}{\_} = \EnumT{dom}
+}\]
+
+Whereas $\Val{}$ was mapping the type to the corresponding host type,
+$\Var{}{}$ maps types to a finite set. The finite set -- the context
+-- contains values. A variable is therefore a $\Eval{}$ that contains
+a pointer to a particular element of the finite set -- an element of
+$\EnumT{dom}$. The extra argument to $\Var{}{}$ is the domain of this
+context.
+
+Consequently, replacing $\Val{ty}$ by $(\SUM{\Val{ty}}{\Var{dom}{ty}})$ in
+Figure~\ref{fig:hexpr-full} turns the language of closed term into a
+language of opened terms with constants. \note{Is it polite and
+  comprehensible to ask that?} This defines a new indexed description,
+called $\HExprVarD$.
+
+\begin{wstructure}
         <- evaluator, with a context
             -> First, close variables
                 -> Perform assignment
                 <- subst [code]
+\end{wstructure}
+
+\newcommand{\discharge}{\F{discharge}}
+
+Again, we would like to give a semantics to this extended language. We
+proceed in two steps: first, replace the variables by their value in
+the context; then, evaluate the resulting closed term. Thanks to
+$\evalH$, we are already able to solve the second problem. Let us
+focus on discharging variables from the context. Again, we can
+subdivide this problem: first, we need the ability to discharge a
+single variable from the context; then, we apply this $\discharge$
+function on every variables in the term.
+
+The $\discharge$ function is relative to the required type, the domain
+of the context, and a context containing values of the corresponding
+type. Its action is to map variables to their value in context, and
+directly return constant values. This corresponds to the following
+function:
+
+\[\stk{
+\begin{array}{@{}ll}
+\discharge : & \PITEL{\V{ty}}{\Ty}
+               \PITEL{\V{dom}}{\EnumU} \\
+             & \PI{\V{\gamma}}{\spi{dom}{(\LAM{\_} \IMu{\Ty}{\toIDesc{\HExprVarD}}{ty})}} \\
+             & (\SUM{\Val{ty}}{\Var{dom}{ty}}) \To
+               \IMu{\Ty}{\toIDesc{\HExprD}}{ty} 
+\end{array} \\
+\begin{array}{@{}l@{\:\mapsto\:\:}l}
+\discharge\: ty\: dom\: \gamma\: (\SumLeft x)  & \Con{\pair{\Eval{}}{x}{}} \\
+\discharge\: ty\: dom\: \gamma\: (\SumRight v) & \switch{dom}{(\LAM{\_} \IMu{\Ty}{\toIDesc{\HExprVarD}}{ty})}{\gamma}{v}
+\end{array}
+}\]
+
+\begin{wstructure}
             /> Then, perform subst everywhere in the term
                 -> Show type [code]
                 /> This is a bind!?
                 -> There is some more structure 
                     -> We should try to get it
-\end{structure}
+\end{wstructure}
 
+Having implemented the local $\discharge$ operation, we are left with
+applying it over all variables of the term. The type of this operation
+is the following:
 
-\note{Begging for a transition here.}
+\newcommand{\substH}{\F{substExpr}}
+
+\[
+\begin{array}{@{}ll}
+\substH  : & \PITEL{\V{ty}}{\Ty}
+            \PITEL{\V{dom}}{\EnumU} 
+            \PITEL{\V{\gamma}}{\spi{dom}{(\LAM{\_} \IMu{\Ty}{\toIDesc{\HExprVarD}}{ty})}} \\
+          &  \PI{\V{\sigma}}{\PI{\V{ty}}{\Ty} (\Val{ty} + \Var{dom}{ty}) \To
+                             \IMu{\Ty}{(\toIDesc{\HExprD})}{ty}} \\
+          & \IMu{\Ty}{\toIDesc{\HExprVarD}}{\V{ty}} \To
+            \IMu{\Ty}{\toIDesc{\HExprD}}{\V{ty}}
+\end{array}
+\]
+
+Abstracting away the book-keeping introduced by the context, this
+definition looks familiar. Indeed, it is extremely similar to a
+monadic ``bind''. This is not surprising as we are defining a
+first-order syntax with variables: our data-type enjoys more structure
+than what we are currently provided. In particular, this is
+reminiscent to a free monad, where $\Eval{}$ is the ``return''
+introducing variables. Instead of implementing $\substH$ in this
+special case, we shall implement it in a generic setting, and express
+our example in that setting.
 
 \subsection{Constrained constructors}
 
@@ -499,8 +771,9 @@ type signature is the following:
 
 \subsubsection{Examples}
 
+\paragraph{Typed expressions:}
 
-\begin{structure}
+\begin{wstructure}
 <- Hutton's razor is a free monad
     <- substI was our candidate bind
         -> Massage the definition of expr to get it for free
@@ -511,14 +784,92 @@ type signature is the following:
     -> Compute the free monad Hutton * X
         -> With X = Val: We get back our closed terms
         -> With X = Val + Var vars: We get back our open terms
+\end{wstructure}
+
+In Section~\ref{sec:idesc-examples}, we had the intuition that our
+datatype $\HExprD$ and $\HExprVarD$ enjoys a monadic structure. We had
+identified the variable substitution operation as the ``bind'' of a
+free monad. The definition of $\substI$ above confirm our intuition:
+using $substI$, we should easily obtain $\substH$. To do so, we first
+have to massage the definition of our data-type, to exhibit its
+monadic structure.
+
+As previously mentioned, we identify $\Eval{}$ as the ``return'' of
+the free monad, while the other components are the action of the
+monad. As a result, the definition is similar to $\HExprD$ presented
+in Figure~\ref{fig:hexpr-full}, at the exception of $\HExprAD$ that is
+replaced by $\HExprAFreeD$:
+
+\[\stk{
+\HExprAFreeD : \ATagIDesc{\Ty} \\
+\HExprAFreeD \mapsto \left[
+                 \begin{array}{l}
+                   \EnumT{[\Econd{}{}{}]} \red{,} \\
+                   \LAM{ty}
+                   \left[ %%! Should be red
+                   \begin{array}{l}
+                   \DProd{\DVar{\Ebool}}{\DProd{\DVar{ty}}{\DVar{ty}}}
+                   \end{array}
+                   \right]
+                 \end{array}
+                 \right] %%! Should be \red
+}\]
+
+The resulting data-type is called $\HExprFreeD$. By a simple unfolding
+of definition, we note that $\FreeIMonad{\HExprFreeD}{\Ty}{\Val{}}$
+corresponds to the closed expression, $\HExprD$. Similarly,
+$$\FreeIMonad{\HExprFreeD}{\Ty}{(\LAM{ty} \Val{ty} + \Var{ty})}$$
+corresponds to expressions with variables, $\HExprVarD$.
+
+\begin{wstructure}
     /> On open terms, we get a substitution
         -> Apply substI on assgnmt
             -> Have a well-typed language
             -> Get a safe evaluator 
                 <- for well-typed terms 
                 <- in well-typed contexts
-\end{structure}
+\end{wstructure}
 
+The evaluator for closed term we implemented in
+Section~\ref{sec:idesc-examples} remains unchanged. It reduces closed
+terms in $\FreeIMonad{\HExprFreeD}{\Ty}{\Val{}}$ to values in
+$\Val{ty}$. We are therefore left with implementing $\substH$. We
+simply have to fill in the right arguments to $\substI$, the type
+guiding us:
+
+
+\[\stk{
+\begin{array}{@{}ll}
+\substH  : & \PITEL{\V{ty}}{\Ty}
+             \PITEL{\V{dom}}{\EnumU} 
+             \PITEL{\V{\gamma}}{\spi{dom}{(\LAM{\_} \IMu{\Ty}{\toIDesc{\FreeIMonad{\HExprFreeD}{\Ty}{\Val{}}}}{ty})}} \\
+           &  \PI{\V{\sigma}}{\PI{\V{ty}}{\Ty} (\Val{ty} + \Var{dom}{ty}) \To
+                              \IMu{\Ty}{(\toIDesc{\FreeIMonad{\HExprFreeD}{\Ty}{\Val{}}})}{ty}} \\
+           & \IMu{\Ty}{\toIDesc{\FreeIMonad{\HExprFreeD}{\Ty}{\Val{} + \Var{dom}{}}}}{\V{ty}} \To
+             \IMu{\Ty}{\toIDesc{\FreeIMonad{\HExprFreeD}{\Ty}{\Val{}}}}{\V{ty}} \\
+\end{array} \\
+\substH\: ty\: dom\: \gamma\: \sigma\: term \mapsto 
+    \substI\: \Ty\: 
+              (\Val{} + \Var{dom}{})\: 
+              \Val{}\:
+              \HExprFreeD\:
+              \sigma\:
+              ty\:
+              term
+}\]
+
+\note{Not using $\discharge$, that's a shame.}
+
+Hence, we have completed our implementation of the evaluator for open
+terms. We started with a well-typed language of arithmetical
+expressions. We have seen how to take advantage of indexes to only
+present type-safe constructors. Then, we have implemented an evaluator
+for closed term, based on the generic catamorphism function. Having
+implemented an open term representation, we wanted a substitution
+operation, in order to close open terms in a context. Again, we have
+implemented this operation with the generic substitution
+operator. Hence, without much efforts, we have described the syntax of
+a well-typed language, together with its semantics.
 
 \begin{wstructure}
 <- IDesc
@@ -530,6 +881,8 @@ type signature is the following:
         <- [ subst sigma D ] X = [D] (\x -> [subst sigma x] X)
         ???
 \end{wstructure}
+
+\paragraph{Indexed description:}
 
 Another instance of free monad is $\IDesc$ itself. Indeed, $\DVar$ is
 nothing but the ``return''. The remaining constructors are simply the
@@ -556,7 +909,7 @@ Then, we get $\IDesc$ by building its free monad:
 
 \[\stk{
 \IDescD : \PI{\V{I}}{\Set} \IDesc{\Unit} \\
-\IDescD\: I \mapsto \FreeMonad{[\IDescFreeD]}{I}\: I
+\IDescD\: I \mapsto \FreeIMonad{[\IDescFreeD]}{\Unit}{I}\: I
 }\]
 
 
