@@ -605,7 +605,9 @@ $\FinSuc$ are only defined for an index distinct from $\NatZero$:
      {\Bhab{\FinSuc{}}{\Fin{(\NatSuc{n})}}}
 \]
 
-In order to code this data-type, we have to appeal to equality:
+One way to code constrained data-type is to appeal to equality. The
+constraints are therefore captured by equations in the data-type. In
+this case, we obtain the following definition:
 
 \[\stk{
 \FinD : \Nat \To \IDesc{\Nat} \\
