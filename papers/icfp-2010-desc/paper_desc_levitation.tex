@@ -324,10 +324,10 @@ the type theory with a special-purpose operator:
 The entire work of the magician stands here, in this extension. One
 could be worried by the availability of such operations in our type
 theory. Indeed, it would be inconvenient for the user to have to
-decide between two variants. In fact, we give no choice to the user,
-hence no inconvenience. Just as the $\F{switch}$ operator was sealed
-off by the type propagation machinery, $\F{switchD}$ is not provided
-to the user. We simply extend the type-checking rules
+decide between two variants. The solution to this problem stands, once
+again, in the type propagation system. Just as the $\F{switch}$
+operator, $\F{switchD}$ can be automatically elaborated. To this end,
+we simply extend the type-checking rules
 (Fig.~\ref{fig:type-checking}) with the following inference rule:
 
 \[
