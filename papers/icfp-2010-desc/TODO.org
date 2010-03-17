@@ -107,3 +107,6 @@ It should use the pieces we have developped, such as discharge.
 * TODO Discuss stratification
 * TODO Discuss induction/recursion
 * TODO Introduction/conclusion
+* TODO Improve motivation of dependent-types
+
+Talk about decidability, termination, etc.
