@@ -561,12 +561,15 @@ arguments to $\cata$ as possible:
 \begin{array}{@{}ll}
 \subst : & \PITEL{\V{D}}{\TagDesc}
            \PI{\V{X}, \V{Y}}{\Set} \\
-         & \Mu{(\FreeMonad{D}{X})} \To
-           (\V{X} \To \Mu{(\FreeMonad{D}{Y})}) \To
-           \Mu{(\FreeMonad{D}{Y})} 
+         & \Mu{(\toDesc{\FreeMonad{D}{X}})} \To
+           (\V{X} \To \Mu{(\toDesc{\FreeMonad{D}{Y}})}) \To
+           \Mu{(\toDesc{\FreeMonad{D}{Y}})} 
 \end{array} \\
 \subst\: D\: X\: Y\: x\: \sigma \mapsto
-  \cata\: (\FreeMonad{D}{X})\: (\Mu{(\FreeMonad{D}{Y})})\: ???\: x
+  \cata\: (\toDesc{\FreeMonad{D}{X}})\: 
+          (\Mu{(\toDesc{\FreeMonad{D}{Y}})})\: 
+          ???\: 
+          x
 }\]
 
 Our task is therefore to implement the algebra of the
@@ -579,12 +582,13 @@ definition:
 \begin{array}{@{}ll}
 \apply : & \PITEL{\V{D}}{\TagDesc} 
            \PI{\V{X}, \V{Y}}{\Set} \\
-         & (\V{X} \To \Mu{(\FreeMonad{D}{X})}) \To
-           \descop{\FreeMonad{D}{X}}{\Mu{(\FreeMonad{D}{Y})}} \To
-           \Mu{(\FreeMonad{D}{Y})}                            \\
+         & (\V{X} \To \Mu{(\toDesc{\FreeMonad{D}{X}})}) \To
+           \descop{\toDesc{\FreeMonad{D}{X}}}{\Mu{(\toDesc{\FreeMonad{D}{Y}})}} \To
+           \Mu{(\toDesc{\FreeMonad{D}{Y}})}
+\\
 \end{array} \\
 \begin{array}{@{}l@{\:\:\mapsto\:}l}
-\apply\: D\: X\: Y\: \sigma\: \pair{\DVar{}}{x}{}     & \sigma\: x                   \\
+\apply\: D\: X\: Y\: \sigma\: \pair{\DVar{}}{x}{}   & \sigma\: x                   \\
 \apply\: D\: X\: Y\: \sigma\: \pair{\etag{t}}{ys}{} & \Con{\pair{\etag{t}}{ys}{}}
 \end{array}
 }\]
