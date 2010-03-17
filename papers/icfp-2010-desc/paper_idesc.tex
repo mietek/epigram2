@@ -40,6 +40,80 @@ grammar of data-types. To this end, we rely on \emph{indexing}. We are
 going to transform the $\Desc$ universe into an indexed $\IDesc$
 universe. We express inductive families by the $I \To \IDesc{I}$ type.
 
+\subsection{Desc, atomically}
+
+\begin{wstructure}
+<- Adding hindx have introduced some duplication
+    <- indx == hindx 1
+    -> We can factor out commonalities 
+        /> Obtain an equivalent presentation
+        /> Still embeddable (refer to the Agda model)
+\end{wstructure}
+
+Before moving on indexed descriptions, we have to carry out some
+maintenance work on descriptions. We presented $\Desc$ as the grammar
+of inductive types. Hence, the codes closely follow this grammar. In
+the following, we adopt an alternative presentation. With $\DSigma$,
+we are already quoting a standard type-former. In the alternative
+presentation, we go further and entirely present our codes as
+quotation of standard type-formers. This presentation is shown in
+Figure~\ref{fig:type-former-desc}.
+
+This reorganisation is strictly equivalent to the previous one
+(Fig.~\ref{fig:hindx_desc}). Just as the previous version, it is also
+self-descriptive. We refer the reader to the companion technical
+report for details. In this finer-grained presentation, we can define
+$\DIndx$ and $\DHindx$ as follow:
+
+\[\begin{array}{l@{\:\mapsto\:\:}l}
+\DIndx{D}         & \DProd{\DId}{D}                      \\
+\DHindx{H}{D}     & \DProd{(\DPi{H}{(\LAM{\_} \DId)})}{D}
+\end{array}
+\]
+
+Consequently, the examples previously developed can be
+straightforwardly translated into this new presentation. \note{We
+  might want to re-do the Nat example here, as we encode once again in
+  $\IDesc$} In the following, we adopt this last version as our de
+facto universe of inductive types. In particular, we are going to
+evolve this presentation into an indexed one.
+
+\note{Shall we talk about the Type Theory being Desc Zero? or such story?}
+
+\begin{figure*}
+
+\[
+\begin{array}{ll}
+\stk{
+\data \Desc : \Set \where \\
+\;\;\begin{array}{@{}l@{\::\:}l@{\quad}l}
+    \DId            & \Desc                                   \\
+    \DUnit          & \Desc                                   \\
+    \DProd{}{}      & \PI{\V{D}, \V{D'}}{\Desc} \Desc         \\
+    \DSigma         & \PI{\V{S}}{\Set} \PIS{S \To \Desc} \Desc \\
+    \DPi            & \PI{\V{S}}{\Set} \PIS{S \To \Desc} \Desc 
+\end{array}
+}
+&
+\stk{
+\descop{\_\:}{} : \Desc \To \Set \To \Set \\
+\begin{array}{@{}l@{\:=\:\:}ll}
+\descop{\DId}{X}          &  X                                           \\
+\descop{\DUnit}{X}        &  \Unit                                       \\
+\descop{\DProd{D}{D'}}{X} &  \TIMES{\descop{D}{X}}{\descop{D'}{X}}       \\
+\descop{\DSigma{S}{D}}{X} &  \SIGMA{\V{s}}{S} \descop{D\: s}{X}                \\
+\descop{\DPi{S}{D}}{X}    &  \PI{\V{s}}{S} \descop{D\: s}{X}            
+\end{array}
+}
+\end{array}
+\]
+
+\caption{Universe of descriptions based on Type-formers}
+\label{fig:type-former-desc}
+
+\end{figure*}
+
+
 
 \subsection{From Desc to IDesc}
 
