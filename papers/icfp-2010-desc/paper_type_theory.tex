@@ -295,8 +295,14 @@ corresponds to an index, a number, pointing to an element of $u$.
 
 The type of finite sets comes with further machinery. Indeed, to
 manipulate the $\EnumU$ and $\EnumT{}$ objects, we need to equip our
-type theory with an appropriate \emph{elimination principle}. A first
-step consists in defining the $\spi{}{}$ operator:
+type theory with an appropriate \emph{elimination
+  principle}. Formally, as we add types for data -- such as finite
+sets here --, we need such primitive operators to compute with those
+data, and corresponding extension of the judgemental equality with
+their computational behavior. For compactness and readability, we
+shall present these operators as functional programs, much as we
+implement them in our Agda model. Hence, we first define the
+$\spi{}{}$ operator:
 
 \[\stk{
 %% spi
