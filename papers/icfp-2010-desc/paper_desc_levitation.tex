@@ -491,7 +491,7 @@ free monad over $F$ is defined by the following data-type:
                      \PI{\V{X}}{\Set} 
                      \Set 
 \where \\
-\;\;\begin{array}{@{}l@{\::\:}l@{\quad}l}
+\;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
     \FMVar           & X \To \FMFreeMonad\: F\: X                            \\
     \FMComposite     & F (\FMFreeMonad\: F\: X) \To \FMFreeMonad\: F\: X    
 \end{array}
@@ -587,7 +587,7 @@ definition:
            \Mu{(\toDesc{\FreeMonad{D}{Y}})}
 \\
 \end{array} \\
-\begin{array}{@{}l@{\:\:\mapsto\:}l}
+\begin{array}{@{}l@{\:\mapsto\:\:}l}
 \apply\: D\: X\: Y\: \sigma\: \pair{\DVar{}}{x}{}   & \sigma\: x                   \\
 \apply\: D\: X\: Y\: \sigma\: \pair{\etag{t}}{ys}{} & \Con{\pair{\etag{t}}{ys}{}}
 \end{array}

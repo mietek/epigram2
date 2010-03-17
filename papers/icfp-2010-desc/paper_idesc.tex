@@ -91,7 +91,7 @@ evolve this presentation into an indexed one.
 \begin{array}{ll}
 \stk{
 \data \Desc : \Set \where \\
-\;\;\begin{array}{@{}l@{\::\:}l@{\quad}l}
+\;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
     \DId            & \Desc                                   \\
     \DUnit          & \Desc                                   \\
     \DProd{}{}      & \PI{\V{D}, \V{D'}}{\Desc} \Desc         \\
@@ -153,7 +153,7 @@ by turning $\DId$ into an index-dependent $\DVar$ code:
 
 \[\stk{
 \data \IDesc{} (\Bhab{\V{I}}{\Set}) : \Set \where \\
-\;\;\begin{array}{@{}l@{\::\:}l@{\quad}l}
+\;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
     \DVar{}         & I \To \IDesc{I}                                   \\
     \ldots          & \ldots
 \end{array} \\
@@ -191,7 +191,7 @@ burden on the programmer.
 \begin{array}{ll}
 \stk{
 \data \IDesc{} (\Bhab{\V{I}}{\Set}) : \Set \where \\
-\;\;\begin{array}{@{}l@{\::\:}l@{\quad}l}
+\;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
     \DVar{}         & I \To \IDesc{I}                                   \\
     \DConst{}       & \Set \To \IDesc{I}                                \\
     \DProd{}{}      & \PI{\V{D}, \V{D'}}{\IDesc{I}} \IDesc{I}           \\
