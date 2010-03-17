@@ -21,7 +21,7 @@ have built upon the experience gained in using simply-typed languages,
 such as Haskell or OCaml. In our dependent setting, we provided these
 data-types by the mean of $\Desc$, a universe of descriptions. 
 
-While inductive types are the alpha and omega of the simply-typed
+While inductive types are the alpha and omega of simply-typed
 languages, evolving in a dependent setting fosters new
 opportunities. The typical example is bounded lists, also known as
 vectors. A vector is a list decorated by its length. Having this
@@ -54,10 +54,13 @@ Before moving on indexed descriptions, we have to carry out some
 maintenance work on descriptions. We presented $\Desc$ as the grammar
 of inductive types. Hence, the codes closely follow this grammar. In
 the following, we adopt an alternative presentation. With $\DSigma$,
-we are already quoting a standard type-former. In the alternative
-presentation, we go further and entirely present our codes as
-quotation of standard type-formers. This presentation is shown in
-Figure~\ref{fig:type-former-desc}.
+we are actually \emph{quoting} a standard type-former, namely
+
+$$\Bhab{\Sigma}{\PI{\V{S}}{\Set} (S \To \Set) \To \Set}$$
+
+In the alternative presentation, we go further and present all our
+codes as quotations of standard type-formers. This presentation is
+shown in Figure~\ref{fig:type-former-desc}.
 
 This reorganisation is strictly equivalent to the previous one
 (Fig.~\ref{fig:hindx_desc}). Just as the previous version, it is also
@@ -130,9 +133,8 @@ In the previous section, we have presented the $\Desc$ universe as the
 grammar of functors in the category $\Set$. We have seen how to encode
 inductive types in this setting. To encode an inductive family indexed
 by $\Bhab{\V{I}}{\Set}$, we rely on functors in the category
-$\Set^I$. We call these \emph{indexed functors}. When $\Desc$ was
-defining a grammar a functor, we need $I \To \IDesc{I}$ to define a
-grammar of indexed functors:
+$\Set^I$. We call these \emph{indexed functors}. In the following, we
+implement $I \To \IDesc{I}$ as a grammar for indexed functors:
 
 \[\stk{
 \data \IDesc{} (\Bhab{\V{I}}{\Set}) : \Set \where \\
@@ -143,7 +145,7 @@ grammar of indexed functors:
 }\]
 
 This generalisation can be achieved by a minor evolution of $\Desc$
-(Fig.~\ref{fig:factor-desc}). Indeed, the functorial nature of $\Desc$
+(Fig.~\ref{fig:type-former-desc}). Indeed, the functorial nature of $\Desc$
 is entirely captured by the $\DId$ code. We get an indexed functor
 by turning $\DId$ into an index-dependent $\DVar$ code:
 
@@ -179,7 +181,7 @@ $\DSigma{X}{\DUnit}$ are equivalent. However, $\DConst$ is more
 succinct. More importantly, $\DConst$ is \emph{first-order}, unlike
 its equivalent encoding. From a definitional perspective, we are
 giving more opportunities to the type-system, hence reducing the
-burden on the programmer in practice.
+burden on the programmer.
 
 \begin{figure*}
 
@@ -214,6 +216,7 @@ burden on the programmer in practice.
 
 \end{figure*}
 
+\subsection{Tagged indexed descriptions}
 
 \begin{wstructure}
 <- Tagged constructor choice
@@ -234,7 +237,7 @@ burden on the programmer in practice.
 
 In Section~\ref{sec:desc-examples}, we have defined a \emph{tagged}
 form for descriptions. This format follows the usual presentation of
-inductive types as sums of product. With indexed description, this
+inductive types as sum-of-product. With indexed description, this
 definition can be generalized. Indeed, when defining an indexed
 data-type, we have access to this index. Therefore, we can use this
 index to influence the choice of constructors. This captures the
@@ -250,14 +253,14 @@ constructors by $I$. Hence, by inspecting the index, it is possible to
 enable or disable the constructors. 
 
 \[\stk{
+ \TagIDesc{I}  \mapsto \TIMES{\ATagIDesc{I}}{\ITagIDesc{I}}
  \ATagIDesc{I} \mapsto \SIGMA{\V{E}}{\EnumU} (\PI{\V{i}}{I} \spi{\V{E}}{(\LAM{\_} \IDesc{I})}) \\
  \ITagIDesc{I} \mapsto \SIGMA{\V{F}}{I \To \EnumU} (\PI{\V{i}}{I} \spi{(F\: i)}{(\LAM{\_} \IDesc{I})})  \\
- \TagIDesc{I}  \mapsto \TIMES{\ATagIDesc{I}}{\ITagIDesc{I}}
 }\]
 
-In the case of vectors, for instance, for the index $n = \NatZero$, we
-would only offer the constructor $\ListNil$. Similarly, for $n =
-\NatSuc{n'}$, we only offer the constructor $\ListCons{}{}$. We will
+In the case of vectors, for instance, for the index $\NatZero$, we
+would only propose the constructor $\ListNil$. Similarly, for
+$\NatSuc{n}$, we only propose the constructor $\ListCons{}{}$. We will
 see more instances of this pattern in the following.
 
 
@@ -403,7 +406,7 @@ maps $\Epolym$ to the corresponding type in the host language. Hence,
 the argument of $\Eval{}$ are ensured to be of the expected type. We
 assume $\Nat$ and $\Bool$ represent natural numbers and booleans in
 the host language. Further, we also assume the existence of an
-addition and comparison operator in $\Nat$, respectively name
+addition and comparison operator in $\Nat$, respectively named
 $\F{plusHost}$ and $\F{leHost}$. We define $\Val{}$ as follow:
 
 \[\stk{
@@ -501,8 +504,9 @@ evaluator is:
 
 The type of $\F{eval}$ is strikingly similar to a
 catamorphism. Indeed, implementing a single step of evaluation -- the
-algebra -- is sufficient, as $\F{cataI}$ gives, for free, the
-full evaluator. The implementation is as follow:
+algebra -- is sufficient, as $\F{cataI}$ \note{We have not defined
+  \F{cataI}!} gives, for free, the full evaluator. The implementation
+is as follow:
 
 
 \[\stk{
@@ -526,7 +530,6 @@ full evaluator. The implementation is as follow:
                                  term
 }\]
 
-\note{We have not defined \F{cataI}!}
 
 \begin{wstructure}
     /> Closed term
@@ -544,7 +547,7 @@ big step evaluation is granted without effort thanks to the generic
 catamorphism. 
 
 However, so far, we are only able to define and manipulate
-\emph{closed} terms. By abstracting over $\Var{}$, it is possible to
+\emph{closed} terms. By abstracting over $\Val{}$, it is possible to
 build and manipulate \emph{open} terms, that is terms with symbolic
 variables. On the model of $\Val{}$, we define $\Var{}{}$:
 
@@ -555,10 +558,10 @@ variables. On the model of $\Val{}$, we define $\Var{}{}$:
 
 Whereas $\Val{}$ was mapping the type to the corresponding host type,
 $\Var{}{}$ maps types to a finite set. The finite set -- the context
--- contains values. A variable is therefore a $\Eval{}$ that contains
-a pointer to a particular element of the finite set -- an element of
-$\EnumT{dom}$. The extra argument to $\Var{}{}$ is the domain of this
-context.
+-- contains closed terms. A variable is therefore a $\Eval{}$ that
+contains a pointer to a particular element of the finite set -- an
+element of $\EnumT{dom}$. The extra argument to $\Var{}{}$ is the
+domain of this context.
 
 Consequently, replacing $\Val{ty}$ by $(\SUM{\Val{ty}}{\Var{dom}{ty}})$ in
 Figure~\ref{fig:hexpr-full} turns the language of closed term into a
@@ -576,8 +579,8 @@ called $\HExprVarD$.
 \newcommand{\discharge}{\F{discharge}}
 
 Again, we would like to give a semantics to this extended language. We
-proceed in two steps: first, replace the variables by their value in
-the context; then, evaluate the resulting closed term. Thanks to
+proceed in two steps: first, we replace the variables by their value
+in the context; then, we evaluate the resulting closed term. Thanks to
 $\evalH$, we are already able to solve the second problem. Let us
 focus on discharging variables from the context. Again, we can
 subdivide this problem: first, we need the ability to discharge a
@@ -634,11 +637,13 @@ Abstracting away the book-keeping introduced by the context, this
 definition looks familiar. Indeed, it is extremely similar to a
 monadic ``bind''. This is not surprising as we are defining a
 first-order syntax with variables: our data-type enjoys more structure
-than what we are currently provided. In particular, this is
-reminiscent to a free monad, where $\Eval{}$ is the ``return''
-introducing variables. Instead of implementing $\substH$ in this
-special case, we shall implement it in a generic setting, and express
-our example in that setting.
+than what we are given. In particular, this is reminiscent to a free
+monad, where $\Eval{}$ is the ``return'' introducing
+variables. Instead of implementing $\substH$ in this special case, we
+shall implement it in a generic setting, and express our example in
+that setting. However, before entering the realm of generic
+structures, let us further explore the universe of indexed
+descriptions.
 
 \subsection{Constrained constructors}
 
@@ -648,10 +653,8 @@ our example in that setting.
     ???
 \end{wstructure}
 
-However, before entering the realm of generic structures, let us
-further explore the universe of indexed descriptions. In the
-following, we ask $I$ to come equipped with a notion of definitional
-equality. Hence, we can legibly equates elements of $I$.
+In the following, we ask $I$ to come equipped with a notion of
+definitional equality. Hence, we can legibly equates elements of $I$.
 
 \note{ I will need some tutorial on this ad-hoc notion of definitional
   equality. Or what Conor's meant with that. }
@@ -664,9 +667,8 @@ equality. Hence, we can legibly equates elements of $I$.
     ???
 \end{wstructure}
  
-In our implementation of lambda terms, variables were elements of
-$\Fin{n}$, with $n$ the number of binders. Let us now implement
-$\Fin$. $\Fin$ is a typical example of an inductive family using
+Another common dependent data-type is $\Fin$, the finite sets of
+numbers. $\Fin$ is a typical example of an inductive family using
 \emph{constrained constructors}. The constructors $\FinZero$ and
 $\FinSuc$ are only defined for an index distinct from $\NatZero$:
 
@@ -726,8 +728,8 @@ stipulates that $m$ cannot be \emph{any} natural numbers: it must be
 \end{wstructure}
 
 The $\Fin$ example is also a well-known example of Generalised
-Abstract Data-Type (GADT), in Haskell. It comes as no surprise that
-our universe of indexed description supports this restricted class of
+Abstract Data-Type (GADT) in Haskell. It comes as no surprise that our
+universe of indexed description supports this restricted class of
 dependent data-types. As we have shown with $\Fin$, constrained
 constructors are straightforwardly translated into equality
 constraints.
@@ -783,10 +785,9 @@ following, equivalent definition:
 Equations have simply disappeared! We should precise that forcing a
 description is not guaranteed to remove all constraints. It is subject
 of future work to see if constraints can be entirely eradicated, or
-presented more conveniently to the user.
-
-Finally, it is worth mentioning that the forcing optimisation is a
-\emph{source-to-source} transformation of the description. 
+presented more conveniently to the user. Finally, it is worth
+mentioning that the forcing optimisation is a \emph{source-to-source}
+transformation of the description.
 
 \note{ Actual implementation of forcing as a generic function??! }
 
@@ -803,7 +804,7 @@ Finally, it is worth mentioning that the forcing optimisation is a
         <- show implementation?? (space! space!)
 \end{wstructure}
 
-In this section, we develop some more structure for our indexed
+In this section, we develop more structure for our indexed
 data-types. In Section~\ref{sec:desc-free-monad}, we have constructed
 a free monad operation on simple descriptions. Building on this
 experience, we are going to present its equivalent in the indexed
@@ -862,10 +863,10 @@ type signature is the following:
 \end{wstructure}
 
 In Section~\ref{sec:idesc-examples}, we had the intuition that our
-datatype $\HExprD$ and $\HExprVarD$ enjoys a monadic structure. We had
+datatypes $\HExprD$ and $\HExprVarD$ enjoy a monadic structure. We had
 identified the variable substitution operation as the ``bind'' of a
 free monad. The definition of $\substI$ above confirm our intuition:
-using $substI$, we should easily obtain $\substH$. To do so, we first
+using $\substI$, we should easily obtain $\substH$. To do so, we first
 have to massage the definition of our data-type, to exhibit its
 monadic structure.
 
@@ -892,7 +893,7 @@ replaced by $\HExprAFreeD$:
 
 The resulting data-type is called $\HExprFreeD$. By a simple unfolding
 of definition, we note that $\FreeIMonad{\HExprFreeD}{\Ty}{\Val{}}$
-corresponds to the closed expression, $\HExprD$. Similarly,
+corresponds to the syntax of closed terms, $\HExprD$. Similarly,
 $$\FreeIMonad{\HExprFreeD}{\Ty}{(\LAM{ty} \Val{ty} + \Var{dom}{ty})}$$
 corresponds to expressions with variables, $\HExprVarD$.
 
@@ -907,7 +908,7 @@ corresponds to expressions with variables, $\HExprVarD$.
 
 The evaluator for closed term we implemented in
 Section~\ref{sec:idesc-examples} remains unchanged. It reduces closed
-terms in $\FreeIMonad{\HExprFreeD}{\Ty}{\Val{}}$ to values in
+terms in $\FreeIMonad{\HExprFreeD}{\Ty}{\Val{}}\: ty$ to values in
 $\Val{ty}$. We are therefore left with implementing $\substH$. We
 simply have to fill in the right arguments to $\substI$, the type
 guiding us:
@@ -961,8 +962,8 @@ a well-typed language, together with its semantics.
 
 Another instance of free monad is $\IDesc$ itself. Indeed, $\DVar$ is
 nothing but the ``return''. The remaining constructors are simply the
-freed functor, trivially indexed by $\Unit$. Hence, amusingly, we can
-define the $\IDesc$ freed functor by the following code:
+signature functor, trivially indexed by $\Unit$. Hence, we describe
+this signature functor by the following code:
 
 \[\stk{
 \IDescFreeD : \PI{\V{I}}{\Set} \IDesc{\Unit} \\

@@ -3,7 +3,7 @@
 
 In this section, we will fulfil several promises. One promise we made
 was to effectively implement the code of the $\Desc$ universe. Another
-promise we tacitly made is to implement the type former of finite
+promise we tacitly was the existence of the type formers for finite
 sets. Despite being a perilous pedagogical exercise for the authors,
 we hope to convey to the reader the dizzy feeling of levitation,
 without the falling.
@@ -17,11 +17,11 @@ without the falling.
         <- Simply List UId
 \end{wstructure}
 
-In Section~\ref{sec:finite-sets}, we have promised an implementation
-of finite sets. It consists in the objects specified in
-Figure~\ref{fig:typing-finite-set}. In particular, we will now
-implement the $\EnumU$ type former and its constructors. Let us recall
-their specification:
+In Section~\ref{sec:finite-sets}, we have given a specification of
+finite sets. It consists in the objects presented in
+Figure~\ref{fig:typing-finite-set}. We are going to implement the
+$\EnumU$ type former and its constructors. Let us recall their
+specification:
 
 \[\stkc{
 %% EnumU
@@ -39,11 +39,10 @@ their specification:
 }\]
 
 The names $\NilE$ and $\ConsE{}{}$ are absolutely not a
-coincidence. $\EnumU$ is indeed simply isomorphic to a list, with
-$\UId$s as parameter. However, in Section~\ref{sec:desc-examples}, we
-have shown how to build lists in the universe of
-description. Therefore, the actual implementation of $\EnumU$ sums up
-to the following, trivial definition:
+coincidence. $\EnumU$ is indeed isomorphic to a list of $\UId$s. In
+Section~\ref{sec:desc-examples}, we have shown how to build lists in
+the universe of description. Therefore, the actual implementation of
+$\EnumU$ boils down to the following, trivial definition:
 
 \[\stk{
 \EnumU : \Set \\
@@ -83,7 +82,7 @@ of $\EnumU$ does not influence our implementation of $\EnumT$: be they
 hard-coded or codes in the $\Desc$ universe, the $\EnumU$ objects just
 behave similarly. We have witnessed this effect when carrying this
 operation in Epigram, moving from an hard-coded presentation to a
-self-hosted one. Absolutely no changes to the $\EnumT$ world was
+self-hosted one. Absolutely no change to the $\EnumT$ objects was
 required.
 
 \begin{wstructure}
@@ -101,7 +100,7 @@ sets by a self-hosted one, expressed in the universe of
 descriptions. However, formally, the content of the type theory
 remains unchanged: objects which were present before the modification
 are still there. Conversely, we have not introduced any spurious
-objects in the type theory.
+object.
 
 If not on the content, this modification had an effect on the
 names. The type naming scheme of the type theory has condensed: named
@@ -121,12 +120,13 @@ condense the entire naming scheme of data-types \emph{in itself}.
         -> It ought to be encoded in itself
 \end{wstructure}
 
-We shall now fulfil our promises. We are going to implement the codes
-of the universe of descriptions. Interestingly, in and by itself, a
-code is nothing but a data-type. We are in the same situation than
-with $\EnumU$: we ought to be able to describe the codes of $\Desc$ in
-$\Desc$ itself. Hence, this code would be a first-class citizen, born
-with the standard, generic equipment of data-types.
+We shall now fulfil our promises for $\Desc$. We are going to
+implement the codes of the universe of descriptions. Interestingly, in
+and by itself, a code is nothing but a data-type. We are in the same
+situation than with $\EnumU$: we ought to be able to describe the
+codes of $\Desc$ in $\Desc$ itself. Hence, this code would be a
+first-class citizen, born with the standard, generic equipment of
+data-types.
 
 \subsubsection{First attempt}
 
@@ -155,16 +155,17 @@ Our first tentative is the following:
 
 Let us explain how we have proceeded and the obstacle we face. Much as
 the data-types we have seen so far, we first have to choose a
-constructor. Constructors correspond to the code's cases: $\DUnit$,
-$\DSigma$, and $\DIndx$. The reader will notice that the tagged
-notation we have used so far for $\Desc$ constructors now fully make
-sense: these were actually the tags we are defining. \note{This
+constructor. Constructors correspond to the code's constructors:
+$\DUnit$, $\DSigma$, and $\DIndx$. The reader will notice that the
+tagged notation we have used so far for $\Desc$ constructors now fully
+make sense: these were actually the tags we are defining. \note{This
   sentence badly needs a rephrasing.}
 
 The case of $\DUnit$ is trivial: we immediately reach the end of the
 data-type. $\DUnit$ has no payload. The case of $\DIndx{}$ comes
 naturally: it only takes a recursive argument -- a description. The
-case of $\DSigma$ is problematic. Recall the definition of $\DSigma$:
+case of $\DSigma$ is problematic. Recall the specification of
+$\DSigma$:
 
 \[    \DSigma{}{} : \PI{\V{S}}{\Set} \PIS{S \To \Desc} \Desc      \]
 
@@ -242,9 +243,9 @@ the $H$ in $\Set$ with a recursive argument.
 In a first glance, we have achieved our goal. We have described the
 codes of the universe of description. Taking the fix-point of this
 object gives us $\Desc$, up to isomorphism. We have implemented our
-code of data-types as a levitating object inside itself. However, this
-levitation operation, just as any magic trick, relies on an invisible
-cable. Let us reveal it, hence finishing our implementation.
+code of data-types as an object levitating inside itself. However,
+this levitation operation, just as any magic trick, relies on an
+invisible cable. Let us reveal it, hence finishing our implementation.
 
 \begin{figure}
 
@@ -278,24 +279,24 @@ cable. Let us reveal it, hence finishing our implementation.
 Our reader might be slightly confused to learn that the trick is
 visible in the definition of $\DescD$
 (Fig.\ref{fig:desc-levitate}). Or rather, it is made invisible by
-careful usage of type propagation. Indeed, let us elaborate this term
-down to the low-level type theory. The $\EnumT [ \ldots ]$ construct
-elaborates to a finite set $e$ in $\EnumU$, inhabited by the
+careful usage of type propagation. Indeed, let us try to elaborate
+this term down to the low-level type theory. The $\EnumT [ \ldots ]$
+construct elaborates to a finite set $e$ in $\EnumU$, inhabited by the
 codes. Then, we can type-check the case definition, between square
 brackets $[ \ldots ]$. This term $f$ is pushed into the type
 $\EnumT{e} \To \Desc$. This corresponds to a finite function
-definition we have implemented in Figure~\ref{fig:type-checking}.
+definition, as formalised in Figure~\ref{fig:type-checking}.
 
 What happens if we unfold the definition? We ought to build the following term:
 
 \[
-\PLAM{x}{(\EnumT{e})} \switch{e}{\LAM{\_} \Mu{\DescD}}{\pi^f}{x}
+\PLAM{x}{(\EnumT{e})} \switch{e}{(\LAM{\_} \Mu{\DescD})}{\pi^f}{x}
 \]
 
-But this is rather problematic! We are still in the process of
+But this is quite problematic. We are still in the process of
 constructing $\DescD$, and the motive of $\F{switch}$ is abruptly
-begging for an $\eta$-expanded $\Desc$. Despite our willingness, we
-will never be able to materialise such motive.
+begging for this very same $\DescD$. Despite our willingness, we
+cannot materialise such motive.
 
 \begin{wstructure}
 <- The magician trick
@@ -324,20 +325,22 @@ the type theory with a special-purpose operator:
 The entire work of the magician stands here, in this extension. One
 could be worried by the availability of such operations in our type
 theory. Indeed, it would be inconvenient for the user to have to
-decide between two variants. The solution to this problem stands, once
-again, in the type propagation system. Just as the $\F{switch}$
+decide between two variants. The solution to this problem is, once
+again, to use the type propagation system. Just as the $\F{switch}$
 operator, $\F{switchD}$ can be automatically elaborated. To this end,
-we simply extend the type-checking rules
-(Fig.~\ref{fig:type-checking}) with the following inference rule:
+we extend the type-checking rules (Fig.~\ref{fig:type-checking}) with
+the following inference rule:
 
 \[
 \Rule{\Gamma \Vdash \propag{\push{t}{\spiD{e}}}
                            {t'}}
-     {\Gamma \Vdash \begin{array}{@{}l} 
+     {\Gamma \Vdash \begin{array}{@{}l}
                         \propag{\push{t}{\EnumT{e} \To \Desc}}
                                {\\ \PLAM{x}{(\EnumT{e})} \switchD{e}{t'}{x}}
-                    \end{array}}\;\mbox{t is $[]$ or $[a,b]$}
+                    \end{array}
+     }\;\mbox{t is $[]$ or $[a,b]$}
 \]
+
 
 \begin{wstructure}
 <- Generic programming now!
@@ -358,13 +361,13 @@ Induction principle defined over Mu-things.
 This concludes our levitation work. Beyond its pedagogical value, this
 exercise has several practical outcomes. First of all, this exercise
 reveals that the $\Desc$ universe is just plain data. Just as any
-piece of data, it can therefore be inspected and manipulated. However,
-unlike any data, it is expressed in the $\Desc$ universe. As a
+piece of data, it can therefore be inspected and
+manipulated. Moreover, it is expressed in the $\Desc$ universe. As a
 consequence, it is equipped, for free, with an induction
 principle. So, our ability to inspect and program with $\Desc$ is not
 restricted to the meta-language: we now have all the necessary
 equipment in the target language to \emph{program} over data-types. In
-this setting, generic programming is just about \emph{programming}.
+this setting, \emph{generic programming is just about programming}.
 
 
 \subsection{The generic catamorphism}
@@ -390,7 +393,7 @@ from the generic induction principle.
 The catamorphism can be characterised as an induction on the
 description $D$, with a non-dependent motive targeting $T$. Given a
 node $xs$ and the induction hypotheses, the method ought to build an
-element of $T$. Provided we know how to make an element of
+element of $T$. Provided that we know how to make an element of
 $\descop{D}{T}$, this step will be performed by the algebra $f$. Let
 us take a look at this jigsaw:
 
@@ -453,10 +456,7 @@ operation, the catamorphism, from a pre-existing generic operation,
 the induction principle. This has been made possible by our ability to
 manipulate descriptions as first-class objects: the catamorphism is,
 basically, a function mapping a $\Desc$ to a data-type specific
-operation. Having the ability to program on $\Desc$ is the key to
-define such function. The induction principle of $\Desc$ -- inherited
-by levitation -- plays a central role here: without an induction
-principle, it would be impossible to program on $\Desc$.
+operation.
 
 Moreover, the $\F{replace}$ function demonstrates the benefit of an
 approach based on universes. The data-types living in the universe of
@@ -480,7 +480,7 @@ data-type. Given a functor, represented as a tagged description, we
 build the free monad over this functor.
 
 \newcommand{\FMFreeMonad}{\D{FreeMonad}}
-\newcommand{\FMFreeMonadF}{\D{FreeMonad$_{\CN{Free}}$}}
+\newcommand{\FMFreeMonadD}{\D{FreeMonadD}}
 \newcommand{\FMVar}{\C{Var}}
 \newcommand{\FMComposite}{\C{Composite}}
 
@@ -506,7 +506,7 @@ Being an inductive type, this $\FMFreeMonad$ data-type is itself
 defined by a functor signature. It is given by:
 
 \[
-\FMFreeMonadF\: F\: X\: Z \mapsto X + F Z
+\FMFreeMonadD\: F\: X\: Z \mapsto X + F Z
 \]
 
 \begin{wstructure}
@@ -521,9 +521,8 @@ defined by a functor signature. It is given by:
 In our setting, the functor will be represented by a tagged
 description. The free monad construction will take such tagged
 description, a set $X$ of variables, and will compute the tagged
-description of the corresponding free monad.
-
-Implementing this function is surprisingly easy:
+description of the corresponding free monad. Implementing this
+function is surprisingly easy:
 
 \[\stk{
 \FreeMonad{\_} : \TagDesc \To \Set \To \TagDesc \\
@@ -534,10 +533,10 @@ Implementing this function is surprisingly easy:
 
 We simply add a constructor, $\DVar{}$, and define its argument to be
 a $\DSigma{X}{\DUnit}$, that is an element of $X$. We keep $E$ and $D$
-as they were, hence leaving the functor unchanged. The interpretation
-of this definition convince us that we have built the functor
-signature of the free monad. The fix-point operation ties the knot and
-gives us the full-blown free monad construction.
+as they were, hence leaving the functor unchanged. Unfolding the
+interpretation of this definition, we convince ourself that this
+corresponds to the functor $\FMFreeMonadD$. The fix-point operation
+ties the knot and gives us the full-blown free monad construction.
 
 \begin{wstructure}
 <- A generic program: monadic substitution [equation]
@@ -573,8 +572,8 @@ arguments to $\cata$ as possible:
 }\]
 
 Our task is therefore to implement the algebra of the
-catamorphism. Intuitively, its role is to catch appearance of
-$\DVar{x}$, to replace it by $\sigma x$. Otherwise, it should simply
+catamorphism. Intuitively, its role is to catch appearances of
+$\DVar{x}$ and replace them by $\sigma x$. Otherwise, it should simply
 appeal to the induction hypothesis. This corresponds to the following
 definition:
 
@@ -601,15 +600,15 @@ definition:
             <- Substitution / bind
 \end{wstructure}
 
-Filling the $???$ sub-goal with $\apply\: D\: X\: Y\: \sigma$ finishes
-the implementation. To sum up, we have implemented the free monad
-construction for an arbitrary tagged description. This gives our user
-the ability, for any data-type, to extend it with a notion of
-variable. Then, we have equipped this structure with the
-corresponding monadic operation, ``bind'' and ``return''. Whereas the
-``return'' is a trivial variable former, the ``bind'' operation
-corresponds to the substitution of variables by terms. We have shown
-how to implement it, for any free monad.
+Filling the $???$ sub-goal with $\apply\: D\: X\: Y\: \sigma$
+completes the implementation. To sum up, we have implemented the free
+monad construction for an arbitrary tagged description. This gives our
+user the ability, for any data-type, to extend it with a notion of
+variable. Then, we have equipped this structure with the corresponding
+monadic operation, ``bind'' and ``return''. Whereas the ``return'' is
+a trivial variable former, the ``bind'' operation corresponds to the
+substitution of variables by terms. We have shown how to implement it,
+for any free monad.
 
 
 \begin{wstructure}
