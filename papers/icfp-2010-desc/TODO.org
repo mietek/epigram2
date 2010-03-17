@@ -14,12 +14,12 @@ If it hasn't been translated into universe polymorphism
 ** Nisse's parser?
 ** ???
 
-* TODO Tagged description needs to go through \toDesc{} before use
+* DONE Tagged description needs to go through \toDesc{} before use
 * TODO I have written "user" here and there.
 
 This might not be the tone of the paper. We probaly want to call "user" a developer.
 
-* TODO Fig.~\ref or Fig.\ref?
+* DONE Fig.~\ref or Fig.\ref?
 * TODO No indexed fixed-point? No induction principle discussion?
 
 The IMu type former and iinduction operator are absolutely not presented.
