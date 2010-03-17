@@ -210,7 +210,7 @@ following:
 
 \[\stk{
 \NatD : \Desc \\
-\NatD \mapsto \DSigma{(\EnumT [ \NatZero, \NatSuc{} ])}
+\NatD \mapsto \DSigma{(\EnumT{[ \NatZero, \NatSuc{} ]})}
                      {[ \DUnit \quad (\DIndx{\DUnit}) ]}
 }\]
 
@@ -239,7 +239,7 @@ signature of lists:
 
 \[\stk{
 \ListD : \Set \To \Desc \\
-\ListD \: X \mapsto \DSigma{(\EnumT [ \ListNil, \ListCons ])}
+\ListD \: X \mapsto \DSigma{(\EnumT{[ \ListNil, \ListCons ]})}
                            {[ \DUnit \quad (\DSigma{X}{\LAM{\_} \DIndx{\DUnit}}) ]}
 }\]
 
@@ -266,7 +266,7 @@ demonstrated by our description of binary trees:
 \[\stk{
 \TreeD : \Set \To \Desc \\
 \begin{array}{@{}ll}
-\TreeD \: X \mapsto \DSigma{ & (\EnumT [ \TreeLeaf, \TreeNode ]) \\}
+\TreeD \: X \mapsto \DSigma{ & (\EnumT{[ \TreeLeaf, \TreeNode ]}) \\}
                            { & [ \DUnit \quad (\DSigma{X}{\LAM{\_} \DIndx{(\DIndx{\DUnit})}}) ]}
 \end{array}
 }\]

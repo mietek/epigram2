@@ -143,7 +143,7 @@ Our first tentative is the following:
 \[\stk{
 \DescD : \Desc \\
 \begin{array}{@{}ll}
-\DescD \mapsto \DSigma{}{} & (\EnumT [ \DUnit, \DSigma{}{}, \DIndx{} ])  \\
+\DescD \mapsto \DSigma{}{} & (\EnumT{[ \DUnit, \DSigma{}{}, \DIndx{} ]})  \\
                            & \left[\begin{array}{l}
                                    \DUnit                                \\
                                    \DSigma{\Set}{(\LAM{\V{S}} ???)}      \\
@@ -252,7 +252,7 @@ invisible cable. Let us reveal it, hence finishing our implementation.
 \[\stk{
 \DescD : \Desc \\
 \begin{array}{@{}ll}
-\DescD \mapsto \DSigma{}{} & (\EnumT [ \DUnit, \DSigma{}{}, \DIndx{}, \DHindx{}{} ]) \\
+\DescD \mapsto \DSigma{}{} & (\EnumT{[ \DUnit, \DSigma{}{}, \DIndx{}, \DHindx{}{} ]}) \\
                            & \left[\begin{array}{l}
                                    \DUnit                                            \\
                                    \DSigma{\Set}{(\LAM{\V{S}} \DHindx{S}{\DUnit})}   \\
@@ -280,7 +280,7 @@ Our reader might be slightly confused to learn that the trick is
 visible in the definition of $\DescD$
 (Fig.~\ref{fig:desc-levitate}). Or rather, it is made invisible by
 careful usage of type propagation. Indeed, let us try to elaborate
-this term down to the low-level type theory. The $\EnumT [ \ldots ]$
+this term down to the low-level type theory. The $\EnumT{[ \ldots ]}$
 construct elaborates to a finite set $e$ in $\EnumU$, inhabited by the
 codes. Then, we can type-check the case definition, between square
 brackets $[ \ldots ]$. This term $f$ is pushed into the type

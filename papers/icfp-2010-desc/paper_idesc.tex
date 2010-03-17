@@ -290,7 +290,7 @@ descriptions. The code is the following:
 
 \[\stk{
 \NatD : \IDesc{\Unit} \\
-\NatD \mapsto \DSigma{(\EnumT [ \NatZero, \NatSuc{} ])}
+\NatD \mapsto \DSigma{(\EnumT{[ \NatZero, \NatSuc{} ]})}
                      {[ \DConst{\Unit} \quad (\DVar{\Void}) ]}
 }\]
 
@@ -318,11 +318,11 @@ levitation does not pose any issue:
 \[\stk{
 \IDescD : \PI{\V{I}}{\Set} \IDesc{\Unit} \\
 \begin{array}{@{}ll}
-\IDescD~I \mapsto \DSigma{}{} & (\EnumT [ \DVar{},
+\IDescD~I \mapsto \DSigma{}{} & (\EnumT{[ \DVar{},
                                           \DConst{},
                                           \DProd{}{},
                                           \DSigma{}{}, 
-                                          \DPi{}{} ]) \\
+                                          \DPi{}{} ]}) \\
                               & \left[\begin{array}{l}
                                       \DConst{I}                  \\
                                       \DConst{\Set}               \\
@@ -382,7 +382,7 @@ not using any indexing. We are going to define a syntax for a small
 typed language. We consider two types, natural numbers and booleans:
 
 \[
-\Ty \mapsto \EnumT{[\Enat \quad \Ebool]}
+\Ty \mapsto \EnumT{[\Enat, \Ebool]}
 \]
 
 An expression of this language is either a value, a conditional
@@ -445,7 +445,7 @@ $\switch{}{}{}{}$ eliminator.
 \HExprAD : \ATagIDesc{\Ty} \\
 \HExprAD \mapsto \left[
                  \begin{array}{l}
-                   \EnumT{[\Eval{}  \Econd{}{}{}]} \red{,} \\
+                   \EnumT{[\Eval{}, \Econd{}{}{}]} \red{,} \\
                    \LAM{ty}
                    \left[ %%! Should be read
                    \begin{array}{l}
@@ -689,7 +689,7 @@ this case, we obtain the following definition:
 \[\stk{
 \FinD : \Nat \To \IDesc{\Nat} \\
 \begin{array}{@{}ll}
-\FinD\: n = \DSigma{}{} & (\EnumT [ \FinZero , \FinSuc{} ]) \\
+\FinD\: n = \DSigma{}{} & (\EnumT{[ \FinZero , \FinSuc{} ]}) \\
                         & \left[
                           \begin{array}{l}
                             \DSigma{\Nat}{\LAM{m} \DConst{(n \PropEq \NatSuc{m})}} \\
@@ -773,7 +773,7 @@ following, equivalent definition:
 \FinD : \Nat \To \IDesc{\Nat} \\
 \begin{array}{@{}llll}
 \FinD\: 0            & = & \multicolumn{2}{l}{\DSigma{\Void}{\Void} } \\
-\FinD\: (\NatSuc{n}) & = & \DSigma{}{} & (\EnumT [ \FinZero , \FinSuc{} ]) \\
+\FinD\: (\NatSuc{n}) & = & \DSigma{}{} & (\EnumT{[ \FinZero , \FinSuc{} ]}) \\
                      &   &             & \left[
                                          \begin{array}{l}
                                          \DConst{\Unit} \\
@@ -967,10 +967,10 @@ this signature functor by the following code:
 \[\stk{
 \IDescFreeD : \PI{\V{I}}{\Set} \IDesc{\Unit} \\
 \begin{array}{@{}ll}
-\IDescFreeD~I \mapsto \DSigma{}{} & (\EnumT [ \DConst{},
+\IDescFreeD~I \mapsto \DSigma{}{} & (\EnumT{[ \DConst{},
                                               \DProd{}{},
                                               \DSigma{}{}, 
-                                              \DPi{}{} ]) \\
+                                              \DPi{}{} ]}) \\
                                   & \left[\begin{array}{l}
                                         \DConst{\Set}               \\
                                         \DProd{\DVar{\Void}}{\DVar{\Void}}  \\

@@ -57,7 +57,7 @@ universe of descriptions.
 * DONE Cool down the many "intuitively"
 * DONE composed by/composed of
 * TODO Shall we present EnumU with tags as constructors, directly?
-* TODO Finite set declaration: should be EnumT [a, b, c]
+* DONE Finite set declaration: should be EnumT [a, b, c]
 * TODO Simply-typed Haskell??
 
 Man everybody knows that Haskell is the first mainstream
