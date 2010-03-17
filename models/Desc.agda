@@ -305,7 +305,7 @@ cata : (D : Desc)
        (T : Set) ->
        ([| D |] T -> T) ->
        (Mu D) -> T
-cata D T phi x = induction D (\_ -> T) (\x ms -> phi (replace D T x ms )) x
+cata D T phi x = induction D (\_ -> T) (\x ms -> phi (replace D T x ms)) x
   where replace : (D' : Desc)(T : Set)(xs : [| D' |] (Mu D))(ms : All D' (Mu D) (\_ -> T) xs) -> [| D' |] T
         replace id T x y = y
         replace (const Z) T z z' = z'

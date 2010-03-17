@@ -405,14 +405,11 @@ closeTerm = exprIDesc Val expr
 eval : (ty : Type) -> IMu closeTerm ty -> Val ty
 eval ty term = cata Type closeTerm Val evalOneStep ty term
         where evalOneStep : (ty : Type) -> desc (closeTerm ty) Val -> Val ty
-              evalOneStep nat (EZe , t) = t
-              evalOneStep nat ((ESu EZe) , (true , ( x , _))) = x
-              evalOneStep nat ((ESu EZe) , (false , ( _ , y ))) = y
+              evalOneStep _ (EZe , t) = t
+              evalOneStep _ ((ESu EZe) , (true , ( x , _))) = x
+              evalOneStep _ ((ESu EZe) , (false , ( _ , y ))) = y
               evalOneStep nat ((ESu (ESu EZe)) , (x , y)) = plus x y
               evalOneStep nat ((ESu (ESu (ESu ()))) , t) 
-              evalOneStep bool (EZe , t ) = t
-              evalOneStep bool ((ESu EZe) , (true , (x , _))) = x
-              evalOneStep bool ((ESu EZe) , (false , (_ , y))) = y
               evalOneStep bool ((ESu (ESu EZe)) , (x , y) ) =   le x y
               evalOneStep bool ((ESu (ESu (ESu ()))) , _) 
 
