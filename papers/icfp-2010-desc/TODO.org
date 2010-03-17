@@ -79,7 +79,7 @@ definition with constructors. When defining the Fin data-type, I used
 a sequent presentation of it. I should uniformize this presentation,
 and choose one or the other.
 
-* TODO {ExprD_{Free}}_Ty might be a bit to much
+* DONE {ExprD_{Free}}_Ty might be a bit to much
 
 It's un-readable. Probably one should be an exponent.
 
