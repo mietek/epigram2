@@ -66,14 +66,14 @@ for data to influence further data.
 \end{wstructure}
 
 In the simply-typed world, the essence of data-type definition can be
-summed up by the expression ``sum-of-product''. A data-type is defined
+summed up by the expression \emph{sum-of-product}. A data-type is defined
 by a finite sum -- a choice -- of constructors, each of them is
 composed of a product -- a tuple -- of arguments. This form governs
 the grammar of data-type definition in languages such as Haskell or
 OCaml.
 
 To model these data-types, we simply need to capture this grammar in
-our dependently-typed setting. Here, the notion of ``sum-of-product''
+our dependently-typed setting. Here, the notion of sum-of-product
 naturally translates into \emph{sigmas-of-sigmas}. However, beyond
 this intuition, it should be clear that a direct encoding of
 data-types through raw $\Sigma$-types is not a viable option. Indeed,
@@ -303,7 +303,7 @@ description. Formally, we have:
  \TagDesc \mapsto \SIGMA{\V{E}}{\EnumU} (\spi{\V{E}}{(\LAM{\_} \Desc)})
 \]
 
-Again, this is a clear reminiscence of the ``sum-of-products'' style:
+Again, this is a clear reminiscence of the sum-of-product style:
 we have a finite sum of constructors. Of course, every description can
 be expressed in this style, using a singleton as single constructor if
 necessary. A tagged description can trivially be turned into a
@@ -510,7 +510,7 @@ As for finite sets previously, these symptoms clearly indicate that we
 suffer from too much type information. Just as for finite sets, the
 cure lies in rationalising this information. Let us first tackle the
 issue of data-type declaration. The grammar of data-types we are used
-to can be straightforwardly translated to the ``sigmas-of-sigmas''
+to can be straightforwardly translated to the sigmas-of-sigmas
 paradigm. Hence, a data-type definition can be turned into the
 corresponding description. Then, at the level of definitions, we
 associate the name of the data-type to the fix-point of the

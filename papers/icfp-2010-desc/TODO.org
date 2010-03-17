@@ -64,7 +64,7 @@ Man everybody knows that Haskell is the first mainstream
 dependently-typed language. So, how do I get arround my various
 "simply-typed languages, such as Haskell"?
 
-* TODO Quotes on sum-of-product, or not, or maybe. Same for sigmas-of-sigmas
+* DONE Quotes on sum-of-product, or not, or maybe. Same for sigmas-of-sigmas
 * TODO Better names for subcomponents of tagged description
 
 \newcommand{\ATagIDesc}[1]{\F{ATagIDesc}~#1}
