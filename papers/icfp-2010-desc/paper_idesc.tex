@@ -637,15 +637,14 @@ is the following:
 
 Abstracting away the book-keeping introduced by the context, this
 definition looks familiar. Indeed, it is extremely similar to a
-monadic ``bind''. This is not surprising as we are defining a
-first-order syntax with variables: our data-type enjoys more structure
-than what we are given. In particular, this is reminiscent to a free
-monad, where $\Eval{}$ is the ``return'' introducing
-variables. Instead of implementing $\substH$ in this special case, we
-shall implement it in a generic setting, and express our example in
-that setting. However, before entering the realm of generic
-structures, let us further explore the universe of indexed
-descriptions.
+monadic \bind. This is not surprising as we are defining a first-order
+syntax with variables: our data-type enjoys more structure than what
+we are given. In particular, this is reminiscent to a free monad,
+where $\Eval{}$ is the \return introducing variables. Instead of
+implementing $\substH$ in this special case, we shall implement it in
+a generic setting, and express our example in that setting. However,
+before entering the realm of generic structures, let us further
+explore the universe of indexed descriptions.
 
 \subsection{Constrained constructors}
 
@@ -826,8 +825,8 @@ derive the indexed functor coding its free monad:
 }\]
 
 Just as in the universe of descriptions, this construction comes with
-an obvious ``return'' and a substitution operation, the ``bind''. Its
-type signature is the following:
+an obvious \return and a substitution operation, the \bind. Its type
+signature is the following:
 
 \newcommand{\substI}{\F{substI}}
 
@@ -864,16 +863,16 @@ type signature is the following:
 
 In Section~\ref{sec:idesc-examples}, we had the intuition that our
 datatypes $\HExprD$ and $\HExprVarD$ enjoy a monadic structure. We had
-identified the variable substitution operation as the ``bind'' of a
-free monad. The definition of $\substI$ above confirm our intuition:
-using $\substI$, we should easily obtain $\substH$. To do so, we first
-have to massage the definition of our data-type, to exhibit its
-monadic structure.
+identified the variable substitution operation as the \bind of a free
+monad. The definition of $\substI$ above confirm our intuition: using
+$\substI$, we should easily obtain $\substH$. To do so, we first have
+to massage the definition of our data-type, to exhibit its monadic
+structure.
 
-As previously mentioned, we identify $\Eval{}$ as the ``return'' of
-the free monad, while the other components are the action of the
-monad. As a result, the definition is similar to $\HExprD$ presented
-in Figure~\ref{fig:hexpr-full}, at the exception of $\HExprAD$ that is
+As previously mentioned, we identify $\Eval{}$ as the \return of the
+free monad, while the other components are the action of the monad. As
+a result, the definition is similar to $\HExprD$ presented in
+Figure~\ref{fig:hexpr-full}, at the exception of $\HExprAD$ that is
 replaced by $\HExprAFreeD$:
 
 \[\stk{
@@ -961,7 +960,7 @@ a well-typed language, together with its semantics.
 \paragraph{Indexed description:}
 
 Another instance of free monad is $\IDesc$ itself. Indeed, $\DVar$ is
-nothing but the ``return''. The remaining constructors are simply the
+nothing but the \return. The remaining constructors are simply the
 signature functor, trivially indexed by $\Unit$. Hence, we describe
 this signature functor by the following code:
 

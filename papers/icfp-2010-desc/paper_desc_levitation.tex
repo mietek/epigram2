@@ -544,8 +544,8 @@ ties the knot and gives us the full-blown free monad construction.
 
 Of course, we must equip the resulting data-types with operations
 delivering a monadic interface. As usual, \(\LAM{\x}\DVar{\x}\)
-performs the r\^ole of ``return'', embedding variables into terms. The
-``bind'' operation corresponds to \emph{substitution}. We will now
+performs the r\^ole of \return, embedding variables into terms. The
+\bind operation corresponds to \emph{substitution}. We will now
 implement it, as a generic function.
 
 Our implementation will appeal to the $\cata$ function developed
@@ -607,10 +607,10 @@ completes the implementation. To sum up, we have implemented the free
 monad construction for an arbitrary tagged description. This gives our
 user the ability, for any data-type, to extend it with a notion of
 variable. Then, we have equipped this structure with the corresponding
-monadic operation, ``bind'' and ``return''. Whereas the ``return'' is
-a trivial variable former, the ``bind'' operation corresponds to the
-substitution of variables by terms. We have shown how to implement it,
-for any free monad.
+monadic operation, \bind and \return. Whereas the \return is a trivial
+variable former, the \bind operation corresponds to the substitution
+of variables by terms. We have shown how to implement it, for any free
+monad.
 
 
 \begin{wstructure}
@@ -634,6 +634,6 @@ it. Extending a data-type might give rise to a more structured
 object, as was the case here.
 
 So, secondly, we have equipped this new data-type with its inherent
-structure: the bind and return operations. We have been able to build
-them as generic functions. Here, we rely on our ability to compute
-over descriptions, thanks to the induction principle.
+structure: the \bind and \return operations. We have been able to
+build them as generic functions. Here, we rely on our ability to
+compute over descriptions, thanks to the induction principle.
