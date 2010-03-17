@@ -761,11 +761,10 @@ To get a clue of a solution, let us look back at $\Fin$. We note that
 the equation is introduced because we are \emph{storing} the index of
 the inductive family, through $m$. Hence the constraint. However,
 \emph{inductive families need not store their
-  indices}~\cite{brady:index-inductive-families}. Applying the
+  indices}~\cite{brady:index-inductive-families}\note{ I'm not
+  familiar with this, I need to get into the paper. }. Applying the
 \emph{forcing} optimisation to our definition of $\Fin$ gives the
 following, equivalent definition:
-
-\note{ I'm not familiar with this, I need to get into the paper. }
 
 \[\stk{
 \FinD : \Nat \To \IDesc{\Nat} \\
@@ -894,7 +893,7 @@ replaced by $\HExprAFreeD$:
 The resulting data-type is called $\HExprFreeD$. By a simple unfolding
 of definition, we note that $\FreeIMonad{\HExprFreeD}{\Ty}{\Val{}}$
 corresponds to the closed expression, $\HExprD$. Similarly,
-$$\FreeIMonad{\HExprFreeD}{\Ty}{(\LAM{ty} \Val{ty} + \Var{ty})}$$
+$$\FreeIMonad{\HExprFreeD}{\Ty}{(\LAM{ty} \Val{ty} + \Var{dom}{ty})}$$
 corresponds to expressions with variables, $\HExprVarD$.
 
 \begin{wstructure}
