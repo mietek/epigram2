@@ -67,14 +67,14 @@ such as Luo's seminal work \cite{luo:utt}.
 \begin{wstructure}
     <- Judgemental equality
         <- Presentation independent of particular implementation choice
-        -> Model in Agda, intentional
+        -> Model in Agda, intensional
         -> Used in Epigram, OTT
 \end{wstructure}
 
 Noticeably, we have adopted a judgemental presentation of
 equality. Therefore, we are not tied to a particular implementation
 choice. In particular, our system has been modelled in Agda, which
-features an intentional equality. On the other hand, it is used in
+features an intensional equality. On the other hand, it is used in
 Epigram, which equality has a slightly extensional
 flavor~\cite{altenkirch:ott}. We expect users of fully extensional
 systems to also find their way through this presentation.
@@ -401,6 +401,9 @@ type-checking is divided into two complementary phases. In the
 \emph{type inference} phase, types are \emph{pulled} out of terms. A
 typical example is a variable in the context:
 
+\note{pwm: We should explain this new judgement form, specifically that
+$\propag{}{}$ means `elaborates to'.}
+
 \[
 \Axiom{\Gamma ; \xS ; \Delta \Vdash \propag{\x}
                                            {\pull{\x}{S}}}
@@ -570,7 +573,7 @@ convenient syntax instead.
 
 This example teaches us that we should not be afraid by codes, as soon
 as type information is available. We have shown how to rationalise
-this information in a formal presentation. Hence, we have proved that
+this information in a formal presentation. Hence, we have shown that
 programming with such objects is practical. As we introduce more codes
 in our theory, we will show how to extend the framework we have
 developed so far.

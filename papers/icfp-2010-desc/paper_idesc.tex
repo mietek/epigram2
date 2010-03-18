@@ -36,11 +36,14 @@ However, this new class of objects cannot be defined by mere
 induction. In the case of vectors, for instance, we have to define the
 whole \emph{family} of vector in one go: vectors of all size needs to
 be defined at the same time. Where simply-typed languages have
-inductive types, we adopt inductive family of types as our basic
-grammar of data-types. To this end, we rely on \emph{indexing}. We are
-going to transform the $\Desc$ universe into $\IDesc$, the universe of
-indexed descriptions. We express inductive families by the $I \To
-\IDesc{I}$ type.
+inductive types, in dependently typed programming we the basic grammar of
+data-types should be that of inductive families of types. To this end, we
+rely on \emph{indexing}. We are going to transform the $\Desc$ universe into
+$\IDesc$, the universe of indexed descriptions. We express inductive families
+by the $I \To \IDesc{I}$ type.  \note{pwm: Vec might not be the best
+motivating example here, since it doesn't appear in the paper (more on that
+later). Come to think of it, this is entirely too vague without spelling out
+a concrete example.} 
 
 \subsection{Desc, atomically}
 
@@ -63,6 +66,8 @@ $$\Bhab{\Sigma}{\PI{\V{S}}{\Set} (S \To \Set) \To \Set}$$
 In the alternative presentation, we go further and present all our
 codes as quotations of standard type-formers. This presentation is
 shown in Figure~\ref{fig:type-former-desc}.
+\note{pwm: The exception being non dependent product -- we might want to
+explain why this is.} 
 
 This reorganisation is strictly equivalent to the previous one
 (Fig.~\ref{fig:hindx_desc}). Just as the previous version, it is also
@@ -134,7 +139,10 @@ In the previous section, we have presented the $\Desc$ universe as the
 grammar of functors in the category $\Set$. We have seen how to encode
 inductive types in this setting. To encode an inductive family indexed
 by $\Bhab{\V{I}}{\Set}$, we rely on functors in the category
-$\Set^I$. We call these \emph{indexed functors}. In the following, we
+$\Set^I$. We call these \emph{indexed functors}. 
+\note{pwm: What's our story \emph{vis-\`{a}-vis} the 2 notions of indexed
+functor at play here: $(I\to\Set)\to\Set$ and $(I\to\Set)\to(I\to\Set)$?}  
+In the following, we
 implement $I \To \IDesc{I}$ as a grammar for indexed functors:
 
 \[\stk{
@@ -146,9 +154,9 @@ implement $I \To \IDesc{I}$ as a grammar for indexed functors:
 }\]
 
 This generalisation can be achieved by a minor evolution of $\Desc$
-(Fig.~\ref{fig:type-former-desc}). Indeed, the functorial nature of $\Desc$
-is entirely captured by the $\DId$ code. We get an indexed functor
-by turning $\DId$ into an index-dependent $\DVar$ code:
+(Fig.~\ref{fig:type-former-desc}). Indeed, the functorial nature of the
+atomic $\Desc$ is entirely captured by the $\DId$ code. We get an indexed
+functor by turning $\DId$ into an index-dependent $\DVar$ code:
 
 \[\stk{
 \data \IDesc{} (\Bhab{\V{I}}{\Set}) : \Set \where \\
@@ -157,7 +165,7 @@ by turning $\DId$ into an index-dependent $\DVar$ code:
     \ldots          & \ldots
 \end{array} \\
 \\
-\idescop{\_\:}{}{} : \PI{\V{I}}{\Set} \IDesc{I} \To (\V{I} \To \Set) \To \Set        \\
+\idescop{\_\:}{}{} :_{\PI{\V{I}}{\Set}} \IDesc{I} \To (\V{I} \To \Set) \To \Set        \\
 \begin{array}{@{}l@{\:=\:\:}ll}
 \idescop{\DVar{i}}{I}{P}      &  P~i                                                 \\
 \ldots                        &  \ldots
@@ -201,7 +209,7 @@ burden on the programmer.
 \vspace{0.2in}
 \\
 \stk{
-\idescop{\_\:}{}{} : \PI{\V{I}}{\Set} \IDesc{I} \To (\V{I} \To \Set) \To \Set                  \\
+\idescop{\_\:}{}{} :_{\PI{\V{I}}{\Set}} \IDesc{I} \To (\V{I} \To \Set) \To \Set                  \\
 \begin{array}{@{}l@{\:=\:\:}ll}
 \idescop{\DVar{i}}{I}{P}      &  P~i                                                 \\
 \idescop{\DConst{X}}{I}{P}    &  X                                                   \\
@@ -264,6 +272,8 @@ In the case of vectors, for instance, for the index $\NatZero$, we
 would only propose the constructor $\ListNil$. Similarly, for
 $\NatSuc{n}$, we only propose the constructor $\ListCons{}{}$. We will
 see more instances of this pattern in the following.
+\note{We're talking about vectors again, are we \emph{really} not going to
+define them?}
 
 
 
@@ -318,26 +328,26 @@ levitation does not pose any issue:
 \[\stk{
 \IDescD : \PI{\V{I}}{\Set} \IDesc{\Unit} \\
 \begin{array}{@{}ll}
-\IDescD~I \mapsto \DSigma{}{} & (\EnumT{[ \DVar{},
+\IDescD~I \mapsto \DSigma{}{} & (\EnumT \red{[} \DVar{},
                                           \DConst{},
                                           \DProd{}{},
                                           \DSigma{}{}, 
-                                          \DPi{}{} ]}) \\
-                              & \left[\begin{array}{l}
+                                          \DPi{}{} \red{]}) \\
+                              & \bigRedBracket{\begin{array}{l}
                                       \DConst{I}                  \\
                                       \DConst{\Set}               \\
                                       \DProd{\DVar{\Void}}{\DVar{\Void}}  \\
                                       \DSigma{\Set}{(\LAM{S} \DPi{S}{(\LAM{\_} \DVar{\Void})})} \\
                                       \DSigma{\Set}{(\LAM{S} \DPi{S}{(\LAM{\_} \DVar{\Void})})}
                                    \end{array}
-                             \right]
+                             }
 \end{array}
 }\]
 
 Note that this description also lives in $\IDesc{\Unit}$. Indeed,
-$\IDesc$ is merely an inductive type. As for the $\Desc$ levitation,
-the finite function space $[ \ldots ]$ elaborates into a special
-purpose $\F{switchID}$ operator. 
+for any $\V{I}$, $\IDesc~\V{I}$ is merely an inductive type. As for the
+$\Desc$ levitation, the finite function space $[ \ldots ]$ elaborates into a
+special purpose $\F{switchID}$ operator. 
 
 \paragraph{Typed expressions:}
 
@@ -401,7 +411,9 @@ their type is the following:
 The notation $\Epolym$ represents a form of ``polymorphism'', meaning
 that $\alpha$ can be any type. \note{Polymorph? Will any ghost try to
   haunt me with that?  A ghost under a mixed prefix?
-  Aaaaaaaaaaargh\ldots}
+  Aaaaaaaaaaargh\ldots (Wha? - pwm)}
+\note{pwm: I don't really get the need for this $\Epolym$ notation. Why not
+just abstract over an elem of $\Ty£$?} 
 
 The function $\Val{}$, used in the definition of $\Eval{}$, simply
 maps $\Epolym$ to the corresponding type in the host language. Hence,
@@ -443,24 +455,24 @@ $\switch{}{}{}{}$ eliminator.
 \begin{array}{ll}
 \stk{
 \HExprAD : \ATagIDesc{\Ty} \\
-\HExprAD \mapsto \left[
+\HExprAD \mapsto \bigRedBracket{
                  \begin{array}{l}
                    \EnumT{[\Eval{}, \Econd{}{}{}]} \red{,} \\
                    \LAM{ty}
-                   \left[ %%! Should be read
+                   \bigRedBracket{
                    \begin{array}{l}
                    \DConst{(\Val{ty})} \\
                    \DProd{\DVar{\Ebool}}{\DProd{\DVar{ty}}{\DVar{ty}}}
                    \end{array}
-                   \right]
+                   }
                  \end{array}
-                 \right] %%! Should be \red
+                 }
 \\
 \\
 } &
 \stk{
 \HExprID : \ITagIDesc{\Ty} \\
-\HExprID \mapsto \left[
+\HExprID \mapsto \bigRedBracket{
                  \begin{array}{l}
                    \LAM{ty} \case{ty}{\Enat \To \EnumT{[\Eplus{}{}]} \\ \Ebool \To \EnumT{[\Ele{}{}]}} \red{,} \\
                    \LAM{ty}
@@ -469,7 +481,7 @@ $\switch{}{}{}{}$ eliminator.
                      \Ebool \To \DProd{\DVar{nat}}{\DVar{nat}}
                    }
                    \end{array}
-                   \right]
+                   }
 }
 \end{array}
 }\]
@@ -479,7 +491,7 @@ $\switch{}{}{}{}$ eliminator.
 
 \end{figure*}
 
-\note{the big square brackets should be red}
+\note{the big square brackets should be red (pwm: use \\bigRedBracket :)) }
 
 \begin{wstructure}
     -> evaluation: IMu TermD -> Val
@@ -531,7 +543,9 @@ is as follow:
                                  ty\: 
                                  term
 }\]
-
+\note{pwm: $\evalOne$ rather illustrates my point about the 2 types of IFunc
+floating around, $\idescop{\_}{}{}$ is defined using the 1st notion, and used it
+here as if it were the 2nd}
 
 \begin{wstructure}
     /> Closed term
@@ -718,16 +732,16 @@ this case, we obtain the following definition:
 \FinD : \Nat \To \IDesc{\Nat} \\
 \begin{array}{@{}ll}
 \FinD\: n = \DSigma{}{} & (\EnumT{[ \FinZero , \FinSuc{} ]}) \\
-                        & \left[
+                        & \bigRedBracket{
                           \begin{array}{l}
                             \DSigma{\Nat}{\LAM{m} \DConst{(n \PropEq \NatSuc{m})}} \\
                             \DSigma{\Nat}{\LAM{m} \DProd{\DVar{m}}{\DConst{(n \PropEq \NatSuc{m})}}}
                           \end{array}
-                          \right]
+                          }
 \end{array}
 }\]
 
-Intuitively, the constraint is captured as follow. First, we store an
+Intuitively, the constraint is captured as follows. First, we store an
 element $m$ of $\Nat$, thanks to a $\DSigma$. However, the constraint
 stipulates that $m$ cannot be \emph{any} natural numbers: it must be
 ``the index minus one''. This translates into the constraint $n
@@ -742,6 +756,7 @@ stipulates that $m$ cannot be \emph{any} natural numbers: it must be
 \end{wstructure}
 
 \note{ I suspect we don't implement vectors, space-wise }
+\note{pwm: I suspect we don't get away with leaving them out}
 
 \begin{wstructure}
 <- GADT-style data-type definition
@@ -765,10 +780,10 @@ constraints.
 
 While we support the same grammar, indexed descriptions embraces a
 much wider class of data-types. Indeed, we pose no constraint apart
-from strict positivity. This suggests that, based on the familiar
-grammar of GADTs, we can simply lift off the restrictions and
-translates the user's input to a code in our universe of indexed
-description. 
+from strict positivity\note{pwm: Is this actually the 1st mention of this
+phrase? I think that should be rectified :)}. This suggests that, based on
+the familiar grammar of GADTs, we can simply lift off the restrictions and
+translates the user's input to a code in our universe of indexed description. 
 
 However, one could, quite rightfully, be worried by the introduction
 of equations in the picture. In the context of programming, these
@@ -802,12 +817,12 @@ following, equivalent definition:
 \begin{array}{@{}llll}
 \FinD\: 0            & = & \multicolumn{2}{l}{\DSigma{\Void}{\Void} } \\
 \FinD\: (\NatSuc{n}) & = & \DSigma{}{} & (\EnumT{[ \FinZero , \FinSuc{} ]}) \\
-                     &   &             & \left[
+                     &   &             & \bigRedBracket{
                                          \begin{array}{l}
                                          \DConst{\Unit} \\
                                          \DVar{n}
                                          \end{array}
-                                         \right]
+                                         }
 \end{array}
 }\]
 
@@ -835,8 +850,10 @@ In this section, we develop more structure for our indexed
 data-types. In Section~\ref{sec:desc-free-monad}, we have constructed
 a free monad operation on simple descriptions. Building on this
 experience, we are going to present its equivalent in the indexed
-world. The processus is the same. Namely, given an indexed functor, we
+world. The process the same. Namely, given an indexed functor, we
 derive the indexed functor coding its free monad:
+\note{pwm: Whoa there. Maybe we should say something about IMonads in
+general before we get to this point?}
 
 \[\stk{
 \begin{array}{ll}
@@ -905,17 +922,17 @@ replaced by $\HExprAFreeD$:
 
 \[\stk{
 \HExprAFreeD : \ATagIDesc{\Ty} \\
-\HExprAFreeD \mapsto \left[
+\HExprAFreeD \mapsto \bigRedBracket{
                  \begin{array}{l}
-                   \EnumT{[\Econd{}{}{}]} \red{,} \\
+                   \EnumT{\red{[}\Econd{}{}{}\red{]}} \red{,} \\
                    \LAM{ty}
-                   \left[ %%! Should be red
+                   \bigRedBracket{
                    \begin{array}{l}
                    \DProd{\DVar{\Ebool}}{\DProd{\DVar{ty}}{\DVar{ty}}}
                    \end{array}
-                   \right]
+                   }
                  \end{array}
-                 \right] %%! Should be \red
+                 }
 }\]
 
 The resulting data-type is called $\HExprFreeD$. By a simple unfolding
@@ -992,16 +1009,16 @@ this signature functor by the following code:
 \[\stk{
 \IDescFreeD : \PI{\V{I}}{\Set} \IDesc{\Unit} \\
 \begin{array}{@{}ll}
-\IDescFreeD~I \mapsto \DSigma{}{} & (\EnumT{[ \DConst{},
+\IDescFreeD~I \mapsto \DSigma{}{} & (\EnumT \red{[} \DConst{},
                                               \DProd{}{},
                                               \DSigma{}{}, 
-                                              \DPi{}{} ]}) \\
-                                  & \left[\begin{array}{l}
+                                              \DPi{}{} \red{]}) \\
+                                  & \bigRedBracket{\begin{array}{l}
                                         \DConst{\Set}               \\
                                         \DProd{\DVar{\Void}}{\DVar{\Void}}  \\
                                         \DSigma{\Set}{(\LAM{S} \DPi{S}{(\LAM{\_} \DVar{\Void})})} \\
                                         \DSigma{\Set}{(\LAM{S} \DPi{S}{(\LAM{\_} \DVar{\Void})})}
-                                    \end{array}\right]
+                                    \end{array}}
 \end{array}
 }\]
 
@@ -1009,7 +1026,7 @@ Then, we get $\IDesc$ by building its free monad:
 
 \[\stk{
 \IDescD : \PI{\V{I}}{\Set} \IDesc{\Unit} \\
-\IDescD\: I \mapsto \FreeIMonad{[\IDescFreeD]}{\Unit}{I}\: I
+\IDescD\: I \mapsto \FreeIMonad{\red{[}\IDescFreeD\red{]}}{\Unit}{I}\: I
 }\]
 
 
