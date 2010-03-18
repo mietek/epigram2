@@ -46,7 +46,7 @@ I don't know where to write this down.
 And replace occurences of "Typed expressions"
 
 * DONE Mention convention \Val{} + \Var{dom}{} is point-wise
-* TODO Sort out indexing of HExprFreeD
+* DONE Sort out indexing of HExprFreeD
 * TODO Present Fin as tagged constructor?
 * TODO Type presentation / representation is just confusing me
 
@@ -104,7 +104,7 @@ Section sec:indexing-desc
 
 It should use the pieces we have developped, such as discharge.
 
-* TODO Fix code alignment
+* TODO Fix code overflows
 * TODO Discuss stratification
 * TODO Discuss induction/recursion
 * TODO Introduction/conclusion

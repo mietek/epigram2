@@ -861,14 +861,15 @@ general before we get to this point?}
 \begin{array}{ll}
 \FreeIMonad{\_}{} : & \PITEL{\V{I}}{\Set}
                       \PITEL{\V{X}}{\V{I} \To \Set} \\
-                    & \PITEL{\V{R}}{\V{I} \To \TagIDesc{I}} \To
-                      (\V{I} \To \TagIDesc{I})
+                    & \PITEL{\V{R}}{\TagIDesc{I}} \To
+                      \TagIDesc{I}
 \end{array} \\
-\FreeIMonad{R}{I}{X} \mapsto
-    \LAM{i}
-    \pair{\ListCons{\DVar{}}{(\fst{(R\: i)})}}
-         {\pair{(\DConst{X\: i})}
-               {(\snd{(R\: i)})}{}}{}
+\FreeIMonad{(E,F)}{I}{X} \mapsto
+    \pair{\pair{\ListCons{\DVar{}}{(\fst{E})}} 
+               {\LAM{i}
+                \pair{(\DConst{(X\: i)})}
+                     {((\snd{E})\: i)}{}}{}}
+         {F}{}
 }\]
 
 Just as in the universe of descriptions, this construction comes with
@@ -881,7 +882,7 @@ signature is the following:
 \begin{array}{@{}ll}
 \substI : & \PITEL{\V{I}}{\Set}
             \PITEL{\V{X}, \V{Y}}{\V{I} \To \Set}
-            \PITEL{\V{R}}{\V{I} \To \TagIDesc{\V{I}}} \\
+            \PITEL{\V{R}}{\TagIDesc{\V{I}}} \\
           & \PITEL{\V{\sigma}}{\PI{\V{i}}{\V{I}} \V{X}\:\V{i} \To 
                                \IMu{I}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}{\V{i}}} \\
           & \PITEL{\V{i}}{\V{I}}
