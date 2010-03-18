@@ -24,7 +24,7 @@ This might not be the tone of the paper. We probaly want to call "user" a develo
 
 The IMu type former and iinduction operator are absolutely not presented.
 
-* TODO bi-directional or bidirectional?
+* DONE bi-directional or bidirectional?
 * TODO Tech report as a bibtex entry, or footnote?
 * TODO No-argument version of multi-argument things, to avoid empty spaces
 * DONE "bind" and "return" is not a nice way of writing 
