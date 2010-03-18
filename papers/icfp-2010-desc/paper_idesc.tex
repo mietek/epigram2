@@ -85,9 +85,9 @@ evolve this presentation into an indexed one.
 
 \note{Shall we talk about the Type Theory being Desc Zero? or such story?}
 
-\begin{figure*}
+\begin{figure}
 
-\[
+\[\stk{
 \begin{array}{ll}
 \stk{
 \data \Desc : \Set \where \\
@@ -99,7 +99,8 @@ evolve this presentation into an indexed one.
     \DPi            & \PI{\V{S}}{\Set} \PIS{S \To \Desc} \Desc 
 \end{array}
 }
-&
+\vspace{0.2in}
+\\
 \stk{
 \descop{\_\:}{} : \Desc \To \Set \To \Set \\
 \begin{array}{@{}l@{\:=\:\:}ll}
@@ -111,14 +112,12 @@ evolve this presentation into an indexed one.
 \end{array}
 }
 \end{array}
-\]
+}\]
 
 \caption{Universe of descriptions based on Type-formers}
 \label{fig:type-former-desc}
 
-\end{figure*}
-
-
+\end{figure}
 
 \subsection{From Desc to IDesc}
 
@@ -185,9 +184,9 @@ its equivalent encoding. From a definitional perspective, we are
 giving more opportunities to the type-system, hence reducing the
 burden on the programmer.
 
-\begin{figure*}
+\begin{figure}
 
-\[
+\[\stk{
 \begin{array}{ll}
 \stk{
 \data \IDesc{} (\Bhab{\V{I}}{\Set}) : \Set \where \\
@@ -199,7 +198,8 @@ burden on the programmer.
     \DPi            & \PI{\V{S}}{\Set} \PIS{S \To \IDesc{I}} \IDesc{I} 
 \end{array}
 }
-&
+\vspace{0.2in}
+\\
 \stk{
 \idescop{\_\:}{}{} : \PI{\V{I}}{\Set} \IDesc{I} \To (\V{I} \To \Set) \To \Set                  \\
 \begin{array}{@{}l@{\:=\:\:}ll}
@@ -211,12 +211,12 @@ burden on the programmer.
 \end{array}
 }
 \end{array}
-\]
+}\]
 
 \caption{Universe of indexed description}
 \label{fig:idesc}
 
-\end{figure*}
+\end{figure}
 
 \subsection{Tagged indexed descriptions}
 

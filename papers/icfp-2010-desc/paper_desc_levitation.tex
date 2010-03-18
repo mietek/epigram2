@@ -196,9 +196,9 @@ interpretation are presented in
 Figure~\ref{fig:hindx_desc}. Intuitively, $\DHindx$ use the elements
 of $H$ to index as many recursive arguments. 
 
-\begin{figure*}
+\begin{figure}
 
-\[
+\[\stk{
 \begin{array}{ll}
 \stk{
 \data \Desc : \Set \where \\
@@ -207,7 +207,8 @@ of $H$ to index as many recursive arguments.
     \DHindx         & \PI{H}{Set} \Desc \To \Desc
 \end{array}
 }
-&
+\vspace{0.2in}
+\\
 \stk{
 \descop{\_\:}{} : \Desc \To \Set \To \Set \\
 \begin{array}{@{}l@{\:=\:\:}ll}
@@ -216,12 +217,12 @@ of $H$ to index as many recursive arguments.
 \end{array}
 }
 \end{array}
-\]
+}\]
 
 \caption{Higher-order universe of descriptions}
 \label{fig:hindx_desc}
 
-\end{figure*}
+\end{figure}
 
 
 Note that $\DIndx$ is isomorphic to $\DHindx{\Unit}$. However, we

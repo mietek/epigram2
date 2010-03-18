@@ -155,9 +155,9 @@ argument. We notice that this functoriality appears in the type of
 $\descop{D}{}$ itself, for a given data-type definition $D$. This
 corresponds to the object part of the functor described by $D$.
 
-\begin{figure*}
+\begin{figure}
 
-\[
+\[\stk{
 \begin{array}{ll}
 \stk{
 \data \Desc : \Set \where \\
@@ -167,7 +167,8 @@ corresponds to the object part of the functor described by $D$.
     \DIndx          & \Desc \To \Desc
 \end{array}
 }
-&
+\vspace{0.2in}
+\\
 \stk{
 \descop{\_\:}{} : \Desc \To \Set \To \Set \\
 \begin{array}{@{}ll@{\:=\:\:}ll}
@@ -177,13 +178,13 @@ corresponds to the object part of the functor described by $D$.
 \end{array}
 }
 \end{array}
-\]
+}\]
 
 
 \caption{Universe of Descriptions}
 \label{fig:desc_universe}
 
-\end{figure*}
+\end{figure}
 
 To give some intuition on this universe of descriptions, we now turn
 to some examples. For obvious pedagogical reasons, we will manually
