@@ -373,7 +373,7 @@ purpose $\F{switchID}$ operator.
 \newcommand{\HExprD}{\C{ExprD}}
 \newcommand{\HExprAD}{\C{ExprAlwaysD}}
 \newcommand{\HExprID}{\C{ExprIndexedD}}
-\newcommand{\HExprVarD}{\C{ExprD}_{\C{Var}}}
+\newcommand{\HExprVarD}[1]{\C{ExprD}_{\C{Var},#1}}
 \newcommand{\HExprFreeD}{\C{ExprD}^{\C{Free}}}
 \newcommand{\HExprAFreeD}{\C{ExprAlwaysD}^{\C{Free}}}
 
@@ -569,7 +569,7 @@ Consequently, replacing $\Val{ty}$ by $(\SUM{\Val{ty}}{\Var{dom}{ty}})$ in
 Figure~\ref{fig:hexpr-full} turns the language of closed term into a
 language of opened terms with constants. \note{Is it polite and
   comprehensible to ask that?} This defines a new indexed description,
-called $\HExprVarD$.
+called $\HExprVarD{dom}$.
 
 \begin{wstructure}
         <- evaluator, with a context
@@ -599,13 +599,13 @@ function:
 \begin{array}{@{}ll}
 \discharge : & \PITEL{\V{ty}}{\Ty}
                \PITEL{\V{dom}}{\EnumU} \\
-             & \PI{\V{\gamma}}{\spi{dom}{(\LAM{\_} \IMu{\Ty}{\toIDesc{\HExprVarD}}{ty})}} \\
+             & \PI{\V{\gamma}}{\spi{dom}{(\LAM{\_} \IMu{\Ty}{\toIDesc{\HExprVarD{dom}}}{ty})}} \\
              & (\SUM{\Val{ty}}{\Var{dom}{ty}}) \To
                \IMu{\Ty}{\toIDesc{\HExprD}}{ty} 
 \end{array} \\
 \begin{array}{@{}l@{\:\mapsto\:\:}l}
 \discharge\: ty\: dom\: \gamma\: (\SumLeft x)  & \Con{\pair{\Eval{}}{x}{}} \\
-\discharge\: ty\: dom\: \gamma\: (\SumRight v) & \switch{dom}{(\LAM{\_} \IMu{\Ty}{\toIDesc{\HExprVarD}}{ty})}{\gamma}{v}
+\discharge\: ty\: dom\: \gamma\: (\SumRight v) & \switch{dom}{(\LAM{\_} \IMu{\Ty}{\toIDesc{\HExprVarD{dom}}}{ty})}{\gamma}{v}
 \end{array}
 }\]
 
@@ -622,29 +622,55 @@ applying it over all variables of the term. The type of this operation
 is the following:
 
 \newcommand{\substH}{\F{substExpr}}
+\newcommand{\domNat}{dom_{\CN{nat}}}
+\newcommand{\domBool}{dom_{\CN{bool}}}
+\newcommand{\gammaNat}{\gamma_{\CN{nat}}}
+\newcommand{\gammaBool}{\gamma_{\CN{bool}}}
 
 \[
 \begin{array}{@{}ll}
-\substH  : & \PITEL{\V{ty}}{\Ty}
-            \PITEL{\V{dom}}{\EnumU} 
-            \PITEL{\V{\gamma}}{\spi{dom}{(\LAM{\_} \IMu{\Ty}{\toIDesc{\HExprVarD}}{ty})}} \\
-          &  \PI{\V{\sigma}}{\PI{\V{ty}}{\Ty} (\Val{ty} + \Var{dom}{ty}) \To
-                             \IMu{\Ty}{(\toIDesc{\HExprD})}{ty}} \\
-          & \IMu{\Ty}{\toIDesc{\HExprVarD}}{\V{ty}} \To
+\substH  : & \PITEL{\V{\domNat}}{\EnumU} 
+             \PITEL{\V{\gammaNat}}{\spi{\domNat}{(\LAM{\_} \IMu{\Ty}{\toIDesc{\HExprVarD{\domNat}}}{\Enat})}} \\
+           & \PITEL{\V{\domBool}}{\EnumU} 
+             \PITEL{\V{\gammaBool}}{\spi{\domBool}{(\LAM{\_} \IMu{\Ty}{\toIDesc{\HExprVarD{\domBool}}}{\Ebool})}} \\
+          &  \begin{array}{@{}ll}
+             \PI{\V{\sigma}}{& \PITEL{\V{\domNat}}{\EnumU} \\
+                             & \PITEL{\V{\gammaNat}}
+                                     {\spi{\domNat}{(\LAM{\_} \IMu{\Ty}{\toIDesc{\HExprVarD{\domNat}}}{\Enat})}} \\
+                             & \PITEL{\V{\domBool}}{\EnumU} \\
+                             & \PITEL{\V{\gammaBool}}
+                                     {\spi{\domBool}{(\LAM{\_} \IMu{\Ty}{\toIDesc{\HExprVarD{\domBool}}}{\Ebool})}} \\
+                             & \PI{\V{ty}}{\Ty} (\Val{ty} + \Var{dom_{ty}}{ty}) \To
+                               \IMu{\Ty}{(\toIDesc{\HExprD})}{ty}}
+             \end{array}\\
+          & \PI{\V{ty}}{\Ty}
+            \IMu{\Ty}{\toIDesc{\HExprVarD{dom_{ty}}}}{\V{ty}} \To
             \IMu{\Ty}{\toIDesc{\HExprD}}{\V{ty}}
 \end{array}
 \]
+
+Where $dom_{ty}$ is short for
+ $\case{ty}{\Enat  \To \domNat
+         \\ \Ebool \To \domBool}$
 
 Abstracting away the book-keeping introduced by the context, this
 definition looks familiar. Indeed, it is extremely similar to a
 monadic \bind. This is not surprising as we are defining a first-order
 syntax with variables: our data-type enjoys more structure than what
 we are given. In particular, this is reminiscent to a free monad,
-where $\Eval{}$ is the \return introducing variables. Instead of
-implementing $\substH$ in this special case, we shall implement it in
-a generic setting, and express our example in that setting. However,
-before entering the realm of generic structures, let us further
-explore the universe of indexed descriptions.
+where $\Eval{}$ is the \return\ introducing variables. The substitution
+$\sigma$ is implemented from $\discharge$, by picking the domain and
+context corresponding to the type:
+
+\[
+\sigma\: \domNat\: \gammaNat\: \domBool\: \gammaBool\: ty\: var \mapsto 
+    \discharge\: ty\: dom_{ty}\: \gamma_{ty}\: var 
+\]
+
+Instead of implementing $\substH$ in this special case, we shall
+implement it in a generic setting, and express our example in that
+setting. However, before entering the realm of generic structures, let
+us further explore the universe of indexed descriptions.
 
 \subsection{Constrained constructors}
 
@@ -864,7 +890,7 @@ signature is the following:
 \end{wstructure}
 
 In Section~\ref{sec:idesc-examples}, we had the intuition that our
-datatypes $\HExprD$ and $\HExprVarD$ enjoy a monadic structure. We had
+datatypes $\HExprD$ and $\HExprVarD{dom}$ enjoy a monadic structure. We had
 identified the variable substitution operation as the \bind of a free
 monad. The definition of $\substI$ above confirm our intuition: using
 $\substI$, we should easily obtain $\substH$. To do so, we first have
@@ -896,7 +922,7 @@ The resulting data-type is called $\HExprFreeD$. By a simple unfolding
 of definition, we note that $\FreeIMonad{\HExprFreeD}{\Ty}{\Val{}}$
 corresponds to the syntax of closed terms, $\HExprD$. Similarly,
 $$\FreeIMonad{\HExprFreeD}{\Ty}{(\LAM{ty} \Val{ty} + \Var{dom}{ty})}$$
-corresponds to expressions with variables, $\HExprVarD$.
+corresponds to expressions with variables, $\HExprVarD{dom}$.
 
 \begin{wstructure}
     /> On open terms, we get a substitution
@@ -916,26 +942,23 @@ guiding us:
 
 
 \[\stk{
-\begin{array}{@{}ll}
-\substH  : & \PITEL{\V{ty}}{\Ty}
-             \PITEL{\V{dom}}{\EnumU} 
-             \PITEL{\V{\gamma}}{\spi{dom}{(\LAM{\_} \IMu{\Ty}{\toIDesc{\FreeIMonad{\HExprFreeD}{\Ty}{\Val{}}}}{ty})}} \\
-           &  \PI{\V{\sigma}}{\PI{\V{ty}}{\Ty} (\Val{ty} + \Var{dom}{ty}) \To
-                              \IMu{\Ty}{(\toIDesc{\FreeIMonad{\HExprFreeD}{\Ty}{\Val{}}})}{ty}} \\
-           & \IMu{\Ty}{\toIDesc{\FreeIMonad{\HExprFreeD}{\Ty}{\Val{} + \Var{dom}{}}}}{\V{ty}} \To
-             \IMu{\Ty}{\toIDesc{\FreeIMonad{\HExprFreeD}{\Ty}{\Val{}}}}{\V{ty}} \\
-\end{array} \\
-\substH\: ty\: dom\: \gamma\: \sigma\: term \mapsto 
-    \substI\: \Ty\: 
-              (\Val{} + \Var{dom}{})\: 
-              \Val{}\:
-              \HExprFreeD\:
-              \sigma\:
-              ty\:
-              term
+\substH\: \domNat\: \domBool\: 
+            \gammaNat\: \gammaBool\:
+            \sigma\: 
+            ty\: 
+            term \mapsto  \\
+\;\;\ \begin{array}{ll}
+       \substI\: & \Ty\: 
+                  (\Val{} + \Var{dom_{ty}}{})\: 
+                  \Val{}\:
+                  \HExprFreeD\:  \\
+                &
+                  (\sigma\: \domNat\: \domBool\: \gammaNat\: \gammaBool)\:
+                  ty\:
+                  term
+      \end{array}
 }\]
 
-\note{Not using $\discharge$, that's a shame.}
 
 Hence, we have completed our implementation of the evaluator for open
 terms. We started with a well-typed language of arithmetical

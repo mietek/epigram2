@@ -100,10 +100,11 @@ Section sec:desc-universe
 
 Section sec:indexing-desc
 
-* TODO Fix substitution for Hutton expressions
+* DONE Fix substitution for Hutton expressions
 
 It should use the pieces we have developped, such as discharge.
 
+* TODO Fix code alignment
 * TODO Discuss stratification
 * TODO Discuss induction/recursion
 * TODO Introduction/conclusion
