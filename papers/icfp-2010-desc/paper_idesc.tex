@@ -491,8 +491,6 @@ $\switch{}{}{}{}$ eliminator.
 
 \end{figure*}
 
-\note{the big square brackets should be red (pwm: use \\bigRedBracket :)) }
-
 \begin{wstructure}
     -> evaluation: IMu TermD -> Val
         -> it is a catamorphism
@@ -583,7 +581,7 @@ Consequently, replacing $\Val{ty}$ by
 $(\SUM{\Val{ty}}{\Var{dom}{ty}})$ in Figure~\ref{fig:hexpr-full} turns
 the language of closed term into a language of opened terms with
 constants. For readability, we will abbreviate $\LAM{ty}
-\SUM{\Val{ty}{\Var{dom}{ty}}}$ into $\SUM{\Val{}}{\Var{}{}}$ \note{Is
+\SUM{\Val{ty}}{\Var{dom}{ty}}$ into $\SUM{\Val{}}{\Var{}{}}$ \note{Is
   it polite and comprehensible to ask that?} This defines a new
 indexed description, called $\HExprVarD{dom}$.
 
