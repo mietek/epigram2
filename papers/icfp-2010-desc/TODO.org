@@ -45,7 +45,7 @@ I don't know where to write this down.
 
 And replace occurences of "Typed expressions"
 
-* TODO Mention convention \Val{} + \Var{dom}{} is point-wise
+* DONE Mention convention \Val{} + \Var{dom}{} is point-wise
 * TODO Sort out indexing of HExprFreeD
 * TODO Present Fin as tagged constructor?
 * TODO Type presentation / representation is just confusing me

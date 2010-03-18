@@ -579,11 +579,13 @@ contains a pointer to a particular element of the finite set -- an
 element of $\EnumT{dom}$. The extra argument to $\Var{}{}$ is the
 domain of this context.
 
-Consequently, replacing $\Val{ty}$ by $(\SUM{\Val{ty}}{\Var{dom}{ty}})$ in
-Figure~\ref{fig:hexpr-full} turns the language of closed term into a
-language of opened terms with constants. \note{Is it polite and
-  comprehensible to ask that?} This defines a new indexed description,
-called $\HExprVarD{dom}$.
+Consequently, replacing $\Val{ty}$ by
+$(\SUM{\Val{ty}}{\Var{dom}{ty}})$ in Figure~\ref{fig:hexpr-full} turns
+the language of closed term into a language of opened terms with
+constants. For readability, we will abbreviate $\LAM{ty}
+\SUM{\Val{ty}{\Var{dom}{ty}}}$ into $\SUM{\Val{}}{\Var{}{}}$ \note{Is
+  it polite and comprehensible to ask that?} This defines a new
+indexed description, called $\HExprVarD{dom}$.
 
 \begin{wstructure}
         <- evaluator, with a context
@@ -654,7 +656,7 @@ is the following:
                              & \PITEL{\V{\domBool}}{\EnumU} \\
                              & \PITEL{\V{\gammaBool}}
                                      {\spi{\domBool}{(\LAM{\_} \IMu{\Ty}{\toIDesc{\HExprVarD{\domBool}}}{\Ebool})}} \\
-                             & \PI{\V{ty}}{\Ty} (\Val{ty} + \Var{dom_{ty}}{ty}) \To
+                             & \PI{\V{ty}}{\Ty} (\SUM{\Val{ty}}{\Var{dom_{ty}}{ty}}) \To
                                \IMu{\Ty}{(\toIDesc{\HExprD})}{ty}}
              \end{array}\\
           & \PI{\V{ty}}{\Ty}
@@ -938,7 +940,7 @@ replaced by $\HExprAFreeD$:
 The resulting data-type is called $\HExprFreeD$. By a simple unfolding
 of definition, we note that $\FreeIMonad{\HExprFreeD}{\Ty}{\Val{}}$
 corresponds to the syntax of closed terms, $\HExprD$. Similarly,
-$$\FreeIMonad{\HExprFreeD}{\Ty}{(\LAM{ty} \Val{ty} + \Var{dom}{ty})}$$
+$$\FreeIMonad{\HExprFreeD}{\Ty}{(\LAM{ty} \SUM{\Val{ty}}{\Var{dom}{ty}})}$$
 corresponds to expressions with variables, $\HExprVarD{dom}$.
 
 \begin{wstructure}
@@ -966,7 +968,7 @@ guiding us:
             term \mapsto  \\
 \;\;\ \begin{array}{ll}
        \substI\: & \Ty\: 
-                  (\Val{} + \Var{dom_{ty}}{})\: 
+                  (\SUM{\Val{}}{\Var{dom_{ty}}{}})\: 
                   \Val{}\:
                   \HExprFreeD\:  \\
                 &
