@@ -673,13 +673,15 @@ numbers. $\Fin$ is a typical example of an inductive family using
 \emph{constrained constructors}. The constructors $\FinZero$ and
 $\FinSuc$ are only defined for an index distinct from $\NatZero$:
 
+
 \[
-\Rule{\Bhab{n}{\Nat}}
-     {\Bhab{\FinZero}{\Fin{(\NatSuc{n})}}}
-\qquad
-\Rule{\Bhab{n}{\Nat} \quad 
-      \Bhab{i}{\Fin{n}}}
-     {\Bhab{\FinSuc{}}{\Fin{(\NatSuc{n})}}}
+\stk{
+\data \Fin{} : \PI{\V{n}}{\Nat} \Set \where \\
+\;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
+    \FinZero_n      & \Fin{(\NatSuc{n})}   \\
+    \FinSuc{}_n     & \Fin{n} \To \Fin{(\NatSuc{n})}
+\end{array}
+}
 \]
 
 One way to code constrained data-type is to appeal to equality. The

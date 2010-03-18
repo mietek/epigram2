@@ -65,14 +65,14 @@ dependently-typed language. So, how do I get arround my various
 "simply-typed languages, such as Haskell"?
 
 * DONE Quotes on sum-of-product, or not, or maybe. Same for sigmas-of-sigmas
-* TODO Better names for subcomponents of tagged description
+* TODO Better names for subcomponents of tagged indexed description
 
 \newcommand{\ATagIDesc}[1]{\F{ATagIDesc}~#1}
 \newcommand{\ITagIDesc}[1]{\F{ITagIDesc}~#1}
 
 Just stinks, says nothing useful.
 
-* TODO Present Fin as a more data-like maneer, or free monad in a more sequent-like maneer
+* DONE Present Fin as a more data-like maneer, or free monad in a more sequent-like maneer
 
 When defining the free monad data-type, I used an Haskell-ish "data"
 definition with constructors. When defining the Fin data-type, I used
