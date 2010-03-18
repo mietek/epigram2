@@ -1,35 +1,15 @@
-* TODO Check/fix alignment in code
-* TODO Code review of the Agda models
+* Open Questions
+** TODO Type presentation / representation is just confusing me
 
-** Desc.agda
-** IDesc.agda
-** (IDesc_type_in_type.agda)
+Finite set motivation stinks. I should sit down with Conor and find a
+clear motivation for it. This will also impact on the motivation for a
+universe of descriptions.
 
-If it hasn't been translated into universe polymorphism
-
-* TODO Find references for usage of bidirectional type-checking
-* TODO Find usage of universe construction in functional programming
-
-** Norell's xml?
-** Nisse's parser?
-** ???
-
-* DONE Tagged description needs to go through \toDesc{} before use
-* TODO I have written "user" here and there.
-
-This might not be the tone of the paper. We probaly want to call "user" a developer.
-
-* DONE Fig.~\ref or Fig.\ref?
-* TODO No indexed fixed-point? No induction principle discussion?
+** TODO No indexed fixed-point? No induction principle discussion?
 
 The IMu type former and iinduction operator are absolutely not presented.
 
-* DONE bi-directional or bidirectional?
-* TODO Tech report as a bibtex entry, or footnote?
-* TODO No-argument version of multi-argument things, to avoid empty spaces
-* DONE "bind" and "return" is not a nice way of writing 
-* TODO titles are sometimes quite vague
-* TODO Precise that we are talking in the Evidence language
+** TODO Precise that we are talking in the Evidence language
 
 I guess that the point is the following: we are not talking about
 higher-level presentation. So, we manipulate/make low-level terms and
@@ -37,77 +17,107 @@ people have to bear with that.
 
 I don't know where to write this down.
 
-* TODO Mention that the notation for lists in the LISP one
-* DONE Uniformize spacing in array @{\:()\:\:}
-* TODO Check coloring of terms
-* TODO How could we get Hutton expressions with different type of variables?
-* TODO Find a convenient name for Hutton's razor
+** TODO Mention that the notation for lists in the LISP one
 
-And replace occurences of "Typed expressions"
-
-* DONE Mention convention \Val{} + \Var{dom}{} is point-wise
-* DONE Sort out indexing of HExprFreeD
-* TODO Present Fin as tagged constructor?
-* TODO Type presentation / representation is just confusing me
-
-Finite set motivation stinks. I should sit down with Conor and find a
-clear motivation for it. This will also impact on the motivation for a
-universe of descriptions.
-
-* DONE Cool down the many "intuitively"
-* DONE composed by/composed of
-* TODO Shall we present EnumU with tags as constructors, directly?
-* DONE Finite set declaration: should be EnumT [a, b, c]
-* TODO Simply-typed Haskell??
+** TODO How could we get Hutton expressions with different type of variables?
+** TODO Present Fin as tagged constructor?
+** TODO Simply-typed Haskell??
 
 Man everybody knows that Haskell is the first mainstream
 dependently-typed language. So, how do I get arround my various
 "simply-typed languages, such as Haskell"?
 
-* DONE Quotes on sum-of-product, or not, or maybe. Same for sigmas-of-sigmas
-* TODO Better names for subcomponents of tagged indexed description
+** TODO Shall we present EnumU with tags as constructors, directly?
+** TODO Fix every \note{} in the paper
 
-\newcommand{\ATagIDesc}[1]{\F{ATagIDesc}~#1}
-\newcommand{\ITagIDesc}[1]{\F{ITagIDesc}~#1}
-
-Just stinks, says nothing useful.
-
-* DONE Present Fin as a more data-like maneer, or free monad in a more sequent-like maneer
-
-When defining the free monad data-type, I used an Haskell-ish "data"
-definition with constructors. When defining the Fin data-type, I used
-a sequent presentation of it. I should uniformize this presentation,
-and choose one or the other.
-
-* DONE {ExprD_{Free}}_Ty might be a bit to much
-
-It's un-readable. Probably one should be an exponent.
-
-
-* TODO Fix every \note{} in the paper
-* TODO Improve finite sets motivation (encoding vs. codes)
+* Post-doc area
+** TODO Improve finite sets motivation (encoding vs. codes)
 
 Section sec:finite-sets
 
-* TODO Improve motivation for the use of codes for inductive types
+** TODO Improve motivation for the use of codes for inductive types
 
 Pedagogically answer the question:
 "Why using codes instead of raw sigmas?"
 
 Section sec:desc-universe
 
-* TODO Improve motivation and high-level picture of indexing
+** TODO Improve motivation and high-level picture of indexing
 
 Section sec:indexing-desc
 
-* DONE Fix substitution for Hutton expressions
+** TODO Improve motivation of dependent-types
+
+Talk about decidability, termination, etc.
+
+** TODO Discuss stratification
+** TODO Discuss induction/recursion
+** TODO Introduction/conclusion
+** TODO Code review of the Agda models
+
+*** Desc.agda
+*** IDesc.agda
+*** (IDesc_type_in_type.agda)
+
+If it hasn't been translated into universe polymorphism
+
+
+* Janitor service
+** TODO Check/fix alignment in code
+** TODO Fix code overflows
+** TODO Find references for usage of bidirectional type-checking
+** TODO Find references of universe construction in functional programming
+
+*** Norell's xml?
+*** Nisse's parser?
+*** ???
+
+** TODO I have written "user" here and there.
+
+This might not be the tone of the paper. We probaly want to call "user" a developer.
+
+** TODO Tech report as a bibtex entry, or footnote?
+** TODO No-argument version of multi-argument things, to avoid empty spaces
+** TODO titles are sometimes quite vague
+** TODO Check coloring of terms
+** TODO Better names for subcomponents of tagged indexed description
+
+\newcommand{\ATagIDesc}[1]{\F{ATagIDesc}~#1}
+\newcommand{\ITagIDesc}[1]{\F{ITagIDesc}~#1}
+
+Just stinks, says nothing useful.
+
+** TODO Find a convenient name for Hutton's razor
+
+And replace occurences of "Typed expressions"
+
+
+* Dones
+** DONE Tagged description needs to go through \toDesc{} before use
+** DONE Fix substitution for Hutton expressions
 
 It should use the pieces we have developped, such as discharge.
 
-* TODO Fix code overflows
-* TODO Discuss stratification
-* TODO Discuss induction/recursion
-* TODO Introduction/conclusion
-* TODO Improve motivation of dependent-types
+** DONE Present Fin as a more data-like maneer, or free monad in a more sequent-like maneer
 
-Talk about decidability, termination, etc.
+When defining the free monad data-type, I used an Haskell-ish "data"
+definition with constructors. When defining the Fin data-type, I used
+a sequent presentation of it. I should uniformize this presentation,
+and choose one or the other.
+
+** DONE {ExprD_{Free}}_Ty might be a bit to much
+
+It's un-readable. Probably one should be an exponent.
+
+
+
+** DONE Quotes on sum-of-product, or not, or maybe. Same for sigmas-of-sigmas
+** DONE Finite set declaration: should be EnumT [a, b, c]
+** DONE Cool down the many "intuitively"
+** DONE composed by/composed of
+** DONE Mention convention \Val{} + \Var{dom}{} is point-wise
+** DONE Sort out indexing of HExprFreeD
+** DONE Uniformize spacing in array @{\:()\:\:}
+** DONE "bind" and "return" is not a nice way of writing 
+** DONE bi-directional or bidirectional?
+** DONE Fig.~\ref or Fig.\ref?
