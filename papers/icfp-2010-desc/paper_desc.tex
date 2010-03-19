@@ -295,11 +295,6 @@ From the examples above, we observe that data-types are defined by a
 $\DSigma$ which first argument is a finite set of constructors. The
 descriptions fitting into this pattern are called \emph{tagged}
 description. Formally, we have:
-\note{We have talked about a tagged description based on $\List (\UId
-  \times \Desc)$. It makes the free monad easier to construct but,
-  imho, considerably clutters anything else. I've reverted back to a
-  more sigma-friendly presentation.}
-
 
 \[
  \TagDesc \mapsto \SIGMA{\V{E}}{\EnumU} (\spi{\V{E}}{(\LAM{\_} \Desc)})
@@ -364,11 +359,6 @@ own recursive definition:
       \Gamma \vdash \Bhab{x}{\descop{D}{(\Mu{D})}}}
      {\Gamma \vdash \Bhab{\Con{x}}{\Mu{D}}}
 \]
-
-At this stage, we have recovered the data-types we are usually able to
-define in simply-typed languages.
-\note{pwm: Err, not quite --- not til we introduce $\DHindx{\!}{\!}$}
-
 
 \begin{wstructure}
 <- Elimination on Mu

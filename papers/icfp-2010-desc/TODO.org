@@ -61,7 +61,6 @@ Talk about decidability, termination, etc.
 
 If it hasn't been translated into universe polymorphism
 
-
 * Janitor service
 ** TODO Check/fix alignment in code
 ** TODO Fix code overflows
@@ -90,7 +89,6 @@ Just stinks, says nothing useful.
 ** TODO Find a convenient name for Hutton's razor
 
 And replace occurences of "Typed expressions"
-
 
 * Dones
 ** DONE Tagged description needs to go through \toDesc{} before use

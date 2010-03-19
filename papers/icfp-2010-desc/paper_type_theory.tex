@@ -401,12 +401,9 @@ type-checking is divided into two complementary phases. In the
 \emph{type inference} phase, types are \emph{pulled} out of terms. A
 typical example is a variable in the context:
 
-\note{pwm: We should explain this new judgement form, specifically that
-$\propag{}{}$ means `elaborates to'.}
-
 \[
-\Axiom{\Gamma ; \xS ; \Delta \Vdash \propag{\x}
-                                           {\pull{\x}{S}}}
+\Rule{\Gamma ; \xS ; \Delta \vdash \Valid}
+     {\Gamma ; \xS ; \Delta \vdash \Bhab{x}{S}}
 \]
 
 Because the variable and its type are stored in the context, whenever
@@ -420,16 +417,15 @@ information provided by the type. Therefore, we can relax our
 requirements on the term. A typical example is the lambda abstraction:
 
 \[
-\Rule{\Gamma ; \xS \Vdash \propag{\push{t}{T}}
-                                 {t'}}
-     {\Gamma \Vdash \propag{\push{\LAM{\x} t}{\PIS{\xS}{T}}}
-                           {\PLAM{\x}{S} t'}} 
+\Rule{\Gamma       \vdash \Type{S} \quad
+      \Gamma ; \xS \vdash \Bhab{t}{T}}
+     {\Gamma \vdash \Bhab{\PLAM{\x}{S} t}{\PIS{\xS} T}}
 \]
 
-In our formal presentation of the type theory, we were forced to
-annotate lambda abstractions by the type of the domain. In a
-bidirectional setting, the domain is provided by the $\Pi$ type we are
-pushing the abstraction into. Hence we do not need the annotation.
+Here, we are forced to annotate lambda abstractions by the type of the
+domain. In a bidirectional setting, the domain is provided by the
+$\Pi$ type we are pushing the abstraction into. Hence we do not need
+the annotation.
 
 \begin{wstructure}
 <- Formalisation: type propagation
