@@ -230,10 +230,27 @@ Equality rules:
 >     ("switch", [e, x, p, b]) -> App (Var "__switch") [x, b]
 
 
+A function from an enumeration is equivalent to a list, so the elaborator can
+turn lists into functions like this:
+
+> import -> MakeElabRules where
+>   makeElab' loc (PI (ENUMT e) t :>: m) | isTuply m = do
+>       t' :=>: _ <- eQuote t
+>       e' :=>: _ <- eQuote e
+>       tm :=>: tmv <- subElab loc (branchesOp @@ [e, t] :>: m)
+>       x <- eLambda (fortran t)
+>       return $ N (switchOp :@ [e', NP x, t', tm])
+>                      :=>: switchOp @@ [e, NP x, t, tmv]
+>     where
+>       isTuply :: InDTmRN -> Bool
+>       isTuply DVOID        = True
+>       isTuply (DPAIR _ _)  = True
+>       isTuply _            = False
+
+
 To elaborate a tag with an enumeration as its type, we search for the
 tag in the enumeration to determine the appropriate index.
 
-> import -> MakeElabRules where
 >   makeElab' loc (ENUMT t :>: DTAG a) = findTag a t 0
 >     where
 >       findTag :: String -> TY -> Int -> Elab (INTM :=>: VAL)
@@ -248,7 +265,6 @@ tag in the enumeration to determine the appropriate index.
 >       toNum 0  = ZE
 >       toNum n  = SU (toNum (n-1))
 
-
 Conversely, we can distill an index to a tag as follows. Note that if the
 index contains a stuck term, we simply give up and let the normal distillation
 rules take over; the pretty-printer will then do the right thing.
@@ -260,3 +276,9 @@ rules take over; the pretty-printer will then do the right thing.
 >       findIndex (CONSE (TAG s)  _ :>: ZE)    = Just (DTAG s :=>: evTm tm)
 >       findIndex (CONSE _        a :>: SU b)  = findIndex (a :>: b)
 >       findIndex _                            = Nothing
+
+Since elaboration turns lists into functions from enumerated types, we can
+do the reverse when distilling. This is slightly dubious.
+
+>   distill es (PI (ENUMT e) t :>: L (x :. N (op :@ [e', NV 0, t', b]))) 
+>     | op == switchOp = distill es (branchesOp @@ [e, t] :>: b)

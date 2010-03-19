@@ -185,18 +185,6 @@ These rules should be moved to features.
 >     return $ N ((tm :? mt') :$ A (N (P x :$ Fst)) :$ A (N (P x :$ Snd)))
 >                     :=>: tmv $$ A (NP x $$ Fst) $$ A (NP x $$ Snd)
 
-> makeElab' loc (PI (ENUMT e) t :>: m) | isTuply m = do
->     t' :=>: _ <- eQuote t
->     e' :=>: _ <- eQuote e
->     tm :=>: tmv <- subElab loc (branchesOp @@ [e, t] :>: m)
->     x <- eLambda (fortran t)
->     return $ N (switchOp :@ [e', NP x, t', tm]) :=>: switchOp @@ [e, NP x, t, tmv]
->   where
->     isTuply :: InDTmRN -> Bool
->     isTuply DVOID        = True
->     isTuply (DPAIR _ _)  = True
->     isTuply _            = False
-
 > makeElab' loc (MONAD d x :>: DCON t) = makeElab' loc (MONAD d x :>: DCOMPOSITE t)
 > makeElab' loc (QUOTIENT a r p :>: DPAIR x DVOID) =
 >   makeElab' loc (QUOTIENT a r p :>: DCLASS x)
