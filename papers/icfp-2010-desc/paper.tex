@@ -44,8 +44,6 @@
 
 
 \title{The Gentle Art of Levitation}
-% Or something mentionning levitation. Feel free to change. 
-% \subtitle{Subtitle Text, if any}
 
 
 %% Alphabetical ordering.
@@ -90,20 +88,163 @@ This is the text of the abstract.
 
 \section{Introduction}
 
-The text of the paper begins here. \cite{morris:spf}
+Dependent types are an appealing technique for building safer and more
+reliable software. By giving types more expressive power, the
+developer is able to encode more precise invariants in the types. As a
+result, more bugs are caught automatically, during
+type-checking. Because of this benefit, dependently-typed systems have
+flourished, such as Generalized Abstract Data-Types (GADT) in
+Haskell~\cite{spj:gadt}, Agda~\cite{norell:agda},
+Ynot~\cite{morrisett:ynot}, or Epigram~\cite{pigs:epigram}, to name
+but a few.
 
-ACM bullet points, we offer:
+\begin{wstructure}
+<- Describe the problem
+    <- Data-types in dependent-type theory
+        <- Much more precise
+            <- More powerful type-system
+            -> Stronger safety guarantees
+\end{wstructure}
+
+In this paper, we will focus on data-types in such systems. Indeed,
+the expressive power of the type-system has a direct impact on
+data-types. Because types can \emph{depend} on terms, our data-types
+can be made more precise. The typical example is vectors, which type
+depend on the size of the vector. Having more precision about
+data-types, we can write safer code: taking the $\CN{head}$ of a
+vector is \emph{ensured} to succeed whenever its type states that it
+is a non-empty vector. This property is automatically enforced by the
+type-checker.
+
+\begin{wstructure}
+        <- Equipped with elimination principle
+            <- Defining functions over them
+            <- Making proofs over them
+\end{wstructure}
+
+Moreover, in total programming systems, such as Agda, Ynot, or
+Epigram, data-types come equipped with an elimination principle: while
+a data-type definition introduces new type formers in the theory, we
+need an eliminator to dispose of them. Looking through the
+Curry-Howard lenses, the elimination principle corresponds to an
+induction principle associated with the data-type. To program over our
+data-types, we rely on their induction principle, guaranteeing the
+well-foundedness of our definition.
+
+\begin{wstructure}
+    <- Agda standard library [Nisse file]
+        <- x implementations of natural numbers
+        <- y implementations of lists
+        -> Painful duplication of code and functionality
+            <- Types are (slightly) different
+                -> Same functions need to be re-implemented 
+        -> Crucial need for ``genericity''
+\end{wstructure}
+
+From a software correctness point of view, having fine-grained types
+is a blessing. However, from a software re-use point of view, this is
+a major hurdle. For example, the difference between lists and vectors
+is rather thin, and, for most functions, it does not make a
+difference. However, because their type is (slightly) different, the
+functions need to be implemented separately. Often, the code will even
+be the same, only the type signature changes. A striking example of
+such unavoidable code duplication is apparent in the Agda standard
+library~\cite{nisse:asl}: it features no less than 13 variations of
+lists, ranging from difference lists to lists which elements verify
+some predicate. In dependently-typed system, we crucially need to
+program \emph{generically}.
+
+\begin{wstructure}
+        /> Coq, Agda: external notion
+            <- Not first-class citizen
+            -> Cannot "compute" with them
+            -> No reflexivity for data-types (?)
+\end{wstructure}
+
+While central in a programming environment, the presentation of
+data-types in today's dependently-typed system is
+\emph{external}. As in the simply-typed world, the definition of
+data-types is processed by a meta-theoretical engine, before being
+reifed by extending the type theory with the corresponding type
+formers and elimination principle. Because of this external apparatus,
+data-type definition is not \emph{first-class}: we cannot compute with
+them, such as making new data-types from previous data-types. 
+
+This is a rather harsh limitation, in particular in a
+dependently-typed system. Indeed, reflexivity~\cite{allen:reflection,
+  gregoire:ring-solver} is at the heart of many dependently-typed
+programming techniques. Not having first-class data-type definitions,
+we have to give up reflexivity for data-types.
+
+\begin{wstructure}
+    <- Dependent types offer new programming techniques
+        <- Eg.: universe construction
+        /> State of the art haunted by the simply-typed paradigm
+            -> Generative
+            -> Non reflexive
+\end{wstructure}
+
+However, we do not think that we are condemned to such fate. The
+external presentation of data-types is an heritage of the simply-typed
+paradigm. Dependently-typed system has more to offer. Indeed, new
+programming techniques, unavailable in a simply-typed setting,
+arises. One of them is \emph{universe
+  construction}~\cite{martin-lof:itt}. We shall see how this technique
+help us overcoming the limitations of the standard, non reflexive and
+generative presentation of data-types.
+
+\begin{wstructure}
+<- State contributions
+    <- Closed presentation of data-types 
+        -> No generativity requires
+        -> Subsuming standard inductive families 
+            /> Some popular extensions excluded for now
+    <- Descriptions of data-types are first-class 
+        <- Self-encoded [Section sec:desc-levitate]
+    <- ``generic programming is just programming''
+        <- Ability to inspect data-type definition
+            -> Write program over them
+        <- A generic program works over a class of data-types (???)
+            -> Capture this class by common structure
+            -> Write a program over this common code
+    <- Design a language for generic programming
+        -> First serious attempt
+            /> except possibly Lisp
+                <- ???
+\end{wstructure}
+
+In this paper, we propose a new approach to build data-types in a
+dependent-type theory. Our contributions are the following:
+
 \begin{itemize}
-\item a closed presentation of data-types (no generativity requires)
-  subsuming standard inductive families (some popular extensions
-  excluded for now)
-\item descriptions of data-types are first-class (indeed,
-  self-encoded)
-\item ``generic programming is just programming''
-\item first serious attempt to design a language for generic
-  programming, except possibly Lisp
+\item We present a basic type-theory and extend it with a universe of
+  finite sets. We show how coding can be made practical by putting
+  types at work (Section~\ref{sec:type-theory}) ;
+\item We give a closed presentation of inductive data-types, through a
+  universe of descriptions (Section~\ref{sec:universe-desc}). This
+  first universe has the expressive power of standard inductive
+  types. Being closed, this presentation does not require
+  generativity, hence the type theory remains unchanged when
+  data-types are introduced ;
+\item We present a self-encoding of the universe of description inside
+  itself (Section~\ref{sec:desc-levitate}). As a consequence,
+  description of data-types appears as first-class object in the type
+  theory. We illustrate the benefit of a first-order presentation by
+  implementing a generic catamorphism as well as a generic free monad
+  construction, together with its monadic operations ;
+\item We index the universe of descriptions, to subsume standard
+  inductive families (Section~\ref{sec:indexing-desc}). In this
+  setting, we develop several examples of dependently-typed
+  data-structure and some generic operations over them ;
+\item We have implemented this technology in the Epigram programming
+  language. This is, we believe, the first attempt to design a
+  language for generic programming, Lisp having opened the way. We
+  propose and demonstrate with several examples that generic
+  programming is just programming. Because data-types are described by
+  code, we can finally program with them. As a consequence, generic
+  programs are implemented as functions built from the data-type
+  definition.
 \end{itemize}
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% The Type Theory
