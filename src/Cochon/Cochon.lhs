@@ -62,9 +62,9 @@ Here we have a very basic command-driven interface to the proof state monad.
 > cochon' (locs :< loc) = do
 >     -- Safety belt: this *must* type-check!      
 >     validateDevelopment (locs :< loc)
->     -- Show current goal
->     showGoal loc
->     putStr (showPrompt (pcLayers loc))
+>     -- Show goal and prompt
+>     let Right prompt = evalStateT showPrompt loc
+>     putStr prompt
 >     hFlush stdout
 >     l <- getLine
 >     case parse tokenize l of 
@@ -93,6 +93,31 @@ Here we have a very basic command-driven interface to the proof state monad.
 >                          putStrLn "*** Warning: definition failed to type-check! ***"
 >                          putStrLn $ renderHouseStyle $ prettyStackError ss
 >               _ -> return ()
+
+
+> showPrompt :: ProofState String
+> showPrompt = do
+>     mty <- optional getHoleGoal
+>     case mty of
+>         Just (_ :=>: ty)  -> (|(showGoal ty) ++ showInputLine|)
+>         Nothing           -> showInputLine
+>   where
+>     showGoal :: TY -> ProofState String
+>     showGoal ty@(LABEL _ _) = do
+>         h <- infoHypotheses
+>         s <- prettyHere . (SET :>:) =<< bquoteHere ty
+>         return $ h ++ "\n" ++ "Programming: " ++ show s ++ "\n"
+>     showGoal ty = do
+>         s <- prettyHere . (SET :>:) =<< bquoteHere ty
+>         return $ "Goal: " ++ show s ++ "\n"
+>
+>     showInputLine :: ProofState String
+>     showInputLine = do
+>         mn <- optional getMotherName
+>         case mn of
+>             Just n   -> return $ showName n ++ " > "
+>             Nothing  -> return "> "
+
 
 > describePFailure :: PFailure a -> ([a] -> String) -> String
 > describePFailure (PFailure (ts, fail)) f = (case fail of
@@ -499,17 +524,6 @@ Import more tactics from an aspect:
 
 
 
-
-> showGoal :: ProofContext -> IO ()
-> showGoal loc = case evalStateT getHoleGoal loc of
->     Right (_ :=>: ty) ->
->         let Right s = evalStateT (bquoteHere ty >>= prettyHere . (SET :>:)) loc
->         in putStrLn ("Goal: " ++ show s)
->     Left _ -> return ()
-
-> showPrompt :: Bwd Layer -> String
-> showPrompt (_ :< l)  = showName (motherName (mother l)) ++ " > "
-> showPrompt B0        = "> "
 
 > printChanges :: ProofContext -> ProofContext -> IO ()
 > printChanges from to = do
