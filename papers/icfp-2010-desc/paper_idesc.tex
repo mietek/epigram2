@@ -522,7 +522,7 @@ is as follow:
 
 
 \[\stk{
-\evalOne : \PI{\V{ty}}{\Ty} \idescop{\toIDesc{\HExprD}}{\Ty}{ty} \To {\Val{ty}} \\
+\evalOne : \PI{\V{ty}}{\Ty} \idescop{\toIDesc{\HExprD}\: ty}{\Ty}{ty} \To {\Val{ty}} \\
 \begin{array}{@{}l@{\:=\:\:}l}
 \evalOne\: \_\: \pair{\Eval{}}{x}{}                                         & x \\
 \evalOne\: \_\: \pair{\Econd{}{}{}}{\pair{\BoolTrue}{\pair{x}{\_}{}}{}}{}   & x \\
@@ -541,9 +541,11 @@ is as follow:
                                  ty\: 
                                  term
 }\]
-\note{pwm: $\evalOne$ rather illustrates my point about the 2 types of IFunc
-floating around, $\idescop{\_}{}{}$ is defined using the 1st notion, and used it
-here as if it were the 2nd}
+\note{pwm: $\evalOne$ rather illustrates my point about the 2 types of
+  IFunc floating around, $\idescop{\_}{}{}$ is defined using the 1st
+  notion, and used it here as if it were the 2nd. pierre: in this
+  case, it was a typo. But you're right, there is two notions and we
+  probably want to clarify where these things live.}
 
 \begin{wstructure}
     /> Closed term
