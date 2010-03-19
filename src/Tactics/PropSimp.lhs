@@ -476,7 +476,7 @@ at a time. It will fail if no simplification is possible.
 
 > simplifyGoal (PI UNIT t) = do
 >     t' <- bquoteHere (t $$ A VOID)
->     make ("" :<: t')
+>     make ("u" :<: t')
 >     goIn
 >     b :=>: _ <-  problemSimplify
 >     goOut
@@ -486,7 +486,7 @@ at a time. It will fail if no simplification is possible.
 >               PI (r $$ A a) . L . HF (fortran t) $ \ b ->
 >               t $$ A (PAIR a b)
 >     mt' <- bquoteHere mt
->     make ("" :<: mt')
+>     make ("s" :<: mt')
 >     goIn
 >     b :=>: _ <-  problemSimplify
 >     goOut
@@ -496,7 +496,7 @@ at a time. It will fail if no simplification is possible.
 >     t' <- bquoteHere t
 >     e' <- bquoteHere e
 >     v' <- bquoteHere (branchesOp @@ [e, t])
->     make ("" :<: v')
+>     make ("e" :<: v')
 >     goIn
 >     b :=>: _ <-  problemSimplify
 >     goOut
@@ -515,7 +515,7 @@ at a time. It will fail if no simplification is possible.
 >             give' nonsense
 >         Just (SimplyTrivial prf) -> do
 >             t' <- bquoteHere (t $$ A prf)
->             make ("" :<: t')
+>             make ("r" :<: t')
 >             goIn
 >             b :=>: _ <- problemSimplify
 >             goOut
@@ -538,7 +538,7 @@ at a time. It will fail if no simplification is possible.
 >     stm :=>: stv <- problemSimplify
 >     goOut
 >     tty <- bquoteHere (t $$ A stv)
->     make ("" :<: tty)
+>     make ("t" :<: tty)
 >     goIn
 >     ttm :=>: _ <- problemSimplify
 >     goOut
