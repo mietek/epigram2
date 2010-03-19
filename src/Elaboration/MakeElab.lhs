@@ -309,6 +309,9 @@ to produce a type-term pair in the evidence language.
 >     handleArgs (tm :=>: tv :<: ty) [] = do
 >         ty' :=>: _ <- eQuote ty
 >         return $ PAIR ty' (N tm) :=>: PAIR ty tv
+>     handleArgs (t :=>: v :<: LABEL l ty) (Call _ : as) = do
+>         l' :=>: _ <- eQuote l
+>         handleArgs (t :$ Call l' :=>: v $$ Call l :<: ty) as
 >     handleArgs (t :=>: v :<: C cty) (a : as) = do
 >         (a', ty') <- elimTy (subElab loc) (v :<: cty) a
 >         handleArgs (t :$ fmap termOf a' :=>: v $$ fmap valueOf a' :<: ty') as
