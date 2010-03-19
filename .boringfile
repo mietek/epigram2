@@ -2,6 +2,10 @@
 papers/icfp-2010-desc/propagation\.pdf
 papers/icfp-2010-desc/type_theory\.pdf
 
+# Type inference paper
+papers/type-inference/type-inference.pdf
+papers/type-inference/type-inference.tex
+
 # Agdai files
 \.agdai
 
