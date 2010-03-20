@@ -521,47 +521,42 @@ chooseGamma : (ty : Type)
 chooseGamma nat dom gammaNat gammaBool = gammaNat
 chooseGamma bool dom gammaNat gammaBool = gammaBool
 
-substExpr : (domNat domBool : EnumU)
-            (gammaNat : spi domNat (\_ -> IMu closeTerm' nat))
-            (gammaBool : spi domBool (\_ -> IMu closeTerm' bool))
-            (sigma : (domNat domBool : EnumU)
-                     (gammaNat : spi domNat (\_ -> IMu closeTerm' nat))
-                     (gammaBool : spi domBool (\_ -> IMu closeTerm' bool))
+substExpr : (dom : EnumU)
+            (gammaNat : spi dom (\_ -> IMu closeTerm' nat))
+            (gammaBool : spi dom (\_ -> IMu closeTerm' bool))
+            (sigma : (dom : EnumU)
+                     (gammaNat : spi dom (\_ -> IMu closeTerm' nat))
+                     (gammaBool : spi dom (\_ -> IMu closeTerm' bool))
                      (ty : Type) ->
-                     (Val ty + Var (chooseDom ty domNat domBool) ty) ->
+                     (Val ty + Var dom ty) ->
                      IMu closeTerm' ty)
             (ty : Type) ->
-            IMu (toIDesc Type (exprFree ** (\ty -> Val ty + Var (chooseDom ty domNat domBool) ty))) ty ->
+            IMu (openTerm' dom) ty ->
             IMu closeTerm' ty
-substExpr domNat domBool gammaNat gammaBool sig ty term = 
-    substI (\ty -> Val ty + Var (chooseDom ty domNat domBool) ty)
+substExpr dom gammaNat gammaBool sig ty term = 
+    substI (\ty -> Val ty + Var dom ty)
            Val
            exprFree
-           (sig domNat domBool gammaNat gammaBool)
+           (sig dom gammaNat gammaBool)
            ty
            term
 
 
--- sigmaExpr : (domNat domBool : EnumU)
---             (gammaNat : spi domNat (\_ -> IMu closeTerm' nat))
---             (gammaBool : spi domBool (\_ -> IMu closeTerm' bool))
---             (ty : Type) ->
---             (Val ty + Var (chooseDom ty domNat domBool) ty) ->
---             IMu closeTerm' ty
--- sigmaExpr domNat domBool gammaNat gammaBool ty v = 
---     discharge' ty
---                (chooseDom ty domNat domBool)
---                (chooseGamma ty (chooseDom ty domNat domBool) gammaNat gammaBool)
---                v
+sigmaExpr : (dom : EnumU)
+            (gammaNat : spi dom (\_ -> IMu closeTerm' nat))
+            (gammaBool : spi dom (\_ -> IMu closeTerm' bool))
+            (ty : Type) ->
+            (Val ty + Var dom ty) ->
+            IMu closeTerm' ty
+sigmaExpr dom gammaNat gammaBool ty v = 
+    discharge' ty
+               dom
+               (chooseGamma ty dom gammaNat gammaBool)
+               v
 
--- discharge' : (ty : Type)
---             (vars : EnumU)
---             (context : spi vars (\_ -> IMu closeTerm' ty)) ->
---             (Val ty + Var vars ty) -> 
---             IMu closeTerm' ty
-
--- chooseGamma : (ty : Type)
---               (dom : EnumU)
---               (gammaNat : spi dom (\_ -> IMu closeTerm' nat))
---               (gammaBool : spi dom (\_ -> IMu closeTerm' bool)) ->
---               spi dom (\_ -> IMu closeTerm' ty)
+test : IMu (openTerm' (consE (consE nilE))) nat ->
+       IMu closeTerm' nat
+test term = substExpr (consE (consE nilE)) 
+                      ( con ( EZe , ze ) , ( con (EZe , su ze ) , Void )) 
+                      ( con ( EZe , true ) , ( con ( EZe , false ) , Void ))
+                      sigmaExpr nat term
