@@ -428,11 +428,140 @@ openTerm dom = exprIDesc (\ty -> Val ty + Var dom ty) expr
 -- Evaluation of open terms
 --********************************
 
-assgnmt : (ty : Type)
+discharge : (ty : Type)
           (vars : EnumU)
           (context : spi vars (\_ -> IMu closeTerm ty)) ->
           (Val ty + Var vars ty) -> 
           IMu closeTerm ty
-assgnmt ty vars context (l value) = con ( EZe , value )
-assgnmt ty vars context (r variable) = switch vars (\_ -> IMu closeTerm ty) context variable 
+discharge ty vars context (l value) = con ( EZe , value )
+discharge ty vars context (r variable) = switch vars (\_ -> IMu closeTerm ty) context variable 
 
+
+--********************************************
+-- Free monad construction
+--********************************************
+
+_**_ : {I : Set} (R : TagIDesc I)(X : I -> Set) -> TagIDesc I
+((E , ED) , FFD) ** X = ((( consE E ,  \ i -> ( const (X i) , ED i ))) , FFD) 
+
+
+--********************************************
+-- Substitution
+--********************************************
+
+apply : {I : Set}
+        (R : TagIDesc I)(X Y : I -> Set) ->
+        ((i : I) -> X i -> IMu (toIDesc I (R ** Y)) i) ->
+        (i : I) -> 
+        desc (toIDesc I (R ** X) i) (IMu (toIDesc I (R ** Y))) ->
+        IMu (toIDesc I (R ** Y)) i
+apply (( E , ED) , (F , FD)) X Y sig i (EZe , x) = sig i x
+apply (( E , ED) , (F , FD)) X Y sig i (ESu n , t) = con (ESu n , t)
+
+substI : {I : Set} (X Y : I -> Set)(R : TagIDesc I)
+         (sigma : (i : I) -> X i -> IMu (toIDesc I (R ** Y)) i)
+         (i : I)(D : IMu (toIDesc I (R ** X)) i) ->
+         IMu (toIDesc I (R ** Y)) i
+substI {I} X Y R sig i term = cata I (toIDesc I (R ** X)) (IMu (toIDesc I (R ** Y))) (apply R X Y sig) i term 
+
+
+--********************************************
+-- Hutton's razor is free monad
+--********************************************
+
+exprFreeFixMenu : FixMenu Type
+exprFreeFixMenu = ( consE nilE , 
+                    \ty -> (prod (var bool) (prod (var ty) (var ty)), 
+                           Void))
+
+choiceFreeMenu : Type -> EnumU
+choiceFreeMenu nat = consE nilE
+choiceFreeMenu bool = consE nilE
+
+choiceFreeDessert : (ty : Type) -> spi (choiceFreeMenu ty) (\ _ -> IDesc Type)
+choiceFreeDessert nat = (prod (var nat) (var nat) , Void)
+choiceFreeDessert bool = (prod (var nat) (var nat) , Void )
+
+exprFreeSensitiveMenu : SensitiveMenu Type
+exprFreeSensitiveMenu = ( choiceFreeMenu ,  choiceFreeDessert )
+
+exprFree : TagIDesc Type
+exprFree = exprFreeFixMenu , exprFreeSensitiveMenu
+
+exprFreeC : (Type -> Set) -> TagIDesc Type
+exprFreeC X = exprFree ** X
+
+closeTerm' : Type -> IDesc Type
+closeTerm' = toIDesc Type (exprFree ** Val)
+
+openTerm' : EnumU -> Type -> IDesc Type
+openTerm' dom = toIDesc Type (exprFree ** (\ty -> Val ty + Var dom ty))
+
+--********************************
+-- Evaluation of open terms'
+--********************************
+
+discharge' : (ty : Type)
+            (vars : EnumU)
+            (context : spi vars (\_ -> IMu closeTerm' ty)) ->
+            (Val ty + Var vars ty) -> 
+            IMu closeTerm' ty
+discharge' ty vars context (l value) = con (EZe , value) 
+discharge' ty vars context (r variable) = switch vars (\_ -> IMu closeTerm' ty) context variable
+
+chooseDom : (ty : Type)(domNat domBool : EnumU) -> EnumU
+chooseDom nat domNat _ = domNat
+chooseDom bool _ domBool = domBool
+
+chooseGamma : (ty : Type)
+              (dom : EnumU)
+              (gammaNat : spi dom (\_ -> IMu closeTerm' nat))
+              (gammaBool : spi dom (\_ -> IMu closeTerm' bool)) ->
+              spi dom (\_ -> IMu closeTerm' ty)
+chooseGamma nat dom gammaNat gammaBool = gammaNat
+chooseGamma bool dom gammaNat gammaBool = gammaBool
+
+substExpr : (domNat domBool : EnumU)
+            (gammaNat : spi domNat (\_ -> IMu closeTerm' nat))
+            (gammaBool : spi domBool (\_ -> IMu closeTerm' bool))
+            (sigma : (domNat domBool : EnumU)
+                     (gammaNat : spi domNat (\_ -> IMu closeTerm' nat))
+                     (gammaBool : spi domBool (\_ -> IMu closeTerm' bool))
+                     (ty : Type) ->
+                     (Val ty + Var (chooseDom ty domNat domBool) ty) ->
+                     IMu closeTerm' ty)
+            (ty : Type) ->
+            IMu (toIDesc Type (exprFree ** (\ty -> Val ty + Var (chooseDom ty domNat domBool) ty))) ty ->
+            IMu closeTerm' ty
+substExpr domNat domBool gammaNat gammaBool sig ty term = 
+    substI (\ty -> Val ty + Var (chooseDom ty domNat domBool) ty)
+           Val
+           exprFree
+           (sig domNat domBool gammaNat gammaBool)
+           ty
+           term
+
+
+-- sigmaExpr : (domNat domBool : EnumU)
+--             (gammaNat : spi domNat (\_ -> IMu closeTerm' nat))
+--             (gammaBool : spi domBool (\_ -> IMu closeTerm' bool))
+--             (ty : Type) ->
+--             (Val ty + Var (chooseDom ty domNat domBool) ty) ->
+--             IMu closeTerm' ty
+-- sigmaExpr domNat domBool gammaNat gammaBool ty v = 
+--     discharge' ty
+--                (chooseDom ty domNat domBool)
+--                (chooseGamma ty (chooseDom ty domNat domBool) gammaNat gammaBool)
+--                v
+
+-- discharge' : (ty : Type)
+--             (vars : EnumU)
+--             (context : spi vars (\_ -> IMu closeTerm' ty)) ->
+--             (Val ty + Var vars ty) -> 
+--             IMu closeTerm' ty
+
+-- chooseGamma : (ty : Type)
+--               (dom : EnumU)
+--               (gammaNat : spi dom (\_ -> IMu closeTerm' nat))
+--               (gammaBool : spi dom (\_ -> IMu closeTerm' bool)) ->
+--               spi dom (\_ -> IMu closeTerm' ty)
