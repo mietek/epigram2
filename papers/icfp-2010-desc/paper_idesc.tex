@@ -82,9 +82,17 @@ $\DIndx$ and $\DHindx$ as follow:
 \]
 
 Consequently, the examples previously developed can be
-straightforwardly translated into this new presentation. \note{We
-  might want to re-do the Nat example here, as we encode once again in
-  $\IDesc$} In the following, we adopt this last version as our de
+straightforwardly translated into this new presentation. For example,
+here is the new definition of $\NatD$:
+
+\[\stk{
+\NatD : \Desc \\
+\NatD \mapsto \DSigma{(\EnumT{[ \NatZero, \NatSuc{} ]})}
+                     {[ \DUnit \quad \DId ]}
+}\]
+
+
+In the following, we adopt this last version as our de
 facto universe of inductive types. In particular, we are going to
 evolve this presentation into an indexed one.
 
