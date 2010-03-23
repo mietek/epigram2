@@ -756,6 +756,8 @@ a false economy.
 >         (ALL sS2 . L . HF "s2" $ \ s2 -> ALL sS1 . L . HF "s1" $  \ s1 ->
 >            IMP  (EQBLUE (sS2 :>: s2) (sS1 :>: s1)) $
 >            (SET :>: tT1 $$ A s1) <-> (SET :>: tT2 $$ A s2))
+> opRunEqGreen [C Set, C (Mu (_ :?=: (Id t0))), C Set, C (Mu (_ :?=: (Id t1)))] = 
+>    opRunEqGreen [desc, t0, desc, t1]
 > opRunEqGreen [C ty0,C t0,C ty1,C t1] = case halfZip t0'' t1'' of
 >    Nothing -> Right ABSURD 
 >    Just x  -> Right $ mkEqConj (trail x)
