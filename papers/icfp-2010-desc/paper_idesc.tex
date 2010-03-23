@@ -531,8 +531,8 @@ is as follow:
 \evalOne\: \_\: \pair{\Eval{}}{x}{}                                         & x \\
 \evalOne\: \_\: \pair{\Econd{}{}{}}{\pair{\BoolTrue}{\pair{x}{\_}{}}{}}{}   & x \\
 \evalOne\: \_\: \pair{\Econd{}{}{}}{\pair{\BoolFalse}{\pair{\_}{y}{}}{}}{}  & x \\
-\evalOne\: \Enat\: \pair{\Eplus{}{}}{\pair{x}{y}{}}{}                       & \F{plusHost}\: x y \\
-\evalOne\: \Ebool\: \pair{\Ele{}{}}{\pair{x}{y}{}}{}                        & \F{leHost}\: x y 
+\evalOne\: \Enat\: \pair{\Eplus{}{}}{\pair{x}{y}{}}{}                       & \F{plusHost}\: x\: y \\
+\evalOne\: \Ebool\: \pair{\Ele{}{}}{\pair{x}{y}{}}{}                        & \F{leHost}\: x\: y 
 \end{array} \\
 \\
 \evalH : \PI{\V{ty}}{\Ty} 
