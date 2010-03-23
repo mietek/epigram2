@@ -670,32 +670,35 @@ is the following:
 \newcommand{\domBool}{dom_{\CN{bool}}}
 \newcommand{\gammaNat}{\gamma_{\CN{nat}}}
 \newcommand{\gammaBool}{\gamma_{\CN{bool}}}
+\newcommand{\GammaSpi}[2]{\Gamma_{\CN{ty}}~#1~#2}
 
 \[
 \begin{array}{@{}ll}
-\substH  : & \PITEL{\V{\domNat}}{\EnumU} 
-             \PITEL{\V{\gammaNat}}{\spi{\domNat}{(\LAM{\_} \IMu{\Ty}{\toIDesc{\HExprVarD{\domNat}}}{\Enat})}} \\
-           & \PITEL{\V{\domBool}}{\EnumU} 
-             \PITEL{\V{\gammaBool}}{\spi{\domBool}{(\LAM{\_} \IMu{\Ty}{\toIDesc{\HExprVarD{\domBool}}}{\Ebool})}} \\
-          &  \begin{array}{@{}ll}
-             \PI{\V{\sigma}}{& \PITEL{\V{\domNat}}{\EnumU} \\
+\substH  : & \PITEL{\V{\dom}}{\EnumU} \\
+           & \PITEL{\V{\gammaNat}}{\GammaSpi{dom}{\Enat}} 
+             \PITEL{\V{\gammaBool}}{\GammaSpi{dom}{\Ebool}} \\
+           & \begin{array}{@{}ll}
+             \PI{\V{\sigma}}{& \PITEL{\V{dom}}{\EnumU} \\
                              & \PITEL{\V{\gammaNat}}
-                                     {\spi{\domNat}{(\LAM{\_} \IMu{\Ty}{\toIDesc{\HExprVarD{\domNat}}}{\Enat})}} \\
-                             & \PITEL{\V{\domBool}}{\EnumU} \\
+                                     {\GammaSpi{dom}{\Enat}} \\
                              & \PITEL{\V{\gammaBool}}
-                                     {\spi{\domBool}{(\LAM{\_} \IMu{\Ty}{\toIDesc{\HExprVarD{\domBool}}}{\Ebool})}} \\
-                             & \PI{\V{ty}}{\Ty} (\SUM{\Val{ty}}{\Var{dom_{ty}}{ty}}) \To
-                               \IMu{\Ty}{(\toIDesc{\HExprD})}{ty}}
+                                     {\GammaSpi{dom}{\Ebool}} \\
+                             & \PI{\V{ty}}{\Ty} (\SUM{\Val{ty}}{\Var{dom}{ty}}) \To \\
+                             & \IMu{\Ty}{(\toIDesc{\HExprD})}{ty}}
              \end{array}\\
           & \PI{\V{ty}}{\Ty}
-            \IMu{\Ty}{\toIDesc{\HExprVarD{dom_{ty}}}}{\V{ty}} \To
-            \IMu{\Ty}{\toIDesc{\HExprD}}{\V{ty}}
+            \IMu{\Ty}{\toIDesc{\HExprVarD{dom}}}{\V{ty}} \To \\
+          & \IMu{\Ty}{\toIDesc{\HExprD}}{\V{ty}}
 \end{array}
 \]
 
-Where $dom_{ty}$ is short for
- $\case{ty}{\Enat  \To \domNat
-         \\ \Ebool \To \domBool}$
+Where $\GammaSpi$ corresponds to a context, defined by:
+
+\[\stk{
+\GammaSpi{}{} : \EnumU \To \Ty \To \Set                                             \\
+\GammaSpi{dom}{ty} = \spi{dom}{(\LAM{\_} \IMu{\Ty}{\toIDesc{\HExprVarD{dom}}}{ty})} 
+}\]
+
 
 Abstracting away the book-keeping introduced by the context, this
 definition looks familiar. Indeed, it is extremely similar to a
@@ -707,9 +710,13 @@ $\sigma$ is implemented from $\discharge$, by picking the domain and
 context corresponding to the type:
 
 \[
-\sigma\: \domNat\: \gammaNat\: \domBool\: \gammaBool\: ty\: var \mapsto 
-    \discharge\: ty\: dom_{ty}\: \gamma_{ty}\: var 
+\sigma\: dom\: \gammaNat\: \gammaBool\: ty\: var \mapsto 
+    \discharge\: ty\: dom\: \gamma_{ty}\: var 
 \]
+
+Where $\gamma_{ty}$ is short for
+ $\caseB{ty}{\Enat  \To \gammaNat \\
+             \Ebool \To \gammaBool}$
 
 Instead of implementing $\substH$ in this special case, we shall
 implement it in a generic setting, and express our example in that
@@ -981,23 +988,22 @@ guiding us:
 
 
 \[\stk{
-\substH\: \domNat\: \domBool\: 
-            \gammaNat\: \gammaBool\:
-            \sigma\: 
-            ty\: 
-            term \mapsto  \\
+\substH\: dom\:
+          \gammaNat\: \gammaBool\:
+          \sigma\: 
+          ty\: 
+          term \mapsto  \\
 \;\;\ \begin{array}{ll}
        \substI\: & \Ty\: 
-                  (\SUM{\Val{}}{\Var{dom_{ty}}{}})\: 
+                  (\SUM{\Val{}}{\Var{dom}{}})\: 
                   \Val{}\:
                   \HExprFreeD\:  \\
                 &
-                  (\sigma\: \domNat\: \domBool\: \gammaNat\: \gammaBool)\:
+                  (\sigma\: dom\: \gammaNat\: \gammaBool)\:
                   ty\:
                   term
       \end{array}
 }\]
-
 
 Hence, we have completed our implementation of the evaluator for open
 terms. We started with a well-typed language of arithmetical
