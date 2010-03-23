@@ -367,7 +367,6 @@ special purpose $\F{switchID}$ operator.
 \newcommand{\Ty}{\C{Ty}}
 \newcommand{\Ebool}{\etag{\CN{bool}}}
 \newcommand{\Enat}{\etag{\CN{nat}}}
-\newcommand{\Epolym}{\etag{\alpha}}
 
 %% Constructors
 \newcommand{\Eval}[1]{\etag{\CN{val}}~#1}
@@ -401,27 +400,21 @@ their type is the following:
 
 \[
 \begin{array}{l@{\::\:\:}l}
-\Econd{}{}{}     & \Ebool \To \Epolym \To \Epolym \To \Epolym  \\ 
-\Eplus{}{}       & \Enat \To \Enat \To \Enat                   \\
-\Ele{}{}         & \Enat \To \Enat \To \Ebool                  \\
-\Eval{}          & \Val{\Epolym} \To \Epolym
+\Econd{}{}{}     & \forall \Bhab{ty}{\Ty} . \Ebool \To ty \To ty \To ty  \\ 
+\Eplus{}{}       & \Enat \To \Enat \To \Enat                           \\
+\Ele{}{}         & \Enat \To \Enat \To \Ebool                          \\
+\Eval{}          & \forall \Bhab{ty}{\Ty} . \Val{ty} \To ty
 \end{array}
 \]
 
-The notation $\Epolym$ represents a form of ``polymorphism'', meaning
-that $\alpha$ can be any type. \note{Polymorph? Will any ghost try to
-  haunt me with that?  A ghost under a mixed prefix?
-  Aaaaaaaaaaargh\ldots (Wha? - pwm)}
-\note{pwm: I don't really get the need for this $\Epolym$ notation. Why not
-just abstract over an elem of $\Ty£$?} 
-
 The function $\Val{}$, used in the definition of $\Eval{}$, simply
-maps $\Epolym$ to the corresponding type in the host language. Hence,
-the argument of $\Eval{}$ are ensured to be of the expected type. We
-assume $\Nat$ and $\Bool$ represent natural numbers and booleans in
-the host language. Further, we also assume the existence of an
-addition and comparison operator in $\Nat$, respectively named
-$\F{plusHost}$ and $\F{leHost}$. We define $\Val{}$ as follow:
+maps an object type $ty$ to the corresponding type in the host
+language. Hence, the argument of $\Eval{}$ are ensured to be of the
+expected type. We assume $\Nat$ and $\Bool$ represent natural numbers
+and booleans in the host language. Further, we also assume the
+existence of an addition and comparison operator in $\Nat$,
+respectively named $\F{plusHost}$ and $\F{leHost}$. We define $\Val{}$
+as follow:
 
 \[\stk{
 \Val{} : \Ty \To \Set \\
