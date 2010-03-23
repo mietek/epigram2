@@ -30,7 +30,8 @@ information prevents hazardous operations, such as taking the head of
 an empty vector: the head function only takes vectors of length
 $\NatSuc{n}$, as enforced by its type. This is made possible by the
 very specificity of dependently-typed systems: terms -- the length --
-are allowed to influence types -- the vector type.
+are allowed to influence types -- the vector type. \note{Reference
+  paper to cite about vectors in dependent types?}
 
 However, this new class of objects cannot be defined by mere
 induction. In the case of vectors, for instance, we have to define the
@@ -279,13 +280,40 @@ enable or disable the constructors.
  \ITagIDesc{I} \mapsto \SIGMA{\V{F}}{I \To \EnumU} (\PI{\V{i}}{I} \spi{(F\: i)}{(\LAM{\_} \IDesc{I})}) 
 }\]
 
+
+\begin{wstructure}
+<- Vectors
+    Do we treat them in the end? 
+    What can we say here we haven't with Fin?
+\end{wstructure}
+
 In the case of vectors, for instance, for the index $\NatZero$, we
 would only propose the constructor $\ListNil$. Similarly, for
-$\NatSuc{n}$, we only propose the constructor $\ListCons{}{}$. We will
-see more instances of this pattern in the following.
-\note{We're talking about vectors again, are we \emph{really} not going to
-define them?}
+$\NatSuc{n}$, we only propose the constructor $\ListCons{}{}$. Hence,
+we obtain the following definition:
 
+\newcommand{\VecD}{\C{VecD}}
+\newcommand{\VecNil}{\etag{\CN{vnil}}}
+\newcommand{\VecCons}[2]{\etag{\CN{vcons}}\:#1\:#2}
+
+\[\stk{
+\VecD : \Set \To \TagIDesc{\Nat} \\
+\begin{array}{@{}ll}
+\VecD\: X = \bigRedBracket{ 
+            \begin{array}{l}
+                \pair{[]}{\_}{} \\
+                \bigRedBracket{
+                \begin{array}{l} 
+                  \LAM{n} \caseB{n}{\NatZero \To [\VecNil] \\
+                                   (\NatSuc n) \To [\VecCons{}{}]} \\
+                  \LAM{n} \caseB{n}{\NatZero \To [\DConst{Unit}] \\
+                                   (\NatSuc n) \To [\DSigma{X}{\DVar{n}}]}
+                \end{array}}
+            \end{array}}
+\end{array}
+}\]
+
+We will see more instances of this pattern in the following.
 
 
 \note{Should we say something about IMu, fixed-points, and their
@@ -754,15 +782,6 @@ stipulates that $m$ cannot be \emph{any} natural numbers: it must be
 \PropEq \NatSuc{m}$. 
 
 \note{ Anything else? }
-
-\begin{wstructure}
-<- Vectors
-    Do we treat them in the end? 
-    What can we say here we haven't with Fin?
-\end{wstructure}
-
-\note{ I suspect we don't implement vectors, space-wise }
-\note{pwm: I suspect we don't get away with leaving them out}
 
 \begin{wstructure}
 <- GADT-style data-type definition
