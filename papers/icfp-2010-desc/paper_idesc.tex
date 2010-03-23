@@ -66,12 +66,16 @@ $$\Bhab{\Sigma}{\PI{\V{S}}{\Set} (S \To \Set) \To \Set}$$
 
 In the alternative presentation, we go further and present all our
 codes as quotations of standard type-formers. This presentation is
-shown in Figure~\ref{fig:type-former-desc}. The reader will notice the
-introduction of $\DProd{}{}$ that overlaps with $\DSigma{}{}$. Unlike
-$\DSigma{}{}$, $\DProd{}{}$ is first-order, hence amenable to a
-definitional treatment. \note{We could replace $\DUnit$ by $\DConst$
-  here, instead of doing it in the following section. This is also a
-  story about being first-order, so that would make sense, isn't it?}
+shown in Figure~\ref{fig:type-former-desc}. The reader will notice
+that we replace $\DUnit$ by a more general $\DConst$ code. Whereas
+$\DUnit$ was interpreted as the unit set, $\DConst{X}$ is interpreted
+as $X$, for any $\Bhab{X}{\Set}$. Extensionally, $\DConst{X}$ and
+$\DSigma{X}{\DUnit}$ are equivalent. However, $\DConst$ is more
+succinct. More importantly, $\DConst$ is \emph{first-order}, unlike
+its equivalent encoding. From a definitional perspective, we are
+giving more opportunities to the type-system, hence reducing the
+burden on the programmer. For the same reason, we introduce
+$\DProd{}{}$ that overlaps with $\DSigma{}{}$.
 
 This reorganisation is strictly equivalent to the previous one
 (Fig.~\ref{fig:hindx_desc}). Just as the previous version, it is also
@@ -107,11 +111,11 @@ evolve this presentation into an indexed one.
 \[\stk{
 \begin{array}{ll}
 \stk{
-\data \Desc : \Set \where \\
+\data \Desc : \Set \where                                      \\
 \;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
-    \DId            & \Desc                                   \\
-    \DUnit          & \Desc                                   \\
-    \DProd{}{}      & \PI{\V{D}, \V{D'}}{\Desc} \Desc         \\
+    \DId            & \Desc                                    \\
+    \DConst{}       & \Set \To \Desc                           \\
+    \DProd{}{}      & \PI{\V{D}, \V{D'}}{\Desc} \Desc          \\
     \DSigma         & \PI{\V{S}}{\Set} \PIS{S \To \Desc} \Desc \\
     \DPi            & \PI{\V{S}}{\Set} \PIS{S \To \Desc} \Desc 
 \end{array}
@@ -122,9 +126,9 @@ evolve this presentation into an indexed one.
 \descop{\_\:}{} : \Desc \To \Set \To \Set \\
 \begin{array}{@{}l@{\:=\:\:}ll}
 \descop{\DId}{X}          &  X                                           \\
-\descop{\DUnit}{X}        &  \Unit                                       \\
+\descop{\DConst{Z}}{X}    &  Z                                           \\
 \descop{\DProd{D}{D'}}{X} &  \TIMES{\descop{D}{X}}{\descop{D'}{X}}       \\
-\descop{\DSigma{S}{D}}{X} &  \SIGMA{\V{s}}{S} \descop{D\: s}{X}                \\
+\descop{\DSigma{S}{D}}{X} &  \SIGMA{\V{s}}{S} \descop{D\: s}{X}          \\
 \descop{\DPi{S}{D}}{X}    &  \PI{\V{s}}{S} \descop{D\: s}{X}            
 \end{array}
 }
@@ -194,15 +198,7 @@ functor by turning $\DId$ into an index-dependent $\DVar$ code:
 \end{wstructure}
 
 The resulting code of $\IDesc$ is presented in
-Figure~\ref{fig:idesc}. The reader will notice that we have also
-replaced $\DUnit$ by a more general $\DConst$ code. Whereas $\DUnit$
-was interpreted as the unit set, $\DConst{X}$ is interpreted as $X$,
-for any $\Bhab{X}{\Set}$. Extensionally, $\DConst{X}$ and
-$\DSigma{X}{\DUnit}$ are equivalent. However, $\DConst$ is more
-succinct. More importantly, $\DConst$ is \emph{first-order}, unlike
-its equivalent encoding. From a definitional perspective, we are
-giving more opportunities to the type-system, hence reducing the
-burden on the programmer.
+Figure~\ref{fig:idesc}. 
 
 \begin{figure}
 
