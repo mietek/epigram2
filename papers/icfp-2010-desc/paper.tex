@@ -158,7 +158,7 @@ program \emph{generically}.
         /> Coq, Agda: external notion
             <- Not first-class citizen
             -> Cannot "compute" with them
-            -> No reflexivity for data-types (?)
+            -> No reflection for data-types (?)
 \end{wstructure}
 
 While central in a programming environment, the presentation of
@@ -171,17 +171,17 @@ data-type definition is not \emph{first-class}: we cannot compute with
 them, such as making new data-types from previous data-types. 
 
 This is a rather harsh limitation, in particular in a
-dependently-typed system. Indeed, reflexivity~\cite{allen:reflection,
+dependently-typed system. Indeed, reflection~\cite{allen:reflection,
   gregoire:ring-solver} is at the heart of many dependently-typed
 programming techniques. Not having first-class data-type definitions,
-we have to give up reflexivity for data-types.
+we have to give up reflection for data-types.
 
 \begin{wstructure}
     <- Dependent types offer new programming techniques
         <- Eg.: universe construction
         /> State of the art haunted by the simply-typed paradigm
             -> Generative
-            -> Non reflexive
+            -> Non reflective
 \end{wstructure}
 
 However, we do not think that we are condemned to such fate. The
@@ -190,7 +190,7 @@ paradigm. Dependently-typed system has more to offer. Indeed, new
 programming techniques, unavailable in a simply-typed setting,
 arises. One of them is \emph{universe
   construction}~\cite{martin-lof:itt}. We shall see how this technique
-help us overcoming the limitations of the standard, non reflexive and
+help us overcoming the limitations of the standard, non reflective and
 generative presentation of data-types.
 
 \begin{wstructure}
