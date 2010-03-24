@@ -824,25 +824,19 @@ stipulates that $m$ cannot be \emph{any} natural numbers: it must be
 The $\Fin$ example is also a well-known example of Generalised
 Abstract Data-Type (GADT) in Haskell. It comes as no surprise that our
 universe of indexed description supports this restricted class of
-dependent data-types. As we have shown with $\Fin$, constrained
-constructors are straightforwardly translated into equality
-constraints.
-
-While we support the same grammar, indexed descriptions embraces a
-much wider class of data-types. Indeed, we pose no constraint apart
-from strict positivity\note{pwm: Is this actually the 1st mention of this
-phrase? I think that should be rectified :)}. This suggests that, based on
-the familiar grammar of GADTs, we can simply lift off the restrictions and
-translates the user's input to a code in our universe of indexed description. 
+inductive families. As we have seen with $\Fin$, constrained
+constructors are straightforwardly translated into equations.
 
 However, one could, quite rightfully, be worried by the introduction
-of equations in the picture. In the context of programming, these
-equations will come back and haunt us, begging for proofs. Hence,
-whereas the user typed a constructor-constrained data-type, the
-elimination form will involve equations and their proofs. This
-introduces a loophole in our abstraction we should try to address.
-
-\note{Is that convincing? Worth saying? Anything else?}
+of equalities in the picture. In a programming context, equalities
+haunt us, begging for proofs. Hence, whereas the user typed a
+constructor-constrained data-type, the elimination form will involve
+equalities and their proofs. As much as possible, one would rather
+avoid suffering from this burden. However, the equalities introduced
+here are rather special: they are \emph{equations} constraining
+variables to certain terms. Goguen et
+al.~\cite{goguen:pattern-matching} have shown, in the context of
+dependent pattern matching, how to tame these equations. 
 
 \begin{wstructure}
 !!! Need Help !!!
@@ -853,14 +847,13 @@ introduces a loophole in our abstraction we should try to address.
     ??? More technical detail needed
 \end{wstructure}
 
-To get a clue of a solution, let us look back at $\Fin$. We note that
-the equation is introduced because we are \emph{storing} the index of
-the inductive family, through $m$. Hence the constraint. However,
-\emph{inductive families need not store their
-  indices}~\cite{brady:index-inductive-families}\note{ I'm not
-  familiar with this, I need to get into the paper. }. Applying the
-\emph{forcing} optimisation to our definition of $\Fin$ gives the
-following, equivalent definition:
+Further, we can actually remove these equations altogether. Let us
+look back at $\Fin$. We note that the equations are introduced because
+we are \emph{storing} the index of the inductive family, through
+$m$. Hence the constraints. However, \emph{inductive families need not
+  store their indices}~\cite{brady:index-inductive-families}. Applying
+the \emph{forcing} optimisation to our initial definition of $\Fin$
+gives the following, equivalent definition:
 
 \[\stk{
 \FinD : \Nat \To \IDesc{\Nat} \\
@@ -876,9 +869,9 @@ following, equivalent definition:
 \end{array}
 }\]
 
-Equations have simply disappeared! We should precise that forcing a
+Equations have simply disappeared. We should precise that forcing a
 description is not guaranteed to remove all constraints. It is subject
-of future work to see if constraints can be entirely eradicated, or
+to future work to see if constraints can be entirely eradicated, or
 presented more conveniently to the user. Finally, it is worth
 mentioning that the forcing optimisation is a \emph{source-to-source}
 transformation of the description.
