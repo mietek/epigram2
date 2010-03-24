@@ -49,12 +49,23 @@ a concrete example.}
 \subsection{Desc, atomically}
 
 \begin{wstructure}
+[Outdated: type former presentation instead]
 <- Adding hindx have introduced some duplication
     <- indx == hindx 1
     -> We can factor out commonalities 
         /> Obtain an equivalent presentation
         /> Still embeddable (refer to the Agda model)
 \end{wstructure}
+
+\begin{wstructure}
+<- Also replacing '1 by 'const  [figure]
+    <- For convenience
+        <- 'const X equivalent to 'sigma X (\_ -> '1)
+        /> Easier to abstract
+            <- Extensionally same
+            /> 'const more useful in practice
+\end{wstructure}
+
 
 Before moving on indexed descriptions, we have to carry out some
 maintenance work on descriptions. We presented $\Desc$ as the grammar
@@ -154,12 +165,11 @@ evolve this presentation into an indexed one.
 In the previous section, we have presented the $\Desc$ universe as the
 grammar of functors in the category $\Set$. We have seen how to encode
 inductive types in this setting. To encode an inductive family indexed
-by $\Bhab{\V{I}}{\Set}$, we rely on functors in the category
-$\Set^I$. We call these \emph{indexed functors}. 
-\note{pwm: What's our story \emph{vis-\`{a}-vis} the 2 notions of indexed
-functor at play here: $(I\to\Set)\to\Set$ and $(I\to\Set)\to(I\to\Set)$?}  
-In the following, we
-implement $I \To \IDesc{I}$ as a grammar for indexed functors:
+by $\Bhab{\V{I}}{\Set}$, we rely on endofunctors on the category
+$\Set^I$. We call these \emph{indexed functors}. In the following, $I
+\To \IDesc{I}$ is a grammar for indexed functors: \note{pwm: What's
+  our story \emph{vis-\`{a}-vis} the 2 notions of indexed functor at
+  play here: $(I\to\Set)\to\Set$ and $(I\to\Set)\to(I\to\Set)$?}
 
 \[\stk{
 \data \IDesc{} (\Bhab{\V{I}}{\Set}) : \Set \where \\
@@ -170,8 +180,8 @@ implement $I \To \IDesc{I}$ as a grammar for indexed functors:
 }\]
 
 This generalisation can be achieved by a minor evolution of $\Desc$
-(Fig.~\ref{fig:type-former-desc}). Indeed, the functorial nature of the
-atomic $\Desc$ is entirely captured by the $\DId$ code. We get an indexed
+(Fig.~\ref{fig:type-former-desc}). Indeed, the functorial nature of
+$\Desc$ is entirely captured by the $\DId$ code. We get an indexed
 functor by turning $\DId$ into an index-dependent $\DVar$ code:
 
 \[\stk{
@@ -188,17 +198,25 @@ functor by turning $\DId$ into an index-dependent $\DVar$ code:
 \end{array}
 }\]
 
-\begin{wstructure}
-<- Also replacing '1 by 'const  [figure]
-    <- For convenience
-        <- 'const X equivalent to 'sigma X (\_ -> '1)
-        /> Easier to abstract
-            <- Extensionally same
-            /> 'const more useful in practice
-\end{wstructure}
 
 The resulting code of $\IDesc$ is presented in
-Figure~\ref{fig:idesc}. 
+Figure~\ref{fig:idesc}. A fix-point consists of the fix-point of the
+\emph{family} of functors as a whole. Hence the following definition:
+
+\[\stkl{
+\Rule{\stk{ 
+          \Gamma \vdash \Bhab{I}{\Set} \\
+          \Gamma \vdash \Bhab{R}{I \To \IDesc{I}} \\
+          \Gamma \vdash \Bhab{i}{I}}}
+     {\Gamma \vdash \Bhab{\IMu{I}{R}{i}}{\Set}} \qquad
+\Rule{\stk{
+          \Gamma \vdash \Bhab{I}{\Set} \\
+          \Gamma \vdash \Bhab{R}{I \To \IDesc{I}} \\
+          \Gamma \vdash \Bhab{i}{I} \\
+          \Gamma \vdash \Bhab{x}{\idescop{R\: i}{I}{(\IMu{I}{R}{})}}}}
+     {\Gamma \vdash \Bhab{\Con{x}}{\IMu{I}{R}{i}}}
+}\]
+
 
 \begin{figure}
 
