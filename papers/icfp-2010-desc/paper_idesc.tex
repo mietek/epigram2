@@ -163,13 +163,13 @@ evolve this presentation into an indexed one.
 \end{wstructure}
 
 In the previous section, we have presented the $\Desc$ universe as the
-grammar of functors in the category $\Set$. We have seen how to encode
-inductive types in this setting. To encode an inductive family indexed
-by $\Bhab{\V{I}}{\Set}$, we rely on endofunctors on the category
-$\Set^I$. We call these \emph{indexed functors}. In the following, $I
-\To \IDesc{I}$ is a grammar for indexed functors: \note{pwm: What's
-  our story \emph{vis-\`{a}-vis} the 2 notions of indexed functor at
-  play here: $(I\to\Set)\to\Set$ and $(I\to\Set)\to(I\to\Set)$?}
+grammar of functors in the category $\Set$. We have seen how to code
+inductive types in this setting. To describe an inductive family
+indexed by $\Bhab{I}{\Set}$, we use endofunctors on the category
+$\Set^I$. We call these \emph{indexed functors}. \note{Predicate
+  transformer anyone?} In this setting, $I \To \IDesc{I}$ is our
+grammar for describing these functors. Hence, $\IDesc{}$ and its
+interpretation have the following types:
 
 \[\stk{
 \data \IDesc{} (\Bhab{\V{I}}{\Set}) : \Set \where \\
@@ -179,29 +179,12 @@ $\Set^I$. We call these \emph{indexed functors}. In the following, $I
 \ldots
 }\]
 
-This generalisation can be achieved by a minor evolution of $\Desc$
-(Fig.~\ref{fig:type-former-desc}). Indeed, the functorial nature of
-$\Desc$ is entirely captured by the $\DId$ code. We get an indexed
-functor by turning $\DId$ into an index-dependent $\DVar$ code:
-
-\[\stk{
-\data \IDesc{} (\Bhab{\V{I}}{\Set}) : \Set \where \\
-\;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
-    \DVar{}         & I \To \IDesc{I}                                   \\
-    \ldots          & \ldots
-\end{array} \\
-\\
-\idescop{\_\:}{}{} :_{\PI{\V{I}}{\Set}} \IDesc{I} \To (\V{I} \To \Set) \To \Set        \\
-\begin{array}{@{}l@{\:=\:\:}ll}
-\idescop{\DVar{i}}{I}{P}      &  P~i                                                 \\
-\ldots                        &  \ldots
-\end{array}
-}\]
-
-
-The resulting code of $\IDesc$ is presented in
-Figure~\ref{fig:idesc}. A fix-point consists of the fix-point of the
-\emph{family} of functors as a whole. Hence the following definition:
+Note that $I \To \IDesc{I}$ is isomorphic, up to interpretation, to an
+endofunctor on $\Set^I$. Indeed, $I \To \IDesc{I}$ is interpreted as
+$I \To (I \To \Set) \To \Set$, which is isomorphic to $(I \To \Set)
+\To (I \To \Set)$. Fix-point of inductive families is defined over
+these indexed functors, hence computing a fix-point of the entire
+\emph{family} of functors:
 
 \[\stkl{
 \Rule{\stk{ 
@@ -217,6 +200,27 @@ Figure~\ref{fig:idesc}. A fix-point consists of the fix-point of the
      {\Gamma \vdash \Bhab{\Con{x}}{\IMu{I}{R}{i}}}
 }\]
 
+
+However, we still have to define the actual grammar. This can be
+achieved by a minor evolution of $\Desc$
+(Fig.~\ref{fig:type-former-desc}). Indeed, the functorial nature of
+$\Desc$ is entirely captured by the $\DId$ code. We get an indexed
+functor by turning $\DId$ into an index-dependent $\DVar$ code. The
+resulting code of $\IDesc$ is presented in Figure~\ref{fig:idesc}.
+
+%% \[\stk{
+%% \data \IDesc{} (\Bhab{\V{I}}{\Set}) : \Set \where \\
+%% \;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
+%%     \DVar{}         & I \To \IDesc{I}                                   \\
+%%     \ldots          & \ldots
+%% \end{array} \\
+%% \\
+%% \idescop{\_\:}{}{} :_{\PI{\V{I}}{\Set}} \IDesc{I} \To (\V{I} \To \Set) \To \Set        \\
+%% \begin{array}{@{}l@{\:=\:\:}ll}
+%% \idescop{\DVar{i}}{I}{P}      &  P~i                                                 \\
+%% \ldots                        &  \ldots
+%% \end{array}
+%% }\]
 
 \begin{figure}
 
@@ -861,7 +865,7 @@ following, equivalent definition:
 \[\stk{
 \FinD : \Nat \To \IDesc{\Nat} \\
 \begin{array}{@{}llll}
-\FinD\: 0            & = & \multicolumn{2}{l}{\DSigma{\Void}{\Void} } \\
+\FinD\: \NatZero     & = & \multicolumn{2}{l}{\DSigma{\Void}{\Void} } \\
 \FinD\: (\NatSuc{n}) & = & \DSigma{}{} & (\EnumT{[ \FinZero , \FinSuc{} ]}) \\
                      &   &             & \bigRedBracket{
                                          \begin{array}{l}
