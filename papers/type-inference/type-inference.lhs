@@ -102,6 +102,8 @@
 \newcommand{\genarrow}{\ensuremath{\Uparrow}}
 \newcommand{\gen}[2]{\ensuremath{(#1 \genarrow #2)}}
 \newcommand{\forget}[1]{\ensuremath{\lfloor #1 \rfloor}}
+\newcommand{\hasscheme}{\ensuremath{::}}
+\newcommand{\subcontext}{\ensuremath{\subset}}
 
 \newcommand{\define}[1]{\emph{#1}}
 \newcommand{\scare}[1]{`#1'}
@@ -193,8 +195,9 @@ and substitutions often complicate mechanical correctness proofs.
 
 %if False
 
-> {-# LANGUAGE DeriveFunctor, DeriveFoldable, FlexibleInstances,
->     TypeSynonymInstances, TypeFamilies, StandaloneDeriving, TypeOperators #-}
+< {-# LANGUAGE DeriveFunctor, DeriveFoldable #-}
+
+> {-# LANGUAGE FlexibleInstances, TypeSynonymInstances, TypeFamilies, StandaloneDeriving, TypeOperators #-}
 
 First, let's get some imports out of the way.
 
@@ -204,6 +207,8 @@ First, let's get some imports out of the way.
 > import Control.Monad.State (StateT, get, gets, lift, put, runStateT)
 > import Data.Foldable (any, Foldable, foldMap)
 > import Data.Monoid (Monoid, mappend, mempty)
+
+> import Data.Traversable (Traversable, traverse, fmapDefault, foldMapDefault)
 
 %endif
 
@@ -289,7 +294,8 @@ derive the required typeclass instances.
 We define |Type| to use integers as names.
 
 > data Ty a  =  V a |  Ty a :-> Ty a
->     deriving (Functor, Foldable)
+
+<     deriving (Functor, Foldable)
 
 %if False
 
@@ -779,14 +785,16 @@ use the Haskell type system to prevent some incorrect manipulations of the
 indices by defining a natural number type
 
 > data Index a = Z | S a
->     deriving (Functor, Foldable)
+
+<     deriving (Functor, Foldable)
 
 and representing schemes as
 
 > data Schm a  =  Type (Ty a) 
 >              |  All (Schm (Index a))
 >              |  LetS (Ty a) (Schm (Index a))
->     deriving (Functor, Foldable)
+
+<     deriving (Functor, Foldable)
 
 > type Scheme = Schm Name
 
@@ -1008,32 +1016,6 @@ where $x$ ranges over some set of term variables.
 We define the judgement $\Delta \entails t : \tau$ ($t$ can be assigned type $\tau$
 in $\Delta$) by the rules in Figure~\ref{fig:typeAssignmentRules}.
 
-Now we can extend the $\lei$ relation to ensure that more informative contexts
-preserve term information. First, let $\forget{\cdot}$ be the forgetful map from
-contexts to lists of term names and |LetGoal| markers that discards type and
-scheme information:
-\begin{align*}
-\forget{\emptycontext}         &= \emptycontext  \\
-\forget{\Gamma, \alpha := \_}  &= \forget{\Gamma}  \\
-\forget{\Gamma, x \asc \sigma} &= \forget{\Gamma} , x  \\
-\forget{\Gamma, \letGoal}      &= \forget{\Gamma} , \letGoal
-\end{align*}
-
-We write $\theta : \Gamma \lei \Delta$ if
-\begin{enumerate}[(a)]
-\item $\Gamma \entails \alpha \defn \tau   \Rightarrow
-           \Delta \entails \theta\alpha \equiv \theta\tau$,
-\item $\Gamma \entails x \asc \sigma  \Rightarrow
-           \forall \tau. (\Delta \entails \theta\sigma \succ \tau 
-               \Leftrightarrow  \Delta \entails x : \tau)$ and
-\item $\forget{\Gamma}$ is a prefix of $\forget{\Delta}$.
-\end{enumerate}
-
-Furthermore, we define the judgement $\Gamma_0 \extend t : \tau \yields \Gamma_1$
-(inferring the type of $t$ in $\Gamma_0$
-yields $\tau$ in the more informative context $\Gamma_1$) by the rules in
-Figure~\ref{fig:inferRules}.
-
 \begin{figure}[ht]
 \boxrule{\Delta \entails t : \tau}
 
@@ -1064,9 +1046,7 @@ $$
 
 $$
 \Rule{
-      \forall \upsilon \Phi . (\theta : \Delta \lei \Phi
-          \wedge \Phi \entails \theta\sigma \succ \upsilon
-              \Leftrightarrow \Phi \entails s : \upsilon)
+      \Delta \entails s \hasscheme \sigma
       \quad
       \Delta, x \asc \sigma \entails t : \tau}
      {\Delta \entails \letIn{x}{s}{t} : \tau}
@@ -1077,6 +1057,74 @@ $$
 \end{figure}
 
 
+
+Now we can extend the $\lei$ relation to ensure that more informative contexts
+preserve term information. First, let $\forget{\cdot}$ be the forgetful map from
+contexts to lists of term names and |LetGoal| markers that discards type and
+scheme information:
+\begin{align*}
+\forget{\emptycontext}         &= \emptycontext  \\
+\forget{\Gamma, \alpha := \_}  &= \forget{\Gamma}  \\
+\forget{\Gamma, x \asc \sigma} &= \forget{\Gamma} , x  \\
+\forget{\Gamma, \letGoal}      &= \forget{\Gamma} , \letGoal
+\end{align*}
+
+We write $\theta : \Gamma \lei \Delta$ if
+\begin{enumerate}[(a)]
+\item $\Gamma \entails \alpha \defn \tau   \Rightarrow
+           \Delta \entails \theta\alpha \equiv \theta\tau$,
+\item $\Gamma \entails x \asc \sigma  \Rightarrow
+           \forall \tau. (\Delta \entails \theta\sigma \succ \tau 
+               \Rightarrow  \Delta \entails x : \tau)$ and
+\item $\forget{\Gamma}$ is a prefix of $\forget{\Delta}$.
+\end{enumerate}
+
+It is straightforward to verify that the previous results go through using the
+extended definition of the $\lei$ relation, since the unification algorithm
+ignores term variables and $\letGoal$ markers completely.
+
+As we have previously observed, condition (a) means that type equations are
+preserved by information increase, as
+$$\Gamma \entails \tau \equiv \upsilon
+    \Rightarrow  \Delta \entails \theta\tau \equiv \theta\upsilon.$$
+The new conditions ensure that type assignment is similarly preserved, as
+$$\Gamma \entails t : \tau
+    \Rightarrow  \Delta \entails t : \theta\tau.$$
+
+Do we need equivalence in condition (b)? Otherwise information increase
+could arbitrarily make term variable schemes more general, and hence we have
+no hope of finding principal type schemes. Or should we change the definition
+of principal type scheme?
+
+
+A term $t$ \define{can be assigned type scheme} $\sigma$ in context $\Gamma$,
+written $\Gamma \entails t \hasscheme \sigma$, if
+$$\forall \tau . \forall \theta : \Gamma \lei \Delta . (
+    \Delta \entails \theta\sigma \succ \tau
+        \Rightarrow \Delta \entails t : \tau )$$ 
+and $\sigma$ is \define{principal} if, additionally,
+$$\forall \tau . \forall \theta : \Gamma \lei \Delta . (
+    \Delta \entails t : \tau
+        \Rightarrow  \Delta \entails \theta\sigma \succ \tau).$$ 
+
+
+\begin{lemma}
+\label{lem:suffixSchemeEquivalence}
+Let $\Gamma$ be a context and $\Xi$ a list of type variable declarations such
+that $\Gamma, \Xi$ is a valid context. For any term $t$ and type $\tau$,
+$$\Gamma, \Xi \entails t : \tau
+    \Leftrightarrow    \Gamma \entails t \hasscheme \gen{\Xi}{\tau}.$$
+\end{lemma}
+
+\begin{proof}
+
+\end{proof}
+
+
+Now we define the judgement $\Gamma_0 \extend t : \tau \yields \Gamma_1$
+(inferring the type of $t$ in $\Gamma_0$
+yields $\tau$ in the more informative context $\Gamma_1$) by the rules in
+Figure~\ref{fig:inferRules}.
 
 \begin{figure}[ht]
 \boxrule{\Gamma_0 \extend t : \tau \yields \Gamma_1}
@@ -1119,12 +1167,24 @@ $$
 \end{figure}
 
 
+We say $\Theta$ is a \define{subcontext} of $\Gamma$, written
+$\Theta \subcontext \Gamma$, if $\Gamma = \Theta; \Gamma'$ for some context
+extension $\Gamma'$.
+
+
 \begin{lemma}[Soundness of type inference]
 \label{lem:inferSound}
 If $\Gamma_0 \extend t : \tau \yields \Gamma_1$, then
-$\Gamma_1 \entails t : \tau$, $\tyvars{\Gamma_0} \subseteq \tyvars{\Gamma_1}$,
-$\forget{\Gamma_0} = \forget{\Gamma_1}$
-and $\iota : \Gamma_0 \lei \Gamma_1$, where $\iota$ is the inclusion substitution.
+\begin{enumerate}[(a)]
+\item $\Gamma_1 \entails t : \tau$;
+\item $\tyvars{\Gamma_0} \subseteq \tyvars{\Gamma_1}$;
+\item $\forget{\Gamma_0} = \forget{\Gamma_1}$;
+\item $\iota : \Gamma_0 \lei \Gamma_1$, where $\iota$ is the inclusion substitution; and
+\item if $\Theta_0 \subcontext \Gamma_0$ and $\Theta_1 \subcontext \Gamma_1$ are such that
+    $\forget{\Theta_0} = \forget{\Theta_1}$, then
+    $\tyvars{\Theta_0} \subseteq \tyvars{\Theta_1}$ and
+    $\iota : \Theta_0 \lei \Theta_1$.
+\end{enumerate}
 \end{lemma}
 
 \begin{proof}
@@ -1295,8 +1355,6 @@ there exists $\psi : \Gamma; \Xi \lei \Delta$ such that
 $\Delta \entails \psi \gen{\Xi'}{.\tau} \succ \upsilon$.
 \end{lemma}
 
-%endif
-
 
 \begin{lemma}[Completeness of specialisation]
 If $\Gamma \entails \sigma \scheme$ then
@@ -1319,8 +1377,6 @@ then
           \Leftrightarrow \Phi \entails t : \tau' )$
 \end{enumerate}
 \end{lemma}
-
-%if False
 
 \begin{proof}
 If $t = x$ is a variable, then by inversion $\Delta \entails x \asc \sigma$ and
@@ -1377,6 +1433,94 @@ and the \textsc{Let} rule applies to give
 %endif
 
 
+\begin{lemma}[Completeness of type inference]
+If $\theta_0 : \Gamma_0 \lei \Delta$ and $\Delta \entails t : \tau$ then
+\begin{enumerate}[(a)]
+\item $\Gamma_0 \extend t : \upsilon \yields \Gamma_1; \Xi$,
+\item $\theta_1 : \Gamma_1 \lei \Delta$ and
+\item $\Gamma_1 \entails t :: \gen{\Xi}{\upsilon}$ principal.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+If $t = x$ is a variable, then by inversion $\Delta \entails x \asc \sigma$ and
+$\Delta \entails \sigma \succ \tau$. Now by definition of $\lei$,
+$\Gamma_0 \entails x \asc \sigma'$ for some $\sigma'$ with
+$$\forall \upsilon. \Delta \entails \theta_0\sigma' \succ \upsilon
+    \Rightarrow \Delta \entails x : \upsilon.$$
+
+By completeness of specialisation,
+$\Gamma_0 \extend \sigma' \succ \upsilon \yields \Gamma_0; \Xi$
+and hence the \textsc{Var} rule applies giving
+$\Gamma_0 \extend x : \upsilon \yields \Gamma_0; \Xi$.
+Moreover, (b) holds trivially with $\theta_1 = \theta_0$.
+By lemma \ref{lem:suffixSchemeEquivalence},
+$\Gamma_0 \entails x \hasscheme \gen{\Xi}{\upsilon}$.
+Why should this be principal?
+
+
+If $t = (\letIn{x}{s}{w})$, then by inversion there is some scheme
+$\sigma$ such that $\Delta \entails s \hasscheme \sigma$ and
+$\Delta, x \asc \sigma \entails w : \tau$.
+Let $\Psi$ be a list of fresh type variables so that
+$\Delta, \letGoal; \Psi \entails \sigma \succ (\Psi \Downarrow \sigma)$
+and hence
+$\Delta, \letGoal; \Psi \entails s : (\Psi \Downarrow \sigma)$.
+Moreover $\theta_0 : \Gamma_0, \letGoal; \lei \Delta, \letGoal;$ so
+by induction
+\begin{enumerate}[(a)]
+\item $\Gamma_0, \letGoal; \extend s : \upsilon \yields \Gamma_1, \letGoal; \Xi_1$
+\item $\theta_1 : \Gamma_1, \letGoal; \lei \Delta, \letGoal; \Psi$
+\item $\Gamma_1, \letGoal; \entails s \hasscheme \gen{\Xi_1}{\upsilon}$ principal.
+\end{enumerate}
+
+Now by lemma ???, $\theta_1 : \Gamma_1 \lei \Delta$ and hence
+$$\theta_1 : \Gamma_1, x \asc \gen{\Xi_1}{\upsilon};
+                            \lei \Delta, x \asc \gen{\Xi_1}{\upsilon}.$$
+but
+$$\iota : \Delta, x \asc \sigma; \lei \Delta, x \asc \gen{\Xi_1}{\upsilon};$$
+by principality, and hence
+$$\Delta, x \asc \gen{\Xi_1}{\upsilon} \entails w : \tau$$
+by preservation of type assignment (lemma ???). 
+
+Thus, by induction,
+\begin{enumerate}[(a)]
+\item $\Gamma_1, x \asc \gen{\Xi_1}{\upsilon}; \extend w : \chi \yields \Gamma_2, x \asc \gen{\Xi_1}{\upsilon}; \Xi_2$
+\item $\theta_2 : \Gamma_2, x \asc \gen{\Xi_1}{\upsilon}; \lei \Delta, x \asc \gen{\Xi_1}{\upsilon};$
+\item $\Gamma_2, x \asc \gen{\Xi_1}{\upsilon}; \entails w \hasscheme \gen{\Xi_2}{\chi}$ principal
+\end{enumerate}
+and the \textsc{Let} rule applies to give
+\begin{enumerate}[(a)]
+\item $\Gamma_0 \extend \letIn{x}{s}{w} : \chi \yields \Gamma_2; \Xi_2$
+\item $\theta_2 : \Gamma_2; \lei \Delta;$
+\item $\Gamma_2; \entails \letIn{x}{s}{w} \hasscheme \gen{\Xi_2}{\chi}$ principal (???).
+\end{enumerate}
+
+
+If $t = \lambda x . w$ is an abstraction, then by inversion
+$\Delta \entails \tau \equiv \tau_0 \arrow \tau_1$
+where $\tau_0$ and $\tau_1$ are some $\Delta$-types, and
+$\Delta, x \asc .\tau_0 \entails w : \tau_1$.
+Taking $\theta = [\tau_0/\alpha]\theta_0$, we have that
+$\theta : \Gamma_0, \hole{\alpha}, x \asc .\alpha  \lei  \Delta, x \asc .\tau_0$
+and hence, by induction,
+\begin{enumerate}[(a)]
+\item $\Gamma_0, \hole{\alpha}, x \asc .\alpha; \extend w : \upsilon \yields \Gamma_1, x \asc .\alpha; \Xi$
+\item $\theta_1 : \Gamma_1, x \asc .\alpha; \lei \Delta, x \asc .\tau_0;$
+\item $\Gamma_1, x \asc .\alpha; \entails w \hasscheme \gen{\Xi}{\upsilon}$ principal.
+\end{enumerate}
+
+Thus the \textsc{Abs} rule applies, so we have
+\begin{enumerate}[(a)]
+\item $\Gamma_0 \extend \lambda x . w : \alpha \arrow \upsilon \yields \Gamma_1, \Xi$
+\item $\theta_1 : \Gamma_1 \lei \Delta$
+\item $\Gamma_1 \entails \lambda x . w \hasscheme \gen{\Xi}{\upsilon}$ principal.
+\end{enumerate}
+
+
+\end{proof}
+
+
 \subsection{Implementation}
 
 A term $t$ may be a variable |(X)|, an application |(:$)|, an abstraction |(Lam)|
@@ -1387,7 +1531,8 @@ of term variable names, so |Tm| is a foldable functor.
 >            |  Tm a :$ Tm a 
 >            |  Lam a (Tm a)
 >            |  Let a (Tm a) (Tm a)
->     deriving (Functor, Foldable)
+
+<     deriving (Functor, Foldable)
 
 > type Term      = Tm TermName
 > type TermName  = String
@@ -1530,11 +1675,17 @@ We define our own types of forward (|Fwd|) and backward (|Bwd|) lists,
 which are foldable functors and monoids.
 
 > data Fwd a = F0 | a :> Fwd a
->     deriving (Eq, Functor, Foldable, Show)
+>     deriving (Eq, Show)
+
+<     deriving (Eq, Functor, Foldable, Show)
+
 > infixr 8 :>
 
 > data Bwd a = B0 | Bwd a :< a
->     deriving (Eq, Functor, Foldable, Show)
+>     deriving (Eq, Show)
+
+<     deriving (Eq, Functor, Foldable, Show)
+
 > infixl 8 :<
 
 > instance Monoid (Fwd a) where
@@ -1812,6 +1963,62 @@ variable numbers may be different.
 > deriving instance Show a => Show (Schm a)
 > deriving instance Eq a => Eq (Index a)
 > deriving instance Show a => Show (Index a)
+
+
+\subsection{Traversable Foldable Functors}
+
+This is all just boilerplate. Roll on GHC 6.12!
+
+> instance Traversable Ty where
+>     traverse g (V x)      = V <$> (g x)
+>     traverse g (s :-> t)  = (:->) <$> (traverse g s) <*> (traverse g t)
+>
+> instance Functor Ty where
+>     fmap = fmapDefault
+>
+> instance Foldable Ty where
+>     foldMap = foldMapDefault
+
+
+> instance Functor Tm where
+>     fmap g (X x)           = X (g x)
+>     fmap g (f :$ a)        = fmap g f :$ fmap g a
+>     fmap g (Lam x t)       = Lam (g x) (fmap g t)
+>     fmap g (Let x s t)     = Let (g x) (fmap g s) (fmap g t)
+
+
+> instance Traversable Index where
+>     traverse f Z      = pure Z
+>     traverse f (S a)  = S <$> f a
+>
+> instance Functor Index where
+>     fmap = fmapDefault
+> 
+> instance Foldable Index where
+>     foldMap = foldMapDefault
+
+
+> instance Traversable Schm where
+>     traverse f (Type tau)   = Type <$> traverse f tau
+>     traverse f (All sigma)  = All <$> traverse (traverse f) sigma
+>     traverse f (LetS sigma sigma') = LetS  <$> traverse f sigma 
+>                                            <*> traverse (traverse f) sigma'
+>
+> instance Functor Schm where
+>     fmap = fmapDefault
+>
+> instance Foldable Schm where
+>     foldMap = foldMapDefault
+
+> instance Functor Fwd where
+>     fmap = fmapDefault
+
+> instance Foldable Fwd where
+>     foldMap = foldMapDefault
+
+> instance Traversable Fwd where
+>     traverse f F0 = pure F0
+>     traverse f (e :> es) = (:>) <$> f e <*> traverse f es
 
 %endif
 
