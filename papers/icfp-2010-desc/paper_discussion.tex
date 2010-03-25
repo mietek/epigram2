@@ -1,15 +1,42 @@
 \section{Discussion}
 \label{sec:discussion}
 
-\begin{structure}
+\subsection{Universe stratification}
+
+\begin{wstructure}
 !!! Need Help !!!
 <- Universe stratification
     <- Stratified agda model
         <- Fully stratified
         <- Proof of iso between host and embedding
     ???
-\end{structure}
+\end{wstructure}
 
+As presented, our type theory suffers from a major weakness. Indeed,
+we are subject to Girard's paradox, as we assume that $\Set$ lives in
+$\Set$. We made that choice for presentational convenience, as
+universe stratification is orthogonal to our work. Nonetheless, our
+universes of description rather naturally leads itself to
+stratification. Unsurprisingly, $\IDesc{}$ at level $l$ is of type
+$\Set^{\blue{l+1}}$. Similarly, the interpretation of $\IDesc{}$ at
+level $l$ is an object of type $\Set^{\blue{l}}$:
+
+\[\stk{
+\data \IDesc{\!}^{\blue{l}} (\Bhab{\V{I}}{\Set^{\blue{l+1}}}) : \Set^{\blue{l+1}} \where \\
+\;\;\ldots \\
+\\
+\idescop{\_\:}{}{}^{\blue{l}} : \PI{\V{I}}{\Set^{\blue{l+1}}} \IDesc{{\!}^{\blue{l}}I} \To (\V{I} \To \Set^{\blue{l}}) \To \Set^{\blue{l}}    \\
+\ldots
+}\]
+
+Consequently, we can implement the operations and examples developed
+above. We refer the reader to our Agda implementation, which take
+advantage of set polymorphism to implement the universe of indexed
+descriptions at any level. Further, we have coded $\IDesc{}$ in itself
+and have proved the isomorphism between the host and the embedded
+universes.
+
+\subsection{Related Work}
 
 \begin{structure}
 !!! Need Help !!!
@@ -18,8 +45,9 @@
 \end{structure}
 
 
-\begin{structure}
+\begin{wstructure}
 !!! Need Help !!!
 <- Related Work
     Who? What?
-\end{structure}
+\end{wstructure}
+
