@@ -100,9 +100,9 @@ Equality rules:
 >                      switchDOp @@ [ constructors , cases , c])
 >       where constructors = CONSE (TAG "nil")
 >                            (CONSE (TAG "cons")
->                                   NILE)
+>                             NILE)
 >             cases = PAIR (CONSTD UNIT)
->                     (PAIR (SIGMA UID (L $ K IDD))
+>                     (PAIR (SIGMAD UID (L $ K IDD))
 >                      VOID)
 >   enumFakeREF :: REF
 >   enumFakeREF = [("Primitive", 0), ("EnumU", 0)] := (FAKE :<: SET) 
@@ -122,14 +122,14 @@ Equality rules:
 > import -> CanPats where
 >   pattern ENUMT e    = C (EnumT e) 
 >   pattern NILE       = CON (PAIR ZE VOID)
->   pattern CONSE t e  = CON (PAIR (SU ZE) (PAIR t (PAIR e VOID)))
+>   pattern CONSE t e  = CON (PAIR (SU ZE) (PAIR t e))
 >   pattern ZE         = C Ze
 >   pattern SU n       = C (Su n)
 
 > import -> CanDisplayPats where
 >   pattern DENUMT e    = DC (EnumT e) 
->   pattern DNILE       = DCON (DPAIR (DTAG "nil") DVOID)
->   pattern DCONSE t e  = DCON (DPAIR (DTAG "cons") (DPAIR t (DPAIR e DVOID)))
+>   pattern DNILE       = DCON (DPAIR {-(DTAG "nil")-} DZE DVOID)
+>   pattern DCONSE t e  = DCON (DPAIR {- (DTAG "cons") -} (DSU DZE) (DPAIR t e))
 >   pattern DZE         = DC Ze
 >   pattern DSU n       = DC (Su n)
 
@@ -187,6 +187,12 @@ Equality rules:
 >           Right (TIMES (p $$ A ZE) 
 >                 (branchesOp @@ [e' , L (HF "x" $ \x -> p $$ A (SU x))]))
 >         bOpRun [N e , _] = Left e 
+
+%if False
+
+>         bOpRun vs = error ("Enum.branches.bOpRun: couldn't handle " ++ show vs)
+
+%endif
 
 >   switchOp = Op
 >     { opName  = "switch"
