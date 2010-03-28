@@ -52,7 +52,7 @@ cong2 : {A B C : Set}(f : A -> B -> C){x y : A}{z t : B} ->
 cong2 f refl refl = refl
 
 postulate 
-  reflFun : {A B : Set}(f : A -> B)(g : A -> B)-> ((a : A) -> f a == g a) -> f == g 
+  reflFun : {A : Set}{B : A -> Set}(f : (a : A) -> B a)(g : (a : A) -> B a)-> ((a : A) -> f a == g a) -> f == g 
 
 
 --********************************************
@@ -113,6 +113,15 @@ map (const Z) X Y sig z = z
 map (prod D D') X Y sig (d , d') = map D X Y sig d , map D' X Y sig d'
 map (sigma S T) X Y sig (a , b) = (a , map (T a) X Y sig b)
 map (pi S T) X Y sig f = \x -> map (T x) X Y sig (f x)
+
+
+proof-map-id : (D : Desc)(X : Set)(v : [| D |] X) -> map D X X (\x -> x) v == v
+proof-map-id id X v = refl
+proof-map-id (const Z) X v = refl
+proof-map-id (prod D D') X (v , v') = cong2 (\x y -> (x , y)) (proof-map-id D X v) (proof-map-id D' X v')
+proof-map-id (sigma S T) X (a , b) = cong (\x -> (a , x)) (proof-map-id (T a) X b) 
+proof-map-id (pi S T) X f = reflFun (\a -> map (T a) X X (\x -> x) (f a)) f (\a -> proof-map-id (T a) X (f a))
+
 
 --********************************************
 -- Elimination principle: induction
