@@ -122,6 +122,19 @@ proof-map-id (prod D D') X (v , v') = cong2 (\x y -> (x , y)) (proof-map-id D X 
 proof-map-id (sigma S T) X (a , b) = cong (\x -> (a , x)) (proof-map-id (T a) X b) 
 proof-map-id (pi S T) X f = reflFun (\a -> map (T a) X X (\x -> x) (f a)) f (\a -> proof-map-id (T a) X (f a))
 
+proof-map-compos : (D : Desc)(X Y Z : Set)
+                   (f : X -> Y)(g : Y -> Z)
+                   (v : [| D |] X) -> 
+                   map D X Z (\x -> g (f x)) v == map D Y Z g (map D X Y f v)
+proof-map-compos id X Y Z f g v = refl
+proof-map-compos (const K) X Y Z f g v = refl
+proof-map-compos (prod D D') X Y Z f g (v , v') = cong2 (\x y -> (x , y)) 
+                                                        (proof-map-compos D X Y Z f g v)
+                                                        (proof-map-compos D' X Y Z f g v')
+proof-map-compos (sigma S T) X Y Z f g (a , b) = cong (\x -> (a , x)) (proof-map-compos (T a) X Y Z f g b)
+proof-map-compos (pi S T) X Y Z f g fc = reflFun (\a -> map (T a) X Z (\x -> g (f x)) (fc a))
+                                                 (\a -> map (T a) Y Z g (map (T a) X Y f (fc a)))
+                                                 (\a -> proof-map-compos (T a) X Y Z f g (fc a))
 
 --********************************************
 -- Elimination principle: induction
