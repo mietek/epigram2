@@ -34,18 +34,18 @@
 %%                            {\SigmaTy{S'}{T'}}}
 %% \\
 %% Lambda
-\Rule{\Gamma ; \xS \Vdash \propag{\push{t}{T}}
-                                 {t'}}
-     {\Gamma \Vdash \propag{\push{\LAM{\x} t}{\PIS{\xS}{T}}}
-                           {\PLAM{\x}{S} t'}} 
+\Rule{\Gamma ; \xS \Vdash \propag{\push{\V{t}}{\V{T}}}
+                                 {\V{t'}}}
+     {\Gamma \Vdash \propag{\push{\LAM{\x} \V{t}}{\PIS{\xS}{\V{T}}}}
+                           {\PLAM{\x}{\V{S}} \V{t'}}} 
 \\
 %% Pair
-\Rule{\stkl{ \Gamma \Vdash \propag{\push{s}{S}}
-                                  {s'} \\
-             \Gamma \Vdash \propag{\push{t}{T[s'/x]}}
-                                  {t'}}}
-     {\Gamma \Vdash \propag{\push{\pair{s}{t}{}}{\SIGMAS{\xS}{T}}}
-                           {\pair{s'}{t'}{T}}}
+\Rule{\stkl{ \Gamma \Vdash \propag{\push{\V{s}}{\V{S}}}
+                                  {\V{s'}} \\
+             \Gamma \Vdash \propag{\push{\V{t}}{\V{T}[\V{s'}/\V{x}]}}
+                                  {\V{t'}}}}
+     {\Gamma \Vdash \propag{\push{\pair{\V{s}}{\V{t}}{}}{\SIGMAS{\xS}{\V{T}}}}
+                           {\pair{\V{s'}}{\V{t'}}{\V{T}}}}
 \\
 %% EnumU
 %% \Axiom{\Gamma \Vdash \propag{\push{\EnumU}{\Set}}
@@ -58,30 +58,30 @@
 %%                            {\EnumT{e'}}}
 %% \\
 %% Tag
-\Axiom{\Gamma \Vdash \propag{\push{\etag{t}}{\EnumT{(\ConsE{t'}{e})}}}
-                            {\Ze}}\;t = t'
+\Axiom{\Gamma \Vdash \propag{\push{\etag{t_0}}{\EnumT{(\ConsE{\etag{t_1}}{\V{e}})}}}
+                            {\Ze}}\;\etag{t_0} = \etag{t_1}
 \\
-\Rule{\Gamma \Vdash \propag{\push{\etag{t}}{\EnumT{e}}}
-                           {n}}
-     {\Gamma \Vdash \propag{\push{\etag{t}}{\EnumT{(\ConsE{t'}{e})}}}
-                            {\Su{n}}}\;t \neq t'
+\Rule{\Gamma \Vdash \propag{\push{\etag{t_0}}{\EnumT{\V{e}}}}
+                           {\V{n}}}
+     {\Gamma \Vdash \propag{\push{\etag{t_0}}{\EnumT{(\ConsE{\etag{t_1}}{\V{e}})}}}
+                            {\Su{\V{n}}}}\;\etag{t_0} \neq \etag{t_1}
 \\
 %% EnumU
 \Axiom{\Gamma \Vdash \propag{\push{[]}{\EnumU}}
                             {\NilE}}
 \\
-\Rule{\Gamma \Vdash \propag{\push{ts}{\EnumU}}
-                                 {cs}}
-     {\Gamma \Vdash \propag{\push{[ \etag{t_1},\: ts ]}{\EnumU}}
-                                 {\ConsE{t_1}{cs}}}
+\Rule{\Gamma \Vdash \propag{\push{\V{ts}}{\EnumU}}
+                                 {\V{cs}}}
+     {\Gamma \Vdash \propag{\push{[ \etag{t_1},\: \V{ts} ]}{\EnumU}}
+                                 {\ConsE{\etag{t_1}}{\V{cs}}}}
 \\
 %% Switch
-\Rule{\Gamma \Vdash \propag{\push{t}{\spi{e}{P}}}
-                           {t'}}
+\Rule{\Gamma \Vdash \propag{\push{\V{t}}{\spi{\V{e}}{\V{P}}}}
+                           {\V{t'}}}
      {\Gamma \Vdash \begin{array}{@{}l} 
-                        \propag{\push{t}{\PI{\V{x}}{\EnumT{e}} P\:x}}
-                               {\\ \PLAM{x}{(\EnumT{e})} \switch{e}{P}{t'}{x}}
-                    \end{array}}\;\mbox{t is $[]$ or $[a,b]$}
+                        \propag{\push{\V{t}}{\PI{\V{x}}{\EnumT{\V{e}}} \V{P}\:\V{x}}}
+                               {\\ \PLAM{\V{x}}{(\EnumT{\V{e}})} \switch{\V{e}}{\V{P}}{\V{t'}}{\V{x}}}
+                    \end{array}}\;\mbox{$\V{t}$ is $[]$ or $[\_,\_]$}
 %% \\
 %% Conversion
 %% \Rule{\Gamma \Vdash \propag{s}

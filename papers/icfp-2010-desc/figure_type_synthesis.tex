@@ -13,23 +13,23 @@
 %% \\
 %% Context
 \Axiom{\Gamma ; \xS ; \Delta \Vdash \propag{\x}
-                                           {\pull{\x}{S}}}
+                                           {\pull{\x}{\V{S}}}}
 \qquad
 %% Application
-\Rule{\stkl{\Gamma \Vdash \propag{f}
-                                 {\pull{f'}{\PIS{\xS}{T}}} \\
-            \Gamma \Vdash \propag{\push{s}{S}}
-                                 {s'}}}
-     {\Gamma \Vdash \propag{f\: s}{\pull{f'\: s'}{T [s'/x]}}} 
+\Rule{\stkl{\Gamma \Vdash \propag{\V{f}}
+                                 {\pull{\V{f}\V{'}}{\PIS{\xS}{\V{T}}}} \\
+            \Gamma \Vdash \propag{\push{\V{s}}{\V{S}}}
+                                 {\V{s'}}}}
+     {\Gamma \Vdash \propag{\V{f}\: \V{s}}{\pull{\V{f'}\: \V{s'}}{\V{T} [\V{s'}/\V{x}]}}} 
 \\
 %% First projection
-\Rule{\Gamma \Vdash \propag{p}
-                           {\pull{p'}{\SIGMAS{\xS}{T}}}}
-     {\Gamma \Vdash \propag{\fst{p}}
-                           {\pull{\fst{p'}}{S}}} \qquad 
+\Rule{\Gamma \Vdash \propag{\V{p}}
+                           {\pull{\V{p'}}{\SIGMAS{\xS}{\V{T}}}}}
+     {\Gamma \Vdash \propag{\fst{\V{p}}}
+                           {\pull{\fst{\V{p'}}}{\V{S}}}} \qquad 
 %% Second projection
-\Rule{\Gamma \Vdash \propag{p}
-                           {\pull{p'}{\SIGMAS{\xS}{T}}}}
-     {\Gamma \Vdash \propag{\snd{p}}
-                           {\pull{\snd{p'}}{T [\fst{p'}/x]}}}
+\Rule{\Gamma \Vdash \propag{\V{p}}
+                           {\pull{\V{p'}}{\SIGMAS{\xS}{\V{T}}}}}
+     {\Gamma \Vdash \propag{\snd{\V{p}}}
+                           {\pull{\snd{\V{p'}}}{\V{T} [\fst{\V{p'}}/\V{x}]}}}
 }\]

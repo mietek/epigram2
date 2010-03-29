@@ -33,9 +33,9 @@ specification:
      {\Gamma \vdash \Bhab{\NilE}{\EnumU}} 
 \qquad
 %% ConsE
-\Rule{\Gamma \vdash \Bhab{t}{\UId} \quad
-      \Gamma \vdash \Bhab{e}{\EnumU}}
-     {\Gamma \vdash \Bhab{\ConsE{t}{e}}{\EnumU}}
+\Rule{\Gamma \vdash \Bhab{\V{t}}{\UId} \quad
+      \Gamma \vdash \Bhab{\V{e}}{\EnumU}}
+     {\Gamma \vdash \Bhab{\ConsE{\V{t}}{\V{e}}}{\EnumU}}
 }\]
 
 The names $\NilE$ and $\ConsE{}{}$ are absolutely not a
@@ -138,7 +138,7 @@ data-types.
     -> Show partial code [figure]
 \end{wstructure}
 
-Our first tentative is the following:
+Our first tentative attempt is the following:
 
 \[\stk{
 \DescD : \Desc \\
@@ -146,7 +146,7 @@ Our first tentative is the following:
 \DescD \mapsto \DSigma{}{} & (\EnumT{[ \DUnit, \DSigma{}{}, \DIndx{} ]})  \\
                            & \left[\begin{array}{l}
                                    \DUnit                                \\
-                                   \DSigma{\Set}{(\LAM{\V{S}} ???)}      \\
+                                   \DSigma{\Set}{(\LAM{\V{S}} \SHED)}      \\
                                    \DIndx{\DUnit}                        \\
                                    \end{array}
                              \right]
@@ -167,10 +167,10 @@ naturally: it only takes a recursive argument -- a description. The
 case of $\DSigma$ is problematic. Recall the specification of
 $\DSigma$:
 
-\[    \DSigma{}{} : \PI{\V{S}}{\Set} \PIS{S \To \Desc} \Desc      \]
+\[    \DSigma{}{} : \PI{\V{S}}{\Set} \PIS{\V{S} \To \Desc} \Desc      \]
 
-So, we first pack an element $S$ of $\Set$. Then, we would like to
-express a notion of recursive argument \emph{indexed} by $S$. Because
+So, we first pack an element $\V{S}$ of $\Set$. Then, we would like to
+express a notion of recursive argument \emph{indexed} by $\V{S}$. Because
 our presentation is entirely first-order so far, we are not able to
 express this notion. We shall remedy to this situation.
 
@@ -191,7 +191,7 @@ express this notion. We shall remedy to this situation.
 
 In order to capture a notion of higher-order induction, we need to
 extend our universe of descriptions. This consists in adding a code
-$\DHindx$ that takes an indexing set $H$. The code and its
+$\DHindx$ that takes an indexing set $\V{H}$. The code and its
 interpretation are presented in
 Figure~\ref{fig:hindx_desc}. Intuitively, $\DHindx$ use the elements
 of $H$ to index as many recursive arguments. 
@@ -204,7 +204,7 @@ of $H$ to index as many recursive arguments.
 \data \Desc : \Set \where \\
 \;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
     \ldots          & \:\:\ldots \\
-    \DHindx         & \PI{H}{\Set} \Desc \To \Desc
+    \DHindx         & \PI{\V{H}}{\Set} \Desc \To \Desc
 \end{array}
 }
 \vspace{0.2in}
@@ -213,7 +213,7 @@ of $H$ to index as many recursive arguments.
 \descop{\_\:}{} : \Desc \To \Set \To \Set \\
 \begin{array}{@{}l@{\:=\:\:}ll}
 \ldots                        &  \ldots \\
-\descop{\DHindx{H}{D}}{X}     &  \TIMES{(H \To X)}{\descop{D}{X}}
+\descop{\DHindx{\V{H}}{\V{D}}}{\V{X}}     &  \TIMES{(\V{H} \To \V{X})}{\descop{\V{D}}{\V{X}}}
 \end{array}
 }
 \end{array}
@@ -238,8 +238,8 @@ Equipped with $\DHindx$, we can describe the extended code of our
 universe of data-types, as shown in Figure~\ref{fig:desc-levitate}.
 The $\DUnit$ and $\DIndx$ cases remains unchanged, as expected. We
 successfully describe the $\DSigma$ case, by a simple appeal to the
-higher-order induction on $S$. The $\DHindx$ case consists in packing
-the $H$ in $\Set$ with a recursive argument.
+higher-order induction on $\V{S}$. The $\DHindx$ case consists in packing
+the $\V{H}$ in $\Set$ with a recursive argument.
 
 In a first glance, we have achieved our goal. We have described the
 codes of the universe of description. Taking the fix-point of this
@@ -256,7 +256,7 @@ invisible cable. Let us reveal it, hence finishing our implementation.
 \DescD \mapsto \DSigma{}{} & (\EnumT{[ \DUnit, \DSigma{}{}, \DIndx{}, \DHindx{}{} ]}) \\
                            & \left[\begin{array}{l}
                                    \DUnit                                            \\
-                                   \DSigma{\Set}{(\LAM{\V{S}} \DHindx{S}{\DUnit})}   \\
+                                   \DSigma{\Set}{(\LAM{\V{S}} \DHindx{\V{S}}{\DUnit})}   \\
                                    \DIndx{\DUnit}                                    \\
                                    \DSigma{\Set}{(\LAM{\V{H}} \DIndx{\DUnit})}
                                    \end{array}
@@ -284,14 +284,14 @@ careful usage of type propagation. Indeed, let us try to elaborate
 this term down to the low-level type theory. The $\EnumT{[ \ldots ]}$
 construct elaborates to a finite set $e$ in $\EnumU$, inhabited by the
 codes. Then, we can type-check the case definition, between square
-brackets $[ \ldots ]$. This term $f$ is pushed into the type
-$\EnumT{e} \To \Desc$. This corresponds to a finite function
+brackets $[ \ldots ]$. This term $\V{f}$ is pushed into the type
+$\EnumT{\V{e}} \To \Desc$. This corresponds to a finite function
 definition, as formalised in Figure~\ref{fig:type-checking}.
 
 What happens if we unfold the definition? We ought to build the following term:
 
 \[
-\PLAM{x}{(\EnumT{e})} \switch{e}{(\LAM{\_} \Mu{\DescD})}{\pi^f}{x}
+\PLAM{\V{x}}{(\EnumT{\V{e}})} \switch{\V{e}}{(\LAM{\_} \Mu{\DescD})}{\V{\pi^f}}{\V{x}}
 \]
 
 But this is quite problematic. We are still in the process of
@@ -318,8 +318,8 @@ the type theory with a special-purpose operator:
 \begin{array}{@{}ll}
 %% switchD
 \F{switchD} : & \PITEL{\V{e}}{\EnumU}               
-                \PITEL{\V{b}}{\spi{e}{\LAM{\_} \Desc}}
-                \PITEL{\V{x}}{\EnumT{e}} \To \Desc
+                \PITEL{\V{b}}{\spi{\V{e}}{\LAM{\_} \Desc}}
+                \PITEL{\V{x}}{\EnumT{\V{e}}} \To \Desc
 \end{array}
 \]
 
@@ -333,13 +333,13 @@ we extend the type-checking rules (Fig.~\ref{fig:type-checking}) with
 the following inference rule:
 
 \[
-\Rule{\Gamma \Vdash \propag{\push{t}{\spiD{e}}}
-                           {t'}}
+\Rule{\Gamma \Vdash \propag{\push{\V{t}}{\spiD{\V{e}}}}
+                           {\V{t'}}}
      {\Gamma \Vdash \begin{array}{@{}l}
-                        \propag{\push{t}{\EnumT{e} \To \Desc}}
-                               {\\ \PLAM{x}{(\EnumT{e})} \switchD{e}{t'}{x}}
+                        \propag{\push{\V{t}}{\EnumT{\V{e}} \To \Desc}}
+                               {\\ \PLAM{\V{x}}{(\EnumT{\V{e}})} \switchD{\V{e}}{\V{t'}}{\V{x}}}
                     \end{array}
-     }\;\mbox{t is $[]$ or $[a,b]$}
+     }\;\mbox{$\V{t}$ is $[]$ or $[\_,\_]$}
 \]
 
 
@@ -392,48 +392,48 @@ necessary. In the following, we propose to derive the catamorphism
 from the generic induction principle. 
 
 The catamorphism can be characterised as an induction on the
-description $D$, with a non-dependent motive targeting $T$. Given a
-node $xs$ and the induction hypotheses, the method ought to build an
-element of $T$. Provided that we know how to make an element of
-$\descop{D}{T}$, this step will be performed by the algebra $f$. Let
+description $\V{D}$, with a non-dependent motive targeting $\V{T}$. Given a
+node $\V{xs}$ and the induction hypotheses, the method ought to build an
+element of $\V{T}$. Provided that we know how to make an element of
+$\descop{\V{D}}{\V{T}}$, this step will be performed by the algebra $\V{f}$. Let
 us take a look at this jigsaw:
 
 \newcommand{\cata}{\F{cata}}
 
 \[\stk{
-\cata : \PITEL{D}{\Desc}
-           \PI{T}{\Set}
-           (\descop{D}{T} \To T) \To 
-           \Mu{D} \To T \\
-\cata\: D\: T\: f \mapsto
-  \F{induction}\: D\: (\LAM{\_}T)\: (\LAM{xs\:hs} f\: ???)
+\cata : \PITEL{\V{D}}{\Desc}
+           \PI{\V{T}}{\Set}
+           (\descop{\V{D}}{\V{T}} \To \V{T}) \To 
+           \Mu{\V{D}} \To \V{T} \\
+\cata\: \V{D}\: \V{T}\: \V{f\: \V{x}} \mapsto
+  \F{induction}\: \V{D}\:\V{x}\: (\LAM{\_}\V{T})\: (\LAM{\V{xs}\:\V{hs}} \V{f}\: \SHED)
 }\]
 
-We are left with implementing the \(???\) program. Recall that we have
-\(\Bhab{xs}{\descop{D}{\Mu{D}}}\) and
-\(\Bhab{hs}{\All{D}{(\Mu{D})}{(\LAM{\_} T)}{xs}}\) at hand. Our goal
-is to make an element of \(\descop{D}{T}\). Intuitively, $xs$ is of
+We are left with implementing filling the hole. Recall that we have
+\(\Bhab{\V{xs}}{\descop{\V{D}}{\Mu{\V{D}}}}\) and
+\(\Bhab{\V{hs}}{\All{\V{D}}{(\Mu{\V{D}})}{(\LAM{\_} \V{T})}{\V{xs}}}\) at hand. Our goal
+is to make an element of \(\descop{\V{D}}{\V{T}}\). Intuitively, $\V{xs}$ is of
 the right shape, but its sub-elements are of the wrong type. On the
-other hand, for each sub-element of $xs$, $hs$ gives us the
-corresponding element in $T$. Hence the name ``induction
-hypotheses''. Therefore, to construct an element of \(\descop{D}{T}\),
-we replace the recursive components of \(xs\) by their counterpart in
-\(hs\):
+other hand, for each sub-element of $\V{xs}$, $\V{hs}$ gives us the
+corresponding element in $\V{T}$. Hence the name ``induction
+hypotheses''. Therefore, to construct an element of \(\descop{\V{D}}{\V{T}}\),
+we replace the recursive components of \(\V{xs}\) by their counterpart in
+\(\V{hs}\):
 
 \[\stk{
-\F{replace} : \stk{\PITEL{D}{\Desc}
-                   \PITEL{X,Y}{\Set}\\
-                   \PI{xs}{\descop{D}{X}} 
-                   \All{D}{X}{(\LAM{\_}Y)}{xs} \To
-                   \descop{D}{Y}} \\
-\F{replace}\: \DUnit\:          X\: Y\: \Void\:          \Void          \mapsto \Void \\
-\F{replace}\: (\DSigma{S}{D})\: X\: Y\: \pair{s}{xs}{}\: ys             \mapsto
-    \pair{s}{\F{replace}\: {D~s}\: X\: Y\: xs\: ys}{}                                 \\
-\F{replace}\: (\DIndx{D})\:     X\: Y\: \pair{x}{xs}{}\: \pair{y}{ys}{} \mapsto
-    \pair{y}{\F{replace}\: D\: X\: Y\: xs\: ys}{}
+\F{replace} : \stk{\PITEL{\V{D}}{\Desc}
+                   \PITEL{\V{X},\V{Y}}{\Set}\\
+                   \PI{\V{xs}}{\descop{\V{D}}{\V{X}}} 
+                   \All{\V{D}}{\V{X}}{(\LAM{\_}\V{Y})}{\V{xs}} \To
+                   \descop{\V{D}}{\V{Y}}} \\
+\F{replace}\: \DUnit\:          \V{X}\: \V{Y}\: \Void\:          \Void          \mapsto \Void \\
+\F{replace}\: (\DSigma{\V{S}}{\V{D}})\: \V{X}\: \V{Y}\: \pair{\V{s}}{\V{xs}}{}\: \V{ys}             \mapsto
+    \pair{\V{s}}{\F{replace}\: {\V{D}~\V{s}}\: \V{X}\: \V{Y}\: \V{xs}\: \V{ys}}{}                                 \\
+\F{replace}\: (\DIndx{\V{D}})\:     \V{X}\: \V{Y}\: \pair{\V{x}}{\V{xs}}{}\: \pair{\V{y}}{\V{ys}}{} \mapsto
+    \pair{\V{y}}{\F{replace}\: \V{D}\: \V{X}\: \V{Y}\: \V{xs}\: \V{ys}}{}
 }\]
 
-Filling the \(???\) with \(\F{replace}\: D\: (\Mu{D})\: T\: xs\: hs\) closes the
+Filling the hole in $\F{cata}$ with \(\F{replace}\: \V{D}\: (\Mu{\V{D}})\: \V{T}\: \V{xs}\: \V{hs}\) closes the
 problem. In the type theory, we have built a generic catamorphism. Any
 data-type will now come equipped with this operation, for free.
 
@@ -493,8 +493,8 @@ free monad over $F$ is defined by the following data-type:
                      \Set 
 \where \\
 \;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
-    \FMVar           & X \To \FMFreeMonad\: F\: X                            \\
-    \FMComposite     & F (\FMFreeMonad\: F\: X) \To \FMFreeMonad\: F\: X    
+    \FMVar           & \V{X} \To \FMFreeMonad\: \V{F}\: \V{X}                            \\
+    \FMComposite     & \V{F} (\FMFreeMonad\: \V{F}\: \V{X}) \To \FMFreeMonad\: \V{F}\: \V{X}    
 \end{array}
 }
 \]
@@ -505,7 +505,7 @@ Being an inductive type, this $\FMFreeMonad$ data-type is itself
 defined by a functor signature. It is given by:
 
 \[
-\FMFreeMonadD\: F\: X\: Z \mapsto X + F Z
+\FMFreeMonadD\: \V{F}\: \V{X}\: \V{Z} \mapsto \V{X} \mathop{\D{+}} \V{F} \V{Z}
 \]
 
 \begin{wstructure}
@@ -519,19 +519,19 @@ defined by a functor signature. It is given by:
 
 In our setting, the functor will be represented by a tagged
 description. The free monad construction will take such tagged
-description, a set $X$ of variables, and will compute the tagged
+description, a set $\V{X}$ of variables, and will compute the tagged
 description of the corresponding free monad. Implementing this
 function is surprisingly easy:
 
 \[\stk{
 \FreeMonad{\_} : \TagDesc \To \Set \To \TagDesc \\
-\FreeMonad{\pair{E}{D}{}}\:X \mapsto
-    \pair{\ListCons{\DVar{}}{E}}
-         {\pair{\DSigma{X}{\DUnit}}{D}{}}{}
+\FreeMonad{\pair{\V{E}}{\V{D}}{}}\:\V{X} \mapsto
+    \pair{\ListCons{\DVar{}}{\V{E}}}
+         {\pair{\DSigma{\V{X}}{\DUnit}}{\V{D}}{}}{}
 }\]
 
 We simply add a constructor, $\DVar{}$, and define its argument to be
-a $\DSigma{X}{\DUnit}$, that is an element of $X$. We keep $E$ and $D$
+a $\DSigma{\V{X}}{\DUnit}$, that is an element of $\V{X}$. We keep $\V{E}$ and $\V{D}$
 as they were, hence leaving the functor unchanged. Unfolding the
 interpretation of this definition, we convince ourself that this
 corresponds to the functor $\FMFreeMonadD$. The fix-point operation
@@ -560,20 +560,20 @@ arguments to $\cata$ as possible:
 \begin{array}{@{}ll}
 \subst : & \PITEL{\V{D}}{\TagDesc}
            \PI{\V{X}, \V{Y}}{\Set} \\
-         & \Mu{(\toDesc{\FreeMonad{D}{X}})} \To
-           (\V{X} \To \Mu{(\toDesc{\FreeMonad{D}{Y}})}) \To
-           \Mu{(\toDesc{\FreeMonad{D}{Y}})} 
+         & \Mu{(\toDesc{\FreeMonad{\V{D}}{\V{X}}})} \To
+           (\V{X} \To \Mu{(\toDesc{\FreeMonad{\V{D}}{\V{Y}}})}) \To
+           \Mu{(\toDesc{\FreeMonad{\V{D}}{\V{Y}}})} 
 \end{array} \\
-\subst\: D\: X\: Y\: x\: \sigma \mapsto
-  \cata\: (\toDesc{\FreeMonad{D}{X}})\: 
-          (\Mu{(\toDesc{\FreeMonad{D}{Y}})})\: 
-          ???\: 
-          x
+\subst\: \V{D}\: \V{X}\: \V{Y}\: \V{x}\: \V{\sigma} \mapsto
+  \cata\: (\toDesc{\FreeMonad{\V{D}}{\V{X}}})\: 
+          (\Mu{(\toDesc{\FreeMonad{\V{D}}{\V{Y}}})})\: 
+          \SHED\: 
+          \V{x}
 }\]
 
 Our task is therefore to implement the algebra of the
 catamorphism. Intuitively, its role is to catch appearances of
-$\DVar{x}$ and replace them by $\sigma x$. Otherwise, it should simply
+$\DVar{\V{x}}$ and replace them by $\V{\sigma}\: \V{x}$. Otherwise, it should simply
 appeal to the induction hypothesis. This corresponds to the following
 definition:
 
@@ -581,14 +581,14 @@ definition:
 \begin{array}{@{}ll}
 \apply : & \PITEL{\V{D}}{\TagDesc} 
            \PI{\V{X}, \V{Y}}{\Set} \\
-         & (\V{X} \To \Mu{(\toDesc{\FreeMonad{D}{X}})}) \To
-           \descop{\toDesc{\FreeMonad{D}{X}}}{\Mu{(\toDesc{\FreeMonad{D}{Y}})}} \To
-           \Mu{(\toDesc{\FreeMonad{D}{Y}})}
+         & (\V{X} \To \Mu{(\toDesc{\FreeMonad{\V{D}}{\V{X}}})}) \To
+           \descop{\toDesc{\FreeMonad{\V{D}}{\V{X}}}}{\Mu{(\toDesc{\FreeMonad{\V{D}}{\V{Y}}})}} \To
+           \Mu{(\toDesc{\FreeMonad{\V{D}}{\V{Y}}})}
 \\
 \end{array} \\
 \begin{array}{@{}l@{\:\mapsto\:\:}l}
-\apply\: D\: X\: Y\: \sigma\: \pair{\DVar{}}{x}{}   & \sigma\: x                   \\
-\apply\: D\: X\: Y\: \sigma\: \pair{\etag{t}}{ys}{} & \Con{\pair{\etag{t}}{ys}{}}
+\apply\: \V{D}\: \V{X}\: \V{Y}\: \V{\sigma}\: \pair{\DVar{}}{\V{x}}{}   & \V{\sigma}\: \V{x}                   \\
+\apply\: \V{D}\: \V{X}\: \V{Y}\: \V{\sigma}\: \pair{\etag{t}\,}{\V{ys}}{} & \Con{\pair{\etag{t}}{\V{ys}}{}}
 \end{array}
 }\]
 
@@ -601,7 +601,7 @@ definition:
             <- Substitution / bind
 \end{wstructure}
 
-Filling the $???$ sub-goal with $\apply\: D\: X\: Y\: \sigma$
+Filling the sub-goal with $\apply\: \V{D}\: \V{X}\: \V{Y}\: \V{\sigma}$
 completes the implementation. To sum up, we have implemented the free
 monad construction for an arbitrary tagged description. This gives our
 user the ability, for any data-type, to extend it with a notion of

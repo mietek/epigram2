@@ -13,10 +13,10 @@
 %%      {\Gamma \vdash \Bhab{x \equiv z}{T}}
 %% \\
 %% Beta-reduction
-\Rule{\stkl{\Gamma       \vdash \Type{S} \quad
-            \Gamma ; \xS \vdash \Bhab{t}{T} \\
-            \Gamma       \vdash \Bhab{s}{S}}}
-     {\Gamma \vdash \Bhab{(\PLAM{\x}{S} t)\:s \equiv t[s/x]}{T[s/x]}}
+\Rule{\stkl{\Gamma       \vdash \Type{\V{S}} \quad
+            \Gamma ; \xS \vdash \Bhab{\V{t}}{\V{T}} \\
+            \Gamma       \vdash \Bhab{\V{s}}{\V{S}}}}
+     {\Gamma \vdash \Bhab{(\PLAM{\x}{\V{S}} \V{t})\:\V{s} \equiv \V{t}[\V{s}/\V{x}]}{\V{T}[\V{s}/\V{x}]}}
 \\
 %% Xi rule
 %% \Rule{\Gamma       \vdash \Type{S} \quad
@@ -24,13 +24,13 @@
 %%      {\Gamma \vdash \Bhab{(\PLAM{\x}{S} t) \equiv (\PLAM{\x}{S} t')}{\PIS{\xS} T}}
 %% \\
 %% Projections
-\Rule{\stkl{\Gamma                 \vdash \Bhab{s}{S} \quad
-            \Gamma ; \xS           \vdash \Bhab{T}{\Set} \\
-            \Gamma ; \Bhab{s}{S}   \vdash \Bhab{t}{T[s/x]}}}
-     {\Gamma \vdash \Bhab{\fst{(\pair{s}{t}{T})} \equiv s}{S}}
+\Rule{\stkl{\Gamma                 \vdash \Bhab{\V{s}}{\V{S}} \quad
+            \Gamma ; \xS           \vdash \Bhab{\V{T}}{\Set} \\
+            \Gamma ; \Bhab{\V{s}}{\V{S}}   \vdash \Bhab{\V{t}}{\V{T}[\V{s}/\V{x}]}}}
+     {\Gamma \vdash \Bhab{\fst{(\pair{\V{s}}{\V{t}}{\V{T}})} \equiv \V{s}}{\V{S}}}
 \qquad
-\Rule{\stkl{\Gamma               \vdash \Bhab{s}{S} \quad
-            \Gamma ; \xS         \vdash \Bhab{T}{\Set} \\
-            \Gamma ; \Bhab{s}{S} \vdash \Bhab{t}{T[s/x]}}}
-     {\Gamma \vdash \Bhab{\snd{(\pair{s}{t}{T})} \equiv t}{T[s/x]}}
+\Rule{\stkl{\Gamma               \vdash \Bhab{\V{s}}{\V{S}} \quad
+            \Gamma ; \xS         \vdash \Bhab{\V{T}}{\Set} \\
+            \Gamma ; \Bhab{\V{s}}{\V{S}} \vdash \Bhab{\V{t}}{\V{T}[\V{s}/\V{x}]}}}
+     {\Gamma \vdash \Bhab{\snd{(\pair{\V{s}}{\V{t}}{\V{T}})} \equiv \V{t}}{\V{T}[\V{s}/\V{x}]}}
 }\]

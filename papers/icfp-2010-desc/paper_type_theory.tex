@@ -34,8 +34,8 @@ these judgements are presented as follow:
 \[
 \begin{array}{ll}
 \Gamma \vdash \Valid                & \mbox{\(\Gamma\) is a valid context, giving types to variables} \\
-\Gamma \vdash \Bhab{t}{T}           & \mbox{term \(t\) has type \(T\) in context \(\Gamma\)} \\
-\Gamma \vdash \Bhab{s \equiv t}{T}  & \mbox{\(s\) and \(t\) are equal at type \(T\) in context \(\Gamma\)} \\
+\Gamma \vdash \Bhab{\V{t}}{\V{T}}           & \mbox{term \(\V{t}\) has type \(\V{T}\) in context \(\Gamma\)} \\
+\Gamma \vdash \Bhab{\V{s} \equiv \V{t}}{\V{T}}  & \mbox{\(\V{s}\) and \(\V{t}\) are equal at type \(\V{T}\) in context \(\Gamma\)} \\
 \end{array}
 \]
 
@@ -50,13 +50,13 @@ following implications always hold by induction on derivations:
 
 \[
 \begin{array}{l@{\;\Rightarrow\;\;}l}
-\Gamma            \vdash \Bhab{t}{T}            
-    & \Gamma \vdash \Valid\; \wedge\; \Gamma\vdash\Type{T} \\
-\Gamma            \vdash s \equiv \Bhab{t}{T}   
-    & \Gamma \vdash \Bhab{s}{T} \;\wedge\; \Gamma\vdash \Bhab{t}{T} \\
-\Gamma ; \xS ; \Delta \vdash J                      
-    & \Gamma \vdash \Bhab{s}{S} \;\Rightarrow\; 
-          \Gamma ; \Delta[s/x] \vdash J[s/x] \\
+\Gamma            \vdash \Bhab{\V{t}}{\V{T}}            
+    & \Gamma \vdash \Valid\; \wedge\; \Gamma\vdash\Type{\V{T}} \\
+\Gamma            \vdash \V{s} \equiv \Bhab{\V{t}}{\V{T}}   
+    & \Gamma \vdash \Bhab{\V{s}}{\V{T}} \;\wedge\; \Gamma\vdash \Bhab{\V{t}}{\V{T}} \\
+\Gamma ; \xS ; \Delta \vdash \V{J}                      
+    & \Gamma \vdash \Bhab{\V{s}}{\V{S}} \;\Rightarrow\; 
+          \Gamma ; \Delta[\V{s}/\V{x}] \vdash \V{J}[\V{s}/\V{x}] \\
 \end{array}
 \]
 
@@ -81,29 +81,23 @@ flavor~\cite{altenkirch:ott}. We expect users of fully extensional
 systems to also find their way through this presentation.
 
 \begin{wstructure}
-<- Context validity [figure]
+<- Context validity [figure no longer]
     <- Not much to be said
 \end{wstructure}
 
-\begin{figure}
+The rules ensuring Context Validity 
+are unsurprisingly common. They simply guarantee the validity of the
+empty context, as well as the linear extension of a context by a
+well-typed variable.
 
 \[
 %% Empty context validity
 \Axiom{\vdash \Valid}
 \qquad
 %% Extend context
-\Rule{\Gamma       \vdash \Type{S}}
-     {\Gamma ; \xS \vdash \Valid}\;x\not\in\Gamma
+\Rule{\Gamma       \vdash \Type{\V{S}}}
+     {\Gamma ; \xS \vdash \Valid}\;\V{x}\not\in\Gamma
 \]
-
-\caption{Context validity}
-\label{fig:context-validity}
-\end{figure}
-
-The rules ensuring Context Validity (Fig.~\ref{fig:context-validity})
-are unsurprisingly common. They simply guarantee the validity of the
-empty context, as well as the linear extension of a context by a
-well-typed variable.
 
 \begin{wstructure}
 <- Typing judgements [figure]
@@ -270,9 +264,9 @@ components. First, we define tags as inhabitants of the $\UId$ type. A
 tag is solely an informative token, used for diagnostic
 purposes. Finite sets inhabits the $\EnumU$ type. Unfolding the
 definition, we get that a finite set is a list of tags. Finally,
-elements of a finite set $u$ belong to the corresponding $\EnumT{u}$
+elements of a finite set $\V{u}$ belong to the corresponding $\EnumT{\V{u}}$
 type. Intuitively, it corresponds to an index -- a number -- pointing
-to an element of $u$.
+to an element of $\V{u}$.
 
 \begin{figure}
 
@@ -311,10 +305,10 @@ $\spi{}{}$ operator:
 \[\stk{
 %% spi
 \spi{}{} : \PITEL{\V{e}}{\EnumU}
-           \PITEL{\V{P}}{\EnumT{e} \To \Set} \To \Set \\
+           \PITEL{\V{P}}{\EnumT{\V{e}} \To \Set} \To \Set \\
 \begin{array}{@{}ll@{\:\mapsto\:\:}l}
-\spi{\NilE}{& P}        & \Unit \\
-\spi{(\ConsE{t}{e})}{& P} & \TIMES{P\: \Ze}{\spi{e}{(\LAM{x} P\: (\Su{x}))}}
+\spi{\NilE}{& \V{P}}        & \Unit \\
+\spi{(\ConsE{\V{t}}{\V{e}})}{& \V{P}} & \TIMES{\V{P}\: \Ze}{\spi{\V{e}}{(\LAM{\V{x}} \V{P}\: (\Su{\V{x}}))}}
 \end{array}
 }\]
 
@@ -332,21 +326,21 @@ $\F{switch}$ eliminator is not surprising:
 %% switch
 \begin{array}{@{}ll}
 \F{switch} : & \PITEL{\V{e}}{\EnumU}
-               \PITEL{\V{P}}{\EnumT{e} \To \Set} \\
-             & \PITEL{\V{b}}{\spi{e}{P}}
-               \PITEL{\V{x}}{\EnumT{e}} \To P~x
+               \PITEL{\V{P}}{\EnumT{\V{e}} \To \Set} \\
+             & \PITEL{\V{b}}{\spi{\V{e}}{\V{P}}}
+               \PITEL{\V{x}}{\EnumT{\V{e}}} \To P~x
 \end{array} \\
 \begin{array}{@{}l@{\:\mapsto\:\:}l}
-\switch{(\ConsE{t}{e})}{P}{b}{\Ze}      & \fst{b} \\
-\switch{(\ConsE{t}{e})}{P}{b}{(\Su{x})} & \switch{e}{(\LAM{x} P
-  (\Su{x}))}{(\snd{b})}{x}
+\switch{(\ConsE{\V{t}}{\V{e}})}{\V{P}}{\V{b}}{\Ze}      & \fst{\V{b}} \\
+\switch{(\ConsE{\V{t}}{\V{e}})}{\V{P}}{\V{b}}{(\Su{\V{x}})} & \switch{\V{e}}{(\LAM{\V{x}} \V{P}
+  (\Su{\V{x}}))}{(\snd{\V{b}})}{\V{x}}
 \end{array}
 }\]
 
 Again, there is a clear equivalent in the full-$\Set$ world: function
 application. The operational behaviour of $\F{switch}$ is
-straightforward: $x$ is peeled off as we move deeper inside the nested
-tuple $b$. When $x$ equals $\Ze$, we simply return the value we are
+straightforward: $\V{x}$ is peeled off as we move deeper inside the nested
+tuple $\V{b}$. When $\V{x}$ equals $\Ze$, we simply return the value we are
 pointing to.
 
 \begin{wstructure}
@@ -404,7 +398,7 @@ typical example is a variable in the context:
 
 \[
 \Rule{\Gamma ; \xS ; \Delta \vdash \Valid}
-     {\Gamma ; \xS ; \Delta \vdash \Bhab{x}{S}}
+     {\Gamma ; \xS ; \Delta \vdash \Bhab{\V{x}}{\V{S}}}
 \]
 
 Because the variable and its type are stored in the context, whenever
@@ -418,9 +412,9 @@ information provided by the type. Therefore, we can relax our
 requirements on the term. A typical example is the lambda abstraction:
 
 \[
-\Rule{\Gamma       \vdash \Type{S} \quad
-      \Gamma ; \xS \vdash \Bhab{t}{T}}
-     {\Gamma \vdash \Bhab{\PLAM{\x}{S} t}{\PIS{\xS} T}}
+\Rule{\Gamma       \vdash \Type{\V{S}} \quad
+      \Gamma ; \xS \vdash \Bhab{\V{t}}{\V{T}}}
+     {\Gamma \vdash \Bhab{\PLAM{\x}{\V{S}} \V{t}}{\PIS{\xS} \V{T}}}
 \]
 
 Here, we are forced to annotate lambda abstractions by the type of the
@@ -513,7 +507,7 @@ on our coding scheme for finite sets.
 
 A first consequence is that we can actually denote elements of finite
 sets \emph{by their name}. Indeed, such expression will be pushed into
-a $\EnumT{u}$, where $\Bhab{u}{\EnumU}$ contains all the names
+a $\EnumT{\V{u}}$, where $\Bhab{\V{u}}{\EnumU}$ contains all the names
 populating the finite set. It is therefore easy to elaborate a name
 into the corresponding index.
 
@@ -528,7 +522,7 @@ translation to elements of $\EnumU$ is straightforward.
 
 Finally, and more importantly, we are able to present our user an
 abstraction of \emph{finite} function space. This work as follow. When
-an expression $t$ is pushed into a function which domain is a finite
+an expression $\V{t}$ is pushed into a function which domain is a finite
 set, we instead elaborate it as a term in a small $\pi$-type. That is,
 a finite function. To realise our promise of a big $\Pi$-type, we
 elaborate a call to the $\F{switch}$ eliminator. 

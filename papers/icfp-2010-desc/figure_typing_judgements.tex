@@ -1,21 +1,21 @@
 \[\stkc{
 %% Context
 \Rule{\Gamma ; \xS ; \Delta \vdash \Valid}
-     {\Gamma ; \xS ; \Delta \vdash \Bhab{x}{S}}
+     {\Gamma ; \xS ; \Delta \vdash \Bhab{\V{x}}{\V{S}}}
 \qquad
 %% Conversion
-\Rule{\Gamma \vdash \Bhab{s}{S} \quad 
-      \Gamma \vdash \Type{S \equiv T}}
-     {\Gamma \vdash \Bhab{s}{T}}
+\Rule{\Gamma \vdash \Bhab{\V{s}}{\V{S}} \quad 
+      \Gamma \vdash \Type{\V{S} \equiv \V{T}}}
+     {\Gamma \vdash \Bhab{\V{s}}{\V{T}}}
 \\
 %% Girard's favorite
 \Rule{\Gamma \vdash \Valid}
      {\Gamma \vdash \Type{\Set}}
 \qquad
 %% Pi-Sigma
-\Rule{\Gamma       \vdash \Type{S} \quad
-      \Gamma ; \xS \vdash \Type{T}}
-     {\Gamma \vdash \Type{\PIS{\xS} T, \SIGMAS{\xS} T}}
+\Rule{\Gamma       \vdash \Type{\V{S}} \quad
+      \Gamma ; \xS \vdash \Type{\V{T}}}
+     {\Gamma \vdash \Type{\PIS{\xS} \V{T}, \SIGMAS{\xS} \V{T}}}
 \\
 %% %% Prop
 %% \Rule{\Gamma \vdash \Bhab{q}{\Prop}}
@@ -34,27 +34,27 @@
      {\Gamma \vdash \Bhab{\Void}{\Unit}}
 \\
 %% Lambda
-\Rule{\stkl{\Gamma       \vdash \Type{S} \\
-            \Gamma ; \xS \vdash \Bhab{t}{T}}}
-     {\Gamma \vdash \Bhab{\PLAM{\x}{S} t}{\PIS{\xS} T}}
+\Rule{\stkl{\Gamma       \vdash \Type{\V{S}} \\
+            \Gamma ; \xS \vdash \Bhab{\V{t}}{\V{T}}}}
+     {\Gamma \vdash \Bhab{\PLAM{\x}{\V{S}} \V{t}}{\PIS{\xS} \V{T}}}
 \qquad
 %% Application
-\Rule{\stkl{\Gamma \vdash \Bhab{f}{\PIS{\xS} T} \\
-            \Gamma \vdash \Bhab{s}{S}}}
-     {\Gamma \vdash \Bhab{f\: s}{T[s/x]}} 
+\Rule{\stkl{\Gamma \vdash \Bhab{\V{f}}{\PIS{\xS} \V{T}} \\
+            \Gamma \vdash \Bhab{\V{s}}{\V{S}}}}
+     {\Gamma \vdash \Bhab{\V{f}\: \V{s}}{\V{T}[\V{s}/\V{x}]}} 
 \\
 %% Pair
-\Rule{\Gamma       \vdash \Bhab{s}{S} \quad 
-      \Gamma ; \xS \vdash \Bhab{T}{\Set}    \quad
-      \Gamma       \vdash \Bhab{t}{T[s/x]}}
-     {\Gamma \vdash \Bhab{\pair{s}{t}{x.T}}{\SIGMAS{\xS} T}}
+\Rule{\Gamma       \vdash \Bhab{\V{s}}{S} \quad 
+      \Gamma ; \xS \vdash \Bhab{\V{T}}{\Set}    \quad
+      \Gamma       \vdash \Bhab{\V{t}}{\V{T}[\V{s}/\V{x}]}}
+     {\Gamma \vdash \Bhab{\pair{\V{s}}{\V{t}}{\V{x}.\V{T}}}{\SIGMAS{\xS} \V{T}}}
 \\
 %% First projection
-\Rule{\Gamma \vdash \Bhab{p}{\SIGMAS{\xS} T}}
-     {\Gamma \vdash \Bhab{\fst{p}}{S}} 
+\Rule{\Gamma \vdash \Bhab{\V{p}}{\SIGMAS{\xS} \V{T}}}
+     {\Gamma \vdash \Bhab{\fst{\V{p}}}{\V{S}}} 
 \qquad
 %% Second projection
-\Rule{\Gamma \vdash \Bhab{p}{\SIGMAS{\xS} T}}
-     {\Gamma \vdash \Bhab{\snd{p}}{T[\fst{p}/x]}}
+\Rule{\Gamma \vdash \Bhab{\V{p}}{\SIGMAS{\xS} \V{T}}}
+     {\Gamma \vdash \Bhab{\snd{\V{p}}}{\V{T}[\fst{\V{p}}/\V{x}]}}
 \\
 }\]

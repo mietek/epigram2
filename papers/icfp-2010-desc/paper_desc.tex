@@ -40,12 +40,12 @@ Section~\ref{sec:discussion}.
 In dependently-typed language, $\Sigma$-types can be interpreted in
 two different ways. This duality is actually reflected in the notation
 we can find in the literature, depending on the sensibility of the author.
-The notation $\Sigma_{x : A} (B\: x)$ stresses the interpretation that
+The notation $\blue{\Sigma}_{\V{x} : \V{A}} (\V{B}\: \V{x})$ stresses the interpretation that
 $\Sigma$-types are a generalisation of sums over arbitrary arities.  Where
 simply-typed languages have finite sums, dependently-typed languages have
 sums indexed by any set.
 
-On the other hand, our choice of notation ($\SIGMA{\V{x}}{A} (B\: x)$)
+On the other hand, our choice of notation $\SIGMA{\V{x}}{\V{A}} (\V{B}\:\V{x})$
 emphasises that $\Sigma$-types can be read as a generalisation of products,
 where the second component can depend on the first one. When simply-typed
 languages pack data into non-dependent tuples, dependently-types languages
@@ -154,8 +154,8 @@ contains no useful payload. The functoriality of the data-types is
 introduced by $\DIndx$. When we tie the knot with a fix-point, the
 hole left open by $\DIndx$ will be turned into a standard recursive
 argument. We notice that this functoriality appears in the type of
-$\descop{D}{}$ itself, for a given data-type definition $D$. This
-corresponds to the object part of the functor described by $D$.
+$\descop{\V{D}}{}$ itself, for a given data-type definition $\V{D}$. This
+corresponds to the object part of the functor described by $\V{D}$.
 
 \begin{figure}
 
@@ -165,7 +165,7 @@ corresponds to the object part of the functor described by $D$.
 \data \Desc : \Set \where \\
 \;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
     \DUnit          & \Desc \\
-    \DSigma         & \PI{\V{S}}{\Set} \PIS{S \To \Desc} \Desc \\
+    \DSigma         & \PI{\V{S}}{\Set} \PIS{\V{S} \To \Desc} \Desc \\
     \DIndx          & \Desc \To \Desc
 \end{array}
 }
@@ -174,9 +174,9 @@ corresponds to the object part of the functor described by $D$.
 \stk{
 \descop{\_\:}{} : \Desc \To \Set \To \Set \\
 \begin{array}{@{}ll@{\:=\:\:}ll}
-\descop{\DUnit}{& X}        &  \Unit                                       \\
-\descop{\DSigma{S}{D}}{& X} &  \SIGMAS{\V{s} : S}{\descop{D~s}{X}}         \\
-\descop{\DIndx{D}}{& X}     &  \TIMES{X}{\descop{D}{X}}
+\descop{\DUnit}{& \V{X}}        &  \Unit                                       \\
+\descop{\DSigma{\V{S}}{\V{D}}}{& \V{X}} &  \SIGMAS{\V{s} : \V{S}}{\descop{\V{D}~\V{s}}{\V{X}}}         \\
+\descop{\DIndx{\V{D}}}{& \V{X}}     &  \TIMES{\V{X}}{\descop{\V{D}}{\V{X}}}
 \end{array}
 }
 \end{array}
@@ -225,9 +225,7 @@ open for the recursive argument, and we close the description.
 
 In a more synthetic notation, we have described the following functor:
 
-\[    \NatD\: Z \mapsto 1 + Z    \]
-
-
+\[    \NatD\: \V{Z} \mapsto \Unit \mathop{\D{+}} \V{Z}    \]
 
 \begin{wstructure}
 <- List
@@ -242,18 +240,18 @@ signature of lists:
 
 \[\stk{
 \ListD : \Set \To \Desc \\
-\ListD \: X \mapsto \DSigma{(\EnumT{[ \ListNil, \ListCons ]})}
-                           {[ \DUnit \quad (\DSigma{X}{\LAM{\_} \DIndx{\DUnit}}) ]}
+\ListD \: \V{X} \mapsto \DSigma{(\EnumT{[ \ListNil, \ListCons ]})}
+                           {[ \DUnit \quad (\DSigma{\V{X}}{\LAM{\_} \DIndx{\DUnit}}) ]}
 }\]
 
 The modification consists in turning the $\NatSuc{}$ constructor into
-a proper $\ListCons$ taking an argument in X followed by a recursive
+a proper $\ListCons$ taking an argument in $\V{X}$ followed by a recursive
 argument. In this case, we use $\DSigma{}{}$ in its product
-interpretation: we pack an element of $X$ together with the recursive
+interpretation: we pack an element of $\V{X}$ together with the recursive
 argument. Easily, one sees that this code actually describes the
 following functor:
 
-\[    \ListD\: X\: Z \mapsto 1 + X \times Z     \]
+\[    \ListD\: \V{X}\: \V{Z} \mapsto \Unit \mathop{\D{+}} \V{X} \D{\ensuremath{\times}} \V{Z}     \]
 
 \begin{wstructure}
 <- Tree
@@ -269,8 +267,8 @@ demonstrated by our description of binary trees:
 \[\stk{
 \TreeD : \Set \To \Desc \\
 \begin{array}{@{}ll}
-\TreeD \: X \mapsto \DSigma{ & (\EnumT{[ \TreeLeaf, \TreeNode ]}) \\}
-                           { & [ \DUnit \quad (\DSigma{X}{\LAM{\_} \DIndx{(\DIndx{\DUnit})}}) ]}
+\TreeD \: \V{X} \mapsto \DSigma{ & (\EnumT{[ \TreeLeaf, \TreeNode ]}) \\}
+                           { & [ \DUnit \quad (\DSigma{\V{X}}{\LAM{\_} \DIndx{(\DIndx{\DUnit})}}) ]}
 \end{array}
 }\]
 
@@ -278,7 +276,7 @@ Again, we are at one evolutionary step away from $\ListD$. However,
 instead of a single call to the induction code, we call it twice. The
 interpretation of this code corresponds to the following functor:
 
-\[    \TreeD\: X\: Z \mapsto 1 + X \times Z \times Z     \]
+\[    \TreeD\: \V{X}\: \V{Z} \mapsto \Unit \mathop{\D{+}} \V{X} \Prod \V{Z} \Prod \V{Z}     \]
 
 
 \begin{wstructure}
@@ -305,8 +303,8 @@ Again, this is a clear reminiscence of the sum-of-product style:
 we have a finite sum of constructors. Of course, every description can
 be expressed in this style, using a singleton as single constructor if
 necessary. A tagged description can trivially be turned into a
-full-blown description. We note $\toDesc{TD}$ the description computed
-from the tagged description $TD$.
+full-blown description. We write $\toDesc{\V{TD}}$ for the description computed
+from the tagged description $\V{TD}$.
 
 \begin{wstructure}
 <- Fictive object [figure 'data Desc']
@@ -354,11 +352,11 @@ interpretation: the holes left open by the functor are filled by its
 own recursive definition:
 
 \[
-\Rule{\Gamma \vdash \Bhab{D}{\Desc}}
-     {\Gamma \vdash \Bhab{\Mu{D}}{\Set}} \qquad
-\Rule{\Gamma \vdash \Bhab{D}{\Desc} \quad 
-      \Gamma \vdash \Bhab{x}{\descop{D}{(\Mu{D})}}}
-     {\Gamma \vdash \Bhab{\Con{x}}{\Mu{D}}}
+\Rule{\Gamma \vdash \Bhab{\V{D}}{\Desc}}
+     {\Gamma \vdash \Bhab{\Mu{\V{D}}}{\Set}} \qquad
+\Rule{\Gamma \vdash \Bhab{\V{D}}{\Desc} \quad 
+      \Gamma \vdash \Bhab{\V{x}}{\descop{\V{D}}{(\Mu{\V{D}})}}}
+     {\Gamma \vdash \Bhab{\Con{\V{x}}}{\Mu{\V{D}}}}
 \]
 
 \begin{wstructure}
@@ -378,10 +376,10 @@ an elimination principle. Following a categorical intuition, we could
 be tempted to provide it as a catamorphism:
 
 \[
-\F{cata} : \PITEL{D}{\Desc}
-           \PI{T}{\Set}
-           (\descop{D}{T} \To T) \To 
-           \Mu{D} \To T 
+\F{cata} : \PITEL{\V{D}}{\Desc}
+           \PI{\V{T}}{\Set}
+           (\descop{\V{D}}{\V{T}} \To \V{T}) \To 
+           \Mu{\V{D}} \To \V{T} 
 \]
 
 Whereas this definition is amply sufficient in the simply-typed world,
@@ -389,28 +387,29 @@ it comes short of its promises in the dependently-typed realm. Indeed,
 this type is not dependent. As this operator will be the corner stone
 of any inductive definition, we are better off sharpening it before use.
 
-The first step consists in turning $T$ into a predicate
-$\Bhab{P}{\Mu{D} \To \Set}$, hence introducing a dependency on the
-descriptions. Consequently, we strengthen the algebra $\descop{D}{T}
-\To T$ by a similar process. We start with turning the arrow into a
-dependent arrow, hence offering $\Bhab{xs}{\descop{D}{(\Mu{D})}}$ to
+The first step consists in turning $\V{T}$ into a predicate
+$\Bhab{\V{P}}{\Mu{\V{D}} \To \Set}$, hence introducing a dependency on the
+descriptions. Consequently, we strengthen the algebra $\descop{\V{D}}{\V{T}}
+\To \V{T}$ by a similar process. We start with turning the arrow into a
+dependent arrow, hence offering $\Bhab{\V{xs}}{\descop{\V{D}}{(\Mu{\V{D}})}}$ to
 further analysis. 
 
 Then, we have to translate the notion of algebra in our dependent
-setting. This is achieved by the predicate $\All{D}{X}{P}{x}$
+setting. This is achieved by the predicate $\All{\V{D}}{\V{X}}{\V{P}}{\V{x}}$
 (Fig.~\ref{fig:all-predicates}) that, intuitively, states that
-$\Bhab{P}{X \To \Set}$ holds everywhere in $x$. Based on that
-knowledge, we ought to be able to prove that $P$ holds for
-$\Con{xs}$. We close our elimination principle by taking an argument
-$x$ in $\Mu{D}$ and claiming that the motive $P$ is realised on $x$.
+$\Bhab{\V{P}}{\V{X} \To \Set}$ holds everywhere in $\V{x}$. Based on that
+knowledge, we ought to be able to prove that $\V{P}$ holds for
+$\Con{\V{xs}}$. We close our elimination principle by taking an argument
+$x$ in $\Mu{\V{D}}$ and claiming that the motive $\V{P}$ is realised on $\V{x}$.
 
 \[
 \begin{array}{lcll}
-\F{induction} & : & \multicolumn{2}{l}{\PITEL{D}{\Desc}}                   \\
-              &   & \multicolumn{2}{l}{\PITEL{P}{\Mu{D} \To \Set}}         \\
-              &   & \PITEL{m}{& \PI{xs}{\descop{D}{(\Mu{D})}}              \\
-              &   &           & \All{D}{(\Mu{D})}{P}{xs} \To P (\Con{xs})} \\
-              &   & \multicolumn{2}{l}{\PI{x}{\Mu{D}} P x}
+\F{induction} & : & \multicolumn{2}{l}{\PITEL{\V{D}}{\Desc}}                   \\
+              &   & \multicolumn{2}{l}{\PITEL{\V{x}}{\Mu{\V{D}}}}                   \\
+              &   & \multicolumn{2}{l}{\PITEL{\V{P}}{\Mu{\V{D}} \To \Set}}         \\
+              &   & \PI{\V{m}}{& \PI{\V{xs}}{\descop{\V{D}}{(\Mu{\V{D}})}}              \\
+              &   &           & \All{\V{D}}{(\Mu{\V{D}})}{\V{P}}{\V{xs}} \To \V{P} (\Con{\V{xs}})} \\
+              &   & \V{P} \V{x}
 \end{array}
 \]
 
@@ -424,14 +423,14 @@ $x$ in $\Mu{D}$ and claiming that the motive $P$ is realised on $x$.
 \All{}{}{}{} : & \PITEL{\V{D}}{\Desc}
                  \PITEL{\V{X}}{\Set}
                  \PITEL{\V{P}}{\V{X} \To \Set} \\
-               & \PI{\V{xs}}{\descop{D}{\V{X}}} 
+               & \PI{\V{xs}}{\descop{\V{D}}{\V{X}}} 
                  \Set 
 \end{array} \\
-\All{\DId}{X}{P}{x} \mapsto P\: x \\
-\All{(\DConst{Z})}{X}{P}{x} \mapsto Z \\
-\All{(\DProd{D}{D'})}{X}{P}{\pair{d}{d'}{}} \mapsto \TIMES{\All{D}{X}{P}{d}}{\All{D'}{X}{P}{d'}} \\
-\All{(\DSigma{S}{T})}{X}{P}{\pair{a}{b}{}} \mapsto \All{(T\: a)}{X}{P}{b} \\
-\All{(\DPi{S}{T})}{X}{P}{f} \mapsto \PI{\V{s}}{S} \All{(T\: a)}{X}{P}{(f\: s)}
+\All{\DId}{\V{X}}{\V{P}}{\V{x}} \mapsto \V{P}\: \V{x} \\
+\All{(\DConst{\V{Z}})}{\V{X}}{\V{P}}{\V{z}} \mapsto \Unit \\
+\All{(\DProd{\V{D}}{\V{D'}})}{\V{X}}{\V{P}}{\pair{\V{d}}{\V{d'}}{}} \mapsto \TIMES{\All{\V{D}}{\V{X}}{\V{P}}{\V{d}}}{\All{\V{D'}}{\V{X}}{\V{P}}{\V{d'}}} \\
+\All{(\DSigma{\V{S}}{\V{T}})}{\V{X}}{\V{P}}{\pair{\V{a}}{\V{b}}{}} \mapsto \All{(\V{T}\: \V{a})}{\V{X}}{\V{P}}{\V{b}} \\
+\All{(\DPi{\V{S}}{\V{T}})}{\V{X}}{\V{P}}{\V{f}} \mapsto \PI{\V{\V{s}}}{\V{S}} \All{(\V{T}\: \V{a})}{\V{X}}{\V{P}}{(\V{f}\: \V{s})}
 }
 &
 %%
@@ -440,15 +439,15 @@ $x$ in $\Mu{D}$ and claiming that the motive $P$ is realised on $x$.
 \all{}{}{}{}{} : & \PITEL{\V{D}}{\Desc}
                    \PITEL{\V{X}}{\Set}
                    \PITEL{\V{P}}{\V{X} \To \Set} \\
-                 & \PITEL{\V{R}}{\PI{\V{x}}{X} P\: x}
-                   \PI{\V{xs}}{\descop{D}{\V{X}}} 
-                   \All{D}{X}{P}{xs} 
+                 & \PITEL{\V{R}}{\PI{\V{x}}{\V{X}} \V{P}\: \V{x}}
+                   \PI{\V{xs}}{\descop{\V{D}}{\V{X}}} 
+                   \All{\V{D}}{\V{X}}{\V{P}}{\V{xs}} 
 \end{array} \\
-\all{\DId}{X}{P}{R}{x} = R x \\
-\all{(\DConst{Z})}{X}{P}{R}{x} = z \\
-\all{(\DProd{D}{D'})}{X}{P}{R}{\pair{d}{d'}{}} = \pair{\all{D}{X}{P}{R}{d}}{\all{D'}{X}{P}{R}{d'}}{} \\
-\all{(\DSigma{S}{T})}{X}{P}{R}{\pair{a}{b}{}} = \all{(T\: a)}{X}{P}{R}{b} \\
-\all{(\DPi{S}{T})}{X}{P}{R}{f} = \LAM{s} \all{(T\: s)}{X}{P}{R}{(f\: s)}
+\all{\DId}{\V{X}}{\V{P}}{\V{R}}{\V{x}} = \V{R}\: \V{x} \\
+\all{(\DConst{\V{Z}})}{\V{X}}{\V{P}}{\V{R}}{\V{z}} = \Void \\
+\all{(\DProd{\V{D}}{\V{D'}})}{\V{X}}{\V{P}}{\V{R}}{\pair{\V{d}}{\V{d'}}{}} = \pair{\all{\V{D}}{\V{X}}{\V{P}}{\V{R}}{\V{d}}}{\all{\V{D'}}{\V{X}}{\V{P}}{\V{R}}{\V{d'}}}{} \\
+\all{(\DSigma{\V{S}}{\V{T}})}{\V{X}}{\V{P}}{\V{R}}{\pair{\V{a}}{\V{b}}{}} = \all{(\V{T}\: \V{a})}{\V{X}}{\V{P}}{\V{R}}{\V{b}} \\
+\all{(\DPi{\V{S}}{\V{T}})}{\V{X}}{\V{P}}{\V{R}}{\V{f}} = \LAM{\V{s}} \all{(\V{T}\: \V{s})}{\V{X}}{\V{P}}{\V{R}}{(\V{f}\: \V{s})}
 \end{array}
 }
 \]
@@ -527,11 +526,11 @@ inference rule:
 \note{ This is rather drafty. I should explain what $\vec{e}$ and $\widetilde{e'}$ are. }
 
 \[
-\Rule{\forall e_i \in \vec{e}, \propag{\push{e_i}
-                                            {\descop{f\: i}{(\Mu{(\DSigma{(\Enum\: b)}{f})})}}}
-                                      {e'_i}}
-     {\propag{\push{C\: \vec{e}}{\Mu{(\DSigma{(\Enum\: b)}{f})}}}
-             {\Con{(\etag{C}, \widetilde{e'})}}}\;\etag{C} \in b
+\Rule{\forall \V{e_i} \in \V{\vec{e}}, \propag{\push{\V{e_i}}
+                                            {\descop{\V{f}\: \V{i}}{(\Mu{(\DSigma{(\Enum\: \V{b})}{\V{f}})})}}}
+                                      {\V{e'_i}}}
+     {\propag{\push{\V{C}\: \V{\vec{e}}}{\Mu{(\DSigma{(\Enum\: \V{b})}{\V{f}})}}}
+             {\Con{(\etag{C}, \V{\widetilde{e'}})}}}\;\etag{t} \in \V{b}
 \]
 
 Hence, in the high-level expression language, the user types a

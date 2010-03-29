@@ -5,30 +5,30 @@
 \qquad
 %% Tag
 \Rule{\Gamma \vdash \Valid}
-     {\Gamma \vdash \Bhab{\Tag{s}}{\UId}}\;s \mbox{ unique identifier}
+     {\Gamma \vdash \Bhab{\Tag{\V{s}}}{\UId}}\;\V{s} \mbox{ unique identifier}
 \\
 %% EnumU
 \Rule{\Gamma \vdash \Valid}
      {\Gamma \vdash \Type{\EnumU}} 
 \qquad
 %% EnumT
-\Rule{\Gamma \vdash \Bhab{e}{\EnumU}}
-     {\Gamma \vdash \Type{\EnumT{e}}} 
+\Rule{\Gamma \vdash \Bhab{\V{e}}{\EnumU}}
+     {\Gamma \vdash \Type{\EnumT{\V{e}}}} 
 \\
 %% NilE
 \Rule{\Gamma \vdash \Valid}
      {\Gamma \vdash \Bhab{\NilE}{\EnumU}} 
 \qquad
 %% ConsE
-\Rule{\Gamma \vdash \Bhab{t}{\UId} \quad
-      \Gamma \vdash \Bhab{e}{\EnumU}}
-     {\Gamma \vdash \Bhab{\ConsE{t}{e}}{\EnumU}}
+\Rule{\Gamma \vdash \Bhab{\V{t}}{\UId} \quad
+      \Gamma \vdash \Bhab{\V{e}}{\EnumU}}
+     {\Gamma \vdash \Bhab{\ConsE{\V{t}}{\V{e}}}{\EnumU}}
 \\
 %% Ze
 \Rule{\Gamma \vdash \Valid}
-     {\Gamma \vdash \Bhab{\Ze}{\EnumT{\ConsE{t}{e}}}} 
+     {\Gamma \vdash \Bhab{\Ze}{\EnumT{\ConsE{\V{t}}{\V{e}}}}} 
 \qquad
 %% Su
-\Rule{\Gamma \vdash \Bhab{n}{\EnumT{e}}}
-     {\Gamma \vdash \Bhab{\Su{n}}{\EnumT{\ConsE{t}{e}}}}
+\Rule{\Gamma \vdash \Bhab{\V{n}}{\EnumT{\V{e}}}}
+     {\Gamma \vdash \Bhab{\Su{\V{n}}}{\EnumT{\ConsE{\V{t}}{\V{e}}}}}
 }\]
