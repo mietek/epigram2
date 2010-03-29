@@ -830,14 +830,14 @@ constructors are straightforwardly translated into equations.
 
 However, one could, quite rightfully, be worried by the introduction
 of equalities in the picture. In a programming context, equalities
-haunt us, begging for proofs. Hence, whereas the user typed a
+haunt us, begging for proofs. Hence, whereas the developer typed a
 constructor-constrained data-type, the elimination form will involve
 equalities and their proofs. As much as possible, one would rather
 avoid suffering from this burden. However, the equalities introduced
 here are rather special: they are \emph{equations} constraining
 variables to certain terms. Goguen et
 al.~\cite{goguen:pattern-matching} have shown, in the context of
-dependent pattern matching, how to tame these equations. 
+dependent pattern matching, how to tame these equations.
 
 \begin{wstructure}
 !!! Need Help !!!
@@ -874,8 +874,8 @@ Equations have simply disappeared. Note that it is straightforward to
 turn this definition into a tagged form. We should precise that
 forcing a description is not guaranteed to remove all constraints. It
 is subject to future work to see if constraints can be entirely
-eradicated, or presented more conveniently to the user. Finally, it is
-worth mentioning that the forcing optimisation is a
+eradicated, or presented more conveniently to the developer. Finally,
+it is worth mentioning that the forcing optimisation is a
 \emph{source-to-source} transformation of the description.
 
 \subsection{Free IMonad}

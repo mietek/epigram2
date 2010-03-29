@@ -63,10 +63,6 @@ If it hasn't been translated into universe polymorphism
 * Janitor service
 ** TODO Check/fix alignment in code
 ** TODO Fix code overflows
-** TODO I have written "user" here and there.
-
-This might not be the tone of the paper. We probaly want to call "user" a developer.
-
 ** TODO Tech report as a bibtex entry, or footnote?
 ** TODO No-argument version of multi-argument things, to avoid empty spaces
 ** TODO titles are sometimes quite vague
@@ -136,4 +132,7 @@ people to grasp the following.
 *** Norell's xml?
 *** Nisse's parser?
 *** ???
+** DONE I have written "user" here and there.
+
+This might not be the tone of the paper. We probaly want to call "user" a developer.
 

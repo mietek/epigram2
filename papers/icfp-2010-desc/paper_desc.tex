@@ -494,8 +494,8 @@ objects is not practical.
 
 Whereas simply-typed languages feature a convenient grammar for
 defining data-types and manipulating them, our proposal could be seen
-as a step backward. In our setting, the user would have to write a
-description instead of a sugared data-type definition. Then, to
+as a step backward. In our setting, the developer would have to write
+a description instead of a sugared data-type definition. Then, to
 recognise an element of $\Nat$ for instance, she would have to
 identify $\Mu{}$ of a description as indeed the fix-point of the
 pattern functor of natural numbers. Finally, she would have to write
@@ -514,10 +514,10 @@ operations follow for free.
 
 Doing so, we seal data-type definition behind a convenient
 abstraction. We take advantage of this abstraction barrier to tamper
-the second issue. Namely, our user would rather be presented a name
-rather than a fix-point of a pattern functor. Surprisingly, it is
+the second issue. Namely, the developer would rather be presented a
+name rather than a fix-point of a pattern functor. Surprisingly, it is
 sufficient to \emph{label} the $\Mu{}$ constructor with the
-user-provided name. When pretty-printing this object, we just expose
+user-defined name. When pretty-printing this object, we just expose
 the label, instead of the definition in full.
 
 Regaining the ability to write data-type constructor is simply a
@@ -535,7 +535,7 @@ inference rule:
              {\Con{(\etag{C}, \V{\widetilde{e'}})}}}\;\etag{t} \in \V{b}
 \]
 
-Hence, in the high-level expression language, the user types a
+Hence, in the high-level expression language, the developer writes a
 familiar type constructors, applied to a telescope of arguments. In
 the type propagation setting, this expression will be pushed to a
 $\Mu{}$ type of a tagged description. It is then straightforward to

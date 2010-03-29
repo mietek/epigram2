@@ -325,7 +325,7 @@ the type theory with a special-purpose operator:
 
 The entire work of the magician stands here, in this extension. One
 could be worried by the availability of such operations in our type
-theory. Indeed, it would be inconvenient for the user to have to
+theory. Indeed, it would be inconvenient for the developer to have to
 decide between two variants. The solution to this problem is, once
 again, to use the type propagation system. Just as the $\F{switch}$
 operator, $\F{switchD}$ can be automatically elaborated. To this end,
@@ -603,13 +603,13 @@ definition:
 
 Filling the sub-goal with $\apply\: \V{D}\: \V{X}\: \V{Y}\: \V{\sigma}$
 completes the implementation. To sum up, we have implemented the free
-monad construction for an arbitrary tagged description. This gives our
-user the ability, for any data-type, to extend it with a notion of
-variable. Then, we have equipped this structure with the corresponding
-monadic operation, \bind and \return. Whereas the \return is a trivial
-variable former, the \bind operation corresponds to the substitution
-of variables by terms. We have shown how to implement it, for any free
-monad.
+monad construction for an arbitrary tagged description. This gives the
+developer the ability, for any data-type, to extend it with a notion
+of variable. Then, we have equipped this structure with the
+corresponding monadic operation, \bind and \return. Whereas the
+\return is a trivial variable former, the \bind operation corresponds
+to the substitution of variables by terms. We have shown how to
+implement it, for any free monad.
 
 
 \begin{wstructure}

@@ -362,7 +362,7 @@ However, our situation is significantly different from the one we
 faced with encoded data: while we were suffering from a crucial lack
 of information, we are now facing too much information, hence loosing
 focus. This is a general issue with the usage of codes, as they convey
-much more information than what the user is willing to see. 
+much more information than what the developer is willing to see. 
 
 As we will see in the following section, there exists a cure to this
 problem. In a nutshell, instead of being overflown by typing
@@ -517,16 +517,16 @@ elements of $\EnumU$ is straightforward.
 \note{This might deserve a more thorough explanation, with snippet of
   code.}
 
-Finally, and more importantly, we are able to present our user an
+Finally, and more importantly, we are able to present the developer an
 abstraction of \emph{finite} function space. This work as follow. When
 an expression $\V{t}$ is pushed into a function which domain is a finite
 set, we instead elaborate it as a term in a small $\pi$-type. That is,
 a finite function. To realise our promise of a big $\Pi$-type, we
-elaborate a call to the $\F{switch}$ eliminator. 
+elaborate a call to the $\F{switch}$ eliminator.
 
 The abstraction we have developed in this section are entirely
 transparent to the user. In the case of finite function space, the
-user has never to explicitly \emph{call} the $\F{switch}$
+developer has never to explicitly \emph{call} the $\F{switch}$
 eliminator. For diagnosis purposes, a similar, reverse mechanism turns
 low-level terms into high-level expressions. Hence, this system, which
 complete presentation is out of the scope of this paper, seals the
