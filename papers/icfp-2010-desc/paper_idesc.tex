@@ -324,10 +324,10 @@ we obtain the following definition:
                 \\\\
                 \bigRedBracket{
                 \begin{array}{l} 
-                  \LAM{\V{n}} \caseB{\V{n}}{\NatZero \mapsto [\VecNil] \\
-                                   (\NatSuc \V{n}) \mapsto [\VecCons{}{}]} \\
-                  \LAM{\V{n}} \caseB{\V{n}}{\NatZero \mapsto [\DConst{\Unit}] \\
-                                   (\NatSuc \V{n}) \mapsto [\DSigma{\V{X}}{\DVar{\V{n}}}]}
+                  \LAM{n} \caseB{n}{\NatZero \To [\VecNil] \\
+                                   (\NatSuc n) \To [\VecCons{}{}]} \\
+                  \LAM{n} \caseB{n}{\NatZero \To [\DConst{Unit}] \\
+                                   (\NatSuc n) \To [\DSigma{X}{\DVar{n}}]}
                 \end{array}}
             \end{array}}
 \end{array}
@@ -870,12 +870,13 @@ gives the following, equivalent definition:
 \end{array}
 }\]
 
-Equations have simply disappeared. We should precise that forcing a
-description is not guaranteed to remove all constraints. It is subject
-to future work to see if constraints can be entirely eradicated, or
-presented more conveniently to the user. Finally, it is worth
-mentioning that the forcing optimisation is a \emph{source-to-source}
-transformation of the description.
+Equations have simply disappeared. Note that it is straightforward to
+turn this definition into a tagged form. We should precise that
+forcing a description is not guaranteed to remove all constraints. It
+is subject to future work to see if constraints can be entirely
+eradicated, or presented more conveniently to the user. Finally, it is
+worth mentioning that the forcing optimisation is a
+\emph{source-to-source} transformation of the description.
 
 \subsection{Free IMonad}
 
