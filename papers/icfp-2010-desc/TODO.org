@@ -63,12 +63,6 @@ If it hasn't been translated into universe polymorphism
 * Janitor service
 ** TODO Check/fix alignment in code
 ** TODO Fix code overflows
-** TODO Find references of universe construction in functional programming
-
-*** Norell's xml?
-*** Nisse's parser?
-*** ???
-
 ** TODO I have written "user" here and there.
 
 This might not be the tone of the paper. We probaly want to call "user" a developer.
@@ -137,3 +131,9 @@ people to grasp the following.
 
 ** DONE Use the word "pattern functor" which seems to be used
 ** DONE Find references for usage of bidirectional type-checking
+** DONE Find references of universe construction in functional programming
+
+*** Norell's xml?
+*** Nisse's parser?
+*** ???
+
