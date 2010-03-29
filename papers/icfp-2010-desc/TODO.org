@@ -31,12 +31,6 @@ dependently-typed language. So, how do I get arround my various
 
 
 
-* Fix
-** TODO Mention that Desc does not aim at Generic Haskell encoding
-
-Man, we are in a more serious business. Desc is just to help poor
-people to grasp the following.
-
 * Post-doc area
 ** TODO Improve finite sets motivation (encoding vs. codes)
 
@@ -139,3 +133,7 @@ No. It is too verbose. I just mention it could be done.
 
 ** DONE Mention that the notation for lists in the LISP one
 ** DONE Induction should refer to Benke et al.
+** DONE Mention that Desc does not aim at Generic Haskell encoding
+
+Man, we are in a more serious business. Desc is just to help poor
+people to grasp the following.
