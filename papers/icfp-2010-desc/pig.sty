@@ -181,20 +181,20 @@
 
 %% UId
 \newcommand{\UId}{\D{UId}}
-\newcommand{\Tag}[1]{\red{\CN{Tag}}~#1}
+\newcommand{\Tag}[1]{\red{\CN{Tag}}\:#1}
 
 %% Enum
 \newcommand{\EnumU}{\D{EnumU}}
 \newcommand{\NilE}{\C{nilE}}
-\newcommand{\ConsE}[2]{\C{consE}~#1~#2}
+\newcommand{\ConsE}[2]{\C{consE}\:#1\:#2}
 
-\newcommand{\EnumT}[1]{\D{EnumT}~#1}
+\newcommand{\EnumT}[1]{\D{EnumT}\:#1}
 \newcommand{\Ze}{\C{$0$}}
-\newcommand{\Su}[1]{\C{$1\!+$}~#1}
+\newcommand{\Su}[1]{\C{$1\!+$}\:#1}
 
-\newcommand{\spi}[2]{\F{$\pi$}~#1~#2}
-\newcommand{\switch}[4]{\green{\CN{switch}}~#1~#2~#3~#4}
-\newcommand{\spiD}[1]{\F{$\pi_D$}~#1}
+\newcommand{\spi}[2]{\F{$\pi$}\:#1\:#2}
+\newcommand{\switch}[4]{\green{\CN{switch}}\:#1\:#2\:#3\:#4}
+\newcommand{\spiD}[1]{\F{$\pi_D$}\:#1}
 \newcommand{\switchD}[3]{\green{\CN{switchD}}\green{(} #1 , #2 , #3 \green{)}}
 
 \newcommand{\Unit}{\D{Unit}}
@@ -209,52 +209,51 @@
 \newcommand{\TagDesc}{\F{TagDesc}}
 \newcommand{\toDesc}[1]{\overline{#1}}
 
-\newcommand{\descop}[2]{\green{\llbracket} #1 \green{\rrbracket}~#2}
+\newcommand{\descop}[2]{\green{\llbracket} #1 \green{\rrbracket}\:#2}
 
 \newcommand{\DUnit}{\etag{1}}
-\newcommand{\DSigma}[2]{\etag{\Sigma}~#1~#2}
-\newcommand{\DIndx}[1]{\etag{\CN{ind}\!\times}~#1}
+\newcommand{\DSigma}[2]{\etag{\Sigma}\:#1\:#2}
+\newcommand{\DIndx}[1]{\etag{\CN{ind}\!\times}\:#1}
 
-\newcommand{\DHindx}[2]{\etag{\CN{hind}\!\times}~#1~#2}
+\newcommand{\DHindx}[2]{\etag{\CN{hind}\!\times}\:#1\:#2}
 
-\newcommand{\DPi}[2]{\etag{\Pi}~#1~#2}
+\newcommand{\DPi}[2]{\etag{\Pi}\:#1\:#2}
 \newcommand{\DProd}[2]{#1 \mathop{\etag{\!\times}} #2}
 \newcommand{\DId}{\etag{\CN{id}}}
 
 %% Mu
 \newcommand{\Mu}[1]{\blue{\mu} #1}
-\newcommand{\Con}[1]{\C{con}~#1}
-\newcommand{\All}[4]{\F{All}~#1~#2~#3~#4}
-\newcommand{\all}[5]{\F{all}~#1~#2~#3~#4~#5}
+\newcommand{\Con}[1]{\C{con}\:#1}
+\newcommand{\All}[4]{\F{All}\:#1\:#2\:#3\:#4}
+\newcommand{\all}[5]{\F{all}\:#1\:#2\:#3\:#4\:#5}
 
 
 %% IDesc
-\newcommand{\IDesc}[1]{\D{IDesc}~#1}
+\newcommand{\IDesc}[1]{\D{IDesc}\:#1}
 \newcommand{\IDescD}{\C{IDescD}}
 \newcommand{\IDescFreeD}{\C{IDescD}^{\C{Free}}}
-\newcommand{\ATagIDesc}[1]{\F{ATagIDesc}~#1}
-\newcommand{\ITagIDesc}[1]{\F{ITagIDesc}~#1}
-\newcommand{\TagIDesc}[1]{\F{TagIDesc}~#1}
+\newcommand{\ATagIDesc}[1]{\F{ATagIDesc}\:#1}
+\newcommand{\ITagIDesc}[1]{\F{ITagIDesc}\:#1}
+\newcommand{\TagIDesc}[1]{\F{TagIDesc}\:#1}
 \newcommand{\toIDesc}[1]{\overline{#1}}
 
-\newcommand{\idescop}[3]{\green{\llbracket} #1 \green{\rrbracket}_{#2}~#3}
+\newcommand{\idescop}[3]{\green{\llbracket} #1 \green{\rrbracket}_{#2}\:#3}
 
-\newcommand{\DVar}[1]{\etag{\CN{var}}~#1}
-\newcommand{\DConst}[1]{\etag{\CN{const}}~#1}
-\newcommand{\DPrf}[1]{\etag{\prf{}}~#1}
+\newcommand{\DVar}[1]{\etag{\CN{var}}\:#1}
+\newcommand{\DConst}[1]{\etag{\CN{const}}\:#1}
 
 %% IMu
-\newcommand{\IMu}[3]{\blue{\mu}_{#1}~#2~#3}
+\newcommand{\IMu}[3]{\blue{\mu}_{#1}\:#2\:#3}
 
 
 %% Agda-style data-type declaration
 \newcommand{\data}{\mathkw{data}\;}
 \newcommand{\where}{\;\mathkw{where}}
-\newcommand{\case}[2]{\mathkw{case}~#1~\mathkw{of} 
+\newcommand{\case}[2]{\mathkw{case}\:#1\:\mathkw{of} 
   \begin{array}{l}
     #2
   \end{array}}
-\newcommand{\caseB}[2]{\mathkw{case}~#1~\mathkw{of} 
+\newcommand{\caseB}[2]{\mathkw{case}\:#1\:\mathkw{of} 
   \left\{
   \begin{array}{l}
     #2
@@ -263,8 +262,8 @@
 
 
 %% Free monad
-\newcommand{\FreeMonad}[2]{{#1}^{\F{\(\ast\)}}~#2}
-\newcommand{\FreeIMonad}[3]{{#1}^{\F{\(\ast\)}}_{#2}~#3}
+\newcommand{\FreeMonad}[2]{{#1}^{\F{\(\ast\)}}\:#2}
+\newcommand{\FreeIMonad}[3]{{#1}^{\F{\(\ast\)}}_{#2}\:#3}
 
 %% Bool
 \newcommand{\Bool}{\D{Bool}}
@@ -276,13 +275,13 @@
 \newcommand{\Nat}{\D{Nat}}
 \newcommand{\NatD}{\C{NatD}}
 \newcommand{\NatZero}{\etag{\CN{zero}}}
-\newcommand{\NatSuc}[1]{\etag{\CN{suc}}~#1}
+\newcommand{\NatSuc}[1]{\etag{\CN{suc}}\:#1}
 
 %% List
 \newcommand{\List}{\D{List}}
 \newcommand{\ListD}{\C{ListD}}
 \newcommand{\ListNil}{\etag{\CN{nil}}}
-\newcommand{\ListCons}[2]{\etag{\CN{cons}}~#1~#2}
+\newcommand{\ListCons}[2]{\etag{\CN{cons}}\:#1\:#2}
 
 %% Tree
 \newcommand{\Tree}{\D{Tree}}

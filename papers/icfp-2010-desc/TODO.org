@@ -64,7 +64,6 @@ If it hasn't been translated into universe polymorphism
 ** TODO Check/fix alignment in code
 ** TODO Fix code overflows
 ** TODO Tech report as a bibtex entry, or footnote?
-** TODO No-argument version of multi-argument things, to avoid empty spaces
 ** TODO titles are sometimes quite vague
 ** TODO Check coloring of terms
 ** TODO Better names for subcomponents of tagged indexed description
@@ -136,3 +135,5 @@ people to grasp the following.
 
 This might not be the tone of the paper. We probaly want to call "user" a developer.
 
+
+** DONE No-argument version of multi-argument things, to avoid empty spaces

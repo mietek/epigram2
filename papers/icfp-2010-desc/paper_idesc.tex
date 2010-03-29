@@ -40,7 +40,7 @@ be defined at the same time. Where simply-typed languages have
 inductive types, in dependently typed programming we the basic grammar of
 data-types should be that of inductive families of types. To this end, we
 rely on \emph{indexing}. We are going to transform the $\Desc$ universe into
-$\IDesc$, the universe of indexed descriptions. We express inductive families
+$\IDesc{\!}$, the universe of indexed descriptions. We express inductive families
 by the $\V{I} \To \IDesc{\V{I}}$ type.  \note{pwm: Vec might not be the best
 motivating example here, since it doesn't appear in the paper (more on that
 later). Come to think of it, this is entirely too vague without spelling out
@@ -70,29 +70,30 @@ a concrete example.}
 Before moving on indexed descriptions, we have to carry out some
 maintenance work on descriptions. We presented $\Desc$ as the grammar
 of inductive types. Hence, the codes closely follow this grammar. In
-the following, we adopt an alternative presentation. With $\DSigma$,
-we are actually \emph{quoting} a standard type-former, namely
+the following, we adopt an alternative presentation. With
+$\DSigma{\!}{\!}$, we are actually \emph{quoting} a standard
+type-former, namely
 
 $$\Bhab{\Sigma}{\PI{\V{S}}{\Set} \PI{\V{S}}{\Set} \Set}$$
 
 In the alternative presentation, we go further and present all our
 codes as quotations of standard type-formers. This presentation is
 shown in Figure~\ref{fig:type-former-desc}. The reader will notice
-that we replace $\DUnit$ by a more general $\DConst$ code. Whereas
-$\DUnit$ was interpreted as the unit set, $\DConst{\V{X}}$ is interpreted
-as $\V{X}$, for any $\Bhab{\V{X}}{\Set}$. Extensionally, $\DConst{\V{X}}$ and
-$\DSigma{\V{X}}{\DUnit}$ are equivalent. However, $\DConst$ is more
+that we replace $\DUnit$ by a more general $\DConst{\!}$ code. Whereas
+$\DUnit$ was interpreted as the unit set, $\DConst{X}$ is interpreted
+as $X$, for any $\Bhab{X}{\Set}$. Extensionally, $\DConst{X}$ and
+$\DSigma{X}{\DUnit}$ are equivalent. However, $\DConst$ is more
 succinct. More importantly, $\DConst$ is \emph{first-order}, unlike
 its equivalent encoding. From a definitional perspective, we are
 giving more opportunities to the type-system, hence reducing the
 burden on the programmer. For the same reason, we introduce
-$\DProd{}{}$ that overlaps with $\DSigma{}{}$.
+$\DProd{\!}{\!}$ that overlaps with $\DSigma{\!}{\!}$.
 
 This reorganisation is strictly equivalent to the previous one
 (Fig.~\ref{fig:hindx_desc}). Just as the previous version, it is also
 self-descriptive. We refer the reader to the companion technical
 report for details. In this finer-grained presentation, we can define
-$\DIndx$ and $\DHindx$ as follow:
+$\DIndx{\!}$ and $\DHindx{\!}{\!}$ as follow:
 
 \[\begin{array}{l@{\:\mapsto\:\:}l}
 \DIndx{\V{D}}         & \DProd{\DId}{\V{D}}                      \\
@@ -106,7 +107,7 @@ here is the new definition of $\NatD$:
 
 \[\stk{
 \NatD : \Desc \\
-\NatD \mapsto \DSigma{(\EnumT{[ \NatZero, \NatSuc{} ]})}
+\NatD \mapsto \DSigma{(\EnumT{[ \NatZero, \NatSuc{\!} ]})}
                      {[ \DUnit \quad \DId ]}
 }\]
 
@@ -127,8 +128,8 @@ evolve this presentation into an indexed one.
     \DId            & \Desc                                    \\
     \DConst{}       & \Set \To \Desc                           \\
     \DProd{}{}      & \PI{\V{D}, \V{D'}}{\Desc} \Desc          \\
-    \DSigma         & \PI{\V{S}}{\Set} \PIS{\V{S} \To \Desc} \Desc \\
-    \DPi            & \PI{\V{S}}{\Set} \PIS{\V{S} \To \Desc} \Desc 
+    \DSigma         & \PI{\V{S}}{\Set} \PIS{S \To \Desc} \Desc \\
+    \DPi            & \PI{\V{S}}{\Set} \PIS{S \To \Desc} \Desc 
 \end{array}
 }
 \vspace{0.2in}
@@ -168,11 +169,11 @@ inductive types in this setting. To describe an inductive family
 indexed by $\Bhab{\V{I}}{\Set}$, we use endofunctors on the category
 $\Set^{\V{I}}$. We call these \emph{indexed functors}. \note{Predicate
   transformer anyone?} In this setting, $\V{I} \To \IDesc{\V{I}}$ is our
-grammar for describing these functors. Hence, $\IDesc{}$ and its
+grammar for describing these functors. Hence, $\IDesc{\!}$ and its
 interpretation have the following types:
 
 \[\stk{
-\data \IDesc{} (\Bhab{\V{I}}{\Set}) : \Set \where \\
+\data \IDesc{\!} (\Bhab{\V{I}}{\Set}) : \Set \where \\
 \;\;\ldots \\
 \\
 \idescop{\_\:}{}{} : \PI{\V{I}}{\Set} \IDesc{\V{I}} \To (\V{I} \To \Set) \To \Set    \\
@@ -205,8 +206,9 @@ However, we still have to define the actual grammar. This can be
 achieved by a minor evolution of $\Desc$
 (Fig.~\ref{fig:type-former-desc}). Indeed, the functorial nature of
 $\Desc$ is entirely captured by the $\DId$ code. We get an indexed
-functor by turning $\DId$ into an index-dependent $\DVar$ code. The
-resulting code of $\IDesc$ is presented in Figure~\ref{fig:idesc}.
+functor by turning $\DId$ into an index-dependent $\DVar{\!}$
+code. The resulting code of $\IDesc{\!}$ is presented in
+Figure~\ref{fig:idesc}.
 
 %% \[\stk{
 %% \data \IDesc{} (\Bhab{\V{I}}{\Set}) : \Set \where \\
@@ -227,13 +229,13 @@ resulting code of $\IDesc$ is presented in Figure~\ref{fig:idesc}.
 \[\stk{
 \begin{array}{ll}
 \stk{
-\data \IDesc{} (\Bhab{\V{I}}{\Set}) : \Set \where \\
+\data \IDesc{\!} (\Bhab{\V{I}}{\Set}) : \Set \where \\
 \;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
-    \DVar{}         & \V{I} \To \IDesc{\V{I}}                                   \\
-    \DConst{}       & \Set \To \IDesc{\V{I}}                                \\
-    \DProd{}{}      & \PI{\V{\V{D}}, \V{\V{D'}}}{\IDesc{\V{I}}} \IDesc{\V{I}}           \\
-    \DSigma         & \PI{\V{S}}{\Set} \PIS{\V{S} \To \IDesc{\V{I}}} \IDesc{\V{I}}  \\
-    \DPi            & \PI{\V{S}}{\Set} \PIS{\V{S} \To \IDesc{\V{I}}} \IDesc{\V{I}} 
+    \DVar{}         & I \To \IDesc{I}                                   \\
+    \DConst{}       & \Set \To \IDesc{I}                                \\
+    \DProd{}{}      & \PI{\V{D}, \V{D'}}{\IDesc{I}} \IDesc{I}           \\
+    \DSigma         & \PI{\V{S}}{\Set} \PIS{S \To \IDesc{I}} \IDesc{I}  \\
+    \DPi            & \PI{\V{S}}{\Set} \PIS{S \To \IDesc{I}} \IDesc{I} 
 \end{array}
 }
 \vspace{0.2in}
@@ -308,7 +310,7 @@ enable or disable the constructors.
 
 In the case of vectors, for instance, for the index $\NatZero$, we
 would only propose the constructor $\ListNil$. Similarly, for
-$\NatSuc{n}$, we only propose the constructor $\ListCons{}{}$. Hence,
+$\NatSuc{n}$, we only propose the constructor $\ListCons{\!}{\!}$. Hence,
 we obtain the following definition:
 
 \newcommand{\VecD}{\C{VecD}}
@@ -352,14 +354,14 @@ We will see more instances of this pattern in the following.
         -> This applies to all previous examples
 \end{wstructure}
 
-In order to gain some intuition with $\IDesc$, let us re-implement the
-pattern functor of natural numbers. We refer the reader to
+In order to gain some intuition with $\IDesc{\!}$, let us re-implement
+the pattern functor of natural numbers. We refer the reader to
 Section~\ref{sec:desc-examples} for its incarnation in the universe of
 descriptions. The code is the following:
 
 \[\stk{
 \NatD : \IDesc{\Unit} \\
-\NatD \mapsto \DSigma{(\EnumT{[ \NatZero, \NatSuc{} ]})}
+\NatD \mapsto \DSigma{(\EnumT{[ \NatZero, \NatSuc{\!} ]})}
                      {[ \DConst{\Unit} \quad (\DVar{\Void}) ]}
 }\]
 
@@ -380,14 +382,14 @@ transition.
     -> Behind the scene, relies on the special purpose switchD
 \end{wstructure}
 
-A mandatory exercise consists in describing $\IDesc$ in itself. With
+A mandatory exercise consists in describing $\IDesc{\!}$ in itself. With
 the experience gained in Section~\ref{sec:desc-levitate}, this
 levitation does not pose any issue:
 
 \[\stk{
 \IDescD : \PI{\V{I}}{\Set} \IDesc{\Unit} \\
 \begin{array}{@{}ll}
-\IDescD~\V{I} \mapsto \DSigma{}{} & (\EnumT \red{[} \DVar{},
+\IDescD~I \mapsto \DSigma{}{} & (\EnumT \red{[} \DVar{},
                                           \DConst{},
                                           \DProd{}{},
                                           \DSigma{}{}, 
@@ -404,7 +406,7 @@ levitation does not pose any issue:
 }\]
 
 Note that this description also lives in $\IDesc{\Unit}$. Indeed,
-for any $\V{I}$, $\IDesc~\V{I}$ is merely an inductive type. As for the
+for any $\V{I}$, $\IDesc{\V{I}}$ is merely an inductive type. As for the
 $\Desc$ levitation, the finite function space $[ \ldots ]$ elaborates into a
 special purpose $\F{switchID}$ operator. 
 
@@ -494,7 +496,7 @@ index is $\Ebool$. The actual code precisely follows this intuition,
 as shown in Figure~\ref{fig:hexpr-full}. For brevity, we use an
 informal $\case{\ldots}{\ldots}$ notation, simulating a definition by
 pattern-matching. Formally, this corresponds to a call to the
-$\switch{}{}{}{}$ eliminator.
+$\switch{\!}{\!}{\!}{\!}$ eliminator.
 
 \begin{figure*}
 
@@ -768,18 +770,18 @@ definitional equality. Hence, we can legibly equates elements of $I$.
     ???
 \end{wstructure}
  
-Another common dependent data-type is $\Fin$, the finite sets of
-numbers. $\Fin$ is a typical example of an inductive family using
+Another common dependent data-type is $\Fin{\!}$, the finite sets of
+numbers. $\Fin{\!}$ is a typical example of an inductive family using
 \emph{constrained constructors}. The constructors $\FinZero$ and
-$\FinSuc$ are only defined for an index distinct from $\NatZero$:
+$\FinSuc{\!}$ are only defined for an index distinct from $\NatZero$:
 
 
 \[
 \stk{
-\data \Fin{} : \PI{\V{n}}{\Nat} \Set \where \\
+\data \Fin{\!} : \PI{\V{n}}{\Nat} \Set \where \\
 \;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
-    \FinZero_{\V{n}}      & \Fin{(\NatSuc{\V{n}})}   \\
-    \FinSuc{}_{\V{n}}     & \Fin{\V{n}} \To \Fin{(\NatSuc{\V{n}})}
+    \FinZero_n      & \Fin{(\NatSuc{n})}   \\
+    \FinSuc{}_n     & \Fin{n} \To \Fin{(\NatSuc{n})}
 \end{array}
 }
 \]
@@ -791,21 +793,21 @@ this case, we obtain the following definition:
 \[\stk{
 \FinD : \Nat \To \IDesc{\Nat} \\
 \begin{array}{@{}ll}
-\FinD\: \V{n} = \DSigma{}{} \!\!\!\!\!\!& (\EnumT{[ \FinZero , \FinSuc{} ]}) \\
+\FinD\: n = \DSigma{}{} & (\EnumT{[ \FinZero , \FinSuc{} ]}) \\
                         & \bigRedBracket{
                           \begin{array}{l}
-                            \DSigma{\Nat}{\LAM{\V{m}} \DConst{(\V{n} \PropEq \NatSuc{\V{m}})}} \\
-                            \DSigma{\Nat}{\LAM{\V{m}} \DProd{\DVar{\V{m}}}{\DConst{(\V{n} \PropEq \NatSuc{\V{m}})}}}
+                            \DSigma{\Nat}{\LAM{m} \DConst{(n \PropEq \NatSuc{m})}} \\
+                            \DSigma{\Nat}{\LAM{m} \DProd{\DVar{m}}{\DConst{(n \PropEq \NatSuc{m})}}}
                           \end{array}
                           }
 \end{array}
 }\]
 
 Intuitively, the constraint is captured as follows. First, we store an
-element $\V{m}$ of $\Nat$, thanks to a $\DSigma$. However, the constraint
-stipulates that $\V{m}$ cannot be \emph{any} natural numbers: it must be
-``the index minus one''. This translates into the constraint $\V{n}
-\PropEq \NatSuc{\V{m}}$. 
+element $m$ of $\Nat$, thanks to a $\DSigma$. However, the constraint
+stipulates that $m$ cannot be \emph{any} natural numbers: it must be
+``the index minus one''. This translates into the constraint $n
+\PropEq \NatSuc{m}$. 
 
 \note{ Anything else? }
 
@@ -822,10 +824,10 @@ stipulates that $\V{m}$ cannot be \emph{any} natural numbers: it must be
         <- Lose match between data-type definition and the elimination form
 \end{wstructure}
 
-The $\Fin$ example is also a well-known example of Generalised
+The $\Fin{\!}$ example is also a well-known example of Generalised
 Abstract Data-Type (GADT) in Haskell. It comes as no surprise that our
 universe of indexed description supports this restricted class of
-inductive families. As we have seen with $\Fin$, constrained
+inductive families. As we have seen with $\Fin{\!}$, constrained
 constructors are straightforwardly translated into equations.
 
 However, one could, quite rightfully, be worried by the introduction
@@ -849,22 +851,22 @@ dependent pattern matching, how to tame these equations.
 \end{wstructure}
 
 Further, we can actually remove these equations altogether. Let us
-look back at $\Fin$. We note that the equations are introduced because
+look back at $\Fin{\!}$. We note that the equations are introduced because
 we are \emph{storing} the index of the inductive family, through
 $\V{m}$. Hence the constraints. However, \emph{inductive families need not
   store their indices}~\cite{brady:index-inductive-families}. Applying
-the \emph{forcing} optimisation to our initial definition of $\Fin$
+the \emph{forcing} optimisation to our initial definition of $\Fin{\!}$
 gives the following, equivalent definition:
 
 \[\stk{
 \FinD : \Nat \To \IDesc{\Nat} \\
 \begin{array}{@{}llll}
-\FinD\: \NatZero     & = & \multicolumn{2}{l}{\DSigma{(\EnumT{[]})}{\Void} } \\
-\FinD\: (\NatSuc{\V{n}}) & = & \DSigma{}{}\!\!\!\!\!\!\! & (\EnumT{[ \FinZero , \FinSuc{} ]}) \\
+\FinD\: \NatZero     & = & \multicolumn{2}{l}{\DSigma{\Void}{\Void} } \\
+\FinD\: (\NatSuc{n}) & = & \DSigma{}{} & (\EnumT{[ \FinZero , \FinSuc{} ]}) \\
                      &   &             & \bigRedBracket{
                                          \begin{array}{l}
                                          \DConst{\Unit} \\
-                                         \DVar{\V{n}}
+                                         \DVar{n}
                                          \end{array}
                                          }
 \end{array}
@@ -907,12 +909,12 @@ general before we get to this point?}
                      \PITEL{\V{X}}{\V{I} \To \Set}\To 
                       \TagIDesc{\V{I}}
 \end{array} \\
-\FreeIMonad{(\V{E},\V{F})}{\V{I}}{\V{R}} \mapsto \\ \;\;
-    \pair{\pair{\ListCons{\DVar{}}{(\fst{\V{E}})}} 
-               {\LAM{\V{i}}
-                \pair{(\DConst{(\V{R}\: \V{i})})}
-                     {((\snd{\V{E}})\: \V{i})}{}}{}}
-         {\V{F}}{}
+\FreeIMonad{(E,F)}{I}{X} \mapsto
+    \pair{\pair{\ListCons{\DVar{}}{(\fst{E})}} 
+               {\LAM{i}
+                \pair{(\DConst{(X\: i)})}
+                     {((\snd{E})\: i)}{}}{}}
+         {F}{}
 }\]
 
 Just as in the universe of descriptions, this construction comes with
@@ -1046,15 +1048,15 @@ a well-typed language, together with its semantics.
 
 \paragraph{Indexed description:}
 
-Another instance of free monad is $\IDesc$ itself. Indeed, $\DVar$ is
-nothing but the \return. The remaining constructors are simply the
-pattern functor, trivially indexed by $\Unit$. Hence, we describe
-this functor by the following code:
+Another instance of free monad is $\IDesc{\!}$ itself. Indeed,
+$\DVar{\!}$ is nothing but the \return. The remaining constructors are
+simply the pattern functor, trivially indexed by $\Unit$. Hence, we
+describe this functor by the following code:
 
 \[\stk{
 \IDescFreeD : \PI{\V{I}}{\Set} \IDesc{\Unit} \\
 \begin{array}{@{}ll}
-\IDescFreeD~\V{I} \mapsto \DSigma{}{} & (\EnumT \red{[} \DConst{},
+\IDescFreeD~I \mapsto \DSigma{}{} & (\EnumT \red{[} \DConst{},
                                               \DProd{}{},
                                               \DSigma{}{}, 
                                               \DPi{}{} \red{]}) \\

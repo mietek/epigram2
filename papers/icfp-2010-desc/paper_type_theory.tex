@@ -288,7 +288,7 @@ to an element of $u$.
 \end{wstructure}
 
 The type of finite sets comes with further machinery. Indeed, to
-manipulate the $\EnumU$ and $\EnumT{}$ objects, we need to equip our
+manipulate the $\EnumU$ and $\EnumT{\!}$ objects, we need to equip our
 type theory with an appropriate \emph{elimination
   principle}. Formally, as we add types for data -- such as finite
 sets here --, we need such primitive operators to compute with those
@@ -296,11 +296,11 @@ data, and corresponding extension of the judgemental equality with
 their computational behavior. For compactness and readability, we
 shall present these operators as functional programs, much as we
 implement them in our Agda model. Hence, we first define the
-$\spi{}{}$ operator:
+$\spi{\!}{\!}$ operator:
 
 \[\stk{
 %% spi
-\spi{}{} : \PITEL{\V{e}}{\EnumU}
+\spi{\!}{\!} : \PITEL{\V{e}}{\EnumU}
            \PITEL{\V{P}}{\EnumT{\V{e}} \To \Set} \To \Set \\
 \begin{array}{@{}ll@{\:\mapsto\:\:}l}
 \spi{\NilE}{& \V{P}}        & \Unit \\
@@ -309,13 +309,13 @@ $\spi{}{}$ operator:
 }\]
 
 A closer look to its type should reveal a certain familiarity with its
-equivalent for sets, $\Pi$. Indeed, $\spi{}{}$ defines a \emph{finite
-  function space}, mapping elements of finite sets to objects in
-$\Set$. Intuitively, this operator build a right-nested tuple,
-effectively mapping an object of $P\:i$ for each $i$ the finite
+equivalent for sets, $\Pi$. Indeed, $\spi{\!}{\!}$ defines a
+\emph{finite function space}, mapping elements of finite sets to
+objects in $\Set$. Intuitively, this operator build a right-nested
+tuple, effectively mapping an object of $P\:i$ for each $i$ the finite
 domain.
 
-Having understood the meaning of $\spi{}{}$, the definition of the
+Having understood the meaning of $\spi{\!}{\!}$, the definition of the
 $\F{switch}$ eliminator is not surprising:
 
 \[\stk{
@@ -351,7 +351,7 @@ pointing to.
 \end{wstructure}
 
 As we have seen, finite sets are not just a way of making
-data. Through the $\spi{}{}$ and $\F{switch}$ operators, they also
+data. Through the $\spi{\!}{\!}$ and $\F{switch}$ operators, they also
 come with a notion of finite function space. However, we had to
 extract that intuition from the type, by a careful reading. This seems
 to contradict our argument in favour of types for coding

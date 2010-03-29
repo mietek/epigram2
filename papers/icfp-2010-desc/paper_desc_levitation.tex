@@ -38,7 +38,7 @@ specification:
      {\Gamma \vdash \Bhab{\ConsE{\V{t}}{\V{e}}}{\EnumU}}
 }\]
 
-The names $\NilE$ and $\ConsE{}{}$ are absolutely not a
+The names $\NilE$ and $\ConsE{\!}{\!}$ are absolutely not a
 coincidence. $\EnumU$ is indeed isomorphic to a list of $\UId$s. In
 Section~\ref{sec:desc-examples}, we have shown how to build lists in
 the universe of description. Therefore, the actual implementation of
@@ -68,8 +68,8 @@ just defined $\EnumU$ above, by fix-point over the pattern functor denoted
 by $\ListD$. $\NilE$ and $\ConsE$ are simply the $\ListNil$ and $\ListCons$
 constructors of lists.
 
-Another interesting consequence concerns the $\spi{}{}$ operator: it
-can actually be implemented with the generic $\F{induction}$
+Another interesting consequence concerns the $\spi{\!}{\!}$ operator:
+it can actually be implemented with the generic $\F{induction}$
 principle. From an implementation perspective, this means that we
 remove an operator hard-coded in the host language. This operator is
 simply implemented in the dependently-typed target language, as any
@@ -143,31 +143,31 @@ Our first tentative attempt is the following:
 \[\stk{
 \DescD : \Desc \\
 \begin{array}{@{}ll}
-\DescD \mapsto \DSigma{}{} & (\EnumT{[ \DUnit, \DSigma{}{}, \DIndx{} ]})  \\
-                           & \left[\begin{array}{l}
+\DescD \mapsto \DSigma{\!}{\!} & (\EnumT{[ \DUnit, \DSigma{\!}{\!}, \DIndx{\!} ]})  \\
+                               & \left[\begin{array}{l}
                                    \DUnit                                \\
                                    \DSigma{\Set}{(\LAM{\V{S}} \SHED)}      \\
                                    \DIndx{\DUnit}                        \\
-                                   \end{array}
-                             \right]
+                                 \end{array}
+                                 \right]
 \end{array}
 }\]
 
 Let us explain how we have proceeded and the obstacle we face. Much as
 the data-types we have seen so far, we first have to choose a
 constructor. Constructors correspond to the code's constructors:
-$\DUnit$, $\DSigma$, and $\DIndx$. The reader will notice that the
+$\DUnit$, $\DSigma{\!}{\!}$, and $\DIndx{\!}$. The reader will notice that the
 tagged notation we have used so far for $\Desc$ constructors now fully
 make sense: these were actually the tags we are defining. \note{This
   sentence badly needs a rephrasing.}
 
 The case of $\DUnit$ is trivial: we immediately reach the end of the
-data-type. $\DUnit$ has no payload. The case of $\DIndx{}$ comes
+data-type. $\DUnit$ has no payload. The case of $\DIndx{\!}$ comes
 naturally: it only takes a recursive argument -- a description. The
-case of $\DSigma$ is problematic. Recall the specification of
-$\DSigma$:
+case of $\DSigma{\!}{\!}$ is problematic. Recall the specification of
+$\DSigma{\!}{\!}$:
 
-\[    \DSigma{}{} : \PI{\V{S}}{\Set} \PIS{\V{S} \To \Desc} \Desc      \]
+\[    \DSigma{}{} : \PI{\V{S}}{\Set} \PIS{S \To \Desc} \Desc      \]
 
 So, we first pack an element $\V{S}$ of $\Set$. Then, we would like to
 express a notion of recursive argument \emph{indexed} by $\V{S}$. Because
@@ -191,10 +191,10 @@ express this notion. We shall remedy to this situation.
 
 In order to capture a notion of higher-order induction, we need to
 extend our universe of descriptions. This consists in adding a code
-$\DHindx$ that takes an indexing set $\V{H}$. The code and its
+$\DHindx$ that takes an indexing set $H$. The code and its
 interpretation are presented in
-Figure~\ref{fig:hindx_desc}. Intuitively, $\DHindx$ use the elements
-of $H$ to index as many recursive arguments. 
+Figure~\ref{fig:hindx_desc}. Intuitively, $\DHindx{\!}{\!}$ use the
+elements of $H$ to index as many recursive arguments.
 
 \begin{figure}
 
@@ -204,7 +204,7 @@ of $H$ to index as many recursive arguments.
 \data \Desc : \Set \where \\
 \;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
     \ldots          & \:\:\ldots \\
-    \DHindx         & \PI{\V{H}}{\Set} \Desc \To \Desc
+    \DHindx         & \PI{H}{\Set} \Desc \To \Desc
 \end{array}
 }
 \vspace{0.2in}
@@ -225,21 +225,22 @@ of $H$ to index as many recursive arguments.
 \end{figure}
 
 
-Note that $\DIndx$ is isomorphic to $\DHindx{\Unit}$. However, we
-tolerate this duplication and do not replace $\DIndx$ by the more
-general $\DHindx$. Indeed, unlike its counterpart, $\DIndx$ is
-first-order. Therefore, while both codes are \emph{extensionally} the
-same, in most practical implementation they would be dealt with rather
-differently. While definitional equality can cope with first order
-objects, the functional presentation introduced by $\DHindx$ is
-unlikely to be amenable to a purely definitional treatment.
+Note that $\DIndx{\!}$ is isomorphic to $\DHindx{\Unit}{\!}$. However,
+we tolerate this duplication and do not replace $\DIndx{\!}$ by the
+more general $\DHindx{\!}{\!}$. Indeed, unlike its counterpart,
+$\DIndx{\!}$ is first-order. Therefore, while both codes are
+\emph{extensionally} the same, in most practical implementation they
+would be dealt with rather differently. While definitional equality
+can cope with first order objects, the functional presentation
+introduced by $\DHindx{\!}{\!}$ is unlikely to be amenable to a purely
+definitional treatment.
 
 Equipped with $\DHindx$, we can describe the extended code of our
 universe of data-types, as shown in Figure~\ref{fig:desc-levitate}.
 The $\DUnit$ and $\DIndx$ cases remains unchanged, as expected. We
 successfully describe the $\DSigma$ case, by a simple appeal to the
-higher-order induction on $\V{S}$. The $\DHindx$ case consists in packing
-the $\V{H}$ in $\Set$ with a recursive argument.
+higher-order induction on $S$. The $\DHindx$ case consists in packing
+the $H$ in $\Set$ with a recursive argument.
 
 In a first glance, we have achieved our goal. We have described the
 codes of the universe of description. Taking the fix-point of this
@@ -253,7 +254,7 @@ invisible cable. Let us reveal it, hence finishing our implementation.
 \[\stk{
 \DescD : \Desc \\
 \begin{array}{@{}ll}
-\DescD \mapsto \DSigma{}{} & (\EnumT{[ \DUnit, \DSigma{}{}, \DIndx{}, \DHindx{}{} ]}) \\
+\DescD \mapsto \DSigma{\!}{\!} & (\EnumT{[ \DUnit, \DSigma{\!}{\!}, \DIndx{\!}, \DHindx{\!}{\!} ]}) \\
                            & \left[\begin{array}{l}
                                    \DUnit                                            \\
                                    \DSigma{\Set}{(\LAM{\V{S}} \DHindx{\V{S}}{\DUnit})}   \\
@@ -525,13 +526,13 @@ function is surprisingly easy:
 
 \[\stk{
 \FreeMonad{\_} : \TagDesc \To \Set \To \TagDesc \\
-\FreeMonad{\pair{\V{E}}{\V{D}}{}}\:\V{X} \mapsto
-    \pair{\ListCons{\DVar{}}{\V{E}}}
-         {\pair{\DSigma{\V{X}}{\DUnit}}{\V{D}}{}}{}
+\FreeMonad{\pair{E}{D}{}}\:X \mapsto
+    \pair{\ListCons{\DVar{}}{E}}
+         {\pair{\DSigma{X}{\DUnit}}{D}{}}{}
 }\]
 
 We simply add a constructor, $\DVar{}$, and define its argument to be
-a $\DSigma{\V{X}}{\DUnit}$, that is an element of $\V{X}$. We keep $\V{E}$ and $\V{D}$
+a $\DSigma{X}{\DUnit}$, that is an element of $X$. We keep $E$ and $D$
 as they were, hence leaving the functor unchanged. Unfolding the
 interpretation of this definition, we convince ourself that this
 corresponds to the functor $\FMFreeMonadD$. The fix-point operation
@@ -587,8 +588,8 @@ definition:
 \\
 \end{array} \\
 \begin{array}{@{}l@{\:\mapsto\:\:}l}
-\apply\: \V{D}\: \V{X}\: \V{Y}\: \V{\sigma}\: \pair{\DVar{}}{\V{x}}{}   & \V{\sigma}\: \V{x}                   \\
-\apply\: \V{D}\: \V{X}\: \V{Y}\: \V{\sigma}\: \pair{\etag{t}\,}{\V{ys}}{} & \Con{\pair{\etag{t}}{\V{ys}}{}}
+\apply\: D\: X\: Y\: \sigma\: \pair{\DVar{}}{x}{}   & \sigma\: x                   \\
+\apply\: D\: X\: Y\: \sigma\: \pair{\etag{t}}{ys}{} & \Con{\pair{\etag{t}}{ys}{}}
 \end{array}
 }\]
 

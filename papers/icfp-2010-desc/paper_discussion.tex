@@ -17,8 +17,8 @@ we are subject to Girard's paradox, as we assume that $\Set$ lives in
 $\Set$. We made that choice for presentational convenience, as
 universe stratification is orthogonal to our work. Nonetheless, our
 universes of description rather naturally leads itself to
-stratification. Unsurprisingly, $\IDesc{}$ at level $l$ is of type
-$\Set^{\blue{l+1}}$. Similarly, the interpretation of $\IDesc{}$ at
+stratification. Unsurprisingly, $\IDesc{\!}$ at level $l$ is of type
+$\Set^{\blue{l+1}}$. Similarly, the interpretation of $\IDesc{\!}$ at
 level $l$ is an object of type $\Set^{\blue{l}}$:
 
 \[\stk{
@@ -32,9 +32,9 @@ level $l$ is an object of type $\Set^{\blue{l}}$:
 Consequently, we can implement the operations and examples developed
 above. We refer the reader to our Agda implementation, which take
 advantage of set polymorphism to implement the universe of indexed
-descriptions at any level. Further, we have coded $\IDesc{}$ in itself
-and have proved the isomorphism between the host and the embedded
-universes.
+descriptions at any level. Further, we have coded $\IDesc{\!}$ in
+itself and have proved the isomorphism between the host and the
+embedded universes.
 
 \subsection{Related Work}
 
@@ -111,13 +111,13 @@ same source of inspiration, namely induction recursion.
 However, we differ in several ways. First, they adopt a generative
 perspective: each universe extends the base type theory with both type
 formers and elimination rules. Thanks to the levitation, we only rely
-on a generic induction and a specialised $\switchD{}{}{}$. Second, the
-authors develop several universes, each with its own strengths and
-weaknesses, but lack a formal, unifying universe. With indexed
-descriptions, we subsume simple descriptions, hence avoiding the move
-to and from several codings. Finally, the authors often resort to an
-extensional notion of equality, while we have given an
-equality-agnostic presentation. Moreover, our presentation is arranged
-so as to use definitional equality as much as possible. Hence, in
-practice, the developer is relieved from many trivial proof
-obligations.
+on a generic induction and a specialised
+$\switchD{\!}{\!}{\!}$. Second, the authors develop several universes,
+each with its own strengths and weaknesses, but lack a formal,
+unifying universe. With indexed descriptions, we subsume simple
+descriptions, hence avoiding the move to and from several
+codings. Finally, the authors often resort to an extensional notion of
+equality, while we have given an equality-agnostic
+presentation. Moreover, our presentation is arranged so as to use
+definitional equality as much as possible. Hence, in practice, the
+developer is relieved from many trivial proof obligations.

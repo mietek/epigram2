@@ -148,15 +148,15 @@ We propose to embed inductive types as a universe in our dependent
 type theory, the universe of \emph{descriptions}
 (Figure~\ref{fig:desc_universe}). As expected, the code of this
 universe mimics the standard grammar of data-types definitions in
-simply-typed languages. Hence, we have a $\DSigma{}{}$ code,
+simply-typed languages. Hence, we have a $\DSigma{\!}{\!}$ code,
 interpreted as a $\Sigma$-type, to build the
 sigmas-of-sigmas. Descriptions are terminated by $\DUnit$, which
 contains no useful payload. The functoriality of the data-types is
 introduced by $\DIndx$. When we tie the knot with a fix-point, the
 hole left open by $\DIndx$ will be turned into a standard recursive
 argument. We notice that this functoriality appears in the type of
-$\descop{\V{D}}{}$ itself, for a given data-type definition $\V{D}$. This
-corresponds to the object part of the functor described by $\V{D}$.
+$\descop{D}{}$ itself, for a given data-type definition $D$. This
+corresponds to the object part of the functor described by $D$.
 
 \begin{figure}
 
@@ -166,7 +166,7 @@ corresponds to the object part of the functor described by $\V{D}$.
 \data \Desc : \Set \where \\
 \;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
     \DUnit          & \Desc \\
-    \DSigma         & \PI{\V{S}}{\Set} \PIS{\V{S} \To \Desc} \Desc \\
+    \DSigma         & \PI{\V{S}}{\Set} \PIS{S \To \Desc} \Desc \\
     \DIndx          & \Desc \To \Desc
 \end{array}
 }
@@ -214,14 +214,14 @@ following:
 
 \[\stk{
 \NatD : \Desc \\
-\NatD \mapsto \DSigma{(\EnumT{[ \NatZero, \NatSuc{} ]})}
+\NatD \mapsto \DSigma{(\EnumT{[ \NatZero, \NatSuc{\!} ]})}
                      {[ \DUnit \quad (\DIndx{\DUnit}) ]}
 }\]
 
-Let us explain its construction. First, we use $\DSigma{}{}$ to give a
-choice between the $\NatZero$ and $\NatSuc{}$ constructors. In the
-$\NatZero$ case, we reach the end of the description: there is no
-useful payload in that case. In the $\NatSuc{}$ case, we left one hole
+Let us explain its construction. First, we use $\DSigma{\!}{\!}$ to
+give a choice between the $\NatZero$ and $\NatSuc{\!}$ constructors. In
+the $\NatZero$ case, we reach the end of the description: there is no
+useful payload in that case. In the $\NatSuc{\!}$ case, we left one hole
 open for the recursive argument, and we close the description.
 
 In a more synthetic notation, we have described the following functor:
@@ -241,12 +241,12 @@ pattern functor for lists:
 
 \[\stk{
 \ListD : \Set \To \Desc \\
-\ListD \: \V{X} \mapsto \DSigma{(\EnumT{[ \ListNil, \ListCons ]})}
-                           {[ \DUnit \quad (\DSigma{\V{X}}{\LAM{\_} \DIndx{\DUnit}}) ]}
+\ListD \: X \mapsto \DSigma{(\EnumT{[ \ListNil, \ListCons ]})}
+                           {[ \DUnit \quad (\DSigma{X}{\LAM{\_} \DIndx{\DUnit}}) ]}
 }\]
 
 The modification consists in turning the $\NatSuc{}$ constructor into
-a proper $\ListCons$ taking an argument in $\V{X}$ followed by a recursive
+a proper $\ListCons$ taking an argument in X followed by a recursive
 argument. In this case, we use $\DSigma{}{}$ in its product
 interpretation: we pack an element of $\V{X}$ together with the recursive
 argument. Easily, one sees that this code actually describes the
@@ -292,9 +292,9 @@ interpretation of this code corresponds to the following functor:
 \end{wstructure}
 
 From the examples above, we observe that data-types are defined by a
-$\DSigma$ which first argument is a finite set of constructors. The
-descriptions fitting into this pattern are called \emph{tagged}
-description. Formally, we have:
+$\DSigma{\!}{\!}$ which first argument is a finite set of
+constructors. The descriptions fitting into this pattern are called
+\emph{tagged} description. Formally, we have:
 
 \[
  \TagDesc \mapsto \SIGMA{\V{E}}{\EnumU} (\spi{\V{E}}{(\LAM{\_} \Desc)})
@@ -316,13 +316,13 @@ from the tagged description $\V{TD}$.
 
 So far, for convenience, we have taken as granted the existence of
 $\Desc$, as presented in Figure~\ref{fig:desc_universe}. In
-particular, we have considered its code, $\DSigma{}{}$, $\DIndx{}$,
-and $\DUnit$ as type formers, extending the basic type theory. Hence,
-in an implementation of this type theory, we need to extended it with
-these constructors and their typing rules. Although it makes no
-conceptual difference, the code of description should rather be read
-as a specification. We promise the existence of such objects,
-satisfying the typing rules. It will be the subject of
+particular, we have considered its code, $\DSigma{\!}{\!}$,
+$\DIndx{\!}$, and $\DUnit$ as type formers, extending the basic type
+theory. Hence, in an implementation of this type theory, we need to
+extended it with these constructors and their typing rules. Although
+it makes no conceptual difference, the code of description should
+rather be read as a specification. We promise the existence of such
+objects, satisfying the typing rules. It will be the subject of
 Section~\ref{sec:desc-levitate} to fulfil this promise, by actually
 implementing the specification.
 
@@ -425,7 +425,7 @@ $x$ in $\Mu{\V{D}}$ and claiming that the motive $\V{P}$ is realised on $\V{x}$.
 \All{}{}{}{} : & \PITEL{\V{D}}{\Desc}
                  \PITEL{\V{X}}{\Set}
                  \PITEL{\V{P}}{\V{X} \To \Set} \\
-               & \PI{\V{xs}}{\descop{\V{D}}{\V{X}}} 
+               & \PI{\V{xs}}{\descop{D}{\V{X}}} 
                  \Set 
 \end{array} \\
 \All{\DId}{\V{X}}{\V{P}}{\V{x}} \mapsto \V{P}\: \V{x} \\
@@ -441,9 +441,9 @@ $x$ in $\Mu{\V{D}}$ and claiming that the motive $\V{P}$ is realised on $\V{x}$.
 \all{}{}{}{}{} : & \PITEL{\V{D}}{\Desc}
                    \PITEL{\V{X}}{\Set}
                    \PITEL{\V{P}}{\V{X} \To \Set} \\
-                 & \PITEL{\V{R}}{\PI{\V{x}}{\V{X}} \V{P}\: \V{x}}
-                   \PI{\V{xs}}{\descop{\V{D}}{\V{X}}} 
-                   \All{\V{D}}{\V{X}}{\V{P}}{\V{xs}} 
+                 & \PITEL{\V{R}}{\PI{\V{x}}{X} P\: x}
+                   \PI{\V{xs}}{\descop{D}{\V{X}}} 
+                   \All{D}{X}{P}{xs} 
 \end{array} \\
 \all{\DId}{\V{X}}{\V{P}}{\V{R}}{\V{x}} = \V{R}\: \V{x} \\
 \all{(\DConst{\V{Z}})}{\V{X}}{\V{P}}{\V{R}}{\V{z}} = \Void \\
