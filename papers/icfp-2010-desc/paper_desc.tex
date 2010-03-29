@@ -337,16 +337,16 @@ implementing the specification.
             <- Interpret D with (Mu D) as sub-objects
 \end{wstructure}
 
-\note{ Strictly positive types anyone? }
 
 So far, we have used our universe of descriptions to build
-functors. To illustrate its usage, we have implemented the pattern
-functors of natural numbers, lists, and binary trees. However, the
-class of functors expressible with descriptions enjoy another
-property: they all admit a fix-point. Indeed, descriptions are
-interpreted into \emph{polynomial functors}~\cite{who?}\note{who is
-  the relevant source for polynomial functors?}, as they are only
-composed of $\Sigma$-types, the unit type, and variables.
+functors. \note{ Strictly positive types anyone? } To illustrate its
+usage, we have implemented the pattern functors of natural numbers,
+lists, and binary trees. However, the class of functors expressible
+with descriptions enjoy another property: they all admit a
+fix-point. Indeed, descriptions are interpreted into \emph{polynomial
+  functors}~\cite{who?}\note{who is the relevant source for polynomial
+  functors?}, as they are only composed of $\Sigma$-types, the unit
+type, and variables.
 
 We construct the fix-point by \emph{tying the knot} of the
 interpretation: the holes left open by the functor are filled by its
@@ -524,7 +524,6 @@ Regaining the ability to write data-type constructor is simply a
 matter of type propagation. We therefore extends the type-checking
 framework of Figure~\ref{fig:type-checking} with the following
 inference rule:
-
 \note{ This is rather drafty. I should explain what $\vec{e}$ and $\widetilde{e'}$ are. }
 
 \[

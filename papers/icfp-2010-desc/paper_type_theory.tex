@@ -197,7 +197,6 @@ languages, such as Haskell, dependently-typed systems are
 \emph{strongly normalising}: every program that type-checks
 terminates. Moreover, type-checking is decidable and can therefore be
 implemented by a terminating algorithm.
-
 \note{Need some care here. Expansion would be good too. I wanted to
   carry the intuition that we are not the bad guys with a
   non-terminating type-checker.}
@@ -240,7 +239,6 @@ as a coding representation: finite sets being good citizens, they
 ought to be democratically represented at the type level. As we will
 see, this gives us the ability to name and manipulate them (this is
 were the democracy analogy goes crazy, I think).
-
 \note{Did I got the coding presentation vs. coding representation
   story right? No.}
 
@@ -439,7 +437,6 @@ syntactic categories: $\exprIn$ into which types are pushed in, and
 $\exprEx$ from which types are pulled out. Following the bidirectional
 presentation, $\exprIn$ are subject to type \emph{checking}, while
 $\exprEx$ are subject to type \emph{synthesis}.
-
 \note{Why don't we need a context validity judgement, again?}
 
 The purpose of type propagation is to \emph{elaborate} an high-level
@@ -513,9 +510,6 @@ instead. Hence, we use the syntax $[t_1 \ldots t_n]$ to denote the
 finite sets composed of the named elements $t_1$, \ldots, $t_n$. This
 syntax is reminiscent to Lisp notation for lists. The translation to
 elements of $\EnumU$ is straightforward.
-
-\note{This might deserve a more thorough explanation, with snippet of
-  code.}
 
 Finally, and more importantly, we are able to present the developer an
 abstraction of \emph{finite} function space. This work as follow. When
