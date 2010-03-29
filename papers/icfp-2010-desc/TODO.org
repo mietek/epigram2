@@ -5,7 +5,7 @@ Finite set motivation stinks. I should sit down with Conor and find a
 clear motivation for it. This will also impact on the motivation for a
 universe of descriptions.
 
-** TODO No induction principle discussion?
+** TODO No indexed induction principle discussion?
 
 iinduction operator is absolutely not presented.
 
