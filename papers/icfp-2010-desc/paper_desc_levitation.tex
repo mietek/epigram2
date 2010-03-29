@@ -167,7 +167,7 @@ naturally: it only takes a recursive argument -- a description. The
 case of $\DSigma{\!}{\!}$ is problematic. Recall the specification of
 $\DSigma{\!}{\!}$:
 
-\[    \DSigma{}{} : \PI{\V{S}}{\Set} \PIS{S \To \Desc} \Desc      \]
+\[    \DSigma{\!}{\!} : \PI{\V{S}}{\Set} \PIS{\V{S} \To \Desc} \Desc      \]
 
 So, we first pack an element $\V{S}$ of $\Set$. Then, we would like to
 express a notion of recursive argument \emph{indexed} by $\V{S}$. Because
@@ -191,7 +191,7 @@ express this notion. We shall remedy to this situation.
 
 In order to capture a notion of higher-order induction, we need to
 extend our universe of descriptions. This consists in adding a code
-$\DHindx$ that takes an indexing set $H$. The code and its
+$\DHindx{\!}{\!}$ that takes an indexing set $\V{H}$. The code and its
 interpretation are presented in
 Figure~\ref{fig:hindx_desc}. Intuitively, $\DHindx{\!}{\!}$ use the
 elements of $H$ to index as many recursive arguments.
@@ -204,7 +204,7 @@ elements of $H$ to index as many recursive arguments.
 \data \Desc : \Set \where \\
 \;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
     \ldots          & \:\:\ldots \\
-    \DHindx         & \PI{H}{\Set} \Desc \To \Desc
+    \DHindx{\!}{\!} & \PI{\V{H}}{\Set} \Desc \To \Desc
 \end{array}
 }
 \vspace{0.2in}
@@ -235,12 +235,13 @@ can cope with first order objects, the functional presentation
 introduced by $\DHindx{\!}{\!}$ is unlikely to be amenable to a purely
 definitional treatment.
 
-Equipped with $\DHindx$, we can describe the extended code of our
-universe of data-types, as shown in Figure~\ref{fig:desc-levitate}.
-The $\DUnit$ and $\DIndx$ cases remains unchanged, as expected. We
-successfully describe the $\DSigma$ case, by a simple appeal to the
-higher-order induction on $S$. The $\DHindx$ case consists in packing
-the $H$ in $\Set$ with a recursive argument.
+Equipped with $\DHindx{\!}{\!}$, we can describe the extended code of
+our universe of data-types, as shown in
+Figure~\ref{fig:desc-levitate}.  The $\DUnit$ and $\DIndx{\!}$ cases
+remains unchanged, as expected. We successfully describe the
+$\DSigma{\!}{\!}$ case, by a simple appeal to the higher-order
+induction on $\V{S}$. The $\DHindx{\!}{\!}$ case consists in packing
+the $\V{H}$ in $\Set$ with a recursive argument.
 
 In a first glance, we have achieved our goal. We have described the
 codes of the universe of description. Taking the fix-point of this
@@ -526,17 +527,18 @@ function is surprisingly easy:
 
 \[\stk{
 \FreeMonad{\_} : \TagDesc \To \Set \To \TagDesc \\
-\FreeMonad{\pair{E}{D}{}}\:X \mapsto
-    \pair{\ListCons{\DVar{}}{E}}
-         {\pair{\DSigma{X}{\DUnit}}{D}{}}{}
+\FreeMonad{\pair{\V{E}}{\V{D}}{}}\:\V{X} \mapsto
+    \pair{\ListCons{\DVar{}}{\V{E}}}
+         {\pair{\DSigma{\V{X}}{\DUnit}}{\V{D}}{}}{}
 }\]
 
-We simply add a constructor, $\DVar{}$, and define its argument to be
-a $\DSigma{X}{\DUnit}$, that is an element of $X$. We keep $E$ and $D$
-as they were, hence leaving the functor unchanged. Unfolding the
-interpretation of this definition, we convince ourself that this
-corresponds to the functor $\FMFreeMonadD$. The fix-point operation
-ties the knot and gives us the full-blown free monad construction.
+We simply add a constructor, $\DVar{\!}$, and define its argument to
+be a $\DSigma{\V{X}}{\DUnit}$, that is an element of $\V{X}$. We keep
+$\V{E}$ and $\V{D}$ as they were, hence leaving the functor
+unchanged. Unfolding the interpretation of this definition, we
+convince ourself that this corresponds to the functor
+$\FMFreeMonadD$. The fix-point operation ties the knot and gives us
+the full-blown free monad construction.
 
 \begin{wstructure}
 <- A generic program: monadic substitution [equation]
@@ -588,8 +590,8 @@ definition:
 \\
 \end{array} \\
 \begin{array}{@{}l@{\:\mapsto\:\:}l}
-\apply\: D\: X\: Y\: \sigma\: \pair{\DVar{}}{x}{}   & \sigma\: x                   \\
-\apply\: D\: X\: Y\: \sigma\: \pair{\etag{t}}{ys}{} & \Con{\pair{\etag{t}}{ys}{}}
+\apply\: \V{D}\: \V{X}\: \V{Y}\: \V{\sigma}\: \pair{\DVar{\!}}{\V{x}}{}   & \V{\sigma}\: \V{x}                   \\
+\apply\: \V{D}\: \V{X}\: \V{Y}\: \V{\sigma}\: \pair{\etag{t}\,}{\V{ys}}{} & \Con{\pair{\etag{t}}{\V{ys}}{}}
 \end{array}
 }\]
 

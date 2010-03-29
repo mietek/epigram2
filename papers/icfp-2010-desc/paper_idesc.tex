@@ -80,14 +80,15 @@ In the alternative presentation, we go further and present all our
 codes as quotations of standard type-formers. This presentation is
 shown in Figure~\ref{fig:type-former-desc}. The reader will notice
 that we replace $\DUnit$ by a more general $\DConst{\!}$ code. Whereas
-$\DUnit$ was interpreted as the unit set, $\DConst{X}$ is interpreted
-as $X$, for any $\Bhab{X}{\Set}$. Extensionally, $\DConst{X}$ and
-$\DSigma{X}{\DUnit}$ are equivalent. However, $\DConst$ is more
-succinct. More importantly, $\DConst$ is \emph{first-order}, unlike
-its equivalent encoding. From a definitional perspective, we are
-giving more opportunities to the type-system, hence reducing the
-burden on the programmer. For the same reason, we introduce
-$\DProd{\!}{\!}$ that overlaps with $\DSigma{\!}{\!}$.
+$\DUnit$ was interpreted as the unit set, $\DConst{\V{X}}$ is
+interpreted as $\V{X}$, for any $\Bhab{\V{X}}{\Set}$. Extensionally,
+$\DConst{\V{X}}$ and $\DSigma{\V{X}}{\DUnit}$ are equivalent. However,
+$\DConst{\!}$ is more succinct. More importantly, $\DConst$ is
+\emph{first-order}, unlike its equivalent encoding. From a
+definitional perspective, we are giving more opportunities to the
+type-system, hence reducing the burden on the programmer. For the same
+reason, we introduce $\DProd{\!}{\!}$ that overlaps with
+$\DSigma{\!}{\!}$.
 
 This reorganisation is strictly equivalent to the previous one
 (Fig.~\ref{fig:hindx_desc}). Just as the previous version, it is also
@@ -126,10 +127,10 @@ evolve this presentation into an indexed one.
 \data \Desc : \Set \where                                      \\
 \;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
     \DId            & \Desc                                    \\
-    \DConst{}       & \Set \To \Desc                           \\
-    \DProd{}{}      & \PI{\V{D}, \V{D'}}{\Desc} \Desc          \\
-    \DSigma         & \PI{\V{S}}{\Set} \PIS{S \To \Desc} \Desc \\
-    \DPi            & \PI{\V{S}}{\Set} \PIS{S \To \Desc} \Desc 
+    \DConst{\!}     & \Set \To \Desc                           \\
+    \DProd{\!}{\!}  & \PI{\V{D}, \V{D'}}{\Desc} \Desc          \\
+    \DSigma{\!}{\!} & \PI{\V{S}}{\Set} \PIS{\V{S} \To \Desc} \Desc \\
+    \DPi{\!}{\!}    & \PI{\V{S}}{\Set} \PIS{\V{S} \To \Desc} \Desc 
 \end{array}
 }
 \vspace{0.2in}
@@ -231,11 +232,11 @@ Figure~\ref{fig:idesc}.
 \stk{
 \data \IDesc{\!} (\Bhab{\V{I}}{\Set}) : \Set \where \\
 \;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
-    \DVar{}         & I \To \IDesc{I}                                   \\
-    \DConst{}       & \Set \To \IDesc{I}                                \\
-    \DProd{}{}      & \PI{\V{D}, \V{D'}}{\IDesc{I}} \IDesc{I}           \\
-    \DSigma         & \PI{\V{S}}{\Set} \PIS{S \To \IDesc{I}} \IDesc{I}  \\
-    \DPi            & \PI{\V{S}}{\Set} \PIS{S \To \IDesc{I}} \IDesc{I} 
+    \DVar{\!}         & \V{I} \To \IDesc{\V{I}}                                       \\
+    \DConst{\!}       & \Set \To \IDesc{\V{I}}                                        \\
+    \DProd{\!}{\!}    & \PI{\V{\V{D}}, \V{\V{D'}}}{\IDesc{\V{I}}} \IDesc{\V{I}}       \\
+    \DSigma{\!}{\!}   & \PI{\V{S}}{\Set} \PIS{\V{S} \To \IDesc{\V{I}}} \IDesc{\V{I}}  \\
+    \DPi{\!}{\!}      & \PI{\V{S}}{\Set} \PIS{\V{S} \To \IDesc{\V{I}}} \IDesc{\V{I}} 
 \end{array}
 }
 \vspace{0.2in}
@@ -326,10 +327,10 @@ we obtain the following definition:
                 \\\\
                 \bigRedBracket{
                 \begin{array}{l} 
-                  \LAM{n} \caseB{n}{\NatZero \To [\VecNil] \\
-                                   (\NatSuc n) \To [\VecCons{}{}]} \\
-                  \LAM{n} \caseB{n}{\NatZero \To [\DConst{Unit}] \\
-                                   (\NatSuc n) \To [\DSigma{X}{\DVar{n}}]}
+                  \LAM{\V{n}} \caseB{\V{n}}{\NatZero \mapsto [\VecNil] \\
+                                   (\NatSuc{\V{n}}) \mapsto [\VecCons{\!}{\!}]} \\
+                  \LAM{\V{n}} \caseB{\V{n}}{\NatZero \mapsto [\DConst{\Unit}] \\
+                                   (\NatSuc{\V{n}}) \mapsto [\DSigma{\V{X}}{\DVar{\V{n}}}]}
                 \end{array}}
             \end{array}}
 \end{array}
@@ -389,11 +390,13 @@ levitation does not pose any issue:
 \[\stk{
 \IDescD : \PI{\V{I}}{\Set} \IDesc{\Unit} \\
 \begin{array}{@{}ll}
-\IDescD~I \mapsto \DSigma{}{} & (\EnumT \red{[} \DVar{},
-                                          \DConst{},
-                                          \DProd{}{},
-                                          \DSigma{}{}, 
-                                          \DPi{}{} \red{]}) \\
+\IDescD~\V{I} \mapsto \DSigma{\!}{\!} & (\EnumT \red{[} 
+                                          \DVar{\!},
+                                          \DConst{\!},
+                                          \DProd{\!}{\!},
+                                          \DSigma{\!}{\!}, 
+                                          \DPi{\!}{\!}
+                                             \red{]}) \\
                               & \bigRedBracket{\begin{array}{l}
                                       \DConst{\V{I}}                  \\
                                       \DConst{\Set}               \\
@@ -780,8 +783,8 @@ $\FinSuc{\!}$ are only defined for an index distinct from $\NatZero$:
 \stk{
 \data \Fin{\!} : \PI{\V{n}}{\Nat} \Set \where \\
 \;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
-    \FinZero_n      & \Fin{(\NatSuc{n})}   \\
-    \FinSuc{}_n     & \Fin{n} \To \Fin{(\NatSuc{n})}
+    \FinZero_{\V{n}}      & \Fin{(\NatSuc{\V{n}})}   \\
+    \FinSuc{\!}_{\V{n}}   & \Fin{\V{n}} \To \Fin{(\NatSuc{\V{n}})}
 \end{array}
 }
 \]
@@ -793,21 +796,21 @@ this case, we obtain the following definition:
 \[\stk{
 \FinD : \Nat \To \IDesc{\Nat} \\
 \begin{array}{@{}ll}
-\FinD\: n = \DSigma{}{} & (\EnumT{[ \FinZero , \FinSuc{} ]}) \\
+\FinD\: \V{n} = \DSigma{\!}{\!} \!\!\!\!& (\EnumT{[ \FinZero , \FinSuc{\!} ]}) \\
                         & \bigRedBracket{
                           \begin{array}{l}
-                            \DSigma{\Nat}{\LAM{m} \DConst{(n \PropEq \NatSuc{m})}} \\
-                            \DSigma{\Nat}{\LAM{m} \DProd{\DVar{m}}{\DConst{(n \PropEq \NatSuc{m})}}}
+                            \DSigma{\Nat}{\LAM{\V{m}} \DConst{(\V{n} \PropEq \NatSuc{\V{m}})}} \\
+                            \DSigma{\Nat}{\LAM{\V{m}} \DProd{\DVar{\V{m}}}{\DConst{(\V{n} \PropEq \NatSuc{\V{m}})}}}
                           \end{array}
                           }
 \end{array}
 }\]
 
 Intuitively, the constraint is captured as follows. First, we store an
-element $m$ of $\Nat$, thanks to a $\DSigma$. However, the constraint
-stipulates that $m$ cannot be \emph{any} natural numbers: it must be
-``the index minus one''. This translates into the constraint $n
-\PropEq \NatSuc{m}$. 
+element $\V{m}$ of $\Nat$, thanks to a $\DSigma{\!}{\!}$. However, the
+constraint stipulates that $\V{m}$ cannot be \emph{any} natural
+numbers: it must be ``the index minus one''. This translates into the
+constraint $\V{n} \PropEq \NatSuc{\V{m}}$.
 
 \note{ Anything else? }
 
@@ -861,12 +864,12 @@ gives the following, equivalent definition:
 \[\stk{
 \FinD : \Nat \To \IDesc{\Nat} \\
 \begin{array}{@{}llll}
-\FinD\: \NatZero     & = & \multicolumn{2}{l}{\DSigma{\Void}{\Void} } \\
-\FinD\: (\NatSuc{n}) & = & \DSigma{}{} & (\EnumT{[ \FinZero , \FinSuc{} ]}) \\
+\FinD\: \NatZero     & = & \multicolumn{2}{l}{\DSigma{(\EnumT{[]})}{\Void} } \\
+\FinD\: (\NatSuc{\V{n}}) & = & \DSigma{\!}{\!}\!\!\!\!\! & (\EnumT{[ \FinZero , \FinSuc{\!} ]}) \\
                      &   &             & \bigRedBracket{
                                          \begin{array}{l}
                                          \DConst{\Unit} \\
-                                         \DVar{n}
+                                         \DVar{\V{n}}
                                          \end{array}
                                          }
 \end{array}
@@ -909,12 +912,12 @@ general before we get to this point?}
                      \PITEL{\V{X}}{\V{I} \To \Set}\To 
                       \TagIDesc{\V{I}}
 \end{array} \\
-\FreeIMonad{(E,F)}{I}{X} \mapsto
-    \pair{\pair{\ListCons{\DVar{}}{(\fst{E})}} 
-               {\LAM{i}
-                \pair{(\DConst{(X\: i)})}
-                     {((\snd{E})\: i)}{}}{}}
-         {F}{}
+\FreeIMonad{(\V{E},\V{F})}{\V{I}}{\V{R}} \mapsto \\ \;\;
+    \pair{\pair{\ListCons{\DVar{\!}}{(\fst{\V{E}})}} 
+               {\LAM{\V{i}}
+                \pair{(\DConst{(\V{R}\: \V{i})})}
+                     {((\snd{\V{E}})\: \V{i})}{}}{}}
+         {\V{F}}{}
 }\]
 
 Just as in the universe of descriptions, this construction comes with
@@ -1056,10 +1059,12 @@ describe this functor by the following code:
 \[\stk{
 \IDescFreeD : \PI{\V{I}}{\Set} \IDesc{\Unit} \\
 \begin{array}{@{}ll}
-\IDescFreeD~I \mapsto \DSigma{}{} & (\EnumT \red{[} \DConst{},
-                                              \DProd{}{},
-                                              \DSigma{}{}, 
-                                              \DPi{}{} \red{]}) \\
+\IDescFreeD~\V{I} \mapsto \DSigma{\!}{\!} & (\EnumT \red{[}
+                                              \DConst{\!},
+                                              \DProd{\!}{\!},
+                                              \DSigma{\!}{\!}, 
+                                              \DPi{\!}{\!}
+                                                    \red{]}) \\
                                   & \bigRedBracket{\begin{array}{l}
                                         \DConst{\Set}               \\
                                         \DProd{\DVar{\Void}}{\DVar{\Void}}  \\

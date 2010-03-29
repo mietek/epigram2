@@ -152,11 +152,12 @@ simply-typed languages. Hence, we have a $\DSigma{\!}{\!}$ code,
 interpreted as a $\Sigma$-type, to build the
 sigmas-of-sigmas. Descriptions are terminated by $\DUnit$, which
 contains no useful payload. The functoriality of the data-types is
-introduced by $\DIndx$. When we tie the knot with a fix-point, the
-hole left open by $\DIndx$ will be turned into a standard recursive
-argument. We notice that this functoriality appears in the type of
-$\descop{D}{}$ itself, for a given data-type definition $D$. This
-corresponds to the object part of the functor described by $D$.
+introduced by $\DIndx{\!}$. When we tie the knot with a fix-point, the
+hole left open by $\DIndx{\!}$ will be turned into a standard
+recursive argument. We notice that this functoriality appears in the
+type of $\descop{\V{D}}{\!}$ itself, for a given data-type definition
+$\V{D}$. This corresponds to the object part of the functor described
+by $\V{D}$.
 
 \begin{figure}
 
@@ -166,8 +167,8 @@ corresponds to the object part of the functor described by $D$.
 \data \Desc : \Set \where \\
 \;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
     \DUnit          & \Desc \\
-    \DSigma         & \PI{\V{S}}{\Set} \PIS{S \To \Desc} \Desc \\
-    \DIndx          & \Desc \To \Desc
+    \DSigma{\!}{\!} & \PI{\V{S}}{\Set} \PIS{\V{S} \To \Desc} \Desc \\
+    \DIndx{\!}      & \Desc \To \Desc
 \end{array}
 }
 \vspace{0.2in}
@@ -241,16 +242,17 @@ pattern functor for lists:
 
 \[\stk{
 \ListD : \Set \To \Desc \\
-\ListD \: X \mapsto \DSigma{(\EnumT{[ \ListNil, \ListCons ]})}
-                           {[ \DUnit \quad (\DSigma{X}{\LAM{\_} \DIndx{\DUnit}}) ]}
+\ListD \: \V{X} \mapsto \DSigma{(\EnumT{[ \ListNil, \ListCons{\!}{\!} ]})}
+                           {[ \DUnit \quad (\DSigma{\V{X}}{\LAM{\_} \DIndx{\DUnit}}) ]}
 }\]
 
-The modification consists in turning the $\NatSuc{}$ constructor into
-a proper $\ListCons$ taking an argument in X followed by a recursive
-argument. In this case, we use $\DSigma{}{}$ in its product
-interpretation: we pack an element of $\V{X}$ together with the recursive
-argument. Easily, one sees that this code actually describes the
-following functor:
+
+The modification consists in turning the $\NatSuc{\!}$ constructor
+into a proper $\ListCons{\!}{\!}$ taking an argument in $\V{X}$
+followed by a recursive argument. In this case, we use
+$\DSigma{\!}{\!}$ in its product interpretation: we pack an element of
+$\V{X}$ together with the recursive argument. Easily, one sees that
+this code actually describes the following functor:
 
 \[    \ListD\: \V{X}\: \V{Z} \mapsto \Unit \mathop{\D{+}} \V{X} \D{\ensuremath{\times}} \V{Z}     \]
 
@@ -389,12 +391,17 @@ this type is not dependent, being restricted to a notion of
 \emph{iteration}. As this operator will be the corner stone of any
 inductive definition, we are better off sharpening it before use.
 
-The first step consists in turning $T$ into a predicate
-$\Bhab{P}{\Mu{D} \To \Set}$, hence introducing a dependency on the
-descriptions. Consequently, we strengthen the algebra $\descop{D}{T}
-\To T$ by a similar process. We start with turning the arrow into a
-dependent arrow, hence offering $\Bhab{xs}{\descop{D}{(\Mu{D})}}$ to
-further analysis. 
+A full account of such generic induction schema can be found in Benke
+et al.~\cite{benke:universe-generic-prog,
+  dybjer:ir-initial-algebra}. In the following, we convey the
+intuition behind this schema by a step-by-step construction of the
+dependent eliminator from the catamorphism. The first step consists in
+turning $\V{T}$ into a predicate $\Bhab{\V{P}}{\Mu{\V{D}} \To \Set}$,
+hence introducing a dependency on the descriptions. Consequently, we
+strengthen the algebra $\descop{\V{D}}{\V{T}} \To \V{T}$ by a similar
+process. We start with turning the arrow into a dependent arrow, hence
+offering $\Bhab{\V{xs}}{\descop{\V{D}}{(\Mu{\V{D}})}}$ to further
+analysis.
 
 Then, we have to translate the notion of algebra in our dependent
 setting. This is achieved by the predicate $\All{\V{D}}{\V{X}}{\V{P}}{\V{x}}$
@@ -422,34 +429,43 @@ $x$ in $\Mu{\V{D}}$ and claiming that the motive $\V{P}$ is realised on $\V{x}$.
 %%
 \stk{
 \begin{array}{@{}ll}
-\All{}{}{}{} : & \PITEL{\V{D}}{\Desc}
-                 \PITEL{\V{X}}{\Set}
-                 \PITEL{\V{P}}{\V{X} \To \Set} \\
-               & \PI{\V{xs}}{\descop{D}{\V{X}}} 
-                 \Set 
+\All{\!}{\!}{\!}{\!} : & \PITEL{\V{D}}{\Desc}
+                         \PITEL{\V{X}}{\Set}
+                         \PITEL{\V{P}}{\V{X} \To \Set} \\
+                       & \PI{\V{xs}}{\descop{\V{D}}{\V{X}}} 
+                         \Set 
 \end{array} \\
 \All{\DId}{\V{X}}{\V{P}}{\V{x}} \mapsto \V{P}\: \V{x} \\
-\All{(\DConst{\V{Z}})}{\V{X}}{\V{P}}{\V{z}} \mapsto \Unit \\
-\All{(\DProd{\V{D}}{\V{D'}})}{\V{X}}{\V{P}}{\pair{\V{d}}{\V{d'}}{}} \mapsto \TIMES{\All{\V{D}}{\V{X}}{\V{P}}{\V{d}}}{\All{\V{D'}}{\V{X}}{\V{P}}{\V{d'}}} \\
-\All{(\DSigma{\V{S}}{\V{T}})}{\V{X}}{\V{P}}{\pair{\V{a}}{\V{b}}{}} \mapsto \All{(\V{T}\: \V{a})}{\V{X}}{\V{P}}{\V{b}} \\
-\All{(\DPi{\V{S}}{\V{T}})}{\V{X}}{\V{P}}{\V{f}} \mapsto \PI{\V{\V{s}}}{\V{S}} \All{(\V{T}\: \V{a})}{\V{X}}{\V{P}}{(\V{f}\: \V{s})}
+\All{(\DConst{\V{Z}})}{\V{X}}{\V{P}}{\V{z}} \mapsto 
+    \Unit \\
+\All{(\DProd{\V{D}}{\V{D'}})}{\V{X}}{\V{P}}{\pair{\V{d}}{\V{d'}}{}} \mapsto 
+    \TIMES{\All{\V{D}}{\V{X}}{\V{P}}{\V{d}}}{\All{\V{D'}}{\V{X}}{\V{P}}{\V{d'}}} \\
+\All{(\DSigma{\V{S}}{\V{T}})}{\V{X}}{\V{P}}{\pair{\V{a}}{\V{b}}{}} \mapsto 
+    \All{(\V{T}\: \V{a})}{\V{X}}{\V{P}}{\V{b}} \\
+\All{(\DPi{\V{S}}{\V{T}})}{\V{X}}{\V{P}}{\V{f}} \mapsto 
+    \PI{\V{\V{s}}}{\V{S}} \All{(\V{T}\: \V{a})}{\V{X}}{\V{P}}{(\V{f}\: \V{s})}
 }
 &
 %%
 \stk{
 \begin{array}{@{}ll}
-\all{}{}{}{}{} : & \PITEL{\V{D}}{\Desc}
-                   \PITEL{\V{X}}{\Set}
-                   \PITEL{\V{P}}{\V{X} \To \Set} \\
-                 & \PITEL{\V{R}}{\PI{\V{x}}{X} P\: x}
-                   \PI{\V{xs}}{\descop{D}{\V{X}}} 
-                   \All{D}{X}{P}{xs} 
+\all{\!}{\!}{\!}{\!}{\!} : & \PITEL{\V{D}}{\Desc}
+                             \PITEL{\V{X}}{\Set}
+                             \PITEL{\V{P}}{\V{X} \To \Set} \\
+                           & \PITEL{\V{R}}{\PI{\V{x}}{\V{X}} \V{P}\: \V{x}}
+                             \PI{\V{xs}}{\descop{\V{D}}{\V{X}}} 
+                             \All{\V{D}}{\V{X}}{\V{P}}{\V{xs}} 
 \end{array} \\
-\all{\DId}{\V{X}}{\V{P}}{\V{R}}{\V{x}} = \V{R}\: \V{x} \\
-\all{(\DConst{\V{Z}})}{\V{X}}{\V{P}}{\V{R}}{\V{z}} = \Void \\
-\all{(\DProd{\V{D}}{\V{D'}})}{\V{X}}{\V{P}}{\V{R}}{\pair{\V{d}}{\V{d'}}{}} = \pair{\all{\V{D}}{\V{X}}{\V{P}}{\V{R}}{\V{d}}}{\all{\V{D'}}{\V{X}}{\V{P}}{\V{R}}{\V{d'}}}{} \\
-\all{(\DSigma{\V{S}}{\V{T}})}{\V{X}}{\V{P}}{\V{R}}{\pair{\V{a}}{\V{b}}{}} = \all{(\V{T}\: \V{a})}{\V{X}}{\V{P}}{\V{R}}{\V{b}} \\
-\all{(\DPi{\V{S}}{\V{T}})}{\V{X}}{\V{P}}{\V{R}}{\V{f}} = \LAM{\V{s}} \all{(\V{T}\: \V{s})}{\V{X}}{\V{P}}{\V{R}}{(\V{f}\: \V{s})}
+\all{\DId}{\V{X}}{\V{P}}{\V{R}}{\V{x}} = 
+    \V{R}\: \V{x} \\
+\all{(\DConst{\V{Z}})}{\V{X}}{\V{P}}{\V{R}}{\V{z}} = 
+    \Void \\
+\all{(\DProd{\V{D}}{\V{D'}})}{\V{X}}{\V{P}}{\V{R}}{\pair{\V{d}}{\V{d'}}{}} =
+    \pair{\all{\V{D}}{\V{X}}{\V{P}}{\V{R}}{\V{d}}}{\all{\V{D'}}{\V{X}}{\V{P}}{\V{R}}{\V{d'}}}{} \\
+\all{(\DSigma{\V{S}}{\V{T}})}{\V{X}}{\V{P}}{\V{R}}{\pair{\V{a}}{\V{b}}{}} = 
+    \all{(\V{T}\: \V{a})}{\V{X}}{\V{P}}{\V{R}}{\V{b}} \\
+\all{(\DPi{\V{S}}{\V{T}})}{\V{X}}{\V{P}}{\V{R}}{\V{f}} = 
+    \LAM{\V{s}} \all{(\V{T}\: \V{s})}{\V{X}}{\V{P}}{\V{R}}{(\V{f}\: \V{s})}
 \end{array}
 }
 \]
