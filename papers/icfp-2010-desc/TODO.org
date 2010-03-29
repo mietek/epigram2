@@ -5,9 +5,9 @@ Finite set motivation stinks. I should sit down with Conor and find a
 clear motivation for it. This will also impact on the motivation for a
 universe of descriptions.
 
-** TODO No indexed fixed-point? No induction principle discussion?
+** TODO No induction principle discussion?
 
-The IMu type former and iinduction operator are absolutely not presented.
+iinduction operator is absolutely not presented.
 
 ** TODO Precise that we are talking in the Evidence language
 
@@ -30,6 +30,17 @@ dependently-typed language. So, how do I get arround my various
 ** TODO Shall we present EnumU with tags as constructors, directly?
 ** TODO Fix every \note{} in the paper
 
+** TODO Example right after the introduction?
+
+
+
+* Fix
+** TODO Induction should refer to Benke et al.
+** TODO Mention that Desc does not aim at Generic Haskell encoding
+
+Man, we are in a more serious business. Desc is just to help poor
+people to grasp the following.
+
 * Post-doc area
 ** TODO Improve finite sets motivation (encoding vs. codes)
 
@@ -50,9 +61,7 @@ Section sec:indexing-desc
 
 Talk about decidability, termination, etc.
 
-** TODO Discuss stratification
 ** TODO Discuss induction/recursion
-** TODO Conclusion
 ** TODO Code review of the Agda models
 
 *** Desc.agda
@@ -62,6 +71,8 @@ Talk about decidability, termination, etc.
 If it hasn't been translated into universe polymorphism
 
 * Janitor service
+** TODO Use the word "pattern functor" which seems to be used
+
 ** TODO Check/fix alignment in code
 ** TODO Fix code overflows
 ** TODO Find references for usage of bidirectional type-checking
@@ -108,7 +119,6 @@ and choose one or the other.
 
 It's un-readable. Probably one should be an exponent.
 
-
 ** DONE Quotes on sum-of-product, or not, or maybe. Same for sigmas-of-sigmas
 ** DONE Finite set declaration: should be EnumT [a, b, c]
 ** DONE Cool down the many "intuitively"
@@ -119,3 +129,10 @@ It's un-readable. Probably one should be an exponent.
 ** DONE "bind" and "return" is not a nice way of writing 
 ** DONE bi-directional or bidirectional?
 ** DONE Fig.~\ref or Fig.\ref?
+** DONE Discuss stratification
+** DONE No indexed fixed-point? 
+
+The IMu type former and iinduction operator are absolutely not presented.
+
+
+** DONE Conclusion
