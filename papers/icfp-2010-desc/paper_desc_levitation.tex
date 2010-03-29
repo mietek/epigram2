@@ -64,7 +64,7 @@ $\EnumU$ boils down to the following, trivial definition:
 Let us examine the consequences of our act. First of all, we discover
 that the type theory does not actually need to be extended with the
 type former $\EnumU$, the constructors $\NilE$ and $\ConsE$. We have
-just defined $\EnumU$ above, by fix-point over the signature functor denoted
+just defined $\EnumU$ above, by fix-point over the pattern functor denoted
 by $\ListD$. $\NilE$ and $\ConsE$ are simply the $\ListNil$ and $\ListCons$
 constructors of lists.
 
@@ -502,7 +502,7 @@ free monad over $F$ is defined by the following data-type:
 \note{Recall monadic structure of this object}
 
 Being an inductive type, this $\FMFreeMonad$ data-type is itself
-defined by a functor signature. It is given by:
+defined by a pattern functor. It is given by:
 
 \[
 \FMFreeMonadD\: \V{F}\: \V{X}\: \V{Z} \mapsto \V{X} \mathop{\D{+}} \V{F} \V{Z}

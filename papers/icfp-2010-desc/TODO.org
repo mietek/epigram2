@@ -61,8 +61,6 @@ Talk about decidability, termination, etc.
 If it hasn't been translated into universe polymorphism
 
 * Janitor service
-** TODO Use the word "pattern functor" which seems to be used
-
 ** TODO Check/fix alignment in code
 ** TODO Fix code overflows
 ** TODO Find references for usage of bidirectional type-checking
@@ -137,3 +135,5 @@ No. It is too verbose. I just mention it could be done.
 
 Man, we are in a more serious business. Desc is just to help poor
 people to grasp the following.
+
+** DONE Use the word "pattern functor" which seems to be used

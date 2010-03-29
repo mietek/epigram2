@@ -207,7 +207,7 @@ Haskell-like $\data$ definition.
     -> NatD Z = 1 + Z
 \end{wstructure}
 
-Our first example is the natural numbers, or rather its signature
+Our first example is the natural numbers, or rather its pattern
 functor. Our code is presented in the high-level expression language
 of Section~\ref{sec:type-propagation}. The translation back to the raw
 terms is laborious but should not pose any difficulty. The code is the
@@ -238,7 +238,7 @@ In a more synthetic notation, we have described the following functor:
 \end{wstructure}
 
 With a small change to the definition of $\NatD$, we obtain the
-signature of lists:
+pattern functor for lists:
 
 \[\stk{
 \ListD : \Set \To \Desc \\
@@ -341,7 +341,7 @@ implementing the specification.
 \note{ Strictly positive types anyone? }
 
 So far, we have used our universe of descriptions to build
-functors. To illustrate its usage, we have implemented the signature
+functors. To illustrate its usage, we have implemented the pattern
 functors of natural numbers, lists, and binary trees. However, the
 class of functors expressible with descriptions enjoy another
 property: they all admit a fix-point. Indeed, descriptions are
@@ -499,7 +499,7 @@ as a step backward. In our setting, the user would have to write a
 description instead of a sugared data-type definition. Then, to
 recognise an element of $\Nat$ for instance, she would have to
 identify $\Mu{}$ of a description as indeed the fix-point of the
-functor signature of natural numbers. Finally, she would have to write
+pattern functor of natural numbers. Finally, she would have to write
 codes instead of the natural data-type constructor.
 
 As for finite sets previously, these symptoms clearly indicate that we
@@ -516,7 +516,7 @@ operations follow for free.
 Doing so, we seal data-type definition behind a convenient
 abstraction. We take advantage of this abstraction barrier to tamper
 the second issue. Namely, our user would rather be presented a name
-rather than a fix-point of a signature functor. Surprisingly, it is
+rather than a fix-point of a pattern functor. Surprisingly, it is
 sufficient to \emph{label} the $\Mu{}$ constructor with the
 user-provided name. When pretty-printing this object, we just expose
 the label, instead of the definition in full.

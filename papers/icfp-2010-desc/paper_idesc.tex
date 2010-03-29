@@ -353,7 +353,7 @@ We will see more instances of this pattern in the following.
 \end{wstructure}
 
 In order to gain some intuition with $\IDesc$, let us re-implement the
-signature functor of natural numbers. We refer the reader to
+pattern functor of natural numbers. We refer the reader to
 Section~\ref{sec:desc-examples} for its incarnation in the universe of
 descriptions. The code is the following:
 
@@ -1048,8 +1048,8 @@ a well-typed language, together with its semantics.
 
 Another instance of free monad is $\IDesc$ itself. Indeed, $\DVar$ is
 nothing but the \return. The remaining constructors are simply the
-signature functor, trivially indexed by $\Unit$. Hence, we describe
-this signature functor by the following code:
+pattern functor, trivially indexed by $\Unit$. Hence, we describe
+this functor by the following code:
 
 \[\stk{
 \IDescFreeD : \PI{\V{I}}{\Set} \IDesc{\Unit} \\
