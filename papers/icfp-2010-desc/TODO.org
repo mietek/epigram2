@@ -63,7 +63,6 @@ If it hasn't been translated into universe polymorphism
 * Janitor service
 ** TODO Check/fix alignment in code
 ** TODO Fix code overflows
-** TODO Find references for usage of bidirectional type-checking
 ** TODO Find references of universe construction in functional programming
 
 *** Norell's xml?
@@ -137,3 +136,4 @@ Man, we are in a more serious business. Desc is just to help poor
 people to grasp the following.
 
 ** DONE Use the word "pattern functor" which seems to be used
+** DONE Find references for usage of bidirectional type-checking
