@@ -32,7 +32,6 @@ dependently-typed language. So, how do I get arround my various
 
 
 * Fix
-** TODO Induction should refer to Benke et al.
 ** TODO Mention that Desc does not aim at Generic Haskell encoding
 
 Man, we are in a more serious business. Desc is just to help poor
@@ -139,3 +138,4 @@ No. It is too verbose. I just mention it could be done.
 
 
 ** DONE Mention that the notation for lists in the LISP one
+** DONE Induction should refer to Benke et al.

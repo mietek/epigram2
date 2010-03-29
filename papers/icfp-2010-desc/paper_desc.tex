@@ -384,14 +384,15 @@ be tempted to provide it as a catamorphism:
 
 Whereas this definition is amply sufficient in the simply-typed world,
 it comes short of its promises in the dependently-typed realm. Indeed,
-this type is not dependent. As this operator will be the corner stone
-of any inductive definition, we are better off sharpening it before use.
+this type is not dependent, being restricted to a notion of
+\emph{iteration}. As this operator will be the corner stone of any
+inductive definition, we are better off sharpening it before use.
 
-The first step consists in turning $\V{T}$ into a predicate
-$\Bhab{\V{P}}{\Mu{\V{D}} \To \Set}$, hence introducing a dependency on the
-descriptions. Consequently, we strengthen the algebra $\descop{\V{D}}{\V{T}}
-\To \V{T}$ by a similar process. We start with turning the arrow into a
-dependent arrow, hence offering $\Bhab{\V{xs}}{\descop{\V{D}}{(\Mu{\V{D}})}}$ to
+The first step consists in turning $T$ into a predicate
+$\Bhab{P}{\Mu{D} \To \Set}$, hence introducing a dependency on the
+descriptions. Consequently, we strengthen the algebra $\descop{D}{T}
+\To T$ by a similar process. We start with turning the arrow into a
+dependent arrow, hence offering $\Bhab{xs}{\descop{D}{(\Mu{D})}}$ to
 further analysis. 
 
 Then, we have to translate the notion of algebra in our dependent
