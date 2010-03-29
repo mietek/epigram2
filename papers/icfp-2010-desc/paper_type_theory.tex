@@ -223,11 +223,7 @@ with a notion of finite set. One could argue that there is no need for
 such an extension: finite sets, just as any data-structure, can be
 encoded inside the type theory. A well-known example of such encoding
 is the Church encoding of natural numbers, which is isomorphic to
-finite sets. 
-
-% Another example is Martin-Löf's W-types~\cite{}.
-
-\note{Shall we talk about W-types encoding?}
+finite sets. \note{Shall we talk about W-types encoding?}
 
 However, using encodings is impractical. In the case of finite sets,
 for instance, we would like to name the elements of the sets. Then, we
@@ -246,7 +242,7 @@ see, this gives us the ability to name and manipulate them (this is
 were the democracy analogy goes crazy, I think).
 
 \note{Did I got the coding presentation vs. coding representation
-  story right?}
+  story right? No.}
 
 \begin{wstructure}
 <- Implementation [figure]      
@@ -266,7 +262,7 @@ purposes. Finite sets inhabits the $\EnumU$ type. Unfolding the
 definition, we get that a finite set is a list of tags. Finally,
 elements of a finite set $\V{u}$ belong to the corresponding $\EnumT{\V{u}}$
 type. Intuitively, it corresponds to an index -- a number -- pointing
-to an element of $\V{u}$.
+to an element of $u$.
 
 \begin{figure}
 
@@ -514,8 +510,9 @@ into the corresponding index.
 A second consequence concerns the definition of a finite set. We can
 abstract away the details of code and use a familiar syntax
 instead. Hence, we use the syntax $[t_1 \ldots t_n]$ to denote the
-finite sets composed of the named elements $t_1$, \ldots, $t_n$. The
-translation to elements of $\EnumU$ is straightforward.
+finite sets composed of the named elements $t_1$, \ldots, $t_n$. This
+syntax is reminiscent to Lisp notation for lists. The translation to
+elements of $\EnumU$ is straightforward.
 
 \note{This might deserve a more thorough explanation, with snippet of
   code.}

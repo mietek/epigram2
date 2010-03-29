@@ -17,8 +17,6 @@ people have to bear with that.
 
 I don't know where to write this down.
 
-** TODO Mention that the notation for lists in the LISP one
-
 ** TODO How could we get Hutton expressions with different type of variables?
 ** TODO Simply-typed Haskell??
 
@@ -139,3 +137,5 @@ The IMu type former and iinduction operator are absolutely not presented.
 
 No. It is too verbose. I just mention it could be done.
 
+
+** DONE Mention that the notation for lists in the LISP one
