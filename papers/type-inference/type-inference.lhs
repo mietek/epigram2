@@ -58,6 +58,11 @@
 %format _Xi0
 %format _Xi1
 
+\usepackage{color}
+\definecolor{red}{rgb}{1.0,0.0,0.0}
+\newcommand{\TODO}[1]{\textcolor{red}{#1}}
+
+\newcommand{\compose}{\cdot}
 \newcommand{\extend}{\ensuremath{\wedge}}
 \newcommand{\yields}{\ensuremath{\dashv}}
 \newcommand{\entails}{\ensuremath{\vdash}}
@@ -66,6 +71,7 @@
 \newcommand{\type}{\ensuremath{~\mathbf{type}}}
 \newcommand{\scheme}{\ensuremath{~\mathbf{scheme}}}
 \newcommand{\valid}{\ensuremath{\mathbf{valid}}}
+\newcommand{\ok}{\ensuremath{~\mathbf{ok}}}
 \newcommand{\emptycontext}{\ensuremath{\varepsilon}}
 \newcommand{\notTypeVar}{\ensuremath{\ldots}}
 \newcommand{\letGoal}{\ensuremath{\mathbf{let}}}
@@ -81,14 +87,21 @@
 
 \newcommand{\lei}{\ensuremath{\sqsubseteq}}
 \newcommand{\gei}{\ensuremath{\sqsupseteq}}
+\newcommand{\LEI}{\ensuremath{\hat\sqsubseteq}}
 
 \newcommand{\arrow}{\ensuremath{\triangleright}}
 \newcommand{\defn}{\ensuremath{\!:=\!}}
 \newcommand{\asc}{\ensuremath{:\sim}}
 \newcommand{\hole}[1]{\ensuremath{#1 \!:= ?}}
+\newcommand{\contains}{\ensuremath{\ni}}
 
-\newcommand{\unify}[4]{\ensuremath{#1 \extend #2 \equiv #3 \yields #4}}
-\newcommand{\unifyInst}[5]{\ensuremath{#1 \extend #2 \equiv #3 ~[#4] \yields #5}}
+\newcommand{\Judge}[3]{\ensuremath{#1 \preceq #3 \vdash #2}}
+\newcommand{\Jmin}[3]{\ensuremath{#1 \hat\sqsubseteq #3 \vdash #2}}
+\newcommand{\Junify}[4]{\Judge{#1}{#2 \equiv #3}{#4}}
+\newcommand{\Jinstantiate}[5]{\Judge{#1}{#2 \equiv #3 ~[#4]}{#5}}
+\newcommand{\Jspec}[4]{\Judge{#1}{#2 \succ #3}{#4}}
+\newcommand{\Jtype}[4]{\Judge{#1}{#2 : #3}{#4}}
+
 \newcommand{\name}[1]{\ensuremath{\mathrm{\textsc{#1}} \;}}
 \newcommand{\side}[1]{\ensuremath{\; #1}}
 
@@ -96,6 +109,7 @@
 \newcommand{\BigRule}[3]{\ensuremath{\Rule{\br{#1}{#2}}{#3}}}
 
 \newcommand{\sym}{\ensuremath{^\vee}}
+\newcommand{\sem}[1]{\ensuremath{\llbracket #1 \rrbracket}}
 
 \newcommand{\W}{\ensuremath{\mathcal{W}}}
 
@@ -108,9 +122,14 @@
 \newcommand{\define}[1]{\emph{#1}}
 \newcommand{\scare}[1]{`#1'}
 
+\newcommand{\V}{\mathcal{V}}
+\newcommand{\D}{\mathcal{D}}
+\newcommand{\J}{\mathcal{J}}
+
 \usepackage{amsthm}
 \usepackage{amsmath}
 \usepackage{enumerate}
+\usepackage{eucal}
 \usepackage[T1]{fontenc}
 \usepackage[draft=false]{hyperref}
 
@@ -165,13 +184,16 @@ In particular, the generalisation step (required when inferring the type of
 a let-expression) becomes straightforward.
 
 We present the algorithm using systems of inference rules to define judgements
-of the form $\Gamma_0 \extend J \yields \Gamma_1$. Here $\Gamma_0$ is the input
+of the form $\Judge{\Gamma_0}{J}{\Gamma_1}$. Here $\Gamma_0$ is the input
 context (before applying the rule), $J$ is the condition being established, and
-$\Gamma_1$ is the output context (in which $J$ holds). The idea of separating
-input and output contexts goes back to ???. In each case, at most one
-rule matches the input context and condition, and we specify a termination order
-so the rules define an algorithm. We additionally give an implementation of the
-algorithm in Haskell.
+$\Gamma_1$ is the output context (in which $J$ holds). The idea of judgements
+producting a resulting context goes back at least to
+\citet{pollack_implicit_1990}, and hence perhaps to \citet{harper_type_1991}
+and \citet{milner_definition_1990}.
+
+In each case, at most one rule matches the input context and condition, and we
+specify a termination order so the rules define an algorithm. \TODO{Do we?}
+We additionally give an implementation of the algorithm in Haskell.
 
 Contexts here are not simply sets of assumptions, but lists containing
 information about type and term variables. The unification problem thus
@@ -191,6 +213,143 @@ substitution operation. It thus lends itself to efficient implementation.
 of (variations on) the Robinson unification algorithm are incorrect because they
 do not handle substitutions correctly \citep{norvig_correctingwidespread_1991},
 and substitutions often complicate mechanical correctness proofs.
+
+
+
+\section{Abstract nonsense}
+
+Let $\V$ be a set of variables, $\D$ a set of definientia
+(objects of some sort) and $\J$ a set of judgements. A \define{substitution}
+$\theta$ maps some subset of $\V$ to a subset of $\D$, and we assume $\D$ and
+$\J$ are closed under substitution.
+A \define{context} $\Gamma$ is a list of definitions $v D$ (pairs of $v \in \V$
+and $D \in \D$) and separators $(\fatsemi)$.
+We write $\emptycontext$ for the empty context, and the symbols
+$\Gamma, \Delta, \Theta, \Phi, \Psi$ represent contexts.
+Let $\V(\Gamma)$ be the set of variables in $\Gamma$.
+We write $\Gamma \entails J$ to mean that the definitions in $\Gamma$,
+corresponding to atomic facts, support the judgement $J \in \J$.
+We assume that $\J$ is closed under conjunction $(\wedge)$ with
+$$\Gamma \entails J_0  ~\wedge~  \Gamma \entails J_1
+    \quad  \Leftrightarrow  \quad
+    \Gamma \entails (J_0 \wedge J_1).$$
+Further assume that we have a judgement $v D \ok$ corresponding
+to every possible definition $v D$, and define validity of contexts thus:
+% \boxrule{\Gamma \entails \valid}
+$$
+\Axiom{\emptycontext \entails \valid}
+\qquad
+\Rule{\Gamma \entails \valid    \quad    \Gamma \entails v D \ok}
+     {\Gamma, v D \entails \valid}
+\side{v \notin \V(\Gamma)}
+\qquad
+\Rule{\Gamma \entails \valid}
+     {\Gamma \fatsemi \entails \valid}
+$$
+
+For any variable $x$ and definiens $D$ we define membership judgements
+$\contains v D$ as follows, writing $\Gamma \contains v D$ for
+$\Gamma \entails \contains v D$.
+% \boxrule{\Gamma \contains v D}
+$$
+\Axiom{\Gamma, v D \contains v D}
+\qquad
+\Rule{\Gamma \contains v D}
+     {\Gamma, y D' \contains v D}
+\qquad
+\Rule{\Gamma \contains v D}
+     {\Gamma \fatsemi \contains v D}
+$$
+
+We suppose that
+there is an embedding $\sem{\cdot} : \D \rightarrow \J$, such that
+$$\Gamma \contains v D  \Rightarrow  \Gamma \entails \sem{v D}.$$
+
+Let $\D(\Gamma) = \{ D \in \D ~||~ \Gamma \entails v D \ok \mathrm{~for~some~} v \}$.
+We write $\delta : \Gamma \lei \Delta$ to mean that $\delta$ is a substitution
+from $\V(\Gamma)$ to $\D(\Delta)$ such that
+$$\Gamma \contains v D  \Rightarrow  \Delta \entails \delta\sem{v D}$$
+and if $\Gamma$ is $\Xi \fatsemi \Gamma'$ then $\Delta$ is
+$\Psi \fatsemi \Delta'$ with $\delta||_\Xi : \Xi \lei \Psi$ and
+$\delta : \Xi, \Gamma' \lei \Psi, \Delta'$. This definition is well-founded by
+induction on the number of $\fatsemi$ separators in $\Gamma$.
+Note that we extend substitution to act on judgements.
+
+We may omit $\delta$ and write $\Gamma \lei \Delta$ if we are only interested
+in the existence of a suitable substitution. This relation between contexts
+captures the notion of \define{information increase}: $\Delta$ supports all the
+judgements corresponding to definitions in $\Gamma$. We say a judgement $J$ is
+\define{stable} if it is preserved under information increase, that is, if
+$$\Gamma \entails J  ~\wedge~  \delta : \Gamma \lei \Delta
+    \quad \Rightarrow \quad
+    \Delta \entails \delta J.$$
+
+A \define{problem of arity $n$} is a map $P: \D^n \rightarrow \J$ such that
+$P(\vec{D})$ is stable and $\theta P(\vec{D}) = P(\theta \vec{D})$ for any
+$\vec{D} \in \D^n$ and substitution $\theta$.  Note that we can regard stable
+judgements as problems of arity $0$. We say that $\vec{D} \in \D^n$
+\define{solves $P$ in $\Gamma$} if $\Gamma \entails P(\vec{D})$.
+We will be interested in finding the minimal information increase required to
+solve a given problem. Hence we write
+$\delta : \Jmin{\Gamma}{P(\vec{D})}{\Delta}$ if
+$\delta : \Gamma \lei \Delta$, $\Delta \entails \delta P(\vec{D})$ and
+$$\theta : \Gamma \lei \Theta  ~\wedge~  \Theta \entails \theta P(\vec{D'})
+    \quad \Rightarrow \quad
+    \exists \zeta : \Delta \lei \Theta ~.~ \theta = \zeta \compose \delta.$$
+We say that $\vec{D}$ is a \define{minimal solution of $P$ in $\Delta$}.
+
+If $P_1$ and $P_2$ are problems of arities $m$ and $n$, then since $\J$ is
+closed under conjunction, $P_1 \wedge P_2$ is a problem of arity $m+n$ given by
+$$P_1 \wedge P_2 : \D^{m+n} \rightarrow \J :
+      \vec{D_1} \vec{D_2} \mapsto P(\vec{D_1}) \wedge P(\vec{D_2})$$
+where $D_1$ and $D_2$ are vectors of length $m$ and $n$ respectively.
+
+The point of all this work is to be able to state and prove the following lemma.
+This states that the minimal solution to a conjunction of problems can be found
+by finding the minimal solution of the first problem, then (minimally) extending
+it to solve the second problem.
+
+\begin{lemma}[The Optimist's Lemma]
+If $\sem{v D}$ is stable for any $v \in \V, D \in \D$, then the following
+inference rule is admissible:
+$$\Rule{\gamma_1 : \Jmin{\Gamma_0}{P_1(\vec{D_1})}{\Gamma_1}
+       \quad  \gamma_2 : \Jmin{\Gamma_1}{P_2(\vec{D_2})}{\Gamma_2}}
+       {\gamma_2 \compose \gamma_1 : \Jmin{\Gamma_0}{P_1 \wedge P_2 (\gamma_2 \vec{D_1}, \vec{D_2})}{\Gamma_2}}$$
+\end{lemma}
+
+\begin{proof}
+First we show that $\gamma_2 \compose \gamma_1 : \Gamma_0 \lei \Gamma_2$.
+Suppose $\Gamma_0 \contains v D$, then $\Gamma_1 \entails \gamma_1\sem{v D}$
+since $\gamma_1 : \Gamma_0 \lei \Gamma_1$. Now provided $\sem{v D}$
+is stable, we have $\Gamma_2 \entails \gamma_2\gamma_1\sem{v D}$ by stability
+applied to $\gamma_2 : \Gamma_1 \lei \Gamma_2$.
+
+To show $\Gamma_2 \entails P_1 \wedge P_2 (\gamma_2 \vec{D_1}, \vec{D_2})$, it
+suffices to show $\Gamma_2 \entails P_1(\gamma_2 \vec{D_1})$ and
+$\Gamma_2 \entails P_2(\vec{D_2})$. The latter holds by assumption. For the
+former, note that $\Gamma_1 \entails P_1(\vec{D_1})$ and hence
+$\Gamma_2 \entails \gamma_2 P_1(\vec{D_1})$ by stability of $P_1(\vec{D_1})$.
+But $\gamma_2 P_1(\vec{D_1}) = P_1(\gamma_2 \vec{D_1})$ by definition of a 
+problem, so we are done.
+
+Finally, suppose there is some $\theta : \Gamma_0 \lei \Theta$ such that
+$\Theta \entails \theta (P_1 \wedge P_2)(\vec{D_1}, \vec{D_2})$, so
+$\Theta \entails P_1(\theta \vec{D_1})$ and
+$\Theta \entails P_2(\theta \vec{D_2})$.
+Since $\gamma_1 : \Jmin{\Gamma_0}{P_1(\vec{D_1})}{\Gamma_1}$, there exists
+$\zeta_1 : \Gamma_1 \lei \Theta$ such that $\theta = \zeta_1 \compose \gamma_1$.
+But then $\gamma_2 : \Jmin{\Gamma_1}{P_2(\vec{D_2})}{\Gamma_2}$, so there exists
+$\zeta_2 : \Gamma_2 \lei \Theta$ such that $\zeta_1 = \zeta_2 \compose \gamma_2$.
+Hence $\theta = \zeta_2 \compose (\gamma_2 \compose \gamma_1)$ as required.
+\end{proof}
+
+
+We now proceed as follows. First we instantiate the above definitions and give
+a version of the unification algorithm in this setting. Using this, we can
+describe a general technique for converting a collection of inference rules that
+give the declarative specification for a problem into an algorithm for solving
+the problem minimally. We give the example of Hindley-Milner type inference.
+
 
 
 %if False
@@ -217,79 +376,76 @@ First, let's get some imports out of the way.
 
 The syntax of types is
 $$\tau ::= \alpha ~||~ \tau \arrow \tau$$
-where $\alpha$ ranges over some set of type variables.
-
-For now, a \define{context entry} will be a type variable declaration
-|alpha := mt|, where $\alpha$ is a variable that is either bound to a type $\tau$
-(written |alpha := Just tau| or $\alpha := \tau$), or left unbound
-(written |alpha := Nothing| or $\hole{\alpha}$).
-Later, we will add other kinds of entry that are not relevant for unification.
-
-In the sequel, $\Gamma$ and $\Delta$ are contexts, $\alpha$ and $\beta$ are type
-variables and $\tau$ and $\upsilon$ are types. (All of these symbols may be
+where $\alpha$ ranges over some set of type variables $\V_0 \subset \V$.
+Let $\D_0 \subset \D$ be the set of types.
+In the sequel, $\alpha$ and $\beta$ are type variables and $\tau$ and $\upsilon$
+are types. (All of these symbols may be
 primed or subscripted.) We use $\Xi$ to denote a context suffix that will
-contain only type variable declarations, and no other kinds of entry.  We write
-$\emptycontext$ for the empty context.
+contain only type variable declarations, and no other kinds of definition.
 
-Arguably the most basic judgement a context can support is a membership test.
-We define $\Gamma \entails \alpha \defn mt$ to mean $\alpha \defn mt \in \Gamma$.
-We write $\alpha \var$ for an entry that is either $\hole{\alpha}$ or
-$\alpha \defn \tau$ for some $\tau$, and define
-$\Gamma \entails \alpha ~\mathbf{fresh}$ to mean
-$\Gamma \not\entails \alpha \var$.
+A type variable declaration is written |alpha := mt|, where $\alpha$ is a
+variable that is either bound to a type $\tau$ (written |alpha := Just tau| or
+$\alpha \defn \tau$), or left unbound (written |alpha := Nothing|).
+Later, we will add other kinds of variable and definition that are not relevant
+for unification.
 
-We define the judgements $\Gamma \entails \valid$ ($\Gamma$ is a valid context)
-and  $\Gamma \entails \tau \type$ ($\tau$ is a valid type in context $\Gamma$) by
-the rules in Figure~\ref{fig:contextTypeValidityRules}.
-As sanity conditions, observe that if $\Gamma \entails \tau \type$ for some
-type $\tau$, then $\Gamma \entails \valid$ and $\Gamma$ is non-empty.
+We write $\tyvars{\Gamma}$ for the set of type variables of $\Gamma$, i.e.\
+$\V_0 \cap \V(\Gamma)$.
+We define the judgement $\tau \type$ ($\tau$ is a type over the context) as
+shown in Figure~\ref{fig:typeOkRules}, and hence give the rules for the
+judgement $\alpha \defn D \ok$.
 
-If $\Gamma$ is a valid context,
-we write $\tyvars{\Gamma}$ for the set of type variables of $\Gamma$
-and $\types{\Gamma}$ for the set of types $\tau$ such that
-$\Gamma \entails \tau \type$. We define
+\begin{figure}[ht]
+\boxrule{\Gamma \entails \tau \type}
+$$
+\Rule{\Gamma \entails \valid}
+     {\Gamma \entails \alpha \type}
+\side{\alpha \in \tyvars{\Gamma}}
+\qquad
+\Rule{\Gamma \entails \tau \type   \quad   \Gamma \entails \upsilon \type}
+     {\Gamma \entails \tau \arrow \upsilon \type}
+$$
+\boxrule{\Gamma \entails \alpha D \ok}
+$$\Rule{\Gamma \entails \valid}
+       {\Gamma \entails \hole{\alpha} \ok}
+\qquad
+\Rule{\Gamma \entails \tau \type}
+     {\Gamma \entails \alpha \defn \tau \ok}
+$$
+
+\label{fig:typeOkRules}
+\caption{Rules for types and definitions}
+\end{figure}
+
+% Arguably the most basic judgement a context can support is a membership test.
+% We define $\Gamma \entails \alpha \defn mt$ to mean $\alpha \defn mt \in \Gamma$.
+% We write $\alpha \var$ for an entry that is either $\hole{\alpha}$ or
+% $\alpha \defn \tau$ for some $\tau$, and define
+% $\Gamma \entails \alpha ~\mathbf{fresh}$ to mean
+% $\Gamma \not\entails \alpha \var$.
+
+% We define the judgements $\Gamma \entails \valid$ ($\Gamma$ is a valid context)
+% and  $\Gamma \entails \tau \type$ ($\tau$ is a valid type in context $\Gamma$) by
+% the rules in Figure~\ref{fig:contextTypeValidityRules}.
+% As sanity conditions, observe that if $\Gamma \entails \tau \type$ for some
+% type $\tau$, then $\Gamma \entails \valid$ and $\Gamma$ is non-empty.
+
+If $\Gamma$ is a valid context, we write $\types{\Gamma}$ for the set of types
+$\tau$ such that $\Gamma \entails \tau \type$. We define
 \begin{align*}
-\FTV{\tau}      &= \{ \alpha ~||~ \alpha \in \tau \}  \\
+\FTV{\alpha}    &= \alpha  \\
+\FTV{\tau \arrow \upsilon}  &= \FTV{\tau} \cup \FTV{\upsilon}  \\
 \FTV{\Xi}       &= \bigcup \{ \FTV{\tau} ~||~ \alpha \defn \tau \in \Xi \}  \\
 \FTV{\tau, \Xi} &= \FTV{\tau} \cup \FTV{\Xi}.
 \end{align*}
 
-\begin{figure}[ht]
-\boxrule{\Gamma \entails \valid}
-
-$$
-\Axiom{\emptycontext \entails \valid}
-$$
-
-$$
-\Rule{\Gamma \entails \valid    \quad    \Gamma \entails \alpha \fresh}
-     {\Gamma, \hole{\alpha} \entails \valid}
-\qquad
-\Rule{\Gamma \entails \tau \type    \quad    \Gamma \entails \alpha \fresh}
-     {\Gamma, \alpha \defn \tau \entails \valid}
-$$
-
-\bigskip
-\boxrule{\Gamma \entails \tau \type}
-
-$$
-\Rule{\Gamma \entails \valid    \quad     \Gamma \entails \alpha \var}
-     {\Gamma \entails \alpha \type}
-\qquad
-\Rule{\Gamma \entails \tau \type \quad \Gamma \entails \upsilon \type}
-     {\Gamma \entails \tau \arrow \upsilon \type}
-$$
-
-\caption{Rules for context and type validity}
-\label{fig:contextTypeValidityRules}
-\end{figure}
 
 
 \subsection{Implementation}
 
 The foldable functor |Ty| defines types in our object language parameterised by
 the type of variable names, which will be useful later. Thanks to a language
-extension in GHC 6.12 \citep{ghc_team_7.5.extensions_2009} we can simply
+extension in GHC 6.12 \citep{ghc_team_glorious_2009} we can simply
 derive the required typeclass instances.
 We define |Type| to use integers as names.
 
@@ -332,11 +488,36 @@ as well make the code match our intution about the meaning of data. Lists
 are monoids where |<+>| is the append operator, and the \scare{fish} operator
 \eval{:t (<><)} appends a suffix to a context.
 
-We work in the |Contextual| monad (computations that can fail and mutate the context). 
-The |Name| component is the next fresh type variable name to use;
+We work in the |Contextual| monad (computations that can fail and mutate the
+context).  The |Name| component is the next fresh type variable name to use;
 it is an implementation detail that is not mentioned in the typing judgements.
 
 > type Contextual  = StateT (Name, Context) Maybe
+
+
+Working in this monad, we first define some useful functions for dealing with
+the context. The |getContext|, |putContext| and |modifyContext| functions
+respectively retrieve, replace and update the stored context. They correspond
+to |get|, |put| and |modify| in the |State| monad, but ignore the first component
+of the state.
+
+> getContext :: Contextual Context
+> getContext = gets snd
+>
+> putContext :: Context -> Contextual ()
+> putContext _Gamma = do  beta <- gets fst
+>                         put (beta, _Gamma)
+>
+> modifyContext :: (Context -> Context) -> Contextual ()
+> modifyContext f = getContext >>= putContext . f
+
+The |popEntry| function removes and returns the topmost entry from the context.
+\TODO{Since |popEntry| is only used twice, perhaps we should remove it?}
+
+> popEntry :: Contextual Entry
+> popEntry = do  _Gamma :< e <- getContext
+>                putContext _Gamma
+>                return e
 
 
 \section{Unification up to definition}
@@ -373,12 +554,12 @@ $\tau$ and $\upsilon$ in $\Gamma$, we have $\Delta \lei \Delta'$.
 
 The rules in Figure~\ref{fig:unifyRules} define our unification algorithm. The
 judgement
-$\unify{\Gamma_0}{\tau}{\upsilon}{\Gamma_1}$
+$\Junify{\Gamma_0}{\tau}{\upsilon}{\Gamma_1}$
 means that given inputs $\Gamma_0$, $\tau$ and $\upsilon$,
 unification of $\tau$ with $\upsilon$ 
 succeeds with output context $\Gamma_1$.
 The judgement
-$\unifyInst{\Gamma_0}{\alpha}{\tau}{\Xi}{\Gamma_1}$
+$\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\Xi}{\Gamma_1}$
 means that given inputs $\Gamma_0$, $\tau$, $\upsilon$ and $\Xi$,
 instantiation of $\alpha$ with $\tau$ succeds with output context $\Gamma_1$.
 (Here $\Xi$ is a (possibly empty) list of type variable declarations.)
@@ -408,29 +589,29 @@ refer to them as \textsc{Coalesce}\sym, \textsc{Expand}\sym and \textsc{Instanti
 A fat semicolon ($\fatsemi$) indicates that the context is passed along unmodified.
 
 \begin{figure}[ht]
-\boxrule{\Gamma_0 \extend \tau \equiv \upsilon \yields \Gamma_1}
+\boxrule{\Junify{\Gamma_0}{\tau}{\upsilon}{\Gamma_1}}
 
 $$
 \name{Id}
-\Axiom{\unify{\Gamma}{\alpha}{\alpha}{\Gamma}}
+\Axiom{\Junify{\Gamma}{\alpha}{\alpha}{\Gamma}}
 $$
 
 $$
 \name{Coalesce}
-\Axiom{\unify{\Gamma, \hole{\alpha}}{\alpha}{\beta}{\Gamma, \alpha \defn \beta}}
+\Axiom{\Junify{\Gamma, \hole{\alpha}}{\alpha}{\beta}{\Gamma, \alpha \defn \beta}}
 $$
 
 $$
 \name{Expand}
-\Rule{\unify{\Gamma_0}{\tau}{\beta}{\Gamma_1}}
-     {\unify{\Gamma_0, \alpha \defn \tau}{\alpha}{\beta}{\Gamma_1, \alpha \defn \tau}}
+\Rule{\Junify{\Gamma_0}{\tau}{\beta}{\Gamma_1}}
+     {\Junify{\Gamma_0, \alpha \defn \tau}{\alpha}{\beta}{\Gamma_1, \alpha \defn \tau}}
 \side{\alpha \neq \beta}
 $$
 
 $$
 \name{Orthogonal}
-\Rule{\unify{\Gamma_0}{\tau}{\upsilon}{\Gamma_1}}
-     {\unify{\Gamma_0, e}{\tau}{\upsilon}{\Gamma_1, e}}
+\Rule{\Junify{\Gamma_0}{\tau}{\upsilon}{\Gamma_1}}
+     {\Junify{\Gamma_0, e}{\tau}{\upsilon}{\Gamma_1, e}}
 \side{e \perp \tau \equiv \upsilon}
 $$
 
@@ -450,44 +631,46 @@ $$
 
 $$
 \name{Arrow}
-\Rule{\Gamma_0 \extend \tau_0 \equiv \upsilon_0 \fatsemi \tau_1 \equiv \upsilon_1 \yields \Gamma_1}
-     {\Gamma_0 \extend \tau_0 \arrow \tau_1 \equiv \upsilon_0 \arrow \upsilon_1 \yields \Gamma_1}
+\Rule{\Junify{\Gamma_0}{\tau_0}{\upsilon_0}{\Gamma}
+      \quad
+      \Junify{\Gamma}{\tau_1}{\upsilon_1}{\Gamma_1}}
+     {\Junify{\Gamma_0}{\tau_0 \arrow \tau_1}{\upsilon_0 \arrow \upsilon_1}{\Gamma_1}}
 $$
 
 $$
 \name{Instantiate}
-\Rule{\unifyInst{\Gamma_0}{\alpha}{\tau}{\emptycontext}{\Gamma_1}}
-     {\unify{\Gamma_0}{\alpha}{\tau}{\Gamma_1}}
+\Rule{\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\emptycontext}{\Gamma_1}}
+     {\Junify{\Gamma_0}{\alpha}{\tau}{\Gamma_1}}
 \side{\tau \mathrm{~not~variable}}
 $$
 
 \bigskip
 
-\boxrule{\unifyInst{\Gamma_0}{\alpha}{\tau}{\Xi}{\Gamma_1}}
+\boxrule{\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\Xi}{\Gamma_1}}
 
 $$
 \name{InstCoalesce}
-\Axiom{\unifyInst{\Gamma, \hole{\alpha}}{\alpha}{\tau}{\Xi}{\Gamma, \Xi, \alpha \defn \tau}}
+\Axiom{\Jinstantiate{\Gamma, \hole{\alpha}}{\alpha}{\tau}{\Xi}{\Gamma, \Xi, \alpha \defn \tau}}
 \side{\alpha \notin \FTV{\tau, \Xi}}
 $$
 
 $$
 \name{InstExpand}
-\Rule{\unify{\Gamma_0, \Xi}{\upsilon}{\tau}{\Gamma_1}}
-     {\unifyInst{\Gamma_0, \alpha \defn \upsilon}{\alpha}{\tau}{\Xi}{\Gamma_1, \alpha \defn \nu}}
+\Rule{\Junify{\Gamma_0, \Xi}{\upsilon}{\tau}{\Gamma_1}}
+     {\Jinstantiate{\Gamma_0, \alpha \defn \upsilon}{\alpha}{\tau}{\Xi}{\Gamma_1, \alpha \defn \nu}}
 $$
 
 $$
 \name{InstPass}
-\Rule{\unifyInst{\Gamma_0}{\alpha}{\tau}{\beta \defn mt, \Xi}{\Gamma_1}}
-     {\unifyInst{\Gamma_0, \beta \defn mt}{\alpha}{\tau}{\Xi}{\Gamma_1}}
+\Rule{\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\beta \defn mt, \Xi}{\Gamma_1}}
+     {\Jinstantiate{\Gamma_0, \beta \defn mt}{\alpha}{\tau}{\Xi}{\Gamma_1}}
 \side{\alpha \neq \beta, \beta \in \FTV{\tau, \Xi}}
 $$
 
 $$
 \name{InstOrthogonal}
-\Rule{\unifyInst{\Gamma_0}{\alpha}{\tau}{\Xi}{\Gamma_1}}
-     {\unifyInst{\Gamma_0, e}{\alpha}{\tau}{\Xi}{\Gamma_1, e}}
+\Rule{\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\Xi}{\Gamma_1}}
+     {\Jinstantiate{\Gamma_0, e}{\alpha}{\tau}{\Xi}{\Gamma_1, e}}
 \side{e \perp \alpha \equiv \tau [\Xi]}
 $$
 
@@ -510,11 +693,9 @@ $$
 \end{figure}
 
 
-Observe that we have no rule for the case
-$$\Gamma_0, \hole{\alpha} \extend \alpha \equiv \tau ~[\Xi]
-  \quad \mathrm{when} \quad
-  \alpha \in \FTV{\tau, \Xi}$$
-so the algorithm fails if this situation arises. This is essentially an occur
+Observe that we have no rule for the case $\alpha \equiv \tau ~[\Xi]$
+with $\alpha \in \FTV{\tau, \Xi}$ and the context $\Gamma_0, \hole{\alpha}$;
+hence the algorithm fails if this situation arises. This is essentially an occur
 check failure: $\alpha$ and $\tau$ cannot be unified if $\alpha$ occurs in
 $\tau$ or in an entry that $\tau$ depends on. (Note that the trivial exception
 $\tau = \alpha$ is dealt with by the \textsc{Id} rule.) Since we only have one
@@ -524,7 +705,7 @@ however.
 
 \begin{lemma}[Soundness of unification]
 \label{lem:unifySound}
-(a) If $\Gamma_0 \extend \tau \equiv \upsilon \yields \Gamma_1$, then
+(a) If $\Junify{\Gamma_0}{\tau}{\upsilon}{\Gamma_1}$, then
 $\Gamma_1 \entails \tau \equiv \upsilon$,
 $\tyvars{\Gamma_0} = \tyvars{\Gamma_1}$ and
 $\iota : \Gamma_0 \lei \Gamma_1$ where
@@ -532,7 +713,7 @@ $$\iota: \tyvars{\Gamma_0} \rightarrow \types{\Gamma_1} : \alpha \mapsto \alpha$
 is the inclusion substitution.
 
 (b) Moreover, if
-$\unifyInst{\Gamma_0}{\alpha}{\tau}{\Xi}{\Gamma_1}$, then
+$\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\Xi}{\Gamma_1}$, then
 $\Gamma_1 \entails \alpha \equiv \tau$,
 $\tyvars{\Gamma_0, \Xi} = \tyvars{\Gamma_1}$
 and $\iota : \Gamma_0, \Xi \lei \Gamma_1$.
@@ -546,14 +727,14 @@ By induction on the structure of derivations.
 \label{lem:unifyComplete}
 (a) If $\theta : \Gamma_0 \lei \Delta$ and
 $\Delta \entails \theta\tau \equiv \theta\upsilon$, then
-$\Gamma_0 \extend \tau \equiv \upsilon \yields \Gamma_1$ for some $\Gamma_1$ with
+$\Junify{\Gamma_0}{\tau}{\upsilon}{\Gamma_1}$ for some $\Gamma_1$ with
 $\theta : \Gamma_1 \lei \Delta$. That is, if a unifier for $\tau$ and $\upsilon$
 exists, then the algorithm succeeds and delivers a most general unifier.
 
 (b) Moreover, if $\theta : \Gamma, \Xi \lei \Delta$ and
 $\Delta \entails \theta\alpha \equiv \theta\upsilon$
 where $\Xi$ contains only type variable declarations and $\upsilon$ is not a
-variable, then $\unifyInst{\Gamma}{\alpha}{\upsilon}{\Xi}{\Gamma_1}$ for some
+variable, then $\Jinstantiate{\Gamma}{\alpha}{\upsilon}{\Xi}{\Gamma_1}$ for some
 $\Gamma_1$ with $\theta : \Gamma_1 \lei \Delta$.
 \end{lemma}
 
@@ -584,7 +765,7 @@ hence $\Delta \entails \theta\beta \equiv \theta\upsilon$.
 But then $\theta_\alpha : \Gamma_0' \lei \Delta$ and
 $\Delta \entails \theta_\alpha\beta \equiv \theta_\alpha\upsilon$,
 so by induction,
-$\Gamma_0' \extend \beta \equiv \upsilon \yields \Gamma_1'$
+$\Junify{\Gamma_0'}{\beta}{\upsilon}{\Gamma_1'}$
 for some $\Gamma_1'$ with $\theta_\alpha : \Gamma_1' \lei \Delta$.
 Hence the \textsc{Expand} rule applies, $\Gamma_1 = \Gamma_1', \alpha \defn \upsilon$
 and $\theta : \Gamma_1 \lei \Delta$.
@@ -596,19 +777,21 @@ applies by a similar argument.
 
 Now suppose $\tau = \tau_0 \arrow \tau_1$ and $\upsilon = \upsilon_0 \arrow \upsilon_1$.
 Then by induction, there are some contexts $\Gamma$ and $\Gamma_1$ such that
-$\Gamma_0 \extend \tau_0 \equiv \upsilon_0 \yields \Gamma$ and
-$\Gamma \extend \tau_1 \equiv \upsilon_1 \yields \Gamma_1$, with
+$\Junify{\Gamma_0}{\tau_0}{\upsilon_0}{\Gamma}$ and
+$\Junify{\Gamma}{\tau_1}{\upsilon_1}{\Gamma_1}$, with
 $\theta : \Gamma \lei \Delta$ and $\theta : \Gamma_1 \lei \Delta$. Hence
 the \textsc{Arrow} rule applies.
 
 Finally, suppose wlog that $\tau = \alpha$ is a variable and $\upsilon$ is not a variable.
-By part (b), $\unifyInst{\Gamma_0}{\alpha}{\upsilon}{}{\Gamma_1}$ and
+By part (b), $\Jinstantiate{\Gamma_0}{\alpha}{\upsilon}{}{\Gamma_1}$ and
 the \textsc{Instantiate} rule applies.
 
 (b) Suppose $\theta : \Gamma, \Xi \lei \Delta$ and
 $\Delta \entails \theta\alpha \equiv \theta\upsilon$
 where $\Xi$ contains only type variable declarations and $\upsilon$ is not a variable.
 Let $\Gamma = \Gamma_0, e$. We proceed by induction as before.
+
+\TODO{We need to fill in some details here.}
 
 \begin{itemize}
 \item If $e = \hole{\alpha}$ and $\alpha \notin \FTV{\upsilon, \Xi}$, then the \textsc{Coalesce} rule
@@ -857,33 +1040,33 @@ The full data type of context entries is thus:
 
 \subsection{Specialisation}
 
-The judgement $\Gamma \extend \sigma \succ \tau \yields \Gamma, \Xi$ means
+The judgement $\Jspec{\Gamma}{\sigma}{\tau}{\Gamma, \Xi}$ means
 that, starting with the context $\Gamma$, the scheme $\sigma$ specialises
 to the type $\tau$ when the context is extended with some type variable
 definitions $\Xi$. This judgement
 is defined as shown in Figure~\ref{fig:specialiseAlgorithm}.
 
 \begin{figure}[ht]
-\boxrule{\Gamma \extend \sigma \succ \tau \yields \Gamma, \Xi}
+\boxrule{\Jspec{\Gamma}{\sigma}{\tau}{\Gamma, \Xi}}
 
 $$
 \name{T}
 \Rule{\Gamma \entails \tau \type}
-     {\Gamma \extend .\tau \succ \tau \yields \Gamma}
+     {\Jspec{\Gamma}{.\tau}{\tau}{\Gamma}}
 $$
 
 $$
 \name{All}
 \Rule{\Gamma \entails \alpha \fresh    \quad
-      \Gamma, \hole{\alpha} \extend \sigma \succ \tau \yields \Gamma, \hole{\alpha}, \Xi}
-     {\Gamma \extend \forall\alpha~\sigma \succ \tau \yields \Gamma, \hole{\alpha}, \Xi}
+      \Jspec{\Gamma, \hole{\alpha}}{\sigma}{\tau}{\Gamma, \hole{\alpha}, \Xi}}
+     {\Jspec{\Gamma}{\forall\alpha~\sigma}{\tau}{\Gamma, \hole{\alpha}, \Xi}}
 $$
 
 $$
 \name{LetS}
 \Rule{\Gamma \entails \alpha \fresh    \quad
-      \Gamma, \alpha \defn \upsilon \extend \sigma \succ \tau \yields \Gamma, \alpha \defn \upsilon, \Xi}
-     {\Gamma \extend \letS{\alpha}{\upsilon}{\sigma} \succ \tau \yields \Gamma, \alpha \defn \upsilon, \Xi}
+      \Jspec{\Gamma, \alpha \defn \upsilon}{\sigma}{\tau}{\Gamma, \alpha \defn \upsilon, \Xi}}
+     {\Jspec{\Gamma}{\letS{\alpha}{\upsilon}{\sigma}}{\tau}{\Gamma, \alpha \defn \upsilon, \Xi}}
 $$
 
 \caption{Algorithmic rules for specialisation}
@@ -893,7 +1076,7 @@ $$
 
 \begin{lemma}[Soundness of specialisation]
 \label{lem:specialiseSound}
-If $\Gamma_0 \extend \sigma \succ \tau \yields \Gamma_1$, then
+If $\Jspec{\Gamma_0}{\sigma}{\tau}{\Gamma_1}$, then
 $\Gamma_1 \entails \sigma \succ \tau$, $\tyvars{\Gamma_0} \subseteq \tyvars{\Gamma_1}$ and
 $\iota : \Gamma_0 \lei \Gamma_1$.
 \end{lemma}
@@ -904,18 +1087,40 @@ By structural induction on $\sigma$.
 
 \begin{lemma}[Completeness of specialisation]
 \label{lem:specialiseComplete}
-If $\theta_0 : \Gamma_0 \lei \Delta$, $\Gamma_0 \entails \sigma \scheme$ and
-$\Delta \entails \theta_0\sigma \succ \tau$,
-then $\Gamma_0 \extend \sigma \succ \upsilon \yields \Gamma_1$ for some type
-$\upsilon$ and context $\Gamma_1$ with $\theta_1 : \Gamma_1 \lei \Delta$,
-$\Delta \entails \tau \equiv \theta_1\upsilon$ and
-$\forall \alpha \in \tyvars{\Gamma_0} . \Delta \entails \theta_0 \alpha \equiv \theta_1 \alpha$.
+If $\Gamma \entails \sigma \scheme$ then
+$\Jspec{\Gamma}{\sigma}{\tau}{\Gamma, \Xi}$
+for some type $\tau$ and list of type variable declarations $\Xi$ such that
+$$\forall \upsilon \forall \phi : \Gamma \lei \Phi . (
+    \Phi \entails \phi\sigma \succ \upsilon
+        \Leftrightarrow  \Phi \entails \phi\gen{\Xi}{\tau} \succ \upsilon).$$
+
+% If $\theta_0 : \Gamma_0 \lei \Delta$, $\Gamma_0 \entails \sigma \scheme$ and
+% $\Delta \entails \theta_0\sigma \succ \tau$,
+% then $\Gamma_0 \extend \sigma \succ \upsilon \yields \Gamma_1$ for some type
+% $\upsilon$ and context $\Gamma_1$ with $\theta_1 : \Gamma_1 \lei \Delta$,
+% \Delta \entails \tau \equiv \theta_1\upsilon$ and
+% $\forall \alpha \in \tyvars{\Gamma_0} .
+%    \Delta \entails \theta_0 \alpha \equiv \theta_1 \alpha$.
 \end{lemma}
 
 \begin{proof}
 
 \end{proof}
 
+
+The |freshVar| function generates a fresh name for a type variable and defines it as unbound,
+and the |freshVarDef| function generates a fresh name and binds it to the given type.
+
+> fresh :: Maybe Type -> Contextual Name
+> fresh mt = do  (beta, _Gamma) <- get
+>                put (succ beta, _Gamma :< beta := mt)
+>                return beta
+
+> freshVar :: Contextual Name
+> freshVar = fresh Nothing
+
+> freshVarDef :: Type -> Contextual Name
+> freshVarDef = fresh . Just
 
 The |specialise| function will specialise a type scheme with fresh variables
 to produce a type. That is, given a scheme $\sigma$ it computes a most general
@@ -1079,23 +1284,26 @@ We write $\theta : \Gamma \lei \Delta$ if
 \item $\forget{\Gamma}$ is a prefix of $\forget{\Delta}$.
 \end{enumerate}
 
+We write $\theta : \Gamma \LEI \Delta$ if $\theta : \Gamma \lei \Delta$ and
+$$\Gamma \entails x \asc \sigma  \Rightarrow
+           \forall \tau. (\Delta \entails x : \tau
+               \Rightarrow   \Delta \entails \theta\sigma \succ \tau).$$
+
 It is straightforward to verify that the previous results go through using the
 extended definition of the $\lei$ relation, since the unification algorithm
 ignores term variables and $\letGoal$ markers completely.
 
 As we have previously observed, condition (a) means that type equations are
 preserved by information increase, as
-$$\Gamma \entails \tau \equiv \upsilon
+$$\theta : \Gamma \lei \Delta  \wedge  \Gamma \entails \tau \equiv \upsilon
     \Rightarrow  \Delta \entails \theta\tau \equiv \theta\upsilon.$$
-The new conditions ensure that type assignment is similarly preserved, as
-$$\Gamma \entails t : \tau
-    \Rightarrow  \Delta \entails t : \theta\tau.$$
+The new conditions ensure that type assignment is preserved:
 
-Do we need equivalence in condition (b)? Otherwise information increase
-could arbitrarily make term variable schemes more general, and hence we have
-no hope of finding principal type schemes. Or should we change the definition
-of principal type scheme?
-
+\begin{lemma}
+\label{lem:typeAssignmentPreserved}
+If $\theta : \Gamma \lei \Delta$ and $\Gamma \entails t : \tau$ then
+$\Delta \entails t : \theta\tau$.
+\end{lemma}
 
 A term $t$ \define{can be assigned type scheme} $\sigma$ in context $\Gamma$,
 written $\Gamma \entails t \hasscheme \sigma$, if
@@ -1103,9 +1311,9 @@ $$\forall \tau . \forall \theta : \Gamma \lei \Delta . (
     \Delta \entails \theta\sigma \succ \tau
         \Rightarrow \Delta \entails t : \tau )$$ 
 and $\sigma$ is \define{principal} if, additionally,
-$$\forall \tau . \forall \theta : \Gamma \lei \Delta . (
+$$\forall \tau . \forall \theta : \Gamma \LEI \Delta . (
     \Delta \entails t : \tau
-        \Rightarrow  \Delta \entails \theta\sigma \succ \tau).$$ 
+        \Rightarrow  \Delta \entails \theta\sigma \succ \tau).$$
 
 
 \begin{lemma}
@@ -1121,45 +1329,47 @@ $$\Gamma, \Xi \entails t : \tau
 \end{proof}
 
 
-Now we define the judgement $\Gamma_0 \extend t : \tau \yields \Gamma_1$
+Now we define the judgement $\Jtype{\Gamma_0}{t}{\tau}{\Gamma_1}$
 (inferring the type of $t$ in $\Gamma_0$
 yields $\tau$ in the more informative context $\Gamma_1$) by the rules in
 Figure~\ref{fig:inferRules}.
 
 \begin{figure}[ht]
-\boxrule{\Gamma_0 \extend t : \tau \yields \Gamma_1}
+\boxrule{\Jtype{\Gamma_0}{t}{\tau}{\Gamma_1}}
 
 $$
 \name{Var}
 \Rule{\Gamma_0 \entails x \asc \sigma
       \quad
-      \Gamma_0 \extend \sigma \succ \tau \yields \Gamma_1}
-     {\Gamma_0 \extend x : \tau \yields \Gamma_1}
+      \Jspec{\Gamma_0}{\sigma}{\tau}{\Gamma_1}}
+     {\Jtype{\Gamma_0}{x}{\tau}{\Gamma_1}}
 $$
 
 $$
 \name{Abs}
 \Rule{\Gamma_0 \entails \alpha \fresh    \quad
-      \Gamma_0, \hole{\alpha}, x \asc .\alpha; \extend t:\tau
-          \yields \Gamma_1, x \asc \_; \Xi}
-     {\Gamma_0 \extend \lambda x.t : \alpha \arrow \tau \yields \Gamma_1, \Xi}
+      \Jtype{\Gamma_0, \hole{\alpha}, x \asc .\alpha;}{t}{\tau}
+          {\Gamma_1, x \asc \_; \Xi}}
+     {\Jtype{\Gamma_0}{\lambda x.t}{\alpha \arrow \tau}{\Gamma_1, \Xi}}
 $$
 
 $$
 \name{App}
-\BigRule{\Gamma_0 \extend f : \tau   ~\fatsemi~  a : \tau' \yields \Gamma
+\BigRule{\Jtype{\Gamma_0}{f}{\tau}{\Gamma_1}
          \quad
-         \Gamma \entails \beta \fresh}
-        {\Gamma, \hole{\beta} \extend \tau \equiv \tau' \arrow \beta \yields \Gamma_1}
-        {\Gamma_0 \extend f a : \beta \yields \Gamma_1}
+         \Jtype{\Gamma_1}{a}{\tau'}{\Gamma_2}
+         \quad
+         \Gamma_2 \entails \beta \fresh}
+        {\Junify{\Gamma_2, \hole{\beta}}{\tau}{\tau' \arrow \beta}{\Gamma_1}}
+        {\Jtype{\Gamma_0}{f a}{\beta}{\Gamma_1}}
 $$
 
 $$
 \name{Let}
-\BigRule{\Gamma_0, \letGoal; \extend s : \tau_0 \yields \Gamma, \letGoal; \Xi_0}
-        {\Gamma, x \asc \gen{\Xi_0}{.\tau_0}; \extend t : \tau_1
-                 \yields \Gamma_1, x \asc \_; \Xi_1}
-        {\Gamma_0 \extend \letIn{x}{s}{t} : \tau_1 \yields \Gamma_1, \Xi_1}
+\BigRule{\Jtype{\Gamma_0, \letGoal;}{s}{\tau_0}{\Gamma, \letGoal; \Xi_0}}
+        {\Jtype{\Gamma, x \asc \gen{\Xi_0}{.\tau_0};}{t}{\tau_1}
+               {\Gamma_1, x \asc \_; \Xi_1}}
+        {\Jtype{\Gamma_0}{\letIn{x}{s}{t}}{\tau_1}{\Gamma_1, \Xi_1}}
 $$
 
 \caption{Algorithmic rules for type inference}
@@ -1174,7 +1384,7 @@ extension $\Gamma'$.
 
 \begin{lemma}[Soundness of type inference]
 \label{lem:inferSound}
-If $\Gamma_0 \extend t : \tau \yields \Gamma_1$, then
+If $\Jtype{\Gamma_0}{t}{\tau}{\Gamma_1}$, then
 \begin{enumerate}[(a)]
 \item $\Gamma_1 \entails t : \tau$;
 \item $\tyvars{\Gamma_0} \subseteq \tyvars{\Gamma_1}$;
@@ -1433,88 +1643,137 @@ and the \textsc{Let} rule applies to give
 %endif
 
 
+\begin{lemma}
+\label{lem:letSchemePrincipal}
+If $\Delta \entails s \hasscheme \sigma$ principal and
+$\Delta, x \asc \sigma; \entails w \hasscheme \sigma'$ principal then
+$\Delta \entails \letIn{x}{s}{w} \hasscheme \sigma'$ principal.
+\end{lemma}
+
 \begin{lemma}[Completeness of type inference]
-If $\theta_0 : \Gamma_0 \lei \Delta$ and $\Delta \entails t : \tau$ then
+If $\theta_0 : \Gamma_0; \LEI \Delta$ and $\Delta \entails t : \tau$ then
 \begin{enumerate}[(a)]
-\item $\Gamma_0 \extend t : \upsilon \yields \Gamma_1; \Xi$,
-\item $\theta_1 : \Gamma_1 \lei \Delta$ and
-\item $\Gamma_1 \entails t :: \gen{\Xi}{\upsilon}$ principal.
+\item $\Jtype{\Gamma_0;}{t}{\upsilon}{\Gamma_1; \Xi}$,
+\item $\theta_1 : \Gamma_1; \LEI \Delta$ with 
+$\theta_0\alpha = \theta_1\alpha$ for any $\alpha \in \tyvars{\Gamma_0}$, and
+\item $\Gamma_1; \entails t :: \gen{\Xi}{\upsilon}$ principal.
 \end{enumerate}
 \end{lemma}
 
 \begin{proof}
 If $t = x$ is a variable, then by inversion $\Delta \entails x \asc \sigma$ and
-$\Delta \entails \sigma \succ \tau$. Now by definition of $\lei$,
-$\Gamma_0 \entails x \asc \sigma'$ for some $\sigma'$ with
+$\Delta \entails \sigma \succ \tau$. Now by definition of $\LEI$,
+$\Gamma_0; \entails x \asc \sigma'$ for some $\sigma'$ with
 $$\forall \upsilon. \Delta \entails \theta_0\sigma' \succ \upsilon
-    \Rightarrow \Delta \entails x : \upsilon.$$
+    \Leftrightarrow \Delta \entails x : \upsilon.$$
 
 By completeness of specialisation,
-$\Gamma_0 \extend \sigma' \succ \upsilon \yields \Gamma_0; \Xi$
-and hence the \textsc{Var} rule applies giving
-$\Gamma_0 \extend x : \upsilon \yields \Gamma_0; \Xi$.
-Moreover, (b) holds trivially with $\theta_1 = \theta_0$.
-By lemma \ref{lem:suffixSchemeEquivalence},
-$\Gamma_0 \entails x \hasscheme \gen{\Xi}{\upsilon}$.
-Why should this be principal?
+$\Jspec{\Gamma_0;}{\sigma'}{\upsilon}{\Gamma_0; \Xi}$
+and
+$$\forall\tau \forall \phi: \Gamma_0 \lei \Phi . (
+    \Phi \entails \phi\sigma' \succ \tau
+        \Leftrightarrow  \Phi \entails \phi\gen{\Xi}{\upsilon} \succ \tau.$$
+Hence the \textsc{Var} rule applies giving
+$\Jtype{\Gamma_0;}{x}{\upsilon}{\Gamma_0; \Xi}$,
+(b) holds trivially with $\theta_1 = \theta_0$, and
+$\Gamma_0 \entails x \hasscheme \gen{\Xi}{\upsilon}$ principal.
 
 
 If $t = (\letIn{x}{s}{w})$, then by inversion there is some scheme
 $\sigma$ such that $\Delta \entails s \hasscheme \sigma$ and
-$\Delta, x \asc \sigma \entails w : \tau$.
-Let $\Psi$ be a list of fresh type variables so that
-$\Delta, \letGoal; \Psi \entails \sigma \succ (\Psi \Downarrow \sigma)$
+$\Delta, x \asc \sigma \entails w : \tau$. Specialise $\sigma$ with fresh type
+variables $\Psi$ so that
+$\Delta, \letGoal; \Psi \entails \sigma \succ \tau_s$
 and hence
-$\Delta, \letGoal; \Psi \entails s : (\Psi \Downarrow \sigma)$.
-Moreover $\theta_0 : \Gamma_0, \letGoal; \lei \Delta, \letGoal;$ so
+$\Delta, \letGoal; \Psi \entails s : \tau_s$.
+Moreover $\theta_0 : \Gamma_0; \letGoal; \LEI \Delta, \letGoal;$ so
 by induction
 \begin{enumerate}[(a)]
-\item $\Gamma_0, \letGoal; \extend s : \upsilon \yields \Gamma_1, \letGoal; \Xi_1$
-\item $\theta_1 : \Gamma_1, \letGoal; \lei \Delta, \letGoal; \Psi$
-\item $\Gamma_1, \letGoal; \entails s \hasscheme \gen{\Xi_1}{\upsilon}$ principal.
+\item $\Jtype{\Gamma_0; \letGoal;}{s}{\upsilon}{\Gamma_1; \letGoal; \Xi_1}$
+\item $\theta_1 : \Gamma_1; \letGoal; \LEI \Delta, \letGoal; \Psi$
+\item $\Gamma_1; \letGoal; \entails s \hasscheme \gen{\Xi_1}{\upsilon}$ principal.
 \end{enumerate}
 
-Now by lemma ???, $\theta_1 : \Gamma_1 \lei \Delta$ and hence
-$$\theta_1 : \Gamma_1, x \asc \gen{\Xi_1}{\upsilon};
-                            \lei \Delta, x \asc \gen{\Xi_1}{\upsilon}.$$
+Now 
+$$\theta_1 : \Gamma_1; x \asc \gen{\Xi_1}{\upsilon};
+                            \LEI \Delta, x \asc \gen{\Xi_1}{\upsilon}; \Psi$$
 but
 $$\iota : \Delta, x \asc \sigma; \lei \Delta, x \asc \gen{\Xi_1}{\upsilon};$$
 by principality, and hence
-$$\Delta, x \asc \gen{\Xi_1}{\upsilon} \entails w : \tau$$
-by preservation of type assignment (lemma ???). 
+$$\Delta, x \asc \gen{\Xi_1}{\upsilon}; \Psi \entails w : \tau$$
+by preservation of type assignment (lemma \ref{lem:typeAssignmentPreserved}). 
 
 Thus, by induction,
 \begin{enumerate}[(a)]
-\item $\Gamma_1, x \asc \gen{\Xi_1}{\upsilon}; \extend w : \chi \yields \Gamma_2, x \asc \gen{\Xi_1}{\upsilon}; \Xi_2$
-\item $\theta_2 : \Gamma_2, x \asc \gen{\Xi_1}{\upsilon}; \lei \Delta, x \asc \gen{\Xi_1}{\upsilon};$
-\item $\Gamma_2, x \asc \gen{\Xi_1}{\upsilon}; \entails w \hasscheme \gen{\Xi_2}{\chi}$ principal
+\item $\Jtype{\Gamma_1, x \asc \gen{\Xi_1}{\upsilon};}{w}{\chi}{\Gamma_2; x \asc \gen{\Xi_1}{\upsilon}; \Xi_2}$
+\item $\theta_2 : \Gamma_2; x \asc \gen{\Xi_1}{\upsilon}; \LEI \Delta, x \asc \gen{\Xi_1}{\upsilon}; \Psi$
+\item $\Gamma_2; x \asc \gen{\Xi_1}{\upsilon}; \entails w \hasscheme \gen{\Xi_2}{\chi}$ principal
 \end{enumerate}
 and the \textsc{Let} rule applies to give
 \begin{enumerate}[(a)]
-\item $\Gamma_0 \extend \letIn{x}{s}{w} : \chi \yields \Gamma_2; \Xi_2$
-\item $\theta_2 : \Gamma_2; \lei \Delta;$
-\item $\Gamma_2; \entails \letIn{x}{s}{w} \hasscheme \gen{\Xi_2}{\chi}$ principal (???).
+\item $\Jtype{\Gamma_0;}{\letIn{x}{s}{w}}{\chi}{\Gamma_2; \Xi_2}$
+\item $\theta_2 : \Gamma_2; \LEI \Delta;$ \TODO{Why?}
+\item $\Gamma_2; \entails \letIn{x}{s}{w} \hasscheme \gen{\Xi_2}{\chi}$ principal by
+lemma \ref{lem:letSchemePrincipal}.
 \end{enumerate}
 
 
 If $t = \lambda x . w$ is an abstraction, then by inversion
 $\Delta \entails \tau \equiv \tau_0 \arrow \tau_1$
 where $\tau_0$ and $\tau_1$ are some $\Delta$-types, and
-$\Delta, x \asc .\tau_0 \entails w : \tau_1$.
+$\Delta, x \asc .\tau_0; \entails w : \tau_1$.
 Taking $\theta = [\tau_0/\alpha]\theta_0$, we have that
-$\theta : \Gamma_0, \hole{\alpha}, x \asc .\alpha  \lei  \Delta, x \asc .\tau_0$
+$$\theta : \Gamma_0; \hole{\alpha}, x \asc .\alpha;
+             \LEI  \Delta, x \asc .\tau_0;$$
 and hence, by induction,
 \begin{enumerate}[(a)]
-\item $\Gamma_0, \hole{\alpha}, x \asc .\alpha; \extend w : \upsilon \yields \Gamma_1, x \asc .\alpha; \Xi$
-\item $\theta_1 : \Gamma_1, x \asc .\alpha; \lei \Delta, x \asc .\tau_0;$
-\item $\Gamma_1, x \asc .\alpha; \entails w \hasscheme \gen{\Xi}{\upsilon}$ principal.
+\item $\Jtype{\Gamma_0; \hole{\alpha}, x \asc .\alpha;}{w}{\upsilon}
+             {\Gamma_1; \Phi, x \asc .\alpha; \Xi}$
+\item $\theta_1 : \Gamma_1; \Phi, x \asc .\alpha; \LEI \Delta, x \asc .\tau_0;$
+\item $\Gamma_1; \Phi, x \asc .\alpha; \entails w \hasscheme \gen{\Xi}{\upsilon}$
+          principal.
 \end{enumerate}
 
 Thus the \textsc{Abs} rule applies, so we have
 \begin{enumerate}[(a)]
-\item $\Gamma_0 \extend \lambda x . w : \alpha \arrow \upsilon \yields \Gamma_1, \Xi$
-\item $\theta_1 : \Gamma_1 \lei \Delta$
-\item $\Gamma_1 \entails \lambda x . w \hasscheme \gen{\Xi}{\upsilon}$ principal.
+\item $\Jtype{\Gamma_0;}{\lambda x . w}{\alpha \arrow \upsilon}
+             {\Gamma_1; \Phi, \Xi}$
+\item $\theta_1 : \Gamma_1; \LEI \Delta$
+\item $\Gamma_1; \entails \lambda x . w \hasscheme \gen{\Phi, \Xi}{\upsilon}$
+          principal. \TODO{Why?}
+\end{enumerate}
+
+
+If $t = f a$ is an application, then
+$\Delta \entails f : \tau_0 \arrow \tau$,
+so by induction
+\begin{enumerate}[(a)]
+\item $\Jtype{\Gamma_0;}{f}{\upsilon}{\Gamma; \Xi}$
+\item $\theta : \Gamma; \LEI \Delta$ 
+\item $\Gamma; \entails f \hasscheme \gen{\Xi}{\upsilon}$ principal.
+\end{enumerate}
+
+Now $\Delta \entails a : \tau_0$, so by induction
+\begin{enumerate}[(a)]
+\item $\Jtype{\Gamma;}{a}{\upsilon_0}{\Gamma_1; \Xi_1}$
+\item $\theta' : \Gamma_1; \LEI \Delta$ 
+\item $\Gamma_1; \entails a \hasscheme \gen{\Xi_1}{\upsilon_0}$ principal.
+\end{enumerate}
+
+Let $\theta_1 = [\tau/\beta]\theta'$, then
+$\theta_1 : \Gamma_1; \Xi_1, \Xi, \hole{\beta} \LEI \Delta$,
+and since
+$$\Delta \entails \theta_1\upsilon \equiv \tau_0 \arrow \tau
+    \equiv \theta_1(\upsilon_0 \arrow \beta)$$
+we have
+$\Junify{\Gamma_1; \hole{\beta}}{\upsilon}{\upsilon_0 \arrow \beta}{\Gamma_2}$
+by completeness of unification.
+
+Hence the \textsc{App} rule applies, so
+\begin{enumerate}[(a)]
+\item $\Jtype{\Gamma_0}{f a}{\beta}{\Gamma_2}$
+\item $\theta_1 : \Gamma_2; \LEI \Delta$ \TODO{Why?}
+\item $\Gamma_2; \entails f a \hasscheme \gen{???}{\beta}$ principal. \TODO{Why?}
 \end{enumerate}
 
 
@@ -1622,49 +1881,10 @@ evaluates its second argument, then removes the term variable definition.
 %endif
 
 
-\section{Odds and ends}
 
-\subsection{Fresh names}
+\section{Conclusion}
 
-The |freshVar| function generates a fresh name for a type variable and defines it as unbound,
-and the |freshVarDef| function generates a fresh name and binds it to the given type.
-
-> fresh :: Maybe Type -> Contextual Name
-> fresh mt = do  (beta, _Gamma) <- get
->                put (succ beta, _Gamma :< beta := mt)
->                return beta
-
-> freshVar :: Contextual Name
-> freshVar = fresh Nothing
-
-> freshVarDef :: Type -> Contextual Name
-> freshVarDef = fresh . Just
-
-
-\subsection{Context manipulation}
-
-The |getContext| function retrieves the context.
-
-> getContext :: Contextual Context
-> getContext = gets snd
-
-The |putContext| operator replaces the stored context.
-
-> putContext :: Context -> Contextual ()
-> putContext _Gamma = do  beta <- gets fst
->                         put (beta, _Gamma)
-
-The |modifyContext| operator applies a function to the stored context.
-
-> modifyContext :: (Context -> Context) -> Contextual ()
-> modifyContext f = getContext >>= putContext . f
-
-The |popEntry| function removes the topmost entry from the context and returns it.
-
-> popEntry :: Contextual Entry
-> popEntry = do  _Gamma :< e <- getContext
->                putContext _Gamma
->                return e
+\TODO{Write a conclusion.}
 
 
 %if False
