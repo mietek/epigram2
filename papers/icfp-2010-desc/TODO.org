@@ -32,7 +32,6 @@ dependently-typed language. So, how do I get arround my various
 
 ** TODO Say something about arity generic stuff?
 ** TODO The comma in Pi/Sigma typing rule seems confusing
-** TODO Replace as a map? Should we say something about map?
 ** TODO Fix mentions of strictly positive types
 
 There is a \note about it somewhere.
@@ -88,6 +87,7 @@ Talk about decidability, termination, etc.
 If it hasn't been translated into universe polymorphism
 
 * Janitor service
+** TODO Fix replace code
 ** TODO cataI is not defined
 ** TODO Explain that \overbar turns a tagged description into a description
 ** TODO Fix explanation of elaboration of constructors

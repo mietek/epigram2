@@ -440,6 +440,14 @@ Filling the hole in $\F{cata}$ with \(\F{replace}\: \V{D}\: (\Mu{\V{D}})\: \V{T}
 problem. In the type theory, we have built a generic catamorphism. Any
 data-type will now come equipped with this operation, for free.
 
+The astute reader will have been struck by the type of $\F{replace}$:
+it is \emph{almost} the morphism part -- sometimes called \emph{map}
+-- of the functor $\V{D}$ from $\V{X}$ to $\V{Y}$ in $\Set$. Just as
+the $\F{induction}$ is the dependent version of $\cata$, $\F{replace}$
+is the dependent version of the map, which uses the induction
+hypotheses. For space reason, we will not present the non-dependent
+map. It can be found in the Agda model.
+
 \begin{wstructure}
 <- Deriving generic functions
     <- Taking a Desc and computing a function
