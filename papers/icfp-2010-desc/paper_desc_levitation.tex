@@ -3,10 +3,10 @@
 
 In this section, we will fulfil several promises. One promise we made
 was to effectively implement the code of the $\Desc$ universe. Another
-promise we tacitly was the existence of the type formers for finite
-sets. Despite being a perilous pedagogical exercise for the authors,
-we hope to convey to the reader the dizzy feeling of levitation,
-without the falling.
+promise we tacitly made was the existence of the type formers for
+finite sets. Despite being a perilous pedagogical exercise for the
+authors, we hope to convey to the reader the dizzy feeling of
+levitation, without the falling.
 
 \subsection{Implementing finite sets}
 
@@ -121,9 +121,9 @@ condense the entire naming scheme of data-types \emph{in itself}.
 \end{wstructure}
 
 We shall now fulfil our promises for $\Desc$. We are going to
-implement the codes of the universe of descriptions. Interestingly, in
-and by itself, the system of codes, $\Desc$, is nothing but a data-type. We
-are in the same situation than with $\EnumU$: we ought to be able to describe
+implement the codes of the universe of descriptions. In and by itself,
+the system of codes, $\Desc$, is nothing but a data-type. We are in
+the same situation as with $\EnumU$: we ought to be able to describe
 the codes of $\Desc$ in $\Desc$ itself. Hence, this code would be a
 first-class citizen, born with the standard, generic equipment of
 data-types.
@@ -156,10 +156,10 @@ Our first attempt is the following:
 Let us explain how we have proceeded and the obstacle we face. Much as
 the data-types we have seen so far, we first have to choose a
 constructor. Constructors correspond to the code's constructors:
-$\DUnit$, $\DSigma{\!}{\!}$, and $\DIndx{\!}$. The reader will notice that the
-tagged notation we have used so far for $\Desc$ constructors now fully
-make sense: these were actually the tags we are defining. \note{This
-  sentence badly needs a rephrasing.}
+$\DUnit$, $\DSigma{\!}{\!}$, and $\DIndx{\!}$. The reader will notice
+that the tagged notation we have used for the $\Desc$ constructors now
+fully makes sense: these were actually the tags we are
+defining.
 
 The case of $\DUnit$ is trivial: we immediately reach the end of the
 data-type. $\DUnit$ has no payload. The case of $\DIndx{\!}$ comes
@@ -238,10 +238,10 @@ definitional treatment.
 Equipped with $\DHindx{\!}{\!}$, we can describe the extended code of
 our universe of data-types, as shown in
 Figure~\ref{fig:desc-levitate}.  The $\DUnit$ and $\DIndx{\!}$ cases
-remains unchanged, as expected. We successfully describe the
-$\DSigma{\!}{\!}$ case, by a simple appeal to the higher-order
-induction on $\V{S}$. The $\DHindx{\!}{\!}$ case consists in packing
-the $\V{H}$ in $\Set$ with a recursive argument.
+remain unchanged, as expected. We successfully describe the
+$\DSigma{\!}{}$ case, by a simple appeal to the higher-order induction
+on $\V{S}$. The $\DHindx{\!}{\!}$ case consists in packing the $\V{H}$
+in $\Set$ with a recursive argument.
 
 At a first glance, we have achieved our goal. We have described the
 codes of the universe of description. Taking the fix-point of this
@@ -642,7 +642,7 @@ structure.
             -> Ability to compute over data
 \end{wstructure}
 
-With the free monad construction, we have seen two kind of generic
+With the free monad construction, we have seen two kinds of generic
 operations. Firstly, we have derived a new data-structure from another
 one: we make the free monad from its underlying functor. To do so, we
 crucially rely on the fact that data-types are nothing but codes. We
@@ -651,4 +651,4 @@ it. Extending a data-type might give rise to a more structured object,
 as was the case here.  So, secondly, we have equipped this new
 data-type with its inherent structure: the \bind\ and
 \return\ operations. We have been able to build them as generic
-functions. 
+functions.
