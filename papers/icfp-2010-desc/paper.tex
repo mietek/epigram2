@@ -289,14 +289,6 @@ dependent-type theory. Our contributions are the following:
     -> Low requirement / high applicability
 \end{wstructure}
 
-In this paper, we have presented a universe of data-types for a
-dependently-typed language. To ensure the generality of our proposal,
-this system has been presented in a reasonable type theory: our model
-is composed of $\Pi$ and $\Sigma$-types, together with finite sets. In
-particular, we have made no assumption about the underlying
-propositional equality. Hence, our proposal can be applied in various
-settings.
-
 \begin{wstructure}
 <- Formalize a rationnalized presentation of types
     <- Working directly with codes is not practical
@@ -306,14 +298,13 @@ settings.
     -> Should not be afraid by codes
 \end{wstructure}
 
-Because our approach is extensively using codes for universes, we give
-a rationalised presentation of codes. By adapting bidirectional
-type-checking to our setting, we are able to tame the verbosity of
-codes. The distinction between type checking and type synthesis builds
-a \emph{type propagation} system. The developer is thus able to write
-convenient, high-level expressions that are elaborated into low-level
-terms in the type theory. By adapting this technology to our
-universes, we make practical the usage of codes for data-types.
+In this paper, we have presented a universe of data-types for a
+dependently-typed language. To ensure the generality of our proposal,
+this system has been built in a familiar type theory, with no
+assumption about the underlying propositional equality. Because our
+approach is extensively using codes for universes, we have given a
+rationalised presentation of codes. Thanks to type propagation, we
+make practical the usage of codes for data-types.
 
 \begin{wstructure}
 <- Dependently-typed presentation of simple inductive types
@@ -338,12 +329,11 @@ universes, we make practical the usage of codes for data-types.
 
 To introduce our approach, we have presented a universe of
 description. This universe has the expressive power of simple
-inductive types, as we can find them in simply typed languages. This
-technique relies on two key particularities of dependent types:
-universe construction and sigma types. Going one step further, we
-present an implementation of this universe as a self-described
-object. Hence, for a minimal extension of the type-theory, we get a
-closed presentation of data-types, where data-types are just data.
+inductive types, as we can find them in simply typed languages. Going
+one step further, we present an implementation of this universe as a
+self-described object. Hence, for a minimal extension of the
+type-theory, we get a closed, self-describing presentation of
+data-types, where data-types are just data.
 
 \begin{wstructure}
 <- Indexed descriptions for dependent data-types
@@ -360,8 +350,8 @@ closed presentation of data-types, where data-types are just data.
 To model dependent data-types, we generalise our presentation to
 support indexing. The universe of indexed descriptions thus built
 encompass inductive families. Again, this universe is
-self-described. Moreover, we develop several examples of dependent
-data-types and some generic functions over them.
+self-describing. Moreover, we develop several examples of dependent
+data-types and generic functions over them.
 
 \begin{wstructure}
 <- All of this without cheating
@@ -371,7 +361,7 @@ data-types and some generic functions over them.
 \end{wstructure}
 
 We have presented a self-describing, self-hosted universe for
-data-types. We have shown the benefit of such approach, as we are able
+data-types. We have shown the benefit of such approach, by our ability
 to reflect data-types in our type-theory. This fosters a new way of
 considering generic programming: just as programming. Moreover,
 despite its egg-and-chicken nature, this presentation does not suffer

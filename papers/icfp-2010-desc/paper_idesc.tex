@@ -921,13 +921,13 @@ that we will see in the next section.
 \end{wstructure}
 
 In this section, we develop more structure for our indexed
-data-types. In Section~\ref{sec:desc-free-monad}, we have constructed
-a free monad operation on simple descriptions. Building on this
-experience, we are going to present its equivalent in the indexed
-world. The process the same. Namely, given an indexed functor, we
-derive the indexed functor coding its free monad:
-\note{pwm: Whoa there. Maybe we should say something about IMonads in
-general before we get to this point?}
+data-types. In Section~\ref{sec:desc-free-monad}, we have built a free
+monad operation for simple descriptions. Building on this experience,
+we are going to present its equivalent in the indexed world. The
+process the same. Namely, given an indexed functor, we derive the
+indexed functor coding its free monad: \note{pwm: Whoa there. Maybe we
+  should say something about IMonads in general before we get to this
+  point?}
 
 \[\stk{
 \begin{array}{ll}
@@ -945,7 +945,7 @@ general before we get to this point?}
 }\]
 
 Just as in the universe of descriptions, this construction comes with
-an obvious \return and a substitution operation, the \bind. Its type
+an obvious \return\ and a substitution operation, the \bind. Its type
 signature is the following:
 
 \newcommand{\substI}{\F{substI}}
@@ -983,13 +983,13 @@ signature is the following:
 
 In Section~\ref{sec:idesc-examples}, we had the intuition that our
 datatypes $\HExprD$ and $\HExprVarD{\V{dom}}$ enjoy a monadic structure. We had
-identified the variable substitution operation as the \bind of a free
+identified the variable substitution operation as the \bind\ of a free
 monad. The definition of $\substI$ above confirm our intuition: using
 $\substI$, we should easily obtain $\substH$. To do so, we first have
 to massage the definition of our data-type, to exhibit its monadic
 structure.
 
-As previously mentioned, we identify $\Eval{}$ as the \return of the
+As previously mentioned, we identify $\Eval{}$ as the \return\ of the
 free monad, while the other components are the action of the monad. As
 a result, the definition is similar to $\HExprD$ presented in
 Figure~\ref{fig:hexpr-full}, at the exception of $\HExprAD$ that is
@@ -1053,14 +1053,14 @@ guiding us:
 
 Hence, we have completed our implementation of the evaluator for open
 terms. We started with a well-typed language of arithmetical
-expressions. We have seen how to take advantage of indexes to only
-present type-safe constructors. Then, we have implemented an evaluator
-for closed term, based on the generic catamorphism function. Having
-implemented an open term representation, we wanted a substitution
-operation, in order to close open terms in a context. Again, we have
-implemented this operation with the generic substitution
-operator. Hence, without much efforts, we have described the syntax of
-a well-typed language, together with its semantics.
+expressions. We have seen how to take advantage of indexes to define
+type-safe constructors. Then, we have implemented an evaluator for
+closed term, based on the generic catamorphism function. Having built
+an open term representation, we wanted a substitution operation, in
+order to close open terms in a context. Again, we have implemented
+this operation with the generic substitution operator. Hence, without
+much efforts, we have described the syntax of a well-typed language,
+together with its semantics.
 
 \begin{wstructure}
 <- IDesc

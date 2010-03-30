@@ -29,12 +29,11 @@ level $l$ is an object of type $\Set^{\blue{l}}$:
 \ldots
 }\]
 
-Consequently, we can implement the operations and examples developed
-above. We refer the reader to our Agda implementation, which take
-advantage of set polymorphism to implement the universe of indexed
-descriptions at any level. Further, we have coded $\IDesc{\!}$ in
-itself and have proved the isomorphism between the host and the
-embedded universes.
+The operations and examples developed in this paper stratify just as
+well. We refer the reader to our Agda model, which takes advantage of
+set polymorphism to implement the universe of indexed descriptions at
+any level. Further, we have coded $\IDesc{\!}$ in itself and have
+proved the isomorphism between the host and the embedded universes.
 
 \subsection{Related Work}
 
@@ -64,12 +63,13 @@ Rodriguez et al.~\cite{rodriguez:generic-libs-comparative}.
 In particular, our approach is similar in spirit with polytypic
 programming, as initiated by PolyP~\cite{jansson:polyp}. Indeed,
 generic functions, in our system, are built by induction on the
-pattern functor. Unlike PolyP, we do not have to resort to
-pre-processing code: our data-types are, natively, nothing but codes.
+pattern functor. Unlike PolyP, we do not have to resort to pre-process
+data-type definitions: our data-types are, natively, nothing but
+codes.
 
 Our approach also support the Generic
 Haskell~\cite{hinze:generic-haskell} model. This model, based on
-type-indexed data types, corresponds to computing new data-types from
+type-indexed data types, enables computing new data-types from
 others. This is natural in our system, as data-types descriptions are
 first-class.
 
@@ -77,7 +77,7 @@ Interestingly, our generic induction principle allows a programming
 style reminiscent to the Scrap Your Boilerplate~\cite{spj:syb} (SYB)
 approach. Like SYB, we provide a generic operator to manipulate and
 carry operations over data-types. However, unlike SYB, we do not need
-support from the compiler, as introduced by the $\CN{Typeable}$
+support from the compiler, as required by the $\CN{Typeable}$
 class. Indeed, in our setting, data-types are reflected in the
 language, hence our ability to manipulate them directly.
 
@@ -89,35 +89,37 @@ language, hence our ability to manipulate them directly.
 \end{wstructure}
 
 The interest in generic programming for dependent types is not new
-either. Norell~\cite{norell:msc-thesis} have shown the benefit of
+either. Norell~\cite{norell:msc-thesis} have given a formalization of
 polytypic programming in the setting of Alfa, a precursor of
 Agda. Similarly, Verbruggen et al.~\cite{verbruggen:polytype-prog-coq,
   verbruggen:polytype-coq} have developed a framework for polytypic
 programming in the Coq theorem prover. However, these works aim at
-\emph{modelling} Generic Haskell in a dependently-typed setting, for
-the purpose of proving correctness properties of Haskell code. Our
-approach is different in that we aim at building a foundation for
-data-types in a dependently typed theory.
+\emph{modelling} PolyP or Generic Haskell in a dependently-typed
+setting, for the purpose of proving correctness properties of Haskell
+code. Our approach is different in that we aim at building a
+foundation for data-types, in a dependently-typed theory, for a
+dependently-typed system.
 
 Closer to us is the work by Benke et
 al.~\cite{benke:universe-generic-prog}. This seminal work introduced
-the usage of universes for developing generic programs. Moreover, our
-own universes are rather similar to theirs: our universe of
-descriptions is similar to their universe of iterated induction, and
-our universe of indexed descriptions is isomorphic to their universe of
-finitary indexed induction. This is not surprising, as we share the
-same source of inspiration, namely induction recursion.
+the usage of universes for developing generic programs. Our own
+universes are rather similar to theirs: our universe of descriptions
+is similar to their universe of iterated induction, and our universe
+of indexed descriptions is isomorphic to their universe of finitary
+indexed induction. This is not surprising, as we share the same source
+of inspiration, namely induction recursion.
 
 However, we differ in several ways. First, they adopt a generative
 perspective: each universe extends the base type theory with both type
 formers and elimination rules. Thanks to the levitation, we only rely
 on a generic induction and a specialised
-$\switchD{\!}{\!}{\!}$. Second, the authors develop several universes,
-each with its own strengths and weaknesses, but lack a formal,
-unifying universe. With indexed descriptions, we subsume simple
-descriptions, hence avoiding the move to and from several
-codings. Finally, the authors often resort to an extensional notion of
-equality, while we have given an equality-agnostic
-presentation. Moreover, our presentation is arranged so as to use
-definitional equality as much as possible. Hence, in practice, the
-developer is relieved from many trivial proof obligations.
+$\switchD{\!}{\!}{\!}$. Second, the authors do not tackle the issue of
+\emph{programming} with such codes: it is not obvious, to us, how one
+can define, manipulate, and program over these coded data-types. With
+descriptions, we have shown how to abstract away codes and present a
+convenient and familiar presentation to the developer. Finally, the
+authors often resort to an extensional notion of equality, while we
+have given an equality-agnostic presentation. Beside, our presentation
+is arranged so as to use definitional equality as much as
+possible. Hence, in practice, the developer is relieved from many
+proof obligations.

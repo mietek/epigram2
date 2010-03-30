@@ -3,10 +3,10 @@
 
 In this section, we will fulfil several promises. One promise we made
 was to effectively implement the code of the $\Desc$ universe. Another
-promise we tacitly was the existence of the type formers for finite
-sets. Despite being a perilous pedagogical exercise for the authors,
-we hope to convey to the reader the dizzy feeling of levitation,
-without the falling.
+promise we tacitly made was the existence of the type formers for
+finite sets. Despite being a perilous pedagogical exercise for the
+authors, we hope to convey to the reader the dizzy feeling of
+levitation, without the falling.
 
 \subsection{Implementing finite sets}
 
@@ -38,8 +38,8 @@ specification:
      {\Gamma \vdash \Bhab{\ConsE{\V{t}}{\V{e}}}{\EnumU}}
 }\]
 
-The names $\NilE$ and $\ConsE{\!}{\!}$ are absolutely not a
-coincidence. $\EnumU$ is indeed isomorphic to a list of $\UId$s. In
+The names $\NilE$ and $\ConsE{\!}{\!}$ are not a coincidence. $\EnumU$
+is indeed isomorphic to a list of $\UId$s. In
 Section~\ref{sec:desc-examples}, we have shown how to build lists in
 the universe of description. Therefore, the actual implementation of
 $\EnumU$ boils down to the following, trivial definition:
@@ -61,12 +61,12 @@ $\EnumU$ boils down to the following, trivial definition:
     -> Anything else remains the same (switch, EnumT, 0, 1+)
 \end{wstructure}
 
-Let us examine the consequences of our act. First of all, we discover
-that the type theory does not actually need to be extended with the
-type former $\EnumU$, the constructors $\NilE$ and $\ConsE$. We have
-just defined $\EnumU$ above, by fix-point over the pattern functor denoted
-by $\ListD$. $\NilE$ and $\ConsE$ are simply the $\ListNil$ and $\ListCons$
-constructors of lists.
+Let us examine the consequences. First of all, we discover that the
+type theory does not actually need to be extended with the type former
+$\EnumU$, the constructors $\NilE$ and $\ConsE$. We have just defined
+$\EnumU$ above, by fix-point over the pattern functor denoted by
+$\ListD$. $\NilE$ and $\ConsE$ are simply the $\ListNil$ and
+$\ListCons$ constructors of lists.
 
 Another interesting consequence concerns the $\spi{\!}{\!}$ operator:
 it can actually be implemented with the generic $\F{induction}$
@@ -79,8 +79,8 @@ Apart from these changes, we are left with implementing the other
 components of finite sets. This consists in $\EnumT$, $\Ze$, $\Su$, as
 well as the $\F{switch}$ operator. Note that the actual implementation
 of $\EnumU$ does not influence our implementation of $\EnumT$: be they
-hard-coded or codes in the $\Desc$ universe, the $\EnumU$ objects just
-behave similarly. We have witnessed this effect when carrying this
+hard-coded or codes in the $\Desc$ universe, the $\EnumU$ objects
+behave the same. We have witnessed this effect when carrying the
 operation in Epigram, moving from an hard-coded presentation to a
 self-hosted one. Absolutely no change to the $\EnumT$ objects was
 required.
@@ -98,7 +98,7 @@ required.
 In this section, we have replaced a low-level presentation of finite
 sets by a self-hosted one, expressed in the universe of
 descriptions. However, formally, the content of the type theory
-remains unchanged: objects which were present before the modification
+remains unchanged: objects that were present before the modification
 are still there. Conversely, we have not introduced any spurious
 object.
 
@@ -121,9 +121,9 @@ condense the entire naming scheme of data-types \emph{in itself}.
 \end{wstructure}
 
 We shall now fulfil our promises for $\Desc$. We are going to
-implement the codes of the universe of descriptions. Interestingly, in
-and by itself, the system of codes, $\Desc$, is nothing but a data-type. We
-are in the same situation than with $\EnumU$: we ought to be able to describe
+implement the codes of the universe of descriptions. In and by itself,
+the system of codes, $\Desc$, is nothing but a data-type. We are in
+the same situation than with $\EnumU$: we ought to be able to describe
 the codes of $\Desc$ in $\Desc$ itself. Hence, this code would be a
 first-class citizen, born with the standard, generic equipment of
 data-types.
@@ -138,7 +138,7 @@ data-types.
     -> Show partial code [figure]
 \end{wstructure}
 
-Our first tentative attempt is the following:
+Our first attempt is the following:
 
 \[\stk{
 \DescD : \Desc \\
@@ -156,10 +156,10 @@ Our first tentative attempt is the following:
 Let us explain how we have proceeded and the obstacle we face. Much as
 the data-types we have seen so far, we first have to choose a
 constructor. Constructors correspond to the code's constructors:
-$\DUnit$, $\DSigma{\!}{\!}$, and $\DIndx{\!}$. The reader will notice that the
-tagged notation we have used so far for $\Desc$ constructors now fully
-make sense: these were actually the tags we are defining. \note{This
-  sentence badly needs a rephrasing.}
+$\DUnit$, $\DSigma{\!}{\!}$, and $\DIndx{\!}$. The reader will notice
+that the tagged notation we have used for the $\Desc$ constructors now
+fully make sense: these were actually the tags we are
+defining. \note{This sentence badly needs a rephrasing.}
 
 The case of $\DUnit$ is trivial: we immediately reach the end of the
 data-type. $\DUnit$ has no payload. The case of $\DIndx{\!}$ comes
@@ -203,8 +203,8 @@ elements of $H$ to index as many recursive arguments.
 \stk{
 \data \Desc : \Set \where \\
 \;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
-    \ldots          & \:\:\ldots \\
-    \DHindx{\!}{\!} & \PI{\V{H}}{\Set} \Desc \To \Desc
+    \DHindx{\!}{\!} & \PI{\V{H}}{\Set} \Desc \To \Desc \\
+    \ldots          & \:\:\ldots
 \end{array}
 }
 \vspace{0.2in}
@@ -212,8 +212,8 @@ elements of $H$ to index as many recursive arguments.
 \stk{
 \descop{\_\:}{} : \Desc \To \Set \To \Set \\
 \begin{array}{@{}l@{\:=\:\:}ll}
-\ldots                        &  \ldots \\
-\descop{\DHindx{\V{H}}{\V{D}}}{\V{X}}     &  \TIMES{(\V{H} \To \V{X})}{\descop{\V{D}}{\V{X}}}
+\descop{\DHindx{\V{H}}{\V{D}}}{\V{X}}     &  \TIMES{(\V{H} \To \V{X})}{\descop{\V{D}}{\V{X}}} \\
+\ldots                                    &  \ldots 
 \end{array}
 }
 \end{array}
@@ -232,18 +232,18 @@ $\DIndx{\!}$ is first-order. Therefore, while both codes are
 \emph{extensionally} the same, in most practical implementation they
 would be dealt with rather differently. While definitional equality
 can cope with first order objects, the functional presentation
-introduced by $\DHindx{\!}{\!}$ is unlikely to be amenable to a purely
+introduced by $\DHindx{\!}{}$ is unlikely to be amenable to a purely
 definitional treatment.
 
 Equipped with $\DHindx{\!}{\!}$, we can describe the extended code of
 our universe of data-types, as shown in
 Figure~\ref{fig:desc-levitate}.  The $\DUnit$ and $\DIndx{\!}$ cases
-remains unchanged, as expected. We successfully describe the
-$\DSigma{\!}{\!}$ case, by a simple appeal to the higher-order
+remain unchanged, as expected. We successfully describe the
+$\DSigma{\!}{}$ case, by a simple appeal to the higher-order
 induction on $\V{S}$. The $\DHindx{\!}{\!}$ case consists in packing
 the $\V{H}$ in $\Set$ with a recursive argument.
 
-In a first glance, we have achieved our goal. We have described the
+At a first glance, we have achieved our goal. We have described the
 codes of the universe of description. Taking the fix-point of this
 object gives us $\Desc$, up to isomorphism. We have implemented our
 code of data-types as an object levitating inside itself. However,
@@ -287,7 +287,7 @@ this term down to the low-level type theory. The $\EnumT{[ \ldots ]}$
 construct elaborates to a finite set $e$ in $\EnumU$, inhabited by the
 codes. Then, we can type-check the case definition, between square
 brackets $[ \ldots ]$. This term $\V{f}$ is pushed into the type
-$\EnumT{\V{e}} \To \Desc$. This corresponds to a finite function
+$\EnumT{\V{e}} \To \Mu{\DescD}$. This corresponds to a finite function
 definition, as formalised in Figure~\ref{fig:type-checking}.
 
 What happens if we unfold the definition? We ought to build the following term:
@@ -411,16 +411,17 @@ us take a look at this jigsaw:
   \F{induction}\: \V{D}\:\V{x}\: (\LAM{\_}\V{T})\: (\LAM{\V{xs}\:\V{hs}} \V{f}\: \SHED)
 }\]
 
-We are left with implementing filling the hole. Recall that we have
+We are left with filling the hole. Recall that we have
 \(\Bhab{\V{xs}}{\descop{\V{D}}{\Mu{\V{D}}}}\) and
-\(\Bhab{\V{hs}}{\All{\V{D}}{(\Mu{\V{D}})}{(\LAM{\_} \V{T})}{\V{xs}}}\) at hand. Our goal
-is to make an element of \(\descop{\V{D}}{\V{T}}\). Intuitively, $\V{xs}$ is of
-the right shape, but its sub-elements are of the wrong type. On the
-other hand, for each sub-element of $\V{xs}$, $\V{hs}$ gives us the
-corresponding element in $\V{T}$. Hence the name ``induction
-hypotheses''. Therefore, to construct an element of \(\descop{\V{D}}{\V{T}}\),
-we replace the recursive components of \(\V{xs}\) by their counterpart in
-\(\V{hs}\):
+\(\Bhab{\V{hs}}{\All{\V{D}}{(\Mu{\V{D}})}{(\LAM{\_} \V{T})}{\V{xs}}}\)
+at hand. Our goal is to make an element of
+\(\descop{\V{D}}{\V{T}}\). Intuitively, $\V{xs}$ is of the right
+shape, but its sub-elements are of the wrong type. On the other hand,
+for each sub-element of $\V{xs}$, $\V{hs}$ gives us the corresponding
+element in $\V{T}$. Hence the name ``induction
+hypotheses''. Therefore, to construct an element of
+\(\descop{\V{D}}{\V{T}}\), we replace the recursive components of
+\(\V{xs}\) by their counterpart in \(\V{hs}\):
 
 \[\stk{
 \F{replace} : \stk{\PITEL{\V{D}}{\Desc}
@@ -457,7 +458,8 @@ operation, the catamorphism, from a pre-existing generic operation,
 the induction principle. This has been made possible by our ability to
 manipulate descriptions as first-class objects: the catamorphism is,
 basically, a function mapping a $\Desc$ to a data-type specific
-operation.
+operation. This programming style is reminiscent to polytypic
+languages, such as PolyP~\cite{jansson:polyp}.
 
 Moreover, the $\F{replace}$ function demonstrates the benefit of an
 approach based on universes. The data-types living in the universe of
@@ -490,8 +492,8 @@ free monad over $F$ is defined by the following data-type:
 
 \[
 \stk{
-\data \FMFreeMonad : \PITEL{\V{F}}{\Set \To \Set} 
-                     \PI{\V{X}}{\Set} 
+\data \FMFreeMonad\: \PITEL{\V{F}}{\Set \To \Set} 
+                     \PITEL{\V{X}}{\Set} :
                      \Set 
 \where \\
 \;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
@@ -547,9 +549,9 @@ the full-blown free monad construction.
 \end{wstructure}
 
 Of course, we must equip the resulting data-types with operations
-delivering a monadic interface. As usual, \(\LAM{\x}\DVar{\x}\)
-performs the r\^ole of \return, embedding variables into terms. The
-\bind operation corresponds to \emph{substitution}. We will now
+delivering a monadic interface. As expected, \(\LAM{\x}\DVar{\x}\)
+plays the r\^ole of \return, embedding variables into terms. The
+\bind\ operation corresponds to \emph{substitution}. We will now
 implement it, as a generic function.
 
 Our implementation will appeal to the $\cata$ function developed
@@ -576,9 +578,8 @@ arguments to $\cata$ as possible:
 
 Our task is therefore to implement the algebra of the
 catamorphism. Intuitively, its role is to catch appearances of
-$\DVar{\V{x}}$ and replace them by $\V{\sigma}\: \V{x}$. Otherwise, it should simply
-appeal to the induction hypothesis. This corresponds to the following
-definition:
+$\DVar{\V{x}}$ and replace them by $\V{\sigma}\: \V{x}$. This
+corresponds to the following definition:
 
 \[\stk{
 \begin{array}{@{}ll}
@@ -604,16 +605,19 @@ definition:
             <- Substitution / bind
 \end{wstructure}
 
-Filling the sub-goal with $\apply\: \V{D}\: \V{X}\: \V{Y}\: \V{\sigma}$
-completes the implementation. To sum up, we have implemented the free
-monad construction for an arbitrary tagged description. This gives the
-developer the ability, for any data-type, to extend it with a notion
-of variable. Then, we have equipped this structure with the
-corresponding monadic operation, \bind and \return. Whereas the
-\return is a trivial variable former, the \bind operation corresponds
-to the substitution of variables by terms. We have shown how to
-implement it, for any free monad.
-
+Filling the sub-goal with $\apply\: \V{D}\: \V{X}\: \V{Y}\:
+\V{\sigma}$ completes the implementation. To sum up, we have
+implemented the free monad construction for an arbitrary tagged
+description. This gives the developer the ability, for any data-type,
+to extend it with a notion of variable. Then, we have equipped this
+structure with the corresponding monadic operation, \bind\ and
+\return. Whereas the \return\ is a trivial variable former, the
+\bind\ operation corresponds to the substitution of variables by
+terms. We have shown how to implement it, for any free monad. This
+programming style is reminiscent to the type-indexed data
+types~\cite{hinze:generic-haskell}, as implemented in Generic Haskell:
+from data-types, we built new data-types and equip them with some
+structure.
 
 \begin{wstructure}
 <- Deriving new data-structure and functions on them
@@ -627,15 +631,13 @@ implement it, for any free monad.
             -> Ability to compute over data
 \end{wstructure}
 
-With the free monad construction, we have seen two kind of generic
+With the free monad construction, we have seen two kinds of generic
 operations. Firstly, we have derived a new data-structure from another
 one: we make the free monad from its underlying functor. To do so, we
 crucially rely on the fact that data-types are nothing but codes. We
 are therefore entitled to modify this code and, in this case, extend
-it. Extending a data-type might give rise to a more structured
-object, as was the case here.
-
-So, secondly, we have equipped this new data-type with its inherent
-structure: the \bind and \return operations. We have been able to
-build them as generic functions. Here, we rely on our ability to
-compute over descriptions.
+it. Extending a data-type might give rise to a more structured object,
+as was the case here.  So, secondly, we have equipped this new
+data-type with its inherent structure: the \bind\ and
+\return\ operations. We have been able to build them as generic
+functions. 
