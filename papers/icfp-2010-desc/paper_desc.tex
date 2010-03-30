@@ -435,15 +435,15 @@ $x$ in $\Mu{\V{D}}$ and claiming that the motive $\V{P}$ is realised on $\V{x}$.
                        & \PI{\V{xs}}{\descop{\V{D}}{\V{X}}} 
                          \Set 
 \end{array} \\
-\All{\DId}{\V{X}}{\V{P}}{\V{x}} \mapsto \V{P}\: \V{x} \\
-\All{(\DConst{\V{Z}})}{\V{X}}{\V{P}}{\V{z}} \mapsto 
+\All{\DUnit}{\V{X}}{\V{P}}{\Void} = 
     \Unit \\
-\All{(\DProd{\V{D}}{\V{D'}})}{\V{X}}{\V{P}}{\pair{\V{d}}{\V{d'}}{}} \mapsto 
-    \TIMES{\All{\V{D}}{\V{X}}{\V{P}}{\V{d}}}{\All{\V{D'}}{\V{X}}{\V{P}}{\V{d'}}} \\
-\All{(\DSigma{\V{S}}{\V{T}})}{\V{X}}{\V{P}}{\pair{\V{a}}{\V{b}}{}} \mapsto 
-    \All{(\V{T}\: \V{a})}{\V{X}}{\V{P}}{\V{b}} \\
-\All{(\DPi{\V{S}}{\V{T}})}{\V{X}}{\V{P}}{\V{f}} \mapsto 
-    \PI{\V{\V{s}}}{\V{S}} \All{(\V{T}\: \V{a})}{\V{X}}{\V{P}}{(\V{f}\: \V{s})}
+\All{(\DSigma{\V{S}}{\V{T}})}{\V{X}}{\V{P}}{\pair{\V{a}}{\V{b}}{}} = 
+    \All{(\V{T}\: a)}{\V{X}}{\V{P}}{\V{b}} \\
+\All{(\DIndx{\V{D}})}{\V{X}}{\V{P}}{\pair{\V{a}}{\V{b}}{}} =
+    \TIMES{\V{P}\: \V{a}}{\All{\V{D}}{\V{X}}{\V{P}}{\V{b}}} \\
+\All{(\DHindx{\V{H}}{\V{D}})}{\V{X}}{\V{P}}{\pair{\V{f}}{\V{b}}{}} =
+    \TIMES{(\PI{\V{i}}{\V{H}} \V{P}\: (\V{f}\: \V{i}))}
+          {\All{\V{D}}{\V{X}}{\V{P}}{\V{b}}}
 }
 &
 %%
@@ -456,16 +456,16 @@ $x$ in $\Mu{\V{D}}$ and claiming that the motive $\V{P}$ is realised on $\V{x}$.
                              \PI{\V{xs}}{\descop{\V{D}}{\V{X}}} 
                              \All{\V{D}}{\V{X}}{\V{P}}{\V{xs}} 
 \end{array} \\
-\all{\DId}{\V{X}}{\V{P}}{\V{R}}{\V{x}} = 
-    \V{R}\: \V{x} \\
-\all{(\DConst{\V{Z}})}{\V{X}}{\V{P}}{\V{R}}{\V{z}} = 
+\all{\DUnit}{\V{X}}{\V{P}}{\V{R}}{\Void} =
     \Void \\
-\all{(\DProd{\V{D}}{\V{D'}})}{\V{X}}{\V{P}}{\V{R}}{\pair{\V{d}}{\V{d'}}{}} =
-    \pair{\all{\V{D}}{\V{X}}{\V{P}}{\V{R}}{\V{d}}}{\all{\V{D'}}{\V{X}}{\V{P}}{\V{R}}{\V{d'}}}{} \\
-\all{(\DSigma{\V{S}}{\V{T}})}{\V{X}}{\V{P}}{\V{R}}{\pair{\V{a}}{\V{b}}{}} = 
-    \all{(\V{T}\: \V{a})}{\V{X}}{\V{P}}{\V{R}}{\V{b}} \\
-\all{(\DPi{\V{S}}{\V{T}})}{\V{X}}{\V{P}}{\V{R}}{\V{f}} = 
-    \LAM{\V{s}} \all{(\V{T}\: \V{s})}{\V{X}}{\V{P}}{\V{R}}{(\V{f}\: \V{s})}
+\all{(\DSigma{\V{S}}{\V{T}})}{\V{X}}{\V{P}}{\V{R}}{\pair{\V{a}}{\V{b}}{}} =
+    \all{(\V{T}\: a)}{\V{X}}{\V{P}}{\V{R}}{\V{b}} \\
+\all{(\DIndx{D})}{\V{X}}{\V{P}}{\V{R}}{\pair{\V{a}}{\V{b}}{}} =
+    \pair{\V{R}\: \V{a}}
+         {\all{\V{D}}{\V{X}}{\V{P}}{\V{R}}{\V{b}}}{} \\
+\all{(\DHindx{H}{D})}{\V{X}}{\V{P}}{\V{R}}{\pair{\V{f}}{\V{b}}{}} =
+    \pair{\LAM{i} \V{R}\: (\V{f}\: \V{i})}
+         {\all{\V{D}}{\V{X}}{\V{P}}{\V{R}}{b}}{}
 \end{array}
 }
 \]
