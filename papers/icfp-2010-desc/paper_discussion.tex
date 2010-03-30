@@ -53,12 +53,12 @@ proved the isomorphism between the host and the embedded universes.
         <- Scratch your boilerplate \cite{spj:syb}
 \end{wstructure}
 
-Generic programming is a vast topic. We refer our reader to Garcia et
-al.~\cite{garcia:generic-comparative-study} for a broad overview of
+Generic programming is a vast topic. We refer our reader to
+\citet{garcia:generic-comparative-study} for a broad overview of
 generic support in various languages. In the sole context of Haskell,
 there is a myriad of proposals. These approaches are presented and
-compared in Hinze et al.~\cite{hinze:generic-approach-comparative} and
-Rodriguez et al.~\cite{rodriguez:generic-libs-comparative}.
+compared in \citet{hinze:generic-approach-comparative} and
+\citet{rodriguez:generic-libs-comparative}.
 
 In particular, our approach is similar in spirit with polytypic
 programming, as initiated by PolyP~\cite{jansson:polyp}. Indeed,
@@ -91,7 +91,7 @@ language, hence our ability to manipulate them directly.
 The interest in generic programming for dependent types is not new
 either. Norell~\cite{norell:msc-thesis} have given a formalization of
 polytypic programming in the setting of Alfa, a precursor of
-Agda. Similarly, Verbruggen et al.~\cite{verbruggen:polytype-prog-coq,
+Agda. Similarly, \citet{verbruggen:polytype-prog-coq,
   verbruggen:polytype-coq} have developed a framework for polytypic
 programming in the Coq theorem prover. However, these works aim at
 \emph{modelling} PolyP or Generic Haskell in a dependently-typed
@@ -100,14 +100,13 @@ code. Our approach is different in that we aim at building a
 foundation for data-types, in a dependently-typed theory, for a
 dependently-typed system.
 
-Closer to us is the work by Benke et
-al.~\cite{benke:universe-generic-prog}. This seminal work introduced
-the usage of universes for developing generic programs. Our own
-universes are rather similar to theirs: our universe of descriptions
-is similar to their universe of iterated induction, and our universe
-of indexed descriptions is isomorphic to their universe of finitary
-indexed induction. This is not surprising, as we share the same source
-of inspiration, namely induction recursion.
+Closer to us is the work by \citet{benke:universe-generic-prog}. This
+seminal work introduced the usage of universes for developing generic
+programs. Our own universes are rather similar to theirs: our universe
+of descriptions is similar to their universe of iterated induction,
+and our universe of indexed descriptions is isomorphic to their
+universe of finitary indexed induction. This is not surprising, as we
+share the same source of inspiration, namely induction recursion.
 
 However, we differ in several ways. First, they adopt a generative
 perspective: each universe extends the base type theory with both type
