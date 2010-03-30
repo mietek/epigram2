@@ -429,11 +429,14 @@ hypotheses''. Therefore, to construct an element of
                    \PI{\V{xs}}{\descop{\V{D}}{\V{X}}} 
                    \All{\V{D}}{\V{X}}{(\LAM{\_}\V{Y})}{\V{xs}} \To
                    \descop{\V{D}}{\V{Y}}} \\
-\F{replace}\: \DUnit\:          \V{X}\: \V{Y}\: \Void\:          \Void          \mapsto \Void \\
+\F{replace}\: \DUnit\:          \V{X}\: \V{Y}\: \Void\:          \Void          \mapsto 
+    \Void                                                                                                         \\
 \F{replace}\: (\DSigma{\V{S}}{\V{D}})\: \V{X}\: \V{Y}\: \pair{\V{s}}{\V{xs}}{}\: \V{ys}             \mapsto
     \pair{\V{s}}{\F{replace}\: {\V{D}~\V{s}}\: \V{X}\: \V{Y}\: \V{xs}\: \V{ys}}{}                                 \\
-\F{replace}\: (\DIndx{\V{D}})\:     \V{X}\: \V{Y}\: \pair{\V{x}}{\V{xs}}{}\: \pair{\V{y}}{\V{ys}}{} \mapsto
-    \pair{\V{y}}{\F{replace}\: \V{D}\: \V{X}\: \V{Y}\: \V{xs}\: \V{ys}}{}
+\F{replace}\: (\DIndx{\V{D}})\:     \V{X}\: \V{Y}\: \pair{\V{x}}{\V{xs}}{}\: \pair{\V{y}}{\V{ys}}{} \mapsto       \\
+\qquad  \pair{\V{y}}{\F{replace}\: \V{D}\: \V{X}\: \V{Y}\: \V{xs}\: \V{ys}}{}                                     \\
+\F{replace}\: (\DHindx{\V{H}}{\V{D}})\: \V{X}\: \V{Y}\: \pair{\V{f}}{\V{xs}}{}\: \pair{\V{g}}{\V{ys}}{} \mapsto   \\
+\qquad  \pair{\V{g}}{\F{replace}\: \V{D}\{ \V{X}\: \V{Y}\: \V{g}\: \V{ys}}{}
 }\]
 
 Filling the hole in $\F{cata}$ with \(\F{replace}\: \V{D}\: (\Mu{\V{D}})\: \V{T}\: \V{xs}\: \V{hs}\) closes the
