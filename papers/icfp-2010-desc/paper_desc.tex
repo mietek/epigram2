@@ -78,8 +78,8 @@ our dependently-typed setting. Here, the notion of sum-of-product
 naturally translates into \emph{sigmas-of-sigmas}. However, beyond
 this intuition, it should be clear that a direct encoding of
 data-types through raw $\Sigma$-types is not a viable option. Indeed,
-just as for finite sets, encoding throw away information when we
-crucially need it. In the realm of data-types, things become even more
+just as for finite sets, encoding throws away information when we
+crucially need it. In the realm of data-types, things become even
 tougher, as one could legitimately expect an induction principle, for
 instance. Anonymous in a sea of $\Sigma$s, our data-types have little
 chance of survival. 
@@ -119,7 +119,7 @@ Even if it doesn't show off their full power?}
 The key idea behind universe construction is our ability to make names
 by defining new types. These names are called \emph{codes}. By
 defining a set of codes, we somehow define the syntax of a
-language. However, as such, a system of code is useless as it lacks a
+language. However, as such, a system of codes is useless as it lacks a
 semantics. Instead of equipping the universe of codes with some
 computational behaviour, we pragmatically chose to \emph{interpret}
 these codes back into the standard type theory. Hence, codes act only
@@ -193,7 +193,7 @@ by $\V{D}$.
 To give some intuition on this universe of descriptions, we now turn
 to some examples. For obvious pedagogical reasons, we will manually
 build these descriptions. However, it should be clear that, in
-practice, these definitions can be automatically constructed from an
+practice, these definitions can be automatically constructed from a
 Haskell-like $\data$ definition.
 
 \subsection{Examples}
@@ -318,7 +318,7 @@ from the tagged description $\V{TD}$.
 
 So far, for convenience, we have taken as granted the existence of
 $\Desc$, as presented in Figure~\ref{fig:desc_universe}. In
-particular, we have considered its code, $\DSigma{\!}{\!}$,
+particular, we have considered its codes, $\DSigma{\!}{\!}$,
 $\DIndx{\!}$, and $\DUnit$ as type formers, extending the basic type
 theory. Hence, in an implementation of this type theory, we need to
 extended it with these constructors and their typing rules. Although
@@ -344,7 +344,7 @@ So far, we have used our universe of descriptions to build
 functors. \note{ Strictly positive types anyone? } To illustrate its
 usage, we have implemented the pattern functors of natural numbers,
 lists, and binary trees. However, the class of functors expressible
-with descriptions enjoy another property: they all admit a
+with descriptions enjoys another property: they all admit a
 fix-point. Indeed, descriptions are interpreted into \emph{polynomial
   functors}~\cite{who?}\note{who is the relevant source for polynomial
   functors?}, as they are only composed of $\Sigma$-types, the unit
@@ -529,15 +529,15 @@ description. The induction principle as well as other generic
 operations follow for free.
 
 Doing so, we seal data-type definition behind a convenient
-abstraction. We take advantage of this abstraction barrier to tamper
+abstraction. We take advantage of this abstraction barrier to address
 the second issue. Namely, the developer would rather be presented a
-name rather than a fix-point of a pattern functor. Surprisingly, it is
+name than a fix-point of a pattern functor. Surprisingly, it is
 sufficient to \emph{label} the $\Mu{}$ constructor with the
 user-defined name. When pretty-printing this object, we just expose
 the label, instead of the definition in full.
 
-Regaining the ability to write data-type constructor is simply a
-matter of type propagation. We therefore extends the type-checking
+Regaining the ability to write data-type constructors is simply a
+matter of type propagation. We therefore extend the type-checking
 framework of Figure~\ref{fig:type-checking} with the following
 inference rule:
 
@@ -558,7 +558,7 @@ $\widetilde{\V{e}}$ the right-nested tuple terminated by $\Void$
 corresponding to the curried telescope $\vec{\V{e}}$.
 
 Hence, in the high-level expression language, the developer writes a
-familiar type constructors, applied to a telescope of arguments. In
+familiar type constructor, applied to a telescope of arguments. In
 the type propagation setting, this expression will be pushed to a
 $\Mu{}$ type of a tagged description. It is then straightforward to
 look-up the tag and turn the constructor form into the appropriate

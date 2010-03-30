@@ -6,12 +6,12 @@ languages. In particular, we have developed this technology in our
 on-going work on Epigram. However, in this paper,
 we strive to present our technology in the broadest setting
 possible. To this end, we are going to present a type theory from the
-ground-up.
+ground up.
 
 To the reader new to type theory, this first section will provide a
 gentle introduction to dependently-typed systems. To the reader
 familiar with type theory, she will recognise the basis of her
-favourite type theory, be it Agda or Coq for instance. This scene sets,
+favourite type theory, be it Agda or Coq, for instance. This scene sets,
 we have a common ground for discussion.
 
 \subsection{Base theory}
@@ -29,7 +29,7 @@ we have a common ground for discussion.
 In the following, we adopt a standard presentation for our type
 theory. It is defined by three forms of judgements: context validity
 judgements, typing judgements, and equality judgements. Formally,
-these judgements are presented as follow:
+these judgements are presented as follows:
 
 \[
 \begin{array}{ll}
@@ -76,7 +76,7 @@ Noticeably, we have adopted a judgemental presentation of
 equality. Therefore, we are not tied to a particular implementation
 choice. In particular, our system has been modelled in Agda, which
 features an intensional equality. On the other hand, it is used in
-Epigram, which equality has a slightly extensional
+Epigram, whose equality has a slightly extensional
 flavor~\cite{altenkirch:ott}. We expect users of fully extensional
 systems to also find their way through this presentation.
 
@@ -309,7 +309,7 @@ $\spi{\!}{\!}$ operator:
 A closer look to its type should reveal a certain familiarity with its
 equivalent for sets, $\Pi$. Indeed, $\spi{\!}{\!}$ defines a
 \emph{finite function space}, mapping elements of finite sets to
-objects in $\Set$. Intuitively, this operator build a right-nested
+objects in $\Set$. Intuitively, this operator builds a right-nested
 tuple, effectively mapping an object of $P\:i$ for each $i$ the finite
 domain.
 
@@ -358,7 +358,7 @@ information.
 
 However, our situation is significantly different from the one we
 faced with encoded data: while we were suffering from a crucial lack
-of information, we are now facing too much information, hence loosing
+of information, we are now facing too much information, hence losing
 focus. This is a general issue with the usage of codes, as they convey
 much more information than what the developer is willing to see. 
 
@@ -367,7 +367,7 @@ problem. In a nutshell, instead of being overflown by typing
 information, we will put it at work, automatically. The consequence is
 that, in such system, working with codes is \emph{practical}: one
 should not be worried by information overload, but how to use it as
-much as possible. Therefore, we should not be afraid by using code for
+much as possible. Therefore, we should not be afraid of using codes for
 practical purposes.
 
 
@@ -439,7 +439,7 @@ presentation, $\exprIn$ are subject to type \emph{checking}, while
 $\exprEx$ are subject to type \emph{synthesis}.
 \note{Why don't we need a context validity judgement, again?}
 
-The purpose of type propagation is to \emph{elaborate} an high-level
+The purpose of type propagation is to \emph{elaborate} a high-level
 expression into a term of the type theory, together with its
 type. This presentation builds on the experience gained in
 implementing Epigram 1~\cite{mcbride:view-from-the-left}. Being
@@ -512,17 +512,17 @@ syntax is reminiscent to Lisp notation for lists. The translation to
 elements of $\EnumU$ is straightforward.
 
 Finally, and more importantly, we are able to present the developer an
-abstraction of \emph{finite} function space. This work as follow. When
+abstraction of \emph{finite} function space. This works as follow. When
 an expression $\V{t}$ is pushed into a function which domain is a finite
 set, we instead elaborate it as a term in a small $\pi$-type. That is,
 a finite function. To realise our promise of a big $\Pi$-type, we
 elaborate a call to the $\F{switch}$ eliminator.
 
-The abstraction we have developed in this section are entirely
+The abstraction we have developed in this section is entirely
 transparent to the user. In the case of finite function space, the
-developer has never to explicitly \emph{call} the $\F{switch}$
+developer never has to explicitly \emph{call} the $\F{switch}$
 eliminator. For diagnosis purposes, a similar, reverse mechanism turns
-low-level terms into high-level expressions. Hence, this system, which
+low-level terms into high-level expressions. Hence, this system, whose
 complete presentation is out of the scope of this paper, seals the
 low-level type theory behind the high-level expressions.
 
@@ -554,7 +554,7 @@ dependent types. We have illustrated our approach with finite sets. We
 have abstracted away the low-level presentation of finite sets,
 offering a convenient syntax instead.
 
-This example teaches us that we should not be afraid by codes, as soon
+This example teaches us that we should not be afraid of codes, as soon
 as type information is available. We have shown how to rationalise
 this information in a formal presentation. Hence, we have shown that
 programming with such objects is practical. As we introduce more codes

@@ -3,10 +3,10 @@
 
 In this section, we will fulfil several promises. One promise we made
 was to effectively implement the code of the $\Desc$ universe. Another
-promise we tacitly made was the existence of the type formers for
-finite sets. Despite being a perilous pedagogical exercise for the
-authors, we hope to convey to the reader the dizzy feeling of
-levitation, without the falling.
+promise we tacitly was the existence of the type formers for finite
+sets. Despite being a perilous pedagogical exercise for the authors,
+we hope to convey to the reader the dizzy feeling of levitation,
+without the falling.
 
 \subsection{Implementing finite sets}
 
@@ -18,7 +18,7 @@ levitation, without the falling.
 \end{wstructure}
 
 In Section~\ref{sec:finite-sets}, we have given a specification of
-finite sets. It consists in the objects presented in
+finite sets. It consists of the objects presented in
 Figure~\ref{fig:typing-finite-set}. We are going to implement the
 $\EnumU$ type former and its constructors. Let us recall their
 specification:
@@ -121,9 +121,9 @@ condense the entire naming scheme of data-types \emph{in itself}.
 \end{wstructure}
 
 We shall now fulfil our promises for $\Desc$. We are going to
-implement the codes of the universe of descriptions. In and by itself,
-the system of codes, $\Desc$, is nothing but a data-type. We are in
-the same situation than with $\EnumU$: we ought to be able to describe
+implement the codes of the universe of descriptions. Interestingly, in
+and by itself, the system of codes, $\Desc$, is nothing but a data-type. We
+are in the same situation than with $\EnumU$: we ought to be able to describe
 the codes of $\Desc$ in $\Desc$ itself. Hence, this code would be a
 first-class citizen, born with the standard, generic equipment of
 data-types.
@@ -156,10 +156,10 @@ Our first attempt is the following:
 Let us explain how we have proceeded and the obstacle we face. Much as
 the data-types we have seen so far, we first have to choose a
 constructor. Constructors correspond to the code's constructors:
-$\DUnit$, $\DSigma{\!}{\!}$, and $\DIndx{\!}$. The reader will notice
-that the tagged notation we have used for the $\Desc$ constructors now
-fully make sense: these were actually the tags we are
-defining. \note{This sentence badly needs a rephrasing.}
+$\DUnit$, $\DSigma{\!}{\!}$, and $\DIndx{\!}$. The reader will notice that the
+tagged notation we have used so far for $\Desc$ constructors now fully
+make sense: these were actually the tags we are defining. \note{This
+  sentence badly needs a rephrasing.}
 
 The case of $\DUnit$ is trivial: we immediately reach the end of the
 data-type. $\DUnit$ has no payload. The case of $\DIndx{\!}$ comes
@@ -193,7 +193,7 @@ In order to capture a notion of higher-order induction, we need to
 extend our universe of descriptions. This consists in adding a code
 $\DHindx{\!}{\!}$ that takes an indexing set $\V{H}$. The code and its
 interpretation are presented in
-Figure~\ref{fig:hindx_desc}. Intuitively, $\DHindx{\!}{\!}$ use the
+Figure~\ref{fig:hindx_desc}. Intuitively, $\DHindx{\!}{\!}$ uses the
 elements of $H$ to index as many recursive arguments.
 
 \begin{figure}
@@ -229,7 +229,7 @@ Note that $\DIndx{\!}$ is isomorphic to $\DHindx{\Unit}{\!}$. However,
 we tolerate this duplication and do not replace $\DIndx{\!}$ by the
 more general $\DHindx{\!}{\!}$. Indeed, unlike its counterpart,
 $\DIndx{\!}$ is first-order. Therefore, while both codes are
-\emph{extensionally} the same, in most practical implementation they
+\emph{extensionally} the same, in most practical implementations they
 would be dealt with rather differently. While definitional equality
 can cope with first order objects, the functional presentation
 introduced by $\DHindx{\!}{}$ is unlikely to be amenable to a purely
@@ -238,8 +238,8 @@ definitional treatment.
 Equipped with $\DHindx{\!}{\!}$, we can describe the extended code of
 our universe of data-types, as shown in
 Figure~\ref{fig:desc-levitate}.  The $\DUnit$ and $\DIndx{\!}$ cases
-remain unchanged, as expected. We successfully describe the
-$\DSigma{\!}{}$ case, by a simple appeal to the higher-order
+remains unchanged, as expected. We successfully describe the
+$\DSigma{\!}{\!}$ case, by a simple appeal to the higher-order
 induction on $\V{S}$. The $\DHindx{\!}{\!}$ case consists in packing
 the $\V{H}$ in $\Set$ with a recursive argument.
 
@@ -549,7 +549,7 @@ We simply add a constructor, $\DVar{\!}$, and define its argument to
 be a $\DSigma{\V{X}}{\DUnit}$, that is an element of $\V{X}$. We keep
 $\V{E}$ and $\V{D}$ as they were, hence leaving the functor
 unchanged. Unfolding the interpretation of this definition, we
-convince ourself that this corresponds to the functor
+convince ourselves that this corresponds to the functor
 $\FMFreeMonadD$. The fix-point operation ties the knot and gives us
 the full-blown free monad construction.
 
@@ -642,7 +642,7 @@ structure.
             -> Ability to compute over data
 \end{wstructure}
 
-With the free monad construction, we have seen two kinds of generic
+With the free monad construction, we have seen two kind of generic
 operations. Firstly, we have derived a new data-structure from another
 one: we make the free monad from its underlying functor. To do so, we
 crucially rely on the fact that data-types are nothing but codes. We

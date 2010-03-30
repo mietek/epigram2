@@ -35,9 +35,9 @@ are allowed to influence types -- the vector type. \note{Reference
 
 However, this new class of objects cannot be defined by mere
 induction. In the case of vectors, for instance, we have to define the
-whole \emph{family} of vector in one go: vectors of all size needs to
+whole \emph{family} of vector in one go: vectors of all sizes need to
 be defined at the same time. Where simply-typed languages have
-inductive types, in dependently typed programming we the basic grammar of
+inductive types, in dependently typed programming the basic grammar of
 data-types should be that of inductive families of types. To this end, we
 rely on \emph{indexing}. We are going to transform the $\Desc$ universe into
 $\IDesc{\!}$, the universe of indexed descriptions. We express inductive families
@@ -68,7 +68,7 @@ a concrete example.}
 \end{wstructure}
 
 
-Before moving on indexed descriptions, we have to carry out some
+Before moving on to indexed descriptions, we have to carry out some
 maintenance work on descriptions. We presented $\Desc$ as the grammar
 of inductive types. Hence, the codes closely follow this grammar. In
 the following, we adopt an alternative presentation. With
@@ -608,7 +608,8 @@ will see a concrete example of this in the following example.
 \newcommand{\HExprFreeD}{\C{ExprD}^{\C{Free}}}
 \newcommand{\HExprAFreeD}{\C{ExprAD}^{\C{Free}}}
 
-We are going to define a syntax for a small
+So far, the examples we have seen lives in $\IDesc{\Unit}$, hence are
+not using any indexing. We are going to define a syntax for a small
 typed language. We consider two types, natural numbers and booleans:
 
 \[
@@ -635,7 +636,7 @@ expected type. We assume $\Nat$ and $\Bool$ represent natural numbers
 and booleans in the host language. Further, we also assume the
 existence of an addition and comparison operator in $\Nat$,
 respectively named $\F{plusHost}$ and $\F{leHost}$. We define $\Val{}$
-as follow:
+as follows:
 
 \[\stk{
 \Val{} : \Ty \To \Set \\
@@ -648,7 +649,7 @@ as follow:
 In our universe of descriptions, this data-type is represented by a
 tagged indexed description. We use the index to carry the type: the
 resulting description is indexed by $\Ty$. We observe that some
-constructors are ``polymorph'', namely $\Econd{}{}{}$ and $\Eval{}$. On the
+constructors are ``polymorphic'', namely $\Econd{}{}{}$ and $\Eval{}$. On the
 other hand, the $\Eplus$ and $\Ele$ constructors are
 index-dependent. $\Eplus$ is defined if and only if the result type --
 the index -- is $\Enat$, whereas $\Ele$ is defined if and only if the
@@ -732,7 +733,7 @@ The type of $\F{eval}$ is strikingly similar to a
 catamorphism. Indeed, implementing a single step of evaluation -- the
 algebra -- is sufficient, as $\F{cataI}$ \note{We have not defined
   \F{cataI}!} gives, for free, the full evaluator. The implementation
-is as follow:
+is as follows:
 
 
 \[\stk{
@@ -779,7 +780,7 @@ catamorphism.
 
 However, so far, we are only able to define and manipulate
 \emph{closed} terms. By abstracting over $\Val{}$, it is possible to
-build and manipulate \emph{open} terms, that is terms with symbolic
+build and manipulate \emph{open} terms, that is, terms with symbolic
 variables. On the model of $\Val{}$, we define $\Var{}{}$:
 
 \[\stk{
@@ -893,7 +894,7 @@ Abstracting away the book-keeping introduced by the context, this
 definition looks familiar. Indeed, it is extremely similar to a
 monadic \bind. This is not surprising as we are defining a first-order
 syntax with variables: our data-type enjoys more structure than what
-we are given. In particular, this is reminiscent to a free monad,
+we are given. In particular, this is reminiscent of a free monad,
 where $\Eval{}$ is the \return\ introducing variables. The substitution
 $\V{\sigma}$ is implemented from $\discharge$, by picking the domain and
 context corresponding to the type:
@@ -907,9 +908,142 @@ Where $\F{$\gamma$}_{\V{ty}}$ is short for
  $\caseB{\V{ty}}{\Enat  \To \gammaNat \\
                  \Ebool \To \gammaBool}$
 
-Instead of implementing $\substH$ in this special case, we can
-implement it in a generic setting, a \emph{free indexed-monad construction}
-that we will see in the next section.
+Instead of implementing $\substH$ in this special case, we shall
+implement it in a generic setting, and express our example in that
+setting. However, before entering the realm of generic structures, let
+us further explore the universe of indexed descriptions.
+
+\subsection{Constrained constructors}
+
+\begin{wstructure}
+!!! Need Help !!!
+<- Assuming a suitable notion of definitional equality for I
+    ???
+\end{wstructure}
+
+In the following, we ask $I$ to come equipped with a notion of
+definitional equality. Hence, we can legibly equates elements of $I$.
+
+\note{ I will need some tutorial on this ad-hoc notion of definitional
+  equality. Or what Conor's meant with that. }
+
+\begin{wstructure}
+<- Fin [figure]
+    <- Presentation with equality constraints
+    <- Example of constrained constructor
+        -> Constraints are translated into equalities
+    ???
+\end{wstructure}
+ 
+Another common dependent data-type is $\Fin{\!}$, the finite sets of
+numbers. $\Fin{\!}$ is a typical example of an inductive family using
+\emph{constrained constructors}. The constructors $\FinZero$ and
+$\FinSuc{\!}$ are only defined for an index distinct from $\NatZero$:
+
+
+\[
+\stk{
+\data \Fin{\!} : \PI{\V{n}}{\Nat} \Set \where \\
+\;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
+    \FinZero_{\V{n}}      & \Fin{(\NatSuc{\V{n}})}   \\
+    \FinSuc{\!}_{\V{n}}   & \Fin{\V{n}} \To \Fin{(\NatSuc{\V{n}})}
+\end{array}
+}
+\]
+
+One way to code constrained data-type is to appeal to equality. The
+constraints are therefore captured by equations in the data-type. In
+this case, we obtain the following definition:
+
+\[\stk{
+\FinD : \Nat \To \IDesc{\Nat} \\
+\begin{array}{@{}ll}
+\FinD\: \V{n} = \DSigma{\!}{\!} \!\!\!\!& (\EnumT{[ \FinZero , \FinSuc{\!} ]}) \\
+                        & \bigRedBracket{
+                          \begin{array}{l}
+                            \DSigma{\Nat}{\LAM{\V{m}} \DConst{(\V{n} \PropEq \NatSuc{\V{m}})}} \\
+                            \DSigma{\Nat}{\LAM{\V{m}} \DProd{\DVar{\V{m}}}{\DConst{(\V{n} \PropEq \NatSuc{\V{m}})}}}
+                          \end{array}
+                          }
+\end{array}
+}\]
+
+Intuitively, the constraint is captured as follows. First, we store an
+element $\V{m}$ of $\Nat$, thanks to a $\DSigma{\!}{\!}$. However, the
+constraint stipulates that $\V{m}$ cannot be \emph{any} natural
+numbers: it must be ``the index minus one''. This translates into the
+constraint $\V{n} \PropEq \NatSuc{\V{m}}$.
+
+\note{ Anything else? }
+
+\begin{wstructure}
+<- GADT-style data-type definition
+    <- We directly support it
+        <- Constraints turned into equalities
+            <- Fin example
+    <- Again, smooth transition from "today" data-types to advanced ones
+        <- Same grammar
+        /> More power
+    /> Equations in data-types are not a blessing
+        <- Complexify induction principle
+        <- Lose match between data-type definition and the elimination form
+\end{wstructure}
+
+The $\Fin{\!}$ example is also a well-known example of Generalised
+Abstract Data-Type (GADT) in Haskell. It comes as no surprise that our
+universe of indexed description supports this restricted class of
+inductive families. As we have seen with $\Fin{\!}$, constrained
+constructors are straightforwardly translated into equations.
+
+However, one could, quite rightfully, be worried by the introduction
+of equalities in the picture. In a programming context, equalities
+haunt us, begging for proofs. Hence, whereas the developer typed a
+constructor-constrained data-type, the elimination form will involve
+equalities and their proofs. As much as possible, one would rather
+avoid suffering from this burden. However, the equalities introduced
+here are rather special: they are \emph{equations} constraining
+variables to certain terms. Goguen et
+al.~\cite{goguen:pattern-matching} have shown, in the context of
+dependent pattern matching, how to tame these equations.
+
+\begin{wstructure}
+!!! Need Help !!!
+<- Brady optimisation: forcing
+    <- Source to source translation
+    <- Able to remove some constraints
+    -> Example: Fin [figure]
+    ??? More technical detail needed
+\end{wstructure}
+
+Further, we can actually remove these equations altogether. Let us
+look back at $\Fin{\!}$. We note that the equations are introduced because
+we are \emph{storing} the index of the inductive family, through
+$\V{m}$. Hence the constraints. However, \emph{inductive families need not
+  store their indices}~\cite{brady:index-inductive-families}. Applying
+the \emph{forcing} optimisation to our initial definition of $\Fin{\!}$
+gives the following, equivalent definition:
+
+\[\stk{
+\FinD : \Nat \To \IDesc{\Nat} \\
+\begin{array}{@{}llll}
+\FinD\: \NatZero     & = & \multicolumn{2}{l}{\DSigma{(\EnumT{[]})}{\Void} } \\
+\FinD\: (\NatSuc{\V{n}}) & = & \DSigma{\!}{\!}\!\!\!\!\! & (\EnumT{[ \FinZero , \FinSuc{\!} ]}) \\
+                     &   &             & \bigRedBracket{
+                                         \begin{array}{l}
+                                         \DConst{\Unit} \\
+                                         \DVar{\V{n}}
+                                         \end{array}
+                                         }
+\end{array}
+}\]
+
+Equations have simply disappeared. Note that it is straightforward to
+turn this definition into a tagged form. We should precise that
+forcing a description is not guaranteed to remove all constraints. It
+is subject to future work to see if constraints can be entirely
+eradicated, or presented more conveniently to the developer. Finally,
+it is worth mentioning that the forcing optimisation is a
+\emph{source-to-source} transformation of the description.
 
 \subsection{Free IMonad}
 
@@ -925,13 +1059,13 @@ that we will see in the next section.
 \end{wstructure}
 
 In this section, we develop more structure for our indexed
-data-types. In Section~\ref{sec:desc-free-monad}, we have built a free
-monad operation for simple descriptions. Building on this experience,
-we are going to present its equivalent in the indexed world. The
-process the same. Namely, given an indexed functor, we derive the
-indexed functor coding its free monad: \note{pwm: Whoa there. Maybe we
-  should say something about IMonads in general before we get to this
-  point?}
+data-types. In Section~\ref{sec:desc-free-monad}, we have constructed
+a free monad operation on simple descriptions. Building on this
+experience, we are going to present its equivalent in the indexed
+world. The process the same. Namely, given an indexed functor, we
+derive the indexed functor coding its free monad:
+\note{pwm: Whoa there. Maybe we should say something about IMonads in
+general before we get to this point?}
 
 \[\stk{
 \begin{array}{ll}
@@ -988,7 +1122,7 @@ signature is the following:
 In Section~\ref{sec:idesc-examples}, we had the intuition that our
 datatypes $\HExprD$ and $\HExprVarD{\V{dom}}$ enjoy a monadic structure. We had
 identified the variable substitution operation as the \bind\ of a free
-monad. The definition of $\substI$ above confirm our intuition: using
+monad. The definition of $\substI$ above confirms our intuition: using
 $\substI$, we should easily obtain $\substH$. To do so, we first have
 to massage the definition of our data-type, to exhibit its monadic
 structure.
@@ -1028,7 +1162,7 @@ corresponds to expressions with variables, $\HExprVarD{\V{dom}}$.
                 <- in well-typed contexts
 \end{wstructure}
 
-The evaluator for closed term we implemented in
+The evaluator for closed terms we implemented in
 Section~\ref{sec:idesc-examples} remains unchanged. It reduces closed
 terms in $\FreeIMonad{\HExprFreeD}{\Ty}{\Val{}}\: \V{ty}$ to values in
 $\Val{\V{ty}}$. We are therefore left with implementing $\substH$. We
