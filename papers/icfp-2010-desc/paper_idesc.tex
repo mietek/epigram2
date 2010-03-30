@@ -47,6 +47,7 @@ later). Come to think of it, this is entirely too vague without spelling out
 a concrete example.} 
 
 \subsection{Desc, atomically}
+\label{sec:idesc-atomic-desc}
 
 \begin{wstructure}
 [Outdated: type former presentation instead]
@@ -259,91 +260,92 @@ Figure~\ref{fig:idesc}.
 
 \end{figure}
 
-\subsection{Tagged indexed descriptions}
+%\subsection{Tagged indexed descriptions}
 
-\begin{wstructure}
-<- Tagged constructor choice
-    <- Index available when defining the data-type
-        -> Can influence the choice of constructors
-        -> Dependently-typed data-types
-            <- term (index) influence types
-    -> Two parts
-        <- Always on the menu
-            <- E : EnumU 
-            <- ED : E -> IDesc I
-        <- Index-dependent
-            <- F : I -> EnumU 
-            <- FD : (i : I) -> spi (F i) (\_ -> IDesc I)
-        -> taggedIDesc I == Sigma E ED x Sigma F FD
-        -> toIDesc : (I : Set) -> taggedIDesc I -> (I -> IDesc I)
-\end{wstructure}
+% This discussion seemed out of place to me, so i've moved it a bit later (pwm).
 
-In Section~\ref{sec:desc-examples}, we have defined a \emph{tagged}
-form for descriptions. This format follows the usual presentation of
-inductive types as sum-of-product. With indexed description, this
-definition can be generalized. Indeed, when defining an indexed
-data-type, we have access to this index. Therefore, we can use this
-index to influence the choice of constructors. This captures the
-essence of dependent data-types: a term -- the index -- has the
-ability to influence the data-type.
-
-For convenience, we divide a tagged indexed description in two parts:
-first, the constructors that do not depend on the index; then, the
-constructors that do. The non-dependent part mirrors the definition
-for non-indexed descriptions: we are provided a finite choice of
-constructors. The index-depend part simply indexes the choice of
-constructors by $I$. Hence, by inspecting the index, it is possible to
-enable or disable the constructors. 
-
-\[\stk{
- \TagIDesc{\V{I}}  \mapsto \TIMES{\ATagIDesc{\V{I}}}{\ITagIDesc{\V{I}}} \\
- \ATagIDesc{\V{I}} \mapsto \SIGMA{\V{E}}{\EnumU} (\PI{\V{i}}{\V{I}} \spi{\V{E}}{(\LAM{\_} \IDesc{\V{I}})}) \\
- \ITagIDesc{\V{I}} \mapsto \\
-\qquad\SIGMA{\V{F}}{\V{I} \To \EnumU} (\PI{\V{i}}{\V{I}} \spi{(\V{F}\: \V{i})}{(\LAM{\_} \IDesc{\V{I}})}) 
-}\]
-
-
-\begin{wstructure}
-<- Vectors
-    Do we treat them in the end? 
-    What can we say here we haven't with Fin?
-\end{wstructure}
-
-In the case of vectors, for instance, for the index $\NatZero$, we
-would only propose the constructor $\ListNil$. Similarly, for
-$\NatSuc{n}$, we only propose the constructor $\ListCons{\!}{\!}$. Hence,
-we obtain the following definition:
-
-\newcommand{\VecD}{\C{VecD}}
-\newcommand{\VecNil}{\etag{\CN{vnil}}}
-\newcommand{\VecCons}[2]{\etag{\CN{vcons}}\:#1\:#2}
-
-\[\stk{
-\VecD : \Set \To \TagIDesc{\Nat} \\
-\begin{array}{@{}ll}
-\VecD\: \V{X} = \\ \quad\bigRedBracket{ 
-            \begin{array}{l}
-                \pair{[]}{\_}{} 
-                \\\\
-                \bigRedBracket{
-                \begin{array}{l} 
-                  \LAM{\V{n}} \caseB{\V{n}}{\NatZero \mapsto [\VecNil] \\
-                                   (\NatSuc{\V{n}}) \mapsto [\VecCons{\!}{\!}]} \\
-                  \LAM{\V{n}} \caseB{\V{n}}{\NatZero \mapsto [\DConst{\Unit}] \\
-                                   (\NatSuc{\V{n}}) \mapsto [\DSigma{\V{X}}{\DVar{\V{n}}}]}
-                \end{array}}
-            \end{array}}
-\end{array}
-}\]
-
-We will see more instances of this pattern in the following.
+%\begin{wstructure}
+%<- Tagged constructor choice
+%    <- Index available when defining the data-type
+%        -> Can influence the choice of constructors
+%        -> Dependently-typed data-types
+%            <- term (index) influence types
+%    -> Two parts
+%        <- Always on the menu
+%            <- E : EnumU 
+%            <- ED : E -> IDesc I
+%        <- Index-dependent
+%            <- F : I -> EnumU 
+%            <- FD : (i : I) -> spi (F i) (\_ -> IDesc I)
+%        -> taggedIDesc I == Sigma E ED x Sigma F FD
+%        -> toIDesc : (I : Set) -> taggedIDesc I -> (I -> IDesc I)
+%\end{wstructure}
+%
+%In Section~\ref{sec:desc-examples}, we have defined a \emph{tagged}
+%form for descriptions. This format follows the usual presentation of
+%inductive types as sum-of-product. With indexed description, this
+%definition can be generalized. Indeed, when defining an indexed
+%data-type, we have access to this index. Therefore, we can use this
+%index to influence the choice of constructors. This captures the
+%essence of dependent data-types: a term -- the index -- has the
+%ability to influence the data-type.
+%
+%For convenience, we divide a tagged indexed description in two parts:
+%first, the constructors that do not depend on the index; then, the
+%constructors that do. The non-dependent part mirrors the definition
+%for non-indexed descriptions: we are provided a finite choice of
+%constructors. The index-depend part simply indexes the choice of
+%constructors by $I$. Hence, by inspecting the index, it is possible to
+%enable or disable the constructors. 
+%
+%\[\stk{
+% \TagIDesc{\V{I}}  \mapsto \TIMES{\ATagIDesc{\V{I}}}{\ITagIDesc{\V{I}}} \\
+% \ATagIDesc{\V{I}} \mapsto \SIGMA{\V{E}}{\EnumU} (\PI{\V{i}}{\V{I}} \spi{\V{E}}{(\LAM{\_} \IDesc{\V{I}})}) \\
+% \ITagIDesc{\V{I}} \mapsto \\
+%\qquad\SIGMA{\V{F}}{\V{I} \To \EnumU} (\PI{\V{i}}{\V{I}} \spi{(\V{F}\: \V{i})}{(\LAM{\_} \IDesc{\V{I}})}) 
+%}\]
+%
+%
+%\begin{wstructure}
+%<- Vectors
+%    Do we treat them in the end? 
+%    What can we say here we haven't with Fin?
+%\end{wstructure}
+%
+%In the case of vectors, for instance, for the index $\NatZero$, we
+%would only propose the constructor $\ListNil$. Similarly, for
+%$\NatSuc{n}$, we only propose the constructor $\ListCons{\!}{\!}$. Hence,
+%we obtain the following definition:
+%
+%\newcommand{\VecD}{\C{VecD}}
+%\newcommand{\VecNil}{\etag{\CN{vnil}}}
+%\newcommand{\VecCons}[2]{\etag{\CN{vcons}}\:#1\:#2}
+%
+%\[\stk{
+%\VecD : \Set \To \TagIDesc{\Nat} \\
+%\begin{array}{@{}ll}
+%\VecD\: \V{X} = \\ \quad\bigRedBracket{ 
+%            \begin{array}{l}
+%                \pair{[]}{\_}{} 
+%                \\\\
+%                \bigRedBracket{
+%                \begin{array}{l} 
+%                  \LAM{\V{n}} \caseB{\V{n}}{\NatZero \mapsto [\VecNil] \\
+%                                   (\NatSuc{\V{n}}) \mapsto [\VecCons{\!}{\!}]} \\
+%                  \LAM{\V{n}} \caseB{\V{n}}{\NatZero \mapsto [\DConst{\Unit}] \\
+%                                   (\NatSuc{\V{n}}) \mapsto [\DSigma{\V{X}}{\DVar{\V{n}}}]}
+%                \end{array}}
+%            \end{array}}
+%\end{array}
+%}\]
+%
+%We will see more instances of this pattern in the following.
 
 
 \note{Should we say something about IMu, fixed-points, and their
   elimination before moving on? If so, where should we put it?}
 
-
-\subsubsection{Examples}
+\subsection{Examples}
 \label{sec:idesc-examples}
 
 \paragraph{Natural numbers:}
@@ -356,22 +358,22 @@ We will see more instances of this pattern in the following.
 \end{wstructure}
 
 In order to gain some intuition with $\IDesc{\!}$, let us re-implement
-the pattern functor of natural numbers. We refer the reader to
-Section~\ref{sec:desc-examples} for its incarnation in the universe of
-descriptions. The code is the following:
+the pattern functor of natural numbers. This follows the implementation of
+$\NatD$ from \ref{sec:idesc-atomic-desc}:
 
 \[\stk{
 \NatD : \IDesc{\Unit} \\
 \NatD \mapsto \DSigma{(\EnumT{[ \NatZero, \NatSuc{\!} ]})}
-                     {[ \DConst{\Unit} \quad (\DVar{\Void}) ]}
+                     {[ (\DConst{\Unit}) \quad (\DVar{\Void}) ]}
 }\]
 
-Because $\Nat$ is just an inductive type, we make no use of the index:
-it is the trivial inhabitant of $\Unit$. Therefore, the recursive
+Because $\Nat$ is just an inductive type, $\NatD$ represents a
+$\Unit$-indexed functor. Therefore, the recursive
 argument is materialised by $\DVar{\Void}$, where we were using $\DId$
-in the $\Desc$ presentation. This transformation applies to all
-inductive types: we have not lost in expressive power during the
-transition.
+in the $\Desc$ presentation. Indeed, all inductive types can be
+translated into $\IDesc{\!}$ in exactly this way.
+
+
 
 \paragraph{Indexed descriptions:}
 
@@ -383,9 +385,8 @@ transition.
     -> Behind the scene, relies on the special purpose switchD
 \end{wstructure}
 
-A mandatory exercise consists in describing $\IDesc{\!}$ in itself. With
-the experience gained in Section~\ref{sec:desc-levitate}, this
-levitation does not pose any issue:
+If we note that, for any $\V{I}$, $\IDesc{\V{I}}$ itself is merely an inductive 
+\emph{type} then we can certainly define its encoding in $\IDesc{\Unit}$:
 
 \[\stk{
 \IDescD : \PI{\V{I}}{\Set} \IDesc{\Unit} \\
@@ -408,11 +409,169 @@ levitation does not pose any issue:
 \end{array}
 }\]
 
-Note that this description also lives in $\IDesc{\Unit}$. Indeed,
-for any $\V{I}$, $\IDesc{\V{I}}$ is merely an inductive type. As for the
-$\Desc$ levitation, the finite function space $[ \ldots ]$ elaborates into a
-special purpose $\F{switchID}$ operator. 
+Using this description we can repeat the act of levitation 
+from section~\ref{sec:desc-levitate}. As before we rely on a special purpose 
+$\F{switchID}$ operator to build the finite function space
+$\bigRedBracket{\ldots}$. 
 
+\paragraph{Vectors:}
+
+\newcommand{\VecD}{\C{VecD}}
+\newcommand{\VecNil}{\etag{\CN{vnil}}}
+\newcommand{\VecCons}[2]{\etag{\CN{vcons}}\:#1\:#2}
+
+So far, the examples we have seen lives in $\IDesc{\Unit}$, hence are
+not using any indexing. We remedy this by encoding the vectors:
+
+Recall that the constructors of $\D{Vec}$. The constructors $\VecNil$ and
+$\VecCons$ are only defined for an index $\NatZero$ and $\NatSuc$ 
+respectively.:
+
+
+\[
+\stk{
+\data \D{Vec}\: \PITEL{\V{X}}{\Set} : \PI{\V{n}}{\Nat} \Set \where \\
+\;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
+    \VecNil      & \D{Vec}\:\V{X}\:{\NatZero)}   \\
+    \VecCons     & _{\PI{\V{n}}{\Nat}}\V{X} \To \D{Vec}\:{\V{X}}\:{\V{n}} \To \D{Vec}\:{\V{X}}\:{(\NatSuc{\V{n}})}
+\end{array}
+}
+\]
+
+One way to code constrained data-type is to appeal to equality. The
+constraints are therefore captured by equations in the data-type. In
+this case, we obtain the following definition:
+
+\[\stk{
+\VecD : \Set \To \Nat \To \IDesc{\Nat} \\
+\begin{array}{@{}ll}
+\VecD\: \V{X}\: \V{n} = \DSigma{\!}{\!} \!\!\!\!& (\EnumT{[ \VecNil , \VecCons{\!}{\!} ]}) \\
+                        & \bigRedBracket{
+                          \begin{array}{l}
+                            \DConst{(\V{n} \PropEq \NatZero)} \\
+                            \DSigma{\Nat}{\LAM{\V{m}} \stk{\DProd{\DVar{\V{m}}}{\\\DConst{(\V{n} \PropEq \NatSuc{\V{m}})}}}}
+                          \end{array}
+                          }
+\end{array}
+}\]
+
+If the $\VecNil$ tag is chosen, a proof must be provided that the index is equal
+to $\NatZero$. In the $\VecCons$ case, we first store an
+element $\V{m}$ of $\Nat$, with a $\DSigma{\!}{\!}$. However, the
+constraint stipulates that $\V{m}$ cannot be \emph{any} natural
+numbers: it must be ``the index minus one''. This translates into the
+constraint $\V{n} \PropEq \NatSuc{\V{m}}$.
+
+However, one could, quite rightfully, be worried by the introduction
+of equalities in the picture. In a programming context, equalities
+haunt us, begging for proofs. Hence, whereas the developer typed a
+constructor-constrained data-type, the elimination form will involve
+equalities and their proofs. As much as possible, one would rather
+avoid suffering from this burden. However, the equalities introduced
+here are rather special: they are \emph{equations} constraining
+variables to certain terms. Goguen et
+al.~\cite{goguen:pattern-matching} have shown, in the context of
+dependent pattern matching, how to tame these equations.
+
+\begin{wstructure}
+!!! Need Help !!!
+<- Brady optimisation: forcing
+    <- Source to source translation
+    <- Able to remove some constraints
+    -> Example: Fin [figure]
+    ??? More technical detail needed
+\end{wstructure}
+
+Further, we can actually remove these equations altogether. Let us look back
+at $\D{Vec}$. We note that the equations are introduced because we are
+\emph{storing} the index of the inductive family.  However, \emph{inductive
+families need not store their indices}~\cite{brady:index-inductive-families}.
+By examining the in coming index, we can apply the \emph{forcing} and
+\emph{de-tagging} optimisations to our initial definition of $\D{Vec}$ gives
+the following, equivalent definition:
+
+\[\stk{
+\VecD \:\PITEL{\V{X}}{\Set} : \Nat \To \IDesc{\Nat} \\
+\begin{array}{@{}lll}
+\VecD\:\V{X}\: \NatZero     & = & \DConst{\Unit} \\
+\VecD\:\V{X}\: (\NatSuc{\V{n}}) & = & \DProd{\DConst{\V{X}}}{\DVar{\V{n}}}
+\end{array}
+                                       
+}\]
+
+The equations (and constructors) have simply disappeared. Note that it is
+straightforward to turn this definition into a tagged form, where in each
+case, only one constructor choice is available to the developer. In another
+example, $\Fin{\!}$, we can force, but not detag, since both $\FinZero$ and 
+$\FinSuc{\!}$ both target $\NatSuc{\!}$:
+
+\[
+\stk{
+\data \Fin{\!} : \PI{\V{n}}{\Nat} \Set \where \\
+\;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
+    \FinZero_{\V{n}}      & \Fin{(\NatSuc{\V{n}})}   \\
+    \FinSuc{\!}_{\V{n}}   & \Fin{\V{n}} \To \Fin{(\NatSuc{\V{n}})}
+\end{array}
+\vspace{0.1in}
+\\
+\FinD : \Nat \To \IDesc{\Nat} \\
+\begin{array}{@{}llll}
+\FinD\: \NatZero     & = & \multicolumn{2}{l}{\DSigma{(\EnumT{[]})}{\Void} } \\
+\FinD\: (\NatSuc{\V{n}}) & = & \DSigma{\!}{\!}\!\!\!\!\! & (\EnumT{[ \FinZero , \FinSuc{\!} ]}) \\
+                     &   &             & \bigRedBracket{
+                                         \begin{array}{l}
+                                         \DConst{\Unit} \\
+                                         \DVar{\V{n}}
+                                         \end{array}
+                                         }
+\end{array}
+}\]
+
+We should
+precise that forcing a description is not guaranteed to remove all
+constraints. It is subject to future work to see if constraints can be
+entirely eradicated, or presented more conveniently to the developer.
+Finally, it is worth mentioning that these optimisations are 
+\emph{source-to-source} transformations on descriptions.
+
+\subsubsection{Tagged Indexed Descriptions}
+
+In Section~\ref{sec:desc-examples}, we have defined a \emph{tagged}
+form for descriptions. This format follows the usual presentation of
+inductive types as sum-of-product. With indexed description, this
+definition can be generalized. Indeed, when defining an indexed
+data-type, we have access to this index. Therefore, we can use this
+index to influence the choice of constructors. This captures the
+essence of dependent data-types: a term -- the index -- has the
+ability to influence the data-type.
+
+For convenience, we divide a tagged indexed description in two parts:
+first, the constructors that do not depend on the index; then, the
+constructors that do. The non-dependent part mirrors the definition
+for non-indexed descriptions: we are provided a finite choice of
+constructors. The index-depend part simply indexes the choice of
+constructors by $\V{I}$. Hence, by inspecting the index, it is possible to
+e
+
+\[\stk{
+ \TagIDesc{\V{I}}  \mapsto \TIMES{\ATagIDesc{\V{I}}}{\ITagIDesc{\V{I}}} \\
+ \ATagIDesc{\V{I}} \mapsto \SIGMA{\V{E}}{\EnumU} (\PI{\V{i}}{\V{I}} \spi{\V{E}}{(\LAM{\_} \IDesc{\V{I}})}) \\
+ \ITagIDesc{\V{I}} \mapsto \\
+\qquad\SIGMA{\V{F}}{\V{I} \To \EnumU} (\PI{\V{i}}{\V{I}} \spi{(\V{F}\: \V{i})}{(\LAM{\_} \IDesc{\V{I}})}) 
+}\]
+
+
+\begin{wstructure}
+<- Vectors
+    Do we treat them in the end? 
+    What can we say here we haven't with Fin?
+\end{wstructure}
+
+In the case of a tagged $\D{Vec}$, for instance, for the index $\NatZero$, we
+would only propose the constructor $\ListNil$. Similarly, for
+$\NatSuc{n}$, we would only propose the constructor $\ListCons{\!}{\!}$. We
+will see a concrete example of this in the following example. 
+ 
 \paragraph{Typed expressions:}
 
 \begin{wstructure}
@@ -444,14 +603,13 @@ special purpose $\F{switchID}$ operator.
 
 %% Hutton expressions
 \newcommand{\HExprD}{\C{ExprD}}
-\newcommand{\HExprAD}{\C{ExprAlwaysD}}
-\newcommand{\HExprID}{\C{ExprIndexedD}}
+\newcommand{\HExprAD}{\C{ExprAD}}
+\newcommand{\HExprID}{\C{ExprID}}
 \newcommand{\HExprVarD}[1]{\C{ExprD}_{\C{Var},#1}}
 \newcommand{\HExprFreeD}{\C{ExprD}^{\C{Free}}}
 \newcommand{\HExprAFreeD}{\C{ExprAlwaysD}^{\C{Free}}}
 
-So far, the examples we have seen lives in $\IDesc{\Unit}$, hence are
-not using any indexing. We are going to define a syntax for a small
+We are going to define a syntax for a small
 typed language. We consider two types, natural numbers and booleans:
 
 \[
@@ -501,20 +659,19 @@ informal $\case{\ldots}{\ldots}$ notation, simulating a definition by
 pattern-matching. Formally, this corresponds to a call to the
 $\switch{\!}{\!}{\!}{\!}$ eliminator.
 
-\begin{figure*}
+\begin{figure}
 
-\[\stkc{
+\[\stk{
 \stk{
 \HExprD : \TagIDesc{\Ty} \\
 \HExprD \mapsto ( \HExprAD , \HExprID ) \\
 } \\
 \\
-\begin{array}{ll}
 \stk{
 \HExprAD : \ATagIDesc{\Ty} \\
 \HExprAD \mapsto \bigRedBracket{
                  \begin{array}{l}
-                   \EnumT{[\Eval{}, \Econd{}{}{}]} \red{,} \\
+                   \EnumT{[\Eval{}, \Econd{\!}{\!}{\!}\!\,]} \red{,} \\
                    \LAM{\V{ty}}
                    \bigRedBracket{
                    \begin{array}{l}
@@ -526,23 +683,23 @@ $\switch{\!}{\!}{\!}{\!}$ eliminator.
                  }
 \\
 \\
-} &
+} 
+\\
 \stk{
 \HExprID : \ITagIDesc{\Ty} \\
 \HExprID \mapsto \bigRedBracket{
                  \begin{array}{l}
-                   \LAM{\V{t}y} \case{\V{t}y}{\Enat \To \EnumT{[\Eplus{\!}{\!}\!]} \\ \Ebool \To \EnumT{[\Ele{\!}{\!}\!]}} \red{,} \\
+                   \LAM{\V{ty}} \case{\V{ty}}{\Enat \To \EnumT{[\Eplus{\!}{\!}\!\,]} \\ \Ebool \To \EnumT{[\Ele{\!}{\!}\!\,]}} \red{,} \\
                    \LAM{\_} \DProd{\DVar{\Enat}}{\DVar{\Enat}} 
                    \end{array}
                    }
 }
-\end{array}
 }\]
 
 \caption{Syntax of typed expressions}
 \label{fig:hexpr-full}
 
-\end{figure*}
+\end{figure}
 
 \begin{wstructure}
     -> evaluation: IMu TermD -> Val
@@ -639,7 +796,7 @@ the language of closed term into a language of opened terms with
 constants. For readability, we will abbreviate $\LAM{\V{ty}}
 \SUM{\Val{\V{ty}}}{\Var{\V{dom}}{\V{ty}}}$ into $\SUM{\Val{}}{\Var{}{}}$ \note{Is
   it polite and comprehensible to ask that?} This defines a new
-indexed description, called $\HExprVarD{dom}$.
+indexed description, called $\HExprVarD{\V{dom}}$.
 
 \begin{wstructure}
         <- evaluator, with a context
@@ -712,7 +869,7 @@ is the following:
                              & \PITEL{\V{\gammaBool}}
                                      {\GammaSpi{\V{dom}}{\Ebool}} \\
                              & \PI{\V{ty}}{\Ty} (\SUM{\Val{\V{ty}}}{\Var{\V{dom}}{\V{ty}}}) \To \\
-                             & \IMu{\Ty}{(\toIDesc{\HExprD})}{\V{ty}}}
+                             & \IMu{\Ty}{\toIDesc{\HExprD}}{\V{ty}}}
              \end{array}\\
           & \PI{\V{ty}}{\Ty}
             \IMu{\Ty}{\toIDesc{\HExprVarD{\V{dom}}}}{\V{ty}} \To \\
@@ -734,7 +891,7 @@ monadic \bind. This is not surprising as we are defining a first-order
 syntax with variables: our data-type enjoys more structure than what
 we are given. In particular, this is reminiscent to a free monad,
 where $\Eval{}$ is the \return\ introducing variables. The substitution
-$\sigma$ is implemented from $\discharge$, by picking the domain and
+$\V{\sigma}$ is implemented from $\discharge$, by picking the domain and
 context corresponding to the type:
 
 \[
@@ -746,142 +903,9 @@ Where $\F{$\gamma$}_{\V{ty}}$ is short for
  $\caseB{\V{ty}}{\Enat  \To \gammaNat \\
                  \Ebool \To \gammaBool}$
 
-Instead of implementing $\substH$ in this special case, we shall
-implement it in a generic setting, and express our example in that
-setting. However, before entering the realm of generic structures, let
-us further explore the universe of indexed descriptions.
-
-\subsection{Constrained constructors}
-
-\begin{wstructure}
-!!! Need Help !!!
-<- Assuming a suitable notion of definitional equality for I
-    ???
-\end{wstructure}
-
-In the following, we ask $I$ to come equipped with a notion of
-definitional equality. Hence, we can legibly equates elements of $I$.
-
-\note{ I will need some tutorial on this ad-hoc notion of definitional
-  equality. Or what Conor's meant with that. }
-
-\begin{wstructure}
-<- Fin [figure]
-    <- Presentation with equality constraints
-    <- Example of constrained constructor
-        -> Constraints are translated into equalities
-    ???
-\end{wstructure}
- 
-Another common dependent data-type is $\Fin{\!}$, the finite sets of
-numbers. $\Fin{\!}$ is a typical example of an inductive family using
-\emph{constrained constructors}. The constructors $\FinZero$ and
-$\FinSuc{\!}$ are only defined for an index distinct from $\NatZero$:
-
-
-\[
-\stk{
-\data \Fin{\!} : \PI{\V{n}}{\Nat} \Set \where \\
-\;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
-    \FinZero_{\V{n}}      & \Fin{(\NatSuc{\V{n}})}   \\
-    \FinSuc{\!}_{\V{n}}   & \Fin{\V{n}} \To \Fin{(\NatSuc{\V{n}})}
-\end{array}
-}
-\]
-
-One way to code constrained data-type is to appeal to equality. The
-constraints are therefore captured by equations in the data-type. In
-this case, we obtain the following definition:
-
-\[\stk{
-\FinD : \Nat \To \IDesc{\Nat} \\
-\begin{array}{@{}ll}
-\FinD\: \V{n} = \DSigma{\!}{\!} \!\!\!\!& (\EnumT{[ \FinZero , \FinSuc{\!} ]}) \\
-                        & \bigRedBracket{
-                          \begin{array}{l}
-                            \DSigma{\Nat}{\LAM{\V{m}} \DConst{(\V{n} \PropEq \NatSuc{\V{m}})}} \\
-                            \DSigma{\Nat}{\LAM{\V{m}} \DProd{\DVar{\V{m}}}{\DConst{(\V{n} \PropEq \NatSuc{\V{m}})}}}
-                          \end{array}
-                          }
-\end{array}
-}\]
-
-Intuitively, the constraint is captured as follows. First, we store an
-element $\V{m}$ of $\Nat$, thanks to a $\DSigma{\!}{\!}$. However, the
-constraint stipulates that $\V{m}$ cannot be \emph{any} natural
-numbers: it must be ``the index minus one''. This translates into the
-constraint $\V{n} \PropEq \NatSuc{\V{m}}$.
-
-\note{ Anything else? }
-
-\begin{wstructure}
-<- GADT-style data-type definition
-    <- We directly support it
-        <- Constraints turned into equalities
-            <- Fin example
-    <- Again, smooth transition from "today" data-types to advanced ones
-        <- Same grammar
-        /> More power
-    /> Equations in data-types are not a blessing
-        <- Complexify induction principle
-        <- Lose match between data-type definition and the elimination form
-\end{wstructure}
-
-The $\Fin{\!}$ example is also a well-known example of Generalised
-Abstract Data-Type (GADT) in Haskell. It comes as no surprise that our
-universe of indexed description supports this restricted class of
-inductive families. As we have seen with $\Fin{\!}$, constrained
-constructors are straightforwardly translated into equations.
-
-However, one could, quite rightfully, be worried by the introduction
-of equalities in the picture. In a programming context, equalities
-haunt us, begging for proofs. Hence, whereas the developer typed a
-constructor-constrained data-type, the elimination form will involve
-equalities and their proofs. As much as possible, one would rather
-avoid suffering from this burden. However, the equalities introduced
-here are rather special: they are \emph{equations} constraining
-variables to certain terms. Goguen et
-al.~\cite{goguen:pattern-matching} have shown, in the context of
-dependent pattern matching, how to tame these equations.
-
-\begin{wstructure}
-!!! Need Help !!!
-<- Brady optimisation: forcing
-    <- Source to source translation
-    <- Able to remove some constraints
-    -> Example: Fin [figure]
-    ??? More technical detail needed
-\end{wstructure}
-
-Further, we can actually remove these equations altogether. Let us
-look back at $\Fin{\!}$. We note that the equations are introduced because
-we are \emph{storing} the index of the inductive family, through
-$\V{m}$. Hence the constraints. However, \emph{inductive families need not
-  store their indices}~\cite{brady:index-inductive-families}. Applying
-the \emph{forcing} optimisation to our initial definition of $\Fin{\!}$
-gives the following, equivalent definition:
-
-\[\stk{
-\FinD : \Nat \To \IDesc{\Nat} \\
-\begin{array}{@{}llll}
-\FinD\: \NatZero     & = & \multicolumn{2}{l}{\DSigma{(\EnumT{[]})}{\Void} } \\
-\FinD\: (\NatSuc{\V{n}}) & = & \DSigma{\!}{\!}\!\!\!\!\! & (\EnumT{[ \FinZero , \FinSuc{\!} ]}) \\
-                     &   &             & \bigRedBracket{
-                                         \begin{array}{l}
-                                         \DConst{\Unit} \\
-                                         \DVar{\V{n}}
-                                         \end{array}
-                                         }
-\end{array}
-}\]
-
-Equations have simply disappeared. Note that it is straightforward to
-turn this definition into a tagged form. We should precise that
-forcing a description is not guaranteed to remove all constraints. It
-is subject to future work to see if constraints can be entirely
-eradicated, or presented more conveniently to the developer. Finally,
-it is worth mentioning that the forcing optimisation is a
-\emph{source-to-source} transformation of the description.
+Instead of implementing $\substH$ in this special case, we can
+implement it in a generic setting, a \emph{free indexed-monad construction}
+that we will see in the next section.
 
 \subsection{Free IMonad}
 
