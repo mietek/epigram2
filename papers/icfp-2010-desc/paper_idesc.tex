@@ -482,13 +482,14 @@ equations.
     ??? More technical detail needed
 \end{wstructure}
 
-Further, we can actually remove these equations altogether. Let us look back
-at $\D{Vec}$. We note that the equations are introduced because we are
-\emph{storing} the index of the inductive family.  However, \emph{inductive
-families need not store their indices}~\cite{brady:index-inductive-families}.
-By examining the in coming index, we can apply the \emph{forcing} and
-\emph{de-tagging} optimisations to our initial definition of $\D{Vec}$ gives
-the following, equivalent definition:
+Further, we can actually remove these equations altogether. Let us
+look back at $\D{Vec}$. We note that the equations are introduced
+because we are \emph{storing} the index of the inductive family.
+However, \emph{inductive families need not store their
+  indices}~\cite{brady:index-inductive-families}.  By examining the
+incoming index, we can apply the \emph{forcing} and \emph{de-tagging}
+optimisations to our initial definition of $\D{Vec}$ gives the
+following, equivalent definition:
 
 \[\stk{
 \VecD \:\PITEL{\V{X}}{\Set} : \Nat \To \IDesc{\Nat} \\

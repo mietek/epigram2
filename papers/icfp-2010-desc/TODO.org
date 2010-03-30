@@ -30,7 +30,34 @@ dependently-typed language. So, how do I get arround my various
 ** TODO Example right after the introduction?
 
 
+** TODO Say something about arity generic stuff?
+** TODO The comma in Pi/Sigma typing rule seems confusing
+** TODO Replace as a map? Should we say something about map?
+** TODO Fix mentions of strictly positive types
 
+There is a \note about it somewhere.
+
+** TODO Fix comparison with Generic Haskell
+
+"You say that your approach also supports the Generic Haskell model of
+generic programming. One of the nice things of GH is that it works
+fine for datatypes with higher-kinded parameters (say data Rose f a =
+Leaf a | Branch (f (Rose f a))). I do not see how your framework could
+deal with that. Also, you do not explore the concept of generic views,
+which are present in GH."
+
+** TODO Fix comparison with SYB
+
+"The comparison with SYB puzzles me, as I saw almost nothing in your
+work that I could find similar to SYB. SYB has an underlying Spine
+view, whereas you use a sum of products. Also, generic functions in
+SYB are defined using combinators, whereas with your style they are
+defined by induction in the structure of types. SYB relies on run-time
+type comparison, and is not exploiting the functorial structure of
+types (so it's unable to define 'cata', for instance). So I don't
+really see many similarities..."
+
+** TODO We might want 5.3.1 Tagged Indexed Descriptions to be just an Example paragraph
 * Post-doc area
 ** TODO Improve finite sets motivation (encoding vs. codes)
 
@@ -61,6 +88,9 @@ Talk about decidability, termination, etc.
 If it hasn't been translated into universe polymorphism
 
 * Janitor service
+** TODO cataI is not defined
+** TODO Explain that \overbar turns a tagged description into a description
+** TODO Fix explanation of elaboration of constructors
 ** TODO Check/fix alignment in code
 ** TODO Fix code overflows
 ** TODO Tech report as a bibtex entry, or footnote?
