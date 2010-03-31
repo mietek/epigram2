@@ -59,32 +59,30 @@ there is a myriad of proposals. These approaches are presented and
 compared in \citet{hinze:generic-approach-comparative} and
 \citet{rodriguez:generic-libs-comparative}.
 
-In particular, our approach is similar in spirit with polytypic
+In particular, our approach is similar in spirit to polytypic
 programming, as initiated by PolyP~\cite{jansson:polyp}. Indeed,
 generic functions, in our system, are built by induction on the
-pattern functor. Unlike PolyP, we do not have to resort to pre-process
-data-type definitions: our data-types are, natively, nothing but
-codes.
+pattern functor. Unlike PolyP, we do not have to pre-process datatype
+definitions: our datatypes are, natively, nothing but codes.
 
 We share with Generic Haskell the \emph{type-indexed data type}
 approach~\cite{hinze:generic-haskell}, as exemplified by the free
-monad construction: from data-type, we can compute new data-types and
+monad construction: from datatype, we can compute new datatypes and
 equip them with their structure. Generic Haskell also features
 \emph{generic views}~\cite{holdermans:generic-view}, transparently
-transforming the structure of data-type definitions, to ease the
+transforming the structure of datatype definitions, to ease the
 implementation of generic functions over them. Views in
 dependently-typed system are widely
-used~\cite{mcbride.mckinna:view-from-the-left}. Unlike in Generic
+used~\cite{mcbride.mckinna:view-from-the-left}. Unlike Generic
 Haskell, we do not have to modify the compiler to develop views on
-data-types: we can massage description codes from inside the language
-and present them as a standard view. An example of such operation is
-the tagged descriptions, presenting data-types under a particular
-angle.
+datatypes: we can massage descriptions from inside the language. An
+example of such operation is the tagged descriptions, presenting
+datatypes under a sum-of-sigmas angle.
 
 Unlike Generic Haskell, we do not support polykinded
 programming~\cite{hinze:polytypic-polykinded}. Our descriptions are
 limited to endofunctor on $\Set$ and $\Set^I$. While it is possible to
-\emph{encode} higher-kinded data-types in our setting, we do not plan
+\emph{encode} higher-kinded datatypes in our setting, we do not plan
 to adopt this strategy. Rather, as future work, we plan to extend our
 universe to capture higher-kinded definitions and generic functions
 over them. For the same reason, arity-generic
@@ -93,16 +91,17 @@ current presentation.
 
 Another generic programming framework is Scrap Your
 Boilerplate~\cite{spj:syb} (SYB). Our proposal is different in various
-ways. The corner stone of SYB is the \emph{spine} view of data-type
-constructors. A data-type is a spine composed by a constructor applied
-to some arguments. Further, this spine is equipped with some
+ways. The corner stone of SYB is the \emph{spine} view of datatype
+constructors. A piece of data is a spine composed by a constructor
+applied to some arguments. Further, this spine is equipped with some
 combinators including, primarily, an iterator. In this setting,
-generic programs are written by composing these combinators. This
-relies on a $\CN{Typeable}$ type-class, allowing dynamic dispatch to
-data-type specific operations. As a result, SYB is not reflexive: it
-is restricted to data-types instanciating $\CN{Typeable}$. Moreover,
-it forbids type-indexed data types: it can only define generic
-functions.
+generic programs are written by composing these combinators, building
+generic operations on spines. This relies on a $\CN{Typeable}$
+type-class, allowing dynamic dispatch to datatype-specific
+operations. As a result, SYB is not reflexive: it is restricted to
+datatypes instanciating $\CN{Typeable}$. Moreover, it is limited to
+building generic functions, hence type-indexed datatypes cannot be
+implemented in this framework.
 
 
 \begin{wstructure}
@@ -112,7 +111,7 @@ functions.
         <- Universes for generic prog \cite{benke:universe-generic-prog}
 \end{wstructure}
 
-The interest in generic programming for dependent types is not new
+The interest for generic programming in dependent types is not new
 either. \citet{norell:msc-thesis} has given a formalization of
 polytypic programming in the setting of Alfa, a precursor of
 Agda. Similarly, \citet{verbruggen:polytype-prog-coq,
@@ -121,7 +120,7 @@ programming in the Coq theorem prover. However, these works aim at
 \emph{modelling} PolyP or Generic Haskell in a dependently-typed
 setting, for the purpose of proving correctness properties of Haskell
 code. Our approach is different in that we aim at building a
-foundation for data-types, in a dependently-typed theory, for a
+foundation for datatypes, in a dependently-typed theory, for a
 dependently-typed system.
 
 Closer to us is the work by \citet{benke:universe-generic-prog}. This
@@ -130,7 +129,7 @@ programs. Our own universes are rather similar to theirs: our universe
 of descriptions is similar to their universe of iterated induction,
 and our universe of indexed descriptions is isomorphic to their
 universe of finitary indexed induction. This is not surprising, as we
-share the same source of inspiration, namely induction recursion.
+share the same source of inspiration, namely induction-recursion.
 
 However, we differ in several ways. First, they adopt a generative
 perspective: each universe extends the base type theory with both type
@@ -138,7 +137,7 @@ formers and elimination rules. Thanks to the levitation, we only rely
 on a generic induction and a specialised
 $\switchD{\!}{\!}{\!}$. Second, the authors do not tackle the issue of
 \emph{programming} with such codes: it is not obvious, to us, how one
-can define, manipulate, and program over these coded data-types. With
+can define, manipulate, and program over these coded datatypes. With
 descriptions, we have shown how to abstract away codes and present a
 convenient and familiar presentation to the developer. Finally, the
 authors often resort to an extensional notion of equality, while we

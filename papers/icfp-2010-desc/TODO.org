@@ -58,6 +58,7 @@ Talk about decidability, termination, etc.
 If it hasn't been translated into universe polymorphism
 
 * Janitor service
+** TODO induction-recursion? induction recursion
 ** TODO s/data*type/datatype/
 ** TODO s/judgement/judgment/
 ** TODO Check/fix alignment in code
