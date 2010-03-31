@@ -242,21 +242,36 @@ do not handle substitutions correctly \citep{norvig_correctingwidespread_1991}.
 Let $\V$ be a set of variables, $\D$ a set of objects and $\J$ a set of
 judgments. A \define{substitution} $\theta$ is a partial map from $\V$ to $\D$,
 and we assume $\D$ and $\J$ are closed under application of substitutions.
-A \define{context} $\Gamma$ is a list of definitions $v D$ (pairs of $v \in \V$
-and $D \in \D$) and separators $(\fatsemi)$.
+A \define{context} $\Gamma$ is a list of 
+%%%definitions 
+   declarations 
+$v D$ (pairs of $v \in \V$
+and $D \in \D$) and separators $(\fatsemi)$. 
+We assume 
+%%%that 
+we have a judgment $v D \ok$ corresponding
+to every possible declaration $v D$. 
+
 We write $\emptycontext$ for the empty context, and the symbols
 $\Gamma, \Delta, \Theta, \Phi, \Psi$ represent contexts.
 Let $\V(\Gamma)$ be the set of variables in $\Gamma$.
 We write $\Gamma \entails J$ to mean that the definitions in $\Gamma$,
-corresponding to atomic facts, support the judgment $J \in \J$.
+corresponding to atomic facts, support the judgment $J \in \J$. 
+%%%
+For any variable $v$ and 
+%%%definiens 
+   object $D$ we define a context membership judgment
+$\contains v D$ in the obvious way, and write $\Gamma \contains v D$ for
+$\Gamma \entails (\contains v D)$. 
+%%%
 We assume that $\J$ is closed under conjunction $(\wedge)$ with
-$$\Gamma \entails J_0  ~\wedge~  \Gamma \entails J_1
+$$\Gamma \entails (J_0 \wedge J_1)
     \quad  \Leftrightarrow  \quad
-    \Gamma \entails (J_0 \wedge J_1).$$
-Further assume 
-%%%that 
-   we have a judgment $v D \ok$ corresponding
-to every possible definition $v D$. 
+    \Gamma \entails J_0  ~\wedge~  \Gamma \entails J_1.$$
+%%%Further assume 
+%%%%%%that 
+%%%   we have a judgment $v D \ok$ corresponding
+%%%to every possible definition $v D$. 
 We %%%can 
    define validity of contexts as shown
 in Figure~\ref{fig:contextValidityRules}.
@@ -278,9 +293,9 @@ $$
 \label{fig:contextValidityRules}
 \end{figure}
 
-For any variable $v$ and definiens $D$ we define a context membership judgment
-$\contains v D$ in the obvious way, and write $\Gamma \contains v D$ for
-$\Gamma \entails (\contains v D)$.
+%%%For any variable $v$ and definiens $D$ we define a context membership judgment
+%%%$\contains v D$ in the obvious way, and write $\Gamma \contains v D$ for
+%%%$\Gamma \entails (\contains v D)$.
 
 We suppose that
 there is an embedding $\sem{\cdot} : \V \times \D \rightarrow \J$, such that
@@ -394,7 +409,9 @@ and $r' \le \zeta_1 r$.
 But then $\gamma_2 : \Jmin{\Gamma_1}{P_2(s)}{\Gamma_2}$, so there exists
 $\zeta_2 : \Gamma_2 \lei \Theta$ such that $\zeta_1 = \zeta_2 \compose \gamma_2$
 and $s' \ll \zeta_2 s$.
-Hence $\theta = \zeta_2 \compose (\gamma_2 \compose \gamma_1)$,
+Hence 
+%%%   we obtain  
+$\theta = \zeta_2 \compose (\gamma_2 \compose \gamma_1)$, 
 $r' \le \zeta_2 (\gamma_2 r)$ and $s' \ll \zeta_2 s$.
 \end{proof}
 
@@ -451,6 +468,15 @@ for unification.
 We write $\tyvars{\Gamma}$ for the 
 %%%set of type variables of $\Gamma$, i.e.\ $\V_0 \cap \V(\Gamma)$.
    set $\V_0 \cap \V(\Gamma)$ of type variables declared in $\Gamma$. 
+We define the set of free type
+variables of a type or context thus:
+\begin{align*}
+\FTV{\alpha}    &= \alpha  \\
+\FTV{\tau \arrow \upsilon}  &= \FTV{\tau} \cup \FTV{\upsilon}  \\
+\FTV{\Xi}       &= \bigcup \{ \FTV{\tau} ~||~ \alpha \defn \tau \in \Xi \}  \\
+\FTV{\tau, \Xi} &= \FTV{\tau} \cup \FTV{\Xi}.
+\end{align*}
+
 We define the judgment $\tau \type$ ($\tau$ is a type over the context) as
 shown in Figure~\ref{fig:typeOkRules}, and hence give the rules for the
 judgment $\alpha \defn D \ok$. 
@@ -481,15 +507,7 @@ $$
 
 
 If $\Gamma$ is a valid context, we write $\types{\Gamma}$ for the set of types
-$\tau$ such that $\Gamma \entails \tau \type$. We define the set of free type
-variables of a type or context thus:
-\begin{align*}
-\FTV{\alpha}    &= \alpha  \\
-\FTV{\tau \arrow \upsilon}  &= \FTV{\tau} \cup \FTV{\upsilon}  \\
-\FTV{\Xi}       &= \bigcup \{ \FTV{\tau} ~||~ \alpha \defn \tau \in \Xi \}  \\
-\FTV{\tau, \Xi} &= \FTV{\tau} \cup \FTV{\Xi}.
-\end{align*}
-
+$\tau$ such that $\Gamma \entails \tau \type$. 
 
 
 \subsection{Implementation}
