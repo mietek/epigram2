@@ -1054,9 +1054,16 @@ $$
 \end{figure}
 
 
-It is convenient to represent bound variables using de Brujin indices and
-free variables (i.e.\ those defined in the context) using names. Moreover, we can
-use the Haskell type system to prevent some incorrect manipulations of the
+It is convenient to represent bound variables 
+%%%using 
+   by 
+de Brujin indices and
+free variables (i.e.\ those defined in the context) 
+%%%using 
+   by 
+names. Moreover, we can
+use the Haskell type system to prevent some incorrect manipulations of 
+%%%the 
 indices by defining a natural number type
 
 > data Index a = Z | S a
