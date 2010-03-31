@@ -88,15 +88,26 @@ This is the text of the abstract.
 
 \section{Introduction}
 
-Dependent types are an appealing technique for building safer and more
-reliable software. By giving types more expressive power, the
-developer is able to encode more precise invariants in the types. As a
-result, more bugs are caught automatically, during
-type-checking. Because of this benefit, dependently-typed systems have
-flourished, such as Generalized Abstract Data-Types (GADT) in
-Haskell~\cite{spj:gadt}, Agda~\cite{norell:agda},
-Ynot~\cite{morrisett:ynot}, or Epigram~\cite{pigs:epigram}, to name
-but a few.
+Dependent datatypes, such as the ubiquitous vectors (lists indexed by
+length) express \emph{relative} notions of data validity. They allow
+us to function in a complex world with a higher standard of basic
+hygiene than is practical with the context-free datatypes of ML-like
+languages. Dependent type systems, as found in
+Agda~\cite{norell:agda}, Coq~\cite{coq},
+Epigram~\cite{mcbride.mckinna:view-from-the-left}, and contemporary
+Haskell~\cite{spj:gadt}, are beginning to make themselves useful. As
+with rope, the engineering benefits of type indexing sometimes
+outweigh the difficulties you can arrange with enough of it.
+
+%Dependent types are an appealing technique for building safer and more
+%reliable software. By giving types more expressive power, the
+%developer is able to encode more precise invariants in the types. As a
+%result, more bugs are caught automatically, during
+%type-checking. Because of this benefit, dependently-typed systems have
+%flourished, such as Generalized Abstract Data-Types (GADT) in
+%Haskell~\cite{spj:gadt}, Agda~\cite{norell:agda},
+%Ynot~\cite{morrisett:ynot}, or Epigram~\cite{pigs:epigram}, to name
+%but a few.
 
 \begin{wstructure}
 <- Describe the problem
@@ -106,15 +117,15 @@ but a few.
             -> Stronger safety guarantees
 \end{wstructure}
 
-In this paper, we will focus on data-types in such systems. Indeed,
-the expressive power of the type-system has a direct impact on
-data-types. Because types can \emph{depend} on terms, our data-types
-can be made more precise. The typical example is vectors, which type
-depend on the size of the vector. Having more precision about
-data-types, we can write safer code: taking the $\CN{head}$ of a
-vector is \emph{ensured} to succeed whenever its type states that it
-is a non-empty vector. This property is automatically enforced by the
-type-checker.
+%In this paper, we will focus on data-types in such systems. Indeed,
+%the expressive power of the type-system has a direct impact on
+%data-types. Because types can \emph{depend} on terms, our data-types
+%can be made more precise. The typical example is vectors, which type
+%depend on the size of the vector. Having more precision about
+%data-types, we can write safer code: taking the $\CN{head}$ of a
+%vector is \emph{ensured} to succeed whenever its type states that it
+%is a non-empty vector. This property is automatically enforced by the
+%type-checker.
 
 \begin{wstructure}
         <- Equipped with elimination principle
@@ -122,14 +133,14 @@ type-checker.
             <- Making proofs over them
 \end{wstructure}
 
-Moreover, in total programming systems, such as Agda, Ynot, or
-Epigram, data-types come equipped with an elimination principle: while
-a data-type definition introduces new type formers in the theory, we
-need an eliminator to dispose of them. Looking through the
-Curry-Howard lenses, the elimination principle corresponds to an
-induction principle associated with the data-type. To program over our
-data-types, we rely on their induction principle, guaranteeing the
-well-foundedness of our definition.
+%Moreover, in total programming systems, such as Agda, Ynot, or
+%Epigram, data-types come equipped with an elimination principle: while
+%a data-type definition introduces new type formers in the theory, we
+%need an eliminator to dispose of them. Looking through the
+%Curry-Howard lenses, the elimination principle corresponds to an
+%induction principle associated with the data-type. To program over our
+%data-types, we rely on their induction principle, guaranteeing the
+%well-foundedness of our definition.
 
 \begin{wstructure}
     <- Agda standard library [Nisse file]
@@ -141,18 +152,16 @@ well-foundedness of our definition.
         -> Crucial need for ``genericity''
 \end{wstructure}
 
-From a software correctness point of view, having fine-grained types
-is a blessing. However, from a software re-use point of view, this is
-a major hurdle. For example, the difference between lists and vectors
-is rather thin, and, for most functions, it does not make a
-difference. However, because their type is (slightly) different, the
-functions need to be implemented separately. Often, the code will even
-be the same, only the type signature changes. A striking example of
-such unavoidable code duplication is apparent in the Agda standard
-library~\cite{nisse:asl}: it features no less than 13 variations of
-lists, ranging from difference lists to lists which elements verify
-some predicate. In dependently-typed system, we crucially need to
-program \emph{generically}.
+The blessing of expressing just the right type for the job can also be
+a curse. Where once we might have had a small collection of basic
+datatypes and a large library, we now must cope with a cornucopia of
+finely confected structures, subtly designed, so subtly different. The
+basic vector equipment is much like that for lists, but we implement
+it separately, often retyping the same code. The Agda standard
+library~\cite{nisse:asl} sports a writhing mass of list-like
+structures, including vectors, bounded-length lists, difference lists,
+reflexive-transitive closures---the list is petrifying. In this paper,
+we equip ourselves to fight this gorgon, with \emph{reflection}.
 
 \begin{wstructure}
         /> Coq, Agda: external notion
@@ -161,9 +170,13 @@ program \emph{generically}.
             -> No reflection for data-types (?)
 \end{wstructure}
 
-While central in a programming environment, the presentation of
-data-types in today's dependently-typed system is
-\emph{external}. As in the simply-typed world, the definition of
+The business of belonging to a datatype is itself a relative notion,
+depending on the type's \emph{declaration}. Most typed functional
+languages feature a datatype declaration construct, external to
+and extending, the language for defining values and programs.
+
+
+ As in the simply-typed world, the definition of
 data-types is processed by a meta-theoretical engine, before being
 reifed by extending the type theory with the corresponding type
 formers and elimination principle. Because of this external apparatus,
