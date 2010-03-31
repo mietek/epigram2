@@ -175,31 +175,30 @@ grammar for describing these functors. Hence, $\IDesc{\!}$ and its
 interpretation have the following types:
 
 \[\stk{
-\data \IDesc{\!} (\Bhab{\V{I}}{\Set}) : \Set \where \\
-\;\;\ldots \\
+\data \IDesc{(\Bhab{\V{I}}{\Set})} : \Set \where \:\ldots \\
 \\
-\idescop{\_\:}{}{} : \PI{\V{I}}{\Set} \IDesc{\V{I}} \To (\V{I} \To \Set) \To \Set    \\
+\idescop{\_}{}{} : _{\PI{\V{I}}{\Set}} \IDesc{\V{I}} \To (\V{I} \To \Set) \To \Set    \\
 \ldots
 }\]
 
-Note that $I \To \IDesc{\V{I}}$ is isomorphic, up to interpretation, to an
+Note that $\V{I} \To \IDesc{\V{I}}$ is isomorphic, up to interpretation, to an
 endofunctor on $\Set^{\V{I}}$. Indeed, $\V{I} \To \IDesc{\V{I}}$ is interpreted as
-$\V{I} \To (\V{I} \To \Set) \To \Set$, which is isomorphic to $(\V{I} \To \Set)
-\To (\V{I} \To \Set)$. Fix-point of inductive families is defined over
+$\V{I} \To \Set^{\V{I}} \To \Set$, which is isomorphic to $\Set^{\V{I}}
+\To \Set^{\V{I}}$. Fix-point of inductive families is defined over
 these indexed functors, hence computing a fix-point of the entire
 \emph{family} of functors:
 
 \[\stkl{
-\Rule{\stk{ 
-          \Gamma \vdash \Bhab{\V{I}}{\Set} \\
+\Rule{\Gamma \vdash \Bhab{\V{I}}{\Set} \qquad
+      \Gamma \vdash \Bhab{\V{R}}{\V{I} \To \IDesc{\V{I}}}}
+     {\Gamma \vdash \Bhab{\IMu{\V{I}}{\V{R}}{\!}}{\V{I}\To\Set}} \qquad
+\\:\
+\Rule{\begin{array}{l@{\qquad}l}
+          \Gamma \vdash \Bhab{\V{I}}{\Set} &
           \Gamma \vdash \Bhab{\V{R}}{\V{I} \To \IDesc{\V{I}}} \\
-          \Gamma \vdash \Bhab{\V{i}}{\V{I}}}}
-     {\Gamma \vdash \Bhab{\IMu{\V{I}}{\V{R}}{\V{i}}}{\Set}} \qquad
-\Rule{\stk{
-          \Gamma \vdash \Bhab{\V{I}}{\Set} \\
-          \Gamma \vdash \Bhab{\V{R}}{\V{I} \To \IDesc{\V{I}}} \\
-          \Gamma \vdash \Bhab{\V{i}}{\V{I}} \\
-          \Gamma \vdash \Bhab{\V{x}}{\idescop{\V{R}\: \V{i}}{\V{I}}{(\IMu{\V{I}}{\V{R}}{})}}}}
+          \Gamma \vdash \Bhab{\V{i}}{\V{I}} &
+          \Gamma \vdash \Bhab{\V{x}}{\idescop{\V{R}\:\V{i}}{\V{I}}{(\IMu{\V{I}}{\V{R}}{\!})}}
+      \end{array}}
      {\Gamma \vdash \Bhab{\Con{\V{x}}}{\IMu{\V{I}}{\V{R}}{\V{i}}}}
 }\]
 
@@ -231,7 +230,7 @@ Figure~\ref{fig:idesc}.
 \[\stk{
 \begin{array}{ll}
 \stk{
-\data \IDesc{\!} (\Bhab{\V{I}}{\Set}) : \Set \where \\
+\data \IDesc{(\Bhab{\V{I}}{\Set})} : \Set \where \\
 \;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
     \DVar{\!}         & \V{I} \To \IDesc{\V{I}}                                       \\
     \DConst{\!}       & \Set \To \IDesc{\V{I}}                                        \\
@@ -510,8 +509,8 @@ $\FinSuc{\!}$ both target $\NatSuc{\!}$:
 \stk{
 \data \Fin{\!} : \PI{\V{n}}{\Nat} \Set \where \\
 \;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
-    \FinZero_{\V{n}}      & \Fin{(\NatSuc{\V{n}})}   \\
-    \FinSuc{\!}_{\V{n}}   & \Fin{\V{n}} \To \Fin{(\NatSuc{\V{n}})}
+    \FinZero      & _{\PI{\V{n}}{\Nat}}\Fin{(\NatSuc{\V{n}})}   \\
+    \FinSuc{\!}   & _{\PI{\V{n}}{\Nat}}\Fin{\V{n}} \To \Fin{(\NatSuc{\V{n}})}
 \end{array}
 \vspace{0.1in}
 \\
@@ -599,16 +598,16 @@ will see a concrete example of this in the following example.
 \newcommand{\Ele}[2]{\etag{\CN{le}}~#1~#2}
 
 %% Index mapper (terminology?)
-\newcommand{\Val}[1]{\D{Val}~#1}
-\newcommand{\Var}[2]{\D{Var}_{#1}~#2}
+\newcommand{\Val}[1]{\F{Val}~#1}
+\newcommand{\Var}[2]{\F{Var}_{#1}~#2}
 
 %% Hutton expressions
 \newcommand{\HExprD}{\C{ExprD}}
 \newcommand{\HExprAD}{\C{ExprAD}}
 \newcommand{\HExprID}{\C{ExprID}}
-\newcommand{\HExprVarD}[1]{\C{ExprD}_{\C{Var},#1}}
+\newcommand{\HExprVarD}[1]{\C{ExprD}_{\F{Var},#1}}
 \newcommand{\HExprFreeD}{\C{ExprD}^{\C{Free}}}
-\newcommand{\HExprAFreeD}{\C{ExprAlwaysD}^{\C{Free}}}
+\newcommand{\HExprAFreeD}{\C{ExprAD}^{\C{Free}}}
 
 We are going to define a syntax for a small
 typed language. We consider two types, natural numbers and booleans:
@@ -672,7 +671,7 @@ $\switch{\!}{\!}{\!}{\!}$ eliminator.
 \HExprAD : \ATagIDesc{\Ty} \\
 \HExprAD \mapsto \bigRedBracket{
                  \begin{array}{l}
-                   \EnumT{[\Eval{}, \Econd{\!}{\!}{\!}\!\,]} \red{,} \\
+                   {[\Eval{}, \Econd{\!}{\!}{\!}\!\,]} \red{,} \\
                    \LAM{\V{ty}}
                    \bigRedBracket{
                    \begin{array}{l}
@@ -690,7 +689,7 @@ $\switch{\!}{\!}{\!}{\!}$ eliminator.
 \HExprID : \ITagIDesc{\Ty} \\
 \HExprID \mapsto \bigRedBracket{
                  \begin{array}{l}
-                   \LAM{\V{ty}} \case{\V{ty}}{\Enat \To \EnumT{[\Eplus{\!}{\!}\!\,]} \\ \Ebool \To \EnumT{[\Ele{\!}{\!}\!\,]}} \red{,} \\
+                   \LAM{\V{ty}} \case{\V{ty}}{\Enat \To {[\Eplus{\!}{\!}\!\,]} \\ \Ebool \To {[\Ele{\!}{\!}\!\,]}} \red{,} \\
                    \LAM{\_} \DProd{\DVar{\Enat}}{\DVar{\Enat}} 
                    \end{array}
                    }
@@ -733,7 +732,7 @@ is as follow:
 
 
 \[\stk{
-\evalOne : \PI{\V{ty}}{\Ty} \idescop{\toIDesc{\HExprD}\: \V{ty}}{\Ty}{\V{ty}}
+\evalOne : \PI{\V{ty}}{\Ty} \idescop{\toIDesc{\HExprD}\:\V{ty}}{\Ty}{\Val{\!}}
 \To {\Val{\V{ty}}} \\
 \begin{array}{@{}l@{\:=\:\:}l}
 \evalOne\: \_\: \pair{\Eval{}}{\V{x}}{}                                         & \V{x} \\
@@ -795,7 +794,7 @@ Consequently, replacing $\Val{\V{ty}}$ by
 $(\SUM{\Val{\V{ty}}}{\Var{\V{dom}}{\V{ty}}})$ in Figure~\ref{fig:hexpr-full} turns
 the language of closed term into a language of opened terms with
 constants. For readability, we will abbreviate $\LAM{\V{ty}}
-\SUM{\Val{\V{ty}}}{\Var{\V{dom}}{\V{ty}}}$ into $\SUM{\Val{}}{\Var{}{}}$ \note{Is
+\SUM{\Val{\V{ty}}}{\Var{\V{dom}}{\V{ty}}}$ into $\SUM{\Val{\!}}{\Var{\V{dom}}{\!}}$. \note{Is
   it polite and comprehensible to ask that?} This defines a new
 indexed description, called $\HExprVarD{\V{dom}}$.
 
@@ -860,7 +859,7 @@ is the following:
 
 \[
 \begin{array}{@{}ll}
-\substH  : & \PITEL{\V{\dom}}{\EnumU} \\
+\substH  : & \PITEL{\V{dom}}{\EnumU} \\
            & \PITEL{\V{\gammaNat}}{\GammaSpi{\V{dom}}{\Enat}} 
              \PITEL{\V{\gammaBool}}{\GammaSpi{\V{dom}}{\Ebool}} \\
            & \begin{array}{@{}ll}
@@ -937,7 +936,7 @@ indexed functor coding its free monad: \note{pwm: Whoa there. Maybe we
                      \PITEL{\V{X}}{\V{I} \To \Set}\To 
                       \TagIDesc{\V{I}}
 \end{array} \\
-\FreeIMonad{(\V{E},\V{F})}{\V{I}}{\V{R}} \mapsto \\ \;\;
+\FreeIMonad{\pair{\V{E}}{\V{F}}{}}{\V{I}}{\V{R}} \mapsto \\ \;\;
     \pair{\pair{\ListCons{\DVar{\!}}{(\fst{\V{E}})}} 
                {\LAM{\V{i}}
                 \pair{(\DConst{(\V{R}\: \V{i})})}
@@ -993,8 +992,7 @@ structure.
 As previously mentioned, we identify $\Eval{}$ as the \return\ of the
 free monad, while the other components are the action of the monad. As
 a result, the definition is similar to $\HExprD$ presented in
-Figure~\ref{fig:hexpr-full}, at the exception of $\HExprAD$ that is
-replaced by $\HExprAFreeD$:
+Figure~\ref{fig:hexpr-full}, replacing $\HExprAD$ with $\HExprAFreeD$:
 
 \[\stk{
 \HExprAFreeD : \ATagIDesc{\Ty} \\
@@ -1014,7 +1012,7 @@ replaced by $\HExprAFreeD$:
 The resulting data-type is called $\HExprFreeD$. By a simple unfolding
 of definition, we note that $\FreeIMonad{\HExprFreeD}{\Ty}{\Val{}}$
 corresponds to the syntax of closed terms, $\HExprD$. Similarly,
-$$\FreeIMonad{\HExprFreeD}{\Ty}{(\LAM{\V{ty}} \SUM{\Val{\V{ty}}}{\Var{\V{dom}}{\V{ty}}})}$$
+$\FreeIMonad{\HExprFreeD}{\Ty}{\SUM{\Val{\!}}{\Var{\V{dom}}{\!}}}$
 corresponds to expressions with variables, $\HExprVarD{\V{dom}}$.
 
 \begin{wstructure}
@@ -1042,7 +1040,7 @@ guiding us:
           \V{term} \mapsto  \\
 \;\;\ \begin{array}{ll}
        \substI\: & \Ty\: 
-                  (\SUM{\Val{}}{\Var{\V{dom}}{}})\: 
+                  (\SUM{\Val{\!}}{\Var{\V{dom}}{\!}})\: 
                   \Val{}\:
                   \HExprFreeD\:  \\
                 &
@@ -1074,7 +1072,7 @@ together with its semantics.
         ???
 \end{wstructure}
 
-\paragraph{Indexed description:}
+\paragraph{Indexed descriptions:}
 
 Another instance of free monad is $\IDesc{\!}$ itself. Indeed,
 $\DVar{\!}$ is nothing but the \return. The remaining constructors are
@@ -1082,28 +1080,27 @@ simply the pattern functor, trivially indexed by $\Unit$. Hence, we
 describe this functor by the following code:
 
 \[\stk{
-\IDescFreeD : \PI{\V{I}}{\Set} \IDesc{\Unit} \\
+\IDescFreeD : \ATagIDesc{\Unit} \\
 \begin{array}{@{}ll}
-\IDescFreeD~\V{I} \mapsto \DSigma{\!}{\!} & (\EnumT \red{[}
-                                              \DConst{\!},
-                                              \DProd{\!}{\!},
-                                              \DSigma{\!}{\!}, 
-                                              \DPi{\!}{\!}
-                                                    \red{]}) \\
-                                  & \bigRedBracket{\begin{array}{l}
+\IDescFreeD \mapsto \bigRedBracket{\begin{array}{l}
+                                [\DConst{\!},
+                                 \DProd{\!}{\!},
+                                 \DSigma{\!}{\!}, 
+                                 \DPi{\!}{\!}] \red{,}\\
+                                  \LAM{\_}\bigRedBracket{\begin{array}{l}
                                         \DConst{\Set}               \\
                                         \DProd{\DVar{\Void}}{\DVar{\Void}}  \\
                                         \DSigma{\Set}{(\LAM{\V{S}} \DPi{\V{S}}{(\LAM{\_} \DVar{\Void})})} \\
                                         \DSigma{\Set}{(\LAM{\V{S}} \DPi{\V{S}}{(\LAM{\_} \DVar{\Void})})}
-                                    \end{array}}
+                                    \end{array}}\end{array}}
 \end{array}
 }\]
 
 Then, we get $\IDesc$ by building its free monad:
 
 \[\stk{
-\IDescD : \PI{\V{I}}{\Set} \IDesc{\Unit} \\
-\IDescD\: \V{I} \mapsto \FreeIMonad{\red{[}\IDescFreeD\red{]}}{\Unit}{\V{I}}\: \V{I}
+\IDescD : \PI{\V{I}}{\Set} \TagIDesc{\Unit} \\
+\IDescD\: \V{I} \mapsto \FreeIMonad{\red{[}\IDescFreeD\red{,[}\LAM{\_}[]\red{,}\LAM{\_}\red{[]]]}}{\Unit}\LAM{\_}\V{I}
 }\]
 
 
