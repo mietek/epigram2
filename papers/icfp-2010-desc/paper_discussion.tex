@@ -67,11 +67,30 @@ pattern functor. Unlike PolyP, we do not have to resort to pre-process
 data-type definitions: our data-types are, natively, nothing but
 codes.
 
-Our approach also support the Generic
-Haskell~\cite{hinze:generic-haskell} model. This model, based on
-type-indexed data types, enables computing new data-types from
-others. This is natural in our system, as data-types descriptions are
-first-class.
+We share with Generic Haskell the \emph{type-indexed data type}
+approach~\cite{hinze:generic-haskell}, as exemplified by the free
+monad construction: from data-type, we can compute new data-types and
+equip them with their structure. Generic Haskell also features
+\emph{generic views}~\cite{holdermans:generic-view}, transparently
+transforming the structure of data-type definitions, to ease the
+implementation of generic functions over them. Views in
+dependently-typed system are widely
+used~\cite{mcbride.mckinna:view-from-the-left}. Unlike in Generic
+Haskell, we do not have to modify the compiler to develop views on
+data-types: we can massage description codes from inside the language
+and present them as a standard view. An example of such operation is
+the tagged descriptions, presenting data-types under a particular
+angle.
+
+Unlike Generic Haskell, we do not support polykinded
+programming~\cite{hinze:polytypic-polykinded}. Our descriptions are
+limited to endofunctor on $\Set$ and $\Set^I$. While it is possible to
+\emph{encode} higher-kinded data-types in our setting, we do not plan
+to adopt this strategy. Rather, as future work, we plan to extend our
+universe to capture higher-kinded definitions and generic functions
+over them. For the same reason, arity-generic
+programming~\cite{weirich:arity-generic} is out of reach of our
+current presentation.
 
 Interestingly, our generic induction principle allows a programming
 style reminiscent to the Scrap Your Boilerplate~\cite{spj:syb} (SYB)
