@@ -482,6 +482,9 @@ shown in Figure~\ref{fig:typeOkRules}, and hence give the rules for the
 judgment $\alpha \defn D \ok$. 
 \TODO{Show $\tau \type$ is stable.}
 A simple induction on derivations shows that the judgment $\tau \type$ is stable. 
+%%%
+If $\Gamma$ is a valid context, we write $\types{\Gamma}$ for the set of types
+$\tau$ such that $\Gamma \entails \tau \type$. 
 
 \begin{figure}[ht]
 \boxrule{\Gamma \entails \tau \type}
@@ -506,8 +509,8 @@ $$
 \end{figure}
 
 
-If $\Gamma$ is a valid context, we write $\types{\Gamma}$ for the set of types
-$\tau$ such that $\Gamma \entails \tau \type$. 
+%%%If $\Gamma$ is a valid context, we write $\types{\Gamma}$ for the set of types
+%%%$\tau$ such that $\Gamma \entails \tau \type$. 
 
 
 \subsection{Implementation}
@@ -555,11 +558,31 @@ respectively. We overload |B0| for the empty list in both cases, and write
 |:<| and |:>| for the data constructors. Data types are cheap, so we might
 as well make the code match our intution about the meaning of data. Lists
 are monoids where |<+>| is the append operator, and the \scare{fish} operator
-\eval{:t (<><)} appends a suffix to a context.
+\eval{:t (<><)} appends a suffix to a context. 
+
+Since |Type| and |Suffix| are built from |Foldable| functors containing names, we can define a typeclass implementation of \ensuremath{FTV}, with membership function |(<?)|: 
+
+> class OccursIn a where
+>     (<?) :: Name -> a -> Bool
+
+> instance OccursIn Name where
+>     (<?) = (==)
+
+> instance Foldable ((::=) a) where
+>     foldMap f (_ ::= x) = f x
+
+> instance (Foldable t, OccursIn a) => OccursIn (t a) where
+>     alpha <? t = any (alpha <?) t
+
+
 
 We work in the |Contextual| monad (computations that can fail and mutate the
 context).  The |Name| component is the next fresh type variable name to use;
-it is an implementation detail that is not mentioned in the typing judgments.
+it is an implementation detail that is not mentioned in the typing judgments. 
+Our choice of |Name| means that it is easy to choose a name fresh with respect to a |Context|: 
+
+> fresh :: Name -> Context -> Name
+> fresh alpha _Gamma = succ alpha
 
 > type Contextual  = StateT (Name, Context) Maybe
 
@@ -958,20 +981,8 @@ which must be placed into the context before it.
 >                                                 >>  restore
 
 
-The |(<?)| typeclass function tests if a name occurs in a type or context
-suffix, since these are both |Foldable| functors containing names.
-
-> class OccursIn a where
->     (<?) :: Name -> a -> Bool
-
-> instance OccursIn Name where
->     (<?) = (==)
-
-> instance Foldable ((::=) a) where
->     foldMap f (_ ::= x) = f x
-
-> instance (Foldable t, OccursIn a) => OccursIn (t a) where
->     alpha <? t = any (alpha <?) t
+%%%The |(<?)| typeclass function tests if a name occurs in a type or context
+%%%suffix, since these are both |Foldable| functors containing names.
 
 
 \section{Type schemes}
@@ -1193,18 +1204,18 @@ $$\forall \upsilon \forall \phi : \Gamma \lei \Phi . (
 
 
 The |freshVar| function generates a fresh name for a type variable and defines it as unbound,
-and the |freshVarDef| function generates a fresh name and binds it to the given type.
+and the |freshDef| function generates a fresh name and binds it to the given type.
 
-> fresh :: Maybe Type -> Contextual Name
-> fresh mt = do  (beta, _Gamma) <- get
->                put (succ beta, _Gamma :< beta := mt)
->                return beta
+> freshen :: Maybe Type -> Contextual Name
+> freshen mt = do  (beta, _Gamma) <- get
+>                  put (fresh beta _Gamma, _Gamma :< beta := mt)
+>                  return beta
 
 > freshVar :: Contextual Name
-> freshVar = fresh Nothing
+> freshVar = freshen Nothing
 
-> freshVarDef :: Type -> Contextual Name
-> freshVarDef = fresh . Just
+> freshDef :: Type -> Contextual Name
+> freshDef = freshen . Just
 
 The |specialise| function will specialise a type scheme with fresh variables
 to produce a type. That is, given a scheme $\sigma$ it computes a most general
@@ -1223,7 +1234,7 @@ If a let binding is outermost, it is removed and added to the context with a fre
 variable name (applying the \textsc{LetS} rule).
 
 > specialise (LetS tau sigma) = do
->     alpha <- freshVarDef tau
+>     alpha <- freshDef tau
 >     specialise (schemeUnbind alpha sigma)
 
 This continues until a scheme with no quantifiers is reached, which can simply be
