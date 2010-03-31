@@ -550,8 +550,8 @@ first, the constructors that do not depend on the index; then, the
 constructors that do. The non-dependent part mirrors the definition
 for non-indexed descriptions: we are provided a finite choice of
 constructors. The index-depend part simply indexes the choice of
-constructors by $\V{I}$. Hence, by inspecting the index, it is possible to
-e
+constructors by $\V{I}$. Hence, by inspecting the index, it is
+possible to enable or disable the constructors. 
 
 \[\stk{
  \TagIDesc{\V{I}}  \mapsto \TIMES{\ATagIDesc{\V{I}}}{\ITagIDesc{\V{I}}} \\
@@ -559,7 +559,6 @@ e
  \ITagIDesc{\V{I}} \mapsto \\
 \qquad\SIGMA{\V{F}}{\V{I} \To \EnumU} (\PI{\V{i}}{\V{I}} \spi{(\V{F}\: \V{i})}{(\LAM{\_} \IDesc{\V{I}})}) 
 }\]
-
 
 \begin{wstructure}
 <- Vectors
@@ -723,6 +722,11 @@ evaluator is:
          \IMu{\Ty}{\toIDesc{\HExprD}}{\V{ty}} \To
          \Val{\V{ty}}
 \]
+
+
+Where we overload the notation $\toIDesc{\V{TID}}$ to denote the
+indexed description computed from the tagged indexed description
+$\V{TID}$.
 
 The type of $\F{eval}$ is strikingly similar to a
 catamorphism. Indeed, implementing a single step of evaluation -- the
