@@ -165,10 +165,14 @@ type inference algorithms. We illustrate this technique by describing an
 implementation of type inference for the familiar Hindley-Milner type system,
 but it can be extended to more advanced type systems.
 The algorithms are based around the notion of a well-founded linear context
-in which type variable bindings and type-schemes for terms may only depend on
-types that appear earlier in the context. We ensure that the unification
+in which type variable bindings and type-schemes for terms 
+%%%may only depend on types that appear earlier in the context. 
+   may depend only on bindings appearing earlier in the context. 
+We ensure that the unification
 algorithm produces a most general unifier, and that type inference produces
-principal types, by only moving definitions earlier in the context when this is
+principal types, 
+%%%by only moving definitions earlier in the context when this is
+   by moving definitions earlier in the context only when 
 absolutely necessary.
 \end{abstract}
 
@@ -184,17 +188,24 @@ It is based on the Unification Algorithm of
 Successive presentations and formalisations of Algorithm \W\ have treated the
 underlying unification algorithm as a \scare{black box}, but by considering both
 simultaneously we are able to give a more elegant type inference algorithm.
-In particular, the generalisation step (required when inferring the type of
-a let-expression) becomes straightforward.
+In particular, the generalisation step 
+%%%(required when 
+(for 
+ inferring the type of a let-expression) becomes straightforward.
 
 We present algorithms using systems of inference rules to define relationships
 between sequents of the form $\Judge{\Gamma_0}{J}{\Gamma_1}$. Here $\Gamma_0$
-is the input context (before applying the rule), $J$ is the judgement being
+is the input context (before applying the rule), $J$ is the judgment being
 established, and $\Gamma_1$ is the output context (in which $J$ holds).
 This idea of sequents producing a resulting context goes back at least to
-\citet{pollack_implicit_1990}, and hence perhaps to \citet{harper_type_1991}
-and \citet{milner_definition_1990}.
-We will define an ordering on contexts based on the information they contain,
+\citet{pollack_implicit_1990}. 
+%%%, and hence perhaps to \citet{harper_type_1991} and \citet{milner_definition_1990}.
+   An interesting point of comparison is with the work of Nipkow and 
+   co-workers\citep{Nipkow-Prehofer-JFP95,NaraschewskiN-JAR}, 
+   but substitutions and new contexts are there kept separate. 
+%%%
+We %%%will 
+   define an ordering on contexts based on the information they contain,
 and show that $\Gamma_1$ is minimal with respect to this ordering. If one
 thinks of a context as a set of atomic facts, then $\Gamma_1$ is the least upper
 bound of $\Gamma_0$ together with the facts required to make $J$ hold.
@@ -228,7 +239,7 @@ do not handle substitutions correctly \citep{norvig_correctingwidespread_1991}.
 \section{Abstract nonsense}
 
 Let $\V$ be a set of variables, $\D$ a set of objects and $\J$ a set of
-judgements. A \define{substitution} $\theta$ is a partial map from $\V$ to $\D$,
+judgments. A \define{substitution} $\theta$ is a partial map from $\V$ to $\D$,
 and we assume $\D$ and $\J$ are closed under application of substitutions.
 A \define{context} $\Gamma$ is a list of definitions $v D$ (pairs of $v \in \V$
 and $D \in \D$) and separators $(\fatsemi)$.
@@ -236,13 +247,17 @@ We write $\emptycontext$ for the empty context, and the symbols
 $\Gamma, \Delta, \Theta, \Phi, \Psi$ represent contexts.
 Let $\V(\Gamma)$ be the set of variables in $\Gamma$.
 We write $\Gamma \entails J$ to mean that the definitions in $\Gamma$,
-corresponding to atomic facts, support the judgement $J \in \J$.
+corresponding to atomic facts, support the judgment $J \in \J$.
 We assume that $\J$ is closed under conjunction $(\wedge)$ with
 $$\Gamma \entails J_0  ~\wedge~  \Gamma \entails J_1
     \quad  \Leftrightarrow  \quad
     \Gamma \entails (J_0 \wedge J_1).$$
-Further assume that we have a judgement $v D \ok$ corresponding
-to every possible definition $v D$. We can define validity of contexts as shown
+Further assume 
+%%%that 
+   we have a judgment $v D \ok$ corresponding
+to every possible definition $v D$. 
+We %%%can 
+   define validity of contexts as shown
 in Figure~\ref{fig:contextValidityRules}.
 
 \begin{figure}[ht]
@@ -262,7 +277,7 @@ $$
 \label{fig:contextValidityRules}
 \end{figure}
 
-For any variable $v$ and definiens $D$ we define a context membership judgement
+For any variable $v$ and definiens $D$ we define a context membership judgment
 $\contains v D$ in the obvious way, and write $\Gamma \contains v D$ for
 $\Gamma \entails (\contains v D)$.
 
@@ -281,23 +296,23 @@ induction on the number of $\fatsemi$ separators in $\Gamma$.
 We may omit $\delta$ and write $\Gamma \lei \Delta$ if we are only interested
 in the existence of a suitable substitution. This relation between contexts
 captures the notion of \define{information increase}: $\Delta$ supports all the
-judgements corresponding to definitions in $\Gamma$. The second condition
+judgments corresponding to definitions in $\Gamma$. The second condition
 ensures that approximate ordering is preserved.
 We require a substitution because the type inference algorithm will invent new
 type variables, which must be interpreted over a more informative context that
 will not contain them.
 
-We say a judgement $J$ is
+We say a judgment $J$ is
 \define{stable} if it is preserved under information increase, that is, if
 $$\Gamma \entails J  ~\wedge~  \delta : \Gamma \lei \Delta
     \quad \Rightarrow \quad
     \Delta \entails \delta J.$$
 
-From now on we will assume that the judgement $\sem{v D}$ is stable for any
-$v \in \V$ and $D \in \D$, and that stable judgements are closed under 
+From now on we will assume that the judgment $\sem{v D}$ is stable for any
+$v \in \V$ and $D \in \D$, and that stable judgments are closed under 
 substitution. This allows us to prove the following:
 
-\begin{lemma}
+\begin{lemma}\label{lei:preorder}
 The $\lei$ relation is a preorder, with reflexivity demonstrated by
 $\iota : \Gamma \lei \Gamma : v \mapsto v$, and transitivity by
 $$\gamma_1 : \Gamma_0 \lei \Gamma_1  ~\wedge~  \gamma_2 : \Gamma_1 \lei \Gamma_2
@@ -317,7 +332,7 @@ applied to $\gamma_2 : \Gamma_1 \lei \Gamma_2$.
 A \define{problem of arity $n$} is a map $P: \D^n \rightarrow \J$ such that
 $P(\vec{D})$ is stable and $\theta P(\vec{D}) = P(\theta \vec{D})$ for any
 $\vec{D} \in \D^n$ and substitution $\theta$.  Note that we can regard stable
-judgements as problems of arity $0$. We say that $\vec{D} \in \D^n$
+judgments as problems of arity $0$. We say that $\vec{D} \in \D^n$
 \define{solves $P$ in $\Gamma$} if $\Gamma \entails P(\vec{D})$.
 We will be interested in finding the minimal information increase required to
 solve a given problem. Hence we write
@@ -334,10 +349,13 @@ $$P_1 \wedge P_2 : \D^{m+n} \rightarrow \J :
       \vec{D_1} \vec{D_2} \mapsto P(\vec{D_1}) \wedge P(\vec{D_2})$$
 where $D_1$ and $D_2$ are vectors of length $m$ and $n$ respectively.
 
-The point of all this work is to be able to state and prove the following lemma.
-This states that the minimal solution to a conjunction of problems can be found
+The point of all this work is to be able to state and prove the following 
+%%%lemma. This states 
+   lemma, stating that the minimal solution to a conjunction of problems can be found
 by finding the minimal solution of the first problem, then (minimally) extending
-it to solve the second problem.
+it to solve the 
+%%%second problem.
+   second. 
 
 \begin{lemma}[The Optimist's Lemma]
 The following inference rule is admissible:
@@ -347,8 +365,9 @@ $$\Rule{\gamma_1 : \Jmin{\Gamma_0}{P_1(\vec{D_1})}{\Gamma_1}
 \end{lemma}
 
 \begin{proof}
-We have that $\gamma_2 \compose \gamma_1 : \Gamma_0 \lei \Gamma_2$ by the 
-preceding lemma.
+We have that $\gamma_2 \compose \gamma_1 : \Gamma_0 \lei \Gamma_2$ by 
+%%%the preceding lemma.
+   Lemma~\ref{lei:preorder}. 
 
 To show $\Gamma_2 \entails P_1 \wedge P_2 (\gamma_2 \vec{D_1}, \vec{D_2})$, it
 suffices to show $\Gamma_2 \entails P_1(\gamma_2 \vec{D_1})$ and
@@ -374,7 +393,10 @@ We now proceed as follows. First we instantiate the above definitions and give
 a version of the unification algorithm in this setting. Using this, we can
 describe a general technique for converting a collection of inference rules that
 give the declarative specification for a problem into an algorithm for solving
-the problem minimally. We give the example of Hindley-Milner type inference.
+the problem minimally. We 
+%%%give 
+   illustrate with 
+the example of Hindley-Milner type inference.
 
 
 
@@ -416,11 +438,14 @@ $\alpha \defn \tau$), or left unbound (written |alpha := Nothing|).
 Later, we will add other kinds of variable and definition that are not relevant
 for unification.
 
-We write $\tyvars{\Gamma}$ for the set of type variables of $\Gamma$, i.e.\
-$\V_0 \cap \V(\Gamma)$.
-We define the judgement $\tau \type$ ($\tau$ is a type over the context) as
+We write $\tyvars{\Gamma}$ for the 
+%%%set of type variables of $\Gamma$, i.e.\ $\V_0 \cap \V(\Gamma)$.
+   set $\V_0 \cap \V(\Gamma)$ of type variables declared in $\Gamma$. 
+We define the judgment $\tau \type$ ($\tau$ is a type over the context) as
 shown in Figure~\ref{fig:typeOkRules}, and hence give the rules for the
-judgement $\alpha \defn D \ok$. \TODO{Show $\tau \type$ is stable.}
+judgment $\alpha \defn D \ok$. 
+\TODO{Show $\tau \type$ is stable.}
+A simple induction on derivations shows that the judgment $\tau \type$ is stable. 
 
 \begin{figure}[ht]
 \boxrule{\Gamma \entails \tau \type}
@@ -506,7 +531,7 @@ are monoids where |<+>| is the append operator, and the \scare{fish} operator
 
 We work in the |Contextual| monad (computations that can fail and mutate the
 context).  The |Name| component is the next fresh type variable name to use;
-it is an implementation detail that is not mentioned in the typing judgements.
+it is an implementation detail that is not mentioned in the typing judgments.
 
 > type Contextual  = StateT (Name, Context) Maybe
 
@@ -538,7 +563,7 @@ The |popEntry| function removes and returns the topmost entry from the context.
 
 \section{Unification up to definition}
 
-If $\tau$ and $\upsilon$ are types, we define the equivalence judgement
+If $\tau$ and $\upsilon$ are types, we define the equivalence judgment
 $\tau \equiv \upsilon$ by the rules in Figure~\ref{fig:equivRules}.
 
 \begin{figure}[ht]
@@ -576,7 +601,7 @@ $$\Gamma \contains \hole{\alpha}
     \Rightarrow  \Gamma \entails \alpha \equiv \alpha.$$
 
 \begin{lemma}
-The judgement $\tau \equiv \upsilon$ is stable, i.e.\ if
+The judgment $\tau \equiv \upsilon$ is stable, i.e.\ if
 $\Gamma \entails \tau \equiv \upsilon$ and $\delta : \Gamma \lei \Delta$ then
 $\Delta \entails \delta\tau \equiv \delta\upsilon$.
 \end{lemma}
@@ -609,7 +634,7 @@ instantiation of $\alpha$ with $\tau$ succeds with output context $\Gamma_1$.
 
 
 We define the orthogonality relation $e \perp J$ (entry $e$ does not have any
-effect on the judgement $J$) for unification and instantiation judgements
+effect on the judgment $J$) for unification and instantiation judgments
 as follows:
 \begin{align*}
 \delta \defn \_ \perp \alpha \equiv \beta
@@ -929,7 +954,7 @@ $$\sigma ::= .\tau ~||~ \forall\alpha~\sigma ~||~ \letS{\alpha}{\tau}{\sigma}.$$
 We use explicit definitions in type schemes to avoid the need for substitution
 in the type inference algorithm. 
 
-We now define a new judgement form $\Gamma \entails \sigma \scheme$ ($\sigma$ is
+We now define a new judgment form $\Gamma \entails \sigma \scheme$ ($\sigma$ is
 a valid scheme in $\Gamma$) by the rules in Figure~\ref{fig:schemeValidityRules}.
 We also observe the further sanity condition
 $\Gamma \entails \sigma \scheme$ implies $\Gamma \entails \valid$.
@@ -957,7 +982,7 @@ $$
 \end{figure}
 
 
-The judgement $\Delta \entails \sigma \succ \tau$, defined in
+The judgment $\Delta \entails \sigma \succ \tau$, defined in
 Figure~\ref{fig:genericInstRules}, means that $\sigma$ has
 generic instance $\tau$ obtained by substituting $\Delta$-types
 for the generic variables of $\sigma$.
@@ -1032,9 +1057,9 @@ The term variable definitions and |LetGoal| markers will record information abou
 progress through the structure of a term when inferring its type.
 
 Since the additional context entries are not used in unification, it is
-straightforward to extend the orthogonality judgements: if $e = \letGoal$ or
+straightforward to extend the orthogonality judgments: if $e = \letGoal$ or
 $e = x \asc \sigma$ we have $e \perp J$ for any $J$.
-We also extend the context validity judgement with additional rules, as given in
+We also extend the context validity judgment with additional rules, as given in
 Figure~\ref{fig:additionalContextValidityRules}.
 
 \begin{figure}[ht]
@@ -1068,10 +1093,10 @@ The full data type of context entries is thus:
 
 \subsection{Specialisation}
 
-The judgement $\Jspec{\Gamma}{\sigma}{\tau}{\Gamma, \Xi}$ means
+The judgment $\Jspec{\Gamma}{\sigma}{\tau}{\Gamma, \Xi}$ means
 that, starting with the context $\Gamma$, the scheme $\sigma$ specialises
 to the type $\tau$ when the context is extended with some type variable
-definitions $\Xi$. This judgement
+definitions $\Xi$. This judgment
 is defined as shown in Figure~\ref{fig:specialiseAlgorithm}.
 
 \begin{figure}[ht]
@@ -1246,7 +1271,7 @@ The syntax of terms is
 $$t ::= x ~||~ t~t ~||~ \lambda x . t ~||~ \letIn{x}{t}{t}$$
 where $x$ ranges over some set of term variables.
 
-We define the judgement $\Delta \entails t : \tau$ ($t$ can be assigned type $\tau$
+We define the judgment $\Delta \entails t : \tau$ ($t$ can be assigned type $\tau$
 in $\Delta$) by the rules in Figure~\ref{fig:typeAssignmentRules}.
 
 \begin{figure}[ht]
@@ -1357,7 +1382,7 @@ $$\Gamma, \Xi \entails t : \tau
 \end{proof}
 
 
-Now we define the judgement $\Jtype{\Gamma_0}{t}{\tau}{\Gamma_1}$
+Now we define the judgment $\Jtype{\Gamma_0}{t}{\tau}{\Gamma_1}$
 (inferring the type of $t$ in $\Gamma_0$
 yields $\tau$ in the more informative context $\Gamma_1$) by the rules in
 Figure~\ref{fig:inferRules}.
@@ -1959,19 +1984,19 @@ produces a forward list.
 > (xs :< x) <>> ys  = xs <>> (x :> ys)
 
 
-\section{Judgement typeclass}
+\section{Judgment typeclass}
 
-> class Judgement j where
+> class Judgment j where
 >     type Output j
 >     fiat :: j -> Contextual (Output j)
 >     orthogonal :: Entry -> j -> Bool
 
-> instance Judgement () where
+> instance Judgment () where
 >     type Output () = ()
 >     fiat () = return ()
 >     orthogonal _ _ = True
 
-> instance (Judgement j, Judgement k) => Judgement (j, k) where
+> instance (Judgment j, Judgment k) => Judgment (j, k) where
 >     type Output (j, k) = (Output j, Output k)
 >     fiat (j, k) = do
 >         a  <- fiat j
@@ -1983,7 +2008,7 @@ produces a forward list.
 >     pure = return
 >     (<*>) = ap
 
-> instance (Judgement j, Judgement k) => Judgement (Either j k) where
+> instance (Judgment j, Judgment k) => Judgment (Either j k) where
 >     type Output (Either j k) = Either (Output j) (Output k)
 >     fiat (Left j) = pure Left <*> fiat j
 >     fiat (Right k) = pure Right <*> fiat k
@@ -1995,7 +2020,7 @@ produces a forward list.
 > data Instantiate = Name :===: (Type, Suffix)
 > infix 1 :===:
 
-> instance Judgement Unify where
+> instance Judgment Unify where
 >     type Output Unify = ()
 >     fiat (tau    :==:   upsilon) = unify tau upsilon
 >     orthogonal (delta := _) (V alpha :==: V beta) =
@@ -2005,7 +2030,7 @@ produces a forward list.
 >     orthogonal e (V alpha :==: tau) = orthogonal e (alpha :===: (tau, F0))
 >     orthogonal e (tau :==: V alpha) = orthogonal e (alpha :===: (tau, F0))
 
-> instance Judgement Instantiate where
+> instance Judgment Instantiate where
 >     type Output Instantiate = ()
 >     fiat (alpha  :===:  (upsilon, _Xi)) = instantiate alpha _Xi upsilon
 >     orthogonal (delta := _) (alpha :===: (tau, _Xi)) = not (alpha == delta) &&
@@ -2014,21 +2039,21 @@ produces a forward list.
 
 > data Specialise = Specialise Scheme
 
-> instance Judgement Specialise where
+> instance Judgment Specialise where
 >     type Output Specialise = Type
 >     fiat (Specialise sigma) = specialise sigma
 >     orthogonal _ _ = False
 
 > data Infer = Infer Term
 
-> instance Judgement Infer where
+> instance Judgment Infer where
 >     type Output Infer = Type
 >     fiat (Infer t) = infer t
 >     orthogonal _ _ = False
 
 
 
-> class Judgement j => Topmost j where
+> class Judgment j => Topmost j where
 >     topmost :: Entry -> j -> Contextual (Output j, Maybe Suffix)
 >     topset :: Entry -> j -> Contextual (Maybe Suffix)
 >     topset e j = snd <$> topmost e j
