@@ -213,7 +213,7 @@ the decidability of equality and thence type checking.
 %  carry the intuition that we are not the bad guys with a
 %  non-terminating type-checker.}
 
-\subsection{Finite sets}
+\subsection{Finite enumerations of tags}
 \label{sec:finite-sets}
 
 \begin{wstructure}
@@ -229,30 +229,70 @@ the decidability of equality and thence type checking.
             /> Also as coding representation!
 \end{wstructure}
 
-As a motivating example, we are now going to extend the type theory
-with a notion of finite set. One could argue that there is no need for
-such an extension: finite sets, just as any data-structure, can be
-encoded inside the type theory. A well-known example of such encoding
-is the Church encoding of natural numbers, which is isomorphic to
-finite sets. \note{Shall we talk about W-types encoding?}
+It is time for our first example of a \emph{universe}. You might
+want to offer a choice of named constructors in your datatypes, we shall
+equip you with sets of tags to choose from. Our plan
+is to implement (by extending the theory, or by encoding) the signature
+\[
+  \Type{\EnumU}\qquad \Type{\EnumT{(\Bhab{\M{E}}{\EnumU})}}
+\]
+where some value \(E:\EnumU\) in the `enumeration universe' describes
+a type of tag choices \(\EnumT{E}\). We shall need
+some tags---valid identifiers, marked to indicate that
+they are data, not variables scoped and substitutable---so we hardwire these
+rules:
+\[
+%% UId
+\Rule{\Gamma \vdash \Valid}
+     {\Gamma \vdash \Type{\UId}}
+\qquad
+%% Tag
+\Rule{\Gamma \vdash \Valid}
+     {\Gamma \vdash \Bhab{\Tag{\V{s}}}{\UId}}\;\V{s}\: \mbox{a valid identifier}
+\]
+Let us describe enumerations as lists of tags, with signature:
+\[
+\Bhab{\NilE}{\EnumU}\qquad
+\Bhab{\ConsE{(\Bhab{\M{t}}{\UId})}{(\Bhab{\M{E}}{\EnumU})}}{\EnumU}
+\]
+What are the \emph{values} in \(\EnumT{E}\)? Formally, we represent
+the choice of a tag as a numerical index into \(E\), via new rules:
+\[
+%% Ze
+\Rule{\Gamma \vdash \Valid}
+     {\Gamma \vdash \Bhab{\Ze}{\EnumT{(\ConsE{\M{t}}{\M{E}})}}} 
+\qquad
+%% Su
+\Rule{\Gamma \vdash \Bhab{\M{n}}{\EnumT{\M{E}}}}
+     {\Gamma \vdash \Bhab{\Su{\M{n}}}{\EnumT{(\ConsE{\M{t}}{\M{E}})}}}
+\]
+However, we expect that in practice, you might rather refer to these
+values \emph{by tag}, and we shall ensure that this is possible in due course.
 
-However, using encodings is impractical. In the case of finite sets,
-for instance, we would like to name the elements of the sets. Then, we
-need to be able to manipulate these elements by their name, instead of
-their encoding. While we are able to give names to encodings, it is
-extremely tedious to map the encodings back to a name. Whereas these
-objects have a structure, the structure is lost during the encoding,
-when they become anonymous inhabitants of a $\Pi$ or $\Sigma$-type.
+%As a motivating example, we are now going to extend the type theory
+%with a notion of finite set. One could argue that there is no need for
+%such an extension: finite sets, just as any data-structure, can be
+%encoded inside the type theory. A well-known example of such encoding
+%is the Church encoding of natural numbers, which is isomorphic to
+%finite sets. \note{Shall we talk about W-types encoding?}
 
-In the simply-typed world, we are used to see types as a coding
-presentation -- presentation of invariants, presentation of
-properties. In the dependently-typed world, we also learn to use types
-as a coding representation: finite sets being good citizens, they
-ought to be democratically represented at the type level. As we will
-see, this gives us the ability to name and manipulate them (this is
-were the democracy analogy goes crazy, I think).
-\note{Did I got the coding presentation vs. coding representation
-  story right? No.}
+%However, using encodings is impractical. In the case of finite sets,
+%for instance, we would like to name the elements of the sets. Then, we
+%need to be able to manipulate these elements by their name, instead of
+%their encoding. While we are able to give names to encodings, it is
+%extremely tedious to map the encodings back to a name. Whereas these
+%objects have a structure, the structure is lost during the encoding,
+%when they become anonymous inhabitants of a $\Pi$ or $\Sigma$-type.
+
+%In the simply-typed world, we are used to see types as a coding
+%presentation -- presentation of invariants, presentation of
+%properties. In the dependently-typed world, we also learn to use types
+%as a coding representation: finite sets being good citizens, they
+%ought to be democratically represented at the type level. As we will
+%see, this gives us the ability to name and manipulate them (this is
+%were the democracy analogy goes crazy, I think).
+%\note{Did I got the coding presentation vs. coding representation
+%  story right? No.}
 
 \begin{wstructure}
 <- Implementation [figure]      
@@ -264,24 +304,24 @@ were the democracy analogy goes crazy, I think).
         -> Elements of finite set e
 \end{wstructure}
 
-The specification of finite sets is presented in
-Figure~\ref{fig:typing-finite-set}. It is composed of three
-components. First, we define tags as inhabitants of the $\UId$ type. A
-tag is solely an informative token, used for diagnostic
-purposes. Finite sets inhabits the $\EnumU$ type. Unfolding the
-definition, we get that a finite set is a list of tags. Finally,
-elements of a finite set $\V{u}$ belong to the corresponding $\EnumT{\V{u}}$
-type. Intuitively, it corresponds to an index -- a number -- pointing
-to an element of $\V{u}$.
+%The specification of finite sets is presented in
+%Figure~\ref{fig:typing-finite-set}. It is composed of three
+%components. First, we define tags as inhabitants of the $\UId$ type. A
+%tag is solely an informative token, used for diagnostic
+%purposes. Finite sets inhabits the $\EnumU$ type. Unfolding the
+%definition, we get that a finite set is a list of tags. Finally,
+%elements of a finite set $\V{u}$ belong to the corresponding $\EnumT{\V{u}}$
+%type. Intuitively, it corresponds to an index -- a number -- pointing
+%to an element of $\V{u}$.
 
-\begin{figure}
+%\begin{figure}
 
-\input{figure_finite_sets}
+%\input{figure_finite_sets}
 
-\caption{Typing rules for finite sets}
-\label{fig:typing-finite-set}
+%\caption{Typing rules for finite sets}
+%\label{fig:typing-finite-set}
 
-\end{figure}
+%\end{figure}
 
 
 \begin{wstructure}
@@ -297,57 +337,49 @@ to an element of $\V{u}$.
         <- index into the \spi tuple to retrieve the corresponding result
 \end{wstructure}
 
-The type of finite sets comes with further machinery. Indeed, to
-manipulate the $\EnumU$ and $\EnumT{\!}$ objects, we need to equip our
-type theory with an appropriate \emph{elimination
-  principle}. Formally, as we add types for data -- such as finite
-sets here --, we need such primitive operators to compute with those
-data, and corresponding extension of the judgemental equality with
-their computational behavior. For compactness and readability, we
-shall present these operators as functional programs, much as we
-implement them in our Agda model. Hence, we first define the
-$\spi{\!}{\!}$ operator:
+Enumerations come with further machinery. Each \(\EnumT{E}\) needs an
+eliminator, allowing us to branch according to a tag choice. Formally,
+whenever we need such new computational facilities, we add primitive
+operators to the type theory and extend the judgmental equality with
+their computational behavior. However, for compactness and readability, we
+shall write these operators as functional programs (much as we
+model them in Agda).
 
+We first define the `small product' $\spi{\!}{\!}$ operator:
 \[\stk{
 %% spi
-\spi{\!}{\!} : \PITEL{\V{e}}{\EnumU}
-           \PITEL{\V{P}}{\EnumT{\V{e}} \To \Set} \To \Set \\
-\begin{array}{@{}ll@{\:\mapsto\:\:}l}
+\spi{}{}: \PITEL{\V{E}}{\EnumU}\PITEL{\V{P}}{\EnumT{\V{E}} \To \Set} \To \Set \\
+\begin{array}{@{}l@{\:}l@{\:\mapsto\:\:}l}
 \spi{\NilE}{& \V{P}}        & \Unit \\
-\spi{(\ConsE{\V{t}}{\V{e}})}{& \V{P}} & \TIMES{\V{P}\: \Ze}{\spi{\V{e}}{(\LAM{\V{x}} \V{P}\: (\Su{\V{x}}))}}
+\spi{(\ConsE{\V{t}}{\V{E}})}{& \V{P}} & \TIMES{\V{P}\: \Ze}{\spi{\V{E}}{(\LAM{\V{x}} \V{P}\: (\Su{\V{x}}))}}
 \end{array}
 }\]
-
-A closer look to its type should reveal a certain familiarity with its
-equivalent for sets, $\Pi$. Indeed, $\spi{\!}{\!}$ defines a
-\emph{finite function space}, mapping elements of finite sets to
-objects in $\Set$. Intuitively, this operator builds a right-nested
-tuple, effectively mapping an object of $P\:i$ for each $i$ the finite
-domain.
-
-Having understood the meaning of $\spi{\!}{\!}$, the definition of the
-$\F{switch}$ eliminator is not surprising:
-
+This builds a right-nested
+tuple type, demanding an object of $P\:i$ for each $i$ in the given finite
+domain. We can see these tuples as `jump tables' tabulating dependently
+typed functions from the domain. We give this functional
+interpretation---the eliminator we need---by the
+$\F{switch}$ operator, which, unsurprisingly, iterates projection:
 \[\stk{
 %% switch
 \begin{array}{@{}ll}
-\F{switch} : & \PITEL{\V{e}}{\EnumU}
-               \PITEL{\V{P}}{\EnumT{\V{e}} \To \Set} \\
-             & \PITEL{\V{b}}{\spi{\V{e}}{\V{P}}}
-               \PITEL{\V{x}}{\EnumT{\V{e}}} \To P~x
+\F{switch} :& \PITEL{\V{E}}{\EnumU}
+               \PITEL{\V{P}}{\EnumT{\V{E}} \To \Set} \To\\
+             & \spi{\V{E}}{\V{P}} \To
+               \PITEL{\V{x}}{\EnumT{\V{E}}} \To \V{P}~\x
 \end{array} \\
 \begin{array}{@{}l@{\:\mapsto\:\:}l}
-\switch{(\ConsE{\V{t}}{\V{e}})}{\V{P}}{\V{b}}{\Ze}      & \fst{\V{b}} \\
-\switch{(\ConsE{\V{t}}{\V{e}})}{\V{P}}{\V{b}}{(\Su{\V{x}})} & \switch{\V{e}}{(\LAM{\V{x}} \V{P}
+\switch{(\ConsE{\V{t}}{\V{E}})}{\V{P}}{\V{b}}{\Ze}      & \fst{\V{b}} \\
+\switch{(\ConsE{\V{t}}{\V{E}})}{\V{P}}{\V{b}}{(\Su{\V{x}})} & \switch{\V{E}}{(\LAM{\V{x}} \V{P}
   (\Su{\V{x}}))}{(\snd{\V{b}})}{\V{x}}
 \end{array}
 }\]
 
-Again, there is a clear equivalent in the full-$\Set$ world: function
-application. The operational behaviour of $\F{switch}$ is
-straightforward: $\V{x}$ is peeled off as we move deeper inside the nested
-tuple $\V{b}$. When $\V{x}$ equals $\Ze$, we simply return the value we are
-pointing to.
+%Again, there is a clear equivalent in the full-$\Set$ world: function
+%application. The operational behaviour of $\F{switch}$ is
+%straightforward: $\V{x}$ is peeled off as we move deeper inside the nested
+%tuple $\V{b}$. When $\V{x}$ equals $\Ze$, we simply return the value we are
+%pointing to.
 
 \begin{wstructure}
 <- Equivalent to having a function space over finite sets
@@ -360,27 +392,33 @@ pointing to.
         -> See next Section
 \end{wstructure}
 
-As we have seen, finite sets are not just a way of making
-data. Through the $\spi{\!}{\!}$ and $\F{switch}$ operators, they also
-come with a notion of finite function space. However, we had to
-extract that intuition from the type, by a careful reading. This seems
-to contradict our argument in favour of types for coding
-representation. Here, we are overflown by low-level, very precise type
-information.
+The $\spi{\!}{\!}$ and $\F{switch}$ operators deliver dependent
+elimination for finite enumerations, but are rather awkward to
+use directly. We do not write the range for a \(\LAMBINDER\)-abstraction, so
+it is galling to supply \(\V{P}\) for functions defined by $\F{switch}$.
+Let us therefore find a way to recover the tedious details of the
+encoding from types.
 
-However, our situation is significantly different from the one we
-faced with encoded data: while we were suffering from a crucial lack
-of information, we are now facing too much information, hence losing
-focus. This is a general issue with the usage of codes, as they convey
-much more information than what the developer is willing to see. 
+%, they also
+%come with a notion of finite function space. However, we had to
+%extract that intuition from the type, by a careful reading. This seems
+%to contradict our argument in favour of types for coding
+%representation. Here, we are overflown by low-level, very precise type
+%information.
 
-As we will see in the following section, there exists a cure to this
-problem. In a nutshell, instead of being overflown by typing
-information, we will put it at work, automatically. The consequence is
-that, in such system, working with codes is \emph{practical}: one
-should not be worried by information overload, but how to use it as
-much as possible. Therefore, we should not be afraid of using codes for
-practical purposes.
+%However, our situation is significantly different from the one we
+%faced with encoded data: while we were suffering from a crucial lack
+%of information, we are now facing too much information, hence losing
+%focus. This is a general issue with the usage of codes, as they convey
+%much more information than what the developer is willing to see. 
+
+%As we will see in the following section, there exists a cure to this
+%problem. In a nutshell, instead of being overflown by typing
+%information, we will put it at work, automatically. The consequence is
+%that, in such system, working with codes is \emph{practical}: one
+%should not be worried by information overload, but how to use it as
+%much as possible. Therefore, we should not be afraid of using codes for
+%practical purposes.
 
 
 \subsection{Type propagation}
