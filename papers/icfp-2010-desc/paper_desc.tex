@@ -540,15 +540,22 @@ Regaining the ability to write data-type constructor is simply a
 matter of type propagation. We therefore extends the type-checking
 framework of Figure~\ref{fig:type-checking} with the following
 inference rule:
-\note{ This is rather drafty. I should explain what $\vec{e}$ and $\widetilde{e'}$ are. }
 
 \[
-\Rule{\forall \V{e_i} \in \V{\vec{e}}, \propag{\push{\V{e_i}}
-                                            {\descop{\V{f}\: \V{i}}{(\Mu{(\DSigma{(\Enum\: \V{b})}{\V{f}})})}}}
-                                      {\V{e'_i}}}
-     {\propag{\push{\V{C}\: \V{\vec{e}}}{\Mu{(\DSigma{(\Enum\: \V{b})}{\V{f}})}}}
-             {\Con{(\etag{C}, \V{\widetilde{e'}})}}}\;\etag{t} \in \V{b}
+\Rule{\propag{\push{\widetilde{\V{e}}}
+                   {\descop{\V{f}\: \V{C}}{(\Mu{(\DSigma{(\Enum\: \V{b})}{\V{f}})})}}}
+            {\widetilde{\V{e}}'}}
+     {\propag{\push{\V{C}\: \vec{\V{e}}}
+                   {\Mu{(\DSigma{(\Enum\: \V{b})}{\V{f}})}}}
+             {\Con{(\etag{\V{C}}, \widetilde{\V{e}}')}}}\;\etag{\V{C}} \in \V{b}
 \]
+
+Where $\vec{\V{e}}$ denotes a telescope of arguments applied to the
+constructor $\V{C}$. For the sake of readability, we write function
+application in the small function space as $\V{f}\: \V{C}$. This
+corresponds to a call to $\F{switch}$. Also, we note
+$\widetilde{\V{e}}$ the right-nested tuple terminated by $\Void$
+corresponding to the curried telescope $\vec{\V{e}}$.
 
 Hence, in the high-level expression language, the developer writes a
 familiar type constructors, applied to a telescope of arguments. In
