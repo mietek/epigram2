@@ -179,11 +179,12 @@ absolutely necessary.
 
 \section{Introduction}
 
-Algorithm \W, also known as the Damas-Milner algorithm, is a well-known type
-inference algorithm for the Hindley-Milner type system due to
-\citet{milner_theory_1978}, and proved correct by \citet{damas_principal_1982}.
-It is based on the Unification Algorithm of
-\citet{robinson_machine-oriented_1965}.
+Algorithm \W%%%, also known as the Damas-Milner algorithm, 
+    \ is a well-known type inference algorithm, 
+    based on the Unification Algorithm of \citet{robinson_machine-oriented_1965}, 
+for the Hindley-Milner type system due to \citet{milner_theory_1978}, 
+and proved correct by \citet{damas_principal_1982}.
+%%%It is 
 
 Successive presentations and formalisations of Algorithm \W\ have treated the
 underlying unification algorithm as a \scare{black box}, but by considering both
@@ -201,7 +202,7 @@ This idea of sequents producing a resulting context goes back at least to
 \citet{pollack_implicit_1990}. 
 %%%, and hence perhaps to \citet{harper_type_1991} and \citet{milner_definition_1990}.
    An interesting point of comparison is with the work of Nipkow and 
-   co-workers\citep{Nipkow-Prehofer-JFP95,NaraschewskiN-JAR}, 
+   co-workers \citep{Nipkow-Prehofer-JFP95,NaraschewskiN-JAR}, 
    but substitutions and new contexts are there kept separate. 
 %%%
 We %%%will 
@@ -282,7 +283,7 @@ $\contains v D$ in the obvious way, and write $\Gamma \contains v D$ for
 $\Gamma \entails (\contains v D)$.
 
 We suppose that
-there is an embedding $\sem{\cdot} : \D \rightarrow \J$, such that
+there is an embedding $\sem{\cdot} : \V \times \D \rightarrow \J$, such that
 $$\Gamma \contains v D  \Rightarrow  \Gamma \entails \sem{v D}.$$
 
 Let $\D(\Gamma) = \{ D \in \D ~||~ \Gamma \entails v D \ok \mathrm{~for~some~} v \}$.
@@ -1057,9 +1058,12 @@ type scheme (written $.\tau$), as the latter will be represented by
 \section{Making contexts more informative}
 
 Now we can give the full definition of context entries that we postponed earlier.
-As before, |alpha := mt| declares a type variable name $\alpha$; this is the only
-kind of entry used in unification. A scheme assignment |x ::: sigma| defines a
-term variable $x$ with type scheme $\sigma$. A |LetGoal| marker is used when
+As before, |alpha := mt| declares a type variable with name $\alpha$; this is the only
+%%%kind of 
+   entry used in unification. A scheme assignment |x ::: sigma| 
+%%%defines 
+   declares 
+a term variable $x$ with type scheme $\sigma$. A |LetGoal| marker is used when
 inferring the type of let bindings, to make it easy to determine which variables
 can be generalised over.
 The term variable definitions and |LetGoal| markers will record information about
@@ -1089,7 +1093,7 @@ $$
 Note that term variable names are not necessarily unique, so the most recent
 definition of a name will shadow previous occurences. Thus we define
 $\Gamma \entails x \asc \sigma$ to mean that $x \asc \sigma \in \Gamma$ and
-moreover that this is the rightmost (i.e.\ most local) occurence of $x$.
+moreover that this is the rightmost (i.e.\ most local) occurrence of $x$.
 
 The full data type of context entries is thus:
 
