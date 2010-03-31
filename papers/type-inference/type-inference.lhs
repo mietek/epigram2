@@ -350,7 +350,7 @@ If $P_1$ and $P_2$ are problems on $R_\le$ and $S_\ll$, then since $\J$ is
 closed under conjunction, $P_1 \wedge P_2$ is a problem on
 $R \times S_{\langle \le , \ll \rangle}$ given by
 $$P_1 \wedge P_2 : R \times S \rightarrow \J :
-      (r, s) \mapsto P(r) \wedge P(s)$$
+      (r, s) \mapsto P_1(r) \wedge P_2(s)$$
 where $(r, s) \langle \le , \ll \rangle (r', s')$ if
 $r \le r'$ and $s \ll s'$.
 
