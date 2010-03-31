@@ -1,32 +1,31 @@
-\section{A universe of simple data-types}
+\section{A universe of inductive datatypes}
 \label{sec:universe-desc}
 
 \begin{wstructure}
-<- Why starting with simple data-types
+<- Why starting with simple datatypes
     <- For pedagogical purposes
-        <- Data-types as we know them every day
+        <- datatypes as we know them every day
         /> Target dependent types
     -> Cut down version of Induction Recursion
         -> Presentation evolves independently as we go to dependent types
 \end{wstructure}
 
 In this section, we describe an implementation of inductive types, as
-we know them in simply-typed languages such as Haskell or OCaml. This
-choice is motivated by pedagogical considerations: by describing the
-layman data-types in our setting, we build on our intuition of
-data-types we are familiar with. In particular, we do not aim at
-describing a model for generics in simply-typed functional
-language. Our goal is and remains to discuss data-types as we find
-them in dependently-typed languages.
+we know them in ML-like languages. This choice is motivated by
+pedagogical considerations: by describing the layman datatypes in our
+setting, we build on our intuition of datatypes we are familiar
+with. In particular, we do not aim at describing a model for generics
+in simply-typed functional language. Our goal is and remains to
+discuss datatypes as we find them in dependently-typed languages.
 
 Our proposal is inspired by, but less involved than, Dybjer and
 Setzer's closed formulation of
 induction-recursion~\cite{dybjer:general-ir, dybjer:axiom-ir,
-  dybjer:ir-initial-algebra, dybjer:iir}. In the context of simple
-data-types, the full power of induction-recursion is not
-necessary. Therefore, we adopt a stripped-down version of it. As we
-extend the scope of our universe of data-types, our presentation will
-diverge from induction-recursion. We shall compare both approaches in
+  dybjer:ir-initial-algebra, dybjer:iir}. For inductive datatypes, the
+full power of induction-recursion is not necessary. Therefore, we
+adopt a stripped-down version of it. As we broaden the scope of our
+universe of datatypes, our presentation will diverge from
+induction-recursion. We shall compare both approaches in
 Section~\ref{sec:discussion}.
 
 \subsection{The power of $\Sigma$}
@@ -39,51 +38,48 @@ Section~\ref{sec:discussion}.
         -> \Sigma A B == (x : A) \times (B x)
 \end{wstructure}
 
-In dependently-typed language, $\Sigma$-types can be interpreted in
+In dependently-typed languages, $\Sigma$-types can be interpreted in
 two different ways. This duality is actually reflected in the notation
-we can find in the literature, depending on the sensibility of the author.
-The notation $\blue{\Sigma}_{\V{x} : \V{A}} (\V{B}\: \V{x})$ stresses the interpretation that
-$\Sigma$-types are a generalisation of sums over arbitrary arities.  Where
-simply-typed languages have finite sums, dependently-typed languages have
-sums indexed by any set.
+we can find in the literature, depending on the sensibility of the
+author.  The notation $\blue{\Sigma}_{\V{x} : \V{A}} (\V{B}\: \V{x})$
+stresses the interpretation that $\Sigma$-types are a generalisation
+of sums over arbitrary arities.  Where simply-typed languages have
+finite sums, dependently-typed languages have sums indexed by any set.
 
 On the other hand, our choice of notation $\SIGMA{\V{x}}{\V{A}} (\V{B}\:\V{x})$
 emphasises that $\Sigma$-types can be read as a generalisation of products,
 where the second component can depend on the first one. When simply-typed
-languages pack data into non-dependent tuples, dependently-types languages
+languages pack data into non-dependent tuples, dependently-typed languages
 tolerate this non-dependent usage. However, they also give the rather novel
 ability for data to influence types of further data.
 
 \begin{wstructure}
-<- Data-types in the simply-typed world
+<- datatypes in the simply-typed world
     -> "sums-of-product"
         <- Sum of constructors
         <- Product of arguments
-<- Data-types in the dependently-typed world
+<- datatypes in the dependently-typed world
     -> "sigmas-of-sigmas"
     /> Need ability to manipulate these sigmas
-        -> Define a Code for data-types
+        -> Define a Code for datatypes
         -> Together with a sigma-based Interpretation
 \end{wstructure}
 
-In the simply-typed world, the essence of data-type definition can be
-summed up by the expression \emph{sum-of-product}. A data-type is defined
-by a finite sum -- a choice -- of constructors, each of them is
-composed of a product -- a tuple -- of arguments. This form governs
-the grammar of data-type definition in languages such as Haskell or
-OCaml.
+In the simply-typed world, datatype definitions are often referred to
+as \emph{sum-of-product}. A datatype is defined by a finite sum -- a
+choice -- of constructors, each of them is composed of a product -- a
+tuple -- of arguments. This form governs the grammar of datatype
+definition in languages such as Haskell or ML.
 
-To model these data-types, we simply need to capture this grammar in
+To model these datatypes, we simply need to capture this grammar in
 our dependently-typed setting. Here, the notion of sum-of-product
-naturally translates into \emph{sigmas-of-sigmas}. However, beyond
-this intuition, it should be clear that a direct encoding of
-data-types through raw $\Sigma$-types is not a viable option. Indeed,
-just as for finite sets, encoding throws away information when we
-crucially need it. In the realm of data-types, things become even
-tougher, as one could legitimately expect an induction principle, for
-instance. Anonymous in a sea of $\Sigma$s, our data-types have little
-chance of survival. 
-\note{Ridiculous tentative of poetry. I was really tired when I wrote that.}
+naturally translates into \emph{sigmas-of-sigmas}. Beyond this
+intuition, it should be clear that a direct encoding of datatypes
+through raw $\Sigma$-types is not a viable option. Indeed, just as for
+finite sets, encoding throws away information when we crucially need
+it. Moreover, to program with these datatypes, one would need an
+induction principle. An encoding will be unable to deliver such
+operation~\cite{geuvers:induction-not-derivable}.
 
 
 \subsection{A universe of descriptions}
@@ -99,44 +95,42 @@ chance of survival.
     -> Ability to compute with these objects
 \end{wstructure}
 
-For the structure of our data-types to be known, we crucially need the
-ability to name them. \note{Pursuing this crappy analogy. Solving the type
-presentation/representation debate would help solving that point.} To this
-end, we will use a standard technique in dependently-typed programming: we
-construct an ad-hoc universe. This technique dates back to Martin-L\"of
-definition of type theory~\cite{martin-lof:itt}. Since then, it has been
-fruitful as a programming 
-technique~\cite{benke:universe-generic-prog, oury:power-of-pi}
-\note{Any idea of other papers?}. 
-We refer the reader to the Agda tutorial~\cite{norell:agda-tutorial} for a
-pedagogical presentation of universe construction. 
-\note{Is that really a motivating motivation for the usage of universe 
-construction?}
-\note{pwm: Surely ($\EnumU$, $\EnumT$) is a useful example of universes too.
-Even if it doesn't show off their full power?}
+While sigmas-of-sigmas form a convenient \emph{semantics} for
+datatypes, we have seen that it makes a poor \emph{syntax}. To
+decouple these two notions, we use a standard technique in
+dependently-typed programming: we construct an ad-hoc universe. This
+technique dates back to Martin-L\"of definition of type
+theory~\cite{martin-lof:itt}. Since then, it has been fruitful as a
+programming technique~\cite{benke:universe-generic-prog,
+  oury:power-of-pi} \note{Any idea of other papers?}.  We refer the
+reader to the Agda tutorial~\cite{norell:agda-tutorial} for a
+pedagogical presentation of universe construction.  \note{Is that
+  really a motivating motivation for the usage of universe
+  construction?}  \note{pwm: Surely ($\EnumU$, $\EnumT$) is a useful
+  example of universes too.  Even if it doesn't show off their full
+  power?}
 
 
 The key idea behind universe construction is our ability to make names
 by defining new types. These names are called \emph{codes}. By
-defining a set of codes, we somehow define the syntax of a
-language. However, as such, a system of codes is useless as it lacks a
-semantics. Instead of equipping the universe of codes with some
-computational behaviour, we pragmatically chose to \emph{interpret}
-these codes back into the standard type theory. Hence, codes act only
-as labels, while the type theory provides the computational
-machinery. \note{Is that a good description?}
+defining a set of codes, we define the syntax of a language. However,
+as such, a system of codes is useless as it lacks a semantics. Instead
+of equipping the universe of codes with some computational behaviour,
+we pragmatically chose to \emph{interpret} these codes back into the
+standard type theory. Hence, codes act only as labels, while the type
+theory provides the computational machinery. \note{Is that a good
+  description?}
 
 Codes being simple labels, we have the ability to inspect them, hence
-taking advantage of structural information. Being able to inspect
-them, we are therefore free to compute over them: deriving new codes
-from previous ones, or even new functions on them. In several
-occasions, we will have the opportunity to witness the power of
-universes.
+regaining structural information. Being able to inspect them, we are
+therefore free to compute over them: deriving new codes from previous
+ones, or even new functions on them. In several occasions, we will
+have the opportunity to witness the power of universes.
 
 \begin{wstructure}
 <- Justification of the code 
     <- [both figures]: cannot be read separately
-    <- Mimic the standard grammar of data-types description
+    <- Mimic the standard grammar of datatypes description
         -> Just as we already know it
         <- '\Sigma for making sigmas-of-sigmas
         <- 'indx for exhibiting the functoriality
@@ -147,15 +141,15 @@ universes.
 We propose to embed inductive types as a universe in our dependent
 type theory, the universe of \emph{descriptions}
 (Figure~\ref{fig:desc_universe}). As expected, the code of this
-universe mimics the standard grammar of data-types definitions in
+universe mimics the standard grammar of datatypes definitions in
 simply-typed languages. Hence, we have a $\DSigma{\!}{\!}$ code,
 interpreted as a $\Sigma$-type, to build the
 sigmas-of-sigmas. Descriptions are terminated by $\DUnit$, which
-contains no useful payload. The functoriality of the data-types is
+contains no useful payload. The functoriality of the datatypes is
 introduced by $\DIndx{\!}$. When we tie the knot with a fix-point, the
 hole left open by $\DIndx{\!}$ will be turned into a standard
 recursive argument. We notice that this functoriality appears in the
-type of $\descop{\V{D}}{\!}$ itself, for a given data-type definition
+type of $\descop{\V{D}}{\!}$ itself, for a given datatype definition
 $\V{D}$. This corresponds to the object part of the functor described
 by $\V{D}$.
 
@@ -193,8 +187,8 @@ by $\V{D}$.
 To give some intuition on this universe of descriptions, we now turn
 to some examples. For obvious pedagogical reasons, we will manually
 build these descriptions. However, it should be clear that, in
-practice, these definitions can be automatically constructed from a
-Haskell-like $\data$ definition.
+practice, these definitions can be automatically constructed from an
+ML-like $\data$ definition.
 
 \subsection{Examples}
 \label{sec:desc-examples}
@@ -220,10 +214,11 @@ following:
 }\]
 
 Let us explain its construction. First, we use $\DSigma{\!}{\!}$ to
-give a choice between the $\NatZero$ and $\NatSuc{\!}$ constructors. In
-the $\NatZero$ case, we reach the end of the description: there is no
-useful payload in that case. In the $\NatSuc{\!}$ case, we left one hole
-open for the recursive argument, and we close the description.
+give a choice between the $\NatZero$ and $\NatSuc{\!}$
+constructors. In the $\NatZero$ case, we reach the end of the
+description: there is no useful payload in that case. In the
+$\NatSuc{\!}$ case, we leave one hole open for the recursive argument,
+and we close the description.
 
 In a more synthetic notation, we have described the following functor:
 
@@ -285,15 +280,15 @@ interpretation of this code corresponds to the following functor:
 \begin{wstructure}
 <- Tagged description
     <- Form TDesc = List (UId x Desc) [equation]
-    <- Follow usual sums-of-product presentation of data-type
+    <- Follow usual sums-of-product presentation of datatype
         <- Finite set of constructors
         <- Then whatever you want
-    -> Any Desc data-type can be turned into this form
+    -> Any Desc datatype can be turned into this form
         -> No loss of expressive power
         /> Guarantee a ``constructor form''
 \end{wstructure}
 
-From the examples above, we observe that data-types are defined by a
+From the examples above, we observe that datatypes are defined by a
 $\DSigma{\!}{\!}$ which first argument is a finite set of
 constructors. The descriptions fitting into this pattern are called
 \emph{tagged} description. Formally, we have:
@@ -316,15 +311,15 @@ from the tagged description $\V{TD}$.
         <- Subject to our levitation exercise
 \end{wstructure}
 
-So far, for convenience, we have taken as granted the existence of
-$\Desc$, as presented in Figure~\ref{fig:desc_universe}. In
-particular, we have considered its codes, $\DSigma{\!}{\!}$,
-$\DIndx{\!}$, and $\DUnit$ as type formers, extending the basic type
-theory. Hence, in an implementation of this type theory, we need to
-extended it with these constructors and their typing rules. Although
-it makes no conceptual difference, the code of description should
-rather be read as a specification. We promise the existence of such
-objects, satisfying the typing rules. It will be the subject of
+For convenience, we have taken for granted the existence of $\Desc$,
+as presented in Figure~\ref{fig:desc_universe}. In particular, we have
+considered its codes, $\DSigma{\!}{\!}$, $\DIndx{\!}$, and $\DUnit$ as
+type formers, extending the basic type theory. Hence, in an
+implementation of this type theory, we need to extended it with these
+constructors and their typing rules. Although it makes no conceptual
+difference, the code of description should rather be read as a
+specification. We promise the existence of such objects, satisfying
+the typing rules. It will be the subject of
 Section~\ref{sec:desc-levitate} to fulfil this promise, by actually
 implementing the specification.
 
@@ -390,26 +385,8 @@ it comes short of its promises in the dependently-typed realm. Indeed,
 this type is not dependent, being restricted to a notion of
 \emph{iteration}. As this operator will be the corner stone of any
 inductive definition, we are better off sharpening it before use.
-
-A full account of such generic induction schema can be found in Benke
-et al.~\cite{benke:universe-generic-prog,
-  dybjer:ir-initial-algebra}. In the following, we convey the
-intuition behind this schema by a step-by-step construction of the
-dependent eliminator from the catamorphism. The first step consists in
-turning $\V{T}$ into a predicate $\Bhab{\V{P}}{\Mu{\V{D}} \To \Set}$,
-hence introducing a dependency on the descriptions. Consequently, we
-strengthen the algebra $\descop{\V{D}}{\V{T}} \To \V{T}$ by a similar
-process. We start with turning the arrow into a dependent arrow, hence
-offering $\Bhab{\V{xs}}{\descop{\V{D}}{(\Mu{\V{D}})}}$ to further
-analysis.
-
-Then, we have to translate the notion of algebra in our dependent
-setting. This is achieved by the predicate $\All{\V{D}}{\V{X}}{\V{P}}{\V{x}}$
-(Fig.~\ref{fig:all-predicates}) that, intuitively, states that
-$\Bhab{\V{P}}{\V{X} \To \Set}$ holds everywhere in $\V{x}$. Based on that
-knowledge, we ought to be able to prove that $\V{P}$ holds for
-$\Con{\V{xs}}$. We close our elimination principle by taking an argument
-$x$ in $\Mu{\V{D}}$ and claiming that the motive $\V{P}$ is realised on $\V{x}$.
+Following \citet{benke:universe-generic-prog}, we adopt the following
+definition:
 
 \[
 \begin{array}{lcll}
@@ -421,6 +398,17 @@ $x$ in $\Mu{\V{D}}$ and claiming that the motive $\V{P}$ is realised on $\V{x}$.
               &   & \V{P} \V{x}
 \end{array}
 \]
+
+Where, intuitively, $\All{\V{D}}{\V{X}}{\V{P}}{\V{x}}$ states that
+$\Bhab{\V{P}}{\V{X} \To \Set}$ holds everywhere in $\V{x}$. Its formal
+definition is presented in Figure~\ref{fig:all-predicates}.  We refer
+the reader to our technical report for the implementation of
+$\F{induction}$. Having this dependent catamorphism, we are empowered
+with the ability to $\emph{compute}$ over descriptions. Note that this
+induction principle is the first manifestation of a generic operation
+over descriptions. Thanks to $\F{induction}$, any datatype we define
+automatically comes equipped with an induction principle.
+
 
 \begin{figure*}
 
@@ -475,21 +463,12 @@ $x$ in $\Mu{\V{D}}$ and claiming that the motive $\V{P}$ is realised on $\V{x}$.
 
 \end{figure*}
 
-At this stage, we are still left with implementing this
-$\F{induction}$ principle. For space reason, we refer the reader to
-our technical report for the actual code. Having this dependent
-catamorphism, we are empowered with the ability to $\emph{compute}$
-over descriptions. Note that this induction principle is the first
-manifestation of a generic operation over descriptions. Thanks to
-$\F{induction}$, any data-type we define automatically comes equipped
-with an induction principle.
-
 
 \subsection{Extending type propagation}
 
 \begin{wstructure}
 <- Extending type propagation
-    <- Data-type declaration turns into definitions
+    <- datatype declaration turns into definitions
         -> Straightforward translation to Desc
         -> Creation of a variable referring to the structure
     <- Labelled Mu
@@ -502,33 +481,32 @@ with an induction principle.
 \end{wstructure}
 
 
-So far, we have introduced a universe of description. We have shown
-how to manipulate these codes to build data-types. We have also
-presented a fix-point construction and its associated dependent
-catamorphism. However, one could argue that programming with these
+We have now enough machinery to build and manipulate inductive
+types. In a word, we ought be able to \emph{program} over these
+datatypes.  However, one could argue that programming with these
 objects is not practical.
 
 Whereas simply-typed languages feature a convenient grammar for
-defining data-types and manipulating them, our proposal could be seen
+defining datatypes and manipulating them, our proposal could be seen
 as a step backward. In our setting, the developer would have to write
-a description instead of a sugared data-type definition. Then, to
+a description instead of a sugared datatype definition. Then, to
 recognise an element of $\Nat$ for instance, she would have to
-identify $\Mu{}$ of a description as indeed the fix-point of the
-pattern functor of natural numbers. Finally, she would have to write
-codes instead of the natural data-type constructor.
+identify $\Mu{}$ of some coded description as indeed the fix-point of
+the pattern functor of natural numbers. Finally, she would have to
+write codes instead of datatype constructors.
 
 As for finite sets previously, these symptoms clearly indicate that we
 suffer from too much type information. Just as for finite sets, the
 cure lies in rationalising this information. Let us first tackle the
-issue of data-type declaration. The grammar of data-types we are used
+issue of datatype declaration. The grammar of datatypes we are used
 to can be straightforwardly translated to the sigmas-of-sigmas
-paradigm. Hence, a data-type definition can be turned into the
+paradigm. Hence, a datatype definition can be turned into the
 corresponding description. Then, at the level of definitions, we
-associate the name of the data-type to the fix-point of the
+associate the name of the datatype to the fix-point of the
 description. The induction principle as well as other generic
 operations follow for free.
 
-Doing so, we seal data-type definition behind a convenient
+Doing so, we seal datatype definition behind a convenient
 abstraction. We take advantage of this abstraction barrier to address
 the second issue. Namely, the developer would rather be presented a
 name than a fix-point of a pattern functor. Surprisingly, it is
@@ -536,7 +514,7 @@ sufficient to \emph{label} the $\Mu{}$ constructor with the
 user-defined name. When pretty-printing this object, we just expose
 the label, instead of the definition in full.
 
-Regaining the ability to write data-type constructors is simply a
+Regaining the ability to write datatype constructors is simply a
 matter of type propagation. We therefore extend the type-checking
 framework of Figure~\ref{fig:type-checking} with the following
 inference rule:
@@ -558,19 +536,18 @@ $\widetilde{\V{e}}$ the right-nested tuple terminated by $\Void$
 corresponding to the curried telescope $\vec{\V{e}}$.
 
 Hence, in the high-level expression language, the developer writes a
-familiar type constructor, applied to a telescope of arguments. In
-the type propagation setting, this expression will be pushed to a
-$\Mu{}$ type of a tagged description. It is then straightforward to
-look-up the tag and turn the constructor form into the appropriate
-code.
+familiar type constructor, applied to a telescope of arguments. During
+type propagation, this expression will be pushed to a $\Mu{}$ type of
+a tagged description. It is then straightforward to look-up the tag
+and turn the constructor form into the appropriate code.
 
 This concludes our presentation of the universe of descriptions. In
-this section, we have seen how data-types from the simply-typed world
+this section, we have seen how datatypes from the simply-typed world
 can be expressed in our dependently-typed setting. By relying on a
 universe construction technique, we benefit from the ability to
 inspect and manipulate these codes. This opens some appealing
 opportunities for generic programming. Finally, we have demonstrated
 that programming with codes is practical. To this end, we have
 extended the type propagation machinery. In this setting, we can
-define, interact, and build data-types as transparently as in the
+define, interact, and build datatypes as transparently as in the
 simply-typed world.

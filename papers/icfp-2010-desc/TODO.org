@@ -27,6 +27,7 @@ dependently-typed language. So, how do I get arround my various
 
 
 ** TODO The comma in Pi/Sigma typing rule seems confusing
+** TODO coding/encoding distinction sufficiently clear?
 * Post-doc area
 ** TODO Improve finite sets motivation (encoding vs. codes)
 
