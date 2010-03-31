@@ -192,7 +192,7 @@ these indexed functors, hence computing a fix-point of the entire
 \Rule{\Gamma \vdash \Bhab{\V{I}}{\Set} \qquad
       \Gamma \vdash \Bhab{\V{R}}{\V{I} \To \IDesc{\V{I}}}}
      {\Gamma \vdash \Bhab{\IMu{\V{I}}{\V{R}}{\!}}{\V{I}\To\Set}} \qquad
-\\:\
+\\
 \Rule{\begin{array}{l@{\qquad}l}
           \Gamma \vdash \Bhab{\V{I}}{\Set} &
           \Gamma \vdash \Bhab{\V{R}}{\V{I} \To \IDesc{\V{I}}} \\
@@ -210,6 +210,42 @@ $\Desc$ is entirely captured by the $\DId$ code. We get an indexed
 functor by turning $\DId$ into an index-dependent $\DVar{\!}$
 code. The resulting code of $\IDesc{\!}$ is presented in
 Figure~\ref{fig:idesc}.
+
+The induction scheme on $\IDesc{\!}$ has the following type:
+
+\[
+\begin{array}{@{}ll}
+\F{inductionI} : & _{\Bhab{\V{I}}{\Set}}
+                   \PITEL{\V{R}}{\V{I} \To \IDesc{\V{I}}}
+                   \PI{\V{P}}{\SIGMA{\V{i}}{\V{I}} \IMu{\V{I}}{\V{R}}{\!} \To \Set} \\
+                 & (      \PITEL{\V{i}}{\V{I}} 
+                          \PI{\V{xs}}{\idescop{\V{R}\: \V{i}}{\V{I}}{\IMu{\V{I}}{\V{R}}{\!}}} \\
+                 & \   \idescop{\AllI{\V{I}}
+                                     {(\V{R}\: \V{i})}
+                                     {(\IMu{\V{I}}{\V{R}}{\!})}
+                                     {\V{xs}}}
+                               {}
+                               {\V{P}} \To
+                       \V{P}\: \pair{\V{i}}{\Con{\V{xs}}}{}) \\
+                 & \PITEL{\V{i}}{\V{I}}
+                   \PI{\V{x}}{\IMu{\V{I}}{\V{R}}{\V{i}}}
+                   \V{P}\: \pair{\V{i}}{\V{x}}{}
+\end{array}
+\]
+
+Where the operator $\AllI{\!}{\!}{\!}{\!}$ is of type:
+
+\[
+\AllI{\!}{\!}{\!}{\!} : _{\Bhab{\V{I}}{\Set}}
+                        \PITEL{\V{D}}{\IDesc{\V{I}}}
+                        \PI{\V{P}}{\V{I} \To \Set}
+                        \idescop{\V{D}}{\V{I}}{\V{P}} \To
+                        \IDesc{(\SIGMA{\V{i}}{\V{I}} \V{P})} 
+\]
+
+The implementation of these operators can be found in the companion
+technical report. As for descriptions, we can compute a generic
+catamorphism, $\F{cataI}$, from $\F{inductionI}$.
 
 %% \[\stk{
 %% \data \IDesc{} (\Bhab{\V{I}}{\Set}) : \Set \where \\

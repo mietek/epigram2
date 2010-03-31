@@ -5,10 +5,6 @@ Finite set motivation stinks. I should sit down with Conor and find a
 clear motivation for it. This will also impact on the motivation for a
 universe of descriptions.
 
-** TODO No indexed induction principle discussion?
-
-iinduction operator is absolutely not presented.
-
 ** TODO Precise that we are talking in the Evidence language
 
 I guess that the point is the following: we are not talking about
@@ -31,11 +27,6 @@ dependently-typed language. So, how do I get arround my various
 
 
 ** TODO The comma in Pi/Sigma typing rule seems confusing
-** TODO Fix mentions of strictly positive types
-
-There is a \note about it somewhere.
-
-** TODO We might want 5.3.1 Tagged Indexed Descriptions to be just an Example paragraph
 * Post-doc area
 ** TODO Improve finite sets motivation (encoding vs. codes)
 
@@ -66,7 +57,8 @@ Talk about decidability, termination, etc.
 If it hasn't been translated into universe polymorphism
 
 * Janitor service
-** TODO cataI is not defined
+** TODO s/data*type/datatype/
+** TODO s/judgement/judgment/
 ** TODO Check/fix alignment in code
 ** TODO Fix code overflows
 ** TODO Tech report as a bibtex entry, or footnote?
@@ -164,3 +156,13 @@ really see many similarities..."
 
 ** DONE Say something about arity generic stuff?
 ** DONE Explain that \overbar turns a tagged description into a description
+** DONE We might want 5.3.1 Tagged Indexed Descriptions to be just an Example paragraph
+** DONE Fix mentions of strictly positive types
+
+There is a \note about it somewhere.
+
+** DONE cataI is not defined
+** DONE No indexed induction principle discussion?
+
+iinduction operator is absolutely not presented.
+
