@@ -160,12 +160,16 @@
 \maketitle
 
 \begin{abstract}
-We present a novel first-order unification algorithm and a type inference algorithm that
-makes use of it. Both algorithms are based around the idea of a well-founded
-linear context in which type variable bindings and type-schemes for terms may only
-depend on types that appear earlier in the context. We ensure that the unification
-algorithm produces a most general unifier by only moving definitions earlier in
-the context when this is absolutely necessary.
+We describe a unification algorithm and a powerful technique for implementing
+type inference algorithms. We illustrate this technique by describing an
+implementation of type inference for the familiar Hindley-Milner type system,
+but it can be extended to more advanced type systems.
+The algorithms are based around the notion of a well-founded linear context
+in which type variable bindings and type-schemes for terms may only depend on
+types that appear earlier in the context. We ensure that the unification
+algorithm produces a most general unifier, and that type inference produces
+principal types, by only moving definitions earlier in the context when this is
+absolutely necessary.
 \end{abstract}
 
 
@@ -183,17 +187,22 @@ simultaneously we are able to give a more elegant type inference algorithm.
 In particular, the generalisation step (required when inferring the type of
 a let-expression) becomes straightforward.
 
-We present the algorithm using systems of inference rules to define judgements
-of the form $\Judge{\Gamma_0}{J}{\Gamma_1}$. Here $\Gamma_0$ is the input
-context (before applying the rule), $J$ is the condition being established, and
-$\Gamma_1$ is the output context (in which $J$ holds). The idea of judgements
-producting a resulting context goes back at least to
+We present algorithms using systems of inference rules to define relationships
+between sequents of the form $\Judge{\Gamma_0}{J}{\Gamma_1}$. Here $\Gamma_0$
+is the input context (before applying the rule), $J$ is the judgement being
+established, and $\Gamma_1$ is the output context (in which $J$ holds).
+This idea of sequents producing a resulting context goes back at least to
 \citet{pollack_implicit_1990}, and hence perhaps to \citet{harper_type_1991}
 and \citet{milner_definition_1990}.
+We will define an ordering on contexts based on the information they contain,
+and show that $\Gamma_1$ is minimal with respect to this ordering. If one
+thinks of a context as a set of atomic facts, then $\Gamma_1$ is the least upper
+bound of $\Gamma_0$ together with the facts required to make $J$ hold.
 
 In each case, at most one rule matches the input context and condition, and we
-specify a termination order so the rules define an algorithm. \TODO{Do we?}
-We additionally give an implementation of the algorithm in Haskell.
+specify a termination order so the rules define algorithms. \TODO{Do we?}
+It is straightforward to implement these algorithms by translating the rule
+systems into code. We illustrate this by providing a Haskell implementation.
 
 Contexts here are not simply sets of assumptions, but lists containing
 information about type and term variables. The unification problem thus
@@ -203,25 +212,24 @@ subject to well-foundedness conditions (any definition must be in terms of
 definitions earlier in the context), and we obtain most general unifiers and
 principal types by keeping entries as far to the right as possible, only moving
 them left when necessary to satisfy a constraint. This idea of imposing order
-restrictions on the entries of a context is similar to the \emph{ordered hypotheses}
-of deduction systems for non-commutative logic \citep{polakow_natural_1999}.
+restrictions on the entries of a context is similar to the
+\emph{ordered hypotheses} of deduction systems for non-commutative logic
+\citep{polakow_natural_1999}.
 
 In contrast to other presentations of unification and Hindley-Milner type
 inference, our algorithm uses explicit definitions to avoid the need for a 
 substitution operation. It thus lends itself to efficient implementation.
 (We do use substitution in our reasoning about the system.) Many implementations
 of (variations on) the Robinson unification algorithm are incorrect because they
-do not handle substitutions correctly \citep{norvig_correctingwidespread_1991},
-and substitutions often complicate mechanical correctness proofs.
+do not handle substitutions correctly \citep{norvig_correctingwidespread_1991}.
 
 
 
 \section{Abstract nonsense}
 
-Let $\V$ be a set of variables, $\D$ a set of definientia
-(objects of some sort) and $\J$ a set of judgements. A \define{substitution}
-$\theta$ maps some subset of $\V$ to a subset of $\D$, and we assume $\D$ and
-$\J$ are closed under substitution.
+Let $\V$ be a set of variables, $\D$ a set of objects and $\J$ a set of
+judgements. A \define{substitution} $\theta$ is a partial map from $\V$ to $\D$,
+and we assume $\D$ and $\J$ are closed under application of substitutions.
 A \define{context} $\Gamma$ is a list of definitions $v D$ (pairs of $v \in \V$
 and $D \in \D$) and separators $(\fatsemi)$.
 We write $\emptycontext$ for the empty context, and the symbols
@@ -234,32 +242,29 @@ $$\Gamma \entails J_0  ~\wedge~  \Gamma \entails J_1
     \quad  \Leftrightarrow  \quad
     \Gamma \entails (J_0 \wedge J_1).$$
 Further assume that we have a judgement $v D \ok$ corresponding
-to every possible definition $v D$, and define validity of contexts thus:
-% \boxrule{\Gamma \entails \valid}
+to every possible definition $v D$. We can define validity of contexts as shown
+in Figure~\ref{fig:contextValidityRules}.
+
+\begin{figure}[ht]
+\boxrule{\Gamma \entails \valid}
 $$
 \Axiom{\emptycontext \entails \valid}
-\qquad
-\Rule{\Gamma \entails \valid    \quad    \Gamma \entails v D \ok}
-     {\Gamma, v D \entails \valid}
-\side{v \notin \V(\Gamma)}
 \qquad
 \Rule{\Gamma \entails \valid}
      {\Gamma \fatsemi \entails \valid}
 $$
+$$
+\Rule{\Gamma \entails \valid    \quad    \Gamma \entails v D \ok}
+     {\Gamma, v D \entails \valid}
+\side{v \notin \V(\Gamma)}
+$$
+\caption{Rules for context validity}
+\label{fig:contextValidityRules}
+\end{figure}
 
-For any variable $x$ and definiens $D$ we define membership judgements
-$\contains v D$ as follows, writing $\Gamma \contains v D$ for
-$\Gamma \entails \contains v D$.
-% \boxrule{\Gamma \contains v D}
-$$
-\Axiom{\Gamma, v D \contains v D}
-\qquad
-\Rule{\Gamma \contains v D}
-     {\Gamma, y D' \contains v D}
-\qquad
-\Rule{\Gamma \contains v D}
-     {\Gamma \fatsemi \contains v D}
-$$
+For any variable $v$ and definiens $D$ we define a context membership judgement
+$\contains v D$ in the obvious way, and write $\Gamma \contains v D$ for
+$\Gamma \entails (\contains v D)$.
 
 We suppose that
 there is an embedding $\sem{\cdot} : \D \rightarrow \J$, such that
@@ -270,19 +275,44 @@ We write $\delta : \Gamma \lei \Delta$ to mean that $\delta$ is a substitution
 from $\V(\Gamma)$ to $\D(\Delta)$ such that
 $$\Gamma \contains v D  \Rightarrow  \Delta \entails \delta\sem{v D}$$
 and if $\Gamma$ is $\Xi \fatsemi \Gamma'$ then $\Delta$ is
-$\Psi \fatsemi \Delta'$ with $\delta||_\Xi : \Xi \lei \Psi$ and
+$\Psi \fatsemi \Delta'$ with $\delta||_{\V(\Xi)} : \Xi \lei \Psi$ and
 $\delta : \Xi, \Gamma' \lei \Psi, \Delta'$. This definition is well-founded by
 induction on the number of $\fatsemi$ separators in $\Gamma$.
-Note that we extend substitution to act on judgements.
-
 We may omit $\delta$ and write $\Gamma \lei \Delta$ if we are only interested
 in the existence of a suitable substitution. This relation between contexts
 captures the notion of \define{information increase}: $\Delta$ supports all the
-judgements corresponding to definitions in $\Gamma$. We say a judgement $J$ is
+judgements corresponding to definitions in $\Gamma$. The second condition
+ensures that approximate ordering is preserved.
+We require a substitution because the type inference algorithm will invent new
+type variables, which must be interpreted over a more informative context that
+will not contain them.
+
+We say a judgement $J$ is
 \define{stable} if it is preserved under information increase, that is, if
 $$\Gamma \entails J  ~\wedge~  \delta : \Gamma \lei \Delta
     \quad \Rightarrow \quad
     \Delta \entails \delta J.$$
+
+From now on we will assume that the judgement $\sem{v D}$ is stable for any
+$v \in \V$ and $D \in \D$, and that stable judgements are closed under 
+substitution. This allows us to prove the following:
+
+\begin{lemma}
+The $\lei$ relation is a preorder, with reflexivity demonstrated by
+$\iota : \Gamma \lei \Gamma : v \mapsto v$, and transitivity by
+$$\gamma_1 : \Gamma_0 \lei \Gamma_1  ~\wedge~  \gamma_2 : \Gamma_1 \lei \Gamma_2
+  \quad \Rightarrow \quad  \gamma_2 \compose \gamma_1 : \Gamma_0 \lei \Gamma_2.$$
+\end{lemma}
+
+\begin{proof}
+Reflexivity follows since
+$\Gamma \contains v D  \Rightarrow  \Gamma \entails \sem{v D}$.
+For transitivity, suppose $\Gamma_0 \contains v D$, then
+$\Gamma_1 \entails \gamma_1\sem{v D}$ since $\gamma_1 : \Gamma_0 \lei \Gamma_1$.
+Now provided $\gamma_1\sem{v D}$ is stable, we have
+$\Gamma_2 \entails \gamma_2\gamma_1\sem{v D}$ by stability
+applied to $\gamma_2 : \Gamma_1 \lei \Gamma_2$.
+\end{proof}
 
 A \define{problem of arity $n$} is a map $P: \D^n \rightarrow \J$ such that
 $P(\vec{D})$ is stable and $\theta P(\vec{D}) = P(\theta \vec{D})$ for any
@@ -296,7 +326,7 @@ $\delta : \Gamma \lei \Delta$, $\Delta \entails \delta P(\vec{D})$ and
 $$\theta : \Gamma \lei \Theta  ~\wedge~  \Theta \entails \theta P(\vec{D'})
     \quad \Rightarrow \quad
     \exists \zeta : \Delta \lei \Theta ~.~ \theta = \zeta \compose \delta.$$
-We say that $\vec{D}$ is a \define{minimal solution of $P$ in $\Delta$}.
+We then say that $\vec{D}$ is a \define{minimal solution of $P$ in $\Delta$}.
 
 If $P_1$ and $P_2$ are problems of arities $m$ and $n$, then since $\J$ is
 closed under conjunction, $P_1 \wedge P_2$ is a problem of arity $m+n$ given by
@@ -310,19 +340,15 @@ by finding the minimal solution of the first problem, then (minimally) extending
 it to solve the second problem.
 
 \begin{lemma}[The Optimist's Lemma]
-If $\sem{v D}$ is stable for any $v \in \V, D \in \D$, then the following
-inference rule is admissible:
+The following inference rule is admissible:
 $$\Rule{\gamma_1 : \Jmin{\Gamma_0}{P_1(\vec{D_1})}{\Gamma_1}
        \quad  \gamma_2 : \Jmin{\Gamma_1}{P_2(\vec{D_2})}{\Gamma_2}}
        {\gamma_2 \compose \gamma_1 : \Jmin{\Gamma_0}{P_1 \wedge P_2 (\gamma_2 \vec{D_1}, \vec{D_2})}{\Gamma_2}}$$
 \end{lemma}
 
 \begin{proof}
-First we show that $\gamma_2 \compose \gamma_1 : \Gamma_0 \lei \Gamma_2$.
-Suppose $\Gamma_0 \contains v D$, then $\Gamma_1 \entails \gamma_1\sem{v D}$
-since $\gamma_1 : \Gamma_0 \lei \Gamma_1$. Now provided $\sem{v D}$
-is stable, we have $\Gamma_2 \entails \gamma_2\gamma_1\sem{v D}$ by stability
-applied to $\gamma_2 : \Gamma_1 \lei \Gamma_2$.
+We have that $\gamma_2 \compose \gamma_1 : \Gamma_0 \lei \Gamma_2$ by the 
+preceding lemma.
 
 To show $\Gamma_2 \entails P_1 \wedge P_2 (\gamma_2 \vec{D_1}, \vec{D_2})$, it
 suffices to show $\Gamma_2 \entails P_1(\gamma_2 \vec{D_1})$ and
@@ -372,15 +398,16 @@ First, let's get some imports out of the way.
 %endif
 
 
-\section{Types and contexts}
+\section{Types and type variables}
 
 The syntax of types is
 $$\tau ::= \alpha ~||~ \tau \arrow \tau$$
 where $\alpha$ ranges over some set of type variables $\V_0 \subset \V$.
 Let $\D_0 \subset \D$ be the set of types.
 In the sequel, $\alpha$ and $\beta$ are type variables and $\tau$ and $\upsilon$
-are types. (All of these symbols may be
-primed or subscripted.) We use $\Xi$ to denote a context suffix that will
+are types.
+% (All of these symbols may be primed or subscripted.)
+We use $\Xi$ to denote a context suffix that may
 contain only type variable declarations, and no other kinds of definition.
 
 A type variable declaration is written |alpha := mt|, where $\alpha$ is a
@@ -393,7 +420,7 @@ We write $\tyvars{\Gamma}$ for the set of type variables of $\Gamma$, i.e.\
 $\V_0 \cap \V(\Gamma)$.
 We define the judgement $\tau \type$ ($\tau$ is a type over the context) as
 shown in Figure~\ref{fig:typeOkRules}, and hence give the rules for the
-judgement $\alpha \defn D \ok$.
+judgement $\alpha \defn D \ok$. \TODO{Show $\tau \type$ is stable.}
 
 \begin{figure}[ht]
 \boxrule{\Gamma \entails \tau \type}
@@ -405,7 +432,7 @@ $$
 \Rule{\Gamma \entails \tau \type   \quad   \Gamma \entails \upsilon \type}
      {\Gamma \entails \tau \arrow \upsilon \type}
 $$
-\boxrule{\Gamma \entails \alpha D \ok}
+\boxrule{\Gamma \entails \alpha \defn D \ok}
 $$\Rule{\Gamma \entails \valid}
        {\Gamma \entails \hole{\alpha} \ok}
 \qquad
@@ -413,25 +440,14 @@ $$\Rule{\Gamma \entails \valid}
      {\Gamma \entails \alpha \defn \tau \ok}
 $$
 
-\label{fig:typeOkRules}
 \caption{Rules for types and definitions}
+\label{fig:typeOkRules}
 \end{figure}
 
-% Arguably the most basic judgement a context can support is a membership test.
-% We define $\Gamma \entails \alpha \defn mt$ to mean $\alpha \defn mt \in \Gamma$.
-% We write $\alpha \var$ for an entry that is either $\hole{\alpha}$ or
-% $\alpha \defn \tau$ for some $\tau$, and define
-% $\Gamma \entails \alpha ~\mathbf{fresh}$ to mean
-% $\Gamma \not\entails \alpha \var$.
-
-% We define the judgements $\Gamma \entails \valid$ ($\Gamma$ is a valid context)
-% and  $\Gamma \entails \tau \type$ ($\tau$ is a valid type in context $\Gamma$) by
-% the rules in Figure~\ref{fig:contextTypeValidityRules}.
-% As sanity conditions, observe that if $\Gamma \entails \tau \type$ for some
-% type $\tau$, then $\Gamma \entails \valid$ and $\Gamma$ is non-empty.
 
 If $\Gamma$ is a valid context, we write $\types{\Gamma}$ for the set of types
-$\tau$ such that $\Gamma \entails \tau \type$. We define
+$\tau$ such that $\Gamma \entails \tau \type$. We define the set of free type
+variables of a type or context thus:
 \begin{align*}
 \FTV{\alpha}    &= \alpha  \\
 \FTV{\tau \arrow \upsilon}  &= \FTV{\tau} \cup \FTV{\upsilon}  \\
@@ -522,49 +538,75 @@ The |popEntry| function removes and returns the topmost entry from the context.
 
 \section{Unification up to definition}
 
-For a fixed context $\Gamma$, define a relation $\Gamma \entails \cdot \equiv \cdot$
-on $\types{\Gamma}$ by taking the structural and equivalence closure generated
-by the axiom
-$$
-\Rule{\Gamma \entails \alpha \defn \tau}
-     {\Gamma \entails \alpha \equiv \tau}.
-$$
+If $\tau$ and $\upsilon$ are types, we define the equivalence judgement
+$\tau \equiv \upsilon$ by the rules in Figure~\ref{fig:equivRules}.
 
-We say that $\Gamma$ \define{contains less information than} $\Delta$, written
-$\Gamma \lei \Delta$, if there exists a substitution
-$\theta : \tyvars{\Gamma} \rightarrow \types{\Delta}$ that
-\define{preserves definitions in $\Gamma$}, i.e.\ a substitution such that
-$$\Gamma \entails \alpha \defn \tau  \Rightarrow   \Delta \entails \theta \alpha \equiv \theta \tau.$$
-In this case, we write $\theta : \Gamma \lei \Delta$.
-We require a substitution because the type inference algorithm will invent new
-type variables, which must be interpreted over a more informative context that
-will not contain them.
-It is straightforward to verify that $\lei$ is a preorder and
-  $$\theta : \Gamma \lei \Delta 
-    \quad \mathrm{iff} \quad
-    \Gamma \entails \tau \equiv \upsilon
-        \Rightarrow \Delta \entails \theta\tau \equiv \theta\upsilon.$$
+\begin{figure}[ht]
+\boxrule{\Gamma \entails \tau \equiv \upsilon}
+$$
+\Rule{\Gamma \contains \alpha \defn \tau}
+     {\Gamma \entails \alpha \equiv \tau}
+\qquad
+\Rule{\Gamma \entails \tau \type}
+     {\Gamma \entails \tau \equiv \tau}
+$$
+$$
+\Rule{\Gamma \entails \upsilon \equiv \tau}
+     {\Gamma \entails \tau \equiv \upsilon}
+\qquad
+\Rule{\Gamma \entails \tau_0 \equiv \tau_1
+      \quad
+      \Gamma \entails \tau_1 \equiv \tau_2}
+     {\Gamma \entails \tau_0 \equiv \tau_2}
+$$
+\caption{Rules for type equivalence}
+\label{fig:equivRules}
+\end{figure}
 
-A \define{unifier} for the types $\tau$ and $\upsilon$ in a context $\Gamma$ is a pair
-$(\Delta, \theta)$ such that $\theta : \Gamma \lei \Delta$ and
+We can now define
+$\sem{\alpha \defn \tau} = \alpha \equiv \tau$ and
+$\sem{\hole{\alpha}} = \alpha \equiv \alpha$, since the first inference rule
+ensures that
+$\Gamma \contains \alpha \defn \tau
+    \Rightarrow  \Gamma \entails \alpha \equiv \tau$,
+and we have
+$$\Gamma \contains \hole{\alpha}
+    \Rightarrow  \alpha \in \tyvars{\Gamma}
+    \Rightarrow  \Gamma \entails \alpha \type
+    \Rightarrow  \Gamma \entails \alpha \equiv \alpha.$$
+
+\begin{lemma}
+The judgement $\tau \equiv \upsilon$ is stable, i.e.\ if
+$\Gamma \entails \tau \equiv \upsilon$ and $\delta : \Gamma \lei \Delta$ then
+$\Delta \entails \delta\tau \equiv \delta\upsilon$.
+\end{lemma}
+\begin{proof}
+By induction on the structure of derivations, observing that leaves are either
+of the form
+$\Gamma \contains \alpha \defn \tau$,
+in which case $\Delta \entails \delta\alpha \equiv \delta\tau$ by definition
+of $\lei$, or they are of the form
+$\Gamma \entails \tau \type$,
+in which case $\Delta \entails \delta\tau \type$ by stability of
+$\tau \type$.
+\end{proof}
+
+
+A \define{unifier} for the types $\tau$ and $\upsilon$ in a context $\Gamma$ is
+a pair $(\Delta, \theta)$ such that $\theta : \Gamma \lei \Delta$ and
 $\Delta \entails \theta\tau \equiv \theta\upsilon$.
-$\Delta$ is said to be \define{most general} if it is
-minimal with respect to $\lei$, i.e.\ for every unifier $\Delta'$ of
-$\tau$ and $\upsilon$ in $\Gamma$, we have $\Delta \lei \Delta'$.
+
 
 The rules in Figure~\ref{fig:unifyRules} define our unification algorithm. The
-judgement
-$\Junify{\Gamma_0}{\tau}{\upsilon}{\Gamma_1}$
-means that given inputs $\Gamma_0$, $\tau$ and $\upsilon$,
-unification of $\tau$ with $\upsilon$ 
-succeeds with output context $\Gamma_1$.
-The judgement
+sequent $\Junify{\Gamma_0}{\tau}{\upsilon}{\Gamma_1}$ means that given inputs
+$\Gamma_0$, $\tau$ and $\upsilon$, unification of $\tau$ with $\upsilon$ 
+succeeds, producing output context $\Gamma_1$.
+The sequent
 $\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\Xi}{\Gamma_1}$
 means that given inputs $\Gamma_0$, $\tau$, $\upsilon$ and $\Xi$,
 instantiation of $\alpha$ with $\tau$ succeds with output context $\Gamma_1$.
 (Here $\Xi$ is a (possibly empty) list of type variable declarations.)
-In each case, the idea is that the output context minimally extends the
-input context to make the additional judgement hold.
+
 
 We define the orthogonality relation $e \perp J$ (entry $e$ does not have any
 effect on the judgement $J$) for unification and instantiation judgements
@@ -673,20 +715,6 @@ $$
      {\Jinstantiate{\Gamma_0, e}{\alpha}{\tau}{\Xi}{\Gamma_1, e}}
 \side{e \perp \alpha \equiv \tau [\Xi]}
 $$
-
-% \begin{prooftree}
-% \AxiomC{ $\Gamma_0 \focusbar \Xi \extend \alpha \equiv \tau \yields \Gamma_1$ }
-% \LeftLabel{ \textsc{InstSkip$_1$} }
-% \RightLabel{ $\beta \notin \FTV{\tau, \Xi}$ }
-% \UnaryInfC{ $\Gamma_0, \beta \defn mt \focusbar \Xi \extend \alpha \equiv \tau \yields \Gamma_1, \beta \defn mt$ }
-% \end{prooftree}
-
-% \begin{prooftree}
-% \AxiomC{ $\Gamma_0 \focusbar \Xi \extend \alpha \equiv \tau \yields \Gamma_1$ }
-% \LeftLabel{ \textsc{InstSkip$_2$} }
-% \RightLabel{ $\beta \notin \FTV{\tau, \Xi}$ }
-% \UnaryInfC{ $\Gamma_0, \Diamond \focusbar \Xi \extend \alpha \equiv \tau \yields \Gamma_1, \Diamond$ }
-% \end{prooftree}
 
 \caption{Algorithmic rules for unification}
 \label{fig:unifyRules}
