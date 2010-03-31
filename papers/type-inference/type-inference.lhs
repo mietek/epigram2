@@ -349,8 +349,12 @@ A \define{problem domain} $R_\le$ is a set $R$ equipped with a relation $\le$
 such that $R$ is closed under substitution. 
 A \define{problem on $R_\le$} is a map $P: R_\le \rightarrow \J$ such that
 $P(r)$ is stable and $\theta P(r) = P(\theta r)$ for any $r \in R_\le$ and
-substitution $\theta$. Note that we can regard stable
-judgments as problems on the unit set. We say that $r \in R_\le$
+substitution $\theta$. 
+%%%Note that we can regard stable judgments 
+   Stable judgments can be seen 
+as problems on the unit set. 
+We say %%%that 
+$r \in R_\le$
 \define{solves $P$ in $\Gamma$} if $\Gamma \entails P(r)$.
 
 We will be interested in finding the minimal information increase required to
@@ -370,7 +374,10 @@ $$P_1 \wedge P_2 : R \times S \rightarrow \J :
 where $(r, s) \langle \le , \ll \rangle (r', s')$ if
 $r \le r'$ and $s \ll s'$.
 
-The point of all this work is to be able to state and prove the following 
+The point of all this 
+%%%work 
+   machinery 
+is to be able to state and prove the following 
 %%%lemma. This states 
    lemma, stating that the minimal solution to a conjunction of problems can be found
 by finding the minimal solution of the first problem, then (minimally) extending
@@ -396,8 +403,10 @@ suffices to show $\Gamma_2 \entails P_1(\gamma_2 r)$ and
 $\Gamma_2 \entails P_2(s)$. The latter holds by assumption. For the
 former, note that $\Gamma_1 \entails P_1(r)$ and hence
 $\Gamma_2 \entails \gamma_2 P_1(r)$ by stability of $P_1(r)$.
-But $\gamma_2 P_1(r) = P_1(\gamma_2 r)$ by definition of a 
-problem, so we are done.
+But $\gamma_2 P_1(r) = P_1(\gamma_2 r)$ by 
+   definition,  
+%%%of a problem, 
+   so we are done.
 
 Finally, suppose there is some $\theta : \Gamma_0 \lei \Theta$ such that
 $\Theta \entails (P_1 \wedge P_2)(r', s')$, so
@@ -452,12 +461,17 @@ First, let's get some imports out of the way.
 The syntax of types is
 $$\tau ::= \alpha ~||~ \tau \arrow \tau$$
 where $\alpha$ ranges over some set of type variables $\V_0 \subset \V$.
-Let $\D_0 \subset \D$ be the set of types.
+%%%Let $\D_0 \subset \D$ be the set of types.
 In the sequel, $\alpha$ and $\beta$ are type variables and $\tau$ and $\upsilon$
-are types.
+%%%are 
+   types.
 % (All of these symbols may be primed or subscripted.)
-We use $\Xi$ to denote a context suffix that may
-contain only type variable declarations, and no other kinds of definition.
+We use $\Xi$ to denote a context suffix 
+%%%that may contain 
+   containing 
+only type variable 
+%%%declarations, and no other kinds of definition.
+   declarations.
 
 A type variable declaration is written |alpha := mt|, where $\alpha$ is a
 variable that is either bound to a type $\tau$ (written |alpha := Just tau| or
@@ -465,26 +479,34 @@ $\alpha \defn \tau$), or left unbound (written |alpha := Nothing|).
 Later, we will add other kinds of variable and definition that are not relevant
 for unification.
 
-We write $\tyvars{\Gamma}$ for the 
+%%%We write $\tyvars{\Gamma}$ for the 
+   Let $\tyvars{\Gamma}$ be the 
 %%%set of type variables of $\Gamma$, i.e.\ $\V_0 \cap \V(\Gamma)$.
-   set $\V_0 \cap \V(\Gamma)$ of type variables declared in $\Gamma$. 
-We define the set of free type
+   set $\V_0 \cap \V(\Gamma)$ of type variables declared in $\Gamma$,  
+%%%We 
+   and 
+define the set of free type
 variables of a type or context thus:
 \begin{align*}
-\FTV{\alpha}    &= \alpha  \\
+\FTV{\alpha}    &= \{ \alpha \} \\
 \FTV{\tau \arrow \upsilon}  &= \FTV{\tau} \cup \FTV{\upsilon}  \\
 \FTV{\Xi}       &= \bigcup \{ \FTV{\tau} ~||~ \alpha \defn \tau \in \Xi \}  \\
 \FTV{\tau, \Xi} &= \FTV{\tau} \cup \FTV{\Xi}.
 \end{align*}
 
-We define the judgment $\tau \type$ ($\tau$ is a type over the context) as
-shown in Figure~\ref{fig:typeOkRules}, and hence give the rules for the
+We define the judgment $\tau \type$ %%%($\tau$ is a type over the context) 
+%%%as shown 
+   in Figure~\ref{fig:typeOkRules}, and hence give 
+%%%the 
+   rules for the
 judgment $\alpha \defn D \ok$. 
-\TODO{Show $\tau \type$ is stable.}
+%%%\TODO{Show $\tau \type$ is stable.}
 A simple induction on derivations shows that the judgment $\tau \type$ is stable. 
 %%%
-If $\Gamma$ is a valid context, we write $\types{\Gamma}$ for the set of types
-$\tau$ such that $\Gamma \entails \tau \type$. 
+If $\Gamma$ is a valid context, 
+%%%we write $\types{\Gamma}$ for 
+   let $\types{\Gamma}$ be 
+the set of types $\tau$ such that $\Gamma \entails \tau \type$. 
 
 \begin{figure}[ht]
 \boxrule{\Gamma \entails \tau \type}
@@ -577,15 +599,18 @@ Since |Type| and |Suffix| are built from |Foldable| functors containing names, w
 
 
 We work in the |Contextual| monad (computations that can fail and mutate the
-context).  The |Name| component is the next fresh type variable name to use;
+context).  
+
+
+> type Contextual  = StateT (Name, Context) Maybe
+
+
+The |Name| component is the next fresh type variable name to use;
 it is an implementation detail that is not mentioned in the typing judgments. 
 Our choice of |Name| means that it is easy to choose a name fresh with respect to a |Context|: 
 
 > fresh :: Name -> Context -> Name
 > fresh alpha _Gamma = succ alpha
-
-> type Contextual  = StateT (Name, Context) Maybe
-
 
 Working in this monad, we first define some useful functions for dealing with
 the context. The |getContext|, |putContext| and |modifyContext| functions
@@ -615,7 +640,11 @@ The |popEntry| function removes and returns the topmost entry from the context.
 \section{Unification up to definition}
 
 If $\tau$ and $\upsilon$ are types, we define the equivalence judgment
-$\tau \equiv \upsilon$ by the rules in Figure~\ref{fig:equivRules}.
+$\tau \equiv \upsilon$ by the rules in Figure~\ref{fig:equivRules}. 
+%%% 
+A \define{unifier} for the types $\tau$ and $\upsilon$ in a context $\Gamma$ is
+a pair $(\Delta, \theta)$ such that $\theta : \Gamma \lei \Delta$ and
+$\Delta \entails \theta\tau \equiv \theta\upsilon$.
 
 \begin{figure}[ht]
 \boxrule{\Gamma \entails \tau \equiv \upsilon}
@@ -641,11 +670,14 @@ $$
 
 We can now define
 $\sem{\alpha \defn \tau} = \alpha \equiv \tau$ and
-$\sem{\hole{\alpha}} = \alpha \equiv \alpha$, since the first inference rule
+$\sem{\hole{\alpha}} = \alpha \equiv \alpha$, since the first 
+%%%inference rule
+   rule 
 ensures that
 $\Gamma \contains \alpha \defn \tau
     \Rightarrow  \Gamma \entails \alpha \equiv \tau$,
-and we have
+and 
+%%%we have
 $$\Gamma \contains \hole{\alpha}
     \Rightarrow  \alpha \in \tyvars{\Gamma}
     \Rightarrow  \Gamma \entails \alpha \type
@@ -668,9 +700,9 @@ $\tau \type$.
 \end{proof}
 
 
-A \define{unifier} for the types $\tau$ and $\upsilon$ in a context $\Gamma$ is
-a pair $(\Delta, \theta)$ such that $\theta : \Gamma \lei \Delta$ and
-$\Delta \entails \theta\tau \equiv \theta\upsilon$.
+%%%A \define{unifier} for the types $\tau$ and $\upsilon$ in a context $\Gamma$ is
+%%%a pair $(\Delta, \theta)$ such that $\theta : \Gamma \lei \Delta$ and
+%%%$\Delta \entails \theta\tau \equiv \theta\upsilon$.
 
 
 The rules in Figure~\ref{fig:unifyRules} define our unification algorithm. The
@@ -680,7 +712,7 @@ succeeds, producing output context $\Gamma_1$.
 The sequent
 $\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\Xi}{\Gamma_1}$
 means that given inputs $\Gamma_0$, $\tau$, $\upsilon$ and $\Xi$,
-instantiation of $\alpha$ with $\tau$ succeds with output context $\Gamma_1$.
+instantiation of $\alpha$ with $\tau$ succeeds with output context $\Gamma_1$.
 (Here $\Xi$ is a (possibly empty) list of type variable declarations.)
 
 
@@ -1061,7 +1093,7 @@ de Brujin indices and
 free variables (i.e.\ those defined in the context) 
 %%%using 
    by 
-names. Moreover, we can
+names. Moreover, we %%%can
 use the Haskell type system to prevent some incorrect manipulations of 
 %%%the 
 indices by defining a natural number type
@@ -1885,7 +1917,10 @@ Hence the \textsc{App} rule applies, so
 \subsection{Implementation}
 
 A term $t$ may be a variable |(X)|, an application |(:$)|, an abstraction |(Lam)|
-or a let binding |(Let)|. As with type variables, we parameterise over the type
+or a let binding |(Let)|. As with 
+%%%type variables, 
+   |Ty|, 
+we parameterise over the type
 of term variable names, so |Tm| is a foldable functor.
 
 > data Tm a  =  X a
@@ -1897,7 +1932,6 @@ of term variable names, so |Tm| is a foldable functor.
 
 > type Term      = Tm TermName
 > type TermName  = String
-
 
 The |infer| function attempts to infer the type of the given term,
 updating the context with the minimum necessary information.
@@ -1916,8 +1950,10 @@ and specialise this scheme with fresh variables.
 
 
 To infer the type of a $\lambda$-abstraction, we recursively infer the type of its body
-$t$ with its variable $x$ assigned type-scheme $.\alpha$, where $\alpha$
-is a fresh type variable. The type is then $\alpha \arrow \tau$ in the context with
+$t$ with its variable $x$ assigned type-scheme $.\alpha$, 
+%%%where $\alpha$ is 
+   with $\alpha$ 
+a fresh type variable. The type is then $\alpha \arrow \tau$ in the context with
 the $x$ binding removed.
 
 > infer (Lam x t) = do
