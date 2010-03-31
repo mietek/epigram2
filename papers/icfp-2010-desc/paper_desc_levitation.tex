@@ -76,7 +76,7 @@ simply implemented in the dependently-typed target language, as any
 other function.
 
 Apart from these changes, we are left with implementing the other
-components of finite sets. This consists in $\EnumT$, $\Ze$, $\Su$, as
+components of finite sets. This consists of $\EnumT$, $\Ze$, $\Su$, as
 well as the $\F{switch}$ operator. Note that the actual implementation
 of $\EnumU$ does not influence our implementation of $\EnumT$: be they
 hard-coded or codes in the $\Desc$ universe, the $\EnumU$ objects
@@ -90,9 +90,9 @@ required.
     <- The content of the type theory is exactly the same
         <- before == after
     /> type naming scheme condenses
-        <- Replace named constructors by codes in the universe of data-types
+        <- Replace named constructors by codes in the universe of datatypes
     -> Our next step is a similar move (in essence)
-        /> Condenses the entire naming scheme of data-types
+        /> Condenses the entire naming scheme of datatypes
 \end{wstructure}
 
 In this section, we have replaced a low-level presentation of finite
@@ -107,14 +107,14 @@ names. The type naming scheme of the type theory has condensed: named
 type formers ($\EnumU$) and constructors ($\NilE$ and $\ConsE$) are
 now replaced by codes and their fix-point in the universe of
 descriptions. In essence, our next step is similar: we are going to
-condense the entire naming scheme of data-types \emph{in itself}.
+condense the entire naming scheme of datatypes \emph{in itself}.
 
 \subsection{Implementing descriptions}
 
 \begin{wstructure}
 <- Realising our promises
     <- We are going to implement Desc
-    /> Desc is itself a data-type
+    /> Desc is itself a datatype
         <- Same situation as EnumU
             <- We want to benefit from generic operations
         -> It ought to be encoded in itself
@@ -122,11 +122,11 @@ condense the entire naming scheme of data-types \emph{in itself}.
 
 We shall now fulfil our promises for $\Desc$. We are going to
 implement the codes of the universe of descriptions. In and by itself,
-the system of codes, $\Desc$, is nothing but a data-type. We are in
+the system of codes, $\Desc$, is nothing but a datatype. We are in
 the same situation as with $\EnumU$: we ought to be able to describe
 the codes of $\Desc$ in $\Desc$ itself. Hence, this code would be a
 first-class citizen, born with the standard, generic equipment of
-data-types.
+datatypes.
 
 \subsubsection{First attempt}
 
@@ -154,7 +154,7 @@ Our first attempt is the following:
 }\]
 
 Let us explain how we have proceeded and the obstacle we face. Much as
-the data-types we have seen so far, we first have to choose a
+the datatypes we have seen so far, we first have to choose a
 constructor. Constructors correspond to the code's constructors:
 $\DUnit$, $\DSigma{\!}{\!}$, and $\DIndx{\!}$. The reader will notice
 that the tagged notation we have used for the $\Desc$ constructors now
@@ -162,7 +162,7 @@ fully makes sense: these were actually the tags we are
 defining.
 
 The case of $\DUnit$ is trivial: we immediately reach the end of the
-data-type. $\DUnit$ has no payload. The case of $\DIndx{\!}$ comes
+datatype. $\DUnit$ has no payload. The case of $\DIndx{\!}$ comes
 naturally: it only takes a recursive argument -- a description. The
 case of $\DSigma{\!}{\!}$ is problematic. Recall the specification of
 $\DSigma{\!}{\!}$:
@@ -236,7 +236,7 @@ introduced by $\DHindx{\!}{}$ is unlikely to be amenable to a purely
 definitional treatment.
 
 Equipped with $\DHindx{\!}{\!}$, we can describe the extended code of
-our universe of data-types, as shown in
+our universe of datatypes, as shown in
 Figure~\ref{fig:desc-levitate}.  The $\DUnit$ and $\DIndx{\!}$ cases
 remain unchanged, as expected. We successfully describe the
 $\DSigma{\!}{}$ case, by a simple appeal to the higher-order induction
@@ -246,7 +246,7 @@ in $\Set$ with a recursive argument.
 At a first glance, we have achieved our goal. We have described the
 codes of the universe of description. Taking the fix-point of this
 object gives us $\Desc$, up to isomorphism. We have implemented our
-code of data-types as an object levitating inside itself. However,
+code of datatypes as an object levitating inside itself. However,
 this levitation operation, just as any magic trick, relies on an
 invisible cable. Let us reveal it, hence finishing our implementation.
 
@@ -350,8 +350,8 @@ the following inference rule:
     <- Desc is just data
         -> Can be manipulated
     <- Free induction scheme on Desc
-        -> Ability to inspect data-types
-        -> Ability to program on data-types
+        -> Ability to inspect datatypes
+        -> Ability to program on datatypes
 \end{wstructure}
 
 
@@ -369,7 +369,7 @@ manipulated. Moreover, it is expressed in the $\Desc$ universe. As a
 consequence, it is equipped, for free, with an induction
 principle. So, our ability to inspect and program with $\Desc$ is not
 restricted to the meta-language: we now have all the necessary
-equipment in the target language to \emph{program} over data-types. In
+equipment in the target language to \emph{program} over datatypes. In
 this setting, \emph{generic programming is just about programming}.
 
 
@@ -436,12 +436,12 @@ hypotheses''. Therefore, to construct an element of
 \F{replace}\: (\DIndx{\V{D}})\:     \V{X}\: \V{Y}\: \pair{\V{x}}{\V{xs}}{}\: \pair{\V{y}}{\V{ys}}{} \mapsto       \\
 \qquad  \pair{\V{y}}{\F{replace}\: \V{D}\: \V{X}\: \V{Y}\: \V{xs}\: \V{ys}}{}                                     \\
 \F{replace}\: (\DHindx{\V{H}}{\V{D}})\: \V{X}\: \V{Y}\: \pair{\V{f}}{\V{xs}}{}\: \pair{\V{g}}{\V{ys}}{} \mapsto   \\
-\qquad  \pair{\V{g}}{\F{replace}\: \V{D}\{ \V{X}\: \V{Y}\: \V{g}\: \V{ys}}{}
+\qquad  \pair{\V{g}}{\F{replace}\: \V{D}\: \V{X}\: \V{Y}\: \V{g}\: \V{ys}}{}
 }\]
 
 Filling the hole in $\F{cata}$ with \(\F{replace}\: \V{D}\: (\Mu{\V{D}})\: \V{T}\: \V{xs}\: \V{hs}\) closes the
 problem. In the type theory, we have built a generic catamorphism. Any
-data-type will now come equipped with this operation, for free.
+datatype will now come equipped with this operation, for free.
 
 The astute reader will have been struck by the type of $\F{replace}$:
 it is \emph{almost} the morphism part -- sometimes called \emph{map}
@@ -457,7 +457,7 @@ map. It can be found in the Agda model.
         <- Desc comes equipped with an induction principle
         -> Ability to compute more functions from it
             -> More generic functions
-    <- Inspecting data-types
+    <- Inspecting datatypes
         <- All described byu a Desc code
         -> Ability to explore the code
             <- Desc equipped with an induction principle
@@ -468,12 +468,12 @@ With this example, we have shown how we can derive a generic
 operation, the catamorphism, from a pre-existing generic operation,
 the induction principle. This has been made possible by our ability to
 manipulate descriptions as first-class objects: the catamorphism is,
-basically, a function mapping a $\Desc$ to a data-type specific
+basically, a function mapping a $\Desc$ to a datatype specific
 operation. This programming style is reminiscent to polytypic
 languages, such as PolyP~\cite{jansson:polyp}.
 
 Moreover, the $\F{replace}$ function demonstrates the benefit of an
-approach based on universes. The data-types living in the universe of
+approach based on universes. The datatypes living in the universe of
 descriptions, we are able to \emph{inspect} them. As shown by
 $\F{replace}$, it is easy to explore these structures, as well as
 building new ones.
@@ -490,7 +490,7 @@ building new ones.
 \end{wstructure}
 
 In this section, we will turn to a more ambitious generic operation on
-data-type. Given a functor, represented as a tagged description, we
+datatype. Given a functor, represented as a tagged description, we
 build the free monad over this functor.
 
 \newcommand{\FMFreeMonad}{\D{FreeMonad}}
@@ -499,7 +499,7 @@ build the free monad over this functor.
 \newcommand{\FMComposite}{\C{Composite}}
 
 Let us recall the free monad construction. Given a functor $F$, the
-free monad over $F$ is defined by the following data-type:
+free monad over $F$ is defined by the following datatype:
 
 \[
 \stk{
@@ -516,7 +516,7 @@ free monad over $F$ is defined by the following data-type:
 
 \note{Recall monadic structure of this object}
 
-Being an inductive type, this $\FMFreeMonad$ data-type is itself
+Being an inductive type, this $\FMFreeMonad$ datatype is itself
 defined by a pattern functor. It is given by:
 
 \[
@@ -559,7 +559,7 @@ the full-blown free monad construction.
         -> Using Fold
 \end{wstructure}
 
-Of course, we must equip the resulting data-types with operations
+Of course, we must equip the resulting datatypes with operations
 delivering a monadic interface. As expected, \(\LAM{\x}\DVar{\x}\)
 plays the r\^ole of \return, embedding variables into terms. The
 \bind\ operation corresponds to \emph{substitution}. We will now
@@ -609,7 +609,7 @@ corresponds to the following definition:
 
 \begin{wstructure}
     -> Consequences
-        <- We have free monad data-type
+        <- We have free monad datatype
             <- Term + variables
         <- We have monad operations
             <- Return / var
@@ -619,36 +619,37 @@ corresponds to the following definition:
 Filling the sub-goal with $\apply\: \V{D}\: \V{X}\: \V{Y}\:
 \V{\sigma}$ completes the implementation. To sum up, we have
 implemented the free monad construction for an arbitrary tagged
-description. This gives the developer the ability, for any data-type,
+description. This gives the developer the ability, for any datatype,
 to extend it with a notion of variable. Then, we have equipped this
 structure with the corresponding monadic operation, \bind\ and
 \return. Whereas the \return\ is a trivial variable former, the
 \bind\ operation corresponds to the substitution of variables by
 terms. We have shown how to implement it, for any free monad. This
-programming style is reminiscent to the type-indexed data
-types~\cite{hinze:generic-haskell}, as implemented in Generic Haskell:
-from data-types, we built new data-types and equip them with some
-structure.
+programming style is reminiscent to type-indexed
+datatypes~\cite{hinze:generic-haskell}, as implemented in Generic
+Haskell: from datatypes, we built new datatypes and equip them with
+their structure.
 
 \begin{wstructure}
 <- Deriving new data-structure and functions on them
-    <- Computing the Free Monad of a data-type
+    <- Computing the Free Monad of a datatype
         <- Derive new data-structure from previous one
             <- It is just code
         /> New data-structure comes with some equipment
-    <- Computing new functions on computed data-types
+    <- Computing new functions on computed datatypes
         <- If data comes with structure, we ought to be able to capture it
             <- Induction on Desc
             -> Ability to compute over data
 \end{wstructure}
 
+%% Candidate for removal:
 With the free monad construction, we have seen two kinds of generic
 operations. Firstly, we have derived a new data-structure from another
 one: we make the free monad from its underlying functor. To do so, we
-crucially rely on the fact that data-types are nothing but codes. We
+crucially rely on the fact that datatypes are nothing but codes. We
 are therefore entitled to modify this code and, in this case, extend
-it. Extending a data-type might give rise to a more structured object,
+it. Extending a datatype might give rise to a more structured object,
 as was the case here.  So, secondly, we have equipped this new
-data-type with its inherent structure: the \bind\ and
+datatype with its inherent structure: the \bind\ and
 \return\ operations. We have been able to build them as generic
 functions.
