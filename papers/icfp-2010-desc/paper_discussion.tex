@@ -92,13 +92,19 @@ over them. For the same reason, arity-generic
 programming~\cite{weirich:arity-generic} is out of reach of our
 current presentation.
 
-Interestingly, our generic induction principle allows a programming
-style reminiscent to the Scrap Your Boilerplate~\cite{spj:syb} (SYB)
-approach. Like SYB, we provide a generic operator to manipulate and
-carry operations over data-types. However, unlike SYB, we do not need
-support from the compiler, as required by the $\CN{Typeable}$
-class. Indeed, in our setting, data-types are reflected in the
-language, hence our ability to manipulate them directly.
+Another generic programming framework is Scrap Your
+Boilerplate~\cite{spj:syb} (SYB). Our proposal is different in various
+ways. The corner stone of SYB is the \emph{spine} view of data-type
+constructors. A data-type is a spine composed by a constructor applied
+to some arguments. Further, this spine is equipped with some
+combinators including, primarily, an iterator. In this setting,
+generic programs are written by composing these combinators. This
+relies on a $\CN{Typeable}$ type-class, allowing dynamic dispatch to
+data-type specific operations. As a result, SYB is not reflexive: it
+is restricted to data-types instanciating $\CN{Typeable}$. Moreover,
+it forbids type-indexed data types: it can only define generic
+functions.
+
 
 \begin{wstructure}
     <- Generic in dependent types
