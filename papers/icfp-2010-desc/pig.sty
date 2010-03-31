@@ -109,6 +109,7 @@
 \DeclareMathAlphabet{\mathkw}{OT1}{cmss}{bx}{n}
 \newcommand{\K}[1]{\mathkw{#1}}
 \newcommand{\M}[1]{\mathit{#1}}
+\newcommand{\G}{\Gamma}
 \newcommand{\V}[1]{\purple{\mathit{#1}}}
 \newcommand{\p}{\purple{'}}
 \newcommand{\D}[1]{\blue{\CN{#1}}}
@@ -197,8 +198,9 @@
 \newcommand{\spiD}[1]{\F{$\pi_D$}\:#1}
 \newcommand{\switchD}[3]{\green{\CN{switchD}}\:#1\:#2\:#3}
 
-\newcommand{\Unit}{\D{Unit}}
-\newcommand{\Void}{\C{[]}}
+\newcommand{\Unit}{\D{1}}
+\newcommand{\void}{\C{[]}}
+\newcommand{\Void}{\void}  %grrr
 
 
 %% Desc
@@ -331,7 +333,7 @@
 \newcommand{\Tn}{\vdash}
 \newcommand{\Eq}{\equiv}
 \newcommand{\x}{\V{x}}
-\newcommand{\xS}{\Bhab{\x}{\V{S}}}
+\newcommand{\xS}{\Bhab{\x}{\M{S}}}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

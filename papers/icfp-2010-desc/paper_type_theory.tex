@@ -1,18 +1,8 @@
+
 \section{The Type Theory}
 \label{sec:type-theory}
 
-Our work is deeply rooted in the realm of dependently-typed functional
-languages. In particular, we have developed this technology in our
-on-going work on Epigram. However, in this paper,
-we strive to present our technology in the broadest setting
-possible. To this end, we are going to present a type theory from the
-ground up.
-
-To the reader new to type theory, this first section will provide a
-gentle introduction to dependently-typed systems. To the reader
-familiar with type theory, she will recognise the basis of her
-favourite type theory, be it Agda or Coq, for instance. This scene sets,
-we have a common ground for discussion.
+One challenge in writing this paper is to extricate our account of datatypes from what else is new in Epigram 2. In fact, we demand relatively little from the setup, so we shall start with a `vanilla' theory and add just what we need. The reader accustomed to dependent types will recognise the basis of her favourite system; for those less familiar, we try to keep the presentation self-contained.
 
 \subsection{Base theory}
 
@@ -26,16 +16,17 @@ we have a common ground for discussion.
         -> Equality judgements
 \end{wstructure}
 
-In the following, we adopt a standard presentation for our type
-theory. It is defined by three forms of judgements: context validity
-judgements, typing judgements, and equality judgements. Formally,
-these judgements are presented as follows:
+We adopt a traditional presentation for our type
+theory, with three mutually defined systems of judgments:
+\emph{context validity}, \emph{typing}, and \emph{equality},
+with the following forms:
+
 
 \[
 \begin{array}{ll}
-\Gamma \vdash \Valid                & \mbox{\(\Gamma\) is a valid context, giving types to variables} \\
-\Gamma \vdash \Bhab{\V{t}}{\V{T}}           & \mbox{term \(\V{t}\) has type \(\V{T}\) in context \(\Gamma\)} \\
-\Gamma \vdash \Bhab{\V{s} \equiv \V{t}}{\V{T}}  & \mbox{\(\V{s}\) and \(\V{t}\) are equal at type \(\V{T}\) in context \(\Gamma\)} \\
+\G \vdash \Valid                & \mbox{\(\G\) is a valid context, giving types to variables} \\
+\G \vdash \Bhab{\M{t}}{\M{T}}           & \mbox{term \(\M{t}\) has type \(\M{T}\) in context \(\G\)} \\
+\G \vdash \Bhab{\M{s} \equiv \M{t}}{\M{T}}  & \mbox{\(\M{s}\) and \(\M{t}\) are equal at type \(\M{T}\) in context \(\G\)} \\
 \end{array}
 \]
 
@@ -44,26 +35,26 @@ these judgements are presented as follows:
         -> By induction on derivations
 \end{wstructure}
 
-Each of these judgements is populated by a respective system of
-inferences rules. These rules are formulated so as to ensure that the
-following implications always hold by induction on derivations:
-
+The rules are formulated to ensure that the
+following `sanity checks' hold by induction on derivations
 \[
 \begin{array}{l@{\;\Rightarrow\;\;}l}
-\Gamma            \vdash \Bhab{\V{t}}{\V{T}}            
-    & \Gamma \vdash \Valid\; \wedge\; \Gamma\vdash\Type{\V{T}} \\
-\Gamma            \vdash \V{s} \equiv \Bhab{\V{t}}{\V{T}}   
-    & \Gamma \vdash \Bhab{\V{s}}{\V{T}} \;\wedge\; \Gamma\vdash \Bhab{\V{t}}{\V{T}} \\
-\Gamma ; \xS ; \Delta \vdash \V{J}                      
-    & \Gamma \vdash \Bhab{\V{s}}{\V{S}} \;\Rightarrow\; 
-          \Gamma ; \Delta[\V{s}/\V{x}] \vdash \V{J}[\V{s}/\V{x}] \\
-\end{array}
+\G            \vdash \Bhab{\M{t}}{\M{T}}            
+    & \G \vdash \Valid\; \wedge\; \G\vdash\Type{\M{T}} \\
+\G            \vdash s \equiv \Bhab{\M{t}}{\M{T}}   
+    & \G \vdash \Bhab{s}{T} \;\wedge\; \G\vdash \Bhab{\M{t}}{\M{T}}
+\end{array} \]
+and that judgments \(\M{J}\) are preserved by well-typed instantiation.
+\[
+\G ; \xS ; \Delta \vdash \M{J}            \;\Rightarrow\;      
+    \G \vdash \Bhab{\M{s}}{\M{S}} \;\Rightarrow\; 
+          \G ; \Delta[\M{s}/\x] \vdash \M{J}[\M{s}/\x] 
 \]
 
-We are not going to prove the validity of these invariants. They
-follow rather straightforwardly from the induction rules. For formal
-proofs, we refer the reader to standard presentations of type theory,
-such as Luo's seminal work \cite{luo:utt}.
+%We are not going to prove the validity of these invariants. They
+%follow rather straightforwardly from the induction rules. For formal
+%proofs, we refer the reader to standard presentations of type theory,
+%such as Luo's seminal work \cite{luo:utt}.
 
 \begin{wstructure}
     <- Judgemental equality
@@ -72,33 +63,31 @@ such as Luo's seminal work \cite{luo:utt}.
         -> Used in Epigram, OTT
 \end{wstructure}
 
-Noticeably, we have adopted a judgemental presentation of
-equality. Therefore, we are not tied to a particular implementation
-choice. In particular, our system has been modelled in Agda, which
-features an intensional equality. On the other hand, it is used in
-Epigram, whose equality has a slightly extensional
-flavor~\cite{altenkirch:ott}. We expect users of fully extensional
-systems to also find their way through this presentation.
+We specify equality as a judgment, leaving open the details of its implementation, requiring only a congruence including ordinary computation (\(\beta\)-rules), decided, e.g., by testing \(\alpha\)-equivalence of \(\beta\)-normal forms~\cite{DBLP:journals/jfp/Adams06}. Coquand and Abel feature prominently in a literature of richer equalities, involving \(\eta\)-expansion, proof-irrelevance and other attractions~\cite{DBLP:journals/scp/Coquand96,DBLP:conf/tlca/AbelCP09}. Agda and Epigram 2 support such features, Coq currently does not, but they are surplus to requirements here.
+
+% Therefore, we are not tied to a particular implementation
+%choice. In particular, our system has been modelled in Agda, which
+%features an intensional equality. On the other hand, it is used in
+%Epigram, whose equality has a slightly extensional
+%flavor~\cite{altenkirch:ott}. We expect users of fully extensional
+%systems to also find their way through this presentation.
 
 \begin{wstructure}
 <- Context validity [figure no longer]
     <- Not much to be said
 \end{wstructure}
 
-The rules ensuring Context Validity 
-are unsurprisingly common. They simply guarantee the validity of the
-empty context, as well as the linear extension of a context by a
-well-typed variable.
-
+Context validity ensures that variables inhabit well-formed
+sets.
 \[
 %% Empty context validity
 \Axiom{\vdash \Valid}
 \qquad
 %% Extend context
-\Rule{\Gamma       \vdash \Type{\V{S}}}
-     {\Gamma ; \xS \vdash \Valid}\;\V{x}\not\in\Gamma
+\Rule{\G       \vdash \Type{\M{S}}}
+     {\G ; \xS \vdash \Valid}\;\x\not\in\G
 \]
-
+%
 \begin{wstructure}
 <- Typing judgements [figure]
     <- Set in Set
@@ -108,32 +97,46 @@ well-typed variable.
         -> See later discussion
     <- Standard presentation of Pi and Sigma types
 \end{wstructure}
-
-The typing judgements (Fig.~\ref{fig:typing-judgements}) are just as
-familiar. We recognise the standard presentation of $\Pi$ and $\Sigma$
-types, respectively inhabited by lambda terms and dependent
-pairs. Naturally, there are rules for function application and
-projections of $\Sigma$-types. Equal types can be substituted, thanks
-to the conversion rule.
-
-For the sake of presentation, we postulate a $\Set$ in $\Set$
-rule. Having this rule makes our type theory inconsistent, by Girard's
-paradox~\cite{girard:set-in-set}. However, it has been
-shown~\cite{harper:implicit-universe, luo:utt,
-  courant:explicit-universe} that a valid stratification can be
-inferred, automatically or semi-automatically. In the remaining of our
-presentation, we will assume that such a stratification exists, even
-though we will keep it implicit. We shall discuss this assumption in
-Section~\ref{sec:discussion}.
-
-\begin{figure}
-
+%
+The basic typing rules
+% (Fig.~\ref{fig:typing-judgements})
+for tuples and functions are also standard, save that we locally adopt
+\(\Set:\Set\), putting presentation before paradox~\cite{girard:set-in-set}.
+The usual remedies apply, \emph{stratifying}
+\(\Set\)~\cite{harper:implicit-universe, luo:utt,
+  courant:explicit-universe}.
 \input{figure_typing_judgements}
 
-\caption{Typing judgements}
-\label{fig:typing-judgements}
+\paragraph{Notation.} We subscript information needed for type synthesis
+but not type checking, e.g., the domain of a \(\LAMBINDER\)-abstraction,
+and suppress it informally where clear. Square brackets denote tuples,
+with a LISP-like right-nesting convention: \(\sqr{a\;b}\) abbreviates
+\(\pair{a}{\pair{b}{\void}{}}{}\).
 
-\end{figure}
+%We recognise the standard presentation of $\Pi$ and $\Sigma$
+%types, respectively inhabited by lambda terms and dependent
+%pairs. Naturally, there are rules for function application and
+%projections of $\Sigma$-types. Equal types can be substituted, thanks
+%to the conversion rule.
+
+%For the sake of presentation, we postulate a $\Set$ in $\Set$
+%rule. Having this rule makes our type theory inconsistent, by Girard's
+%paradox~\cite{girard:set-in-set}. However, it has been
+%shown~\cite{harper:implicit-universe, luo:utt,
+%  courant:explicit-universe} that a valid stratification can be
+%inferred, automatically or semi-automatically. In the remaining of our
+%presentation, we will assume that such a stratification exists, even
+%though we will keep it implicit. We shall discuss this assumption in
+%Section~\ref{sec:discussion}.
+
+%\begin{figure}
+%
+%\input{figure_typing_judgements}
+%
+%\caption{Typing judgements}
+%\label{fig:typing-judgements}
+%
+%\end{figure}
 
 
 \begin{wstructure}
@@ -146,35 +149,43 @@ Section~\ref{sec:discussion}.
         -> Key: wide applicability of our proposal
 \end{wstructure}
 
-Finally, we define the rules governing judgemental equality in
-Figure~\ref{fig:judgemental-equality}. We implicitly assume that
-judgemental equality respects symmetry, reflexivity, and
-transitivity. We capture the computational behavior of the language
-through the $\beta$-rules for function application and pairs. Finally,
-we implicitly assume that it respects purely syntactic and structural
-equality. This includes equality under lambda ($\xi$-rule).
+The judgmental equality comprises these computational rules
+\input{figure_judgemental_equality} closed under reflexivity,
+symmetry, transitivity and structural congruence, even under binders.
+We omit the mundane rules which ensure these closure properties for
+reasons of space. Given a suitable stratification of \(\Set\), the
+computation rules yield a terminating evaluation procedure, ensuring
+the decidability of equality and thence type checking.
 
-Crucially, being judgemental, this presentation is agnostic in the
-notion of equality actually implemented. Indeed, our typing and
-equality judgements do not rely on a ``propositional'' equality. This
-freedom is a key point in favour of the wide applicability of our
-proposal. This judgemental presentation must be read as a
-\emph{specification}: our proposal works with any propositional
-equality satisfying this specification. Moreover, our lightweight
-requirements do not endanger decidability of equality-checking.
-Obviously, when implementing our technology in an existing
-type-theory, some opportunities arise. We will present some of them
-along the course of the paper.
+%Finally, we define the rules governing judgemental equality in
+%Figure~\ref{fig:judgemental-equality}. We implicitly assume that
+%judgemental equality respects symmetry, reflexivity, and
+%transitivity. We capture the computational behavior of the language
+%through the $\beta$-rules for function application and pairs. Finally,
+%we implicitly assume that it respects purely syntactic and structural
+%equality. This includes equality under lambda ($\xi$-rule).
+
+%Crucially, being judgemental, this presentation is agnostic in the
+%notion of equality actually implemented. Indeed, our typing and
+%equality judgements do not rely on a ``propositional'' equality. This
+%freedom is a key point in favour of the wide applicability of our
+%proposal. This judgemental presentation must be read as a
+%\emph{specification}: our proposal works with any propositional
+%equality satisfying this specification. Moreover, our lightweight
+%requirements do not endanger decidability of equality-checking.
+%Obviously, when implementing our technology in an existing
+%type-theory, some opportunities arise. We will present some of them
+%along the course of the paper.
 
 
-\begin{figure}
+%\begin{figure}
 
-\input{figure_judgemental_equality}
-
-\caption{Judgemental equality}
-\label{fig:judgemental-equality}
-
-\end{figure}
+%\input{figure_judgemental_equality}
+%
+%\caption{Judgemental equality}
+%\label{fig:judgemental-equality}
+%
+%\end{figure}
 
 
 
@@ -190,16 +201,17 @@ along the course of the paper.
     ???
 \end{wstructure}
 
-This completes our presentation of the type theory. Assuming a
-stratified discipline of universe, the system we have described enjoy
-some very strong meta-theoretical properties. Unlike simply typed
-languages, such as Haskell, dependently-typed systems are
-\emph{strongly normalising}: every program that type-checks
-terminates. Moreover, type-checking is decidable and can therefore be
-implemented by a terminating algorithm.
-\note{Need some care here. Expansion would be good too. I wanted to
-  carry the intuition that we are not the bad guys with a
-  non-terminating type-checker.}
+
+%This completes our presentation of the type theory. Assuming a
+%stratified discipline of universe, the system we have described enjoy
+%some very strong meta-theoretical properties. Unlike simply typed
+%languages, such as Haskell, dependently-typed systems are
+%\emph{strongly normalising}: every program that type-checks
+%terminates. Moreover, type-checking is decidable and can therefore be
+%implemented by a terminating algorithm.
+%\note{Need some care here. Expansion would be good too. I wanted to
+%  carry the intuition that we are not the bad guys with a
+%  non-terminating type-checker.}
 
 \subsection{Finite sets}
 \label{sec:finite-sets}
@@ -391,8 +403,8 @@ type-checking is divided into two complementary phases. In the
 typical example is a variable in the context:
 
 \[
-\Rule{\Gamma ; \xS ; \Delta \vdash \Valid}
-     {\Gamma ; \xS ; \Delta \vdash \Bhab{\V{x}}{\V{S}}}
+\Rule{\G ; \xS ; \Delta \vdash \Valid}
+     {\G ; \xS ; \Delta \vdash \Bhab{\V{x}}{\V{S}}}
 \]
 
 Because the variable and its type are stored in the context, whenever
@@ -406,9 +418,9 @@ information provided by the type. Therefore, we can relax our
 requirements on the term. A typical example is the lambda abstraction:
 
 \[
-\Rule{\Gamma       \vdash \Type{\V{S}} \quad
-      \Gamma ; \xS \vdash \Bhab{\V{t}}{\V{T}}}
-     {\Gamma \vdash \Bhab{\PLAM{\x}{\V{S}} \V{t}}{\PIS{\xS} \V{T}}}
+\Rule{\G       \vdash \Type{\V{S}} \quad
+      \G ; \xS \vdash \Bhab{\V{t}}{\V{T}}}
+     {\G \vdash \Bhab{\PLAM{\x}{\V{S}} \V{t}}{\PIS{\xS} \V{T}}}
 \]
 
 Here, we are forced to annotate lambda abstractions by the type of the

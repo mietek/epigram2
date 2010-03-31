@@ -1,22 +1,44 @@
 \[\stkc{
 %% Context
 \Rule{\Gamma ; \xS ; \Delta \vdash \Valid}
-     {\Gamma ; \xS ; \Delta \vdash \Bhab{\V{x}}{\V{S}}}
+     {\Gamma ; \xS ; \Delta \vdash \Bhab{\x}{\M{S}}}
 \qquad
 %% Conversion
-\Rule{\Gamma \vdash \Bhab{\V{s}}{\V{S}} \quad 
-      \Gamma \vdash \Type{\V{S} \equiv \V{T}}}
-     {\Gamma \vdash \Bhab{\V{s}}{\V{T}}}
+\Rule{\Gamma \vdash \Bhab{\M{s}}{\M{S}} \quad 
+      \Gamma \vdash \Type{\M{S} \equiv \M{T}}}
+     {\Gamma \vdash \Bhab{\M{s}}{\M{T}}}
 \\
 %% Girard's favorite
 \Rule{\Gamma \vdash \Valid}
      {\Gamma \vdash \Type{\Set}}
 \qquad
-%% Pi-Sigma
-\Rule{\Gamma       \vdash \Type{\V{S}} \quad
-      \Gamma ; \xS \vdash \Type{\V{T}}}
-     {\Gamma \vdash \Type{\PIS{\xS} \V{T}, \SIGMAS{\xS} \V{T}}}
+%% Unit
+\Rule{\Gamma \vdash \Valid}
+     {\Gamma \vdash \Bhab{\Unit}{\Set}}
+\qquad
+%% Void
+\Rule{\Gamma \vdash \Valid}
+     {\Gamma \vdash \Bhab{\void}{\Unit}}
 \\
+%% Sigma
+\Rule{\Gamma       \vdash \Type{\M{S}} \quad
+      \Gamma ; \xS \vdash \Type{\M{T}}}
+     {\Gamma \vdash \Type{\SIGMAS{\xS} \M{T}}}
+\\%% Pair
+\Rule{\Gamma       \vdash \Bhab{\M{s}}{S} \quad 
+      \Gamma ; \xS \vdash \Bhab{\M{T}}{\Set}    \quad
+      \Gamma       \vdash \Bhab{\M{t}}{\M{T}[\M{s}/\x]}}
+     {\Gamma \vdash \Bhab{\pair{\M{s}}{\M{t}}{\x.\M{T}}}{\SIGMAS{\xS} \M{T}}}
+\\
+%% First projection
+\Rule{\Gamma \vdash \Bhab{\M{p}}{\SIGMAS{\xS} \M{T}}}
+     {\Gamma \vdash \Bhab{\fst{\M{p}}}{\M{S}}} 
+\qquad
+%% Second projection
+\Rule{\Gamma \vdash \Bhab{\M{p}}{\SIGMAS{\xS} \M{T}}}
+     {\Gamma \vdash \Bhab{\snd{\M{p}}}{\M{T}[\fst{\M{p}}/\x]}}
+\\
+
 %% %% Prop
 %% \Rule{\Gamma \vdash \Bhab{q}{\Prop}}
 %%      {\Gamma \vdash \Type{\prf{q}}}
@@ -25,36 +47,18 @@
 %% \Rule{\Gamma \vdash \Valid}
 %%      {\Gamma \vdash \Bhab{\True}{\Prop}}
 %% \\
-%% Unit
-\Rule{\Gamma \vdash \Valid}
-     {\Gamma \vdash \Bhab{\Unit}{\Set}}
-\qquad
-%% Void
-\Rule{\Gamma \vdash \Valid}
-     {\Gamma \vdash \Bhab{\Void}{\Unit}}
-\\
-%% Lambda
-\Rule{\stkl{\Gamma       \vdash \Type{\V{S}} \\
-            \Gamma ; \xS \vdash \Bhab{\V{t}}{\V{T}}}}
-     {\Gamma \vdash \Bhab{\PLAM{\x}{\V{S}} \V{t}}{\PIS{\xS} \V{T}}}
+%% Pi
+\Rule{\Gamma       \vdash \Type{\M{S}} \quad
+      \Gamma ; \xS \vdash \Type{\M{T}}}
+     {\Gamma \vdash \Type{\PIS{\xS} \M{T}}}
+\\%% Lambda
+\Rule{\stkl{\Gamma       \vdash \Type{\M{S}} \\
+            \Gamma ; \xS \vdash \Bhab{\M{t}}{\M{T}}}}
+     {\Gamma \vdash \Bhab{\PLAM{\x}{\M{S}} \M{t}}{\PIS{\xS} \M{T}}}
 \qquad
 %% Application
-\Rule{\stkl{\Gamma \vdash \Bhab{\V{f}}{\PIS{\xS} \V{T}} \\
-            \Gamma \vdash \Bhab{\V{s}}{\V{S}}}}
-     {\Gamma \vdash \Bhab{\V{f}\: \V{s}}{\V{T}[\V{s}/\V{x}]}} 
-\\
-%% Pair
-\Rule{\Gamma       \vdash \Bhab{\V{s}}{S} \quad 
-      \Gamma ; \xS \vdash \Bhab{\V{T}}{\Set}    \quad
-      \Gamma       \vdash \Bhab{\V{t}}{\V{T}[\V{s}/\V{x}]}}
-     {\Gamma \vdash \Bhab{\pair{\V{s}}{\V{t}}{\V{x}.\V{T}}}{\SIGMAS{\xS} \V{T}}}
-\\
-%% First projection
-\Rule{\Gamma \vdash \Bhab{\V{p}}{\SIGMAS{\xS} \V{T}}}
-     {\Gamma \vdash \Bhab{\fst{\V{p}}}{\V{S}}} 
-\qquad
-%% Second projection
-\Rule{\Gamma \vdash \Bhab{\V{p}}{\SIGMAS{\xS} \V{T}}}
-     {\Gamma \vdash \Bhab{\snd{\V{p}}}{\V{T}[\fst{\V{p}}/\V{x}]}}
+\Rule{\stkl{\Gamma \vdash \Bhab{\M{f}}{\PIS{\xS} \M{T}} \\
+            \Gamma \vdash \Bhab{\M{s}}{\M{S}}}}
+     {\Gamma \vdash \Bhab{\M{f}\: \M{s}}{\M{T}[\M{s}/\x]}} 
 \\
 }\]

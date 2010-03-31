@@ -13,10 +13,10 @@
 %%      {\Gamma \vdash \Bhab{x \equiv z}{T}}
 %% \\
 %% Beta-reduction
-\Rule{\stkl{\Gamma       \vdash \Type{\V{S}} \quad
-            \Gamma ; \xS \vdash \Bhab{\V{t}}{\V{T}} \\
-            \Gamma       \vdash \Bhab{\V{s}}{\V{S}}}}
-     {\Gamma \vdash \Bhab{(\PLAM{\x}{\V{S}} \V{t})\:\V{s} \equiv \V{t}[\V{s}/\V{x}]}{\V{T}[\V{s}/\V{x}]}}
+\Rule{\stkl{\Gamma       \vdash \Type{\M{S}} \quad
+            \Gamma ; \xS \vdash \Bhab{\M{t}}{\M{T}} \\
+            \Gamma       \vdash \Bhab{\M{s}}{\M{S}}}}
+     {\Gamma \vdash \Bhab{(\PLAM{\x}{\M{S}} \M{t})\:\M{s} \equiv \M{t}[\M{s}/\x]}{\M{T}[\M{s}/\x]}}
 \\
 %% Xi rule
 %% \Rule{\Gamma       \vdash \Type{S} \quad
@@ -24,13 +24,13 @@
 %%      {\Gamma \vdash \Bhab{(\PLAM{\x}{S} t) \equiv (\PLAM{\x}{S} t')}{\PIS{\xS} T}}
 %% \\
 %% Projections
-\Rule{\stkl{\Gamma                 \vdash \Bhab{\V{s}}{\V{S}} \quad
-            \Gamma ; \xS           \vdash \Bhab{\V{T}}{\Set} \\
-            \Gamma ; \Bhab{\V{s}}{\V{S}}   \vdash \Bhab{\V{t}}{\V{T}[\V{s}/\V{x}]}}}
-     {\Gamma \vdash \Bhab{\fst{(\pair{\V{s}}{\V{t}}{\V{T}})} \equiv \V{s}}{\V{S}}}
+\Rule{\stkl{\Gamma                 \vdash \Bhab{\M{s}}{\M{S}} \quad
+            \Gamma ; \xS           \vdash \Bhab{\M{T}}{\Set} \\
+            \Gamma ; \Bhab{\M{s}}{\M{S}}   \vdash \Bhab{\M{t}}{\M{T}[\M{s}/\x]}}}
+     {\Gamma \vdash \Bhab{\fst{(\pair{\M{s}}{\M{t}}{\x.\M{T}})} \equiv \M{s}}{\M{S}}}
 \qquad
-\Rule{\stkl{\Gamma               \vdash \Bhab{\V{s}}{\V{S}} \quad
-            \Gamma ; \xS         \vdash \Bhab{\V{T}}{\Set} \\
-            \Gamma ; \Bhab{\V{s}}{\V{S}} \vdash \Bhab{\V{t}}{\V{T}[\V{s}/\V{x}]}}}
-     {\Gamma \vdash \Bhab{\snd{(\pair{\V{s}}{\V{t}}{\V{T}})} \equiv \V{t}}{\V{T}[\V{s}/\V{x}]}}
+\Rule{\stkl{\Gamma               \vdash \Bhab{\M{s}}{\M{S}} \quad
+            \Gamma ; \xS         \vdash \Bhab{\M{T}}{\Set} \\
+            \Gamma ; \Bhab{\M{s}}{\M{S}} \vdash \Bhab{\M{t}}{\M{T}[\M{s}/\x]}}}
+     {\Gamma \vdash \Bhab{\snd{(\pair{\M{s}}{\M{t}}{\x.\M{T}})} \equiv \M{t}}{\M{T}[\M{s}/\x]}}
 }\]
