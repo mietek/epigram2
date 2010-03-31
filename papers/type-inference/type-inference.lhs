@@ -329,25 +329,30 @@ $\Gamma_2 \entails \gamma_2\gamma_1\sem{v D}$ by stability
 applied to $\gamma_2 : \Gamma_1 \lei \Gamma_2$.
 \end{proof}
 
-A \define{problem of arity $n$} is a map $P: \D^n \rightarrow \J$ such that
-$P(\vec{D})$ is stable and $\theta P(\vec{D}) = P(\theta \vec{D})$ for any
-$\vec{D} \in \D^n$ and substitution $\theta$.  Note that we can regard stable
-judgments as problems of arity $0$. We say that $\vec{D} \in \D^n$
-\define{solves $P$ in $\Gamma$} if $\Gamma \entails P(\vec{D})$.
-We will be interested in finding the minimal information increase required to
-solve a given problem. Hence we write
-$\delta : \Jmin{\Gamma}{P(\vec{D})}{\Delta}$ if
-$\delta : \Gamma \lei \Delta$, $\Delta \entails \delta P(\vec{D})$ and
-$$\theta : \Gamma \lei \Theta  ~\wedge~  \Theta \entails \theta P(\vec{D'})
-    \quad \Rightarrow \quad
-    \exists \zeta : \Delta \lei \Theta ~.~ \theta = \zeta \compose \delta.$$
-We then say that $\vec{D}$ is a \define{minimal solution of $P$ in $\Delta$}.
+A \define{problem domain} $R_\le$ is a set $R$ equipped with a relation $\le$
+such that $R$ is closed under substitution. 
+A \define{problem on $R_\le$} is a map $P: R_\le \rightarrow \J$ such that
+$P(r)$ is stable and $\theta P(r) = P(\theta r)$ for any $r \in R_\le$ and
+substitution $\theta$. Note that we can regard stable
+judgments as problems on the unit set. We say that $r \in R_\le$
+\define{solves $P$ in $\Gamma$} if $\Gamma \entails P(r)$.
 
-If $P_1$ and $P_2$ are problems of arities $m$ and $n$, then since $\J$ is
-closed under conjunction, $P_1 \wedge P_2$ is a problem of arity $m+n$ given by
-$$P_1 \wedge P_2 : \D^{m+n} \rightarrow \J :
-      \vec{D_1} \vec{D_2} \mapsto P(\vec{D_1}) \wedge P(\vec{D_2})$$
-where $D_1$ and $D_2$ are vectors of length $m$ and $n$ respectively.
+We will be interested in finding the minimal information increase required to
+solve a given problem, so we write
+$\delta : \Jmin{\Gamma}{P(r)}{\Delta}$ if
+$\delta : \Gamma \lei \Delta$, $\Delta \entails P(r)$ and
+for all $\theta : \Gamma \lei \Theta$ and $r'$ such that
+$\Theta \entails P(r')$, there exists $\zeta : \Delta \lei \Theta$
+such that $\theta = \zeta \compose \delta$ and $r' \le \zeta r$.
+We then say that $r$ is a \define{minimal solution of $P$ in $\Delta$}.
+
+If $P_1$ and $P_2$ are problems on $R_\le$ and $S_\ll$, then since $\J$ is
+closed under conjunction, $P_1 \wedge P_2$ is a problem on
+$R \times S_{\langle \le , \ll \rangle}$ given by
+$$P_1 \wedge P_2 : R \times S \rightarrow \J :
+      (r, s) \mapsto P(r) \wedge P(s)$$
+where $(r, s) \langle \le , \ll \rangle (r', s')$ if
+$r \le r'$ and $s \ll s'$.
 
 The point of all this work is to be able to state and prove the following 
 %%%lemma. This states 
@@ -359,9 +364,10 @@ it to solve the
 
 \begin{lemma}[The Optimist's Lemma]
 The following inference rule is admissible:
-$$\Rule{\gamma_1 : \Jmin{\Gamma_0}{P_1(\vec{D_1})}{\Gamma_1}
-       \quad  \gamma_2 : \Jmin{\Gamma_1}{P_2(\vec{D_2})}{\Gamma_2}}
-       {\gamma_2 \compose \gamma_1 : \Jmin{\Gamma_0}{P_1 \wedge P_2 (\gamma_2 \vec{D_1}, \vec{D_2})}{\Gamma_2}}$$
+$$\Rule{\gamma_1 : \Jmin{\Gamma_0}{P_1(r)}{\Gamma_1}
+       \quad  \gamma_2 : \Jmin{\Gamma_1}{P_2(s)}{\Gamma_2}}
+       {\gamma_2 \compose \gamma_1 :
+           \Jmin{\Gamma_0}{P_1 \wedge P_2 (\gamma_2 r, s)}{\Gamma_2}}$$
 \end{lemma}
 
 \begin{proof}
@@ -369,23 +375,26 @@ We have that $\gamma_2 \compose \gamma_1 : \Gamma_0 \lei \Gamma_2$ by
 %%%the preceding lemma.
    Lemma~\ref{lei:preorder}. 
 
-To show $\Gamma_2 \entails P_1 \wedge P_2 (\gamma_2 \vec{D_1}, \vec{D_2})$, it
-suffices to show $\Gamma_2 \entails P_1(\gamma_2 \vec{D_1})$ and
-$\Gamma_2 \entails P_2(\vec{D_2})$. The latter holds by assumption. For the
-former, note that $\Gamma_1 \entails P_1(\vec{D_1})$ and hence
-$\Gamma_2 \entails \gamma_2 P_1(\vec{D_1})$ by stability of $P_1(\vec{D_1})$.
-But $\gamma_2 P_1(\vec{D_1}) = P_1(\gamma_2 \vec{D_1})$ by definition of a 
+To show $\Gamma_2 \entails P_1 \wedge P_2 (\gamma_2 r, s)$, it
+suffices to show $\Gamma_2 \entails P_1(\gamma_2 r)$ and
+$\Gamma_2 \entails P_2(s)$. The latter holds by assumption. For the
+former, note that $\Gamma_1 \entails P_1(r)$ and hence
+$\Gamma_2 \entails \gamma_2 P_1(r)$ by stability of $P_1(r)$.
+But $\gamma_2 P_1(r) = P_1(\gamma_2 r)$ by definition of a 
 problem, so we are done.
 
 Finally, suppose there is some $\theta : \Gamma_0 \lei \Theta$ such that
-$\Theta \entails \theta (P_1 \wedge P_2)(\vec{D_1}, \vec{D_2})$, so
-$\Theta \entails P_1(\theta \vec{D_1})$ and
-$\Theta \entails P_2(\theta \vec{D_2})$.
-Since $\gamma_1 : \Jmin{\Gamma_0}{P_1(\vec{D_1})}{\Gamma_1}$, there exists
-$\zeta_1 : \Gamma_1 \lei \Theta$ such that $\theta = \zeta_1 \compose \gamma_1$.
-But then $\gamma_2 : \Jmin{\Gamma_1}{P_2(\vec{D_2})}{\Gamma_2}$, so there exists
-$\zeta_2 : \Gamma_2 \lei \Theta$ such that $\zeta_1 = \zeta_2 \compose \gamma_2$.
-Hence $\theta = \zeta_2 \compose (\gamma_2 \compose \gamma_1)$ as required.
+$\Theta \entails (P_1 \wedge P_2)(r', s')$, so
+$\Theta \entails P_1(r')$ and
+$\Theta \entails P_2(s')$.
+Since $\gamma_1 : \Jmin{\Gamma_0}{P_1(r)}{\Gamma_1}$, there exists
+$\zeta_1 : \Gamma_1 \lei \Theta$ such that $\theta = \zeta_1 \compose \gamma_1$
+and $r' \le \zeta_1 r$.
+But then $\gamma_2 : \Jmin{\Gamma_1}{P_2(s)}{\Gamma_2}$, so there exists
+$\zeta_2 : \Gamma_2 \lei \Theta$ such that $\zeta_1 = \zeta_2 \compose \gamma_2$
+and $s' \ll \zeta_2 s$.
+Hence $\theta = \zeta_2 \compose (\gamma_2 \compose \gamma_1)$,
+$r' \le \zeta_2 (\gamma_2 r)$ and $s' \ll \zeta_2 s$.
 \end{proof}
 
 
