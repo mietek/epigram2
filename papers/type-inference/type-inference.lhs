@@ -542,15 +542,15 @@ $$
 %      {\Gamma \entails \alpha \type}
 % \side{\alpha \in \tyvars{\Gamma}}
 % \qquad
-\Rule{\Gamma \entails \tau \type   \quad   \Gamma \entails \upsilon \type}
-     {\Gamma \entails \tau \arrow \upsilon \type}
+\Rule{\tau \type   \quad   \upsilon \type}
+     {\tau \arrow \upsilon \type}
 $$
 \boxrule{\Gamma \entails D \ok_\TY}
-$$\Rule{\Gamma \entails \valid}
-       {\Gamma \entails \;\hole{} \ok_\TY}
+$$\Rule{\valid}
+       {\;\hole{} \ok_\TY}
 \qquad
-\Rule{\Gamma \entails \tau \type}
-     {\Gamma \entails \;\defn \tau \ok_\TY}
+\Rule{\tau \type}
+     {\;\defn \tau \ok_\TY}
 $$
 \caption{Rules for types and definitions}
 \label{fig:typeOkRules}
@@ -663,71 +663,80 @@ The |popEntry| function removes and returns the topmost entry from the context.
 \section{Unification up to definition}
 
 If $\tau$ and $\upsilon$ are types, we define the equivalence judgment
-$\tau \equiv \upsilon$ by the rules in Figure~\ref{fig:equivRules}. 
-%%% 
-A \define{unifier} for the types $\tau$ and $\upsilon$ in a context $\Gamma$ is
-a pair $(\Delta, \theta)$ such that $\theta : \Gamma \lei \Delta$ and
-$\Delta \entails \theta\tau \equiv \theta\upsilon$.
+$\tau \equiv \upsilon$ by the rules in Figure~\ref{fig:equivRules} along with
+\begin{align*}
+\sem{\hole{\alpha}}_\TY &= \{ \alpha \type, \alpha \equiv \alpha \}  \\
+\sem{\alpha \defn \tau}_\TY &= \{ \alpha \type, \alpha \equiv \alpha,
+           \alpha \equiv \tau, \tau \equiv \alpha \}
+\end{align*}
+
+% A \define{unifier} for the types $\tau$ and $\upsilon$ in a context $\Gamma$ is
+% a pair $(\Delta, \theta)$ such that $\theta : \Gamma \lei \Delta$ and
+% $\Delta \entails \theta\tau \equiv \theta\upsilon$.
 
 \begin{figure}[ht]
 \boxrule{\Gamma \entails \tau \equiv \upsilon}
+% $$
+% \Rule{\Gamma \contains \alpha \defn \tau}
+%      {\Gamma \entails \alpha \equiv \tau}
+% \qquad
+% \Rule{\Gamma \entails \tau \type}
+%     {\Gamma \entails \tau \equiv \tau}
+% $$
+% $$
+% \Rule{\Gamma \entails \upsilon \equiv \tau}
+%      {\Gamma \entails \tau \equiv \upsilon}
 $$
-\Rule{\Gamma \contains \alpha \defn \tau}
-     {\Gamma \entails \alpha \equiv \tau}
-\qquad
-\Rule{\Gamma \entails \tau \type}
-     {\Gamma \entails \tau \equiv \tau}
-$$
-$$
-\Rule{\Gamma \entails \upsilon \equiv \tau}
-     {\Gamma \entails \tau \equiv \upsilon}
-\qquad
-\Rule{\Gamma \entails \tau_0 \equiv \tau_1
+\Rule{\tau_0 \equiv \upsilon_0
       \quad
-      \Gamma \entails \tau_1 \equiv \tau_2}
-     {\Gamma \entails \tau_0 \equiv \tau_2}
+      \tau_1 \equiv \upsilon_1}
+     {\tau_0 \arrow \tau_1 \equiv \upsilon_0 \arrow \upsilon_1}
+\qquad
+\Rule{\tau_0 \equiv \tau_1
+      \quad
+      \tau_1 \equiv \tau_2}
+     {\tau_0 \equiv \tau_2}
 $$
 \caption{Rules for type equivalence}
 \label{fig:equivRules}
 \end{figure}
 
-We can now define
-$\sem{\alpha \defn \tau} = \alpha \equiv \tau$ and
-$\sem{\hole{\alpha}} = \alpha \equiv \alpha$, since the first 
+% since the first 
 %%%inference rule
-   rule 
-ensures that
-$\Gamma \contains \alpha \defn \tau
-    \Rightarrow  \Gamma \entails \alpha \equiv \tau$,
-and 
+%   rule 
+% ensures that
+% $\Gamma \contains \alpha \defn \tau
+%     \Rightarrow  \Gamma \entails \alpha \equiv \tau$,
+% and 
 %%%we have
-$$\Gamma \contains \hole{\alpha}
-    \Rightarrow  \alpha \in \tyvars{\Gamma}
-    \Rightarrow  \Gamma \entails \alpha \type
-    \Rightarrow  \Gamma \entails \alpha \equiv \alpha.$$
+% $$\Gamma \contains \hole{\alpha}
+%     \Rightarrow  \alpha \in \tyvars{\Gamma}
+%     \Rightarrow  \Gamma \entails \alpha \type
+%     \Rightarrow  \Gamma \entails \alpha \equiv \alpha.$$
 
-\begin{lemma}
-The judgment $\tau \equiv \upsilon$ is stable, i.e.\ if
-$\Gamma \entails \tau \equiv \upsilon$ and $\delta : \Gamma \lei \Delta$ then
-$\Delta \entails \delta\tau \equiv \delta\upsilon$.
-\end{lemma}
-\begin{proof}
-By induction on the structure of derivations, observing that leaves are either
-of the form
-$\Gamma \contains \alpha \defn \tau$,
-in which case $\Delta \entails \delta\alpha \equiv \delta\tau$ by definition
-of $\lei$, or they are of the form
-$\Gamma \entails \tau \type$,
-in which case $\Delta \entails \delta\tau \type$ by stability of
-$\tau \type$.
-\end{proof}
+% \begin{lemma}
+% The judgment $\tau \equiv \upsilon$ is stable, i.e.\ if
+% $\Gamma \entails \tau \equiv \upsilon$ and $\delta : \Gamma \lei \Delta$ then
+% $\Delta \entails \delta\tau \equiv \delta\upsilon$.
+% \end{lemma}
+% \begin{proof}
+% By induction on the structure of derivations, observing that leaves are either
+% of the form
+% $\Gamma \contains \alpha \defn \tau$,
+% in which case $\Delta \entails \delta\alpha \equiv \delta\tau$ by definition
+% of $\lei$, or they are of the form
+% $\Gamma \entails \tau \type$,
+% in which case $\Delta \entails \delta\tau \type$ by stability of
+% $\tau \type$.
+% \end{proof}
 
+An induction on derivations shows that $\tau \equiv \upsilon$ is stable, since
+the only rule that accesses the context is \textsc{Lookup}.
+Note that reflexivity and symmetry are admissible rules.
 
-%%%A \define{unifier} for the types $\tau$ and $\upsilon$ in a context $\Gamma$ is
-%%%a pair $(\Delta, \theta)$ such that $\theta : \Gamma \lei \Delta$ and
-%%%$\Delta \entails \theta\tau \equiv \theta\upsilon$.
-
-
+\TODO{Relating the declarative rules for type equivalence to the unification
+algorithm needs some thought. It would be nice if we could turn transitivity
+into an admissible rule.}
 The rules in Figure~\ref{fig:unifyRules} define our unification algorithm. The
 sequent $\Junify{\Gamma_0}{\tau}{\upsilon}{\Gamma_1}$ means that given inputs
 $\Gamma_0$, $\tau$ and $\upsilon$, unification of $\tau$ with $\upsilon$ 
