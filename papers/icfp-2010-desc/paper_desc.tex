@@ -338,23 +338,27 @@ inductive definitions, we are better off sharpening it before use.
 Following \citet{benke:universe-generic-prog}, we adopt the following
 definition:
 
-\[
+\[\stk{
 \begin{array}{lcl}
 \F{induction} & : & \PITEL{\V{D}}{\Desc}
                     \PI{\V{P}}{\Mu{\V{D}} \To \Set}         \\
               &   & (\PI{\V{xs}}{\descop{\V{D}}{(\Mu{\V{D}})}}              \\
               &   & \ \All{\V{D}}{(\Mu{\V{D}})}{\V{P}}{\V{xs}} \To \V{P} (\Con{\V{xs}})) \To \\
-              &   & \PI{\V{x}}{\Mu{\V{D}}} \V{P} \V{x}
-\end{array}
-\]
+              &   & \PI{\V{x}}{\Mu{\V{D}}} \V{P} \V{x} 
+\end{array} \\
+\F{induction}\: \V{D}\: \V{P}\: \V{ms}\: (\Con{\V{xs}}) =  \\
+\qquad
+    \V{ms}\: \V{xs}\: (\all{D}{\Mu{D}}{P}
+                           {(\LAM{x} \F{induction}\: \V{D}\: \V{P}\: \V{ms}\: \V{x})}
+                           {\V{xs}})
+}\]
 
 Where, intuitively, $\All{\V{D}}{\V{X}}{\V{P}}{\V{x}}$ states that
 $\Bhab{\V{P}}{\V{X} \To \Set}$ holds everywhere in $\V{x}$. Its
-definition is presented in Figure~\ref{fig:all-predicates}.  We refer
-the reader to our technical report for the implementation of
-$\F{induction}$. Note that this induction principle is the first
-manifestation of a generic operation over descriptions. Any datatype
-we define automatically comes with an induction principle.
+definition is presented in Figure~\ref{fig:all-predicates}. Note that
+this induction principle is the first manifestation of a generic
+operation over descriptions. Any datatype we define automatically
+comes with an induction principle.
 
 
 \begin{figure*}

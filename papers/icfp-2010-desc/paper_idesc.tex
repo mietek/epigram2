@@ -196,12 +196,12 @@ these indexed functors, hence computing a fixpoint of the entire
 
 
 However, we still have to define the actual grammar. We obtain it by
-evolving $\Desc$ to cope with indexing. The step-by-step
-transformation is described in our technical report. The code of
-$\IDesc{\!}$ is presented in Figure~\ref{fig:idesc}. The induction
-scheme on $\IDesc{\!}$ has the following type:
+evolving $\Desc$ to cope with indexing. \note{Say something about the
+  transformation} The code of $\IDesc{\!}$ is presented in
+Figure~\ref{fig:idesc}. The induction scheme on $\IDesc{\!}$ has the
+following type:
 
-\[
+\[\stk{
 \begin{array}{@{}ll}
 \F{inductionI} : & _{\Bhab{\V{I}}{\Set}}
                    \PITEL{\V{R}}{\V{I} \To \IDesc{\V{I}}}
@@ -218,22 +218,83 @@ scheme on $\IDesc{\!}$ has the following type:
                  & \PITEL{\V{i}}{\V{I}}
                    \PI{\V{x}}{\IMu{\V{I}}{\V{R}}{\V{i}}}
                    \V{P}\: \pair{\V{i}}{\V{x}}{}
-\end{array}
-\]
+\end{array} \\
+\F{inductionI}\: \V{R}\: \V{P}\: \V{ms}\: \V{i}\: (\Con{\V{xs}}) =  \\
+\qquad
+    \V{ms}\: \V{i}\: \V{xs}\: (\allI{}
+                                    {\V{R}\: \V{i}}
+                                    {\IMu{\V{I}}{R}{}}
+                                    {\V{P}}
+                                    {(\LAM{\pair{\V{i}}{\V{xs}}{}} \F{inductionI}\: \V{R}\: \V{P}\: \V{ms}\: \V{i}\: \V{xs})}
+                                    {\V{xs}})
+}\]
 
-Where the operator $\AllI{\!}{\!}{\!}{\!}$ is of type:
+Where the operators $\AllI{\!}{\!}{\!}{\!}$ and
+$\allI{\!}{\!}{\!}{\!}{\!}{\!}$ are defined in
+Figure~\ref{fig:allI-predicates}. As for descriptions, we can compute
+a generic catamorphism, $\F{cataI}$, from $\F{inductionI}$.
+
+
+\begin{figure*}
 
 \[
-\AllI{\!}{\!}{\!}{\!} : _{\Bhab{\V{I}}{\Set}}
-                        \PITEL{\V{D}}{\IDesc{\V{I}}}
-                        \PI{\V{P}}{\V{I} \To \Set}
-                        \idescop{\V{D}}{\V{I}}{\V{P}} \To
-                        \IDesc{(\SIGMA{\V{i}}{\V{I}} \V{P})} 
+\begin{array}{ll}
+%%
+\stk{
+\begin{array}{@{}ll}
+\AllI{\!}{\!}{\!}{\!} : & _{\Bhab{\V{I}}{\Set}}
+                          \PITEL{\V{D}}{\IDesc{\V{I}}}
+                          \PI{\V{X}}{\V{I} \To \Set} \\
+                        & \idescop{\V{D}}{\V{I}}{\V{X}} \To
+                          \IDesc{(\TIMES{\V{I}}{\V{X}})}
+\end{array} \\
+\begin{array}{@{}ll@{\:=\:\:}l}
+\AllI{\:}{(\DVar{\V{i}})}{& \V{X}}{\V{x}} &
+    \DVar{\pair{\V{i}}{\V{x}}{}} \\
+\AllI{\:}{(\DConst{\V{K}})}{& \V{X}}{\V{k}} &
+    \DConst{K} \\
+\AllI{\:}{(\DProd{\V{D}}{\V{D'}})}{& \V{X}}{\pair{\V{d}}{\V{d'}}{}} &
+    \DProd{\AllI{}{\V{D}}{\V{X}}{\V{d}}}{\AllI{}{\V{D'}}{\V{X}}{\V{d'}}} \\
+\AllI{\:}{(\DSigma{\V{S}}{\V{T}})}{& \V{X}}{\pair{\V{a}}{\V{b}}{}} &
+    \AllI{}{(\V{T}\: \V{a})}{\V{X}}{\V{b}} \\
+\AllI{\:}{(\DPi{\V{S}}{\V{T}})}{& \V{X}}{\V{f}} &
+    \DPi{\V{S}}{(\LAM{s} \AllI{}{(\V{T}\: \V{s})}{\V{X}}{(\V{f}\: \V{s})})}
+\end{array}
+}
+&
+%%
+\stk{
+\begin{array}{@{}ll}
+\allI{\!}{\!}{\!}{\!}{\!}{\!} : & _{\Bhab{\V{I}}{\Set}}
+                                  \PITEL{\V{D}}{\IDesc{\V{I}}}
+                                  \PITEL{\V{X}}{\V{I} \To \Set} 
+                                  \PI{\V{R}}{\TIMES{\V{I}}{\V{X}} \To \Set} \\
+                                & (\PI{\V{x}}{\TIMES{\V{I}}{\V{X}}} \V{R}\: \V{x}) \To
+                                  \PI{\V{xs}}{\idescop{\V{D}}{}{\V{X}}} 
+                                  \idescop{\AllI{}{\V{D}}{\V{X}}{\V{xs}}}{\TIMES{\V{I}}{\V{X}}}{\V{R}}
+\end{array} \\
+\begin{array}{@{}ll@{\:=\:\:}l}
+\allI{\:}{(\DVar{\V{i}})}{& \V{X}}{\V{R}}{\V{P}}{\V{x}} &
+    \V{P}\: \pair{\V{i}}{\V{x}}{} \\
+\allI{\:}{(\DConst{\V{K}})}{& \V{X}}{\V{R}}{\V{P}}{\V{k}} &
+    \V{k} \\
+\allI{\:}{(\DProd{\V{D}}{\V{D'}})}{& \V{X}}{\V{R}}{\V{P}}{(\V{d}, \V{d'})} &
+    \pair{\allI{}{\V{D}}{\V{X}}{\V{R}}{\V{P}}{\V{d}}}
+         {\allI{}{\V{D'}}{\V{X}}{\V{R}}{\V{P}}{\V{d'}}}{} \\
+\allI{\:}{(\DSigma{\V{S}}{\V{T}})}{& \V{X}}{\V{R}}{\V{P}}{\pair{\V{a}}{\V{b}}{}} &
+    \allI{}{(\V{T}\: \V{a})}{\V{X}}{\V{R}}{\V{P}}{\V{b}} \\
+\allI{\:}{(\DPi{\V{S}}{\V{T}})}{& \V{X}}{\V{R}}{\V{P}}{\V{f}} &
+    \allI{}{(\V{T}\: \V{a})}{\V{X}}{\V{R}}{\V{P}}{(\V{f}\: \V{a})}
+\end{array}
+\end{array}
+}
 \]
 
-The implementation of these operators can be found in the companion
-technical report. As for descriptions, we can compute a generic
-catamorphism, $\F{cataI}$, from $\F{inductionI}$.
+\caption{Indexed induction predicates}
+\label{fig:allI-predicates}
+
+\end{figure*}
+
 
 %% \[\stk{
 %% \data \IDesc{} (\Bhab{\V{I}}{\Set}) : \Set \where \\
