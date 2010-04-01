@@ -379,12 +379,12 @@ in Agda.
 \end{wstructure}
 
 In this paper, we have presented a universe of datatypes for a
-dependently-typed language. To ensure the generality of our proposal,
-this system has been built in a familiar type theory, with no
-assumption about the underlying propositional equality. Because our
-approach is extensively using codes for universes, we have given a
-rationalised presentation of codes. Thanks to type propagation, we
-make practical the usage of codes for datatypes.
+dependent type theory. To ensure the generality of our proposal, this
+system has been built in a familiar type theory, with no assumption
+about the underlying propositional equality. Because our approach is
+extensively using codes for universes, we have given a rationalised
+presentation of codes. Thanks to type propagation, we make practical
+the usage of codes for datatypes.
 
 \begin{wstructure}
 <- Dependently-typed presentation of simple inductive types
@@ -409,11 +409,10 @@ make practical the usage of codes for datatypes.
 
 To introduce our approach, we have presented a universe of
 description. This universe has the expressive power of simple
-inductive types, as we can find them in simply typed languages. Going
-one step further, we present an implementation of this universe as a
-self-described object. Hence, for a minimal extension of the
-type-theory, we get a closed, self-describing presentation of
-datatypes, where datatypes are just data.
+inductive types, as found in ML-like languages. Further, we have
+implemented this universe as a self-described object. Hence, for a
+minimal extension of the type-theory, we get a closed, self-describing
+presentation of datatypes, where datatypes are just data.
 
 \begin{wstructure}
 <- Indexed descriptions for dependent datatypes
@@ -427,10 +426,10 @@ datatypes, where datatypes are just data.
         <- Substitution
 \end{wstructure}
 
-To model dependent datatypes, we generalise our presentation to
+To capture dependent datatypes, we generalise our presentation to
 support indexing. The universe of indexed descriptions thus built
 encompasses inductive families. Again, this universe is
-self-describing. Moreover, we develop several examples of dependent
+self-described. We have developed several examples of dependent
 datatypes and generic functions over them.
 
 \begin{wstructure}
@@ -442,25 +441,25 @@ datatypes and generic functions over them.
 
 We have presented a self-describing, self-hosted universe for
 datatypes. We have shown the benefit of such approach, by our ability
-to reflect datatypes in our type-theory. This fosters a new way of
+to reflect datatypes in the type-theory. This fosters a new way of
 considering generic programming: just as programming. Moreover,
 despite its egg-and-chicken nature, this presentation is free of
 paradox: it has been formalised in Agda, admitting a correct
 stratification.
 
-\paragraph{Future Work:} As such, our indexed description universe does 
-not cover several extensions of inductive families. One of these is
+\paragraph{Future Work:} As such, indexed descriptions do
+not cover several extensions of inductive families. One of them is
 induction-recursion. An interesting question is to locate indexed
 descriptions in the spectrum between inductive families and indexed
 induction-recursion. Another popular extension we plan to consider is
-to allow internal fix-points.
+to allow internal fix-points and higher-kinded datatypes.
 
 Also, we have presented a generic notion of syntax with variables,
-thanks to the free monad construction. Further, we would like to
-explore the notion of syntax with binding. Interestingly, introducing
-internal fix-points in our universe turns it into such syntax with
-binding. Once again, levitation would reveal itself extremely
-convenient by providing generic tools to handle binding.
+thanks to the free monad construction. We would like to explore a
+notion of syntax with binding. Interestingly, introducing internal
+fix-points or kinds would turn our universe into such syntax with
+binding. Once again, levitation would reveal itself convenient by
+providing generic tools to handle binding.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Appendices
