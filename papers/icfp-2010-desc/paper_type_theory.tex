@@ -365,9 +365,9 @@ $\F{switch}$ operator, which, unsurprisingly, iterates projection:
 \[\stk{
 %% switch
 \begin{array}{@{}ll}
-\F{switch} :& \PITEL{\V{E}}{\EnumU}
-               \PITEL{\V{P}}{\EnumT{\V{E}} \To \Set} \To\\
-             & \spi{\V{E}}{\V{P}} \To
+\F{switch} : \PITEL{\V{E}}{\EnumU}
+               \PITEL{\V{P}}{\EnumT{\V{E}} \To \Set} \To
+              \spi{\V{E}}{\V{P}} \To
                \PITEL{\V{x}}{\EnumT{\V{E}}} \To \V{P}~\x
 \end{array} \\
 \begin{array}{@{}l@{\:\mapsto\:\:}l}
@@ -435,38 +435,33 @@ encoding from types.
         <- Example: |x : S l- x :<: S| gives us the type of x
 \end{wstructure}
 
-Our proposal to tame the problem of codes is deeply rooted in the
-bidirectional presentation of type-checking from Pierce and
-Turner~\cite{pierce:bidirectional-tc}. In this formalism,
-type-checking is divided into two complementary phases. In the
-\emph{type inference} phase, types are \emph{pulled} out of terms. A
+Our approach to tidying the coding cruft is deeply rooted in the
+bidirectional presentation of type checking from Pierce and
+Turner~\cite{pierce:bidirectional-tc}. They divide
+type inference into two communicating components. In
+\emph{type synthesis}, types are \emph{pulled} out of terms. A
 typical example is a variable in the context:
-
 \[
 \Rule{\G ; \xS ; \Delta \vdash \Valid}
-     {\G ; \xS ; \Delta \vdash \Bhab{\V{x}}{\V{S}}}
+     {\G ; \xS ; \Delta \vdash \Bhab{\V{x}}{\M{S}}}
 \]
+Because the context stores the type of the variable, we can extract the
+type whenever the variable is used.
 
-Because the variable and its type are stored in the context, whenever
-this variable is used, we can pull its type out of it.
-
-On the other hand, in the \emph{type checking} phase, terms are
-\emph{pushed} into types. We are handed a type together with a term,
-our task consists in checking that the term is indeed of this
-type. Doing so, we are allowed, and actually encouraged, to use the
-information provided by the type. Therefore, we can relax our
-requirements on the term. A typical example is the lambda abstraction:
-
+On the other hand, in the \emph{type checking} phase, types are
+\emph{pushed} into terms. We are handed a type together with a term,
+our task consists of checking that the type admits the term. In doing
+so, we can and should use the information
+provided by the type. Therefore, we can relax our requirements on the
+term. Consider \(\LAMBINDER\)-abstraction:
 \[
-\Rule{\G       \vdash \Type{\V{S}} \quad
-      \G ; \xS \vdash \Bhab{\V{t}}{\V{T}}}
-     {\G \vdash \Bhab{\PLAM{\x}{\V{S}} \V{t}}{\PIS{\xS} \V{T}}}
+\Rule{\G       \vdash \Type{\M{S}} \quad
+      \G ; \xS \vdash \Bhab{\M{t}}{\M{T}}}
+     {\G \vdash \Bhab{\PLAM{\x}{\M{S}} \M{t}}{\PIS{\xS} \M{T}}}
 \]
-
-Here, we are forced to annotate lambda abstractions by the type of the
-domain. In a bidirectional setting, the domain is provided by the
-$\Pi$ type we are pushing the abstraction into. Hence we do not need
-the annotation.
+The official rules require an annotation specifying the domain.
+However, in type \emph{checking}, the \(\Pi\)-type we push in determines
+the domain, so we can drop the annotation.
 
 \begin{wstructure}
 <- Formalisation: type propagation
@@ -482,19 +477,24 @@ the annotation.
         -> Ignore identical judgements
 \end{wstructure}
 
-We adapt and formalise this \emph{type propagation} mechanism to our
-richer type theory. First of all, we define a high-level syntax,
-composed of \emph{expressions}. Expressions are divided into two
-syntactic categories: $\exprIn$ into which types are pushed in, and
-$\exprEx$ from which types are pulled out. Following the bidirectional
-presentation, $\exprIn$ are subject to type \emph{checking}, while
-$\exprEx$ are subject to type \emph{synthesis}.
-\note{Why don't we need a context validity judgement, again?}
+We adapt this idea, yielding a \emph{type
+propagation} system, whose purpose is to elaborate high-level
+\emph{expressions} into the terms of our underlying type theory, much
+as in the definition of Epigram
+1~\cite{mcbride.mckinna:view-from-the-left}.  We divide expressions
+into two syntactic categories: $\exprIn$ into which types are pushed,
+and $\exprEx$ from which types are extracted. In the
+bidirectional spirit, the $\exprIn$ are subject to type
+\emph{checking}, while the $\exprEx$---variables and elimination
+forms---admit type \emph{synthesis}. We embed $\exprEx$ into
+$\exprIn$, demanding that the synthesized type coincides with the type
+proposed. The other direction---only necessary to apply
+abstractions or project from pairs---takes a type annotation.
 
 The purpose of type propagation is to \emph{elaborate} a high-level
 expression into a term of the type theory, together with its
 type. This presentation builds on the experience gained in
-implementing Epigram 1~\cite{mcbride.mckinna:view-from-the-left}. Being
+implementing Epigram 1~\cite{mcbride:view-from-the-left}. Being
 entirely syntax driven, we present our formalism as a system of
 syntax-directed inference rules. As the presentation largely mirrors
 the inference rules of the type theory, we will ignore the judgements
@@ -512,22 +512,18 @@ rules.
         -> Projections
 \end{wstructure}
 
-The type synthesis rules are presented
-Figure~\ref{fig:type-synthesis}. As illustrated by the judgement form,
-a type synthesis problem is provided an expression $\exprEx$ in a
-context, which is elaborated into a low-level term together with its
-type. These terms act as \emph{sources} for the type propagation
-machinery: they make types out of expressions. We have already studied
-the case of a variable in context. This also include function
-application as well as projections. Further down the line, these
-inferred types might propagate to other terms, thanks to type
-checking.
-
-\begin{figure}
+Type synthesis is the \emph{source} of types. It follows the \(\exprEx\)
+syntax, delivering both the elaborated term and its type. Terms
+and expressions never mix: e.g., for application, we
+instantiate the range with the \emph{term} delivered by checking the
+argument \emph{expression}. Hardwired operators are checked as variables.
 \input{figure_type_synthesis}
-\caption{Type synthesis}
-\label{fig:type-synthesis}
-\end{figure}
+
+%\begin{figure}
+%\input{figure_type_synthesis}
+%\caption{Type synthesis}
+%\label{fig:type-synthesis}
+%\end{figure}
 
 
 
@@ -542,47 +538,46 @@ checking.
         -> Finite function space into switch
 \end{wstructure}
 
-Dually to type synthesis, type checking judgements
-(Fig.~\ref{fig:type-checking}) act as \emph{sinks}. From an expression
-$\exprIn$ and a type propagated down to it, they elaborate a low-level
-term. The strength of this approach comes from the availability of the
-type to drive the elaboration of expressions. Its benefit on lambda
-abstraction and pairs is well-known. Let us explore the consequences
-on our coding scheme for finite sets.
-
-A first consequence is that we can actually denote elements of finite
-sets \emph{by their name}. Indeed, such expression will be pushed into
-a $\EnumT{\V{u}}$, where $\Bhab{\V{u}}{\EnumU}$ contains all the names
-populating the finite set. It is therefore easy to elaborate a name
-into the corresponding index.
-
-A second consequence concerns the definition of a finite set. We can
-abstract away the details of code and use a familiar syntax
-instead. Hence, we use the syntax $[t_1 \ldots t_n]$ to denote the
-finite sets composed of the named elements $t_1$, \ldots, $t_n$. This
-syntax is reminiscent to Lisp notation for lists. The translation to
-elements of $\EnumU$ is straightforward.
-
-Finally, and more importantly, we are able to present the developer an
-abstraction of \emph{finite} function space. This works as follow. When
-an expression $\V{t}$ is pushed into a function which domain is a finite
-set, we instead elaborate it as a term in a small $\pi$-type. That is,
-a finite function. To realise our promise of a big $\Pi$-type, we
-elaborate a call to the $\F{switch}$ eliminator.
-
-The abstraction we have developed in this section is entirely
-transparent to the user. In the case of finite function space, the
-developer never has to explicitly \emph{call} the $\F{switch}$
-eliminator. For diagnosis purposes, a similar, reverse mechanism turns
-low-level terms into high-level expressions. Hence, this system, whose
-complete presentation is out of the scope of this paper, seals the
-low-level type theory behind the high-level expressions.
+Dually, type checking judgments
+(Fig.~\ref{fig:type-checking}) are \emph{sinks} for types. From an
+$\exprIn$ and a type pushed into it, they elaborate a low-level
+term, extracting information from the type.
+Canonical set-formers are \emph{checked}: we could exploit \(\Set:\Set\)
+to give them synthesis rules, but this would prejudice our future
+stratification plans. Note that abstraction and pairing are free of
+annotation, as promised. Most of the propagation rules are unremarkably
+structural: we have omitted some mundane rules which just follow
+the pattern, e.g., for \(\UId\). It is for the finite enumerations that
+things get interesting.
 
 \begin{figure}
 \input{figure_type_checking}
 \caption{Type checking}
 \label{fig:type-checking}
 \end{figure}
+
+Firstly, we present the codes for enumerations as right-nested tuples
+which, by our LISP convention, we write as unpunctuated lists of tags
+\(\sqr{\etag{t_0}\ldots\etag{t_n}}\).
+
+Secondly, we can denote an element \emph{by its
+name}: the type pushed in allows us to recover the numerical
+index. However, we retain the numerical forms to facilitate
+\emph{generic} operations and ensure that shadowing a tag is punished
+fittingly, not fatally.
+
+Finally, we enable you to write functions from finite sets as tuples.
+Any bracketed form, \(\void\) or \(\pair{\_}{\_}{}\), is accepted by the
+function space---the general product---if it is accepted by the
+small product. Propagation fills in the appeal to the $\F{switch}$,
+copying the range information.
+
+We note, but have no room to elaborate on the fact that the propagation
+is reversible. Indeed, our interactive development tools rely on the
+reverse transformation to relay intelligible information to the user.
+For any specific usage, the encoding is completely hidden by these
+translations. Only when programming generically with enumerations is it
+necessary to address the encoding, but in that case, it is a benefit!
 
 \begin{wstructure}
 <- Summary
@@ -595,20 +590,32 @@ low-level type theory behind the high-level expressions.
 -> Will extend this machinery in further sections
 \end{wstructure}
 
-In this section, we have developed a type propagation system based on
-bidirectional type-checking. Using bidirectional type-checking as a
-boilerplate scrapper is a well-known
-technique~\cite{pierce:bidirectional-tc,
-  xi:bidirectional-tc-bound-array, chlipala:strict-bidirectional-tc}
-\note{Everybody ok with the citations?}. In our case, we have shown
-how to instrument bidirectionality to rationalise the expressivity of
-dependent types. We have illustrated our approach with finite sets. We
-have abstracted away the low-level presentation of finite sets,
-offering a convenient syntax instead.
+%In this section, we have developed a type propagation system based on
+%bidirectional type-checking. Using bidirectional type-checking as a
+%boilerplate scrapper is a well-known
+%technique~\cite{pierce:bidirectional-tc,
+%  xi:bidirectional-tc-bound-array, chlipala:strict-bidirectional-tc}
+%\note{Everybody ok with the citations?}. In our case, we have shown
+%how to instrument bidirectionality to rationalise the expressivity of
+%dependent types. We have illustrated our approach with finite sets. We
+%have abstracted away the low-level presentation of finite sets,
+%offering a convenient syntax instead.
 
-This example teaches us that we should not be afraid of codes, as soon
-as type information is available. We have shown how to rationalise
-this information in a formal presentation. Hence, we have shown that
-programming with such objects is practical. As we introduce more codes
-in our theory, we will show how to extend the framework we have
-developed so far.
+%This example teaches us that we should not be afraid of codes, as soon
+%as type information is available. We have shown how to rationalise
+%this information in a formal presentation. Hence, we have shown that
+%programming with such objects is practical. As we introduce more codes
+%in our theory, we will show how to extend the framework we have
+%developed so far.
+
+The relatively civilised presentation we have achieved here is
+possible because our universe of enumerations specifies not only the
+\emph{representation} of the low-level values in each set as bounded
+numbers, but also the \emph{presentation} of these values as
+high-level tags. To encode only the former, we should merely need the
+\emph{size} of enumerations, but we extract more work from these types
+by making them more informative.  We have also, \emph{en passant},
+distinguished enumerations which have the same cardinality but
+describe distinct notions:
+\(\EnumT{\sqr{\etag{\CN{red}}\,\etag{\CN{blue}}}}\) is not
+\(\EnumT{\sqr{\etag{\CN{green}}\,\etag{\CN{orange}}}}\).
