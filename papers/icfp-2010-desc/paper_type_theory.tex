@@ -20,8 +20,7 @@ We adopt a traditional presentation for our type
 theory, with three mutually defined systems of judgments:
 \emph{context validity}, \emph{typing}, and \emph{equality},
 with the following forms:
-
-
+%
 \[
 \begin{array}{ll}
 \G \vdash \Valid                & \mbox{\(\G\) is a valid context, giving types to variables} \\
@@ -37,6 +36,7 @@ with the following forms:
 
 The rules are formulated to ensure that the
 following `sanity checks' hold by induction on derivations
+%
 \[
 \begin{array}{l@{\;\Rightarrow\;\;}l}
 \G            \vdash \Bhab{\M{t}}{\M{T}}            
@@ -44,7 +44,9 @@ following `sanity checks' hold by induction on derivations
 \G            \vdash s \equiv \Bhab{\M{t}}{\M{T}}   
     & \G \vdash \Bhab{s}{T} \;\wedge\; \G\vdash \Bhab{\M{t}}{\M{T}}
 \end{array} \]
+%
 and that judgments \(\M{J}\) are preserved by well-typed instantiation.
+%
 \[
 \G ; \xS ; \Delta \vdash \M{J}            \;\Rightarrow\;      
     \G \vdash \Bhab{\M{s}}{\M{S}} \;\Rightarrow\; 
@@ -79,6 +81,7 @@ We specify equality as a judgment, leaving open the details of its implementatio
 
 Context validity ensures that variables inhabit well-formed
 sets.
+%
 \[
 %% Empty context validity
 \Axiom{\vdash \Valid}
@@ -235,14 +238,17 @@ It is time for our first example of a \emph{universe}. You might
 want to offer a choice of named constructors in your datatypes, we shall
 equip you with sets of tags to choose from. Our plan
 is to implement (by extending the theory, or by encoding) the signature
+%
 \[
   \Type{\EnumU}\qquad \Type{\EnumT{(\Bhab{\M{E}}{\EnumU})}}
 \]
+%
 where some value \(E:\EnumU\) in the `enumeration universe' describes
 a type of tag choices \(\EnumT{E}\). We shall need
 some tags---valid identifiers, marked to indicate that
 they are data, not variables scoped and substitutable---so we hardwire these
 rules:
+%
 \[
 %% UId
 \Rule{\Gamma \vdash \Valid}
@@ -252,13 +258,17 @@ rules:
 \Rule{\Gamma \vdash \Valid}
      {\Gamma \vdash \Bhab{\Tag{\V{s}}}{\UId}}\;\V{s}\: \mbox{a valid identifier}
 \]
+%
 Let us describe enumerations as lists of tags, with signature:
+%
 \[
 \Bhab{\NilE}{\EnumU}\qquad
 \Bhab{\ConsE{(\Bhab{\M{t}}{\UId})}{(\Bhab{\M{E}}{\EnumU})}}{\EnumU}
 \]
+%
 What are the \emph{values} in \(\EnumT{E}\)? Formally, we represent
 the choice of a tag as a numerical index into \(E\), via new rules:
+%
 \[
 %% Ze
 \Rule{\Gamma \vdash \Valid}
@@ -268,6 +278,7 @@ the choice of a tag as a numerical index into \(E\), via new rules:
 \Rule{\Gamma \vdash \Bhab{\M{n}}{\EnumT{\M{E}}}}
      {\Gamma \vdash \Bhab{\Su{\M{n}}}{\EnumT{(\ConsE{\M{t}}{\M{E}})}}}
 \]
+%
 However, we expect that in practice, you might rather refer to these
 values \emph{by tag}, and we shall ensure that this is possible in due course.
 
@@ -348,6 +359,7 @@ shall write these operators as functional programs (much as we
 model them in Agda).
 
 We first define the `small product' $\spi{\!}{\!}$ operator:
+%
 \[\stk{
 %% spi
 \spi{}{}: \PITEL{\V{E}}{\EnumU}\PITEL{\V{P}}{\EnumT{\V{E}} \To \Set} \To \Set \\
@@ -356,12 +368,14 @@ We first define the `small product' $\spi{\!}{\!}$ operator:
 \spi{(\ConsE{\V{t}}{\V{E}})}{& \V{P}} & \TIMES{\V{P}\: \Ze}{\spi{\V{E}}{(\LAM{\V{x}} \V{P}\: (\Su{\V{x}}))}}
 \end{array}
 }\]
+%
 This builds a right-nested
 tuple type, demanding an object of $P\:i$ for each $i$ in the given finite
 domain. We can see these tuples as `jump tables' tabulating dependently
 typed functions from the domain. We give this functional
 interpretation---the eliminator we need---by the
 $\F{switch}$ operator, which, unsurprisingly, iterates projection:
+%
 \[\stk{
 %% switch
 \begin{array}{@{}ll}
@@ -441,10 +455,12 @@ Turner~\cite{pierce:bidirectional-tc}. They divide
 type inference into two communicating components. In
 \emph{type synthesis}, types are \emph{pulled} out of terms. A
 typical example is a variable in the context:
+%
 \[
 \Rule{\G ; \xS ; \Delta \vdash \Valid}
      {\G ; \xS ; \Delta \vdash \Bhab{\V{x}}{\M{S}}}
 \]
+%
 Because the context stores the type of the variable, we can extract the
 type whenever the variable is used.
 
@@ -454,11 +470,13 @@ our task consists of checking that the type admits the term. In doing
 so, we can and should use the information
 provided by the type. Therefore, we can relax our requirements on the
 term. Consider \(\LAMBINDER\)-abstraction:
+%
 \[
 \Rule{\G       \vdash \Type{\M{S}} \quad
       \G ; \xS \vdash \Bhab{\M{t}}{\M{T}}}
      {\G \vdash \Bhab{\PLAM{\x}{\M{S}} \M{t}}{\PIS{\xS} \M{T}}}
 \]
+%
 The official rules require an annotation specifying the domain.
 However, in type \emph{checking}, the \(\Pi\)-type we push in determines
 the domain, so we can drop the annotation.
@@ -537,6 +555,7 @@ Dually, type checking judgments
 (Fig.~\ref{fig:type-checking}) are \emph{sinks} for types. From an
 $\exprIn$ and a type pushed into it, they elaborate a low-level
 term, extracting information from the type. Note that we inductively ensure the following `sanity checks':
+%
 \[\stkc{
 \Gamma\Vdash\propag{e}{\pull{t}{T}} \Rightarrow
   \Gamma\vdash t:T \\

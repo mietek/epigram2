@@ -114,6 +114,7 @@ codes mimicking the grammar of datatype declarations. We
 can read a description $\V{D}:\Desc$ as an \emph{endofunctor}
 on $\Set$, with $\descop{\V{D}}{\!}$ its action on an object, \(\V{X}\), soon
 to be instantiated recursively.
+%
 \[\stk{
 \begin{array}{l}
 \Desc : \Set\\
@@ -130,6 +131,7 @@ to be instantiated recursively.
 \descop{\DIndx{\V{D}}}{}  &  \TIMES{\V{X}}{\descop{\V{D}}{\V{X}}}
 \end{array}
 }\]
+%
 Descriptions are sequential structures, terminated by $\DUnit$, indicating
 the empty tuple. To build
 sigmas-of-sigmas, we define a $\DSigma{\!}{}$ code, interpreted as a
@@ -157,20 +159,20 @@ Our first example is the natural numbers, or rather its pattern
 functor. Our code is presented in the high-level expression language
 of Section~\ref{sec:type-propagation}. The translation back to the raw
 terms should not pose any difficulty. The code is the following:
-
+%
 \[\stk{
 \NatD : \Desc \\
 \NatD \mapsto \DSigma{(\EnumT{[ \NatZero, \NatSuc{\!} ]})}
                      {[ \DUnit \quad (\DIndx{\DUnit}) ]}
 }\]
-
+%
 Let us explain its construction. First, we use $\DSigma{\!}{\!}$ to
 give a choice between the $\NatZero$ and $\NatSuc{}$ constructors. In
 the $\NatZero$ case, we reach the end of the description. In the
 $\NatSuc{\!}$ case, we attach a recursive argument and close the
 description. In a more synthetic notation, we have described the
 following functor:
-
+%
 \[    \NatD\: \V{Z} \mapsto \Unit \mathop{\D{+}} \V{Z}    \]
 
 \begin{wstructure}
@@ -183,18 +185,17 @@ following functor:
 
 With a small change to this definition, we obtain the pattern functor
 for lists:
-
+%
 \[\stk{
 \ListD : \Set \To \Desc \\
 \ListD \: \V{X} \mapsto \DSigma{(\EnumT{[ \ListNil, \ListCons{\!}{\!} ]})}
                            {[ \DUnit \quad (\DSigma{\V{X}}{\LAM{\_} \DIndx{\DUnit}}) ]}
 }\]
-
-
+%
 The $\NatSuc{\!}$ constructor is turned into a proper
 $\ListCons{\!}{\!}$, taking an argument in $\V{X}$ followed by a
 recursive argument. This code describes the following functor:
-
+%
 \[    \ListD\: \V{X}\: \V{Z} \mapsto \Unit \mathop{\D{+}} \V{X} \D{\ensuremath{\times}} \V{Z}     \]
 
 \begin{wstructure}
@@ -207,7 +208,7 @@ recursive argument. This code describes the following functor:
 
 Finally, we are not limited to one recursive argument. This is
 demonstrated by our description of binary trees:
-
+%
 \[\stk{
 \TreeD : \Set \To \Desc \\
 \begin{array}{@{}ll}
@@ -215,11 +216,11 @@ demonstrated by our description of binary trees:
                            { & [ \DUnit \quad (\DSigma{\V{X}}{\LAM{\_} \DIndx{(\DIndx{\DUnit})}}) ]}
 \end{array}
 }\]
-
+%
 Again, we are one evolutionary step away from $\ListD$. However,
 instead of a single call to the induction code, we call it twice. The
 interpretation of this code corresponds to the following functor:
-
+%
 \[    \TreeD\: \V{X}\: \V{Z} \mapsto \Unit \mathop{\D{+}} \V{X} \Prod \V{Z} \Prod \V{Z}     \]
 
 
@@ -238,12 +239,12 @@ From the examples above, we observe that datatypes are defined by a
 $\DSigma{\!}{\!}$ which first argument is a finite set of
 constructors. The descriptions fitting into this pattern are called
 \emph{tagged} description. Formally, we have:
-
+%
 \[
  \TagDesc \mapsto \SIGMA{\V{E}}{\EnumU} (\spi{\V{E}}{(\LAM{\_} \Desc)})
 \]
-
-Again, this is a clear reminiscence of the sum-of-products style,
+%
+This is a clear reminiscence of the sum-of-products style,
 characterized by a finite sum of constructors. Every description can
 be expressed in this style, using a singleton constructor if
 necessary. Conversely, a tagged description can be turned into a
@@ -282,7 +283,7 @@ functors. Being polynomial functors, they all admit a fixpoint. We
 construct the fixpoint by \emph{tying the knot} of the
 interpretation: the holes left open by the functor are filled by its
 own recursive definition:
-
+%
 \[
 \Rule{\Gamma \vdash \Bhab{\V{D}}{\Desc}}
      {\Gamma \vdash \Bhab{\Mu{\V{D}}}{\Set}} \qquad
@@ -306,14 +307,14 @@ own recursive definition:
 Together with the type formers defined above, we would legibly expect
 an elimination principle. Following a categorical intuition, we could
 be tempted to provide it as a catamorphism:
-
+%
 \[
 \F{cata} : \PITEL{\V{D}}{\Desc}
            \PI{\V{T}}{\Set}
            (\descop{\V{D}}{\V{T}} \To \V{T}) \To 
            \Mu{\V{D}} \To \V{T} 
 \]
-
+%
 Whereas this definition is amply sufficient in the simply-typed world,
 it comes short of its promises in the dependently-typed realm. Indeed,
 this type is not dependent, being restricted to a notion of
@@ -321,7 +322,7 @@ this type is not dependent, being restricted to a notion of
 inductive definitions, we are better off sharpening it before use.
 Following \citet{benke:universe-generic-prog}, we adopt the following
 definition:
-
+%
 \[\stk{
 \begin{array}{lcl}
 \F{induction} & : & \PITEL{\V{D}}{\Desc}
@@ -336,7 +337,7 @@ definition:
                            {(\LAM{\V{x}} \F{induction}\: \V{D}\: \V{P}\: \V{ms}\: \V{x})}
                            {\V{xs}})
 }\]
-
+%
 Where, intuitively, $\All{\V{D}}{\V{X}}{\V{P}}{\V{x}}$ states that
 $\Bhab{\V{P}}{\V{X} \To \Set}$ holds everywhere in $\V{x}$. Its
 definition is presented in Figure~\ref{fig:all-predicates}. Note that
@@ -429,7 +430,7 @@ Writing codes instead of datatype constructor is indeed unpractical.
 However, regaining this ability is simply a matter of type
 propagation. We extend the type-checking framework of
 Figure~\ref{fig:type-checking} with the following inference rule:
-
+%
 \[
 \Rule{\propag{\push{\widetilde{\V{e}}}
                    {\descop{\V{f}\: \V{C}}{(\Mu{(\DSigma{(\Enum\: \V{b})}{\V{f}})})}}}
@@ -438,7 +439,7 @@ Figure~\ref{fig:type-checking} with the following inference rule:
                    {\Mu{(\DSigma{(\Enum\: \V{b})}{\V{f}})}}}
              {\Con{(\etag{\V{C}}, \widetilde{\V{e}}')}}}\;\etag{\V{C}} \in \V{b}
 \]
-
+%
 Where $\vec{\V{e}}$ denotes a telescope of arguments applied to the
 constructor $\V{C}$. For readability, we write $\V{f}\: \V{C}$ instead
 of a call to $\F{switch}$. Also, we note $\widetilde{\V{e}}$ the

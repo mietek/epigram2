@@ -19,7 +19,7 @@ falling.
 In Section~\ref{sec:finite-sets}, we have given a specification of
 finite sets. We are going to implement the $\EnumU$ type former and
 its constructors. Let us recall their specification:
-
+%
 \[\stkc{
 %% EnumU
 \Rule{\Gamma \vdash \Valid}
@@ -38,7 +38,7 @@ its constructors. Let us recall their specification:
 The names $\NilE$ and $\ConsE{\!}{\!}$ are not a coincidence. $\EnumU$
 is indeed isomorphic to a list of $\UId$s. Therefore, the actual
 implementation of $\EnumU$ boils down to the following definition:
-
+%
 \[\stk{
 \EnumU : \Set \\
 \EnumU \mapsto \Mu{(\ListD~\UId)}
@@ -131,7 +131,7 @@ citizen, born with the standard, generic equipment of datatypes.
 \end{wstructure}
 
 Our first attempt is the following:
-
+%
 \[\stk{
 \DescD : \Desc \\
 \begin{array}{@{}ll}
@@ -144,7 +144,7 @@ Our first attempt is the following:
                                  \right]
 \end{array}
 }\]
-
+%
 Let us explain how we have proceeded and the obstacle we face. Much as
 the datatypes we have seen so far, we first choose a constructor among
 $\DUnit$, $\DSigma{\!}{\!}$, and $\DIndx{\!}$. The reader will notice
@@ -155,9 +155,9 @@ For $\DUnit$, we immediately reach the end of the description. For
 $\DIndx{\!}$, there is a single recursive argument. Describing
 $\DSigma{\!}{\!}$ is problematic. Recall the specification of
 $\DSigma{\!}{\!}$:
-
+%
 \[    \DSigma{\!}{\!} : \PI{\V{S}}{\Set} \PIS{\V{S} \To \Desc} \Desc      \]
-
+%
 So, we first pack an element $\V{S}$ of $\Set$. Then, we would like to
 express a notion of recursive argument \emph{indexed} by $\V{S}$. Because
 our presentation is entirely first-order so far, we are not able to
@@ -183,7 +183,7 @@ extend our universe of descriptions. This consists in adding a code
 $\DHindx{\!}{\!}$ that takes an indexing set $\V{H}$. Intuitively,
 $\DHindx{\!}{\!}$ uses the elements of $H$ to index as many recursive
 arguments:
-
+%
 \[\stk{
 \begin{array}{ll}
 \stk{
@@ -215,7 +215,7 @@ objects, the functional presentation introduced by $\DHindx{\!}{}$ is
 unlikely to be amenable to a purely definitional treatment.
 
 We are now able to describe our universe of datatypes:
-
+%
 \[\stk{
 \DescD : \Desc \\
 \begin{array}{@{}ll}
@@ -229,7 +229,7 @@ We are now able to describe our universe of datatypes:
                              \right]
 \end{array}
 }\]
-
+%
 The $\DUnit$ and $\DIndx{\!}$ cases remain unchanged, as expected. We
 successfully describe the $\DSigma{\!}{}$ case, by a simple appeal to
 the higher-order induction on $\V{S}$. The $\DHindx{\!}{\!}$ case
@@ -275,18 +275,18 @@ definition, as presented in Figure~\ref{fig:type-checking}.
 \end{wstructure}
 
 What happens if we unfold the definition? We ought to build the following term:
-
+%
 \[
 \PLAM{\V{x}}{(\EnumT{\V{E}})} \switch{\V{E}}{(\LAM{\_} \Mu{\DescD})}{\V{\pi^f}}{\V{x}}
 \]
-
+%
 But this is quite problematic. We are still in the process of
 constructing $\DescD$, and the motive of $\F{switch}$ is abruptly
 begging for this very same $\DescD$. Despite our willingness, we
 cannot materialise such motive. However, we perfectly know what the
 motive is. Consequently, we extend the type theory with a
 special-purpose operator:
-
+%
 \[
 \begin{array}{@{}ll}
 %% switchD
@@ -295,13 +295,13 @@ special-purpose operator:
                 \PITEL{\V{x}}{\EnumT{\V{e}}} \To \Desc
 \end{array}
 \]
-
+%
 The entire work of the magician stands here, in this extension. Note
 that the developer do not have to chose between the two variants of
 $\F{switch}$. This is dealt with by the type propagation system
 (Fig.~\ref{fig:type-checking}), extended with the following inference
 rule:
-
+%
 \[
 \Rule{\Gamma \Vdash \propag{\push{\V{t}}{\spiD{\V{e}}}}
                            {\V{t'}}}
@@ -351,15 +351,15 @@ some circumstances, the full-power of a dependent elimination is not
 necessary. In the following, we propose to derive the catamorphism
 from the $\F{induction}$ principle.
 
+\newcommand{\cata}{\F{cata}}
+
 The catamorphism is defined by induction on the description $\V{D}$,
 with a non-dependent motive targeting $\V{T}$. Given a node $\V{xs}$
 and the induction hypotheses, the method ought to build an element of
 $\V{T}$. Provided that we know how to make an element of
 $\descop{\V{D}}{\V{T}}$, this step will be performed by the algebra
 $\V{f}$. Let us take a look at this jigsaw:
-
-\newcommand{\cata}{\F{cata}}
-
+%
 \[\stk{
 \cata : \PITEL{\V{D}}{\Desc}
            \PI{\V{T}}{\Set}
@@ -368,7 +368,7 @@ $\V{f}$. Let us take a look at this jigsaw:
 \cata\: \V{D}\: \V{T}\: \V{f\: \V{x}} \mapsto
   \F{induction}\: \V{D}\:\V{x}\: (\LAM{\_}\V{T})\: (\LAM{\V{xs}\:\V{hs}} \V{f}\: \SHED)
 }\]
-
+%
 We are left with filling the hole. Recall that we have
 \(\Bhab{\V{xs}}{\descop{\V{D}}{\Mu{\V{D}}}}\) and
 \(\Bhab{\V{hs}}{\All{\V{D}}{(\Mu{\V{D}})}{(\LAM{\_} \V{T})}{\V{xs}}}\)
@@ -379,7 +379,7 @@ for each sub-element of $\V{xs}$, $\V{hs}$ gives us the corresponding
 element in $\V{T}$.  Therefore, to construct an element of
 \(\descop{\V{D}}{\V{T}}\), we replace the recursive components of
 \(\V{xs}\) by their counterpart in \(\V{hs}\):
-
+%
 \[\stk{
 \F{replace} : \stk{\PITEL{\V{D}}{\Desc}
                    \PITEL{\V{X},\V{Y}}{\Set}\\
@@ -395,7 +395,7 @@ element in $\V{T}$.  Therefore, to construct an element of
 \F{replace}\: (\DHindx{\V{H}}{\V{D}})\: \V{X}\: \V{Y}\: \pair{\V{f}}{\V{xs}}{}\: \pair{\V{g}}{\V{ys}}{} \mapsto   \\
 \qquad  \pair{\V{g}}{\F{replace}\: \V{D}\: \V{X}\: \V{Y}\: \V{g}\: \V{ys}}{}
 }\]
-
+%
 Filling the hole in $\F{cata}$ with \(\F{replace}\: \V{D}\:
 (\Mu{\V{D}})\: \V{T}\: \V{xs}\: \V{hs}\) closes the problem. In the
 type theory, we have built a generic catamorphism. Any datatype will
@@ -458,7 +458,7 @@ build the free monad over this functor.
 
 Let us recall the free monad construction. Given a functor $F$, the
 free monad over $F$ is defined by the following datatype:
-
+%
 \[
 \stk{
 \data \FMFreeMonad\: \PITEL{\V{F}}{\Set \To \Set} 
@@ -471,10 +471,10 @@ free monad over $F$ is defined by the following datatype:
 \end{array}
 }
 \]
-
+%
 Being an inductive type, this $\FMFreeMonad$ datatype is itself
 defined by a pattern functor. It is given by:
-
+%
 \[
 \FMFreeMonadD\: \V{F}\: \V{X}\: \V{Z} \mapsto \V{X} \mathop{\D{+}} \V{F} \V{Z}
 \]
@@ -492,14 +492,14 @@ In our setting, the free monad construction will take the functor as a
 tagged description, a set $\V{X}$ of variables, and will compute the
 tagged description of the corresponding free monad. Implementing this
 function is surprisingly easy:
-
+%
 \[\stk{
 \FreeMonad{\_} : \TagDesc \To \Set \To \TagDesc \\
 \FreeMonad{\pair{\V{E}}{\V{D}}{}}\:\V{X} \mapsto
     \pair{\ListCons{\DVar{}}{\V{E}}}
          {\pair{\DSigma{\V{X}}{\DUnit}}{\V{D}}{}}{}
 }\]
-
+%
 We simply add a constructor, $\DVar{\!}$, and define its argument to
 be a $\DSigma{\V{X}}{\DUnit}$, that is an element of $\V{X}$. We keep
 $\V{E}$ and $\V{D}$ as they were, hence leaving the functor
@@ -520,13 +520,14 @@ plays the r\^ole of \return, embedding variables into terms. The
 \bind\ operation corresponds to \emph{substitution}. We will now
 implement it, as a generic function.
 
-Our implementation will appeal to the $\cata$ function developed
-previously. So, let us write down the types, and fill as much
-arguments to $\cata$ as possible:
 
 \newcommand{\subst}{\F{subst}}
 \newcommand{\apply}{\F{apply}}
 
+Our implementation will appeal to the $\cata$ function developed
+previously. So, let us write down the types, and fill as much
+arguments to $\cata$ as possible:
+%
 \[\stk{
 \begin{array}{@{}ll}
 \subst : & \PITEL{\V{D}}{\TagDesc}
@@ -541,12 +542,12 @@ arguments to $\cata$ as possible:
           \SHED\: 
           \V{x}
 }\]
-
+%
 We are left with implementing the algebra of the
 catamorphism. Intuitively, its role is to catch appearances of
 $\DVar{\V{x}}$ and replace them by $\V{\sigma}\: \V{x}$. This
 corresponds to the following definition:
-
+%
 \[\stk{
 \begin{array}{@{}ll}
 \apply : & \PITEL{\V{D}}{\TagDesc} 

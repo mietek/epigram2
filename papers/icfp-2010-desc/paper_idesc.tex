@@ -162,7 +162,7 @@ $\Set^{\V{I}}$. We call these \emph{indexed functors}. \note{Predicate
   transformer anyone?} $\V{I} \To \IDesc{\V{I}}$ is our grammar for
 describing these functors. Hence, $\IDesc{\!}$ and its interpretation
 have the following types:
-
+%
 \[\stk{
 \data \IDesc{(\Bhab{\V{I}}{\Set})} : \Set \where \:\ldots \\
 \\
@@ -176,7 +176,7 @@ $\V{I} \To \Set^{\V{I}} \To \Set$, which is isomorphic to $\Set^{\V{I}}
 \To \Set^{\V{I}}$.The fixpoint of inductive families is defined over
 these indexed functors, hence computing a fixpoint of the entire
 \emph{family} of functors:
-
+%
 \[\stkl{
 \Rule{\Gamma \vdash \Bhab{\V{I}}{\Set} \qquad
       \Gamma \vdash \Bhab{\V{R}}{\V{I} \To \IDesc{\V{I}}}}
@@ -197,7 +197,7 @@ evolving $\Desc$ to cope with indexing. \note{Say something about the
   transformation} The code of $\IDesc{\!}$ is presented in
 Figure~\ref{fig:idesc}. Induction on indexed descriptions is defined
 by:
-
+%
 \[\stk{
 \begin{array}{@{}ll}
 \F{inductionI} : & _{\PI{\V{I}}{\Set}}
@@ -225,7 +225,7 @@ by:
                                     {(\LAM{\pair{\V{i}}{\V{xs}}{}} \F{inductionI}\: \V{R}\: \V{P}\: \V{ms}\: \V{i}\: \V{xs})}
                                     {\V{xs}})
 }\]
-
+%
 Where the operators $\AllI{}{\!}{\!}{}$ and
 $\allI{}{\!}{\!}{\!}{\!}{}$ are presented in
 Figure~\ref{fig:allI-predicates}. As for descriptions, we can compute
@@ -437,7 +437,7 @@ a generic catamorphism, $\F{cataI}$, from $\F{inductionI}$.
 
 In order to gain some intuition of $\IDesc{\!}$, let us re-implement
 the pattern functor of natural numbers:
-
+%
 \[\stk{
 \NatD : \IDesc{\Unit} \\
 \NatD \mapsto \DSigma{(\EnumT{[ \NatZero, \NatSuc{\!} ]})}
@@ -465,7 +465,7 @@ inductive types.
 
 Note that $\IDesc{\V{I}}$ itself is merely an inductive type. Hence,
 we can describe it in $\IDesc{\Unit}$:
-
+%
 \[\stk{
 \IDescD : \PI{\V{I}}{\Set} \IDesc{\Unit} \\
 \begin{array}{@{}ll}
@@ -501,7 +501,7 @@ So far, the examples we have seen lives in $\IDesc{\Unit}$, hence are
 not using any indexing. We remedy this by encoding the vectors. Recall
 that the constructors $\VecNil$ and $\VecCons{\!}{\!}$ are only defined for an
 index $\NatZero$ and $\NatSuc$ respectively.:
-
+%
 \[
 \stk{
 \data \D{Vec}\: \PITEL{\V{X}}{\Set} : \PI{\V{n}}{\Nat} \Set \where \\
@@ -515,7 +515,7 @@ index $\NatZero$ and $\NatSuc$ respectively.:
 One way to code constrained datatypes is to appeal to equality. The
 constraints are therefore captured by equations in the datatype. In
 this case, we obtain the following definition:
-
+%
 \[\stk{
 \VecD : \Set \To \Nat \To \IDesc{\Nat} \\
 \begin{array}{@{}ll}
@@ -562,7 +562,7 @@ However, \emph{inductive families need not store their
 incoming index, we can apply the \emph{forcing} and \emph{de-tagging}
 optimisations to our initial definition of $\D{Vec}$. This gives the
 following, equivalent definition:
-
+%
 \[\stk{
 \VecD \:\PITEL{\V{X}}{\Set} : \Nat \To \IDesc{\Nat} \\
 \begin{array}{@{}lll}
@@ -571,10 +571,10 @@ following, equivalent definition:
 \end{array}
                                        
 }\]
-
+%
 The equations (and constructors) have simply disappeared. A similar
 example is $\Fin{\!}$, specified by:
-
+%
 \[
 \stk{
 \data \Fin{\!} : \PI{\V{n}}{\Nat} \Set \where \\
@@ -583,10 +583,10 @@ example is $\Fin{\!}$, specified by:
     \FinSuc{\!}   & _{\PI{\V{n}}{\Nat}}\Fin{\V{n}} \To \Fin{(\NatSuc{\V{n}})}
 \end{array}
 }\]
-
+%
 In this case, we can apply forcing, but not detagging, since both
 $\FinZero$ and $\FinSuc{\!}$ both target $\NatSuc{\!}$:
-
+%
 \[\stk{
 \FinD : \Nat \To \IDesc{\Nat} \\
 \begin{array}{@{}llll}
@@ -622,7 +622,7 @@ that do. The non-dependent part mirrors the definition for non-indexed
 descriptions. The index-depend part simply indexes the choice of
 constructors by $\V{I}$. Hence, by inspecting the index, it is
 possible to enable or disable constructors.
-
+%
 \[
 \begin{array}{@{}l@{\:\mapsto\:\:}l}
  \TagIDesc{\V{I}}  & \TIMES{\ATagIDesc{\V{I}}}{\ITagIDesc{\V{I}}} \\
@@ -682,7 +682,7 @@ constructor $\ListCons{\!}{\!}$.
 
 We are going to define a syntax for a small typed language. We
 consider two types, natural numbers and booleans:
-
+%
 \[
 \Ty \mapsto \EnumT{[\Enat, \Ebool]}
 \]
@@ -690,7 +690,7 @@ consider two types, natural numbers and booleans:
 An expression of this language is either a value, a conditional
 expression, an addition of numbers, or a comparison of
 numbers. Informally, their type is the following:
-
+%
 \[
 \begin{array}{l@{\::\:\:}l}
 \Econd{\!}{\!}{\!}   & \forall \Bhab{\V{ty}}{\Ty} . \Ebool \To \V{ty} \To \V{ty} \To \V{ty}  \\ 
@@ -699,7 +699,7 @@ numbers. Informally, their type is the following:
 \Eval{\!}            & \forall \Bhab{\V{ty}}{\Ty} . \Val{\V{ty}} \To \V{ty}
 \end{array}
 \]
-
+%
 The function $\Val{\!}$, used in the definition of $\Eval{\!}$, simply
 maps a type $ty$ of the object language to the corresponding type in
 the host language. Hence, the arguments of $\Eval{\!}$ are ensured to
@@ -707,7 +707,7 @@ be of the expected type. We assume that $\Nat$ and $\Bool$ represent
 natural numbers and booleans in the host language, equipped with an
 addition operation $\F{plusHost}$ and a comparison function
 $\F{leHost}$. We define $\Val{\!}$ as follows:
-
+%
 \[\stk{
 \Val{\!} : \Ty \To \Set \\
 \begin{array}{@{}l@{\:=\:\:}l}
@@ -788,22 +788,20 @@ $\switch{\!}{\!}{\!}{\!}$ eliminator.
 Having implemented the syntax, we would like to describe its
 semantics. To do so, we implement an evaluator. The type of the
 evaluator is:
-
+%
 \[
 \evalH : \PI{\V{ty}}{\Ty} 
          \IMu{\Ty}{\toIDesc{\HExprD}}{\V{ty}} \To
          \Val{\V{ty}}
 \]
-
-
+%
 Where we overload the notation $\toIDesc{\V{TID}}$ to denote the
 indexed description computed from the tagged indexed description
 $\V{TID}$. The type of $\evalH$ is strikingly similar to a
 catamorphism. Indeed, implementing a single step of evaluation -- the
 algebra -- is sufficient, as $\F{cataI}$ gives, for free, the full
 evaluator. The implementation is as follows:
-
-
+%
 \[\stk{
 \evalOne : \PI{\V{ty}}{\Ty} \idescop{\toIDesc{\HExprD}\:\V{ty}}{\Ty}{\Val{\!}}
            \To {\Val{\V{ty}}} \\
@@ -845,12 +843,12 @@ However, so far, we are only able to define and manipulate
 \emph{closed} terms. By abstracting over $\Val{\!}$, it is possible to
 build and manipulate \emph{open} terms, that is, terms with
 variables. Following $\Val{\!}$, we define $\Var{}{}$ by:
-
+%
 \[\stk{
 \Var{}{} : \EnumU \To \Ty \To \Set \\
 \Var{\V{dom}}{\_} = \EnumT{\V{dom}}
 }\]
-
+%
 Whereas $\Val{\!}$ was mapping the type to the corresponding host type,
 $\Var{}{}$ maps types to a finite set. The finite set -- the context
 -- contains closed terms. A variable is therefore a $\Eval{\!}$ that
@@ -888,7 +886,7 @@ The $\discharge$ function is relative to the required type and a
 context of the right type. Its action is to map values to themself,
 and variables to their value in context. This corresponds to the
 following function:
-
+%
 \[\stk{
 \begin{array}{@{}ll}
 \discharge : & \PITEL{\V{ty}}{\Ty}
@@ -913,9 +911,6 @@ following function:
                     -> We should try to get it
 \end{wstructure}
 
-We are now left with applying $\discharge$ over all variables of the
-term. The type of this operation is the following:
-
 \newcommand{\substH}{\F{substExpr}}
 \newcommand{\domNat}{dom_{\CN{nat}}}
 \newcommand{\domBool}{dom_{\CN{bool}}}
@@ -923,6 +918,10 @@ term. The type of this operation is the following:
 \newcommand{\gammaBool}{\V{\ensuremath{\gamma_{\CN{bool}}}}}
 \newcommand{\GammaSpi}[2]{\F{\ensuremath{\Gamma_{\CN{ty}}}}\: #1\: #2}
 
+
+We are now left with applying $\discharge$ over all variables of the
+term. The type of this operation is the following:
+%
 \[
 \begin{array}{@{}ll}
 \substH  : & \PITEL{\V{dom}}{\EnumU} \\
@@ -942,9 +941,9 @@ term. The type of this operation is the following:
           & \IMu{\Ty}{\toIDesc{\HExprD}}{\V{ty}}
 \end{array}
 \]
-
+%
 Where $\GammaSpi{\!}{\!}$ corresponds to a context, defined by:
-
+%
 \[\stk{
 \GammaSpi{\!}{\!} : \EnumU \To \Ty \To \Set                                             \\
 \GammaSpi{\V{dom}}{\V{ty}} = \spi{\V{dom}}{(\LAM{\_} \IMu{\Ty}{\toIDesc{\HExprVarD{\V{dom}}}}{\V{ty}})} 
@@ -958,12 +957,12 @@ our datatype enjoys more structure than what we are given. We are
 facing a free monad, where $\Eval{\!}$ is the \return\ introducing
 variables. For convenience, we wrap $\discharge$ in a $\V{\sigma}$
 function that picks the context of the right type:
-
+%
 \[
 \F{$\sigma$}\: \V{dom}\: \gammaNat\: \gammaBool\: \V{ty}\: \V{var} \mapsto
     \F{$\discharge$}\: \V{ty}\: \V{dom}\: \F{$\gamma$}_{\V{ty}}\: \V{var} 
 \]
-
+%
 Where $\F{$\gamma$}_{\V{ty}}$ is short for
  $\caseB{\V{ty}}{\Enat  \To \gammaNat \\
                  \Ebool \To \gammaBool}$
@@ -989,7 +988,7 @@ operation for simple descriptions. The process is similar in the
 indexed world. Namely, given an indexed functor, we derive the indexed
 functor coding its free monad: \note{pwm: Whoa there. Maybe we should
   say something about IMonads in general before we get to this point?}
-
+%
 \[\stk{
 \begin{array}{ll}
 \FreeIMonad{\_}{} : & _{\PI{\V{I}}{\Set}}
@@ -1005,12 +1004,14 @@ functor coding its free monad: \note{pwm: Whoa there. Maybe we should
          {\V{F}}{}
 }\]
 
-Just as in the universe of descriptions, this construction comes with
-an obvious \return\ and a substitution operation, the \bind. Its type
-signature is the following:
 
 \newcommand{\substI}{\F{substI}}
 
+
+Just as in the universe of descriptions, this construction comes with
+an obvious \return\ and a substitution operation, the \bind. Its type
+signature is the following:
+%
 \[
 \begin{array}{@{}ll}
 \substI : & \PITEL{\V{I}}{\Set}
@@ -1023,7 +1024,7 @@ signature is the following:
             \IMu{I}{(\toIDesc{\FreeIMonad{\V{R}}{\V{I}}{\V{Y}}})}{\V{i}}
 \end{array}
 \]
-
+%
 We refer the reader to the Agda model for the actual implementation.
 
 \subsubsection{Examples}
@@ -1054,7 +1055,7 @@ the free monad, while the other components are the action of the
 monad. As a result, the definition is similar to $\HExprD$ presented
 in Figure~\ref{fig:hexpr-full}, replacing $\HExprAD$ by
 $\HExprAFreeD$:
-
+%
 \[\stk{
 \HExprAFreeD : \ATagIDesc{\Ty} \\
 \HExprAFreeD \mapsto \bigRedBracket{
@@ -1090,8 +1091,7 @@ Section~\ref{sec:idesc-examples} remains unchanged. It reduces closed
 terms in $\FreeIMonad{\HExprFreeD}{\Ty}{\Val{\!}}\: \V{ty}$ to values in
 $\Val{\V{ty}}$. We are left with implementing $\substH$. We simply
 have to fill in the right arguments to $\substI$, the type guiding us:
-
-
+%
 \[\stk{
 \substH\: \V{dom}\:
           \gammaNat\: \gammaBool\:
@@ -1109,11 +1109,12 @@ have to fill in the right arguments to $\substI$, the type guiding us:
                   \V{term}
       \end{array}
 }\]
+%
+Hence completing our implementation of the open terms interpreter. 
 
-Hence completing our implementation of the open terms interpreter. We
-have defined a well-typed language of arithmetical expressions, taking
-advantage of indexing. Then, we have implemented an evaluator for
-closed term, based on the generic catamorphism function. Using the
+We have defined a well-typed language of arithmetical expressions,
+taking advantage of indexing. Then, we have implemented an evaluator
+for closed term, based on the generic catamorphism function. Using the
 free monad construction, we have automatically derived the language of
 open terms. Using its monadic structure, we have implemented the
 interpreter for open terms in context. Hence, without much efforts, we
@@ -1137,7 +1138,7 @@ Another instance of free monad is $\IDesc{\!}$ itself. Indeed,
 $\DVar{\!}$ is nothing but the \return. The remaining constructors are
 the carrier functor, trivially indexed by $\Unit$. The carrier functor
 is described as follow:
-
+%
 \[\stk{
 \IDescFreeD : \ATagIDesc{\Unit} \\
 \begin{array}{@{}ll}
@@ -1154,9 +1155,9 @@ is described as follow:
                                     \end{array}}\end{array}}
 \end{array}
 }\]
-
+%
 Then, we get $\IDesc$ by building its free monad:
-
+%
 \[\stk{
 \IDescD : \PI{\V{I}}{\Set} \TagIDesc{\Unit} \\
 \IDescD\: \V{I} \mapsto \FreeIMonad{\red{[}\IDescFreeD\red{,[}\LAM{\_}[]\red{,}\LAM{\_}\red{[]]]}}{\Unit}\LAM{\_}\V{I}
