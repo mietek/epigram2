@@ -149,11 +149,13 @@ with a LISP-like right-nesting convention: \(\sqr{a\;b}\) abbreviates
         -> Key: wide applicability of our proposal
 \end{wstructure}
 
-The judgmental equality comprises these computational rules
-\input{figure_judgemental_equality} closed under reflexivity,
+The judgmental equality comprises the computational rules below,
+closed under reflexivity,
 symmetry, transitivity and structural congruence, even under binders.
 We omit the mundane rules which ensure these closure properties for
-reasons of space. Given a suitable stratification of \(\Set\), the
+reasons of space.
+\input{figure_judgemental_equality}
+Given a suitable stratification of \(\Set\), the
 computation rules yield a terminating evaluation procedure, ensuring
 the decidability of equality and thence type checking.
 

@@ -68,14 +68,13 @@
 
 
 \begin{abstract}
-  We present a closed dependent type theory whose inductive datatypes
-  are presented not by a scheme for generative datatype declaration,
-  but by encoding in a \emph{universe}. Each inductive datatype is
-  thus given by interpreting its \emph{description}---an ordinary
+  We present a closed dependent type theory whose inductive types
+  are given not by a scheme for generative declarations,
+  but by encoding in a \emph{universe}. Each inductive datatype arises
+  by interpreting its \emph{description}---a
   first-class value in a datatype of descriptions. Moreover, the
-  latter itself has a description. By presenting datatypes via such a
-  self-encoding universe, datatype-generic programming becomes
-  ordinary programming. We show some of the resulting generic
+  latter itself has a description. Datatype-generic programming thus
+  becomes ordinary programming. We show some of the resulting generic
   operations and deploy them in particular, useful ways on the
   datatype of datatype descriptions itself. Surprisingly this
   apparently self-supporting setup is achievable without paradox or
@@ -253,9 +252,8 @@ we shall show the art of it. We contribute
 %dependent-type theory. Our contributions are the following:
 
 \begin{itemize}
-\item a \emph{closed} type theory, equipped with a universe of
-  inductive datatypes and a generic induction principle for programming
-  and proof, extensible only with \emph{definitions};
+\item a \emph{closed} type theory, extensible only \emph{definitionally},
+  nonetheless equipped with a universe of inductive families of datatypes;
 \item a \emph{self-encoding} of the universe codes as a datatype in the
   universe---datatype generic programming is just programming;
 \item a bidirectional \emph{type propagation} mechanism to conceal
@@ -263,9 +261,9 @@ we shall show the art of it. We contribute
   a convenient presentation of data;
 \item examples of generic operations and constructions over our universe,
   notably the \emph{free monad} construction;
-\item a language sustaining datatype generic programming \emph{directly},
-  with no need to mediate between declared datatypes and some isomorphic
-  model or `view'.
+\item datatype generic programming delivered \emph{directly},
+  not via some isomorphic
+  model or `view' of declared types.
 \end{itemize}
 
 We study two universes as a means to explore this novel way to equip a
