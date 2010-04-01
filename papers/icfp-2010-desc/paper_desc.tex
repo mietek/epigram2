@@ -89,19 +89,14 @@ decouple these two notions, we construct an ad-hoc
 \emph{universe}. This technique originates in Martin-L\"of definition
 of type theory~\cite{martin-lof:itt}. It is a fruitful programming
 technique in dependently-typed
-languages~\cite{benke:universe-generic-prog, oury:power-of-pi}
-\note{Any idea of other papers?}.  \note{Is that really a motivating
-  motivation for the usage of universe construction?}  \note{pwm:
-  Surely ($\EnumU$, $\EnumT$) is a useful example of universes too.
-  Even if it doesn't show off their full power?}
-
+languages~\cite{benke:universe-generic-prog, oury:power-of-pi}.
 
 The key idea behind universe construction is our ability to make names
 by defining new types. These names are called \emph{codes}. By
 defining a set of codes, we define the syntax of a language. To give
 it a semantics, we \emph{interpret} these codes back into the type
 theory. Hence, codes act as labels, while the type theory provides the
-computational machinery. \note{Is that a good description?}
+computational machinery.
 
 Codes being mere labels, we can inspect them, hence regaining
 structural information. We can also compute over them: deriving new
