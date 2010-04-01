@@ -81,7 +81,7 @@
 \newcommand{\boxrules}[2]{\begin{center}\framebox{\ensuremath{#1}}\quad\framebox{\ensuremath{#2}}\end{center}}
 
 \newcommand{\tmvars}[1]{\ensuremath{tmvars(#1)}}
-\newcommand{\tyvars}[1]{\ensuremath{tyvars(#1)}}
+\newcommand{\tyvars}[1]{\ensuremath{V_A(#1)}}
 \newcommand{\types}[1]{\ensuremath{types(#1)}}
 \newcommand{\FTV}[1]{\ensuremath{FTV(#1)}}
 
@@ -125,6 +125,7 @@
 \newcommand{\V}{\mathcal{V}}
 \newcommand{\D}{\mathcal{D}}
 \newcommand{\J}{\mathcal{J}}
+\newcommand{\K}{\mathcal{K}}
 
 \usepackage{amsthm}
 \usepackage{amsmath}
@@ -239,22 +240,25 @@ do not handle substitutions correctly \citep{norvig_correctingwidespread_1991}.
 
 \section{Abstract nonsense}
 
-Let $\V$ be a set of variables, $\D$ a set of objects and $\J$ a set of
-judgments. A \define{substitution} $\theta$ is a partial map from $\V$ to $\D$,
-and we assume $\D$ and $\J$ are closed under application of substitutions.
+Let $\K$ be a set of sorts, and for each $K \in \K$
+let $\V_K$ be a set of variables and $\D_K$ a set of objects.
+Let $\J$ be a set of judgments.
+A \define{substitution} $\theta$ is a partial map from $\V_K$ to $\D_K$
+for each $K \in \K$,
+and we assume $\D_K$ and $\J$ are closed under application of substitutions.
 A \define{context} $\Gamma$ is a list of 
 %%%definitions 
    declarations 
-$v D$ (pairs of $v \in \V$
-and $D \in \D$) and separators $(\fatsemi)$. 
+$v D$ (pairs of $v \in \V_K$
+and $D \in \D_K$) and separators $(\fatsemi)$. 
 We assume 
 %%%that 
-we have a judgment $v D \ok$ corresponding
-to every possible declaration $v D$. 
+we have a judgment $D \ok_K$ 
+for every $K \in \K$ and $D \in \D_K$. 
 
 We write $\emptycontext$ for the empty context, and the symbols
 $\Gamma, \Delta, \Theta, \Phi, \Psi$ represent contexts.
-Let $\V(\Gamma)$ be the set of variables in $\Gamma$.
+Let $\V_K(\Gamma)$ be the set of $K$-variables in $\Gamma$.
 We write $\Gamma \entails J$ to mean that the definitions in $\Gamma$,
 corresponding to atomic facts, support the judgment $J \in \J$. 
 %%%
@@ -285,9 +289,9 @@ $$
      {\Gamma \fatsemi \entails \valid}
 $$
 $$
-\Rule{\Gamma \entails \valid    \quad    \Gamma \entails v D \ok}
+\Rule{\Gamma \entails \valid    \quad    \Gamma \entails D \ok_K}
      {\Gamma, v D \entails \valid}
-\side{v \notin \V(\Gamma)}
+\side{v \in \V_K \setminus \V_K(\Gamma)}
 $$
 \caption{Rules for context validity}
 \label{fig:contextValidityRules}
@@ -298,17 +302,21 @@ $$
 %%%$\Gamma \entails (\contains v D)$.
 
 We suppose that
-there is an embedding $\sem{\cdot} : \V \times \D \rightarrow \J$, such that
+there is an embedding $\sem{\cdot}_K : \V_K \times \D_K \rightarrow \J$, such
+that
 $$\Gamma \contains v D  \Rightarrow  \Gamma \entails \sem{v D}.$$
 
-Let $\D(\Gamma) = \{ D \in \D ~||~ \Gamma \entails v D \ok \mathrm{~for~some~} v \}$.
-We write $\delta : \Gamma \lei \Delta$ to mean that $\delta$ is a substitution
-from $\V(\Gamma)$ to $\D(\Delta)$ such that
+Let $\D_K(\Gamma) = \{ D \in \D_K ~||~ \Gamma \entails D \ok_K \}$.
+We write $\delta : \Gamma \lei \Delta$ to mean that for each $K \in \K$,
+$\delta_K$ is a substitution
+from $\V_K(\Gamma)$ to $\D_K(\Delta)$ such that
 $$\Gamma \contains v D  \Rightarrow  \Delta \entails \delta\sem{v D}$$
 and if $\Gamma$ is $\Xi \fatsemi \Gamma'$ then $\Delta$ is
-$\Psi \fatsemi \Delta'$ with $\delta||_{\V(\Xi)} : \Xi \lei \Psi$ and
+$\Psi \fatsemi \Delta'$ with $\delta||_{\Xi} : \Xi \lei \Psi$ and
 $\delta : \Xi, \Gamma' \lei \Psi, \Delta'$. This definition is well-founded by
 induction on the number of $\fatsemi$ separators in $\Gamma$.
+(We write $\delta||_{\Xi}$ for the substitution formed by restricting each
+$\delta_K$ to variables in $V_K(\Xi)$.)
 We may omit $\delta$ and write $\Gamma \lei \Delta$ if we are only interested
 in the existence of a suitable substitution. This relation between contexts
 captures the notion of \define{information increase}: $\Delta$ supports all the
@@ -324,8 +332,8 @@ $$\Gamma \entails J  ~\wedge~  \delta : \Gamma \lei \Delta
     \quad \Rightarrow \quad
     \Delta \entails \delta J.$$
 
-From now on we will assume that the judgment $\sem{v D}$ is stable for any
-$v \in \V$ and $D \in \D$, and that stable judgments are closed under 
+From now on we will assume that the judgment $\sem{v D}_K$ is stable for any
+$v \in \V_K$ and $D \in \D_K$, and that stable judgments are closed under 
 substitution. This allows us to prove the following:
 
 \begin{lemma}\label{lei:preorder}
@@ -460,7 +468,7 @@ First, let's get some imports out of the way.
 
 The syntax of types is
 $$\tau ::= \alpha ~||~ \tau \arrow \tau$$
-where $\alpha$ ranges over some set of type variables $\V_0 \subset \V$.
+where $\alpha$ ranges over some set of type variables $\V_A$.
 %%%Let $\D_0 \subset \D$ be the set of types.
 In the sequel, $\alpha$ and $\beta$ are type variables and $\tau$ and $\upsilon$
 %%%are 
@@ -476,17 +484,17 @@ only type variable
 A type variable declaration is written |alpha := mt|, where $\alpha$ is a
 variable that is either bound to a type $\tau$ (written |alpha := Just tau| or
 $\alpha \defn \tau$), or left unbound (written |alpha := Nothing|).
+Thus $\D_A$ contains the \scare{undefined} binding $\hole{}$ and bindings
+$\defn \tau$ for each type $\tau$.
 Later, we will add other kinds of variable and definition that are not relevant
 for unification.
 
 %%%We write $\tyvars{\Gamma}$ for the 
-   Let $\tyvars{\Gamma}$ be the 
+%   Let $\tyvars{\Gamma}$ be the 
 %%%set of type variables of $\Gamma$, i.e.\ $\V_0 \cap \V(\Gamma)$.
-   set $\V_0 \cap \V(\Gamma)$ of type variables declared in $\Gamma$,  
-%%%We 
-   and 
-define the set of free type
-variables of a type or context thus:
+%   set $\V_0 \cap \V(\Gamma)$ of type variables declared in $\Gamma$,  
+
+We define the set of free type variables of a type or context suffix thus:
 \begin{align*}
 \FTV{\alpha}    &= \{ \alpha \} \\
 \FTV{\tau \arrow \upsilon}  &= \FTV{\tau} \cup \FTV{\upsilon}  \\
@@ -499,7 +507,7 @@ We define the judgment $\tau \type$ %%%($\tau$ is a type over the context)
    in Figure~\ref{fig:typeOkRules}, and hence give 
 %%%the 
    rules for the
-judgment $\alpha \defn D \ok$. 
+judgment $\defn mt \ok_A$. 
 %%%\TODO{Show $\tau \type$ is stable.}
 A simple induction on derivations shows that the judgment $\tau \type$ is stable. 
 %%%
@@ -518,12 +526,12 @@ $$
 \Rule{\Gamma \entails \tau \type   \quad   \Gamma \entails \upsilon \type}
      {\Gamma \entails \tau \arrow \upsilon \type}
 $$
-\boxrule{\Gamma \entails \alpha \defn D \ok}
+\boxrule{\Gamma \entails \;\defn mt \ok}
 $$\Rule{\Gamma \entails \valid}
-       {\Gamma \entails \hole{\alpha} \ok}
+       {\Gamma \entails \;\hole{} \ok}
 \qquad
 \Rule{\Gamma \entails \tau \type}
-     {\Gamma \entails \alpha \defn \tau \ok}
+     {\Gamma \entails \;\defn \tau \ok}
 $$
 
 \caption{Rules for types and definitions}
