@@ -1181,43 +1181,64 @@ type scheme (written $.\tau$), as the latter will be represented by
 
 \section{Making contexts more informative}
 
-Now we can give the full definition of context entries that we postponed earlier.
-As before, |alpha := mt| declares a type variable with name $\alpha$; this is the only
-%%%kind of 
-   entry used in unification. A scheme assignment |x ::: sigma| 
-%%%defines 
-   declares 
-a term variable $x$ with type scheme $\sigma$. A |LetGoal| marker is used when
-inferring the type of let bindings, to make it easy to determine which variables
-can be generalised over.
-The term variable definitions and |LetGoal| markers will record information about
-progress through the structure of a term when inferring its type.
-
-Since the additional context entries are not used in unification, it is
-straightforward to extend the orthogonality judgments: if $e = \letGoal$ or
-$e = x \asc \sigma$ we have $e \perp J$ for any $J$.
-We also extend the context validity judgment with additional rules, as given in
-Figure~\ref{fig:additionalContextValidityRules}.
+Now we can define another sort, $\TM \in \K$, with $\V_\TM$ some set of term
+variables and $\D_\TM$ containing scheme assignments of the form $\asc \sigma$.
+The judgment $D \ok_\TM$ is easy to define:
+$$\Rule{\sigma \scheme}
+       {\asc \sigma \ok_\TM}.$$
+Let $x$ range over term variables. 
+We make $x \asc \sigma$ a judgment with rules in
+Figure~\ref{fig:termVarSchemeRules} and define
+$\sem{x \asc \sigma}_\TM = \{ x \asc \sigma \}$.
 
 \begin{figure}[ht]
-\boxrule{\Gamma \entails \valid}
-
+\boxrule{\Gamma \entails x \asc \sigma}
 $$
-\Rule{\Gamma \entails \sigma \scheme}
-     {\Gamma, x \asc \sigma \entails \valid}
+\Rule{\upsilon \type   ~\wedge~   x \asc \forall \alpha \sigma}
+     {x \asc \sigma[\upsilon/\alpha]}
 \qquad
-\Rule{\Gamma \entails \valid}
-     {\Gamma, \letGoal \entails \valid}
+\Rule{x \asc \letS{\alpha}{\upsilon}{\sigma}}
+     {x \asc \sigma[\upsilon/\alpha]}
 $$
-
-\caption{Additional rules for context validity}
-\label{fig:additionalContextValidityRules}
+\caption{Rules for scheme assignment to term variables}
+\label{fig:termVarSchemeRules}
 \end{figure}
 
-Note that term variable names are not necessarily unique, so the most recent
-definition of a name will shadow previous occurences. Thus we define
-$\Gamma \entails x \asc \sigma$ to mean that $x \asc \sigma \in \Gamma$ and
-moreover that this is the rightmost (i.e.\ most local) occurrence of $x$.
+% Now we can give the full definition of context entries that we postponed earlier.
+% As before, |alpha := mt| declares a type variable with name $\alpha$; this is the only
+%%%kind of 
+%    entry used in unification. A scheme assignment |x ::: sigma| 
+%%%defines 
+%    declares 
+% a term variable $x$ with type scheme $\sigma$. A |LetGoal| marker is used when
+% inferring the type of let bindings, to make it easy to determine which variables
+% can be generalised over.
+% The term variable definitions and |LetGoal| markers will record information about
+% progress through the structure of a term when inferring its type.
+
+% Since the additional context entries are not used in unification, it is
+% straightforward to extend the orthogonality judgments: if $e = \letGoal$ or
+% $e = x \asc \sigma$ we have $e \perp J$ for any $J$.
+% We also extend the context validity judgment with additional rules, as given in
+% Figure~\ref{fig:additionalContextValidityRules}.
+
+% \begin{figure}[ht]
+% \boxrule{\Gamma \entails \valid}
+% $$
+% \Rule{\Gamma \entails \sigma \scheme}
+%      {\Gamma, x \asc \sigma \entails \valid}
+% \qquad
+% \Rule{\Gamma \entails \valid}
+%      {\Gamma, \letGoal \entails \valid}
+% $$
+% \caption{Additional rules for context validity}
+% \label{fig:additionalContextValidityRules}
+% \end{figure}
+
+% Note that term variable names are not necessarily unique, so the most recent
+% definition of a name will shadow previous occurences. Thus we define
+% $\Gamma \entails x \asc \sigma$ to mean that $x \asc \sigma \in \Gamma$ and
+% moreover that this is the rightmost (i.e.\ most local) occurrence of $x$.
 
 The full data type of context entries is thus:
 
