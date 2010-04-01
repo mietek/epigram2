@@ -60,7 +60,7 @@ we can now build tuples where data influence further types.
 In ML-like languages, datatypes are presented as a
 \emph{sum-of-products}. A datatype is defined by a finite sum of
 constructors, each composed by a product of arguments. To embrace
-these datatypes, we need to capture this grammar.
+these datatypes, we have to capture this grammar.
 
 With dependent types, the notion of sum-of-products translates into
 \emph{sigmas-of-sigmas}. However, a direct encoding of datatypes
@@ -96,11 +96,9 @@ by defining new types. These names are called \emph{codes}. By
 defining a set of codes, we define the syntax of a language. To give
 it a semantics, we \emph{interpret} these codes back into the type
 theory. Hence, codes act as labels, while the type theory provides the
-computational machinery.
-
-Codes being mere labels, we can inspect them, hence regaining
-structural information. We can also compute over them: deriving new
-codes from others, or even functions on them.
+computational machinery. Codes being mere labels, we can inspect them,
+hence regaining structural information. We can also compute over them:
+deriving new codes from others, or even functions on them.
 
 \begin{wstructure}
 <- Justification of the code 
@@ -119,7 +117,7 @@ code of this universe mimics the grammar of inductive types. To build
 sigmas-of-sigmas, we define a $\DSigma{\!}{}$ code, interpreted as a
 $\Sigma$-type. Descriptions are terminated by $\DUnit$, containing no
 payload. To make recursive arguments, we introduce the $\DIndx{\!}$
-code. It interprets to a hole that will be closed by the fix-point. We
+code. It interprets to a hole that will be closed by the fixpoint. We
 can also read $\V{D}$ as describing an endofunctor on $\Set$, with
 $\descop{\V{D}}{\!}$ being the object part.
 
@@ -284,21 +282,21 @@ satisfying the typing rules. It will be the subject of
 Section~\ref{sec:desc-levitate} to actually implement the
 specification.
 
-\subsection{Fix-point}
+\subsection{Fixpoint}
 \label{sec:desc-fix-point}
 
 \begin{wstructure}
-<- Build the fix-point of functors
+<- Build the fixpoint of functors
     <- See examples: need to build their initial algebra
     -> Extend the type theory with Mu/Con [figure]
-        <- Straightforward definition of a fix-point
+        <- Straightforward definition of a fixpoint
             <- Interpret D with (Mu D) as sub-objects
 \end{wstructure}
 
 
 So far, we have used our universe of descriptions to build pattern
-functors. Being polynomial functors, they all admit a fix-point. We
-construct the fix-point by \emph{tying the knot} of the
+functors. Being polynomial functors, they all admit a fixpoint. We
+construct the fixpoint by \emph{tying the knot} of the
 interpretation: the holes left open by the functor are filled by its
 own recursive definition:
 

@@ -59,7 +59,7 @@ implementation of $\EnumU$ boils down to the following definition:
 Let us consider the consequences. First, we discover that the type
 theory does not need to be extended with the type former $\EnumU$, the
 constructors $\NilE$ and $\ConsE$. We have just defined $\EnumU$
-above, by fix-point over the pattern functor denoted by
+above, by fixpoint over the pattern functor denoted by
 $\ListD$. $\NilE$ and $\ConsE$ are simply the $\ListNil$ and
 $\ListCons$ constructors of lists.
 
@@ -99,7 +99,7 @@ object.
 If not on the content, this modification had an effect on the
 names. The type naming scheme of the type theory has condensed: named
 type formers ($\EnumU$) and constructors ($\NilE$ and $\ConsE$) are
-now replaced by codes and their fix-point in the universe of
+now replaced by codes and their fixpoint in the universe of
 descriptions. In essence, our next step is similar: we are going to
 condense the entire naming scheme of datatypes \emph{in itself}.
 
@@ -232,7 +232,7 @@ on $\V{S}$. The $\DHindx{\!}{\!}$ case consists in packing the $\V{H}$
 in $\Set$ with a recursive argument.
 
 At a first glance, we have achieved our goal. We have described the
-codes of the universe of description. Taking the fix-point of this
+codes of the universe of description. Taking the fixpoint of this
 object gives us $\Desc$, up to isomorphism. We have implemented our
 code of datatypes as an object levitating inside itself. However,
 this levitation operation, just as any magic trick, relies on an
@@ -504,7 +504,7 @@ defined by a pattern functor. It is given by:
         <- The free monad functor is what we have just defined
         <- [\_]* : Desc -> Set -> Desc
            [\_]* D X = 'cons ['var ('sigma X (\_ -> '1))] D
-        -> Mu does the fix-point
+        -> Mu does the fixpoint
 \end{wstructure}
 
 In our setting, the free monad construction will take the functor as a
@@ -524,7 +524,7 @@ be a $\DSigma{\V{X}}{\DUnit}$, that is an element of $\V{X}$. We keep
 $\V{E}$ and $\V{D}$ as they were, hence leaving the functor
 unchanged. Unfolding the interpretation of this definition, we
 convince ourselves that this corresponds to the functor
-$\FMFreeMonadD$. The fix-point operation ties the knot and gives us
+$\FMFreeMonadD$. The fixpoint operation ties the knot and gives us
 the full-blown free monad construction.
 
 \begin{wstructure}
