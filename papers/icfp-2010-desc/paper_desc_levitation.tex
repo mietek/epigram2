@@ -180,12 +180,9 @@ express this notion. We shall remedy to this situation.
 
 In order to capture a notion of higher-order induction, we need to
 extend our universe of descriptions. This consists in adding a code
-$\DHindx{\!}{\!}$ that takes an indexing set $\V{H}$. The code and its
-interpretation are presented in
-Figure~\ref{fig:hindx_desc}. Intuitively, $\DHindx{\!}{\!}$ uses the
-elements of $H$ to index as many recursive arguments.
-
-\begin{figure}
+$\DHindx{\!}{\!}$ that takes an indexing set $\V{H}$. Intuitively,
+$\DHindx{\!}{\!}$ uses the elements of $H$ to index as many recursive
+arguments:
 
 \[\stk{
 \begin{array}{ll}
@@ -208,11 +205,6 @@ elements of $H$ to index as many recursive arguments.
 \end{array}
 }\]
 
-\caption{Higher-order universe of descriptions}
-\label{fig:hindx_desc}
-
-\end{figure}
-
 
 Note that $\DIndx{\!}$ is isomorphic to $\DHindx{\Unit}{\!}$. However,
 we tolerate this duplication. Indeed, unlike its counterpart,
@@ -222,21 +214,7 @@ differently. While definitional equality can cope with first-order
 objects, the functional presentation introduced by $\DHindx{\!}{}$ is
 unlikely to be amenable to a purely definitional treatment.
 
-As shown in Figure~\ref{fig:desc-levitate}, we are now able to
-describe our universe of datatypes.  The $\DUnit$ and $\DIndx{\!}$
-cases remain unchanged, as expected. We successfully describe the
-$\DSigma{\!}{}$ case, by a simple appeal to the higher-order induction
-on $\V{S}$. The $\DHindx{\!}{\!}$ case consists in packing an $\V{H}$
-in $\Set$ with a recursive argument.
-
-At a first glance, we have achieved our goal. We have described the
-codes of the universe of description. Taking the fixpoint of this
-object gives us $\Desc$, up to isomorphism. We have implemented the
-codes of datatypes as an object levitating inside itself. However,
-this levitation operation, just as any magic trick, relies on an
-invisible cable. Let us reveal it, hence finishing our implementation.
-
-\begin{figure}
+We are now able to describe our universe of datatypes:
 
 \[\stk{
 \DescD : \Desc \\
@@ -252,10 +230,18 @@ invisible cable. Let us reveal it, hence finishing our implementation.
 \end{array}
 }\]
 
-\caption{Levitating description of $\Desc$}
-\label{fig:desc-levitate}
+The $\DUnit$ and $\DIndx{\!}$ cases remain unchanged, as expected. We
+successfully describe the $\DSigma{\!}{}$ case, by a simple appeal to
+the higher-order induction on $\V{S}$. The $\DHindx{\!}{\!}$ case
+consists in packing an $\V{H}$ in $\Set$ with a recursive argument.
 
-\end{figure}
+At a first glance, we have achieved our goal. We have described the
+codes of the universe of description. Taking the fixpoint of this
+object gives us $\Desc$, up to isomorphism. We have implemented the
+codes of datatypes as an object levitating inside itself. However,
+this levitation operation, just as any magic trick, relies on an
+invisible cable. Let us reveal it, hence finishing our implementation.
+
 
 \subsubsection{Final move}
 
@@ -267,9 +253,8 @@ invisible cable. Let us reveal it, hence finishing our implementation.
 
 
 Our reader might be slightly confused to learn that the trick is
-visible in the definition of $\DescD$
-(Fig.~\ref{fig:desc-levitate}). Or rather, it is made invisible by
-careful usage of type propagation. Indeed, let us try to elaborate
+visible in the definition of $\DescD$. Or rather, it is made invisible
+by careful usage of type propagation. Indeed, let us try to elaborate
 this term down to the low-level type theory. The $\EnumT{[ \ldots ]}$
 construct elaborates to a finite set $\V{E}$ in $\EnumU$, inhabited by
 the codes. Then, we can type-check the case definition, between square
@@ -320,13 +305,10 @@ rule:
 \[
 \Rule{\Gamma \Vdash \propag{\push{\V{t}}{\spiD{\V{e}}}}
                            {\V{t'}}}
-     {\Gamma \Vdash \begin{array}{@{}l}
-                        \propag{\push{\V{t}}{\EnumT{\V{e}} \To \Desc}}
-                               {\\ \PLAM{\V{x}}{(\EnumT{\V{e}})} \switchD{\V{e}}{\V{t'}}{\V{x}}}
-                    \end{array}
+     {\Gamma \Vdash \propag{\push{\V{t}}{\EnumT{\V{e}} \To \Desc}}
+                           {\PLAM{\V{x}}{(\EnumT{\V{e}})} \switchD{\V{e}}{\V{t'}}{\V{x}}}
      }\;\mbox{$\V{t}$ is $[]$ or $[\_,\_]$}
 \]
-
 
 \begin{wstructure}
 <- Generic programming now!
