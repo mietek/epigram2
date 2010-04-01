@@ -118,6 +118,7 @@
 \newcommand{\forget}[1]{\ensuremath{\lfloor #1 \rfloor}}
 \newcommand{\hasscheme}{\ensuremath{::}}
 \newcommand{\subcontext}{\ensuremath{\subset}}
+\newcommand{\semidrop}{\downharpoonright}
 
 \newcommand{\define}[1]{\emph{#1}}
 \newcommand{\scare}[1]{`#1'}
@@ -240,45 +241,25 @@ do not handle substitutions correctly \citep{norvig_correctingwidespread_1991}.
 
 \section{Abstract nonsense}
 
-Let $\K$ be a set of sorts, and for each $K \in \K$
+Let $\J$ be a set of judgments, $\K$ a set of sorts, and for each $K \in \K$
 let $\V_K$ be a set of variables and $\D_K$ a set of objects.
-Let $\J$ be a set of judgments.
-A \define{substitution} $\theta$ is a partial map from $\V_K$ to $\D_K$
-for each $K \in \K$,
-and we assume $\D_K$ and $\J$ are closed under application of substitutions.
-A \define{context} $\Gamma$ is a list of 
-%%%definitions 
-   declarations 
-$v D$ (pairs of $v \in \V_K$
-and $D \in \D_K$) and separators $(\fatsemi)$. 
-We assume 
-%%%that 
-we have a judgment $D \ok_K$ 
-for every $K \in \K$ and $D \in \D_K$. 
+We assume we have a judgment $D \ok_K$ for every $K \in \K$ and $D \in \D_K$. 
 
+% A \define{substitution} $\theta$ is a partial map from $\V_K$ to $\D_K$
+% for each $K \in \K$,
+% and we assume $\D_K$ and $\J$ are closed under application of substitutions.
+
+A \define{context} $\Gamma$ is a list of declarations $v D$
+(pairs of $v \in \V_K$ and $D \in \D_K$) and separators $(\fatsemi)$. 
 We write $\emptycontext$ for the empty context, and the symbols
-$\Gamma, \Delta, \Theta, \Phi, \Psi$ represent contexts.
-Let $\V_K(\Gamma)$ be the set of $K$-variables in $\Gamma$.
+$\Gamma, \Delta$ and $\Theta$ will represent contexts.
+$\Xi$ is a context that contains no $\fatsemi$ separators.
 We write $\Gamma \entails J$ to mean that the definitions in $\Gamma$,
-corresponding to atomic facts, support the judgment $J \in \J$. 
-%%%
-For any variable $v$ and 
-%%%definiens 
-   object $D$ we define a context membership judgment
-$\contains v D$ in the obvious way, and write $\Gamma \contains v D$ for
-$\Gamma \entails (\contains v D)$. 
-%%%
-We assume that $\J$ is closed under conjunction $(\wedge)$ with
-$$\Gamma \entails (J_0 \wedge J_1)
-    \quad  \Leftrightarrow  \quad
-    \Gamma \entails J_0  ~\wedge~  \Gamma \entails J_1.$$
-%%%Further assume 
-%%%%%%that 
-%%%   we have a judgment $v D \ok$ corresponding
-%%%to every possible definition $v D$. 
-We %%%can 
-   define validity of contexts as shown
-in Figure~\ref{fig:contextValidityRules}.
+corresponding to atomic facts, support the judgment $J \in \J$.
+
+Let $\V_K(\Gamma)$ be the set of $K$-variables in $\Gamma$.
+We define the context validity judgment $\valid$ as shown in
+Figure~\ref{fig:contextValidityRules}.
 
 \begin{figure}[ht]
 \boxrule{\Gamma \entails \valid}
@@ -297,44 +278,79 @@ $$
 \label{fig:contextValidityRules}
 \end{figure}
 
-%%%For any variable $v$ and definiens $D$ we define a context membership judgment
-%%%$\contains v D$ in the obvious way, and write $\Gamma \contains v D$ for
-%%%$\Gamma \entails (\contains v D)$.
 
-We suppose that
-there is an embedding $\sem{\cdot}_K : \V_K \times \D_K \rightarrow \J$, such
-that
-$$\Gamma \contains v D  \Rightarrow  \Gamma \entails \sem{v D}.$$
+% For any variable $v$ and object $D$ we define a context membership judgment
+% $\contains v D$ in the obvious way, and write $\Gamma \contains v D$ for
+% $\Gamma \entails (\contains v D)$. 
 
-Let $\D_K(\Gamma) = \{ D \in \D_K ~||~ \Gamma \entails D \ok_K \}$.
+% We assume that $\J$ is closed under conjunction $(\wedge)$ with
+% $$\Gamma \entails (J_0 \wedge J_1)
+%     \quad  \Leftrightarrow  \quad
+%     \Gamma \entails J_0  ~\wedge~  \Gamma \entails J_1.$$
+
+We suppose that there is a map
+$\sem{\cdot}_K : \V_K \times \D_K \rightarrow \mathcal{P}(\J)$
+for each $K \in \K$, from declarations to sets of judgments.
+% such that $$\Gamma \contains v D  \Rightarrow  \Gamma \entails \sem{v D}.$$
+(We typically omit the subscript when the sort is irrelevant or can be inferred.)
+The basic rule of our inference system is
+$$\name{Lookup}
+  \Rule{v D \in \Gamma    ~\wedge~    J \in \sem{v D}}
+       {\Gamma \entails J}.$$
+Thus $\sem{v D}$ is the set of atomic judgments that hold if the declaration
+$v D$ is in the context.
+
+Let $\semidrop$ be a partial function from contexts and natural numbers to
+contexts, defined by
+\begin{align*}
+\Xi \semidrop 0 &= \Xi  \\
+\Xi \fatsemi \Gamma \semidrop 0 &= \Xi  \\
+\Xi \fatsemi \Gamma \semidrop n+1 &= \Xi \fatsemi (\Gamma \semidrop n)  \\
+\Xi \semidrop n+1 &~\mathrm{undefined}
+\end{align*}
+
+% Let $\D_K(\Gamma) = \{ D \in \D_K ~||~ \Gamma \entails D \ok_K \}$.
+For contexts $\Gamma$, $\Delta$ and for each $K \in \K$, we will define a set of
+\define{$K$-substitutions from $\Gamma$ to $\Delta$}
+from variables in $\V_K(\Gamma)$ to some set, which will apply to judgments.
 We write $\delta : \Gamma \lei \Delta$ to mean that for each $K \in \K$,
-$\delta_K$ is a substitution
-from $\V_K(\Gamma)$ to $\D_K(\Delta)$ such that
-$$\Gamma \contains v D  \Rightarrow  \Delta \entails \delta\sem{v D}$$
-and if $\Gamma$ is $\Xi \fatsemi \Gamma'$ then $\Delta$ is
-$\Psi \fatsemi \Delta'$ with $\delta||_{\Xi} : \Xi \lei \Psi$ and
-$\delta : \Xi, \Gamma' \lei \Psi, \Delta'$. This definition is well-founded by
-induction on the number of $\fatsemi$ separators in $\Gamma$.
-(We write $\delta||_{\Xi}$ for the substitution formed by restricting each
-$\delta_K$ to variables in $V_K(\Xi)$.)
+$\delta_K$ is a $K$-substitution from $\Gamma$ to $\Delta$ such that
+if $v D \in \Gamma \semidrop n$ and $J \in \sem{v D}$ then
+$\Delta \semidrop n$ is defined and $\Delta \semidrop n \entails \delta J$.
+(We write $\delta J$ for the simultaneous application of every $\delta_K$ to
+$J$.)
+
+% $$\Gamma \contains v D  \Rightarrow  \Delta \entails \delta\sem{v D}$$
+% and if $\Gamma$ is $\Xi \fatsemi \Gamma'$ then $\Delta$ is
+% $\Psi \fatsemi \Delta'$ with $\delta||_{\Xi} : \Xi \lei \Psi$ and
+% $\delta : \Xi, \Gamma' \lei \Psi, \Delta'$. This definition is well-founded by
+% induction on the number of $\fatsemi$ separators in $\Gamma$.
+% (We write $\delta||_{\Xi}$ for the substitution formed by restricting each
+% $\delta_K$ to variables in $V_K(\Xi)$.)
+
 We may omit $\delta$ and write $\Gamma \lei \Delta$ if we are only interested
 in the existence of a suitable substitution. This relation between contexts
 captures the notion of \define{information increase}: $\Delta$ supports all the
-judgments corresponding to definitions in $\Gamma$. The second condition
-ensures that approximate ordering is preserved.
-We require a substitution because the type inference algorithm will invent new
-type variables, which must be interpreted over a more informative context that
-will not contain them.
+judgments corresponding to definitions in $\Gamma$. 
+Moreover, this will still hold if we truncate both $\Gamma$ and $\Delta$ after
+any number of $\fatsemi$ separators.
+
+% We require a substitution because the type inference algorithm will invent new
+% type variables, which must be interpreted over a more informative context that
+% will not contain them.
 
 We say a judgment $J$ is
 \define{stable} if it is preserved under information increase, that is, if
-$$\Gamma \entails J  ~\wedge~  \delta : \Gamma \lei \Delta
+$$\Gamma \semidrop n \entails J  ~\wedge~  \delta : \Gamma \lei \Delta
     \quad \Rightarrow \quad
-    \Delta \entails \delta J.$$
+    \Delta \semidrop n \entails \delta J.$$
 
-From now on we will assume that the judgment $\sem{v D}_K$ is stable for any
-$v \in \V_K$ and $D \in \D_K$, and that stable judgments are closed under 
-substitution. This allows us to prove the following:
+% From now on we will assume that the judgment $\sem{v D}_K$ is stable for any
+% $v \in \V_K$ and $D \in \D_K$, and that stable judgments are closed under 
+% substitution. 
+
+We will show that every judgment in $\J$ is stable. 
+This allows us to prove the following:
 
 \begin{lemma}\label{lei:preorder}
 The $\lei$ relation is a preorder, with reflexivity demonstrated by
@@ -344,13 +360,13 @@ $$\gamma_1 : \Gamma_0 \lei \Gamma_1  ~\wedge~  \gamma_2 : \Gamma_1 \lei \Gamma_2
 \end{lemma}
 
 \begin{proof}
-Reflexivity follows since
-$\Gamma \contains v D  \Rightarrow  \Gamma \entails \sem{v D}$.
-For transitivity, suppose $\Gamma_0 \contains v D$, then
-$\Gamma_1 \entails \gamma_1\sem{v D}$ since $\gamma_1 : \Gamma_0 \lei \Gamma_1$.
-Now provided $\gamma_1\sem{v D}$ is stable, we have
-$\Gamma_2 \entails \gamma_2\gamma_1\sem{v D}$ by stability
-applied to $\gamma_2 : \Gamma_1 \lei \Gamma_2$.
+Reflexivity follows immediately from the \textsc{Lookup} rule.
+For transitivity, suppose $v D \in \Gamma_0 \semidrop n$ and $J \in \sem{v D}$.
+Then $\Gamma_1 \semidrop n \entails \gamma_1 J$ since
+$\gamma_1 : \Gamma_0 \lei \Gamma_1$.
+Now by stability applied to $\gamma_1 J$ using
+$\gamma_2 : \Gamma_1 \lei \Gamma_2$, we have
+$\Gamma_2 \semidrop n \entails \gamma_2\gamma_1\sem{v D}$ .
 \end{proof}
 
 A \define{problem domain} $R_\le$ is a set $R$ equipped with a relation $\le$
