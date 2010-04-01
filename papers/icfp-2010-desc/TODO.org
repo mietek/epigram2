@@ -8,19 +8,10 @@ people have to bear with that.
 I don't know where to write this down.
 
 ** TODO How could we get Hutton expressions with different type of variables?
-** TODO Shall we present EnumU with tags as constructors, directly?
 ** TODO Fix every \note{} in the paper
-
-** TODO Example right after the introduction?
-
 
 ** TODO coding/encoding distinction sufficiently clear?
 * Post-doc area
-** TODO Improve motivation and high-level picture of indexing
-
-Section sec:indexing-desc
-
-** TODO Discuss induction/recursion
 ** TODO Code review of the Agda models
 
 *** Desc.agda
@@ -179,3 +170,11 @@ Talk about decidability, termination, etc.
 ** DONE Remove mention of tech report
 
 Implement induction.
+
+** DONE Discuss induction/recursion
+** DONE Improve motivation and high-level picture of indexing
+
+Section sec:indexing-desc
+
+** DONE Shall we present EnumU with tags as constructors, directly?
+** DONE Example right after the introduction?

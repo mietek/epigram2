@@ -248,7 +248,7 @@ a generic catamorphism, $\F{cataI}$, from $\F{inductionI}$.
                         & \idescop{\V{D}}{\V{I}}{\V{X}} \To
                           \IDesc{(\TIMES{\V{I}}{\V{X}})}
 \end{array} \\
-\begin{array}{@{}ll@{\:=\:\:}l}
+\begin{array}{@{}l@{}l@{\:=\:\:}l}
 \AllI{\:}{(\DVar{\V{i}})}{& \V{X}}{\V{x}} &
     \DVar{\pair{\V{i}}{\V{x}}{}} \\
 \AllI{\:}{(\DConst{\V{K}})}{& \V{X}}{\V{k}} &
@@ -273,7 +273,7 @@ a generic catamorphism, $\F{cataI}$, from $\F{inductionI}$.
                                   \PI{\V{xs}}{\idescop{\V{D}}{}{\V{X}}} 
                                   \idescop{\AllI{}{\V{D}}{\V{X}}{\V{xs}}}{\TIMES{\V{I}}{\V{X}}}{\V{R}}
 \end{array} \\
-\begin{array}{@{}ll@{\:=\:\:}l}
+\begin{array}{@{}l@{}l@{\:=\:\:}l}
 \allI{\:}{(\DVar{\V{i}})}{& \V{X}}{\V{R}}{\V{P}}{\V{x}} &
     \V{P}\: \pair{\V{i}}{\V{x}}{} \\
 \allI{\:}{(\DConst{\V{K}})}{& \V{X}}{\V{R}}{\V{P}}{\V{k}} &
@@ -628,12 +628,14 @@ for non-indexed descriptions. The index-depend part simply indexes the
 choice of constructors by $\V{I}$. Hence, by inspecting the index, it
 is possible to enable or disable the constructors.
 
-\[\stk{
- \TagIDesc{\V{I}}  \mapsto \TIMES{\ATagIDesc{\V{I}}}{\ITagIDesc{\V{I}}} \\
- \ATagIDesc{\V{I}} \mapsto \SIGMA{\V{E}}{\EnumU} (\PI{\V{i}}{\V{I}} \spi{\V{E}}{(\LAM{\_} \IDesc{\V{I}})}) \\
- \ITagIDesc{\V{I}} \mapsto \\
-\qquad\SIGMA{\V{F}}{\V{I} \To \EnumU} (\PI{\V{i}}{\V{I}} \spi{(\V{F}\: \V{i})}{(\LAM{\_} \IDesc{\V{I}})}) 
-}\]
+\[
+\begin{array}{@{}l@{\:\mapsto\:\:}l}
+ \TagIDesc{\V{I}}  & \TIMES{\ATagIDesc{\V{I}}}{\ITagIDesc{\V{I}}} \\
+ \ATagIDesc{\V{I}} & \SIGMA{\V{E}}{\EnumU} (\PI{\V{i}}{\V{I}} \spi{\V{E}}{(\LAM{\_} \IDesc{\V{I}})}) \\
+ \ITagIDesc{\V{I}} & 
+     \SIGMA{\V{F}}{\V{I} \To \EnumU} (\PI{\V{i}}{\V{I}} \spi{(\V{F}\: \V{i})}{(\LAM{\_} \IDesc{\V{I}})}) 
+\end{array}
+\]
 
 \begin{wstructure}
 <- Vectors
@@ -808,13 +810,13 @@ evaluator. The implementation is as follows:
 
 \[\stk{
 \evalOne : \PI{\V{ty}}{\Ty} \idescop{\toIDesc{\HExprD}\:\V{ty}}{\Ty}{\Val{\!}}
-\To {\Val{\V{ty}}} \\
-\begin{array}{@{}l@{\:=\:\:}l}
-\evalOne\: \_\: \pair{\Eval{}}{\V{x}}{}                                         & \V{x} \\
-\evalOne\: \_\: \pair{\Econd{}{}{}}{\pair{\BoolTrue}{\pair{\V{x}}{\_}{}}{}}{}   & \V{x} \\
-\evalOne\: \_\: \pair{\Econd{}{}{}}{\pair{\BoolFalse}{\pair{\_}{\V{y}}{}}{}}{}  & \V{x} \\
-\evalOne\: \Enat\: \pair{\Eplus{}{}}{\pair{\V{x}}{\V{y}}{}}{}                       & \F{plusHost}\: \V{x}\: \V{y} \\
-\evalOne\: \Ebool\: \pair{\Ele{}{}}{\pair{\V{x}}{\V{y}}{}}{}                        & \F{leHost}\: \V{x}\: \V{y} 
+           \To {\Val{\V{ty}}} \\
+\begin{array}{@{}l@{}c@{}l@{\:=\:\:}l}
+\evalOne\: & \_\: & \pair{\Eval{}}{\V{x}}{}                                         & \V{x} \\
+\evalOne\: & \_\: & \pair{\Econd{}{}{}}{\pair{\BoolTrue}{\pair{\V{x}}{\_}{}}{}}{}   & \V{x} \\
+\evalOne\: & \_\: & \pair{\Econd{}{}{}}{\pair{\BoolFalse}{\pair{\_}{\V{y}}{}}{}}{}  & \V{x} \\
+\evalOne\: & \Enat\: & \pair{\Eplus{}{}}{\pair{\V{x}}{\V{y}}{}}{}                       & \F{plusHost}\: \V{x}\: \V{y} \\
+\evalOne\: & \Ebool\: & \pair{\Ele{}{}}{\pair{\V{x}}{\V{y}}{}}{}                        & \F{leHost}\: \V{x}\: \V{y} 
 \end{array} \\
 \\
 \evalH : \PI{\V{ty}}{\Ty} 

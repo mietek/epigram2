@@ -374,15 +374,17 @@ comes with an induction principle.
                        & \PI{\V{xs}}{\descop{\V{D}}{\V{X}}} 
                          \Set 
 \end{array} \\
-\All{\DUnit}{\V{X}}{\V{P}}{\Void} = 
+\begin{array}{@{}l@{}l@{\:=\:\:}l}
+\All{\DUnit}{& \V{X}}{\V{P}}{\Void} &
     \Unit \\
-\All{(\DSigma{\V{S}}{\V{T}})}{\V{X}}{\V{P}}{\pair{\V{a}}{\V{b}}{}} = 
+\All{(\DSigma{\V{S}}{\V{T}})}{& \V{X}}{\V{P}}{\pair{\V{a}}{\V{b}}{}} &
     \All{(\V{T}\: a)}{\V{X}}{\V{P}}{\V{b}} \\
-\All{(\DIndx{\V{D}})}{\V{X}}{\V{P}}{\pair{\V{a}}{\V{b}}{}} =
+\All{(\DIndx{\V{D}})}{& \V{X}}{\V{P}}{\pair{\V{a}}{\V{b}}{}} &
     \TIMES{\V{P}\: \V{a}}{\All{\V{D}}{\V{X}}{\V{P}}{\V{b}}} \\
-\All{(\DHindx{\V{H}}{\V{D}})}{\V{X}}{\V{P}}{\pair{\V{f}}{\V{b}}{}} =
+\All{(\DHindx{\V{H}}{\V{D}})}{& \V{X}}{\V{P}}{\pair{\V{f}}{\V{b}}{}} &
     \TIMES{(\PI{\V{i}}{\V{H}} \V{P}\: (\V{f}\: \V{i}))}
           {\All{\V{D}}{\V{X}}{\V{P}}{\V{b}}}
+\end{array}
 }
 &
 %%
@@ -395,16 +397,18 @@ comes with an induction principle.
                              \PI{\V{xs}}{\descop{\V{D}}{\V{X}}} 
                              \All{\V{D}}{\V{X}}{\V{P}}{\V{xs}} 
 \end{array} \\
-\all{\DUnit}{\V{X}}{\V{P}}{\V{R}}{\Void} =
+\begin{array}{@{}l@{}l@{\:=\:\:}l}
+\all{\DUnit}{& \V{X}}{\V{P}}{\V{R}}{\Void} &
     \Void \\
-\all{(\DSigma{\V{S}}{\V{T}})}{\V{X}}{\V{P}}{\V{R}}{\pair{\V{a}}{\V{b}}{}} =
+\all{(\DSigma{\V{S}}{\V{T}})}{& \V{X}}{\V{P}}{\V{R}}{\pair{\V{a}}{\V{b}}{}} &
     \all{(\V{T}\: a)}{\V{X}}{\V{P}}{\V{R}}{\V{b}} \\
-\all{(\DIndx{D})}{\V{X}}{\V{P}}{\V{R}}{\pair{\V{a}}{\V{b}}{}} =
+\all{(\DIndx{D})}{& \V{X}}{\V{P}}{\V{R}}{\pair{\V{a}}{\V{b}}{}} &
     \pair{\V{R}\: \V{a}}
          {\all{\V{D}}{\V{X}}{\V{P}}{\V{R}}{\V{b}}}{} \\
-\all{(\DHindx{H}{D})}{\V{X}}{\V{P}}{\V{R}}{\pair{\V{f}}{\V{b}}{}} =
+\all{(\DHindx{H}{D})}{& \V{X}}{\V{P}}{\V{R}}{\pair{\V{f}}{\V{b}}{}} &
     \pair{\LAM{i} \V{R}\: (\V{f}\: \V{i})}
          {\all{\V{D}}{\V{X}}{\V{P}}{\V{R}}{b}}{}
+\end{array}
 \end{array}
 }
 \]
