@@ -81,7 +81,7 @@
 \newcommand{\boxrules}[2]{\begin{center}\framebox{\ensuremath{#1}}\quad\framebox{\ensuremath{#2}}\end{center}}
 
 \newcommand{\tmvars}[1]{\ensuremath{tmvars(#1)}}
-\newcommand{\tyvars}[1]{\ensuremath{V_A(#1)}}
+\newcommand{\tyvars}[1]{\ensuremath{V_\TY(#1)}}
 \newcommand{\types}[1]{\ensuremath{types(#1)}}
 \newcommand{\FTV}[1]{\ensuremath{FTV(#1)}}
 
@@ -127,6 +127,8 @@
 \newcommand{\D}{\mathcal{D}}
 \newcommand{\J}{\mathcal{J}}
 \newcommand{\K}{\mathcal{K}}
+\newcommand{\TY}{\mathrm{\textsc{TY}}}
+\newcommand{\TM}{\mathrm{\textsc{TM}}}
 
 \usepackage{amsthm}
 \usepackage{amsmath}
@@ -482,9 +484,10 @@ First, let's get some imports out of the way.
 
 \section{Types and type variables}
 
+To make things more concrete, we define the sort $\TY \in \K$.
 The syntax of types is
 $$\tau ::= \alpha ~||~ \tau \arrow \tau$$
-where $\alpha$ ranges over some set of type variables $\V_A$.
+where $\alpha$ ranges over some set of type variables $\V_\TY$.
 %%%Let $\D_0 \subset \D$ be the set of types.
 In the sequel, $\alpha$ and $\beta$ are type variables and $\tau$ and $\upsilon$
 %%%are 
@@ -500,10 +503,11 @@ only type variable
 A type variable declaration is written |alpha := mt|, where $\alpha$ is a
 variable that is either bound to a type $\tau$ (written |alpha := Just tau| or
 $\alpha \defn \tau$), or left unbound (written |alpha := Nothing|).
-Thus $\D_A$ contains the \scare{undefined} binding $\hole{}$ and bindings
-$\defn \tau$ for each type $\tau$.
-Later, we will add other kinds of variable and definition that are not relevant
-for unification.
+Thus $\D_\TY$ contains the \scare{undefined} binding $\;\hole{}$ and bindings
+$\;\defn \tau$ for each type $\tau$.
+
+% Later, we will add other sorts of declaration that are not relevant
+% for unification.
 
 %%%We write $\tyvars{\Gamma}$ for the 
 %   Let $\tyvars{\Gamma}$ be the 
@@ -518,45 +522,40 @@ We define the set of free type variables of a type or context suffix thus:
 \FTV{\tau, \Xi} &= \FTV{\tau} \cup \FTV{\Xi}.
 \end{align*}
 
-We define the judgment $\tau \type$ %%%($\tau$ is a type over the context) 
-%%%as shown 
-   in Figure~\ref{fig:typeOkRules}, and hence give 
-%%%the 
-   rules for the
-judgment $\defn mt \ok_A$. 
-%%%\TODO{Show $\tau \type$ is stable.}
-A simple induction on derivations shows that the judgment $\tau \type$ is stable. 
-%%%
+We define the judgment $\tau \type$ in Figure~\ref{fig:typeOkRules},
+and hence define the judgment $D \ok_\TY$. Note that there is no base
+case for the former definition because we will deduce $\alpha \type$ for
+variables $\alpha$ using the \textsc{Lookup} rule.
+
 If $\Gamma$ is a valid context, 
-%%%we write $\types{\Gamma}$ for 
-   let $\types{\Gamma}$ be 
+let $\types{\Gamma}$ be 
 the set of types $\tau$ such that $\Gamma \entails \tau \type$. 
+A \define{$\TY$-substitution from $\Gamma$ to $\Delta$} is a substitution from
+$\V_\TY(\Gamma)$ to $\types{\Delta}$ which applies to types and judgments in
+the obvious way.
+A simple induction on derivations shows that the judgment $\tau \type$ is stable.
 
 \begin{figure}[ht]
 \boxrule{\Gamma \entails \tau \type}
 $$
-\Rule{\Gamma \entails \valid}
-     {\Gamma \entails \alpha \type}
-\side{\alpha \in \tyvars{\Gamma}}
-\qquad
+% \Rule{\Gamma \entails \valid}
+%      {\Gamma \entails \alpha \type}
+% \side{\alpha \in \tyvars{\Gamma}}
+% \qquad
 \Rule{\Gamma \entails \tau \type   \quad   \Gamma \entails \upsilon \type}
      {\Gamma \entails \tau \arrow \upsilon \type}
 $$
-\boxrule{\Gamma \entails \;\defn mt \ok}
+\boxrule{\Gamma \entails D \ok_\TY}
 $$\Rule{\Gamma \entails \valid}
-       {\Gamma \entails \;\hole{} \ok}
+       {\Gamma \entails \;\hole{} \ok_\TY}
 \qquad
 \Rule{\Gamma \entails \tau \type}
-     {\Gamma \entails \;\defn \tau \ok}
+     {\Gamma \entails \;\defn \tau \ok_\TY}
 $$
-
 \caption{Rules for types and definitions}
 \label{fig:typeOkRules}
 \end{figure}
 
-
-%%%If $\Gamma$ is a valid context, we write $\types{\Gamma}$ for the set of types
-%%%$\tau$ such that $\Gamma \entails \tau \type$. 
 
 
 \subsection{Implementation}
