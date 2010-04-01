@@ -12,7 +12,7 @@
 %format <+> = "\oplus "
 %format <*> = "\varoast "
 %format <$> = "<\!\!\$\!\!> "
-%format :$  = ":\!\!\$ "
+%format :$  = ":\!\!\$\ "
 %format ::: = "\asc "
 %format ::~ = "\asc "
 %format >=> = "\genarrow "
