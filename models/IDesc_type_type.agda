@@ -86,15 +86,23 @@ data IMu {I : Set}(R : I -> IDesc I)(i : I) : Set where
   con : desc (R i) (\j -> IMu R j) -> IMu R i
 
 --********************************************
--- Predicate: Box
+-- Predicate: All
 --********************************************
 
-box : {I : Set}(D : IDesc I)(P : I -> Set) -> desc D P -> IDesc (Sigma I P)
-box (var i)     P x        = var (i , x)
-box (const X)   P x        = const X
-box (prod D D') P (d , d') = prod (box D P d) (box D' P d')
-box (sigma S T) P (a , b)  = box (T a) P b
-box (pi S T)    P f        = pi S (\s -> box (T s) P (f s))
+All : {I : Set}(D : IDesc I)(P : I -> Set) -> desc D P -> IDesc (Sigma I P)
+All (var i)     P x        = var (i , x)
+All (const X)   P x        = const X
+All (prod D D') P (d , d') = prod (All D P d) (All D' P d')
+All (sigma S T) P (a , b)  = All (T a) P b
+All (pi S T)    P f        = pi S (\s -> All (T s) P (f s))
+
+all : {I : Set}(D : IDesc I)(X : I -> Set)
+      (R : Sigma I X -> Set)(P : (x : Sigma I X) -> R x) -> (xs : desc D X) -> desc (All D X xs) R
+all (var i) X R P x = P (i , x)
+all (const K) X R P k = k
+all (prod D D') X R P (x , y) = ( all D X R P x , all D' X R P y )
+all (sigma S T) X R P (a , b) = all (T a) X R P b
+all (pi S T) X R P f = \a -> all (T a) X R P (f a)
 
 --********************************************
 -- Enumerations (hard-coded)
@@ -155,7 +163,7 @@ module Elim {I : Set}
             (P : Sigma I (IMu R) -> Set)
             (m : (i : I)
                  (xs : desc (R i) (IMu R))
-                 (hs : desc (box (R i) (IMu R) xs) P) ->
+                 (hs : desc (All (R i) (IMu R) xs) P) ->
                  P ( i , con xs ))
        where
 
@@ -165,7 +173,7 @@ module Elim {I : Set}
 
     hyps : (D : IDesc I) -> 
            (xs : desc D (IMu R)) -> 
-           desc (box D (IMu R) xs) P
+           desc (All D (IMu R) xs) P
     hyps (var i) x = induction i x
     hyps (const X) x = x -- ??
     hyps (prod D D') (d , d') =  hyps D d , hyps D' d'
@@ -178,10 +186,24 @@ induction : {I : Set}
             (P : Sigma I (IMu R) -> Set)
             (m : (i : I)
                  (xs : desc (R i) (IMu R))
-                 (hs : desc (box (R i) (IMu R) xs) P) ->
+                 (hs : desc (All (R i) (IMu R) xs) P) ->
                  P ( i , con xs)) ->
             (i : I)(x : IMu R i) -> P ( i , x )
 induction = Elim.induction
+
+{-
+induction : {I : Set}
+            (R : I -> IDesc I)
+            (P : Sigma I (IMu R) -> Set)
+            (m : (i : I)
+                 (xs : desc (R i) (IMu R))
+                 (hs : desc (All (R i) (IMu R) xs) P) ->
+                 P ( i , con xs)) ->
+            (i : I)(x : IMu R i) -> P ( i , x )
+induction {I} R P m i (con xs) = m i xs (all (R i) (IMu R) P induct xs)
+  where induct : (x : Sigma I (IMu R)) -> P x
+        induct (i , xs) = induction R P m i xs
+-}
 
 --********************************************
 -- DescD
@@ -233,7 +255,7 @@ sigmal S T = con (lsigma , ( S , T))
 
 cases : {I : Set}
         (xs : desc (descD I) (IMu (λ _ -> descD I)))
-        (hs : desc (box (descD I) (IMu (λ _ -> descD I)) xs) (λ _ -> IDesc I)) ->
+        (hs : desc (All (descD I) (IMu (λ _ -> descD I)) xs) (λ _ -> IDesc I)) ->
         IDesc I
 cases ( lvar , i ) hs =  var i
 cases ( lconst , X ) hs =  const X
@@ -289,7 +311,7 @@ proof-psi-phi I D =  induction (\ _ -> descD I)
                       P ( Void , D ) = psi (phi D) == D
                       proof-psi-phi-cases : (i : Unit)
                                             (xs : desc (descD I) (IDescl0 I))
-                                            (hs : desc (box (descD I) (IDescl0 I) xs) P)
+                                            (hs : desc (All (descD I) (IDescl0 I) xs) P)
                                             -> P (i , con xs)
                       proof-psi-phi-cases Void (lvar , i) hs = refl
                       proof-psi-phi-cases Void (lconst , x) hs = refl
@@ -315,7 +337,7 @@ cata : (I : Set)
 cata I R T phi i x = induction R (\it -> T (fst it)) (\i xs ms -> phi i (replace (R i) T xs ms)) i x
   where replace : (D : IDesc I)(T : I -> Set)
                   (xs : desc D (IMu R))
-                  (ms : desc (box D (IMu R) xs) (\it -> T (fst it))) -> 
+                  (ms : desc (All D (IMu R) xs) (\it -> T (fst it))) -> 
                   desc D T
         replace (var i) T x y = y
         replace (const Z) T z z' = z'
