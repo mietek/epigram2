@@ -1,10 +1,4 @@
 * Open Questions
-** TODO Type presentation / representation is just confusing me
-
-Finite set motivation stinks. I should sit down with Conor and find a
-clear motivation for it. This will also impact on the motivation for a
-universe of descriptions.
-
 ** TODO Precise that we are talking in the Evidence language
 
 I guess that the point is the following: we are not talking about
@@ -14,39 +8,17 @@ people have to bear with that.
 I don't know where to write this down.
 
 ** TODO How could we get Hutton expressions with different type of variables?
-** TODO Simply-typed Haskell??
-
-Man everybody knows that Haskell is the first mainstream
-dependently-typed language. So, how do I get arround my various
-"simply-typed languages, such as Haskell"?
-
 ** TODO Shall we present EnumU with tags as constructors, directly?
 ** TODO Fix every \note{} in the paper
 
 ** TODO Example right after the introduction?
 
 
-** TODO The comma in Pi/Sigma typing rule seems confusing
 ** TODO coding/encoding distinction sufficiently clear?
 * Post-doc area
-** TODO Improve finite sets motivation (encoding vs. codes)
-
-Section sec:finite-sets
-
-** TODO Improve motivation for the use of codes for inductive types
-
-Pedagogically answer the question:
-"Why using codes instead of raw sigmas?"
-
-Section sec:desc-universe
-
 ** TODO Improve motivation and high-level picture of indexing
 
 Section sec:indexing-desc
-
-** TODO Improve motivation of dependent-types
-
-Talk about decidability, termination, etc.
 
 ** TODO Discuss induction/recursion
 ** TODO Code review of the Agda models
@@ -58,21 +30,12 @@ Talk about decidability, termination, etc.
 If it hasn't been translated into universe polymorphism
 
 * Janitor service
-** TODO induction-recursion? induction recursion
-** TODO s/data*type/datatype/
 ** TODO s/judgement/judgment/
 ** TODO Check/fix alignment in code
 ** TODO Fix code overflows
 ** TODO Tech report as a bibtex entry, or footnote?
 ** TODO titles are sometimes quite vague
 ** TODO Check coloring of terms
-** TODO Better names for subcomponents of tagged indexed description
-
-\newcommand{\ATagIDesc}[1]{\F{ATagIDesc}~#1}
-\newcommand{\ITagIDesc}[1]{\F{ITagIDesc}~#1}
-
-Just stinks, says nothing useful.
-
 ** TODO Find a convenient name for Hutton's razor
 
 And replace occurences of "Typed expressions"
@@ -168,3 +131,44 @@ There is a \note about it somewhere.
 
 iinduction operator is absolutely not presented.
 
+** DONE The comma in Pi/Sigma typing rule seems confusing
+** DONE Better names for subcomponents of tagged indexed description
+
+\newcommand{\ATagIDesc}[1]{\F{ATagIDesc}~#1}
+\newcommand{\ITagIDesc}[1]{\F{ITagIDesc}~#1}
+
+Just stinks, says nothing useful.
+
+** DONE Type presentation / representation is just confusing me
+
+Finite set motivation stinks. I should sit down with Conor and find a
+clear motivation for it. This will also impact on the motivation for a
+universe of descriptions.
+
+** DONE Simply-typed Haskell??
+
+Man everybody knows that Haskell is the first mainstream
+dependently-typed language. So, how do I get arround my various
+"simply-typed languages, such as Haskell"?
+
+** DONE Improve finite sets motivation (encoding vs. codes)
+
+Section sec:finite-sets
+
+** DONE Improve motivation for the use of codes for inductive types
+
+Pedagogically answer the question:
+"Why using codes instead of raw sigmas?"
+
+Section sec:desc-universe
+
+** DONE Improve motivation of dependent-types
+
+Talk about decidability, termination, etc.
+
+** DONE induction-recursion? induction recursion
+
+'induction-recursion'
+
+
+** DONE s/data*type/datatype/
