@@ -30,6 +30,14 @@ Section sec:indexing-desc
 If it hasn't been translated into universe polymorphism
 
 * Janitor service
+** TODO Look for inlining figures
+
+DescD (Figure 6)
+
+** TODO Remove mention of tech report
+
+Implement induction.
+
 ** TODO Ispell
 ** TODO Check bibliography references
 ** TODO s/judgement/judgment/

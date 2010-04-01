@@ -1,11 +1,11 @@
 \section{Levitating the universe of descriptions}
 \label{sec:desc-levitate}
 
-In this section, we will fulfil our promises. First, we will build
-finite sets. Second, we will implement the code of the $\Desc$
-universe.  Despite being a perilous pedagogical exercise for the
-authors, we hope to convey to the reader the dizzy feeling of
-levitation, without the falling.
+In this section, we will fulfil our promises. We first implement
+finite sets. Then, we implement the codes of the $\Desc$ universe.
+Despite being a perilous pedagogical exercise for the authors, we hope
+to convey to the reader the dizzy feeling of levitation, without the
+falling.
 
 \subsection{Implementing finite sets}
 
@@ -58,16 +58,15 @@ implementation of $\EnumU$ boils down to the following definition:
 
 Let us consider the consequences. First, we discover that the type
 theory does not need to be extended with the type former $\EnumU$, the
-constructors $\NilE$ and $\ConsE$. We have just defined $\EnumU$
-above, by fixpoint over the pattern functor denoted by
-$\ListD$. $\NilE$ and $\ConsE$ are simply the $\ListNil$ and
-$\ListCons$ constructors of lists.
+constructors $\NilE$ and $\ConsE$. $\EnumU$ is defined above, as the
+fixpoint of $\ListD~\UId$. $\NilE$ and $\ConsE$ are simply the type
+constructors of lists, $\ListNil$ and $\ListCons$.
 
 Another interesting consequence concerns the $\spi{\!}{\!}$ operator:
 it can actually be implemented with the generic $\F{induction}$
 principle. From an implementation perspective, this means that this
-operator is simply implemented in the dependently-typed target
-language, as any other function.
+operator is implemented in the dependently-typed target language, as
+any other function.
 
 %% Apart from these changes, we are left with implementing the other
 %% components of finite sets. This consists of $\EnumT$, $\Ze$, $\Su$, as
@@ -114,13 +113,12 @@ condense the entire naming scheme of datatypes \emph{in itself}.
         -> It ought to be encoded in itself
 \end{wstructure}
 
-We shall now fulfil our promises for $\Desc$. We are going to
+We shall now fulfil our promise concerning $\Desc$. We are going to
 implement the codes of the universe of descriptions. In and by itself,
-the system of codes, $\Desc$, is nothing but a datatype. We are in
-the same situation as with $\EnumU$: we ought to be able to describe
-the codes of $\Desc$ in $\Desc$ itself. Hence, this code would be a
-first-class citizen, born with the standard, generic equipment of
-datatypes.
+the codes, $\Desc$, is nothing but a datatype. We are in the same
+situation as with $\EnumU$: we ought to be able to describe the codes
+of $\Desc$ in $\Desc$ itself. Hence, this code would be a first-class
+citizen, born with the standard, generic equipment of datatypes.
 
 \subsubsection{First attempt}
 
@@ -154,7 +152,7 @@ that the tagged notation we have used for the $\Desc$ constructors now
 fully makes sense: these were actually the tags we are defining.
 
 For $\DUnit$, we immediately reach the end of the description. For
-$\DIndx{\!}$, there is a single recursive argument. The case of
+$\DIndx{\!}$, there is a single recursive argument. Describing
 $\DSigma{\!}{\!}$ is problematic. Recall the specification of
 $\DSigma{\!}{\!}$:
 
@@ -220,7 +218,7 @@ Note that $\DIndx{\!}$ is isomorphic to $\DHindx{\Unit}{\!}$. However,
 we tolerate this duplication. Indeed, unlike its counterpart,
 $\DIndx{\!}$ is first-order. Both codes are \emph{extensionally} the
 same but, in practice, they will be dealt with rather
-differently. While definitional equality can cope with first order
+differently. While definitional equality can cope with first-order
 objects, the functional presentation introduced by $\DHindx{\!}{}$ is
 unlikely to be amenable to a purely definitional treatment.
 
@@ -228,13 +226,13 @@ As shown in Figure~\ref{fig:desc-levitate}, we are now able to
 describe our universe of datatypes.  The $\DUnit$ and $\DIndx{\!}$
 cases remain unchanged, as expected. We successfully describe the
 $\DSigma{\!}{}$ case, by a simple appeal to the higher-order induction
-on $\V{S}$. The $\DHindx{\!}{\!}$ case consists in packing the $\V{H}$
+on $\V{S}$. The $\DHindx{\!}{\!}$ case consists in packing an $\V{H}$
 in $\Set$ with a recursive argument.
 
 At a first glance, we have achieved our goal. We have described the
 codes of the universe of description. Taking the fixpoint of this
-object gives us $\Desc$, up to isomorphism. We have implemented our
-code of datatypes as an object levitating inside itself. However,
+object gives us $\Desc$, up to isomorphism. We have implemented the
+codes of datatypes as an object levitating inside itself. However,
 this levitation operation, just as any magic trick, relies on an
 invisible cable. Let us reveal it, hence finishing our implementation.
 
@@ -267,27 +265,18 @@ invisible cable. Let us reveal it, hence finishing our implementation.
         -> Code with problem for the motive of switch
 \end{wstructure}
 
+
 Our reader might be slightly confused to learn that the trick is
 visible in the definition of $\DescD$
 (Fig.~\ref{fig:desc-levitate}). Or rather, it is made invisible by
 careful usage of type propagation. Indeed, let us try to elaborate
 this term down to the low-level type theory. The $\EnumT{[ \ldots ]}$
-construct elaborates to a finite set $e$ in $\EnumU$, inhabited by the
-codes. Then, we can type-check the case definition, between square
+construct elaborates to a finite set $\V{E}$ in $\EnumU$, inhabited by
+the codes. Then, we can type-check the case definition, between square
 brackets $[ \ldots ]$. This term $\V{f}$ is pushed into the type
-$\EnumT{\V{e}} \To \Mu{\DescD}$. This corresponds to a finite function
+$\EnumT{\V{E}} \To \Mu{\DescD}$. This corresponds to a finite function
 definition, as presented in Figure~\ref{fig:type-checking}.
 
-What happens if we unfold the definition? We ought to build the following term:
-
-\[
-\PLAM{\V{x}}{(\EnumT{\V{e}})} \switch{\V{e}}{(\LAM{\_} \Mu{\DescD})}{\V{\pi^f}}{\V{x}}
-\]
-
-But this is quite problematic. We are still in the process of
-constructing $\DescD$, and the motive of $\F{switch}$ is abruptly
-begging for this very same $\DescD$. Despite our willingness, we
-cannot materialise such motive.
 
 \begin{wstructure}
 <- The magician trick
@@ -300,8 +289,18 @@ cannot materialise such motive.
             <- Another instance of type propagation
 \end{wstructure}
 
-However, we perfectly know what the motive is. Consequently, we extend
-the type theory with a special-purpose operator:
+What happens if we unfold the definition? We ought to build the following term:
+
+\[
+\PLAM{\V{x}}{(\EnumT{\V{E}})} \switch{\V{E}}{(\LAM{\_} \Mu{\DescD})}{\V{\pi^f}}{\V{x}}
+\]
+
+But this is quite problematic. We are still in the process of
+constructing $\DescD$, and the motive of $\F{switch}$ is abruptly
+begging for this very same $\DescD$. Despite our willingness, we
+cannot materialise such motive. However, we perfectly know what the
+motive is. Consequently, we extend the type theory with a
+special-purpose operator:
 
 \[
 \begin{array}{@{}ll}
@@ -313,9 +312,9 @@ the type theory with a special-purpose operator:
 \]
 
 The entire work of the magician stands here, in this extension. Note
-that the developer do not have to decide between the two variants of
+that the developer do not have to chose between the two variants of
 $\F{switch}$. This is dealt with by the type propagation system
-(Fig.~\ref{fig:type-checking}), extended by the following inference
+(Fig.~\ref{fig:type-checking}), extended with the following inference
 rule:
 
 \[
@@ -341,13 +340,13 @@ rule:
 
 This concludes our levitation work. Beyond its pedagogical value, this
 exercise has several practical outcomes. First of all, it reveals that
-the $\Desc$ universe is just plain data. Just as any piece of data, it
-can therefore be inspected and manipulated. Moreover, it is expressed
-in the $\Desc$ universe. As a consequence, it is equipped, for free,
-with an induction principle. So, our ability to inspect and program
-with $\Desc$ is not restricted to the meta-language: we now have all
-the necessary equipment in the target language to \emph{program} over
-datatypes. In this setting, \emph{generic programming is just 
+the $\Desc$ universe is just plain data. As any piece of data, it can
+therefore be inspected and manipulated. Moreover, it is expressed in
+the $\Desc$ universe. As a consequence, it is equipped, for free, with
+an induction principle. So, our ability to inspect and program with
+$\Desc$ is not restricted to the meta-language: we now have all the
+necessary equipment in the target language to \emph{program} over
+datatypes. In this setting, \emph{generic programming is just
   programming}.
 
 
@@ -370,9 +369,9 @@ some circumstances, the full-power of a dependent elimination is not
 necessary. In the following, we propose to derive the catamorphism
 from the $\F{induction}$ principle.
 
-The catamorphism is an induction on the description $\V{D}$, with a
-non-dependent motive targeting $\V{T}$. Given a node $\V{xs}$ and the
-induction hypotheses, the method ought to build an element of
+The catamorphism is defined by induction on the description $\V{D}$,
+with a non-dependent motive targeting $\V{T}$. Given a node $\V{xs}$
+and the induction hypotheses, the method ought to build an element of
 $\V{T}$. Provided that we know how to make an element of
 $\descop{\V{D}}{\V{T}}$, this step will be performed by the algebra
 $\V{f}$. Let us take a look at this jigsaw:
@@ -596,8 +595,7 @@ implemented the free monad construction for an arbitrary tagged
 description. This gives the developer the ability, for any datatype,
 to extend it with a notion of variable. Then, we have equipped this
 structure with the corresponding monadic operation, \bind\ and
-\return. We have shown how to implement \bind, for any free
-monad. This construction is an example of type-indexed
+\return. This construction is an example of type-indexed
 datatype~\cite{hinze:generic-haskell}, as found in Generic Haskell:
 from a datatype, we built a new datatype and equip it with its
 structure.
