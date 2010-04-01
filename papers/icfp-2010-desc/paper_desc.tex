@@ -349,7 +349,7 @@ definition:
 \F{induction}\: \V{D}\: \V{P}\: \V{ms}\: (\Con{\V{xs}}) =  \\
 \qquad
     \V{ms}\: \V{xs}\: (\all{D}{\Mu{D}}{P}
-                           {(\LAM{x} \F{induction}\: \V{D}\: \V{P}\: \V{ms}\: \V{x})}
+                           {(\LAM{\V{x}} \F{induction}\: \V{D}\: \V{P}\: \V{ms}\: \V{x})}
                            {\V{xs}})
 }\]
 
@@ -378,7 +378,7 @@ comes with an induction principle.
 \All{\DUnit}{& \V{X}}{\V{P}}{\Void} &
     \Unit \\
 \All{(\DSigma{\V{S}}{\V{T}})}{& \V{X}}{\V{P}}{\pair{\V{a}}{\V{b}}{}} &
-    \All{(\V{T}\: a)}{\V{X}}{\V{P}}{\V{b}} \\
+    \All{(\V{T}\: \V{a})}{\V{X}}{\V{P}}{\V{b}} \\
 \All{(\DIndx{\V{D}})}{& \V{X}}{\V{P}}{\pair{\V{a}}{\V{b}}{}} &
     \TIMES{\V{P}\: \V{a}}{\All{\V{D}}{\V{X}}{\V{P}}{\V{b}}} \\
 \All{(\DHindx{\V{H}}{\V{D}})}{& \V{X}}{\V{P}}{\pair{\V{f}}{\V{b}}{}} &
@@ -401,13 +401,13 @@ comes with an induction principle.
 \all{\DUnit}{& \V{X}}{\V{P}}{\V{R}}{\Void} &
     \Void \\
 \all{(\DSigma{\V{S}}{\V{T}})}{& \V{X}}{\V{P}}{\V{R}}{\pair{\V{a}}{\V{b}}{}} &
-    \all{(\V{T}\: a)}{\V{X}}{\V{P}}{\V{R}}{\V{b}} \\
-\all{(\DIndx{D})}{& \V{X}}{\V{P}}{\V{R}}{\pair{\V{a}}{\V{b}}{}} &
+    \all{(\V{T}\: \V{a})}{\V{X}}{\V{P}}{\V{R}}{\V{b}} \\
+\all{(\DIndx{\V{D}})}{& \V{X}}{\V{P}}{\V{R}}{\pair{\V{a}}{\V{b}}{}} &
     \pair{\V{R}\: \V{a}}
          {\all{\V{D}}{\V{X}}{\V{P}}{\V{R}}{\V{b}}}{} \\
-\all{(\DHindx{H}{D})}{& \V{X}}{\V{P}}{\V{R}}{\pair{\V{f}}{\V{b}}{}} &
-    \pair{\LAM{i} \V{R}\: (\V{f}\: \V{i})}
-         {\all{\V{D}}{\V{X}}{\V{P}}{\V{R}}{b}}{}
+\all{(\DHindx{\V{H}}{\V{D}})}{& \V{X}}{\V{P}}{\V{R}}{\pair{\V{f}}{\V{b}}{}} &
+    \pair{\LAM{\V{i}} \V{R}\: (\V{f}\: \V{i})}
+         {\all{\V{D}}{\V{X}}{\V{P}}{\V{R}}{\V{b}}}{}
 \end{array}
 \end{array}
 }

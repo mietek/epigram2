@@ -252,13 +252,13 @@ a generic catamorphism, $\F{cataI}$, from $\F{inductionI}$.
 \AllI{\:}{(\DVar{\V{i}})}{& \V{X}}{\V{x}} &
     \DVar{\pair{\V{i}}{\V{x}}{}} \\
 \AllI{\:}{(\DConst{\V{K}})}{& \V{X}}{\V{k}} &
-    \DConst{K} \\
+    \DConst{\V{K}} \\
 \AllI{\:}{(\DProd{\V{D}}{\V{D'}})}{& \V{X}}{\pair{\V{d}}{\V{d'}}{}} &
     \DProd{\AllI{}{\V{D}}{\V{X}}{\V{d}}}{\AllI{}{\V{D'}}{\V{X}}{\V{d'}}} \\
 \AllI{\:}{(\DSigma{\V{S}}{\V{T}})}{& \V{X}}{\pair{\V{a}}{\V{b}}{}} &
     \AllI{}{(\V{T}\: \V{a})}{\V{X}}{\V{b}} \\
 \AllI{\:}{(\DPi{\V{S}}{\V{T}})}{& \V{X}}{\V{f}} &
-    \DPi{\V{S}}{(\LAM{s} \AllI{}{(\V{T}\: \V{s})}{\V{X}}{(\V{f}\: \V{s})})}
+    \DPi{\V{S}}{(\LAM{\V{s}} \AllI{}{(\V{T}\: \V{s})}{\V{X}}{(\V{f}\: \V{s})})}
 \end{array}
 }
 &
