@@ -4,7 +4,7 @@
 \begin{wstructure}
 !!! Need Help !!!
 <- Motivation
-    <- Desc: expressivity of simply-typed data-types: inductive types
+    <- Desc: expressivity of simply-typed datatypes: inductive types
         <- Values do not influence types
     /> Example: Vectors
         <- Cannot be defined by just induction
@@ -18,141 +18,135 @@
 \note{ Need care: motivating motivation of indexing. }
 
 So far, we have explored the well-known realm of inductive types. We
-have built upon the experience gained in using simply-typed languages,
-such as Haskell or OCaml. In our dependent setting, we provided these
-data-types by the mean of $\Desc$, a universe of descriptions. 
+have built upon our intuition of ML-like datatypes. In our dependent
+setting, we have provided these datatypes by the mean of $\Desc$, a
+universe of descriptions.
 
-While inductive types are the alpha and omega of simply-typed
-languages, evolving in a dependent setting fosters new
-opportunities. The typical example is bounded lists, also known as
+Evolving in a dependent setting fosters new opportunities for
+datatypes. The typical example is bounded lists, also known as
 vectors. A vector is a list decorated by its length. Having this
 information prevents hazardous operations, such as taking the head of
 an empty vector: the head function only takes vectors of length
-$\NatSuc{\V{n}}$, as enforced by its type. This is made possible by the
-very specificity of dependently-typed systems: terms -- the length --
-are allowed to influence types -- the vector type. \note{Reference
-  paper to cite about vectors in dependent types?}
+$\NatSuc{\V{n}}$, as enforced by its type. This is made possible by
+the specificity of dependent types: a term -- the length -- can
+influence a type -- the vector type.
 
-However, this new class of objects cannot be defined by mere
-induction. In the case of vectors, for instance, we have to define the
-whole \emph{family} of vector in one go: vectors of all sizes need to
-be defined at the same time. Where simply-typed languages have
-inductive types, in dependently typed programming the basic grammar of
-data-types should be that of inductive families of types. To this end, we
-rely on \emph{indexing}. We are going to transform the $\Desc$ universe into
-$\IDesc{\!}$, the universe of indexed descriptions. We express inductive families
-by the $\V{I} \To \IDesc{\V{I}}$ type.  \note{pwm: Vec might not be the best
-motivating example here, since it doesn't appear in the paper (more on that
-later). Come to think of it, this is entirely too vague without spelling out
-a concrete example.} 
+However, these datatypes cannot be defined by mere induction. In the
+case of vectors, for instance, we have to define the whole
+\emph{family} of vectors in one go: vectors of all sizes need to be
+defined at the same time. In dependently-typed languages, the basic
+grammar of datatypes is that of inductive families. To capture this
+grammar, we rely on \emph{indexing}. We are going to transform the
+$\Desc$ universe into $\IDesc{\!}$, the universe of indexed
+descriptions. We model inductive families by the $\V{I} \To
+\IDesc{\V{I}}$ type.
 
-\subsection{Desc, atomically}
-\label{sec:idesc-atomic-desc}
+%% \subsection{Desc, atomically}
+%% \label{sec:idesc-atomic-desc}
 
-\begin{wstructure}
-[Outdated: type former presentation instead]
-<- Adding hindx have introduced some duplication
-    <- indx == hindx 1
-    -> We can factor out commonalities 
-        /> Obtain an equivalent presentation
-        /> Still embeddable (refer to the Agda model)
-\end{wstructure}
+%% \begin{wstructure}
+%% [Outdated: type former presentation instead]
+%% <- Adding hindx have introduced some duplication
+%%     <- indx == hindx 1
+%%     -> We can factor out commonalities 
+%%         /> Obtain an equivalent presentation
+%%         /> Still embeddable (refer to the Agda model)
+%% \end{wstructure}
 
-\begin{wstructure}
-<- Also replacing '1 by 'const  [figure]
-    <- For convenience
-        <- 'const X equivalent to 'sigma X (\_ -> '1)
-        /> Easier to abstract
-            <- Extensionally same
-            /> 'const more useful in practice
-\end{wstructure}
+%% \begin{wstructure}
+%% <- Also replacing '1 by 'const  [figure]
+%%     <- For convenience
+%%         <- 'const X equivalent to 'sigma X (\_ -> '1)
+%%         /> Easier to abstract
+%%             <- Extensionally same
+%%             /> 'const more useful in practice
+%% \end{wstructure}
 
+%% Before moving on to indexed descriptions, we have to carry out some
+%% maintenance work on descriptions. We presented $\Desc$ as the grammar
+%% of inductive types. Hence, the codes closely follow this grammar. In
+%% the following, we adopt an alternative presentation. With
+%% $\DSigma{\!}{\!}$, we are actually \emph{quoting} a standard
+%% type-former, namely
 
-Before moving on to indexed descriptions, we have to carry out some
-maintenance work on descriptions. We presented $\Desc$ as the grammar
-of inductive types. Hence, the codes closely follow this grammar. In
-the following, we adopt an alternative presentation. With
-$\DSigma{\!}{\!}$, we are actually \emph{quoting} a standard
-type-former, namely
+%% $$\Bhab{\Sigma}{\PI{\V{S}}{\Set} \PI{\V{S}}{\Set} \Set}$$
 
-$$\Bhab{\Sigma}{\PI{\V{S}}{\Set} \PI{\V{S}}{\Set} \Set}$$
+%% In the alternative presentation, we go further and present all our
+%% codes as quotations of standard type-formers. This presentation is
+%% shown in Figure~\ref{fig:type-former-desc}. The reader will notice
+%% that we replace $\DUnit$ by a more general $\DConst{\!}$ code. Whereas
+%% $\DUnit$ was interpreted as the unit set, $\DConst{\V{X}}$ is
+%% interpreted as $\V{X}$, for any $\Bhab{\V{X}}{\Set}$. Extensionally,
+%% $\DConst{\V{X}}$ and $\DSigma{\V{X}}{\DUnit}$ are equivalent. However,
+%% $\DConst{\!}$ is more succinct. More importantly, $\DConst$ is
+%% \emph{first-order}, unlike its equivalent encoding. From a
+%% definitional perspective, we are giving more opportunities to the
+%% type-system, hence reducing the burden on the programmer. For the same
+%% reason, we introduce $\DProd{\!}{\!}$ that overlaps with
+%% $\DSigma{\!}{\!}$.
 
-In the alternative presentation, we go further and present all our
-codes as quotations of standard type-formers. This presentation is
-shown in Figure~\ref{fig:type-former-desc}. The reader will notice
-that we replace $\DUnit$ by a more general $\DConst{\!}$ code. Whereas
-$\DUnit$ was interpreted as the unit set, $\DConst{\V{X}}$ is
-interpreted as $\V{X}$, for any $\Bhab{\V{X}}{\Set}$. Extensionally,
-$\DConst{\V{X}}$ and $\DSigma{\V{X}}{\DUnit}$ are equivalent. However,
-$\DConst{\!}$ is more succinct. More importantly, $\DConst$ is
-\emph{first-order}, unlike its equivalent encoding. From a
-definitional perspective, we are giving more opportunities to the
-type-system, hence reducing the burden on the programmer. For the same
-reason, we introduce $\DProd{\!}{\!}$ that overlaps with
-$\DSigma{\!}{\!}$.
+%% This reorganisation is strictly equivalent to the previous one
+%% (Fig.~\ref{fig:hindx_desc}). Just as the previous version, it is also
+%% self-descriptive. We refer the reader to the companion technical
+%% report for details. In this finer-grained presentation, we can define
+%% $\DIndx{\!}$ and $\DHindx{\!}{\!}$ as follow:
 
-This reorganisation is strictly equivalent to the previous one
-(Fig.~\ref{fig:hindx_desc}). Just as the previous version, it is also
-self-descriptive. We refer the reader to the companion technical
-report for details. In this finer-grained presentation, we can define
-$\DIndx{\!}$ and $\DHindx{\!}{\!}$ as follow:
+%% \[\begin{array}{l@{\:\mapsto\:\:}l}
+%% \DIndx{\V{D}}         & \DProd{\DId}{\V{D}}                      \\
+%% \DHindx{\V{H}}{\V{D}}     & \DProd{(\DPi{\V{H}}{(\LAM{\_} \DId)})}{\V{D}}
+%% \end{array}
+%% \]
 
-\[\begin{array}{l@{\:\mapsto\:\:}l}
-\DIndx{\V{D}}         & \DProd{\DId}{\V{D}}                      \\
-\DHindx{\V{H}}{\V{D}}     & \DProd{(\DPi{\V{H}}{(\LAM{\_} \DId)})}{\V{D}}
-\end{array}
-\]
+%% Consequently, the examples previously developed can be
+%% straightforwardly translated into this new presentation. For example,
+%% here is the new definition of $\NatD$:
 
-Consequently, the examples previously developed can be
-straightforwardly translated into this new presentation. For example,
-here is the new definition of $\NatD$:
-
-\[\stk{
-\NatD : \Desc \\
-\NatD \mapsto \DSigma{(\EnumT{[ \NatZero, \NatSuc{\!} ]})}
-                     {[ \DUnit \quad \DId ]}
-}\]
+%% \[\stk{
+%% \NatD : \Desc \\
+%% \NatD \mapsto \DSigma{(\EnumT{[ \NatZero, \NatSuc{\!} ]})}
+%%                      {[ \DUnit \quad \DId ]}
+%% }\]
 
 
-In the following, we adopt this last version as our de
-facto universe of inductive types. In particular, we are going to
-evolve this presentation into an indexed one.
+%% In the following, we adopt this last version as our de
+%% facto universe of inductive types. In particular, we are going to
+%% evolve this presentation into an indexed one.
 
-\note{Shall we talk about the Type Theory being Desc Zero? or such story?}
+%% \note{Shall we talk about the Type Theory being Desc Zero? or such story?}
 
-\begin{figure}
+%% \begin{figure}
 
-\[\stk{
-\begin{array}{ll}
-\stk{
-\data \Desc : \Set \where                                      \\
-\;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
-    \DId            & \Desc                                    \\
-    \DConst{\!}     & \Set \To \Desc                           \\
-    \DProd{\!}{\!}  & \PI{\V{D}, \V{D'}}{\Desc} \Desc          \\
-    \DSigma{\!}{\!} & \PI{\V{S}}{\Set} \PIS{\V{S} \To \Desc} \Desc \\
-    \DPi{\!}{\!}    & \PI{\V{S}}{\Set} \PIS{\V{S} \To \Desc} \Desc 
-\end{array}
-}
-\vspace{0.2in}
-\\
-\stk{
-\descop{\_\:}{} : \Desc \To \Set \To \Set \\
-\begin{array}{@{}l@{\:=\:\:}ll}
-\descop{\DId}{\V{X}}          &  \V{X}                                           \\
-\descop{\DConst{\V{Z}}}{\V{X}}    &  \V{Z}                                           \\
-\descop{\DProd{\V{D}}{\V{D'}}}{\V{X}} &  \TIMES{\descop{\V{D}}{\V{X}}}{\descop{\V{D}\V{'}}{\V{X}}}       \\
-\descop{\DSigma{\V{S}}{\V{D}}}{\V{X}} &  \SIGMA{\V{s}}{\V{S}} \descop{\V{D}\: \V{s}}{\V{X}}          \\
-\descop{\DPi{\V{S}}{\V{D}}}{\V{X}}    &  \PI{\V{s}}{\V{S}} \descop{\V{D}\: \V{s}}{\V{X}}            
-\end{array}
-}
-\end{array}
-}\]
+%% \[\stk{
+%% \begin{array}{ll}
+%% \stk{
+%% \data \Desc : \Set \where                                      \\
+%% \;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
+%%     \DId            & \Desc                                    \\
+%%     \DConst{\!}     & \Set \To \Desc                           \\
+%%     \DProd{\!}{\!}  & \PI{\V{D}, \V{D'}}{\Desc} \Desc          \\
+%%     \DSigma{\!}{\!} & \PI{\V{S}}{\Set} \PIS{\V{S} \To \Desc} \Desc \\
+%%     \DPi{\!}{\!}    & \PI{\V{S}}{\Set} \PIS{\V{S} \To \Desc} \Desc 
+%% \end{array}
+%% }
+%% \vspace{0.2in}
+%% \\
+%% \stk{
+%% \descop{\_\:}{} : \Desc \To \Set \To \Set \\
+%% \begin{array}{@{}l@{\:=\:\:}ll}
+%% \descop{\DId}{\V{X}}          &  \V{X}                                           \\
+%% \descop{\DConst{\V{Z}}}{\V{X}}    &  \V{Z}                                           \\
+%% \descop{\DProd{\V{D}}{\V{D'}}}{\V{X}} &  \TIMES{\descop{\V{D}}{\V{X}}}{\descop{\V{D}\V{'}}{\V{X}}}       \\
+%% \descop{\DSigma{\V{S}}{\V{D}}}{\V{X}} &  \SIGMA{\V{s}}{\V{S}} \descop{\V{D}\: \V{s}}{\V{X}}          \\
+%% \descop{\DPi{\V{S}}{\V{D}}}{\V{X}}    &  \PI{\V{s}}{\V{S}} \descop{\V{D}\: \V{s}}{\V{X}}            
+%% \end{array}
+%% }
+%% \end{array}
+%% }\]
 
-\caption{Universe of descriptions based on Type-formers}
-\label{fig:type-former-desc}
+%% \caption{Universe of descriptions based on Type-formers}
+%% \label{fig:type-former-desc}
 
-\end{figure}
+%% \end{figure}
 
 \subsection{From Desc to IDesc}
 
@@ -170,7 +164,7 @@ grammar of functors in the category $\Set$. We have seen how to code
 inductive types in this setting. To describe an inductive family
 indexed by $\Bhab{\V{I}}{\Set}$, we use endofunctors on the category
 $\Set^{\V{I}}$. We call these \emph{indexed functors}. \note{Predicate
-  transformer anyone?} In this setting, $\V{I} \To \IDesc{\V{I}}$ is our
+  transformer anyone?} $\V{I} \To \IDesc{\V{I}}$ is our
 grammar for describing these functors. Hence, $\IDesc{\!}$ and its
 interpretation have the following types:
 
@@ -184,7 +178,7 @@ interpretation have the following types:
 Note that $\V{I} \To \IDesc{\V{I}}$ is isomorphic, up to interpretation, to an
 endofunctor on $\Set^{\V{I}}$. Indeed, $\V{I} \To \IDesc{\V{I}}$ is interpreted as
 $\V{I} \To \Set^{\V{I}} \To \Set$, which is isomorphic to $\Set^{\V{I}}
-\To \Set^{\V{I}}$. Fix-point of inductive families is defined over
+\To \Set^{\V{I}}$.The fix-point of inductive families is defined over
 these indexed functors, hence computing a fix-point of the entire
 \emph{family} of functors:
 
@@ -203,15 +197,11 @@ these indexed functors, hence computing a fix-point of the entire
 }\]
 
 
-However, we still have to define the actual grammar. This can be
-achieved by a minor evolution of $\Desc$
-(Fig.~\ref{fig:type-former-desc}). Indeed, the functorial nature of
-$\Desc$ is entirely captured by the $\DId$ code. We get an indexed
-functor by turning $\DId$ into an index-dependent $\DVar{\!}$
-code. The resulting code of $\IDesc{\!}$ is presented in
-Figure~\ref{fig:idesc}.
-
-The induction scheme on $\IDesc{\!}$ has the following type:
+However, we still have to define the actual grammar. We obtain it by
+evolving $\Desc$ to cope with indexing. The step-by-step
+transformation is described in our technical report. The code of
+$\IDesc{\!}$ is presented in Figure~\ref{fig:idesc}. The induction
+scheme on $\IDesc{\!}$ has the following type:
 
 \[
 \begin{array}{@{}ll}
@@ -301,9 +291,9 @@ catamorphism, $\F{cataI}$, from $\F{inductionI}$.
 
 %\begin{wstructure}
 %<- Tagged constructor choice
-%    <- Index available when defining the data-type
+%    <- Index available when defining the datatype
 %        -> Can influence the choice of constructors
-%        -> Dependently-typed data-types
+%        -> Dependently-typed datatypes
 %            <- term (index) influence types
 %    -> Two parts
 %        <- Always on the menu
@@ -320,10 +310,10 @@ catamorphism, $\F{cataI}$, from $\F{inductionI}$.
 %form for descriptions. This format follows the usual presentation of
 %inductive types as sum-of-product. With indexed description, this
 %definition can be generalized. Indeed, when defining an indexed
-%data-type, we have access to this index. Therefore, we can use this
+%datatype, we have access to this index. Therefore, we can use this
 %index to influence the choice of constructors. This captures the
-%essence of dependent data-types: a term -- the index -- has the
-%ability to influence the data-type.
+%essence of dependent datatypes: a term -- the index -- has the
+%ability to influence the datatype.
 %
 %For convenience, we divide a tagged indexed description in two parts:
 %first, the constructors that do not depend on the index; then, the
@@ -389,9 +379,8 @@ catamorphism, $\F{cataI}$, from $\F{inductionI}$.
         -> This applies to all previous examples
 \end{wstructure}
 
-In order to gain some intuition with $\IDesc{\!}$, let us re-implement
-the pattern functor of natural numbers. This follows the implementation of
-$\NatD$ from \ref{sec:idesc-atomic-desc}:
+In order to gain some intuition of $\IDesc{\!}$, let us re-implement
+the pattern functor of natural numbers:
 
 \[\stk{
 \NatD : \IDesc{\Unit} \\
@@ -399,11 +388,12 @@ $\NatD$ from \ref{sec:idesc-atomic-desc}:
                      {[ (\DConst{\Unit}) \quad (\DVar{\Void}) ]}
 }\]
 
-Because $\Nat$ is just an inductive type, $\NatD$ represents a
-$\Unit$-indexed functor. Therefore, the recursive
-argument is materialised by $\DVar{\Void}$, where we were using $\DId$
-in the $\Desc$ presentation. Indeed, all inductive types can be
-translated into $\IDesc{\!}$ in exactly this way.
+Because $\Nat$ is just an inductive type, $\NatD$ is a $\Unit$-indexed
+functor. Therefore, the recursive argument is materialised by
+$\DVar{\Void}$, where we were using $\DIndx$ in the previous
+presentation. This transformation generalizes to all inductive
+types. Moreover, we gain the ability to write mutually recursive
+inductive types.
 
 
 
@@ -412,13 +402,13 @@ translated into $\IDesc{\!}$ in exactly this way.
 \begin{wstructure}
 <- Levitation [figure]
     <- Following Desc encoding
-        /> Note: simple data-type
+        /> Note: simple datatype
             -> Live in IDesc 1
     -> Behind the scene, relies on the special purpose switchD
 \end{wstructure}
 
-If we note that, for any $\V{I}$, $\IDesc{\V{I}}$ itself is merely an inductive 
-\emph{type} then we can certainly define its encoding in $\IDesc{\Unit}$:
+Note that $\IDesc{\V{I}}$ itself is merely an inductive type. Hence,
+we can describe it in $\IDesc{\Unit}$:
 
 \[\stk{
 \IDescD : \PI{\V{I}}{\Set} \IDesc{\Unit} \\
@@ -441,10 +431,9 @@ If we note that, for any $\V{I}$, $\IDesc{\V{I}}$ itself is merely an inductive
 \end{array}
 }\]
 
-Using this description we can repeat the act of levitation 
-from section~\ref{sec:desc-levitate}. As before we rely on a special purpose 
-$\F{switchID}$ operator to build the finite function space
-$\bigRedBracket{\ldots}$. 
+Therefore, this universe is self-describing, hence can be
+levitated. As before, we rely on a special purpose $\F{switchID}$
+operator to build the finite function space $\bigRedBracket{\ldots}$.
 
 \paragraph{Vectors:}
 
@@ -453,12 +442,9 @@ $\bigRedBracket{\ldots}$.
 \newcommand{\VecCons}[2]{\etag{\CN{vcons}}\:#1\:#2}
 
 So far, the examples we have seen lives in $\IDesc{\Unit}$, hence are
-not using any indexing. We remedy this by encoding the vectors:
-
-Recall that the constructors of $\D{Vec}$. The constructors $\VecNil$ and
-$\VecCons$ are only defined for an index $\NatZero$ and $\NatSuc$ 
-respectively.:
-
+not using any indexing. We remedy this by encoding the vectors. Recall
+that the constructors $\VecNil$ and $\VecCons$ are only defined for an
+index $\NatZero$ and $\NatSuc$ respectively.:
 
 \[
 \stk{
@@ -470,8 +456,8 @@ respectively.:
 }
 \]
 
-One way to code constrained data-type is to appeal to equality. The
-constraints are therefore captured by equations in the data-type. In
+One way to code constrained datatype is to appeal to equality. The
+constraints are therefore captured by equations in the datatype. In
 this case, we obtain the following definition:
 
 \[\stk{
@@ -487,18 +473,18 @@ this case, we obtain the following definition:
 \end{array}
 }\]
 
-If the $\VecNil$ tag is chosen, a proof must be provided that the index is equal
-to $\NatZero$. In the $\VecCons$ case, we first store an
-element $\V{m}$ of $\Nat$, with a $\DSigma{\!}{\!}$. However, the
-constraint stipulates that $\V{m}$ cannot be \emph{any} natural
-numbers: it must be ``the index minus one''. This translates into the
-constraint $\V{n} \PropEq \NatSuc{\V{m}}$.
+In the $\VecNil$ case, a proof must be provided that the index is
+equal to $\NatZero$. In the $\VecCons$ case, we first store an element
+$\V{m}$ of $\Nat$. However, the constraint stipulates that $\V{m}$
+cannot be \emph{any} natural numbers: it must be ``the index minus
+one''. This translates into the constraint $\V{n} \PropEq
+\NatSuc{\V{m}}$.
 
 However, one could, quite rightfully, be worried by the introduction
 of equalities in the picture. In a programming context, equalities
 haunt us, begging for proofs. Hence, whereas the developer typed a
-constructor-constrained data-type, the elimination form will involve
-equalities and their proofs. As much as possible, one would rather
+constructor-constrained datatype, the elimination form will involve
+equalities and their proofs. As much as possible, one would like to
 avoid suffering from this burden. However, the equalities introduced
 here are rather special: they are \emph{equations} constraining
 variables to certain terms. \citet{goguen:pattern-matching} have
@@ -520,7 +506,7 @@ because we are \emph{storing} the index of the inductive family.
 However, \emph{inductive families need not store their
   indices}~\cite{brady:index-inductive-families}.  By examining the
 incoming index, we can apply the \emph{forcing} and \emph{de-tagging}
-optimisations to our initial definition of $\D{Vec}$ gives the
+optimisations to our initial definition of $\D{Vec}$. This gives the
 following, equivalent definition:
 
 \[\stk{
@@ -532,11 +518,8 @@ following, equivalent definition:
                                        
 }\]
 
-The equations (and constructors) have simply disappeared. Note that it is
-straightforward to turn this definition into a tagged form, where in each
-case, only one constructor choice is available to the developer. In another
-example, $\Fin{\!}$, we can force, but not detag, since both $\FinZero$ and 
-$\FinSuc{\!}$ both target $\NatSuc{\!}$:
+The equations (and constructors) have simply disappeared. A similar
+example is $\Fin{\!}$, specified by:
 
 \[
 \stk{
@@ -545,8 +528,12 @@ $\FinSuc{\!}$ both target $\NatSuc{\!}$:
     \FinZero      & _{\PI{\V{n}}{\Nat}}\Fin{(\NatSuc{\V{n}})}   \\
     \FinSuc{\!}   & _{\PI{\V{n}}{\Nat}}\Fin{\V{n}} \To \Fin{(\NatSuc{\V{n}})}
 \end{array}
-\vspace{0.1in}
-\\
+}\]
+
+In this case, we can apply forcing, but not detagging, since both
+$\FinZero$ and $\FinSuc{\!}$ both target $\NatSuc{\!}$:
+
+\[\stk{
 \FinD : \Nat \To \IDesc{\Nat} \\
 \begin{array}{@{}llll}
 \FinD\: \NatZero     & = & \multicolumn{2}{l}{\DSigma{(\EnumT{[]})}{\Void} } \\
@@ -560,31 +547,27 @@ $\FinSuc{\!}$ both target $\NatSuc{\!}$:
 \end{array}
 }\]
 
-We should
-precise that forcing a description is not guaranteed to remove all
-constraints. It is subject to future work to see if constraints can be
-entirely eradicated, or presented more conveniently to the developer.
-Finally, it is worth mentioning that these optimisations are 
-\emph{source-to-source} transformations on descriptions.
+We should precise that forcing a description is not guaranteed to
+remove all constraints. It is subject to future work to see if
+constraints can be entirely eradicated, or presented more conveniently
+to the developer.  Finally, it is worth mentioning that these
+optimisations are \emph{source-to-source} transformations on
+descriptions.
 
 \paragraph{Tagged Indexed Descriptions:}
 
-In Section~\ref{sec:desc-examples}, we have defined a \emph{tagged}
-form for descriptions. This format follows the usual presentation of
-inductive types as sum-of-product. With indexed description, this
-definition can be generalized. Indeed, when defining an indexed
-data-type, we have access to this index. Therefore, we can use this
-index to influence the choice of constructors. This captures the
-essence of dependent data-types: a term -- the index -- has the
-ability to influence the data-type.
+When defining an indexed datatype, we have access to its
+index. Therefore, we can use this index to influence the choice of
+constructors. This captures the essence of dependent datatypes: a
+term -- the index -- has the ability to influence the datatype. We
+define tagged indexed descriptions to capture this specificity.
 
 For convenience, we divide a tagged indexed description in two parts:
 first, the constructors that do not depend on the index; then, the
 constructors that do. The non-dependent part mirrors the definition
-for non-indexed descriptions: we are provided a finite choice of
-constructors. The index-depend part simply indexes the choice of
-constructors by $\V{I}$. Hence, by inspecting the index, it is
-possible to enable or disable the constructors. 
+for non-indexed descriptions. The index-depend part simply indexes the
+choice of constructors by $\V{I}$. Hence, by inspecting the index, it
+is possible to enable or disable the constructors.
 
 \[\stk{
  \TagIDesc{\V{I}}  \mapsto \TIMES{\ATagIDesc{\V{I}}}{\ITagIDesc{\V{I}}} \\
@@ -599,10 +582,10 @@ possible to enable or disable the constructors.
     What can we say here we haven't with Fin?
 \end{wstructure}
 
-In the case of a tagged $\D{Vec}$, for instance, for the index $\NatZero$, we
-would only propose the constructor $\ListNil$. Similarly, for
-$\NatSuc{n}$, we would only propose the constructor $\ListCons{\!}{\!}$. We
-will see a concrete example of this in the following example. 
+In the case of a tagged $\D{Vec}$, for instance, for the index
+$\NatZero$, we would only propose the constructor
+$\ListNil$. Similarly, for $\NatSuc{n}$, we would only propose the
+constructor $\ListCons{\!}{\!}$.
  
 \paragraph{Typed expressions:}
 
@@ -649,8 +632,8 @@ consider two types, natural numbers and booleans:
 \]
 
 An expression of this language is either a value, a conditional
-expression, addition of numbers, or comparison of numbers. Informally,
-their type is the following:
+expression, an addition of numbers, or a comparison of
+numbers. Informally, their type is the following:
 
 \[
 \begin{array}{l@{\::\:\:}l}
@@ -661,14 +644,13 @@ their type is the following:
 \end{array}
 \]
 
-The function $\Val{}$, used in the definition of $\Eval{}$, simply
-maps an object type $ty$ to the corresponding type in the host
-language. Hence, the argument of $\Eval{}$ are ensured to be of the
-expected type. We assume $\Nat$ and $\Bool$ represent natural numbers
-and booleans in the host language. Further, we also assume the
-existence of an addition and comparison operator in $\Nat$,
-respectively named $\F{plusHost}$ and $\F{leHost}$. We define $\Val{}$
-as follows:
+The function $\Val{\!}$, used in the definition of $\Eval{\!}$, simply
+maps a type $ty$ of the object language to the corresponding type in
+the host language. Hence, the arguments of $\Eval{}$ are ensured to be
+of the expected type. We assume that $\Nat$ and $\Bool$ represent
+natural numbers and booleans in the host language, equipped with an
+addition operation $\F{plusHost}$ and a comparison function
+$\F{leHost}$. We define $\Val{}$ as follows:
 
 \[\stk{
 \Val{} : \Ty \To \Set \\
@@ -678,10 +660,10 @@ as follows:
 \end{array}
 }\]
 
-In our universe of descriptions, this data-type is represented by a
+In our universe of descriptions, this datatype is represented by a
 tagged indexed description. We use the index to carry the type: the
 resulting description is indexed by $\Ty$. We observe that some
-constructors are ``polymorphic'', namely $\Econd{}{}{}$ and $\Eval{}$. On the
+constructors are always defined, namely $\Econd{}{}{}$ and $\Eval{}$. On the
 other hand, the $\Eplus$ and $\Ele$ constructors are
 index-dependent. $\Eplus$ is defined if and only if the result type --
 the index -- is $\Enat$, whereas $\Ele$ is defined if and only if the
@@ -759,9 +741,7 @@ evaluator is:
 
 Where we overload the notation $\toIDesc{\V{TID}}$ to denote the
 indexed description computed from the tagged indexed description
-$\V{TID}$.
-
-The type of $\F{eval}$ is strikingly similar to a
+$\V{TID}$. The type of $\evalH$ is strikingly similar to a
 catamorphism. Indeed, implementing a single step of evaluation -- the
 algebra -- is sufficient, as $\F{cataI}$ gives, for free, the full
 evaluator. The implementation is as follows:
@@ -788,11 +768,6 @@ evaluator. The implementation is as follows:
                                  \V{ty}\: 
                                  \V{term}
 }\]
-\note{pwm: $\evalOne$ rather illustrates my point about the 2 types of
-  IFunc floating around, $\idescop{\_}{}{}$ is defined using the 1st
-  notion, and used it here as if it were the 2nd. pierre: in this
-  case, it was a typo. But you're right, there is two notions and we
-  probably want to clarify where these things live.}
 
 \begin{wstructure}
     /> Closed term
@@ -804,14 +779,14 @@ evaluator. The implementation is as follows:
 \end{wstructure}
 
 Hence, we have defined the syntax of a typed language of arithmetic
-and boolean operations. We have given its semantics through an
+and boolean expressions. We have given its semantics through an
 evaluation function. Provided a one step semantic of the language, the
-big step evaluation is granted without effort thanks to the generic
-catamorphism. 
+big step interpreter is granted without effort thanks to the generic
+catamorphism.
 
 However, so far, we are only able to define and manipulate
 \emph{closed} terms. By abstracting over $\Val{}$, it is possible to
-build and manipulate \emph{open} terms, that is, terms with symbolic
+build and manipulate \emph{open} terms, that is, terms with
 variables. On the model of $\Val{}$, we define $\Var{}{}$:
 
 \[\stk{
@@ -823,8 +798,7 @@ Whereas $\Val{}$ was mapping the type to the corresponding host type,
 $\Var{}{}$ maps types to a finite set. The finite set -- the context
 -- contains closed terms. A variable is therefore a $\Eval{}$ that
 contains a pointer to a particular element of the finite set -- an
-element of $\EnumT{\V{dom}}$. The extra argument to $\Var{}{}$ is the
-domain of this context.
+element of $\EnumT{\V{dom}}$. 
 
 Consequently, replacing $\Val{\V{ty}}$ by
 $(\SUM{\Val{\V{ty}}}{\Var{\V{dom}}{\V{ty}}})$ in Figure~\ref{fig:hexpr-full} turns
@@ -846,17 +820,15 @@ indexed description, called $\HExprVarD{\V{dom}}$.
 Again, we would like to give a semantics to this extended language. We
 proceed in two steps: first, we replace the variables by their value
 in the context; then, we evaluate the resulting closed term. Thanks to
-$\evalH$, we are already able to solve the second problem. Let us
-focus on discharging variables from the context. Again, we can
-subdivide this problem: first, we need the ability to discharge a
-single variable from the context; then, we apply this $\discharge$
-function on every variables in the term.
+$\evalH$, the second problem is already solved. Let us focus on
+discharging variables from the context. Again, we can subdivide this
+problem: first, discharging a single variable from the context; then,
+applying this $\discharge$ function on every variables in the term.
 
-The $\discharge$ function is relative to the required type, the domain
-of the context, and a context containing values of the corresponding
-type. Its action is to map variables to their value in context, and
-directly return constant values. This corresponds to the following
-function:
+The $\discharge$ function is relative to the required type and a
+context of the right type. Its action is to map values to themself,
+and variables to their value in context. This corresponds to the
+following function:
 
 \[\stk{
 \begin{array}{@{}ll}
@@ -882,9 +854,8 @@ function:
                     -> We should try to get it
 \end{wstructure}
 
-Having implemented the local $\discharge$ operation, we are left with
-applying it over all variables of the term. The type of this operation
-is the following:
+We are now left with applying $\discharge$ over all variables of the
+term. The type of this operation is the following:
 
 \newcommand{\substH}{\F{substExpr}}
 \newcommand{\domNat}{dom_{\CN{nat}}}
@@ -921,14 +892,13 @@ Where $\GammaSpi$ corresponds to a context, defined by:
 }\]
 
 
-Abstracting away the book-keeping introduced by the context, this
-definition looks familiar. Indeed, it is extremely similar to a
-monadic \bind. This is not surprising as we are defining a first-order
-syntax with variables: our data-type enjoys more structure than what
-we are given. In particular, this is reminiscent of a free monad,
-where $\Eval{}$ is the \return\ introducing variables. The substitution
-$\V{\sigma}$ is implemented from $\discharge$, by picking the domain and
-context corresponding to the type:
+Abstracting away the book-keeping introduced by contexts, this
+definition looks familiar. It is similar to a monadic \bind. This is
+not surprising as we are defining a first-order syntax with variables:
+our datatype enjoys more structure than what we are given. We are
+facing a free monad, where $\Eval{}$ is the \return\ introducing
+variables. For convenience, we wrap $\discharge$ in a $\V{\sigma}$
+function that picks the context of the right type:
 
 \[
 \F{$\sigma$}\: \V{dom}\: \gammaNat\: \gammaBool\: \V{ty}\: \V{var} \mapsto
@@ -939,9 +909,8 @@ Where $\F{$\gamma$}_{\V{ty}}$ is short for
  $\caseB{\V{ty}}{\Enat  \To \gammaNat \\
                  \Ebool \To \gammaBool}$
 
-Instead of implementing $\substH$ in this special case, we can
-implement it in a generic setting, a \emph{free indexed-monad construction}
-that we will see in the next section.
+Instead of implementing $\substH$ in this special case, we are now
+going to implement the \emph{free indexed-monad construction}.
 
 \subsection{Free IMonad}
 
@@ -956,14 +925,11 @@ that we will see in the next section.
         <- show implementation?? (space! space!)
 \end{wstructure}
 
-In this section, we develop more structure for our indexed
-data-types. In Section~\ref{sec:desc-free-monad}, we have built a free
-monad operation for simple descriptions. Building on this experience,
-we are going to present its equivalent in the indexed world. The
-process is the same. Namely, given an indexed functor, we derive the
-indexed functor coding its free monad: \note{pwm: Whoa there. Maybe we
-  should say something about IMonads in general before we get to this
-  point?}
+In Section~\ref{sec:desc-free-monad}, we have built a free monad
+operation for simple descriptions. The process is similar in the
+indexed world. Namely, given an indexed functor, we derive the indexed
+functor coding its free monad: \note{pwm: Whoa there. Maybe we should
+  say something about IMonads in general before we get to this point?}
 
 \[\stk{
 \begin{array}{ll}
@@ -999,6 +965,7 @@ signature is the following:
 \end{array}
 \]
 
+We refer the reader to the Agda model for the actual implementation.
 
 \subsubsection{Examples}
 
@@ -1018,17 +985,16 @@ signature is the following:
 \end{wstructure}
 
 In Section~\ref{sec:idesc-examples}, we had the intuition that our
-datatypes $\HExprD$ and $\HExprVarD{\V{dom}}$ enjoy a monadic structure. We had
-identified the variable substitution operation as the \bind\ of a free
-monad. The definition of $\substI$ above confirms our intuition: using
-$\substI$, we should easily obtain $\substH$. To do so, we first have
-to massage the definition of our data-type, to exhibit its monadic
-structure.
+datatypes $\HExprD$ and $\HExprVarD{\V{dom}}$ enjoy a monadic
+structure. We had identified the variable substitution operation as
+the \bind\ of a free monad. To exhibit its monadic structure, we first
+have to massage the definition of our datatype.
 
-As previously mentioned, we identify $\Eval{}$ as the \return\ of the
-free monad, while the other components are the action of the monad. As
-a result, the definition is similar to $\HExprD$ presented in
-Figure~\ref{fig:hexpr-full}, replacing $\HExprAD$ with $\HExprAFreeD$:
+As previously mentioned, we identify $\Eval{}$ with the \return\ of
+the free monad, while the other components are the action of the
+monad. As a result, the definition is similar to $\HExprD$ presented
+in Figure~\ref{fig:hexpr-full}, replacing $\HExprAD$ by
+$\HExprAFreeD$:
 
 \[\stk{
 \HExprAFreeD : \ATagIDesc{\Ty} \\
@@ -1045,8 +1011,8 @@ Figure~\ref{fig:hexpr-full}, replacing $\HExprAD$ with $\HExprAFreeD$:
                  }
 }\]
 
-The resulting data-type is called $\HExprFreeD$. By a simple unfolding
-of definition, we note that $\FreeIMonad{\HExprFreeD}{\Ty}{\Val{}}$
+We call this datatype $\HExprFreeD$. By a simple unfolding of
+definition, we note that $\FreeIMonad{\HExprFreeD}{\Ty}{\Val{}}$
 corresponds to the syntax of closed terms, $\HExprD$. Similarly,
 $\FreeIMonad{\HExprFreeD}{\Ty}{\SUM{\Val{\!}}{\Var{\V{dom}}{\!}}}$
 corresponds to expressions with variables, $\HExprVarD{\V{dom}}$.
@@ -1063,9 +1029,8 @@ corresponds to expressions with variables, $\HExprVarD{\V{dom}}$.
 The evaluator for closed terms we implemented in
 Section~\ref{sec:idesc-examples} remains unchanged. It reduces closed
 terms in $\FreeIMonad{\HExprFreeD}{\Ty}{\Val{}}\: \V{ty}$ to values in
-$\Val{\V{ty}}$. We are therefore left with implementing $\substH$. We
-simply have to fill in the right arguments to $\substI$, the type
-guiding us:
+$\Val{\V{ty}}$. We are left with implementing $\substH$. We simply
+have to fill in the right arguments to $\substI$, the type guiding us:
 
 
 \[\stk{
@@ -1086,16 +1051,15 @@ guiding us:
       \end{array}
 }\]
 
-Hence, we have completed our implementation of the evaluator for open
-terms. We started with a well-typed language of arithmetical
-expressions. We have seen how to take advantage of indexes to define
-type-safe constructors. Then, we have implemented an evaluator for
-closed term, based on the generic catamorphism function. Having built
-an open term representation, we wanted a substitution operation, in
-order to close open terms in a context. Again, we have implemented
-this operation with the generic substitution operator. Hence, without
-much efforts, we have described the syntax of a well-typed language,
-together with its semantics.
+Hence completing our implementation of the open terms interpreter. We
+have defined a well-typed language of arithmetical expressions, taking
+advantage of indexing. Then, we have implemented an evaluator for
+closed term, based on the generic catamorphism function. Using the
+free monad construction, we have automatically derived the language of
+open terms. Using its monadic structure, we have implemented the
+interpreter for open terms in context. Hence, without much efforts, we
+have described the syntax of a well-typed language, together with its
+semantics.
 
 \begin{wstructure}
 <- IDesc
@@ -1112,8 +1076,8 @@ together with its semantics.
 
 Another instance of free monad is $\IDesc{\!}$ itself. Indeed,
 $\DVar{\!}$ is nothing but the \return. The remaining constructors are
-simply the pattern functor, trivially indexed by $\Unit$. Hence, we
-describe this functor by the following code:
+the carrier functor, trivially indexed by $\Unit$. The carrier functor
+is described as follow:
 
 \[\stk{
 \IDescFreeD : \ATagIDesc{\Unit} \\
@@ -1140,3 +1104,9 @@ Then, we get $\IDesc$ by building its free monad:
 }\]
 
 
+In this section, we have presented the universe of indexed
+description. It embraces indexed families of types and, as such,
+allows us to write dependent datatypes. Hence, we have presented
+several example of indexed datatypes. In this context, we have
+presented the free monad construction, together its monadic
+operations.
