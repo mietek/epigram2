@@ -243,6 +243,8 @@ do not handle substitutions correctly \citep{norvig_correctingwidespread_1991}.
 
 \section{Abstract nonsense}
 
+\subsection{Judgments}
+
 Let $\J$ be a set of judgments, $\K$ a set of sorts, and for each $K \in \K$
 let $\V_K$ be a set of variables and $\D_K$ a set of objects.
 We assume we have a judgment $D \ok_K$ for every $K \in \K$ and $D \in \D_K$. 
@@ -301,6 +303,25 @@ $$\name{Lookup}
        {\Gamma \entails J}.$$
 Thus $\sem{v D}$ is the set of atomic judgments that hold if the declaration
 $v D$ is in the context.
+
+
+If $J$ and $J'$ are judgments and $v D$ is a declaration, then
+we define judgments $J \wedge J'$, $\fatsemi J$ and $v D \entails J$ thus:
+$$\Rule{J \quad J'}{J \wedge J'}
+  \qquad
+  \Rule{\Gamma \fatsemi \entails J}
+       {\Gamma \entails \fatsemi J}
+  \qquad
+  \Rule{\Gamma, v D \entails J}
+       {\Gamma \entails (v D \entails J)}. 
+$$
+We do not add elimination rules to make proofs by induction on the structure
+of derivations easier, but they will be admissible.
+Note that we omit the context from rules if it is constant throughout.
+
+
+
+\subsection{Increasing information}
 
 Let $\semidrop$ be a partial function from contexts and natural numbers to
 contexts, defined by
@@ -370,6 +391,9 @@ Now by stability applied to $\gamma_1 J$ using
 $\gamma_2 : \Gamma_1 \lei \Gamma_2$, we have
 $\Gamma_2 \semidrop n \entails \gamma_2\gamma_1\sem{v D}$ .
 \end{proof}
+
+
+\subsection{Problems}
 
 A \define{problem domain} $R_\le$ is a set $R$ equipped with a relation $\le$
 such that $R$ is closed under substitution. 
@@ -1057,27 +1081,26 @@ $$\sigma ::= .\tau ~||~ \forall\alpha~\sigma ~||~ \letS{\alpha}{\tau}{\sigma}.$$
 We use explicit definitions in type schemes to avoid the need for substitution
 in the type inference algorithm. 
 
-We now define a new judgment form $\Gamma \entails \sigma \scheme$ ($\sigma$ is
-a valid scheme in $\Gamma$) by the rules in Figure~\ref{fig:schemeValidityRules}.
-We also observe the further sanity condition
-$\Gamma \entails \sigma \scheme$ implies $\Gamma \entails \valid$.
+We define a new judgment $\sigma \scheme$
+% ($\sigma$ is a valid scheme in $\Gamma$)
+by the rules in Figure~\ref{fig:schemeValidityRules}.
+% We also observe the further sanity condition
+% $\Gamma \entails \sigma \scheme$ implies $\Gamma \entails \valid$.
 
 \begin{figure}[ht]
 \boxrule{\Gamma \entails \sigma \scheme}
 
 $$
-\Rule{\Gamma \entails \tau \type}
-     {\Gamma \entails .\tau \scheme}
+\Rule{\tau \type}
+     {.\tau \scheme}
 \qquad
-\Rule{\Gamma \entails \sigma \scheme}
-     {\Gamma \entails \forall\alpha~\sigma \scheme}
+\Rule{\hole{\alpha} \entails \sigma \scheme}
+     {\forall\alpha~\sigma \scheme}
 $$
 
 $$
-\Rule{\Gamma \entails \sigma \scheme
-      \quad
-      \Gamma \entails \tau \type}
-     {\Gamma \entails \letS{\alpha}{\tau}{\sigma} \scheme}
+\Rule{\upsilon \type   \quad  (\alpha \defn \upsilon \entails \sigma \scheme)}
+     {\letS{\alpha}{\upsilon}{\sigma} \scheme}
 $$
 
 \caption{Rules for scheme validity}
@@ -1085,6 +1108,7 @@ $$
 \end{figure}
 
 
+\TODO{Get rid of the specialisation judgment and specialise on lookup instead.}
 The judgment $\Delta \entails \sigma \succ \tau$, defined in
 Figure~\ref{fig:genericInstRules}, means that $\sigma$ has
 generic instance $\tau$ obtained by substituting $\Delta$-types
