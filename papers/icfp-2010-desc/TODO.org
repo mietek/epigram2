@@ -21,6 +21,9 @@ I don't know where to write this down.
 If it hasn't been translated into universe polymorphism
 
 * Janitor service
+** TODO Footnote the address of the Agda model
+** TODO s/~/\:/
+** TODO Capitalized titles
 ** TODO switchD elaboration rule is in a bad state
 ** TODO Look for inlining figures
 ** TODO Ispell

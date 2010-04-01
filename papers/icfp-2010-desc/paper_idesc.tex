@@ -20,7 +20,7 @@ have built upon our intuition of ML-like datatypes. In our dependent
 setting, we have provided these datatypes by the mean of $\Desc$, a
 universe of descriptions.
 
-Evolving in a dependent setting fosters new opportunities for
+Working with dependent types fosters new opportunities for
 datatypes. The typical example is bounded lists, also known as
 vectors. A vector is a list decorated by its length. Having this
 information prevents hazardous operations, such as taking the head of
@@ -34,10 +34,7 @@ case of vectors, for instance, we have to define the whole
 \emph{family} of vectors in one go: vectors of all sizes need to be
 defined at the same time. In dependently-typed languages, the basic
 grammar of datatypes is that of inductive families. To capture this
-grammar, we rely on \emph{indexing}. We are going to transform the
-$\Desc$ universe into $\IDesc{\!}$, the universe of indexed
-descriptions. We model inductive families by the $\V{I} \To
-\IDesc{\V{I}}$ type.
+grammar, we rely on \emph{indexing}.
 
 %% \subsection{Desc, atomically}
 %% \label{sec:idesc-atomic-desc}
@@ -157,14 +154,14 @@ descriptions. We model inductive families by the $\V{I} \To
             <- Where the functor is built
 \end{wstructure}
 
-In the previous section, we have presented the $\Desc$ universe as the
+In the previous section, we have presented the $\Desc$ universe as a
 grammar of functors in the category $\Set$. We have seen how to code
 inductive types in this setting. To describe an inductive family
 indexed by $\Bhab{\V{I}}{\Set}$, we use endofunctors on the category
 $\Set^{\V{I}}$. We call these \emph{indexed functors}. \note{Predicate
-  transformer anyone?} $\V{I} \To \IDesc{\V{I}}$ is our
-grammar for describing these functors. Hence, $\IDesc{\!}$ and its
-interpretation have the following types:
+  transformer anyone?} $\V{I} \To \IDesc{\V{I}}$ is our grammar for
+describing these functors. Hence, $\IDesc{\!}$ and its interpretation
+have the following types:
 
 \[\stk{
 \data \IDesc{(\Bhab{\V{I}}{\Set})} : \Set \where \:\ldots \\
@@ -198,12 +195,12 @@ these indexed functors, hence computing a fixpoint of the entire
 However, we still have to define the actual grammar. We obtain it by
 evolving $\Desc$ to cope with indexing. \note{Say something about the
   transformation} The code of $\IDesc{\!}$ is presented in
-Figure~\ref{fig:idesc}. The induction scheme on $\IDesc{\!}$ has the
-following type:
+Figure~\ref{fig:idesc}. Induction on indexed descriptions is defined
+by:
 
 \[\stk{
 \begin{array}{@{}ll}
-\F{inductionI} : & _{\Bhab{\V{I}}{\Set}}
+\F{inductionI} : & _{\PI{\V{I}}{\Set}}
                    \PITEL{\V{R}}{\V{I} \To \IDesc{\V{I}}}
                    \PI{\V{P}}{\SIGMA{\V{i}}{\V{I}} \IMu{\V{I}}{\V{R}}{\!} \To \Set} \\
                  & (      \PITEL{\V{i}}{\V{I}} 
@@ -220,7 +217,7 @@ following type:
                    \V{P}\: \pair{\V{i}}{\V{x}}{}
 \end{array} \\
 \F{inductionI}\: \V{R}\: \V{P}\: \V{ms}\: \V{i}\: (\Con{\V{xs}}) =  \\
-\qquad
+\quad
     \V{ms}\: \V{i}\: \V{xs}\: (\allI{}
                                     {\V{R}\: \V{i}}
                                     {\IMu{\V{I}}{R}{}}
@@ -229,8 +226,8 @@ following type:
                                     {\V{xs}})
 }\]
 
-Where the operators $\AllI{\!}{\!}{\!}{\!}$ and
-$\allI{\!}{\!}{\!}{\!}{\!}{\!}$ are defined in
+Where the operators $\AllI{}{\!}{\!}{}$ and
+$\allI{}{\!}{\!}{\!}{\!}{}$ are presented in
 Figure~\ref{fig:allI-predicates}. As for descriptions, we can compute
 a generic catamorphism, $\F{cataI}$, from $\F{inductionI}$.
 
@@ -242,7 +239,7 @@ a generic catamorphism, $\F{cataI}$, from $\F{inductionI}$.
 %%
 \stk{
 \begin{array}{@{}ll}
-\AllI{\!}{\!}{\!}{\!} : & _{\Bhab{\V{I}}{\Set}}
+\AllI{\!}{\!}{\!}{\!} : & _{\PI{\V{I}}{\Set}}
                           \PITEL{\V{D}}{\IDesc{\V{I}}}
                           \PI{\V{X}}{\V{I} \To \Set} \\
                         & \idescop{\V{D}}{\V{I}}{\V{X}} \To
@@ -265,7 +262,7 @@ a generic catamorphism, $\F{cataI}$, from $\F{inductionI}$.
 %%
 \stk{
 \begin{array}{@{}ll}
-\allI{\!}{\!}{\!}{\!}{\!}{\!} : & _{\Bhab{\V{I}}{\Set}}
+\allI{\!}{\!}{\!}{\!}{\!}{\!} : & _{\PI{\V{I}}{\Set}}
                                   \PITEL{\V{D}}{\IDesc{\V{I}}}
                                   \PITEL{\V{X}}{\V{I} \To \Set} 
                                   \PI{\V{R}}{\TIMES{\V{I}}{\V{X}} \To \Set} \\
@@ -329,7 +326,7 @@ a generic catamorphism, $\F{cataI}$, from $\F{inductionI}$.
 \stk{
 \idescop{\_\:}{}{} :_{\PI{\V{I}}{\Set}} \IDesc{\V{I}} \To (\V{\V{I}} \To \Set) \To \Set                  \\
 \begin{array}{@{}l@{\:=\:\:}ll}
-\idescop{\DVar{\V{i}}}{\V{I}}{\V{P}}      &  \V{P}~\V{i}                                                 \\
+\idescop{\DVar{\V{i}}}{\V{I}}{\V{P}}      &  \V{P}\: \V{i}                                           \\
 \idescop{\DConst{\V{X}}}{\V{I}}{\V{P}}    &  \V{X}                                                   \\
 \idescop{\DProd{\V{D}}{\V{D'}}}{\V{I}}{\V{P}} &  \TIMES{\idescop{\V{D}}{\V{I}}{\V{P}}}{\idescop{\V{D'}}{\V{I}}{\V{P}}}       \\
 \idescop{\DSigma{\V{S}}{\V{D}}}{\V{I}}{\V{P}} &  \SIGMA{\V{s}}{\V{S}} \idescop{\V{D}\: \V{s}}{\V{I}}{\V{P}}                    \\
@@ -449,7 +446,7 @@ the pattern functor of natural numbers:
 
 Because $\Nat$ is just an inductive type, $\NatD$ is a $\Unit$-indexed
 functor. Therefore, the recursive argument is materialised by
-$\DVar{\Void}$, where we were using $\DIndx$ in the previous
+$\DVar{\Void}$, where we were using $\DIndx{\!}$ in the previous
 presentation. This transformation generalizes to all inductive
 types. Moreover, we gain the ability to write mutually recursive
 inductive types.
@@ -472,7 +469,7 @@ we can describe it in $\IDesc{\Unit}$:
 \[\stk{
 \IDescD : \PI{\V{I}}{\Set} \IDesc{\Unit} \\
 \begin{array}{@{}ll}
-\IDescD~\V{I} \mapsto \DSigma{\!}{\!} & (\EnumT \red{[} 
+\IDescD\: \V{I} \mapsto \DSigma{\!}{\!} & (\EnumT \red{[} 
                                           \DVar{\!},
                                           \DConst{\!},
                                           \DProd{\!}{\!},
@@ -502,20 +499,20 @@ operator to build the finite function space $\bigRedBracket{\ldots}$.
 
 So far, the examples we have seen lives in $\IDesc{\Unit}$, hence are
 not using any indexing. We remedy this by encoding the vectors. Recall
-that the constructors $\VecNil$ and $\VecCons$ are only defined for an
+that the constructors $\VecNil$ and $\VecCons{\!}{\!}$ are only defined for an
 index $\NatZero$ and $\NatSuc$ respectively.:
 
 \[
 \stk{
 \data \D{Vec}\: \PITEL{\V{X}}{\Set} : \PI{\V{n}}{\Nat} \Set \where \\
 \;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
-    \VecNil      & \D{Vec}\:\V{X}\:{\NatZero)}   \\
-    \VecCons     & _{\PI{\V{n}}{\Nat}}\V{X} \To \D{Vec}\:{\V{X}}\:{\V{n}} \To \D{Vec}\:{\V{X}}\:{(\NatSuc{\V{n}})}
+    \VecNil          & \D{Vec}\:\V{X}\:{\NatZero)}   \\
+    \VecCons{\!}{\!} & _{\PI{\V{n}}{\Nat}}\V{X} \To \D{Vec}\:{\V{X}}\:{\V{n}} \To \D{Vec}\:{\V{X}}\:{(\NatSuc{\V{n}})}
 \end{array}
 }
 \]
 
-One way to code constrained datatype is to appeal to equality. The
+One way to code constrained datatypes is to appeal to equality. The
 constraints are therefore captured by equations in the datatype. In
 this case, we obtain the following definition:
 
@@ -533,7 +530,7 @@ this case, we obtain the following definition:
 }\]
 
 In the $\VecNil$ case, a proof must be provided that the index is
-equal to $\NatZero$. In the $\VecCons$ case, we first store an element
+equal to $\NatZero$. In the $\VecCons{\!}{\!}$ case, we first store an element
 $\V{m}$ of $\Nat$. However, the constraint stipulates that $\V{m}$
 cannot be \emph{any} natural numbers: it must be ``the index minus
 one''. This translates into the constraint $\V{n} \PropEq
@@ -541,9 +538,7 @@ one''. This translates into the constraint $\V{n} \PropEq
 
 However, one could, quite rightfully, be worried by the introduction
 of equalities in the picture. In a programming context, equalities
-haunt us, begging for proofs. Hence, whereas the developer typed a
-constructor-constrained datatype, the elimination form will involve
-equalities and their proofs. As much as possible, one would like to
+haunt us, begging for proofs. As much as possible, one would like to
 avoid suffering from this burden. However, the equalities introduced
 here are rather special: they are \emph{equations} constraining
 variables to certain terms. \citet{goguen:pattern-matching} have
@@ -613,7 +608,7 @@ to the developer.  Finally, it is worth mentioning that these
 optimisations are \emph{source-to-source} transformations on
 descriptions.
 
-\paragraph{Tagged Indexed Descriptions:}
+\paragraph{Tagged indexed descriptions:}
 
 When defining an indexed datatype, we have access to its
 index. Therefore, we can use this index to influence the choice of
@@ -621,12 +616,12 @@ constructors. This captures the essence of dependent datatypes: a
 term -- the index -- has the ability to influence the datatype. We
 define tagged indexed descriptions to capture this specificity.
 
-For convenience, we divide a tagged indexed description in two parts:
-first, the constructors that do not depend on the index; then, the
-constructors that do. The non-dependent part mirrors the definition
-for non-indexed descriptions. The index-depend part simply indexes the
-choice of constructors by $\V{I}$. Hence, by inspecting the index, it
-is possible to enable or disable the constructors.
+We divide a tagged indexed description in two parts: first, the
+constructors that do not depend on the index; then, the constructors
+that do. The non-dependent part mirrors the definition for non-indexed
+descriptions. The index-depend part simply indexes the choice of
+constructors by $\V{I}$. Hence, by inspecting the index, it is
+possible to enable or disable constructors.
 
 \[
 \begin{array}{@{}l@{\:\mapsto\:\:}l}
@@ -668,14 +663,14 @@ constructor $\ListCons{\!}{\!}$.
 \newcommand{\Enat}{\etag{\CN{nat}}}
 
 %% Constructors
-\newcommand{\Eval}[1]{\etag{\CN{val}}~#1}
-\newcommand{\Econd}[3]{\etag{\CN{cond}}~#1~#2~#3}
-\newcommand{\Eplus}[2]{\etag{\CN{plus}}~#1~#2}
-\newcommand{\Ele}[2]{\etag{\CN{le}}~#1~#2}
+\newcommand{\Eval}[1]{\etag{\CN{val}}\:#1}
+\newcommand{\Econd}[3]{\etag{\CN{cond}}\:#1\:#2\:#3}
+\newcommand{\Eplus}[2]{\etag{\CN{plus}}\:#1\:#2}
+\newcommand{\Ele}[2]{\etag{\CN{le}}\:#1\:#2}
 
 %% Index mapper (terminology?)
-\newcommand{\Val}[1]{\F{Val}~#1}
-\newcommand{\Var}[2]{\F{Var}_{#1}~#2}
+\newcommand{\Val}[1]{\F{Val}\:#1}
+\newcommand{\Var}[2]{\F{Var}_{#1} #2}
 
 %% Hutton expressions
 \newcommand{\HExprD}{\C{ExprD}}
@@ -698,39 +693,40 @@ numbers. Informally, their type is the following:
 
 \[
 \begin{array}{l@{\::\:\:}l}
-\Econd{}{}{}     & \forall \Bhab{\V{ty}}{\Ty} . \Ebool \To \V{ty} \To \V{ty} \To \V{ty}  \\ 
-\Eplus{}{}       & \Enat \To \Enat \To \Enat                           \\
-\Ele{}{}         & \Enat \To \Enat \To \Ebool                          \\
-\Eval{}          & \forall \Bhab{\V{ty}}{\Ty} . \Val{\V{ty}} \To \V{ty}
+\Econd{\!}{\!}{\!}   & \forall \Bhab{\V{ty}}{\Ty} . \Ebool \To \V{ty} \To \V{ty} \To \V{ty}  \\ 
+\Eplus{\!}{\!}       & \Enat \To \Enat \To \Enat                           \\
+\Ele{\!}{\!}         & \Enat \To \Enat \To \Ebool                          \\
+\Eval{\!}            & \forall \Bhab{\V{ty}}{\Ty} . \Val{\V{ty}} \To \V{ty}
 \end{array}
 \]
 
 The function $\Val{\!}$, used in the definition of $\Eval{\!}$, simply
 maps a type $ty$ of the object language to the corresponding type in
-the host language. Hence, the arguments of $\Eval{}$ are ensured to be
-of the expected type. We assume that $\Nat$ and $\Bool$ represent
+the host language. Hence, the arguments of $\Eval{\!}$ are ensured to
+be of the expected type. We assume that $\Nat$ and $\Bool$ represent
 natural numbers and booleans in the host language, equipped with an
 addition operation $\F{plusHost}$ and a comparison function
-$\F{leHost}$. We define $\Val{}$ as follows:
+$\F{leHost}$. We define $\Val{\!}$ as follows:
 
 \[\stk{
-\Val{} : \Ty \To \Set \\
+\Val{\!} : \Ty \To \Set \\
 \begin{array}{@{}l@{\:=\:\:}l}
 \Val{\Enat}   & \Nat \\
 \Val{\Ebool}  & \Bool
 \end{array}
 }\]
 
-In our universe of descriptions, this datatype is represented by a
-tagged indexed description. We use the index to carry the type: the
-resulting description is indexed by $\Ty$. We observe that some
-constructors are always defined, namely $\Econd{}{}{}$ and $\Eval{}$. On the
-other hand, the $\Eplus$ and $\Ele$ constructors are
-index-dependent. $\Eplus$ is defined if and only if the result type --
-the index -- is $\Enat$, whereas $\Ele$ is defined if and only if the
-index is $\Ebool$. The actual code precisely follows this intuition,
-as shown in Figure~\ref{fig:hexpr-full}. For brevity, we use an
-informal $\case{\ldots}{\ldots}$ notation, simulating a definition by
+In our universe of descriptions, the syntax of this language is
+described by a tagged indexed description. We use the index to carry
+the type: the resulting description is indexed by $\Ty$. We observe
+that some constructors are always defined, namely $\Econd{\!}{\!}{\!}$
+and $\Eval{\!}$. On the other hand, the $\Eplus{\!}{\!}$ and
+$\Ele{\!}{\!}$ constructors are index-dependent. $\Eplus{\!}{\!}$ is
+defined if and only if the result type -- the index -- is $\Enat$,
+whereas $\Ele{\!}{\!}$ is defined if and only if the index is
+$\Ebool$. The actual code precisely follows this intuition, as shown
+in Figure~\ref{fig:hexpr-full}. For brevity, we use an informal
+$\case{\ldots}{\ldots}$ notation, simulating a definition by
 pattern-matching. Formally, this corresponds to a call to the
 $\switch{\!}{\!}{\!}{\!}$ eliminator.
 
@@ -746,7 +742,7 @@ $\switch{\!}{\!}{\!}{\!}$ eliminator.
 \HExprAD : \ATagIDesc{\Ty} \\
 \HExprAD \mapsto \bigRedBracket{
                  \begin{array}{l}
-                   {[\Eval{}, \Econd{\!}{\!}{\!}\!\,]} \red{,} \\
+                   {[\Eval{\!}, \Econd{\!}{\!}{\!}\!\,]} \red{,} \\
                    \LAM{\V{ty}}
                    \bigRedBracket{
                    \begin{array}{l}
@@ -812,11 +808,11 @@ evaluator. The implementation is as follows:
 \evalOne : \PI{\V{ty}}{\Ty} \idescop{\toIDesc{\HExprD}\:\V{ty}}{\Ty}{\Val{\!}}
            \To {\Val{\V{ty}}} \\
 \begin{array}{@{}l@{}c@{}l@{\:=\:\:}l}
-\evalOne\: & \_\: & \pair{\Eval{}}{\V{x}}{}                                         & \V{x} \\
-\evalOne\: & \_\: & \pair{\Econd{}{}{}}{\pair{\BoolTrue}{\pair{\V{x}}{\_}{}}{}}{}   & \V{x} \\
-\evalOne\: & \_\: & \pair{\Econd{}{}{}}{\pair{\BoolFalse}{\pair{\_}{\V{y}}{}}{}}{}  & \V{x} \\
-\evalOne\: & \Enat\: & \pair{\Eplus{}{}}{\pair{\V{x}}{\V{y}}{}}{}                       & \F{plusHost}\: \V{x}\: \V{y} \\
-\evalOne\: & \Ebool\: & \pair{\Ele{}{}}{\pair{\V{x}}{\V{y}}{}}{}                        & \F{leHost}\: \V{x}\: \V{y} 
+\evalOne\: & \_\: & \pair{\Eval{\!}}{\V{x}}{}                                             & \V{x} \\
+\evalOne\: & \_\: & \pair{\Econd{\!}{\!}{\!}}{\pair{\BoolTrue}{\pair{\V{x}}{\_}{}}{}}{}   & \V{x} \\
+\evalOne\: & \_\: & \pair{\Econd{\!}{\!}{\!}}{\pair{\BoolFalse}{\pair{\_}{\V{y}}{}}{}}{}  & \V{x} \\
+\evalOne\: & \Enat\: & \pair{\Eplus{\!}{\!}}{\pair{\V{x}}{\V{y}}{}}{}                     & \F{plusHost}\: \V{x}\: \V{y} \\
+\evalOne\: & \Ebool\: & \pair{\Ele{\!}{\!}}{\pair{\V{x}}{\V{y}}{}}{}                      & \F{leHost}\: \V{x}\: \V{y} 
 \end{array} \\
 \\
 \evalH : \PI{\V{ty}}{\Ty} 
@@ -824,7 +820,7 @@ evaluator. The implementation is as follows:
            \Val{\V{ty}} \\
 \evalH\: \V{ty}\: \V{term} = \F{cataI}\: \Ty\: 
                                  \toIDesc{\HExprD}\: 
-                                 \Val{}\: 
+                                 \Val{\!}\: 
                                  \evalOne\: 
                                  \V{ty}\: 
                                  \V{term}
@@ -846,28 +842,30 @@ big step interpreter is granted without effort thanks to the generic
 catamorphism.
 
 However, so far, we are only able to define and manipulate
-\emph{closed} terms. By abstracting over $\Val{}$, it is possible to
+\emph{closed} terms. By abstracting over $\Val{\!}$, it is possible to
 build and manipulate \emph{open} terms, that is, terms with
-variables. On the model of $\Val{}$, we define $\Var{}{}$:
+variables. Following $\Val{\!}$, we define $\Var{}{}$ by:
 
 \[\stk{
 \Var{}{} : \EnumU \To \Ty \To \Set \\
 \Var{\V{dom}}{\_} = \EnumT{\V{dom}}
 }\]
 
-Whereas $\Val{}$ was mapping the type to the corresponding host type,
+Whereas $\Val{\!}$ was mapping the type to the corresponding host type,
 $\Var{}{}$ maps types to a finite set. The finite set -- the context
--- contains closed terms. A variable is therefore a $\Eval{}$ that
+-- contains closed terms. A variable is therefore a $\Eval{\!}$ that
 contains a pointer to a particular element of the finite set -- an
 element of $\EnumT{\V{dom}}$. 
 
 Consequently, replacing $\Val{\V{ty}}$ by
-$(\SUM{\Val{\V{ty}}}{\Var{\V{dom}}{\V{ty}}})$ in Figure~\ref{fig:hexpr-full} turns
-the language of closed term into a language of opened terms with
-constants. For readability, we will abbreviate $\LAM{\V{ty}}
-\SUM{\Val{\V{ty}}}{\Var{\V{dom}}{\V{ty}}}$ into $\SUM{\Val{\!}}{\Var{\V{dom}}{\!}}$. \note{Is
-  it polite and comprehensible to ask that?} This defines a new
-indexed description, called $\HExprVarD{\V{dom}}$.
+$(\SUM{\Val{\V{ty}}}{\Var{\V{dom}}{\V{ty}}})$ in
+Figure~\ref{fig:hexpr-full} turns the language of closed terms into a
+language of opened terms with variables and constants. For
+readability, we abbreviate $\LAM{\V{ty}}
+\SUM{\Val{\V{ty}}}{\Var{\V{dom}}{\V{ty}}}$ by
+$\SUM{\Val{\!}}{\Var{\V{dom}}{}}$. \note{Is it polite and
+  comprehensible to ask that?} This defines a new indexed description,
+called $\HExprVarD{\V{dom}}$.
 
 \begin{wstructure}
         <- evaluator, with a context
@@ -900,7 +898,7 @@ following function:
                \IMu{\Ty}{\toIDesc{\HExprD}}{\V{ty}} 
 \end{array} \\
 \begin{array}{@{}l@{\:\mapsto\:\:}l}
-\discharge\: \V{ty}\: \V{dom}\: \V{\gamma}\: (\SumLeft \V{x})  & \Con{\pair{\Eval{}}{\V{x}}{}} \\
+\discharge\: \V{ty}\: \V{dom}\: \V{\gamma}\: (\SumLeft \V{x})  & \Con{\pair{\Eval{\!}}{\V{x}}{}} \\
 \discharge\: \V{ty}\: \V{dom}\: \V{\gamma}\: (\SumRight \V{v}) &
 \end{array}\\
 \qquad\switch{\V{dom}}{(\LAM{\_}
@@ -923,7 +921,7 @@ term. The type of this operation is the following:
 \newcommand{\domBool}{dom_{\CN{bool}}}
 \newcommand{\gammaNat}{\V{\ensuremath{\gamma_{\CN{nat}}}}}
 \newcommand{\gammaBool}{\V{\ensuremath{\gamma_{\CN{bool}}}}}
-\newcommand{\GammaSpi}[2]{\F{\ensuremath{\Gamma_{\CN{ty}}}}~#1~#2}
+\newcommand{\GammaSpi}[2]{\F{\ensuremath{\Gamma_{\CN{ty}}}}\: #1\: #2}
 
 \[
 \begin{array}{@{}ll}
@@ -945,10 +943,10 @@ term. The type of this operation is the following:
 \end{array}
 \]
 
-Where $\GammaSpi$ corresponds to a context, defined by:
+Where $\GammaSpi{\!}{\!}$ corresponds to a context, defined by:
 
 \[\stk{
-\GammaSpi{}{} : \EnumU \To \Ty \To \Set                                             \\
+\GammaSpi{\!}{\!} : \EnumU \To \Ty \To \Set                                             \\
 \GammaSpi{\V{dom}}{\V{ty}} = \spi{\V{dom}}{(\LAM{\_} \IMu{\Ty}{\toIDesc{\HExprVarD{\V{dom}}}}{\V{ty}})} 
 }\]
 
@@ -957,7 +955,7 @@ Abstracting away the book-keeping introduced by contexts, this
 definition looks familiar. It is similar to a monadic \bind. This is
 not surprising as we are defining a first-order syntax with variables:
 our datatype enjoys more structure than what we are given. We are
-facing a free monad, where $\Eval{}$ is the \return\ introducing
+facing a free monad, where $\Eval{\!}$ is the \return\ introducing
 variables. For convenience, we wrap $\discharge$ in a $\V{\sigma}$
 function that picks the context of the right type:
 
@@ -994,7 +992,7 @@ functor coding its free monad: \note{pwm: Whoa there. Maybe we should
 
 \[\stk{
 \begin{array}{ll}
-\FreeIMonad{\_}{} : & _{\PITEL{\V{I}}{\Set}}
+\FreeIMonad{\_}{} : & _{\PI{\V{I}}{\Set}}
                      \PITEL{\V{R}}{\TagIDesc{\V{I}}} 
                      \PITEL{\V{X}}{\V{I} \To \Set}\To 
                       \TagIDesc{\V{I}}
@@ -1051,7 +1049,7 @@ structure. We had identified the variable substitution operation as
 the \bind\ of a free monad. To exhibit its monadic structure, we first
 have to massage the definition of our datatype.
 
-As previously mentioned, we identify $\Eval{}$ with the \return\ of
+As previously mentioned, we identify $\Eval{\!}$ with the \return\ of
 the free monad, while the other components are the action of the
 monad. As a result, the definition is similar to $\HExprD$ presented
 in Figure~\ref{fig:hexpr-full}, replacing $\HExprAD$ by
@@ -1061,7 +1059,7 @@ $\HExprAFreeD$:
 \HExprAFreeD : \ATagIDesc{\Ty} \\
 \HExprAFreeD \mapsto \bigRedBracket{
                  \begin{array}{l}
-                   \EnumT{\red{[}\Econd{}{}{}\red{]}} \red{,} \\
+                   \EnumT{\red{[}\Econd{\!}{\!}{\!}\red{]}} \red{,} \\
                    \LAM{\V{ty}}
                    \bigRedBracket{
                    \begin{array}{l}
@@ -1073,9 +1071,9 @@ $\HExprAFreeD$:
 }\]
 
 We call this datatype $\HExprFreeD$. By a simple unfolding of
-definition, we note that $\FreeIMonad{\HExprFreeD}{\Ty}{\Val{}}$
+definition, we note that $\FreeIMonad{\HExprFreeD}{\Ty}{\Val{\!}}$
 corresponds to the syntax of closed terms, $\HExprD$. Similarly,
-$\FreeIMonad{\HExprFreeD}{\Ty}{\SUM{\Val{\!}}{\Var{\V{dom}}{\!}}}$
+$\FreeIMonad{\HExprFreeD}{\Ty}{(\SUM{\Val{\!}}{\Var{\V{dom}}{}})}$
 corresponds to expressions with variables, $\HExprVarD{\V{dom}}$.
 
 \begin{wstructure}
@@ -1089,7 +1087,7 @@ corresponds to expressions with variables, $\HExprVarD{\V{dom}}$.
 
 The evaluator for closed terms we implemented in
 Section~\ref{sec:idesc-examples} remains unchanged. It reduces closed
-terms in $\FreeIMonad{\HExprFreeD}{\Ty}{\Val{}}\: \V{ty}$ to values in
+terms in $\FreeIMonad{\HExprFreeD}{\Ty}{\Val{\!}}\: \V{ty}$ to values in
 $\Val{\V{ty}}$. We are left with implementing $\substH$. We simply
 have to fill in the right arguments to $\substI$, the type guiding us:
 
@@ -1102,8 +1100,8 @@ have to fill in the right arguments to $\substI$, the type guiding us:
           \V{term} \mapsto  \\
 \;\;\ \begin{array}{ll}
        \substI\: & \Ty\: 
-                  (\SUM{\Val{\!}}{\Var{\V{dom}}{\!}})\: 
-                  \Val{}\:
+                  (\SUM{\Val{\!}}{\Var{\V{dom}}{}})\: 
+                  \Val{\!}\:
                   \HExprFreeD\:  \\
                 &
                   (\V{\sigma}\: \V{dom}\: \gammaNat\: \gammaBool)\:
