@@ -41,7 +41,7 @@ implementation of $\EnumU$ boils down to the following definition:
 %
 \[\stk{
 \EnumU : \Set \\
-\EnumU \mapsto \Mu{(\ListD~\UId)}
+\EnumU \mapsto \Mu{(\ListD\: \UId)}
 }\]
 
 
@@ -59,7 +59,7 @@ implementation of $\EnumU$ boils down to the following definition:
 Let us consider the consequences. First, we discover that the type
 theory does not need to be extended with the type former $\EnumU$, the
 constructors $\NilE$ and $\ConsE$. $\EnumU$ is defined above, as the
-fixpoint of $\ListD~\UId$. $\NilE$ and $\ConsE$ are simply the type
+fixpoint of $\ListD\: \UId$. $\NilE$ and $\ConsE$ are simply the type
 constructors of lists, $\ListNil$ and $\ListCons$.
 
 Another interesting consequence concerns the $\spi{\!}{\!}$ operator:
@@ -389,7 +389,7 @@ element in $\V{T}$.  Therefore, to construct an element of
 \F{replace}\: \DUnit\:          \V{X}\: \V{Y}\: \Void\:          \Void          \mapsto 
     \Void                                                                                                         \\
 \F{replace}\: (\DSigma{\V{S}}{\V{D}})\: \V{X}\: \V{Y}\: \pair{\V{s}}{\V{xs}}{}\: \V{ys}             \mapsto
-    \pair{\V{s}}{\F{replace}\: {\V{D}~\V{s}}\: \V{X}\: \V{Y}\: \V{xs}\: \V{ys}}{}                                 \\
+    \pair{\V{s}}{\F{replace}\: (\V{D}\: \V{s})\: \V{X}\: \V{Y}\: \V{xs}\: \V{ys}}{}                                 \\
 \F{replace}\: (\DIndx{\V{D}})\:     \V{X}\: \V{Y}\: \pair{\V{x}}{\V{xs}}{}\: \pair{\V{y}}{\V{ys}}{} \mapsto       \\
 \qquad  \pair{\V{y}}{\F{replace}\: \V{D}\: \V{X}\: \V{Y}\: \V{xs}\: \V{ys}}{}                                     \\
 \F{replace}\: (\DHindx{\V{H}}{\V{D}})\: \V{X}\: \V{Y}\: \pair{\V{f}}{\V{xs}}{}\: \pair{\V{g}}{\V{ys}}{} \mapsto   \\
