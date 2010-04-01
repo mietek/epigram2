@@ -30,6 +30,7 @@ Section sec:indexing-desc
 If it hasn't been translated into universe polymorphism
 
 * Janitor service
+** TODO Check bibliography references
 ** TODO s/judgement/judgment/
 ** TODO Check/fix alignment in code
 ** TODO Fix code overflows

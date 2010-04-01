@@ -57,12 +57,12 @@ we can now build tuples where data influence further types.
         -> Together with a sigma-based Interpretation
 \end{wstructure}
 
-In ML-like languages, datatype definitions are called
-\emph{sum-of-product}. A datatype is defined by a finite sum of
+In ML-like languages, datatypes are presented as a
+\emph{sum-of-products}. A datatype is defined by a finite sum of
 constructors, each composed by a product of arguments. To embrace
 these datatypes, we need to capture this grammar.
 
-With dependent types, the notion of sum-of-product translates into
+With dependent types, the notion of sum-of-products translates into
 \emph{sigmas-of-sigmas}. However, a direct encoding of datatypes
 through raw $\Sigma$-types is not a viable option. Indeed, to program
 with these datatypes, we need an induction principle. An encoding is
@@ -262,7 +262,7 @@ constructors. The descriptions fitting into this pattern are called
  \TagDesc \mapsto \SIGMA{\V{E}}{\EnumU} (\spi{\V{E}}{(\LAM{\_} \Desc)})
 \]
 
-Again, this is a clear reminiscence of the sum-of-product style: we
+Again, this is a clear reminiscence of the sum-of-products style: we
 have a finite sum of constructors. Every description can be expressed
 in this style, using a singleton as a constructor if
 necessary. Converselly, a tagged description can be turned into a
