@@ -26,8 +26,6 @@ If it hasn't been translated into universe polymorphism
 
 Without the restored "onecolumn" mode.
 
-** TODO Footnote the address of the Agda model
-** TODO s/~/\:/
 ** TODO Capitalized titles
 ** TODO switchD elaboration rule is in a bad state
 ** TODO Look for inlining figures
@@ -186,3 +184,5 @@ Section sec:indexing-desc
 
 ** DONE Shall we present EnumU with tags as constructors, directly?
 ** DONE Example right after the introduction?
+** DONE s/~/\:/
+** DONE Footnote the address of the Agda model
