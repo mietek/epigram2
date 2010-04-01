@@ -11,15 +11,17 @@
 \end{wstructure}
 
 In this section, we describe an implementation of inductive types, as
-we know them in ML-like languages. By working with datatypes we are
-familiar with, we rely on our intuition on these objects. However, our
-goal remains to discuss datatypes as we find them in dependently-typed
-languages.
-
-Our proposal is inspired by Dybjer and Setzer's closed formulation of
-induction-recursion~\cite{dybjer:axiom-ir}. For inductive datatypes, the
-full power of induction-recursion is not necessary. Therefore, we
-adopt a stripped-down version of it. 
+we know them in ML-like languages. By working with familiar datatypes,
+we hope to focus on the delivery mechanism, warming up gently to the
+indexed datatypes we really want.  % Our encoding is inspired by
+Dybjer and Setzer's closed formulation of
+induction-recursion~\cite{dybjer:axiom-ir}, but without the
+`-recursion'.  An impredicative Church-style encoding of datatypes is
+not adequate for dependently typed programming, as although such
+encodings present data as non-dependent eliminators, they do not
+support dependent \emph{induction}~\cite{geuvers:induction-not-derivable}.
+Whilst the \(\LAMBINDER\)-calculus captures all that data can \emph{do},
+it cannot ultimately delimit all that data can \emph{be}.
 
 \subsection{The power of $\Sigma$}
 
@@ -31,19 +33,17 @@ adopt a stripped-down version of it.
         -> \Sigma A B == (x : A) \times (B x)
 \end{wstructure}
 
-In dependently-typed languages, $\Sigma$-types can be interpreted in
-two different ways. This duality is actually reflected in the notation
-we can find in the literature. The notation $\blue{\Sigma}_{\V{x} :
-  \V{A}} (\V{B}\: \V{x})$ stresses that $\Sigma$-types are a
-generalisation of sums over arbitrary arities.  Where simply-typed
-languages have finite sums, dependently-typed languages have sums
-indexed by any set.
+In dependently typed languages, $\Sigma$-types can be interpreted as
+two different generalisations. This duality is reflected in the
+notation we can find in the literature. The notation
+$\blue{\Sigma}_{\x : \M{A}} (\M{B}\: \x)$ stresses that
+$\Sigma$-types are `dependent sums', generalising of sums over
+arbitrary arities, where simply typed languages have finite sums.
 
-On the other hand, our choice of notation $\SIGMA{\V{x}}{\V{A}}
-(\V{B}\:\V{x})$ emphasises that $\Sigma$-types are a generalisation of
-products, where the second component can depend on the first
-one. Where simply-typed languages pack data into non-dependent tuples,
-we can now build tuples where data influence further types.
+On the other hand, our choice of notation $\SIGMA{\x}{\M{A}}
+(\M{B}\:\x)$ emphasises that $\Sigma$-types generalise products,
+with the type of the second component depending on the value of the
+first, where simply typed languages do not express such relative validity.
 
 \begin{wstructure}
 <- datatypes in the simply-typed world
@@ -59,18 +59,13 @@ we can now build tuples where data influence further types.
 
 In ML-like languages, datatypes are presented as a
 \emph{sum-of-products}. A datatype is defined by a finite sum of
-constructors, each composed by a product of arguments. To embrace
+constructors, each carrying a product of arguments. To embrace
 these datatypes, we have to capture this grammar.
-
 With dependent types, the notion of sum-of-products translates into
-\emph{sigmas-of-sigmas}. However, a direct encoding of datatypes
-through raw $\Sigma$-types is not a viable option. Indeed, to program
-with these datatypes, we need an induction principle. An encoding is
-unable to deliver such
-operation~\cite{geuvers:induction-not-derivable}.
+\emph{sigmas-of-sigmas}.
 
 
-\subsection{A universe of descriptions}
+\subsection{A universe of datatype descriptions}
 \label{sec:desc-universe}
 
 \begin{wstructure}
@@ -83,22 +78,24 @@ operation~\cite{geuvers:induction-not-derivable}.
     -> Ability to compute with these objects
 \end{wstructure}
 
-While sigmas-of-sigmas form a convenient \emph{semantics} for
-datatypes, we have seen that it makes a poor \emph{syntax}. To
-decouple these two notions, we construct an ad-hoc
-\emph{universe}. This technique originates in Martin-L\"of definition
-of type theory~\cite{martin-lof:itt}. It is a fruitful programming
-technique in dependently-typed
-languages~\cite{benke:universe-generic-prog, oury:power-of-pi}.
+While sigmas-of-sigmas can give a \emph{semantics} for the
+sum-of-products structure in each node of the tree-like values in a
+datatype, we need to account somehow for the recursive structure which
+ties these nodes together. Not for the first time, we do this by
+constructing a \emph{universe}~\cite{martin-lof:itt}. Universes
+are ubiquitous in dependently typed
+programming~\cite{benke:universe-generic-prog, oury:power-of-pi},
+but here we seek to exploit them as the foundation of our notion
+of datatypes.
 
-The key idea behind universe construction is our ability to make names
-by defining new types. These names are called \emph{codes}. By
-defining a set of codes, we define the syntax of a language. To give
-it a semantics, we \emph{interpret} these codes back into the type
-theory. Hence, codes act as labels, while the type theory provides the
-computational machinery. Codes being mere labels, we can inspect them,
-hence regaining structural information. We can also compute over them:
-deriving new codes from others, or even functions on them.
+%The key idea behind universe construction is our ability to make names
+%by defining new types. These names are called \emph{codes}. By
+%defining a set of codes, we define the syntax of a language. To give
+%it a semantics, we \emph{interpret} these codes back into the type
+%theory. Hence, codes act as labels, while the type theory provides the
+%computational machinery. Codes being mere labels, we can inspect them,
+%hence regaining structural information. We can also compute over them:
+%deriving new codes from others, or even functions on them.
 
 \begin{wstructure}
 <- Justification of the code 
@@ -111,46 +108,33 @@ deriving new codes from others, or even functions on them.
         <- '1 for end of description
 \end{wstructure}
 
-To embed inductive types in our type theory, we define a universe of
-\emph{descriptions} (Figure~\ref{fig:desc_universe}). As expected, the
-code of this universe mimics the grammar of inductive types. To build
-sigmas-of-sigmas, we define a $\DSigma{\!}{}$ code, interpreted as a
-$\Sigma$-type. Descriptions are terminated by $\DUnit$, containing no
-payload. To make recursive arguments, we introduce the $\DIndx{\!}$
-code. It interprets to a hole that will be closed by the fixpoint. We
-can also read $\V{D}$ as describing an endofunctor on $\Set$, with
-$\descop{\V{D}}{\!}$ being the object part.
-
-\begin{figure}
-
+To add inductive types to our type theory, we build a universe of
+datatype \emph{descriptions} by implementing the signature below, with
+codes mimicking the grammar of datatype declarations. We
+can read a description $\V{D}:\Desc$ as an \emph{endofunctor}
+on $\Set$, with $\descop{\V{D}}{\!}$ its action on an object, \(\V{X}\), soon
+to be instantiated recursively.
 \[\stk{
-\begin{array}{ll}
-\stk{
-\data \Desc : \Set \where \\
-\;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
-    \DUnit          & \Desc \\
-    \DSigma{\!}{\!} & \PI{\V{S}}{\Set} \PIS{\V{S} \To \Desc} \Desc \\
-    \DIndx{\!}      & \Desc \To \Desc
+\begin{array}{l}
+\Desc : \Set\\
+\DUnit : \Desc\\
+\DSigma{(\Bhab{\V{S}}{\Set})}{(\Bhab{\V{D}}{\V{S} \To \Desc})} : \Desc\\
+\DIndx{(\Bhab{\V{D}}{\Desc})} : \Desc \\
 \end{array}
-}
-\vspace{0.2in}
-\\
-\stk{
-\descop{\_\:}{} : \Desc \To \Set \To \Set \\
-\begin{array}{@{}ll@{\:=\:\:}ll}
-\descop{\DUnit}{& \V{X}}        &  \Unit                                       \\
-\descop{\DSigma{\V{S}}{\V{D}}}{& \V{X}} &  \SIGMAS{\V{s} : \V{S}}{\descop{\V{D}~\V{s}}{\V{X}}}         \\
-\descop{\DIndx{\V{D}}}{& \V{X}}     &  \TIMES{\V{X}}{\descop{\V{D}}{\V{X}}}
-\end{array}
-}
+\smallskip\\
+\begin{array}{l@{\V{X}\:\mapsto\:}l}     
+\multicolumn{2}{l}{\descop{\_\:}{} : \Desc \To \Set \To \Set} \\
+ \descop{\DUnit}{} &  \Unit \\
+ \descop{\DSigma{\V{S}}{\V{D}}}{} &
+     \SIGMAS{\Bhab{\V{s}}{\V{S}}}{\descop{\V{D}\,\V{s}}{\!\V{X}}}  \\
+\descop{\DIndx{\V{D}}}{}  &  \TIMES{\V{X}}{\descop{\V{D}}{\V{X}}}
 \end{array}
 }\]
-
-
-\caption{Universe of Descriptions}
-\label{fig:desc_universe}
-
-\end{figure}
+Descriptions are sequential structures, terminated by $\DUnit$, indicating
+the empty tuple. To build
+sigmas-of-sigmas, we define a $\DSigma{\!}{}$ code, interpreted as a
+$\Sigma$-type. To request a recursive component, we have $\DIndx{\V{D}}$,
+where \(\V{D}\) descibes the rest of the node.
 
 To give some intuition on this universe, we now turn to some
 examples. For obvious pedagogical reasons, we will manually build the

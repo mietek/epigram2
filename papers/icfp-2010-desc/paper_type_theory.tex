@@ -536,14 +536,21 @@ argument \emph{expression}. Hardwired operators are checked as variables.
 Dually, type checking judgments
 (Fig.~\ref{fig:type-checking}) are \emph{sinks} for types. From an
 $\exprIn$ and a type pushed into it, they elaborate a low-level
-term, extracting information from the type.
-Canonical set-formers are \emph{checked}: we could exploit \(\Set:\Set\)
-to give them synthesis rules, but this would prejudice our future
-stratification plans. Note that abstraction and pairing are free of
-annotation, as promised. Most of the propagation rules are unremarkably
-structural: we have omitted some mundane rules which just follow
-the pattern, e.g., for \(\UId\). It is for the finite enumerations that
-things get interesting.
+term, extracting information from the type. Note that we inductively ensure the following `sanity checks':
+\[\stkc{
+\Gamma\Vdash\propag{e}{\pull{t}{T}} \Rightarrow
+  \Gamma\vdash t:T \\
+\Gamma\Vdash\push{\propag{e}{t}}{T} \Rightarrow
+  \Gamma\vdash t:T
+}\]
+
+Canonical set-formers are \emph{checked}: we could exploit
+\(\Set:\Set\) to give them synthesis rules, but this would prejudice
+our future stratification plans. Note that abstraction and pairing are
+free of annotation, as promised. Most of the propagation rules are
+unremarkably structural: we have omitted some mundane rules which just
+follow the pattern, e.g., for \(\UId\). It is for the finite
+enumerations that things get interesting.
 
 \begin{figure}
 \input{figure_type_checking}
@@ -561,18 +568,19 @@ index. However, we retain the numerical forms to facilitate
 \emph{generic} operations and ensure that shadowing a tag is punished
 fittingly, not fatally.
 
-Finally, we enable you to write functions from finite sets as tuples.
-Any bracketed form, \(\void\) or \(\pair{\_}{\_}{}\), is accepted by the
+Finally, we let you express functions from enumerations as tuples.
+Any tuple-form, \(\void\) or \(\pair{\_}{\_}{}\), is accepted by the
 function space---the general product---if it is accepted by the
-small product. Propagation fills in the appeal to the $\F{switch}$,
+small product. Propagation fills in the appeal to $\F{switch}$,
 copying the range information.
 
+
 We note, but have no room to elaborate on the fact that the propagation
-is reversible. Indeed, our interactive development tools rely on the
-reverse transformation to relay intelligible information to the user.
-For any specific usage, the encoding is completely hidden by these
-translations. Only when programming generically with enumerations is it
-necessary to address the encoding, but in that case, it is a benefit!
+is reversible. Our interactive development tools rely on the
+reverse transformation to report intelligibly to the user.
+The encoding of any specific enumeration is thus hidden by these
+translations. Only in enumeration-generic programs is the
+encoding exposed, but in that case, it is a benefit!
 
 \begin{wstructure}
 <- Summary
@@ -603,7 +611,8 @@ necessary to address the encoding, but in that case, it is a benefit!
 %in our theory, we will show how to extend the framework we have
 %developed so far.
 
-The relatively civilised presentation we have achieved here is
+Our type propagation mechanism does no fancy unification or constraint
+solving, just copying.  The relative civilision it delivers is
 possible because our universe of enumerations specifies not only the
 \emph{representation} of the low-level values in each set as bounded
 numbers, but also the \emph{presentation} of these values as
