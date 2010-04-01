@@ -153,9 +153,9 @@ $\descop{\V{D}}{\!}$ being the object part.
 \end{figure}
 
 To give some intuition on this universe, we now turn to some
-examples. For obvious pedagogical reasons, we will manually build
-these descriptions. However, it should be clear that, in practice,
-these definitions are automatically computed from an ML-like $\data$
+examples. For obvious pedagogical reasons, we will manually build the
+descriptions. However, it should be clear that, in practice, these
+definitions are automatically computed from an Agda-like $\data$
 definition.
 
 \subsection{Examples}
@@ -209,8 +209,7 @@ for lists:
 
 The $\NatSuc{\!}$ constructor is turned into a proper
 $\ListCons{\!}{\!}$, taking an argument in $\V{X}$ followed by a
-recursive argument. Easily, one sees that this code describes the
-following functor:
+recursive argument. This code describes the following functor:
 
 \[    \ListD\: \V{X}\: \V{Z} \mapsto \Unit \mathop{\D{+}} \V{X} \D{\ensuremath{\times}} \V{Z}     \]
 
@@ -233,7 +232,7 @@ demonstrated by our description of binary trees:
 \end{array}
 }\]
 
-Again, we are at one evolutionary step away from $\ListD$. However,
+Again, we are one evolutionary step away from $\ListD$. However,
 instead of a single call to the induction code, we call it twice. The
 interpretation of this code corresponds to the following functor:
 
@@ -260,10 +259,10 @@ constructors. The descriptions fitting into this pattern are called
  \TagDesc \mapsto \SIGMA{\V{E}}{\EnumU} (\spi{\V{E}}{(\LAM{\_} \Desc)})
 \]
 
-Again, this is a clear reminiscence of the sum-of-products style: we
-have a finite sum of constructors. Every description can be expressed
-in this style, using a singleton as a constructor if
-necessary. Converselly, a tagged description can be turned into a
+Again, this is a clear reminiscence of the sum-of-products style,
+characterized by a finite sum of constructors. Every description can
+be expressed in this style, using a singleton constructor if
+necessary. Conversely, a tagged description can be turned into a
 full-blown description. We denote $\toDesc{\V{TD}}$ the description
 computed from the tagged description $\V{TD}$.
 
@@ -276,10 +275,10 @@ computed from the tagged description $\V{TD}$.
 
 For convenience, we have taken for granted the existence of $\Desc$,
 as presented in Figure~\ref{fig:desc_universe}. Although it makes no
-conceptual difference, the code of description should rather be read
-as a specification. We promise the existence of such objects,
-satisfying the typing rules. It will be the subject of
-Section~\ref{sec:desc-levitate} to actually implement the
+conceptual difference, this code should rather be read as a
+specification. We promise the existence of such objects, satisfying
+these typing rules. It will be the subject of
+Section~\ref{sec:desc-levitate} to actually implement this
 specification.
 
 \subsection{Fixpoint}
