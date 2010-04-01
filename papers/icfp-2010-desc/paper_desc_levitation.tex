@@ -1,10 +1,9 @@
 \section{Levitating the universe of descriptions}
 \label{sec:desc-levitate}
 
-In this section, we will fulfil several promises. One promise we made
-was to effectively implement the code of the $\Desc$ universe. Another
-promise we tacitly made was the existence of the type formers for
-finite sets. Despite being a perilous pedagogical exercise for the
+In this section, we will fulfil our promises. First, we will build
+finite sets. Second, we will implement the code of the $\Desc$
+universe.  Despite being a perilous pedagogical exercise for the
 authors, we hope to convey to the reader the dizzy feeling of
 levitation, without the falling.
 
@@ -18,10 +17,8 @@ levitation, without the falling.
 \end{wstructure}
 
 In Section~\ref{sec:finite-sets}, we have given a specification of
-finite sets. It consists of the objects presented in
-Figure~\ref{fig:typing-finite-set}. We are going to implement the
-$\EnumU$ type former and its constructors. Let us recall their
-specification:
+finite sets. We are going to implement the $\EnumU$ type former and
+its constructors. Let us recall their specification:
 
 \[\stkc{
 %% EnumU
@@ -39,10 +36,8 @@ specification:
 }\]
 
 The names $\NilE$ and $\ConsE{\!}{\!}$ are not a coincidence. $\EnumU$
-is indeed isomorphic to a list of $\UId$s. In
-Section~\ref{sec:desc-examples}, we have shown how to build lists in
-the universe of description. Therefore, the actual implementation of
-$\EnumU$ boils down to the following, trivial definition:
+is indeed isomorphic to a list of $\UId$s. Therefore, the actual
+implementation of $\EnumU$ boils down to the following definition:
 
 \[\stk{
 \EnumU : \Set \\
@@ -61,29 +56,28 @@ $\EnumU$ boils down to the following, trivial definition:
     -> Anything else remains the same (switch, EnumT, 0, 1+)
 \end{wstructure}
 
-Let us examine the consequences. First of all, we discover that the
-type theory does not actually need to be extended with the type former
-$\EnumU$, the constructors $\NilE$ and $\ConsE$. We have just defined
-$\EnumU$ above, by fix-point over the pattern functor denoted by
+Let us consider the consequences. First, we discover that the type
+theory does not need to be extended with the type former $\EnumU$, the
+constructors $\NilE$ and $\ConsE$. We have just defined $\EnumU$
+above, by fix-point over the pattern functor denoted by
 $\ListD$. $\NilE$ and $\ConsE$ are simply the $\ListNil$ and
 $\ListCons$ constructors of lists.
 
 Another interesting consequence concerns the $\spi{\!}{\!}$ operator:
 it can actually be implemented with the generic $\F{induction}$
-principle. From an implementation perspective, this means that we
-remove an operator hard-coded in the host language. This operator is
-simply implemented in the dependently-typed target language, as any
-other function.
+principle. From an implementation perspective, this means that this
+operator is simply implemented in the dependently-typed target
+language, as any other function.
 
-Apart from these changes, we are left with implementing the other
-components of finite sets. This consists of $\EnumT$, $\Ze$, $\Su$, as
-well as the $\F{switch}$ operator. Note that the actual implementation
-of $\EnumU$ does not influence our implementation of $\EnumT$: be they
-hard-coded or codes in the $\Desc$ universe, the $\EnumU$ objects
-behave the same. We have witnessed this effect when carrying the
-operation in Epigram, moving from an hard-coded presentation to a
-self-hosted one. Absolutely no change to the $\EnumT$ objects was
-required.
+%% Apart from these changes, we are left with implementing the other
+%% components of finite sets. This consists of $\EnumT$, $\Ze$, $\Su$, as
+%% well as the $\F{switch}$ operator. Note that the actual implementation
+%% of $\EnumU$ does not influence our implementation of $\EnumT$: be they
+%% hard-coded or codes in the $\Desc$ universe, the $\EnumU$ objects
+%% behave the same. We have witnessed this effect when carrying the
+%% operation in Epigram, moving from an hard-coded presentation to a
+%% self-hosted one. Absolutely no change to the $\EnumT$ objects was
+%% required.
 
 \begin{wstructure}
 <- Summary of the operation
@@ -154,17 +148,14 @@ Our first attempt is the following:
 }\]
 
 Let us explain how we have proceeded and the obstacle we face. Much as
-the datatypes we have seen so far, we first have to choose a
-constructor. Constructors correspond to the code's constructors:
+the datatypes we have seen so far, we first choose a constructor among
 $\DUnit$, $\DSigma{\!}{\!}$, and $\DIndx{\!}$. The reader will notice
 that the tagged notation we have used for the $\Desc$ constructors now
-fully makes sense: these were actually the tags we are
-defining.
+fully makes sense: these were actually the tags we are defining.
 
-The case of $\DUnit$ is trivial: we immediately reach the end of the
-datatype. $\DUnit$ has no payload. The case of $\DIndx{\!}$ comes
-naturally: it only takes a recursive argument -- a description. The
-case of $\DSigma{\!}{\!}$ is problematic. Recall the specification of
+For $\DUnit$, we immediately reach the end of the description. For
+$\DIndx{\!}$, there is a single recursive argument. The case of
+$\DSigma{\!}{\!}$ is problematic. Recall the specification of
 $\DSigma{\!}{\!}$:
 
 \[    \DSigma{\!}{\!} : \PI{\V{S}}{\Set} \PIS{\V{S} \To \Desc} \Desc      \]
@@ -226,19 +217,16 @@ elements of $H$ to index as many recursive arguments.
 
 
 Note that $\DIndx{\!}$ is isomorphic to $\DHindx{\Unit}{\!}$. However,
-we tolerate this duplication and do not replace $\DIndx{\!}$ by the
-more general $\DHindx{\!}{\!}$. Indeed, unlike its counterpart,
-$\DIndx{\!}$ is first-order. Therefore, while both codes are
-\emph{extensionally} the same, in most practical implementations they
-would be dealt with rather differently. While definitional equality
-can cope with first order objects, the functional presentation
-introduced by $\DHindx{\!}{}$ is unlikely to be amenable to a purely
-definitional treatment.
+we tolerate this duplication. Indeed, unlike its counterpart,
+$\DIndx{\!}$ is first-order. Both codes are \emph{extensionally} the
+same but, in practice, they will be dealt with rather
+differently. While definitional equality can cope with first order
+objects, the functional presentation introduced by $\DHindx{\!}{}$ is
+unlikely to be amenable to a purely definitional treatment.
 
-Equipped with $\DHindx{\!}{\!}$, we can describe the extended code of
-our universe of datatypes, as shown in
-Figure~\ref{fig:desc-levitate}.  The $\DUnit$ and $\DIndx{\!}$ cases
-remain unchanged, as expected. We successfully describe the
+As shown in Figure~\ref{fig:desc-levitate}, we are now able to
+describe our universe of datatypes.  The $\DUnit$ and $\DIndx{\!}$
+cases remain unchanged, as expected. We successfully describe the
 $\DSigma{\!}{}$ case, by a simple appeal to the higher-order induction
 on $\V{S}$. The $\DHindx{\!}{\!}$ case consists in packing the $\V{H}$
 in $\Set$ with a recursive argument.
@@ -288,7 +276,7 @@ construct elaborates to a finite set $e$ in $\EnumU$, inhabited by the
 codes. Then, we can type-check the case definition, between square
 brackets $[ \ldots ]$. This term $\V{f}$ is pushed into the type
 $\EnumT{\V{e}} \To \Mu{\DescD}$. This corresponds to a finite function
-definition, as formalised in Figure~\ref{fig:type-checking}.
+definition, as presented in Figure~\ref{fig:type-checking}.
 
 What happens if we unfold the definition? We ought to build the following term:
 
@@ -312,8 +300,7 @@ cannot materialise such motive.
             <- Another instance of type propagation
 \end{wstructure}
 
-If we cannot make it happen, we simply do not make it happen. We
-perfectly know what the motive ought to be. Consequently, we extend
+However, we perfectly know what the motive is. Consequently, we extend
 the type theory with a special-purpose operator:
 
 \[
@@ -325,14 +312,11 @@ the type theory with a special-purpose operator:
 \end{array}
 \]
 
-The entire work of the magician stands here, in this extension. One
-could be worried by the availability of such operations in our type
-theory. Indeed, it would be inconvenient for the developer to have to
-decide between two variants. The solution to this problem is, once
-again, to use the type propagation system. Just as the $\F{switch}$
-operator, $\F{switchD}$ can be automatically elaborated. To this end,
-we extend the type-checking rules (Fig.~\ref{fig:type-checking}) with
-the following inference rule:
+The entire work of the magician stands here, in this extension. Note
+that the developer do not have to decide between the two variants of
+$\F{switch}$. This is dealt with by the type propagation system
+(Fig.~\ref{fig:type-checking}), extended by the following inference
+rule:
 
 \[
 \Rule{\Gamma \Vdash \propag{\push{\V{t}}{\spiD{\V{e}}}}
@@ -362,15 +346,15 @@ Induction principle defined over Mu-things.
 }
 
 This concludes our levitation work. Beyond its pedagogical value, this
-exercise has several practical outcomes. First of all, this exercise
-reveals that the $\Desc$ universe is just plain data. Just as any
-piece of data, it can therefore be inspected and
-manipulated. Moreover, it is expressed in the $\Desc$ universe. As a
-consequence, it is equipped, for free, with an induction
-principle. So, our ability to inspect and program with $\Desc$ is not
-restricted to the meta-language: we now have all the necessary
-equipment in the target language to \emph{program} over datatypes. In
-this setting, \emph{generic programming is just about programming}.
+exercise has several practical outcomes. First of all, it reveals that
+the $\Desc$ universe is just plain data. Just as any piece of data, it
+can therefore be inspected and manipulated. Moreover, it is expressed
+in the $\Desc$ universe. As a consequence, it is equipped, for free,
+with an induction principle. So, our ability to inspect and program
+with $\Desc$ is not restricted to the meta-language: we now have all
+the necessary equipment in the target language to \emph{program} over
+datatypes. In this setting, \emph{generic programming is just 
+  programming}.
 
 
 \subsection{The generic catamorphism}
@@ -386,19 +370,18 @@ this setting, \emph{generic programming is just about programming}.
     -> Dependent-typeless catamorphism 
 \end{wstructure}
 
-In Section~\ref{sec:desc-fix-point}, we have argued for the
-implementation of a dependently-typed $\F{induction}$ principle,
-instead of the more traditional catamorphism. However, in some
-circumstances, the full-power of a dependent elimination is not
+In Section~\ref{sec:desc-fix-point}, we have implemented a dependent
+$\F{induction}$ principle, instead of the catamorphism. However, in
+some circumstances, the full-power of a dependent elimination is not
 necessary. In the following, we propose to derive the catamorphism
-from the generic induction principle. 
+from the $\F{induction}$ principle.
 
-The catamorphism can be characterised as an induction on the
-description $\V{D}$, with a non-dependent motive targeting $\V{T}$. Given a
-node $\V{xs}$ and the induction hypotheses, the method ought to build an
-element of $\V{T}$. Provided that we know how to make an element of
-$\descop{\V{D}}{\V{T}}$, this step will be performed by the algebra $\V{f}$. Let
-us take a look at this jigsaw:
+The catamorphism is an induction on the description $\V{D}$, with a
+non-dependent motive targeting $\V{T}$. Given a node $\V{xs}$ and the
+induction hypotheses, the method ought to build an element of
+$\V{T}$. Provided that we know how to make an element of
+$\descop{\V{D}}{\V{T}}$, this step will be performed by the algebra
+$\V{f}$. Let us take a look at this jigsaw:
 
 \newcommand{\cata}{\F{cata}}
 
@@ -418,8 +401,7 @@ at hand. Our goal is to make an element of
 \(\descop{\V{D}}{\V{T}}\). Intuitively, $\V{xs}$ is of the right
 shape, but its sub-elements are of the wrong type. On the other hand,
 for each sub-element of $\V{xs}$, $\V{hs}$ gives us the corresponding
-element in $\V{T}$. Hence the name ``induction
-hypotheses''. Therefore, to construct an element of
+element in $\V{T}$.  Therefore, to construct an element of
 \(\descop{\V{D}}{\V{T}}\), we replace the recursive components of
 \(\V{xs}\) by their counterpart in \(\V{hs}\):
 
@@ -439,17 +421,18 @@ hypotheses''. Therefore, to construct an element of
 \qquad  \pair{\V{g}}{\F{replace}\: \V{D}\: \V{X}\: \V{Y}\: \V{g}\: \V{ys}}{}
 }\]
 
-Filling the hole in $\F{cata}$ with \(\F{replace}\: \V{D}\: (\Mu{\V{D}})\: \V{T}\: \V{xs}\: \V{hs}\) closes the
-problem. In the type theory, we have built a generic catamorphism. Any
-datatype will now come equipped with this operation, for free.
+Filling the hole in $\F{cata}$ with \(\F{replace}\: \V{D}\:
+(\Mu{\V{D}})\: \V{T}\: \V{xs}\: \V{hs}\) closes the problem. In the
+type theory, we have built a generic catamorphism. Any datatype will
+now come equipped with this operation, for free.
 
-The astute reader will have been struck by the type of $\F{replace}$:
-it is \emph{almost} the morphism part -- sometimes called \emph{map}
--- of the functor $\V{D}$ from $\V{X}$ to $\V{Y}$ in $\Set$. Just as
-the $\F{induction}$ is the dependent version of $\cata$, $\F{replace}$
-is the dependent version of the map, which uses the induction
-hypotheses. For space reason, we will not present the non-dependent
-map. It can be found in the Agda model.
+%% The astute reader will have been struck by the type of $\F{replace}$:
+%% it is \emph{almost} the morphism part -- sometimes called \emph{map}
+%% -- of the functor $\V{D}$ from $\V{X}$ to $\V{Y}$ in $\Set$. Just as
+%% the $\F{induction}$ is the dependent version of $\cata$, $\F{replace}$
+%% is the dependent version of the map, which uses the induction
+%% hypotheses. For space reason, we will not present the non-dependent
+%% map. It can be found in the Agda model.
 
 \begin{wstructure}
 <- Deriving generic functions
@@ -469,14 +452,14 @@ operation, the catamorphism, from a pre-existing generic operation,
 the induction principle. This has been made possible by our ability to
 manipulate descriptions as first-class objects: the catamorphism is,
 basically, a function mapping a $\Desc$ to a datatype specific
-operation. This programming style is reminiscent to polytypic
-languages, such as PolyP~\cite{jansson:polyp}.
+operation. This is a form of polytypic programming, as found in
+PolyP~\cite{jansson:polyp}.
 
-Moreover, the $\F{replace}$ function demonstrates the benefit of an
-approach based on universes. The datatypes living in the universe of
-descriptions, we are able to \emph{inspect} them. As shown by
-$\F{replace}$, it is easy to explore these structures, as well as
-building new ones.
+%% Moreover, the $\F{replace}$ function demonstrates the benefit of an
+%% approach based on universes. The datatypes living in the universe of
+%% descriptions, we are able to \emph{inspect} them. As shown by
+%% $\F{replace}$, it is easy to explore these structures, as well as
+%% building new ones.
 
 \subsection{The generic Free Monad}
 \label{sec:desc-free-monad}
@@ -514,8 +497,6 @@ free monad over $F$ is defined by the following datatype:
 }
 \]
 
-\note{Recall monadic structure of this object}
-
 Being an inductive type, this $\FMFreeMonad$ datatype is itself
 defined by a pattern functor. It is given by:
 
@@ -532,10 +513,9 @@ defined by a pattern functor. It is given by:
         -> Mu does the fix-point
 \end{wstructure}
 
-In our setting, the functor will be represented by a tagged
-description. The free monad construction will take such tagged
-description, a set $\V{X}$ of variables, and will compute the tagged
-description of the corresponding free monad. Implementing this
+In our setting, the free monad construction will take the functor as a
+tagged description, a set $\V{X}$ of variables, and will compute the
+tagged description of the corresponding free monad. Implementing this
 function is surprisingly easy:
 
 \[\stk{
@@ -587,7 +567,7 @@ arguments to $\cata$ as possible:
           \V{x}
 }\]
 
-Our task is therefore to implement the algebra of the
+We are left with implementing the algebra of the
 catamorphism. Intuitively, its role is to catch appearances of
 $\DVar{\V{x}}$ and replace them by $\V{\sigma}\: \V{x}$. This
 corresponds to the following definition:
@@ -622,13 +602,11 @@ implemented the free monad construction for an arbitrary tagged
 description. This gives the developer the ability, for any datatype,
 to extend it with a notion of variable. Then, we have equipped this
 structure with the corresponding monadic operation, \bind\ and
-\return. Whereas the \return\ is a trivial variable former, the
-\bind\ operation corresponds to the substitution of variables by
-terms. We have shown how to implement it, for any free monad. This
-programming style is reminiscent to type-indexed
-datatypes~\cite{hinze:generic-haskell}, as implemented in Generic
-Haskell: from datatypes, we built new datatypes and equip them with
-their structure.
+\return. We have shown how to implement \bind, for any free
+monad. This construction is an example of type-indexed
+datatype~\cite{hinze:generic-haskell}, as found in Generic Haskell:
+from a datatype, we built a new datatype and equip it with its
+structure.
 
 \begin{wstructure}
 <- Deriving new data-structure and functions on them
@@ -643,13 +621,13 @@ their structure.
 \end{wstructure}
 
 %% Candidate for removal:
-With the free monad construction, we have seen two kinds of generic
-operations. Firstly, we have derived a new data-structure from another
-one: we make the free monad from its underlying functor. To do so, we
-crucially rely on the fact that datatypes are nothing but codes. We
-are therefore entitled to modify this code and, in this case, extend
-it. Extending a datatype might give rise to a more structured object,
-as was the case here.  So, secondly, we have equipped this new
-datatype with its inherent structure: the \bind\ and
-\return\ operations. We have been able to build them as generic
-functions.
+%% With the free monad construction, we have seen two kinds of generic
+%% operations. Firstly, we have derived a new data-structure from another
+%% one: we make the free monad from its underlying functor. To do so, we
+%% crucially rely on the fact that datatypes are nothing but codes. We
+%% are therefore entitled to modify this code and, in this case, extend
+%% it. Extending a datatype might give rise to a more structured object,
+%% as was the case here.  So, secondly, we have equipped this new
+%% datatype with its inherent structure: the \bind\ and
+%% \return\ operations. We have been able to build them as generic
+%% functions.
