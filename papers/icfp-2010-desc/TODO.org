@@ -26,16 +26,12 @@ If it hasn't been translated into universe polymorphism
 
 Without the restored "onecolumn" mode.
 
-** TODO Capitalized titles
 ** TODO switchD elaboration rule is in a bad state
 ** TODO Look for inlining figures
 ** TODO Ispell
 ** TODO Check bibliography references
-** TODO s/judgement/judgment/
 ** TODO Check/fix alignment in code
 ** TODO Fix code overflows
-** TODO Tech report as a bibtex entry, or footnote?
-** TODO titles are sometimes quite vague
 ** TODO Check coloring of terms
 ** TODO Find a convenient name for Hutton's razor
 
@@ -186,3 +182,11 @@ Section sec:indexing-desc
 ** DONE Example right after the introduction?
 ** DONE s/~/\:/
 ** DONE Footnote the address of the Agda model
+** DONE Capitalized titles
+** DONE titles are sometimes quite vague
+** DONE Tech report as a bibtex entry, or footnote?
+
+No tech report.
+
+
+** DONE s/judgement/judgment/
