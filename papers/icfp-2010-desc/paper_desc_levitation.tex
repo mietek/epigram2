@@ -64,10 +64,10 @@ just use the generic $\F{ind}$ operator, as we would for any ordinary
 program.
 
 Note, however, that the universe decoder \(\EnumT{\M{E}}\) \emph{is}
-hardwired, as are the primitive \(\Ze\) and \(\Su{-}\) constructs that
+hardwired, as are the primitive \(\Ze\) and \(\Su{\!}\) that
 we use for low-level values, and indeed the \(\F{switch}\) operator.
 We cannot dispose of data altogether! We have, however, gained
-the ordinariness of the enumeration \emph{codes}, and hence of
+the ordinariness of the enumeration \emph{codes}, and hence of generic
 programs which manipulate them. Our next step is similar: we are going to
 condense the entire naming scheme of datatypes \emph{into itself}.
 
@@ -115,12 +115,12 @@ condense the entire naming scheme of datatypes \emph{into itself}.
         -> It ought to be encoded in itself
 \end{wstructure}
 
-We shall now fulfil our implementation promises, delivering the
-codes of the universe of descriptions. In and by itself,
-the codes, $\Desc$, is nothing but a datatype. We are in the same
-situation as with $\EnumU$: we ought to be able to describe the codes
-of $\Desc$ in $\Desc$ itself. Hence, this code would be a first-class
-citizen, born with the standard, generic equipment of datatypes.
+We shall now fulfil our implementation promises, encoding the universe
+of descriptions. In and of itself, the codes, $\Desc$, is nothing but
+a datatype. We are in the same situation as with $\EnumU$: we ought to
+be able to describe the codes of $\Desc$ in $\Desc$ itself. Hence,
+this code would be a first-class citizen, born with the standard,
+generic equipment of datatypes.
 
 \subsubsection{First attempt}
 
@@ -132,42 +132,45 @@ citizen, born with the standard, generic equipment of datatypes.
     -> Show partial code [figure]
 \end{wstructure}
 
-Our first attempt is the following:
+Our first attempt gets stuck quite quickly:
 %
 \[\stk{
 \DescD : \Desc \\
-\begin{array}{@{}ll}
-\DescD \mapsto \DSigma{\!}{\!} & (\EnumT{[ \DUnit, \DSigma{\!}{\!}, \DIndx{\!} ]})  \\
-                               & \left[\begin{array}{l}
-                                   \DUnit                                \\
-                                   \DSigma{\Set}{(\LAM{\V{S}} \SHED)}      \\
-                                   \DIndx{\DUnit}                        \\
-                                 \end{array}
-                                 \right]
-\end{array}
+\DescD \mapsto
+  \tada{\stkm{\DUnit\\ \DSigma{\!}{\!}\\ \DIndx{\!}}}
+       {\stkm{ \DUnit                                \\
+         \DSigma{\Set}{(\LAM{\V{S}} \SHED)}      \\
+         \DIndx{\DUnit}    }                    } \\
+%\begin{array}{@{}ll}
+%\DescD \mapsto \DSigma{\!}{\!} & (\EnumT{[ \DUnit, \DSigma{\!}{\!}, \DIndx{\!} ]})  \\
+%                               & \left[\begin{array}{l}
+%                                   \DUnit                                \\
+%                                   \DSigma{\Set}{\LAM{\V{S}} \SHED}      \\
+%                                   \DIndx{\DUnit}                        \\
+%                                 \end{array}
+%                                 \right]
+%\end{array}
 }\]
 %
-Let us explain how we have proceeded and the obstacle we face. Much as
-the datatypes we have seen so far, we first choose a constructor among
+Let us explain where we stand. Much as
+we have done so far, we first offer a constructor choice from
 $\DUnit$, $\DSigma{\!}{\!}$, and $\DIndx{\!}$. The reader will notice
-that the tagged notation we have used for the $\Desc$ constructors now
+that the `tagged' notation we have used for the $\Desc$ constructors now
 fully makes sense: these were actually the tags we are defining.
-
 For $\DUnit$, we immediately reach the end of the description. For
 $\DIndx{\!}$, there is a single recursive argument. Describing
 $\DSigma{\!}{\!}$ is problematic. Recall the specification of
 $\DSigma{\!}{\!}$:
 %
 \[
-      \DSigma{\!}{\!} : \PITEL{\V{S}}{\Set}
-                        \PI{\V{D}}{\V{S} \To \Desc} 
-                        \Desc      
+\DSigma{(\Bhab{\V{S}}{\Set})}{(\Bhab{\V{D}}{\V{S} \To \Desc})} : \Desc\\
 \]
 %
-So, we first pack an element $\V{S}$ of $\Set$. Then, we would like to
-express a notion of recursive argument \emph{indexed} by $\V{S}$. Because
-our presentation is entirely first-order so far, we are not able to
-express this notion. We shall remedy to this situation.
+So, we first pack a  $\Set$, $\V{S}$. We should then like
+a recursive argument \emph{indexed} by $\V{S}$, but
+that is an \emph{exponential}, and our presentation is entirely
+first-order so far, delivering only sums-of-products. To code our
+universe, we must first enlarge it!
 
 
 \subsubsection{Second attempt}
@@ -184,69 +187,55 @@ express this notion. We shall remedy to this situation.
     -> Show DescD code
 \end{wstructure}
 
-In order to capture a notion of higher-order induction, we need to
-extend our universe of descriptions. This consists in adding a code
+In order to capture a notion of higher-order induction, we add a code
 $\DHindx{\!}{\!}$ that takes an indexing set $\V{H}$. Intuitively,
-$\DHindx{\!}{\!}$ uses the elements of $H$ to index as many recursive
-arguments:
+$\DHindx{\!}{\!}$ gives a recursive subobject for each element of $H$.
 %
 \[\stk{
-\begin{array}{ll}
-\stk{
-\data \Desc : \Set \where \\
-\;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
-    \DHindx{\!}{\!} & \PI{\V{H}}{\Set} \Desc \To \Desc \\
-    \ldots          & \:\:\ldots
-\end{array}
-}
-\vspace{0.2in}
-\\
-\stk{
-\descop{\_\:}{} : \Desc \To \Set \To \Set \\
-\begin{array}{@{}l@{\:=\:\:}ll}
-\descop{\DHindx{\V{H}}{\V{D}}}{\V{X}}     &  \TIMES{(\V{H} \To \V{X})}{\descop{\V{D}}{\V{X}}} \\
-\ldots                                    &  \ldots 
-\end{array}
-}
-\end{array}
+    \DHindx{(\Bhab{\M{H}}{\Set})}{(\Bhab{\M{D}}{\Desc})} : \Set \smallskip \\
+\descop{\DHindx{\V{H}}{\V{D}}}{\V{X}}     \mapsto \TIMES{(\V{H} \To \V{X})}{\descop{\V{D}}{\V{X}}} \\
 }\]
 
 
-Note that $\DIndx{\!}$ is isomorphic to $\DHindx{\Unit}{\!}$. However,
-we tolerate this duplication. Indeed, unlike its counterpart,
-$\DIndx{\!}$ is first-order. Both codes are \emph{extensionally} the
-same but, in practice, they will be dealt with rather
-differently. While definitional equality can cope with first-order
-objects, the functional presentation introduced by $\DHindx{\!}{}$ is
-unlikely to be amenable to a purely definitional treatment.
+Note that up to isomorphism, $\DIndx{\!}$ is subsumed by
+$\DHindx{\Unit}{\!}$. However, the apparent duplication has some
+value.  Unlike its counterpart, $\DIndx{\!}$ is first-order: we prefer
+not to demand dummy functions from \(\Unit\) in ordinary data,
+e.g. \(\NatSuc{(\LAM{\_}n)}\). It is na{\"\i}ve to imagine that up to
+isomorphism, any representation of data will do.  First-order
+representations are finitary by construction, and thus admit a richer,
+componentwise decidable equality than functions may in
+general possess.\footnote{E.g., extensionally, there is one inhabitant of
+\(\EnumT{\void}\To\Nat\); intensionally, there is a countable infinitude
+which it is not safe to collapse.}
 
 We are now able to describe our universe of datatypes:
 %
 \[\stk{
 \DescD : \Desc \\
-\begin{array}{@{}ll}
-\DescD \mapsto \DSigma{\!}{\!} & (\EnumT{[ \DUnit, \DSigma{\!}{\!}, \DIndx{\!}, \DHindx{\!}{\!} ]}) \\
-                           & \left[\begin{array}{l}
-                                   \DUnit                                            \\
-                                   \DSigma{\Set}{(\LAM{\V{S}} \DHindx{\V{S}}{\DUnit})}   \\
+\DescD \mapsto\tada
+{\stkm{ \DUnit\\ \DSigma{\!}{\!}\\ \DIndx{\!}\\ \DHindx{\!}{\!}}}
+{\stkm{
+\DUnit                                            \\
+                                   \DSigma{\Set}{\LAM{\V{S}} \DHindx{\V{S}}{\DUnit}}   \\
                                    \DIndx{\DUnit}                                    \\
-                                   \DSigma{\Set}{(\LAM{\V{H}} \DIndx{\DUnit})}
-                                   \end{array}
-                             \right]
-\end{array}
+                                   \DSigma{\Set}{\LAM{\_} \DIndx{\DUnit}}
+}}
 }\]
 %
 The $\DUnit$ and $\DIndx{\!}$ cases remain unchanged, as expected. We
 successfully describe the $\DSigma{\!}{}$ case, by a simple appeal to
 the higher-order induction on $\V{S}$. The $\DHindx{\!}{\!}$ case
-consists in packing an $\V{H}$ in $\Set$ with a recursive argument.
+consists in packing a $\Set$ with a recursive argument.
 
 At a first glance, we have achieved our goal. We have described the
-codes of the universe of description. Taking the fixpoint of this
-object gives us $\Desc$, up to isomorphism. We have implemented the
-codes of datatypes as an object levitating inside itself. However,
-this levitation operation, just as any magic trick, relies on an
-invisible cable. Let us reveal it, hence finishing our implementation.
+codes of the universe of descriptions. Taking the fixpoint of \(\descop{\DescD}\)
+gives us a datatype exactly like $\Desc$. Might we be
+so bold as to take \(\Desc \mapsto \Mu{\DescD}\) as the levitating
+definition? If we do, we shall come down with a bump! 
+To complete our levitation, just as in the magic trick, requires
+hidden assistance. Let us explain the problem and reveal the `invisible
+cable' which fixes it.
 
 
 \subsubsection{Final move}
@@ -257,17 +246,30 @@ invisible cable. Let us reveal it, hence finishing our implementation.
         -> Code with problem for the motive of switch
 \end{wstructure}
 
-
-Our reader might be slightly confused to learn that the trick is
-visible in the definition of $\DescD$. Or rather, it is made invisible
-by careful usage of type propagation. Indeed, let us try to elaborate
-this term down to the low-level type theory. The $\EnumT{[ \ldots ]}$
-construct elaborates to a finite set $\V{E}$ in $\EnumU$, inhabited by
-the codes. Then, we can type-check the case definition, between square
-brackets $[ \ldots ]$. This term $\V{f}$ is pushed into the type
-$\EnumT{\V{E}} \To \Mu{\DescD}$. This corresponds to a finite function
-definition, as presented in Figure~\ref{fig:type-checking}.
-
+The definition \(\Desc \mapsto \Mu{\DescD}\) is circular,
+but the offensive recursion is concealed by a prestidigitation.
+Expanding be \(\toDesc{-}\) and propagating types as in
+Figure~\ref{fig:type-checking} reveals the
+awful truth:
+\[
+\Desc\mapsto
+\Mu{\stk{(\DSigma{\EnumT{\sqr{ \DUnit\: \DSigma{\!}{\!}\: \DIndx{\!}\: 
+    \DHindx{\!}{\!}}}\\}
+    {\;\F{switch}\:\sqr{ \DUnit\: \DSigma{\!}{\!}\: \DIndx{\!}\: 
+    \DHindx{\!}{\!}}\:(\LAM{\_}\Desc)\\
+\;\sqr{\stkm{
+\DUnit                                            \\
+                                   \DSigma{\Set}{\LAM{\V{S}} \DHindx{\V{S}}{\DUnit}}   \\
+                                   \DIndx{\DUnit}                                    \\
+                                   \DSigma{\Set}{\LAM{\_} \DIndx{\DUnit}}
+}}})}}
+\]
+The recursion shows up only because we must specify the return type
+of the general-purpose \(\F{switch}\), and it is computing a \(\Desc\)!
+Although type propagation
+allows us to hide this detail \emph{when defining a function}, we cannot
+readily suppress this information and check types
+when \(\F{switch}\) is fully applied.
 
 \begin{wstructure}
 <- The magician trick
@@ -280,41 +282,46 @@ definition, as presented in Figure~\ref{fig:type-checking}.
             <- Another instance of type propagation
 \end{wstructure}
 
-What happens if we unfold the definition? We ought to build the following term:
+%What happens if we unfold the definition? We ought to build the following term:
+%
+%\[
+%\PLAM{\V{x}}{(\EnumT{\V{E}})} \switch{\V{E}}{(\LAM{\_} %\Mu{\DescD})}{\V{\pi^f}}{\V{x}}
+%\]
+%
+%But this is quite problematic. We are still in the process of
+%constructing $\DescD$, and the motive of $\F{switch}$ is abruptly
+%begging for this very same $\DescD$. Despite our willingness, we
+%cannot materialise such motive. However, we perfectly know what the
+%motive is.
+
+We are too close to give up now. If only we did not need to
+supply that return type, especially when we know what it must be.
+We eliminate the recursion by \emph{specializing} \(\F{switch}\):
 %
 \[
-\PLAM{\V{x}}{(\EnumT{\V{E}})} \switch{\V{E}}{(\LAM{\_} \Mu{\DescD})}{\V{\pi^f}}{\V{x}}
+\F{switchD} : \PITEL{\V{E}}{\EnumU}   \To
+                (\spi{\V{E}}{\LAM{\_} \Desc}) \To
+                \EnumT{\V{E}} \To \Desc
 \]
 %
-But this is quite problematic. We are still in the process of
-constructing $\DescD$, and the motive of $\F{switch}$ is abruptly
-begging for this very same $\DescD$. Despite our willingness, we
-cannot materialise such motive. However, we perfectly know what the
-motive is. Consequently, we extend the type theory with a
-special-purpose operator:
+The magician's art rests here, in this extension. We conceal it
+behind a type propagation rule for \(\F{switchD}\) which we apply
+with higher priority than for \(\F{switch}\) in general.
 %
 \[
-\begin{array}{@{}ll}
-%% switchD
-\F{switchD} : & \PITEL{\V{e}}{\EnumU}               
-                \PITEL{\V{b}}{\spi{\V{e}}{\LAM{\_} \Desc}}
-                \PITEL{\V{x}}{\EnumT{\V{e}}} \To \Desc
-\end{array}
+\Rule{\Gamma \Vdash
+  \propag{\push{\sqr{\vec{t}}}{\spi{\M{E}}{(\PLAM{x}{\EnumT{E}}\Desc)}}}
+                           {\M{t'}}}
+     {\Gamma \Vdash
+\propag{\push{\sqr{\vec{t}}}{\EnumT{\M{E}}\To\Desc}}
+ {\switchD{\M{E}}{\M{t'}}}}
 \]
-%
-The entire work of the magician stands here, in this extension. Note
-that the developer do not have to chose between the two variants of
-$\F{switch}$. This is dealt with by the type propagation system
-(Fig.~\ref{fig:type-checking}), extended with the following inference
-rule:
-%
-\[
-\Rule{\Gamma \Vdash \propag{\push{\V{t}}{\spiD{\V{e}}}}
-                           {\V{t'}}}
-     {\Gamma \Vdash \propag{\push{\V{t}}{\EnumT{\V{e}} \To \Desc}}
-                           {\PLAM{\V{x}}{(\EnumT{\V{e}})} \switchD{\V{e}}{\V{t'}}{\V{x}}}
-     }\;\mbox{$\V{t}$ is $[]$ or $[\_,\_]$}
-\]
+As a consequence, our definition above now propagates without
+introducing recursion. Of course, by pasting together
+the declaration of \(\Desc\) and its internal copy, we have made
+it appear in its own type. Hardwaired as a \emph{fait accompli},
+this creates no regress, although one must assume the definition
+to recheck it.
 
 \begin{wstructure}
 <- Generic programming now!
@@ -326,15 +333,15 @@ rule:
 \end{wstructure}
 
 
-This concludes our levitation work. Beyond its pedagogical value, this
+We have levitated \(\Desc\). Beyond its pedagogical value, this
 exercise has several practical outcomes. First of all, it reveals that
 the $\Desc$ universe is just plain data. As any piece of data, it can
 therefore be inspected and manipulated. Moreover, it is expressed in
 the $\Desc$ universe. As a consequence, it is equipped, for free, with
 an induction principle. So, our ability to inspect and program with
-$\Desc$ is not restricted to the meta-language: we now have all the
-necessary equipment in the target language to \emph{program} over
-datatypes. In this setting, \emph{generic programming is just
+$\Desc$ is not restricted to a meta-language: we now have all the
+necessary equipment in the theory to \emph{program} over
+datatypes. \emph{Generic programming is just
   programming}.
 
 

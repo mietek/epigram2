@@ -208,10 +208,18 @@
 %% Desc
 \usepackage{stmaryrd}
 
+
 \newcommand{\Desc}{\D{Desc}}
-\newcommand{\DescD}{\C{DescD}}
+\newcommand{\DescD}{\F{DescD}}
 \newcommand{\TagDesc}{\F{TagDesc}}
 \newcommand{\toDesc}[1]{\F{de}\:{#1}}
+
+\newcommand{\tada}[2]{
+  \toDesc{\red{\left[
+  \left[\black{#1}\right],
+  \left[\black{#2}\right]
+  \right]}}}
+
 
 \newcommand{\descop}[2]{\green{\llbracket} #1 \green{\rrbracket}\:#2}
 
@@ -394,6 +402,7 @@
 \newcommand{\STC}[1]{\begin{array}[t]{@{}c@{}}#1\end{array}}
 \newcommand{\CASES}[1]{\begin{array}[t]{@{}l@{\;\mapsto\;}l@{}}#1\end{array}}
 
+\newcommand{\stkm}[1]{\begin{array}{@{}l@{}}#1\end{array}}
 \newcommand{\stk}[1]{\begin{array}[t]{@{}l@{}}#1\end{array}}
 \newcommand{\stkl}[1]{\begin{array}[b]{@{}l@{}}#1\end{array}}
 \newcommand{\stkc}[1]{\begin{array}[b]{@{}c@{}}#1\end{array}}
@@ -433,5 +442,6 @@
 
 \newcommand{\bigRedBracket}[1]{\ensuremath\red{\left[\blackFG{#1}\right]}}
 
-\newcommand{\SHED}{\raisebox{0in}[0in][0in]{\yellow{\([\ldots]\)}}}
+\newcommand{\SHED}{\raisebox{0in}[0in][0in]{\yellowBG{\(\{?\}\)}}}
+
 
