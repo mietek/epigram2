@@ -1009,25 +1009,53 @@ functor coding its free monad: \note{pwm: Whoa there. Maybe we should
 
 
 Just as in the universe of descriptions, this construction comes with
-an obvious \return\ and a substitution operation, the \bind. Its type
-signature is the following:
+an obvious \return\ and a substitution operation, the \bind. Its
+definition is the following:
 %
-\[
+\[\stk{
 \begin{array}{@{}ll}
-\substI : & \PITEL{\V{I}}{\Set}
-            \PITEL{\V{X}, \V{Y}}{\V{I} \To \Set}
-            \PITEL{\V{R}}{\TagIDesc{\V{I}}} \\
-          & \PITEL{\V{\sigma}}{\PI{\V{i}}{\V{I}} \V{X}\:\V{i} \To 
-                               \IMu{\V{I}}{(\toIDesc{\FreeIMonad{\V{R}}{\V{I}}{\V{Y}}})}{\V{i}}} \\
+\substI : & _{\PI{\V{I}}{\Set}}
+            \PITEL{\V{R}}{\TagIDesc{\V{I}}}
+            \PI{\V{X}, \V{Y}}{\V{I} \To \Set} \\
+          & (\PI{\V{i}}{\V{I}} \V{X}\:\V{i} \To 
+                               \IMu{\V{I}}{(\toIDesc{\FreeIMonad{\V{R}}{\V{I}}{\V{Y}}})}{\V{i}}) \To \\
           & \PITEL{\V{i}}{\V{I}}
             \PITEL{\V{D}}{\IMu{I}{(\toIDesc{\FreeIMonad{\V{R}}{\V{I}}{\V{X}}})}{\V{i}}} \To
             \IMu{I}{(\toIDesc{\FreeIMonad{\V{R}}{\V{I}}{\V{Y}}})}{\V{i}}
-\end{array}
-\]
+\end{array} \\
+\substI\: \V{X}\: \V{Y}\: \V{R}\: \V{\sigma}\: \V{i}\: \V{t} = \\
+\qquad    \F{cataI}\: \toIDesc{\FreeIMonad{\V{R}}{}{\V{X}}}\:
+                      (\IMu{}{\toIDesc{\FreeIMonad{\V{R}}{}{\V{Y}}}})\:
+                      (\F{applyI}\: \V{X}\: \V{Y}\: \V{R}\: \V{\sigma})\:
+                      \V{i}\:
+                      \V{t} 
+}\]
 % 
-We refer the reader to the Agda model for the actual
-implementation. Let us now consider two examples of free indexed
-monad.
+Where  $\F{applyI}$ is defined as follow:
+%
+\[\stk{
+\begin{array}{@{}ll}
+\F{applyI} : & _{\PI{\V{I}}{\Set}}
+            \PITEL{\V{R}}{\TagIDesc{\V{I}}}
+            \PI{\V{X}, \V{Y}}{\V{I} \To \Set} \\
+          & (\PI{\V{i}}{\V{I}} \V{X}\: \V{i} \To \IMu{}{\toIDesc{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}}{\V{i}}) \To \\
+          & \PI{\V{i}}{\V{I}} 
+            \idescop{\toIDesc{(\FreeIMonad{\V{R}}
+                                         {\V{I}}
+                                         {\V{X}})}\: 
+                     \V{i}}
+                    {\V{I}}
+                    {\IMu{\V{I}}{\toIDesc{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}}} \To 
+           \IMu{\V{I}}{\toIDesc{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}}{\V{i}}
+\end{array} \\
+\begin{array}{@{}l@{\:\mapsto\:\:}l}
+\F{applyI}\: \V{R}\: \V{X}\: \V{Y}\: \V{\sigma}\: \V{i}\: \pair{\DVar{\!}}{\V{x}}{}   & \V{\sigma}\: \V{i}\: \V{x}                   \\
+\F{applyI}\: \V{R}\: \V{X}\: \V{Y}\: \V{\sigma}\: \V{i}\: \pair{\etag{t}\,}{\V{ys}}{} & \Con{\pair{\etag{t}}{\V{ys}}{}}
+\end{array}
+}\]
+ 
+Let us now consider two examples of free indexed monad.
+
 
 \paragraph{Typed expressions:}
 
@@ -1099,14 +1127,13 @@ have to fill in the right arguments to $\substI$, the type guiding us:
           \V{ty}\: 
           \V{term} \mapsto  \\
 \;\;\ \begin{array}{ll}
-       \substI\: & \Ty\: 
-                  (\SUM{\Val{\!}}{\Var{\V{dom}}{}})\: 
-                  \Val{\!}\:
-                  \HExprFreeD\:  \\
-                &
-                  (\V{\sigma}\: \V{dom}\: \gammaNat\: \gammaBool)\:
-                  \V{ty}\:
-                  \V{term}
+       \substI_{\Ty}\: &  \HExprFreeD\: 
+                         (\SUM{\Val{\!}}{\Var{\V{dom}}{}})\: 
+                         \Val{\!} \\
+                      &
+                        (\V{\sigma}\: \V{dom}\: \gammaNat\: \gammaBool)\:
+                        \V{ty}\:
+                        \V{term}
       \end{array}
 }\]
 %
