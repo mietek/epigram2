@@ -180,7 +180,7 @@ effectively described the functor:
 Correspondingly, we can see the injections to the sum:
 \[
 \sqr{\NatZero}:\descop{\NatD}Z \qquad
-\sqr{\NatSuc\:z}:\descop{\NatD}Z \;\mbox{if}\;z:Z
+\sqr{\NatSuc{z}}:\descop{\NatD}Z \;\mbox{if}\;z:Z
 \]
 
 \begin{wstructure}
@@ -261,6 +261,9 @@ if necessary. We characterise tagged descriptions thus:
 \spl{\LAM{\V{E}}\LAM{\V{D}}
 \DSigma{\EnumT{\V{E}}}{(\F{switch}\:\V{E}\:(\LAM{\_}\Desc)\:\V{D})}}
 }\]
+It is not a great stretch to imagine that the traditional datatype
+declaration syntax might desugar to the \emph{definition} of a datatype
+via a tagged description.
 
 \begin{wstructure}
 <- Fictive object [figure 'data Desc']
@@ -281,18 +284,17 @@ if necessary. We characterise tagged descriptions thus:
 \end{wstructure}
 
 
-So far, we have used our universe of descriptions to build pattern
-functors. Being polynomial functors, they all admit a fixpoint. We
-construct the fixpoint by \emph{tying the knot} of the
-interpretation: the holes left open by the functor are filled by its
-own recursive definition:
+So far, we have built pattern functors with our \(\Desc\) universe.
+Being polynomial functors, they all admit a least fixpoint, which we
+now construct by \emph{tying the knot}: the element type abstracted
+by the functor is now instantiated recursively:
 %
 \[
-\Rule{\Gamma \vdash \Bhab{\V{D}}{\Desc}}
-     {\Gamma \vdash \Bhab{\Mu{\V{D}}}{\Set}} \qquad
-\Rule{\Gamma \vdash \Bhab{\V{D}}{\Desc} \quad 
-      \Gamma \vdash \Bhab{\V{x}}{\descop{\V{D}}{(\Mu{\V{D}})}}}
-     {\Gamma \vdash \Bhab{\Con{\V{x}}}{\Mu{\V{D}}}}
+\Rule{\Gamma \vdash \Bhab{\M{D}}{\Desc}}
+     {\Gamma \vdash \Bhab{\Mu{\M{D}}}{\Set}} \qquad
+\Rule{\Gamma \vdash \Bhab{\M{D}}{\Desc} \quad 
+      \Gamma \vdash \Bhab{\M{d}}{\descop{\M{D}}{(\Mu{\M{D}})}}}
+     {\Gamma \vdash \Bhab{\Con{\M{d}}}{\Mu{\M{D}}}}
 \]
 
 \begin{wstructure}
@@ -307,9 +309,18 @@ own recursive definition:
     ???
 \end{wstructure}
 
-Together with the type formers defined above, we would legibly expect
-an elimination principle. Following a categorical intuition, we could
-be tempted to provide it as a catamorphism:
+We can now build datatypes and their elements, e.g.:
+\[\stk{
+\Nat\mapsto\Mu{(\toDesc{\pair{\sqr{\NatZero\: \NatSuc{\!} }}
+                     {\sqr{ \DUnit \quad (\DIndx{\DUnit})}}{}}:\Set
+\\
+\Con{\sqr{\NatZero}}:\Nat \qquad
+\Con{\sqr{\NatSuc{n}}}:\Nat \;\mbox{if}\;n:\Nat}
+}\]
+
+But how shall we compute with our data?  We should expect an
+elimination principle. Following a categorical intuition, we might
+provide the `fold', or `iterator', or `catamorphism':
 %
 \[
 \F{cata} : \PITEL{\V{D}}{\Desc}
@@ -317,35 +328,34 @@ be tempted to provide it as a catamorphism:
            (\descop{\V{D}}{\V{T}} \To \V{T}) \To 
            \Mu{\V{D}} \To \V{T} 
 \]
-%
-Whereas this definition is amply sufficient in the simply-typed world,
-it comes short of its promises in the dependently-typed realm. Indeed,
-this type is not dependent, being restricted to a notion of
-\emph{iteration}. As this operator will be the corner stone of
-inductive definitions, we are better off sharpening it before use.
-Following \citet{benke:universe-generic-prog}, we adopt the following
-definition:
+
+However, iteration is inadequate for \emph{dependent} computation.
+We need \emph{induction} to write functions whose type depends on inductive
+data. Following \citet{benke:universe-generic-prog}, we adopt the following:
 %
 \[\stk{
-\begin{array}{lcl}
-\F{induction} & : & \PITEL{\V{D}}{\Desc}
+\F{ind} : \stk{ \PITEL{\V{D}}{\Desc}
                     \PI{\V{P}}{\Mu{\V{D}} \To \Set}         \\
-              &   & (\PI{\V{xs}}{\descop{\V{D}}{(\Mu{\V{D}})}}              \\
-              &   & \ \All{\V{D}}{(\Mu{\V{D}})}{\V{P}}{\V{xs}} \To \V{P} (\Con{\V{xs}})) \To \\
-              &   & \PI{\V{x}}{\Mu{\V{D}}} \V{P} \V{x} 
-\end{array} \\
-\F{induction}\: \V{D}\: \V{P}\: \V{ms}\: (\Con{\V{xs}}) =  \\
-\qquad
-    \V{ms}\: \V{xs}\: (\all{D}{\Mu{D}}{P}
-                           {(\LAM{\V{x}} \F{induction}\: \V{D}\: \V{P}\: \V{ms}\: \V{x})}
-                           {\V{xs}})
+               (\PI{\V{d}}{\descop{\V{D}}{(\Mu{\V{D}})}}       
+                \All{\V{D}}{(\Mu{\V{D}})}{\V{P}}{\V{d}} \To \V{P} (\Con{\V{d}})) \To \\
+               \PI{\V{x}}{\Mu{\V{D}}} \V{P} \V{x} 
+} \\
+\F{ind}\, \V{D}\, \V{P}\, \V{m}\, (\Con{\V{d}}) = 
+    \V{m}\, \V{d}\, (\all{D}{(\Mu{D})}{\V{P}}
+                           {(\F{ind}\, \V{D}\, \V{P}\, \V{m})}
+                           {\V{d}})
 }\]
 %
-Where, intuitively, $\All{\V{D}}{\V{X}}{\V{P}}{\V{x}}$ states that
-$\Bhab{\V{P}}{\V{X} \To \Set}$ holds everywhere in $\V{x}$. Its
-definition is presented in Figure~\ref{fig:all-predicates}. Note that
-this induction principle is the first manifestation of a generic
-operation over descriptions. Any datatype we define automatically
+Here, $\All{\V{D}}{\V{X}}{\V{P}}{\V{d}}$ states that
+$\Bhab{\V{P}}{\V{X} \To \Set}$ holds for every subobject $\V{x}:\V{X}$ in \(\V{D}\), and \(\all{\V{D}}{\V{X}}{\V{P}}{\V{p}}{\V{d}}\) is a
+`dependent map', applying
+some \(\Bhab{\V{p}}{\PIS{\Bhab{\x}{\V{X}}}\V{P}\,\V{x}}\) to each \(\x\)
+contained in \(\V{d}\). The full
+definition (including an extra case, introduced shortly) is presented in
+Figure~\ref{fig:all-predicates}. Note that
+\(\F{ind}\) is our first generic
+operation over descriptions, albeit a hardwired operator.
+Any datatype we define automatically
 comes with an induction principle.
 
 
@@ -365,13 +375,13 @@ comes with an induction principle.
 \begin{array}{@{}l@{}l@{\:=\:\:}l}
 \All{\DUnit}{& \V{X}}{\V{P}}{\Void} &
     \Unit \\
-\All{(\DSigma{\V{S}}{\V{T}})}{& \V{X}}{\V{P}}{\pair{\V{a}}{\V{b}}{}} &
-    \All{(\V{T}\: \V{a})}{\V{X}}{\V{P}}{\V{b}} \\
-\All{(\DIndx{\V{D}})}{& \V{X}}{\V{P}}{\pair{\V{a}}{\V{b}}{}} &
-    \TIMES{\V{P}\: \V{a}}{\All{\V{D}}{\V{X}}{\V{P}}{\V{b}}} \\
-\All{(\DHindx{\V{H}}{\V{D}})}{& \V{X}}{\V{P}}{\pair{\V{f}}{\V{b}}{}} &
-    \TIMES{(\PI{\V{i}}{\V{H}} \V{P}\: (\V{f}\: \V{i}))}
-          {\All{\V{D}}{\V{X}}{\V{P}}{\V{b}}}
+\All{(\DSigma{\V{S}}{\V{D}})}{& \V{X}}{\V{P}}{\pair{\V{s}}{\V{d}}{}} &
+    \All{(\V{D}\: \V{s})}{\V{X}}{\V{P}}{\V{d}} \\
+\All{(\DIndx{\V{D}})}{& \V{X}}{\V{P}}{\pair{\V{x}}{\V{d}}{}} &
+    \TIMES{\V{P}\: \V{x}}{\All{\V{D}}{\V{X}}{\V{P}}{\V{d}}} \\
+\All{(\DHindx{\V{H}}{\V{D}})}{& \V{X}}{\V{P}}{\pair{\V{f}}{\V{d}}{}} &
+    \TIMES{(\PI{\V{h}}{\V{H}} \V{P}\: (\V{f}\: \V{h}))}
+          {\All{\V{D}}{\V{X}}{\V{P}}{\V{d}}}
 \end{array}
 }
 &
@@ -381,27 +391,27 @@ comes with an induction principle.
 \all{\!}{\!}{\!}{\!}{\!} : & \PITEL{\V{D}}{\Desc}
                              \PITEL{\V{X}}{\Set}
                              \PITEL{\V{P}}{\V{X} \To \Set} \\
-                           & \PITEL{\V{R}}{\PI{\V{x}}{\V{X}} \V{P}\: \V{x}}
+                           & \PITEL{\V{p}}{\PI{\V{x}}{\V{X}} \V{P}\: \V{x}}
                              \PI{\V{xs}}{\descop{\V{D}}{\V{X}}} 
                              \All{\V{D}}{\V{X}}{\V{P}}{\V{xs}} 
 \end{array} \\
 \begin{array}{@{}l@{}l@{\:=\:\:}l}
-\all{\DUnit}{& \V{X}}{\V{P}}{\V{R}}{\Void} &
+\all{\DUnit}{& \V{X}}{\V{P}}{\V{p}}{\Void} &
     \Void \\
-\all{(\DSigma{\V{S}}{\V{T}})}{& \V{X}}{\V{P}}{\V{R}}{\pair{\V{a}}{\V{b}}{}} &
-    \all{(\V{T}\: \V{a})}{\V{X}}{\V{P}}{\V{R}}{\V{b}} \\
-\all{(\DIndx{\V{D}})}{& \V{X}}{\V{P}}{\V{R}}{\pair{\V{a}}{\V{b}}{}} &
-    \pair{\V{R}\: \V{a}}
-         {\all{\V{D}}{\V{X}}{\V{P}}{\V{R}}{\V{b}}}{} \\
-\all{(\DHindx{\V{H}}{\V{D}})}{& \V{X}}{\V{P}}{\V{R}}{\pair{\V{f}}{\V{b}}{}} &
-    \pair{\LAM{\V{i}} \V{R}\: (\V{f}\: \V{i})}
-         {\all{\V{D}}{\V{X}}{\V{P}}{\V{R}}{\V{b}}}{}
+\all{(\DSigma{\V{S}}{\V{D}})}{& \V{X}}{\V{P}}{\V{p}}{\pair{\V{s}}{\V{d}}{}} &
+    \all{(\V{D}\: \V{s})}{\V{X}}{\V{P}}{\V{p}}{\V{d}} \\
+\all{(\DIndx{\V{D}})}{& \V{X}}{\V{P}}{\V{p}}{\pair{\V{x}}{\V{d}}{}} &
+    \pair{\V{p}\: \V{x}}
+         {\all{\V{D}}{\V{X}}{\V{P}}{\V{p}}{\V{d}}}{} \\
+\all{(\DHindx{\V{H}}{\V{D}})}{& \V{X}}{\V{P}}{\V{p}}{\pair{\V{f}}{\V{d}}{}} &
+    \pair{\LAM{\V{h}} \V{p}\: (\V{f}\: \V{h})}
+         {\all{\V{D}}{\V{X}}{\V{P}}{\V{p}}{\V{d}}}{}
 \end{array}
 \end{array}
 }
 \]
 
-\caption{Induction predicates}
+\caption{Defining and collecting inductive hypotheses}
 \label{fig:all-predicates}
 
 \end{figure*}
@@ -425,38 +435,56 @@ comes with an induction principle.
 
 
 We have now enough machinery to build and manipulate inductive
-types. In a word, we ought be able to \emph{program} over these
-datatypes.  However, one could argue that programming with these
-objects is not practical. 
-
-Writing codes instead of datatype constructor is indeed unpractical.
-However, regaining this ability is simply a matter of type
-propagation. We extend the type-checking framework of
-Figure~\ref{fig:type-checking} with the following inference rule:
+types at a low level. Let us now apply cosmetic surgery
+to the syntactic overhead. We extend type checking of
+expressions:
 %
 \[
-\Rule{\propag{\push{\widetilde{\V{e}}}
-                   {\descop{\V{f}\: \V{C}}{(\Mu{(\DSigma{(\Enum\: \V{b})}{\V{f}})})}}}
-            {\widetilde{\V{e}}'}}
-     {\propag{\push{\V{C}\: \vec{\V{e}}}
-                   {\Mu{(\DSigma{(\Enum\: \V{b})}{\V{f}})}}}
-             {\Con{(\etag{\V{C}}, \widetilde{\V{e}}')}}}\;\etag{\V{C}} \in \V{b}
+\Rule{\Gamma\Vdash\propag{\push{\etag{c}}{\EnumT{\M{E}}}}{n} \quad
+\Gamma\Vdash  
+\propag{
+  \push{\sqr{\vec{t}}}
+   {\descop{\M{D}\: n}{(\Mu{(\DSigma{\EnumT{\M{E}}}{\M{D}})})}}}
+        {\M{t'}}}
+     {\Gamma\Vdash\propag{\push{\etag{c}\: \vec{\M{t}}}
+                   {\Mu{(\DSigma{\EnumT{\M{E}}}{\M{D}})}}}
+             {\Con{\pair{n}{\M{t'}}{}}}}
 \]
 %
-Where $\vec{\V{e}}$ denotes a telescope of arguments applied to the
-constructor $\V{C}$. For readability, we write $\V{f}\: \V{C}$ instead
-of a call to $\F{switch}$. Also, we note $\widetilde{\V{e}}$ the
-right-nested tuple terminated by $\Void$ corresponding to the curried
-telescope $\vec{\V{e}}$.
+Here $\etag{c}\:\vec{t}$ denotes a tag `applied' to a sequence
+of arguments, and \(\sqr{\vec{t}}\) that sequence's repackaging as
+a right-nested tuple. Now we can just write data directly.
+\[
+\NatZero:\Nat\qquad \NatSuc{n}:\Nat\;\mbox{if}\;n:\Nat
+\]
+Once again, the type explains the legible presentation, as well as
+the low-level representation.
 
-Hence, in the high-level expression language, the developer writes a
-familiar type constructor, applied to a telescope of arguments. During
-type propagation, this expression will be pushed to a $\Mu{}$ type of
-a tagged description. It is then straightforward to look-up the tag
-and turn the constructor form into the appropriate code.
+We may also simplify appeals to induction by type propagation, as we
+have done with functions from pairs and enumerations.
+\[
+\Rule{\Gamma\Vdash\stk{
+\propag{\push{\M{f}}
+             {\PI{\V{d}}{\descop{\M{D}}{(\Mu{\M{D}})}}       
+                \All{\M{D}}{(\Mu{\M{D}})}{(\PLAM{\x}{\Mu{\M{D}}}\M{P})}{\V{d}} \To \M{P}[\Con{\V{d}}/\x]\\}}
+       {\M{f'}}}}
+{\Gamma\Vdash
+\propag{\push{\sind{\M{f}}}
+             {\PIS{\Bhab{\x}{\Mu{\M{D}}}}\M{P} }}
+       {\F{ind}\:\M{D}\:(\PLAM{\x}{\Mu{\M{D}}}\M{P})\:\M{f'}}}
+\]
+This abbreviation is no substitute for the dependent pattern
+matching to which we are entitled in a high-level language built on top
+of this theory~\cite{goguen:pattern-matching}, but it does at least make
+`assembly language' programming mercifully brief, if hieroglyphic.
+\[\stk{
+\F{plus}:\Nat\To\Nat\To\Nat \\
+\F{plus}\mapsto\sind{\spl{\sqr{(\LAM{\_}\LAM{\_}\LAM{\V{y}}\V{y})
+  \quad(\LAM{\_}\spl{\LAM{\V{h}}\LAM{\_}\LAM{\V{y}}
+    \NatSuc{(\V{h}\:\V{y})}})}}}
+}\]
 
-This concludes our presentation of the universe of descriptions. In
-this section, we have seen how datatypes from the simply-typed world
-can be expressed in a dependently-typed setting. By relying on a
-universe, we benefit from the ability to inspect and manipulate
-codes. We have shown that programming with codes is practical. 
+This concludes our introduction to the universe of datatype descriptions.
+We have encoded sum-of-products datatypes from the simply-typed world
+as data and equipped them with computation. We have also made sure
+to hide the details by type propagation.
