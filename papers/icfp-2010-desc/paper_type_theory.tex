@@ -525,19 +525,18 @@ abstractions or project from pairs---takes a type annotation.
         -> Projections
 \end{wstructure}
 
-Type synthesis is the \emph{source} of types. It follows the \(\exprEx\)
-syntax, delivering both the elaborated term and its type. Terms
-and expressions never mix: e.g., for application, we
-instantiate the range with the \emph{term} delivered by checking the
-argument \emph{expression}. Hardwired operators are checked as variables.
+Type synthesis (Fig.~\ref{fig:type-synthesis}) is the \emph{source} of
+types. It follows the \(\exprEx\) syntax, delivering both the
+elaborated term and its type. Terms and expressions never mix: e.g.,
+for application, we instantiate the range with the \emph{term}
+delivered by checking the argument \emph{expression}. Hardwired
+operators are checked as variables.
+
+\begin{figure}
 \input{figure_type_synthesis}
-
-%\begin{figure}
-%\input{figure_type_synthesis}
-%\caption{Type synthesis}
-%\label{fig:type-synthesis}
-%\end{figure}
-
+\caption{Type synthesis}
+\label{fig:type-synthesis}
+\end{figure}
 
 
 \begin{wstructure}
