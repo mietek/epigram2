@@ -191,6 +191,8 @@ these indexed functors, hence computing a fixpoint of the entire
      {\Gamma \vdash \Bhab{\Con{\V{x}}}{\IMu{\V{I}}{\V{R}}{\V{i}}}}
 }\]
 
+\newcommand{\inductionI}{\F{indI}}
+\newcommand{\cataI}{\F{cataI}}
 
 However, we still have to define the actual grammar. We obtain it by
 evolving $\Desc$ to cope with indexing. \note{Say something about the
@@ -200,36 +202,36 @@ by:
 %
 \[\stk{
 \begin{array}{@{}ll}
-\F{inductionI} : & _{\PI{\V{I}}{\Set}}
+\inductionI : & _{\PI{\V{I}}{\Set}}
                    \PITEL{\V{R}}{\V{I} \To \IDesc{\V{I}}}
-                   \PI{\V{P}}{\SIGMA{\V{i}}{\V{I}} \IMu{\V{I}}{\V{R}}{\!} \To \Set} \\
+                   \PI{\V{P}}{\TIMES{\V{I}}{\IMu{\V{I}}{\V{R}}{\!}} \To \Set} \\
                  & (      \PITEL{\V{i}}{\V{I}} 
-                          \PI{\V{xs}}{\idescop{\V{R}\: \V{i}}{\V{I}}{\IMu{\V{I}}{\V{R}}{\!}}} \\
-                 & \   \idescop{\AllI{\V{I}}
+                          \PI{\V{xs}}{\idescop{\V{R}\: \V{i}}{\V{I}}{(\IMu{\V{I}}{\V{R}}{\!})}} \\
+                 & \   \idescop{\AllI{}
                                      {(\V{R}\: \V{i})}
                                      {(\IMu{\V{I}}{\V{R}}{\!})}
                                      {\V{xs}}}
                                {}
                                {\V{P}} \To
-                       \V{P}\: \pair{\V{i}}{\Con{\V{xs}}}{}) \\
+                       \V{P}\: \pair{\V{i}}{\Con{\V{xs}}}{}) \To \\
                  & \PITEL{\V{i}}{\V{I}}
                    \PI{\V{x}}{\IMu{\V{I}}{\V{R}}{\V{i}}}
                    \V{P}\: \pair{\V{i}}{\V{x}}{}
 \end{array} \\
-\F{inductionI}\: \V{R}\: \V{P}\: \V{ms}\: \V{i}\: (\Con{\V{xs}}) =  \\
-\quad
+\inductionI\: \V{R}\: \V{P}\: \V{ms}\: \V{i}\: (\Con{\V{xs}}) =  \\
+\qquad
     \V{ms}\: \V{i}\: \V{xs}\: (\allI{}
                                     {\V{R}\: \V{i}}
                                     {\IMu{\V{I}}{R}{}}
                                     {\V{P}}
-                                    {(\LAM{\pair{\V{i}}{\V{xs}}{}} \F{inductionI}\: \V{R}\: \V{P}\: \V{ms}\: \V{i}\: \V{xs})}
+                                    {(\LAM{\pair{\V{i}}{\V{xs}}{}} \inductionI\: \V{R}\: \V{P}\: \V{ms}\: \V{i}\: \V{xs})}
                                     {\V{xs}})
 }\]
 %
 Where the operators $\AllI{}{\!}{\!}{}$ and
 $\allI{}{\!}{\!}{\!}{\!}{}$ are presented in
 Figure~\ref{fig:allI-predicates}. As for descriptions, we can compute
-a generic catamorphism, $\F{cataI}$, from $\F{inductionI}$.
+a generic catamorphism, $\cataI$, from $\inductionI$.
 
 
 \begin{figure*}
@@ -252,10 +254,10 @@ a generic catamorphism, $\F{cataI}$, from $\F{inductionI}$.
     \DConst{\V{K}} \\
 \AllI{\:}{(\DProd{\V{D}}{\V{D'}})}{& \V{X}}{\pair{\V{d}}{\V{d'}}{}} &
     \DProd{\AllI{}{\V{D}}{\V{X}}{\V{d}}}{\AllI{}{\V{D'}}{\V{X}}{\V{d'}}} \\
-\AllI{\:}{(\DSigma{\V{S}}{\V{T}})}{& \V{X}}{\pair{\V{a}}{\V{b}}{}} &
-    \AllI{}{(\V{T}\: \V{a})}{\V{X}}{\V{b}} \\
-\AllI{\:}{(\DPi{\V{S}}{\V{T}})}{& \V{X}}{\V{f}} &
-    \DPi{\V{S}}{(\LAM{\V{s}} \AllI{}{(\V{T}\: \V{s})}{\V{X}}{(\V{f}\: \V{s})})}
+\AllI{\:}{(\DSigma{\V{S}}{\V{D}})}{& \V{X}}{\pair{\V{s}}{\V{d}}{}} &
+    \AllI{}{(\V{D}\: \V{s})}{\V{X}}{\V{d}} \\
+\AllI{\:}{(\DPi{\V{S}}{\V{D}})}{& \V{X}}{\V{f}} &
+    \DPi{\V{S}}{(\LAM{\V{s}} \AllI{}{(\V{D}\: \V{s})}{\V{X}}{(\V{f}\: \V{s})})}
 \end{array}
 }
 &
@@ -265,23 +267,23 @@ a generic catamorphism, $\F{cataI}$, from $\F{inductionI}$.
 \allI{\!}{\!}{\!}{\!}{\!}{\!} : & _{\PI{\V{I}}{\Set}}
                                   \PITEL{\V{D}}{\IDesc{\V{I}}}
                                   \PITEL{\V{X}}{\V{I} \To \Set} 
-                                  \PI{\V{R}}{\TIMES{\V{I}}{\V{X}} \To \Set} \\
-                                & (\PI{\V{x}}{\TIMES{\V{I}}{\V{X}}} \V{R}\: \V{x}) \To
-                                  \PI{\V{xs}}{\idescop{\V{D}}{}{\V{X}}} 
-                                  \idescop{\AllI{}{\V{D}}{\V{X}}{\V{xs}}}{\TIMES{\V{I}}{\V{X}}}{\V{R}}
+                                  \PI{\V{P}}{\TIMES{\V{I}}{\V{X}} \To \Set} \\
+                                & (\PI{\V{x}}{\TIMES{\V{I}}{\V{X}}} \V{P}\: \V{x}) \To
+                                  \PI{\V{xs}}{\idescop{\V{D}}{\V{I}}{\V{X}}} 
+                                  \idescop{\AllI{}{\V{D}}{\V{X}}{\V{xs}}}{\TIMES{\V{I}}{\V{X}}}{\V{P}}
 \end{array} \\
 \begin{array}{@{}l@{}l@{\:=\:\:}l}
-\allI{\:}{(\DVar{\V{i}})}{& \V{X}}{\V{R}}{\V{P}}{\V{x}} &
-    \V{P}\: \pair{\V{i}}{\V{x}}{} \\
-\allI{\:}{(\DConst{\V{K}})}{& \V{X}}{\V{R}}{\V{P}}{\V{k}} &
+\allI{\:}{(\DVar{\V{i}})}{& \V{X}}{\V{P}}{\V{p}}{\V{x}} &
+    \V{p}\: \pair{\V{i}}{\V{x}}{} \\
+\allI{\:}{(\DConst{\V{K}})}{& \V{X}}{\V{P}}{\V{p}}{\V{k}} &
     \V{k} \\
-\allI{\:}{(\DProd{\V{D}}{\V{D'}})}{& \V{X}}{\V{R}}{\V{P}}{(\V{d}, \V{d'})} &
-    \pair{\allI{}{\V{D}}{\V{X}}{\V{R}}{\V{P}}{\V{d}}}
-         {\allI{}{\V{D'}}{\V{X}}{\V{R}}{\V{P}}{\V{d'}}}{} \\
-\allI{\:}{(\DSigma{\V{S}}{\V{T}})}{& \V{X}}{\V{R}}{\V{P}}{\pair{\V{a}}{\V{b}}{}} &
-    \allI{}{(\V{T}\: \V{a})}{\V{X}}{\V{R}}{\V{P}}{\V{b}} \\
-\allI{\:}{(\DPi{\V{S}}{\V{T}})}{& \V{X}}{\V{R}}{\V{P}}{\V{f}} &
-    \allI{}{(\V{T}\: \V{a})}{\V{X}}{\V{R}}{\V{P}}{(\V{f}\: \V{a})}
+\allI{\:}{(\DProd{\V{D}}{\V{D'}})}{& \V{X}}{\V{P}}{\V{p}}{\pair{\V{d}}{\V{d'}}{}} &
+    \pair{\allI{}{\V{D}}{\V{X}}{\V{P}}{\V{p}}{\V{d}}}
+         {\allI{}{\V{D'}}{\V{X}}{\V{P}}{\V{p}}{\V{d'}}}{} \\
+\allI{\:}{(\DSigma{\V{S}}{\V{D}})}{& \V{X}}{\V{P}}{\V{p}}{\pair{\V{s}}{\V{d}}{}} &
+    \allI{}{(\V{D}\: \V{s})}{\V{X}}{\V{P}}{\V{p}}{\V{d}} \\
+\allI{\:}{(\DPi{\V{S}}{\V{D}})}{& \V{X}}{\V{P}}{\V{p}}{\V{f}} &
+    \allI{}{(\V{D}\: \V{a})}{\V{X}}{\V{P}}{\V{p}}{(\V{f}\: \V{a})}
 \end{array}
 \end{array}
 }
@@ -326,11 +328,11 @@ a generic catamorphism, $\F{cataI}$, from $\F{inductionI}$.
 \stk{
 \idescop{\_\:}{}{} :_{\PI{\V{I}}{\Set}} \IDesc{\V{I}} \To (\V{\V{I}} \To \Set) \To \Set                  \\
 \begin{array}{@{}l@{\:=\:\:}ll}
-\idescop{\DVar{\V{i}}}{\V{I}}{\V{P}}      &  \V{P}\: \V{i}                                           \\
-\idescop{\DConst{\V{X}}}{\V{I}}{\V{P}}    &  \V{X}                                                   \\
-\idescop{\DProd{\V{D}}{\V{D'}}}{\V{I}}{\V{P}} &  \TIMES{\idescop{\V{D}}{\V{I}}{\V{P}}}{\idescop{\V{D'}}{\V{I}}{\V{P}}}       \\
-\idescop{\DSigma{\V{S}}{\V{D}}}{\V{I}}{\V{P}} &  \SIGMA{\V{s}}{\V{S}} \idescop{\V{D}\: \V{s}}{\V{I}}{\V{P}}                    \\
-\idescop{\DPi{\V{S}}{\V{D}}}{\V{I}}{\V{P}}    &  \PI{\V{s}}{\V{S}} \idescop{\V{D}\: \V{s}}{\V{I}}{\V{P}}            
+\idescop{\DVar{\V{i}}}{\V{I}}{\V{D}}      &  \V{X}\: \V{i}                                           \\
+\idescop{\DConst{\V{K}}}{\V{I}}{\V{X}}    &  \V{K}                                                   \\
+\idescop{\DProd{\V{D}}{\V{D'}}}{\V{I}}{\V{X}} &  \TIMES{\idescop{\V{D}}{\V{I}}{\V{X}}}{\idescop{\V{D'}}{\V{I}}{\V{X}}}       \\
+\idescop{\DSigma{\V{S}}{\V{D}}}{\V{I}}{\V{X}} &  \SIGMA{\V{s}}{\V{S}} \idescop{\V{D}\: \V{s}}{\V{I}}{\V{X}}                    \\
+\idescop{\DPi{\V{S}}{\V{D}}}{\V{I}}{\V{X}}    &  \PI{\V{s}}{\V{S}} \idescop{\V{D}\: \V{s}}{\V{I}}{\V{X}}            
 \end{array}
 }
 \end{array}
@@ -799,7 +801,7 @@ Where we overload the notation $\toIDesc{\V{TID}}$ to denote the
 indexed description computed from the tagged indexed description
 $\V{TID}$. The type of $\evalH$ is strikingly similar to a
 catamorphism. Indeed, implementing a single step of evaluation -- the
-algebra -- is sufficient, as $\F{cataI}$ gives, for free, the full
+algebra -- is sufficient, as $\cataI$ gives, for free, the full
 evaluator. The implementation is as follows:
 %
 \[\stk{
@@ -808,7 +810,7 @@ evaluator. The implementation is as follows:
 \begin{array}{@{}l@{}c@{}l@{\:=\:\:}l}
 \evalOne\: & \_\: & \pair{\Eval{\!}}{\V{x}}{}                                             & \V{x} \\
 \evalOne\: & \_\: & \pair{\Econd{\!}{\!}{\!}}{\pair{\BoolTrue}{\pair{\V{x}}{\_}{}}{}}{}   & \V{x} \\
-\evalOne\: & \_\: & \pair{\Econd{\!}{\!}{\!}}{\pair{\BoolFalse}{\pair{\_}{\V{y}}{}}{}}{}  & \V{x} \\
+\evalOne\: & \_\: & \pair{\Econd{\!}{\!}{\!}}{\pair{\BoolFalse}{\pair{\_}{\V{y}}{}}{}}{}  & \V{y} \\
 \evalOne\: & \Enat\: & \pair{\Eplus{\!}{\!}}{\pair{\V{x}}{\V{y}}{}}{}                     & \F{plusHost}\: \V{x}\: \V{y} \\
 \evalOne\: & \Ebool\: & \pair{\Ele{\!}{\!}}{\pair{\V{x}}{\V{y}}{}}{}                      & \F{leHost}\: \V{x}\: \V{y} 
 \end{array} \\
@@ -816,7 +818,7 @@ evaluator. The implementation is as follows:
 \evalH : \PI{\V{ty}}{\Ty} 
            \IMu{\Ty}{\toIDesc{\HExprD}}{\V{ty}} \To
            \Val{\V{ty}} \\
-\evalH\: \V{ty}\: \V{term} = \F{cataI}\: \Ty\: 
+\evalH\: \V{ty}\: \V{term} = \cataI_{\Ty}
                                  \toIDesc{\HExprD}\: 
                                  \Val{\!}\: 
                                  \evalOne\: 
@@ -893,7 +895,7 @@ following function:
                \PITEL{\V{dom}}{\EnumU} \\
              & \PI{\V{\gamma}}{\spi{\V{dom}}{(\LAM{\_} \IMu{\Ty}{\toIDesc{\HExprVarD{\V{dom}}}}{\V{ty}})}} \\
              & (\SUM{\Val{\V{ty}}}{\Var{\V{dom}}{\V{ty}}}) \To
-               \IMu{\Ty}{\toIDesc{\HExprD}}{\V{ty}} 
+               \IMu{\Ty}{\toIDesc{\HExprVarD{\V{dom}}}}{\V{ty}} 
 \end{array} \\
 \begin{array}{@{}l@{\:\mapsto\:\:}l}
 \discharge\: \V{ty}\: \V{dom}\: \V{\gamma}\: (\SumLeft \V{x})  & \Con{\pair{\Eval{\!}}{\V{x}}{}} \\
@@ -999,8 +1001,8 @@ functor coding its free monad: \note{pwm: Whoa there. Maybe we should
 \FreeIMonad{\pair{\V{E}}{\V{F}}{}}{\V{I}}{\V{R}} \mapsto \\ \;\;
     \pair{\pair{\ListCons{\DVar{\!}}{(\fst{\V{E}})}} 
                {\LAM{\V{i}}
-                \pair{(\DConst{(\V{R}\: \V{i})})}
-                     {((\snd{\V{E}})\: \V{i})}{}}{}}
+                \pair{\DConst{(\V{R}\: \V{i})}}
+                     {(\snd{\V{E}})\: \V{i}}{}}{}}
          {\V{F}}{}
 }\]
 
@@ -1024,9 +1026,9 @@ definition is the following:
             \IMu{I}{(\toIDesc{\FreeIMonad{\V{R}}{\V{I}}{\V{Y}}})}{\V{i}}
 \end{array} \\
 \substI\: \V{X}\: \V{Y}\: \V{R}\: \V{\sigma}\: \V{i}\: \V{t} = \\
-\qquad    \F{cataI}\: \toIDesc{\FreeIMonad{\V{R}}{}{\V{X}}}\:
+\qquad    \cataI\: \toIDesc{\FreeIMonad{\V{R}}{}{\V{X}}}\:
                       (\IMu{}{\toIDesc{\FreeIMonad{\V{R}}{}{\V{Y}}}})\:
-                      (\F{applyI}\: \V{X}\: \V{Y}\: \V{R}\: \V{\sigma})\:
+                      (\F{applyI}\: \V{R}\: \V{X}\: \V{Y}\: \V{\sigma})\:
                       \V{i}\:
                       \V{t} 
 }\]
@@ -1038,7 +1040,7 @@ Where  $\F{applyI}$ is defined as follow:
 \F{applyI} : & _{\PI{\V{I}}{\Set}}
             \PITEL{\V{R}}{\TagIDesc{\V{I}}}
             \PI{\V{X}, \V{Y}}{\V{I} \To \Set} \\
-          & (\PI{\V{i}}{\V{I}} \V{X}\: \V{i} \To \IMu{}{\toIDesc{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}}{\V{i}}) \To \\
+          & (\PI{\V{i}}{\V{I}} \V{X}\: \V{i} \To \IMu{\V{I}}{\toIDesc{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}}{\V{i}}) \To \\
           & \PI{\V{i}}{\V{I}} 
             \idescop{\toIDesc{(\FreeIMonad{\V{R}}
                                          {\V{I}}

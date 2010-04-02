@@ -21,8 +21,8 @@ I don't know where to write this down.
 If it hasn't been translated into universe polymorphism
 
 * Janitor service
-** TODO Implicit underscored indexing
-** TODO Uniformize names of function args
+** TODO SUBMIT THE B&W VERSION!
+** TODO Parenthesize \mu or not
 ** TODO switchD elaboration rule is in a bad state
 ** TODO Look for inlining figures
 ** TODO Ispell
@@ -191,3 +191,6 @@ No tech report.
 ** DONE Brink back original ICFP template
 
 Without the restored "onecolumn" mode.
+
+** DONE Implicit underscored indexing
+** DONE Uniformize names of function args

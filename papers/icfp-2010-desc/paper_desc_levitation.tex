@@ -158,7 +158,11 @@ $\DIndx{\!}$, there is a single recursive argument. Describing
 $\DSigma{\!}{\!}$ is problematic. Recall the specification of
 $\DSigma{\!}{\!}$:
 %
-\[    \DSigma{\!}{\!} : \PI{\V{S}}{\Set} \PIS{\V{S} \To \Desc} \Desc      \]
+\[
+      \DSigma{\!}{\!} : \PITEL{\V{S}}{\Set}
+                        \PI{\V{D}}{\V{S} \To \Desc} 
+                        \Desc      
+\]
 %
 So, we first pack an element $\V{S}$ of $\Set$. Then, we would like to
 express a notion of recursive argument \emph{indexed} by $\V{S}$. Because
@@ -390,12 +394,12 @@ element in $\V{T}$.  Therefore, to construct an element of
                    \descop{\V{D}}{\V{Y}}} \\
 \F{replace}\: \DUnit\:          \V{X}\: \V{Y}\: \Void\:          \Void          \mapsto 
     \Void                                                                                                         \\
-\F{replace}\: (\DSigma{\V{S}}{\V{D}})\: \V{X}\: \V{Y}\: \pair{\V{s}}{\V{xs}}{}\: \V{ys}             \mapsto
-    \pair{\V{s}}{\F{replace}\: (\V{D}\: \V{s})\: \V{X}\: \V{Y}\: \V{xs}\: \V{ys}}{}                                 \\
-\F{replace}\: (\DIndx{\V{D}})\:     \V{X}\: \V{Y}\: \pair{\V{x}}{\V{xs}}{}\: \pair{\V{y}}{\V{ys}}{} \mapsto       \\
-\qquad  \pair{\V{y}}{\F{replace}\: \V{D}\: \V{X}\: \V{Y}\: \V{xs}\: \V{ys}}{}                                     \\
-\F{replace}\: (\DHindx{\V{H}}{\V{D}})\: \V{X}\: \V{Y}\: \pair{\V{f}}{\V{xs}}{}\: \pair{\V{g}}{\V{ys}}{} \mapsto   \\
-\qquad  \pair{\V{g}}{\F{replace}\: \V{D}\: \V{X}\: \V{Y}\: \V{g}\: \V{ys}}{}
+\F{replace}\: (\DSigma{\V{S}}{\V{D}})\: \V{X}\: \V{Y}\: \pair{\V{s}}{\V{d}}{}\: \V{d'}             \mapsto
+    \pair{\V{s}}{\F{replace}\: (\V{D}\: \V{s})\: \V{X}\: \V{Y}\: \V{d}\: \V{d'}}{}                                \\
+\F{replace}\: (\DIndx{\V{D}})\:     \V{X}\: \V{Y}\: \pair{\V{x}}{\V{d}}{}\: \pair{\V{y}}{\V{d'}}{} \mapsto        \\
+\qquad  \pair{\V{y}}{\F{replace}\: \V{D}\: \V{X}\: \V{Y}\: \V{d}\: \V{d'}}{}                                      \\
+\F{replace}\: (\DHindx{\V{H}}{\V{D}})\: \V{X}\: \V{Y}\: \pair{\V{f}}{\V{d'}}{}\: \pair{\V{g}}{\V{d'}}{} \mapsto   \\
+\qquad  \pair{\V{g}}{\F{replace}\: \V{D}\: \V{X}\: \V{Y}\: \V{d}\: \V{d'}}{}
 }\]
 %
 Filling the hole in $\F{cata}$ with \(\F{replace}\: \V{D}\:
@@ -534,11 +538,11 @@ arguments to $\cata$ as possible:
 \begin{array}{@{}ll}
 \subst : & \PITEL{\V{D}}{\TagDesc}
            \PI{\V{X}, \V{Y}}{\Set} \\
-         & \Mu{(\toDesc{\FreeMonad{\V{D}}{\V{X}}})} \To
-           (\V{X} \To \Mu{(\toDesc{\FreeMonad{\V{D}}{\V{Y}}})}) \To
+         & (\V{X} \To \Mu{(\toDesc{\FreeMonad{\V{D}}{\V{Y}}})}) \To
+           \Mu{(\toDesc{\FreeMonad{\V{D}}{\V{X}}})} \To
            \Mu{(\toDesc{\FreeMonad{\V{D}}{\V{Y}}})} 
 \end{array} \\
-\subst\: \V{D}\: \V{X}\: \V{Y}\: \V{x}\: \V{\sigma} \mapsto
+\subst\: \V{D}\: \V{X}\: \V{Y}\: \V{\sigma}\: \V{x} \mapsto
   \cata\: (\toDesc{\FreeMonad{\V{D}}{\V{X}}})\: 
           (\Mu{(\toDesc{\FreeMonad{\V{D}}{\V{Y}}})})\: 
           \SHED\: 
@@ -561,7 +565,7 @@ corresponds to the following definition:
 \end{array} \\
 \begin{array}{@{}l@{\:\mapsto\:\:}l}
 \apply\: \V{D}\: \V{X}\: \V{Y}\: \V{\sigma}\: \pair{\DVar{\!}}{\V{x}}{}   & \V{\sigma}\: \V{x}                   \\
-\apply\: \V{D}\: \V{X}\: \V{Y}\: \V{\sigma}\: \pair{\etag{t}\,}{\V{ys}}{} & \Con{\pair{\etag{t}}{\V{ys}}{}}
+\apply\: \V{D}\: \V{X}\: \V{Y}\: \V{\sigma}\: \pair{\etag{t}\,}{\V{xs}}{} & \Con{\pair{\etag{t}}{\V{xs}}{}}
 \end{array}
 }\]
 
