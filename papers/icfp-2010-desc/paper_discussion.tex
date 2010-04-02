@@ -16,21 +16,34 @@ As such, our type theory suffers from an inconsistency. Indeed, the
 typing rule $\Bhab{\Set}{\Set}$ leads to Girard's paradox. We made
 that choice for presentational convenience, as universe stratification
 is orthogonal to our work. Nonetheless, our universe of description
-stratifies naturally. Unsurprisingly, $\IDesc{\!}$ at level $l$ is of
-type $\Set^{\blue{l+1}}$. Similarly, the interpretation of
+stratifies naturally. $\IDesc{\!}$ is self-encoding only in a
+level-polymorphic sense.  Unsurprisingly, $\IDesc{\!}$ at level $l$ is
+of type $\Set^{\blue{l+1}}$. Similarly, the interpretation of
 $\IDesc{\!}$ at level $l$ is an object of type $\Set^{\blue{l}}$:
 %
-\[\stk{
-\data \IDesc{\!}^{\blue{l}} (\Bhab{\V{I}}{\Set^{\blue{l+1}}}) : \Set^{\blue{l+1}} \where \ldots \\
-\\
+\[\stk{\begin{array}{@{}ll}
+\IDesc{\!}^{\blue{l}} (\Bhab{\M{I}}{\Set^{\blue{l+1}}}) & :\Set^{\blue{l+1}} \\
+\DVar{(\Bhab{\M{i}}{\M{I}})} &: \IDesc{\!}^{\blue{l}}{\M{I}} \\
+\DConst{(\Bhab{\M{A}}{\Set^{\blue{l}}})} &:\IDesc{\!}^{\blue{l}}{\M{I}}       \\
+\DProd{(\Bhab{\M{D}}{\IDesc{\!}^{\blue{l}}{\M{I}}})}{(\Bhab{\M{D}}{\IDesc{\!}^{\blue{l}}{\M{I}}})}
+  & :\IDesc{\!}^{\blue{l}}{\M{I}}       \\
+\DSigma{(\Bhab{\M{S}}{\Set^{\blue{l}}})}{(\Bhab{\M{D}}{\M{S}\To\IDesc{\!}^{\blue{l}}{\M{I}}})}
+& : \IDesc{\!}^{\blue{l}}{\M{I}}  \\
+\DPi{(\Bhab{\M{S}}{\Set^{\blue{l}}})}{(\Bhab{\M{D}}{\M{S}\To\IDesc{\!}^{\blue{l}}{\M{I}}})}
+& : \IDesc{\!}^{\blue{l}}{\M{I}}  \\
+\end{array}\smallskip \\
 \idescop{\_\:}{}{}^{\blue{l}} : _{\PI{\V{I}}{\Set^{\blue{l+1}}}} \IDesc{{\!}^{\blue{l}}\V{I}} \To (\V{I} \To \Set^{\blue{l}}) \To \Set^{\blue{l}}    \\
 \ldots
-}\]
-
-The operations and examples developed in this paper stratify just as
-well. We refer the reader to our Agda model. Further, we have coded
-$\IDesc{\!}$ in itself and have proved the isomorphism between the
-host and the embedded universes.
+}
+\]
+Crucially, the types of data stored in an
+\(\IDesc{\!}^{\blue{l}}{\M{I}}\) all live no higher---we may store an
+\(I\) and a \(\Set^{\blue{l}}\) in a \(\Set^{\blue{l+1}}\).  The code
+for \(\IDesc{\!}^{\blue{l}}{\M{I}}\) is an element of
+\(\IDesc{\!}^{\blue{l+1}}{\Unit}\), so there is a spiral, not a cycle.
+We have checked the construction using Agda's universe polymorphism,
+coding $\IDesc{\!}$ in itself and have proving the isomorphism
+between the host and the embedded universes.
 
 \subsection{Related work}
 
