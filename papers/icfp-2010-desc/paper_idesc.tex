@@ -442,8 +442,8 @@ the pattern functor of natural numbers:
 %
 \[\stk{
 \NatD : \IDesc{\Unit} \\
-\NatD \mapsto \DSigma{(\EnumT{[ \NatZero, \NatSuc{\!} ]})}
-                     {[ (\DConst{\Unit}) \quad (\DVar{\Void}) ]}
+\NatD \mapsto \DSigma{(\EnumT{[ \NatZero\: \NatSuc{\!} ]})}
+                     {\red{[} \DConst{\Unit} \quad \DVar{\Void} \red{]}}
 }\]
 
 Because $\Nat$ is just an inductive type, $\NatD$ is a $\Unit$-indexed
@@ -471,13 +471,13 @@ we can describe it in $\IDesc{\Unit}$:
 \[\stk{
 \IDescD : \PI{\V{I}}{\Set} \IDesc{\Unit} \\
 \begin{array}{@{}ll}
-\IDescD\: \V{I} \mapsto \DSigma{\!}{\!} & (\EnumT \red{[} 
-                                          \DVar{\!},
-                                          \DConst{\!},
-                                          \DProd{\!}{\!},
-                                          \DSigma{\!}{\!}, 
+\IDescD\: \V{I} \mapsto \DSigma{\!}{\!} & (\EnumT \sqr{ 
+                                          \DVar{\!}\:
+                                          \DConst{\!}\:
+                                          \DProd{\!}{\!}\:
+                                          \DSigma{\!}{\!}\: 
                                           \DPi{\!}{\!}
-                                             \red{]}) \\
+                                             }) \\
                               & \bigRedBracket{\begin{array}{l}
                                       \DConst{\V{I}}                  \\
                                       \DConst{\Set}               \\
@@ -521,7 +521,7 @@ this case, we obtain the following definition:
 \[\stk{
 \VecD : \Set \To \Nat \To \IDesc{\Nat} \\
 \begin{array}{@{}ll}
-\VecD\: \V{X}\: \V{n} = \DSigma{\!}{\!} \!\!\!\!& (\EnumT{[ \VecNil , \VecCons{\!}{\!} ]}) \\
+\VecD\: \V{X}\: \V{n} = \DSigma{\!}{\!} \!\!\!\!& (\EnumT{\sqr{ \VecNil\:\VecCons{\!}{\!} }}) \\
                         & \bigRedBracket{
                           \begin{array}{l}
                             \DConst{(\V{n} \PropEq \NatZero)} \\
@@ -592,8 +592,8 @@ $\FinZero$ and $\FinSuc{\!}$ both target $\NatSuc{\!}$:
 \[\stk{
 \FinD : \Nat \To \IDesc{\Nat} \\
 \begin{array}{@{}llll}
-\FinD\: \NatZero     & = & \multicolumn{2}{l}{\DSigma{(\EnumT{[]})}{\Void} } \\
-\FinD\: (\NatSuc{\V{n}}) & = & \DSigma{\!}{\!}\!\!\!\!\! & (\EnumT{[ \FinZero , \FinSuc{\!} ]}) \\
+\FinD\: \NatZero     & = & \multicolumn{2}{l}{\DSigma{(\EnumT{\Void})}{\Void} } \\
+\FinD\: (\NatSuc{\V{n}}) & = & \DSigma{\!}{\!}\!\!\!\!\! & (\EnumT{\sqr{ \FinZero \: \FinSuc{\!} }}) \\
                      &   &             & \bigRedBracket{
                                          \begin{array}{l}
                                          \DConst{\Unit} \\
@@ -686,7 +686,7 @@ We are going to define a syntax for a small typed language. We
 consider two types, natural numbers and booleans:
 %
 \[
-\Ty \mapsto \EnumT{[\Enat, \Ebool]}
+\Ty \mapsto \EnumT{\sqr{\Enat\: \Ebool}}
 \]
 
 An expression of this language is either a value, a conditional
@@ -744,7 +744,7 @@ $\switch{\!}{\!}{\!}{\!}$ eliminator.
 \HExprAD : \ATagIDesc{\Ty} \\
 \HExprAD \mapsto \bigRedBracket{
                  \begin{array}{l}
-                   {[\Eval{\!}, \Econd{\!}{\!}{\!}\!\,]} \red{,} \\
+                   {\sqr{\Eval{\!}\: \Econd{\!}{\!}{\!}\!\,}} \red{,} \\
                    \LAM{\V{ty}}
                    \bigRedBracket{
                    \begin{array}{l}
@@ -762,7 +762,7 @@ $\switch{\!}{\!}{\!}{\!}$ eliminator.
 \HExprID : \ITagIDesc{\Ty} \\
 \HExprID \mapsto \bigRedBracket{
                  \begin{array}{l}
-                   \LAM{\V{ty}} \case{\V{ty}}{\Enat \To {[\Eplus{\!}{\!}\!\,]} \\ \Ebool \To {[\Ele{\!}{\!}\!\,]}} \red{,} \\
+                   \LAM{\V{ty}} \case{\V{ty}}{\Enat \To {\sqr{\Eplus{\!}{\!}\!\,}} \\ \Ebool \To {\sqr{\Ele{\!}{\!}\!\,}}} \red{,} \\
                    \LAM{\_} \DProd{\DVar{\Enat}}{\DVar{\Enat}} 
                    \end{array}
                    }
@@ -1090,7 +1090,7 @@ $\HExprAFreeD$:
 \HExprAFreeD : \ATagIDesc{\Ty} \\
 \HExprAFreeD \mapsto \bigRedBracket{
                  \begin{array}{l}
-                   \EnumT{\red{[}\Econd{\!}{\!}{\!}\red{]}} \red{,} \\
+                   \EnumT{\sqr{\Econd{\!}{\!}{\!}}} \red{,} \\
                    \LAM{\V{ty}}
                    \bigRedBracket{
                    \begin{array}{l}
@@ -1172,10 +1172,10 @@ is described as follow:
 \IDescFreeD : \ATagIDesc{\Unit} \\
 \begin{array}{@{}ll}
 \IDescFreeD \mapsto \bigRedBracket{\begin{array}{l}
-                                [\DConst{\!},
-                                 \DProd{\!}{\!},
-                                 \DSigma{\!}{\!}, 
-                                 \DPi{\!}{\!}] \red{,}\\
+                                \sqr{\DConst{\!}\:
+                                 \DProd{\!}{\!}\:
+                                 \DSigma{\!}{\!}\: 
+                                 \DPi{\!}{\!}} \red{,}\\
                                   \LAM{\_}\bigRedBracket{\begin{array}{l}
                                         \DConst{\Set}               \\
                                         \DProd{\DVar{\Void}}{\DVar{\Void}}  \\
@@ -1189,7 +1189,7 @@ Then, we get $\IDesc$ by building its free monad:
 %
 \[\stk{
 \IDescD : \PI{\V{I}}{\Set} \TagIDesc{\Unit} \\
-\IDescD\: \V{I} \mapsto \FreeIMonad{\red{[}\IDescFreeD\red{,[}\LAM{\_}[]\red{,}\LAM{\_}\red{[]]]}}{\Unit}\LAM{\_}\V{I}
+\IDescD\: \V{I} \mapsto \FreeIMonad{\red{[}\IDescFreeD\red{,[}\LAM{\_}\sqr{}\red{,}\LAM{\_}\red{[]]]}}{\Unit}\LAM{\_}\V{I}
 }\]
 
 

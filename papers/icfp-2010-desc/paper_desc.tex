@@ -186,7 +186,7 @@ effectively described the functor:
 Correspondingly, we can see the injections to the sum:
 \[
 \sqr{\NatZero}:\descop{\NatD}Z \qquad
-\sqr{\NatSuc{(\Bhab{z}{X})}}:\descop{\NatD}Z
+\sqr{\NatSuc{(\Bhab{z}{Z})}}:\descop{\NatD}Z
 \]
 
 \begin{wstructure}
@@ -227,7 +227,7 @@ demonstrated by our description of node-labelled binary trees:
 \[\stk{
 \TreeD : \Set \To \Desc \\
 \begin{array}{@{}ll}
-\TreeD \: \V{X} \mapsto \DSigma{ & \EnumT{\sqr{ \TreeLeaf, \TreeNode }} \\}
+\TreeD \: \V{X} \mapsto \DSigma{ & \EnumT{\sqr{ \TreeLeaf\: \TreeNode }} \\}
   { & \sqr{ \DUnit \quad
        ( \DIndx{(\DSigma{\V{X}}{\LAM{\_}\DIndx{\DUnit}})})} }
 \end{array}
