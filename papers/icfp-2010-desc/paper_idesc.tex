@@ -164,16 +164,15 @@ describing these functors. Hence, $\IDesc{\!}$ and its interpretation
 have the following types:
 %
 \[\stk{
-\data \IDesc{(\Bhab{\V{I}}{\Set})} : \Set \where \:\ldots \\
-\\
+\IDesc{(\Bhab{\V{I}}{\Set})} : \Set \smallskip \\
 \idescop{\_}{}{} : _{\PI{\V{I}}{\Set}} \IDesc{\V{I}} \To (\V{I} \To \Set) \To \Set    \\
-\ldots
 }\]
 
-Note that $\V{I} \To \IDesc{\V{I}}$ is isomorphic, up to interpretation, to an
-endofunctor on $\Set^{\V{I}}$. Indeed, $\V{I} \To \IDesc{\V{I}}$ is interpreted as
+Given these components, we may interpret a \emph{function}
+$\V{R}:\V{I} \To \IDesc{\V{I}}$ is interpreted as a function
 $\V{I} \To \Set^{\V{I}} \To \Set$, which is isomorphic to $\Set^{\V{I}}
-\To \Set^{\V{I}}$.The fixpoint of inductive families is defined over
+\To \Set^{\V{I}}$, the type of endofunctors on \(\Set^{\V{I}}\).
+Inductive families are fixpoints defined over
 these indexed functors, hence computing a fixpoint of the entire
 \emph{family} of functors:
 %
@@ -204,7 +203,7 @@ by:
 \begin{array}{@{}ll}
 \inductionI : & _{\PI{\V{I}}{\Set}}
                    \PITEL{\V{R}}{\V{I} \To \IDesc{\V{I}}}
-                   \PI{\V{P}}{\TIMES{\V{I}}{\IMu{\V{I}}{\V{R}}{\!}} \To \Set} \\
+                   \PI{\V{P}}{(\SIGMAS{\Bhab{\V{i}}{\V{I}}}{\IMu{\V{I}}{\V{R}}{\V{i}}}) \To \Set} \\
                  & (      \PITEL{\V{i}}{\V{I}} 
                           \PI{\V{xs}}{\idescop{\V{R}\: \V{i}}{\V{I}}{(\IMu{\V{I}}{\V{R}}{\!})}} \\
                  & \   \idescop{\AllI{}
@@ -218,13 +217,13 @@ by:
                    \PI{\V{x}}{\IMu{\V{I}}{\V{R}}{\V{i}}}
                    \V{P}\: \pair{\V{i}}{\V{x}}{}
 \end{array} \\
-\inductionI\: \V{R}\: \V{P}\: \V{ms}\: \V{i}\: (\Con{\V{xs}}) =  \\
+\inductionI\: \V{R}\: \V{P}\: \V{m}\: \V{i}\: (\Con{\V{xs}}) =  \\
 \qquad
-    \V{ms}\: \V{i}\: \V{xs}\: (\allI{}
+    \V{m}\: \V{i}\: \V{xs}\: (\allI{}
                                     {\V{R}\: \V{i}}
                                     {\IMu{\V{I}}{\V{R}}{}}
                                     {\V{P}}
-                                    {(\LAM{\pair{\V{i}}{\V{xs}}{}} \inductionI\: \V{R}\: \V{P}\: \V{ms}\: \V{i}\: \V{xs})}
+                                    {(\spl{\LAM{\V{i}}\LAM{\V{xs}} \inductionI\: \V{R}\: \V{P}\: \V{m}})}
                                     {\V{xs}})
 }\]
 %
@@ -311,23 +310,19 @@ a generic catamorphism, $\cataI$, from $\inductionI$.
 
 \begin{figure}
 
-\[\stk{
-\begin{array}{ll}
-\stk{
-\data \IDesc{(\Bhab{\V{I}}{\Set})} : \Set \where \\
-\;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
-    \DVar{\!}         & \V{I} \To \IDesc{\V{I}}                                       \\
-    \DConst{\!}       & \Set \To \IDesc{\V{I}}                                        \\
-    \DProd{\!}{\!}    & \PI{\V{\V{D}}, \V{\V{D'}}}{\IDesc{\V{I}}} \IDesc{\V{I}}       \\
-    \DSigma{\!}{\!}   & \PI{\V{S}}{\Set} \PIS{\V{S} \To \IDesc{\V{I}}} \IDesc{\V{I}}  \\
-    \DPi{\!}{\!}      & \PI{\V{S}}{\Set} \PIS{\V{S} \To \IDesc{\V{I}}} \IDesc{\V{I}} 
-\end{array}
-}
-\vspace{0.2in}
-\\
-\stk{
+\[\stk{\begin{array}{@{}ll}
+\IDesc{(\Bhab{\M{I}}{\Set})} &: \Set \\
+\DVar{(\Bhab{\M{i}}{\M{I}})} &: \IDesc{\M{I}} \\
+\DConst{(\Bhab{\M{A}}{\Set})} &:\IDesc{\M{I}}       \\
+\DProd{(\Bhab{\M{D}}{\IDesc{\M{I}}})}{(\Bhab{\M{D}}{\IDesc{\M{I}}})}
+  & :\IDesc{\M{I}}       \\
+\DSigma{(\Bhab{\M{S}}{\Set})}{(\Bhab{\M{D}}{\M{S}\To\IDesc{\M{I}}})}
+& : \IDesc{\M{I}}  \\
+\DPi{(\Bhab{\M{S}}{\Set})}{(\Bhab{\M{D}}{\M{S}\To\IDesc{\M{I}}})}
+& : \IDesc{\M{I}}  \\
+\end{array}\smallskip \\
 \idescop{\_\:}{}{} :_{\PI{\V{I}}{\Set}} \IDesc{\V{I}} \To (\V{\V{I}} \To \Set) \To \Set                  \\
-\begin{array}{@{}l@{\V{X}}@{\:=\:\:}ll}
+\begin{array}{@{}l@{\V{X}}@{\:\mapsto\:\:}ll}
 \idescop{\DVar{\V{i}}}{\V{I}}{&}      &  \V{X}\: \V{i}                                           \\
 \idescop{\DConst{\V{K}}}{\V{I}}{&}    &  \V{K}                                                   \\
 \idescop{\DProd{\V{D}}{\V{D'}}}{\V{I}}{&} &  \TIMES{\idescop{\V{D}}{\V{I}}{\V{X}}}{\idescop{\V{D'}}{\V{I}}{\V{X}}}       \\
@@ -335,10 +330,9 @@ a generic catamorphism, $\cataI$, from $\inductionI$.
 \idescop{\DPi{\V{S}}{\V{D}}}{\V{I}}{&}    &  \PI{\V{s}}{\V{S}} \idescop{\V{D}\: \V{s}}{\V{I}}{\V{X}}            
 \end{array}
 }
-\end{array}
-}\]
+\]
 
-\caption{Universe of indexed description}
+\caption{Universe of indexed descriptions}
 \label{fig:idesc}
 
 \end{figure}
@@ -495,7 +489,7 @@ operator to build the finite function space $\bigRedBracket{\ldots}$.
 
 \paragraph{Vectors:}
 
-\newcommand{\VecD}{\C{VecD}}
+\newcommand{\VecD}{\F{VecD}}
 \newcommand{\VecNil}{\etag{\CN{vnil}}}
 \newcommand{\VecCons}[2]{\etag{\CN{vcons}}\:#1\:#2}
 
