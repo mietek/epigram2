@@ -496,7 +496,7 @@ the domain, so we can drop the annotation.
 \end{wstructure}
 
 We adapt this idea, yielding a \emph{type
-propagation} system, whose purpose is to elaborate high-level
+propagation} system, whose purpose is to elaborate compact
 \emph{expressions} into the terms of our underlying type theory, much
 as in the definition of Epigram
 1~\cite{mcbride.mckinna:view-from-the-left}.  We divide expressions
@@ -552,7 +552,8 @@ argument \emph{expression}. Hardwired operators are checked as variables.
 \end{wstructure}
 
 Dually, type checking judgments
-(Fig.~\ref{fig:type-checking}) are \emph{sinks} for types. From an
+%(Fig.~\ref{fig:type-checking})
+are \emph{sinks} for types. From an
 $\exprIn$ and a type pushed into it, they elaborate a low-level
 term, extracting information from the type. Note that we inductively ensure the following `sanity checks':
 %
@@ -568,38 +569,38 @@ Canonical set-formers are \emph{checked}: we could exploit
 our future stratification plans. Note that abstraction and pairing are
 free of annotation, as promised. Most of the propagation rules are
 unremarkably structural: we have omitted some mundane rules which just
-follow the pattern, e.g., for \(\UId\). It is for the finite
-enumerations that things get interesting.
+follow the pattern, e.g., for \(\UId\).
 
-\begin{figure}
+%\begin{figure}
 \input{figure_type_checking}
-\caption{Type checking}
-\label{fig:type-checking}
-\end{figure}
+%\caption{Type checking}
+%\label{fig:type-checking}
+%\end{figure}
+
+However, we also add abbreviations. We write \(\spl{\M{f}}\),
+pronounced `uncurry \(\M{f}\)' for the function which takes a pair and
+feeds it to \(\M{f}\) one component at a time, letting us name
+them individually. Now, for the finite enumerations, we go to work.
 
 Firstly, we present the codes for enumerations as right-nested tuples
 which, by our LISP convention, we write as unpunctuated lists of tags
 \(\sqr{\etag{t_0}\ldots\etag{t_n}}\).
-
 Secondly, we can denote an element \emph{by its
 name}: the type pushed in allows us to recover the numerical
-index. However, we retain the numerical forms to facilitate
-\emph{generic} operations and ensure that shadowing a tag is punished
+index. We retain the numerical forms to facilitate
+\emph{generic} operations and ensure that shadowing is punished
 fittingly, not fatally.
-
-Finally, we let you express functions from enumerations as tuples.
+Finally, we express functions from enumerations as tuples.
 Any tuple-form, \(\void\) or \(\pair{\_}{\_}{}\), is accepted by the
-function space---the general product---if it is accepted by the
+function space---the generalised product---if it is accepted by the
 small product. Propagation fills in the appeal to $\F{switch}$,
 copying the range information.
 
-
-We note, but have no room to elaborate on the fact that the propagation
-is reversible. Our interactive development tools rely on the
-reverse transformation to report intelligibly to the user.
+Our interactive development tools also perform the
+reverse transformation for intelligible output.
 The encoding of any specific enumeration is thus hidden by these
-translations. Only in enumeration-generic programs is the
-encoding exposed, but in that case, it is a benefit!
+translations. Only, and rightly, in enumeration-generic programs is the
+encoding exposed.
 
 \begin{wstructure}
 <- Summary
@@ -630,15 +631,16 @@ encoding exposed, but in that case, it is a benefit!
 %in our theory, we will show how to extend the framework we have
 %developed so far.
 
-Our type propagation mechanism does no fancy unification or constraint
-solving, just copying.  The relative civilision it delivers is
-possible because our universe of enumerations specifies not only the
-\emph{representation} of the low-level values in each set as bounded
-numbers, but also the \emph{presentation} of these values as
-high-level tags. To encode only the former, we should merely need the
-\emph{size} of enumerations, but we extract more work from these types
-by making them more informative.  We have also, \emph{en passant},
-distinguished enumerations which have the same cardinality but
-describe distinct notions:
+Our type propagation mechanism does no constraint
+solving, just copying, so it just the thin end of the elaboration wedge.
+It can afford us this `assembly
+language' level of civilisation as \(\EnumU\) universe
+specifies not only the \emph{representation} of the
+low-level values in each set as bounded numbers, but also the
+\emph{presentation} of these values as high-level tags. To encode only
+the former, we should merely need the \emph{size} of enumerations, but
+we extract more work from these types by making them more informative.
+We have also, \emph{en passant}, distinguished enumerations which have
+the same cardinality but describe distinct notions:
 \(\EnumT{\sqr{\etag{\CN{red}}\,\etag{\CN{blue}}}}\) is not
 \(\EnumT{\sqr{\etag{\CN{green}}\,\etag{\CN{orange}}}}\).

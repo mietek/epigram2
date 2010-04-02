@@ -111,7 +111,7 @@ of datatypes.
 To add inductive types to our type theory, we build a universe of
 datatype \emph{descriptions} by implementing the signature below, with
 codes mimicking the grammar of datatype declarations. We
-can read a description $\V{D}:\Desc$ as an \emph{endofunctor}
+can read a description $\V{D}:\Desc$ as a `pattern functor'
 on $\Set$, with $\descop{\V{D}}{\!}$ its action on an object, \(\V{X}\), soon
 to be instantiated recursively.
 %
@@ -123,12 +123,12 @@ to be instantiated recursively.
 \DIndx{(\Bhab{\V{D}}{\Desc})} : \Desc \\
 \end{array}
 \smallskip\\
-\begin{array}{l@{\V{X}\:\mapsto\:}l}     
+\begin{array}{l@{\V{Z}\:\mapsto\:}l}     
 \multicolumn{2}{l}{\descop{\_\:}{} : \Desc \To \Set \To \Set} \\
  \descop{\DUnit}{} &  \Unit \\
  \descop{\DSigma{\V{S}}{\V{D}}}{} &
-     \SIGMAS{\Bhab{\V{s}}{\V{S}}}{\descop{\V{D}\,\V{s}}{\!\V{X}}}  \\
-\descop{\DIndx{\V{D}}}{}  &  \TIMES{\V{X}}{\descop{\V{D}}{\V{X}}}
+     \SIGMAS{\Bhab{\V{s}}{\V{S}}}{\descop{\V{D}\,\V{s}}{\!\V{Z}}}  \\
+\descop{\DIndx{\V{D}}}{}  &  \TIMES{\V{Z}}{\descop{\V{D}}{\V{Z}}}
 \end{array}
 }\]
 %
@@ -136,13 +136,15 @@ Descriptions are sequential structures, terminated by $\DUnit$, indicating
 the empty tuple. To build
 sigmas-of-sigmas, we define a $\DSigma{\!}{}$ code, interpreted as a
 $\Sigma$-type. To request a recursive component, we have $\DIndx{\V{D}}$,
-where \(\V{D}\) descibes the rest of the node.
+where \(\V{D}\) describes the rest of the node.
 
-To give some intuition on this universe, we now turn to some
-examples. For obvious pedagogical reasons, we will manually build the
-descriptions. However, it should be clear that, in practice, these
-definitions are automatically computed from an Agda-like $\data$
-definition.
+You may have noticed that we are a little coy about this presentation,
+writing of `implementing a signature' without clarifying how. A viable
+approach would simply be to extend the theory with constants for the
+constructors and an operator for \(\descop{\V{D}}\). However, in
+Section~\ref{sec:desc-levitate}, you will see what we actually do.  In
+the meantime, let us first gain some intuition for its use by
+developing some examples.
 
 \subsection{Examples}
 \label{sec:desc-examples}
@@ -155,25 +157,31 @@ definition.
     -> NatD Z = 1 + Z
 \end{wstructure}
 
-Our first example is the natural numbers, or rather its pattern
-functor. Our code is presented in the high-level expression language
-of Section~\ref{sec:type-propagation}. The translation back to the raw
-terms should not pose any difficulty. The code is the following:
+We begin with the natural numbers, now working in the high-level
+expression language of Section~\ref{sec:type-propagation}, exploiting
+type propagation.
 %
 \[\stk{
 \NatD : \Desc \\
-\NatD \mapsto \DSigma{(\EnumT{[ \NatZero, \NatSuc{\!} ]})}
-                     {[ \DUnit \quad (\DIndx{\DUnit}) ]}
+\NatD \mapsto \DSigma{\EnumT{\sqr{\NatZero\: \NatSuc{\!} }}}
+                     {\sqr{ \DUnit \quad (\DIndx{\DUnit}) }}
 }\]
 %
 Let us explain its construction. First, we use $\DSigma{\!}{\!}$ to
-give a choice between the $\NatZero$ and $\NatSuc{}$ constructors. In
-the $\NatZero$ case, we reach the end of the description. In the
-$\NatSuc{\!}$ case, we attach a recursive argument and close the
-description. In a more synthetic notation, we have described the
-following functor:
+give a choice between the $\NatZero$ and $\NatSuc{}$ constructors.
+What follows depends on this choice, so we write the function
+computing the rest of the description in tuple notation.  In the
+$\NatZero$ case, we reach the end of the description. In the
+$\NatSuc{\!}$ case, we attach one recursive argument and close the
+description. Translating the \(\Sigma\) to a binary sum, we have
+effectively described the functor:
 %
 \[    \NatD\: \V{Z} \mapsto \Unit \mathop{\D{+}} \V{Z}    \]
+Correspondingly, we can see the injections to the sum:
+\[
+\sqr{\NatZero}:\descop{\NatD}Z \qquad
+\sqr{\NatSuc\:z}:\descop{\NatD}Z \;\mbox{if}\;z:Z
+\]
 
 \begin{wstructure}
 <- List
@@ -188,8 +196,9 @@ for lists:
 %
 \[\stk{
 \ListD : \Set \To \Desc \\
-\ListD \: \V{X} \mapsto \DSigma{(\EnumT{[ \ListNil, \ListCons{\!}{\!} ]})}
-                           {[ \DUnit \quad (\DSigma{\V{X}}{\LAM{\_} \DIndx{\DUnit}}) ]}
+\ListD \: \V{X} \mapsto
+ \DSigma{\EnumT{\sqr{ \ListNil\: \ListCons{\!}{\!} }}}
+         {\sqr{ \DUnit \quad (\DSigma{\V{X}}{\LAM{\_} \DIndx{\DUnit}}) }}
 }\]
 %
 The $\NatSuc{\!}$ constructor is turned into a proper
@@ -207,21 +216,23 @@ recursive argument. This code describes the following functor:
 \end{wstructure}
 
 Finally, we are not limited to one recursive argument. This is
-demonstrated by our description of binary trees:
+demonstrated by our description of node-labelled binary trees:
 %
 \[\stk{
 \TreeD : \Set \To \Desc \\
 \begin{array}{@{}ll}
-\TreeD \: \V{X} \mapsto \DSigma{ & (\EnumT{[ \TreeLeaf, \TreeNode ]}) \\}
-                           { & [ \DUnit \quad (\DSigma{\V{X}}{\LAM{\_} \DIndx{(\DIndx{\DUnit})}}) ]}
+\TreeD \: \V{X} \mapsto \DSigma{ & \EnumT{\sqr{ \TreeLeaf, \TreeNode }} \\}
+  { & \sqr{ \DUnit \quad
+       ( \DIndx{(\DSigma{\V{X}}{\LAM{\_}\DIndx{\DUnit}})})} }
 \end{array}
 }\]
 %
 Again, we are one evolutionary step away from $\ListD$. However,
-instead of a single call to the induction code, we call it twice. The
+instead of a single call to the induction code, we add another. The
 interpretation of this code corresponds to the following functor:
 %
-\[    \TreeD\: \V{X}\: \V{Z} \mapsto \Unit \mathop{\D{+}} \V{X} \Prod \V{Z} \Prod \V{Z}     \]
+\[    \TreeD\: \V{X}\: \V{Z} \mapsto \Unit \mathop{\D{+}} 
+          \V{Z} \Prod \V{X}  \Prod \V{Z}     \]
 
 
 \begin{wstructure}
@@ -236,20 +247,20 @@ interpretation of this code corresponds to the following functor:
 \end{wstructure}
 
 From the examples above, we observe that datatypes are defined by a
-$\DSigma{\!}{\!}$ which first argument is a finite set of
-constructors. The descriptions fitting into this pattern are called
-\emph{tagged} description. Formally, we have:
-%
-\[
+$\DSigma{\!}{\!}$ whose first argument enumerates the constructors. We
+call codes fitting this pattern \emph{tagged} descriptions. Again,
+this is a clear reminder of the sum-of-products style. Every
+description can be forced into this style with a singleton constructor
+if necessary. We characterise tagged descriptions thus:
+\[\stk{
+ \TagDesc : \Set \\
  \TagDesc \mapsto \SIGMA{\V{E}}{\EnumU} (\spi{\V{E}}{(\LAM{\_} \Desc)})
-\]
-%
-This is a clear reminiscence of the sum-of-products style,
-characterized by a finite sum of constructors. Every description can
-be expressed in this style, using a singleton constructor if
-necessary. Conversely, a tagged description can be turned into a
-full-blown description. We denote $\toDesc{\V{TD}}$ the description
-computed from the tagged description $\V{TD}$.
+\smallskip\\
+\toDesc{\!} : \TagDesc\To\Desc \\
+\toDesc{\!} \mapsto
+\spl{\LAM{\V{E}}\LAM{\V{D}}
+\DSigma{\EnumT{\V{E}}}{(\F{switch}\:\V{E}\:(\LAM{\_}\Desc)\:\V{D})}}
+}\]
 
 \begin{wstructure}
 <- Fictive object [figure 'data Desc']
@@ -257,14 +268,6 @@ computed from the tagged description $\V{TD}$.
     -> See further for its actual implementation
         <- Subject to our levitation exercise
 \end{wstructure}
-
-For convenience, we have taken for granted the existence of $\Desc$,
-as presented in Figure~\ref{fig:desc_universe}. Although it makes no
-conceptual difference, this code should rather be read as a
-specification. We promise the existence of such objects, satisfying
-these typing rules. It will be the subject of
-Section~\ref{sec:desc-levitate} to actually implement this
-specification.
 
 \subsection{Fixpoint}
 \label{sec:desc-fix-point}

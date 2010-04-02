@@ -133,7 +133,11 @@
 \usepackage{amsthm}
 \usepackage{amsmath}
 \usepackage{enumerate}
+v v v v v v v
 \usepackage{eucal}
+*************
+\usepackage{natbib}
+^ ^ ^ ^ ^ ^ ^
 \usepackage[T1]{fontenc}
 \usepackage[draft=false]{hyperref}
 

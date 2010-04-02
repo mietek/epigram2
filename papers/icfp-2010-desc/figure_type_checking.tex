@@ -53,7 +53,16 @@
              \Gamma \Vdash \propag{\push{\M{t}}{\M{T}[\M{s'}/\x]}}
                                   {\M{t'}}}}
      {\Gamma \Vdash \propag{\push{\pair{\M{s}}{\M{t}}{}}{\SIGMAS{\xS}{\M{T}}}}
-                           {\pair{\M{s'}}{\M{t'}}{\M{T}}}}
+                           {\pair{\M{s'}}{\M{t'}}{\x.\M{T}}}}
+\\
+%% Split
+\Rule{\Gamma \Vdash \propag{\push{\M{f}}
+   {\PIS{\xS}{\PIS{\Bhab{\V{y}}{\M{T}}}{\M{U}[\pair{\x}{\V{y}}{\x.T}/\V{p}]}}}}{\M{f'}}}
+     {\Gamma \Vdash
+\propag{
+   \push{\spl{\M{f}}}{\PIS{\Bhab{\V{p}}{\SIGMAS{\xS}{\M{T}}}}{\M{U}}}}
+   {\PLAM{\V{p}}{(\SIGMAS{\xS}{\!\M{T}})}}\M{f'}\:(\fst{\V{p}})\:(\snd{\V{p}})
+}
 \\
 \Rule{\Gamma\vdash \Valid}
      {\Gamma\Vdash \propag{\push{\Unit}{\Set}}{\Unit}}
@@ -108,4 +117,6 @@
      {\Gamma \Vdash
 \propag{\push{\sqr{\vec{t}}}{\PI{\x}{\EnumT{\M{E}}} \M{T}}}
  {\PLAM{\x}{\EnumT{\M{E}}} \switch{\M{E}}{(\PLAM{x}{\EnumT{E}}\M{T})}{\M{t'}}{\x}}}
+\\
+
 }\]
