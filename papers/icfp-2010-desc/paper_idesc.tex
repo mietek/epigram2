@@ -1045,7 +1045,7 @@ Where  $\F{applyI}$ is defined as follow:
                                          {\V{X}})}\: 
                      \V{i}}
                     {\V{I}}
-                    {\IMu{\V{I}}{\toIDesc{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}}} \To 
+{\IMu{\V{I}}{\toIDesc{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}}} \To 
            \IMu{\V{I}}{\toIDesc{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}}{\V{i}}
 \end{array} \\
 \begin{array}{@{}l@{\:\mapsto\:\:}l}
@@ -1190,10 +1190,20 @@ Then, we get $\IDesc$ by building its free monad:
 \IDescD\: \V{I} \mapsto \FreeIMonad{\red{[}\IDescFreeD\red{,[}\LAM{\_}\sqr{}\red{,}\LAM{\_}\red{[]]]}}{\Unit}\LAM{\_}\V{I}
 }\]
 
+The fact that indexed descriptions are closed under substitution
+is potentially of considerable utility, if we can exploit this fact:
+\[
+\idescop{\sigma D}{J}{X} = \idescop{D}{I}{\LAM{i}\idescop{\sigma i}{J}{X}}
+\quad \mbox{where}\;\sigma:I\To\IDesc{J}
+\]
+By observing that a description can be decomposed via substitution, we
+split its meaning into a superstructure of substructures, e.g. a
+`database containing salaries', ready for traversal operations
+preserving the former and targeting the latter.
 
 In this section, we have presented the universe of indexed
 description. It embraces indexed families of types and, as such,
 allows us to write dependent datatypes. Hence, we have presented
 several example of indexed datatypes. In this context, we have
-presented the free monad construction, together its monadic
+presented the free monad construction, together with its monadic
 operations.
