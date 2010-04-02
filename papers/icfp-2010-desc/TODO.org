@@ -1,12 +1,4 @@
 * Open Questions
-** TODO Precise that we are talking in the Evidence language
-
-I guess that the point is the following: we are not talking about
-higher-level presentation. So, we manipulate/make low-level terms and
-people have to bear with that.
-
-I don't know where to write this down.
-
 ** TODO How could we get Hutton expressions with different type of variables?
 ** TODO Better transition for IDesc
 ** TODO coding/encoding distinction sufficiently clear?
@@ -22,10 +14,6 @@ If it hasn't been translated into universe polymorphism
 * Janitor service
 ** TODO Parenthesize \mu or not
 ** TODO switchD elaboration rule is in a bad state
-** TODO Ispell
-** TODO Check/fix alignment in code
-** TODO Fix code overflows
-** TODO Check coloring of terms
 ** TODO Find a convenient name for Hutton's razor
 
 And replace occurences of "Typed expressions"
@@ -194,3 +182,14 @@ Without the restored "onecolumn" mode.
 ** DONE Look for inlining figures
 ** DONE SUBMIT THE B&W VERSION!
 ** DONE Fix every \note{} in the paper
+** DONE Ispell
+** DONE Check/fix alignment in code
+** DONE Fix code overflows
+** DONE Check coloring of terms
+** DONE Precise that we are talking in the Evidence language
+
+I guess that the point is the following: we are not talking about
+higher-level presentation. So, we manipulate/make low-level terms and
+people have to bear with that.
+
+I don't know where to write this down.
