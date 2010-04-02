@@ -203,7 +203,7 @@ by:
 \begin{array}{@{}ll}
 \inductionI : & _{\PI{\V{I}}{\Set}}
                    \PITEL{\V{R}}{\V{I} \To \IDesc{\V{I}}}
-                   \PI{\V{P}}{(\SIGMAS{\Bhab{\V{i}}{\V{I}}}{\IMu{\V{I}}{\V{R}}{\V{i}}}) \To \Set} \\
+                   \PI{\V{P}}{(\SIGMA{\V{i}}{\V{I}}{\IMu{\V{I}}{\V{R}}{\V{i}}}) \To \Set} \\
                  & (      \PITEL{\V{i}}{\V{I}} 
                           \PI{\V{xs}}{\idescop{\V{R}\: \V{i}}{\V{I}}{(\IMu{\V{I}}{\V{R}}{\!})}} \\
                  & \   \idescop{\AllI{}
@@ -244,7 +244,7 @@ a generic catamorphism, $\cataI$, from $\inductionI$.
                           \PITEL{\V{D}}{\IDesc{\V{I}}}
                           \PI{\V{X}}{\V{I} \To \Set} \\
                         & \idescop{\V{D}}{\V{I}}{\V{X}} \To
-                          \IDesc{(\TIMES{\V{I}}{\V{X}})}
+                          \IDesc{(\SIGMA{\V{i}}{\V{I}}{\V{X}\: \V{i}})}
 \end{array} \\
 \begin{array}{@{}l@{}l@{\:=\:\:}l}
 \AllI{\:}{(\DVar{\V{i}})}{& \V{X}}{\V{x}} &
@@ -266,10 +266,10 @@ a generic catamorphism, $\cataI$, from $\inductionI$.
 \allI{\!}{\!}{\!}{\!}{\!}{\!} : & _{\PI{\V{I}}{\Set}}
                                   \PITEL{\V{D}}{\IDesc{\V{I}}}
                                   \PITEL{\V{X}}{\V{I} \To \Set} 
-                                  \PI{\V{P}}{\TIMES{\V{I}}{\V{X}} \To \Set} \\
-                                & (\PI{\V{x}}{\TIMES{\V{I}}{\V{X}}} \V{P}\: \V{x}) \To
+                                  \PI{\V{P}}{(\SIGMA{\V{i}}{\V{I}}{\V{X}\: \V{i}}) \To \Set} \\
+                                & (\PI{\V{x}}{\SIGMA{\V{i}}{\V{I}}{\V{X}\: \V{i}}} \V{P}\: \V{x}) \To
                                   \PI{\V{xs}}{\idescop{\V{D}}{\V{I}}{\V{X}}} 
-                                  \idescop{\AllI{}{\V{D}}{\V{X}}{\V{xs}}}{\TIMES{\V{I}}{\V{X}}}{\V{P}}
+                                  \idescop{\AllI{}{\V{D}}{\V{X}}{\V{xs}}}{}{\V{P}}
 \end{array} \\
 \begin{array}{@{}l@{}l@{\:=\:\:}l}
 \allI{\:}{(\DVar{\V{i}})}{& \V{X}}{\V{P}}{\V{p}}{\V{x}} &
