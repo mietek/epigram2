@@ -1,13 +1,19 @@
 \section{Levitating the Universe of Descriptions}
 \label{sec:desc-levitate}
 
-In this section, we will fulfil our promises. We first implement
-finite sets. Then, we implement the codes of the $\Desc$ universe.
-Despite being a perilous pedagogical exercise for the authors, we hope
-to convey to the reader the dizzy feeling of levitation, without the
-falling.
+In this section, we will fulfil our promises and show how we implement
+the signatures, first for the enumerations, and then for the codes of
+the $\Desc$ universe.  Persuading this to perform was a perilous
+pedagogical peregrination for the protagonist.  Our method was indeed to
+hardwire constants implementing the signatures specified above, in the
+first instance, but then attempt to replace them, step by step, with
+\emph{definitions}: ``Is \(2+2\) still \(4\)?'', ``No, it's a loop!''.
+But we did find a way, so now we hope to convey to the reader the
+dizzy feeling of levitation, without the falling.
 
-\subsection{Implementing finite sets}
+
+
+\subsection{Implementing finite enumerations}
 
 \begin{wstructure}
 <- Recall typing rules of 1st section
@@ -16,33 +22,26 @@ falling.
         <- Simply List UId
 \end{wstructure}
 
-In Section~\ref{sec:finite-sets}, we have given a specification of
-finite sets. We are going to implement the $\EnumU$ type former and
-its constructors. Let us recall their specification:
+In Section~\ref{sec:finite-sets}, we specified the
+finite sets of tags. We are going to implement the $\EnumU$ type former and
+its constructors. Recall:
 %
-\[\stkc{
-%% EnumU
-\Rule{\Gamma \vdash \Valid}
-     {\Gamma \vdash \Type{\EnumU}} 
-\\
-%% NilE
-\Rule{\Gamma \vdash \Valid}
-     {\Gamma \vdash \Bhab{\NilE}{\EnumU}} 
-\qquad
-%% ConsE
-\Rule{\Gamma \vdash \Bhab{\V{t}}{\UId} \quad
-      \Gamma \vdash \Bhab{\V{e}}{\EnumU}}
-     {\Gamma \vdash \Bhab{\ConsE{\V{t}}{\V{e}}}{\EnumU}}
-}\]
-
-The names $\NilE$ and $\ConsE{\!}{\!}$ are not a coincidence. $\EnumU$
-is indeed isomorphic to a list of $\UId$s. Therefore, the actual
-implementation of $\EnumU$ boils down to the following definition:
+\[\Type{\EnumU}\qquad\Bhab{\NilE}{\EnumU}\qquad
+\Bhab{\ConsE{(\Bhab{\M{t}}{\UId})}{(\Bhab{\M{E}}{\EnumU})}}{\EnumU}
+\]
 %
-\[\stk{
-\EnumU : \Set \\
+The $\NilE$ and $\ConsE{\!}{\!}$ constructors are just the `nil' and
+`cons' or ordinary lists, with elements from \(\UId\).
+Therefore, we
+implement:
+%
+\[
 \EnumU \mapsto \Mu{(\ListD\: \UId)}
-}\]
+\qquad
+\NilE \mapsto \ListNil
+\qquad
+\ConsE{\M{t}}{\M{E}} \mapsto \ListCons{\M{t}}{\M{E}}
+\]
 
 
 \begin{wstructure}
@@ -56,17 +55,21 @@ implementation of $\EnumU$ boils down to the following definition:
     -> Anything else remains the same (switch, EnumT, 0, 1+)
 \end{wstructure}
 
-Let us consider the consequences. First, we discover that the type
-theory does not need to be extended with the type former $\EnumU$, the
-constructors $\NilE$ and $\ConsE$. $\EnumU$ is defined above, as the
-fixpoint of $\ListD\: \UId$. $\NilE$ and $\ConsE$ are simply the type
-constructors of lists, $\ListNil$ and $\ListCons$.
+Let us consider the consequences. We discover that the type
+theory does not need to be extended with a special type former $\EnumU$,
+or special constructors $\NilE$ and $\ConsE$. 
+Moreover, the $\spi{\M{E}}{\M{P}}$ operator, computing tuple types
+of \(\M{P}\)s by recursion on \(\M{E}\) need not be hardwired: we can
+just use the generic $\F{ind}$ operator, as we would for any ordinary
+program.
 
-Another interesting consequence concerns the $\spi{\!}{\!}$ operator:
-it can actually be implemented with the generic $\F{induction}$
-principle. From an implementation perspective, this means that this
-operator is implemented in the dependently-typed target language, as
-any other function.
+Note, however, that the universe decoder \(\EnumT{\M{E}}\) \emph{is}
+hardwired, as are the primitive \(\Ze\) and \(\Su{-}\) constructs that
+we use for low-level values, and indeed the \(\F{switch}\) operator.
+We cannot dispose of data altogether! We have, however, gained
+the ordinariness of the enumeration \emph{codes}, and hence of
+programs which manipulate them. Our next step is similar: we are going to
+condense the entire naming scheme of datatypes \emph{into itself}.
 
 %% Apart from these changes, we are left with implementing the other
 %% components of finite sets. This consists of $\EnumT$, $\Ze$, $\Su$, as
@@ -88,19 +91,18 @@ any other function.
         /> Condenses the entire naming scheme of datatypes
 \end{wstructure}
 
-In this section, we have replaced a low-level presentation of finite
-sets by a self-hosted one, expressed in the universe of
-descriptions. However, formally, the content of the type theory
-remains unchanged: objects that were present before the modification
-are still there. Conversely, we have not introduced any spurious
-object.
+%In this section, we have replaced a low-level presentation of finite
+%sets by a self-hosted one, expressed in the universe of
+%descriptions. However, formally, the content of the type theory
+%remains unchanged: objects that were present before the modification
+%are still there. Conversely, we have not introduced any spurious
+%object.
 
-If not on the content, this modification had an effect on the
-names. The type naming scheme of the type theory has condensed: named
-type formers ($\EnumU$) and constructors ($\NilE$ and $\ConsE$) are
-now replaced by codes and their fixpoint in the universe of
-descriptions. In essence, our next step is similar: we are going to
-condense the entire naming scheme of datatypes \emph{in itself}.
+%If not on the content, this modification had an effect on the
+%names. The type naming scheme of the type theory has condensed: named
+%type formers ($\EnumU$) and constructors ($\NilE$ and $\ConsE$) are
+%now replaced by codes and their fixpoint in the universe of
+%descriptions. In essence,
 
 \subsection{Implementing descriptions}
 
@@ -113,8 +115,8 @@ condense the entire naming scheme of datatypes \emph{in itself}.
         -> It ought to be encoded in itself
 \end{wstructure}
 
-We shall now fulfil our promise concerning $\Desc$. We are going to
-implement the codes of the universe of descriptions. In and by itself,
+We shall now fulfil our implementation promises, delivering the
+codes of the universe of descriptions. In and by itself,
 the codes, $\Desc$, is nothing but a datatype. We are in the same
 situation as with $\EnumU$: we ought to be able to describe the codes
 of $\Desc$ in $\Desc$ itself. Hence, this code would be a first-class

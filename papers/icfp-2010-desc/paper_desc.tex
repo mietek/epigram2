@@ -180,7 +180,7 @@ effectively described the functor:
 Correspondingly, we can see the injections to the sum:
 \[
 \sqr{\NatZero}:\descop{\NatD}Z \qquad
-\sqr{\NatSuc{z}}:\descop{\NatD}Z \;\mbox{if}\;z:Z
+\sqr{\NatSuc{(\Bhab{z}{X})}}:\descop{\NatD}Z
 \]
 
 \begin{wstructure}
@@ -272,7 +272,7 @@ via a tagged description.
         <- Subject to our levitation exercise
 \end{wstructure}
 
-\subsection{Fixpoint}
+\subsection{The least fixpoint}
 \label{sec:desc-fix-point}
 
 \begin{wstructure}
@@ -315,7 +315,7 @@ We can now build datatypes and their elements, e.g.:
                        {\sqr{ \DUnit \quad (\DIndx{\DUnit})}}{}})}:\Set
 \\
 \Con{\sqr{\NatZero}}:\Nat \qquad
-\Con{\sqr{\NatSuc{n}}}:\Nat \;\mbox{if}\;n:\Nat
+\Con{\sqr{\NatSuc{(\Bhab{n}{\Nat})}}}:\Nat
 }\]
 
 But how shall we compute with our data?  We should expect an
@@ -341,7 +341,7 @@ data. Following \citet{benke:universe-generic-prog}, we adopt the following:
                \PI{\V{x}}{\Mu{\V{D}}} \V{P} \V{x} 
 } \\
 \F{ind}\, \V{D}\, \V{P}\, \V{m}\, (\Con{\V{d}}) = 
-    \V{m}\, \V{d}\, (\all{D}{(\Mu{D})}{\V{P}}
+    \V{m}\, \V{d}\, (\all{\V{D}}{(\Mu{\V{D}})}{\V{P}}
                            {(\F{ind}\, \V{D}\, \V{P}\, \V{m})}
                            {\V{d}})
 }\]
@@ -358,6 +358,9 @@ operation over descriptions, albeit a hardwired operator.
 Any datatype we define automatically
 comes with an induction principle.
 
+We note that the very same functors \(\descop{\M{D}}{\!}\) also admit greatest
+fixpoints, and we have indeed implemented coinductive types this way, but
+that is a story for another time.
 
 \begin{figure*}
 
@@ -455,7 +458,7 @@ Here $\etag{c}\:\vec{t}$ denotes a tag `applied' to a sequence
 of arguments, and \(\sqr{\vec{t}}\) that sequence's repackaging as
 a right-nested tuple. Now we can just write data directly.
 \[
-\NatZero:\Nat\qquad \NatSuc{n}:\Nat\;\mbox{if}\;n:\Nat
+\NatZero:\Nat\qquad \NatSuc{(\Bhab{n}{\Nat})}:\Nat
 \]
 Once again, the type explains the legible presentation, as well as
 the low-level representation.
