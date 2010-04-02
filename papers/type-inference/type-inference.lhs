@@ -323,7 +323,8 @@ $$
 We do not add elimination rules to make proofs by induction on the structure
 of derivations easier, but they will be admissible.
 Note that we omit the context from rules if it is constant throughout.
-
+The only inference rules to access the context will be the \textsc{Lookup} rule
+and the rules for the $\fatsemi$ and $\entails$ judgments given above.
 
 
 \subsection{Increasing information}
@@ -363,21 +364,52 @@ judgments corresponding to definitions in $\Gamma$.
 Moreover, this will still hold if we truncate both $\Gamma$ and $\Delta$ after
 any number of $\fatsemi$ separators.
 
+Note that if $\delta : \Gamma \lei \Delta$ then
+$\delta||_{\Gamma \semidrop n} : \Gamma \semidrop n \lei \Delta \semidrop n$. 
+
 % We require a substitution because the type inference algorithm will invent new
 % type variables, which must be interpreted over a more informative context that
 % will not contain them.
 
 We say a judgment $J$ is
 \define{stable} if it is preserved under information increase, that is, if
-$$\Gamma \semidrop n \entails J  ~\wedge~  \delta : \Gamma \lei \Delta
+$$\Gamma \entails J  ~\wedge~  \delta : \Gamma \lei \Delta
     \quad \Rightarrow \quad
-    \Delta \semidrop n \entails \delta J.$$
+    \Delta \entails \delta J.$$
 
 % From now on we will assume that the judgment $\sem{v D}_K$ is stable for any
 % $v \in \V_K$ and $D \in \D_K$, and that stable judgments are closed under 
 % substitution. 
 
-We will show that every judgment in $\J$ is stable. 
+\begin{lemma}[Stability]
+Every judgment in $\J$ is stable.
+\end{lemma}
+\begin{proof}
+Suppose $J$ and $J'$ are stable, $\Gamma \entails (J \wedge J')$ and
+$\delta : \Gamma \lei \Delta$. Then $\Gamma \entails J$ and $\Gamma \entails J'$,
+so by stability, $\Delta \entails \delta J$ and $\Delta \entails \delta J'$.
+Hence $\Delta \entails \delta (J \wedge J')$.
+
+Suppose $J$ is stable, $\Gamma \entails (v D \entails J)$ and
+$\delta : \Gamma \lei \Delta$. Then $\Gamma, v D \entails J$,
+and $\delta : \Gamma, v D \lei \Delta, v (\delta D)$
+so by stability of $J$, $\Delta, v (\delta D) \entails \delta J$.
+Hence $\Delta \entails (v (\delta D) \entails \delta J)$
+and so $\Delta \entails \delta (v D \entails J)$.
+
+Suppose $J$ is stable, $\Gamma \entails \fatsemi J$ and
+$\delta : \Gamma \lei \Delta$. Then $\Gamma \fatsemi \entails J$.
+Now $\delta : \Gamma \fatsemi \lei \Delta \fatsemi$
+so by stability, $\Delta \fatsemi \entails \delta J$ and hence
+$\Delta \entails \delta (\fatsemi J)$.
+
+For other judgments that we define later, the proof will proceed by induction
+on the structure of derivations. Where the \textsc{Lookup} rule is applied,
+the result holds by the definition of information increase. No other rules
+may refer to the context, so it is straightforward to see that the judgment
+is stable.
+\end{proof}
+
 This allows us to prove the following:
 
 \begin{lemma}\label{lei:preorder}
@@ -393,7 +425,8 @@ For transitivity, suppose $v D \in \Gamma_0 \semidrop n$ and $J \in \sem{v D}$.
 Then $\Gamma_1 \semidrop n \entails \gamma_1 J$ since
 $\gamma_1 : \Gamma_0 \lei \Gamma_1$.
 Now by stability applied to $\gamma_1 J$ using
-$\gamma_2 : \Gamma_1 \lei \Gamma_2$, we have
+$\gamma_2||_{\Gamma_1 \semidrop n} :
+    \Gamma_1 \semidrop n \lei \Gamma_2 \semidrop n$, we have
 $\Gamma_2 \semidrop n \entails \gamma_2\gamma_1\sem{v D}$ .
 \end{proof}
 
@@ -403,10 +436,9 @@ $\Gamma_2 \semidrop n \entails \gamma_2\gamma_1\sem{v D}$ .
 A \define{problem domain} $R_\le$ is a set $R$ equipped with a relation $\le$
 such that $R$ is closed under substitution. 
 A \define{problem on $R_\le$} is a map $P: R_\le \rightarrow \J$ such that
-$P(r)$ is stable and $\theta P(r) = P(\theta r)$ for any $r \in R_\le$ and
+$\theta P(r) = P(\theta r)$ for any $r \in R_\le$ and
 substitution $\theta$. 
-%%%Note that we can regard stable judgments 
-   Stable judgments can be seen 
+Judgments themselves can be seen 
 as problems on the unit set. 
 We say %%%that 
 $r \in R_\le$
@@ -1449,32 +1481,30 @@ The syntax of terms is
 $$t ::= x ~||~ t~t ~||~ \lambda x . t ~||~ \letIn{x}{t}{t}$$
 where $x$ ranges over some set of term variables.
 
-We define the judgment $\Delta \entails t : \tau$ ($t$ can be assigned type $\tau$
-in $\Delta$) by the rules in Figure~\ref{fig:typeAssignmentRules}.
+We define the type assignability judgment $t : \tau$ by the rules in
+Figure~\ref{fig:typeAssignmentRules}.
 
 \begin{figure}[ht]
 \boxrule{\Delta \entails t : \tau}
 
 $$
-\Rule{\Delta \entails t : \tau
+\Rule{t : \tau
       \quad
-      \Delta \entails \tau \equiv \upsilon}
-     {\Delta \entails t : \upsilon}
+      \tau \equiv \upsilon}
+     {t : \upsilon}
 \qquad
-\Rule{\Delta \entails x \asc \sigma
-      \quad
-      \Delta \entails \sigma \succ \tau}
-     {\Delta \entails x : \tau}
+\Rule{x \hasc .\tau}
+     {x : \tau}
 $$
 
 $$
-\Rule{\Delta, x \asc .\upsilon \entails t : \tau}
-     {\Delta \entails \lambda x.t : \upsilon \arrow \tau}
+\Rule{x \asc .\upsilon \entails t : \tau}
+     {\lambda x.t : \upsilon \arrow \tau}
 \qquad
-\Rule{\Delta \entails f : \upsilon \arrow \tau
+\Rule{f : \upsilon \arrow \tau
       \quad
-      \Delta \entails a : \upsilon}
-     {\Delta \entails f a : \tau}
+      a : \upsilon}
+     {f a : \tau}
 $$
 
 %      \forall \upsilon . (\Gamma \entails \sigma \succ \upsilon
@@ -1482,10 +1512,10 @@ $$
 
 $$
 \Rule{
-      \Delta \entails s \hasscheme \sigma
+      s \hasscheme \sigma
       \quad
-      \Delta, x \asc \sigma \entails t : \tau}
-     {\Delta \entails \letIn{x}{s}{t} : \tau}
+      x \asc \sigma \entails t : \tau}
+     {\letIn{x}{s}{t} : \tau}
 $$
 
 \caption{Declarative rules for type assignment}
