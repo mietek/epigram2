@@ -24,9 +24,7 @@ If it hasn't been translated into universe polymorphism
 ** TODO SUBMIT THE B&W VERSION!
 ** TODO Parenthesize \mu or not
 ** TODO switchD elaboration rule is in a bad state
-** TODO Look for inlining figures
 ** TODO Ispell
-** TODO Check bibliography references
 ** TODO Check/fix alignment in code
 ** TODO Fix code overflows
 ** TODO Check coloring of terms
@@ -194,3 +192,5 @@ Without the restored "onecolumn" mode.
 
 ** DONE Implicit underscored indexing
 ** DONE Uniformize names of function args
+** DONE Check bibliography references
+** DONE Look for inlining figures
