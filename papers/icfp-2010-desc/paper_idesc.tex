@@ -327,12 +327,12 @@ a generic catamorphism, $\cataI$, from $\inductionI$.
 \\
 \stk{
 \idescop{\_\:}{}{} :_{\PI{\V{I}}{\Set}} \IDesc{\V{I}} \To (\V{\V{I}} \To \Set) \To \Set                  \\
-\begin{array}{@{}l@{\:=\:\:}ll}
-\idescop{\DVar{\V{i}}}{\V{I}}{\V{D}}      &  \V{X}\: \V{i}                                           \\
-\idescop{\DConst{\V{K}}}{\V{I}}{\V{X}}    &  \V{K}                                                   \\
-\idescop{\DProd{\V{D}}{\V{D'}}}{\V{I}}{\V{X}} &  \TIMES{\idescop{\V{D}}{\V{I}}{\V{X}}}{\idescop{\V{D'}}{\V{I}}{\V{X}}}       \\
-\idescop{\DSigma{\V{S}}{\V{D}}}{\V{I}}{\V{X}} &  \SIGMA{\V{s}}{\V{S}} \idescop{\V{D}\: \V{s}}{\V{I}}{\V{X}}                    \\
-\idescop{\DPi{\V{S}}{\V{D}}}{\V{I}}{\V{X}}    &  \PI{\V{s}}{\V{S}} \idescop{\V{D}\: \V{s}}{\V{I}}{\V{X}}            
+\begin{array}{@{}l@{\V{X}}@{\:=\:\:}ll}
+\idescop{\DVar{\V{i}}}{\V{I}}{&}      &  \V{X}\: \V{i}                                           \\
+\idescop{\DConst{\V{K}}}{\V{I}}{&}    &  \V{K}                                                   \\
+\idescop{\DProd{\V{D}}{\V{D'}}}{\V{I}}{&} &  \TIMES{\idescop{\V{D}}{\V{I}}{\V{X}}}{\idescop{\V{D'}}{\V{I}}{\V{X}}}       \\
+\idescop{\DSigma{\V{S}}{\V{D}}}{\V{I}}{&} &  \SIGMA{\V{s}}{\V{S}} \idescop{\V{D}\: \V{s}}{\V{I}}{\V{X}}                    \\
+\idescop{\DPi{\V{S}}{\V{D}}}{\V{I}}{&}    &  \PI{\V{s}}{\V{S}} \idescop{\V{D}\: \V{s}}{\V{I}}{\V{X}}            
 \end{array}
 }
 \end{array}
