@@ -109,12 +109,19 @@ of datatypes.
 \end{wstructure}
 
 To add inductive types to our type theory, we build a universe of
-datatype \emph{descriptions} by implementing the signature below, with
-codes mimicking the grammar of datatype declarations. We
-can read a description $\V{D}:\Desc$ as a `pattern functor'
-on $\Set$, with $\descop{\V{D}}{\!}$ its action on an object, \(\V{X}\), soon
-to be instantiated recursively.
-%
+datatype \emph{descriptions} by implementing the signature presented
+in Figure~\ref{fig:desc_universe}, with codes mimicking the grammar of
+datatype declarations. We can read a description $\V{D}:\Desc$ as a
+`pattern functor' on $\Set$, with $\descop{\V{D}}{\!}$ its action on
+an object, \(\V{X}\), soon to be instantiated recursively.
+
+Descriptions are sequential structures, terminated by $\DUnit$, indicating
+the empty tuple. To build
+sigmas-of-sigmas, we define a $\DSigma{\!}{}$ code, interpreted as a
+$\Sigma$-type. To request a recursive component, we have $\DIndx{\V{D}}$,
+where \(\V{D}\) describes the rest of the node.
+
+\begin{figure}
 \[\stk{
 \begin{array}{l}
 \Desc : \Set\\
@@ -131,12 +138,11 @@ to be instantiated recursively.
 \descop{\DIndx{\V{D}}}{}  &  \TIMES{\V{X}}{\descop{\V{D}}{\V{X}}}
 \end{array}
 }\]
-%
-Descriptions are sequential structures, terminated by $\DUnit$, indicating
-the empty tuple. To build
-sigmas-of-sigmas, we define a $\DSigma{\!}{}$ code, interpreted as a
-$\Sigma$-type. To request a recursive component, we have $\DIndx{\V{D}}$,
-where \(\V{D}\) describes the rest of the node.
+
+\caption{Universe of Descriptions}
+\label{fig:desc_universe}
+ 
+\end{figure}
 
 You may have noticed that we are a little coy about this presentation,
 writing of `implementing a signature' without clarifying how. A viable
