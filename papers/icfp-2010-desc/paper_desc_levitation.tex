@@ -358,16 +358,17 @@ datatypes. \emph{Generic programming is just
     -> Dependent-typeless catamorphism 
 \end{wstructure}
 
-In Section~\ref{sec:desc-fix-point}, we have implemented a dependent
-$\F{induction}$ principle, instead of the catamorphism. However, in
-some circumstances, the full-power of a dependent elimination is not
-necessary. In the following, we propose to derive the catamorphism
-from the $\F{induction}$ principle.
+In Section~\ref{sec:desc-fix-point}, we hardwired a dependent
+$\F{ind}$unction principle, instead of the catamorphism. However, in
+some circumstances, the full power of a dependent elimination is not
+necessary. Let us now derive the catamorphism
+from $\F{ind}$ principle.
 
 \newcommand{\cata}{\F{cata}}
 
 The catamorphism is defined by induction on the description $\V{D}$,
-with a non-dependent motive targeting $\V{T}$. Given a node $\V{xs}$
+with a readily propagated non-dependent return type $\V{T}$.
+Given a node $\V{xs}$
 and the induction hypotheses, the method ought to build an element of
 $\V{T}$. Provided that we know how to make an element of
 $\descop{\V{D}}{\V{T}}$, this step will be performed by the algebra
@@ -378,8 +379,8 @@ $\V{f}$. Let us take a look at this jigsaw:
            \PI{\V{T}}{\Set}
            (\descop{\V{D}}{\V{T}} \To \V{T}) \To 
            \Mu{\V{D}} \To \V{T} \\
-\cata\: \V{D}\: \V{T}\: \V{f\: \V{x}} \mapsto
-  \F{induction}\: \V{D}\:\V{x}\: (\LAM{\_}\V{T})\: (\LAM{\V{xs}\:\V{hs}} \V{f}\: \SHED)
+\cata\: \V{D}\: \V{T}\: \V{f} \mapsto
+  \sind \LAM{\V{xs}}\LAM{\V{hs}} \V{f}\: \SHED
 }\]
 %
 We are left with filling the hole. Recall that we have
@@ -390,8 +391,10 @@ at hand. Our goal is to make an element of
 shape, but its sub-elements are of the wrong type. On the other hand,
 for each sub-element of $\V{xs}$, $\V{hs}$ gives us the corresponding
 element in $\V{T}$.  Therefore, to construct an element of
-\(\descop{\V{D}}{\V{T}}\), we replace the recursive components of
-\(\V{xs}\) by their counterpart in \(\V{hs}\):
+\(\descop{\V{D}}{\V{T}}\), we must replace the recursive components of
+\(\V{xs}\) by their counterparts from \(\V{hs}\). Let us write a
+program to do that---please forgive us if we lapse to a pattern matching
+notation, for readability's sake.
 %
 \[\stk{
 \F{replace} : \stk{\PITEL{\V{D}}{\Desc}
@@ -440,7 +443,7 @@ operation, the catamorphism, from a pre-existing generic operation,
 the induction principle. This has been made possible by our ability to
 manipulate descriptions as first-class objects: the catamorphism is,
 basically, a function mapping a $\Desc$ to a datatype specific
-operation. This is a form of polytypic programming, as found in
+operation. This is a form of polytypic programming, as we learned from
 PolyP~\cite{jansson:polyp}.
 
 %% Moreover, the $\F{replace}$ function demonstrates the benefit of an
@@ -509,13 +512,13 @@ function is surprisingly easy:
 \[\stk{
 \FreeMonad{\_} : \TagDesc \To \Set \To \TagDesc \\
 \FreeMonad{\pair{\V{E}}{\V{D}}{}}\:\V{X} \mapsto
-    \pair{\ListCons{\DVar{}}{\V{E}}}
+    \pair{\pair{\DVar{}}{\V{E}}{}}
          {\pair{\DSigma{\V{X}}{\DUnit}}{\V{D}}{}}{}
 }\]
 %
 We simply add a constructor, $\DVar{\!}$, and define its argument to
 be a $\DSigma{\V{X}}{\DUnit}$, that is an element of $\V{X}$. We keep
-$\V{E}$ and $\V{D}$ as they were, hence leaving the functor
+$\V{E}$ and $\V{D}$ as they were, hence leaving the other constructors
 unchanged. Unfolding the interpretation of this definition, we
 convince ourselves that this corresponds to the functor
 $\FMFreeMonadD$. The fixpoint operation ties the knot and gives us
@@ -545,15 +548,14 @@ arguments to $\cata$ as possible:
 \begin{array}{@{}ll}
 \subst : & \PITEL{\V{D}}{\TagDesc}
            \PI{\V{X}, \V{Y}}{\Set} \\
-         & (\V{X} \To \Mu{(\toDesc{\FreeMonad{\V{D}}{\V{Y}}})}) \To
-           \Mu{(\toDesc{\FreeMonad{\V{D}}{\V{X}}})} \To
-           \Mu{(\toDesc{\FreeMonad{\V{D}}{\V{Y}}})} 
+         & (\V{X} \To \Mu{(\toDesc{(\FreeMonad{\V{D}}{\V{Y}})})}) \To
+           \Mu{(\toDesc{(\FreeMonad{\V{D}}{\V{X}})})} \To
+           \Mu{(\toDesc{(\FreeMonad{\V{D}}{\V{Y}})})} 
 \end{array} \\
-\subst\: \V{D}\: \V{X}\: \V{Y}\: \V{\sigma}\: \V{x} \mapsto
-  \cata\: (\toDesc{\FreeMonad{\V{D}}{\V{X}}})\: 
-          (\Mu{(\toDesc{\FreeMonad{\V{D}}{\V{Y}}})})\: 
-          \SHED\: 
-          \V{x}
+\subst\: \V{D}\: \V{X}\: \V{Y}\: \V{\sigma} \mapsto
+  \cata\: (\toDesc{(\FreeMonad{\V{D}}{\V{X}})})\: 
+          (\Mu{(\toDesc{(\FreeMonad{\V{D}}{\V{Y}})})})\: 
+          \SHED
 }\]
 %
 We are left with implementing the algebra of the
@@ -572,7 +574,7 @@ corresponds to the following definition:
 \end{array} \\
 \begin{array}{@{}l@{\:\mapsto\:\:}l}
 \apply\: \V{D}\: \V{X}\: \V{Y}\: \V{\sigma}\: \pair{\DVar{\!}}{\V{x}}{}   & \V{\sigma}\: \V{x}                   \\
-\apply\: \V{D}\: \V{X}\: \V{Y}\: \V{\sigma}\: \pair{\etag{t}\,}{\V{xs}}{} & \Con{\pair{\etag{t}}{\V{xs}}{}}
+\apply\: \V{D}\: \V{X}\: \V{Y}\: \V{\sigma}\: \pair{\V{c}}{\V{xs}}{} & \Con{\pair{\V{c}}{\V{xs}}{}}
 \end{array}
 }\]
 
@@ -593,7 +595,7 @@ to extend it with a notion of variable. Then, we have equipped this
 structure with the corresponding monadic operation, \bind\ and
 \return. This construction is an example of type-indexed
 datatype~\cite{hinze:generic-haskell}, as found in Generic Haskell:
-from a datatype, we built a new datatype and equip it with its
+from a datatype, we build a new datatype and equip it with its
 structure.
 
 \begin{wstructure}
