@@ -725,15 +725,12 @@ In our universe of descriptions, the syntax of this language is
 described by a tagged indexed description. We use the index to carry
 the type: the resulting description is indexed by $\Ty$. We observe
 that some constructors are always defined, namely $\Econd{\!}{\!}{\!}$
-and $\Eval{\!}$. On the other hand, the $\Eplus{\!}{\!}$ and
-$\Ele{\!}{\!}$ constructors are index-dependent. $\Eplus{\!}{\!}$ is
+and $\Eval{\!}$. On the other hand, the $\Eplus{\!}{}$ and
+$\Ele{}{\!}$ constructors are index-dependent. $\Eplus{\!}{}$ is
 defined if and only if the result type -- the index -- is $\Enat$,
-whereas $\Ele{\!}{\!}$ is defined if and only if the index is
+whereas $\Ele{}{\!}$ is defined if and only if the index is
 $\Ebool$. The actual code precisely follows this intuition, as shown
-in Figure~\ref{fig:hexpr-full}. For brevity, we use an informal
-$\case{\ldots}{\ldots}$ notation, simulating a definition by
-pattern-matching. Formally, this corresponds to a call to the
-$\switch{\!}{\!}{\!}{\!}$ eliminator.
+in Figure~\ref{fig:hexpr-full}. 
 
 \begin{figure}
 
@@ -765,7 +762,7 @@ $\switch{\!}{\!}{\!}{\!}$ eliminator.
 \HExprID : \ITagIDesc{\Ty} \\
 \HExprID \mapsto \bigRedBracket{
                  \begin{array}{l}
-                   \LAM{\V{ty}} \case{\V{ty}}{\Enat \To {\sqr{\Eplus{\!}{\!}\!\,}} \\ \Ebool \To {\sqr{\Ele{\!}{\!}\!\,}}} \red{,} \\
+                   \sqr{\sqr{\Eplus{\!}{\!}} \quad \sqr{\Ele{\!}{\!}}} \red{,} \\
                    \LAM{\_} \DProd{\DVar{\Enat}}{\DVar{\Enat}} 
                    \end{array}
                    }
