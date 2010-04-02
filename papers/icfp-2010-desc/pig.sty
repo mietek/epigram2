@@ -23,6 +23,7 @@
 \newcommand{\whiteFG}[1]{\textcolor[rgb]{1,1,1}{#1}}
 \newcommand{\yellowBG}[1]{\colorbox[rgb]{1,1,0.2}{#1}}
 \newcommand{\brownBG}[1]{\colorbox[rgb]{1.0,0.7,0.4}{#1}}
+\newcommand{\greyBG}[1]{\colorbox[rgb]{0.7,0.7,0.7}{#1}}
 
 \newcommand{\ColourEpigram}{
   \newcommand{\red}{\redFG}
@@ -30,7 +31,7 @@
   \newcommand{\blue}{\blueFG}
   \newcommand{\orange}{\orangeFG}
   \newcommand{\purple}{\purpleFG}
-  \newcommand{\yellow}{\yellowFG}
+  \newcommand{\yellow}{\yellowBG}
   \newcommand{\brown}{\brownFG}
   \newcommand{\black}{\blackFG}
   \newcommand{\white}{\whiteFG}
@@ -42,7 +43,7 @@
   \newcommand{\blue}{\blackFG}
   \newcommand{\orange}{\blackFG}
   \newcommand{\purple}{\blackFG}
-  \newcommand{\yellow}{\blackFG}
+  \newcommand{\yellow}{\greyBG}
   \newcommand{\brown}{\blackFG}
   \newcommand{\black}{\blackFG}
   \newcommand{\white}{\blackFG}
@@ -430,7 +431,7 @@
 \V{#1} & :\;#2 \\
 }
 
-\newcommand{\bigRedBracket}[1]{\ensuremath\redFG{\left[\blackFG{#1}\right]}}
+\newcommand{\bigRedBracket}[1]{\ensuremath\red{\left[\blackFG{#1}\right]}}
 
-\newcommand{\SHED}{\raisebox{0in}[0in][0in]{\yellowBG{\([\ldots]\)}}}
+\newcommand{\SHED}{\raisebox{0in}[0in][0in]{\yellow{\([\ldots]\)}}}
 
