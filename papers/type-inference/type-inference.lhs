@@ -92,6 +92,7 @@
 \newcommand{\arrow}{\ensuremath{\triangleright}}
 \newcommand{\defn}{\ensuremath{\!:=\!}}
 \newcommand{\asc}{\ensuremath{:\sim}}
+\newcommand{\hasc}{\hat{::}}
 \newcommand{\hole}[1]{\ensuremath{#1 \!:= ?}}
 \newcommand{\contains}{\ensuremath{\ni}}
 
@@ -1191,27 +1192,42 @@ The judgment $D \ok_\TM$ is easy to define:
 $$\Rule{\sigma \scheme}
        {\asc \sigma \ok_\TM}.$$
 Let $x$ range over term variables. 
-We make $x \asc \sigma$ a judgment with rules in
-Figure~\ref{fig:termVarSchemeRules} and define
-$\sem{x \asc \sigma}_\TM = \{ x \asc \sigma \}$.
+We define the jugment $x \hasc \sigma$ by the rules in
+Figure~\ref{fig:termVarSchemeRules}, and define
+$\sem{x \asc \sigma}_\TM = \{ x \hasc \sigma \}$.
+Thus a term variable has a scheme $\sigma'$ if it is given scheme $\sigma$ in
+the context and $\sigma$ specialises to $\sigma'$.
+\TODO{Do we need to permute quantifiers when specialising schemes?
+For example, consider $\forall \alpha \forall \beta. \alpha \arrow \beta.$} 
 
 \begin{figure}[ht]
-\boxrule{\Gamma \entails x \asc \sigma}
+\boxrule{\Gamma \entails x \hasc \sigma}
 $$
-\Rule{\upsilon \type   ~\wedge~   x \asc \forall \alpha \sigma}
-     {x \asc \sigma[\upsilon/\alpha]}
+\Rule{\upsilon \type   ~\wedge~   x \hasc \forall \alpha \sigma}
+     {x \hasc \sigma[\upsilon/\alpha]}
 \qquad
-\Rule{x \asc \letS{\alpha}{\upsilon}{\sigma}}
-     {x \asc \sigma[\upsilon/\alpha]}
+\Rule{x \hasc \letS{\alpha}{\upsilon}{\sigma}}
+     {x \hasc \sigma[\upsilon/\alpha]}
 $$
 \caption{Rules for scheme assignment to term variables}
 \label{fig:termVarSchemeRules}
 \end{figure}
 
+
+Now we define the judgment $t \hasscheme \sigma$ for arbitrary terms $t$ thus:
+\begin{align*}
+t \hasscheme .\tau   &\mapsto    t : \tau  \\
+t \hasscheme \forall \alpha \sigma  &\mapsto 
+    (\hole{\alpha} \entails t \hasscheme \sigma)   \\
+t \hasscheme \letS{\alpha}{\tau}{\sigma}  &\mapsto
+    (\alpha \defn \tau \entails t \hasscheme \sigma)
+\end{align*}
+
+
 % Now we can give the full definition of context entries that we postponed earlier.
 % As before, |alpha := mt| declares a type variable with name $\alpha$; this is the only
 %%%kind of 
-%    entry used in unification. A scheme assignment |x ::: sigma| 
+%    entry used in unification. A scheme assmignment |x ::: sigma| 
 %%%defines 
 %    declares 
 % a term variable $x$ with type scheme $\sigma$. A |LetGoal| marker is used when
