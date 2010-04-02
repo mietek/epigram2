@@ -23,10 +23,6 @@ If it hasn't been translated into universe polymorphism
 * Janitor service
 ** TODO Implicit underscored indexing
 ** TODO Uniformize names of function args
-** TODO Brink back original ICFP template
-
-Without the restored "onecolumn" mode.
-
 ** TODO switchD elaboration rule is in a bad state
 ** TODO Look for inlining figures
 ** TODO Ispell
@@ -192,3 +188,6 @@ No tech report.
 
 ** DONE s/judgement/judgment/
 ** DONE Check argument order to substI
+** DONE Brink back original ICFP template
+
+Without the restored "onecolumn" mode.

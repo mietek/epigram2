@@ -312,10 +312,10 @@ by the functor is now instantiated recursively:
 We can now build datatypes and their elements, e.g.:
 \[\stk{
 \Nat\mapsto\Mu{(\toDesc{\pair{\sqr{\NatZero\: \NatSuc{\!} }}
-                     {\sqr{ \DUnit \quad (\DIndx{\DUnit})}}{}}:\Set
+                       {\sqr{ \DUnit \quad (\DIndx{\DUnit})}}{}})}:\Set
 \\
 \Con{\sqr{\NatZero}}:\Nat \qquad
-\Con{\sqr{\NatSuc{n}}}:\Nat \;\mbox{if}\;n:\Nat}
+\Con{\sqr{\NatSuc{n}}}:\Nat \;\mbox{if}\;n:\Nat
 }\]
 
 But how shall we compute with our data?  We should expect an
