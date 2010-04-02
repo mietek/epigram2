@@ -485,7 +485,8 @@ we can describe it in $\IDesc{\Unit}$:
 
 Therefore, this universe is self-describing, hence can be
 levitated. As before, we rely on a special purpose $\F{switchID}$
-operator to build the finite function space $\bigRedBracket{\ldots}$.
+operator to build the finite function $\bigRedBracket{\ldots}$
+without mentioning \(\IDesc{\!}\).
 
 \paragraph{Vectors:}
 
@@ -493,7 +494,7 @@ operator to build the finite function space $\bigRedBracket{\ldots}$.
 \newcommand{\VecNil}{\etag{\CN{vnil}}}
 \newcommand{\VecCons}[2]{\etag{\CN{vcons}}\:#1\:#2}
 
-So far, the examples we have seen lives in $\IDesc{\Unit}$, hence are
+So far, the examples we have seen live in $\IDesc{\Unit}$, hence are
 not using any indexing. We remedy this by encoding the vectors. Recall
 that the constructors $\VecNil$ and $\VecCons{\!}{\!}$ are only defined for an
 index $\NatZero$ and $\NatSuc$ respectively.:
@@ -530,16 +531,19 @@ equal to $\NatZero$. In the $\VecCons{\!}{\!}$ case, we first store an element
 $\V{m}$ of $\Nat$. However, the constraint stipulates that $\V{m}$
 cannot be \emph{any} natural numbers: it must be ``the index minus
 one''. This translates into the constraint $\V{n} \PropEq
-\NatSuc{\V{m}}$.
+\NatSuc{\V{m}}$, given a suitable presentation of propositional equality.
 
-However, one could, quite rightfully, be worried by the introduction
-of equalities in the picture. In a programming context, equalities
-haunt us, begging for proofs. As much as possible, one would like to
-avoid suffering from this burden. However, the equalities introduced
-here are rather special: they are \emph{equations} constraining
-variables to certain terms. \citet{goguen:pattern-matching} have
-shown, in the context of dependent pattern matching, how to tame these
-equations.
+We have been careful to keep our setup agnostic with respect to
+notions of propositional equality. Any will do, according to your
+convictions, or for vectors, none---equality for \(\Nat\) is definable by
+recursion---and many variations are popular. The traditional
+homogeneous identity type used in Coq is not adequate to support
+dependent pattern matching, but its heterogeneous variant, allowing
+equations between elements of arbitrary types, is sufficient to
+allow the translation of structurally recursive pattern matching
+programs to \(\F{indI}\)~\cite{goguen:pattern-matching}. Our present
+inclination is towards the extensional equality proposed by
+\citet{altenkirch:ott}, which also sustains the translation.
 
 \begin{wstructure}
 !!! Need Help !!!
@@ -550,7 +554,7 @@ equations.
     ??? More technical detail needed
 \end{wstructure}
 
-Further, we can actually remove these equations altogether. Let us
+However, sometimes, we can actually remove these equations altogether. Let us
 look back at $\D{Vec}$. We note that the equations are introduced
 because we are \emph{storing} the index of the inductive family.
 However, \emph{inductive families need not store their
@@ -562,8 +566,8 @@ following, equivalent definition:
 \[\stk{
 \VecD \:\PITEL{\V{X}}{\Set} : \Nat \To \IDesc{\Nat} \\
 \begin{array}{@{}lll}
-\VecD\:\V{X}\: \NatZero     & = & \DConst{\Unit} \\
-\VecD\:\V{X}\: (\NatSuc{\V{n}}) & = & \DProd{\DConst{\V{X}}}{\DVar{\V{n}}}
+\VecD\:\V{X}\: \NatZero     & \mapsto & \DConst{\Unit} \\
+\VecD\:\V{X}\: (\NatSuc{\V{n}}) & \mapsto & \DProd{\DConst{\V{X}}}{\DVar{\V{n}}}
 \end{array}
                                        
 }\]
@@ -586,8 +590,8 @@ $\FinZero$ and $\FinSuc{\!}$ both target $\NatSuc{\!}$:
 \[\stk{
 \FinD : \Nat \To \IDesc{\Nat} \\
 \begin{array}{@{}llll}
-\FinD\: \NatZero     & = & \multicolumn{2}{l}{\DSigma{(\EnumT{\Void})}{\Void} } \\
-\FinD\: (\NatSuc{\V{n}}) & = & \DSigma{\!}{\!}\!\!\!\!\! & (\EnumT{\sqr{ \FinZero \: \FinSuc{\!} }}) \\
+\FinD\: \NatZero     & \mapsto & \multicolumn{2}{l}{\DSigma{(\EnumT{\Void})}{\Void} } \\
+\FinD\: (\NatSuc{\V{n}}) & \mapsto & \DSigma{\!}{\!}\!\!\!\!\! & (\EnumT{\sqr{ \FinZero \: \FinSuc{\!} }}) \\
                      &   &             & \bigRedBracket{
                                          \begin{array}{l}
                                          \DConst{\Unit} \\
@@ -638,6 +642,11 @@ In the case of a tagged $\D{Vec}$, for instance, for the index
 $\NatZero$, we would only propose the constructor
 $\ListNil$. Similarly, for $\NatSuc{n}$, we would only propose the
 constructor $\ListCons{\!}{\!}$.
+
+We use the notation $\toIDesc{\V{TID}}$ to denote the
+indexed description computed from the tagged indexed description
+$\V{TID}$. Its expansion is similar to the definition of \(\toDesc{\!}\)
+but more involved.
  
 \paragraph{Typed expressions:}
 
@@ -791,9 +800,7 @@ evaluator is:
          \Val{\V{ty}}
 \]
 %
-Where we overload the notation $\toIDesc{\V{TID}}$ to denote the
-indexed description computed from the tagged indexed description
-$\V{TID}$. The type of $\evalH$ is strikingly similar to a
+The type of $\evalH$ is strikingly similar to a
 catamorphism. Indeed, implementing a single step of evaluation -- the
 algebra -- is sufficient, as $\cataI$ gives, for free, the full
 evaluator. The implementation is as follows:
@@ -1046,7 +1053,7 @@ Where  $\F{applyI}$ is defined as follow:
 \end{array} \\
 \begin{array}{@{}l@{\:\mapsto\:\:}l}
 \F{applyI}\: \V{R}\: \V{X}\: \V{Y}\: \V{\sigma}\: \V{i}\: \pair{\DVar{\!}}{\V{x}}{}   & \V{\sigma}\: \V{i}\: \V{x}                   \\
-\F{applyI}\: \V{R}\: \V{X}\: \V{Y}\: \V{\sigma}\: \V{i}\: \pair{\etag{t}\,}{\V{ys}}{} & \Con{\pair{\etag{t}}{\V{ys}}{}}
+\F{applyI}\: \V{R}\: \V{X}\: \V{Y}\: \V{\sigma}\: \V{i}\: \pair{\V{c}}{\V{ys}}{} & \Con{\pair{\V{c}}{\V{ys}}{}}
 \end{array}
 }\]
  
