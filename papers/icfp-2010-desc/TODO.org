@@ -21,7 +21,6 @@ I don't know where to write this down.
 If it hasn't been translated into universe polymorphism
 
 * Janitor service
-** TODO SUBMIT THE B&W VERSION!
 ** TODO Parenthesize \mu or not
 ** TODO switchD elaboration rule is in a bad state
 ** TODO Ispell
@@ -194,3 +193,4 @@ Without the restored "onecolumn" mode.
 ** DONE Uniformize names of function args
 ** DONE Check bibliography references
 ** DONE Look for inlining figures
+** DONE SUBMIT THE B&W VERSION!

@@ -551,8 +551,7 @@ argument \emph{expression}. Hardwired operators are checked as variables.
         -> Finite function space into switch
 \end{wstructure}
 
-Dually, type checking judgments
-%(Fig.~\ref{fig:type-checking})
+Dually, type checking judgments (Fig.~\ref{fig:type-checking})
 are \emph{sinks} for types. From an
 $\exprIn$ and a type pushed into it, they elaborate a low-level
 term, extracting information from the type. Note that we inductively ensure the following `sanity checks':
@@ -571,11 +570,11 @@ free of annotation, as promised. Most of the propagation rules are
 unremarkably structural: we have omitted some mundane rules which just
 follow the pattern, e.g., for \(\UId\).
 
-%\begin{figure}
+\begin{figure}
 \input{figure_type_checking}
-%\caption{Type checking}
-%\label{fig:type-checking}
-%\end{figure}
+\caption{Type checking}
+\label{fig:type-checking}
+\end{figure}
 
 However, we also add abbreviations. We write \(\spl{\M{f}}\),
 pronounced `uncurry \(\M{f}\)' for the function which takes a pair and
