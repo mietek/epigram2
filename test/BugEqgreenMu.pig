@@ -1,1 +1,1 @@
-elab eqGreen Set (Mu (con ['done])) Set (Mu (con ['done]))
+elab eqGreen Set (Mu (con ['constD (Sig ())])) Set (Mu (con ['constD (Sig ())]))
