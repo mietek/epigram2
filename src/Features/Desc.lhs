@@ -34,11 +34,11 @@
 >   pattern CONSTD x    = CON (PAIR  (SU ZE)                 
 >                                    (PAIR x VOID))
 >   pattern PRODD d d'  = CON (PAIR  (SU (SU ZE))            
->                                    (PAIR d d'))
+>                                    (PAIR d (PAIR d' VOID)))
 >   pattern SIGMAD s t  = CON (PAIR  (SU (SU (SU ZE)))
->                                    (PAIR s t))
+>                                    (PAIR s (PAIR t VOID)))
 >   pattern PID s t     = CON (PAIR  (SU (SU (SU (SU ZE))))
->                                    (PAIR s t))
+>                                    (PAIR s (PAIR t VOID)))
 
 > import -> CanDisplayPats where
 >   pattern DMU l x      = DC (Mu (l :?=: Id x))
@@ -47,11 +47,11 @@
 >   pattern DCONSTD x    = DCON (DPAIR  (DSU DZE)
 >                                       (DPAIR x DVOID))
 >   pattern DPRODD d d'  = DCON (DPAIR  (DSU (DSU DZE))
->                                       (DPAIR d d'))
+>                                       (DPAIR d (DPAIR d' DVOID)))
 >   pattern DSIGMAD s t  = DCON (DPAIR  (DSU (DSU (DSU DZE)))
->                                       (DPAIR s t))
+>                                       (DPAIR s (DPAIR t DVOID)))
 >   pattern DPID s t     = DCON (DPAIR  (DSU (DSU (DSU (DSU DZE))))
->                                       (DPAIR s t))
+>                                       (DPAIR s (DPAIR t DVOID)))
 
 > import -> CanPretty where
 >   pretty (Mu (Just l   :?=: _))     = pretty l
@@ -346,7 +346,7 @@
 >     makeElab' loc (MU l d :>: DVOID) = 
 >         makeElab' loc (MU l d :>: DCON (DPAIR DZE DVOID))
 >     makeElab' loc (MU l d :>: DPAIR s t) =
->         makeElab' loc (MU l d :>: DCON (DPAIR (DSU DZE) (DPAIR s t)))
+>         makeElab' loc (MU l d :>: DCON (DPAIR (DSU DZE) (DPAIR s (DPAIR t DVOID))))
 >     makeElab' loc (SET :>: DMU Nothing d) = do
 >         lt :=>: lv <- EFake True Bale
 >         dt :=>: dv <- subElab loc (desc :>: d)
@@ -355,9 +355,9 @@
 > import -> DistillRules where
 >     distill _ (MU _ _ :>: CON (PAIR ZE VOID)) =
 >         return (DVOID :=>: CON (PAIR ZE VOID))
->     distill es (C ty@(Mu _) :>: C c@(Con (PAIR (SU ZE) (PAIR _ _)))) = do
->         Con (DPAIR _ (DPAIR s t) :=>: v) <- canTy (distill es) (ty :>: c)
->         return (DPAIR s t :=>: CON v)
+>     distill es (C ty@(Mu _) :>: C c@(Con (PAIR (SU ZE) (PAIR _ (PAIR _ VOID))))) = do
+>         Con (DPAIR _ (DPAIR s (DPAIR t _)) :=>: v) <- canTy (distill es) (ty :>: c)
+>         return ((DPAIR s t) :=>: CON v)
 
 If a label is not in scope, we remove it, so the definition appears at the
 appropriate place when the proof state is printed.
@@ -398,11 +398,11 @@ appropriate place when the proof state is printed.
 >                                 NILE)))))
 >             cases = PAIR (CONSTD UNIT) 
 >                     (PAIR (SIGMAD SET (L $ K $ CONSTD UNIT))
->                      (PAIR (PRODD IDD IDD)
+>                      (PAIR (PRODD IDD (PRODD IDD (CONSTD UNIT)))
 >                       (PAIR (SIGMAD SET (L $ HF "S" $ \_S -> 
->                                          PID _S (L $ K IDD)))
+>                                          (PRODD (PID _S (L $ K IDD)) (CONSTD UNIT))))
 >                        (PAIR (SIGMAD SET (L $ HF "S" $ \_S -> 
->                                          PID _S (L $ K IDD)))
+>                                          (PRODD (PID _S (L $ K IDD)) (CONSTD UNIT))))
 >                         VOID))))
 >   descFakeREF :: REF
 >   descFakeREF = [("Primitive", 0), ("Desc", 0)] := (FAKE :<: SET)
@@ -414,4 +414,3 @@ appropriate place when the proof state is printed.
 >
 >   descDREF :: REF
 >   descDREF = [("Primitive", 0), ("DescD", 0)] := (DEFN inDesc :<: desc)
- 

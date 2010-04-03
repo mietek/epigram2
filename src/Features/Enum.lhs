@@ -102,7 +102,7 @@ Equality rules:
 >                            (CONSE (TAG "cons")
 >                             NILE)
 >             cases = PAIR (CONSTD UNIT)
->                     (PAIR (SIGMAD UID (L $ K IDD))
+>                     (PAIR (SIGMAD UID (L $ K (PRODD IDD (CONSTD UNIT))))
 >                      VOID)
 >   enumFakeREF :: REF
 >   enumFakeREF = [("Primitive", 0), ("EnumU", 0)] := (FAKE :<: SET) 
@@ -122,14 +122,14 @@ Equality rules:
 > import -> CanPats where
 >   pattern ENUMT e    = C (EnumT e) 
 >   pattern NILE       = CON (PAIR ZE VOID)
->   pattern CONSE t e  = CON (PAIR (SU ZE) (PAIR t e))
+>   pattern CONSE t e  = CON (PAIR (SU ZE) (PAIR t (PAIR e VOID)))
 >   pattern ZE         = C Ze
 >   pattern SU n       = C (Su n)
 
 > import -> CanDisplayPats where
 >   pattern DENUMT e    = DC (EnumT e) 
 >   pattern DNILE       = DCON (DPAIR {-(DTAG "nil")-} DZE DVOID)
->   pattern DCONSE t e  = DCON (DPAIR {- (DTAG "cons") -} (DSU DZE) (DPAIR t e))
+>   pattern DCONSE t e  = DCON (DPAIR {- (DTAG "cons") -} (DSU DZE) (DPAIR t (DPAIR e DVOID)))
 >   pattern DZE         = DC Ze
 >   pattern DSU n       = DC (Su n)
 
