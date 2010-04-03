@@ -14,7 +14,6 @@
 \usepackage{color}
 \usepackage{hyperref}
 \usepackage{a4wide}
-\usepackage{bussproofs}
 \usepackage{amsthm}
 \usepackage{manfnt}
 

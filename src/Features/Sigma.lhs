@@ -8,68 +8,6 @@
 
 %endif
 
-\question{Do the Formation/Introduction/\ldots names make sense?}
-
-\question{How do we handle the |Fst| and |Snd| eliminators?}
-
-
-Formation rules:
-
-\begin{prooftree}
-\AxiomC{}
-\RightLabel{Unit-formation}
-\UnaryInfC{|Set :>: Unit|}
-\end{prooftree}
-
-\begin{prooftree}
-\AxiomC{|Set :>: S|}
-\AxiomC{|S -> Set :>: T|}
-\RightLabel{Sigma-formation}
-\BinaryInfC{|Set :>: Sigma S T|}
-\end{prooftree}
-
-Introduction rules:
-
-\begin{prooftree}
-\AxiomC{}
-\RightLabel{Unit-intro}
-\UnaryInfC{|Unit :>: Void|}
-\end{prooftree}
-
-\begin{prooftree}
-\AxiomC{|S :>: x|}
-\AxiomC{|T x :>: y|}
-\RightLabel{Sigma-intro}
-\BinaryInfC{|Sigma S T :>: Pair x y|}
-\end{prooftree}
-
-Elimination rules:
-
-\begin{prooftree}
-\AxiomC{|Set :>: A|}
-\AxiomC{|A -> Set :>: B|}
-\noLine
-\BinaryInfC{|(a : A) (b : B a) -> C (Pair a b) :>: f|}
-\AxiomC{|Sigma A B -> Set :>: C|}
-\noLine
-\UnaryInfC{|Sigma A B :>: t|}
-\RightLabel{Sigma-elim}
-\BinaryInfC{|C t :>: split(A,B,f,t)|}
-\end{prooftree}
-
-With the following computational behavior:
-
-< split _ _ _ f t = f (fst t) (snd t)
-
-Equality rules:
-
-< eqGreen(Unit, _, Unit, _) :-> Trivial
-< eqGreen(Sigma s1 t1, p1, Sigma s2 t2, p2) :->
-<     And (eqGreen(s1, fst p1, s2, fst p2))
-<         (eqGreen(t1 (fst p1), snd p1, t2 (fst p2), snd p2))
-
-Coercion rule:
-
 
 > import -> CanConstructors where
 >   Unit   :: Can t
