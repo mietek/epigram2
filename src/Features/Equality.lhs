@@ -150,6 +150,9 @@ by |DEqBlue| defined below.
 >            } where
 >            oprun :: [VAL] -> Either NEU VAL
 >            oprun [_, _, N (P r :$ A _ :$ A _) , v] | r == refl = Right v
+>            oprun [C (Mu t0), C (Mu t1), q, s] = case halfZip (Mu (dropLabel t0)) (Mu (dropLabel t1)) of
+>              Nothing -> Right $ nEOp @@ [q $$ Out, C (Mu t1)]
+>              Just fxy -> coerce fxy (q $$ Out) s
 >            oprun [C x,C y,q,s] = case halfZip x y of
 >              Nothing  -> Right $ nEOp @@ [q $$ Out, C y]
 >              Just fxy -> coerce fxy (q $$ Out) s
