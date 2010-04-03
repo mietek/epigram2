@@ -1,0 +1,13 @@
+infer Desc;
+infer EnumU;
+make const := \ X -> con ['constD X] : Set -> Desc ;
+make id := con ['idD] : Desc ;
+make prod := \ D0 D1 -> con ['prodD D0 D1] : Desc -> Desc -> Desc ;
+make sigma := \ S T -> con ['sigmaD S T] : (S : Set) -> (S -> Desc) -> Desc ;
+make pi := \ S T -> con ['piD S T] : (S : Set) -> (S -> Desc) -> Desc ;
+make cons := \ t x -> con ['cons t x] : UId -> EnumU -> EnumU ;
+make nil := con ['nil] : EnumU ;
+infer (: EnumU) (cons 'zero nil) ;
+infer (: EnumU) [] ;
+infer (: EnumU) ['a] ;
+infer (: EnumU) ['a 'b] ;
