@@ -86,7 +86,8 @@
 \newcommand{\exprEx}{\CN{exprEx}}
 \newcommand{\push}[2]{#2 \ni #1}
 \newcommand{\pull}[2]{#1 \in #2}
-\newcommand{\propag}[2]{#1 \:\triangleright\: #2}
+\newcommand{\SYMBpropag}{\triangleright\xspace}
+\newcommand{\propag}[2]{#1 \:\SYMBpropag\: #2}
 
 \newcommand{\PiTy}[2]{\blue{\Pi}\: #1\: #2}
 \newcommand{\PITEL}[2]{\blue{(}\Bhab{#1}{#2}\blue{)}}
@@ -121,11 +122,14 @@
 \newcommand{\U}[1]{\orange{\CN{#1}}}
 
 \newcommand{\Enum}{\D{Enum}}
-\newcommand{\enum}[1]{\D{enum}\:#1}
+\newcommand{\SYMBenum}{\D{enum}\xspace}
+\newcommand{\enum}[1]{\SYMBenum\:#1}
 
 \newcommand{\Sig}{\D{Sig}}
-\newcommand{\dom}[1]{\F{dom}\:#1}
-\newcommand{\sig}[1]{\D{sig}\:#1}
+\newcommand{\SYMBdom}{\F{dom}\xspace}
+\newcommand{\dom}[1]{\SYMBdom\:#1}
+\newcommand{\SYMBsig}{\D{sig}\xspace}
+\newcommand{\sig}[1]{\SYMBsig\:#1}
 \newcommand{\Refl}{\overline}
 
 \newcommand{\Rhab}{:}
@@ -167,8 +171,10 @@
 \newcommand{\SIGMAS}[1]{\blue{(}#1\blue{)}\Prod}
 \newcommand{\TIMES}[1]{#1 \Prod}
 \newcommand{\pair}[3]{\red{\left[\black{#1},\black{#2}\right]_{\black{#3}}}}
-\newcommand{\fst}[1]{\F{$\pi_0$}\: #1}
-\newcommand{\snd}[1]{\F{$\pi_1$}\: #1}
+\newcommand{\SYMBfst}{\F{$\pi_0$}\xspace}
+\newcommand{\fst}[1]{\SYMBfst\: #1}
+\newcommand{\SYMBsnd}{\F{$\pi_1$}\xspace}
+\newcommand{\snd}[1]{\SYMBsnd\: #1}
 \newcommand{\spl}[1]{\green{\wedge}#1}
 
 %% Sum
@@ -189,17 +195,21 @@
 %% Enum
 \newcommand{\EnumU}{\D{En}}
 \newcommand{\NilE}{\C{nE}}
-\newcommand{\NAMEConsE}{\C{cE}}
-\newcommand{\ConsE}[2]{\NAMEConsE\:#1\:#2}
+\newcommand{\SYMBConsE}{\C{cE}\xspace}
+\newcommand{\ConsE}[2]{\SYMBConsE\:#1\:#2}
 
 \newcommand{\EnumT}[1]{\D{\#}#1}
 \newcommand{\Ze}{\C{$0$}}
 \newcommand{\Su}[1]{\C{$1\!+$}#1}
 
-\newcommand{\spi}[2]{\F{$\pi$}\:#1\:#2}
-\newcommand{\switch}[4]{\green{\CN{switch}}\:#1\:#2\:#3\:#4}
-\newcommand{\spiD}[1]{\F{$\pi_D$}\:#1}
-\newcommand{\switchD}[3]{\green{\CN{switchD}}\:#1\:#2\:#3}
+\newcommand{\SYMBspi}{\F{$\pi$}\xspace}
+\newcommand{\spi}[2]{\SYMBspi\:#1\:#2}
+\newcommand{\SYMBswitch}{\green{\CN{switch}}\xspace}
+\newcommand{\switch}[4]{\SYMBswitch\:#1\:#2\:#3\:#4}
+\newcommand{\SYMBspiD}{\F{$\pi_D$}\xspace}
+\newcommand{\spiD}[1]{\SYMBspiD\:#1}
+\newcommand{\SYMBswitchD}{\green{\CN{switchD}}\xspace}
+\newcommand{\switchD}[3]{\SYMBswitchD\:#1\:#2\:#3}
 
 \newcommand{\Unit}{\D{1}}
 \newcommand{\void}{\C{[]}}
@@ -213,7 +223,8 @@
 \newcommand{\Desc}{\D{Desc}}
 \newcommand{\DescD}{\F{DescD}}
 \newcommand{\TagDesc}{\F{TagDesc}}
-\newcommand{\toDesc}[1]{\F{de}\:{#1}}
+\newcommand{\SYMBtoDesc}{\F{de}\xspace}
+\newcommand{\toDesc}[1]{\SYMBtoDesc\:{#1}}
 
 \newcommand{\tada}[2]{
   \toDesc{\red{\left[
@@ -222,43 +233,61 @@
   \right]}}}
 
 
-\newcommand{\descop}[2]{\green{\llbracket} #1 \green{\rrbracket}\:#2}
+\newcommand{\SYMBdescop}[1]{\green{\llbracket} #1 \green{\rrbracket}\xspace}
+\newcommand{\descop}[2]{\SYMBdescop{#1}\:#2}
 
 \newcommand{\DUnit}{\etag{1}}
-\newcommand{\DSigma}[2]{\etag{\Sigma}\:#1\:#2}
-\newcommand{\DIndx}[1]{\etag{\CN{ind}\!\times}\:#1}
+\newcommand{\SYMBDSigma}{\etag{\Sigma}\xspace}
+\newcommand{\DSigma}[2]{\SYMBDSigma\:#1\:#2}
+\newcommand{\SYMBDIndx}{\etag{\CN{ind}\!\times}\xspace}
+\newcommand{\DIndx}[1]{\SYMBDIndx\:#1}
 
-\newcommand{\DHindx}[2]{\etag{\CN{hind}\!\times}\:#1\:#2}
+\newcommand{\SYMBDHindx}{\etag{\CN{hind}\!\times}\xspace}
+\newcommand{\DHindx}[2]{\SYMBDHindx\:#1\:#2}
 
-\newcommand{\DPi}[2]{\etag{\Pi}\:#1\:#2}
+\newcommand{\SYMBDPi}{\etag{\Pi}\xspace}
+\newcommand{\DPi}[2]{\SYMBDPi\:#1\:#2}
 \newcommand{\DProd}[2]{#1 \mathop{\etag{\!\times}} #2}
 \newcommand{\DId}{\etag{\CN{id}}}
 
 %% Mu
 \newcommand{\Mu}[1]{\blue{\mu} #1}
-\newcommand{\Con}[1]{\C{con}\:#1}
-\newcommand{\All}[4]{\F{All}\:#1\:#2\:#3\:#4}
-\newcommand{\all}[5]{\F{all}\:#1\:#2\:#3\:#4\:#5}
+\newcommand{\SYMBCon}{\C{con}\xspace}
+\newcommand{\Con}[1]{\SYMBCon\:#1}
+\newcommand{\SYMBAll}{\F{All}\xspace}
+\newcommand{\All}[4]{\SYMBAll\:#1\:#2\:#3\:#4}
+\newcommand{\SYMBall}{\F{all}\xspace}
+\newcommand{\all}[5]{\SYMBall\:#1\:#2\:#3\:#4\:#5}
 \newcommand{\sind}[1]{\F{\(\circlearrowleft\)}#1}
 
 %% IDesc
-\newcommand{\IDesc}[1]{\D{IDesc}\:#1}
+\newcommand{\SYMBIDesc}{\D{IDesc}\xspace}
+\newcommand{\IDesc}[1]{\SYMBIDesc\:#1}
 \newcommand{\IDescD}{\F{IDescD}}
 \newcommand{\IDescFreeD}{\C{IDescD}^{\C{Free}}}
-\newcommand{\ATagIDesc}[1]{\F{AlwaysD}\:#1}
-\newcommand{\ITagIDesc}[1]{\F{IndexedD}\:#1}
-\newcommand{\TagIDesc}[1]{\F{TagIDesc}\:#1}
+\newcommand{\SYMBATagIDesc}{\F{AlwaysD}\xspace}
+\newcommand{\ATagIDesc}[1]{\SYMBATagIDesc\:#1}
+\newcommand{\SYMBITagIDesc}{\F{IndexedD}\xspace}
+\newcommand{\ITagIDesc}[1]{\SYMBITagIDesc\:#1}
+\newcommand{\SYMBTagIDesc}{\F{TagIDesc}\xspace}
+\newcommand{\TagIDesc}[1]{\SYMBTagIDesc\:#1}
 \newcommand{\toIDesc}[1]{\overline{#1}}
 
-\newcommand{\idescop}[3]{\green{\llbracket} #1 \green{\rrbracket}_{#2}\:#3}
+\newcommand{\SYMBidescop}[2]{\green{\llbracket} #1 \green{\rrbracket}_{#2} \xspace}
+\newcommand{\idescop}[3]{\SYMBidescop{#1}{#2}\:#3}
 
-\newcommand{\DVar}[1]{\etag{\CN{var}}\:#1}
-\newcommand{\DConst}[1]{\etag{\CN{const}}\:#1}
+\newcommand{\SYMBDVar}{\etag{\CN{var}}\xspace}
+\newcommand{\DVar}[1]{\SYMBDVar\:#1}
+\newcommand{\SYMBDConst}{\etag{\CN{const}}\xspace}
+\newcommand{\DConst}[1]{\SYMBDConst\:#1}
 
 %% IMu
-\newcommand{\IMu}[3]{\blue{\mu}_{#1} #2\:#3}
-\newcommand{\AllI}[4]{\F{AllI}_{#1}#2\:#3\:#4}
-\newcommand{\allI}[6]{\F{allI}_{#1}#2\:#3\:#4\:#5\:#6}
+\newcommand{\SYMBIMu}{\blue{\mu}\xspace}
+\newcommand{\IMu}[3]{\SYMBIMu_{#1} #2\:#3}
+\newcommand{\SYMBAllI}{\F{AllI}\xspace}
+\newcommand{\AllI}[4]{\SYMBAllI_{#1}#2\:#3\:#4}
+\newcommand{\SYMBallI}{\F{allI}\xspace}
+\newcommand{\allI}[6]{\SYMBallI_{#1}#2\:#3\:#4\:#5\:#6}
 
 
 %% Agda-style data-type declaration
@@ -290,13 +319,15 @@
 \newcommand{\Nat}{\F{Nat}}
 \newcommand{\NatD}{\F{NatD}}
 \newcommand{\NatZero}{\etag{\CN{zero}}}
-\newcommand{\NatSuc}[1]{\etag{\CN{suc}}\:#1}
+\newcommand{\SYMBNatSuc}{\etag{\CN{suc}}\xspace}
+\newcommand{\NatSuc}[1]{\SYMBNatSuc\:#1}
 
 %% List
 \newcommand{\List}{\D{List}}
 \newcommand{\ListD}{\F{ListD}}
 \newcommand{\ListNil}{\etag{\CN{nil}}}
-\newcommand{\ListCons}[2]{\etag{\CN{cons}}\:#1\:#2}
+\newcommand{\SYMBListCons}{\etag{\CN{cons}}\xspace}
+\newcommand{\ListCons}[2]{\SYMBListCons\:#1\:#2}
 
 %% Tree
 \newcommand{\Tree}{\D{Tree}}
@@ -313,10 +344,12 @@
 \newcommand{\LambdaTLam}{\etag{\CN{lam}}}
 
 %% Fin
-\newcommand{\Fin}[1]{\D{Fin}\:#1}
+\newcommand{\SYMBFin}{\D{Fin}\xspace}
+\newcommand{\Fin}[1]{\SYMBFin\:#1}
 \newcommand{\FinD}{\F{FinD}}
 \newcommand{\FinZero}{\etag{\CN{Fz}}}
-\newcommand{\FinSuc}[1]{\etag{\CN{Fs}}\:#1}
+\newcommand{\SYMBFinSuc}{\etag{\CN{Fs}}\xspace}
+\newcommand{\FinSuc}[1]{\SYMBFinSuc\:#1}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

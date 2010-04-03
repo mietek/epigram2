@@ -358,7 +358,7 @@ their computational behavior. However, for compactness and readability, we
 shall write these operators as functional programs (much as we
 model them in Agda).
 
-We first define the `small product' $\spi{\!}{\!}$ operator:
+We first define the `small product' $\SYMBspi$ operator:
 %
 \[\stk{
 %% spi
@@ -370,16 +370,16 @@ We first define the `small product' $\spi{\!}{\!}$ operator:
 }\]
 %
 This builds a right-nested
-tuple type, demanding an object of $P\:i$ for each $i$ in the given finite
+tuple type, demanding an object of $\V{P}\:\V{i}$ for each $\V{i}$ in the given finite
 domain. We can see these tuples as `jump tables' tabulating dependently
 typed functions from the domain. We give this functional
 interpretation---the eliminator we need---by the
-$\F{switch}$ operator, which, unsurprisingly, iterates projection:
+$\SYMBswitch$ operator, which, unsurprisingly, iterates projection:
 %
 \[\stk{
 %% switch
 \begin{array}{@{}ll}
-\F{switch} : \PITEL{\V{E}}{\EnumU}
+\SYMBswitch : \PITEL{\V{E}}{\EnumU}
                \PITEL{\V{P}}{\EnumT{\V{E}} \To \Set} \To
               \spi{\V{E}}{\V{P}} \To
                \PITEL{\V{x}}{\EnumT{\V{E}}} \To \V{P}\: \x
@@ -408,10 +408,10 @@ $\F{switch}$ operator, which, unsurprisingly, iterates projection:
         -> See next Section
 \end{wstructure}
 
-The $\spi{\!}{\!}$ and $\F{switch}$ operators deliver dependent
+The $\SYMBspi$ and $\SYMBswitch$ operators deliver dependent
 elimination for finite enumerations, but are rather awkward to
 use directly. We do not write the range for a \(\LAMBINDER\)-abstraction, so
-it is galling to supply \(\V{P}\) for functions defined by $\F{switch}$.
+it is galling to supply \(\V{P}\) for functions defined by $\SYMBswitch$.
 Let us therefore find a way to recover the tedious details of the
 encoding from types.
 
@@ -591,7 +591,7 @@ fittingly, not fatally.
 Finally, we express functions from enumerations as tuples.
 Any tuple-form, \(\void\) or \(\pair{\_}{\_}{}\), is accepted by the
 function space---the generalised product---if it is accepted by the
-small product. Propagation fills in the appeal to $\F{switch}$,
+small product. Propagation fills in the appeal to $\SYMBswitch$,
 copying the range information.
 
 Our interactive development tools also perform the

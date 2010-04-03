@@ -16,33 +16,33 @@ As such, our type theory suffers from an inconsistency. Indeed, the
 typing rule $\Bhab{\Set}{\Set}$ leads to Girard's paradox. We made
 that choice for presentational convenience, as universe stratification
 is orthogonal to our work. Nonetheless, our universe of description
-stratifies naturally. $\IDesc{\!}$ is self-encoding only in a
-level-polymorphic sense.  Unsurprisingly, $\IDesc{\!}$ at level $l$ is
+stratifies naturally. $\SYMBIDesc$ is self-encoding only in a
+level-polymorphic sense.  Unsurprisingly, $\SYMBIDesc$ at level $l$ is
 of type $\Set^{\blue{l+1}}$. Similarly, the interpretation of
-$\IDesc{\!}$ at level $l$ is an object of type $\Set^{\blue{l}}$:
+$\SYMBIDesc$ at level $l$ is an object of type $\Set^{\blue{l}}$:
 %
 \[\stk{\begin{array}{@{}ll}
-\IDesc{\!}^{\blue{l}} (\Bhab{\M{I}}{\Set^{\blue{l+1}}}) & :\Set^{\blue{l+1}} \\
-\DVar{(\Bhab{\M{i}}{\M{I}})} &: \IDesc{\!}^{\blue{l}}{\M{I}} \\
-\DConst{(\Bhab{\M{A}}{\Set^{\blue{l}}})} &:\IDesc{\!}^{\blue{l}}{\M{I}}       \\
-\DProd{(\Bhab{\M{D}}{\IDesc{\!}^{\blue{l}}{\M{I}}})}{(\Bhab{\M{D}}{\IDesc{\!}^{\blue{l}}{\M{I}}})}
-  & :\IDesc{\!}^{\blue{l}}{\M{I}}       \\
-\DSigma{(\Bhab{\M{S}}{\Set^{\blue{l}}})}{(\Bhab{\M{D}}{\M{S}\To\IDesc{\!}^{\blue{l}}{\M{I}}})}
-& : \IDesc{\!}^{\blue{l}}{\M{I}}  \\
-\DPi{(\Bhab{\M{S}}{\Set^{\blue{l}}})}{(\Bhab{\M{D}}{\M{S}\To\IDesc{\!}^{\blue{l}}{\M{I}}})}
-& : \IDesc{\!}^{\blue{l}}{\M{I}}  \\
+\SYMBIDesc^{\blue{l}} (\Bhab{\M{I}}{\Set^{\blue{l+1}}}) & :\Set^{\blue{l+1}} \\
+\DVar{(\Bhab{\M{i}}{\M{I}})} &: \SYMBIDesc^{\blue{l}}{\M{I}} \\
+\DConst{(\Bhab{\M{A}}{\Set^{\blue{l}}})} &:\SYMBIDesc^{\blue{l}}{\M{I}}       \\
+\DProd{(\Bhab{\M{D}}{\SYMBIDesc^{\blue{l}}{\M{I}}})}{(\Bhab{\M{D}}{\SYMBIDesc^{\blue{l}}{\M{I}}})}
+  & :\SYMBIDesc^{\blue{l}}{\M{I}}       \\
+\DSigma{(\Bhab{\M{S}}{\Set^{\blue{l}}})}{(\Bhab{\M{D}}{\M{S}\To\SYMBIDesc^{\blue{l}}{\M{I}}})}
+& : \SYMBIDesc^{\blue{l}}{\M{I}}  \\
+\DPi{(\Bhab{\M{S}}{\Set^{\blue{l}}})}{(\Bhab{\M{D}}{\M{S}\To\SYMBIDesc^{\blue{l}}{\M{I}}})}
+& : \SYMBIDesc^{\blue{l}}{\M{I}}  \\
 \end{array}\smallskip \\
-\idescop{\_\:}{}{}^{\blue{l}} : _{\PI{\V{I}}{\Set^{\blue{l+1}}}} \IDesc{{\!}^{\blue{l}}\V{I}} \To (\V{I} \To \Set^{\blue{l}}) \To \Set^{\blue{l}}    \\
+\idescop{\_\:}{}{}^{\blue{l}} : _{\PI{\V{I}}{\Set^{\blue{l+1}}}} \SYMBIDesc^{\blue{l}}\:\V{I} \To (\V{I} \To \Set^{\blue{l}}) \To \Set^{\blue{l}}    \\
 \ldots
 }
 \]
 Crucially, the types of data stored in an
-\(\IDesc{\!}^{\blue{l}}{\M{I}}\) all live no higher---we may store an
+\(\SYMBIDesc^{\blue{l}}{\M{I}}\) all live no higher---we may store an
 \(I\) and a \(\Set^{\blue{l}}\) in a \(\Set^{\blue{l+1}}\).  The code
-for \(\IDesc{\!}^{\blue{l}}{\M{I}}\) is an element of
-\(\IDesc{\!}^{\blue{l+1}}{\Unit}\), so there is a spiral, not a cycle.
+for \(\SYMBIDesc^{\blue{l}}{\M{I}}\) is an element of
+\(\SYMBIDesc^{\blue{l+1}}{\Unit}\), so there is a spiral, not a cycle.
 We have checked the construction using Agda's universe polymorphism,
-coding $\IDesc{\!}$ in itself and have proving the isomorphism
+coding $\SYMBIDesc$ in itself and have proving the isomorphism
 between the host and the embedded universes.
 
 \subsection{Related work}
@@ -137,7 +137,7 @@ same source of inspiration, namely induction-recursion.
 However, we differ in several ways. First, there approach is
 generative: each universe extends the base type theory with both type
 formers and elimination rules. Thanks to levitation, we only rely on a
-generic induction and a specialised $\switchD{\!}{\!}{\!}$. Second,
+generic induction and a specialised $\SYMBswitchD$. Second,
 the authors do not tackle the issue of \emph{programming} with
 codes. We have shown how to abstract away codes and give a convenient
 presentation to the developer. The authors often resort to an

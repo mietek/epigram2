@@ -13,7 +13,6 @@ If it hasn't been translated into universe polymorphism
 
 * Janitor service
 ** TODO Parenthesize \mu or not
-** TODO switchD elaboration rule is in a bad state
 ** TODO Find a convenient name for Hutton's razor
 
 And replace occurences of "Typed expressions"
@@ -193,3 +192,10 @@ higher-level presentation. So, we manipulate/make low-level terms and
 people have to bear with that.
 
 I don't know where to write this down.
+
+** DONE Make a NAME version of constructors
+
+And remove the \!
+
+
+** DONE switchD elaboration rule is in a bad state

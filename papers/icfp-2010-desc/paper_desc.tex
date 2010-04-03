@@ -112,12 +112,12 @@ To add inductive types to our type theory, we build a universe of
 datatype \emph{descriptions} by implementing the signature presented
 in Figure~\ref{fig:desc_universe}, with codes mimicking the grammar of
 datatype declarations. We can read a description $\V{D}:\Desc$ as a
-`pattern functor' on $\Set$, with $\descop{\V{D}}{\!}$ its action on
+`pattern functor' on $\Set$, with $\SYMBdescop{\V{D}}$ its action on
 an object, \(\V{X}\), soon to be instantiated recursively.
 
 Descriptions are sequential structures, terminated by $\DUnit$, indicating
 the empty tuple. To build
-sigmas-of-sigmas, we define a $\DSigma{\!}{}$ code, interpreted as a
+sigmas-of-sigmas, we define a $\SYMBDSigma$ code, interpreted as a
 $\Sigma$-type. To request a recursive component, we have $\DIndx{\V{D}}$,
 where \(\V{D}\) describes the rest of the node.
 
@@ -169,16 +169,16 @@ type propagation.
 %
 \[\stk{
 \NatD : \Desc \\
-\NatD \mapsto \DSigma{\EnumT{\sqr{\NatZero\: \NatSuc{\!} }}}
+\NatD \mapsto \DSigma{\EnumT{\sqr{\NatZero\: \SYMBNatSuc }}}
                      {\sqr{ \DUnit \quad (\DIndx{\DUnit}) }}
 }\]
 %
-Let us explain its construction. First, we use $\DSigma{\!}{\!}$ to
-give a choice between the $\NatZero$ and $\NatSuc{}$ constructors.
+Let us explain its construction. First, we use $\SYMBDSigma$ to
+give a choice between the $\NatZero$ and $\SYMBNatSuc$ constructors.
 What follows depends on this choice, so we write the function
 computing the rest of the description in tuple notation.  In the
 $\NatZero$ case, we reach the end of the description. In the
-$\NatSuc{\!}$ case, we attach one recursive argument and close the
+$\SYMBNatSuc$ case, we attach one recursive argument and close the
 description. Translating the \(\Sigma\) to a binary sum, we have
 effectively described the functor:
 %
@@ -203,12 +203,12 @@ for lists:
 \[\stk{
 \ListD : \Set \To \Desc \\
 \ListD \: \V{X} \mapsto
- \DSigma{\EnumT{\sqr{ \ListNil\: \ListCons{\!}{\!} }}}
+ \DSigma{\EnumT{\sqr{ \ListNil\: \SYMBListCons }}}
          {\sqr{ \DUnit \quad (\DSigma{\V{X}}{\LAM{\_} \DIndx{\DUnit}}) }}
 }\]
 %
-The $\NatSuc{\!}$ constructor is turned into a proper
-$\ListCons{\!}{\!}$, taking an argument in $\V{X}$ followed by a
+The $\SYMBNatSuc$ constructor is turned into a proper
+$\SYMBListCons$, taking an argument in $\V{X}$ followed by a
 recursive argument. This code describes the following functor:
 %
 \[    \ListD\: \V{X}\: \V{Z} \mapsto \Unit \mathop{\D{+}} \V{X} \D{\ensuremath{\times}} \V{Z}     \]
@@ -253,7 +253,7 @@ interpretation of this code corresponds to the following functor:
 \end{wstructure}
 
 From the examples above, we observe that datatypes are defined by a
-$\DSigma{\!}{\!}$ whose first argument enumerates the constructors. We
+$\SYMBDSigma$ whose first argument enumerates the constructors. We
 call codes fitting this pattern \emph{tagged} descriptions. Again,
 this is a clear reminder of the sum-of-products style. Every
 description can be forced into this style with a singleton constructor
@@ -262,8 +262,8 @@ if necessary. We characterise tagged descriptions thus:
  \TagDesc : \Set \\
  \TagDesc \mapsto \SIGMA{\V{E}}{\EnumU} (\spi{\V{E}}{(\LAM{\_} \Desc)})
 \smallskip\\
-\toDesc{\!} : \TagDesc\To\Desc \\
-\toDesc{\!} \mapsto
+\SYMBtoDesc : \TagDesc\To\Desc \\
+\SYMBtoDesc \mapsto
 \spl{\LAM{\V{E}}\LAM{\V{D}}
 \DSigma{\EnumT{\V{E}}}{(\F{switch}\:\V{E}\:(\LAM{\_}\Desc)\:\V{D})}}
 }\]
@@ -317,7 +317,7 @@ by the functor is now instantiated recursively:
 
 We can now build datatypes and their elements, e.g.:
 \[\stk{
-\Nat\mapsto\Mu{(\toDesc{\pair{\sqr{\NatZero\: \NatSuc{\!} }}
+\Nat\mapsto\Mu{(\toDesc{\pair{\sqr{\NatZero\: \SYMBNatSuc }}
                        {\sqr{ \DUnit \quad (\DIndx{\DUnit})}}{}})}:\Set
 \\
 \Con{\sqr{\NatZero}}:\Nat \qquad
@@ -364,7 +364,7 @@ operation over descriptions, albeit a hardwired operator.
 Any datatype we define automatically
 comes with an induction principle.
 
-We note that the very same functors \(\descop{\M{D}}{\!}\) also admit greatest
+We note that the very same functors \(\SYMBdescop{\M{D}}\) also admit greatest
 fixpoints, and we have indeed implemented coinductive types this way, but
 that is a story for another time.
 
@@ -375,11 +375,11 @@ that is a story for another time.
 %%
 \stk{
 \begin{array}{@{}ll}
-\All{\!}{\!}{\!}{\!} : & \PITEL{\V{D}}{\Desc}
-                         \PITEL{\V{X}}{\Set}
-                         \PITEL{\V{P}}{\V{X} \To \Set} \\
-                       & \PI{\V{xs}}{\descop{\V{D}}{\V{X}}} 
-                         \Set 
+\SYMBAll : & \PITEL{\V{D}}{\Desc}
+             \PITEL{\V{X}}{\Set}
+             \PITEL{\V{P}}{\V{X} \To \Set} \\
+           & \PI{\V{xs}}{\descop{\V{D}}{\V{X}}} 
+             \Set 
 \end{array} \\
 \begin{array}{@{}l@{}l@{\:=\:\:}l}
 \All{\DUnit}{& \V{X}}{\V{P}}{\Void} &
@@ -397,12 +397,12 @@ that is a story for another time.
 %%
 \stk{
 \begin{array}{@{}ll}
-\all{\!}{\!}{\!}{\!}{\!} : & \PITEL{\V{D}}{\Desc}
-                             \PITEL{\V{X}}{\Set}
-                             \PITEL{\V{P}}{\V{X} \To \Set} \\
-                           & \PITEL{\V{p}}{\PI{\V{x}}{\V{X}} \V{P}\: \V{x}}
-                             \PI{\V{xs}}{\descop{\V{D}}{\V{X}}} 
-                             \All{\V{D}}{\V{X}}{\V{P}}{\V{xs}} 
+\SYMBall : & \PITEL{\V{D}}{\Desc}
+             \PITEL{\V{X}}{\Set}
+             \PITEL{\V{P}}{\V{X} \To \Set} \\
+           & \PITEL{\V{p}}{\PI{\V{x}}{\V{X}} \V{P}\: \V{x}}
+             \PI{\V{xs}}{\descop{\V{D}}{\V{X}}} 
+             \All{\V{D}}{\V{X}}{\V{P}}{\V{xs}} 
 \end{array} \\
 \begin{array}{@{}l@{}l@{\:=\:\:}l}
 \all{\DUnit}{& \V{X}}{\V{P}}{\V{p}}{\Void} &

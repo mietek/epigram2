@@ -160,7 +160,7 @@ inductive types in this setting. To describe an inductive family
 indexed by $\Bhab{\V{I}}{\Set}$, we use endofunctors on the category
 $\Set^{\V{I}}$. We call these \emph{indexed functors}. \note{Predicate
   transformer anyone?} $\V{I} \To \IDesc{\V{I}}$ is our grammar for
-describing these functors. Hence, $\IDesc{\!}$ and its interpretation
+describing these functors. Hence, $\SYMBIDesc$ and its interpretation
 have the following types:
 %
 \[\stk{
@@ -179,13 +179,13 @@ these indexed functors, hence computing a fixpoint of the entire
 \[\stkl{
 \Rule{\Gamma \vdash \Bhab{\V{I}}{\Set} \qquad
       \Gamma \vdash \Bhab{\V{R}}{\V{I} \To \IDesc{\V{I}}}}
-     {\Gamma \vdash \Bhab{\IMu{\V{I}}{\V{R}}{\!}}{\V{I}\To\Set}} \qquad
+     {\Gamma \vdash \Bhab{\SYMBIMu_{\V{I}}{\V{R}}}{\V{I}\To\Set}} \qquad
 \\
 \Rule{\begin{array}{l@{\qquad}l}
           \Gamma \vdash \Bhab{\V{I}}{\Set} &
           \Gamma \vdash \Bhab{\V{R}}{\V{I} \To \IDesc{\V{I}}} \\
           \Gamma \vdash \Bhab{\V{i}}{\V{I}} &
-          \Gamma \vdash \Bhab{\V{x}}{\idescop{\V{R}\:\V{i}}{\V{I}}{(\IMu{\V{I}}{\V{R}}{\!})}}
+          \Gamma \vdash \Bhab{\V{x}}{\idescop{\V{R}\:\V{i}}{\V{I}}{(\SYMBIMu_{\V{I}}{\V{R}})}}
       \end{array}}
      {\Gamma \vdash \Bhab{\Con{\V{x}}}{\IMu{\V{I}}{\V{R}}{\V{i}}}}
 }\]
@@ -195,7 +195,7 @@ these indexed functors, hence computing a fixpoint of the entire
 
 However, we still have to define the actual grammar. We obtain it by
 evolving $\Desc$ to cope with indexing. \note{Say something about the
-  transformation} The code of $\IDesc{\!}$ is presented in
+  transformation} The code of $\SYMBIDesc$ is presented in
 Figure~\ref{fig:idesc}. Induction on indexed descriptions is defined
 by:
 %
@@ -205,10 +205,10 @@ by:
                    \PITEL{\V{R}}{\V{I} \To \IDesc{\V{I}}}
                    \PI{\V{P}}{(\SIGMA{\V{i}}{\V{I}}{\IMu{\V{I}}{\V{R}}{\V{i}}}) \To \Set} \\
                  & (      \PITEL{\V{i}}{\V{I}} 
-                          \PI{\V{xs}}{\idescop{\V{R}\: \V{i}}{\V{I}}{(\IMu{\V{I}}{\V{R}}{\!})}} \\
+                          \PI{\V{xs}}{\idescop{\V{R}\: \V{i}}{\V{I}}{(\SYMBIMu_{\V{I}}{\V{R}})}} \\
                  & \   \idescop{\AllI{}
                                      {(\V{R}\: \V{i})}
-                                     {(\IMu{\V{I}}{\V{R}}{\!})}
+                                     {(\SYMBIMu_{\V{I}}{\V{R}})}
                                      {\V{xs}}}
                                {}
                                {\V{P}} \To
@@ -227,10 +227,9 @@ by:
                                     {\V{xs}})
 }\]
 %
-Where the operators $\AllI{}{\!}{\!}{}$ and
-$\allI{}{\!}{\!}{\!}{\!}{}$ are presented in
-Figure~\ref{fig:allI-predicates}. As for descriptions, we can compute
-a generic catamorphism, $\cataI$, from $\inductionI$.
+Where the operators $\SYMBAllI$ and $\SYMBallI$ are
+presented in Figure~\ref{fig:allI-predicates}. As for descriptions, we
+can compute a generic catamorphism, $\cataI$, from $\inductionI$.
 
 
 \begin{figure*}
@@ -240,11 +239,11 @@ a generic catamorphism, $\cataI$, from $\inductionI$.
 %%
 \stk{
 \begin{array}{@{}ll}
-\AllI{\!}{\!}{\!}{\!} : & _{\PI{\V{I}}{\Set}}
-                          \PITEL{\V{D}}{\IDesc{\V{I}}}
-                          \PI{\V{X}}{\V{I} \To \Set} \\
-                        & \idescop{\V{D}}{\V{I}}{\V{X}} \To
-                          \IDesc{(\SIGMA{\V{i}}{\V{I}}{\V{X}\: \V{i}})}
+\SYMBAllI : & _{\PI{\V{I}}{\Set}}
+              \PITEL{\V{D}}{\IDesc{\V{I}}}
+              \PI{\V{X}}{\V{I} \To \Set} \\
+            & \idescop{\V{D}}{\V{I}}{\V{X}} \To
+              \IDesc{(\SIGMA{\V{i}}{\V{I}}{\V{X}\: \V{i}})}
 \end{array} \\
 \begin{array}{@{}l@{}l@{\:=\:\:}l}
 \AllI{\:}{(\DVar{\V{i}})}{& \V{X}}{\V{x}} &
@@ -263,13 +262,13 @@ a generic catamorphism, $\cataI$, from $\inductionI$.
 %%
 \stk{
 \begin{array}{@{}ll}
-\allI{\!}{\!}{\!}{\!}{\!}{\!} : & _{\PI{\V{I}}{\Set}}
-                                  \PITEL{\V{D}}{\IDesc{\V{I}}}
-                                  \PITEL{\V{X}}{\V{I} \To \Set} 
-                                  \PI{\V{P}}{(\SIGMA{\V{i}}{\V{I}}{\V{X}\: \V{i}}) \To \Set} \\
-                                & (\PI{\V{x}}{\SIGMA{\V{i}}{\V{I}}{\V{X}\: \V{i}}} \V{P}\: \V{x}) \To
-                                  \PI{\V{xs}}{\idescop{\V{D}}{\V{I}}{\V{X}}} 
-                                  \idescop{\AllI{}{\V{D}}{\V{X}}{\V{xs}}}{}{\V{P}}
+\SYMBallI : & _{\PI{\V{I}}{\Set}}
+              \PITEL{\V{D}}{\IDesc{\V{I}}}
+              \PITEL{\V{X}}{\V{I} \To \Set} 
+              \PI{\V{P}}{(\SIGMA{\V{i}}{\V{I}}{\V{X}\: \V{i}}) \To \Set} \\
+            & (\PI{\V{x}}{\SIGMA{\V{i}}{\V{I}}{\V{X}\: \V{i}}} \V{P}\: \V{x}) \To
+              \PI{\V{xs}}{\idescop{\V{D}}{\V{I}}{\V{X}}} 
+              \idescop{\AllI{}{\V{D}}{\V{X}}{\V{xs}}}{}{\V{P}}
 \end{array} \\
 \begin{array}{@{}l@{}l@{\:=\:\:}l}
 \allI{\:}{(\DVar{\V{i}})}{& \V{X}}{\V{P}}{\V{p}}{\V{x}} &
@@ -431,18 +430,18 @@ a generic catamorphism, $\cataI$, from $\inductionI$.
         -> This applies to all previous examples
 \end{wstructure}
 
-In order to gain some intuition of $\IDesc{\!}$, let us re-implement
+In order to gain some intuition of $\SYMBIDesc$, let us re-implement
 the pattern functor of natural numbers:
 %
 \[\stk{
 \NatD : \IDesc{\Unit} \\
-\NatD \mapsto \DSigma{(\EnumT{[ \NatZero\: \NatSuc{\!} ]})}
+\NatD \mapsto \DSigma{(\EnumT{[ \NatZero\: \SYMBNatSuc ]})}
                      {\red{[} \DConst{\Unit} \quad \DVar{\Void} \red{]}}
 }\]
 
 Because $\Nat$ is just an inductive type, $\NatD$ is a $\Unit$-indexed
 functor. Therefore, the recursive argument is materialised by
-$\DVar{\Void}$, where we were using $\DIndx{\!}$ in the previous
+$\DVar{\Void}$, where we were using $\SYMBDIndx$ in the previous
 presentation. This transformation generalises to all inductive
 types. Moreover, we gain the ability to write mutually recursive
 inductive types.
@@ -465,12 +464,12 @@ we can describe it in $\IDesc{\Unit}$:
 \[\stk{
 \IDescD : \PI{\V{I}}{\Set} \IDesc{\Unit} \\
 \begin{array}{@{}ll}
-\IDescD\: \V{I} \mapsto \DSigma{\!}{\!} & (\EnumT \sqr{ 
-                                          \DVar{\!}\:
-                                          \DConst{\!}\:
-                                          \DProd{\!}{\!}\:
-                                          \DSigma{\!}{\!}\: 
-                                          \DPi{\!}{\!}
+\IDescD\: \V{I} \mapsto \SYMBDSigma & (\EnumT \sqr{ 
+                                          \SYMBDVar\:\:
+                                          \SYMBDConst\:\:
+                                          \DProd\:\:
+                                          \SYMBDSigma\:\:
+                                          \SYMBDPi
                                              }) \\
                               & \bigRedBracket{\begin{array}{l}
                                       \DConst{\V{I}}                  \\
@@ -478,25 +477,25 @@ we can describe it in $\IDesc{\Unit}$:
                                       \DProd{\DVar{\Void}}{\DVar{\Void}}  \\
                                       \DSigma{\Set}{(\LAM{\V{S}} \DPi{\V{S}}{(\LAM{\_} \DVar{\Void})})} \\
                                       \DSigma{\Set}{(\LAM{\V{S}} \DPi{\V{S}}{(\LAM{\_} \DVar{\Void})})}
-                                   \end{array}
-                             }
+                                   \end{array}}
 \end{array}
 }\]
 
 Therefore, this universe is self-describing, hence can be
 levitated. As before, we rely on a special purpose $\F{switchID}$
 operator to build the finite function $\bigRedBracket{\ldots}$
-without mentioning \(\IDesc{\!}\).
+without mentioning \(\SYMBIDesc\).
 
 \paragraph{Vectors:}
 
 \newcommand{\VecD}{\F{VecD}}
 \newcommand{\VecNil}{\etag{\CN{vnil}}}
-\newcommand{\VecCons}[2]{\etag{\CN{vcons}}\:#1\:#2}
+\newcommand{\SYMBVecCons}{\etag{\CN{vcons}}\xspace}
+\newcommand{\VecCons}[2]{\SYMBVecCons\:#1\:#2}
 
 So far, the examples we have seen live in $\IDesc{\Unit}$, hence are
 not using any indexing. We remedy this by encoding the vectors. Recall
-that the constructors $\VecNil$ and $\VecCons{\!}{\!}$ are only defined for an
+that the constructors $\VecNil$ and $\SYMBVecCons$ are only defined for an
 index $\NatZero$ and $\NatSuc$ respectively.:
 %
 \[
@@ -504,7 +503,7 @@ index $\NatZero$ and $\NatSuc$ respectively.:
 \data \D{Vec}\: \PITEL{\V{X}}{\Set} : \PI{\V{n}}{\Nat} \Set \where \\
 \;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
     \VecNil          & \D{Vec}\:\V{X}\:{\NatZero)}   \\
-    \VecCons{\!}{\!} & _{\PI{\V{n}}{\Nat}}\V{X} \To \D{Vec}\:{\V{X}}\:{\V{n}} \To \D{Vec}\:{\V{X}}\:{(\NatSuc{\V{n}})}
+    \SYMBVecCons & _{\PI{\V{n}}{\Nat}}\V{X} \To \D{Vec}\:{\V{X}}\:{\V{n}} \To \D{Vec}\:{\V{X}}\:{(\NatSuc{\V{n}})}
 \end{array}
 }
 \]
@@ -515,8 +514,8 @@ this case, we obtain the following definition:
 %
 \[\stk{
 \VecD : \Set \To \Nat \To \IDesc{\Nat} \\
-\begin{array}{@{}ll}
-\VecD\: \V{X}\: \V{n} = \DSigma{\!}{\!} \!\!\!\!& (\EnumT{\sqr{ \VecNil\:\VecCons{\!}{\!} }}) \\
+\begin{array}{@{}l@{}l}
+\VecD\: \V{X}\: \V{n} = \SYMBDSigma & (\EnumT{\sqr{ \VecNil\:\SYMBVecCons }}) \\
                         & \bigRedBracket{
                           \begin{array}{l}
                             \DConst{(\V{n} \PropEq \NatZero)} \\
@@ -527,7 +526,7 @@ this case, we obtain the following definition:
 }\]
 
 In the $\VecNil$ case, a proof must be provided that the index is
-equal to $\NatZero$. In the $\VecCons{\!}{\!}$ case, we first store an element
+equal to $\NatZero$. In the $\SYMBVecCons$ case, we first store an element
 $\V{m}$ of $\Nat$. However, the constraint stipulates that $\V{m}$
 cannot be \emph{any} natural numbers: it must be ``the index minus
 one''. This translates into the constraint $\V{n} \PropEq
@@ -573,31 +572,30 @@ following, equivalent definition:
 }\]
 %
 The equations (and constructors) have simply disappeared. A similar
-example is $\Fin{\!}$, specified by:
+example is $\SYMBFin$, specified by:
 %
 \[
 \stk{
-\data \Fin{\!} : \PI{\V{n}}{\Nat} \Set \where \\
+\data \SYMBFin : \PI{\V{n}}{\Nat} \Set \where \\
 \;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
     \FinZero      & _{\PI{\V{n}}{\Nat}}\Fin{(\NatSuc{\V{n}})}   \\
-    \FinSuc{\!}   & _{\PI{\V{n}}{\Nat}}\Fin{\V{n}} \To \Fin{(\NatSuc{\V{n}})}
+    \SYMBFinSuc   & _{\PI{\V{n}}{\Nat}}\Fin{\V{n}} \To \Fin{(\NatSuc{\V{n}})}
 \end{array}
 }\]
 %
 In this case, we can apply forcing, but not detagging, since both
-$\FinZero$ and $\FinSuc{\!}$ both target $\NatSuc{\!}$:
+$\FinZero$ and $\SYMBFinSuc$ both target $\SYMBNatSuc$:
 %
 \[\stk{
 \FinD : \Nat \To \IDesc{\Nat} \\
-\begin{array}{@{}llll}
-\FinD\: \NatZero     & \mapsto & \multicolumn{2}{l}{\DSigma{(\EnumT{\Void})}{\Void} } \\
-\FinD\: (\NatSuc{\V{n}}) & \mapsto & \DSigma{\!}{\!}\!\!\!\!\! & (\EnumT{\sqr{ \FinZero \: \FinSuc{\!} }}) \\
-                     &   &             & \bigRedBracket{
-                                         \begin{array}{l}
-                                         \DConst{\Unit} \\
-                                         \DVar{\V{n}}
-                                         \end{array}
-                                         }
+\begin{array}{@{}lll@{}l}
+\FinD\: \NatZero         & \mapsto & \multicolumn{2}{l}{\DSigma{(\EnumT{\Void})}{\Void} } \\
+\FinD\: (\NatSuc{\V{n}}) & \mapsto & \SYMBDSigma & (\EnumT{\sqr{ \FinZero \: \SYMBFinSuc }}) \\
+                         &         &             & \bigRedBracket{
+                                                   \begin{array}{l}
+                                                       \DConst{\Unit} \\
+                                                       \DVar{\V{n}}
+                                                   \end{array}}
 \end{array}
 }\]
 
@@ -641,11 +639,11 @@ possible to enable or disable constructors.
 In the case of a tagged $\D{Vec}$, for instance, for the index
 $\NatZero$, we would only propose the constructor
 $\ListNil$. Similarly, for $\NatSuc{n}$, we would only propose the
-constructor $\ListCons{\!}{\!}$.
+constructor $\SYMBListCons$.
 
 We use the notation $\toIDesc{\V{TID}}$ to denote the
 indexed description computed from the tagged indexed description
-$\V{TID}$. Its expansion is similar to the definition of \(\toDesc{\!}\)
+$\V{TID}$. Its expansion is similar to the definition of \(\SYMBtoDesc\)
 but more involved.
  
 \paragraph{Typed expressions:}
@@ -668,14 +666,20 @@ but more involved.
 \newcommand{\Enat}{\etag{\CN{nat}}}
 
 %% Constructors
-\newcommand{\Eval}[1]{\etag{\CN{val}}\:#1}
-\newcommand{\Econd}[3]{\etag{\CN{cond}}\:#1\:#2\:#3}
-\newcommand{\Eplus}[2]{\etag{\CN{plus}}\:#1\:#2}
-\newcommand{\Ele}[2]{\etag{\CN{le}}\:#1\:#2}
+\newcommand{\SYMBEval}{\etag{\CN{val}}\xspace}
+\newcommand{\Eval}[1]{\SYMBEval\:#1}
+\newcommand{\SYMBEcond}{\etag{\CN{cond}}\xspace}
+\newcommand{\Econd}[3]{\SYMBEcond\:#1\:#2\:#3}
+\newcommand{\SYMBEplus}{\etag{\CN{plus}}\xspace}
+\newcommand{\Eplus}[2]{\SYMBEplus\:#1\:#2}
+\newcommand{\SYMBEle}{\etag{\CN{le}}\xspace}
+\newcommand{\Ele}[2]{\SYMBEle\:#1\:#2}
 
 %% Index mapper (terminology?)
-\newcommand{\Val}[1]{\F{Val}\:#1}
-\newcommand{\Var}[2]{\F{Var}_{#1} #2}
+\newcommand{\SYMBVal}{\F{Val}\xspace}
+\newcommand{\Val}[1]{\SYMBVal\:#1}
+\newcommand{\SYMBVar}{\F{Var}\xspace}
+\newcommand{\Var}[2]{\SYMBVar_{#1} #2}
 
 %% Hutton expressions
 \newcommand{\HExprD}{\C{ExprD}}
@@ -698,23 +702,23 @@ numbers. Informally, their type is the following:
 %
 \[
 \begin{array}{l@{\::\:\:}l}
-\Econd{\!}{\!}{\!}   & \forall \Bhab{\V{ty}}{\Ty} . \Ebool \To \V{ty} \To \V{ty} \To \V{ty}  \\ 
-\Eplus{\!}{\!}       & \Enat \To \Enat \To \Enat                           \\
-\Ele{\!}{\!}         & \Enat \To \Enat \To \Ebool                          \\
-\Eval{\!}            & \forall \Bhab{\V{ty}}{\Ty} . \Val{\V{ty}} \To \V{ty}
+\SYMBEcond           & \forall \Bhab{\V{ty}}{\Ty} . \Ebool \To \V{ty} \To \V{ty} \To \V{ty}  \\ 
+\SYMBEplus           & \Enat \To \Enat \To \Enat                           \\
+\SYMBEle             & \Enat \To \Enat \To \Ebool                          \\
+\SYMBEval            & \forall \Bhab{\V{ty}}{\Ty} . \Val{\V{ty}} \To \V{ty}
 \end{array}
 \]
 %
-The function $\Val{\!}$, used in the definition of $\Eval{\!}$, simply
+The function $\SYMBVal$, used in the definition of $\SYMBEval$, simply
 maps a type $ty$ of the object language to the corresponding type in
-the host language. Hence, the arguments of $\Eval{\!}$ are ensured to
+the host language. Hence, the arguments of $\SYMBEval$ are ensured to
 be of the expected type. We assume that $\Nat$ and $\Bool$ represent
 natural numbers and booleans in the host language, equipped with an
 addition operation $\F{plusHost}$ and a comparison function
-$\F{leHost}$. We define $\Val{\!}$ as follows:
+$\F{leHost}$. We define $\SYMBVal$ as follows:
 %
 \[\stk{
-\Val{\!} : \Ty \To \Set \\
+\SYMBVal : \Ty \To \Set \\
 \begin{array}{@{}l@{\:=\:\:}l}
 \Val{\Enat}   & \Nat \\
 \Val{\Ebool}  & \Bool
@@ -724,11 +728,11 @@ $\F{leHost}$. We define $\Val{\!}$ as follows:
 In our universe of descriptions, the syntax of this language is
 described by a tagged indexed description. We use the index to carry
 the type: the resulting description is indexed by $\Ty$. We observe
-that some constructors are always defined, namely $\Econd{\!}{\!}{\!}$
-and $\Eval{\!}$. On the other hand, the $\Eplus{\!}{}$ and
-$\Ele{}{\!}$ constructors are index-dependent. $\Eplus{\!}{}$ is
+that some constructors are always defined, namely $\SYMBEcond$
+and $\SYMBEval$. On the other hand, the $\SYMBEplus$ and
+$\SYMBEle$ constructors are index-dependent. $\SYMBEplus$ is
 defined if and only if the result type -- the index -- is $\Enat$,
-whereas $\Ele{}{\!}$ is defined if and only if the index is
+whereas $\SYMBEle$ is defined if and only if the index is
 $\Ebool$. The actual code precisely follows this intuition, as shown
 in Figure~\ref{fig:hexpr-full}. 
 
@@ -744,7 +748,7 @@ in Figure~\ref{fig:hexpr-full}.
 \HExprAD : \ATagIDesc{\Ty} \\
 \HExprAD \mapsto \bigRedBracket{
                  \begin{array}{l}
-                   {\sqr{\Eval{\!}\: \Econd{\!}{\!}{\!}\!\,}} \red{,} \\
+                   {\sqr{\SYMBEval\: \SYMBEcond \,}} \red{,} \\
                    \LAM{\V{ty}}
                    \bigRedBracket{
                    \begin{array}{l}
@@ -762,7 +766,7 @@ in Figure~\ref{fig:hexpr-full}.
 \HExprID : \ITagIDesc{\Ty} \\
 \HExprID \mapsto \bigRedBracket{
                  \begin{array}{l}
-                   \sqr{\sqr{\Eplus{\!}{\!}} \quad \sqr{\Ele{\!}{\!}}} \red{,} \\
+                   \sqr{\sqr{\SYMBEplus} \quad \sqr{\SYMBEle}} \red{,} \\
                    \LAM{\_} \DProd{\DVar{\Enat}}{\DVar{\Enat}} 
                    \end{array}
                    }
@@ -803,14 +807,14 @@ algebra -- is sufficient, as $\cataI$ gives, for free, the full
 evaluator. The implementation is as follows:
 %
 \[\stk{
-\evalOne : \PI{\V{ty}}{\Ty} \idescop{\toIDesc{\HExprD}\:\V{ty}}{\Ty}{\Val{\!}}
+\evalOne : \PI{\V{ty}}{\Ty} \idescop{\toIDesc{\HExprD}\:\V{ty}}{\Ty}{\SYMBVal}
            \To {\Val{\V{ty}}} \\
 \begin{array}{@{}l@{}c@{}l@{\:=\:\:}l}
-\evalOne\: & \_\: & \pair{\Eval{\!}}{\V{x}}{}                                             & \V{x} \\
-\evalOne\: & \_\: & \pair{\Econd{\!}{\!}{\!}}{\pair{\BoolTrue}{\pair{\V{x}}{\_}{}}{}}{}   & \V{x} \\
-\evalOne\: & \_\: & \pair{\Econd{\!}{\!}{\!}}{\pair{\BoolFalse}{\pair{\_}{\V{y}}{}}{}}{}  & \V{y} \\
-\evalOne\: & \Enat\: & \pair{\Eplus{\!}{\!}}{\pair{\V{x}}{\V{y}}{}}{}                     & \F{plusHost}\: \V{x}\: \V{y} \\
-\evalOne\: & \Ebool\: & \pair{\Ele{\!}{\!}}{\pair{\V{x}}{\V{y}}{}}{}                      & \F{leHost}\: \V{x}\: \V{y} 
+\evalOne\: & \_\: & \pair{\SYMBEval}{\V{x}}{}                                             & \V{x} \\
+\evalOne\: & \_\: & \pair{\SYMBEcond}{\pair{\BoolTrue}{\pair{\V{x}}{\_}{}}{}}{}   & \V{x} \\
+\evalOne\: & \_\: & \pair{\SYMBEcond}{\pair{\BoolFalse}{\pair{\_}{\V{y}}{}}{}}{}  & \V{y} \\
+\evalOne\: & \Enat\: & \pair{\SYMBEplus}{\pair{\V{x}}{\V{y}}{}}{}                     & \F{plusHost}\: \V{x}\: \V{y} \\
+\evalOne\: & \Ebool\: & \pair{\SYMBEle}{\pair{\V{x}}{\V{y}}{}}{}                      & \F{leHost}\: \V{x}\: \V{y} 
 \end{array} \\
 \\
 \evalH : \PI{\V{ty}}{\Ty} 
@@ -818,7 +822,7 @@ evaluator. The implementation is as follows:
            \Val{\V{ty}} \\
 \evalH\: \V{ty}\: \V{term} = \cataI_{\Ty}
                                  \toIDesc{\HExprD}\: 
-                                 \Val{\!}\: 
+                                 \SYMBVal\: 
                                  \evalOne\: 
                                  \V{ty}\: 
                                  \V{term}
@@ -840,18 +844,18 @@ big step interpreter is granted without effort thanks to the generic
 catamorphism.
 
 However, so far, we are only able to define and manipulate
-\emph{closed} terms. By abstracting over $\Val{\!}$, it is possible to
+\emph{closed} terms. By abstracting over $\SYMBVal$, it is possible to
 build and manipulate \emph{open} terms, that is, terms with
-variables. Following $\Val{\!}$, we define $\Var{}{}$ by:
+variables. Following $\SYMBVal$, we define $\SYMBVar$ by:
 %
 \[\stk{
 \Var{}{} : \EnumU \To \Ty \To \Set \\
 \Var{\V{dom}}{\_} = \EnumT{\V{dom}}
 }\]
 %
-Whereas $\Val{\!}$ was mapping the type to the corresponding host type,
-$\Var{}{}$ maps types to a finite set. The finite set -- the context
--- contains closed terms. A variable is therefore a $\Eval{\!}$ that
+Whereas $\SYMBVal$ was mapping the type to the corresponding host type,
+$\SYMBVar$ maps types to a finite set. The finite set -- the context
+-- contains closed terms. A variable is therefore a $\SYMBEval$ that
 contains a pointer to a particular element of the finite set -- an
 element of $\EnumT{\V{dom}}$. 
 
@@ -861,7 +865,7 @@ Figure~\ref{fig:hexpr-full} turns the language of closed terms into a
 language of opened terms with variables and constants. For
 readability, we abbreviate $\LAM{\V{ty}}
 \SUM{\Val{\V{ty}}}{\Var{\V{dom}}{\V{ty}}}$ by
-$\SUM{\Val{\!}}{\Var{\V{dom}}{}}$. \note{Is it polite and
+$\SUM{\SYMBVal}{\Var{\V{dom}}{}}$. \note{Is it polite and
   comprehensible to ask that?} This defines a new indexed description,
 called $\HExprVarD{\V{dom}}$.
 
@@ -896,7 +900,7 @@ following function:
                \IMu{\Ty}{\toIDesc{\HExprVarD{\V{dom}}}}{\V{ty}} 
 \end{array} \\
 \begin{array}{@{}l@{\:\mapsto\:\:}l}
-\discharge\: \V{ty}\: \V{dom}\: \V{\gamma}\: (\SumLeft \V{x})  & \Con{\pair{\Eval{\!}}{\V{x}}{}} \\
+\discharge\: \V{ty}\: \V{dom}\: \V{\gamma}\: (\SumLeft \V{x})  & \Con{\pair{\SYMBEval}{\V{x}}{}} \\
 \discharge\: \V{ty}\: \V{dom}\: \V{\gamma}\: (\SumRight \V{v}) &
 \end{array}\\
 \qquad\switch{\V{dom}}{(\LAM{\_}
@@ -916,7 +920,8 @@ following function:
 \newcommand{\domBool}{dom_{\CN{bool}}}
 \newcommand{\gammaNat}{\V{\ensuremath{\gamma_{\CN{nat}}}}}
 \newcommand{\gammaBool}{\V{\ensuremath{\gamma_{\CN{bool}}}}}
-\newcommand{\GammaSpi}[2]{\F{\ensuremath{\Gamma_{\CN{ty}}}}\: #1\: #2}
+\newcommand{\SYMBGammaSpi}{\F{\ensuremath{\Gamma_{\CN{ty}}}}\xspace}
+\newcommand{\GammaSpi}[2]{\SYMBGammaSpi\: #1\: #2}
 
 
 We are now left with applying $\discharge$ over all variables of the
@@ -942,10 +947,10 @@ term. The type of this operation is the following:
 \end{array}
 \]
 %
-Where $\GammaSpi{\!}{\!}$ corresponds to a context, defined by:
+Where $\SYMBGammaSpi$ corresponds to a context, defined by:
 %
 \[\stk{
-\GammaSpi{\!}{\!} : \EnumU \To \Ty \To \Set                                             \\
+\SYMBGammaSpi : \EnumU \To \Ty \To \Set                                             \\
 \GammaSpi{\V{dom}}{\V{ty}} = \spi{\V{dom}}{(\LAM{\_} \IMu{\Ty}{\toIDesc{\HExprVarD{\V{dom}}}}{\V{ty}})} 
 }\]
 
@@ -954,7 +959,7 @@ Abstracting away the book-keeping introduced by contexts, this
 definition looks familiar. It is similar to a monadic \bind. This is
 not surprising as we are defining a first-order syntax with variables:
 our datatype enjoys more structure than what we are given. We are
-facing a free monad, where $\Eval{\!}$ is the \return\ introducing
+facing a free monad, where $\SYMBEval$ is the \return\ introducing
 variables. For convenience, we wrap $\discharge$ in a $\V{\sigma}$
 function that picks the context of the right type:
 %
@@ -997,7 +1002,7 @@ functor coding its free monad: \note{pwm: Whoa there. Maybe we should
                       \TagIDesc{\V{I}}
 \end{array} \\
 \FreeIMonad{\pair{\V{E}}{\V{F}}{}}{\V{I}}{\V{R}} \mapsto \\ \;\;
-    \pair{\pair{\ListCons{\DVar{\!}}{(\fst{\V{E}})}} 
+    \pair{\pair{\ListCons{\SYMBDVar}{(\fst{\V{E}})}} 
                {\LAM{\V{i}}
                 \pair{\DConst{(\V{R}\: \V{i})}}
                      {(\snd{\V{E}})\: \V{i}}{}}{}}
@@ -1049,7 +1054,7 @@ Where  $\F{applyI}$ is defined as follow:
            \IMu{\V{I}}{\toIDesc{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}}{\V{i}}
 \end{array} \\
 \begin{array}{@{}l@{\:\mapsto\:\:}l}
-\F{applyI}\: \V{R}\: \V{X}\: \V{Y}\: \V{\sigma}\: \V{i}\: \pair{\DVar{\!}}{\V{x}}{}   & \V{\sigma}\: \V{i}\: \V{x}                   \\
+\F{applyI}\: \V{R}\: \V{X}\: \V{Y}\: \V{\sigma}\: \V{i}\: \pair{\SYMBDVar}{\V{x}}{}   & \V{\sigma}\: \V{i}\: \V{x}                   \\
 \F{applyI}\: \V{R}\: \V{X}\: \V{Y}\: \V{\sigma}\: \V{i}\: \pair{\V{c}}{\V{ys}}{} & \Con{\pair{\V{c}}{\V{ys}}{}}
 \end{array}
 }\]
@@ -1078,7 +1083,7 @@ structure. We had identified the variable substitution operation as
 the \bind\ of a free monad. To exhibit its monadic structure, we first
 have to massage the definition of our datatype.
 
-As previously mentioned, we identify $\Eval{\!}$ with the \return\ of
+As previously mentioned, we identify $\SYMBEval$ with the \return\ of
 the free monad, while the other components are the action of the
 monad. As a result, the definition is similar to $\HExprD$ presented
 in Figure~\ref{fig:hexpr-full}, replacing $\HExprAD$ by
@@ -1088,7 +1093,7 @@ $\HExprAFreeD$:
 \HExprAFreeD : \ATagIDesc{\Ty} \\
 \HExprAFreeD \mapsto \bigRedBracket{
                  \begin{array}{l}
-                   \EnumT{\sqr{\Econd{\!}{\!}{\!}}} \red{,} \\
+                   \EnumT{\sqr{\SYMBEcond}} \red{,} \\
                    \LAM{\V{ty}}
                    \bigRedBracket{
                    \begin{array}{l}
@@ -1100,9 +1105,9 @@ $\HExprAFreeD$:
 }\]
 
 We call this datatype $\HExprFreeD$. By a simple unfolding of
-definition, we note that $\FreeIMonad{\HExprFreeD}{\Ty}{\Val{\!}}$
+definition, we note that $\FreeIMonad{\HExprFreeD}{\Ty}{\SYMBVal}$
 corresponds to the syntax of closed terms, $\HExprD$. Similarly,
-$\FreeIMonad{\HExprFreeD}{\Ty}{(\SUM{\Val{\!}}{\Var{\V{dom}}{}})}$
+$\FreeIMonad{\HExprFreeD}{\Ty}{(\SUM{\SYMBVal}{\Var{\V{dom}}{}})}$
 corresponds to expressions with variables, $\HExprVarD{\V{dom}}$.
 
 \begin{wstructure}
@@ -1116,7 +1121,7 @@ corresponds to expressions with variables, $\HExprVarD{\V{dom}}$.
 
 The evaluator for closed terms we implemented in
 Section~\ref{sec:idesc-examples} remains unchanged. It reduces closed
-terms in $\FreeIMonad{\HExprFreeD}{\Ty}{\Val{\!}}\: \V{ty}$ to values in
+terms in $\FreeIMonad{\HExprFreeD}{\Ty}{\SYMBVal}\: \V{ty}$ to values in
 $\Val{\V{ty}}$. We are left with implementing $\substH$. We simply
 have to fill in the right arguments to $\substI$, the type guiding us:
 %
@@ -1128,8 +1133,8 @@ have to fill in the right arguments to $\substI$, the type guiding us:
           \V{term} \mapsto  \\
 \;\;\ \begin{array}{ll}
        \substI_{\Ty}\: &  \HExprFreeD\: 
-                         (\SUM{\Val{\!}}{\Var{\V{dom}}{}})\: 
-                         \Val{\!} \\
+                         (\SUM{\SYMBVal}{\Var{\V{dom}}{}})\: 
+                         \SYMBVal \\
                       &
                         (\V{\sigma}\: \V{dom}\: \gammaNat\: \gammaBool)\:
                         \V{ty}\:
@@ -1161,8 +1166,8 @@ semantics.
 
 \paragraph{Indexed descriptions:}
 
-Another instance of free monad is $\IDesc{\!}$ itself. Indeed,
-$\DVar{\!}$ is nothing but the \return. The remaining constructors are
+Another instance of free monad is $\SYMBIDesc$ itself. Indeed,
+$\SYMBDVar$ is nothing but the \return. The remaining constructors are
 the carrier functor, trivially indexed by $\Unit$. The carrier functor
 is described as follow:
 %
@@ -1170,10 +1175,10 @@ is described as follow:
 \IDescFreeD : \ATagIDesc{\Unit} \\
 \begin{array}{@{}ll}
 \IDescFreeD \mapsto \bigRedBracket{\begin{array}{l}
-                                \sqr{\DConst{\!}\:
-                                 \DProd{\!}{\!}\:
-                                 \DSigma{\!}{\!}\: 
-                                 \DPi{\!}{\!}} \red{,}\\
+                                \sqr{\SYMBDConst\:
+                                     \DProd\:
+                                     \SYMBDSigma\: 
+                                     \SYMBDPi} \red{,}\\
                                   \LAM{\_}\bigRedBracket{\begin{array}{l}
                                         \DConst{\Set}               \\
                                         \DProd{\DVar{\Void}}{\DVar{\Void}}  \\

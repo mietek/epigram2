@@ -30,7 +30,7 @@ its constructors. Recall:
 \Bhab{\ConsE{(\Bhab{\M{t}}{\UId})}{(\Bhab{\M{E}}{\EnumU})}}{\EnumU}
 \]
 %
-The $\NilE$ and $\ConsE{\!}{\!}$ constructors are just the `nil' and
+The $\NilE$ and $\SYMBConsE$ constructors are just the `nil' and
 `cons' or ordinary lists, with elements from \(\UId\).
 Therefore, we
 implement:
@@ -57,15 +57,15 @@ implement:
 
 Let us consider the consequences. We discover that the type
 theory does not need to be extended with a special type former $\EnumU$,
-or special constructors $\NilE$ and $\NAMEConsE$. 
+or special constructors $\NilE$ and $\SYMBConsE$. 
 Moreover, the $\spi{\M{E}}{\M{P}}$ operator, computing tuple types
 of \(\M{P}\)s by recursion on \(\M{E}\) need not be hardwired: we can
 just use the generic $\F{ind}$ operator, as we would for any ordinary
 program.
 
 Note, however, that the universe decoder \(\EnumT{\M{E}}\) \emph{is}
-hardwired, as are the primitive \(\Ze\) and \(\Su{\!}\) that
-we use for low-level values, and indeed the \(\F{switch}\) operator.
+hardwired, as are the primitive \(\Ze\) and \(\Su\) that
+we use for low-level values, and indeed the \(\SYMBswitch\) operator.
 We cannot dispose of data altogether! We have, however, gained
 the ordinariness of the enumeration \emph{codes}, and hence of generic
 programs which manipulate them. Our next step is similar: we are going to
@@ -137,7 +137,7 @@ Our first attempt gets stuck quite quickly:
 \[\stk{
 \DescD : \Desc \\
 \DescD \mapsto
-  \tada{\stkm{\DUnit\\ \DSigma{\!}{\!}\\ \DIndx{\!}}}
+  \tada{\stkm{\DUnit\\ \SYMBDSigma\\ \SYMBDIndx}}
        {\stkm{ \DUnit                                \\
          \DSigma{\Set}{(\LAM{\V{S}} \SHED)}      \\
          \DIndx{\DUnit}    }                    } \\
@@ -154,13 +154,13 @@ Our first attempt gets stuck quite quickly:
 %
 Let us explain where we stand. Much as
 we have done so far, we first offer a constructor choice from
-$\DUnit$, $\DSigma{\!}{\!}$, and $\DIndx{\!}$. The reader will notice
+$\DUnit$, $\SYMBDSigma$, and $\SYMBDIndx$. The reader will notice
 that the `tagged' notation we have used for the $\Desc$ constructors now
 fully makes sense: these were actually the tags we are defining.
 For $\DUnit$, we immediately reach the end of the description. For
-$\DIndx{\!}$, there is a single recursive argument. Describing
-$\DSigma{\!}{\!}$ is problematic. Recall the specification of
-$\DSigma{\!}{\!}$:
+$\SYMBDIndx$, there is a single recursive argument. Describing
+$\SYMBDSigma$ is problematic. Recall the specification of
+$\SYMBDSigma$:
 %
 \[
 \DSigma{(\Bhab{\V{S}}{\Set})}{(\Bhab{\V{D}}{\V{S} \To \Desc})} : \Desc\\
@@ -188,8 +188,8 @@ universe, we must first enlarge it!
 \end{wstructure}
 
 In order to capture a notion of higher-order induction, we add a code
-$\DHindx{\!}{\!}$ that takes an indexing set $\V{H}$. Intuitively,
-$\DHindx{\!}{\!}$ gives a recursive subobject for each element of $H$.
+$\SYMBDHindx$ that takes an indexing set $\V{H}$. Intuitively,
+$\SYMBDHindx$ gives a recursive subobject for each element of $H$.
 %
 \[\stk{
     \DHindx{(\Bhab{\M{H}}{\Set})}{(\Bhab{\M{D}}{\Desc})} : \Set \smallskip \\
@@ -197,9 +197,9 @@ $\DHindx{\!}{\!}$ gives a recursive subobject for each element of $H$.
 }\]
 
 
-Note that up to isomorphism, $\DIndx{\!}$ is subsumed by
+Note that up to isomorphism, $\SYMBDIndx$ is subsumed by
 $\DHindx{\Unit}{\!}$. However, the apparent duplication has some
-value.  Unlike its counterpart, $\DIndx{\!}$ is first-order: we prefer
+value.  Unlike its counterpart, $\SYMBDIndx$ is first-order: we prefer
 not to demand dummy functions from \(\Unit\) in ordinary data,
 e.g. \(\NatSuc{(\LAM{\_}n)}\). It is na{\"\i}ve to imagine that up to
 isomorphism, any representation of data will do.  First-order
@@ -214,7 +214,7 @@ We are now able to describe our universe of datatypes:
 \[\stk{
 \DescD : \Desc \\
 \DescD \mapsto\tada
-{\stkm{ \DUnit\\ \DSigma{\!}{\!}\\ \DIndx{\!}\\ \DHindx{\!}{\!}}}
+{\stkm{ \DUnit\\ \SYMBDSigma\\ \SYMBDIndx\\ \SYMBDHindx}}
 {\stkm{
 \DUnit                                            \\
                                    \DSigma{\Set}{\LAM{\V{S}} \DHindx{\V{S}}{\DUnit}}   \\
@@ -223,9 +223,9 @@ We are now able to describe our universe of datatypes:
 }}
 }\]
 %
-The $\DUnit$ and $\DIndx{\!}$ cases remain unchanged, as expected. We
-successfully describe the $\DSigma{\!}{}$ case, by a simple appeal to
-the higher-order induction on $\V{S}$. The $\DHindx{\!}{\!}$ case
+The $\DUnit$ and $\SYMBDIndx$ cases remain unchanged, as expected. We
+successfully describe the $\SYMBDSigma$ case, by a simple appeal to
+the higher-order induction on $\V{S}$. The $\SYMBDHindx$ case
 consists in packing a $\Set$ with a recursive argument.
 
 At a first glance, we have achieved our goal. We have described the
@@ -253,10 +253,8 @@ Figure~\ref{fig:type-checking} reveals the
 awful truth:
 \[
 \Desc\mapsto
-\Mu{\stk{(\DSigma{\EnumT{\sqr{ \DUnit\: \DSigma{\!}{\!}\: \DIndx{\!}\: 
-    \DHindx{\!}{\!}}}\\}
-    {\;\F{switch}\:\sqr{ \DUnit\: \DSigma{\!}{\!}\: \DIndx{\!}\: 
-    \DHindx{\!}{\!}}\:(\LAM{\_}\Desc)\\
+\Mu{\stk{(\DSigma{\EnumT{\sqr{ \DUnit\:\: \SYMBDSigma\:\: \SYMBDIndx\:\: \SYMBDHindx}}\\}
+    {\;\SYMBswitch\:\sqr{ \DUnit\:\: \SYMBDSigma\:\: \SYMBDIndx\:\: \SYMBDHindx}\:(\LAM{\_}\Desc)\\
 \;\sqr{\stkm{
 \DUnit                                            \\
                                    \DSigma{\Set}{\LAM{\V{S}} \DHindx{\V{S}}{\DUnit}}   \\
@@ -516,7 +514,7 @@ function is surprisingly easy:
          {\pair{\DSigma{\V{X}}{\DUnit}}{\V{D}}{}}{}
 }\]
 %
-We simply add a constructor, $\DVar{\!}$, and define its argument to
+We simply add a constructor, $\SYMBDVar$, and define its argument to
 be a $\DSigma{\V{X}}{\DUnit}$, that is an element of $\V{X}$. We keep
 $\V{E}$ and $\V{D}$ as they were, hence leaving the other constructors
 unchanged. Unfolding the interpretation of this definition, we
@@ -573,7 +571,7 @@ corresponds to the following definition:
 \\
 \end{array} \\
 \begin{array}{@{}l@{\:\mapsto\:\:}l}
-\apply\: \V{D}\: \V{X}\: \V{Y}\: \V{\sigma}\: \pair{\DVar{\!}}{\V{x}}{}   & \V{\sigma}\: \V{x}                   \\
+\apply\: \V{D}\: \V{X}\: \V{Y}\: \V{\sigma}\: \pair{\SYMBDVar}{\V{x}}{}   & \V{\sigma}\: \V{x}                   \\
 \apply\: \V{D}\: \V{X}\: \V{Y}\: \V{\sigma}\: \pair{\V{c}}{\V{xs}}{} & \Con{\pair{\V{c}}{\V{xs}}{}}
 \end{array}
 }\]
