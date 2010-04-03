@@ -1,4 +1,7 @@
-make Nat := (Mu con ['arg (Enum ['zero 'suc]) [ (con ['done]) (con ['ind1 con ['done]]) ] ] ) : Set ;
+make Nat := Mu (con ['sigmaD (Enum ['zero 
+                                    'suc]) 
+                             [ (con ['constD (Sig ())]) 
+			       (con ['prodD (con ['idD]) (con ['constD (Sig ())]) ])]]) : Set ;
 make zero := con ['zero] : Nat ;
 make suc := (\ x -> con ['suc x]) : Nat -> Nat ;
 make one := (suc zero) : Nat ;
@@ -7,9 +10,10 @@ make two := (suc one) : Nat ;
 make plus := con con [(\ r r y -> y) (\ r -> con \ h r y -> suc (h y))] : Nat -> Nat -> Nat ;
 
 make ExprD : Desc ;
-give con ['arg (Enum ['num 'add]) [ ? ? ]] ;
-  give con ['arg Nat (\ n -> con ['done])] ;
-  give con ['ind1 con ['ind1 con ['done]]] ; root ;
+give con ['sigmaD (Enum ['num 'add]) [ ? ? ]] ;
+  give con ['sigmaD Nat (\ n -> con ['constD (Sig ())])] ;
+  give con ['prodD (con ['idD]) (con ['prodD (con ['idD]) (con ['constD (Sig ())])])] ; 
+root ;
 
 make Expr := (\ X -> Monad ExprD X) : Set -> Set ;
 
@@ -27,4 +31,5 @@ give elimMonad ExprD (Enum []) t (\ x -> Nat) ? ? ;
 give con [ con (\ n -> con con n) (\ t -> con (\ x -> con (\ y -> con (plus x y)))) ] ;
 give [] ; root ;
 
-make main := eval plus11 : Nat
+make main := eval plus11 : Nat ;
+elab main

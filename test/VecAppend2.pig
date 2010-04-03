@@ -2,7 +2,10 @@ make ship := (\ X x y q P p ->
                coe (P x) (P y) (con (((: :- P == P) _)
                                 % x y _)) p)
            : (X : Set)(x : X)(y : X)(q : :- x == y)(P : X -> Set) -> P x -> P y ;
-make Nat := (Mu con ['arg (Enum ['zero 'suc]) [ (con ['done]) (con ['ind1 con ['done]]) ] ] ) : Set ;
+make Nat := (Mu con ['sigmaD (Enum ['zero 
+                                    'suc]) 
+                             [ (con ['constD (Sig ())]) 
+			       (con ['prodD (con ['idD]) (con ['constD (Sig ())]) ])]]) : Set ;
 make zero := con ['zero] : Nat ;
 make suc := (\ x -> con ['suc x]) : Nat -> Nat ;
 make one := (suc zero) : Nat ;

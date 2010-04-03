@@ -1,5 +1,7 @@
-make nat := (Mu con ['arg (Enum ['zero 'suc]) [ (con ['done]) (con ['ind1 con ['
-done]]) ] ] ) : Set ;
+make nat := (Mu con ['sigmaD (Enum ['zero 
+                                    'suc]) 
+                             [ (con ['constD (Sig ())]) 
+			       (con ['prodD (con ['idD]) (con ['constD (Sig ())]) ])]]) : Set ;
 make zero := con ['zero] : nat ;
 make suc := (\ x -> con ['suc x]) : nat -> nat ;
 make one := (suc zero) : nat ;
@@ -19,4 +21,5 @@ lambda r ;
 lambda y ;
 give suc (h y) ;
 root ;
-make x := (plus two two) : nat
+make x := (plus two two) : nat;
+elab x

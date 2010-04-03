@@ -1,5 +1,8 @@
 make Nat : Set ;
-make NatD := con ['arg (Enum ['zero 'suc]) [ (con ['done]) (con ['ind1 con ['done]]) ] ] : Desc ;
+make NatD := con ['sigmaD (Enum ['zero 
+                                    'suc]) 
+                             [ (con ['constD (Sig ())]) 
+			       (con ['prodD (con ['idD]) (con ['constD (Sig ())]) ])]] : Desc ;
 give Mu NatD ;
 make zero := con ['zero] : Nat ;
 make suc := (\ x -> con ['suc x]) : Nat -> Nat ;

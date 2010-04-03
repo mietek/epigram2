@@ -1,4 +1,7 @@
-make Nat := (Mu con ['arg (Enum ['zero 'suc]) [ (con ['done]) (con ['ind1 con ['done]]) ] ] ) : Set ;
+make Nat := (Mu con ['sigmaD (Enum ['zero 
+                                    'suc]) 
+                             [ (con ['constD (Sig ())]) 
+			       (con ['prodD (con ['idD]) (con ['constD (Sig ())]) ])]]) : Set ;
 make zero := con ['zero] : Nat ;
 make suc := (\ x -> con ['suc x]) : Nat -> Nat ;
 make one := (suc zero) : Nat ;
@@ -21,4 +24,5 @@ lambda y ;
 give return (suc ((h y) call)) ;
 root ;
 
-make x := plus two two : Nat
+make x := plus two two : Nat;
+elab x

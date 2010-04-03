@@ -18,9 +18,9 @@ give con ? ; lambda x2 ; lambda eqxx2 ;
 give ship X x x2 eqxx2 (\ z -> :- R z y) eqxy ; root ;
 
 make Plus := (\ A B ->
-  Mu con ['arg (Enum ['inl 'inr])
-          [ con ['arg A (\ x -> con ['done])]
-            con ['arg B (\ y -> con ['done])]
+  Mu con ['sigmaD (Enum ['inl 'inr])
+          [ con ['sigmaD A (\ x -> con ['constD (Sig ())])]
+            con ['sigmaD B (\ y -> con ['constD (Sig ())])]
           ]
        ]
   ) :  Set -> Set -> Set ;

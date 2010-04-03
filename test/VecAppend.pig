@@ -3,7 +3,10 @@ make ship := (\ X x y q P p ->
                                 % x y _)) p)
            : (X : Set)(x : X)(y : X)(q : :- x == y)(P : X -> Set) -> P x -> P y ;
 make Nat : Set ;
-make NatD := con ['arg (Enum ['zero 'suc]) [ (con ['done]) (con ['ind1 con ['done]]) ] ] : Desc ;
+make NatD := con ['sigmaD (Enum ['zero 
+                                    'suc]) 
+                             [ (con ['constD (Sig ())]) 
+			       (con ['prodD (con ['idD]) (con ['constD (Sig ())]) ])]] : Desc ;
 give Mu NatD ;
 make zero := con ['zero] : Nat ;
 make suc := (\ x -> con ['suc x]) : Nat -> Nat ;
@@ -26,3 +29,4 @@ make vcons := (\ n a as -> con [ 1 n a as , _ ]) : (n : Nat) -> A -> Vec n -> Ve
 make vappend := (\ m as -> iinduction Nat Vec.VecD m as (\ mas -> (n : Nat) -> Vec n -> Vec (plus (mas !) n)) (\ m -> con [ (\ p _ n as -> ship Nat zero m p (\ mm -> Vec (plus mm n)) as) (con \ mm -> con \ a -> con \ as p -> con \ appp _ n as -> ship Nat (con ['suc mm]) m p (\ mmm -> Vec (plus  mmm n)) (vcons (plus mm n) a (appp n as))) ])) : (m : Nat) -> Vec m -> (n : Nat) -> Vec n -> Vec (plus m n) ;
 root ;
 make ex := Vec.vcons Nat one zero (Vec.vcons Nat zero one (Vec.vnil Nat)) : Vec.Vec Nat two ;
+elab ex

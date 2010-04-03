@@ -12,4 +12,5 @@ Made.
 Made.
 Made.
 Made.
+[[] (con ['suc []]) (con ['suc (con ['suc []])]) (con ['suc (con ['suc (con ['suc []])])])]
 Loaded.
