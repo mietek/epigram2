@@ -84,6 +84,7 @@
 >   descOp :
 >   boxOp :
 >   mapBoxOp :
+>   mapOp :
 >   inductionOp :
 >   switchDOp :
 
