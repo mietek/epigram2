@@ -98,7 +98,36 @@
 >   ("mapBox", [x,d,bp,p,v]) -> App (Var "__mapBox") [x, p, v]
 >   ("switchD", [e,b,x]) -> App (Var "__switch") [x, b]
 
+
 > import -> OpCode where
+
+>   type DescDispatchTable = (VAL, 
+>                         VAL -> VAL,
+>                         VAL -> VAL -> VAL,
+>                         VAL -> VAL -> VAL,
+>                         VAL -> VAL -> VAL,
+>                         VAL -> VAL -> VAL)
+>
+>   mkLazyDescDef :: VAL -> DescDispatchTable -> Either NEU VAL
+>   mkLazyDescDef arg cases = 
+>     let const = arg $$ Fst
+>         args  = arg $$ Snd
+>     in Right $ dispatch const cases args
+>         where dispatch :: VAL -> DescDispatchTable -> VAL -> VAL
+>               dispatch ZE (idCase, constCase, sumCase, prodCase, sigmaCase, piCase) args = 
+>                   idCase
+>               dispatch (SU ZE) (idCase, constCase, sumCase, prodCase, sigmaCase, piCase) args = 
+>                   constCase (args $$ Fst)
+>               dispatch (SU (SU ZE)) (idCase, constCase, sumCase, prodCase, sigmaCase, piCase) args =
+>                   sumCase (args $$ Fst) (args $$ Snd $$ Fst)
+>               dispatch (SU (SU (SU ZE))) (idCase, constCase, sumCase, prodCase, sigmaCase, piCase) args =
+>                   prodCase (args $$ Fst) (args $$ Snd $$ Fst)
+>               dispatch (SU (SU (SU (SU ZE)))) (idCase, constCase, sumCase, prodCase, sigmaCase, piCase) args =
+>                   sigmaCase (args $$ Fst) (args $$ Snd $$ Fst)
+>               dispatch (SU (SU (SU (SU (SU ZE))))) (idCase, constCase, sumCase, prodCase, sigmaCase, piCase) args =
+>                   piCase (args $$ Fst) (args $$ Snd $$ Fst)
+>               dispatch _ _ _ = error "mkLazyDescDef: Invalid constructor"
+
 >   descOp :: Op
 >   descOp = Op
 >     { opName = "desc"
@@ -112,26 +141,28 @@
 >         "X" :<: SET :-: \xX ->
 >         Target SET
 >       dOpRun :: [VAL] -> Either NEU VAL
->       dOpRun [IDD,           _X]  = Right _X
->       dOpRun [CONSTD _Z ,    _X]  = Right _Z
->       dOpRun [SUMD _E _B,    _X]  = Right $ SIGMA (ENUMT _E) .
->                                                L $ HF "x" $ \x ->
->                                                descOp @@ [ switchDOp @@ [_E, x, _B]  , _X]
->       dOpRun [PRODD _D _D',  _X]  = Right $ TIMES  (descOp @@ [ _D , _X ])
->                                                    (descOp @@ [ _D', _X ])
->       dOpRun [SIGMAD _S _T,  _X]  = Right $ SIGMA  _S . 
->                                                    L $ HF "s" $ \s ->
->                                                    descOp @@ [ _T $$ A s, _X ]
->       dOpRun [PID _S _T,     _X]  = Right $ PI  _S . 
->                                                 L $ HF "s" $ \s ->
->                                                 descOp @@ [ _T $$ A s, _X ]
->       dOpRun [N _D,          _]   = Left _D
+>       dOpRun [CON arg, _X]  = mkLazyDescDef arg (idCase _X, 
+>                                                  constCase _X, 
+>                                                  sumCase _X, 
+>                                                  prodCase _X, 
+>                                                  sigmaCase _X, 
+>                                                  piCase _X)
+>       dOpRun [N _D, _]      = Left _D
+>           
+>       idCase _X          = _X
+>       constCase _X _Z    = _Z
+>       sumCase _X _E _B   = SIGMA (ENUMT _E) .
+>                                  L $ HF "x" $ \x ->
+>                                 descOp @@ [ switchDOp @@ [_E, x, _B]  , _X]
+>       prodCase _X _D _D' = TIMES  (descOp @@ [ _D , _X ])
+>                                   (descOp @@ [ _D', _X ])
+>       sigmaCase _X _S _T = SIGMA  _S . 
+>                                   L $ HF "s" $ \s ->
+>                                   descOp @@ [ _T $$ A s, _X ]
+>       piCase _X _S _T    = PI  _S . 
+>                                L $ HF "s" $ \s ->
+>                                descOp @@ [ _T $$ A s, _X ]
 
-%if False
-
->       dOpRun vs = error ("Desc.descOp.dOpRun: couldn't handle " ++ show vs)
-
-%endif
 
 >   boxOp :: Op
 >   boxOp = Op
@@ -148,29 +179,33 @@
 >         "v" :<: (descOp @@ [dD,xX]) :-: \v ->
 >         Target SET
 >       boxOpRun :: [VAL] -> Either NEU VAL
->       boxOpRun [IDD ,          _X, _P, x ]  = 
->           Right $ _P $$ A x
->       boxOpRun [CONSTD _Z ,    _X, _P, x]   = 
->           Right $ _Z
->       boxOpRun [SUMD _E _B,    _X, _P, ab]  = 
+>       boxOpRun [CON arg, _X, _P, x]  = mkLazyDescDef arg (idCase _X _P x, 
+>                                                       constCase _X _P x, 
+>                                                       sumCase _X _P x, 
+>                                                       prodCase _X _P x, 
+>                                                       sigmaCase _X _P x, 
+>                                                       piCase _X _P x)
+>       boxOpRun [N x,           _,_,_] = Left x
+>       idCase _X _P x = _P $$ A x
+>       constCase _X _P x _Z = _Z
+>       sumCase _X _P ab _E _B = 
 >           let a = ab $$ Fst
 >               b = ab $$ Snd
->           in Right $ boxOp @@ [switchDOp @@ [_E, a, _B], _X, _P, b]
->       boxOpRun [PRODD _D _D',  _X, _P, dd'] = 
+>           in boxOp @@ [switchDOp @@ [_E, a, _B], _X, _P, b]
+>       prodCase _X _P dd' _D _D' = 
 >           let d  = dd' $$ Fst
 >               d' = dd' $$ Snd 
->           in Right $ TIMES  (boxOp @@ [_D, _X, _P, d])
->                             (boxOp @@ [_D', _X, _P, d'])
->       boxOpRun [SIGMAD _S _T,  _X, _P, ab]  = 
+>           in TIMES  (boxOp @@ [_D, _X, _P, d])
+>                     (boxOp @@ [_D', _X, _P, d'])
+>       sigmaCase _X _P ab _S _T = 
 >           let a = ab $$ Fst
 >               b = ab $$ Snd
->           in Right $ boxOp @@ [_T $$ A a, _X, _P, b]
->       boxOpRun [PID _S _T,     _X, _P, f]  =
->           Right $ PI  _S . 
->                       L $ HF "s" $ \s -> 
->                       boxOp @@ [_T $$ A s, _X, _P, f $$ A s]
->       boxOpRun [N x,           _,_,_] = 
->           Left x
+>           in boxOp @@ [_T $$ A a, _X, _P, b]
+>       piCase _X _P f _S _T =
+>           PI  _S . 
+>               L $ HF "s" $ \s -> 
+>               boxOp @@ [_T $$ A s, _X, _P, f $$ A s]
+
 
 >   mapBoxOp :: Op
 >   mapBoxOp = Op
@@ -188,28 +223,32 @@
 >         "v" :<: (descOp @@ [dD,xX]) :-: \v ->
 >          Target (boxOp @@ [dD,xX,pP,v])
 >       mapBoxOpRun :: [VAL] -> Either NEU VAL
->       mapBoxOpRun [IDD,            _X, _P, _R, v]   = 
->           Right $ _R $$ A v
->       mapBoxOpRun [CONSTD _Z,      _X, _P, _R, z]   = 
->           Right z
->       mapBoxOpRun [SUMD _E _B,     _X, _P, _R, ab]  =
+>       mapBoxOpRun [CON arg, _X, _P, _R, x]  = mkLazyDescDef arg (idCase _X _P _R x, 
+>                                                              constCase _X _P _R x, 
+>                                                              sumCase _X _P _R x, 
+>                                                              prodCase _X _P _R x, 
+>                                                              sigmaCase _X _P _R x, 
+>                                                              piCase _X _P _R x)
+>       mapBoxOpRun [N x,     _, _,_,_]       = Left x
+>
+>       idCase _X _P _R v = _R $$ A v
+>       constCase _X _P _R z _Z = z
+>       sumCase _X _P _R ab _E _B =
 >           let a = ab $$ Fst
 >               b = ab $$ Snd
->           in Right $ mapBoxOp @@ [switchDOp @@ [_E, a, _B], _X, _P, _R, b]
->       mapBoxOpRun [PRODD _D _D',   _X, _P, _R, dd'] = 
+>           in mapBoxOp @@ [switchDOp @@ [_E, a, _B], _X, _P, _R, b]
+>       prodCase _X _P _R dd' _D _D' = 
 >           let d  = dd' $$ Fst
 >               d' = dd' $$ Snd 
->           in Right $ PAIR  (mapBoxOp @@ [_D,  _X, _P, _R, d])
->                            (mapBoxOp @@ [_D', _X, _P, _R, d'])
->       mapBoxOpRun [SIGMAD _S _T,   _X, _P, _R, ab]  =
+>           in PAIR  (mapBoxOp @@ [_D,  _X, _P, _R, d])
+>                    (mapBoxOp @@ [_D', _X, _P, _R, d'])
+>       sigmaCase _X _P _R ab _S _T =
 >           let a = ab $$ Fst
 >               b = ab $$ Snd
->           in Right $ mapBoxOp @@ [_T $$ A a, _X, _P, _R, b]
->       mapBoxOpRun [PID _S _T,      _X, _P, _R, f]   =
->           Right $ L . HF "s" $ \s ->
->                   mapBoxOp @@ [_T $$ A s, _X, _P, _R, f $$ A s]
->       mapBoxOpRun [N x,            _, _,_,_]        = 
->           Left x
+>           in mapBoxOp @@ [_T $$ A a, _X, _P, _R, b]
+>       piCase _X _P _R f _S _T =
+>           L . HF "s" $ \s ->
+>           mapBoxOp @@ [_T $$ A s, _X, _P, _R, f $$ A s]
 
 
 >   mapOp = Op
@@ -227,28 +266,32 @@
 >           "v" :<: (descOp @@ [dD, xX]) :-: \v -> 
 >           Target (descOp @@ [dD, yY])
 >         mapOpRun :: [VAL] -> Either NEU VAL
->         mapOpRun [IDD, _X, _Y, sig, x] = Right $ sig $$ A x
->         mapOpRun [CONSTD _Z, _X, _Y, sig, z] = Right z
->         mapOpRun [SUMD _E _B, _X, _Y, sig, ab] = 
+>         mapOpRun [CON arg, _X, _Y, f, v]  = mkLazyDescDef arg (idCase _X _Y f v, 
+>                                                            constCase _X _Y f v, 
+>                                                            sumCase _X _Y f v, 
+>                                                            prodCase _X _Y f v, 
+>                                                            sigmaCase _X _Y f v, 
+>                                                            piCase _X _Y f v)
+>         mapOpRun [N d,     a, b, f, x] = Left d
+>
+>         idCase _X _Y sig x = sig $$ A x
+>         constCase _X _Y sig z _Z = z
+>         sumCase _X _Y sig ab _E _B = 
 >             let a = ab $$ Fst
 >                 b = ab $$ Snd
->             in Right $
->                PAIR a (mapOp @@ [ switchDOp @@ [_E, a, _B], _X, _Y, sig, b])
->         mapOpRun [PRODD _D _D', _X, _Y, sig, dd'] = 
+>             in PAIR a (mapOp @@ [ switchDOp @@ [_E, a, _B], _X, _Y, sig, b])
+>         prodCase _X _Y sig dd' _D _D' = 
 >             let d  = dd' $$ Fst
 >                 d' = dd' $$ Snd 
->             in 
->               Right $ PAIR  (mapOp @@ [_D,  _X, _Y, sig, d])
->                             (mapOp @@ [_D', _X, _Y, sig, d'])
->         mapOpRun [SIGMAD _S _T, _X, _Y, sig, ab] = 
+>             in PAIR  (mapOp @@ [_D,  _X, _Y, sig, d])
+>                      (mapOp @@ [_D', _X, _Y, sig, d'])
+>         sigmaCase _X _Y sig ab _S _T = 
 >             let a = ab $$ Fst
 >                 b = ab $$ Snd
->             in
->               Right $ PAIR a (mapOp @@ [_T $$ A a, _X, _Y, sig, b])
->         mapOpRun [PID _S _T, _X, _Y, sig, f] =
->             Right $  L . HF "s" $ \s ->
->                      mapOp @@ [_T $$ A s, _X, _Y, sig, f $$ A s]
->         mapOpRun [N d,     a, b, f, x] = Left d
+>             in PAIR a (mapOp @@ [_T $$ A a, _X, _Y, sig, b])
+>         piCase _X _Y sig f _S _T =
+>             L . HF "s" $ \s ->
+>             mapOp @@ [_T $$ A s, _X, _Y, sig, f $$ A s]
 
 
 >   inductionOpMethodType = L . HF "d" $ \d ->
@@ -298,11 +341,13 @@
 >         bOpTy = "e" :<: enumU :-: \e ->
 >                 Target SET
 >         bOpRun :: [VAL] -> Either NEU VAL
->         bOpRun [NILE] = Right UNIT
->         bOpRun [CONSE t e'] = Right $
->             TIMES desc 
->                   (branchesDOp @@ [e'])
+>         bOpRun [CON arg] = mkLazyEnumDef arg (nilECase, 
+>                                               consECase)
 >         bOpRun [N e] = Left e
+>
+>         nilECase       = UNIT
+>         consECase t e' = TIMES desc (branchesDOp @@ [e'])
+
 
 
 >   switchDOp = Op
@@ -318,17 +363,22 @@
 >           "x" :<: ENUMT e :-: \x ->
 >           Target desc
 >         sOpRun :: [VAL] -> Either NEU VAL
->         sOpRun [CONSE t e', ps, ZE]   = Right $ 
->             ps $$ Fst
->         sOpRun [CONSE t e', ps, SU n] = Right $
->             switchDOp @@ [ e' , ps $$ Snd , n ]
->         sOpRun [_, _, N n] = Left n
+>         sOpRun [_      , _ , N n] = Left n
+>         sOpRun [CON arg, ps, n] = mkLazyEnumDef arg (error "switchDOp: NilE barfs me.", 
+>                                                      consECase n ps)
 
 %if False
 
 >         sOpRun vs = error ("Desc.SwitchD.sOpRun: couldn't handle " ++ show vs)
 
 %endif
+
+>
+>         consECase :: VAL -> VAL -> VAL -> VAL -> VAL
+>         consECase ZE     ps t e' = ps $$ Fst
+>         consECase (SU n) ps t e' = switchDOp @@ [ e'
+>                                                 , ps $$ Snd
+>                                                 , n ]
 
 \subsection{Plugging Axioms in}
 

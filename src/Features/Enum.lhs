@@ -170,6 +170,19 @@ Equality rules:
 >     return $ Su nnv
 
 > import -> OpCode where
+
+>   type EnumDispatchTable = (VAL, VAL -> VAL -> VAL) 
+>
+>   mkLazyEnumDef :: VAL -> EnumDispatchTable -> Either NEU VAL
+>   mkLazyEnumDef arg cases =
+>     let const = arg $$ Fst
+>         args  = arg $$ Snd
+>     in Right $ dispatch const cases args
+>        where dispatch :: VAL -> EnumDispatchTable -> VAL -> VAL
+>              dispatch ZE (nilECase, consECase) args = nilECase
+>              dispatch (SU ZE) (nilECase, consECase) args =
+>                  consECase (args $$ Fst) (args $$ Snd $$ Fst)
+
 >   branchesOp = Op 
 >     { opName   = "branches"
 >     , opArity  = 2 
@@ -182,10 +195,8 @@ Equality rules:
 >                 Target SET
 
 >         bOpRun :: [VAL] -> Either NEU VAL
->         bOpRun [NILE , _] = Right UNIT
->         bOpRun [CONSE t e' , p] = 
->           Right (TIMES (p $$ A ZE) 
->                 (branchesOp @@ [e' , L (HF "x" $ \x -> p $$ A (SU x))]))
+>         bOpRun [CON arg, p] = mkLazyEnumDef arg (nilECase p, 
+>                                                  consECase p)
 >         bOpRun [N e , _] = Left e 
 
 %if False
@@ -193,6 +204,11 @@ Equality rules:
 >         bOpRun vs = error ("Enum.branches.bOpRun: couldn't handle " ++ show vs)
 
 %endif
+
+>         nilECase p = UNIT
+>         consECase p t e' = 
+>             TIMES (p $$ A ZE) 
+>                   (branchesOp @@ [e' , L (HF "x" $ \x -> p $$ A (SU x))])
 
 >   switchOp = Op
 >     { opName  = "switch"
@@ -207,16 +223,18 @@ Equality rules:
 >           "p" :<: ARR (ENUMT e) SET :-: \p ->
 >           "b" :<: branchesOp @@ [e , p] :-: \b -> 
 >           Target (p $$ A x)
-
 >         sOpRun :: [VAL] -> Either NEU VAL
->         sOpRun [CONSE t e' , ZE , p , ps] = Right $ ps $$ Fst
->         sOpRun [CONSE t e' , SU n , p , ps] =
->             Right $ switchOp @@ [ e'
->                                 , n
->                                 , L . HF "x" $ \x -> p $$ A (SU x)
->                                 , ps $$ Snd ]
->         sOpRun [_ , N n , _ , _] = Left n
-
+>         sOpRun [_      , N n , _ , _] = Left n
+>         sOpRun [CON arg, n, p, ps] = mkLazyEnumDef arg (error "switchOp: NilE barfs me.", 
+>                                                         consECase n p ps)
+>
+>         consECase :: VAL -> VAL -> VAL -> VAL -> VAL -> VAL
+>         consECase ZE     p ps t e' = ps $$ Fst
+>         consECase (SU n) p ps t e' =
+>             switchOp @@ [ e'
+>                         , n
+>                         , L . HF "x" $ \x -> p $$ A (SU x)
+>                         , ps $$ Snd ]
 
 > import -> Coerce where
 >   coerce (EnumT (CONSE _ _,   CONSE _ _))      _  (N x) = Left x
