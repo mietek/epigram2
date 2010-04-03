@@ -33,11 +33,13 @@
 >                                    VOID)
 >   pattern CONSTD x    = CON (PAIR  (SU ZE)                 
 >                                    (PAIR x VOID))
->   pattern PRODD d d'  = CON (PAIR  (SU (SU ZE))            
+>   pattern SUMD e b    = CON (PAIR  (SU (SU ZE))
+>                                    (PAIR e (PAIR b VOID)))
+>   pattern PRODD d d'  = CON (PAIR  (SU (SU (SU ZE)))
 >                                    (PAIR d (PAIR d' VOID)))
->   pattern SIGMAD s t  = CON (PAIR  (SU (SU (SU ZE)))
+>   pattern SIGMAD s t  = CON (PAIR  (SU (SU (SU (SU ZE))))
 >                                    (PAIR s (PAIR t VOID)))
->   pattern PID s t     = CON (PAIR  (SU (SU (SU (SU ZE))))
+>   pattern PID s t     = CON (PAIR  (SU (SU (SU (SU (SU ZE)))))
 >                                    (PAIR s (PAIR t VOID)))
 
 > import -> CanDisplayPats where
@@ -46,11 +48,13 @@
 >                                       DVOID)
 >   pattern DCONSTD x    = DCON (DPAIR  (DSU DZE)
 >                                       (DPAIR x DVOID))
->   pattern DPRODD d d'  = DCON (DPAIR  (DSU (DSU DZE))
+>   pattern DSUMD e b    = DCON (DPAIR  (DSU (DSU DZE))
+>                                       (DPAIR e (DPAIR b DVOID)))
+>   pattern DPRODD d d'  = DCON (DPAIR  (DSU (DSU (DSU DZE)))
 >                                       (DPAIR d (DPAIR d' DVOID)))
->   pattern DSIGMAD s t  = DCON (DPAIR  (DSU (DSU (DSU DZE)))
+>   pattern DSIGMAD s t  = DCON (DPAIR  (DSU (DSU (DSU (DSU DZE))))
 >                                       (DPAIR s (DPAIR t DVOID)))
->   pattern DPID s t     = DCON (DPAIR  (DSU (DSU (DSU (DSU DZE))))
+>   pattern DPID s t     = DCON (DPAIR  (DSU (DSU (DSU (DSU (DSU DZE)))))
 >                                       (DPAIR s (DPAIR t DVOID)))
 
 > import -> CanPretty where
@@ -86,6 +90,7 @@
 >   mapBoxOp :
 >   mapOp :
 >   inductionOp :
+>   branchesDOp :
 >   switchDOp :
 
 > import -> OpCompile where
@@ -109,6 +114,9 @@
 >       dOpRun :: [VAL] -> Either NEU VAL
 >       dOpRun [IDD,           _X]  = Right _X
 >       dOpRun [CONSTD _Z ,    _X]  = Right _Z
+>       dOpRun [SUMD _E _B,    _X]  = Right $ SIGMA (ENUMT _E) .
+>                                                L $ HF "x" $ \x ->
+>                                                descOp @@ [ switchDOp @@ [_E, x, _B]  , _X]
 >       dOpRun [PRODD _D _D',  _X]  = Right $ TIMES  (descOp @@ [ _D , _X ])
 >                                                    (descOp @@ [ _D', _X ])
 >       dOpRun [SIGMAD _S _T,  _X]  = Right $ SIGMA  _S . 
@@ -144,6 +152,10 @@
 >           Right $ _P $$ A x
 >       boxOpRun [CONSTD _Z ,    _X, _P, x]   = 
 >           Right $ _Z
+>       boxOpRun [SUMD _E _B,    _X, _P, ab]  = 
+>           let a = ab $$ Fst
+>               b = ab $$ Snd
+>           in Right $ boxOp @@ [switchDOp @@ [_E, a, _B], _X, _P, b]
 >       boxOpRun [PRODD _D _D',  _X, _P, dd'] = 
 >           let d  = dd' $$ Fst
 >               d' = dd' $$ Snd 
@@ -180,6 +192,10 @@
 >           Right $ _R $$ A v
 >       mapBoxOpRun [CONSTD _Z,      _X, _P, _R, z]   = 
 >           Right z
+>       mapBoxOpRun [SUMD _E _B,     _X, _P, _R, ab]  =
+>           let a = ab $$ Fst
+>               b = ab $$ Snd
+>           in Right $ mapBoxOp @@ [switchDOp @@ [_E, a, _B], _X, _P, _R, b]
 >       mapBoxOpRun [PRODD _D _D',   _X, _P, _R, dd'] = 
 >           let d  = dd' $$ Fst
 >               d' = dd' $$ Snd 
@@ -213,6 +229,11 @@
 >         mapOpRun :: [VAL] -> Either NEU VAL
 >         mapOpRun [IDD, _X, _Y, sig, x] = Right $ sig $$ A x
 >         mapOpRun [CONSTD _Z, _X, _Y, sig, z] = Right z
+>         mapOpRun [SUMD _E _B, _X, _Y, sig, ab] = 
+>             let a = ab $$ Fst
+>                 b = ab $$ Snd
+>             in Right $
+>                PAIR a (mapOp @@ [ switchDOp @@ [_E, a, _B], _X, _Y, sig, b])
 >         mapOpRun [PRODD _D _D', _X, _Y, sig, dd'] = 
 >             let d  = dd' $$ Fst
 >                 d' = dd' $$ Snd 
@@ -266,6 +287,23 @@
 >                                        inductionOp @@ [ dD , w , pP , p ]
 >                                    , v]) 
 >       inductionOpRun [_, N x, _,_] = Left x
+
+>   branchesDOp = Op 
+>     { opName   = "branchesD"
+>     , opArity  = 1
+>     , opTyTel  = bOpTy
+>     , opRun    = bOpRun
+>     , opSimp   = \_ _ -> empty
+>     } where
+>         bOpTy = "e" :<: enumU :-: \e ->
+>                 Target SET
+>         bOpRun :: [VAL] -> Either NEU VAL
+>         bOpRun [NILE] = Right UNIT
+>         bOpRun [CONSE t e'] = Right $
+>             TIMES desc 
+>                   (branchesDOp @@ [e'])
+>         bOpRun [N e] = Left e
+
 
 >   switchDOp = Op
 >     { opName = "switchD"
@@ -392,19 +430,25 @@ appropriate place when the proof state is printed.
 >                    (L $ HF "c" $ \c -> 
 >                     switchDOp @@ [ constructors , cases , c ])
 >       where constructors = (CONSE (TAG "idD")
->                             (CONSE (TAG "constD")
->                              (CONSE (TAG "prodD")
->                               (CONSE (TAG "sigmaD")
->                                (CONSE (TAG "piD")
->                                 NILE)))))
->             cases = PAIR (CONSTD UNIT) 
+>                            (CONSE (TAG "constD")
+>                            (CONSE (TAG "sumD")
+>                            (CONSE (TAG "prodD")
+>                            (CONSE (TAG "sigmaD")
+>                            (CONSE (TAG "piD")
+>                             NILE))))))
+>             cases = (PAIR (CONSTD UNIT) 
 >                     (PAIR (SIGMAD SET (L $ K $ CONSTD UNIT))
->                      (PAIR (PRODD IDD (PRODD IDD (CONSTD UNIT)))
->                       (PAIR (SIGMAD SET (L $ HF "S" $ \_S -> 
->                                          (PRODD (PID _S (L $ K IDD)) (CONSTD UNIT))))
->                        (PAIR (SIGMAD SET (L $ HF "S" $ \_S -> 
->                                          (PRODD (PID _S (L $ K IDD)) (CONSTD UNIT))))
->                         VOID))))
+>                     (PAIR (SIGMAD enumU (L $ HF "E" $ \_E ->
+>                                         (SIGMAD (branchesDOp @@ [_E]) 
+>                                                 (L $ K (CONSTD UNIT)))))
+>                     (PAIR (PRODD IDD (PRODD IDD (CONSTD UNIT)))
+>                     (PAIR (SIGMAD SET (L $ HF "S" $ \_S -> 
+>                                       (PRODD (PID _S (L $ K IDD)) 
+>                                              (CONSTD UNIT))))
+>                     (PAIR (SIGMAD SET (L $ HF "S" $ \_S -> 
+>                                       (PRODD (PID _S (L $ K IDD)) 
+>                                              (CONSTD UNIT))))
+>                      VOID))))))
 >   descFakeREF :: REF
 >   descFakeREF = [("Primitive", 0), ("Desc", 0)] := (FAKE :<: SET)
 >   desc :: VAL
