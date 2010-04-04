@@ -190,12 +190,11 @@ The |Con| object is used and abused in many circumstances. However,
 all ilts usages share the same pattern: |Con| is used wheneveer we
 need to ''pack'' an object |t| into something else, to avoid
 ambiguities. For example, we use |Con| in the following case:
-
-\begin{prooftree}
-\AxiomC{|desc x (Mu x) :>: y|}
-\UnaryInfC{|Mu x :>: Con y|}
-\end{prooftree}
-
+%
+\[
+\Rule{desc x (Mu x) \ni y}
+     {Mu x \ni Con y}
+\]
 
 \subsubsection{Eliminators}
 

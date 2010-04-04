@@ -536,11 +536,11 @@ to evaluate the well-typed terms.
 
 As for lambda, it is simple too. We wish the code was simple
 too. But, hey, it isn't. The formal typing rule is the following:
-
-\begin{prooftree}
-\AxiomC{$x : S \vdash T x \ni t$}
-\UnaryInfC{$\Pi S\ T \ni \lambda x . t$}
-\end{prooftree}
+%
+\[
+\Rule{x : S \vdash T x \ni t}
+     {\Pi S\ T \ni \lambda x . t}
+\]
 
 As for the implementation, we apply the by-now standard trick of
 making a fresh variable $x \in S$ and computing the type |T x|. Then,
@@ -554,12 +554,12 @@ we simply have to check that $T\ x \ni t$.
 
 Formally, we can bring the |Ex| terms into the |In| world with the
 rule:
-
-\begin{prooftree}
-\AxiomC{$n \in Y$}
-\AxiomC{$\star \ni W \equiv Y$}
-\BinaryInfC{$W \ni n$}
-\end{prooftree}
+%
+\[
+\Rule{n \in Y  \qquad
+      \star \ni W \equiv Y}
+     {W \ni n}
+\]
 
 This translates naturally into the following code:
 
@@ -599,11 +599,10 @@ This translates into the following signature:
 
 We all know the rule to infer the type of a free variable from the
 context:
-
-\begin{prooftree}
-\AxiomC{}
-\UnaryInfC{$\Gamma, x : A, \Delta \vdash x \in A$}
-\end{prooftree}
+%
+\[
+\CAxiom{\Gamma, x : A, \Delta \vdash x \in A}
+\]
 
 In Epigram, parameters carry their types, so it is even easier:
 
@@ -611,12 +610,12 @@ In Epigram, parameters carry their types, so it is even easier:
 
 The rule for eliminators is a generalization of the rule for function
 application. Let us give a look at its formal rule:
-
-\begin{prooftree}
-\AxiomC{$f \in \Pi\ S\ T$}
-\AxiomC{$S \ni x$}
-\BinaryInfC{$f x \in {(B x)}^\downarrow$}
-\end{prooftree}
+%
+\[
+\Rule{f \in \Pi\ S\ T  \qquad
+      S \ni x}
+     {f x \in {(B x)}^\downarrow}
+\]
 
 The story is the same in the general case: we infer the eliminated
 term |t| and we type-check the eliminator, using |elimTy|. Because
@@ -648,12 +647,12 @@ operator application:
 >               return $ ch :=>: evTm x
 
 Type ascription is formalized by the following rule:
-
-\begin{prooftree}
-\AxiomC{$\star \ni \mbox{ty}$}
-\AxiomC{$\mbox{ty}^\downarrow \ni t$}
-\BinaryInfC{$(t :\in T) \in \mbox{ty}^\downarrow$}
-\end{prooftree}
+%
+\[
+\Rule{\star \ni \mbox{ty}  \qquad
+      \mbox{ty}^\downarrow \ni t}
+     {(t :\in T) \in \mbox{ty}^\downarrow}
+\]
 
 Which translates directly into the following code:
 
