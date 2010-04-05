@@ -249,7 +249,7 @@ can compute a generic catamorphism, $\cataI$, from $\inductionI$.
 \AllI{\:}{(\DVar{\V{i}})}{& \V{X}}{\V{x}} &
     \DVar{\pair{\V{i}}{\V{x}}{}} \\
 \AllI{\:}{(\DConst{\V{K}})}{& \V{X}}{\V{k}} &
-    \DConst{\V{K}} \\
+    \DConst{\Unit} \\
 \AllI{\:}{(\DProd{\V{D}}{\V{D'}})}{& \V{X}}{\pair{\V{d}}{\V{d'}}{}} &
     \DProd{\AllI{}{\V{D}}{\V{X}}{\V{d}}}{\AllI{}{\V{D'}}{\V{X}}{\V{d'}}} \\
 \AllI{\:}{(\DSigma{\V{S}}{\V{D}})}{& \V{X}}{\pair{\V{s}}{\V{d}}{}} &
@@ -274,7 +274,7 @@ can compute a generic catamorphism, $\cataI$, from $\inductionI$.
 \allI{\:}{(\DVar{\V{i}})}{& \V{X}}{\V{P}}{\V{p}}{\V{x}} &
     \V{p}\: \pair{\V{i}}{\V{x}}{} \\
 \allI{\:}{(\DConst{\V{K}})}{& \V{X}}{\V{P}}{\V{p}}{\V{k}} &
-    \V{k} \\
+    \void \\
 \allI{\:}{(\DProd{\V{D}}{\V{D'}})}{& \V{X}}{\V{P}}{\V{p}}{\pair{\V{d}}{\V{d'}}{}} &
     \pair{\allI{}{\V{D}}{\V{X}}{\V{P}}{\V{p}}{\V{d}}}
          {\allI{}{\V{D'}}{\V{X}}{\V{P}}{\V{p}}{\V{d'}}}{} \\
