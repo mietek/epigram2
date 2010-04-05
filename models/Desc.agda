@@ -98,12 +98,55 @@ postulate
 -- Desc code
 --********************************************
 
+-- In the paper, we have presented Desc as the grammar of inductive
+-- types. Hence, the codes in the paper closely follow this
+-- grammar:
+
+data DescPaper : Set1 where
+  oneP : DescPaper
+  sigmaP : (S : Set) -> (S -> DescPaper) -> DescPaper
+  indx : DescPaper -> DescPaper
+  hindx : Set -> DescPaper -> DescPaper
+
+-- We take advantage of this model to give you an alternative
+-- presentation. This alternative model is the one implemented in
+-- Epigram. It is also the one which inspired the code for indexed
+-- descriptions.
+
+-- With sigma, we are actually "quoting" a standard type-former,
+-- namely:
+--     |Sigma : (S : Set) -> (S -> Set) -> Set|
+-- With:
+--     |sigma : (S : Set) -> (S -> Desc) -> Desc|
+
+-- In the alternative presentation, we go further and present all our
+-- codes as quotations of standard type-formers:
+
 data Desc {l : Level} : Set (suc l) where
   id : Desc
   const : Set l -> Desc
   prod : Desc -> Desc -> Desc
   sigma : (S : Set l) -> (S -> Desc) -> Desc
   pi : (S : Set l) -> (S -> Desc) -> Desc
+
+-- Note that we replace |oneP| by a more general |const| code. Whereas
+-- |oneP| was interpreted as the unit set, |const K| is
+-- interpreted as |K|, for any |K : Set|. Extensionally,
+-- |const K| and |sigma K (\_ -> Unit)| are equivalent. However,
+-- |const| is *first-order*, unlike its equivalent encoding. From a
+-- definitional perspective, we are giving more opportunities to the
+-- type-system, hence reducing the burden on the programmer. For the same
+-- reason, we introduce |prod| that overlaps with |pi|.
+
+-- This reorganisation is strictly equivalent to the |DescPaper|. For
+-- instance, we can encode |indx| and |hindx| using the following
+-- code:
+
+indx2 : {l : Level} -> Desc {l = l} -> Desc {l = l}
+indx2 D = prod id D
+
+hindx2 : Set -> Desc -> Desc
+hindx2 H D = prod (pi H (\_ -> id)) D
 
 
 --********************************************
@@ -147,6 +190,9 @@ all (pi S T) X P R f = \ s -> all (T s) X P R (f s)
 -- Map
 --********************************************
 
+-- This one is bonus: one could rightfully expect our so-called
+-- functors to have a morphism part! Here it is.
+
 map : {l : Level}(D : Desc)(X Y : Set l)(f : X -> Y)(v : [| D |] X) -> [| D |] Y
 map id X Y sig x = sig x
 map (const Z) X Y sig z = z
@@ -154,7 +200,9 @@ map (prod D D') X Y sig (d , d') = map D X Y sig d , map D' X Y sig d'
 map (sigma S T) X Y sig (a , b) = (a , map (T a) X Y sig b)
 map (pi S T) X Y sig f = \x -> map (T x) X Y sig (f x)
 
+-- Together with the proof that they respect the functor laws:
 
+-- map id = id
 proof-map-id : {l : Level}(D : Desc)(X : Set l)(v : [| D |] X) -> map D X X (\x -> x) v == v
 proof-map-id id X v = refl
 proof-map-id (const Z) X v = refl
@@ -162,7 +210,7 @@ proof-map-id (prod D D') X (v , v') = cong2 (\x y -> (x , y)) (proof-map-id D X 
 proof-map-id (sigma S T) X (a , b) = cong (\x -> (a , x)) (proof-map-id (T a) X b) 
 proof-map-id (pi S T) X f = reflFun (\a -> map (T a) X X (\x -> x) (f a)) f (\a -> proof-map-id (T a) X (f a))
 
-
+-- map (f . g) = map f . map g
 proof-map-compos : {l : Level}(D : Desc)(X Y Z : Set l)
                    (f : X -> Y)(g : Y -> Z)
                    (v : [| D |] X) -> 
@@ -185,14 +233,14 @@ proof-map-compos (pi S T) X Y Z f g fc = reflFun (\a -> map (T a) X Z (\x -> g (
 -- One would like to write the following:
 
 {-
-induction : {l : Level}
+ind : {l : Level}
             (D : Desc) 
             (P : Mu D -> Set l) ->
             ( (x : [| D |] (Mu D)) -> 
               All D (Mu D) P x -> P (con x)) ->
             (v : Mu D) ->
             P v
-induction D P ms (con xs) = ms xs (all D (Mu D) P (\x -> induction D P ms x) xs)
+ind D P ms (con xs) = ms xs (all D (Mu D) P (\x -> ind D P ms x) xs)
 -}
 
 -- But the termination checker is unhappy.
@@ -206,26 +254,26 @@ module Elim {l : Level}
        where
 
     mutual
-        induction : (x : Mu D) -> P x
-        induction (con xs) =  ms xs (hyps D xs)
+        ind : (x : Mu D) -> P x
+        ind (con xs) =  ms xs (hyps D xs)
     
         hyps : (D' : Desc)
                (xs : [| D' |] (Mu D)) ->
                All D' (Mu D) P xs
-        hyps id x = induction x
+        hyps id x = ind x
         hyps (const Z) z = Void
         hyps (prod D D') (d , d') = hyps D d , hyps D' d'
         hyps (sigma S T) (a , b) = hyps (T a) b
         hyps (pi S T) f = \s -> hyps (T s) (f s)
             
-induction : {l : Level}
+ind : {l : Level}
             (D : Desc) 
             (P : Mu D -> Set l) ->
             ( (x : [| D |] (Mu D)) -> 
               All D (Mu D) P x -> P (con x)) ->
             (v : Mu D) ->
             P v
-induction D P ms x = Elim.induction D P ms x
+ind D P ms x = Elim.ind D P ms x
 
 
 --********************************************
@@ -256,13 +304,15 @@ ze = con (Ze , Void)
 su : Nat -> Nat
 su n = con (Su , n)
 
+-- Now we can get addition for example:
+
 plusCase : (xs : [| NatD |] Nat) ->
            All NatD Nat (\_ -> Nat -> Nat) xs -> Nat -> Nat
 plusCase ( Ze , Void ) hs y = y
 plusCase ( Su , n ) hs y = su (hs y)
 
 plus : Nat -> Nat -> Nat
-plus x = induction NatD (\ _ -> (Nat -> Nat)) plusCase x
+plus x = ind NatD (\ _ -> (Nat -> Nat)) plusCase x
 
 -- Do this thing in Epigram, you will see that this is *not*
 -- hieroglyphic with a bit of elaboration.
@@ -324,65 +374,75 @@ node x le ri = con (Node , (x , (le , ri)))
 
 {-
 
-data EnumU : Set where
-  nilE : EnumU
-  consE : EnumU -> EnumU
+data En : Set where
+  nE : En
+  cE : En -> En
 
-spi : (e : EnumU)(P : EnumT e -> Set) -> Set
-spi nilE P = Unit
-spi (consE e) P = P EZe * spi e (\e -> P (ESu e))
+spi : (e : En)(P : EnumT e -> Set) -> Set
+spi nE P = Unit
+spi (cE e) P = P EZe * spi e (\e -> P (ESu e))
 
-switch : (e : EnumU)(P : EnumT e -> Set)(b : spi e P)(x : EnumT e) -> P x
-switch nilE P b ()
-switch (consE e) P b EZe = fst b
-switch (consE e) P b (ESu n) = switch e (\e -> P (ESu e)) (snd b) n
+switch : (e : En)(P : EnumT e -> Set)(b : spi e P)(x : EnumT e) -> P x
+switch nE P b ()
+switch (cE e) P b EZe = fst b
+switch (cE e) P b (ESu n) = switch e (\e -> P (ESu e)) (snd b) n
 -}
 
 -- But no, we make it fly in Desc:
 
 --****************
--- EnumU
+-- En
 --****************
 
-EnumU : Set
-EnumU = Nat
+-- As we have no tags here, we use Nat instead of List. 
 
-nilE : EnumU
-nilE = ze
+EnD : Desc
+EnD = NatD
 
-consE : EnumU -> EnumU
-consE e = su e 
+En : Set
+En = Nat
+
+nE : En
+nE = ze
+
+cE : En -> En
+cE e = su e 
 
 --****************
 -- EnumT
 --****************
 
-data EnumT : (e : EnumU) -> Set where
-  EZe : {e : EnumU} -> EnumT (consE e)
-  ESu : {e : EnumU} -> EnumT e -> EnumT (consE e)
+-- Because I don't want to fall back on wacky unicode symbols, I will
+-- write EnumT for #, EZe for 0, and ESu for 1+. Sorry about that
+
+data EnumT : (e : En) -> Set where
+  EZe : {e : En} -> EnumT (cE e)
+  ESu : {e : En} -> EnumT e -> EnumT (cE e)
 
 --****************
 -- Small Pi
 --****************
 
-casesSpi : {l : Level}(xs : [| NatD |] Nat) -> 
-           All NatD Nat (\e -> (EnumT e -> Set l) -> Set l) xs -> 
+-- This corresponds to the small pi |\pi|.
+
+casesSpi : {l : Level}(xs : [| EnD |] En) -> 
+           All EnD En (\e -> (EnumT e -> Set l) -> Set l) xs -> 
            (EnumT (con xs) -> Set l) -> Set l
 casesSpi (Ze , Void) hs P' = Unit
 casesSpi (Su , n) hs P' = P' EZe * hs (\e -> P' (ESu e))
 
-spi : {l : Level}(e : EnumU)(P : EnumT e -> Set l) -> Set l
-spi {x} e P =  induction NatD (\E -> (EnumT E -> Set x) -> Set x) casesSpi e P
+spi : {l : Level}(e : En)(P : EnumT e -> Set l) -> Set l
+spi {x} e P =  ind EnD (\E -> (EnumT E -> Set x) -> Set x) casesSpi e P
 
 --****************
 -- Switch
 --****************
 
 casesSwitch : {l : Level}
-              (xs : [| NatD |] Nat) ->
-              All NatD Nat (\e -> (P' : EnumT e -> Set l)
-                                  (b' : spi e P')
-                                  (x' : EnumT e) -> P' x') xs ->
+              (xs : [| EnD |] En) ->
+              All EnD En (\e -> (P' : EnumT e -> Set l)
+                                (b' : spi e P')
+                                (x' : EnumT e) -> P' x') xs ->
               (P' : EnumT (con xs) -> Set l)
               (b' : spi (con xs) P')
               (x' : EnumT (con xs)) -> P' x'
@@ -392,22 +452,25 @@ casesSwitch (Su , n) hs P' b' (ESu e') = hs (\e -> P' (ESu e)) (snd b') e'
 
 
 switch : {l : Level}
-         (e : EnumU)
+         (e : En)
          (P : EnumT e -> Set l)
          (b : spi e P)
          (x : EnumT e) -> P x
-switch {x} e P b xs =  induction NatD
-                                 (\e -> (P : EnumT e -> Set x)
-                                        (b : spi e P)
-                                        (xs : EnumT e) -> P xs) 
-                                 casesSwitch e P b xs 
+switch {x} e P b xs =  ind EnD
+                           (\e -> (P : EnumT e -> Set x)
+                                  (b : spi e P)
+                                  (xs : EnumT e) -> P xs) 
+                           casesSwitch e P b xs 
 
 --****************
 -- Desc
 --****************
 
--- TODO: explain that if it weren't so verbose
---       we could use finite sets instead of DescDef
+-- In the following, we implement Desc in itself. As usual, we have a
+-- finite set of constructors -- the name of the codes. Note that we
+-- could really define these as a finite set built above. However, in
+-- Agda, it's horribly verbose. For the sake of clarity, we won't do
+-- that here. 
 
 data DescDef : Set1 where
   DescId : DescDef
@@ -416,7 +479,16 @@ data DescDef : Set1 where
   DescSigma : DescDef
   DescPi : DescDef
 
--- TODO: explain the Units
+-- We slightly diverge here from the presentation of the paper: note
+-- the presence of terminating "const Unit". Recall our Lisp-ish
+-- notation for nested tuples:
+--    |[a b c]| 
+-- Corresponds to 
+--    |[a , [ b , [c , []]]]|
+-- So, if we want to write constructors using our Lisp-ish notation, the interpretation 
+-- [| DescD |] (Mu DescD) have to evaluates to [ constructor , [ arg1 , [ arg2 , []]]]
+
+-- Hence, we define Desc's code as follow:
 
 descCases : DescDef -> Desc
 descCases DescId = const Unit
@@ -431,8 +503,25 @@ DescD = sigma DescDef descCases
 DescIn : Set1
 DescIn = Mu DescD
 
--- TODO: Explain that we can prove iso between Desc and DescIn. 
---       Report to IDesc.
+-- So that the constructors are:
+-- (Note the annoying |pair|s to set the implicit levels. I could not
+--  get rid of the yellow otherwise)
+
+idIn : DescIn
+idIn = con (pair {i = suc zero} {j =  suc zero} DescId Void)
+constIn : Set -> DescIn
+constIn K = con (pair {i = suc zero} {j = suc zero} DescConst (K , Void))
+prodIn : (D D' : DescIn) -> DescIn
+prodIn D D' = con (pair {i = suc zero} {j = suc zero} DescProd (D , ( D' , Void )))
+sigmaIn : (S : Set)(D : S -> DescIn) -> DescIn
+sigmaIn S D = con (pair {i = suc zero} {j = suc zero} DescSigma (S , ((\s -> D (unlift s)) , Void )))
+piIn : (S : Set)(D : S -> DescIn) -> DescIn
+piIn S D = con (pair {i = suc zero} {j = suc zero} DescPi (S , ((\s -> D (unlift s)) , Void )))
+
+-- At this stage, we could prove the isomorphism between |DescIn| and
+-- |Desc|. While not technically difficult, it is long and
+-- laborious. We have carried this proof on the more complex and
+-- interesting |IDesc| universe, in IDesc.agda.
 
 
 --********************************************
@@ -440,10 +529,10 @@ DescIn = Mu DescD
 --********************************************
 
 TagDesc : {l : Level} -> Set (suc l)
-TagDesc = Sigma EnumU (\e -> spi e (\_ -> Desc))
+TagDesc = Sigma En (\e -> spi e (\_ -> Desc))
 
-toDesc : TagDesc -> Desc
-toDesc (B , F) = sigma (EnumT B) (\E -> switch B (\_ -> Desc) F E)
+de : TagDesc -> Desc
+de (B , F) = sigma (EnumT B) (\E -> switch B (\_ -> Desc) F E)
 
 --********************************************
 -- Catamorphism
@@ -453,7 +542,7 @@ cata : (D : Desc)
        (T : Set) ->
        ([| D |] T -> T) ->
        (Mu D) -> T
-cata D T phi x = induction D (\_ -> T) (\x ms -> phi (replace D T x ms)) x
+cata D T phi x = ind D (\_ -> T) (\x ms -> phi (replace D T x ms)) x
   where replace : (D' : Desc)(T : Set)(xs : [| D' |] (Mu D))(ms : All D' (Mu D) (\_ -> T) xs) -> [| D' |] T
         replace id T x y = y
         replace (const Z) T z z' = z
@@ -466,21 +555,21 @@ cata D T phi x = induction D (\_ -> T) (\x ms -> phi (replace D T x ms)) x
 --********************************************
 
 _**_ : TagDesc -> (X : Set) -> TagDesc
-(e , D) ** X = consE e , (const X , D)
+(e , D) ** X = cE e , (const X , D)
 
 --********************************************
 -- Substitution
 --********************************************
 
 apply : (D : TagDesc)(X Y : Set) ->
-        (X -> Mu (toDesc (D ** Y))) ->
-        [| toDesc (D ** X) |] (Mu (toDesc (D ** Y))) ->
-        Mu (toDesc (D ** Y))
+        (X -> Mu (de (D ** Y))) ->
+        [| de (D ** X) |] (Mu (de (D ** Y))) ->
+        Mu (de (D ** Y))
 apply (E , B) X Y sig (EZe , x) = sig x
 apply (E , B) X Y sig (ESu n , t) = con (ESu n , t)
 
 subst : (D : TagDesc)(X Y : Set) ->
-        Mu (toDesc (D ** X)) ->
-        (X -> Mu (toDesc (D ** Y))) ->
-        Mu (toDesc (D ** Y))
-subst D X Y x sig = cata (toDesc (D ** X)) (Mu (toDesc (D ** Y))) (apply D X Y sig) x
+        Mu (de (D ** X)) ->
+        (X -> Mu (de (D ** Y))) ->
+        Mu (de (D ** Y))
+subst D X Y x sig = cata (de (D ** X)) (Mu (de (D ** Y))) (apply D X Y sig) x
