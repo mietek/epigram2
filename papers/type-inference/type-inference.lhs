@@ -136,7 +136,6 @@
 \usepackage{enumerate}
 \usepackage{eucal}
 \usepackage{natbib}
-
 \usepackage[T1]{fontenc}
 \usepackage[draft=false]{hyperref}
 
