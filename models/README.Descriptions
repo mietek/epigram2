@@ -6,6 +6,8 @@
 The models of Epigram's universe of descriptions are:
     - DescTT.agda: model of descriptions
       		 (with type-in-type)
+    - Desc.agda: model of descriptions
+      		 (with universe polymorphism)
     - IDescTT.agda: model of indexed descriptions
       		    (with type-in-type)
     - IDesc.agda: model of indexed descriptions
@@ -13,23 +15,27 @@ The models of Epigram's universe of descriptions are:
 
 Each of these file is self-contained: we build our own equipment for
 Sigma-type, sums, and equality. This corresponds to the requirements
-we have in the paper wrt. the underlying type-theory.
+we have in the paper wrt. the underlying type-theory (excepted for
+equality and Pi-types, which we inherit from Agda).
 
 
 These files follow the plan of the paper:
 
-* DescTT.agda implements the universe of inductive types, Desc, the
-examples, and generic constructions of Section 3 and 4. 
+* Desc.agda implements the universe of inductive types, Desc, the
+  examples, and generic constructions of Section 3 and 4.
+
+* DescTT.agda is similar to Desc.agda, excepted that the hierarchy of
+  Sets is collapsed by --type-in-type.
 
 * IDescTT.agda implements the universe of inductive families, IDesc,
-the examples, and generic constructions of Section 5. 
+  the examples, and generic constructions of Section 5. 
 
 * IDesc.agda is the stratified implementation of indexed
-descriptions. We also describe IDesc in itself and prove that it is
-isomorphic to the host one.
+  descriptions. We also describe IDesc in itself and prove that it is
+  isomorphic to the host one.
 
 
-As shown by IDesc.agda, --type-in-type is not necessary for
-DescTT.agda and IDescTT.agda. But it makes prototyping easier, as the
-universe polymorphic version is cluttered with lifting operations and
-implicit levels that requires extreme care.
+As shown by Desc.agda and IDesc.agda, --type-in-type is not necessary
+for DescTT.agda and IDescTT.agda. But the *TT version make prototyping
+easier, as the universe polymorphic version is cluttered with lifting
+operations and implicit levels that requires extreme care.
