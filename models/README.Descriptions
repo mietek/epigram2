@@ -31,5 +31,5 @@ isomorphic to the host one.
 
 As shown by IDesc.agda, --type-in-type is not necessary for
 DescTT.agda and IDescTT.agda. But it makes prototyping easier, as the
-universe polymorphic version is cluttered with explicit lifting
-operations.
+universe polymorphic version is cluttered with lifting operations and
+implicit levels that requires extreme care.
