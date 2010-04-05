@@ -1,5 +1,4 @@
-
- {-# OPTIONS --universe-polymorphism #-}
+{-# OPTIONS --universe-polymorphism #-}
 
 module Desc where
 
@@ -99,19 +98,19 @@ postulate
 -- Desc code
 --********************************************
 
-data Desc {l : Level} : Set (suc l) where
+data Desc : Set1 where
   id : Desc
-  const : Set l -> Desc
+  const : Set -> Desc
   prod : Desc -> Desc -> Desc
-  sigma : (S : Set l) -> (S -> Desc) -> Desc
-  pi : (S : Set l) -> (S -> Desc) -> Desc
+  sigma : (S : Set) -> (S -> Desc) -> Desc
+  pi : (S : Set) -> (S -> Desc) -> Desc
 
 
 --********************************************
 -- Desc interpretation
 --********************************************
 
-[|_|]_ : {l : Level} -> Desc -> Set l -> Set l
+[|_|]_ : Desc -> Set -> Set
 [| id |] Z        = Z
 [| const X |] Z   = X
 [| prod D D' |] Z = [| D |] Z * [| D' |] Z
@@ -122,21 +121,22 @@ data Desc {l : Level} : Set (suc l) where
 -- Fixpoint construction
 --********************************************
 
-data Mu {l : Level}(D : Desc {l = l}) : Set l where
+data Mu (D : Desc) : Set where
   con : [| D |] (Mu D) -> Mu D
 
 --********************************************
 -- Predicate: All
 --********************************************
 
-All : {l : Level}(D : Desc)(X : Set l)(P : X -> Set l) -> [| D |] X -> Set l
+All : {l : Level}(D : Desc)(X : Set)(P : X -> Set l) -> [| D |] X -> Set l
 All id          X P x        = P x
 All (const Z)   X P x        = Unit
 All (prod D D') X P (d , d') = (All D X P d) * (All D' X P d')
 All (sigma S T) X P (a , b)  = All (T a) X P b
 All (pi S T)    X P f        = (s : S) -> All (T s) X P (f s)
 
-all : {l : Level}(D : Desc)(X : Set l)(P : X -> Set l)(R : (x : X) -> P x)(x : [| D |] X) -> All D X P x
+
+all : (D : Desc)(X : Set)(P : X -> Set)(R : (x : X) -> P x)(x : [| D |] X) -> All D X P x
 all id X P R x = R x
 all (const Z) X P R z = Void
 all (prod D D') X P R (d , d') = all D X P R d , all D' X P R d'
@@ -147,7 +147,7 @@ all (pi S T) X P R f = \ s -> all (T s) X P R (f s)
 -- Map
 --********************************************
 
-map : {l : Level}(D : Desc)(X Y : Set l)(f : X -> Y)(v : [| D |] X) -> [| D |] Y
+map : (D : Desc)(X Y : Set)(f : X -> Y)(v : [| D |] X) -> [| D |] Y
 map id X Y sig x = sig x
 map (const Z) X Y sig z = z
 map (prod D D') X Y sig (d , d') = map D X Y sig d , map D' X Y sig d'
@@ -155,7 +155,7 @@ map (sigma S T) X Y sig (a , b) = (a , map (T a) X Y sig b)
 map (pi S T) X Y sig f = \x -> map (T x) X Y sig (f x)
 
 
-proof-map-id : {l : Level}(D : Desc)(X : Set l)(v : [| D |] X) -> map D X X (\x -> x) v == v
+proof-map-id : (D : Desc)(X : Set)(v : [| D |] X) -> map D X X (\x -> x) v == v
 proof-map-id id X v = refl
 proof-map-id (const Z) X v = refl
 proof-map-id (prod D D') X (v , v') = cong2 (\x y -> (x , y)) (proof-map-id D X v) (proof-map-id D' X v')
@@ -163,7 +163,7 @@ proof-map-id (sigma S T) X (a , b) = cong (\x -> (a , x)) (proof-map-id (T a) X 
 proof-map-id (pi S T) X f = reflFun (\a -> map (T a) X X (\x -> x) (f a)) f (\a -> proof-map-id (T a) X (f a))
 
 
-proof-map-compos : {l : Level}(D : Desc)(X Y Z : Set l)
+proof-map-compos : (D : Desc)(X Y Z : Set)
                    (f : X -> Y)(g : Y -> Z)
                    (v : [| D |] X) -> 
                    map D X Z (\x -> g (f x)) v == map D Y Z g (map D X Y f v)
@@ -185,9 +185,8 @@ proof-map-compos (pi S T) X Y Z f g fc = reflFun (\a -> map (T a) X Z (\x -> g (
 -- One would like to write the following:
 
 {-
-induction : {l : Set}
-            (D : Desc) 
-            (P : Mu D -> Set l) ->
+induction : (D : Desc) 
+            (P : Mu D -> Set) ->
             ( (x : [| D |] (Mu D)) -> 
               All D (Mu D) P x -> P (con x)) ->
             (v : Mu D) ->
@@ -227,6 +226,7 @@ induction : {l : Level}
             P v
 induction D P ms x = Elim.induction D P ms x
 
+
 --********************************************
 -- Examples
 --********************************************
@@ -235,25 +235,25 @@ induction D P ms x = Elim.induction D P ms x
 -- Nat
 --****************
 
-data NatConst {l : Level} : Set l where
+data NatConst : Set where
   Ze : NatConst
   Su : NatConst
 
-natCases : {l : Level} -> NatConst {l = l} -> Desc {l = l}
+natCases : NatConst -> Desc
 natCases Ze = const Unit
 natCases Suc = id
 
-NatD : {l : Level} -> Desc {l = l}
-NatD {x} = sigma {l = x} NatConst  natCases
+NatD : Desc
+NatD = sigma NatConst  natCases
 
-Nat : {l : Level} -> Set l
+Nat : Set
 Nat = Mu NatD
 
-ze : {l : Level} -> Nat {l = l}
-ze {x} = con (pair {i = x} {j = x} Ze Void)
+ze : Nat
+ze = con (Ze , Void)
 
-su : {l : Level} -> Nat {l = l} -> Nat {l = l}
-su {x} n = con (pair {i = x} {j = x} Su n)
+su : Nat -> Nat
+su n = con (Su , n)
 
 --****************
 -- List
@@ -329,16 +329,16 @@ switch (consE e) P b (ESu n) = switch e (\e -> P (ESu e)) (snd b) n
 
 -- But no, we make it fly in Desc:
 
-EnumU : {l : Level} -> Set l
+EnumU : Set
 EnumU = Nat
 
-nilE : {l : Level} -> EnumU {l = l}
-nilE {x} = ze {l = x}
+nilE : EnumU
+nilE = ze
 
-consE : {l : Level} -> EnumU -> EnumU {l = l}
-consE {x} e = su {l = x} e 
+consE : EnumU -> EnumU
+consE e = su e 
 
-data EnumT {l : Level} : (e : EnumU {l = l}) -> Set l where
+data EnumT : (e : EnumU) -> Set where
   EZe : {e : EnumU} -> EnumT (consE e)
   ESu : {e : EnumU} -> EnumT e -> EnumT (consE e)
 
@@ -362,8 +362,15 @@ induction : {l : Level}
             P v
 -}
 
-spi : (e : EnumU {l = zero})(P : EnumT {l = zero} e -> Set) -> Set
-spi e P =  induction NatD (\E -> {!(EnumT {l = zero} e -> Set) -> Set!}) {!!} e  ?
+casesSpi : (xs : [| NatD |] Nat) -> 
+           All NatD Nat (\e -> (EnumT e -> Set) -> Set) xs -> 
+           (EnumT (con xs) -> Set) -> Set
+casesSpi (Ze , Void) hs P' = Unit
+casesSpi (Su , n) hs P' = P' EZe * hs (\e -> P' (ESu e))
+
+
+spi : (e : EnumU)(P : EnumT e -> Set) -> Set
+spi e P =  induction NatD (\E -> (EnumT E -> Set) -> Set) casesSpi e P
 
 {-
 casesSwitch : (xs : [| NatD |] Nat) ->
