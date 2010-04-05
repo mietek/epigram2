@@ -134,11 +134,9 @@
 \usepackage{amsthm}
 \usepackage{amsmath}
 \usepackage{enumerate}
-v v v v v v v
 \usepackage{eucal}
-*************
 \usepackage{natbib}
-^ ^ ^ ^ ^ ^ ^
+
 \usepackage[T1]{fontenc}
 \usepackage[draft=false]{hyperref}
 
@@ -169,20 +167,7 @@ v v v v v v v
 \maketitle
 
 \begin{abstract}
-We describe a unification algorithm and a powerful technique for implementing
-type inference algorithms. We illustrate this technique by describing an
-implementation of type inference for the familiar Hindley-Milner type system,
-but it can be extended to more advanced type systems.
-The algorithms are based around the notion of a well-founded linear context
-in which type variable bindings and type-schemes for terms 
-%%%may only depend on types that appear earlier in the context. 
-   may depend only on bindings appearing earlier in the context. 
-We ensure that the unification
-algorithm produces a most general unifier, and that type inference produces
-principal types, 
-%%%by only moving definitions earlier in the context when this is
-   by moving definitions earlier in the context only when 
-absolutely necessary.
+\input{abstract.ltx}
 \end{abstract}
 
 
