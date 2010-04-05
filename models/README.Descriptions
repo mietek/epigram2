@@ -1,0 +1,35 @@
+****************************************************************
+                        Descriptions
+****************************************************************
+
+
+The models of Epigram's universe of descriptions are:
+    - DescTT.agda: model of descriptions
+      		 (with type-in-type)
+    - IDescTT.agda: model of indexed descriptions
+      		    (with type-in-type)
+    - IDesc.agda: model of indexed descriptions
+      		  (with universe polymorphism)
+
+Each of these file is self-contained: we build our own equipment for
+Sigma-type, sums, and equality. This corresponds to the requirements
+we have in the paper wrt. the underlying type-theory.
+
+
+These files follow the plan of the paper:
+
+* DescTT.agda implements the universe of inductive types, Desc, the
+examples, and generic constructions of Section 3 and 4. 
+
+* IDescTT.agda implements the universe of inductive families, IDesc,
+the examples, and generic constructions of Section 5. 
+
+* IDesc.agda is the stratified implementation of indexed
+descriptions. We also describe IDesc in itself and prove that it is
+isomorphic to the host one.
+
+
+As shown by IDesc.agda, --type-in-type is not necessary for
+DescTT.agda and IDescTT.agda. But it makes prototyping easier, as the
+universe polymorphic version is cluttered with explicit lifting
+operations.

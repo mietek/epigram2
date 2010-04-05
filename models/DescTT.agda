@@ -1,7 +1,7 @@
 
  {-# OPTIONS --type-in-type #-}
 
-module Desc where
+module DescTT where
 
 --********************************************
 -- Prelude

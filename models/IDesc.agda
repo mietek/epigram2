@@ -90,7 +90,6 @@ trans refl refl = refl
 proof-lift-unlift-eq : {l : Level}{A : Set l}(x : Lifted A) -> lifter (unlift x) == x
 proof-lift-unlift-eq (lifter a) = refl
 
--- Intensionally extensional
 postulate 
   reflFun : {l m : Level}{A : Set l}{B : Set m}(f : A -> B)(g : A -> B)-> ((a : A) -> f a == g a) -> f == g 
 
@@ -286,17 +285,17 @@ proof-psi-phi {x} I D =  induction (\ _ -> IDescD I)
           proof-psi-phi-cases Void (lconst , x) hs = refl
           proof-psi-phi-cases Void (lprod , ( D , D' )) ( p , q ) = cong2 prodl p q 
           proof-psi-phi-cases Void (lpi , ( S , T )) hs = cong (\T -> con (lpi {l = suc x} , ( S , T ) )) 
-                                                               (trans (reflFun (λ s → psi (phi (T (lifter (unlift s)))))
-                                                                               (λ s → psi (phi (T (s))))
-                                                                               (\s -> cong (λ s → psi (phi (T (s))))
+                                                               (trans (reflFun (\ s -> psi (phi (T (lifter (unlift s)))))
+                                                                               (\ s -> psi (phi (T (s))))
+                                                                               (\s -> cong (\ s -> psi (phi (T (s))))
                                                                                            (proof-lift-unlift-eq s)))
                                                                        (reflFun (\s -> psi (phi (T s))) 
                                                                                 T 
                                                                                 hs)) 
           proof-psi-phi-cases Void (lsigma , ( S , T )) hs = cong (\T -> con (lsigma {l = suc x} , ( S , T ) )) 
-                                                                  (trans (reflFun (λ s → psi (phi (T (lifter (unlift s)))))
-                                                                                  (λ s → psi (phi (T (s))))
-                                                                                  (\s -> cong (λ s → psi (phi (T (s))))
+                                                                  (trans (reflFun (\ s → psi (phi (T (lifter (unlift s)))))
+                                                                                  (\ s → psi (phi (T (s))))
+                                                                                  (\s -> cong (\ s -> psi (phi (T (s))))
                                                                                               (proof-lift-unlift-eq s)))
                                                                          (reflFun (\s -> psi (phi (T s))) 
                                                                                   T 

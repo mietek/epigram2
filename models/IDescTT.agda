@@ -1,6 +1,6 @@
  {-# OPTIONS --type-in-type #-}
 
-module IDesc_type_type where
+module IDescTT where
 
 --********************************************
 -- Prelude
@@ -50,8 +50,6 @@ cong2 : {A B C : Set}(f : A -> B -> C){x y : A}{z t : B} ->
         x == y -> z == t -> f x z == f y t
 cong2 f refl refl = refl
 
-
--- Intensionally extensional
 postulate 
   reflFun : {A B : Set}(f : A -> B)(g : A -> B)-> ((a : A) -> f a == g a) -> f == g 
 
