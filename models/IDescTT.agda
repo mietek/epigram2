@@ -53,6 +53,31 @@ cong2 f refl refl = refl
 postulate 
   reflFun : {A B : Set}(f : A -> B)(g : A -> B)-> ((a : A) -> f a == g a) -> f == g 
 
+--****************
+-- Meta-language
+--****************
+
+-- Note that we could define Nat, Bool, and the related operations in
+-- IDesc. But it is awful to code with them, in Agda.
+
+data Nat : Set where
+  ze : Nat
+  su : Nat -> Nat
+
+data Bool : Set where
+  true : Bool
+  false : Bool
+
+plus : Nat -> Nat -> Nat
+plus ze n' = n'
+plus (su n) n' = su (plus n n')
+
+le : Nat -> Nat -> Bool
+le ze _ = true
+le (su _) ze = false
+le (su n) (su n') = le n n'
+
+
 --********************************************
 -- Desc code
 --********************************************
@@ -230,6 +255,60 @@ pil S T = con (lpi , ( S , T))
 sigmal : {I : Set}(S : Set)(T : S -> IDescl I) -> IDescl I
 sigmal S T = con (lsigma , ( S , T))
 
+--****************
+-- Vec (constraints)
+--****************
+
+data VecConst : Set where
+  Vnil : VecConst
+  Vcons : VecConst
+
+vecDChoice : Set -> Nat -> VecConst -> IDesc Nat
+vecDChoice X n Vnil = const (n == ze)
+vecDChoice X n Vcons = sigma Nat (\m -> prod (var m) (const (n == su m)))
+
+vecD : Set -> Nat -> IDesc Nat
+vecD X n = sigma VecConst (vecDChoice X n)
+
+vec : Set -> Nat -> Set
+vec X n = IMu (vecD X) n
+
+--****************
+-- Vec (de-tagged, forced)
+--****************
+
+data VecConst2 : Nat -> Set where
+  Vnil : VecConst2 ze
+  Vcons : {n : Nat} -> VecConst2 (su n)
+
+vecDChoice2 : Set -> (n : Nat) -> VecConst2 n -> IDesc Nat
+vecDChoice2 X ze Vnil = const Unit
+vecDChoice2 X (su n) Vcons = prod (const X) (var n)
+
+vecD2 : Set -> Nat -> IDesc Nat
+vecD2 X n = sigma (VecConst2 n) (vecDChoice2 X n)
+
+vec2 : Set -> Nat -> Set
+vec2 X n = IMu (vecD2 X) n
+
+--****************
+-- Fin (de-tagged)
+--****************
+
+data FinConst : Nat -> Set where
+  Fz : {n : Nat} -> FinConst (su n)
+  Fs : {n : Nat} -> FinConst (su n)
+
+finDChoice : (n : Nat) -> FinConst n -> IDesc Nat
+finDChoice ze ()
+finDChoice (su n) Fz = const Unit
+finDChoice (su n) Fs = var n
+
+finD : Nat -> IDesc Nat
+finD n = sigma (FinConst n) (finDChoice n) 
+
+fin : Nat -> Set
+fin n = IMu finD n
 
 --********************************************
 -- Enumerations (hard-coded)
@@ -311,28 +390,6 @@ cata I R T phi i x = indI R (\it -> T (fst it)) (\i xs ms -> phi i (replace (R i
 --********************************************
 -- Hutton's razor
 --********************************************
-
---********************************
--- Meta-language
---********************************
-
-data Nat : Set where
-  ze : Nat
-  su : Nat -> Nat
-
-data Bool : Set where
-  true : Bool
-  false : Bool
-
-plus : Nat -> Nat -> Nat
-plus ze n' = n'
-plus (su n) n' = su (plus n n')
-
-le : Nat -> Nat -> Bool
-le ze _ = true
-le (su _) ze = false
-le (su n) (su n') = le n n'
-
 
 --********************************
 -- Types code
