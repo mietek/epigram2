@@ -120,14 +120,14 @@
 \newcommand{\hasscheme}{\ensuremath{::}}
 \newcommand{\subcontext}{\ensuremath{\subset}}
 \newcommand{\semidrop}{\downharpoonright}
-\newcommand{\Sbind}[2]{(#1 \entails #2)}
+\newcommand{\Sbind}[2]{(#1 \Yright #2)}
 
 \newcommand{\define}[1]{\emph{#1}}
 \newcommand{\scare}[1]{`#1'}
 
 \newcommand{\V}{\mathcal{V}}
 \newcommand{\D}{\mathcal{D}}
-\newcommand{\J}{\mathcal{J}}
+\newcommand{\Ss}{\mathcal{S}}
 \newcommand{\K}{\mathcal{K}}
 \newcommand{\TY}{\mathrm{\textsc{TY}}}
 \newcommand{\TM}{\mathrm{\textsc{TM}}}
@@ -192,10 +192,10 @@ In particular, the generalisation step
  inferring the type of a let-expression) becomes straightforward.
 
 We present algorithms using systems of inference rules to define relationships
-between sequents of the form $\Judge{\Gamma_0}{J}{\Gamma_1}$. Here $\Gamma_0$
-is the input context (before applying the rule), $J$ is the judgment being
-established, and $\Gamma_1$ is the output context (in which $J$ holds).
-This idea of sequents producing a resulting context goes back at least to
+between judgments of the form $\Judge{\Gamma_0}{S}{\Gamma_1}$. Here $\Gamma_0$
+is the input context (before applying the rule), $S$ is the statement being
+established, and $\Gamma_1$ is the output context (in which $S$ holds).
+This idea of judgments producing a resulting context goes back at least to
 \citet{pollack_implicit_1990}. 
 %%%, and hence perhaps to \citet{harper_type_1991} and \citet{milner_definition_1990}.
    An interesting point of comparison is with the work of Nipkow and 
@@ -206,7 +206,7 @@ We %%%will
    define an ordering on contexts based on the information they contain,
 and show that $\Gamma_1$ is minimal with respect to this ordering. If one
 thinks of a context as a set of atomic facts, then $\Gamma_1$ is the least upper
-bound of $\Gamma_0$ together with the facts required to make $J$ hold.
+bound of $\Gamma_0$ together with the facts required to make $S$ hold.
 
 In each case, at most one rule matches the input context and condition, and we
 specify a termination order so the rules define algorithms. \TODO{Do we?}
@@ -236,26 +236,26 @@ do not handle substitutions correctly \citep{norvig_correctingwidespread_1991}.
 
 \section{Abstract nonsense}
 
-\subsection{Judgments}
+\subsection{Statements}
 
-Let $\J$ be a set of judgments, $\K$ a set of sorts, and for each $K \in \K$
+Let $\Ss$ be a set of statements, $\K$ a set of sorts, and for each $K \in \K$
 let $\V_K$ be a set of variables and $\D_K$ a set of objects.
-We assume we have a judgment $D \ok_K$ for every $K \in \K$ and $D \in \D_K$. 
+We assume we have a statement $D \ok_K$ for every $K \in \K$ and $D \in \D_K$. 
 
 % A \define{substitution} $\theta$ is a partial map from $\V_K$ to $\D_K$
 % for each $K \in \K$,
-% and we assume $\D_K$ and $\J$ are closed under application of substitutions.
+% and we assume $\D_K$ and $\Ss$ are closed under application of substitutions.
 
 A \define{context} $\Gamma$ is a list of declarations $v D$
 (pairs of $v \in \V_K$ and $D \in \D_K$) and separators $(\fatsemi)$. 
 We write $\emptycontext$ for the empty context, and the symbols
 $\Gamma, \Delta$ and $\Theta$ will represent contexts.
 $\Xi$ is a context that contains no $\fatsemi$ separators.
-We write $\Gamma \entails J$ to mean that the definitions in $\Gamma$,
-corresponding to atomic facts, support the judgment $J \in \J$.
+We write $\Gamma \entails S$ to mean that the definitions in $\Gamma$,
+corresponding to atomic facts, support the statement $S \in \Ss$.
 
 Let $\V_K(\Gamma)$ be the set of $K$-variables in $\Gamma$.
-We define the context validity judgment $\valid$ as shown in
+We define the context validity statement $\valid$ as shown in
 Figure~\ref{fig:contextValidityRules}.
 
 \begin{figure}[ht]
@@ -276,43 +276,43 @@ $$
 \end{figure}
 
 
-% For any variable $v$ and object $D$ we define a context membership judgment
+% For any variable $v$ and object $D$ we define a context membership statement
 % $\contains v D$ in the obvious way, and write $\Gamma \contains v D$ for
 % $\Gamma \entails (\contains v D)$. 
 
-% We assume that $\J$ is closed under conjunction $(\wedge)$ with
-% $$\Gamma \entails (J_0 \wedge J_1)
+% We assume that $\Ss$ is closed under conjunction $(\wedge)$ with
+% $$\Gamma \entails (S_0 \wedge S_1)
 %     \quad  \Leftrightarrow  \quad
-%     \Gamma \entails J_0  ~\wedge~  \Gamma \entails J_1.$$
+%     \Gamma \entails S_0  ~\wedge~  \Gamma \entails S_1.$$
 
 We suppose that there is a map
-$\sem{\cdot}_K : \V_K \times \D_K \rightarrow \mathcal{P}(\J)$
-for each $K \in \K$, from declarations to sets of judgments.
+$\sem{\cdot}_K : \V_K \times \D_K \rightarrow \mathcal{P}(\Ss)$
+for each $K \in \K$, from declarations to sets of statements.
 % such that $$\Gamma \contains v D  \Rightarrow  \Gamma \entails \sem{v D}.$$
 (We typically omit the subscript when the sort is irrelevant or can be inferred.)
 The basic rule of our inference system is
 $$\name{Lookup}
-  \Rule{v D \in \Gamma    ~\wedge~    J \in \sem{v D}}
-       {\Gamma \entails J}.$$
-Thus $\sem{v D}$ is the set of atomic judgments that hold if the declaration
+  \Rule{v D \in \Gamma    ~\wedge~   S  \in \sem{v D}}
+       {\Gamma \entails S}.$$
+Thus $\sem{v D}$ is the set of atomic statements that hold if the declaration
 $v D$ is in the context.
 
 
-If $J$ and $J'$ are judgments and $v D$ is a declaration, then
-we define judgments $J \wedge J'$, $\fatsemi J$ and $\Sbind{v D}{J}$ thus:
-$$\Rule{J \quad J'}{J \wedge J'}
+If $S$ and $S'$ are statements and $v D$ is a declaration, then
+we define statements $S \wedge S'$, $\fatsemi S$ and $\Sbind{v D}{S}$ thus:
+$$\Rule{S \quad S'}{S \wedge S'}
   \qquad
-  \Rule{\Gamma \fatsemi \entails J}
-       {\Gamma \entails \fatsemi J}
+  \Rule{\Gamma \fatsemi \entails S}
+       {\Gamma \entails \fatsemi S}
   \qquad
-  \Rule{\Gamma, v D \entails J}
-       {\Gamma \entails \Sbind{v D}{J}}. 
+  \Rule{\Gamma, v D \entails S}
+       {\Gamma \entails \Sbind{v D}{S}}. 
 $$
 We do not add elimination rules to make proofs by induction on the structure
 of derivations easier, but they will be admissible.
 Note that we omit the context from rules if it is constant throughout.
 The only inference rules to access the context will be the \textsc{Lookup} rule
-and the rules for the $\fatsemi$ and $\Sbind{\cdot}{\cdot}$ judgments given above.
+and the rules for the $\fatsemi$ and $\Sbind{\cdot}{\cdot}$ statements given above.
 
 
 \subsection{Increasing information}
@@ -329,13 +329,13 @@ contexts, defined by
 % Let $\D_K(\Gamma) = \{ D \in \D_K ~||~ \Gamma \entails D \ok_K \}$.
 For contexts $\Gamma$, $\Delta$ and for each $K \in \K$, we will define a set of
 \define{$K$-substitutions from $\Gamma$ to $\Delta$}
-from variables in $\V_K(\Gamma)$ to some set, which will apply to judgments.
+from variables in $\V_K(\Gamma)$ to some set, which will apply to statements.
 We write $\delta : \Gamma \lei \Delta$ to mean that for each $K \in \K$,
 $\delta_K$ is a $K$-substitution from $\Gamma$ to $\Delta$ such that
-if $v D \in \Gamma \semidrop n$ and $J \in \sem{v D}$ then
-$\Delta \semidrop n$ is defined and $\Delta \semidrop n \entails \delta J$.
-(We write $\delta J$ for the simultaneous application of every $\delta_K$ to
-$J$.)
+if $v D \in \Gamma \semidrop n$ and $S \in \sem{v D}$ then
+$\Delta \semidrop n$ is defined and $\Delta \semidrop n \entails \delta S$.
+(We write $\delta S$ for the simultaneous application of every $\delta_K$ to
+$S$.)
 
 % $$\Gamma \contains v D  \Rightarrow  \Delta \entails \delta\sem{v D}$$
 % and if $\Gamma$ is $\Xi \fatsemi \Gamma'$ then $\Delta$ is
@@ -348,7 +348,7 @@ $J$.)
 We may omit $\delta$ and write $\Gamma \lei \Delta$ if we are only interested
 in the existence of a suitable substitution. This relation between contexts
 captures the notion of \define{information increase}: $\Delta$ supports all the
-judgments corresponding to definitions in $\Gamma$. 
+statements corresponding to definitions in $\Gamma$. 
 Moreover, this will still hold if we truncate both $\Gamma$ and $\Delta$ after
 any number of $\fatsemi$ separators.
 
@@ -359,42 +359,42 @@ $\delta||_{\Gamma \semidrop n} : \Gamma \semidrop n \lei \Delta \semidrop n$.
 % type variables, which must be interpreted over a more informative context that
 % will not contain them.
 
-We say a judgment $J$ is
+We say a statement $S$ is
 \define{stable} if it is preserved under information increase, that is, if
-$$\Gamma \entails J  ~\wedge~  \delta : \Gamma \lei \Delta
+$$\Gamma \entails S  ~\wedge~  \delta : \Gamma \lei \Delta
     \quad \Rightarrow \quad
-    \Delta \entails \delta J.$$
+    \Delta \entails \delta S.$$
 
-% From now on we will assume that the judgment $\sem{v D}_K$ is stable for any
-% $v \in \V_K$ and $D \in \D_K$, and that stable judgments are closed under 
+% From now on we will assume that the statement $\sem{v D}_K$ is stable for any
+% $v \in \V_K$ and $D \in \D_K$, and that stable statementss are closed under 
 % substitution. 
 
 \begin{lemma}[Stability]
-Every judgment in $\J$ is stable.
+Every statement in $\Ss$ is stable.
 \end{lemma}
 \begin{proof}
-Suppose $J$ and $J'$ are stable, $\Gamma \entails (J \wedge J')$ and
-$\delta : \Gamma \lei \Delta$. Then $\Gamma \entails J$ and $\Gamma \entails J'$,
-so by stability, $\Delta \entails \delta J$ and $\Delta \entails \delta J'$.
-Hence $\Delta \entails \delta (J \wedge J')$.
+Suppose $S$ and $S'$ are stable, $\Gamma \entails (S \wedge S')$ and
+$\delta : \Gamma \lei \Delta$. Then $\Gamma \entails S$ and $\Gamma \entails S'$,
+so by stability, $\Delta \entails \delta S$ and $\Delta \entails \delta S'$.
+Hence $\Delta \entails \delta (S \wedge S')$.
 
-Suppose $J$ is stable, $\Gamma \entails \Sbind{v D}{J}$ and
-$\delta : \Gamma \lei \Delta$. Then $\Gamma, v D \entails J$,
+Suppose $S$ is stable, $\Gamma \entails \Sbind{v D}{S}$ and
+$\delta : \Gamma \lei \Delta$. Then $\Gamma, v D \entails S$,
 and $\delta : \Gamma, v D \lei \Delta, v (\delta D)$
-so by stability of $J$, $\Delta, v (\delta D) \entails \delta J$.
-Hence $\Delta \entails \Sbind{v (\delta D)}{\delta J}$
-and so $\Delta \entails \delta \Sbind{v D}{J}$.
+so by stability of $S$, $\Delta, v (\delta D) \entails \delta S$.
+Hence $\Delta \entails \Sbind{v (\delta D)}{\delta S}$
+and so $\Delta \entails \delta \Sbind{v D}{S}$.
 
-Suppose $J$ is stable, $\Gamma \entails \fatsemi J$ and
-$\delta : \Gamma \lei \Delta$. Then $\Gamma \fatsemi \entails J$.
+Suppose $S$ is stable, $\Gamma \entails \fatsemi S$ and
+$\delta : \Gamma \lei \Delta$. Then $\Gamma \fatsemi \entails S$.
 Now $\delta : \Gamma \fatsemi \lei \Delta \fatsemi$
-so by stability, $\Delta \fatsemi \entails \delta J$ and hence
-$\Delta \entails \delta (\fatsemi J)$.
+so by stability, $\Delta \fatsemi \entails \delta S$ and hence
+$\Delta \entails \delta (\fatsemi S)$.
 
-For other judgments that we define later, the proof will proceed by induction
+For other statements that we define later, the proof will proceed by induction
 on the structure of derivations. Where the \textsc{Lookup} rule is applied,
 the result holds by the definition of information increase. No other rules
-may refer to the context, so it is straightforward to see that the judgment
+may refer to the context, so it is straightforward to see that the statement
 is stable.
 \end{proof}
 
@@ -409,10 +409,10 @@ $$\gamma_1 : \Gamma_0 \lei \Gamma_1  ~\wedge~  \gamma_2 : \Gamma_1 \lei \Gamma_2
 
 \begin{proof}
 Reflexivity follows immediately from the \textsc{Lookup} rule.
-For transitivity, suppose $v D \in \Gamma_0 \semidrop n$ and $J \in \sem{v D}$.
-Then $\Gamma_1 \semidrop n \entails \gamma_1 J$ since
+For transitivity, suppose $v D \in \Gamma_0 \semidrop n$ and $S \in \sem{v D}$.
+Then $\Gamma_1 \semidrop n \entails \gamma_1 S$ since
 $\gamma_1 : \Gamma_0 \lei \Gamma_1$.
-Now by stability applied to $\gamma_1 J$ using
+Now by stability applied to $\gamma_1 S$ using
 $\gamma_2||_{\Gamma_1 \semidrop n} :
     \Gamma_1 \semidrop n \lei \Gamma_2 \semidrop n$, we have
 $\Gamma_2 \semidrop n \entails \gamma_2\gamma_1\sem{v D}$ .
@@ -423,10 +423,10 @@ $\Gamma_2 \semidrop n \entails \gamma_2\gamma_1\sem{v D}$ .
 
 A \define{problem domain} $R_\le$ is a set $R$ equipped with a relation $\le$
 such that $R$ is closed under substitution. 
-A \define{problem on $R_\le$} is a map $P: R_\le \rightarrow \J$ such that
+A \define{problem on $R_\le$} is a map $P: R_\le \rightarrow \Ss$ such that
 $\theta P(r) = P(\theta r)$ for any $r \in R_\le$ and
 substitution $\theta$. 
-Judgments themselves can be seen 
+Statements themselves can be seen 
 as problems on the unit set. 
 We say %%%that 
 $r \in R_\le$
@@ -441,10 +441,10 @@ $\Theta \entails P(r')$, there exists $\zeta : \Delta \lei \Theta$
 such that $\theta = \zeta \compose \delta$ and $r' \le \zeta r$.
 We then say that $r$ is a \define{minimal solution of $P$ in $\Delta$}.
 
-If $P_1$ and $P_2$ are problems on $R_\le$ and $S_\ll$, then since $\J$ is
+If $P_1$ and $P_2$ are problems on $R_\le$ and $S_\ll$, then since $\Ss$ is
 closed under conjunction, $P_1 \wedge P_2$ is a problem on
 $R \times S_{\langle \le , \ll \rangle}$ given by
-$$P_1 \wedge P_2 : R \times S \rightarrow \J :
+$$P_1 \wedge P_2 : R \times S \rightarrow \Ss :
       (r, s) \mapsto P_1(r) \wedge P_2(s)$$
 where $(r, s) \langle \le , \ll \rangle (r', s')$ if
 $r \le r'$ and $s \ll s'$.
@@ -571,8 +571,8 @@ We define the set of free type variables of a type or context suffix thus:
 \FTV{\tau, \Xi} &= \FTV{\tau} \cup \FTV{\Xi}.
 \end{align*}
 
-We define the judgment $\tau \type$ in Figure~\ref{fig:typeOkRules},
-and hence define the judgment $D \ok_\TY$. Note that there is no base
+We define the statement $\tau \type$ in Figure~\ref{fig:typeOkRules},
+and hence define the statement $D \ok_\TY$. Note that there is no base
 case for the former definition because we will deduce $\alpha \type$ for
 variables $\alpha$ using the \textsc{Lookup} rule.
 
@@ -580,9 +580,9 @@ If $\Gamma$ is a valid context,
 let $\types{\Gamma}$ be 
 the set of types $\tau$ such that $\Gamma \entails \tau \type$. 
 A \define{$\TY$-substitution from $\Gamma$ to $\Delta$} is a substitution from
-$\V_\TY(\Gamma)$ to $\types{\Delta}$ which applies to types and judgments in
+$\V_\TY(\Gamma)$ to $\types{\Delta}$ which applies to types and statements in
 the obvious way.
-A simple induction on derivations shows that the judgment $\tau \type$ is stable.
+A simple induction on derivations shows that the statement $\tau \type$ is stable.
 
 \begin{figure}[ht]
 \boxrule{\Gamma \entails \tau \type}
@@ -678,7 +678,7 @@ context).
 
 
 The |Name| component is the next fresh type variable name to use;
-it is an implementation detail that is not mentioned in the typing judgments. 
+it is an implementation detail that is not mentioned in the typing rules. 
 Our choice of |Name| means that it is easy to choose a name fresh with respect to a |Context|: 
 
 > fresh :: Name -> Context -> Name
@@ -711,7 +711,7 @@ The |popEntry| function removes and returns the topmost entry from the context.
 
 \section{Unification up to definition}
 
-If $\tau$ and $\upsilon$ are types, we define the equivalence judgment
+If $\tau$ and $\upsilon$ are types, we define the equivalence statement
 $\tau \equiv \upsilon$ by the rules in Figure~\ref{fig:equivRules} along with
 \begin{align*}
 \sem{\hole{\alpha}}_\TY &= \{ \alpha \type, \alpha \equiv \alpha \}  \\
@@ -764,7 +764,7 @@ $$
 %     \Rightarrow  \Gamma \entails \alpha \equiv \alpha.$$
 
 % \begin{lemma}
-% The judgment $\tau \equiv \upsilon$ is stable, i.e.\ if
+% The statement $\tau \equiv \upsilon$ is stable, i.e.\ if
 % $\Gamma \entails \tau \equiv \upsilon$ and $\delta : \Gamma \lei \Delta$ then
 % $\Delta \entails \delta\tau \equiv \delta\upsilon$.
 % \end{lemma}
@@ -797,8 +797,8 @@ instantiation of $\alpha$ with $\tau$ succeeds with output context $\Gamma_1$.
 (Here $\Xi$ is a (possibly empty) list of type variable declarations.)
 
 
-We define the orthogonality relation $e \perp J$ (entry $e$ does not have any
-effect on the judgment $J$) for unification and instantiation judgments
+We define the orthogonality relation $e \perp S$ (entry $e$ does not have any
+effect on the statement $S$) for unification and instantiation statements
 as follows:
 \begin{align*}
 \delta \defn \_ \perp \alpha \equiv \beta
@@ -1106,7 +1106,7 @@ $$\sigma ::= .\tau ~||~ \forall\alpha~\sigma ~||~ \letS{\alpha}{\tau}{\sigma}.$$
 We use explicit definitions in type schemes to avoid the need for substitution
 in the type inference algorithm. 
 
-We define a new judgment $\sigma \scheme$
+We define a new statement $\sigma \scheme$
 % ($\sigma$ is a valid scheme in $\Gamma$)
 by the rules in Figure~\ref{fig:schemeValidityRules}.
 % We also observe the further sanity condition
@@ -1134,7 +1134,7 @@ $$
 
 
 \TODO{Get rid of the specialisation judgment and specialise on lookup instead.}
-The judgment $\Delta \entails \sigma \succ \tau$, defined in
+The statement $\sigma \succ \tau$, defined in
 Figure~\ref{fig:genericInstRules}, means that $\sigma$ has
 generic instance $\tau$ obtained by substituting $\Delta$-types
 for the generic variables of $\sigma$.
@@ -1208,7 +1208,7 @@ type scheme (written $.\tau$), as the latter will be represented by
 
 Now we can define another sort, $\TM \in \K$, with $\V_\TM$ some set of term
 variables and $\D_\TM$ containing scheme assignments of the form $\asc \sigma$.
-The judgment $D \ok_\TM$ is easy to define:
+The statement $D \ok_\TM$ is easy to define:
 $$\Rule{\sigma \scheme}
        {\asc \sigma \ok_\TM}.$$
 Let $x$ range over term variables. 
@@ -1234,7 +1234,7 @@ $$
 \end{figure}
 
 
-Now we define the judgment $t \hasscheme \sigma$ for arbitrary terms $t$ thus:
+Now we define the statement $t \hasscheme \sigma$ for arbitrary terms $t$ thus:
 \begin{align*}
 t \hasscheme .\tau   &\mapsto    t : \tau  \\
 t \hasscheme \forall \alpha \sigma  &\mapsto 
@@ -1257,9 +1257,9 @@ t \hasscheme \letS{\alpha}{\tau}{\sigma}  &\mapsto
 % progress through the structure of a term when inferring its type.
 
 % Since the additional context entries are not used in unification, it is
-% straightforward to extend the orthogonality judgments: if $e = \letGoal$ or
-% $e = x \asc \sigma$ we have $e \perp J$ for any $J$.
-% We also extend the context validity judgment with additional rules, as given in
+% straightforward to extend the orthogonality statements: if $e = \letGoal$ or
+% $e = x \asc \sigma$ we have $e \perp S$ for any $S$.
+% We also extend the context validity statement with additional rules, as given in
 % Figure~\ref{fig:additionalContextValidityRules}.
 
 % \begin{figure}[ht]
@@ -1469,7 +1469,7 @@ The syntax of terms is
 $$t ::= x ~||~ t~t ~||~ \lambda x . t ~||~ \letIn{x}{t}{t}$$
 where $x$ ranges over some set of term variables.
 
-We define the type assignability judgment $t : \tau$ by the rules in
+We define the type assignability statement $t : \tau$ by the rules in
 Figure~\ref{fig:typeAssignmentRules}.
 
 \begin{figure}[ht]
