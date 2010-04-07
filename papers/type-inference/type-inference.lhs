@@ -148,6 +148,9 @@
 \include{macros}
 \setlength{\rulevgap}{0.05in}
 
+\hyphenpenalty=5000
+\tolerance=1000
+
 \begin{document}
 
 \conferenceinfo{ICFP '10}{September 27--29, Baltimore, Maryland, USA.} 
