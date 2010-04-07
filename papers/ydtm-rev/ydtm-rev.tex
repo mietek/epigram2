@@ -1,0 +1,1941 @@
+\documentclass{fundam}
+
+\usepackage{url,fontlock,alltt,latexsym}
+\input{macros.ltx}
+\input{library.ltx}
+\NatPackage
+
+\begin{document}
+\title{Why Dependent Types Matter}
+\author{Thorsten Altenkirch, Conor McBride and James McKinna}
+\maketitle
+
+\begin{abstract}
+  We exhibit the rationale behind the design of Epigram, a dependently
+  typed programming language and interactive program development
+  system, using refinements of a well known program---merge sort---as a
+  running example. We discuss its relationship with other proposals
+  to introduce aspects of dependent types into functional programming
+  languages and sketch some topics for further work in this area.
+\end{abstract}
+
+\section{Introduction}
+
+Types matter. That's what they're for---to classify data with respect
+to criteria which matter: how they should be stored in memory, whether
+they can be safely passed as inputs to a given operation, even who is
+allowed to see them. Dependent types are types expressed in terms of
+data, explicitly relating their inhabitants to that data. As such,
+they enable you to express more of what matters about data.  While
+conventional type systems allow us to validate our programs with
+respect to a fixed set of criteria, dependent types are much more
+flexible, they realize a continuum of precision from the basic
+assertions we are used to expect from types up to a complete
+specification of the program's behaviour. It is the programmer's
+choice to what degree he wants to exploit the expressiveness of such a
+powerful type discipline. While the price for formally certified
+software may be high, it is good to know that we can pay it in
+installments and that we are free to decide how far we want to go.
+Dependent types reduce certification to type checking, hence they
+provide a means to convince others that the assertions we make about
+our programs are correct. Dependently typed programs are, by their
+nature, proof carrying code \cite{necula1996,hamid03:safpcc}.
+
+%Dependent
+%types are better at mattering on your behalf, and that is why we hope
+%they might matter to you.
+
+Functional programmers have started to incorporate many aspects of
+dependent types into novel type systems using \emph{generalized
+  algebraic data types} and \emph{singleton types}. Indeed, we share
+Sheard's vision \cite{sheard-04} of closing the \emph{semantic gap}
+between programs and their properties.
+While Sheard's language $\Omega$mega approaches this goal by an
+evolutionary step from current functional languages like Haskell, we
+are proposing a more radical departure with Epigram, exploiting what
+we have learnt from proof development tools like LEGO and COQ.
+
+Epigram is a full dependently typed programming language defined by
+McBride and McKinna \cite{ConorJames:vfl}, drawing on experience with
+the LEGO system. McBride has implemented a prototype which is
+available together with basic documentation
+\cite{epigram-man,epigram-afp} from the Epigram homepage.%
+\footnote{Currently {\tt http://sneezy.cs.nott.ac.uk/epigram/}.}
+The prototype implements most of
+the features discussed in this article, and we are continuing to
+develop it to close the remaining gaps, improve performance and add
+new features. Brady has implemented a compiler
+\cite{edwin:thesis,edwin.conor.james:family.indices} for the Epigram
+language, providing important technology for producing efficient code
+from dependently typed programs.
+
+\newcommand{\general}{\mathrm{g}\RW{eneral}}
+\newcommand{\nil}{\DC{nil}}
+\newcommand{\cons}{\mbox{\(\;\DC{:\!:}\;\)}}
+\newcommand{\tup}{\;\times\;}
+
+\begin{figure}[htb]
+\[\AR{
+\RW{data}\;\;
+\Axiom{\TC{Nat}\hab\Type}
+\;\;
+\RW{where}
+\;\;
+\Axiom{\DC{0}\hab\TC{Nat}}
+\;\;
+\Rule{\vn\hab\TC{Nat}}
+     {\DC{1+}\;\vn\hab\TC{Nat}}
+\medskip \\
+%
+\RW{data}\;\;
+\Axiom{\TC{Order}\hab\Type}
+\;\;
+\RW{where}
+\;\;
+\Axiom{\DC{le},\DC{ge}\hab\TC{Order}}
+\medskip \\
+%
+\RW{data}\;\;
+\Rule{\vX\hab\Type}
+     {\TC{List}\;\vX\hab\Type}
+\;\;
+\RW{where}
+\;\;
+\Axiom{\DC{nil}\hab\TC{List}\;\vX}
+\;\;
+\Rule{\vx\hab\vX \quad
+      \vxs\hab\TC{List}\;\vX}
+     {\vx\cons\vxs\hab\TC{List}\;\vX}
+\medskip \\
+%
+\RW{let}\;\;
+\Rule{\vx,\vy\hab\TC{Nat}}
+     {\FN{order}\;\vx\;\vy\hab\TC{Order}}
+\qquad
+\begin{array}[t]{@{}l@{\;}c@{\;}c@{\;}l}
+\FN{order} & \vx & \vy &\BY\RW{rec}\;\vx \\
+\;\;\FN{order} & \DC{0} & \vy & \cq\DC{le} \\
+\;\;\FN{order} & (\DC{1+}\vx\Pp) & \DC{0} & \cq\DC{ge} \\
+\;\;\FN{order} & (\DC{1+}\vx\Pp) & (\DC{1+}\vy\Pp) &
+        \cq\FN{order}\;\vx\Pp\;\vy\Pp \\ 
+\end{array}
+\medskip \\
+%
+\RW{let}\;\;\AR{
+\Rule{\vxs,\vys\hab\TC{List}\:\TC{Nat}}
+     {\FN{merge}\;\vxs\;\vys\hab\TC{List}\;\TC{Nat}}
+\smallskip \\
+\begin{array}{@{}l@{\;}c@{\;}c@{\;}l}
+\FN{merge}&\vxs&\vys&\BY\RW{rec}\;\vxs \\
+\;\;  \FN{merge} & \nil & \vys & \cq \vys \\
+\;\;  \FN{merge} & (\vx \cons \vxs\Pp) & \vys & \BY \RW{rec}\;\vys \\
+\;\;  \;\;\FN{merge} & (\vx \cons \vxs\Pp) & \nil & \cq \vxs \\
+\;\;  \;\;\FN{merge} & (\vx \cons \vxs\Pp) & (\vy \cons \vys\Pp) &
+    \begin{array}[t]{|c@{\;}l}
+      \FN{order}\;\vx\;\vy \\
+      \DC{le} & \cq \vx \cons \FN{merge}\;\vxs\Pp\;\vys \\
+      \DC{ge} & \cq \vy \cons \FN{merge}\;\vxs\;\vys\Pp \\
+    \end{array}
+\end{array}
+}
+\medskip\\
+%
+\RW{let}\;\;
+\Rule{\vxs\hab\TC{List}\;\vX}
+     {\FN{deal}\;\vxs\hab\TC{List}\;\vX \tup \TC{List}\;\vX}
+\qquad
+\begin{array}[t]{@{}l@{\;}c@{\;}l}
+  \FN{deal} & \vxs & \BY \RW{rec}\;\vx \\
+\;\;  \FN{deal} & \nil & \cq (\nil;\;\nil) \\
+\;\;  \FN{deal} & (\vx \cons \nil) & \cq (\vx \cons \nil;\;\nil) \\
+\;\;  \FN{deal} & (\vy \cons \vz \cons \vxs) &
+    \begin{array}[t]{|c@{\;}l}
+      \FN{deal}\;\vxs \\
+      (\vys;\;\vzs) & \cq (\vy\cons\vys;\;\vz\cons\vzs)
+    \end{array}
+\end{array}
+\medskip\\
+%
+\RW{let}\;\;\AR{
+\Rule{\vxs\hab\TC{List}\;\TC{Nat}}
+     {\FN{sort}\;\vxs\hab\TC{List}\;\TC{Nat}}
+\qquad
+\begin{array}[t]{@{}l@{\;}c@{\;}l}
+  \FN{sort} & \vxs &\AR{
+    \BY\general \\
+    \begin{array}[t]{|c@{\;}l}
+      \FN{deal}\;\vxs \\
+      (\vys;\;\nil) & \cq \vys \\
+      (\vys;\;\vz\cons\vzs) & \cq \FN{merge}\;(\FN{sort}\;\vys)
+                                    \;(\FN{sort}\;(\vz\cons\vzs))
+    \end{array}}
+\end{array}
+}
+}\]
+\caption{Merge-sort, generally\label{fig:mergesortgenerally}}
+\end{figure}
+
+In this article we exhibit the rationale behind Epigram's design,
+using refinements of a well known program---merge sort---as a running
+example.  Our starting point is the implementation shown in Figure
+\ref{fig:mergesortgenerally}: it is written in Epigram, but it could have
+been written in any functional language. We start by
+revisiting the question of totality versus partiality in section
+\ref{sec:partial}, showing how $\FN{sort}$ can be made
+structurally recursive. Section \ref{sec:static} continues by
+addressing the problem of how to maintain static invariants which is
+illustrated by implementing a sized $\FN{sort}$. In section
+\ref{sec:evidence} we how to use dependent types to maintain static
+invariants about dynamic data, which is illustrated by implementing a
+version of $\FN{sort}$ which certifies that its output is in order.
+We look behind the curtains of the Epigram system in section
+\ref{sec:tools} and discuss how dependent types support an extensible
+system of programming patterns which include, but are not restricted to,
+constructor case analysis and constructor guarded recursion; we also
+discuss the design of the
+interactive aspect of the Epigram programming environment.  Finally,
+we describe areas of further work in \ref{sec:further} and
+summarize our conclusions in section \ref{sec:concl}.
+
+Before embarking on this programme let's quickly describe Epigram's
+syntax (which may look unusual to functional programmers who have
+grown up with languages like ML or Haskell), taking our
+implementation of merge sort as an example.  Epigram uses a
+two-dimensional syntax for declarations, based on natural deduction
+rules, a choice which pays off once type
+dependencies become more intricate.  E.g. the declaration of the constructor
+$\DC{1+}$ for the datatype%
+\footnote{While the declaration of $\TC{Nat}$ provides a convenient interface to the
+type of natural numbers, there is no need to implement them using
+a unary representation internally. Moreover, we shall also exploit the
+syntactic
+convenience of using the usual decimal notation to refer to elements of $\TC{Nat}$.}
+$\Nat$ is equivalent to writing
+$\DC{1+}\hab \TC{Nat}\To\TC{Nat}$.
+The conclusion of a declaration visualizes its use---this is important
+because parameters of any type can be implicit in Epigram. For example,
+when declaring $\DC{nil}$ we do not declare $\vX$---Epigram figures out
+from its usage that it must inhabit $\Type$, the type of types and internally
+completes the declaration
+\[ 
+\Rule{\vX\hab\Type} {\DC{nil}_{\vX} \hab\TC{List}\;\vX}
+\]
+When presented with
+$\DC{nil}$, Epigram uses the well known technology established by
+Damas and Milner \cite{damas.milner:principal} to figure out the value
+of this implicit parameter.  We can also make an implicit parameter
+explicit by writing it as a subscript, eg., 
+$\DC{nil}_{\TC{Nat}} \hab\TC{List}\;\TC{Nat}$.
+
+Epigram programs are tree-structured: each node has a `left-hand side'
+indicating a \emph{programming problem} and a `right hand side'
+indicating either how to solve it outright by returning a value, $\TO
+t$ ($\TO$ is pronounced `return'), or how to reduce it to subproblems
+by deploying a programming
+pattern indicated by the $\BY$ symbol ($\BY$ is pronounced `by').
+Programming patterns include
+structural recursion, like $\RW{rec}\;\vx$ in $\FN{order}$, $\general$
+recursion and also case analysis. We suppress nonempty case analyses
+for the sake of brevity---they can be recovered by the standard algorithm
+\cite{augustsson:compiling.patterns}. If, as in the
+$\FN{merge}$ function, we need to analyse the result of an
+intermediate computation, we bring it to the left with the $|cdots$
+construct ($|$ is pronounced `with').%
+ \footnote{The current prototype doesn't yet support
+  the suppression of $\RW{case}$ and it doesn't implement the $|$ notation.
+  As a consequence its code is more verbose.} 
+Here, $\FN{order}$ decides the
+$\leq$ relation, returning a value in the enumeration $\TC{Order}$.
+
+We have given a complete program, but Epigram can also typecheck and
+evaluate incomplete programs with unfinished sections sitting in
+\emph{sheds}, $\SHEDC{\cdots}$, where the typechecker is forbidden to
+tread. Programs can be developed interactively, with the machine
+showing the available context and the required type, wherever the
+cursor may be. Moreover, it is Epigram which generates the left-hand
+sides of programs from type information, each time a problem is
+simplified with $\BY$ on the right.
+
+
+\section{Related Work}
+
+Dependent types are a central feature of Martin-L\"of's Type
+Theory \cite{martinloef:intuitionistic,nordstrom:programming}, integrating constructive
+logic and strongly typed functional programming. Type Theory and its
+impredicative extension, the Calculus of Constructions, inspired many
+type-based proof systems, such as NUPRL \cite{nuprl-book}, LEGO
+\cite{luo.pollack:legomanual} and the widely used COQ
+\cite{CoqManualV8}. Magnusson's ALF system \cite{magnusson.nordstrom:alf}
+%\cite{magnusson94implementation} 
+was not only the first system to
+implement inductive families \cite{dybjer:families} and pattern
+matching for dependent types \cite{coquand:patternmatching} and it
+also pioneered the interactive style of type-driven program and proof
+development which inspired Epigram.
+
+Xi and Pfenning's DML (for Dependent ML) \cite{DML99} was an
+impressive experiment in exploiting dependent types for a real
+functional programming language. DML, like other \emph{Applied Type
+  Systems} \cite{ATStypes03}, separates the world of indexing
+expressions and programs, thereby 
+keeping types unaffected from potentially badly behaved programs.  In contrast to
+DML, Augustsson's implementation of the Cayenne language
+\cite{augustsson:cayenne}, which also inspired the AGDA proof system
+\cite{coquand99structured}, uses full dependency and doesn't
+differentiate between static and dynamic types.
+
+Nested types provide a poor man's approach to many indexed
+data structures such as square matrices or well scoped $\lambda$-terms,
+e.g. see \cite{Hin00Man}. McBride suggested a more general approach
+\cite{conor:faking}, exploiting that Haskell's class system provides a
+static logic programming language. Having realized the power of
+indexed data structures, Cheney and Hinze \cite{ChH03Pha} proposed
+to extend the type system to introduce a rich language of index
+expressions leading to \emph{generalized
+  algebraic datatypes} (GADTs), which are basically inductive families
+in a programming language setting \cite{sheard-04,peyton-jones-wobbly}.
+
+%Sheard's $\Omega$mega
+%\cite{sheard-04} and \emph{wobbly types} \cite{peyton-jones-wobbly}
+%are based on GADTs.
+
+
+%While Cayenne
+%was an important, and mostly successful experiment, Epigram goes beyond
+%Cayenne in a number if important points, which: Epigram introduces a notion of
+%totality which leads to a better behaved symbolic evaluator, it provides 
+%support for inductively defined families and it provides a type-driven
+%interactive development system, which seems essential to deal with the
+%complexity of dependently type programming. We will discuss all these 
+%issues in more detail below.
+
+\section{Why we are Partial to Totality}
+\label{sec:partial}
+
+A popular myth, still to be found in learned articles and referee reports on
+grant applications, is that dependent types and general recursion do not
+mix. This is a misunderstanding, but it's an understandable one.
+Let us examine the facts, beginning with the typing rule for application:
+
+\[
+\Rule{\vf\hab\forall\vx:\vS\TO\vT[\vx]\quad\vs\hab\vS}
+     {\vf\;\vs\hab\vT[\vs]}
+\]
+
+It's clear from the premises that, as ever, to check an application we
+need to compare the function domain and the argument type. It's also
+clear from the rule's conclusion that these types may contain
+expressions. If computation is to preserve typings, then
+$\vf\;(\red{2}\green{+}\red{2})$ should have the same type as
+$\vf\;\red{4}$, so $\vT[\red{2}\green{+}\red{2}]$ must \emph{be} the
+same type as $\vT[\red{4}]$. To decide typechecking, we therefore need
+to decide some kind of equivalence \emph{up to computation}. There are
+various approaches to this problem.
+
+
+\textbf{The totalitarian approach.}$\quad$
+%
+Some proof systems based on intensional type theory, including Coq and
+Lego, forbid general recursion. As all computations terminate,
+equality of types is just syntactic equality of their normal forms.
+Decidability of typechecking is a consequence, but it's not the
+primary motivation for this choice. As a proof method, general
+recursion is wholly bogus---its type, $\forall\vP\TO(\vP\to\vP)\To\vP$
+is a blatant lie. General recursion, non-exhaustive
+patterns and other such non-total programming features compromise the
+logical soundness of a proof system.
+Trust is more important than termination in proof checking.
+
+Of course, even in the absence of general recursion, it's possible to
+write programs which take a long time---e.g. checking all the basic
+configurations of four-colouring problems. That doesn't make dependent
+typechecking necessarily intractable: the complexity of the programs
+in types is entirely controlled by the programmer---the more you say,
+the more you pay, but the more also you can be repaid in terms of
+genericity, or precision, or brevity. Georges Gonthier's proof of the
+four colour theorem \cite{gonthier:four} is made \emph{tractable} by
+type-level computation, because it lets him avoid generating and
+checking a separate proof for each configuration---the latter approach
+would have involved at least as much work for the computer and a great
+deal more work for Georges!
+
+
+\textbf{The libertarian approach.}$\quad$
+%
+It's reasonable to allow arbitrary recursion in type-level programs,
+provided you have some sort of cut-off mechanism which interrupts
+loops when they happen in practice. This is the approach taken by the
+Agda proof system, Cayenne and by Haskell with
+`undecidable instances'---Haskell's overloading resolution amounts
+to executing a kind of `compile-time Prolog'. Agda restores logical
+soundness by a separate termination check, performed after typechecking.
+The basic point is that you include recursive programs in types at your
+own risk: mostly they're benign and typechecking behaves sensibly.
+
+The legendary `loopiness' of dependent typechecking stems from the
+particular way the libertarian approach was implemented in Cayenne. It's
+perfectly reasonable to implement recursion via fixpoints in the
+value-only run-times of functional programming languages, but Lennart
+Augustsson's attempt to lift this to the open terms used in dependent
+typechecking had an unintended consequence---when even a structurally
+recursive function is stuck on a non-constructor input, you can still
+expand the fixpoint, potentially putting the system into a
+spin: this is intolerable, but it's not inevitable, as the other
+`libertarian' systems have shown.
+
+The pragmatic advantage of libertarianism is that we don't have to
+care why a program works in order to start playing with it---it
+seems a shame to ban certain programs at run-time just to protect
+ourselves at compile-time. However, it also seems a shame to forsake
+the certainties which totalitarianism supports.
+
+\textbf{The mixed economy.}$\quad$
+%
+As both of the above have their merits, it seems
+sensible to support both, as long as programs are clear about where
+they stand.  Dependent types can be used to express schemes of
+recursion in the form of induction principles, such as
+constructor-guarded recursion for a given inductive datatype. In
+Epigram, programs invoke recursion schemes explicitly---each recursive
+call must be translatable to an `inductive hypothesis' arising from
+such a scheme. Any program which employs only constructor-guarded
+recursion, or some fancier scheme derived therefrom, is guaranteed
+to be total.
+
+However, general recursion also takes the form of an induction
+principle (with a particularly generous inductive hypothesis). We can
+make general recursion available, but only by explicit appeal to this
+principle. If we suppress the compile-time computational behaviour of
+general recursion, we can preserve decidability of typechecking, leaving
+computation by explicitly total programs activated.
+
+This opens a range of possibilities, as shown by the implementation of
+merge-sort shown in figure \ref{fig:mergesortgenerally}. The
+$\FN{order}$ing of the natural numbers with respect to $\le$ is a
+one-step constructor guarded recursion. To $\FN{merge}$ two sorted
+lists, we need a combination of one-step recursions on each
+argument---for each successive element of the first list, we step
+along the second list until its rightful place appears. The
+$\FN{deal}$ing out of a list into two lists of (roughly) half the
+length here exploits a two-step recursion, but this still fits within
+the constructor-guarded scheme indicated by the keyword $\RW{rec}$.
+However, $\FN{sort}$ performs a peculiar recursion via
+$\FN{deal}$---it's not obvious yet how to justify this, so for now we give
+up and use $\general$.\footnote{To see how subtle the justification
+can be, try swapping the case analysis on $\FN{deal}\;\vxs$ so the
+patterns are $(\nil;\;\vys)$ and $(\vz\cons\vzs;\;\vys)$.}
+
+
+This approach rules nothing out, but it still allows us to observe
+guaranteed totality where we can see the explanation. The notational
+overhead is not large and could be reduced still further if we were to
+install an Agda-style termination checker, inferring simple
+explanations when the user omits them.  We could go even further,
+pushing the total-versus-general distinction into types by treating
+general recursion as an effect which we lock away safely in a monad.
+For practical purposes, we should need a better notation for monadic
+programming in the \emph{functional} style.  Both of these are active
+topics of research.
+
+
+\subsection{Totality is Good for more than the Soul}
+
+The warm fuzzy feeling you get when you've persuaded your program to live
+in a total programming language should not be underestimated. It's a
+strong static guarantee---you can say that you've written a \emph{function}
+without having to pretend that $\bot$ is a value.
+But warm fuzzy feelings don't pay the rent: what are the practical benefits
+of virtue?
+
+Randy Pollack has often said to us `the point of writing a proof in a
+strongly normalizing calculus is that you don't need to normalize it'.
+When you have an expression of a given type in a total language, you
+can guarantee that it will compute to a value: if you don't care what
+that value is---as is usually the case with a proof---you have no need
+to perform the computation. Now we know that we can integrate proofs
+of logical properties into our programs at \emph{no run-time cost}.
+
+This is particularly important with proofs of equations. Equality is
+defined as follows:
+
+\newcommand{\EQ}{\;\blue{=}\;}
+\[
+\RW{data}\;\;
+\Rule{\vs\hab\vS\quad\vt\hab\vT}
+     {\vs\EQ\vt\hab\Type}
+\;\;\RW{where}\;\;
+\Axiom{\DC{refl}\hab\vt\EQ\vt}
+\]
+
+An equation between types induces a coercion from one
+to the other which is trivial if the proof is $\DC{refl}$.
+
+\[
+\RW{let}\;\;
+\Rule{\vQ\hab\vS=\vT\quad \vs\hab\vS}
+     {\{\vQ\}\vs\hab\vT}
+\qquad
+\{\DC{refl}\}\vt \cq\vt
+\]
+
+In a partial setting, we need to run $\vQ$ to check that it's
+$\DC{refl}$, because trusting a false equation (like
+$\TC{Nat}=\TC{Nat}\to\TC{Nat}$) induces a run-time type error.  When
+$\vQ$ is total, the compiler can erase
+$\{\vQ\}$. 
+Contrast this with the proposal to represent type equations 
+% current vogue for representing 
+in Haskell by isomorphisms, e.g. \cite{BaSw02},  --- even though good programmers
+always try to ensure that these functions turn out at run-time to be
+functorial liftings of $\texttt{id}$, there is no way to guarantee
+this to the compiler, so the isomorphisms must actually be executed.
+
+Moreover, an optimising compiler can exploit totality in various
+useful ways. The evaluation strategy of a total program is irrelevant,
+so they can be run as strictly or lazily as a heuristic analysis might
+suggest. Optimisations like replacing $\texttt{foldr}$ with $\texttt{foldl}$,
+which only work with finite values, can be applied safely. Specialisation
+by partial evaluation is untroubled by $\bot$. Further the explicit marking
+of a program as structurally recursive is a clear invitation to apply
+fusion techniques.
+
+All in all, there is no bliss to be had from ignorance of totality;
+there is no disadvantage to wisdom.
+
+
+\subsection{Defusing General Recursion}
+
+A recursive function which happens to be total will generally exploit some
+sort of structure, but perhaps not the `native' structure of its inductive
+arguments. The totality of the function can be made clear if that structure,
+whatever it is, can be brought into the open and expressed inductively.
+
+A typical `divide and conquer' recursion often becomes structural by
+introducing an intermediate data structure which represents the
+division of the input, built by a process of insertion, and collapsed
+structurally by `conquering'. This intermediate data structure thus
+corresponds to the control structure built by the original recursion,
+which can be reconstructed by fusing the building with the collapse.
+
+As David Turner observed \cite{turner:strong.functional}, defusing
+quick-sort exposes the binary search tree structure.  The standard
+example of a non-structural program is actually tree-sort---Rod
+Burstall's first example of a structural program
+\cite{burstall:induction}!
+
+We play the same game with merge-sort in figure
+\ref{fig:mergesortstructurally}. The `divide' phase deals out the
+input to each sort into two inputs for sub-sorts (roughly) half the
+size; the `conquer' phase merges the two sorted outputs into one
+(roughly) twice the size. If we build a tree representing the sorting
+processes, we find that each node deals its inputs fairly to its
+subnodes, with the leaves having none or one.
+
+\newcommand{\pev}{\DC{p0}}
+\newcommand{\poo}{\DC{p1}}
+
+\begin{figure}[htb]
+\[\AR{
+\RW{data}\;\;
+\Axiom{\TC{Parity}\hab\Type}
+\;\;
+\RW{where}
+\;\;
+\Axiom{\pev,\poo\hab\TC{Parity}}
+\medskip\\
+%
+\RW{data}\;\;
+\Rule{\vX\hab\Type}
+     {\TC{DealT}\;\vX\hab\Type}
+\;\;
+\RW{where}
+\;\;
+\Axiom{\DC{empT}\hab\TC{DealT}\;\vX}
+\;\;
+\Rule{\vx\hab\vX}
+     {\DC{leafT}\;\vx\hab\TC{DealT}\;\vX}
+\;\;
+\Rule{\vp\hab\TC{Parity}\quad\vl,\vr\hab\TC{DealT}\;\vX}
+     {\DC{nodeT}\;\vp\;\vl\;\vr \hab \TC{DealT}\;\vX}
+\medskip\\
+%
+\RW{let}\;\;
+\Rule{\vx\hab\vX\quad\vt\hab\TC{DealT}\;\vX}
+     {\FN{insertT}\;\vx\;\vt\hab\TC{DealT}\;\vX}
+\qquad
+\begin{array}[t]{@{}l@{\;}c@{\;}c@{\;}l}
+  \FN{insertT} & \vx & \vt & \BY \RW{rec}\;\vt \\
+\;\;  \FN{insertT} & \vx & \DC{empT} & \cq \DC{leafT}\;\vx \\
+\;\;   \FN{insertT} & \vx & (\DC{leafT}\;\vy) & \cq
+    \DC{nodeT}\;\pev\; (\DC{leafT}\;\vy)\;(\DC{leafT}\;\vx)\\
+\;\;   \FN{insertT} & \vx & (\DC{nodeT}\;\pev\;\vl\;\vr) & \cq
+    \DC{nodeT}\;\poo\;(\FN{insertT}\;\vx\;\vl)\;\vr \\
+\;\;   \FN{insertT} & \vx & (\DC{nodeT}\;\poo\;\vl\;\vr) & \cq
+    \DC{nodeT}\;\pev\;\vl\;(\FN{insertT}\;\vx\;\vr)
+\end{array}
+\medskip\\
+%
+\RW{let}\;\;
+\Rule{\vxs\hab\TC{List}\;\vX}
+     {\FN{dealT}\;\vxs\hab\TC{DealT}\;\vX}
+\qquad
+\begin{array}[t]{@{}l@{\;}c@{\;}l}
+  \FN{dealT} & \vxs & \BY \RW{rec}\;\vxs \\
+\;\;  \FN{dealT} & \nil & \cq \DC{empT}\\
+\;\;  \FN{dealT} & (\vx\cons\vxs) & \cq\FN{insertT}\;\vx\;(\FN{dealT}\:\vxs)
+\end{array}
+\medskip\\
+%
+\RW{let}\;\;
+\Rule{\vt\hab\TC{DealT}\;\TC{Nat}}
+     {\FN{mergeT}\;\vt\hab\TC{List}\;\TC{Nat}}
+\qquad
+\begin{array}[t]{@{}l@{\;}c@{\;}l}
+\FN{mergeT} & \vt & \BY \RW{rec}\;\vt \\
+\;\;\FN{mergeT} & \DC{empT} & \cq \nil \\
+\;\;\FN{mergeT} & (\DC{leafT}\;\vx) & \cq \vx\cons\nil \\
+\;\;\FN{mergeT} & (\DC{nodeT}\;\vp\;\vl\;\vr) & \cq
+  \FN{merge}\;(\FN{mergeT}\;\vl)\;(\FN{mergeT}\;\vr)
+\end{array}
+\medskip\\
+%
+\RW{let}\;\;
+\Rule{\vxs\hab\TC{List}\;\TC{Nat}}
+     {\FN{sort}\;\vxs\hab\TC{List}\;\TC{Nat}}
+\qquad
+  \FN{sort} \; \cq \FN{mergeT}\cdot\FN{dealT}
+}\]
+\caption{Merge-sort, structurally
+    (with $\FN{merge}$ as before)\label{fig:mergesortstructurally}}
+\end{figure}
+
+Correspondingly, a `dealing' is a binary tree with leaves of weight
+zero or one, and nodes off balance by at most one---if we keep a
+parity bit at each node, we shall know into which subnode the next
+element should be dealt. In effect, we defuse the general recursion as
+a composition of folds, with `divide' replacing $[\nil,(\!\cons\!)]$
+by $[\DC{empT},\FN{insertT}]$ and `conquer' ($\FN{mergeT}$) replacing
+$[\DC{empT},\DC{leafT},\DC{nodeT}]$ by
+$[\nil,(\!\cons\nil),\lambda\vp\TO\FN{merge}]$.
+
+Of course, there is no panacea: there are all sorts of ways to write
+programs which conceal the structures by which they operate. A
+dependent type system provides a rich language of datatypes in which
+to expose these structures---other examples include evaluation for the
+simply typed $\lambda$-calculus with primitive recursion on
+$\TC{Nat}$, which gives a denotational semantics to both types and
+terms, and first-order unification, which combines recursion on the
+number of available variables with recursion on terms over those
+variables.
+
+If you care about totality, it's often easier to write a new program
+which works with the relevant structure than to write a proof which
+finds the structure which a $\general$-program is hiding. The best way
+to tidy up the mess is not to make it in the first place, if you can
+possibly avoid it.
+
+
+\section{Maintaining Invariants by Static Indexing}
+\label{sec:static}
+
+An important aspect of many recent and innovative type systems is the
+idea of \emph{indexing} datatypes in order to express and enforce
+structural invariants. There are various ways this can be achieved: in
+Epigram, we define \emph{datatype families} in the style of the Alf
+system~\cite{dybjer:families}.  A good introductory example is given
+by the \emph{vectors}---lists indexed with their length.
+
+\newcommand{\VEC}{\TC{Vec}}
+\newcommand{\vnil}{\DC{vnil}}
+\newcommand{\vcons}{\DC{vcons}}
+\[
+\RW{data}\;\;
+\Rule{\vn\hab\Nat\quad\vX\hab\Type}
+     {\VEC\;\vn\;\vX\hab\Type}
+\;\;
+\RW{where}
+\;\;
+\Axiom{\vnil\hab\VEC\;\DC{0}\;\vX}
+\;\;
+\Rule{\vx\hab\vX\quad
+      \vxs\hab\VEC\;\vn\;\vX}
+     {\vcons\;\vx\;\vxs\hab\VEC\;(\DC{1+}\vn)\;\vX}
+\]
+
+Case analysis on inductive families~\cite{coquand:patternmatching}
+involves \emph{unifying} the type of the scrutinee with the type of
+each possible constructor pattern---those patterns for which
+constructors clash are rejected as impossible, as in this notorious
+example:
+
+\[
+\RW{let}\;\;
+\Rule{\vxs\hab\VEC\;(\DC{1+}\vn)\;\vX}
+     {\FN{vtail}\;\vxs\hab\VEC\;\vn\;\vX}
+\qquad
+\FN{vtail}\;(\vcons\;\vx\;\vxs) \;\cq\vxs
+\]
+
+Vectors admit operations which enforce and
+maintain length invariants, such as this `vectorized application':
+
+\newcommand{\vapp}{\;^{\FN{@}}\;}
+\[
+\RW{let}\;\;
+\Rule{\vfs\hab\VEC\;\vn\;(\vS\to\vT)\quad
+      \vsss\hab\VEC\;\vn\;\vS}
+     {\vfs\vapp\vsss\hab\VEC\;\vn\;\vT}
+\qquad
+\AR{
+\vfs\vapp\vsss\;\BY\RW{rec}\;\vfs \\
+\;\;\begin{array}{l@{}c@{}l@{\;}l}
+       \vnil & \vapp & \vnil & \cq \vnil \\
+       \vcons\;\vf\;\vfs\Pp & \vapp & \vcons\;\vs\;\vsss\Pp & \cq
+         \vcons\;(\vf\;\vs)\;(\vfs\Pp\vapp\vsss\Pp)
+    \end{array}
+}
+\]
+
+Sometimes, we need some operations on the indices in order to express
+the type of an operation on indexed data. Concatenating vectors is a simple
+example
+
+\newcommand{\plus}{\;\FN{+}\;}
+\newcommand{\vconc}{\;\FN{+\!+}\;}
+\[\begin{array}{l@{\qquad}l}
+\RW{let}\;\;
+\Rule{\vm,\vn\hab\TC{Nat}}
+     {\vm\plus\vn\hab\TC{Nat}}
+&
+\AR{
+\vm\plus\vn\;\BY\RW{rec}\;\vm \\
+\;\;\begin{array}{l@{}c@{}l@{\;}l}
+       \DC{0} & \plus & \vn & \cq \vn \\
+       (\DC{1+}\;\vm\Pp) & \plus & \vn & \cq\DC{1+}\;(\vm\Pp\plus\vn)
+    \end{array}
+}
+\medskip\\
+\RW{let}\;\;
+\Rule{\vxs\hab\VEC\;\vm\;\vX\qquad\vys\hab\VEC\;\vn\;\vX}
+     {\vxs\vconc\vys\hab\VEC\;(\vm\plus\vn)\;\vX}
+&
+\AR{
+\vxs\plus\vys\;\BY\RW{rec}\;\vxs \\
+\;\;\begin{array}{l@{}c@{}l@{\;}l}
+       \vnil & \vconc & \vys & \cq \vys \\
+       \vcons\;\vx\;\vxs\Pp & \vconc & \vys &
+         \cq\vcons\;\vx\;(\vxs\Pp\vconc\vys)
+    \end{array}
+}
+\end{array}\]
+
+Note the importance of the index unification in the above example---it's
+the instantiation of the first argument's length with $\DC{0}$ or
+$(\DC{1+}\;\vm\Pp)$ which enables the length of the concatenation to
+compute down to the length of the vectors we actually return in each case.
+
+The fact that the length is some kind of data allows us to write
+generic operations by computation over it. This example computes a
+constant vector of the required size.
+
+\[
+\RW{let}\;\;
+\Rule{\vx\hab\vX}
+     {\FN{vec}_{\vn}\;\vx\hab\VEC\;\vn\;\vX}
+\qquad
+\AR{
+\FN{vec}_{\vn}\;\vx\;\BY\RW{rec}\;\vn \\
+\;\;\begin{array}{l@{\;}l@{\;}l}
+      \FN{vec}_{\DC{0}} & \vx & \cq \vnil \\
+      \FN{vec}_{(\DC{1+}\;\vn\Pp)} & \vx &
+         \cq \vcons\;\vx\;(\FN{vec}_{\vn\Pp}\;\vx)
+    \end{array}
+}
+\]
+
+We write $\FN{vec}$'s length argument as a subscript to indicate that
+it is usually to be left implicit when the $\FN{vec}$ function is
+used.  For example, we can map a function $\vf$ across a vector $\vxs$
+just by writing $\FN{vec}\:\vf\vapp\vxs$, because the type of
+$\!\vapp\!$ will require the output of $\FN{vec}$ to have the same
+length as $\vxs$.  The technology we have inherited from Damas and
+Milner is now being used to infer \emph{value} parameters as well as
+types.  The behaviours of $\FN{vec}$ and $\!\vapp\!$ combine
+conveniently to give us `vectorized applicative programming' with size
+invariants quietly maintained: transposition shows this in action.
+
+\[
+\RW{let}\;\;
+\Rule{\VV{xij}\hab\VEC\;\vi\;(\VEC\;\vj\;\vX)}
+     {\FN{xpose}\;\VV{xij}\hab\VEC\;\vj\;(\VEC\;\vi\;\vX)}
+\qquad
+\AR{
+  \FN{xpose}\;\VV{xij}\;\BY\RW{rec}\;\VV{xij}\\
+  \begin{array}{l@{\;}c@{\;}l}
+    \FN{xpose} & \vnil & \cq \FN{vec}\;\vnil \\
+    \FN{xpose} & (\vcons\;\VV{xj}\;\VV{xi}\Pp\!\vj) & \cq
+      \FN{vec}\;\vcons\vapp\VV{xj}\vapp\FN{xpose}\;\VV{xi}\Pp\!\vj
+  \end{array}
+}
+\]
+
+
+\subsection{Static Indexing and Proofs}
+
+In our definition of $\!\vconc\!$, we were lucky---the computation on
+the vectors was in harmony with the computation on the numbers. We are
+not always so lucky---if we try to reverse a vector by the usual
+accumulating algorithm, we kick against the computational behaviour of
+$\!\plus\!$ and the obvious program does not typecheck.
+
+\[
+\RW{let}\;\;
+\Rule{\vxs\hab\VEC\;\vm\;\vX\qquad\vys\hab\VEC\;\vn\;\vX}
+     {\FN{vrevacc}\;\vxs\;\vys\hab\VEC\;(\vm\plus\vn)\;\vX}
+\qquad
+\AR{
+\FN{vrevacc}\;\vxs\;\vys\;\BY\RW{rec}\;\vxs \\
+\;\;\begin{array}{l@{\;}c@{\;}l@{\;}l}
+       \FN{vrevacc} & \vnil & \vys & \cq \vys \\
+       \FN{vrevacc} & (\vcons\;\vx\;\vxs\Pp) & \vys &
+         \cq\brownBG{$\FN{vrevacc}\;\vxs\Pp\;(\vcons\;\vx\;\vys)$}
+    \end{array}
+}
+\]
+
+The trouble is that the shaded expression has length
+$\vm\Pp\plus(\DC{1+}\;\vn)$, and we require a length of
+$\DC{1+}\;(\vm\Pp\plus\vn)$, where $\vxs\Pp$ and $\vys$ have lengths
+$\vm\Pp$ and $\vn$ respectively. The fact that these two lengths are
+the same does not follow directly from applying the computational
+behaviour of $\!\plus\!$, rather it's an algebraic property for which
+we can offer an inductive explanation.
+
+\newcommand{\CONG}[1]{\left[#1\right>}
+\newcommand{\GNOC}[1]{\left<#1\right]}
+
+\[
+\RW{let}\;\;\AR{
+\Axiom{\FN{plusSuc}\;\vm\;\vn\hab
+       \vm\plus(\DC{1+}\;\vn) \EQ \DC{1+}\;(\vm\plus\vn)}
+\smallskip\\
+\FN{plusSuc}\;\vm\;\vn\;\BY\RW{rec}\;\vm \\
+\;\;\begin{array}{l@{\;}c@{\;}c@{\;}l}
+      \FN{plusSuc} & \DC{0} & \vn & \cq\DC{refl} \\
+      \FN{plusSuc} & (\DC{1+}\;\vm\Pp) & \vn & \cq
+         \CONG{\FN{plusSuc}\;\vm\Pp\;\vn} \\
+    \end{array}
+}
+\]
+
+We write $\CONG{\vq}$ for the proof of an equation
+$\vp[\vs]\EQ\vp[\vt]$ where $\vq\hab\vs\EQ\vt$ and
+$\GNOC{\vq}$ for the symmetric proof of $\vp[\vt]\EQ\vp[\vs]$
+Once we have this proof, we can fix our accumulating reverse:
+
+\[
+\RW{let}\;\;\AR{
+\Rule{\vxs\hab\VEC\;\vm\;\vX\qquad\vys\hab\VEC\;\vn\;\vX}
+     {\FN{vrevacc}_{\vm\;\vn}\;\vxs\;\vys\hab\VEC\;(\vm\plus\vn)\;\vX}
+\smallskip\\
+\FN{vrevacc}\;\vxs\;\vys\;\BY\RW{rec}\;\vxs \\
+\;\;\begin{array}{l@{\;}c@{\;}l@{\;}l}
+       \FN{vrevacc} & \vnil & \vys & \cq \vys \\
+       \FN{vrevacc}_{(\DC{1+}\:\vm\Pp)\;\vn} & (\vcons\;\vx\;\vxs\Pp) & \vys &
+         \cq\{\CONG{\FN{plusSuc}\;\vm\Pp\;\vn}\}\;
+            \FN{vrevacc}\;\vxs\Pp\;(\vcons\;\vx\;\vys)
+    \end{array}
+}
+\]
+
+It is perhaps not surprising that to finish the job, we need another
+lemma (whose proof is an unremarkable induction):
+
+\[\AR{
+\RW{let}\;\;
+\Axiom{\FN{plusZero}\;\vn\hab\vn\plus\DC{0} \EQ \vn} \qquad \cdots
+\medskip\\
+\RW{let}\;\;
+\Rule{\vxs\hab\VEC\;\vn\;\vX}
+     {\FN{vrev}_{\vn}\;\vxs\hab\VEC\;\vn\;\vX}
+\qquad
+\FN{vrev}_{\vn}\;\vxs\;\cq \{\CONG{\FN{plusZero}\:\vn}\}\;
+                            \FN{vrevacc}\;\vxs\;\vnil
+}\]
+
+As we have already mentioned, these proofs are erased at run-time---their
+only r\^ole is to make the typechecker aware of more than it can figure
+out by computation alone. Perhaps it's undesirable to `repair' programs with
+proofs---our $\FN{vrev}$ is certainly more trouble to write than the
+reversal of an unsized list, but this is just the work which has to
+be done if you want to know that length is preserved. If we don't
+care, we don't have to work so hard---we could just return a vector of
+\emph{some} length, rather than the \emph{same} length:
+
+\newcommand{\Gp}{\green{'}}
+\[
+\RW{let}\;\;\AR{
+\Rule{\vxs\hab\VEC\;\vm\;\vX\qquad\vys\hab\VEC\;\vn\;\vX}
+     {\FN{vrevacc}\Gp\;\vxs\;\vys\hab\exists_{\vl}\TO\VEC\;\vl\;\vX}
+\smallskip\\
+\FN{vrevacc}\Gp\;\vxs\;\vys\;\BY\RW{rec}\;\vxs \\
+\;\;\begin{array}{l@{\;}c@{\;}l@{\;}l}
+       \FN{vrevacc}\Gp & \vnil & \vys & \cq \vys \\
+       \FN{vrevacc}\Gp & (\vcons\;\vx\;\vxs\Pp) & \vys &
+           \cq \FN{vrevacc}\Gp\;\vxs\Pp\;(\vcons\;\vx\;\vys)
+    \end{array}
+}
+\]
+
+The notion of `some length' is expressed via an \emph{implicit
+  existential} $\exists_{\vl}\TO\VEC\;\vl\;\vX$. The vector is packed
+(inferring the witness) and unpacked (discarding the witness)
+automatically. It allows us to recover a less dependent type by hiding
+an index---here we recover ordinary lists.  We can write the old
+programs with the old precision just as easily as before.
+
+As with totality, we have enough language to negotiate a pragmatic
+compromise, adopting more precise methods where the gain is worth the
+work.  
+%To reject this language is to presuppose the outcome of this
+%negotiation in all cases---we are not capable of such courage.  
+The
+more prudent course, perhaps, is to try to make the unremarkable
+proofs as cheap as possible. Xi and Pfenning's approach of equipping
+the typechecker with decision procedures for standard problem classes
+is a great help in practice: DML has no difficulty discharging the
+elementary properties of $\!\plus\!$ we required above. We should certainly
+emulate this functionality.
+
+\subsection{Sized Merge-Sort}
+
+We can provide a more substantial example of `the pragmatics of precision' by
+rolling out size invariants across our development of merge-sort. We shall
+replace the lists by vectors, and we shall seek to ensure that sorting
+preserves the length of its input.
+
+How will sizing affect $\FN{merge}$? The output length should be the
+sum of the input lengths.
+
+\[
+\RW{let}\;\;\AR{
+\Rule{\vxs\hab\VEC\;\vm\;\Nat\quad
+      \vys\hab\VEC\;\vn\;\Nat}
+     {\FN{merge}_{\vm\;\vn}\;\vxs\;\vys\hab\VEC\;(\vm\plus\vn)\;\Nat}
+\smallskip \\
+\begin{array}{@{}l@{\;}c@{\;}c@{\;}l}
+\FN{merge}&\vxs&\vys&\BY\RW{rec}\;\vxs \\
+\;\;  \FN{merge} & \vnil & \vys & \cq \vys \\
+\;\;  \FN{merge} & (\vcons\;\vx\; \vxs\Pp) & \vys & \BY \RW{rec}\;\vys \\
+\;\;  \;\;\FN{merge}_{(\DC{1+}\:\vm\Pp)\;\DC{0}}
+        & (\vcons\;\vx\; \vxs\Pp) & \vnil &
+        \cq \{\GNOC{\FN{plusZero}\;(\DC{1+}\:\vm\Pp)}\}\;\vxs \\
+\;\;  \;\;\FN{merge}_{(\DC{1+}\:\vm\Pp)\;(\DC{1+}\:\vn\Pp)} &
+      (\vcons\;\vx\; \vxs\Pp) & (\vcons\;\vy\; \vys\Pp)\\
+  \multicolumn{4}{l}{\qquad
+    \begin{array}[t]{|c@{\;}l}
+      \FN{order}\;\vx\;\vy \\
+      \DC{le} & \cq \vcons\;\vx \;(\FN{merge}\;\vxs\Pp\;\vys) \\
+      \DC{ge} & \cq \vcons\;\vy \;
+      (\{\GNOC{\FN{plusSuc}\;\vm\Pp\;\vn}\}\;
+       \FN{merge}\;\vxs\;\vys\Pp) \\
+    \end{array}
+  }
+\end{array}
+}
+\]
+
+%Note that we need to use our lemmas the other way around when we are
+%\emph{using} constructors on the right---in $\FN{vrev}$, we were putting
+%constructors on the right.
+
+We shall also need to add sizes to our intermediate $\TC{DealT}$ data
+structure. The sizes for $\DC{empT}$ and $\DC{leafT}$ are obvious
+enough, but what about $\DC{nodeT}$?  A useful clue is provided by the
+\emph{balancing} invariant which our program preserves---the size of
+the left subtree is either equal to that of the right subtree or just
+one more, depending on the parity bit.  Let's write that down (we use
+decimals to abbreviate numerical constants):
+
+\newcommand{\pfog}[1]{\green{\hat{#1}}}
+\[\AR{
+\RW{let}\;\;\Rule{\vp\hab\TC{Parity}}
+                 {\pfog{\vp}\hab\Nat}\quad
+\AR{\pfog{\pev}\;\cq\DC{0}\\
+    \pfog{\poo}\;\cq\DC{1}\\
+   }
+\medskip\\
+\RW{data}\;\;
+\Rule{\vn\hab\Nat\quad\vX\hab\Type}
+     {\TC{DealT}\;\vn\;\vX\hab\Type}
+\;\;
+\RW{where}
+\;\;
+\AR{
+\Axiom{\DC{empT}\hab\TC{DealT}\;\DC{0}\;\vX}
+\;\;
+\Rule{\vx\hab\vX}
+     {\DC{leafT}\;\vx\hab\TC{DealT}\;\DC{1}\;\vX}
+\\
+\Rule{\vp\hab\TC{Parity}\quad\vl\hab\TC{DealT}\;(\pfog{\vp}\plus\vn)\;\vX
+                        \quad\vr\hab\TC{DealT}\;\vn\;\vX}
+     {\DC{nodeT}_{\vn}\;\vp\;\vl\;\vr \hab
+       \TC{DealT}\;((\pfog{\vp}\plus\vn)\plus\vn)\;\vX}
+}
+}\]
+
+There is more than one way to write down the size of a
+$\DC{nodeT}$.\footnote{Indeed, the above does not ensure that
+the subtrees of a node are nonempty---this can be done by replacing
+$\vn$ with $(\DC{1+}\;\vn\Pp)$ in the type of $\DC{nodeT}$.} The
+choice we make here is motivated by the $\FN{mergeT}$ operation, which now
+has a more informative type:
+
+\[
+\RW{let}\;\;\AR{
+\Rule{\vt\hab\TC{DealT}\;\vn\;\Nat}
+     {\FN{mergeT}\;\vt\hab\VEC\;\vn\;\Nat}
+\smallskip \\
+\begin{array}{@{}l@{\;}c@{\;}l}
+\FN{mergeT} & \vt & \BY \RW{rec}\;\vt \\
+\;\;\FN{mergeT} & \DC{empT} & \cq \vnil \\
+\;\;\FN{mergeT} & (\DC{leafT}\;\vx) & \cq \vcons\;\vx\;\nil \\
+\;\;\FN{mergeT} & (\DC{nodeT}\;\vp\;\vl\;\vr) & \cq
+  \FN{merge}\;(\FN{mergeT}\;\vl)\;(\FN{mergeT}\;\vr)
+\end{array}
+}
+\]
+
+We simply chose the return type for $\DC{nodeT}$ which made the old code
+for $\FN{mergeT}$ go through as it stood, given the new type of
+$\FN{merge}$! Of course, we shall pay when we come to write
+$\FN{insertT}$---we could shift the burden the other way by taking the
+size of a $\DC{nodeT}$ to be
+$\pfog{\vp}\plus\vn\;\green{\ast}\;\DC{2}$.
+
+\[
+\RW{let}\;\;\AR{
+\Rule{\vx\hab\vX\quad\vt\hab\TC{DealT}\;\vn\;\vX}
+     {\FN{insertT}\;\vx\;\vt\hab\TC{DealT}\;(\DC{1+}\;\vn)\;\vX}
+\smallskip \\
+\begin{array}{@{}l@{\;}c@{\;}c@{\;}l}
+  \FN{insertT} & \vx & \vt & \BY \RW{rec}\;\vt \\
+\;\;  \FN{insertT} & \vx & \DC{empT} & \cq \DC{leafT}\;\vx \\
+\;\;   \FN{insertT} & \vx & (\DC{leafT}\;\vy) & \cq
+    \DC{nodeT}\;\pev\; (\DC{leafT}\;\vy)\;(\DC{leafT}\;\vx)\\
+\;\;   \FN{insertT} & \vx & (\DC{nodeT}\;\pev\;\vl\;\vr) & \cq
+    \DC{nodeT}\;\poo\;(\FN{insertT}\;\vx\;\vl)\;\vr \\
+\;\;   \FN{insertT} & \vx & (\DC{nodeT}_{\vn}\;\poo\;\vl\;\vr) & \cq
+    \{\CONG{\FN{plusSuc}\;\vn\;\vn}\}\;
+    \DC{nodeT}_{(\DC{1+}\:\vn)}\;\pev\;\vl\;(\FN{insertT}\;\vx\;\vr)
+\end{array}
+}
+\]
+
+The damage is not too bad---we just have to appeal to algebraic properties of $\plus$,
+to show that the constructed tree of size $(\DC{1+}\vn)\plus\vn$ fits the constraint 
+$\DC{1+}(\vn\plus\vn)$.
+%when we insert on the right, we still want
+%the $\DC{1+}$ on the left!
+This leaves $\FN{dealT}$ and $\FN{sort}$ with new types, but basically
+the same code:
+
+\[\AR{
+\RW{let}\;\;
+\Rule{\vxs\hab\VEC\;\vn\;\vX}
+     {\FN{dealT}\;\vxs\hab\TC{DealT}\;\vn\;\vX}
+\qquad
+\begin{array}[t]{@{}l@{\;}c@{\;}l}
+  \FN{dealT} & \vxs & \BY \RW{rec}\;\vxs \\
+\;\;  \FN{dealT} & \vnil & \cq \DC{empT}\\
+\;\;  \FN{dealT} & (\vcons\;\vx\;\vxs) &
+      \cq\FN{insertT}\;\vx\;(\FN{dealT}\:\vxs)
+\end{array}
+\medskip\\
+%
+\RW{let}\;\;
+\Rule{\vxs\hab\VEC\;\vn\;\Nat}
+     {\FN{sort}\;\vxs\hab\VEC\;\vn\;\Nat}
+\qquad
+  \FN{sort} \; \cq \FN{mergeT}\cdot\FN{dealT}
+}\]
+
+It seems appropriate at this point to emphasize the importance of feedback
+from the typechecker when doing a development like this. It's the typechecker
+which tells you which lemmas you need and where you need to insert them,
+and it's the constraints which arise during typechecking which tell you
+how to engineer a data structure's indices so that its operations typecheck
+where possible. The computational coincidences between the indices
+we encounter are really a matter of care, not luck.
+
+
+\subsection{A Question of Phase}
+
+In our sorting example, the natural numbers $\TC{Nat}$ are playing two
+separate parts---dynamically, they represent the data being sorted;
+statically, they give sizes to the data structures involved in the
+process. All the case analysis happens over the indexed datatypes,
+rather than the indices themselves, so there is no need for sizes at
+run-time. It would appear that, in this example at least, the data on
+which types depend is entirely static. Although we need something like
+the natural numbers within the language of types, should it be the
+natural numbers? Perhaps it would be simpler if, as well as the natural
+numbers, there was something else exactly like them.
+
+It's not as ridiculous as it sounds: it enables us to keep the
+workaday term language out of types, allowing dependency only on the
+static things.  This keeps the type/term distinction in alignment with
+the phase distinction, separating the static $\forall$ from
+the dynamic $\to$, each with their own distinct notions of
+abstraction, application and now of datatype.
+
+Of course, static datatypes are not quite enough: our $\TC{DealT}$
+datatype family relies on operations such as $\plus$. We need static
+functions over static data, together with the associated partial
+evaluation technology. We need to find design criteria for this
+emerging static programming language. Will all our static data
+structures be monomorphic? Do we believe that static data will never
+need to be indexed itself? It would be bold to imagine that `yes' is
+the answer to these questions.  At what point will we stop extending
+the static language with a replica of the dynamic language?
+
+We're beginning to see more and more of the same phenomema showing up
+on either side of the phase distinction; we're even beginning to see
+the potential emergence of a phase \emph{hierarchy}. Occam's razor
+suggests that we should understand `data' and `function' once,
+regardless of phase, since the phase distinction no longer
+distinguishes where these notions arise.
+
+But Occam's razor is a subjective instrument, so we cannot presume
+that others will come to the same judgment as ourselves. We can,
+however, examine the impact of the underlying presumption that `the
+data on which types depend is entirely static'.
+
+
+\section{Evidence is About Data; Evidence is Data}
+\label{sec:evidence}
+
+Type systems without dependency on dynamic data tend to satisfy the
+\emph{replacement} property---any subexpression of a well typed
+expression can be replaced by an alternative subexpression of the same
+type in the same scope, and the whole will remain well typed. For
+example, in Java or Haskell, you can always swap the $\texttt{then}$
+and $\texttt{else}$ branches of conditionals and nothing will go
+wrong---nothing of any static significance, anyway. The simplifying
+assumption is that within any given type, one value is as good as
+another. These type systems have no means to express the way that
+different data mean different things, and should be treated accordingly
+in different ways. That is why dependent types matter.
+
+More specifically, we have seen how the apparatus of dependent types can
+be used to maintain the length invariant in our sorting algorithm, but
+that the length can essentially be regarded as a prior static notion
+which the code must \emph{respect} dynamically.  What if we wanted to
+guarantee the the output of our sorting algorithm is in order? The
+order is not a prior static notion---that is why we need a sorting
+algorithm---the order is \emph{established} by run-time testing of the
+dynamic data. Can we observe this fact statically? As things stand,
+$\TC{Order}$ does not matter: we can swap around the $\DC{le}$ and
+$\DC{ge}$ outputs of our $\FN{order}$ test without affecting the well
+typedness of $\FN{merge}$. How can we make $\TC{Order}$ matter? By
+making $\TC{Order}$ a dependent type!
+
+
+\subsection{Evidence of Ordering}
+
+We replace the uninformative type $\TC{Order}$ by an inductive family with
+$\TC{Order}\;\vx\;\vy$ expressing that  $\vx$ and $\vy$ can be ordered
+and each possibility can be established with \emph{evidence}.
+%There are two ways a given $\vx$ and $\vy$ can be ordered,
+%and each possibility can be established with \emph{evidence}.
+
+\newcommand{\LE}{\mathrel{\blue{\le}}}
+\[\AR{
+\RW{data}\;\;
+\Rule{\vx,\vy\hab\Nat}
+     {\vx\LE\vy\hab\Type}
+\;\;\RW{where}\;\;
+\orange{\cdots}
+\\
+\RW{data}\;\;
+\Rule{\vx,\vy\hab\Nat}
+     {\TC{Order}\;\vx\;\vy\hab\Type}
+\;\;\RW{where}\;\;
+\Rule{\VV{xley}\hab\vx\LE\vy}
+     {\DC{le}\;\VV{xley}\hab\TC{Order}\;\vx\;\vy}
+\;\;
+\Rule{\VV{ylex}\hab\vy\LE\vx}
+     {\DC{ge}\;\VV{ylex}\hab\TC{Order}\;\vx\;\vy}
+}\]
+
+
+\newcommand{\HOLE}{\yellowBG{[]}}
+We shall give $\LE$ its constructors shortly. First, let us see what
+happens to the $\FN{order}$ test---for a start, its type now tells us
+what its output says about its input! We provide empty sheds $\HOLE$
+which will be completed once we have decided how to represent $\LE$ proofs.
+The freedom to delay implementation decisions while type checking
+the rest of the code is an essential feature of Epigram which we 
+further elaborate in the next section.
+
+%We have left $\HOLE$s standing
+%for the $\LE$ proofs.
+
+\[
+\RW{let}\;\;
+\Axiom{\FN{order}\;\vx\;\vy\hab\TC{Order}\;\vx\;\vy}
+\qquad
+\begin{array}[t]{@{}l@{\;}c@{\;}c@{\;}l}
+\FN{order} & \vx & \vy &\BY\RW{rec}\;\vx \\
+\;\;\FN{order} & \DC{0} & \vy & \cq \DC{le}\;\HOLE \\
+\;\;\FN{order} & (\DC{1+}\vx\Pp) & \DC{0} & \cq \DC{ge}\;\HOLE \\
+\;\;\FN{order} & (\DC{1+}\vx\Pp) & (\DC{1+}\vy\Pp) &
+    \begin{array}[t]{|c@{\;}l}
+      \FN{order}\;\vx\Pp\;\vy\Pp \\
+      \DC{le}\;\VV{x\Pp\!ley\Pp} & \cq \DC{le}\;\HOLE \\
+      \DC{ge}\;\VV{y\Pp\!lex\Pp} & \cq \DC{ge}\;\HOLE \\
+    \end{array}
+\end{array}
+\]
+
+This program is almost as before, except that we cannot pass the recursive
+call back directly---it is the ordering of $\vx\Pp$ and $\vy\Pp$, but
+we need to order their successors. We can treat this partial program as
+a clue to good constructors for $\LE$. What should we wish them to
+be? Well, our first $\HOLE$ requires a proof that $\DC{0}\LE\vy$, so let
+us have
+
+\[
+\Axiom{\DC{le0}\hab\DC{0}\LE\vy}
+\]
+
+Actually, that will also satisfy our second $\HOLE$, which needs a
+proof of $\DC{0}\LE(\DC{1+}\vx\Pp)$. Our third $\HOLE$ requires us to
+establish $(\DC{1+}\vx\Pp)\LE (\DC{1+}\vy\Pp)$, given
+$\VV{x\Pp\!ley\Pp}\hab\vx\Pp\LE\vy\Pp$, and the fourth $\HOLE$ is
+similar, so let us have
+
+\[
+\Rule{\VV{xley}\hab\vx\LE\vy}
+     {\DC{leS}\;\VV{xley}\hab(\DC{1+}\vx\Pp)\LE (\DC{1+}\vy\Pp)}
+\]
+
+The two seem like a reasonable definition of $\LE$, and they certainly
+enable us to fill in our $\HOLE$s.
+
+\[
+\RW{let}\;\;
+\Axiom{\FN{order}\;\vx\;\vy\hab\TC{Order}\;\vx\;\vy}
+\qquad
+\begin{array}[t]{@{}l@{\;}c@{\;}c@{\;}l}
+\FN{order} & \vx & \vy &\BY\RW{rec}\;\vx \\
+\;\;\FN{order} & \DC{0} & \vy & \cq \DC{le}\;\DC{le0} \\
+\;\;\FN{order} & (\DC{1+}\vx\Pp) & \DC{0} & \cq \DC{ge}\;\DC{le0} \\
+\;\;\FN{order} & (\DC{1+}\vx\Pp) & (\DC{1+}\vy\Pp) &
+    \begin{array}[t]{|c@{\;}l}
+      \FN{order}\;\vx\Pp\;\vy\Pp \\
+      \DC{le}\;\VV{x\Pp\!ley\Pp} & \cq
+             \DC{le}\;(\DC{leS}\;\VV{x\Pp\!ley\Pp}) \\
+      \DC{ge}\;\VV{y\Pp\!lex\Pp} & \cq
+             \DC{ge}\;(\DC{leS}\;\VV{y\Pp\!lex\Pp}) \\
+    \end{array}
+\end{array}
+\]
+
+What has happened here? We started with a program which \emph{did} the
+right thing but did not \emph{say} so. It should be no surprise that
+when we try to make this program say what it does, we learn how to say
+the right thing.
+
+However, some of you may be wondering whether it is
+worth saying the right thing, if it means spending heap on this data
+structure of evidence and losing the tail-call optimisation into the
+bargain. Fortunately, our $\LE$ type has the property of being
+\emph{content-free}~\cite{edwin.conor.james:family.indices}: just as with
+$\EQ$, for any given indices $\vx$ and $\vy$, $\vx\LE\vy$ contains at
+most one value, so the evidence can be erased at run-time and the
+tail-call restored. Moreover, it is no accident that $\LE$ is
+content-free: our method of packing up the cases arising
+ensured that $\DC{le0}$ and $\DC{leS}$ covered distinct indices, and
+that the indices of any recursive proofs were determined in turn.
+
+Just to be sure, let us check that $\LE$ is a total ordering---given
+$\FN{order}$, we just need
+
+\[\AR{
+\RW{let}\;\;
+\Axiom{\FN{leRefl}_{\vx}\hab\vx\LE\vx}
+\qquad
+  \AR{
+    \FN{leRefl}_{\vx}\;\BY\RW{rec}\;\vx \\
+    \;\;\begin{array}{@{}l@{\;}l}
+       \FN{leRefl}_{\DC{0}} & \cq \DC{le0} \\
+       \FN{leRefl}_{(\DC{1+}\:\vx\Pp)} & \cq \DC{leS}\;\FN{leRefl}_{\vx\Pp}
+    \end{array}
+  }
+\medskip \\
+\RW{let}\;\;
+\Rule{\VV{xley}\hab\vx\LE\vy\quad\VV{ylez}\hab\vy\LE\vz}
+     {\FN{leTrans}\;\VV{xley}\;\VV{ylez}\hab\vx\LE\vz}
+\qquad
+  \begin{array}[t]{@{}l@{\;}c@{\;}c@{\;}l}
+    \FN{leTrans}     & \VV{xley} & \VV{ylez} & \BY\RW{rec}\;\VV{xley} \\
+    \;\;\FN{leTrans} & \DC{le0}  & \VV{ylez} & \cq \DC{le0} \\
+    \;\;\FN{leTrans} & (\DC{leS}\;\VV{xley}\Pp)
+                     & (\DC{leS}\;\VV{ylez}\Pp) 
+                     & \cq \DC{leS}\;
+                       (\FN{leTrans}\;\VV{xley}\Pp\;\VV{ylez}\Pp)\\
+ \end{array}
+\medskip \\
+\RW{let}\;\;
+\Rule{\VV{xley}\hab\vx\LE\vy\quad\VV{ylex}\hab\vy\LE\vx}
+     {\FN{leASym}\;\VV{xley}\;\VV{ylex}\hab\vx\EQ\vy}
+\qquad
+  \begin{array}[t]{@{}l@{\;}c@{\;}c@{\;}l}
+    \FN{leASym}     & \VV{xley} & \VV{ylex} & \BY\RW{rec}\;\VV{xley} \\
+    \;\;\FN{leASym} & \DC{le0}  & \DC{le0} & \cq \DC{refl} \\
+    \;\;\FN{leASym} & (\DC{leS}\;\VV{xley}\Pp)
+                    & (\DC{leS}\;\VV{ylex}\Pp) 
+                    & \cq \CONG{\FN{leASym}\;\VV{xley}\Pp\;\VV{ylex}\Pp}\\
+ \end{array}
+}\]
+
+As it happens, these properties of $\LE$ are not necessary in order to
+implement sorting. To be sure that a list is sorted, you need at least to
+have checked that each adjacent pair is in order---that it's \emph{locally
+sorted}. It's not hard to see that a list can always be locally sorted
+with respect to any binary relation which always holds one way around or
+the other (when inserting a new element, if it fits nowhere before the
+end, then it must fit at the end). Of course, knowing that it is
+also a partial order enhances what you can deduce from a locally sorted
+list.
+
+
+\subsection{Locally Sorted Lists}
+
+How shall we define locally sorted lists? We shall clearly have to index
+lists with some sort of interval, but there are several ways we might
+do it: one bound or two? open bounds or closed bounds? As with the design
+of the sized $\TC{DealT}$, we should take care to ensure that the decision
+leads to operations which are as cleanly defined as possible. For pedagogical
+purposes, we shall sort lists rather than vectors---sizing and sorting are
+independent refinements of the list structure. We do not verify the fact
+that the resulting list is a permutation of the input here.
+
+\textbf{One bound or two?}$\quad$ In order to do a `cons', we shall certainly
+need to know that the head and the tail are suitably ordered, so the tail
+will require a lower bound. Meanwhile, $\FN{merge}$ makes no restrictions
+between the bounds of its inputs---only between the input bounds and the
+output bounds. That suggests that we can get away with a lower bound for
+this example. Of course, if we wanted to \emph{concatenate} sorted lists
+(in an algorithm based on pivoting, say), we should need upper bounds too.
+
+\textbf{Open or closed?}$\quad$ It is perhaps a little tricky to give a
+precise lower bound for the empty list---we could make a bound `elements
+lifted with $\red{\infty}$' and lift $\LE$ accordingly:
+
+\[
+  \RW{data}\;\;
+  \Rule{\vb\hab\TC{Lifted}\;\Nat}
+       {\TC{CList}\;\vb\hab\Type}
+  \;\;\RW{where}\;\;
+  \Axiom{\DC{cnil}\hab\TC{CList}\;\red{\infty}} \;\;
+  \Rule{\vx\hab\Nat\quad \VV{xley}\hab\vx\LE\vy\quad
+        \vxs\hab\TC{CList}\;\vy}
+       {\DC{ccons}\;\vx\;\VV{xley}\;\vxs\hab\TC{CList}\;(\DC{lift}\;\vx)}
+\]
+
+The lifting is not a big issue here---we only get away without
+$\red{-\infty}$ because $\Nat$ stops at $\DC{0}$. The advantage of this
+definition is its precision: each list is assigned its tightest bound.
+The disadvantage of this definition is also its precision---when we
+are making a $\TC{CList}$, we must either specify its lower bound
+(eg., $\FN{sort}$ is bounded by $\FN{min}$) and satisfy that specification,
+or say `don't care' with an existential. But we do care! The recursive calls
+in $\FN{merge}$ can't have any old lower bound---the lower bound of the tail
+must be at least the head!
+
+The fact that we can \emph{assign} closed bounds to sorted lists does
+not necessarily make them a good choice for a type, because we also
+need to \emph{prescribe} bounds. We can usually think of an open bound,
+even if it is not the best one. Let us try:
+
+\[
+  \RW{data}\;\;
+  \Rule{\vb\hab\Nat}
+       {\TC{OList}\;\vb\hab\Type}
+  \;\;\RW{where}\;\;
+  \Axiom{\DC{onil}\hab\TC{OList}\;\vb} \;\;
+  \Rule{\vx\hab\Nat\quad \VV{blex}\hab\vb\LE\vx\quad
+        \vxs\hab\TC{OList}\;\vx}
+       {\DC{ocons}\;\vx\;\VV{blex}\;\vxs\hab\TC{OList}\;\vb}
+\]
+
+Here, we have that $\DC{onil}$ trivially satisfies any prescribed bound,
+whilst for $\DC{ocons}$, the head must exceed the prescribed lower bound
+and bound the tail in turn. Any old sorted list can certainly be
+represented as an element of $\TC{OList}\;\DC{0}$. Meanwhile, if \emph{both}
+inputs to $\FN{merge}$ share a lower bound, then the output certainly
+shares it too.
+
+\[
+\RW{let}\;\;\AR{
+\Rule{\vxs,\vys\hab\TC{OList}\:\vb}
+     {\FN{merge}\;\vxs\;\vys\hab\TC{OList}\;\vb}
+\smallskip \\
+\begin{array}{@{}l@{\;}c@{\;}c@{\;}l}
+\FN{merge}&\vxs&\vys&\BY\RW{rec}\;\vxs \\
+\;\;  \FN{merge} & \DC{onil} & \vys & \cq \vys \\
+\;\;  \FN{merge} & (\DC{ocons}\;\vx\;\VV{blex}\;\vxs\Pp)
+                 & \vys & \BY \RW{rec}\;\vys \\
+\;\;  \;\;\FN{merge} & (\DC{ocons}\;\vx\;\VV{blex}\;\vxs\Pp) & \DC{onil} & \cq \vxs \\
+\;\;  \;\;\FN{merge} & (\DC{ocons}\;\vx\;\VV{blex}\;\vxs\Pp)
+                     & (\DC{ocons}\;\vy\;\VV{bley}\;\vys\Pp) \\
+\multicolumn{4}{l}{\;\; \;\; \quad
+    \begin{array}[t]{|c@{\;}l}
+      \FN{order}\;\vx\;\vy \\
+      \DC{le}\;\VV{xley} & \cq \DC{ocons}\;\vx\;\VV{blex}\;
+              (\FN{merge}\;\vxs\Pp\;(\DC{ocons}\;\vy\;\VV{xley}\;\vys\Pp)) \\
+      \DC{ge}\;\VV{ylex} & \cq \DC{ocons}\;\vy\;\VV{bley}\;
+              (\FN{merge}\;(\DC{ocons}\;\vx\;\VV{ylex}\;\vxs\Pp)\;\vys\Pp) \\
+    \end{array}
+}
+\end{array}
+}
+\]
+
+Each input list already satisfies the bound required for the output, so
+the $\DC{onil}$ cases are trivial. When we have two $\DC{ocons}$es, we
+know both heads satisfy the lower bound, but whichever we pick must
+bound the recursive $\FN{merge}$. Hence, we had better pick the smaller
+one---the evidence we get from $\FN{order}$ is exactly what we need to
+show that the list which keeps its head satisfies the newer tighter bound.
+
+Now we can flatten a $\TC{DealT}$ into a sorted list. This gives us a
+new back end which we can compose with the old $\FN{dealT}$ to get a
+sort which produces sorted output:
+
+\[\AR{
+\RW{let}\;\;
+\Rule{\vt\hab\TC{DealT}\;\TC{Nat}}
+     {\FN{mergeT}\;\vt\hab\TC{OList}\;\DC{0}}
+\qquad
+\begin{array}[t]{@{}l@{\;}c@{\;}l}
+\FN{mergeT} & \vt & \BY \RW{rec}\;\vt \\
+\;\;\FN{mergeT} & \DC{empT} & \cq \DC{onil} \\
+\;\;\FN{mergeT} & (\DC{leafT}\;\vx)
+                & \cq \DC{ocons}\;\vx\;\DC{le0}\;\DC{onil} \\
+\;\;\FN{mergeT} & (\DC{nodeT}\;\vp\;\vl\;\vr) & \cq
+  \FN{merge}\;(\FN{mergeT}\;\vl)\;(\FN{mergeT}\;\vr)
+\end{array}
+\medskip\\
+%
+\RW{let}\;\;
+\Rule{\vxs\hab\TC{List}\;\TC{Nat}}
+     {\FN{sort}\;\vxs\hab\TC{OList}\;\DC{0}}
+\qquad
+  \FN{sort} \; \cq \FN{mergeT}\cdot\FN{dealT}
+}\]
+
+\textbf{Remark.}$\quad$ In the above definitions of $\FN{merge}$ and
+$\FN{mergeT}$, all of the $\le$ proofs which we supply in the lists
+we build are either by $\DC{le0}$ or by direct appeal to a hypothesis
+in scope. The proofs which we uncover by case analysis are only used
+in this way. It seems reasonable to consider suppressing all of them
+by default from the explicit syntax of the program. Implicit hypotheses
+could be kept in the context and searched whenever an implicit proof is
+required, in much the way that Haskell handles the implicit dictionaries
+when unpacking and packing existential types. Of course, a `manual
+override' is still necessary---not all proofs are so immediate.
+
+
+\subsection{Programming with Evidence}
+
+The idea that one datatype can represent evidence about the values in
+another is alien to mainstream functional programming languages, but its
+absence is beginning to cause pain. A recent experiment in `dynamically
+typed' generic programming---the `Scrap Your Boilerplate' library
+of traversal operators by Ralf L\"ammel and Simon Peyton
+Jones~\cite{laemmel.peytonjones:boilerplate}---is a case in point.
+The library relies on a `type safe cast' operator, effectively comparing
+types at run time by comparing their encodings as data:
+
+\begin{alltt}
+  cast :: (Typeable a, Typeable b) => a -> Maybe b
+  cast x = r
+         where
+           r = if typeOf x == typeOf (get r)
+               then Just (unsafeCoerce x)
+               else Nothing
+
+           get :: Maybe a -> a
+           get x = undefined
+\end{alltt}
+
+Here, the Boolean test $\texttt{typeOf x == typeOf (get r)}$ serves
+the purpose of comparing type $\texttt{a}$ with type $\texttt{b}$, but
+the Haskell typechecker cannot interpret the value $\texttt{True}$ as
+a reason to unify types. In the absence of evidence, the programmers
+resort to coercion. \emph{We} trust them, of course, but this degree
+of trust should not be necessary. This is an example
+where static dependency on dynamic data is the solution, not the
+problem.
+
+We now work in a setting where we expect operations which test their
+input in some way to have a dependent type which explains what the
+output reveals about the input---$\FN{order}$ is a simple
+example. Without some kind of movement between terms and types this is
+impossible---you can exploit valid data (eg., writing a type-preserving
+evaluator for a typed expression language) , but you cannot \emph{validate}
+it dynamically (eg., by writing a typechecker).
+
+Traditional dependent types achieve this movement directly---the
+argument of a function can appear in the type of its result, and often
+will, if the result is evidence of the argument's properties. An
+alternative, adopted for DML's numerical indices, is to push the other
+way with \emph{singleton types}---types of dynamic data constrained to
+be equal to the corresponding static data. We would have something like
+this:
+
+\[
+  \FN{order}\hab\forall\vx,\vy:\Nat\TO
+    \TC{Only}\;\vx \To \TC{Only}\;\vy \To \TC{Order}\;\vx\;\vy
+\]
+
+Here every piece of data about which we seek evidence must be
+abstracted twice---the type of evidence depends on the static copy,
+but the testing itself is performed on the dynamic copy. In the
+context of DML, this is a sensible separation---erasing the indices is
+intended to yield a well typed SML program. In a broader context,
+where we might need to represent properties of any kind of dynamic
+data, this approach seems unlikely to scale. Effectively, we may need
+to replace each type $\vT$ by the existential pairing of its static
+and dynamic copies $\exists\vt:\vT\TO\TC{Only}\;\vt$ throughout our
+programs, in order to have data at all the levels where it is used.
+
+Singleton types thus provide a convenient way to retro-fit a more
+sophisticated type system to an existing compiler architecture.
+With just one notion of data at all levels, dependent types
+provide a convenient way for programmers to exploit the potential
+of working with data as evidence. Our typechecker example in
+\cite{ConorJames:vfl} not only generates enough evidence about
+the types being inferred and compared to feed the tagless interpreter,
+it generates evidence about the program being checked---it is the
+first typechecker in the literature which is statically guaranteed to
+check its input!
+
+
+%=======
+%\subsection{Programming with Evidence}
+
+%The idea that one datatype can represent evidence about the values in
+%another is alien to mainstream functional programming languages, but its
+%absence is beginning to cause pain. A recent experiment in `dynamically
+%typed' generic programming---the `Scrap Your Boilerplate' library
+%of traversal operators by Ralf L\"ammel and Simon Peyton
+%Jones~\cite{laemmel.peytonjones:boilerplate}---is a case in point.
+%The library relies on a `type safe cast' operator, effectively comparing
+%types at run time by comparing their encodings as data:
+
+%\begin{alltt}
+%  cast :: (Typeable a, Typeable b) => a -> Maybe b
+%  cast x = r
+%         where
+%           r = if typeOf x == typeOf (get r)
+%               then Just (unsafeCoerce x)
+%               else Nothing
+
+%           get :: Maybe a -> a
+%           get x = undefined
+%\end{alltt}
+
+%Here, the Boolean test $\texttt{typeOf x == typeOf (get r)}$ serves
+%the purpose of comparing type $\texttt{a}$ with type $\texttt{b}$, but
+%the Haskell typechecker cannot interpret the value $\texttt{True}$ as
+%a reason to unify types. In the absence of evidence, the programmers
+%resort to coercion. \emph{We} trust them, of course, but this degree
+%of trust should not be necessary. This is an example
+%where static dependency on dynamic data is the solution, not the
+%problem.
+
+%We now work in a setting where we expect operations which test their
+%input in some way to have a dependent type which explains what the
+%output reveals about the input---$\FN{order}$ is a simple
+%example. Without some kind of movement between terms and types this is
+%impossible---you can exploit valid data (eg., writing a type-preserving
+%evaluator for a typed expression language) , but you cannot \emph{validate}
+%it dynamically (eg., by writing a typechecker).
+
+%Traditional dependent types achieve this movement directly---the
+%argument of a function can appear in the type of its result, and often
+%will, if the result is evidence of the argument's properties. An
+%alternative, adopted for DML's numerical indices, is to push the other
+%way with \emph{singleton types}---types of dynamic data constrained to
+%be equal to the corresponding static data. We would have something like
+%this:
+
+%\[
+%  \FN{order}\hab\forall\vx,\vy:\Nat\TO
+%    \TC{Only}\;\vx \To \TC{Only}\;\vy \To \TC{Order}\;\vx\;\vy
+%\]
+
+%Here every piece of data about which we seek evidence must be
+%abstracted twice---the type of evidence depends on the static copy,
+%but the testing itself is performed on the dynamic copy. In the
+%context of DML, this is a sensible separation---erasing the indices is
+%intended to yield a well typed SML program. In a broader context,
+%where we might need to represent properties of any kind of dynamic
+%data, this approach seems unlikely to scale. Effectively, we may need
+%to replace each type $\vT$ by the existential pairing of its static
+%and dynamic copies $\exists\vt:\vT\TO\TC{Only}\;\vt$ throughout our
+%programs, in order to have data at all the levels where it is used.
+
+%Singleton types thus provide a convenient way to retro-fit a more
+%sophisticated type system to an existing compiler architecture.
+%With just one notion of data at all levels, dependent types
+%provide a convenient way for programmers to exploit the potential
+%of working with data as evidence. Our typechecker example in
+%\cite{conor.james:viewfromleft} not only generates enough evidence about
+%the types being inferred and compared to feed the tagless interpreter,
+%it generates evidence about the program being checked---it is the
+%first typechecker in the literature which is statically guaranteed to
+%check its input!
+
+
+\section{The Tools of the Trade}
+\label{sec:tools}
+
+Programming is a complex task which can be made easier for people to
+do with the help of computers. The conventional cycle of programming
+with a text editor then compiling in `batch mode' is a welcome
+shortening of the feedback loop since the days of punched cards, but it
+clearly under-uses the technology available today. Any typed
+programming language can benefit from the capacity---but not
+necessarily the compulsion---to invoke the typechecker incrementally
+on incomplete subprograms whilst they are under development. The more
+powerful the type system, the more pressing this need becomes---it just
+gets harder to do it in your head, especially when types contain
+\emph{computations}, for which computers are inherently useful.
+
+Moreover, a type acts as a partial specification of a program, and can
+thus be used to narrow the search space for correct programs, even if
+only as a key for searching a library. The choice of a program's type
+is inherently suggestive of the programming strategies with which that
+type is naturally equipped---constructors and case analysis for
+datatypes, abstraction and application for functions, and so on.  It
+is a tragic waste if types play only a passive r\^ole in
+programming, providing a basis for error reporting. Our technology should
+enable programmers to exploit the clues which types provide.
+
+% For example,
+%Haskell's \emph{ad hoc}
+%polymorphism~\cite{wadler.blott:less.ad.hoc,%
+%peytonjones.jones.meijer:type.classes} allows standard components to
+%be constructed automatically in a type-directed way---the programmer can
+%indicate the general idea and leave the machine to do the tedious `plumbing'.
+
+\subsection{Dependent Types Also Matter Behind the Scenes}
+
+The key innovation of Epigram is its use of types to express
+programming tasks and programming patterns. For example, the pattern
+of primitive recursion on a datatype is expressed by an \emph{induction
+principle}, like
+\[
+\AR{\forall\vP:\Nat\to\Type\;\TO \\
+       \vP\;\DC{0} \To \;\;
+       (\forall \vn\Pp:\Nat\TO\;\vP\;\vn\Pp\to \vP\;(\DC{1+}\;\vn\Pp)) \To \\
+       \forall \vn:\Nat\TO\;\vP\;\vn}
+\]
+%
+The conventional type of primitive recursion may be shorter, but it is less
+informative.
+\[
+\forall\vP\TO\vP\To(\Nat\to\vP\to\vP)\To\Nat\To\vP
+\]
+%
+This type does not connect the arguments to the tasks they serve,
+whereas the induction principle is a dependent type which explains
+that a recursive computation for $\vn$ needs a method for $\DC{0}$ and
+a method for $(\DC{1+\;\vn\Pp})$.
+Correspondingly, the system transforms a programming problem such as
+\[
+  \RW{let}\;\;
+  \Rule{\vx,\vy\hab\Nat}
+       {\vx\plus\vy\hab\Nat}
+\qquad\qquad\mbox{into a `computability proof' goal}\qquad\qquad
+  \orange{?}\hab\forall\vx,\vy\hab\Nat\TO\;\LBTY{\vx\plus\vy:\Nat}
+\]
+We read $\LBTY{\vx\plus\vy:\Nat}$ as `$\vx\plus\vy$ is computable'.
+If we attack this goal with induction, we acquire subgoals like these:
+\[\AR{
+  \orange{?}\hab\forall\vy\hb\Nat\TO\;\LBTY{\DC{0}\plus\vy:\Nat} \\
+  \orange{?}\hab
+    \AR{\forall\vx\Pp\hb\Nat\TO \\
+        (\forall\vy\hb\Nat\TO\;\LBTY{\vx\Pp\plus\vy:\Nat})\To \\
+        \forall\vy\hb\Nat\TO\;\LBTY{(\DC{1+}\;\vx\Pp)\plus\vy:\Nat}
+       }
+}\]
+These goals tell us exactly the `left-hand sides' for the subprograms
+which the recursive strategy requires.
+
+By using dependent types to represent programming problems and
+programming patterns, we have acquired an interactive programming
+environment for the price of an interactive proof system. The basic
+constructs of the Epigram language give a `programming' presentation
+to the basic tactics of the system. The $\BY$ construct is just
+McBride's `elimination with a motive' tactic~\cite{conor:motive} which
+synthesizes an appropriate `$\vP$' parameter for any induction-like
+rule. The $|\VV{scrutinee}$ construct is just `cut'.
+%
+The details of the process by which Epigram code is \emph{elaborated}
+into the underlying type theory---a variation of Luo's
+UTT~\cite{luo:typetheoryforcs}---are given in
+\cite{ConorJames:vfl}. Edwin Brady's compiler for UTT,
+which erases extraneous information at run time, is presented
+in \cite{edwin:thesis}.
+
+The point is this: UTT is not our programming language---UTT is our
+language for describing how programming works.  Epigram has no
+hard-wired construct for constructor case analysis or
+constructor-guarded recursion---these are just programming patterns
+specified by type and supplied as standard with every datatype you
+define. However, UTT types are Epigram types, so you are free to
+extend our language by specifying and implementing your own
+patterns. Our typechecking example in \cite{ConorJames:vfl} is a
+derived case analysis principle for expressions, exposing not their
+syntax, but their types or type errors. By making programming patterns
+first-class citizens via dependent types, we raise the level of
+abstraction available to programmers and provide interactive support for its
+deployment at a single stroke.
+
+
+\subsection{Programming Interactively}
+
+The interface to Epigram is inspired by the Alf
+proof editor~\cite{magnusson.nordstrom:alf}, which introduced
+a type-directed structure editor for incomplete programs.
+In Epigram's  concrete syntax, a \emph{shed} $\SHEDC{\texttt{raw
+text}}$ may stand in for any subexpression. The elaborator is not
+permitted inside a \emph{shed}, so the text it contains may be edited
+freely.  There are two basic editing moves---removing the brackets to
+admit the elaborator (which will process as far as any nested sheds)
+and placing brackets around an elaborated subexpression to `undo' it
+and return it to a shed. Correspondingly, the full spectrum of
+interactivity is supported: an entire program can be written (or, more
+to the point, reloaded) inside a shed, then elaborated in `batch
+mode'; or a single syntactic construct can be elaborated, with sheds
+for subexpressions. The advantages of structure editing are available,
+but the disadvantages are not compulsory.
+
+The interactive development of a program is a kind of dialogue.  The
+system poses the problems---the left-hand sides of programs.  We
+supply the solutions by filling in the right-hand sides, either by
+directly giving the program's output $\TO\;\vt$, or by invoking a
+programming pattern which reduces the problem to subproblems which are
+then posed in turn. There is a direct mapping from sheds
+$\SHEDC{\cdots}$ in source code to metavariables, $\orange{?x}$ in the
+underlying proof state---when you elaborate a shed, your code triggers
+a refinement of the proof state, and the resulting refinement to the
+source code is read off from the types of the subgoals. Nothing is
+hidden---the proof state is recoverable from the source code simply by
+re-elaborating it in a single step.
+
+Our approach to metavariables basically follows McBride's OLEG
+system~\cite{conor-phd}---metavariables represent not only the missing
+contents of sheds, but also all the unknowns arising from implicit
+quantification. The latter are resolved, where possible, by solving
+the unification constraints which arise during typechecking---we
+follow Dale Miller's `mixed prefix'
+approach~\cite{miller:mixed}. Epigram will not guess the type of your
+program, but it will infer the bits of your program which the type
+determines. The Damas-Milner approach to type
+inference~\cite{damas.milner:principal} is alive and well and working
+harder than ever, even though we have dispensed with the shackles on
+programming which allow it to be complete.
+
+
+\section{Further Work}
+\label{sec:further}
+
+We have hardly started. Exploiting
+the expressivity of dependent types in a practicable way involves
+a wide range of challenges in the development of the theory, the
+design of language, the engineering of tools and the pragmatics of
+programming. In this section, we summarize just a few of them.
+
+\textbf{First-Class Modules.}$\quad$ No programming language can succeed
+without strong support for the large-scale engineering of
+systems. Dependent type systems already allow us to express record
+types which pack up data structures, operations over them---and also
+proofs of the properties of those operations. \emph{Manifest} record
+types, which specify the values of some of their fields, can be used
+to express sharing between records, and between the the inputs and
+outputs of record-transforming operations~\cite{pollack:records}.
+Epigram's first-class notion of programming pattern allows an abstract
+datatype to offer admissible notions of pattern matching which hide
+the actual data representation but are guaranteed to be faithful to
+it---we have Wadler's \emph{views} for free~\cite{wadler:views}.
+
+We now need a practical theory of subtyping to deliver a suitable form
+of inheritance, and a convenient high-level syntax for working with
+records. Our elaboration mechanism naturally lends itself to the approach
+of \emph{coercive subtyping}, where subsumptions in source code elaborate to
+explicit coercion functions---typically projections---in the underlying
+theory~\cite{luo:coercive}.
+
+\textbf{Universe Polymorphism.}$\quad$ What is the type of types, and how
+do we quantify over them safely and consistently? In
+\cite{ConorJames:vfl}, we follow the \emph{predicative} fragment of Luo's
+Extended Calculus of Constructions~\cite{luo:ecc},
+installing a cumulative hierarchy of universes
+$\Type_0,\Type_1,\ldots$ each of which both inhabits and embeds in the 
+next, so that $\Type_i:\Type_{i+1}$ holds and $\vT:\Type_i$ implies
+$\vT:\Type_{i+1}$. As Harper and Pollack have
+shown~\cite{harper.pollack:universes}, the user need never
+write a universe level explicitly---the machine can maintain a graph
+of relative level constraints and protest if any construction induces
+a cycle.
+
+This much is certainly safe, and it allows every type to find its own
+particular level---this is called \emph{typical ambiguity}. The
+trouble is that, as things stand, there is no satisfactory way to
+define datatype constructors which operate at \emph{every}
+level---this is called \emph{universe polymorphism}. A simple example
+shows up if we have a list $\VV{Ts}$ of element types, and we want to
+construct the corresponding list of list types
+\[
+  \FN{map}\;\TC{List}\;\VV{Ts}
+\]
+The types \emph{in} $\VV{Ts}$ live one level below the type \emph{of}
+$\VV{Ts}$, so we need $\TC{List}$ to operate at \emph{both}
+levels. There has been some very promising theoretical work in this
+area~\cite{paul.zhaohui:coercions.universes,courant02tphols} but
+again, a clear and convenient design has yet to emerge. In the
+interim, we have adopted the cheap but inconsistent fudge of taking
+$\Type:\Type$.
+
+
+\textbf{Generics and Reflection.}$\quad$ Any function $\vT\hab\vU\to\Type$
+naturally \emph{reflects} a sublanguage or \emph{universe} of types---those
+given by $\vT\;\vu$. We can think of $\vu$ as the `name' of a type in the
+universe.
+If $\vU$ happens to be a datatype, we can write generic programs which work
+for all the types named by a value $\vu$. Perhaps $\vU$ is the type of
+regular expressions and $\vT$ computes for each regular expression the
+type of its words, yielding \emph{regular expression
+types}~\cite{pierce.vouillon.hosoya:regular.expression.types}.
+Perhaps $\vU$ represents a collection of datatypes with a decidable equality
+\[
+  \FN{eq}\hab\forall\vu:\vU;\,\vx,\vy:\vT\;\vu\;\TO\;
+    \vx\EQ\vy\;\blue{\vee}\;\vx\;\blue{\neq}\;\vy
+\]
+Peter Morris has recently implemented exactly such a generic equality
+in Epigram for the universe of regular types~\cite{Morris:bctcs05}.
+Dependently typed generic programming is a lively research area
+\cite{alti:wcgp02,benke.dybjer.jansson:universes}, inspired by the pioneering
+work on generics in
+Haskell~\cite{backhouse.jansson.jeuring.meertens:generic,%
+              hinze.jeuring:tidts,genHaskell}.
+
+Alternatively, perhaps our universe $\vU$ represents a class of decidable
+propositions, equipped with a decision procedure
+\[
+  \FN{decide}\hab\forall\vu:\vU\;\TO\;
+    \vT\;\vu\;\blue{\vee}\;\vT\;\vu\To\blue{\bot}
+\]
+Such a procedure could be used to extend the elaborator's capacity to solve
+simple proof obligations and equational constraints automatically, following
+the lead of DML~\cite{DML99}, but without wiring a particular constraint
+domain into the language design and the compiler.
+However, to make this work conveniently, we need language support for the
+declaration of universes $(\vU,\vT)$ where $\vU$ reflects a given class of
+types and $\vT$ is invertible by construction, enabling the elaborator to
+infer the appropriate $\vu:\vU$ when invoking a generic operation.
+
+
+\textbf{Observational Type Theory.}$\quad$ The type of equality proofs
+used in an intensional theory like Epigram's underlying Type Theory,
+is inconvenient when working with infinite objects like function types
+or lazy lists (codata). We plan to overcome this restriction without
+affecting the decidability of type checking by implementing an
+\emph{Observational Type Theory} based on \cite{alti:lics99,mh:phd}.
+
+\textbf{Monadic interfaces to the real world.}$\quad$ A dependently typed
+language offers the opportunity to develop the idea of monadic IO further.
+Such a monadic interface comes in two guises: a static, denotational semantics
+which can be used to reason about the programs and an operational semantics,
+which is employed at runtime. This approach is not only relevant for IO,
+based on \cite{venanzio-general} we can develop a \emph{partiality monad}
+which allows us not only to implement but also reason about genuinely partial
+programs like interpreters or programs on the computable reals. 
+
+\textbf{Refactoring.}$\quad$ Epigram's
+\emph{refinement} style of editing supports the process of working from
+types to programs, but it does not help with the inevitable iterations
+of the design cycle, as our plans evolve. Indeed, it is quite normal
+to build up the index structure for our in layers, as we did for our
+$\FN{sort}$ example. Our interactive editing technology should support
+these process also, allowing us to experiment at pushing different
+type refinements through our programs. We should be able to try out
+the options which gave rise to the `open lower bound' choice for
+sorted lists.
+
+More generally, we can seek to emulate existing tools
+for \emph{refactoring} evolving the design of data structures and
+programs~\cite{kent-refactoring}, now in the context of a system which
+supports incomplete objects. There is plenty of scope to develop tools
+which really reflect the way most programmers work, iteratively improving
+program \emph{attempts}---good ideas often come a bit at a time.
+
+
+
+\section{Conclusions}
+\label{sec:concl}
+
+This much is clear: many programmers are already finding practical
+uses for the approximants to dependent types which mainstream
+functional languages (especially Haskell) admit, by hook or by crook.
+From arrows and functional reactive
+programming~\cite{hughes:afp-arrows,henrik:dynamic-optimisation},
+through extensible records~\cite{oleg.ralf.keean:hlists},
+database programming~\cite{bringert.hockersten:haskellDB}  and
+dynamic web scripting~\cite{thiemann:programmabletypes} to code
+generation~\cite{baars.swierstra:selfinspecting}, people are `faking it'
+any way they can to great effect.
+Each little step along the road to dependent types makes the task
+a little easier, the code a little neater and the next improvement a
+little closer: the arrival of GADTs in Haskell is a joy and a
+relief~\cite{peyton-jones-wobbly}.
+
+Now is the time to recognize the direction of these developments and
+pursue it by design, not drift. In the long term, there is a great
+deal more chaos and confusion to be feared from fumbling through
+today's jungle of type class Prolog, singletons and proxies than from
+a dependent type system whose core rules have been well studied and
+fit on the back of an envelope. The Epigram project is our attempt to
+plunder the proof systems based on Type Theory for the technology they
+can offer programmers. It is also a platform for radical
+experimentation without industrial inertia---an attempt to discover in
+which ways dependent types might affect the assumptions upon which
+mainstream functional language designs have been predicated. We are
+having a lot of fun, and there is plenty of fun left for many more
+researchers, but we do not expect to change the mainstream
+overnight. What we can hope to do is contribute a resource of
+experiments---successful or otherwise---to this design process.
+
+More technically, what we have tried to demonstrate here is that the
+distinctions term/type, dynamic/static, explicit/inferred are no longer
+naturally aligned to each other in a type system which recognizes the
+relationships between values. We have decoupled these dichotomies and
+found a language which enables us to explore the continuum of
+pragmatism and precision and find new sweet spots within it.
+Of course this continuum also contains opportunities for remarkable
+ugliness and convolution---one can never legislate against bad design---but
+that is no reason to toss away its opportunities. Often, by
+bringing out the ideas which lie behind good designs, by expressing
+the things which matter, dependent types make data and programs fit better.
+
+\bibliographystyle{alpha}
+\bibliography{handy,obsdec,alti,local} 
+
+\end{document}

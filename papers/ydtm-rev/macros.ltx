@@ -1,0 +1,207 @@
+\newcommand{\LBTY}[1]{\TC{\left<\right.}#1\TC{\left.\right>}}
+\newcommand{\RETN}[1]{\DC{return\!\left<\right.}#1\DC{\left.\right>}}
+\newcommand{\CALL}[1]{\FN{call\!\left<\right.}#1\FN{\left.\right>}}
+\newcommand{\able}[1]{\lozenge{#1}}
+
+\newcommand{\EV}{\;\Downarrow\;}
+\newcommand{\TO}{\Rightarrow\!}
+
+\newcommand{\dsep}{\;\; ; \;\;}
+
+\newcommand{\Aside}[1]{{\footnotesize [\textbf{Aside}. #1]}}
+
+
+%%%%%%%%% INFERENCE RULES
+
+\newlength{\rulevgap}
+\setlength{\rulevgap}{0.05in}
+\newlength{\ruleheight}
+\newlength{\ruledepth}
+\newsavebox{\rulebox}
+\newlength{\GapLength}
+\newcommand{\gap}[1]{\settowidth{\GapLength}{#1} \hspace*{\GapLength}}
+\newcommand{\dotstep}[2]{\begin{tabular}[b]{@{}c@{}}
+                         #1\\$\vdots$\\#2
+                         \end{tabular}}
+\newlength{\fracwid}
+\newcommand{\dotfrac}[2]{\settowidth{\fracwid}{$\frac{#1}{#2}$}
+                         \addtolength{\fracwid}{0.1in}
+                         \begin{tabular}[b]{@{}c@{}}
+                         $#1$\\
+                         \parbox[c][0.02in][t]{\fracwid}{\dotfill} \\
+                         $#2$\\
+                         \end{tabular}}
+\newcommand{\Rule}[2]{\savebox{\rulebox}[\width][b]                         %
+                              {\( \frac{\raisebox{0in} {\( #1 \)}}       %
+                                       {\raisebox{-0.03in}{\( #2 \)}} \)}   %
+                      \settoheight{\ruleheight}{\usebox{\rulebox}}          %
+                      \addtolength{\ruleheight}{\rulevgap}                  %
+                      \settodepth{\ruledepth}{\usebox{\rulebox}}            %
+                      \addtolength{\ruledepth}{\rulevgap}                   %
+                      \raisebox{0in}[\ruleheight][\ruledepth]               %
+                               {\usebox{\rulebox}}}
+\newcommand{\Case}[2]{\savebox{\rulebox}[\width][b]                         %
+                              {\( \dotfrac{\raisebox{0in} {\( #1 \)}}       %
+                                       {\raisebox{-0.03in}{\( #2 \)}} \)}   %
+                      \settoheight{\ruleheight}{\usebox{\rulebox}}          %
+                      \addtolength{\ruleheight}{\rulevgap}                  %
+                      \settodepth{\ruledepth}{\usebox{\rulebox}}            %
+                      \addtolength{\ruledepth}{\rulevgap}                   %
+                      \raisebox{0in}[\ruleheight][\ruledepth]               %
+                               {\usebox{\rulebox}}}
+\newcommand{\Axiom}[1]{\savebox{\rulebox}[\width][b]                        %
+                               {$\frac{}{\raisebox{-0.03in}{$#1$}}$}        %
+                      \settoheight{\ruleheight}{\usebox{\rulebox}}          %
+                      \addtolength{\ruleheight}{\rulevgap}                  %
+                      \settodepth{\ruledepth}{\usebox{\rulebox}}            %
+                      \addtolength{\ruledepth}{\rulevgap}                   %
+                      \raisebox{0in}[\ruleheight][\ruledepth]               %
+                               {\usebox{\rulebox}}}
+\newcommand{\RuleSide}[3]{\gap{\mbox{$#2$}} \hspace*{0.1in}               %
+                            \Rule{#1}{#3}                          %
+                          \hspace*{0.1in}\mbox{$#2$}}
+\newcommand{\AxiomSide}[2]{\gap{\mbox{$#1$}} \hspace*{0.1in}              %
+                             \Axiom{#2}                            %
+                           \hspace*{0.1in}\mbox{$#1$}}
+\newcommand{\RULE}[1]{\textbf{#1}}
+\newcommand{\hg}{\hspace{0.2in}}
+
+
+
+
+%%%%%%%%%%%% FONTS
+
+%\newcommand{\TC}{\mathsf}
+%\newcommand{\DC}{\mathsf}
+%\newcommand{\VV}{\mathit}
+%\newcommand{\FN}{\mathbf}
+%\newcommand{\RW}[1]{\underline{\mathrm{#1}}}
+\newcommand{\SC}{\mathit}
+
+\newcommand{\TC}[1]{\blue{\mathsf{#1}}}
+\newcommand{\DC}[1]{\red{\mathsf{#1}}}
+\newcommand{\VV}[1]{\purple{\mathit{#1}}}
+\newcommand{\FN}[1]{\green{\mathbf{#1}}}
+\newcommand{\HFN}[1]{\green{\mathtt{#1}}}
+\newcommand{\RW}[1]{\underline{\textup{#1}}}
+
+\newcommand{\Pp}{\purple{'}}
+
+\newcommand{\MV}[1]{\orange{\nhole\mathit{#1}}}
+\newcommand{\Lang}[1]{\brown{\mathsf{#1}}}
+\newcommand{\Name}[1]{\brown{\mathit{#1}}}
+
+\newcommand{\SHED}{\yellowBG{\([\,]\)}}
+\newcommand{\SHEDC}[1]{\yellowBG{\([\)}#1\yellowBG{\(]\)}}
+
+\newcommand{\HasCom}[1]{\mbox{\(\{\!\!\!-\,\)}#1\mbox{\(\,-\!\!\!\}\)}}
+
+%%%%%%%%%%%% GUBBINS
+
+\newcommand{\fbx}[1]{\fbox{$#1$}}
+\newcommand{\stk}[1]{\begin{array}{c}#1\end{array}}
+%\newcommand{\DM}[1]{\hg\mbox{$#1$}}
+\newcommand{\DM}[1]{\[#1\]}
+\newcommand{\AR}[1]{\begin{array}[t]{@{}l}#1\end{array}}
+\newcommand{\ARc}[1]{\begin{array}{@{}l}#1\end{array}}
+\newcommand{\EA}[1]{\begin{array}[t]{r@{}c@{}l}#1\end{array}}
+\newcommand{\A}{@{\:}c}
+\newcommand{\R}{@{\:}r}
+\newcommand{\PAc}[2]{\begin{array}{l#1@{}r@{}l}#2\end{array}}
+\newcommand{\PA}[2]{\begin{array}[t]{l@{\:}l#1@{\:}c@{\:}l}#2\end{array}}
+\newcommand{\DTREE}[3]{\begin{array}[t]{l#1@{}r@{\:}l#2}#3\end{array}}
+\newcommand{\IDTREE}[2]{%
+  \begin{array}[t]{l@{\:}c@{\:}l@{\:}r@{\:}l#1}#2\end{array}}
+\newcommand{\IA}[2]
+   {\begin{array}[t]{l@{\:}r@{\:}c@{\:}l@{\:}#1@{\:}r@{\:}l}#2\end{array}}
+\newcommand{\IAc}[2]
+   {\begin{array}[c]{r@{\:}c@{\:}l@{\:}#1@{}r@{}l}#2\end{array}}
+\newcommand{\CS}[1]{\left\lfloor\begin{array}{@{}l}#1\end{array}\right.}
+\newcommand{\SYNT}[2]{\begin{array}[t]{r@{\;}l}#1 \dq & #2\end{array}}
+\newcommand{\SL}{ \\ \gb &}
+\newcommand{\Kl}[1]{#1^\ast}
+
+%%\newcommand{\CALL}[2]{\RW{call}\:\ang{#1}\:#2}
+%%\newcommand{\RTN}[1]{\RW{return}\:#1}
+
+\newcommand{\ELAB}{\triangleright}
+\newcommand{\BY}{\Leftarrow}
+\newcommand{\By}[1]{\BY & #1}
+%%%\newcommand{\BY}[3]{\multicolumn{2}{l}{\;\RW{by}\; #1} \\ %
+%%%    \multicolumn{#2}{l}{\CS{#3}} }
+\newcommand{\WITH}[3]{\multicolumn{2}{l}{\;\RW{with}\; #1} \\ %
+    \multicolumn{#2}{l}{\CS{#3}} }
+\newcommand{\withby}{with-by}
+\newcommand{\Wb}[1]{\RW{\withby}& #1}
+%%%\newcommand{\By}[1]{\;\RW{by}\; & \multicolumn{3}{l}{#1}}
+%%%\newcommand{\Byr}[1]{\;\RW{by}\; #1}
+%\newcommand{\Bar}{|}
+%\newcommand{\Bart}{\settowidth{\GapLength}{$\Bar$}%
+%                   \raisebox{6pt}[0pt][0pt]{$\Bar$}%
+%                   \hspace*{-1\GapLength}%
+%                   \Bar}
+%\newcommand{\With}[1]{\Bar & #1}
+%\newcommand{\Witt}[1]{\Bart & #1}
+\newcommand{\View}[1]{\RW{view}\;#1}
+\newcommand{\B}{@{\:}c@{\:}c}
+\newcommand{\Ret}[1]{\cq & \multicolumn{1}{l}{#1}}
+\newcommand{\Data}{\RW{data}}
+\newcommand{\Where}{\RW{where}}
+\newcommand{\Let}{\RW{let}}
+\newcommand{\Fact}{\RW{fact}}
+\newcommand{\Rec}[1]{#1\textbf{-Rec}}
+\newcommand{\Cases}[1]{#1\textbf{-Case}}
+\newcommand{\As}[2]{#1 \:\RW{as}\: #2}
+\newcommand{\gdd}{\prec}
+\newcommand{\I}{\;\;}
+\newcommand{\gb}{\settowidth{\GapLength}{$|$}%
+                 \raisebox{2pt}[0pt][0pt]{$|$}%
+                 \hspace*{-1\GapLength}%
+                 \raisebox{-2pt}[0pt][0pt]{$|$}}
+\newcommand{\Gb}{\;\gb\;}
+
+
+%%%%%%%%%%%% PUNCTUATION
+
+\newcommand{\pad}[2]{#1#2#1}
+
+\newcommand{\hb}{\pad{\!}{:}}
+\newcommand{\hab}{\pad{\,}{:}}
+\newcommand{\Hab}{\pad{\;}{:}}
+
+%%%%%%%%%%%% TYPE
+
+\newcommand{\Type}{\star}
+
+
+%%%%%%%%%%%%% ARROWS
+
+\newcommand{\To}{\pad{\:}{\rightarrow}}
+%\newcommand{\car}{\vartriangleright}
+
+%%%%%%%%%%%%% QUANTIFIERS
+
+\newcommand{\ang}[1]{\left< #1 \right>}
+\newcommand{\lam}[2]{\lambda#1\pad{\!}{:}#2}
+\newcommand{\all}[2]{\forall#1\pad{\!}{:}#2}
+\newcommand{\ali}[2]{\forall_{#1:#2}}
+\newcommand{\exi}[2]{\exists#1\pad{\!}{:}#2}
+\newcommand{\wit}[2]{\ang{#1,#2}}
+\newcommand{\X}{\times}
+
+%%%%%%%%%%%%% EQUALITIES
+
+\newcommand{\mq}{\pad{\;}{\Longrightarrow}}
+\newcommand{\ccq}{\Rightarrow}
+\newcommand{\cq}{\pad{\:}{\ccq}}
+\newcommand{\xq}{\pad{}{\doteq}}
+\newcommand{\pq}{\pad{\:}{=}}
+\newcommand{\dq}{\pad{\:}{:=}}
+
+\newcommand{\sq}{\pad{\:}{::=}}
+
+\newcommand{\refl}{\DC{refl}}
+
+
+
+
