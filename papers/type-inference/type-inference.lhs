@@ -120,6 +120,7 @@
 \newcommand{\hasscheme}{\ensuremath{::}}
 \newcommand{\subcontext}{\ensuremath{\subset}}
 \newcommand{\semidrop}{\downharpoonright}
+\newcommand{\Sbind}[2]{(#1 \entails #2)}
 
 \newcommand{\define}[1]{\emph{#1}}
 \newcommand{\scare}[1]{`#1'}
@@ -298,20 +299,20 @@ $v D$ is in the context.
 
 
 If $J$ and $J'$ are judgments and $v D$ is a declaration, then
-we define judgments $J \wedge J'$, $\fatsemi J$ and $v D \entails J$ thus:
+we define judgments $J \wedge J'$, $\fatsemi J$ and $\Sbind{v D}{J}$ thus:
 $$\Rule{J \quad J'}{J \wedge J'}
   \qquad
   \Rule{\Gamma \fatsemi \entails J}
        {\Gamma \entails \fatsemi J}
   \qquad
   \Rule{\Gamma, v D \entails J}
-       {\Gamma \entails (v D \entails J)}. 
+       {\Gamma \entails \Sbind{v D}{J}}. 
 $$
 We do not add elimination rules to make proofs by induction on the structure
 of derivations easier, but they will be admissible.
 Note that we omit the context from rules if it is constant throughout.
 The only inference rules to access the context will be the \textsc{Lookup} rule
-and the rules for the $\fatsemi$ and $\entails$ judgments given above.
+and the rules for the $\fatsemi$ and $\Sbind{\cdot}{\cdot}$ judgments given above.
 
 
 \subsection{Increasing information}
@@ -377,12 +378,12 @@ $\delta : \Gamma \lei \Delta$. Then $\Gamma \entails J$ and $\Gamma \entails J'$
 so by stability, $\Delta \entails \delta J$ and $\Delta \entails \delta J'$.
 Hence $\Delta \entails \delta (J \wedge J')$.
 
-Suppose $J$ is stable, $\Gamma \entails (v D \entails J)$ and
+Suppose $J$ is stable, $\Gamma \entails \Sbind{v D}{J}$ and
 $\delta : \Gamma \lei \Delta$. Then $\Gamma, v D \entails J$,
 and $\delta : \Gamma, v D \lei \Delta, v (\delta D)$
 so by stability of $J$, $\Delta, v (\delta D) \entails \delta J$.
-Hence $\Delta \entails (v (\delta D) \entails \delta J)$
-and so $\Delta \entails \delta (v D \entails J)$.
+Hence $\Delta \entails \Sbind{v (\delta D)}{\delta J}$
+and so $\Delta \entails \delta \Sbind{v D}{J}$.
 
 Suppose $J$ is stable, $\Gamma \entails \fatsemi J$ and
 $\delta : \Gamma \lei \Delta$. Then $\Gamma \fatsemi \entails J$.
@@ -1118,12 +1119,12 @@ $$
 \Rule{\tau \type}
      {.\tau \scheme}
 \qquad
-\Rule{\hole{\alpha} \entails \sigma \scheme}
+\Rule{\Sbind{\hole{\alpha}}{\sigma \scheme}}
      {\forall\alpha~\sigma \scheme}
 $$
 
 $$
-\Rule{\upsilon \type   \quad  (\alpha \defn \upsilon \entails \sigma \scheme)}
+\Rule{\upsilon \type   \quad  \Sbind{\alpha \defn \upsilon}{\sigma \scheme}}
      {\letS{\alpha}{\upsilon}{\sigma} \scheme}
 $$
 
@@ -1237,9 +1238,9 @@ Now we define the judgment $t \hasscheme \sigma$ for arbitrary terms $t$ thus:
 \begin{align*}
 t \hasscheme .\tau   &\mapsto    t : \tau  \\
 t \hasscheme \forall \alpha \sigma  &\mapsto 
-    (\hole{\alpha} \entails t \hasscheme \sigma)   \\
+    \Sbind{\hole{\alpha}}{t \hasscheme \sigma}   \\
 t \hasscheme \letS{\alpha}{\tau}{\sigma}  &\mapsto
-    (\alpha \defn \tau \entails t \hasscheme \sigma)
+    \Sbind{\alpha \defn \tau}{t \hasscheme \sigma}
 \end{align*}
 
 
@@ -1485,7 +1486,7 @@ $$
 $$
 
 $$
-\Rule{x \asc .\upsilon \entails t : \tau}
+\Rule{\Sbind{x \asc .\upsilon}{t : \tau}}
      {\lambda x.t : \upsilon \arrow \tau}
 \qquad
 \Rule{f : \upsilon \arrow \tau
@@ -1501,7 +1502,8 @@ $$
 \Rule{
       s \hasscheme \sigma
       \quad
-      x \asc \sigma \entails t : \tau}
+      \Sbind{x \asc \sigma}{t : \tau}
+     }
      {\letIn{x}{s}{t} : \tau}
 $$
 
