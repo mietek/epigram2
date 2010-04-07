@@ -824,7 +824,7 @@ A fat semicolon ($\fatsemi$) indicates that the context is passed along unmodifi
 
 $$
 \name{Id}
-\Axiom{\Junify{\Gamma}{\alpha}{\alpha}{\Gamma}}
+\Axiom{\Junify{\Gamma, \alpha \defn \_}{\alpha}{\alpha}{\Gamma, \alpha \defn \_}}
 $$
 
 $$
@@ -841,9 +841,9 @@ $$
 
 $$
 \name{Orthogonal}
-\Rule{\Junify{\Gamma_0}{\tau}{\upsilon}{\Gamma_1}}
-     {\Junify{\Gamma_0, e}{\tau}{\upsilon}{\Gamma_1, e}}
-\side{e \perp \tau \equiv \upsilon}
+\Rule{\Junify{\Gamma_0}{\alpha}{\beta}{\Gamma_1}}
+     {\Junify{\Gamma_0, e}{\alpha}{\beta}{\Gamma_1, e}}
+\side{e \perp \alpha \equiv \beta}
 $$
 
 % \begin{prooftree}
