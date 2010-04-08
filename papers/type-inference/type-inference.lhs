@@ -300,13 +300,16 @@ $v D$ is in the context.
 
 If $S$ and $S'$ are statements and $v D$ is a declaration, then
 we define statements $S \wedge S'$, $\fatsemi S$ and $\Sbind{v D}{S}$ thus:
-$$\Rule{S \quad S'}{S \wedge S'}
-  \qquad
-  \Rule{\Gamma \fatsemi \entails S}
-       {\Gamma \entails \fatsemi S}
-  \qquad
-  \Rule{\Gamma, v D \entails S}
-       {\Gamma \entails \Sbind{v D}{S}}. 
+$$
+\Rule{S \quad S'}{S \wedge S'}
+\qquad
+\Rule{\Gamma \fatsemi \entails S}
+     {\Gamma \entails \fatsemi S}
+$$
+$$
+\Rule{\Gamma \entails D \ok_K    \quad    \Gamma, v D \entails S}
+     {\Gamma \entails \Sbind{v D}{S}}
+\side{v \in \V_K \setminus \V_K(\Gamma)}.
 $$
 We do not add elimination rules to make proofs by induction on the structure
 of derivations easier, but they will be admissible.
@@ -379,9 +382,10 @@ so by stability, $\Delta \entails \delta S$ and $\Delta \entails \delta S'$.
 Hence $\Delta \entails \delta (S \wedge S')$.
 
 Suppose $S$ is stable, $\Gamma \entails \Sbind{v D}{S}$ and
-$\delta : \Gamma \lei \Delta$. Then $\Gamma, v D \entails S$,
+$\delta : \Gamma \lei \Delta$. Then $\Gamma \entails D \ok_K$ and
+$\Gamma, v D \entails S$. By induction, $\Delta \entails \delta D \ok_K$,
 and $\delta : \Gamma, v D \lei \Delta, v (\delta D)$
-so by stability of $S$, $\Delta, v (\delta D) \entails \delta S$.
+so by stability of $S$ we have $\Delta, v (\delta D) \entails \delta S$.
 Hence $\Delta \entails \Sbind{v (\delta D)}{\delta S}$
 and so $\Delta \entails \delta \Sbind{v D}{S}$.
 
