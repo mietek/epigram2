@@ -716,12 +716,17 @@ The |popEntry| function removes and returns the topmost entry from the context.
 \section{Unification up to definition}
 
 If $\tau$ and $\upsilon$ are types, we define the equivalence statement
-$\tau \equiv \upsilon$ by the rules in Figure~\ref{fig:equivRules} along with
+$\tau \equiv \upsilon$ by making declarations yield equations:
 \begin{align*}
-\sem{\hole{\alpha}}_\TY &= \{ \alpha \type, \alpha \equiv \alpha \}  \\
-\sem{\alpha \defn \tau}_\TY &= \{ \alpha \type, \alpha \equiv \alpha,
-           \alpha \equiv \tau, \tau \equiv \alpha \}
+\sem{\hole{\alpha}}_\TY &= \{ \alpha \type \}  \\
+\sem{\alpha \defn \tau}_\TY &= \{ \alpha \type, \alpha \equiv \tau \}
+%%%
+%%% \sem{\hole{\alpha}}_\TY &= \{ \alpha \type, \alpha \equiv \alpha \}  \\
+%%% \sem{\alpha \defn \tau}_\TY &= \{ \alpha \type, \alpha \equiv \alpha,
+%%%            \alpha \equiv \tau, \tau \equiv \alpha \}
 \end{align*}
+and taking structural and equivalence closure by the rules in
+Figure~\ref{fig:equivRules}.
 
 % A \define{unifier} for the types $\tau$ and $\upsilon$ in a context $\Gamma$ is
 % a pair $(\Delta, \theta)$ such that $\theta : \Gamma \lei \Delta$ and
@@ -729,16 +734,15 @@ $\tau \equiv \upsilon$ by the rules in Figure~\ref{fig:equivRules} along with
 
 \begin{figure}[ht]
 \boxrule{\Gamma \entails \tau \equiv \upsilon}
-% $$
-% \Rule{\Gamma \contains \alpha \defn \tau}
-%      {\Gamma \entails \alpha \equiv \tau}
-% \qquad
-% \Rule{\Gamma \entails \tau \type}
-%     {\Gamma \entails \tau \equiv \tau}
-% $$
-% $$
-% \Rule{\Gamma \entails \upsilon \equiv \tau}
-%      {\Gamma \entails \tau \equiv \upsilon}
+% \Rule{\alpha \defn \tau}
+%      {\alpha \equiv \tau}
+$$
+\Rule{\tau \type}
+     {\tau \equiv \tau}
+\qquad
+\Rule{\upsilon \equiv \tau}
+     {\tau \equiv \upsilon}
+$$
 $$
 \Rule{\tau_0 \equiv \upsilon_0
       \quad
@@ -785,7 +789,48 @@ $$
 
 An induction on derivations shows that $\tau \equiv \upsilon$ is stable, since
 the only rule that accesses the context is \textsc{Lookup}.
-Note that reflexivity and symmetry are admissible rules.
+% Note that reflexivity and symmetry are admissible rules.
+We wish to transform these rules into a unification algorithm.
+Starting with only the structural rule, if we try to prove admissibility of
+equivalence closure, we encounter the proof obligations shown.
+
+\begin{figure}[ht]
+$$
+\Rule{\alpha \type}
+     {\alpha \equiv \alpha}
+\qquad
+\Rule{\alpha \equiv \tau}
+     {\tau \equiv \alpha}
+\qquad
+\Rule{\tau \equiv \alpha}
+     {\alpha \equiv \tau}
+$$
+$$
+\Rule{\alpha \equiv \tau    \quad    \tau \equiv \upsilon}
+     {\alpha \equiv \upsilon}
+\qquad
+\Rule{\upsilon \equiv \tau    \quad    \tau \equiv \alpha}
+     {\upsilon \equiv \alpha}
+$$
+\caption{Proof obligations to admit equivalence closure}
+\label{fig:admitEquivClosure}
+\end{figure}
+
+Now we can see how to construct the algorithm. The structural rule says that
+whenever we have rigid $\arrow$ symbols on each side, we decompose the problem
+into two subproblems, and thanks to the Optimist's Lemma we can solve these
+sequentially. Otherwise, we either have variables on both sides, or a variable
+on one side and a type on the other. In each case, we look at the head of the
+context to see what information it gives us, but when instantiating a variable
+with a type we need to accumulate a list of the type's dependencies as we
+encounter them.
+% \begin{itemize}
+% \item If $\alpha D$ is at the head of the context and we are trying to
+% unify $\alpha \equiv \alpha$ then we are done.
+% \item If $\hole{\alpha}$ is at the head and we seek $\alpha \equiv \tau$ or
+% $\tau \equiv \alpha$ then we can replace the head with the list of dependencies
+% followed by $\alpha \defn \tau$.
+% \end{itemize}
 
 \TODO{Relating the declarative rules for type equivalence to the unification
 algorithm needs some thought. It would be nice if we could turn transitivity
@@ -828,7 +873,7 @@ A fat semicolon ($\fatsemi$) indicates that the context is passed along unmodifi
 
 $$
 \name{Id}
-\Axiom{\Junify{\Gamma, \alpha \defn \_}{\alpha}{\alpha}{\Gamma, \alpha \defn \_}}
+\Axiom{\Junify{\Gamma, \alpha D}{\alpha}{\alpha}{\Gamma, \alpha D}}
 $$
 
 $$
@@ -897,8 +942,8 @@ $$
 
 $$
 \name{InstPass}
-\Rule{\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\beta \defn mt, \Xi}{\Gamma_1}}
-     {\Jinstantiate{\Gamma_0, \beta \defn mt}{\alpha}{\tau}{\Xi}{\Gamma_1}}
+\Rule{\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\beta D, \Xi}{\Gamma_1}}
+     {\Jinstantiate{\Gamma_0, \beta D}{\alpha}{\tau}{\Xi}{\Gamma_1}}
 \side{\alpha \neq \beta, \beta \in \FTV{\tau, \Xi}}
 $$
 
