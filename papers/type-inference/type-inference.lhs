@@ -103,6 +103,8 @@
 \newcommand{\Jspec}[4]{\Judge{#1}{#2 \succ #3}{#4}}
 \newcommand{\Jtype}[4]{\Judge{#1}{#2 : #3}{#4}}
 
+\newcommand{\Pinf}[1]{\mathrm{Inf}_{#1}}
+
 \newcommand{\name}[1]{\ensuremath{\mathrm{\textsc{#1}} \;}}
 \newcommand{\side}[1]{\ensuremath{\; #1}}
 
@@ -1283,16 +1285,6 @@ $$
 \end{figure}
 
 
-Now we define the statement $t \hasscheme \sigma$ for arbitrary terms $t$ thus:
-\begin{align*}
-t \hasscheme .\tau   &\mapsto    t : \tau  \\
-t \hasscheme \forall \alpha \sigma  &\mapsto 
-    \Sbind{\hole{\alpha}}{t \hasscheme \sigma}   \\
-t \hasscheme \letS{\alpha}{\tau}{\sigma}  &\mapsto
-    \Sbind{\alpha \defn \tau}{t \hasscheme \sigma}
-\end{align*}
-
-
 % Now we can give the full definition of context entries that we postponed earlier.
 % As before, |alpha := mt| declares a type variable with name $\alpha$; this is the only
 %%%kind of 
@@ -1515,11 +1507,19 @@ to the right of the |LetGoal| marker.
 \section{Type inference}
 
 The syntax of terms is
-$$t ::= x ~||~ t~t ~||~ \lambda x . t ~||~ \letIn{x}{t}{t}$$
-where $x$ ranges over some set of term variables.
+$$t ::= x ~||~ t~t ~||~ \lambda x . t ~||~ \letIn{x}{t}{t}.$$
+% where $x$ ranges over some set of term variables.
 
 We define the type assignability statement $t : \tau$ by the rules in
-Figure~\ref{fig:typeAssignmentRules}.
+Figure~\ref{fig:typeAssignmentRules}, and the scheme assignability statement
+$t \hasscheme \sigma$ for arbitrary terms $t$ thus:
+\begin{align*}
+t \hasscheme .\tau   &\mapsto    t : \tau  \\
+t \hasscheme \forall \alpha \sigma  &\mapsto 
+    \Sbind{\hole{\alpha}}{t \hasscheme \sigma}   \\
+t \hasscheme \letS{\alpha}{\tau}{\sigma}  &\mapsto
+    \Sbind{\alpha \defn \tau}{t \hasscheme \sigma}
+\end{align*}
 
 \begin{figure}[ht]
 \boxrule{\Delta \entails t : \tau}
@@ -1561,6 +1561,7 @@ $$
 \end{figure}
 
 
+%if False
 
 Now we can extend the $\lei$ relation to ensure that more informative contexts
 preserve term information. First, let $\forget{\cdot}$ be the forgetful map from
@@ -1627,11 +1628,64 @@ $$\Gamma, \Xi \entails t : \tau
 
 \end{proof}
 
+%endif
 
-Now we define the judgment $\Jtype{\Gamma_0}{t}{\tau}{\Gamma_1}$
-(inferring the type of $t$ in $\Gamma_0$
-yields $\tau$ in the more informative context $\Gamma_1$) by the rules in
-Figure~\ref{fig:inferRules}.
+
+As with unification, we wish to translate these declarative rules into an
+algorithm for type inference. For each term $t$, we define the problem
+$\Pinf{t}$ on types with equivalence by $\Pinf{t}(\tau) = t : \tau$,
+and we seek an algorithm to find a minimal solution of $\Pinf{t}$.
+
+To transform a rule into an algorithmic form, we proceed clockwise starting from
+the conclusion. For each hypothesis, we must ensure that the problem is fully
+specified, inserting variables to stand for unknown problem inputs. Moreover, we
+cannot pattern match on problem outputs, so we ensure there are schematic variables
+in output positions, fixing things up with appeals to unification. 
+
+Consider the rule for application, written to highlight problem inputs and outputs
+as
+$$\Rule{\Pinf{f}(\upsilon \arrow \tau)    \quad \Pinf{a}(\upsilon)}
+       {\Pinf{f a}(\tau)}.$$
+We change this to the equivalent form
+$$\Rule{\Pinf{f}(\chi)
+        \quad
+        \Pinf{a}(\upsilon)
+        \quad
+        \Sbind{\beta \defn \tau}{\chi \equiv \upsilon \arrow \beta}
+       }
+       {\Sbind{\beta \defn \tau}{\Pinf{f a}(\beta)}}$$
+assuming $\beta$ is a fresh variable. Now the algorithmic version uses input and
+output contexts, with $\beta$ initially unknown:
+$$
+\Rule{\Jtype{\Gamma_0}{f}{\chi}{\Gamma_1}
+         \quad
+         \Jtype{\Gamma_1}{a}{\upsilon}{\Gamma_2}
+         \quad
+         \Junify{\Gamma_2, \hole{\beta}}{\chi}{\upsilon \arrow \beta}{\Gamma_3}}
+        {\Jtype{\Gamma_0}{f a}{\beta}{\Gamma_3}}
+$$
+
+The rule for abstraction is
+$$\Rule{\Sbind{x \asc .\upsilon}{\Pinf{t}(\tau)}}
+       {\Pinf{\lambda x . t}(\upsilon \arrow \tau)}$$
+which is transformed to
+$$\Rule{\Sbind{\beta \defn \upsilon}{\Sbind{x \asc .\beta}{\Pinf{t}(\tau)}}}
+       {\Sbind{\beta \defn \upsilon}{\Pinf{\lambda x . t}(\beta \arrow \tau)}}$$
+and hence
+$$
+\Rule{\Jtype{\Gamma_0, \hole{\beta}, x \asc .\beta}{t}{\tau}
+          {\Gamma_1, x \asc .\beta, \Xi}}
+     {\Jtype{\Gamma_0}{\lambda x.t}{\beta \arrow \tau}{\Gamma_1, \Xi}}
+$$
+
+The variable rule is
+$$\Rule{x \hasc .\tau}
+       {\Pinf{x}(\tau)}$$
+
+Now we define the type inference judgment $\Jtype{\Gamma_0}{t}{\tau}{\Gamma_1}$
+% (inferring the type of $t$ in $\Gamma_0$ yields $\tau$ in the more informative
+% context $\Gamma_1$)
+by the rules in Figure~\ref{fig:inferRules}.
 
 \begin{figure}[ht]
 \boxrule{\Jtype{\Gamma_0}{t}{\tau}{\Gamma_1}}
@@ -1654,13 +1708,13 @@ $$
 
 $$
 \name{App}
-\BigRule{\Jtype{\Gamma_0}{f}{\tau}{\Gamma_1}
+\BigRule{\Jtype{\Gamma_0}{f}{\chi}{\Gamma_1}
          \quad
-         \Jtype{\Gamma_1}{a}{\tau'}{\Gamma_2}
+         \Jtype{\Gamma_1}{a}{\upsilon}{\Gamma_2}
          \quad
          \Gamma_2 \entails \beta \fresh}
-        {\Junify{\Gamma_2, \hole{\beta}}{\tau}{\tau' \arrow \beta}{\Gamma_1}}
-        {\Jtype{\Gamma_0}{f a}{\beta}{\Gamma_1}}
+        {\Junify{\Gamma_2, \hole{\beta}}{\chi}{\upsilon \arrow \beta}{\Gamma_3}}
+        {\Jtype{\Gamma_0}{f a}{\beta}{\Gamma_3}}
 $$
 
 $$
