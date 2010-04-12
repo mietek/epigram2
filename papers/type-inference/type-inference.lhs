@@ -87,21 +87,22 @@
 
 \newcommand{\lei}{\ensuremath{\sqsubseteq}}
 \newcommand{\gei}{\ensuremath{\sqsupseteq}}
-\newcommand{\LEI}{\ensuremath{\hat\sqsubseteq}}
+\newcommand{\LEI}{\ensuremath{~\hat\sqsubseteq~}}
 
 \newcommand{\arrow}{\ensuremath{\triangleright}}
 \newcommand{\defn}{\ensuremath{\!:=\!}}
 \newcommand{\asc}{\ensuremath{:\sim}}
-\newcommand{\hasc}{\hat{::}}
+\newcommand{\hasc}{~\hat{::}~}
 \newcommand{\hole}[1]{\ensuremath{#1 \!:= ?}}
 \newcommand{\contains}{\ensuremath{\ni}}
 
 \newcommand{\Judge}[3]{\ensuremath{#1 \preceq #3 \vdash #2}}
-\newcommand{\Jmin}[3]{\ensuremath{#1 \hat\sqsubseteq #3 \vdash #2}}
+\newcommand{\Jmin}[3]{\ensuremath{#1 \LEI #3 \vdash #2}}
 \newcommand{\Junify}[4]{\Judge{#1}{#2 \equiv #3}{#4}}
 \newcommand{\Jinstantiate}[5]{\Judge{#1}{#2 \equiv #3 ~[#4]}{#5}}
 \newcommand{\Jspec}[4]{\Judge{#1}{#2 \succ #3}{#4}}
 \newcommand{\Jtype}[4]{\Judge{#1}{#2 : #3}{#4}}
+\newcommand{\Jhast}[4]{\Judge{#1}{#2 ~\hat:~ #3}{#4}}
 
 \newcommand{\Pinf}[1]{\mathrm{Inf}_{#1}}
 
@@ -1184,6 +1185,8 @@ $$
 \end{figure}
 
 
+%if False
+
 \TODO{Get rid of the specialisation judgment and specialise on lookup instead.}
 The statement $\sigma \succ \tau$, defined in
 Figure~\ref{fig:genericInstRules}, means that $\sigma$ has
@@ -1216,6 +1219,8 @@ $$
 \caption{Rules for generic instantiation}
 \label{fig:genericInstRules}
 \end{figure}
+
+%endif
 
 
 It is convenient to represent bound variables 
@@ -1704,8 +1709,8 @@ $$
 
 $$
 \name{Abs}
-\Rule{\Jtype{\Gamma_0, \hole{\alpha}, x \asc .\alpha;}{t}{\tau}
-          {\Gamma_1, x \asc \_; \Xi}}
+\Rule{\Jtype{\Gamma_0, \hole{\alpha}, x \asc .\alpha}{t}{\tau}
+          {\Gamma_1, x \asc .\alpha, \Xi}}
      {\Jtype{\Gamma_0}{\lambda x.t}{\alpha \arrow \tau}{\Gamma_1, \Xi}}
 \side{\alpha \fresh}
 $$
@@ -1722,9 +1727,9 @@ $$
 
 $$
 \name{Let}
-\BigRule{\Jtype{\Gamma_0, \letGoal;}{s}{\tau_0}{\Gamma, \letGoal; \Xi_0}}
-        {\Jtype{\Gamma, x \asc \gen{\Xi_0}{.\tau_0};}{t}{\tau_1}
-               {\Gamma_1, x \asc \_; \Xi_1}}
+\BigRule{\Jtype{\Gamma_0 \fatsemi}{s}{\tau_0}{\Gamma \fatsemi \Xi_0}}
+        {\Jtype{\Gamma, x \asc \gen{\Xi_0}{.\tau_0}}{t}{\tau_1}
+               {\Gamma_1, x \asc \gen{\Xi_0}{.\tau_0}, \Xi_1}}
         {\Jtype{\Gamma_0}{\letIn{x}{s}{t}}{\tau_1}{\Gamma_1, \Xi_1}}
 $$
 
@@ -1743,13 +1748,15 @@ extension $\Gamma'$.
 If $\Jtype{\Gamma_0}{t}{\tau}{\Gamma_1}$, then
 \begin{enumerate}[(a)]
 \item $\Gamma_1 \entails t : \tau$;
-\item $\tyvars{\Gamma_0} \subseteq \tyvars{\Gamma_1}$;
-\item $\forget{\Gamma_0} = \forget{\Gamma_1}$;
-\item $\iota : \Gamma_0 \lei \Gamma_1$, where $\iota$ is the inclusion substitution; and
-\item if $\Theta_0 \subcontext \Gamma_0$ and $\Theta_1 \subcontext \Gamma_1$ are such that
-    $\forget{\Theta_0} = \forget{\Theta_1}$, then
-    $\tyvars{\Theta_0} \subseteq \tyvars{\Theta_1}$ and
-    $\iota : \Theta_0 \lei \Theta_1$.
+\item $\tyvars{\Gamma_0} \subseteq \tyvars{\Gamma_1}$; and
+% \item $\forget{\Gamma_0} = \forget{\Gamma_1}$;
+\item $\iota : \Gamma_0 \lei \Gamma_1$, where $\iota$ is the inclusion
+      substitution.
+% \item if $\Theta_0 \subcontext \Gamma_0$ and $\Theta_1 \subcontext \Gamma_1$
+% are such that
+%    $\forget{\Theta_0} = \forget{\Theta_1}$, then
+%    $\tyvars{\Theta_0} \subseteq \tyvars{\Theta_1}$ and
+%    $\iota : \Theta_0 \lei \Theta_1$.
 \end{enumerate}
 \end{lemma}
 
@@ -2007,10 +2014,10 @@ $\Delta \entails \letIn{x}{s}{w} \hasscheme \sigma'$ principal.
 \end{lemma}
 
 \begin{lemma}[Completeness of type inference]
-If $\theta_0 : \Gamma_0; \LEI \Delta$ and $\Delta \entails t : \tau$ then
+If $\theta_0 : \Gamma_0; \lei \Delta$ and $\Delta \entails t : \tau$ then
 \begin{enumerate}[(a)]
 \item $\Jtype{\Gamma_0;}{t}{\upsilon}{\Gamma_1; \Xi}$,
-\item $\theta_1 : \Gamma_1; \LEI \Delta$ with 
+\item $\theta_1 : \Gamma_1; \lei \Delta$ with 
 $\theta_0\alpha = \theta_1\alpha$ for any $\alpha \in \tyvars{\Gamma_0}$, and
 \item $\Gamma_1; \entails t :: \gen{\Xi}{\upsilon}$ principal.
 \end{enumerate}
@@ -2018,7 +2025,7 @@ $\theta_0\alpha = \theta_1\alpha$ for any $\alpha \in \tyvars{\Gamma_0}$, and
 
 \begin{proof}
 If $t = x$ is a variable, then by inversion $\Delta \entails x \asc \sigma$ and
-$\Delta \entails \sigma \succ \tau$. Now by definition of $\LEI$,
+$\Delta \entails \sigma \succ \tau$. Now by definition of $\lei$,
 $\Gamma_0; \entails x \asc \sigma'$ for some $\sigma'$ with
 $$\forall \upsilon. \Delta \entails \theta_0\sigma' \succ \upsilon
     \Leftrightarrow \Delta \entails x : \upsilon.$$
@@ -2042,17 +2049,17 @@ variables $\Psi$ so that
 $\Delta, \letGoal; \Psi \entails \sigma \succ \tau_s$
 and hence
 $\Delta, \letGoal; \Psi \entails s : \tau_s$.
-Moreover $\theta_0 : \Gamma_0; \letGoal; \LEI \Delta, \letGoal;$ so
+Moreover $\theta_0 : \Gamma_0; \letGoal; \lei \Delta, \letGoal;$ so
 by induction
 \begin{enumerate}[(a)]
 \item $\Jtype{\Gamma_0; \letGoal;}{s}{\upsilon}{\Gamma_1; \letGoal; \Xi_1}$
-\item $\theta_1 : \Gamma_1; \letGoal; \LEI \Delta, \letGoal; \Psi$
+\item $\theta_1 : \Gamma_1; \letGoal; \lei \Delta, \letGoal; \Psi$
 \item $\Gamma_1; \letGoal; \entails s \hasscheme \gen{\Xi_1}{\upsilon}$ principal.
 \end{enumerate}
 
 Now 
 $$\theta_1 : \Gamma_1; x \asc \gen{\Xi_1}{\upsilon};
-                            \LEI \Delta, x \asc \gen{\Xi_1}{\upsilon}; \Psi$$
+                            \lei \Delta, x \asc \gen{\Xi_1}{\upsilon}; \Psi$$
 but
 $$\iota : \Delta, x \asc \sigma; \lei \Delta, x \asc \gen{\Xi_1}{\upsilon};$$
 by principality, and hence
@@ -2062,13 +2069,13 @@ by preservation of type assignment (lemma \ref{lem:typeAssignmentPreserved}).
 Thus, by induction,
 \begin{enumerate}[(a)]
 \item $\Jtype{\Gamma_1, x \asc \gen{\Xi_1}{\upsilon};}{w}{\chi}{\Gamma_2; x \asc \gen{\Xi_1}{\upsilon}; \Xi_2}$
-\item $\theta_2 : \Gamma_2; x \asc \gen{\Xi_1}{\upsilon}; \LEI \Delta, x \asc \gen{\Xi_1}{\upsilon}; \Psi$
+\item $\theta_2 : \Gamma_2; x \asc \gen{\Xi_1}{\upsilon}; \lei \Delta, x \asc \gen{\Xi_1}{\upsilon}; \Psi$
 \item $\Gamma_2; x \asc \gen{\Xi_1}{\upsilon}; \entails w \hasscheme \gen{\Xi_2}{\chi}$ principal
 \end{enumerate}
 and the \textsc{Let} rule applies to give
 \begin{enumerate}[(a)]
 \item $\Jtype{\Gamma_0;}{\letIn{x}{s}{w}}{\chi}{\Gamma_2; \Xi_2}$
-\item $\theta_2 : \Gamma_2; \LEI \Delta;$ \TODO{Why?}
+\item $\theta_2 : \Gamma_2; \lei \Delta;$ \TODO{Why?}
 \item $\Gamma_2; \entails \letIn{x}{s}{w} \hasscheme \gen{\Xi_2}{\chi}$ principal by
 lemma \ref{lem:letSchemePrincipal}.
 \end{enumerate}
@@ -2080,12 +2087,12 @@ where $\tau_0$ and $\tau_1$ are some $\Delta$-types, and
 $\Delta, x \asc .\tau_0; \entails w : \tau_1$.
 Taking $\theta = [\tau_0/\alpha]\theta_0$, we have that
 $$\theta : \Gamma_0; \hole{\alpha}, x \asc .\alpha;
-             \LEI  \Delta, x \asc .\tau_0;$$
+             \lei  \Delta, x \asc .\tau_0;$$
 and hence, by induction,
 \begin{enumerate}[(a)]
 \item $\Jtype{\Gamma_0; \hole{\alpha}, x \asc .\alpha;}{w}{\upsilon}
              {\Gamma_1; \Phi, x \asc .\alpha; \Xi}$
-\item $\theta_1 : \Gamma_1; \Phi, x \asc .\alpha; \LEI \Delta, x \asc .\tau_0;$
+\item $\theta_1 : \Gamma_1; \Phi, x \asc .\alpha; \lei \Delta, x \asc .\tau_0;$
 \item $\Gamma_1; \Phi, x \asc .\alpha; \entails w \hasscheme \gen{\Xi}{\upsilon}$
           principal.
 \end{enumerate}
@@ -2094,7 +2101,7 @@ Thus the \textsc{Abs} rule applies, so we have
 \begin{enumerate}[(a)]
 \item $\Jtype{\Gamma_0;}{\lambda x . w}{\alpha \arrow \upsilon}
              {\Gamma_1; \Phi, \Xi}$
-\item $\theta_1 : \Gamma_1; \LEI \Delta$
+\item $\theta_1 : \Gamma_1; \lei \Delta$
 \item $\Gamma_1; \entails \lambda x . w \hasscheme \gen{\Phi, \Xi}{\upsilon}$
           principal. \TODO{Why?}
 \end{enumerate}
@@ -2105,19 +2112,19 @@ $\Delta \entails f : \tau_0 \arrow \tau$,
 so by induction
 \begin{enumerate}[(a)]
 \item $\Jtype{\Gamma_0;}{f}{\upsilon}{\Gamma; \Xi}$
-\item $\theta : \Gamma; \LEI \Delta$ 
+\item $\theta : \Gamma; \lei \Delta$ 
 \item $\Gamma; \entails f \hasscheme \gen{\Xi}{\upsilon}$ principal.
 \end{enumerate}
 
 Now $\Delta \entails a : \tau_0$, so by induction
 \begin{enumerate}[(a)]
 \item $\Jtype{\Gamma;}{a}{\upsilon_0}{\Gamma_1; \Xi_1}$
-\item $\theta' : \Gamma_1; \LEI \Delta$ 
+\item $\theta' : \Gamma_1; \lei \Delta$ 
 \item $\Gamma_1; \entails a \hasscheme \gen{\Xi_1}{\upsilon_0}$ principal.
 \end{enumerate}
 
 Let $\theta_1 = [\tau/\beta]\theta'$, then
-$\theta_1 : \Gamma_1; \Xi_1, \Xi, \hole{\beta} \LEI \Delta$,
+$\theta_1 : \Gamma_1; \Xi_1, \Xi, \hole{\beta} \lei \Delta$,
 and since
 $$\Delta \entails \theta_1\upsilon \equiv \tau_0 \arrow \tau
     \equiv \theta_1(\upsilon_0 \arrow \beta)$$
@@ -2128,7 +2135,7 @@ by completeness of unification.
 Hence the \textsc{App} rule applies, so
 \begin{enumerate}[(a)]
 \item $\Jtype{\Gamma_0}{f a}{\beta}{\Gamma_2}$
-\item $\theta_1 : \Gamma_2; \LEI \Delta$ \TODO{Why?}
+\item $\theta_1 : \Gamma_2; \lei \Delta$ \TODO{Why?}
 \item $\Gamma_2; \entails f a \hasscheme \gen{???}{\beta}$ principal. \TODO{Why?}
 \end{enumerate}
 
