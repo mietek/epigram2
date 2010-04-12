@@ -1373,10 +1373,14 @@ $$
 \end{figure}
 
 
+We define $\Jhast{\Gamma_0}{x}{\tau}{\Gamma_1}$ to mean
+$\Gamma_0 \entails x \hasc \sigma$ and
+$\Jspec{\Gamma_0}{\sigma}{\tau}{\Gamma_1}$.
+
+
 \begin{lemma}[Soundness of specialisation]
 \label{lem:specialiseSound}
-If $\Gamma_0 \entails x \hasc \sigma$ and
-$\Jspec{\Gamma_0}{\sigma}{\tau}{\Gamma_1}$, then
+If $\Jhast{\Gamma_0}{x}{\tau}{\Gamma_1}$, then
 $\Gamma_1 \entails x \hasc .\tau$,
 $\tyvars{\Gamma_0} \subseteq \tyvars{\Gamma_1}$ and
 $\iota : \Gamma_0 \lei \Gamma_1$.
@@ -1388,12 +1392,13 @@ By structural induction on $\sigma$.
 
 \begin{lemma}[Completeness of specialisation]
 \label{lem:specialiseComplete}
-If $\Gamma \entails \sigma \scheme$ then
-$\Jspec{\Gamma}{\sigma}{\tau}{\Gamma, \Xi}$
-for some type $\tau$ and list of type variable declarations $\Xi$ such that
-$$\forall \upsilon \forall \phi : \Gamma \lei \Phi . (
-    \Phi \entails \phi\sigma \succ \upsilon
-        \Leftrightarrow  \Phi \entails \phi\gen{\Xi}{\tau} \succ \upsilon).$$
+If $\Gamma \entails x \hasc \sigma$ then
+$\Jhast{\Gamma}{x}{\tau}{\Gamma, \Xi}$
+for some type $\tau$ and list of type variable declarations $\Xi$.
+
+% $$\forall \upsilon \forall \phi : \Gamma \lei \Phi . (
+%     \Phi \entails \phi\sigma \succ \upsilon
+%        \Leftrightarrow  \Phi \entails \phi\gen{\Xi}{\tau} \succ \upsilon).$$
 
 % If $\theta_0 : \Gamma_0 \lei \Delta$, $\Gamma_0 \entails \sigma \scheme$ and
 % $\Delta \entails \theta_0\sigma \succ \tau$,
@@ -1406,6 +1411,22 @@ $$\forall \upsilon \forall \phi : \Gamma \lei \Phi . (
 
 \begin{proof}
 
+\end{proof}
+
+\begin{lemma}[Minimality of specialisation]
+\label{lem:specialiseMinimal}
+Let $P(x)(\tau) = x \hasc .\tau$ be a problem.
+If $\Jhast{\Gamma}{x}{\tau}{\Gamma, \Xi}$ then
+$\Jmin{\Gamma}{P(x)(\tau)}{\Gamma, \Xi}$.
+\end{lemma}
+
+\begin{proof}
+Suppose $\theta : \Gamma \lei \Theta \entails P(x)(\upsilon)$.
+By stability, $\Theta \entails x \hasc \sigma$.
+Examining the rules in Figure~\ref{fig:termVarSchemeRules}, the proof of
+$\Theta \entails x \hasc .\tau$ must specialise $\sigma$ with types
+$\Psi$ for its generic variables. Let $\theta' = \theta[\Psi/\Xi]$, then
+$\theta' : \Gamma, \Xi \lei \Theta$ and $\theta = \theta' \compose \iota$.
 \end{proof}
 
 
@@ -1691,6 +1712,30 @@ The variable rule is
 $$\Rule{x \hasc .\tau}
        {\Pinf{x}(\tau)}$$
 
+The let rule is
+$$
+\Rule{
+      s \hasscheme \sigma
+      \quad
+      \Sbind{x \asc \sigma}{t : \tau}
+     }
+     {\Pinf{\letIn{x}{s}{t}}(\tau)}
+$$
+which we transform to
+$$
+\Rule{
+      \fatsemi (s : \upsilon)
+      \quad
+      x \asc \upsilon \Yup t : \tau
+     }
+     {\Pinf{\letIn{x}{s}{t}}(\tau)}
+$$
+where $\Yup$ is defined via
+$$
+\Rule{\Gamma \entails \Sbind{x \asc \gen{\Xi}{\sigma}}{S}}
+     {\Gamma \fatsemi \Xi \entails x \asc \upsilon \Yup S}
+$$
+
 Now we define the type inference judgment $\Jtype{\Gamma_0}{t}{\tau}{\Gamma_1}$
 % (inferring the type of $t$ in $\Gamma_0$ yields $\tau$ in the more informative
 % context $\Gamma_1$)
@@ -1701,9 +1746,7 @@ by the rules in Figure~\ref{fig:inferRules}.
 
 $$
 \name{Var}
-\Rule{\Gamma_0 \entails x \asc \sigma
-      \quad
-      \Jspec{\Gamma_0}{\sigma}{\tau}{\Gamma_1}}
+\Rule{\Jhast{\Gamma_0}{x}{\tau}{\Gamma_1}}
      {\Jtype{\Gamma_0}{x}{\tau}{\Gamma_1}}
 $$
 
