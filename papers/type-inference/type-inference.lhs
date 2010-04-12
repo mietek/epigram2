@@ -135,6 +135,12 @@
 \newcommand{\TY}{\mathrm{\textsc{TY}}}
 \newcommand{\TM}{\mathrm{\textsc{TM}}}
 
+\newcommand{\In}[1]{In_{#1}}
+\newcommand{\Out}[1]{Out_{#1}}
+\newcommand{\Pre}[1]{Pre_{#1}}
+\newcommand{\Post}[1]{Post_{#1}}
+\newcommand{\R}[1]{R_{#1}}
+
 \usepackage{amsthm}
 \usepackage{amsmath}
 \usepackage{enumerate}
@@ -428,6 +434,49 @@ $\Gamma_2 \semidrop n \entails \gamma_2\gamma_1\sem{v D}$ .
 
 \subsection{Problems}
 
+A \define{problem} $P$ consists of
+\begin{itemize}
+\item sets $\In{P}$ and $\Out{P}$ of input and output parameters,
+\item a precondition map $\Pre{P} : \In{P} \rightarrow \Ss$,
+\item a postcondition map $\Post{P} : \In{P} \rightarrow \Out{P} \rightarrow \Ss$ and
+\item a relation map $\R{P} : \Out{P} \rightarrow \Out{P} \rightarrow \Ss$,
+\end{itemize}
+such that $\In{P}$ and $\Out{P}$ are closed under substitution and the maps
+respect substitution, for example, $\Pre{P}(\theta r) = \theta \Pre{P}(r)$.
+Moreover, for any context $\Gamma$, $a \in \In{P}$ and $b, c, d \in \Out{P}$
+such that
+$$\Gamma \entails \Pre{P} (a) \wedge \Post{P} (a)(b) \wedge \Post{P} (a)(c)
+         \wedge \Post{P} (a)(d),$$
+we must have 
+$\Gamma \entails \R{P} (b)(b)$ and
+$$\Gamma \entails \R{P} (a)(b) \wedge \R{P} (b)(c)
+    \Rightarrow \Gamma \entails \R{P} (a)(c).$$
+
+A \define{$P$-instance for a context $\Gamma$} is $a \in \In{P}$ such that
+$\Gamma \entails \Pre{P}(a)$. The problem instance $a$ has \define{solution}
+$(b, \delta, \Delta)$ if $b \in \Out{P}$ and $\delta : \Gamma \lei \Delta$
+such that $\Delta \entails \Post{P} (\delta a, b)$.
+
+The solution $(b, \delta, \Delta)$ is \define{minimal} if for any solution
+$(c, \theta, \Theta)$ there exists $\zeta : \Delta \lei \Theta$ such that
+$\theta = \zeta \compose \delta$ and $\Theta \entails \R{P} (\zeta b, c)$.
+
+We write $P_a(b)$ for $\Post{P}(a)(b)$ and
+$\delta : \Jmin{\Gamma}{P_a(b)}{\Delta}$ to mean that
+$(b, \delta, \Delta)$ is a minimal solution of the $P$-instance $a$.
+
+If $P$ and $Q$ are problems, then $P \wedge Q$ is a problem with
+\begin{itemize}
+\item $\In{P \wedge Q} = \In{P} \times \In{Q}$
+\item $\Out{P \wedge Q} = \Out{P} \times \Out{Q}$
+\item $\Pre{P \wedge Q} (a, b) = \Pre{P} (a) \wedge \Pre{Q} b$
+\item $\Post{P \wedge Q} (a, b) (c, d) = \Post{P}(a)(c) \wedge \Post{Q}(b)(d)$
+\item $\R{P \wedge Q}(a, b)(c, d) = \R{P}(a)(c) \wedge \R{Q}(b)(d)$
+\end{itemize}
+
+
+%if False
+
 A \define{problem domain} $R_\le$ is a set $R$ equipped with a relation $\le$
 such that $R$ is closed under substitution. 
 A \define{problem on $R_\le$} is a map $P: R_\le \rightarrow \Ss$ such that
@@ -456,54 +505,46 @@ $$P_1 \wedge P_2 : R \times S \rightarrow \Ss :
 where $(r, s) \langle \le , \ll \rangle (r', s')$ if
 $r \le r'$ and $s \ll s'$.
 
-The point of all this 
-%%%work 
-   machinery 
-is to be able to state and prove the following 
-%%%lemma. This states 
-   lemma, stating that the minimal solution to a conjunction of problems can be found
-by finding the minimal solution of the first problem, then (minimally) extending
-it to solve the 
-%%%second problem.
-   second. 
+%endif
+
+The point of all this machinery is to be able to state and prove the following 
+lemma, stating that the minimal solution to a conjunction of problems can be
+found by finding the minimal solution of the first problem, then (minimally)
+extending it to solve the second. 
 
 \begin{lemma}[The Optimist's Lemma]
 The following inference rule is admissible:
-$$\Rule{\gamma_1 : \Jmin{\Gamma_0}{P_1(r)}{\Gamma_1}
-       \quad  \gamma_2 : \Jmin{\Gamma_1}{P_2(s)}{\Gamma_2}}
+$$\Rule{\gamma_1 : \Jmin{\Gamma_0}{P_a(r)}{\Gamma_1}
+       \quad  \gamma_2 : \Jmin{\Gamma_1}{Q_b(s)}{\Gamma_2}}
        {\gamma_2 \compose \gamma_1 :
-           \Jmin{\Gamma_0}{P_1 \wedge P_2 (\gamma_2 r, s)}{\Gamma_2}}$$
+           \Jmin{\Gamma_0}{P \wedge Q_{(a, b)}(\gamma_2 r, s)}{\Gamma_2}}$$
 \end{lemma}
 
 \begin{proof}
 We have that $\gamma_2 \compose \gamma_1 : \Gamma_0 \lei \Gamma_2$ by 
-%%%the preceding lemma.
-   Lemma~\ref{lei:preorder}. 
+Lemma~\ref{lei:preorder}. 
 
-To show $\Gamma_2 \entails P_1 \wedge P_2 (\gamma_2 r, s)$, it
-suffices to show $\Gamma_2 \entails P_1(\gamma_2 r)$ and
-$\Gamma_2 \entails P_2(s)$. The latter holds by assumption. For the
-former, note that $\Gamma_1 \entails P_1(r)$ and hence
-$\Gamma_2 \entails \gamma_2 P_1(r)$ by stability of $P_1(r)$.
-But $\gamma_2 P_1(r) = P_1(\gamma_2 r)$ by 
-   definition,  
-%%%of a problem, 
-   so we are done.
+To show $\Gamma_2 \entails P \wedge Q_{(a, b)} (\gamma_2 r, s)$, it
+suffices to show $\Gamma_2 \entails P_a(\gamma_2 r)$ and
+$\Gamma_2 \entails Q_b(s)$. The latter holds by assumption. For the
+former, note that $\Gamma_1 \entails P_a(r)$ and hence
+$\Gamma_2 \entails \gamma_2 P_a(r)$ by stability of $P_a(r)$.
+But $\gamma_2 P_a(r) = P_a(\gamma_2 r)$ by definition, so we are done.
 
 Finally, suppose there is some $\theta : \Gamma_0 \lei \Theta$ such that
-$\Theta \entails (P_1 \wedge P_2)(r', s')$, so
-$\Theta \entails P_1(r')$ and
-$\Theta \entails P_2(s')$.
-Since $\gamma_1 : \Jmin{\Gamma_0}{P_1(r)}{\Gamma_1}$, there exists
+$\Theta \entails P \wedge Q_{(a, b)}(r', s')$, so
+$\Theta \entails P_a(r')$ and
+$\Theta \entails Q_b(s')$.
+Since $\gamma_1 : \Jmin{\Gamma_0}{P_a(r)}{\Gamma_1}$, there exists
 $\zeta_1 : \Gamma_1 \lei \Theta$ such that $\theta = \zeta_1 \compose \gamma_1$
-and $r' \le \zeta_1 r$.
-But then $\gamma_2 : \Jmin{\Gamma_1}{P_2(s)}{\Gamma_2}$, so there exists
+and $\Theta \entails \R{P}(\zeta_1 r)(r')$.
+But then $\gamma_2 : \Jmin{\Gamma_1}{Q_b(s)}{\Gamma_2}$, so there exists
 $\zeta_2 : \Gamma_2 \lei \Theta$ such that $\zeta_1 = \zeta_2 \compose \gamma_2$
-and $s' \ll \zeta_2 s$.
+and $\Theta \entails \R{Q}(\zeta_2 s)(s')$.
 Hence 
-%%%   we obtain  
-$\theta = \zeta_2 \compose (\gamma_2 \compose \gamma_1)$, 
-$r' \le \zeta_2 (\gamma_2 r)$ and $s' \ll \zeta_2 s$.
+$\theta = \zeta_2 \compose (\gamma_2 \compose \gamma_1)$
+and
+$\Theta \entails \R{P \wedge Q}(\zeta_2 (\gamma_2 r), \zeta_2 s)(r', s')$.
 \end{proof}
 
 
@@ -794,6 +835,17 @@ An induction on derivations shows that $\tau \equiv \upsilon$ is stable, since
 the only rule that accesses the context is \textsc{Lookup}.
 % Note that reflexivity and symmetry are admissible rules.
 We wish to transform these rules into a unification algorithm.
+
+The unification problem $U$ is given by
+\begin{align*}
+\In{U} &= Type \times Type  \\
+\Out{U} &= 1  \\
+\Pre{U}(\tau, \upsilon) &= \tau \type \wedge \upsilon \type  \\
+\Post{U}(\tau, \upsilon) ~\_ &= \tau \equiv \upsilon  \\
+\R{U} ~\_ ~\_ &= \valid
+\end{align*}
+
+
 Starting with only the structural rule, if we try to prove admissibility of
 equivalence closure, we encounter the proof obligations shown.
 
@@ -1415,7 +1467,7 @@ for some type $\tau$ and list of type variable declarations $\Xi$.
 
 \begin{lemma}[Minimality of specialisation]
 \label{lem:specialiseMinimal}
-Let $P(x)(\tau) = x \hasc .\tau$ be a problem.
+Define the problem $P_x(\tau) = x \hasc .\tau$.
 If $\Jhast{\Gamma}{x}{\tau}{\Gamma, \Xi}$ then
 $\Jmin{\Gamma}{P(x)(\tau)}{\Gamma, \Xi}$.
 \end{lemma}
@@ -1662,9 +1714,18 @@ $$\Gamma, \Xi \entails t : \tau
 
 
 As with unification, we wish to translate these declarative rules into an
-algorithm for type inference. For each term $t$, we define the problem
-$\Pinf{t}$ on types with equivalence by $\Pinf{t}(\tau) = t : \tau$,
-and we seek an algorithm to find a minimal solution of $\Pinf{t}$.
+algorithm for type inference. 
+% For each term $t$, we define the problem
+% $\Pinf{t}$ on types with equivalence by $\Pinf{t}(\tau) = t : \tau$,
+% and we seek an algorithm to find a minimal solution of $\Pinf{t}$.
+We define the type inference problem $\Pinf{}$ by
+\begin{align*}
+\In{\Pinf{}} &= Term  \\
+\Out{\Pinf{}} &= Type  \\
+\Pre{\Pinf{}}(t) &= \valid  \\
+\Post{\Pinf{}}(t)(\tau) &= t : \tau  \\
+\R{\Pinf{}}(\tau)(\upsilon) &= \tau \equiv \upsilon
+\end{align*}
 
 To transform a rule into an algorithmic form, we proceed clockwise starting from
 the conclusion. For each hypothesis, we must ensure that the problem is fully
