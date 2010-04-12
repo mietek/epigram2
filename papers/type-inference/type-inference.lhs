@@ -917,11 +917,12 @@ e \perp \tau_0 \arrow \tau_1 \equiv \upsilon_0 \arrow \upsilon_1
     &\mathrm{~if~} \alpha \neq \delta \wedge \delta \notin \FTV{\tau, \Xi}
 \end{align*}
 
-The rules \textsc{Coalesce}, \textsc{Expand} and \textsc{Instantiate} have symmetric counterparts
-which are identical apart from interchanging the equated terms in the conclusion.
-Usually we will ignore these without loss of generality, but where necessary we
-refer to them as \textsc{Coalesce}\sym, \textsc{Expand}\sym and \textsc{Instantiate}\sym.
-A fat semicolon ($\fatsemi$) indicates that the context is passed along unmodified.
+The rules \textsc{Coalesce}, \textsc{Expand} and \textsc{Instantiate} have
+symmetric counterparts that are identical apart from interchanging the equated
+terms in the conclusion. Usually we will ignore these without loss of generality,
+but where necessary we refer to them as \textsc{Coalesce}\sym,
+\textsc{Expand}\sym and \textsc{Instantiate}\sym.
+
 
 \begin{figure}[ht]
 \boxrule{\Junify{\Gamma_0}{\tau}{\upsilon}{\Gamma_1}}
