@@ -1349,16 +1349,18 @@ $$
 
 $$
 \name{All}
-\Rule{\Gamma \entails \alpha \fresh    \quad
-      \Jspec{\Gamma, \hole{\alpha}}{\sigma}{\tau}{\Gamma, \hole{\alpha}, \Xi}}
+\Rule{\Jspec{\Gamma, \hole{\alpha}}{\sigma}{\tau}{\Gamma, \hole{\alpha}, \Xi}}
      {\Jspec{\Gamma}{\forall\alpha~\sigma}{\tau}{\Gamma, \hole{\alpha}, \Xi}}
+\side{\alpha \fresh}
 $$
 
 $$
 \name{LetS}
-\Rule{\Gamma \entails \alpha \fresh    \quad
-      \Jspec{\Gamma, \alpha \defn \upsilon}{\sigma}{\tau}{\Gamma, \alpha \defn \upsilon, \Xi}}
-     {\Jspec{\Gamma}{\letS{\alpha}{\upsilon}{\sigma}}{\tau}{\Gamma, \alpha \defn \upsilon, \Xi}}
+\Rule{\Jspec{\Gamma, \alpha \defn \upsilon}{\sigma}{\tau}
+            {\Gamma, \alpha \defn \upsilon, \Xi}}
+     {\Jspec{\Gamma}{\letS{\alpha}{\upsilon}{\sigma}}{\tau}
+            {\Gamma, \alpha \defn \upsilon, \Xi}}
+\side{\alpha \fresh}
 $$
 
 \caption{Algorithmic rules for specialisation}
@@ -1368,8 +1370,10 @@ $$
 
 \begin{lemma}[Soundness of specialisation]
 \label{lem:specialiseSound}
-If $\Jspec{\Gamma_0}{\sigma}{\tau}{\Gamma_1}$, then
-$\Gamma_1 \entails \sigma \succ \tau$, $\tyvars{\Gamma_0} \subseteq \tyvars{\Gamma_1}$ and
+If $\Gamma_0 \entails x \hasc \sigma$ and
+$\Jspec{\Gamma_0}{\sigma}{\tau}{\Gamma_1}$, then
+$\Gamma_1 \entails x \hasc .\tau$,
+$\tyvars{\Gamma_0} \subseteq \tyvars{\Gamma_1}$ and
 $\iota : \Gamma_0 \lei \Gamma_1$.
 \end{lemma}
 
@@ -1700,21 +1704,20 @@ $$
 
 $$
 \name{Abs}
-\Rule{\Gamma_0 \entails \alpha \fresh    \quad
-      \Jtype{\Gamma_0, \hole{\alpha}, x \asc .\alpha;}{t}{\tau}
+\Rule{\Jtype{\Gamma_0, \hole{\alpha}, x \asc .\alpha;}{t}{\tau}
           {\Gamma_1, x \asc \_; \Xi}}
      {\Jtype{\Gamma_0}{\lambda x.t}{\alpha \arrow \tau}{\Gamma_1, \Xi}}
+\side{\alpha \fresh}
 $$
 
 $$
 \name{App}
 \BigRule{\Jtype{\Gamma_0}{f}{\chi}{\Gamma_1}
          \quad
-         \Jtype{\Gamma_1}{a}{\upsilon}{\Gamma_2}
-         \quad
-         \Gamma_2 \entails \beta \fresh}
+         \Jtype{\Gamma_1}{a}{\upsilon}{\Gamma_2}}
         {\Junify{\Gamma_2, \hole{\beta}}{\chi}{\upsilon \arrow \beta}{\Gamma_3}}
         {\Jtype{\Gamma_0}{f a}{\beta}{\Gamma_3}}
+\side{\beta \fresh}
 $$
 
 $$
