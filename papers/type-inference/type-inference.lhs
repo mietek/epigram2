@@ -135,11 +135,11 @@
 \newcommand{\TY}{\mathrm{\textsc{TY}}}
 \newcommand{\TM}{\mathrm{\textsc{TM}}}
 
-\newcommand{\In}[1]{In_{#1}}
-\newcommand{\Out}[1]{Out_{#1}}
-\newcommand{\Pre}[1]{Pre_{#1}}
-\newcommand{\Post}[1]{Post_{#1}}
-\newcommand{\R}[1]{R_{#1}}
+\newcommand{\In}[1]{\ensuremath{In_{#1}}}
+\newcommand{\Out}[1]{\ensuremath{Out_{#1}}}
+\newcommand{\Pre}[1]{\ensuremath{Pre_{#1}}}
+\newcommand{\Post}[1]{\ensuremath{Post_{#1}}}
+\newcommand{\R}[1]{\ensuremath{R_{#1}}}
 
 \usepackage{amsthm}
 \usepackage{amsmath}
@@ -436,12 +436,12 @@ $\Gamma_2 \semidrop n \entails \gamma_2\gamma_1\sem{v D}$ .
 
 A \define{problem} $P$ consists of
 \begin{itemize}
-\item sets $\In{P}$ and $\Out{P}$ of input and output parameters,
+\item sets \In{P}\ and \Out{P}\ of input and output parameters,
 \item a precondition map $\Pre{P} : \In{P} \rightarrow \Ss$,
 \item a postcondition map $\Post{P} : \In{P} \rightarrow \Out{P} \rightarrow \Ss$ and
 \item a relation map $\R{P} : \Out{P} \rightarrow \Out{P} \rightarrow \Ss$,
 \end{itemize}
-such that $\In{P}$ and $\Out{P}$ are closed under substitution and the maps
+such that \In{P}\ and \Out{P}\ are closed under substitution and the maps
 respect substitution, for example, $\Pre{P}(\theta r) = \theta \Pre{P}(r)$.
 Moreover, for any context $\Gamma$, $a \in \In{P}$ and $b, c, d \in \Out{P}$
 such that
