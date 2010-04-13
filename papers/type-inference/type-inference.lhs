@@ -445,12 +445,12 @@ such that $\In{P}$ and $\Out{P}$ are closed under substitution and the maps
 respect substitution, for example, $\Pre{P}(\theta r) = \theta \Pre{P}(r)$.
 Moreover, for any context $\Gamma$, $a \in \In{P}$ and $b, c, d \in \Out{P}$
 such that
-$$\Gamma \entails \Pre{P} (a) \wedge \Post{P} (a)(b) \wedge \Post{P} (a)(c)
-         \wedge \Post{P} (a)(d),$$
+\[\Gamma \entails \Pre{P} (a) \wedge \Post{P} (a)(b) \wedge \Post{P} (a)(c)
+         \wedge \Post{P} (a)(d), \]
 we must have 
-$\Gamma \entails \R{P} (b)(b)$ and
-$$\Gamma \entails \R{P} (a)(b) \wedge \R{P} (b)(c)
-    \Rightarrow \Gamma \entails \R{P} (a)(c).$$
+\(\Gamma \entails \R{P} (b)(b)\) and
+\[\Gamma \entails \R{P} (b)(c) \wedge \R{P} (c)(d)
+    \Rightarrow \Gamma \entails \R{P} (b)(d). \]
 
 A \define{$P$-instance for a context $\Gamma$} is $a \in \In{P}$ such that
 $\Gamma \entails \Pre{P}(a)$. The problem instance $a$ has \define{solution}
