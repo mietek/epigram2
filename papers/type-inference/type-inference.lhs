@@ -540,29 +540,35 @@ The |popEntry| function removes and returns the topmost entry from the context.
 
 \subsection{The information order}
 
-\TODO{Intuitively, defining a variable certainly can't make equations
-become untrue.
+Intuitively, defining a variable cannot make equations cease to hold.
 More generally, if we rely on the context to tell us what we may
-deduce about variables, making contexts more informative must preserve
-deductions.
-Information order, stability (no fatsemi yet, just forward pointer).}
+deduce about variables, then making contexts more informative must preserve
+deductions. 
 
-For contexts $\Gamma$, $\Delta$ and for each $K \in \K$, we will define a set of
-\define{$K$-substitutions from $\Gamma$ to $\Delta$}
-from variables in $\V_K(\Gamma)$ to some set, which will apply to statements.
-We write $\delta : \Gamma \lei \Delta$ to mean that for each $K \in \K$,
-$\delta_K$ is a $K$-substitution from $\Gamma$ to $\Delta$ such that
+\TODO{Make this more precise.}
+For contexts $\Gamma$, $\Delta$ and for each $K \in \K$, a
+\define{$K$-substitution from $\Gamma$ to $\Delta$} is map from
+variables in $\V_K(\Gamma)$ to some set (depending on $K$);
+substitutions will apply to statements.
+We write $\delta : \Gamma \lei \Delta$ and say
+\define{$\Delta$ is more informative than $\Gamma$} if,
+for each $K \in \K$, there is a 
+$K$-substitution from $\Gamma$ to $\Delta$ (written $\delta_K$) such that
 if $v D \in \Gamma$ and $S \in \sem{v D}$ then
 %% $\Delta \semidrop n$ is defined and
 $\Delta \entails \delta S$.
 (We write $\delta S$ for the simultaneous application of every $\delta_K$ to
 $S$.)
-\TODO{We only consider equality of substitutions up to...what?}
 
-If $\Gamma$ is a valid context, let $\types{\Gamma}$ be 
-the set of types $\tau$ such that $\Gamma \entails \tau \type$. 
+If $\delta : \Gamma \lei \Delta$ and $\theta : \Gamma \lei \Delta$, then we
+consider $\delta$ and $\theta$ to be equal if, for every statement $S$,
+$\Delta \entails \delta S  \Leftrightarrow  \Delta \entails \theta S$.
+\TODO{Is this what we want for proving correctness of \textsc{Repossess} later?}
+
+Let $\types{\Gamma}$ be the set of types $\tau$ such that
+$\Gamma \entails \tau \type$. 
 A \define{$\TY$-substitution from $\Gamma$ to $\Delta$} is a substitution from
-$\V_\TY(\Gamma)$ to $\types{\Delta}$ which applies to types and statements in
+$\V_\TY(\Gamma)$ to $\types{\Delta}$ that applies to types and statements in
 the obvious way.
 
 \TODO{Idea of information order as substitution on derivations.}
@@ -577,6 +583,8 @@ statements corresponding to definitions in $\Gamma$.
 
 %% Note that if $\delta : \Gamma \lei \Delta$ then
 %% $\delta||_{\Gamma \semidrop n} : \Gamma \semidrop n \lei \Delta \semidrop n$. 
+
+\TODO{Forward pointer to $\fatsemi$}
 
 
 \subsection{Stability}
