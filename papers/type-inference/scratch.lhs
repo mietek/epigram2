@@ -150,3 +150,41 @@ the example of Hindley-Milner type inference.
 % Note that reflexivity and symmetry are admissible rules.
 
 %endif
+
+
+%if False
+
+$$
+\name{Coalesce}
+\Axiom{\Junify{\Gamma, \hole{\alpha}}{\alpha}{\beta}{\Gamma, \alpha \defn \beta}}
+$$
+
+$$
+\name{Expand}
+\Rule{\Junify{\Gamma_0}{\tau}{\beta}{\Gamma_1}}
+     {\Junify{\Gamma_0, \alpha \defn \tau}{\alpha}{\beta}{\Gamma_1, \alpha \defn \tau}}
+\side{\alpha \neq \beta}
+$$
+
+$$
+\name{Orthogonal}
+\Rule{\Junify{\Gamma_0}{\alpha}{\beta}{\Gamma_1}}
+     {\Junify{\Gamma_0, e}{\alpha}{\beta}{\Gamma_1, e}}
+\side{e \perp \alpha \equiv \beta}
+$$
+
+% \begin{prooftree}
+% \AxiomC{ $\Gamma_0 \extend \alpha \equiv \beta \yields \Gamma_1$ }
+% \LeftLabel{ \textsc{Skip$_1$} }
+% \RightLabel{ $\alpha, \beta, \delta $ distinct}
+% \UnaryInfC{ $\Gamma_0, \delta \defn mt \extend \alpha \equiv \beta \yields \Gamma_1, \delta \defn mt$ }
+% \end{prooftree}
+
+% \begin{prooftree}
+% \AxiomC{ $\Gamma_0 \extend \alpha \equiv \beta \yields \Gamma_1$ }
+% \LeftLabel{ \textsc{Skip$_2$} }
+% \RightLabel{ $\alpha \neq \beta$}
+% \UnaryInfC{ $\Gamma_0, \Diamond \extend \alpha \equiv \beta \yields \Gamma_1, \Diamond$ }
+% \end{prooftree}
+
+%endif

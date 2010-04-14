@@ -99,7 +99,7 @@
 \newcommand{\Judge}[3]{\ensuremath{#1 \preceq #3 \vdash #2}}
 \newcommand{\Jmin}[3]{\ensuremath{#1 \LEI #3 \vdash #2}}
 \newcommand{\Junify}[4]{\Judge{#1}{#2 \equiv #3}{#4}}
-\newcommand{\Jinstantiate}[5]{\Judge{#1}{#2 \equiv #3 ~[#4]}{#5}}
+\newcommand{\Jinstantiate}[5]{\Judge{#1 ~||~ #4}{#2 \equiv #3}{#5}}
 \newcommand{\Jspec}[4]{\Judge{#1}{#2 \succ #3}{#4}}
 \newcommand{\Jtype}[4]{\Judge{#1}{#2 : #3}{#4}}
 \newcommand{\Jhast}[4]{\Judge{#1}{#2 ~\hat:~ #3}{#4}}
@@ -861,6 +861,7 @@ instantiation of $\alpha$ with $\tau$ succeeds with output context $\Gamma_1$.
 (Here $\Xi$ is a (possibly empty) list of type variable declarations.)
 
 
+\TODO{Define orthogonality wrt sets of type variables, extend to other stuff.}
 We define the orthogonality relation $e \perp S$ (entry $e$ does not have any
 effect on the statement $S$) for unification and instantiation statements
 as follows:
@@ -888,45 +889,12 @@ but where necessary we refer to them as \textsc{Coalesce}\sym,
 \boxrule{\Junify{\Gamma_0}{\tau}{\upsilon}{\Gamma_1}}
 
 $$
-\name{Id}
-\Axiom{\Junify{\Gamma, \alpha D}{\alpha}{\alpha}{\Gamma, \alpha D}}
+\name{Idle}
+\Axiom{\Junify{\Gamma}{\alpha}{\alpha}{\Gamma}}
 $$
 
 $$
-\name{Coalesce}
-\Axiom{\Junify{\Gamma, \hole{\alpha}}{\alpha}{\beta}{\Gamma, \alpha \defn \beta}}
-$$
-
-$$
-\name{Expand}
-\Rule{\Junify{\Gamma_0}{\tau}{\beta}{\Gamma_1}}
-     {\Junify{\Gamma_0, \alpha \defn \tau}{\alpha}{\beta}{\Gamma_1, \alpha \defn \tau}}
-\side{\alpha \neq \beta}
-$$
-
-$$
-\name{Orthogonal}
-\Rule{\Junify{\Gamma_0}{\alpha}{\beta}{\Gamma_1}}
-     {\Junify{\Gamma_0, e}{\alpha}{\beta}{\Gamma_1, e}}
-\side{e \perp \alpha \equiv \beta}
-$$
-
-% \begin{prooftree}
-% \AxiomC{ $\Gamma_0 \extend \alpha \equiv \beta \yields \Gamma_1$ }
-% \LeftLabel{ \textsc{Skip$_1$} }
-% \RightLabel{ $\alpha, \beta, \delta $ distinct}
-% \UnaryInfC{ $\Gamma_0, \delta \defn mt \extend \alpha \equiv \beta \yields \Gamma_1, \delta \defn mt$ }
-% \end{prooftree}
-
-% \begin{prooftree}
-% \AxiomC{ $\Gamma_0 \extend \alpha \equiv \beta \yields \Gamma_1$ }
-% \LeftLabel{ \textsc{Skip$_2$} }
-% \RightLabel{ $\alpha \neq \beta$}
-% \UnaryInfC{ $\Gamma_0, \Diamond \extend \alpha \equiv \beta \yields \Gamma_1, \Diamond$ }
-% \end{prooftree}
-
-$$
-\name{Arrow}
+\name{Decompose}
 \Rule{\Junify{\Gamma_0}{\tau_0}{\upsilon_0}{\Gamma}
       \quad
       \Junify{\Gamma}{\tau_1}{\upsilon_1}{\Gamma_1}}
@@ -934,10 +902,11 @@ $$
 $$
 
 $$
-\name{Instantiate}
+\name{Solve}
 \Rule{\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\emptycontext}{\Gamma_1}}
      {\Junify{\Gamma_0}{\alpha}{\tau}{\Gamma_1}}
-\side{\tau \mathrm{~not~variable}}
+\side{\tau \neq \alpha}
+%% \side{\tau \mathrm{~not~variable}}
 $$
 
 \bigskip
@@ -945,29 +914,32 @@ $$
 \boxrule{\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\Xi}{\Gamma_1}}
 
 $$
-\name{InstCoalesce}
-\Axiom{\Jinstantiate{\Gamma, \hole{\alpha}}{\alpha}{\tau}{\Xi}{\Gamma, \Xi, \alpha \defn \tau}}
+\name{Define}
+\Axiom{\Jinstantiate{\Gamma, \hole{\alpha}}{\alpha}{\tau}{\Xi}
+                    {\Gamma, \Xi, \alpha \defn \tau}}
 \side{\alpha \notin \FTV{\tau, \Xi}}
 $$
 
 $$
-\name{InstExpand}
+\name{Expand}
 \Rule{\Junify{\Gamma_0, \Xi}{\upsilon}{\tau}{\Gamma_1}}
-     {\Jinstantiate{\Gamma_0, \alpha \defn \upsilon}{\alpha}{\tau}{\Xi}{\Gamma_1, \alpha \defn \nu}}
+     {\Jinstantiate{\Gamma_0, \alpha \defn \upsilon}{\alpha}{\tau}{\Xi}
+                   {\Gamma_1, \alpha \defn \upsilon}}
+\side{\alpha \notin \FTV{\tau, \Xi}}
 $$
 
 $$
-\name{InstPass}
+\name{Depend}
 \Rule{\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\beta D, \Xi}{\Gamma_1}}
      {\Jinstantiate{\Gamma_0, \beta D}{\alpha}{\tau}{\Xi}{\Gamma_1}}
 \side{\alpha \neq \beta, \beta \in \FTV{\tau, \Xi}}
 $$
 
 $$
-\name{InstOrthogonal}
+\name{Ignore}
 \Rule{\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\Xi}{\Gamma_1}}
-     {\Jinstantiate{\Gamma_0, e}{\alpha}{\tau}{\Xi}{\Gamma_1, e}}
-\side{e \perp \alpha \equiv \tau [\Xi]}
+     {\Jinstantiate{\Gamma_0, v D}{\alpha}{\tau}{\Xi}{\Gamma_1, v D}}
+\side{v D \perp \FTV{\tau, \Xi}}
 $$
 
 \caption{Algorithmic rules for unification}
