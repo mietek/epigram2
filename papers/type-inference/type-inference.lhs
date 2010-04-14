@@ -135,11 +135,11 @@
 \newcommand{\TY}{\mathrm{\textsc{TY}}}
 \newcommand{\TM}{\mathrm{\textsc{TM}}}
 
-\newcommand{\In}[1]{\ensuremath{In_{#1}}}
-\newcommand{\Out}[1]{\ensuremath{Out_{#1}}}
-\newcommand{\Pre}[1]{\ensuremath{Pre_{#1}}}
-\newcommand{\Post}[1]{\ensuremath{Post_{#1}}}
-\newcommand{\R}[1]{\ensuremath{R_{#1}}}
+\newcommand{\In}[1]{\ensuremath{\mathit{In}_{#1}}}
+\newcommand{\Out}[1]{\ensuremath{\mathit{Out}_{#1}}}
+\newcommand{\Pre}[1]{\ensuremath{\mathit{Pre}_{#1}}}
+\newcommand{\Post}[1]{\ensuremath{\mathit{Post}_{#1}}}
+\newcommand{\R}[1]{\ensuremath{\mathit{R}_{#1}}}
 
 \usepackage{amsthm}
 \usepackage{amsmath}
@@ -392,11 +392,13 @@ Hence $\Delta \entails \delta (S \wedge S')$.
 
 Suppose $S$ is stable, $\Gamma \entails \Sbind{v D}{S}$ and
 $\delta : \Gamma \lei \Delta$. Then $\Gamma \entails D \ok_K$ and
-$\Gamma, v D \entails S$. By induction, $\Delta \entails \delta D \ok_K$,
-and $\delta : \Gamma, v D \lei \Delta, v (\delta D)$
-so by stability of $S$ we have $\Delta, v (\delta D) \entails \delta S$.
-Hence $\Delta \entails \Sbind{v (\delta D)}{\delta S}$
+$\Gamma, v D \entails S$, so by induction, $\Delta \entails \delta D \ok_K$.
+Let $\delta' = \delta[v/v]$, then
+$\delta' : \Gamma, v D \lei \Delta, v (\delta D)$
+so by stability of $S$ we have $\Delta, v (\delta D) \entails \delta' S$.
+Hence $\Delta \entails \Sbind{v (\delta D)}{\delta' S}$
 and so $\Delta \entails \delta \Sbind{v D}{S}$.
+\TODO{We should at least mention freshness here.}
 
 Suppose $S$ is stable, $\Gamma \entails \fatsemi S$ and
 $\delta : \Gamma \lei \Delta$. Then $\Gamma \fatsemi \entails S$.
@@ -455,7 +457,8 @@ we must have
 A \define{$P$-instance for a context $\Gamma$} is $a \in \In{P}$ such that
 $\Gamma \entails \Pre{P}(a)$. The problem instance $a$ has \define{solution}
 $(b, \delta, \Delta)$ if $b \in \Out{P}$ and $\delta : \Gamma \lei \Delta$
-such that $\Delta \entails \Post{P} (\delta a, b)$.
+such that $\Delta \entails \Post{P} (\delta a, b)$. (Observe that
+$\Delta \entails \Pre{P} (\delta a)$ by stability.)
 
 The solution $(b, \delta, \Delta)$ is \define{minimal} if for any solution
 $(c, \theta, \Theta)$ there exists $\zeta : \Delta \lei \Theta$ such that
@@ -2169,7 +2172,7 @@ but
 $$\iota : \Delta, x \asc \sigma; \lei \Delta, x \asc \gen{\Xi_1}{\upsilon};$$
 by principality, and hence
 $$\Delta, x \asc \gen{\Xi_1}{\upsilon}; \Psi \entails w : \tau$$
-by preservation of type assignment (lemma \ref{lem:typeAssignmentPreserved}). 
+by stability.
 
 Thus, by induction,
 \begin{enumerate}[(a)]
