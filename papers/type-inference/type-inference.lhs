@@ -605,33 +605,31 @@ An induction on derivations shows that $\tau \equiv \upsilon$ is stable, since
 the only rule that accesses the context is \textsc{Lookup}.
 
 
-\TODO{Where should composite statements go?
-Postpone fatsemi to later.}
+\TODO{Where should composite statements go?}
 
-If $S$ and $S'$ are statements and $v D$ is a declaration, then
-we define statements $S \wedge S'$, $\fatsemi S$ and $\Sbind{v D}{S}$ thus:
+If $S$ and $S'$ are statements and $v D$ is a declaration, then we define the
+\define{composite} statements $S \wedge S'$ and $\Sbind{v D}{S}$ thus:
 $$
 \Rule{S \quad S'}{S \wedge S'}
 \qquad
-\Rule{\Gamma \fatsemi \entails S}
-     {\Gamma \entails \fatsemi S}
-$$
-$$
 \Rule{\Gamma \entails D \ok_K    \quad    \Gamma, v D \entails S}
      {\Gamma \entails \Sbind{v D}{S}}
 \side{v \in \V_K \setminus \V_K(\Gamma)}.
 $$
-We do not add elimination rules to make proofs by induction on the structure
-of derivations easier, but they will be admissible.
-Note that we omit the context from rules if it is constant throughout.
-The only inference rules to access the context will be the \textsc{Lookup} rule
-and the rules for the $\fatsemi$ and $\Sbind{\cdot}{\cdot}$ statements given above.
+We add general introduction forms for composite statements, but supply
+eliminators only for composite hypotheses, in effect forcing derivations to be
+cut-free. This facilitates reasoning by induction on derivations. The general
+eliminators are in any case admissible rules.
 
+Note that we omit the context from rules if it is constant throughout, as in
+the rule for the $\wedge$ statement.
+%% The only inference rules to access the context will be the \textsc{Lookup}
+%% rule and the rules for the $\fatsemi$ and $\Sbind{\cdot}{\cdot}$ statements
+%% given above.
 
-\TODO{Composition preserves stability.}
-
-\begin{lemma}[Stability]
-Every statement in $\Ss$ is stable.
+\begin{lemma}[Composition preserves stability]
+If $S$ and $S'$ are stable then $S \wedge S'$ is stable.
+If $S$ is stable and $v D$ is a declaration, then $\Sbind{v D}{S}$ is stable.
 \end{lemma}
 \begin{proof}
 Suppose $S$ and $S'$ are stable, $\Gamma \entails (S \wedge S')$ and
@@ -648,28 +646,17 @@ so by stability of $S$ we have $\Delta, v (\delta D) \entails \delta' S$.
 Hence $\Delta \entails \Sbind{v (\delta D)}{\delta' S}$
 and so $\Delta \entails \delta \Sbind{v D}{S}$.
 \TODO{We should at least mention freshness here.}
-
-Suppose $S$ is stable, $\Gamma \entails \fatsemi S$ and
-$\delta : \Gamma \lei \Delta$. Then $\Gamma \fatsemi \entails S$.
-Now $\delta : \Gamma \fatsemi \lei \Delta \fatsemi$
-so by stability, $\Delta \fatsemi \entails \delta S$ and hence
-$\Delta \entails \delta (\fatsemi S)$.
-
-For other statements that we define later, the proof will proceed by induction
-on the structure of derivations. Where the \textsc{Lookup} rule is applied,
-the result holds by the definition of information increase. No other rules
-may refer to the context, so it is straightforward to see that the statement
-is stable.
 \end{proof}
 
-
-\TODO{We need $\sem{\cdot}$ to be a set of stable statements, then $\lei$
-is a preorder.}
-
-This allows us to prove the following:
+For other statements, the proof of stability will usually proceed
+by induction on the structure of derivations. Where the \textsc{Lookup} rule
+is applied, the result holds by the definition of information increase. No other
+rules may refer to the context, so it is straightforward to see that the
+statement is stable.
 
 \begin{lemma}\label{lei:preorder}
-The $\lei$ relation is a preorder, with reflexivity demonstrated by
+If $\sem{v D}$ is a set of stable statements for every declaration $v D$, then
+the $\lei$ relation is a preorder, with reflexivity demonstrated by
 $\iota : \Gamma \lei \Gamma : v \mapsto v$, and transitivity by
 $$\gamma_1 : \Gamma_0 \lei \Gamma_1  ~\wedge~  \gamma_2 : \Gamma_1 \lei \Gamma_2
   \quad \Rightarrow \quad  \gamma_2 \compose \gamma_1 : \Gamma_0 \lei \Gamma_2.$$
@@ -1667,6 +1654,19 @@ $$\Gamma, \Xi \entails t : \tau
 
 %endif
 
+
+\TODO{Introduce $\fatsemi$}
+
+$$
+\Rule{\Gamma \fatsemi \entails S}
+     {\Gamma \entails \fatsemi S}
+$$
+
+Suppose $S$ is stable, $\Gamma \entails \fatsemi S$ and
+$\delta : \Gamma \lei \Delta$. Then $\Gamma \fatsemi \entails S$.
+Now $\delta : \Gamma \fatsemi \lei \Delta \fatsemi$
+so by stability, $\Delta \fatsemi \entails \delta S$ and hence
+$\Delta \entails \delta (\fatsemi S)$.
 
 As with unification, we wish to translate these declarative rules into an
 algorithm for type inference. 
