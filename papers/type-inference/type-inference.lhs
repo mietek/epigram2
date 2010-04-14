@@ -802,8 +802,8 @@ McAdam) ; there is a transactional flavour.}
 
 \section{Deriving a unification algorithm}
 
-\TODO{Derive algorithmic rules from declarative specification.}
-
+\TODO{Explain what happens here, simplify the proof obligations and show
+equivalence to the original system.}
 
 We wish to transform these rules into a unification algorithm.
 Starting with only the structural rule, if we try to prove admissibility of
@@ -831,6 +831,9 @@ $$
 \label{fig:admitEquivClosure}
 \end{figure}
 
+\TODO{Relating the declarative rules for type equivalence to the unification
+algorithm needs some explanation.}
+
 Now we can see how to construct the algorithm. The structural rule says that
 whenever we have rigid $\arrow$ symbols on each side, we decompose the problem
 into two subproblems, and thanks to the Optimist's Lemma we can solve these
@@ -847,21 +850,30 @@ encounter them.
 % followed by $\alpha \defn \tau$.
 % \end{itemize}
 
-\TODO{Relating the declarative rules for type equivalence to the unification
-algorithm needs some thought. It would be nice if we could turn transitivity
-into an admissible rule.}
+We define the orthogonality relation $v D \perp X$ (the set of type variables $X$
+does not depend on the declaration $v D$) thus:
+\begin{align*}
+\delta \defn \_ \perp X
+    &\mathrm{~if~} \delta \notin X  \\
+v D \perp X
+    &\mathrm{~if~} v \in \V_K, D \in \D_K \mathrm{~for~} K \neq \TY
+\end{align*}
+
 The rules in Figure~\ref{fig:unifyRules} define our unification algorithm. The
 sequent $\Junify{\Gamma_0}{\tau}{\upsilon}{\Gamma_1}$ means that given inputs
 $\Gamma_0$, $\tau$ and $\upsilon$, unification of $\tau$ with $\upsilon$ 
 succeeds, producing output context $\Gamma_1$.
 The sequent
 $\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\Xi}{\Gamma_1}$
-means that given inputs $\Gamma_0$, $\tau$, $\upsilon$ and $\Xi$,
-instantiation of $\alpha$ with $\tau$ succeeds with output context $\Gamma_1$.
+means that given inputs $\Gamma_0$, $\Xi$, $\alpha$ and $\tau$,
+solving $\alpha$ with $\tau$ succeeds, producing output context $\Gamma_1$.
 (Here $\Xi$ is a (possibly empty) list of type variable declarations.)
+We observe the sanity conditions that $\alpha \in \tyvars{\Gamma_0}$
+and $\beta \in \tyvars{\Xi} \Rightarrow \beta \in \FTV{\tau}$.
 
 
-\TODO{Define orthogonality wrt sets of type variables, extend to other stuff.}
+%if False
+
 We define the orthogonality relation $e \perp S$ (entry $e$ does not have any
 effect on the statement $S$) for unification and instantiation statements
 as follows:
@@ -883,6 +895,8 @@ symmetric counterparts that are identical apart from interchanging the equated
 terms in the conclusion. Usually we will ignore these without loss of generality,
 but where necessary we refer to them as \textsc{Coalesce}\sym,
 \textsc{Expand}\sym and \textsc{Instantiate}\sym.
+
+%endif
 
 
 \begin{figure}[ht]
@@ -907,6 +921,13 @@ $$
      {\Junify{\Gamma_0}{\alpha}{\tau}{\Gamma_1}}
 \side{\tau \neq \alpha}
 %% \side{\tau \mathrm{~not~variable}}
+$$
+
+$$
+\name{Solve\sym}
+\Rule{\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\emptycontext}{\Gamma_1}}
+     {\Junify{\Gamma_0}{\tau}{\alpha}{\Gamma_1}}
+\side{\tau \mathrm{~not~variable}}
 $$
 
 \bigskip
@@ -947,9 +968,10 @@ $$
 \end{figure}
 
 
-Observe that we have no rule for the case $\alpha \equiv \tau ~[\Xi]$
-with $\alpha \in \FTV{\tau, \Xi}$ and the context $\Gamma_0, \hole{\alpha}$;
-hence the algorithm fails if this situation arises. This is essentially an occur
+Observe that we have no rule for the case
+$$\Jinstantiate{\Gamma_0, \alpha \defn \_}{\alpha}{\tau}{\Xi}{\Gamma_1}
+\mathrm{~with~} \alpha \in \FTV{\tau, \Xi}$$
+so the algorithm fails if this situation arises. This is essentially an occur
 check failure: $\alpha$ and $\tau$ cannot be unified if $\alpha$ occurs in
 $\tau$ or in an entry that $\tau$ depends on. (Note that the trivial exception
 $\tau = \alpha$ is dealt with by the \textsc{Id} rule.) Since we only have one
