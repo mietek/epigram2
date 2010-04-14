@@ -183,6 +183,7 @@
 \end{abstract}
 
 
+
 \section{Introduction}
 
 Algorithm \W%%%, also known as the Damas-Milner algorithm, 
@@ -242,324 +243,11 @@ of (variations on) the Robinson unification algorithm are incorrect because they
 do not handle substitutions correctly \citep{norvig_correctingwidespread_1991}.
 
 
-
-\section{Abstract nonsense}
-
-\subsection{Statements}
-
-Let $\Ss$ be a set of statements, $\K$ a set of sorts, and for each $K \in \K$
-let $\V_K$ be a set of variables and $\D_K$ a set of objects.
-We assume we have a statement $D \ok_K$ for every $K \in \K$ and $D \in \D_K$. 
-
-% A \define{substitution} $\theta$ is a partial map from $\V_K$ to $\D_K$
-% for each $K \in \K$,
-% and we assume $\D_K$ and $\Ss$ are closed under application of substitutions.
-
-A \define{context} $\Gamma$ is a list of declarations $v D$
-(pairs of $v \in \V_K$ and $D \in \D_K$) and separators $(\fatsemi)$. 
-We write $\emptycontext$ for the empty context, and the symbols
-$\Gamma, \Delta$ and $\Theta$ will represent contexts.
-$\Xi$ is a context that contains no $\fatsemi$ separators.
-We write $\Gamma \entails S$ to mean that the definitions in $\Gamma$,
-corresponding to atomic facts, support the statement $S \in \Ss$.
-
-Let $\V_K(\Gamma)$ be the set of $K$-variables in $\Gamma$.
-We define the context validity statement $\valid$ as shown in
-Figure~\ref{fig:contextValidityRules}.
-
-\begin{figure}[ht]
-\boxrule{\Gamma \entails \valid}
-$$
-\Axiom{\emptycontext \entails \valid}
-\qquad
-\Rule{\Gamma \entails \valid}
-     {\Gamma \fatsemi \entails \valid}
-$$
-$$
-\Rule{\Gamma \entails \valid    \quad    \Gamma \entails D \ok_K}
-     {\Gamma, v D \entails \valid}
-\side{v \in \V_K \setminus \V_K(\Gamma)}
-$$
-\caption{Rules for context validity}
-\label{fig:contextValidityRules}
-\end{figure}
-
-
-% For any variable $v$ and object $D$ we define a context membership statement
-% $\contains v D$ in the obvious way, and write $\Gamma \contains v D$ for
-% $\Gamma \entails (\contains v D)$. 
-
-% We assume that $\Ss$ is closed under conjunction $(\wedge)$ with
-% $$\Gamma \entails (S_0 \wedge S_1)
-%     \quad  \Leftrightarrow  \quad
-%     \Gamma \entails S_0  ~\wedge~  \Gamma \entails S_1.$$
-
-We suppose that there is a map
-$\sem{\cdot}_K : \V_K \times \D_K \rightarrow \mathcal{P}(\Ss)$
-for each $K \in \K$, from declarations to sets of statements.
-% such that $$\Gamma \contains v D  \Rightarrow  \Gamma \entails \sem{v D}.$$
-(We typically omit the subscript when the sort is irrelevant or can be inferred.)
-The basic rule of our inference system is
-$$\name{Lookup}
-  \Rule{v D \in \Gamma    ~\wedge~   S  \in \sem{v D}}
-       {\Gamma \entails S}.$$
-Thus $\sem{v D}$ is the set of atomic statements that hold if the declaration
-$v D$ is in the context.
-
-
-If $S$ and $S'$ are statements and $v D$ is a declaration, then
-we define statements $S \wedge S'$, $\fatsemi S$ and $\Sbind{v D}{S}$ thus:
-$$
-\Rule{S \quad S'}{S \wedge S'}
-\qquad
-\Rule{\Gamma \fatsemi \entails S}
-     {\Gamma \entails \fatsemi S}
-$$
-$$
-\Rule{\Gamma \entails D \ok_K    \quad    \Gamma, v D \entails S}
-     {\Gamma \entails \Sbind{v D}{S}}
-\side{v \in \V_K \setminus \V_K(\Gamma)}.
-$$
-We do not add elimination rules to make proofs by induction on the structure
-of derivations easier, but they will be admissible.
-Note that we omit the context from rules if it is constant throughout.
-The only inference rules to access the context will be the \textsc{Lookup} rule
-and the rules for the $\fatsemi$ and $\Sbind{\cdot}{\cdot}$ statements given above.
-
-
-\subsection{Increasing information}
-
-Let $\semidrop$ be a partial function from contexts and natural numbers to
-contexts, defined by
-\begin{align*}
-\Xi \semidrop 0 &= \Xi  \\
-\Xi \fatsemi \Gamma \semidrop 0 &= \Xi  \\
-\Xi \fatsemi \Gamma \semidrop n+1 &= \Xi \fatsemi (\Gamma \semidrop n)  \\
-\Xi \semidrop n+1 &~\mathrm{undefined}
-\end{align*}
-
-% Let $\D_K(\Gamma) = \{ D \in \D_K ~||~ \Gamma \entails D \ok_K \}$.
-For contexts $\Gamma$, $\Delta$ and for each $K \in \K$, we will define a set of
-\define{$K$-substitutions from $\Gamma$ to $\Delta$}
-from variables in $\V_K(\Gamma)$ to some set, which will apply to statements.
-We write $\delta : \Gamma \lei \Delta$ to mean that for each $K \in \K$,
-$\delta_K$ is a $K$-substitution from $\Gamma$ to $\Delta$ such that
-if $v D \in \Gamma \semidrop n$ and $S \in \sem{v D}$ then
-$\Delta \semidrop n$ is defined and $\Delta \semidrop n \entails \delta S$.
-(We write $\delta S$ for the simultaneous application of every $\delta_K$ to
-$S$.)
-
-% $$\Gamma \contains v D  \Rightarrow  \Delta \entails \delta\sem{v D}$$
-% and if $\Gamma$ is $\Xi \fatsemi \Gamma'$ then $\Delta$ is
-% $\Psi \fatsemi \Delta'$ with $\delta||_{\Xi} : \Xi \lei \Psi$ and
-% $\delta : \Xi, \Gamma' \lei \Psi, \Delta'$. This definition is well-founded by
-% induction on the number of $\fatsemi$ separators in $\Gamma$.
-% (We write $\delta||_{\Xi}$ for the substitution formed by restricting each
-% $\delta_K$ to variables in $V_K(\Xi)$.)
-
-We may omit $\delta$ and write $\Gamma \lei \Delta$ if we are only interested
-in the existence of a suitable substitution. This relation between contexts
-captures the notion of \define{information increase}: $\Delta$ supports all the
-statements corresponding to definitions in $\Gamma$. 
-Moreover, this will still hold if we truncate both $\Gamma$ and $\Delta$ after
-any number of $\fatsemi$ separators.
-
-Note that if $\delta : \Gamma \lei \Delta$ then
-$\delta||_{\Gamma \semidrop n} : \Gamma \semidrop n \lei \Delta \semidrop n$. 
-
-% We require a substitution because the type inference algorithm will invent new
-% type variables, which must be interpreted over a more informative context that
-% will not contain them.
-
-We say a statement $S$ is
-\define{stable} if it is preserved under information increase, that is, if
-$$\Gamma \entails S  ~\wedge~  \delta : \Gamma \lei \Delta
-    \quad \Rightarrow \quad
-    \Delta \entails \delta S.$$
-
-% From now on we will assume that the statement $\sem{v D}_K$ is stable for any
-% $v \in \V_K$ and $D \in \D_K$, and that stable statementss are closed under 
-% substitution. 
-
-\begin{lemma}[Stability]
-Every statement in $\Ss$ is stable.
-\end{lemma}
-\begin{proof}
-Suppose $S$ and $S'$ are stable, $\Gamma \entails (S \wedge S')$ and
-$\delta : \Gamma \lei \Delta$. Then $\Gamma \entails S$ and $\Gamma \entails S'$,
-so by stability, $\Delta \entails \delta S$ and $\Delta \entails \delta S'$.
-Hence $\Delta \entails \delta (S \wedge S')$.
-
-Suppose $S$ is stable, $\Gamma \entails \Sbind{v D}{S}$ and
-$\delta : \Gamma \lei \Delta$. Then $\Gamma \entails D \ok_K$ and
-$\Gamma, v D \entails S$, so by induction, $\Delta \entails \delta D \ok_K$.
-Let $\delta' = \delta[v/v]$, then
-$\delta' : \Gamma, v D \lei \Delta, v (\delta D)$
-so by stability of $S$ we have $\Delta, v (\delta D) \entails \delta' S$.
-Hence $\Delta \entails \Sbind{v (\delta D)}{\delta' S}$
-and so $\Delta \entails \delta \Sbind{v D}{S}$.
-\TODO{We should at least mention freshness here.}
-
-Suppose $S$ is stable, $\Gamma \entails \fatsemi S$ and
-$\delta : \Gamma \lei \Delta$. Then $\Gamma \fatsemi \entails S$.
-Now $\delta : \Gamma \fatsemi \lei \Delta \fatsemi$
-so by stability, $\Delta \fatsemi \entails \delta S$ and hence
-$\Delta \entails \delta (\fatsemi S)$.
-
-For other statements that we define later, the proof will proceed by induction
-on the structure of derivations. Where the \textsc{Lookup} rule is applied,
-the result holds by the definition of information increase. No other rules
-may refer to the context, so it is straightforward to see that the statement
-is stable.
-\end{proof}
-
-This allows us to prove the following:
-
-\begin{lemma}\label{lei:preorder}
-The $\lei$ relation is a preorder, with reflexivity demonstrated by
-$\iota : \Gamma \lei \Gamma : v \mapsto v$, and transitivity by
-$$\gamma_1 : \Gamma_0 \lei \Gamma_1  ~\wedge~  \gamma_2 : \Gamma_1 \lei \Gamma_2
-  \quad \Rightarrow \quad  \gamma_2 \compose \gamma_1 : \Gamma_0 \lei \Gamma_2.$$
-\end{lemma}
-
-\begin{proof}
-Reflexivity follows immediately from the \textsc{Lookup} rule.
-For transitivity, suppose $v D \in \Gamma_0 \semidrop n$ and $S \in \sem{v D}$.
-Then $\Gamma_1 \semidrop n \entails \gamma_1 S$ since
-$\gamma_1 : \Gamma_0 \lei \Gamma_1$.
-Now by stability applied to $\gamma_1 S$ using
-$\gamma_2||_{\Gamma_1 \semidrop n} :
-    \Gamma_1 \semidrop n \lei \Gamma_2 \semidrop n$, we have
-$\Gamma_2 \semidrop n \entails \gamma_2\gamma_1\sem{v D}$ .
-\end{proof}
-
-
-\subsection{Problems}
-
-A \define{problem} $P$ consists of
-\begin{itemize}
-\item sets \In{P}\ and \Out{P}\ of input and output parameters,
-\item a precondition map $\Pre{P} : \In{P} \rightarrow \Ss$,
-\item a postcondition map $\Post{P} : \In{P} \rightarrow \Out{P} \rightarrow \Ss$ and
-\item a relation map $\R{P} : \Out{P} \rightarrow \Out{P} \rightarrow \Ss$,
-\end{itemize}
-such that \In{P}\ and \Out{P}\ are closed under substitution and the maps
-respect substitution, for example, $\Pre{P}(\theta r) = \theta \Pre{P}(r)$.
-Moreover, for any context $\Gamma$, $a \in \In{P}$ and $b, c, d \in \Out{P}$
-such that
-\[\Gamma \entails \Pre{P} (a) \wedge \Post{P} (a)(b) \wedge \Post{P} (a)(c)
-         \wedge \Post{P} (a)(d), \]
-we must have 
-\(\Gamma \entails \R{P} (b)(b)\) and
-\[\Gamma \entails \R{P} (b)(c) \wedge \R{P} (c)(d)
-    \Rightarrow \Gamma \entails \R{P} (b)(d). \]
-
-A \define{$P$-instance for a context $\Gamma$} is $a \in \In{P}$ such that
-$\Gamma \entails \Pre{P}(a)$. The problem instance $a$ has \define{solution}
-$(b, \delta, \Delta)$ if $b \in \Out{P}$ and $\delta : \Gamma \lei \Delta$
-such that $\Delta \entails \Post{P} (\delta a, b)$. (Observe that
-$\Delta \entails \Pre{P} (\delta a)$ by stability.)
-
-The solution $(b, \delta, \Delta)$ is \define{minimal} if for any solution
-$(c, \theta, \Theta)$ there exists $\zeta : \Delta \lei \Theta$ such that
-$\theta = \zeta \compose \delta$ and $\Theta \entails \R{P} (\zeta b, c)$.
-
-We write $P_a(b)$ for $\Post{P}(a)(b)$ and
-$\delta : \Jmin{\Gamma}{P_a(b)}{\Delta}$ to mean that
-$(b, \delta, \Delta)$ is a minimal solution of the $P$-instance $a$.
-
-If $P$ and $Q$ are problems, then $P \wedge Q$ is a problem with
-\begin{itemize}
-\item $\In{P \wedge Q} = \In{P} \times \In{Q}$
-\item $\Out{P \wedge Q} = \Out{P} \times \Out{Q}$
-\item $\Pre{P \wedge Q} (a, b) = \Pre{P} (a) \wedge \Pre{Q} b$
-\item $\Post{P \wedge Q} (a, b) (c, d) = \Post{P}(a)(c) \wedge \Post{Q}(b)(d)$
-\item $\R{P \wedge Q}(a, b)(c, d) = \R{P}(a)(c) \wedge \R{Q}(b)(d)$
-\end{itemize}
-
-
-%if False
-
-A \define{problem domain} $R_\le$ is a set $R$ equipped with a relation $\le$
-such that $R$ is closed under substitution. 
-A \define{problem on $R_\le$} is a map $P: R_\le \rightarrow \Ss$ such that
-$\theta P(r) = P(\theta r)$ for any $r \in R_\le$ and
-substitution $\theta$. 
-Statements themselves can be seen 
-as problems on the unit set. 
-We say %%%that 
-$r \in R_\le$
-\define{solves $P$ in $\Gamma$} if $\Gamma \entails P(r)$.
-
-We will be interested in finding the minimal information increase required to
-solve a given problem, so we write
-$\delta : \Jmin{\Gamma}{P(r)}{\Delta}$ if
-$\delta : \Gamma \lei \Delta$, $\Delta \entails P(r)$ and
-for all $\theta : \Gamma \lei \Theta$ and $r'$ such that
-$\Theta \entails P(r')$, there exists $\zeta : \Delta \lei \Theta$
-such that $\theta = \zeta \compose \delta$ and $r' \le \zeta r$.
-We then say that $r$ is a \define{minimal solution of $P$ in $\Delta$}.
-
-If $P_1$ and $P_2$ are problems on $R_\le$ and $S_\ll$, then since $\Ss$ is
-closed under conjunction, $P_1 \wedge P_2$ is a problem on
-$R \times S_{\langle \le , \ll \rangle}$ given by
-$$P_1 \wedge P_2 : R \times S \rightarrow \Ss :
-      (r, s) \mapsto P_1(r) \wedge P_2(s)$$
-where $(r, s) \langle \le , \ll \rangle (r', s')$ if
-$r \le r'$ and $s \ll s'$.
-
-%endif
-
-The point of all this machinery is to be able to state and prove the following 
-lemma, stating that the minimal solution to a conjunction of problems can be
-found by finding the minimal solution of the first problem, then (minimally)
-extending it to solve the second. 
-
-\begin{lemma}[The Optimist's Lemma]
-The following inference rule is admissible:
-$$\Rule{\gamma_1 : \Jmin{\Gamma_0}{P_a(r)}{\Gamma_1}
-       \quad  \gamma_2 : \Jmin{\Gamma_1}{Q_b(s)}{\Gamma_2}}
-       {\gamma_2 \compose \gamma_1 :
-           \Jmin{\Gamma_0}{P \wedge Q_{(a, b)}(\gamma_2 r, s)}{\Gamma_2}}$$
-\end{lemma}
-
-\begin{proof}
-We have that $\gamma_2 \compose \gamma_1 : \Gamma_0 \lei \Gamma_2$ by 
-Lemma~\ref{lei:preorder}. 
-
-To show $\Gamma_2 \entails P \wedge Q_{(a, b)} (\gamma_2 r, s)$, it
-suffices to show $\Gamma_2 \entails P_a(\gamma_2 r)$ and
-$\Gamma_2 \entails Q_b(s)$. The latter holds by assumption. For the
-former, note that $\Gamma_1 \entails P_a(r)$ and hence
-$\Gamma_2 \entails \gamma_2 P_a(r)$ by stability of $P_a(r)$.
-But $\gamma_2 P_a(r) = P_a(\gamma_2 r)$ by definition, so we are done.
-
-Finally, suppose there is some $\theta : \Gamma_0 \lei \Theta$ such that
-$\Theta \entails P \wedge Q_{(a, b)}(r', s')$, so
-$\Theta \entails P_a(r')$ and
-$\Theta \entails Q_b(s')$.
-Since $\gamma_1 : \Jmin{\Gamma_0}{P_a(r)}{\Gamma_1}$, there exists
-$\zeta_1 : \Gamma_1 \lei \Theta$ such that $\theta = \zeta_1 \compose \gamma_1$
-and $\Theta \entails \R{P}(\zeta_1 r)(r')$.
-But then $\gamma_2 : \Jmin{\Gamma_1}{Q_b(s)}{\Gamma_2}$, so there exists
-$\zeta_2 : \Gamma_2 \lei \Theta$ such that $\zeta_1 = \zeta_2 \compose \gamma_2$
-and $\Theta \entails \R{Q}(\zeta_2 s)(s')$.
-Hence 
-$\theta = \zeta_2 \compose (\gamma_2 \compose \gamma_1)$
-and
-$\Theta \entails \R{P \wedge Q}(\zeta_2 (\gamma_2 r), \zeta_2 s)(r', s')$.
-\end{proof}
-
-
-We now proceed as follows. First we instantiate the above definitions and give
-a version of the unification algorithm in this setting. Using this, we can
-describe a general technique for converting a collection of inference rules that
-give the declarative specification for a problem into an algorithm for solving
-the problem minimally. We 
-%%%give 
-   illustrate with 
-the example of Hindley-Milner type inference.
-
+\section{Plan}
+\TODO{Develop abstract contextual and problem-solving machinery with
+running example of types and unification, then redeploy for terms and
+type inference. Our mission is to understand why type inference problems have
+various solutions (Heeren, Wells, Schilling, McAdam...).}
 
 
 %if False
@@ -583,82 +271,17 @@ First, let's get some imports out of the way.
 
 
 \section{Types and type variables}
+\TODO{Syntax in mathematics and Haskell}
 
-To make things more concrete, we define the sort $\TY \in \K$.
+%% To make things more concrete, we define the sort $\TY \in \K$.
 The syntax of types is
 $$\tau ::= \alpha ~||~ \tau \arrow \tau$$
 where $\alpha$ ranges over some set of type variables $\V_\TY$.
-%%%Let $\D_0 \subset \D$ be the set of types.
+%% Let $\D_0 \subset \D$ be the set of types.
 In the sequel, $\alpha$ and $\beta$ are type variables and $\tau$ and $\upsilon$
-%%%are 
-   types.
-% (All of these symbols may be primed or subscripted.)
-We use $\Xi$ to denote a context suffix 
-%%%that may contain 
-   containing 
-only type variable 
-%%%declarations, and no other kinds of definition.
-   declarations.
-
-A type variable declaration is written |alpha := mt|, where $\alpha$ is a
-variable that is either bound to a type $\tau$ (written |alpha := Just tau| or
-$\alpha \defn \tau$), or left unbound (written |alpha := Nothing|).
-Thus $\D_\TY$ contains the \scare{undefined} binding $\;\hole{}$ and bindings
-$\;\defn \tau$ for each type $\tau$.
-
-% Later, we will add other sorts of declaration that are not relevant
-% for unification.
-
-%%%We write $\tyvars{\Gamma}$ for the 
-%   Let $\tyvars{\Gamma}$ be the 
-%%%set of type variables of $\Gamma$, i.e.\ $\V_0 \cap \V(\Gamma)$.
-%   set $\V_0 \cap \V(\Gamma)$ of type variables declared in $\Gamma$,  
-
-We define the set of free type variables of a type or context suffix thus:
-\begin{align*}
-\FTV{\alpha}    &= \{ \alpha \} \\
-\FTV{\tau \arrow \upsilon}  &= \FTV{\tau} \cup \FTV{\upsilon}  \\
-\FTV{\Xi}       &= \bigcup \{ \FTV{\tau} ~||~ \alpha \defn \tau \in \Xi \}  \\
-\FTV{\tau, \Xi} &= \FTV{\tau} \cup \FTV{\Xi}.
-\end{align*}
-
-We define the statement $\tau \type$ in Figure~\ref{fig:typeOkRules},
-and hence define the statement $D \ok_\TY$. Note that there is no base
-case for the former definition because we will deduce $\alpha \type$ for
-variables $\alpha$ using the \textsc{Lookup} rule.
-
-If $\Gamma$ is a valid context, 
-let $\types{\Gamma}$ be 
-the set of types $\tau$ such that $\Gamma \entails \tau \type$. 
-A \define{$\TY$-substitution from $\Gamma$ to $\Delta$} is a substitution from
-$\V_\TY(\Gamma)$ to $\types{\Delta}$ which applies to types and statements in
-the obvious way.
-A simple induction on derivations shows that the statement $\tau \type$ is stable.
-
-\begin{figure}[ht]
-\boxrule{\Gamma \entails \tau \type}
-$$
-% \Rule{\Gamma \entails \valid}
-%      {\Gamma \entails \alpha \type}
-% \side{\alpha \in \tyvars{\Gamma}}
-% \qquad
-\Rule{\tau \type   \quad   \upsilon \type}
-     {\tau \arrow \upsilon \type}
-$$
-\boxrule{\Gamma \entails D \ok_\TY}
-$$\Rule{\valid}
-       {\;\hole{} \ok_\TY}
-\qquad
-\Rule{\tau \type}
-     {\;\defn \tau \ok_\TY}
-$$
-\caption{Rules for types and definitions}
-\label{fig:typeOkRules}
-\end{figure}
-
-
-
-\subsection{Implementation}
+types.
+%% (All of these symbols may be primed or subscripted.)
+%% We use $\Xi$ to denote a context suffix containing only type variable declarations.
 
 The foldable functor |Ty| defines types in our object language parameterised by
 the type of variable names, which will be useful later. Thanks to a language
@@ -679,6 +302,131 @@ We define |Type| to use integers as names.
 > type Name  = Integer
 > type Type  = Ty Name
 
+
+\TODO{What makes sense of the variables?
+Idea (ideology?): make sure variables are bound somewhere, introduce
+a context for this purpose}
+
+Let $\K$ a set of sorts, and for each $K \in \K$ let $\V_K$ be a set of
+variables and $\D_K$ a set of objects. Our running example will be the sort
+$\TY$, where $\V_\TY$ is some set of type variables and $\D_\TY$ initially
+contains only the \scare{unbound variable} object $~\hole{}$.
+
+A \define{context} $\Gamma$ is a list of declarations $v D$, where
+$v \in \V_K$ and $D \in \D_K$.
+%% and separators $(\fatsemi)$. 
+We write $\emptycontext$ for the empty context, and the symbols
+$\Gamma, \Delta$ and $\Theta$ range over contexts.
+%% $\Xi$ is a context that contains no $\fatsemi$ separators.
+
+\TODO{Contexts collect variable declarations (what there is to know about
+a variable); only a := ? initially. Statements are judged in a context.}
+
+Let $\Ss$ be a set of statements.
+We write $\Gamma \entails S$ to mean that the definitions in $\Gamma$,
+corresponding to atomic facts, support the statement $S \in \Ss$.
+
+\TODO{Start keeping our own house in order.
+When is a context valid?
+When its declarations are valid extensions.
+Ok is a function, not a statement.}
+
+We assume we have a map $\ok_K : \D_K \rightarrow \Ss$ for every $K \in \K$.
+Let $\V_K(\Gamma)$ be the set of $K$-variables in $\Gamma$.
+We define the context validity statement $\valid$ as shown in
+Figure~\ref{fig:contextValidityRules}.
+
+In the example, $\ok_\TY (\hole{}) = \valid$.
+
+\begin{figure}[ht]
+\boxrule{\Gamma \entails \valid}
+$$
+\Axiom{\emptycontext \entails \valid}
+\qquad
+%% \Rule{\Gamma \entails \valid}
+%%      {\Gamma \fatsemi \entails \valid}
+%% $$
+%% $$
+\Rule{\Gamma \entails \valid    \quad    \Gamma \entails \ok_K D}
+     {\Gamma, v D \entails \valid}
+\side{v \in \V_K \setminus \V_K(\Gamma)}
+$$
+\caption{Rules for context validity}
+\label{fig:contextValidityRules}
+\end{figure}
+
+\TODO{When is a type meaningful (syntax isn't enough)?
+When its variables are in scope.
+Introduce lookup rule.}
+
+We suppose that there is a map
+$\sem{\cdot}_K : \V_K \times \D_K \rightarrow \mathcal{P}(\Ss)$
+for each $K \in \K$, from declarations to sets of statements.
+% such that $$\Gamma \contains v D  \Rightarrow  \Gamma \entails \sem{v D}.$$
+(We typically omit the subscript when the sort is irrelevant or can be inferred.)
+The basic rule of our inference system is
+$$\name{Lookup}
+  \Rule{v D \in \Gamma    ~\wedge~   S  \in \sem{v D}}
+       {\Gamma \entails S}.$$
+Thus $\sem{v D}$ is the set of atomic statements that hold if the declaration
+$v D$ is in the context.
+
+We define the statement $\tau \type$ in Figure~\ref{fig:typeOkRules}.
+Note that there is no base case for the definition because we will deduce
+$\alpha \type$ for variables $\alpha$ using the \textsc{Lookup} rule.
+In the example, $\sem{\hole{\alpha}} = \{ \alpha \type \}$.
+
+\begin{figure}[ht]
+\boxrule{\Gamma \entails \tau \type}
+$$
+% \Rule{\Gamma \entails \valid}
+%      {\Gamma \entails \alpha \type}
+% \side{\alpha \in \tyvars{\Gamma}}
+% \qquad
+\Rule{\tau \type   \quad   \upsilon \type}
+     {\tau \arrow \upsilon \type}
+$$
+% \boxrule{\Gamma \entails D \ok_\TY}
+% $$\Rule{\valid}
+%       {\;\hole{} \ok_\TY}
+% \qquad
+% \Rule{\tau \type}
+%      {\;\defn \tau \ok_\TY}
+% $$
+\caption{Rules for types and definitions}
+\label{fig:typeOkRules}
+\end{figure}
+
+\TODO{Lookups are the "variables" of derivations}
+
+
+\section{Declarations}
+
+\TODO{Discovering the value of a variable does not render it meaningless
+(quite the reverse).
+As we're going to solve constraints and learn values of variables,
+we had better extend declarations.
+Add := tau declarations with associated ok.}
+
+A type variable declaration is written |alpha := mt|, where $\alpha$ is a
+variable that is either bound to a type $\tau$ (written |alpha := Just tau| or
+$\alpha \defn \tau$), or left unbound (written |alpha := Nothing|).
+Thus $\D_\TY$ contains the \scare{undefined} binding $\;\hole{}$ and bindings
+$\;\defn \tau$ for each type $\tau$.
+
+In the example, $\ok_\TY (\defn \tau) = \tau \type$.
+
+We define the set of free type variables of a type or context suffix thus:
+\begin{align*}
+\FTV{\alpha}    &= \{ \alpha \} \\
+\FTV{\tau \arrow \upsilon}  &= \FTV{\tau} \cup \FTV{\upsilon}  \\
+\FTV{\Xi}       &= \bigcup \{ \FTV{\tau} ~||~ \alpha \defn \tau \in \Xi \}  \\
+\FTV{\tau, \Xi} &= \FTV{\tau} \cup \FTV{\Xi}.
+\end{align*}
+
+
+
+\subsection{Implementation}
 
 A context is an ordered (backwards) list of entries, subject to the
 conditions that each variable is defined at most once, and all variables that
@@ -719,14 +467,10 @@ Since |Type| and |Suffix| are built from |Foldable| functors containing names, w
 > instance (Foldable t, OccursIn a) => OccursIn (t a) where
 >     alpha <? t = any (alpha <?) t
 
-
-
 We work in the |Contextual| monad (computations that can fail and mutate the
 context).  
 
-
 > type Contextual  = StateT (Name, Context) Maybe
-
 
 The |Name| component is the next fresh type variable name to use;
 it is an implementation detail that is not mentioned in the typing rules. 
@@ -760,7 +504,13 @@ The |popEntry| function removes and returns the topmost entry from the context.
 >                return e
 
 
-\section{Unification up to definition}
+
+\section{Equality, Information Order, Stability}
+
+
+\TODO{Declarations induce an equational theory.
+Equality judgment, extended lookup, structural rule, equivalence
+closure.}
 
 If $\tau$ and $\upsilon$ are types, we define the equivalence statement
 $\tau \equiv \upsilon$ by making declarations yield equations:
@@ -774,10 +524,6 @@ $\tau \equiv \upsilon$ by making declarations yield equations:
 \end{align*}
 and taking structural and equivalence closure by the rules in
 Figure~\ref{fig:equivRules}.
-
-% A \define{unifier} for the types $\tau$ and $\upsilon$ in a context $\Gamma$ is
-% a pair $(\Delta, \theta)$ such that $\theta : \Gamma \lei \Delta$ and
-% $\Delta \entails \theta\tau \equiv \theta\upsilon$.
 
 \begin{figure}[ht]
 \boxrule{\Gamma \entails \tau \equiv \upsilon}
@@ -805,39 +551,170 @@ $$
 \label{fig:equivRules}
 \end{figure}
 
-% since the first 
-%%%inference rule
-%   rule 
-% ensures that
-% $\Gamma \contains \alpha \defn \tau
-%     \Rightarrow  \Gamma \entails \alpha \equiv \tau$,
-% and 
-%%%we have
-% $$\Gamma \contains \hole{\alpha}
-%     \Rightarrow  \alpha \in \tyvars{\Gamma}
-%     \Rightarrow  \Gamma \entails \alpha \type
-%     \Rightarrow  \Gamma \entails \alpha \equiv \alpha.$$
 
-% \begin{lemma}
-% The statement $\tau \equiv \upsilon$ is stable, i.e.\ if
-% $\Gamma \entails \tau \equiv \upsilon$ and $\delta : \Gamma \lei \Delta$ then
-% $\Delta \entails \delta\tau \equiv \delta\upsilon$.
-% \end{lemma}
-% \begin{proof}
-% By induction on the structure of derivations, observing that leaves are either
-% of the form
-% $\Gamma \contains \alpha \defn \tau$,
-% in which case $\Delta \entails \delta\alpha \equiv \delta\tau$ by definition
-% of $\lei$, or they are of the form
-% $\Gamma \entails \tau \type$,
-% in which case $\Delta \entails \delta\tau \type$ by stability of
-% $\tau \type$.
-% \end{proof}
+\TODO{Intuitively, defining a variable certainly can't make equations
+become untrue.
+More generally, if we rely on the context to tell us what we may
+deduce about variables, making contexts more informative must preserve
+deductions.
+Information order, stability (no fatsemi yet, just forward pointer).}
 
+For contexts $\Gamma$, $\Delta$ and for each $K \in \K$, we will define a set of
+\define{$K$-substitutions from $\Gamma$ to $\Delta$}
+from variables in $\V_K(\Gamma)$ to some set, which will apply to statements.
+We write $\delta : \Gamma \lei \Delta$ to mean that for each $K \in \K$,
+$\delta_K$ is a $K$-substitution from $\Gamma$ to $\Delta$ such that
+if $v D \in \Gamma$ and $S \in \sem{v D}$ then
+%% $\Delta \semidrop n$ is defined and
+$\Delta \entails \delta S$.
+(We write $\delta S$ for the simultaneous application of every $\delta_K$ to
+$S$.)
+
+If $\Gamma$ is a valid context, let $\types{\Gamma}$ be 
+the set of types $\tau$ such that $\Gamma \entails \tau \type$. 
+A \define{$\TY$-substitution from $\Gamma$ to $\Delta$} is a substitution from
+$\V_\TY(\Gamma)$ to $\types{\Delta}$ which applies to types and statements in
+the obvious way.
+
+\TODO{Idea of information order as substitution on derivations.}
+
+We may omit $\delta$ and write $\Gamma \lei \Delta$ if we are only interested
+in the existence of a suitable substitution. This relation between contexts
+captures the notion of \define{information increase}: $\Delta$ supports all the
+statements corresponding to definitions in $\Gamma$. 
+
+%% Moreover, this will still hold if we truncate both $\Gamma$ and $\Delta$ after
+%% any number of $\fatsemi$ separators.
+
+%% Note that if $\delta : \Gamma \lei \Delta$ then
+%% $\delta||_{\Gamma \semidrop n} : \Gamma \semidrop n \lei \Delta \semidrop n$. 
+
+We say a statement $S$ is
+\define{stable} if it is preserved under information increase, that is, if
+$$\Gamma \entails S  ~\wedge~  \delta : \Gamma \lei \Delta
+    \quad \Rightarrow \quad
+    \Delta \entails \delta S.$$
+
+
+\TODO{Stability of == just by strict positivity of recursive hypotheses
+and stability of non-recursive hypotheses.
+Construction ensures effectiveness of this proof strategy.}
+
+A simple induction on derivations shows that the statement $\tau \type$ is stable.
 An induction on derivations shows that $\tau \equiv \upsilon$ is stable, since
 the only rule that accesses the context is \textsc{Lookup}.
-% Note that reflexivity and symmetry are admissible rules.
-We wish to transform these rules into a unification algorithm.
+
+
+\TODO{Where should composite statements go?
+Postpone fatsemi to later.}
+
+If $S$ and $S'$ are statements and $v D$ is a declaration, then
+we define statements $S \wedge S'$, $\fatsemi S$ and $\Sbind{v D}{S}$ thus:
+$$
+\Rule{S \quad S'}{S \wedge S'}
+\qquad
+\Rule{\Gamma \fatsemi \entails S}
+     {\Gamma \entails \fatsemi S}
+$$
+$$
+\Rule{\Gamma \entails D \ok_K    \quad    \Gamma, v D \entails S}
+     {\Gamma \entails \Sbind{v D}{S}}
+\side{v \in \V_K \setminus \V_K(\Gamma)}.
+$$
+We do not add elimination rules to make proofs by induction on the structure
+of derivations easier, but they will be admissible.
+Note that we omit the context from rules if it is constant throughout.
+The only inference rules to access the context will be the \textsc{Lookup} rule
+and the rules for the $\fatsemi$ and $\Sbind{\cdot}{\cdot}$ statements given above.
+
+
+\TODO{Composition preserves stability.}
+
+\begin{lemma}[Stability]
+Every statement in $\Ss$ is stable.
+\end{lemma}
+\begin{proof}
+Suppose $S$ and $S'$ are stable, $\Gamma \entails (S \wedge S')$ and
+$\delta : \Gamma \lei \Delta$. Then $\Gamma \entails S$ and $\Gamma \entails S'$,
+so by stability, $\Delta \entails \delta S$ and $\Delta \entails \delta S'$.
+Hence $\Delta \entails \delta (S \wedge S')$.
+
+Suppose $S$ is stable, $\Gamma \entails \Sbind{v D}{S}$ and
+$\delta : \Gamma \lei \Delta$. Then $\Gamma \entails D \ok_K$ and
+$\Gamma, v D \entails S$, so by induction, $\Delta \entails \delta D \ok_K$.
+Let $\delta' = \delta[v/v]$, then
+$\delta' : \Gamma, v D \lei \Delta, v (\delta D)$
+so by stability of $S$ we have $\Delta, v (\delta D) \entails \delta' S$.
+Hence $\Delta \entails \Sbind{v (\delta D)}{\delta' S}$
+and so $\Delta \entails \delta \Sbind{v D}{S}$.
+\TODO{We should at least mention freshness here.}
+
+Suppose $S$ is stable, $\Gamma \entails \fatsemi S$ and
+$\delta : \Gamma \lei \Delta$. Then $\Gamma \fatsemi \entails S$.
+Now $\delta : \Gamma \fatsemi \lei \Delta \fatsemi$
+so by stability, $\Delta \fatsemi \entails \delta S$ and hence
+$\Delta \entails \delta (\fatsemi S)$.
+
+For other statements that we define later, the proof will proceed by induction
+on the structure of derivations. Where the \textsc{Lookup} rule is applied,
+the result holds by the definition of information increase. No other rules
+may refer to the context, so it is straightforward to see that the statement
+is stable.
+\end{proof}
+
+
+\TODO{We need $\sem{\cdot}$ to be a set of stable statements, then $\lei$
+is a preorder.}
+
+This allows us to prove the following:
+
+\begin{lemma}\label{lei:preorder}
+The $\lei$ relation is a preorder, with reflexivity demonstrated by
+$\iota : \Gamma \lei \Gamma : v \mapsto v$, and transitivity by
+$$\gamma_1 : \Gamma_0 \lei \Gamma_1  ~\wedge~  \gamma_2 : \Gamma_1 \lei \Gamma_2
+  \quad \Rightarrow \quad  \gamma_2 \compose \gamma_1 : \Gamma_0 \lei \Gamma_2.$$
+\end{lemma}
+
+\begin{proof}
+Reflexivity follows immediately from the \textsc{Lookup} rule.
+For transitivity, suppose $v D \in \Gamma_0 \semidrop n$ and $S \in \sem{v D}$.
+Then $\Gamma_1 \semidrop n \entails \gamma_1 S$ since
+$\gamma_1 : \Gamma_0 \lei \Gamma_1$.
+Now by stability applied to $\gamma_1 S$ using
+$\gamma_2||_{\Gamma_1 \semidrop n} :
+    \Gamma_1 \semidrop n \lei \Gamma_2 \semidrop n$, we have
+$\Gamma_2 \semidrop n \entails \gamma_2\gamma_1\sem{v D}$ .
+\end{proof}
+
+
+
+\section{Unification Problems}
+
+\TODO{What is a problem?
+Statement you wish true, or more generally, statement for which
+you wish a witness.
+We want algorithms which find witnesses to statements, preferably
+general ones.
+Refine statements to problems.
+Set of well-posed questions, category of answers.}
+
+A \define{problem} $P$ consists of
+\begin{itemize}
+\item sets \In{P}\ and \Out{P}\ of input and output parameters,
+\item a precondition map $\Pre{P} : \In{P} \rightarrow \Ss$,
+\item a postcondition map $\Post{P} : \In{P} \rightarrow \Out{P} \rightarrow \Ss$ and
+\item a relation map $\R{P} : \Out{P} \rightarrow \Out{P} \rightarrow \Ss$,
+\end{itemize}
+such that \In{P}\ and \Out{P}\ are closed under substitution and the maps
+respect substitution, for example, $\Pre{P}(\theta r) = \theta \Pre{P}(r)$.
+Moreover, for any context $\Gamma$, $a \in \In{P}$ and $b, c, d \in \Out{P}$
+such that
+\[\Gamma \entails \Pre{P} (a) \wedge \Post{P} (a)(b) \wedge \Post{P} (a)(c)
+         \wedge \Post{P} (a)(d), \]
+we must have 
+\(\Gamma \entails \R{P} (b)(b)\) and
+\[\Gamma \entails \R{P} (b)(c) \wedge \R{P} (c)(d)
+    \Rightarrow \Gamma \entails \R{P} (b)(d). \]
 
 The unification problem $U$ is given by
 \begin{align*}
@@ -848,7 +725,87 @@ The unification problem $U$ is given by
 \R{U} ~\_ ~\_ &= \valid
 \end{align*}
 
+A \define{$P$-instance for a context $\Gamma$} is $a \in \In{P}$ such that
+$\Gamma \entails \Pre{P}(a)$. The problem instance $a$ has \define{solution}
+$(b, \delta, \Delta)$ if $b \in \Out{P}$ and $\delta : \Gamma \lei \Delta$
+such that $\Delta \entails \Post{P} (\delta a, b)$. (Observe that
+$\Delta \entails \Pre{P} (\delta a)$ by stability.)
 
+The solution $(b, \delta, \Delta)$ is \define{minimal} if for any solution
+$(c, \theta, \Theta)$ there exists $\zeta : \Delta \lei \Theta$ such that
+$\theta = \zeta \compose \delta$ and $\Theta \entails \R{P} (\zeta b, c)$.
+
+We write $P_a(b)$ for $\Post{P}(a)(b)$ and
+$\delta : \Jmin{\Gamma}{P_a(b)}{\Delta}$ to mean that
+$(b, \delta, \Delta)$ is a minimal solution of the $P$-instance $a$.
+
+
+\TODO{Closure under conjunction.}
+
+If $P$ and $Q$ are problems, then $P \wedge Q$ is a problem with
+\begin{align*}
+\In{P \wedge Q}                 &= \In{P} \times \In{Q}  \\
+\Out{P \wedge Q}                &= \Out{P} \times \Out{Q}  \\
+\Pre{P \wedge Q} (a, b)         &= \Pre{P} (a) \wedge \Pre{Q} b  \\
+\Post{P \wedge Q} (a, b) (c, d) &= \Post{P}(a)(c) \wedge \Post{Q}(b)(d)  \\
+\R{P \wedge Q}(a, b)(c, d)      &= \R{P}(a)(c) \wedge \R{Q}(b)(d)  \\
+\end{align*}
+
+
+\TODO{Optimist's lemma justifying sequential solution.}
+
+The point of all this machinery is to be able to state and prove the following 
+lemma, stating that the minimal solution to a conjunction of problems can be
+found by finding the minimal solution of the first problem, then (minimally)
+extending it to solve the second. 
+
+\begin{lemma}[The Optimist's Lemma]
+The following inference rule is admissible:
+$$\Rule{\gamma_1 : \Jmin{\Gamma_0}{P_a(r)}{\Gamma_1}
+       \quad  \gamma_2 : \Jmin{\Gamma_1}{Q_b(s)}{\Gamma_2}}
+       {\gamma_2 \compose \gamma_1 :
+           \Jmin{\Gamma_0}{P \wedge Q_{(a, b)}(\gamma_2 r, s)}{\Gamma_2}}$$
+\end{lemma}
+
+\TODO{Make the proof prettier, perhaps using a diagram.}
+
+\begin{proof}
+We have that $\gamma_2 \compose \gamma_1 : \Gamma_0 \lei \Gamma_2$ by 
+Lemma~\ref{lei:preorder}. 
+
+To show $\Gamma_2 \entails P \wedge Q_{(a, b)} (\gamma_2 r, s)$, it
+suffices to show $\Gamma_2 \entails P_a(\gamma_2 r)$ and
+$\Gamma_2 \entails Q_b(s)$. The latter holds by assumption. For the
+former, note that $\Gamma_1 \entails P_a(r)$ and hence
+$\Gamma_2 \entails \gamma_2 P_a(r)$ by stability of $P_a(r)$.
+But $\gamma_2 P_a(r) = P_a(\gamma_2 r)$ by definition, so we are done.
+
+Finally, suppose there is some $\theta : \Gamma_0 \lei \Theta$ such that
+$\Theta \entails P \wedge Q_{(a, b)}(r', s')$, so
+$\Theta \entails P_a(r')$ and
+$\Theta \entails Q_b(s')$.
+Since $\gamma_1 : \Jmin{\Gamma_0}{P_a(r)}{\Gamma_1}$, there exists
+$\zeta_1 : \Gamma_1 \lei \Theta$ such that $\theta = \zeta_1 \compose \gamma_1$
+and $\Theta \entails \R{P}(\zeta_1 r)(r')$.
+But then $\gamma_2 : \Jmin{\Gamma_1}{Q_b(s)}{\Gamma_2}$, so there exists
+$\zeta_2 : \Gamma_2 \lei \Theta$ such that $\zeta_1 = \zeta_2 \compose \gamma_2$
+and $\Theta \entails \R{Q}(\zeta_2 s)(s')$.
+Hence 
+$\theta = \zeta_2 \compose (\gamma_2 \compose \gamma_1)$
+and
+$\Theta \entails \R{P \wedge Q}(\zeta_2 (\gamma_2 r), \zeta_2 s)(r', s')$.
+\end{proof}
+
+\TODO{This is not the only decomposition justified by stability (cf.
+McAdam) ; there is a transactional flavour.}
+
+
+\section{Deriving a unification algorithm}
+
+\TODO{Derive algorithmic rules from declarative specification.}
+
+
+We wish to transform these rules into a unification algorithm.
 Starting with only the structural rule, if we try to prove admissibility of
 equivalence closure, we encounter the proof obligations shown.
 
