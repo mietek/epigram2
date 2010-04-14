@@ -162,13 +162,13 @@
 
 \begin{document}
 
-\conferenceinfo{ICFP '10}{September 27--29, Baltimore, Maryland, USA.} 
+\conferenceinfo{MSFP '10}{September 25, Baltimore, Maryland, USA.} 
 \copyrightyear{2010} 
 \copyrightdata{[to be supplied]} 
 
 \titlebanner{DRAFT}
 
-\title{Functional Pearl: Type inference in context}
+\title{Type inference in context}
 \authorinfo{Adam Gundry \and Conor McBride}
            {University of Strathclyde, Glasgow}
            {\{adam.gundry,conor.mcbride\} at cis.strath.ac.uk}
