@@ -569,6 +569,7 @@ if $v D \in \Gamma$ and $S \in \sem{v D}$ then
 $\Delta \entails \delta S$.
 (We write $\delta S$ for the simultaneous application of every $\delta_K$ to
 $S$.)
+\TODO{We only consider equality of substitutions up to...what?}
 
 If $\Gamma$ is a valid context, let $\types{\Gamma}$ be 
 the set of types $\tau$ such that $\Gamma \entails \tau \type$. 
@@ -594,7 +595,8 @@ We say a statement $S$ is
 $$\Gamma \entails S  ~\wedge~  \delta : \Gamma \lei \Delta
     \quad \Rightarrow \quad
     \Delta \entails \delta S.$$
-
+This says that we can extend a simultaneous substitution on syntax to a
+simultaneous substitution on derivations.
 
 \TODO{Stability of == just by strict positivity of recursive hypotheses
 and stability of non-recursive hypotheses.
@@ -793,30 +795,60 @@ McAdam) ; there is a transactional flavour.}
 equivalence to the original system.}
 
 We wish to transform these rules into a unification algorithm.
-Starting with only the structural rule, if we try to prove admissibility of
-equivalence closure, we encounter the proof obligations shown.
+Starting with the rules in Figure~\ref{fig:equivRules}, consider what happens if
+we remove each equivalence closure rule in turn and attempt to prove its
+admissibility. This will fail, but the proof obligations left over give us a more
+specific but equivalent system of algorithmic-looking rules for equivalence.
+\TODO{Reference unfold/fold transformations.}
 
-\begin{figure}[ht]
-$$
-\Rule{\alpha \type}
-     {\alpha \equiv \alpha}
-\qquad
-\Rule{\alpha \equiv \tau}
-     {\tau \equiv \alpha}
-\qquad
-\Rule{\tau \equiv \alpha}
-     {\alpha \equiv \tau}
-$$
+First, the reflexivity rule for types can be derived from the reflexivity
+rule for variables given by
+$$\Rule{\alpha \type}
+       {\alpha \equiv \alpha}$$
+by applying the structural rule until variables occur.
+
+Next, transitivity can be derived from
 $$
 \Rule{\alpha \equiv \tau    \quad    \tau \equiv \upsilon}
      {\alpha \equiv \upsilon}
-\qquad
-\Rule{\upsilon \equiv \tau    \quad    \tau \equiv \alpha}
-     {\upsilon \equiv \alpha}
+\side{\alpha \neq \tau, \alpha \neq \upsilon}
+%% \qquad
+%% \Rule{\upsilon \equiv \tau    \quad    \tau \equiv \alpha}
+%%     {\upsilon \equiv \alpha}
 $$
-\caption{Proof obligations to admit equivalence closure}
-\label{fig:admitEquivClosure}
-\end{figure}
+as follows. Suppose $\chi \equiv \tau$ and $\tau \equiv \upsilon$ and seek to
+prove $\chi \equiv \upsilon$.
+\begin{itemize}
+\item If $\chi = \alpha$ is a variable distinct from $\tau$ and $\upsilon$
+      then we can use the restricted transitivity rule.
+\item If $\chi = \alpha = \upsilon$ then we can use reflexivity.
+\item If $\chi = \alpha = \tau$ then the result holds by hypothesis.
+\item If $\chi$ is not a variable but $\upsilon$ is then we can apply symmetry
+      and one of the previous cases.
+\item If $\chi$ and $\upsilon$ are both not variables then we can apply
+      the structural rule.
+\end{itemize}
+
+Finally, symmetry becomes admissible (but not derivable) if replaced by
+$$
+\Rule{\alpha \equiv \tau}
+     {\tau \equiv \alpha}.
+%% \qquad
+%% \Rule{\tau \equiv \alpha}
+%%      {\alpha \equiv \tau}
+$$
+Note that the restricted symmetry rule covers the case we needed
+for deriving transitivity. Suppose $\upsilon \equiv \tau$ and seek to prove
+$\tau \equiv \upsilon$.
+\begin{itemize}
+\item If $\upsilon = \alpha$ is a variable then the rule applies.
+\item If $\upsilon$ is not a variable but $\tau = \beta$ is, then
+      the proof of $\upsilon \equiv \beta$ must be by restricted symmetry,
+      in which case its hypothesis says that $\beta \equiv \upsilon$.
+\item If $\tau$ and $\upsilon$ are both not variables then we can apply the
+      structural rule.
+\end{itemize} 
+
 
 \TODO{Relating the declarative rules for type equivalence to the unification
 algorithm needs some explanation.}
