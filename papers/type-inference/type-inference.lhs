@@ -304,9 +304,10 @@ We define |Type| to use integers as names.
 
 \subsection{Introducing contexts}
 
-\TODO{What makes sense of the variables?
-Idea (ideology?): make sure variables are bound somewhere, introduce
-a context for this purpose}
+Types contain variables, but we need some way of interpreting what the variables
+mean. Our ideology is that such information belongs in the context. We given an
+abstract description of contexts, which may contain type variables and other
+information.
 
 Let $\K$ a set of sorts, and for each $K \in \K$ let $\V_K$ be a set of
 variables and $\D_K$ a set of objects. Our running example will be the sort
@@ -320,24 +321,18 @@ We write $\emptycontext$ for the empty context, and the symbols
 $\Gamma, \Delta$ and $\Theta$ range over contexts.
 %% $\Xi$ is a context that contains no $\fatsemi$ separators.
 
-\TODO{Contexts collect variable declarations (what there is to know about
-a variable); only a := ? initially. Statements are judged in a context.}
+We will gradually construct a set $\Ss$ of statements, assertions that can be
+judged in a context. We write the \define{judgment} $\Gamma \entails S$ to mean
+that the declarations in $\Gamma$ support the statement $S \in \Ss$.
 
-Let $\Ss$ be a set of statements.
-We write $\Gamma \entails S$ to mean that the definitions in $\Gamma$,
-corresponding to atomic facts, support the statement $S \in \Ss$.
-
-\TODO{Start keeping our own house in order.
-When is a context valid?
-When its declarations are valid extensions.
-Ok is a function, not a statement.}
-
+It is not enough for contexts to be lists of declarations: they must be
+well-founded, that is, the declarations need to make sense.
+A context is valid if it declares each variable at most
+once, and each declaration is a valid extension of the preceding context.
 We assume we have a map $\ok_K : \D_K \rightarrow \Ss$ for every $K \in \K$.
 Let $\V_K(\Gamma)$ be the set of $K$-variables in $\Gamma$.
 We define the context validity statement $\valid$ as shown in
 Figure~\ref{fig:contextValidityRules}.
-
-In the example, $\ok_\TY (\hole{}) = \valid$.
 
 \begin{figure}[ht]
 \boxrule{\Gamma \entails \valid}
@@ -356,70 +351,56 @@ $$
 \label{fig:contextValidityRules}
 \end{figure}
 
+From now on, we will only be interested in valid contexts. All future definitions
+implicitly assume the context is valid, and it is straightforward to verify that
+our algorithms preserve context validity.
+
+In the example of type declarations, we let $\ok_\TY (\hole{}) = \valid$.
+That is, declaring a type variable to be unknown always makes sense.
+
 
 \subsection{Making types meaningful}
 
-\TODO{When is a type meaningful (syntax isn't enough)?
-When its variables are in scope.
-Introduce lookup rule.}
+Now we can ask whether a type is meaningful with respect to a context.
+This requires us to lookup the type variables to determine if they are in scope.
 
 We suppose that there is a map
 $\sem{\cdot}_K : \V_K \times \D_K \rightarrow \mathcal{P}(\Ss)$
 for each $K \in \K$, from declarations to sets of statements.
 % such that $$\Gamma \contains v D  \Rightarrow  \Gamma \entails \sem{v D}.$$
 (We typically omit the subscript when the sort is irrelevant or can be inferred.)
-The basic rule of our inference system is
+The idea is that $\sem{v D}$ is the set of atomic statements that hold if the
+declaration $v D$ is in the context.
+The basic rule of our inference system thus becomes
 $$\name{Lookup}
-  \Rule{v D \in \Gamma    ~\wedge~   S  \in \sem{v D}}
+  \Rule{v D \in \Gamma    \quad    S  \in \sem{v D}}
        {\Gamma \entails S}.$$
-Thus $\sem{v D}$ is the set of atomic statements that hold if the declaration
-$v D$ is in the context.
 
-We define the statement $\tau \type$ in Figure~\ref{fig:typeOkRules}.
-Note that there is no base case for the definition because we will deduce
-$\alpha \type$ for variables $\alpha$ using the \textsc{Lookup} rule.
-In the example, $\sem{\hole{\alpha}} = \{ \alpha \type \}$.
+Applications of the \textsc{Lookup} rule are the \scare{variables} of
+derivations. \TODO{Expand on what this means.}
 
-\begin{figure}[ht]
-\boxrule{\Gamma \entails \tau \type}
+We define the statement $\tau \type$ by taking
+$\sem{\hole{\alpha}} = \{ \alpha \type \}$
+together with the structural rule
 $$
-% \Rule{\Gamma \entails \valid}
-%      {\Gamma \entails \alpha \type}
-% \side{\alpha \in \tyvars{\Gamma}}
-% \qquad
 \Rule{\tau \type   \quad   \upsilon \type}
-     {\tau \arrow \upsilon \type}
+     {\tau \arrow \upsilon \type}.
 $$
-% \boxrule{\Gamma \entails D \ok_\TY}
-% $$\Rule{\valid}
-%       {\;\hole{} \ok_\TY}
-% \qquad
-% \Rule{\tau \type}
-%      {\;\defn \tau \ok_\TY}
-% $$
-\caption{Rules for types and definitions}
-\label{fig:typeOkRules}
-\end{figure}
-
-\TODO{Lookups are the "variables" of derivations}
 
 
-\subsection{Declarations}
+\subsection{Type variable declarations}
 
-\TODO{Discovering the value of a variable does not render it meaningless
-(quite the reverse).
-As we're going to solve constraints and learn values of variables,
-we had better extend declarations.
-Add := tau declarations with associated ok.}
+At the moment, variables are rather useless, because they can do nothing more
+than exist. During unification we will solve constraints to discover the values
+of variables, so we could then substitute them out. However, finding a value for
+a variable does not render it meaningless, in fact the reverse is true. We will
+therefore extend declarations instead, allowing variables to retain their values
+and hence their meaning.
 
-A type variable declaration is written |alpha := mt|, where $\alpha$ is a
-variable that is either bound to a type $\tau$ (written |alpha := Just tau| or
-$\alpha \defn \tau$), or left unbound (written |alpha := Nothing|).
-Thus $\D_\TY$ contains the \scare{undefined} binding $\;\hole{}$ and bindings
-$\;\defn \tau$ for each type $\tau$.
+We therefore add bindings $\;\defn \tau$ to $\D_\TY$ for every type $\tau$, and
+let $\ok_\TY (\defn \tau) = \tau \type$.
 
-In the example, $\ok_\TY (\defn \tau) = \tau \type$.
-
+\TODO{Omit this, or move it?}
 We define the set of free type variables of a type or context suffix thus:
 \begin{align*}
 \FTV{\alpha}    &= \{ \alpha \} \\
@@ -427,6 +408,51 @@ We define the set of free type variables of a type or context suffix thus:
 \FTV{\Xi}       &= \bigcup \{ \FTV{\tau} ~||~ \alpha \defn \tau \in \Xi \}  \\
 \FTV{\tau, \Xi} &= \FTV{\tau} \cup \FTV{\Xi}.
 \end{align*}
+
+
+\subsection{Type equations}
+
+Previously we could only consider the syntactic equality of types, but
+type variable declarations now induce a more interesting equational theory. 
+If $\tau$ and $\upsilon$ are types, we define the equivalence statement
+$\tau \equiv \upsilon$ by making declarations yield equations:
+\begin{align*}
+%% \sem{\hole{\alpha}}_\TY &= \{ \alpha \type \}  \\
+\sem{\alpha \defn \tau}_\TY &= \{ \alpha \type, \alpha \equiv \tau \}
+%%%
+%%% \sem{\hole{\alpha}}_\TY &= \{ \alpha \type, \alpha \equiv \alpha \}  \\
+%%% \sem{\alpha \defn \tau}_\TY &= \{ \alpha \type, \alpha \equiv \alpha,
+%%%            \alpha \equiv \tau, \tau \equiv \alpha \}
+\end{align*}
+and taking structural and equivalence closure by the rules in
+Figure~\ref{fig:equivRules}.
+
+\begin{figure}[ht]
+\boxrule{\Gamma \entails \tau \equiv \upsilon}
+% \Rule{\alpha \defn \tau}
+%      {\alpha \equiv \tau}
+$$
+\Rule{\tau \type}
+     {\tau \equiv \tau}
+\qquad
+\Rule{\upsilon \equiv \tau}
+     {\tau \equiv \upsilon}
+$$
+$$
+\Rule{\tau_0 \equiv \upsilon_0
+      \quad
+      \tau_1 \equiv \upsilon_1}
+     {\tau_0 \arrow \tau_1 \equiv \upsilon_0 \arrow \upsilon_1}
+\qquad
+\Rule{\tau_0 \equiv \tau_1
+      \quad
+      \tau_1 \equiv \tau_2}
+     {\tau_0 \equiv \tau_2}
+$$
+\caption{Rules for type equivalence}
+\label{fig:equivRules}
+\end{figure}
+
 
 
 
@@ -510,55 +536,9 @@ The |popEntry| function removes and returns the topmost entry from the context.
 
 
 
-\section{Equality, Information Order, Stability}
+\section{Information and stable statements}
 
-\subsection{Equations}
-
-\TODO{Declarations induce an equational theory.
-Equality judgment, extended lookup, structural rule, equivalence
-closure.}
-
-If $\tau$ and $\upsilon$ are types, we define the equivalence statement
-$\tau \equiv \upsilon$ by making declarations yield equations:
-\begin{align*}
-\sem{\hole{\alpha}}_\TY &= \{ \alpha \type \}  \\
-\sem{\alpha \defn \tau}_\TY &= \{ \alpha \type, \alpha \equiv \tau \}
-%%%
-%%% \sem{\hole{\alpha}}_\TY &= \{ \alpha \type, \alpha \equiv \alpha \}  \\
-%%% \sem{\alpha \defn \tau}_\TY &= \{ \alpha \type, \alpha \equiv \alpha,
-%%%            \alpha \equiv \tau, \tau \equiv \alpha \}
-\end{align*}
-and taking structural and equivalence closure by the rules in
-Figure~\ref{fig:equivRules}.
-
-\begin{figure}[ht]
-\boxrule{\Gamma \entails \tau \equiv \upsilon}
-% \Rule{\alpha \defn \tau}
-%      {\alpha \equiv \tau}
-$$
-\Rule{\tau \type}
-     {\tau \equiv \tau}
-\qquad
-\Rule{\upsilon \equiv \tau}
-     {\tau \equiv \upsilon}
-$$
-$$
-\Rule{\tau_0 \equiv \upsilon_0
-      \quad
-      \tau_1 \equiv \upsilon_1}
-     {\tau_0 \arrow \tau_1 \equiv \upsilon_0 \arrow \upsilon_1}
-\qquad
-\Rule{\tau_0 \equiv \tau_1
-      \quad
-      \tau_1 \equiv \tau_2}
-     {\tau_0 \equiv \tau_2}
-$$
-\caption{Rules for type equivalence}
-\label{fig:equivRules}
-\end{figure}
-
-
-\subsection{Increasing information}
+\subsection{The information order}
 
 \TODO{Intuitively, defining a variable certainly can't make equations
 become untrue.
@@ -618,7 +598,27 @@ An induction on derivations shows that $\tau \equiv \upsilon$ is stable, since
 the only rule that accesses the context is \textsc{Lookup}.
 
 
-\TODO{Where should composite statements go?}
+\begin{lemma}\label{lei:preorder}
+If $\sem{v D}$ is a set of stable statements for every declaration $v D$, then
+the $\lei$ relation is a preorder, with reflexivity demonstrated by
+$\iota : \Gamma \lei \Gamma : v \mapsto v$, and transitivity by
+$$\gamma_1 : \Gamma_0 \lei \Gamma_1  ~\wedge~  \gamma_2 : \Gamma_1 \lei \Gamma_2
+  \quad \Rightarrow \quad  \gamma_2 \compose \gamma_1 : \Gamma_0 \lei \Gamma_2.$$
+\end{lemma}
+
+\begin{proof}
+Reflexivity follows immediately from the \textsc{Lookup} rule.
+For transitivity, suppose $v D \in \Gamma_0 \semidrop n$ and $S \in \sem{v D}$.
+Then $\Gamma_1 \semidrop n \entails \gamma_1 S$ since
+$\gamma_1 : \Gamma_0 \lei \Gamma_1$.
+Now by stability applied to $\gamma_1 S$ using
+$\gamma_2||_{\Gamma_1 \semidrop n} :
+    \Gamma_1 \semidrop n \lei \Gamma_2 \semidrop n$, we have
+$\Gamma_2 \semidrop n \entails \gamma_2\gamma_1\sem{v D}$ .
+\end{proof}
+
+
+\subsection{Composite statements}
 
 If $S$ and $S'$ are statements and $v D$ is a declaration, then we define the
 \define{composite} statements $S \wedge S'$ and $\Sbind{v D}{S}$ thus:
@@ -666,25 +666,6 @@ by induction on the structure of derivations. Where the \textsc{Lookup} rule
 is applied, the result holds by the definition of information increase. No other
 rules may refer to the context, so it is straightforward to see that the
 statement is stable.
-
-\begin{lemma}\label{lei:preorder}
-If $\sem{v D}$ is a set of stable statements for every declaration $v D$, then
-the $\lei$ relation is a preorder, with reflexivity demonstrated by
-$\iota : \Gamma \lei \Gamma : v \mapsto v$, and transitivity by
-$$\gamma_1 : \Gamma_0 \lei \Gamma_1  ~\wedge~  \gamma_2 : \Gamma_1 \lei \Gamma_2
-  \quad \Rightarrow \quad  \gamma_2 \compose \gamma_1 : \Gamma_0 \lei \Gamma_2.$$
-\end{lemma}
-
-\begin{proof}
-Reflexivity follows immediately from the \textsc{Lookup} rule.
-For transitivity, suppose $v D \in \Gamma_0 \semidrop n$ and $S \in \sem{v D}$.
-Then $\Gamma_1 \semidrop n \entails \gamma_1 S$ since
-$\gamma_1 : \Gamma_0 \lei \Gamma_1$.
-Now by stability applied to $\gamma_1 S$ using
-$\gamma_2||_{\Gamma_1 \semidrop n} :
-    \Gamma_1 \semidrop n \lei \Gamma_2 \semidrop n$, we have
-$\Gamma_2 \semidrop n \entails \gamma_2\gamma_1\sem{v D}$ .
-\end{proof}
 
 
 
