@@ -243,8 +243,7 @@ of (variations on) the Robinson unification algorithm are incorrect because they
 do not handle substitutions correctly \citep{norvig_correctingwidespread_1991}.
 
 
-\section{Plan}
-\TODO{Develop abstract contextual and problem-solving machinery with
+\TODO{The plan: to develop abstract contextual and problem-solving machinery with
 running example of types and unification, then redeploy for terms and
 type inference. Our mission is to understand why type inference problems have
 various solutions (Heeren, Wells, Schilling, McAdam...).}
@@ -271,13 +270,13 @@ First, let's get some imports out of the way.
 
 
 \section{Types and type variables}
-\TODO{Syntax in mathematics and Haskell}
 
-%% To make things more concrete, we define the sort $\TY \in \K$.
-The syntax of types is
+\subsection{Syntax}
+
+The syntax of Hindley-Milner types is
 $$\tau ::= \alpha ~||~ \tau \arrow \tau$$
 where $\alpha$ ranges over some set of type variables $\V_\TY$.
-%% Let $\D_0 \subset \D$ be the set of types.
+For simplicity, we only consider one type constructor.
 In the sequel, $\alpha$ and $\beta$ are type variables and $\tau$ and $\upsilon$
 types.
 %% (All of these symbols may be primed or subscripted.)
@@ -302,6 +301,8 @@ We define |Type| to use integers as names.
 > type Name  = Integer
 > type Type  = Ty Name
 
+
+\subsection{Introducing contexts}
 
 \TODO{What makes sense of the variables?
 Idea (ideology?): make sure variables are bound somewhere, introduce
@@ -355,6 +356,9 @@ $$
 \label{fig:contextValidityRules}
 \end{figure}
 
+
+\subsection{Making types meaningful}
+
 \TODO{When is a type meaningful (syntax isn't enough)?
 When its variables are in scope.
 Introduce lookup rule.}
@@ -400,7 +404,7 @@ $$
 \TODO{Lookups are the "variables" of derivations}
 
 
-\section{Declarations}
+\subsection{Declarations}
 
 \TODO{Discovering the value of a variable does not render it meaningless
 (quite the reverse).
@@ -427,6 +431,7 @@ We define the set of free type variables of a type or context suffix thus:
 
 
 \subsection{Implementation}
+\TODO{Should we mix Haskell and mathematics more? Or less?}
 
 A context is an ordered (backwards) list of entries, subject to the
 conditions that each variable is defined at most once, and all variables that
@@ -507,6 +512,7 @@ The |popEntry| function removes and returns the topmost entry from the context.
 
 \section{Equality, Information Order, Stability}
 
+\subsection{Equations}
 
 \TODO{Declarations induce an equational theory.
 Equality judgment, extended lookup, structural rule, equivalence
@@ -552,6 +558,8 @@ $$
 \end{figure}
 
 
+\subsection{Increasing information}
+
 \TODO{Intuitively, defining a variable certainly can't make equations
 become untrue.
 More generally, if we rely on the context to tell us what we may
@@ -589,6 +597,9 @@ statements corresponding to definitions in $\Gamma$.
 
 %% Note that if $\delta : \Gamma \lei \Delta$ then
 %% $\delta||_{\Gamma \semidrop n} : \Gamma \semidrop n \lei \Delta \semidrop n$. 
+
+
+\subsection{Stability}
 
 We say a statement $S$ is
 \define{stable} if it is preserved under information increase, that is, if
@@ -679,8 +690,9 @@ $\Gamma_2 \semidrop n \entails \gamma_2\gamma_1\sem{v D}$ .
 
 \section{Unification Problems}
 
-\TODO{What is a problem?
-Statement you wish true, or more generally, statement for which
+\subsection{What is a problem?}
+
+\TODO{A statement you wish true, or more generally, statement for which
 you wish a witness.
 We want algorithms which find witnesses to statements, preferably
 general ones.
@@ -729,7 +741,7 @@ $\delta : \Jmin{\Gamma}{P_a(b)}{\Delta}$ to mean that
 $(b, \delta, \Delta)$ is a minimal solution of the $P$-instance $a$.
 
 
-\TODO{Closure under conjunction.}
+\subsection{Closure under conjunction.}
 
 If $P$ and $Q$ are problems, then $P \wedge Q$ is a problem with
 \begin{align*}
@@ -741,7 +753,7 @@ If $P$ and $Q$ are problems, then $P \wedge Q$ is a problem with
 \end{align*}
 
 
-\TODO{Optimist's lemma justifying sequential solution.}
+\subsection{The Optimist's Lemma}
 
 The point of all this machinery is to be able to state and prove the following 
 lemma, stating that the minimal solution to a conjunction of problems can be
@@ -790,6 +802,8 @@ McAdam) ; there is a transactional flavour.}
 
 
 \section{Deriving a unification algorithm}
+
+\subsection{Transforming the rule system for equivalence}
 
 \TODO{Explain what happens here, simplify the proof obligations and show
 equivalence to the original system.}
@@ -849,6 +863,8 @@ $\tau \equiv \upsilon$.
       structural rule.
 \end{itemize} 
 
+
+\subsection{Constructing a unification algorithm}
 
 \TODO{Relating the declarative rules for type equivalence to the unification
 algorithm needs some explanation.}
@@ -1014,6 +1030,9 @@ $\tau = \alpha$ is dealt with by the \textsc{Id} rule.) Since we only have one
 type constructor symbol (the function arrow $\arrow$), there are no failures due
 to rigid-rigid mismatch. Adding these would not significantly complicate matters,
 however.
+
+
+\subsection{Soundness and completeness}
 
 \begin{lemma}[Soundness of unification]
 \label{lem:unifySound}
