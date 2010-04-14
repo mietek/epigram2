@@ -909,14 +909,19 @@ e \perp \tau_0 \arrow \tau_1 \equiv \upsilon_0 \arrow \upsilon_1
     &\mathrm{~if~} \alpha \neq \delta \wedge \delta \notin \FTV{\tau, \Xi}
 \end{align*}
 
-The rules \textsc{Coalesce}, \textsc{Expand} and \textsc{Instantiate} have
-symmetric counterparts that are identical apart from interchanging the equated
-terms in the conclusion. Usually we will ignore these without loss of generality,
-but where necessary we refer to them as \textsc{Coalesce}\sym,
-\textsc{Expand}\sym and \textsc{Instantiate}\sym.
-
 %endif
 
+The rules \textsc{Define}, \textsc{Expand} and \textsc{Ignore} have
+symmetric counterparts that are identical apart from interchanging the equated
+terms in the conclusion. Usually we will ignore these without loss of generality,
+but where necessary we refer to them as \textsc{Define}\sym,
+\textsc{Expand}\sym and \textsc{Ignore}\sym.
+
+\TODO{Can we do better than this?
+Unfortunately removing these three rules and using the solve versions doesn't
+work, e.g. consider solving $\alpha \equiv \beta$ in
+$\hole{\alpha}, \beta \defn \alpha$.
+}
 
 \begin{figure}[ht]
 \boxrule{\Junify{\Gamma_0}{\tau}{\upsilon}{\Gamma_1}}
@@ -938,15 +943,27 @@ $$
 \name{Solve}
 \Rule{\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\emptycontext}{\Gamma_1}}
      {\Junify{\Gamma_0}{\alpha}{\tau}{\Gamma_1}}
-\side{\tau \neq \alpha}
-%% \side{\tau \mathrm{~not~variable}}
+%% \side{\tau \neq \alpha}
+\side{\tau \mathrm{~not~variable}}
 $$
 
 $$
-\name{Solve\sym}
-\Rule{\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\emptycontext}{\Gamma_1}}
-     {\Junify{\Gamma_0}{\tau}{\alpha}{\Gamma_1}}
-\side{\tau \mathrm{~not~variable}}
+\name{Define}
+\Axiom{\Junify{\Gamma, \hole{\alpha}}{\alpha}{\beta}{\Gamma, \alpha \defn \beta}}
+$$
+
+$$
+\name{Expand}
+\Rule{\Junify{\Gamma_0}{\tau}{\beta}{\Gamma_1}}
+     {\Junify{\Gamma_0, \alpha \defn \tau}{\alpha}{\beta}{\Gamma_1, \alpha \defn \tau}}
+\side{\alpha \neq \beta}
+$$
+
+$$
+\name{Ignore}
+\Rule{\Junify{\Gamma_0}{\alpha}{\beta}{\Gamma_1}}
+     {\Junify{\Gamma_0, v D}{\alpha}{\beta}{\Gamma_1, v D}}
+\side{v D \perp \{\alpha, \beta\} }
 $$
 
 \bigskip
@@ -979,7 +996,7 @@ $$
 \name{Ignore}
 \Rule{\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\Xi}{\Gamma_1}}
      {\Jinstantiate{\Gamma_0, v D}{\alpha}{\tau}{\Xi}{\Gamma_1, v D}}
-\side{v D \perp \FTV{\tau, \Xi}}
+\side{v D \perp \FTV{\alpha, \tau, \Xi}}
 $$
 
 \caption{Algorithmic rules for unification}
@@ -1148,17 +1165,17 @@ unified given the current state of the context.
 >           (True,            False,          Just tau  )  ->  unify (V beta)   tau       >> restore   
 >           (False,           True,           Just tau  )  ->  unify (V alpha)  tau       >> restore   
 >           (False,           False,          _         )  ->  unify (V alpha)  (V beta)  >> restore   
-> unify (V alpha)        tau                               =   instantiate alpha F0 tau
-> unify tau              (V alpha)                         =   instantiate alpha F0 tau    
+> unify (V alpha)        tau                               =   solve alpha F0 tau
+> unify tau              (V alpha)                         =   solve alpha F0 tau    
 > unify (tau0 :-> tau1)  (upsilon0 :-> upsilon1)           =   unify tau0 upsilon0 >> unify tau1 upsilon1
 
 
-The |instantiate| function attempts to unify a variable name with a
+The |solve| function attempts to unify a variable name with a
 (non-variable) type, given a list of entries that the type depends on,
 which must be placed into the context before it.
 
-> instantiate :: Name -> Suffix -> Type -> Contextual ()
-> instantiate alpha _Xi tau = onTop $ \ (delta ::= mt) -> 
+> solve :: Name -> Suffix -> Type -> Contextual ()
+> solve alpha _Xi tau = onTop $ \ (delta ::= mt) -> 
 >     let occurs = delta <? tau || delta <? _Xi in case
 >     (delta == alpha,  occurs,  mt            ) of
 >     (True,            True,    _             )  ->  fail "Occur check failed"
@@ -1166,9 +1183,9 @@ which must be placed into the context before it.
 >     (True,            False,   Just upsilon  )  ->  modifyContext (<>< _Xi)
 >                                                 >>  unify upsilon tau
 >                                                 >>  restore
->     (False,           True,    _             )  ->  instantiate alpha (delta ::= mt :> _Xi) tau
+>     (False,           True,    _             )  ->  solve alpha (delta ::= mt :> _Xi) tau
 >                                                 >>  replace F0   
->     (False,           False,   _             )  ->  instantiate alpha _Xi tau
+>     (False,           False,   _             )  ->  solve alpha _Xi tau
 >                                                 >>  restore
 
 
@@ -2437,7 +2454,7 @@ produces a forward list.
 
 > instance Judgment Instantiate where
 >     type Output Instantiate = ()
->     fiat (alpha  :===:  (upsilon, _Xi)) = instantiate alpha _Xi upsilon
+>     fiat (alpha  :===:  (upsilon, _Xi)) = solve alpha _Xi upsilon
 >     orthogonal (delta := _) (alpha :===: (tau, _Xi)) = not (alpha == delta) &&
 >         not (delta <? tau) && not (delta <? _Xi)
 >     orthogonal _ (_ :===: _) = True
@@ -2473,7 +2490,7 @@ produces a forward list.
 >     (True,            False,   Just upsilon  )  ->  modifyContext (<>< _Xi)
 >                                                 >>  unify upsilon tau
 >                                                 >>  restore
->     (False,           True,    _             )  ->  instantiate alpha (delta ::= mt :> _Xi) tau
+>     (False,           True,    _             )  ->  solve alpha (delta ::= mt :> _Xi) tau
 >                                                 >>  replace F0
 >     (False,           False,   _             )  ->  undefined
 >   topset _ _ = undefined

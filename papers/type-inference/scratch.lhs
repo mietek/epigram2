@@ -154,24 +154,7 @@ the example of Hindley-Milner type inference.
 
 %if False
 
-$$
-\name{Coalesce}
-\Axiom{\Junify{\Gamma, \hole{\alpha}}{\alpha}{\beta}{\Gamma, \alpha \defn \beta}}
-$$
 
-$$
-\name{Expand}
-\Rule{\Junify{\Gamma_0}{\tau}{\beta}{\Gamma_1}}
-     {\Junify{\Gamma_0, \alpha \defn \tau}{\alpha}{\beta}{\Gamma_1, \alpha \defn \tau}}
-\side{\alpha \neq \beta}
-$$
-
-$$
-\name{Orthogonal}
-\Rule{\Junify{\Gamma_0}{\alpha}{\beta}{\Gamma_1}}
-     {\Junify{\Gamma_0, e}{\alpha}{\beta}{\Gamma_1, e}}
-\side{e \perp \alpha \equiv \beta}
-$$
 
 % \begin{prooftree}
 % \AxiomC{ $\Gamma_0 \extend \alpha \equiv \beta \yields \Gamma_1$ }
