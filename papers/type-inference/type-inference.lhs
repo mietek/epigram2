@@ -386,6 +386,7 @@ $$
 \Rule{\tau \type   \quad   \upsilon \type}
      {\tau \arrow \upsilon \type}.
 $$
+Note that we omit the context from rules if it is constant throughout.
 
 
 \subsection{Type variable declarations}
@@ -596,13 +597,17 @@ This says that we can extend a simultaneous substitution on syntax to a
 simultaneous substitution on derivations.
 \TODO{Expand on this.}
 
-\TODO{Stability of == just by strict positivity of recursive hypotheses
-and stability of non-recursive hypotheses.
-Construction ensures effectiveness of this proof strategy.}
+Since we are only interested in valid contexts, the statement $\valid$ always
+holds, and it is invariant under substitution, so it is clearly stable.
 
-A simple induction on derivations shows that the statement $\tau \type$ is stable.
-An induction on derivations shows that $\tau \equiv \upsilon$ is stable, since
-the only rule that accesses the context is \textsc{Lookup}.
+We have a standard strategy for proving stability of most statements, which is
+effective by construction. In each case we proceed by induction on the structure
+of derivations. Where the \textsc{Lookup} rule is applied, stability holds by
+the definition of information increase. Otherwise, for rules that do not refer
+to the context, we can verify that non-recursive hypotheses are stable and that
+recursive hypotheses occur in strictly positive positions, so they are stable
+by induction. Applying this strategy shows that the statements $\tau \type$
+and $\tau \equiv \upsilon$ are stable.
 
 
 \begin{lemma}\label{lei:preorder}
@@ -632,7 +637,7 @@ If $S$ and $S'$ are statements and $v D$ is a declaration, then we define the
 $$
 \Rule{S \quad S'}{S \wedge S'}
 \qquad
-\Rule{\Gamma \entails D \ok_K    \quad    \Gamma, v D \entails S}
+\Rule{\Gamma \entails \ok_K D    \quad    \Gamma, v D \entails S}
      {\Gamma \entails \Sbind{v D}{S}}
 \side{v \in \V_K \setminus \V_K(\Gamma)}.
 $$
@@ -640,12 +645,6 @@ We add general introduction forms for composite statements, but supply
 eliminators only for composite hypotheses, in effect forcing derivations to be
 cut-free. This facilitates reasoning by induction on derivations. The general
 eliminators are in any case admissible rules.
-
-Note that we omit the context from rules if it is constant throughout, as in
-the rule for the $\wedge$ statement.
-%% The only inference rules to access the context will be the \textsc{Lookup}
-%% rule and the rules for the $\fatsemi$ and $\Sbind{\cdot}{\cdot}$ statements
-%% given above.
 
 \begin{lemma}[Composition preserves stability]
 If $S$ and $S'$ are stable then $S \wedge S'$ is stable.
@@ -658,8 +657,8 @@ so by stability, $\Delta \entails \delta S$ and $\Delta \entails \delta S'$.
 Hence $\Delta \entails \delta (S \wedge S')$.
 
 Suppose $S$ is stable, $\Gamma \entails \Sbind{v D}{S}$ and
-$\delta : \Gamma \lei \Delta$. Then $\Gamma \entails D \ok_K$ and
-$\Gamma, v D \entails S$, so by induction, $\Delta \entails \delta D \ok_K$.
+$\delta : \Gamma \lei \Delta$. Then $\Gamma \entails \ok_K D$ and
+$\Gamma, v D \entails S$, so by induction, $\Delta \entails \delta \ok_K D$.
 Let $\delta' = \delta[v/v]$, then
 $\delta' : \Gamma, v D \lei \Delta, v (\delta D)$
 so by stability of $S$ we have $\Delta, v (\delta D) \entails \delta' S$.
@@ -667,12 +666,6 @@ Hence $\Delta \entails \Sbind{v (\delta D)}{\delta' S}$
 and so $\Delta \entails \delta \Sbind{v D}{S}$.
 \TODO{We should at least mention freshness here.}
 \end{proof}
-
-For other statements, the proof of stability will usually proceed
-by induction on the structure of derivations. Where the \textsc{Lookup} rule
-is applied, the result holds by the definition of information increase. No other
-rules may refer to the context, so it is straightforward to see that the
-statement is stable.
 
 
 
