@@ -81,8 +81,8 @@
 \newcommand{\boxrules}[2]{\begin{center}\framebox{\ensuremath{#1}}\quad\framebox{\ensuremath{#2}}\end{center}}
 
 \newcommand{\tmvars}[1]{\ensuremath{tmvars(#1)}}
-\newcommand{\tyvars}[1]{\ensuremath{V_\TY(#1)}}
-\newcommand{\types}[1]{\ensuremath{types(#1)}}
+\newcommand{\tyvars}[1]{\ensuremath{\V_\TY(#1)}}
+\newcommand{\types}[1]{\ensuremath{\T_\TY(#1)}}
 \newcommand{\FTV}[1]{\ensuremath{FTV(#1)}}
 
 \newcommand{\lei}{\ensuremath{\sqsubseteq}}
@@ -132,6 +132,7 @@
 \newcommand{\D}{\mathcal{D}}
 \newcommand{\Ss}{\mathcal{S}}
 \newcommand{\K}{\mathcal{K}}
+\newcommand{\T}{\mathcal{T}}
 \newcommand{\TY}{\mathrm{\textsc{TY}}}
 \newcommand{\TM}{\mathrm{\textsc{TM}}}
 
@@ -542,20 +543,19 @@ More generally, if we rely on the context to tell us what we may
 deduce about variables, then making contexts more informative must preserve
 deductions. 
 
-\TODO{Make this more precise.}
-For contexts $\Gamma$, $\Delta$ and for each $K \in \K$, a
-\define{$K$-substitution from $\Gamma$ to $\Delta$} is map from
-variables in $\V_K(\Gamma)$ to some set (depending on $K$);
-substitutions will apply to statements.
+Suppose we have a set $\T_K(\Delta)$ for each $K \in \K$ and context $\Delta$.
+A \define{$K$-substitution from $\Gamma$ to $\Delta$} is map from
+$\V_K(\Gamma)$ to $\T_K(\Delta)$.
+Suppose further that substitutions can be applied to statements.
 We write $\delta : \Gamma \lei \Delta$ and say
 \define{$\Delta$ is more informative than $\Gamma$} if,
 for each $K \in \K$, there is a 
-$K$-substitution from $\Gamma$ to $\Delta$ (written $\delta_K$) such that
+$K$-substitution $\delta_K$ from $\Gamma$ to $\Delta$ such that
 if $v D \in \Gamma$ and $S \in \sem{v D}$ then
-%% $\Delta \semidrop n$ is defined and
 $\Delta \entails \delta S$.
 (We write $\delta S$ for the simultaneous application of every $\delta_K$ to
 $S$.)
+\TODO{Can we simplify this without making it too concrete?}
 
 If $\delta : \Gamma \lei \Delta$ and $\theta : \Gamma \lei \Delta$, then we
 consider $\delta$ and $\theta$ to be equal if, for every statement $S$,
@@ -579,9 +579,8 @@ For our running example, the sort $\TY$ of type variables, substitution is
 defined as one would expect.
 Let $\types{\Delta}$ be the set of types $\tau$ such that
 $\Delta \entails \tau \type$. 
-A \define{$\TY$-substitution from $\Gamma$ to $\Delta$} is a substitution from
-$\V_\TY(\Gamma)$ to $\types{\Delta}$ that applies to types and statements
-containing types in the obvious way.
+A $\TY$-substitution then maps type variables to types, so it can be applied
+to types and statements in the usual way.
 
 
 \subsection{Stability}
@@ -1329,6 +1328,10 @@ $$
 \caption{Rules for scheme assignment to term variables}
 \label{fig:termVarSchemeRules}
 \end{figure}
+
+We are not going to substitute for term variables, so we let $\T_\TM = \V_\TM$
+and assume that $\TM$-substitutions are always the identity map.
+\TODO{Comment on what would happen if we did allow term substitutions.}
 
 
 % Now we can give the full definition of context entries that we postponed earlier.
