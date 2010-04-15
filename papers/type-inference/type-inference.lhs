@@ -535,7 +535,7 @@ The |popEntry| function removes and returns the topmost entry from the context.
 
 \section{Information and stable statements}
 
-\subsection{The information order}
+\subsection{Information order}
 
 Intuitively, defining a variable cannot make equations cease to hold.
 More generally, if we rely on the context to tell us what we may
@@ -562,12 +562,6 @@ consider $\delta$ and $\theta$ to be equal if, for every statement $S$,
 $\Delta \entails \delta S  \Leftrightarrow  \Delta \entails \theta S$.
 \TODO{Is this what we want for proving correctness of \textsc{Repossess} later?}
 
-Let $\types{\Gamma}$ be the set of types $\tau$ such that
-$\Gamma \entails \tau \type$. 
-A \define{$\TY$-substitution from $\Gamma$ to $\Delta$} is a substitution from
-$\V_\TY(\Gamma)$ to $\types{\Delta}$ that applies to types and statements in
-the obvious way.
-
 We may omit $\delta$ and write $\Gamma \lei \Delta$ if we are only interested
 in the existence of a suitable substitution. This relation between contexts
 captures the notion of \define{information increase}: $\Delta$ supports all the
@@ -576,7 +570,18 @@ statements corresponding to definitions in $\Gamma$.
 %% Moreover, this will still hold if we truncate both $\Gamma$ and $\Delta$ after
 %% any number of $\fatsemi$ separators.
 
-\TODO{Forward pointer to $\fatsemi$}
+This definition of information increase is not quite complete, because it does
+not place any constraints on the order of context entries, other than the
+dependency order of variables in declarations. We will later see how to extend
+$\lei$ to capture the order of entries at an appropriate level of precision. 
+
+For our running example, the sort $\TY$ of type variables, substitution is
+defined as one would expect.
+Let $\types{\Delta}$ be the set of types $\tau$ such that
+$\Delta \entails \tau \type$. 
+A \define{$\TY$-substitution from $\Gamma$ to $\Delta$} is a substitution from
+$\V_\TY(\Gamma)$ to $\types{\Delta}$ that applies to types and statements
+containing types in the obvious way.
 
 
 \subsection{Stability}
@@ -1790,7 +1795,7 @@ We define the type inference problem $\Pinf{}$ by
 \In{\Pinf{}} &= Term  \\
 \Out{\Pinf{}} &= Type  \\
 \Pre{\Pinf{}}(t) &= \valid  \\
-\Post{\Pinf{}}(t)(\tau) &= t : \tau  \\
+\Post{\Pinf{}}(t)(\tau) &= \tau \type \wedge t : \tau  \\
 \R{\Pinf{}}(\tau)(\upsilon) &= \tau \equiv \upsilon
 \end{align*}
 
