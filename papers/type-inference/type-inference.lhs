@@ -374,7 +374,9 @@ $$\name{Lookup}
        {\Gamma \entails S}.$$
 
 Applications of the \textsc{Lookup} rule are the \scare{variables} of
-derivations. \TODO{Expand on what this means.}
+derivations. 
+%%%\TODO{Expand on what this means.}
+Just as variable names are the atoms out of which compound expressiosn get built, instances of \textsc{Lookup} are the axiom leaves out of which complex derivations of judgments are built. 
 
 We define the statement $\tau \type$ by taking
 $\sem{\hole{\alpha}} = \{ \alpha \type \}$
