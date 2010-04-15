@@ -400,7 +400,7 @@ and hence their meaning.
 We therefore add bindings $\;\defn \tau$ to $\D_\TY$ for every type $\tau$, and
 let $\ok_\TY (\defn \tau) = \tau \type$.
 
-\TODO{Omit this, or move it?}
+\TODO{Omit this, or move it? Suggest, like declaring instances, that we define \FTV{\alpha} and \FTV{\tau \arrow \upsilon} in 2.1, and then add to it as we go. For example, we haven't defined yet what a 'suffix' is, even\ldots}
 We define the set of free type variables of a type or context suffix thus:
 \begin{align*}
 \FTV{\alpha}    &= \{ \alpha \} \\
@@ -466,7 +466,16 @@ occur in a type variable binding must be defined earlier in the list.
 the type system, though that would be possible in a language such as Agda.)
 A context suffix is a (forwards) list containing only type variable definitions.
 
+%%%\TODO{Suggest we have 
+%%%
+%%%  data Entry = EntT TyEntry | notTypeVar
+%%%
+%%%  then types of Suffix and onTop simplify\ldots
+%%%}
+
 < data Entry = Name := Maybe Type | notTypeVar
+
+\TODO{The constructors of |Maybe| are abbreviated to |Nothing| and |Just|}
 
 %if False
 
@@ -499,7 +508,7 @@ Since |Type| and |Suffix| are built from |Foldable| functors containing names, w
 >     alpha <? t = any (alpha <?) t
 
 We work in the |Contextual| monad (computations that can fail and mutate the
-context).  
+context), defined as follows:   
 
 > type Contextual  = StateT (Name, Context) Maybe
 
