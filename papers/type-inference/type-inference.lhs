@@ -673,14 +673,21 @@ and so $\Delta \entails \delta \Sbind{v D}{S}$.
 
 \subsection{What is a problem?}
 
-\TODO{A statement you wish true, or more generally, statement for which
-you wish a witness.
-We want algorithms which find witnesses to statements, preferably
-general ones.
-Refine statements to problems.
-Set of well-posed questions, category of answers.}
+A problem represents a statement we wish to make hold by increasing information
+in the context. More generally, it is a statement with distinguished output
+positions for which we wish to find a witness in a more informative context.
+Unification is an example of the first kind of problem and type inference an
+example of the second.
 
-A \define{problem} $P$ consists of
+We are interested in creating algorithms to solve problems, preferably in as
+general a way as possible (that is, by making the smallest information increase
+necessary to find a solution). This corresponds to finding a most general
+unifier, in the case of unification, or a principal type in the case of type
+inference.
+
+\TODO{Set of well-posed questions, category of answers.
+Make the categorical structure clearer.}
+Formally, a \define{problem} $P$ consists of
 \begin{itemize}
 \item sets \In{P}\ and \Out{P}\ of input and output parameters,
 \item a precondition map $\Pre{P} : \In{P} \rightarrow \Ss$,
