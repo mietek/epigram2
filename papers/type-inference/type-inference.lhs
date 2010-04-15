@@ -571,8 +571,6 @@ A \define{$\TY$-substitution from $\Gamma$ to $\Delta$} is a substitution from
 $\V_\TY(\Gamma)$ to $\types{\Delta}$ that applies to types and statements in
 the obvious way.
 
-\TODO{Idea of information order as substitution on derivations.}
-
 We may omit $\delta$ and write $\Gamma \lei \Delta$ if we are only interested
 in the existence of a suitable substitution. This relation between contexts
 captures the notion of \define{information increase}: $\Delta$ supports all the
@@ -596,6 +594,7 @@ $$\Gamma \entails S  ~\wedge~  \delta : \Gamma \lei \Delta
     \Delta \entails \delta S.$$
 This says that we can extend a simultaneous substitution on syntax to a
 simultaneous substitution on derivations.
+\TODO{Expand on this.}
 
 \TODO{Stability of == just by strict positivity of recursive hypotheses
 and stability of non-recursive hypotheses.
@@ -677,7 +676,7 @@ statement is stable.
 
 
 
-\section{Unification Problems}
+\section{Problems}
 
 \subsection{What is a problem?}
 
@@ -730,7 +729,7 @@ $\delta : \Jmin{\Gamma}{P_a(b)}{\Delta}$ to mean that
 $(b, \delta, \Delta)$ is a minimal solution of the $P$-instance $a$.
 
 
-\subsection{Closure under conjunction.}
+\subsection{The Optimist's Lemma}
 
 If $P$ and $Q$ are problems, then $P \wedge Q$ is a problem with
 \begin{align*}
@@ -740,9 +739,6 @@ If $P$ and $Q$ are problems, then $P \wedge Q$ is a problem with
 \Post{P \wedge Q} (a, b) (c, d) &= \Post{P}(a)(c) \wedge \Post{Q}(b)(d)  \\
 \R{P \wedge Q}(a, b)(c, d)      &= \R{P}(a)(c) \wedge \R{Q}(b)(d)  \\
 \end{align*}
-
-
-\subsection{The Optimist's Lemma}
 
 The point of all this machinery is to be able to state and prove the following 
 lemma, stating that the minimal solution to a conjunction of problems can be
@@ -1201,7 +1197,14 @@ which must be placed into the context before it.
 %%%suffix, since these are both |Foldable| functors containing names.
 
 
-\section{Type schemes}
+\section{Type schemes and term variables}
+
+\subsection{Introducing type schemes}
+
+Having implemented unification, we now turn to the problem of type inference
+for terms. We will reuse the abstract framework already introduced, defining
+a new sort $\TM$ for term variables. To handle polymorphism, these need to
+be associated with type schemes rather than monomorphic types.
 
 A \define{type scheme} $\sigma$ is a type wrapped in one or more $\forall$
 quantifiers or let bindings, with the syntax
@@ -1274,17 +1277,10 @@ $$
 %endif
 
 
-It is convenient to represent bound variables 
-%%%using 
-   by 
-de Brujin indices and
-free variables (i.e.\ those defined in the context) 
-%%%using 
-   by 
-names. Moreover, we %%%can
-use the Haskell type system to prevent some incorrect manipulations of 
-%%%the 
-indices by defining a natural number type
+It is convenient to represent bound variables by de Brujin indices and free
+variables (i.e.\ those defined in the context) by names. Moreover, we use the
+Haskell type system to prevent some incorrect manipulations of indices by
+defining a natural number type
 
 > data Index a = Z | S a
 
@@ -1311,16 +1307,15 @@ type scheme (written $.\tau$), as the latter will be represented by
 |Type tau :: Scheme|.
 
 
-\section{Making contexts more informative}
+\subsection{Term variables}
 
-Now we can define another sort, $\TM \in \K$, with $\V_\TM$ some set of term
-variables and $\D_\TM$ containing scheme assignments of the form $\asc \sigma$.
-The statement $D \ok_\TM$ is easy to define:
-$$\Rule{\sigma \scheme}
-       {\asc \sigma \ok_\TM}.$$
-Let $x$ range over term variables. 
+Let $\V_\TM$ be some set of term variables and let $x$ range over $\V_\TM$.
+Term variable declarations $\D_\TM$ are scheme assignments of the form
+$\asc \sigma$, with
+$\ok_\TM (\asc \sigma) = \sigma \scheme$.
+
 We define the jugment $x \hasc \sigma$ by the rules in
-Figure~\ref{fig:termVarSchemeRules}, and define
+Figure~\ref{fig:termVarSchemeRules}, and let
 $\sem{x \asc \sigma}_\TM = \{ x \hasc \sigma \}$.
 Thus a term variable has a scheme $\sigma'$ if it is given scheme $\sigma$ in
 the context and $\sigma$ specialises to $\sigma'$.
@@ -1377,6 +1372,7 @@ $$
 % $\Gamma \entails x \asc \sigma$ to mean that $x \asc \sigma \in \Gamma$ and
 % moreover that this is the rightmost (i.e.\ most local) occurrence of $x$.
 
+\TODO{Move after $\fatsemi$ introduction.}
 The full data type of context entries is thus:
 
 > data Entry  =  Name := Maybe Type
@@ -1384,7 +1380,6 @@ The full data type of context entries is thus:
 >             |  LetGoal
 
 
-\section{Type scheme operations}
 
 \subsection{Specialisation}
 
@@ -1587,6 +1582,8 @@ to the right of the |LetGoal| marker.
 
 \section{Type inference}
 
+\subsection{Type assignment system}
+
 The syntax of terms is
 $$t ::= x ~||~ t~t ~||~ \lambda x . t ~||~ \letIn{x}{t}{t}.$$
 % where $x$ ranges over some set of term variables.
@@ -1711,6 +1708,9 @@ $$\Gamma, \Xi \entails t : \tau
 
 %endif
 
+
+
+\subsection{Constructing a type inference algorithm}
 
 \TODO{Introduce $\fatsemi$}
 
@@ -1853,6 +1853,8 @@ $$
 \label{fig:inferRules}
 \end{figure}
 
+
+\subsection{Soundness and completeness}
 
 We say $\Theta$ is a \define{subcontext} of $\Gamma$, written
 $\Theta \subcontext \Gamma$, if $\Gamma = \Theta; \Gamma'$ for some context
