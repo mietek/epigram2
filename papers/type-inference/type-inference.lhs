@@ -74,7 +74,7 @@
 \newcommand{\ok}{\ensuremath{~\mathbf{ok}}}
 \newcommand{\emptycontext}{\ensuremath{\varepsilon}}
 \newcommand{\notTypeVar}{\ensuremath{\ldots}}
-\newcommand{\letGoal}{\ensuremath{\mathbf{let}}}
+\newcommand{\letGoal}{\ensuremath{\fatsemi}}
 \newcommand{\letIn}[3]{\ensuremath{\mathrm{let}~ #1 \!:=\! #2 ~\mathrm{in}~ #3}}
 \newcommand{\letS}[3]{\ensuremath{(!#1 \!:=\! #2 ~\mathrm{in}~ #3)}}
 \newcommand{\boxrule}[1]{\begin{center}\framebox{\ensuremath{#1}}\end{center}}
@@ -339,10 +339,6 @@ Figure~\ref{fig:contextValidityRules}.
 $$
 \Axiom{\emptycontext \entails \valid}
 \qquad
-%% \Rule{\Gamma \entails \valid}
-%%      {\Gamma \fatsemi \entails \valid}
-%% $$
-%% $$
 \Rule{\Gamma \entails \valid    \quad    \Gamma \entails \ok_K D}
      {\Gamma, v D \entails \valid}
 \side{v \in \V_K \setminus \V_K(\Gamma)}
@@ -580,9 +576,6 @@ statements corresponding to definitions in $\Gamma$.
 %% Moreover, this will still hold if we truncate both $\Gamma$ and $\Delta$ after
 %% any number of $\fatsemi$ separators.
 
-%% Note that if $\delta : \Gamma \lei \Delta$ then
-%% $\delta||_{\Gamma \semidrop n} : \Gamma \semidrop n \lei \Delta \semidrop n$. 
-
 \TODO{Forward pointer to $\fatsemi$}
 
 
@@ -620,13 +613,10 @@ $$\gamma_1 : \Gamma_0 \lei \Gamma_1  ~\wedge~  \gamma_2 : \Gamma_1 \lei \Gamma_2
 
 \begin{proof}
 Reflexivity follows immediately from the \textsc{Lookup} rule.
-For transitivity, suppose $v D \in \Gamma_0 \semidrop n$ and $S \in \sem{v D}$.
-Then $\Gamma_1 \semidrop n \entails \gamma_1 S$ since
-$\gamma_1 : \Gamma_0 \lei \Gamma_1$.
-Now by stability applied to $\gamma_1 S$ using
-$\gamma_2||_{\Gamma_1 \semidrop n} :
-    \Gamma_1 \semidrop n \lei \Gamma_2 \semidrop n$, we have
-$\Gamma_2 \semidrop n \entails \gamma_2\gamma_1\sem{v D}$ .
+For transitivity, suppose $v D \in \Gamma_0$ and $S \in \sem{v D}$.
+Then $\Gamma_1 \entails \gamma_1 S$ since $\gamma_1 : \Gamma_0 \lei \Gamma_1$.
+Now by stability applied to $\gamma_1 S$ using $\gamma_2$, we have
+$\Gamma_2 \entails \gamma_2\gamma_1 S$ as required.
 \end{proof}
 
 
@@ -1372,13 +1362,6 @@ $$
 % $\Gamma \entails x \asc \sigma$ to mean that $x \asc \sigma \in \Gamma$ and
 % moreover that this is the rightmost (i.e.\ most local) occurrence of $x$.
 
-\TODO{Move after $\fatsemi$ introduction.}
-The full data type of context entries is thus:
-
-> data Entry  =  Name := Maybe Type
->             |  TermName ::: Scheme
->             |  LetGoal
-
 
 
 \subsection{Specialisation}
@@ -1709,21 +1692,93 @@ $$\Gamma, \Xi \entails t : \tau
 %endif
 
 
+\subsection{Dividing up the context}
 
-\subsection{Constructing a type inference algorithm}
+\TODO{Motivation!}
 
-\TODO{Introduce $\fatsemi$}
+In addition to variable declarations $v D$, we need another kind of context
+entry, the $\fatsemi$ separator. This allows us to make use of the property,
+so far observed but not made use of, that order in the context is important
+and we move declarations left as little as possible.
+We therefore add the context validity rule
+$$
+\Rule{\Gamma \entails \valid}
+     {\Gamma \fatsemi \entails \valid}.
+$$
 
+The full data type of context entries is thus:
+
+> data Entry  =  Name := Maybe Type
+>             |  TermName ::: Scheme
+>             |  LetGoal
+
+We also need to refine the $\lei$ relation.
+Let $\semidrop$ be the partial function from contexts and natural numbers to
+contexts that takes $\Gamma \semidrop n$ to $\Gamma$ truncated after $n$
+$\fatsemi$ separators, provided $\Gamma$ contains at least $n$ of them. It is
+defined by
+\begin{align*}
+\Xi \semidrop 0 &= \Xi  \\
+\Xi \fatsemi \Gamma \semidrop 0 &= \Xi  \\
+\Xi \fatsemi \Gamma \semidrop n+1 &= \Xi \fatsemi (\Gamma \semidrop n)  \\
+\Xi \semidrop n+1 &~\mathrm{undefined}
+\end{align*}
+
+We write $\delta : \Gamma \lei \Delta$ if,
+for each $K \in \K$, there is a 
+$K$-substitution from $\Gamma$ to $\Delta$ (written $\delta_K$) such that
+if $v D \in \Gamma \semidrop n$ and $S \in \sem{v D}$ then
+$\Delta \semidrop n$ is defined and
+$\Delta \entails \delta S$.
+
+This definition of $\Gamma \lei \Delta$ is stronger than the previous definition,
+because it requires a correspondence between the sections of $\Gamma$ and
+$\Delta$, such that declarations in the first $n$ sections of $\Gamma$ can be
+interpreted over the first $n$ sections of $\Delta$.
+However, it is mostly straightforward to verify that the previous results go
+through with the new definition.
+
+%% Note that if $\delta : \Gamma \lei \Delta$ then
+%% $\delta||_{\Gamma \semidrop n} : \Gamma \semidrop n \lei \Delta \semidrop n$. 
+
+The only place where the change is nontrivial is in the unification algorithm,
+because it acts structurally over the context, so we need to specify what happens
+when it finds a $\fatsemi$ separator. It turns out that these can simply be
+ignored, so we add the following algorithmic rules:
+$$
+\name{Skip}
+\Rule{\Junify{\Gamma_0}{\alpha}{\beta}{\Gamma_1}}
+     {\Junify{\Gamma_0 \fatsemi}{\alpha}{\beta}{\Gamma_1 \fatsemi}}
+$$
+$$
+\name{Repossess}
+\Rule{\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\Xi}{\Gamma_1}}
+     {\Jinstantiate{\Gamma_0 \fatsemi}{\alpha}{\tau}{\Xi}{\Gamma_1 \fatsemi}}
+$$
+The \textsc{Skip} rule is relatively straightforward, but the \textsc{Repossess}
+rule is nontrivial. It is so named because it moves the variable declarations in
+$\Xi$ to the left of the $\fatsemi$ separator, thereby \scare{repossessing} them.
+Despite this, unification does still produce a most general solution, as we
+shall see.
+
+\TODO{Correctness proof for unification. Explain how sanity conditions on $\Xi$,
+which we have been following all along, ensure generality is preserved.}
+
+
+If $S$ is a statement then $\fatsemi S$ is a composite statement given by
 $$
 \Rule{\Gamma \fatsemi \entails S}
-     {\Gamma \entails \fatsemi S}
+     {\Gamma \entails \fatsemi S}.
 $$
-
-Suppose $S$ is stable, $\Gamma \entails \fatsemi S$ and
-$\delta : \Gamma \lei \Delta$. Then $\Gamma \fatsemi \entails S$.
-Now $\delta : \Gamma \fatsemi \lei \Delta \fatsemi$
-so by stability, $\Delta \fatsemi \entails \delta S$ and hence
+If $S$ is stable then $\fatsemi S$ is stable, which we can see as follows.
+Suppose $\Gamma \entails \fatsemi S$ and $\delta : \Gamma \lei \Delta$. Then
+$\Gamma \fatsemi \entails S$, and $\delta : \Gamma \fatsemi \lei \Delta \fatsemi$
+by the new definition of the $\lei$ relation. Hence
+$\Delta \fatsemi \entails \delta S$ by stability and so
 $\Delta \entails \delta (\fatsemi S)$.
+
+
+\subsection{Constructing a type inference algorithm}
 
 As with unification, we wish to translate these declarative rules into an
 algorithm for type inference. 

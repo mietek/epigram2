@@ -20,15 +20,6 @@
 
 \subsection{Increasing information}
 
-Let $\semidrop$ be a partial function from contexts and natural numbers to
-contexts, defined by
-\begin{align*}
-\Xi \semidrop 0 &= \Xi  \\
-\Xi \fatsemi \Gamma \semidrop 0 &= \Xi  \\
-\Xi \fatsemi \Gamma \semidrop n+1 &= \Xi \fatsemi (\Gamma \semidrop n)  \\
-\Xi \semidrop n+1 &~\mathrm{undefined}
-\end{align*}
-
 % Let $\D_K(\Gamma) = \{ D \in \D_K ~||~ \Gamma \entails D \ok_K \}$.
 
 
@@ -171,3 +162,14 @@ the example of Hindley-Milner type inference.
 % \end{prooftree}
 
 %endif
+
+
+
+Reflexivity follows immediately from the \textsc{Lookup} rule.
+For transitivity, suppose $v D \in \Gamma_0 \semidrop n$ and $S \in \sem{v D}$.
+Then $\Gamma_1 \semidrop n \entails \gamma_1 S$ since
+$\gamma_1 : \Gamma_0 \lei \Gamma_1$.
+Now by stability applied to $\gamma_1 S$ using
+$\gamma_2||_{\Gamma_1 \semidrop n} :
+    \Gamma_1 \semidrop n \lei \Gamma_2 \semidrop n$, we have
+$\Gamma_2 \semidrop n \entails \gamma_2\gamma_1\sem{v D}$ .
