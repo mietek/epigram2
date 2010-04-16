@@ -340,6 +340,9 @@ Let $\V_K(\Gamma)$ be the set of $K$-variables in $\Gamma$.
 We define the context validity statement $\valid$ as shown in
 Figure~\ref{fig:contextValidityRules}.
 
+\TODO{Formally introduce statements and sanity conditions in a theorem-like
+environment?}
+
 \begin{figure}[ht]
 \boxrule{\Gamma \entails \valid}
 $$
@@ -725,6 +728,8 @@ $\theta = \zeta \compose \delta$ and $\Theta \entails \R{P} (\zeta b, c)$.
 We write $P_a(b)$ for $\Post{P}(a)(b)$ and
 $\delta : \Jmin{\Gamma}{P_a(b)}{\Delta}$ to mean that
 $(b, \delta, \Delta)$ is a minimal solution of the $P$-instance $a$.
+
+\TODO{Define what it means for a rule system to be algorithmic.}
 
 
 \subsection{The Optimist's Lemma}
@@ -1240,6 +1245,8 @@ $$
 \end{figure}
 
 
+\TODO{In practice, we make schemes by generalisation over types.}
+
 We write $\gen{\Xi}{\sigma}$ for the generalisation of the type scheme $\sigma$
 over the list of type variable declarations $\Xi$. This is defined as follows:
 \begin{align*}
@@ -1332,7 +1339,7 @@ Term variable declarations $\D_\TM$ are scheme assignments of the form
 $\asc \sigma$, with
 $\ok_\TM (\asc \sigma) = \sigma \scheme$.
 
-We define the jugment $x \hasc \sigma$ by the rules in
+We define the statement $x \hasc \sigma$ by the rules in
 Figure~\ref{fig:termVarSchemeRules}, and let
 $\sem{x \asc \sigma}_\TM = \{ x \hasc \sigma \}$.
 Thus a term variable has a scheme $\sigma'$ if it is given scheme $\sigma$ in
@@ -1573,14 +1580,15 @@ $\Delta \entails \delta (\fatsemi S)$.
 To transform a rule into an algorithmic form, we proceed clockwise starting from
 the conclusion. For each hypothesis, we must ensure that the problem is fully
 specified, inserting variables to stand for unknown problem inputs. Moreover, we
-cannot pattern match on problem outputs, so we ensure there are schematic variables
-in output positions, fixing things up with appeals to unification. 
+cannot pattern match on problem outputs, so we ensure there are schematic
+variables in output positions, fixing things up with appeals to unification. 
 
-Consider the rule for application, written to highlight problem inputs and outputs
-as
+Consider the rule for application, written to highlight problem inputs and
+outputs as
 $$\Rule{\Pinf{f}(\upsilon \arrow \tau)    \quad \Pinf{a}(\upsilon)}
        {\Pinf{f a}(\tau)}.$$
 We change this to the equivalent form
+\TODO{two steps, explained more}
 $$\Rule{\Pinf{f}(\chi)
         \quad
         \Pinf{a}(\upsilon)
@@ -1701,9 +1709,8 @@ By structural induction on $\sigma$.
 
 \begin{lemma}[Completeness of specialisation]
 \label{lem:specialiseComplete}
-If $\Gamma \entails x \hasc \sigma$ then
-$\Jhast{\Gamma}{x}{\tau}{\Gamma, \Xi}$
-for some type $\tau$ and list of type variable declarations $\Xi$.
+If $\Gamma \entails x \hasc \gen{\Xi}{\tau}$ then
+$\Jhast{\Gamma}{x}{\tau}{\Gamma, \Xi}$.
 
 % $$\forall \upsilon \forall \phi : \Gamma \lei \Phi . (
 %     \Phi \entails \phi\sigma \succ \upsilon
@@ -1719,7 +1726,7 @@ for some type $\tau$ and list of type variable declarations $\Xi$.
 \end{lemma}
 
 \begin{proof}
-
+\TODO{Trivial, but is this what we want?}
 \end{proof}
 
 \begin{lemma}[Minimality of specialisation]
