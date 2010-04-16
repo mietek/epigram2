@@ -780,8 +780,11 @@ and
 $\Theta \entails \R{P \wedge Q}(\zeta_2 (\gamma_2 r), \zeta_2 s)(r', s')$.
 \end{proof}
 
-\TODO{This is not the only decomposition justified by stability (cf.
-McAdam) ; there is a transactional flavour.}
+This sequential approach to problem solving is not the only decomposition
+justified by stability. The account of unification given by
+\citet{mcadam_unification_1998} amounts to a concurrent, transactional
+decomposition of problems. The same context is extended via multiple different
+substitutions, then these are unified to produce a single substitution.
 
 
 \section{Deriving a unification algorithm}
