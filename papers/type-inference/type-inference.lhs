@@ -280,6 +280,13 @@ types.
 %% (All of these symbols may be primed or subscripted.)
 %% We use $\Xi$ to denote a context suffix containing only type variable declarations.
 
+We write $\FTV{\tau}$ for the free type variables of $\tau$, defined as follows.
+This will later be extended to other syntactic objects.
+\begin{align*}
+\FTV{\alpha}                &= \{ \alpha \} \\
+\FTV{\tau \arrow \upsilon}  &= \FTV{\tau} \cup \FTV{\upsilon}
+\end{align*}
+
 The foldable functor |Ty| defines types in our object language parameterised by
 the type of variable names, which will be useful later. Thanks to a language
 extension in GHC 6.12 \citep{ghc_team_glorious_2009} we can simply
@@ -393,18 +400,14 @@ of variables, so we could then substitute them out. However, finding a value for
 a variable does not render it meaningless, in fact the reverse is true. We will
 therefore extend declarations instead, allowing variables to retain their values
 and hence their meaning.
-
-We therefore add bindings $\;\defn \tau$ to $\D_\TY$ for every type $\tau$, and
+We extend $\D_\TY$ with bindings $\;\defn \tau$ for every type $\tau$, and
 let $\ok_\TY (\defn \tau) = \tau \type$.
 
-\TODO{Omit this, or move it? Suggest, like declaring instances, that we define \FTV{\alpha} and \FTV{\tau \arrow \upsilon} in 2.1, and then add to it as we go. For example, we haven't defined yet what a 'suffix' is, even\ldots}
-We define the set of free type variables of a type or context suffix thus:
-\begin{align*}
-\FTV{\alpha}    &= \{ \alpha \} \\
-\FTV{\tau \arrow \upsilon}  &= \FTV{\tau} \cup \FTV{\upsilon}  \\
-\FTV{\Xi}       &= \bigcup \{ \FTV{\tau} ~||~ \alpha \defn \tau \in \Xi \}  \\
-\FTV{\tau, \Xi} &= \FTV{\tau} \cup \FTV{\Xi}.
-\end{align*}
+If $\Xi$ is a list of type variable declarations, we define its set of free
+type variables $\FTV{\Xi}$ by
+$$\FTV{\Xi} = \bigcup \{ \FTV{\tau} ~||~ \alpha \defn \tau \in \Xi \}.$$
+If $X_0, \ldots, X_n$ are types or lists of type variable declarations then
+$$\FTV{X_0, \ldots, X_n} = \FTV{X_0} \cup \ldots \cup \FTV{X_n}.$$
 
 
 \subsection{Type equations}
@@ -499,6 +502,8 @@ context), defined as follows:
 
 > type Contextual  = StateT (TyName, Context) Maybe
 
+\TODO{Is it right to say $\alpha$ is fresh wrt $\Gamma$ here? Perhaps |fresh|
+should move to |freshen| et al. or vice versa?}
 The |TyName| component is the next fresh type variable name to use;
 it is an implementation detail that is not mentioned in the typing rules. 
 Our choice of |TyName| means that it is easy to choose a name fresh with respect to a |Context|: 
