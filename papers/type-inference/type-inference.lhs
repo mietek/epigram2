@@ -103,8 +103,9 @@
 \newcommand{\Jtype}[4]{\Judge{#1}{#2 : #3}{#4}}
 \newcommand{\Jhast}[4]{\Judge{#1}{#2 ~\hat:~ #3}{#4}}
 
-\newcommand{\Pinf}[2]{\ensuremath{#1 \,?_I\, #2}}
-\newcommand{\Puni}[2]{\ensuremath{#1 \equiv #2 \,?_U}}
+\newcommand{\Prob}[3]{\ensuremath{#2 \,?_{#1}\, #3}}
+\newcommand{\Pinf}[2]{\Prob{I}{#1}{#2}}
+\newcommand{\Puni}[2]{\Prob{U}{#1 \equiv #2}{}}
 
 \newcommand{\name}[1]{\ensuremath{\mathrm{\textsc{#1}} \;}}
 \newcommand{\side}[1]{\ensuremath{\; #1}}
@@ -734,8 +735,8 @@ The solution $(b, \delta, \Delta)$ is \define{minimal} if for any solution
 $(c, \theta, \Theta)$ there exists $\zeta : \Delta \lei \Theta$ such that
 $\theta = \zeta \compose \delta$ and $\Theta \entails \R{P} (\zeta b, c)$.
 
-We write $P_a(b)$ for $\Post{P}(a)(b)$ and
-$\delta : \Jmin{\Gamma}{P_a(b)}{\Delta}$ to mean that
+We write $\Prob{P}{a}{b}$ for $\Post{P}(a)(b)$ and
+$\delta : \Jmin{\Gamma}{\Prob{P}{a}{b}}{\Delta}$ to mean that
 $(b, \delta, \Delta)$ is a minimal solution of the $P$-instance $a$.
 
 \TODO{Define what it means for a rule system to be algorithmic.}
@@ -759,10 +760,10 @@ extending it to solve the second.
 
 \begin{lemma}[The Optimist's Lemma]
 The following inference rule is admissible:
-$$\Rule{\gamma_1 : \Jmin{\Gamma_0}{P_a(r)}{\Gamma_1}
-       \quad  \gamma_2 : \Jmin{\Gamma_1}{Q_b(s)}{\Gamma_2}}
+$$\Rule{\gamma_1 : \Jmin{\Gamma_0}{\Prob{P}{a}{r}}{\Gamma_1}
+       \quad  \gamma_2 : \Jmin{\Gamma_1}{\Prob{Q}{b}{s}}{\Gamma_2}}
        {\gamma_2 \compose \gamma_1 :
-           \Jmin{\Gamma_0}{P \wedge Q_{(a, b)}(\gamma_2 r, s)}{\Gamma_2}}$$
+         \Jmin{\Gamma_0}{\Prob{P \wedge Q}{(a, b)}{(\gamma_2 r, s)}}{\Gamma_2}}$$
 \end{lemma}
 
 \TODO{Make the proof prettier, perhaps using a diagram.}
@@ -771,21 +772,21 @@ $$\Rule{\gamma_1 : \Jmin{\Gamma_0}{P_a(r)}{\Gamma_1}
 We have that $\gamma_2 \compose \gamma_1 : \Gamma_0 \lei \Gamma_2$ by 
 Lemma~\ref{lei:preorder}. 
 
-To show $\Gamma_2 \entails P \wedge Q_{(a, b)} (\gamma_2 r, s)$, it
-suffices to show $\Gamma_2 \entails P_a(\gamma_2 r)$ and
-$\Gamma_2 \entails Q_b(s)$. The latter holds by assumption. For the
-former, note that $\Gamma_1 \entails P_a(r)$ and hence
-$\Gamma_2 \entails \gamma_2 P_a(r)$ by stability of $P_a(r)$.
-But $\gamma_2 P_a(r) = P_a(\gamma_2 r)$ by definition, so we are done.
+To show $\Gamma_2 \entails \Prob{P \wedge Q}{(a, b)}{(\gamma_2 r, s)}$, it
+suffices to show $\Gamma_2 \entails \Prob{P}{a}{\gamma_2 r}$ and
+$\Gamma_2 \entails \Prob{Q}{b}{s}$. The latter holds by assumption. For the
+former, note that $\Gamma_1 \entails \Prob{P}{a}{r}$ and hence
+$\Gamma_2 \entails \gamma_2 (\Prob{P}{a}{r})$ by stability of $\Prob{P}{a}{r}$.
+But $\gamma_2 (\Prob{P}{a}{r}) = \Prob{P}{a}{\gamma_2 r}$ by definition, so we are done.
 
 Finally, suppose there is some $\theta : \Gamma_0 \lei \Theta$ such that
-$\Theta \entails P \wedge Q_{(a, b)}(r', s')$, so
-$\Theta \entails P_a(r')$ and
-$\Theta \entails Q_b(s')$.
-Since $\gamma_1 : \Jmin{\Gamma_0}{P_a(r)}{\Gamma_1}$, there exists
+$\Theta \entails \Prob{P \wedge Q}{(a, b)}{(r', s')}$, so
+$\Theta \entails \Prob{P}{a}{r'}$ and
+$\Theta \entails \Prob{Q}{b}{s'}$.
+Since $\gamma_1 : \Jmin{\Gamma_0}{\Prob{P}{a}{r}}{\Gamma_1}$, there exists
 $\zeta_1 : \Gamma_1 \lei \Theta$ such that $\theta = \zeta_1 \compose \gamma_1$
 and $\Theta \entails \R{P}(\zeta_1 r)(r')$.
-But then $\gamma_2 : \Jmin{\Gamma_1}{Q_b(s)}{\Gamma_2}$, so there exists
+But then $\gamma_2 : \Jmin{\Gamma_1}{\Prob{Q}{b}{s}}{\Gamma_2}$, so there exists
 $\zeta_2 : \Gamma_2 \lei \Theta$ such that $\zeta_1 = \zeta_2 \compose \gamma_2$
 and $\Theta \entails \R{Q}(\zeta_2 s)(s')$.
 Hence 
@@ -1690,6 +1691,17 @@ $$
 
 \subsection{Specialisation}
 
+\TODO{Where should this subsection live?}
+
+Let $S$ be the problem given by
+\begin{align*}
+\In{S}                 &= \V_\TM  \\
+\Out{S}                &= Type  \\
+\Pre{S} (x)            &= \valid  \\
+\Post{S} (x, \tau)     &= \tau \type \wedge x \hasc .\tau  \\
+\R{S} (\tau, \upsilon) &= \tau \equiv \upsilon
+\end{align*}
+
 The judgment $\Jspec{\Gamma}{\sigma}{\tau}{\Gamma, \Xi}$ means
 that, starting with the context $\Gamma$, the scheme $\sigma$ specialises
 to the type $\tau$ when the context is extended with some type variable
@@ -1767,13 +1779,12 @@ $\Jhast{\Gamma}{x}{\tau}{\Gamma, \Xi}$.
 
 \begin{lemma}[Minimality of specialisation]
 \label{lem:specialiseMinimal}
-Define the problem $P_x(\tau) = x \hasc .\tau$.
 If $\Jhast{\Gamma}{x}{\tau}{\Gamma, \Xi}$ then
-$\Jmin{\Gamma}{P(x)(\tau)}{\Gamma, \Xi}$.
+$\Jmin{\Gamma}{\Prob{S}{x}{\tau}}{\Gamma, \Xi}$.
 \end{lemma}
 
 \begin{proof}
-Suppose $\theta : \Gamma \lei \Theta \entails P(x)(\upsilon)$.
+Suppose $\theta : \Gamma \lei \Theta \entails \Prob{S}{x}{\upsilon}$.
 By stability, $\Theta \entails x \hasc \sigma$.
 Examining the rules in Figure~\ref{fig:termVarSchemeRules}, the proof of
 $\Theta \entails x \hasc .\tau$ must specialise $\sigma$ with types
