@@ -17,6 +17,7 @@
 %format >=> = "\genarrow "
 %format <?  = "\in "
 %format ... = "\ldots "
+%format >-  = "\Yright "
 
 %format F0  = "\emptycontext"
 %format B0  = "\emptycontext"
@@ -88,8 +89,8 @@
 
 \newcommand{\arrow}{\ensuremath{\triangleright}}
 \newcommand{\defn}{\ensuremath{\!:=\!}}
-\newcommand{\asc}{\ensuremath{:\sim}}
-\newcommand{\hasc}{~\hat{::}~}
+\newcommand{\asc}{\ensuremath{\hasc}}
+\newcommand{\hasc}{\ensuremath{~\hat{::}~}}
 \newcommand{\hole}[1]{\ensuremath{#1 \!:= ?}}
 \newcommand{\contains}{\ensuremath{\ni}}
 
@@ -2283,7 +2284,7 @@ the $x$ binding removed.
 
 > infer (Lam x t) = do
 >     alpha  <- freshVar
->     tau    <- withDefinition (x ::: Type (V alpha)) (infer t)
+>     tau    <- x ::: Type (V alpha) >- infer t
 >     return (V alpha :-> tau)
 
 
@@ -2311,19 +2312,19 @@ and a context from which the $x$ binding can be extracted.
 
 > infer (Let x s t) = do
 >     sigma <- generaliseOver (infer s)
->     withDefinition (x ::: sigma) (infer t)
+>     x ::: sigma >- infer t
 
 
 
-The |withDefinition| operator appends a term variable definition to the context,
-evaluates its second argument, then removes the term variable definition.
+The |(>-)| operator appends a term variable declaration to the context,
+evaluates its second argument, then removes the declaration.
 
-> withDefinition :: TmEntry -> Contextual a -> Contextual a
-> withDefinition (x ::: sigma) f = do
+> (>-) :: TmEntry -> Contextual a -> Contextual a
+> x ::: sigma >- f = do
 >     modifyContext (:< TM (x ::: sigma))
->     result <- f
+>     tau <- f
 >     modifyContext extract
->     return result
+>     return tau
 >   where          
 >     extract ::  Context -> Context
 >     extract (_Gamma :< TM (y ::: _))
