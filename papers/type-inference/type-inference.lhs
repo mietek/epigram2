@@ -103,7 +103,8 @@
 \newcommand{\Jtype}[4]{\Judge{#1}{#2 : #3}{#4}}
 \newcommand{\Jhast}[4]{\Judge{#1}{#2 ~\hat:~ #3}{#4}}
 
-\newcommand{\Pinf}[1]{\mathrm{Inf}_{#1}}
+\newcommand{\Pinf}[2]{\ensuremath{#1 \,?_I\, #2}}
+\newcommand{\Puni}[2]{\ensuremath{#1 \equiv #2 \,?_U}}
 
 \newcommand{\name}[1]{\ensuremath{\mathrm{\textsc{#1}} \;}}
 \newcommand{\side}[1]{\ensuremath{\; #1}}
@@ -1495,17 +1496,13 @@ $$
 
 
 As with unification, we wish to translate these declarative rules into an
-algorithm for type inference. 
-% For each term $t$, we define the problem
-% $\Pinf{t}$ on types with equivalence by $\Pinf{t}(\tau) = t : \tau$,
-% and we seek an algorithm to find a minimal solution of $\Pinf{t}$.
-We define the type inference problem $\Pinf{}$ by
+algorithm for type inference. We define the type inference problem $I$ by
 \begin{align*}
-\In{\Pinf{}} &= Term  \\
-\Out{\Pinf{}} &= Type  \\
-\Pre{\Pinf{}}(t) &= \valid  \\
-\Post{\Pinf{}}(t)(\tau) &= \tau \type \wedge t : \tau  \\
-\R{\Pinf{}}(\tau)(\upsilon) &= \tau \equiv \upsilon
+\In{I} &= Term  \\
+\Out{I} &= Type  \\
+\Pre{I}(t) &= \valid  \\
+\Post{I}(t)(\tau) &= \tau \type \wedge t : \tau  \\
+\R{I}(\tau)(\upsilon) &= \tau \equiv \upsilon
 \end{align*}
 
 
@@ -1607,19 +1604,32 @@ specified, inserting variables to stand for unknown problem inputs. Moreover, we
 cannot pattern match on problem outputs, so we ensure there are schematic
 variables in output positions, fixing things up with appeals to unification. 
 
+\TODO{One possible notation for problems: $?_P$ as an infix operator
+with the input parameters before it and the output parameters after it.
+Any other suggestions?}
+
 Consider the rule for application, written to highlight problem inputs and
 outputs as
-$$\Rule{\Pinf{f}(\upsilon \arrow \tau)    \quad \Pinf{a}(\upsilon)}
-       {\Pinf{f a}(\tau)}.$$
-We change this to the equivalent form
-\TODO{two steps, explained more}
-$$\Rule{\Pinf{f}(\chi)
+$$\Rule{\Pinf{f}{(\upsilon \arrow \tau)}  \quad  \Pinf{a}{\upsilon}}
+       {\Pinf{f a}{\tau}}.$$
+Since we cannot pattern match on the output of the first subproblem, we use a
+metavariable instead and add a unification constraint, giving
+$$\Rule{\Pinf{f}{\chi}  \quad \Pinf{a}{\upsilon}
+            \quad  \Puni{\chi}{\upsilon \arrow \tau}}
+       {\Pinf{f a}{\tau}}.$$
+Furthermore, $\tau$ is an input to the unification problem, but it is not
+determined by the previous inputs or outputs, so we have to bind a fresh variable
+$\beta$ instead to give the algorithmic version
+$$\Rule{\Pinf{f}{\chi}
         \quad
-        \Pinf{a}(\upsilon)
+        \Pinf{a}{\upsilon}
         \quad
-        \Sbind{\beta \defn \tau}{\chi \equiv \upsilon \arrow \beta}
+        \Sbind{\beta \defn \tau}{\Puni{\chi}{\upsilon \arrow \beta}}
        }
-       {\Sbind{\beta \defn \tau}{\Pinf{f a}(\beta)}}$$
+       {\Sbind{\beta \defn \tau}{\Pinf{f a}{\beta}}}.$$
+
+
+%if False
 assuming $\beta$ is a fresh variable. Now the algorithmic version uses input and
 output contexts, with $\beta$ initially unknown:
 $$
@@ -1630,13 +1640,15 @@ $$
          \Junify{\Gamma_2, \hole{\beta}}{\chi}{\upsilon \arrow \beta}{\Gamma_3}}
         {\Jtype{\Gamma_0}{f a}{\beta}{\Gamma_3}}
 $$
+%endif
+
 
 The rule for abstraction is
-$$\Rule{\Sbind{x \asc .\upsilon}{\Pinf{t}(\tau)}}
-       {\Pinf{\lambda x . t}(\upsilon \arrow \tau)}$$
+$$\Rule{\Sbind{x \asc .\upsilon}{\Pinf{t}{\tau}}}
+       {\Pinf{\lambda x . t}{\upsilon \arrow \tau}}$$
 which is transformed to
-$$\Rule{\Sbind{\beta \defn \upsilon}{\Sbind{x \asc .\beta}{\Pinf{t}(\tau)}}}
-       {\Sbind{\beta \defn \upsilon}{\Pinf{\lambda x . t}(\beta \arrow \tau)}}$$
+$$\Rule{\Sbind{\beta \defn \upsilon}{\Sbind{x \asc .\beta}{\Pinf{t}{\tau}}}}
+       {\Sbind{\beta \defn \upsilon}{\Pinf{\lambda x . t}{\beta \arrow \tau}}}$$
 and hence
 $$
 \Rule{\Jtype{\Gamma_0, \hole{\beta}, x \asc .\beta}{t}{\tau}
@@ -1646,7 +1658,7 @@ $$
 
 The variable rule is
 $$\Rule{x \hasc .\tau}
-       {\Pinf{x}(\tau)}$$
+       {\Pinf{x}{\tau}}$$
 
 The let rule is
 $$
@@ -1655,16 +1667,16 @@ $$
       \quad
       \Sbind{x \asc \sigma}{t : \tau}
      }
-     {\Pinf{\letIn{x}{s}{t}}(\tau)}
+     {\Pinf{\letIn{x}{s}{t}}{\tau}}
 $$
-which we transform to
+which we transform to \TODO{what?}
 $$
 \Rule{
       \fatsemi (s : \upsilon)
       \quad
       x \asc \upsilon \Yup t : \tau
      }
-     {\Pinf{\letIn{x}{s}{t}}(\tau)}
+     {\Pinf{\letIn{x}{s}{t}}{\tau}}
 $$
 where $\Yup$ is defined via
 $$
