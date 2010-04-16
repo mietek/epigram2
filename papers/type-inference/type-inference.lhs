@@ -14,10 +14,9 @@
 %format <$> = "<\!\!\$\!\!> "
 %format :$  = ":\!\!\$\ "
 %format ::: = "\asc "
-%format ::~ = "\asc "
 %format >=> = "\genarrow "
-%format ::= = ":= "
 %format <?  = "\in "
+%format ... = "\ldots "
 
 %format F0  = "\emptycontext"
 %format B0  = "\emptycontext"
@@ -25,7 +24,6 @@
 %format Lam (x) (b) = "\lambda" x "." b
 %format Let (x) (s) (t) = "\letIn{" x "}{" s "}{" t "} "
 %format LetGoal = "\letGoal "
-%format notTypeVar = "\notTypeVar "
 
 %format Nothing = "? "
 %format Just = "!\!"
@@ -73,7 +71,6 @@
 \newcommand{\valid}{\ensuremath{\mathbf{valid}}}
 \newcommand{\ok}{\ensuremath{~\mathbf{ok}}}
 \newcommand{\emptycontext}{\ensuremath{\varepsilon}}
-\newcommand{\notTypeVar}{\ensuremath{\ldots}}
 \newcommand{\letGoal}{\ensuremath{\fatsemi}}
 \newcommand{\letIn}[3]{\ensuremath{\mathrm{let}~ #1 \!:=\! #2 ~\mathrm{in}~ #3}}
 \newcommand{\letS}[3]{\ensuremath{(!#1 \!:=\! #2 ~\mathrm{in}~ #3)}}
@@ -299,8 +296,8 @@ We define |Type| to use integers as names.
 
 %endif
 
-> type Name  = Integer
-> type Type  = Ty Name
+> type TyName  = Integer
+> type Type    = Ty TyName
 
 
 \subsection{Introducing contexts}
@@ -466,25 +463,14 @@ occur in a type variable binding must be defined earlier in the list.
 the type system, though that would be possible in a language such as Agda.)
 A context suffix is a (forwards) list containing only type variable definitions.
 
-%%%\TODO{Suggest we have 
-%%%
-%%%  data Entry = EntT TyEntry | notTypeVar
-%%%
-%%%  then types of Suffix and onTop simplify\ldots
-%%%}
+> data TyEntry = TyName := Maybe Type
 
-< data Entry = Name := Maybe Type | notTypeVar
+< data Entry = TY TyEntry | ...
 
 \TODO{The constructors of |Maybe| are abbreviated to |Nothing| and |Just|}
 
-%if False
-
-> data a ::= b = a ::= b
-
-%endif
-
 > type Context     = Bwd Entry
-> type Suffix      = Fwd (Name ::= Maybe Type)
+> type Suffix      = Fwd TyEntry
 
 The types |Bwd| and |Fwd| are backwards (snoc) and forwards (cons) lists,
 respectively. We overload |B0| for the empty list in both cases, and write
@@ -496,13 +482,14 @@ are monoids where |<+>| is the append operator, and the \scare{fish} operator
 Since |Type| and |Suffix| are built from |Foldable| functors containing names, we can define a typeclass implementation of \ensuremath{FTV}, with membership function |(<?)|: 
 
 > class OccursIn a where
->     (<?) :: Name -> a -> Bool
+>     (<?) :: TyName -> a -> Bool
 
-> instance OccursIn Name where
+> instance OccursIn TyName where
 >     (<?) = (==)
 
-> instance Foldable ((::=) a) where
->     foldMap f (_ ::= x) = f x
+> instance OccursIn TyEntry where
+>    alpha <? (_ := Just tau)  = alpha <? tau
+>    alpha <? (_ := Nothing)   = False
 
 > instance (Foldable t, OccursIn a) => OccursIn (t a) where
 >     alpha <? t = any (alpha <?) t
@@ -510,13 +497,13 @@ Since |Type| and |Suffix| are built from |Foldable| functors containing names, w
 We work in the |Contextual| monad (computations that can fail and mutate the
 context), defined as follows:   
 
-> type Contextual  = StateT (Name, Context) Maybe
+> type Contextual  = StateT (TyName, Context) Maybe
 
-The |Name| component is the next fresh type variable name to use;
+The |TyName| component is the next fresh type variable name to use;
 it is an implementation detail that is not mentioned in the typing rules. 
-Our choice of |Name| means that it is easy to choose a name fresh with respect to a |Context|: 
+Our choice of |TyName| means that it is easy to choose a name fresh with respect to a |Context|: 
 
-> fresh :: Name -> Context -> Name
+> fresh :: TyName -> Context -> TyName
 > fresh alpha _Gamma = succ alpha
 
 Working in this monad, we first define some useful functions for dealing with
@@ -1143,12 +1130,12 @@ function may |restore| the previous entry by returning |Nothing|, or it may
 return a context extension (that contains at least as much information as the
 entry that has been removed) with which to |replace| it.
 
-> onTop ::  (Name ::= Maybe Type -> Contextual (Maybe Suffix)) 
+> onTop ::  (TyEntry -> Contextual (Maybe Suffix)) 
 >             -> Contextual ()
 > onTop f = do
 >     e <- popEntry
 >     case e of
->         delta := mt  -> do  m <- f (delta ::= mt)
+>         TY te        -> do  m <- f te
 >                             case m of
 >                                 Just _Xi  -> modifyContext (<>< _Xi)
 >                                 Nothing   -> modifyContext (:< e)
@@ -1166,11 +1153,11 @@ unifier for the two given types; it will fail if the types cannot be
 unified given the current state of the context.
 
 > unify :: Type -> Type -> Contextual ()
-> unify (V alpha) (V beta) = onTop $ \ (delta ::= mt) -> case
+> unify (V alpha) (V beta) = onTop $ \ (delta := mt) -> case
 >           (delta == alpha,  delta == beta,  mt        ) of
 >           (True,            True,           _         )  ->  restore                                 
->           (True,            False,          Nothing   )  ->  replace (alpha ::= Just (V beta) :> F0)  
->           (False,           True,           Nothing   )  ->  replace (beta ::= Just (V alpha) :> F0)  
+>           (True,            False,          Nothing   )  ->  replace (alpha := Just (V beta) :> F0)  
+>           (False,           True,           Nothing   )  ->  replace (beta := Just (V alpha) :> F0)  
 >           (True,            False,          Just tau  )  ->  unify (V beta)   tau       >> restore   
 >           (False,           True,           Just tau  )  ->  unify (V alpha)  tau       >> restore   
 >           (False,           False,          _         )  ->  unify (V alpha)  (V beta)  >> restore   
@@ -1183,16 +1170,16 @@ The |solve| function attempts to unify a variable name with a
 (non-variable) type, given a list of entries that the type depends on,
 which must be placed into the context before it.
 
-> solve :: Name -> Suffix -> Type -> Contextual ()
-> solve alpha _Xi tau = onTop $ \ (delta ::= mt) -> 
+> solve :: TyName -> Suffix -> Type -> Contextual ()
+> solve alpha _Xi tau = onTop $ \ (delta := mt) -> 
 >     let occurs = delta <? tau || delta <? _Xi in case
 >     (delta == alpha,  occurs,  mt            ) of
 >     (True,            True,    _             )  ->  fail "Occur check failed"
->     (True,            False,   Nothing       )  ->  replace (_Xi <+> (alpha ::= Just tau :> F0))
+>     (True,            False,   Nothing       )  ->  replace (_Xi <+> (alpha := Just tau :> F0))
 >     (True,            False,   Just upsilon  )  ->  modifyContext (<>< _Xi)
 >                                                 >>  unify upsilon tau
 >                                                 >>  restore
->     (False,           True,    _             )  ->  solve alpha (delta ::= mt :> _Xi) tau
+>     (False,           True,    _             )  ->  solve alpha (delta := mt :> _Xi) tau
 >                                                 >>  replace F0   
 >     (False,           False,   _             )  ->  solve alpha _Xi tau
 >                                                 >>  restore
@@ -1299,7 +1286,7 @@ and representing schemes as
 
 <     deriving (Functor, Foldable)
 
-> type Scheme = Schm Name
+> type Scheme = Schm TyName
 
 The outermost bound variable is represented by |Z| and the other variables
 are wrapped in the |S| constructor. For example, the type scheme
@@ -1382,6 +1369,12 @@ and assume that $\TM$-substitutions are always the identity map.
 % moreover that this is the rightmost (i.e.\ most local) occurrence of $x$.
 
 
+In the implementation, we extend the definition of |Entry|:
+
+> type TmName   = String
+> data TmEntry  = TmName ::: Scheme
+
+< data Entry    = TY TyEntry | TM TmEntry | ...
 
 \subsection{Specialisation}
 
@@ -1481,15 +1474,15 @@ $\theta' : \Gamma, \Xi \lei \Theta$ and $\theta = \theta' \compose \iota$.
 The |freshVar| function generates a fresh name for a type variable and defines it as unbound,
 and the |freshDef| function generates a fresh name and binds it to the given type.
 
-> freshen :: Maybe Type -> Contextual Name
+> freshen :: Maybe Type -> Contextual TyName
 > freshen mt = do  (beta, _Gamma) <- get
->                  put (fresh beta _Gamma, _Gamma :< beta := mt)
+>                  put (fresh beta _Gamma, _Gamma :< TY (beta := mt))
 >                  return beta
 
-> freshVar :: Contextual Name
+> freshVar :: Contextual TyName
 > freshVar = freshen Nothing
 
-> freshDef :: Type -> Contextual Name
+> freshDef :: Type -> Contextual TyName
 > freshDef = freshen . Just
 
 The |specialise| function will specialise a type scheme with fresh variables
@@ -1521,10 +1514,10 @@ converted into a type (applying the \textsc{T} rule).
 The |schemeUnbind alpha sigma| function converts the body $\sigma$ of the scheme
 $\forall\beta.\sigma$ or $\letS{\beta}{\tau}{\sigma}$ into $\sigma[\alpha/\beta]$.
 
-> schemeUnbind :: Name -> Schm (Index Name) -> Scheme
+> schemeUnbind :: TyName -> Schm (Index TyName) -> Scheme
 > schemeUnbind alpha = fmap fromS
 >   where
->     fromS :: Index Name -> Name
+>     fromS :: Index TyName -> TyName
 >     fromS Z          = alpha
 >     fromS (S delta)  = delta
 
@@ -1551,9 +1544,9 @@ By induction on the length of $\Xi$.
 
 Implementing the generalisation function is straightforward:
 
-> (>=>) :: Bwd (Name ::= Maybe Type) -> Scheme -> Scheme
+> (>=>) :: Bwd TyEntry -> Scheme -> Scheme
 > B0                      >=> sigma = sigma
-> (_Xi :< alpha ::=  mt)  >=> sigma = case mt of
+> (_Xi :< alpha :=   mt)  >=> sigma = case mt of
 >                    Nothing  -> _Xi >=> All sigma'
 >                    Just nu  -> _Xi >=> LetS nu sigma'
 >   where 
@@ -1573,13 +1566,13 @@ to the right of the |LetGoal| marker.
 >     _Xi <- skimContext
 >     return (_Xi >=> Type tau)
 >   where
->     skimContext :: Contextual (Bwd (Name ::= Maybe Type))
+>     skimContext :: Contextual (Bwd TyEntry)
 >     skimContext = do
 >         e <- popEntry
 >         case e of
->             LetGoal      -> return B0
->             alpha := mt  -> (:< alpha ::= mt) <$> skimContext
->             _ ::: _      -> undefined
+>             LetGoal  -> return B0
+>             TY te    -> (:< te) <$> skimContext
+>             TM _     -> undefined
 
 
 \section{Type inference}
@@ -1727,9 +1720,7 @@ $$
 
 The full data type of context entries is thus:
 
-> data Entry  =  Name := Maybe Type
->             |  TermName ::: Scheme
->             |  LetGoal
+> data Entry = TY TyEntry | TM TmEntry | LetGoal
 
 We also need to refine the $\lei$ relation.
 Let $\semidrop$ be the partial function from contexts and natural numbers to
@@ -2351,8 +2342,8 @@ of term variable names, so |Tm| is a foldable functor.
 
 <     deriving (Functor, Foldable)
 
-> type Term      = Tm TermName
-> type TermName  = String
+> type Term      = Tm TmName
+
 
 The |infer| function attempts to infer the type of the given term,
 updating the context with the minimum necessary information.
@@ -2365,10 +2356,10 @@ and specialise this scheme with fresh variables.
 > infer (X x) = getContext >>= find >>= specialise
 >   where
 >     find :: Context -> Contextual Scheme
->     find B0                                 = fail "Missing variable"
->     find (_Gamma :< y ::: sigma)  | x == y  = return sigma
->     find (_Gamma :< _)                      = find _Gamma
-
+>     find (_Gamma :< TM (y ::: sigma))
+>         | x == y                        = return sigma
+>     find (_Gamma :< _)                  = find _Gamma
+>     find B0                             = fail "Missing variable"
 
 To infer the type of a $\lambda$-abstraction, we recursively infer the type of its body
 $t$ with its variable $x$ assigned type-scheme $.\alpha$, 
@@ -2379,7 +2370,7 @@ the $x$ binding removed.
 
 > infer (Lam x t) = do
 >     alpha  <- freshVar
->     tau    <- withDefinition (x ::~ Type (V alpha)) (infer t)
+>     tau    <- withDefinition (x ::: Type (V alpha)) (infer t)
 >     return (V alpha :-> tau)
 
 
@@ -2407,31 +2398,25 @@ and a context from which the $x$ binding can be extracted.
 
 > infer (Let x s t) = do
 >     sigma <- generaliseOver (infer s)
->     withDefinition (x ::~ sigma) (infer t)
+>     withDefinition (x ::: sigma) (infer t)
 
 
 
 The |withDefinition| operator appends a term variable definition to the context,
 evaluates its second argument, then removes the term variable definition.
 
-%if False
-
-> data a ::~ b = a ::~ b
-
-%endif
-
-> withDefinition ::  TermName ::~ Scheme -> Contextual a
->                      -> Contextual a
-> withDefinition (x ::~ sigma) f = do
->     modifyContext (:< x ::: sigma)
+> withDefinition :: TmEntry -> Contextual a -> Contextual a
+> withDefinition (x ::: sigma) f = do
+>     modifyContext (:< TM (x ::: sigma))
 >     result <- f
 >     modifyContext extract
 >     return result
 >   where          
 >     extract ::  Context -> Context
->     extract (_Gamma :< y ::: _)  | x == y  = _Gamma
->     extract (_Gamma :< alpha := mt)        = extract _Gamma :< alpha := mt
->     extract (_Gamma :< _)                  = undefined
+>     extract (_Gamma :< TM (y ::: _))
+>         | x == y               = _Gamma
+>     extract (_Gamma :< TY te)  = (extract _Gamma) :< TY te
+>     extract (_Gamma :< _)      = undefined
 
 %if False
 
@@ -2482,7 +2467,7 @@ produces a forward list.
 > (<><) :: Context -> Suffix -> Context
 > infixl 8 <><
 > xs <>< F0 = xs
-> xs <>< (alpha ::= mt :> ys) = (xs :< alpha := mt) <>< ys
+> xs <>< (alpha := mt :> ys) = (xs :< TY (alpha := mt) ) <>< ys
 
 > (<>>) :: Bwd a -> Fwd a -> Fwd a
 > infixl 8 <>>
@@ -2490,121 +2475,15 @@ produces a forward list.
 > (xs :< x) <>> ys  = xs <>> (x :> ys)
 
 
-\section{Judgment typeclass}
-
-> class Judgment j where
->     type Output j
->     fiat :: j -> Contextual (Output j)
->     orthogonal :: Entry -> j -> Bool
-
-> instance Judgment () where
->     type Output () = ()
->     fiat () = return ()
->     orthogonal _ _ = True
-
-> instance (Judgment j, Judgment k) => Judgment (j, k) where
->     type Output (j, k) = (Output j, Output k)
->     fiat (j, k) = do
->         a  <- fiat j
->         b  <- fiat k
->         return (a, b)
->     orthogonal e (a, b) = orthogonal e a && orthogonal e b
-
-> instance Applicative Contextual where
->     pure = return
->     (<*>) = ap
-
-> instance (Judgment j, Judgment k) => Judgment (Either j k) where
->     type Output (Either j k) = Either (Output j) (Output k)
->     fiat (Left j) = pure Left <*> fiat j
->     fiat (Right k) = pure Right <*> fiat k
->     orthogonal e = either (orthogonal e) (orthogonal e)
-
-> data Unify = Type :==: Type
-> infix 1 :==:
-
-> data Instantiate = Name :===: (Type, Suffix)
-> infix 1 :===:
-
-> instance Judgment Unify where
->     type Output Unify = ()
->     fiat (tau    :==:   upsilon) = unify tau upsilon
->     orthogonal (delta := _) (V alpha :==: V beta) =
->         alpha /= delta && beta /= delta
->     orthogonal e (tau0 :-> tau1 :==: upsilon0 :-> upsilon1) =
->         orthogonal e (tau0 :==: upsilon0) && orthogonal e (tau1 :==: upsilon1)
->     orthogonal e (V alpha :==: tau) = orthogonal e (alpha :===: (tau, F0))
->     orthogonal e (tau :==: V alpha) = orthogonal e (alpha :===: (tau, F0))
-
-> instance Judgment Instantiate where
->     type Output Instantiate = ()
->     fiat (alpha  :===:  (upsilon, _Xi)) = solve alpha _Xi upsilon
->     orthogonal (delta := _) (alpha :===: (tau, _Xi)) = not (alpha == delta) &&
->         not (delta <? tau) && not (delta <? _Xi)
->     orthogonal _ (_ :===: _) = True
-
-> data Specialise = Specialise Scheme
-
-> instance Judgment Specialise where
->     type Output Specialise = Type
->     fiat (Specialise sigma) = specialise sigma
->     orthogonal _ _ = False
-
-> data Infer = Infer Term
-
-> instance Judgment Infer where
->     type Output Infer = Type
->     fiat (Infer t) = infer t
->     orthogonal _ _ = False
-
-
-
-> class Judgment j => Topmost j where
->     topmost :: Entry -> j -> Contextual (Output j, Maybe Suffix)
->     topset :: Entry -> j -> Contextual (Maybe Suffix)
->     topset e j = snd <$> topmost e j
-
-> instance Topmost Instantiate where
->   topmost e j = (\_Xi -> ((),_Xi)) <$> topset e j
->   topset (delta := mt) (alpha :===: (tau, _Xi)) =
->    let occurs = delta <? tau || delta <? _Xi in case
->     (delta == alpha,  occurs,  mt            ) of
->     (True,            True,    _             )  ->  lift Nothing
->     (True,            False,   Nothing       )  ->  replace (_Xi <+> (alpha ::= Just tau :> F0))
->     (True,            False,   Just upsilon  )  ->  modifyContext (<>< _Xi)
->                                                 >>  unify upsilon tau
->                                                 >>  restore
->     (False,           True,    _             )  ->  solve alpha (delta ::= mt :> _Xi) tau
->                                                 >>  replace F0
->     (False,           False,   _             )  ->  undefined
->   topset _ _ = undefined
-
-
-> onTop' :: Topmost j => j -> Contextual (Output j)
-> onTop' j = do
->     e <- popEntry
->     if orthogonal e j
->         then do
->             x <- onTop' j
->             modifyContext (:< e)
->             return x
->         else do
->             (x, m) <- topmost e j
->             case m of
->                 Just _Xi  -> modifyContext (<>< _Xi)
->                 Nothing   -> modifyContext (:< e)
->             return x
-
-
 \section{Tests}
 
 The |findType| function looks up a type variable in the context and returns its binding,
 or |Nothing| if it is unbound or missing from the context.
 
-> findType :: Context -> Name -> Maybe Type
-> findType B0              _           = Nothing
-> findType (_ :< y := mt)  x | x == y  = mt
-> findType (c :< _)        x           = findType c x
+> findType :: Context -> TyName -> Maybe Type
+> findType B0              _                = Nothing
+> findType (_ :< TY (y := mt))  x | x == y  = mt
+> findType (c :< _)        x                = findType c x
 
 
 The |normalise| function returns the normal form (i.e.\ with all type variables expanded as far
@@ -2622,14 +2501,14 @@ variable in the context is normalised at most once and only if necessary.
 >
 >         normaliseContext :: Context -> Fwd Entry -> Context
 >         normaliseContext c F0 = c
->         normaliseContext c (x := Just t :> es) = 
->             normaliseContext (c :< x := Just (normalStep c t)) es
+>         normaliseContext c (TY (x := Just t) :> es) = 
+>             normaliseContext (c :< TY (x := Just (normalStep c t))) es
 >         normaliseContext c (e :> es) = normaliseContext (c :< e) es
 
 
 |inferType| is a convenience method for inferring the type of a term in the empty context.
 
-> inferType :: Term -> Maybe (Type, (Name, Context))
+> inferType :: Term -> Maybe (Type, (TyName, Context))
 > inferType t = runStateT (infer t) (0, B0)
 
 
@@ -2645,29 +2524,31 @@ variable numbers may be different.
 > main :: IO ()
 > main = unifyTest unifyTests >> inferTest inferTests
 
+> alpha *= mt = TY (alpha := mt)
+
 > unifyTests :: [(Type, Type, Context, Maybe Context)]
 > unifyTests = [
 >     (V 0, V 1,
->         B0 :< 0 := Nothing :< 1 := Nothing,
->         Just (B0 :< 0 := Nothing :< 1 := Just (V 0))),
+>         B0 :< 0 *= Nothing :< 1 *= Nothing,
+>         Just (B0 :< 0 *= Nothing :< 1 *= Just (V 0))),
 >     (V 0, V 1 :-> V 2, 
->         B0 :< 0 := Nothing :< 1 := Nothing :< 2 := Nothing,
->         Just (B0 :< 1 := Nothing :< 2 := Nothing :< 0 := Just (V 1 :-> V 2))),
+>         B0 :< 0 *= Nothing :< 1 *= Nothing :< 2 *= Nothing,
+>         Just (B0 :< 1 *= Nothing :< 2 *= Nothing :< 0 *= Just (V 1 :-> V 2))),
 >     (V 0, V 1 :-> V 2,
->         B0 :< 0 := Nothing :< 2 := Just (V 0) :< 1 := Just (V 0),
+>         B0 :< 0 *= Nothing :< 2 *= Just (V 0) :< 1 *= Just (V 0),
 >         Nothing),
 >     (V 0 :-> V 0, V 1 :-> V 1,
->         B0 :< 1 := Nothing :< 0 := Nothing,
->         Just (B0 :< 1 := Nothing :< 0 := Just (V 1))),
+>         B0 :< 1 *= Nothing :< 0 *= Nothing,
+>         Just (B0 :< 1 *= Nothing :< 0 *= Just (V 1))),
 >     (V 0, V 1 :-> V 2,
->        B0 :< 1 := Nothing :< 0 := Just (V 1 :-> V 1) :< 2 := Nothing,
->        Just (B0 :< 1 := Nothing :< 2 := Just (V 1) :< 0 := Just (V 1 :-> V 1))),
+>        B0 :< 1 *= Nothing :< 0 *= Just (V 1 :-> V 1) :< 2 *= Nothing,
+>        Just (B0 :< 1 *= Nothing :< 2 *= Just (V 1) :< 0 *= Just (V 1 :-> V 1))),
 >     (V 0 :-> V 1, V 1 :-> V 0,
->        B0 :< 0 := Nothing :< 1 := Nothing,
->        Just (B0 :< 0 := Nothing :< 1 := Just (V 0))),
+>        B0 :< 0 *= Nothing :< 1 *= Nothing,
+>        Just (B0 :< 0 *= Nothing :< 1 *= Just (V 0))),
 >     (V 0 :-> V 1 :-> V 2, V 1 :-> V 0 :-> V 0,
->        B0 :< 2 := Nothing :< 0 := Nothing :< 1 := Nothing,
->        Just (B0 :< 2 := Nothing :< 0 := Just (V 2) :< 1 := Just (V 0)))
+>        B0 :< 2 *= Nothing :< 0 *= Nothing :< 1 *= Nothing,
+>        Just (B0 :< 2 *= Nothing :< 0 *= Just (V 2) :< 1 *= Just (V 0)))
 >     ]
 
 > unifyTest :: [(Type, Type, Context, Maybe Context)] -> IO ()
@@ -2743,6 +2624,10 @@ variable numbers may be different.
 > deriving instance Eq a => Eq (Index a)
 > deriving instance Show a => Show (Index a)
 
+> deriving instance Eq TyEntry
+> deriving instance Show TyEntry
+> deriving instance Eq TmEntry
+> deriving instance Show TmEntry
 
 \subsection{Traversable Foldable Functors}
 
