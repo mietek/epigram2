@@ -1260,9 +1260,12 @@ By induction on the length of $\Xi$.
 
 
 It is convenient to represent bound variables by de Brujin indices and free
-variables (i.e.\ those defined in the context) by names. Moreover, we use the
+variables (i.e.\ those defined in the context) by names
+\citep{mcbride_mckinna_not_number_2004}.
+Moreover, we use the
 Haskell type system to prevent some incorrect manipulations of indices by
-defining a natural number type
+defining a \scare{successor} type
+\citep{bird_paterson_nested_1999, bellegarde_hook_substitution_1994}
 
 > data Index a = Z | S a
 
