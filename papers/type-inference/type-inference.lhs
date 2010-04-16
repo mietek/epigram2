@@ -394,6 +394,8 @@ $$
      {\tau \arrow \upsilon \type}.
 $$
 Note that we omit the context from rules if it is constant throughout.
+We observe the sanity condition
+$\Gamma \entails \tau \type  \Rightarrow  \Gamma \entails \valid$.
 
 
 \subsection{Type variable declarations}
@@ -429,7 +431,9 @@ $\tau \equiv \upsilon$ by making declarations yield equations:
 %%%            \alpha \equiv \tau, \tau \equiv \alpha \}
 \end{align*}
 and taking structural and equivalence closure by the rules in
-Figure~\ref{fig:equivRules}.
+Figure~\ref{fig:equivRules}. We observe the sanity condition
+$$\Gamma \entails \tau \equiv \upsilon
+    \Rightarrow  \Gamma \entails \tau \type \wedge \upsilon \type.$$
 
 \begin{figure}[ht]
 \boxrule{\Gamma \entails \tau \equiv \upsilon}
@@ -935,7 +939,8 @@ $\hole{\alpha}, \beta \defn \alpha$.
 
 $$
 \name{Idle}
-\Axiom{\Junify{\Gamma}{\alpha}{\alpha}{\Gamma}}
+\Rule{\Gamma \entails \alpha \type}
+     {\Junify{\Gamma}{\alpha}{\alpha}{\Gamma}}
 $$
 
 $$
@@ -956,7 +961,8 @@ $$
 
 $$
 \name{Define}
-\Axiom{\Junify{\Gamma, \hole{\alpha}}{\alpha}{\beta}{\Gamma, \alpha \defn \beta}}
+\Rule{\Gamma \entails \beta \type}
+     {\Junify{\Gamma, \hole{\alpha}}{\alpha}{\beta}{\Gamma, \alpha \defn \beta}}
 $$
 
 $$
@@ -979,8 +985,9 @@ $$
 
 $$
 \name{Define}
-\Axiom{\Jinstantiate{\Gamma, \hole{\alpha}}{\alpha}{\tau}{\Xi}
-                    {\Gamma, \Xi, \alpha \defn \tau}}
+\Rule{\Gamma \entails \Sbind{\Xi}{\tau \type}}
+     {\Jinstantiate{\Gamma, \hole{\alpha}}{\alpha}{\tau}{\Xi}
+                   {\Gamma, \Xi, \alpha \defn \tau}}
 \side{\alpha \notin \FTV{\tau, \Xi}}
 $$
 
@@ -1221,8 +1228,8 @@ in the type inference algorithm.
 We define a new statement $\sigma \scheme$
 % ($\sigma$ is a valid scheme in $\Gamma$)
 by the rules in Figure~\ref{fig:schemeValidityRules}.
-% We also observe the further sanity condition
-% $\Gamma \entails \sigma \scheme$ implies $\Gamma \entails \valid$.
+We observe the sanity condition
+$\Gamma \entails \sigma \scheme  \Rightarrow  \Gamma \entails \valid$.
 
 \begin{figure}[ht]
 \boxrule{\Gamma \entails \sigma \scheme}
@@ -1344,8 +1351,14 @@ Figure~\ref{fig:termVarSchemeRules}, and let
 $\sem{x \asc \sigma}_\TM = \{ x \hasc \sigma \}$.
 Thus a term variable has a scheme $\sigma'$ if it is given scheme $\sigma$ in
 the context and $\sigma$ specialises to $\sigma'$.
+We observe the sanity condition
+$\Gamma \entails x \hasc \sigma  \Rightarrow  \Gamma \entails \sigma \scheme$.
+
 \TODO{Do we need to permute quantifiers when specialising schemes?
-For example, consider $\forall \alpha \forall \beta. \alpha \arrow \beta.$} 
+For example, consider $\forall \alpha \forall \beta. \alpha \arrow \beta.$
+Probably not: ultimately we work with types, and we have the required
+relationship between all type instances of schemes, if not the schemes
+themselves.}
 
 \begin{figure}[ht]
 \boxrule{\Gamma \entails x \hasc \sigma}
@@ -1420,7 +1433,7 @@ $$t ::= x ~||~ t~t ~||~ \lambda x . t ~||~ \letIn{x}{t}{t}.$$
 
 We define the type assignability statement $t : \tau$ by the rules in
 Figure~\ref{fig:typeAssignmentRules}, and the scheme assignability statement
-$t \hasscheme \sigma$ for arbitrary terms $t$ thus:
+$t \hasscheme \sigma$ for arbitrary terms $t$ and schemes $\sigma$ thus:
 \begin{align*}
 t \hasscheme .\tau   &\mapsto    t : \tau  \\
 t \hasscheme \forall \alpha \sigma  &\mapsto 
@@ -1428,6 +1441,9 @@ t \hasscheme \forall \alpha \sigma  &\mapsto
 t \hasscheme \letS{\alpha}{\tau}{\sigma}  &\mapsto
     \Sbind{\alpha \defn \tau}{t \hasscheme \sigma}
 \end{align*}
+
+We observe the sanity condition
+$\Gamma \entails x : \tau  \Rightarrow  \Gamma \entails \tau \type$.
 
 \begin{figure}[ht]
 \boxrule{\Delta \entails t : \tau}
