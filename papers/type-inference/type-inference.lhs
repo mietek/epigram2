@@ -1194,7 +1194,7 @@ which must be placed into the context before it.
 %%%suffix, since these are both |Foldable| functors containing names.
 
 
-\section{Type schemes and term variables}
+\section{The type inference problem}
 
 \subsection{Introducing type schemes}
 
@@ -1236,42 +1236,23 @@ $$
 \end{figure}
 
 
-%if False
+We write $\gen{\Xi}{\sigma}$ for the generalisation of the type scheme $\sigma$
+over the list of type variable declarations $\Xi$. This is defined as follows:
+\begin{align*}
+\emptycontext         &\genarrow \sigma = \sigma  \\
+\Xi, \hole{\alpha}    &\genarrow \sigma = \Xi \genarrow \forall\alpha~\sigma  \\
+\Xi, \alpha \defn \nu &\genarrow \sigma = \Xi \genarrow \letS{\alpha}{\nu}{\sigma}
+\end{align*}
 
-\TODO{Get rid of the specialisation judgment and specialise on lookup instead.}
-The statement $\sigma \succ \tau$, defined in
-Figure~\ref{fig:genericInstRules}, means that $\sigma$ has
-generic instance $\tau$ obtained by substituting $\Delta$-types
-for the generic variables of $\sigma$.
+\begin{lemma}
+\label{lem:generalise}
+If $\Gamma, \Xi \entails \sigma \scheme$ where $\Xi$ contains only type variable
+definitions, then $\Gamma \entails \gen{\Xi}{\sigma} \scheme$.
+\end{lemma}
+\begin{proof}
+By induction on the length of $\Xi$.
+\end{proof}
 
-\begin{figure}[ht]
-\boxrule{\Delta \entails \sigma \succ \tau}
-
-$$
-\Rule{\Delta \entails \tau \type}
-     {\Delta \entails .\tau \succ \tau}
-\qquad
-\Rule{\Delta \entails \upsilon \type
-      \quad
-      \Delta \entails [\upsilon/\alpha]\sigma \succ \tau}
-     {\Delta \entails \forall\alpha~\sigma \succ \tau}
-$$
-
-$$
-\Rule{\Delta \entails [\upsilon/\alpha]\sigma \succ \tau}
-     {\Delta \entails \letS{\alpha}{\upsilon}{\sigma} \succ \tau}
-\qquad
-\Rule{\Delta \entails \sigma \succ \tau
-      \quad
-      \Delta \entails \tau \equiv \upsilon}
-     {\Delta \entails \sigma \succ \upsilon}
-$$
-
-\caption{Rules for generic instantiation}
-\label{fig:genericInstRules}
-\end{figure}
-
-%endif
 
 
 It is convenient to represent bound variables by de Brujin indices and free
@@ -1302,6 +1283,39 @@ $\forall\alpha\forall\beta.\beta \arrow 2$ is represented as
 Note that the code forces us to distinguish a type $\tau$ and its corresponding
 type scheme (written $.\tau$), as the latter will be represented by
 |Type tau :: Scheme|.
+
+
+Implementing the generalisation function is straightforward:
+
+> (>=>) :: Bwd TyEntry -> Scheme -> Scheme
+> B0                      >=> sigma = sigma
+> (_Xi :< alpha :=   mt)  >=> sigma = case mt of
+>                    Nothing  -> _Xi >=> All sigma'
+>                    Just nu  -> _Xi >=> LetS nu sigma'
+>   where 
+>     sigma' = fmap bind sigma
+>     bind beta  | alpha == beta  = Z
+>                | otherwise      = S beta
+
+
+The |generaliseOver| operator appends a |LetGoal| marker to the context,
+evalutes its argument, then generalises over the type variables
+to the right of the |LetGoal| marker.
+
+> generaliseOver ::  Contextual Type -> Contextual Scheme
+> generaliseOver f = do
+>     modifyContext (:< LetGoal)
+>     tau <- f
+>     _Xi <- skimContext
+>     return (_Xi >=> Type tau)
+>   where
+>     skimContext :: Contextual (Bwd TyEntry)
+>     skimContext = do
+>         e <- popEntry
+>         case e of
+>             LetGoal  -> return B0
+>             TY te    -> (:< te) <$> skimContext
+>             TM _     -> undefined
 
 
 \subsection{Term variables}
@@ -1380,6 +1394,248 @@ In the implementation, we extend the definition of |Entry|:
 > data TmEntry  = TmName ::: Scheme
 
 < data Entry    = TY TyEntry | TM TmEntry | ...
+
+
+
+
+\subsection{Type assignment system}
+
+The syntax of terms is
+$$t ::= x ~||~ t~t ~||~ \lambda x . t ~||~ \letIn{x}{t}{t}.$$
+% where $x$ ranges over some set of term variables.
+
+We define the type assignability statement $t : \tau$ by the rules in
+Figure~\ref{fig:typeAssignmentRules}, and the scheme assignability statement
+$t \hasscheme \sigma$ for arbitrary terms $t$ thus:
+\begin{align*}
+t \hasscheme .\tau   &\mapsto    t : \tau  \\
+t \hasscheme \forall \alpha \sigma  &\mapsto 
+    \Sbind{\hole{\alpha}}{t \hasscheme \sigma}   \\
+t \hasscheme \letS{\alpha}{\tau}{\sigma}  &\mapsto
+    \Sbind{\alpha \defn \tau}{t \hasscheme \sigma}
+\end{align*}
+
+\begin{figure}[ht]
+\boxrule{\Delta \entails t : \tau}
+
+$$
+\Rule{t : \tau
+      \quad
+      \tau \equiv \upsilon}
+     {t : \upsilon}
+\qquad
+\Rule{x \hasc .\tau}
+     {x : \tau}
+$$
+
+$$
+\Rule{\Sbind{x \asc .\upsilon}{t : \tau}}
+     {\lambda x.t : \upsilon \arrow \tau}
+\qquad
+\Rule{f : \upsilon \arrow \tau
+      \quad
+      a : \upsilon}
+     {f a : \tau}
+$$
+
+%      \forall \upsilon . (\Gamma \entails \sigma \succ \upsilon
+%              \Rightarrow \Gamma \entails s : \upsilon)
+
+$$
+\Rule{
+      s \hasscheme \sigma
+      \quad
+      \Sbind{x \asc \sigma}{t : \tau}
+     }
+     {\letIn{x}{s}{t} : \tau}
+$$
+
+\caption{Declarative rules for type assignment}
+\label{fig:typeAssignmentRules}
+\end{figure}
+
+
+
+As with unification, we wish to translate these declarative rules into an
+algorithm for type inference. 
+% For each term $t$, we define the problem
+% $\Pinf{t}$ on types with equivalence by $\Pinf{t}(\tau) = t : \tau$,
+% and we seek an algorithm to find a minimal solution of $\Pinf{t}$.
+We define the type inference problem $\Pinf{}$ by
+\begin{align*}
+\In{\Pinf{}} &= Term  \\
+\Out{\Pinf{}} &= Type  \\
+\Pre{\Pinf{}}(t) &= \valid  \\
+\Post{\Pinf{}}(t)(\tau) &= \tau \type \wedge t : \tau  \\
+\R{\Pinf{}}(\tau)(\upsilon) &= \tau \equiv \upsilon
+\end{align*}
+
+
+
+\section{Local contexts for local problems}
+
+\TODO{Motivation!}
+
+In addition to variable declarations $v D$, we need another kind of context
+entry, the $\fatsemi$ separator. This allows us to make use of the property,
+so far observed but not made use of, that order in the context is important
+and we move declarations left as little as possible.
+We therefore add the context validity rule
+$$
+\Rule{\Gamma \entails \valid}
+     {\Gamma \fatsemi \entails \valid}.
+$$
+
+The full data type of context entries is thus:
+
+> data Entry = TY TyEntry | TM TmEntry | LetGoal
+
+We also need to refine the $\lei$ relation.
+Let $\semidrop$ be the partial function from contexts and natural numbers to
+contexts that takes $\Gamma \semidrop n$ to $\Gamma$ truncated after $n$
+$\fatsemi$ separators, provided $\Gamma$ contains at least $n$ of them. It is
+defined by
+\begin{align*}
+\Xi \semidrop 0 &= \Xi  \\
+\Xi \fatsemi \Gamma \semidrop 0 &= \Xi  \\
+\Xi \fatsemi \Gamma \semidrop n+1 &= \Xi \fatsemi (\Gamma \semidrop n)  \\
+\Xi \semidrop n+1 &~\mathrm{undefined}
+\end{align*}
+
+We write $\delta : \Gamma \lei \Delta$ if,
+for each $K \in \K$, there is a 
+$K$-substitution from $\Gamma$ to $\Delta$ (written $\delta_K$) such that
+if $v D \in \Gamma \semidrop n$ and $S \in \sem{v D}$ then
+$\Delta \semidrop n$ is defined and
+$\Delta \entails \delta S$.
+
+This definition of $\Gamma \lei \Delta$ is stronger than the previous definition,
+because it requires a correspondence between the sections of $\Gamma$ and
+$\Delta$, such that declarations in the first $n$ sections of $\Gamma$ can be
+interpreted over the first $n$ sections of $\Delta$.
+However, it is mostly straightforward to verify that the previous results go
+through with the new definition.
+
+%% Note that if $\delta : \Gamma \lei \Delta$ then
+%% $\delta||_{\Gamma \semidrop n} : \Gamma \semidrop n \lei \Delta \semidrop n$. 
+
+The only place where the change is nontrivial is in the unification algorithm,
+because it acts structurally over the context, so we need to specify what happens
+when it finds a $\fatsemi$ separator. It turns out that these can simply be
+ignored, so we add the following algorithmic rules:
+$$
+\name{Skip}
+\Rule{\Junify{\Gamma_0}{\alpha}{\beta}{\Gamma_1}}
+     {\Junify{\Gamma_0 \fatsemi}{\alpha}{\beta}{\Gamma_1 \fatsemi}}
+$$
+$$
+\name{Repossess}
+\Rule{\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\Xi}{\Gamma_1}}
+     {\Jinstantiate{\Gamma_0 \fatsemi}{\alpha}{\tau}{\Xi}{\Gamma_1 \fatsemi}}
+$$
+The \textsc{Skip} rule is relatively straightforward, but the \textsc{Repossess}
+rule is nontrivial. It is so named because it moves the variable declarations in
+$\Xi$ to the left of the $\fatsemi$ separator, thereby \scare{repossessing} them.
+Despite this, unification does still produce a most general solution, as we
+shall see.
+
+\TODO{Correctness proof for unification. Explain how sanity conditions on $\Xi$,
+which we have been following all along, ensure generality is preserved.}
+
+
+If $S$ is a statement then $\fatsemi S$ is a composite statement given by
+$$
+\Rule{\Gamma \fatsemi \entails S}
+     {\Gamma \entails \fatsemi S}.
+$$
+If $S$ is stable then $\fatsemi S$ is stable, which we can see as follows.
+Suppose $\Gamma \entails \fatsemi S$ and $\delta : \Gamma \lei \Delta$. Then
+$\Gamma \fatsemi \entails S$, and $\delta : \Gamma \fatsemi \lei \Delta \fatsemi$
+by the new definition of the $\lei$ relation. Hence
+$\Delta \fatsemi \entails \delta S$ by stability and so
+$\Delta \entails \delta (\fatsemi S)$.
+
+
+
+
+\section{A type inference algorithm}
+
+
+\subsection{Transforming the rule system}
+
+To transform a rule into an algorithmic form, we proceed clockwise starting from
+the conclusion. For each hypothesis, we must ensure that the problem is fully
+specified, inserting variables to stand for unknown problem inputs. Moreover, we
+cannot pattern match on problem outputs, so we ensure there are schematic variables
+in output positions, fixing things up with appeals to unification. 
+
+Consider the rule for application, written to highlight problem inputs and outputs
+as
+$$\Rule{\Pinf{f}(\upsilon \arrow \tau)    \quad \Pinf{a}(\upsilon)}
+       {\Pinf{f a}(\tau)}.$$
+We change this to the equivalent form
+$$\Rule{\Pinf{f}(\chi)
+        \quad
+        \Pinf{a}(\upsilon)
+        \quad
+        \Sbind{\beta \defn \tau}{\chi \equiv \upsilon \arrow \beta}
+       }
+       {\Sbind{\beta \defn \tau}{\Pinf{f a}(\beta)}}$$
+assuming $\beta$ is a fresh variable. Now the algorithmic version uses input and
+output contexts, with $\beta$ initially unknown:
+$$
+\Rule{\Jtype{\Gamma_0}{f}{\chi}{\Gamma_1}
+         \quad
+         \Jtype{\Gamma_1}{a}{\upsilon}{\Gamma_2}
+         \quad
+         \Junify{\Gamma_2, \hole{\beta}}{\chi}{\upsilon \arrow \beta}{\Gamma_3}}
+        {\Jtype{\Gamma_0}{f a}{\beta}{\Gamma_3}}
+$$
+
+The rule for abstraction is
+$$\Rule{\Sbind{x \asc .\upsilon}{\Pinf{t}(\tau)}}
+       {\Pinf{\lambda x . t}(\upsilon \arrow \tau)}$$
+which is transformed to
+$$\Rule{\Sbind{\beta \defn \upsilon}{\Sbind{x \asc .\beta}{\Pinf{t}(\tau)}}}
+       {\Sbind{\beta \defn \upsilon}{\Pinf{\lambda x . t}(\beta \arrow \tau)}}$$
+and hence
+$$
+\Rule{\Jtype{\Gamma_0, \hole{\beta}, x \asc .\beta}{t}{\tau}
+          {\Gamma_1, x \asc .\beta, \Xi}}
+     {\Jtype{\Gamma_0}{\lambda x.t}{\beta \arrow \tau}{\Gamma_1, \Xi}}
+$$
+
+The variable rule is
+$$\Rule{x \hasc .\tau}
+       {\Pinf{x}(\tau)}$$
+
+The let rule is
+$$
+\Rule{
+      s \hasscheme \sigma
+      \quad
+      \Sbind{x \asc \sigma}{t : \tau}
+     }
+     {\Pinf{\letIn{x}{s}{t}}(\tau)}
+$$
+which we transform to
+$$
+\Rule{
+      \fatsemi (s : \upsilon)
+      \quad
+      x \asc \upsilon \Yup t : \tau
+     }
+     {\Pinf{\letIn{x}{s}{t}}(\tau)}
+$$
+where $\Yup$ is defined via
+$$
+\Rule{\Gamma \entails \Sbind{x \asc \gen{\Xi}{\sigma}}{S}}
+     {\Gamma \fatsemi \Xi \entails x \asc \upsilon \Yup S}
+$$
+
+
+
+
 
 \subsection{Specialisation}
 
@@ -1527,357 +1783,9 @@ $\forall\beta.\sigma$ or $\letS{\beta}{\tau}{\sigma}$ into $\sigma[\alpha/\beta]
 >     fromS (S delta)  = delta
 
 
-\subsection{Generalisation}
-
-We write $\gen{\Xi}{\sigma}$ for the generalisation of the type scheme $\sigma$
-over the list of type variable declarations $\Xi$. This is defined as follows:
-\begin{align*}
-\emptycontext         &\genarrow \sigma = \sigma  \\
-\Xi, \hole{\alpha}    &\genarrow \sigma = \Xi \genarrow \forall\alpha~\sigma  \\
-\Xi, \alpha \defn \nu &\genarrow \sigma = \Xi \genarrow \letS{\alpha}{\nu}{\sigma}
-\end{align*}
-
-\begin{lemma}
-\label{lem:generalise}
-If $\Gamma, \Xi \entails \sigma \scheme$ where $\Xi$ contains only type variable
-definitions, then $\Gamma \entails \gen{\Xi}{\sigma} \scheme$.
-\end{lemma}
-\begin{proof}
-By induction on the length of $\Xi$.
-\end{proof}
 
 
-Implementing the generalisation function is straightforward:
-
-> (>=>) :: Bwd TyEntry -> Scheme -> Scheme
-> B0                      >=> sigma = sigma
-> (_Xi :< alpha :=   mt)  >=> sigma = case mt of
->                    Nothing  -> _Xi >=> All sigma'
->                    Just nu  -> _Xi >=> LetS nu sigma'
->   where 
->     sigma' = fmap bind sigma
->     bind beta  | alpha == beta  = Z
->                | otherwise      = S beta
-
-
-The |generaliseOver| operator appends a |LetGoal| marker to the context,
-evalutes its argument, then generalises over the type variables
-to the right of the |LetGoal| marker.
-
-> generaliseOver ::  Contextual Type -> Contextual Scheme
-> generaliseOver f = do
->     modifyContext (:< LetGoal)
->     tau <- f
->     _Xi <- skimContext
->     return (_Xi >=> Type tau)
->   where
->     skimContext :: Contextual (Bwd TyEntry)
->     skimContext = do
->         e <- popEntry
->         case e of
->             LetGoal  -> return B0
->             TY te    -> (:< te) <$> skimContext
->             TM _     -> undefined
-
-
-\section{Type inference}
-
-\subsection{Type assignment system}
-
-The syntax of terms is
-$$t ::= x ~||~ t~t ~||~ \lambda x . t ~||~ \letIn{x}{t}{t}.$$
-% where $x$ ranges over some set of term variables.
-
-We define the type assignability statement $t : \tau$ by the rules in
-Figure~\ref{fig:typeAssignmentRules}, and the scheme assignability statement
-$t \hasscheme \sigma$ for arbitrary terms $t$ thus:
-\begin{align*}
-t \hasscheme .\tau   &\mapsto    t : \tau  \\
-t \hasscheme \forall \alpha \sigma  &\mapsto 
-    \Sbind{\hole{\alpha}}{t \hasscheme \sigma}   \\
-t \hasscheme \letS{\alpha}{\tau}{\sigma}  &\mapsto
-    \Sbind{\alpha \defn \tau}{t \hasscheme \sigma}
-\end{align*}
-
-\begin{figure}[ht]
-\boxrule{\Delta \entails t : \tau}
-
-$$
-\Rule{t : \tau
-      \quad
-      \tau \equiv \upsilon}
-     {t : \upsilon}
-\qquad
-\Rule{x \hasc .\tau}
-     {x : \tau}
-$$
-
-$$
-\Rule{\Sbind{x \asc .\upsilon}{t : \tau}}
-     {\lambda x.t : \upsilon \arrow \tau}
-\qquad
-\Rule{f : \upsilon \arrow \tau
-      \quad
-      a : \upsilon}
-     {f a : \tau}
-$$
-
-%      \forall \upsilon . (\Gamma \entails \sigma \succ \upsilon
-%              \Rightarrow \Gamma \entails s : \upsilon)
-
-$$
-\Rule{
-      s \hasscheme \sigma
-      \quad
-      \Sbind{x \asc \sigma}{t : \tau}
-     }
-     {\letIn{x}{s}{t} : \tau}
-$$
-
-\caption{Declarative rules for type assignment}
-\label{fig:typeAssignmentRules}
-\end{figure}
-
-
-%if False
-
-Now we can extend the $\lei$ relation to ensure that more informative contexts
-preserve term information. First, let $\forget{\cdot}$ be the forgetful map from
-contexts to lists of term names and |LetGoal| markers that discards type and
-scheme information:
-\begin{align*}
-\forget{\emptycontext}         &= \emptycontext  \\
-\forget{\Gamma, \alpha := \_}  &= \forget{\Gamma}  \\
-\forget{\Gamma, x \asc \sigma} &= \forget{\Gamma} , x  \\
-\forget{\Gamma, \letGoal}      &= \forget{\Gamma} , \letGoal
-\end{align*}
-
-We write $\theta : \Gamma \lei \Delta$ if
-\begin{enumerate}[(a)]
-\item $\Gamma \entails \alpha \defn \tau   \Rightarrow
-           \Delta \entails \theta\alpha \equiv \theta\tau$,
-\item $\Gamma \entails x \asc \sigma  \Rightarrow
-           \forall \tau. (\Delta \entails \theta\sigma \succ \tau 
-               \Rightarrow  \Delta \entails x : \tau)$ and
-\item $\forget{\Gamma}$ is a prefix of $\forget{\Delta}$.
-\end{enumerate}
-
-We write $\theta : \Gamma \LEI \Delta$ if $\theta : \Gamma \lei \Delta$ and
-$$\Gamma \entails x \asc \sigma  \Rightarrow
-           \forall \tau. (\Delta \entails x : \tau
-               \Rightarrow   \Delta \entails \theta\sigma \succ \tau).$$
-
-It is straightforward to verify that the previous results go through using the
-extended definition of the $\lei$ relation, since the unification algorithm
-ignores term variables and $\letGoal$ markers completely.
-
-As we have previously observed, condition (a) means that type equations are
-preserved by information increase, as
-$$\theta : \Gamma \lei \Delta  \wedge  \Gamma \entails \tau \equiv \upsilon
-    \Rightarrow  \Delta \entails \theta\tau \equiv \theta\upsilon.$$
-The new conditions ensure that type assignment is preserved:
-
-\begin{lemma}
-\label{lem:typeAssignmentPreserved}
-If $\theta : \Gamma \lei \Delta$ and $\Gamma \entails t : \tau$ then
-$\Delta \entails t : \theta\tau$.
-\end{lemma}
-
-A term $t$ \define{can be assigned type scheme} $\sigma$ in context $\Gamma$,
-written $\Gamma \entails t \hasscheme \sigma$, if
-$$\forall \tau . \forall \theta : \Gamma \lei \Delta . (
-    \Delta \entails \theta\sigma \succ \tau
-        \Rightarrow \Delta \entails t : \tau )$$ 
-and $\sigma$ is \define{principal} if, additionally,
-$$\forall \tau . \forall \theta : \Gamma \LEI \Delta . (
-    \Delta \entails t : \tau
-        \Rightarrow  \Delta \entails \theta\sigma \succ \tau).$$
-
-
-\begin{lemma}
-\label{lem:suffixSchemeEquivalence}
-Let $\Gamma$ be a context and $\Xi$ a list of type variable declarations such
-that $\Gamma, \Xi$ is a valid context. For any term $t$ and type $\tau$,
-$$\Gamma, \Xi \entails t : \tau
-    \Leftrightarrow    \Gamma \entails t \hasscheme \gen{\Xi}{\tau}.$$
-\end{lemma}
-
-\begin{proof}
-
-\end{proof}
-
-%endif
-
-
-\subsection{Dividing up the context}
-
-\TODO{Motivation!}
-
-In addition to variable declarations $v D$, we need another kind of context
-entry, the $\fatsemi$ separator. This allows us to make use of the property,
-so far observed but not made use of, that order in the context is important
-and we move declarations left as little as possible.
-We therefore add the context validity rule
-$$
-\Rule{\Gamma \entails \valid}
-     {\Gamma \fatsemi \entails \valid}.
-$$
-
-The full data type of context entries is thus:
-
-> data Entry = TY TyEntry | TM TmEntry | LetGoal
-
-We also need to refine the $\lei$ relation.
-Let $\semidrop$ be the partial function from contexts and natural numbers to
-contexts that takes $\Gamma \semidrop n$ to $\Gamma$ truncated after $n$
-$\fatsemi$ separators, provided $\Gamma$ contains at least $n$ of them. It is
-defined by
-\begin{align*}
-\Xi \semidrop 0 &= \Xi  \\
-\Xi \fatsemi \Gamma \semidrop 0 &= \Xi  \\
-\Xi \fatsemi \Gamma \semidrop n+1 &= \Xi \fatsemi (\Gamma \semidrop n)  \\
-\Xi \semidrop n+1 &~\mathrm{undefined}
-\end{align*}
-
-We write $\delta : \Gamma \lei \Delta$ if,
-for each $K \in \K$, there is a 
-$K$-substitution from $\Gamma$ to $\Delta$ (written $\delta_K$) such that
-if $v D \in \Gamma \semidrop n$ and $S \in \sem{v D}$ then
-$\Delta \semidrop n$ is defined and
-$\Delta \entails \delta S$.
-
-This definition of $\Gamma \lei \Delta$ is stronger than the previous definition,
-because it requires a correspondence between the sections of $\Gamma$ and
-$\Delta$, such that declarations in the first $n$ sections of $\Gamma$ can be
-interpreted over the first $n$ sections of $\Delta$.
-However, it is mostly straightforward to verify that the previous results go
-through with the new definition.
-
-%% Note that if $\delta : \Gamma \lei \Delta$ then
-%% $\delta||_{\Gamma \semidrop n} : \Gamma \semidrop n \lei \Delta \semidrop n$. 
-
-The only place where the change is nontrivial is in the unification algorithm,
-because it acts structurally over the context, so we need to specify what happens
-when it finds a $\fatsemi$ separator. It turns out that these can simply be
-ignored, so we add the following algorithmic rules:
-$$
-\name{Skip}
-\Rule{\Junify{\Gamma_0}{\alpha}{\beta}{\Gamma_1}}
-     {\Junify{\Gamma_0 \fatsemi}{\alpha}{\beta}{\Gamma_1 \fatsemi}}
-$$
-$$
-\name{Repossess}
-\Rule{\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\Xi}{\Gamma_1}}
-     {\Jinstantiate{\Gamma_0 \fatsemi}{\alpha}{\tau}{\Xi}{\Gamma_1 \fatsemi}}
-$$
-The \textsc{Skip} rule is relatively straightforward, but the \textsc{Repossess}
-rule is nontrivial. It is so named because it moves the variable declarations in
-$\Xi$ to the left of the $\fatsemi$ separator, thereby \scare{repossessing} them.
-Despite this, unification does still produce a most general solution, as we
-shall see.
-
-\TODO{Correctness proof for unification. Explain how sanity conditions on $\Xi$,
-which we have been following all along, ensure generality is preserved.}
-
-
-If $S$ is a statement then $\fatsemi S$ is a composite statement given by
-$$
-\Rule{\Gamma \fatsemi \entails S}
-     {\Gamma \entails \fatsemi S}.
-$$
-If $S$ is stable then $\fatsemi S$ is stable, which we can see as follows.
-Suppose $\Gamma \entails \fatsemi S$ and $\delta : \Gamma \lei \Delta$. Then
-$\Gamma \fatsemi \entails S$, and $\delta : \Gamma \fatsemi \lei \Delta \fatsemi$
-by the new definition of the $\lei$ relation. Hence
-$\Delta \fatsemi \entails \delta S$ by stability and so
-$\Delta \entails \delta (\fatsemi S)$.
-
-
-\subsection{Constructing a type inference algorithm}
-
-As with unification, we wish to translate these declarative rules into an
-algorithm for type inference. 
-% For each term $t$, we define the problem
-% $\Pinf{t}$ on types with equivalence by $\Pinf{t}(\tau) = t : \tau$,
-% and we seek an algorithm to find a minimal solution of $\Pinf{t}$.
-We define the type inference problem $\Pinf{}$ by
-\begin{align*}
-\In{\Pinf{}} &= Term  \\
-\Out{\Pinf{}} &= Type  \\
-\Pre{\Pinf{}}(t) &= \valid  \\
-\Post{\Pinf{}}(t)(\tau) &= \tau \type \wedge t : \tau  \\
-\R{\Pinf{}}(\tau)(\upsilon) &= \tau \equiv \upsilon
-\end{align*}
-
-To transform a rule into an algorithmic form, we proceed clockwise starting from
-the conclusion. For each hypothesis, we must ensure that the problem is fully
-specified, inserting variables to stand for unknown problem inputs. Moreover, we
-cannot pattern match on problem outputs, so we ensure there are schematic variables
-in output positions, fixing things up with appeals to unification. 
-
-Consider the rule for application, written to highlight problem inputs and outputs
-as
-$$\Rule{\Pinf{f}(\upsilon \arrow \tau)    \quad \Pinf{a}(\upsilon)}
-       {\Pinf{f a}(\tau)}.$$
-We change this to the equivalent form
-$$\Rule{\Pinf{f}(\chi)
-        \quad
-        \Pinf{a}(\upsilon)
-        \quad
-        \Sbind{\beta \defn \tau}{\chi \equiv \upsilon \arrow \beta}
-       }
-       {\Sbind{\beta \defn \tau}{\Pinf{f a}(\beta)}}$$
-assuming $\beta$ is a fresh variable. Now the algorithmic version uses input and
-output contexts, with $\beta$ initially unknown:
-$$
-\Rule{\Jtype{\Gamma_0}{f}{\chi}{\Gamma_1}
-         \quad
-         \Jtype{\Gamma_1}{a}{\upsilon}{\Gamma_2}
-         \quad
-         \Junify{\Gamma_2, \hole{\beta}}{\chi}{\upsilon \arrow \beta}{\Gamma_3}}
-        {\Jtype{\Gamma_0}{f a}{\beta}{\Gamma_3}}
-$$
-
-The rule for abstraction is
-$$\Rule{\Sbind{x \asc .\upsilon}{\Pinf{t}(\tau)}}
-       {\Pinf{\lambda x . t}(\upsilon \arrow \tau)}$$
-which is transformed to
-$$\Rule{\Sbind{\beta \defn \upsilon}{\Sbind{x \asc .\beta}{\Pinf{t}(\tau)}}}
-       {\Sbind{\beta \defn \upsilon}{\Pinf{\lambda x . t}(\beta \arrow \tau)}}$$
-and hence
-$$
-\Rule{\Jtype{\Gamma_0, \hole{\beta}, x \asc .\beta}{t}{\tau}
-          {\Gamma_1, x \asc .\beta, \Xi}}
-     {\Jtype{\Gamma_0}{\lambda x.t}{\beta \arrow \tau}{\Gamma_1, \Xi}}
-$$
-
-The variable rule is
-$$\Rule{x \hasc .\tau}
-       {\Pinf{x}(\tau)}$$
-
-The let rule is
-$$
-\Rule{
-      s \hasscheme \sigma
-      \quad
-      \Sbind{x \asc \sigma}{t : \tau}
-     }
-     {\Pinf{\letIn{x}{s}{t}}(\tau)}
-$$
-which we transform to
-$$
-\Rule{
-      \fatsemi (s : \upsilon)
-      \quad
-      x \asc \upsilon \Yup t : \tau
-     }
-     {\Pinf{\letIn{x}{s}{t}}(\tau)}
-$$
-where $\Yup$ is defined via
-$$
-\Rule{\Gamma \entails \Sbind{x \asc \gen{\Xi}{\sigma}}{S}}
-     {\Gamma \fatsemi \Xi \entails x \asc \upsilon \Yup S}
-$$
+\subsection{Defining the algorithm}
 
 Now we define the type inference judgment $\Jtype{\Gamma_0}{t}{\tau}{\Gamma_1}$
 % (inferring the type of $t$ in $\Gamma_0$ yields $\tau$ in the more informative

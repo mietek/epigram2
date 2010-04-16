@@ -173,3 +173,119 @@ Now by stability applied to $\gamma_1 S$ using
 $\gamma_2||_{\Gamma_1 \semidrop n} :
     \Gamma_1 \semidrop n \lei \Gamma_2 \semidrop n$, we have
 $\Gamma_2 \semidrop n \entails \gamma_2\gamma_1\sem{v D}$ .
+
+
+
+
+
+
+%if False
+
+Now we can extend the $\lei$ relation to ensure that more informative contexts
+preserve term information. First, let $\forget{\cdot}$ be the forgetful map from
+contexts to lists of term names and |LetGoal| markers that discards type and
+scheme information:
+\begin{align*}
+\forget{\emptycontext}         &= \emptycontext  \\
+\forget{\Gamma, \alpha := \_}  &= \forget{\Gamma}  \\
+\forget{\Gamma, x \asc \sigma} &= \forget{\Gamma} , x  \\
+\forget{\Gamma, \letGoal}      &= \forget{\Gamma} , \letGoal
+\end{align*}
+
+We write $\theta : \Gamma \lei \Delta$ if
+\begin{enumerate}[(a)]
+\item $\Gamma \entails \alpha \defn \tau   \Rightarrow
+           \Delta \entails \theta\alpha \equiv \theta\tau$,
+\item $\Gamma \entails x \asc \sigma  \Rightarrow
+           \forall \tau. (\Delta \entails \theta\sigma \succ \tau 
+               \Rightarrow  \Delta \entails x : \tau)$ and
+\item $\forget{\Gamma}$ is a prefix of $\forget{\Delta}$.
+\end{enumerate}
+
+We write $\theta : \Gamma \LEI \Delta$ if $\theta : \Gamma \lei \Delta$ and
+$$\Gamma \entails x \asc \sigma  \Rightarrow
+           \forall \tau. (\Delta \entails x : \tau
+               \Rightarrow   \Delta \entails \theta\sigma \succ \tau).$$
+
+It is straightforward to verify that the previous results go through using the
+extended definition of the $\lei$ relation, since the unification algorithm
+ignores term variables and $\letGoal$ markers completely.
+
+As we have previously observed, condition (a) means that type equations are
+preserved by information increase, as
+$$\theta : \Gamma \lei \Delta  \wedge  \Gamma \entails \tau \equiv \upsilon
+    \Rightarrow  \Delta \entails \theta\tau \equiv \theta\upsilon.$$
+The new conditions ensure that type assignment is preserved:
+
+\begin{lemma}
+\label{lem:typeAssignmentPreserved}
+If $\theta : \Gamma \lei \Delta$ and $\Gamma \entails t : \tau$ then
+$\Delta \entails t : \theta\tau$.
+\end{lemma}
+
+A term $t$ \define{can be assigned type scheme} $\sigma$ in context $\Gamma$,
+written $\Gamma \entails t \hasscheme \sigma$, if
+$$\forall \tau . \forall \theta : \Gamma \lei \Delta . (
+    \Delta \entails \theta\sigma \succ \tau
+        \Rightarrow \Delta \entails t : \tau )$$ 
+and $\sigma$ is \define{principal} if, additionally,
+$$\forall \tau . \forall \theta : \Gamma \LEI \Delta . (
+    \Delta \entails t : \tau
+        \Rightarrow  \Delta \entails \theta\sigma \succ \tau).$$
+
+
+\begin{lemma}
+\label{lem:suffixSchemeEquivalence}
+Let $\Gamma$ be a context and $\Xi$ a list of type variable declarations such
+that $\Gamma, \Xi$ is a valid context. For any term $t$ and type $\tau$,
+$$\Gamma, \Xi \entails t : \tau
+    \Leftrightarrow    \Gamma \entails t \hasscheme \gen{\Xi}{\tau}.$$
+\end{lemma}
+
+\begin{proof}
+
+\end{proof}
+
+%endif
+
+
+
+
+
+
+%if False
+
+\TODO{Get rid of the specialisation judgment and specialise on lookup instead.}
+The statement $\sigma \succ \tau$, defined in
+Figure~\ref{fig:genericInstRules}, means that $\sigma$ has
+generic instance $\tau$ obtained by substituting $\Delta$-types
+for the generic variables of $\sigma$.
+
+\begin{figure}[ht]
+\boxrule{\Delta \entails \sigma \succ \tau}
+
+$$
+\Rule{\Delta \entails \tau \type}
+     {\Delta \entails .\tau \succ \tau}
+\qquad
+\Rule{\Delta \entails \upsilon \type
+      \quad
+      \Delta \entails [\upsilon/\alpha]\sigma \succ \tau}
+     {\Delta \entails \forall\alpha~\sigma \succ \tau}
+$$
+
+$$
+\Rule{\Delta \entails [\upsilon/\alpha]\sigma \succ \tau}
+     {\Delta \entails \letS{\alpha}{\upsilon}{\sigma} \succ \tau}
+\qquad
+\Rule{\Delta \entails \sigma \succ \tau
+      \quad
+      \Delta \entails \tau \equiv \upsilon}
+     {\Delta \entails \sigma \succ \upsilon}
+$$
+
+\caption{Rules for generic instantiation}
+\label{fig:genericInstRules}
+\end{figure}
+
+%endif
