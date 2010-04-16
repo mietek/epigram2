@@ -18,6 +18,7 @@
 %format <?  = "\in "
 %format ... = "\ldots "
 %format >-  = "\Yright "
+%format .   = "\,\circ\, "
 
 %format F0  = "\emptycontext"
 %format B0  = "\emptycontext"
@@ -218,7 +219,8 @@ thinks of a context as a set of atomic facts, then $\Gamma_1$ is the least upper
 bound of $\Gamma_0$ together with the facts required to make $S$ hold.
 
 In each case, at most one rule matches the input context and condition, and we
-specify a termination order so the rules define algorithms. \TODO{Do we?}
+specify a termination order so the rules define algorithms.
+\TODO{Do we? We need to say more about termination.}
 It is straightforward to implement these algorithms by translating the rule
 systems into code. We illustrate this by providing a Haskell implementation.
 
@@ -478,7 +480,9 @@ A context suffix is a (forwards) list containing only type variable definitions.
 
 < data Entry = TY TyEntry | ...
 
-\TODO{The constructors of |Maybe| are abbreviated to |Nothing| and |Just|}
+\TODO{The constructors of |Maybe| are abbreviated to |Nothing| and |Just|.
+Is this too magical? We could define a type with those constructors and use
+it for |TyEntry| only.}
 
 > type Context     = Bwd Entry
 > type Suffix      = Fwd TyEntry
@@ -928,10 +932,12 @@ terms in the conclusion. Usually we will ignore these without loss of generality
 but where necessary we refer to them as \textsc{Define}\sym,
 \textsc{Expand}\sym and \textsc{Ignore}\sym.
 
-\TODO{Can we do better than this?
-Unfortunately removing these three rules and using the solve versions doesn't
+\TODO{
+Unfortunately, removing these three rules and using the solve versions doesn't
 work, e.g. consider solving $\alpha \equiv \beta$ in
 $\hole{\alpha}, \beta \defn \alpha$.
+The flex-flex/flex-rigid distinction is necessary to handle the trivial
+exception to the occur check.
 }
 
 \begin{figure}[ht]
@@ -1252,15 +1258,17 @@ $$
 \end{figure}
 
 
-\TODO{In practice, we make schemes by generalisation over types.}
-
-We write $\gen{\Xi}{\sigma}$ for the generalisation of the type scheme $\sigma$
-over the list of type variable declarations $\Xi$. This is defined as follows:
+The structure of these rules strongly suggests that schemes arise by discharging
+a list of type variable declarations over a type. In fact, any scheme can be
+viewed in this way. We write $\gen{\Xi}{\sigma}$ for the generalisation of
+the type scheme $\sigma$ over the list of type variable declarations $\Xi$,
+defined by
 \begin{align*}
 \emptycontext         &\genarrow \sigma = \sigma  \\
 \Xi, \hole{\alpha}    &\genarrow \sigma = \Xi \genarrow \forall\alpha~\sigma  \\
 \Xi, \alpha \defn \nu &\genarrow \sigma = \Xi \genarrow \letS{\alpha}{\nu}{\sigma}
 \end{align*}
+We will usually be interested in the case $\sigma = .\tau$      for some type $\tau$.
 
 \begin{lemma}
 \label{lem:generalise}
@@ -1504,19 +1512,20 @@ We define the type inference problem $\Pinf{}$ by
 
 \section{Local contexts for local problems}
 
-\TODO{Motivation!}
+We have previously observed \TODO{(have we?)}, but not yet made use of, the
+property that order in the context is important and we move declarations left as
+little as possible. Thus the rightmost entries are the most local to the problem
+we are solving. This will be useful when we come to implement type inference
+for the |Let| construct, as we want to generalise over \scare{local} type
+variables but not \scare{global} variables.
 
-In addition to variable declarations $v D$, we need another kind of context
-entry, the $\fatsemi$ separator. This allows us to make use of the property,
-so far observed but not made use of, that order in the context is important
-and we move declarations left as little as possible.
-We therefore add the context validity rule
+In order to keep track of locality in the context, we need another kind of
+context extension: the $\fatsemi$ separator. We add the context validity rule
 $$
 \Rule{\Gamma \entails \valid}
-     {\Gamma \fatsemi \entails \valid}.
+     {\Gamma \fatsemi \entails \valid}
 $$
-
-The full data type of context entries is thus:
+so the (finally) complete data type of context entries is:
 
 > data Entry = TY TyEntry | TM TmEntry | LetGoal
 
@@ -1532,17 +1541,16 @@ defined by
 \Xi \semidrop n+1 &~\mathrm{undefined}
 \end{align*}
 
-We write $\delta : \Gamma \lei \Delta$ if,
-for each $K \in \K$, there is a 
-$K$-substitution from $\Gamma$ to $\Delta$ (written $\delta_K$) such that
+We write $\delta : \Gamma \lei \Delta$ if, for each $K \in \K$, there is a 
+$K$-substitution $\delta_K$ from $\Gamma$ to $\Delta$ such that
 if $v D \in \Gamma \semidrop n$ and $S \in \sem{v D}$ then
 $\Delta \semidrop n$ is defined and
 $\Delta \entails \delta S$.
 
 This definition of $\Gamma \lei \Delta$ is stronger than the previous definition,
-because it requires a correspondence between the sections of $\Gamma$ and
-$\Delta$, such that declarations in the first $n$ sections of $\Gamma$ can be
-interpreted over the first $n$ sections of $\Delta$.
+because it requires a correspondence between the $\fatsemi$-separated sections of
+$\Gamma$ and $\Delta$, such that declarations in the first $n$ sections of
+$\Gamma$ can be interpreted over the first $n$ sections of $\Delta$.
 However, it is mostly straightforward to verify that the previous results go
 through with the new definition.
 
