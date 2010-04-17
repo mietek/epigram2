@@ -24,13 +24,12 @@
   volume = {23},
   number = {2-3},
   year = {1994},
-  issn = {0167-6423},
   pages = {287--311},
-  doi = {http://dx.doi.org/10.1016/0167-6423(94)00022-0},
   publisher = {Elsevier North-Holland, Inc.},
-  address = {Amsterdam, The Netherlands, The Netherlands},
+  address = {Amsterdam, The Netherlands},
 }
-
+  issn = {0167-6423},
+  doi = {http://dx.doi.org/10.1016/0167-6423(94)00022-0},
 
 
 @article{bird_paterson_nested_1999,
@@ -38,163 +37,179 @@
   title = {de {Bruijn} notation as a nested datatype},
   journal = {Journal of Functional Programming},
   volume = {9},
-  number = {01},
+  number = {1},
   pages = {77-91},
   year = {1999},
-  doi = {10.1017/S0956796899003366},
   eprint = {http://journals.cambridge.org/article_S2739506151},
   abstract = { ABSTRACT &ldquo;I have no data yet. It is a capital mistake to theorise before one has data.&rdquo; Sir Arthur Conan Doyle The Adventures of Sherlock Holmesde Bruijn notation is a coding of lambda terms in which each occurrence of a bound variable x is replaced by a natural number, indicating the &lsquo;distance&rsquo; from the occurrence to the abstraction that introduced x. One might suppose that in any datatype for representing de Bruijn terms, the distance restriction on numbers would have to be maintained as an explicit datatype invariant. However, by using a nested (or non-regular) datatype, we can define a representation in which all terms are well-formed, so that the invariant is enforced automatically by the type system. Programming with nested types is only a little more difficult than programming with regular types, provided we stick to well-established structuring techniques. These involve expressing inductively defined functions in terms of an appropriate fold function for the type, and using fusion laws to establish their properties. In particular, the definition of lambda abstraction and beta reduction is particularly simple, and the proof of their associated properties is entirely mechanical. }
 }
+  doi = {10.1017/S0956796899003366},
+
 
 @inproceedings{clment_simple_1986,
-	address = {Cambridge, Massachusetts, United States},
-	title = {A simple applicative language: {mini-ML}},
-	isbn = {0-89791-200-4},
-	shorttitle = {A simple applicative language},
-	doi = {10.1145/319838.319847},
-	booktitle = {Proceedings of the 1986 {ACM} conference on {LISP} and functional programming},
-	publisher = {{ACM}},
-	author = {Dominique Clément and Thierry Despeyroux and Gilles Kahn and Joëlle Despeyroux},
-	year = {1986},
-	keywords = {inference paper, ml, type inference},
-	pages = {13--27}
-},
+  address = {Cambridge, Massachusetts, USA},
+  title = {A simple applicative language: {mini-ML}},
+  shorttitle = {A simple applicative language},
+  booktitle = {Proceedings of the 1986 {ACM} conference on {LISP} and functional programming},
+  publisher = {{ACM}},
+  author = {Dominique Clément and Thierry Despeyroux and Gilles Kahn and Joëlle Despeyroux},
+  year = {1986},
+  keywords = {inference paper, ml, type inference},
+  pages = {13--27}
+}
+  isbn = {0-89791-200-4},
+  doi = {10.1145/319838.319847},
+  
 
 @inproceedings{damas_principal_1982,
-	address = {Albuquerque, New Mexico},
-	title = {Principal type-schemes for functional programs},
-	isbn = {0-89791-065-6},
-	doi = {10.1145/582153.582176},
-	booktitle = {Proceedings of the 9th {ACM} {SIGPLAN-SIGACT} symposium on Principles of Programming Languages},
-	publisher = {{ACM}},
-	author = {Luis Damas and Robin Milner},
-	year = {1982},
-	keywords = {hindley milner, inference paper, type inference},
-	pages = {207--212}
+  address = {Albuquerque, New Mexico, USA},
+  title = {Principal type-schemes for functional programs},
+  booktitle = {Proceedings of the 9th {ACM} {SIGPLAN-SIGACT} symposium on Principles of Programming Languages (POPL '82)},
+  publisher = {{ACM}},
+  author = {Luis Damas and Robin Milner},  
+  year = {1982},
+  keywords = {hindley milner, inference paper, type inference},
+  pages = {207--212}
 },
+  isbn = {0-89791-065-6},
+  doi = {10.1145/582153.582176},
+
 
 @unpublished{ghc_team_glorious_2009,
-	title = {The {Glorious Glasgow Haskell Compilation System} User's Guide, Version 6.12.1},
-	url = {http://www.haskell.org/ghc/docs/latest/html/users_guide/deriving.html#deriving-typeable},
-	author = {{GHC Team}},
-	year = {2009},
-	note = {Section 7.5. Extensions to the "deriving" mechanism},
-	keywords = {ghc, haskell, inference paper}
+  title = {The {Glorious Glasgow Haskell Compilation System} User's Guide, Version 6.12.1},
+  url = {http://www.haskell.org/ghc/docs/latest/html/users_guide/deriving.html#deriving-typeable},
+  author = {{GHC Team}},
+  year = {2009},
+  note = {Section 7.5. Extensions to the "deriving" mechanism},
+  keywords = {ghc, haskell, inference paper}
 },
 
 @article{gibbons_essence_2009,
-	title = {The essence of the iterator pattern},
-	volume = {19},
-	abstract = {The Iterator pattern gives a clean interface for element-by-element access to a collection, independent of the collection's shape. Imperative iterations using the pattern have two simultaneous aspects: mapping and accumulating. Various existing functional models of iteration capture one or other of these aspects, but not both simultaneously. We argue that C. {McBride} and R. Paterson's applicative functors {(Applicative} programming with effects, J. Funct. Program., 18 (1): 1–13, 2008), and in particular the corresponding traverse operator, do exactly this, and therefore capture the essence of the Iterator pattern. Moreover, they do so in a way that nicely supports modular programming. We present some axioms for traversal, discuss modularity concerns and illustrate with a simple example, the wordcount problem.},
-	number = {3-4},
-	journal = {J. Funct. Program.},
-	author = {Jeremy Gibbons and Bruno c. d. s. Oliveira},
-	year = {2009},
-	keywords = {applicative, inference paper},
-	pages = {377--402}
+  title = {The essence of the iterator pattern},
+  volume = {19},
+  abstract = {The Iterator pattern gives a clean interface for element-by-element access to a collection, independent of the collection's shape. Imperative iterations using the pattern have two simultaneous aspects: mapping and accumulating. Various existing functional models of iteration capture one or other of these aspects, but not both simultaneously. We argue that C. {McBride} and R. Paterson's applicative functors {(Applicative} programming with effects, J. Funct. Program., 18 (1): 1–13, 2008), and in particular the corresponding traverse operator, do exactly this, and therefore capture the essence of the Iterator pattern. Moreover, they do so in a way that nicely supports modular programming. We present some axioms for traversal, discuss modularity concerns and illustrate with a simple example, the wordcount problem.},
+  number = {3-4},
+  journal = {Journal of Functional Programming},
+  author = {Jeremy Gibbons and Bruno c. d. s. Oliveira},
+  year = {2009},
+  keywords = {applicative, inference paper},
+  pages = {377--402}
 },
 
 @inproceedings{mcadam_unification_1998,
-    author = {Bruce J. {McAdam}},
-    title = {On the Unification of Substitutions in Type Inference},
-    booktitle = {Implementation of Functional Languages (IFL' 98)},
-    year = {1998},
-    pages = {139--154},
-    publisher = {Springer-Verlag}
+  author = {Bruce J. {McAdam}},
+  title = {On the Unification of Substitutions in Type Inference},
+  booktitle = {Implementation of Functional Languages (IFL' 98)},
+  year = {1998},
+  pages = {139--154},
+  publisher = {Springer-Verlag}
 }
 
 @article{mcbride_applicative_2008,
-	title = {Applicative programming with effects},
-	volume = {18},
-	abstract = {In this article, we introduce Applicative functors – an abstract characterisation of an applicative style of effectful programming, weaker than Monads and hence more widespread. Indeed, it is the ubiquity of this programming pattern that drew us to the abstraction. We retrace our steps in this article, introducing the applicative pattern by diverse examples, then abstracting it to define the Applicative type class and introducing a bracket notation that interprets the normal application syntax in the idiom of an Applicative functor. Furthermore, we develop the properties of applicative functors and the generic operations they support. We close by identifying the categorical structure of applicative functors and examining their relationship both with Monads and with Arrow.},
-	number = {1},
-	journal = {J. Funct. Program.},
-	author = {Conor {McBride} and Ross Paterson},
-	year = {2008},
-	keywords = {applicative, inference paper},
-	pages = {1--13}
-},
+  title = {Applicative programming with effects},
+  volume = {18},
+  abstract = {In this article, we introduce Applicative functors – an abstract characterisation of an applicative style of effectful programming, weaker than Monads and hence more widespread. Indeed, it is the ubiquity of this programming pattern that drew us to the abstraction. We retrace our steps in this article, introducing the applicative pattern by diverse examples, then abstracting it to define the Applicative type class and introducing a bracket notation that interprets the normal application syntax in the idiom of an Applicative functor. Furthermore, we develop the properties of applicative functors and the generic operations they support. We close by identifying the categorical structure of applicative functors and examining their relationship both with Monads and with Arrow.},
+  number = {1},
+  journal = {Journal of Functional Programming},
+  author = {Conor {McBride} and Ross Paterson},
+  year = {2008},
+  keywords = {applicative, inference paper},
+  pages = {1--13}
+}
+
 
 @inproceedings{mcbride_mckinna_not_number_2004,
   author = {Conor {McBride} and James {McKinna}},
   title = {Functional pearl: {I} am not a Number--{I} am a Free Variable},
   booktitle = {Proceedings of the 2004 {ACM SIGPLAN} workshop on {Haskell}},
   year = {2004},
-  isbn = {1-58113-850-4},
   pages = {1--9},
-  location = {Snowbird, Utah, USA},
-  doi = {http://doi.acm.org/10.1145/1017472.1017477},
+  address = {Snowbird, Utah, USA},
   publisher = {ACM},
-  address = {New York, NY, USA},
 }
+  isbn = {1-58113-850-4},
+  doi = {http://doi.acm.org/10.1145/1017472.1017477},
+  address = {New York, NY, USA},
 
 
 @article{milner_theory_1978,
-	title = {A theory of type polymorphism in programming},
-	volume = {17},
-	abstract = {The aim of this work is largely a practical one. A widely employed style of programming, particularly in structure-processing languages which impose no discipline of types, entails defining procedures which work well on objects of a wide variety. We present a formal type discipline for such polymorphic procedures in the context of a simple programming language, and a compile time type-checking algorithm which enforces the discipline. A Semantic Soundness Theorem (based on a formal semantics for the language) states that well-type programs cannot "go wrong" and a Syntactic Soundness Theorem states that if accepts a program then it is well typed. We also discuss extending these results to richer languages; a type-checking algorithm based on is in fact already implemented and working, for the metalanguage {ML} in the Edinburgh {LCF} system.},
-	number = {3},
-	journal = {Journal of Computer and System Sciences},
-	author = {Robin Milner},
-	month = dec,
-	year = {1978},
-	keywords = {hindley milner, inference paper, polymorphism, type inference},
-	pages = {375, 348}
-},
+  title = {A theory of type polymorphism in programming},
+  volume = {17},
+  abstract = {The aim of this work is largely a practical one. A widely employed style of programming, particularly in structure-processing languages which impose no discipline of types, entails defining procedures which work well on objects of a wide variety. We present a formal type discipline for such polymorphic procedures in the context of a simple programming language, and a compile time type-checking algorithm which enforces the discipline. A Semantic Soundness Theorem (based on a formal semantics for the language) states that well-type programs cannot "go wrong" and a Syntactic Soundness Theorem states that if accepts a program then it is well typed. We also discuss extending these results to richer languages; a type-checking algorithm based on is in fact already implemented and working, for the metalanguage {ML} in the Edinburgh {LCF} system.},
+  number = {3},
+  journal = {Journal of Computer and System Sciences},
+  author = {Robin Milner},
+  month = dec,
+  year = {1978},
+  keywords = {hindley milner, inference paper, polymorphism, type inference},
+  pages = {348--375}
+}
+
 
 @article{NaraschewskiN-JAR,
-   author={Wolfgang Naraschewski and Tobias Nipkow},
-   title={Type Inference Verified: Algorithm {W} in {Isabelle/HOL}},
-   journal={Journal of Automated Reasoning},
-   year=1999,
-   volume=23,
-   pages={299--318}} 
+  author={Wolfgang Naraschewski and Tobias Nipkow},
+  title={Type Inference Verified: Algorithm {W} in {Isabelle/HOL}},
+  journal={Journal of Automated Reasoning},
+  month=nov,
+  year=1999,
+  volume=23,
+  number=3,
+  pages={299--318},
+  publisher={Springer-Verlag}
+} 
+
 
 @article{Nipkow-Prehofer-JFP95,
-   author={Tobias Nipkow and Christian Prehofer},
-   title={Type Reconstruction for Type Classes},
-   journal={Journal of Functional Programming},
-   volume=5,
-   number=2,
-   year=1995,
-   pages={201--224}}
+  author={Tobias Nipkow and Christian Prehofer},
+  title={Type Reconstruction for Type Classes},
+  journal={Journal of Functional Programming},
+  volume=5,
+  number=2,
+  year=1995,
+  pages={201--224}
+}
+
 
 @article{norvig_correctingwidespread_1991,
-	title = {Correcting a widespread error in unification algorithms},
-	volume = {21},
-	number = {2},
-	journal = {Softw. Pract. Exper.},
-	author = {Peter Norvig},
-	year = {1991},
-	keywords = {inference paper, unification},
-	pages = {231--233}
-},
+  title = {Correcting a widespread error in unification algorithms},
+  volume = {21},
+  number = {2},
+  journal = {Software: Practice and Experience},
+  author = {Peter Norvig},
+  year = {1991},
+  keywords = {inference paper, unification},
+  pages = {231--233},
+  publisher = {Wiley}
+}
 
-@article{polakow_natural_1999,
-	title = {Natural Deduction for Intuitionistic Non-Commutative Linear Logic},
-	journal = {Proceedings of the 4th international conference on Typed Lambda Calculi and Applications {(TLCA} '99)},
-	author = {Jeff Polakow and Frank Pfenning},
-	year = {1999},
-	keywords = {inference paper, linear logic},
-	pages = {295---309}
-},
+@inproceedings{polakow_natural_1999,
+  title = {Natural Deduction for Intuitionistic Non-Commutative Linear Logic},
+  booktitle = {Proceedings of the 4th international conference on Typed Lambda Calculi and Applications {(TLCA} '99)},
+  author = {Jeff Polakow and Frank Pfenning},
+  year = {1999},
+  keywords = {inference paper, linear logic},
+  pages = {295--309}
+}
+
 
 @inproceedings{pollack_implicit_1990,
-    author = {Robert Pollack},
-    title = {Implicit Syntax},
-    booktitle = {Informal Proceedings of First BRA Workshop on Logical Frameworks},
-    year = {1992},
-    doi = {10.1.1.30.7361}
+  author = {Robert Pollack},
+  title = {Implicit Syntax},
+  booktitle = {Informal Proceedings of First Workshop on Logical Frameworks},
+  year = {1990},
+  month = may,
 }
+  doi = {10.1.1.30.7361}
+
 
 @article{robinson_machine-oriented_1965,
-	title = {A Machine-Oriented Logic Based on the Resolution Principle},
-	volume = {12},
-	doi = {10.1145/321250.321253},
-	number = {1},
-	journal = {J. {ACM}},
-	author = {J. A. Robinson},
-	year = {1965},
-	keywords = {inference paper, unification},
-	pages = {23--41}
+  title = {A Machine-Oriented Logic Based on the Resolution Principle},
+  volume = {12},
+  number = {1},
+  journal = {Journal of the {ACM}},
+  author = {John. A. Robinson},
+  year = {1965},
+  keywords = {inference paper, unification},
+  pages = {23--41}
 }
+  doi = {10.1145/321250.321253},
