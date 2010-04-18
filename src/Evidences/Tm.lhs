@@ -472,7 +472,7 @@ values, and are shared.
 
 References are compared by name, as the |NameSupply| guarantees a
 source of unique, fresh names. Note however that |REF|s being shared,
-one could thing of using physical pointer equality to implement this
+one could think of using physical pointer equality to implement this
 test (!).
 
 > instance Eq REF where
