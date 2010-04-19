@@ -205,9 +205,9 @@ In particular, the generalisation step
  inferring the type of a let-expression) becomes straightforward.
 
 We present algorithms using systems of inference rules to define relationships
-between judgments of the form $\Judge{\Gamma_0}{S}{\Gamma_1}$. Here $\Gamma_0$
+between judgments of the form $\Judge{\Gamma}{S}{\Delta}$. Here $\Gamma$
 is the input context (before applying the rule), $S$ is the statement being
-established, and $\Gamma_1$ is the output context (in which $S$ holds).
+established, and $\Delta$ is the output context (in which $S$ holds).
 This idea of judgments producing a resulting context goes back at least to
 \citet{pollack_implicit_1990}. 
 %%%, and hence perhaps to \citet{harper_type_1991} and \citet{milner_definition_1990}.
@@ -217,9 +217,9 @@ This idea of judgments producing a resulting context goes back at least to
 %%%
 We %%%will 
    define an ordering on contexts based on the information they contain,
-and show that $\Gamma_1$ is minimal with respect to this ordering. If one
-thinks of a context as a set of atomic facts, then $\Gamma_1$ is the least upper
-bound of $\Gamma_0$ together with the facts required to make $S$ hold.
+and show that $\Delta$ is minimal with respect to this ordering. If one
+thinks of a context as a set of atomic facts, then $\Delta$ is the least upper
+bound of $\Gamma$ together with the facts required to make $S$ hold.
 
 In each case, at most one rule matches the input context and condition, and we
 specify a termination order so the rules define algorithms.
@@ -1854,17 +1854,17 @@ $$
 \end{figure}
 
 
-We define $\Jhast{\Gamma_0}{x}{\tau}{\Gamma_1}$ to mean
-$\Gamma_0 \entails x \hasc \sigma$ and
-$\Jspec{\Gamma_0}{\sigma}{\tau}{\Gamma_1}$.
+We define $\Jhast{\Gamma}{x}{\tau}{\Delta}$ to mean
+$\Gamma \entails x \hasc \sigma$ and
+$\Jspec{\Gamma}{\sigma}{\tau}{\Delta}$.
 
 
 \begin{lemma}[Soundness of specialisation]
 \label{lem:specialiseSound}
-If $\Jhast{\Gamma_0}{x}{\tau}{\Gamma_1}$, then
-$\Gamma_1 \entails x \hasc .\tau$,
-$\tyvars{\Gamma_0} \subseteq \tyvars{\Gamma_1}$ and
-$\iota : \Gamma_0 \lei \Gamma_1$.
+If $\Jhast{\Gamma}{x}{\tau}{\Delta}$, then
+$\Delta \entails x \hasc .\tau$,
+$\tyvars{\Gamma} \subseteq \tyvars{\Delta}$ and
+$\iota : \Gamma \lei \Delta$.
 \end{lemma}
 
 \begin{proof}
@@ -1964,44 +1964,44 @@ $\forall\beta.\sigma$ or $\letS{\beta}{\tau}{\sigma}$ into $\sigma[\alpha/\beta]
 
 \subsection{Defining the algorithm}
 
-Now we define the type inference judgment $\Jtype{\Gamma_0}{t}{\tau}{\Gamma_1}$
+Now we define the type inference judgment $\Jtype{\Gamma}{t}{\tau}{\Delta}$
 % (inferring the type of $t$ in $\Gamma_0$ yields $\tau$ in the more informative
 % context $\Gamma_1$)
 by the rules in Figure~\ref{fig:inferRules}.
 
 \begin{figure}[ht]
-\boxrule{\Jtype{\Gamma_0}{t}{\tau}{\Gamma_1}}
+\boxrule{\Jtype{\Gamma}{t}{\tau}{\Delta}}
 
 $$
 \name{Var}
-\Rule{\Jhast{\Gamma_0}{x}{\tau}{\Gamma_1}}
-     {\Jtype{\Gamma_0}{x}{\tau}{\Gamma_1}}
+\Rule{\Jhast{\Gamma}{x}{\tau}{\Gamma, \Xi}}
+     {\Jtype{\Gamma}{x}{\tau}{\Gamma, \Xi}}
 $$
 
 $$
 \name{Abs}
-\Rule{\Jtype{\Gamma_0, \hole{\alpha}, x \asc .\alpha}{t}{\tau}
-          {\Gamma_1, x \asc .\alpha, \Xi}}
-     {\Jtype{\Gamma_0}{\lambda x.t}{\alpha \arrow \tau}{\Gamma_1, \Xi}}
+\Rule{\Jtype{\Gamma, \hole{\alpha}, x \asc .\alpha}{t}{\tau}
+          {\Delta_0, x \asc .\alpha, \Xi}}
+     {\Jtype{\Gamma}{\lambda x.t}{\alpha \arrow \tau}{\Delta_0, \Xi}}
 \side{\alpha \fresh}
 $$
 
 $$
 \name{App}
-\BigRule{\Jtype{\Gamma_0}{f}{\chi}{\Gamma_1}
+\BigRule{\Jtype{\Gamma}{f}{\chi}{\Delta_0}
          \quad
-         \Jtype{\Gamma_1}{a}{\upsilon}{\Gamma_2}}
-        {\Junify{\Gamma_2, \hole{\beta}}{\chi}{\upsilon \arrow \beta}{\Gamma_3}}
-        {\Jtype{\Gamma_0}{f a}{\beta}{\Gamma_3}}
+         \Jtype{\Delta_0}{a}{\upsilon}{\Delta_1}}
+        {\Junify{\Delta_1, \hole{\beta}}{\chi}{\upsilon \arrow \beta}{\Delta}}
+        {\Jtype{\Gamma}{f a}{\beta}{\Delta}}
 \side{\beta \fresh}
 $$
 
 $$
 \name{Let}
-\BigRule{\Jtype{\Gamma_0 \fatsemi}{s}{\tau_0}{\Gamma \fatsemi \Xi_0}}
-        {\Jtype{\Gamma, x \asc \gen{\Xi_0}{.\tau_0}}{t}{\tau_1}
-               {\Gamma_1, x \asc \gen{\Xi_0}{.\tau_0}, \Xi_1}}
-        {\Jtype{\Gamma_0}{\letIn{x}{s}{t}}{\tau_1}{\Gamma_1, \Xi_1}}
+\BigRule{\Jtype{\Gamma \fatsemi}{s}{\tau_0}{\Delta_0 \fatsemi \Xi_0}}
+        {\Jtype{\Delta_0, x \asc \gen{\Xi_0}{.\tau_0}}{t}{\tau_1}
+               {\Delta_1, x \asc \gen{\Xi_0}{.\tau_0}, \Xi_1}}
+        {\Jtype{\Gamma}{\letIn{x}{s}{t}}{\tau_1}{\Delta_1, \Xi_1}}
 $$
 
 \caption{Algorithmic rules for type inference}
@@ -2018,8 +2018,8 @@ $$
 
 \begin{lemma}[Soundness and generality of type inference]
 \label{lem:inferSound}
-If $\Jtype{\Gamma_0}{t}{\tau}{\Gamma_1}$, then
-$\iota : \Jmin{\Gamma_0}{\Pinf{t}{\tau}}{\Gamma_1}$.
+If $\Jtype{\Gamma}{t}{\tau}{\Delta}$, then
+$\iota : \Jmin{\Gamma}{\Pinf{t}{\tau}}{\Delta}$.
 % \begin{enumerate}[(a)]
 % \item $\Gamma_1 \entails t : \tau$;
 % \item $\tyvars{\Gamma_0} \subseteq \tyvars{\Gamma_1}$; and
@@ -2041,9 +2041,9 @@ By induction on the structure of derivations.
 
 
 \begin{lemma}[Completeness of type inference]
-If $\theta_0 : \Gamma_0 \lei \Delta$ and $\Delta \entails t : \tau$ then
-$\Jtype{\Gamma_0}{t}{\upsilon}{\Gamma_1, \Xi}$
-for some type $\upsilon$ and context $\Gamma_1, \Xi$.
+If $\theta : \Gamma \lei \Theta$ and $\Theta \entails t : \tau$ then
+$\Jtype{\Gamma}{t}{\upsilon}{\Delta}$
+for some type $\upsilon$ and context $\Delta$.
 \TODO{Is this enough to cope with the let rule?}
 % \begin{enumerate}[(a)]
 % \item $\Jtype{\Gamma_0;}{t}{\upsilon}{\Gamma_1; \Xi}$,
