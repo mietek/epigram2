@@ -62,6 +62,7 @@
 \definecolor{red}{rgb}{1.0,0.0,0.0}
 \newcommand{\TODO}[1]{\textcolor{red}{#1}}
 
+\newcommand{\eqsubst}{\equiv}
 \newcommand{\compose}{\cdot}
 \newcommand{\extend}{\ensuremath{\wedge}}
 \newcommand{\yields}{\ensuremath{\dashv}}
@@ -575,9 +576,11 @@ $S$.)
 \TODO{Can we simplify this without making it too concrete?}
 
 If $\delta : \Gamma \lei \Delta$ and $\theta : \Gamma \lei \Delta$, then we
-consider $\delta$ and $\theta$ to be equal if, for every statement $S$,
+write $\delta \eqsubst \theta$ if, for every statement $S$,
 $\Delta \entails \delta S  \Leftrightarrow  \Delta \entails \theta S$.
-\TODO{Is this what we want for proving correctness of \textsc{Repossess} later?}
+It is easy to see that $\eqsubst$ is an equivalence relation that is preserved
+under composition.
+\TODO{What other properties of $\eqsubst$ do we need?}
 
 We may omit $\delta$ and write $\Gamma \lei \Delta$ if we are only interested
 in the existence of a suitable substitution. This relation between contexts
@@ -735,7 +738,7 @@ $\Delta \entails \Pre{P} (\delta a)$ by stability.)
 
 The solution $(b, \delta, \Delta)$ is \define{minimal} if for any solution
 $(c, \theta, \Theta)$ there exists $\zeta : \Delta \lei \Theta$ such that
-$\theta = \zeta \compose \delta$ and $\Theta \entails \R{P} (\zeta b, c)$.
+$\theta \eqsubst \zeta \compose \delta$ and $\Theta \entails \R{P} (\zeta b, c)$.
 
 We write $\Prob{P}{a}{b}$ for $\Post{P}(a)(b)$ and
 $\delta : \Jmin{\Gamma}{\Prob{P}{a}{b}}{\Delta}$ to mean that
@@ -786,15 +789,15 @@ $\Theta \entails \Prob{P \wedge Q}{(a, b)}{(r', s')}$, so
 $\Theta \entails \Prob{P}{a}{r'}$ and
 $\Theta \entails \Prob{Q}{b}{s'}$.
 Since $\gamma_1 : \Jmin{\Gamma_0}{\Prob{P}{a}{r}}{\Gamma_1}$, there exists
-$\zeta_1 : \Gamma_1 \lei \Theta$ such that $\theta = \zeta_1 \compose \gamma_1$
+$\zeta_1 : \Gamma_1 \lei \Theta$ such that
+$\theta \eqsubst \zeta_1 \compose \gamma_1$
 and $\Theta \entails \R{P}(\zeta_1 r)(r')$.
 But then $\gamma_2 : \Jmin{\Gamma_1}{\Prob{Q}{b}{s}}{\Gamma_2}$, so there exists
-$\zeta_2 : \Gamma_2 \lei \Theta$ such that $\zeta_1 = \zeta_2 \compose \gamma_2$
+$\zeta_2 : \Gamma_2 \lei \Theta$ such that
+$\zeta_1 \eqsubst \zeta_2 \compose \gamma_2$
 and $\Theta \entails \R{Q}(\zeta_2 s)(s')$.
-Hence 
-$\theta = \zeta_2 \compose (\gamma_2 \compose \gamma_1)$
-and
-$\Theta \entails \R{P \wedge Q}(\zeta_2 (\gamma_2 r), \zeta_2 s)(r', s')$.
+Hence $\theta \eqsubst \zeta_2 \compose (\gamma_2 \compose \gamma_1)$
+and $\Theta \entails \R{P \wedge Q}(\zeta_2 (\gamma_2 r), \zeta_2 s)(r', s')$.
 \end{proof}
 
 This sequential approach to problem solving is not the only decomposition
@@ -912,7 +915,7 @@ $\alpha \in \tyvars{\Gamma}$
 $\Gamma, \Xi \entails \tau \type$,
 $\tau$ is not a variable,
 $\Xi$ contains only type variable declarations and
-$\beta \in \tyvars{\Xi} \Rightarrow \beta \in \FTV{\tau}$,
+$\beta \in \tyvars{\Xi} \Rightarrow \beta \in \FTV{\tau, \Xi}$,
 solving $\alpha$ with $\tau$ succeeds, producing output context $\Delta$.
 
 
@@ -1088,7 +1091,7 @@ $\Junify{\Gamma}{\upsilon}{\tau}{\Delta}$ for some context $\Delta$.
 \item Moreover, if $\theta : \Gamma, \Xi \lei \Theta$,
 $\alpha \in \tyvars{\Gamma}$, $\Gamma, \Xi \entails \tau \type$,
 $\tau$ is not a variable, $\Xi$ contains only type variable declarations,
-$\beta \in \tyvars{\Xi}  \Rightarrow  \beta \in \FTV{\tau}$
+$\beta \in \tyvars{\Xi}  \Rightarrow  \beta \in \FTV{\tau, \Xi}$
 and $\Theta \entails \theta\alpha \equiv \theta\tau$,
 then $\Jinstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$ for some context
 $\Delta$.
@@ -1177,10 +1180,11 @@ for some $\Delta_0$, and the \textsc{ExpandS} rule applies with
 $\Delta = \Delta_0, \alpha \defn \chi$.
 
 \item If $v = \alpha$ and $\alpha \in \FTV{\tau}$ then
-\TODO{this is a contradiction.}
+\TODO{this is contradictory.}
 
 \item If $v = \alpha$ and $\alpha \in \FTV{\Xi}$ then $\alpha \in \FTV{\chi}$
-for some $\chi$ with $\beta \defn \chi \in \Xi$ and $\beta \in \FTV{\tau}$.
+for some $\chi$ with $\Xi = \Xi_0, \beta \defn \chi, \Xi_1$ and
+$\beta \in \FTV{\tau, \Xi_1}$.
 \TODO{Prove this is contradictory.}
 
 \item If $v = \beta$ for $\alpha \neq \beta$ and
@@ -1558,6 +1562,8 @@ algorithm for type inference. We define the type inference problem $I$ by
 
 \section{Local contexts for local problems}
 
+\subsection{Preserving order in the context}
+
 We have previously observed \TODO{(have we?)}, but not yet made use of, the
 property that order in the context is important and we move declarations left as
 little as possible. Thus the rightmost entries are the most local to the problem
@@ -1603,29 +1609,89 @@ through with the new definition.
 %% Note that if $\delta : \Gamma \lei \Delta$ then
 %% $\delta||_{\Gamma \semidrop n} : \Gamma \semidrop n \lei \Delta \semidrop n$. 
 
+
+\subsection{Fixing the unification algorithm}
+
 The only place where the change is nontrivial is in the unification algorithm,
 because it acts structurally over the context, so we need to specify what happens
 when it finds a $\fatsemi$ separator. It turns out that these can simply be
 ignored, so we add the following algorithmic rules:
 $$
 \name{Skip}
-\Rule{\Junify{\Gamma_0}{\alpha}{\beta}{\Gamma_1}}
-     {\Junify{\Gamma_0 \fatsemi}{\alpha}{\beta}{\Gamma_1 \fatsemi}}
+\Rule{\Junify{\Gamma_0}{\alpha}{\beta}{\Delta_0}}
+     {\Junify{\Gamma_0 \fatsemi}{\alpha}{\beta}{\Delta_0 \fatsemi}}
 $$
 $$
 \name{Repossess}
-\Rule{\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\Xi}{\Gamma_1}}
-     {\Jinstantiate{\Gamma_0 \fatsemi}{\alpha}{\tau}{\Xi}{\Gamma_1 \fatsemi}}
+\Rule{\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\Xi}{\Delta_0}}
+     {\Jinstantiate{\Gamma_0 \fatsemi}{\alpha}{\tau}{\Xi}{\Delta_0 \fatsemi}}
 $$
-The \textsc{Skip} rule is relatively straightforward, but the \textsc{Repossess}
-rule is nontrivial. It is so named because it moves the variable declarations in
-$\Xi$ to the left of the $\fatsemi$ separator, thereby \scare{repossessing} them.
-Despite this, unification does still produce a most general solution, as we
-shall see.
+Proving correctness of the \textsc{Skip} rule is relatively straightforward,
+thanks to the following lemma.
 
-\TODO{Correctness proof for unification. Explain how sanity conditions on $\Xi$,
-which we have been following all along, ensure generality is preserved.}
+\begin{lemma}
+If $\delta : \Jmin{\Gamma}{\Prob{P}{a}{b}}{\Delta}$ then
+$\delta : \Jmin{\Gamma \fatsemi}{\Prob{P}{a}{b}}{\Delta \fatsemi}$.
+\end{lemma}
 
+The \textsc{Repossess} rule is more complicated. It is so named because it moves
+the variable declarations in $\Xi$ to the left of the $\fatsemi$ separator,
+thereby \scare{repossessing} them. Despite this, unification does still
+produce a most general solution:
+
+\begin{lemma}[Soundness and generality of \textsc{Repossess} rule]
+If $\Jinstantiate{\Gamma \fatsemi}{\alpha}{\tau}{\Xi}{\Delta \fatsemi}$
+then $\tyvars{\Gamma \fatsemi \Xi} = \tyvars{\Delta \fatsemi}$ and
+$\iota : \Jmin{\Gamma \fatsemi \Xi}{\Puni{\alpha}{\tau}}{\Delta \fatsemi}$.
+\end{lemma}
+\begin{proof}
+Suppose $\Jinstantiate{\Gamma \fatsemi}{\alpha}{\tau}{\Xi}{\Delta \fatsemi}$,
+so $\Jinstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$ as only the
+\textsc{Repossess} rule applies.
+By induction and lemma~\ref{lem:unifySound},
+$\tyvars{\Gamma, \Xi} = \tyvars{\Delta}$ and
+$\iota : \Jmin{\Gamma, \Xi}{\Puni{\alpha}{\tau}}{\Delta}$.
+
+For the first part, we have
+$$\tyvars{\Gamma \fatsemi \Xi} = \tyvars{\Gamma, \Xi} = \tyvars{\Delta}
+    = \tyvars{\Delta \fatsemi}.$$
+
+For the second part, since $\iota : \Gamma, \Xi \lei \Delta$ we have
+$\iota : \Gamma \fatsemi \Xi \lei \Delta \fatsemi$,
+and $\Delta \entails \alpha \equiv \tau$ so
+$\Delta \fatsemi \entails \alpha \equiv \tau$.
+
+For minimality, suppose
+$\theta : \Gamma \fatsemi \Xi \lei \Theta \fatsemi \Phi$
+and $\Theta \fatsemi \Phi \entails \theta\alpha \equiv \theta\tau$.
+Observe that  $\alpha \in \tyvars{\Gamma}$ and
+$\beta \in \tyvars{\Xi}  \Rightarrow  \beta \in \FTV{\tau, \Xi}$
+by the sanity conditions.
+Now $\theta\alpha$ is a $\Theta$-type and $\theta\tau$ is equal to it,
+so the only declarations in $\Phi$ that $\theta\tau$ (hereditarily) depends on
+must be definitions over $\Theta$. But all the variables declared in $\Xi$ are
+used in $\tau$, so there is a substitution
+$\psi : \Gamma \fatsemi \Xi \lei \Theta \fatsemi$
+that agrees with $\theta$ on $\Gamma$ and maps variables in $\Xi$ to their
+definitions in $\Theta$.
+
+Note that $\psi \eqsubst \theta$. \TODO{Why?}
+
+% Now we can filter $\Phi$ to give $\Psi$ consisting only of definitions
+% such that $\Theta \fatsemi \Psi \entails \theta\alpha \equiv \theta\tau$.
+% Let $\psi = \lfloor \Psi \rfloor \compose \theta$, then
+% $\psi : \Gamma \fatsemi \Xi \lei \Theta \fatsemi$
+% and $\Theta \fatsemi \entails \psi\alpha \equiv \psi\tau$.
+
+Hence $\psi : \Gamma, \Xi \lei \Theta$ and
+$\Theta \entails \psi\alpha \equiv \psi\tau$, so by hypothesis there exists
+$\zeta : \Delta \lei \Theta$ such that $\psi \eqsubst \zeta \compose \iota$.
+Then $\zeta : \Delta \fatsemi \lei \Theta \fatsemi \Phi$
+and $\theta \eqsubst \zeta \compose \iota$.
+\end{proof}
+
+
+\subsection{A new composite statement}
 
 If $S$ is a statement then $\fatsemi S$ is a composite statement given by
 $$
