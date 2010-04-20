@@ -1988,9 +1988,9 @@ $$
 
 $$
 \name{Abs}
-\Rule{\Jtype{\Gamma, \hole{\alpha}, x \asc .\alpha}{t}{\tau}
+\Rule{\Jtype{\Gamma, \hole{\alpha}, x \asc .\alpha}{w}{\upsilon}
           {\Delta_0, x \asc .\alpha, \Xi}}
-     {\Jtype{\Gamma}{\lambda x.t}{\alpha \arrow \tau}{\Delta_0, \Xi}}
+     {\Jtype{\Gamma}{\lambda x.w}{\alpha \arrow \upsilon}{\Delta_0, \Xi}}
 \side{\alpha \fresh}
 $$
 
@@ -2006,10 +2006,10 @@ $$
 
 $$
 \name{Let}
-\BigRule{\Jtype{\Gamma \fatsemi}{s}{\tau_0}{\Delta_0 \fatsemi \Xi_0}}
-        {\Jtype{\Delta_0, x \asc \gen{\Xi_0}{.\tau_0}}{t}{\tau_1}
-               {\Delta_1, x \asc \gen{\Xi_0}{.\tau_0}, \Xi_1}}
-        {\Jtype{\Gamma}{\letIn{x}{s}{t}}{\tau_1}{\Delta_1, \Xi_1}}
+\BigRule{\Jtype{\Gamma \fatsemi}{s}{\upsilon}{\Delta_0 \fatsemi \Xi_0}}
+        {\Jtype{\Delta_0, x \asc \gen{\Xi_0}{.\upsilon}}{t}{\chi}
+               {\Delta_1, x \asc \gen{\Xi_0}{.\upsilon}, \Xi_1}}
+        {\Jtype{\Gamma}{\letIn{x}{s}{t}}{\chi}{\Delta_1, \Xi_1}}
 $$
 
 \caption{Algorithmic rules for type inference}
@@ -2052,7 +2052,7 @@ By induction on the structure of derivations.
 If $\theta : \Gamma \lei \Theta$ and $\Theta \entails t : \tau$ then
 $\Jtype{\Gamma}{t}{\upsilon}{\Delta}$
 for some type $\upsilon$ and context $\Delta$.
-\TODO{Is this enough to cope with the let rule?}
+
 % \begin{enumerate}[(a)]
 % \item $\Jtype{\Gamma_0;}{t}{\upsilon}{\Gamma_1; \Xi}$,
 % \item $\theta_1 : \Gamma_1; \lei \Delta$ with 
@@ -2061,121 +2061,153 @@ for some type $\upsilon$ and context $\Delta$.
 % \end{enumerate}
 \end{lemma}
 
-\begin{proof} \TODO{Update this proof.}
-If $t = x$ is a variable, then by inversion $\Delta \entails x \asc \sigma$ and
-$\Delta \entails \sigma \succ \tau$. Now by definition of $\lei$,
-$\Gamma_0; \entails x \asc \sigma'$ for some $\sigma'$ with
-$$\forall \upsilon. \Delta \entails \theta_0\sigma' \succ \upsilon
-    \Leftrightarrow \Delta \entails x : \upsilon.$$
-
-By completeness of specialisation,
-$\Jspec{\Gamma_0;}{\sigma'}{\upsilon}{\Gamma_0; \Xi}$
-and
-$$\forall\tau \forall \phi: \Gamma_0 \lei \Phi . (
-    \Phi \entails \phi\sigma' \succ \tau
-        \Leftrightarrow  \Phi \entails \phi\gen{\Xi}{\upsilon} \succ \tau.$$
+\begin{proof}
+If $t = x$ is a variable, then by inversion $\Theta \entails x \hasc .\tau$
+Now by definition of $\lei$,
+$\Gamma \entails x \asc \sigma$ for some $\sigma$,
+% with
+% $$\forall \upsilon. \Theta \entails \theta\sigma' \succ \upsilon
+%     \Leftrightarrow \Theta \entails x : \upsilon.$$
+so by completeness of specialisation,
+$\Jhast{\Gamma}{x}{\upsilon}{\Gamma, \Xi}$
+% and
+% $$\forall\tau \forall \phi: \Gamma_0 \lei \Phi . (
+%     \Phi \entails \phi\sigma' \succ \tau
+%         \Leftrightarrow  \Phi \entails \phi\gen{\Xi}{\upsilon} \succ \tau.$$
 Hence the \textsc{Var} rule applies giving
-$\Jtype{\Gamma_0;}{x}{\upsilon}{\Gamma_0; \Xi}$,
-(b) holds trivially with $\theta_1 = \theta_0$, and
-$\Gamma_0 \entails x \hasscheme \gen{\Xi}{\upsilon}$ principal.
+$\Jtype{\Gamma}{x}{\upsilon}{\Gamma, \Xi}$.
+% (b) holds trivially with $\theta_1 = \theta_0$, and
+% $\Gamma_0 \entails x \hasscheme \gen{\Xi}{\upsilon}$ principal.
 
 
 If $t = (\letIn{x}{s}{w})$, then by inversion there is some scheme
-$\sigma$ such that $\Delta \entails s \hasscheme \sigma$ and
-$\Delta, x \asc \sigma \entails w : \tau$. Specialise $\sigma$ with fresh type
-variables $\Psi$ so that
-$\Delta, \letGoal; \Psi \entails \sigma \succ \tau_s$
-and hence
-$\Delta, \letGoal; \Psi \entails s : \tau_s$.
-Moreover $\theta_0 : \Gamma_0; \letGoal; \lei \Delta, \letGoal;$ so
+$\sigma$ such that $\Theta \entails s \hasscheme \sigma$ and
+$\Theta, x \asc \sigma \entails w : \tau$.
+Let $\sigma = \gen{\Psi}{.\tau_s}$,
+then $\Theta \fatsemi \entails s \hasscheme \gen{\Psi}{.\tau_s}$ so
+$\Theta \fatsemi \Psi \entails s : \tau_s$.
+
+Moreover $\theta : \Gamma \fatsemi \lei \Theta \fatsemi \Psi$, so
 by induction
-\begin{enumerate}[(a)]
-\item $\Jtype{\Gamma_0; \letGoal;}{s}{\upsilon}{\Gamma_1; \letGoal; \Xi_1}$
-\item $\theta_1 : \Gamma_1; \letGoal; \lei \Delta, \letGoal; \Psi$
-\item $\Gamma_1; \letGoal; \entails s \hasscheme \gen{\Xi_1}{\upsilon}$ principal.
-\end{enumerate}
+$\Jtype{\Gamma \fatsemi}{s}{\upsilon}{\Delta_0 \fatsemi \Xi_0}$
+and by minimality there exists
+$\theta' : \Delta_0 \fatsemi \Xi_0 \lei \Theta \fatsemi \Psi$. 
+
+% \begin{enumerate}[(a)]
+% \item $\Jtype{\Gamma_0; \letGoal;}{s}{\upsilon}{\Gamma_1; \letGoal; \Xi_1}$
+% \item $\theta_1 : \Gamma_1; \letGoal; \lei \Delta, \letGoal; \Psi$
+% \item $\Gamma_1; \letGoal; \entails s \hasscheme \gen{\Xi_1}{.\upsilon}$ principal.
+% \end{enumerate}
 
 Now 
-$$\theta_1 : \Gamma_1; x \asc \gen{\Xi_1}{\upsilon};
-                            \lei \Delta, x \asc \gen{\Xi_1}{\upsilon}; \Psi$$
-but
-$$\iota : \Delta, x \asc \sigma; \lei \Delta, x \asc \gen{\Xi_1}{\upsilon};$$
-by principality, and hence
-$$\Delta, x \asc \gen{\Xi_1}{\upsilon}; \Psi \entails w : \tau$$
-by stability.
+$$\theta' ||_{\Delta_0} : \Delta_0, x \asc \gen{\Xi_0}{.\upsilon}
+                            \lei \Theta, x \asc \gen{\Xi_0}{.\upsilon}$$
+% but
+% $$\iota : \Theta, x \asc \sigma \lei \Theta, x \asc \gen{\Xi_0}{.\upsilon}$$
+% \TODO{by principality?}, and hence
+and
+$$\Theta, x \asc \gen{\Xi_0}{.\upsilon} \entails w : \tau$$
+since if $\Theta, x \asc \sigma \entails x \hasc .\tau_x$ then
+$\Theta, x \asc \gen{\Xi_0}{.\upsilon} \entails x \hasc .\tau_x$.
+\TODO{Prove this as a lemma.}
 
-Thus, by induction,
-\begin{enumerate}[(a)]
-\item $\Jtype{\Gamma_1, x \asc \gen{\Xi_1}{\upsilon};}{w}{\chi}{\Gamma_2; x \asc \gen{\Xi_1}{\upsilon}; \Xi_2}$
-\item $\theta_2 : \Gamma_2; x \asc \gen{\Xi_1}{\upsilon}; \lei \Delta, x \asc \gen{\Xi_1}{\upsilon}; \Psi$
-\item $\Gamma_2; x \asc \gen{\Xi_1}{\upsilon}; \entails w \hasscheme \gen{\Xi_2}{\chi}$ principal
-\end{enumerate}
+Hence, by induction,
+$$\Jtype{\Delta_0, x \asc \gen{\Xi_0}{.\upsilon}}{w}{\chi}
+        {\Delta_1, x \asc \gen{\Xi_0}{.\upsilon}, \Xi_2}$$
+% \begin{enumerate}[(a)]
+% \item $\Jtype{\Gamma_1, x \asc \gen{\Xi_1}{.\upsilon};}{w}{\chi}
+% {\Gamma_2; x \asc \gen{\Xi_1}{.\upsilon}; \Xi_2}$
+% \item $\theta_2 : \Gamma_2; x \asc \gen{\Xi_1}{.\upsilon};
+%   \lei \Delta, x \asc \gen{\Xi_1}{.\upsilon}; \Psi$
+% \item $\Gamma_2; x \asc \gen{\Xi_1}{.\upsilon};
+%   \entails w \hasscheme \gen{\Xi_2}{.\chi}$ principal
+% \end{enumerate}
 and the \textsc{Let} rule applies to give
-\begin{enumerate}[(a)]
-\item $\Jtype{\Gamma_0;}{\letIn{x}{s}{w}}{\chi}{\Gamma_2; \Xi_2}$
-\item $\theta_2 : \Gamma_2; \lei \Delta;$ \TODO{Why?}
-\item $\Gamma_2; \entails \letIn{x}{s}{w} \hasscheme \gen{\Xi_2}{\chi}$ principal by
-lemma \ref{lem:letSchemePrincipal}.
-\end{enumerate}
+$\Jtype{\Gamma}{\letIn{x}{s}{w}}{\chi}{\Delta_1, \Xi_1}$.
+% \begin{enumerate}[(a)]
+% \item $\Jtype{\Gamma_0;}{\letIn{x}{s}{w}}{\chi}{\Gamma_2; \Xi_2}$
+% \item $\theta_2 : \Gamma_2; \lei \Delta;$ \TODO{Why?}
+% \item $\Gamma_2; \entails \letIn{x}{s}{w} \hasscheme \gen{\Xi_2}{.\chi}$
+% principal by
+% lemma \ref{lem:letSchemePrincipal}.
+% \end{enumerate}
 
 
 If $t = \lambda x . w$ is an abstraction, then by inversion
-$\Delta \entails \tau \equiv \tau_0 \arrow \tau_1$
-where $\tau_0$ and $\tau_1$ are some $\Delta$-types, and
-$\Delta, x \asc .\tau_0; \entails w : \tau_1$.
-Taking $\theta = [\tau_0/\alpha]\theta_0$, we have that
-$$\theta : \Gamma_0; \hole{\alpha}, x \asc .\alpha;
-             \lei  \Delta, x \asc .\tau_0;$$
+$\Theta \entails \tau \equiv \tau_0 \arrow \tau_1$
+for some types $\tau_0$ and $\tau_1$, and
+$\Theta, x \asc .\tau_0 \entails w : \tau_1$.
+Taking $\theta' = [\tau_0/\alpha]\theta$, we have that
+$$\theta' : \Gamma, \hole{\alpha}, x \asc .\alpha
+             \lei  \Theta, x \asc .\tau_0$$
 and hence, by induction,
-\begin{enumerate}[(a)]
-\item $\Jtype{\Gamma_0; \hole{\alpha}, x \asc .\alpha;}{w}{\upsilon}
-             {\Gamma_1; \Phi, x \asc .\alpha; \Xi}$
-\item $\theta_1 : \Gamma_1; \Phi, x \asc .\alpha; \lei \Delta, x \asc .\tau_0;$
-\item $\Gamma_1; \Phi, x \asc .\alpha; \entails w \hasscheme \gen{\Xi}{\upsilon}$
-          principal.
-\end{enumerate}
+$$\Jtype{\Gamma, \hole{\alpha}, x \asc .\alpha}{w}{\upsilon}
+              {\Delta_0, x \asc .\alpha, \Xi}.$$
+
+% \begin{enumerate}[(a)]
+% \item $\Jtype{\Gamma_0; \hole{\alpha}, x \asc .\alpha;}{w}{\upsilon}
+%              {\Gamma_1; \Phi, x \asc .\alpha; \Xi}$
+% \item $\theta_1 : \Gamma_1; \Phi, x \asc .\alpha; \lei \Delta, x \asc .\tau_0;$
+% \item $\Gamma_1; \Phi, x \asc .\alpha;
+%   \entails w \hasscheme \gen{\Xi}{\upsilon}$
+%          principal.
+% \end{enumerate}
 
 Thus the \textsc{Abs} rule applies, so we have
-\begin{enumerate}[(a)]
-\item $\Jtype{\Gamma_0;}{\lambda x . w}{\alpha \arrow \upsilon}
-             {\Gamma_1; \Phi, \Xi}$
-\item $\theta_1 : \Gamma_1; \lei \Delta$
-\item $\Gamma_1; \entails \lambda x . w \hasscheme \gen{\Phi, \Xi}{\upsilon}$
-          principal. \TODO{Why?}
-\end{enumerate}
+$$\Jtype{\Gamma}{\lambda x . w}{\alpha \arrow \upsilon}
+              {\Delta_0, \Xi}.$$
+
+% \begin{enumerate}[(a)]
+% \item $\Jtype{\Gamma_0;}{\lambda x . w}{\alpha \arrow \upsilon}
+%              {\Gamma_1; \Phi, \Xi}$
+% \item $\theta_1 : \Gamma_1; \lei \Delta$
+% \item $\Gamma_1; \entails \lambda x . w \hasscheme \gen{\Phi, \Xi}{\upsilon}$
+%           principal. \TODO{Why?}
+% \end{enumerate}
 
 
 If $t = f a$ is an application, then
-$\Delta \entails f : \tau_0 \arrow \tau$,
+$\Theta \entails f : \tau_0 \arrow \tau$,
 so by induction
-\begin{enumerate}[(a)]
-\item $\Jtype{\Gamma_0;}{f}{\upsilon}{\Gamma; \Xi}$
-\item $\theta : \Gamma; \lei \Delta$ 
-\item $\Gamma; \entails f \hasscheme \gen{\Xi}{\upsilon}$ principal.
-\end{enumerate}
+$\Jtype{\Gamma}{f}{\chi}{\Delta_0}$
+and by minimality there exists
+$\theta_0 : \Delta_0 \lei \Theta$
+such that $\Theta \entails \theta_0\chi \equiv \tau_0 \arrow \tau$.
+% \begin{enumerate}[(a)]
+% \item $\Jtype{\Gamma_0;}{f}{\upsilon}{\Gamma; \Xi}$
+% \item $\theta : \Gamma; \lei \Delta$ 
+% \item $\Gamma; \entails f \hasscheme \gen{\Xi}{\upsilon}$ principal.
+% \end{enumerate}
+Now $\Theta \entails a : \tau_0$, so by induction
+$\Jtype{\Delta_0}{a}{\upsilon}{\Delta_1}$
+and by minimality there exists
+$\theta_1 : \Delta_1 \lei \Theta$
+such that $\Theta \entails \theta_1\upsilon \equiv \tau_0$ and
+$\theta_0 \eqsubst \theta_1 \compose \iota$.
 
-Now $\Delta \entails a : \tau_0$, so by induction
-\begin{enumerate}[(a)]
-\item $\Jtype{\Gamma;}{a}{\upsilon_0}{\Gamma_1; \Xi_1}$
-\item $\theta' : \Gamma_1; \lei \Delta$ 
-\item $\Gamma_1; \entails a \hasscheme \gen{\Xi_1}{\upsilon_0}$ principal.
-\end{enumerate}
+% \begin{enumerate}[(a)]
+% \item $\Jtype{\Gamma;}{a}{\upsilon_0}{\Gamma_1; \Xi_1}$
+% \item $\theta' : \Gamma_1; \lei \Delta$ 
+% \item $\Gamma_1; \entails a \hasscheme \gen{\Xi_1}{\upsilon_0}$ principal.
+% \end{enumerate}
 
-Let $\theta_1 = [\tau/\beta]\theta'$, then
-$\theta_1 : \Gamma_1; \Xi_1, \Xi, \hole{\beta} \lei \Delta$,
-and since
-$$\Delta \entails \theta_1\upsilon \equiv \tau_0 \arrow \tau
-    \equiv \theta_1(\upsilon_0 \arrow \beta)$$
+Let $\theta_2 = [\tau/\beta]\theta_1$, then
+$\theta_2 : \Delta_1, \hole{\beta} \lei \Theta$,
+and since \TODO{(explain why)}
+$$\Theta \entails \theta_2\chi \equiv \tau_0 \arrow \tau
+    ~\wedge~
+    \tau_0 \arrow \tau \equiv \theta_2(\upsilon \arrow \beta)$$
 we have
-$\Junify{\Gamma_1; \hole{\beta}}{\upsilon}{\upsilon_0 \arrow \beta}{\Gamma_2}$
+$\Junify{\Delta_1, \hole{\beta}}{\chi}{\upsilon \arrow \beta}{\Delta}$
 by completeness of unification.
-
 Hence the \textsc{App} rule applies, so
-\begin{enumerate}[(a)]
-\item $\Jtype{\Gamma_0}{f a}{\beta}{\Gamma_2}$
-\item $\theta_1 : \Gamma_2; \lei \Delta$ \TODO{Why?}
-\item $\Gamma_2; \entails f a \hasscheme \gen{???}{\beta}$ principal. \TODO{Why?}
-\end{enumerate}
+$\Jtype{\Gamma}{f a}{\beta}{\Delta}$.
+
+% \begin{enumerate}[(a)]
+% \item $\Jtype{\Gamma_0}{f a}{\beta}{\Gamma_2}$
+% \item $\theta_1 : \Gamma_2; \lei \Delta$
+% \item $\Gamma_2; \entails f a \hasscheme \gen{???}{\beta}$ principal.
+% \end{enumerate}
 
 
 \end{proof}
