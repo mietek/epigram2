@@ -1730,7 +1730,11 @@ $\Delta \entails \delta (\fatsemi S)$.
 
 \subsection{Specialisation}
 
-\TODO{Motivation, please.}
+Consider the variable rule for type assignment, which is
+$$\Rule{x \hasc .\tau}
+       {\Pinf{x}{\tau}}.$$
+We need an algorithm that, given a term variable as input, finds a type that
+can be assigned to it (by specialising its scheme).
 
 Let $S$ be the problem given by
 \begin{align*}
@@ -1859,7 +1863,8 @@ $\forall\alpha.\sigma$ or $\letS{\alpha}{\tau}{\sigma}$ into
 $\subst{\beta}{\alpha}{\sigma}$. Since we use different syntactic
 representations for free and bound variables, this is easy to implement.
 
-> schemeUnbind :: TyName -> Schm (Index TyName) -> Scheme
+> schemeUnbind
+>   :: TyName -> Schm (Index TyName) -> Scheme
 > schemeUnbind beta = fmap fromS
 >   where
 >     fromS :: Index TyName -> TyName
@@ -1918,19 +1923,18 @@ $$
 The rule for abstraction is
 $$\Rule{\Sbind{x \asc .\upsilon}{\Pinf{t}{\tau}}}
        {\Pinf{\lambda x . t}{\upsilon \arrow \tau}}$$
-which is transformed to
+which has $\upsilon$ as an unknown input, so we bind a fresh variable $\beta$
+to give
 $$\Rule{\Sbind{\beta \defn \upsilon}{\Sbind{x \asc .\beta}{\Pinf{t}{\tau}}}}
-       {\Sbind{\beta \defn \upsilon}{\Pinf{\lambda x . t}{\beta \arrow \tau}}}$$
-and hence
-$$
-\Rule{\Jtype{\Gamma_0, \hole{\beta}, x \asc .\beta}{t}{\tau}
-          {\Gamma_1, x \asc .\beta, \Xi}}
-     {\Jtype{\Gamma_0}{\lambda x.t}{\beta \arrow \tau}{\Gamma_1, \Xi}}
-$$
+       {\Sbind{\beta \defn \upsilon}{\Pinf{\lambda x . t}{\beta \arrow \tau}}}.$$
 
-The variable rule is
-$$\Rule{x \hasc .\tau}
-       {\Pinf{x}{\tau}}$$
+% and hence
+% $$
+% \Rule{\Jtype{\Gamma_0, \hole{\beta}, x \asc .\beta}{t}{\tau}
+%           {\Gamma_1, x \asc .\beta, \Xi}}
+%      {\Jtype{\Gamma_0}{\lambda x.t}{\beta \arrow \tau}{\Gamma_1, \Xi}}
+% $$
+
 
 The let rule is
 $$
@@ -1939,29 +1943,52 @@ $$
       \quad
       \Sbind{x \asc \sigma}{t : \tau}
      }
-     {\Pinf{\letIn{x}{s}{t}}{\tau}}
+     {\Pinf{\letIn{x}{s}{t}}{\tau}}.
 $$
-which we transform to \TODO{what?}
+Writing $\sigma = \gen{\Xi}{\upsilon}$ and expanding the definition of
+$\hasscheme$, we obtain
 $$
 \Rule{
-      \fatsemi (s : \upsilon)
+      \Sbind{\Xi}{s : \upsilon}
       \quad
-      x \asc \upsilon \Yup t : \tau
+      \Sbind{x \asc \gen{\Xi}{\upsilon}}{t : \tau}
      }
-     {\Pinf{\letIn{x}{s}{t}}{\tau}}
+     {\Pinf{\letIn{x}{s}{t}}{\tau}}.
 $$
-where $\Yup$ is defined via
-$$
-\Rule{\Gamma \entails \Sbind{x \asc \gen{\Xi}{\sigma}}{S}}
-     {\Gamma \fatsemi \Xi \entails x \asc \upsilon \Yup S}
-$$
+where we let $\Sbind{\emptycontext}{S} = S$ and
+$\Sbind{\Xi, v D}{S} = \Sbind{\Xi}{\Sbind{v D}{S}}$.
 
 
+But how can we find $\Xi$?
+This is where the $\fatsemi$ context separator becomes necessary. Instead of an
+unknown list of type variables, we simply add a $\fatsemi$ to the context, 
+infer the type of $s$, then generalise its type by \scare{skimming off} the type
+variables from the top of the context until the $\fatsemi$ is reached.
 
-Now we define the type inference assertion $\Jtype{\Gamma}{t}{\tau}{\Delta}$
+
+% which we transform to \TODO{what?}
+% $$
+% \Rule{
+%       \fatsemi (s : \upsilon)
+%       \quad
+%       x \asc \upsilon \Yup t : \tau
+%      }
+%      {\Pinf{\letIn{x}{s}{t}}{\tau}}
+% $$
+% where $\Yup$ is defined via
+% $$
+% \Rule{\Gamma \entails \Sbind{x \asc \gen{\Xi}{\sigma}}{S}}
+%      {\Gamma \fatsemi \Xi \entails x \asc \upsilon \Yup S}
+% $$
+
+
+We define the type inference assertion $\Jtype{\Gamma}{t}{\tau}{\Delta}$
 % (inferring the type of $t$ in $\Gamma_0$ yields $\tau$ in the more informative
 % context $\Gamma_1$)
 by the rules in Figure~\ref{fig:inferRules}.
+These rules are clearly structural on terms, so they give a terminating
+algorithm, and they lead naturally to an implementation, given in
+subsection~\ref{sec:inferImplementation}.
 
 \begin{figure}[ht]
 \boxrule{\Jtype{\Gamma}{t}{\tau}{\Delta}}
@@ -2200,6 +2227,7 @@ $\Jtype{\Gamma}{f a}{\beta}{\Delta}$.
 
 
 \subsection{Implementation}
+\label{sec:inferImplementation}
 
 A term $t$ may be a variable |(X)|, an application |(:$)|, an abstraction |(Lam)|
 or a let binding |(Let)|. As with 
