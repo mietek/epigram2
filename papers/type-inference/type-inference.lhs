@@ -475,7 +475,7 @@ $$
 
 
 
-\subsection{Implementation}
+\subsection{Implementing types and contexts}
 \TODO{Should we mix Haskell and mathematics more? Or less?}
 
 A type variable declaration is represented as a |TyEntry|, in which a variable
@@ -1220,7 +1220,7 @@ the \textsc{IgnoreS} rule applies with $\Delta = \Delta_0, v D$.
 \end{proof}
 
 
-\subsection{Implementation}
+\subsection{Implementing unification}
 
 First, we define some helpful machinery.
 The |onTop| operator applies its argument to the topmost type variable
@@ -1352,6 +1352,7 @@ By induction on the length of $\Xi$.
 \end{proof}
 
 
+\subsection{Implementing type schemes}
 
 It is convenient to represent bound variables by de Brujin indices and free
 variables (i.e.\ those defined in the context) by names
@@ -1365,7 +1366,7 @@ defining a \scare{successor} type
 
 <     deriving (Functor, Foldable)
 
-and representing schemes as
+We can then represent schemes as
 
 > data Schm a  =  Type (Ty a) 
 >              |  All (Schm (Index a))
@@ -1397,26 +1398,6 @@ Implementing the generalisation function is straightforward:
 >     sigma' = fmap bind sigma
 >     bind beta  | alpha == beta  = Z
 >                | otherwise      = S beta
-
-
-The |generaliseOver| operator appends a |LetGoal| marker to the context,
-evalutes its argument, then generalises over the type variables
-to the right of the |LetGoal| marker.
-
-> generaliseOver ::  Contextual Type -> Contextual Scheme
-> generaliseOver f = do
->     modifyContext (:< LetGoal)
->     tau <- f
->     _Xi <- skimContext
->     return (_Xi >=> Type tau)
->   where
->     skimContext :: Contextual (Bwd TyEntry)
->     skimContext = do
->         e <- popEntry
->         case e of
->             LetGoal  -> return B0
->             TY te    -> (:< te) <$> skimContext
->             TM _     -> undefined
 
 
 \subsection{Term variables}
@@ -1711,6 +1692,8 @@ and $\theta \eqsubst \zeta \compose \iota$.
 
 \subsection{A new composite statement}
 
+\TODO{Do we actually use this anywhere? Perhaps it is redundant.}
+
 If $S$ is a statement then $\fatsemi S$ is a composite statement given by
 $$
 \Rule{\Gamma \fatsemi \entails S}
@@ -1728,7 +1711,7 @@ $\Delta \entails \delta (\fatsemi S)$.
 
 \section{A type inference algorithm}
 
-\subsection{Specialisation}
+\subsection{Introducing specialisation}
 
 Consider the variable rule for type assignment, which is
 $$\Rule{x \hasc .\tau}
@@ -1830,7 +1813,7 @@ By structural induction on $\Xi$.
 \end{proof}
 
 
-\subsubsection{Implementation}
+\subsection{Implementing specialisation}
 
 The |specialise| function will specialise a type scheme with fresh variables
 to produce a type. That is, given a scheme $\sigma$ it computes a most general
@@ -2226,7 +2209,7 @@ $\Jtype{\Gamma}{f a}{\beta}{\Delta}$.
 \end{proof}
 
 
-\subsection{Implementation}
+\subsection{Implementing type inference}
 \label{sec:inferImplementation}
 
 A term $t$ may be a variable |(X)|, an application |(:$)|, an abstraction |(Lam)|
@@ -2301,6 +2284,25 @@ and a context from which the $x$ binding can be extracted.
 >     sigma <- generaliseOver (infer s)
 >     x ::: sigma >- infer t
 
+
+The |generaliseOver| operator appends a |LetGoal| marker to the context,
+evalutes its argument, then generalises over the type variables
+to the right of the |LetGoal| marker.
+
+> generaliseOver ::  Contextual Type -> Contextual Scheme
+> generaliseOver f = do
+>     modifyContext (:< LetGoal)
+>     tau <- f
+>     _Xi <- skimContext
+>     return (_Xi >=> Type tau)
+>   where
+>     skimContext :: Contextual (Bwd TyEntry)
+>     skimContext = do
+>         e <- popEntry
+>         case e of
+>             LetGoal  -> return B0
+>             TY te    -> (:< te) <$> skimContext
+>             TM _     -> undefined
 
 
 The |(>-)| operator appends a term variable declaration to the context,
