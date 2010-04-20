@@ -207,10 +207,10 @@ In particular, the generalisation step
  inferring the type of a let-expression) becomes straightforward.
 
 We present algorithms using systems of inference rules to define relationships
-between judgments of the form $\Judge{\Gamma}{S}{\Delta}$. Here $\Gamma$
+between assertions of the form $\Judge{\Gamma}{S}{\Delta}$. Here $\Gamma$
 is the input context (before applying the rule), $S$ is the statement being
 established, and $\Delta$ is the output context (in which $S$ holds).
-This idea of judgments producing a resulting context goes back at least to
+This idea of assertions producing a resulting context goes back at least to
 \citet{pollack_implicit_1990}. 
 %%%, and hence perhaps to \citet{harper_type_1991} and \citet{milner_definition_1990}.
    An interesting point of comparison is with the work of Nipkow and 
@@ -335,7 +335,7 @@ We write $\emptycontext$ for the empty context, and the symbols
 $\Gamma, \Delta$ and $\Theta$ range over contexts.
 %% $\Xi$ is a context that contains no $\fatsemi$ separators.
 
-We will gradually construct a set $\Ss$ of statements, assertions that can be
+We will gradually construct a set $\Ss$ of statements, which can be
 judged in a context. We write the \define{judgment} $\Gamma \entails S$ to mean
 that the declarations in $\Gamma$ support the statement $S \in \Ss$.
 
@@ -906,13 +906,13 @@ v D \perp X
 \end{align*}
 
 The rules in Figure~\ref{fig:unifyRules} define our unification algorithm. The
-\TODO{sequent?} $\Junify{\Gamma}{\tau}{\upsilon}{\Delta}$ means that given inputs
+assertion $\Junify{\Gamma}{\tau}{\upsilon}{\Delta}$ means that given inputs
 $\Gamma$, $\tau$ and $\upsilon$, where
 $\Gamma \entails \tau \type \wedge \upsilon \type$,
 unification of $\tau$ with $\upsilon$ 
 succeeds, producing output context $\Delta$.
 
-The sequent
+The assertion
 $\Jinstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$
 means that given inputs $\Gamma$, $\Xi$, $\alpha$ and $\tau$,
 where
@@ -1826,10 +1826,10 @@ Let $S$ be the problem given by
 \R{S} (\tau, \upsilon) &= \tau \equiv \upsilon
 \end{align*}
 
-The judgment $\Jspec{\Gamma}{\sigma}{\tau}{\Gamma, \Xi}$ means
+The assertion $\Jspec{\Gamma}{\sigma}{\tau}{\Gamma, \Xi}$ means
 that, starting with the context $\Gamma$, the scheme $\sigma$ specialises
 to the type $\tau$ when the context is extended with some type variable
-definitions $\Xi$. This judgment
+definitions $\Xi$. This assertion
 is defined as shown in Figure~\ref{fig:specialiseAlgorithm}.
 
 \begin{figure}[ht]
@@ -1972,7 +1972,7 @@ $\forall\beta.\sigma$ or $\letS{\beta}{\tau}{\sigma}$ into $\sigma[\alpha/\beta]
 
 \subsection{Defining the algorithm}
 
-Now we define the type inference judgment $\Jtype{\Gamma}{t}{\tau}{\Delta}$
+Now we define the type inference assertion $\Jtype{\Gamma}{t}{\tau}{\Delta}$
 % (inferring the type of $t$ in $\Gamma_0$ yields $\tau$ in the more informative
 % context $\Gamma_1$)
 by the rules in Figure~\ref{fig:inferRules}.
