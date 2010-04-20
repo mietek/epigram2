@@ -68,7 +68,6 @@
 \newcommand{\yields}{\ensuremath{\dashv}}
 \newcommand{\entails}{\ensuremath{\vdash}}
 \newcommand{\var}{\ensuremath{\defn \_}}
-\newcommand{\fresh}{\ensuremath{~\mathbf{fresh}}}
 \newcommand{\type}{\ensuremath{~\mathbf{type}}}
 \newcommand{\scheme}{\ensuremath{~\mathbf{scheme}}}
 \newcommand{\valid}{\ensuremath{\mathbf{valid}}}
@@ -1854,7 +1853,7 @@ $$
 \name{All}
 \Rule{\Jspec{\Gamma, \hole{\alpha}}{\sigma}{\tau}{\Gamma, \hole{\alpha}, \Xi}}
      {\Jspec{\Gamma}{\forall\alpha~\sigma}{\tau}{\Gamma, \hole{\alpha}, \Xi}}
-\side{\alpha \fresh}
+\side{\alpha \notin \tyvars{\Gamma}}
 $$
 
 $$
@@ -1863,7 +1862,7 @@ $$
             {\Gamma, \alpha \defn \upsilon, \Xi}}
      {\Jspec{\Gamma}{\letS{\alpha}{\upsilon}{\sigma}}{\tau}
             {\Gamma, \alpha \defn \upsilon, \Xi}}
-\side{\alpha \fresh}
+\side{\alpha \notin \tyvars{\Gamma}}
 $$
 
 \caption{Algorithmic rules for specialisation}
@@ -1987,7 +1986,7 @@ $$
 \Rule{\Jtype{\Gamma, \hole{\alpha}, x \asc .\alpha}{w}{\upsilon}
           {\Delta_0, x \asc .\alpha, \Xi}}
      {\Jtype{\Gamma}{\lambda x.w}{\alpha \arrow \upsilon}{\Delta_0, \Xi}}
-\side{\alpha \fresh}
+\side{\alpha \notin \tyvars{\Gamma}}
 $$
 
 $$
@@ -1997,7 +1996,7 @@ $$
          \Jtype{\Delta_0}{a}{\upsilon}{\Delta_1}}
         {\Junify{\Delta_1, \hole{\beta}}{\chi}{\upsilon \arrow \beta}{\Delta}}
         {\Jtype{\Gamma}{f a}{\beta}{\Delta}}
-\side{\beta \fresh}
+\side{\beta \notin \tyvars{\Delta_1}}
 $$
 
 $$
