@@ -1077,6 +1077,30 @@ By induction on the structure of derivations. \TODO{Need a bit more here.}
 \end{proof}
 
 
+\begin{lemma}[Occur check]
+\label{lem:occurCheck}
+Let $\alpha$ be a variable and $\tau$ a non-variable type such that
+$\alpha \in \FTV{\tau}$. For every context $\Gamma$ and substitution
+$\theta$, $\Gamma \nvdash \theta\alpha \equiv \theta\tau$ and
+$\Gamma \nvdash \theta\tau \equiv \theta\alpha$.
+\end{lemma}
+
+\begin{proof}
+It suffices to prove $\Gamma \nvdash \alpha \equiv \tau$ and
+$\Gamma \nvdash \tau \equiv \alpha$, because
+$\theta\alpha$ must contain a variable $\beta \in \FTV{\theta\tau}$ 
+and $\theta\tau$ is not a variable.
+
+Since $\alpha$ is a variable but $\tau$ is not, neither reflexivity nor the
+structural rule apply. Symmetry and transitivity do not apply because their
+hypotheses cannot be satisifed.
+
+By the well-formedness conditions for contexts, if
+$\alpha \defn \upsilon \in \Gamma$ then $\alpha \notin \FTV{\upsilon}$, so
+the \textsc{Lookup} rule does not apply.
+\end{proof}
+
+
 \begin{lemma}[Completeness of unification]
 \label{lem:unifyComplete}
 \begin{enumerate}[(a)]
@@ -1179,13 +1203,16 @@ $\Junify{\Gamma_0, \Xi}{\chi}{\tau}{\Delta_0}$
 for some $\Delta_0$, and the \textsc{ExpandS} rule applies with
 $\Delta = \Delta_0, \alpha \defn \chi$.
 
-\item If $v = \alpha$ and $\alpha \in \FTV{\tau}$ then
-\TODO{this is contradictory.}
+\item If $v = \alpha$ and $\alpha \in \FTV{\tau, \Xi}$, then there is some
+non-variable type $\tau'$ such that
+$\Theta \entails \theta\alpha \equiv \theta\tau'$
+and $\alpha \in \FTV{\tau'}$. But this cannot occur, by
+lemma~\ref{lem:occurCheck}.
 
-\item If $v = \alpha$ and $\alpha \in \FTV{\Xi}$ then $\alpha \in \FTV{\chi}$
-for some $\chi$ with $\Xi = \Xi_0, \beta \defn \chi, \Xi_1$ and
-$\beta \in \FTV{\tau, \Xi_1}$.
-\TODO{Prove this is contradictory.}
+% \item If $v = \alpha$ and $\alpha \in \FTV{\Xi}$ then $\alpha \in \FTV{\chi}$
+% for some $\chi$ with $\Xi = \Xi_0, \beta \defn \chi, \Xi_1$ and
+% $\beta \in \FTV{\tau, \Xi_1}$.
+% \TODO{Prove this is contradictory.}
 
 \item If $v = \beta$ for $\alpha \neq \beta$ and
 $\beta \in \FTV{\upsilon, \Xi}$ then
