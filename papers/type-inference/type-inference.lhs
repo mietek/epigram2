@@ -27,8 +27,8 @@
 %format Let (x) (s) (t) = "\letIn{" x "}{" s "}{" t "} "
 %format LetGoal = "\letGoal "
 
-%format Nothing = "? "
-%format Just = "!\!"
+%format Hole = "? "
+%format Some = "!\!"
 
 %format alpha  = "\alpha"
 %format alpha0
@@ -477,20 +477,22 @@ $$
 \subsection{Implementation}
 \TODO{Should we mix Haskell and mathematics more? Or less?}
 
-A context is an ordered (backwards) list of entries, subject to the
-conditions that each variable is defined at most once, and all variables that
-occur in a type variable binding must be defined earlier in the list.
-(These conditions will be maintained by the algorithm but are not enforced by
-the type system, though that would be possible in a language such as Agda.)
-A context suffix is a (forwards) list containing only type variable definitions.
+A type variable declaration is represented as a |TyEntry|, in which a variable
+is either bound to a type (written |Some tau|) or left unbound (written |Hole|).
 
-> data TyEntry = TyName := Maybe Type
+> data TyDecl   =  Some Type | {-"\;"-} Hole
+> data TyEntry  =  TyName := TyDecl
+
+A context is a (backwards) list of entries. At the moment we only have one
+kind of entry, but later we will add others, so this definition is incomplete.
+% subject to the
+% conditions that each variable is defined at most once, and all variables that
+% occur in a type variable binding must be defined earlier in the list.
+The context validity conditions will be maintained by the algorithm but are not
+enforced by the type system; this is possible in a language such as Agda.
+A context suffix is a (forwards) list containing only type variable declarations.
 
 < data Entry = TY TyEntry | ...
-
-\TODO{The constructors of |Maybe| are abbreviated to |Nothing| and |Just|.
-Is this too magical? We could define a type with those constructors and use
-it for |TyEntry| only.}
 
 > type Context     = Bwd Entry
 > type Suffix      = Fwd TyEntry
@@ -511,8 +513,8 @@ Since |Type| and |Suffix| are built from |Foldable| functors containing names, w
 >     (<?) = (==)
 
 > instance OccursIn TyEntry where
->    alpha <? (_ := Just tau)  = alpha <? tau
->    alpha <? (_ := Nothing)   = False
+>    alpha <? (_ := Some tau)  = alpha <? tau
+>    alpha <? (_ := Hole)      = False
 
 > instance (Foldable t, OccursIn a) => OccursIn (t a) where
 >     alpha <? t = any (alpha <?) t
@@ -522,17 +524,24 @@ context), defined as follows:
 
 > type Contextual  = StateT (TyName, Context) Maybe
 
-\TODO{Is it right to say $\alpha$ is fresh wrt $\Gamma$ here? Perhaps |fresh|
-should move to |freshen| et al. or vice versa?}
+\TODO{Is it right to say $\alpha$ is fresh wrt $\Gamma$ here?}
 The |TyName| component is the next fresh type variable name to use;
 it is an implementation detail that is not mentioned in the typing rules. 
-Our choice of |TyName| means that it is easy to choose a name fresh with respect to a |Context|: 
+Our choice of |TyName| means that it is easy to choose a name fresh with respect
+to a |Context|.
 
-> fresh :: TyName -> Context -> TyName
-> fresh alpha _Gamma = succ alpha
+> freshen :: TyName -> Context -> TyName
+> freshen alpha _Gamma = succ alpha
 
-Working in this monad, we first define some useful functions for dealing with
-the context. The |getContext|, |putContext| and |modifyContext| functions
+The |fresh| function generates a fresh variable name and appends a declaration
+to the context.
+
+> fresh :: TyDecl -> Contextual TyName
+> fresh mt = do  (beta, _Gamma) <- get
+>                put (freshen beta _Gamma, _Gamma :< TY (beta := mt))
+>                return beta
+
+The |getContext|, |putContext| and |modifyContext| functions
 respectively retrieve, replace and update the stored context. They correspond
 to |get|, |put| and |modify| in the |State| monad, but ignore the first component
 of the state.
@@ -590,7 +599,7 @@ under composition.
 We may omit $\delta$ and write $\Gamma \lei \Delta$ if we are only interested
 in the existence of a suitable substitution. This relation between contexts
 captures the notion of \define{information increase}: $\Delta$ supports all the
-statements corresponding to definitions in $\Gamma$. 
+statements corresponding to declarations in $\Gamma$. 
 
 %% Moreover, this will still hold if we truncate both $\Gamma$ and $\Delta$ after
 %% any number of $\fatsemi$ separators.
@@ -1214,7 +1223,7 @@ the \textsc{IgnoreS} rule applies with $\Delta = \Delta_0, v D$.
 
 First, we define some helpful machinery.
 The |onTop| operator applies its argument to the topmost type variable
-definition in the context, skipping over any other kinds of entry. The argument
+declaration in the context, skipping over any other kinds of entry. The argument
 function may |restore| the previous entry by returning |Nothing|, or it may
 return a context extension (that contains at least as much information as the
 entry that has been removed) with which to |replace| it.
@@ -1245,10 +1254,10 @@ unified given the current state of the context.
 > unify (V alpha) (V beta) = onTop $ \ (delta := mt) -> case
 >           (delta == alpha,  delta == beta,  mt        ) of
 >           (True,            True,           _         )  ->  restore                                 
->           (True,            False,          Nothing   )  ->  replace (alpha := Just (V beta) :> F0)  
->           (False,           True,           Nothing   )  ->  replace (beta := Just (V alpha) :> F0)  
->           (True,            False,          Just tau  )  ->  unify (V beta)   tau       >> restore   
->           (False,           True,           Just tau  )  ->  unify (V alpha)  tau       >> restore   
+>           (True,            False,          Hole      )  ->  replace (alpha := Some (V beta) :> F0)  
+>           (False,           True,           Hole      )  ->  replace (beta := Some (V alpha) :> F0)  
+>           (True,            False,          Some tau  )  ->  unify (V beta)   tau       >> restore   
+>           (False,           True,           Some tau  )  ->  unify (V alpha)  tau       >> restore   
 >           (False,           False,          _         )  ->  unify (V alpha)  (V beta)  >> restore   
 > unify (V alpha)        tau                               =   solve alpha F0 tau
 > unify tau              (V alpha)                         =   solve alpha F0 tau    
@@ -1264,8 +1273,8 @@ which must be placed into the context before it.
 >     let occurs = delta <? tau || delta <? _Xi in case
 >     (delta == alpha,  occurs,  mt            ) of
 >     (True,            True,    _             )  ->  fail "Occur check failed"
->     (True,            False,   Nothing       )  ->  replace (_Xi <+> (alpha := Just tau :> F0))
->     (True,            False,   Just upsilon  )  ->  modifyContext (<>< _Xi)
+>     (True,            False,   Hole          )  ->  replace (_Xi <+> (alpha := Some tau :> F0))
+>     (True,            False,   Some upsilon  )  ->  modifyContext (<>< _Xi)
 >                                                 >>  unify upsilon tau
 >                                                 >>  restore
 >     (False,           True,    _             )  ->  solve alpha (delta := mt :> _Xi) tau
@@ -1335,7 +1344,7 @@ We will usually be interested in the case $\sigma = .\tau$      for some type $\
 \begin{lemma}
 \label{lem:generalise}
 If $\Gamma, \Xi \entails \sigma \scheme$ where $\Xi$ contains only type variable
-definitions, then $\Gamma \entails \gen{\Xi}{\sigma} \scheme$.
+declarations, then $\Gamma \entails \gen{\Xi}{\sigma} \scheme$.
 \end{lemma}
 \begin{proof}
 By induction on the length of $\Xi$.
@@ -1381,8 +1390,8 @@ Implementing the generalisation function is straightforward:
 > (>=>) :: Bwd TyEntry -> Scheme -> Scheme
 > B0                      >=> sigma = sigma
 > (_Xi :< alpha :=   mt)  >=> sigma = case mt of
->                    Nothing  -> _Xi >=> All sigma'
->                    Just nu  -> _Xi >=> LetS nu sigma'
+>                    Hole     -> _Xi >=> All sigma'
+>                    Some nu  -> _Xi >=> LetS nu sigma'
 >   where 
 >     sigma' = fmap bind sigma
 >     bind beta  | alpha == beta  = Z
@@ -1829,7 +1838,7 @@ Let $S$ be the problem given by
 The assertion $\Jspec{\Gamma}{\sigma}{\tau}{\Gamma, \Xi}$ means
 that, starting with the context $\Gamma$, the scheme $\sigma$ specialises
 to the type $\tau$ when the context is extended with some type variable
-definitions $\Xi$. This assertion
+declarations $\Xi$. This assertion
 is defined as shown in Figure~\ref{fig:specialiseAlgorithm}.
 
 \begin{figure}[ht]
@@ -1917,19 +1926,6 @@ $\theta' : \Gamma, \Xi \lei \Theta$ and $\theta = \theta' \compose \iota$.
 \end{proof}
 
 
-The |freshVar| function generates a fresh name for a type variable and defines it as unbound,
-and the |freshDef| function generates a fresh name and binds it to the given type.
-
-> freshen :: Maybe Type -> Contextual TyName
-> freshen mt = do  (beta, _Gamma) <- get
->                  put (fresh beta _Gamma, _Gamma :< TY (beta := mt))
->                  return beta
-
-> freshVar :: Contextual TyName
-> freshVar = freshen Nothing
-
-> freshDef :: Type -> Contextual TyName
-> freshDef = freshen . Just
 
 The |specialise| function will specialise a type scheme with fresh variables
 to produce a type. That is, given a scheme $\sigma$ it computes a most general
@@ -1941,14 +1937,14 @@ If a $\forall$ quantifier is outermost, it is removed and an unbound fresh type 
 is substituted in its place (applying the \textsc{All} rule).
 
 > specialise (All sigma) = do
->     alpha <- freshVar
+>     alpha <- fresh Hole
 >     specialise (schemeUnbind alpha sigma)
 
 If a let binding is outermost, it is removed and added to the context with a fresh
 variable name (applying the \textsc{LetS} rule).
 
 > specialise (LetS tau sigma) = do
->     alpha <- freshDef tau
+>     alpha <- fresh (Some tau)
 >     specialise (schemeUnbind alpha sigma)
 
 This continues until a scheme with no quantifiers is reached, which can simply be
@@ -2256,7 +2252,7 @@ a fresh type variable. The type is then $\alpha \arrow \tau$ in the context with
 the $x$ binding removed.
 
 > infer (Lam x t) = do
->     alpha  <- freshVar
+>     alpha  <- fresh Hole
 >     tau    <- x ::: Type (V alpha) >- infer t
 >     return (V alpha :-> tau)
 
@@ -2269,7 +2265,7 @@ result.
 > infer (f :$ a) = do
 >     tau   <- infer f
 >     tau'  <- infer a
->     beta  <- freshVar
+>     beta  <- fresh Hole
 >     unify tau (tau' :-> V beta)
 >     return (V beta)
 
@@ -2368,9 +2364,10 @@ The |findType| function looks up a type variable in the context and returns its 
 or |Nothing| if it is unbound or missing from the context.
 
 > findType :: Context -> TyName -> Maybe Type
-> findType B0              _                = Nothing
-> findType (_ :< TY (y := mt))  x | x == y  = mt
-> findType (c :< _)        x                = findType c x
+> findType B0              _                      = Nothing
+> findType (_ :< TY (y := Some tau))  x | x == y  = Just tau
+> findType (_ :< TY (y := Hole))      x | x == y  = Nothing
+> findType (c :< _)        x                      = findType c x
 
 
 The |normalise| function returns the normal form (i.e.\ with all type variables expanded as far
@@ -2388,8 +2385,8 @@ variable in the context is normalised at most once and only if necessary.
 >
 >         normaliseContext :: Context -> Fwd Entry -> Context
 >         normaliseContext c F0 = c
->         normaliseContext c (TY (x := Just t) :> es) = 
->             normaliseContext (c :< TY (x := Just (normalStep c t))) es
+>         normaliseContext c (TY (x := Some t) :> es) = 
+>             normaliseContext (c :< TY (x := Some (normalStep c t))) es
 >         normaliseContext c (e :> es) = normaliseContext (c :< e) es
 
 
@@ -2416,26 +2413,26 @@ variable numbers may be different.
 > unifyTests :: [(Type, Type, Context, Maybe Context)]
 > unifyTests = [
 >     (V 0, V 1,
->         B0 :< 0 *= Nothing :< 1 *= Nothing,
->         Just (B0 :< 0 *= Nothing :< 1 *= Just (V 0))),
+>         B0 :< 0 *= Hole :< 1 *= Hole,
+>         Just (B0 :< 0 *= Hole :< 1 *= Some (V 0))),
 >     (V 0, V 1 :-> V 2, 
->         B0 :< 0 *= Nothing :< 1 *= Nothing :< 2 *= Nothing,
->         Just (B0 :< 1 *= Nothing :< 2 *= Nothing :< 0 *= Just (V 1 :-> V 2))),
+>         B0 :< 0 *= Hole :< 1 *= Hole :< 2 *= Hole,
+>         Just (B0 :< 1 *= Hole :< 2 *= Hole :< 0 *= Some (V 1 :-> V 2))),
 >     (V 0, V 1 :-> V 2,
->         B0 :< 0 *= Nothing :< 2 *= Just (V 0) :< 1 *= Just (V 0),
+>         B0 :< 0 *= Hole :< 2 *= Some (V 0) :< 1 *= Some (V 0),
 >         Nothing),
 >     (V 0 :-> V 0, V 1 :-> V 1,
->         B0 :< 1 *= Nothing :< 0 *= Nothing,
->         Just (B0 :< 1 *= Nothing :< 0 *= Just (V 1))),
+>         B0 :< 1 *= Hole :< 0 *= Hole,
+>         Just (B0 :< 1 *= Hole :< 0 *= Some (V 1))),
 >     (V 0, V 1 :-> V 2,
->        B0 :< 1 *= Nothing :< 0 *= Just (V 1 :-> V 1) :< 2 *= Nothing,
->        Just (B0 :< 1 *= Nothing :< 2 *= Just (V 1) :< 0 *= Just (V 1 :-> V 1))),
+>        B0 :< 1 *= Hole :< 0 *= Some (V 1 :-> V 1) :< 2 *= Hole,
+>        Just (B0 :< 1 *= Hole :< 2 *= Some (V 1) :< 0 *= Some (V 1 :-> V 1))),
 >     (V 0 :-> V 1, V 1 :-> V 0,
->        B0 :< 0 *= Nothing :< 1 *= Nothing,
->        Just (B0 :< 0 *= Nothing :< 1 *= Just (V 0))),
+>        B0 :< 0 *= Hole :< 1 *= Hole,
+>        Just (B0 :< 0 *= Hole :< 1 *= Some (V 0))),
 >     (V 0 :-> V 1 :-> V 2, V 1 :-> V 0 :-> V 0,
->        B0 :< 2 *= Nothing :< 0 *= Nothing :< 1 *= Nothing,
->        Just (B0 :< 2 *= Nothing :< 0 *= Just (V 2) :< 1 *= Just (V 0)))
+>        B0 :< 2 *= Hole :< 0 *= Hole :< 1 *= Hole,
+>        Just (B0 :< 2 *= Hole :< 0 *= Some (V 2) :< 1 *= Some (V 0)))
 >     ]
 
 > unifyTest :: [(Type, Type, Context, Maybe Context)] -> IO ()
@@ -2510,6 +2507,9 @@ variable numbers may be different.
 > deriving instance Show a => Show (Schm a)
 > deriving instance Eq a => Eq (Index a)
 > deriving instance Show a => Show (Index a)
+
+> deriving instance Eq TyDecl
+> deriving instance Show TyDecl
 
 > deriving instance Eq TyEntry
 > deriving instance Show TyEntry
