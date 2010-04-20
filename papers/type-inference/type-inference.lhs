@@ -33,6 +33,7 @@
 %format alpha  = "\alpha"
 %format alpha0
 %format alpha1
+%format alpha'
 %format beta   = "\beta"
 %format beta0
 %format beta1
@@ -1415,12 +1416,6 @@ the context and $\sigma$ specialises to $\sigma'$.
 We observe the sanity condition
 $\Gamma \entails x \hasc \sigma  \Rightarrow  \Gamma \entails \sigma \scheme$.
 
-\TODO{Do we need to permute quantifiers when specialising schemes?
-For example, consider $\forall \alpha \forall \beta. \alpha \arrow \beta.$
-Probably not: ultimately we work with types, and we have the required
-relationship between all type instances of schemes, if not the schemes
-themselves.}
-
 \begin{figure}[ht]
 \boxrule{\Gamma \entails x \hasc \sigma}
 $$
@@ -1433,6 +1428,14 @@ $$
 \caption{Rules for scheme assignment to term variables}
 \label{fig:termVarSchemeRules}
 \end{figure}
+
+It may appear that this definition of scheme assignment is overly restrictive,
+because it offers no way to permute quantifiers or specialise inner variables
+without specialising outer ones first. However, this will not be a problem for
+type inference, because we always work with fully specialised schemes.
+Indeed, the changes to type schemes that can occur on information increase are
+deliberately limited, to ensure terms have principal types.
+\TODO{Characterise and prove result needed for let completeness.}
 
 We are not going to substitute for term variables, so we let $\T_\TM = \V_\TM$
 and assume that $\TM$-substitutions are always the identity map.
@@ -2087,7 +2090,8 @@ Moreover $\theta : \Gamma \fatsemi \lei \Theta \fatsemi \Psi$, so
 by induction
 $\Jtype{\Gamma \fatsemi}{s}{\upsilon}{\Delta_0 \fatsemi \Xi_0}$
 and by minimality there exists
-$\theta' : \Delta_0 \fatsemi \Xi_0 \lei \Theta \fatsemi \Psi$. 
+$\theta_0 : \Delta_0 \fatsemi \Xi_0 \lei \Theta \fatsemi \Psi$
+such that $\Theta \entails \theta_0 \upsilon \equiv \tau_s$.
 
 % \begin{enumerate}[(a)]
 % \item $\Jtype{\Gamma_0; \letGoal;}{s}{\upsilon}{\Gamma_1; \letGoal; \Xi_1}$
@@ -2096,15 +2100,16 @@ $\theta' : \Delta_0 \fatsemi \Xi_0 \lei \Theta \fatsemi \Psi$.
 % \end{enumerate}
 
 Now 
-$$\theta' ||_{\Delta_0} : \Delta_0, x \asc \gen{\Xi_0}{.\upsilon}
-                            \lei \Theta, x \asc \gen{\Xi_0}{.\upsilon}$$
+$\theta_0 ||_{\Delta_0} : \Delta_0 \lei \Theta$, so
+$$\theta_0 ||_{\Delta_0} : \Delta_0, x \asc \gen{\Xi_0}{.\upsilon}
+    \lei \Theta, x \asc \theta_0\gen{\Xi_0}{.\upsilon}$$
 % but
 % $$\iota : \Theta, x \asc \sigma \lei \Theta, x \asc \gen{\Xi_0}{.\upsilon}$$
 % \TODO{by principality?}, and hence
 and
-$$\Theta, x \asc \gen{\Xi_0}{.\upsilon} \entails w : \tau$$
+$\Theta, x \asc \theta_0\gen{\Xi_0}{.\upsilon} \entails w : \tau$
 since if $\Theta, x \asc \sigma \entails x \hasc .\tau_x$ then
-$\Theta, x \asc \gen{\Xi_0}{.\upsilon} \entails x \hasc .\tau_x$.
+$\Theta, x \asc \theta_0\gen{\Xi_0}{.\upsilon} \entails x \hasc .\tau_x$.
 \TODO{Prove this as a lemma.}
 
 Hence, by induction,
