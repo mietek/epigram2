@@ -1728,102 +1728,9 @@ $\Delta \entails \delta (\fatsemi S)$.
 
 \section{A type inference algorithm}
 
-
-\subsection{Transforming the rule system}
-
-To transform a rule into an algorithmic form, we proceed clockwise starting from
-the conclusion. For each hypothesis, we must ensure that the problem is fully
-specified, inserting variables to stand for unknown problem inputs. Moreover, we
-cannot pattern match on problem outputs, so we ensure there are schematic
-variables in output positions, fixing things up with appeals to unification. 
-
-\TODO{One possible notation for problems: $?_P$ as an infix operator
-with the input parameters before it and the output parameters after it.
-Any other suggestions?}
-
-Consider the rule for application, written to highlight problem inputs and
-outputs as
-$$\Rule{\Pinf{f}{(\upsilon \arrow \tau)}  \quad  \Pinf{a}{\upsilon}}
-       {\Pinf{f a}{\tau}}.$$
-Since we cannot pattern match on the output of the first subproblem, we use a
-metavariable instead and add a unification constraint, giving
-$$\Rule{\Pinf{f}{\chi}  \quad \Pinf{a}{\upsilon}
-            \quad  \Puni{\chi}{\upsilon \arrow \tau}}
-       {\Pinf{f a}{\tau}}.$$
-Furthermore, $\tau$ is an input to the unification problem, but it is not
-determined by the previous inputs or outputs, so we have to bind a fresh variable
-$\beta$ instead to give the algorithmic version
-$$\Rule{\Pinf{f}{\chi}
-        \quad
-        \Pinf{a}{\upsilon}
-        \quad
-        \Sbind{\beta \defn \tau}{\Puni{\chi}{\upsilon \arrow \beta}}
-       }
-       {\Sbind{\beta \defn \tau}{\Pinf{f a}{\beta}}}.$$
-
-
-%if False
-assuming $\beta$ is a fresh variable. Now the algorithmic version uses input and
-output contexts, with $\beta$ initially unknown:
-$$
-\Rule{\Jtype{\Gamma_0}{f}{\chi}{\Gamma_1}
-         \quad
-         \Jtype{\Gamma_1}{a}{\upsilon}{\Gamma_2}
-         \quad
-         \Junify{\Gamma_2, \hole{\beta}}{\chi}{\upsilon \arrow \beta}{\Gamma_3}}
-        {\Jtype{\Gamma_0}{f a}{\beta}{\Gamma_3}}
-$$
-%endif
-
-
-The rule for abstraction is
-$$\Rule{\Sbind{x \asc .\upsilon}{\Pinf{t}{\tau}}}
-       {\Pinf{\lambda x . t}{\upsilon \arrow \tau}}$$
-which is transformed to
-$$\Rule{\Sbind{\beta \defn \upsilon}{\Sbind{x \asc .\beta}{\Pinf{t}{\tau}}}}
-       {\Sbind{\beta \defn \upsilon}{\Pinf{\lambda x . t}{\beta \arrow \tau}}}$$
-and hence
-$$
-\Rule{\Jtype{\Gamma_0, \hole{\beta}, x \asc .\beta}{t}{\tau}
-          {\Gamma_1, x \asc .\beta, \Xi}}
-     {\Jtype{\Gamma_0}{\lambda x.t}{\beta \arrow \tau}{\Gamma_1, \Xi}}
-$$
-
-The variable rule is
-$$\Rule{x \hasc .\tau}
-       {\Pinf{x}{\tau}}$$
-
-The let rule is
-$$
-\Rule{
-      s \hasscheme \sigma
-      \quad
-      \Sbind{x \asc \sigma}{t : \tau}
-     }
-     {\Pinf{\letIn{x}{s}{t}}{\tau}}
-$$
-which we transform to \TODO{what?}
-$$
-\Rule{
-      \fatsemi (s : \upsilon)
-      \quad
-      x \asc \upsilon \Yup t : \tau
-     }
-     {\Pinf{\letIn{x}{s}{t}}{\tau}}
-$$
-where $\Yup$ is defined via
-$$
-\Rule{\Gamma \entails \Sbind{x \asc \gen{\Xi}{\sigma}}{S}}
-     {\Gamma \fatsemi \Xi \entails x \asc \upsilon \Yup S}
-$$
-
-
-
-
-
 \subsection{Specialisation}
 
-\TODO{Where should this subsection live?}
+\TODO{Motivation, please.}
 
 Let $S$ be the problem given by
 \begin{align*}
@@ -1961,8 +1868,95 @@ representations for free and bound variables, this is easy to implement.
 
 
 
+\subsection{Transforming the rule system}
 
-\subsection{Defining the algorithm}
+To transform a rule into an algorithmic form, we proceed clockwise starting from
+the conclusion. For each hypothesis, we must ensure that the problem is fully
+specified, inserting variables to stand for unknown problem inputs. Moreover, we
+cannot pattern match on problem outputs, so we ensure there are schematic
+variables in output positions, fixing things up with appeals to unification. 
+
+\TODO{One possible notation for problems: $?_P$ as an infix operator
+with the input parameters before it and the output parameters after it.
+Any other suggestions?}
+
+Consider the rule for application, written to highlight problem inputs and
+outputs as
+$$\Rule{\Pinf{f}{(\upsilon \arrow \tau)}  \quad  \Pinf{a}{\upsilon}}
+       {\Pinf{f a}{\tau}}.$$
+Since we cannot pattern match on the output of the first subproblem, we use a
+metavariable instead and add a unification constraint, giving
+$$\Rule{\Pinf{f}{\chi}  \quad \Pinf{a}{\upsilon}
+            \quad  \Puni{\chi}{\upsilon \arrow \tau}}
+       {\Pinf{f a}{\tau}}.$$
+Furthermore, $\tau$ is an input to the unification problem, but it is not
+determined by the previous inputs or outputs, so we have to bind a fresh variable
+$\beta$ instead to give the algorithmic version
+$$\Rule{\Pinf{f}{\chi}
+        \quad
+        \Pinf{a}{\upsilon}
+        \quad
+        \Sbind{\beta \defn \tau}{\Puni{\chi}{\upsilon \arrow \beta}}
+       }
+       {\Sbind{\beta \defn \tau}{\Pinf{f a}{\beta}}}.$$
+
+
+%if False
+assuming $\beta$ is a fresh variable. Now the algorithmic version uses input and
+output contexts, with $\beta$ initially unknown:
+$$
+\Rule{\Jtype{\Gamma_0}{f}{\chi}{\Gamma_1}
+         \quad
+         \Jtype{\Gamma_1}{a}{\upsilon}{\Gamma_2}
+         \quad
+         \Junify{\Gamma_2, \hole{\beta}}{\chi}{\upsilon \arrow \beta}{\Gamma_3}}
+        {\Jtype{\Gamma_0}{f a}{\beta}{\Gamma_3}}
+$$
+%endif
+
+
+The rule for abstraction is
+$$\Rule{\Sbind{x \asc .\upsilon}{\Pinf{t}{\tau}}}
+       {\Pinf{\lambda x . t}{\upsilon \arrow \tau}}$$
+which is transformed to
+$$\Rule{\Sbind{\beta \defn \upsilon}{\Sbind{x \asc .\beta}{\Pinf{t}{\tau}}}}
+       {\Sbind{\beta \defn \upsilon}{\Pinf{\lambda x . t}{\beta \arrow \tau}}}$$
+and hence
+$$
+\Rule{\Jtype{\Gamma_0, \hole{\beta}, x \asc .\beta}{t}{\tau}
+          {\Gamma_1, x \asc .\beta, \Xi}}
+     {\Jtype{\Gamma_0}{\lambda x.t}{\beta \arrow \tau}{\Gamma_1, \Xi}}
+$$
+
+The variable rule is
+$$\Rule{x \hasc .\tau}
+       {\Pinf{x}{\tau}}$$
+
+The let rule is
+$$
+\Rule{
+      s \hasscheme \sigma
+      \quad
+      \Sbind{x \asc \sigma}{t : \tau}
+     }
+     {\Pinf{\letIn{x}{s}{t}}{\tau}}
+$$
+which we transform to \TODO{what?}
+$$
+\Rule{
+      \fatsemi (s : \upsilon)
+      \quad
+      x \asc \upsilon \Yup t : \tau
+     }
+     {\Pinf{\letIn{x}{s}{t}}{\tau}}
+$$
+where $\Yup$ is defined via
+$$
+\Rule{\Gamma \entails \Sbind{x \asc \gen{\Xi}{\sigma}}{S}}
+     {\Gamma \fatsemi \Xi \entails x \asc \upsilon \Yup S}
+$$
+
+
 
 Now we define the type inference assertion $\Jtype{\Gamma}{t}{\tau}{\Delta}$
 % (inferring the type of $t$ in $\Gamma_0$ yields $\tau$ in the more informative
