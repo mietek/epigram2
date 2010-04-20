@@ -64,6 +64,8 @@
 
 \newcommand{\eqsubst}{\equiv}
 \newcommand{\compose}{\cdot}
+\newcommand{\subst}[3]{[#1/#2]#3}
+
 \newcommand{\extend}{\ensuremath{\wedge}}
 \newcommand{\yields}{\ensuremath{\dashv}}
 \newcommand{\entails}{\ensuremath{\vdash}}
@@ -103,7 +105,7 @@
 \newcommand{\Jinstantiate}[5]{\Judge{#1 ~||~ #4}{#2 \equiv #3}{#5}}
 \newcommand{\Jspec}[4]{\Judge{#1}{#2 \succ #3}{#4}}
 \newcommand{\Jtype}[4]{\Judge{#1}{#2 : #3}{#4}}
-\newcommand{\Jhast}[4]{\Judge{#1}{#2 ~\hat:~ #3}{#4}}
+\newcommand{\Jhast}[5]{\Judge{#1}{#2 ~\hat:_{#3}~ #4}{#5}}
 
 \newcommand{\Prob}[3]{\ensuremath{#2 \,?_{#1}\, #3}}
 \newcommand{\Pinf}[2]{\Prob{I}{#1}{#2}}
@@ -686,7 +688,7 @@ Hence $\Delta \entails \delta (S \wedge S')$.
 Suppose $S$ is stable, $\Gamma \entails \Sbind{v D}{S}$ and
 $\delta : \Gamma \lei \Delta$. Then $\Gamma \entails \ok_K D$ and
 $\Gamma, v D \entails S$, so by stability, $\Delta \entails \delta \ok_K D$.
-Let $\delta' = \delta[v/v]$, then
+Let $\delta' = \subst{v}{v}{\delta}$, then
 $\delta' : \Gamma, v D \lei \Delta, v (\delta D)$
 so by stability of $S$ we have $\Delta, v (\delta D) \entails \delta' S$.
 Hence $\Delta \entails \Sbind{v (\delta D)}{\delta' S}$
@@ -1442,10 +1444,10 @@ themselves.}
 \boxrule{\Gamma \entails x \hasc \sigma}
 $$
 \Rule{\upsilon \type   ~\wedge~   x \hasc \forall \alpha \sigma}
-     {x \hasc \sigma[\upsilon/\alpha]}
+     {x \hasc \subst{\upsilon}{\alpha}{\sigma}}
 \qquad
 \Rule{x \hasc \letS{\alpha}{\upsilon}{\sigma}}
-     {x \hasc \sigma[\upsilon/\alpha]}
+     {x \hasc \subst{\upsilon}{\alpha}{\sigma}}
 $$
 \caption{Rules for scheme assignment to term variables}
 \label{fig:termVarSchemeRules}
@@ -1823,8 +1825,6 @@ $$
 
 \TODO{Where should this subsection live?}
 
-\TODO{This doesn't quite make sense, because $\V_\TM$ is not closed under
-substitution. Perhaps we need the general type inference problem?}
 Let $S$ be the problem given by
 \begin{align*}
 \In{S}                 &= \V_\TM  \\
@@ -1837,8 +1837,11 @@ Let $S$ be the problem given by
 The assertion $\Jspec{\Gamma}{\sigma}{\tau}{\Gamma, \Xi}$ means
 that, starting with the context $\Gamma$, the scheme $\sigma$ specialises
 to the type $\tau$ when the context is extended with some type variable
-declarations $\Xi$. This assertion
-is defined as shown in Figure~\ref{fig:specialiseAlgorithm}.
+declarations $\Xi$. It is defined in Figure~\ref{fig:specialiseAlgorithm}.
+We define $\Jhast{\Gamma}{x}{\sigma}{\tau}{\Gamma, \Xi}$ to mean
+$\Gamma \entails x \hasc \sigma$ and
+$\Jspec{\Gamma}{\sigma}{\tau}{\Gamma, \Xi}$.
+
 
 \begin{figure}[ht]
 \boxrule{\Jspec{\Gamma}{\sigma}{\tau}{\Gamma, \Xi}}
@@ -1851,18 +1854,19 @@ $$
 
 $$
 \name{All}
-\Rule{\Jspec{\Gamma, \hole{\alpha}}{\sigma}{\tau}{\Gamma, \hole{\alpha}, \Xi}}
-     {\Jspec{\Gamma}{\forall\alpha~\sigma}{\tau}{\Gamma, \hole{\alpha}, \Xi}}
-\side{\alpha \notin \tyvars{\Gamma}}
+\Rule{\Jspec{\Gamma, \hole{\beta}}{\subst{\beta}{\alpha}{\sigma}}{\tau}
+            {\Gamma, \hole{\beta}, \Xi}}
+     {\Jspec{\Gamma}{\forall\alpha~\sigma}{\tau}{\Gamma, \hole{\beta}, \Xi}}
+\side{\beta \notin \tyvars{\Gamma}}
 $$
 
 $$
 \name{LetS}
-\Rule{\Jspec{\Gamma, \alpha \defn \upsilon}{\sigma}{\tau}
-            {\Gamma, \alpha \defn \upsilon, \Xi}}
+\Rule{\Jspec{\Gamma, \beta \defn \upsilon}{\subst{\beta}{\alpha}{\sigma}}{\tau}
+            {\Gamma, \beta \defn \upsilon, \Xi}}
      {\Jspec{\Gamma}{\letS{\alpha}{\upsilon}{\sigma}}{\tau}
-            {\Gamma, \alpha \defn \upsilon, \Xi}}
-\side{\alpha \notin \tyvars{\Gamma}}
+            {\Gamma, \beta \defn \upsilon, \Xi}}
+\side{\beta \notin \tyvars{\Gamma}}
 $$
 
 \caption{Algorithmic rules for specialisation}
@@ -1870,27 +1874,32 @@ $$
 \end{figure}
 
 
-We define $\Jhast{\Gamma}{x}{\tau}{\Delta}$ to mean
-$\Gamma \entails x \hasc \sigma$ and
-$\Jspec{\Gamma}{\sigma}{\tau}{\Delta}$.
 
-
-\begin{lemma}[Soundness of specialisation]
+\begin{lemma}[Soundness and minimality of specialisation]
 \label{lem:specialiseSound}
-If $\Jhast{\Gamma}{x}{\tau}{\Delta}$, then
-$\Delta \entails x \hasc .\tau$,
-$\tyvars{\Gamma} \subseteq \tyvars{\Delta}$ and
-$\iota : \Gamma \lei \Delta$.
+If $\Jhast{\Gamma}{x}{\sigma}{\tau}{\Gamma, \Xi}$, then
+$\iota : \Jmin{\Gamma}{\Prob{S}{x}{\tau}}{\Gamma, \Xi}$.
 \end{lemma}
 
 \begin{proof}
-By structural induction on $\sigma$.
+Clearly $\iota : \Gamma \lei \Gamma, \Xi$.
+By structural induction on $\sigma$,
+$$\Gamma, \Xi \entails \tau \type \wedge x \hasc .\tau.$$
+
+For minimality, suppose
+$\theta : \Gamma \lei \Theta \entails \Prob{S}{x}{\upsilon}$.
+By stability, $\Theta \entails x \hasc \sigma$.
+Examining the rules in Figure~\ref{fig:termVarSchemeRules}, the proof of
+$\Theta \entails x \hasc .\tau$ must specialise $\sigma$ with types
+$\Psi$ for its generic variables. Let $\theta' = \subst{\Psi}{\Xi}{\theta}$, then
+$\theta' : \Gamma, \Xi \lei \Theta$ and $\theta = \theta' \compose \iota$.
+
 \end{proof}
 
 \begin{lemma}[Completeness of specialisation]
 \label{lem:specialiseComplete}
 If $\Gamma \entails x \hasc \gen{\Xi}{\tau}$ then
-$\Jhast{\Gamma}{x}{\tau}{\Gamma, \Xi}$.
+$\Jhast{\Gamma}{x}{\sigma}{\tau}{\Gamma, \Xi}$.
 
 % $$\forall \upsilon \forall \phi : \Gamma \lei \Phi . (
 %     \Phi \entails \phi\sigma \succ \upsilon
@@ -1906,25 +1915,11 @@ $\Jhast{\Gamma}{x}{\tau}{\Gamma, \Xi}$.
 \end{lemma}
 
 \begin{proof}
-\TODO{Trivial, but is this what we want?}
-\end{proof}
-
-\begin{lemma}[Minimality of specialisation]
-\label{lem:specialiseMinimal}
-If $\Jhast{\Gamma}{x}{\tau}{\Gamma, \Xi}$ then
-$\Jmin{\Gamma}{\Prob{S}{x}{\tau}}{\Gamma, \Xi}$.
-\end{lemma}
-
-\begin{proof}
-Suppose $\theta : \Gamma \lei \Theta \entails \Prob{S}{x}{\upsilon}$.
-By stability, $\Theta \entails x \hasc \sigma$.
-Examining the rules in Figure~\ref{fig:termVarSchemeRules}, the proof of
-$\Theta \entails x \hasc .\tau$ must specialise $\sigma$ with types
-$\Psi$ for its generic variables. Let $\theta' = \theta[\Psi/\Xi]$, then
-$\theta' : \Gamma, \Xi \lei \Theta$ and $\theta = \theta' \compose \iota$.
+By structural induction on $\Xi$.
 \end{proof}
 
 
+\subsubsection{Implementation}
 
 The |specialise| function will specialise a type scheme with fresh variables
 to produce a type. That is, given a scheme $\sigma$ it computes a most general
@@ -1932,19 +1927,19 @@ type $\tau$ such that $\sigma \succ \tau$.
 
 > specialise :: Scheme -> Contextual Type
 
-If a $\forall$ quantifier is outermost, it is removed and an unbound fresh type variable
-is substituted in its place (applying the \textsc{All} rule).
+If a $\forall$ quantifier is outermost, it is removed and an unbound fresh type
+variable is substituted in its place (applying the \textsc{All} rule).
 
 > specialise (All sigma) = do
->     alpha <- fresh Hole
->     specialise (schemeUnbind alpha sigma)
+>     beta <- fresh Hole
+>     specialise (schemeUnbind beta sigma)
 
-If a let binding is outermost, it is removed and added to the context with a fresh
-variable name (applying the \textsc{LetS} rule).
+If a let binding is outermost, it is removed and added to the context with a
+fresh variable name (applying the \textsc{LetS} rule).
 
 > specialise (LetS tau sigma) = do
->     alpha <- fresh (Some tau)
->     specialise (schemeUnbind alpha sigma)
+>     beta <- fresh (Some tau)
+>     specialise (schemeUnbind beta sigma)
 
 This continues until a scheme with no quantifiers is reached, which can simply be
 converted into a type (applying the \textsc{T} rule).
@@ -1952,15 +1947,17 @@ converted into a type (applying the \textsc{T} rule).
 > specialise (Type tau) = return tau
 
 
-The |schemeUnbind alpha sigma| function converts the body $\sigma$ of the scheme
-$\forall\beta.\sigma$ or $\letS{\beta}{\tau}{\sigma}$ into $\sigma[\alpha/\beta]$.
+The |schemeUnbind| function converts the body $\sigma$ of the scheme
+$\forall\alpha.\sigma$ or $\letS{\alpha}{\tau}{\sigma}$ into
+$\subst{\beta}{\alpha}{\sigma}$. Since we use different syntactic
+representations for free and bound variables, this is easy to implement.
 
 > schemeUnbind :: TyName -> Schm (Index TyName) -> Scheme
-> schemeUnbind alpha = fmap fromS
+> schemeUnbind beta = fmap fromS
 >   where
 >     fromS :: Index TyName -> TyName
->     fromS Z          = alpha
->     fromS (S delta)  = delta
+>     fromS Z           = beta
+>     fromS (S alpha')  = alpha'
 
 
 
@@ -1977,7 +1974,7 @@ by the rules in Figure~\ref{fig:inferRules}.
 
 $$
 \name{Var}
-\Rule{\Jhast{\Gamma}{x}{\tau}{\Gamma, \Xi}}
+\Rule{\Jhast{\Gamma}{x}{\sigma}{\tau}{\Gamma, \Xi}}
      {\Jtype{\Gamma}{x}{\tau}{\Gamma, \Xi}}
 $$
 
@@ -2063,8 +2060,8 @@ $\Gamma \entails x \asc \sigma$ for some $\sigma$,
 % with
 % $$\forall \upsilon. \Theta \entails \theta\sigma' \succ \upsilon
 %     \Leftrightarrow \Theta \entails x : \upsilon.$$
-so by completeness of specialisation,
-$\Jhast{\Gamma}{x}{\upsilon}{\Gamma, \Xi}$
+so by completeness of specialisation (lemma~\ref{lem:specialiseComplete}),
+$\Jhast{\Gamma}{x}{\sigma}{\upsilon}{\Gamma, \Xi}$
 % and
 % $$\forall\tau \forall \phi: \Gamma_0 \lei \Phi . (
 %     \Phi \entails \phi\sigma' \succ \tau
@@ -2132,7 +2129,7 @@ If $t = \lambda x . w$ is an abstraction, then by inversion
 $\Theta \entails \tau \equiv \tau_0 \arrow \tau_1$
 for some types $\tau_0$ and $\tau_1$, and
 $\Theta, x \asc .\tau_0 \entails w : \tau_1$.
-Taking $\theta' = [\tau_0/\alpha]\theta$, we have that
+Taking $\theta' = \subst{\tau_0}{\alpha}{\theta}$, we have that
 $$\theta' : \Gamma, \hole{\alpha}, x \asc .\alpha
              \lei  \Theta, x \asc .\tau_0$$
 and hence, by induction,
@@ -2186,7 +2183,7 @@ $\theta_0 \eqsubst \theta_1 \compose \iota$.
 % \item $\Gamma_1; \entails a \hasscheme \gen{\Xi_1}{\upsilon_0}$ principal.
 % \end{enumerate}
 
-Let $\theta_2 = [\tau/\beta]\theta_1$, then
+Let $\theta_2 = \subst{\tau}{\beta}{\theta_1}$, then
 $\theta_2 : \Delta_1, \hole{\beta} \lei \Theta$,
 and since \TODO{(explain why)}
 $$\Theta \entails \theta_2\chi \equiv \tau_0 \arrow \tau
