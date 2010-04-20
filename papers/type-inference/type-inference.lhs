@@ -818,9 +818,6 @@ substitutions, then these are unified to produce a single substitution.
 
 \subsection{Transforming the rule system for equivalence}
 
-\TODO{Explain what happens here, simplify the proof obligations and show
-equivalence to the original system.}
-
 We wish to transform these rules into a unification algorithm.
 Starting with the rules in Figure~\ref{fig:equivRules}, consider what happens if
 we remove each equivalence closure rule in turn and attempt to prove its
@@ -879,17 +876,16 @@ $\tau \equiv \upsilon$.
 
 \subsection{Constructing a unification algorithm}
 
-\TODO{Relating the declarative rules for type equivalence to the unification
-algorithm needs some explanation.}
-
 Now we can see how to construct the algorithm. The structural rule says that
 whenever we have rigid $\arrow$ symbols on each side, we decompose the problem
 into two subproblems, and thanks to the Optimist's Lemma we can solve these
 sequentially. Otherwise, we either have variables on both sides, or a variable
 on one side and a type on the other. In each case, we look at the head of the
-context to see what information it gives us, but when instantiating a variable
-with a type we need to accumulate a list of the type's dependencies as we
-encounter them.
+context to see what information it gives us, and use the transformed rules to
+see how to proceed. When solving a variable with a type, we need to accumulate
+the type's dependencies as we encounter them, performing the occur check to
+ensure a solution exists.
+
 % \begin{itemize}
 % \item If $\alpha D$ is at the head of the context and we are trying to
 % unify $\alpha \equiv \alpha$ then we are done.
@@ -898,6 +894,8 @@ encounter them.
 % followed by $\alpha \defn \tau$.
 % \end{itemize}
 
+It is possible that a context entry may have no bearing on the unification
+problem being solved, and hence can be ignored.
 We define the orthogonality relation $v D \perp X$ (the set of type variables $X$
 does not depend on the declaration $v D$) thus:
 \begin{align*}
@@ -925,41 +923,13 @@ $\Xi$ contains only type variable declarations and
 $\beta \in \tyvars{\Xi} \Rightarrow \beta \in \FTV{\tau, \Xi}$,
 solving $\alpha$ with $\tau$ succeeds, producing output context $\Delta$.
 
-
-%if False
-
-We define the orthogonality relation $e \perp S$ (entry $e$ does not have any
-effect on the statement $S$) for unification and instantiation statements
-as follows:
-\begin{align*}
-\delta \defn \_ \perp \alpha \equiv \beta
-    &\mathrm{~if~} \delta \neq \alpha \wedge \delta \neq \beta  \\
-e \perp \alpha \equiv \tau
-    &\mathrm{~if~} e \perp \alpha \equiv \tau [] \wedge \tau \mathrm{~not~variable}  \\
-e \perp \tau \equiv \alpha
-    &\mathrm{~if~} e \perp \alpha \equiv \tau [] \wedge \tau \mathrm{~not~variable}  \\
-e \perp \tau_0 \arrow \tau_1 \equiv \upsilon_0 \arrow \upsilon_1
-    &\mathrm{~if~} e \perp \tau_0 \equiv \upsilon_0 \wedge e \perp \tau_1 \equiv \upsilon_1  \\
-\delta \defn \_ \perp \alpha \equiv \tau [\Xi]
-    &\mathrm{~if~} \alpha \neq \delta \wedge \delta \notin \FTV{\tau, \Xi}
-\end{align*}
-
-%endif
-
 The rules \textsc{Define}, \textsc{Expand} and \textsc{Ignore} have
 symmetric counterparts that are identical apart from interchanging the equated
 terms in the conclusion. Usually we will ignore these without loss of generality,
 but where necessary we refer to them as \textsc{Define}\sym,
 \textsc{Expand}\sym and \textsc{Ignore}\sym.
 
-\TODO{
-Unfortunately, removing these three rules and using the solve versions doesn't
-work, e.g. consider solving $\alpha \equiv \beta$ in
-$\hole{\alpha}, \beta \defn \alpha$.
-The flex-flex/flex-rigid distinction is necessary to handle the trivial
-exception to the occur check.
-}
-
+        
 \begin{figure}[ht]
 \boxrule{\Junify{\Gamma}{\tau}{\upsilon}{\Delta}}
 
@@ -1049,12 +1019,16 @@ $$\Jinstantiate{\Gamma_0, \alpha \defn \_}{\alpha}{\tau}{\Xi}{\Delta}
 \mathrm{~with~} \alpha \in \FTV{\tau, \Xi}$$
 so the algorithm fails if this situation arises. This is essentially an occur
 check failure: $\alpha$ and $\tau$ cannot be unified if $\alpha$ occurs in
-$\tau$ or in an entry that $\tau$ depends on.
-% (Note that the trivial exception
-% $\tau = \alpha$ is dealt with by the \textsc{Idle} rule.)
+$\tau$ or in an entry that $\tau$ depends on, and $\tau$ is not a variable.
 Since we only have one type constructor symbol (the function arrow $\arrow$),
 there are no failures due to rigid-rigid mismatch. Adding these would not
 significantly complicate matters, however.
+
+At first there appears to be some redundancy in the system, with similar-looking
+rules for flex-flex and flex-rigid problems
+(\textsc{Define} versus \textsc{DefineS}, for example).
+Unfortunately, it is not easy to remove the flex-flex versions, because they
+permit the exception to the occur check when only variables are involved.
 
 
 \subsection{Soundness and completeness}

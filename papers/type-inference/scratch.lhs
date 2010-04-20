@@ -289,3 +289,26 @@ $$
 \end{figure}
 
 %endif
+
+
+
+
+%if False
+
+We define the orthogonality relation $e \perp S$ (entry $e$ does not have any
+effect on the statement $S$) for unification and instantiation statements
+as follows:
+\begin{align*}
+\delta \defn \_ \perp \alpha \equiv \beta
+    &\mathrm{~if~} \delta \neq \alpha \wedge \delta \neq \beta  \\
+e \perp \alpha \equiv \tau
+    &\mathrm{~if~} e \perp \alpha \equiv \tau [] \wedge \tau \mathrm{~not~variable}  \\
+e \perp \tau \equiv \alpha
+    &\mathrm{~if~} e \perp \alpha \equiv \tau [] \wedge \tau \mathrm{~not~variable}  \\
+e \perp \tau_0 \arrow \tau_1 \equiv \upsilon_0 \arrow \upsilon_1
+    &\mathrm{~if~} e \perp \tau_0 \equiv \upsilon_0 \wedge e \perp \tau_1 \equiv \upsilon_1  \\
+\delta \defn \_ \perp \alpha \equiv \tau [\Xi]
+    &\mathrm{~if~} \alpha \neq \delta \wedge \delta \notin \FTV{\tau, \Xi}
+\end{align*}
+
+%endif
