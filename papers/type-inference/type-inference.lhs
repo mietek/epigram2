@@ -84,6 +84,8 @@
 \newcommand{\tyvars}[1]{\ensuremath{\V_\TY(#1)}}
 \newcommand{\types}[1]{\ensuremath{\T_\TY(#1)}}
 \newcommand{\FTV}[1]{\ensuremath{\mathit{FTV}(#1)}}
+\newcommand{\Type}{\ensuremath{\mathit{Type}}}
+\newcommand{\Term}{\ensuremath{\mathit{Term}}}
 
 \newcommand{\lei}{\ensuremath{\sqsubseteq}}
 \newcommand{\gei}{\ensuremath{\sqsupseteq}}
@@ -282,7 +284,8 @@ $$\tau ::= \alpha ~||~ \tau \arrow \tau$$
 where $\alpha$ ranges over some set of type variables $\V_\TY$.
 For simplicity, we only consider one type constructor.
 In the sequel, $\alpha$ and $\beta$ are type variables and $\tau$ and $\upsilon$
-types.
+are types.
+We write $\Type$ for the set of types.
 %% (All of these symbols may be primed or subscripted.)
 %% We use $\Xi$ to denote a context suffix containing only type variable declarations.
 
@@ -297,7 +300,7 @@ The foldable functor |Ty| defines types in our object language parameterised by
 the type of variable names, which will be useful later. Thanks to a language
 extension in GHC 6.12 \citep{ghc_team_glorious_2009} we can simply
 derive the required typeclass instances.
-We define |Type| to use integers as names.
+For simplicity, we use integers as names in the implementation.
 
 > data Ty a  =  V a |  Ty a :-> Ty a
 
@@ -316,11 +319,11 @@ We define |Type| to use integers as names.
 \subsection{Introducing contexts}
 
 Types contain variables, but we need some way of interpreting what the variables
-mean. Our ideology is that such information belongs in the context. We given an
+mean. Our ideology is that such information belongs in the context. We give an
 abstract description of contexts, which may contain type variables and other
 information.
 
-Let $\K$ a set of sorts, and for each $K \in \K$ let $\V_K$ be a set of
+Let $\K$ be a set of sorts, and for each $K \in \K$ let $\V_K$ be a set of
 variables and $\D_K$ a set of objects. Our running example will be the sort
 $\TY$, where $\V_\TY$ is some set of type variables and $\D_\TY$ initially
 contains only the \scare{unbound variable} object $~\hole{}$.
@@ -372,7 +375,8 @@ That is, declaring a type variable to be unknown always makes sense.
 \subsection{Making types meaningful}
 
 Now we can ask whether a type is meaningful with respect to a context.
-This requires us to lookup the type variables to determine if they are in scope.
+This requires us to determine whether the type variables are in scope.
+More generally, each context entry makes some statements hold.
 
 We suppose that there is a map
 $\sem{\cdot}_K : \V_K \times \D_K \rightarrow \mathcal{P}(\Ss)$
@@ -381,15 +385,16 @@ for each $K \in \K$, from declarations to sets of statements.
 (We typically omit the subscript when the sort is irrelevant or can be inferred.)
 The idea is that $\sem{v D}$ is the set of atomic statements that hold if the
 declaration $v D$ is in the context.
-The basic rule of our inference system thus becomes
+The basic rule of our inference system is
 $$\name{Lookup}
-  \Rule{v D \in \Gamma    \quad    S  \in \sem{v D}}
+  \Rule{\Gamma \entails \valid   \quad  v D \in \Gamma  \quad  S  \in \sem{v D}}
        {\Gamma \entails S}.$$
 
 Applications of the \textsc{Lookup} rule are the \scare{variables} of
 derivations. 
-%%%\TODO{Expand on what this means.}
-Just as variable names are the atoms out of which compound expressiosn get built, instances of \textsc{Lookup} are the axiom leaves out of which complex derivations of judgments are built. 
+Just as variable names are the atoms out of which compound expressions get built,
+instances of \textsc{Lookup} are the axiom leaves out of which complex
+derivations of judgments are built. 
 
 We define the statement $\tau \type$ by taking
 $\sem{\hole{\alpha}} = \{ \alpha \type \}$
@@ -607,9 +612,8 @@ to types and statements in the usual way.
 
 We say a statement $S$ is
 \define{stable} if it is preserved under information increase, that is, if
-$$\Gamma \entails S  ~\wedge~  \delta : \Gamma \lei \Delta
-    \quad \Rightarrow \quad
-    \Delta \entails \delta S.$$
+$$\Gamma \entails S  \quad \mathrm{and}  \quad  \delta : \Gamma \lei \Delta
+    \quad \Rightarrow \quad  \Delta \entails \delta S.$$
 This says that we can extend a simultaneous substitution on syntax to a
 simultaneous substitution on derivations.
 \TODO{Expand on this.}
@@ -628,7 +632,7 @@ and $\tau \equiv \upsilon$ are stable.
 
 
 \begin{lemma}\label{lei:preorder}
-If $\sem{v D}$ is a set of stable statements for every declaration $v D$, then
+If every statement $S \in \sem{v D}$ is stable for every declaration $v D$, then
 the $\lei$ relation is a preorder, with reflexivity demonstrated by
 $\iota : \Gamma \lei \Gamma : v \mapsto v$, and transitivity by
 $$\gamma_1 : \Gamma_0 \lei \Gamma_1  ~\wedge~  \gamma_2 : \Gamma_1 \lei \Gamma_2
@@ -662,7 +666,8 @@ eliminators are in any case admissible rules.
 
 \begin{lemma}[Composition preserves stability]
 If $S$ and $S'$ are stable then $S \wedge S'$ is stable.
-If $S$ is stable and $v D$ is a declaration, then $\Sbind{v D}{S}$ is stable.
+If $v D$ is a declaration and both $\ok_K D$ and $S$ are stable, then
+$\Sbind{v D}{S}$ is stable.
 \end{lemma}
 \begin{proof}
 Suppose $S$ and $S'$ are stable, $\Gamma \entails (S \wedge S')$ and
@@ -672,7 +677,7 @@ Hence $\Delta \entails \delta (S \wedge S')$.
 
 Suppose $S$ is stable, $\Gamma \entails \Sbind{v D}{S}$ and
 $\delta : \Gamma \lei \Delta$. Then $\Gamma \entails \ok_K D$ and
-$\Gamma, v D \entails S$, so by induction, $\Delta \entails \delta \ok_K D$.
+$\Gamma, v D \entails S$, so by stability, $\Delta \entails \delta \ok_K D$.
 Let $\delta' = \delta[v/v]$, then
 $\delta' : \Gamma, v D \lei \Delta, v (\delta D)$
 so by stability of $S$ we have $\Delta, v (\delta D) \entails \delta' S$.
@@ -680,6 +685,10 @@ Hence $\Delta \entails \Sbind{v (\delta D)}{\delta' S}$
 and so $\Delta \entails \delta \Sbind{v D}{S}$.
 \TODO{We should at least mention freshness here.}
 \end{proof}
+
+Thanks to this lemma and the preceding results, every statement we have
+introduced so far is stable. We will ensure that all statements in $\Ss$ are
+stable, so we can make use of stability without qualification in the sequel.
 
 
 
@@ -719,11 +728,9 @@ we must have
 \[\Gamma \entails \R{P} (b)(c) \wedge \R{P} (c)(d)
     \Rightarrow \Gamma \entails \R{P} (b)(d). \]
 
-\TODO{Either define $Type$ property (and use mathit) or replace it with something
-more sensible.}
 The unification problem $U$ is given by
 \begin{align*}
-\In{U} &= Type \times Type  \\
+\In{U} &= \Type \times \Type  \\
 \Out{U} &= 1  \\
 \Pre{U}(\tau, \upsilon) &= \tau \type \wedge \upsilon \type  \\
 \Post{U}(\tau, \upsilon) ~\_ &= \tau \equiv \upsilon  \\
@@ -1578,8 +1585,8 @@ $$
 As with unification, we wish to translate these declarative rules into an
 algorithm for type inference. We define the type inference problem $I$ by
 \begin{align*}
-\In{I} &= Term  \\
-\Out{I} &= Type  \\
+\In{I} &= \Term  \\
+\Out{I} &= \Type  \\
 \Pre{I}(t) &= \valid  \\
 \Post{I}(t)(\tau) &= \tau \type \wedge t : \tau  \\
 \R{I}(\tau)(\upsilon) &= \tau \equiv \upsilon
@@ -1839,7 +1846,7 @@ substitution. Perhaps we need the general type inference problem?}
 Let $S$ be the problem given by
 \begin{align*}
 \In{S}                 &= \V_\TM  \\
-\Out{S}                &= Type  \\
+\Out{S}                &= \Type  \\
 \Pre{S} (x)            &= \valid  \\
 \Post{S} (x, \tau)     &= \tau \type \wedge x \hasc .\tau  \\
 \R{S} (\tau, \upsilon) &= \tau \equiv \upsilon
