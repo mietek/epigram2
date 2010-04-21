@@ -312,3 +312,13 @@ e \perp \tau_0 \arrow \tau_1 \equiv \upsilon_0 \arrow \upsilon_1
 \end{align*}
 
 %endif
+
+
+
+The |popEntry| function removes and returns the topmost entry from the context.
+\TODO{Since |popEntry| is only used twice, perhaps we should remove it?}
+
+> popEntry :: Contextual Entry
+> popEntry = do  _Gamma :< e <- getContext
+>                putContext _Gamma
+>                return e

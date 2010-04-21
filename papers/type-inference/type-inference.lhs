@@ -34,6 +34,7 @@
 %format alpha0
 %format alpha1
 %format alpha'
+%format alphaD = "\alpha\!D"
 %format beta   = "\beta"
 %format beta0
 %format beta1
@@ -477,7 +478,6 @@ $$
 
 
 \subsection{Implementing types and contexts}
-\TODO{Should we mix Haskell and mathematics more? Or less?}
 
 A type variable declaration is represented as a |TyEntry|, in which a variable
 is either bound to a type (written |Some tau|) or left unbound (written |Hole|).
@@ -518,7 +518,8 @@ Since |Type| and |Suffix| are built from |Foldable| functors containing names, w
 >    alpha <? (_ := Some tau)  = alpha <? tau
 >    alpha <? (_ := Hole)      = False
 
-> instance (Foldable t, OccursIn a) => OccursIn (t a) where
+> instance  (Foldable t, OccursIn a)
+>               => OccursIn (t a) where
 >     alpha <? t = any (alpha <?) t
 
 We work in the |Contextual| monad (computations that can fail and mutate the
@@ -557,14 +558,6 @@ of the state.
 >
 > modifyContext :: (Context -> Context) -> Contextual ()
 > modifyContext f = getContext >>= putContext . f
-
-The |popEntry| function removes and returns the topmost entry from the context.
-\TODO{Since |popEntry| is only used twice, perhaps we should remove it?}
-
-> popEntry :: Contextual Entry
-> popEntry = do  _Gamma :< e <- getContext
->                putContext _Gamma
->                return e
 
 
 
@@ -758,6 +751,10 @@ The solution $(b, \delta, \Delta)$ is \define{minimal} if for any solution
 $(c, \theta, \Theta)$ there exists $\zeta : \Delta \lei \Theta$ such that
 $\theta \eqsubst \zeta \compose \delta$ and $\Theta \entails \R{P} (\zeta b, c)$.
 
+\TODO{One possible notation for problems: $?_P$ as an infix operator
+with the input parameters before it and the output parameters after it.
+Any other suggestions?}
+
 We write $\Prob{P}{a}{b}$ for $\Post{P}(a)(b)$ and
 $\delta : \Jmin{\Gamma}{\Prob{P}{a}{b}}{\Delta}$ to mean that
 $(b, \delta, \Delta)$ is a minimal solution of the $P$-instance $a$.
@@ -926,13 +923,16 @@ succeeds, producing output context $\Delta$.
 The assertion
 $\Jinstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$
 means that given inputs $\Gamma$, $\Xi$, $\alpha$ and $\tau$,
-where
-$\alpha \in \tyvars{\Gamma}$
-$\Gamma, \Xi \entails \tau \type$,
-$\tau$ is not a variable,
-$\Xi$ contains only type variable declarations and
-$\beta \in \tyvars{\Xi} \Rightarrow \beta \in \FTV{\tau, \Xi}$,
-solving $\alpha$ with $\tau$ succeeds, producing output context $\Delta$.
+solving $\alpha$ with $\tau$ succeeds and produces output context $\Delta$,
+subject to the conditions
+\begin{itemize}
+\item $\alpha \in \tyvars{\Gamma}$,
+\item $\Gamma, \Xi \entails \tau \type$,
+\item $\tau$ is not a variable,
+\item $\Xi$ contains only type variable declarations and
+\item $\beta \in \tyvars{\Xi} \Rightarrow \beta \in \FTV{\tau, \Xi}$.
+\end{itemize}
+
 
 The rules \textsc{Define}, \textsc{Expand} and \textsc{Ignore} have
 symmetric counterparts that are identical apart from interchanging the equated
@@ -1047,13 +1047,13 @@ permit the exception to the occur check when only variables are involved.
 \begin{lemma}[Soundness and generality of unification]
 \label{lem:unifySound}
 \begin{enumerate}[(a)]
-\item If $\Junify{\Gamma}{\tau}{\upsilon}{\Delta}$, then
-$\tyvars{\Gamma} = \tyvars{\Delta}$ and
-$\iota : \Jmin{\Gamma}{\Puni{\tau}{\upsilon}}{\Delta}$
+\item First, if $\Junify{\Gamma}{\tau}{\upsilon}{\Delta}$, then
+$\tyvars{\Gamma} = \tyvars{\Delta}$ and we have
+$\iota : \Jmin{\Gamma}{\Puni{\tau}{\upsilon}}{\Delta}$,
 %% $\Gamma_1 \entails \tau \equiv \upsilon$,
 %% $\iota : \Gamma_0 \lei \Gamma_1$
-where
-$$\iota: \tyvars{\Gamma} \rightarrow \types{\Delta} : \alpha \mapsto \alpha$$
+where $\iota$
+% $$\iota: \tyvars{\Gamma} \rightarrow \types{\Delta} : \alpha \mapsto \alpha$$
 is the inclusion substitution.
 
 \item Moreover, if
@@ -1233,13 +1233,14 @@ entry that has been removed) with which to |replace| it.
 > onTop ::  (TyEntry -> Contextual (Maybe Suffix)) 
 >             -> Contextual ()
 > onTop f = do
->     e <- popEntry
->     case e of
->         TY te        -> do  m <- f te
+>     _Gamma :< vD <- getContext
+>     putContext _Gamma
+>     case vD of
+>         TY alphaD    -> do  m <- f alphaD
 >                             case m of
 >                                 Just _Xi  -> modifyContext (<>< _Xi)
->                                 Nothing   -> modifyContext (:< e)
->         _            -> onTop f >> modifyContext (:< e)
+>                                 Nothing   -> modifyContext (:< vD)
+>         _            -> onTop f >> modifyContext (:< vD)
 
 > restore :: Contextual (Maybe Suffix)
 > restore = return Nothing
@@ -1693,21 +1694,22 @@ and $\theta \eqsubst \zeta \compose \iota$.
 \end{proof}
 
 
-\subsection{A new composite statement}
-
-\TODO{Do we actually use this anywhere? Perhaps it is redundant.}
-
-If $S$ is a statement then $\fatsemi S$ is a composite statement given by
-$$
-\Rule{\Gamma \fatsemi \entails S}
-     {\Gamma \entails \fatsemi S}.
-$$
-If $S$ is stable then $\fatsemi S$ is stable, which we can see as follows.
-Suppose $\Gamma \entails \fatsemi S$ and $\delta : \Gamma \lei \Delta$. Then
-$\Gamma \fatsemi \entails S$, and $\delta : \Gamma \fatsemi \lei \Delta \fatsemi$
-by the new definition of the $\lei$ relation. Hence
-$\Delta \fatsemi \entails \delta S$ by stability and so
-$\Delta \entails \delta (\fatsemi S)$.
+% \subsection{A new composite statement}
+% 
+% \TODO{Do we actually use this anywhere? Perhaps it is redundant.}
+% 
+% If $S$ is a statement then $\fatsemi S$ is a composite statement given by
+% $$
+% \Rule{\Gamma \fatsemi \entails S}
+%      {\Gamma \entails \fatsemi S}.
+% $$
+% If $S$ is stable then $\fatsemi S$ is stable, which we can see as follows.
+% Suppose $\Gamma \entails \fatsemi S$ and $\delta : \Gamma \lei \Delta$. Then
+% $\Gamma \fatsemi \entails S$, and
+% $\delta : \Gamma \fatsemi \lei \Delta \fatsemi$
+% by the new definition of the $\lei$ relation. Hence
+% $\Delta \fatsemi \entails \delta S$ by stability and so
+% $\Delta \entails \delta (\fatsemi S)$.
 
 
 
@@ -1866,10 +1868,6 @@ the conclusion. For each hypothesis, we must ensure that the problem is fully
 specified, inserting variables to stand for unknown problem inputs. Moreover, we
 cannot pattern match on problem outputs, so we ensure there are schematic
 variables in output positions, fixing things up with appeals to unification. 
-
-\TODO{One possible notation for problems: $?_P$ as an infix operator
-with the input parameters before it and the output parameters after it.
-Any other suggestions?}
 
 Consider the rule for application, written to highlight problem inputs and
 outputs as
@@ -2303,11 +2301,12 @@ to the right of the |LetGoal| marker.
 >   where
 >     skimContext :: Contextual (Bwd TyEntry)
 >     skimContext = do
->         e <- popEntry
->         case e of
->             LetGoal  -> return B0
->             TY te    -> (:< te) <$> skimContext
->             TM _     -> undefined
+>         _Gamma :< vD <- getContext
+>         putContext _Gamma
+>         case vD of
+>             LetGoal    -> return B0
+>             TY alphaD  -> (:< alphaD) <$> skimContext
+>             TM _       -> undefined
 
 
 The |(>-)| operator appends a term variable declaration to the context,
