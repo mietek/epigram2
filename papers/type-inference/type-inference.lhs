@@ -570,6 +570,31 @@ More generally, if we rely on the context to tell us what we may
 deduce about variables, then making contexts more informative must preserve
 deductions. 
 
+Let $\Gamma$ and $\Delta$ be contexts.
+A \define{substitution from $\Gamma$ to $\Delta$} is a map from
+$\tyvars{\Gamma}$ to $\{ \tau ~||~ \Delta \entails \tau \type \}$.
+Substitutions apply to types and statements in the obvious way.
+
+We write $\delta : \Gamma \lei \Delta$ and say
+\define{$\Delta$ is more informative than $\Gamma$} if $\delta$ is a
+substitution from $\Gamma$ to $\Delta$ such that,
+for every $v D \in \Gamma$ and $S \in \sem{v D}$, we have that
+$\Delta \entails \delta S$.
+
+We write $\delta \eqsubst \theta : \Gamma \lei \Delta$ if
+$\delta : \Gamma \lei \Delta$, $\theta : \Gamma \lei \Delta$
+and for all $\alpha \in \tyvars{\Gamma}$,
+$\Delta \entails \delta\alpha \equiv \theta\alpha$.
+We will sometimes just write $\delta \equiv \theta$ if the contexts involved
+are obvious.
+It is straightforward to verify that $\eqsubst$ is an equivalence relation
+for fixed contexts $\Gamma$ and $\Delta$, and that if
+$\delta \eqsubst \theta$ then
+$\Delta \entails \delta\tau \equiv \theta\tau$ for any $\Gamma$-type $\tau$.
+
+
+%if False
+
 Suppose we have a set $\T_K(\Delta)$ for each $K \in \K$ and context $\Delta$.
 A \define{$K$-substitution from $\Gamma$ to $\Delta$} is map from
 $\V_K(\Gamma)$ to $\T_K(\Delta)$.
@@ -584,12 +609,25 @@ $\Delta \entails \delta S$.
 $S$.)
 \TODO{Can we simplify this without making it too concrete?}
 
+
 If $\delta : \Gamma \lei \Delta$ and $\theta : \Gamma \lei \Delta$, then we
 write $\delta \eqsubst \theta$ if, for every statement $S$,
 $\Delta \entails \delta S  \Leftrightarrow  \Delta \entails \theta S$.
 It is easy to see that $\eqsubst$ is an equivalence relation that is preserved
 under composition.
 \TODO{What other properties of $\eqsubst$ do we need?}
+
+% For each $K \in \K$ and context $\Delta$, suppose
+% $\equiv_K : \T_K(\Delta) \rightarrow \T_K(\Delta) \rightarrow \Ss$.
+% If $\delta : \Gamma \lei \Delta$ and $\theta : \Gamma \lei \Delta$, then we
+% write $\delta \eqsubst \theta$ if, for every $K \in \K$ and
+% $v \in \V_K(\Gamma)$,
+% $\Delta \entails \delta v \equiv_K \theta v$.
+% It is easy to see that $\eqsubst$ is an equivalence relation that is preserved
+% under composition.
+
+%endif
+
 
 We may omit $\delta$ and write $\Gamma \lei \Delta$ if we are only interested
 in the existence of a suitable substitution. This relation between contexts
@@ -604,12 +642,12 @@ not place any constraints on the order of context entries, other than the
 dependency order of variables in declarations. We will later see how to extend
 $\lei$ to capture the order of entries at an appropriate level of precision. 
 
-For our running example, the sort $\TY$ of type variables, substitution is
-defined as one would expect.
-Let $\types{\Delta}$ be the set of types $\tau$ such that
-$\Delta \entails \tau \type$. 
-A $\TY$-substitution then maps type variables to types, so it can be applied
-to types and statements in the usual way.
+% For our running example, the sort $\TY$ of type variables, substitution is
+% defined as one would expect.
+% Let $\types{\Delta}$ be the set of types $\tau$ such that
+% $\Delta \entails \tau \type$. 
+% A $\TY$-substitution then maps type variables to types, so it can be applied
+% to types and statements in the usual way.
 
 
 \subsection{Stability}
@@ -649,6 +687,27 @@ For transitivity, suppose $v D \in \Gamma_0$ and $S \in \sem{v D}$.
 Then $\Gamma_1 \entails \gamma_1 S$ since $\gamma_1 : \Gamma_0 \lei \Gamma_1$.
 Now by stability applied to $\gamma_1 S$ using $\gamma_2$, we have
 $\Gamma_2 \entails \gamma_2\gamma_1 S$ as required.
+\end{proof}
+
+
+\begin{lemma}
+\label{lem:composePreservesEquivSubst}
+If $\delta_0 \eqsubst \delta_1 : \Gamma \lei \Delta$
+and $\theta_0 \eqsubst \theta_1 : \Delta \lei \Theta$
+then $\theta_0 \compose \delta_0  \eqsubst  \theta_1 \compose \delta_1 :
+         \Gamma \lei \Theta$.
+\end{lemma}
+
+\begin{proof}
+Fix $\alpha \in \tyvars{\Gamma}$. By definition of $\eqsubst$,
+$\Delta \entails \delta_0\alpha \equiv \delta_1\alpha$,
+so by stability,
+$\Theta \entails \theta_0\delta_0\alpha \equiv \theta_0\delta_1\alpha$.
+Moreover
+$\Theta \entails \theta_0\delta_1\alpha \equiv \theta_1\delta_1\alpha$,
+and hence
+$\Theta \entails \theta_0\delta_0\alpha \equiv \theta_1\delta_1\alpha$
+by transitivity.
 \end{proof}
 
 
@@ -1438,9 +1497,9 @@ Indeed, the changes to type schemes that can occur on information increase are
 deliberately limited, to ensure terms have principal types.
 \TODO{Characterise and prove result needed for let completeness.}
 
-We are not going to substitute for term variables, so we let $\T_\TM = \V_\TM$
-and assume that $\TM$-substitutions are always the identity map.
-\TODO{Comment on what would happen if we did allow term substitutions.}
+% We are not going to substitute for term variables, so we let $\T_\TM = \V_\TM$
+% and assume that $\TM$-substitutions are always the identity map.
+% \TODO{Comment on what would happen if we did allow term substitutions.}
 
 
 % Now we can give the full definition of context entries that we postponed earlier.
@@ -1596,9 +1655,9 @@ defined by
 \Xi \semidrop n+1 &~\mathrm{undefined}
 \end{align*}
 
-We write $\delta : \Gamma \lei \Delta$ if, for each $K \in \K$, there is a 
-$K$-substitution $\delta_K$ from $\Gamma$ to $\Delta$ such that
-if $v D \in \Gamma \semidrop n$ and $S \in \sem{v D}$ then
+We write $\delta : \Gamma \lei \Delta$ if $\delta$ is a
+substitution from $\Gamma$ to $\Delta$ such that, for every
+$v D \in \Gamma \semidrop n$ and $S \in \sem{v D}$, we have that
 $\Delta \semidrop n$ is defined and
 $\Delta \entails \delta S$.
 
@@ -1677,8 +1736,7 @@ used in $\tau$, so there is a substitution
 $\psi : \Gamma \fatsemi \Xi \lei \Theta \fatsemi$
 that agrees with $\theta$ on $\Gamma$ and maps variables in $\Xi$ to their
 definitions in $\Theta$.
-
-Note that $\psi \eqsubst \theta$. \TODO{Why?}
+Note that $\psi \eqsubst \theta : \Gamma \fatsemi \Xi \lei \Theta \fatsemi \Phi$.
 
 % Now we can filter $\Phi$ to give $\Psi$ consisting only of definitions
 % such that $\Theta \fatsemi \Psi \entails \theta\alpha \equiv \theta\tau$.
@@ -1688,9 +1746,15 @@ Note that $\psi \eqsubst \theta$. \TODO{Why?}
 
 Hence $\psi : \Gamma, \Xi \lei \Theta$ and
 $\Theta \entails \psi\alpha \equiv \psi\tau$, so by hypothesis there exists
-$\zeta : \Delta \lei \Theta$ such that $\psi \eqsubst \zeta \compose \iota$.
+$\zeta : \Delta \lei \Theta$ such that
+$\psi \eqsubst \zeta \compose \iota : \Gamma, \Xi \lei \Theta$.
 Then $\zeta : \Delta \fatsemi \lei \Theta \fatsemi \Phi$
-and $\theta \eqsubst \zeta \compose \iota$.
+and
+$\psi \eqsubst \zeta \compose \iota :
+    \Gamma \fatsemi \Xi \lei \Theta \fatsemi \Phi$,
+so
+$\theta \eqsubst \zeta \compose \iota :
+    \Gamma \fatsemi \Xi \lei \Theta \fatsemi \Phi$.
 \end{proof}
 
 
