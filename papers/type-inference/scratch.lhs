@@ -662,3 +662,201 @@ representations for free and bound variables, this is easy to implement.
 
 
 %endif
+
+
+
+
+% \begin{enumerate}[(a)]
+% \item $\Gamma_1 \entails t : \tau$;
+% \item $\tyvars{\Gamma_0} \subseteq \tyvars{\Gamma_1}$; and
+% % \item $\forget{\Gamma_0} = \forget{\Gamma_1}$;
+% \item $\iota : \Gamma_0 \lei \Gamma_1$, where $\iota$ is the inclusion
+%       substitution.
+%% \item if $\Theta_0 \subcontext \Gamma_0$ and $\Theta_1 \subcontext \Gamma_1$
+%% are such that
+%%    $\forget{\Theta_0} = \forget{\Theta_1}$, then
+%%    $\tyvars{\Theta_0} \subseteq \tyvars{\Theta_1}$ and
+%%    $\iota : \Theta_0 \lei \Theta_1$.
+% \end{enumerate}
+
+
+
+
+%if False
+
+\begin{lemma}
+\label{lem:schemeInfoIncrease}
+Let $\Theta$ be a context such that
+$\Theta \entails \gen{\Xi}{.\upsilon} \scheme$ and $\Theta \entails \tau \type$.
+Then $\Theta, x \asc \gen{\Xi}{.\upsilon} \entails x \hasc \tau$
+if and only if there exists a list of type variable declarations $\Phi$ such that
+$$\iota : \Theta \fatsemi \Xi \lei \Theta \fatsemi \Phi
+    \quad \text{and} \quad
+    \Theta \fatsemi \Phi \entails \upsilon \equiv \tau$$
+\end{lemma}
+
+
+\begin{lemma}
+\label{lem:schemeSameInstances}
+Suppose $\theta : \Delta_0 \fatsemi \Xi_0 \lei \Theta \fatsemi \Psi$,
+$\Theta \fatsemi \Psi \entails \theta\upsilon \equiv \tau_s$ and
+$\Theta, x \asc \gen{\Psi}{.\tau_s} \entails x \hasc .\tau$. Then
+$\Theta, x \asc \theta \gen{\Xi_0}{.\upsilon} \entails x \hasc .\tau$.
+\end{lemma}
+
+\begin{proof}
+By lemma~\ref{lem:schemeInfoIncrease}, there exists $\Phi$ such that
+$\iota : \Theta \fatsemi \Psi \lei \Theta \fatsemi \Phi$ and
+$\Theta \fatsemi \Phi \entails \tau_s \equiv \tau$.
+Then $\iota : \Theta \fatsemi \theta \Xi_0 \lei \Theta \fatsemi \Phi$
+and $\Theta \fatsemi \Phi \entails \theta\upsilon \equiv \tau$ by
+stability and transitivity, so by lemma~\ref{lem:schemeInfoIncrease},
+$\Theta, x \asc \gen{\theta\Xi_0}{.\theta\upsilon} \entails x \hasc \tau$.
+\end{proof}
+
+
+\begin{lemma}
+\label{lem:schemeInstancesSuffice}
+Given $\Theta, x, \sigma, \sigma'$ suppose
+$$\forall \upsilon \forall \Phi .
+    \Theta, x \hasc \sigma, \Phi \entails x : \upsilon
+        \Rightarrow  \Theta, x \hasc \sigma', \Phi \entails x : \upsilon$$
+and given $\Psi, w, \tau$ suppose
+$\Theta, x \hasc \sigma, \Psi \entails w : \tau$.
+Then $\Theta, x \hasc \sigma', \Psi \entails w : \tau$. 
+
+% If $\Theta, x \asc \sigma, \Theta' \entails w : \tau$
+% and for all types $\upsilon$,
+% $$\Theta, x \asc \sigma, \Theta' \entails x \hasc .\upsilon
+%     ~\Rightarrow~ \Theta, x \asc \sigma', \Theta' \entails x \hasc .\upsilon$$
+% then $\Theta, x \asc \sigma', \Theta' \entails w : \tau$.
+\end{lemma}
+
+\begin{proof}
+By induction on the structure of derivations; the hypothesis ensures that
+appeals to the variable rule hold in the new context.
+\end{proof}
+
+%endif
+
+
+
+
+% \begin{enumerate}[(a)]
+% \item $\Jtype{\Gamma_0;}{t}{\upsilon}{\Gamma_1; \Xi}$,
+% \item $\theta_1 : \Gamma_1; \lei \Delta$ with 
+% $\theta_0\alpha = \theta_1\alpha$ for any $\alpha \in \tyvars{\Gamma_0}$, and
+% \item $\Gamma_1; \entails t :: \gen{\Xi}{\upsilon}$ principal.
+% \end{enumerate}
+
+
+
+
+% with
+% $$\forall \upsilon. \Theta \entails \theta\sigma' \succ \upsilon
+%     \Leftrightarrow \Theta \entails x : \upsilon.$$
+% so by completeness of specialisation (lemma~\ref{lem:specialiseComplete}),
+% $\Jhast{\Gamma}{x}{\sigma}{\upsilon}{\Gamma, \Xi}$
+% and
+% $$\forall\tau \forall \phi: \Gamma_0 \lei \Phi . (
+%     \Phi \entails \phi\sigma' \succ \tau
+%         \Leftrightarrow  \Phi \entails \phi\gen{\Xi}{\upsilon} \succ \tau.$$
+% Hence the \textsc{Var} rule applies giving
+% $\Jtype{\Gamma}{x}{\upsilon}{\Gamma, \Xi}$.
+% (b) holds trivially with $\theta_1 = \theta_0$, and
+% $\Gamma_0 \entails x \hasscheme \gen{\Xi}{\upsilon}$ principal.
+
+
+
+
+
+% \begin{enumerate}[(a)]
+% \item $\Jtype{\Gamma_0; \letGoal;}{s}{\upsilon}{\Gamma_1; \letGoal; \Xi_1}$
+% \item $\theta_1 : \Gamma_1; \letGoal; \lei \Delta, \letGoal; \Psi$
+% \item $\Gamma_1; \letGoal; \entails s \hasscheme \gen{\Xi_1}{.\upsilon}$ principal.
+% \end{enumerate}
+
+Now 
+$\theta_0 ||_{\Delta_0} : \Delta_0 \lei \Theta$, so
+$$\theta_0 ||_{\Delta_0} : \Delta_0, x \asc \gen{\Xi_0}{.\upsilon}
+    \lei \Theta, x \asc \theta_0\gen{\Xi_0}{.\upsilon}$$
+% but
+% $$\iota : \Theta, x \asc \sigma \lei \Theta, x \asc \gen{\Xi_0}{.\upsilon}$$
+% \TODO{by principality?}, and hence
+and
+$$\iota : \Theta, x \asc \gen{\Psi}{.\tau_s}
+    \lei  \Theta, x \asc \theta_0\gen{\Xi_0}{.\upsilon}$$
+so by stability of type assignment under the $\lei$ relation,
+$$\Theta, x \asc \theta_0\gen{\Xi_0}{.\upsilon} \entails w : \tau.$$
+
+% since if $\Theta, x \asc \sigma \entails x \hasc .\tau_x$ then
+% $\Theta, x \asc \theta_0\gen{\Xi_0}{.\upsilon} \entails x \hasc .\tau_x$.
+% \TODO{Prove this as a lemma.}
+
+
+
+
+
+% \begin{enumerate}[(a)]
+% \item $\Jtype{\Gamma_1, x \asc \gen{\Xi_1}{.\upsilon};}{w}{\chi}
+% {\Gamma_2; x \asc \gen{\Xi_1}{.\upsilon}; \Xi_2}$
+% \item $\theta_2 : \Gamma_2; x \asc \gen{\Xi_1}{.\upsilon};
+%   \lei \Delta, x \asc \gen{\Xi_1}{.\upsilon}; \Psi$
+% \item $\Gamma_2; x \asc \gen{\Xi_1}{.\upsilon};
+%   \entails w \hasscheme \gen{\Xi_2}{.\chi}$ principal
+% \end{enumerate}
+
+
+
+
+% \begin{enumerate}[(a)]
+% \item $\Jtype{\Gamma_0;}{\letIn{x}{s}{w}}{\chi}{\Gamma_2; \Xi_2}$
+% \item $\theta_2 : \Gamma_2; \lei \Delta;$ \TODO{Why?}
+% \item $\Gamma_2; \entails \letIn{x}{s}{w} \hasscheme \gen{\Xi_2}{.\chi}$
+% principal by
+% lemma \ref{lem:letSchemePrincipal}.
+% \end{enumerate}
+
+
+
+
+% \begin{enumerate}[(a)]
+% \item $\Jtype{\Gamma_0; \hole{\alpha}, x \asc .\alpha;}{w}{\upsilon}
+%              {\Gamma_1; \Phi, x \asc .\alpha; \Xi}$
+% \item $\theta_1 : \Gamma_1; \Phi, x \asc .\alpha; \lei \Delta, x \asc .\tau_0;$
+% \item $\Gamma_1; \Phi, x \asc .\alpha;
+%   \entails w \hasscheme \gen{\Xi}{\upsilon}$
+%          principal.
+% \end{enumerate}
+
+
+
+% \begin{enumerate}[(a)]
+% \item $\Jtype{\Gamma_0;}{\lambda x . w}{\alpha \arrow \upsilon}
+%              {\Gamma_1; \Phi, \Xi}$
+% \item $\theta_1 : \Gamma_1; \lei \Delta$
+% \item $\Gamma_1; \entails \lambda x . w \hasscheme \gen{\Phi, \Xi}{\upsilon}$
+%           principal. \TODO{Why?}
+% \end{enumerate}
+
+
+
+% \begin{enumerate}[(a)]
+% \item $\Jtype{\Gamma_0;}{f}{\upsilon}{\Gamma; \Xi}$
+% \item $\theta : \Gamma; \lei \Delta$ 
+% \item $\Gamma; \entails f \hasscheme \gen{\Xi}{\upsilon}$ principal.
+% \end{enumerate}
+
+
+% \begin{enumerate}[(a)]
+% \item $\Jtype{\Gamma;}{a}{\upsilon_0}{\Gamma_1; \Xi_1}$
+% \item $\theta' : \Gamma_1; \lei \Delta$ 
+% \item $\Gamma_1; \entails a \hasscheme \gen{\Xi_1}{\upsilon_0}$ principal.
+% \end{enumerate}
+
+
+% \begin{enumerate}[(a)]
+% \item $\Jtype{\Gamma_0}{f a}{\beta}{\Gamma_2}$
+% \item $\theta_1 : \Gamma_2; \lei \Delta$
+% \item $\Gamma_2; \entails f a \hasscheme \gen{???}{\beta}$ principal.
+% \end{enumerate}
