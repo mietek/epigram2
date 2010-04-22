@@ -360,3 +360,136 @@ The |popEntry| function removes and returns the topmost entry from the context.
 > popEntry = do  _Gamma :< e <- getContext
 >                putContext _Gamma
 >                return e
+
+
+
+
+%if False
+
+Suppose we have a set $\T_K(\Delta)$ for each $K \in \K$ and context $\Delta$.
+A \define{$K$-substitution from $\Gamma$ to $\Delta$} is map from
+$\V_K(\Gamma)$ to $\T_K(\Delta)$.
+Suppose further that substitutions can be applied to statements.
+We write $\delta : \Gamma \lei \Delta$ and say
+\define{$\Delta$ is more informative than $\Gamma$} if,
+for each $K \in \K$, there is a 
+$K$-substitution $\delta_K$ from $\Gamma$ to $\Delta$ such that
+if $v D \in \Gamma$ and $S \in \sem{v D}$ then
+$\Delta \entails \delta S$.
+(We write $\delta S$ for the simultaneous application of every $\delta_K$ to
+$S$.)
+\TODO{Can we simplify this without making it too concrete?}
+
+
+If $\delta : \Gamma \lei \Delta$ and $\theta : \Gamma \lei \Delta$, then we
+write $\delta \eqsubst \theta$ if, for every statement $S$,
+$\Delta \entails \delta S  \Leftrightarrow  \Delta \entails \theta S$.
+It is easy to see that $\eqsubst$ is an equivalence relation that is preserved
+under composition.
+\TODO{What other properties of $\eqsubst$ do we need?}
+
+% For each $K \in \K$ and context $\Delta$, suppose
+% $\equiv_K : \T_K(\Delta) \rightarrow \T_K(\Delta) \rightarrow \Ss$.
+% If $\delta : \Gamma \lei \Delta$ and $\theta : \Gamma \lei \Delta$, then we
+% write $\delta \eqsubst \theta$ if, for every $K \in \K$ and
+% $v \in \V_K(\Gamma)$,
+% $\Delta \entails \delta v \equiv_K \theta v$.
+% It is easy to see that $\eqsubst$ is an equivalence relation that is preserved
+% under composition.
+
+%endif
+
+
+
+% For our running example, the sort $\TY$ of type variables, substitution is
+% defined as one would expect.
+% Let $\types{\Delta}$ be the set of types $\tau$ such that
+% $\Delta \entails \tau \type$. 
+% A $\TY$-substitution then maps type variables to types, so it can be applied
+% to types and statements in the usual way.
+
+
+
+
+
+
+
+
+
+%if False
+
+We define the statement $x \hasc \sigma$ by the rules in
+Figure~\ref{fig:termVarSchemeRules}, and let
+$\sem{x \asc \sigma}_\TM = \{ x \hasc \sigma \}$.
+Thus a term variable has a scheme $\sigma'$ if it is given scheme $\sigma$ in
+the context and $\sigma$ specialises to $\sigma'$.
+We observe the sanity condition
+$\Gamma \entails x \hasc \sigma  \Rightarrow  \Gamma \entails \sigma \scheme$.
+
+\begin{figure}[ht]
+\boxrule{\Gamma \entails x \hasc \sigma}
+$$
+\Rule{\upsilon \type   ~\wedge~   x \hasc \forall \alpha \sigma}
+     {x \hasc \subst{\upsilon}{\alpha}{\sigma}}
+\qquad
+\Rule{x \hasc \letS{\alpha}{\upsilon}{\sigma}}
+     {x \hasc \subst{\upsilon}{\alpha}{\sigma}}
+$$
+$$
+\Rule{x \hasc .\tau  ~\wedge~   \tau \equiv \upsilon}
+     {x \hasc .\upsilon}
+$$
+\caption{Rules for scheme assignment to term variables}
+\label{fig:termVarSchemeRules}
+\end{figure}
+
+It may appear that this definition of scheme assignment is overly restrictive,
+because it offers no way to permute quantifiers or specialise inner variables
+without specialising outer ones first. However, this will not be a problem for
+type inference, because we always work with fully specialised schemes.
+Indeed, the changes to type schemes that can occur on information increase are
+deliberately limited, to ensure terms have principal types.
+\TODO{Characterise and prove result needed for let completeness.}
+
+% We are not going to substitute for term variables, so we let $\T_\TM = \V_\TM$
+% and assume that $\TM$-substitutions are always the identity map.
+% \TODO{Comment on what would happen if we did allow term substitutions.}
+
+
+% Now we can give the full definition of context entries that we postponed earlier.
+% As before, |alpha := mt| declares a type variable with name $\alpha$; this is the only
+%%%kind of 
+%    entry used in unification. A scheme assmignment |x ::: sigma| 
+%%%defines 
+%    declares 
+% a term variable $x$ with type scheme $\sigma$. A |LetGoal| marker is used when
+% inferring the type of let bindings, to make it easy to determine which variables
+% can be generalised over.
+% The term variable definitions and |LetGoal| markers will record information about
+% progress through the structure of a term when inferring its type.
+
+% Since the additional context entries are not used in unification, it is
+% straightforward to extend the orthogonality statements: if $e = \letGoal$ or
+% $e = x \asc \sigma$ we have $e \perp S$ for any $S$.
+% We also extend the context validity statement with additional rules, as given in
+% Figure~\ref{fig:additionalContextValidityRules}.
+
+% \begin{figure}[ht]
+% \boxrule{\Gamma \entails \valid}
+% $$
+% \Rule{\Gamma \entails \sigma \scheme}
+%      {\Gamma, x \asc \sigma \entails \valid}
+% \qquad
+% \Rule{\Gamma \entails \valid}
+%      {\Gamma, \letGoal \entails \valid}
+% $$
+% \caption{Additional rules for context validity}
+% \label{fig:additionalContextValidityRules}
+% \end{figure}
+
+% Note that term variable names are not necessarily unique, so the most recent
+% definition of a name will shadow previous occurences. Thus we define
+% $\Gamma \entails x \asc \sigma$ to mean that $x \asc \sigma \in \Gamma$ and
+% moreover that this is the rightmost (i.e.\ most local) occurrence of $x$.
+
+%endif
