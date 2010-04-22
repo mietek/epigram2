@@ -2074,23 +2074,41 @@ $\zeta : \Gamma, \Xi \leiR \Theta$ that agrees with $\theta$ on $\Gamma$ and map
 type variables in $\Xi$ to their definitions in $\Theta$.
 Thus $\theta \eqsubst \zeta \compose \iota : \Gamma \leiR \Theta$.
 
-\TODO{Need a bit more here.}
 
-Minimality for let.
-Suppose $\theta : \Gamma \lei \Theta$ and
-$\Theta \entails \letIn{x}{s}{w} : \tau'$.
-Then $\Theta \entails s \hasscheme \sigma$ for some scheme
-$\sigma = \gen{\Psi}{\tau_s}$, so
+If $t = (\letIn{x}{s}{w})$, then $\Theta \entails s \hasscheme \sigma$ for some
+scheme $\sigma = \gen{\Psi}{\tau_s}$, so
 $\Theta \fatsemi \Psi \entails s : \tau_s$.
-But $\theta : \Gamma \fatsemi \lei \Theta \fatsemi \Psi$, so
-by induction there is some
-$\zeta : \Delta_0 \fatsemi \Xi_0 \lei \Theta \fatsemi \Psi$
-such that
-$\theta \eqsubst \zeta \compose \iota$.
+But $\theta : \Gamma \fatsemi \leiR \Theta \fatsemi \Psi$, so by induction there
+is some $\zeta_0 : \Delta_0 \fatsemi \Xi_0 \leiR \Theta \fatsemi \Psi$ such that
+$\theta \eqsubst \zeta_0 \compose \iota$ and
+$\Theta \fatsemi \Psi \entails \zeta_0\upsilon \equiv \tau_s$.
 
-Now $\zeta ||_{\Delta_0} : \Delta_0 \lei \Theta$, so
-$$\zeta ||_{\Delta_0} : \Delta_0, x \asc \gen{\Xi_0}{.\upsilon}
-    \lei \Theta, x \asc \zeta\gen{\Xi_0}{.\upsilon}.$$
+Now $\zeta_0 ||_{\Delta_0} : \Delta_0 \leiR \Theta$, so
+$$\zeta_0 ||_{\Delta_0} : \Delta_0, x \asc \gen{\Xi_0}{.\upsilon}
+    \leiR \Theta, x \asc \zeta_0\gen{\Xi_0}{.\upsilon}.$$
+and (note the $\lei$ relation since we are generalising the type scheme)
+$$\iota : \Theta, x \asc \gen{\Psi}{.\tau_s}
+    \lei  \Theta, x \asc \zeta_0\gen{\Xi_0}{.\upsilon}$$
+so by stability of type assignment under the $\lei$ relation,
+$$\Theta, x \asc \zeta_0\gen{\Xi_0}{.\upsilon} \entails w : \tau.$$
+
+Hence, by induction, there is some
+$$\zeta_1 : \Delta_1, x \asc \gen{\Xi_0}{.\upsilon}, \Xi_1
+    \leiR \Theta, x \asc \zeta_0\gen{\Xi_0}{.\upsilon}$$
+such that
+$\zeta_0 ||_{\Delta_0} \equiv \zeta_1 \compose \iota$
+%   : \Delta_0, x \asc \gen{\Xi_0}{.\upsilon}$
+%          \leiR \Theta, x \asc \zeta_0\gen{\Xi_0}{.\upsilon}.
+and
+$\Theta, x \asc \zeta_0\gen{\Xi_0}{.\upsilon} \entails \zeta_1\chi \equiv \tau$.
+
+But now
+$\zeta_1 : \Delta_1, \Xi_1 \leiR \Theta$,
+$\Theta \entails \zeta_1\chi \equiv \tau$
+and $\theta \equiv \zeta_1 \compose \iota$.
+
+
+\TODO{Need a bit more here.}
 \end{proof}
 
 
