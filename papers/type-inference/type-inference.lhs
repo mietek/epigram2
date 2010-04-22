@@ -607,8 +607,8 @@ Substitutions apply to types and statements in the obvious way.
 We write $\delta : \Gamma \lei \Delta$ and say
 \define{$\Delta$ is more informative than $\Gamma$} if $\delta$ is a
 substitution from $\Gamma$ to $\Delta$ such that,
-for every $v D \in \Gamma$ and $S \in \sem{v D}$, we have that
-$\Delta \entails \delta S$.
+for every $v D \in \Gamma$, we have that
+$\Delta \entails \delta \sem{v D}$.
 
 We write $\delta \eqsubst \theta : \Gamma \lei \Delta$ if
 $\delta : \Gamma \lei \Delta$, $\theta : \Gamma \lei \Delta$
@@ -703,19 +703,20 @@ and $\tau \equiv \upsilon$ are stable.
 
 
 \begin{lemma}\label{lei:preorder}
-If every statement $S \in \sem{v D}$ is stable for every declaration $v D$, then
+If $\sem{v D}$ is stable for every declaration $v D$, then
 the $\lei$ relation is a preorder, with reflexivity demonstrated by
 $\iota : \Gamma \lei \Gamma : v \mapsto v$, and transitivity by
-$$\gamma_1 : \Gamma_0 \lei \Gamma_1  ~\wedge~  \gamma_2 : \Gamma_1 \lei \Gamma_2
+$$\gamma_1 : \Gamma_0 \lei \Gamma_1  ~~\text{and}~~  \gamma_2 : \Gamma_1 \lei \Gamma_2
   \quad \Rightarrow \quad  \gamma_2 \compose \gamma_1 : \Gamma_0 \lei \Gamma_2.$$
 \end{lemma}
 
 \begin{proof}
 Reflexivity follows immediately from the \textsc{Lookup} rule.
-For transitivity, suppose $v D \in \Gamma_0$ and $S \in \sem{v D}$.
-Then $\Gamma_1 \entails \gamma_1 S$ since $\gamma_1 : \Gamma_0 \lei \Gamma_1$.
-Now by stability applied to $\gamma_1 S$ using $\gamma_2$, we have
-$\Gamma_2 \entails \gamma_2\gamma_1 S$ as required.
+For transitivity, suppose $v D \in \Gamma_0$,
+then $\Gamma_1 \entails \gamma_1 \sem{v D}$ since
+$\gamma_1 : \Gamma_0 \lei \Gamma_1$.
+Now by stability applied to $\gamma_1 \sem{v D}$ using $\gamma_2$, we have
+$\Gamma_2 \entails \gamma_2\gamma_1 \sem{v D}$ as required.
 \end{proof}
 
 
