@@ -115,9 +115,11 @@
 
 \newcommand{\JminR}[3]{\ensuremath{#1 \LEIR #3 \vdash #2}}
 
-\newcommand{\Prob}[3]{\ensuremath{#2 \,\leadsto_{#1}\, #3}}
-\newcommand{\Pinf}[2]{\Prob{I}{#1}{#2}}
-\newcommand{\Puni}[2]{\Prob{U}{#1 \equiv #2}{}}
+\newcommand{\InParam}[1]{(#1)}
+\newcommand{\OutParam}[1]{\langle #1 \rangle}
+\newcommand{\Prob}[3]{#1 \InParam{#2} \OutParam{#3}}
+\newcommand{\Pinf}[2]{#1 : \OutParam{#2}}
+\newcommand{\Puni}[2]{#1 \equiv #2}
 \newcommand{\Pspec}[2]{\Prob{S}{#1}{#2}}
 
 \newcommand{\name}[1]{\ensuremath{\mathrm{\textsc{#1}} \;}}
@@ -153,9 +155,9 @@
 
 \newcommand{\In}[1]{\ensuremath{\mathit{In}_{#1}}}
 \newcommand{\Out}[1]{\ensuremath{\mathit{Out}_{#1}}}
-\newcommand{\Pre}[1]{\ensuremath{\mathit{Pre}_{#1}}}
-\newcommand{\Post}[1]{\ensuremath{\mathit{Post}_{#1}}}
-\newcommand{\R}[1]{\ensuremath{\mathit{R}_{#1}}}
+\newcommand{\Pre}[2]{\ensuremath{\mathit{Pre}_{#1} \InParam{#2}}}
+\newcommand{\Post}[3]{#1 \InParam{#2} \OutParam{#3}}
+\newcommand{\R}[3]{\ensuremath{\mathit{R}_{#1} \OutParam{#2} \OutParam{#3}}}
 
 \usepackage{amsthm}
 \usepackage{amsmath}
@@ -811,46 +813,44 @@ Make the categorical structure clearer.}
 Formally, a \define{problem} $P$ consists of
 \begin{itemize}
 \item sets \In{P}\ and \Out{P}\ of input and output parameters,
-\item a precondition map $\Pre{P} : \In{P} \rightarrow \Ss$,
-\item a postcondition map $\Post{P} : \In{P} \rightarrow \Out{P} \rightarrow \Ss$ and
-\item a relation map $\R{P} : \Out{P} \rightarrow \Out{P} \rightarrow \Ss$,
+\item a precondition map $\Pre{P}{\cdot} : \In{P} \rightarrow \Ss$,
+\item a postcondition map $\Post{P}{\cdot}{\cdot} : \In{P} \rightarrow \Out{P} \rightarrow \Ss$ and
+\item a relation map $\R{P}{\cdot}{\cdot} : \Out{P} \rightarrow \Out{P} \rightarrow \Ss$,
 \end{itemize}
 such that \In{P}\ and \Out{P}\ are closed under substitution and the maps
-respect substitution, for example, $\Pre{P}(\theta r) = \theta \Pre{P}(r)$.
+respect substitution, for example, $\Pre{P}{\theta r} = \theta \Pre{P}{r}$.
 Moreover, for any context $\Gamma$, $a \in \In{P}$ and $b, c, d \in \Out{P}$
 such that
-\[\Gamma \entails \Pre{P} (a) \wedge \Post{P} (a)(b) \wedge \Post{P} (a)(c)
-         \wedge \Post{P} (a)(d), \]
+\[\Gamma \entails \Pre{P}{a} \wedge \Post{P}{a}{b} \wedge \Post{P}{a}{c}
+         \wedge \Post{P}{a}{d}, \]
 we must have 
-\(\Gamma \entails \R{P} (b)(b)\) and
-\[\Gamma \entails \R{P} (b)(c) \wedge \R{P} (c)(d)
-    \Rightarrow \Gamma \entails \R{P} (b)(d). \]
+\(\Gamma \entails \R{P}{b}{b}\) and
+\[\Gamma \entails \R{P}{b}{c} \wedge \R{P}{c}{d}
+    \Rightarrow \Gamma \entails \R{P}{b}{d}. \]
+
+We write angle brackets $\OutParam{\cdot}$ around the output parameters of a
+problem.
 
 The unification problem $U$ is given by
 \begin{align*}
 \In{U} &= \Type \times \Type  \\
 \Out{U} &= 1  \\
-\Pre{U}(\tau, \upsilon) &= \tau \type \wedge \upsilon \type  \\
-\Post{U}(\tau, \upsilon) ~\_ &= \tau \equiv \upsilon  \\
-\R{U} ~\_ ~\_ &= \valid
+\Pre{U}{\tau, \upsilon} &= \tau \type \wedge \upsilon \type  \\
+\Post{U}{\tau, \upsilon}{\_} &= \tau \equiv \upsilon  \\
+\R{U}{\_}{\_} &= \valid
 \end{align*}
 
 A \define{$P$-instance for a context $\Gamma$} is $a \in \In{P}$ such that
-$\Gamma \entails \Pre{P}(a)$. The problem instance $a$ has \define{solution}
+$\Gamma \entails \Pre{P}{a}$. The problem instance $a$ has \define{solution}
 $(b, \delta, \Delta)$ if $b \in \Out{P}$ and $\delta : \Gamma \lei \Delta$
-such that $\Delta \entails \Post{P} (\delta a, b)$. (Observe that
-$\Delta \entails \Pre{P} (\delta a)$ by stability.)
+such that $\Delta \entails \Post{P}{\delta a}{b}$. (Observe that
+$\Delta \entails \Pre{P}{\delta a}$ by stability.)
 
 The solution $(b, \delta, \Delta)$ is \define{minimal} if for any solution
 $(c, \theta, \Theta)$ there exists $\zeta : \Delta \lei \Theta$ such that
-$\theta \eqsubst \zeta \compose \delta$ and $\Theta \entails \R{P} (\zeta b, c)$.
-
-\TODO{One possible notation for problems: $\Prob{P}{}{}$ as an infix operator
-with the input parameters before it and the output parameters after it.
-Any other suggestions?}
-
-We write $\Prob{P}{a}{b}$ for $\Post{P}(a)(b)$ and
-$\delta : \Jmin{\Gamma}{\Prob{P}{a}{b}}{\Delta}$ to mean that
+$\theta \eqsubst \zeta \compose \delta$ and $\Theta \entails \R{P}{\zeta b}{c}$.
+ 
+We write $\delta : \Jmin{\Gamma}{\Prob{P}{a}{b}}{\Delta}$ to mean that
 $(b, \delta, \Delta)$ is a minimal solution of the $P$-instance $a$.
 
 \TODO{Define what it means for a rule system to be algorithmic.}
@@ -862,9 +862,9 @@ If $P$ and $Q$ are problems, then $P \wedge Q$ is a problem with
 \begin{align*}
 \In{P \wedge Q}                 &= \In{P} \times \In{Q}  \\
 \Out{P \wedge Q}                &= \Out{P} \times \Out{Q}  \\
-\Pre{P \wedge Q} (a, b)         &= \Pre{P} (a) \wedge \Pre{Q} b  \\
-\Post{P \wedge Q} (a, b) (c, d) &= \Post{P}(a)(c) \wedge \Post{Q}(b)(d)  \\
-\R{P \wedge Q}(a, b)(c, d)      &= \R{P}(a)(c) \wedge \R{Q}(b)(d)  \\
+\Pre{P \wedge Q}{a, b}          &= \Pre{P}{a} \wedge \Pre{Q}{b}  \\
+\Post{P \wedge Q}{a, b}{c, d}   &= \Post{P}{a}{c} \wedge \Post{Q}{b}{d}  \\
+\R{P \wedge Q}{a, b}{c, d}      &= \R{P}{a}{c} \wedge \R{Q}{b}{d}  \\
 \end{align*}
 
 The point of all this machinery is to be able to state and prove the following 
@@ -877,7 +877,7 @@ The following inference rule is admissible:
 $$\Rule{\gamma_1 : \Jmin{\Gamma_0}{\Prob{P}{a}{r}}{\Gamma_1}
        \quad  \gamma_2 : \Jmin{\Gamma_1}{\Prob{Q}{b}{s}}{\Gamma_2}}
        {\gamma_2 \compose \gamma_1 :
-         \Jmin{\Gamma_0}{\Prob{P \wedge Q}{(a, b)}{(\gamma_2 r, s)}}{\Gamma_2}}$$
+         \Jmin{\Gamma_0}{\Prob{P \wedge Q}{a, b}{\gamma_2 r, s}}{\Gamma_2}}.$$
 \end{lemma}
 
 \TODO{Make the proof prettier, perhaps using a diagram.}
@@ -886,7 +886,7 @@ $$\Rule{\gamma_1 : \Jmin{\Gamma_0}{\Prob{P}{a}{r}}{\Gamma_1}
 We have that $\gamma_2 \compose \gamma_1 : \Gamma_0 \lei \Gamma_2$ by 
 Lemma~\ref{lei:preorder}. 
 
-To show $\Gamma_2 \entails \Prob{P \wedge Q}{(a, b)}{(\gamma_2 r, s)}$, it
+To show $\Gamma_2 \entails \Prob{P \wedge Q}{a, b}{\gamma_2 r, s}$, it
 suffices to show $\Gamma_2 \entails \Prob{P}{a}{\gamma_2 r}$ and
 $\Gamma_2 \entails \Prob{Q}{b}{s}$. The latter holds by assumption. For the
 former, note that $\Gamma_1 \entails \Prob{P}{a}{r}$ and hence
@@ -894,19 +894,19 @@ $\Gamma_2 \entails \gamma_2 (\Prob{P}{a}{r})$ by stability of $\Prob{P}{a}{r}$.
 But $\gamma_2 (\Prob{P}{a}{r}) = \Prob{P}{a}{\gamma_2 r}$ by definition, so we are done.
 
 Finally, suppose there is some $\theta : \Gamma_0 \lei \Theta$ such that
-$\Theta \entails \Prob{P \wedge Q}{(a, b)}{(r', s')}$, so
+$\Theta \entails \Prob{P \wedge Q}{a, b}{r', s'}$, so
 $\Theta \entails \Prob{P}{a}{r'}$ and
 $\Theta \entails \Prob{Q}{b}{s'}$.
 Since $\gamma_1 : \Jmin{\Gamma_0}{\Prob{P}{a}{r}}{\Gamma_1}$, there exists
 $\zeta_1 : \Gamma_1 \lei \Theta$ such that
 $\theta \eqsubst \zeta_1 \compose \gamma_1$
-and $\Theta \entails \R{P}(\zeta_1 r)(r')$.
+and $\Theta \entails \R{P}{\zeta_1 r}{r'}$.
 But then $\gamma_2 : \Jmin{\Gamma_1}{\Prob{Q}{b}{s}}{\Gamma_2}$, so there exists
 $\zeta_2 : \Gamma_2 \lei \Theta$ such that
 $\zeta_1 \eqsubst \zeta_2 \compose \gamma_2$
-and $\Theta \entails \R{Q}(\zeta_2 s)(s')$.
+and $\Theta \entails \R{Q}{\zeta_2 s}{s'}$.
 Hence $\theta \eqsubst \zeta_2 \compose (\gamma_2 \compose \gamma_1)$
-and $\Theta \entails \R{P \wedge Q}(\zeta_2 (\gamma_2 r), \zeta_2 s)(r', s')$.
+and $\Theta \entails \R{P \wedge Q}{\zeta_2 (\gamma_2 r), \zeta_2 s}{r', s'}$.
 \end{proof}
 
 This sequential approach to problem solving is not the only decomposition
@@ -1610,158 +1610,12 @@ to term variables as $\Gamma$ does (modulo substitution).
 As with unification, we wish to translate these declarative rules into an
 algorithm for type inference. We define the type inference problem $I$ by
 \begin{align*}
-\In{I} &= \Term  \\
-\Out{I} &= \Type  \\
-\Pre{I}(t) &= \valid  \\
-\Post{I}(t)(\tau) &= \tau \type \wedge t : \tau  \\
-\R{I}(\tau)(\upsilon) &= \tau \equiv \upsilon
+\In{I}                &= \Term  \\
+\Out{I}               &= \Type  \\
+\Pre{I}{t}            &= \valid  \\
+\Post{I}{t}{\tau}     &= \OutParam{\tau} \type \wedge t : \OutParam{\tau}  \\
+\R{I}{\tau}{\upsilon} &= \OutParam{\tau} \equiv \OutParam{\upsilon}
 \end{align*}
-
-
-
-%if False
-
-\section{The specialisation problem}
-
-\TODO{How much of this section can we get rid of?}
-
-Let $S$ be the problem given by
-\begin{align*}
-\In{S}                   &= \V_\TM  \\
-\Out{S}                  &= \Type  \\
-\Pre{S} (x)         &= \valid  \\
-\Post{S} (x, \tau)  &= \tau \type \wedge x : \tau  \\
-\R{S} (\tau, \upsilon)   &= \tau \equiv \upsilon
-\end{align*}
-
-\subsection{Constructing a specialisation algorithm}
-
-% Consider the variable rule for type assignment, which is
-% $$\Rule{x \hasc \sigma   \quad   \sigma \spec \tau}
-%        {\Pinf{x}{\tau}}.$$
-% We need an algorithm that, given a term variable as input, finds a type that
-% can be assigned to it (by specialising its scheme).
-
-
-The assertion $\Jspec{\Gamma}{\sigma}{\tau}{\Gamma, \Xi}$ means
-that, starting with the context $\Gamma$, the scheme $\sigma$ specialises
-to the type $\tau$ when the context is extended with some type variable
-declarations $\Xi$. It is defined in Figure~\ref{fig:specialiseAlgorithm}.
-We define $\Jhast{\Gamma}{x}{\sigma}{\tau}{\Gamma, \Xi}$ to mean
-$\Gamma \entails x \hasc \sigma$ and
-$\Jspec{\Gamma}{\sigma}{\tau}{\Gamma, \Xi}$.
-
-
-\begin{figure}[ht]
-\boxrule{\Jspec{\Gamma}{\sigma}{\tau}{\Gamma, \Xi}}
-
-$$
-\name{T}
-\Rule{\Gamma \entails \tau \type}
-     {\Jspec{\Gamma}{.\tau}{\tau}{\Gamma}}
-$$
-
-$$
-\name{All}
-\Rule{\Jspec{\Gamma, \hole{\beta}}{\subst{\beta}{\alpha}{\sigma}}{\tau}
-            {\Gamma, \hole{\beta}, \Xi}}
-     {\Jspec{\Gamma}{\forall\alpha~\sigma}{\tau}{\Gamma, \hole{\beta}, \Xi}}
-\side{\beta \notin \tyvars{\Gamma}}
-$$
-
-$$
-\name{LetS}
-\Rule{\Jspec{\Gamma, \beta \defn \upsilon}{\subst{\beta}{\alpha}{\sigma}}{\tau}
-            {\Gamma, \beta \defn \upsilon, \Xi}}
-     {\Jspec{\Gamma}{\letS{\alpha}{\upsilon}{\sigma}}{\tau}
-            {\Gamma, \beta \defn \upsilon, \Xi}}
-\side{\beta \notin \tyvars{\Gamma}}
-$$
-
-\caption{Algorithmic rules for specialisation}
-\label{fig:specialiseAlgorithm}
-\end{figure}
-
-
-
-\begin{lemma}[Soundness and minimality of specialisation]
-\label{lem:specialiseSound}
-If $\Jspec{\Gamma}{\sigma}{\tau}{\Gamma, \Xi}$, then
-$\iota : \Jmin{\Gamma}{\Pspec{\sigma}{\tau}}{\Gamma, \Xi}$.
-\end{lemma}
-
-\begin{proof}
-Clearly $\iota : \Gamma \lei \Gamma, \Xi$.
-By structural induction on $\sigma$,
-$$\Gamma, \Xi \entails \tau \type \wedge \sigma \spec \tau.$$
-
-\TODO{This needs updating.}
-For minimality, suppose $\sigma = \gen{\Psi}{\chi}$,
-$\theta : \Gamma \lei \Theta$
-and $\Theta \entails \Pspec{\sigma}{\upsilon}$.
-% Then there is a substitution $\psi : \Theta, \Psi \lei \Theta$
-
-% For minimality, suppose
-% $\theta : \Gamma \lei \Theta \entails \Pspec{\sigma}{\upsilon}$.
-% By stability, $\Theta \entails x \hasc \sigma$.
-% Examining the rules in Figure~\ref{fig:termVarSchemeRules}, the proof of
-% $\Theta \entails x \hasc .\tau$ must specialise $\sigma$ with types
-% $\Psi$ for its generic variables. Let $\theta' = \subst{\Psi}{\Xi}{\theta}$,
-% then $\theta' : \Gamma, \Xi \lei \Theta$ and $\theta = \theta' \compose \iota$.
-\end{proof}
-
-
-\begin{lemma}[Completeness of specialisation]
-\label{lem:specialiseComplete}
-If $\Gamma \entails \sigma \scheme$ then
-$\Jspec{\Gamma}{\sigma}{\tau}{\Gamma, \Xi}$
-for some list of type variables $\Xi$.
-
-% $$\forall \upsilon \forall \phi : \Gamma \lei \Phi . (
-%     \Phi \entails \phi\sigma \succ \upsilon
-%        \Leftrightarrow  \Phi \entails \phi\gen{\Xi}{\tau} \succ \upsilon).$$
-
-% If $\theta_0 : \Gamma_0 \lei \Delta$, $\Gamma_0 \entails \sigma \scheme$ and
-% $\Delta \entails \theta_0\sigma \succ \tau$,
-% then $\Gamma_0 \extend \sigma \succ \upsilon \yields \Gamma_1$ for some type
-% $\upsilon$ and context $\Gamma_1$ with $\theta_1 : \Gamma_1 \lei \Delta$,
-% \Delta \entails \tau \equiv \theta_1\upsilon$ and
-% $\forall \alpha \in \tyvars{\Gamma_0} .
-%    \Delta \entails \theta_0 \alpha \equiv \theta_1 \alpha$.
-\end{lemma}
-
-\begin{proof}
-By structural induction on $\sigma$.
-\end{proof}
-
-
-\subsection{Implementing specialisation}
-
-If a $\forall$ quantifier is outermost, it is removed and an unbound fresh type
-variable is substituted in its place (applying the \textsc{All} rule).
-
-If a let binding is outermost, it is removed and added to the context with a
-fresh variable name (applying the \textsc{LetS} rule).
-
-This continues until a scheme with no quantifiers is reached, which can simply be
-converted into a type (applying the \textsc{T} rule).
-
-
-The |schemeUnbind| function converts the body $\sigma$ of the scheme
-$\forall\alpha.\sigma$ or $\letS{\alpha}{\tau}{\sigma}$ into
-$\subst{\beta}{\alpha}{\sigma}$. Since we use different syntactic
-representations for free and bound variables, this is easy to implement.
-
-> schemeUnbind
->   :: TyName -> Schm (Index TyName) -> Scheme
-> schemeUnbind beta = fmap fromS
->   where
->     fromS :: Index TyName -> TyName
->     fromS Z           = beta
->     fromS (S alpha')  = alpha'
-
-
-%endif
 
 
 
@@ -1924,7 +1778,7 @@ $\leiR$ relation.
 \section{A type inference algorithm}
 
 
-\subsection{Transforming the rule system}
+\subsection{Transforming the rule system for type assignment}
 
 To transform a rule into an algorithmic form, we proceed clockwise starting from
 the conclusion. For each hypothesis, we must ensure that the problem is fully
@@ -1934,7 +1788,7 @@ variables in output positions, fixing things up with appeals to unification.
 
 Consider the rule for application, written to highlight problem inputs and
 outputs as
-$$\Rule{\Pinf{f}{(\upsilon \arrow \tau)}  \quad  \Pinf{a}{\upsilon}}
+$$\Rule{\Pinf{f}{\upsilon \arrow \tau}  \quad  \Pinf{a}{\upsilon}}
        {\Pinf{f a}{\tau}}.$$
 Since we cannot pattern match on the output of the first subproblem, we use a
 metavariable instead and add a unification constraint, giving
