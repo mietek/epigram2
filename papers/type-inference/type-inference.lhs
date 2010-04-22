@@ -110,6 +110,7 @@
 \newcommand{\Junify}[4]{\Judge{#1}{\Puni{#2}{#3}}{#4}}
 \newcommand{\JunifyR}[4]{\JudgeR{#1}{\Puni{#2}{#3}}{#4}}
 \newcommand{\Jinstantiate}[5]{\Judge{#1 ~||~ #4}{\Puni{#2}{#3}}{#5}}
+\newcommand{\JinstantiateMin}[5]{\Jmin{#1 ~||~ #4}{\Puni{#2}{#3}}{#5}}
 \newcommand{\Jspec}[4]{\Judge{#1}{#2 \succ #3}{#4}}
 \newcommand{\Jtype}[4]{\JudgeR{#1}{\Pinf{#2}{#3}}{#4}}
 \newcommand{\Jhast}[5]{\Judge{#1}{#2 ~\hat:_{#3}~ #4}{#5}}
@@ -1139,28 +1140,29 @@ permit the exception to the occur check when only variables are involved.
 
 \subsection{Soundness and completeness}
 
-\begin{lemma}[Soundness and generality of unification]
+\begin{lemma}[Soundness of unification]
 \label{lem:unifySound}
 \begin{enumerate}[(a)]
-\item First, if $\Junify{\Gamma}{\tau}{\upsilon}{\Delta}$, then
-$\tyvars{\Gamma} = \tyvars{\Delta}$ and we have
-$\iota : \Jmin{\Gamma}{\Puni{\tau}{\upsilon}}{\Delta}$,
-%% $\Gamma_1 \entails \tau \equiv \upsilon$,
-%% $\iota : \Gamma_0 \lei \Gamma_1$
+\item If $\Junify{\Gamma}{\tau}{\upsilon}{\Delta}$, then
+$\tyvars{\Gamma} = \tyvars{\Delta}$,
+% and we have $\iota : \Jmin{\Gamma}{\Puni{\tau}{\upsilon}}{\Delta}$,
+$\Delta \entails \tau \equiv \upsilon$ and
+$\iota : \Gamma \lei \Delta$
 where $\iota$
 % $$\iota: \tyvars{\Gamma} \rightarrow \types{\Delta} : \alpha \mapsto \alpha$$
 is the inclusion substitution.
 
-\item Moreover, if
+\item If
 $\Jinstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$, then
-% $\Gamma_1 \entails \alpha \equiv \tau$,
-$\tyvars{\Gamma, \Xi} = \tyvars{\Delta}$
-and $\iota : \Jmin{\Gamma, \Xi}{\Puni{\alpha}{\tau}}{\Delta}$.
+$\tyvars{\Gamma, \Xi} = \tyvars{\Delta}$,
+$\Delta \entails \alpha \equiv \tau$ and
+$\iota : \Gamma, \Xi \lei \Delta$.
+% $\iota : \Jmin{\Gamma, \Xi}{\Puni{\alpha}{\tau}}{\Delta}$.
 \end{enumerate}
 \end{lemma}
 
 \begin{proof}
-By induction on the structure of derivations. \TODO{Need a bit more here.}
+By induction on the structure of derivations.
 \end{proof}
 
 
@@ -1188,69 +1190,76 @@ the \textsc{Lookup} rule does not apply.
 \end{proof}
 
 
-\begin{lemma}[Completeness of unification]
+\begin{lemma}[Completeness and generality of unification]
 \label{lem:unifyComplete}
 \begin{enumerate}[(a)]
 \item If $\theta : \Gamma \lei \Theta$,
-$\Gamma \entails \upsilon \type$, $\Gamma \entails \tau \type$ and
+$\Gamma \entails \upsilon \type \wedge \tau \type$ and
 $\Theta \entails \theta\upsilon \equiv \theta\tau$, then
-$\Junify{\Gamma}{\upsilon}{\tau}{\Delta}$ for some context $\Delta$.
+there is some context $\Delta$ such that
+$\Jmin{\Gamma}{\Puni{\upsilon}{\tau}}{\Delta}$.
+
 % with
 % $\theta : \Delta \lei \Theta$. That is, if a unifier for $\tau$ and $\upsilon$
 % exists, then the algorithm succeeds and delivers a most general unifier.
 
-\item Moreover, if $\theta : \Gamma, \Xi \lei \Theta$,
-$\alpha \in \tyvars{\Gamma}$, $\Gamma, \Xi \entails \tau \type$,
-$\tau$ is not a variable, $\Xi$ contains only type variable declarations,
-$\beta \in \tyvars{\Xi}  \Rightarrow  \beta \in \FTV{\tau, \Xi}$
-and $\Theta \entails \theta\alpha \equiv \theta\tau$,
-then $\Jinstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$ for some context
-$\Delta$.
+\item Moreover, if $\theta : \Gamma, \Xi \lei \Theta$ is such that
+$\Theta \entails \theta\alpha \equiv \theta\tau$ and
+\begin{itemize}
+\item $\alpha \in \tyvars{\Gamma}$,
+\item $\Gamma, \Xi \entails \tau \type$,
+\item $\tau$ is not a variable,
+\item $\Xi$ contains only type variable declarations and
+\item $\beta \in \tyvars{\Xi}  \Rightarrow  \beta \in \FTV{\tau, \Xi}$.
+\end{itemize}
+then there is some context $\Delta$ such that
+$\JinstantiateMin{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$.
 \end{enumerate}
 \end{lemma}
 
 \begin{proof}
+It suffices to show that the algorithm succeeds and produces a solution that is
+below $\Theta$.
 % We examine the structure of $\upsilon$ (or $\alpha$) and $\tau$, and 
 We proceed by induction on the total length of the context, the length of the
 context before the bar, and structurally on types. \TODO{Make this clearer.}
 
-(a) Suppose $\theta : \Gamma \lei \Theta$ and
-$\Theta \entails \theta\upsilon \equiv \theta\tau$.
+\begin{enumerate}[(a)]
+\item 
+\begin{enumerate}[(i)]
+\item If $\tau = \alpha = \upsilon$ are both the same variable, then the
+\textsc{Idle} rule applies, $\Delta = \Gamma$ and the result is trivial.
 
-If $\tau = \alpha = \upsilon$ are both the same variable,  then the \textsc{Idle}
-rule applies, $\Delta = \Gamma$ and the result is trivial.
-
-Now suppose $\upsilon = \alpha$ and $\tau = \beta$ are distinct variables.
+\item Now suppose $\upsilon = \alpha$ and $\tau = \beta$ are distinct variables.
 Let $\Gamma = \Gamma_0, v D$ and examine $v D$:
 \begin{itemize}
-\item If $v D = \hole{\alpha}$ then the
-\textsc{Define} rule applies and $\Delta = \Gamma_0, \alpha \defn \beta$.
-% Now $\theta : \Gamma_0 \lei \Delta$ preserves definitions in $\Gamma_0'$, and
-% $\Delta \entails \theta\alpha \equiv \theta\beta$ by hypothesis, so
-% $\theta : \Gamma_1 \lei \Delta$.
+\item If $v D = \hole{\alpha}$ then the \textsc{Define} rule applies,
+$\Delta = \Gamma_0, \alpha \defn \beta$
+and $\theta : \Delta \lei \Theta$.
 The case $v D = \hole{\beta}$ is similar.
 
 \item If $v D = \alpha \defn \chi$ then
 $\Theta \entails \theta\alpha \equiv \theta\chi$ by definition of $\lei$,
 and $\Theta \entails \theta\alpha \equiv \theta\beta$ by hypothesis,
 so $\Theta \entails \theta\beta \equiv \theta\chi$ by transitivity and symmetry.
-But then $\theta_\alpha : \Gamma_0 \lei \Theta$ and
+But then $\theta_\alpha : \Gamma_0 \lei \Theta$ where $\theta_\alpha$ is $\theta$
+with the type assigned to $\alpha$ removed, and
 $\Theta \entails \theta_\alpha\beta \equiv \theta_\alpha\chi$,
-so by induction,
+since $\beta$ and $\chi$ cannot depend on $\alpha$ by the sanity conditions.
+Now, by induction,
 $\Junify{\Gamma_0}{\beta}{\chi}{\Delta_0}$
 for some $\Delta_0$.
-% with $\theta_\alpha : \Gamma_1' \lei \Delta$.
-Hence the \textsc{Expand} rule applies and
-$\Delta = \Delta_0, \alpha \defn \upsilon$.
-%and $\theta : \Gamma_1 \lei \Delta$.
+with $\theta_\alpha : \Delta_0 \lei \Theta$.
+Hence the \textsc{Expand} rule applies,
+$\Delta = \Delta_0, \alpha \defn \upsilon$
+and $\theta : \Delta \lei \Theta$.
 The case $v D = \beta \defn \upsilon$ is similar.
-\TODO{Define $\theta_\alpha$ and possibly prove the relevant lemma.}
 
 \item Otherwise, $v D \perp \{ \alpha, \beta \}$ and the \textsc{Ignore} rule
-applies by a similar argument.
+applies by a similar argument. \TODO{Give this argument.}
 \end{itemize}
 
-Now suppose $\tau = \tau_0 \arrow \tau_1$ and
+\item Now suppose $\tau = \tau_0 \arrow \tau_1$ and
 $\upsilon = \upsilon_0 \arrow \upsilon_1$.
 Then $\Theta \entails \theta\tau_0 \equiv \theta\upsilon_0$ and
 $\Theta \entails \theta\tau_1 \equiv \theta\upsilon_1$,
@@ -1259,60 +1268,57 @@ $\Delta'$ and $\Delta$ such that
 $\Junify{\Gamma}{\tau_0}{\upsilon_0}{\Delta'}$ and
 $\Junify{\Delta'}{\tau_1}{\upsilon_1}{\Delta}$.
 %, with $\theta : \Gamma \lei \Delta$ and $\theta : \Gamma_1 \lei \Delta$.
-Hence the \textsc{Decompose} rule applies.
+Hence the \textsc{Decompose} rule applies, and
+$\theta : \Delta \lei \Theta$ by the Optimist's lemma.
 
-Finally, suppose wlog that $\upsilon = \alpha$ is a variable and $\tau$ is not a
-variable. By part (b),
+\item Finally, suppose wlog that $\upsilon = \alpha$ is a variable and $\tau$ is
+not a variable. The conditions for part (b) hold, so
 $\Jinstantiate{\Gamma}{\alpha}{\tau}{\emptycontext}{\Delta}$
 and the \textsc{Solve} rule applies.
 
+\end{enumerate}
 
-(b) Suppose $\theta : \Gamma, \Xi \lei \Theta$ and
-$\Theta \entails \theta\alpha \equiv \theta\tau$.
-% where $\Xi$ contains only type variable declarations and $\upsilon$ is not a
-% variable.
-Let $\Gamma = \Gamma_0, v D$.
-\begin{itemize}
+\item  Let $\Gamma = \Gamma_0, v D$.
+\begin{enumerate}[(i)]
 \item If $v D = \hole{\alpha}$ and $\alpha \notin \FTV{\tau, \Xi}$, then the
-\textsc{DefineS} rule applies and $\Delta = \Gamma_0, \Xi, \alpha := \tau$.
-% Now $\theta$ preserves  definitions in $\Gamma_0, \Xi$ and
-% $\Delta \entails \theta\alpha \equiv \theta\upsilon$
-% by hypothesis, so $\theta : \Gamma_1 \lei \Delta$.
+\textsc{DefineS} rule applies, $\Delta = \Gamma_0, \Xi, \alpha := \tau$ and
+$\theta : \Delta \lei \Theta$.
 
 \item If $v D = \alpha \defn \chi$ and $\alpha \notin \FTV{\tau, \Xi}$, then
 $\Theta \entails \theta\alpha \equiv \theta\chi$,
 so $\Theta \entails \theta\chi \equiv \theta\tau$ by symmetry and transitivity. 
-Moreover, $\Gamma_0, \Xi \entails \valid$ and $\Gamma_0, \Xi \entails \tau \type$
+Moreover, $\Gamma_0, \Xi \entails \tau \type$
 since $\alpha \notin \FTV{\tau, \Xi}$, and
 $\theta_\alpha : \Gamma_0, \Xi \lei \Theta$
 so by induction
 $\Junify{\Gamma_0, \Xi}{\chi}{\tau}{\Delta_0}$
-for some $\Delta_0$, and the \textsc{ExpandS} rule applies with
-$\Delta = \Delta_0, \alpha \defn \chi$.
+for some $\Delta_0$
+with $\theta_\alpha : \Delta_0 \lei \Theta$.
+Hence the \textsc{ExpandS} rule applies with
+$\Delta = \Delta_0, \alpha \defn \chi$
+and $\theta : \Delta \lei \Theta$.
 
 \item If $v = \alpha$ and $\alpha \in \FTV{\tau, \Xi}$, then there is some
 non-variable type $\tau'$ such that
 $\Theta \entails \theta\alpha \equiv \theta\tau'$
-and $\alpha \in \FTV{\tau'}$. But this cannot occur, by
-lemma~\ref{lem:occurCheck}.
-
-% \item If $v = \alpha$ and $\alpha \in \FTV{\Xi}$ then $\alpha \in \FTV{\chi}$
-% for some $\chi$ with $\Xi = \Xi_0, \beta \defn \chi, \Xi_1$ and
-% $\beta \in \FTV{\tau, \Xi_1}$.
-% \TODO{Prove this is contradictory.}
+and $\alpha \in \FTV{\tau'}$.
+\TODO{Explain why this follows.}
+But this cannot occur, by lemma~\ref{lem:occurCheck}.
 
 \item If $v = \beta$ for $\alpha \neq \beta$ and
 $\beta \in \FTV{\upsilon, \Xi}$ then
 $\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\beta D, \Xi}{\Delta}$
 is well-posed, so it has a solution by induction and
-the \textsc{DependS} rule applies. \TODO{Reword this.}
+the \textsc{DependS} rule applies. \TODO{Explain this.}
 
 \item Otherwise $v D \perp \FTV{\alpha, \tau, \Xi}$ and
 $\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\Xi}{\Delta_0}$
 is well-posed, so it has a solution by induction and
 the \textsc{IgnoreS} rule applies with $\Delta = \Delta_0, v D$.
+\TODO{Explain this.}
 \qedhere
-\end{itemize}
+\end{enumerate}
+\end{enumerate}
 \end{proof}
 
 

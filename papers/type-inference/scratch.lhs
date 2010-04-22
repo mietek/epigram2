@@ -860,3 +860,11 @@ $$\Theta, x \asc \theta_0\gen{\Xi_0}{.\upsilon} \entails w : \tau.$$
 % \item $\theta_1 : \Gamma_2; \lei \Delta$
 % \item $\Gamma_2; \entails f a \hasscheme \gen{???}{\beta}$ principal.
 % \end{enumerate}
+
+
+
+
+% \item If $v = \alpha$ and $\alpha \in \FTV{\Xi}$ then $\alpha \in \FTV{\chi}$
+% for some $\chi$ with $\Xi = \Xi_0, \beta \defn \chi, \Xi_1$ and
+% $\beta \in \FTV{\tau, \Xi_1}$.
+% \TODO{Prove this is contradictory.}
