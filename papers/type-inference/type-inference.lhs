@@ -2038,8 +2038,8 @@ $$
 
 \begin{lemma}[Soundness and generality of type inference]
 \label{lem:inferSound}
-If $\Jtype{\Gamma}{t}{\tau}{\Delta}$, then
-$\iota : \JminR{\Gamma}{\Pinf{t}{\tau}}{\Delta}$.
+If $\Jtype{\Gamma}{t}{\upsilon}{\Delta}$, then
+$\iota : \JminR{\Gamma}{\Pinf{t}{\upsilon}}{\Delta}$.
 % \begin{enumerate}[(a)]
 % \item $\Gamma_1 \entails t : \tau$;
 % \item $\tyvars{\Gamma_0} \subseteq \tyvars{\Gamma_1}$; and
@@ -2055,7 +2055,25 @@ $\iota : \JminR{\Gamma}{\Pinf{t}{\tau}}{\Delta}$.
 \end{lemma}
 
 \begin{proof}
-By induction on the structure of derivations.
+Suppose $\Jtype{\Gamma}{t}{\upsilon}{\Delta}$.
+We proceed by induction on the structure of derivations.
+It is straightforward to verify that $\iota : \Gamma \leiR \Delta$ and
+$\Delta \entails \upsilon \type \wedge t : \upsilon$.
+For minimality, suppose $\theta : \Gamma \leiR \Theta$ and
+$\Theta \entails \tau \type \wedge t : \tau$.
+
+If $t = x$ is a variable, then $\Delta = \Gamma, \Xi$ and
+$x \asc \gen{\Xi}{\upsilon} \in \Gamma$,
+so $x \asc \theta\gen{\Xi}{\upsilon} \in \Delta$
+by definition of $\leiR$.
+The proof of $\Theta \entails x : \tau$ must consist of applying
+$\Theta \entails x \hasscheme \gen{\theta\Xi}{\theta\upsilon}$
+to some $\Theta$-types, so it determines a map from the unbound type variables of
+$\Xi$ to types over $\Theta$, and hence a substitution
+$\zeta : \Gamma, \Xi \leiR \Theta$ that agrees with $\theta$ on $\Gamma$ and maps
+type variables in $\Xi$ to their definitions in $\Theta$.
+Thus $\theta \eqsubst \zeta \compose \iota : \Gamma \leiR \Theta$.
+
 \TODO{Need a bit more here.}
 
 Minimality for let.
