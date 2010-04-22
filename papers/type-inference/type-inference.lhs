@@ -1890,16 +1890,18 @@ through with the new definition.
 
 We refine the $\leiR$ relation in a corresponding way, and further insist for
 $\Gamma \leiR \Delta$ that $\Gamma$ and $\Delta$ have the same
-\define{shape} (list of $\fatsemi$ separators and term variable names).
-Formally, we require that $\forget{\Gamma} = \forget{\Delta}$, where
-$\forget{\cdot}$ is the forgetful map from contexts to shapes that discards
-type and scheme information:
+\define{shape} (list of $\fatsemi$ separators and term variables).
+Formally, we say that $\delta : \Gamma \leiR \Delta$ if
+$\delta : \Gamma \lei \Delta$ and $\forget{\Gamma} = \delta\forget{\Delta}$,
+where $\forget{\cdot}$ is the forgetful map from contexts to shapes that discards
+type variables:
 \begin{align*}
 \forget{\emptycontext}         &= \emptycontext  \\
 \forget{\Gamma, \alpha D}      &= \forget{\Gamma}  \\
-\forget{\Gamma, x \asc \sigma} &= \forget{\Gamma} , x  \\
+\forget{\Gamma, x \asc \sigma} &= \forget{\Gamma} , x \asc \sigma  \\
 \forget{\Gamma \, \letGoal}      &= \forget{\Gamma} \, \letGoal
 \end{align*}
+Substitution on shapes acts on type schemes only.
 
 \subsection{Fixing the unification algorithm}
 
