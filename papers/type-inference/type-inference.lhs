@@ -223,26 +223,28 @@ In particular, the generalisation step
 
 \subsection{Motivating Context}
 
-Why revisit Algorithm \W{} at this time? Our long term objective is to
-explain the elaboration of high-level \emph{dependently} typed
-programs into a low-level fully explicit calculus. Elaboration
-involves solving equational constraints to infer \emph{implicit
-arguments}, in the same way that polymorphic variables are specialised
-in the Hindley-Milner system, but with fewer `algorithmic' guarantees.
-The incremental tendency of dependently typed program construction
-often means that the parts of programs arrive in an unpredictable
+Why revisit Algorithm \W{}? This is a first step towards a longer term
+objective: explaining the elaboration of high-level \emph{dependently
+typed} programs into fully explicit calculi. Elaboration involves
+inferring \emph{implicit arguments} by solving constraints, just as
+\W{} specialises polymorphic type schemes, but with fewer algorithmic
+guarantees.  Dependently typed programs are often constructed
+incrementally, with pieces arriving in an unpredictable
 order. Unification problems involve computations as well as
 constructors, and may evolve towards tractability even if not
 apparently solvable at first. Type inference without annotation is out
 of the question, but we may still exploit most general solutions to
-constraints when they exist. The Hindley-Milner technology still serves
-us well, even if it does not serve us completely.
+constraints when they exist. Milner's insights still serve us well,
+if it not completely.
 
 The existing literature on `implicit syntax'~\citep{pollack_implicit_1990,norell:agda} neither fully nor
-clearly accounts for the behaviour of the systems in use today. We
+clearly accounts for the behaviour of the systems in use today, nor are
+any of these systems free from murky corners. We
 feel the need to step back and gain perspective.  Pragmatically, we
 need to account for stepwise progress in problem solving from states
-of partial knowledge. What is a state of partial knowledge?  In this
+of partial knowledge.
+
+What is a state of partial knowledge?  In this
 paper, we model such things as the \emph{contexts} which occur in
 typing judgments, describing the known properties of all variables in
 scope. We present algorithms using systems of inference rules to
@@ -267,24 +269,6 @@ We %%%will
 and show that $\Delta$ is minimal with respect to this ordering. If one
 thinks of a context as a set of atomic facts, then $\Delta$ is the least upper
 bound of $\Gamma$ together with the facts required to make $S$ hold.
-
-McBride's thesis~\citep{mcbride:thesis} gives an early account of
-typing contexts representing the state of an interactive construction
-system, with `holes' in programs and proofs as specially designated
-variables. Contexts come equipped with an information order: increase
-of information preserves typing and equality judgments; proof tactics
-are admissible context validity rules which increase information;
-unification is specified (but not implemented) as a tactic which
-increases information to make an equation hold. This view of
-construction underpinned the implementation of
-Epigram~\citep{mcbride.mckinna:view-from-the-left} and informed Norell's
-implementation of Agda~\citep{norell:agda}. It is high time we began
-to explain how it works.
-
-\subsection{Problem Solving Algorithms}
-
-HOLE
-
 In each case, at most one rule matches the input context and condition, and we
 specify a termination order so the rules define algorithms.
 \TODO{Do we? We need to say more about termination.}
@@ -294,29 +278,45 @@ appropriately monadic
 code. We illustrate this by providing a Haskell implementation.
 
 Contexts here are not simply sets of assumptions, but lists containing
-information about type and term variables. The unification problem thus
-becomes finding a \scare{more informative} context in which two expressions are
-equivalent up to definition. Order of entries in a context is important: they are
-subject to well-foundedness conditions (any definition must be in terms of
-definitions earlier in the context), and we obtain most general unifiers and
-principal types by keeping entries as far to the right as possible, only moving
-them left when necessary to satisfy a constraint. This idea of imposing order
-restrictions on the entries of a context is similar to the
-\emph{ordered hypotheses} of deduction systems for non-commutative logic
-\citep{polakow_natural_1999}.
+information about type and term variables. The unification problem
+thus becomes finding a \scare{more informative} context in which two
+expressions are equivalent up to definition. Order of entries in a
+context is important. They are subject to well-foundedness conditions:
+any definition or declaration must be in terms of variables earlier in
+the context, as in dependent type theories. We obtain most general
+unifiers and principal types \emph{just} by keeping entries as far to
+the right as possible, moving them left only when necessary to satisfy
+a constraint. This idea of imposing order restrictions on the entries
+of a context is similar to the \emph{ordered hypotheses} of deduction
+systems for non-commutative logic \citep{polakow_natural_1999}.
 
 In contrast to other presentations of unification and Hindley-Milner type
 inference, our algorithm uses explicit definitions to avoid the need for a 
-substitution operation. It thus lends itself to efficient implementation.
+substitution operation.
+  %%% It thus lends itself to efficient implementation.
+  %%% conor: hostage to fortune?
 (We do use substitution in our reasoning about the system.) Many implementations
 of (variations on) the Robinson unification algorithm are incorrect because they
 do not handle substitutions correctly \citep{norvig_correctingwidespread_1991}.
 
+This paper has been brewing for a long time. Its origins lie in a long
+lost constraint engine which McBride cannibalised from components of
+an implementation of Miller's `mixed prefix'
+unification~\cite{miller:mixed}, mutating the quantifier prefix into a
+context.  McBride's thesis~\citep{mcbride:thesis} gives an early
+account of typing contexts representing the state of an interactive
+construction system, with `holes' in programs and proofs as specially
+designated variables. Contexts come equipped with an information
+order: increase of information preserves typing and equality
+judgments; proof tactics are admissible context validity rules which
+increase information; unification is specified as a tactic which
+increases information to make an equation hold, but its implementation
+is not discussed. This view of construction underpinned the
+implementation of Epigram~\citep{mcbride.mckinna:view-from-the-left}
+and informed Norell's implementation of Agda~\citep{norell:agda}. It
+is high time we began to explain how it works and perhaps to
+understand it.
 
-\TODO{The plan: to develop abstract contextual and problem-solving machinery with
-running example of types and unification, then redeploy for terms and
-type inference. Our mission is to understand why type inference problems have
-various solutions (Heeren, Wells, Schilling, McAdam...).}
 
 
 %if False
@@ -2218,9 +2218,64 @@ evaluates its second argument, then removes the declaration.
 
 
 
-\section{Conclusion}
+\section{Discussion}  %%% Concussion?
 
-\TODO{Write a conclusion.}
+We have arrived at an implementation of Hindley-Milner type inference
+which involves all the same steps as Algorithm \W{}, but not
+necessarily in the same order. In particular, the dependency analysis
+which \W{} performs all of a sudden in the let-rule is here pushed
+down to a requirement that the underlying unification algorithm
+maintain the well-foundedness of the context.
+
+Our algorithm is presented as a system of problem transformation
+locally preserving all possibile solutions, hence finding a most
+general global solution if any at all. Accumulating solutions to
+decomposed problems is justified simply by the stability of solutions
+with respect to information increase. We have established a discipline
+of problem solving which happens to be complete for Hindley-Milner
+type inference but in any case maintains a coupling of soundness with
+generality.
+
+Maintain context validity, make definitions anywhere and only where
+there is no choice, so the solutions you find will be general and
+generalisable locally: this is a key design principle for
+elaboration of high-level code in systems like Epigram and Agda; bugs
+arise from its transgression. By giving a disciplined account of
+`current information' in terms of contexts and their information
+ordering, we provide a means to investigate these problems and justify
+the steps we take to repair them.
+
+We are, however, missing yet more context. Our task was greatly
+simplified by studying a structural type inference process for
+`finished' expressions in a setting where unification is
+complete. Each subproblem is either solved or rejected on first
+inspection---there is never a need for a `later, perhaps' outcome. As
+a result, the conventional control discipline of `direct style'
+recursive programming is adequate to the task. If problems could get
+stuck, how might we abandon them and return to them later? By storing
+their \emph{context}, of course!
+
+Here, we have combined the linguistic contexts for the various sorts
+of variable involved in problems; our next acquisition is the
+syntactic context of the target term, interspersing variable
+declarations with components of its
+\emph{zipper}~\citep{huet:zipper}. We thus become free to abandon
+fixed recursion strategies and refocus wherever progress is to be
+made. The tree-like proof states of McBride's thesis evolved into
+exactly such `zippers with binding' in the implementation of Epigram.
+
+As we have seen, an information increase is nothing other than the
+extension of a simultaneous substitution from variables and terms to
+declarations and derivations. Our generic analysis of the role of
+declarations in derivations shows that stability is endemic, amounting
+to the action of hereditary substitution on `cut-free' derivations.
+And that is exactly what it should be. We have rationalised
+Hindley-Milner type inference by adapting a discipline for
+interactively constructing inhabitants of dependent types as the means
+to manage unknowns when incrementally constructing solutions to
+problems. The analysis can only become clearer, the technology
+simpler, as we bring these two kinds of construction together,
+mediating \emph{problems as types}.
 
 
 %if False
