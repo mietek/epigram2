@@ -2158,7 +2158,8 @@ $\Theta \entails \zeta_1\chi \equiv \tau$
 and $\theta \equiv \zeta_1 \compose \iota$.
 
 
-\TODO{Need a bit more here.}
+\TODO{Need a bit more here.
+Should we combine minimality with completeness?}
 \end{proof}
 
 
@@ -2258,10 +2259,9 @@ $\Jtype{\Gamma}{x}{\upsilon}{\Gamma, \Xi}$.
 
 
 If $t = (\letIn{x}{s}{w})$, then by inversion there is some scheme
-$\sigma$ such that $\Theta \entails s \hasscheme \sigma$ and
-$\Theta, x \asc \sigma \entails w : \tau$.
-Let $\sigma = \gen{\Psi}{.\tau_s}$,
-then $\Theta \fatsemi \entails s \hasscheme \gen{\Psi}{.\tau_s}$ so
+$\sigma = \gen{\Psi}{.\tau_s}$ such that $\Theta \entails s \hasscheme \sigma$
+and $\Theta, x \asc \sigma \entails w : \tau$.
+Then $\Theta \fatsemi \entails s \hasscheme \gen{\Psi}{.\tau_s}$ so
 $\Theta \fatsemi \Psi \entails s : \tau_s$.
 
 Moreover $\theta : \Gamma \fatsemi \lei \Theta \fatsemi \Psi$, so
