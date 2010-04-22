@@ -89,6 +89,7 @@
 \newcommand{\FTV}[1]{\ensuremath{\mathit{FTV}(#1)}}
 \newcommand{\Type}{\ensuremath{\mathit{Type}}}
 \newcommand{\Term}{\ensuremath{\mathit{Term}}}
+\newcommand{\Scheme}{\ensuremath{\mathit{Scheme}}}
 
 \newcommand{\lei}{\ensuremath{\sqsubseteq}}
 \newcommand{\gei}{\ensuremath{\sqsupseteq}}
@@ -112,6 +113,7 @@
 \newcommand{\Prob}[3]{\ensuremath{#2 \,?_{#1}\, #3}}
 \newcommand{\Pinf}[2]{\Prob{I}{#1}{#2}}
 \newcommand{\Puni}[2]{\Prob{U}{#1 \equiv #2}{}}
+\newcommand{\Pspec}[2]{\Prob{S}{#1}{#2}}
 
 \newcommand{\name}[1]{\ensuremath{\mathrm{\textsc{#1}} \;}}
 \newcommand{\side}[1]{\ensuremath{\; #1}}
@@ -131,6 +133,7 @@
 \newcommand{\subcontext}{\ensuremath{\subset}}
 \newcommand{\semidrop}{\downharpoonright}
 \newcommand{\Sbind}[2]{(#1 \Yright #2)}
+\newcommand{\spec}{\ensuremath{\succ}}
 
 \newcommand{\define}[1]{\emph{#1}}
 \newcommand{\scare}[1]{`#1'}
@@ -1461,12 +1464,64 @@ Implementing the generalisation function is straightforward:
 >                | otherwise      = S beta
 
 
+
+\subsection{Specialisation}
+
+The statement $\sigma \succ \tau$, defined in
+Figure~\ref{fig:specRules}, means that $\sigma$ has
+generic instance $\tau$ obtained by substituting types
+for the generic variables of $\sigma$.
+We observe the sanity condition
+$$\Gamma \entails \sigma \succ \tau
+    \Rightarrow  \Gamma \entails \sigma \scheme  \wedge  \tau \type.$$
+
+\begin{figure}[ht]
+\boxrule{\Delta \entails \sigma \spec \tau}
+
+$$
+\Rule{\tau \type}
+     {.\tau \spec \tau}
+\qquad
+\Rule{\upsilon \type
+      \quad
+      \subst{\upsilon}{\alpha}{\sigma} \spec \tau}
+     {\forall\alpha~\sigma \spec \tau}
+$$
+
+$$
+\Rule{\subst{\upsilon}{\alpha}{\sigma} \succ \tau}
+     {\letS{\alpha}{\upsilon}{\sigma} \succ \tau}
+\qquad
+\Rule{\sigma \succ \tau
+      \quad
+      \tau \equiv \upsilon}
+     {\sigma \succ \upsilon}
+$$
+
+\caption{Declarative rules for specialisation}
+\label{fig:specRules}
+\end{figure}
+
+
+
 \subsection{Term variables}
+
+\TODO{Cite \citet{wells_principal_typings_2002} on principal typings.
+There are two relations between contexts, one where type schemes can be
+generalised (which preserves stability but does not admit principal types),
+and a smaller relation where they cannot (but is still stable).}
 
 Let $\V_\TM$ be some set of term variables and let $x$ range over $\V_\TM$.
 Term variable declarations $\D_\TM$ are scheme assignments of the form
 $\asc \sigma$, with
 $\ok_\TM (\asc \sigma) = \sigma \scheme$.
+
+We define the statement $x \hasc \sigma$ and let
+$\sem{x \asc \sigma}_\TM = \{ x \hasc \sigma \}$.
+Thus the only way for a term to have a scheme is to be given it in the context.
+
+
+%if False
 
 We define the statement $x \hasc \sigma$ by the rules in
 Figure~\ref{fig:termVarSchemeRules}, and let
@@ -1484,6 +1539,10 @@ $$
 \qquad
 \Rule{x \hasc \letS{\alpha}{\upsilon}{\sigma}}
      {x \hasc \subst{\upsilon}{\alpha}{\sigma}}
+$$
+$$
+\Rule{x \hasc .\tau  ~\wedge~   \tau \equiv \upsilon}
+     {x \hasc .\upsilon}
 $$
 \caption{Rules for scheme assignment to term variables}
 \label{fig:termVarSchemeRules}
@@ -1538,6 +1597,8 @@ deliberately limited, to ensure terms have principal types.
 % $\Gamma \entails x \asc \sigma$ to mean that $x \asc \sigma \in \Gamma$ and
 % moreover that this is the rightmost (i.e.\ most local) occurrence of $x$.
 
+%endif
+
 
 In the implementation, we extend the definition of |Entry|:
 
@@ -1578,7 +1639,7 @@ $$
       \tau \equiv \upsilon}
      {t : \upsilon}
 \qquad
-\Rule{x \hasc .\tau}
+\Rule{x \hasc \sigma  \quad  \sigma \spec \tau}
      {x : \tau}
 $$
 
@@ -1619,6 +1680,156 @@ algorithm for type inference. We define the type inference problem $I$ by
 \Post{I}(t)(\tau) &= \tau \type \wedge t : \tau  \\
 \R{I}(\tau)(\upsilon) &= \tau \equiv \upsilon
 \end{align*}
+
+
+
+\section{The specialisation problem}
+
+Let $S$ be the problem given by
+\begin{align*}
+\In{S}                   &= \Scheme  \\
+\Out{S}                  &= \Type  \\
+\Pre{S} (\sigma)         &= \sigma \scheme  \\
+\Post{S} (\sigma, \tau)  &= \tau \type \wedge \sigma \spec \tau  \\
+\R{S} (\tau, \upsilon)   &= \tau \equiv \upsilon
+\end{align*}
+
+\subsection{Constructing a specialisation algorithm}
+
+% Consider the variable rule for type assignment, which is
+% $$\Rule{x \hasc \sigma   \quad   \sigma \spec \tau}
+%        {\Pinf{x}{\tau}}.$$
+% We need an algorithm that, given a term variable as input, finds a type that
+% can be assigned to it (by specialising its scheme).
+
+
+The assertion $\Jspec{\Gamma}{\sigma}{\tau}{\Gamma, \Xi}$ means
+that, starting with the context $\Gamma$, the scheme $\sigma$ specialises
+to the type $\tau$ when the context is extended with some type variable
+declarations $\Xi$. It is defined in Figure~\ref{fig:specialiseAlgorithm}.
+We define $\Jhast{\Gamma}{x}{\sigma}{\tau}{\Gamma, \Xi}$ to mean
+$\Gamma \entails x \hasc \sigma$ and
+$\Jspec{\Gamma}{\sigma}{\tau}{\Gamma, \Xi}$.
+
+
+\begin{figure}[ht]
+\boxrule{\Jspec{\Gamma}{\sigma}{\tau}{\Gamma, \Xi}}
+
+$$
+\name{T}
+\Rule{\Gamma \entails \tau \type}
+     {\Jspec{\Gamma}{.\tau}{\tau}{\Gamma}}
+$$
+
+$$
+\name{All}
+\Rule{\Jspec{\Gamma, \hole{\beta}}{\subst{\beta}{\alpha}{\sigma}}{\tau}
+            {\Gamma, \hole{\beta}, \Xi}}
+     {\Jspec{\Gamma}{\forall\alpha~\sigma}{\tau}{\Gamma, \hole{\beta}, \Xi}}
+\side{\beta \notin \tyvars{\Gamma}}
+$$
+
+$$
+\name{LetS}
+\Rule{\Jspec{\Gamma, \beta \defn \upsilon}{\subst{\beta}{\alpha}{\sigma}}{\tau}
+            {\Gamma, \beta \defn \upsilon, \Xi}}
+     {\Jspec{\Gamma}{\letS{\alpha}{\upsilon}{\sigma}}{\tau}
+            {\Gamma, \beta \defn \upsilon, \Xi}}
+\side{\beta \notin \tyvars{\Gamma}}
+$$
+
+\caption{Algorithmic rules for specialisation}
+\label{fig:specialiseAlgorithm}
+\end{figure}
+
+
+
+\begin{lemma}[Soundness and minimality of specialisation]
+\label{lem:specialiseSound}
+If $\Jspec{\Gamma}{\sigma}{\tau}{\Gamma, \Xi}$, then
+$\iota : \Jmin{\Gamma}{\Pspec{\sigma}{\tau}}{\Gamma, \Xi}$.
+\end{lemma}
+
+\begin{proof}
+Clearly $\iota : \Gamma \lei \Gamma, \Xi$.
+By structural induction on $\sigma$,
+$$\Gamma, \Xi \entails \tau \type \wedge \sigma \spec \tau.$$
+
+For minimality, suppose
+$\theta : \Gamma \lei \Theta \entails \Pspec{\sigma}{\upsilon}$.
+By stability, $\Theta \entails x \hasc \sigma$.
+Examining the rules in Figure~\ref{fig:termVarSchemeRules}, the proof of
+$\Theta \entails x \hasc .\tau$ must specialise $\sigma$ with types
+$\Psi$ for its generic variables. Let $\theta' = \subst{\Psi}{\Xi}{\theta}$, then
+$\theta' : \Gamma, \Xi \lei \Theta$ and $\theta = \theta' \compose \iota$.
+\end{proof}
+
+
+\begin{lemma}[Completeness of specialisation]
+\label{lem:specialiseComplete}
+If $\Gamma \entails \gen{\Xi}{\tau} \scheme$ then
+$\Jspec{\Gamma}{\sigma}{\tau}{\Gamma, \Xi}$.
+\TODO{This isn't quite what we mean.}
+
+% $$\forall \upsilon \forall \phi : \Gamma \lei \Phi . (
+%     \Phi \entails \phi\sigma \succ \upsilon
+%        \Leftrightarrow  \Phi \entails \phi\gen{\Xi}{\tau} \succ \upsilon).$$
+
+% If $\theta_0 : \Gamma_0 \lei \Delta$, $\Gamma_0 \entails \sigma \scheme$ and
+% $\Delta \entails \theta_0\sigma \succ \tau$,
+% then $\Gamma_0 \extend \sigma \succ \upsilon \yields \Gamma_1$ for some type
+% $\upsilon$ and context $\Gamma_1$ with $\theta_1 : \Gamma_1 \lei \Delta$,
+% \Delta \entails \tau \equiv \theta_1\upsilon$ and
+% $\forall \alpha \in \tyvars{\Gamma_0} .
+%    \Delta \entails \theta_0 \alpha \equiv \theta_1 \alpha$.
+\end{lemma}
+
+\begin{proof}
+By structural induction on $\Xi$.
+\end{proof}
+
+
+\subsection{Implementing specialisation}
+
+The |specialise| function will specialise a type scheme with fresh variables
+to produce a type. That is, given a scheme $\sigma$ it computes a most general
+type $\tau$ such that $\sigma \succ \tau$.
+
+> specialise :: Scheme -> Contextual Type
+
+If a $\forall$ quantifier is outermost, it is removed and an unbound fresh type
+variable is substituted in its place (applying the \textsc{All} rule).
+
+> specialise (All sigma) = do
+>     beta <- fresh Hole
+>     specialise (schemeUnbind beta sigma)
+
+If a let binding is outermost, it is removed and added to the context with a
+fresh variable name (applying the \textsc{LetS} rule).
+
+> specialise (LetS tau sigma) = do
+>     beta <- fresh (Some tau)
+>     specialise (schemeUnbind beta sigma)
+
+This continues until a scheme with no quantifiers is reached, which can simply be
+converted into a type (applying the \textsc{T} rule).
+
+> specialise (Type tau) = return tau
+
+
+The |schemeUnbind| function converts the body $\sigma$ of the scheme
+$\forall\alpha.\sigma$ or $\letS{\alpha}{\tau}{\sigma}$ into
+$\subst{\beta}{\alpha}{\sigma}$. Since we use different syntactic
+representations for free and bound variables, this is easy to implement.
+
+> schemeUnbind
+>   :: TyName -> Schm (Index TyName) -> Scheme
+> schemeUnbind beta = fmap fromS
+>   where
+>     fromS :: Index TyName -> TyName
+>     fromS Z           = beta
+>     fromS (S alpha')  = alpha'
+
 
 
 
@@ -1779,150 +1990,6 @@ $\theta \eqsubst \zeta \compose \iota :
 
 
 \section{A type inference algorithm}
-
-\subsection{Introducing specialisation}
-
-Consider the variable rule for type assignment, which is
-$$\Rule{x \hasc .\tau}
-       {\Pinf{x}{\tau}}.$$
-We need an algorithm that, given a term variable as input, finds a type that
-can be assigned to it (by specialising its scheme).
-
-Let $S$ be the problem given by
-\begin{align*}
-\In{S}                 &= \V_\TM  \\
-\Out{S}                &= \Type  \\
-\Pre{S} (x)            &= \valid  \\
-\Post{S} (x, \tau)     &= \tau \type \wedge x \hasc .\tau  \\
-\R{S} (\tau, \upsilon) &= \tau \equiv \upsilon
-\end{align*}
-
-The assertion $\Jspec{\Gamma}{\sigma}{\tau}{\Gamma, \Xi}$ means
-that, starting with the context $\Gamma$, the scheme $\sigma$ specialises
-to the type $\tau$ when the context is extended with some type variable
-declarations $\Xi$. It is defined in Figure~\ref{fig:specialiseAlgorithm}.
-We define $\Jhast{\Gamma}{x}{\sigma}{\tau}{\Gamma, \Xi}$ to mean
-$\Gamma \entails x \hasc \sigma$ and
-$\Jspec{\Gamma}{\sigma}{\tau}{\Gamma, \Xi}$.
-
-
-\begin{figure}[ht]
-\boxrule{\Jspec{\Gamma}{\sigma}{\tau}{\Gamma, \Xi}}
-
-$$
-\name{T}
-\Rule{\Gamma \entails \tau \type}
-     {\Jspec{\Gamma}{.\tau}{\tau}{\Gamma}}
-$$
-
-$$
-\name{All}
-\Rule{\Jspec{\Gamma, \hole{\beta}}{\subst{\beta}{\alpha}{\sigma}}{\tau}
-            {\Gamma, \hole{\beta}, \Xi}}
-     {\Jspec{\Gamma}{\forall\alpha~\sigma}{\tau}{\Gamma, \hole{\beta}, \Xi}}
-\side{\beta \notin \tyvars{\Gamma}}
-$$
-
-$$
-\name{LetS}
-\Rule{\Jspec{\Gamma, \beta \defn \upsilon}{\subst{\beta}{\alpha}{\sigma}}{\tau}
-            {\Gamma, \beta \defn \upsilon, \Xi}}
-     {\Jspec{\Gamma}{\letS{\alpha}{\upsilon}{\sigma}}{\tau}
-            {\Gamma, \beta \defn \upsilon, \Xi}}
-\side{\beta \notin \tyvars{\Gamma}}
-$$
-
-\caption{Algorithmic rules for specialisation}
-\label{fig:specialiseAlgorithm}
-\end{figure}
-
-
-
-\begin{lemma}[Soundness and minimality of specialisation]
-\label{lem:specialiseSound}
-If $\Jhast{\Gamma}{x}{\sigma}{\tau}{\Gamma, \Xi}$, then
-$\iota : \Jmin{\Gamma}{\Prob{S}{x}{\tau}}{\Gamma, \Xi}$.
-\end{lemma}
-
-\begin{proof}
-Clearly $\iota : \Gamma \lei \Gamma, \Xi$.
-By structural induction on $\sigma$,
-$$\Gamma, \Xi \entails \tau \type \wedge x \hasc .\tau.$$
-
-For minimality, suppose
-$\theta : \Gamma \lei \Theta \entails \Prob{S}{x}{\upsilon}$.
-By stability, $\Theta \entails x \hasc \sigma$.
-Examining the rules in Figure~\ref{fig:termVarSchemeRules}, the proof of
-$\Theta \entails x \hasc .\tau$ must specialise $\sigma$ with types
-$\Psi$ for its generic variables. Let $\theta' = \subst{\Psi}{\Xi}{\theta}$, then
-$\theta' : \Gamma, \Xi \lei \Theta$ and $\theta = \theta' \compose \iota$.
-
-\end{proof}
-
-\begin{lemma}[Completeness of specialisation]
-\label{lem:specialiseComplete}
-If $\Gamma \entails x \hasc \gen{\Xi}{\tau}$ then
-$\Jhast{\Gamma}{x}{\sigma}{\tau}{\Gamma, \Xi}$.
-
-% $$\forall \upsilon \forall \phi : \Gamma \lei \Phi . (
-%     \Phi \entails \phi\sigma \succ \upsilon
-%        \Leftrightarrow  \Phi \entails \phi\gen{\Xi}{\tau} \succ \upsilon).$$
-
-% If $\theta_0 : \Gamma_0 \lei \Delta$, $\Gamma_0 \entails \sigma \scheme$ and
-% $\Delta \entails \theta_0\sigma \succ \tau$,
-% then $\Gamma_0 \extend \sigma \succ \upsilon \yields \Gamma_1$ for some type
-% $\upsilon$ and context $\Gamma_1$ with $\theta_1 : \Gamma_1 \lei \Delta$,
-% \Delta \entails \tau \equiv \theta_1\upsilon$ and
-% $\forall \alpha \in \tyvars{\Gamma_0} .
-%    \Delta \entails \theta_0 \alpha \equiv \theta_1 \alpha$.
-\end{lemma}
-
-\begin{proof}
-By structural induction on $\Xi$.
-\end{proof}
-
-
-\subsection{Implementing specialisation}
-
-The |specialise| function will specialise a type scheme with fresh variables
-to produce a type. That is, given a scheme $\sigma$ it computes a most general
-type $\tau$ such that $\sigma \succ \tau$.
-
-> specialise :: Scheme -> Contextual Type
-
-If a $\forall$ quantifier is outermost, it is removed and an unbound fresh type
-variable is substituted in its place (applying the \textsc{All} rule).
-
-> specialise (All sigma) = do
->     beta <- fresh Hole
->     specialise (schemeUnbind beta sigma)
-
-If a let binding is outermost, it is removed and added to the context with a
-fresh variable name (applying the \textsc{LetS} rule).
-
-> specialise (LetS tau sigma) = do
->     beta <- fresh (Some tau)
->     specialise (schemeUnbind beta sigma)
-
-This continues until a scheme with no quantifiers is reached, which can simply be
-converted into a type (applying the \textsc{T} rule).
-
-> specialise (Type tau) = return tau
-
-
-The |schemeUnbind| function converts the body $\sigma$ of the scheme
-$\forall\alpha.\sigma$ or $\letS{\alpha}{\tau}{\sigma}$ into
-$\subst{\beta}{\alpha}{\sigma}$. Since we use different syntactic
-representations for free and bound variables, this is easy to implement.
-
-> schemeUnbind
->   :: TyName -> Schm (Index TyName) -> Scheme
-> schemeUnbind beta = fmap fromS
->   where
->     fromS :: Index TyName -> TyName
->     fromS Z           = beta
->     fromS (S alpha')  = alpha'
-
 
 
 \subsection{Transforming the rule system}
@@ -2153,7 +2220,7 @@ by induction
 $\Jtype{\Gamma \fatsemi}{s}{\upsilon}{\Delta_0 \fatsemi \Xi_0}$
 and by minimality there exists
 $\theta_0 : \Delta_0 \fatsemi \Xi_0 \lei \Theta \fatsemi \Psi$
-such that $\Theta \entails \theta_0 \upsilon \equiv \tau_s$.
+such that $\Theta \fatsemi \Psi \entails \theta_0 \upsilon \equiv \tau_s$.
 
 % \begin{enumerate}[(a)]
 % \item $\Jtype{\Gamma_0; \letGoal;}{s}{\upsilon}{\Gamma_1; \letGoal; \Xi_1}$
