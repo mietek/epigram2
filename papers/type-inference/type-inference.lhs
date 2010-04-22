@@ -217,10 +217,41 @@ In particular, the generalisation step
 (for 
  inferring the type of a let-expression) becomes straightforward.
 
-We present algorithms using systems of inference rules to define relationships
-between assertions of the form $\Judge{\Gamma}{S}{\Delta}$. Here $\Gamma$
-is the input context (before applying the rule), $S$ is the statement being
-established, and $\Delta$ is the output context (in which $S$ holds).
+
+\subsection{Motivating Context}
+
+Why revisit Algorithm \W{} at this time? Our long term objective is to
+explain the elaboration of high-level \emph{dependently} typed
+programs into a low-level fully explicit calculus. Elaboration
+involves solving equational constraints to infer \emph{implicit
+arguments}, in the same way that polymorphic variables are specialised
+in the Hindley-Milner system, but with fewer `algorithmic' guarantees.
+The incremental tendency of dependently typed program construction
+often means that the parts of programs arrive in an unpredictable
+order. Unification problems involve computations as well as
+constructors, and may evolve towards tractability even if not
+apparently solvable at first. Type inference without annotation is out
+of the question, but we may still exploit most general solutions to
+constraints when they exist. The Hindley-Milner technology still serves
+us well, even if it does not serve us completely.
+
+The existing literature on `implicit syntax'~\citep{pollack_implicit_1990,norell:agda} neither fully nor
+clearly accounts for the behaviour of the systems in use today. We
+feel the need to step back and gain perspective.  Pragmatically, we
+need to account for stepwise progress in problem solving from states
+of partial knowledge. What is a state of partial knowledge?  In this
+paper, we model such things as the \emph{contexts} which occur in
+typing judgments, describing the known properties of all variables in
+scope. We present algorithms using systems of inference rules to
+define relationships between assertions of the form
+$\Judge{\Gamma}{S}{\Delta}$. Here $\Gamma$ is the input context
+(before applying the rule), $S$ is the statement being established,
+and $\Delta$ is the output context (in which $S$ holds). We revisit
+Algorithm \W{} as a necessary check that our perspective is helpful,
+as a familiar example of problem solving presented anew, and because
+our context discipline delivers a clearer account of generalisation
+in let-binding.
+
 This idea of assertions producing a resulting context goes back at least to
 \citet{pollack_implicit_1990}. 
 %%%, and hence perhaps to \citet{harper_type_1991} and \citet{milner_definition_1990}.
@@ -234,11 +265,30 @@ and show that $\Delta$ is minimal with respect to this ordering. If one
 thinks of a context as a set of atomic facts, then $\Delta$ is the least upper
 bound of $\Gamma$ together with the facts required to make $S$ hold.
 
+McBride's thesis~\citep{mcbride:thesis} gives an early account of
+typing contexts representing the state of an interactive construction
+system, with `holes' in programs and proofs as specially designated
+variables. Contexts come equipped with an information order: increase
+of information preserves typing and equality judgments; proof tactics
+are admissible context validity rules which increase information;
+unification is specified (but not implemented) as a tactic which
+increases information to make an equation hold. This view of
+construction underpinned the implementation of
+Epigram~\citep{mcbride.mckinna:view-from-the-left} and informed Norell's
+implementation of Agda~\citep{norell:agda}. It is high time we began
+to explain how it works.
+
+\subsection{Problem Solving Algorithms}
+
+HOLE
+
 In each case, at most one rule matches the input context and condition, and we
 specify a termination order so the rules define algorithms.
 \TODO{Do we? We need to say more about termination.}
 It is straightforward to implement these algorithms by translating the rule
-systems into code. We illustrate this by providing a Haskell implementation.
+systems into %%%
+appropriately monadic
+code. We illustrate this by providing a Haskell implementation.
 
 Contexts here are not simply sets of assumptions, but lists containing
 information about type and term variables. The unification problem thus
