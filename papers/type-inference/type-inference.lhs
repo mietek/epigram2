@@ -1512,26 +1512,16 @@ with fresh variables to produce a type.
 >     fromS beta (S alpha)  = alpha
 
 
-\subsection{Term variables}
+\subsection{Type assignment system}
 
 Let $\V_\TM$ be some set of term variables and let $x$ range over $\V_\TM$.
 Term variable declarations $\D_\TM$ are scheme assignments of the form
 $\asc \sigma$, with
 $\ok_\TM (\asc \sigma) = \sigma \scheme$.
 
-In the implementation, we extend the definition of |Entry|:
-
-> type TmName   = String
-> data TmEntry  = TmName ::: Scheme
-
-< data Entry    = TY TyEntry | TM TmEntry | ...
-
-
-
-\subsection{Type assignment system}
-
 The syntax of terms is
 $$t ::= x ~||~ t~t ~||~ \lambda x . t ~||~ \letIn{x}{t}{t}.$$
+Let $\Term$ be the set of terms.
 % where $x$ ranges over some set of term variables.
 
 We define the type assignability statement $t : \tau$ by the rules in
@@ -1618,6 +1608,30 @@ algorithm for type inference. We define the type inference problem $I$ by
 \R{I}{\tau}{\upsilon} &= \OutParam{\tau} \equiv \OutParam{\upsilon}
 \end{align*}
 
+
+\subsection{Implementing terms}
+
+We extend the |Entry| data type to include declarations of term variables.
+It is still not quite complete, however.
+
+> type TmName   = String
+> data TmEntry  = TmName ::: Scheme
+
+< data Entry    = TY TyEntry | TM TmEntry | ...
+
+
+A term $t$ may be a variable |(X)|, an application |(:$)|, an abstraction |(Lam)|
+or a let binding |(Let)|. As with |Ty|, we parameterise over the type
+of term variable names, so |Tm| is a foldable functor.
+
+> data Tm a  =  X a
+>            |  Tm a :$ Tm a 
+>            |  Lam a (Tm a)
+>            |  Let a (Tm a) (Tm a)
+
+<     deriving (Functor, Foldable)
+
+> type Term      = Tm TmName
 
 
 \section{Local contexts for local problems}
@@ -2101,22 +2115,6 @@ and $\theta \eqsubst \zeta \compose \iota$.
 
 \subsection{Implementing type inference}
 \label{sec:inferImplementation}
-
-A term $t$ may be a variable |(X)|, an application |(:$)|, an abstraction |(Lam)|
-or a let binding |(Let)|. As with 
-%%%type variables, 
-   |Ty|, 
-we parameterise over the type
-of term variable names, so |Tm| is a foldable functor.
-
-> data Tm a  =  X a
->            |  Tm a :$ Tm a 
->            |  Lam a (Tm a)
->            |  Let a (Tm a) (Tm a)
-
-<     deriving (Functor, Foldable)
-
-> type Term      = Tm TmName
 
 
 The |infer| function attempts to infer the type of the given term,
