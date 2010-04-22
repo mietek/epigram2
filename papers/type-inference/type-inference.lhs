@@ -94,6 +94,7 @@
 \newcommand{\lei}{\ensuremath{\sqsubseteq}}
 \newcommand{\gei}{\ensuremath{\sqsupseteq}}
 \newcommand{\LEI}{\ensuremath{~\hat\sqsubseteq~}}
+\newcommand{\les}{\ensuremath{\leq}}
 
 \newcommand{\arrow}{\ensuremath{\triangleright}}
 \newcommand{\defn}{\ensuremath{\!:=\!}}
@@ -1683,6 +1684,20 @@ algorithm for type inference. We define the type inference problem $I$ by
 
 
 
+Instead of preventing any changes to the scheme assigned to a term variable,
+we could allow it to be arbitrarily generalised by defining
+$\sem{x \hasc \sigma}_\TM = \{ x \hasscheme \sigma \}.$
+We write $\Gamma \les \Delta$ for the more liberal relation between
+contexts induced by this definition.
+Observe that $\Gamma \lei \Delta  \Rightarrow  \Gamma \les \Delta$.
+We still have stability, because if
+$\Gamma \entails x : \tau$ and $\delta : \Gamma \les \Delta$  then
+$\Delta \entails x : \delta\tau$.
+However, it would not be possible to assign principal types to terms under this
+more liberal notion of information increase.
+
+
+
 \section{The specialisation problem}
 
 Let $S$ be the problem given by
@@ -1755,21 +1770,27 @@ Clearly $\iota : \Gamma \lei \Gamma, \Xi$.
 By structural induction on $\sigma$,
 $$\Gamma, \Xi \entails \tau \type \wedge \sigma \spec \tau.$$
 
-For minimality, suppose
-$\theta : \Gamma \lei \Theta \entails \Pspec{\sigma}{\upsilon}$.
-By stability, $\Theta \entails x \hasc \sigma$.
-Examining the rules in Figure~\ref{fig:termVarSchemeRules}, the proof of
-$\Theta \entails x \hasc .\tau$ must specialise $\sigma$ with types
-$\Psi$ for its generic variables. Let $\theta' = \subst{\Psi}{\Xi}{\theta}$, then
-$\theta' : \Gamma, \Xi \lei \Theta$ and $\theta = \theta' \compose \iota$.
+\TODO{This needs updating.}
+For minimality, suppose $\sigma = \gen{\Psi}{\chi}$,
+$\theta : \Gamma \lei \Theta$
+and $\Theta \entails \Pspec{\sigma}{\upsilon}$.
+% Then there is a substitution $\psi : \Theta, \Psi \lei \Theta$
+
+% For minimality, suppose
+% $\theta : \Gamma \lei \Theta \entails \Pspec{\sigma}{\upsilon}$.
+% By stability, $\Theta \entails x \hasc \sigma$.
+% Examining the rules in Figure~\ref{fig:termVarSchemeRules}, the proof of
+% $\Theta \entails x \hasc .\tau$ must specialise $\sigma$ with types
+% $\Psi$ for its generic variables. Let $\theta' = \subst{\Psi}{\Xi}{\theta}$,
+% then $\theta' : \Gamma, \Xi \lei \Theta$ and $\theta = \theta' \compose \iota$.
 \end{proof}
 
 
 \begin{lemma}[Completeness of specialisation]
 \label{lem:specialiseComplete}
-If $\Gamma \entails \gen{\Xi}{\tau} \scheme$ then
-$\Jspec{\Gamma}{\sigma}{\tau}{\Gamma, \Xi}$.
-\TODO{This isn't quite what we mean.}
+If $\Gamma \entails \sigma \scheme$ then
+$\Jspec{\Gamma}{\sigma}{\tau}{\Gamma, \Xi}$
+for some list of type variables $\Xi$.
 
 % $$\forall \upsilon \forall \phi : \Gamma \lei \Phi . (
 %     \Phi \entails \phi\sigma \succ \upsilon
@@ -1785,7 +1806,7 @@ $\Jspec{\Gamma}{\sigma}{\tau}{\Gamma, \Xi}$.
 \end{lemma}
 
 \begin{proof}
-By structural induction on $\Xi$.
+By structural induction on $\sigma$.
 \end{proof}
 
 
@@ -2294,10 +2315,14 @@ $$\theta_0 ||_{\Delta_0} : \Delta_0, x \asc \gen{\Xi_0}{.\upsilon}
 % $$\iota : \Theta, x \asc \sigma \lei \Theta, x \asc \gen{\Xi_0}{.\upsilon}$$
 % \TODO{by principality?}, and hence
 and
-$\Theta, x \asc \theta_0\gen{\Xi_0}{.\upsilon} \entails w : \tau$
-since if $\Theta, x \asc \sigma \entails x \hasc .\tau_x$ then
-$\Theta, x \asc \theta_0\gen{\Xi_0}{.\upsilon} \entails x \hasc .\tau_x$.
-\TODO{Prove this as a lemma.}
+$$\iota : \Theta, x \asc \gen{\Psi}{.\tau_s}
+    \les  \Theta, x \asc \theta_0\gen{\Xi_0}{.\upsilon}$$
+so by stability of type assignment under the $\les$ relation,
+$$\Theta, x \asc \theta_0\gen{\Xi_0}{.\upsilon} \entails w : \tau.$$
+
+% since if $\Theta, x \asc \sigma \entails x \hasc .\tau_x$ then
+% $\Theta, x \asc \theta_0\gen{\Xi_0}{.\upsilon} \entails x \hasc .\tau_x$.
+% \TODO{Prove this as a lemma.}
 
 Hence, by induction,
 $$\Jtype{\Delta_0, x \asc \gen{\Xi_0}{.\upsilon}}{w}{\chi}
