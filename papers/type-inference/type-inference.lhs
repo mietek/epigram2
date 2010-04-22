@@ -1433,7 +1433,7 @@ type scheme (written $.\tau$), as the latter will be represented by
 |Type tau :: Scheme|.
 
 
-Implementing the generalisation function is straightforward:
+Implementing the generalisation function |(>=>)| is straightforward:
 
 > (>=>) :: Bwd TyEntry -> Scheme -> Scheme
 > B0                      >=> sigma = sigma
@@ -1444,6 +1444,21 @@ Implementing the generalisation function is straightforward:
 >     sigma' = fmap bind sigma
 >     bind beta  | alpha == beta  = Z
 >                | otherwise      = S beta
+
+Conversely, we can |specialise| a type scheme by extending the context
+with fresh variables to produce a type.
+
+> specialise :: Scheme -> Contextual Type
+> specialise (Type tau) = return tau
+> specialise sigma = do
+>     let (d, sigma') = unpack sigma
+>     beta <- fresh d
+>     specialise (fmap (fromS beta) sigma')
+>   where
+>     unpack (All sigma') = (Hole, sigma')
+>     unpack (LetS tau sigma') = (Some tau, sigma')
+>     fromS beta Z          = beta
+>     fromS beta (S alpha)  = alpha
 
 
 \subsection{Term variables}
@@ -1554,6 +1569,7 @@ algorithm for type inference. We define the type inference problem $I$ by
 
 
 
+%if False
 
 \section{The specialisation problem}
 
@@ -1671,30 +1687,14 @@ By structural induction on $\sigma$.
 
 \subsection{Implementing specialisation}
 
-The |specialise| function will specialise a type scheme with fresh variables
-to produce a type. That is, given a scheme $\sigma$ it computes a most general
-type $\tau$ such that $\sigma \succ \tau$.
-
-> specialise :: Scheme -> Contextual Type
-
 If a $\forall$ quantifier is outermost, it is removed and an unbound fresh type
 variable is substituted in its place (applying the \textsc{All} rule).
-
-> specialise (All sigma) = do
->     beta <- fresh Hole
->     specialise (schemeUnbind beta sigma)
 
 If a let binding is outermost, it is removed and added to the context with a
 fresh variable name (applying the \textsc{LetS} rule).
 
-> specialise (LetS tau sigma) = do
->     beta <- fresh (Some tau)
->     specialise (schemeUnbind beta sigma)
-
 This continues until a scheme with no quantifiers is reached, which can simply be
 converted into a type (applying the \textsc{T} rule).
-
-> specialise (Type tau) = return tau
 
 
 The |schemeUnbind| function converts the body $\sigma$ of the scheme
@@ -1710,6 +1710,8 @@ representations for free and bound variables, this is easy to implement.
 >     fromS Z           = beta
 >     fromS (S alpha')  = alpha'
 
+
+%endif
 
 
 
@@ -1985,13 +1987,15 @@ These rules are clearly structural on terms, so they give a terminating
 algorithm, and they lead naturally to an implementation, given in
 subsection~\ref{sec:inferImplementation}.
 
+\TODO{Say something about freshness of $\Xi$ in \textsc{Var} rule.}
+
 \begin{figure}[ht]
 \boxrule{\Jtype{\Gamma}{t}{\tau}{\Delta}}
 
 $$
 \name{Var}
-\Rule{\Jhast{\Gamma}{x}{\sigma}{\tau}{\Gamma, \Xi}}
-     {\Jtype{\Gamma}{x}{\tau}{\Gamma, \Xi}}
+\Rule{x \asc \gen{\Xi}{\upsilon} \in \Gamma}
+     {\Jtype{\Gamma}{x}{\upsilon}{\Gamma, \Xi}}
 $$
 
 $$
@@ -2144,20 +2148,25 @@ for some type $\upsilon$ and context $\Delta$.
 \end{lemma}
 
 \begin{proof}
-If $t = x$ is a variable, then by inversion $\Theta \entails x \hasc .\tau$
-Now by definition of $\lei$,
-$\Gamma \entails x \asc \sigma$ for some $\sigma$,
+If $t = x$ is a variable, then by inversion
+$x \asc \sigma \in \Theta$.
+Now by definition of $\leiR$,
+$x \asc \gen{\Xi}{\upsilon} \in \Gamma$
+where $\sigma = \theta\gen{\Xi}{\upsilon}$.
+Hence the \textsc{Var} rule applies giving
+$\Jtype{\Gamma}{x}{\upsilon}{\Gamma, \Xi}$.
+
 % with
 % $$\forall \upsilon. \Theta \entails \theta\sigma' \succ \upsilon
 %     \Leftrightarrow \Theta \entails x : \upsilon.$$
-so by completeness of specialisation (lemma~\ref{lem:specialiseComplete}),
-$\Jhast{\Gamma}{x}{\sigma}{\upsilon}{\Gamma, \Xi}$
+% so by completeness of specialisation (lemma~\ref{lem:specialiseComplete}),
+% $\Jhast{\Gamma}{x}{\sigma}{\upsilon}{\Gamma, \Xi}$
 % and
 % $$\forall\tau \forall \phi: \Gamma_0 \lei \Phi . (
 %     \Phi \entails \phi\sigma' \succ \tau
 %         \Leftrightarrow  \Phi \entails \phi\gen{\Xi}{\upsilon} \succ \tau.$$
-Hence the \textsc{Var} rule applies giving
-$\Jtype{\Gamma}{x}{\upsilon}{\Gamma, \Xi}$.
+% Hence the \textsc{Var} rule applies giving
+% $\Jtype{\Gamma}{x}{\upsilon}{\Gamma, \Xi}$.
 % (b) holds trivially with $\theta_1 = \theta_0$, and
 % $\Gamma_0 \entails x \hasscheme \gen{\Xi}{\upsilon}$ principal.
 
