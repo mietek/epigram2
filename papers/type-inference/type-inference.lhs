@@ -107,10 +107,10 @@
 \newcommand{\Judge}[3]{\ensuremath{#1 \lei #3 \vdash #2}}
 \newcommand{\JudgeR}[3]{\ensuremath{#1 \leiR #3 \vdash #2}}
 \newcommand{\Jmin}[3]{\ensuremath{#1 \LEI #3 \vdash #2}}
-\newcommand{\Junify}[4]{\Judge{#1}{#2 \equiv #3}{#4}}
-\newcommand{\Jinstantiate}[5]{\Judge{#1 ~||~ #4}{#2 \equiv #3}{#5}}
+\newcommand{\Junify}[4]{\Judge{#1}{\Puni{#2}{#3}}{#4}}
+\newcommand{\Jinstantiate}[5]{\Judge{#1 ~||~ #4}{\Puni{#2}{#3}}{#5}}
 \newcommand{\Jspec}[4]{\Judge{#1}{#2 \succ #3}{#4}}
-\newcommand{\Jtype}[4]{\JudgeR{#1}{#2 : #3}{#4}}
+\newcommand{\Jtype}[4]{\JudgeR{#1}{\Pinf{#2}{#3}}{#4}}
 \newcommand{\Jhast}[5]{\Judge{#1}{#2 ~\hat:_{#3}~ #4}{#5}}
 
 \newcommand{\JminR}[3]{\ensuremath{#1 \LEIR #3 \vdash #2}}
