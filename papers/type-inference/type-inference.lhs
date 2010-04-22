@@ -2176,6 +2176,64 @@ By induction on the structure of derivations.
 \end{proof}
 
 
+%if False
+
+\begin{lemma}
+\label{lem:schemeInfoIncrease}
+Let $\Theta$ be a context such that
+$\Theta \entails \gen{\Xi}{.\upsilon} \scheme$ and $\Theta \entails \tau \type$.
+Then $\Theta, x \asc \gen{\Xi}{.\upsilon} \entails x \hasc \tau$
+if and only if there exists a list of type variable declarations $\Phi$ such that
+$$\iota : \Theta \fatsemi \Xi \lei \Theta \fatsemi \Phi
+    \quad \text{and} \quad
+    \Theta \fatsemi \Phi \entails \upsilon \equiv \tau$$
+\end{lemma}
+
+
+\begin{lemma}
+\label{lem:schemeSameInstances}
+Suppose $\theta : \Delta_0 \fatsemi \Xi_0 \lei \Theta \fatsemi \Psi$,
+$\Theta \fatsemi \Psi \entails \theta\upsilon \equiv \tau_s$ and
+$\Theta, x \asc \gen{\Psi}{.\tau_s} \entails x \hasc .\tau$. Then
+$\Theta, x \asc \theta \gen{\Xi_0}{.\upsilon} \entails x \hasc .\tau$.
+\end{lemma}
+
+\begin{proof}
+By lemma~\ref{lem:schemeInfoIncrease}, there exists $\Phi$ such that
+$\iota : \Theta \fatsemi \Psi \lei \Theta \fatsemi \Phi$ and
+$\Theta \fatsemi \Phi \entails \tau_s \equiv \tau$.
+Then $\iota : \Theta \fatsemi \theta \Xi_0 \lei \Theta \fatsemi \Phi$
+and $\Theta \fatsemi \Phi \entails \theta\upsilon \equiv \tau$ by
+stability and transitivity, so by lemma~\ref{lem:schemeInfoIncrease},
+$\Theta, x \asc \gen{\theta\Xi_0}{.\theta\upsilon} \entails x \hasc \tau$.
+\end{proof}
+
+
+\begin{lemma}
+\label{lem:schemeInstancesSuffice}
+Given $\Theta, x, \sigma, \sigma'$ suppose
+$$\forall \upsilon \forall \Phi .
+    \Theta, x \hasc \sigma, \Phi \entails x : \upsilon
+        \Rightarrow  \Theta, x \hasc \sigma', \Phi \entails x : \upsilon$$
+and given $\Psi, w, \tau$ suppose
+$\Theta, x \hasc \sigma, \Psi \entails w : \tau$.
+Then $\Theta, x \hasc \sigma', \Psi \entails w : \tau$. 
+
+% If $\Theta, x \asc \sigma, \Theta' \entails w : \tau$
+% and for all types $\upsilon$,
+% $$\Theta, x \asc \sigma, \Theta' \entails x \hasc .\upsilon
+%     ~\Rightarrow~ \Theta, x \asc \sigma', \Theta' \entails x \hasc .\upsilon$$
+% then $\Theta, x \asc \sigma', \Theta' \entails w : \tau$.
+\end{lemma}
+
+\begin{proof}
+By induction on the structure of derivations; the hypothesis ensures that
+appeals to the variable rule hold in the new context.
+\end{proof}
+
+%endif
+
+
 \begin{lemma}[Completeness of type inference]
 If $\theta : \Gamma \lei \Theta$ and $\Theta \entails t : \tau$ then
 $\Jtype{\Gamma}{t}{\upsilon}{\Delta}$
