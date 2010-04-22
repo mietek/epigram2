@@ -1492,46 +1492,6 @@ Implementing the generalisation function is straightforward:
 >                | otherwise      = S beta
 
 
-
-\subsection{Specialisation}
-
-The statement $\sigma \succ \tau$, defined in
-Figure~\ref{fig:specRules}, means that $\sigma$ has
-generic instance $\tau$ obtained by substituting types
-for the generic variables of $\sigma$.
-We observe the sanity condition
-$$\Gamma \entails \sigma \succ \tau
-    \Rightarrow  \Gamma \entails \sigma \scheme  \wedge  \tau \type.$$
-
-\begin{figure}[ht]
-\boxrule{\Delta \entails \sigma \spec \tau}
-
-$$
-\Rule{\tau \type}
-     {.\tau \spec \tau}
-\qquad
-\Rule{\upsilon \type
-      \quad
-      \subst{\upsilon}{\alpha}{\sigma} \spec \tau}
-     {\forall\alpha~\sigma \spec \tau}
-$$
-
-$$
-\Rule{\subst{\upsilon}{\alpha}{\sigma} \succ \tau}
-     {\letS{\alpha}{\upsilon}{\sigma} \succ \tau}
-\qquad
-\Rule{\sigma \succ \tau
-      \quad
-      \tau \equiv \upsilon}
-     {\sigma \succ \upsilon}
-$$
-
-\caption{Declarative rules for specialisation}
-\label{fig:specRules}
-\end{figure}
-
-
-
 \subsection{Term variables}
 
 Let $\V_\TM$ be some set of term variables and let $x$ range over $\V_\TM$.
@@ -1647,21 +1607,13 @@ t \hasscheme \letS{\alpha}{\tau}{\sigma}  &\mapsto
     \Sbind{\alpha \defn \tau}{t \hasscheme \sigma}
 \end{align*}
 
-We observe the sanity condition
-$\Gamma \entails x : \tau  \Rightarrow  \Gamma \entails \tau \type$.
+We observe the sanity conditions
+$\Gamma \entails x : \tau  \Rightarrow  \Gamma \entails \tau \type$
+and
+$\Gamma \entails x \hasscheme \sigma \Rightarrow \Gamma \entails \sigma \scheme$.
 
 \begin{figure}[ht]
 \boxrule{\Delta \entails t : \tau}
-
-$$
-\Rule{t : \tau
-      \quad
-      \tau \equiv \upsilon}
-     {t : \upsilon}
-\qquad
-\Rule{x \hasc \sigma  \quad  \sigma \spec \tau}
-     {x : \tau}
-$$
 
 $$
 \Rule{\Sbind{x \asc .\upsilon}{t : \tau}}
@@ -1683,6 +1635,11 @@ $$
       \Sbind{x \asc \sigma}{t : \tau}
      }
      {\letIn{x}{s}{t} : \tau}
+\qquad
+\Rule{t : \tau
+      \quad
+      \tau \equiv \upsilon}
+     {t : \upsilon}
 $$
 
 \caption{Declarative rules for type assignment}
@@ -1690,8 +1647,7 @@ $$
 \end{figure}
 
 
-How should we define $\sem{x \asc \sigma}_\TM$? One option is to interpret it
-as the scheme assignment $\{ x \hasscheme \sigma \}$,
+We define $\sem{x \asc \sigma}_\TM = x \hasscheme \sigma$,
 so $\Gamma \lei \Delta$ requires $\Delta$ to assign a term variable all the types
 that $\Gamma$ assigns it, but allows other types to be assigned as well.
 This is all that is required for information increase to correspond to
@@ -1707,14 +1663,10 @@ and a smaller relation where they cannot (but is still stable).}
 However, it is not be possible to assign principal types to terms under this
 relatively liberal notion of information increase. 
 We therefore define a sub-relation $\leiR$ of the information increase relation
-$\lei$, by taking 
-$\sem{x \asc \sigma}_\TM = \{ x \hasc \sigma \}$
-where $x \hasc \sigma$ is a new statement form that has no proof rules (other
-than \textsc{Lookup}). 
+$\lei$, by $\delta : \Gamma \leiR \Delta$ if $\delta : \Gamma \lei \Delta$ and
+$$x \asc \sigma \in \Gamma  ~\Rightarrow~  x \asc \delta\sigma \in \Delta.$$
 Thus, if $\Gamma \leiR \Delta$, then $\Delta$ assigns the same type schemes
 to term variables as $\Gamma$ does (modulo substitution).
-Observe that
-$$\delta : \Gamma \leiR \Delta  ~\Rightarrow~  \delta : \Gamma \lei \Delta.$$
 
 
 

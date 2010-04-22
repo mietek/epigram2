@@ -292,6 +292,44 @@ $$
 
 
 
+\subsection{Specialisation}
+
+The statement $\sigma \succ \tau$, defined in
+Figure~\ref{fig:specRules}, means that $\sigma$ has
+generic instance $\tau$ obtained by substituting types
+for the generic variables of $\sigma$.
+We observe the sanity condition
+$$\Gamma \entails \sigma \succ \tau
+    \Rightarrow  \Gamma \entails \sigma \scheme  \wedge  \tau \type.$$
+
+\begin{figure}[ht]
+\boxrule{\Delta \entails \sigma \spec \tau}
+
+$$
+\Rule{\tau \type}
+     {.\tau \spec \tau}
+\qquad
+\Rule{\upsilon \type
+      \quad
+      \subst{\upsilon}{\alpha}{\sigma} \spec \tau}
+     {\forall\alpha~\sigma \spec \tau}
+$$
+
+$$
+\Rule{\subst{\upsilon}{\alpha}{\sigma} \succ \tau}
+     {\letS{\alpha}{\upsilon}{\sigma} \succ \tau}
+\qquad
+\Rule{\sigma \succ \tau
+      \quad
+      \tau \equiv \upsilon}
+     {\sigma \succ \upsilon}
+$$
+
+\caption{Declarative rules for specialisation}
+\label{fig:specRules}
+\end{figure}
+
+
 
 %if False
 
