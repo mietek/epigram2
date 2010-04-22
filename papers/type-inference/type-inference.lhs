@@ -91,10 +91,10 @@
 \newcommand{\Term}{\ensuremath{\mathit{Term}}}
 \newcommand{\Scheme}{\ensuremath{\mathit{Scheme}}}
 
-\newcommand{\lei}{\ensuremath{\sqsubseteq}}
-\newcommand{\gei}{\ensuremath{\sqsupseteq}}
-\newcommand{\LEI}{\ensuremath{~\hat\sqsubseteq~}}
-\newcommand{\les}{\ensuremath{\leq}}
+\newcommand{\lei}{\ensuremath{\preceq}}
+\newcommand{\LEI}{\ensuremath{~\hat\lei~}}
+\newcommand{\leiR}{\ensuremath{\sqsubseteq}}
+\newcommand{\LEIR}{\ensuremath{~\hat\sqsubseteq~}}
 
 \newcommand{\arrow}{\ensuremath{\triangleright}}
 \newcommand{\defn}{\ensuremath{\!:=\!}}
@@ -103,15 +103,18 @@
 \newcommand{\hole}[1]{\ensuremath{#1 \!:= ?}}
 \newcommand{\contains}{\ensuremath{\ni}}
 
-\newcommand{\Judge}[3]{\ensuremath{#1 \preceq #3 \vdash #2}}
+\newcommand{\Judge}[3]{\ensuremath{#1 \lei #3 \vdash #2}}
+\newcommand{\JudgeR}[3]{\ensuremath{#1 \leiR #3 \vdash #2}}
 \newcommand{\Jmin}[3]{\ensuremath{#1 \LEI #3 \vdash #2}}
 \newcommand{\Junify}[4]{\Judge{#1}{#2 \equiv #3}{#4}}
 \newcommand{\Jinstantiate}[5]{\Judge{#1 ~||~ #4}{#2 \equiv #3}{#5}}
 \newcommand{\Jspec}[4]{\Judge{#1}{#2 \succ #3}{#4}}
-\newcommand{\Jtype}[4]{\Judge{#1}{#2 : #3}{#4}}
+\newcommand{\Jtype}[4]{\JudgeR{#1}{#2 : #3}{#4}}
 \newcommand{\Jhast}[5]{\Judge{#1}{#2 ~\hat:_{#3}~ #4}{#5}}
 
-\newcommand{\Prob}[3]{\ensuremath{#2 \,?_{#1}\, #3}}
+\newcommand{\JminR}[3]{\ensuremath{#1 \LEIR #3 \vdash #2}}
+
+\newcommand{\Prob}[3]{\ensuremath{#2 \,\leadsto_{#1}\, #3}}
 \newcommand{\Pinf}[2]{\Prob{I}{#1}{#2}}
 \newcommand{\Puni}[2]{\Prob{U}{#1 \equiv #2}{}}
 \newcommand{\Pspec}[2]{\Prob{S}{#1}{#2}}
@@ -1507,19 +1510,11 @@ $$
 
 \subsection{Term variables}
 
-\TODO{Cite \citet{wells_principal_typings_2002} on principal typings.
-There are two relations between contexts, one where type schemes can be
-generalised (which preserves stability but does not admit principal types),
-and a smaller relation where they cannot (but is still stable).}
-
 Let $\V_\TM$ be some set of term variables and let $x$ range over $\V_\TM$.
 Term variable declarations $\D_\TM$ are scheme assignments of the form
 $\asc \sigma$, with
 $\ok_\TM (\asc \sigma) = \sigma \scheme$.
 
-We define the statement $x \hasc \sigma$ and let
-$\sem{x \asc \sigma}_\TM = \{ x \hasc \sigma \}$.
-Thus the only way for a term to have a scheme is to be given it in the context.
 
 
 %if False
@@ -1671,6 +1666,33 @@ $$
 \end{figure}
 
 
+How should we define $\sem{x \asc \sigma}_\TM$? One option is to interpret it
+as the scheme assignment $\{ x \hasscheme \sigma \}$,
+so $\Gamma \lei \Delta$ requires $\Delta$ to assign a term variable all the types
+that $\Gamma$ assigns it, but allows other types to be assigned as well.
+This is all that is required for information increase to correspond to
+substitution on typing derivations, because every variable lookup can be
+simulated in the more general context.
+It allows arbitrary generalisation of the schemes assigned to term variables.
+
+\TODO{Cite \citet{wells_principal_typings_2002} on principal typings.
+There are two relations between contexts, one where type schemes can be
+generalised (which preserves stability but does not admit principal types),
+and a smaller relation where they cannot (but is still stable).}
+
+However, it is not be possible to assign principal types to terms under this
+relatively liberal notion of information increase. 
+We therefore define a sub-relation $\leiR$ of the information increase relation
+$\lei$, by taking 
+$\sem{x \asc \sigma}_\TM = \{ x \hasc \sigma \}$
+where $x \hasc \sigma$ is a new statement form that has no proof rules (other
+than \textsc{Lookup}). 
+Thus, if $\Gamma \leiR \Delta$, then $\Delta$ assigns the same type schemes
+to term variables as $\Gamma$ does (modulo substitution).
+Observe that
+$$\delta : \Gamma \leiR \Delta  ~\Rightarrow~  \delta : \Gamma \lei \Delta.$$
+
+
 
 As with unification, we wish to translate these declarative rules into an
 algorithm for type inference. We define the type inference problem $I$ by
@@ -1682,19 +1704,6 @@ algorithm for type inference. We define the type inference problem $I$ by
 \R{I}(\tau)(\upsilon) &= \tau \equiv \upsilon
 \end{align*}
 
-
-
-Instead of preventing any changes to the scheme assigned to a term variable,
-we could allow it to be arbitrarily generalised by defining
-$\sem{x \hasc \sigma}_\TM = \{ x \hasscheme \sigma \}.$
-We write $\Gamma \les \Delta$ for the more liberal relation between
-contexts induced by this definition.
-Observe that $\Gamma \lei \Delta  \Rightarrow  \Gamma \les \Delta$.
-We still have stability, because if
-$\Gamma \entails x : \tau$ and $\delta : \Gamma \les \Delta$  then
-$\Delta \entails x : \delta\tau$.
-However, it would not be possible to assign principal types to terms under this
-more liberal notion of information increase.
 
 
 
@@ -1903,10 +1912,23 @@ through with the new definition.
 %% Note that if $\delta : \Gamma \lei \Delta$ then
 %% $\delta||_{\Gamma \semidrop n} : \Gamma \semidrop n \lei \Delta \semidrop n$. 
 
+We refine the $\leiR$ relation in a corresponding way, and further insist for
+$\Gamma \leiR \Delta$ that $\Gamma$ and $\Delta$ have the same
+\define{shape} (list of $\fatsemi$ separators and term variable names).
+Formally, we require that $\forget{\Gamma} = \forget{\Delta}$, where
+$\forget{\cdot}$ is the forgetful map from contexts to shapes that discards
+type and scheme information:
+\begin{align*}
+\forget{\emptycontext}         &= \emptycontext  \\
+\forget{\Gamma, \alpha D}      &= \forget{\Gamma}  \\
+\forget{\Gamma, x \asc \sigma} &= \forget{\Gamma} , x  \\
+\forget{\Gamma \, \letGoal}      &= \forget{\Gamma} \, \letGoal
+\end{align*}
 
 \subsection{Fixing the unification algorithm}
 
-The only place where the change is nontrivial is in the unification algorithm,
+The only place where changing the $\lei$ relation requires extra work is in the
+unification algorithm,
 because it acts structurally over the context, so we need to specify what happens
 when it finds a $\fatsemi$ separator. It turns out that these can simply be
 ignored, so we add the following algorithmic rules:
@@ -1988,6 +2010,11 @@ so
 $\theta \eqsubst \zeta \compose \iota :
     \Gamma \fatsemi \Xi \lei \Theta \fatsemi \Phi$.
 \end{proof}
+
+
+Observe that the unification algorithm makes no changes to the shape of the
+input context, so the corresponding results hold for the more restrictive
+$\leiR$ relation.
 
 
 % \subsection{A new composite statement}
@@ -2176,7 +2203,7 @@ $$
 \begin{lemma}[Soundness and generality of type inference]
 \label{lem:inferSound}
 If $\Jtype{\Gamma}{t}{\tau}{\Delta}$, then
-$\iota : \Jmin{\Gamma}{\Pinf{t}{\tau}}{\Delta}$.
+$\iota : \JminR{\Gamma}{\Pinf{t}{\tau}}{\Delta}$.
 % \begin{enumerate}[(a)]
 % \item $\Gamma_1 \entails t : \tau$;
 % \item $\tyvars{\Gamma_0} \subseteq \tyvars{\Gamma_1}$; and
@@ -2194,6 +2221,22 @@ $\iota : \Jmin{\Gamma}{\Pinf{t}{\tau}}{\Delta}$.
 \begin{proof}
 By induction on the structure of derivations.
 \TODO{Need a bit more here.}
+
+Minimality for let.
+Suppose $\theta : \Gamma \lei \Theta$ and
+$\Theta \entails \letIn{x}{s}{w} : \tau'$.
+Then $\Theta \entails s \hasscheme \sigma$ for some scheme
+$\sigma = \gen{\Psi}{\tau_s}$, so
+$\Theta \fatsemi \Psi \entails s : \tau_s$.
+But $\theta : \Gamma \fatsemi \lei \Theta \fatsemi \Psi$, so
+by induction there is some
+$\zeta : \Delta_0 \fatsemi \Xi_0 \lei \Theta \fatsemi \Psi$
+such that
+$\theta \eqsubst \zeta \compose \iota$.
+
+Now $\zeta ||_{\Delta_0} : \Delta_0 \lei \Theta$, so
+$$\zeta ||_{\Delta_0} : \Delta_0, x \asc \gen{\Xi_0}{.\upsilon}
+    \lei \Theta, x \asc \zeta\gen{\Xi_0}{.\upsilon}.$$
 \end{proof}
 
 
@@ -2256,7 +2299,7 @@ appeals to the variable rule hold in the new context.
 
 
 \begin{lemma}[Completeness of type inference]
-If $\theta : \Gamma \lei \Theta$ and $\Theta \entails t : \tau$ then
+If $\theta : \Gamma \leiR \Theta$ and $\Theta \entails t : \tau$ then
 $\Jtype{\Gamma}{t}{\upsilon}{\Delta}$
 for some type $\upsilon$ and context $\Delta$.
 
@@ -2316,8 +2359,8 @@ $$\theta_0 ||_{\Delta_0} : \Delta_0, x \asc \gen{\Xi_0}{.\upsilon}
 % \TODO{by principality?}, and hence
 and
 $$\iota : \Theta, x \asc \gen{\Psi}{.\tau_s}
-    \les  \Theta, x \asc \theta_0\gen{\Xi_0}{.\upsilon}$$
-so by stability of type assignment under the $\les$ relation,
+    \lei  \Theta, x \asc \theta_0\gen{\Xi_0}{.\upsilon}$$
+so by stability of type assignment under the $\lei$ relation,
 $$\Theta, x \asc \theta_0\gen{\Xi_0}{.\upsilon} \entails w : \tau.$$
 
 % since if $\Theta, x \asc \sigma \entails x \hasc .\tau_x$ then
