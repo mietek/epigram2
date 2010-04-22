@@ -71,6 +71,7 @@
 \newcommand{\extend}{\ensuremath{\wedge}}
 \newcommand{\yields}{\ensuremath{\dashv}}
 \newcommand{\entails}{\ensuremath{\vdash}}
+\newcommand{\entailsN}{\ensuremath{\Vdash}}
 \newcommand{\var}{\ensuremath{\defn \_}}
 \newcommand{\type}{\ensuremath{~\mathbf{type}}}
 \newcommand{\scheme}{\ensuremath{~\mathbf{scheme}}}
@@ -346,8 +347,10 @@ $\Gamma, \Delta$ and $\Theta$ range over contexts.
 %% $\Xi$ is a context that contains no $\fatsemi$ separators.
 
 We will gradually construct a set $\Ss$ of statements, which can be
-judged in a context. We write the \define{judgment} $\Gamma \entails S$ to mean
-that the declarations in $\Gamma$ support the statement $S \in \Ss$.
+judged in a context. We write the \define{normal judgment} $\Gamma \entails S$
+to mean that the declarations in $\Gamma$ support the statement $S \in \Ss$.
+We write the \define{neutral judgment} $\Gamma \entailsN S$ to mean that $S$
+follows directly from applying a fact in $\Gamma$.
 
 It is not enough for contexts to be lists of declarations: they must be
 well-founded, that is, the declarations need to make sense.
@@ -389,16 +392,16 @@ This requires us to determine whether the type variables are in scope.
 More generally, each context entry makes some statements hold.
 
 We suppose that there is a map
-$\sem{\cdot}_K : \V_K \times \D_K \rightarrow \mathcal{P}(\Ss)$
-for each $K \in \K$, from declarations to sets of statements.
+$\sem{\cdot}_K : \V_K \times \D_K \rightarrow \Ss$
+for each $K \in \K$, from declarations to statements.
 % such that $$\Gamma \contains v D  \Rightarrow  \Gamma \entails \sem{v D}.$$
 (We typically omit the subscript when the sort is irrelevant or can be inferred.)
-The idea is that $\sem{v D}$ is the set of atomic statements that hold if the
-declaration $v D$ is in the context.
+The idea is that $\sem{v D}$ is the statement that holds by virtue of the
+declaration $v D$ in the context.
 The basic rule of our inference system is
 $$\name{Lookup}
-  \Rule{\Gamma \entails \valid   \quad  v D \in \Gamma  \quad  S  \in \sem{v D}}
-       {\Gamma \entails S}.$$
+  \Rule{\Gamma \entails \valid   \quad  v D \in \Gamma}
+       {\Gamma \entailsN \sem{v D}}.$$
 
 Applications of the \textsc{Lookup} rule are the \scare{variables} of
 derivations. 
@@ -406,8 +409,12 @@ Just as variable names are the atoms out of which compound expressions get built
 instances of \textsc{Lookup} are the axiom leaves out of which complex
 derivations of judgments are built. 
 
+Neutral judgments are embedded in normals by
+$$\Rule{\Gamma \entailsN S}
+       {\Gamma \entails S}.$$
+
 We define the statement $\tau \type$ by taking
-$\sem{\hole{\alpha}} = \{ \alpha \type \}$
+$\sem{\hole{\alpha}} = \alpha \type$
 together with the structural rule
 $$
 \Rule{\tau \type   \quad   \upsilon \type}
@@ -416,6 +423,25 @@ $$
 Note that we omit the context from rules if it is constant throughout.
 We observe the sanity condition
 $\Gamma \entails \tau \type  \Rightarrow  \Gamma \entails \valid$.
+
+
+\subsection{Conjunctions}
+
+If $S$ and $S'$ are statements, then we define the composite statement
+$S \wedge S'$ with introduction rule
+$$\Rule{S \quad S'}
+       {S \wedge S'}$$
+and neutral elimination rules
+$$\Rule{\Gamma \entailsN S \wedge S'}
+       {\Gamma \entailsN S}
+  \qquad
+  \Rule{\Gamma \entailsN S \wedge S'}
+       {\Gamma \entailsN S'}$$
+We add general introduction forms for composite statements, but supply
+eliminators only for composite hypotheses, in effect forcing derivations to be
+cut-free. This facilitates reasoning by induction on derivations. The general
+eliminators are in any case admissible rules.
+
 
 
 \subsection{Type variable declarations}
@@ -443,12 +469,8 @@ type variable declarations now induce a more interesting equational theory.
 If $\tau$ and $\upsilon$ are types, we define the equivalence statement
 $\tau \equiv \upsilon$ by making declarations yield equations:
 \begin{align*}
-%% \sem{\hole{\alpha}}_\TY &= \{ \alpha \type \}  \\
-\sem{\alpha \defn \tau}_\TY &= \{ \alpha \type, \alpha \equiv \tau \}
-%%%
-%%% \sem{\hole{\alpha}}_\TY &= \{ \alpha \type, \alpha \equiv \alpha \}  \\
-%%% \sem{\alpha \defn \tau}_\TY &= \{ \alpha \type, \alpha \equiv \alpha,
-%%%            \alpha \equiv \tau, \tau \equiv \alpha \}
+% \sem{\alpha \defn \tau}_\TY &= \{ \alpha \type, \alpha \equiv \tau \}
+\sem{\alpha \defn \tau}_\TY &= \alpha \type \wedge \alpha \equiv \tau
 \end{align*}
 and taking structural and equivalence closure by the rules in
 Figure~\ref{fig:equivRules}. We observe the sanity condition
@@ -720,19 +742,20 @@ by transitivity.
 
 \subsection{Composite statements}
 
-If $S$ and $S'$ are statements and $v D$ is a declaration, then we define the
-\define{composite} statements $S \wedge S'$ and $\Sbind{v D}{S}$ thus:
+If $S$ is a statement and $v D$ is a declaration, then we define the
+composite statement $\Sbind{v D}{S}$ with the introduction rule
 $$
-\Rule{S \quad S'}{S \wedge S'}
-\qquad
 \Rule{\Gamma \entails \ok_K D    \quad    \Gamma, v D \entails S}
      {\Gamma \entails \Sbind{v D}{S}}
 \side{v \in \V_K \setminus \V_K(\Gamma)}.
 $$
-We add general introduction forms for composite statements, but supply
-eliminators only for composite hypotheses, in effect forcing derivations to be
-cut-free. This facilitates reasoning by induction on derivations. The general
-eliminators are in any case admissible rules.
+and neutral elimination rule
+$$
+\Rule{\Gamma \entailsN \Sbind{v D}{S}
+      \quad
+      \Gamma \entails \subst{t}{x}{\sem{v D}}}
+     {\Gamma \entailsN \subst{t}{x}{S}}
+$$
 
 \begin{lemma}[Composition preserves stability]
 If $S$ and $S'$ are stable then $S \wedge S'$ is stable.
