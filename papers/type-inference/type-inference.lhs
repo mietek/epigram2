@@ -38,6 +38,7 @@
 %format beta   = "\beta"
 %format beta0
 %format beta1
+%format gamma  = "\gamma"
 %format _Gamma  = "\Gamma"
 %format _Gamma0
 %format _Gamma1
@@ -1445,6 +1446,7 @@ defined by
 \end{align*}
 We will usually be interested in the case $\sigma = .\tau$      for some type $\tau$.
 
+\TODO{What is the role played by this lemma? Where is it used (JHM)}
 \begin{lemma}
 \label{lem:generalise}
 If $\Gamma, \Xi \entails \sigma \scheme$ where $\Xi$ contains only type variable
