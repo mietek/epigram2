@@ -73,7 +73,7 @@
 \newcommand{\yields}{\ensuremath{\dashv}}
 \newcommand{\entails}{\ensuremath{\vdash}}
 \newcommand{\entailsN}{\ensuremath{\Vdash}}
-\newcommand{\var}{\ensuremath{\defn \_}}
+% \newcommand{\var}{\ensuremath{\defn \_}}
 \newcommand{\type}{\ensuremath{~\mathbf{type}}}
 \newcommand{\scheme}{\ensuremath{~\mathbf{scheme}}}
 \newcommand{\valid}{\ensuremath{\mathbf{valid}}}
@@ -91,7 +91,7 @@
 \newcommand{\FTV}[1]{\ensuremath{\mathit{FTV}(#1)}}
 \newcommand{\Type}{\ensuremath{\mathit{Type}}}
 \newcommand{\Term}{\ensuremath{\mathit{Term}}}
-\newcommand{\Scheme}{\ensuremath{\mathit{Scheme}}}
+% \newcommand{\Scheme}{\ensuremath{\mathit{Scheme}}}
 
 \newcommand{\lei}{\ensuremath{\preceq}}
 \newcommand{\LEI}{\ensuremath{~\hat\lei~}}
@@ -830,40 +830,40 @@ Formally, a \define{problem} $P$ consists of
 \item a relation map $\R{P}{\cdot}{\cdot} : \Out{P} \rightarrow \Out{P} \rightarrow \Ss$,
 \end{itemize}
 such that \In{P}\ and \Out{P}\ are closed under substitution and the maps
-respect substitution, for example, $\Pre{P}{\theta r} = \theta \Pre{P}{r}$.
-Moreover, for any context $\Gamma$, $a \in \In{P}$ and $b, c, d \in \Out{P}$
+respect substitution, for example, $\Pre{P}{\theta a} = \theta \Pre{P}{a}$.
+Moreover, for any context $\Gamma$, $a \in \In{P}$ and $r, s, t \in \Out{P}$
 such that
-\[\Gamma \entails \Pre{P}{a} \wedge \Post{P}{a}{b} \wedge \Post{P}{a}{c}
-         \wedge \Post{P}{a}{d}, \]
+\[\Gamma \entails \Pre{P}{a} \wedge \Post{P}{a}{r} \wedge \Post{P}{a}{s}
+         \wedge \Post{P}{a}{t}, \]
 we must have 
-\(\Gamma \entails \R{P}{b}{b}\) and
-\[\Gamma \entails \R{P}{b}{c} \wedge \R{P}{c}{d}
-    \Rightarrow \Gamma \entails \R{P}{b}{d}. \]
+\(\Gamma \entails \R{P}{r}{r}\) and
+\[\Gamma \entails \R{P}{r}{s} \wedge \R{P}{s}{t}
+    \Rightarrow \Gamma \entails \R{P}{r}{t}. \]
 
 We write angle brackets $\OutParam{\cdot}$ around the output parameters of a
 problem.
 
 The unification problem $U$ is given by
 \begin{align*}
-\In{U} &= \Type \times \Type  \\
-\Out{U} &= 1  \\
-\Pre{U}{\tau, \upsilon} &= \tau \type \wedge \upsilon \type  \\
-\Post{U}{\tau, \upsilon}{\_} &= \tau \equiv \upsilon  \\
-\R{U}{\_}{\_} &= \valid
+\In{U}                        &= \Type \times \Type  \\
+\Out{U}                       &= \{ 1 \}  \\
+\Pre{U}{\tau, \upsilon}       &= \tau \type \wedge \upsilon \type  \\
+\Post{U}{\tau, \upsilon}{\_}  &= \tau \equiv \upsilon  \\
+\R{U}{\_}{\_}                 &= \valid
 \end{align*}
 
 A \define{$P$-instance for a context $\Gamma$} is $a \in \In{P}$ such that
 $\Gamma \entails \Pre{P}{a}$. The problem instance $a$ has \define{solution}
-$(b, \delta, \Delta)$ if $b \in \Out{P}$ and $\delta : \Gamma \lei \Delta$
-such that $\Delta \entails \Post{P}{\delta a}{b}$. (Observe that
+$(r, \delta, \Delta)$ if $r \in \Out{P}$ and $\delta : \Gamma \lei \Delta$
+such that $\Delta \entails \Post{P}{\delta a}{r}$. (Observe that
 $\Delta \entails \Pre{P}{\delta a}$ by stability.)
 
-The solution $(b, \delta, \Delta)$ is \define{minimal} if for any solution
-$(c, \theta, \Theta)$ there exists $\zeta : \Delta \lei \Theta$ such that
-$\theta \eqsubst \zeta \compose \delta$ and $\Theta \entails \R{P}{\zeta b}{c}$.
+The solution $(r, \delta, \Delta)$ is \define{minimal} if for any solution
+$(s, \theta, \Theta)$ there exists $\zeta : \Delta \lei \Theta$ such that
+$\theta \eqsubst \zeta \compose \delta$ and $\Theta \entails \R{P}{\zeta r}{s}$.
  
-We write $\delta : \Jmin{\Gamma}{\Prob{P}{a}{b}}{\Delta}$ to mean that
-$(b, \delta, \Delta)$ is a minimal solution of the $P$-instance $a$.
+We write $\delta : \Jmin{\Gamma}{\Prob{P}{a}{r}}{\Delta}$ to mean that
+$(r, \delta, \Delta)$ is a minimal solution of the $P$-instance $r$.
 
 \TODO{Define what it means for a rule system to be algorithmic.}
 
@@ -875,8 +875,8 @@ If $P$ and $Q$ are problems, then $P \wedge Q$ is a problem with
 \In{P \wedge Q}                 &= \In{P} \times \In{Q}  \\
 \Out{P \wedge Q}                &= \Out{P} \times \Out{Q}  \\
 \Pre{P \wedge Q}{a, b}          &= \Pre{P}{a} \wedge \Pre{Q}{b}  \\
-\Post{P \wedge Q}{a, b}{c, d}   &= \Post{P}{a}{c} \wedge \Post{Q}{b}{d}  \\
-\R{P \wedge Q}{a, b}{c, d}      &= \R{P}{a}{c} \wedge \R{Q}{b}{d}  \\
+\Post{P \wedge Q}{a, b}{r, s}   &= \Post{P}{a}{r} \wedge \Post{Q}{b}{s}  \\
+\R{P \wedge Q}{r, s}{t, u}      &= \R{P}{r}{t} \wedge \R{Q}{s}{u}  \\
 \end{align*}
 
 The point of all this machinery is to be able to state and prove the following 
@@ -886,39 +886,40 @@ extending it to solve the second.
 
 \begin{lemma}[The Optimist's Lemma]
 The following inference rule is admissible:
-$$\Rule{\gamma_1 : \Jmin{\Gamma_0}{\Prob{P}{a}{r}}{\Gamma_1}
-       \quad  \gamma_2 : \Jmin{\Gamma_1}{\Prob{Q}{b}{s}}{\Gamma_2}}
-       {\gamma_2 \compose \gamma_1 :
-         \Jmin{\Gamma_0}{\Prob{P \wedge Q}{a, b}{\gamma_2 r, s}}{\Gamma_2}}.$$
+$$\Rule{\delta : \Jmin{\Gamma}{\Prob{P}{a}{r}}{\Delta}
+       \quad  \theta : \Jmin{\Delta}{\Prob{Q}{b}{s}}{\Theta}}
+       {\theta \compose \delta :
+         \Jmin{\Gamma}{\Prob{P \wedge Q}{a, b}{\theta r, s}}{\Theta}}.$$
 \end{lemma}
 
 \TODO{Make the proof prettier, perhaps using a diagram.}
 
 \begin{proof}
-We have that $\gamma_2 \compose \gamma_1 : \Gamma_0 \lei \Gamma_2$ by 
+We have that $\theta \compose \delta : \Gamma \lei \Theta$ by 
 Lemma~\ref{lei:preorder}. 
 
-To show $\Gamma_2 \entails \Prob{P \wedge Q}{a, b}{\gamma_2 r, s}$, it
-suffices to show $\Gamma_2 \entails \Prob{P}{a}{\gamma_2 r}$ and
-$\Gamma_2 \entails \Prob{Q}{b}{s}$. The latter holds by assumption. For the
-former, note that $\Gamma_1 \entails \Prob{P}{a}{r}$ and hence
-$\Gamma_2 \entails \gamma_2 (\Prob{P}{a}{r})$ by stability of $\Prob{P}{a}{r}$.
-But $\gamma_2 (\Prob{P}{a}{r}) = \Prob{P}{a}{\gamma_2 r}$ by definition, so we are done.
+To show $\Theta \entails \Prob{P \wedge Q}{a, b}{\theta r, s}$, it
+suffices to show $\Theta \entails \Prob{P}{a}{\theta r}$ and
+$\Theta \entails \Prob{Q}{b}{s}$. The latter holds by assumption. For the
+former, note that $\Delta \entails \Prob{P}{a}{r}$ and hence
+$\Theta \entails \theta (\Prob{P}{a}{r})$ by stability of $\Prob{P}{a}{r}$.
+But $\theta (\Prob{P}{a}{r}) = \Prob{P}{a}{\theta r}$ by definition, so we are done.
 
-Finally, suppose there is some $\theta : \Gamma_0 \lei \Theta$ such that
-$\Theta \entails \Prob{P \wedge Q}{a, b}{r', s'}$, so
-$\Theta \entails \Prob{P}{a}{r'}$ and
-$\Theta \entails \Prob{Q}{b}{s'}$.
-Since $\gamma_1 : \Jmin{\Gamma_0}{\Prob{P}{a}{r}}{\Gamma_1}$, there exists
-$\zeta_1 : \Gamma_1 \lei \Theta$ such that
-$\theta \eqsubst \zeta_1 \compose \gamma_1$
-and $\Theta \entails \R{P}{\zeta_1 r}{r'}$.
-But then $\gamma_2 : \Jmin{\Gamma_1}{\Prob{Q}{b}{s}}{\Gamma_2}$, so there exists
-$\zeta_2 : \Gamma_2 \lei \Theta$ such that
-$\zeta_1 \eqsubst \zeta_2 \compose \gamma_2$
-and $\Theta \entails \R{Q}{\zeta_2 s}{s'}$.
-Hence $\theta \eqsubst \zeta_2 \compose (\gamma_2 \compose \gamma_1)$
-and $\Theta \entails \R{P \wedge Q}{\zeta_2 (\gamma_2 r), \zeta_2 s}{r', s'}$.
+Finally, suppose there is some substitution $\theta : \Gamma \lei \Theta$ 
+and outputs $t, u$ such that
+$\Theta \entails \Prob{P \wedge Q}{a, b}{t, u}$, so
+$\Theta \entails \Prob{P}{a}{t}$ and
+$\Theta \entails \Prob{Q}{b}{u}$.
+Since $\delta : \Jmin{\Gamma}{\Prob{P}{a}{r}}{\Delta}$, there exists
+$\zeta_1 : \Delta \lei \Theta$ such that
+$\theta \eqsubst \zeta_1 \compose \delta$
+and $\Theta \entails \R{P}{\zeta_1 r}{t}$.
+But then $\theta : \Jmin{\Delta}{\Prob{Q}{b}{s}}{\Theta}$, so there exists
+$\zeta_2 : \Theta \lei \Theta$ such that
+$\zeta_1 \eqsubst \zeta_2 \compose \theta$
+and $\Theta \entails \R{Q}{\zeta_2 s}{u}$.
+Hence $\theta \eqsubst \zeta_2 \compose (\theta \compose \delta)$
+and $\Theta \entails \R{P \wedge Q}{\zeta_2 (\theta r), \zeta_2 s}{t, u}$.
 \end{proof}
 
 This sequential approach to problem solving is not the only decomposition
@@ -1013,8 +1014,8 @@ problem being solved, and hence can be ignored.
 We define the orthogonality relation $v D \perp X$ (the set of type variables $X$
 does not depend on the declaration $v D$) thus:
 \begin{align*}
-\delta \defn \_ \perp X
-    &\mathrm{~if~} \delta \notin X  \\
+\alpha D \perp X
+    &\mathrm{~if~} \alpha \in \V_\TY \setminus X  \\
 v D \perp X
     &\mathrm{~if~} v \in \V_K, D \in \D_K \mathrm{~for~} K \neq \TY
 \end{align*}
@@ -1132,7 +1133,7 @@ $$
 
 
 Observe that we have no rule for the case
-$$\Jinstantiate{\Gamma_0, \alpha \defn \_}{\alpha}{\tau}{\Xi}{\Delta}
+$$\Jinstantiate{\Gamma_0, \alpha D}{\alpha}{\tau}{\Xi}{\Delta}
 \mathrm{~with~} \alpha \in \FTV{\tau, \Xi}$$
 so the algorithm fails if this situation arises. This is essentially an occur
 check failure: $\alpha$ and $\tau$ cannot be unified if $\alpha$ occurs in
