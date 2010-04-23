@@ -352,7 +352,8 @@ where $\alpha$ ranges over some set of type variables $\V_\TY$.
 For simplicity, we only consider one type constructor.
 In the sequel, $\alpha$ and $\beta$ are type variables and $\tau$ and $\upsilon$
 are types.
-We write $\Type$ for the set of types.
+%%%We write $\Type$ for the set of types. 
+   Let $\Type$ be the set of types.
 %% (All of these symbols may be primed or subscripted.)
 %% We use $\Xi$ to denote a context suffix containing only type variable declarations.
 
@@ -383,7 +384,8 @@ For simplicity, we use integers as names in the implementation.
 > type Type    = Ty TyName
 
 
-We can implement $\mathit{FTV}$ using a typeclass, with membership function
+We %%%can 
+implement $\mathit{FTV}$ via a typeclass with membership function
 |(<?)|. We get most of the required instances for free using |Foldable|.
 
 > class FTV a where
@@ -729,7 +731,7 @@ recursive hypotheses occur in strictly positive positions, so they are stable
 by induction. Applying this strategy shows that the statements $\tau \type$
 and $\tau \equiv \upsilon$ are stable.
 
-
+%%%\TODO{Suggest here that 'gamma's be 'delta's}
 \begin{lemma}\label{lei:preorder}
 If $\sem{v D}$ is stable for every declaration $v D$, then
 the $\lei$ relation is a preorder, with reflexivity demonstrated by
