@@ -782,13 +782,12 @@ $$
 $$
 and neutral elimination rule
 $$
-\Rule{\Gamma \entailsN \Sbind{v D}{S}
+\Rule{\Gamma \entailsN \Sbind{\alpha D}{S}
       \quad
-      \Gamma \entails \subst{t}{x}{\sem{v D}}}
-     {\Gamma \entailsN \subst{t}{x}{S}}
+      \Gamma \entails \subst{\tau}{\alpha}{\sem{\alpha D}}}
+     {\Gamma \entailsN \subst{\tau}{\alpha}{S}}
+\side{D \in \D_\TY}
 $$
-\TODO{We have not defined substitution for arbitrary variable sorts.
-Should we do so or restrict the elimination rule?} 
 
 \begin{lemma}[Composition preserves stability]
 If $S$ and $S'$ are stable then $S \wedge S'$ is stable.
@@ -797,19 +796,21 @@ $\Sbind{v D}{S}$ is stable.
 \end{lemma}
 \begin{proof}
 Suppose $\delta : \Gamma \lei \Delta$, the statements $S$ and $S'$ are stable
-and $\Gamma \entails (S \wedge S')$. If the proof is by \textsc{Lookup},
+and $\Gamma \entails (S \wedge S')$. If the proof is by \textsc{Lookup}
 then $\Delta \entails \delta (S \wedge S')$ by definition of information
 increase. Otherwise $\Gamma \entails S$ and $\Gamma \entails S'$,
 so by stability, $\Delta \entails \delta S$ and $\Delta \entails \delta S'$, so
 $\Delta \entails \delta (S \wedge S')$.
 
-Suppose $S$ is stable, $\Gamma \entails \Sbind{v D}{S}$ and
-$\delta : \Gamma \lei \Delta$. Then $\Gamma \entails \ok_K D$ and
+Suppose $\delta : \Gamma \lei \Delta$, the statement $S$ is stable and
+$\Gamma \entails \Sbind{v D}{S}$.  If the proof is by \textsc{Lookup}
+then $\Delta \entails \delta S$ by definition of information increase.
+Otherwise, $\Gamma \entails \ok_K D$ and
 $\Gamma, v D \entails S$, so by stability, $\Delta \entails \delta \ok_K D$.
-Let $\delta' = \subst{v}{v}{\delta}$, then
-$\delta' : \Gamma, v D \lei \Delta, v (\delta D)$
-so by stability of $S$ we have $\Delta, v (\delta D) \entails \delta' S$.
-Hence $\Delta \entails \Sbind{v (\delta D)}{\delta' S}$
+% Let $\delta' = \subst{v}{v}{\delta}$, then
+Now $\delta : \Gamma, v D \lei \Delta, v (\delta D)$
+so by stability of $S$ we have $\Delta, v (\delta D) \entails \delta S$.
+Hence $\Delta \entails \Sbind{v (\delta D)}{\delta S}$
 and so $\Delta \entails \delta \Sbind{v D}{S}$.
 \TODO{We should at least mention freshness here.}
 \end{proof}
