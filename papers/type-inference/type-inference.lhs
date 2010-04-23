@@ -2333,9 +2333,10 @@ suffices to show $\Theta \entails \Prob{P}{a}{\theta r}$ and
 $\Theta \entails \Prob{Q}{b}{s}$. The latter holds by assumption. For the
 former, note that $\Delta \entails \Prob{P}{a}{r}$ and hence
 $\Theta \entails \theta (\Prob{P}{a}{r})$ by stability of $\Prob{P}{a}{r}$.
-But $\theta (\Prob{P}{a}{r}) = \Prob{P}{a}{\theta r}$ by definition, so we are done.
+But $\theta (\Prob{P}{a}{r}) = \Prob{P}{a}{\theta r}$ by definition%%%, so we are done
+.
 
-Finally, suppose there is some substitution $\theta : \Gamma \lei \Theta$ 
+Finally, suppose there is some $\theta : \Gamma \lei \Theta$ 
 and outputs $t, u$ such that
 $\Theta \entails \Prob{P \wedge Q}{a, b}{t, u}$, so
 $\Theta \entails \Prob{P}{a}{t}$ and
@@ -2405,12 +2406,12 @@ not a variable. The conditions for part (b) hold, so by induction,
 $\Jinstantiate{\Gamma}{\alpha}{\tau}{\emptycontext}{\Delta}$
 and the \textsc{Solve} rule applies.
 
-\item Otherwise, we must have $\tau = \tau_0 \arrow \tau_1$ and
+\item Otherwise, we have $\tau = \tau_0 \arrow \tau_1$ and
 $\upsilon = \upsilon_0 \arrow \upsilon_1$.
 Then $\Theta \entails \theta\tau_0 \equiv \theta\upsilon_0$ and
 $\Theta \entails \theta\tau_1 \equiv \theta\upsilon_1$,
 so by induction there exist contexts
-$\Delta_0$ and $\Delta$ such that
+$\Delta_0, \Delta$ such that
 $\Junify{\Gamma}{\tau_0}{\upsilon_0}{\Delta_0}$ and
 $\Junify{\Delta_0}{\tau_1}{\upsilon_1}{\Delta}$.
 %, with $\theta : \Gamma \lei \Delta$ and $\theta : \Gamma_1 \lei \Delta$.
@@ -2422,7 +2423,7 @@ $\theta : \Delta \lei \Theta$ by the Optimist's lemma.
 
 \item  Let $\Gamma = \Gamma_0, v D$.
 \begin{enumerate}[(i)]
-\item If $v = \alpha$ and $\alpha \in \FTV{\tau, \Xi}$, then there is some
+\item If $v = \alpha \in \FTV{\tau, \Xi}$, then there is some
 non-variable type $\chi$ such that
 $\Theta \entails \theta\alpha \equiv \theta\chi$
 and $\alpha \in \FTV{\chi}$.
