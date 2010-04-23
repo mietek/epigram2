@@ -189,7 +189,7 @@
 \copyrightyear{2010} 
 \copyrightdata{[to be supplied]} 
 
-\titlebanner{DRAFT}
+\titlebanner{\NotForPublication{DRAFT}}
 
 \title{Type inference in context}
 \authorinfo{Adam Gundry \and Conor McBride}
@@ -223,6 +223,9 @@ In particular, the generalisation step
 %%%(required when 
 (for 
  inferring the type of a let-expression) becomes straightforward.
+
+This paper is literate Haskell, and the full source code is available at
+\footnotesize\verb!http://personal.cis.strath.ac.uk/~adam/type-inference/!.
 
 
 \subsection{Motivating Context}
