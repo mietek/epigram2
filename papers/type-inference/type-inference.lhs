@@ -211,9 +211,12 @@
 
 Algorithm \W%%%, also known as the Damas-Milner algorithm, 
     \ is a well-known type inference algorithm, 
-    based on the Unification Algorithm of \citet{robinson_machine-oriented_1965}, 
-for the Hindley-Milner type system due to \citet{milner_theory_1978}, 
-and proved correct by \citet{damas_principal_1982}.
+    based on \citeauthor{robinson_machine-oriented_1965}'s 
+    Unification Algorithm \citeyearpar{robinson_machine-oriented_1965}, 
+for the Hindley-Milner type system \citep{milner_theory_1978}, 
+%%%and proved correct 
+   verified 
+by \citet{damas_principal_1982}.
 %%%It is 
 
 Successive presentations and formalisations of Algorithm \W\ have treated the
@@ -304,8 +307,12 @@ any definition or declaration must be in terms of variables earlier in
 the context, as in dependent type theories. We obtain most general
 unifiers and principal types \emph{just} by keeping entries as far to
 the right as possible, moving them left only when necessary to satisfy
-a constraint. This idea of imposing order restrictions on the entries
-of a context is similar to the \emph{ordered hypotheses} of deduction
+a constraint. 
+%%%This idea of imposing order restrictions on 
+   Imposing order restrictions on 
+%%%the entries of a context 
+   context entries 
+is similar to the \emph{ordered hypotheses} of deduction
 systems for non-commutative logic \citep{polakow_natural_1999}.
 
 In contrast to other presentations of unification and Hindley-Milner type
@@ -313,7 +320,7 @@ inference, our algorithm uses explicit definitions to avoid the need for a
 substitution operation.
   %%% It thus lends itself to efficient implementation.
   %%% conor: hostage to fortune?
-(We do use substitution in our reasoning about the system.) Many implementations
+(We do use substitution in reasoning about the system.) Many implementations
 of (variations on) the Robinson unification algorithm are incorrect because they
 do not handle substitutions correctly \citep{norvig_correctingwidespread_1991}.
 
@@ -445,10 +452,10 @@ to mean that the declarations in $\Gamma$ support the statement $S \in
 mean that $S$ follows directly from applying a fact in $\Gamma$.
 Neutral judgments capture exactly the legitimate appeals to assumptions
 in the context, just the way `neutral terms' in $\lambda$-calculus are
-applied variables. We embed neutral into normal.
+applied variables. We embed neutral into normal: 
 $$\name{Neutral}
   \Rule{\Gamma \entailsN S}
-       {\Gamma \entails S}.$$
+       {\Gamma \entails S}$$
 
 It is not enough for contexts to be lists of declarations: they must
 be well-founded, that is, each declaration should make sense in
@@ -483,8 +490,8 @@ That is, declaring our ignorance is always reasonable.
 \subsection{Making types meaningful}
 
 Now we can ask whether a type is meaningful with respect to a context.
-This requires us to determine whether the type variables are in scope.
-More generally, each context entry makes some statements hold.
+This requires us to determine whether a type variable is in scope.
+In general, each context entry forces some statement to hold.
 
 We suppose that there is a map
 $\sem{\cdot}_K : \V_K \times \D_K \rightarrow \Ss$
@@ -499,10 +506,12 @@ $$\name{Lookup}
        {\Gamma \entailsN \sem{v D}}.$$
 
 As promised, uses of \textsc{Lookup} act as \scare{variables} in
-derivations.  Our $\sem{\cdot}_K$ associates an `expression atom'
-with its `derivation atom'. This is the only rule which interrogates
-the context, hence we propose the bold step of dropping the
-shared context from the presentation of all the other rules.
+derivations.  Our $\sem{\cdot}_K$ associates to an `expression atom'
+its `derivation atom'. This is the only rule which interrogates
+the context, hence we propose 
+%%%the bold step of 
+dropping the
+shared context from the presentation of all other rules.
 
 We define the statement $\tau \type$ by taking
 $\sem{\hole{\alpha}} = \alpha \type$
@@ -644,7 +653,7 @@ context), defined as follows:
 > type Contextual  = StateT (TyName, Context) Maybe
 
 The |TyName| component is the next fresh type variable name to use;
-it is an implementation detail that is not mentioned in the typing rules. 
+it is an implementation detail not mentioned in the typing rules. 
 % > freshen :: TyName -> Context -> TyName
 % > freshen alpha _Gamma = succ alpha
 The |fresh| function generates a fresh variable name and appends a declaration
@@ -805,7 +814,7 @@ $$
 \side{D \in \D_\TY}
 $$
 
-\begin{lemma}[Composition preserves stability]
+\begin{lemma}[Composition preserves stability]\label{lem:stab-pres}
 If $S$ and $S'$ are stable then $S \wedge S'$ is stable.
 If $v D$ is a declaration and both $\ok_K D$ and $S$ are stable, then
 $\Sbind{v D}{S}$ is stable.
@@ -831,9 +840,11 @@ and so $\Delta \entails \delta \Sbind{v D}{S}$.
 \TODO{We should at least mention freshness here.}
 \end{proof}
 
-Thanks to this lemma and the preceding results, every statement we have
-introduced so far is stable. We will ensure that all statements in $\Ss$ are
-stable, so we can make use of stability without qualification in the sequel.
+Thanks to Lemma~\ref{lem:stab-pres} and 
+%%%preceding results, 
+   the foregoing, 
+every statement we have
+introduced so far is stable. We will ensure stability for all statements in $\Ss$, so we can exploit it without qualification in the sequel.
 
 
 
@@ -844,8 +855,9 @@ stable, so we can make use of stability without qualification in the sequel.
 A problem represents a statement we wish to make hold by increasing information
 in the context. More generally, it is a statement with distinguished output
 positions for which we wish to find a witness in a more informative context.
-Unification is an example of the first kind of problem and type inference an
-example of the second.
+Unification is an example of the first kind of problem and type inference 
+%%%an example of 
+the second.
 
 We are interested in creating algorithms to solve problems, preferably in as
 general a way as possible (that is, by making the smallest information increase
@@ -855,7 +867,9 @@ inference.
 
 \TODO{Set of well-posed questions, category of answers.
 Make the categorical structure clearer.}
-Formally, a \define{problem} $P$ consists of
+%%%Formally, a \define{problem} $P$ consists of
+   Distinguishing output positions with angle brackets $\OutParam{\cdot}$, 
+   formally, a \define{problem} $P$ consists of 
 \begin{itemize}
 \item sets \In{P}\ and \Out{P}\ of input and output parameters,
 \item a precondition map $\Pre{P}{\cdot} : \In{P} \rightarrow \Ss$,
@@ -864,7 +878,7 @@ Formally, a \define{problem} $P$ consists of
 \end{itemize}
 such that \In{P}\ and \Out{P}\ are closed under substitution and the maps
 respect substitution, for example, $\Pre{P}{\theta a} = \theta \Pre{P}{a}$.
-Moreover, for any context $\Gamma$, $a \in \In{P}$ and $r, s, t \in \Out{P}$
+Moreover, for any $\Gamma$, $a \in \In{P}$ and $r, s, t \in \Out{P}$
 such that
 \[\Gamma \entails \Pre{P}{a} \wedge \Post{P}{a}{r} \wedge \Post{P}{a}{s}
          \wedge \Post{P}{a}{t}, \]
@@ -873,8 +887,7 @@ we must have
 \[\Gamma \entails \R{P}{r}{s} \wedge \R{P}{s}{t}
     \Rightarrow \Gamma \entails \R{P}{r}{t}. \]
 
-We write angle brackets $\OutParam{\cdot}$ around the output parameters of a
-problem.
+%%%We write angle brackets $\OutParam{\cdot}$ around the output parameters of a problem.
 
 The unification problem $U$ is given by
 \begin{align*}
@@ -1601,11 +1614,14 @@ so the (finally) complete data type of context entries is:
 
 > data Entry = TY TyEntry | TM TmEntry | LetGoal
 
-We also need to refine the $\lei$ relation.
+We also 
+%%%need to 
+refine the $\lei$ relation.
 Let $\semidrop$ be the partial function from contexts and natural numbers to
-contexts that takes $\Gamma \semidrop n$ to $\Gamma$ truncated after $n$
-$\fatsemi$ separators, provided $\Gamma$ contains at least $n$ of them. It is
-defined by
+contexts taking $\Gamma \semidrop n$ to $\Gamma$ truncated after $n$
+$\fatsemi$ separators, provided $\Gamma$ contains at least $n$ 
+%%%of them. It is defined by
+   such: 
 \begin{align*}
 \Xi \semidrop 0 &= \Xi  \\
 \Xi \fatsemi \Gamma \semidrop 0 &= \Xi  \\
@@ -1807,24 +1823,29 @@ $$
      }
      {\Pinf{\letIn{x}{s}{w}}{\tau}}.
 $$
-Writing $\sigma = \gen{\Xi}{\upsilon}$ and expanding the definition of
+Writing $\sigma = \gen{\Xi}{.\upsilon}$ and expanding the definition of
 $\hasscheme$, we obtain
 $$
 \Rule{
       \Sbind{\Xi}{s : \upsilon}
       \quad
-      \Sbind{x \asc \gen{\Xi}{\upsilon}}{w : \tau}
+      \Sbind{x \asc \gen{\Xi}{.\upsilon}}{w : \tau}
      }
      {\Pinf{\letIn{x}{s}{w}}{\tau}}.
 $$
 where we let $\Sbind{\emptycontext}{S} = S$ and
-$\Sbind{\Xi, v D}{S} = \Sbind{\Xi}{\Sbind{v D}{S}}$.
+$\Sbind{(\Xi, v D)}{S} = \Sbind{\Xi}{\Sbind{v D}{S}}$.
 
 
 But how can we find $\Xi$?
-This is where the $\fatsemi$ context separator becomes necessary. Instead of an
-unknown list of type variables, we simply add a $\fatsemi$ to the context, 
-infer the type of $s$, then generalise its type by \scare{skimming off} the type
+This is where 
+   we use 
+the $\fatsemi$ separator.  
+%%%becomes necessary. 
+Instead of an
+unknown list of type variables, we just add a $\fatsemi$ to the context, 
+infer the type of $s$, then generalise its type 
+by \scare{skimming off} type
 variables from the top of the context until the $\fatsemi$ is reached.
 
 
@@ -1832,8 +1853,8 @@ We define the type inference assertion $\Jtype{\Gamma}{t}{\tau}{\Delta}$
 % (inferring the type of $t$ in $\Gamma_0$ yields $\tau$ in the more informative
 % context $\Gamma_1$)
 by the rules in Figure~\ref{fig:inferRules}.
-These rules are clearly structural on terms, so they give a terminating
-algorithm, and they lead naturally to an implementation, given in
+These rules are clearly structural on terms, so yield a terminating
+algorithm, leading naturally to an implementation, given in
 subsection~\ref{sec:inferImplementation}.
 
 %%%\TODO{Say something about freshness of $\Xi$ in \textsc{Var} rule.}
@@ -1846,7 +1867,7 @@ output \ensuremath{\Gamma, \Xi} is well-formed.
 
 $$
 \name{Var}
-\Rule{x \asc \gen{\Xi}{\upsilon} \in \Gamma}
+\Rule{x \asc \gen{\Xi}{.\upsilon} \in \Gamma}
      {\Jtype{\Gamma}{x}{\upsilon}{\Gamma, \Xi}}
 $$
 
@@ -1913,7 +1934,7 @@ for some type $\upsilon$ and context $\Delta$.
 \begin{proof}[Sketch]
 The algorithm is structurally recursive over terms, failing only when
 unification fails. Each step locally preserves all possible solutions.
-For let-expressions, we observe that any type specialising any scheme
+For let-expressions, observe that any type specialising any scheme
 for $s$ must certainly specialise the type we infer for $s$, and
 \emph{ipso facto}, the principal type scheme we assign to $x$.
 For details, see appendix.
@@ -1941,8 +1962,10 @@ and specialise this scheme with fresh variables.
 >     find B0                             = fail "Missing variable"
 
 To infer the type of a $\lambda$-abstraction, we recursively infer the type of
-its body $w$ with its variable $x$ assigned type-scheme $.\alpha$, 
-with $\alpha$ a fresh type variable.
+its body $w$ with variable $x$ assigned type-scheme $.\alpha$, 
+with $\alpha$ 
+%%%a fresh type variable. 
+   fresh. 
 % The type is then $\alpha \arrow \upsilon$ in the context with
 % the $x$ binding removed.
 
@@ -1965,9 +1988,11 @@ result.
 >     return (V beta)
 
 
-Finally, to infer the type of a let construct,
-we infer the type of the definiens $s$ and generalise over type variables on
-top of the context to produce a scheme $\sigma$.
+Finally, to infer the type of a let construct, 
+we infer the type of the definiens $s$ and generalise  
+%%%over type variables on top of the context 
+   it 
+to yield a scheme $\sigma$.
 We then infer the type of the body $w$ in the context where $x \asc \sigma$.
 
 > infer (Let x s w) = do
@@ -1975,8 +2000,8 @@ We then infer the type of the body $w$ in the context where $x \asc \sigma$.
 >     x ::: sigma >- infer w
 
 
-The |generaliseOver| operator appends a |LetGoal| marker to the context,
-evalutes its argument, then generalises over the type variables
+The |generaliseOver| operator adds a |LetGoal| to the context,
+evaluates its argument, then generalises over type variables
 to the right of the |LetGoal| marker.
 
 > generaliseOver ::  Contextual Type -> Contextual Scheme
