@@ -38,7 +38,6 @@
 %format beta   = "\beta"
 %format beta0
 %format beta1
-%format gamma  = "\gamma"
 %format _Gamma  = "\Gamma"
 %format _Gamma0
 %format _Gamma1
@@ -621,8 +620,8 @@ The |fresh| function generates a fresh variable name and appends a declaration
 to the context.
 
 > fresh :: TyDecl -> Contextual TyName
-> fresh mt = do  (beta, _Gamma) <- get
->                put (freshen beta _Gamma, _Gamma :< TY (beta := mt))
+> fresh d = do   (beta, _Gamma) <- get
+>                put (freshen beta _Gamma, _Gamma :< TY (beta := d))
 >                return beta
 
 The |getContext|, |putContext| and |modifyContext| functions
@@ -655,6 +654,10 @@ Let $\Gamma$ and $\Delta$ be contexts.
 A \define{substitution from $\Gamma$ to $\Delta$} is a map from
 $\tyvars{\Gamma}$ to $\{ \tau ~||~ \Delta \entails \tau \type \}$.
 Substitutions apply to types and statements in the obvious way.
+Composition of substitutions is given by
+$(\theta \compose \delta) (\alpha) = \theta (\delta \alpha)$.
+We write $\subst{\tau}{\alpha}{}$ for the substitution that maps
+$\alpha$ to $\tau$ and other variables to themselves.
 
 We write $\delta : \Gamma \lei \Delta$ and say
 \define{$\Delta$ is more informative than $\Gamma$} if $\delta$ is a
@@ -714,18 +717,19 @@ and $\tau \equiv \upsilon$ are stable.
 \begin{lemma}\label{lei:preorder}
 If $\sem{v D}$ is stable for every declaration $v D$, then
 the $\lei$ relation is a preorder, with reflexivity demonstrated by
-$\iota : \Gamma \lei \Gamma : v \mapsto v$, and transitivity by
-$$\gamma_1 : \Gamma_0 \lei \Gamma_1  ~~\text{and}~~  \gamma_2 : \Gamma_1 \lei \Gamma_2
-  \quad \Rightarrow \quad  \gamma_2 \compose \gamma_1 : \Gamma_0 \lei \Gamma_2.$$
+the inclusion substitution
+$\iota : \Gamma \lei \Gamma : v \mapsto v$, and transitivity by composition:
+$$\delta : \Gamma \lei \Delta  ~~\text{and}~~  \theta : \Delta \lei \Theta
+  \quad \Rightarrow \quad  \theta \compose \delta : \Gamma \lei \Theta.$$
 \end{lemma}
 
 \begin{proof}
 Reflexivity follows immediately from the \textsc{Lookup} rule.
-For transitivity, suppose $v D \in \Gamma_0$,
-then $\Gamma_1 \entails \gamma_1 \sem{v D}$ since
-$\gamma_1 : \Gamma_0 \lei \Gamma_1$.
-Now by stability applied to $\gamma_1 \sem{v D}$ using $\gamma_2$, we have
-$\Gamma_2 \entails \gamma_2\gamma_1 \sem{v D}$ as required.
+For transitivity, suppose $v D \in \Gamma$,
+then $\Delta \entails \delta \sem{v D}$ since
+$\delta : \Gamma \lei \Delta$.
+Now by stability applied to $\delta \sem{v D}$ using $\theta$, we have
+$\Theta \entails \theta\delta \sem{v D}$ as required.
 \end{proof}
 
 
@@ -766,6 +770,8 @@ $$
       \Gamma \entails \subst{t}{x}{\sem{v D}}}
      {\Gamma \entailsN \subst{t}{x}{S}}
 $$
+\TODO{We have not defined substitution for arbitrary variable sorts.
+Should we do so or restrict the elimination rule?} 
 
 \begin{lemma}[Composition preserves stability]
 If $S$ and $S'$ are stable then $S \wedge S'$ is stable.
@@ -773,10 +779,12 @@ If $v D$ is a declaration and both $\ok_K D$ and $S$ are stable, then
 $\Sbind{v D}{S}$ is stable.
 \end{lemma}
 \begin{proof}
-Suppose $S$ and $S'$ are stable, $\Gamma \entails (S \wedge S')$ and
-$\delta : \Gamma \lei \Delta$. Then $\Gamma \entails S$ and $\Gamma \entails S'$,
-so by stability, $\Delta \entails \delta S$ and $\Delta \entails \delta S'$.
-Hence $\Delta \entails \delta (S \wedge S')$.
+Suppose $\delta : \Gamma \lei \Delta$, the statements $S$ and $S'$ are stable
+and $\Gamma \entails (S \wedge S')$. If the proof is by \textsc{Lookup},
+then $\Delta \entails \delta (S \wedge S')$ by definition of information
+increase. Otherwise $\Gamma \entails S$ and $\Gamma \entails S'$,
+so by stability, $\Delta \entails \delta S$ and $\Delta \entails \delta S'$, so
+$\Delta \entails \delta (S \wedge S')$.
 
 Suppose $S$ is stable, $\Gamma \entails \Sbind{v D}{S}$ and
 $\delta : \Gamma \lei \Delta$. Then $\Gamma \entails \ok_K D$ and
@@ -1356,8 +1364,8 @@ unifier for the two given types; it will fail if the types cannot be
 unified given the current state of the context.
 
 > unify :: Type -> Type -> Contextual ()
-> unify (V alpha) (V beta) = onTop $ \ (delta := mt) -> case
->           (delta == alpha,  delta == beta,  mt        ) of
+> unify (V alpha) (V beta) = onTop $ \ (gamma := d) -> case
+>           (gamma == alpha,  gamma == beta,  d         ) of
 >           (True,            True,           _         )  ->  restore                                 
 >           (True,            False,          Hole      )  ->  replace (alpha := Some (V beta) :> F0)  
 >           (False,           True,           Hole      )  ->  replace (beta := Some (V alpha) :> F0)  
@@ -1374,15 +1382,15 @@ The |solve| function attempts to unify a variable name with a
 which must be placed into the context before it.
 
 > solve :: TyName -> Suffix -> Type -> Contextual ()
-> solve alpha _Xi tau = onTop $ \ (delta := mt) -> 
->     let occurs = delta <? tau || delta <? _Xi in case
->     (delta == alpha,  occurs,  mt            ) of
+> solve alpha _Xi tau = onTop $ \ (gamma := d) -> 
+>     let occurs = gamma <? tau || gamma <? _Xi in case
+>     (gamma == alpha,  occurs,  d             ) of
 >     (True,            True,    _             )  ->  fail "Occur check failed"
 >     (True,            False,   Hole          )  ->  replace (_Xi <+> (alpha := Some tau :> F0))
 >     (True,            False,   Some upsilon  )  ->  modifyContext (<>< _Xi)
 >                                                 >>  unify upsilon tau
 >                                                 >>  restore
->     (False,           True,    _             )  ->  solve alpha (delta := mt :> _Xi) tau
+>     (False,           True,    _             )  ->  solve alpha (gamma := d :> _Xi) tau
 >                                                 >>  replace F0   
 >     (False,           False,   _             )  ->  solve alpha _Xi tau
 >                                                 >>  restore
@@ -1496,7 +1504,7 @@ Implementing the generalisation function |(>=>)| is straightforward:
 
 > (>=>) :: Bwd TyEntry -> Scheme -> Scheme
 > B0                      >=> sigma = sigma
-> (_Xi :< alpha :=   mt)  >=> sigma = case mt of
+> (_Xi :< alpha :=   d)  >=> sigma = case d of
 >                    Hole     -> _Xi >=> All sigma'
 >                    Some nu  -> _Xi >=> LetS nu sigma'
 >   where 
@@ -2322,7 +2330,7 @@ produces a forward list.
 > (<><) :: Context -> Suffix -> Context
 > infixl 8 <><
 > xs <>< F0 = xs
-> xs <>< (alpha := mt :> ys) = (xs :< TY (alpha := mt) ) <>< ys
+> xs <>< (alpha := d :> ys) = (xs :< TY (alpha := d) ) <>< ys
 
 > (<>>) :: Bwd a -> Fwd a -> Fwd a
 > infixl 8 <>>
@@ -2380,7 +2388,7 @@ variable numbers may be different.
 > main :: IO ()
 > main = unifyTest unifyTests >> inferTest inferTests
 
-> alpha *= mt = TY (alpha := mt)
+> alpha *= d = TY (alpha := d)
 
 > unifyTests :: [(Type, Type, Context, Maybe Context)]
 > unifyTests = [
