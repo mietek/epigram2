@@ -896,10 +896,9 @@ If $P$ and $Q$ are problems, then $P \wedge Q$ is a problem with
 \In{P \wedge Q}                 &= \In{P} \times \In{Q}  \\
 \Out{P \wedge Q}                &= \Out{P} \times \Out{Q}  \\
 \Pre{P \wedge Q}{a, b}          &= \Pre{P}{a} \wedge \Pre{Q}{b}  \\
-\Post{P \wedge Q}{a, b}{r, s}   &= \Post{P}{a}{r} \wedge \Post{Q}{b}{s}  \\
+\Post{(P \wedge Q)}{a, b}{r, s}   &= \Post{P}{a}{r} \wedge \Post{Q}{b}{s}  \\
 \R{P \wedge Q}{r, s}{t, u}      &= \R{P}{r}{t} \wedge \R{Q}{s}{u}  \\
 \end{align*}
-
 The point of all this machinery is to be able to state and prove the following 
 lemma, stating that the minimal solution to a conjunction of problems can be
 found by finding the minimal solution of the first problem, then (minimally)
@@ -911,7 +910,7 @@ The following inference rule is admissible:
 $$\Rule{\delta : \Jmin{\Gamma}{\Prob{P}{a}{r}}{\Delta}
        \quad  \theta : \Jmin{\Delta}{\Prob{Q}{b}{s}}{\Theta}}
        {\theta \compose \delta :
-         \Jmin{\Gamma}{\Prob{P \wedge Q}{a, b}{\theta r, s}}{\Theta}}.$$
+         \Jmin{\Gamma}{\Prob{P}{a}{\theta r} \wedge \Prob{Q}{b}{s}}{\Theta}}.$$
 \end{lemma}
 
 \begin{proof}[Sketch] The solutions of $P(a)$ arise exactly by
