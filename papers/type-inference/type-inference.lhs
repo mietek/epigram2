@@ -2229,7 +2229,7 @@ to the right of the |LetGoal| marker.
 >         case vD of
 >             LetGoal    -> return B0
 >             TY alphaD  -> (:< alphaD) <$> skimContext
->             TM _       -> undefined
+>             TM _       -> error "Unexpected TM variable!"
 
 
 The |(>-)| operator appends a term variable declaration to the context,
@@ -2245,14 +2245,9 @@ evaluates its second argument, then removes the declaration.
 >     extract ::  Context -> Context
 >     extract (_Gamma :< TM (y ::: _))
 >         | x == y               = _Gamma
->     extract (_Gamma :< TY te)  = (extract _Gamma) :< TY te
->     extract (_Gamma :< _)      = undefined
-
-%if False
-
->     extract B0 = error "extract reached empty context"
-
-%endif
+>     extract (_Gamma :< TY xD)  = (extract _Gamma) :< TY xD
+>     extract (_Gamma :< _)  = error "Bad context entry!"
+>     extract B0             = error "Missing TM variable!"
 
 
 
