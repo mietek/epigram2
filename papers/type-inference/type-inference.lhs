@@ -910,10 +910,10 @@ $$\Rule{\delta : \Jmin{\Gamma}{\Prob{P}{a}{r}}{\Delta}
          \Jmin{\Gamma}{\Prob{P \wedge Q}{a, b}{\theta r, s}}{\Theta}}.$$
 \end{lemma}
 
-\begin{proof}[Sketch]
-\TODO{Sketch proof.}
-See appendix.
-\end{proof}
+\begin{proof}[Sketch] The solutions of $P(a)$ arise exactly by
+extending $\delta$, so if we seek also to solve $Q(b)$, it is
+necessary and sufficient to search amongst the extensions of $\delta$.
+For details, see appendix.  \end{proof}
 
 This sequential approach to problem solving is not the only decomposition
 justified by stability. The account of unification given by
