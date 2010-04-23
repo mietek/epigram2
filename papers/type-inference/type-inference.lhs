@@ -618,10 +618,11 @@ A context suffix is a (forwards) list containing only type variable declarations
 
 The types |Bwd| and |Fwd| are backwards (snoc) and forwards (cons) lists,
 respectively. We overload |B0| for the empty list in both cases, and write
-|:<| and |:>| for the data constructors. Data types are cheap, so we might
-as well make the code match our intution about the meaning of data. Lists
-are monoids where |<+>| is the append operator, and the \scare{fish} operator
-\eval{:t (<><)} appends a suffix to a context. 
+|:<| and |:>| for the backwards and forwards list data constructors.
+% Data types are cheap, so we might
+% as well make the code match our intution about the meaning of data.
+Lists are monoids where |<+>| is the append operator, and the \scare{fish}
+operator |(<><) :: Context -> Suffix -> Context| appends a suffix to a context. 
 
 
 We work in the |Contextual| monad (computations that can fail and mutate the
@@ -629,22 +630,20 @@ context), defined as follows:
 
 > type Contextual  = StateT (TyName, Context) Maybe
 
-\TODO{Is it right to say $\alpha$ is fresh wrt $\Gamma$ here?}
 The |TyName| component is the next fresh type variable name to use;
 it is an implementation detail that is not mentioned in the typing rules. 
-Our choice of |TyName| means that it is easy to choose a name fresh with respect
-to a |Context|.
-
-> freshen :: TyName -> Context -> TyName
-> freshen alpha _Gamma = succ alpha
-
+% > freshen :: TyName -> Context -> TyName
+% > freshen alpha _Gamma = succ alpha
 The |fresh| function generates a fresh variable name and appends a declaration
 to the context.
+Our choice of |TyName| means that it is easy to choose a name fresh with respect
+to a |Context|.
 
 > fresh :: TyDecl -> Contextual TyName
 > fresh d = do   (beta, _Gamma) <- get
 >                put (freshen beta _Gamma, _Gamma :< TY (beta := d))
 >                return beta
+>   where freshen alpha _Gamma = succ alpha
 
 The |getContext|, |putContext| and |modifyContext| functions
 respectively retrieve, replace and update the stored context. They correspond
