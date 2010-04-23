@@ -226,6 +226,7 @@ In particular, the generalisation step
 
 This paper is literate Haskell, and the full source code is available at
 \footnotesize\verb!http://personal.cis.strath.ac.uk/~adam/type-inference/!.
+\normalsize
 
 
 \subsection{Motivating Context}
