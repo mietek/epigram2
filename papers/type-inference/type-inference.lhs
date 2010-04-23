@@ -131,7 +131,7 @@
 \newcommand{\br}[2]{\genfrac{}{}{0pt}{0}{#1}{#2}}
 \newcommand{\BigRule}[3]{\ensuremath{\Rule{\br{#1}{#2}}{#3}}}
 
-\newcommand{\sym}{\ensuremath{^\vee}}
+% \newcommand{\sym}{\ensuremath{^\vee}}
 \newcommand{\sem}[1]{\ensuremath{\llbracket #1 \rrbracket}}
 
 \newcommand{\W}{\ensuremath{\mathcal{W}}}
@@ -1052,9 +1052,9 @@ subject to the conditions
 
 The rules \textsc{Define}, \textsc{Expand} and \textsc{Ignore} have
 symmetric counterparts that are identical apart from interchanging the equated
-terms in the conclusion. Usually we will ignore these without loss of generality,
-but where necessary we refer to them as \textsc{Define}\sym,
-\textsc{Expand}\sym and \textsc{Ignore}\sym.
+terms in the conclusion. Usually we will ignore these without loss of generality.
+% but where necessary we refer to them as \textsc{Define}\sym,
+% \textsc{Expand}\sym and \textsc{Ignore}\sym.
 
         
 \begin{figure}[ht]
@@ -1063,29 +1063,14 @@ but where necessary we refer to them as \textsc{Define}\sym,
 $$
 \name{Idle}
 \Rule{\Gamma \entails \alpha \type}
-     {\Junify{\Gamma}{\alpha}{\alpha}{\Gamma}}
-$$
-
-$$
-\name{Decompose}
-\Rule{\Junify{\Gamma}{\tau_0}{\upsilon_0}{\Delta_0}
-      \quad
-      \Junify{\Delta_0}{\tau_1}{\upsilon_1}{\Delta}}
-    {\Junify{\Gamma}{\tau_0 \arrow \tau_1}{\upsilon_0 \arrow \upsilon_1}{\Delta}}
-$$
-
-$$
-\name{Solve}
-\Rule{\Jinstantiate{\Gamma}{\alpha}{\tau}{\emptycontext}{\Delta}}
-     {\Junify{\Gamma}{\alpha}{\tau}{\Delta}}
-%% \side{\tau \neq \alpha}
-\side{\tau \mathrm{~not~variable}}
+     {\Junify{\Gamma_0, \alpha D}{\alpha}{\alpha}{\Gamma_0, \alpha D}}
 $$
 
 $$
 \name{Define}
 \Rule{\Gamma_0 \entails \beta \type}
      {\Junify{\Gamma_0, \hole{\alpha}}{\alpha}{\beta}{\Gamma_0, \alpha \defn \beta}}
+\side{\alpha \neq \beta}
 $$
 
 $$
@@ -1102,13 +1087,29 @@ $$
 \side{v D \perp \{\alpha, \beta\} }
 $$
 
+$$
+\name{Solve}
+\Rule{\Jinstantiate{\Gamma}{\alpha}{\tau}{\emptycontext}{\Delta}}
+     {\Junify{\Gamma}{\alpha}{\tau}{\Delta}}
+%% \side{\tau \neq \alpha}
+\side{\tau \mathrm{~not~variable}}
+$$
+
+$$
+\name{Decompose}
+\Rule{\Junify{\Gamma}{\tau_0}{\upsilon_0}{\Delta_0}
+      \quad
+      \Junify{\Delta_0}{\tau_1}{\upsilon_1}{\Delta}}
+    {\Junify{\Gamma}{\tau_0 \arrow \tau_1}{\upsilon_0 \arrow \upsilon_1}{\Delta}}
+$$
+
 \bigskip
 
 \boxrule{\Jinstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}}
 
 $$
 \name{DefineS}
-\Rule{\Gamma_0 \entails \Sbind{\Xi}{\tau \type}}
+\Rule{\Gamma_0, \Xi \entails \tau \type}
      {\Jinstantiate{\Gamma_0, \hole{\alpha}}{\alpha}{\tau}{\Xi}
                    {\Gamma_0, \Xi, \alpha \defn \tau}}
 \side{\alpha \notin \FTV{\tau, \Xi}}
@@ -1230,7 +1231,7 @@ $\Theta \entails \theta\alpha \equiv \theta\tau$ and
 \item $\Gamma, \Xi \entails \tau \type$,
 \item $\tau$ is not a variable,
 \item $\Xi$ contains only type variable declarations and
-\item $\beta \in \tyvars{\Xi}  \Rightarrow  \beta \in \FTV{\tau, \Xi}$.
+\item $\beta \in \tyvars{\Xi}  \Rightarrow  \beta \in \FTV{\tau, \Xi}$,
 \end{itemize}
 then there is some context $\Delta$ such that
 $\JinstantiateMin{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$.
