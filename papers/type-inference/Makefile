@@ -1,6 +1,7 @@
 ################
 #### PDFLaTeX
 
+LATEX = latex
 LATEXC = pdflatex
 LATEX_OPTS = #-interaction=nonstopmode
 LHS2TEX = lhs2TeX
@@ -37,3 +38,11 @@ original-quick : type-inference.lhs
 original-test  : type-inference.lhs
 	$(GHC) $(GHC_OPTS) -o type-inference type-inference.lhs
 	./type-inference
+
+dvi   : type-inference.lhs lib.bib
+	$(LHS2TEX) $(LHS2TEX_OPTS) -o type-inference.tex type-inference.lhs
+	$(LATEX) $(LATEX_OPTS) type-inference
+	bibtex type-inference
+	$(LATEX) $(LATEX_OPTS) type-inference
+	if egrep Rerun type-inference.log; then $(LATEX) $(LATEX_OPTS) type-inference; fi
+
