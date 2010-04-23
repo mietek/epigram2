@@ -1497,26 +1497,29 @@ $$
 \end{figure}
 
 
-We define $\sem{x \asc \sigma}_\TM = x \hasscheme \sigma$,
-so $\Gamma \lei \Delta$ requires $\Delta$ to assign a term variable all the types
-that $\Gamma$ assigns it, but allows other types to be assigned as well.
-This is all that is required for information increase to correspond to
-substitution on typing derivations, because every variable lookup can be
-simulated in the more general context.
-It allows arbitrary generalisation of the schemes assigned to term variables.
+We define $\sem{x \asc \sigma}_\TM = x \hasscheme \sigma$, so $\Gamma
+\lei \Delta$ requires $\Delta$ to assign a term variable all the types
+that $\Gamma$ assigns it, but allows $x$ to become more polymorphic
+and acquire new types.  This notion certainly retains stability:
+every variable lookup can be simulated in the more general context.
+However, it allows arbitrary generalisation of the schemes assigned to term
+variables which are incompatible with the known and intended value of
+those variables.
 
-\TODO{Cite \citet{wells_principal_typings_2002} on principal typings.
-There are two relations between contexts, one where type schemes can be
-generalised (which preserves stability but does not admit principal types),
-and a smaller relation where they cannot (but is still stable).}
+As \citet{wells_principal_typings_2002} points out, Hindley-Milner
+type inference is not in this respect compositional. He carefully
+distinguishes principal \emph{typings}, given the right to demand more
+polymorphism, from Milner's principal \emph{type schemes} and analyses
+how the language of types must be extended to express principal
+typings.
 
-However, it is not be possible to assign principal types to terms under this
-relatively liberal notion of information increase. 
-We therefore define a sub-relation $\leiR$ of the information increase relation
-$\lei$, by $\delta : \Gamma \leiR \Delta$ if $\delta : \Gamma \lei \Delta$ and
-$$x \asc \sigma \in \Gamma  ~\Rightarrow~  x \asc \delta\sigma \in \Delta.$$
-Thus, if $\Gamma \leiR \Delta$, then $\Delta$ assigns the same type schemes
-to term variables as $\Gamma$ does (modulo substitution).
+We, too, note this distinction. We cannot hope to find principal types
+with respect to $\lei$, so we capture Milner's compromise by defining
+a sub-relation $\leiR$, by $\delta : \Gamma \leiR \Delta$ if $\delta :
+\Gamma \lei \Delta$ and $$x \asc \sigma \in \Gamma ~\Rightarrow~ x
+\asc \delta\sigma \in \Delta.$$ Thus, if $\Gamma \leiR \Delta$, then
+$\Delta$ assigns the \emph{same} type schemes to term variables as $\Gamma$
+does (modulo substitution).
 
 
 
