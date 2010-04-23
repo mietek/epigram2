@@ -1581,15 +1581,21 @@ of term variable names, so |Tm| is a foldable functor.
 
 \subsection{Preserving order in the context}
 
-We have previously observed \TODO{(have we?)}, but not yet made use of, the
-property that order in the context is important and we move declarations left as
-little as possible. Thus the rightmost entries are the most local to the problem
+We have previously 
+%%%\TODO{(have we? Yes: Subsection "Motivating Context")} 
+observed, but not yet 
+%%%made use of, the property that order in the context is important and 
+   exploited, the importance of declaration order in the context, and that 
+we move declarations left as
+little as possible. Thus rightmost entries are those most local to the problem
 we are solving. This will be useful when we come to implement type inference
 for the |Let| construct, as we want to generalise over \scare{local} type
 variables but not \scare{global} variables.
 
 In order to keep track of locality in the context, we need another kind of
-context extension: the $\fatsemi$ separator. We add the context validity rule
+context extension: the $\fatsemi$ separator. We add 
+%%%the context validity rule
+   a new validity rule 
 $$
 \Rule{\Gamma \entails \valid}
      {\Gamma \fatsemi \entails \valid}
@@ -1834,6 +1840,9 @@ algorithm, and they lead naturally to an implementation, given in
 subsection~\ref{sec:inferImplementation}.
 
 \TODO{Say something about freshness of $\Xi$ in \textsc{Var} rule.}
+We use Lemma~\ref{lem:specialise} to ensure in rule \textsc{Var} that
+the suffix \(\Xi\) consists of fresh names, and that the output
+context \ensuremath{\Gamma, \Xi} is well-formed. 
 
 \begin{figure}[ht]
 \boxrule{\Jtype{\Gamma}{t}{\tau}{\Delta}}
