@@ -1359,14 +1359,20 @@ defined by
 \end{align*}
 We will usually be interested in the case $\sigma = .\tau$      for some type $\tau$.
 
-\TODO{What is the role played by this lemma? Where is it used (JHM)}
+When we infer the specialised type of a variable, we rely on the
+ability to invert this operation, extending the contex with a
+\emph{fresh} copy of a scheme's prefix. As shown above, we follow
+\citet{NaraschewskiN-JAR} in achieving freshness with a simple
+counter, built into the |Contextual| monad.
+
 \begin{lemma}
-\label{lem:generalise}
-If $\Gamma, \Xi \entails \sigma \scheme$ where $\Xi$ contains only type variable
-declarations, then $\Gamma \entails \gen{\Xi}{\sigma} \scheme$.
+\label{lem:specialise}
+If $\Gamma \entails \sigma \scheme$ then $\sigma = \Xi\genarrow.\tau$
+for some $\Xi$ and $\tau$ such that $\Gamma,\Xi\entails \tau \type$
 \end{lemma}
 \begin{proof}
-By induction on the length of $\Xi$.
+By induction on the structure of $\sigma$, given that it is possible to choose
+fresh variable names.
 \end{proof}
 
 
