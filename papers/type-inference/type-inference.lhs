@@ -1028,6 +1028,10 @@ subject to the conditions
 \item $\beta \in \tyvars{\Xi} \Rightarrow \beta \in \FTV{\tau, \Xi}$.
 \end{itemize}
 
+For clarity, we take a \scare{garbage-in, garbage-out} approach to the
+algorithm: we omit the above sanity conditions from the rules, and
+correspondingly do not check them in the implementation. 
+
 
 The rules \textsc{Define}, \textsc{Expand} and \textsc{Ignore} have
 symmetric counterparts that are identical apart from interchanging the equated
@@ -1041,14 +1045,14 @@ terms in the conclusion. Usually we will ignore these without loss of generality
 
 $$
 \name{Idle}
-\Rule{\Gamma \entails \alpha \type}
-     {\Junify{\Gamma_0, \alpha D}{\alpha}{\alpha}{\Gamma_0, \alpha D}}
+% \Rule{\Gamma \entails \alpha \type}
+\Axiom{\Junify{\Gamma_0, \alpha D}{\alpha}{\alpha}{\Gamma_0, \alpha D}}
 $$
 
 $$
 \name{Define}
-\Rule{\Gamma_0 \entails \beta \type}
-     {\Junify{\Gamma_0, \hole{\alpha}}{\alpha}{\beta}{\Gamma_0, \alpha \defn \beta}}
+%\Rule{\Gamma_0 \entails \beta \type}
+\Axiom{\Junify{\Gamma_0, \hole{\alpha}}{\alpha}{\beta}{\Gamma_0, \alpha \defn \beta}}
 \side{\alpha \neq \beta}
 $$
 
@@ -1088,8 +1092,8 @@ $$
 
 $$
 \name{DefineS}
-\Rule{\Gamma_0, \Xi \entails \tau \type}
-     {\Jinstantiate{\Gamma_0, \hole{\alpha}}{\alpha}{\tau}{\Xi}
+% \Rule{\Gamma_0, \Xi \entails \tau \type}
+\Axiom{\Jinstantiate{\Gamma_0, \hole{\alpha}}{\alpha}{\tau}{\Xi}
                    {\Gamma_0, \Xi, \alpha \defn \tau}}
 \side{\alpha \notin \FTV{\tau, \Xi}}
 $$
