@@ -38,6 +38,7 @@
 %format beta   = "\beta"
 %format beta0
 %format beta1
+%format gamma  = "\gamma"
 %format _Gamma  = "\Gamma"
 %format _Gamma0
 %format _Gamma1
