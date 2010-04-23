@@ -224,7 +224,7 @@ In particular, the generalisation step
 (for 
  inferring the type of a let-expression) becomes straightforward.
 
-This paper is literate Haskell, and the full source code is available at
+This paper is literate Haskell, with full source code available at
 \footnotesize\url{http://personal.cis.strath.ac.uk/~adam/type-inference/}.
 \normalsize
 
@@ -243,26 +243,30 @@ constructors, and may evolve towards tractability even if not
 apparently solvable at first. Type inference without annotation is out
 of the question, but we may still exploit most general solutions to
 constraints when they exist. Milner's insights still serve us well,
-if it not completely.
+if not completely.
 
-The existing literature on `implicit syntax'~\citep{pollack_implicit_1990,norell:agda} neither fully nor
-clearly accounts for the behaviour of the systems in use today, nor are
-any of these systems free from murky corners. We
+The existing literature on 
+\scare{implicit syntax}~\citep{pollack_implicit_1990,norell:agda} 
+neither fully nor clearly accounts for the behaviour of the systems in
+use today, nor are any of these systems free from murky corners. We
 feel the need to step back and gain perspective.  Pragmatically, we
 need to account for stepwise progress in problem solving from states
 of partial knowledge.
 
-What is a state of partial knowledge?  In this
-paper, we model such things as the \emph{contexts} which occur in
+What are such states of partial knowledge?  In this
+paper, we model them by \emph{contexts} occurring in
 typing judgments, describing the known properties of all variables in
-scope. We present algorithms using systems of inference rules to
-define relationships between assertions of the form
+scope. We present algorithms via systems of inference rules 
+defining relationships between asser-tions of the form
 $\Judge{\Gamma}{S}{\Delta}$. Here $\Gamma$ is the input context
-(before applying the rule), $S$ is the statement being established,
-and $\Delta$ is the output context (in which $S$ holds). We revisit
-Algorithm \W{} as a necessary check that our perspective is helpful,
+(before applying the rule), $S$ the statement to be established,
+and $\Delta$ the output context (in which $S$ holds). We revisit
+Algorithm \W{} as a 
+%%%necessary check 
+   sanity check 
+that our perspective is helpful, 
 as a familiar example of problem solving presented anew, and because
-our context discipline delivers a clearer account of generalisation
+our context discipline yields a clearer account of generalisation
 in let-binding.
 
 This idea of assertions producing a resulting context goes back at least to
@@ -273,16 +277,23 @@ This idea of assertions producing a resulting context goes back at least to
    but substitutions and new contexts are there kept separate. 
 %%%
 We %%%will 
-   define an ordering on contexts based on the information they contain,
+   define an ordering on contexts based on 
+%%%the information they contain, 
+   their information content, 
 and show that $\Delta$ is minimal with respect to this ordering. If one
 thinks of a context as a set of atomic facts, then $\Delta$ is the least upper
-bound of $\Gamma$ together with the facts required to make $S$ hold.
+bound of $\Gamma$ together with the facts required for $S$ to hold.
 In each case, at most one rule matches the input context and condition, and we
 specify a termination order so the rules define algorithms.
-It is straightforward to implement these algorithms by translating the rule
+%%%It is straightforward to implement these algorithms 
+   These are straightforward to implement 
+by translating the rule
 systems into %%%
 appropriately monadic
-code. We illustrate this by providing a Haskell implementation.
+code. We illustrate this 
+%%%by providing a 
+   with our 
+Haskell implementation.
 
 Contexts here are not simply sets of assumptions, but lists containing
 information about type and term variables. The unification problem
@@ -417,11 +428,13 @@ only the \scare{unbound variable} property $~\hole{}$. Properties of
 variables play the same atomic role in \emph{derivations} that variables
 themselves play in terms.
 
-A \define{context} $\Gamma$ is a list of declarations $v D$, where
+A \define{context} is a list of declarations $v D$, with
 $v \in \V_K$ and $D \in \D_K$.
 %% and separators $(\fatsemi)$. 
-We write $\emptycontext$ for the empty context, and the symbols
-$\Gamma, \Delta$ and $\Theta$ range over contexts.
+We write $\emptycontext$ for the empty context, and 
+%%%the symbols 
+   let 
+$\Gamma, \Delta, \Theta$ range over contexts.
 %% $\Xi$ is a context that contains no $\fatsemi$ separators.
 
 We will gradually construct a set $\Ss$ of statements, which can be
@@ -485,7 +498,7 @@ $$\name{Lookup}
   \Rule{\Gamma \entails \valid   \quad  v D \in \Gamma}
        {\Gamma \entailsN \sem{v D}}.$$
 
-As promised, \textsc{Lookup} uses act as \scare{variables} in
+As promised, uses of \textsc{Lookup} act as \scare{variables} in
 derivations.  Our $\sem{\cdot}_K$ associates an `expression atom'
 with its `derivation atom'. This is the only rule which interrogates
 the context, hence we propose the bold step of dropping the
@@ -589,7 +602,7 @@ $$
 
 \subsection{Implementing types and contexts}
 
-A type variable declaration is represented as a |TyEntry|, in which a variable
+A type variable declaration is given by a |TyEntry|, where a variable
 is either bound to a type (written |Some tau|) or left unbound (written |Hole|).
 
 > data TyDecl   =  Some Type | {-"\;"-} Hole
@@ -723,7 +736,7 @@ simultaneous substitution on derivations.
 \TODO{Expand on this.}
 
 Since we are only interested in valid contexts, the statement $\valid$ always
-holds, and it is invariant under substitution, so it is clearly stable.
+holds, and is invariant under substitution, so is clearly stable.
 
 We have a standard strategy for proving stability of most statements, which is
 effective by construction. In each case we proceed by induction on the structure
