@@ -1248,12 +1248,12 @@ context before the bar, and structurally on types. \TODO{Make this clearer.}
 \begin{enumerate}[(a)]
 \item 
 \begin{enumerate}[(i)]
-\item If $\tau = \alpha = \upsilon$ are both the same variable, then the
-\textsc{Idle} rule applies, $\Delta = \Gamma$ and the result is trivial.
-
-\item Now suppose $\upsilon = \alpha$ and $\tau = \beta$ are distinct variables.
+\item Suppose $\upsilon = \alpha$ and $\tau = \beta$ are variables.
 Let $\Gamma = \Gamma_0, v D$ and examine $v D$:
 \begin{itemize}
+\item If $v = \alpha = \beta$ are all the same variable, then the
+\textsc{Idle} rule applies, $\Delta = \Gamma$ and the result is trivial.
+
 \item If $v D = \hole{\alpha}$ then the \textsc{Define} rule applies,
 $\Delta = \Gamma_0, \alpha \defn \beta$
 and $\theta : \Delta \lei \Theta$.
@@ -1280,27 +1280,36 @@ The case $v D = \beta \defn \upsilon$ is similar.
 applies by a similar argument. \TODO{Give this argument.}
 \end{itemize}
 
-\item Now suppose $\tau = \tau_0 \arrow \tau_1$ and
+\item Now suppose wlog that $\upsilon = \alpha$ is a variable and $\tau$ is
+not a variable. The conditions for part (b) hold, so by induction,
+$\Jinstantiate{\Gamma}{\alpha}{\tau}{\emptycontext}{\Delta}$
+and the \textsc{Solve} rule applies.
+
+\item Otherwise, we must have $\tau = \tau_0 \arrow \tau_1$ and
 $\upsilon = \upsilon_0 \arrow \upsilon_1$.
 Then $\Theta \entails \theta\tau_0 \equiv \theta\upsilon_0$ and
 $\Theta \entails \theta\tau_1 \equiv \theta\upsilon_1$,
 so by induction there exist contexts
-$\Delta'$ and $\Delta$ such that
-$\Junify{\Gamma}{\tau_0}{\upsilon_0}{\Delta'}$ and
-$\Junify{\Delta'}{\tau_1}{\upsilon_1}{\Delta}$.
+$\Delta_0$ and $\Delta$ such that
+$\Junify{\Gamma}{\tau_0}{\upsilon_0}{\Delta_0}$ and
+$\Junify{\Delta_0}{\tau_1}{\upsilon_1}{\Delta}$.
 %, with $\theta : \Gamma \lei \Delta$ and $\theta : \Gamma_1 \lei \Delta$.
 Hence the \textsc{Decompose} rule applies, and
 $\theta : \Delta \lei \Theta$ by the Optimist's lemma.
 
-\item Finally, suppose wlog that $\upsilon = \alpha$ is a variable and $\tau$ is
-not a variable. The conditions for part (b) hold, so
-$\Jinstantiate{\Gamma}{\alpha}{\tau}{\emptycontext}{\Delta}$
-and the \textsc{Solve} rule applies.
+
 
 \end{enumerate}
 
 \item  Let $\Gamma = \Gamma_0, v D$.
 \begin{enumerate}[(i)]
+\item If $v = \alpha$ and $\alpha \in \FTV{\tau, \Xi}$, then there is some
+non-variable type $\chi$ such that
+$\Theta \entails \theta\alpha \equiv \theta\chi$
+and $\alpha \in \FTV{\chi}$.
+\TODO{Explain why this follows.}
+But this cannot occur, by lemma~\ref{lem:occurCheck}.
+
 \item If $v D = \hole{\alpha}$ and $\alpha \notin \FTV{\tau, \Xi}$, then the
 \textsc{DefineS} rule applies, $\Delta = \Gamma_0, \Xi, \alpha := \tau$ and
 $\theta : \Delta \lei \Theta$.
@@ -1318,13 +1327,6 @@ with $\theta_\alpha : \Delta_0 \lei \Theta$.
 Hence the \textsc{ExpandS} rule applies with
 $\Delta = \Delta_0, \alpha \defn \chi$
 and $\theta : \Delta \lei \Theta$.
-
-\item If $v = \alpha$ and $\alpha \in \FTV{\tau, \Xi}$, then there is some
-non-variable type $\tau'$ such that
-$\Theta \entails \theta\alpha \equiv \theta\tau'$
-and $\alpha \in \FTV{\tau'}$.
-\TODO{Explain why this follows.}
-But this cannot occur, by lemma~\ref{lem:occurCheck}.
 
 \item If $v = \beta$ for $\alpha \neq \beta$ and
 $\beta \in \FTV{\upsilon, \Xi}$ then
