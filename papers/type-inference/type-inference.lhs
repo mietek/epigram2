@@ -57,6 +57,7 @@
 %format upsilon = "\upsilon"
 %format upsilon0
 %format upsilon1
+%format chi = "\chi"
 %format _Xi = "\Xi"
 %format _Xi0
 %format _Xi1
@@ -1590,9 +1591,9 @@ $$
 \Rule{
       s \hasscheme \sigma
       \quad
-      \Sbind{x \asc \sigma}{t : \tau}
+      \Sbind{x \asc \sigma}{w : \tau}
      }
-     {\letIn{x}{s}{t} : \tau}
+     {\letIn{x}{s}{w} : \tau}
 \qquad
 \Rule{t : \tau
       \quad
@@ -1887,9 +1888,9 @@ $$
 \Rule{
       s \hasscheme \sigma
       \quad
-      \Sbind{x \asc \sigma}{t : \tau}
+      \Sbind{x \asc \sigma}{w : \tau}
      }
-     {\Pinf{\letIn{x}{s}{t}}{\tau}}.
+     {\Pinf{\letIn{x}{s}{w}}{\tau}}.
 $$
 Writing $\sigma = \gen{\Xi}{\upsilon}$ and expanding the definition of
 $\hasscheme$, we obtain
@@ -1897,9 +1898,9 @@ $$
 \Rule{
       \Sbind{\Xi}{s : \upsilon}
       \quad
-      \Sbind{x \asc \gen{\Xi}{\upsilon}}{t : \tau}
+      \Sbind{x \asc \gen{\Xi}{\upsilon}}{w : \tau}
      }
-     {\Pinf{\letIn{x}{s}{t}}{\tau}}.
+     {\Pinf{\letIn{x}{s}{w}}{\tau}}.
 $$
 where we let $\Sbind{\emptycontext}{S} = S$ and
 $\Sbind{\Xi, v D}{S} = \Sbind{\Xi}{\Sbind{v D}{S}}$.
@@ -1968,9 +1969,9 @@ $$
 $$
 \name{Let}
 \BigRule{\Jtype{\Gamma \fatsemi}{s}{\upsilon}{\Delta_0 \fatsemi \Xi_0}}
-        {\Jtype{\Delta_0, x \asc \gen{\Xi_0}{.\upsilon}}{t}{\chi}
+        {\Jtype{\Delta_0, x \asc \gen{\Xi_0}{.\upsilon}}{w}{\chi}
                {\Delta_1, x \asc \gen{\Xi_0}{.\upsilon}, \Xi_1}}
-        {\Jtype{\Gamma}{\letIn{x}{s}{t}}{\chi}{\Delta_1, \Xi_1}}
+        {\Jtype{\Gamma}{\letIn{x}{s}{w}}{\chi}{\Delta_1, \Xi_1}}
 $$
 
 \caption{Algorithmic rules for type inference}
@@ -2170,10 +2171,10 @@ $t$ with its variable $x$ assigned type-scheme $.\alpha$,
 a fresh type variable. The type is then $\alpha \arrow \tau$ in the context with
 the $x$ binding removed.
 
-> infer (Lam x t) = do
->     alpha  <- fresh Hole
->     tau    <- x ::: Type (V alpha) >- infer t
->     return (V alpha :-> tau)
+> infer (Lam x w) = do
+>     alpha    <- fresh Hole
+>     upsilon  <- x ::: Type (V alpha) >- infer w
+>     return (V alpha :-> upsilon)
 
 
 To infer the type of an application, we infer the type $\tau$ of the function
@@ -2182,10 +2183,10 @@ $\tau' \arrow \beta$, where $\beta$ is a fresh variable, produces the
 result.
 
 > infer (f :$ a) = do
->     tau   <- infer f
->     tau'  <- infer a
->     beta  <- fresh Hole
->     unify tau (tau' :-> V beta)
+>     chi      <- infer f
+>     upsilon  <- infer a
+>     beta     <- fresh Hole
+>     unify chi (upsilon :-> V beta)
 >     return (V beta)
 
 
@@ -2198,9 +2199,9 @@ were introduced after the marker (i.e.\ during the type inference of $s$). This 
 us to infer the type of $t$ in the context where $x \asc \sigma$, producing a result type $\tau_1$
 and a context from which the $x$ binding can be extracted.
 
-> infer (Let x s t) = do
+> infer (Let x s w) = do
 >     sigma <- generaliseOver (infer s)
->     x ::: sigma >- infer t
+>     x ::: sigma >- infer w
 
 
 The |generaliseOver| operator appends a |LetGoal| marker to the context,
