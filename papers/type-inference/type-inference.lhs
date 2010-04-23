@@ -431,9 +431,10 @@ themselves play in terms.
 A \define{context} is a list of declarations $v D$, with
 $v \in \V_K$ and $D \in \D_K$.
 %% and separators $(\fatsemi)$. 
-We write $\emptycontext$ for the empty context, and 
+%%%We write $\emptycontext$ for the empty context, and 
+   The empty context is written $\emptycontext$. 
 %%%the symbols 
-   let 
+   We let 
 $\Gamma, \Delta, \Theta$ range over contexts.
 %% $\Xi$ is a context that contains no $\fatsemi$ separators.
 
