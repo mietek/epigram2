@@ -274,7 +274,6 @@ thinks of a context as a set of atomic facts, then $\Delta$ is the least upper
 bound of $\Gamma$ together with the facts required to make $S$ hold.
 In each case, at most one rule matches the input context and condition, and we
 specify a termination order so the rules define algorithms.
-\TODO{Do we? We need to say more about termination.}
 It is straightforward to implement these algorithms by translating the rule
 systems into %%%
 appropriately monadic
@@ -984,15 +983,7 @@ $\tau \equiv \upsilon$.
 
 \subsection{Constructing a unification algorithm}
 
-Now we can see how to construct the algorithm. The structural rule says that
-whenever we have rigid $\arrow$ symbols on each side, we decompose the problem
-into two subproblems, and thanks to the Optimist's Lemma we can solve these
-sequentially. Otherwise, we either have variables on both sides, or a variable
-on one side and a type on the other. In each case, we look at the head of the
-context to see what information it gives us, and use the transformed rules to
-see how to proceed. When solving a variable with a type, we need to accumulate
-the type's dependencies as we encounter them, performing the occur check to
-ensure a solution exists.
+Now we can see how to construct the algorithm. The structural rule says that whenever we have rigid $\arrow$ symbols on each side, we decompose the problem into two subproblems, and thanks to the Optimist's Lemma we can solve these sequentially. Otherwise, we either have variables on both sides, or a variable on one side and a type on the other. In each case, we look at the head of the context to see what information it gives us, and use the transformed rules to see how to proceed. When solving a variable with a type, we need to accumulate the type's dependencies as we encounter them, performing the occur check to ensure a solution exists.
 
 % \begin{itemize}
 % \item If $\alpha D$ is at the head of the context and we are trying to
@@ -1136,11 +1127,20 @@ Since we only have one type constructor symbol (the function arrow $\arrow$),
 there are no failures due to rigid-rigid mismatch. Adding these would not
 significantly complicate matters, however.
 
-At first there appears to be some redundancy in the system, with similar-looking
-rules for flex-flex and flex-rigid problems
-(\textsc{Define} versus \textsc{DefineS}, for example).
-Unfortunately, it is not easy to remove the flex-flex versions, because they
-permit the exception to the occur check when only variables are involved.
+%At first there appears to be some redundancy in the system, with %similar-looking
+%rules for flex-flex and flex-rigid problems
+%(\textsc{Define} versus \textsc{DefineS}, for example).
+%Unfortunately, it is not easy to remove the flex-flex versions, because %they
+%permit the exception to the occur check when only variables are involved.
+
+By exposing the contextual structure underlying unification we make
+termination of the algorithm evident. Each recursive appeal to
+unification (directly or via the solving process) either shortens the
+context or preserves the context and decomposes
+types~\citep{mcbride:unification}. We are correspondingly entitled to
+reason about the total correctness of unification by induction on the
+algorithmic rules.
+
 
 
 \subsection{Soundness and completeness}
