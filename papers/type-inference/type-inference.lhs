@@ -1593,7 +1593,7 @@ for the |Let| construct, as we want to generalise over \scare{local} type
 variables but not \scare{global} variables.
 
 In order to keep track of locality in the context, we need another kind of
-context extension: the $\fatsemi$ separator. We add 
+context entry: the $\fatsemi$ separator. We add 
 %%%the context validity rule
    a new validity rule 
 $$
@@ -1754,7 +1754,7 @@ Consider the rule for application, written to highlight problem inputs and
 outputs as
 $$\Rule{\Pinf{f}{\upsilon \arrow \tau}  \quad  \Pinf{a}{\upsilon}}
        {\Pinf{f a}{\tau}}.$$
-Since we cannot pattern match on the output of the first subproblem, we use a
+Since we cannot match on the output of the first subproblem, we use a
 metavariable instead and add a unification constraint, giving
 $$\Rule{\Pinf{f}{\chi}  \quad \Pinf{a}{\upsilon}
             \quad  \Puni{\chi}{\upsilon \arrow \tau}}
@@ -1788,7 +1788,7 @@ $$
 The rule for abstraction is
 $$\Rule{\Sbind{x \asc .\upsilon}{\Pinf{t}{\tau}}}
        {\Pinf{\lambda x . t}{\upsilon \arrow \tau}}$$
-which has $\upsilon$ as an unknown input, so we bind a fresh variable $\beta$
+which has unknown input $\upsilon$, so we bind a fresh variable $\beta$
 to give
 $$\Rule{\Sbind{\beta \defn \upsilon}{\Sbind{x \asc .\beta}{\Pinf{t}{\tau}}}}
        {\Sbind{\beta \defn \upsilon}{\Pinf{\lambda x . t}{\beta \arrow \tau}}}.$$
@@ -1841,8 +1841,8 @@ subsection~\ref{sec:inferImplementation}.
 
 %%%\TODO{Say something about freshness of $\Xi$ in \textsc{Var} rule.}
 We use Lemma~\ref{lem:specialise} to ensure in rule \textsc{Var} that
-we compute a suffix \(\Xi\) consisting of fresh names, and that the output
-context \ensuremath{\Gamma, \Xi} is well-formed. 
+we compute a suffix \(\Xi\) consisting of fresh names, such that the
+output \ensuremath{\Gamma, \Xi} is well-formed.
 
 \begin{figure}[ht]
 \boxrule{\Jtype{\Gamma}{t}{\tau}{\Delta}}
@@ -2005,9 +2005,9 @@ evaluates its second argument, then removes the declaration.
 > (>-) :: TmEntry -> Contextual a -> Contextual a
 > x ::: sigma >- ma = do
 >     modifyContext (:< TM (x ::: sigma))
->     tau <- ma
+>     a <- ma
 >     modifyContext extract
->     return tau
+>     return a 
 >   where          
 >     extract ::  Context -> Context
 >     extract (_Gamma :< TM (y ::: _))

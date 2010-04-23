@@ -1,9 +1,23 @@
-﻿
+@STRING{jfp = {Journal of Functional Programming}}
+
+@STRING{scp = {Science of Computer Programming}}
+
+@STRING{lncs = {LNCS}}
+
+@STRING{lncslong = {Lecture Notes in Computer Science}}
+
+@STRING{sv = {Springer}}
+
+@STRING{svlong = {Springer-Verlag}}
+
+@STRING{acm = {ACM}}
+
+
 @inproceedings{altenkirch_monadic_1999,
 	title = {Monadic Presentations of Lambda Terms Using Generalized Inductive Types},
 	isbn = {3-540-66536-6},
 	booktitle = {Proceedings of the 13th International Workshop and 8th Annual Conference of the {EACSL} on Computer Science Logic},
-	publisher = {{Springer-Verlag}},
+	publisher = sv,
 	author = {Thorsten Altenkirch and Bernhard Reus},
 	year = {1999},
 	keywords = {category theory, inference paper, kleisli structure, monad},
@@ -20,7 +34,7 @@
 @article{bellegarde_hook_substitution_1994,
   author = {Fran\c{c}oise Bellegarde and James Hook},
   title = {Substitution: a formal methods case study using monads and transformations},
-  journal = {Science of Computer Programming},
+  journal = scp,
   volume = {23},
   number = {2-3},
   year = {1994},
@@ -35,7 +49,7 @@
 @article{bird_paterson_nested_1999,
   author = {Richard Bird and Ross Paterson},
   title = {de {Bruijn} notation as a nested datatype},
-  journal = {Journal of Functional Programming},
+  journal = jfp,
   volume = {9},
   number = {1},
   pages = {77-91},
@@ -89,7 +103,7 @@
   volume = {19},
   abstract = {The Iterator pattern gives a clean interface for element-by-element access to a collection, independent of the collection's shape. Imperative iterations using the pattern have two simultaneous aspects: mapping and accumulating. Various existing functional models of iteration capture one or other of these aspects, but not both simultaneously. We argue that C. {McBride} and R. Paterson's applicative functors {(Applicative} programming with effects, J. Funct. Program., 18 (1): 1–13, 2008), and in particular the corresponding traverse operator, do exactly this, and therefore capture the essence of the Iterator pattern. Moreover, they do so in a way that nicely supports modular programming. We present some axioms for traversal, discuss modularity concerns and illustrate with a simple example, the wordcount problem.},
   number = {3-4},
-  journal = {Journal of Functional Programming},
+  journal = jfp,
   author = {Jeremy Gibbons and Bruno c. d. s. Oliveira},
   year = {2009},
   keywords = {applicative, inference paper},
@@ -114,7 +128,7 @@
   booktitle = {Implementation of Functional Languages (IFL' 98)},
   year = {1998},
   pages = {139--154},
-  publisher = {Springer-Verlag}
+  publisher = sv
 }
 
 @article{mcbride_applicative_2008,
@@ -122,7 +136,7 @@
   volume = {18},
   abstract = {In this article, we introduce Applicative functors – an abstract characterisation of an applicative style of effectful programming, weaker than Monads and hence more widespread. Indeed, it is the ubiquity of this programming pattern that drew us to the abstraction. We retrace our steps in this article, introducing the applicative pattern by diverse examples, then abstracting it to define the Applicative type class and introducing a bracket notation that interprets the normal application syntax in the idiom of an Applicative functor. Furthermore, we develop the properties of applicative functors and the generic operations they support. We close by identifying the categorical structure of applicative functors and examining their relationship both with Monads and with Arrow.},
   number = {1},
-  journal = {Journal of Functional Programming},
+  journal = jfp,
   author = {Conor {McBride} and Ross Paterson},
   year = {2008},
   keywords = {applicative, inference paper},
@@ -154,7 +168,7 @@
 
 @article{mcbride.mckinna:view-from-the-left,
     author = {McBride, Conor and McKinna, James},
-    journal = {J. Funct. Program.},
+    journal = jfp,
     month = {January},
     number = {1},
     pages = {69--111},
@@ -208,14 +222,14 @@
   volume=23,
   number=3,
   pages={299--318},
-  publisher={Springer-Verlag}
+  publisher=sv
 } 
 
 
 @article{Nipkow-Prehofer-JFP95,
   author={Tobias Nipkow and Christian Prehofer},
   title={Type Reconstruction for Type Classes},
-  journal={Journal of Functional Programming},
+  journal=jfp,
   volume=5,
   number=2,
   year=1995,
@@ -269,8 +283,8 @@
   title = {A Machine-Oriented Logic Based on the Resolution Principle},
   volume = {12},
   number = {1},
-  journal = {Journal of the {ACM}},
-  author = {John. A. Robinson},
+  journal = {Journal of the } # acm,
+  author = {John A. Robinson},
   year = {1965},
   keywords = {inference paper, unification},
   pages = {23--41}
@@ -283,7 +297,7 @@
   booktitle = {ICALP '02: Proceedings of the 29th International Colloquium on Automata, Languages and Programming},
   year = {2002},
   pages = {913--925},
-  publisher = {Springer-Verlag},
+  publisher = sv,
   address = {London, UK},
 }
   isbn = {3-540-43864-5},
