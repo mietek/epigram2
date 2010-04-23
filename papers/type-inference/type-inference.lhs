@@ -64,7 +64,8 @@
 
 \usepackage{color}
 \definecolor{red}{rgb}{1.0,0.0,0.0}
-\newcommand{\TODO}[1]{\textcolor{red}{#1}}
+\newcommand{\TODO}[1]{\NotForPublication{\textcolor{red}{#1}}}
+\newcommand{\NotForPublication}[1]{#1}
 
 \newcommand{\eqsubst}{\equiv}
 \newcommand{\compose}{\cdot}
@@ -2315,7 +2316,8 @@ This is all just boilerplate. Roll on GHC 6.12!
 
 %endif
 
-\perform{main}
+
+\NotForPublication{\perform{main}}
 
 
 \phantomsection
