@@ -1839,9 +1839,9 @@ These rules are clearly structural on terms, so they give a terminating
 algorithm, and they lead naturally to an implementation, given in
 subsection~\ref{sec:inferImplementation}.
 
-\TODO{Say something about freshness of $\Xi$ in \textsc{Var} rule.}
+%%%\TODO{Say something about freshness of $\Xi$ in \textsc{Var} rule.}
 We use Lemma~\ref{lem:specialise} to ensure in rule \textsc{Var} that
-the suffix \(\Xi\) consists of fresh names, and that the output
+we compute a suffix \(\Xi\) consisting of fresh names, and that the output
 context \ensuremath{\Gamma, \Xi} is well-formed. 
 
 \begin{figure}[ht]
