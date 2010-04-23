@@ -225,7 +225,7 @@ In particular, the generalisation step
  inferring the type of a let-expression) becomes straightforward.
 
 This paper is literate Haskell, and the full source code is available at
-\footnotesize\verb!http://personal.cis.strath.ac.uk/~adam/type-inference/!.
+\footnotesize\url{http://personal.cis.strath.ac.uk/~adam/type-inference/}.
 \normalsize
 
 
