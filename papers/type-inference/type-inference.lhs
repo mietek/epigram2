@@ -344,7 +344,7 @@ understand it.
 
 
 
-%if False
+%if showCode
 
 > {-# LANGUAGE DeriveFunctor, DeriveFoldable #-}
 
@@ -395,7 +395,7 @@ For simplicity, we use integers as names in the implementation.
 > data Ty a  =  V a |  Ty a :-> Ty a
 >     deriving (Functor, Foldable)
 
-%if False
+%if showCode
 
 > infixr 5 :->
 
@@ -2100,7 +2100,7 @@ simpler, as we bring these two kinds of construction together,
 mediating \emph{problems as types}.
 
 
-%if False
+%if showCode
 
 \subsection{Lists}
 
