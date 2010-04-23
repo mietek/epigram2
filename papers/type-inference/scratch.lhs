@@ -868,3 +868,22 @@ $$\Theta, x \asc \theta_0\gen{\Xi_0}{.\upsilon} \entails w : \tau.$$
 % for some $\chi$ with $\Xi = \Xi_0, \beta \defn \chi, \Xi_1$ and
 % $\beta \in \FTV{\tau, \Xi_1}$.
 % \TODO{Prove this is contradictory.}
+
+
+
+
+
+% which we transform to \TODO{what?}
+% $$
+% \Rule{
+%       \fatsemi (s : \upsilon)
+%       \quad
+%       x \asc \upsilon \Yup t : \tau
+%      }
+%      {\Pinf{\letIn{x}{s}{t}}{\tau}}
+% $$
+% where $\Yup$ is defined via
+% $$
+% \Rule{\Gamma \entails \Sbind{x \asc \gen{\Xi}{\sigma}}{S}}
+%      {\Gamma \fatsemi \Xi \entails x \asc \upsilon \Yup S}
+% $$

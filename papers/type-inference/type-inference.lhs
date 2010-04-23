@@ -734,7 +734,6 @@ recursive hypotheses occur in strictly positive positions, so they are stable
 by induction. Applying this strategy shows that the statements $\tau \type$
 and $\tau \equiv \upsilon$ are stable.
 
-%%%\TODO{Suggest here that 'gamma's be 'delta's}
 \begin{lemma}\label{lei:preorder}
 If $\sem{v D}$ is stable for every declaration $v D$, then
 the $\lei$ relation is a preorder, with reflexivity demonstrated by
@@ -1807,22 +1806,6 @@ infer the type of $s$, then generalise its type by \scare{skimming off} the type
 variables from the top of the context until the $\fatsemi$ is reached.
 
 
-% which we transform to \TODO{what?}
-% $$
-% \Rule{
-%       \fatsemi (s : \upsilon)
-%       \quad
-%       x \asc \upsilon \Yup t : \tau
-%      }
-%      {\Pinf{\letIn{x}{s}{t}}{\tau}}
-% $$
-% where $\Yup$ is defined via
-% $$
-% \Rule{\Gamma \entails \Sbind{x \asc \gen{\Xi}{\sigma}}{S}}
-%      {\Gamma \fatsemi \Xi \entails x \asc \upsilon \Yup S}
-% $$
-
-
 We define the type inference assertion $\Jtype{\Gamma}{t}{\tau}{\Delta}$
 % (inferring the type of $t$ in $\Gamma_0$ yields $\tau$ in the more informative
 % context $\Gamma_1$)
@@ -2371,12 +2354,15 @@ and $\Theta \entails \R{P \wedge Q}{\zeta_2 (\theta r), \zeta_2 s}{t, u}$.
 
 
 
-\begin{proof}[Proof of lemma~\ref{lem:unifyComplete}]
+\begin{proof}[Proof of lemma~\ref{lem:unifyComplete}
+(Completeness and generality of unification)]
 It suffices to show that the algorithm succeeds and produces a solution that is
 below $\Theta$.
 % We examine the structure of $\upsilon$ (or $\alpha$) and $\tau$, and 
-We proceed by induction on the total length of the context, the length of the
-context before the bar, and structurally on types. \TODO{Make this clearer.}
+% We proceed by induction on the total length of the context, the length of the
+% context before the bar, and structurally on types.
+We proceed by induction on the call graph; since the algorithm terminates, this
+is well-founded.
 
 \begin{enumerate}[(a)]
 \item 
@@ -2478,7 +2464,8 @@ the \textsc{IgnoreS} rule applies with $\Delta = \Delta_0, v D$.
 
 
 
-\begin{proof}[Proof of lemma~\ref{lem:inferComplete}]
+\begin{proof}[Proof of lemma~\ref{lem:inferComplete}
+(Completeness and generality of type inference)]
 It suffices to show that the algorithm succeeds and delivers a result that is
 below $(\tau, \theta, \Theta)$. We proceed by structural induction.
 
