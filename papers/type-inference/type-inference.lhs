@@ -902,6 +902,7 @@ found by finding the minimal solution of the first problem, then (minimally)
 extending it to solve the second. 
 
 \begin{lemma}[The Optimist's Lemma]
+\label{lem:optimist}
 The following inference rule is admissible:
 $$\Rule{\delta : \Jmin{\Gamma}{\Prob{P}{a}{r}}{\Delta}
        \quad  \theta : \Jmin{\Delta}{\Prob{Q}{b}{s}}{\Theta}}
@@ -909,34 +910,9 @@ $$\Rule{\delta : \Jmin{\Gamma}{\Prob{P}{a}{r}}{\Delta}
          \Jmin{\Gamma}{\Prob{P \wedge Q}{a, b}{\theta r, s}}{\Theta}}.$$
 \end{lemma}
 
-\TODO{Make the proof prettier, perhaps using a diagram.}
-
-\begin{proof}
-We have that $\theta \compose \delta : \Gamma \lei \Theta$ by 
-Lemma~\ref{lei:preorder}. 
-
-To show $\Theta \entails \Prob{P \wedge Q}{a, b}{\theta r, s}$, it
-suffices to show $\Theta \entails \Prob{P}{a}{\theta r}$ and
-$\Theta \entails \Prob{Q}{b}{s}$. The latter holds by assumption. For the
-former, note that $\Delta \entails \Prob{P}{a}{r}$ and hence
-$\Theta \entails \theta (\Prob{P}{a}{r})$ by stability of $\Prob{P}{a}{r}$.
-But $\theta (\Prob{P}{a}{r}) = \Prob{P}{a}{\theta r}$ by definition, so we are done.
-
-Finally, suppose there is some substitution $\theta : \Gamma \lei \Theta$ 
-and outputs $t, u$ such that
-$\Theta \entails \Prob{P \wedge Q}{a, b}{t, u}$, so
-$\Theta \entails \Prob{P}{a}{t}$ and
-$\Theta \entails \Prob{Q}{b}{u}$.
-Since $\delta : \Jmin{\Gamma}{\Prob{P}{a}{r}}{\Delta}$, there exists
-$\zeta_1 : \Delta \lei \Theta$ such that
-$\theta \eqsubst \zeta_1 \compose \delta$
-and $\Theta \entails \R{P}{\zeta_1 r}{t}$.
-But then $\theta : \Jmin{\Delta}{\Prob{Q}{b}{s}}{\Theta}$, so there exists
-$\zeta_2 : \Theta \lei \Theta$ such that
-$\zeta_1 \eqsubst \zeta_2 \compose \theta$
-and $\Theta \entails \R{Q}{\zeta_2 s}{u}$.
-Hence $\theta \eqsubst \zeta_2 \compose (\theta \compose \delta)$
-and $\Theta \entails \R{P \wedge Q}{\zeta_2 (\theta r), \zeta_2 s}{t, u}$.
+\begin{proof}[Sketch]
+\TODO{Sketch proof.}
+See appendix.
 \end{proof}
 
 This sequential approach to problem solving is not the only decomposition
@@ -1246,110 +1222,9 @@ $\JinstantiateMin{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$.
 \end{enumerate}
 \end{lemma}
 
-\begin{proof}
-It suffices to show that the algorithm succeeds and produces a solution that is
-below $\Theta$.
-% We examine the structure of $\upsilon$ (or $\alpha$) and $\tau$, and 
-We proceed by induction on the total length of the context, the length of the
-context before the bar, and structurally on types. \TODO{Make this clearer.}
-
-\begin{enumerate}[(a)]
-\item 
-\begin{enumerate}[(i)]
-\item Suppose $\upsilon = \alpha$ and $\tau = \beta$ are variables.
-Let $\Gamma = \Gamma_0, v D$ and examine $v D$:
-\begin{itemize}
-\item If $v = \alpha = \beta$ are all the same variable, then the
-\textsc{Idle} rule applies, $\Delta = \Gamma$ and the result is trivial.
-
-\item If $v D = \hole{\alpha}$ then the \textsc{Define} rule applies,
-$\Delta = \Gamma_0, \alpha \defn \beta$
-and $\theta : \Delta \lei \Theta$.
-The case $v D = \hole{\beta}$ is similar.
-
-\item If $v D = \alpha \defn \chi$ then
-$\Theta \entails \theta\alpha \equiv \theta\chi$ by definition of $\lei$,
-and $\Theta \entails \theta\alpha \equiv \theta\beta$ by hypothesis,
-so $\Theta \entails \theta\beta \equiv \theta\chi$ by transitivity and symmetry.
-But then $\theta_\alpha : \Gamma_0 \lei \Theta$ where $\theta_\alpha$ is $\theta$
-with the type assigned to $\alpha$ removed, and
-$\Theta \entails \theta_\alpha\beta \equiv \theta_\alpha\chi$,
-since $\beta$ and $\chi$ cannot depend on $\alpha$ by the sanity conditions.
-Now, by induction,
-$\Junify{\Gamma_0}{\beta}{\chi}{\Delta_0}$
-for some $\Delta_0$.
-with $\theta_\alpha : \Delta_0 \lei \Theta$.
-Hence the \textsc{Expand} rule applies,
-$\Delta = \Delta_0, \alpha \defn \upsilon$
-and $\theta : \Delta \lei \Theta$.
-The case $v D = \beta \defn \upsilon$ is similar.
-
-\item Otherwise, $v D \perp \{ \alpha, \beta \}$ and the \textsc{Ignore} rule
-applies by a similar argument. \TODO{Give this argument.}
-\end{itemize}
-
-\item Now suppose wlog that $\upsilon = \alpha$ is a variable and $\tau$ is
-not a variable. The conditions for part (b) hold, so by induction,
-$\Jinstantiate{\Gamma}{\alpha}{\tau}{\emptycontext}{\Delta}$
-and the \textsc{Solve} rule applies.
-
-\item Otherwise, we must have $\tau = \tau_0 \arrow \tau_1$ and
-$\upsilon = \upsilon_0 \arrow \upsilon_1$.
-Then $\Theta \entails \theta\tau_0 \equiv \theta\upsilon_0$ and
-$\Theta \entails \theta\tau_1 \equiv \theta\upsilon_1$,
-so by induction there exist contexts
-$\Delta_0$ and $\Delta$ such that
-$\Junify{\Gamma}{\tau_0}{\upsilon_0}{\Delta_0}$ and
-$\Junify{\Delta_0}{\tau_1}{\upsilon_1}{\Delta}$.
-%, with $\theta : \Gamma \lei \Delta$ and $\theta : \Gamma_1 \lei \Delta$.
-Hence the \textsc{Decompose} rule applies, and
-$\theta : \Delta \lei \Theta$ by the Optimist's lemma.
-
-
-
-\end{enumerate}
-
-\item  Let $\Gamma = \Gamma_0, v D$.
-\begin{enumerate}[(i)]
-\item If $v = \alpha$ and $\alpha \in \FTV{\tau, \Xi}$, then there is some
-non-variable type $\chi$ such that
-$\Theta \entails \theta\alpha \equiv \theta\chi$
-and $\alpha \in \FTV{\chi}$.
-\TODO{Explain why this follows.}
-But this cannot occur, by lemma~\ref{lem:occurCheck}.
-
-\item If $v D = \hole{\alpha}$ and $\alpha \notin \FTV{\tau, \Xi}$, then the
-\textsc{DefineS} rule applies, $\Delta = \Gamma_0, \Xi, \alpha := \tau$ and
-$\theta : \Delta \lei \Theta$.
-
-\item If $v D = \alpha \defn \chi$ and $\alpha \notin \FTV{\tau, \Xi}$, then
-$\Theta \entails \theta\alpha \equiv \theta\chi$,
-so $\Theta \entails \theta\chi \equiv \theta\tau$ by symmetry and transitivity. 
-Moreover, $\Gamma_0, \Xi \entails \tau \type$
-since $\alpha \notin \FTV{\tau, \Xi}$, and
-$\theta_\alpha : \Gamma_0, \Xi \lei \Theta$
-so by induction
-$\Junify{\Gamma_0, \Xi}{\chi}{\tau}{\Delta_0}$
-for some $\Delta_0$
-with $\theta_\alpha : \Delta_0 \lei \Theta$.
-Hence the \textsc{ExpandS} rule applies with
-$\Delta = \Delta_0, \alpha \defn \chi$
-and $\theta : \Delta \lei \Theta$.
-
-\item If $v = \beta$ for $\alpha \neq \beta$ and
-$\beta \in \FTV{\upsilon, \Xi}$ then
-$\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\beta D, \Xi}{\Delta}$
-is well-posed, so it has a solution by induction and
-the \textsc{DependS} rule applies. \TODO{Explain this.}
-
-\item Otherwise $v D \perp \FTV{\alpha, \tau, \Xi}$ and
-$\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\Xi}{\Delta_0}$
-is well-posed, so it has a solution by induction and
-the \textsc{IgnoreS} rule applies with $\Delta = \Delta_0, v D$.
-\TODO{Explain this.}
-\qedhere
-\end{enumerate}
-\end{enumerate}
+\begin{proof}[Sketch]
+\TODO{Sketch proof.}
+See appendix.
 \end{proof}
 
 
@@ -2008,146 +1883,15 @@ By induction on the structure of derivations.
 
 
 \begin{lemma}[Completeness and generality of type inference]
+\label{lem:inferComplete}
 If $\theta : \Gamma \leiR \Theta$ and $\Theta \entails t : \tau$ then
 $\JminR{\Gamma}{\Pinf{t}{\upsilon}}{\Delta}$
 for some type $\upsilon$ and context $\Delta$.
 \end{lemma}
 
-\begin{proof}
-It suffices to show that the algorithm succeeds and delivers a result that is below
-$(\tau, \theta, \Theta)$. We proceed by structural induction.
-
-\paragraph{Variables.}
-If $t = x$ is a variable, then by inversion
-$x \asc \sigma \in \Theta$.
-Now by definition of $\leiR$,
-$x \asc \gen{\Xi}{\upsilon} \in \Gamma$
-where $\sigma = \theta\gen{\Xi}{\upsilon}$.
-Hence the \textsc{Var} rule applies giving
-$\Jtype{\Gamma}{x}{\upsilon}{\Gamma, \Xi}$.
-
-The proof of $\Theta \entails x : \tau$ must consist of applying
-$\Theta \entailsN x \hasscheme \gen{\theta\Xi}{\theta\upsilon}$
-to some $\Theta$-types, so it determines a map from the unbound type variables of
-$\Xi$ to types over $\Theta$, and hence a substitution
-$\zeta : \Gamma, \Xi \leiR \Theta$ that agrees with $\theta$ on $\Gamma$ and maps
-type variables in $\Xi$ to their definitions in $\Theta$.
-Thus $\theta \eqsubst \zeta \compose \iota : \Gamma \leiR \Theta$.
-
-
-
-\paragraph{Let bindings.}
-If $t = (\letIn{x}{s}{w})$, then by inversion there is some scheme
-$\sigma = \gen{\Psi}{.\tau_s}$ such that $\Theta \entails s \hasscheme \sigma$
-and $\Theta, x \asc \sigma \entails w : \tau$.
-Then $\Theta \fatsemi \entails s \hasscheme \gen{\Psi}{.\tau_s}$ so
-$\Theta \fatsemi \Psi \entails s : \tau_s$.
-
-Moreover $\theta : \Gamma \fatsemi \lei \Theta \fatsemi \Psi$, so
-by induction
-$\Jtype{\Gamma \fatsemi}{s}{\upsilon}{\Delta_0 \fatsemi \Xi_0}$
-and there exists
-$\zeta_0 : \Delta_0 \fatsemi \Xi_0 \leiR \Theta \fatsemi \Psi$
-such that
-$\theta \eqsubst \zeta_0 \compose \iota$ and
-$\Theta \fatsemi \Psi \entails \zeta_0 \upsilon \equiv \tau_s$.
-
-Now $\zeta_0 ||_{\Delta_0} : \Delta_0 \leiR \Theta$, so
-$$\zeta_0 ||_{\Delta_0} : \Delta_0, x \asc \gen{\Xi_0}{.\upsilon}
-    \leiR \Theta, x \asc \zeta_0\gen{\Xi_0}{.\upsilon}.$$
-and (note the $\lei$ relation since we are generalising the type scheme)
-$$\iota : \Theta, x \asc \gen{\Psi}{.\tau_s}
-    \lei  \Theta, x \asc \zeta_0\gen{\Xi_0}{.\upsilon}$$
-so by stability of type assignment under the $\lei$ relation,
-$$\Theta, x \asc \zeta_0\gen{\Xi_0}{.\upsilon} \entails w : \tau.$$
-
-Hence, by induction,
-$$\Jtype{\Delta_0, x \asc \gen{\Xi_0}{.\upsilon}}{w}{\chi}
-        {\Delta_1, x \asc \gen{\Xi_0}{.\upsilon}, \Xi_1}$$
-and there is some
-$$\zeta_1 : \Delta_1, x \asc \gen{\Xi_0}{.\upsilon}, \Xi_1
-    \leiR \Theta, x \asc \zeta_0\gen{\Xi_0}{.\upsilon}$$
-such that
-$\zeta_0 ||_{\Delta_0} \equiv \zeta_1 \compose \iota$
-%   : \Delta_0, x \asc \gen{\Xi_0}{.\upsilon}$
-%          \leiR \Theta, x \asc \zeta_0\gen{\Xi_0}{.\upsilon}.
-and
-$\Theta, x \asc \zeta_0\gen{\Xi_0}{.\upsilon} \entails \zeta_1\chi \equiv \tau$.
-
-Now the \textsc{Let} rule applies to give
-$$\Jtype{\Gamma}{\letIn{x}{s}{w}}{\chi}{\Delta_1, \Xi_1}$$
-and we have
-$\zeta_1 : \Delta_1, \Xi_1 \leiR \Theta$,
-$\Theta \entails \zeta_1\chi \equiv \tau$
-and $\theta \equiv \zeta_1 \compose \iota$.
-
-
-
-\paragraph{$\lambda$-abstractions.}
-If $t = \lambda x . w$ is an abstraction, then by inversion
-$\Theta \entails \tau \equiv \tau_0 \arrow \tau_1$
-for some types $\tau_0$ and $\tau_1$, and
-$\Theta, x \asc .\tau_0 \entails w : \tau_1$.
-Taking $\theta' = \subst{\tau_0}{\alpha}{\theta}$, we have that
-$$\theta' : \Gamma, \hole{\alpha}, x \asc .\alpha
-             \leiR  \Theta, x \asc .\tau_0$$
-and hence, by induction,
-$$\Jtype{\Gamma, \hole{\alpha}, x \asc .\alpha}{w}{\upsilon}
-              {\Delta_0, x \asc .\alpha, \Xi}$$
-with $\zeta : \Delta_0, x \asc .\alpha, \Xi \leiR \Theta, x \asc .\tau_0$
-such that $\theta' \eqsubst \zeta \compose \iota$ and
-$\Theta, x \asc .\tau_0 \entails \zeta\upsilon \equiv \tau_1$.
-
-Thus the \textsc{Abs} rule applies, so we have
-$$\Jtype{\Gamma}{\lambda x . w}{\alpha \arrow \upsilon}
-              {\Delta_0, \Xi},$$
-$\zeta : \Delta_0, \Xi \leiR \Theta$,
-$\theta \eqsubst \zeta \compose \iota$ and
-$\Theta \entails \zeta(\alpha \arrow \upsilon) \equiv \tau_0 \arrow \tau_1$.
-
-
-
-\paragraph{Applications.}
-If $t = f a$ is an application, then
-$\Theta \entails f : \tau_0 \arrow \tau$,
-so by induction
-$\Jtype{\Gamma}{f}{\chi}{\Delta_0}$
-and there exists
-$\zeta_0 : \Delta_0 \leiR \Theta$
-such that 
-$\theta \eqsubst \zeta_0 \compose \iota$ and
-$\Theta \entails \zeta_0\chi \equiv \tau_0 \arrow \tau$.
-
-Now $\Theta \entails a : \tau_0$, so by induction
-$\Jtype{\Delta_0}{a}{\upsilon}{\Delta_1}$
-and there exists
-$\zeta_1 : \Delta_1 \leiR \Theta$
-such that
-$\zeta_0 \eqsubst \zeta_1 \compose \iota$ and
-$\Theta \entails \zeta_1\upsilon \equiv \tau_0$.
-
-Let $\zeta_2 = \subst{\tau}{\beta}{\zeta_1}$, then
-$\zeta_2 : \Delta_1, \hole{\beta} \leiR \Theta$.
-Now
-$\Theta \entails \zeta_2\chi \equiv \tau_0 \arrow \tau$
-since $\chi$ is a $\Delta_0$ type so
-$\Theta \entails \zeta_2\chi \equiv \zeta_0\chi$.
-Similarly, and since $\zeta_2$ maps $\beta$ to $\tau$, we have
-$\Theta \entails \zeta_2(\upsilon \arrow \beta) \equiv \tau_0 \arrow \tau$.
-Hence $\Theta \entails \zeta_2\chi \equiv \zeta_2(\upsilon \arrow \beta)$ so
-we have
-$\JunifyR{\Delta_1, \hole{\beta}}{\chi}{\upsilon \arrow \beta}{\Delta}$
-with
-$\zeta : \Delta \leiR \Theta$ such that
-$\zeta_2 \eqsubst \zeta \compose \iota$
-by completeness of unification.
-Hence the \textsc{App} rule applies, so
-$\Jtype{\Gamma}{f a}{\beta}{\Delta}$,
-and $\theta \eqsubst \zeta \compose \iota$.
-
-
-
-
+\begin{proof}[Sketch]
+\TODO{Sketch proof.}
+See appendix.
 \end{proof}
 
 
@@ -2577,5 +2321,285 @@ This is all just boilerplate. Roll on GHC 6.12!
 \addcontentsline{toc}{section}{References}
 \bibliographystyle{plainnat}
 \bibliography{lib}
+
+
+\appendix
+
+\section{Appendix}
+
+\begin{proof}[Proof of lemma~\ref{lem:optimist} (Optimist's Lemma)]
+We have that $\theta \compose \delta : \Gamma \lei \Theta$ by 
+Lemma~\ref{lei:preorder}. 
+
+To show $\Theta \entails \Prob{P \wedge Q}{a, b}{\theta r, s}$, it
+suffices to show $\Theta \entails \Prob{P}{a}{\theta r}$ and
+$\Theta \entails \Prob{Q}{b}{s}$. The latter holds by assumption. For the
+former, note that $\Delta \entails \Prob{P}{a}{r}$ and hence
+$\Theta \entails \theta (\Prob{P}{a}{r})$ by stability of $\Prob{P}{a}{r}$.
+But $\theta (\Prob{P}{a}{r}) = \Prob{P}{a}{\theta r}$ by definition, so we are done.
+
+Finally, suppose there is some substitution $\theta : \Gamma \lei \Theta$ 
+and outputs $t, u$ such that
+$\Theta \entails \Prob{P \wedge Q}{a, b}{t, u}$, so
+$\Theta \entails \Prob{P}{a}{t}$ and
+$\Theta \entails \Prob{Q}{b}{u}$.
+Since $\delta : \Jmin{\Gamma}{\Prob{P}{a}{r}}{\Delta}$, there exists
+$\zeta_1 : \Delta \lei \Theta$ such that
+$\theta \eqsubst \zeta_1 \compose \delta$
+and $\Theta \entails \R{P}{\zeta_1 r}{t}$.
+But then $\theta : \Jmin{\Delta}{\Prob{Q}{b}{s}}{\Theta}$, so there exists
+$\zeta_2 : \Theta \lei \Theta$ such that
+$\zeta_1 \eqsubst \zeta_2 \compose \theta$
+and $\Theta \entails \R{Q}{\zeta_2 s}{u}$.
+Hence $\theta \eqsubst \zeta_2 \compose (\theta \compose \delta)$
+and $\Theta \entails \R{P \wedge Q}{\zeta_2 (\theta r), \zeta_2 s}{t, u}$.
+\end{proof}
+
+
+
+
+\begin{proof}[Proof of lemma~\ref{lem:unifyComplete}]
+It suffices to show that the algorithm succeeds and produces a solution that is
+below $\Theta$.
+% We examine the structure of $\upsilon$ (or $\alpha$) and $\tau$, and 
+We proceed by induction on the total length of the context, the length of the
+context before the bar, and structurally on types. \TODO{Make this clearer.}
+
+\begin{enumerate}[(a)]
+\item 
+\begin{enumerate}[(i)]
+\item Suppose $\upsilon = \alpha$ and $\tau = \beta$ are variables.
+Let $\Gamma = \Gamma_0, v D$ and examine $v D$:
+\begin{itemize}
+\item If $v = \alpha = \beta$ are all the same variable, then the
+\textsc{Idle} rule applies, $\Delta = \Gamma$ and the result is trivial.
+
+\item If $v D = \hole{\alpha}$ then the \textsc{Define} rule applies,
+$\Delta = \Gamma_0, \alpha \defn \beta$
+and $\theta : \Delta \lei \Theta$.
+The case $v D = \hole{\beta}$ is similar.
+
+\item If $v D = \alpha \defn \chi$ then
+$\Theta \entails \theta\alpha \equiv \theta\chi$ by definition of $\lei$,
+and $\Theta \entails \theta\alpha \equiv \theta\beta$ by hypothesis,
+so $\Theta \entails \theta\beta \equiv \theta\chi$ by transitivity and symmetry.
+But then $\theta_\alpha : \Gamma_0 \lei \Theta$ where $\theta_\alpha$ is $\theta$
+with the type assigned to $\alpha$ removed, and
+$\Theta \entails \theta_\alpha\beta \equiv \theta_\alpha\chi$,
+since $\beta$ and $\chi$ cannot depend on $\alpha$ by the sanity conditions.
+Now, by induction,
+$\Junify{\Gamma_0}{\beta}{\chi}{\Delta_0}$
+for some $\Delta_0$.
+with $\theta_\alpha : \Delta_0 \lei \Theta$.
+Hence the \textsc{Expand} rule applies,
+$\Delta = \Delta_0, \alpha \defn \upsilon$
+and $\theta : \Delta \lei \Theta$.
+The case $v D = \beta \defn \upsilon$ is similar.
+
+\item Otherwise, $v D \perp \{ \alpha, \beta \}$ and the \textsc{Ignore} rule
+applies by a similar argument. \TODO{Give this argument.}
+\end{itemize}
+
+\item Now suppose wlog that $\upsilon = \alpha$ is a variable and $\tau$ is
+not a variable. The conditions for part (b) hold, so by induction,
+$\Jinstantiate{\Gamma}{\alpha}{\tau}{\emptycontext}{\Delta}$
+and the \textsc{Solve} rule applies.
+
+\item Otherwise, we must have $\tau = \tau_0 \arrow \tau_1$ and
+$\upsilon = \upsilon_0 \arrow \upsilon_1$.
+Then $\Theta \entails \theta\tau_0 \equiv \theta\upsilon_0$ and
+$\Theta \entails \theta\tau_1 \equiv \theta\upsilon_1$,
+so by induction there exist contexts
+$\Delta_0$ and $\Delta$ such that
+$\Junify{\Gamma}{\tau_0}{\upsilon_0}{\Delta_0}$ and
+$\Junify{\Delta_0}{\tau_1}{\upsilon_1}{\Delta}$.
+%, with $\theta : \Gamma \lei \Delta$ and $\theta : \Gamma_1 \lei \Delta$.
+Hence the \textsc{Decompose} rule applies, and
+$\theta : \Delta \lei \Theta$ by the Optimist's lemma.
+
+
+\end{enumerate}
+
+\item  Let $\Gamma = \Gamma_0, v D$.
+\begin{enumerate}[(i)]
+\item If $v = \alpha$ and $\alpha \in \FTV{\tau, \Xi}$, then there is some
+non-variable type $\chi$ such that
+$\Theta \entails \theta\alpha \equiv \theta\chi$
+and $\alpha \in \FTV{\chi}$.
+\TODO{Explain why this follows.}
+But this cannot occur, by lemma~\ref{lem:occurCheck}.
+
+\item If $v D = \hole{\alpha}$ and $\alpha \notin \FTV{\tau, \Xi}$, then the
+\textsc{DefineS} rule applies, $\Delta = \Gamma_0, \Xi, \alpha := \tau$ and
+$\theta : \Delta \lei \Theta$.
+
+\item If $v D = \alpha \defn \chi$ and $\alpha \notin \FTV{\tau, \Xi}$, then
+$\Theta \entails \theta\alpha \equiv \theta\chi$,
+so $\Theta \entails \theta\chi \equiv \theta\tau$ by symmetry and transitivity. 
+Moreover, $\Gamma_0, \Xi \entails \tau \type$
+since $\alpha \notin \FTV{\tau, \Xi}$, and
+$\theta_\alpha : \Gamma_0, \Xi \lei \Theta$
+so by induction
+$\Junify{\Gamma_0, \Xi}{\chi}{\tau}{\Delta_0}$
+for some $\Delta_0$
+with $\theta_\alpha : \Delta_0 \lei \Theta$.
+Hence the \textsc{ExpandS} rule applies with
+$\Delta = \Delta_0, \alpha \defn \chi$
+and $\theta : \Delta \lei \Theta$.
+
+\item If $v = \beta$ for $\alpha \neq \beta$ and
+$\beta \in \FTV{\upsilon, \Xi}$ then
+$\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\beta D, \Xi}{\Delta}$
+is well-posed, so it has a solution by induction and
+the \textsc{DependS} rule applies. \TODO{Explain this.}
+
+\item Otherwise $v D \perp \FTV{\alpha, \tau, \Xi}$ and
+$\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\Xi}{\Delta_0}$
+is well-posed, so it has a solution by induction and
+the \textsc{IgnoreS} rule applies with $\Delta = \Delta_0, v D$.
+\TODO{Explain this.}
+\qedhere
+\end{enumerate}
+\end{enumerate}
+\end{proof}
+
+
+
+\begin{proof}[Proof of lemma~\ref{lem:inferComplete}]
+It suffices to show that the algorithm succeeds and delivers a result that is
+below $(\tau, \theta, \Theta)$. We proceed by structural induction.
+
+\paragraph{Variables.}
+If $t = x$ is a variable, then by inversion
+$x \asc \sigma \in \Theta$.
+Now by definition of $\leiR$,
+$x \asc \gen{\Xi}{\upsilon} \in \Gamma$
+where $\sigma = \theta\gen{\Xi}{\upsilon}$.
+Hence the \textsc{Var} rule applies giving
+$\Jtype{\Gamma}{x}{\upsilon}{\Gamma, \Xi}$.
+
+The proof of $\Theta \entails x : \tau$ must consist of applying
+$\Theta \entailsN x \hasscheme \gen{\theta\Xi}{\theta\upsilon}$
+to some $\Theta$-types, so it determines a map from the unbound type variables of
+$\Xi$ to types over $\Theta$, and hence a substitution
+$\zeta : \Gamma, \Xi \leiR \Theta$ that agrees with $\theta$ on $\Gamma$ and maps
+type variables in $\Xi$ to their definitions in $\Theta$.
+Thus $\theta \eqsubst \zeta \compose \iota : \Gamma \leiR \Theta$.
+
+
+
+\paragraph{Let bindings.}
+If $t = (\letIn{x}{s}{w})$, then by inversion there is some scheme
+$\sigma = \gen{\Psi}{.\tau_s}$ such that $\Theta \entails s \hasscheme \sigma$
+and $\Theta, x \asc \sigma \entails w : \tau$.
+Then $\Theta \fatsemi \entails s \hasscheme \gen{\Psi}{.\tau_s}$ so
+$\Theta \fatsemi \Psi \entails s : \tau_s$.
+
+Moreover $\theta : \Gamma \fatsemi \lei \Theta \fatsemi \Psi$, so
+by induction
+$\Jtype{\Gamma \fatsemi}{s}{\upsilon}{\Delta_0 \fatsemi \Xi_0}$
+and there exists
+$\zeta_0 : \Delta_0 \fatsemi \Xi_0 \leiR \Theta \fatsemi \Psi$
+such that
+$\theta \eqsubst \zeta_0 \compose \iota$ and
+$\Theta \fatsemi \Psi \entails \zeta_0 \upsilon \equiv \tau_s$.
+
+Now $\zeta_0 ||_{\Delta_0} : \Delta_0 \leiR \Theta$, so
+$$\zeta_0 ||_{\Delta_0} : \Delta_0, x \asc \gen{\Xi_0}{.\upsilon}
+    \leiR \Theta, x \asc \zeta_0\gen{\Xi_0}{.\upsilon}.$$
+and (note the $\lei$ relation since we are generalising the type scheme)
+$$\iota : \Theta, x \asc \gen{\Psi}{.\tau_s}
+    \lei  \Theta, x \asc \zeta_0\gen{\Xi_0}{.\upsilon}$$
+so by stability of type assignment under the $\lei$ relation,
+$$\Theta, x \asc \zeta_0\gen{\Xi_0}{.\upsilon} \entails w : \tau.$$
+
+Hence, by induction,
+$$\Jtype{\Delta_0, x \asc \gen{\Xi_0}{.\upsilon}}{w}{\chi}
+        {\Delta_1, x \asc \gen{\Xi_0}{.\upsilon}, \Xi_1}$$
+and there is some
+$$\zeta_1 : \Delta_1, x \asc \gen{\Xi_0}{.\upsilon}, \Xi_1
+    \leiR \Theta, x \asc \zeta_0\gen{\Xi_0}{.\upsilon}$$
+such that
+$\zeta_0 ||_{\Delta_0} \equiv \zeta_1 \compose \iota$
+%   : \Delta_0, x \asc \gen{\Xi_0}{.\upsilon}$
+%          \leiR \Theta, x \asc \zeta_0\gen{\Xi_0}{.\upsilon}.
+and
+$\Theta, x \asc \zeta_0\gen{\Xi_0}{.\upsilon} \entails \zeta_1\chi \equiv \tau$.
+
+Now the \textsc{Let} rule applies to give
+$$\Jtype{\Gamma}{\letIn{x}{s}{w}}{\chi}{\Delta_1, \Xi_1}$$
+and we have
+$\zeta_1 : \Delta_1, \Xi_1 \leiR \Theta$,
+$\Theta \entails \zeta_1\chi \equiv \tau$
+and $\theta \equiv \zeta_1 \compose \iota$.
+
+
+
+\paragraph{$\lambda$-abstractions.}
+If $t = \lambda x . w$ is an abstraction, then by inversion
+$\Theta \entails \tau \equiv \tau_0 \arrow \tau_1$
+for some types $\tau_0$ and $\tau_1$, and
+$\Theta, x \asc .\tau_0 \entails w : \tau_1$.
+Taking $\theta' = \subst{\tau_0}{\alpha}{\theta}$, we have that
+$$\theta' : \Gamma, \hole{\alpha}, x \asc .\alpha
+             \leiR  \Theta, x \asc .\tau_0$$
+and hence, by induction,
+$$\Jtype{\Gamma, \hole{\alpha}, x \asc .\alpha}{w}{\upsilon}
+              {\Delta_0, x \asc .\alpha, \Xi}$$
+with $\zeta : \Delta_0, x \asc .\alpha, \Xi \leiR \Theta, x \asc .\tau_0$
+such that $\theta' \eqsubst \zeta \compose \iota$ and
+$\Theta, x \asc .\tau_0 \entails \zeta\upsilon \equiv \tau_1$.
+
+Thus the \textsc{Abs} rule applies, so we have
+$$\Jtype{\Gamma}{\lambda x . w}{\alpha \arrow \upsilon}
+              {\Delta_0, \Xi},$$
+$\zeta : \Delta_0, \Xi \leiR \Theta$,
+$\theta \eqsubst \zeta \compose \iota$ and
+$\Theta \entails \zeta(\alpha \arrow \upsilon) \equiv \tau_0 \arrow \tau_1$.
+
+
+
+\paragraph{Applications.}
+If $t = f a$ is an application, then
+$\Theta \entails f : \tau_0 \arrow \tau$,
+so by induction
+$\Jtype{\Gamma}{f}{\chi}{\Delta_0}$
+and there exists
+$\zeta_0 : \Delta_0 \leiR \Theta$
+such that 
+$\theta \eqsubst \zeta_0 \compose \iota$ and
+$\Theta \entails \zeta_0\chi \equiv \tau_0 \arrow \tau$.
+
+Now $\Theta \entails a : \tau_0$, so by induction
+$\Jtype{\Delta_0}{a}{\upsilon}{\Delta_1}$
+and there exists
+$\zeta_1 : \Delta_1 \leiR \Theta$
+such that
+$\zeta_0 \eqsubst \zeta_1 \compose \iota$ and
+$\Theta \entails \zeta_1\upsilon \equiv \tau_0$.
+
+Let $\zeta_2 = \subst{\tau}{\beta}{\zeta_1}$, then
+$\zeta_2 : \Delta_1, \hole{\beta} \leiR \Theta$.
+Now
+$\Theta \entails \zeta_2\chi \equiv \tau_0 \arrow \tau$
+since $\chi$ is a $\Delta_0$ type so
+$\Theta \entails \zeta_2\chi \equiv \zeta_0\chi$.
+Similarly, and since $\zeta_2$ maps $\beta$ to $\tau$, we have
+$\Theta \entails \zeta_2(\upsilon \arrow \beta) \equiv \tau_0 \arrow \tau$.
+Hence $\Theta \entails \zeta_2\chi \equiv \zeta_2(\upsilon \arrow \beta)$ so
+we have
+$\JunifyR{\Delta_1, \hole{\beta}}{\chi}{\upsilon \arrow \beta}{\Delta}$
+with
+$\zeta : \Delta \leiR \Theta$ such that
+$\zeta_2 \eqsubst \zeta \compose \iota$
+by completeness of unification.
+Hence the \textsc{App} rule applies, so
+$\Jtype{\Gamma}{f a}{\beta}{\Delta}$,
+and $\theta \eqsubst \zeta \compose \iota$.
+
+\end{proof}
+
+
+
 
 \end{document}
