@@ -1932,12 +1932,11 @@ and specialise this scheme with fresh variables.
 >     find (_Gamma :< _)                  = find _Gamma
 >     find B0                             = fail "Missing variable"
 
-To infer the type of a $\lambda$-abstraction, we recursively infer the type of its body
-$t$ with its variable $x$ assigned type-scheme $.\alpha$, 
-%%%where $\alpha$ is 
-   with $\alpha$ 
-a fresh type variable. The type is then $\alpha \arrow \tau$ in the context with
-the $x$ binding removed.
+To infer the type of a $\lambda$-abstraction, we recursively infer the type of
+its body $w$ with its variable $x$ assigned type-scheme $.\alpha$, 
+with $\alpha$ a fresh type variable.
+% The type is then $\alpha \arrow \upsilon$ in the context with
+% the $x$ binding removed.
 
 > infer (Lam x w) = do
 >     alpha    <- fresh Hole
@@ -1945,9 +1944,9 @@ the $x$ binding removed.
 >     return (V alpha :-> upsilon)
 
 
-To infer the type of an application, we infer the type $\tau$ of the function
-$f$, then the type $\tau'$ of the argument. Unifying $\tau$ with
-$\tau' \arrow \beta$, where $\beta$ is a fresh variable, produces the
+To infer the type of an application, we infer the type $\chi$ of the function
+$f$, then the type $\upsilon$ of the argument. Unifying $\chi$ with
+$\upsilon \arrow \beta$, where $\beta$ is a fresh variable, produces the
 result.
 
 > infer (f :$ a) = do
@@ -1958,14 +1957,10 @@ result.
 >     return (V beta)
 
 
-Finally, to infer the type of a let construct we need a new kind of entry,
-the goal marker $\letGoal$.
-First we infer the type of the value $s$ being assigned, with a marker at the end of the
-original context, to determine that $s : \tau_0$. We can then generalise $\tau_0$
-to the scheme $\sigma$ by universally quantifying all variables in $\tau_0$ that
-were introduced after the marker (i.e.\ during the type inference of $s$). This allows
-us to infer the type of $t$ in the context where $x \asc \sigma$, producing a result type $\tau_1$
-and a context from which the $x$ binding can be extracted.
+Finally, to infer the type of a let construct,
+we infer the type of the definiens $s$ and generalise over type variables on
+top of the context to produce a scheme $\sigma$.
+We then infer the type of the body $w$ in the context where $x \asc \sigma$.
 
 > infer (Let x s w) = do
 >     sigma <- generaliseOver (infer s)
@@ -1977,9 +1972,9 @@ evalutes its argument, then generalises over the type variables
 to the right of the |LetGoal| marker.
 
 > generaliseOver ::  Contextual Type -> Contextual Scheme
-> generaliseOver f = do
+> generaliseOver mt = do
 >     modifyContext (:< LetGoal)
->     tau <- f
+>     tau <- mt
 >     _Xi <- skimContext
 >     return (_Xi >=> Type tau)
 >   where
@@ -1997,9 +1992,9 @@ The |(>-)| operator appends a term variable declaration to the context,
 evaluates its second argument, then removes the declaration.
 
 > (>-) :: TmEntry -> Contextual a -> Contextual a
-> x ::: sigma >- f = do
+> x ::: sigma >- ma = do
 >     modifyContext (:< TM (x ::: sigma))
->     tau <- f
+>     tau <- ma
 >     modifyContext extract
 >     return tau
 >   where          
