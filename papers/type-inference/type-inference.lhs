@@ -389,10 +389,13 @@ mean. Our ideology is that such information belongs in the context. We give an
 abstract description of contexts, which may contain type variables and other
 information.
 
-Let $\K$ be a set of sorts, and for each $K \in \K$ let $\V_K$ be a set of
-variables and $\D_K$ a set of objects. Our running example will be the sort
-$\TY$, where $\V_\TY$ is some set of type variables and $\D_\TY$ initially
-contains only the \scare{unbound variable} object $~\hole{}$.
+Let $\K$ be a set of sorts, and for each $K \in \K$ let $\V_K$ be a
+set of variables and $\D_K$ a set of \emph{declaration
+properties}. Our running example will be the sort $\TY$, where
+$\V_\TY$ is some set of type variables and $\D_\TY$ initially contains
+only the \scare{unbound variable} property $~\hole{}$. Properties of
+variables play the same atomic role in \emph{derivations} that variables
+themselves play in terms.
 
 A \define{context} $\Gamma$ is a list of declarations $v D$, where
 $v \in \V_K$ and $D \in \D_K$.
@@ -402,19 +405,26 @@ $\Gamma, \Delta$ and $\Theta$ range over contexts.
 %% $\Xi$ is a context that contains no $\fatsemi$ separators.
 
 We will gradually construct a set $\Ss$ of statements, which can be
-judged in a context. We write the \define{normal judgment} $\Gamma \entails S$
-to mean that the declarations in $\Gamma$ support the statement $S \in \Ss$.
-We write the \define{neutral judgment} $\Gamma \entailsN S$ to mean that $S$
-follows directly from applying a fact in $\Gamma$.
+judged in a context: these are the `sorts' of our syntax of
+derivations. We write the \define{normal judgment} $\Gamma \entails S$
+to mean that the declarations in $\Gamma$ support the statement $S \in
+\Ss$.  We write the \define{neutral judgment} $\Gamma \entailsN S$ to
+mean that $S$ follows directly from applying a fact in $\Gamma$.
+Neutral judgments capture exactly the legitimate appeals to assumptions
+in the context, just the way `neutral terms' in $\lambda$-calculus are
+applied variables. We embed neutral into normal.
+$$\name{Neutral}
+  \Rule{\Gamma \entailsN S}
+       {\Gamma \entails S}.$$
 
-It is not enough for contexts to be lists of declarations: they must be
-well-founded, that is, the declarations need to make sense.
-A context is valid if it declares each variable at most
-once, and each declaration is a valid extension of the preceding context.
-We assume we have a map $\ok_K : \D_K \rightarrow \Ss$ for every $K \in \K$.
-Let $\V_K(\Gamma)$ be the set of $K$-variables in $\Gamma$.
-We define the context validity statement $\valid$ as shown in
-Figure~\ref{fig:contextValidityRules}.
+It is not enough for contexts to be lists of declarations: they must
+be well-founded, that is, each declaration should make sense in
+\emph{its} context.  A context is valid if it declares each variable
+at most once, and each declaration property is meaningful in the
+preceding context.  We maintain a map $\ok_K : \D_K \rightarrow
+\Ss$ for every $K \in \K$.  Let $\V_K(\Gamma)$ be the set of
+$K$-variables in $\Gamma$.  We define the context validity statement
+$\valid$ as shown in Figure~\ref{fig:contextValidityRules}.
 
 \begin{figure}[ht]
 \boxrule{\Gamma \entails \valid}
@@ -429,12 +439,12 @@ $$
 \label{fig:contextValidityRules}
 \end{figure}
 
-From now on, we will only be interested in valid contexts. All future definitions
+From now on, we consider only valid contexts. All future definitions
 implicitly assume the context is valid, and it is straightforward to verify that
 our algorithms preserve context validity.
 
 In the example of type declarations, we let $\ok_\TY (\hole{}) = \valid$.
-That is, declaring a type variable to be unknown always makes sense.
+That is, declaring our ignorance is always reasonable.
 
 
 \subsection{Making types meaningful}
@@ -455,15 +465,11 @@ $$\name{Lookup}
   \Rule{\Gamma \entails \valid   \quad  v D \in \Gamma}
        {\Gamma \entailsN \sem{v D}}.$$
 
-Applications of the \textsc{Lookup} rule are the \scare{variables} of
-derivations. 
-Just as variable names are the atoms out of which compound expressions get built,
-instances of \textsc{Lookup} are the axiom leaves out of which complex
-derivations of judgments are built. 
-
-Neutral judgments are embedded in normals by
-$$\Rule{\Gamma \entailsN S}
-       {\Gamma \entails S}.$$
+As promised, \textsc{Lookup} uses act as \scare{variables} in
+derivations.  Our $\sem{\cdot}_K$ associates an `expression atom'
+with its `derivation atom'. This is the only rule which interrogates
+the context, hence we propose the bold step of dropping the
+shared context from the presentation of all the other rules.
 
 We define the statement $\tau \type$ by taking
 $\sem{\hole{\alpha}} = \alpha \type$
@@ -473,26 +479,29 @@ $$
      {\tau \arrow \upsilon \type}.
 $$
 Note that we omit the context from rules if it is constant throughout.
-We observe the sanity condition
+We observe the \emph{sanity} condition
 $\Gamma \entails \tau \type  \Rightarrow  \Gamma \entails \valid$.
 
 
 \subsection{Conjunctions}
 
-If $S$ and $S'$ are statements, then we define the composite statement
-$S \wedge S'$ with introduction rule
-$$\Rule{S \quad S'}
-       {S \wedge S'}$$
-and neutral elimination rules
-$$\Rule{\Gamma \entailsN S \wedge S'}
-       {\Gamma \entailsN S}
+We shall sometimes need to package multiple facts about a single
+variable, so we introduce the composite statement $S \wedge S'$ for
+statements $S$ and $S'$, with normal introduction rule (pairing) and neutral
+elimination rules (projections):
+ $$\Rule{S \quad S'} {S \wedge S'}
+\qquad
+\Rule{\entailsN S \wedge S'}
+       {\entailsN S}
   \qquad
-  \Rule{\Gamma \entailsN S \wedge S'}
-       {\Gamma \entailsN S'}$$
-We add general introduction forms for composite statements, but supply
-eliminators only for composite hypotheses, in effect forcing derivations to be
-cut-free. This facilitates reasoning by induction on derivations. The general
-eliminators are in any case admissible rules.
+  \Rule{\entailsN S \wedge S'}
+       {\entailsN S'}$$
+This is but one instance of a general pattern: we add normal introduction
+forms for composite statements, but supply
+eliminators only for composite \emph{hypotheses}, in effect forcing
+derivations to be cut-free. This facilitates reasoning by induction on
+derivations. We shall ensure that the corresponding elimination rules
+for \emph{normal} judgments are in any case admissible.
 
 
 
