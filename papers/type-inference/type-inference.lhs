@@ -1894,9 +1894,14 @@ $\JminR{\Gamma}{\Pinf{t}{\upsilon}}{\Delta}$
 for some type $\upsilon$ and context $\Delta$.
 \end{lemma}
 
+
 \begin{proof}[Sketch]
-\TODO{Sketch proof.}
-See appendix.
+The algorithm is structurally recursive over terms, failing only when
+unification fails. Each step locally preserves all possible solutions.
+For let-expressions, we observe that any type specialising any scheme
+for $s$ must certainly specialise the type we infer for $s$, and
+\emph{ipso facto}, the principal type scheme we assign to $x$.
+For details, see appendix.
 \end{proof}
 
 
