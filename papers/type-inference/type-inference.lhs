@@ -383,6 +383,19 @@ For simplicity, we use integers as names in the implementation.
 > type Type    = Ty TyName
 
 
+We can implement $\mathit{FTV}$ using a typeclass, with membership function
+|(<?)|. We get most of the required instances for free using |Foldable|.
+
+> class FTV a where
+>     (<?) :: TyName -> a -> Bool
+
+> instance FTV TyName where
+>     (<?) = (==)
+
+> instance  (Foldable t, FTV a) => FTV (t a) where
+>     alpha <? t = any (alpha <?) t
+
+
 \subsection{Introducing contexts}
 
 Types contain variables, but we need some way of interpreting what the variables
@@ -576,6 +589,13 @@ is either bound to a type (written |Some tau|) or left unbound (written |Hole|).
 > data TyDecl   =  Some Type | {-"\;"-} Hole
 > data TyEntry  =  TyName := TyDecl
 
+Thanks to the relevant |Foldable| instances, all we need to do is define |FTV|
+for entries.
+
+> instance FTV TyEntry where
+>    alpha <? (_ := Some tau)  = alpha <? tau
+>    alpha <? (_ := Hole)      = False
+
 A context is a (backwards) list of entries. At the moment we only have one
 kind of entry, but later we will add others, so this definition is incomplete.
 % subject to the
@@ -597,21 +617,6 @@ as well make the code match our intution about the meaning of data. Lists
 are monoids where |<+>| is the append operator, and the \scare{fish} operator
 \eval{:t (<><)} appends a suffix to a context. 
 
-Since |Type| and |Suffix| are built from |Foldable| functors containing names, we can define a typeclass implementation of \ensuremath{FTV}, with membership function |(<?)|: 
-
-> class OccursIn a where
->     (<?) :: TyName -> a -> Bool
-
-> instance OccursIn TyName where
->     (<?) = (==)
-
-> instance OccursIn TyEntry where
->    alpha <? (_ := Some tau)  = alpha <? tau
->    alpha <? (_ := Hole)      = False
-
-> instance  (Foldable t, OccursIn a)
->               => OccursIn (t a) where
->     alpha <? t = any (alpha <?) t
 
 We work in the |Contextual| monad (computations that can fail and mutate the
 context), defined as follows:   
