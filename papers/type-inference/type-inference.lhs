@@ -1224,10 +1224,11 @@ $\JinstantiateMin{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$.
 \end{enumerate}
 \end{lemma}
 
-\begin{proof}[Sketch]
-\TODO{Sketch proof.}
-See appendix.
-\end{proof}
+\begin{proof}[Sketch] Each step preserves all solutions. The
+Optimist's Lemma justifies problem decomposition. The algorithm
+terminates, and the only case not covered by the rules is the case
+where the occur check fails, indicating that no unifer exists.  For
+details, see appendix.  \end{proof}
 
 
 \subsection{Implementing unification}
