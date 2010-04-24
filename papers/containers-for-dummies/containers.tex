@@ -1,0 +1,95 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{verbatim}
+\usepackage{url}
+\usepackage{xspace}
+\usepackage{ifthen}
+
+\newcommand{\DRAFT}{}
+
+
+%% Structure
+\ifthenelse{\isundefined{\DRAFT}}
+           {\newenvironment{structure}
+                           {\comment}
+                           {\endcomment}}
+           {\newenvironment{structure}
+                           {\footnotesize\verbatim}
+                           {\endverbatim}}
+
+%% Written bits of Structure
+\newenvironment{wstructure}{\comment}{\endcomment}
+
+%% Comments
+\ifthenelse{\isundefined{\DRAFT}}
+           {\newcommand{\note}[1]{}}
+           {\setlength{\marginparwidth}{0.7in}
+            \newcommand{\note}[1]{\-\marginpar[\raggedright\footnotesize #1]%
+                                 {\raggedright\footnotesize #1}}}
+
+\begin{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Title
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\title{Draft: Containers for Dummies}
+\author{The MSP Doctoral Crew
+        \footnote{Correspondent author: 
+                  \texttt{dagand@cis.strath.ac.uk}}}
+
+\maketitle
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Content
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\begin{abstract}
+The idea of writing this document arised during a MSP meeting, when I
+(Pierre) was begging for some explanation of Michael Abbott's PhD
+thesis~\cite{abbott:phd-thesis}. Neil answered that I should develop
+my own understanding of the Container story instead. Hank acknowledged
+that resources on Containers were rather technical and going in many
+directions, mostly because each member of the Container Mafia have his
+personal take on it.
+
+It was suggested to write a document that would serve as an
+introduction as well as a reference on Containers. Being an
+introduction, this document should allow newcomers to become familiar
+with our technology, thanks to a plethora of examples and
+exercices. Being a reference, it should be an exhaustive overview of
+the Container landscape, with clear definitions and theorems.
+\end{abstract}
+
+
+\begin{structure}
+Some braindump:
+
+* I have several pages of definitions from Hank. That could make a
+  first skeleton.
+
+* As suggested by Hank, we should first focus on the table of content,
+  the content will follow.
+
+* We will inevitably end up talking to the Programmer, the Type
+Theorist and the Category Theorist. That would be good to organize the
+document to allow people to build on their intuition and then move on
+what they are less familiar with. We could (graphically) signal when
+some paragraph goes into technicalities of a particular field.
+\end{structure}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Bibliography
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\bibliographystyle{abbrvnat}
+\bibliography{containers}
+
+
+\end{document}
+
