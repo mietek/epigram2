@@ -129,7 +129,7 @@ data IMu {l : Level}{I : Set (suc l)}(R : I -> IDesc {l = l} I)(i : I) : Set l w
 
 box : {l : Level}{I : Set (suc l)}(D : IDesc I)(P : I -> Set l) -> desc D P -> IDesc (Sigma I P)
 box (var i)     P x        = var (i , x)
-box (const X)   P x        = const X
+box (const X)   P x        = const Unit
 box (prod D D') P (d , d') = prod (box D P d) (box D' P d')
 box (sigma S T) P (a , b)  = box (T a) P b
 box (pi S T)    P f        = pi S (\s -> box (T s) P (f s))
@@ -156,7 +156,7 @@ module Elim {l : Level}
            (xs : desc D (IMu R)) -> 
            desc (box D (IMu R) xs) P
     hyps (var i) x = induction i x
-    hyps (const X) x = x -- ??
+    hyps (const X) x = Void
     hyps (prod D D') (d , d') =  hyps D d , hyps D' d'
     hyps (pi S R) f = \ s -> hyps (R s) (f s)
     hyps (sigma S R) ( a , b ) = hyps (R a) b

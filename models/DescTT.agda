@@ -91,14 +91,14 @@ data Mu (D : Desc) : Set where
 
 All : (D : Desc)(X : Set)(P : X -> Set) -> [| D |] X -> Set
 All id          X P x        = P x
-All (const Z)   X P x        = Z
+All (const Z)   X P x        = Unit
 All (prod D D') X P (d , d') = (All D X P d) * (All D' X P d')
 All (sigma S T) X P (a , b)  = All (T a) X P b
 All (pi S T)    X P f        = (s : S) -> All (T s) X P (f s)
 
 all : (D : Desc)(X : Set)(P : X -> Set)(R : (x : X) -> P x)(x : [| D |] X) -> All D X P x
 all id X P R x = R x
-all (const Z) X P R z = z
+all (const Z) X P R z = Void
 all (prod D D') X P R (d , d') = all D X P R d , all D' X P R d'
 all (sigma S T) X P R (a , b) = all (T a) X P R b
 all (pi S T) X P R f = \ s -> all (T s) X P R (f s)
@@ -164,7 +164,7 @@ module Elim (D : Desc)
                (xs : [| D' |] (Mu D)) ->
                All D' (Mu D) P xs
         hyps id x = induction x
-        hyps (const Z) z = z
+        hyps (const Z) z = Void
         hyps (prod D D') (d , d') = hyps D d , hyps D' d'
         hyps (sigma S T) (a , b) = hyps (T a) b
         hyps (pi S T) f = \s -> hyps (T s) (f s)
@@ -331,7 +331,7 @@ cata : (D : Desc)
 cata D T phi x = induction D (\_ -> T) (\x ms -> phi (replace D T x ms)) x
   where replace : (D' : Desc)(T : Set)(xs : [| D' |] (Mu D))(ms : All D' (Mu D) (\_ -> T) xs) -> [| D' |] T
         replace id T x y = y
-        replace (const Z) T z z' = z'
+        replace (const Z) T z z' = z
         replace (prod D D') T (x , x') (y , y') = replace D T x y , replace D' T x' y'
         replace (sigma A B) T (a , b) t = a , replace (B a) T b t
         replace (pi A B) T f t = \s -> replace (B s) T (f s) (t s)
