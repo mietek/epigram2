@@ -45,12 +45,11 @@ We distinguish |In|Terms (into which we push types) and |Ex|Terms
 This is the by-now traditional bidirectional
 type-checking~\cite{turner:bidirectional_tc} story: there are
 \emph{checkable} terms that are checked against given types, and there
-are \emph{inferable} terms which type are inferred relatively to a
-typing context. We push types in checkable terms, pull types from
+are \emph{inferable} terms whose types are inferred relative to a
+typing context. We push types in to checkable terms, and pull types from
 inferable terms.
 
 We also distinguish the representations of |TT| terms and |VV| values.
-
 
 > data Phase  = TT | VV
 
@@ -88,25 +87,25 @@ And we can infer types from:
 
 To put some flesh on these bones, we define and use the |Scope|,
 |Can|, |Op|, and |Elim| data-types. Their role is described
-below. Before that, let us point out an important invariant. Non
-implementers are advised to skip the following.
+below. Before that, let us point out an important invariant. Non-implementers
+are advised to skip the following.
 
 \begin{danger}[Neutral terms and Operators]
 
-In the world of values, ie. |Tm {In, VV} p|, the neutral terms are
+In the world of values, i.e.\ |Tm {In, VV} p|, the neutral terms are
 exactly the |N t| terms. Enforcing this invariant requires some
 caution in the way we deal with operators and how we turn them into
 values, so this statement relies on the hypothesis that the evaluation
 of operators is correct: it is not enforced by Haskell type-system.
 
 To prove that statement, we first show that any |Tm {In, VV} p| which
-is not a |N t| is not a neutral term. This obvious as we are left with
+is not a |N t| is not a neutral term. This is obvious as we are left with
 lambda and canonicals, which cannot be stuck. Then, we have to prove
 that a |N t| in |Tm {In, VV} p| form is a stuck term. We do so by case
 analysis on the term |t| inside the |N|:
 \begin{itemize}
 
-\item Typing and variable will not let you get a value, so a neutral
+\item Typing and variables will not let you get values, so a neutral
 value is not one of those.
 
 \item This is also easy if you have a parameter: it is stuck waiting
@@ -142,13 +141,13 @@ building a stuck operator for no good reason.
 
 \subsubsection{Scopes}
 
-A |Scope| represents bodies of binders, but the representation differs
+A |Scope| represents the body of a binder, but the representation differs
 with phase. In \emph{terms}, |x :. t| is a \emph{binder}: the |t| is a
 de Bruijn term with a new bound variable 0, and the old ones
-incremented. The |x| is just advice for display-name selection.
+incremented. The |x| is just advice for display name selection.
 
 In values, |HF x body| is an higher-order binding. As previously, |x|
-is just a name advice. On the other hand, |body| is a stored function
+is just name advice. On the other hand, |body| is a stored function
 awaiting a value, the bound variable, to compute a \emph{fully
 evaluated} value. The substitution is therefore partially inherited
 from Haskell. 
@@ -312,22 +311,18 @@ type of the result.
 However, we had to generalize it. Following the evolution of |canTy|
 in Section~\ref{sec:canTy}, we have adopted the following scheme:
 
-< opTy    :: (Alternative m, MonadError StackError m) =>
-<            (TY :>: t -> m (s :=>: VAL)) -> 
-<            [t] -> 
-<            m ([s :=>: VAL] , TY)
+> opTy ::  (Alternative m, MonadError (StackError t) m) =>
+>          Op -> (TY :>: t -> m (s :=>: VAL)) -> [t] ->
+>          m ([s :=>: VAL], TY)
 
-First, being kind of |MonadPlus| allows a seamless integration in the
+First, the |MonadError| constraint allows seamless integration in the
 world of things that might fail. Second, we have extended the
 evaluation function to perform type-checking at the same time. We also
-liberalize the return type to |s|, to give more freedom in the choice
+liberalise the return type to |s|, to give more freedom in the choice
 of the checker-evaluator. This change impacts on |exQuote|, |infer|,
 and |useOp|. If this definition is not clear now, it should become
 clear after the definition of |canTy| in Section~\ref{sec:canTy}.
 
-> opTy ::  (Alternative m, MonadError (StackError t) m) =>
->          Op -> (TY :>: t -> m (s :=>: VAL)) -> [t] ->
->          m ([s :=>: VAL], TY)
 > opTy op chev ss
 >   | length ss == opArity op = telCheck chev (opTyTel op :>: ss)
 > opTy op _ _ = throwError' $  (err "operator arity error: ")
@@ -336,7 +331,7 @@ clear after the definition of |canTy| in Section~\ref{sec:canTy}.
 
 \paragraph{Running the operator}
 
-The |opRun| argument implements the computational behavior: given
+The |opRun| field implements the computational behavior: given
 suitable arguments, we should receive a value, or failing that, the
 neutral term to blame for the failure of computation. For example, if
 |append| were an operator, it would compute if the first list is nil
@@ -374,9 +369,9 @@ We have some type synonyms for commonly occurring instances of |Tm|.
 > type ENV    = Bwd VAL
 
 We have special pairs for types going into and coming out of
-stuff. That is, we write |typ :>: thing| to say that |typ| accepts the
-term |thing| -- we can push the |typ| in the |thing|. Conversely, we
-write |thing :<: typ| to say that |thing| is of infered type |typ| --
+stuff. We write |typ :>: thing| to say that |typ| accepts the
+term |thing|, i.e.\ we can push the |typ| in the |thing|. Conversely, we
+write |thing :<: typ| to say that |thing| is of inferred type |typ|, i.e.\
 we can pull the type |typ| out of the |thing|. Therefore, we can read
 |:>:| as ``accepts'' and |:<:| as ``has inferred type''.
 
@@ -385,13 +380,12 @@ we can pull the type |typ| out of the |thing|. Therefore, we can read
 > data tm :<: ty = tm :<: ty  deriving (Show,Eq)
 > infix 4 :<:
 
-As we are discussing syntactic sugar, let me introduce the ``reduces
-to'' symbol:
+As we are discussing syntactic sugar, we define the ``reduces to'' symbol:
 
 > data t :=>: v = t :=>: v deriving (Show, Eq)
 > infix 5 :=>:
 
-With the associated projections:
+with the associated projections:
 
 > valueOf :: (t :=>: v) -> v
 > valueOf (_ :=>: v) = v
@@ -422,7 +416,7 @@ First, a bunch of straightforward structural inductions:
 >   (t0 :$ e0)    == (t1 :$ e1)    = t0 == t1 && e0 == e1
 >   (op0 :@ vs0)  == (op1 :@ vs1)  = op0 == op1 && vs0 == vs1
 
-Then, equality in a set means having equal canonical element:
+Then, equality of a type ascription means having equal elements:
 
 >   (t0 :? _)     == (t1 :? _)     = t0 == t1
 
@@ -473,7 +467,8 @@ values, and are shared.
 References are compared by name, as the |NameSupply| guarantees a
 source of unique, fresh names. Note however that |REF|s being shared,
 one could think of using physical pointer equality to implement this
-test (!).
+test (!). This would require us to ensure we retain sharing in all
+circumstances, however.
 
 > instance Eq REF where
 >   (x := _) == (y := _) = x == y
@@ -485,12 +480,12 @@ test (!).
 
 %endif
 
-A |REF| can be of one of those kinds:
+A |REF| can be of one of four kinds:
 \begin{itemize}
-\item |DECL|: used a binder, a declaration
-\item |DEFN|: computed, a definition
-\item |HOLE|: not computed yet, a definition-to-be
-\item |FAKE|: a hysterectomized definition, used to make labels
+\item |DECL|: used a binder, a declaration;
+\item |DEFN|: computed, a definition;
+\item |HOLE|: not computed yet, a definition-to-be; or
+\item |FAKE|: a hysterectomized definition, used to make labels.
 \end{itemize}
 
 > data RKind
@@ -500,6 +495,15 @@ A |REF| can be of one of those kinds:
 >   |  FAKE
 >   deriving Show
 
+A hole will be in one of three ``Buddy Holly'' states:
+\begin{itemize}
+\item |Crying|: the elaboration strategy intended to solve the hole has
+gone wrong.
+\item |Waiting|: a solution strategy exists for the hole (including the
+``strategy'' of waiting for the user to solve it). 
+\item |Hoping|: no solution strategy is assigned to the hole, so it will
+take any value that you can give it.
+\end{itemize}
 Stealing documentation from http://www.e-pig.org/epilogue/?p=147 might be
 a good idea at this point.
 
@@ -508,7 +512,7 @@ a good idea at this point.
 
 We can already define some handy operators on |REF|s. First, we can
 turn a |REF| to a |VAL|ue by using |pval|. If the reference is already
-defined, then we pick the computed value. Otherwise, it is dealt as a
+defined, then we pick the computed value. Otherwise, it is dealt with as a
 neutral parameter.
 
 > pval :: REF -> VAL
@@ -537,8 +541,8 @@ For example, labels are used in the presentation of the |Enum|
 (Section~\ref{sec:enum}) and |Desc| (Section~\ref{sec:desc})
 data-types. These data-types are themselves implemented as fix-points
 of non human-readable descriptions, hence we hide the details behind a
-label. The curious reader is referred to their implementation. Any
-body in his right mind would ignore labels for now.
+label. The curious reader is referred to their implementation. Anybody
+in their right mind would ignore labels for now.
 
 Label equality is sound but not complete for equality of what has been
 labelled.
@@ -551,13 +555,13 @@ labelled.
 
 If we have a labelled |INTM|, we can try to extract the name from the label.
 
+> extractREF :: EXTM -> Maybe REF
+> extractREF (P ref)    = Just ref
+> extractREF (tm :$ _)  = extractREF tm
+> extractREF _          = Nothing
+
 > extractLabelName :: Labelled f INTM -> Maybe Name
-> extractLabelName (Just (N l) :?=: _) = extractName l
->   where
->     extractName :: EXTM -> Maybe Name
->     extractName (P ref)    = Just (refName ref)
->     extractName (tm :$ _)  = extractName tm
->     extractName _          = Nothing
+> extractLabelName (Just (N l) :?=: _) = (|refName (extractREF l)|)
 > extractLabelName _ = Nothing
 
 We can also throw away a label, should we want to.
@@ -568,17 +572,26 @@ We can also throw away a label, should we want to.
 
 \subsection{Term Construction}
 
+It is sometimes useful to construct the identity function as a term or value.
+
 > idTM :: String -> INTM
 > idTM x   = L (x :. (N (V 0)))
 
 > idVAL :: String -> VAL
 > idVAL x  = L (HF x id)
 
+\question{Do we need this operator any more?}
+
 > ($#) :: Int -> [Int] -> InTm x
 > f $# xs = N (foldl (\ g x -> g :$ A (NV x)) (V f) xs)
 
+The aptly named |$##| operator applies an |ExTm| to a list of |InTm|s.
+
 > ($##) :: Tm {Ex, p} x -> [Tm {In, p} x] -> Tm {Ex, p} x
 > f $## xs = f $:$ (map A xs)
+
+Sensible name advice is a hard problem. The |fortran| function tries to extract
+a useful name from a term.  
 
 > fortran :: Tm {In, p} x -> String
 > fortran (L (x :. _))   | not (null x) = x

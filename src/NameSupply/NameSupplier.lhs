@@ -21,10 +21,10 @@
 %endif
 
 The |NameSupplier| type-class aims at giving the ability to use the
-|NameSupply| in a safe way. There is trade-off here, between ease of
-implementation and safety. As it stands now, this version offers a
-moderate safety but is easy to use. Ideally, we would like that most
-of the code uses |NameSupplier| instead of manipulating the
+|NameSupply| in a safe way. There is trade-off here between ease of
+implementation and safety. As it stands now, this version offers
+moderate safety but is easy to use. Ideally, we would like most
+of the code to use |NameSupplier| instead of manipulating the
 |NameSupply| explicitly.
 
 So, what does |NameSupplier| offer? 
@@ -41,12 +41,12 @@ the namespace.
 
 Similarly, |forkNSupply| is a safe wrapper around |freshName| and
 |freshNSpace|: |forkNSupply subname child dad| runs the |child| with
-the current namespace extended with |subname|. Then, |dad| gets the
+the current namespace extended with |subname|, then, |dad| gets the
 result of |child|'s work and can go ahead with a fresh variable index.
 
 >     forkNSupply  :: String -> m s -> (s -> m t) -> m t
 
-Finally, we have a |askNSupply| operation, to \emph{read} the current
+Finally, we have an |askNSupply| operation, to \emph{read} the current
 |NameSupply|. This was a difficult choice: we give up the read-only
 access to the |NameSupply|, allowing the code to use it in potentially
 nasty ways. This operation has been motivated by |equal| that calls
@@ -57,7 +57,7 @@ invariants of the name fabric, hence needs direct access to the
 >     askNSupply   :: m NameSupply
 
 Because of the presence of |askNSupply|, we have here a kind of Reader
-monad on steroid. This might not be true forever, we can hope to replace
+monad on steroids. This might not be true forever; we can hope to replace
 |askNSupply| by a finer grained mechanism.
 
 

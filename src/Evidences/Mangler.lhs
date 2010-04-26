@@ -17,7 +17,7 @@
 
 %endif
 
-Variable manipulation, in all its forms, ought be handled by a
+Variable manipulation, in all its forms, ought be handled by the
 mangler. A |Mangle f x y| is a record that describes how to deal with
 parameters of type |x|, variables and binders, producing terms with
 parameters of type |y| and wrapping the results in some applicative
@@ -46,8 +46,8 @@ given binder name.
 >   }
 
 
-The interpretation of |Mangle| is given by the following function
-|%|. The |%| operator mangles a term, produing a term with the
+The interpretation of a |Mangle| is given by the |%| operator.
+This mangles a term, produing a term with the
 appropriate parameter type in the relevant idiom. This is basically a
 traversal, but calling the appropriate fields of |Mangle| for each
 parameter, variable or binder encountered.
@@ -57,7 +57,9 @@ parameter, variable or binder encountered.
 > m % L (x :. t)   = (|L (|(x :.) (mangB m x % t)|)|)
 > m % C c          = (|C ((m %) ^$ c)|)
 > m % N n          = (|N (exMang m n (|[]|))|)
->
+
+The corresponding behaviour for |ExTm|s is implemented by |exMang|.
+
 > exMang ::  Applicative f => Mangle f x y ->
 >            Tm {Ex, TT} x -> f [Elim (Tm {In, TT} y)] -> f (Tm {Ex, TT} y)
 > exMang m (P x)     es = mangP m x es
@@ -74,33 +76,10 @@ The |%%| operator applies a mangle that uses the identity functor.
 
 
 
-%if false
-
-Dead code, waiting to be burried
-
-\subsection{The Capture mangler}
-
-Given a list |xs| of |String| parameter names, the |capture| function produces a mangle
-that captures those parameters as de Brujin indexed variables.
-\question{Do we ever need to do this?}
-
-< capture :: Bwd String -> Mangle Identity String String
-< capture xs = Mang
-<   {  mangP = \ x ies  -> (|(either P V (h xs x) $:$) ies|)
-<   ,  mangV = \ i ies  -> (|(V i $:$) ies|)
-<   ,  mangB = \ x -> capture (xs :< x)
-<   } where
-<   h B0         x  = Left x
-<   h (ys :< y)  x
-<     | x == y      = Right 0
-<     | otherwise   = (|succ (h ys y)|)
-
-%endif
-
 \subsection{The Under mangler}
 
-The |under i y| mangle binds the variable with de Brujin index |i| to the parameter |y|
-and leaves the term otherwise unchanged.
+The |under i y| mangle binds the variable with de Brujin index |i| to the
+parameter |y| and leaves the term otherwise unchanged.
 
 > under :: Int -> x -> Mangle Identity x x
 > under i y = Mang

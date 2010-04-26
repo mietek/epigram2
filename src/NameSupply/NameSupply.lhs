@@ -13,19 +13,19 @@
 
 The |NameSupply| is the name generator used throughout Epigram. It is
 inspired by the \emph{hierarchical names}~\cite{mcbride:free_variable}
-used in Epigram the First. The aim of this structure is to,
+used in Epigram the First. The aim of this structure is to
 conveniently, provide unique free variable names.
 
 A |NameSupply| is composed by a backward list of |(String, Int)| and an
 |Int|. This corresponds to a hierarchical namespace and a free name in
 that namespace. The structure of the namespace stack is justified as
-follow. The |String| component is simply here for readability
-purposes, while the |Int| uniquely identifies the namespace.
+follows. The |String| component provides name advice, which may not be
+unique, while the |Int| uniquely identifies the namespace.
 
 > type NameSupply = (Bwd (String, Int), Int)
 
 Therefore, creating a fresh name in a given namespace simply consists
-in incrementing the name counter:
+of incrementing the name counter:
 
 > freshName :: NameSupply -> NameSupply
 > freshName (sis, i) = (sis, i + 1)
