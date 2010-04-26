@@ -18,14 +18,19 @@
 %endif
 
 
-\question{Some general introduction about the News system? 
-          Why? How? When?}
+The news system represents stored updates to references. For performance
+reasons, we do not wish to traverse the entire proof state every time
+modifications are made to one part of the tree. Instead, we store news
+entries below the cursor, and update following entries when the cursor
+moves down. This section describes the data that is stored in the
+proof state, and section \ref{sec:wire_service} describes how news is
+propagated.
 
 
 \subsection{News}
 
 
-|News| represent possible changes to references. At the moment, it may
+|News| represents possible changes to references. At the moment, it may
 be |GoodNews| (the reference has become more defined) or |NoNews|
 (even better from our perspective, as the reference has not
 changed). Note that |News| is ordered by increasing ``niceness''.
@@ -36,8 +41,8 @@ and |DeletedNews| (the reference has gone completely).
 
 > data News = DeletedNews | BadNews | GoodNews | NoNews deriving (Eq, Ord, Show)
 
-Handily, |News| defines a monoid. The neutral element is a
-|NoNews|. Composing two news consists in taking the less nice.
+Handily, |News| is a monoid where the neutral element is |NoNews| and composing
+two |News| takes the less nice.
 
 > instance Monoid News where
 >     mempty   = NoNews
@@ -65,12 +70,11 @@ The |addNews| function adds the given news to the bulletin, if it is newsworthy.
 >   seek ((r', n') : old) | r == r' = (n', old)
 >   seek (rn : old) = (n', rn : old') where (n', old') = seek old
 
-For performance reason, the code is slightly more complex than
-necessary. Using |seek|, we enforce the invariant that any reference
-is subject to at most one news in a |NewsBulletin|. Hence, as we add a
-news about a reference, we eagerly merge it in the |NewsBulletin|.
+Using |seek|, we enforce the invariant that any reference
+appears at most once in a |NewsBulletin|.
 
-\subsubsection{Grabbing the freshest news}
+
+\subsubsection{Getting the latest news}
 
 The |lookupNews| function returns the news about a reference contained
 in the bulletin, which may be |NoNews| if the reference is not
@@ -116,10 +120,11 @@ in either.
 > mergeNews new old = foldr addNews old new
 
 
-\subsubsection{o news}
+\subsubsection{Read all about it}
 
 The |tellNews| function applies a bulletin to a term. It returns the updated
-term and the news about it.
+term and the news about it (i.e.\ the least nice news of any reference used
+in the term).
 
 > tellNews :: NewsBulletin -> Tm {d, TT} REF -> (Tm {d, TT} REF, News)
 > tellNews []    tm = (tm, NoNews)
