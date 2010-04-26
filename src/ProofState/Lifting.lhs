@@ -11,12 +11,13 @@
 > import Control.Applicative
 > import Control.Monad.Identity
 
-> import Kit.BwdFwd
-
 > import Evidences.Tm
 > import Evidences.Mangler
 
 > import ProofState.Developments
+
+> import Kit.BwdFwd
+> import Kit.MissingLibrary
 
 %endif
 

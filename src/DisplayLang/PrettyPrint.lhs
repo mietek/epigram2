@@ -12,9 +12,6 @@
 > import Data.List
 > import Text.PrettyPrint.HughesPJ
 
-> import Kit.BwdFwd hiding ((<+>))
-> import Kit.MissingLibrary
-
 > import ProofState.Developments
 
 > import DisplayLang.DisplayTm
@@ -24,6 +21,9 @@
 > import Features.Features ()
 
 > import Evidences.Tm
+
+> import Kit.BwdFwd
+> import Kit.MissingLibrary hiding ((<+>))
 
 %endif
 

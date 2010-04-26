@@ -30,7 +30,7 @@
 
 > import Elaboration.Elaborator
 
-> import Kit.BwdFwd hiding ((<+>))
+> import Kit.BwdFwd
 
 %endif
 

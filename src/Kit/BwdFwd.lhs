@@ -12,7 +12,8 @@
 > import Data.Foldable hiding (foldl, foldr)
 > import Data.Traversable
 > import Control.Applicative
-> import Control.Monad.Writer
+
+> import Kit.MissingLibrary
 
 %endif
 
@@ -85,28 +86,6 @@ Backward and forward lists, applicative with zipping.
 > bwdNull B0        = True
 > bwdNull (_ :< _)  = False
 
-These bits of renaming should go elsewhere.
-
-> instance (Applicative f, Num x, Show (f x), Eq (f x)) => Num (f x) where
->   x + y          = (|x + y|)
->   x * y          = (|x * y|)
->   x - y          = (|x - y|)
->   abs x          = (|abs x|)
->   negate x       = (|negate x|)
->   signum x       = (|signum x|)
->   fromInteger i  = (|(fromInteger i)|)
-
-> trail :: (Applicative f, Foldable t, Monoid (f a)) => t a -> f a
-> trail = foldMap pure
-
-> (<+>) :: Monoid x => x -> x -> x
-> (<+>) = mappend
-
-> (^$) :: (Traversable f, Applicative i) => (s -> i t) -> f s -> i (f t)
-> (^$) = traverse
-
-%if False
-
 > bwdFoldCtxt :: (Fwd x -> t) ->
 >                (t -> x -> Fwd x -> t) ->
 >                Bwd x -> t
@@ -123,6 +102,9 @@ These bits of renaming should go elsewhere.
 >                                 t)
 >     where sum = foldr' (\_ x -> x+1) 0
 
+
+
+%if False
 
 > instance Traversable Bwd where
 >   traverse f B0         = (|B0|)
@@ -143,15 +125,5 @@ These bits of renaming should go elsewhere.
 >
 > instance Foldable Fwd where
 >   foldMap = foldMapDefault
-
-> instance Monoid o => Applicative (Writer o) where
->   pure = return
->   (<*>) = ap
-
-Grr.
-
-> instance Monoid (IO ()) where
->   mempty = return ()
->   mappend x y = do x; y
 
 %endif

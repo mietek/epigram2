@@ -8,6 +8,7 @@
 > module NameSupply.NameSupply where
 
 > import Kit.BwdFwd
+> import Kit.MissingLibrary
 
 %endif
 

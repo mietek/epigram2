@@ -20,8 +20,6 @@ generate an executable from a collection of supercombinator definitions.
 > import Data.Traversable
 > import Control.Applicative
 
-> import Kit.BwdFwd
-
 > import NameSupply.NameSupply
 
 > import Evidences.Tm
@@ -30,6 +28,9 @@ generate an executable from a collection of supercombinator definitions.
 > import ProofState.Developments
 
 > import Features.Features ()
+
+> import Kit.BwdFwd
+> import Kit.MissingLibrary
 
 %endif
 

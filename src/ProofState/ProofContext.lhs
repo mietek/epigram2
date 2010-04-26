@@ -14,8 +14,6 @@
 > import Data.List
 > import Data.Traversable
 
-> import Kit.BwdFwd
-
 > import NameSupply.NameSupply
 
 > import ProofState.Developments
@@ -24,6 +22,9 @@
 > import Evidences.Tm
 
 > import DisplayLang.DisplayTm
+
+> import Kit.BwdFwd
+> import Kit.MissingLibrary
 
 %endif
 

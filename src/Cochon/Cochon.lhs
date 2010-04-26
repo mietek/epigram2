@@ -17,9 +17,6 @@
 > import System.Exit
 > import System.IO 
 
-> import Kit.BwdFwd
-> import Kit.Parsley
-
 > import NameSupply.NameSupply
 
 > import Evidences.Tm hiding (In)
@@ -36,7 +33,6 @@
 > import ProofState.ProofKit
 
 > import Tactics.Elimination
-> -- import Tactics.Induction -- waiting for tis to be fixed :)
 > import Tactics.PropSimp
 > import Tactics.Information
 > import Tactics.Gadgets
@@ -50,6 +46,10 @@
 > import Cochon.Error
 
 > import Compiler.Compiler
+
+> import Kit.BwdFwd
+> import Kit.Parsley
+> import Kit.MissingLibrary
 
 %endif
 

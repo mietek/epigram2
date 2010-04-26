@@ -14,17 +14,31 @@
 > import Control.Monad.Identity
 > import Control.Monad.State
 > import Control.Monad.Reader
+> import Control.Monad.Writer
 
 > import Data.Foldable
-> import Data.Monoid
 > import Data.Traversable
 
 %endif
+
+
+\subsection{Renaming}
+
+> trail :: (Applicative f, Foldable t, Monoid (f a)) => t a -> f a
+> trail = foldMap pure
+
+> (<+>) :: Monoid x => x -> x -> x
+> (<+>) = mappend
+
+> (^$) :: (Traversable f, Applicative i) => (s -> i t) -> f s -> i (f t)
+> (^$) = traverse
+
 
 \subsection{Indicator Function}
 
 > indicator :: (x -> Bool) -> x -> Int
 > indicator p x = if p x then 1 else 0
+
 
 \subsection{Newtype Unwrapping}
 
@@ -140,11 +154,31 @@ so we have to do things the long way...
 > instance Foldable (Either x) where
 >     foldMap = foldMapDefault
 
+> instance (Applicative f, Num x, Show (f x), Eq (f x)) => Num (f x) where
+>   x + y          = (|x + y|)
+>   x * y          = (|x * y|)
+>   x - y          = (|x - y|)
+>   abs x          = (|abs x|)
+>   negate x       = (|negate x|)
+>   signum x       = (|signum x|)
+>   fromInteger i  = (|(fromInteger i)|)
+
+> instance Monoid o => Applicative (Writer o) where
+>   pure = return
+>   (<*>) = ap
+
+Grr.
+
+> instance Monoid (IO ()) where
+>   mempty = return ()
+>   mappend x y = do x; y
+
 
 \subsection{HalfZip}
 
 > class Functor f => HalfZip f where
 >   halfZip :: f x -> f y -> Maybe (f (x,y))
+
 
 \subsection{Functor Kit}
 
