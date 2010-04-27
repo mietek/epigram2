@@ -292,7 +292,7 @@ $\lambda$-lift terms.
 
 
 
-\subsection{Elaborated Construction Commands}
+\subsection{Elaborating construction commands}
 
 
 The |elabGive| command elaborates the given display term in the appropriate type for
@@ -337,6 +337,107 @@ subgoals produced by elaboration will be children of the resulting goal.
 >     return tm
 
 
+The |elabPiBoy| command elaborates the given display term to produce a type, and
+creates a $\Pi$-boy with that type.
+
+> elabPiBoy :: (String :<: InDTmRN) -> ProofState REF
+> elabPiBoy (s :<: ty) = do
+>     tt <- elaborate' (SET :>: ty)
+>     piBoy' (s :<: tt)
+
+> elabLamBoy :: (String :<: InDTmRN) -> ProofState REF
+> elabLamBoy (s :<: ty) = do
+>     tt <- elaborate' (SET :>: ty)
+>     lambdaBoy' (s :<: tt)
+
+
+\subsection{Elaborating programming problems}
+
+The |elabLet| command sets up a programming problem, given a name and
+scheme. The command |let plus (m : Nat)(n : Nat) : Nat| should result
+in the following proof state:
+
+\begin{verbatim}
+plus
+    [ plus-type
+        [ tau := Nat : Set ;
+          (m : Nat) ->
+          tau := Nat : Set ;
+          (n : Nat) ->
+        ] Nat : Set ;
+      plus
+        [ \ m : Nat ->
+          \ n : Nat ->
+          \ c : < plus^1 m n : Nat > ->
+        ] c call : Nat ;
+      plus-impl
+        [ \ m : Nat ->
+          \ n : Nat ->
+        ] ? : < plus^1 m n : Nat > ;
+      \ m : Nat ->
+      \ n : Nat ->
+    ] plus-impl m n call : Nat ;
+\end{verbatim}
+
+> elabLet :: (String :<: Scheme InDTmRN) -> ProofState (EXTM :=>: VAL)
+> elabLet (x :<: sch) = do
+>     makeModule x
+>     goIn
+
+First we need to elaborate the scheme so it contains evidence terms,
+then convert the module into a goal with the scheme assigned.
+
+>     make (x ++ "-type" :<: SET)
+>     goIn
+>     (sch', ty :=>: _) <- elabScheme B0 sch
+>     moduleToGoal (N ty)     
+>     putMotherScheme sch'
+
+Now we add a definition with the same name as the function being defined,
+to handle recursive calls. This has the same arguments as the function,
+plus an implicit labelled type that provides evidence for the recursive call.
+
+>     pn <- getFake
+>     let schCall = makeCall pn 0 sch'
+>     make (x :<: schemeToInTm schCall)
+>     goIn
+>     putMotherScheme schCall
+>     refs <- traverse lambdaBoy (schemeNames schCall)
+>     give (N (P (last refs) :$ Call (N (pn $## map NP (init refs)))))
+
+For now we just call |elabProgram| to set up the remainder of the programming
+problem. This could be implemented more cleanly, but it works.
+
+>     elabProgram (schemeNames sch')
+>   where
+>     getFake :: ProofState EXTM
+>     getFake = do
+>         n <- getMotherName
+>         (_ :=>: g) <- getHoleGoal
+>         return $ P (n := FAKE :<: g)
+
+Sorry for the horrible de Bruijn index mangling.
+\question{Perhaps we should use something
+like |TEL| to represent schemes as telescopes of values?}
+
+>     makeCall :: EXTM -> Int -> Scheme INTM -> Scheme INTM
+>     makeCall l n (SchType ty) =
+>         SchImplicitPi ("c" :<: LABEL (N (l $## fmap NV [n-1,n-2..0])) ty)
+>             (SchType (inc %% ty))
+>     makeCall l n (SchImplicitPi (x :<: s) schT) =
+>         SchImplicitPi (x :<: s) (makeCall l (n+1) schT)
+>     makeCall l n (SchExplicitPi (x :<: schS) schT) =
+>         SchExplicitPi (x :<: schS) (makeCall l (n+1) schT)
+
+>     inc :: Mangle Identity x x
+>     inc = Mang
+>         {  mangP = \x ies -> (|(P x $:$) ies|)
+>         ,  mangV = \j ies -> (|(V (j+1) $:$) ies|)
+>         ,  mangB = \_ -> inc
+>         }
+
+
+
 The |elabProgram| command adds a label to a type, given a list of arguments.
 e.g. with a goal |plus : Nat -> Nat -> Nat|, |program x,y| will give a proof
 state of:
@@ -356,7 +457,7 @@ plus [
 >     let pn = P (n := FAKE :<: g)
 >     let newty = pity (mkTel pn g [] args)
 >     newty' <- bquoteHere newty
->     g :=>: _ <- make (fst (last n) :<: newty') 
+>     g :=>: _ <- make (fst (last n) ++ "-impl" :<: newty') 
 >     argrefs <- traverse lambdaBoy args
 >     let fcall = pn $## (map NP argrefs) 
 >     let call = g $## (map NP argrefs) :$ Call (N fcall)
@@ -373,34 +474,7 @@ plus [
 >         mkL n (x:xs) = mkL (n :$ (A x)) xs
 
 
-The |elabPiBoy| command elaborates the given display term to produce a type, and
-creates a $\Pi$-boy with that type.
-
-> elabPiBoy :: (String :<: InDTmRN) -> ProofState REF
-> elabPiBoy (s :<: ty) = do
->     tt <- elaborate' (SET :>: ty)
->     piBoy' (s :<: tt)
-
-> elabLamBoy :: (String :<: InDTmRN) -> ProofState REF
-> elabLamBoy (s :<: ty) = do
->     tt <- elaborate' (SET :>: ty)
->     lambdaBoy' (s :<: tt)
-
-
-\subsection{Elaborating Schemes}
-
-> elabLet :: (String :<: Scheme InDTmRN) -> ProofState (EXTM :=>: VAL)
-> elabLet (x :<: sch) = do
->     makeModule x
->     goIn
->     make ("tau" :<: SET)
->     goIn
->     (sch', ty :=>: _) <- elabScheme B0 sch
->     moduleToGoal (N ty)     
->     putMotherScheme sch'
->     r <- elabProgram (schemeNames sch')
->     putMotherScheme sch' -- this is wrong but does it matter?
->     return r
+\subsection{Elaborating schemes}
 
 
 > elabScheme :: Entries -> Scheme InDTmRN -> ProofState (Scheme INTM, EXTM :=>: VAL)
