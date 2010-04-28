@@ -159,13 +159,12 @@
 >       make ("ConNames" :<: NP enumREF) 
 >       goIn
 >       (e :=>: ev) <- give (foldr (\(t,_) e -> CONSE (TAG t) e) NILE scs)
->       make ("ConDescs" :<: ARR (ENUMT (N e)) (NP descREF)) --(N (branchesOp :@ [ N e, L $ K (NP descREF)])))
+>       make ("ConDescs" :<: N (branchesOp :@ [ N e, L $ K (NP descREF)])) -- ARR (ENUMT (N e)) (NP descREF)
 >       goIn
->       (cs' :=>: _) <- elabGive (foldr (\c t -> DPAIR (DTIN c) t) DVOID 
->                                 (map (\(_,_,c,_,_) -> c) cs))
+>       (cs' :=>: _) <- give (foldr PAIR VOID (map (\(_,_,c,_,_) -> c) cs))
 >       make ("DataDesc" :<: NP descREF)
 >       goIn
->       (d :=>: dv) <- give (SIGMAD (ENUMT (N e)) (N cs'))
+>       (d :=>: dv) <- give (SUMD (N e) (N cs'))
 >       GirlMother (nom := HOLE _ :<: ty) _ _ _ <- getMother
 >       let fr = nom := FAKE :<: ty
 >       xs <- (| boySpine getAuncles |)
