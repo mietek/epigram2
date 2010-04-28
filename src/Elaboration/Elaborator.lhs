@@ -246,22 +246,27 @@ hole is under a bunch of shared parameters.
 >     s' <- bquoteHere s
 >     _S' <- bquoteHere _S
 >     _T' <- bquoteHere _T
->     let p' = EQBLUE (_S' :>: s') (_T' :>: NP ref)
->     return . (, False) =<< neutralise =<< suspend ("eq" :<: PRF p' :=>: PRF p)
->         (WaitSolve ref (s' :=>: Just s)
->             (ElabDone (N (P refl :$ A _S' :$ A s')
+>     let p'     = EQBLUE (_S' :>: s') (_T' :>: NP ref)
+>         eprob  = (WaitSolve ref (s' :=>: Just s)
+>                      (ElabDone (N (P refl :$ A _S' :$ A s')
 >                           :=>: Just (pval refl $$ A _S $$ A s))))
+>     if top
+>         then return . (, False)  =<< neutralise =<< suspendMe eprob
+>         else return . (, True)   =<< neutralise =<< suspend ("eq" :<: PRF p' :=>: PRF p) eprob
+
 
 > flexiProof top p@(EQBLUE (_T :>: (NP ref@(_ := HOLE Hoping :<: _))) (_S :>: s)) = do
 >     guard =<< withNSupply (equal (SET :>: (_S, _T)))
 >     s' <- bquoteHere s
 >     _S' <- bquoteHere _S
 >     _T' <- bquoteHere _T
->     let p' = EQBLUE (_T' :>: NP ref) (_S' :>: s')
->     return . (, False) =<< neutralise =<< suspend ("eq" :<: PRF p' :=>: PRF p)
->         (WaitSolve ref (s' :=>: Just s)
->             (ElabDone (N (P refl :$ A _S' :$ A s')
+>     let p'     = EQBLUE (_T' :>: NP ref) (_S' :>: s')
+>         eprob  = (WaitSolve ref (s' :=>: Just s)
+>                      (ElabDone (N (P refl :$ A _S' :$ A s')
 >                           :=>: Just (pval refl $$ A _S $$ A s))))
+>     if top
+>         then return . (, False)  =<< neutralise =<< suspendMe eprob
+>         else return . (, True)   =<< neutralise =<< suspend ("eq" :<: PRF p' :=>: PRF p) eprob
 
 If we are trying to prove an equation between the same fake reference applied to
 two lists of parameters, we prove equality of the parameters and use reflexivity.
