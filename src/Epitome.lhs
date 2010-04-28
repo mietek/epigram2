@@ -94,6 +94,7 @@
 %include Tactics/Information.lhs
 %include Tactics/Elimination.lhs
 %include Tactics/PropSimp.lhs
+%include Tactics/Data.lhs
 %include Tactics/Gadgets.lhs
 
 \chapter{The Display Language}
