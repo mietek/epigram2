@@ -1,4 +1,5 @@
 \section{Equality}
+\label{sec:features_equality}
 
 %if False
 
