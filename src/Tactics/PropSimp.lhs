@@ -344,46 +344,24 @@ applies |g| to this proof to get a proof of |q|.
 >                            g $$ A (pv $$ A sv)))))
 
 
-To simplify a blue equation, we first try using refl, then try to make it
-compute and simplify the pieces. If neither approach works, we just search
-the context.
+To simplify a blue equation, we use |simplifyBlue|.
 
-> propSimplify gamma delta p@(EQBLUE (sty :>: s) (tty :>: t)) = 
->     useRefl <|> unroll <|> propSearch gamma delta p
->  where
->    useRefl :: Simplifier Simplify
->    useRefl = do
->        guard =<< (asks . equal $ SET :>: (sty, tty))
->        guard =<< (asks . equal $ sty :>: (s, t))
->        let w = pval refl $$ A sty $$ A s
->        return (SimplyTrivial w)
->
->    unroll :: Simplifier Simplify
->    unroll = case opRun eqGreen [sty, s, tty, t] of
->           Left _         -> (|)
->           Right TRIVIAL  -> return (SimplyTrivial (CON VOID))
->           Right q        -> forkNSupply "psEq" (forceSimplify gamma delta q) equality
->          
->    equality :: Simplify -> Simplifier Simplify
->    equality (SimplyAbsurd prf) = return (SimplyAbsurd (prf . ($$ Out)))
->    equality (Simply qs gs h) = return (Simply qs
->        (fmap (..! ($$ Out)) gs)
->        (CON h))
+> propSimplify gamma delta (EQBLUE (sty :>: s) (tty :>: t)) = 
+>     simplifyBlue True gamma delta (sty :>: s) (tty :>: t)
 
 
-To simplify a green equation, we cannot just simplify the corresponding blue
-equation because we would get infinite loops. We can search the context
-for it, though. If we do not find a proof of it in the context, we still
-return it as the simplification result because it is nicer than a green
-equation.
+To simplify a green equation, we cannot unroll the corresponding blue
+equation because we would get infinite loops, but we can use the other
+simplifications for blue equations. If we do not find a proof, we
+return the blue version as the simplification result because it is
+nicer than a green equation for the user.
 
 > propSimplify gamma delta p@(N (op :@ [sty, s, tty, t]))
 >   | op == eqGreen = do
->       let q = EQBLUE (sty :>: s) (tty :>: t)
->       m <- optional $ propSearch gamma delta q
+>       m <- optional $ simplifyBlue False gamma delta (sty :>: s) (tty :>: t)
 >       case m of
 >           Just (SimplyTrivial prf) -> return (SimplyTrivial (prf $$ Out))
->           Nothing -> freshRef ("q" :<: PRF q)
+>           Nothing -> freshRef ("q" :<: PRF (EQBLUE (sty :>: s) (tty :>: t)))
 >               (\qRef -> return (SimplyOne qRef
 >                   (L (HF "p" CON))
 >                   (NP qRef $$ Out)
@@ -393,6 +371,41 @@ equation.
 If nothing matches, we can always try searching the context.
 
 > propSimplify gamma delta p = propSearch gamma delta p
+
+
+The |simplifyBlue| command attempts to simplify a blue equation using
+refl, optionally unrolling it (calling eqGreen and simplifying the
+resulting pieces), or just searching the context.
+
+> simplifyBlue :: Bool -> Bwd REF -> Bwd REF -> TY :>: VAL
+>     -> TY :>: VAL -> Simplifier Simplify 
+> simplifyBlue canUnroll gamma delta (sty :>: s) (tty :>: t) = 
+>     useRefl
+>         <|> unroll canUnroll
+>         <|> propSearch gamma delta (EQBLUE (sty :>: s) (tty :>: t))
+>  where
+>    useRefl :: Simplifier Simplify
+>    useRefl = do
+>        guard =<< (asks . equal $ SET :>: (sty, tty))
+>        guard =<< (asks . equal $ sty :>: (s, t))
+>        let w = pval refl $$ A sty $$ A s
+>        return (SimplyTrivial w)
+>
+>    unroll :: Bool -> Simplifier Simplify
+>    unroll False  = (|)
+>    unroll True   = case opRun eqGreen [sty, s, tty, t] of
+>        Left _         -> (|)
+>        Right TRIVIAL  -> return (SimplyTrivial (CON VOID))
+>        Right q        -> forkNSupply "psEq"
+>            (forceSimplify gamma delta q) equality
+>          
+>    equality :: Simplify -> Simplifier Simplify
+>    equality (SimplyAbsurd prf) = return (SimplyAbsurd (prf . ($$ Out)))
+>    equality (Simply qs gs h) = return (Simply qs
+>        (fmap (..! ($$ Out)) gs)
+>        (CON h))
+
+
 
 
 The |propSearch| operation searches the context for a proof of the proposition,
