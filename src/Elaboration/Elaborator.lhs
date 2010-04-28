@@ -4,7 +4,7 @@
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE GADTs, TypeOperators, TupleSections #-}
+> {-# LANGUAGE GADTs, TypeOperators, TupleSections, PatternGuards #-}
 
 > module Elaboration.Elaborator where
 
@@ -161,8 +161,49 @@ an element of a given type. If it is asking for a proof, we might be able to
 find one, but otherwise we just create a hole.
 
 > runElabHope :: Bool -> TY -> ProofState (INTM :=>: VAL, Bool)
-> runElabHope top (PRF p)  = simplifyProof top p
-> runElabHope top ty       = lastHope top ty
+> runElabHope top (PRF p)       = simplifyProof top p
+> runElabHope top (LABEL l ty)  = seekLabel top l ty <|> lastHope top (LABEL l ty)
+> runElabHope top ty            = lastHope top ty
+
+
+If we are looking for a labelled type (e.g.\ to make a recursive call), we
+search the hypotheses for a value with the same label.
+
+> seekLabel :: Bool -> VAL -> VAL -> ProofState (INTM :=>: VAL, Bool)
+> seekLabel top l ty = do
+>     es <- getAuncles
+>     seekOn es
+>   where
+>     seekOn B0 = (|)
+>     seekOn (es' :< E _ _ (Girl _ _ _) _) = seekOn es'
+>     seekOn (es' :< E boy _ (Boy LAMB) _) =
+>         seekIn (NP boy) (pty boy) <|> seekOn es'
+
+>     seekIn :: VAL -> VAL -> ProofState (INTM :=>: VAL, Bool)
+>     seekIn tm (LABEL m u) = do
+>         (p' :=>: p, True) <- runElabHope False
+>             (PRF (EQBLUE (SET :>: LABEL m u) (SET :>: LABEL l ty)))
+
+<         True <- withNSupply $ equal (SET :>: (u, ty))
+<         (p' :=>: p, True) <- runElabHope False
+<            (PRF (EQBLUE (u :>: m) (ty :>: l)))
+
+>         m'   <- bquoteHere m
+>         u'   <- bquoteHere u
+>         l'   <- bquoteHere l
+>         ty'  <- bquoteHere ty
+>         tm'  <- bquoteHere tm
+>         return (N (coe :@ [LABEL m' u', LABEL l' ty', p', tm'])
+>               :=>: coe @@ [LABEL m  u,  LABEL l  ty,  p,  tm], True)
+
+<         return (N (coe :@ [LABEL m' u', LABEL l' ty', CON (PAIR (N (p' :? PRF (EQBLUE (u' :>: m') (ty' :>: l')) :$ Out)) (N (P refl :$ A SET :$ A u'))), tm'])
+<              :=>: coe @@ [LABEL m  u,  LABEL l  ty,  CON (PAIR (p $$ Out) (NP refl $$ A SET $$ A u)),  tm], True)
+
+>     seekIn tm (PI s t) = do
+>         (st :=>: sv, _) <- runElabHope False s    
+>         seekIn (tm $$ A sv) (t $$ A sv)
+>     seekIn _ _ = (|)
+
 
 If we are hoping for a proof of a proposition, we first try simplifying it using
 the propositional simplification machinery.
@@ -190,10 +231,14 @@ the propositional simplification machinery.
 >     subProof :: Bool -> VAL -> ProofState (INTM :=>: VAL, Bool)
 >     subProof top (PRF p) = flexiProof top p <|> lastHope top (PRF p)
 
+
 After simplification has dealt with the easy stuff, it calls |flexiProof| to
 solve any flex-rigid equations (by suspending a solution process on a subgoal
 and returning the subgoal). \question{Can we hope for a proof of equality and
 insert a coercion rather than demanding definitional equality of the sets?}
+
+We need to do some kind of higher-order magic here, because this fails if the
+hole is under a bunch of shared parameters.
 
 > flexiProof :: Bool -> VAL -> ProofState (INTM :=>: VAL, Bool)
 > flexiProof top p@(EQBLUE (_S :>: s) (_T :>: (NP ref@(_ := HOLE Hoping :<: _)))) = do
@@ -218,7 +263,39 @@ insert a coercion rather than demanding definitional equality of the sets?}
 >             (ElabDone (N (P refl :$ A _S' :$ A s')
 >                           :=>: Just (pval refl $$ A _S $$ A s))))
 
-> flexiProof _ _ = (|)
+If we are trying to prove an equation between the same fake reference applied to
+two lists of parameters, we prove equality of the parameters and use reflexivity.
+This case arises frequently when proving label equality to make recursive calls.
+
+> flexiProof top p@(EQBLUE (_S :>: N s) (_T :>: N t))
+>   | Just (ref, ps) <- matchFakes s t [] = do
+>     let ty = pty ref
+>     prfs <- proveBits ty ps B0
+>     let  q  = NP refl $$ A ty $$ A (NP ref) $$ Out
+>          r  = CON (smash q (trail prfs))
+>     r' <- bquoteHere r
+>     return (r' :=>: r, True)
+>   where
+>     matchFakes :: NEU -> NEU -> [(VAL, VAL)] -> Maybe (REF, [(VAL, VAL)])
+>     matchFakes (P ref@(sn := FAKE :<: _)) (P (tn := FAKE :<: _)) ps
+>         | sn == tn   = Just (ref, ps)
+>         | otherwise  = Nothing
+>     matchFakes (s :$ A as) (t :$ A at) ps = matchFakes s t ((as, at):ps)
+>     matchFakes _ _ _ = Nothing
+
+>     proveBits :: TY -> [(VAL, VAL)] -> Bwd (VAL, VAL, VAL)
+>         -> ProofState (Bwd (VAL, VAL, VAL))
+>     proveBits ty [] prfs = return prfs
+>     proveBits (PI s t) ((as, at):ps) prfs = do
+>         (_ :=>: prf, _) <- simplifyProof False (EQBLUE (s :>: as) (s :>: at))
+>         proveBits (t $$ A as) ps (prfs :< (as, at, prf))
+
+>     smash :: VAL -> [(VAL, VAL, VAL)] -> VAL
+>     smash q [] = q
+>     smash q ((as, at, prf):ps) = smash (q $$ A as $$ A at $$ A prf) ps
+
+> flexiProof top p = (|)
+
 
 If all else fails, we can hope for anything we like by creating a subgoal, though
 ideally we should cry rather than hoping for something patently absurd.
