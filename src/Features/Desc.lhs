@@ -153,7 +153,7 @@
 >       constCase _X _Z    = _Z
 >       sumCase _X _E _B   = SIGMA (ENUMT _E) .
 >                                  L $ HF "x" $ \x ->
->                                 descOp @@ [ switchDOp @@ [_E, x, _B]  , _X]
+>                                 descOp @@ [ switchDOp @@ [_E, _B, x]  , _X]
 >       prodCase _X _D _D' = TIMES  (descOp @@ [ _D , _X ])
 >                                   (descOp @@ [ _D', _X ])
 >       sigmaCase _X _S _T = SIGMA  _S . 
@@ -191,7 +191,7 @@
 >       sumCase _X _P ab _E _B = 
 >           let a = ab $$ Fst
 >               b = ab $$ Snd
->           in boxOp @@ [switchDOp @@ [_E, a, _B], _X, _P, b]
+>           in boxOp @@ [switchDOp @@ [_E, _B, a], _X, _P, b]
 >       prodCase _X _P dd' _D _D' = 
 >           let d  = dd' $$ Fst
 >               d' = dd' $$ Snd 
@@ -236,7 +236,7 @@
 >       sumCase _X _P _R ab _E _B =
 >           let a = ab $$ Fst
 >               b = ab $$ Snd
->           in mapBoxOp @@ [switchDOp @@ [_E, a, _B], _X, _P, _R, b]
+>           in mapBoxOp @@ [switchDOp @@ [_E, _B, a], _X, _P, _R, b]
 >       prodCase _X _P _R dd' _D _D' = 
 >           let d  = dd' $$ Fst
 >               d' = dd' $$ Snd 
@@ -279,7 +279,7 @@
 >         sumCase _X _Y sig ab _E _B = 
 >             let a = ab $$ Fst
 >                 b = ab $$ Snd
->             in PAIR a (mapOp @@ [ switchDOp @@ [_E, a, _B], _X, _Y, sig, b])
+>             in PAIR a (mapOp @@ [ switchDOp @@ [_E, _B, a], _X, _Y, sig, b])
 >         prodCase _X _Y sig dd' _D _D' = 
 >             let d  = dd' $$ Fst
 >                 d' = dd' $$ Snd 
