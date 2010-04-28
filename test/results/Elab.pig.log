@@ -40,6 +40,6 @@ Made.
     [ hope := HOPE? : Set ;
       can
         := (SUSPENDED: WaitCan (N (P (q_12.hope_0 := HOLE Hoping :<: C (Set))) :=>: Nothing) (ElabProb (DC Set))) ? : hope ;
-    ] HOPE? : :- B == ((: hope -> hope) (\ typecast -> typecast) can) ;
+    ] HOPE? : :- B == can ;
 ]
 Loaded.

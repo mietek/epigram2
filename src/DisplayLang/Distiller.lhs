@@ -124,6 +124,12 @@ parameters are handled correctly when the head is a parameter.
 
 > distillInfer es (N t :? _) as  = distillInfer es t as
 
+Type ascriptions that were inserted by elaboration of type casts can be removed,
+if we are lucky, to give nicer output.
+
+> distillInfer es (L ("typecast" :. NV 0) :? PI ty _) ((A a):as) =
+>     distillInfer es (a :? ty) as
+
 Otherwise, type ascriptions are converted into type casts and the spine of
 eliminators is applied in its entirety.
 
