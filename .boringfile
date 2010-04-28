@@ -29,7 +29,7 @@ BUILD_*
 \.aux
 \.bbl
 \.blg
-\.log
+[^g]\.log
 Epitome\.pdf
 paper\.pdf
 \.ptb
