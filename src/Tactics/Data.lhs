@@ -165,8 +165,8 @@
 >       make ("DataDesc" :<: NP descREF)
 >       goIn
 >       (d :=>: dv) <- give (SUMD (N e) (N cs'))
->       GirlMother (nom := HOLE _ :<: ty) _ _ _ <- getMother
->       let fr = nom := FAKE :<: ty
+>       GirlMother (mnom := HOLE _ :<: ty) _ _ _ <- getMother
+>       let fr = mnom := FAKE :<: ty
 >       xs <- (| boySpine getAuncles |)
 >       let lt = N (P fr $:$ xs)
 >       make ("DataTy" :<: SET)
@@ -174,8 +174,38 @@
 >       (dty :=>: _) <- give (MU (Just lt) (N d))
 >       E r _ _ _ <- getDevEntry
 >       traverse (makeCon (N e) (N (P r $:$ oldaus))) cs
->       x <- give $ N dty
->       return x
+
+We specialise the induction operator to this datatype, ensuring the label is
+assigned throughout, so the label will be preserved when eliminating by induction.
+
+>       let indTm = P (mkRef inductionOp) :$ A (N d)
+>       indV :<: indTy <- inferHere indTm
+>       indTy' <- bquoteHere indTy
+>       make ("Ind" :<: setLabel lt indTy')
+>       goIn
+>       give (N indTm)
+>       
+
+>       give $ N dty
+
+
+This is a hack, and should probably be replaced with a version that tests for
+equality, so it doesn't catch the wrong |MU|s.
+
+> setLabel :: INTM -> INTM -> INTM
+> setLabel l (MU Nothing tm) = MU (Just l) tm
+> setLabel l (L (x :. t)) = L (x :. setLabel l t)
+> setLabel l (L (K t)) = L (K (setLabel l t))
+> setLabel l (C c) = C (fmap (setLabel l) c)
+> setLabel l (N n) = N (setLabelN l n)
+
+> setLabelN :: INTM -> EXTM -> EXTM
+> setLabelN l (P x) = P x
+> setLabelN l (V n) = V n
+> setLabelN l (op :@ as) = op :@ map (setLabel l) as
+> setLabelN l (f :$ a) = setLabelN l f :$ fmap (setLabel l) a
+> setLabelN l (t :? ty) = setLabel l t :? setLabel l ty
+
 
 > import -> CochonTactics where
 >   : CochonTactic
