@@ -216,7 +216,8 @@ the propositional simplification machinery.
 >             prf' <- bquoteHere prf
 >             return (prf' :=>: prf, True)
 >         Just (SimplyAbsurd _) -> runElab top (PRF p :>:
->             ECry [err "lastHope: proposition is absurd!"])
+>             ECry [err "simplifyProof: proposition is absurd:"
+>                          ++ errTyVal (p :<: PROP)])
 >         Just (Simply qs _ h) -> do
 >             qrs <- Data.Traversable.mapM partProof qs
 >             h' <- dischargeLots qs h
@@ -238,11 +239,18 @@ and returning the subgoal).
 
 > flexiProof :: Bool -> VAL -> ProofState (INTM :=>: VAL, Bool)
 
+> flexiProof top (EQBLUE (_S :>: s) (_T :>: t)) = 
+>     flexiProofMatch           (_S :>: s) (_T :>: t)
+>     <|> flexiProofLeft   top  (_S :>: s) (_T :>: t)
+>     <|> flexiProofRight  top  (_S :>: s) (_T :>: t)
+> flexiProof _ _ = (|)
+
 If we are trying to prove an equation between the same fake reference applied to
 two lists of parameters, we prove equality of the parameters and use reflexivity.
 This case arises frequently when proving label equality to make recursive calls.
 
-> flexiProof top p@(EQBLUE (_S :>: N s) (_T :>: N t))
+> flexiProofMatch :: (TY :>: VAL) -> (TY :>: VAL) -> ProofState (INTM :=>: VAL, Bool)
+> flexiProofMatch (_S :>: N s) (_T :>: N t)
 >   | Just (ref, ps) <- matchFakes s t [] = do
 >     let ty = pty ref
 >     prfs <- proveBits ty ps B0
@@ -269,6 +277,7 @@ This case arises frequently when proving label equality to make recursive calls.
 >     smash q [] = q
 >     smash q ((as, at, prf):ps) = smash (q $$ A as $$ A at $$ A prf) ps
 
+> flexiProofMatch _ _ = (|)
 
 If one side of the equation is a hoping hole applied to the shared parameters of
 our current location, we can solve it with the other side of the equation.
@@ -280,7 +289,9 @@ insert a coercion rather than demanding definitional equality of the sets?
 See Elab.pig for an example where this makes the elaboration process fragile,
 because we end up trying to move definitions with processes attached.}
 
-> flexiProof top p@(EQBLUE (_T :>: N t) (_S :>: s)) = do
+> flexiProofLeft :: Bool -> (TY :>: VAL) -> (TY :>: VAL)
+>     -> ProofState (INTM :=>: VAL, Bool)
+> flexiProofLeft top (_T :>: N t) (_S :>: s) = do
 >     guard =<< withNSupply (equal (SET :>: (_S, _T)))
 
 <     (q' :=>: q, _) <- simplifyProof False (EQBLUE (SET :>: _S) (SET :>: _T))
@@ -291,7 +302,8 @@ because we end up trying to move definitions with processes attached.}
 >     _S'  <- bquoteHere _S
 >     t'   <- bquoteHere t
 >     _T'  <- bquoteHere _T
->     let  p'     = EQBLUE (_T' :>: N t') (_S' :>: s')
+>     let  p      = EQBLUE (_T   :>: N t   ) (_S   :>: s   )
+>          p'     = EQBLUE (_T'  :>: N t'  ) (_S'  :>: s'  )
 
 <          N (coe :@ [_S', _T', q', s']) :=>: Just (coe @@ [_S, _T, q, s])
 
@@ -308,8 +320,12 @@ because we end up trying to move definitions with processes attached.}
 >     stripShared tm (es :< M _ _)             = stripShared tm es
 >     stripShared _ _ = (|)
 
+> flexiProofLeft _ _ _ = (|)
 
-> flexiProof top p@(EQBLUE (_S :>: s) (_T :>: N t)) = do
+
+> flexiProofRight :: Bool -> (TY :>: VAL) -> (TY :>: VAL)
+>     -> ProofState (INTM :=>: VAL, Bool)
+> flexiProofRight top (_S :>: s) (_T :>: N t) = do
 >     guard =<< withNSupply (equal (SET :>: (_S, _T)))
 >     es   <- getAuncles
 >     ref  <- stripShared t es
@@ -317,7 +333,8 @@ because we end up trying to move definitions with processes attached.}
 >     _S'  <- bquoteHere _S
 >     t'   <- bquoteHere t
 >     _T'  <- bquoteHere _T
->     let  p'     = EQBLUE (_S' :>: s') (_T' :>: N t')
+>     let  p      = EQBLUE (_S   :>: s   ) (_T   :>: N t   )
+>          p'     = EQBLUE (_S'  :>: s'  ) (_T'  :>: N t'  )
 >          eprob  = (WaitSolve ref (s' :=>: Just s)
 >                      (ElabDone (N (P refl :$ A _S' :$ A s')
 >                           :=>: Just (pval refl $$ A _S $$ A s))))
@@ -331,8 +348,9 @@ because we end up trying to move definitions with processes attached.}
 >     stripShared tm (es :< M _ _)             = stripShared tm es
 >     stripShared _ _ = (|)
 
+> flexiProofRight _ _ _ = (|)
 
-> flexiProof top p = (|)
+
 
 
 If all else fails, we can hope for anything we like by creating a subgoal, though
