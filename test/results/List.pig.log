@@ -1,0 +1,45 @@
+Data'd.
+Let there be nil.
+Ta.
+Going to root...
+Let there be cons.
+Ta.
+Going to root...
+Let there be sing.
+Ta.
+Going to root...
+Let there be snoc.
+Eliminated and simplified.
+Ta.
+Ta.
+Going to root...
+Let there be append.
+Eliminated and simplified.
+Ta.
+Ta.
+Going to root...
+Made.
+Made.
+Let there be list-map.
+Eliminated and simplified.
+Ta.
+Going to next goal...
+Ta.
+Going to root...
+['x 'x 'y]
+Data'd.
+Let there be plus.
+Eliminated and simplified.
+Ta.
+Ta.
+Going to root...
+Let there be sum.
+Eliminated and simplified.
+Ta.
+Ta.
+Going to root...
+Made.
+Made.
+Made.
+[Nat , con ['suc (con ['suc (con ['suc (con ['suc (con ['suc (con ['suc []])])])])])]]
+Loaded.
