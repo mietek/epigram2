@@ -15,6 +15,7 @@
 > import Features.Features ()
 
 > import ProofState.Developments
+> import ProofState.Lifting
 > import ProofState.ProofState
 > import ProofState.ProofKit
 
@@ -126,10 +127,17 @@ been suspended) then the cursor could be anywhere earlier in the proof state.
 >     solveHole' ref [] tm -- takes us to who knows where
 >     return Nothing
 > resume tt (WaitSolve ref@(_ := DEFN tmv' :<: ty) stt prob) = do
->     eq <- withNSupply $ equal (ty :>: (valueOf . maybeEval $ stt , tmv'))
+>     let stt' = maybeEval $ stt
+>     aus <- getGreatAuncles
+>     sibs <- getDevEntries
+>     let stm = parBind aus sibs (termOf stt')
+>     eq <- withNSupply $ equal (ty :>: (evTm stm, tmv'))
 >     if eq
 >         then  resume tt prob
->         else  throwError' $ err "resume: hole has been solved inconsistently! We should do something clever here."
+>         else  throwError' $ err "resume: hole" ++ errRef ref ++
+>                    err "has been solved with" ++ errTyVal (tmv' :<: ty) ++
+>                    err "but I wanted to solve it with" ++
+>                            errTyVal (valueOf stt' :<: ty)
 
 > ifSnd :: (a, Bool) -> Maybe a
 > ifSnd (a,  True)   = Just a
