@@ -234,39 +234,9 @@ the propositional simplification machinery.
 
 After simplification has dealt with the easy stuff, it calls |flexiProof| to
 solve any flex-rigid equations (by suspending a solution process on a subgoal
-and returning the subgoal). \question{Can we hope for a proof of equality and
-insert a coercion rather than demanding definitional equality of the sets?}
-
-We need to do some kind of higher-order magic here, because this fails if the
-hole is under a bunch of shared parameters.
+and returning the subgoal). 
 
 > flexiProof :: Bool -> VAL -> ProofState (INTM :=>: VAL, Bool)
-> flexiProof top p@(EQBLUE (_S :>: s) (_T :>: (NP ref@(_ := HOLE Hoping :<: _)))) = do
->     guard =<< withNSupply (equal (SET :>: (_S, _T)))
->     s' <- bquoteHere s
->     _S' <- bquoteHere _S
->     _T' <- bquoteHere _T
->     let p'     = EQBLUE (_S' :>: s') (_T' :>: NP ref)
->         eprob  = (WaitSolve ref (s' :=>: Just s)
->                      (ElabDone (N (P refl :$ A _S' :$ A s')
->                           :=>: Just (pval refl $$ A _S $$ A s))))
->     if top
->         then return . (, False)  =<< neutralise =<< suspendMe eprob
->         else return . (, True)   =<< neutralise =<< suspend ("eq" :<: PRF p' :=>: PRF p) eprob
-
-
-> flexiProof top p@(EQBLUE (_T :>: (NP ref@(_ := HOLE Hoping :<: _))) (_S :>: s)) = do
->     guard =<< withNSupply (equal (SET :>: (_S, _T)))
->     s' <- bquoteHere s
->     _S' <- bquoteHere _S
->     _T' <- bquoteHere _T
->     let p'     = EQBLUE (_T' :>: NP ref) (_S' :>: s')
->         eprob  = (WaitSolve ref (s' :=>: Just s)
->                      (ElabDone (N (P refl :$ A _S' :$ A s')
->                           :=>: Just (pval refl $$ A _S $$ A s))))
->     if top
->         then return . (, False)  =<< neutralise =<< suspendMe eprob
->         else return . (, True)   =<< neutralise =<< suspend ("eq" :<: PRF p' :=>: PRF p) eprob
 
 If we are trying to prove an equation between the same fake reference applied to
 two lists of parameters, we prove equality of the parameters and use reflexivity.
@@ -298,6 +268,69 @@ This case arises frequently when proving label equality to make recursive calls.
 >     smash :: VAL -> [(VAL, VAL, VAL)] -> VAL
 >     smash q [] = q
 >     smash q ((as, at, prf):ps) = smash (q $$ A as $$ A at $$ A prf) ps
+
+
+If one side of the equation is a hoping hole applied to the shared parameters of
+our current location, we can solve it with the other side of the equation.
+\question{How can we generalise this to cases where the hole is under a different
+list of parameters?}
+
+\question{Can we hope for a proof of equality and
+insert a coercion rather than demanding definitional equality of the sets?
+See Elab.pig for an example where this makes the elaboration process fragile,
+because we end up trying to move definitions with processes attached.}
+
+> flexiProof top p@(EQBLUE (_T :>: N t) (_S :>: s)) = do
+>     guard =<< withNSupply (equal (SET :>: (_S, _T)))
+
+<     (q' :=>: q, _) <- simplifyProof False (EQBLUE (SET :>: _S) (SET :>: _T))
+
+>     es   <- getAuncles
+>     ref  <- stripShared t es
+>     s'   <- bquoteHere s
+>     _S'  <- bquoteHere _S
+>     t'   <- bquoteHere t
+>     _T'  <- bquoteHere _T
+>     let  p'     = EQBLUE (_T' :>: N t') (_S' :>: s')
+
+<          N (coe :@ [_S', _T', q', s']) :=>: Just (coe @@ [_S, _T, q, s])
+
+>          eprob  = (WaitSolve ref (s' :=>: Just s)
+>                      (ElabDone (N (P refl :$ A _S' :$ A s')
+>                           :=>: Just (pval refl $$ A _S $$ A s))))
+>     suspendThis top ("eq" :<: PRF p' :=>: PRF p) eprob
+>   where
+>     stripShared :: NEU -> Entries -> ProofState REF
+>     stripShared (P ref@(_ := HOLE Hoping :<: _)) B0 = return ref
+>     stripShared (n :$ A (NP r)) (es :< E boyRef _ (Boy _) _)
+>         | r == boyRef  = stripShared n es
+>     stripShared tm (es :< E _ _ (Girl _ _ _) _)  = stripShared tm es
+>     stripShared tm (es :< M _ _)             = stripShared tm es
+>     stripShared _ _ = (|)
+
+
+> flexiProof top p@(EQBLUE (_S :>: s) (_T :>: N t)) = do
+>     guard =<< withNSupply (equal (SET :>: (_S, _T)))
+>     es   <- getAuncles
+>     ref  <- stripShared t es
+>     s'   <- bquoteHere s
+>     _S'  <- bquoteHere _S
+>     t'   <- bquoteHere t
+>     _T'  <- bquoteHere _T
+>     let  p'     = EQBLUE (_S' :>: s') (_T' :>: N t')
+>          eprob  = (WaitSolve ref (s' :=>: Just s)
+>                      (ElabDone (N (P refl :$ A _S' :$ A s')
+>                           :=>: Just (pval refl $$ A _S $$ A s))))
+>     suspendThis top ("eq" :<: PRF p' :=>: PRF p) eprob
+>   where
+>     stripShared :: NEU -> Entries -> ProofState REF
+>     stripShared (P ref@(_ := HOLE Hoping :<: _)) B0 = return ref
+>     stripShared (n :$ A (NP r)) (es :< E boyRef _ (Boy _) _)
+>         | r == boyRef  = stripShared n es
+>     stripShared tm (es :< E _ _ (Girl _ _ _) _)  = stripShared tm es
+>     stripShared tm (es :< M _ _)             = stripShared tm es
+>     stripShared _ _ = (|)
+
 
 > flexiProof top p = (|)
 
@@ -339,6 +372,14 @@ location.
 >     putDevTip (Suspended tt prob)
 >     getMotherDefinition
 
+
+The |suspendThis| command attaches the problem to the current hole if the
+top-level boolean is |True|, and creates a new subgoal otherwise.
+
+> suspendThis :: Bool -> (String :<: INTM :=>: TY) -> EProb
+>     -> ProofState (INTM :=>: VAL, Bool)
+> suspendThis True   _    ep = return . (, False)  =<< neutralise =<< suspendMe ep
+> suspendThis False  stt  ep = return . (, True)   =<< neutralise =<< suspend stt ep
 
 
 \subsection{Elaborating terms}

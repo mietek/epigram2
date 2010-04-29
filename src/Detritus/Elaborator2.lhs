@@ -461,3 +461,32 @@ creates a $\Pi$-boy with that type.
 >     return (SchImplicitPi (x :<: (es -| termOf ss)) t', tt)
 
 > import <- ElabCode 
+
+
+
+
+
+
+
+> flexiProof top p@(EQBLUE (_S :>: s) (_T :>: (NP ref@(_ := HOLE Hoping :<: _)))) = do
+>     guard =<< withNSupply (equal (SET :>: (_S, _T)))
+>     s' <- bquoteHere s
+>     _S' <- bquoteHere _S
+>     _T' <- bquoteHere _T
+>     let p'     = EQBLUE (_S' :>: s') (_T' :>: NP ref)
+>         eprob  = (WaitSolve ref (s' :=>: Just s)
+>                      (ElabDone (N (P refl :$ A _S' :$ A s')
+>                           :=>: Just (pval refl $$ A _S $$ A s))))
+>     suspendThis top ("eq" :<: PRF p' :=>: PRF p) eprob
+
+
+> flexiProof top p@(EQBLUE (_T :>: (NP ref@(_ := HOLE Hoping :<: _))) (_S :>: s)) = do
+>     guard =<< withNSupply (equal (SET :>: (_S, _T)))
+>     s' <- bquoteHere s
+>     _S' <- bquoteHere _S
+>     _T' <- bquoteHere _T
+>     let p'     = EQBLUE (_T' :>: NP ref) (_S' :>: s')
+>         eprob  = (WaitSolve ref (s' :=>: Just s)
+>                      (ElabDone (N (P refl :$ A _S' :$ A s')
+>                           :=>: Just (pval refl $$ A _S $$ A s))))
+>     suspendThis top ("eq" :<: PRF p' :=>: PRF p) eprob

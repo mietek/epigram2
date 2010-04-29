@@ -173,8 +173,9 @@ similarly to the previous case, but we also update the elaboration problem.
 
 > tellEntry news (E ref@(name := HOLE h :<: tyv) sn
 >                    (Girl LETG (cs, Suspended tt prob, nsupply) ms) ty)
->   | Just _ <- getNews news ref = throwError' $ err
->       "tellEntry: news bulletin contains update to hole with suspended computation"
+>   | Just ne <- getNews news ref = throwError' . err . unlines $ [
+>       "tellEntry: news bulletin contains update", show ne, "for hole", show ref, 
+>        "with suspended computation", show prob]
 >   | otherwise = do
 >     let  (tt', n)             = tellNewsEval news tt
 >          (ty' :=>: tyv', n')  = tellNewsEval news (ty :=>: tyv)

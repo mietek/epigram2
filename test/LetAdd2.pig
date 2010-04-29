@@ -11,10 +11,6 @@ let plus (m : Nat)(n : Nat) : Nat ;
 -- Sorry about the terrible name choice!
 = Nat.suc (plus xf^1 n) ;
 
--- We have to justify the recursive call a little bit, sadly:
-give n ;
-give _ ;
-
 -- Just to show this really works:
 root ;
 elab plus (Nat.suc (Nat.suc Nat.zero)) (Nat.suc (Nat.suc Nat.zero)) ;
