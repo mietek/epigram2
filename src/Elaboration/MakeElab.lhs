@@ -17,6 +17,7 @@
 
 > import Features.Features ()
 
+> import ProofState.ProofState
 > import ProofState.ProofKit
 
 > import DisplayLang.DisplayTm
@@ -73,6 +74,7 @@ hoping for a proof of the appropriate equation and inserting a coercion.
 >         else do
 >             q :=>: qv <- eHopeFor $ PRF (EQBLUE (SET :>: _Sv) (SET :>: _Tv))
 >             return $ N (coe :@ [_S, _T, q, s]) :=>: coe @@ [_Sv, _Tv, qv, sv]
+
 
 
 The |eEnsure| instruction demands that a value should be equal to a canonical

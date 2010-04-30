@@ -8,7 +8,9 @@
 
 > module DisplayLang.Distiller where
 
+> import Control.Applicative
 > import Control.Monad.State
+> import Data.Traversable
 > import Text.PrettyPrint.HughesPJ (Doc)
 
 > import Kit.BwdFwd
@@ -143,6 +145,28 @@ If nothing matches, we are unable to distill this term, so we complain loudly.
 
 > distillInfer _ tm _ = throwError' $ (err "distillInfer: can't cope with "
 >                                      ++ errTm (N tm))
+
+
+The |moonshine| command attempts the dubious task of converting an
+evidence term (possibly of dubious veracity) into a display term.
+This is mostly for error-message generation.
+
+> moonshine :: INTM -> ProofStateT INTM InDTmRN
+> moonshine (LK t) = do
+>     t' <- moonshine t
+>     return $ DLK t'
+> moonshine (L (x :. t)) = do
+>     t' <- moonshine t
+>     return $ DL (x ::. t')
+> moonshine (C c) = do
+>     c' <- traverse moonshine c
+>     return $ DC c'
+> moonshine (N n) = (do
+>     n' :<: ty <- distillInfer B0 n []
+>     return $ DN n'
+>   ) <|> return (DTIN (N n))
+> moonshine t = return (DTIN t)
+
 
 
 \subsection{Distillation Support}
