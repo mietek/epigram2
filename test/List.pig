@@ -13,13 +13,13 @@ let sing {A : Set}(a : A) : List A ;
 root ;
 
 let snoc (A : Set)(as : List A)(a : A) : List A ;
-<= induction (List.DataDesc A) as ;
+<= List.Ind A as ;
 = sing./ A a ;
 = List.cons A s^2 (snoc A xf^1 a) ;
 root ;
 
 let append (A : Set)(as : List A)(bs : List A) : List A ;
-<= induction (List.DataDesc A) bs ;
+<= List.Ind A bs ;
 = as ;
 = append A (snoc A as s^2) xf^1 ;
 root ;
@@ -28,7 +28,7 @@ make T := Enum ['a 'b 'c] : Set ;
 make L := append T (cons 'a (cons 'b nil)) (sing 'c) : List T ;
 
 let list-map (A : Set)(B : Set)(f : A -> B)(as : List A) : List B ;
-<= [as] induction (List.DataDesc A) as ;
+<= [as] List.Ind A as ;
 = nil ;
 next ; 
 = cons (f s^2) (list-map A B f xf^1) ;
