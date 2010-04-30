@@ -137,17 +137,14 @@ representation of an elaboration problem.
 >     runElabProb top loc (ty :>: prob)
 > runElabProb top loc (ty :>: WaitCan (tm :=>: Nothing) prob) =
 >     runElabProb top loc (ty :>: WaitCan (tm :=>: Just (evTm tm)) prob)
-> runElabProb True loc (ty :>: prob) =
->     return . (, False) =<< neutralise =<< suspendMe prob
-> runElabProb False loc (ty :>: prob) = do
+> runElabProb top loc (ty :>: prob) = do
 >     ty' <- bquoteHere ty
->     return . (, True) =<< neutralise =<< suspend (name prob :<: ty' :=>: ty) prob
+>     suspendThis top (name prob :<: ty' :=>: ty) prob
 >   where
 >     name :: EProb -> String
 >     name (WaitCan _ _)      = "can"
 >     name (WaitSolve _ _ _)  = "solve"
 >     name _                  = "suspend"
-
 
 \subsection{Hoping, hoping, hoping}
 

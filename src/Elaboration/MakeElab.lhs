@@ -139,6 +139,12 @@ The |eQuote| instruction $\beta$-quotes a value to produce a term representation
 >     return (bquote B0 v nsupply :=>: v)
 
 
+The |eSchedule| instruction asks for the scheduler to deal with other problems
+before returning its result.
+
+> eSchedule :: (INTM :=>: VAL) -> Elab a
+> eSchedule (tm :=>: tv) = eElab (Loc 0) (ElabSchedule (ElabDone (tm :=>: Just tv)))
+
 \subsection{Elaborating |InDTm|s}
 
 We can use the |Elab| language to describe how to elaborate a display term to

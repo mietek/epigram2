@@ -141,6 +141,7 @@ been suspended) then the cursor could be anywhere earlier in the proof state.
 >                    err "has been solved with" ++ errTyVal (tmv' :<: ty) ++
 >                    err "but I wanted to solve it with" ++
 >                            errTyVal (valueOf stt' :<: ty)
+> resume tt (ElabSchedule prob) = resume tt prob
 
 > ifSnd :: (a, Bool) -> Maybe a
 > ifSnd (a,  True)   = Just a

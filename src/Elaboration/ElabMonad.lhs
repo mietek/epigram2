@@ -99,6 +99,7 @@ caches the value representations of terms it contains.
 >     |  ElabInferProb (ExDTm x RelName)                   -- elaborate and infer type of |Ex| display term
 >     |  WaitCan (InTm x :=>: Maybe VAL) (ElabProb x)      -- wait for value to become canonical
 >     |  WaitSolve x (InTm x :=>: Maybe VAL) (ElabProb x)  -- wait for reference to be solved with term
+>     |  ElabSchedule (ElabProb x)                         -- kick off the scheduler
 
 It is a traversable functor, parameterised by the type of references, which
 are typically |REF|s. Note that traversal will discard the cached values, but
@@ -120,6 +121,7 @@ elaboration problem is waiting for a non-canonical term to become canonical.
 > isUnstable (WaitCan (tm :=>: Nothing) _) | C _ <- evTm tm  = True
 > isUnstable (WaitCan _ _)                                   = False
 > isUnstable (WaitSolve _ _ _)                               = True
+> isUnstable (ElabSchedule _)                                = True
 
 
 
@@ -145,6 +147,7 @@ functions for producing and manipulating these.
 >                                         ++ show prob ++ ")"
 >     show (WaitSolve ref tt prob)  = "WaitSolve (" ++ show ref ++ ") ("
 >                                         ++ show tt ++ ") (" ++ show prob ++ ")"
+>     show (ElabSchedule prob)      = "ElabSchedule (" ++ show prob ++ ")"
 
 > instance Functor ElabProb where
 >     fmap = fmapDefault
@@ -159,6 +162,7 @@ functions for producing and manipulating these.
 >     traverse f (ElabInferProb tm)       = (|ElabInferProb (traverseDTEX f tm)|)
 >     traverse f (WaitCan tt prob)        = (|WaitCan (travEval f tt) (traverse f prob)|)
 >     traverse f (WaitSolve ref tt prob)  = (|WaitSolve (f ref) (travEval f tt) (traverse f prob)|)
+>     traverse f (ElabSchedule prob)      = (|ElabSchedule (traverse f prob)|)
 
 > travEval :: Applicative f => (p -> f q) -> InTm p :=>: Maybe VAL -> f (InTm q :=>: Maybe VAL)
 > travEval f (tm :=>: _) = (|traverse f tm :=>: ~Nothing|)
