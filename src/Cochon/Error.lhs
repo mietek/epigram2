@@ -8,6 +8,7 @@
 
 > module Cochon.Error where
 
+> import Control.Applicative
 > import Control.Monad.Error
 > import Text.PrettyPrint.HughesPJ
 
@@ -39,6 +40,7 @@
 >   vTm <- bquoteHere v
 >   vDTm :=>: _ <- distillHere (t :>: vTm)
 >   return $ UntypedTm vDTm
+> distillError (UntypedVal v) = (|(UntypedTm . DTIN) (bquoteHere v)|)
 > distillError e = return e
 
 

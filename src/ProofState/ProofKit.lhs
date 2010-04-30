@@ -112,11 +112,11 @@ may be useful for paranoia purposes.
 >             ty' <- bquoteHere ty
 >             mc <- withNSupply $ liftError . (typeCheck $ check (SET :>: ty'))
 >             mc `catchEither`  (err "validateHere: girl type failed to type-check: SET does not admit"
->                               ++ errVal ty)
+>                               ++ errTyVal (ty :<: SET))
 >             tm' <- bquoteHere tm
 >             mc <- withNSupply $ liftError . (typeCheck $ check (ty :>: tm'))
 >             mc `catchEither`  (err "validateHere: definition failed to type-check:"
->                               ++ errVal ty
+>                               ++ errTyVal (ty :<: SET)
 >                               ++ err "does not admit"
 >                               ++ errVal tm)
 >             return ()

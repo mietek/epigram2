@@ -99,7 +99,6 @@ caches the value representations of terms it contains.
 >     |  ElabInferProb (ExDTm x RelName)                   -- elaborate and infer type of |Ex| display term
 >     |  WaitCan (InTm x :=>: Maybe VAL) (ElabProb x)      -- wait for value to become canonical
 >     |  WaitSolve x (InTm x :=>: Maybe VAL) (ElabProb x)  -- wait for reference to be solved with term
->   deriving Show
 
 It is a traversable functor, parameterised by the type of references, which
 are typically |REF|s. Note that traversal will discard the cached values, but
@@ -136,6 +135,16 @@ functions for producing and manipulating these.
 
 
 %if False
+
+> instance Show a => Show (ElabProb a) where
+>     show (ElabDone tt)            = "ElabDone (" ++ show tt ++ ")"
+>     show ElabHope                 = "ElabHope"
+>     show (ElabProb tm)            = "ElabProb (" ++ show tm ++ ")"
+>     show (ElabInferProb tm)       = "ElabInferProb (" ++ show tm ++ ")"
+>     show (WaitCan tt prob)        = "WaitCan (" ++ show tt ++ ") ("
+>                                         ++ show prob ++ ")"
+>     show (WaitSolve ref tt prob)  = "WaitSolve (" ++ show ref ++ ") ("
+>                                         ++ show tt ++ ") (" ++ show prob ++ ")"
 
 > instance Functor ElabProb where
 >     fmap = fmapDefault
@@ -179,7 +188,7 @@ argument, as well as its second.
 >     show (Bale x)           = "Bale (" ++ show x ++ ")"
 >     show (ELambda s _)      = "ELambda " ++ s ++ " (...)"
 >     show (EGoal _)          = "EGoal (...)"
->     show (EWait s ty _)     = "EHope " ++ show s ++ " (" ++ show ty ++ ") (...)"
+>     show (EWait s ty _)     = "EWait " ++ show s ++ " (" ++ show ty ++ ") (...)"
 >     show (ECry _)           = "ECry (...)"
 >     show (EElab l tp)       = "EElab " ++ show l ++ " (" ++ show tp ++ ")"
 >     show (ECompute te _)    = "ECompute (" ++ show te ++ ") (...)"
@@ -196,7 +205,7 @@ argument, as well as its second.
 >     EGoal f          >>= k = EGoal          ((k =<<) . f)
 >     EWait s t f      >>= k = EWait s t      ((k =<<) . f)
 >     ECry errs        >>= k = ECry errs
->     EElab l p        >>= k = error "EElab: cannot bind!"
+>     EElab l p        >>= k = error $ "EElab: cannot bind:\n" ++ show p
 >     ECompute te f    >>= k = ECompute te    ((k =<<) . f)
 >     EFake b f        >>= k = EFake b        ((k =<<) . f)
 >     EResolve rn f    >>= k = EResolve rn    ((k =<<) . f)
