@@ -14,8 +14,9 @@ root ;
 
 let snoc (A : Set)(as : List A)(a : A) : List A ;
 <= List.Ind A as ;
-= sing./ A a ;
-= List.cons A s^2 (snoc A xf^1 a) ;
+= sing a ;
+next ;
+= cons s^2 (snoc A xf^1 a) ;
 root ;
 
 let append (A : Set)(as : List A)(bs : List A) : List A ;
