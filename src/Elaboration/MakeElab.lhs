@@ -39,6 +39,9 @@ to work in.
 > subElab :: Loc -> (TY :>: InDTmRN) -> Elab (INTM :=>: VAL)
 > subElab loc (ty :>: tm) = eCompute (ty :>: makeElab loc tm)
 
+> subElabInfer :: Loc -> ExDTmRN -> Elab (INTM :=>: VAL)
+> subElabInfer loc tm = eCompute (sigSetVAL :>: makeElabInfer loc tm)
+
 
 The |eCan| instruction asks for the current goal to be solved by the given
 elaboration problem when the supplied value is canonical.
@@ -226,7 +229,7 @@ types are equal, and if so it will not insert a redundant coercion.)
 
 > makeElab' loc (w :>: DN n) = do
 >     w' :=>: _ <- eQuote w
->     tt <- makeElabInfer loc n
+>     tt <- subElabInfer loc n
 >     let (yt :=>: yn :<: ty :=>: tyv) = extractNeutral tt
 >     eCoerce (ty :=>: tyv) (w' :=>: w) (yt :=>: yn)
 
