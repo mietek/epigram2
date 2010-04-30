@@ -330,6 +330,7 @@ the name part of references, respectively.
 >     0 -> (| ((x,Rel 0) : nom', ms) |)
 >     j -> (| ((x,Abs j) : nom', ms) |)
 > nomAbs [] _ = Just ([], Nothing)
+> nomAbs _ _ = Nothing
 
 > countF :: String -> Fwd (Entry Bwd) -> Int
 > countF x F0 = 0
