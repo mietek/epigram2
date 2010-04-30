@@ -26,6 +26,7 @@
 
 > import Elaboration.ElabMonad
 > import Elaboration.MakeElab
+> import Elaboration.RunElab
 > import Elaboration.Elaborator
 > import Elaboration.Unification
 
@@ -108,6 +109,8 @@ been suspended) then the cursor could be anywhere earlier in the proof state.
 
 > resume :: (INTM :=>: VAL) -> EProb -> ProofState (Maybe (INTM :=>: VAL))
 > resume _ (ElabDone tt) = return . Just . maybeEval $ tt
+> resume (ty :=>: tyv) ElabHope = 
+>     return . ifSnd =<< runElabHope True tyv
 > resume (ty :=>: tyv) (ElabProb tm) = 
 >     return . ifSnd =<< runElab True (tyv :>: makeElab (Loc 0) tm)
 > resume (ty :=>: tyv) (ElabInferProb tm) =

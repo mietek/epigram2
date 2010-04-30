@@ -112,6 +112,7 @@
 
 %include Elaboration/ElabMonad.lhs
 %include Elaboration/MakeElab.lhs
+%include Elaboration/RunElab.lhs
 %include Elaboration/Elaborator.lhs
 %include Elaboration/Scheduler.lhs
 %include Elaboration/Wire.lhs
