@@ -117,6 +117,7 @@ profile: .depend
 Epitome : Epitome.tex Epitome.bib
 	$(LATEXC) $(LATEXOPTS) Epitome
 	bibtex Epitome
+	makeindex Epitome
 	$(LATEXC) $(LATEXOPTS) Epitome
 	if egrep Rerun Epitome.log; then $(LATEXC) $(LATEXOPTS) Epitome; fi
 
@@ -129,6 +130,7 @@ dvi : Epitome.dvi
 Epitome.dvi : Epitome.tex
 	latex Epitome
 	bibtex Epitome
+	makeindex Epitome
 	latex Epitome
 	if egrep Rerun Epitome.log; then latex Epitome; fi
 

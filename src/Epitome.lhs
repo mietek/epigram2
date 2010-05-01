@@ -16,6 +16,7 @@
 \usepackage{a4wide}
 \usepackage{amsthm}
 \usepackage{manfnt}
+\usepackage{makeidx}
 
 %include lhs2TeX.fmt
 %include lhs2TeX.sty
@@ -24,6 +25,8 @@
 %include stuff.fmt
 
 \input{Documentation/Macros.tex}
+
+\makeindex
 
 \begin{document}
 
@@ -142,12 +145,15 @@
 %include Kit/Parsley.lhs
 %include Kit/MissingLibrary.lhs
 
-
 \cleardoublepage
 \phantomsection
 \addcontentsline{toc}{chapter}{Bibliography}
 \bibliographystyle{plain}
 \bibliography{Epitome}
 
+\cleardoublepage
+\phantomsection
+\addcontentsline{toc}{chapter}{Index}
+\printindex
 
 \end{document}
