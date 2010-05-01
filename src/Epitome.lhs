@@ -17,6 +17,7 @@
 \usepackage{amsthm}
 \usepackage{manfnt}
 \usepackage{makeidx}
+\usepackage{pig}
 
 %include lhs2TeX.fmt
 %include lhs2TeX.sty
@@ -29,6 +30,8 @@
 \makeindex
 
 \begin{document}
+
+\ColourEpigram
 
 \title{An Epigram Implementation}
 \author{Edwin Brady,  James Chapman, Pierre-\'{E}variste Dagand, \\
