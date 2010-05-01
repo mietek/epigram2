@@ -148,7 +148,9 @@ test:
 
 ## Tags (emacs):
 etags:
-	hasktags -e `find . -name "*.lhs"`
+	rm -f TAGS
+	echo ":etags" | ghci -v0 Main.lhs
+	while [ ! -f TAGS ]; do echo ":etags" | ghci -v0 Main.lhs; done
 
 ## Clean:
 clean:
