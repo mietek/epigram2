@@ -780,14 +780,10 @@ If one of the arguments is neutral, we blame it for being unable to compute.
 > opRunEqGreen [_,     _,     N y1,  _     ] = Left y1
 
 
-The |mkEqConj| function builds a conjunction of |eqGreen| propositions by
-folding over a list. It does not respect contravariance in the |Pi| rule,
-as it is uniformly structural for canonical terms, ignoring contravariance.
-At first glance, this contradicts the definition in the OTT paper.
-It will work out the same in the end,
-provided we remember to apply symmetry when we use the proofs in
-contravariant positions. It seemed cheap at the time, but perhaps it's
-a false economy.
+The |mkEqConj| function builds a conjunction of |eqGreen| propositions
+by folding over a list. It is uniformly structural for canonical
+terms, ignoring contravariance. Therefore, this requires a special
+case for |Pi| in |opRunEqGreen|.
 
 > mkEqConj :: [(TY :>: VAL,TY :>: VAL)] -> VAL
 > mkEqConj ((tt0, tt1) : [])  = tt0 <-> tt1
