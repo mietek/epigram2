@@ -32,24 +32,31 @@
 
 \question{What should the terminology be?}
 
-A \emph{normal} proposition is either |FF| or a conjunction of \emph{q-neutral}
-propositions. A q-neutral context is a context all of whose propositions are q-neutral.
-A \emph{q-neutral} proposition is either:
+A \emph{normal proposition}\index{normal proposition} is either
+|Absurd| or a conjunction of q-neutral propositions. A \emph{q-neutral
+proposition}\index{q-neutral proposition} is either:
+
 \begin{itemize}
 \item a neutral term of type |Prop|;
 \item a blue equation with (at least) one neutral side;
 \item |(x : S) => P|, with |S| not a proof and |P| q-neutral; or
-\item |(x :- P) => Q|, with |P| and |Q| q-neutral and |P| not |FF|.
+\item |(x :- P) => Q|, with |P| and |Q| q-neutral and |P| not |Absurd|.
 \end{itemize}
+By extension, a \emph{q-neutral context}\index{q-neutral context} is a
+context all of whose propositions are q-neutral.
 
 
-Given $\Delta \vdash p$, the propositional simplifier will either 
+Given $\Delta \vdash \Bhab{p}{\Prop}$, the propositional simplifier will either 
 \begin{itemize}
+
 \item discover that $p$ is absurd and provide a proof
-$\Delta \vdash f :\!\!-~ p \Rightarrow \bot$, represented by |Left f|; or
-\item simplify $p$ to a conjunction $\bigwedge_i q_i$ together with proofs
-$\Delta \vdash g_i :\!\!-~ p \Rightarrow q_i$ and $\Delta, \Gamma \vdash h :\!\!-~ p$,
-where $\Gamma = \{q_i\}_i$, represented by |Right (qs, gs, h)|.
+$\Delta \vdash \Bhab{f}{(\prf{p} \To \Absurd)}$, represented by |Left f|; or
+
+\item simplify $p$ to a conjunction $\bigwedge_i q_i$ together with
+proofs $\Delta \vdash \Bhab{g_i}{(\prf{p} \To q_i)}$ and $\Delta, \Gamma
+\vdash \Bhab{h}{(\prf{p})}$, where $\Gamma = \{q_i\}_i$, represented by
+|Right (qs, gs, h)|.
+
 \end{itemize}
 
 > type Simplify = Either (VAL -> VAL) (Bwd REF, Bwd VAL, VAL)
