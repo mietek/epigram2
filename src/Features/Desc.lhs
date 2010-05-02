@@ -379,8 +379,6 @@
 >         consECase (SU n) ps t e' = switchDOp @@ [ e'
 >                                                 , ps $$ Snd
 >                                                 , n ]
->         consECase junk ps t e' = error $ unlines ["Desc.lhs switchD consECase:",
->             show junk {-, "ps:", show ps, "t:", show t, "e':", show e'-}]
 
 \subsection{Plugging Axioms in}
 
