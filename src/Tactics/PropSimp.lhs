@@ -5,8 +5,11 @@
 
 > module Tactics.PropSimp where
 
+> import Prelude hiding (any, foldl)
+
 > import Control.Applicative 
 > import Control.Monad.Reader
+
 > import Data.Foldable
 > import Data.Traversable
 
@@ -21,8 +24,6 @@
 
 > import ProofState.ProofState
 > import ProofState.ProofKit
-
-> import Prelude hiding (any, foldl)
 
 %endif
 
@@ -49,13 +50,13 @@ context all of whose propositions are q-neutral.
 Given $\Delta \vdash \Bhab{p}{\Prop}$, the propositional simplifier will either 
 \begin{itemize}
 
-\item discover that $p$ is absurd and provide a proof
-$\Delta \vdash \Bhab{f}{(\prf{p} \To \Absurd)}$, represented by |Left f|; or
+\item discover that $p$ is absurd and provide a proof $\Delta \vdash
+\Bhab{f}{(\ALL{\prf{p}}{\Absurd})}$, represented by |Left f|; or
 
 \item simplify $p$ to a conjunction $\bigwedge_i q_i$ together with
-proofs $\Delta \vdash \Bhab{g_i}{(\prf{p} \To q_i)}$ and $\Delta, \Gamma
-\vdash \Bhab{h}{(\prf{p})}$, where $\Gamma = \{q_i\}_i$, represented by
-|Right (qs, gs, h)|.
+proofs $\Delta \vdash \Bhab{g_i}{(\ALL{\prf{p}}{q_i})}$ and $\Delta,
+\Gamma \vdash \Bhab{h}{(\prf{p})}$, where $\Gamma = \{q_i\}_i$,
+represented by |Right (qs, gs, h)|.
 
 \end{itemize}
 
@@ -70,7 +71,8 @@ proofs $\Delta \vdash \Bhab{g_i}{(\prf{p} \To q_i)}$ and $\Delta, \Gamma
 > type Simplifier x = ReaderT NameSupply Maybe x
                  
 
-The |dischargeLots| function discharges and $\lambda$-binds a list of references over a |VAL|.
+The |dischargeLots| function discharges and $\lambda$-binds a list of
+references over a |VAL|.
 
 > dischargeLots :: (NameSupplier m) => Bwd REF -> VAL -> m VAL
 > dischargeLots bs v = do
@@ -82,11 +84,14 @@ The |dischargeLots| function discharges and $\lambda$-binds a list of references
 >     wrapLambdas (bs :< (n := _)) tm = wrapLambdas bs (L (fst (last n) :. tm))
 
 
-The |dischargeAllLots| function discharges and $\forall$-binds a list of references over a |VAL|.
-It checks to see which are actually used, and inserts constant scopes |K| where possible.
+The |dischargeFLots| function discharges and binds a list of
+references over a |VAL|. The |binder| is informed whether or not the
+variable is actually used.
 
-> dischargeFLots :: (NameSupplier m) => (Bool -> String -> INTM -> INTM -> INTM) -> Bwd REF -> VAL -> m VAL
-> dischargeFLots f bs v = do
+> dischargeFLots :: (NameSupplier m) => 
+>                   (Bool -> String -> INTM -> INTM -> INTM) ->
+>                   Bwd REF -> VAL -> m VAL
+> dischargeFLots binder bs v = do
 >     temp <- bquote B0 v
 >     let cs = fmap (contains temp) bs
 >     v' <- bquote bs v
@@ -97,11 +102,13 @@ It checks to see which are actually used, and inserts constant scopes |K| where 
 >     wrapFs B0 _ tm = return tm
 >     wrapFs (bs :< (n := _ :<: ty)) (cs :< c) tm = do
 >         ty' <- bquote B0 ty
->         wrapFs bs cs (f c (fst (last n)) ty' tm)
-
+>         wrapFs bs cs (binder c (fst (last n)) ty' tm)
 >     contains :: INTM -> REF -> Bool
 >     contains tm ref = any (== ref) tm
 
+Hence, we can easily discharge then $\forall$-bind or discharge then
+$\Pi$-bind. Note that when the bound variable is not used, a |K|
+binder is used.
 
 > dischargeAllLots :: (NameSupplier m) => Bwd REF -> VAL -> m VAL
 > dischargeAllLots = dischargeFLots f
@@ -109,7 +116,7 @@ It checks to see which are actually used, and inserts constant scopes |K| where 
 >     f :: Bool -> String -> INTM -> INTM -> INTM
 >     f True   x p (PRF q) = PRF (ALLV x p q)
 >     f False  x p (PRF q) = PRF (ALL p (LK q))
-
+>
 > dischargePiLots :: (NameSupplier m) => Bwd REF -> VAL -> m VAL
 > dischargePiLots = dischargeFLots f
 >   where
@@ -143,7 +150,8 @@ The |dischargeRefPis| function calls |dischargePiLots| on the type of a referenc
 
 
 
-The |magic ty| function takes a proof of |FF| and yields a value of type |ty|.
+The |magic ty| function takes a proof of |Absurd| and yields a value
+of type |ty|.
 
 > magic :: TY -> VAL -> VAL
 > magic ty no = nEOp @@ [no, ty]
@@ -194,75 +202,86 @@ Otherwise, we can simplify the conjunction, post-composing the proofs with
 the application of |Fst| or |Snd| as appropriate.
 
 >     simplifyAnd (Simply q1s g1s h1) (Simply q2s g2s h2) =
->         Simply (q1s <+> q2s)
->             (fmap (..! ($$ Fst)) g1s <+> (fmap (..! ($$ Snd)) g2s))
->             (PAIR h1 h2)
+>         Simply  (q1s <+> q2s)
+>                 (fmap (..! ($$ Fst)) g1s <+> (fmap (..! ($$ Snd)) g2s))
+>                 (PAIR h1 h2)
 
 
 
-To simplify |p = (x :- s) => t|, we first try to simplify |s|:
+To simplify |p = x : (:- s) => l|, we first try to simplify |s|:
 
 > propSimplify gamma delta p@(ALL (PRF s) l) =
->     forkNSupply "psImp1" (forceSimplifyNamed gamma delta s (fortran l)) antecedent
+>     forkNSupply  "psImp1" 
+>                  (forceSimplifyNamed gamma delta s (fortran l))
+>                  antecedent
 >   where
 >     antecedent :: Simplify -> Simplifier Simplify
 
 If |s| is absurd then |p| is trivial, which we can prove by doing |magic|
 whenever someone gives us an element of |s|.
 
->     antecedent (SimplyAbsurd prfAbsurdS) = return (SimplyTrivial
->         (L (HF "antecedentAbsurd" (\sv ->
->             magic (PRF (l $$ A sv)) (prfAbsurdS sv)))))
+>     antecedent (SimplyAbsurd prfAbsurdS) =
+>       return $ SimplyTrivial $ L . HF "antecedentAbsurd" $ \sv ->
+>                                magic (PRF (l $$ A sv)) (prfAbsurdS sv)
 
-If |s| is trivial, then we go under the binder by applying the proof, and then
-simplify |t|. Then |p| simplifies to the result of simplifying |t|, with the
-proofs constructed by $\lambda$-abstracting in one direction and applying the
-proof of |s| in the other direction.
+If |s| is trivial, then we go under the binder by applying the proof,
+and then simplify |l|. Then |p| simplifies to the result of
+simplifying |l|, with the proofs constructed by $\lambda$-abstracting
+in one direction and applying the proof of |s| in the other direction.
 
 >     antecedent (SimplyTrivial prfS) =
->         forkNSupply "psImp2" (forceSimplify gamma delta (l $$ A prfS)) consequentTrivial
+>         forkNSupply  "psImp2" 
+>                      (forceSimplify gamma delta (l $$ A prfS)) 
+>                      consequentTrivial
 >       where
 >         consequentTrivial :: Simplify -> Simplifier Simplify
 >         consequentTrivial (SimplyAbsurd prfAbsurdT) =
->             return (SimplyAbsurd (prfAbsurdT . ($$ A prfS)))
->         consequentTrivial (SimplyTrivial prfT)  = return (SimplyTrivial (LK prfT))
->         consequentTrivial (Simply tqs tgs th)   = return (Simply tqs
->             (fmap (..! ($$ A prfS)) tgs)
->             (LK th))
+>             return $ SimplyAbsurd (prfAbsurdT . ($$ A prfS))
+>         consequentTrivial (SimplyTrivial prfT)  = 
+>             return $ SimplyTrivial (LK prfT)
+>         consequentTrivial (Simply tqs tgs th)   = 
+>             return $ Simply  tqs
+>                              (fmap (..! ($$ A prfS)) tgs)
+>                              (LK th)
 
 If |s| simplifies nontrivially, we have a bit more work to do. We simplify |t|
 under the binder by adding the simplified conjuncts of |s| to the context and
 applying |l| to |sh| (the proof of |s| in the extended context). 
 
 >     antecedent (Simply sqs sgs sh) =
->         forkNSupply "psImp3" (forceSimplify gamma (delta <+> sqs) (l $$ A sh)) consequent
+>         forkNSupply  "psImp3" 
+>                      (forceSimplify gamma (delta <+> sqs) (l $$ A sh)) 
+>                      consequent
 >       where
 >         consequent :: Simplify -> Simplifier Simplify
 >         consequent (SimplyAbsurd prfAbsurdT) = do
 >             madness <- dischargeAllLots sqs (PRF ABSURD)
->             freshRef ("madness" :<: madness) (\ref -> 
->                 freshRef ("pref" :<: p) (\pref -> do
->                     g <- dischargeLots sqs (prfAbsurdT (NP pref $$ A sh))
->                     g' <- discharge pref g
->                     return (SimplyOne ref
->                         (L (HF "p" (\pv -> g' $$ A pv)))
->                         (L (HF "consequentAbsurd" (\sv -> magic (PRF (l $$ A sv))
->                         (NP ref $$$ (fmap (A . ($$ A sv)) sgs))))))
->                   )
->               )
+>             freshRef ("madness" :<: madness) $ \ref -> 
+>               freshRef ("pref" :<: p) $ \pref -> do
+>                 g <- dischargeLots sqs (prfAbsurdT (NP pref $$ A sh))
+>                 g' <- discharge pref g
+>                 return $ 
+>                   SimplyOne ref
+>                             (L . HF "p" $ \pv -> g' $$ A pv)
+>                             (L . HF "consequentAbsurd" $ \sv -> 
+>                                 magic (PRF (l $$ A sv))
+>                                       (NP ref $$$ (fmap (A . ($$ A sv)) sgs)))
 
 If the consequent |t| is trivial, then the implication is trivial, which we can
 prove as follows:
 \begin{enumerate}
-\item Discharge the proof of |t| over the conjuncts |sqs| to get a $\lambda$-lifted proof |prfT'|.
-\item Construct a proof of |(x :\!\!- s) => t| that takes a proof of |s| and applies the proofs
-|sgs| to get proofs of the |sqs|, which can then be passed to |prfT'| to get a proof of |t|.
+\item Discharge the proof of |t| over the conjuncts |sqs| to get a
+      $\lambda$-lifted proof |prfT'|.
+\item Construct a proof of |(x :\!\!- s) => t| that takes a proof of
+      |s| and applies the proofs |sgs| to get proofs of the |sqs|, which can
+      then be passed to |prfT'| to get a proof of |t|.
 \end{enumerate}
 
 >         consequent (SimplyTrivial prfT) = do
 >             prfT' <- dischargeLots sqs prfT
->             return (SimplyTrivial (L (HF "consequentTrivial" (\sv ->
->                 prfT' $$$ (fmap (A . ($$ A sv)) sgs)))))
+>             return $ SimplyTrivial $ 
+>                      L . HF "consequentTrivial" $ \sv ->
+>                          prfT' $$$ (fmap (A . ($$ A sv)) sgs)
 
 Otherwise, if the consequent simplifies, we proceed as follows.
 
@@ -289,54 +308,60 @@ where $\Theta \cong z_0 : pq_0, ..., z_m : pq_m$.
 >             pqs <- Data.Traversable.mapM (dischargeRefAlls sqs) tqs
 >             pgs <- Data.Traversable.mapM wrapper tgs
 >
->             freshRef ("sref" :<: PRF s) (\sref -> do
->                 th' <- dischargeLots tqs th
+>             freshRef ("sref" :<: PRF s) $ \sref -> do
+>                 th1 <- dischargeLots tqs th
 >                 let  sgSpine  = fmap (\sg -> A (sg $$ A (NP sref))) sgs
->                      th''     = th' $$$ fmap (\pq -> A (NP pq $$$ sgSpine)) pqs
->                 th''' <- dischargeLots sqs th''
->                 let th'''' = th''' $$$ sgSpine
->                 ph <- discharge sref th''''
->                 return (Simply pqs pgs ph)
->               )
+>                      th2      = th1 $$$ fmap (\pq -> A (NP pq $$$ sgSpine)) pqs
+>                 th3 <- dischargeLots sqs th2
+>                 let th4 = th3 $$$ sgSpine
+>                 ph <- discharge sref th4
+>                 return $ Simply pqs pgs ph
 >
 >           where
 >             wrapper :: (NameSupplier m) => VAL -> m VAL
->             wrapper tg = freshRef ("pref" :<: p) (\pref -> do
+>             wrapper tg = freshRef ("pref" :<: p) $ \pref -> do
 >                 pg <- dischargeLots sqs (tg $$ A (NP pref $$ A sh))
 >                 discharge pref pg
->               )
 
 To simplify |p = (x : s) => t| where |s| is not a proof set, we generate a fresh
 reference and simplify |t| under the binder.
 
-> propSimplify gamma delta p@(ALL s l) = freshRef (fortran l :<: s)
->     (\refS -> forkNSupply "psAll" (forceSimplify gamma (delta :< refS) (l $$ A (NP refS))) (thingy refS))
+> propSimplify gamma delta p@(ALL s l) = 
+>     freshRef (fortran l :<: s) $ \refS -> 
+>       forkNSupply  "psAll" 
+>                    (forceSimplify gamma (delta :< refS) (l $$ A (NP refS))) 
+>                    (thingy refS)
 >   where
 >     thingy :: (NameSupplier m) => REF -> Simplify -> m Simplify
 
 If |t| is absurd, then |p| simplifies to |(x : s) => FF|. 
 
->     thingy refS (SimplyAbsurd prf) = freshRef ("psA" :<: PRF (ALL s (LK ABSURD)))
->         (\refA -> return (SimplyOne refA
->             (L (HF "p" (\pv -> magic (PRF (ALL s (LK ABSURD))) (prf (pv $$ A (NP refS))))))
->             (L (HF "consequentAbsurd2" (\sv -> magic (PRF (l $$ A sv)) (pval refA $$ A sv)))))
->         )
+>     thingy refS (SimplyAbsurd prf) =
+>       freshRef ("psA" :<: PRF (ALL s (LK ABSURD))) $ \refA -> 
+>         return $
+>           SimplyOne  refA
+>                      (L . HF "p" $ \pv -> 
+>                       magic  (PRF (ALL s (LK ABSURD))) 
+>                              (prf (pv $$ A (NP refS))))
+>                      (L . HF "consequentAbsurd2" $ \sv -> 
+>                       magic  (PRF (l $$ A sv)) 
+>                              (pval refA $$ A sv))
 
 If |t| is trivial, then |p| is trivial.
 
 >     thingy refS (SimplyTrivial prf) = do
 >         prf' <- discharge refS prf
->         return (SimplyTrivial prf')
+>         return $ SimplyTrivial prf'
 
-Otherwise, |p| simplifies to a conjunction of propositions |(x : s) => q| for each |q| in
-the simplification of |t|.
+Otherwise, |p| simplifies to a conjunction of propositions |(x : s) =>
+q| for each |q| in the simplification of |t|.
 
 >     thingy refS (Simply qs gs h) = do
 >         pqs <- Data.Traversable.mapM (dischargeRefAlls (B0 :< refS)) qs
 >         let pgs = fmap wrapper gs
->         h' <- dischargeLots qs h
->         let h'' = h' $$$ fmap (\q -> A (NP q $$ A (NP refS))) pqs
->         ph <- discharge refS h''
+>         h1 <- dischargeLots qs h
+>         let h2 = h1 $$$ fmap (\q -> A (NP q $$ A (NP refS))) pqs
+>         ph <- discharge refS h2
 >         return (Simply pqs pgs ph)
 >       where
 
@@ -346,9 +371,9 @@ Since |pq == (x : s) => q| we can give back a function that takes proofs
 applies |g| to this proof to get a proof of |q|.
 
 >         wrapper :: VAL -> VAL
->         wrapper g = L (HF "p" (\pv ->
->                        L (HF "s" (\sv ->
->                            g $$ A (pv $$ A sv)))))
+>         wrapper g = L . HF "p" $ \pv ->
+>                     L . HF "s" $ \sv ->
+>                     g $$ A (pv $$ A sv)
 
 
 To simplify a blue equation, we use |simplifyBlue|.
@@ -367,12 +392,12 @@ nicer than a green equation for the user.
 >   | op == eqGreen = do
 >       m <- optional $ simplifyBlue False gamma delta (sty :>: s) (tty :>: t)
 >       case m of
->           Just (SimplyTrivial prf) -> return (SimplyTrivial (prf $$ Out))
->           Nothing -> freshRef ("q" :<: PRF (EQBLUE (sty :>: s) (tty :>: t)))
->               (\qRef -> return (SimplyOne qRef
->                   (L (HF "p" CON))
->                   (NP qRef $$ Out)
->               ))
+>           Just (SimplyTrivial prf) -> return $ SimplyTrivial (prf $$ Out)
+>           Nothing -> do
+>              freshRef ("q" :<: PRF (EQBLUE (sty :>: s) (tty :>: t))) $ \qRef ->
+>                return $ SimplyOne  qRef
+>                                    (L . HF "p" $ CON)
+>                                    (NP qRef $$ Out)
 
 
 If nothing matches, we can always try searching the context.
@@ -384,33 +409,34 @@ The |simplifyBlue| command attempts to simplify a blue equation using
 refl, optionally unrolling it (calling eqGreen and simplifying the
 resulting pieces), or just searching the context.
 
-> simplifyBlue :: Bool -> Bwd REF -> Bwd REF -> TY :>: VAL
->     -> TY :>: VAL -> Simplifier Simplify 
+> simplifyBlue ::  Bool -> Bwd REF -> Bwd REF -> TY :>: VAL
+>                  -> TY :>: VAL -> Simplifier Simplify 
 > simplifyBlue canUnroll gamma delta (sty :>: s) (tty :>: t) = 
 >     useRefl
->         <|> unroll canUnroll
->         <|> propSearch gamma delta (EQBLUE (sty :>: s) (tty :>: t))
+>     <|> unroll canUnroll
+>     <|> propSearch gamma delta (EQBLUE (sty :>: s) (tty :>: t))
 >  where
 >    useRefl :: Simplifier Simplify
 >    useRefl = do
 >        guard =<< (asks . equal $ SET :>: (sty, tty))
 >        guard =<< (asks . equal $ sty :>: (s, t))
 >        let w = pval refl $$ A sty $$ A s
->        return (SimplyTrivial w)
+>        return $ SimplyTrivial w
 >
 >    unroll :: Bool -> Simplifier Simplify
 >    unroll False  = (|)
 >    unroll True   = case opRun eqGreen [sty, s, tty, t] of
 >        Left _         -> (|)
->        Right TRIVIAL  -> return (SimplyTrivial (CON VOID))
->        Right q        -> forkNSupply "psEq"
->            (forceSimplify gamma delta q) equality
+>        Right TRIVIAL  -> return $ SimplyTrivial (CON VOID)
+>        Right q        -> forkNSupply  "psEq"
+>                                       (forceSimplify gamma delta q)
+>                                       equality
 >          
 >    equality :: Simplify -> Simplifier Simplify
->    equality (SimplyAbsurd prf) = return (SimplyAbsurd (prf . ($$ Out)))
->    equality (Simply qs gs h) = return (Simply qs
->        (fmap (..! ($$ Out)) gs)
->        (CON h))
+>    equality (SimplyAbsurd prf) = return $ SimplyAbsurd (prf . ($$ Out))
+>    equality (Simply qs gs h) = return $ Simply  qs
+>                                                 (fmap (..! ($$ Out)) gs)
+>                                                 (CON h)
 
 
 
@@ -423,8 +449,10 @@ test if the consequent matches the goal; if so, |backchain| then calls
 backchained proposition removed. 
 
 > propSearch :: Bwd REF -> Bwd REF -> VAL -> Simplifier Simplify
-> propSearch gamma delta p = seekProof (gamma <+> delta) F0 p >>= return . SimplyTrivial
->   where
+> propSearch gamma delta p = do
+>   prf <- seekProof (gamma <+> delta) F0 p
+>   return $ SimplyTrivial prf
+>     where 
 >     seekProof :: Bwd REF -> Fwd REF -> VAL -> Simplifier VAL
 >     seekProof B0 _ _ = (|)
 >     seekProof (rs :< ref@(_ := DECL :<: PRF q)) fs p =
@@ -432,13 +460,13 @@ backchained proposition removed.
 >     seekProof (rs :< ref) fs p = seekProof rs (ref :> fs) p
 >  
 >     backchain :: Bwd REF -> Fwd REF -> Bwd REF -> VAL -> VAL -> Simplifier VAL
->     backchain rs fs ss p (ALL (PRF s) l) = freshRef ("bc" :<: PRF s)
->         (\sRef -> backchain rs fs (ss :< sRef) p (l $$ A (NP sRef)))
+>     backchain rs fs ss p (ALL (PRF s) l) = freshRef ("bc" :<: PRF s) $ \sRef ->
+>         backchain rs fs (ss :< sRef) p (l $$ A (NP sRef))
 >                                                                       
 >     backchain (rs :< ref) fs ss p q = do
 >         guard =<< (asks . equal $ PROP :>: (p, q))
 >         ssPrfs <- Data.Traversable.mapM (seekProof (rs <>< fs) F0 . unPRF . pty) ss
->         return (pval ref $$$ fmap A ssPrfs)
+>         return $ pval ref $$$ fmap A ssPrfs
 >
 >     unPRF :: VAL -> VAL
 >     unPRF (PRF p) = p
@@ -455,19 +483,18 @@ used if simplification fails.
 > forceSimplify gamma delta p = forceSimplifyNamed gamma delta p ""
 
 > forceSimplifyNamed :: Bwd REF -> Bwd REF -> VAL -> String -> Simplifier Simplify
-> forceSimplifyNamed gamma delta p hint = propSimplify gamma delta p
->                                   <|> simplifyNone hint (PRF p)
-> 
-> simplifyNone :: (NameSupplier m) => String -> TY -> m Simplify
-> simplifyNone hint ty = freshRef (nameHint hint ty :<: ty) (\ref ->
->     return (SimplyOne ref (idVAL "id") (NP ref)))
+> forceSimplifyNamed gamma delta p hint  = propSimplify gamma delta p
+>                                        <|> simplifyNone hint (PRF p)
+>     where
+>       simplifyNone :: (NameSupplier m) => String -> TY -> m Simplify
+>       simplifyNone hint ty = freshRef (nameHint hint ty :<: ty) $ \ref ->
+>                              return $ SimplyOne ref (idVAL "id") (NP ref)
 >   
-> nameHint :: String -> VAL -> String
-> nameHint hint _ | not (null hint) = hint
-> nameHint _ (NP (n := _)) = "" ++ fst (last n)
-> nameHint _ (L (HF s _)) = "" ++ s
-> nameHint _ _ = "xnh"
-
+>       nameHint :: String -> VAL -> String
+>       nameHint hint _ | not (null hint) = hint
+>       nameHint _ (NP (n := _)) = "" ++ fst (last n)
+>       nameHint _ (L (HF s _)) = "" ++ s
+>       nameHint _ _ = "xnh"
 
 
 \subsection{Problem Simplification}
@@ -573,7 +600,7 @@ at a time. It will fail if no simplification is possible.
 > runPropSimplify p = do
 >     nsupply <- askNSupply
 >     es <- getBoysBwd
->     return (runReaderT (propSimplify es B0 p) nsupply)
+>     return $ runReaderT (propSimplify es B0 p) nsupply
 
 The |propSimplifyHere| command attempts propositional simplification on the
 current location, which must be an open goal of type |PRF p| for some |p|.
