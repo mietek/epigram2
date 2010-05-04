@@ -29,6 +29,9 @@ BUILD_*
 \.aux
 \.bbl
 \.blg
+Epitome.ind
+Epitome.ilg
+Epitome.idx
 [^g]\.log
 Epitome\.pdf
 paper\.pdf
