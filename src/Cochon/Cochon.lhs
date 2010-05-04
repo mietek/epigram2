@@ -37,6 +37,7 @@
 > import Tactics.Information
 > import Tactics.Gadgets
 > import Tactics.Data
+> import Tactics.Relabel
 
 > import Elaboration.Elaborator
 > import Elaboration.Scheduler
