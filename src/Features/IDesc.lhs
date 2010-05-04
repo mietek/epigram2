@@ -329,21 +329,23 @@
 >             args = [iI, d, a, c, comp f g, N x]
 >         mapOpSimp _ _ = empty
 
-> import -> BrokenMakeElabRules where
->   makeElab loc (SET :>: DIMU Nothing iI d i) = do
->       GirlMother (nom := HOLE _ :<: ty) _ _ _ <- getMother
->       let fr = nom := FAKE :<: ty
->       xs <- getBoys
->       guard (not (null xs))
->       let lt = N (P fr $:$ (map (\x -> A (N (P x))) (init xs)))
->       let lv = evTm lt
->       (iI :=>: iIv) <- elaborate False (SET :>: iI)
->       (d :=>: dv) <- elaborate False (ARR iIv (IDESC iIv) :>: d)
->       (i :=>: iv) <- elaborate False (iIv :>: i)
->       lastIsIndex <- withNSupply (equal (SET :>: (iv,N (P (last xs)))))
->       guard lastIsIndex
->       -- should check i doesn't appear in d (fairly safe it's not in iI :))
->       return (IMU (Just lt) iI d i :=>: IMU (Just lv) iIv dv iv)
+
+> import -> MakeElabRules where
+>   makeElab' loc (SET :>: DIMU Nothing iI d i) = do
+>       l   :=>: lv   <- eFake False
+>       iI  :=>: iIv  <- subElab loc (SET :>: iI)
+>       d   :=>: dv   <- subElab loc (ARR iIv (IDESC iIv) :>: d)
+>       i   :=>: iv   <- subElab loc (iIv :>: i)
+
+\question{What is this check for, and how can we implement it in |Elab|?
+|xs| is the list of boys (cf. |eFake|).}
+
+<       lastIsIndex <- eEqual (SET :>: (iv,N (P (last xs))))
+<       guard lastIsIndex
+<       -- should check i doesn't appear in d (fairly safe it's not in iI :))
+
+>       return $ IMU (Just (N l)) iI d i :=>: IMU (Just lv) iIv dv iv
+
 
 If a label is not in scope, we remove it, so the definition appears at the
 appropriate place when the proof state is printed.

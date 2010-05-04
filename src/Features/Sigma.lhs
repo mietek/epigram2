@@ -157,8 +157,25 @@
 >   coerce Unit q s = Right s
 
 
+In order to make programs as cryptic as possible, you can use |con| in the
+display language to generate a constant function from unit or curry a function
+from a pair.
+
 > import -> MakeElabRules where
->   makeElab' loc (UNIT :>: DU) = return $ VOID :=>: VOID
+>   makeElab' loc (PI UNIT t :>: DCON f) = do
+>     tm :=>: tmv <- subElab loc (t $$ A VOID :>: f)
+>     return $ LK tm :=>: LK tmv
+
+>   makeElab' loc (PI (SIGMA d r) t :>: DCON f) = do
+>     let mt =  PI d . L . HF (fortran r) $ \ a ->
+>               PI (r $$ A a) . L . HF (fortran t) $ \ b ->
+>               t $$ A (PAIR a b)
+>     mt'  :=>: _    <- eQuote mt
+>     tm   :=>: tmv  <- subElab loc (mt :>: f)
+>     x <- eLambda (fortran t)
+>     return $ N ((tm :? mt') :$ A (N (P x :$ Fst)) :$ A (N (P x :$ Snd)))
+>                     :=>: tmv $$ A (NP x $$ Fst) $$ A (NP x $$ Snd)
+
 
 > import -> DistillRules where
 >   distill es (UNIT :>: _) = return $ DU :=>: VOID

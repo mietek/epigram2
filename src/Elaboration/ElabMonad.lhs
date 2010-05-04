@@ -232,12 +232,4 @@ argument, as well as its second.
 >     catchError (ECry e) f  = f e
 >     catchError x _         = x
 
-
-> newtype WrapElab x = WrapElab {unWrapElab :: Elab x}
->     deriving (Functor, Applicative, Alternative, Monad)
-
-> instance (MonadError (StackError ())) WrapElab where
->     throwError e = WrapElab (throwError [err "WrapElab: cannot unwrap error."])
->     catchError _ _ = WrapElab (throwError [err "WrapElab: cannot catch error."])
-
 %endif

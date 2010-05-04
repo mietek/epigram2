@@ -110,3 +110,13 @@ relation over |A|.
 > import -> Coerce where
 >   coerce (Quotient (_X, _Y) _ _) q (CLASS x) = Right $
 >     CLASS (coe @@ [_X, _Y, CON $ q $$ Fst, x])
+
+
+As a bit of syntactic sugar, we elaborate |con| as |COMPOSITE| and |[x]| as
+|CLASS x|. \question{Why not just use |CON| rather than |COMPOSITE| everywhere?}
+
+> import -> MakeElabRules where
+>   makeElab' loc (MONAD d x :>: DCON t) =
+>     makeElab' loc (MONAD d x :>: DCOMPOSITE t)
+>   makeElab' loc (QUOTIENT a r p :>: DPAIR x DVOID) =
+>     makeElab' loc (QUOTIENT a r p :>: DCLASS x)

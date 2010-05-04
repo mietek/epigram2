@@ -433,6 +433,17 @@
 >         dt :=>: dv <- subElab loc (desc :>: d)
 >         return $ MU (Just (N lt)) dt :=>: MU (Just lv) dv
  
+>     makeElab' loc (PI (MU l d) t :>: DCON f) = do
+>         d'  :=>: _    <- eQuote d
+>         t'  :=>: _    <- eQuote t
+>         tm  :=>: tmv  <- subElab loc $ case l of
+>             Nothing  -> inductionOpMethodType $$ A d $$ A t :>: f
+>             Just l   -> inductionOpLabMethodType $$ A l $$ A d $$ A t :>: f
+>         x <- eLambda (fortran t)
+>         return $ N (  inductionOp :@  [d',  NP x, t',  tm   ])
+>                :=>:   inductionOp @@  [d,   NP x, t,   tmv  ]
+
+
 > import -> DistillRules where
 >     distill _ (MU _ _ :>: CON (PAIR ZE VOID)) =
 >         return (DVOID :=>: CON (PAIR ZE VOID))
