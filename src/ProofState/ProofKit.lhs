@@ -615,7 +615,7 @@ name if the name suggestion is empty.
 > pickName prefix ""  = do
 >     m <- getMotherName
 >     r <- getDevNSupply
->     return (prefix ++ foldMap (show . snd) m ++ show (snd r))
+>     return (prefix ++ show (foldMap snd m + snd r))
 > pickName _ s   = return s
 
 

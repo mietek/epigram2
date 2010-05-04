@@ -1,10 +1,10 @@
 [ nat
     [ h00
         [ \ s : Enum ['zero 'suc] ->
-          h001
+          h1
             [ \ s : Enum ['zero 'suc] ->
             ] Desc : Set ;
-        ] switch ['zero 'suc] s h001 [(con ['constD (Sig ())]) (con ['prodD [] (con ['constD (Sig ())])])] : Desc ;
+        ] switch ['zero 'suc] s h1 [(con ['constD (Sig ())]) (con ['prodD [] (con ['constD (Sig ())])])] : Desc ;
     ] Mu (con ['sigmaD (Enum ['zero 'suc]) h00]) : Set ;
   zero := [] : nat ;
   suc
@@ -30,47 +30,47 @@
                   \ x : Sig (nat -> nat ;) ->
                 ] G50011 (x !) _ : nat -> nat ;
               \ s : Enum ['zero 'suc] ->
-              h5003
+              h8
                 [ \ s : Enum ['zero 'suc] ->
                 ] Desc : Set ;
-              h5004
+              h9
                 [ \ x : desc (switch ['zero 'suc] s (\ s -> Desc) [(con ['constD (Sig ())]) (con ['prodD [] (con ['constD (Sig ())])])]) nat ->
-                  h50041
+                  h10
                     [ \ s : Enum ['zero 'suc] ->
                     ] Desc : Set ;
-                ] (box (switch ['zero 'suc] s h50041 [(con ['constD (Sig ())]) (con ['prodD [] (con ['constD (Sig ())])])]) nat (\ _ -> (nat -> nat)) x -> nat -> nat) : Set ;
-              h5005
+                ] (box (switch ['zero 'suc] s h10 [(con ['constD (Sig ())]) (con ['prodD [] (con ['constD (Sig ())])])]) nat (\ _ -> (nat -> nat)) x -> nat -> nat) : Set ;
+              h10
                 [ \ s : Enum ['zero 'suc] ->
-                  h50051
+                  h11
                     [ \ s : Enum ['zero 'suc] ->
                     ] Desc : Set ;
-                  h50052
+                  h12
                     [ \ x : desc (switch ['zero 'suc] s (\ s -> Desc) [(con ['constD (Sig ())]) (con ['prodD [] (con ['constD (Sig ())])])]) nat ->
-                      h500521
+                      h13
                         [ \ s : Enum ['zero 'suc] ->
                         ] Desc : Set ;
-                    ] (box (switch ['zero 'suc] s h500521 [(con ['constD (Sig ())]) (con ['prodD [] (con ['constD (Sig ())])])]) nat (\ _ -> (nat -> nat)) x -> nat -> nat) : Set ;
-                ] (Pi (desc (switch ['zero 'suc] s h50051 [(con ['constD (Sig ())]) (con ['prodD [] (con ['constD (Sig ())])])]) nat) h50052) : Set ;
-            ] switch ['zero 'suc] s h5005 [G5000 G5001] : Pi (desc (switch ['zero 'suc] s h5003 [(con ['constD (Sig ())]) (con ['prodD [] (con ['constD (Sig ())])])]) nat) h5004 ;
-          h501
+                    ] (box (switch ['zero 'suc] s h13 [(con ['constD (Sig ())]) (con ['prodD [] (con ['constD (Sig ())])])]) nat (\ _ -> (nat -> nat)) x -> nat -> nat) : Set ;
+                ] (Pi (desc (switch ['zero 'suc] s h11 [(con ['constD (Sig ())]) (con ['prodD [] (con ['constD (Sig ())])])]) nat) h12) : Set ;
+            ] switch ['zero 'suc] s h10 [G5000 G5001] : Pi (desc (switch ['zero 'suc] s h8 [(con ['constD (Sig ())]) (con ['prodD [] (con ['constD (Sig ())])])]) nat) h9 ;
+          h6
             [ \ s : Enum ['zero 'suc] ->
-              h5011
+              h7
                 [ \ s : Enum ['zero 'suc] ->
                 ] Desc : Set ;
-            ] desc (switch ['zero 'suc] s h5011 [(con ['constD (Sig ())]) (con ['prodD [] (con ['constD (Sig ())])])]) nat : Set ;
+            ] desc (switch ['zero 'suc] s h7 [(con ['constD (Sig ())]) (con ['prodD [] (con ['constD (Sig ())])])]) nat : Set ;
           \ x : Sig (s : Enum ['zero 'suc] ; desc (switch ['zero 'suc] s (\ s -> Desc) [(con ['constD (Sig ())]) (con ['prodD [] (con ['constD (Sig ())])])]) nat) ->
-          h503
+          h8
             [ \ s : Enum ['zero 'suc] ->
             ] Desc : Set ;
-        ] G500 (x !) (x -) : box (switch ['zero 'suc] (x !) h503 [(con ['constD (Sig ())]) (con ['prodD [] (con ['constD (Sig ())])])]) nat (\ _ -> (nat -> nat)) (x -) -> nat -> nat ;
+        ] G500 (x !) (x -) : box (switch ['zero 'suc] (x !) h8 [(con ['constD (Sig ())]) (con ['prodD [] (con ['constD (Sig ())])])]) nat (\ _ -> (nat -> nat)) (x -) -> nat -> nat ;
       \ x : nat ->
-      h52
+      h7
         [ \ s : Enum ['zero 'suc] ->
-          h521
+          h8
             [ \ s : Enum ['zero 'suc] ->
             ] Desc : Set ;
-        ] switch ['zero 'suc] s h521 [(con ['constD (Sig ())]) (con ['prodD [] (con ['constD (Sig ())])])] : Desc ;
-    ] induction (con ['sigmaD (Enum ['zero 'suc]) h52]) x (\ _ -> (nat -> nat)) G50 : nat -> nat ;
+        ] switch ['zero 'suc] s h8 [(con ['constD (Sig ())]) (con ['prodD [] (con ['constD (Sig ())])])] : Desc ;
+    ] induction (con ['sigmaD (Enum ['zero 'suc]) h7]) x (\ _ -> (nat -> nat)) G50 : nat -> nat ;
   x := plus two two : nat ;
 ]
 Loaded.

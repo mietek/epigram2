@@ -13,7 +13,7 @@ Made.
 Made.
 Made.
 [ id
-    [ h00
+    [ h0
         [ \ X : Set ->
         ] (X -> X) : Set ;
       \ X : Set ->
