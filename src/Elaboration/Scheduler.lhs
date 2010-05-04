@@ -22,12 +22,9 @@
 > import DisplayLang.DisplayTm
 > import DisplayLang.Naming
 
-> import Tactics.Information
-
 > import Elaboration.ElabMonad
 > import Elaboration.MakeElab
 > import Elaboration.RunElab
-> import Elaboration.Elaborator
 > import Elaboration.Unification
 
 > import Kit.BwdFwd
@@ -129,11 +126,17 @@ been suspended) then the cursor could be anywhere earlier in the proof state.
 >     tm <- bquoteHere (valueOf . maybeEval $ stt) -- force definitional expansion
 >     solveHole' ref [] tm -- takes us to who knows where
 >     return Nothing
+
+If we have a |WaitSolve| problem where the hole has already been solved with
+something else, we need to check the solution is compatible. \question{How
+can we reorganise things to use propositional rather than definitional
+equality here?}
+
 > resume tt (WaitSolve ref@(_ := DEFN tmv' :<: ty) stt prob) = do
->     let stt' = maybeEval $ stt
->     aus <- getGreatAuncles
->     sibs <- getDevEntries
->     let stm = parBind aus sibs (termOf stt')
+>     aus   <- getGreatAuncles
+>     sibs  <- getDevEntries
+>     let  stt'  = maybeEval stt
+>          stm   = parBind aus sibs (termOf stt')
 >     eq <- withNSupply $ equal (ty :>: (evTm stm, tmv'))
 >     if eq
 >         then  resume tt prob
@@ -141,7 +144,9 @@ been suspended) then the cursor could be anywhere earlier in the proof state.
 >                    err "has been solved with" ++ errTyVal (tmv' :<: ty) ++
 >                    err "but I wanted to solve it with" ++
 >                            errTyVal (valueOf stt' :<: ty)
+
 > resume tt (ElabSchedule prob) = resume tt prob
+
 
 > ifSnd :: (a, Bool) -> Maybe a
 > ifSnd (a,  True)   = Just a
@@ -155,17 +160,3 @@ otherwise, so we can enable or disable them at compile time.
 > schedTrace s = if schedTracing then proofTrace s else return ()
 
 > schedTracing = False
-
-
-The |elm| Cochon tactic elaborates a term, then starts the scheduler to
-stabilise the proof state, and returns a pretty-printed representation of the
-final type-term pair (using a quick hack).
-
-> elmCT :: ExDTmRN -> ProofState String
-> elmCT tm = do
->     suspend ("elab" :<: sigSetTM :=>: sigSetVAL) (ElabInferProb tm)
->     startScheduler
->     infoElaborate (DP [("elab", Rel 0)] ::$ [])
-
-> import -> CochonTactics where
->   : unaryExCT "elm" elmCT "elm <term> - elaborate <term>, stabilise and print type-term pair."

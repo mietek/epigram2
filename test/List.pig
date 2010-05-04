@@ -15,7 +15,6 @@ root ;
 let snoc (A : Set)(as : List A)(a : A) : List A ;
 <= List.Ind A as ;
 = sing a ;
-next ;
 = cons s^2 (snoc A xf^1 a) ;
 root ;
 
@@ -31,7 +30,6 @@ make L := append T (cons 'a (cons 'b nil)) (sing 'c) : List T ;
 let list-map (A : Set)(B : Set)(f : A -> B)(as : List A) : List B ;
 <= [as] List.Ind A as ;
 = nil ;
-next ; 
 = cons (f s^2) (list-map A B f xf^1) ;
 root ;
 

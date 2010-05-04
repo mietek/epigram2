@@ -28,6 +28,10 @@
 > import DisplayLang.Naming
 > import DisplayLang.PrettyPrint
 
+> import Elaboration.ElabMonad
+> import Elaboration.MakeElab
+> import Elaboration.RunElab
+> import Elaboration.Scheduler
 > import Elaboration.Elaborator
 
 > import Kit.BwdFwd
@@ -230,7 +234,20 @@ of the proof state at the current location.
 >     prettyHKind (Crying s)  = text ("CRY <<" ++ s ++ ">>")
 
 
+The |elm| Cochon tactic elaborates a term, then starts the scheduler to
+stabilise the proof state, and returns a pretty-printed representation of the
+final type-term pair (using a quick hack).
+
+> elmCT :: ExDTmRN -> ProofState String
+> elmCT tm = do
+>     suspend ("elab" :<: sigSetTM :=>: sigSetVAL) (ElabInferProb tm)
+>     startScheduler
+>     infoElaborate (DP [("elab", Rel 0)] ::$ [])
+
+
 > import -> CochonTactics where
+>   : unaryExCT "elm" elmCT "elm <term> - elaborate <term>, stabilise and print type-term pair."
+
 >   : unaryExCT "elaborate" infoElaborate
 >       "elaborate <term> - elaborates, evaluates, quotes, distills and pretty-prints <term>."
 >   : unaryExCT "infer" infoInfer

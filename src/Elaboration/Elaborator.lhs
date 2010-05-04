@@ -29,6 +29,7 @@
 > import Elaboration.ElabMonad
 > import Elaboration.MakeElab
 > import Elaboration.RunElab
+> import Elaboration.Scheduler
 
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
@@ -78,10 +79,10 @@ is a nameless question mark, it avoids creating a pointless subgoal by simply re
 a reference to the current goal (applied to the appropriate shared parameters).
 
 > elabGive :: InDTmRN -> ProofState (EXTM :=>: VAL)
-> elabGive tm = elabGive' tm <* goOut
+> elabGive tm = elabGive' tm <* startScheduler <* goOut
 
 > elabGiveNext :: InDTmRN -> ProofState (EXTM :=>: VAL)
-> elabGiveNext tm = elabGive' tm <* (nextGoal <|> goOut)
+> elabGiveNext tm = elabGive' tm <* startScheduler <* (nextGoal <|> goOut)
 
 > elabGive' :: InDTmRN -> ProofState (EXTM :=>: VAL)
 > elabGive' tm = do
