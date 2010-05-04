@@ -149,10 +149,12 @@ representation of an elaboration problem.
 \subsection{Hoping, hoping, hoping}
 
 The |runElabHope| command interprets the |EHope| instruction, which hopes for
-an element of a given type. If it is asking for a proof, we might be able to
-find one, but otherwise we just create a hole.
+an element of a given type. If it is asking for an element of unit, a proof
+or an element of a labelled type, we might be able to find one; otherwise we
+just create a hole.
 
 > runElabHope :: Bool -> TY -> ProofState (INTM :=>: VAL, Bool)
+> runElabHope top UNIT          = return (VOID :=>: VOID, True)
 > runElabHope top (PRF p)       = simplifyProof top p
 > runElabHope top (LABEL l ty)  = seekLabel top l ty <|> lastHope top (LABEL l ty)
 > runElabHope top ty            = lastHope top ty
