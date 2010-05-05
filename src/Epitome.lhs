@@ -102,6 +102,7 @@
 %include Tactics/PropSimp.lhs
 %include Tactics/Data.lhs
 %include Tactics/Gadgets.lhs
+%include Tactics/Relabel.lhs
 
 \chapter{The Display Language}
 

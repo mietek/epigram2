@@ -30,6 +30,7 @@
 
 > import Elaboration.ElabMonad
 > import Elaboration.MakeElab
+> import Elaboration.Unification
 
 > import Cochon.Error
 
@@ -154,10 +155,10 @@ or an element of a labelled type, we might be able to find one; otherwise we
 just create a hole.
 
 > runElabHope :: Bool -> TY -> ProofState (INTM :=>: VAL, Bool)
-> runElabHope top UNIT          = return (VOID :=>: VOID, True)
-> runElabHope top (PRF p)       = simplifyProof top p
-> runElabHope top (LABEL l ty)  = seekLabel top l ty <|> lastHope top (LABEL l ty)
-> runElabHope top ty            = lastHope top ty
+> runElabHope top UNIT                = return (VOID :=>: VOID, True)
+> runElabHope top (PRF p)             = simplifyProof top p
+> runElabHope top v@(LABEL (N l) ty)  = seekLabel top l ty <|> lastHope top v
+> runElabHope top ty                  = lastHope top ty
 
 
 \subsubsection{Hoping for labelled types}
@@ -165,7 +166,7 @@ just create a hole.
 If we are looking for a labelled type (e.g.\ to make a recursive call), we
 search the hypotheses for a value with the same label.
 
-> seekLabel :: Bool -> VAL -> VAL -> ProofState (INTM :=>: VAL, Bool)
+> seekLabel :: Bool -> NEU -> VAL -> ProofState (INTM :=>: VAL, Bool)
 > seekLabel top l ty = do
 >     es <- getAuncles
 >     seekOn es
@@ -176,29 +177,40 @@ search the hypotheses for a value with the same label.
 >         seekIn (NP boy) (pty boy) <|> seekOn es'
 
 >     seekIn :: VAL -> VAL -> ProofState (INTM :=>: VAL, Bool)
->     seekIn tm (LABEL m u) = do
->         (p' :=>: p, True) <- runElabHope False
->             (PRF (EQBLUE (SET :>: LABEL m u) (SET :>: LABEL l ty)))
-
-<         True <- withNSupply $ equal (SET :>: (u, ty))
-<         (p' :=>: p, True) <- runElabHope False
-<            (PRF (EQBLUE (u :>: m) (ty :>: l)))
-
->         m'   <- bquoteHere m
->         u'   <- bquoteHere u
->         l'   <- bquoteHere l
->         ty'  <- bquoteHere ty
->         tm'  <- bquoteHere tm
->         return (N (coe :@ [LABEL m' u', LABEL l' ty', p', tm'])
->               :=>: coe @@ [LABEL m  u,  LABEL l  ty,  p,  tm], True)
-
-<         return (N (coe :@ [LABEL m' u', LABEL l' ty', CON (PAIR (N (p' :? PRF (EQBLUE (u' :>: m') (ty' :>: l')) :$ Out)) (N (P refl :$ A SET :$ A u'))), tm'])
-<              :=>: coe @@ [LABEL m  u,  LABEL l  ty,  CON (PAIR (p $$ Out) (NP refl $$ A SET $$ A u)),  tm], True)
-
+>     seekIn tm (LABEL (N m) u) = do
+>         let Just (ref, vvs) = matchFakes m l []
+>         subst  <- matchBits (pty ref) vvs [] 
+>         l'     <- bquoteHere l
+>         ty'    <- bquoteHere ty
+>         tm'    <- bquoteHere tm
+>         suspendThis top ("label" :<: LABEL (N l') ty' :=>: LABEL (N l) ty) =<<
+>             makeWait subst tm'
 >     seekIn tm (PI s t) = do
 >         (st :=>: sv, _) <- runElabHope False s    
 >         seekIn (tm $$ A sv) (t $$ A sv)
->     seekIn _ _ = (|)
+>     seekIn tm ty = (|)
+
+>     matchBits :: TY -> [(VAL, VAL)] -> [(REF, VAL)]
+>         -> ProofState [(REF, VAL)]
+>     matchBits ty [] subst = return subst
+>     matchBits (PI s t) ((as, at):ps) subst = do
+>         subst' <- valueMatch (s :>: (as, at))
+>         matchBits (t $$ A as) ps (subst ++ subst')
+
+
+> matchFakes :: NEU -> NEU -> [(VAL, VAL)] -> Maybe (REF, [(VAL, VAL)])
+> matchFakes (P ref@(sn := FAKE :<: _)) (P (tn := FAKE :<: _)) ps
+>     | sn == tn   = Just (ref, ps)
+>     | otherwise  = Nothing
+> matchFakes (s :$ A as) (t :$ A at) ps = matchFakes s t ((as, at):ps)
+> matchFakes _ _ _ = Nothing 
+
+> makeWait :: [(REF, VAL)] -> INTM -> ProofState EProb
+> makeWait [] g = return $ ElabDone (g :=>: Nothing)
+> makeWait ((r, v) : rvs) g = do
+>     v' <- bquoteHere v
+>     ep <- makeWait rvs g
+>     return $ WaitSolve r (v' :=>: Just v) ep
 
 
 \subsubsection{Simplifying proofs}
@@ -246,8 +258,10 @@ and returning the subgoal).
 If we are trying to prove an equation between the same fake reference applied to
 two lists of parameters, we prove equality of the parameters and use reflexivity.
 This case arises frequently when proving label equality to make recursive calls.
+\question{Do we need this case, or are we better off using matching?}
 
-> flexiProofMatch :: (TY :>: VAL) -> (TY :>: VAL) -> ProofState (INTM :=>: VAL, Bool)
+> flexiProofMatch :: (TY :>: VAL) -> (TY :>: VAL)
+>     -> ProofState (INTM :=>: VAL, Bool)
 > flexiProofMatch (_S :>: N s) (_T :>: N t)
 >   | Just (ref, ps) <- matchFakes s t [] = do
 >     let ty = pty ref
@@ -257,13 +271,6 @@ This case arises frequently when proving label equality to make recursive calls.
 >     r' <- bquoteHere r
 >     return (r' :=>: r, True)
 >   where
->     matchFakes :: NEU -> NEU -> [(VAL, VAL)] -> Maybe (REF, [(VAL, VAL)])
->     matchFakes (P ref@(sn := FAKE :<: _)) (P (tn := FAKE :<: _)) ps
->         | sn == tn   = Just (ref, ps)
->         | otherwise  = Nothing
->     matchFakes (s :$ A as) (t :$ A at) ps = matchFakes s t ((as, at):ps)
->     matchFakes _ _ _ = Nothing
-
 >     proveBits :: TY -> [(VAL, VAL)] -> Bwd (VAL, VAL, VAL)
 >         -> ProofState (Bwd (VAL, VAL, VAL))
 >     proveBits ty [] prfs = return prfs
@@ -294,8 +301,7 @@ because we end up trying to move definitions with processes attached.}
 
 <     (q' :=>: q, _) <- simplifyProof False (EQBLUE (SET :>: _S) (SET :>: _T))
 
->     es   <- getAuncles
->     ref  <- stripShared t es
+>     ref  <- stripShared t
 >     s'   <- bquoteHere s
 >     _S'  <- bquoteHere _S
 >     t'   <- bquoteHere t
@@ -309,24 +315,15 @@ because we end up trying to move definitions with processes attached.}
 >                      (ElabDone (N (P refl :$ A _S' :$ A s')
 >                           :=>: Just (pval refl $$ A _S $$ A s))))
 >     suspendThis top ("eq" :<: PRF p' :=>: PRF p) eprob
->   where
->     stripShared :: NEU -> Entries -> ProofState REF
->     stripShared (P ref@(_ := HOLE Hoping :<: _)) B0 = return ref
->     stripShared (n :$ A (NP r)) (es :< E boyRef _ (Boy _) _)
->         | r == boyRef  = stripShared n es
->     stripShared tm (es :< E _ _ (Girl _ _ _) _)  = stripShared tm es
->     stripShared tm (es :< M _ _)             = stripShared tm es
->     stripShared _ _ = (|)
-
 > flexiProofLeft _ _ _ = (|)
+
 
 
 > flexiProofRight :: Bool -> (TY :>: VAL) -> (TY :>: VAL)
 >     -> ProofState (INTM :=>: VAL, Bool)
 > flexiProofRight top (_S :>: s) (_T :>: N t) = do
 >     guard =<< withNSupply (equal (SET :>: (_S, _T)))
->     es   <- getAuncles
->     ref  <- stripShared t es
+>     ref  <- stripShared t
 >     s'   <- bquoteHere s
 >     _S'  <- bquoteHere _S
 >     t'   <- bquoteHere t
@@ -337,15 +334,6 @@ because we end up trying to move definitions with processes attached.}
 >                      (ElabDone (N (P refl :$ A _S' :$ A s')
 >                           :=>: Just (pval refl $$ A _S $$ A s))))
 >     suspendThis top ("eq" :<: PRF p' :=>: PRF p) eprob
->   where
->     stripShared :: NEU -> Entries -> ProofState REF
->     stripShared (P ref@(_ := HOLE Hoping :<: _)) B0 = return ref
->     stripShared (n :$ A (NP r)) (es :< E boyRef _ (Boy _) _)
->         | r == boyRef  = stripShared n es
->     stripShared tm (es :< E _ _ (Girl _ _ _) _)  = stripShared tm es
->     stripShared tm (es :< M _ _)             = stripShared tm es
->     stripShared _ _ = (|)
-
 > flexiProofRight _ _ _ = (|)
 
 

@@ -15,3 +15,5 @@ let traversal (t : Tree) : Tree;
 undo ;
 = traversal xf^3 ;
 -- Cf. constraint arising at this point
+give ? ;
+-- Should complain, as we should not have a goal left
