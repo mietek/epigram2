@@ -171,10 +171,10 @@ search the hypotheses for a value with the same label.
 >     es <- getAuncles
 >     seekOn es
 >   where
->     seekOn B0 = (|)
->     seekOn (es' :< E _ _ (Girl _ _ _) _) = seekOn es'
->     seekOn (es' :< E boy _ (Boy LAMB) _) =
->         seekIn (NP boy) (pty boy) <|> seekOn es'
+>     seekOn B0                             =    (|)
+>     seekOn (es' :< E boy _ (Boy LAMB) _)  =    seekIn (NP boy) (pty boy)
+>                                           <|>  seekOn es'
+>     seekOn (es' :< _)                     =    seekOn es'
 
 >     seekIn :: VAL -> VAL -> ProofState (INTM :=>: VAL, Bool)
 >     seekIn tm (LABEL (N m) u) = do
