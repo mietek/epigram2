@@ -77,6 +77,8 @@
 
 > import -> InDTmConstructors where
 
+> import -> InDTmTraverse where
+
 > import -> InDTmPretty where
 
 > import -> Pretty where

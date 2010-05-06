@@ -120,6 +120,10 @@ to InDTm, along with appropriate elaboration and distillation rules.
 >       (pretty t ArgSize <+> kword KwEqBlue <+> pretty u ArgSize)
 >       ArgSize
 
+> import -> InDTmTraverse where
+>   traverseDTIN f (DEqBlue t u) =
+>     (| DEqBlue (traverseDTEX f t) (traverseDTEX f u) |)
+
 > import -> MakeElabRules where
 >   makeElab' loc (PROP :>: DEqBlue t u) = do
 >       ttt <- subElabInfer loc t

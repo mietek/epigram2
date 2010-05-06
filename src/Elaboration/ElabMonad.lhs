@@ -21,6 +21,8 @@
 > import Evidences.Tm
 > import Evidences.Rules
 
+> import Features.Features
+
 > import DisplayLang.DisplayTm
 
 %endif
@@ -178,6 +180,7 @@ argument, as well as its second.
 > traverseDTIN f (DQ s) = (|(DQ s)|)
 > traverseDTIN f DU     = (|DU|)
 > traverseDTIN f (DTIN tm) = (|DTIN (traverse f tm)|)
+> import <- InDTmTraverse
 
 > traverseDTEX :: Applicative f => (p -> f q) -> ExDTm p x -> f (ExDTm q x)
 > traverseDTEX f (h ::$ as) = (|(traverseDHead f h) ::$ (traverse (traverse (traverseDTIN f)) as)|)
