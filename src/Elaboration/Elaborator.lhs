@@ -231,25 +231,31 @@ plus [
 > elabProgram :: [String] -> ProofState (EXTM :=>: VAL)
 > elabProgram args = do
 >     n <- getMotherName
->     (_ :=>: g) <- getHoleGoal
->     let pn = P (n := FAKE :<: g)
->     let newty = pity (mkTel pn g [] args)
->     newty' <- bquoteHere newty
->     g :=>: _ <- make (fst (last n) ++ "-impl" :<: newty') 
->     argrefs <- traverse lambdaBoy args
->     let fcall = pn $## (map NP argrefs) 
->     let call = g $## (map NP argrefs) :$ Call (N fcall)
+>     (gUnlifted :=>: _) <- getHoleGoal
+>     aus <- getAuncles
+>     let  g      = evTm (liftType aus gUnlifted)
+>          pn     = applyAuncles (n := FAKE :<: g) aus
+>          newty  = pity (mkTel (unN $ valueOf pn) (evTm gUnlifted) [] args)
+>     newty'       <- bquoteHere newty
+>     impl :=>: _  <- make (fst (last n) ++ "-impl" :<: newty') 
+>     argrefs      <- traverse lambdaBoy args
+>     let  fcall  = termOf pn $## (map NP argrefs) 
+>          call   = impl $## (map NP argrefs) :$ Call (N fcall)
 >     r <- give' (N call)
 >     goIn
 >     return r
->   where mkTel :: NEU -> TY -> [VAL] -> [String] -> TEL TY
->         mkTel n (PI s t) args (x:xs)
->            = (x :<: s) :-: (\val -> mkTel n (t $$ A val) (val:args) xs)
->         mkTel n r args _ = Target (LABEL (mkL n (reverse args)) r)
+>   where
+>     mkTel :: NEU -> TY -> [VAL] -> [String] -> TEL TY
+>     mkTel n (PI s t) args (x:xs)
+>         = (x :<: s) :-: (\val -> mkTel n (t $$ A val) (val:args) xs)
+>     mkTel n r args _ = Target (LABEL (mkL n (reverse args)) r)
 >         
->         mkL :: NEU -> [VAL] -> VAL
->         mkL n [] = N n
->         mkL n (x:xs) = mkL (n :$ (A x)) xs
+>     mkL :: NEU -> [VAL] -> VAL
+>     mkL n [] = N n
+>     mkL n (x:xs) = mkL (n :$ (A x)) xs
+
+>     unN :: VAL -> NEU
+>     unN (N n) = n
 
 
 \subsection{Elaborating schemes}
