@@ -49,8 +49,6 @@ cause issues.}
 >     suspendMe =<< makeWait sols (N g)
 >     goOutProperly
 >     startScheduler
->     startScheduler -- TODO: fix scheduler bug that makes this necessary
->     startScheduler
 >     nextGoal
 >   where
 >     splitSpine :: NEU -> Maybe (REF, [VAL])

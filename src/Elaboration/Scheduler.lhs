@@ -57,46 +57,54 @@ return to.
 >     case cs of
 
 If we have no cadets to search, we check whether this is the target location:
-if so, we stop, otherwise we go out and keep looking.
+if so, we stop, otherwise we resume the mother and continue searching.
 
 >         F0 -> do
 >             mn <- getMotherName
->             if mn == n
->                 then return ()
->                 else case mn of
->                     []  -> error "scheduler: got lost!"
->                     _   -> goOutProperly >> scheduler n
+>             case mn of
+>                 _ | mn == n  -> return ()
+>                 []           -> error "scheduler: got lost!"
+>                 _            -> do
+>                     b <- resumeMother
+>                     if b then cursorTop else goOutProperly
+>                     scheduler n
 
 Boys are simply ignored by the scheduler.
 
 >         E _ _ (Boy _) _ :> _  -> cursorDown >> scheduler n
 
-If we find a girl with an unstable elaboration problem attached, we have some
-work to do. We enter the goal, remove the suspended problem and call |resume| to
-actually resume elaboration. If elaboration succeeds, we solve the goal.
-We then move the cursor to the top (since elaboration may have left some
-suspended processes lying around that can now be resumed) and continue.
+If we find a module or a girl, we enter it, try to resume its mother, then
+search its children from the top.
 
->         E ref _ (Girl _ (_, Suspended tt prob, _) _) _ :> _ | isUnstable prob -> do
+>         _ :> _ -> do
 >             cursorDown
->             goIn            
->             Suspended (ty :=>: tyv) prob <- getDevTip
->             putDevTip (Unknown (ty :=>: tyv))
->             mn <- getMotherName
->             schedTrace $ "scheduler: resuming elaboration on " ++ showName mn
->                 ++ ":  \n" ++ show prob
->             mtt <- resume (ty :=>: tyv) prob
->             case mtt of
->                 Just (tm :=>: _)  ->  give' tm
->                                   >>  schedTrace "scheduler: elaboration done."
->                 Nothing           ->  schedTrace "scheduler: elaboration suspended."
+>             goIn
+>             resumeMother
 >             cursorTop
 >             scheduler n
 
-If we find a module or a girl without an unstable elaboration problem, we enter it
-and search its children, starting from the top.
 
->         _ :> _ -> cursorDown >> goIn >> cursorTop >> scheduler n
+The |resumeMother| command checks for an unstable elaboration problem on the
+mother of the current location, and resumes elaboration if it finds one. If
+elaboration succeeds, it gives the resulting term. It returns whether an
+elaboration process was resumed (not whether the process succeeded).
+
+> resumeMother :: ProofState Bool
+> resumeMother = do
+>   tip <- getDevTip
+>   case tip of
+>     Suspended (ty :=>: tyv) prob | isUnstable prob -> do
+>         putDevTip (Unknown (ty :=>: tyv))
+>         mn <- getMotherName
+>         schedTrace $ "scheduler: resuming elaboration on " ++ showName mn
+>                           ++ ":  \n" ++ show prob
+>         mtt <- resume (ty :=>: tyv) prob
+>         case mtt of
+>             Just tt  ->  give' (termOf tt)
+>                      >>  schedTrace "scheduler: elaboration done."
+>             Nothing  ->  schedTrace "scheduler: elaboration suspended."
+>         return True
+>     _ -> return False
 
 
 Given a (potentially, but not necessarily, unstable) elaboration problem for the
