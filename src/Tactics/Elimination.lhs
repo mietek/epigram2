@@ -555,24 +555,18 @@ corresponding to the remaining |Binders|.
 
 Let us implement the ``search and symbolic removal'' operation: we are
 given a reference, which may or may not belong to the binders.
+If the reference belongs to the binders, we return the binders before it,
+and the binders after it (which might depend on it); if not, we return
+|Nothing|.
 
 > lookupInContext :: REF -> Binders -> Maybe (Bwd Binder, Fwd Binder)
-
-We go other the binders and two cases arise. First case, the reference
-belongs to the binders: we return the binders before it, and the
-binders after it (which might depend on it):
-
-> lookupInContext x@(n := _) (xs :< r@(xn :<: _))  | n == xn = 
->     return (B0, xs <>> F0)
->                                                  | otherwise = do
->     (left, right) <- lookupInContext x xs
->     return (left :< r, right)
-
-Second case, the reference does not belong to the binders: we return
-|Nothing|:
-
-> lookupInContext _ B0 = Nothing
-
+> lookupInContext (n := _) xs = help xs F0
+>   where
+>     help :: Bwd Binder -> Fwd Binder -> Maybe (Bwd Binder, Fwd Binder)
+>     help (xs :< b@(xn :<: _)) ys
+>         | n == xn    = Just (xs, ys)
+>         | otherwise  = help xs (b :> ys)
+>     help B0 _        = Nothing
 
 
 \subsubsection{Carrying renaming}
