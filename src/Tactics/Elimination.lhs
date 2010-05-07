@@ -585,6 +585,8 @@ by another:
 > renameVar n r' t
 >     = fmap (\r@(rn := _) -> if rn == n then r' else r) t
 
+\question{Is it worth fusing these fmaps to improve performance,
+or will GHC do it for us anyway?}
 
 In the previous section, we have shown that, given a reference
 belonging to the context, we can split the context into two parts. The
@@ -776,7 +778,7 @@ term. Unless I've screwed up things, |give| should always be happy.
 >   (binders, constraints, goal) <- withNSupply $ simplify teleConstraints binders B0 goalTm
 >   let bindersL = trail binders
 >   -- Make the $\Pi$-boys from $\Delta_1$
->   deltas1' <- mkPiDelta1 bindersL
+>   deltas1' <- mkPiDelta1 bindersL id B0
 >   -- Make $(xi == ti) \rightarrow T$
 >   solution <- makeEq constraints goal
 >   -- Rename solution from the dummy |binders| to the fresh |deltas|
@@ -792,14 +794,16 @@ term. Unless I've screwed up things, |give| should always be happy.
 
 Along the way, we have used a bunch of helper functions. Let us look
 at them in turn. First, we have used |mkPiDelta1| to turn the
-|Binders| we have computed into $\Pi$-boys in the development. This is
-achieved by the following code:
+|Binders| we have computed into $\Pi$-boys in the development.
+We have to update references in the types as we go along, in case
+there are dependencies.
 
-> mkPiDelta1 :: [Binder] -> ProofState [REF]
-> mkPiDelta1 binders = 
->     sequence $                           
->     map (\(n :<: t) -> piBoy $ (fst (last n)) :<: t) $  -- make $\Pi$s
->     binders
+> mkPiDelta1 :: [Binder] -> Renamer -> Bwd REF -> ProofState [REF]
+> mkPiDelta1 []              renamer refs = return (trail refs)
+> mkPiDelta1 ((n :<: t):bs)  renamer refs = do
+>     r <- piBoy (fst (last n)  :<: renamer t)
+>     mkPiDelta1 bs ((n `renameVar` r) . renamer) (refs :< r)
+
 
 An important step is to build the term $(\Xi == \vec{t}) -> T$. This
 consists in going over the |Bwd| list of constraints and make the
