@@ -19,5 +19,5 @@ Made.
 Made.
 Going to root...
 Made.
-con ['cons (con ['suc []]) [] (con ['cons [] (con ['suc []]) (con ['nil , refl Nat []]) , refl Nat (con ['suc []])]) , refl Nat (con ['suc (con ['suc []])])]
+con ['cons ('suc 'zero) 'zero (con ['cons 'zero ('suc 'zero) (con ['nil , refl Nat 'zero]) , refl Nat ('suc 'zero)]) , refl Nat ('suc ('suc 'zero))]
 Loaded.

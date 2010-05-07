@@ -4,7 +4,7 @@ Eliminated and simplified.
 Ta.
 Ta.
 Going to root...
-con ['suc (con ['suc (con ['suc (con ['suc []])])])]
+'suc ('suc ('suc ('suc 'zero)))
 Appended goal!
 Made lambda boy!
 Eliminated and simplified.

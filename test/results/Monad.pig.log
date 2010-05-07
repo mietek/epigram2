@@ -22,5 +22,5 @@ Thank you.
 Thank you.
 Going to root...
 Made.
-con ['suc (con ['suc []])]
+'suc ('suc 'zero)
 Loaded.

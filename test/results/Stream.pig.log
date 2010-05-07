@@ -12,5 +12,5 @@ Made.
 Made.
 Made.
 Made.
-[[] (con ['suc []]) (con ['suc (con ['suc []])]) (con ['suc (con ['suc (con ['suc []])])])]
+'go 'zero ('go ('suc 'zero) ('go ('suc ('suc 'zero)) ('go ('suc ('suc ('suc 'zero))) 'stop)))
 Loaded.

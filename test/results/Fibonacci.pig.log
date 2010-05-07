@@ -45,12 +45,12 @@ Ta.
 Thank you.
 Thank you.
 Going to root...
-con ['suc []]
-con ['suc []]
-con ['suc (con ['suc []])]
-con ['suc (con ['suc (con ['suc []])])]
-con ['suc (con ['suc (con ['suc (con ['suc (con ['suc []])])])])]
-con ['suc (con ['suc (con ['suc (con ['suc (con ['suc (con ['suc (con ['suc (con ['suc []])])])])])])])]
-con ['suc (con ['suc (con ['suc (con ['suc (con ['suc (con ['suc (con ['suc (con ['suc (con ['suc (con ['suc (con ['suc (con ['suc (con ['suc []])])])])])])])])])])])])]
-con ['suc (con ['suc (con ['suc (con ['suc (con ['suc (con ['suc (con ['suc (con ['suc (con ['suc (con ['suc (con ['suc (con ['suc (con ['suc (con ['suc (con ['suc (con ['suc (con ['suc (con ['suc (con ['suc (con ['suc (con ['suc []])])])])])])])])])])])])])])])])])])])])]
+'suc 'zero
+'suc 'zero
+'suc ('suc 'zero)
+'suc ('suc ('suc 'zero))
+'suc ('suc ('suc ('suc ('suc 'zero))))
+'suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc 'zero)))))))
+'suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc 'zero))))))))))))
+'suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc 'zero))))))))))))))))))))
 Loaded.

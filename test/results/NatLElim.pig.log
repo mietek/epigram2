@@ -28,5 +28,5 @@ Thank you.
 Made lambda boy!
 Thank you.
 Going to root...
-return (con ['suc (con ['suc (con ['suc (con ['suc []])])])])
+return ('suc ('suc ('suc ('suc 'zero))))
 Loaded.

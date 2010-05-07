@@ -25,7 +25,7 @@ Eliminated and simplified.
 Ta.
 Ta.
 Going to root...
-['x 'x 'y]
+'cons 'x ('cons 'x ('cons 'y 'nil))
 Data'd.
 Let there be plus.
 Eliminated and simplified.
@@ -40,5 +40,5 @@ Going to root...
 Made.
 Made.
 Made.
-[Nat , con ['suc (con ['suc (con ['suc (con ['suc (con ['suc (con ['suc []])])])])])]]
+[Nat , 'suc ('suc ('suc ('suc ('suc ('suc 'zero)))))]
 Loaded.

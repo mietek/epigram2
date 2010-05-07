@@ -14,5 +14,5 @@ Eliminated and simplified.
 Ta.
 Ta.
 Going to root...
-con ['suc (con ['suc (con ['suc (con ['suc []])])])]
+'suc ('suc ('suc ('suc 'zero)))
 Loaded.

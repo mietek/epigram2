@@ -6,14 +6,14 @@ let plus (m : Nat)(n : Nat) : Nat ;
 <= Nat.Ind m ;
 = n ;
 -- Sorry about the terrible name choice!
-= Nat.suc (plus xf^1 n) ;
+= 'suc (plus xf^1 n) ;
 
 -- Just to show this really works:
 root ;
-elab plus (Nat.suc (Nat.suc Nat.zero)) (Nat.suc (Nat.suc Nat.zero)) ;
+elab plus ('suc ('suc 'zero)) ('suc ('suc 'zero)) ;
 
 -- And some proofs:
-make plusZ : (m : Nat) -> :- plus m Nat.zero == m ;
+make plusZ : (m : Nat) -> :- plus m 'zero == m ;
 lambda m ;
 <= Nat.Ind m ;
 root ; 
@@ -24,7 +24,7 @@ give coe (P x) (P y) ?q px ;
 give con (refl (X -> Set) P % x y _) ;
 root ;
 
-make plzq : :- (((: Nat -> Nat) \ x -> plus x Nat.zero) == plus Nat.zero) ;
+make plzq : :- (((: Nat -> Nat) \ x -> plus x 'zero) == plus 'zero) ;
 give con ? ;
 lambda m, n, q ;
-give ship Nat m n _ (\ y -> :- plus m Nat.zero == y) (plusZ m) % ;
+give ship Nat m n _ (\ y -> :- plus m 'zero == y) (plusZ m) % ;

@@ -20,7 +20,7 @@ root ;
 let plus (m : Nat)(n : Nat) : Nat ;
 <= Nat.Ind m ;
 = n ;
-= Nat.suc (plus xf^1 n) ;
+= 'suc (plus xf^1 n) ;
 root ;
 
 
@@ -53,24 +53,24 @@ make NatRec := (\ n P r -> r n (aux-gen P r n)) : (n : Nat)(P : Nat -> Set)(r : 
 let fib (n : Nat) : Nat ;
 <= NatRec n ;
 <= [xf] NatCase k ;
-= Nat.suc Nat.zero ;
+= 'suc 'zero ;
 <= [xf] NatCase xf^2 ;
-= Nat.suc Nat.zero ;
+= 'suc 'zero ;
 
 -- Unfortunately, our implementation of elimination with a motive is currently
 -- unable to simplify the hypothesis, so we have to extract the justification
 -- for the recursive calls by hand. 
-make rec := ship Nat k (Nat.suc (Nat.suc xf^1)) ? (aux P^2) xf^5 : _ ;
+make rec := ship Nat k ('suc ('suc xf^1)) ? (aux P^2) xf^5 : _ ;
 next ;
-give trans Nat k (Nat.suc xf^6) (Nat.suc (Nat.suc xf^1)) ? ? ;
-give sym Nat (Nat.suc xf^6) k xf^4 ;
-give sym Nat (Nat.suc xf^1) xf^6 xf ;
+give trans Nat k ('suc xf^6) ('suc ('suc xf^1)) ? ? ;
+give sym Nat ('suc xf^6) k xf^4 ;
+give sym Nat ('suc xf^1) xf^6 xf ;
 out ;
 out ;
 
 -- Having done that, we can make the recursive call. We need a blunderbuss to
 -- deal with finding the labelled types!
-= plus (fib xf^1) (fib (Nat.suc xf^1)) ;
+= plus (fib xf^1) (fib ('suc xf^1)) ;
 give rec - ! ;
 give rec ! ;
 
@@ -78,11 +78,11 @@ root ;
 
 
 -- Hooray, fib is defined and we can go ahead and count the rabbits:
-elab fib Nat.zero ;
-elab fib (Nat.suc Nat.zero) ;
-elab fib (Nat.suc (Nat.suc Nat.zero)) ;
-elab fib (Nat.suc (Nat.suc (Nat.suc Nat.zero))) ;
-elab fib (Nat.suc (Nat.suc (Nat.suc (Nat.suc Nat.zero)))) ;
-elab fib (Nat.suc (Nat.suc (Nat.suc (Nat.suc (Nat.suc Nat.zero))))) ;
-elab fib (Nat.suc (Nat.suc (Nat.suc (Nat.suc (Nat.suc (Nat.suc Nat.zero)))))) ;
-elab fib (Nat.suc (Nat.suc (Nat.suc (Nat.suc (Nat.suc (Nat.suc (Nat.suc Nat.zero))))))) ;
+elab fib 'zero ;
+elab fib ('suc 'zero) ;
+elab fib ('suc ('suc 'zero)) ;
+elab fib ('suc ('suc ('suc 'zero))) ;
+elab fib ('suc ('suc ('suc ('suc 'zero)))) ;
+elab fib ('suc ('suc ('suc ('suc ('suc 'zero))))) ;
+elab fib ('suc ('suc ('suc ('suc ('suc ('suc 'zero)))))) ;
+elab fib ('suc ('suc ('suc ('suc ('suc ('suc ('suc 'zero))))))) ;
