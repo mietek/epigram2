@@ -27,9 +27,12 @@
 >   enumU = MU (Just (N (P enumFakeREF))) inEnumU
 >   enumREF :: REF
 >   enumREF = [("Primitive", 0), ("EnumU", 0)] := (DEFN enumU :<: SET) 
+>   enumDREF :: REF
+>   enumDREF = [("Primitive", 0), ("EnumD", 0)] := DEFN inEnumU :<: desc
 
 > import -> Primitives where
->   ("EnumU", enumREF) :
+>   ("EnumU", enumREF)   :
+>   ("EnumD", enumDREF)  :
 
 > import -> CanConstructors where
 >   EnumT  :: t -> Can t

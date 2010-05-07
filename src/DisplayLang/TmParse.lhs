@@ -169,6 +169,10 @@ largest size again.
 >     mkNum 0 (Just t) = t
 >     mkNum n t = DSU (mkNum (n-1) t)
 
+> specialInDTm AppSize =
+>     (|DTag (%keyword KwTag%) ident (many (sizedInDTm ArgSize))
+>      |)
+
 > specialInDTm AndSize =
 >     (|DPRF (%keyword KwPrf%) (sizedInDTm AndSize)
 >      |(DMU Nothing) (%keyword KwMu%) (sizedInDTm ArgSize)

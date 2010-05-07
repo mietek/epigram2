@@ -429,6 +429,10 @@ so it returns a term on the |Left|.
 >         makeElab' loc (MU l d :>: DCON (DPAIR DZE DVOID))
 >     makeElab' loc (MU l d :>: DPAIR s t) =
 >         makeElab' loc (MU l d :>: DCON (DPAIR (DSU DZE) (DPAIR s (DPAIR t DVOID))))
+
+>     makeElab' loc (MU l d :>: DTag s xs) =
+>         makeElab' loc (MU l d :>: DCON (DPAIR (DTAG s) (foldr DPAIR DVOID xs)))
+
 >     makeElab' loc (SET :>: DMU Nothing d) = do
 >         lt :=>: lv <- EFake True Bale
 >         dt :=>: dv <- subElab loc (desc :>: d)
@@ -444,13 +448,44 @@ so it returns a term on the |Left|.
 >         return $ N (  inductionOp :@  [d',  NP x, t',  tm   ])
 >                :=>:   inductionOp @@  [d,   NP x, t,   tmv  ]
 
-
 > import -> DistillRules where
->     distill _ (MU _ _ :>: CON (PAIR ZE VOID)) =
+
+The following cases turn vaguely list-like data into actual lists.
+We don't want this in general, but it is useful in special cases (when the data
+type is really supposed to be a list, as in |EnumD|).
+\question{When else should we use this representation?}
+
+>     distill _ (MU (Just (NP r)) _ :>: CON (PAIR ZE VOID)) | r == enumFakeREF =
 >         return (DVOID :=>: CON (PAIR ZE VOID))
->     distill es (C ty@(Mu _) :>: C c@(Con (PAIR (SU ZE) (PAIR _ (PAIR _ VOID))))) = do
->         Con (DPAIR _ (DPAIR s (DPAIR t _)) :=>: v) <- canTy (distill es) (ty :>: c)
+
+>     distill es (C ty@(Mu (Just (NP r) :?=: _)) :>:
+>       C c@(Con (PAIR (SU ZE) (PAIR _ (PAIR _ VOID)))))
+>       | r == enumFakeREF = do
+>         Con (DPAIR _ (DPAIR s (DPAIR t _)) :=>: v) <- canTy  (distill es)
+>                                                              (ty :>: c)
 >         return ((DPAIR s t) :=>: CON v)
+
+
+If we have a canonical value in |MU s|, where |s| starts with a finite sum,
+then we can (probably) turn it into a tag applied to some arguments.
+
+>     distill es (ty@(MU l s) :>: CON (PAIR t x)) | Just (e, df) <- summy s = do
+>         m   :=>: tv  <- distill es (ENUMT e :>: t)
+>         as  :=>: xv  <- distill es (descOp @@ [df tv, ty] :>: x)
+>         case m of
+>             DTAG s   -> return $ DTag s (unfold as)  :=>: CON (PAIR tv xv)
+>             _        -> return $ DCON (DPAIR m as)   :=>: CON (PAIR tv xv)
+>       where
+>         summy :: VAL -> Maybe (VAL, VAL -> VAL)
+>         summy (SUMD e b)            = Just (e, \tv -> switchDOp @@ [e, b, tv])
+>         summy (SIGMAD (ENUMT e) f)  = Just (e, (f $$) . A)
+
+>         unfold :: InDTmRN -> [InDTmRN]
+>         unfold DU           = [] -- since DVOID gets turned into this first
+>         unfold DVOID        = []
+>         unfold (DPAIR s t)  = s : unfold t
+>         unfold t            = [t]
+
 
 If a label is not in scope, we remove it, so the definition appears at the
 appropriate place when the proof state is printed.
@@ -463,6 +498,7 @@ appropriate place when the proof state is printed.
 >               Just _   -> do
 >                   cc <- canTy (distill es) (Set :>: Mu ltm)
 >                   return ((DC $ fmap termOf cc) :=>: evTm tm)
+
 
 > import -> InDTmConstructors where
 
@@ -480,9 +516,7 @@ appropriate place when the proof state is printed.
 
 > import -> BootstrapDesc where
 >   inDesc :: VAL
->   inDesc = SIGMAD  (ENUMT constructors) 
->                    (L $ HF "c" $ \c -> 
->                     switchDOp @@ [ constructors , cases , c ])
+>   inDesc = SUMD constructors cases
 >       where constructors = (CONSE (TAG "idD")
 >                            (CONSE (TAG "constD")
 >                            (CONSE (TAG "sumD")

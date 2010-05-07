@@ -19,7 +19,7 @@
 
 > import -> CanDisplayPats where
 >   pattern DUID    = DC UId
->   pattern DTAG s  = DC (Tag s)
+>   pattern DTAG s  = DTag s []
 
 > import -> CanTraverse where
 >   traverse f UId          = (|UId|)
@@ -43,3 +43,18 @@
 
 > import -> Coerce where
 >   coerce UId _ u = Right u
+
+
+> import -> InDTmConstructors where
+>   DTag :: String -> [InDTm p x] -> InDTm p x
+
+> import -> InDTmPretty where
+>   pretty (DTAG s)     = const (kword KwTag <> text s)
+>   pretty (DTag s xs)  = wrapDoc (kword KwTag <> text s
+>       <+> hsep (map (flip pretty ArgSize) xs)) AppSize
+
+> import -> InDTmTraverse where
+>   traverseDTIN f (DTag s xs) = (|(DTag s) (traverse (traverseDTIN f) xs)|)
+
+> import -> MakeElabRules where
+>   makeElab' loc (UID :>: DTAG s) = return $ TAG s :=>: TAG s
