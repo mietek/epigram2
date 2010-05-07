@@ -1,0 +1,25 @@
+Data'd.
+Let there be Iter.
+Eliminated and simplified.
+Ta.
+Ta.
+Going to root...
+Let there be A.
+Eliminated and simplified.
+Ta.
+Ta.
+Going to root...
+'suc 'zero
+'suc ('suc 'zero)
+'suc ('suc ('suc 'zero))
+'suc ('suc ('suc ('suc ('suc 'zero))))
+'suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc 'zero))))))))))))
+'suc ('suc 'zero)
+'suc ('suc ('suc 'zero))
+'suc ('suc ('suc ('suc ('suc 'zero))))
+'suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc 'zero))))))))))))
+'suc ('suc ('suc 'zero))
+'suc ('suc ('suc ('suc 'zero)))
+'suc ('suc ('suc ('suc ('suc ('suc ('suc 'zero))))))
+'suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc ('suc 'zero))))))))))))))))))))))))))))
+Loaded.
