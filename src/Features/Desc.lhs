@@ -28,19 +28,20 @@
 > import -> CanEtaExpand where
 
 > import -> CanPats where
+>   pattern IDN     = ZE
+>   pattern CONSTN  = SU ZE
+>   pattern SUMN    = SU (SU ZE)
+>   pattern PRODN   = SU (SU (SU ZE))
+>   pattern SIGMAN  = SU (SU (SU (SU ZE)))
+>   pattern PIN     = SU (SU (SU (SU (SU ZE))))
+
 >   pattern MU l x      = C (Mu (l :?=: Id x))
->   pattern IDD         = CON (PAIR  ZE                      
->                                    VOID)
->   pattern CONSTD x    = CON (PAIR  (SU ZE)                 
->                                    (PAIR x VOID))
->   pattern SUMD e b    = CON (PAIR  (SU (SU ZE))
->                                    (PAIR e (PAIR b VOID)))
->   pattern PRODD d d'  = CON (PAIR  (SU (SU (SU ZE)))
->                                    (PAIR d (PAIR d' VOID)))
->   pattern SIGMAD s t  = CON (PAIR  (SU (SU (SU (SU ZE))))
->                                    (PAIR s (PAIR t VOID)))
->   pattern PID s t     = CON (PAIR  (SU (SU (SU (SU (SU ZE)))))
->                                    (PAIR s (PAIR t VOID)))
+>   pattern IDD         = CON (PAIR IDN     VOID)
+>   pattern CONSTD x    = CON (PAIR CONSTN  (PAIR x VOID))
+>   pattern SUMD e b    = CON (PAIR SUMN    (PAIR e (PAIR b VOID)))
+>   pattern PRODD d d'  = CON (PAIR PRODN   (PAIR d (PAIR d' VOID)))
+>   pattern SIGMAD s t  = CON (PAIR SIGMAN  (PAIR s (PAIR t VOID)))
+>   pattern PID s t     = CON (PAIR PIN     (PAIR s (PAIR t VOID)))
 
 > import -> CanDisplayPats where
 >   pattern DMU l x      = DC (Mu (l :?=: Id x))
@@ -107,26 +108,26 @@
 >                         VAL -> VAL -> VAL,
 >                         VAL -> VAL -> VAL,
 >                         VAL -> VAL -> VAL)
->
+
+
+The |mkLazyDescDef| function lazily eliminates a desc value (i.e. |d| such that
+|desc :>: CON d|. If the tag is canonical, it calls the corresponding case in
+the dispatch table with the relevant arguments; otherwise, it cannot compute,
+so it returns a term on the |Left|.
+
 >   mkLazyDescDef :: VAL -> DescDispatchTable -> Either NEU VAL
->   mkLazyDescDef arg cases = 
->     let const = arg $$ Fst
->         args  = arg $$ Snd
->     in Right $ dispatch const cases args
->         where dispatch :: VAL -> DescDispatchTable -> VAL -> VAL
->               dispatch ZE (idCase, constCase, sumCase, prodCase, sigmaCase, piCase) args = 
->                   idCase
->               dispatch (SU ZE) (idCase, constCase, sumCase, prodCase, sigmaCase, piCase) args = 
->                   constCase (args $$ Fst)
->               dispatch (SU (SU ZE)) (idCase, constCase, sumCase, prodCase, sigmaCase, piCase) args =
->                   sumCase (args $$ Fst) (args $$ Snd $$ Fst)
->               dispatch (SU (SU (SU ZE))) (idCase, constCase, sumCase, prodCase, sigmaCase, piCase) args =
->                   prodCase (args $$ Fst) (args $$ Snd $$ Fst)
->               dispatch (SU (SU (SU (SU ZE)))) (idCase, constCase, sumCase, prodCase, sigmaCase, piCase) args =
->                   sigmaCase (args $$ Fst) (args $$ Snd $$ Fst)
->               dispatch (SU (SU (SU (SU (SU ZE))))) (idCase, constCase, sumCase, prodCase, sigmaCase, piCase) args =
->                   piCase (args $$ Fst) (args $$ Snd $$ Fst)
->               dispatch _ _ _ = error "mkLazyDescDef: Invalid constructor"
+>   mkLazyDescDef arg (idCase, constCase, sumCase, prodCase, sigmaCase, piCase) =
+>       let args = arg $$ Snd in
+>         case arg $$ Fst of      
+>           IDN     -> Right $ idCase
+>           CONSTN  -> Right $ constCase  (args $$ Fst)
+>           SUMN    -> Right $ sumCase    (args $$ Fst) (args $$ Snd $$ Fst)
+>           PRODN   -> Right $ prodCase   (args $$ Fst) (args $$ Snd $$ Fst)
+>           SIGMAN  -> Right $ sigmaCase  (args $$ Fst) (args $$ Snd $$ Fst)
+
+>           PIN     -> Right $ piCase     (args $$ Fst) (args $$ Snd $$ Fst)
+>           N t     -> Left t
+>           _       -> error "mkLazyDescDef: invalid constructor!"
 
 >   descOp :: Op
 >   descOp = Op

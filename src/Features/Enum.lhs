@@ -37,11 +37,16 @@
 >   Su     :: t -> Can t 
 
 > import -> CanPats where
->   pattern ENUMT e    = C (EnumT e) 
->   pattern NILE       = CON (PAIR ZE VOID)
->   pattern CONSE t e  = CON (PAIR (SU ZE) (PAIR t (PAIR e VOID)))
 >   pattern ZE         = C Ze
 >   pattern SU n       = C (Su n)
+
+>   pattern NILN       = ZE
+>   pattern CONSN      = SU ZE
+
+>   pattern ENUMT e    = C (EnumT e) 
+>   pattern NILE       = CON (PAIR NILN VOID)
+>   pattern CONSE t e  = CON (PAIR CONSN (PAIR t (PAIR e VOID)))
+
 
 > import -> CanDisplayPats where
 >   pattern DENUMT e    = DC (EnumT e) 
@@ -91,14 +96,12 @@
 >   type EnumDispatchTable = (VAL, VAL -> VAL -> VAL) 
 >
 >   mkLazyEnumDef :: VAL -> EnumDispatchTable -> Either NEU VAL
->   mkLazyEnumDef arg cases =
->     let const = arg $$ Fst
->         args  = arg $$ Snd
->     in Right $ dispatch const cases args
->        where dispatch :: VAL -> EnumDispatchTable -> VAL -> VAL
->              dispatch ZE (nilECase, consECase) args = nilECase
->              dispatch (SU ZE) (nilECase, consECase) args =
->                  consECase (args $$ Fst) (args $$ Snd $$ Fst)
+>   mkLazyEnumDef arg (nilECase, consECase) = let args = arg $$ Snd in
+>       case arg $$ Fst of
+>           NILN   -> Right $ nilECase
+>           CONSN  -> Right $ consECase (args $$ Fst) (args $$ Snd $$ Fst)
+>           N t    -> Left t
+>           _      -> error "mkLazyEnumDef: invalid constructor!"
 
 >   branchesOp = Op 
 >     { opName   = "branches"
