@@ -213,7 +213,7 @@ subsection~\ref{subsec:type-inference} as |makeElab| is to |check|. It elaborate
 the display term and infers its type to produce a type-term pair in the evidence
 language.
 
-The result of |makeElabInfer| is of type $\Sigma X \!\! : \!\! Set . X$, which
+The result of |makeElabInfer| is of type $\SIGMA{\V{X}}{\Set}{X}$, which
 we can represent as an evidence term or value (|sigSetTM| or |sigSetVAL|,
 respectively).
 

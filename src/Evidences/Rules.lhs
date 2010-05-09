@@ -299,12 +299,13 @@ are quoting a neutral term, or a canonical term. In the case of
 neutral term, we switch to |exQuote|, which is designed to
 quote neutral terms.
 
-However, by the magic of |OTT|, we are allowed to |simplify| the
-neutral term before handling it to |exQuote|. Simplification is
-discussed in greater length below. To give an intuition, it consists
-in transforming stuck terms into equivalent, yet simpler, stuck
-terms. Typically, we use this opportunity to turn some laws (monad
-law, functor law, etc.) to hold \emph{definitionally}.
+However, we are allowed to |simplify| the neutral term before handling
+it to |exQuote|. Simplification is discussed in greater length
+below. To give an intuition, it consists in transforming stuck terms
+into equivalent, yet simpler, stuck terms. Typically, we use this
+opportunity to turn some laws (monad law, functor law, etc.) to hold
+\emph{definitionally}. This is known as Boutillier's
+trick~\cite{boutillier:report}.
 
 > inQuote (_ :>: N n)      r = N t
 >     where (t :<: _) = exQuote (simplify n r) r
