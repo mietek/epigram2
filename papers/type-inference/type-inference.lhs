@@ -1731,8 +1731,9 @@ $\fatsemi$ separators, provided $\Gamma$ contains at least $n$
 We write $\delta : \Gamma \lei \Delta$ if $\delta$ is a
 substitution from $\Gamma$ to $\Delta$ such that, for all 
 $v D \in \Gamma \semidrop n$ and $S \in \sem{v D}$, we have that
-$\Delta \semidrop n$ is defined and
-$\Delta \entails \delta S$.
+$\Delta \semidrop n$ is defined and 
+%%%$\Delta \entails \delta S$. 
+$\Delta \semidrop n \entails \delta S$. 
 
 This definition of $\Gamma \lei \Delta$ is stronger than the previous one, 
 because it requires 
