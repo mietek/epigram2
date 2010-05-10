@@ -257,7 +257,7 @@ so it returns a term on the |Left|.
 >     , opArity = 5
 >     , opTyTel    = mapOpTy
 >     , opRun   = mapOpRun
->     , opSimp  = \_ _ -> empty
+>     , opSimp  = mapOpSimp
 >     } where
 >         mapOpTy = 
 >           "dD" :<: desc :-: \dD -> 
@@ -293,7 +293,19 @@ so it returns a term on the |Left|.
 >         piCase _X _Y sig f _S _T =
 >             L . HF "s" $ \s ->
 >             mapOp @@ [_T $$ A s, _X, _Y, sig, f $$ A s]
-
+>
+>         mapOpSimp :: Alternative m => [VAL] -> NameSupply -> m NEU
+>         mapOpSimp [dD, xX, yY, f, N v] r
+>           | equal (SET :>: (xX, yY)) r && 
+>             equal (ARR xX yY :>: (f, identity)) r = pure v
+>           where
+>             identity = L (HF "x" $ \x -> x)
+>         mapOpSimp [dD, _, zZ, f, N (mOp :@ [_, xX, _, g, N v])] r
+>           | mOp == mapOp = mapOpSimp args r <|> pure (mapOp :@ args)
+>           where
+>             comp f g = L (HF "x" $ \x -> f $$ A (g $$ A x))
+>             args = [dD, xX, zZ, comp f g, N v]
+>         mapOpSimp _ _ = empty
 
 >   inductionOpMethodType = L . HF "d" $ \d ->
 >                      L . HF "P" $ \_P ->
