@@ -137,6 +137,7 @@
 \newcommand{\sem}[1]{\ensuremath{\llbracket #1 \rrbracket}}
 
 \newcommand{\W}{\ensuremath{\mathcal{W}}}
+\newcommand{\AlgorithmW}{Algorithm~\W}
 
 \newcommand{\genarrow}{\ensuremath{\Uparrow}}
 \newcommand{\gen}[2]{\ensuremath{(#1 \genarrow #2)}}
@@ -209,7 +210,7 @@
 
 \section{Introduction}
 
-Algorithm \W%%%, also known as the Damas-Milner algorithm, 
+\AlgorithmW%%%, also known as the Damas-Milner algorithm, 
     \ is a well-known type inference algorithm, 
     based on \citeauthor{robinson_machine-oriented_1965}'s 
     Unification Algorithm \citeyearpar{robinson_machine-oriented_1965}, 
@@ -219,7 +220,7 @@ for the Hindley-Milner type system \citep{milner_theory_1978},
 by \citet{damas_principal_1982}.
 %%%It is 
 
-Successive presentations and formalisations of Algorithm \W\ have treated the
+Successive presentations and formalisations of \AlgorithmW\ have treated the
 underlying unification algorithm as a \scare{black box}, but by considering both
 simultaneously we are able to give a more elegant type inference algorithm.
 In particular, the generalisation step 
@@ -234,11 +235,11 @@ This paper is literate Haskell, with full source code available at
 
 \subsection{Motivating Context}
 
-Why revisit Algorithm \W{}? This is a first step towards a longer term
+Why revisit \AlgorithmW? This is a first step towards a longer term
 objective: explaining the elaboration of high-level \emph{dependently
 typed} programs into fully explicit calculi. Elaboration involves
 inferring \emph{implicit arguments} by solving constraints, just as
-\W{} specialises polymorphic type schemes, but with fewer algorithmic
+\W\ specialises polymorphic type schemes, but with fewer algorithmic
 guarantees.  Dependently typed programs are often constructed
 incrementally, with pieces arriving in an unpredictable
 order. Unification problems involve computations as well as
@@ -264,7 +265,7 @@ defining relationships between asser-tions of the form
 $\Judge{\Gamma}{S}{\Delta}$. Here $\Gamma$ is the input context
 (before applying the rule), $S$ the statement to be established,
 and $\Delta$ the output context (in which $S$ holds). We revisit
-Algorithm \W{} as a 
+\AlgorithmW\ as a 
 %%%necessary check 
    sanity check 
 that our perspective is helpful, 
@@ -324,23 +325,38 @@ substitution operation.
 of (variations on) the Robinson unification algorithm are incorrect because they
 do not handle substitutions correctly \citep{norvig_correctingwidespread_1991}.
 
-This paper has been brewing for a long time. Its origins lie in a long
-lost constraint engine which McBride cannibalised from components of
-an implementation of Miller's `mixed prefix'
-unification~\cite{miller:mixed}, mutating the quantifier prefix into a
-context.  McBride's thesis~\citep{mcbride:thesis} gives an early
-account of typing contexts representing the state of an interactive
-construction system, with `holes' in programs and proofs as specially
-designated variables. Contexts come equipped with an information
-order: increase of information preserves typing and equality
-judgments; proof tactics are admissible context validity rules which
-increase information; unification is specified as a tactic which
-increases information to make an equation hold, but its implementation
-is not discussed. This view of construction underpinned the
-implementation of Epigram~\citep{mcbride.mckinna:view-from-the-left}
-and informed Norell's implementation of Agda~\citep{norell:agda}. It
-is high time we began to explain how it works and perhaps to
-understand it.
+This paper has been brewing for a long time. Its origins lie in a 
+%%%long lost 
+constraint engine cannibalised by McBride from 
+%%%components of
+an implementation of \citeauthor{miller:mixed}'s \scare{mixed prefix}
+unification~\citeyearpar{miller:mixed}, mutating the quantifier prefix
+into a context. \citeauthor{mcbride:thesis}'s
+thesis~\citeyearpar{mcbride:thesis} gives an early account of 
+   using
+typing contexts 
+%%%representing 
+   to represent 
+the state of an interactive construction system,
+the \scare{holes} in programs and proofs 
+%%%as 
+   being 
+specially designated
+variables. Contexts 
+%%%come equipped with 
+   carry 
+an information order: 
+%%%
+   increase of information  
+preserves typing and equality judgments; proof tactics
+are admissible context validity rules which increase information;
+unification is specified as a tactic which increases information to
+make an equation hold, but its imple-mentation is not discussed. This
+view of construction underpinned the implementation of
+Epigram~\citep{mcbride.mckinna:view-from-the-left} and informed
+\citeauthor{norell:agda}'s implementation of
+Agda~\citeyearpar{norell:agda}. It is high time we began to explain
+how it works and perhaps to understand it.
 
 
 
@@ -445,13 +461,13 @@ $\Gamma, \Delta, \Theta$ range over contexts.
 %% $\Xi$ is a context that contains no $\fatsemi$ separators.
 
 We will gradually construct a set $\Ss$ of statements, which can be
-judged in a context: these are the `sorts' of our syntax of
+judged in a context: these are the \scare{sorts}  of our syntax of
 derivations. We write the \define{normal judgment} $\Gamma \entails S$
 to mean that the declarations in $\Gamma$ support the statement $S \in
 \Ss$.  We write the \define{neutral judgment} $\Gamma \entailsN S$ to
 mean that $S$ follows directly from applying a fact in $\Gamma$.
 Neutral judgments capture exactly the legitimate appeals to assumptions
-in the context, just the way `neutral terms' in $\lambda$-calculus are
+in the context, just the way \scare{neutral terms}  in $\lambda$-calculus are
 applied variables. We embed neutral into normal: 
 $$\name{Neutral}
   \Rule{\Gamma \entailsN S}
@@ -506,8 +522,8 @@ $$\name{Lookup}
        {\Gamma \entailsN \sem{v D}}.$$
 
 As promised, uses of \textsc{Lookup} act as \scare{variables} in
-derivations.  Our $\sem{\cdot}_K$ associates to an `expression atom'
-its `derivation atom'. This is the only rule which interrogates
+derivations.  Our $\sem{\cdot}_K$ associates to an \scare{expression atom} 
+its \scare{derivation atom}. This is the only rule which interrogates
 the context, hence we propose 
 %%%the bold step of 
 dropping the
@@ -639,11 +655,11 @@ A context suffix is a (forwards) list containing only type variable declarations
 > type Suffix      = Fwd TyEntry
 
 The types |Bwd| and |Fwd| are backwards (snoc) and forwards (cons) lists,
-respectively. We overload |B0| for the empty list in both cases, and write
+respectively. We overload |B0| for the empty list in each case, and write
 |:<| and |:>| for the backwards and forwards list data constructors.
 % Data types are cheap, so we might
 % as well make the code match our intution about the meaning of data.
-Lists are monoids where |<+>| is the append operator, and the \scare{fish}
+Lists are monoids with |<+>| the append operator, and the \scare{fish}
 operator |(<><) :: Context -> Suffix -> Context| appends a suffix to a context. 
 
 
@@ -702,11 +718,17 @@ $(\theta \compose \delta) (\alpha) = \theta (\delta \alpha)$.
 We write $\subst{\tau}{\alpha}{}$ for the substitution that maps
 $\alpha$ to $\tau$ and other variables to themselves.
 
-We write $\delta : \Gamma \lei \Delta$ and say
-\define{$\Delta$ is more informative than $\Gamma$} if $\delta$ is a
-substitution from $\Gamma$ to $\Delta$ such that,
-for every $v D \in \Gamma$, we have that
-$\Delta \entails \delta \sem{v D}$.
+%%%We write $\delta : \Gamma \lei \Delta$ and say
+%%%\define{$\Delta$ is more informative than $\Gamma$} if $\delta$ is a
+%%%substitution from $\Gamma$ to $\Delta$ such that,
+%%%%%%for every $v D \in \Gamma$, we have that 
+%%%   for all $v D \in \Gamma$, we have 
+%%%$\Delta \entails \delta \sem{v D}$. 
+Given a substitution $\delta$ from $\Gamma$ to $\Delta$, 
+we write  $\delta : \Gamma \lei \Delta$ and say 
+\define{$\Delta$ is more informative than $\Gamma$} if 
+for all $v D \in \Gamma$, we have 
+$\Delta \entails \delta \sem{v D}$. 
 
 We write $\delta \eqsubst \theta : \Gamma \lei \Delta$ if
 $\delta : \Gamma \lei \Delta$, $\theta : \Gamma \lei \Delta$
@@ -727,10 +749,24 @@ statements corresponding to declarations in $\Gamma$.
 %% Moreover, this will still hold if we truncate both $\Gamma$ and $\Delta$ after
 %% any number of $\fatsemi$ separators.
 
-This definition of information increase is not quite complete, because it does
-not place any constraints on the order of context entries, other than the
-dependency order of variables in declarations. We will later see how to extend
-$\lei$ to capture the order of entries at an appropriate level of precision. 
+This 
+%%%definition of information increase 
+   partial order on information 
+is not 
+%%%quite complete, because it does not place any 
+   yet sufficient, because it places no 
+constraints on the order of context entries, 
+%%%other than 
+   beyond 
+the
+dependency order of variables in declarations. We 
+%%%will later see 
+   show later 
+how to extend
+$\lei$ to capture the order of entries at 
+%%%an appropriate 
+   a finer 
+level of precision. 
 
 
 
@@ -744,16 +780,32 @@ This says that we can extend a simultaneous substitution on syntax to a
 simultaneous substitution on derivations.
 \TODO{Expand on this.}
 
-Since we are only interested in valid contexts, the statement $\valid$ always
-holds, and is invariant under substitution, so is clearly stable.
+Since we 
+%%%are only interested in 
+   only consider 
+valid contexts, the statement $\valid$ always
+holds, and is invariant under substitution, so 
+   it 
+is clearly stable.
 
 We have a standard strategy for proving stability of most statements, which is
 effective by construction. In each case we proceed by induction on the structure
-of derivations. Where the \textsc{Lookup} rule is applied, stability holds by
-the definition of information increase. Otherwise, for rules that do not refer
-to the context, we can verify that non-recursive hypotheses are stable and that
-recursive hypotheses occur in strictly positive positions, so they are stable
-by induction. Applying this strategy shows that the statements $\tau \type$
+of derivations. Where the \textsc{Lookup} rule is applied, stability holds by 
+%%%the 
+definition of information increase. Otherwise, for rules 
+%%%that do not refer 
+   not referring 
+to the context, we 
+%%%can 
+verify that non-recursive hypotheses are stable and that
+recursive hypotheses occur 
+in strictly positive positions, so 
+%%%they 
+are stable
+by induction. Applying this strategy shows that 
+%%%the statements 
+   both 
+$\tau \type$
 and $\tau \equiv \upsilon$ are stable.
 
 \begin{lemma}\label{lei:preorder}
@@ -898,8 +950,14 @@ The unification problem $U$ is given by
 \R{U}{\_}{\_}                 &= \valid
 \end{align*}
 
-A \define{$P$-instance for a context $\Gamma$} is $a \in \In{P}$ such that
-$\Gamma \entails \Pre{P}{a}$. The problem instance $a$ has \define{solution}
+A 
+%%%\define{$P$-instance for a context $\Gamma$} 
+   \define{$P$-instance for $\Gamma$}  
+is $a \in \In{P}$ such that
+$\Gamma \entails \Pre{P}{a}$. 
+%%%The problem 
+   Such an 
+instance $a$ has \define{solution}
 $(r, \delta, \Delta)$ if $r \in \Out{P}$ and $\delta : \Gamma \lei \Delta$
 such that $\Delta \entails \Post{P}{\delta a}{r}$. (Observe that
 $\Delta \entails \Pre{P}{\delta a}$ by stability.)
@@ -909,13 +967,13 @@ $(s, \theta, \Theta)$ there exists $\zeta : \Delta \lei \Theta$ such that
 $\theta \eqsubst \zeta \compose \delta$ and $\Theta \entails \R{P}{\zeta r}{s}$.
  
 We write $\delta : \Jmin{\Gamma}{\Prob{P}{a}{r}}{\Delta}$ to mean that
-$(r, \delta, \Delta)$ is a minimal solution of the $P$-instance $r$.
+$(r, \delta, \Delta)$ is a minimal solution of the $P$-instance $a$.
 
 \TODO{Define what it means for a rule system to be algorithmic.}
 
 
 \subsection{The Optimist's Lemma}
-
+%%%
 If $P$ and $Q$ are problems, then $P \wedge Q$ is a problem with
 \begin{align*}
 \In{P \wedge Q}                 &= \In{P} \times \In{Q}  \\
@@ -944,8 +1002,8 @@ necessary and sufficient to search amongst the extensions of $\delta$.
 For details, see appendix.  \end{proof}
 
 This sequential approach to problem solving is not the only decomposition
-justified by stability. The account of unification given by
-\citet{mcadam_unification_1998} amounts to a concurrent, transactional
+justified by stability. \citeauthor{mcadam_unification_1998}'s account of unification 
+\citeyearpar{mcadam_unification_1998} amounts to a concurrent, transactional
 decomposition of problems. The same context is extended via multiple different
 substitutions, then these are unified to produce a single substitution.
 
@@ -954,22 +1012,30 @@ substitutions, then these are unified to produce a single substitution.
 
 \subsection{Transforming the rule system for equivalence}
 
-We wish to transform these rules into a unification algorithm.
-Starting with the rules in Figure~\ref{fig:equivRules}, consider what happens if
+We wish to transform 
+%%%these rules 
+   the rules in Figure~\ref{fig:equivRules} 
+into a unification algorithm.
+%%%Starting with the rules in Figure~\ref{fig:equivRules}, 
+   So 
+consider what happens if
 we remove each equivalence closure rule in turn and attempt to prove its
 admissibility. This will fail, but the proof obligations left over give us a more
 specific but equivalent system of algorithmic-looking rules for equivalence.
 \TODO{Reference unfold/fold transformations.}
 
-First, the reflexivity rule for types can be derived from the reflexivity
-rule for variables given by
-$$\Rule{\alpha \type}
+First, 
+%%%the reflexivity rule for types can be derived from 
+%%%the reflexivity rule for variables given by
+we reduce the reflexivity rule to the atomic case 
+$$\name{Refl\(_\alpha\)}
+  \Rule{\alpha \type}
        {\alpha \equiv \alpha}$$
 by applying the structural rule until variables occur.
 
-Next, transitivity can be derived from
-$$
-\Rule{\alpha \equiv \tau    \quad    \tau \equiv \upsilon}
+Next, transitivity can be derived from the restricted case 
+$$\name{Trans\(_\alpha\)}
+  \Rule{\alpha \equiv \tau    \quad    \tau \equiv \upsilon}
      {\alpha \equiv \upsilon}
 \side{\alpha \neq \tau, \alpha \neq \upsilon}
 %% \qquad
@@ -980,19 +1046,22 @@ as follows. Suppose $\chi \equiv \tau$ and $\tau \equiv \upsilon$ and seek to
 prove $\chi \equiv \upsilon$.
 \begin{itemize}
 \item If $\chi = \alpha$ is a variable distinct from $\tau$ and $\upsilon$
-      then we can use the restricted transitivity rule.
-\item If $\chi = \alpha = \upsilon$ then we can use reflexivity.
+      then use \name{Trans\(_\alpha\)}\!.
+\item If $\chi = \alpha = \upsilon$ then use \name{Refl\(_\alpha\)}\!.
 \item If $\chi = \alpha = \tau$ then the result holds by hypothesis.
-\item If $\chi$ is not a variable but $\upsilon$ is then we can apply symmetry
+\item If $\chi$ is not a variable but $\upsilon$ is then apply symmetry
       and one of the previous cases.
-\item If $\chi$ and $\upsilon$ are both not variables then we can apply
+\item If $\chi$ and $\upsilon$ are both not variables then apply
       the structural rule.
 \end{itemize}
 
-Finally, symmetry becomes admissible (but not derivable) if replaced by
-$$
-\Rule{\alpha \equiv \tau}
-     {\tau \equiv \alpha}.
+Finally, symmetry 
+%%%becomes 
+   is 
+admissible (but not derivable) if replaced by
+$$\name{Sym\(_\alpha\)}
+  \Rule{\alpha \equiv \tau}
+       {\tau \equiv \alpha}.
 %% \qquad
 %% \Rule{\tau \equiv \alpha}
 %%      {\alpha \equiv \tau}
@@ -1003,9 +1072,9 @@ $\tau \equiv \upsilon$.
 \begin{itemize}
 \item If $\upsilon = \alpha$ is a variable then the rule applies.
 \item If $\upsilon$ is not a variable but $\tau = \beta$ is, then
-      the proof of $\upsilon \equiv \beta$ must be by restricted symmetry,
+      the proof of $\upsilon \equiv \beta$ must be by \name{Sym\(_\alpha\)}\!,
       in which case its hypothesis says that $\beta \equiv \upsilon$.
-\item If $\tau$ and $\upsilon$ are both not variables then we can apply the
+\item If $\tau$ and $\upsilon$ are both not variables then apply the
       structural rule.
 \end{itemize} 
 
@@ -1025,7 +1094,9 @@ Now we can see how to construct the algorithm. The structural rule says that whe
 It is possible that a context entry may have no bearing on the unification
 problem being solved, and hence can be ignored.
 We define the orthogonality relation $v D \perp X$ (the set of type variables $X$
-does not depend on the declaration $v D$) thus:
+does not depend on the declaration $v D$) 
+%%%thus:
+   to capture this idea: 
 \begin{align*}
 \alpha D \perp X
     &\mathrm{~if~} \alpha \in \V_\TY \setminus X  \\
@@ -1034,17 +1105,22 @@ v D \perp X
 \end{align*}
 
 The rules in Figure~\ref{fig:unifyRules} define our unification algorithm. The
-assertion $\Junify{\Gamma}{\tau}{\upsilon}{\Delta}$ means that given inputs
-$\Gamma$, $\tau$ and $\upsilon$, where
-$\Gamma \entails \tau \type \wedge \upsilon \type$,
+assertion $\Junify{\Gamma}{\tau}{\upsilon}{\Delta}$ means that 
 unification of $\tau$ with $\upsilon$ 
-succeeds, producing output context $\Delta$.
+succeeds, producing output context $\Delta$, 
+given inputs
+$\Gamma$, $\tau$ and $\upsilon$ satisfying 
+$\Gamma \entails \tau \type \wedge \upsilon \type$. 
 
 The assertion
 $\Jinstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$
-means that given inputs $\Gamma$, $\Xi$, $\alpha$ and $\tau$,
-solving $\alpha$ with $\tau$ succeeds and produces output context $\Delta$,
-subject to the conditions
+means that 
+solving $\alpha$ with $\tau$ succeeds,  
+%%%and produces 
+   yielding output $\Delta$,
+given inputs $\Gamma$, $\Xi$, $\alpha$ and $\tau$
+%%%,subject to the conditions
+   satisfying 
 \begin{itemize}
 \item $\alpha \in \tyvars{\Gamma}$,
 \item $\Gamma, \Xi \entails \tau \type$,
@@ -1059,7 +1135,9 @@ correspondingly do not check them in the implementation.
 
 
 The rules \textsc{Define}, \textsc{Expand} and \textsc{Ignore} have
-symmetric counterparts that are identical apart from interchanging the equated
+symmetric counterparts, 
+%%%that are 
+identical apart from interchanging the equated
 terms in the conclusion. Usually we will ignore these without loss of generality.
 % but where necessary we refer to them as \textsc{Define}\sym,
 % \textsc{Expand}\sym and \textsc{Ignore}\sym.
@@ -1150,15 +1228,28 @@ $$
 \end{figure}
 
 
-Observe that we have no rule for the case
+Observe that we have no rule 
+%%%for the case
+   in the situation where 
 $$\Jinstantiate{\Gamma_0, \alpha D}{\alpha}{\tau}{\Xi}{\Delta}
 \mathrm{~with~} \alpha \in \FTV{\tau, \Xi}$$
-so the algorithm fails if this situation arises. This is essentially an occur
-check failure: $\alpha$ and $\tau$ cannot be unified if $\alpha$ occurs in
+so the algorithm fails 
+%%%if this situation arises. 
+   in this case. 
+This is 
+%%%essentially 
+an occur check failure: $\alpha$ and $\tau$ cannot 
+%%%be unified 
+   unify 
+if $\alpha$ occurs in
 $\tau$ or in an entry that $\tau$ depends on, and $\tau$ is not a variable.
-Since we only have one type constructor symbol (the function arrow $\arrow$),
-there are no failures due to rigid-rigid mismatch. Adding these would not
-significantly complicate matters, however.
+%%%Since we only have one 
+   Given the single 
+type constructor symbol (the function arrow $\arrow$),
+there are no failures due to rigid-rigid mismatch. 
+To add these would not
+significantly complicate matters%%%, however
+.
 
 %At first there appears to be some redundancy in the system, with %similar-looking
 %rules for flex-flex and flex-rigid problems
@@ -1258,8 +1349,8 @@ $\JinstantiateMin{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$.
 \begin{proof}[Sketch] Each step preserves all solutions. The
 Optimist's Lemma justifies problem decomposition. The algorithm
 terminates, and the only case not covered by the rules is the case
-where the occur check fails, indicating that no unifer exists.  For
-details, see appendix.  \end{proof}
+where the occur check fails, indicating no unifier exists.  For
+details, see Appendix.  \end{proof}
 
 
 \subsection{Implementing unification}
@@ -1268,7 +1359,7 @@ First, we define some helpful machinery.
 The |onTop| operator applies its argument to the topmost type variable
 declaration in the context, skipping over any other kinds of entry. The argument
 function may |restore| the previous entry by returning |Nothing|, or it may
-return a context extension (that contains at least as much information as the
+return a context extension (containing at least as much information as the
 entry that has been removed) with which to |replace| it.
 
 > onTop ::  (TyEntry -> Contextual (Maybe Suffix)) 
@@ -1376,7 +1467,7 @@ $$
 The structure of these rules strongly suggests that schemes arise by discharging
 a list of type variable declarations over a type. In fact, any scheme can be
 viewed in this way. We write $\gen{\Xi}{\sigma}$ for the generalisation of
-the type scheme $\sigma$ over the list of type variable declarations $\Xi$,
+the type scheme $\sigma$ over the prefix of type variable declarations $\Xi$,
 defined by
 \begin{align*}
 \emptycontext         &\genarrow \sigma = \sigma  \\
@@ -1404,11 +1495,11 @@ fresh variable names.
 
 \subsection{Implementing type schemes}
 
-It is convenient to represent bound variables by de Brujin indices and free
+It is convenient to represent bound variables by de Bruijn indices and free
 variables (i.e.\ those defined in the context) by names
 \citep{mcbride_mckinna_not_number_2004}.
-Moreover, we use the
-Haskell type system to prevent some incorrect manipulations of indices by
+Moreover, we use
+Haskell's type system to prevent some incorrect manipulations of indices by
 defining a \scare{successor} type
 \citep{bird_paterson_nested_1999, bellegarde_hook_substitution_1994}
 
@@ -1437,7 +1528,9 @@ type scheme (written $.\tau$), as the latter will be represented by
 
 Implementing the generalisation function |(>=>)| is straightforward:
 
-> (>=>) :: Bwd TyEntry -> Scheme -> Scheme
+> type Prefix      = Bwd TyEntry 
+
+> (>=>) :: Prefix -> Scheme -> Scheme
 > B0                      >=> sigma = sigma
 > (_Xi :< alpha :=   d)  >=> sigma = case d of
 >                    Hole     -> _Xi >=> All sigma'
@@ -1470,12 +1563,15 @@ Term variable declarations $\D_\TM$ are scheme assignments of the form
 $\asc \sigma$, with
 $\ok_\TM (\asc \sigma) = \sigma \scheme$.
 
-The syntax of terms is
+%%%The syntax of terms is
+   Let $\Term$ be the set of terms, with syntax 
 $$t ::= x ~||~ t~t ~||~ \lambda x . t ~||~ \letIn{x}{t}{t}.$$
-Let $\Term$ be the set of terms.
+%%%Let $\Term$ be the set of terms.
 % where $x$ ranges over some set of term variables.
 
-We define the type assignability statement $t : \tau$ by the rules in
+We define the type assignability statement $t : \tau$ by the 
+   declarative 
+rules in
 Figure~\ref{fig:typeAssignmentRules}, and the scheme assignability statement
 $t \hasscheme \sigma$ for arbitrary terms $t$ and schemes $\sigma$ thus:
 \begin{align*}
@@ -1550,9 +1646,12 @@ a sub-relation $\leiR$, by $\delta : \Gamma \leiR \Delta$ if $\delta :
 $\Delta$ assigns the \emph{same} type schemes to term variables as $\Gamma$
 does (modulo substitution).
 
-
-
-As with unification, we wish to translate these declarative rules into an
+As with unification, we wish to 
+%%%translate 
+   turn 
+these 
+%%%declarative 
+rules into an
 algorithm for type inference. We define the type inference problem $I$ by
 \begin{align*}
 \In{I}                &= \Term  \\
@@ -1630,17 +1729,24 @@ $\fatsemi$ separators, provided $\Gamma$ contains at least $n$
 \end{align*}
 
 We write $\delta : \Gamma \lei \Delta$ if $\delta$ is a
-substitution from $\Gamma$ to $\Delta$ such that, for every
+substitution from $\Gamma$ to $\Delta$ such that, for all 
 $v D \in \Gamma \semidrop n$ and $S \in \sem{v D}$, we have that
 $\Delta \semidrop n$ is defined and
 $\Delta \entails \delta S$.
 
-This definition of $\Gamma \lei \Delta$ is stronger than the previous definition,
-because it requires a correspondence between the $\fatsemi$-separated sections of
-$\Gamma$ and $\Delta$, such that declarations in the first $n$ sections of
+This definition of $\Gamma \lei \Delta$ is stronger than the previous one, 
+because it requires 
+%%%a correspondence between 
+the $\fatsemi$-separated sections of $\Gamma$ and $\Delta$ 
+   to correspond  
+%%%such that 
+   in such a way that 
+declarations in the first $n$ sections of
 $\Gamma$ can be interpreted over the first $n$ sections of $\Delta$.
-However, it is mostly straightforward to verify that the previous results go
-through with the new definition.
+However, it is mostly straightforward to verify that the previous results 
+%%%go through with 
+   hold for 
+the new definition.
 
 %% Note that if $\delta : \Gamma \lei \Delta$ then
 %% $\delta||_{\Gamma \semidrop n} : \Gamma \semidrop n \lei \Delta \semidrop n$. 
@@ -1665,8 +1771,10 @@ Substitution on shapes acts on type schemes only.
 The only place where changing the $\lei$ relation requires extra work is in the
 unification algorithm,
 because it acts structurally over the context, so we need to specify what happens
-when it finds a $\fatsemi$ separator. It turns out that these can simply be
-ignored, so we add the following algorithmic rules:
+when it finds a $\fatsemi$ separator. 
+%%%It turns out that these can simply be ignored, so we 
+   In fact it suffices to  
+add the following algorithmic rules:
 $$
 \name{Skip}
 \Rule{\Junify{\Gamma_0}{\alpha}{\beta}{\Delta_0}}
@@ -1685,10 +1793,16 @@ If $\delta : \Jmin{\Gamma}{\Prob{P}{a}{b}}{\Delta}$ then
 $\delta : \Jmin{\Gamma \fatsemi}{\Prob{P}{a}{b}}{\Delta \fatsemi}$.
 \end{lemma}
 
-The \textsc{Repossess} rule is more complicated. It is so named because it moves
-the variable declarations in $\Xi$ to the left of the $\fatsemi$ separator,
-thereby \scare{repossessing} them. Despite this, unification does still
-produce a most general solution:
+The \textsc{Repossess} rule is 
+%%%more complicated. It is 
+   so named because it moves
+%%%the variable 
+declarations in $\Xi$ to the left of the $\fatsemi$ separator,
+thereby \scare{repossessing} them. Despite 
+%%%this, 
+   such complications, 
+unification still
+yields a most general solution:
 
 \begin{lemma}[Soundness and generality of \textsc{Repossess} rule]
 If $\Jinstantiate{\Gamma \fatsemi}{\alpha}{\tau}{\Xi}{\Delta \fatsemi}$
@@ -1746,10 +1860,11 @@ $\theta \eqsubst \zeta \compose \iota :
     \Gamma \fatsemi \Xi \lei \Theta \fatsemi \Phi$.
 \end{proof}
 
-
-Observe that the unification algorithm makes no changes to the shape of the
-input context, so the corresponding results hold for the more restrictive
-$\leiR$ relation.
+Corresponding results hold for the more restrictive
+$\leiR$ relation, because 
+%%%the unification algorithm 
+   unification 
+does not change the shape of the input context. 
 
 
 \section{A type inference algorithm}
@@ -1937,7 +2052,7 @@ unification fails. Each step locally preserves all possible solutions.
 For let-expressions, observe that any type specialising any scheme
 for $s$ must certainly specialise the type we infer for $s$, and
 \emph{ipso facto}, the principal type scheme we assign to $x$.
-For details, see appendix.
+For details, see Appendix.
 \end{proof}
 
 
@@ -2011,7 +2126,7 @@ to the right of the |LetGoal| marker.
 >     _Xi <- skimContext
 >     return (_Xi >=> Type tau)
 >   where
->     skimContext :: Contextual (Bwd TyEntry)
+>     skimContext :: Contextual Prefix
 >     skimContext = do
 >         _Gamma :< vD <- getContext
 >         putContext _Gamma
@@ -2063,16 +2178,16 @@ there is no choice, so the solutions you find will be general and
 generalisable locally: this is a key design principle for
 elaboration of high-level code in systems like Epigram and Agda; bugs
 arise from its transgression. By giving a disciplined account of
-`current information' in terms of contexts and their information
+\scare{current information} in terms of contexts and their information
 ordering, we provide a means to investigate these problems and justify
 the steps we take to repair them.
 
 We are, however, missing yet more context. Our task was greatly
 simplified by studying a structural type inference process for
-`finished' expressions in a setting where unification is
+\scare{finished} expressions in a setting where unification is
 complete. Each subproblem is either solved or rejected on first
-inspection---there is never a need for a `later, perhaps' outcome. As
-a result, the conventional control discipline of `direct style'
+inspection---there is never a need for a \scare{later, perhaps} outcome. As
+a result, the conventional control discipline of \scare{direct style} 
 recursive programming is adequate to the task. If problems could get
 stuck, how might we abandon them and return to them later? By storing
 their \emph{context}, of course!
@@ -2084,13 +2199,13 @@ declarations with components of its
 \emph{zipper}~\citep{huet:zipper}. We thus become free to abandon
 fixed recursion strategies and refocus wherever progress is to be
 made. The tree-like proof states of McBride's thesis evolved into
-exactly such `zippers with binding' in the implementation of Epigram.
+exactly such \scare{zippers with binding} in the implementation of Epigram.
 
 As we have seen, an information increase is nothing other than the
 extension of a simultaneous substitution from variables and terms to
 declarations and derivations. Our generic analysis of the role of
 declarations in derivations shows that stability is endemic, amounting
-to the action of hereditary substitution on `cut-free' derivations.
+to the action of hereditary substitution on \scare{cut-free} derivations.
 And that is exactly what it should be. We have rationalised
 Hindley-Milner type inference by adapting a discipline for
 interactively constructing inhabitants of dependent types as the means
@@ -2319,7 +2434,7 @@ We need some |Eq| and |Show| instances for testing purposes:
 \bibliographystyle{plainnat}
 \bibliography{lib}
 
-
+\newpage
 \appendix
 
 \section{Appendix}
