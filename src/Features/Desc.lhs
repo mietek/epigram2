@@ -469,17 +469,13 @@ type is really supposed to be a list, as in |EnumD|).
 If we have a canonical value in |MU s|, where |s| starts with a finite sum,
 then we can (probably) turn it into a tag applied to some arguments.
 
->     distill es (ty@(MU l s) :>: CON (PAIR t x)) | Just (e, df) <- summy s = do
+>     distill es (ty@(MU l s) :>: CON (PAIR t x)) | Just (e, f) <- sumlike s = do
 >         m   :=>: tv  <- distill es (ENUMT e :>: t)
->         as  :=>: xv  <- distill es (descOp @@ [df tv, ty] :>: x)
+>         as  :=>: xv  <- distill es (descOp @@ [f tv, ty] :>: x)
 >         case m of
 >             DTAG s   -> return $ DTag s (unfold as)  :=>: CON (PAIR tv xv)
 >             _        -> return $ DCON (DPAIR m as)   :=>: CON (PAIR tv xv)
 >       where
->         summy :: VAL -> Maybe (VAL, VAL -> VAL)
->         summy (SUMD e b)            = Just (e, \tv -> switchDOp @@ [e, b, tv])
->         summy (SIGMAD (ENUMT e) f)  = Just (e, (f $$) . A)
-
 >         unfold :: InDTmRN -> [InDTmRN]
 >         unfold DU           = [] -- since DVOID gets turned into this first
 >         unfold DVOID        = []
@@ -547,3 +543,14 @@ appropriate place when the proof state is printed.
 >
 >   descDREF :: REF
 >   descDREF = [("Primitive", 0), ("DescD", 0)] := (DEFN inDesc :<: desc)
+
+
+The |sumlike| function determines whether a value representing a description
+is a sum or a sigma from an enumerate. If so, it returns |Just| the enumeration
+and a function from the enumeration to descriptions.
+\question{Where should this live?}
+
+>   sumlike :: VAL -> Maybe (VAL, VAL -> VAL)
+>   sumlike (SUMD e b)            = Just (e, \tv -> switchDOp @@ [e, b, tv])
+>   sumlike (SIGMAD (ENUMT e) f)  = Just (e, (f $$) . A)
+>   sumlike _                     = Nothing

@@ -42,7 +42,7 @@ and refines the proof state appropriately.
 >             ts'  <- traverse unA ts
 >             n    <- matchArgs (pty r) (P r) as ts'
 >             ty'  <- bquoteHere ty
->             g :=>: _ <- make ("g" :<: LABEL (N n) ty')
+>             g :=>: _ <- make ("relabel" :<: LABEL (N n) ty')
 >             give' (N g)
 >             goIn
 >         else  throwError' $ err "relabel: mismatched function name!"
@@ -72,26 +72,48 @@ and refines the proof state appropriately.
 >                              ++ err "\nas =" ++ map UntypedVal as
 >                              ++ err "\nts =" ++ map UntypedTm ts         
 
+
+The |matchProb| command matches a display term against a value and returns a
+renamed term, with the pattern variables defined in the context.
+
 > matchProb :: (TY :>: (InDTmRN, VAL)) -> ProofState (INTM :=>: VAL)
+
+If the display term is a pattern variable, we can just create a corresponding
+definition in the context.
+
 > matchProb (ty :>: (DNP [(p, Rel 0)], v)) = do
 >     ty'  <- bquoteHere ty
 >     v'   <- bquoteHere v
 >     make (p :<: ty')
 >     goIn
 >     neutralise =<< give v'
+
+If it is an underscore then we make no changes to the value.
+
+> matchProb (ty :>: (DU, v)) = do
+>     v' <- bquoteHere v
+>     return $ v' :=>: v
+
+If it is a pair or void then we match the components.
+
 > matchProb (SIGMA s t :>: (DPAIR w x, PAIR y z)) = do
 >     wtm :=>: wv <- matchProb (s :>: (w, y))
 >     xtm :=>: xv <- matchProb (t $$ A y :>: (x, z))
 >     return (PAIR wtm xtm :=>: PAIR wv xv)
+
 > matchProb (UNIT :>: (DVOID, VOID)) = return $ VOID :=>: VOID
-> matchProb (ty@(MU l (SUMD e b)) :>: (DTag s as, CON (PAIR t xs))) = do
+
+If it is a tag (possibly applied to arguments) and needs to be matched against
+an element of an inductive type, we match the tags and values.
+
+> matchProb (ty@(MU l d) :>: (DTag s as, CON (PAIR t xs)))
+>   | Just (e, f) <- sumlike d = do
 >     ntm :=>: nv <- elaborate (Loc 0) (ENUMT e :>: DTAG s)
 >     sameTag <- withNSupply $ equal (ENUMT e :>: (nv, t))
 >     if sameTag
 >         then do
 >             atm :=>: av <- matchProb
->                     (descOp @@ [switchDOp @@ [e, b, t], ty] :>:
->                         (foldr DPAIR DVOID as, xs))
+>                            (descOp @@ [f t, ty] :>: (foldr DPAIR DVOID as, xs))
 >             return $ CON (PAIR ntm atm) :=>: CON (PAIR nv av)
 >         else throwError' $ err "relabel: mismatched tags!"
 > matchProb (ty :>: (w, v)) = throwError' $ err "relabel: can't match"

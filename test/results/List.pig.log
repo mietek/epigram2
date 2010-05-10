@@ -1,41 +1,41 @@
 Data'd.
 Let there be nil.
-Ta.
+Hurrah!
 Going to root...
 Let there be cons.
-Ta.
+Hurrah!
 Going to root...
 Let there be sing.
-Ta.
+Hurrah!
 Going to root...
 Let there be snoc.
 Eliminated and simplified.
-Ta.
-Ta.
+Hurrah!
+Hurrah!
 Going to root...
 Let there be append.
 Eliminated and simplified.
-Ta.
-Ta.
+Hurrah!
+Hurrah!
 Going to root...
 Made.
 Made.
 Let there be list-map.
 Eliminated and simplified.
-Ta.
-Ta.
+Hurrah!
+Hurrah!
 Going to root...
 'cons 'x ('cons 'x ('cons 'y 'nil))
 Data'd.
 Let there be plus.
 Eliminated and simplified.
-Ta.
-Ta.
+Hurrah!
+Hurrah!
 Going to root...
 Let there be sum.
 Eliminated and simplified.
-Ta.
-Ta.
+Hurrah!
+Hurrah!
 Going to root...
 Made.
 Made.
