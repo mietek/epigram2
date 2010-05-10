@@ -18,6 +18,18 @@
 >       "= <term> - solves the programming problem by returning <term>."
 
 
+\subsection{The Define gadget}
+
+> import -> CochonTactics where
+>   : (simpleCT
+>      "define"
+>      (| (| (B0 :<) tokenExTm |) :< (%keyword KwDefn%) tokenInTm |)
+>      (\ [ExArg rl, InArg tm] -> do
+>          relabel rl
+>          elabGiveNext (DLRET tm)
+>          return "Hurrah!")
+>      "define <prob> := <term> - relabels and solves <prob> with <term>")
+
 
 \subsection{The |By| gadget}
 
