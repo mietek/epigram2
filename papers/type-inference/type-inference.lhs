@@ -982,12 +982,13 @@ If $P$ and $Q$ are problems, then $P \wedge Q$ is a problem with
 \Post{(P \wedge Q)}{a, b}{r, s}   &= \Post{P}{a}{r} \wedge \Post{Q}{b}{s}  \\
 \R{P \wedge Q}{r, s}{t, u}      &= \R{P}{r}{t} \wedge \R{Q}{s}{u}  \\
 \end{align*}
-The point of all this machinery is to be able to state and prove the following 
-lemma, stating that the minimal solution to a conjunction of problems can be
-found by finding the minimal solution of the first problem, then (minimally)
-extending it to solve the second. 
-
-\begin{lemma}[The Optimist's Lemma]
+%%%The point of all this machinery is to be able to state and prove the following 
+%%%lemma, stating that the minimal solution to a conjunction of problems can be
+%%%found by finding the minimal solution of the first problem, then (minimally)
+%%%extending it to solve the second. 
+We can now state the following \scare{greedy} approach to finding minimal solutions to such composite problems: find a minimal solution of problem \(P\), then extend it to (minimally) solve \(Q\):  
+%%%
+\begin{lemma}[The Optimist's lemma]
 \label{lem:optimist}
 The following inference rule is admissible:
 $$\Rule{\delta : \Jmin{\Gamma}{\Prob{P}{a}{r}}{\Delta}
@@ -996,10 +997,39 @@ $$\Rule{\delta : \Jmin{\Gamma}{\Prob{P}{a}{r}}{\Delta}
          \Jmin{\Gamma}{\Prob{P}{a}{\theta r} \wedge \Prob{Q}{b}{s}}{\Theta}}.$$
 \end{lemma}
 
-\begin{proof}[Sketch] The solutions of $P(a)$ arise exactly by
-extending $\delta$, so if we seek also to solve $Q(b)$, it is
-necessary and sufficient to search amongst the extensions of $\delta$.
-For details, see appendix.  \end{proof}
+%%%\begin{proof}[Sketch] The solutions of $P(a)$ arise exactly by
+%%%extending $\delta$, so if we seek also to solve $Q(b)$, it is
+%%%necessary and sufficient to search amongst the extensions of $\delta$.
+%%%For details, see Appendix.  \end{proof}
+
+\begin{proof}%%%[Proof of lemma~\ref{lem:optimist} (Optimist's Lemma)]
+We have that $\theta \compose \delta : \Gamma \lei \Theta$ by 
+Lemma~\ref{lei:preorder}. 
+
+To show $\Theta \entails \Prob{P \wedge Q}{a, b}{\theta r, s}$, it
+suffices to show $\Theta \entails \Prob{P}{a}{\theta r}$ and
+$\Theta \entails \Prob{Q}{b}{s}$. The latter holds by assumption. For the
+former, note that $\Delta \entails \Prob{P}{a}{r}$ and hence
+$\Theta \entails \theta (\Prob{P}{a}{r})$ by stability of $\Prob{P}{a}{r}$.
+But $\theta (\Prob{P}{a}{r}) = \Prob{P}{a}{\theta r}$ by definition. 
+
+Finally, suppose there is some $\theta : \Gamma \lei \Theta$ 
+and outputs $t, u$ such that
+$\Theta \entails \Prob{P \wedge Q}{a, b}{t, u}$, so
+$\Theta \entails \Prob{P}{a}{t}$ and
+$\Theta \entails \Prob{Q}{b}{u}$.
+Since $\delta : \Jmin{\Gamma}{\Prob{P}{a}{r}}{\Delta}$, there exists
+$\zeta_1 : \Delta \lei \Theta$ such that
+$\theta \eqsubst \zeta_1 \compose \delta$
+and $\Theta \entails \R{P}{\zeta_1 r}{t}$.
+But then $\theta : \Jmin{\Delta}{\Prob{Q}{b}{s}}{\Theta}$, so there exists
+$\zeta_2 : \Theta \lei \Theta$ such that
+$\zeta_1 \eqsubst \zeta_2 \compose \theta$
+and $\Theta \entails \R{Q}{\zeta_2 s}{u}$.
+Hence $\theta \eqsubst \zeta_2 \compose (\theta \compose \delta)$
+and $\Theta \entails \R{P \wedge Q}{\zeta_2 (\theta r), \zeta_2 s}{t, u}$.
+\end{proof}
+
 
 This sequential approach to problem solving is not the only decomposition
 justified by stability. \citeauthor{mcadam_unification_1998}'s account of unification 
@@ -2440,36 +2470,6 @@ We need some |Eq| and |Show| instances for testing purposes:
 
 \section{Appendix}
 
-\begin{proof}[Proof of lemma~\ref{lem:optimist} (Optimist's Lemma)]
-We have that $\theta \compose \delta : \Gamma \lei \Theta$ by 
-Lemma~\ref{lei:preorder}. 
-
-To show $\Theta \entails \Prob{P \wedge Q}{a, b}{\theta r, s}$, it
-suffices to show $\Theta \entails \Prob{P}{a}{\theta r}$ and
-$\Theta \entails \Prob{Q}{b}{s}$. The latter holds by assumption. For the
-former, note that $\Delta \entails \Prob{P}{a}{r}$ and hence
-$\Theta \entails \theta (\Prob{P}{a}{r})$ by stability of $\Prob{P}{a}{r}$.
-But $\theta (\Prob{P}{a}{r}) = \Prob{P}{a}{\theta r}$ by definition%%%, so we are done
-.
-
-Finally, suppose there is some $\theta : \Gamma \lei \Theta$ 
-and outputs $t, u$ such that
-$\Theta \entails \Prob{P \wedge Q}{a, b}{t, u}$, so
-$\Theta \entails \Prob{P}{a}{t}$ and
-$\Theta \entails \Prob{Q}{b}{u}$.
-Since $\delta : \Jmin{\Gamma}{\Prob{P}{a}{r}}{\Delta}$, there exists
-$\zeta_1 : \Delta \lei \Theta$ such that
-$\theta \eqsubst \zeta_1 \compose \delta$
-and $\Theta \entails \R{P}{\zeta_1 r}{t}$.
-But then $\theta : \Jmin{\Delta}{\Prob{Q}{b}{s}}{\Theta}$, so there exists
-$\zeta_2 : \Theta \lei \Theta$ such that
-$\zeta_1 \eqsubst \zeta_2 \compose \theta$
-and $\Theta \entails \R{Q}{\zeta_2 s}{u}$.
-Hence $\theta \eqsubst \zeta_2 \compose (\theta \compose \delta)$
-and $\Theta \entails \R{P \wedge Q}{\zeta_2 (\theta r), \zeta_2 s}{t, u}$.
-\end{proof}
-
-
 
 
 \begin{proof}[Proof of lemma~\ref{lem:unifyComplete}
@@ -2711,10 +2711,9 @@ with
 $\zeta : \Delta \leiR \Theta$ such that
 $\zeta_2 \eqsubst \zeta \compose \iota$
 by completeness of unification.
-Hence the \textsc{App} rule applies, so
+Hence by the \textsc{App} rule,
 $\Jtype{\Gamma}{f a}{\beta}{\Delta}$,
 and $\theta \eqsubst \zeta \compose \iota$.
-
 \end{proof}
 
 
