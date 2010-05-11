@@ -15,8 +15,8 @@ Made.
 Made.
 Made.
 Made.
-f : (x : Set) -> Set
-g : (x : Set)(y : Set) -> Set
+f : Set -> Set
+g : Set -> Set -> Set
 h : Set -> Set -> Set
 h2 : (Set -> Set) -> Set
 h3 : Set -> (Set -> Set) -> Set

@@ -14,6 +14,7 @@
 > import NameSupply.NameSupply
 
 > import Evidences.Rules hiding (($$))
+> import qualified Evidences.Rules (($$))
 > import Evidences.Tm
 
 > import ProofState.Developments
@@ -67,14 +68,45 @@ representation of the resulting type.
 
 The |infoContextual| command displays a distilled list of things in the context,
 boys if the argument is False or girls if the argument is True.
-This is written using a horrible imperative hack that saves the state, throws
-away bits of the context to produce an answer, then restores the saved state.
 
 > infoHypotheses  = infoContextual False
 > infoContext     = infoContextual True
 
 > infoContextual :: Bool -> ProofState String
 > infoContextual gals = do
+>     aus <- getAuncles
+>     bsc <- gets inBScope
+>     d <- help bsc aus
+>     return (renderHouseStyle d)
+>   where
+>     help :: BScopeContext -> Entries -> ProofState Doc
+>     help bsc B0 = return empty
+>     help bsc (es :< E ref _ (Boy k) _) | not gals = do
+>         ty     <- bquoteHere (pty ref)
+>         docTy  <- prettyHere (SET :>: ty)
+>         d      <- help bsc es
+>         return $ d $$ prettyBKind k (text (showRelName (christenREF bsc ref))
+>                                               <+> kword KwAsc <+> docTy)
+>     help bsc (es :< E ref _ (Girl LETG _ msch) _) | gals = do
+>         ty     <- bquoteHere $ removeShared (boySpine es) (pty ref)
+>         docTy  <- prettyHere (SET :>: ty)
+>         d      <- help bsc es
+>         return $ d $$ (text (showRelName (christenREF bsc ref))
+>                                 <+> kword KwAsc <+> docTy)
+>     help bsc (es :< _) = help bsc es
+
+>     removeShared :: Spine {TT} REF -> TY -> TY
+>     removeShared []       ty        = ty
+>     removeShared (A (NP r) : as) (PI s t)  = t Evidences.Rules.$$ A (NP r)
+
+
+This old implementation is written using a horrible imperative hack that saves
+the state, throws away bits of the context to produce an answer, then restores
+the saved state. We can get rid of it once we are confident that the new version
+(above) produces suitable output.
+
+> infoContextual' :: Bool -> ProofState String
+> infoContextual' gals = do
 >     save <- get
 >     let bsc = inBScope save
 >     me <- getMotherName
