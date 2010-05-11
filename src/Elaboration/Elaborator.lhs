@@ -201,17 +201,21 @@ like |TEL| to represent schemes as telescopes of values?}
 >     makeCall :: EXTM -> Int -> Scheme INTM -> Scheme INTM
 >     makeCall l n (SchType ty) =
 >         SchImplicitPi ("c" :<: LABEL (N (l $## fmap NV [n-1,n-2..0])) ty)
->             (SchType (inc %% ty))
+>             (SchType (inc 0 %% ty))
 >     makeCall l n (SchImplicitPi (x :<: s) schT) =
 >         SchImplicitPi (x :<: s) (makeCall l (n+1) schT)
 >     makeCall l n (SchExplicitPi (x :<: schS) schT) =
 >         SchExplicitPi (x :<: schS) (makeCall l (n+1) schT)
 
->     inc :: Mangle Identity x x
->     inc = Mang
+The |inc| mangle increments the bound variables in the term, allowing a binding
+to be inserted for the call term. It keeps track of how many local binders it
+has gone under, so as to not increment them.
+
+>     inc :: Int -> Mangle Identity x x
+>     inc n = Mang
 >         {  mangP = \x ies -> (|(P x $:$) ies|)
->         ,  mangV = \j ies -> (|(V (j+1) $:$) ies|)
->         ,  mangB = \_ -> inc
+>         ,  mangV = \j ies -> (|(V (if j >= n then j+1 else j) $:$) ies|)
+>         ,  mangB = \_ -> inc (n+1)
 >         }
 
 
