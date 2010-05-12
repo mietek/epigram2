@@ -586,15 +586,13 @@ The |make| command adds a named goal of the given type to the bottom of the
 current development, after checking that the purported type is in fact a type.
 
 > make :: (String :<: INTM) -> ProofState (EXTM :=>: VAL)
-> make (s :<: ty) = do
->     mty <- withNSupply $ liftError . (typeCheck $ check (SET :>: ty))
->     tt <- mty `catchEither`  (err "make: " 
+> make = make' Waiting
+
+> make' :: HKind -> (String :<: INTM) -> ProofState (EXTM :=>: VAL)
+> make' hk (s :<: ty) = do
+>     _ :=>: tyv <- checkHere (SET :>: ty) `pushError`  (err "make: " 
 >                              ++ errInTm ty 
 >                              ++ err " is not a set.")
->     make' Waiting (s :<: tt)
-
-> make' :: HKind -> (String :<: (INTM :=>: TY)) -> ProofState (EXTM :=>: VAL)
-> make' hk (s :<: (ty :=>: tyv)) = do
 >     aus <- getAuncles
 >     s' <- pickName "G" s
 >     n <- withNSupply (flip mkName s')

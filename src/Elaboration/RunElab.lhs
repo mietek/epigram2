@@ -63,7 +63,7 @@ and |False| if the problem was suspended.
 
 > runElab top (ty :>: EWait s tyWait f) = do
 >     tyWait' <- bquoteHere tyWait
->     tt <- make' Waiting (s :<: tyWait' :=>: tyWait)
+>     tt <- make (s :<: tyWait')
 >     runElab top (ty :>: f tt)
 
 > runElab top (ty :>: EElab l p)  = runElabProb top l (ty :>: p)
@@ -115,7 +115,7 @@ are encountered below the top level.
 > runElabTop (ty :>: elab) = do
 >     ty' <- bquoteHere ty
 >     x <- pickName "h" ""
->     make' Waiting (x :<: ty' :=>: ty)
+>     make (x :<: ty')
 >     goIn
 >     (tm :=>: tmv, okay) <- runElab True (ty :>: elab)
 >     if okay
@@ -178,13 +178,15 @@ search the hypotheses for a value with the same label.
 
 >     seekIn :: VAL -> VAL -> ProofState (INTM :=>: VAL, Bool)
 >     seekIn tm (LABEL (N m) u) = do
->         let Just (ref, vvs) = matchFakes m l []
->         subst  <- matchBits (pty ref) vvs [] 
->         l'     <- bquoteHere l
->         ty'    <- bquoteHere ty
->         tm'    <- bquoteHere tm
->         suspendThis top ("label" :<: LABEL (N l') ty' :=>: LABEL (N l) ty) =<<
->             makeWait subst tm'
+>         case matchFakes m l [] of
+>             Just (ref, vvs) -> do
+>                 subst  <- matchBits (pty ref) vvs [] 
+>                 l'     <- bquoteHere l
+>                 ty'    <- bquoteHere ty
+>                 tm'    <- bquoteHere tm
+>                 suspendThis top ("label" :<: LABEL (N l') ty' :=>: LABEL (N l) ty) =<<
+>                     makeWait subst tm'
+>             _ -> (|)
 >     seekIn tm (PI s t) = do
 >         (st :=>: sv, _) <- runElabHope False s    
 >         seekIn (tm $$ A sv) (t $$ A sv)
@@ -348,7 +350,7 @@ ideally we should cry rather than hoping for something patently absurd.
 >     return . (, False) =<< neutralise =<< getMotherDefinition
 > lastHope False ty = do
 >     ty' <- bquoteHere ty
->     return . (, True) =<< neutralise =<< make' Hoping ("hope" :<: ty' :=>: ty)
+>     return . (, True) =<< neutralise =<< make' Hoping ("hope" :<: ty')
 
 
 \subsection{Suspending computation}
@@ -361,7 +363,7 @@ is unstable.
 > suspend :: (String :<: INTM :=>: TY) -> EProb
 >                -> ProofState (EXTM :=>: VAL)
 > suspend (x :<: tt) prob = do
->     r <- make' Waiting (x :<: tt)
+>     r <- make (x :<: termOf tt)
 >     Just (E ref xn (Girl LETG (es, Unknown utt, nsupply) ms) tm) <- removeDevEntry
 >     putDevEntry (E ref xn (Girl LETG (es, Suspended utt prob, nsupply) ms) tm)
 >     return r
