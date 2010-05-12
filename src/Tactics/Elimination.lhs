@@ -7,6 +7,9 @@
 
 > module Tactics.Elimination where
 
+> import Control.Monad.Error
+> import Cochon.Error
+
 > import Control.Applicative
 > import Data.Foldable hiding (sequence_)
 > import Data.List
@@ -760,31 +763,45 @@ Finally, we can make the motive, hence closing the subgoal. This
 simply consists in chaining the commands above, and give the computed
 term. Unless I've screwed up things, |give| should always be happy.
 
+> optionalProofTrace s = if on then proofTrace s else return ()
+>   where on = False
+
 > makeMotive ::  TY -> VAL -> [REF] -> [INTM] -> TY ->
 >                ProofState ([REF], INTM, [INTM :>: INTM])
 > makeMotive xi goal deltas patterns elimTy = do
 >   -- Extract $\Delta_1$ from $\Delta$
 >   deltas1 <- extractDelta1 (bwdList deltas) elimTy
+>   optionalProofTrace $ "deltas1: " ++ show deltas1
 >   -- Transform $\Delta$ into Binder form
 >   binders <- withNSupply $ toBinders deltas1
+>   optionalProofTrace $ "binders: " ++ show binders
 >   -- Introduce $\Xi$
 >   xis <- introMotive 
 >   -- Make the initial list of constraints
 >   let constraintsI = zip xis patterns
 >   let teleConstraints = (xi, xi, constraintsI)
+>   optionalProofTrace $ "teleConstraints: " ++ show teleConstraints
 >   -- Get goal in |INTM| form
 >   goalTm <- bquoteHere goal
+>   optionalProofTrace $ "goalTm: " ++ show goalTm
 >   -- Simplify that mess!
 >   (binders, constraints, goal) <- withNSupply $ simplify teleConstraints binders B0 goalTm
 >   let bindersL = trail binders
+>   optionalProofTrace $ "bindersL: " ++ show bindersL
+>   optionalProofTrace $ "constraints: " ++ show constraints
+>   optionalProofTrace $ "goal: " ++ show goal
 >   -- Make the $\Pi$-boys from $\Delta_1$
 >   deltas1' <- mkPiDelta1 bindersL id B0
+>   optionalProofTrace $ "deltas1': " ++ show deltas1'
 >   -- Make $(xi == ti) \rightarrow T$
 >   solution <- makeEq constraints goal
+>   optionalProofTrace $ "solution: " ++ show solution
 >   -- Rename solution from the dummy |binders| to the fresh |deltas|
 >   let motive = transportToLocal bindersL deltas1' solution
 >   -- And we are done
+>   optionalProofTrace $ "motive: " ++ show motive
 >   motive :=>: _ <- give motive
+>   optionalProofTrace "motivated!"
 >   -- Filter out the simplified deltas and patterns (for elimination application)
 >   let deltas1R = filterDeltas bindersL deltas1
 >   patterns <- filterPatterns xi patterns (trail constraints)
@@ -909,8 +926,12 @@ Then, it is straightforward to build the term we want and to give it:
 > applyElim elim motive methods deltas args = do
 >     reflArgs <- withNSupply $ mkRefls args
 >     Just (e :=>: _) <- lookupName elim
->     giveNext $ N $ e $## (  map NP deltas ++
+>     ((giveNext $ N $ e $## (  map NP deltas ++
 >                             reflArgs)
+>       ) >> return ())
+>         `catchError` (\ es -> do
+>           es' <- distillErrors es
+>           proofTrace $ "applyElim failed!\n" ++ show (prettyStackError es'))
 >     return ()
 
 We (in theory) have solved the goal!

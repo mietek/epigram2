@@ -116,8 +116,13 @@ an element of an inductive type, we match the tags and values.
 >                            (descOp @@ [f t, ty] :>: (foldr DPAIR DVOID as, xs))
 >             return $ CON (PAIR ntm atm) :=>: CON (PAIR nv av)
 >         else throwError' $ err "relabel: mismatched tags!"
-> matchProb (ty :>: (w, v)) = throwError' $ err "relabel: can't match"
->                                 ++ errTm w ++ err "with" ++ errTyVal (v :<: ty)
+
+> matchProb (ty :>: (w, v)) = do
+>     proofTrace $ "ty: "  ++ show ty
+>     proofTrace $ "w: "   ++ show w
+>     proofTrace $ "v: "   ++ show v
+>     throwError' $ err "relabel: can't match"
+>         ++ errTm w ++ err "with" ++ errTyVal (v :<: ty)
 
 
 > import -> CochonTactics where
