@@ -516,8 +516,11 @@ repeatedly transforming the proof state into a simpler version, one step
 at a time. It will fail if no simplification is possible.
 
 > problemSimplify :: ProofState (EXTM :=>: VAL)
-> problemSimplify = (getHoleGoal >>= simplifyGoal . valueOf)
->                   <|> getMotherDefinition
+> problemSimplify = getHoleGoal >>= simplifyGoal . valueOf
+
+> tryProblemSimplify :: ProofState (EXTM :=>: VAL)
+> tryProblemSimplify = problemSimplify <|> getMotherDefinition
+
 
 > simplifyGoal :: TY -> ProofState (EXTM :=>: VAL)
 
@@ -525,7 +528,7 @@ at a time. It will fail if no simplification is possible.
 >     t' <- bquoteHere (t $$ A VOID)
 >     make ("u" :<: t')
 >     goIn
->     b :=>: _ <-  problemSimplify
+>     b :=>: _ <-  tryProblemSimplify
 >     goOut
 >     give' (LK (N b))
 > simplifyGoal (PI (SIGMA d r) t) = do
@@ -535,17 +538,16 @@ at a time. It will fail if no simplification is possible.
 >     mt' <- bquoteHere mt
 >     make ("s" :<: mt')
 >     goIn
->     b :=>: _ <-  problemSimplify
+>     b :=>: _ <-  tryProblemSimplify
 >     goOut
 >     x <- lambdaBoy (fortran t)
 >     give' (N (b :$ A (N (P x :$ Fst)) :$ A (N (P x :$ Snd))))
 > simplifyGoal (PI (ENUMT e) t) = do
 >     t' <- bquoteHere t
 >     e' <- bquoteHere e
->     v' <- bquoteHere (branchesOp @@ [e, t])
->     make ("e" :<: v')
+>     make ("e" :<: N (branchesOp :@ [e', t']))
 >     goIn
->     b :=>: _ <-  problemSimplify
+>     b :=>: _ <-  tryProblemSimplify
 >     goOut
 >     x <- lambdaBoy (fortran t)
 >     give' (N (switchOp :@ [e', NP x, t', N b]))
@@ -554,7 +556,7 @@ at a time. It will fail if no simplification is possible.
 >     case pSimp of
 >         Nothing -> do
 >             lambdaBoy (fortran t)
->             problemSimplify
+>             tryProblemSimplify
 >         Just (SimplyAbsurd prf) -> do
 >             r <- lambdaBoy (fortran t)
 >             let pr = prf (NP r)
@@ -564,15 +566,15 @@ at a time. It will fail if no simplification is possible.
 >             t' <- bquoteHere (t $$ A prf)
 >             make ("r" :<: t')
 >             goIn
->             b :=>: _ <- problemSimplify
+>             b :=>: _ <- tryProblemSimplify
 >             goOut
 >             give' (LK (N b))
 >         Just (Simply qs _ h) -> do
 >             lambdaBoy (fortran t) -- should do more stuff here
->             problemSimplify 
+>             tryProblemSimplify 
 > simplifyGoal (PI s t) = do
 >     lambdaBoy (fortran t)
->     problemSimplify 
+>     tryProblemSimplify 
 
 > simplifyGoal (PRF p) = propSimplifyHere >> getMotherDefinition
 
@@ -582,12 +584,12 @@ at a time. It will fail if no simplification is possible.
 >     s' <- bquoteHere s
 >     make (fortran t :<: s')
 >     goIn
->     stm :=>: stv <- problemSimplify
+>     stm :=>: stv <- tryProblemSimplify
 >     goOut
 >     tty <- bquoteHere (t $$ A stv)
 >     make ("t" :<: tty)
 >     goIn
->     ttm :=>: _ <- problemSimplify
+>     ttm :=>: _ <- tryProblemSimplify
 >     goOut
 >     give' (PAIR (N stm) (N ttm))
 
