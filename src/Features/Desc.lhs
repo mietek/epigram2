@@ -372,7 +372,7 @@ so it returns a term on the |Left|.
 >     } where
 >         sOpTy = 
 >           "e" :<: enumU :-: \e ->
->           "b" :<: (branchesOp @@ [e , L (K desc) ]) :-: \b ->
+>           "b" :<: (branchesDOp @@ [e]) :-: \b ->
 >           "x" :<: ENUMT e :-: \x ->
 >           Target desc
 >         sOpRun :: [VAL] -> Either NEU VAL
@@ -524,7 +524,9 @@ appropriate place when the proof state is printed.
 
 > import -> BootstrapDesc where
 >   inDesc :: VAL
->   inDesc = SUMD constructors cases
+>   inDesc = SIGMAD  (ENUMT constructors)
+>                     (L $ HF "c" $ \c -> 
+>                      switchDOp @@ [ constructors , cases , c])
 >       where constructors = (CONSE (TAG "idD")
 >                            (CONSE (TAG "constD")
 >                            (CONSE (TAG "sumD")
