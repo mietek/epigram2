@@ -62,7 +62,7 @@
 >   pretty (Mu (Just l   :?=: _))     = pretty l
 >   pretty (Mu (Nothing  :?=: Id t))  = wrapDoc
 >       (kword KwMu <+> pretty t ArgSize)
->       ArgSize
+>       AppSize
 
 > import -> CanTraverse where
 >   traverse f (Mu l) = (|Mu (traverse f l)|)
