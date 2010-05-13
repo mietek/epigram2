@@ -28,6 +28,8 @@ identifiers unless they're keywords.
 > import Data.List
 > import Data.Char
 
+> import Features.Features
+
 > import Kit.Parsley
 
 %endif
@@ -157,6 +159,8 @@ things...
 
 > data Keyword =
 
+<     import <- KeywordConstructors
+
 Punctuation used all over the place:
 
 >     KwAsc | KwComma | KwSemi | KwDefn | KwUnderscore |
@@ -186,6 +190,9 @@ Other |InDTm|s:
 ...and they look like this:
 
 > key :: Keyword -> String
+
+< import <- KeywordTable
+
 > key KwAsc       = ":"
 > key KwComma     = ","
 > key KwSemi      = ";"

@@ -16,6 +16,7 @@ current version of the system.
 > import Features.UId        ()
 > import Features.Enum       ()
 > import Features.Sigma      ()
+> import Features.Problem    ()
 > import Features.Prop       ()
 > import Features.Desc       ()
 > import Features.IDesc      ()
