@@ -445,10 +445,22 @@ so it returns a term on the |Left|.
 >     makeElab' loc (MU l d :>: DTag s xs) =
 >         makeElab' loc (MU l d :>: DCON (DPAIR (DTAG s) (foldr DPAIR DVOID xs)))
 
+
+When elaborating |Mu| we can attach a label for display instead of the underlying
+description. This is often useful when constructing user-visible data types. It
+is not helpful when the description is a bound variable, however, so we check
+for that case and do not label it.
+
 >     makeElab' loc (SET :>: DMU Nothing d) = do
->         lt :=>: lv <- EFake True Bale
 >         dt :=>: dv <- subElab loc (desc :>: d)
->         return $ MU (Just (N lt)) dt :=>: MU (Just lv) dv
+>         if shouldLabel dv
+>             then do  lt :=>: lv <- EFake True Bale
+>                      return $ MU (Just (N lt)) dt :=>: MU (Just lv) dv
+>             else     return $ MU Nothing dt :=>: MU Nothing dv
+>       where
+>         shouldLabel :: VAL -> Bool
+>         shouldLabel (NP (_ := DECL :<: _))  = False
+>         shouldLabel _                       = True
  
 >     makeElab' loc (PI (MU l d) t :>: DCON f) = do
 >         d'  :=>: _    <- eQuote d
