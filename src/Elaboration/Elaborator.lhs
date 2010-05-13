@@ -175,7 +175,7 @@ Now we add a definition with the same name as the function being defined,
 to handle recursive calls. This has the same arguments as the function,
 plus an implicit labelled type that provides evidence for the recursive call.
 
->     pn <- getFake
+>     pn :=>: _ <- getFakeMother True
 >     let schCall = makeCall pn 0 sch'
 >     make (x :<: schemeToInTm schCall)
 >     goIn
@@ -188,11 +188,6 @@ problem. This could be implemented more cleanly, but it works.
 
 >     elabProgram (schemeNames sch')
 >   where
->     getFake :: ProofState EXTM
->     getFake = do
->         n <- getMotherName
->         (_ :=>: g) <- getHoleGoal
->         return $ P (n := FAKE :<: g)
 
 Sorry for the horrible de Bruijn index mangling.
 \question{Perhaps we should use something
@@ -234,12 +229,10 @@ plus [
 
 > elabProgram :: [String] -> ProofState (EXTM :=>: VAL)
 > elabProgram args = do
->     n <- getMotherName
+>     n   <- getMotherName
+>     pn  <- getFakeMother True
 >     (gUnlifted :=>: _) <- getHoleGoal
->     aus <- getAuncles
->     let  g      = evTm (liftType aus gUnlifted)
->          pn     = applyAuncles (n := FAKE :<: g) aus
->          newty  = pity (mkTel (unN $ valueOf pn) (evTm gUnlifted) [] args)
+>     let newty  = pity (mkTel (unN $ valueOf pn) (evTm gUnlifted) [] args)
 >     newty'       <- bquoteHere newty
 >     impl :=>: _  <- make (fst (last n) ++ "-impl" :<: newty') 
 >     argrefs      <- traverse lambdaBoy args

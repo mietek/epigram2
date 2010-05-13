@@ -668,3 +668,19 @@ The |ungawa| command looks for a truly obvious thing to do, and does it.
 
 > infoDump :: ProofState String
 > infoDump = gets show
+
+
+The |getFakeMother| command returns a neutral application of a fake reference
+that represents the mother of the current location. Note that its type is
+$\lambda$-lifted over its great uncles, but it is then applied to them (as
+shared parameters).
+
+> getFakeMother :: Bool -> ProofState (EXTM :=>: VAL)
+> getFakeMother includeLast = do
+>    GirlMother (mnom := HOLE _ :<: ty) _ _ _ <- getMother
+>    aus <- getAuncles
+>    let xs = if includeLast
+>                 then boySpine aus
+>                 else init (boySpine aus)
+>        tm = P (mnom := FAKE :<: ty) $:$ xs
+>    return $ tm :=>: evTm tm

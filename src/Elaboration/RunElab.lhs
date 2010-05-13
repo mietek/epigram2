@@ -82,13 +82,9 @@ and |False| if the problem was suspended.
 
 > runElab False (ty :>: ECry e) = runElabTop (ty :>: ECry e)
 
-> runElab True (ty :>: EFake b f)           = do
->     GirlMother (nom := HOLE _ :<: ty) _ _ _ <- getMother
->     let fr = nom := FAKE :<: ty
->     xs <- if b  then  (| boySpine getAuncles |)
->                 else  (| (init . boySpine) getAuncles |)
->     let tm = P fr $:$ xs
->     runElab True . (ty :>:) . f $ tm :=>: evTm tm
+> runElab True (ty :>: EFake b f) = do
+>     tt <- getFakeMother b
+>     runElab True . (ty :>:) $ f tt
 
 > runElab False (ty :>: EFake b f) = runElabTop (ty :>: EFake b f)
 

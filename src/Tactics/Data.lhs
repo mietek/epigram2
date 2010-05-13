@@ -165,13 +165,10 @@
 >       make ("DataDesc" :<: NP descREF)
 >       goIn
 >       (d :=>: dv) <- give (SUMD (N e) (N cs'))
->       GirlMother (mnom := HOLE _ :<: ty) _ _ _ <- getMother
->       let fr = mnom := FAKE :<: ty
->       xs <- (| boySpine getAuncles |)
->       let lt = N (P fr $:$ xs)
+>       lt :=>: _ <- getFakeMother True
 >       make ("DataTy" :<: SET)
 >       goIn
->       (dty :=>: _) <- give (MU (Just lt) (N d))
+>       (dty :=>: _) <- give (MU (Just (N lt)) (N d))
 >       E r _ _ _ <- getDevEntry
 >       traverse (makeCon (N e) (N (P r $:$ oldaus))) cs
 
@@ -181,7 +178,7 @@ assigned throughout, so the label will be preserved when eliminating by inductio
 >       let indTm = P (mkRef inductionOp) :$ A (N d)
 >       indV :<: indTy <- inferHere indTm
 >       indTy' <- bquoteHere indTy
->       make ("Ind" :<: setLabel lt indTy')
+>       make ("Ind" :<: setLabel (N lt) indTy')
 >       goIn
 >       give (N indTm)
 >       
