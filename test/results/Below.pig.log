@@ -1,0 +1,31 @@
+Made.
+Let there be Below.
+Eliminated and simplified.
+Let there be BH.
+Going to previous goal...
+Ta.
+Eliminated. Subgoals awaiting work...
+Thank you.
+Simplified.
+Ta.
+Simplified.
+Ta.
+Thank you.
+Going to next goal...
+Simplified.
+Ta.
+Simplified.
+Ta.
+Simplified.
+Ta.
+Going to root...
+Made.
+Made.
+Made.
+Sig ()
+Sig (Sig (Sig () ; Q 'zero) ;)
+Sig (Sig (Sig (Sig (Sig () ; Q 'zero) ;) ; Q ('suc 'zero)) ;)
+Sig (Sig (Sig (Sig (Sig (Sig (Sig () ; Q 'zero) ;) ; Q ('suc 'zero)) ;) ; Q ('suc ('suc 'zero))) ;)
+Made.
+Sig (Sig (Sig (Sig () ;) ; Q ('leaf 'zero)) ; Sig (Sig (Sig (Sig (Sig () ;) ; Q ('leaf ('suc 'zero))) ; Sig (Sig (Sig () ;) ; Q ('leaf ('suc ('suc 'zero)))) ;) ; Q ('node ('leaf ('suc 'zero)) ('leaf ('suc ('suc 'zero))))) ;)
+Loaded.
