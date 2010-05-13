@@ -1,0 +1,15 @@
+module M ;
+lambda A : Set ; 
+let f (a : A) : A ;
+root ;
+scheme M.f ;
+infer M.f ;
+scheme M.f.f ;
+infer M.f.f ;
+infer M.f.f./ ;
+in ;
+scheme f ;
+infer f ;
+scheme f.f ;
+infer f.f ;
+infer f.f./ ;

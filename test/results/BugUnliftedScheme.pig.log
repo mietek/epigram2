@@ -1,0 +1,16 @@
+Made module.
+Made lambda boy!
+Let there be f.
+Going to root...
+(A : Set) (a : A) : A
+(A : Set)(a : A) -> A
+(A : Set) (a : A) {c : < M.f A a : A >} : A
+(A : Set)(a : A) -> A
+(A : Set)(a : A)(c : < M.f A a : A >) -> A
+Going in...
+(a : A) : A
+(a : A) -> A
+(a : A) {c : < f a : A >} : A
+(a : A) -> A
+(a : A)(c : < f a : A >) -> A
+Loaded.

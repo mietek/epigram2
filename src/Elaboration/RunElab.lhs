@@ -24,6 +24,7 @@
 > import ProofState.ProofState
 > import ProofState.ProofKit
 
+> import DisplayLang.DisplayTm
 > import DisplayLang.Naming
 
 > import Tactics.PropSimp
@@ -91,10 +92,11 @@ and |False| if the problem was suspended.
 
 > runElab top (ty :>: EResolve rn f) = do
 >     (ref, as, ms) <- resolveHere rn
->     let tm = P ref $:$ as
+>     let  tm   = P ref $:$ as
+>          ms'  = (| (flip applyScheme as) ms |)
 >     (tmv :<: tyv) <- inferHere tm
 >     tyv'  <- bquoteHere tyv
->     runElab top (ty :>: f (PAIR tyv' (N tm) :=>: PAIR tyv tmv, ms))
+>     runElab top (ty :>: f (PAIR tyv' (N tm) :=>: PAIR tyv tmv, ms'))
 >   
 
 > runElab top (ty :>: EAskNSupply f) = do

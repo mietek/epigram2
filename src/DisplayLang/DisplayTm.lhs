@@ -19,6 +19,7 @@
 > import Features.Features ()
 
 > import Evidences.Tm
+> import Evidences.Mangler
 
 %endif
 
@@ -249,6 +250,22 @@ interpret $\Pi$-bindings:
 
 > schemeToInDTm :: Scheme (InDTm p x) -> InDTm p x
 > schemeToInDTm = schemeToType DPIV
+
+
+Schemes are stored fully $\lambda$-lifted, so we may need to apply them to a spine
+of shared parameters:
+
+> applyScheme :: Scheme INTM -> Spine {TT} REF -> Scheme INTM
+> applyScheme sch [] = sch
+> applyScheme (SchExplicitPi (x :<: SchType s) schT) (A (NP r) : rs) =
+>     applyScheme (underScheme 0 r schT) rs
+>   where
+>     underScheme :: Int -> REF -> Scheme INTM -> Scheme INTM
+>     underScheme n r (SchType ty) = SchType (under n r %% ty)
+>     underScheme n r (SchExplicitPi (x :<: schS) schT) =
+>         SchExplicitPi (x :<: underScheme n r schS) (underScheme (n+1) r schT)
+>     underScheme n r (SchImplicitPi (x :<: s) schT) =
+>         SchImplicitPi (x :<: under n r %% s) (underScheme (n+1) r schT)
 
 
 \subsection{Sizes}

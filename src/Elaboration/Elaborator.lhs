@@ -167,7 +167,7 @@ then convert the module into a goal with the scheme assigned.
 
 >     make (x ++ "-type" :<: SET)
 >     goIn
->     (sch', ty :=>: _) <- elabScheme B0 sch
+>     (sch', ty :=>: _) <- elabLiftedScheme sch
 >     moduleToGoal (N ty)     
 >     putMotherScheme sch'
 
@@ -175,18 +175,21 @@ Now we add a definition with the same name as the function being defined,
 to handle recursive calls. This has the same arguments as the function,
 plus an implicit labelled type that provides evidence for the recursive call.
 
->     pn :=>: _ <- getFakeMother True
->     let schCall = makeCall pn 0 sch'
->     make (x :<: schemeToInTm schCall)
+>     GirlMother (mnom := HOLE _ :<: ty) _ _ _ <- getMother
+>     pn :=>: _ <- getFakeMother True     
+>     let schCall = makeCall (P $ mnom := FAKE :<: ty) 0 sch'
+>     us <- (|boySpine getAuncles|)
+>     let schCallLocal = applyScheme schCall us
+>     make (x :<: schemeToInTm schCallLocal)
 >     goIn
 >     putMotherScheme schCall
->     refs <- traverse lambdaBoy (schemeNames schCall)
+>     refs <- traverse lambdaBoy (schemeNames schCallLocal)
 >     give (N (P (last refs) :$ Call (N (pn $## map NP (init refs)))))
 
 For now we just call |elabProgram| to set up the remainder of the programming
 problem. This could be implemented more cleanly, but it works.
 
->     elabProgram (schemeNames sch')
+>     elabProgram (init $ schemeNames schCallLocal)
 >   where
 
 Sorry for the horrible de Bruijn index mangling.
@@ -256,6 +259,18 @@ plus [
 
 
 \subsection{Elaborating schemes}
+
+> elabLiftedScheme :: Scheme InDTmRN -> ProofState (Scheme INTM, EXTM :=>: VAL)
+> elabLiftedScheme sch = do
+>     aus <- getAuncles
+>     (sch', tt) <- elabScheme aus sch
+>     return (liftScheme aus sch', tt)
+
+> liftScheme :: Entries -> Scheme INTM -> Scheme INTM
+> liftScheme B0 sch = sch
+> liftScheme (es :< E _ (x, _) (Boy _) s) sch =
+>     liftScheme es (SchExplicitPi (x :<: SchType (es -| s)) sch)
+> liftScheme (es :< _) sch = liftScheme es sch
 
 
 > elabScheme :: Entries -> Scheme InDTmRN -> ProofState (Scheme INTM, EXTM :=>: VAL)
