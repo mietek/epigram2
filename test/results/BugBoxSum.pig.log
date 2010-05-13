@@ -1,0 +1,7 @@
+Sig ()
+Sig ()
+Sig ((s : Enum (v !)) -> P (v - ! s) ;)
+Sig (P (v !) ; P (v - !) ;)
+Sig ((s : v !) -> P (v - ! s) ;)
+Sig ((s : v !) -> P (v - ! s) ;)
+Loaded.
