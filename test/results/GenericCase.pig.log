@@ -1,0 +1,13 @@
+Made.
+Made.
+Let there be f.
+Eliminated and simplified.
+Hurrah!
+Hurrah!
+Hurrah!
+Hurrah!
+Hurrah!
+Hurrah!
+Going to root...
+'sigmaD (Enum ['zero 'suc]) (\ mkRef -> switchD ['zero 'suc] [('constD (Sig ())) 'idD] mkRef)
+Loaded.
