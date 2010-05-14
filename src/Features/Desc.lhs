@@ -106,22 +106,22 @@
 >                         VAL -> VAL,
 >                         VAL -> VAL -> VAL,
 >                         VAL -> VAL -> VAL,
->                         VAL -> VAL -> VAL,
 >                         VAL -> VAL -> VAL)
 
 
 The |mkLazyDescDef| function lazily eliminates a desc value (i.e. |d| such that
 |desc :>: CON d|. If the tag is canonical, it calls the corresponding case in
 the dispatch table with the relevant arguments; otherwise, it cannot compute,
-so it returns a term on the |Left|.
+so it returns a term on the |Left|. Note that finite sums are handled using the
+case for sigma.
 
 >   mkLazyDescDef :: VAL -> DescDispatchTable -> Either NEU VAL
->   mkLazyDescDef arg (idCase, constCase, sumCase, prodCase, sigmaCase, piCase) =
+>   mkLazyDescDef arg (idCase, constCase, prodCase, sigmaCase, piCase) =
 >       let args = arg $$ Snd in
 >         case arg $$ Fst of      
 >           IDN     -> Right $ idCase
 >           CONSTN  -> Right $ constCase  (args $$ Fst)
->           SUMN    -> Right $ sumCase    (args $$ Fst) (args $$ Snd $$ Fst)
+>           SUMN    -> Right $ sigmaCase  (ENUMT (args $$ Fst)) (args $$ Snd $$ Fst)
 >           PRODN   -> Right $ prodCase   (args $$ Fst) (args $$ Snd $$ Fst)
 >           SIGMAN  -> Right $ sigmaCase  (args $$ Fst) (args $$ Snd $$ Fst)
 
@@ -144,7 +144,6 @@ so it returns a term on the |Left|.
 >       dOpRun :: [VAL] -> Either NEU VAL
 >       dOpRun [CON arg, _X]  = mkLazyDescDef arg (idCase _X, 
 >                                                  constCase _X, 
->                                                  sumCase _X, 
 >                                                  prodCase _X, 
 >                                                  sigmaCase _X, 
 >                                                  piCase _X)
@@ -152,9 +151,6 @@ so it returns a term on the |Left|.
 >           
 >       idCase _X          = _X
 >       constCase _X _Z    = _Z
->       sumCase _X _E _B   = SIGMA (ENUMT _E) .
->                                  L $ HF "x" $ \x ->
->                                 descOp @@ [ switchDOp @@ [_E, _B, x]  , _X]
 >       prodCase _X _D _D' = TIMES  (descOp @@ [ _D , _X ])
 >                                   (descOp @@ [ _D', _X ])
 >       sigmaCase _X _S _T = SIGMA  _S . 
@@ -182,17 +178,12 @@ so it returns a term on the |Left|.
 >       boxOpRun :: [VAL] -> Either NEU VAL
 >       boxOpRun [CON arg, _X, _P, x]  = mkLazyDescDef arg (idCase _X _P x, 
 >                                                       constCase _X _P x, 
->                                                       sumCase _X _P x, 
 >                                                       prodCase _X _P x, 
 >                                                       sigmaCase _X _P x, 
 >                                                       piCase _X _P x)
 >       boxOpRun [N x,           _,_,_] = Left x
 >       idCase _X _P x = _P $$ A x
 >       constCase _X _P x _Z = _Z
->       sumCase _X _P ab _E _B = 
->           let a = ab $$ Fst
->               b = ab $$ Snd
->           in boxOp @@ [switchDOp @@ [_E, _B, a], _X, _P, b]
 >       prodCase _X _P dd' _D _D' = 
 >           let d  = dd' $$ Fst
 >               d' = dd' $$ Snd 
@@ -226,7 +217,6 @@ so it returns a term on the |Left|.
 >       mapBoxOpRun :: [VAL] -> Either NEU VAL
 >       mapBoxOpRun [CON arg, _X, _P, _R, x]  = mkLazyDescDef arg (idCase _X _P _R x, 
 >                                                              constCase _X _P _R x, 
->                                                              sumCase _X _P _R x, 
 >                                                              prodCase _X _P _R x, 
 >                                                              sigmaCase _X _P _R x, 
 >                                                              piCase _X _P _R x)
@@ -234,10 +224,6 @@ so it returns a term on the |Left|.
 >
 >       idCase _X _P _R v = _R $$ A v
 >       constCase _X _P _R z _Z = z
->       sumCase _X _P _R ab _E _B =
->           let a = ab $$ Fst
->               b = ab $$ Snd
->           in mapBoxOp @@ [switchDOp @@ [_E, _B, a], _X, _P, _R, b]
 >       prodCase _X _P _R dd' _D _D' = 
 >           let d  = dd' $$ Fst
 >               d' = dd' $$ Snd 
@@ -269,7 +255,6 @@ so it returns a term on the |Left|.
 >         mapOpRun :: [VAL] -> Either NEU VAL
 >         mapOpRun [CON arg, _X, _Y, f, v]  = mkLazyDescDef arg (idCase _X _Y f v, 
 >                                                            constCase _X _Y f v, 
->                                                            sumCase _X _Y f v, 
 >                                                            prodCase _X _Y f v, 
 >                                                            sigmaCase _X _Y f v, 
 >                                                            piCase _X _Y f v)
@@ -277,10 +262,6 @@ so it returns a term on the |Left|.
 >
 >         idCase _X _Y sig x = sig $$ A x
 >         constCase _X _Y sig z _Z = z
->         sumCase _X _Y sig ab _E _B = 
->             let a = ab $$ Fst
->                 b = ab $$ Snd
->             in PAIR a (mapOp @@ [ switchDOp @@ [_E, _B, a], _X, _Y, sig, b])
 >         prodCase _X _Y sig dd' _D _D' = 
 >             let d  = dd' $$ Fst
 >                 d' = dd' $$ Snd 
@@ -530,6 +511,8 @@ appropriate place when the proof state is printed.
 >                   return ((DC $ fmap termOf cc) :=>: evTm tm)
 
 
+
+
 > import -> InDTmConstructors where
 
 > import -> InDTmPretty where
@@ -546,9 +529,9 @@ appropriate place when the proof state is printed.
 
 > import -> BootstrapDesc where
 >   inDesc :: VAL
->   inDesc = SIGMAD  (ENUMT constructors)
->                     (L $ HF "c" $ \c -> 
->                      switchDOp @@ [ constructors , cases , c])
+>   inDesc = SUMD constructors
+>                (L $ HF "c" $ \c -> 
+>                    switchDOp @@ [ constructors , cases , c])
 >       where constructors = (CONSE (TAG "idD")
 >                            (CONSE (TAG "constD")
 >                            (CONSE (TAG "sumD")
@@ -559,14 +542,14 @@ appropriate place when the proof state is printed.
 >             cases = (PAIR (CONSTD UNIT) 
 >                     (PAIR (SIGMAD SET (L $ K $ CONSTD UNIT))
 >                     (PAIR (SIGMAD enumU (L $ HF "E" $ \_E ->
->                                         (SIGMAD (branchesDOp @@ [_E]) 
->                                                 (L $ K (CONSTD UNIT)))))
+>                                       (PRODD (PID (ENUMT _E) (LK IDD))
+>                                              (CONSTD UNIT))))
 >                     (PAIR (PRODD IDD (PRODD IDD (CONSTD UNIT)))
 >                     (PAIR (SIGMAD SET (L $ HF "S" $ \_S -> 
->                                       (PRODD (PID _S (L $ K IDD)) 
+>                                       (PRODD (PID _S (LK IDD)) 
 >                                              (CONSTD UNIT))))
 >                     (PAIR (SIGMAD SET (L $ HF "S" $ \_S -> 
->                                       (PRODD (PID _S (L $ K IDD)) 
+>                                       (PRODD (PID _S (LK IDD)) 
 >                                              (CONSTD UNIT))))
 >                      VOID))))))
 >   descFakeREF :: REF
@@ -587,6 +570,6 @@ and a function from the enumeration to descriptions.
 \question{Where should this live?}
 
 >   sumlike :: VAL -> Maybe (VAL, VAL -> VAL)
->   sumlike (SUMD e b)            = Just (e, \tv -> switchDOp @@ [e, b, tv])
+>   sumlike (SUMD e b)            = Just (e, (b $$) . A)
 >   sumlike (SIGMAD (ENUMT e) f)  = Just (e, (f $$) . A)
 >   sumlike _                     = Nothing

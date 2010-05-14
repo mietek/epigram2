@@ -16,11 +16,8 @@ simplify ;
 simplify ;
 = Sig () ;
 
-give con \ e -> con \ b -> con con con \ t ys r -> ? ;
--- This recursive call is not available because of the broken definition of SUMD
--- (see issue 9).
--- = BH (switchD e b t) ys r ;
-next ;
+give con \ e -> con \ b -> con con \ rec -> con con \ t ys r -> ? ;
+= BH./ (b t) ys r (rec t ys r) ;
 
 simplify ;
 = Sig (BH xf^5 xf^1 xf ; BH xf^4 ys r) ;

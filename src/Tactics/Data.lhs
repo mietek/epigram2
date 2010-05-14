@@ -164,7 +164,7 @@
 >       (cs' :=>: _) <- give (foldr PAIR VOID (map (\(_,_,c,_,_) -> c) cs))
 >       make ("DataDesc" :<: NP descREF)
 >       goIn
->       (d :=>: dv) <- give (SUMD (N e) (N cs'))
+>       (d :=>: dv) <- give (SUMD (N e) (L ("s" :. N (switchDOp :@ [N e, N cs', NV 0]))))
 >       lt :=>: _ <- getFakeMother True
 >       make ("DataTy" :<: SET)
 >       goIn

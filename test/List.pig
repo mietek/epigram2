@@ -9,12 +9,13 @@ define cons _ a as := 'cons a as ;
 root ;
 
 let sing {A : Set}(a : A) : List A ;
-define sing _ a := cons a nil ;
+define sing _ a := cons a 'nil ;
 root ;
 
 let snoc (A : Set)(as : List A)(a : A) : List A ;
 <= List.Ind A as ;
 define snoc _ 'nil a := sing a ;
+next ;
 define snoc A ('cons x xs) a := cons x (snoc A xs a) ;
 root ;
 

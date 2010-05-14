@@ -11,7 +11,7 @@ let f (D : Desc) : Desc ;
 <= DescCase D ;
 define f 'idD := 'idD ;
 define f ('constD K) := 'constD K ;
-define f ('sumD e b) := 'sigmaD (Enum e) (switchD e b) ;
+define f ('sumD e b) := 'sigmaD (Enum e) b ;
 define f ('prodD D E) := 'prodD D E ;
 define f ('sigmaD S T) := 'sigmaD S T ;
 define f ('piD S T) := 'piD S T ;

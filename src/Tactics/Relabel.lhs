@@ -3,7 +3,7 @@
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE GADTs, TypeOperators, TupleSections #-}
+> {-# LANGUAGE GADTs, TypeOperators, TupleSections, PatternGuards #-}
 
 > module Tactics.Relabel where
 
@@ -19,10 +19,7 @@
 > import DisplayLang.DisplayTm
 
 > import Elaboration.ElabMonad
-> import Elaboration.RunElab
 > import Elaboration.Elaborator
-> import Elaboration.Unification
-> import Elaboration.Scheduler
 
 > import Kit.MissingLibrary
 
@@ -35,17 +32,20 @@ and refines the proof state appropriately.
 
 > relabel :: ExDTmRN -> ProofState ()
 > relabel (DP [(f, Rel 0)] ::$ ts) = do
->     _ :=>: LABEL (N l) ty <- getHoleGoal
->     let Just (r, as) = splitSpine l
->     if f == (fst . last $ refName r)
->         then do
->             ts'  <- traverse unA ts
->             n    <- matchArgs (pty r) (P r) as ts'
->             ty'  <- bquoteHere ty
->             g :=>: _ <- make ("relabel" :<: LABEL (N n) ty')
->             give' (N g)
->             goIn
->         else  throwError' $ err "relabel: mismatched function name!"
+>     _ :=>: tau <- getHoleGoal
+>     case tau of
+>         LABEL (N l) ty -> do
+>             let Just (r, as) = splitSpine l
+>             if f == (fst . last $ refName r)
+>                 then do
+>                     ts'  <- traverse unA ts
+>                     n    <- matchArgs (pty r) (P r) as ts'
+>                     ty'  <- bquoteHere ty
+>                     g :=>: _ <- make ("relabel" :<: LABEL (N n) ty')
+>                     give' (N g)
+>                     goIn
+>                 else  throwError' $ err "relabel: mismatched function name!"
+>         _ -> throwError' $ err "relabel: goal is not a labelled type!"
 > relabel _ =   throwError' $ err "relabel: malformed relabel target!"
 
 > unA :: Elim a -> ProofState a
