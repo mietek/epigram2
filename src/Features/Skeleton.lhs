@@ -9,7 +9,7 @@
 %endif
 
 
-\subsection{Plugging Canonical terms in}
+\subsection{Plugging in canonical forms}
 
 > import -> CanConstructors where
 
@@ -29,7 +29,7 @@
 
 > import -> CanHalfZip where
 
-\subsection{Plugging Eliminators in}
+\subsection{Plugging in eliminators}
 
 > import -> ElimTyRules where
 
@@ -41,7 +41,7 @@
 
 > import -> ElimPretty where
 
-\subsection{Plugging Operators in}
+\subsection{Plugging in operators}
 
 > import -> Operators where
 
@@ -49,11 +49,13 @@
 
 > import -> OpCode where
 
-\subsection{Plugging Axioms in}
+\subsection{Plugging in axioms and primitives}
 
 > import -> Axioms where
 
 > import -> AxCode where
+
+> import -> Primitives where
 
 \subsection{Extending the type-checker}
 
@@ -69,7 +71,7 @@
 
 > import -> QuotientDefinitions where
 
-\subsection{Extending the Display Language}
+\subsection{Extending the display language}
 
 > import -> InDTmConstructors where
 
@@ -78,6 +80,8 @@
 > import -> InDTmPretty where
 
 > import -> Pretty where
+
+\subsection{Extending the concrete syntax}
 
 > import -> KeywordConstructors where
 
@@ -91,10 +95,8 @@
 
 > import -> ParserCode where
 
+\subsection{Extending the elaborator and distiller}
+
 > import -> MakeElabRules where
  
 > import -> DistillRules where
-
-\subsection{Adding Primitive references in Cochon}
-
-> import -> Primitives where
