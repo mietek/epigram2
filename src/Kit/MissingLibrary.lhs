@@ -33,6 +33,9 @@
 > (^$) :: (Traversable f, Applicative i) => (s -> i t) -> f s -> i (f t)
 > (^$) = traverse
 
+> iter :: (a -> b -> b) -> [a] -> b -> b
+> iter = flip . Prelude.foldr
+
 
 \subsection{Indicator Function}
 

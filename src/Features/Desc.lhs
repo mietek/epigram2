@@ -441,6 +441,8 @@ so it returns a term on the |Left|.
 > import -> KeywordTable where
 >   key KwMu        = "Mu"
 
+> import -> InDTmParsersSpecial where
+>   (AndSize, (|(DMU Nothing) (%keyword KwMu%) (sizedInDTm ArgSize)|)) :
 
 
 > import -> MakeElabRules where

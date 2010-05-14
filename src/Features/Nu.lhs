@@ -98,6 +98,12 @@
 >   key KwNu        = "Nu"
 >   key KwCoIt      = "CoIt"
 
+> import -> InDTmParsersSpecial where
+>   (AndSize, (|(DNU Nothing) (%keyword KwNu%) (sizedInDTm ArgSize)|)) :
+>   (AndSize, (|(DCOIT DU) (%keyword KwCoIt%)
+>       (sizedInDTm ArgSize) (sizedInDTm ArgSize) (sizedInDTm ArgSize)|)) :
+
+
 
 
 > import -> MakeElabRules where

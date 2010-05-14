@@ -90,3 +90,9 @@
 > import -> KeywordTable where
 >   key KwINu       = "INu"
 >   key KwICoIt     = "ICoIt"
+
+> import -> InDTmParsersSpecial where
+>   (AndSize, (|DINU (%keyword KwINu%) (sizedInDTm ArgSize) (sizedInDTm ArgSize) (sizedInDTm ArgSize)|)) :
+>   (AndSize, (|(DICOIT DU) (%keyword KwICoIt%)
+>       (sizedInDTm ArgSize) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
+>       (sizedInDTm ArgSize) (sizedInDTm ArgSize)|)) :

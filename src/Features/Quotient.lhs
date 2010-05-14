@@ -118,6 +118,9 @@ relation over |A|.
 > import -> KeywordTable where
 >   key KwQuotient  = "Quotient"
 
+> import -> InDTmParsersSpecial where
+>   (AndSize, (|DQUOTIENT (%keyword KwQuotient%) (sizedInDTm ArgSize) (sizedInDTm ArgSize) (sizedInDTm ArgSize)|)) :
+
 
 As a bit of syntactic sugar, we elaborate |con| as |COMPOSITE| and |[x]| as
 |CLASS x|. \question{Why not just use |CON| rather than |COMPOSITE| everywhere?}

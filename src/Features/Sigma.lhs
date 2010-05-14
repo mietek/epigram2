@@ -167,6 +167,39 @@
 >   key KwSnd       = "-"
 >   key KwSig       = "Sig"
 
+> import -> ElimParsers where
+>   (AppSize, (| Fst (%keyword KwFst%) |)) :
+>   (AppSize, (| Snd (%keyword KwSnd%) |)) :
+
+> import -> InDTmParsersSpecial where
+>   (ArgSize, (|id (bracket Square tuple)|)) :
+>   (ArgSize, (|id (%keyword KwSig%) (bracket Round sigma)|)) :
+>   (ArgSize, (|DSIGMA (%keyword KwSig%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)|)) :
+
+> import -> ParserCode where
+>     tuple :: Parsley Token InDTmRN
+>     tuple =
+>         (|DPAIR (sizedInDTm ArgSize) (| id (%keyword KwComma%) pInDTm
+>                                       | id tuple |)
+>          |DVOID (% pEndOfStream %)
+>          |)
+
+>     sigma :: Parsley Token InDTmRN
+>     sigma = (|mkSigma (optional (ident <* keyword KwAsc)) pInDTm sigmaMore
+>              |DUNIT (% pEndOfStream %)
+>              |)
+
+>     sigmaMore :: Parsley Token InDTmRN
+>     sigmaMore = (|id (% keyword KwSemi %) (sigma <|> pInDTm)
+>                  |(\p s -> mkSigma Nothing (DPRF p) s) (% keyword KwPrf %) pInDTm sigmaMore
+>                  |(\x -> DPRF x) (% keyword KwPrf %) pInDTm
+>                  |)
+
+>     mkSigma :: Maybe String -> InDTmRN -> InDTmRN -> InDTmRN
+>     mkSigma Nothing s t = DSIGMA s (DL (DK t))
+>     mkSigma (Just x) s t = DSIGMA s (DL (x ::. t))
+
+
 
 In order to make programs as cryptic as possible, you can use |con| in the
 display language to generate a constant function from unit or curry a function

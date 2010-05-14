@@ -152,3 +152,7 @@
 > import -> KeywordTable where
 >   key KwMonad     = "Monad"
 >   key KwReturn    = "`"  -- rename me
+
+> import -> InDTmParsersSpecial where
+>   (ArgSize, (|DRETURN (%keyword KwReturn%) (sizedInDTm ArgSize)|)) :
+>   (AndSize, (|DMONAD (%keyword KwMonad%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)|)) :

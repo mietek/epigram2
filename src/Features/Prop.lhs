@@ -189,6 +189,20 @@ Elim forms inherited from elsewhere
 >   key KwInh       = "Inh"
 >   key KwWit       = "wit"
 
+> import -> InDTmParsersSpecial where
+>   (ArgSize, (|DPROP     (%keyword KwProp%)|)) :
+>   (ArgSize, (|DABSURD   (%keyword KwAbsurd%)|)) :
+>   (ArgSize, (|DTRIVIAL  (%keyword KwTrivial%)|)) :
+>   (AndSize, (|DPRF      (%keyword KwPrf%) (sizedInDTm AndSize)|)) :
+>   (AndSize, (|DINH      (%keyword KwInh%) (sizedInDTm ArgSize)|)) :
+>   (AndSize, (|DWIT      (%keyword KwWit%) (sizedInDTm ArgSize)|)) :
+>   (AndSize, (|DALL      (%keyword KwAll%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)|)) :
+
+> import -> InDTmParsersMore where
+>   (AndSize, \ s -> (| (DAND s) (%keyword KwAnd%) (sizedInDTm AndSize)  |)) :
+>   (ArrSize, \ s -> (| (DIMP s) (%keyword KwImp%) (sizedInDTm PiSize)   |)) :
+
+
 
 > import -> DistillRules where
 >   distill es (PRF TRIVIAL :>: _) = return (DU :=>: VOID)

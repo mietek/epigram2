@@ -71,10 +71,6 @@
 
 \subsection{Extending the Display Language}
 
-> import -> MakeElabRules where
- 
-> import -> DistillRules where
-
 > import -> InDTmConstructors where
 
 > import -> InDTmTraverse where
@@ -82,6 +78,22 @@
 > import -> InDTmPretty where
 
 > import -> Pretty where
+
+> import -> KeywordConstructors where
+
+> import -> KeywordTable where
+
+> import -> ElimParsers where
+
+> import -> InDTmParsersSpecial where
+
+> import -> InDTmParsersMore where
+
+> import -> ParserCode where
+
+> import -> MakeElabRules where
+ 
+> import -> DistillRules where
 
 \subsection{Adding Primitive references in Cochon}
 

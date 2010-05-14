@@ -346,6 +346,14 @@
 >   key KwIInd1     = "IInd1"
 >   key KwIInd      = "IND"
 
+> import -> InDTmParsersSpecial where
+>   (AndSize, (|(DIMU Nothing) (%keyword KwIMu%) (sizedInDTm ArgSize) (sizedInDTm ArgSize) (sizedInDTm ArgSize)|)) :
+>   (AndSize, (|DIDESC (%keyword KwIDesc%) (sizedInDTm ArgSize)|)) :
+>   (AndSize, (|DIDONE (%keyword KwIDone%) (sizedInDTm ArgSize)|)) :
+>   (AndSize, (|DIARG (%keyword KwIArg%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)|)) :
+>   (AndSize, (|DIIND1 (%keyword KwIInd1%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)|)) :
+>   (AndSize, (|DIIND (%keyword KwIInd%) (sizedInDTm ArgSize) (sizedInDTm ArgSize) (sizedInDTm ArgSize)|)) :
+
 
 
 > import -> MakeElabRules where

@@ -53,7 +53,10 @@
 >   key KwUId       = "UId"
 >   key KwTag       = "'"
 
-
+> import -> InDTmParsersSpecial where
+>   (ArgSize, (|DUID (%keyword KwUId%)|)) :
+>   (ArgSize, (|DTAG (%keyword KwTag%) ident|)) :
+>   (AppSize, (|DTag (%keyword KwTag%) ident (many (sizedInDTm ArgSize))|)) :
 
 > import -> InDTmConstructors where
 >   DTag :: String -> [InDTm p x] -> InDTm p x

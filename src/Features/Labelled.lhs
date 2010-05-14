@@ -84,6 +84,12 @@
 >   key KwLabelEnd  = ">"
 >   key KwRet       = "return"  -- rename me
 
+> import -> ElimParsers where
+>   (AppSize, (| Call (%keyword KwCall%) ~DU |)) :
+
+> import -> InDTmParsersSpecial where
+>   (ArgSize, (|DLABEL (%keyword KwLabel%) (sizedInDTm AppSize) (%keyword KwAsc%) (sizedInDTm ArgSize) (%keyword KwLabelEnd%)|)) :
+>   (ArgSize, (|DLRET (%keyword KwRet%) (sizedInDTm ArgSize)|)) :
 
 
 \question{The following is all commented out. Is it detritus?}

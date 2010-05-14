@@ -186,6 +186,15 @@
 >   key KwEnum      = "Enum"
 >   key KwPlus      = "+"
 
+> import -> InDTmParsersSpecial where
+>   (ArgSize, (|mkNum (|read digits|) (optional $ (keyword KwPlus) *> sizedInDTm ArgSize)|)) :
+>   (AndSize, (|DENUMT (%keyword KwEnum%) (sizedInDTm ArgSize)|)) :
+
+> import -> ParserCode where
+>     mkNum :: Int -> Maybe InDTmRN -> InDTmRN
+>     mkNum 0 Nothing = DZE
+>     mkNum 0 (Just t) = t
+>     mkNum n t = DSU (mkNum (n-1) t)
 
 A function from an enumeration is equivalent to a list, so the elaborator can
 turn lists into functions like this:

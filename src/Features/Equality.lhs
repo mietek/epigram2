@@ -108,15 +108,6 @@ by |DEqBlue| defined below.
 >   ("refl", refl) :
 
 
-> import -> KeywordConstructors where
->   KwEqGreen  :: Keyword -- redundant?
->   KwEqBlue   :: Keyword
-
-> import -> KeywordTable where
->   key KwEqGreen   = "<->"
->   key KwEqBlue    = "=="
-
-
 In the display syntax, a blue equality can be between arbitrary ExDTms,
 rather than ascriptions. To allow this, we add a suitable constructor |DEqBlue|
 to InDTm, along with appropriate elaboration and distillation rules.
@@ -132,6 +123,23 @@ to InDTm, along with appropriate elaboration and distillation rules.
 > import -> InDTmTraverse where
 >   traverseDTIN f (DEqBlue t u) =
 >     (| DEqBlue (traverseDTEX f t) (traverseDTEX f u) |)
+
+
+> import -> KeywordConstructors where
+>   KwEqBlue :: Keyword
+
+> import -> KeywordTable where
+>   key KwEqBlue = "=="
+
+> import -> InDTmParsersMore where
+>   (EqSize, \ t -> (| DEqBlue  (pFilter isEx (pure t)) (%keyword KwEqBlue%)
+>                               (pFilter isEx (sizedInDTm (pred EqSize))) |)) :
+
+> import -> ParserCode where
+>   isEx :: InDTmRN -> Maybe ExDTmRN
+>   isEx (DN tm)  = Just tm
+>   isEx _        = Nothing
+
 
 > import -> MakeElabRules where
 >   makeElab' loc (PROP :>: DEqBlue t u) = do

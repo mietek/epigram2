@@ -23,9 +23,12 @@
 
 %endif
 
-The Cochon's terms parser eats structured Tokens, as defined in
-@Lexer.lhs@. The code uses the applicative parser to translate
-the grammar of terms defined in Section~\ref{sec:language}.
+The term parser eats structured |Token|s as defined in @Lexer.lhs@. It uses the
+monadic parser combinators to translate the grammar of terms defined in
+Section~\ref{sec:language}.
+
+
+\subsection{Names}
 
 A relative name is a list of idents separated by dots, and possibly
 with |^| or |_| symbols (for relative or absolute offsets).
@@ -53,10 +56,7 @@ with |^| or |_| symbols (for relative or absolute offsets).
 > pNameOffset = some (tokenFilter isDigit)
 
 
-
-> iter :: (a -> b -> b) -> [a] -> b -> b
-> iter = flip . foldr
-
+\subsection{Overall parser structure}
 
 The |pExDTm| and |pInDTm| functions start parsing at the maximum size.
 
@@ -65,6 +65,7 @@ The |pExDTm| and |pInDTm| functions start parsing at the maximum size.
 
 > pInDTm :: Parsley Token InDTmRN
 > pInDTm = sizedInDTm maxBound
+
 
 We do not allow ascriptions in the term syntax, but they are useful in
 commands, so we provide |pAscription| to parse an ascription into
@@ -82,149 +83,119 @@ appropriate type-cast.
 Each |sized| parser tries the appropriate |special| parser for the size,
 then falls back to parsing at the previous size followed by a |more| parser.
 At the smallest size, brackets must be used to start parsing from the
-largest size again.
+largest size again. Concrete syntax is matched using the lists of parsers
+defined in the following subsection.
 
 > sizedExDTm :: Size -> Parsley Token ExDTmRN
-> sizedExDTm z = (|(::$ []) (specialExDTm z) |) <|>
+> sizedExDTm z = (|(::$ []) (specialHead z) |) <|>
 >       (if z > minBound  then pLoop (sizedExDTm (pred z)) (moreExDTm z)
 >                         else bracket Round pExDTm)
 
 > sizedInDTm :: Size -> Parsley Token InDTmRN
-> sizedInDTm z = specialInDTm z <|> (| (DN . (::$ [])) (specialExDTm z) |) <|>
+> sizedInDTm z = specialInDTm z <|> (| (DN . (::$ [])) (specialHead z) |) <|>
 >       (if z > minBound  then pLoop (sizedInDTm (pred z)) (moreInEx z)
 >                         else bracket Round pInDTm)
 
-> moreInEx :: Size -> InDTmRN -> Parsley Token InDTmRN
-> moreInEx z (DN e) = DN <$> moreExDTm z e <|> moreInDTm z (DN e)
-> moreInEx z t = moreInDTm z t
-
-
-
-> specialExDTm :: Size -> Parsley Token DHEAD
-> specialExDTm ArgSize =
->   (| DType (bracket Round (keyword KwAsc *> pInDTm))
->    | DP nameParse
->    |)
-> specialExDTm z = (|)
-
-> moreExDTm :: Size -> ExDTmRN -> Parsley Token ExDTmRN
-> moreExDTm AppSize e = (e $::$) <$>
->   (| Fst (%keyword KwFst%)
->    | Snd (%keyword KwSnd%)
->    | Out (%keyword KwOut%)
->    | Call (%keyword KwCall%) ~DU
->    | A (sizedInDTm ArgSize)
->    |)
-> moreExDTm z _ = (|)
+> specialHead :: Size -> Parsley Token DHEAD
+> specialHead = sizeListParse headParsers
 
 > specialInDTm :: Size -> Parsley Token InDTmRN
-> specialInDTm ArgSize =
->     (|DSET (%keyword KwSet%) 
->      |DPROP (%keyword KwProp%)
->      |DUID (%keyword KwUId%)
->      |DABSURD (%keyword KwAbsurd%)
->      |DTRIVIAL (%keyword KwTrivial%)
->      |DQ (pFilter question ident)
->      |DU (%keyword KwUnderscore%)
->      |DCON (%keyword KwCon%) (sizedInDTm ArgSize)
->      |DRETURN (%keyword KwReturn%) (sizedInDTm ArgSize)
->      |DTAG (%keyword KwTag%) ident
->      |DLABEL (%keyword KwLabel%) (sizedInDTm AppSize) (%keyword KwAsc%) (sizedInDTm ArgSize) (%keyword KwLabelEnd%)
->      |DLRET (%keyword KwRet%) (sizedInDTm ArgSize)
->      |(iter mkDLAV) (%keyword KwLambda%) (some (ident <|> underscore)) (%keyword KwArr%) pInDTm
->      |id (bracket Square tuple)
->      |mkNum (|read digits|) (optional $ (keyword KwPlus) *> sizedInDTm ArgSize)
->      |id (%keyword KwSig%) (bracket Round sigma)
->      |DSIGMA (%keyword KwSig%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
->      |)
->   where
->     question :: String -> Maybe String
->     question ('?':s)  = Just s
->     question _        = Nothing
->
->     tuple :: Parsley Token InDTmRN
->     tuple =
->         (|DPAIR (sizedInDTm ArgSize) (| id (%keyword KwComma%) pInDTm
->                                       | id tuple |)
->          |DVOID (% pEndOfStream %)
->          |)
+> specialInDTm = sizeListParse inDTmParsersSpecial
 
->     sigma :: Parsley Token InDTmRN
->     sigma = (|mkSigma (optional (ident <* keyword KwAsc)) pInDTm sigmaMore
->              |DUNIT (% pEndOfStream %)
->              |)
+> moreInEx :: Size -> InDTmRN -> Parsley Token InDTmRN
+> moreInEx z (DN e)  = (| DN (moreExDTm z e) |) <|> moreInDTm z (DN e)
+> moreInEx z t       = moreInDTm z t
 
->     sigmaMore :: Parsley Token InDTmRN
->     sigmaMore = (|id (% keyword KwSemi %) (sigma <|> pInDTm)
->                  |(\p s -> mkSigma Nothing (DPRF p) s) (% keyword KwPrf %) pInDTm sigmaMore
->                  |(\x -> DPRF x) (% keyword KwPrf %) pInDTm
->                  |)
-
->     mkSigma :: Maybe String -> InDTmRN -> InDTmRN -> InDTmRN
->     mkSigma Nothing s t = DSIGMA s (DL (DK t))
->     mkSigma (Just x) s t = DSIGMA s (DL (x ::. t))
-
->     mkNum :: Int -> Maybe InDTmRN -> InDTmRN
->     mkNum 0 Nothing = DZE
->     mkNum 0 (Just t) = t
->     mkNum n t = DSU (mkNum (n-1) t)
-
-> specialInDTm AppSize =
->     (|DTag (%keyword KwTag%) ident (many (sizedInDTm ArgSize))
->      |)
-
-> specialInDTm AndSize =
->     (|DPRF (%keyword KwPrf%) (sizedInDTm AndSize)
->      |(DMU Nothing) (%keyword KwMu%) (sizedInDTm ArgSize)
->      |(DIMU Nothing) (%keyword KwIMu%) (sizedInDTm ArgSize) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
->      |DIDESC (%keyword KwIDesc%) (sizedInDTm ArgSize)
->      |DIDONE (%keyword KwIDone%) (sizedInDTm ArgSize)
->      |DIARG (%keyword KwIArg%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
->      |DIIND1 (%keyword KwIInd1%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
->      |DIIND (%keyword KwIInd%) (sizedInDTm ArgSize) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
->      |(DNU Nothing) (%keyword KwNu%) (sizedInDTm ArgSize)
->      |DINU (%keyword KwINu%) (sizedInDTm ArgSize) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
->      |DINH (%keyword KwInh%) (sizedInDTm ArgSize)
->      |DWIT (%keyword KwWit%) (sizedInDTm ArgSize)
->      |(DCOIT DU) (%keyword KwCoIt%)
->         (sizedInDTm ArgSize) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
->      |(DICOIT DU) (%keyword KwICoIt%)
->         (sizedInDTm ArgSize) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
->         (sizedInDTm ArgSize) (sizedInDTm ArgSize)
->      |DMONAD (%keyword KwMonad%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
->      |DQUOTIENT (%keyword KwQuotient%) (sizedInDTm ArgSize) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
->      |DENUMT (%keyword KwEnum%) (sizedInDTm ArgSize)
->      |DPI (%keyword KwPi%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
->      |DALL (%keyword KwAll%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)
->      |)
-
-> specialInDTm PiSize =
->     (|(flip iter)  (some (bracket Round (|(ident <|> underscore) , (%keyword KwAsc%) pInDTm|)))
->                    (| (uncurry mkDPIV) (%keyword KwArr%) | (uncurry mkDALLV) (%keyword KwImp%) |)
->                    pInDTm |)
-
-> specialInDTm z = (|)
+> moreExDTm :: Size -> ExDTmRN -> Parsley Token ExDTmRN
+> moreExDTm s e = (| (e $::$) (sizeListParse elimParsers s) |)
 
 > moreInDTm :: Size -> InDTmRN -> Parsley Token InDTmRN
-> moreInDTm EqSize t =
->   (| DEqBlue  (pFilter isEx (pure t)) (%keyword KwEqBlue%)
->              (pFilter isEx (sizedInDTm (pred EqSize)))
->    |) <|> moreInDTm (pred EqSize) t
-> moreInDTm AndSize s =
->   (| (DAND s) (%keyword KwAnd%) (sizedInDTm AndSize)
->    |)
-> moreInDTm ArrSize s =
->   (| (DARR s) (%keyword KwArr%) (sizedInDTm PiSize)
->    | (DIMP s) (%keyword KwImp%) (sizedInDTm PiSize)
->    |)
-> moreInDTm z _ = (|)
+> moreInDTm = paramListParse inDTmParsersMore
 
 
-> isEx :: InDTmRN -> Maybe ExDTmRN
-> isEx (DN tm)  = Just tm
-> isEx _        = Nothing
+\subsection{Lists of sized parsers}
+
+A |SizedParserList| is a list of parsers associated to every size; a
+|ParamParserList| allows the parser to depend on a parameter.
+
+> type SizedParserList a    = [(Size, [Parsley Token a])]
+> type ParamParserList a b  = [(Size, [a -> Parsley Token b])]
+
+We can construct such a list from a list of size-parser pairs thus:
+
+> arrange :: [(Size, b)] -> [(Size, [b])]
+> arrange xs = map (\ s -> (s,  pick s xs)) (enumFromTo minBound maxBound)
+>   where
+>     pick :: Eq a => a -> [(a, b)] -> [b]
+>     pick x = concatMap (\ (a , b) -> if a == x then [b] else [])
+
+To parse using a list at a particular size, we try all the parsers at that size
+in order:
+
+> sizeListParse :: SizedParserList a -> Size -> Parsley Token a
+> sizeListParse sps s = pTryList . unJust $ lookup s sps
+
+> paramListParse :: ParamParserList a b -> Size -> a -> Parsley Token b
+> paramListParse sfs s a = pTryList . map ($ a) . unJust $ lookup s sfs
+
+> unJust :: Maybe a -> a
+> unJust (Just x) = x
+
+> pTryList :: [Parsley Token a] -> Parsley Token a
+> pTryList (p:ps)  = p <|> pTryList ps
+> pTryList []      = (|)
+
+Now we define the lists of parsers that actually match bits of the concrete
+syntax. Note that each list has a corresponding aspect so features can extend
+the parser.
+
+> headParsers :: SizedParserList DHEAD
+> headParsers = arrange $ 
+>    (ArgSize, (| DType (bracket Round (keyword KwAsc *> pInDTm))|)) :
+>    (ArgSize, (| DP nameParse |)) :
+>    []
+
+> elimParsers :: SizedParserList (Elim InDTmRN)
+> elimParsers = arrange $ 
+>     import <- ElimParsers
+>   
+>     (AppSize, (| Out (%keyword KwOut%) |)) :
+>     (AppSize, (| A (sizedInDTm ArgSize) |)) :
+>     []
+      
+> inDTmParsersSpecial :: SizedParserList InDTmRN
+> inDTmParsersSpecial = arrange $ 
+>     import <- InDTmParsersSpecial
+>
+>     (ArgSize, (|DSET (%keyword KwSet%)|)) :
+>     (ArgSize, (|DQ (pFilter questionFilter ident)|)) :
+>     (ArgSize, (|DU (%keyword KwUnderscore%)|)) :
+>     (ArgSize, (|DCON (%keyword KwCon%) (sizedInDTm ArgSize)|)) :
+>     (ArgSize, (|(iter mkDLAV) (%keyword KwLambda%) (some (ident <|> underscore)) (%keyword KwArr%) pInDTm|)) :
+>     (AndSize, (|DPI (%keyword KwPi%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)|)) :
+>     (PiSize, (|(flip iter)  
+>                   (some (bracket Round 
+>                        (|(ident <|> underscore) , (%keyword KwAsc%) pInDTm|)))
+>                   (| (uncurry mkDPIV) (%keyword KwArr%)
+>                    | (uncurry mkDALLV) (%keyword KwImp%) |)
+>                   pInDTm |)) :
+>     []
+
+> inDTmParsersMore :: ParamParserList InDTmRN InDTmRN
+> inDTmParsersMore = arrange $ 
+>     import <- InDTmParsersMore
+
+>     (ArrSize, \ s -> (| (DARR s) (%keyword KwArr%) (sizedInDTm PiSize) |)) :
+>     []
 
 
+\subsection{Parser support code}
+
+> import <- ParserCode
+
+> questionFilter :: String -> Maybe String
+> questionFilter ('?':s)  = Just s
+> questionFilter _        = Nothing
 
 > underscore :: Parsley Token String
 > underscore = keyword KwUnderscore >> pure "_"
@@ -242,7 +213,7 @@ largest size again.
 > mkDALLV  x    s p = DALLV x s p
 
 
-
+\subsection{Parsing schemes}
 
 > pScheme :: Parsley Token (Scheme InDTmRN)
 > pScheme = (|mkScheme (many pSchemeBit) (%keyword KwAsc%) pInDTm|)
