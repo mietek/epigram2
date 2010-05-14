@@ -330,6 +330,24 @@
 >         mapOpSimp _ _ = empty
 
 
+> import -> KeywordConstructors where
+>   KwIMu    :: Keyword
+>   KwIDesc  :: Keyword
+>   KwIDone  :: Keyword
+>   KwIArg   :: Keyword
+>   KwIInd1  :: Keyword
+>   KwIInd   :: Keyword
+
+> import -> KeywordTable where
+>   key KwIMu       = "IMu"
+>   key KwIDesc     = "IDesc"
+>   key KwIDone     = "IDone"
+>   key KwIArg      = "IArg"
+>   key KwIInd1     = "IInd1"
+>   key KwIInd      = "IND"
+
+
+
 > import -> MakeElabRules where
 >   makeElab' loc (SET :>: DIMU Nothing iI d i) = do
 >       l   :=>: lv   <- eFake False

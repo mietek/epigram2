@@ -88,6 +88,18 @@
 >                                $$ A d0 $$ A d1 $$ A (CON q)
 >              , x ]
 
+
+
+> import -> KeywordConstructors where
+>   KwNu    :: Keyword
+>   KwCoIt  :: Keyword 
+
+> import -> KeywordTable where
+>   key KwNu        = "Nu"
+>   key KwCoIt      = "CoIt"
+
+
+
 > import -> MakeElabRules where
 >     makeElab' loc (NU l d :>: DVOID) =
 >         makeElab' loc (NU l d :>: DCON (DPAIR DZE DVOID))

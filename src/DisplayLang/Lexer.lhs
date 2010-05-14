@@ -20,7 +20,7 @@ identifiers unless they're keywords.
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE TypeSynonymInstances #-}
+> {-# LANGUAGE GADTs, TypeSynonymInstances #-}
 
 > module DisplayLang.Lexer where
 
@@ -150,40 +150,25 @@ level of abstraction, working on words instead of characters.
 
 \subsubsection{Lexing keywords}
 
-\question{Presumably, one could make an |import ->| of these things?}
-
-\question{What is a |InDTm ArgSize|? a |InDTm AndSize|?}
-
 Keywords are slightly more involved. A keyword is one of the following
 things...
 
-> data Keyword =
+> data Keyword where
 
-<     import <- KeywordConstructors
+>     import <- KeywordConstructors
 
-Punctuation used all over the place:
+>     KwAsc         :: Keyword
+>     KwComma       :: Keyword
+>     KwSemi        :: Keyword
+>     KwDefn        :: Keyword
+>     KwUnderscore  :: Keyword
 
->     KwAsc | KwComma | KwSemi | KwDefn | KwUnderscore |
+>     KwSet         :: Keyword
+>     KwPi          :: Keyword
+>     KwLambda      :: Keyword
 
-|ExDTm|s:
-
->     KwFst | KwSnd | KwOut | KwCall | KwEqGreen |
-
-|InDTm ArgSize|:
-
->     KwSet | KwProp | KwUId | KwAbsurd | KwTrivial | KwCon | KwReturn |
->     KwTag | KwLabel | KwLabelEnd | KwRet | KwLambda | KwPlus | KwSig |
->     KwIMDesc | KwIMMu | KwIMAt | KwIMPi | KwIMSigma | KwIMFSigma | KwIMProp | KwIMProd |
-
-|InDTm AndSize|:
-
->     KwPrf | KwMu | KwIMu | KwIDesc | KwIDone | KwIArg | KwIInd1 | KwIInd |
->     KwNu | KwINu | KwInh | KwWit | KwCoIt | KwICoIt | KwMonad | KwQuotient |
->     KwEnum | KwPi | KwAll |
-
-Other |InDTm|s:
-
->     KwEqBlue | KwAnd | KwArr | KwImp
+>     KwCon         :: Keyword
+>     KwOut         :: Keyword
 
 >   deriving (Bounded, Enum, Eq, Show)
 
@@ -191,70 +176,22 @@ Other |InDTm|s:
 
 > key :: Keyword -> String
 
-< import <- KeywordTable
+> import <- KeywordTable
 
-> key KwAsc       = ":"
-> key KwComma     = ","
-> key KwSemi      = ";"
-> key KwDefn      = ":="
+> key KwAsc         = ":"
+> key KwComma       = ","
+> key KwSemi        = ";"
+> key KwDefn        = ":="
 > key KwUnderscore  = "_"
 
-> key KwFst       = "!"
-> key KwSnd       = "-"
-> key KwOut       = "%"
-> key KwCall      = "call"
-> key KwEqGreen   = "<->"
+> key KwSet         = "Set"
+> key KwPi          = "Pi"
+> key KwLambda      = "\\"
 
-> key KwSet       = "Set"
-> key KwProp      = "Prop"
-> key KwUId       = "UId"
-> key KwAbsurd    = "FF"
-> key KwTrivial   = "TT"
-> key KwCon       = "con"
-> key KwReturn    = "`"
-> key KwTag       = "'"
-> key KwLabel     = "<"
-> key KwLabelEnd  = ">"
-> key KwRet       = "return"
-> key KwLambda    = "\\"
-> key KwPlus      = "+"
-> key KwSig       = "Sig"
+> key KwCon         = "con"
+> key KwOut         = "%"
 
-> key KwPrf       = ":-"
-> key KwMu        = "Mu"
-> key KwIMu       = "IMu"
-> key KwIDesc     = "IDesc"
-> key KwIDone     = "IDone"
-> key KwIArg      = "IArg"
-> key KwIInd1     = "IInd1"
-> key KwIInd      = "IND"
-> key KwNu        = "Nu"
-> key KwINu       = "INu"
-> key KwInh       = "Inh"
-> key KwWit       = "wit"
-> key KwCoIt      = "CoIt"
-> key KwICoIt     = "ICoIt"
-> key KwMonad     = "Monad"
-> key KwQuotient  = "Quotient"
-> key KwEnum      = "Enum"
-> key KwPi        = "Pi"
-> key KwAll       = "All"
-
-> key KwIMDesc    = "IMDescs"
-> key KwIMMu      = "IMMu"
-> key KwIMAt      = "IMAt"
-> key KwIMPi      = "IMPi"
-> key KwIMSigma   = "IMSigma"
-> key KwIMFSigma  = "IMFSigma"
-> key KwIMProp    = "IMProp"
-> key KwIMProd    = "IMProd"
-
-> key KwEqBlue    = "=="
-> key KwAnd       = "&&"
-> key KwArr       = "->"
-> key KwImp       = "=>"
-
-> key k           = error ("key: missing keyword " ++ show k)
+> key k             = error ("key: missing keyword " ++ show k)
 
 It is straightforward to make a translation table, |keywords|:
 

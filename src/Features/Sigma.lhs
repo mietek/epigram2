@@ -157,6 +157,17 @@
 >   coerce Unit q s = Right s
 
 
+> import -> KeywordConstructors where
+>   KwFst  :: Keyword
+>   KwSnd  :: Keyword
+>   KwSig  :: Keyword
+
+> import -> KeywordTable where
+>   key KwFst       = "!"
+>   key KwSnd       = "-"
+>   key KwSig       = "Sig"
+
+
 In order to make programs as cryptic as possible, you can use |con| in the
 display language to generate a constant function from unit or curry a function
 from a pair.

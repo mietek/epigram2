@@ -165,5 +165,30 @@ Elim forms inherited from elsewhere
 >   coerce (Prf (pP1, pP2))  q p   = Right $ q $$ Fst $$ A p
 
 
+> import -> KeywordConstructors where
+>    KwProp     :: Keyword
+>    KwAbsurd   :: Keyword
+>    KwTrivial  :: Keyword
+>    KwPrf      :: Keyword
+>    KwAnd      :: Keyword
+>    KwArr      :: Keyword
+>    KwImp      :: Keyword
+>    KwAll      :: Keyword
+>    KwInh      :: Keyword
+>    KwWit      :: Keyword
+
+> import -> KeywordTable where
+>   key KwProp      = "Prop"
+>   key KwAbsurd    = "FF"
+>   key KwTrivial   = "TT"
+>   key KwPrf       = ":-"
+>   key KwAnd       = "&&"
+>   key KwArr       = "->"
+>   key KwImp       = "=>"
+>   key KwAll       = "All"
+>   key KwInh       = "Inh"
+>   key KwWit       = "wit"
+
+
 > import -> DistillRules where
 >   distill es (PRF TRIVIAL :>: _) = return (DU :=>: VOID)

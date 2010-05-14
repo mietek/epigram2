@@ -112,6 +112,13 @@ relation over |A|.
 >     CLASS (coe @@ [_X, _Y, CON $ q $$ Fst, x])
 
 
+> import -> KeywordConstructors where
+>   KwQuotient  :: Keyword
+
+> import -> KeywordTable where
+>   key KwQuotient  = "Quotient"
+
+
 As a bit of syntactic sugar, we elaborate |con| as |COMPOSITE| and |[x]| as
 |CLASS x|. \question{Why not just use |CON| rather than |COMPOSITE| everywhere?}
 

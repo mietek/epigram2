@@ -108,6 +108,15 @@ by |DEqBlue| defined below.
 >   ("refl", refl) :
 
 
+> import -> KeywordConstructors where
+>   KwEqGreen  :: Keyword -- redundant?
+>   KwEqBlue   :: Keyword
+
+> import -> KeywordTable where
+>   key KwEqGreen   = "<->"
+>   key KwEqBlue    = "=="
+
+
 In the display syntax, a blue equality can be between arbitrary ExDTms,
 rather than ascriptions. To allow this, we add a suitable constructor |DEqBlue|
 to InDTm, along with appropriate elaboration and distillation rules.

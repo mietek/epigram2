@@ -72,6 +72,20 @@
 >       Right $ LRET $ coe @@ [t1, t2, CON (q $$ Snd), t]
 
 
+> import -> KeywordConstructors where
+>   KwCall      :: Keyword
+>   KwLabel     :: Keyword
+>   KwLabelEnd  :: Keyword
+>   KwRet       :: Keyword
+
+> import -> KeywordTable where
+>   key KwCall      = "call"
+>   key KwLabel     = "<"
+>   key KwLabelEnd  = ">"
+>   key KwRet       = "return"  -- rename me
+
+
+
 \question{The following is all commented out. Is it detritus?}
 
 <   canTy chev (ty :>: Call c tm) = do

@@ -435,6 +435,14 @@ so it returns a term on the |Left|.
 
 \subsection{Extending the Display Language}
 
+> import -> KeywordConstructors where
+>   KwMu :: Keyword
+
+> import -> KeywordTable where
+>   key KwMu        = "Mu"
+
+
+
 > import -> MakeElabRules where
 >     -- Could add rules for named constructors
 >     makeElab' loc (MU l d :>: DVOID) = 

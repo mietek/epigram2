@@ -178,6 +178,15 @@
 >     ("switch", [e, x, p, b]) -> App (Var "__switch") [x, b]
 
 
+> import -> KeywordConstructors where
+>   KwEnum  :: Keyword
+>   KwPlus  :: Keyword
+
+> import -> KeywordTable where
+>   key KwEnum      = "Enum"
+>   key KwPlus      = "+"
+
+
 A function from an enumeration is equivalent to a list, so the elaborator can
 turn lists into functions like this:
 

@@ -143,3 +143,12 @@
 >         error "FreeMonad.coerce: missing equality proof",
 >         y
 >       ]
+
+
+> import -> KeywordConstructors where
+>   KwMonad   :: Keyword
+>   KwReturn  :: Keyword
+
+> import -> KeywordTable where
+>   key KwMonad     = "Monad"
+>   key KwReturn    = "`"  -- rename me

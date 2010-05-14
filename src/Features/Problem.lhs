@@ -157,16 +157,22 @@
 \subsection{Extending the Display Language}
 
 > import -> KeywordConstructors where
->   KwProb | KwProbLabel | KwPatPi | KwSch | KwSchTy | KwExpPi | KwImpPi |
+>   KwProb       :: Keyword
+>   KwProbLabel  :: Keyword
+>   KwPatPi      :: Keyword
+>   KwSch        :: Keyword
+>   KwSchTy      :: Keyword
+>   KwExpPi      :: Keyword
+>   KwImpPi      :: Keyword
 
 > import -> KeywordTable where
->   key KwProb      = "Prob"
->   key KwProbLabe  = "ProbLabel"
->   key KwPatPi     = "PatPi"
->   key KwSch       = "Sch"
->   key KwSchTy     = "SchTy"
->   key KwExpPi     = "ExpPi"
->   key KwImpPi     = "ImpPi"
+>   key KwProb       = "Prob"
+>   key KwProbLabel  = "ProbLabel"
+>   key KwPatPi      = "PatPi"
+>   key KwSch        = "Sch"
+>   key KwSchTy      = "SchTy"
+>   key KwExpPi      = "ExpPi"
+>   key KwImpPi      = "ImpPi"
 
 > import -> MakeElabRules where
  

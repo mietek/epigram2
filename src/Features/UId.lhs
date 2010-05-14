@@ -45,6 +45,16 @@
 >   coerce UId _ u = Right u
 
 
+> import -> KeywordConstructors where
+>   KwUId  :: Keyword
+>   KwTag  :: Keyword
+
+> import -> KeywordTable where
+>   key KwUId       = "UId"
+>   key KwTag       = "'"
+
+
+
 > import -> InDTmConstructors where
 >   DTag :: String -> [InDTm p x] -> InDTm p x
 

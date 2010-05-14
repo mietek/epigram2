@@ -81,3 +81,12 @@
 >               ,L . HF "i" $ \i -> INU ity d i
 >               ,L . HF "s" $ \s -> ICOIT ity d i sty f s
 >               ,f $$ A i $$ A s]
+
+
+> import -> KeywordConstructors where
+>   KwINu    :: Keyword
+>   KwICoIt  :: Keyword
+
+> import -> KeywordTable where
+>   key KwINu       = "INu"
+>   key KwICoIt     = "ICoIt"
