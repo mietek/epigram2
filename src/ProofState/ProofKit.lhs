@@ -100,7 +100,6 @@ Similarly, |checkHere| type-checks a term using the local name supply...
 
 
 
-
 The |validateHere| performs some checks on the current location, which
 may be useful for paranoia purposes.
 
@@ -110,21 +109,21 @@ may be useful for paranoia purposes.
 >     case m of
 >         GirlMother (_ := DEFN tm :<: ty) _ _ _ -> do
 >             ty' <- bquoteHere ty
->             mc <- withNSupply $ liftError . (typeCheck $ check (SET :>: ty'))
->             mc `catchEither`  (err "validateHere: girl type failed to type-check: SET does not admit"
->                               ++ errTyVal (ty :<: SET))
+>             checkHere (SET :>: ty')
+>                 `pushError`  (err "validateHere: girl type failed to type-check: SET does not admit"
+>                              ++ errTyVal (ty :<: SET))
 >             tm' <- bquoteHere tm
->             mc <- withNSupply $ liftError . (typeCheck $ check (ty :>: tm'))
->             mc `catchEither`  (err "validateHere: definition failed to type-check:"
->                               ++ errTyVal (ty :<: SET)
->                               ++ err "does not admit"
->                               ++ errVal tm)
+>             checkHere (ty :>: tm')
+>                 `pushError`  (err "validateHere: definition failed to type-check:"
+>                              ++ errTyVal (ty :<: SET)
+>                              ++ err "does not admit"
+>                              ++ errTyVal (tm :<: ty))
 >             return ()
 >         GirlMother (_ := HOLE _ :<: ty) _ _ _ -> do
 >             ty' <- bquoteHere ty
->             mc <- withNSupply $ liftError . (typeCheck $ check (SET :>: ty'))
->             mc `catchEither` (err "validateHere: hole type failed to type-check: SET does not admit" 
->                              ++ errVal ty)
+>             checkHere (SET :>: ty')
+>                 `pushError`  (err "validateHere: hole type failed to type-check: SET does not admit" 
+>                              ++ errTyVal (ty :<: SET))
 >             return ()
 >         _ -> return ()
 
