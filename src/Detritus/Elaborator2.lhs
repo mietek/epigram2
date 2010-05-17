@@ -386,11 +386,14 @@ plus [
 > elabProgram :: [String] -> ProofState (EXTM :=>: VAL)
 > elabProgram args = do
 >     n <- getMotherName
->     (_ :=>: g) <- getHoleGoal
->     let pn = P (n := FAKE :<: g)
->     let newty = pity (mkTel pn g [] args)
+>     (_ :=>: goal) <- getHoleGoal
+>     let pn = P (n := FAKE :<: goal)
+>     let newty = pity (mkTel pn goal [] args (\l t -> l))
 >     newty' <- bquoteHere newty
->     g :=>: _ <- make (fst (last n) :<: newty') 
+>     let fty = pity (mkTel pn goal [] args (\l t -> (PI l t)))
+>     fty' <- bquoteHere fty
+>     -- (N fn) <- make (n :<: fty')
+>     (N g) <- make ("g" :<: newty') 
 >     argrefs <- traverse lambdaBoy args
 >     let fcall = pn $## (map NP argrefs) 
 >     let call = g $## (map NP argrefs) :$ Call (N fcall)

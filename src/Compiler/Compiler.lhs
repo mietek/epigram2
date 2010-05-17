@@ -1,6 +1,7 @@
 \section{Compiler}
 
-This module uses Epic (darcs get http://www-fp.cs.st-and.ac.uk/~eb/darcs/EpiVM) to
+This module uses Epic (git clone git://github.com/edwinb/EpiVM.git, 
+or download from http://github.com/edwinb/EpiVM) to
 generate an executable from a collection of supercombinator definitions.
 
 %if False
@@ -68,7 +69,7 @@ Also take a list of extra options to give to epic (e.g. for keeping intermediate
 >       hPutStrLn eh support
 >       hPutStrLn eh (mainDef mainfn)
 >       hClose eh
->       let cmd = "epic " ++ epicFile ++ " -o " ++ outfile ++ " " ++ epicopts
+>       let cmd = "epic -checking 1 " ++ epicFile ++ " -o " ++ outfile ++ " " ++ epicopts
 >       exit <- system cmd
 >       if (exit /= ExitSuccess) 
 >         then fail "EPIC FAIL"
