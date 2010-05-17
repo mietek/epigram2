@@ -18,18 +18,20 @@ __switch (n:Int, ps:Data) -> Data =
 
 __mapBox (D:Data, p:Data, d:Data) -> Data =
    case D!0 of
-    { 0 -> []
-    | 1 -> __mapBox((((D!1)!1)!0)(d!0), p, d!1)
-    | 2 -> __mapBox((((D!1)!1)!0)(d!0), p, d!1)
-    | 3 -> [__mapBoxH(p, d!0), __mapBox(((D!1)!1)!0, p, d!1)]
-    | 4 -> [p(d!0), __mapBox((D!1)!0, p, d!1)]
+    { 0 -> p(d)
+    | 1 -> []
+    | 2 -> __mapBox(__switch(d!0,((D!1)!1)!0),p,d!1)
+    | 3 -> [__mapBox((D!1)!0, p, d!0), __mapBox(((D!1)!1)!0, p, d!1)]
+    | 4 -> __mapBox((((D!1)!1)!0)(d!0), p, d!1)
+    | 5 -> __mapBoxH(((D!1)!1)!0, p, d)
     }
 
-__mapBoxH (p:Data, f:Data, h:Data) -> Data = p(f(h))
+__mapBoxH (f:Data, p:Data, d:Data, h:Data) -> Data = __mapBox(f(h), p, d(h))
 
 __induction(D:Data, m:Data, x:Data) -> Data =
    m(x,__mapBox(D, __induction(D,m), x))
 
+{-
 __map (D:Data, f:Data, x:Data) -> Data =
   case D!0 of
    { 0 -> []
@@ -81,6 +83,8 @@ __const(x:Data, y:Data) -> Data = x
    f(y!0, y!1)
 
 __coit(d:Data, f:Data, s:Data) -> Data = lazy(__map(d,__coit(d,f),f(s)))
+
+-}
 
 -- Some tests
 
