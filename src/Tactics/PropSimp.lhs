@@ -1,7 +1,8 @@
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE TypeOperators, TypeSynonymInstances, GADTs, FlexibleInstances #-}
+> {-# LANGUAGE TypeOperators, TypeSynonymInstances, GADTs, FlexibleInstances,
+>              PatternGuards #-}
 
 > module Tactics.PropSimp where
 
@@ -51,10 +52,10 @@ Given $\Delta \vdash \Bhab{p}{\Prop}$, the propositional simplifier will either
 \begin{itemize}
 
 \item discover that $p$ is absurd and provide a proof $\Delta \vdash
-\Bhab{f}{(\ALL{\prf{p}}{\Absurd})}$, represented by |Left f|; or
+\Bhab{f}{(\prf{p} \Imply \Absurd)}$, represented by |Left f|; or
 
 \item simplify $p$ to a conjunction $\bigwedge_i q_i$ together with
-proofs $\Delta \vdash \Bhab{g_i}{(\ALL{\prf{p}}{q_i})}$ and $\Delta,
+proofs $\Delta \vdash \Bhab{g_i}{(\prf{p} \Imply q_i)}$ and $\Delta,
 \Gamma \vdash \Bhab{h}{(\prf{p})}$, where $\Gamma = \{q_i\}_i$,
 represented by |Right (qs, gs, h)|.
 
@@ -322,6 +323,32 @@ where $\Theta \cong z_0 : pq_0, ..., z_m : pq_m$.
 >             wrapper tg = freshRef ("pref" :<: p) $ \pref -> do
 >                 pg <- dischargeLots sqs (tg $$ A (NP pref $$ A sh))
 >                 discharge pref pg
+
+
+To simplify a proposition that is universally quantified over a (completely
+canonical) enumeration, we can simplify it for each possible value.
+
+> propSimplify gamma delta p@(ALL (ENUMT e) b) | Just ts <- getTags B0 e = 
+>     process B0 B0 B0 ZE ts
+>   where
+>     getTags :: Bwd VAL -> VAL -> Maybe (Bwd VAL)
+>     getTags ts NILE         = (| ts |)
+>     getTags ts (CONSE t e)  = getTags (ts :< t) e
+>     getTags ts _            = (|)
+>
+>     process :: Bwd REF -> Bwd VAL -> Bwd VAL -> VAL -> Bwd VAL
+>         -> Simplifier Simplify
+>     process qs gs hs n B0 = return $ Simply qs gs $ L $ HF "xe" $ \ x ->
+>         switchOp @@ [e, x, L (HF "yb" $ \ y -> PRF (b $$ A y)),
+>                          Prelude.foldr PAIR VOID (trail hs)]
+>     process qs1 gs1 hs1 n (ts :< t) = forkNSupply "psEnumImp"
+>         (forceSimplify gamma delta (b $$ A n)) $
+>         \ btSimp -> case btSimp of
+>             SimplyAbsurd prf  -> return $ SimplyAbsurd (\ v -> prf (v $$ A n))
+>             Simply qs2 gs2 h2  -> do
+>                 let gs2' = fmap (..! ($$ A n)) gs2
+>                 process (qs1 <+> qs2) (gs1 <+> gs2') (hs1 :< h2) (SU n) ts
+
 
 To simplify |p = (x : s) => t| where |s| is not a proof set, we generate a fresh
 reference and simplify |t| under the binder.
