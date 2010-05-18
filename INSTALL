@@ -28,7 +28,7 @@ cd ..
 > cd Pig09/src
 > make depend
 > make Pig
-> make Pig
+> make test
 
 
 
@@ -41,11 +41,11 @@ Center. Install: ghc6, darcs, cabal-install, libghc6-mtl-dev.
 
 Later, to update Epigram2, open the terminal window like before and:
 [ If you didn't install She using --global then:
-> > export PATH=~/.cabal/bin:$PATH
+> export PATH=~/.cabal/bin:$PATH
 ]
-> > cd Pig09
-> > darcs pull
-> > cd src
-> > make clean
-> > make depend
-> > make Pig
+> cd Pig09
+> darcs pull
+> cd src
+> make clean
+> make depend
+> make Pig
