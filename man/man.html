@@ -72,33 +72,160 @@
    any element of a datatype is equal to an element in canonical
    form.
    </p>
+   <p>If we want to look at the gory details of what this has
+   generated we can type</p>
+   <p>
+    <code>&gt show state</code>
+   </p>
    <p>
     Having defined <code>Nat</code> we can now define some numbers. Let's
     dip our metaphorical toe in the water by defining the number one.
    </p>
    <p>
-    <code>&gt; let one : Nat</code>
+    <code>&gt; make one : Nat</code>
    </p>
    <p>Cochon responds</p>
    <p>
     <code>
-      Let there be one.<br>
-    Programming: &lt; one^1 : Nat &gt;</code>
+      Appended goal!<br>
+      Goal: Nat
+    </code>
+   </p>
+   <p>and the prompt has changed:</p>
+   <p><code>one_1 &gt;</code</p>
+   <p>This tells us we are no longer at the root of the proof state,
+   instead we are inside the goal one_1. The <code>_1</code> part is
+   just appended to the name internally to guarantee that names are
+   unique. This is an example of the innards visible in Cochon.
+   <p>
+    We have created a programming problem called <code>one^1</code> of
+    type <code>Nat</code>. We can fill it in directly by responding:
    </p>
    <p>
-    We have created a programming problem called <code>one^1</code> of type <code>Nat</code>.  We can fill it in directly by responding:
+    <code>&gt; give 'suc 'zero</code> 
    </p>
+   <p>Cochon responds</p>
+   <p><code>Thank you.</code></p>
+   <p>What are the apostrophies? Well, they are the tags of the
+   constructors we generated. If we want to refer to 0
+   as <code>zero</code> we can define it using <code>make</code> as we
+   did for <code>one</code>.
+   <p>We can 'test our new definition by typing:</p>
+   <p><code>&gt; elab one</code></p>
+   <p>Cochon responds</p>
+   <p><code>'suc 'zero</code></p>
+   <p>What a relief!</p>
+   <p>For the purposes of doing some gratuitous navigation in Cochon
+   let's define a couple more constants:</p>
+   <p><code>&gt; make two : Nat</code></p>
+   <p>We're placed inside our newly created goal by Cochon. This time
+   we won't fill it in immediately instead let's go back out to the
+   root and make another definition.</p>
+   <p><code>two_2 &gt; out</code></p>
+   <p>This takes us out a level. In this case it is to the root of the
+   proof state (as we can see from the Cochon prompt). We could have
+   achieved the same thing by typing:</p>
+   <p><code>two_2 &gt; root</code></p>
+   <p>Let's make another definition:</p>
+   <p><code>&gt; make three : Nat</code></p>
+   <p>Cochon places us inside new goal:
+   <p><code>three_3 &gt;</code></p>
+   <p>To return to the previous one we type:</p>
+   <p><code>three_3 &gt; prev</code></p>
+   <p>Let's fill it in:</p>
+   <p><code>two_2 &gt; give 'suc one</code></p>
+   <p>Cochon politely thanks us and moves us to the next goal which we
+   can fill in too:</p>
+   <p><code>three_3 &gt; give 'suc two</code></p>
+   <p>With this our work is done and we're back at the root. We can
+   test our last definition by typing:</p>
+   <p><code>&gt; elab three</code></p>
+   <p>Having mastered the art of defining constants let's define a
+   recursive function next.</p>
+   <p><code> &gt; let plus (m : Nat)(n : Nat) : Nat</code></p>
    <p>
-    <code>&gt; = 'suc 'zero</code> 
+    <code>
+     Let there be plus.<br>
+     \ m : Nat -&gt;<br>
+     \ n : Nat -&gt;<br>
+     Programming: &lt; plus^1 m n : Nat &gt;<br>
+    </code>
    </p>
-   <p>Cochon responds <code>Ta.</code>
+   <p>So, we now have a programming problem, our context
+   contains <code>m</code> and <code>n</code> of type <code>Nat</code>
+   and we must deliver a <code>Nat</code>. To do this we first
+   indicate to Cochon that we would like to proceed by induction
+   on <code>m</code>:</p>
+   <p><code>plus_4.plus-impl_2 &gt; &lt;= Nat.Ind m</code></p>
+   <p>Cochon tells us that things have been <code>Eliminated and
+   simplified.</code> To me it looks more complicated but if we look
+   carefully we see our programming problem has changed:</p>
+   <p><code>Programming: &lt; plus^1 'zero n : Nat &gt;</code></p>
+   <p>We know very well that 0 + n = n and our first thought might be
+   to respond <code>give n</code>. But this doesn't work. Our goal is
+   not just a natural number it is a <i>programming problem</i>. To
+   fill in such a goal we use a new keyword <code>return</code>. So we
+   must type:</p>
+   <p>
+    <code>
+     ... &gt; give return n
+    </code>
+   </p>
+   <p>Or if we are lazy (we are) we could type:</p>
+   <p><code>... &gt; = n</code></p>
+   <p>This is just shorthand for the <code>give return</code>. Either
+   of these will do and after pressing return Cochon
+   says <code>Ta.</code> and moves us to the next goal:</p>
+   <p><code>Programming: &lt; plus^1 ('suc xf^1) n : Nat &gt;</code></p>
+   <p><code>xf^1</code> isn't the nicest name, <code>m</code> would
+   have been nicer but let's not make a fuss about it now. We can fill
+   in the step case with this:</p>
+   <p><code>... &gt; = 'suc (plus xf^1 n)</code></p>
+   <p>Cochon responds with just <code>Ta.</code> as we don't have
+   anymore goals.
+   <p>We can get back to the root and then check that 2 + 2 indeed
+   equals 4.</p>
+   <p><code>&gt; elab plus two two</code></p>
+   <p>
+    <code>'suc ('suc ('suc ('suc 'zero)))</code></p>
+   <p>Well, thank god for that! Our first Epigram program is finished.</p>
   </section>
   <section>
    <h3>Appendix A - List of Cochon commands</h3>
     <dl>
      <dt><code>quit</code></dt><dd>Leave Cochon.</dd>
-     <dt><code>data</code></dt><dd>Introduce a new data type.</dd>
-     <dt><coce>let</code></dt><dd>Introduce a new definition.</dd>
+     
+     <dt>
+      <code>
+       data <i>type</i> := (<i>con</i> : <i>type</i>) ; <i>more_cons</i>
+      </code>
+     </dt>
+     <dd>Introduce a new data type.</dd>
+     
+     <dt><code>make <i>name</i> : <i>type</i></code></dt>
+     <dd>Introduce a new definition.</dd>
+     
+     <dt><code>let <i>name</i> : <i>type</i></code></dt>
+     <dd>Introduce a new (recursive) definition.</dd>
+     
+     <dt><code>give <i>expr</i></code></dt>
+     <dd>Fill in current goal with an expression.</dd>
+    
+     <dt><code>elab <i>name</i></code></dt>
+     <dd>Elaborate a definition.</dd>
+     
+     <dt><code>root</code></dt>
+     <dd>Go to the top-level of the proof state.</dd>
+     
+     <dt><code>show state</code></dt>
+ 
+     <dt><code>next</code></dt>
+     <dd>Go to next goal.</dd>
+
+     <dt><code>prev</code></dt>
+     <dd>Go to previous goal.</dd>
+     <dt><code>return</code></dt>
+     <dt><code>=</code></dt>
     </dl>
   </section>
   <footer>
