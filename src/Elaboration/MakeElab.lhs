@@ -223,6 +223,13 @@ respectively).
 > sigSetVAL :: VAL
 > sigSetVAL = SIGMA SET (idVAL "ssv")
 
+We use |(??)| as a smart constructor for type ascriptions that omits them when the
+term is in fact neutral.
+
+> (??) :: INTM -> INTM -> EXTM
+> (N t) ?? _   = t
+> t     ?? ty  = t :? ty
+
 
 The |extractNeutral| function separates type-term pairs in both term and value
 forms. It avoids clutter in the term representation by splitting it up if it
@@ -232,7 +239,7 @@ happens to be a canonical pair, or applying the appropriate eliminators if not.
 > extractNeutral (PAIR ty tm :=>: PAIR tyv tmv) = tm :=>: tmv :<: ty :=>: tyv
 > extractNeutral (PAIR ty tm :=>: tv) = tm :=>: tv $$ Snd :<: ty :=>: tv $$ Fst
 > extractNeutral (tm :=>: tv) = N (tm' :$ Snd) :=>: tv $$ Snd :<: N (tm' :$ Fst) :=>: tv $$ Fst
->   where tm' = tm :? sigSetTM
+>   where tm' = tm ?? sigSetTM
 
 
 Since we use a head-spine representation for display terms, we need to elaborate
@@ -264,8 +271,8 @@ process the spine of eliminators.
 >     (tt, ms) <- makeElabInferHead loc t
 >     let (tm :=>: tmv :<: ty :=>: tyv) = extractNeutral tt
 >     case ms of
->         Just sch  -> handleSchemeArgs B0 sch  (tm :? ty :=>: tmv :<: tyv) ss
->         Nothing   -> handleArgs               (tm :? ty :=>: tmv :<: tyv) ss
+>         Just sch  -> handleSchemeArgs B0 sch  (tm ?? ty :=>: tmv :<: tyv) ss
+>         Nothing   -> handleArgs               (tm ?? ty :=>: tmv :<: tyv) ss
 >   where
 
 The |handleSchemeArgs| function takes a list of terms (corresponding to
@@ -318,7 +325,7 @@ the overall type-term pair from the result.
 >                     (tm :$ A rt :=>: tv $$ A rt :<: t $$ A rt) []
 >             )
 >         s' :=>: _ <- eQuote sv
->         let  atm  = tm :? PIV x s' sigSetTM :$ A (NV 0)
+>         let  atm  = tm ?? PIV x s' sigSetTM :$ A (NV 0)
 >              rtm  = PAIR (PIV x s' (N (atm :$ Fst))) (LAV x (N (atm :$ Snd)))
 >         return $ rtm :=>: evTm rtm
 
