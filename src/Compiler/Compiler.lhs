@@ -262,7 +262,7 @@ Everything else is boring traversal of the term.
 > lambdaLift nm args (t :$ el) = 
 >      (| lambdaLift nm args t :$ traverse (lambdaLift nm args) el |)
 > lambdaLift nm args (v :? t) = 
->      (| lambdaLift nm args v :? lambdaLift nm args t |)
+>      (| lambdaLift nm args v :? (| (error "Can't happen") |) |)
 > lambdaLift nm args tm = (| tm |)
 
 %if False
