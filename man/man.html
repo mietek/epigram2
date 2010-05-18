@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8">
+  <title>Emanuel: the Epigram manual</title>
+ </head>
+ <body>
+  <header>
+    <h1>Emanuel</h1>
+    <h2>the Epigram manual</h2>
+  </header>
+  <section>
+   <h3>Chapter 1 - Introduction</h3>
+   <p> 
+    Epigram 2 is intended to be a full-scale dependently typed
+    programming language in the spirit of Epigram 1 and Agda. It isn't
+    finished yet. We've made some of the bits and plugged them
+    together. This document explains how to interact with the system
+    as it exists at the moment.
+   </p>
+   <p>
+    At the time of writing the best way to do this is to use the
+    Cochon tool for interactive program development. Cochon looks more
+    like a theorem prover than a programming IDE and it's quite low
+    level: the guts are showing. Read on for a tutorial of how to
+    write some simple programs in Cochon. For a glossary of Cochon
+    commands skip to the appendix.
+   </p>
+  </section>
+  <section>
+   <h3>Chapter 2 - Installation</h3>
+   <p>
+    For downloading and installing Epigram see 
+    <a href="../web/download.html">look here</a>.
+   </p>
+  </section>
+  <section>
+   <h3>Chapter 3 - Running Epigram</h3>
+   <p>
+    For the moment we interact with Epigram using the Cochon
+    interactive theorem prover:
+   </p>
+   <p>
+    <code>$ cd Pig09/src</code><br>
+    <code>$ ./Pig</code>
+   </p>
+   <p>Cochon responds with a prompt:</p>
+   <p><code>&gt; _</code></p>
+   <p>To exit Cochon you can type
+   <p><code>&gt; quit_</code>
+   <p>and press return.</p>
+  </section>
+  <section>
+   <h3>Chapter 4 - My first Epigram Program</h3>
+   <p>
+    As a first warm-up exercise we will perform the arithmetic feat of
+    adding two and two. First of all let's define the natural numbers
+    in Peano style. Enter the following at Cochon's prompt and press
+    return:
+   </p>
+   <p><code>&gt; data Nat := (zero : Nat) ; (suc : Nat -> Nat)</code></p>
+   <p>We defined a new data type <code>Nat</code> and with two
+   constructors <code>zero</code> which takes no arguments
+   and <code>suc</code> which takes a natural number and gives us back
+   another natural number. There are two canonical forms of natural
+   number: either it's zero; or it's the successor of another natural
+   number. When we define a datatype in Epigram, and give constructors
+   for its canonical forms, we are automatically given a computation
+   mechanism (an elimination principle) which says that if we want to
+   write a program that consumes elements of that datatype we need
+   only explain what to do for its canonical forms. This is because
+   any element of a datatype is equal to an element in canonical
+   form.
+   </p>
+   <p>
+    Having defined <code>Nat</code> we can now define some numbers. Let's
+    dip our metaphorical toe in the water by defining the number one.
+   </p>
+   <p>
+    <code>&gt; let one : Nat</code>
+   </p>
+   <p>Cochon responds</p>
+   <p>
+    <code>
+      Let there be one.<br>
+    Programming: &lt; one^1 : Nat &gt;</code>
+   </p>
+   <p>
+    We have created a programming problem called <code>one^1</code> of type <code>Nat</code>.  We can fill it in directly by responding:
+   </p>
+   <p>
+    <code>&gt; = 'suc 'zero</code> 
+   </p>
+   <p>Cochon responds <code>Ta.</code>
+  </section>
+  <section>
+   <h3>Appendix A - List of Cochon commands</h3>
+    <dl>
+     <dt><code>quit</code></dt><dd>Leave Cochon.</dd>
+     <dt><code>data</code></dt><dd>Introduce a new data type.</dd>
+     <dt><coce>let</code></dt><dd>Introduce a new definition.</dd>
+    </dl>
+  </section>
+  <footer>
+  <hr>
+   <address>Last modified 17th May 2010 by James Chapman</address>
+  </footer>
+ </body>
+</html>
