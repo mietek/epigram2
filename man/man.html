@@ -189,11 +189,21 @@
    <p>
     <code>'suc ('suc ('suc ('suc 'zero)))</code></p>
    <p>Well, thank god for that! Our first Epigram program is finished.</p>
+   <p>If you have EPIC installed you can also compile</p>
+   <p>
+    <code>
+      &gt; make twoplustwo : Nat<br>
+      &gt; give plus two two<br>
+      &gt; compile twoplustwo twoplustwo
+    </code>
+   </p>
+   <p>I'll stop here as we've temporarily overtaken reality.</p>
   </section>
   <section>
-   <h3>Appendix A - List of Cochon commands</h3>
+   <h3>Appendix - List of Cochon commands</h3>
     <dl>
-     <dt><code>quit</code></dt><dd>Leave Cochon.</dd>
+     <dt><code>quit</code></dt>
+     <dd>Leave Cochon.</dd>
      
      <dt>
       <code>
@@ -216,16 +226,27 @@
      
      <dt><code>root</code></dt>
      <dd>Go to the top-level of the proof state.</dd>
-     
+
+     <dt><code>in</code></dt>
+     <dd>Go in one level in the proof state.</dd>
+
+     <dt><code>out</code></dt>
+     <dd>Go out one level in the proof estate.</dd>
+
      <dt><code>show state</code></dt>
- 
+     <dd>Print the bit of the proof state we're in.</dd>
+
      <dt><code>next</code></dt>
      <dd>Go to next goal.</dd>
 
      <dt><code>prev</code></dt>
      <dd>Go to previous goal.</dd>
-     <dt><code>return</code></dt>
+
+     <dt><code>return <i>expr</i></code></dt>
+     <dd>the thing that goes in a programming problem.</dd>
+
      <dt><code>=</code></dt>
+     <dd>Sugar for <code>give return</code>.</dd>
     </dl>
   </section>
   <footer>
