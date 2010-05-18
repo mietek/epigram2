@@ -11,26 +11,24 @@ stuff and:
 
 1. Install She, probably not from Hackage
 (see http://personal.cis.strath.ac.uk/~conor/pub/she/)
-> > darcs get http://personal.cis.strath.ac.uk/~conor/pub/she/
-> > cd she
-> > cabal install
+> darcs get http://personal.cis.strath.ac.uk/~conor/pub/she/
+> cd she
+> cabal install
 [Or:
-> > cabal --global --root-cmd=sudo install
+> cabal --global --root-cmd=sudo install
 ]
 cd ..
 
 [ If you didn't install She using --global then:
-> > export PATH=~/.cabal/bin:$PATH
+> export PATH=~/.cabal/bin:$PATH
 ]
 
 2. Install Epigram2
-> > darcs get http://www.e-pig.org/darcs/Pig09/
-> > cd Pig09/src
-> > make depend
-> > make Pig
-I've found that "make test" fails, so I:
-> > cd ../test
-> > bash ./test.sh
+> darcs get http://www.e-pig.org/darcs/Pig09/
+> cd Pig09/src
+> make depend
+> make Pig
+> make Pig
 
 
 

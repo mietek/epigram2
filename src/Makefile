@@ -146,7 +146,7 @@ Atome:
 
 ## Unit testing (haha):
 test:
-	cd ../test && ./test.sh -q
+	cd ../test && chmod +x test.sh && ./test.sh -q
 
 ## Tags (emacs):
 etags:
