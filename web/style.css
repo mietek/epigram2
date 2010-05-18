@@ -1,0 +1,18 @@
+body { 
+  padding-left: 12em
+}
+body.aboutme {
+  padding-right: 22em
+}
+nav {
+  position: absolute;
+  top: 2em;
+  left: 1em;
+  width: 10em
+}
+aside {
+  position: absolute;
+  top: 2em;
+  right: 1em;
+  width: 20em
+}
