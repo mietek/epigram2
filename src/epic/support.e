@@ -77,14 +77,14 @@ __elimMonad(D:Data, mv:Data, mc:Data, t:Data) -> Data =
   | 1 -> mc(t!1, __mapBox(D, __elimMonad(D,mv,mc), t!1))
   }
 
+__coit(d:Data, f:Data, s:Data) -> Data = lazy(__map(d,__coit(d,f),f(s)))
+
+-}
+
 __const(x:Data, y:Data) -> Data = x 
 
 %inline __split(f:Data, y:Data) -> Data =
    f(y!0, y!1)
-
-__coit(d:Data, f:Data, s:Data) -> Data = lazy(__map(d,__coit(d,f),f(s)))
-
--}
 
 -- Some tests
 
