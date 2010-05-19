@@ -397,6 +397,14 @@ Intuitively, |t :=>: v| can be read as ``the term |t| reduces to the
 value |v|''.
 
 
+We use |(??)| as a smart constructor for type ascriptions that omits them when the
+term is in fact neutral.
+
+> (??) :: INTM -> INTM -> EXTM
+> (N t) ?? _   = t
+> t     ?? ty  = t :? ty
+
+
 \subsection{Syntactic Equality}
 \label{sec:syntactic_equality}
 

@@ -223,13 +223,6 @@ respectively).
 > sigSetVAL :: VAL
 > sigSetVAL = SIGMA SET (idVAL "ssv")
 
-We use |(??)| as a smart constructor for type ascriptions that omits them when the
-term is in fact neutral.
-
-> (??) :: INTM -> INTM -> EXTM
-> (N t) ?? _   = t
-> t     ?? ty  = t :? ty
-
 
 The |extractNeutral| function separates type-term pairs in both term and value
 forms. It avoids clutter in the term representation by splitting it up if it
