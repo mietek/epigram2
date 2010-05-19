@@ -23,6 +23,7 @@
 > import ProofState.ProofContext
 > import ProofState.ProofState
 > import ProofState.ProofKit
+> import ProofState.Lifting
 
 > import DisplayLang.DisplayTm
 > import DisplayLang.Naming

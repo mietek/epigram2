@@ -10,9 +10,13 @@
 
 > import Control.Applicative
 > import Control.Monad.Identity
+> import Data.Foldable
+
+> import NameSupply.NameSupplier
 
 > import Evidences.Tm
 > import Evidences.Mangler
+> import Evidences.Rules
 
 > import ProofState.Developments
 
@@ -32,28 +36,29 @@ the implementer.
 \subsection{Discharging entries in a term}
 
 
-The |(-||)| operator takes a list of entries and a term, and changes
-the term so that boys in the list of entries are represented by de
-Brujin indices.
+The ``discharge into'' operator |(-|||)| takes a list of entries and a term, and
+changes the term so that boys in the list of entries are represented by
+de Brujin indices.
 
-> (-|) :: Bwd (Entry Bwd) -> INTM -> INTM
-> es -| t = disMangle es 0 %% t
+> (-||) :: Bwd REF -> INTM -> INTM
+> es -|| t = disMangle es 0 %% t
 >   where
->     disMangle :: Bwd (Entry Bwd) -> Int -> Mangle Identity REF REF
+>     disMangle :: Bwd REF -> Int -> Mangle Identity REF REF
 >     disMangle ys i = Mang
 >       {  mangP = \ x ies -> (|(h ys x i $:$) ies|)
 >       ,  mangV = \ i ies -> (|(V i $:$) ies|)
 >       ,  mangB = \ _ -> disMangle ys (i + 1)
 >       }
 >     h B0                        x i  = P x
->     h (ys :< E y _ (Boy _) _)     x i
+>     h (ys :< y) x i
 >       | x == y     = V i
 >       | otherwise  = h ys x (i + 1)
->     h (ys :< E _ _ (Girl _ _ _) _)  x i = h ys x i
->     h (ys :< M _ _) x i = h ys x i
 
-\question{How do we read the |(-||)| operator? "discharge into"?}
 
+> (-|) :: Entries -> INTM -> INTM
+> es -| tm = (bwdList $ foldMap boy es) -|| tm
+>   where boy (E r _ (Boy _) _)  = [r]
+>         boy _                  = []
 
 \subsection{Binding a term}
 
@@ -84,11 +89,23 @@ entries.
 
 The |liftType| function $\Pi$-binds a type over a list of entries.
 
-> liftType :: Bwd (Entry Bwd) -> INTM -> INTM
-> liftType es t = pis es (es -| t) where
->   pis B0 t = t
->   pis (es :< E _ (x,_)  (Boy _)     s)  t = pis es (PI (es -| s) (L (x :. t)))
->   pis (es :< _)                         t = pis es t
+> liftType :: Entries -> INTM -> INTM
+> liftType es = liftType' (bwdList $ foldMap boy es) 
+>   where boy (E r _ (Boy _) t) = [r :<: t]
+>         boy _ = []
+
+> liftType' :: Bwd (REF :<: INTM) -> INTM -> INTM
+> liftType' rtys t = pis rs tys (rs -|| t)
+>   where
+>     (rs, tys) = unzipBwd rtys
+>
+>     unzipBwd B0 = (B0, B0)
+>     unzipBwd (rtys :< (r :<: ty)) = (rs :< r, tys :< ty)
+>       where (rs, tys) = unzipBwd rtys
+
+>     pis B0 B0 t = t
+>     pis (rs :< r) (tys :< ty)  t = pis rs tys (PI (rs -|| ty) (L ((fst . last . refName $ r) :. t)))
+
 
 
 \subsection{Making a type out of a goal}
@@ -104,3 +121,84 @@ encounters a $\Pi$-boy.
 > inferGoalType (es :< E _ (x,_)  (Boy PIB)   s)  SET      = inferGoalType es SET
 > inferGoalType (es :< _)                         t        = inferGoalType es t
 
+
+
+\subsection{Horrible horrible discharging}
+
+\question{This needs lots of refactoring.}
+
+The |dischargeLots| function discharges and $\lambda$-binds a list of
+references over a |VAL|.
+
+> dischargeLots :: (NameSupplier m) => Bwd REF -> VAL -> m VAL
+> dischargeLots bs v = do
+>     v' <- bquote bs v
+>     return (evTm (wrapLambdas bs v'))
+>   where
+>     wrapLambdas :: Bwd REF -> INTM -> INTM
+>     wrapLambdas B0 tm = tm
+>     wrapLambdas (bs :< (n := _)) tm = wrapLambdas bs (L (fst (last n) :. tm))
+
+
+The |dischargeFLots| function discharges and binds a list of
+references over a |VAL|. The |binder| is informed whether or not the
+variable is actually used.
+
+> dischargeFLots :: (NameSupplier m) => 
+>                   (Bool -> String -> INTM -> INTM -> INTM) ->
+>                   Bwd REF -> VAL -> m VAL
+> dischargeFLots binder bs v = do
+>     temp <- bquote B0 v
+>     let cs = fmap (contains temp) bs
+>     v' <- bquote bs v
+>     v'' <- wrapFs bs cs v'
+>     return (evTm v'')
+>   where
+>     wrapFs :: (NameSupplier m) => Bwd REF -> Bwd Bool -> INTM -> m INTM
+>     wrapFs B0 _ tm = return tm
+>     wrapFs (bs :< (n := _ :<: ty)) (cs :< c) tm = do
+>         ty' <- bquote B0 ty
+>         wrapFs bs cs (binder c (fst (last n)) ty' tm)
+>     contains :: INTM -> REF -> Bool
+>     contains tm ref = Data.Foldable.any (== ref) tm
+
+Hence, we can easily discharge then $\forall$-bind or discharge then
+$\Pi$-bind. Note that when the bound variable is not used, a |K|
+binder is used.
+
+> dischargeAllLots :: (NameSupplier m) => Bwd REF -> VAL -> m VAL
+> dischargeAllLots = dischargeFLots f
+>   where 
+>     f :: Bool -> String -> INTM -> INTM -> INTM
+>     f True   x p (PRF q) = PRF (ALLV x p q)
+>     f False  x p (PRF q) = PRF (ALL p (LK q))
+>
+> dischargePiLots :: (NameSupplier m) => Bwd REF -> VAL -> m VAL
+> dischargePiLots = dischargeFLots f
+>   where
+>     f :: Bool -> String -> INTM -> INTM -> INTM
+>     f True   x p q = PIV x p q
+>     f False  x p q = PI p (LK q)
+
+
+The |dischargeRef| function calls |dischargeLots| on the type of a reference.
+
+> dischargeRef :: (NameSupplier m) => Bwd REF -> REF -> m REF
+> dischargeRef bs (n := DECL :<: ty) = do
+>     ty' <- dischargeLots bs ty
+>     return (n := DECL :<: ty')
+
+
+The |dischargeRefAlls| function calls |dischargeAllLots| on the type of a reference.
+
+> dischargeRefAlls :: (NameSupplier m) => Bwd REF -> REF -> m REF
+> dischargeRefAlls bs (n := DECL :<: ty) = do
+>     ty' <- dischargeAllLots bs ty
+>     return (n := DECL :<: ty')
+
+The |dischargeRefPis| function calls |dischargePiLots| on the type of a reference.
+
+> dischargeRefPis :: (NameSupplier m) => Bwd REF -> REF -> m REF
+> dischargeRefPis bs (n := DECL :<: ty) = do
+>     ty' <- dischargePiLots bs ty
+>     return (n := DECL :<: ty')
