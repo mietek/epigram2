@@ -4,7 +4,7 @@
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE ScopedTypeVariables, GADTs, FlexibleInstances,
+> {-# LANGUAGE ScopedTypeVariables, GADTs, FlexibleInstances, TypeOperators,
 >     TypeSynonymInstances #-}
 
 > module DisplayLang.PrettyPrint where

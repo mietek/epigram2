@@ -20,12 +20,12 @@
 >   traverse f (EqBlue (pty :>: p) (qty :>: q)) =
 >     (|EqBlue (|(:>:) (f pty) (f p)|) (|(:>:) (f qty) (f q)|)|)
 
-
-We do not pretty-print |EqBlue| because it is replaced in the display syntax
-by |DEqBlue| defined below.
-
-< import -> CanPretty where
-
+> import -> CanPretty where
+>   pretty (EqBlue pp qq) = pretty (DEqBlue (foo pp) (foo qq))
+>     where
+>       foo :: (InDTmRN :>: InDTmRN) -> ExDTmRN
+>       foo (_    :>: DN x  ) = x
+>       foo (xty  :>: x     ) = DType xty ::$ [A x] 
 
 > import -> CanTyRules where
 >   canTy chev (Prop :>: EqBlue (y0 :>: t0) (y1 :>: t1)) = do
