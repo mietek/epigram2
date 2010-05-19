@@ -2,8 +2,6 @@
 Vezzosi. Judging by GHC velocity, it won't take long before this is
 outdated. As usual, patches are welcome.)
 
-
-
 If you're just looking to try the Epigram2 command line program Pig,
 it isn't hard to build. Assuming that you have the Haskell platform
 2010.1.0.0 installed, open a terminal window where you want to put
@@ -29,9 +27,6 @@ cd ..
 > make depend
 > make Pig
 > make test
-
-
-
 
 On Ubuntu 10.04 I found that installing the Platform is much more
 painful than the following:

@@ -25,6 +25,7 @@
    ghc 6.12 right now and you'll also need cabal install. We're sorry
    about this and we hope to target 6.10 in future.
   </p>
+  <h2>Get SHE</h2>
   <p>
    Before you try to install Epigram you will need the Strathclyde
    Haskell Extension to compile Epigram.
@@ -34,15 +35,18 @@
     $ cabal install she
    </code>
   </p>
+  <h2>Get the Epigram</h2>
   <p>
    <code>
      $ darcs get 
      <a href="darcs get http://www.e-pig.org/darcs/Pig09/">
       http://www.e-pig.org/darcs/Pig09/</a><br>
      $ cd Pig09/src<br>
+     $ make dep<br>
      $ make Pig<br>
    </code>
   </p>
+  <h2>Get EPIC</h2>
   <p>
    If you want to create executables from Epigram programs you'll need
    Edwin Brady's EPIC compiler. I defer to Edwin for further instructions:
@@ -53,9 +57,26 @@
      http://www.cs.st-andrews.ac.uk/~eb/epic.php</a>
    </code>
   </p>
+  <h2>Staying up to date</h2>
+  <p>You can just update from the darcs repo:</p>
+  <p>
+   <code>$ darcs pull</code>
+  </p>
+  <p>If <code>make Pig</code> unexpectedly fails, then this is often
+  worth a punt:</p>
+  <p>
+   <code>
+    $ make clean<br>
+    $ make dep<br>
+    $ make Pig<br>
+   </code>
+  </p>
+  <p>Sometimes you don't need the <code>make dep</code> but Epigram's
+  build environment is currently a bit flakey and this can sometimes
+  gently nudge its ducks into a row.</p>
   <footer>
    <hr>
-   <address>Last modified 18th May 2010 by James Chapman</address>
+   <address>Last modified 19th May 2010 by James Chapman</address>
   </footer>
  </body>
 </html>
