@@ -1,0 +1,17 @@
+Made.
+Appended goal!
+Made lambda boy!
+Made lambda boy!
+Eliminated. Subgoals awaiting work...
+Going out...
+Going out...
+[ \ x : Enum ['a 'b 'c] ->
+  \ y : Set ->
+  makeE
+    [ P
+        [ \ xf : Enum ['a 'b 'c] ->
+        ] ((y : Set) -> Set) : Set ;
+      m := ? : Sig (P 'a ; P 'b ; P 'c ;) ;
+    ] switch e x P m : P x ;
+] makeE y : Set
+Loaded.

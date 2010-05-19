@@ -14,6 +14,7 @@
 > import Data.Foldable hiding (sequence_)
 > import Data.List
 > import Data.Maybe
+> import Data.Traversable
 
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
@@ -26,6 +27,8 @@
 
 > import ProofState.ProofState
 > import ProofState.ProofKit
+> import ProofState.News
+> import ProofState.Lifting
 
 > import DisplayLang.DisplayTm
 > import DisplayLang.Naming
@@ -153,33 +156,41 @@ extracting the interesting bits.
 
 The development transformation is achieved by the following code:
 
-> introElim :: Eliminator -> ProofState (Name, INTM :<: TY, [INTM], [INTM])
-> introElim (eType :>: e) = do
->     -- Make an (un-goaled) module
->     -- We will turn it in a (goaled T) girl at the end
->     elimName <- makeModule "makeE"
->     goIn
->     -- Get the type of the motive
->     -- And ask for making it real
->     (motiveType, telType) <- unPi $ valueOf eType
+> introElim :: Eliminator -> ProofState (TY, [INTM], Bwd (INTM :<: INTM))
+> introElim (eType :=>: PI motiveType telType :>: e :=>: _) = do
 >     motiveTypeTm <- bquoteHere motiveType
 >     p :=>: pv <- make $ "P" :<: motiveTypeTm
 >     -- Get the type of the methods and the target
->     -- And ask for making them real
->     (methods, target) <- mkMethods $ telType $$ (A pv)
->     -- Check the motive, and target shape
+>     (methods, returnType) <- mkMethods $ telType $$ (A pv)
+>     -- Check the motive, and return type shape
 >     checkMotive motiveType
->     checkTarget target p motiveType
->     -- Grab the terms which are applied to the motive
->     patterns <- matchPatterns target motiveType 
+>     checkReturnType (evTm returnType) motiveType (pv :<: motiveType)
+>     -- Grab the terms which are applied to the motive (the targets)
+>     targetTerms <- matchTargets returnType motiveType 
+>     targets <- rightTargets (trail targetTerms) motiveType
+
+>     -- targetTypes <- unfoldTelescope motiveType
+>     -- let targets = zipBwd targetTerms (bwdList targetTypes) 
+
 >     -- Close the problem (using the "made" subproblems!)
 >     -- And go to the next subproblem, ie. making P
->     moduleToGoal target
->     giveNext $ N $ (termOf e :? termOf eType) $## (N p : methods)
->     return (elimName, N p :<: motiveType, methods, trail patterns)
->         where unPi :: VAL -> ProofState (VAL, VAL)
->               unPi (PI s t) = return (s, t)
->               unPi _ = throwError' $ err "Elimination: eliminator not a Pi-type??"
+>     moduleToGoal returnType
+>     giveNext $ N $ (e ?? eType) $## (N p : methods)
+>     return (motiveType, methods, targets)
+>   where
+>     zipBwd :: Bwd INTM -> Bwd INTM -> Bwd (INTM :<: INTM)
+>     zipBwd B0 B0 = B0
+>     zipBwd (xs :< x) (ys :< y) = zipBwd xs ys :< (x :<: y) 
+> introElim _ = throwError' $ err "Elimination: eliminator not a Pi-type??"
+
+
+> rightTargets :: [INTM] -> TY -> ProofState (Bwd (INTM :<: INTM))
+> rightTargets [] SET = return B0
+> rightTargets (x:xs) (PI s t) = do
+>     s' <- bquoteHere s
+>     targets <- rightTargets xs (t $$ A (evTm x)) 
+>     return $ targets :< (x :<: s')
+
 
 Above, we have used |mkMethods| to introduce the methods and retrieve
 the target of the eliminator. Remember that the eliminator is a
@@ -201,29 +212,29 @@ been consummed.
 >                     targetTm <- bquoteHere target
 >                     return (reverse ms, targetTm)
 
-Another helper function has been |matchPatterns|. We know that the target
+Another helper function has been |matchTargets|. We know that the return type
 is the following term:
 
 $$P \vec{t}$$
 
-Hence, |matchPatterns| is given the target as well as the
-telescope-type of |P|. |matchPatterns| recursively unfolds the
-telescope, accumulating the arguments of the target along the
+Hence, |matchTargets| is given the return type as well as the
+telescope-type of |P|. It recursively unfolds the
+telescope, accumulating the arguments of the motive along the
 way. When reaching $\Set$, we have accumulated all arguments of |P|.
 
-> matchPatterns :: INTM -> VAL -> ProofState (Bwd INTM)
-> matchPatterns _ SET = return B0
-> matchPatterns (N (t :$ A x)) (PI s r) = 
+> matchTargets :: INTM -> VAL -> ProofState (Bwd INTM)
+> matchTargets _ SET = return B0
+> matchTargets (N (t :$ A x)) (PI s r) = 
 >   freshRef ("s" :<: s) $ \y -> do
->       args <- matchPatterns (N t) (r $$ (A $ pval y))
->       return $ args :< x
+>       targets <- matchTargets (N t) (r $$ (A $ pval y))
+>       return $ targets :< x
 >       
 
 
 \subsubsection{Checking the eliminator}
 
 The calls to |checkMotive|, and |checkTarget| are here to ensure that
-we are handed "stuffs" which fit our technology. They are mostly dull
+we are handed ``stuff'' which fits our technology. They are mostly dull
 at the moment, because we only have nice users.
 
 |checkMotive| consists in veryfing that the motive is of type:
@@ -238,27 +249,26 @@ $$P : \Xi \rightarrow Set$$
 > checkMotive _ = throwError' $ err "elimination: your motive is suspicious"
 
 
-On the other hand, |checkTarget| consists in verifying that the target
-consists of the motive applied to some stuff. Note that |checkTarget|
-is a |matchArgs| on paranoid. 
+On the other hand, |checkReturnType| consists in verifying that the return type
+consists of the motive applied to some arguments.
 
-> checkTarget :: INTM -> EXTM -> VAL -> ProofState ()
-> checkTarget goal motive motiveType = checkTarget' (evTm goal) motiveType 
->     where checkTarget' :: VAL -> VAL -> ProofState ()
->           checkTarget' goal SET = do
->               isEqual <- withNSupply $ equal (motiveType :>: (goal, evTm motive))
->               case isEqual of
->                 True -> return ()
->                 False -> throwError' $ err "elimination: your target is not using the motive?!"
->           checkTarget' (N (f :$ A _)) (PI s t) = do
->               freshRef ("s" :<: s) $ \x ->
->                   checkTarget' (N f) (t $$ (A $ pval x))
->           checkTarget' _ _ = throwError' $ err "eliminator: your target is suspicious"
+> checkReturnType :: VAL -> VAL -> (VAL :<: VAL) -> ProofState ()
+> checkReturnType returnType SET (motive :<: motiveType) = do
+>      isEqual <- withNSupply $ equal (motiveType :>: (returnType, motive))
+>      if isEqual 
+>          then return ()
+>          else throwError' $ err "elimination: return type is not using the motive?!"
+> checkReturnType (N (f :$ A _)) (PI s t) (motive :<: motiveType) =
+>     freshRef ("s" :<: s) $ \x ->
+>         checkReturnType (N f) (t $$ (A $ pval x)) (motive :<: motiveType)
+> checkReturnType _ _ _ = throwError' $ err "elimination: your target is suspicious"
 
 \pierre{There are also some conditions on the variables that can be used in
 these terms! I have to look that up too. This is a matter of traversing the
 terms to collect the |REF|s in them and check that they are of the right
 domains.}
+
+\question{Can we combine and streamline matchPatterns with these?}
 
 
 \subsection{Making the motive}
@@ -413,7 +423,7 @@ This concludes our overview. Now, we have to implement the last
 proposal. That's not for the faint heart.
 
 
-\subsubsection{Chunking the context}
+\subsubsection{Finding parametric hypotheses}
 
 We have the internal context $\Delta$ lying around. We also have
 access to the type of the eliminator, that is the type of the motive
@@ -441,12 +451,11 @@ bag of |REF|s:
 
 Obviously, we get |extractDelta1| from there:
 
-> extractDelta1 :: Bwd REF -> TY -> ProofState [REF]
+> extractDelta1 :: Bwd (REF :<: INTM) -> TY -> ProofState (Bwd (REF :<: INTM))
 > extractDelta1 delta elimTy = do
 >   argTypes <- unfoldTelescope elimTy
 >   let deps = foldMap collectRefs argTypes
->   d <- extractDelta1' delta deps
->   return $ trail d
+>   extractDelta1' delta deps
 
 \begin{danger}
 
@@ -476,7 +485,7 @@ is no pollution, and we get what we asked for.
 
 Now, we are left with implementing |extractDelta1'|.
 
-> extractDelta1' :: Bwd REF -> [REF] -> ProofState (Bwd REF)
+> extractDelta1' :: Bwd (REF :<: INTM) -> [REF] -> ProofState (Bwd (REF :<: INTM))
 
 First, we treat the case where $r \in \Delta$ belongs to the
 dependency set. As expected, we ignore $r$ from
@@ -485,9 +494,9 @@ and add them to the dependency set. Then, we proceed further.
 
 \savecolumns
 
-> extractDelta1' (rs :< r) deps  | r `usedIn` deps = do
+> extractDelta1' (rs :< (r :<: rTyTm)) deps
+>   | r `usedIn` deps = do
 >     -- r is used in the motive or methods
->     rTyTm <- bquoteHere $ pty r
 >     -- Add its components to the dependency set
 >     let deps' = deps `union` collectRefs rTyTm
 >     -- Drop it from Delta1
@@ -498,12 +507,12 @@ $\Delta_1$.
 
 \restorecolumns
 
->                                | otherwise = do
+>   | otherwise = do
 >     -- r is not used
 >     -- Get delta1'
 >     delta1' <- extractDelta1' rs deps
 >     -- And add r to it                   
->     return $ delta1' :< r
+>     return $ delta1' :< (r :<: rTyTm)
 >         where usedIn = Data.Foldable.elem
 
 Trivially, on an empty context, there is nothing to say.
@@ -534,10 +543,11 @@ We turn the context, presented as a list of references, into a
 |Binders| using |toBinders|. There is no magic in there.
 
 > toBinders :: [REF] -> NameSupply -> Binders
-> toBinders delta1 =  (sequence $ fmap toBinder delta1) 
+> toBinders delta1 =  (traverse toBinder delta1) 
 >                     >>= (return . bwdList)
 >     where toBinder :: REF -> NameSupply -> Binder
 >           toBinder (n := ( _ :<: t)) = (| (n :<:) (bquote B0 t) |)
+
 
 
 
@@ -757,33 +767,157 @@ Sooner or later, the following bit will be integrated where the
 
 
 
+
+> data a :~>: b = a :~>: b
+>   deriving (Eq, Show)
+
+To the left, we have a backwards list of binders: references from the fixed context
+$\Delta$ together with their updated type and a non-updated argument term in
+$\vec{t}$.
+
+> type Binder' = (REF :<: (() :~>: INTM), INTM :~>: ())
+
+> toBinder :: (REF :<: INTM) -> Binder'
+> toBinder (r :<: t) = (r :<: (() :~>: t), NP r :~>: ())
+
+> binderArg :: Binder' -> INTM
+> binderArg (_, t :~>: ()) = t
+
+> binderOut :: Binder' -> REF :<: INTM
+> binderOut (r :<: (() :~>: t), _) = (r :<: t)
+
+To the right, we have a forwards list of constraints: references in $\Xi$ together
+with the term representation of their type, and typed terms in $\Delta$ to which
+the references are equated.
+
+> type Constraint' = (REF :<: (INTM :~>: INTM), (INTM :~>: INTM) :<: (INTM :~>: INTM))
+
+For each constraint, we ask if it is homogeneous and the term on the right is a
+reference in $\Delta$. If so, we can simplify by removing the equation, updating
+the binder and renaming the following binders, constraints and term. 
+
+> simplifyMotive :: Bwd Binder' -> Fwd Constraint' -> INTM
+>     -> ProofState (Bwd Binder', INTM)
+
+> simplifyMotive bs F0 tm = return (bs, tm)
+
+> simplifyMotive bs (c@(x' :<: (xt :~>: xt'), (NP p :~>: NP p') :<: (pt :~>: pt')) :> cs) tm = do
+>     eq <- withNSupply $ equal $ SET :>: (pty x', pty p')
+>     case (eq, lookupBinders p' bs) of
+>         (True, Just (pre, post)) -> do
+>             let  (post', f)  = updateBinders
+>                                    [(p', x')] B0 post
+>                  (cs', f')   = updateConstraints f B0 cs
+>                  tm'         = updateTM f' tm
+>             simplifyMotive (pre <+> post') (cs' <>> F0) tm'
+>         _ -> passConstraint bs c cs tm
+>  where
+>    updateTM :: [(REF, REF)] -> INTM -> INTM
+>    updateTM news = fmap (\ r -> case lookup r news of
+>                                   Just r' -> r'
+>                                   Nothing -> r)
+>                       
+>    updateBinders :: [(REF, REF)] -> Bwd Binder' -> Fwd Binder'
+>        -> (Bwd Binder', [(REF, REF)])
+>    updateBinders news bs F0 = (bs, news) 
+>    updateBinders news bs ((y'@(n := DECL :<: _) :<: (() :~>: yt'), a) :> xs) = do
+>        let  yt''   = updateTM news yt'
+>             y''    = n := DECL :<: evTm yt''
+>             news'  = (y' , y'') : news
+>        updateBinders news' (bs :< (y'' :<: (() :~>: yt''), a)) xs 
+>
+>    updateConstraints :: [(REF, REF)] -> Bwd Constraint' -> Fwd Constraint'
+>        -> (Bwd Constraint', [(REF, REF)])
+>    updateConstraints news bs F0 = (bs, news)
+>    updateConstraints news bs ((y'@(n := DECL :<: _) :<: (yt :~>: yt'), (s :~>: s') :<: (st :~>: st')) :> xs) = do
+>        let yt'' = updateTM news yt'
+>            y'' = n := DECL :<: evTm yt''
+>            news' = (y', y'') : news
+>            s'' = updateTM news s'
+>            st'' = updateTM news st'
+>        updateConstraints news' (bs :< (y'' :<: (yt :~>: yt''), (s :~>: s'') :<: (st :~>: st''))) xs
+
+> simplifyMotive bs (c :> cs) tm = passConstraint bs c cs tm
+
+
+> passConstraint :: Bwd Binder' -> Constraint' -> Fwd Constraint' -> INTM
+>     -> ProofState (Bwd Binder', INTM)
+> passConstraint bs (x' :<: (xt :~>: xt'), (s :~>: s') :<: (st :~>: st')) cs tm = do 
+>     let qt' = PRF (EQBLUE (xt' :>: NP x') (st' :>: s'))
+>     optionalProofTrace $ "PASS: " ++ show qt'
+>     freshRef ("qsm" :<: evTm qt')
+>         (\ q -> simplifyMotive
+>             (bs :< (q :<: (() :~>: qt'), N (P refl :$ A st :$ A s) :~>: ())) cs tm)
+
+
+> lookupBinders :: REF -> Bwd Binder' -> Maybe (Bwd Binder', Fwd Binder')
+> lookupBinders p binders = help binders F0
+>   where
+>     help :: Bwd Binder' -> Fwd Binder' -> Maybe (Bwd Binder', Fwd Binder')
+>     help (binders :< b@(y :<: _, _)) zs
+>         | p == y     = Just (binders, zs)
+>         | otherwise  = help binders (b :> zs)
+>     help B0 _        = Nothing
+
+
+
+
 \subsubsection{Building the motive}
+
+> optionalProofTrace s = if on then proofTrace s else return ()
+>   where on = False
+
+
+> introMotive' :: TY -> [INTM :<: INTM] -> Bwd Constraint'
+>     -> ProofState (Bwd Constraint')
+> introMotive' (PI s t) ((x :<: xty) : xs) cs = do
+>     r <- lambdaBoy (fortran t)
+>     rty <- bquoteHere (pty r) -- \question{can we get this from somewhere?}
+>     let c = (r :<: (rty:~>: rty), (x :~>: x) :<: (xty :~>: xty))
+>     optionalProofTrace $ "CONSTRAINT: " ++ show c
+>     introMotive' (t $$ A (NP r)) xs (cs :< c)
+> introMotive' SET [] cs = return cs
+
 
 Finally, we can make the motive, hence closing the subgoal. This
 simply consists in chaining the commands above, and give the computed
 term. Unless I've screwed up things, |give| should always be happy.
 
-> optionalProofTrace s = if on then proofTrace s else return ()
->   where on = False
+> makeMotive ::  TY -> INTM -> Bwd (REF :<: INTM) -> Bwd (INTM :<: INTM) -> TY ->
+>                ProofState [Binder']
+> makeMotive motiveType goal delta targets elimTy = do
+>     optionalProofTrace $ "goal: " ++ show goal
+>     optionalProofTrace $ "targets: " ++ show targets
 
-> makeMotive ::  TY -> VAL -> [REF] -> [INTM] -> TY ->
->                ProofState ([REF], INTM, [INTM :>: INTM])
-> makeMotive xi goal deltas patterns elimTy = do
->   -- Extract $\Delta_1$ from $\Delta$
->   deltas1 <- extractDelta1 (bwdList deltas) elimTy
->   optionalProofTrace $ "deltas1: " ++ show deltas1
->   -- Transform $\Delta$ into Binder form
->   binders <- withNSupply $ toBinders deltas1
->   optionalProofTrace $ "binders: " ++ show binders
+>     -- Extract $\Delta_1$ from $\Delta$
+>     delta1 <- extractDelta1 delta elimTy
+>     optionalProofTrace $ "delta1: " ++ show delta1
+
+>     -- Transform $\Delta$ into Binder form
+>     let binders = fmap toBinder delta1
+
+>     constraints <- introMotive' motiveType (reverse $ trail targets) B0
+>     optionalProofTrace $ "constraints: " ++ show constraints
+
+>     (binders', goal') <- simplifyMotive binders (constraints <>> F0) goal
+>     optionalProofTrace $ "binders': " ++ show binders'
+>     optionalProofTrace $ "goal': " ++ show goal'
+
+>     let goal'' = liftType' (fmap binderOut binders') goal'
+>     optionalProofTrace $ "goal'': " ++ show goal''
+
+>     give goal''
+
+>     return $ trail binders'
+
+
+> {-
 >   -- Introduce $\Xi$
 >   xis <- introMotive 
 >   -- Make the initial list of constraints
->   let constraintsI = zip xis patterns
->   let teleConstraints = (xi, xi, constraintsI)
+>   let constraintsI = zip xis targets
+>   let teleConstraints = (motiveType, motiveType, constraintsI)
 >   optionalProofTrace $ "teleConstraints: " ++ show teleConstraints
->   -- Get goal in |INTM| form
->   goalTm <- bquoteHere goal
->   optionalProofTrace $ "goalTm: " ++ show goalTm
 >   -- Simplify that mess!
 >   (binders, constraints, goal) <- withNSupply $ simplify teleConstraints binders B0 goalTm
 >   let bindersL = trail binders
@@ -791,23 +925,24 @@ term. Unless I've screwed up things, |give| should always be happy.
 >   optionalProofTrace $ "constraints: " ++ show constraints
 >   optionalProofTrace $ "goal: " ++ show goal
 >   -- Make the $\Pi$-boys from $\Delta_1$
->   deltas1' <- mkPiDelta1 bindersL id B0
->   optionalProofTrace $ "deltas1': " ++ show deltas1'
+>   delta1' <- mkPiDelta1 bindersL id B0
+>   optionalProofTrace $ "delta1': " ++ show delta1'
 >   -- Make $(xi == ti) \rightarrow T$
 >   solution <- makeEq constraints goal
 >   optionalProofTrace $ "solution: " ++ show solution
->   -- Rename solution from the dummy |binders| to the fresh |deltas|
->   let motive = transportToLocal bindersL deltas1' solution
+>   -- Rename solution from the dummy |binders| to the fresh |delta|
+>   let motive = transportToLocal bindersL delta1' solution
+
 >   -- And we are done
 >   optionalProofTrace $ "motive: " ++ show motive
 >   motive :=>: _ <- give motive
 >   optionalProofTrace "motivated!"
->   -- Filter out the simplified deltas and patterns (for elimination application)
->   let deltas1R = filterDeltas bindersL deltas1
->   patterns <- filterPatterns xi patterns (trail constraints)
+>   -- Filter out the simplified delta and patterns (for elimination application)
+>   let delta1R = filterDeltas bindersL delta1
+>   patterns <- filterPatterns motiveType targets (trail constraints)
 >   -- Return
->   return (deltas1R, N motive, patterns)
-
+>   return (delta1R, N motive, patterns)
+> -}
 
 Along the way, we have used a bunch of helper functions. Let us look
 at them in turn. First, we have used |mkPiDelta1| to turn the
@@ -820,6 +955,13 @@ there are dependencies.
 > mkPiDelta1 ((n :<: t):bs)  renamer refs = do
 >     r <- piBoy (fst (last n)  :<: renamer t)
 >     mkPiDelta1 bs ((n `renameVar` r) . renamer) (refs :< r)
+
+> introBinders :: [Binder'] -> Renamer -> Bwd REF -> ProofState (Bwd REF)
+> introBinders []                             renamer refs = return refs
+> introBinders ((r :<: (() :~>: t), _) : bs)  renamer refs = do
+>     r' <- piBoy (fst (last (refName r))  :<: renamer t)
+>     introBinders bs ((refName r `renameVar` r') . renamer) (refs :< r')
+
 
 
 An important step is to build the term $(\Xi == \vec{t}) -> T$. This
@@ -922,12 +1064,11 @@ variable $\vec{t}$ and apply |refl| to it.
 
 Then, it is straightforward to build the term we want and to give it:
 
-> applyElim :: Name -> INTM -> [INTM] -> [REF] -> [INTM :>: INTM] -> ProofState ()
-> applyElim elim motive methods deltas args = do
->     reflArgs <- withNSupply $ mkRefls args
->     Just (e :=>: _) <- lookupName elim
->     ((giveNext $ N $ e $## (  map NP deltas ++
->                             reflArgs)
+> applyElim :: Name -> [Binder'] -> ProofState ()
+> applyElim elimName binders = do
+>     -- reflArgs <- withNSupply $ mkRefls args
+>     Just (elim :=>: _) <- lookupName elimName
+>     ((giveNext $ N $ elim $## map binderArg binders
 >       ) >> return ())
 >         `catchError` (\ es -> do
 >           es' <- distillErrors es
@@ -939,20 +1080,18 @@ We (in theory) have solved the goal!
 
 \subsection{Putting things together}
 
+Therefore, we get the |elim| commands, the one, the unique. It is simply a
+Frankenstein operation of these three parts:
+
+> elim :: Maybe REF -> Eliminator -> ProofState ()
+> elim comma eliminator@((_ :=>: elimTy) :>: _) = do 
+
 Here we go. In a first part, we need to retrieve some information about our
 goal and its context. 
 
-> elimContextGoal :: Maybe REF -> ProofState ([REF], VAL)
-> elimContextGoal comma = do
 >     -- The motive needs to know our goal
->     (_ :=>: goal) <- getGoal "T"
->     -- Lacking a comma term, we assume that 
->     -- the whole context is internal
->     deltas <- getBoys 
->     let deltas' = case comma of 
->                     Nothing -> deltas
->                     Just comma -> dropWhile (comma /=) deltas
->     return (deltas', goal)
+>     (goalTm :=>: _) <- getGoal "T"
+>     delta <- getLocalContext comma
 
 In a second part, we turn the eliminator into a girl and play the
 doctor with her: we look at her internals, check that everything is
@@ -961,36 +1100,36 @@ carefully |goOut| her in |elimDoctor|. (This paragraph is the result
 of too much time spend in the lab, too far from any feminine
 presence. Observe the damages).
 
-> elimDoctor ::  [REF] -> VAL -> Eliminator -> 
->                ProofState (Name, INTM, [INTM], [REF], [INTM :>: INTM])
-> elimDoctor deltas goal eliminator@((_ :=>: elimTy) :>: _) = do
+>     -- Make an (un-goaled) module
+>     -- We will turn it in a (goaled T) girl at the end
+>     elimName <- makeModule "makeE"
+>     goIn
 >     -- Prepare the development by creating subgoals:
 >     --    1/ the motive
 >     --    2/ the methods
 >     --    3/ the arguments of the motive
->     (eliminator, motive :<: xi, methods, args) <- introElim eliminator
+>     (motiveType, methods, targets) <- introElim eliminator
 >     -- Build the motive
->     (deltas, motive, constraints) <- makeMotive xi goal deltas args elimTy
+>     binders <- makeMotive motiveType goalTm delta targets elimTy
 >     -- Leave the development with the methods unimplemented
 >     goOut
->     return (eliminator, motive, methods, deltas, constraints)
 
 In a third part, we solve the problem. To that end, we simply have to use the
 |applyElim| command we have developed above.
 
-Therefore, we get the |elim| commands, the one, the unique. It is simply a
-Frankenstein operation of these three parts:
-
-> elim :: Maybe REF -> Eliminator -> ProofState ()
-> elim comma eliminator = do 
->     -- Where are we?
->     (deltas, goal) <- elimContextGoal comma
->     -- What is the eliminator?
->     (eliminator, motive, methods, deltas, args) <- 
->         elimDoctor deltas goal eliminator
 >     -- Apply the motive, ie. solve the goal
->     applyElim eliminator motive methods deltas args
->   
+>     applyElim elimName binders
+   
+
+
+> getLocalContext :: Maybe REF -> ProofState (Bwd (REF :<: INTM))
+> getLocalContext comma = do
+>     -- Lacking a comma term, we assume that 
+>     -- the whole context is internal
+>     delta <- getBoyTerms 
+>     return . bwdList $ case comma of 
+>         Nothing  -> delta
+>         Just c   -> dropWhile (\ (r :<: _) -> c /= r) delta
 
 
 We make elimination accessible to the user by adding it as a Cochon tactic:

@@ -122,6 +122,13 @@ updated information, providing a friendlier interface than |get| and |put|.
 >    where boy (E r _ (Boy _) _)  = [r]
 >          boy _ = []
 
+> getBoyTerms :: ProofStateT e [REF :<: INTM]
+> getBoyTerms = do  
+>     auncles <- getAuncles
+>     return $ foldMap boyTerm auncles 
+>    where boyTerm (E r _ (Boy _) t)  = [r :<: t]
+>          boyTerm _ = []
+
 > getBoysBwd :: ProofStateT e (Bwd REF)
 > getBoysBwd = do  
 >     auncles <- getAuncles
