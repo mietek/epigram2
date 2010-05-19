@@ -12,16 +12,11 @@ lambda n, P, p ;
 give Nat.Ind n P (\ x _ -> p x) ;
 root ;
 
--- Leave plus unimplemented for now, so we can see what we are doing in vappend.
-make plus := ? : (m : Nat)(n : Nat) -> Nat ;
-
-{-
 let plus (m : Nat)(n : Nat) : Nat ;
 <= Nat.Ind m ;
 = n ;
 = 'suc (plus xf^1 n) ;
 root ;
--}
 
 module Vec ;
 lambda A : Set ;
@@ -44,22 +39,24 @@ make VecInd := iinduction Nat Vec.VecD : (m : Nat)(v : Vec m)
 
 let vappend (m : Nat)(as : Vec m)(n : Nat)(bs : Vec n) : Vec (plus m n) ;
 <= [m] VecInd m as ;
--- We are left with a couple of equations in the context, so proceeding is hard.
 
-{-
+<= ship Nat 'zero k x ;
 = bs ;
-lambda s1, s2, q ;
-<= ship Nat s1 s2 _ ;
-lambda s1, s2, q, x1, x2, q ;
-<= ship Nat s1 s2 _ ;
-<= ship Nat 'zero m _ ;
-<= ship Nat k m (con (xf % !)) ;
-simplify ;
--}
+
+<= ship Nat ('suc a^1) k x ;
+= con ['cons (plus a^2 n) a (vappend a^2 xf^1 n bs) , _ ] ;
+
+root ;
+
+
+make A := ? : Set ;
 
 {-
-make vappend := (\ m as -> iinduction Nat Vec.VecD m as (\ mas -> (n : Nat) -> Vec n -> Vec (plus (mas !) n)) (\ m -> con [ (\ p _ n as -> ship Nat 'zero m p (\ mm -> Vec (plus mm n)) as) (con \ mm -> con \ a -> con \ as p -> con \ appp _ n as -> ship Nat ('suc mm) m p (\ mmm -> Vec (plus  mmm n)) (vcons (plus mm n) a (appp n as))) ])) : (m : Nat) -> Vec m -> (n : Nat) -> Vec n -> Vec (plus m n) ;
-root ;
-make ex := Vec.vcons Nat ('suc 'zero) 'zero (Vec.vcons Nat 'zero ('suc 'zero) (Vec.vnil Nat)) : Vec.Vec Nat ('suc ('suc 'zero)) ;
-elab ex ;
+make a := ? : A ;
+make b := ? : A ;
+make c := ? : A ;
+make vab := Vec.vcons A ('suc 'zero) a (Vec.vcons A 'zero b (Vec.vnil A)) : Vec.Vec A ('suc ('suc 'zero)) ;
+elab vab ;
 -}
+
+elab Vec.vappend A 'zero (Vec.vnil A) 'zero (Vec.vnil A) % ! ;
