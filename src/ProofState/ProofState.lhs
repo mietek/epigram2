@@ -77,6 +77,9 @@ updated information, providing a friendlier interface than |get| and |put|.
 > getAuncles :: ProofStateT e Entries
 > getAuncles = gets auncles
 
+> getAunclesToImpl :: ProofStateT e [REF :<: INTM]
+> getAunclesToImpl = gets aunclesToImpl
+
 > getDev :: ProofStateT e (Dev Bwd)
 > getDev = gets pcDev
 
@@ -121,13 +124,6 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     return $ foldMap boy auncles 
 >    where boy (E r _ (Boy _) _)  = [r]
 >          boy _ = []
-
-> getBoyTerms :: ProofStateT e [REF :<: INTM]
-> getBoyTerms = do  
->     auncles <- getAuncles
->     return $ foldMap boyTerm auncles 
->    where boyTerm (E r _ (Boy _) t)  = [r :<: t]
->          boyTerm _ = []
 
 > getBoysBwd :: ProofStateT e (Bwd REF)
 > getBoysBwd = do  

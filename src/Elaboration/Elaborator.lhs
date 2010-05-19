@@ -237,7 +237,7 @@ plus [
 >     (gUnlifted :=>: _) <- getHoleGoal
 >     let newty  = pity (mkTel (unN $ valueOf pn) (evTm gUnlifted) [] args)
 >     newty'       <- bquoteHere newty
->     impl :=>: _  <- make (fst (last n) ++ "-impl" :<: newty') 
+>     impl :=>: _  <- make (magicImplName :<: newty') 
 >     argrefs      <- traverse lambdaBoy args
 >     let  fcall  = termOf pn $## (map NP argrefs) 
 >          call   = impl $## (map NP argrefs) :$ Call (N fcall)

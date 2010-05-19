@@ -766,7 +766,7 @@ In a third part, we solve the problem. To that end, we simply have to use the
 > getLocalContext comma = do
 >     -- Lacking a comma term, we assume that 
 >     -- the whole context is internal
->     delta <- getBoyTerms 
+>     delta <- getAunclesToImpl
 >     return . bwdList $ case comma of 
 >         Nothing  -> delta
 >         Just c   -> dropWhile (\ (r :<: _) -> c /= r) delta

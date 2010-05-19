@@ -217,3 +217,21 @@ giving a list of entries that are currently in scope.
 >   (fs, (u,es' <>> F0) :> vfss)
 > inBFScope (B0,es) = (es <>> F0,F0) 
 
+
+\subsubsection{Gratuitous hackery}
+
+> magicImplName = "impl"
+
+> aunclesToImpl :: ProofContext -> [REF :<: INTM]
+> aunclesToImpl pc@PC{pcDev=(es, _, _)} = help (pcLayers pc) (boys es)
+>   where
+>     help :: Bwd Layer -> [REF :<: INTM] -> [REF :<: INTM]
+>     help B0 xs = xs
+>     help (ls :< Layer{mother=GirlMother _ (n, _) _ _}) xs
+>         | n == magicImplName = xs
+>     help (ls :< l) xs = help ls (boys (elders l) ++ xs)
+
+>     boys = foldMap boy
+
+>     boy (E r _ (Boy _) t)  = [r :<: t]
+>     boy _                  = []
