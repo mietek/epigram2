@@ -3,7 +3,7 @@
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE TypeOperators, TypeSynonymInstances, GADTs #-}
+> {-# LANGUAGE TypeOperators, TypeSynonymInstances, GADTs, PatternGuards #-}
 
 > module Tactics.Elimination where
 
@@ -27,7 +27,6 @@
 
 > import ProofState.ProofState
 > import ProofState.ProofKit
-> import ProofState.News
 > import ProofState.Lifting
 
 > import DisplayLang.DisplayTm
@@ -156,7 +155,7 @@ extracting the interesting bits.
 
 The development transformation is achieved by the following code:
 
-> introElim :: Eliminator -> ProofState (TY, [INTM], Bwd (INTM :<: INTM))
+> introElim :: Eliminator -> ProofState (TY, [INTM], Bwd INTM)
 > introElim (eType :=>: PI motiveType telType :>: e :=>: _) = do
 >     motiveTypeTm <- bquoteHere motiveType
 >     p :=>: pv <- make $ "P" :<: motiveTypeTm
@@ -166,8 +165,8 @@ The development transformation is achieved by the following code:
 >     checkMotive motiveType
 >     checkReturnType (evTm returnType) motiveType (pv :<: motiveType)
 >     -- Grab the terms which are applied to the motive (the targets)
->     targetTerms <- matchTargets returnType motiveType 
->     targets <- rightTargets (trail targetTerms) motiveType
+>     targets <- matchTargets returnType motiveType 
+>     -- targets <- rightTargets (trail targetTerms) motiveType
 
 >     -- targetTypes <- unfoldTelescope motiveType
 >     -- let targets = zipBwd targetTerms (bwdList targetTypes) 
@@ -801,7 +800,7 @@ the binder and renaming the following binders, constraints and term.
 
 > simplifyMotive bs F0 tm = return (bs, tm)
 
-> simplifyMotive bs (c@(x' :<: (xt :~>: xt'), (NP p :~>: NP p') :<: (pt :~>: pt')) :> cs) tm = do
+> simplifyMotive bs (c@(x' :<: (xt :~>: xt'), (q :~>: q') :<: (pt :~>: pt')) :> cs) tm | NP p' <- evTm q' = do
 >     eq <- withNSupply $ equal $ SET :>: (pty x', pty p')
 >     case (eq, lookupBinders p' bs) of
 >         (True, Just (pre, post)) -> do
@@ -868,22 +867,51 @@ the binder and renaming the following binders, constraints and term.
 >   where on = False
 
 
-> introMotive' :: TY -> [INTM :<: INTM] -> Bwd Constraint'
+> introMotive' :: TY -> TY -> [INTM] -> Bwd Constraint'
 >     -> ProofState (Bwd Constraint')
-> introMotive' (PI s t) ((x :<: xty) : xs) cs = do
->     r <- lambdaBoy (fortran t)
->     rty <- bquoteHere (pty r) -- \question{can we get this from somewhere?}
->     let c = (r :<: (rty:~>: rty), (x :~>: x) :<: (xty :~>: xty))
+
+< introMotive' (PI (PRF p) t) (x : xs) xs = introMotive' (t $$ A (evTm x)) xs cs
+
+> introMotive' (PI (SIGMA dFresh rFresh) tFresh) (PI (SIGMA dTarg rTarg) tTarg) (x:xs) cs | not $ isVar (evTm x) = do
+>     let mtFresh  = currySigma dFresh rFresh tFresh
+>     let mtTarg   = currySigma dTarg rTarg tTarg
+>     mtFresh' <- bquoteHere mtFresh
+
+>     b :=>: _ <- make ("sig" :<: mtFresh')
+>     ref <- lambdaBoy (fortran tFresh)
+>     give' (N (b :$ A (N (P ref :$ Fst)) :$ A (N (P ref :$ Snd))))
+>     goIn
+
+>     sTarg' <- bquoteHere (SIGMA dTarg rTarg)
+
+>     introMotive' mtFresh mtTarg ((N (x ?? sTarg' :$ Fst)) : (N (x ?? sTarg' :$ Snd)) : xs) cs
+>   where
+>     isVar :: VAL -> Bool
+>     isVar (NP x)  = True
+>     isVar _       = False
+
+> introMotive' (PI sFresh tFresh) (PI sTarg tTarg) (x:xs) cs = do
+>     ref <- lambdaBoy (fortran tFresh)
+>     sFresh' <- bquoteHere sFresh
+>     sTarg' <- bquoteHere sTarg
+>     let c = (ref :<: (sFresh' :~>: sFresh'), (x :~>: x) :<: (sTarg' :~>: sTarg'))
 >     optionalProofTrace $ "CONSTRAINT: " ++ show c
->     introMotive' (t $$ A (NP r)) xs (cs :< c)
-> introMotive' SET [] cs = return cs
+>     introMotive' (tFresh $$ A (NP ref)) (tTarg $$ A (evTm x)) xs (cs :< c)
+
+> introMotive' SET SET [] cs = return cs
+
+
+> currySigma :: VAL -> VAL -> VAL -> VAL
+> currySigma d r t = PI d . L . HF (fortran r) $ \ a ->
+>               PI (r $$ A a) . L . HF (fortran t) $ \ b ->
+>               t $$ A (PAIR a b)
 
 
 Finally, we can make the motive, hence closing the subgoal. This
 simply consists in chaining the commands above, and give the computed
 term. Unless I've screwed up things, |give| should always be happy.
 
-> makeMotive ::  TY -> INTM -> Bwd (REF :<: INTM) -> Bwd (INTM :<: INTM) -> TY ->
+> makeMotive ::  TY -> INTM -> Bwd (REF :<: INTM) -> Bwd INTM -> TY ->
 >                ProofState [Binder']
 > makeMotive motiveType goal delta targets elimTy = do
 >     optionalProofTrace $ "goal: " ++ show goal
@@ -896,7 +924,7 @@ term. Unless I've screwed up things, |give| should always be happy.
 >     -- Transform $\Delta$ into Binder form
 >     let binders = fmap toBinder delta1
 
->     constraints <- introMotive' motiveType (reverse $ trail targets) B0
+>     constraints <- introMotive' motiveType motiveType (trail targets) B0
 >     optionalProofTrace $ "constraints: " ++ show constraints
 
 >     (binders', goal') <- simplifyMotive binders (constraints <>> F0) goal
@@ -1112,7 +1140,7 @@ presence. Observe the damages).
 >     -- Build the motive
 >     binders <- makeMotive motiveType goalTm delta targets elimTy
 >     -- Leave the development with the methods unimplemented
->     goOut
+>     prevGoal
 
 In a third part, we solve the problem. To that end, we simply have to use the
 |applyElim| command we have developed above.

@@ -1,0 +1,21 @@
+Made.
+Made.
+Made.
+Appended goal!
+Made lambda boy!
+Eliminated. Subgoals awaiting work...
+Going to root...
+[ X := ? : Set ;
+  Y := ? : X -> Set ;
+  Z := ? : Set ;
+  f
+    [ \ xy : Sig X Y ->
+      makeE
+        [ P
+            [ \ xf : Sig X Y ->
+            ] Z : Set ;
+          m := ? : (a : X)(b : Y a) -> P [a , b] ;
+        ] split X Y xy P m : P xy ;
+    ] makeE : Z ;
+]
+Loaded.
