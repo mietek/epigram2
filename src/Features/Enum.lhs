@@ -137,7 +137,7 @@
 >     { opName  = "switch"
 >     , opArity = 4
 >     , opTyTel = sOpTy
->     , opRun   = sOpRun
+>     , opRun   = sOpRun -- makeOpRun "switch" switchTest
 >     , opSimp  = \_ _ -> empty
 >     } where
 >         sOpTy = 
@@ -151,6 +151,7 @@
 >         sOpRun [CON arg, n, p, ps] = mkLazyEnumDef arg (error "switchOp: NilE barfs me.", 
 >                                                         consECase n p ps)
 >
+
 >         consECase :: VAL -> VAL -> VAL -> VAL -> VAL -> VAL
 >         consECase ZE     p ps t e' = ps $$ Fst
 >         consECase (SU n) p ps t e' =
@@ -175,8 +176,10 @@
 
 > import -> OpCompile where
 >     ("branches", _) -> Ignore
->     ("switch", [e, x, p, b]) -> App (Var "__switch") [x, b]
+>     ("switch", [e, x, p, b]) -> App (Var "__switch") [Ignore, x, Ignore, b]
 
+> import -> OpGenerate where
+>     ("switch", switchTest) :
 
 > import -> KeywordConstructors where
 >   KwEnum  :: Keyword

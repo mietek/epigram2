@@ -24,6 +24,7 @@ generate an executable from a collection of supercombinator definitions.
 > import NameSupply.NameSupply
 
 > import Evidences.Tm
+> import Evidences.Rules
 > import Evidences.Mangler
 
 > import ProofState.Developments
@@ -32,6 +33,8 @@ generate an executable from a collection of supercombinator definitions.
 
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
+
+> import Compiler.OpDef
 
 %endif
 
@@ -45,6 +48,8 @@ generate an executable from a collection of supercombinator definitions.
 >             | Proj FnBody Int   -- project from a tuple
 >             | CTag Int          -- any tag
 >             | STag FnBody       -- for Su
+>             | DTag FnBody       -- decrement (for jump tables)
+>             | Let CName FnBody FnBody
 >             | Tuple [FnBody]
 >             | Lazy FnBody       -- evaluate body lazily
 >             | Missing String    
@@ -106,6 +111,9 @@ Things which are convertible to Epic code
 >     codegen (Proj f i) = "(" ++ codegen f ++ "!" ++ show i ++ ")"
 >     codegen (CTag i) = show i
 >     codegen (STag n) = "1+" ++ codegen n
+>     codegen (DTag n) = codegen n ++ "-1"
+>     codegen (Let x v sc) = "(let " ++ x ++ ":Any = " ++ codegen v
+>                            ++ " in " ++ codegen sc ++ ")"
 >     codegen (Tuple xs) = "[" ++ arglist (map codegen xs) ++ "]"
 >     codegen (Lazy t) = "lazy(" ++ codegen t ++ ")"
 >     codegen (Missing m) = "error(\"Missing definition " ++ m ++ "\")"
@@ -194,8 +202,9 @@ by hand in Epic - see epic/support.e
 >     output (makeFns flat) (cname mainName) outfile ""
 
 > makeFns :: [(Name, Bwd Name, FnBody)] -> [(CName, CompileFn)]
-> makeFns = map (\ (n, args, tm) -> 
->                  (cname n, Comp (map cname (trail args)) tm))
+> makeFns xs = map (\ (n, args, tm) -> 
+>                  (cname n, Comp (map cname (trail args)) tm)) xs
+>              ++ opGen
 
 > flatten :: BoyKind -> Name -> Bwd Name -> Dev Fwd -> 
 >            [(Name, Bwd Name, FnBody)]
@@ -264,6 +273,39 @@ Everything else is boring traversal of the term.
 > lambdaLift nm args (v :? t) = 
 >      (| lambdaLift nm args v :? (| (error "Can't happen") |) |)
 > lambdaLift nm args tm = (| tm |)
+
+Generating operator definitions from descriptions
+
+> makeOpCompile :: String -> OpDef -> CompileFn
+> makeOpCompile opname op = mkOp argNames [] op where
+>     mkOp (x:xs) args (Arg fn) 
+>         = mkOp xs (args ++ [aname x]) 
+>                   (fn (NP (aname x := fakeRef)))
+>     mkOp (x:xs) args (ConArg fn) 
+>         = mkOp xs (args ++ [aname x]) 
+>                   (fn (NP (aname x := fakeRef)))
+>     mkOp ns args (Body b) = Comp (map cname args) (mkDef ns b)
+
+>     mkDef _ (Val v) = makeBody v
+>     mkDef (x:xs) (Dec v scope)
+>            = Let (cname (aname x)) (DTag (makeBody v)) 
+>                  (mkDef xs (scope (NP (aname x := fakeRef))))
+>     mkDef xs (IsZero v z s)
+>            = Case (mkDef xs v) [mkDef xs z] (Just (mkDef xs s))
+
+>     aname x = [(opname, 0), x]
+>     fakeRef = error "Made up reference in makeOpCompile"
+
+> argNames = map (\i -> ("x",i)) [1..]
+
+> opList :: [(String, OpDef)]
+> opList = (
+>   import <- OpGenerate
+>   [])
+
+> opGen :: [(CName, CompileFn)]
+> opGen = map (\ (n, def) -> ("__"++n, makeOpCompile n def)) opList
+
 
 %if False
 

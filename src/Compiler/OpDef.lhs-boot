@@ -1,0 +1,16 @@
+> module Compiler.OpDef where
+
+> import Evidences.Tm
+
+> data OpDef = Arg (VAL -> OpDef) -- Any argument
+>            | ConArg (VAL -> OpDef) -- An argument which needs to be canonical
+>            | Body OpBody
+
+> data OpBody = OpCase OpBody [OpBody]
+>             | IsZero OpBody OpBody OpBody
+>             | Val VAL 
+>             | Dec VAL (VAL -> OpBody)
+
+> makeOpRun :: String -> OpDef -> [VAL] -> Either NEU VAL
+
+> switchTest :: OpDef
