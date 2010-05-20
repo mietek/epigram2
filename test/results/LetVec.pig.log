@@ -4,10 +4,8 @@ Thank you.
 Thank you.
 Going to root...
 Data'd.
-Appended goal!
-Made lambda boy!
-Thank you.
-Going to root...
+Made.
+Made.
 Let there be plus.
 Eliminated and simplified.
 Ta.
@@ -16,7 +14,8 @@ Going to root...
 Made module.
 Made lambda boy!
 Appended goal!
-Made.
+Thank you.
+Appended goal!
 Made lambda boy!
 Thank you.
 Made.
@@ -29,6 +28,9 @@ Ta.
 Eliminated and simplified.
 Ta.
 Going to root...
+Made.
+Made.
+con ['cons ('suc 'zero) 'a (con ['cons 'zero 'b (con ['nil , refl Nat 'zero]) , refl Nat ('suc 'zero)]) , refl Nat ('suc ('suc 'zero))]
 Made.
 'nil
 Loaded.
