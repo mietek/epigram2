@@ -131,8 +131,10 @@ extract the interesting bits.
 
 The |introElim| command takes the eliminator with its type, which should be a
 function whose domain is the motive type and whose range contains the methods
-and return type. It returns the name of the rebuilt eliminator, the motive type
-and the list of targets.
+and return type. It creates a new definition for the rebuilt eliminator, with
+subgoals for the motive and methods. It returns the name of the rebuilt
+eliminator, the motive type and the list of targets; the cursor is left on
+the motive subgoal.
 
 > introElim :: (TY :>: INTM) -> ProofState (Name, TY, Bwd INTM)
 > introElim (PI motiveType telType :>: e) = do
@@ -160,7 +162,9 @@ Convert the module to a goal, solve it (using the subgoals created above)
 and go to the next subproblem, i.e. making the motive $P$:
 
 >     moduleToGoal returnType
->     giveNext $ N $ (e ?? PI motiveTypeTm telTypeTm) $## (N p : trail methods)
+>     give' $ N $ (e ?? PI motiveTypeTm telTypeTm) $## (N p : trail methods)
+>     goIn
+>     goTop
 >     return (elimName, motiveType, targets)
 
 
@@ -537,9 +541,11 @@ The |introMotive| command starts with two copies of the motive type and a list o
 targets. It must be called inside the goal for the motive. It unfolds the types in
 parallel, introducing fresh |lambdaBoy|s on the left and working through the
 targets on the right; as it does so, it accumulates constraints between the
-introduced references (in $\Xi$) and the targets. 
+introduced references (in $\Xi$) and the targets. It also returns the number of
+extra definitions created when simplifying the motive (e.g. splitting sigmas).
 
-> introMotive :: TY -> TY -> [INTM] -> Bwd Constraint -> ProofState (Bwd Constraint)
+> introMotive :: TY -> TY -> [INTM] -> Bwd Constraint -> Int
+>     -> ProofState (Bwd Constraint, Int)
 
 < introMotive (PI (PRF p) t) (x : xs) xs = introMotive (t $$ A (evTm x)) xs cs
 
@@ -550,7 +556,7 @@ then continue with the target replaced by its projections.
 We exclude the case where the target is a variable, because if so we might be able
 to simplify its constraint.   
 
-> introMotive (PI (SIGMA dFresh rFresh) tFresh) (PI (SIGMA dTarg rTarg) tTarg) (x:xs) cs
+> introMotive (PI (SIGMA dFresh rFresh) tFresh) (PI (SIGMA dTarg rTarg) tTarg) (x:xs) cs n
 >   | not . isVar $ evTm x = do
 >     let mtFresh  = currySigma dFresh rFresh tFresh
 >     let mtTarg   = currySigma dTarg rTarg tTarg
@@ -563,21 +569,21 @@ to simplify its constraint.
 
 >     sTarg' <- bquoteHere (SIGMA dTarg rTarg)
 
->     introMotive mtFresh mtTarg ((N (x ?? sTarg' :$ Fst)) : (N (x ?? sTarg' :$ Snd)) : xs) cs
+>     introMotive mtFresh mtTarg ((N (x ?? sTarg' :$ Fst)) : (N (x ?? sTarg' :$ Snd)) : xs) cs (n + 1)
 >   where
 >     isVar :: VAL -> Bool
 >     isVar (NP x)  = True
 >     isVar _       = False
 
-> introMotive (PI sFresh tFresh) (PI sTarg tTarg) (x:xs) cs = do
+> introMotive (PI sFresh tFresh) (PI sTarg tTarg) (x:xs) cs n = do
 >     ref      <- lambdaBoy (fortran tFresh)
 >     sFresh'  <- bquoteHere sFresh
 >     sTarg'   <- bquoteHere sTarg
 >     let c = (ref :<: sFresh', (x :~>: x) :<: (sTarg' :~>: sTarg'))
 >     optionalProofTrace $ "CONSTRAINT: " ++ show c
->     introMotive (tFresh $$ A (NP ref)) (tTarg $$ A (evTm x)) xs (cs :< c)
+>     introMotive (tFresh $$ A (NP ref)) (tTarg $$ A (evTm x)) xs (cs :< c) n
 
-> introMotive SET SET [] cs = return cs
+> introMotive SET SET [] cs n = return (cs, n)
 
 
 If |PI (SIGMA d r) t| is the type of functions whose domain is a sigma-type, then
@@ -673,7 +679,7 @@ Transform $\Delta_1$ into Binder form:
 
 Introduce $\Xi$ and generate constraints between its references and the targets:
 
->     constraints <- introMotive motiveType motiveType (trail targets) B0
+>     (constraints, n) <- introMotive motiveType motiveType (trail targets) B0 0
 >     optionalProofTrace $ "constraints: " ++ show constraints
 
 Simplify the constraints to produce an updated list of binders and goal type:
@@ -687,8 +693,16 @@ Discharge the binders over the goal type to produce the motive:
 >     let goal'' = liftType' (fmap fst binders') goal'
 >     optionalProofTrace $ "goal'': " ++ show goal''
 >     give goal''
->     return $ trail binders'
 
+Return to the construction of the rebuilt eliminator, by going out the same number
+of times as |introMotive| went in:
+
+>     rep n goOut
+>     return $ trail binders'
+>   where
+>     rep :: Int -> ProofState () -> ProofState ()
+>     rep 0  _  = return ()
+>     rep n  a  = a >> rep (n - 1) a
 
 \subsection{Putting things together}
 
@@ -713,21 +727,24 @@ constraints, and solve the motive subgoal.
 
 >     binders <- makeMotive motiveType goal delta targets elimTy
 
-We leave the development, with the methods unimplemented, and return to the
-original problem. \question{is there a more robust way of doing this?}
+We leave the definition of the rebuilt eliminator, with the methods
+unimplemented, and return to the original problem.
 
->     prevGoal
+>     goOut
 
-Finally, we solve the problem by applying the eliminator. 
+We solve the problem by applying the eliminator. 
 Since the binders already contain the information we need in their second
 components, it is straightforward to build the term we want and to give it.
 Note that we have to look up the latest version of the rebuilt eliminator
 because its definition will have been updated when the motive was defined.
 
 >     Just (elim :=>: _) <- lookupName elimName
->     giveNext $ N $ elim $## map snd binders
->     return ()
-   
+>     give' $ N $ elim $## map snd binders
+
+>     goIn
+>     goIn
+>     goTop
+>     goDown
 
 The |getLocalContext| command takes a comma and returns the local context, by
 looking up the uncles and dropping those before the comma, if one is supplied.
