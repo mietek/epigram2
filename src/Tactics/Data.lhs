@@ -165,7 +165,7 @@
 >       make ("DataDesc" :<: NP descREF)
 >       goIn
 >       (d :=>: dv) <- give (SUMD (N e) (L ("s" :. N (switchDOp :@ [N e, N cs', NV 0]))))
->       lt :=>: _ <- getFakeMother True
+>       lt :=>: _ <- getFakeMother 
 >       make ("DataTy" :<: SET)
 >       goIn
 >       (dty :=>: _) <- give (MU (Just (N lt)) (N d))

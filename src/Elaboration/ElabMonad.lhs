@@ -46,8 +46,8 @@ then write an interpreter to run the syntax in the |ProofState| monad.
 >              -- solve a suspendable elaboration problem and return the result
 > eCompute     :: (TY :>: Elab (INTM :=>: VAL)) -> Elab (INTM :=>: VAL)
 >              -- execute commands to produce an element of a given type
-> eFake        :: Bool -> Elab (EXTM :=>: VAL)
->              -- return a fake reference to the current goal
+> eFake        :: Elab (REF, Spine {TT} REF)
+>              -- return a fake reference to the current goal and the current spine
 > eResolve     :: RelName -> Elab (INTM :=>: VAL, Maybe (Scheme INTM))
 >              -- resolve a name to a term and maybe a scheme
 > eAskNSupply  :: Elab NameSupply
@@ -64,7 +64,7 @@ The instruction signature given above is implemented using the following monad.
 >     |  ECry (StackError InDTmRN)
 >     |  EElab Loc EProb
 >     |  ECompute (TY :>: Elab (INTM :=>: VAL)) (INTM :=>: VAL -> Elab x)
->     |  EFake Bool (EXTM :=>: VAL -> Elab x)
+>     |  EFake ((REF, Spine {TT} REF) -> Elab x)
 >     |  EResolve RelName ((INTM :=>: VAL, Maybe (Scheme INTM)) -> Elab x)
 >     |  EAskNSupply (NameSupply -> Elab x)
 
@@ -77,10 +77,15 @@ Now we can define the instructions we wanted:
 > eCry          = ECry
 > eElab loc p   = EElab loc p
 > eCompute      = flip ECompute Bale
-> eFake         = flip EFake Bale
+> eFake         = EFake Bale
 > eResolve      = flip EResolve Bale
 > eAskNSupply   = EAskNSupply Bale
 
+> eFaker :: Elab (EXTM :=>: VAL)
+> eFaker = do
+>   (r, sp) <- eFake
+>   let t = (P r) $:$ sp
+>   return (t :=>: evTm t)
 
 We will eventually need to keep track of which elaboration problems correspond
 to which source code locations. For the moment, |Loc|s are just ignored.
@@ -199,7 +204,7 @@ argument, as well as its second.
 >     show (ECry _)           = "ECry (...)"
 >     show (EElab l tp)       = "EElab " ++ show l ++ " (" ++ show tp ++ ")"
 >     show (ECompute te _)    = "ECompute (" ++ show te ++ ") (...)"
->     show (EFake b _)        = "EFake " ++ show b ++ " (...)"
+>     show (EFake _)        = "EFake " ++ " (...)"
 >     show (EResolve rn _)    = "EResolve " ++ show rn ++ " (...)"
 >     show (EAskNSupply _)    = "EAskNSupply (...)"
 
@@ -214,7 +219,7 @@ argument, as well as its second.
 >     ECry errs        >>= k = ECry errs
 >     EElab l p        >>= k = error $ "EElab: cannot bind:\n" ++ show p
 >     ECompute te f    >>= k = ECompute te    ((k =<<) . f)
->     EFake b f        >>= k = EFake b        ((k =<<) . f)
+>     EFake f          >>= k = EFake          ((k =<<) . f)
 >     EResolve rn f    >>= k = EResolve rn    ((k =<<) . f)
 >     EAskNSupply f    >>= k = EAskNSupply    ((k =<<) . f)
 

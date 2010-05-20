@@ -674,12 +674,14 @@ that represents the mother of the current location. Note that its type is
 $\lambda$-lifted over its great uncles, but it is then applied to them (as
 shared parameters).
 
-> getFakeMother :: Bool -> ProofState (EXTM :=>: VAL)
-> getFakeMother includeLast = do
+> getFakeRef :: ProofState REF
+> getFakeRef = do
 >    GirlMother (mnom := HOLE _ :<: ty) _ _ _ <- getMother
+>    return (mnom := FAKE :<: ty)
+
+> getFakeMother :: ProofState (EXTM :=>: VAL)
+> getFakeMother = do
+>    r <- getFakeRef
 >    aus <- getAuncles
->    let xs = if includeLast
->                 then boySpine aus
->                 else init (boySpine aus)
->        tm = P (mnom := FAKE :<: ty) $:$ xs
+>    let tm = P r $:$ (boySpine aus)
 >    return $ tm :=>: evTm tm

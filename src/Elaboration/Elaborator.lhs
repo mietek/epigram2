@@ -176,7 +176,7 @@ to handle recursive calls. This has the same arguments as the function,
 plus an implicit labelled type that provides evidence for the recursive call.
 
 >     GirlMother (mnom := HOLE _ :<: ty) _ _ _ <- getMother
->     pn :=>: _ <- getFakeMother True     
+>     pn :=>: _ <- getFakeMother 
 >     let schCall = makeCall (P $ mnom := FAKE :<: ty) 0 sch'
 >     us <- (|boySpine getAuncles|)
 >     let schCallLocal = applyScheme schCall us
@@ -233,7 +233,7 @@ plus [
 > elabProgram :: [String] -> ProofState (EXTM :=>: VAL)
 > elabProgram args = do
 >     n   <- getMotherName
->     pn  <- getFakeMother True
+>     pn  <- getFakeMother 
 >     (gUnlifted :=>: _) <- getHoleGoal
 >     let newty  = pity (mkTel (unN $ valueOf pn) (evTm gUnlifted) [] args)
 >     newty'       <- bquoteHere newty

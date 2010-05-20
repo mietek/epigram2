@@ -445,7 +445,7 @@ for that case and do not label it.
 >     makeElab' loc (SET :>: DMU Nothing d) = do
 >         dt :=>: dv <- subElab loc (desc :>: d)
 >         if shouldLabel dv
->             then do  lt :=>: lv <- EFake True Bale
+>             then do  (lt :=>: lv) <- eFaker 
 >                      return $ MU (Just (N lt)) dt :=>: MU (Just lv) dv
 >             else     return $ MU Nothing dt :=>: MU Nothing dv
 >       where

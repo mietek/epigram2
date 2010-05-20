@@ -112,7 +112,7 @@
 >     makeElab' loc (NU l d :>: DPAIR s t) =
 >         makeElab' loc (NU l d :>: DCON (DPAIR (DSU DZE) (DPAIR s (DPAIR t DVOID))))
 >     makeElab' loc (SET :>: DNU Nothing d) = do
->         lt :=>: lv <- EFake True Bale
+>         lt :=>: lv <- eFaker 
 >         dt :=>: dv <- subElab loc (desc :>: d)
 >         return $ NU (Just (N lt)) dt :=>: NU (Just lv) dv
 >     makeElab' loc (NU l d :>: DCOIT DU sty f s) = do

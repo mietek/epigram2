@@ -253,6 +253,16 @@ ie. the eliminator, in |Elim (s :=>: VAL)| and the type of the result in
 \question{Why not asking |m| to be |Alternative| too?}
 
 
+> spineTy :: MonadError (StackError t) m =>
+>            (TY :>: t -> m (s :=>: VAL)) -> 
+>            TY -> Bwd t ->
+>            m (Bwd (s :=>: VAL),TY)
+> spineTy chev ty B0 = return (B0, ty) 
+> spineTy chev ty (sp :< x) = do
+>   (spv,PI s t) <- spineTy chev ty sp
+>   xxv@(_ :=>: xv) <- chev (s :>: x)
+>   return (spv :< xxv,t $$ A xv)
+
 \subsection{Equality and Quotation}
 
 Testing for equality is a direct application of normalization by
