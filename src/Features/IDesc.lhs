@@ -143,6 +143,56 @@
 >   halfZip (IConst p0) (IConst p1) = (|(IConst (p0,p1))|)
 >   halfZip (IProd s0 t0) (IProd s1 t1) = (|(IProd (s0,s1) (t0,t1))|)
 
+
+> import -> Coerce where
+>   -- coerce :: (Can (VAL,VAL)) -> VAL -> VAL -> Either NEU VAL
+>   coerce (IMu (Just (l0,l1) :?=: 
+>               (Id (iI0,iI1) :& Id (d0,d1))) (i0,i1)) q (CON x) = 
+>     let ql  = CON $ q $$ Fst
+>         qiI = CON $ q $$ Snd $$ Fst
+>         qi  = CON $ q $$ Snd $$ Snd $$ Snd
+>         qd = CON $ q $$ Snd $$ Snd $$ Fst
+>         (typ :>: vap) = 
+>           laty ("I" :<: SET :-: \iI ->
+>                 "d" :<: ARR iI (IDESC iI) :-: \d ->
+>                 "i" :<: iI :-: \i ->
+>                 "l" :<: ARR iI SET :-: \l ->
+>                 Target (SET :>: 
+>                           idescOp @@ [ iI , d $$ A i
+>                                      , L $ HF "i" $ IMU (|l|) iI d
+>                                      ]))
+>     in Right . CON $ 
+>       coe @@ [ idescOp @@ [iI0, d0 $$ A i0, L $ HF "i" $ IMU (|l0|) iI0 d0] 
+>              , idescOp @@ [iI1, d1 $$ A i1, L $ HF "i" $ IMU (|l1|) iI1 d1] 
+>              , CON $ pval refl $$ A typ $$ A vap $$ Out 
+>                                $$ A iI0 $$ A iI1 $$ A qiI
+>                                $$ A d0 $$ A d1 $$ A qd
+>                                $$ A i0 $$ A i1 $$ A qi
+>                                $$ A l0 $$ A l1 $$ A ql
+>              , x ]
+>   coerce (IMu (Nothing :?=: (Id (iI0,iI1) :& Id (d0,d1))) (i0,i1)) q (CON x) =
+>     let qiI = CON $ q $$ Fst
+>         qi  = CON $ q $$ Snd $$ Snd
+>         qd = CON $ q $$ Snd $$ Fst
+>         (typ :>: vap) = 
+>           laty ("I" :<: SET :-: \iI ->
+>                 "d" :<: ARR iI (IDESC iI) :-: \d ->
+>                 "i" :<: iI :-: \i ->
+>                 Target (SET :>: 
+>                           (idescOp @@ [ iI , d $$ A i
+>                                       , L $ HF "i" $ IMU Nothing iI d
+>                                       ]))) 
+>     in Right . CON $ 
+>       coe @@ [ idescOp @@ [ iI0 , d0 $$ A i0 , L $ HF "i" $ IMU Nothing iI0 d0 ] 
+>              , idescOp @@ [ iI1 , d1 $$ A i1 , L $ HF "i" $ IMU Nothing iI1 d1 ] 
+>              , CON $ pval refl $$ A typ $$ A vap $$ Out 
+>                                $$ A iI0 $$ A iI1 $$ A qiI
+>                                $$ A d0 $$ A d1 $$ A qd
+>                                $$ A i0 $$ A i1 $$ A qi
+>              , x ]
+>   coerce (IDesc (d0, d1)) q x = Right x
+
+
 \subsection{Plugging Eliminators in}
 
 > import -> ElimTyRules where
