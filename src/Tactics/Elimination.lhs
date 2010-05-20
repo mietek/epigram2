@@ -531,7 +531,66 @@ are fresh references that do not depend on the binders. Hence we can implement
 > renameConstraints us bs F0 = bs
 
 
-\subsubsection{Simplifying the motive}
+\subsubsection{Acquiring constraints}
+
+The |introMotive| command starts with two copies of the motive type and a list of
+targets. It must be called inside the goal for the motive. It unfolds the types in
+parallel, introducing fresh |lambdaBoy|s on the left and working through the
+targets on the right; as it does so, it accumulates constraints between the
+introduced references (in $\Xi$) and the targets. 
+
+> introMotive :: TY -> TY -> [INTM] -> Bwd Constraint -> ProofState (Bwd Constraint)
+
+< introMotive (PI (PRF p) t) (x : xs) xs = introMotive (t $$ A (evTm x)) xs cs
+
+If the index and target are both pairs, and the target is not a variable, then we
+simplify the introduced constraints by splitting the pair. We make a new subgoal
+by currying the motive type, solve the current motive with the curried version,
+then continue with the target replaced by its projections.
+We exclude the case where the target is a variable, because if so we might be able
+to simplify its constraint.   
+
+> introMotive (PI (SIGMA dFresh rFresh) tFresh) (PI (SIGMA dTarg rTarg) tTarg) (x:xs) cs
+>   | not . isVar $ evTm x = do
+>     let mtFresh  = currySigma dFresh rFresh tFresh
+>     let mtTarg   = currySigma dTarg rTarg tTarg
+>     mtFresh' <- bquoteHere mtFresh
+
+>     b :=>: _  <- make ("sig" :<: mtFresh')
+>     ref       <- lambdaBoy (fortran tFresh)
+>     give' (N (b :$ A (N (P ref :$ Fst)) :$ A (N (P ref :$ Snd))))
+>     goIn
+
+>     sTarg' <- bquoteHere (SIGMA dTarg rTarg)
+
+>     introMotive mtFresh mtTarg ((N (x ?? sTarg' :$ Fst)) : (N (x ?? sTarg' :$ Snd)) : xs) cs
+>   where
+>     isVar :: VAL -> Bool
+>     isVar (NP x)  = True
+>     isVar _       = False
+
+> introMotive (PI sFresh tFresh) (PI sTarg tTarg) (x:xs) cs = do
+>     ref      <- lambdaBoy (fortran tFresh)
+>     sFresh'  <- bquoteHere sFresh
+>     sTarg'   <- bquoteHere sTarg
+>     let c = (ref :<: sFresh', (x :~>: x) :<: (sTarg' :~>: sTarg'))
+>     optionalProofTrace $ "CONSTRAINT: " ++ show c
+>     introMotive (tFresh $$ A (NP ref)) (tTarg $$ A (evTm x)) xs (cs :< c)
+
+> introMotive SET SET [] cs = return cs
+
+
+If |PI (SIGMA d r) t| is the type of functions whose domain is a sigma-type, then
+|currySigma d r t| is the curried function type that takes the projections
+separately. 
+
+> currySigma :: VAL -> VAL -> VAL -> VAL
+> currySigma d r t = PI d . L . HF (fortran r) $ \ a ->
+>               PI (r $$ A a) . L . HF (fortran t) $ \ b ->
+>               t $$ A (PAIR a b)
+
+
+\subsubsection{Simplifying constraints}
 
 The |simplifyMotive| command takes a list of binders, a list of constraints and
 a goal type. It computes an updated list of binders and an updated goal type.
@@ -593,66 +652,9 @@ applied to the non-updated target.
 >   where on = False
 
 
-The |introMotive| command starts with two copies of the motive type and a list of
-targets. It must be called inside the goal for the motive. It unfolds the types in
-parallel, introducing fresh |lambdaBoy|s on the left and working through the
-targets on the right; as it does so, it accumulates constraints between the
-introduced references (in $\Xi$) and the targets. 
-
-> introMotive :: TY -> TY -> [INTM] -> Bwd Constraint -> ProofState (Bwd Constraint)
-
-< introMotive (PI (PRF p) t) (x : xs) xs = introMotive (t $$ A (evTm x)) xs cs
-
-If the index and target are both pairs, and the target is not a variable, then we
-simplify the introduced constraints by splitting the pair. We make a new subgoal
-by currying the motive type, solve the current motive with the curried version,
-then continue with the target replaced by its projections.
-We exclude the case where the target is a variable, because if so we might be able
-to simplify its constraint.   
-
-> introMotive (PI (SIGMA dFresh rFresh) tFresh) (PI (SIGMA dTarg rTarg) tTarg) (x:xs) cs
->   | not . isVar $ evTm x = do
->     let mtFresh  = currySigma dFresh rFresh tFresh
->     let mtTarg   = currySigma dTarg rTarg tTarg
->     mtFresh' <- bquoteHere mtFresh
-
->     b :=>: _  <- make ("sig" :<: mtFresh')
->     ref       <- lambdaBoy (fortran tFresh)
->     give' (N (b :$ A (N (P ref :$ Fst)) :$ A (N (P ref :$ Snd))))
->     goIn
-
->     sTarg' <- bquoteHere (SIGMA dTarg rTarg)
-
->     introMotive mtFresh mtTarg ((N (x ?? sTarg' :$ Fst)) : (N (x ?? sTarg' :$ Snd)) : xs) cs
->   where
->     isVar :: VAL -> Bool
->     isVar (NP x)  = True
->     isVar _       = False
-
-> introMotive (PI sFresh tFresh) (PI sTarg tTarg) (x:xs) cs = do
->     ref      <- lambdaBoy (fortran tFresh)
->     sFresh'  <- bquoteHere sFresh
->     sTarg'   <- bquoteHere sTarg
->     let c = (ref :<: sFresh', (x :~>: x) :<: (sTarg' :~>: sTarg'))
->     optionalProofTrace $ "CONSTRAINT: " ++ show c
->     introMotive (tFresh $$ A (NP ref)) (tTarg $$ A (evTm x)) xs (cs :< c)
-
-> introMotive SET SET [] cs = return cs
-
-
-If |PI (SIGMA d r) t| is the type of functions whose domain is a sigma-type, then
-|currySigma d r t| is the curried function type that takes the projections
-separately. 
-
-> currySigma :: VAL -> VAL -> VAL -> VAL
-> currySigma d r t = PI d . L . HF (fortran r) $ \ a ->
->               PI (r $$ A a) . L . HF (fortran t) $ \ b ->
->               t $$ A (PAIR a b)
-
-
 Finally, we can make the motive, hence closing the subgoal. This
 simply consists in chaining the commands above, and give the computed
-term. Unless I've screwed up things, |give| should always be happy.
+term. Unless we've screwed things up, |give| should always be happy.
 
 > makeMotive ::  TY -> INTM -> Bwd (REF :<: INTM) -> Bwd INTM -> TY ->
 >                ProofState [Binder]
@@ -660,112 +662,81 @@ term. Unless I've screwed up things, |give| should always be happy.
 >     optionalProofTrace $ "goal: " ++ show goal
 >     optionalProofTrace $ "targets: " ++ show targets
 
->     -- Extract non-parametric hypotheses $\Delta_1$ from the context $\Delta$
+Extract non-parametric hypotheses $\Delta_1$ from the context $\Delta$:
+
 >     delta1 <- findNonParametricHyps delta elimTy
 >     optionalProofTrace $ "delta1: " ++ show delta1
 
->     -- Transform $\Delta$ into Binder form
+Transform $\Delta_1$ into Binder form:
+
 >     let binders = fmap toBinder delta1
+
+Introduce $\Xi$ and generate constraints between its references and the targets:
 
 >     constraints <- introMotive motiveType motiveType (trail targets) B0
 >     optionalProofTrace $ "constraints: " ++ show constraints
+
+Simplify the constraints to produce an updated list of binders and goal type:
 
 >     (binders', goal') <- simplifyMotive binders (constraints <>> F0) goal
 >     optionalProofTrace $ "binders': " ++ show binders'
 >     optionalProofTrace $ "goal': " ++ show goal'
 
+Discharge the binders over the goal type to produce the motive:
+
 >     let goal'' = liftType' (fmap fst binders') goal'
 >     optionalProofTrace $ "goal'': " ++ show goal''
-
 >     give goal''
-
 >     return $ trail binders'
-
-
-
-
-\subsection{Applying the motive}
-
-Remember our eliminator:
-
-$$\Gamma, \Delta \vdash e : (P : \Xi \rightarrow \Set) 
-                            \rightarrow \vec{m} 
-                            \rightarrow P \vec{t}$$
-
-We now have built the following motive |P| (ignoring renaming
-annotations, for brevity):
-
-$$\lambda (\Xi) . \Pi (\Delta_1') . (\Xi) == \vec{t} -> T$$
-
-And we have introduced the methods $\vec{m}$, letting the user the task to
-solve these subgoals. Hence, we can apply the eliminator, which will result in
-a function of the following type:
-
-$$P \vec{t} \equiv \Pi (\Delta_1') \rightarrow \vec{t} == \vec{t} \rightarrow T$$
-
-That is, we need to apply the result of |elim motive methods| to the
-partial internal context $\Delta_1$, and the reflexivity proofs.
-
-Then, it is straightforward to build the term we want and to give it:
-
-> applyElim :: Name -> [Binder] -> ProofState ()
-> applyElim elimName binders = do
->     -- Get latest version of elim (with any news updates applied)
->     Just (elim :=>: _) <- lookupName elimName
->     ((giveNext $ N $ elim $## map snd binders
->       ) >> return ())
->         `catchError` (\ es -> do
->           es' <- distillErrors es
->           proofTrace $ "applyElim failed!\n" ++ show (prettyStackError es'))
->     return ()
-
-We (in theory) have solved the goal!
 
 
 \subsection{Putting things together}
 
-Therefore, we get the |elim| commands, the one, the unique. It is simply a
-Frankenstein operation of these three parts:
+Now we can combine the pieces to produce the |elim| command: 
 
 > elim :: Maybe REF -> (TY :>: INTM) -> ProofState ()
 > elim comma (elimTy :>: elim) = do 
 
-Here we go. In a first part, we need to retrieve some information about our
-goal and its context. 
+Here we go. First, we need to retrieve some information about our
+goal and its context, before we start modifying the development.
 
->     -- The motive needs to know our goal
->     (goalTm :=>: _) <- getGoal "T"
+>     (goal :=>: _) <- getGoal "T"
 >     delta <- getLocalContext comma
 
-In a second part, we turn the eliminator into a girl and play the
-doctor with her: we look at her internals, check that everything is
-correct, and make sub-goals. Note that |introElim| make a girl and we
-carefully |goOut| her in |elimDoctor|. (This paragraph is the result
-of too much time spend in the lab, too far from any feminine
-presence. Observe the damages).
+We call |introElim| to rebuild the eliminator as a definition, check that
+everything is correct, and make subgoals for the motive and methods. 
 
->     -- Prepare the development by creating subgoals:
->     --    1/ the motive
->     --    2/ the methods
->     --    3/ the arguments of the motive
 >     (elimName, motiveType, targets) <- introElim (elimTy :>: elim)
->     -- Build the motive
->     binders <- makeMotive motiveType goalTm delta targets elimTy
->     -- Leave the development with the methods unimplemented
+
+Then we call |makeMotive| to introduce the indices, build and simplify
+constraints, and solve the motive subgoal. 
+
+>     binders <- makeMotive motiveType goal delta targets elimTy
+
+We leave the development, with the methods unimplemented, and return to the
+original problem. \question{is there a more robust way of doing this?}
+
 >     prevGoal
 
-In a third part, we solve the problem. To that end, we simply have to use the
-|applyElim| command we have developed above.
+Finally, we solve the problem by applying the eliminator. 
+Since the binders already contain the information we need in their second
+components, it is straightforward to build the term we want and to give it.
+Note that we have to look up the latest version of the rebuilt eliminator
+because its definition will have been updated when the motive was defined.
 
->     -- Apply the motive, ie. solve the goal
->     applyElim elimName binders
+>     Just (elim :=>: _) <- lookupName elimName
+>     giveNext $ N $ elim $## map snd binders
+>     return ()
    
 
+The |getLocalContext| command takes a comma and returns the local context, by
+looking up the uncles and dropping those before the comma, if one is supplied.
+Regardless of the comma, we only go back as far as a mother with name
+|magicImplName| if one exists, so shared parameters for programming problems will
+always be excluded.
 
 > getLocalContext :: Maybe REF -> ProofState (Bwd (REF :<: INTM))
 > getLocalContext comma = do
->     -- Lacking a comma term, we assume that 
->     -- the whole context is internal
 >     delta <- getAunclesToImpl
 >     return . bwdList $ case comma of 
 >         Nothing  -> delta
