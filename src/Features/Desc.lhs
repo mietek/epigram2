@@ -98,6 +98,7 @@
 >   ("induction", [d,v,bp,p]) -> App (Var "__induction") [d, p, v]
 >   ("mapBox", [x,d,bp,p,v]) -> App (Var "__mapBox") [x, p, v]
 >   ("switchD", [e,b,x]) -> App (Var "__switch") [x, b]
+>   ("branchesD", _) -> Ignore
 
 
 > import -> OpCode where

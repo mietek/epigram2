@@ -21,9 +21,8 @@ current version of the system.
 > import Features.Desc       ()
 > import Features.IDesc      ()
 > import Features.Equality   ()
-> import Features.FreeMonad  ()
 > import Features.Nu         ()
-> import Features.INu        ()
 > import Features.Labelled   ()
 > import Features.Quotient   ()
+> import Features.FreeMonad  ()
 

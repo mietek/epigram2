@@ -8,45 +8,19 @@
 
 %endif
 
+
+\subsection{Plugging Canonical terms in}
+
 > import -> CanConstructors where
 >   IDesc   :: t -> Can t
 >   IMu     :: Labelled (Id :*: Id) t -> t -> Can t
->   IDone   :: t -> Can t
->   IArg    :: t -> t -> Can t
->   IInd1   :: t -> t -> Can t
->   IInd    :: t -> t -> t -> Can t
-
-> import -> CanTraverse where
->   traverse f (IDesc i) = (|IDesc (f i)|)
->   traverse f (IMu l i) = (|IMu (traverse f l) (f i)|)
->   traverse f (IDone p) = (|IDone (f p)|)
->   traverse f (IArg a d) = (|IArg (f a) (f d)|)
->   traverse f (IInd1 x y) = (|IInd1 (f x) (f y)|)
->   traverse f (IInd x y z) = (|IInd (f x) (f y) (f z)|)
-
-> import -> CanHalfZip where
->   halfZip (IDesc i0) (IDesc i1) = (|(IDesc (i0,i1))|)
->   halfZip (IMu l0 i0) (IMu l1 i1) = (|(\p -> IMu p (i0,i1)) (halfZip l0 l1)|)
->   halfZip (IDone p0) (IDone p1) = (|(IDone (p0,p1))|)
->   halfZip (IArg a0 d0) (IArg a1 d1) = (|(IArg (a0,a1) (d0,d1))|)
->   halfZip (IInd1 x0 y0) (IInd1 x1 y1) = (|(IInd1 (x0,x1) (y0,y1))|)
->   halfZip (IInd x0 y0 z0) (IInd x1 y1 z1) = (|(IInd (x0,x1) (y0,y1) (z0,z1))|)
-
-> import -> CanPats where
->   pattern IDESC i = C (IDesc i)
->   pattern IMU l ii x i = C (IMu (l :?=: (Id ii :& Id x)) i) 
->   pattern IDONE p = C (IDone p) 
->   pattern IARG s d = C (IArg s d) 
->   pattern IIND h hi d = C (IInd h hi d) 
->   pattern IIND1 i d = C (IInd1 i d) 
-
-> import -> CanDisplayPats where
->   pattern DIDESC i = DC (IDesc i)
->   pattern DIMU l ii x i = DC (IMu (l :?=: (Id ii :& Id x)) i) 
->   pattern DIDONE p = DC (IDone p) 
->   pattern DIARG s d = DC (IArg s d) 
->   pattern DIIND h hi d = DC (IInd h hi d) 
->   pattern DIIND1 i d = DC (IInd1 i d) 
+>   IVar     :: t -> Can t
+>   IPi     :: t -> t -> Can t
+>   IFPi     :: t -> t -> Can t
+>   ISigma  :: t -> t -> Can t
+>   IFSigma  :: t -> t -> Can t
+>   IConst   :: t -> Can t
+>   IProd   :: t -> t -> Can t
 
 > import -> CanTyRules where
 >   canTy chev (Set :>: IMu (ml :?=: (Id ii :& Id x)) i)  = do
@@ -57,74 +31,65 @@
 >     return $ IMu (mlv :?=: (Id iiiiv :& Id xxv)) iiv
 >   canTy chev (IMu tt@(_ :?=: (Id ii :& Id x)) i :>: Con y) = do
 >     yyv <- chev (idescOp @@ [ ii
->                            , x $$ A i 
->                            , L $ HF "i" $ \i -> C (IMu tt i)
->                            ] :>: y)
+>                             , x $$ A i 
+>                             , L $ HF "i" $ \i -> C (IMu tt i)
+>                             ] :>: y)
 >     return $ Con yyv
 >   canTy chev (Set :>: IDesc ii) = 
 >     (|IDesc (chev (SET :>: ii))|)
->   canTy chev (IDesc ii :>: IDone p) =  
->     (|IDone (chev (PROP :>: p))|)
->   canTy chev (IDesc ii :>: IArg a d) = do
->     aav@(a :=>: av) <- chev (SET :>: a)  
->     ddv <- chev (ARR av (IDESC ii) :>: d)
->     (|(IArg aav ddv)|)  
->   canTy chev (IDesc ii :>: IInd1 i d) =
->     (|IInd1 (chev (ii :>: i)) (chev (IDESC ii :>: d))|)  
->   canTy chev (IDesc ii :>: IInd h hi d) = do
->     hhv@(h :=>: hv) <- chev (SET :>: h)
->     hihiv@(hi :=>: hiv) <- chev (ARR hv ii :>: hi)
->     ddv <- chev (IDESC ii :>: d)
->     (|(IInd hhv hihiv ddv)|)  
+>   canTy chev (IDesc _I :>: IVar i) = do
+>     iiv@(i :=>: iv) <- chev (_I :>: i)
+>     return $ IVar iiv
+>   canTy chev (IDesc _I :>: IPi s t) = do
+>     ssv@(s :=>: sv) <- chev (SET :>: s)
+>     ttv@(t :=>: tv) <- chev (ARR sv (IDESC _I) :>: t)
+>     return $ IPi ssv ttv
+>   canTy chev (IDesc _I :>: IFPi e f) = do
+>     eev@(e :=>: ev) <- chev (enumU :>: e)
+>     ffv@(f :=>: fv) <- chev (ARR (ENUMT ev) (IDESC _I) :>: f)
+>     return $ IFPi eev ffv
+>   canTy chev (IDesc _I :>: ISigma s t) = do
+>     ssv@(s :=>: sv) <- chev (SET :>: s)
+>     ttv@(t :=>: tv) <- chev (ARR sv (IDESC _I) :>: t)
+>     return $ ISigma ssv ttv
+>   canTy chev (IDesc _I :>: IFSigma e b) = do
+>     eev@(e :=>: ev) <- chev (enumU :>: e)
+>     bbv@(b :=>: bv) <- chev (branchesOp @@ [ ev
+>                                            , L (K (IDESC _I))] :>: b)
+>     return $ IFSigma eev bbv
+>   canTy chev (IDesc _I :>: IConst k) = do
+>     kkv@(k :=>: kv) <- chev (SET :>: k)
+>     return $ IConst kkv
+>   canTy chev (IDesc _I :>: IProd x y) = do
+>     xxv@(x :=>: xv) <- chev (IDESC _I :>: x)
+>     yyv@(y :=>: yv) <- chev (IDESC _I :>: y)
+>     return $ IProd xxv yyv
 
-> import -> Coerce where
->   -- coerce :: (Can (VAL,VAL)) -> VAL -> VAL -> Either NEU VAL
->   coerce (IMu (Just (l0,l1) :?=: 
->               (Id (iI0,iI1) :& Id (d0,d1))) (i0,i1)) q (CON x) = 
->     let ql  = CON $ q $$ Fst
->         qiI = CON $ q $$ Snd $$ Fst
->         qi  = CON $ q $$ Snd $$ Snd $$ Snd
->         qd = CON $ q $$ Snd $$ Snd $$ Fst
->         (typ :>: vap) = 
->           laty ("I" :<: SET :-: \iI ->
->                 "d" :<: ARR iI (IDESC iI) :-: \d ->
->                 "i" :<: iI :-: \i ->
->                 "l" :<: ARR iI SET :-: \l ->
->                 Target (SET :>: 
->                           idescOp @@ [ iI , d $$ A i
->                                      , L $ HF "i" $ IMU (|l|) iI d
->                                      ]))
->     in Right . CON $ 
->       coe @@ [ idescOp @@ [iI0, d0 $$ A i0, L $ HF "i" $ IMU (|l0|) iI0 d0] 
->              , idescOp @@ [iI1, d1 $$ A i1, L $ HF "i" $ IMU (|l1|) iI1 d1] 
->              , CON $ pval refl $$ A typ $$ A vap $$ Out 
->                                $$ A iI0 $$ A iI1 $$ A qiI
->                                $$ A d0 $$ A d1 $$ A qd
->                                $$ A i0 $$ A i1 $$ A qi
->                                $$ A l0 $$ A l1 $$ A ql
->              , x ]
->   coerce (IMu (Nothing :?=: (Id (iI0,iI1) :& Id (d0,d1))) (i0,i1)) q (CON x) =
->     let qiI = CON $ q $$ Fst
->         qi  = CON $ q $$ Snd $$ Snd
->         qd = CON $ q $$ Snd $$ Fst
->         (typ :>: vap) = 
->           laty ("I" :<: SET :-: \iI ->
->                 "d" :<: ARR iI (IDESC iI) :-: \d ->
->                 "i" :<: iI :-: \i ->
->                 Target (SET :>: 
->                           (idescOp @@ [ iI , d $$ A i
->                                       , L $ HF "i" $ IMU Nothing iI d
->                                       ]))) 
->     in Right . CON $ 
->       coe @@ [ idescOp @@ [ iI0 , d0 $$ A i0 , L $ HF "i" $ IMU Nothing iI0 d0 ] 
->              , idescOp @@ [ iI1 , d1 $$ A i1 , L $ HF "i" $ IMU Nothing iI1 d1 ] 
->              , CON $ pval refl $$ A typ $$ A vap $$ Out 
->                                $$ A iI0 $$ A iI1 $$ A qiI
->                                $$ A d0 $$ A d1 $$ A qd
->                                $$ A i0 $$ A i1 $$ A qi
->              , x ]
->   coerce (IDesc (d0, d1)) q x = Right x
+> import -> CanCompile where
 
+> import -> CanEtaExpand where
+
+> import -> CanPats where
+>   pattern IDESC i = C (IDesc i)
+>   pattern IMU l ii x i = C (IMu (l :?=: (Id ii :& Id x)) i) 
+>   pattern IVAR i = C (IVar i)
+>   pattern IPI s t = C (IPi s t)
+>   pattern IFPI s t = C (IFPi s t)
+>   pattern ISIGMA s t = C (ISigma s t)
+>   pattern IFSIGMA s t = C (IFSigma s t)
+>   pattern ICONST p = C (IConst p)
+>   pattern IPROD x y = C (IProd x y)
+
+> import -> CanDisplayPats where
+>   pattern DIDESC i = DC (IDesc i)
+>   pattern DIMU l ii x i = DC (IMu (l :?=: (Id ii :& Id x)) i) 
+>   pattern DIVAR i = DC (IVar i)
+>   pattern DIPI s t = DC (IPi s t)
+>   pattern DIFPI s t = DC (IFPi s t)
+>   pattern DISIGMA s t = DC (ISigma s t)
+>   pattern DIFSIGMA s t = DC (IFSigma s t)
+>   pattern DICONST p = DC (IConst p)
+>   pattern DIPROD x y = DC (IProd x y)
 
 > import -> CanPretty where
 >   pretty (IDesc ii) = wrapDoc (kword KwIDesc <+> pretty ii ArgSize) ArgSize
@@ -134,34 +99,102 @@
 >   pretty (IMu (Nothing  :?=: (Id ii :& Id d)) i)  = wrapDoc
 >       (kword KwIMu <+> pretty ii ArgSize <+> pretty d ArgSize <+> pretty i ArgSize)
 >       ArgSize
->   pretty (IDone p) = wrapDoc
->       (kword KwIDone <+> pretty p ArgSize)
+>   pretty (IVar i) = wrapDoc
+>       (kword KwIVar <+> pretty i ArgSize)
 >       ArgSize
->   pretty (IArg a d) = wrapDoc
->       (kword KwIArg <+> pretty a ArgSize <+> pretty d ArgSize)
+>   pretty (IPi s t) = wrapDoc
+>       (kword KwIPi <+> pretty s ArgSize <+> pretty t ArgSize)
 >       ArgSize
->   pretty (IInd1 i d) = wrapDoc
->       (kword KwIInd1 <+> pretty i ArgSize <+> pretty d ArgSize)
+>   pretty (IFPi s t) = wrapDoc
+>       (kword KwIFPi <+> pretty s ArgSize <+> pretty t ArgSize)
 >       ArgSize
->   pretty (IInd h hi d) = wrapDoc
->       (kword KwIInd <+> pretty h ArgSize <+> pretty hi ArgSize <+> pretty d ArgSize)
+>   pretty (ISigma s t) = wrapDoc
+>       (kword KwISigma <+> pretty s ArgSize <+> pretty t ArgSize)
 >       ArgSize
+>   pretty (IFSigma s t) = wrapDoc
+>       (kword KwIFSigma <+> pretty s ArgSize <+> pretty t ArgSize)
+>       ArgSize
+>   pretty (IConst i) = wrapDoc
+>       (kword KwIConst <+> pretty i ArgSize)
+>       ArgSize
+>   pretty (IProd x y) = wrapDoc
+>       (kword KwIProd <+> pretty x ArgSize <+> pretty y ArgSize)
+>       ArgSize
+
+> import -> CanTraverse where
+>   traverse f (IDesc i)     = (|IDesc (f i)|)
+>   traverse f (IMu l i)     = (|IMu (traverse f l) (f i)|)
+>   traverse f (IVar i)       = (|IVar (f i)|)
+>   traverse f (IPi s t)     = (|IPi (f s) (f t)|)
+>   traverse f (IFPi s t)     = (|IFPi (f s) (f t)|)
+>   traverse f (ISigma s t)  = (|ISigma (f s) (f t)|)
+>   traverse f (IFSigma s t) = (|IFSigma (f s) (f t)|)
+>   traverse f (IConst p)     = (|IConst (f p)|)
+>   traverse f (IProd x y)   = (|IProd (f x) (f y)|)
+
+> import -> CanHalfZip where
+>   halfZip (IDesc i0) (IDesc i1) = (|(IDesc (i0,i1))|)
+>   halfZip (IMu l0 i0) (IMu l1 i1) = (|(\p -> IMu p (i0,i1)) (halfZip l0 l1)|)
+>   halfZip (IVar i0) (IVar i1) = (|(IVar (i0,i1))|)
+>   halfZip (IPi s0 t0) (IPi s1 t1) = (|(IPi (s0,s1) (t0,t1))|)
+>   halfZip (IFPi s0 t0) (IFPi s1 t1) = (|(IFPi (s0,s1) (t0,t1))|)
+>   halfZip (ISigma s0 t0) (ISigma s1 t1) = (|(ISigma (s0,s1) (t0,t1))|)
+>   halfZip (IFSigma s0 t0) (IFSigma s1 t1) = (|(IFSigma (s0,s1) (t0,t1))|)
+>   halfZip (IConst p0) (IConst p1) = (|(IConst (p0,p1))|)
+>   halfZip (IProd s0 t0) (IProd s1 t1) = (|(IProd (s0,s1) (t0,t1))|)
+
+\subsection{Plugging Eliminators in}
 
 > import -> ElimTyRules where
 >   elimTy chev (_ :<: (IMu tt@(_ :?=: (Id ii :& Id x)) i)) Out = 
 >     return (Out, idescOp @@ [ii , x $$ A i , L $ HF "i" $ \i -> C (IMu tt i)])
 
+> import -> ElimComputation where
+
+> import -> ElimCompile where
+
+> import -> ElimTraverse where
+
+> import -> ElimPretty where
+
+\subsection{Plugging Operators in}
+
 > import -> Operators where
 >   idescOp :
 >   iboxOp :
 >   imapBoxOp :
->   ielimOp :
+>   iinductionOp :
 
 > import -> OpCompile where
->   ("iinduction", [iI,d,i,v,bp,p]) -> App (Var "__iinduction") [d, p, i, v]
->   ("imapBox", [iI,d,x,bp,p,v]) -> App (Var "__imapBox") [d, p, v]
+
+%if False
+
+<  ("iinduction", [iI,d,i,v,bp,p]) -> App (Var "__iinduction") [d, p, i, v]
+<  ("imapBox", [iI,d,x,bp,p,v]) -> App (Var "__imapBox") [d, p, v]
+
+%endif
 
 > import -> OpCode where
+>   type IDescDispatchTable = (VAL -> VAL,
+>                              VAL -> VAL -> VAL,
+>                              VAL -> VAL -> VAL,
+>                              VAL -> VAL -> VAL,
+>                              VAL -> VAL -> VAL,
+>                              VAL -> VAL,
+>                              VAL -> VAL -> VAL)
+
+>   mkLazyIDescDef :: VAL -> IDescDispatchTable -> Either NEU VAL
+>   mkLazyIDescDef arg (ivarC, ipiC, ifpiC, isigmaC, ifsigmaC, iconstC, iprodC) =
+>     case arg of      
+>       IVAR i       -> Right $ ivarC i
+>       IPI s t      -> Right $ ipiC s t 
+>       IFPI s t     -> Right $ ifpiC s t
+>       ISIGMA s t   -> Right $ isigmaC s t
+>       IFSIGMA s t  -> Right $ ifsigmaC s t
+>       ICONST k     -> Right $ iconstC k
+>       IPROD x y    -> Right $ iprodC x y
+>       N t     -> Left t
+
 >   idescOp :: Op
 >   idescOp = Op
 >     { opName = "idesc"
@@ -176,15 +209,42 @@
 >        "X" :<: ARR iI SET :-: \x ->
 >        Target SET
 >       idOpRun :: [VAL] -> Either NEU VAL
->       idOpRun [iI,IDONE p,x]    = Right $ PRF p
->       idOpRun [iI,IARG aA d,x] = Right $
->          SIGMA aA . L . HF "a" $ \a ->
->            idescOp @@ [iI,d $$ A a, x]
->       idOpRun [iI,IIND1 i d,x] = Right (TIMES (x $$ A i) (idescOp @@ [iI,d,x]))
->       idOpRun [iI,IIND h hi d,x] = 
->         Right (TIMES (PI h (L $ HF "h" (\h -> x $$ (A (hi $$ (A h)))))) 
->                      (idescOp @@ [iI,d,x]))
->       idOpRun [_,N x,_]     = Left x
+>       idOpRun [_I, _D, _P] = 
+>         mkLazyIDescDef _D  (  ivarD _I _P
+>                            ,  ipiD _I _P        
+>                            ,  ifpiD _I _P        
+>                            ,  isigmaD _I _P        
+>                            ,  ifsigmaD _I _P        
+>                            ,  iconstD _I _P        
+>                            ,  iprodD _I _P  
+>                            )
+>       idOpRun x = error (show . length $ x)
+>       ivarD _I _P i = _P $$ A i     
+>       ipiD _I _P _S _T =
+>           PI _S (L . HF "s" $ \s ->
+>                  idescOp @@ [ _I, _T $$ A s, _P ])
+>       ifpiD _I _P _E _Df =
+>           branchesOp @@  [  _E
+>                          ,  (L . HF "e" $ \e -> 
+>                                idescOp @@  [  _I,  _Df $$ A e,  _P ]) 
+>                          ]
+>       isigmaD _I _P _S _T = 
+>           SIGMA _S (L . HF "s" $ \s ->
+>                     idescOp @@ [  _I
+>                                ,  _T $$ A s
+>                                ,  _P ])
+>       ifsigmaD _I _P _E _Ds =
+>           SIGMA (ENUMT _E) (L . HF "s" $ \s ->
+>                             idescOp @@ [ _I
+>                                        , switchOp @@ [ _E
+>                                                      , s
+>                                                      , L (K (IDESC _I))
+>                                                      , _Ds]
+>                                        , _P])
+>       iconstD _I _P _K = _K
+>       iprodD _I _P _D _D' =
+>           TIMES  (idescOp @@ [ _I, _D, _P ])
+>                  (idescOp @@ [ _I, _D', _P ])
 
 >   iboxOp :: Op
 >   iboxOp = Op
@@ -195,170 +255,174 @@
 >     , opSimp = \_ _ -> empty
 >     } where
 >       iboxOpTy = 
->         "ii" :<: SET :-: \ii ->
->         "d" :<: IDESC ii :-: \d ->
->         "x" :<: ARR ii SET :-: \x ->
->         "v" :<: (idescOp @@ [ii,d,x]) :-: \v ->
->         Target $ IDESC (SIGMA ii (L $ HF "i" (\i -> x $$ A i)))
+>         "I" :<: SET                    :-: \ _I ->
+>         "D" :<: IDESC _I               :-: \ _D ->
+>         "P" :<: ARR _I SET             :-: \ _P ->
+>         "v" :<: idescOp @@ [_I,_D,_P]  :-: \v ->
+>         Target $ IDESC (SIGMA _I (L . HF "i" $ \i -> _P $$ A i))
 >       iboxOpRun :: [VAL] -> Either NEU VAL
->       iboxOpRun [ii,IDONE _ ,x,v] = Right (IDONE TRIVIAL)
->       iboxOpRun [ii,IARG a d,x,v] = Right $ 
->         iboxOp @@ [ii,d $$ (A (v $$ Fst)),x,v $$ Snd]
->       iboxOpRun [ii,IIND h hi d,x,v] = Right $
->         IIND h (L (HF "h" $ \hh -> PAIR (hi $$ A hh) (v $$ Fst $$ A hh))) 
->              (iboxOp @@ [ii,d,x,v $$ Snd])
->       iboxOpRun [ii,IIND1 i d,x,v] = Right $ 
->         IIND1 (PAIR i (v $$ Fst)) (iboxOp @@ [ii,d,x,v $$ Snd])
->       iboxOpRun [_,N x    ,_,_] = Left x
-
+>       iboxOpRun [_I,_D,_P,v] = 
+>         mkLazyIDescDef _D  (  ivarD _I _P v
+>                            ,  ipiD _I _P v       
+>                            ,  ifpiD _I _P v       
+>                            ,  isigmaD _I _P v        
+>                            ,  ifsigmaD _I _P v       
+>                            ,  iconstD _I _P v       
+>                            ,  iprodD _I _P v 
+>                            )
+>       ivarD _I _P v i = IVAR (PAIR i v)
+>       ipiD _I _P f _S _T =
+>           IPI _S (L . HF "s" $ \s ->
+>                    iboxOp @@ [_I, _T $$ A s, _P, f $$ A s])
+>       ifpiD _I _P t _E _Df =
+>           IFPI _E (L . HF "e" $ \e ->
+>                     iboxOp @@  [  _I, _Df $$ A e, _P
+>                                ,  switchOp @@ [_E, e, 
+>                                     L (HF "e" $ \e -> 
+>                                       idescOp @@ [_I, _Df $$ A e,_P]), t]])
+>       isigmaD _I _P sd _S _T =
+>           let s = sd $$ Fst
+>               d = sd $$ Snd in
+>           iboxOp @@ [_I, _T $$ A s, _P, d]
+>       ifsigmaD _I _P ed _S _T =
+>            let e = ed $$ Fst
+>                d = ed $$ Snd in
+>            iboxOp @@ [_I
+>                      , switchOp @@ [ _S
+>                                    , e
+>                                    , L (K (IDESC _I))
+>                                    , _T ]
+>                      , _P 
+>                      , d ]
+>       iconstD _I _P _ _K = ICONST (PRF TRIVIAL)
+>       iprodD _I _P dd' _D _D' =
+>           let d = dd' $$ Fst
+>               d' = dd' $$ Snd in
+>           IPROD  (iboxOp @@ [_I, _D, _P, d])
+>                   (iboxOp @@ [_I, _D', _P, d'])
+          
 >   imapBoxOp :: Op
 >   imapBoxOp = Op
 >     { opName = "imapBox"
 >     , opArity = 6
->     , opTyTel = mapBoxOpTy
->     , opRun = mapBoxOpRun
+>     , opTyTel = imapBoxOpTy
+>     , opRun = imapBoxOpRun
 >     , opSimp = \_ _ -> empty
 >     } where
->       mapBoxOpTy = 
->         "ii" :<: SET :-: \ii ->
->         "d" :<: IDESC ii :-: \d ->
->         "x" :<: ARR ii SET :-: \x ->
->         let sigiix = SIGMA ii (L (HF "i" $ \i -> x $$ A i)) in
->           "bp" :<: ARR sigiix SET :-: \bp ->
->           "p" :<: (PI sigiix (L (HF "t" $ \t -> bp $$ A t))) :-: \p ->
->           "v" :<: (idescOp @@ [ii,d,x]) :-: \v ->
->           Target $ idescOp @@ [sigiix,iboxOp @@ [ii,d,x,v],bp]
->       mapBoxOpRun :: [VAL] -> Either NEU VAL
->       mapBoxOpRun [ii,IDONE _,x,bp,p,v] = Right VOID
->       mapBoxOpRun [ii,IARG a d,x,bp,p,v] = Right $ 
->         imapBoxOp @@ [ii,d $$ (A (v $$ Fst)),x,bp,p,v $$ Snd]
->       mapBoxOpRun [ii,IIND h hi d,x,bp,p,v] = Right $ 
->         PAIR (L (HF "x" $ \x -> p $$ A (PAIR (hi $$ A x) (v $$ Fst $$ A x)))) 
->              (imapBoxOp @@ [ii,d,x,bp,p,v $$ Snd]) 
->       mapBoxOpRun [ii,IIND1 i d,x,bp,p,v] = Right $ 
->         PAIR (p $$ A (PAIR i (v $$ Fst))) (imapBoxOp @@ [ii,d,x,bp,p,v $$ Snd]) 
->       mapBoxOpRun [_,N d    ,_, _,_,_] = Left d
+>       imapBoxOpTy =
+>         "I" :<: SET :-: \_I ->  
+>         "D" :<: IDESC _I :-: \ _D ->
+>         "X" :<: ARR _I SET :-: \ _X -> 
+>         let _IX = SIGMA _I (L . HF "i" $ \i -> _X $$ A i) in
+>         "P" :<: ARR _IX SET :-: \ _P ->
+>         "p" :<: (pity $ "ix" :<: _IX :-: \ ix -> Target $ _P $$ A ix) :-: \ _ ->
+>         "v" :<: (idescOp @@ [_I,_D,_X]) :-: \v ->
+>          Target (idescOp @@ [_IX, iboxOp @@ [_I,_D,_X,v], _P])
+>       imapBoxOpRun :: [VAL] -> Either NEU VAL
+>       imapBoxOpRun [_I, _D, _X, _P, p, v]  = 
+>         mkLazyIDescDef _D (varD _I _X _P p v, 
+>                            piD _I _X _P p v,
+>                            fpiD _I _X _P p v,
+>                            sigmaD _I _X _P p v,
+>                            fsigmaD _I _X _P p v,
+>                            constD _I _X _P p v, 
+>                            prodD _I _X _P p v) 
+>       varD _I _X _P p v i = p $$ A (PAIR i v)
+>       piD _I _X _P p v _S _T = 
+>         L . HF "s" $ \s -> imapBoxOp @@ [_I,_T $$ A s,_X,_P,p,v $$ A s]
+>       fpiD _I _X _P p v _E _Df = 
+>         L . HF "s" $ \s -> imapBoxOp @@ [_I,_Df $$ A s,_X,_P,p,v $$ A s]
+>       sigmaD _I _X _P p v _S _T = imapBoxOp @@ [_I,_T $$ A (v $$ Fst),_X,_P,p,v $$ Snd]
+>       fsigmaD _I _X _P p v _E _Ds =
+>         imapBoxOp @@ [_I,switchOp @@ [_E,v $$ Fst,L (K (IDESC _I)),_Ds],_X,_P,p,v $$ Snd]
+>       constD _I _X _P p v _K = VOID
+>       prodD _I _X _P p v _D _D' = 
+>         PAIR (imapBoxOp @@ [_I,_D,_X,_P,p,v $$ Fst]) 
+>               (imapBoxOp @@ [_I,_D',_X,_P,p,v $$ Snd])
 
->   ielimOpTy :: Maybe VAL -> TEL TY
->   ielimOpTy l = 
->     "ii" :<: SET :-: \ii ->
->     "d" :<: (ARR ii (IDESC ii)) :-: \d ->
->     "i" :<: ii :-: \i ->
->     "v" :<: (IMU l ii d i) :-: \v ->
->     "bp" :<: (ARR (SIGMA ii (L (HF "i'" $ \i' -> IMU l ii d i')))
->                   SET) 
->                :-: \bp ->
->     "m" :<: 
->       (pity ("i'" :<: ii :-: \i' ->
->              "x" :<: (idescOp @@ 
->                        [ ii , d $$ A i'
->                        , L $ HF "i''" $ \i'' -> IMU l ii d i''
->                        ]) :-: \x ->
->              "hs" :<: (idescOp @@ 
->                         [ SIGMA ii (L $ HF "i" $ \i -> IMU l ii d i) 
->                         , iboxOp @@
->                              [ ii , d $$ A i'
->                              , L $ HF "i''" $ \i'' -> IMU l ii d i''
->                              , x
->                              ]
->                         , bp ]) :-: \hs ->
->              Target (bp $$ A (PAIR i' (CON x))))) :-: \m ->
->      Target (bp $$ A (PAIR i v))
->   ielimOp :: Op
->   ielimOp = Op
+>   iinductionOpMethodType = L . HF "I" $ \_I -> 
+>                      L . HF "D" $ \_D ->
+>                      L . HF "P" $ \_P -> pity $ 
+>                        "i" :<: _I :-: \i ->
+>                        let mud = L . HF "i" $ \i -> IMU Nothing _I _D i in
+>                        "x" :<: (idescOp @@ [ _I, _D $$ A i, mud])
+>                                  :-: \x -> Target $
+>                          ARR (idescOp @@ [ SIGMA _I mud
+>                                         , iboxOp @@ [_I, _D $$ A i, mud, x], _P ])
+>                              (_P $$ A (PAIR i (CON x)))
+
+<   iinductionOpLabMethodType = L . HF "l" $ \l ->
+<                         L . HF "d" $ \d ->
+<                         L . HF "P" $ \_P ->
+<                         PI (descOp @@ [d, MU (Just l) d])
+<                            (L . HF "x" $ \x ->
+<                             ARR (boxOp @@ [d, MU (Just l) d, _P, x])
+<                                 (_P $$ A (PAIR CON x)))
+
+>   iinductionOp :: Op
+>   iinductionOp = Op
 >     { opName = "iinduction"
 >     , opArity = 6
->     , opTyTel = ielimOpTy Nothing
->     , opRun = elimOpRun
+>     , opTyTel = iinductionOpTy
+>     , opRun = iinductionOpRun
 >     , opSimp = \_ _ -> empty
 >     } where
->       elimOpRun :: [VAL] -> Either NEU VAL
->       elimOpRun [ii,d,i,CON x,bp,m] = Right $ 
->         m $$ A i $$ A x 
->           $$ A (imapBoxOp @@ 
->                   [ ii , d $$ A i , L $ HF "i'" $ \i' -> IMU Nothing ii d i'
->                   , bp , L $ HF "t" $ \t -> 
->                            ielimOp @@ [ii,d,t $$ Fst,t $$ Snd,bp,m] 
->                   , x
->                   ])
->       elimOpRun [_,_,_,N x, _,_] = Left x
-
->   imapOp = Op
->     { opName  = "imap"
->     , opArity = 5
->     , opTyTel    = mapOpTy
->     , opRun   = mapOpRun
->     , opSimp  = undefined 
->     } where
->         mapOpTy = 
->           "iI" :<: SET :-: \iI ->
->           "d" :<: IDESC iI :-: \d -> 
->           "a" :<: ARR iI SET :-: \a ->
->           "b" :<: ARR iI SET :-: \b ->
->           "f" :<: PI iI (L (HF "i" $ \i -> ARR (a $$ A i) (b $$ A i))) 
->                     :-: \f ->
->           "x" :<: (descOp @@ [iI, d, a]) :-: \x -> 
->           Target (descOp @@ [iI, d, b])
->
->         mapOpRun :: [VAL] -> Either NEU VAL
->         mapOpRun [iI,IDONE _,    a, b, f, x] = Right x
->         mapOpRun [iI,IARG s d, a, b, f, x] = Right $
->                 PAIR (x $$ Fst)
->                      (imapOp @@ [iI, d $$ A (x $$ Fst), a, b, f, x $$ Snd])
->         mapOpRun [iI,IIND h hi d, a, b, f, x] = Right $
->                 PAIR (L $ HF "h" $ \h -> f $$ A (hi $$ A h) 
->                                            $$ A (x $$ Fst $$ A h))
->                      (imapOp @@ [iI, d, a, b, f, x $$ Snd])
->         mapOpRun [iI,IIND1 i d,  a, b, f, x] = Right $
->                 PAIR (f $$ A i $$ A (x $$ Fst))
->                      (imapOp @@ [iI, d, a, b, f, x $$ Snd])
->         mapOpRun [iI,N d,        a, b, f, x] = Left d
-> 
->         mapOpSimp :: Alternative m => [VAL] -> NameSupply -> m NEU
->         mapOpSimp [iI, d, a, b, f, N x] r
->           | equal (PI iI (L (HF "i" $ \i -> ARR (a $$ A i) (b $$ A i))) 
->                      :>: (f, identity)) r = pure x
->           where
->             identity = L (HF "i" (\_ -> L (HF "x" (\x -> x))))
->         mapOpSimp [iI, d, _, c, f, N (mOp :@ [_ , _, a, _, g, N x])] r
->           | mOp == imapOp = mapOpSimp args r <|> pure (imapOp :@ args)
->           where
->             comp f g = 
->                L (HF "i" $ \i -> 
->                  L (HF "x" $ \x -> f $$ A i $$ A (g $$ A i $$ A x)))
->             args = [iI, d, a, c, comp f g, N x]
->         mapOpSimp _ _ = empty
-
+>       iinductionOpTy = 
+>         "I" :<: SET :-: \_I ->
+>         "D" :<: ARR _I (IDESC _I) :-: \_D ->
+>         "i" :<: _I :-: \i ->
+>         "v" :<: IMU Nothing _I _D i :-: \v ->
+>         "P" :<: (ARR (SIGMA _I (L . HF "i" $ \i -> IMU Nothing _I _D i)) SET) :-: \_P ->
+>         "p" :<: (iinductionOpMethodType $$ A _I $$ A _D $$ A _P) :-: \p ->
+>         Target (_P $$ A (PAIR i v))
+>       iinductionOpRun :: [VAL] -> Either NEU VAL
+>       iinductionOpRun [_I, _D, i, CON v, _P, p] = Right $ 
+>        p $$ A i $$ A v 
+>          $$ A (imapBoxOp @@ [ _I, _D $$ A i 
+>                             , (L . HF "i" $ \i -> IMU Nothing _I _D i), _P
+>                             , L . HF "ix" $ \ix -> 
+>                                iinductionOp @@ 
+>                                  [ _I, _D, ix $$ Fst, ix $$ Snd, _P, p ]
+>                             , v]) 
+>       iinductionOpRun [_, _, _, N x, _,_] = Left x
 
 > import -> KeywordConstructors where
->   KwIMu    :: Keyword
->   KwIDesc  :: Keyword
->   KwIDone  :: Keyword
->   KwIArg   :: Keyword
->   KwIInd1  :: Keyword
->   KwIInd   :: Keyword
+>   KwIMu :: Keyword
+>   KwIDesc :: Keyword
+>   KwIVar :: Keyword
+>   KwIPi :: Keyword
+>   KwIFPi :: Keyword
+>   KwISigma :: Keyword
+>   KwIFSigma :: Keyword
+>   KwIConst :: Keyword
+>   KwIProd :: Keyword
 
 > import -> KeywordTable where
->   key KwIMu       = "IMu"
->   key KwIDesc     = "IDesc"
->   key KwIDone     = "IDone"
->   key KwIArg      = "IArg"
->   key KwIInd1     = "IInd1"
->   key KwIInd      = "IND"
+>   key KwIMu      = "IMu"
+>   key KwIDesc    = "IDesc"
+>   key KwIVar     = "IVar"
+>   key KwIPi      = "IPi"
+>   key KwIFPi     = "IFPi"
+>   key KwISigma   = "ISigma"
+>   key KwIFSigma  = "IFSigma"
+>   key KwIConst   = "IConst"
+>   key KwIProd    = "IProd"
 
 > import -> InDTmParsersSpecial where
 >   (AndSize, (|(DIMU Nothing) (%keyword KwIMu%) (sizedInDTm ArgSize) (sizedInDTm ArgSize) (sizedInDTm ArgSize)|)) :
 >   (AndSize, (|DIDESC (%keyword KwIDesc%) (sizedInDTm ArgSize)|)) :
->   (AndSize, (|DIDONE (%keyword KwIDone%) (sizedInDTm ArgSize)|)) :
->   (AndSize, (|DIARG (%keyword KwIArg%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)|)) :
->   (AndSize, (|DIIND1 (%keyword KwIInd1%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)|)) :
->   (AndSize, (|DIIND (%keyword KwIInd%) (sizedInDTm ArgSize) (sizedInDTm ArgSize) (sizedInDTm ArgSize)|)) :
-
-
+>   (AndSize, (|DIVAR (%keyword KwIVar%) (sizedInDTm ArgSize)|)) :
+>   (AndSize, (|DIPI (%keyword KwIPi%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)|)) :
+>   (AndSize, (|DIFPI (%keyword KwIFPi%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)|)) :
+>   (AndSize, (|DISIGMA (%keyword KwISigma%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)|)) :
+>   (AndSize, (|DIFSIGMA (%keyword KwIFSigma%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)|)) :
+>   (AndSize, (|DICONST (%keyword KwIConst%) (sizedInDTm ArgSize)|)) :
+>   (AndSize, (|DIPROD (%keyword KwIProd%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)|)) :
 
 > import -> MakeElabRules where
 >   makeElab' loc (SET :>: DIMU Nothing iI d i) = do
->       l   :=>: lv   <- eFake False
+>       (r,sp) <- eFake
+>       let l = (P r) $:$ (init sp)
 >       iI  :=>: iIv  <- subElab loc (SET :>: iI)
 >       d   :=>: dv   <- subElab loc (ARR iIv (IDESC iIv) :>: d)
 >       i   :=>: iv   <- subElab loc (iIv :>: i)
@@ -370,18 +434,15 @@
 <       guard lastIsIndex
 <       -- should check i doesn't appear in d (fairly safe it's not in iI :))
 
->       return $ IMU (Just (N l)) iI d i :=>: IMU (Just lv) iIv dv iv
+>       return $ IMU (Just (N l)) iI d i :=>: IMU (Just (evTm l)) iIv dv iv
 
 
-If a label is not in scope, we remove it, so the definition appears at the
-appropriate place when the proof state is printed.
+> import -> InDTmConstructors where
 
-> import -> DistillRules where
->     distill es (SET :>: tm@(C (IMu l i)))
->       | Just name <- extractLabelName l = do
->           mtm <- lookupName name
->           case mtm of
->               Nothing  -> distill es (SET :>: C (IMu (dropLabel l) i))
->               Just _   -> do
->                   cc <- canTy (distill es) (Set :>: IMu l i)
->                   return ((DC $ fmap termOf cc) :=>: evTm tm)
+> import -> InDTmPretty where
+
+> import -> Pretty where
+
+\subsection{Adding Primitive references in Cochon}
+
+> import -> Primitives where
