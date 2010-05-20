@@ -77,7 +77,6 @@
 %include Features/Equality.lhs
 %include Features/FreeMonad.lhs
 %include Features/Nu.lhs
-%include Features/INu.lhs
 %include Features/Labelled.lhs
 %include Features/Quotient.lhs
 
