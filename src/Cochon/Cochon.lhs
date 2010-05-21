@@ -84,11 +84,14 @@ Here we have a very basic command-driven interface to the proof state monad.
 
 
 > paranoid = False
+> veryParanoid = False
 
 > validateDevelopment :: Bwd ProofContext -> IO ()
-> validateDevelopment locs@(_ :< loc) = if paranoid
+> validateDevelopment locs@(_ :< loc) = if veryParanoid
 >     then Data.Foldable.mapM_ validateCtxt locs -- XXX: there must be a better way to do that
->     else validateCtxt loc
+>     else if paranoid
+>         then validateCtxt loc
+>         else return ()
 >   where validateCtxt loc = do
 >             case evalStateT (validateHere `catchError` catchUnprettyErrors) loc of
 >               Left ss -> do
