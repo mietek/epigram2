@@ -29,8 +29,19 @@ Eliminated and simplified.
 Ta.
 Going to root...
 Made.
+con ['nil , _]
 Made.
-con ['cons ('suc 'zero) 'a (con ['cons 'zero 'b (con ['nil , refl Nat 'zero]) , refl Nat ('suc 'zero)]) , refl Nat ('suc ('suc 'zero))]
-Made.
-'nil
+con ['cons ('suc 'zero) 'a (con ['cons 'zero 'b (con ['nil , _]) , _]) , _]
+con ['cons ('suc ('suc ('suc 'zero))) 'a (con ['cons ('suc ('suc 'zero)) 'b (con ['cons ('suc 'zero) 'a (con ['cons 'zero 'b (con ['nil , _]) , _]) , _]) , _]) , _]
+Let there be vtail.
+Eliminated. Subgoals awaiting work...
+Thank you.
+Made lambda boy!
+Eliminated and simplified.
+Thank you.
+Eliminated and simplified.
+Eliminated and simplified.
+Ta.
+Going to root...
+con ['cons 'zero 'b (con ['nil , _]) , _]
 Loaded.

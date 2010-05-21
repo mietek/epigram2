@@ -520,9 +520,17 @@ at a time. It will fail if no simplification is possible.
 >             b :=>: _ <- tryProblemSimplify
 >             goOut
 >             give' (LK (N b))
->         Just (Simply qs _ h) -> do
->             lambdaBoy (fortran t) -- should do more stuff here
->             tryProblemSimplify 
+>         Just (Simply qs gs h) -> do
+>             q <- dischargePiLots qs (t $$ A h)
+>             q' <- bquoteHere q
+>             make ("psimp" :<: q')
+>             goIn
+>             _ :=>: bv <- tryProblemSimplify
+>             goOut
+>             r <- lambdaBoy (fortran t)
+>             prf <- bquoteHere $ bv $$$ (fmap (A . ($$ A (NP r))) gs)
+>             give' prf
+>              
 > simplifyGoal (PI s t) = do
 >     lambdaBoy (fortran t)
 >     tryProblemSimplify 
