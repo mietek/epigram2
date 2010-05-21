@@ -639,26 +639,20 @@ term |t| and we type-check the eliminator, using |elimTy|. Because
 >     val :<: ty <- infer t
 >     case ty of
 >         C cty -> do
->             (s', ty') <- elimTy chev (evTm t :<: cty) s
+>             (s', ty') <- elimTy check (val :<: cty) s
 >             return $ (val $$ (fmap valueOf s')) :<: ty'
 >         _ -> throwError' $ err "infer: inferred type"
 >                            ++ errTyVal (ty :<: SET)
 >                            ++ err "of"
 >                            ++ errTyVal (val :<: ty)
 >                            ++ err "is not canonical."
->  where chev (t :>: x) = do 
->               ch <- check (t :>: x) 
->               return $ ch :=>: evTm x
 
 Following exactly the same principle, we can infer the result of an
 operator application:
 
 > infer (op :@ ts)         = do
->   (vs,t) <- opTy op chev ts
+>   (vs,t) <- opTy op check ts
 >   return $ (op @@ (fmap valueOf vs)) :<: t
->       where chev (t :>: x) = do 
->               ch <- check (t :>: x) 
->               return $ ch :=>: evTm x
 
 Type ascription is formalized by the following rule:
 %
@@ -671,9 +665,8 @@ Type ascription is formalized by the following rule:
 Which translates directly into the following code:
 
 > infer (t :? ty)           = do
->   check (SET :>: ty)
->   let vty = evTm ty
->   _ :=>: v <- check (vty :>: t)
+>   _ :=>:  vty  <- check (SET  :>: ty  )
+>   _ :=>:  v    <- check (vty  :>: t   )
 >   return $ v :<: vty
 
 Obviously, if none of the rule above applies, then there is something
