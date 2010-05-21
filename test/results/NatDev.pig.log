@@ -28,7 +28,7 @@
                       \ y : nat ->
                     ] suc (h y) : nat ;
                   \ x : Sig (nat -> nat ;) ->
-                ] G50011 (x !) _ : nat -> nat ;
+                ] G50011 (x !) [] : nat -> nat ;
               \ s : Enum ['zero 'suc] ->
               h8
                 [ \ s : Enum ['zero 'suc] ->

@@ -9,10 +9,10 @@ Made lambda boy!
 Made.
 Made.
 [ A := Set : Set ;
-  p := refl Set Set : :- A == ((: Set) Set) ;
+  p := _ : :- A == ((: Set) Set) ;
   \ X : Set ->
   B := Set : Set ;
-  q := refl Set Set : :- B == ((: Set) Set) ;
+  q := _ : :- B == ((: Set) Set) ;
   C := HOPE? : Set ;
   \ Y : Set ->
   r := HOPE? : :- C == Y ;

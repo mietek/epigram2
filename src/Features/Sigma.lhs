@@ -26,7 +26,6 @@
 >   prettyPair p = const (brackets (prettyPairMore empty p))
 
 >   prettyPairMore :: Doc -> InDTmRN -> Doc
->   prettyPairMore d DU           = d
 >   prettyPairMore d DVOID        = d
 >   prettyPairMore d (DPAIR a b)  = prettyPairMore (d <+> pretty a minBound) b
 >   prettyPairMore d t            = d <+> kword KwComma <+> pretty t maxBound
@@ -222,4 +221,4 @@ from a pair.
 
 
 > import -> DistillRules where
->   distill es (UNIT :>: _) = return $ DU :=>: VOID
+>   distill es (UNIT :>: _) = return $ DVOID :=>: VOID

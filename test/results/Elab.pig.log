@@ -22,8 +22,8 @@ Made.
   A := ? : Set ;
   elab
     [ hope := Set : Set ;
-      eq := refl Set Set : :- ((: Set) Set) == hope ;
-    ] [hope , id hope (coe Set hope eq A)] : Sig (sst : Set ; sst) ;
+      eq := _ : :- ((: Set) Set) == hope ;
+    ] [hope , id hope (coe Set hope _ A)] : Sig (sst : Set ; sst) ;
   f
     [ a := (Set -> Set) : Set ;
     ] ? : a ;
@@ -31,8 +31,8 @@ Made.
   x
     [ hope := Set : Set ;
       can := Set : hope ;
-      eq := refl Set Set : :- hope == ((: Set) Set) ;
-    ] ? : coe hope Set eq (id hope can) ;
+      eq := _ : :- hope == ((: Set) Set) ;
+    ] ? : coe hope Set _ (id hope can) ;
   B := HOPE? : Set ;
   C := HOPE? : Prop ;
   p := HOPE? : :- B == C ;

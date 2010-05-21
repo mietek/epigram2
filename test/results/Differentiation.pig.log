@@ -11,9 +11,9 @@ Going to root...
 Made.
 'constD (:- FF)
 Made.
-'suc 'left _
+'suc 'left []
 Made.
 'b
-'c 'left _ 'b
+'c 'left [] 'b
 'c 'right 'b
 Loaded.

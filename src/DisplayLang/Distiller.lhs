@@ -44,17 +44,25 @@ of entries in local(!) scope, which it will extend when going under a binder.
 
 > import <- DistillRules
 
+> distill es tt = distillBase es tt
+
+
+We separate out the standard distillation cases (without aspect extensions) so
+that aspect distill rules can give up and invoke the base cases.  
+
+> distillBase :: Entries -> (TY :>: INTM) -> ProofStateT INTM (InDTmRN :=>: VAL)
+
 Just like in any other checker-evaluator, canonical terms can be distilled
 using |canTy|.
 
-> distill es (C ty :>: C c) = do
+> distillBase es (C ty :>: C c) = do
 >     cc <- canTy (distill es) (ty :>: c)
 >     return ((DC $ fmap termOf cc) :=>: evTm (C c))
 
 To distill a $lambda$-abstraction, we speculate a fresh reference and distill
 under the binder, then convert the scope appropriately.
 
-> distill es (ty :>: l@(L sc)) = do
+> distillBase es (ty :>: l@(L sc)) = do
 >     (k, s, f) <- lambdable ty `catchMaybe`  (err "distill: type " 
 >                                             ++ errVal ty 
 >                                             ++ err " is not lambdable.")
@@ -72,13 +80,13 @@ under the binder, then convert the scope appropriately.
 
 If we encounter a neutral term, we switch to |distillInfer|.
 
-> distill es (_ :>: N n) = do
+> distillBase es (_ :>: N n) = do
 >     (n' :<: _) <- distillInfer es n []
 >     return (DN n' :=>: evTm n)
 
 If none of the cases match, we complain loudly.
 
-> distill _ (ty :>: tm) = error ("distill: can't cope with\n" ++ show ty ++ "\n:>:\n" ++ show tm)
+> distillBase _ (ty :>: tm) = error ("distill: can't cope with\n" ++ show ty ++ "\n:>:\n" ++ show tm)
 
 
 \subsection{Distilling |EXTM|s}
