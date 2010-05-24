@@ -29,10 +29,10 @@ Eliminated and simplified.
 Ta.
 Going to root...
 Made.
-con ['nil , _]
+'nil _
 Made.
-con ['cons ('suc 'zero) 'a (con ['cons 'zero 'b (con ['nil , _]) , _]) , _]
-con ['cons ('suc ('suc ('suc 'zero))) 'a (con ['cons ('suc ('suc 'zero)) 'b (con ['cons ('suc 'zero) 'a (con ['cons 'zero 'b (con ['nil , _]) , _]) , _]) , _]) , _]
+'cons ('suc 'zero) 'a ('cons 'zero 'b ('nil _) _) _
+'cons ('suc ('suc ('suc 'zero))) 'a ('cons ('suc ('suc 'zero)) 'b ('cons ('suc 'zero) 'a ('cons 'zero 'b ('nil _) _) _) _) _
 Let there be vtail.
 Eliminated. Subgoals awaiting work...
 Thank you.
@@ -43,5 +43,5 @@ Eliminated and simplified.
 Eliminated and simplified.
 Ta.
 Going to root...
-con ['cons 'zero 'b (con ['nil , _]) , _]
+'cons 'zero 'b ('nil _) _
 Loaded.

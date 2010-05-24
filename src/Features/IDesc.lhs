@@ -487,6 +487,34 @@
 >       return $ IMU (Just (N l)) iI d i :=>: IMU (Just (evTm l)) iIv dv iv
 
 
+>   makeElab' loc (ty@(IMU _ _ _ _) :>: DTag s xs) =
+>       makeElab' loc (ty :>: DCON (DPAIR (DTAG s) (fold xs)))
+>     where fold :: [InDTmRN] -> InDTmRN
+>           fold [] = DVOID
+>           fold [x] = x
+>           fold (x : xs) = DPAIR x (fold xs)
+
+> import -> DistillRules where
+
+>     distill es (IMU l _I s i :>: CON (PAIR t x)) 
+>       | Just (e, f) <- sumilike _I (s $$ A i) = do
+>         m   :=>: tv  <- distill es (ENUMT e :>: t)
+>         as  :=>: xv  <- distill es (idescOp @@ [  _I,f tv
+>                                                ,  L (HF "i" $ \i -> IMU l _I s i)
+>                                                ] :>: x)
+>         case m of
+>             DTAG s   -> return $ DTag s (unfold as)  :=>: CON (PAIR tv xv)
+>             _        -> return $ DCON (DPAIR m as)   :=>: CON (PAIR tv xv)
+>       where
+>         unfold :: InDTmRN -> [InDTmRN]
+>         unfold DVOID        = []
+>         unfold (DPAIR s t)  = s : unfold t
+>         unfold t            = [t]
+>         sumilike :: VAL -> VAL -> Maybe (VAL, VAL -> VAL)
+>         sumilike _I (IFSIGMA e b)  = 
+>           Just (e, \t -> switchOp @@ [ e , t , L (K (IDESC _I)), b ])
+>         sumilike _ _               = Nothing
+
 > import -> InDTmConstructors where
 
 > import -> InDTmPretty where

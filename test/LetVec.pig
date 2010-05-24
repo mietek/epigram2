@@ -27,8 +27,8 @@ make Vec : Nat -> Set ;
 lambda n ;
 give IMu Nat VecD n ;
 
-make nil := con ['nil , _ ] : Vec 'zero ;
-make cons := (\ n a as -> con ['cons n a as , _ ]) : (n : Nat) -> A -> Vec n -> Vec ('suc n) ;
+make nil := 'nil _ : Vec 'zero ;
+make cons := (\ n a as -> 'cons n a as _) : (n : Nat) -> A -> Vec n -> Vec ('suc n) ;
 
 make VecInd := iinduction Nat VecD : (m : Nat)(v : Vec m)
     (bp : Sig (n : Nat ; Vec n) -> Set)
@@ -52,11 +52,11 @@ root ;
 
 make A := Enum ['a 'b 'c] : Set ;
 
-elab Vec.vappend A 'zero (Vec.nil A) 'zero (Vec.nil A)  ;
+elab Vec.vappend A 'zero ('nil _) 'zero ('nil _)  ;
 
-make vab := Vec.cons A (suc zero) 'a (Vec.cons A zero 'b (Vec.nil A)) : Vec.Vec A (suc (suc zero)) ;
+make vab := 'cons ('suc 'zero) 'a ('cons 'zero 'b ('nil _) _) _ : Vec.Vec A ('suc ('suc 'zero)) ;
 elab vab ;
-elab Vec.vappend A (suc (suc zero)) vab (suc (suc zero)) vab ;
+elab Vec.vappend A ('suc ('suc 'zero)) vab ('suc ('suc 'zero)) vab ;
 
 let vtail (A : Set)(n : Nat)(as : Vec.Vec A ('suc n)) : Vec.Vec A n ;
 elim Vec.VecInd A ('suc n) as ;
@@ -72,4 +72,4 @@ give con \ j -> con \ a -> con \ as -> \ ksuc -> ? ;
 
 root ;
 
-elab vtail A (suc zero) vab ;
+elab vtail A ('suc 'zero) vab ;
