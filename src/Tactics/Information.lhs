@@ -83,7 +83,7 @@ boys if the argument is False or girls if the argument is True.
 >     help bsc B0 = return empty
 >     help bsc (es :< E ref _ (Boy k) _) | not gals = do
 >         ty     <- bquoteHere (pty ref)
->         docTy  <- prettyHere (SET :>: ty)
+>         docTy  <- prettyHereAt (pred ArrSize) (SET :>: ty)
 >         d      <- help bsc es
 >         return $ d $$ prettyBKind k (text (showRelName (christenREF bsc ref))
 >                                               <+> kword KwAsc <+> docTy)
