@@ -477,13 +477,11 @@ a binder.
 For the other constructors, we simply go through and do as much damage
 as we can. Simple, easy.
 
-> bquote refs (L (K t)) = (|(L . K) (bquote refs t) |)
-> bquote refs (C c) = (|C (traverse (bquote refs) c )|)
-> bquote refs (N n) = (|N (bquote refs n )|)
-> bquote refs (n :$ v) = (|(:$) (bquote refs n)
->                                 (traverse (bquote refs) v)|)
-> bquote refs (op :@ vs) = (|(:@) (pure op)
->                                   (traverse (bquote refs) vs)|)
+> bquote refs (L (K t))   = (| LK (bquote refs t) |)
+> bquote refs (C c)       = (| C (traverse (bquote refs) c) |)
+> bquote refs (N n)       = (| N (bquote refs n) |)
+> bquote refs (n :$ v)    = (| (bquote refs n) :$ (traverse (bquote refs) v) |)
+> bquote refs (op :@ vs)  = (| (op :@) (traverse (bquote refs) vs) |)
 
 \subsubsection{discharge}
 
@@ -799,12 +797,12 @@ case for |Pi| in |opRunEqGreen|.
 
 The |coeh| function takes two types, a proof that they are equal and a value
 in the first type; it produces a value in the second type and a proof that
-it is equal to the original value. If the proof is |refl| then this is easy,
-otherwise it applies |coe| to the value and uses the coherence operator
-|coh| to produce the proof.
+it is equal to the original value. If the sets are definitinoally equal then
+this is easy, otherwise it applies |coe| to the value and uses the coherence
+axiom |coh| to produce the proof.
 
 > coeh :: TY -> TY -> VAL -> VAL -> (VAL, VAL)
-> coeh s t (N (P r :$ _ :$ _)) v | r == refl = (v, pval refl $$ A s $$ A v)
+> coeh s t q v | partialEq s t q  = (v, pval refl $$ A s $$ A v)
 > coeh s t q v = (coe @@ [s, t, q, v], pval coh $$ A s $$ A t $$ A q $$ A v)
 
 
@@ -818,8 +816,8 @@ Features must extend this definition using the |Coerce| aspect for every
 canonical set-former they introduce. They must handle coercions between all
 canonical inhabitants of such sets, but need not deal with neutral inhabitants.
 To ensure we can add arbitrary consistent axioms to the system, they should
-not demand the proof be canonical unless asked to coerce between sets that
-cannot be equal.
+not inspect the proof, but may eliminate it with |naughtE| if asked to coerce
+between incompatible sets.
 
 > coerce :: (Can (VAL,VAL)) -> VAL -> VAL -> Either NEU VAL
 > coerce Set q x = Right x
@@ -834,4 +832,16 @@ cannot be equal.
 >                             show cvv, "and proof", show q, "and value", show r]
 
 
+The |partialEq| function takes two sets together with a proof that they are
+equal; it returns |True| if they are known to be definitionally equal. This
+is sound but not complete for the definitional equality, so if it returns
+|False| they might still be equal. It is safe to call during bquote, and
+hence during evaluation, because it avoids forcing the types of references.
 
+\question{Is this safe? Can it somehow cause name collisions?}
+
+> partialEq :: VAL -> VAL -> VAL -> Bool
+> partialEq _ _ (N (P r :$ _ :$ _)) | r == refl = True
+> partialEq _ _ _ = False
+> partialEq s t _ = bquote B0 s ns == bquote B0 t ns
+>   where ns = (B0 :< ("__partialEq", 0), 0) :: NameSupply

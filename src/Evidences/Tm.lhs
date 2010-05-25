@@ -433,14 +433,16 @@ Otherwise, they are clearly not equal:
 >   _             == _             = False
 
 
-For scopes, we should only ever see full binders, and we compare them
-ignoring name advice: de Bruijn indexing gets rid of \(\alpha\)-conversion
-issues.
+We compare scopes ignoring name advice: de Bruijn indexing gets rid of
+\(\alpha\)-conversion issues. When checking the definitional equality, we
+should only ever see full binders thanks to $\eta$-expansion; the remaining
+cases are for sound but not complete approximation of the definitional
+equality.
 
 > instance Eq x => Eq (Scope {TT} x) where
 >   (_ :. t0)  == (_ :. t1)  = t0 == t1
->   K t0       == _          = error "unexpected K"
->   _          == K t1       = error "unexpected K"
+>   K t0       == K t1       = t0 == t1
+>   _          == _          = False
 
 Operators are compared by name!
 
