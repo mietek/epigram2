@@ -416,6 +416,9 @@ Miscellaneous tactics:
 >         ,  ctHelp = "undo - goes back to a previous state."
 >         }
 
+>     : nullaryCT "validate" (validateHere >> return "Validated.")
+>         "validate - re-checks the definition at the current location."  
+
 >     : CochonTactic 
 >         {  ctName = "load"
 >         ,  ctParse = (| (B0 :<) tokenString |)
