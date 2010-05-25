@@ -94,7 +94,7 @@
 > import -> CanPretty where
 >   pretty (IDesc ii) = wrapDoc (kword KwIDesc <+> pretty ii ArgSize) ArgSize
 >   pretty (IMu (Just l   :?=: _) i)  = wrapDoc
->       (pretty l ArgSize <+> pretty i ArgSize)
+>       (pretty l AppSize <+> pretty i ArgSize)
 >       ArgSize
 >   pretty (IMu (Nothing  :?=: (Id ii :& Id d)) i)  = wrapDoc
 >       (kword KwIMu <+> pretty ii ArgSize <+> pretty d ArgSize <+> pretty i ArgSize)
@@ -469,6 +469,10 @@
 >   (AndSize, (|DICONST (%keyword KwIConst%) (sizedInDTm ArgSize)|)) :
 >   (AndSize, (|DIPROD (%keyword KwIProd%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)|)) :
 
+
+Just like |Mu|, when elaborating |IMu| we attach a display label if the
+description is not neutral, to improve the pretty-printed representation.
+
 > import -> MakeElabRules where
 >   makeElab' loc (SET :>: DIMU Nothing iI d i) = do
 >       (r,sp) <- eFake
@@ -477,14 +481,20 @@
 >       d   :=>: dv   <- subElab loc (ARR iIv (IDESC iIv) :>: d)
 >       i   :=>: iv   <- subElab loc (iIv :>: i)
 
-\question{What is this check for, and how can we implement it in |Elab|?
-|xs| is the list of boys (cf. |eFake|).}
+\question{What is this check for? How can we implement it correctly?}
 
-<       lastIsIndex <- eEqual (SET :>: (iv,N (P (last xs))))
-<       guard lastIsIndex
+<       guard =<< eEqual (SET :>: (iv, NP (last sp)))
 <       -- should check i doesn't appear in d (fairly safe it's not in iI :))
 
->       return $ IMU (Just (N l)) iI d i :=>: IMU (Just (evTm l)) iIv dv iv
+>       if shouldLabel dv
+>           then return $ IMU (Just (N l)) iI d i
+>                             :=>: IMU (Just (evTm l)) iIv dv iv
+>           else return $ IMU Nothing iI d i
+>                             :=>: IMU Nothing iIv dv iv
+>    where
+>      shouldLabel :: VAL -> Bool
+>      shouldLabel (N _)  = False
+>      shouldLabel _      = True
 
 
 >   makeElab' loc (ty@(IMU _ _ _ _) :>: DTag s xs) =
