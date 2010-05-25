@@ -552,7 +552,10 @@ at a time. It will fail if no simplification is possible.
 >     goOut
 >     give' (PAIR (N stm) (N ttm))
 
-> simplifyGoal _ = (|)
+> simplifyGoal (LABEL _ UNIT)           = give' (LRET VOID)
+> simplifyGoal (LABEL _ (PRF TRIVIAL))  = give' (LRET VOID)
+
+> simplifyGoal _ = throwError' $ err "simplifyGoal: cannot simplify"
 
 
 \subsection{Invoking Simplification}

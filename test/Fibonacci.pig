@@ -26,7 +26,6 @@ root ;
 -- We can build such a structure if we can get P k from the P j for j < k:
 let aux-gen (P : Nat -> Set)(r : (k : Nat) -> aux P k -> P k)(n : Nat) : aux P n ;
 <= [n] Nat.Ind n ;
-= _ ;
 = [? , ?] ;
 give r xf^1 (aux-gen P^1 r xf^1) ;
 give aux-gen P^1 r xf^1 ;
