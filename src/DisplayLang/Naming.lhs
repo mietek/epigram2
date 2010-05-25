@@ -273,7 +273,7 @@ the name part of references, respectively.
 >               let mnom = take (length nom' - length nom) nom'
 >               (an,ams) <- nomAbs mnom fsc
 >               let tams = if null mnom then tms else ams  
->               (rn, rms) <- nomRel nom (es <+> les) [] Nothing 
+>               (rn, rms) <- nomRel nom (es <+> les) Nothing 
 >               (| ((tn : an) ++ rn, i, if null nom then tams else rms) |)) 
 >       (Just (xs, Nothing),FAKE) ->
 >         maybe (failNom tar,0,Nothing) id 
@@ -375,12 +375,13 @@ the name part of references, respectively.
 > countB i n (esus,es:<_) = countB i n (esus,es)
 > countB _ n _ = Nothing 
 
-> nomRel :: Name -> Entries -> RelName 
+> nomRel :: Name -> Entries 
 >                -> Maybe (Scheme INTM) -> Maybe (RelName, Maybe (Scheme INTM)) 
-> nomRel [] _ rom ms = (| (rom, ms) |)
-> nomRel (x : nom) es rom _ = do
+> nomRel [] _ ms = (| ([], ms) |)
+> nomRel (x : nom) es _ = do
 >   (i,es',ms) <- nomRel' 0 x es
->   nomRel nom es' ((fst x,Rel i):rom) ms
+>   (nom',ms') <- nomRel nom es' ms
+>   return ((fst x,Rel i):nom',ms')
 
 > nomRel' :: Int -> (String,Int) -> Entries 
 >                -> Maybe (Int,Entries, Maybe (Scheme INTM))
