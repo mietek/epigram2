@@ -428,14 +428,24 @@ case for sigma.
 
 
 > import -> MakeElabRules where
->     -- Could add rules for named constructors
->     makeElab' loc (MU l d :>: DVOID) = 
+
+We elaborate list-like syntax for enumerations into the corresponding inductive
+data. This cannot apply in general because it leads to infinite loops when
+elaborating illegal values for some descriptions. Perhaps we should remove it
+for enumerations as well.
+
+>     makeElab' loc (MU l@(Just (NP r)) d :>: DVOID) | r == enumFakeREF = 
 >         makeElab' loc (MU l d :>: DCON (DPAIR DZE DVOID))
->     makeElab' loc (MU l d :>: DPAIR s t) =
+>     makeElab' loc (MU l@(Just (NP r)) d :>: DPAIR s t) | r == enumFakeREF =
 >         makeElab' loc (MU l d :>: DCON (DPAIR (DSU DZE) (DPAIR s (DPAIR t DVOID))))
 
+More usefully, we elaborate a tag with a bunch of arguments by converting it
+into the corresponding inductive data structure. This depends on the description
+having a certain standard format, so it does not work in general.
+\question{Can we make it more robust by looking at the description?}
+
 >     makeElab' loc (MU l d :>: DTag s xs) =
->         makeElab' loc (MU l d :>: DCON (DPAIR (DTAG s) (foldr DPAIR DVOID xs)))
+>         makeElab' loc (MU l d :>: DCON (foldr DPAIR DVOID (DTAG s : xs)))
 
 
 When elaborating |Mu| we can attach a label for display instead of the underlying

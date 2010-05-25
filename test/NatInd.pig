@@ -4,7 +4,7 @@ make NatD := con ['sigmaD (Enum ['zero
 			       (con ['prodD (con ['idD]) (con ['constD (Sig ())]) ])]] : Desc ;
 make Nat := (Mu NatD) : Set ;
 make suc := (\ x -> con ['suc x]) : Nat -> Nat ;
-make zero := [] : Nat ;
+make zero := 'zero : Nat ;
 make one := (suc zero) : Nat ;
 make two := (suc one) : Nat ;
 make ind : (n : Nat) -> (P : Nat -> Set) -> P zero -> ((k : Nat) -> P k -> P (suc k)) -> P n ;

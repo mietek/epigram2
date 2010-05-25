@@ -1,9 +1,9 @@
 [ nat
     [ h00
         [ \ s : Enum ['zero 'suc] ->
-        ] switch ['zero 'suc] s (\ s -> Desc) [(con ['constD (Sig ())]) (con ['prodD [] (con ['constD (Sig ())])])] : Desc ;
+        ] switch ['zero 'suc] s (\ s -> Desc) [(con ['constD (Sig ())]) (con ['prodD 'idD (con ['constD (Sig ())])])] : Desc ;
     ] Mu (con ['sigmaD (Enum ['zero 'suc]) h00]) : Set ;
-  zero := [] : nat ;
+  zero := 'zero : nat ;
   suc
     [ \ x : nat ->
     ] con ['suc x] : nat ;
@@ -27,10 +27,10 @@
                   \ x : Sig (nat -> nat ;) ->
                 ] G50011 (x !) _ : nat -> nat ;
               \ s : Enum ['zero 'suc] ->
-            ] switch ['zero 'suc] s (\ s -> ((x : desc (switch ['zero 'suc] s (\ s -> Desc) [(con ['constD (Sig ())]) (con ['prodD [] (con ['constD (Sig ())])])]) nat) -> box (switch ['zero 'suc] s (\ s -> Desc) [(con ['constD (Sig ())]) (con ['prodD [] (con ['constD (Sig ())])])]) nat (\ _ -> (nat -> nat)) x -> nat -> nat)) [G5000 G5001] : (x : desc (switch ['zero 'suc] s (\ s -> Desc) [(con ['constD (Sig ())]) (con ['prodD [] (con ['constD (Sig ())])])]) nat) -> box (switch ['zero 'suc] s (\ s -> Desc) [(con ['constD (Sig ())]) (con ['prodD [] (con ['constD (Sig ())])])]) nat (\ _ -> (nat -> nat)) x -> nat -> nat ;
-          \ x : Sig (s : Enum ['zero 'suc] ; desc (switch ['zero 'suc] s (\ s -> Desc) [(con ['constD (Sig ())]) (con ['prodD [] (con ['constD (Sig ())])])]) nat) ->
-        ] G500 (x !) (x -) : box (switch ['zero 'suc] (x !) (\ s -> Desc) [(con ['constD (Sig ())]) (con ['prodD [] (con ['constD (Sig ())])])]) nat (\ _ -> (nat -> nat)) (x -) -> nat -> nat ;
+            ] switch ['zero 'suc] s (\ s -> ((x : desc (switch ['zero 'suc] s (\ s -> Desc) [(con ['constD (Sig ())]) (con ['prodD 'idD (con ['constD (Sig ())])])]) nat) -> box (switch ['zero 'suc] s (\ s -> Desc) [(con ['constD (Sig ())]) (con ['prodD 'idD (con ['constD (Sig ())])])]) nat (\ _ -> (nat -> nat)) x -> nat -> nat)) [G5000 G5001] : (x : desc (switch ['zero 'suc] s (\ s -> Desc) [(con ['constD (Sig ())]) (con ['prodD 'idD (con ['constD (Sig ())])])]) nat) -> box (switch ['zero 'suc] s (\ s -> Desc) [(con ['constD (Sig ())]) (con ['prodD 'idD (con ['constD (Sig ())])])]) nat (\ _ -> (nat -> nat)) x -> nat -> nat ;
+          \ x : Sig (s : Enum ['zero 'suc] ; desc (switch ['zero 'suc] s (\ s -> Desc) [(con ['constD (Sig ())]) (con ['prodD 'idD (con ['constD (Sig ())])])]) nat) ->
+        ] G500 (x !) (x -) : box (switch ['zero 'suc] (x !) (\ s -> Desc) [(con ['constD (Sig ())]) (con ['prodD 'idD (con ['constD (Sig ())])])]) nat (\ _ -> (nat -> nat)) (x -) -> nat -> nat ;
       \ x : nat ->
-    ] induction (con ['sigmaD (Enum ['zero 'suc]) (\ s -> switch ['zero 'suc] s (\ s -> Desc) [(con ['constD (Sig ())]) (con ['prodD [] (con ['constD (Sig ())])])])]) x (\ _ -> (nat -> nat)) G50 : nat -> nat ;
+    ] induction (con ['sigmaD (Enum ['zero 'suc]) (\ s -> switch ['zero 'suc] s (\ s -> Desc) [(con ['constD (Sig ())]) (con ['prodD 'idD (con ['constD (Sig ())])])])]) x (\ _ -> (nat -> nat)) G50 : nat -> nat ;
   x := plus two two : nat ;
 ]
