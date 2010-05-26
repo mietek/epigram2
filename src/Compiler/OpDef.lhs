@@ -3,23 +3,30 @@
 Gadgets for building operators so that they will evaluate and compile
 coherently. 
 
+
+%if False
+
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE TypeOperators, GADTs, KindSignatures, RankNTypes, MultiParamTypeClasses ,
->     TypeSynonymInstances, FlexibleInstances, FlexibleContexts, ScopedTypeVariables #-}
+> {-# LANGUAGE TypeOperators, GADTs, KindSignatures, RankNTypes,
+>     MultiParamTypeClasses, TypeSynonymInstances, FlexibleInstances,
+>     FlexibleContexts, ScopedTypeVariables #-}
 
 > module Compiler.OpDef where
 
 > import Evidences.Tm
 > import Evidences.Rules
 
-> data OpDef = Arg (VAL -> OpDef) -- Any argument
->            | ConArg (VAL -> OpDef) -- An argument which needs to be canonical
->            | Body OpBody
+%endif
 
-> data OpBody = OpCase OpBody [OpBody]
->             | IsZero OpBody OpBody OpBody
->             | Val VAL 
->             | Dec VAL (VAL -> OpBody)
+
+> data OpDef  =  Arg (VAL -> OpDef)     -- Any argument
+>             |  ConArg (VAL -> OpDef)  -- An argument that needs to be canonical
+>             |  Body OpBody
+
+> data OpBody  =  OpCase OpBody [OpBody]
+>              |  IsZero OpBody OpBody OpBody
+>              |  Val VAL 
+>              |  Dec VAL (VAL -> OpBody)
 
 > makeOpRun :: String -> OpDef -> [VAL] -> Either NEU VAL
 > makeOpRun name (Arg fn) (v:vs) = makeOpRun name (fn v) vs
@@ -56,21 +63,21 @@ the .lhs-boot.
 
 The operator should also be added to OpCompile and OpGenerate. e.g.
 
- import -> OpCompile where
-     ("switch", [e, x, p, b]) -> App (Var "__switch") [Ignore, x, Ignore, b]
+< import -> OpCompile where
+<     ("switch", [e, x, p, b]) -> App (Var "__switch") [Ignore, x, Ignore, b]
 
- import -> OpGenerate where
-     ("switch", switchTest) :
+< import -> OpGenerate where
+<     ("switch", switchTest) :
 
 The the version to evaluate can be generated with 'makeOpRun':
 
-   switchOp = Op
-     { opName  = "switch"
-     , opArity = 4
-     , opTyTel = sOpTy
-     , opRun   = makeOpRun "switch" switchTest
-     , opSimp  = \_ _ -> empty
-     } where ...
+<   switchOp = Op
+<     { opName  = "switch"
+<     , opArity = 4
+<     , opTyTel = sOpTy
+<     , opRun   = makeOpRun "switch" switchTest
+<     , opSimp  = \_ _ -> empty
+<     } where ...
 
 
 The compiler decorates operator names with __ (to prevent name clashes).

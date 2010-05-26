@@ -1,7 +1,7 @@
 \section{Compiler}
 
-This module uses Epic (git clone git://github.com/edwinb/EpiVM.git, 
-or download from http://github.com/edwinb/EpiVM) to
+This module uses Epic (@git clone git://github.com/edwinb/EpiVM.git@, 
+or download from @http://github.com/edwinb/EpiVM@) to
 generate an executable from a collection of supercombinator definitions.
 
 %if False
@@ -38,7 +38,29 @@ generate an executable from a collection of supercombinator definitions.
 
 %endif
 
+
+\subsection{Representing Epic syntax}
+
+A |CName|, as one might expect, is a string name usable in C (or Epic). It
+should only contain alphanumeric characters and underscores.
+
 > type CName = String
+
+The |CNameable| typeclass describes how to convert the Epigram representation
+of names into |CName|s.
+
+> class Show n => CNameable n where
+>     cname :: n -> CName
+
+> instance Show t => CNameable [(String, t)] where
+>     cname = concatMap (\ (n,i) -> "_" ++ concatMap decorate n ++ "_" ++ show i)
+>         where decorate '_' = "__"
+>               decorate x | isAlphaNum x = [x]
+>                          | otherwise = '_':(show (fromEnum x)) ++ "_"
+
+> instance CNameable REF where
+>     cname (x := d) = cname x
+
 
 > data CompileFn = Comp [CName] FnBody 
 
@@ -57,32 +79,60 @@ generate an executable from a collection of supercombinator definitions.
 >             | Error String
 >    deriving Show
 
-Where to look for support files. We'll need this to be a bit cleverer later. Only interested
-in epic/support.e for now (which is a good place to implement operators, for example).
 
-> libPath = [".", "./epic"]
+\subsection{Compiling functions}
 
-Given a list of names and definitions, and the top level function to evaluate,
-write out an executable. This will evaluate the function and dump the result.
-Also take a list of extra options to give to epic (e.g. for keeping intermediate code, etc)
+The |MakeBody| typeclass describes how to convert a term into the body of a 
+function (need to add the argument names elsewhere).
 
-> output :: [(CName, CompileFn)] -> CName -> FilePath -> String -> IO ()
-> output defs mainfn outfile epicopts =
->    do (epicFile, eh) <- tempfile
->       Prelude.mapM_ ((hPutStrLn eh).codegen) defs
->       support <- readLibFile libPath "support.e"
->       hPutStrLn eh support
->       hPutStrLn eh (mainDef mainfn)
->       hClose eh
->       let cmd = "epic -checking 1 " ++ epicFile ++ " -o " ++ outfile ++ " " ++ epicopts
->       exit <- system cmd
->       if (exit /= ExitSuccess) 
->         then fail "EPIC FAIL"
->         else return ()
+> class MakeBody t where
+>     makeBody :: t -> FnBody
 
-> arglist = concat.(intersperse ",")
 
-Things which are convertible to Epic code
+> instance (CNameable n) => MakeBody (Tm {d,p} n) where
+>     makeBody (C can)       = makeBody can
+>     makeBody (N t)         = makeBody t
+>     makeBody (P x)         = Var (cname x)
+>     makeBody (tm :$ elim)  = makeBody (tm, elim)
+>     makeBody (op :@ args)  = makeBody (op, args)
+>     makeBody (tm :? ty)    = makeBody tm
+>     makeBody (L (K tm))    = App (Var "__const") [makeBody tm]
+>     makeBody x = error ("Please don't do this: makeBody " ++ show x)
+
+
+Lots of canonical things are just there for the typechecker, and we don't care
+about them. So we'll just ignore everything that isn't otherwise explained.
+
+> instance CNameable n => MakeBody (Can (Tm {In, p} n)) where
+>     import <- CanCompile
+>     makeBody (Con t)  = makeBody t
+>     makeBody _        = Ignore
+
+> instance CNameable n => MakeBody (Tm {Ex, p} n, Elim (Tm {In, p} n)) where
+>     makeBody (f, A arg) = appArgs f [makeBody arg]
+>        where appArgs :: Tm {d, p} n -> [FnBody] -> FnBody
+>              appArgs (f :$ (A a)) acc = appArgs f (makeBody a:acc)
+>              appArgs f acc = App (makeBody f) acc
+>     makeBody (f, Out) = makeBody f
+>     import <- ElimCompile
+
+Operators will, in many cases, just compile to an application of a function we
+write by hand in the Epic support file @epic/support.e@.
+\question{Why do we not report unknown operators sooner?}
+
+> instance CNameable n => MakeBody (Op, [Tm {In, p} n]) where
+>     makeBody (Op name arity _ _ _, args) 
+>          = case (name, map makeBody args) of
+>                import <- OpCompile
+>                _ -> Lazy (Error ("Unknown operator" ++ show name))
+>                     -- |error ("Unknown operator" ++ show name)|
+
+
+\subsection{Code generation}
+
+> arglist = concat . (intersperse ",")
+
+The |CodeGen| typeclass describes things that are convertible to Epic code.
 
 > class CodeGen x where
 >     codegen :: x -> String
@@ -116,90 +166,12 @@ Things which are convertible to Epic code
 >                            ++ " in " ++ codegen sc ++ ")"
 >     codegen (Tuple xs) = "[" ++ arglist (map codegen xs) ++ "]"
 >     codegen (Lazy t) = "lazy(" ++ codegen t ++ ")"
->     codegen (Missing m) = "error(\"Missing definition " ++ m ++ "\")"
+>     codegen (Missing m) = "error \"Missing definition " ++ m ++ "\""
 >     codegen Ignore = "42"
 >     codegen (Error s) = "error " ++ show s
 
-> mainDef :: CName -> String
-> mainDef m = "main () -> Unit = __dumpData(" ++ m ++ "())"
 
-> tempfile :: IO (FilePath, Handle)
-> tempfile = 
->    do env <- environment "TMPDIR"
->       let dir = case env of
->                    Nothing -> "/tmp"
->                    (Just d) -> d
->       openTempFile dir "Pig"
-
-> environment :: String -> IO (Maybe String)
-> environment x = catch (do e <- getEnv x
->                           return (Just e))
->                       (\_ -> return Nothing)
-
-> readLibFile :: [FilePath] -> FilePath -> IO String
-> readLibFile xs x = tryReads (map (\f -> f ++ "/" ++ x) (".":xs))
->    where tryReads [] = fail $ "Can't find " ++ x
->          tryReads (x:xs) = catch (readFile x)
->                                  (\e -> tryReads xs)
-
-Convert a term into the body of a function (need to add the argument names elsewhere).
-
-> class MakeBody t where
->     makeBody :: t -> FnBody
-
-We'll need to convert whatever representation was used for names into a name usable in C:
-
-> class Show n => CNameable n where
->     cname :: n -> String
-
-> instance Show t => CNameable [(String, t)] where
->     cname = concatMap (\ (n,i) -> "_" ++ concatMap decorate n ++ "_" ++ show i)
->         where decorate '_' = "__"
->               decorate x | isAlphaNum x = [x]
->                          | otherwise = '_':(show (fromEnum x)) ++ "_"
-
-> instance CNameable REF where
->     cname (x := d) = cname x
-
-> instance (CNameable n) => MakeBody (Tm {d,p} n) where
->     makeBody (C can) = makeBody can
->     makeBody (N t) = makeBody t
->     makeBody (P x) = Var (cname x)
->     makeBody (tm :$ elim) = makeBody (tm, elim)
->     makeBody (op :@ args) = makeBody (op, args)
->     makeBody (tm :? ty) = makeBody tm
->     makeBody (L (K tm)) = App (Var "__const") [makeBody tm]
->     makeBody x = error ("Please don't do this: makeBody " ++ show x)
-
-Lots of canonical things are just there for the typechecker, and we don't care about them.
-So we'll just ignore everything that isn't otherwise explained.
-
-> instance CNameable n => MakeBody (Can (Tm {In, p} n)) where
->     import <- CanCompile
->     makeBody (Con t) = makeBody t
->     makeBody _ = Ignore
-
-> instance CNameable n => MakeBody (Tm {Ex, p} n, Elim (Tm {In, p} n)) where
->     makeBody (f, A arg) = appArgs f [makeBody arg]
->        where appArgs :: Tm {d, p} n -> [FnBody] -> FnBody
->              appArgs (f :$ (A a)) acc = appArgs f (makeBody a:acc)
->              appArgs f acc = App (makeBody f) acc
->     makeBody (f, Out) = makeBody f
->     import <- ElimCompile
-
-Operators will, in many cases, just compile to an application of a function we write
-by hand in Epic - see epic/support.e
-
-> instance CNameable n => MakeBody (Op, [Tm {In, p} n]) where
->     makeBody (Op name arity _ _ _, args) 
->          = case (name, map makeBody args) of
->                import <- OpCompile
->                _ -> Lazy (Error ("Unknown operator" ++ show name))  -- |error ("Unknown operator" ++ show name)|
-
-> compileCommand :: Name -> Dev Fwd -> String -> IO ()
-> compileCommand mainName dev outfile = do
->     let flat = flatten LAMB [] B0 dev
->     output (makeFns flat) (cname mainName) outfile ""
+\subsection{Flattening and lambda-lifting}
 
 > makeFns :: [(Name, Bwd Name, FnBody)] -> [(CName, CompileFn)]
 > makeFns xs = map (\ (n, args, tm) -> 
@@ -209,7 +181,7 @@ by hand in Epic - see epic/support.e
 > flatten :: BoyKind -> Name -> Bwd Name -> Dev Fwd -> 
 >            [(Name, Bwd Name, FnBody)]
 > flatten b ma del (F0, Module, _) = []
-> flatten LAMB ma del (F0, Unknown _, _) = [(ma, del, Missing (show ma))]
+> flatten LAMB ma del (F0, Unknown _, _) = [(ma, del, Missing (cname ma))]
 > flatten LAMB ma del (F0, Defined tm _, _) = 
 >     let (t, (_, defs)) = runState (lambdaLift ma del (fmap refName tm)) 
 >                                   (ma ++ [("lift",0)],[]) in
@@ -273,6 +245,87 @@ Everything else is boring traversal of the term.
 > lambdaLift nm args (v :? t) = 
 >      (| lambdaLift nm args v :? (| (error "Can't happen") |) |)
 > lambdaLift nm args tm = (| tm |)
+
+
+\subsection{Invoking compilation}
+
+Where to look for support files. We'll need this to be a bit cleverer later.
+Only interested in @epic/support.e@ for now (which is a good place to implement
+operators, for example).
+
+> libPath = [".", "./epic"]
+
+
+The |compileCommand| takes the name of a main term to evaluate, a (forward)
+development containing the definitions, and an output file name. It calls
+Epic to produce an executable that evaluates the term, and returns whether
+compilation was successful.
+
+> compileCommand :: Name -> Dev Fwd -> String -> IO Bool
+> compileCommand mainName dev outfile = do
+>     let flat = flatten LAMB [] B0 dev
+>     output (makeFns flat) (cname mainName) outfile ""
+
+
+Given a list of names and definitions, and the top level function to evaluate,
+write out an executable. This will evaluate the function and dump the result.
+Also take a list of extra options to give to Epic (e.g. for keeping intermediate
+code).
+
+> output :: [(CName, CompileFn)] -> CName -> FilePath -> String -> IO Bool
+> output defs mainfn outfile epicopts =
+>    do (epicFile, eh) <- tempfile
+>       Prelude.mapM_ ((hPutStrLn eh) . codegen) defs
+>       support <- readLibFile libPath "support.e"
+>       hPutStrLn eh support
+>       hPutStrLn eh (mainDef mainfn)
+>       hClose eh
+>       let cmd = "epic -checking 1 " ++ epicFile ++ " -o " ++ outfile ++ " " ++ epicopts
+>       exit <- system cmd
+>       return (exit == ExitSuccess)
+
+> tempfile :: IO (FilePath, Handle)
+> tempfile = 
+>    do env <- environment "TMPDIR"
+>       let dir = case env of
+>                    Nothing -> "/tmp"
+>                    (Just d) -> d
+>       openTempFile dir "Pig"
+
+> environment :: String -> IO (Maybe String)
+> environment x = catch (do e <- getEnv x
+>                           return (Just e))
+>                       (\_ -> return Nothing)
+
+> readLibFile :: [FilePath] -> FilePath -> IO String
+> readLibFile xs x = tryReads (map (\f -> f ++ "/" ++ x) (".":xs))
+>    where tryReads [] = fail $ "Can't find " ++ x
+>          tryReads (x:xs) = catch (readFile x)
+>                                  (\e -> tryReads xs)
+
+> mainDef :: CName -> String
+> mainDef m = "main () -> Unit = __dumpData(" ++ m ++ "())"
+
+
+We add a Cochon tactic to invoke the compiler.
+
+> import -> CochonTactics where
+>   : CochonTactic
+>         {  ctName = "compile"
+>         ,  ctParse = (|(|(B0 :<) tokenName|) :< tokenString|)
+>         ,  ctIO = (\ [ExArg (DP r ::$ []), StrArg fn] (locs :< loc) -> do
+>             let  Right aus = evalStateT getAuncles loc
+>                  Right dev = evalStateT getDev loc
+>                  Right (n := _) = evalStateT (resolveDiscard r) loc
+>             b <- compileCommand n (reverseDev' dev) fn
+>             putStrLn (if b then "Compiled." else "EPIC FAIL")
+>             return (locs :< loc)
+>           )
+>         ,  ctHelp = "compile <name> <file> - compiles the proof state with <name> as the main term to be evalauted, producing a binary called <file>."
+>         }
+
+
+\subsection{Operator definitions}
 
 Generating operator definitions from descriptions
 

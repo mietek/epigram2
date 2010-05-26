@@ -137,6 +137,7 @@
 
 \input{Compiler/Introduction.tex}
 
+%include Compiler/OpDef.lhs
 %include Compiler/Compiler.lhs
 
 \appendix

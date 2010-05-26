@@ -14,6 +14,7 @@
 > import Data.Foldable
 > import Data.Traversable
 > import Data.List hiding (find)
+> import System
 > import System.Exit
 > import System.IO 
 
@@ -355,17 +356,14 @@ Navigation tactics:
 Miscellaneous tactics:
 
 >   : CochonTactic
->         {  ctName = "compile"
->         ,  ctParse = (|(|(B0 :<) tokenName|) :< tokenString|)
->         ,  ctIO = (\ [ExArg (DP r ::$ []), StrArg fn] (locs :< loc) -> do
->             let  Right aus = evalStateT getAuncles loc
->                  Right dev = evalStateT getDev loc
->                  Right (n := _) = evalStateT (resolveDiscard r) loc
->             compileCommand n (reverseDev' dev) fn
->             putStrLn "Compiled."
+>         {  ctName = "execute"
+>         ,  ctParse = (|(B0 :<) tokenString|)
+>         ,  ctIO = (\ [StrArg fn] (locs :< loc) -> do
+>             exit <- system fn
+>             putStrLn $ if (exit == ExitSuccess) then "Success." else "Failure."
 >             return (locs :< loc)
 >           )
->         ,  ctHelp = "compile <name> <file> - compiles the proof state with <name> as the main term to be evalauted, producing a binary called <file>."
+>         ,  ctHelp = "execute <command> - executes the given system command."
 >         }
 
 >     : CochonTactic
