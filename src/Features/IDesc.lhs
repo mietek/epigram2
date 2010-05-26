@@ -12,21 +12,13 @@
 \subsection{Plugging Canonical terms in}
 
 > import -> CanConstructors where
->   IDesc   :: t -> Can t
 >   IMu     :: Labelled (Id :*: Id) t -> t -> Can t
->   IVar     :: t -> Can t
->   IPi     :: t -> t -> Can t
->   IFPi     :: t -> t -> Can t
->   ISigma  :: t -> t -> Can t
->   IFSigma  :: t -> t -> Can t
->   IConst   :: t -> Can t
->   IProd   :: t -> t -> Can t
 
 > import -> CanTyRules where
 >   canTy chev (Set :>: IMu (ml :?=: (Id ii :& Id x)) i)  = do
 >     iiiiv@(ii :=>: iiv) <- chev (SET :>: ii)
 >     mlv <- traverse (chev . (ARR iiv SET :>:)) ml
->     xxv@(x :=>: xv) <- chev (ARR iiv (IDESC iiv) :>: x)
+>     xxv@(x :=>: xv) <- chev (ARR iiv (idesc $$ A iiv $$ A VOID) :>: x)
 >     iiv <- chev (iiv :>: i)
 >     return $ IMu (mlv :?=: (Id iiiiv :& Id xxv)) iiv
 >   canTy chev (IMu tt@(_ :?=: (Id ii :& Id x)) i :>: Con y) = do
@@ -35,114 +27,61 @@
 >                             , L $ HF "i" $ \i -> C (IMu tt i)
 >                             ] :>: y)
 >     return $ Con yyv
->   canTy chev (Set :>: IDesc ii) = 
->     (|IDesc (chev (SET :>: ii))|)
->   canTy chev (IDesc _I :>: IVar i) = do
->     iiv@(i :=>: iv) <- chev (_I :>: i)
->     return $ IVar iiv
->   canTy chev (IDesc _I :>: IPi s t) = do
->     ssv@(s :=>: sv) <- chev (SET :>: s)
->     ttv@(t :=>: tv) <- chev (ARR sv (IDESC _I) :>: t)
->     return $ IPi ssv ttv
->   canTy chev (IDesc _I :>: IFPi e f) = do
->     eev@(e :=>: ev) <- chev (enumU :>: e)
->     ffv@(f :=>: fv) <- chev (ARR (ENUMT ev) (IDESC _I) :>: f)
->     return $ IFPi eev ffv
->   canTy chev (IDesc _I :>: ISigma s t) = do
->     ssv@(s :=>: sv) <- chev (SET :>: s)
->     ttv@(t :=>: tv) <- chev (ARR sv (IDESC _I) :>: t)
->     return $ ISigma ssv ttv
->   canTy chev (IDesc _I :>: IFSigma e b) = do
->     eev@(e :=>: ev) <- chev (enumU :>: e)
->     bbv@(b :=>: bv) <- chev (branchesOp @@ [ ev
->                                            , L (K (IDESC _I))] :>: b)
->     return $ IFSigma eev bbv
->   canTy chev (IDesc _I :>: IConst k) = do
->     kkv@(k :=>: kv) <- chev (SET :>: k)
->     return $ IConst kkv
->   canTy chev (IDesc _I :>: IProd x y) = do
->     xxv@(x :=>: xv) <- chev (IDESC _I :>: x)
->     yyv@(y :=>: yv) <- chev (IDESC _I :>: y)
->     return $ IProd xxv yyv
 
 > import -> CanCompile where
 
 > import -> CanEtaExpand where
 
 > import -> CanPats where
->   pattern IDESC i = C (IDesc i)
+>   pattern IVARN     = ZE
+>   pattern ICONSTN   = SU ZE
+>   pattern IPIN      = SU (SU ZE)
+>   pattern IFPIN     = SU (SU (SU ZE))
+>   pattern ISIGMAN   = SU (SU (SU (SU ZE)))
+>   pattern IFSIGMAN  = SU (SU (SU (SU (SU ZE))))
+>   pattern IPRODN    = SU (SU (SU (SU (SU (SU ZE)))))
+
+>   pattern DIVARN     = DZE
+>   pattern DICONSTN   = DSU DZE
+>   pattern DIPIN      = DSU (DSU DZE)
+>   pattern DIFPIN     = DSU (DSU (DSU DZE))
+>   pattern DISIGMAN   = DSU (DSU (DSU (DSU DZE)))
+>   pattern DIFSIGMAN  = DSU (DSU (DSU (DSU (DSU DZE))))
+>   pattern DIPRODN    = DSU (DSU (DSU (DSU (DSU (DSU DZE)))))
+
+
 >   pattern IMU l ii x i = C (IMu (l :?=: (Id ii :& Id x)) i) 
->   pattern IVAR i = C (IVar i)
->   pattern IPI s t = C (IPi s t)
->   pattern IFPI s t = C (IFPi s t)
->   pattern ISIGMA s t = C (ISigma s t)
->   pattern IFSIGMA s t = C (IFSigma s t)
->   pattern ICONST p = C (IConst p)
->   pattern IPROD x y = C (IProd x y)
+>   pattern IVAR i = CON (PAIR IVARN (PAIR i VOID))
+>   pattern IPI s t = CON (PAIR IPIN (PAIR s (PAIR t VOID)))
+>   pattern IFPI s t = CON (PAIR IFPIN (PAIR s (PAIR t VOID)))
+>   pattern ISIGMA s t = CON (PAIR ISIGMAN (PAIR s (PAIR t VOID)))
+>   pattern IFSIGMA s t = CON (PAIR IFSIGMAN (PAIR s (PAIR t VOID)))
+>   pattern ICONST p =  CON (PAIR ICONSTN (PAIR p VOID))
+>   pattern IPROD x y = CON (PAIR IPRODN (PAIR x (PAIR y VOID)))
 
 > import -> CanDisplayPats where
->   pattern DIDESC i = DC (IDesc i)
 >   pattern DIMU l ii x i = DC (IMu (l :?=: (Id ii :& Id x)) i) 
->   pattern DIVAR i = DC (IVar i)
->   pattern DIPI s t = DC (IPi s t)
->   pattern DIFPI s t = DC (IFPi s t)
->   pattern DISIGMA s t = DC (ISigma s t)
->   pattern DIFSIGMA s t = DC (IFSigma s t)
->   pattern DICONST p = DC (IConst p)
->   pattern DIPROD x y = DC (IProd x y)
+>   pattern DIVAR i = DCON (DPAIR DIVARN (DPAIR i DVOID))
+>   pattern DIPI s t = DCON (DPAIR DIPIN (DPAIR s (DPAIR t DVOID)))
+>   pattern DIFPI s t = DCON (DPAIR DIFPIN (DPAIR s (DPAIR t DVOID)))
+>   pattern DISIGMA s t = DCON (DPAIR DISIGMAN (DPAIR s (DPAIR t DVOID)))
+>   pattern DIFSIGMA s t = DCON (DPAIR DIFSIGMAN (DPAIR s (DPAIR t DVOID)))
+>   pattern DICONST p =  DCON (DPAIR DICONST (DPAIR p DVOID))
+>   pattern DIPROD x y = DCON (DPAIR DIPRODN (DPAIR x (DPAIR y DVOID)))
 
 > import -> CanPretty where
->   pretty (IDesc ii) = wrapDoc (kword KwIDesc <+> pretty ii ArgSize) ArgSize
 >   pretty (IMu (Just l   :?=: _) i)  = wrapDoc
 >       (pretty l AppSize <+> pretty i ArgSize)
 >       ArgSize
 >   pretty (IMu (Nothing  :?=: (Id ii :& Id d)) i)  = wrapDoc
 >       (kword KwIMu <+> pretty ii ArgSize <+> pretty d ArgSize <+> pretty i ArgSize)
 >       ArgSize
->   pretty (IVar i) = wrapDoc
->       (kword KwIVar <+> pretty i ArgSize)
->       ArgSize
->   pretty (IPi s t) = wrapDoc
->       (kword KwIPi <+> pretty s ArgSize <+> pretty t ArgSize)
->       ArgSize
->   pretty (IFPi s t) = wrapDoc
->       (kword KwIFPi <+> pretty s ArgSize <+> pretty t ArgSize)
->       ArgSize
->   pretty (ISigma s t) = wrapDoc
->       (kword KwISigma <+> pretty s ArgSize <+> pretty t ArgSize)
->       ArgSize
->   pretty (IFSigma s t) = wrapDoc
->       (kword KwIFSigma <+> pretty s ArgSize <+> pretty t ArgSize)
->       ArgSize
->   pretty (IConst i) = wrapDoc
->       (kword KwIConst <+> pretty i ArgSize)
->       ArgSize
->   pretty (IProd x y) = wrapDoc
->       (kword KwIProd <+> pretty x ArgSize <+> pretty y ArgSize)
->       ArgSize
 
 > import -> CanTraverse where
->   traverse f (IDesc i)     = (|IDesc (f i)|)
 >   traverse f (IMu l i)     = (|IMu (traverse f l) (f i)|)
->   traverse f (IVar i)       = (|IVar (f i)|)
->   traverse f (IPi s t)     = (|IPi (f s) (f t)|)
->   traverse f (IFPi s t)     = (|IFPi (f s) (f t)|)
->   traverse f (ISigma s t)  = (|ISigma (f s) (f t)|)
->   traverse f (IFSigma s t) = (|IFSigma (f s) (f t)|)
->   traverse f (IConst p)     = (|IConst (f p)|)
->   traverse f (IProd x y)   = (|IProd (f x) (f y)|)
 
 > import -> CanHalfZip where
->   halfZip (IDesc i0) (IDesc i1) = (|(IDesc (i0,i1))|)
 >   halfZip (IMu l0 i0) (IMu l1 i1) = (|(\p -> IMu p (i0,i1)) (halfZip l0 l1)|)
->   halfZip (IVar i0) (IVar i1) = (|(IVar (i0,i1))|)
->   halfZip (IPi s0 t0) (IPi s1 t1) = (|(IPi (s0,s1) (t0,t1))|)
->   halfZip (IFPi s0 t0) (IFPi s1 t1) = (|(IFPi (s0,s1) (t0,t1))|)
->   halfZip (ISigma s0 t0) (ISigma s1 t1) = (|(ISigma (s0,s1) (t0,t1))|)
->   halfZip (IFSigma s0 t0) (IFSigma s1 t1) = (|(IFSigma (s0,s1) (t0,t1))|)
->   halfZip (IConst p0) (IConst p1) = (|(IConst (p0,p1))|)
->   halfZip (IProd s0 t0) (IProd s1 t1) = (|(IProd (s0,s1) (t0,t1))|)
-
 
 > import -> Coerce where
 >   -- coerce :: (Can (VAL,VAL)) -> VAL -> VAL -> Either NEU VAL
@@ -154,7 +93,7 @@
 >         qd = CON $ q $$ Snd $$ Snd $$ Fst
 >         (typ :>: vap) = 
 >           laty ("I" :<: SET :-: \iI ->
->                 "d" :<: ARR iI (IDESC iI) :-: \d ->
+>                 "d" :<: ARR iI (idesc $$ A iI $$ A VOID) :-: \d ->
 >                 "i" :<: iI :-: \i ->
 >                 "l" :<: ARR iI SET :-: \l ->
 >                 Target (SET :>: 
@@ -176,7 +115,7 @@
 >         qd = CON $ q $$ Snd $$ Fst
 >         (typ :>: vap) = 
 >           laty ("I" :<: SET :-: \iI ->
->                 "d" :<: ARR iI (IDESC iI) :-: \d ->
+>                 "d" :<: ARR iI (idesc $$ A iI $$ A VOID) :-: \d ->
 >                 "i" :<: iI :-: \i ->
 >                 Target (SET :>: 
 >                           (idescOp @@ [ iI , d $$ A i
@@ -190,7 +129,6 @@
 >                                $$ A d0 $$ A d1 $$ A qd
 >                                $$ A i0 $$ A i1 $$ A qi
 >              , x ]
->   coerce (IDesc (d0, d1)) q x = Right x
 
 
 \subsection{Plugging Eliminators in}
@@ -235,15 +173,16 @@
 
 >   mkLazyIDescDef :: VAL -> IDescDispatchTable -> Either NEU VAL
 >   mkLazyIDescDef arg (ivarC, ipiC, ifpiC, isigmaC, ifsigmaC, iconstC, iprodC) =
->     case arg of      
->       IVAR i       -> Right $ ivarC i
->       IPI s t      -> Right $ ipiC s t 
->       IFPI s t     -> Right $ ifpiC s t
->       ISIGMA s t   -> Right $ isigmaC s t
->       IFSIGMA s t  -> Right $ ifsigmaC s t
->       ICONST k     -> Right $ iconstC k
->       IPROD x y    -> Right $ iprodC x y
->       N t     -> Left t
+>     let args = arg $$ Snd in
+>       case arg $$ Fst of      
+>         IVARN     -> Right $ ivarC (args $$ Fst)
+>         IPIN      -> Right $ ipiC (args $$ Fst) (args $$ Snd $$ Fst) 
+>         IFPIN     -> Right $ ifpiC (args $$ Fst)  (args $$ Snd $$ Fst)
+>         ISIGMAN   -> Right $ isigmaC (args $$ Fst) (args $$ Snd $$ Fst)
+>         IFSIGMAN  -> Right $ ifsigmaC (args $$ Fst) (args $$ Snd $$ Fst)
+>         ICONSTN   -> Right $ iconstC (args $$ Fst) 
+>         IPRODN    -> Right $ iprodC (args $$ Fst) (args $$ Snd $$ Fst)
+>         N t     -> Left t
 
 >   idescOp :: Op
 >   idescOp = Op
@@ -255,11 +194,11 @@
 >     } where
 >       idOpTy = 
 >        "I" :<: SET :-: \iI ->
->        "d" :<: IDESC iI :-: \d ->
+>        "d" :<: (idesc $$ A iI $$ A VOID) :-: \d ->
 >        "X" :<: ARR iI SET :-: \x ->
 >        Target SET
 >       idOpRun :: [VAL] -> Either NEU VAL
->       idOpRun [_I, _D, _P] = 
+>       idOpRun [_I, CON _D, _P] = 
 >         mkLazyIDescDef _D  (  ivarD _I _P
 >                            ,  ipiD _I _P        
 >                            ,  ifpiD _I _P        
@@ -268,6 +207,7 @@
 >                            ,  iconstD _I _P        
 >                            ,  iprodD _I _P  
 >                            )
+>       idOpRun [_I, N n, _P] = Left n 
 >       idOpRun x = error (show . length $ x)
 >       ivarD _I _P i = _P $$ A i     
 >       ipiD _I _P _S _T =
@@ -288,7 +228,7 @@
 >                             idescOp @@ [ _I
 >                                        , switchOp @@ [ _E
 >                                                      , s
->                                                      , L (K (IDESC _I))
+>                                                      , LK (idesc $$ A _I $$ A VOID)
 >                                                      , _Ds]
 >                                        , _P])
 >       iconstD _I _P _K = _K
@@ -305,13 +245,13 @@
 >     , opSimp = \_ _ -> empty
 >     } where
 >       iboxOpTy = 
->         "I" :<: SET                    :-: \ _I ->
->         "D" :<: IDESC _I               :-: \ _D ->
->         "P" :<: ARR _I SET             :-: \ _P ->
->         "v" :<: idescOp @@ [_I,_D,_P]  :-: \v ->
->         Target $ IDESC (SIGMA _I (L . HF "i" $ \i -> _P $$ A i))
+>         "I" :<: SET                        :-: \ _I ->
+>         "D" :<: (idesc $$ A _I $$ A VOID)  :-: \ _D ->
+>         "P" :<: ARR _I SET                 :-: \ _P ->
+>         "v" :<: idescOp @@ [_I,_D,_P]      :-: \v ->
+>         Target $ idesc $$ A (SIGMA _I (L . HF "i" $ \i -> _P $$ A i)) $$ A VOID
 >       iboxOpRun :: [VAL] -> Either NEU VAL
->       iboxOpRun [_I,_D,_P,v] = 
+>       iboxOpRun [_I,CON _D,_P,v] = 
 >         mkLazyIDescDef _D  (  ivarD _I _P v
 >                            ,  ipiD _I _P v       
 >                            ,  ifpiD _I _P v       
@@ -320,6 +260,7 @@
 >                            ,  iconstD _I _P v       
 >                            ,  iprodD _I _P v 
 >                            )
+>       iboxOpRun [_I,N _D,_P,v] = Left _D
 >       ivarD _I _P v i = IVAR (PAIR i v)
 >       ipiD _I _P f _S _T =
 >           IPI _S (L . HF "s" $ \s ->
@@ -340,7 +281,7 @@
 >            iboxOp @@ [_I
 >                      , switchOp @@ [ _S
 >                                    , e
->                                    , L (K (IDESC _I))
+>                                    , LK (idesc $$ A _I $$ A VOID)
 >                                    , _T ]
 >                      , _P 
 >                      , d ]
@@ -361,7 +302,7 @@
 >     } where
 >       imapBoxOpTy =
 >         "I" :<: SET :-: \_I ->  
->         "D" :<: IDESC _I :-: \ _D ->
+>         "D" :<: (idesc $$ A _I $$ A VOID) :-: \ _D ->
 >         "X" :<: ARR _I SET :-: \ _X -> 
 >         let _IX = SIGMA _I (L . HF "i" $ \i -> _X $$ A i) in
 >         "P" :<: ARR _IX SET :-: \ _P ->
@@ -369,7 +310,7 @@
 >         "v" :<: (idescOp @@ [_I,_D,_X]) :-: \v ->
 >          Target (idescOp @@ [_IX, iboxOp @@ [_I,_D,_X,v], _P])
 >       imapBoxOpRun :: [VAL] -> Either NEU VAL
->       imapBoxOpRun [_I, _D, _X, _P, p, v]  = 
+>       imapBoxOpRun [_I, CON _D, _X, _P, p, v]  = 
 >         mkLazyIDescDef _D (varD _I _X _P p v, 
 >                            piD _I _X _P p v,
 >                            fpiD _I _X _P p v,
@@ -377,6 +318,7 @@
 >                            fsigmaD _I _X _P p v,
 >                            constD _I _X _P p v, 
 >                            prodD _I _X _P p v) 
+>       imapBoxOpRun [_I, N _D, _X, _P, p, v]  = Left _D
 >       varD _I _X _P p v i = p $$ A (PAIR i v)
 >       piD _I _X _P p v _S _T = 
 >         L . HF "s" $ \s -> imapBoxOp @@ [_I,_T $$ A s,_X,_P,p,v $$ A s]
@@ -384,7 +326,7 @@
 >         L . HF "s" $ \s -> imapBoxOp @@ [_I,_Df $$ A s,_X,_P,p,v $$ A s]
 >       sigmaD _I _X _P p v _S _T = imapBoxOp @@ [_I,_T $$ A (v $$ Fst),_X,_P,p,v $$ Snd]
 >       fsigmaD _I _X _P p v _E _Ds =
->         imapBoxOp @@ [_I,switchOp @@ [_E,v $$ Fst,L (K (IDESC _I)),_Ds],_X,_P,p,v $$ Snd]
+>         imapBoxOp @@ [_I,switchOp @@ [_E,v $$ Fst,LK (idesc $$ A _I $$ A VOID),_Ds],_X,_P,p,v $$ Snd]
 >       constD _I _X _P p v _K = VOID
 >       prodD _I _X _P p v _D _D' = 
 >         PAIR (imapBoxOp @@ [_I,_D,_X,_P,p,v $$ Fst]) 
@@ -419,7 +361,7 @@
 >     } where
 >       iinductionOpTy = 
 >         "I" :<: SET :-: \_I ->
->         "D" :<: ARR _I (IDESC _I) :-: \_D ->
+>         "D" :<: ARR _I (idesc $$ A _I $$ A VOID) :-: \_D ->
 >         "i" :<: _I :-: \i ->
 >         "v" :<: IMU Nothing _I _D i :-: \v ->
 >         "P" :<: (ARR (SIGMA _I (L . HF "i" $ \i -> IMU Nothing _I _D i)) SET) :-: \_P ->
@@ -438,36 +380,12 @@
 
 > import -> KeywordConstructors where
 >   KwIMu :: Keyword
->   KwIDesc :: Keyword
->   KwIVar :: Keyword
->   KwIPi :: Keyword
->   KwIFPi :: Keyword
->   KwISigma :: Keyword
->   KwIFSigma :: Keyword
->   KwIConst :: Keyword
->   KwIProd :: Keyword
 
 > import -> KeywordTable where
 >   key KwIMu      = "IMu"
->   key KwIDesc    = "IDesc"
->   key KwIVar     = "IVar"
->   key KwIPi      = "IPi"
->   key KwIFPi     = "IFPi"
->   key KwISigma   = "ISigma"
->   key KwIFSigma  = "IFSigma"
->   key KwIConst   = "IConst"
->   key KwIProd    = "IProd"
 
 > import -> InDTmParsersSpecial where
 >   (AndSize, (|(DIMU Nothing) (%keyword KwIMu%) (sizedInDTm ArgSize) (sizedInDTm ArgSize) (sizedInDTm ArgSize)|)) :
->   (AndSize, (|DIDESC (%keyword KwIDesc%) (sizedInDTm ArgSize)|)) :
->   (AndSize, (|DIVAR (%keyword KwIVar%) (sizedInDTm ArgSize)|)) :
->   (AndSize, (|DIPI (%keyword KwIPi%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)|)) :
->   (AndSize, (|DIFPI (%keyword KwIFPi%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)|)) :
->   (AndSize, (|DISIGMA (%keyword KwISigma%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)|)) :
->   (AndSize, (|DIFSIGMA (%keyword KwIFSigma%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)|)) :
->   (AndSize, (|DICONST (%keyword KwIConst%) (sizedInDTm ArgSize)|)) :
->   (AndSize, (|DIPROD (%keyword KwIProd%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)|)) :
 
 
 Just like |Mu|, when elaborating |IMu| we attach a display label if the
@@ -478,7 +396,7 @@ description is not neutral, to improve the pretty-printed representation.
 >       (r,sp) <- eFake
 >       let l = (P r) $:$ (init sp)
 >       iI  :=>: iIv  <- subElab loc (SET :>: iI)
->       d   :=>: dv   <- subElab loc (ARR iIv (IDESC iIv) :>: d)
+>       d   :=>: dv   <- subElab loc (ARR iIv (idesc $$ A iIv $$ A VOID) :>: d)
 >       i   :=>: iv   <- subElab loc (iIv :>: i)
 
 \question{What is this check for? How can we implement it correctly?}
@@ -498,11 +416,7 @@ description is not neutral, to improve the pretty-printed representation.
 
 
 >   makeElab' loc (ty@(IMU _ _ _ _) :>: DTag s xs) =
->       makeElab' loc (ty :>: DCON (DPAIR (DTAG s) (fold xs)))
->     where fold :: [InDTmRN] -> InDTmRN
->           fold [] = DVOID
->           fold [x] = x
->           fold (x : xs) = DPAIR x (fold xs)
+>       makeElab' loc (ty :>: DCON (DPAIR (DTAG s) (foldr DPAIR DU xs)))
 
 > import -> DistillRules where
 
@@ -518,11 +432,12 @@ description is not neutral, to improve the pretty-printed representation.
 >       where
 >         unfold :: InDTmRN -> [InDTmRN]
 >         unfold DVOID        = []
+>         unfold DU        = []
 >         unfold (DPAIR s t)  = s : unfold t
 >         unfold t            = [t]
 >         sumilike :: VAL -> VAL -> Maybe (VAL, VAL -> VAL)
 >         sumilike _I (IFSIGMA e b)  = 
->           Just (e, \t -> switchOp @@ [ e , t , L (K (IDESC _I)), b ])
+>           Just (e, \t -> switchOp @@ [ e , t , LK (idesc $$ A _I $$ A VOID), b ])
 >         sumilike _ _               = Nothing
 
 > import -> InDTmConstructors where
@@ -534,3 +449,51 @@ description is not neutral, to improve the pretty-printed representation.
 \subsection{Adding Primitive references in Cochon}
 
 > import -> Primitives where
+>   ("IDesc", idescREF) :
+>   ("IDescD", idescDREF) :
+
+
+> import -> BootstrapDesc where
+>   inIDesc :: VAL
+>   inIDesc = L $ HF "I" $ \_I -> LK $ IFSIGMA constructors (cases _I)
+>       where constructors = (CONSE (TAG "varD")
+>                            (CONSE (TAG "constD")
+>                            (CONSE (TAG "piD")
+>                            (CONSE (TAG "fpiD")
+>                            (CONSE (TAG "sigmaD")
+>                            (CONSE (TAG "fsigmaD")
+>                            (CONSE (TAG "prodD")
+>                             NILE)))))))
+>             cases _I = (PAIR (ISIGMA _I (LK $ ICONST UNIT)) 
+>                     (PAIR (ISIGMA SET (LK $ ICONST UNIT))
+>                     (PAIR (ISIGMA SET (L $ HF "S" $ \_S -> 
+>                                       (IPROD (IPI _S (LK $ IVAR VOID)) 
+>                                              (ICONST UNIT))))
+>                     (PAIR (ISIGMA enumU (L $ HF "E" $ \_E ->
+>                                       (IPROD (IPI (ENUMT _E) (LK $ IVAR VOID))
+>                                              (ICONST UNIT))))
+>                     (PAIR (ISIGMA SET (L $ HF "S" $ \_S -> 
+>                                       (IPROD (IPI _S (LK $ IVAR VOID)) 
+>                                              (ICONST UNIT))))
+>                     (PAIR (ISIGMA enumU (L $ HF "E" $ \_E ->
+>                                       (IPROD (IFPI _E (LK $ IVAR VOID))
+>                                              (ICONST UNIT))))
+>                     (PAIR (IPROD (IVAR VOID) (IPROD (IVAR VOID) (ICONST UNIT)))
+>                      VOID)))))))
+>   idescFakeREF :: REF
+>   idescFakeREF = [("Primitive", 0), ("IDesc", 0)] 
+>                    := (FAKE :<: ARR SET (ARR UNIT SET))
+>   idesc :: VAL
+>   idesc = L $ HF "I" $ \_I -> LK $
+>             IMU (Just ((N (P idescFakeREF)) $$ A _I)) UNIT (inIDesc $$ A _I) VOID
+>
+>   idescREF :: REF
+>   idescREF = [("Primitive", 0), ("IDesc", 0)] 
+>                := (DEFN idesc :<: ARR SET (ARR UNIT SET))
+>
+>   idescDREF :: REF
+>   idescDREF = [("Primitive", 0), ("IDescD", 0)] 
+>                 := (DEFN inIDesc 
+>                      :<: PI SET (L $ HF "I" $ \_I -> 
+>                             ARR UNIT (idesc $$ A _I $$ A VOID)))
+

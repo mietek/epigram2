@@ -19,16 +19,15 @@ root ;
 module Vec ;
 lambda A : Set ;
 
-make VecD : Nat -> IDesc Nat ;
-give (\ n -> IFSigma ['nil 'cons] [ (IConst (:- (zero == n))) (ISigma Nat (\
-m -> IProd (IConst A) (IProd (IVar m) (IConst (:- (suc m == n)))))) ]) ;
+make VecD : Nat -> IDesc Nat _ ;
+give (\ n -> 'fsigmaD ['nil 'cons] [ ('constD (:- (zero == n))) ('sigmaD Nat (\ m -> 'prodD ('constD A) ('prodD ('varD m) ('constD (:- (suc m == n)))))) ]) ;
 
 make Vec : Nat -> Set ;
 lambda n ;
 give IMu Nat VecD n ;
 
-make nil := 'nil _ : Vec 'zero ;
-make cons := (\ n a as -> 'cons n a as _) : (n : Nat) -> A -> Vec n -> Vec ('suc n) ;
+make nil := 'nil : Vec 'zero ;
+make cons := (\ n a as -> 'cons n a as) : (n : Nat) -> A -> Vec n -> Vec ('suc n) ;
 
 make VecInd := iinduction Nat VecD : (m : Nat)(v : Vec m)
     (bp : Sig (n : Nat ; Vec n) -> Set)
@@ -52,9 +51,9 @@ root ;
 
 make A := Enum ['a 'b 'c] : Set ;
 
-elab Vec.vappend A 'zero ('nil _) 'zero ('nil _)  ;
+elab Vec.vappend A 'zero 'nil 'zero 'nil  ;
 
-make vab := 'cons ('suc 'zero) 'a ('cons 'zero 'b ('nil _) _) _ : Vec.Vec A ('suc ('suc 'zero)) ;
+make vab := 'cons ('suc 'zero) 'a ('cons 'zero 'b 'nil) : Vec.Vec A ('suc ('suc 'zero)) ;
 elab vab ;
 elab Vec.vappend A ('suc ('suc 'zero)) vab ('suc ('suc 'zero)) vab ;
 
