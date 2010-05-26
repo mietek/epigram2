@@ -453,7 +453,7 @@ description is not neutral, to improve the pretty-printed representation.
 >   ("IDescD", idescDREF) :
 
 
-> import -> BootstrapDesc where
+> import -> RulesCode where
 >   inIDesc :: VAL
 >   inIDesc = L $ HF "I" $ \_I -> LK $ IFSIGMA constructors (cases _I)
 >       where constructors = (CONSE (TAG "varD")
