@@ -80,7 +80,7 @@ The the version to evaluate can be generated with 'makeOpRun':
 <     } where ...
 
 
-The compiler decorates operator names with __ (to prevent name clashes).
+The compiler decorates operator names with @__@ (to prevent name clashes).
 Arguments which are not needed at run time should be replaced with 'Ignore'
 so that the compiler can erase them.
 
