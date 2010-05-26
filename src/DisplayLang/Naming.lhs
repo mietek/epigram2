@@ -101,7 +101,6 @@ This needs documenting I (Peter) am on it.
 >             Either (StackError t) (REF, Spine {TT} REF, Maybe (Scheme INTM))
 > resolve [(y, Rel 0)] _ _
 >   | Just ref <- lookup y primitives = Right (ref, [], Nothing)
->   | Just ref <- lookup y axioms     = Right (ref, [], Nothing)
 > resolve us bsc fsc = lookFor us bsc fsc
 
 
@@ -257,13 +256,13 @@ the name part of references, respectively.
 > unresolve :: Name -> RKind -> Spine {TT} REF -> BScopeContext
 >                   -> Entries -> (RelName, Int, Maybe (Scheme INTM))
 > unresolve tar DECL _ (esus,es) les = 
->   case find ((tar ==) . refName . snd) (axioms ++ primitives) of
+>   case find ((tar ==) . refName . snd) primitives of
 >     Just (s, _)  -> ([(s, Rel 0)], 0, Nothing)
 >     Nothing      -> maybe (failNom tar,0,Nothing) id 
 >                       (nomTop tar (esus, es<+>les) >>= 
 >                         \(x,_) -> (| ([x],0,Nothing) |))
 > unresolve tar rk tas msc@(mesus,mes) les = 
->   case find ((tar ==) . refName . snd) (axioms ++ primitives) of
+>   case find ((tar ==) . refName . snd) primitives of
 >     Just (s, _)  -> ([(s, Rel 0)], 0, Nothing)
 >     Nothing      -> case (partNoms tar msc [] B0, rk) of
 >       (Just (xs,Just ys@(top,nom,sp,es)),_) ->

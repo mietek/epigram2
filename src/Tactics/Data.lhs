@@ -175,7 +175,7 @@
 We specialise the induction operator to this datatype, ensuring the label is
 assigned throughout, so the label will be preserved when eliminating by induction.
 
->       let indTm = P (mkRef inductionOp) :$ A (N d)
+>       let indTm = P (lookupOpRef inductionOp) :$ A (N d)
 >       indV :<: indTy <- inferHere indTm
 >       indTy' <- bquoteHere indTy
 >       make ("Ind" :<: setLabel (N lt) indTy')

@@ -10,7 +10,7 @@
 %endif
 
 
-> import -> BootstrapDesc where
+> import -> RulesCode where
 >   inEnumU :: VAL
 >   inEnumU = SIGMAD  (ENUMT constructors)
 >                     (L $ HF "c" $ \c -> 

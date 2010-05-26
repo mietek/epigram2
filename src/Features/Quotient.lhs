@@ -37,7 +37,7 @@
 |equivalenceRelation A R| is the proposition that |R| is an equivalence
 relation over |A|.
 
-> import -> QuotientDefinitions where
+> import -> RulesCode where
 >   equivalenceRelation :: VAL -> VAL -> VAL
 >   equivalenceRelation a r =
 >     -- refl

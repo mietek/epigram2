@@ -673,57 +673,48 @@ fishy.
 > infer _                   = throwError' $ err "infer: unable to infer type"
 
 
-%if false
 
-There is little benefit in presenting the code below. These are just
-wiring primitives.
-
-\subsection{Operators}
+\subsection{Operators and primitives}
 
 In this section, we weave some She aspects. In particular, we bring
-inside @Rules.lhs@ the |OpCode|s and |Operators| defined in the
-various Features.
+inside @Rules.lhs@ the |operators| defined by feature files,
+along with any auxiliary code.
 
-> import <- OpCode
->
 > operators :: [Op]
 > operators = (
 >   import <- Operators
 >   [])
 
-> import <- AxCode
->
-> axioms :: [(String, REF)]
-> axioms = (
->   import <- Axioms
->   [])
+> import <- OpCode
+> import <- RulesCode
+
+The list of |primitives| includes axioms and fundamental definitions provided 
+by the |Primitives| aspect, plus a reference corresponding to each operator.
 
 > primitives :: [(String, REF)]
-> primitives = (
->   import <- Primitives
->   [])
+> primitives = map (\op -> (opName op, mkRef op)) operators ++ (
+>     import <- Primitives
+>     [])
+>   where
+>     mkRef :: Op -> REF
+>     mkRef op = [("Operators",0),(opName op,0)] := (DEFN opEta :<: opTy)
+>       where
+>         opTy = pity $ opTyTel op
+>
+>         opEta = opEtaTac (opArity op) []
+>
+>         opEtaTac :: Int -> [VAL] -> VAL
+>         opEtaTac 0 args = op @@ (reverse args) 
+>         opEtaTac n args = L $ HF "mkRef" $ \l -> opEtaTac (n-1) (l : args) 
 
+We can look up the primitive reference corresponding to an operator using
+|lookupOpRef|. This ensures we maintain sharing of these references.
 
-> mkRef :: Op -> REF
-> mkRef op = [("Operators",0),(opName op,0)] := (DEFN opEta :<: opTy)
->     where opTy = pity $ opTyTel op
->           opEta = opEtaTac (opArity op) []
->           opEtaTac :: Int -> [VAL] -> VAL
->           opEtaTac 0 args = op @@ (reverse args) 
->           opEtaTac n args = L $ HF "mkRef" $ \l -> opEtaTac (n-1) (l : args) 
+> lookupOpRef :: Op -> REF
+> lookupOpRef op = case lookup (opName op) primitives of
+>     Just ref  -> ref
+>     Nothing   -> error $ "lookupOpRef: missing operator primitive " ++ show op
 
-
-> import -> Primitives where
->     (map (\op -> (opName op, mkRef op)) 
->          operators) ++
-
-\subsection{Definitions from feature files}
-
-> import <- BootstrapDesc
-> import <- QuotientDefinitions
-
-
-%endif
 
 
 \subsection{Observational Equality}
@@ -838,10 +829,12 @@ is sound but not complete for the definitional equality, so if it returns
 |False| they might still be equal. It is safe to call during bquote, and
 hence during evaluation, because it avoids forcing the types of references.
 
-\question{Is this safe? Can it somehow cause name collisions?}
 
 > partialEq :: VAL -> VAL -> VAL -> Bool
 > partialEq _ _ (N (P r :$ _ :$ _)) | r == refl = True
 > partialEq _ _ _ = False
-> partialEq s t _ = bquote B0 s ns == bquote B0 t ns
->   where ns = (B0 :< ("__partialEq", 0), 0) :: NameSupply
+
+Sadly we cannot do the following, because it is not safe to invent a name supply.
+
+< partialEq s t _ = bquote B0 s ns == bquote B0 t ns
+<   where ns = (B0 :< ("__partialEq", 0), 0) :: NameSupply

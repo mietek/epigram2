@@ -375,15 +375,11 @@ case for sigma.
 >                                                 , ps $$ Snd
 >                                                 , n ]
 
-\subsection{Plugging Axioms in}
-
-> import -> Axioms where
-
-> import -> AxCode where
 
 \subsection{Extending the type-checker}
 
 > import -> Check where
+
 
 \subsection{Extending the equality}
 
@@ -411,9 +407,6 @@ case for sigma.
 >                                $$ A d0 $$ A d1 $$ A (CON q)
 >              , x ]
 
-\subsection{Extending the quotient}
-
-> import -> QuotientDefinitions where
 
 \subsection{Extending the Display Language}
 
@@ -538,7 +531,7 @@ appropriate place when the proof state is printed.
 
 \subsection{Bootstrapping}
 
-> import -> BootstrapDesc where
+> import -> RulesCode where
 >   inDesc :: VAL
 >   inDesc = SUMD constructors
 >                (L $ HF "c" $ \c -> 

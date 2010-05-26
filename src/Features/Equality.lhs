@@ -90,7 +90,7 @@
 >   eqGreen :
 >   coe :
 
-> import -> AxCode where
+> import -> RulesCode where
 >   coh = [("Axiom",0),("coh",0)] := (DECL :<: cohType) where
 >     cohType = PRF $ 
 >               ALL SET (L . HF "x" $ \x ->
@@ -103,7 +103,7 @@
 >                     ALL s   (L . HF "x" $ \x ->
 >                     EQBLUE (s :>: x) (s :>: x))))
 
-> import -> Axioms where
+> import -> Primitives where
 >   ("coh", coh) :
 >   ("refl", refl) :
 

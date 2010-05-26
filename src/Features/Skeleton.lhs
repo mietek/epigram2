@@ -51,9 +51,7 @@
 
 \subsection{Plugging in axioms and primitives}
 
-> import -> Axioms where
-
-> import -> AxCode where
+> import -> RulesCode where
 
 > import -> Primitives where
 
@@ -66,10 +64,6 @@
 > import -> OpRunEqGreen where
 
 > import -> Coerce where
-
-\subsection{Extending the quotient}
-
-> import -> QuotientDefinitions where
 
 \subsection{Extending the display language}
 

@@ -453,7 +453,7 @@ shared parameters.
 >     case Data.Foldable.find ((name ==) . entryName) aus of
 >       Just (E ref _ _ _)  -> return (Just (applyAuncles ref aus))
 >       Nothing             ->
->         case Data.Foldable.find ((name ==) . refName . snd) (axioms ++ primitives) of
+>         case Data.Foldable.find ((name ==) . refName . snd) primitives of
 >           Just (_, ref)  -> return (Just (applyAuncles ref aus))
 >           Nothing        -> return Nothing
 

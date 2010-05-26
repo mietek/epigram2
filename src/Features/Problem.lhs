@@ -134,11 +134,6 @@
 >                                   (L (HF "x" (\ x -> schTypeOp @@ [t $$ A x])))
 >   schTypeOpRun (N v)           = Left v
 
-\subsection{Plugging Axioms in}
-
-> import -> Axioms where
-
-> import -> AxCode where
 
 \subsection{Extending the type-checker}
 
@@ -149,10 +144,6 @@
 > import -> OpRunEqGreen where
 
 > import -> Coerce where
-
-\subsection{Extending the quotient}
-
-> import -> QuotientDefinitions where
 
 \subsection{Extending the Display Language}
 

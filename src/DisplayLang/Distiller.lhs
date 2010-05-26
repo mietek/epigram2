@@ -127,7 +127,8 @@ To distill an elimination, we simply push the eliminator on to the spine.
 Because there are no operators in the display syntax, we replace them with
 parameters containing the appropriate primitive references.
 
-> distillInfer es (op :@ ts) as  = distillInfer es (P (mkRef op)) (map A ts ++ as)
+> distillInfer es (op :@ ts) as  = distillInfer es (P (lookupOpRef op))
+>                                                      (map A ts ++ as)
 
 Unnecessary type ascriptions can simply be dropped; this also ensures that shared
 parameters are handled correctly when the head is a parameter. 
