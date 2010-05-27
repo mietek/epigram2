@@ -72,10 +72,10 @@
 > import -> CanPretty where
 >   pretty (IMu (Just l   :?=: _) i)  = wrapDoc
 >       (pretty l AppSize <+> pretty i ArgSize)
->       ArgSize
+>       AppSize
 >   pretty (IMu (Nothing  :?=: (Id ii :& Id d)) i)  = wrapDoc
 >       (kword KwIMu <+> pretty ii ArgSize <+> pretty d ArgSize <+> pretty i ArgSize)
->       ArgSize
+>       AppSize
 
 > import -> CanTraverse where
 >   traverse f (IMu l i)     = (|IMu (traverse f l) (f i)|)
