@@ -66,8 +66,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >     -- Safety belt: this *must* type-check!      
 >     validateDevelopment (locs :< loc)
 >     -- Show goal and prompt
->     let Right prompt = evalStateT showPrompt loc
->     putStr prompt
+>     putStr $ fst $ runProofState showPrompt loc
 >     hFlush stdout
 >     l <- getLine
 >     case parse tokenize l of 
@@ -163,25 +162,7 @@ A Cochon tactic consinsts of:
 > instance Ord CochonTactic where
 >     compare ct1 ct2 = compare (ctName ct1) (ctName ct2)
 
-
-
-We have some shortcuts for building common kinds of tactics:
-|simpleCT| builds a tactic that works in the proof state,
-and there are various specialised versions of it for nullary and
-unary tactics.
-
-
-> simpleOutput :: ProofState String -> Bwd ProofContext -> IO (Bwd ProofContext)
-> simpleOutput eval (locs :< loc) = do
->     case runStateT ((eval <* startScheduler) `catchError` catchUnprettyErrors) loc of
->         Right (s, loc') -> do
->             putStrLn s
->             return (locs :< loc :< loc')
->         Left ss -> do
->             putStrLn "I'm sorry, Dave. I'm afraid I can't do that."
->             putStrLn $ renderHouseStyle $ prettyStackError ss
->             return (locs :< loc)
->             
+           
 
 The |tacticsMatching| function identifies Cochon tactics that match the
 given string, either exactly or as a prefix.
@@ -195,7 +176,35 @@ given string, either exactly or as a prefix.
 > tacticNames = intercalate ", " . map ctName
 
 
+Given a proof state command and a context, we can run the command with
+|runProofState| to produce a message (either the response from the command or
+the error message) and |Maybe| a new proof context.
 
+> runProofState :: ProofState String -> ProofContext
+>     -> (String, Maybe ProofContext)
+> runProofState m loc =
+>     case runStateT (m `catchError` catchUnprettyErrors) loc of
+>         Right (s, loc')  -> (s, Just loc')
+>         Left ss          -> (renderHouseStyle $ prettyStackError ss, Nothing)
+
+
+
+> simpleOutput :: ProofState String -> Bwd ProofContext -> IO (Bwd ProofContext)
+> simpleOutput eval (locs :< loc) = do
+>     case runProofState (eval <* startScheduler) loc of
+>         (s, Just loc') -> do
+>             putStrLn s
+>             return (locs :< loc :< loc')
+>         (s, Nothing) -> do
+>             putStrLn "I'm sorry, Dave. I'm afraid I can't do that."
+>             putStrLn s
+>             return (locs :< loc)
+
+
+We have some shortcuts for building common kinds of tactics:
+|simpleCT| builds a tactic that works in the proof state,
+and there are various specialised versions of it for nullary and
+unary tactics.
 
 > simpleCT :: String -> Parsley Token (Bwd CochonArg)
 >     -> ([CochonArg] -> ProofState String) -> String -> CochonTactic
