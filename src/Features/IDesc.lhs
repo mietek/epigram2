@@ -41,6 +41,16 @@
 >   pattern IFSIGMAN  = SU (SU (SU (SU (SU ZE))))
 >   pattern IPRODN    = SU (SU (SU (SU (SU (SU ZE)))))
 
+>   pattern IMU l ii x i  = C (IMu (l :?=: (Id ii :& Id x)) i) 
+>   pattern IVAR i        = CON (PAIR IVARN     (PAIR i VOID))
+>   pattern IPI s t       = CON (PAIR IPIN      (PAIR s (PAIR t VOID)))
+>   pattern IFPI s t      = CON (PAIR IFPIN     (PAIR s (PAIR t VOID)))
+>   pattern ISIGMA s t    = CON (PAIR ISIGMAN   (PAIR s (PAIR t VOID)))
+>   pattern IFSIGMA s t   = CON (PAIR IFSIGMAN  (PAIR s (PAIR t VOID)))
+>   pattern ICONST p      = CON (PAIR ICONSTN   (PAIR p VOID))
+>   pattern IPROD x y     = CON (PAIR IPRODN    (PAIR x (PAIR y VOID)))
+
+> import -> CanDisplayPats where
 >   pattern DIVARN     = DZE
 >   pattern DICONSTN   = DSU DZE
 >   pattern DIPIN      = DSU (DSU DZE)
@@ -49,25 +59,15 @@
 >   pattern DIFSIGMAN  = DSU (DSU (DSU (DSU (DSU DZE))))
 >   pattern DIPRODN    = DSU (DSU (DSU (DSU (DSU (DSU DZE)))))
 
+>   pattern DIMU l ii x i  = DC (IMu (l :?=: (Id ii :& Id x)) i) 
+>   pattern DIVAR i        = DCON (DPAIR DIVARN     (DPAIR i DVOID))
+>   pattern DIPI s t       = DCON (DPAIR DIPIN      (DPAIR s (DPAIR t DVOID)))
+>   pattern DIFPI s t      = DCON (DPAIR DIFPIN     (DPAIR s (DPAIR t DVOID)))
+>   pattern DISIGMA s t    = DCON (DPAIR DISIGMAN   (DPAIR s (DPAIR t DVOID)))
+>   pattern DIFSIGMA s t   = DCON (DPAIR DIFSIGMAN  (DPAIR s (DPAIR t DVOID)))
+>   pattern DICONST p      = DCON (DPAIR DICONSTN   (DPAIR p DVOID))
+>   pattern DIPROD x y     = DCON (DPAIR DIPRODN    (DPAIR x (DPAIR y DVOID)))
 
->   pattern IMU l ii x i = C (IMu (l :?=: (Id ii :& Id x)) i) 
->   pattern IVAR i = CON (PAIR IVARN (PAIR i VOID))
->   pattern IPI s t = CON (PAIR IPIN (PAIR s (PAIR t VOID)))
->   pattern IFPI s t = CON (PAIR IFPIN (PAIR s (PAIR t VOID)))
->   pattern ISIGMA s t = CON (PAIR ISIGMAN (PAIR s (PAIR t VOID)))
->   pattern IFSIGMA s t = CON (PAIR IFSIGMAN (PAIR s (PAIR t VOID)))
->   pattern ICONST p =  CON (PAIR ICONSTN (PAIR p VOID))
->   pattern IPROD x y = CON (PAIR IPRODN (PAIR x (PAIR y VOID)))
-
-> import -> CanDisplayPats where
->   pattern DIMU l ii x i = DC (IMu (l :?=: (Id ii :& Id x)) i) 
->   pattern DIVAR i = DCON (DPAIR DIVARN (DPAIR i DVOID))
->   pattern DIPI s t = DCON (DPAIR DIPIN (DPAIR s (DPAIR t DVOID)))
->   pattern DIFPI s t = DCON (DPAIR DIFPIN (DPAIR s (DPAIR t DVOID)))
->   pattern DISIGMA s t = DCON (DPAIR DISIGMAN (DPAIR s (DPAIR t DVOID)))
->   pattern DIFSIGMA s t = DCON (DPAIR DIFSIGMAN (DPAIR s (DPAIR t DVOID)))
->   pattern DICONST p =  DCON (DPAIR DICONST (DPAIR p DVOID))
->   pattern DIPROD x y = DCON (DPAIR DIPRODN (DPAIR x (DPAIR y DVOID)))
 
 > import -> CanPretty where
 >   pretty (IMu (Just l   :?=: _) i)  = wrapDoc
