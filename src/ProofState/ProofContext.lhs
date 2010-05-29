@@ -21,7 +21,6 @@
 
 > import Evidences.Tm
 
-> import DisplayLang.DisplayTm
 > import DisplayLang.Scheme
 
 > import Kit.BwdFwd

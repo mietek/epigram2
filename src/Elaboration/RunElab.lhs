@@ -20,13 +20,11 @@
 > import Features.Features ()
 
 > import ProofState.Developments
-> import ProofState.ProofContext
 > import ProofState.ProofState
 > import ProofState.ProofKit
 > import ProofState.Lifting
 > import ProofState.NameResolution
 
-> import DisplayLang.DisplayTm
 > import DisplayLang.Scheme
 > import DisplayLang.Name
 

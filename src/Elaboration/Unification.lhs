@@ -20,9 +20,6 @@
 > import ProofState.News
 > import ProofState.ProofState
 > import ProofState.ProofKit
-> import ProofState.NameResolution
-
-> import DisplayLang.Name
 
 > import Kit.BwdFwd
 > import Kit.MissingLibrary

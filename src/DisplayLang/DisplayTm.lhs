@@ -19,7 +19,6 @@
 > import Features.Features ()
 
 > import Evidences.Tm
-> import Evidences.Mangler
 
 %endif
 

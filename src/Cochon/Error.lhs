@@ -13,7 +13,6 @@
 
 > import Evidences.Tm hiding (In)
 
-> import DisplayLang.DisplayTm
 > import DisplayLang.Name
 > import DisplayLang.PrettyPrint
 

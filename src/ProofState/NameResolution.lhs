@@ -22,7 +22,6 @@
 > import ProofState.ProofContext
 > import ProofState.ProofState
 
-> import DisplayLang.DisplayTm
 > import DisplayLang.Name
 > import DisplayLang.Scheme
 

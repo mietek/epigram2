@@ -7,9 +7,6 @@
 
 > module Tactics.Elimination where
 
-> import Control.Monad.Error
-> import Cochon.Error
-
 > import Control.Applicative
 > import Data.Foldable
 > import Data.List
@@ -29,7 +26,6 @@
 > import ProofState.Lifting
 > import ProofState.NameResolution
 
-> import DisplayLang.DisplayTm
 > import DisplayLang.Name
 
 > import Elaboration.Elaborator

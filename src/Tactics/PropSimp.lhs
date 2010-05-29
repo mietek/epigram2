@@ -11,7 +11,6 @@
 > import Control.Applicative 
 > import Control.Monad.Reader
 
-> import Data.Foldable
 > import Data.Traversable
 
 > import Kit.BwdFwd

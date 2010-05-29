@@ -13,7 +13,6 @@
 > import Data.Monoid hiding (All)
 > import Data.Traversable
 
-> import Kit.BwdFwd
 > import Kit.MissingLibrary
 
 > import Evidences.Tm
@@ -23,7 +22,6 @@
 > import NameSupply.NameSupplier
 
 > import ProofState.Developments
-> import ProofState.ProofContext
 > import ProofState.ProofState
 > import ProofState.ProofKit
 

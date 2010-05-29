@@ -18,9 +18,7 @@
 > import ProofState.Lifting
 > import ProofState.ProofState
 > import ProofState.ProofKit
-> import ProofState.NameResolution
 
-> import DisplayLang.DisplayTm
 > import DisplayLang.Name
 
 > import Elaboration.ElabMonad
