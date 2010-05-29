@@ -22,12 +22,13 @@
 > import ProofState.ProofContext
 > import ProofState.ProofState
 > import ProofState.ProofKit
+> import ProofState.NameResolution
 
 > import DisplayLang.DisplayTm
+> import DisplayLang.Name
 > import DisplayLang.Scheme
 > import DisplayLang.Distiller
 > import DisplayLang.Lexer
-> import DisplayLang.Naming
 > import DisplayLang.PrettyPrint
 
 > import Elaboration.ElabMonad

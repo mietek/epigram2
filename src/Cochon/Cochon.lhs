@@ -23,7 +23,7 @@
 > import Evidences.Tm hiding (In)
 
 > import DisplayLang.Lexer
-> import DisplayLang.Naming
+> import DisplayLang.Name
 > import DisplayLang.TmParse
 > import DisplayLang.DisplayTm
 > import DisplayLang.PrettyPrint
@@ -32,6 +32,7 @@
 > import ProofState.ProofContext
 > import ProofState.ProofState
 > import ProofState.ProofKit
+> import ProofState.NameResolution
 
 > import Tactics.Elimination
 > import Tactics.PropSimp

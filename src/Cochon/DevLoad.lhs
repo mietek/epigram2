@@ -23,6 +23,7 @@
 > import ProofState.Developments
 
 > import DisplayLang.DisplayTm
+> import DisplayLang.Name
 > import DisplayLang.Lexer
 > import DisplayLang.TmParse
 > import DisplayLang.PrettyPrint

@@ -20,10 +20,11 @@
 > import ProofState.ProofState
 > import ProofState.ProofContext
 > import ProofState.ProofKit
+> import ProofState.NameResolution
 
 > import DisplayLang.DisplayTm
 > import DisplayLang.Scheme
-> import DisplayLang.Naming
+> import DisplayLang.Name
 > import DisplayLang.PrettyPrint
 
 > import NameSupply.NameSupplier

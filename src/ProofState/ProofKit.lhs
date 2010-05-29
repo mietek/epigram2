@@ -26,9 +26,10 @@
 > import ProofState.Lifting
 > import ProofState.ProofContext
 > import ProofState.ProofState
+> import ProofState.NameResolution
 
 > import DisplayLang.DisplayTm
-> import DisplayLang.Naming
+> import DisplayLang.Name
 
 We have to use a boot file to resolve the circular dependency between this module
 and |Elaboration.Wire|. We need to make calls to the news propagation code from

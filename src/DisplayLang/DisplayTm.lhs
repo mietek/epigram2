@@ -204,33 +204,6 @@ places.
         |LAV| and |PIV|.}
 
 
-\subsection{Names}
-
-For display and storage purposes, we have a system of local longnames
-for referring to entries. Any component of a local name may have a
-\textasciicircum|n| or |_n| suffix, where |n| is an integer,
-representing a relative or absolute offset. A relative offset
-\textasciicircum|n| refers to the $n^\mathrm{th}$ occurrence of the
-name encountered when searching upwards, so |x|\textasciicircum|0|
-refers to the same reference as |x|, but |x|\textasciicircum|1| skips
-past it and refers to the next thing named |x|.  An absolute offset
-|_n|, by contrast, refers to the exact numerical component of the
-name.
-
-> data Offs = Rel Int | Abs Int deriving (Show, Eq)
-> type RelName = [(String,Offs)]
-
-As a consequence, there is whole new family of objects: terms which
-variables are relative names. So it goes:
-
-> type InTmRN = InTm RelName
-> type ExTmRN = ExTm RelName
-> type DInTmRN = DInTm REF RelName
-> type DExTmRN = DExTm REF RelName
-> type DSPINE = DSpine REF RelName
-> type DHEAD = DHead REF RelName
-> type DSCOPE = DScope REF RelName
-
 \subsection{Sizes}
 
 We keep track of the |Size| of terms when parsing, to avoid nasty left

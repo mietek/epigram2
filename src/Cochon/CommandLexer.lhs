@@ -15,6 +15,7 @@
 > import DisplayLang.Lexer
 > import DisplayLang.TmParse
 > import DisplayLang.DisplayTm
+> import DisplayLang.Name
 > import DisplayLang.Scheme
 
 %endif

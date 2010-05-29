@@ -90,6 +90,7 @@
 %include ProofState/ProofContext.lhs
 %include ProofState/ProofState.lhs
 %include ProofState/ProofKit.lhs
+%include ProofState/NameResolution.lhs
 
 \chapter{The Proof Tactics}
 
@@ -107,7 +108,7 @@
 %include DisplayLang/Introduction.lhs
 
 %include DisplayLang/DisplayTm.lhs
-%include DisplayLang/Naming.lhs
+%include DisplayLang/Name.lhs
 %include DisplayLang/Scheme.lhs
 %include DisplayLang/Lexer.lhs
 %include DisplayLang/TmParse.lhs

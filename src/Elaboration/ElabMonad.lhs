@@ -24,6 +24,7 @@
 > import Features.Features
 
 > import DisplayLang.DisplayTm
+> import DisplayLang.Name
 > import DisplayLang.Scheme
 
 %endif

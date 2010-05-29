@@ -30,6 +30,7 @@
 > import Elaboration.Elaborator
 
 > import DisplayLang.DisplayTm
+> import DisplayLang.Name
 
 %endif
 

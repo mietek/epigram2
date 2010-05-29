@@ -27,9 +27,10 @@
 > import ProofState.ProofState
 > import ProofState.ProofKit
 > import ProofState.Lifting
+> import ProofState.NameResolution
 
 > import DisplayLang.DisplayTm
-> import DisplayLang.Naming
+> import DisplayLang.Name
 
 > import Elaboration.Elaborator
 

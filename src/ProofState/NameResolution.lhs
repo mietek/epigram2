@@ -1,11 +1,11 @@
-\section{Naming}
+\section{Resolving Names}
 
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE GADTs, PatternGuards #-}
 
-> module DisplayLang.Naming where
+> module ProofState.NameResolution where
 
 > import Control.Applicative
 > import Control.Monad.State
@@ -23,6 +23,7 @@
 > import ProofState.ProofState
 
 > import DisplayLang.DisplayTm
+> import DisplayLang.Name
 > import DisplayLang.Scheme
 
 > import Evidences.Tm
@@ -31,22 +32,6 @@
 %endif
 
 \subsection{The Naming of Things}
-
-The |showRelName| function converts a relative name to a string by
-inserting the appropriate punctuation.
-
-> showRelName :: RelName -> String
-> showRelName = intercalate "." . map showOffName
-
-> showOffName (x, Rel 0) = x
-> showOffName (x, Rel i) = x ++ "^" ++ show i
-> showOffName (x, Abs i) = x ++ "_" ++ show i
-
-The |showName| function converts a name to a string absolutely (without christening).
-
-> showName :: Name -> String
-> showName = showRelName . map (\(x, i) -> (x, Abs i))
-
 
 The |showEntries| function folds over a bunch of entries, christening them with the
 given auncles and current name, and intercalating to produce a comma-separated list.

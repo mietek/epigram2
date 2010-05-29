@@ -21,6 +21,7 @@
 > -- XXX: bug "fix" of the dependency graph:
 > import DisplayLang.DisplayTm
 > import DisplayLang.Scheme
+> import DisplayLang.Name
 
 > import ProofState.Developments
 > import ProofState.News

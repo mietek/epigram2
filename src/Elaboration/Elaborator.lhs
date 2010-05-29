@@ -25,6 +25,7 @@
 > import ProofState.ProofKit
 
 > import DisplayLang.DisplayTm
+> import DisplayLang.Name
 > import DisplayLang.Scheme
 
 > import Elaboration.ElabMonad

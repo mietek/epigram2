@@ -13,11 +13,12 @@
 > import Text.PrettyPrint.HughesPJ
 
 > import ProofState.Developments
+> import ProofState.NameResolution
 
 > import DisplayLang.DisplayTm
+> import DisplayLang.Name
 > import DisplayLang.Scheme
 > import DisplayLang.Lexer
-> import DisplayLang.Naming
 
 > import Features.Features ()
 
