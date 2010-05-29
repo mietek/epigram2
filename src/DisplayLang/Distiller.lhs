@@ -35,45 +35,58 @@
 
 %endif
 
+
+The distiller, like the elaborator, is organized on a |check|/|infer|
+basis, following the type-checker implementation in
+Section~\ref{subsec:type-checking}. |distill| mirrors |check|--
+distilling |INTM|s, while |distillInfer| mirrors |infer| -- distilling
+|EXTM|s.
+
+
 \subsection{Distilling |INTM|s}
 
-The |distill| command converts a typed INTM in the evidence language
-to a term in the display language; that is, it reverses |elaborate|.
-It performs christening at the same time. For this, it needs a list
-of entries in local(!) scope, which it will extend when going under a binder.
+The |distill| command converts a typed |INTM| in the Evidence language
+to a term in the Display language; that is, it reverses |elaborate|.
+It performs christening at the same time. For this, it needs a list of
+entries in local(!) scope, which it will extend when going under a
+binder.
+
+\pierre{What is the ``local'' scope?}
+
+
+The distiller first tries to apply Feature-specific rules. These rules
+contain the inteligence of the distiller, aiming at making concise
+Display term. If unsuccessful, the distiller fall back to a generic
+distiller |distillBase|.
 
 > distill :: Entries -> (TY :>: INTM) -> ProofStateT INTM (DInTmRN :=>: VAL)
-
 > import <- DistillRules
-
 > distill es tt = distillBase es tt
 
-
-We separate out the standard distillation cases (without aspect extensions) so
-that aspect distill rules can give up and invoke the base cases.  
+We separate out the standard distillation cases (without aspect
+extensions) so that aspect distill rules can give up and invoke the
+base cases.
 
 > distillBase :: Entries -> (TY :>: INTM) -> ProofStateT INTM (DInTmRN :=>: VAL)
 
-Just like in any other checker-evaluator, canonical terms can be distilled
-using |canTy|.
+We distill structurally through canonical terms:
 
 > distillBase es (C ty :>: C c) = do
 >     cc <- canTy (distill es) (ty :>: c)
->     return ((DC $ fmap termOf cc) :=>: evTm (C c))
+>     return $ (DC $ fmap termOf cc) :=>: evTm (C c)
 
 To distill a $lambda$-abstraction, we speculate a fresh reference and distill
 under the binder, then convert the scope appropriately.
 
 > distillBase es (ty :>: l@(L sc)) = do
->     (k, s, f) <- lambdable ty `catchMaybe`  (err "distill: type " 
->                                             ++ errVal ty 
->                                             ++ err " is not lambdable.")
 >     let x = fortran l
->     tm' :=>: _ <- freshRef (x :<: s) (\ref ->
->         distill (es :< E ref (lastName ref) (Boy k)
->                  (error "distill: boy type undefined"))
->                 (f (pval ref) :>: underScope sc ref)
->       )
+>     (k, dom, cod) <- lambdable ty `catchMaybe`  (err "distill: type " 
+>                                                 ++ errVal ty 
+>                                                 ++ err " is not lambdable.")
+>     tm' :=>: _ <-  freshRef (x :<: dom) $ \ref ->
+>                    distill  (es :< E  ref (lastName ref) (Boy k)
+>                                       (error "distill: boy type undefined"))
+>                             (cod (pval ref) :>: underScope sc ref)
 >     return $ DL (convScope sc x tm') :=>: (evTm $ L sc)
 >   where
 >     convScope :: Scope {TT} REF -> String -> DInTmRN -> DSCOPE
@@ -84,43 +97,49 @@ If we encounter a neutral term, we switch to |distillInfer|.
 
 > distillBase es (_ :>: N n) = do
 >     (n' :<: _) <- distillInfer es n []
->     return (DN n' :=>: evTm n)
+>     return $ DN n' :=>: evTm n
 
 If none of the cases match, we complain loudly.
 
-> distillBase _ (ty :>: tm) = error ("distill: can't cope with\n" ++ show ty ++ "\n:>:\n" ++ show tm)
+> distillBase _ (ty :>: tm) =  throwError' $ 
+>                              err "distill: can't cope with\n" ++
+>                              errInTm tm ++ err " :<: " ++ errVal ty
 
 
 \subsection{Distilling |EXTM|s}
 
 The |distillInfer| command is the |EXTM| version of |distill|, which also yields
 the type of the term. It keeps track of a list of entries in scope, but
-also accumulates a spine so shared parameters can be removed.
+also accumulates a spine so that shared parameters can be removed.
 
-> distillInfer :: Entries -> EXTM -> Spine {TT} REF -> ProofStateT INTM (DExTmRN :<: TY)
+\pierre{What is a shared parameter? Why removing shared parameters?}
 
+> distillInfer ::  Entries -> EXTM -> Spine {TT} REF -> 
+>                  ProofStateT INTM (DExTmRN :<: TY)
+>
 > import <- DistillInferRules
 
-To distill a parameter with a spine of eliminators, we use |baptise| to determine
-a name for the reference and the number of shared parameters, then process the
-arguments and return the distilled application with the shared parameters dropped.
+To distill a parameter with a spine of eliminators, we use |baptise|
+to determine a name for the reference and the number of shared
+parameters, then process the arguments and return the distilled
+application with the shared parameters dropped.
 
-> distillInfer les tm@(P (name := rk :<: ty)) as       = do
->     pc <- get
->     let (relName, argsToDrop, ms) = 
->           unresolve name rk as (inBScope pc) les
->     (e', ty') <- processArgs les (evTm tm :<: ty) as
->     let  as'   = drop argsToDrop e'
->          as''  = case ms of
->                    Just sch  -> removeImplicit sch as'
->                    Nothing   -> as'
->     return ((DP relName ::$ as'') :<: ty')
+> distillInfer localEntries tm@(P (name := kind :<: ty)) spine = do
+>     -- Compute a relative name from |name|
+>     proofCtxt <- get
+>     let  (relName, argsToDrop, mSch) = 
+>           unresolve name kind spine (inBScope proofCtxt) localEntries
+>     -- Distill the spine
+>     (e', ty') <- distillSpine localEntries (evTm tm :<: ty) spine
+>     let  spine1  = drop argsToDrop e'
+>          spine2  = maybe spine1 (hideImplicit spine1) mSch 
+>     return $ (DP relName ::$ spine2) :<: ty'
 >   where
->     removeImplicit :: Scheme x -> DSPINE -> DSPINE
->     removeImplicit (SchType _)           as      = as
->     removeImplicit (SchExplicitPi _ sch) (a:as)  = a : removeImplicit sch as
->     removeImplicit (SchImplicitPi _ sch) (a:as)  = removeImplicit sch as
->     removeImplicit _                     []      = []
+>     hideImplicit :: DSPINE -> Scheme x -> DSPINE
+>     hideImplicit as      (SchType _)            = as
+>     hideImplicit (a:as)  (SchExplicitPi _ sch)  = a : hideImplicit as sch
+>     hideImplicit (a:as)  (SchImplicitPi _ sch)  = hideImplicit as sch
+>     hideImplicit []      _                      = []
 
 To distill an elimination, we simply push the eliminator on to the spine.
 
@@ -132,8 +151,9 @@ parameters containing the appropriate primitive references.
 > distillInfer es (op :@ ts) as  = distillInfer es (P (lookupOpRef op))
 >                                                      (map A ts ++ as)
 
-Unnecessary type ascriptions can simply be dropped; this also ensures that shared
-parameters are handled correctly when the head is a parameter. 
+Unnecessary type ascriptions can simply be dropped; this also ensures
+that shared parameters are handled correctly when the head is a
+parameter.
 
 > distillInfer es (N t :? _) as  = distillInfer es t as
 
@@ -149,14 +169,17 @@ eliminators is applied in its entirety.
 > distillInfer es (t :? ty) as   = do
 >     ty'  :=>: vty  <- distill es (SET :>: ty)
 >     t'   :=>: vt   <- distill es (vty :>: t)
->     (e', ty'')     <- processArgs es (vt :<: vty) as
+>     (e', ty'')     <- distillSpine es (vt :<: vty) as
 >     return (DType ty' ::$ (A t' : e') :<: ty'')
 
 If nothing matches, we are unable to distill this term, so we complain loudly.
 
-> distillInfer _ tm _ = throwError' $ (err "distillInfer: can't cope with "
->                                      ++ errTm (N tm))
+> distillInfer _ tm _ =  throwError' $ 
+>                        err "distillInfer: can't cope with " ++ errTm (N tm)
 
+
+
+\subsection{Moonshining}
 
 The |moonshine| command attempts the dubious task of converting an
 evidence term (possibly of dubious veracity) into a display term.
@@ -182,19 +205,19 @@ This is mostly for error-message generation.
 
 \subsection{Distillation Support}
 
-The |processArgs| command takes a list of entries in scope, a typed value
+The |distillSpine| command takes a list of entries in scope, a typed value
 and a spine of arguments for the value. It distills the spine, using
 |elimTy| to determine the appropriate type to push in at each step, and returns
 the distilled spine and the overall type of the application.
 
-> processArgs :: Entries -> (VAL :<: TY) -> Spine {TT} REF -> ProofStateT INTM (DSPINE, TY)
-> processArgs _ (_ :<: ty) [] = return ([], ty)
-> processArgs es (v :<: C ty) (a:as) = do
+> distillSpine :: Entries -> (VAL :<: TY) -> Spine {TT} REF -> ProofStateT INTM (DSPINE, TY)
+> distillSpine _ (_ :<: ty) [] = return ([], ty)
+> distillSpine es (v :<: C ty) (a:as) = do
 >     (e', ty') <- elimTy (distill es) (v :<: ty) a
->     (es, ty'') <- processArgs es (v $$ (fmap valueOf e') :<: ty') as 
+>     (es, ty'') <- distillSpine es (v $$ (fmap valueOf e') :<: ty') as 
 >     return (fmap termOf e' : es, ty'')
-> processArgs es (v :<: ty) as = throwError' $
->     err "processArgs: cannot cope with" ++ errTyVal (v :<: ty)
+> distillSpine es (v :<: ty) as = throwError' $
+>     err "distillSpine: cannot cope with" ++ errTyVal (v :<: ty)
 >     ++ err "which has non-canonical type" ++ errTyVal (ty :<: SET)
 >     ++ err "applied to spine" ++ map UntypedElim as
 
