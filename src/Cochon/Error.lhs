@@ -20,6 +20,7 @@
 > import ProofState.ProofKit
 
 > import Distillation.Distiller
+> import Distillation.Moonshine
 
 %endif
 

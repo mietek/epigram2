@@ -128,6 +128,8 @@
 \chapter{Distillation}
 
 %include Distillation/Distiller.lhs
+%include Distillation/Scheme.lhs
+%include Distillation/Moonshine.lhs
 
 \chapter{Cochon}
 

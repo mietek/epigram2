@@ -37,6 +37,7 @@
 > import Elaboration.Elaborator
 
 > import Distillation.Distiller
+> import Distillation.Scheme
 
 > import Kit.BwdFwd
 

@@ -8,9 +8,7 @@
 
 > module Distillation.Distiller where
 
-> import Control.Applicative
 > import Control.Monad.State
-> import Data.Traversable
 > import Text.PrettyPrint.HughesPJ (Doc)
 
 > import Kit.BwdFwd
@@ -192,31 +190,6 @@ If nothing matches, we are unable to distill this term, so we complain loudly.
 >                        err "distillInfer: can't cope with " ++ errTm (N tm)
 
 
-
-\subsection{Moonshining}
-
-The |moonshine| command attempts the dubious task of converting an
-Evidence term (possibly of dubious veracity) into a Display term.
-This is mostly for error-message generation.
-
-> moonshine :: INTM -> ProofStateT INTM DInTmRN
-> moonshine (LK t) = do
->     t' <- moonshine t
->     return $ DLK t'
-> moonshine (L (x :. t)) = do
->     t' <- moonshine t
->     return $ DL (x ::. t')
-> moonshine (C c) = do
->     c' <- traverse moonshine c
->     return $ DC c'
-> moonshine (N n) = (do
->     n' :<: ty <- distillInfer B0 n []
->     return $ DN n'
->   ) <|> return (DTIN (N n))
-> moonshine t = return (DTIN t)
-
-
-
 \subsection{Distillation Support}
 
 The |distillSpine| command takes a list of entries in scope, a typed value
@@ -253,39 +226,7 @@ The |toDExTm| helper function will distill a term to produce an
 >     return (DTY ty' tm')
 
 
-\subsection{Distilling Schemes}
-
-> distillScheme :: Entries -> Bwd REF -> Scheme INTM -> ProofStateT INTM (Scheme DInTmRN, INTM)
-
-> distillScheme es rs (SchType ty) = do
->     let ty' = underneath 0 rs ty
->     ty'' :=>: _ <- distill es (SET :>: ty')
->     return (SchType ty'', ty')
-
-> distillScheme es rs (SchExplicitPi (x :<: schS) schT) = do
->     (schS', s') <- distillScheme es rs schS
->     freshRef (x :<: evTm s')(\ref -> do
->         (schT', t') <- distillScheme (es :< E ref (lastName ref) (Boy PIB) s')
->                            (rs :< ref) schT
->         return (SchExplicitPi (x :<: schS') schT', PIV x s' t')
->       )
-
-> distillScheme es rs (SchImplicitPi (x :<: s) schT) = do
->     let s' = underneath 0 rs s
->     sd :=>: sv <- distill es (SET :>: s')
->     freshRef (x :<: sv) (\ref -> do
->         (schT', t') <- distillScheme (es :< E ref (lastName ref) (Boy PIB) s')
->                            (rs :< ref) schT
->         return (SchImplicitPi (x :<: sd) schT', PIV x s' t')
->       )
-
-
-> underneath :: Int -> Bwd REF -> INTM -> INTM
-> underneath _ B0 tm = tm
-> underneath n (rs :< ref) tm = underneath (n+1) rs (under n ref %% tm)
-
-
-
+\subsection{Distillation interface}
 
 The |distillHere| command distills a term in the current context.
 
@@ -294,11 +235,6 @@ The |distillHere| command distills a term in the current context.
 >     mliftError $ distill B0 tt
 >         where mliftError :: ProofStateT INTM a -> ProofState a
 >               mliftError = mapStateT liftError
-
-> distillSchemeHere :: Scheme INTM -> ProofState (Scheme DInTmRN)
-> distillSchemeHere sch = do
->     return . fst =<< (mapStateT liftError $ distillScheme B0 B0 sch)
-
 
 The |prettyHere| command distills a term in the current context,
 then passes it to the pretty-printer.
@@ -311,7 +247,5 @@ then passes it to the pretty-printer.
 >     dtm :=>: _ <- distillHere tt
 >     return (pretty dtm size)
 
-> prettySchemeHere :: Scheme INTM -> ProofState Doc
-> prettySchemeHere sch = do
->     sch' <- distillSchemeHere sch
->     return (pretty sch' maxBound)
+
+
