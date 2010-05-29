@@ -32,6 +32,7 @@ SRCS := $(wildcard *.lhs) \
 	$(wildcard Compiler/*.lhs) \
 	$(wildcard DisplayLang/*.lhs) \
 	$(wildcard Elaboration/*.lhs) \
+	$(wildcard Distillation/*.lhs) \
 	$(wildcard Evidences/*.lhs) \
 	$(wildcard Features/*.lhs) \
 	$(wildcard Kit/*.lhs) \

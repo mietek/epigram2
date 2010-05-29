@@ -112,7 +112,6 @@
 %include DisplayLang/Scheme.lhs
 %include DisplayLang/Lexer.lhs
 %include DisplayLang/TmParse.lhs
-%include DisplayLang/Distiller.lhs
 %include DisplayLang/PrettyPrint.lhs
 
 \chapter{Elaboration}
@@ -125,6 +124,10 @@
 %include Elaboration/Scheduler.lhs
 %include Elaboration/Wire.lhs
 %include Elaboration/Unification.lhs
+
+\chapter{Distillation}
+
+%include Distillation/Distiller.lhs
 
 \chapter{Cochon}
 

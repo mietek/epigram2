@@ -6,7 +6,7 @@
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE GADTs, TypeOperators, PatternGuards #-}
 
-> module DisplayLang.Distiller where
+> module Distillation.Distiller where
 
 > import Control.Applicative
 > import Control.Monad.State

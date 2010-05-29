@@ -27,7 +27,6 @@
 > import DisplayLang.DisplayTm
 > import DisplayLang.Name
 > import DisplayLang.Scheme
-> import DisplayLang.Distiller
 > import DisplayLang.Lexer
 > import DisplayLang.PrettyPrint
 
@@ -36,6 +35,8 @@
 > import Elaboration.RunElab
 > import Elaboration.Scheduler
 > import Elaboration.Elaborator
+
+> import Distillation.Distiller
 
 > import Kit.BwdFwd
 

@@ -27,7 +27,6 @@
 > import DisplayLang.TmParse
 > import DisplayLang.DisplayTm
 > import DisplayLang.PrettyPrint
-> import DisplayLang.Distiller
 
 > import ProofState.ProofContext
 > import ProofState.ProofState
@@ -44,6 +43,8 @@
 > import Elaboration.Elaborator
 > import Elaboration.Scheduler
 > import Elaboration.Unification
+
+> import Distillation.Distiller
 
 > import Cochon.CommandLexer
 > import Cochon.Error

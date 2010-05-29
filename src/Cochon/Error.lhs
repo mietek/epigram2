@@ -15,11 +15,12 @@
 
 > import DisplayLang.DisplayTm
 > import DisplayLang.Name
-> import DisplayLang.Distiller
 > import DisplayLang.PrettyPrint
 
 > import ProofState.ProofState
 > import ProofState.ProofKit
+
+> import Distillation.Distiller
 
 %endif
 
