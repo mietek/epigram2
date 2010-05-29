@@ -357,6 +357,10 @@ We have some pattern synonyms for common, er, patterns.
 > pattern LK t      = L (K t)
 > import <- CanPats
 
+\pierre{What does |V| stand for in |LAV| and |PIV|? Is it |V| for
+        \emph{value} (or \emph{Vendetta}?) I'm surprised then, because
+        these are |TT| terms, not values, right? }
+
 We have some type synonyms for commonly occurring instances of |Tm|.
 
 > type InTm   = Tm {In, TT}

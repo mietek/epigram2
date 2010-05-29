@@ -80,9 +80,23 @@ parameter. Thanks to this hack, we can use |deriving Traversable|.
 >  deriving (Functor, Foldable, Traversable, Show)
 
 Note that, again, we are polymorphic in the representation of free
-variables. While we reuse the |Can| and |Elim| functors from |Tm|, we
-redefine the notion of scope.
+variables. The variables in Display terms are denoted here by |x|.
+The variables of embedded Evidence terms are denoted by |p|. Hence,
+there is two potentially distinct set of free variables.
 
+While we reuse the |Can| and |Elim| functors from |Tm|, we redefine
+the notion of scope.
+
+\pierre{Why is |DExTm| in Spine-form?}
+
+
+%if False
+
+> dfortran :: DInTm p x -> String
+> dfortran (DL (x ::. _)) | not (null x) = x
+> dfortran _ = "x"
+
+%endif
 
 \subsubsection{Scopes, canonical objects and eliminators}
 
@@ -119,9 +133,19 @@ Spines of eliminators are just like in the evidence language:
 
 The |DT| and |DTEx| constructors allow evidence terms to be treated as |In| and
 |Ex| display terms, respectively. This is useful for elaboration, but such terms
-cannot be pretty-printed. To make |deriving Traversable| work properly, we have
-to |newtype|-wrap them and give trivial |Traversable| instances for the wrappers
-manually.
+cannot be pretty-printed. 
+
+\pierre{Why is it ``useful for elaboration'' to be able to embed
+        |InTm| and |ExTm|s?}
+
+\begin{danger}
+
+To make |deriving Traversable| work properly, we have to
+|newtype|-wrap them and manually give trivial |Traversable| instances
+for the wrappers. The instanciation code is hidden in the literate
+document.
+
+\end{danger}
 
 > newtype InTmWrap  p x = InTmWrap  (InTm p)  deriving Show
 > newtype ExTmWrap  p x = ExTmWrap  (ExTm p)  deriving Show
@@ -148,13 +172,15 @@ manually.
 %endif
 
 
-\subsubsection{Type casts}
+\subsubsection{Type annotations}
 
-Because type ascriptions are horrible things to parse, in the display language
-we use type casts instead. The type cast |DType ty| gets elaborated to the
-identity function for type |ty|, thereby pushing the type into its argument.
-The distiller removes type ascriptions and replaces them with appropriate
-type casts if necessary.
+Because type ascriptions are horrible things to parse\footnote{Left
+nesting is not really a friend of our damn parser}, in the display
+language we use type annotations instead. The type annotation |DType
+ty| gets elaborated to the identity function for type |ty|, thereby
+pushing the type into its argument.  The distiller removes type
+ascriptions and replaces them with appropriate type annotations if
+necessary.
 
 
 \subsection{Useful Abbreviations}
@@ -174,6 +200,29 @@ places.
 > pattern DTY ty tm   = DType ty ::$ [A tm]
 > import <- CanDisplayPats
 
+\pierre{Same question about |DLAV| and |DPIV| than in @Tm.lhs@ about
+        |LAV| and |PIV|.}
+
+
+\subsection{Names}
+
+For display and storage purposes, we have a system of local longnames
+for referring to entries. Any component of a local name may have a
+\textasciicircum|n| or |_n| suffix, where |n| is an integer,
+representing a relative or absolute offset. A relative offset
+\textasciicircum|n| refers to the $n^\mathrm{th}$ occurrence of the
+name encountered when searching upwards, so |x|\textasciicircum|0|
+refers to the same reference as |x|, but |x|\textasciicircum|1| skips
+past it and refers to the next thing named |x|.  An absolute offset
+|_n|, by contrast, refers to the exact numerical component of the
+name.
+
+> data Offs = Rel Int | Abs Int deriving (Show, Eq)
+> type RelName = [(String,Offs)]
+
+As a consequence, there is whole new family of objects: terms which
+variables are relative names. So it goes:
+
 > type InTmRN = InTm RelName
 > type ExTmRN = ExTm RelName
 > type DInTmRN = DInTm REF RelName
@@ -181,12 +230,6 @@ places.
 > type DSPINE = DSpine REF RelName
 > type DHEAD = DHead REF RelName
 > type DSCOPE = DScope REF RelName
-
-\subsection{Term Construction} 
-
-> dfortran :: DInTm p x -> String
-> dfortran (DL (x ::. _)) | not (null x) = x
-> dfortran _ = "x"
 
 
 \subsection{Schemes}
@@ -275,16 +318,3 @@ arguments have |ArgSize|, so |g (f x)| cannot be written |g f x|, whereas
 |(f x) == (g x)|.
 
 
-\subsection{Names}
-
-For display and storage purposes, we have a system of local longnames for referring to entries.
-Any component of a local name may have a \textasciicircum|n| or |_n| suffix, where |n| is
-an integer, representing a relative or absolute offset. A relative
-offset \textasciicircum|n| refers to the $n^\mathrm{th}$ occurrence of the name
-encountered when searching upwards, so |x|\textasciicircum|0| refers to the same reference
-as |x|, but |x|\textasciicircum|1| skips past it and refers to the next thing named |x|.
-An absolute offset |_n|, by contrast, refers to the exact numerical
-component of the name. 
-
-> data Offs = Rel Int | Abs Int deriving (Show, Eq)
-> type RelName = [(String,Offs)]
