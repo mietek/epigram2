@@ -1,4 +1,4 @@
-\section{DisplayTm}
+\section{Display Terms}
 
 %if False
 
@@ -26,53 +26,39 @@
 %format ::$ = ":\!\!:\!\!\$"
 %format ::. = ":\!\bullet"
 
-\subsection{The Life Cycle of a Term}
-
-The life cycle of a term in the system looks like this, where vertices are
-labelled with the type of a representation, and edges are labelled with the
-transformation between representations.
-
-\begin{verbatim}
-            Lexer             Parser            Elaborator
-   String ---------> [Token] ---------> InDTmRN ----------> INTM
-     ^                                                       |
-     |                                                       |
-     |  Renderer         Pretty-printer           Distiller  |
-     +-------------- Doc <------------- InDTmRN <------------+
-\end{verbatim}
-
-In the beginning was the |String|. This gets lexed (section \ref{sec:lexer})
-to produce a list of |Token|s, which are parsed (section \ref{sec:parser}) to
-give an |InDTm RelName| (a term in the display syntax containing relative
-names). The display term is then elaborated (section \ref{sec:elaborator})
-in the |ProofState| monad to produce an |INTM| (a term in the evidence
-language).
-
-Reversing the process, the distiller (section \ref{sec:distiller}) converts
-an evidence term back to a display term, and the pretty-printer
-(section \ref{sec:pretty_printer}) renders this as a |String|.
-
-
 \subsection{Structure of Display Terms}
 
-Display terms correspond roughly to |Tm {d, TT}| in the evidence language, but
-instead of taking a |Dir| parameter, we define two mutually recursive data
-types. This allows us to use |deriving Traversable|. Again, they are polymorphic
-in the representation of free variables. In addition to the structures from
-the evidence language, we have the following:
-\begin{itemize}
-\item Question marks (holes) which are replaced by subgoals on elaboration.
-\item Underscores which are determined by the typing rules on elaboration.
-\item Embedding of evidence terms into display terms.
-\item Type casts.
-\item Extensions imported from an aspect.
+Display terms mirror and extend the |Tm {d, TT}| terms of the Evidence
+language. While the Evidence language is the language of the
+type-checker, the Display language is the one of humans in an
+interactive development. Hence, in addition to the terms from the
+Evidence language, we have the following:
+
+\begin{itemize} 
+
+\item Question marks (holes), which are turned into subgoals during elaboration
+      (Chapter \ref{chap:elaboration}) ;
+\item Underscores (jokers), which are inferred during elaboration ;
+\item Embedding of evidence terms into display terms ;
+\item Type annotations ; and
+\item Feature-specific extensions, which are imported from an aspect.
 \end{itemize}
 
 However, we have removed the following:
 \begin{itemize}
-\item Type ascriptions (use type casts instead).
-\item Operators (use parameters with appropriate references instead).
+\item Type ascriptions, replaced by type annotations ; and
+\item Operators, replaced by a parameter containing the corresponding
+reference in |primitives| (Section \ref{subsec:operators})
 \end{itemize}
+
+
+\begin{danger}
+
+Because of a limitation of GHC |deriving Traversable|, we define two
+mutually recursive data types instead of taking a |Dir|
+parameter. Thanks to this hack, we can use |deriving Traversable|.
+
+\end{danger}
 
 > data InDTm :: * -> * -> * where
 >     DL     :: DScope p x       ->  InDTm p x -- \(\lambda\)
@@ -83,23 +69,28 @@ However, we have removed the following:
 >     DT     :: InTmWrap p x     ->  InDTm p x -- embedding
 >     import <- InDTmConstructors
 >  deriving (Functor, Foldable, Traversable, Show)
-
+>
 > data ExDTm p x = DHead p x ::$ DSpine p x
 >   deriving (Functor, Foldable, Traversable, Show)
-
+>
 > data DHead :: * -> * -> * where
 >     DP     :: x                -> DHead  p x -- parameter
 >     DType  :: InDTm p x        -> DHead  p x -- type cast
 >     DTEx   :: ExTmWrap p x     -> DHead  p x -- embedding
 >  deriving (Functor, Foldable, Traversable, Show)
 
+Note that, again, we are polymorphic in the representation of free
+variables. While we reuse the |Can| and |Elim| functors from |Tm|, we
+redefine the notion of scope.
+
 
 \subsubsection{Scopes, canonical objects and eliminators}
 
-Note that we reuse the |Can| and |Elim| functors from |Tm|.
 
-The |DScope| functor is a simpler version of the |Scope| functor because it
-doesn't need to deal with the |VV| phase.
+The |DScope| functor is a simpler version of the |Scope| functor: we
+only ever consider \emph{terms} here, while |Scope| had to deal with
+\emph{values}. Hence, we give this purely syntaxic, first-order
+representation of scopes:
 
 > data DScope :: * -> * -> * where
 >     (::.)  :: String -> InDTm p x  -> DScope p x  -- binding

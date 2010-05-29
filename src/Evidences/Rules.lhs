@@ -675,6 +675,7 @@ fishy.
 
 
 \subsection{Operators and primitives}
+\label{subsec:operators}
 
 In this section, we weave some She aspects. In particular, we bring
 inside @Rules.lhs@ the |operators| defined by feature files,

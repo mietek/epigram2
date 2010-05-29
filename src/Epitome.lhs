@@ -104,7 +104,7 @@
 
 \chapter{The Display Language}
 
-\input{DisplayLang/Introduction.tex}
+%include DisplayLang/Introduction.lhs
 
 %include DisplayLang/DisplayTm.lhs
 %include DisplayLang/Naming.lhs
@@ -114,6 +114,7 @@
 %include DisplayLang/PrettyPrint.lhs
 
 \chapter{Elaboration}
+\label{chap:elaboration}
 
 %include Elaboration/ElabMonad.lhs
 %include Elaboration/MakeElab.lhs
