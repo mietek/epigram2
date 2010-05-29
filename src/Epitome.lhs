@@ -108,6 +108,7 @@
 
 %include DisplayLang/DisplayTm.lhs
 %include DisplayLang/Naming.lhs
+%include DisplayLang/Scheme.lhs
 %include DisplayLang/Lexer.lhs
 %include DisplayLang/TmParse.lhs
 %include DisplayLang/Distiller.lhs

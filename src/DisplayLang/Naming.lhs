@@ -23,6 +23,7 @@
 > import ProofState.ProofState
 
 > import DisplayLang.DisplayTm
+> import DisplayLang.Scheme
 
 > import Evidences.Tm
 > import Evidences.Rules

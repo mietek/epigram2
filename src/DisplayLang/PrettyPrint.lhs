@@ -15,6 +15,7 @@
 > import ProofState.Developments
 
 > import DisplayLang.DisplayTm
+> import DisplayLang.Scheme
 > import DisplayLang.Lexer
 > import DisplayLang.Naming
 

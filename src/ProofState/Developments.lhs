@@ -21,6 +21,7 @@
 > import Elaboration.ElabMonad
 
 > import DisplayLang.DisplayTm
+> import DisplayLang.Scheme
 
 %endif
 

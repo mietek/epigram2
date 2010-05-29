@@ -15,6 +15,7 @@
 > import Kit.Parsley
 
 > import DisplayLang.DisplayTm
+> import DisplayLang.Scheme
 > import DisplayLang.Lexer
 
 > import Features.Features ()

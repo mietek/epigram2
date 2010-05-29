@@ -26,6 +26,7 @@
 > import ProofState.Lifting
 
 > import DisplayLang.DisplayTm
+> import DisplayLang.Scheme
 > import DisplayLang.Naming
 
 > import Tactics.PropSimp

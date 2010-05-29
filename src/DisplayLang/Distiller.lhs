@@ -22,6 +22,7 @@
 > import ProofState.ProofKit
 
 > import DisplayLang.DisplayTm
+> import DisplayLang.Scheme
 > import DisplayLang.Naming
 > import DisplayLang.PrettyPrint
 

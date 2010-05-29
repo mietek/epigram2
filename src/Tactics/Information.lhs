@@ -24,6 +24,7 @@
 > import ProofState.ProofKit
 
 > import DisplayLang.DisplayTm
+> import DisplayLang.Scheme
 > import DisplayLang.Distiller
 > import DisplayLang.Lexer
 > import DisplayLang.Naming
