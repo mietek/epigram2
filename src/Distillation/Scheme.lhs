@@ -31,49 +31,94 @@
 %endif
 
 
-\subsection{Distilling Schemes}
+\subsection{Distilling schemes}
 
+Distilling a scheme is similar in spirit to distilling a
+$\lambda$-abstraction (Section~\ref{subsec:distiller-int}). Provided a
+|Scheme INTM|, we compute the same scheme structure, with Display
+terms instead.
 
+To do so, we proceed structurally, using |distill| on types and,
+recursively, |distillScheme| on schemes. Each time we go through a
+$\Pi$, we go under a binder; therefore we need to be careful to turn
+freshly introduced references back into De Bruijn indices.
+
+This distiller takes the list of local entries we are working under,
+as well as the collected list of references we have made so far. It
+turns the |INTM| scheme into an a Display term scheme with relative
+names.
 
 > distillScheme ::  Entries -> Bwd REF -> Scheme INTM -> 
 >                   ProofStateT INTM (Scheme DInTmRN, INTM)
 
-> distillScheme es rs (SchType ty) = do
->     let ty' = underneath 0 rs ty
->     ty'' :=>: _ <- distill es (SET :>: ty')
->     return (SchType ty'', ty')
+On a ground type, there is not much to be done: |distill| does the
+distillation job for us. However, we first have to discharge the fresh
+|refs| back.
 
-> distillScheme es rs (SchExplicitPi (x :<: schS) schT) = do
->     (schS', s') <- distillScheme es rs schS
->     freshRef (x :<: evTm s')(\ref -> do
->         (schT', t') <- distillScheme (es :< E ref (lastName ref) (Boy PIB) s')
->                            (rs :< ref) schT
+> distillScheme entries refs (SchType ty) = do
+>     -- Discharge |refs|
+>     let ty1 = underneath refs ty
+>     -- Distill the type
+>     ty2 :=>: _ <- distill entries (SET :>: ty1)
+>     return (SchType ty2, ty1)
+
+On an explicit $\Pi$, the domain is itself a scheme, so it needs to be
+distilled. Then, we go under the binder and distill the codomain,
+carrying the new |ref| and extending the local entries with it.
+
+\pierre{Why extending |entries|?}
+
+> distillScheme entries refs (SchExplicitPi (x :<: schS) schT) = do
+>     -- Distill the domain
+>     (schS', s') <- distillScheme entries refs schS
+>     -- Under a fresh |ref|\ldots
+>     freshRef (x :<: evTm s') $ \ref -> do
+>         -- Distill the codomain
+>         (schT', t') <- distillScheme  
+>                          (entries :< E ref (lastName ref) (Boy PIB) s')
+>                          (refs :< ref) 
+>                          schT
 >         return (SchExplicitPi (x :<: schS') schT', PIV x s' t')
->       )
 
-> distillScheme es rs (SchImplicitPi (x :<: s) schT) = do
->     let s' = underneath 0 rs s
->     sd :=>: sv <- distill es (SET :>: s')
->     freshRef (x :<: sv) (\ref -> do
->         (schT', t') <- distillScheme (es :< E ref (lastName ref) (Boy PIB) s')
->                            (rs :< ref) schT
+On an implicit $\Pi$, the operation is fairly similar. Instead of
+|distillScheme|-ing the domain, we proceed as for ground types -- it
+is one. 
+
+> distillScheme entries refs (SchImplicitPi (x :<: s) schT) = do
+>     -- Distill the domain as a ground type
+>     let s' = underneath refs s
+>     sd :=>: sv <- distill entries (SET :>: s')
+>     -- Under a fresh |ref|\ldots
+>     freshRef (x :<: sv) $ \ref -> do
+>         -- Distill the domain
+>         (schT', t') <- distillScheme 
+>                          (entries :< E ref (lastName ref) (Boy PIB) s')
+>                          (refs :< ref) 
+>                          schT
 >         return (SchImplicitPi (x :<: sd) schT', PIV x s' t')
->       )
 
 
-> underneath :: Int -> Bwd REF -> INTM -> INTM
-> underneath _ B0 tm = tm
-> underneath n (rs :< ref) tm = underneath (n+1) rs (under n ref %% tm)
+We have been helped by |underneath| to discharge the fresh references
+into the terms.
+
+> underneath :: Bwd REF -> INTM -> INTM
+> underneath = underneath' 0 
+>     where 
+>       underneath' :: Int -> Bwd REF -> INTM -> INTM
+>       underneath' _ B0          tm = tm
+>       underneath' n (rs :< ref) tm = underneath' (n+1) rs (under n ref %% tm)
 
 
 \subsection{ProofState interface}
 
+For ease of use, |distillScheme| is packaged specially for easy
+ProofState usage.
+
 > distillSchemeHere :: Scheme INTM -> ProofState (Scheme DInTmRN)
 > distillSchemeHere sch = do
 >     return . fst =<< (mapStateT liftError $ distillScheme B0 B0 sch)
-
-
+>
 > prettySchemeHere :: Scheme INTM -> ProofState Doc
 > prettySchemeHere sch = do
 >     sch' <- distillSchemeHere sch
->     return (pretty sch' maxBound)
+>     return $ pretty sch' maxBound

@@ -42,6 +42,7 @@ distilling |INTM|s, while |distillInfer| mirrors |infer| -- distilling
 
 
 \subsection{Distilling |INTM|s}
+\label{subsec:distiller-intm}
 
 The |distill| command converts a typed |INTM| in the Evidence language
 to a term in the Display language; that is, it reverses |elaborate|.
