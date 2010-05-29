@@ -72,14 +72,14 @@ The |pDExTm| and |pDInTm| functions start parsing at the maximum size.
 We do not allow ascriptions in the term syntax, but they are useful in
 commands, so we provide |pAscription| to parse an ascription into
 separate components, and |pAscriptionTC| to parse an ascription as an
-appropriate type-cast.
+appropriate type annotation.
 
 > pAscription :: Parsley Token (DInTmRN :<: DInTmRN)
 > pAscription = (| pDInTm (%keyword KwAsc%) :<: pDInTm |)
 
 > pAscriptionTC :: Parsley Token DExTmRN
-> pAscriptionTC = (| typecast pDInTm (%keyword KwAsc%) pDInTm |)
->   where typecast tm ty = DType ty ::$ [A tm]
+> pAscriptionTC = (| typeAnnot pDInTm (%keyword KwAsc%) pDInTm |)
+>   where typeAnnot tm ty = DType ty ::$ [A tm]
 
 
 Each |sized| parser tries the appropriate |special| parser for the size,

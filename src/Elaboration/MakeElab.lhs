@@ -237,24 +237,25 @@ happens to be a canonical pair, or applying the appropriate eliminators if not.
 >   where tm' = tm ?? sigSetTM
 
 
-Since we use a head-spine representation for display terms, we need to elaborate
-the head of an application. The |makeElabInferHead| function uses the |Elab|
-monad to produce a type-term pair for the head, and provides its scheme (if
-it has one) for argument synthesis. The head may be a parameter, which is
-resolved; an embedded evidence term, which is checked; or a type cast, which is
-converted to the identity function at the given type.
+Since we use a head-spine representation for display terms, we need to
+elaborate the head of an application. The |makeElabInferHead| function
+uses the |Elab| monad to produce a type-term pair for the head, and
+provides its scheme (if it has one) for argument synthesis. The head
+may be a parameter, which is resolved; an embedded evidence term,
+which is checked; or a type annotation, which is converted to the
+identity function at the given type.
 
 > makeElabInferHead :: Loc -> DHEAD -> Elab (INTM :=>: VAL, Maybe (Scheme INTM))
 > makeElabInferHead loc (DP rn)     = eResolve rn
 > makeElabInferHead loc (DTEX tm)   = (| (eInfer tm) , ~Nothing |)
 > makeElabInferHead loc (DType ty)  = do
 >     tm :=>: v <- subElab loc (SET :>: ty)
->     return (typecastTM tm :=>: typecastVAL v, Nothing)
+>     return (typeAnnotTM tm :=>: typeAnnotVAL v, Nothing)
 >   where
->     typecastTM :: INTM -> INTM
->     typecastTM tm = PAIR (ARR tm tm) (idTM "typecast")
->     typecastVAL :: VAL -> VAL
->     typecastVAL v = PAIR (ARR v v) (idVAL "typecast")
+>     typeAnnotTM :: INTM -> INTM
+>     typeAnnotTM tm = PAIR (ARR tm tm) (idTM "typeAnnot")
+>     typeAnnotVAL :: VAL -> VAL
+>     typeAnnotVAL v = PAIR (ARR v v) (idVAL "typeAnnot")
 
 
 Now we can implement |makeElabInfer|. We use |makeElabInferHead| to elaborate

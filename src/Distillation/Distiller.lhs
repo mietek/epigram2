@@ -1,4 +1,4 @@
-\section{Distillation}
+\section{The distiller}
 \label{sec:distiller}
 
 %if False
@@ -124,15 +124,17 @@ to determine a name for the reference and the number of shared
 parameters, then process the arguments and return the distilled
 application with the shared parameters dropped.
 
-> distillInfer localEntries tm@(P (name := kind :<: ty)) spine = do
+> distillInfer entries tm@(P (name := kind :<: ty)) spine = do
 >     -- Compute a relative name from |name|
 >     proofCtxt <- get
 >     let  (relName, argsToDrop, mSch) = 
->           unresolve name kind spine (inBScope proofCtxt) localEntries
+>           unresolve name kind spine (inBScope proofCtxt) entries
 >     -- Distill the spine
->     (e', ty') <- distillSpine localEntries (evTm tm :<: ty) spine
+>     (e', ty') <- distillSpine entries (evTm tm :<: ty) spine
+>     -- \pierre{And then\ldots no clue.}
 >     let  spine1  = drop argsToDrop e'
 >          spine2  = maybe spine1 (hideImplicit spine1) mSch 
+>     -- Return the relative name applied to the simplified spine
 >     return $ (DP relName ::$ spine2) :<: ty'
 >   where
 >     hideImplicit :: DSPINE -> Scheme x -> DSPINE
@@ -143,34 +145,46 @@ application with the shared parameters dropped.
 
 To distill an elimination, we simply push the eliminator on to the spine.
 
-> distillInfer es (t :$ e) as    = distillInfer es t (e : as)
+> distillInfer entries (t :$ e) spine = distillInfer entries t (e : spine)
 
 Because there are no operators in the display syntax, we replace them with
 parameters containing the appropriate primitive references.
 
-> distillInfer es (op :@ ts) as  = distillInfer es (P (lookupOpRef op))
->                                                      (map A ts ++ as)
+> distillInfer entries (op :@ args) spine = 
+>     distillInfer  entries (P  (lookupOpRef op)) (map A args ++ spine)
 
-Unnecessary type ascriptions can simply be dropped; this also ensures
-that shared parameters are handled correctly when the head is a
-parameter.
+Unnecessary type ascriptions can simply be dropped. As we can always
+\emph{infer} the type of a neutral term, there is no point in keeping
+its ascription. This also ensures that shared parameters are handled
+correctly when the head is a parameter.
 
-> distillInfer es (N t :? _) as  = distillInfer es t as
+\pierre{Why are shared parameters handled correctly in that case?}
 
-Type ascriptions that were inserted by elaboration of type casts can be removed,
-if we are lucky, to give nicer output.
+> distillInfer entries (N t :? _) spine  = distillInfer entries t spine
 
-> distillInfer es (L ("typecast" :. NV 0) :? PI ty _) ((A a):as) =
->     distillInfer es (a :? ty) as
+Type ascriptions that were inserted by elaboration of type annotations
+can be removed, if we are lucky, to give nicer output.
 
-Otherwise, type ascriptions are converted into type casts and the spine of
-eliminators is applied in its entirety.
+\pierre{Can't we match on any name, not just |"typeAnnot"|? If not, then
+        maybe a less-likely to happen name would be good, stored in a
+        variable somewhere.}
 
-> distillInfer es (t :? ty) as   = do
->     ty'  :=>: vty  <- distill es (SET :>: ty)
->     t'   :=>: vt   <- distill es (vty :>: t)
->     (e', ty'')     <- distillSpine es (vt :<: vty) as
->     return (DType ty' ::$ (A t' : e') :<: ty'')
+> distillInfer entries (L ("typeAnnot" :. NV 0) :? PI ty _) ((A a):spine) =
+>     distillInfer entries (a :? ty) spine
+
+Otherwise, we have no choice but distilling both side of the type
+ascription (term and value). This gives a type annotation applied to
+the distilled term, together with the distilled spine.
+
+> distillInfer entries (t :? ty) spine   = do
+>     -- Distill the type
+>     ty1  :=>: vty  <- distill entries (SET :>: ty)
+>     -- Distill the term
+>     t1   :=>: vt   <- distill entries (vty :>: t)
+>     -- Distill the spine
+>     (e, ty2)     <- distillSpine entries (vt :<: vty) spine
+>     -- Annotate the term by the type, followed by its spine
+>     return $ DType ty1 ::$ (A t1 : e) :<: ty2
 
 If nothing matches, we are unable to distill this term, so we complain loudly.
 
@@ -182,7 +196,7 @@ If nothing matches, we are unable to distill this term, so we complain loudly.
 \subsection{Moonshining}
 
 The |moonshine| command attempts the dubious task of converting an
-evidence term (possibly of dubious veracity) into a display term.
+Evidence term (possibly of dubious veracity) into a Display term.
 This is mostly for error-message generation.
 
 > moonshine :: INTM -> ProofStateT INTM DInTmRN
@@ -210,19 +224,24 @@ and a spine of arguments for the value. It distills the spine, using
 |elimTy| to determine the appropriate type to push in at each step, and returns
 the distilled spine and the overall type of the application.
 
-> distillSpine :: Entries -> (VAL :<: TY) -> Spine {TT} REF -> ProofStateT INTM (DSPINE, TY)
-> distillSpine _ (_ :<: ty) [] = return ([], ty)
-> distillSpine es (v :<: C ty) (a:as) = do
->     (e', ty') <- elimTy (distill es) (v :<: ty) a
->     (es, ty'') <- distillSpine es (v $$ (fmap valueOf e') :<: ty') as 
->     return (fmap termOf e' : es, ty'')
-> distillSpine es (v :<: ty) as = throwError' $
+> distillSpine ::  Entries -> (VAL :<: TY) -> Spine {TT} REF -> 
+>                  ProofStateT INTM (DSPINE, TY)
+> distillSpine _        (_ :<: ty)    []         = return ([], ty)
+> distillSpine entries  (v :<: C ty)  (a:spine)  = do
+>     -- Distill structurally the eliminator |a|
+>     (e1, ty1) <- elimTy (distill entries) (v :<: ty) a
+>     -- Further distill the spine
+>     (es, ty2) <- distillSpine entries (v $$ (fmap valueOf e1) :<: ty1) spine
+>     -- Return distilled spine and type of the application
+>     return (fmap termOf e1 : es, ty2)
+> distillSpine entries  (v :<: ty)    spine      = throwError' $
 >     err "distillSpine: cannot cope with" ++ errTyVal (v :<: ty)
 >     ++ err "which has non-canonical type" ++ errTyVal (ty :<: SET)
->     ++ err "applied to spine" ++ map UntypedElim as
+>     ++ err "applied to spine" ++ map UntypedElim spine
+
 
 The |toDExTm| helper function will distill a term to produce an
-|Ex| representation by applying a type-cast if necessary.
+|Ex| representation by applying a type annotation if necessary.
 
 > toDExTm :: Entries -> (INTM :>: INTM) -> ProofStateT INTM DExTmRN
 > toDExTm es (_ :>: N tm) = do

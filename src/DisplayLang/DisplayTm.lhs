@@ -74,7 +74,7 @@ parameter. Thanks to this hack, we can use |deriving Traversable|.
 >
 > data DHead :: * -> * -> * where
 >     DP     :: x                -> DHead  p x -- parameter
->     DType  :: DInTm p x        -> DHead  p x -- type cast
+>     DType  :: DInTm p x        -> DHead  p x -- type annotation
 >     DTEx   :: ExTmWrap p x     -> DHead  p x -- embedding
 >  deriving (Functor, Foldable, Traversable, Show)
 
