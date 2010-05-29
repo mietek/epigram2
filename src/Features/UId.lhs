@@ -53,20 +53,20 @@
 >   key KwUId       = "UId"
 >   key KwTag       = "'"
 
-> import -> InDTmParsersSpecial where
+> import -> DInTmParsersSpecial where
 >   (ArgSize, (|DUID (%keyword KwUId%)|)) :
 >   (ArgSize, (|DTAG (%keyword KwTag%) ident|)) :
->   (AppSize, (|DTag (%keyword KwTag%) ident (many (sizedInDTm ArgSize))|)) :
+>   (AppSize, (|DTag (%keyword KwTag%) ident (many (sizedDInTm ArgSize))|)) :
 
-> import -> InDTmConstructors where
->   DTag :: String -> [InDTm p x] -> InDTm p x
+> import -> DInTmConstructors where
+>   DTag :: String -> [DInTm p x] -> DInTm p x
 
-> import -> InDTmPretty where
+> import -> DInTmPretty where
 >   pretty (DTAG s)     = const (kword KwTag <> text s)
 >   pretty (DTag s xs)  = wrapDoc (kword KwTag <> text s
 >       <+> hsep (map (flip pretty ArgSize) xs)) AppSize
 
-> import -> InDTmTraverse where
+> import -> DInTmTraverse where
 >   traverseDTIN f (DTag s xs) = (|(DTag s) (traverse (traverseDTIN f) xs)|)
 
 > import -> MakeElabRules where

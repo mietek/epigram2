@@ -60,22 +60,22 @@ parameter. Thanks to this hack, we can use |deriving Traversable|.
 
 \end{danger}
 
-> data InDTm :: * -> * -> * where
->     DL     :: DScope p x       ->  InDTm p x -- \(\lambda\)
->     DC     :: Can (InDTm p x)  ->  InDTm p x -- canonical
->     DN     :: ExDTm p x        ->  InDTm p x -- neutral
->     DQ     :: String           ->  InDTm p x -- hole
->     DU     ::                      InDTm p x -- underscore
->     DT     :: InTmWrap p x     ->  InDTm p x -- embedding
->     import <- InDTmConstructors
+> data DInTm :: * -> * -> * where
+>     DL     :: DScope p x       ->  DInTm p x -- \(\lambda\)
+>     DC     :: Can (DInTm p x)  ->  DInTm p x -- canonical
+>     DN     :: DExTm p x        ->  DInTm p x -- neutral
+>     DQ     :: String           ->  DInTm p x -- hole
+>     DU     ::                      DInTm p x -- underscore
+>     DT     :: InTmWrap p x     ->  DInTm p x -- embedding
+>     import <- DInTmConstructors
 >  deriving (Functor, Foldable, Traversable, Show)
 >
-> data ExDTm p x = DHead p x ::$ DSpine p x
+> data DExTm p x = DHead p x ::$ DSpine p x
 >   deriving (Functor, Foldable, Traversable, Show)
 >
 > data DHead :: * -> * -> * where
 >     DP     :: x                -> DHead  p x -- parameter
->     DType  :: InDTm p x        -> DHead  p x -- type cast
+>     DType  :: DInTm p x        -> DHead  p x -- type cast
 >     DTEx   :: ExTmWrap p x     -> DHead  p x -- embedding
 >  deriving (Functor, Foldable, Traversable, Show)
 
@@ -93,8 +93,8 @@ only ever consider \emph{terms} here, while |Scope| had to deal with
 representation of scopes:
 
 > data DScope :: * -> * -> * where
->     (::.)  :: String -> InDTm p x  -> DScope p x  -- binding
->     DK     :: InDTm p x            -> DScope p x  -- constant
+>     (::.)  :: String -> DInTm p x  -> DScope p x  -- binding
+>     DK     :: DInTm p x            -> DScope p x  -- constant
 >   deriving (Functor, Foldable, Traversable, Show)
 
 We provide handy projection functions to get the name and body of a scope:
@@ -103,15 +103,15 @@ We provide handy projection functions to get the name and body of a scope:
 > dScopeName (x ::. _)  = x
 > dScopeName (DK _)     = "_"
 
-> dScopeTm :: DScope p x -> InDTm p x
+> dScopeTm :: DScope p x -> DInTm p x
 > dScopeTm (_ ::. tm)  = tm
 > dScopeTm (DK tm)     = tm
 
 Spines of eliminators are just like in the evidence language:
 
-> type DSpine p x = [Elim (InDTm p x)]
+> type DSpine p x = [Elim (DInTm p x)]
 
-> ($::$) :: ExDTm p x -> Elim (InDTm p x) -> ExDTm p x
+> ($::$) :: DExTm p x -> Elim (DInTm p x) -> DExTm p x
 > (h ::$ s) $::$ a = h ::$ (s ++ [a])
 
 
@@ -176,15 +176,15 @@ places.
 
 > type InTmRN = InTm RelName
 > type ExTmRN = ExTm RelName
-> type InDTmRN = InDTm REF RelName
-> type ExDTmRN = ExDTm REF RelName
+> type DInTmRN = DInTm REF RelName
+> type DExTmRN = DExTm REF RelName
 > type DSPINE = DSpine REF RelName
 > type DHEAD = DHead REF RelName
 > type DSCOPE = DScope REF RelName
 
 \subsection{Term Construction} 
 
-> dfortran :: InDTm p x -> String
+> dfortran :: DInTm p x -> String
 > dfortran (DL (x ::. _)) | not (null x) = x
 > dfortran _ = "x"
 
@@ -239,8 +239,8 @@ interpret $\Pi$-bindings:
 > schemeToInTm :: Scheme (InTm x) -> InTm x
 > schemeToInTm = schemeToType PIV
 
-> schemeToInDTm :: Scheme (InDTm p x) -> InDTm p x
-> schemeToInDTm = schemeToType DPIV
+> schemeToDInTm :: Scheme (DInTm p x) -> DInTm p x
+> schemeToDInTm = schemeToType DPIV
 
 
 Schemes are stored fully $\lambda$-lifted, so we may need to apply them to a spine

@@ -218,7 +218,7 @@ unary tactics.
 > nullaryCT :: String -> ProofState String -> String -> CochonTactic
 > nullaryCT name eval help = simpleCT name (pure B0) (const eval) help
 
-> unaryExCT :: String -> (ExDTmRN -> ProofState String) -> String -> CochonTactic
+> unaryExCT :: String -> (DExTmRN -> ProofState String) -> String -> CochonTactic
 > unaryExCT name eval help = simpleCT
 >     name
 >     (| (B0 :<) tokenExTm
@@ -226,14 +226,14 @@ unary tactics.
 >     (eval . argToEx . head)
 >     help
 
-> unaryInCT :: String -> (InDTmRN -> ProofState String) -> String -> CochonTactic
+> unaryInCT :: String -> (DInTmRN -> ProofState String) -> String -> CochonTactic
 > unaryInCT name eval help = simpleCT
 >     name
 >     (| (B0 :<) tokenInTm |)
 >     (eval . argToIn . head)
 >     help
 
-> unDP :: ExDTm p x -> x
+> unDP :: DExTm p x -> x
 > unDP (DP ref ::$ []) = ref
 
 > unaryNameCT :: String -> (RelName -> ProofState String) -> String -> CochonTactic

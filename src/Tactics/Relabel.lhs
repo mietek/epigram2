@@ -30,7 +30,7 @@ problem. It takes an unelaborated application corresponding to the programming
 problem, matches it against the existing arguments to determine the renaming,
 and refines the proof state appropriately.
 
-> relabel :: ExDTmRN -> ProofState ()
+> relabel :: DExTmRN -> ProofState ()
 > relabel (DP [(f, Rel 0)] ::$ ts) = do
 >     _ :=>: tau <- getHoleGoal
 >     case tau of
@@ -59,7 +59,7 @@ and refines the proof state appropriately.
 >     return (r, as ++ [a])
 > splitSpine _ = (|)
 
-> matchArgs :: TY -> EXTM -> [VAL] -> [InDTmRN] -> ProofState EXTM
+> matchArgs :: TY -> EXTM -> [VAL] -> [DInTmRN] -> ProofState EXTM
 > matchArgs _ n []  []  = return n
 > matchArgs _ _ []  _       = throwError' $ err "relabel: too many arguments!"
 > matchArgs _ _ _   []      = throwError' $ err "relabel: too few arguments!"
@@ -76,7 +76,7 @@ and refines the proof state appropriately.
 The |matchProb| command matches a display term against a value and returns a
 renamed term, with the pattern variables defined in the context.
 
-> matchProb :: (TY :>: (InDTmRN, VAL)) -> ProofState (INTM :=>: VAL)
+> matchProb :: (TY :>: (DInTmRN, VAL)) -> ProofState (INTM :=>: VAL)
 
 If the display term is a pattern variable, we can just create a corresponding
 definition in the context.

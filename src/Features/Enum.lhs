@@ -78,7 +78,7 @@
 >   pretty (Su t)     = prettyEnumIndex 1 t
 
 > import -> Pretty where
->   prettyEnumIndex :: Int -> InDTmRN -> Size -> Doc
+>   prettyEnumIndex :: Int -> DInTmRN -> Size -> Doc
 >   prettyEnumIndex n DZE      = const (int n)
 >   prettyEnumIndex n (DSU t)  = prettyEnumIndex (succ n) t
 >   prettyEnumIndex n tm       = wrapDoc
@@ -189,12 +189,12 @@
 >   key KwEnum      = "Enum"
 >   key KwPlus      = "+"
 
-> import -> InDTmParsersSpecial where
->   (ArgSize, (|mkNum (|read digits|) (optional $ (keyword KwPlus) *> sizedInDTm ArgSize)|)) :
->   (AndSize, (|DENUMT (%keyword KwEnum%) (sizedInDTm ArgSize)|)) :
+> import -> DInTmParsersSpecial where
+>   (ArgSize, (|mkNum (|read digits|) (optional $ (keyword KwPlus) *> sizedDInTm ArgSize)|)) :
+>   (AndSize, (|DENUMT (%keyword KwEnum%) (sizedDInTm ArgSize)|)) :
 
 > import -> ParserCode where
->     mkNum :: Int -> Maybe InDTmRN -> InDTmRN
+>     mkNum :: Int -> Maybe DInTmRN -> DInTmRN
 >     mkNum 0 Nothing = DZE
 >     mkNum 0 (Just t) = t
 >     mkNum n t = DSU (mkNum (n-1) t)
@@ -211,7 +211,7 @@ turn lists into functions like this:
 >       return $ N (switchOp :@ [e', NP x, t', tm])
 >                      :=>: switchOp @@ [e, NP x, t, tmv]
 >     where
->       isTuply :: InDTmRN -> Bool
+>       isTuply :: DInTmRN -> Bool
 >       isTuply DVOID        = True
 >       isTuply (DPAIR _ _)  = True
 >       isTuply _            = False
@@ -241,7 +241,7 @@ rules take over; the pretty-printer will then do the right thing.
 > import -> DistillRules where
 >   distill _ (ENUMT t :>: tm) | Just r <- findIndex (t :>: tm) = return r
 >     where
->       findIndex :: (VAL :>: INTM) -> Maybe (InDTmRN :=>: VAL)
+>       findIndex :: (VAL :>: INTM) -> Maybe (DInTmRN :=>: VAL)
 >       findIndex (CONSE (TAG s)  _ :>: ZE)    = Just (DTAG s :=>: evTm tm)
 >       findIndex (CONSE _        a :>: SU b)  = findIndex (a :>: b)
 >       findIndex _                            = Nothing

@@ -40,7 +40,7 @@ to a term in the display language; that is, it reverses |elaborate|.
 It performs christening at the same time. For this, it needs a list
 of entries in local(!) scope, which it will extend when going under a binder.
 
-> distill :: Entries -> (TY :>: INTM) -> ProofStateT INTM (InDTmRN :=>: VAL)
+> distill :: Entries -> (TY :>: INTM) -> ProofStateT INTM (DInTmRN :=>: VAL)
 
 > import <- DistillRules
 
@@ -50,7 +50,7 @@ of entries in local(!) scope, which it will extend when going under a binder.
 We separate out the standard distillation cases (without aspect extensions) so
 that aspect distill rules can give up and invoke the base cases.  
 
-> distillBase :: Entries -> (TY :>: INTM) -> ProofStateT INTM (InDTmRN :=>: VAL)
+> distillBase :: Entries -> (TY :>: INTM) -> ProofStateT INTM (DInTmRN :=>: VAL)
 
 Just like in any other checker-evaluator, canonical terms can be distilled
 using |canTy|.
@@ -74,7 +74,7 @@ under the binder, then convert the scope appropriately.
 >       )
 >     return $ DL (convScope sc x tm') :=>: (evTm $ L sc)
 >   where
->     convScope :: Scope {TT} REF -> String -> InDTmRN -> DSCOPE
+>     convScope :: Scope {TT} REF -> String -> DInTmRN -> DSCOPE
 >     convScope (_ :. _)  x  tm = x ::. tm
 >     convScope (K _)     _  tm = DK tm
 
@@ -95,7 +95,7 @@ The |distillInfer| command is the |EXTM| version of |distill|, which also yields
 the type of the term. It keeps track of a list of entries in scope, but
 also accumulates a spine so shared parameters can be removed.
 
-> distillInfer :: Entries -> EXTM -> Spine {TT} REF -> ProofStateT INTM (ExDTmRN :<: TY)
+> distillInfer :: Entries -> EXTM -> Spine {TT} REF -> ProofStateT INTM (DExTmRN :<: TY)
 
 > import <- DistillInferRules
 
@@ -160,7 +160,7 @@ The |moonshine| command attempts the dubious task of converting an
 evidence term (possibly of dubious veracity) into a display term.
 This is mostly for error-message generation.
 
-> moonshine :: INTM -> ProofStateT INTM InDTmRN
+> moonshine :: INTM -> ProofStateT INTM DInTmRN
 > moonshine (LK t) = do
 >     t' <- moonshine t
 >     return $ DLK t'
@@ -196,14 +196,14 @@ the distilled spine and the overall type of the application.
 >     ++ err "which has non-canonical type" ++ errTyVal (ty :<: SET)
 >     ++ err "applied to spine" ++ map UntypedElim as
 
-The |toExDTm| helper function will distill a term to produce an
+The |toDExTm| helper function will distill a term to produce an
 |Ex| representation by applying a type-cast if necessary.
 
-> toExDTm :: Entries -> (INTM :>: INTM) -> ProofStateT INTM ExDTmRN
-> toExDTm es (_ :>: N tm) = do
+> toDExTm :: Entries -> (INTM :>: INTM) -> ProofStateT INTM DExTmRN
+> toDExTm es (_ :>: N tm) = do
 >     (tm' :<: _) <- distillInfer es tm []
 >     return tm'
-> toExDTm es (ty :>: tm) = do
+> toDExTm es (ty :>: tm) = do
 >     (ty'  :=>: tyv)  <- distill es (SET :>: ty)
 >     (tm'  :=>: _)    <- distill es (tyv :>: tm)
 >     return (DTY ty' tm')
@@ -211,7 +211,7 @@ The |toExDTm| helper function will distill a term to produce an
 
 \subsection{Distilling Schemes}
 
-> distillScheme :: Entries -> Bwd REF -> Scheme INTM -> ProofStateT INTM (Scheme InDTmRN, INTM)
+> distillScheme :: Entries -> Bwd REF -> Scheme INTM -> ProofStateT INTM (Scheme DInTmRN, INTM)
 
 > distillScheme es rs (SchType ty) = do
 >     let ty' = underneath 0 rs ty
@@ -245,13 +245,13 @@ The |toExDTm| helper function will distill a term to produce an
 
 The |distillHere| command distills a term in the current context.
 
-> distillHere :: (TY :>: INTM) -> ProofState (InDTmRN :=>: VAL)
+> distillHere :: (TY :>: INTM) -> ProofState (DInTmRN :=>: VAL)
 > distillHere tt = do
 >     mliftError $ distill B0 tt
 >         where mliftError :: ProofStateT INTM a -> ProofState a
 >               mliftError = mapStateT liftError
 
-> distillSchemeHere :: Scheme INTM -> ProofState (Scheme InDTmRN)
+> distillSchemeHere :: Scheme INTM -> ProofState (Scheme DInTmRN)
 > distillSchemeHere sch = do
 >     return . fst =<< (mapStateT liftError $ distillScheme B0 B0 sch)
 

@@ -45,7 +45,7 @@ evaluates the resulting term, bquotes it and returns a pretty-printed string
 representation. Note that it works in its own module which it discards at the
 end, so it will not leave any subgoals lying around in the proof state.
 
-> infoElaborate :: ExDTmRN -> ProofState String
+> infoElaborate :: DExTmRN -> ProofState String
 > infoElaborate tm = draftModule "__infoElaborate" (do
 >     (tm' :=>: tmv :<: ty) <- elabInfer' tm
 >     tm'' <- bquoteHere tmv
@@ -57,7 +57,7 @@ end, so it will not leave any subgoals lying around in the proof state.
 The |infoInfer| command is similar to |infoElaborate|, but it returns a string
 representation of the resulting type.
 
-> infoInfer :: ExDTmRN -> ProofState String
+> infoInfer :: DExTmRN -> ProofState String
 > infoInfer tm = draftModule "__infoInfer" (do
 >     (_ :<: ty) <- elabInfer' tm
 >     ty' <- bquoteHere ty
@@ -162,7 +162,7 @@ the saved state. We can get rid of it once we are confident that the new version
 
 The |infoWhatIs| command displays a term in various representations.
 
-> infoWhatIs :: ExDTmRN -> ProofState String
+> infoWhatIs :: DExTmRN -> ProofState String
 > infoWhatIs tmd = draftModule "__infoWhatIs" (do
 >     (tm :=>: tmv :<: tyv) <- elabInfer' tmd
 >     tmq <- bquoteHere tmv
@@ -270,7 +270,7 @@ The |elm| Cochon tactic elaborates a term, then starts the scheduler to
 stabilise the proof state, and returns a pretty-printed representation of the
 final type-term pair (using a quick hack).
 
-> elmCT :: ExDTmRN -> ProofState String
+> elmCT :: DExTmRN -> ProofState String
 > elmCT tm = do
 >     suspend ("elab" :<: sigSetTM :=>: sigSetVAL) (ElabInferProb tm)
 >     startScheduler

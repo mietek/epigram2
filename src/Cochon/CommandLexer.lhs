@@ -27,9 +27,9 @@ we need a tagging mechanism to distinguish them, together
 with projection functions.
 
 > data CochonArg = StrArg String 
->                | InArg InDTmRN 
->                | ExArg ExDTmRN
->                | SchemeArg (Scheme InDTmRN)
+>                | InArg DInTmRN 
+>                | ExArg DExTmRN
+>                | SchemeArg (Scheme DInTmRN)
 >                | Optional CochonArg
 >                | NoCochonArg
 >                | ListArgs [ CochonArg ]
@@ -42,16 +42,16 @@ with projection functions.
 \subsection{Tokenizer combinators}
 
 > tokenExTm :: Parsley Token CochonArg
-> tokenExTm = (| ExArg pExDTm |)
+> tokenExTm = (| ExArg pDExTm |)
 
 > tokenAscription :: Parsley Token CochonArg
 > tokenAscription = (| ExArg pAscriptionTC |)
 
 > tokenInTm :: Parsley Token CochonArg
-> tokenInTm = (| InArg pInDTm |)
+> tokenInTm = (| InArg pDInTm |)
 
 > tokenAppInTm :: Parsley Token CochonArg
-> tokenAppInTm = (| InArg (sizedInDTm AppSize) |)
+> tokenAppInTm = (| InArg (sizedDInTm AppSize) |)
 
 > tokenName :: Parsley Token CochonArg
 > tokenName = (| (ExArg . (::$ []) . DP) nameParse |)
@@ -82,10 +82,10 @@ with projection functions.
 > argToStr :: CochonArg -> String
 > argToStr (StrArg s) = s
 
-> argToIn :: CochonArg -> InDTmRN
+> argToIn :: CochonArg -> DInTmRN
 > argToIn (InArg a) = a
 
-> argToEx :: CochonArg -> ExDTmRN
+> argToEx :: CochonArg -> DExTmRN
 > argToEx (ExArg a) = a
 
 > argOption :: (CochonArg -> a) -> CochonArg -> Maybe a

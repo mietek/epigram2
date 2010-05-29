@@ -58,13 +58,13 @@ with |^| or |_| symbols (for relative or absolute offsets).
 
 \subsection{Overall parser structure}
 
-The |pExDTm| and |pInDTm| functions start parsing at the maximum size.
+The |pDExTm| and |pDInTm| functions start parsing at the maximum size.
 
-> pExDTm :: Parsley Token ExDTmRN
-> pExDTm = sizedExDTm maxBound
+> pDExTm :: Parsley Token DExTmRN
+> pDExTm = sizedDExTm maxBound
 
-> pInDTm :: Parsley Token InDTmRN
-> pInDTm = sizedInDTm maxBound
+> pDInTm :: Parsley Token DInTmRN
+> pDInTm = sizedDInTm maxBound
 
 
 We do not allow ascriptions in the term syntax, but they are useful in
@@ -72,11 +72,11 @@ commands, so we provide |pAscription| to parse an ascription into
 separate components, and |pAscriptionTC| to parse an ascription as an
 appropriate type-cast.
 
-> pAscription :: Parsley Token (InDTmRN :<: InDTmRN)
-> pAscription = (| pInDTm (%keyword KwAsc%) :<: pInDTm |)
+> pAscription :: Parsley Token (DInTmRN :<: DInTmRN)
+> pAscription = (| pDInTm (%keyword KwAsc%) :<: pDInTm |)
 
-> pAscriptionTC :: Parsley Token ExDTmRN
-> pAscriptionTC = (| typecast pInDTm (%keyword KwAsc%) pInDTm |)
+> pAscriptionTC :: Parsley Token DExTmRN
+> pAscriptionTC = (| typecast pDInTm (%keyword KwAsc%) pDInTm |)
 >   where typecast tm ty = DType ty ::$ [A tm]
 
 
@@ -86,31 +86,31 @@ At the smallest size, brackets must be used to start parsing from the
 largest size again. Concrete syntax is matched using the lists of parsers
 defined in the following subsection.
 
-> sizedExDTm :: Size -> Parsley Token ExDTmRN
-> sizedExDTm z = (|(::$ []) (specialHead z) |) <|>
->       (if z > minBound  then pLoop (sizedExDTm (pred z)) (moreExDTm z)
->                         else bracket Round pExDTm)
+> sizedDExTm :: Size -> Parsley Token DExTmRN
+> sizedDExTm z = (|(::$ []) (specialHead z) |) <|>
+>       (if z > minBound  then pLoop (sizedDExTm (pred z)) (moreDExTm z)
+>                         else bracket Round pDExTm)
 
-> sizedInDTm :: Size -> Parsley Token InDTmRN
-> sizedInDTm z = specialInDTm z <|> (| (DN . (::$ [])) (specialHead z) |) <|>
->       (if z > minBound  then pLoop (sizedInDTm (pred z)) (moreInEx z)
->                         else bracket Round pInDTm)
+> sizedDInTm :: Size -> Parsley Token DInTmRN
+> sizedDInTm z = specialDInTm z <|> (| (DN . (::$ [])) (specialHead z) |) <|>
+>       (if z > minBound  then pLoop (sizedDInTm (pred z)) (moreInEx z)
+>                         else bracket Round pDInTm)
 
 > specialHead :: Size -> Parsley Token DHEAD
 > specialHead = sizeListParse headParsers
 
-> specialInDTm :: Size -> Parsley Token InDTmRN
-> specialInDTm = sizeListParse inDTmParsersSpecial
+> specialDInTm :: Size -> Parsley Token DInTmRN
+> specialDInTm = sizeListParse inDTmParsersSpecial
 
-> moreInEx :: Size -> InDTmRN -> Parsley Token InDTmRN
-> moreInEx z (DN e)  = (| DN (moreExDTm z e) |) <|> moreInDTm z (DN e)
-> moreInEx z t       = moreInDTm z t
+> moreInEx :: Size -> DInTmRN -> Parsley Token DInTmRN
+> moreInEx z (DN e)  = (| DN (moreDExTm z e) |) <|> moreDInTm z (DN e)
+> moreInEx z t       = moreDInTm z t
 
-> moreExDTm :: Size -> ExDTmRN -> Parsley Token ExDTmRN
-> moreExDTm s e = (| (e $::$) (sizeListParse elimParsers s) |)
+> moreDExTm :: Size -> DExTmRN -> Parsley Token DExTmRN
+> moreDExTm s e = (| (e $::$) (sizeListParse elimParsers s) |)
 
-> moreInDTm :: Size -> InDTmRN -> Parsley Token InDTmRN
-> moreInDTm = paramListParse inDTmParsersMore
+> moreDInTm :: Size -> DInTmRN -> Parsley Token DInTmRN
+> moreDInTm = paramListParse inDTmParsersMore
 
 
 \subsection{Lists of sized parsers}
@@ -151,41 +151,41 @@ the parser.
 
 > headParsers :: SizedParserList DHEAD
 > headParsers = arrange $ 
->    (ArgSize, (| DType (bracket Round (keyword KwAsc *> pInDTm))|)) :
+>    (ArgSize, (| DType (bracket Round (keyword KwAsc *> pDInTm))|)) :
 >    (ArgSize, (| DP nameParse |)) :
 >    []
 
-> elimParsers :: SizedParserList (Elim InDTmRN)
+> elimParsers :: SizedParserList (Elim DInTmRN)
 > elimParsers = arrange $ 
 >     import <- ElimParsers
 >   
 >     (AppSize, (| Out (%keyword KwOut%) |)) :
->     (AppSize, (| A (sizedInDTm ArgSize) |)) :
+>     (AppSize, (| A (sizedDInTm ArgSize) |)) :
 >     []
       
-> inDTmParsersSpecial :: SizedParserList InDTmRN
+> inDTmParsersSpecial :: SizedParserList DInTmRN
 > inDTmParsersSpecial = arrange $ 
->     import <- InDTmParsersSpecial
+>     import <- DInTmParsersSpecial
 >
 >     (ArgSize, (|DSET (%keyword KwSet%)|)) :
 >     (ArgSize, (|DQ (pFilter questionFilter ident)|)) :
 >     (ArgSize, (|DU (%keyword KwUnderscore%)|)) :
->     (ArgSize, (|DCON (%keyword KwCon%) (sizedInDTm ArgSize)|)) :
->     (ArgSize, (|(iter mkDLAV) (%keyword KwLambda%) (some (ident <|> underscore)) (%keyword KwArr%) pInDTm|)) :
->     (AndSize, (|DPI (%keyword KwPi%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)|)) :
+>     (ArgSize, (|DCON (%keyword KwCon%) (sizedDInTm ArgSize)|)) :
+>     (ArgSize, (|(iter mkDLAV) (%keyword KwLambda%) (some (ident <|> underscore)) (%keyword KwArr%) pDInTm|)) :
+>     (AndSize, (|DPI (%keyword KwPi%) (sizedDInTm ArgSize) (sizedDInTm ArgSize)|)) :
 >     (PiSize, (|(flip iter)  
 >                   (some (bracket Round 
->                        (|(ident <|> underscore) , (%keyword KwAsc%) pInDTm|)))
+>                        (|(ident <|> underscore) , (%keyword KwAsc%) pDInTm|)))
 >                   (| (uncurry mkDPIV) (%keyword KwArr%)
 >                    | (uncurry mkDALLV) (%keyword KwImp%) |)
->                   pInDTm |)) :
+>                   pDInTm |)) :
 >     []
 
-> inDTmParsersMore :: ParamParserList InDTmRN InDTmRN
+> inDTmParsersMore :: ParamParserList DInTmRN DInTmRN
 > inDTmParsersMore = arrange $ 
->     import <- InDTmParsersMore
+>     import <- DInTmParsersMore
 
->     (ArrSize, \ s -> (| (DARR s) (%keyword KwArr%) (sizedInDTm PiSize) |)) :
+>     (ArrSize, \ s -> (| (DARR s) (%keyword KwArr%) (sizedDInTm PiSize) |)) :
 >     []
 
 
@@ -200,29 +200,29 @@ the parser.
 > underscore :: Parsley Token String
 > underscore = keyword KwUnderscore >> pure "_"
 
-> mkDLAV :: String -> InDTmRN -> InDTmRN
+> mkDLAV :: String -> DInTmRN -> DInTmRN
 > mkDLAV "_"  t = DL (DK t)
 > mkDLAV x    t = DLAV x t
 
-> mkDPIV :: String -> InDTmRN -> InDTmRN -> InDTmRN
+> mkDPIV :: String -> DInTmRN -> DInTmRN -> DInTmRN
 > mkDPIV   "_"  s t = DPI s (DL (DK t))
 > mkDPIV   x    s t = DPIV x s t
 
-> mkDALLV :: String -> InDTmRN -> InDTmRN -> InDTmRN
+> mkDALLV :: String -> DInTmRN -> DInTmRN -> DInTmRN
 > mkDALLV  "_"  s p = DALL s (DL (DK p))
 > mkDALLV  x    s p = DALLV x s p
 
 
 \subsection{Parsing schemes}
 
-> pScheme :: Parsley Token (Scheme InDTmRN)
-> pScheme = (|mkScheme (many pSchemeBit) (%keyword KwAsc%) pInDTm|)
+> pScheme :: Parsley Token (Scheme DInTmRN)
+> pScheme = (|mkScheme (many pSchemeBit) (%keyword KwAsc%) pDInTm|)
 >   where
->     pSchemeBit :: Parsley Token (String, Either (Scheme InDTmRN) InDTmRN)
->     pSchemeBit = bracket Round (| ident , (%keyword KwAsc%) (| (Left . SchType) pInDTm |) |)
->                  <|> bracket Curly (| ident , (%keyword KwAsc%) (| Right pInDTm |) |)
+>     pSchemeBit :: Parsley Token (String, Either (Scheme DInTmRN) DInTmRN)
+>     pSchemeBit = bracket Round (| ident , (%keyword KwAsc%) (| (Left . SchType) pDInTm |) |)
+>                  <|> bracket Curly (| ident , (%keyword KwAsc%) (| Right pDInTm |) |)
 >     
->     mkScheme :: [(String, Either (Scheme InDTmRN) InDTmRN)] -> InDTmRN -> Scheme InDTmRN
+>     mkScheme :: [(String, Either (Scheme DInTmRN) DInTmRN)] -> DInTmRN -> Scheme DInTmRN
 >     mkScheme [] ty = SchType ty
 >     mkScheme ((x, Left   s) : bits) ty = SchExplicitPi  (x :<: s) (mkScheme bits ty)
 >     mkScheme ((x, Right  s) : bits) ty = SchImplicitPi  (x :<: s) (mkScheme bits ty)

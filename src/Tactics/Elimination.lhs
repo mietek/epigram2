@@ -764,7 +764,7 @@ always be excluded.
 
 We make elimination accessible to the user by adding it as a Cochon tactic:
 
-> elimCTactic :: Maybe RelName -> ExDTmRN -> ProofState String
+> elimCTactic :: Maybe RelName -> DExTmRN -> ProofState String
 > elimCTactic c r = do 
 >     c' <- traverse resolveDiscard c
 >     (e :=>: _ :<: elimTy) <- elabInfer' r

@@ -384,8 +384,8 @@
 > import -> KeywordTable where
 >   key KwIMu      = "IMu"
 
-> import -> InDTmParsersSpecial where
->   (AndSize, (|(DIMU Nothing) (%keyword KwIMu%) (sizedInDTm ArgSize) (sizedInDTm ArgSize) (sizedInDTm ArgSize)|)) :
+> import -> DInTmParsersSpecial where
+>   (AndSize, (|(DIMU Nothing) (%keyword KwIMu%) (sizedDInTm ArgSize) (sizedDInTm ArgSize) (sizedDInTm ArgSize)|)) :
 
 
 Just like |Mu|, when elaborating |IMu| we attach a display label if the
@@ -430,7 +430,7 @@ description is not neutral, to improve the pretty-printed representation.
 >             DTAG s   -> return $ DTag s (unfold as)  :=>: CON (PAIR tv xv)
 >             _        -> return $ DCON (DPAIR m as)   :=>: CON (PAIR tv xv)
 >       where
->         unfold :: InDTmRN -> [InDTmRN]
+>         unfold :: DInTmRN -> [DInTmRN]
 >         unfold DVOID        = []
 >         unfold DU        = []
 >         unfold (DPAIR s t)  = s : unfold t
@@ -440,9 +440,9 @@ description is not neutral, to improve the pretty-printed representation.
 >           Just (e, \t -> switchOp @@ [ e , t , LK (idesc $$ A _I $$ A VOID), b ])
 >         sumilike _ _               = Nothing
 
-> import -> InDTmConstructors where
+> import -> DInTmConstructors where
 
-> import -> InDTmPretty where
+> import -> DInTmPretty where
 
 > import -> Pretty where
 

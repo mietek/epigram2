@@ -48,8 +48,8 @@ information to reconstruct it. Note that at this stage, we simply tag
 each girl with a list of commands to execute later.
 
 > data DevLine
->   =  DLBoy BoyKind String InDTmRN
->   |  DLGirl String [DevLine] (Maybe InDTmRN :<: InDTmRN) [CTData]
+>   =  DLBoy BoyKind String DInTmRN
+>   |  DLGirl String [DevLine] (Maybe DInTmRN :<: DInTmRN) [CTData]
 >   |  DLModule String [DevLine] [CTData]
 
 A module may have a list of girls in square brackets, followed by an optional
@@ -89,9 +89,9 @@ A definition is either a question mark or a term, ascripted by a
 type. The question mark corresponds to an open goal. On the other
 hand, giving a term corresponds to explicitly solving the goal.
 
-> pDefn :: Parsley Token (Maybe InDTmRN :<: InDTmRN)
+> pDefn :: Parsley Token (Maybe DInTmRN :<: DInTmRN)
 > pDefn  =  (| (%identEq "?"%) (%keyword KwAsc%)
->                   ~Nothing :<: pInDTm 
+>                   ~Nothing :<: pDInTm 
 >           |  id pAsc
 >           |)
 >   where pAsc = do
@@ -131,14 +131,14 @@ $\Pi$-abstraction (represented by @(x : S) ->@).
 >             (DLBoy LAMB)              
 >             ident                         -- @x@
 >             (%keyword KwAsc%)             -- @:@
->             (sizedInDTm (pred ArrSize))   -- @T@
+>             (sizedDInTm (pred ArrSize))   -- @T@
 >             (%keyword KwArr%) |)          -- @->@
 >         <|> 
 >             (bracket Round                -- @(@
 >              (|  (DLBoy PIB)              
 >                  ident                    -- @x@
 >                  (%keyword KwAsc%)        -- @:@
->                  pInDTm |)) <*            -- @S)@
+>                  pDInTm |)) <*            -- @S)@
 >                  keyword KwArr            -- @->@
 
 

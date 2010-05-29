@@ -40,7 +40,7 @@ then write an interpreter to run the syntax in the |ProofState| monad.
 >              -- return the type of the goal
 > eWait        :: String -> TY -> Elab (EXTM :=>: VAL)
 >              -- create a subgoal corresponding to a question mark
-> eCry         :: StackError InDTmRN -> Elab a
+> eCry         :: StackError DInTmRN -> Elab a
 >              -- give up with an error
 > eElab        :: Loc -> EProb -> Elab a
 >              -- solve a suspendable elaboration problem and return the result
@@ -61,7 +61,7 @@ The instruction signature given above is implemented using the following monad.
 >     |  ELambda String (REF -> Elab x)
 >     |  EGoal (TY -> Elab x)
 >     |  EWait String TY (EXTM :=>: VAL -> Elab x)
->     |  ECry (StackError InDTmRN)
+>     |  ECry (StackError DInTmRN)
 >     |  EElab Loc EProb
 >     |  ECompute (TY :>: Elab (INTM :=>: VAL)) (INTM :=>: VAL -> Elab x)
 >     |  EFake ((REF, Spine {TT} REF) -> Elab x)
@@ -102,8 +102,8 @@ caches the value representations of terms it contains.
 > data ElabProb x
 >     =  ElabDone (InTm x :=>: Maybe VAL)                  -- succeed with given term
 >     |  ElabHope                                          -- hope for a solution to turn up
->     |  ElabProb (InDTm x RelName)                        -- elaborate |In| display term
->     |  ElabInferProb (ExDTm x RelName)                   -- elaborate and infer type of |Ex| display term
+>     |  ElabProb (DInTm x RelName)                        -- elaborate |In| display term
+>     |  ElabInferProb (DExTm x RelName)                   -- elaborate and infer type of |Ex| display term
 >     |  WaitCan (InTm x :=>: Maybe VAL) (ElabProb x)      -- wait for value to become canonical
 >     |  WaitSolve x (InTm x :=>: Maybe VAL) (ElabProb x)  -- wait for reference to be solved with term
 >     |  ElabSchedule (ElabProb x)                         -- kick off the scheduler
@@ -174,10 +174,10 @@ functions for producing and manipulating these.
 > travEval :: Applicative f => (p -> f q) -> InTm p :=>: Maybe VAL -> f (InTm q :=>: Maybe VAL)
 > travEval f (tm :=>: _) = (|traverse f tm :=>: ~Nothing|)
 
-The following are essentially saying that |InDTm| is traversable in its first
+The following are essentially saying that |DInTm| is traversable in its first
 argument, as well as its second.
 
-> traverseDTIN :: Applicative f => (p -> f q) -> InDTm p x -> f (InDTm q x)
+> traverseDTIN :: Applicative f => (p -> f q) -> DInTm p x -> f (DInTm q x)
 > traverseDTIN f (DL (x ::. tm)) = (|DL (|(x ::.) (traverseDTIN f tm)|)|)
 > traverseDTIN f (DL (DK tm)) = (|DL (|DK (traverseDTIN f tm)|)|)
 > traverseDTIN f (DC c) = (|DC (traverse (traverseDTIN f) c)|)
@@ -185,9 +185,9 @@ argument, as well as its second.
 > traverseDTIN f (DQ s) = (|(DQ s)|)
 > traverseDTIN f DU     = (|DU|)
 > traverseDTIN f (DTIN tm) = (|DTIN (traverse f tm)|)
-> import <- InDTmTraverse
+> import <- DInTmTraverse
 
-> traverseDTEX :: Applicative f => (p -> f q) -> ExDTm p x -> f (ExDTm q x)
+> traverseDTEX :: Applicative f => (p -> f q) -> DExTm p x -> f (DExTm q x)
 > traverseDTEX f (h ::$ as) = (|(traverseDHead f h) ::$ (traverse (traverse (traverseDTIN f)) as)|)
 
 > traverseDHead :: Applicative f => (p -> f q) -> DHead p x -> f (DHead q x)
@@ -235,7 +235,7 @@ argument, as well as its second.
 >     ECry _  <|> x  = x
 >     x       <|> _  = x
 
-> instance (MonadError (StackError InDTmRN)) Elab where
+> instance (MonadError (StackError DInTmRN)) Elab where
 >     throwError e           = ECry e
 >     catchError (ECry e) f  = f e
 >     catchError x _         = x

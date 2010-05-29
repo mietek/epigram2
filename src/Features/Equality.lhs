@@ -23,7 +23,7 @@
 > import -> CanPretty where
 >   pretty (EqBlue pp qq) = pretty (DEqBlue (foo pp) (foo qq))
 >     where
->       foo :: (InDTmRN :>: InDTmRN) -> ExDTmRN
+>       foo :: (DInTmRN :>: DInTmRN) -> DExTmRN
 >       foo (_    :>: DN x  ) = x
 >       foo (xty  :>: x     ) = DType xty ::$ [A x] 
 
@@ -108,19 +108,19 @@
 >   ("refl", refl) :
 
 
-In the display syntax, a blue equality can be between arbitrary ExDTms,
+In the display syntax, a blue equality can be between arbitrary DExTms,
 rather than ascriptions. To allow this, we add a suitable constructor |DEqBlue|
-to InDTm, along with appropriate elaboration and distillation rules.
+to DInTm, along with appropriate elaboration and distillation rules.
 
-> import -> InDTmConstructors where
->   DEqBlue :: ExDTm p x -> ExDTm p x -> InDTm p x
+> import -> DInTmConstructors where
+>   DEqBlue :: DExTm p x -> DExTm p x -> DInTm p x
 
-> import -> InDTmPretty where
+> import -> DInTmPretty where
 >   pretty (DEqBlue t u) = wrapDoc
 >       (pretty t ArgSize <+> kword KwEqBlue <+> pretty u ArgSize)
 >       ArgSize
 
-> import -> InDTmTraverse where
+> import -> DInTmTraverse where
 >   traverseDTIN f (DEqBlue t u) =
 >     (| DEqBlue (traverseDTEX f t) (traverseDTEX f u) |)
 
@@ -131,12 +131,12 @@ to InDTm, along with appropriate elaboration and distillation rules.
 > import -> KeywordTable where
 >   key KwEqBlue = "=="
 
-> import -> InDTmParsersMore where
+> import -> DInTmParsersMore where
 >   (EqSize, \ t -> (| DEqBlue  (pFilter isEx (pure t)) (%keyword KwEqBlue%)
->                               (pFilter isEx (sizedInDTm (pred EqSize))) |)) :
+>                               (pFilter isEx (sizedDInTm (pred EqSize))) |)) :
 
 > import -> ParserCode where
->   isEx :: InDTmRN -> Maybe ExDTmRN
+>   isEx :: DInTmRN -> Maybe DExTmRN
 >   isEx (DN tm)  = Just tm
 >   isEx _        = Nothing
 
@@ -152,8 +152,8 @@ to InDTm, along with appropriate elaboration and distillation rules.
 
 > import -> DistillRules where
 >   distill es (PROP :>: tm@(EQBLUE (tty :>: t) (uty :>: u))) = do
->       t' <- toExDTm es (tty :>: t)
->       u' <- toExDTm es (uty :>: u)
+>       t' <- toDExTm es (tty :>: t)
+>       u' <- toDExTm es (uty :>: u)
 >       return $ DEqBlue t' u' :=>: evTm tm
 
 When distilling a proof of an equation, we first check to see if the equation

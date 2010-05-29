@@ -118,8 +118,8 @@ relation over |A|.
 > import -> KeywordTable where
 >   key KwQuotient  = "Quotient"
 
-> import -> InDTmParsersSpecial where
->   (AndSize, (|DQUOTIENT (%keyword KwQuotient%) (sizedInDTm ArgSize) (sizedInDTm ArgSize) (sizedInDTm ArgSize)|)) :
+> import -> DInTmParsersSpecial where
+>   (AndSize, (|DQUOTIENT (%keyword KwQuotient%) (sizedDInTm ArgSize) (sizedDInTm ArgSize) (sizedDInTm ArgSize)|)) :
 
 
 As a bit of syntactic sugar, we elaborate |con| as |COMPOSITE| and |[x]| as

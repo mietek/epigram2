@@ -35,7 +35,7 @@
 
 
 
-> elabCons :: String -> INTM -> [Elim VAL] -> (String , InDTmRN) -> 
+> elabCons :: String -> INTM -> [Elim VAL] -> (String , DInTmRN) -> 
 >             ProofState ( String          -- con name
 >                        , EXTM            -- con ty
 >                        , INTM            -- con desc
@@ -139,8 +139,8 @@
 >             return ()
 
 
-> elabData :: String -> [ (String , InDTmRN) ] -> 
->                       [ (String , InDTmRN) ] -> ProofState (EXTM :=>: VAL)
+> elabData :: String -> [ (String , DInTmRN) ] -> 
+>                       [ (String , DInTmRN) ] -> ProofState (EXTM :=>: VAL)
 > elabData nom pars scs = do
 >       oldaus <- (| boySpine getAuncles |)
 >       makeModule nom

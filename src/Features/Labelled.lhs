@@ -87,9 +87,9 @@
 > import -> ElimParsers where
 >   (AppSize, (| Call (%keyword KwCall%) ~DU |)) :
 
-> import -> InDTmParsersSpecial where
->   (ArgSize, (|DLABEL (%keyword KwLabel%) (sizedInDTm AppSize) (%keyword KwAsc%) (sizedInDTm ArgSize) (%keyword KwLabelEnd%)|)) :
->   (ArgSize, (|DLRET (%keyword KwRet%) (sizedInDTm ArgSize)|)) :
+> import -> DInTmParsersSpecial where
+>   (ArgSize, (|DLABEL (%keyword KwLabel%) (sizedDInTm AppSize) (%keyword KwAsc%) (sizedDInTm ArgSize) (%keyword KwLabelEnd%)|)) :
+>   (ArgSize, (|DLRET (%keyword KwRet%) (sizedDInTm ArgSize)|)) :
 
 
 If we spot a neutral term being called when distilling, we distill the label

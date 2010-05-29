@@ -111,7 +111,7 @@ before returning its result.
 > eSchedule (tm :=>: tv) = eElab (Loc 0) (ElabSchedule (ElabDone (tm :=>: Just tv)))
 
 
-\subsection{Elaborating |InDTm|s}
+\subsection{Elaborating |DInTm|s}
 
 We use the |Elab| language to describe how to elaborate a display term to
 produce an evidence term. The |makeElab| and |makeElabInfer| functions read a
@@ -126,19 +126,19 @@ modify the proof state (for example, to introduce a $\lambda$-boy) it will
 create a new girl to work in. It also ensures that the subproblem can terminate
 with the |eElab| instruction, providing a syntactic representation.
 
-> subElab :: Loc -> (TY :>: InDTmRN) -> Elab (INTM :=>: VAL)
+> subElab :: Loc -> (TY :>: DInTmRN) -> Elab (INTM :=>: VAL)
 > subElab loc (ty :>: tm) = eCompute (ty :>: makeElab loc tm)
 
-> subElabInfer :: Loc -> ExDTmRN -> Elab (INTM :=>: VAL)
+> subElabInfer :: Loc -> DExTmRN -> Elab (INTM :=>: VAL)
 > subElabInfer loc tm = eCompute (sigSetVAL :>: makeElabInfer loc tm)
 
 Since we frequently pattern-match on the goal type when elaborating |In| terms,
 we abstract it out. Thus |makeElab'| actually implements elaboration.
 
-> makeElab :: Loc -> InDTmRN -> Elab (INTM :=>: VAL)
+> makeElab :: Loc -> DInTmRN -> Elab (INTM :=>: VAL)
 > makeElab loc tm = makeElab' loc . (:>: tm) =<< eGoal
 
-> makeElab' :: Loc -> (TY :>: InDTmRN) -> Elab (INTM :=>: VAL)
+> makeElab' :: Loc -> (TY :>: DInTmRN) -> Elab (INTM :=>: VAL)
 
 > import <- MakeElabRules
 
@@ -206,7 +206,7 @@ If nothing else matches, give up and report an error.
 >     ++ errTyVal (ty :<: SET) ++ err "into" ++ errTm tm 
 
 
-\subsection{Elaborating |ExDTm|s}
+\subsection{Elaborating |DExTm|s}
 
 The |makeElabInfer| command is to |infer| in
 subsection~\ref{subsec:type-inference} as |makeElab| is to |check|. It elaborates
@@ -259,7 +259,7 @@ Now we can implement |makeElabInfer|. We use |makeElabInferHead| to elaborate
 the head of the neutral term, then call |handleArgs| or |handleSchemeArgs| to
 process the spine of eliminators.
 
-> makeElabInfer :: Loc -> ExDTmRN -> Elab (INTM :=>: VAL)
+> makeElabInfer :: Loc -> DExTmRN -> Elab (INTM :=>: VAL)
 > makeElabInfer loc (t ::$ ss) = do
 >     (tt, ms) <- makeElabInferHead loc t
 >     let (tm :=>: tmv :<: ty :=>: tyv) = extractNeutral tt

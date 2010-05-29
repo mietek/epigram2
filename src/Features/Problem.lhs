@@ -169,11 +169,11 @@
  
 > import -> DistillRules where
 
-> import -> InDTmConstructors where
+> import -> DInTmConstructors where
 
-> import -> InDTmTraverse where
+> import -> DInTmTraverse where
 
-> import -> InDTmPretty where
+> import -> DInTmPretty where
 
 > import -> Pretty where
 

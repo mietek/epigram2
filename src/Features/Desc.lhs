@@ -416,8 +416,8 @@ case for sigma.
 > import -> KeywordTable where
 >   key KwMu        = "Mu"
 
-> import -> InDTmParsersSpecial where
->   (AndSize, (|(DMU Nothing) (%keyword KwMu%) (sizedInDTm ArgSize)|)) :
+> import -> DInTmParsersSpecial where
+>   (AndSize, (|(DMU Nothing) (%keyword KwMu%) (sizedDInTm ArgSize)|)) :
 
 
 > import -> MakeElabRules where
@@ -495,7 +495,7 @@ then we can (probably) turn it into a tag applied to some arguments.
 >             DTAG s   -> return $ DTag s (unfold as)  :=>: CON (PAIR tv xv)
 >             _        -> return $ DCON (DPAIR m as)   :=>: CON (PAIR tv xv)
 >       where
->         unfold :: InDTmRN -> [InDTmRN]
+>         unfold :: DInTmRN -> [DInTmRN]
 >         unfold DU           = [] -- since DVOID gets turned into this first
 >         unfold DVOID        = []
 >         unfold (DPAIR s t)  = s : unfold t
@@ -517,9 +517,9 @@ appropriate place when the proof state is printed.
 
 
 
-> import -> InDTmConstructors where
+> import -> DInTmConstructors where
 
-> import -> InDTmPretty where
+> import -> DInTmPretty where
 
 > import -> Pretty where
 

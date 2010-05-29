@@ -26,15 +26,15 @@
 \subsection{Catching the gremlins before they leave |ProofState|}
 
 
-> catchUnprettyErrors :: StackError InDTmRN -> ProofState a
+> catchUnprettyErrors :: StackError DInTmRN -> ProofState a
 > catchUnprettyErrors e = do
 >                   e' <- distillErrors e
 >                   throwError e'
 
-> distillErrors :: StackError InDTmRN -> ProofState (StackError InDTmRN)
+> distillErrors :: StackError DInTmRN -> ProofState (StackError DInTmRN)
 > distillErrors e = sequence $ fmap (sequence . fmap distillError) e
 
-> distillError :: ErrorTok InDTmRN -> ProofState (ErrorTok InDTmRN)
+> distillError :: ErrorTok DInTmRN -> ProofState (ErrorTok DInTmRN)
 > distillError (TypedVal (v :<: t)) = do
 >   vTm <- bquoteHere v
 >   vDTm :=>: _ <- distillHere (t :>: vTm)
@@ -53,7 +53,7 @@
 \subsection{Pretty-printing the stack trace}
 
 
-> prettyStackError :: StackError InDTmRN -> Doc
+> prettyStackError :: StackError DInTmRN -> Doc
 > prettyStackError e = 
 >     vcat $
 >     fmap (text "Error:" <+>) $
@@ -63,7 +63,7 @@
 >      prettyErrorTok) e
 
 
-> prettyErrorTok :: ErrorTok InDTmRN -> Doc
+> prettyErrorTok :: ErrorTok DInTmRN -> Doc
 > prettyErrorTok (StrMsg s) = text s
 > prettyErrorTok (TypedTm (v :<: t)) = pretty v maxBound
 > prettyErrorTok (UntypedTm t) = pretty t maxBound

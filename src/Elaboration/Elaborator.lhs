@@ -45,14 +45,14 @@ similarly to |check| from subsection~\ref{subsec:type-checking}, except that
 it operates in the |Elab| monad, so it can create subgoals and
 $\lambda$-lift terms.
 
-> elaborate :: Loc -> (TY :>: InDTmRN) -> ProofState (INTM :=>: VAL)
+> elaborate :: Loc -> (TY :>: DInTmRN) -> ProofState (INTM :=>: VAL)
 > elaborate loc (ty :>: tm) = runElab False (ty :>: makeElab loc tm)
 >     >>= return . fst
 
 > elaborate' = elaborate (Loc 0)
 
 
-> elaborateHere :: Loc -> InDTmRN -> ProofState (INTM :=>: VAL, Bool)
+> elaborateHere :: Loc -> DInTmRN -> ProofState (INTM :=>: VAL, Bool)
 > elaborateHere loc tm = do
 >     _ :=>: ty <- getHoleGoal
 >     runElab True (ty :>: makeElab loc tm)
@@ -60,7 +60,7 @@ $\lambda$-lift terms.
 > elaborateHere' = elaborateHere (Loc 0)
 
 
-> elabInfer :: Loc -> ExDTmRN -> ProofState (INTM :=>: VAL :<: TY)
+> elabInfer :: Loc -> DExTmRN -> ProofState (INTM :=>: VAL :<: TY)
 > elabInfer loc tm = do
 >     (tt, _) <- runElab False (sigSetVAL :>: makeElabInfer loc tm)
 >     let (tt' :<: _ :=>: ty) = extractNeutral tt
@@ -78,13 +78,13 @@ the current goal, and calls the |give| command on the resulting term. If its arg
 is a nameless question mark, it avoids creating a pointless subgoal by simply returning
 a reference to the current goal (applied to the appropriate shared parameters).
 
-> elabGive :: InDTmRN -> ProofState (EXTM :=>: VAL)
+> elabGive :: DInTmRN -> ProofState (EXTM :=>: VAL)
 > elabGive tm = elabGive' tm <* startScheduler <* goOut
 
-> elabGiveNext :: InDTmRN -> ProofState (EXTM :=>: VAL)
+> elabGiveNext :: DInTmRN -> ProofState (EXTM :=>: VAL)
 > elabGiveNext tm = elabGive' tm <* startScheduler <* (nextGoal <|> goOut)
 
-> elabGive' :: InDTmRN -> ProofState (EXTM :=>: VAL)
+> elabGive' :: DInTmRN -> ProofState (EXTM :=>: VAL)
 > elabGive' tm = do
 >     tip <- getDevTip
 >     case (tip, tm) of         
@@ -105,7 +105,7 @@ The |elabMake| command elaborates the given display term in a module to
 produce a type, then converts the module to a goal with that type. Thus any
 subgoals produced by elaboration will be children of the resulting goal.
 
-> elabMake :: (String :<: InDTmRN) -> ProofState (EXTM :=>: VAL)
+> elabMake :: (String :<: DInTmRN) -> ProofState (EXTM :=>: VAL)
 > elabMake (s :<: ty) = do
 >     makeModule s
 >     goIn
@@ -118,12 +118,12 @@ subgoals produced by elaboration will be children of the resulting goal.
 The |elabPiBoy| command elaborates the given display term to produce a type, and
 creates a $\Pi$-boy with that type.
 
-> elabPiBoy :: (String :<: InDTmRN) -> ProofState REF
+> elabPiBoy :: (String :<: DInTmRN) -> ProofState REF
 > elabPiBoy (s :<: ty) = do
 >     tt <- elaborate' (SET :>: ty)
 >     piBoy' (s :<: tt)
 
-> elabLamBoy :: (String :<: InDTmRN) -> ProofState REF
+> elabLamBoy :: (String :<: DInTmRN) -> ProofState REF
 > elabLamBoy (s :<: ty) = do
 >     tt <- elaborate' (SET :>: ty)
 >     lambdaBoy' (s :<: tt)
@@ -157,7 +157,7 @@ plus
     ] plus-impl m n call : Nat ;
 \end{verbatim}
 
-> elabLet :: (String :<: Scheme InDTmRN) -> ProofState (EXTM :=>: VAL)
+> elabLet :: (String :<: Scheme DInTmRN) -> ProofState (EXTM :=>: VAL)
 > elabLet (x :<: sch) = do
 >     makeModule x
 >     goIn
@@ -260,7 +260,7 @@ plus [
 
 \subsection{Elaborating schemes}
 
-> elabLiftedScheme :: Scheme InDTmRN -> ProofState (Scheme INTM, EXTM :=>: VAL)
+> elabLiftedScheme :: Scheme DInTmRN -> ProofState (Scheme INTM, EXTM :=>: VAL)
 > elabLiftedScheme sch = do
 >     aus <- getAuncles
 >     (sch', tt) <- elabScheme aus sch
@@ -273,7 +273,7 @@ plus [
 > liftScheme (es :< _) sch = liftScheme es sch
 
 
-> elabScheme :: Entries -> Scheme InDTmRN -> ProofState (Scheme INTM, EXTM :=>: VAL)
+> elabScheme :: Entries -> Scheme DInTmRN -> ProofState (Scheme INTM, EXTM :=>: VAL)
 
 > elabScheme es (SchType ty) = do
 >     ty' :=>: _ <- elaborate' (SET :>: ty)

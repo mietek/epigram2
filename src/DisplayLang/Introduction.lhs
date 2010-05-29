@@ -12,16 +12,16 @@ transformation between representations.
 
 \begin{verbatim}
             Lexer             Parser            Elaborator
-   String ---------> [Token] ---------> InDTmRN ----------> INTM
+   String ---------> [Token] ---------> DInTmRN ----------> INTM
      ^                                                       |
      |                                                       |
      |  Renderer         Pretty-printer           Distiller  |
-     +-------------- Doc <------------- InDTmRN <------------+
+     +-------------- Doc <------------- DInTmRN <------------+
 \end{verbatim}
 
 In the beginning was the |String|. This gets lexed (section \ref{sec:lexer})
 to produce a list of |Token|s, which are parsed (section \ref{sec:parser}) to
-give an |InDTm RelName| (a term in the display syntax containing relative
+give an |DInTm RelName| (a term in the display syntax containing relative
 names). The display term is then elaborated (section \ref{sec:elaborator})
 in the |ProofState| monad to produce an |INTM| (a term in the evidence
 language).

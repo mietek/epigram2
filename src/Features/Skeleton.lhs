@@ -67,11 +67,11 @@
 
 \subsection{Extending the display language}
 
-> import -> InDTmConstructors where
+> import -> DInTmConstructors where
 
-> import -> InDTmTraverse where
+> import -> DInTmTraverse where
 
-> import -> InDTmPretty where
+> import -> DInTmPretty where
 
 > import -> Pretty where
 
@@ -83,9 +83,9 @@
 
 > import -> ElimParsers where
 
-> import -> InDTmParsersSpecial where
+> import -> DInTmParsersSpecial where
 
-> import -> InDTmParsersMore where
+> import -> DInTmParsersMore where
 
 > import -> ParserCode where
 

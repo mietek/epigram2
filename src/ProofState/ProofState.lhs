@@ -44,21 +44,21 @@ Most of the time, we will work in a |ProofStateT| carrying errors
 composed with Strings and terms in display syntax. Hence the following
 type synonym:
 
-> type ProofState = ProofStateT InDTmRN
+> type ProofState = ProofStateT DInTmRN
 
 
 Some functions, such as |distill|, are defined in the |ProofStateT
-INTM| monad. However, Cochon lives in a |ProofStateT InDTmRN|
+INTM| monad. However, Cochon lives in a |ProofStateT DInTmRN|
 monad. Therefore, in order to use it, we will need to lift from the
 former to the latter.
 
-> liftError :: Either (StackError INTM) a -> Either (StackError InDTmRN) a
+> liftError :: Either (StackError INTM) a -> Either (StackError DInTmRN) a
 > liftError = either (Left . wrapError) Right
->     where wrapError :: StackError INTM -> StackError InDTmRN
+>     where wrapError :: StackError INTM -> StackError DInTmRN
 >           wrapError = fmap $           -- on the stack
 >                       fmap $           -- on the list of token
 >                       fmap             -- on a token
->                       (DT . InTmWrap)  -- turning INTM into InDTmRN
+>                       (DT . InTmWrap)  -- turning INTM into DInTmRN
 
 > liftErrorState :: ProofStateT INTM a -> ProofState a
 > liftErrorState = mapStateT liftError

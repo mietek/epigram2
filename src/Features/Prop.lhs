@@ -77,7 +77,7 @@ Elim forms inherited from elsewhere
 >   pretty (Wit t)        = wrapDoc (kword KwWit <+> pretty t ArgSize) AppSize
 
 > import -> Pretty where
->   prettyAll :: Doc -> InDTmRN -> Size -> Doc
+>   prettyAll :: Doc -> DInTmRN -> Size -> Doc
 >   prettyAll bs (DALL (DPRF p) (DL (DK q))) = prettyAllMore bs
 >     (pretty p (pred PiSize) <+> kword KwImp <+> pretty q PiSize)
 >   prettyAll bs (DALL s (DL (x ::. t))) =
@@ -189,18 +189,18 @@ Elim forms inherited from elsewhere
 >   key KwInh       = "Inh"
 >   key KwWit       = "wit"
 
-> import -> InDTmParsersSpecial where
+> import -> DInTmParsersSpecial where
 >   (ArgSize, (|DPROP     (%keyword KwProp%)|)) :
 >   (ArgSize, (|DABSURD   (%keyword KwAbsurd%)|)) :
 >   (ArgSize, (|DTRIVIAL  (%keyword KwTrivial%)|)) :
->   (AndSize, (|DPRF      (%keyword KwPrf%) (sizedInDTm AndSize)|)) :
->   (AndSize, (|DINH      (%keyword KwInh%) (sizedInDTm ArgSize)|)) :
->   (AndSize, (|DWIT      (%keyword KwWit%) (sizedInDTm ArgSize)|)) :
->   (AndSize, (|DALL      (%keyword KwAll%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)|)) :
+>   (AndSize, (|DPRF      (%keyword KwPrf%) (sizedDInTm AndSize)|)) :
+>   (AndSize, (|DINH      (%keyword KwInh%) (sizedDInTm ArgSize)|)) :
+>   (AndSize, (|DWIT      (%keyword KwWit%) (sizedDInTm ArgSize)|)) :
+>   (AndSize, (|DALL      (%keyword KwAll%) (sizedDInTm ArgSize) (sizedDInTm ArgSize)|)) :
 
-> import -> InDTmParsersMore where
->   (AndSize, \ s -> (| (DAND s) (%keyword KwAnd%) (sizedInDTm AndSize)  |)) :
->   (ArrSize, \ s -> (| (DIMP s) (%keyword KwImp%) (sizedInDTm PiSize)   |)) :
+> import -> DInTmParsersMore where
+>   (AndSize, \ s -> (| (DAND s) (%keyword KwAnd%) (sizedDInTm AndSize)  |)) :
+>   (ArrSize, \ s -> (| (DIMP s) (%keyword KwImp%) (sizedDInTm PiSize)   |)) :
 
 
 

@@ -122,4 +122,4 @@
 >       Left err -> putStrLn ("[FAILED] " ++ x ++ "\t==>\t" ++ show tox ++ "\t==>\t" ++ show err)
 >       Right tm -> putStrLn ("[PASSED] " ++ x ++ "\t==>\t" ++ renderHouseStyle (pretty tm maxBound))
 
-> main = foldMap (test pInDTm) tests
+> main = foldMap (test pDInTm) tests

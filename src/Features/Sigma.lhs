@@ -22,15 +22,15 @@
 >   pretty (Pair a b)   = prettyPair (DPAIR a b)
 
 > import -> Pretty where
->   prettyPair :: InDTmRN -> Size -> Doc
+>   prettyPair :: DInTmRN -> Size -> Doc
 >   prettyPair p = const (brackets (prettyPairMore empty p))
 
->   prettyPairMore :: Doc -> InDTmRN -> Doc
+>   prettyPairMore :: Doc -> DInTmRN -> Doc
 >   prettyPairMore d DVOID        = d
 >   prettyPairMore d (DPAIR a b)  = prettyPairMore (d <+> pretty a minBound) b
 >   prettyPairMore d t            = d <+> kword KwComma <+> pretty t maxBound
 
->   prettySigma :: Doc -> InDTmRN -> Size -> Doc
+>   prettySigma :: Doc -> DInTmRN -> Size -> Doc
 >   prettySigma d DUNIT                      = prettySigmaDone d empty
 >   prettySigma d (DSIGMA s (DL (x ::. t)))  = prettySigma
 >       (d <+> text x <+> kword KwAsc <+> pretty s maxBound <+> kword KwSemi) t
@@ -170,31 +170,31 @@
 >   (AppSize, (| Fst (%keyword KwFst%) |)) :
 >   (AppSize, (| Snd (%keyword KwSnd%) |)) :
 
-> import -> InDTmParsersSpecial where
+> import -> DInTmParsersSpecial where
 >   (ArgSize, (|id (bracket Square tuple)|)) :
 >   (ArgSize, (|id (%keyword KwSig%) (bracket Round sigma)|)) :
->   (ArgSize, (|DSIGMA (%keyword KwSig%) (sizedInDTm ArgSize) (sizedInDTm ArgSize)|)) :
+>   (ArgSize, (|DSIGMA (%keyword KwSig%) (sizedDInTm ArgSize) (sizedDInTm ArgSize)|)) :
 
 > import -> ParserCode where
->     tuple :: Parsley Token InDTmRN
+>     tuple :: Parsley Token DInTmRN
 >     tuple =
->         (|DPAIR (sizedInDTm ArgSize) (| id (%keyword KwComma%) pInDTm
+>         (|DPAIR (sizedDInTm ArgSize) (| id (%keyword KwComma%) pDInTm
 >                                       | id tuple |)
 >          |DVOID (% pEndOfStream %)
 >          |)
 
->     sigma :: Parsley Token InDTmRN
->     sigma = (|mkSigma (optional (ident <* keyword KwAsc)) pInDTm sigmaMore
+>     sigma :: Parsley Token DInTmRN
+>     sigma = (|mkSigma (optional (ident <* keyword KwAsc)) pDInTm sigmaMore
 >              |DUNIT (% pEndOfStream %)
 >              |)
 
->     sigmaMore :: Parsley Token InDTmRN
->     sigmaMore = (|id (% keyword KwSemi %) (sigma <|> pInDTm)
->                  |(\p s -> mkSigma Nothing (DPRF p) s) (% keyword KwPrf %) pInDTm sigmaMore
->                  |(\x -> DPRF x) (% keyword KwPrf %) pInDTm
+>     sigmaMore :: Parsley Token DInTmRN
+>     sigmaMore = (|id (% keyword KwSemi %) (sigma <|> pDInTm)
+>                  |(\p s -> mkSigma Nothing (DPRF p) s) (% keyword KwPrf %) pDInTm sigmaMore
+>                  |(\x -> DPRF x) (% keyword KwPrf %) pDInTm
 >                  |)
 
->     mkSigma :: Maybe String -> InDTmRN -> InDTmRN -> InDTmRN
+>     mkSigma :: Maybe String -> DInTmRN -> DInTmRN -> DInTmRN
 >     mkSigma Nothing s t = DSIGMA s (DL (DK t))
 >     mkSigma (Just x) s t = DSIGMA s (DL (x ::. t))
 
