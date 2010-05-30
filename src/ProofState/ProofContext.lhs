@@ -67,7 +67,7 @@ the data about the working development is the derivative of the |Girl|
 and |Module| data-types defined in
 Section~\ref{sec:developments_entry}.
 
-> data Mother  = GirlMother REF (String, Int) INTM (Maybe (Scheme INTM))
+> data Mother  = GirlMother GirlKind REF (String, Int) INTM
 >              | ModuleMother Name
 >     deriving Show
 
@@ -99,7 +99,7 @@ to deal with this global context.
 >     show (M n d) = intercalate " " ["M", show n, show d]
 > instance Show (Entity NewsyFwd) where
 >     show (Boy k) = "Boy " ++ show k
->     show (Girl k d _) = "Girl " ++ show k ++ " " ++ show d
+>     show (Girl k d) = "Girl " ++ show k ++ " " ++ show d
 > instance Traversable NewsyFwd where
 >     traverse g (NF x) = NF <$> traverse (traverse g) x
 > instance Foldable NewsyFwd where
@@ -115,14 +115,14 @@ to deal with this global context.
 As often, we need some kit. First, getting the name of a |Mother|:
 
 > motherName :: Mother -> Name
-> motherName (GirlMother (n := _) _ _ _) = n
+> motherName (GirlMother _ (n := _) _ _) = n
 > motherName (ModuleMother n) = n
 
 Also, turning an entry (|Girl| or |Module|) into a |Mother|:
 
 > entryToMother :: Traversable f => Entry f -> Mother
-> entryToMother (E ref xn (Girl LETG _ ms) ty) = GirlMother ref xn ty ms
-> entryToMother (M n _) = ModuleMother n
+> entryToMother (E ref xn (Girl kind _) ty)  = GirlMother kind ref xn ty
+> entryToMother (M n _)                      = ModuleMother n
 
 
 \subsubsection{Dealing with the global context}
@@ -155,9 +155,12 @@ More generally, we can use one of these perverse functions:
 
 > rearrangeEntry :: (Traversable f, Traversable g) =>
 >     (forall a. f a -> g a) -> Entry f -> Entry g
-> rearrangeEntry h (E ref xn (Boy k) ty)          = E ref xn (Boy k) ty
-> rearrangeEntry h (E ref xn (Girl LETG dev ms) ty)  = E ref xn (Girl LETG (rearrangeDev h dev) ms) ty
-> rearrangeEntry h (M n d)                        = M n (rearrangeDev h d)
+> rearrangeEntry h (E ref xn (Boy k) ty)          = 
+>     E ref xn (Boy k) ty
+> rearrangeEntry h (E ref xn (Girl kind dev) ty)  = 
+>     E ref xn (Girl kind (rearrangeDev h dev)) ty
+> rearrangeEntry h (M n d)                        = 
+>     M n (rearrangeDev h d)
 >
 > rearrangeDev :: (Traversable f, Traversable g) =>
 >     (forall a. f a -> g a) -> Dev f -> Dev g
@@ -227,7 +230,7 @@ giving a list of entries that are currently in scope.
 >   where
 >     help :: Bwd Layer -> [REF :<: INTM] -> [REF :<: INTM]
 >     help B0 xs = xs
->     help (ls :< Layer{mother=GirlMother _ (n, _) _ _}) xs
+>     help (ls :< Layer{mother=GirlMother _ _ (n, _) _}) xs
 >         | n == magicImplName = xs
 >     help (ls :< l) xs = help ls (boys (elders l) ++ xs)
 

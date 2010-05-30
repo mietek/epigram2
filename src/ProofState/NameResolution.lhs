@@ -132,8 +132,8 @@ This needs documenting I (Peter) am on it.
 > lookUp (x,i) (esus, es :< e@(M n (es', _, _))) (fs,vfss) | (fst $ last n) == x =
 >   if i == 0 then Right (Right es', boySpine (flat esus es), Nothing, Nothing)
 >             else lookUp (x,i-1) (esus,es) (e:>fs,vfss)
-> lookUp (x,i) (esus, es :< e@(E r (y,j) (Girl _ (es',_,_) ms) _)) (fs,vfss) | x == y =
->   if i == 0 then Right (Right es', boySpine (flat esus es), Just r, ms)
+> lookUp (x,i) (esus, es :< e@(E r (y,j) (Girl kind (es',_,_)) _)) (fs,vfss) | x == y =
+>   if i == 0 then Right (Right es', boySpine (flat esus es), Just r, kindScheme kind)
 >             else lookUp (x,i-1) (esus,es) (e:>fs,vfss)
 > lookUp (x,i) (esus, es :< e@(E r (y,j) (Boy _) _)) (fs,vfss) | x == y =
 >   if i == 0 then Right (Right B0, [], Just r, Nothing)
@@ -150,8 +150,8 @@ This needs documenting I (Peter) am on it.
 > lookDown (x, i) (M n (es', _, _) :> es , uess) sp | x == (fst $ last n) =
 >   if i == 0 then Right (Right es', sp, Nothing, Nothing) 
 >             else lookDown (x, i-1) (es, uess) sp 
-> lookDown (x, i) (E r (y, _) (Girl _ (es', _, _) ms) _ :> es , uess) sp | x == y =
->   if i == 0 then Right (Right es', sp, Just r, ms) 
+> lookDown (x, i) (E r (y, _) (Girl kind (es', _, _)) _ :> es , uess) sp | x == y =
+>   if i == 0 then Right (Right es', sp, Just r, kindScheme kind) 
 >             else lookDown (x, i-1) (es, uess) sp
 > lookDown (x, i) (E r (y, _) (Boy _) _ :> es , uess) sp | x == y =
 >   if i == 0 then Right (Right B0, [], Just r, Nothing) 
@@ -180,8 +180,8 @@ This needs documenting I (Peter) am on it.
 > lookUpLocal (x, i) ys (xs :< M n (es, _, _)) as | x == (fst $ last n) =
 >     if i == 0 then lookLocal ys es as Nothing Nothing
 >               else lookUpLocal (x,i-1) ys xs as
-> lookUpLocal (x, i) ys (xs :< E r (y,j) e@(Girl _ (es,_,_) ms) _) as | x == y = 
->     if i == 0 then lookLocal ys es as (Just r) ms
+> lookUpLocal (x, i) ys (xs :< E r (y,j) e@(Girl kind (es,_,_)) _) as | x == y = 
+>     if i == 0 then lookLocal ys es as (Just r) (kindScheme kind)
 >               else lookUpLocal (x,i-1) ys xs as
 > lookUpLocal (x, i) ys (xs :< E r (y,j) (Boy _) _) as | x == y = 
 >     if i == 0 then Left  [err "Boys in other Devs are not in scope"]
@@ -196,8 +196,8 @@ This needs documenting I (Peter) am on it.
 > lookDownLocal (x, i) ys (M n (es, _, _) :> xs) as | x == (fst $ last n) =
 >     if i == 0 then lookLocal ys es as Nothing Nothing
 >               else lookDownLocal (x,i-1) ys xs as
-> lookDownLocal (x, i) ys (E r (y,j) e@(Girl _ (es,_,_) ms) _ :> xs) as | x == y = 
->     if i == 0 then lookLocal ys es as (Just r) ms
+> lookDownLocal (x, i) ys (E r (y,j) e@(Girl kind (es,_,_)) _ :> xs) as | x == y = 
+>     if i == 0 then lookLocal ys es as (Just r) (kindScheme kind)
 >               else lookDownLocal (x,i-1) ys xs as
 > lookDownLocal (x, i) ys (E r (y,j) (Boy _) _ :> xs) as | x == y = 
 >     if i == 0 then Left  [err "Boys in other Devs are not in scope"]
@@ -300,7 +300,7 @@ the name part of references, respectively.
 >   partNom hd top (esus,es) (F0,(not,js):>vjss)
 > partNom hd top (esus, es :< M n (es',_,_)) fsc | (hd ++ [top]) == n =
 >   Just (boySpine (flat esus es),Left es')
-> partNom hd top (esus, es :< E _ top' (Girl _ (es',_,_) _) _) fsc | hd ++ [top] == (flatNom esus []) ++ [top'] =
+> partNom hd top (esus, es :< E _ top' (Girl _ (es',_,_)) _) fsc | hd ++ [top] == (flatNom esus []) ++ [top'] =
 >   Just (boySpine (flat esus es),Left es')
 > partNom hd top (esus, es :< e) (fs, vfss)  = partNom hd top (esus, es) (e:>fs,vfss)
 > partNom _ _ _ _ = Nothing
@@ -328,8 +328,8 @@ the name part of references, respectively.
 > findF i u (M n _ :> es) | (last $ n) == u = 
 >   Just ((fst u, if i == 0 then Rel 0 else Abs i), Nothing)
 > findF i u@(x,_) (M n _ :> es) | (fst . last $ n) == x = findF (i+1) u es
-> findF i u (E _ v (Girl _ _ ms) _ :> es) | v == u = 
->   Just ((fst u, if i == 0 then Rel 0 else Abs i), ms)
+> findF i u (E _ v (Girl kind _) _ :> es) | v == u = 
+>   Just ((fst u, if i == 0 then Rel 0 else Abs i), kindScheme kind)
 > findF i u (E _ v _ _ :> es) | v == u = 
 >   Just ((fst u, if i == 0 then Rel 0 else Abs i), Nothing)
 > findF i u@(x,_) (E _ (y,_) _ _ :> es) | y == x = findF (i+1) u es
@@ -350,9 +350,9 @@ the name part of references, respectively.
 > countB i n (esus,es:<M n' (es',_,_)) | n == n' = (| (i, Nothing) |)
 > countB i n (esus,es:<M n' _) | (fst . last $ n') == (fst . last $ n) =
 >   countB (i+1) n (esus,es)
-> countB i n (esus,es:<E r u' (Girl _ (es',_,_) ms) _) | last n == u' &&
+> countB i n (esus,es:<E r u' (Girl kind (es',_,_)) _) | last n == u' &&
 >                                                        refName r == n = 
->   (| (i, ms) |)
+>   (| (i, kindScheme kind) |)
 > countB i n (esus,es:<E r u' _ _) | last n == u' && refName r == n = 
 >   (| (i, Nothing) |)
 > countB i n (esus,es:<E _ u' _ _) | (fst . last $ n) == fst u' = 
@@ -373,8 +373,8 @@ the name part of references, respectively.
 > nomRel' o (x,i) (es:<M n (es',_,_)) | (fst . last $ n) == x  = 
 >   if i == (snd . last $ n) then (| (o,es',Nothing) |) 
 >                            else nomRel' (o+1) (x,i) es
-> nomRel' o (x,i) (es:<E _ (y,j) (Girl _ (es',_,_) ms) _) | y == x =
->   if i == j then (| (o,es',ms) |) else nomRel' (o+1) (x,i) es
+> nomRel' o (x,i) (es:<E _ (y,j) (Girl kind (es',_,_)) _) | y == x =
+>   if i == j then (| (o,es',kindScheme kind) |) else nomRel' (o+1) (x,i) es
 > nomRel' o (x,i) (es:<E _ (y,j) _ _) | y == x = 
 >   if i == j then (| (o,B0,Nothing) |) else nomRel' (o+1) (x,i) es
 > nomRel' o (x,i) (es:<e) = nomRel' o (x,i) es

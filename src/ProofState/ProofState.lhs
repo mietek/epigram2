@@ -136,12 +136,12 @@ updated information, providing a friendlier interface than |get| and |put|.
 
 > getHoleGoal :: ProofStateT e (INTM :=>: TY)
 > getHoleGoal = do
->     GirlMother (_ := HOLE _ :<: _) _ _ _ <- getMother
+>     GirlMother _ (_ := HOLE _ :<: _) _ _ <- getMother
 >     getGoal "getHoleGoal"
 
 > getHoleKind :: ProofStateT e HKind
 > getHoleKind = do
->     GirlMother (_ := HOLE hk :<: _) _ _ _ <- getMother
+>     GirlMother _ (_ := HOLE hk :<: _) _ _ <- getMother
 >     return hk
 
 > getLayer :: ProofStateT e Layer
@@ -161,7 +161,7 @@ updated information, providing a friendlier interface than |get| and |put|.
 
 > getMotherDefinition :: ProofStateT e (EXTM :=>: VAL)
 > getMotherDefinition = do
->     GirlMother ref _ _ _ <- getMother
+>     GirlMother _ ref _ _ <- getMother
 >     aus <- getGreatAuncles
 >     return (applyAuncles ref aus)
 
@@ -172,8 +172,8 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     cadets <- getDevCadets
 >     let dev = (es <>< cadets, tip, root)
 >     case m of
->         GirlMother ref xn ty ms -> return
->             (E ref xn (Girl LETG dev ms) ty)
+>         GirlMother kind ref xn ty -> return
+>             (E ref xn (Girl kind dev) ty)
 >         ModuleMother n -> return (M n dev)
 
 > getMotherName :: ProofStateT e Name
@@ -232,8 +232,8 @@ updated information, providing a friendlier interface than |get| and |put|.
 
 > putHoleKind :: HKind -> ProofStateT e ()
 > putHoleKind hk = do
->     GirlMother (name := HOLE _ :<: ty) xn tm ms <- getMother
->     putMother $ GirlMother (name := HOLE hk :<: ty) xn tm ms
+>     GirlMother kind (name := HOLE _ :<: ty) xn tm <- getMother
+>     putMother $ GirlMother kind (name := HOLE hk :<: ty) xn tm
 
 > putLayer :: Layer -> ProofStateT e ()
 > putLayer l = do
@@ -252,9 +252,9 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     return ()
 
 > putMotherEntry :: Entry Bwd -> ProofStateT e ()
-> putMotherEntry (E ref xn (Girl LETG dev ms) ty) = do
+> putMotherEntry (E ref xn (Girl kind dev) ty) = do
 >     l <- getLayer
->     replaceLayer (l{mother=GirlMother ref xn ty ms})
+>     replaceLayer (l{mother=GirlMother kind ref xn ty})
 >     putDev dev
 > putMotherEntry (M [] dev) = putDev dev
 > putMotherEntry (M n dev) = do
@@ -264,8 +264,8 @@ updated information, providing a friendlier interface than |get| and |put|.
 
 > putMotherScheme :: Scheme INTM -> ProofState ()
 > putMotherScheme sch = do
->     GirlMother ref xn ty _ <- getMother
->     putMother (GirlMother ref xn ty (Just sch))
+>     GirlMother _ ref xn ty <- getMother
+>     putMother (GirlMother (PROG sch) ref xn ty)
 
 \subsubsection{Removers}
 

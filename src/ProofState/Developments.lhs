@@ -137,7 +137,7 @@ cannot.
 
 > data Traversable f => Entity f
 >   =  Boy   BoyKind
->   |  Girl  GirlKind (Dev f) (Maybe (Scheme INTM))
+>   |  Girl  GirlKind (Dev f)
 
 
 \paragraph{Girls for definitions:}
@@ -145,9 +145,21 @@ cannot.
 A |Girl| represents a \emph{definition}, with a (possibly empty)
 development of sub-objects. The |Tip| of this sub-development will
 either be of |Unknown| or |Defined| kind. \pierre{Can the Tip be
-|Suspended|? Probably, isn't it?}
+|Suspended|? I suspect so.}
 
-> data GirlKind = LETG deriving (Show, Eq)
+A programming problem is a special kind of |Girl|: it follows a type
+|Scheme| (Section~\ref{sec:display-scheme}), the high-level type of
+the function we are implementing.
+
+> data GirlKind = LETG |  PROG (Scheme INTM)
+
+%if False
+
+> instance Show GirlKind where
+>     show LETG = "LETG"
+>     show (PROG _) = "PROG"
+
+%endif
 
 
 \paragraph{Boys for parameters:}
@@ -163,11 +175,11 @@ definitions (if any) in the enclosing development.
 
 > instance Show (Entity Bwd) where
 >     show (Boy k) = "Boy " ++ show k
->     show (Girl k d _) = "Girl " ++ show k ++ " " ++ show d
+>     show (Girl k d) = "Girl " ++ show k ++ " " ++ show d
 
 > instance Show (Entity Fwd) where
 >     show (Boy k) = "Boy " ++ show k
->     show (Girl k d _) = "Girl " ++ show k ++ " " ++ show d 
+>     show (Girl k d) = "Girl " ++ show k ++ " " ++ show d 
 
 %endif
 
@@ -199,7 +211,7 @@ boys.
 
 > entryDev :: Traversable f => Entry f -> Maybe (Dev f)
 > entryDev (E _ _ (Boy _) _)          = Nothing
-> entryDev (E _ _ (Girl LETG d _) _)  = Just d
+> entryDev (E _ _ (Girl _ d) _)       = Just d
 > entryDev (M _ d)                    = Just d
 
 For display purposes, we often ask the last name or the whole name of
@@ -216,8 +228,12 @@ an |Entry|:
 Some girls have |Scheme|s, and we can extract them thus:
 
 > entryScheme :: Traversable f => Entry f -> Maybe (Scheme INTM)
-> entryScheme (E _ _ (Girl _ _ ms) _)  = ms
+> entryScheme (E _ _ (Girl k _) _)     = kindScheme k
 > entryScheme _                        = Nothing
+> 
+> kindScheme :: GirlKind -> Maybe (Scheme INTM)
+> kindScheme LETG        = Nothing
+> kindScheme (PROG sch)  = Just sch
 
 
 The |entryCoerce| function is quite a thing. When defining |Dev|, we
@@ -234,7 +250,7 @@ in which case we return an unchanged |Left dev|.
 > entryCoerce ::  (Traversable f, Traversable g) => 
 >                 Entry f -> Either (Dev f) (Entry g)
 > entryCoerce (E ref  xn  (Boy k)          ty)   = Right $ E ref xn (Boy k) ty
-> entryCoerce (E _    _   (Girl LETG dev _)  _)  = Left dev
+> entryCoerce (E _    _   (Girl _ dev)  _)       = Left dev
 > entryCoerce (M _ dev)                          = Left dev
 
 

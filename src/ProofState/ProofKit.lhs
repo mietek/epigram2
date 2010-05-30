@@ -107,7 +107,7 @@ may be useful for paranoia purposes.
 > validateHere = do
 >     m <- getMother
 >     case m of
->         GirlMother (_ := DEFN tm :<: ty) _ _ _ -> do
+>         GirlMother _ (_ := DEFN tm :<: ty) _ _ -> do
 >             ty' <- bquoteHere ty
 >             checkHere (SET :>: ty')
 >                 `pushError`  (err "validateHere: girl type failed to type-check: SET does not admit"
@@ -119,7 +119,7 @@ may be useful for paranoia purposes.
 >                              ++ err "does not admit"
 >                              ++ errTyVal (tm :<: ty))
 >             return ()
->         GirlMother (_ := HOLE _ :<: ty) _ _ _ -> do
+>         GirlMother _ (_ := HOLE _ :<: ty) _ _ -> do
 >             ty' <- bquoteHere ty
 >             checkHere (SET :>: ty')
 >                 `pushError`  (err "validateHere: hole type failed to type-check: SET does not admit" 
@@ -426,7 +426,7 @@ to the next goal otherwise.
 >     aus <- getAuncles
 >     let  ty' = liftType aus ty
 >          ref = n := HOLE Waiting :<: evTm ty'
->     putMother (GirlMother ref (last n) ty' Nothing)
+>     putMother (GirlMother LETG ref (last n) ty')
 >     putDevTip (Unknown (ty :=>: tyv))
 >     return (applyAuncles ref aus)
 
@@ -474,7 +474,7 @@ $\Pi S T$ and if so, adds a goal of type $S$ and applies $y$ to it.
 > apply = do
 >   devEntry <- getDevEntry
 >   case devEntry of
->     E ref@(name := k :<: (PI s t)) _ (Girl LETG _ _) _ -> do
+>     E ref@(name := k :<: (PI s t)) _ (Girl _ _) _ -> do
 >         s' <- bquoteHere s
 >         t' <- bquoteHere (t $$ A s)
 >         z :=>: _ <- make ("z" :<: s')
@@ -491,7 +491,7 @@ fills in the goal with this entry.
 > done = do
 >   devEntry <- getDevEntry
 >   case devEntry of
->     E ref _ (Girl LETG _ _) _ -> give (N (P ref))
+>     E ref _ (Girl _ _) _ -> give (N (P ref))
 >     _ -> throwError' $ err "done: last entry in the development must be a girl."
 
 The |give| command checks the provided term has the goal type, and if so, fills in
@@ -517,10 +517,10 @@ next goal (if one exists) instead.
 >             aus <- getGreatAuncles
 >             sibs <- getDevEntries
 >             let tmv = evTm (parBind aus sibs tm)
->             GirlMother (name := _ :<: tyv) xn ty ms <- getMother
+>             GirlMother kind (name := _ :<: tyv) xn ty <- getMother
 >             let ref = name := DEFN tmv :<: tyv
 >             putDevTip (Defined tm (tipTyTm :=>: tipTy))
->             putMother (GirlMother ref xn ty ms)
+>             putMother (GirlMother kind ref xn ty)
 >             updateRef ref
 >             return (applyAuncles ref aus)
 >         _  -> throwError' $ err "give: only possible for incomplete goals."
@@ -598,7 +598,7 @@ current development, after checking that the purported type is in fact a type.
 >     let  ty'  = liftType aus ty
 >          ref  = n := HOLE hk :<: evTm ty'
 >     nsupply <- getDevNSupply
->     putDevEntry (E ref (last n) (Girl LETG (B0, Unknown (ty :=>: tyv), freshNSpace nsupply s') Nothing) ty')
+>     putDevEntry (E ref (last n) (Girl LETG (B0, Unknown (ty :=>: tyv), freshNSpace nsupply s')) ty')
 >     putDevNSupply (freshName nsupply)
 >     return (applyAuncles ref aus)
 
@@ -676,7 +676,7 @@ shared parameters).
 
 > getFakeRef :: ProofState REF
 > getFakeRef = do
->    GirlMother (mnom := HOLE _ :<: ty) _ _ _ <- getMother
+>    GirlMother _  (mnom := HOLE _ :<: ty) _ _ <- getMother
 >    return (mnom := FAKE :<: ty)
 
 > getFakeMother :: ProofState (EXTM :=>: VAL)

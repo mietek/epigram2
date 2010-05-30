@@ -98,7 +98,7 @@ a reference to the current goal (applied to the appropriate shared parameters).
 >   where
 >     getDefn :: ProofState (EXTM :=>: VAL)
 >     getDefn = do
->         GirlMother ref _ _ _ <- getMother
+>         GirlMother _ ref _ _ <- getMother
 >         aus <- getGreatAuncles
 >         return (applyAuncles ref aus)
 
@@ -177,7 +177,7 @@ Now we add a definition with the same name as the function being defined,
 to handle recursive calls. This has the same arguments as the function,
 plus an implicit labelled type that provides evidence for the recursive call.
 
->     GirlMother (mnom := HOLE _ :<: ty) _ _ _ <- getMother
+>     GirlMother _ (mnom := HOLE _ :<: ty) _ _ <- getMother
 >     pn :=>: _ <- getFakeMother 
 >     let schCall = makeCall (P $ mnom := FAKE :<: ty) 0 sch'
 >     us <- (|boySpine getAuncles|)

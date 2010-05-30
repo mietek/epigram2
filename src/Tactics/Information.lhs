@@ -91,7 +91,7 @@ boys if the argument is False or girls if the argument is True.
 >         d      <- help bsc es
 >         return $ d $$ prettyBKind k (text (showRelName (christenREF bsc ref))
 >                                               <+> kword KwAsc <+> docTy)
->     help bsc (es :< E ref _ (Girl LETG _ msch) _) | gals = do
+>     help bsc (es :< E ref _ (Girl _ _) _) | gals = do
 >         ty     <- bquoteHere $ removeShared (boySpine es) (pty ref)
 >         docTy  <- prettyHere (SET :>: ty)
 >         d      <- help bsc es
@@ -141,7 +141,7 @@ the saved state. We can get rid of it once we are confident that the new version
 >                docTy <- prettyHere (SET :>: ty')
 >                d <- hyps bsc me
 >                return (d $$ prettyBKind k (text (showRelName (christenREF bsc ref)) <+> kword KwAsc <+> docTy))
->            (True, es' :< E ref _ (Girl LETG _ _) _) -> do
+>            (True, es' :< E ref _ (Girl _ _) _) -> do
 >                goIn
 >                es <- getDevEntries
 >                (ty :=>: _) <- getGoal "hyps"

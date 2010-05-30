@@ -364,8 +364,8 @@ is unstable.
 >                -> ProofState (EXTM :=>: VAL)
 > suspend (x :<: tt) prob = do
 >     r <- make (x :<: termOf tt)
->     Just (E ref xn (Girl LETG (es, Unknown utt, nsupply) ms) tm) <- removeDevEntry
->     putDevEntry (E ref xn (Girl LETG (es, Suspended utt prob, nsupply) ms) tm)
+>     Just (E ref xn (Girl kind (es, Unknown utt, nsupply)) tm) <- removeDevEntry
+>     putDevEntry (E ref xn (Girl kind (es, Suspended utt prob, nsupply)) tm)
 >     return r
 
 

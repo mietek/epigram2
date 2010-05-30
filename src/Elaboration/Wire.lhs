@@ -83,7 +83,7 @@ Updating girls is a bit more complicated. We proceed as follows:
 \item Continue propagating the latest news.
 \end{enumerate}
 
-> propagateNews top news (NF ((Right e@(E ref sn (Girl LETG (_, tip, nsupply) _) ty)) :> es)) = do
+> propagateNews top news (NF ((Right e@(E ref sn (Girl _ (_, tip, nsupply)) ty)) :> es)) = do
 >     xs <- jumpIn e
 >     news' <- propagateNews False news xs
 >     news'' <- tellMother news'
@@ -153,26 +153,26 @@ update the news bulletin). If not, we must:
 \end{enumerate}
 
 > tellEntry news (E ref@(name := HOLE h :<: tyv) sn
->                    (Girl LETG (cs, Unknown tt, nsupply) ms) ty)
+>                    (Girl kind (cs, Unknown tt, nsupply)) ty)
 >   | Just (ref'@(_ := DEFN tm :<: _), GoodNews) <- getNews news ref = do
 >     tm' <- bquoteHere tm
 >     let  (tt', _) = tellNewsEval news tt
 >          (ty', _) = tellNews news ty
->     return (news, E ref' sn (Girl LETG (cs, Defined tm' tt', nsupply) ms) ty')
+>     return (news, E ref' sn (Girl kind (cs, Defined tm' tt', nsupply)) ty')
 >
 >   | otherwise = do
 >     let  (tt', n)             = tellNewsEval news tt
 >          (ty' :=>: tyv', n')  = tellNewsEval news (ty :=>: tyv)
 >          ref                  = name := HOLE h :<: tyv'
 >     return (addNews (ref, min n n') news,
->         E ref sn (Girl LETG (cs, Unknown tt', nsupply) ms) ty')
+>         E ref sn (Girl kind (cs, Unknown tt', nsupply)) ty')
 
 To update a hole with a suspended elaboration problem attached, we proceed
 similarly to the previous case, but we also update the elaboration problem.
 \question{What if the news bulletin defines this hole?}
 
 > tellEntry news (E ref@(name := HOLE h :<: tyv) sn
->                    (Girl LETG (cs, Suspended tt prob, nsupply) ms) ty)
+>                    (Girl kind (cs, Suspended tt prob, nsupply)) ty)
 >   | Just ne <- getNews news ref = throwError' . err . unlines $ [
 >       "tellEntry: news bulletin contains update", show ne, "for hole", show ref, 
 >        "with suspended computation", show prob]
@@ -182,7 +182,7 @@ similarly to the previous case, but we also update the elaboration problem.
 >          ref                  = name := HOLE h :<: tyv'
 >          prob'                = tellEProb news prob
 >     return (addNews (ref, min n n') news,
->         E ref sn (Girl LETG (cs, Suspended tt' prob', nsupply) ms) ty')
+>         E ref sn (Girl kind (cs, Suspended tt' prob', nsupply)) ty')
 
 To update a defined girl, we must:
 \begin{enumerate}
@@ -193,7 +193,7 @@ To update a defined girl, we must:
 \item update the news bulletin with news about this girl.
 \end{enumerate}
 
-> tellEntry news (E (name := DEFN tmL :<: tyv) sn (Girl LETG (cs, Defined tm tt, nsupply) ms) ty) = do
+> tellEntry news (E (name := DEFN tmL :<: tyv) sn (Girl kind (cs, Defined tm tt, nsupply)) ty) = do
 >     let  (tt', n)             = tellNewsEval news tt
 >          (ty' :=>: tyv', n')  = tellNewsEval news (ty :=>: tyv)
 >          (tm', n'')           = tellNews news tm
@@ -208,7 +208,7 @@ For paranoia purposes, the following test might be helpful:
 
 >     let ref = name := DEFN (evTm tmL') :<: tyv'
 >     return (addNews (ref, GoodNews {-min (min n n') n''-}) news,
->                 E ref sn (Girl LETG (cs, Defined tm' tt', nsupply) ms) ty')
+>                 E ref sn (Girl kind (cs, Defined tm' tt', nsupply)) ty')
 
 The |tellMother| function informs the mother entry about a news bulletin
 that her children have already received, and returns the updated news.
