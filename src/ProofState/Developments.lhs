@@ -57,12 +57,15 @@ currently building an unknown satisfying the given type.
 Finally, a development can be finalised, in which case it is
 |Defined|: it has built a term satisfying the given type.
 
+\pierre{What about |Suspended|?}
+
 > data Tip
 >   = Module
 >   | Unknown (INTM :=>: TY)
 >   | Suspended (INTM :=>: TY) EProb
 >   | Defined INTM (INTM :=>: TY)
 >   deriving Show
+
 
 \subsubsection{|Entry|}
 \label{sec:developments_entry}
@@ -130,7 +133,7 @@ it once and for all with |lastName| and later rely on the cached version.
 
 An |Entity| is gendered: it can either be a |Boy| or a |Girl|. A
 |Girl| can have children, that is sub-developments, whereas a |Boy|
-cannot.
+cannot. 
 
 > data Traversable f => Entity f
 >   =  Boy   BoyKind
@@ -141,7 +144,8 @@ cannot.
 
 A |Girl| represents a \emph{definition}, with a (possibly empty)
 development of sub-objects. The |Tip| of this sub-development will
-either be of |Unknown| or |Defined| kind. 
+either be of |Unknown| or |Defined| kind. \pierre{Can the Tip be
+|Suspended|? Probably, isn't it?}
 
 > data GirlKind = LETG deriving (Show, Eq)
 
@@ -150,7 +154,7 @@ either be of |Unknown| or |Defined| kind.
 
 A |Boy| represents a parameter (either a $\lambda$, $\forall$ or $\Pi$
 abstraction), which scopes over all following entries and the
-definition (if any) in the enclosing development.
+definitions (if any) in the enclosing development.
 
 > data BoyKind = LAMB | ALAB | PIB deriving (Show, Eq)
 
@@ -168,13 +172,13 @@ definition (if any) in the enclosing development.
 %endif
 
 We often need to turn the sequence of boys (parameters) under which we
-work into the argument spine of a \(\lambda\)-lifted definition.
+work into the argument spine of a \(\lambda\)-lifted definition:
 
 > boySpine :: Entries -> Spine {TT} REF
 > boySpine = foldMap boy where
 >   boy :: Entry Bwd -> Spine {TT} REF
 >   boy (E r _ (Boy _) _)  = [A (N (P r))]
->   boy _                = []
+>   boy _                  = []
 
 
 \subsection{Manipulating an |Entry|}
@@ -191,7 +195,7 @@ We sometimes wish to determine whether an entry is a |Boy|:
 
 Given an |Entry|, a natural operation is to extract its
 sub-developments. This works for girls and modules, but will not for
-boy.
+boys.
 
 > entryDev :: Traversable f => Entry f -> Maybe (Dev f)
 > entryDev (E _ _ (Boy _) _)          = Nothing
@@ -215,6 +219,7 @@ Some girls have |Scheme|s, and we can extract them thus:
 > entryScheme (E _ _ (Girl _ _ ms) _)  = ms
 > entryScheme _                        = Nothing
 
+
 The |entryCoerce| function is quite a thing. When defining |Dev|, we
 have been picky in letting any Traversable |f| be the carrier of the
 |f (Entry f)|. As shown in Section~\ref{sec:proof_context}, we
@@ -223,11 +228,12 @@ sometimes need to jump from one Traversable |f| to another Traversable
 some |Entries| -- a |Bwd| list.
 
 Changing the type of the carrier is possible for boys, in which case
-we return a |Right entry|. It is not for girls and modules, in which
-case we return an unchanged |Left dev|.
+we return a |Right entry|. It is not possible for girls and modules,
+in which case we return an unchanged |Left dev|.
 
-> entryCoerce :: (Traversable f, Traversable g) => Entry f -> Either (Dev f) (Entry g)
-> entryCoerce (E ref  xn  (Boy k)          ty)   = Right (E ref xn (Boy k) ty)
+> entryCoerce ::  (Traversable f, Traversable g) => 
+>                 Entry f -> Either (Dev f) (Entry g)
+> entryCoerce (E ref  xn  (Boy k)          ty)   = Right $ E ref xn (Boy k) ty
 > entryCoerce (E _    _   (Girl LETG dev _)  _)  = Left dev
 > entryCoerce (M _ dev)                          = Left dev
 

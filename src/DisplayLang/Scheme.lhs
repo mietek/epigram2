@@ -1,4 +1,5 @@
 \section{Schemes}
+\label{sec:display-scheme}
 
 %if False
 
