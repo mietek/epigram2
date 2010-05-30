@@ -115,8 +115,8 @@ to deal with this global context.
 As often, we need some kit. First, getting the name of a |Mother|:
 
 > motherName :: Mother -> Name
-> motherName (GirlMother _ (n := _) _ _) = n
-> motherName (ModuleMother n) = n
+> motherName (GirlMother _ (n := _) _ _)  = n
+> motherName (ModuleMother n)             = n
 
 Also, turning an entry (|Girl| or |Module|) into a |Mother|:
 
@@ -146,15 +146,14 @@ Or we can change the carrier of a whole |Dev| from |Bwd| to |Fwd|:
 
 > reverseDev' :: Dev Bwd -> Dev Fwd
 > reverseDev' = rearrangeDev (<>> F0)
-
-
+>
 > reverseEntries :: Fwd (Entry Bwd) -> NewsyEntries
-> reverseEntries es = NF (fmap (Right . reverseEntry) es)
+> reverseEntries es = NF $ fmap (Right . reverseEntry) es
 
 More generally, we can use one of these perverse functions:
 
-> rearrangeEntry :: (Traversable f, Traversable g) =>
->     (forall a. f a -> g a) -> Entry f -> Entry g
+> rearrangeEntry ::  (Traversable f, Traversable g) =>
+>                    (forall a. f a -> g a) -> Entry f -> Entry g
 > rearrangeEntry h (E ref xn (Boy k) ty)          = 
 >     E ref xn (Boy k) ty
 > rearrangeEntry h (E ref xn (Girl kind dev) ty)  = 
@@ -206,17 +205,25 @@ giving a list of entries that are currently in scope.
 > auncles :: ProofContext -> Entries
 > auncles pc@PC{pcDev=(es,_,_)} = greatAuncles pc <+> es
 
-> type BScopeContext = (Bwd (Entries, (String,Int)), Entries) 
-> type FScopeContext = ( Fwd (Entry Bwd)
->                      , Fwd ((String, Int), Fwd (Entry Bwd))) 
+
+\subsubsection{Context in scope, backward and forward}
 
 
+
+> type BScopeContext =  (Bwd (Entries, (String, Int)), Entries) 
+>
 > inBScope :: ProofContext -> BScopeContext
-> inBScope (PC ls (es,_,_) _) = 
->   (fmap (\l -> (elders l,last . motherName . mother $ l)) ls,es)
+> inBScope (PC layers (entries,_,_) _) = 
+>   (  fmap (\l -> (elders l, last . motherName . mother $ l)) layers
+>   ,  entries)
 
+
+> type FScopeContext =  ( Fwd (Entry Bwd)
+>                       , Fwd ((String, Int), Fwd (Entry Bwd))) 
+>
 > inBFScope :: BScopeContext -> FScopeContext
-> inBFScope (uess :< (es,u),es') = let (fs, vfss) = inBFScope (uess,es) in 
+> inBFScope (uess :< (es,u),es') = 
+>   let (fs, vfss) = inBFScope (uess,es) in 
 >   (fs, (u,es' <>> F0) :> vfss)
 > inBFScope (B0,es) = (es <>> F0,F0) 
 

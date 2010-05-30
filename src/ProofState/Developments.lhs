@@ -227,14 +227,13 @@ an |Entry|:
 
 Some girls have |Scheme|s, and we can extract them thus:
 
-> entryScheme :: Traversable f => Entry f -> Maybe (Scheme INTM)
-> entryScheme (E _ _ (Girl k _) _)     = kindScheme k
-> entryScheme _                        = Nothing
-> 
 > kindScheme :: GirlKind -> Maybe (Scheme INTM)
 > kindScheme LETG        = Nothing
 > kindScheme (PROG sch)  = Just sch
-
+>
+> entryScheme :: Traversable f => Entry f -> Maybe (Scheme INTM)
+> entryScheme (E _ _ (Girl k _) _)     = kindScheme k
+> entryScheme _                        = Nothing
 
 The |entryCoerce| function is quite a thing. When defining |Dev|, we
 have been picky in letting any Traversable |f| be the carrier of the
@@ -249,9 +248,9 @@ in which case we return an unchanged |Left dev|.
 
 > entryCoerce ::  (Traversable f, Traversable g) => 
 >                 Entry f -> Either (Dev f) (Entry g)
-> entryCoerce (E ref  xn  (Boy k)          ty)   = Right $ E ref xn (Boy k) ty
+> entryCoerce (E ref  xn  (Boy k)       ty)      = Right $ E ref xn (Boy k) ty
 > entryCoerce (E _    _   (Girl _ dev)  _)       = Left dev
-> entryCoerce (M _ dev)                          = Left dev
+> entryCoerce (M _    dev)                       = Left dev
 
 
 Finally, we can compare entities for equality by comparing their
