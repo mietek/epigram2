@@ -62,6 +62,17 @@
 %include Evidences/Mangler.lhs
 %include Evidences/Rules.lhs
 
+\chapter{The Display Language}
+
+%include DisplayLang/Introduction.lhs
+
+%include DisplayLang/DisplayTm.lhs
+%include DisplayLang/Name.lhs
+%include DisplayLang/Scheme.lhs
+%include DisplayLang/Lexer.lhs
+%include DisplayLang/TmParse.lhs
+%include DisplayLang/PrettyPrint.lhs
+
 \chapter{Feature by Feature}
 
 \input{Features/Introduction.tex}
@@ -102,17 +113,6 @@
 %include Tactics/Data.lhs
 %include Tactics/Gadgets.lhs
 %include Tactics/Relabel.lhs
-
-\chapter{The Display Language}
-
-%include DisplayLang/Introduction.lhs
-
-%include DisplayLang/DisplayTm.lhs
-%include DisplayLang/Name.lhs
-%include DisplayLang/Scheme.lhs
-%include DisplayLang/Lexer.lhs
-%include DisplayLang/TmParse.lhs
-%include DisplayLang/PrettyPrint.lhs
 
 \chapter{Elaboration}
 \label{chap:elaboration}
