@@ -207,6 +207,7 @@ This needs documenting I (Peter) am on it.
 
 
 \subsection{Christening (Generating Local Longnames)}
+\label{subsec:christening}
 
 Just as resolution automatically supplies parameters to references
 which are actually lifted, so its inverse, \emph{christening}, must

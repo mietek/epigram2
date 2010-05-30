@@ -36,7 +36,7 @@
 
 The distiller, like the elaborator, is organized on a |check|/|infer|
 basis, following the type-checker implementation in
-Section~\ref{subsec:type-checking}. |distill| mirrors |check|--
+Section~\ref{subsec:type-checking}. |distill| mirrors |check| --
 distilling |INTM|s, while |distillInfer| mirrors |infer| -- distilling
 |EXTM|s.
 
@@ -46,21 +46,23 @@ distilling |INTM|s, while |distillInfer| mirrors |infer| -- distilling
 
 The |distill| command converts a typed |INTM| in the Evidence language
 to a term in the Display language; that is, it reverses |elaborate|.
-It performs christening at the same time. For this, it needs a list of
-entries in local(!) scope, which it will extend when going under a
-binder.
-
-\pierre{What is the ``local'' scope?}
-
+It peforms christening at the same time, turning absolute names into
+relative names. 
 
 The distiller first tries to apply Feature-specific rules. These rules
 contain the inteligence of the distiller, aiming at making concise
 Display term. If unsuccessful, the distiller fall back to a generic
 distiller |distillBase|.
 
+When going under a binder, we have to introduce fresh names to distill
+further. When christening, these fresh names have to be dealt with
+separately (See |unresolve| in Section~\ref{subsec:christening}):
+indeed, they are actually bound variables. Hence, we collect this
+\emph{local scope} as a list of |entries|.
+
 > distill :: Entries -> (TY :>: INTM) -> ProofStateT INTM (DInTmRN :=>: VAL)
 > import <- DistillRules
-> distill es tt = distillBase es tt
+> distill entries tt = distillBase entries tt
 
 We separate out the standard distillation cases (without aspect
 extensions) so that aspect distill rules can give up and invoke the
@@ -70,21 +72,24 @@ base cases.
 
 We distill structurally through canonical terms:
 
-> distillBase es (C ty :>: C c) = do
->     cc <- canTy (distill es) (ty :>: c)
+> distillBase entries (C ty :>: C c) = do
+>     cc <- canTy (distill entries) (ty :>: c)
 >     return $ (DC $ fmap termOf cc) :=>: evTm (C c)
 
 To distill a $lambda$-abstraction, we speculate a fresh reference and distill
 under the binder, then convert the scope appropriately.
 
-> distillBase es (ty :>: l@(L sc)) = do
+\pierre{Why do we put an |error| for the entry type here and not in
+       the equivalent place in @Distillation/Scheme@?}
+
+> distillBase entries (ty :>: l@(L sc)) = do
 >     let x = fortran l
->     (k, dom, cod) <- lambdable ty `catchMaybe`  (err "distill: type " 
->                                                 ++ errVal ty 
->                                                 ++ err " is not lambdable.")
+>     (kind, dom, cod) <- lambdable ty `catchMaybe`  (err "distill: type " 
+>                                                    ++ errVal ty 
+>                                                    ++ err " is not lambdable.")
 >     tm' :=>: _ <-  freshRef (x :<: dom) $ \ref ->
->                    distill  (es :< E  ref (lastName ref) (Boy k)
->                                       (error "distill: boy type undefined"))
+>                    distill  (entries :< E  ref (lastName ref) (Boy kind) 
+>                                            (error "distill: type undefined"))
 >                             (cod (pval ref) :>: underScope sc ref)
 >     return $ DL (convScope sc x tm') :=>: (evTm $ L sc)
 >   where
@@ -94,8 +99,8 @@ under the binder, then convert the scope appropriately.
 
 If we encounter a neutral term, we switch to |distillInfer|.
 
-> distillBase es (_ :>: N n) = do
->     (n' :<: _) <- distillInfer es n []
+> distillBase entries (_ :>: N n) = do
+>     (n' :<: _) <- distillInfer entries n []
 >     return $ DN n' :=>: evTm n
 
 If none of the cases match, we complain loudly.
@@ -107,9 +112,15 @@ If none of the cases match, we complain loudly.
 
 \subsection{Distilling |EXTM|s}
 
-The |distillInfer| command is the |EXTM| version of |distill|, which also yields
-the type of the term. It keeps track of a list of entries in scope, but
-also accumulates a spine so that shared parameters can be removed.
+The |distillInfer| command is the |EXTM| version of |distill|, which
+also yields the type of the term. Following |distill|, we maintain the
+local scope of fresh references. 
+
+Moreover, recall that the |DExTm| terms are in Spine form: they are
+composed of a |DHead| -- either parameter, type annotation, or
+embedding of |ExTm| -- and followed by a spine of eliminators. To
+perform this translation, we accumulate a |spine| and discharge it as
+late as possible. Doing so, shared parameters can be removed(?)
 
 \pierre{What is a shared parameter? Why removing shared parameters?}
 
@@ -122,6 +133,9 @@ To distill a parameter with a spine of eliminators, we use |baptise|
 to determine a name for the reference and the number of shared
 parameters, then process the arguments and return the distilled
 application with the shared parameters dropped.
+
+\pierre{The comment above makes little sense and seems to be
+        outdated.}
 
 > distillInfer entries tm@(P (name := kind :<: ty)) spine = do
 >     -- Compute a relative name from |name|
@@ -214,17 +228,17 @@ the distilled spine and the overall type of the application.
 >     ++ err "applied to spine" ++ map UntypedElim spine
 
 
-The |toDExTm| helper function will distill a term to produce an
-|Ex| representation by applying a type annotation if necessary.
+The |toDExTm| helper function will distill a term to produce an |Ex|
+representation by applying a type annotation only if necessary.
 
 > toDExTm :: Entries -> (INTM :>: INTM) -> ProofStateT INTM DExTmRN
-> toDExTm es (_ :>: N tm) = do
->     (tm' :<: _) <- distillInfer es tm []
+> toDExTm entries (_ :>: N tm) = do
+>     (tm' :<: _) <- distillInfer entries tm []
 >     return tm'
-> toDExTm es (ty :>: tm) = do
->     (ty'  :=>: tyv)  <- distill es (SET :>: ty)
->     (tm'  :=>: _)    <- distill es (tyv :>: tm)
->     return (DTY ty' tm')
+> toDExTm entries (ty :>: tm) = do
+>     (ty'  :=>: tyv)  <- distill entries (SET :>: ty)
+>     (tm'  :=>: _)    <- distill entries (tyv :>: tm)
+>     return $ DTY ty' tm'
 
 
 \subsection{Distillation interface}
@@ -232,10 +246,7 @@ The |toDExTm| helper function will distill a term to produce an
 The |distillHere| command distills a term in the current context.
 
 > distillHere :: (TY :>: INTM) -> ProofState (DInTmRN :=>: VAL)
-> distillHere tt = do
->     mliftError $ distill B0 tt
->         where mliftError :: ProofStateT INTM a -> ProofState a
->               mliftError = mapStateT liftError
+> distillHere tt = mapStateT liftError $ distill B0 tt
 
 The |prettyHere| command distills a term in the current context,
 then passes it to the pretty-printer.
