@@ -9,6 +9,8 @@
 
 > module Evidences.Rules where
 
+> import Debug.Trace
+
 > import Control.Applicative
 > import Control.Monad.Error
 
@@ -74,11 +76,12 @@ stuck. The stuckness therefore propagates to the whole elimination.
 This translates into the following code:
 
 > ($$) :: VAL -> Elim VAL -> VAL
-> L (K v)      $$ A _  = v                -- By \ref{eqn:elim_cstt}
-> L (HF _ f)   $$ A v  = f v              -- By \ref{eqn:elim_bind}
-> C (Con t)    $$ Out  = t                -- By \ref{eqn:elim_con}
-> import <- ElimComputation               -- Extensions
-> N n          $$ e    = N (n :$ e)       -- By \ref{eqn:elim_stuck}
+> L (K v)      $$ A _  = v                 -- By \ref{eqn:elim_cstt}
+> L (HF _ f)   $$ A v  = f v               -- By \ref{eqn:elim_bind}
+> L (x :. t)   $$ A v  = eval t (B0 :< v)  -- By \ref{eqn:elim_bind}
+> C (Con t)    $$ Out  = t                 -- By \ref{eqn:elim_con}
+> import <- ElimComputation                -- Extensions
+> N n          $$ e    = N (n :$ e)        -- By \ref{eqn:elim_stuck}
 > f            $$ e    = error ("Can't eliminate\n" ++ show f ++ "\nwith eliminator\n" ++ show e)
 
 
@@ -126,8 +129,9 @@ value.
 This naturally leads to the following code:
 
 > body :: Scope {TT} REF -> ENV -> Scope {VV} REF
-> body (K v)     g = K (eval v g)
-> body (x :. t)  g = HF x (\v -> eval t (g :< v))
+> body (K v)     g   = K (eval v g)
+> body (x :. t)  B0  = x :. t  -- closed lambdas stay syntax
+> body (x :. t)  g   = HF x (\v -> eval t (g :< v))
 
 \subsubsection{Evaluator}
 
@@ -463,6 +467,11 @@ right lambda. We don't do anything otherwise.
 >     case x `elemIndex` refs of
 >       Just i -> pure $ V i 
 >       Nothing -> pure $ P x
+
+When we see a syntactic lambda value, we are very happy, because
+quotation is just renaming.
+
+> bquote refs (L (x :. t)) = (| (refs -|| L (x :. t)) |)
 
 Going under a closure is the usual story: we create a fresh variable,
 evaluate the applied term, quote the result, and bring everyone under

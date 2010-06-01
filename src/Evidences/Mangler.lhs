@@ -11,6 +11,7 @@
 > import Control.Applicative
 > import Control.Monad.Identity
 
+> import Kit.BwdFwd
 > import Evidences.Tm
 
 > import Kit.MissingLibrary
@@ -95,3 +96,25 @@ to the given reference.
 > underScope :: Scope {TT} x -> x -> InTm x
 > underScope (K t)     _ = t
 > underScope (_ :. t)  x = under 0 x %% t
+
+
+\subsection{The deBruijnifying mangler}
+
+This thing takes a stack of REFs and traverses a term, turning them into
+deBruijn indices (in the hope that somebody out there will $\lambda$-abstract
+them). It gets used when quoting $\lambda$-abstractions in values, and when
+building $\lambda$-abstractions in the proof state.
+
+> (-||) :: Bwd REF -> INTM -> INTM
+> es -|| t = disMangle es 0 %% t
+>   where
+>     disMangle :: Bwd REF -> Int -> Mangle Identity REF REF
+>     disMangle ys i = Mang
+>       {  mangP = \ x ies -> (|(h ys x i $:$) ies|)
+>       ,  mangV = \ i ies -> (|(V i $:$) ies|)
+>       ,  mangB = \ _ -> disMangle ys (i + 1)
+>       }
+>     h B0                        x i  = P x
+>     h (ys :< y) x i
+>       | x == y     = V i
+>       | otherwise  = h ys x (i + 1)

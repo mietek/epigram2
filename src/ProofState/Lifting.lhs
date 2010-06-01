@@ -36,24 +36,9 @@ the implementer.
 \subsection{Discharging entries in a term}
 
 
-The ``discharge into'' operator |(-|||)| takes a list of entries and a term, and
+The ``discharge into'' operator |(-|)| takes a list of entries and a term, and
 changes the term so that boys in the list of entries are represented by
-de Brujin indices.
-
-> (-||) :: Bwd REF -> INTM -> INTM
-> es -|| t = disMangle es 0 %% t
->   where
->     disMangle :: Bwd REF -> Int -> Mangle Identity REF REF
->     disMangle ys i = Mang
->       {  mangP = \ x ies -> (|(h ys x i $:$) ies|)
->       ,  mangV = \ i ies -> (|(V i $:$) ies|)
->       ,  mangB = \ _ -> disMangle ys (i + 1)
->       }
->     h B0                        x i  = P x
->     h (ys :< y) x i
->       | x == y     = V i
->       | otherwise  = h ys x (i + 1)
-
+de Brujin indices. It makes key use of the (-||) mangler.
 
 > (-|) :: Entries -> INTM -> INTM
 > es -| tm = (bwdList $ foldMap boy es) -|| tm

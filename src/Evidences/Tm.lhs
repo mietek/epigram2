@@ -3,8 +3,9 @@
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE TypeOperators, GADTs, KindSignatures, RankNTypes, MultiParamTypeClasses ,
->     TypeSynonymInstances, FlexibleInstances, FlexibleContexts, ScopedTypeVariables #-}
+> {-# LANGUAGE TypeOperators, GADTs, KindSignatures, RankNTypes,
+>     MultiParamTypeClasses, TypeSynonymInstances, FlexibleInstances,
+>     FlexibleContexts, ScopedTypeVariables #-}
 
 > module Evidences.Tm where
 
@@ -161,9 +162,14 @@ normalisation.
 In both cases, we represent constant functions with |K t|, equivalent
 of |\ _ -> t |.
 
+\conor{I'm in the middle of messing this bit about. The plan is
+to make scopes syntactic again, but also to ensure that values can
+be embedded in terms. Step one is to whistle innocently and allow
+both syntactic and functional scopes in both places.}
+
 > data Scope :: {Phase} -> * -> * where
->   (:.)  :: String -> Tm {In, TT} x           -> Scope {TT} x  -- binding
->   HF    :: String -> (VAL -> Tm {In, VV} x)  -> Scope {VV} x   
+>   (:.)  :: String -> Tm {In, TT} x           -> Scope p{-TT-} x  -- binding
+>   HF    :: String -> (VAL -> Tm {In, VV} x)  -> Scope p{-VV-} x   
 >   K     :: Tm {In, p} x                      -> Scope p x     -- constant
 
 
@@ -360,6 +366,7 @@ We have some pattern synonyms for common, er, patterns.
 \pierre{What does |V| stand for in |LAV| and |PIV|? Is it |V| for
         \emph{value} (or \emph{Vendetta}?) I'm surprised then, because
         these are |TT| terms, not values, right? }
+\conor{|V| is for \emph{variable}.}
 
 We have some type synonyms for commonly occurring instances of |Tm|.
 
