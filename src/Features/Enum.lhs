@@ -110,7 +110,12 @@
 >     { opName   = "branches"
 >     , opArity  = 2 
 >     , opTyTel  = bOpTy
->     , opRun    = bOpRun
+>     , opRun    = {-bOpRun-} runOpTree $
+>         oData  [ oTup $ OLam $ \_P -> ORet UNIT
+>                , oTup $ \ () _E -> OLam $ \_P -> ORet $
+>                  TIMES (_P $$ A ZE)
+>                     (branchesOp @@ [_E, L $ "x" :. [.x. _P -$ [SU (NV x)]]])
+>                ]
 >     , opSimp   = \_ _ -> empty
 >     } where
 >         bOpTy = "e" :<: enumU :-: \e ->
@@ -137,9 +142,14 @@
 >     { opName  = "switch"
 >     , opArity = 4
 >     , opTyTel = sOpTy
->     , opRun   = sOpRun -- makeOpRun "switch" switchTest
+>     , opRun   = runOpTree $ {- sOpRun -- makeOpRun "switch" switchTest -}
+>         OLam $ \_ ->
+>         OCase (map projector [0..])
 >     , opSimp  = \_ _ -> empty
 >     } where
+>         projector i = OLam $ \_ -> OLam $ \bs -> ORet (proj i bs)
+>         proj 0 bs = bs $$ Fst
+>         proj i bs = proj (i - 1) (bs $$ Snd)
 >         sOpTy = 
 >           "e" :<: enumU :-: \e ->
 >           "x" :<: ENUMT e :-: \x ->

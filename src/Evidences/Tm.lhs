@@ -85,6 +85,7 @@ And we can infer types from:
 >   (:@)  :: Op -> [Tm {In, p} x]                 -> Tm {Ex, p}   x -- fully applied op
 >   (:$)  :: Tm {Ex, p} x -> Elim (Tm {In, p} x)  -> Tm {Ex, p}   x -- elim
 >   (:?)  :: Tm {In, TT} x -> Tm {In, TT} x       -> Tm {Ex, TT}  x -- typing
+>   Yuk   :: Tm {In, VV} x                        -> Tm {Ex, TT}  x -- dirty
 
 To put some flesh on these bones, we define and use the |Scope|,
 |Can|, |Op|, and |Elim| data-types. Their role is described
@@ -136,6 +137,12 @@ More tricky but for the same reason: when \emph{implementing} term
 builders (not when using them), we are indeed making terms,
 potentially involving operators. Again, we must be careful of not
 building a stuck operator for no good reason.
+
+\conor{I've added a cheap embedding from values to terms, for use
+in operators. It's often used in this thing.}
+
+> (-$) :: VAL -> [INTM] -> INTM
+> f -$ as = N (foldl (\f a -> f :$ A a) (Yuk f) as)
 
 \end{danger}
 
@@ -250,6 +257,8 @@ method.
 A key component of the definition of operators is the typing
 telescope. Hence, we first describe the implementation of the
 telescope.
+
+
 
 \paragraph{Telescope}
 
@@ -748,9 +757,11 @@ To ease the writing of error terms, we have a bunch of combinators:
 >   show (n :$ e)    = "(" ++ show n ++ " :$ " ++ show e ++ ")"
 >   show (op :@ vs)  = "(" ++ opName op ++ " :@ " ++ show vs ++ ")"
 >   show (t :? y)    = "(" ++ show t ++ " :? " ++ show y ++ ")"
+>   show (Yuk v)     = "((" ++ show v ++ "))"
 >
 > instance Show x => Show (Scope p x) where
 >   show (x :. t)   = show x ++ " :. " ++ show t
+>   show (H g x t) = "H (" ++ show g ++ ") " ++ x ++ "(" ++ show t ++ ")"
 >   show (HF x t)  = "..."
 >   show (K t) = "K (" ++ show t ++")"
 

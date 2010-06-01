@@ -171,6 +171,7 @@ from the environment (f). Elimination is handled by |$$| defined above
 > eval (V i)       = fromMaybe (error "eval: bad index") . (!. i)  -- By (f)
 > eval (t :$ e)    = (|eval t $$ (eval ^$ e)|)                     -- By (g)
 > eval (op :@ vs)  = (|(op @@) (eval ^$ vs)|)                      -- By (h)
+> eval (Yuk v)     = (|v|)
 
 
 Finally, the evaluation of a closed term simply consists in calling the
@@ -733,6 +734,58 @@ We can look up the primitive reference corresponding to an operator using
 >     Just ref  -> ref
 >     Nothing   -> error $ "lookupOpRef: missing operator primitive " ++ show op
 
+
+Based on, but not quite the same as Edwin's experimental operator
+DSEL, try this.
+
+> data OpTree
+>   = OLam (VAL -> OpTree)
+>   | OPr OpTree
+>   | OCase [OpTree]
+>   | OCon OpTree
+>   | OSet (Can VAL -> OpTree)
+>   | ORet VAL
+>   | OBarf
+
+> oData :: [OpTree] -> OpTree
+> oData = OCon . OPr . OCase 
+
+> class OLams t where
+>   oLams :: t -> OpTree
+> instance OLams OpTree where
+>   oLams = id
+> instance OLams t => OLams (() -> t) where
+>   oLams f = OLam $ \ _ -> oLams (f ())
+> instance OLams t => OLams (VAL -> t) where
+>   oLams = OLam . (oLams .)
+
+> class OTup t where
+>   oTup :: t -> OpTree
+> instance OTup OpTree where
+>   oTup = OLam . const
+> instance OTup t => OTup (() -> t) where
+>   oTup f = OPr . OLam $ \ _ -> oTup (f ())
+> instance OTup t => OTup (VAL -> t) where
+>   oTup = OPr . OLam . (oTup .)
+
+> runOpTree :: OpTree -> [VAL] -> Either NEU VAL
+> runOpTree (OLam f)  (x : xs)  = runOpTree (f x) xs
+> runOpTree (OPr f)   (v : xs)  = runOpTree f (v $$ Fst : v $$ Snd : xs)
+> runOpTree (OCase bs) (i : xs)   = (| (bs !!) (num i) |) >>= \ b -> runOpTree b xs where
+>   num :: VAL -> Either NEU Int
+>   num ZE      = (| 0 |)
+>   num (SU n)  = (| (1+) (num n) |)
+>   num (N e)   = Left e
+> runOpTree (OCon f) (CON t : xs)  = runOpTree f (t : xs)
+> runOpTree (OSet f) (C c :  xs)   = runOpTree (f c) xs
+> runOpTree (ORet v)          xs   = Right (v $$$ map A xs)
+> runOpTree _  (N e : xs)   = Left e
+
+
+Grot! Why does the |Monad (Either e)| instance demand |(Error e)|? I shut it up.
+
+> instance Error NEU where
+>   strMsg = error
 
 
 \subsection{Observational Equality}

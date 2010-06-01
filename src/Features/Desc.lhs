@@ -135,7 +135,21 @@ case for sigma.
 >     { opName = "desc"
 >     , opArity = 2
 >     , opTyTel = dOpTy
->     , opRun = dOpRun
+>     , opRun = {- dOpRun -} runOpTree $ oData
+>         [ {-ID-} oTup $ OLam $ \_X -> ORet _X
+>         , {-CONST-} oTup $ \_A -> OLam $ \_X -> ORet _A
+>         , {-SUM-} oTup $ \_E _D -> OLam $ \_X -> ORet $
+>                     SIGMA (ENUMT _E) $ L $ "c" :. [.c. N $
+>                        descOp :@ [_D -$ [NV c], _X -$ []]]
+>         , {-PROD-} oTup $ \_D _D' -> OLam $ \_X -> ORet $
+>                     TIMES (descOp @@ [_D, _X]) (descOp @@ [_D', _X])
+>         , {-SIGMA-} oTup $ \_S _D -> OLam $ \_X -> ORet $
+>                     SIGMA _S $ L $ "s" :. [.s. N $
+>                       descOp :@ [_D -$ [NV s], _X -$ []]]
+>         , {-PI-} oTup $ \_S _D -> OLam $ \_X -> ORet $
+>                     PI _S $ L $ "s" :. [.s. N $
+>                       descOp :@ [_D -$ [NV s], _X -$ []]]
+>         ]
 >     , opSimp = \_ _ -> empty
 >     } where
 >       dOpTy =
@@ -167,7 +181,20 @@ case for sigma.
 >     { opName = "box"
 >     , opArity = 4
 >     , opTyTel = boxOpTy
->     , opRun = boxOpRun
+>     , opRun = {-boxOpRun-} runOpTree $ oData
+>         [ {-ID-} oTup $             oLams $ \ () _P x -> ORet (_P $$ A x)
+>         , {-CONST-} oTup $ \ () ->  oLams $ \ () () () -> ORet UNIT
+>         , {-SUM-} oTup $ \ () _D -> oLams $ \_X _P -> OPr $ oLams $ \c d ->
+>              ORet $ boxOp @@ [_D $$ A c, _X, _P, d]
+>         , {-PROD-} oTup $ \_D _D' -> oLams $ \_X _P -> OPr $ oLams $ \d d' ->
+>              ORet $ TIMES (boxOp @@ [_D, _X, _P, d])
+>                           (boxOp @@ [_D', _X, _P, d'])
+>         , {-SIGMA-} oTup $ \ () _D -> oLams $ \_X _P -> OPr $ oLams $ \s d ->
+>              ORet $ boxOp @@ [_D $$ A s, _X, _P, d]
+>         , {-PI-} oTup $ \_S _D -> oLams $ \_X _P f ->
+>              ORet $ PI _S $ L $ "s" :. [.s. N $
+>                 boxOp :@ [_D -$ [NV s], _X -$ [] , _P -$ [] , f -$ [NV s]]]
+>         ]
 >     , opSimp = \_ _ -> empty
 >     } where
 >       boxOpTy =
@@ -205,7 +232,21 @@ case for sigma.
 >     { opName = "mapBox"
 >     , opArity = 5
 >     , opTyTel = mapBoxOpTy
->     , opRun = mapBoxOpRun
+>     , opRun = {-mapBoxOpRun-} runOpTree $ oData
+>       [ {-ID-} oTup $             oLams $ \ () () p x -> ORet (p $$ A x)
+>       , {-CONST-} oTup $ \ () ->  oLams $ \ () () () () -> ORet VOID
+>       , {-SUM-} oTup $ \ () _D -> oLams $ \_X _P p -> OPr $ oLams $ \c d ->
+>            ORet $ mapBoxOp @@ [_D $$ A c, _X, _P, p, d]
+>       , {-PROD-} oTup $ \_D _D' -> oLams $ \_X _P p -> OPr $ oLams $ \d d' ->
+>            ORet $ PAIR (mapBoxOp @@ [_D, _X, _P, p, d])
+>                        (mapBoxOp @@ [_D', _X, _P, p, d'])
+>       , {-SIGMA-} oTup $ \ () _D -> oLams $ \_X _P p -> OPr $ oLams $ \s d ->
+>            ORet $ mapBoxOp @@ [_D $$ A s, _X, _P, p, d]
+>       , {-PI-} oTup $ \() _D -> oLams $ \_X _P p f ->
+>            ORet $ L $ "s" :. [.s. N $
+>              mapBoxOp :@ [_D -$ [NV s], _X -$ [] , _P -$ [] , p -$ [],
+>                            f -$ [NV s]]]
+>       ]
 >     , opSimp = \_ _ -> empty
 >     } where
 >       mapBoxOpTy =  
@@ -243,7 +284,21 @@ case for sigma.
 >     { opName  = "map"
 >     , opArity = 5
 >     , opTyTel    = mapOpTy
->     , opRun   = mapOpRun
+>     , opRun   = {-mapOpRun-} runOpTree $ oData
+>       [ {-ID-} oTup $ oLams $ \ () () f v -> ORet $ f $$ A v
+>       , {-CONST-} oTup $ \ () -> oLams $ \ () () () a -> ORet a
+>       , {-SUM-} oTup $ \ () _D -> oLams $ \_X _Y f -> OPr $ oLams $ \c d ->
+>           ORet $ PAIR c (mapOp @@ [_D $$ A c, _X, _Y, f, d])
+>       , {-PROD-} oTup $ \_D _D' -> oLams $ \_X _Y f -> OPr $ oLams $ \d d' ->
+>           ORet $ PAIR (mapOp @@ [_D, _X, _Y, f, d])
+>                       (mapOp @@ [_D', _X, _Y, f, d'])
+>       , {-SIGMA-} oTup $ \ () _D -> oLams $ \_X _Y f -> OPr $ oLams $ \s d ->
+>            ORet $ PAIR s (mapOp @@ [_D $$ A s, _X, _Y, f, d])
+>       , {-PI-} oTup $ \() _D -> oLams $ \_X _Y f g ->
+>            ORet $ L $ "s" :. [.s. N $
+>              mapOp :@ [_D -$ [NV s], _X -$ [] , _Y -$ [] , f -$ [],
+>                            g -$ [NV s]]]
+>       ]
 >     , opSimp  = mapOpSimp
 >     } where
 >         mapOpTy = 
@@ -309,7 +364,11 @@ case for sigma.
 >     { opName = "induction"
 >     , opArity = 4
 >     , opTyTel = inductionOpTy
->     , opRun = inductionOpRun
+>     , opRun = {-inductionOpRun-} runOpTree $
+>         OLam $ \ _D -> OCon $ oLams $ \ v _P p -> ORet $
+>           p $$ A v $$ A (mapBoxOp @@ [_D, MU Nothing _D, _P,
+>             L $ "x" :. [.x. N $
+>              inductionOp :@ [_D -$ [], NV x, _P -$ [], p -$ []]], v])
 >     , opSimp = \_ _ -> empty
 >     } where
 >       inductionOpTy = 
