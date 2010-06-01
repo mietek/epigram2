@@ -167,8 +167,11 @@ to make scopes syntactic again, but also to ensure that values can
 be embedded in terms. Step one is to whistle innocently and allow
 both syntactic and functional scopes in both places.}
 
+\conor{Next, I restore the closure version of scopes.}
+
 > data Scope :: {Phase} -> * -> * where
 >   (:.)  :: String -> Tm {In, TT} x           -> Scope p{-TT-} x  -- binding
+>   H     :: ENV -> String -> Tm {In, TT} x    -> Scope p{-VV-} x  
 >   HF    :: String -> (VAL -> Tm {In, VV} x)  -> Scope p{-VV-} x   
 >   K     :: Tm {In, p} x                      -> Scope p x     -- constant
 
@@ -616,6 +619,7 @@ a useful name from a term.
 
 > fortran :: Tm {In, p} x -> String
 > fortran (L (x :. _))   | not (null x) = x
+> fortran (L (H _ x _))   | not (null x) = x
 > fortran (L (HF x  _))  | not (null x) = x
 > fortran _ = "xf"
 

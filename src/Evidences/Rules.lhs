@@ -77,6 +77,7 @@ This translates into the following code:
 
 > ($$) :: VAL -> Elim VAL -> VAL
 > L (K v)      $$ A _  = v                 -- By \ref{eqn:elim_cstt}
+> L (H g _ t)  $$ A v  = eval t (g :< v)   -- By \ref{eqn:elim_bind}
 > L (HF _ f)   $$ A v  = f v               -- By \ref{eqn:elim_bind}
 > L (x :. t)   $$ A v  = eval t (B0 :< v)  -- By \ref{eqn:elim_bind}
 > C (Con t)    $$ Out  = t                 -- By \ref{eqn:elim_con}
@@ -131,7 +132,10 @@ This naturally leads to the following code:
 > body :: Scope {TT} REF -> ENV -> Scope {VV} REF
 > body (K v)     g   = K (eval v g)
 > body (x :. t)  B0  = x :. t  -- closed lambdas stay syntax
-> body (x :. t)  g   = HF x (\v -> eval t (g :< v))
+> body (x :. t)  g   = H g x t
+> --body (x :. t)  g   = HF x (\v -> eval t (g :< v))
+
+\conor{I'm in the process of restoring first-order closures.}
 
 \subsubsection{Evaluator}
 
@@ -468,25 +472,29 @@ right lambda. We don't do anything otherwise.
 >       Just i -> pure $ V i 
 >       Nothing -> pure $ P x
 
+Constant lambdas are painlessly structural.
+
+> bquote refs (L (K t))   = (| LK (bquote refs t) |)
+
 When we see a syntactic lambda value, we are very happy, because
 quotation is just renaming.
 
-> bquote refs (L (x :. t)) = (| (refs -|| L (x :. t)) |)
+> -- bquote refs (L (x :. t)) = (| (refs -|| L (x :. t)) |)
 
-Going under a closure is the usual story: we create a fresh variable,
+For all other lambdas, it's the usual story: we create a fresh variable,
 evaluate the applied term, quote the result, and bring everyone under
 a binder.
 
-> bquote refs (L (HF x t)) = 
->     (|(\t -> L (x :. t))
+> bquote refs f@(L _) = 
+>     (|(L . (x :.))
 >       (freshRef  (x :<: error "bquote: type undefined") 
 >                  (\x -> bquote  (refs :< x) 
->                                 (t (pval x))))|)
+>                                 (f $$ A (pval x))))|)
+>     where x = fortran f
 
 For the other constructors, we simply go through and do as much damage
 as we can. Simple, easy.
 
-> bquote refs (L (K t))   = (| LK (bquote refs t) |)
 > bquote refs (C c)       = (| C (traverse (bquote refs) c) |)
 > bquote refs (N n)       = (| N (bquote refs n) |)
 > bquote refs (n :$ v)    = (| (bquote refs n) :$ (traverse (bquote refs) v) |)
