@@ -865,7 +865,7 @@ axiom |coh| to produce the proof.
 
 > coeh :: TY -> TY -> VAL -> VAL -> (VAL, VAL)
 > coeh s t q v | partialEq s t q  = (v, pval refl $$ A s $$ A v)
-> coeh s t q v = (coe @@ [s, t, q, v], pval coh $$ A s $$ A t $$ A q $$ A v)
+> coeh s t q v = (coe @@ [s, t, q, v], coh @@ [s, t, q, v])
 
 
 The |coerce| function transports values between equal canonical sets. Given two

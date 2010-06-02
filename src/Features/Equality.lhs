@@ -86,25 +86,51 @@
 >            oprun vs = error ("coe: undefined for arguments"
 >                                  ++ unlines (map show vs))
 
+>   coh = Op { opName = "coh"
+>            , opArity = 4
+>            , opTyTel =
+>                "S" :<: SET :-: \ _S -> "T" :<: SET :-: \ _T ->
+>                "Q" :<: PRF (EQBLUE (SET :>: _S) (SET :>: _T)) :-: \ _Q ->
+>                "s" :<: _S :-: \ s -> Target $ PRF $
+>                EQBLUE (_S :>: s) (_T :>: (coe @@ [_S, _T, _Q, s]))
+>            , opRun = oprun
+>            , opSimp = \ [_S, _T, _, s] r ->
+>                if equal (SET :>: (_S, _T)) r
+>                  then pure $ P refl :$ A _S :$ A s
+>                  else (|)
+>            } where
+>            oprun :: [VAL] -> Either NEU VAL
+>            oprun [_S, _T, q, s] | partialEq _S _T q =
+>              Right (pval refl $$ A _S $$ A s)
+>            oprun [N x,y,q,s] = Left x
+>            oprun [x,N y,q,s] = Left y
+>            oprun [_S,_T,_Q,s] = Right $
+>              pval cohAx $$ A _S $$ A _T $$ A _Q $$ A s
+>            oprun vs = error ("coe: undefined for arguments"
+>                                  ++ unlines (map show vs))
+
 > import -> Operators where
 >   eqGreen :
 >   coe :
 
 > import -> RulesCode where
->   coh = [("Axiom",0),("coh",0)] := (DECL :<: cohType) where
+>   cohAx = [("Axiom",0),("coh",0)] := (DECL :<: cohType) where
 >     cohType = PRF $ 
->               ALL SET (L . HF "x" $ \x ->
->               ALL SET (L . HF "y" $ \y ->
->               ALL (PRF (EQBLUE (SET :>: x) (SET :>: y))) (L . HF "q" $ \q ->
->               ALL x (L . HF "s" $ \s ->
->               EQBLUE (x :>: s) (y :>: (coe @@ [x, y, q, s]))))))
+>               ALL SET $ L $ "S" :. [._S.
+>               ALL SET $ L $ "T" :. [._T.
+>               ALL (PRF (EQBLUE (SET :>: NV _S) (SET :>: NV _T)))
+>                  $ L $ "Q" :. [._Q.
+>               ALL (NV _S) $ L $ "s" :. [.s.
+>               EQBLUE (NV _S :>: NV s)
+>                      (NV _T :>: N (coe :@ [NV _S, NV _T, NV _Q, NV s]))
+>               ]]]]
 >   refl = [("Axiom",0),("refl",0)] := (DECL :<: reflType) where
->     reflType = PRF (ALL SET (L . HF "s" $ \s ->
->                     ALL s   (L . HF "x" $ \x ->
->                     EQBLUE (s :>: x) (s :>: x))))
+>     reflType = PRF $  ALL SET $ L $ "S" :. [._S.
+>                       ALL (NV _S) $ L $ "s" :. [.s.
+>                       EQBLUE (NV _S :>: NV s) (NV _S :>: NV s) ]]
 
 > import -> Primitives where
->   ("coh", coh) :
+>   ("cohAx", cohAx) :
 >   ("refl", refl) :
 
 
