@@ -36,8 +36,8 @@
 
 The distiller, like the elaborator, is organized on a |check|/|infer|
 basis, following the type-checker implementation in
-Section~\ref{subsec:type-checking}. |distill| mirrors |check| --
-distilling |INTM|s, while |distillInfer| mirrors |infer| -- distilling
+Section~\ref{subsec:type-checking}. |distill| mirrors |check| ---
+distilling |INTM|s, while |distillInfer| mirrors |infer| --- distilling
 |EXTM|s.
 
 
@@ -50,15 +50,16 @@ It peforms christening at the same time, turning absolute names into
 relative names. 
 
 The distiller first tries to apply Feature-specific rules. These rules
-contain the inteligence of the distiller, aiming at making concise
-Display term. If unsuccessful, the distiller fall back to a generic
-distiller |distillBase|.
+contain the inteligence of the distiller, aiming at making a concise
+Display term. If unsuccessful, the distiller falls back to the generic
+rules in |distillBase|.
 
 When going under a binder, we have to introduce fresh names to distill
 further. When christening, these fresh names have to be dealt with
-separately (See |unresolve| in Section~\ref{subsec:christening}):
+separately (see |unresolve| in Section~\ref{subsec:christening}):
 indeed, they are actually bound variables. Hence, we collect this
-\emph{local scope} as a list of |entries|.
+\emph{local scope} as a list of |Entries|. \question{Does |unresolve|
+really need |Entries|, or can it cope with |Bwd REF| instead?}
 
 > distill :: Entries -> (TY :>: INTM) -> ProofStateT INTM (DInTmRN :=>: VAL)
 > import <- DistillRules
@@ -77,10 +78,9 @@ We distill structurally through canonical terms:
 >     return $ (DC $ fmap termOf cc) :=>: evTm (C c)
 
 To distill a $lambda$-abstraction, we speculate a fresh reference and distill
-under the binder, then convert the scope appropriately.
-
-\pierre{Why do we put an |error| for the entry type here and not in
-       the equivalent place in @Distillation/Scheme@?}
+under the binder, then convert the scope appropriately. The |INTM| version of
+the entry type should never be used, so we can simply omit it. (Hopefully we
+will switch the entries to |Bwd REF| so this will not be necessary.)
 
 > distillBase entries (ty :>: l@(L sc)) = do
 >     let x = fortran l
@@ -117,25 +117,22 @@ also yields the type of the term. Following |distill|, we maintain the
 local scope of fresh references. 
 
 Moreover, recall that the |DExTm| terms are in Spine form: they are
-composed of a |DHead| -- either parameter, type annotation, or
-embedding of |ExTm| -- and followed by a spine of eliminators. To
-perform this translation, we accumulate a |spine| and discharge it as
-late as possible. Doing so, shared parameters can be removed(?)
-
-\pierre{What is a shared parameter? Why removing shared parameters?}
+composed of a |DHead| --- either parameter, type annotation, or
+embedding of |ExTm| --- and followed by a spine of eliminators. To
+perform this translation, we accumulate a |spine| and distill it 
+when we reach the head. Doing so, shared parameters can be removed
+(see subsection~\ref{subsec:christening}).
 
 > distillInfer ::  Entries -> EXTM -> Spine {TT} REF -> 
 >                  ProofStateT INTM (DExTmRN :<: TY)
 >
 > import <- DistillInferRules
 
-To distill a parameter with a spine of eliminators, we use |baptise|
-to determine a name for the reference and the number of shared
-parameters, then process the arguments and return the distilled
-application with the shared parameters dropped.
-
-\pierre{The comment above makes little sense and seems to be
-        outdated.}
+To distill a parameter with a spine of eliminators, we use |unresolve|
+to determine a relative name for the reference, the number of shared
+parameters, and possibly a scheme attached to it. We then call on
+|distillSpine| to process the eliminators, and return the distilled
+elimination with the shared parameters and implicit arguments removed.
 
 > distillInfer entries tm@(P (name := kind :<: ty)) spine = do
 >     -- Compute a relative name from |name|
@@ -144,12 +141,17 @@ application with the shared parameters dropped.
 >           unresolve name kind spine (inBScope proofCtxt) entries
 >     -- Distill the spine
 >     (e', ty') <- distillSpine entries (evTm tm :<: ty) spine
->     -- \pierre{And then\ldots no clue.}
+>     -- Remove shared parameters and implicit arguments
 >     let  spine1  = drop argsToDrop e'
 >          spine2  = maybe spine1 (hideImplicit spine1) mSch 
 >     -- Return the relative name applied to the simplified spine
 >     return $ (DP relName ::$ spine2) :<: ty'
 >   where
+
+If the parameter has a scheme attached, we need to remove implicit arguments
+once we have distilled the spine and dropped the shared parameters. We proceed
+structurally through the scheme, removing arguments that should be implicit.
+
 >     hideImplicit :: DSPINE -> Scheme x -> DSPINE
 >     hideImplicit as      (SchType _)            = as
 >     hideImplicit (a:as)  (SchExplicitPi _ sch)  = a : hideImplicit as sch
@@ -169,20 +171,16 @@ parameters containing the appropriate primitive references.
 Unnecessary type ascriptions can simply be dropped. As we can always
 \emph{infer} the type of a neutral term, there is no point in keeping
 its ascription. This also ensures that shared parameters are handled
-correctly when the head is a parameter.
-
-\pierre{Why are shared parameters handled correctly in that case?}
+correctly when the head is a parameter under a type ascription, because
+distillation will proceed using the rule for parameters above.
 
 > distillInfer entries (N t :? _) spine  = distillInfer entries t spine
 
-Type ascriptions that were inserted by elaboration of type annotations
-can be removed, if we are lucky, to give nicer output.
+Typed identity functions applied to an argument can simply be removed.
+We do this because they are inserted by elaboration of type annotations;
+if a user manually creates one, we can safely remove it anyway.
 
-\pierre{Can't we match on any name, not just |"typeAnnot"|? If not, then
-        maybe a less-likely to happen name would be good, stored in a
-        variable somewhere.}
-
-> distillInfer entries (L ("typeAnnot" :. NV 0) :? PI ty _) ((A a):spine) =
+> distillInfer entries (L (_ :. NV 0) :? PI ty _) ((A a):spine) =
 >     distillInfer entries (a :? ty) spine
 
 Otherwise, we have no choice but distilling both side of the type
@@ -205,7 +203,7 @@ If nothing matches, we are unable to distill this term, so we complain loudly.
 >                        err "distillInfer: can't cope with " ++ errTm (N tm)
 
 
-\subsection{Distillation Support}
+\subsection{Distillation support}
 
 The |distillSpine| command takes a list of entries in scope, a typed value
 and a spine of arguments for the value. It distills the spine, using

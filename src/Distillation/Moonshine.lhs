@@ -30,6 +30,8 @@
 The |moonshine| command attempts the dubious task of converting an
 Evidence term (possibly of dubious veracity) into a Display term.
 This is mostly for error-message generation.
+\question{Presumably |moonshine| should accumulate |Entries| like
+|distill| and friends?}
 
 > moonshine :: INTM -> ProofStateT INTM DInTmRN
 > moonshine (LK t) = do
