@@ -89,9 +89,9 @@
 >   canTy chev (Set :>: EnumT e)  = do
 >     eev@(e :=>: ev) <- chev (enumU :>: e)
 >     return $ EnumT eev
->   canTy _ (EnumT (CONSE t e) :>: Ze)    = return Ze 
->   canTy chev (EnumT (CONSE t e) :>: Su n)  = do
->     nnv@(n :=>: nv) <- chev (ENUMT e :>: n)
+>   canTy _ (EnumT (CON e) :>: Ze)       | CONSN <- e $$ Fst  = return Ze 
+>   canTy chev (EnumT (CON e) :>: Su n)  | CONSN <- e $$ Fst  = do
+>     nnv@(n :=>: nv) <- chev (ENUMT (e $$ Snd $$ Snd $$ Fst) :>: n)
 >     return $ Su nnv
 
 > import -> OpCode where
