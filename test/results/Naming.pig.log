@@ -1,0 +1,64 @@
+Made module.
+Made lambda boy!
+Made.
+Appended goal!
+Made lambda boy!
+Appended goal!
+Going to root...
+[ X
+    [ \ A : Set ->
+      f := ? : Set ;
+      f
+        [ \ a : A ->
+          g := ? : Set ;
+        ] ? : A ;
+    ] ;
+]
+X.f^1
+(A : Set) -> Set
+X.f
+(A : Set) -> A -> A
+X.f.g
+(A : Set)(a : A) -> Set
+I'm sorry, Dave. I'm afraid I can't do that.
+Error: resolveHere: cannot resolve name: X
+Error: Modules have not term representaion
+Going in...
+\ A : Set ->
+f^1 : Set
+f : A -> A
+f^1
+Set
+f
+A -> A
+f.g
+(a : A) -> Set
+X.f
+(A : Set) -> Set
+X.f_1
+(A : Set) -> A -> A
+I'm sorry, Dave. I'm afraid I can't do that.
+Error: resolveHere: cannot resolve name: X
+Error: Direct ancestors are not in scope!
+Going in...
+\ A : Set ->
+\ a : A ->
+f^1 : Set
+g : (a : A) -> Set
+f^1
+Set
+X.f
+(A : Set) -> Set
+I'm sorry, Dave. I'm afraid I can't do that.
+Error: resolveHere: cannot resolve name: X.f^1
+Error: Yeah, good luck with that
+I'm sorry, Dave. I'm afraid I can't do that.
+Error: resolveHere: cannot resolve name: X.f_1
+Error: Direct ancestors are not in scope!
+g
+Set
+f.g
+(a : A) -> Set
+X.f_1.g
+(A : Set)(a : A) -> Set
+Loaded.

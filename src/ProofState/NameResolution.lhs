@@ -48,16 +48,33 @@ We can extract such a thing from a |ProofContext| using |inBScope|:
 >   (  fmap (\l -> (elders l, last . motherName . mother $ l)) layers
 >   ,  entries)
 
-An |FScopeContext| is the forwards variant.
+An |FScopeContext| is the forwards variant:
 
 > type FScopeContext =  ( Fwd (Entry Bwd)
 >                       , Fwd ((String, Int), Fwd (Entry Bwd))) 
->
+
+We can reverse the former to produce the latter:
+
 > inBFScope :: BScopeContext -> FScopeContext
 > inBFScope (uess :< (es,u),es') = 
->   let (fs, vfss) = inBFScope (uess,es) in 
->   (fs, (u,es' <>> F0) :> vfss)
+>     let (fs, vfss) = inBFScope (uess,es) in 
+>     (fs, (u,es' <>> F0) :> vfss)
 > inBFScope (B0,es) = (es <>> F0,F0) 
+
+
+The |flat| function, up to currying, takes a |BScopeContext| and flattens it
+to produce a list of entries.
+
+> flat :: Bwd (Entries, (String,Int)) -> Entries -> Entries
+> flat B0 es = es
+> flat (esus :< (es',_)) es = flat esus (es' <+> es)
+
+The |flatNom| function produces a name by prepending its second argument with
+the name components from the backwards list. 
+
+> flatNom :: Bwd (Entries, (String,Int)) -> Name -> Name
+> flatNom B0 nom = nom
+> flatNom (esus :< (_,u)) nom = flatNom esus (u : nom)
 
 
 \subsection{Resolving relative names to references}
@@ -123,14 +140,6 @@ way back to (or from) the root of the tree to the cursor position.
 >   (x,_,z) <- lookFor us Nothing fsc
 >   return (x,sp,z)
 > lookFor' us (Right es,sp,mr,ms) = lookLocal us es sp mr ms
-
-> flat :: Bwd (Entries, (String,Int)) -> Entries -> Entries
-> flat B0 es = es
-> flat (esus :< (es',_)) es = flat esus (es' <+> es)
-
-> flatNom :: Bwd (Entries, (String,Int)) -> Name -> Name
-> flatNom B0 nom = nom
-> flatNom (esus :< (_,u)) nom = flatNom esus (u : nom)
 
 > lookUp :: (String, Int) -> BScopeContext -> FScopeContext -> 
 >                            Either (StackError t) 
@@ -355,30 +364,7 @@ spines when we unwind a section from the name of the current development.
 
 \subsubsection{Here goes...}
 
-The |christenName| and |christenREF| functions call |unresolve| for names, and
-the name part of references, respectively.
-
-> christenName :: BScopeContext -> Name -> RKind -> RelName
-> christenName bsc target rk = s
->   where (s, _, _) = unresolve target rk (boySpine . (uncurry flat) $ bsc) bsc B0
->
-> christenREF :: BScopeContext -> REF -> RelName
-> christenREF bsc (target := rk :<: _) = christenName bsc target rk
-
-
-The |failNom| function is used to give up and convert an absolute name that
-cannot be unresolved into a relative name. This can happen when distilling
-erroneous terms, which may not be well-scoped.
-
-> failNom :: Name -> RelName
-> failNom nom = ("!!!",Rel 0):(map (\(a,b) -> (a,Abs b)) nom)
-
-
-A |BwdName| is, as one might expect, a |Name| stored backwards.
-
-> type BwdName = Bwd (String,Int)
-
-To |unresolve| an absolute |Name|, we need its reference kind, the spine of
+To |unresolve| an absolute name, we need its reference kind, the spine of
 arguments to which it is applied, the context in which we are viewing it and
 a list of entries in local scope. We obtain a relative name, the number of
 shared parameters to drop, and the scheme of the name (if there is one).
@@ -525,6 +511,25 @@ shared parameters to drop, and the scheme of the name (if there is one).
 > nomRel' _ _ _ = Nothing
 
 
+\subsubsection{Useful oddments for unresolution}
+
+The |failNom| function is used to give up and convert an absolute name that
+cannot be unresolved into a relative name. This can happen when distilling
+erroneous terms, which may not be well-scoped.
+
+> failNom :: Name -> RelName
+> failNom nom = ("!!!",Rel 0):(map (\(a,b) -> (a,Abs b)) nom)
+
+
+The |christenName| and |christenREF| functions call |unresolve| for names, and
+the name part of references, respectively.
+
+> christenName :: BScopeContext -> Name -> RKind -> RelName
+> christenName bsc target rk = s
+>   where (s, _, _) = unresolve target rk (boySpine . (uncurry flat) $ bsc) bsc B0
+>
+> christenREF :: BScopeContext -> REF -> RelName
+> christenREF bsc (target := rk :<: _) = christenName bsc target rk
 
 
 The |showEntries| function folds over a bunch of entries, christening them with
