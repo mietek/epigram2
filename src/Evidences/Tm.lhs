@@ -639,37 +639,28 @@ This is a first try, with some shortcomings. Feel free to modify the
 following to make it suit your need.
 
 > data ErrorTok t = StrMsg String
->                 | TypedTm (t :<: t)
->                 | UntypedTm t
->                 | TypedCan (Can t :<: Can t)
->                 | UntypedCan (Can t)
->                 | TypedVal (VAL :<: TY)
->                 | UntypedVal VAL
->                 | UntypedElim (Elim t)
->                 | ERef REF
->                 | UntypedINTM INTM
+>                 | ErrorTm       (t       :<: Maybe t)
+>                 | ErrorCan      (Can t   :<: Maybe t)
+>                 | ErrorElim     (Elim t  :<: Maybe t)
+>                 | ErrorREF REF
+>                 | ErrorVAL      (VAL     :<: Maybe TY)
 
 > instance Functor ErrorTok where 
->       -- "deriving Functor" refused to make it for me
->     fmap f (TypedTm (t1 :<: t2)) = TypedTm (f t1 :<: f t2)
->     fmap f (UntypedTm t) = UntypedTm (f t)
->     fmap f (TypedCan (t1 :<: t2)) = TypedCan (fmap f t1 :<: fmap f t2)
->     fmap f (UntypedCan t) = UntypedCan (fmap f t)
->     fmap f (UntypedElim t) = UntypedElim (fmap f t)
->     fmap f (StrMsg x) = StrMsg x
->     fmap f (TypedVal (t1 :<: t2)) = TypedVal (t1 :<: t2)
->     fmap f (UntypedVal t) = UntypedVal t
->     fmap f (ERef r) = ERef r
->     fmap f (UntypedINTM i) = UntypedINTM i
+>     fmap f (StrMsg x)              = StrMsg x
+>     fmap f (ErrorTm (t :<: mt))    = ErrorTm (f t :<: fmap f mt)
+>     fmap f (ErrorCan (t :<: mt))   = ErrorCan (fmap f t :<: fmap f mt)
+>     fmap f (ErrorElim (t :<: mt))  = ErrorElim (fmap f t :<: fmap f mt)
+>     fmap f (ErrorREF r)            = ErrorREF r
+>     fmap f (ErrorVAL (t :<: mt))   = ErrorVAL (t :<: mt)
 
 An error is list of error tokens:
 
-> type ErrorTm t = [ErrorTok t]
+> type ErrorItem t = [ErrorTok t]
 
 Errors a reported in a stack, as failure is likely to be followed by
 further failures. The top of the stack is the head of the list.
 
-> type StackError t = [ErrorTm t]
+> type StackError t = [ErrorItem t]
 
 
 
@@ -679,36 +670,38 @@ further failures. The top of the stack is the head of the list.
 
 To ease the writing of error terms, we have a bunch of combinators:
 
-> err :: String -> ErrorTm t
+> err :: String -> ErrorItem t
 > err s = [StrMsg s]
 
-> errTyTm :: (t :<: t) -> ErrorTm t
-> errTyTm tt = [TypedTm tt]
+> errTyTm :: (t :<: t) -> ErrorItem t
+> errTyTm (t :<: ty) = [ErrorTm (t :<: Just ty)]
 
-> errTm :: t -> ErrorTm t
-> errTm t = [UntypedTm t]
+> errTm :: t -> ErrorItem t
+> errTm t = [ErrorTm (t :<: Nothing)]
 
-> errTyCan :: (Can t :<: Can t) -> ErrorTm t
-> errTyCan tt = [TypedCan tt]
+> errCan :: Can t -> ErrorItem t
+> errCan t = [ErrorCan (t :<: Nothing)]
 
-> errCan :: Can t -> ErrorTm t
-> errCan t = [UntypedCan t]
+> errTyVal :: (VAL :<: VAL) -> ErrorItem t
+> errTyVal (t :<: ty) = [ErrorVAL (t :<: Just ty)]
 
-> errTyVal :: (VAL :<: VAL) -> ErrorTm t
-> errTyVal tt = [TypedVal tt]
+> errVal :: VAL -> ErrorItem t
+> errVal t = [ErrorVAL (t :<: Nothing)]
 
-> errVal :: VAL -> ErrorTm t
-> errVal t = [UntypedVal t]
+> errElim :: Elim t -> ErrorItem t
+> errElim t = [ErrorElim (t :<: Nothing)]
 
-> errElim :: Elim t -> ErrorTm t
-> errElim t = [UntypedElim t]
+> errRef :: REF -> ErrorItem t
+> errRef r = [ErrorREF r]
 
-> errRef :: REF -> ErrorTm t
-> errRef r = [ERef r]
 
-> errInTm :: INTM -> ErrorTm t
-> errInTm t = [UntypedINTM t]
-
+> convertErrorVALs :: ErrorTok VAL -> ErrorTok t
+> convertErrorVALs (StrMsg s)             = StrMsg s
+> convertErrorVALs (ErrorTm tt)           = ErrorVAL tt
+> convertErrorVALs (ErrorCan (c :<: t))   = ErrorVAL (C c :<: t)
+> convertErrorVALs (ErrorElim (e :<: t))  = StrMsg $ "ErrorElim " ++ show e
+> convertErrorVALs (ErrorREF r)           = ErrorREF r
+> convertErrorVALs (ErrorVAL tt)          = ErrorVAL tt
 
 
 %if False

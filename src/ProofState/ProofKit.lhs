@@ -84,19 +84,21 @@ The |bquoteHere| command $\beta$-quotes a term using the current name supply.
 > bquoteHere tm = withNSupply $ bquote B0 tm
 
 
+> runCheckHere :: (ErrorTok e -> ErrorTok InDTmRN) -> Check e a -> ProofState a
+> runCheckHere f c = do
+>     me <- withNSupply $ liftError' f . typeCheck c
+>     lift me
+
+
 Similarly, |checkHere| type-checks a term using the local name supply...
 
 > checkHere :: (TY :>: INTM) -> ProofState (INTM :=>: VAL)
-> checkHere (ty :>: tm) = do
->     mc <- withNSupply $ liftError . (typeCheck $ check (ty :>: tm))
->     lift mc
+> checkHere tt = runCheckHere (fmap DTIN) $ check tt
 
 ... and |inferHere| infers the type of a term using the local name supply.
 
 > inferHere :: EXTM -> ProofState (VAL :<: TY)
-> inferHere tm = do
->     mc <- withNSupply $ liftError . (typeCheck $ infer tm)
->     lift mc
+> inferHere tm = runCheckHere (fmap DTIN) $ infer tm
 
 
 
@@ -509,11 +511,9 @@ next goal (if one exists) instead.
 >     tip <- getDevTip
 >     case tip of         
 >         Unknown (tipTyTm :=>: tipTy) -> do
->             mc <- withNSupply $ liftError . (typeCheck $ check (tipTy :>: tm))
->             mc `catchEither`  (err "give: typechecking failed:"
->                               ++ errInTm tm
->                               ++ err "is not of type"
->                               ++ errTyVal (tipTy :<: SET))
+>             checkHere (tipTy :>: tm) `pushError`
+>                 (err "give: typechecking failed:" ++ errTm (DTIN tm)
+>                  ++ err "is not of type" ++ errTyVal (tipTy :<: SET))
 >             aus <- getGreatAuncles
 >             sibs <- getDevEntries
 >             let tmv = evTm (parBind aus sibs tm)
@@ -590,7 +590,7 @@ current development, after checking that the purported type is in fact a type.
 > make' :: HKind -> (String :<: INTM) -> ProofState (EXTM :=>: VAL)
 > make' hk (s :<: ty) = do
 >     _ :=>: tyv <- checkHere (SET :>: ty) `pushError`  (err "make: " 
->                              ++ errInTm ty 
+>                              ++ errTm (DTIN ty)
 >                              ++ err " is not a set.")
 >     aus <- getAuncles
 >     s' <- pickName "G" s

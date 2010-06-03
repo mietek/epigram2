@@ -15,6 +15,7 @@
 
 > import DisplayLang.Name
 > import DisplayLang.PrettyPrint
+> import DisplayLang.Naming
 
 > import ProofState.ProofState
 > import ProofState.ProofKit
@@ -37,17 +38,15 @@
 > distillErrors e = sequence $ fmap (sequence . fmap distillError) e
 
 > distillError :: ErrorTok DInTmRN -> ProofState (ErrorTok DInTmRN)
-> distillError (TypedVal (v :<: t)) = do
->   vTm <- bquoteHere v
->   vDTm :=>: _ <- distillHere (t :>: vTm)
->   return $ UntypedTm vDTm
-> distillError (UntypedVal v) = do
->   v'  <- bquoteHere v
->   tm  <- liftErrorState (moonshine v')
->   return $ UntypedTm tm
-> distillError (UntypedINTM v') = do
->   tm  <- liftErrorState (moonshine v')
->   return $ UntypedTm tm   
+> distillError (ErrorVAL (v :<: mt)) = do
+>     vTm   <- bquoteHere v
+>     vDTm  <- case mt of
+>         Just t   -> return . termOf =<< distillHere (t :>: vTm)
+>         Nothing  -> liftErrorState DTIN (moonshine vTm)
+>     return $ ErrorTm (vDTm :<: Nothing)
+> distillError (ErrorTm (DTIN t :<: mt)) = do
+>     d <- liftErrorState DTIN (moonshine t)
+>     return $ ErrorTm (d :<: Nothing)
 > distillError e = return e
 
 
@@ -66,20 +65,13 @@
 
 
 > prettyErrorTok :: ErrorTok DInTmRN -> Doc
-> prettyErrorTok (StrMsg s) = text s
-> prettyErrorTok (TypedTm (v :<: t)) = pretty v maxBound
-> prettyErrorTok (UntypedTm t) = pretty t maxBound
-> prettyErrorTok (TypedCan (v :<: t)) = pretty v maxBound
-> prettyErrorTok (UntypedCan c) = pretty c maxBound
-> prettyErrorTok (UntypedElim e) = pretty e maxBound
+> prettyErrorTok (StrMsg s)              = text s
+> prettyErrorTok (ErrorTm    (v :<: _))  = pretty v maxBound
+> prettyErrorTok (ErrorCan   (v :<: _))  = pretty v maxBound
+> prettyErrorTok (ErrorElim  (e :<: _))  = pretty e maxBound
 
 The following cases should be avoided as much as possible:
 
-> prettyErrorTok (TypedVal (v :<: t)) = brackets $ text "typedV" <> (brackets $ text $ show v)
-> prettyErrorTok (UntypedVal v) = brackets $ text "untypedV" <> (brackets $ text $ show v)
-> prettyErrorTok (ERef (name := _)) = hcat $ punctuate  (char '.') 
->                                                       (map (\(x,n) ->  text x <> 
->                                                                        char '_' <> 
->                                                                        int n) name) 
-> prettyErrorTok (UntypedINTM t) = brackets $ text "untypedT" <> (brackets $ text $ show t)
-
+> prettyErrorTok (ErrorREF (name := _))  = text $ showName name
+> prettyErrorTok (ErrorVAL (v :<: _))    = text "ErrorVAL" <>
+>                                              (brackets $ text $ show v)

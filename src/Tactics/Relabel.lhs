@@ -8,6 +8,7 @@
 > module Tactics.Relabel where
 
 > import Control.Applicative
+> import Data.Foldable hiding (foldr)
 > import Data.Traversable
 
 > import Evidences.Rules
@@ -69,9 +70,9 @@ and refines the proof state appropriately.
 >     matchArgs (t $$ A a) (n :$ A wtm) as ws
 > matchArgs ty n as ts  = throwError' $ err "relabel: unmatched\nty ="
 >                              ++ errTyVal (ty :<: SET)
->                              ++ err "\nn =" ++ errInTm (N n)
->                              ++ err "\nas =" ++ map UntypedVal as
->                              ++ err "\nts =" ++ map UntypedTm ts         
+>                              ++ err "\nn =" ++ errTm (DTIN (N n))
+>                              ++ err "\nas =" ++ foldMap errVal as
+>                              ++ err "\nts =" ++ foldMap errTm ts         
 
 
 The |matchProb| command matches a display term against a value and returns a

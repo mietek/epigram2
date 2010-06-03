@@ -225,8 +225,7 @@ the distilled spine and the overall type of the application.
 > distillSpine entries  (v :<: ty)    spine      = throwError' $
 >     err "distillSpine: cannot cope with" ++ errTyVal (v :<: ty)
 >     ++ err "which has non-canonical type" ++ errTyVal (ty :<: SET)
->     ++ err "applied to spine" ++ map UntypedElim spine
-
+>     ++ err "applied to spine" ++ map UntypedElim as
 
 The |toDExTm| helper function will distill a term to produce an |Ex|
 representation by applying a type annotation only if necessary.
@@ -246,7 +245,15 @@ representation by applying a type annotation only if necessary.
 The |distillHere| command distills a term in the current context.
 
 > distillHere :: (TY :>: INTM) -> ProofState (DInTmRN :=>: VAL)
-> distillHere tt = mapStateT liftError $ distill B0 tt
+> distillHere tt = do
+>     mliftError $ distill B0 tt
+>         where mliftError :: ProofStateT INTM a -> ProofState a
+>               mliftError = mapStateT liftError
+
+> distillSchemeHere :: Scheme INTM -> ProofState (Scheme DInTmRN)
+> distillSchemeHere sch = do
+>     return . fst =<< (mapStateT liftError $ distillScheme B0 B0 sch)
+
 
 The |prettyHere| command distills a term in the current context,
 then passes it to the pretty-printer.

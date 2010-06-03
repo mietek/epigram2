@@ -47,7 +47,7 @@ We can type-check a term using the |eCheck| instruction.
 > eCheck :: (TY :>: INTM) -> Elab (INTM :=>: VAL)
 > eCheck tytm = do
 >     nsupply <- eAskNSupply
->     case liftError (typeCheck (check tytm) nsupply) of
+>     case liftError DTIN (typeCheck (check tytm) nsupply) of
 >         Left e    -> throwError e
 >         Right tt  -> return tt
 
@@ -91,7 +91,7 @@ The |eInfer| instruction infers the type of an evidence term.
 > eInfer :: EXTM -> Elab (INTM :=>: VAL)
 > eInfer tm = do
 >     nsupply <- eAskNSupply
->     case liftError (typeCheck (infer tm) nsupply) of
+>     case liftError DTIN (typeCheck (infer tm) nsupply) of
 >         Left e    -> throwError e
 >         Right (tv :<: ty)  -> do
 >             ty' :=>: _ <- eQuote ty
