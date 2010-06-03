@@ -107,7 +107,7 @@ If none of the cases match, we complain loudly.
 
 > distillBase _ (ty :>: tm) =  throwError' $ 
 >                              err "distill: can't cope with\n" ++
->                              errInTm tm ++ err " :<: " ++ errVal ty
+>                              errTm tm ++ err " :<: " ++ errVal ty
 
 
 \subsection{Distilling |EXTM|s}
@@ -225,7 +225,8 @@ the distilled spine and the overall type of the application.
 > distillSpine entries  (v :<: ty)    spine      = throwError' $
 >     err "distillSpine: cannot cope with" ++ errTyVal (v :<: ty)
 >     ++ err "which has non-canonical type" ++ errTyVal (ty :<: SET)
->     ++ err "applied to spine" ++ map UntypedElim as
+>     ++ err "applied to spine" ++ map (ErrorElim . (:<: Nothing)) spine
+
 
 The |toDExTm| helper function will distill a term to produce an |Ex|
 representation by applying a type annotation only if necessary.
@@ -245,14 +246,7 @@ representation by applying a type annotation only if necessary.
 The |distillHere| command distills a term in the current context.
 
 > distillHere :: (TY :>: INTM) -> ProofState (DInTmRN :=>: VAL)
-> distillHere tt = do
->     mliftError $ distill B0 tt
->         where mliftError :: ProofStateT INTM a -> ProofState a
->               mliftError = mapStateT liftError
-
-> distillSchemeHere :: Scheme INTM -> ProofState (Scheme DInTmRN)
-> distillSchemeHere sch = do
->     return . fst =<< (mapStateT liftError $ distillScheme B0 B0 sch)
+> distillHere tt = liftErrorState DTIN $ distill B0 tt
 
 
 The |prettyHere| command distills a term in the current context,

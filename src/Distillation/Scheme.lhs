@@ -18,6 +18,7 @@
 
 > import Distillation.Distiller
 
+> import DisplayLang.DisplayTm
 > import DisplayLang.Scheme
 > import DisplayLang.Name
 > import DisplayLang.PrettyPrint
@@ -116,7 +117,7 @@ ProofState usage.
 
 > distillSchemeHere :: Scheme INTM -> ProofState (Scheme DInTmRN)
 > distillSchemeHere sch = do
->     return . fst =<< (mapStateT liftError $ distillScheme B0 B0 sch)
+>     return . fst =<< (liftErrorState DTIN $ distillScheme B0 B0 sch)
 >
 > prettySchemeHere :: Scheme INTM -> ProofState Doc
 > prettySchemeHere sch = do

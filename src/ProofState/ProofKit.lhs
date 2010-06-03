@@ -28,6 +28,7 @@
 > import ProofState.ProofState
 > import ProofState.NameResolution
 
+> import DisplayLang.DisplayTm
 > import DisplayLang.Name
 
 We have to use a boot file to resolve the circular dependency between this module
@@ -84,7 +85,7 @@ The |bquoteHere| command $\beta$-quotes a term using the current name supply.
 > bquoteHere tm = withNSupply $ bquote B0 tm
 
 
-> runCheckHere :: (ErrorTok e -> ErrorTok InDTmRN) -> Check e a -> ProofState a
+> runCheckHere :: (ErrorTok e -> ErrorTok DInTmRN) -> Check e a -> ProofState a
 > runCheckHere f c = do
 >     me <- withNSupply $ liftError' f . typeCheck c
 >     lift me

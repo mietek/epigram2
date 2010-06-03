@@ -54,13 +54,18 @@ INTM| monad. However, Cochon lives in a |ProofStateT DInTmRN|
 monad. Therefore, in order to use it, we will need to lift from the
 former to the latter.
 
-> liftError :: Either (StackError INTM) a -> Either (StackError InDTmRN) a
-> liftError = either (Left . wrapError) Right
->     where wrapError :: StackError INTM -> StackError InDTmRN
->           wrapError = fmap $           -- on the stack
->                       fmap $           -- on the list of token
->                       fmap             -- on a token
->                       (DT . InTmWrap)  -- turning INTM into InDTmRN
+> mapStackError :: (ErrorTok a -> ErrorTok b) -> StackError a -> StackError b
+> mapStackError = fmap . fmap
+
+> liftError :: (a -> b) -> Either (StackError a) c -> Either (StackError b) c
+> liftError f = either (Left . mapStackError (fmap f)) Right
+
+> liftError' :: (ErrorTok a -> ErrorTok b) -> Either (StackError a) c
+>     -> Either (StackError b) c
+> liftError' f = either (Left . mapStackError f) Right
+
+> liftErrorState :: (a -> b) -> ProofStateT a c -> ProofStateT b c
+> liftErrorState f = mapStateT (liftError f)
 
 
 
