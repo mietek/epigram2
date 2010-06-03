@@ -1,4 +1,4 @@
-\section{Resolving Names}
+\section{Resolving and unresolving names}
 
 %if False
 
@@ -30,33 +30,43 @@
 
 %endif
 
-\subsection{The Naming of Things}
+\newcommand{\relname}[1]{\textit{#1}}
 
-The |showEntries| function folds over a bunch of entries, christening them with the
-given auncles and current name, and intercalating to produce a comma-separated list.
+Typographical note: in this section, we write \relname{f} for a relative name 
+(component) and @f_0@ for an absolute name (component).
 
-> showEntries :: (Traversable f, Traversable g) => BScopeContext -> f (Entry g) -> String
-> showEntries bsc = intercalate ", " . foldMap
->     (\(E ref _ _ _) -> [showRelName (christenREF bsc ref)])
+A |BScopeContext| contains information from the |ProofContext| required for
+name resolution: a list of the elders and last component of the mother's name
+for each layer, along with the entries in the current development.
 
-The |showEntriesAbs| function works similarly, but uses absolute names instead of
-christening them.
+> type BScopeContext =  (Bwd (Entries, (String, Int)), Entries) 
 
-> showEntriesAbs :: Traversable f => f (Entry f) -> String
-> showEntriesAbs = intercalate ", " . foldMap f
->   where
->     f e = [showName (entryName e)]
+We can extract such a thing from a |ProofContext| using |inBScope|:
+
+> inBScope :: ProofContext -> BScopeContext
+> inBScope (PC layers (entries,_,_) _) = 
+>   (  fmap (\l -> (elders l, last . motherName . mother $ l)) layers
+>   ,  entries)
+
+An |FScopeContext| is the forwards variant.
+
+> type FScopeContext =  ( Fwd (Entry Bwd)
+>                       , Fwd ((String, Int), Fwd (Entry Bwd))) 
+>
+> inBFScope :: BScopeContext -> FScopeContext
+> inBFScope (uess :< (es,u),es') = 
+>   let (fs, vfss) = inBFScope (uess,es) in 
+>   (fs, (u,es' <>> F0) :> vfss)
+> inBFScope (B0,es) = (es <>> F0,F0) 
 
 
-\subsection{Resolving Local Longnames}
+\subsection{Resolving relative names to references}
 
-We need to resolve local longnames as
-references. We resolve \(f.x.y.z\) by searching outwards for $f$, then
-inwards for a child $x$, $x$'s child $y$, $y$'s child $z$. References
-are fully $\lambda$-lifted, but as $f$'s parameters are held in common
-with the point of reference, we automatically supply them.
-
-\subsection{A New Hope}
+We need to resolve local longnames as references. We resolve \relname{f.x.y.z}
+by searching outwards for \relname{f}, then inwards for a child \relname{x},
+\relname{x}'s child \relname{y}, \relname{y}'s child \relname{z}. References are
+fully $\lambda$-lifted, but as \relname{f}'s parameters are held in common with
+the point of reference, we automatically supply them.
 
 The |resolveHere| command resolves a relative name to a reference,
 a spine of shared parameters to which it should be applied, and
@@ -70,7 +80,8 @@ discarded, so all parameters can be provided explicitly.
 >     let  x'    = if fst (last x) == "/" then init x else x
 >          uess  = inBScope pc
 >     ans@(r, s, ms) <- resolve x' (Just $ uess) (inBFScope uess)  
->        `catchEither` (err $ "resolveHere: cannot resolve name: " ++ showRelName x')
+>        `catchEither` (err $ "resolveHere: cannot resolve name: "
+>                             ++ showRelName x')
 >     if fst (last x) == "/" then return (r, s, Nothing) else return ans
 
 The |resolveDiscard| command resolves a relative name to a reference,
@@ -80,7 +91,11 @@ discarding any shared parameters it should be applied to.
 > resolveDiscard x = resolveHere x >>= (\ (r, _, _) -> return r)
 
 
-This needs documenting I (Peter) am on it.
+There are four stages relating to whether we are looking up or down
+(\relname{\^} or \relname{\_})
+and whether or nor we are navigating the part of the proof state which is on the
+way back to (or from) the root of the tree to the cursor position.
+\question{Which is which?}
 
 > resolve :: RelName -> Maybe BScopeContext -> FScopeContext -> 
 >             Either (StackError t) (REF, Spine {TT} REF, Maybe (Scheme INTM))
@@ -206,7 +221,7 @@ This needs documenting I (Peter) am on it.
 > lookDownLocal (x, i) ys F0 as = Left  [err $ "Had to give up looking for " ++ x]
 
 
-\subsection{Christening (Generating Local Longnames)}
+\subsection{Unresolving absolute names to relative names}
 \label{subsec:christening}
 
 Just as resolution automatically supplies parameters to references
@@ -214,16 +229,133 @@ which are actually lifted, so its inverse, \emph{christening}, must
 hide parameters to lifted references which can be seen locally. For
 example, here
 
-\begin{alltt}
+\begin{verbatim}
 f [
   x : S
   g => t : T
   ] => g : T
-\end{alltt}
+\end{verbatim}
 
-$g$ is actually represented as $f.g f.x$, but should be displayed as, er, $g$.
+@g@ is actually represented as @f.g f.x@, but should be displayed as, er,
+\relname{g}.
 
-The |christenName| and |christenREF| functions do a similar job for names, and
+\subsubsection{In more detail}
+
+Our job is to take a machine name and print as little of it a possible, while at 
+the same time, turning the IANAN representation into a more human friendly, 
+(hah!) relative offset form. Consider:
+
+\begin{verbatim}
+X [ \ a : A
+   f [ \ b : B ->
+       g [ ] => ? : T
+     -= We are here =-
+     ] => ? : S
+   ] 
+\end{verbatim}
+
+How should we print the computer name @X_0.f_0.g_0@ ? A first approximation 
+would be \relname{g} since this is the bit that differs from the name of the
+development we are in (@X_0.f_0@). And, indeed we will always have to print this
+bit of the name. But there's more to it, here we are assuming that we are
+applying @g@  to the same spine of boys as the boys we are currently working
+under, which isn't always true. We need to be able to refer to, for instance,
+\relname{f.g}, which would have type |(b : B) -> T|. So we must really resolve
+names with their spines compared to the current name and boy spine. So:
+\begin{itemize}
+\item @X_0.f_0.g_0 a b@ resoves to \relname{g}
+\item @X_0.f_0.g_0 a@ resolves to \relname{f.g}
+\item @X_0.f_0.g_0 a c@ resolves to \relname{f.g c}
+\item @X_0.f_0.g_0@ resoves to \relname{X.f.g}
+\end{itemize}
+
+The job of naming boils down to unwinding the current name and spine until 
+both are a prefix of the name we want to print, and its spine. We then print 
+the suffix of the name applied to the suffix of the spine. So, far, so simple, 
+but there are complications:
+
+\paragraph{1) The current development is, kind of, in scope}
+
+\begin{verbatim}
+X [ \ a : A
+   f [] => ? : U
+   f [ \ b : B ->
+       g [ ] => ? : T
+     -= We are here =-
+     ] => ? : S
+   ]
+\end{verbatim}
+
+We never want the current development to be in scope, but with this naming 
+scheme, we need to be very careful since \relname{f.g} is a valid name. Thus we
+must  call @X_0.f_0@ by the name \relname{f\^1} even though @X_0.f_1@ is not in
+scope.
+
+\paragraph{2) Counting back to the top}
+
+When we start looking for the first part of the name we need to print, we can't 
+possibly know what it is, so we can't count how many times it is shadowed 
+(without writing a circular program) This requires us to make two passes through 
+the proof state. If we name @X_0.f_0 a@ in the 2nd example above, we must 1st 
+work out the first part of the name is \relname{f} and then go back out work out
+how many \relname{f}'s we jump over to get there. 
+
+\paragraph{3) Counting down from the top}
+
+Consider naming @X_0.f_1.g_0@ with no spine (again in the 2nd example dev) how 
+do we render @f_1@. It's my contention that or reference point cannot be where 
+the cursor is, since we've escaped that context, instead we should name it 
+absolutely, counting down from @X@, so we should print \relname{X.f\_1.g}. Note
+that \relname{f\_1} as a relative name component has a different meaning from
+@f_1@ as an absolute name component, and in:
+
+\begin{verbatim}
+X [ \ a : A
+   f [] => ? : U
+   h [] => ? : V
+   f [ \ b : B ->
+       g [ ] => ? : T
+     -= We are here =-
+     ] => ? : S
+   ]
+\end{verbatim}
+
+@X_0.f_2.g_0@ also resolves to \relname{X.f\_1.g}.
+
+We can split the name into 3 parts:
+\begin{itemize}
+\item the section when the name differs from our current position;
+\item the section where the name is the same but the spine is different; and
+\item the section where both are the same.
+\end{itemize}
+
+We must only print the last part of the 1st, and we must print the 2nd 
+absolutely. As far as I remember the naming of these three parts is dealt with 
+by (respectively) |nomTop|, |nomAbs| and |nomRel|. 
+
+\paragraph{4) Don't snap your spine}
+
+Final problem! Consider this dev:
+
+\begin{verbatim}
+X [   
+   f [ \ a : A -> 
+       \ b : B ->
+       g [ ] => ? : T
+     -= We are here =-
+     ] => ? : S
+   ]
+\end{verbatim}
+
+How should we render @X_0.f_0.g_0 a@?. Clearly there is some sharing of the
+spine with the current position, but we must still print \relname{f.g a} since
+\relname{f.g} should have type |(a : A) (b : B) -> T|. Thus we must only compare
+spines when we unwind a section from the name of the current development.
+
+
+\subsubsection{Here goes...}
+
+The |christenName| and |christenREF| functions call |unresolve| for names, and
 the name part of references, respectively.
 
 > christenName :: BScopeContext -> Name -> RKind -> RelName
@@ -234,10 +366,22 @@ the name part of references, respectively.
 > christenREF bsc (target := rk :<: _) = christenName bsc target rk
 
 
+The |failNom| function is used to give up and convert an absolute name that
+cannot be unresolved into a relative name. This can happen when distilling
+erroneous terms, which may not be well-scoped.
+
 > failNom :: Name -> RelName
 > failNom nom = ("!!!",Rel 0):(map (\(a,b) -> (a,Abs b)) nom)
 
+
+A |BwdName| is, as one might expect, a |Name| stored backwards.
+
 > type BwdName = Bwd (String,Int)
+
+To |unresolve| an absolute |Name|, we need its reference kind, the spine of
+arguments to which it is applied, the context in which we are viewing it and
+a list of entries in local scope. We obtain a relative name, the number of
+shared parameters to drop, and the scheme of the name (if there is one).
 
 > unresolve :: Name -> RKind -> Spine {TT} REF -> BScopeContext
 >                   -> Entries -> (RelName, Int, Maybe (Scheme INTM))
@@ -379,3 +523,22 @@ the name part of references, respectively.
 >   if i == j then (| (o,B0,Nothing) |) else nomRel' (o+1) (x,i) es
 > nomRel' o (x,i) (es:<e) = nomRel' o (x,i) es
 > nomRel' _ _ _ = Nothing
+
+
+
+
+The |showEntries| function folds over a bunch of entries, christening them with
+the given auncles and current name, and intercalating to produce a
+comma-separated list.
+
+> showEntries :: (Traversable f, Traversable g) => BScopeContext -> f (Entry g) -> String
+> showEntries bsc = intercalate ", " . foldMap
+>     (\(E ref _ _ _) -> [showRelName (christenREF bsc ref)])
+
+The |showEntriesAbs| function works similarly, but uses absolute names instead of
+christening them.
+
+> showEntriesAbs :: Traversable f => f (Entry f) -> String
+> showEntriesAbs = intercalate ", " . foldMap f
+>   where
+>     f e = [showName (entryName e)]

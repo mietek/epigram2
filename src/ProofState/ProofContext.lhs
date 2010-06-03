@@ -206,28 +206,6 @@ giving a list of entries that are currently in scope.
 > auncles pc@PC{pcDev=(es,_,_)} = greatAuncles pc <+> es
 
 
-\subsubsection{Context in scope, backward and forward}
-
-
-
-> type BScopeContext =  (Bwd (Entries, (String, Int)), Entries) 
->
-> inBScope :: ProofContext -> BScopeContext
-> inBScope (PC layers (entries,_,_) _) = 
->   (  fmap (\l -> (elders l, last . motherName . mother $ l)) layers
->   ,  entries)
-
-
-> type FScopeContext =  ( Fwd (Entry Bwd)
->                       , Fwd ((String, Int), Fwd (Entry Bwd))) 
->
-> inBFScope :: BScopeContext -> FScopeContext
-> inBFScope (uess :< (es,u),es') = 
->   let (fs, vfss) = inBFScope (uess,es) in 
->   (fs, (u,es' <>> F0) :> vfss)
-> inBFScope (B0,es) = (es <>> F0,F0) 
-
-
 \subsubsection{Gratuitous hackery}
 
 > magicImplName = "impl"
