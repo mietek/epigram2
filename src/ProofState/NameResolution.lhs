@@ -371,32 +371,56 @@ shared parameters to drop, and the scheme of the name (if there is one).
 
 > unresolve :: Name -> RKind -> Spine {TT} REF -> BScopeContext
 >                   -> Entries -> (RelName, Int, Maybe (Scheme INTM))
-> unresolve tar DECL _ (esus,es) les = 
->   case find ((tar ==) . refName . snd) primitives of
->     Just (s, _)  -> ([(s, Rel 0)], 0, Nothing)
->     Nothing      -> maybe (failNom tar,0,Nothing) id 
->                       (nomTop tar (esus, es<+>les) >>= 
->                         \(x,_) -> (| ([x],0,Nothing) |))
-> unresolve tar rk tas msc@(mesus,mes) les = 
->   case find ((tar ==) . refName . snd) primitives of
->     Just (s, _)  -> ([(s, Rel 0)], 0, Nothing)
->     Nothing      -> case (partNoms tar msc [] B0, rk) of
->       (Just (xs,Just ys@(top,nom,sp,es)),_) ->
->         maybe (failNom tar,0,Nothing) id 
->           (do let (top',nom',i,fsc) = matchUp xs ys tas 
->               (tn,tms) <- nomTop top' (mesus,mes<+>les)
->               let mnom = take (length nom' - length nom) nom'
->               (an,ams) <- nomAbs mnom fsc
->               let tams = if null mnom then tms else ams  
->               (rn, rms) <- nomRel nom (es <+> les) Nothing 
->               (| ((tn : an) ++ rn, i, if null nom then tams else rms) |)) 
->       (Just (xs, Nothing),FAKE) ->
->         maybe (failNom tar,0,Nothing) id 
->           (do let (top',nom',i,fsc) = matchUp' xs tas 
->               (tn,tms) <- nomTop top' (mesus,mes<+>les)
->               (an,ams) <- nomAbs nom' fsc
->               (| ((tn : an), i, if null nom' then tms else ams) |) )
->       _ -> (failNom tar, 0, Nothing)
+> unresolve tar rk tas msc@(mesus, mes) les = 
+
+We first check if the name refers to an element of the |primitives| list:
+
+>     case find ((tar ==) . refName . snd) primitives of
+
+If so, we return its short name with no shared parameters and no scheme.
+
+>         Just (s, _)  -> ([(s, Rel 0)], 0, Nothing)
+
+Otherwise, we actually have to do some work. We work in the |Maybe| monad and
+|failNom| will be called if unresolution fails.
+
+>         Nothing      -> maybe (failNom tar, 0, Nothing) id $
+>             case (partNoms tar msc [] B0, rk) of
+
+If the reference is a |DECL|, then it had better be one of our uncles, and we
+do not need to worry about shared parameters. We simply call |nomTop| to find it.
+
+>                 (_, DECL) ->  do
+>                     (x, ms) <- nomTop tar (mesus, mes <+> les)
+>                     return ([x], 0, ms)
+
+>                 (Just (xs, Just (top, nom, sp, es)), _) -> do
+>                     let  (top', nom', i, fsc) = matchUp (xs :<
+>                                                   (top, nom, sp, (F0, F0))) tas
+>                          mnom = take (length nom' - length nom) nom'
+>                     (tn,  tms)  <- nomTop top' (mesus, mes <+> les)
+>                     (an,  ams)  <- nomAbs mnom fsc
+>                     (rn,  rms)  <- nomRel nom (es <+> les) Nothing 
+>                     let ms = case  (null nom,  null mnom) of
+>                                    (True,      True)   -> tms
+>                                    (True,      False)  -> ams
+>                                    (False,     _)      -> rms
+>                     return ((tn : an) ++ rn, i, ms)
+
+>                 (Just (xs, Nothing), FAKE) -> do
+>                     let (top', nom', i, fsc) = matchUp xs tas 
+>                     (tn, tms) <- nomTop top' (mesus, mes <+> les)
+>                     (an, ams) <- nomAbs nom' fsc
+>                     return ((tn : an), i, if null nom' then tms else ams)
+
+If nothing else matches, we had better give up and go home.
+
+>                 _ -> Nothing
+
+
+\paragraph{Parting the noms}
+
+\question{Does anyone know what this does?}
 
 > partNoms :: Name -> BScopeContext -> Name 
 >                  -> Bwd (Name, Name, Spine {TT} REF, FScopeContext)
@@ -409,18 +433,6 @@ shared parameters to drop, and the scheme of the name (if there is one).
 >    partNoms rest bsc (n ++ [top]) (xs:<(n ++ [top], rest, sp, fsc))
 >  Nothing -> Nothing
 
-> matchUp :: Bwd (Name, Name, Spine {TT} REF, FScopeContext) ->
->              (Name,Name, Spine {TT} REF, Entries) ->
->              Spine {TT} REF ->  (Name, Name, Int, FScopeContext)
-> matchUp blah (x,y,sp,es) tas | sp `isPrefixOf` tas =
->   (x,y,length sp,(F0,F0))
-> matchUp blah _ tas = matchUp' blah tas
-
-> matchUp' :: Bwd (Name, Name, Spine {TT} REF, FScopeContext) 
->              -> Spine {TT} REF ->  (Name, Name, Int, FScopeContext)
-> matchUp' (xs :< (x, nom, sp, fsc)) tas | sp `isPrefixOf` tas =
->   (x, nom, length sp, fsc)
-> matchUp' (xs :< _) tas = matchUp' xs tas
 
 > partNom :: Name -> (String, Int) -> BScopeContext -> FScopeContext
 >                 -> Maybe (Spine {TT} REF, Either Entries FScopeContext)
@@ -434,6 +446,62 @@ shared parameters to drop, and the scheme of the name (if there is one).
 >   Just (boySpine (flat esus es),Left es')
 > partNom hd top (esus, es :< e) (fs, vfss)  = partNom hd top (esus, es) (e:>fs,vfss)
 > partNom _ _ _ _ = Nothing
+
+
+\paragraph{Matching up}
+
+If we have a backward list of gibberish and a spine, it is not hard to go
+back until the spine from the gibberish is a prefix of the given spine,
+then return the gibberish.
+
+> matchUp :: Bwd (Name, Name, Spine {TT} REF, FScopeContext) 
+>              -> Spine {TT} REF ->  (Name, Name, Int, FScopeContext)
+> matchUp (xs :< (x, nom, sp, fsc)) tas
+>     | sp `isPrefixOf` tas  = (x, nom, length sp, fsc)
+> matchUp (xs :< _) tas      = matchUp xs tas
+
+
+\paragraph{Different name}
+
+First, |nomTop| handles the section where the name differs from our current
+position. We call it by its |lastNom| but need to look up the offset and
+scheme.
+
+> nomTop :: Name -> BScopeContext -> Maybe ((String,Offs),Maybe (Scheme INTM))
+> nomTop n bsc = do
+>     (i, ms) <- countB 0 n bsc
+>     return ((lastNom n, Rel i), ms)
+
+To determine the relative offset, |nomTop| uses |countB|, which looks backwards
+through the context, counting the number of things in scope with the same last
+name component. This also returns the scheme attached, if there is one.
+
+> countB :: Int -> Name -> BScopeContext -> Maybe (Int, Maybe (Scheme INTM))
+> countB i n (esus :< (es', u'), B0)
+>   | last n == u' && flatNom esus [] == init n  = (| (i, Nothing) |)
+> countB i n (esus :< (es', u'), B0)
+>   | lastNom n == fst u'                        = countB (i+1)  n (esus, es')
+> countB i n (esus :< (es', u'), B0)             = countB i      n (esus, es')
+>
+> countB i n (esus, es :< M n' (es', _, _))
+>   | n == n'                                    = (| (i, Nothing) |)
+> countB i n (esus, es :< M n' _)           
+>   | lastNom n == lastNom n'                    = countB (i+1) n (esus, es)
+> countB i n (esus, es :< e@(E r u' _ _))
+>   | last n == u' && refName r == n             = (| (i, entryScheme e) |)
+> countB i n (esus, es :< E _ u' _ _)
+>   | lastNom n == fst u'                        = countB (i+1) n (esus, es)
+>
+> countB i n (esus, es :< _)                     = countB i n (esus, es)
+>
+> countB _ n _                                   = Nothing 
+
+
+
+\paragraph{Same name, different spine}
+
+Next, |nomAbs| handles the section where the name is the same as the current
+location but the spine is different.
 
 > nomAbs :: Name -> FScopeContext -> Maybe (RelName, Maybe (Scheme INTM))
 > nomAbs [u] (es,(_,es'):>uess) = do
@@ -466,29 +534,11 @@ shared parameters to drop, and the scheme of the name (if there is one).
 > findF i u (_ :> es) = findF i u es
 > findF _ _ _ = Nothing
 
-> nomTop :: Name -> BScopeContext -> Maybe ((String,Offs),Maybe (Scheme INTM))
-> nomTop n bsc = do
->   (i,ms) <- countB 0 n bsc
->   (| ((fst . last $ n, Rel i), ms) |)
 
-> countB :: Int -> Name -> BScopeContext -> Maybe (Int, Maybe (Scheme INTM))
-> countB i n (esus:<(es',u'),B0) | u' == last n && 
->                                  flatNom esus [] == init n = (| (i,Nothing) |)
-> countB i n (esus:<(es',u'),B0) | fst u' == (fst . last $ n) = 
->   countB (i+1) n (esus,es')
-> countB i n (esus:<(es',u'),B0) = countB i n (esus,es')
-> countB i n (esus,es:<M n' (es',_,_)) | n == n' = (| (i, Nothing) |)
-> countB i n (esus,es:<M n' _) | (fst . last $ n') == (fst . last $ n) =
->   countB (i+1) n (esus,es)
-> countB i n (esus,es:<E r u' (Girl kind (es',_,_)) _) | last n == u' &&
->                                                        refName r == n = 
->   (| (i, kindScheme kind) |)
-> countB i n (esus,es:<E r u' _ _) | last n == u' && refName r == n = 
->   (| (i, Nothing) |)
-> countB i n (esus,es:<E _ u' _ _) | (fst . last $ n) == fst u' = 
->   countB (i+1) n (esus,es)
-> countB i n (esus,es:<_) = countB i n (esus,es)
-> countB _ n _ = Nothing 
+\paragraph{Same name and spine}
+
+Finally, |nomRel| handles the section where the name and spine both match the
+current location.
 
 > nomRel :: Name -> Entries 
 >                -> Maybe (Scheme INTM) -> Maybe (RelName, Maybe (Scheme INTM)) 
@@ -513,6 +563,13 @@ shared parameters to drop, and the scheme of the name (if there is one).
 
 \subsubsection{Useful oddments for unresolution}
 
+The common |lastNom| function extracts the |String| component of the last part
+of a name.
+
+> lastNom :: Name -> String
+> lastNom = fst . last
+
+
 The |failNom| function is used to give up and convert an absolute name that
 cannot be unresolved into a relative name. This can happen when distilling
 erroneous terms, which may not be well-scoped.
@@ -520,6 +577,8 @@ erroneous terms, which may not be well-scoped.
 > failNom :: Name -> RelName
 > failNom nom = ("!!!",Rel 0):(map (\(a,b) -> (a,Abs b)) nom)
 
+
+\subsubsection{Invoking unresolution}
 
 The |christenName| and |christenREF| functions call |unresolve| for names, and
 the name part of references, respectively.

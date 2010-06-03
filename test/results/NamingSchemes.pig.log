@@ -1,0 +1,89 @@
+Made module.
+Made lambda boy!
+Let there be f.
+Going out...
+Going out...
+Let there be f.
+Let there be g.
+Going to root...
+[ X
+    [ \ A : Set ->
+      f
+        [ f-type := Set : Set ;
+          f
+            [ \ c : < f^1 : Set > ->
+            ] f^1 : Set ;
+          impl := ? : < f^1 : Set > ;
+        ] f^1 : f-type ;
+      f
+        [ f-type
+            [ tau := A : Set ;
+              (a : A) ->
+            ] A : Set ;
+          f
+            [ \ a : A ->
+              \ c : < f^1 a : A > ->
+            ] f^1 a : A ;
+          impl
+            [ \ a : A ->
+              g
+                [ g-type := Set : Set ;
+                  g
+                    [ \ c : < g^1 : Set > ->
+                    ] g^1 : Set ;
+                  impl := ? : < g^1 : Set > ;
+                ] g^1 : g-type ;
+            ] ? : < f^1 a : A > ;
+          \ a : A ->
+        ] f^1 a : A ;
+    ] ;
+]
+\ A -> X.f^1 A
+(A : Set) -> Set
+(A : Set) : Set
+\ A a -> X.f A a
+(A : Set)(a : A) -> A
+(A : Set) (a : A) : A
+\ A a -> X.f.impl.g A a
+(A : Set)(a : A) -> Set
+(A : Set) (a : A) : Set
+Going in...
+\ A : Set ->
+f^1 : Set
+f : (a : A) -> A
+f^1
+Set
+: Set
+\ a -> f a
+(a : A) -> A
+(a : A) : A
+\ a -> f.impl.g a
+(a : A) -> Set
+(a : A) : Set
+\ A -> X.f A
+(A : Set) -> Set
+(A : Set) : Set
+\ A a -> X.f_1 A a
+(A : Set)(a : A) -> A
+(A : Set) (a : A) : A
+Going in...
+Going in...
+\ A : Set ->
+\ a : A ->
+f^2 : Set
+f-type : Set
+f : (a : A)(c : < f^1 a : A >) -> A
+g : (a : A) -> Set
+f^2
+Set
+: Set
+\ A -> X.f A
+(A : Set) -> Set
+(A : Set) : Set
+g
+Set
+: Set
+\ A a -> X.f_1.impl.g A a
+(A : Set)(a : A) -> Set
+(A : Set) (a : A) : Set
+Loaded.
