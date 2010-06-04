@@ -133,7 +133,7 @@ There are four stages relating to whether we are looking up or down
 and whether or nor we are navigating the part of the proof state which is on the
 way back to (or from) the root of the tree to the cursor position.
 
-We start off in |resolve|, which calls |lookUp| (for \relname{^}) or |lookDown| 
+We start off in |resolve|, which calls |lookUp| (for \relname{\^}) or |lookDown| 
 (for \relname{\_}) to find the first name element. Then |lookFor| and |lookFor'|
 recursively call each other and |lookDown| until we find the target name, in
 which case we stop, or we reach the local part of the context, in which case
