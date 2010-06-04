@@ -192,6 +192,11 @@ work into the argument spine of a \(\lambda\)-lifted definition:
 >   boy (E r _ (Boy _) _)  = [A (N (P r))]
 >   boy _                  = []
 
+> boyREFs :: Entries -> [REF]
+> boyREFs = foldMap boy where
+>   boy :: Entry Bwd -> [REF]
+>   boy (E r _ (Boy _) _)  = [r]
+>   boy _                  = []
 
 \subsection{Manipulating an |Entry|}
 
@@ -204,6 +209,10 @@ We sometimes wish to determine whether an entry is a |Boy|:
 > isBoy :: Traversable f => Entry f -> Bool
 > isBoy (E _ _ (Boy _) _)  = True
 > isBoy _                  = False
+
+> entryREF :: Traversable f => Entry f -> Maybe REF
+> entryREF (E r _ _ _)  = Just r
+> entryREF (M _ _)      = Nothing
 
 Given an |Entry|, a natural operation is to extract its
 sub-developments. This works for girls and modules, but will not for

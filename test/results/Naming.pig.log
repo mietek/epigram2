@@ -22,7 +22,7 @@ X.f.g
 (A : Set)(a : A) -> Set
 I'm sorry, Dave. I'm afraid I can't do that.
 Error: resolveHere: cannot resolve name: X
-Error: Modules have not term representaion
+Error: Modules have no term representation
 Going in...
 \ A : Set ->
 f^1 : Set

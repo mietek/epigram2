@@ -632,6 +632,11 @@ a useful name from a term.
 > fortran (L (HF x  _))  | not (null x) = x
 > fortran _ = "xf"
 
+If we have a bunch of references we can make them into a spine:
+
+> toSpine :: Foldable f => f REF -> Spine {TT} REF
+> toSpine = foldMap (\ r -> [A (NP r)])
+
 
 \subsection{Error Stack}
 

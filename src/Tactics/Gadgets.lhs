@@ -55,7 +55,7 @@
 >         (| (| (B0 :<) tokenName |) :< tokenInTm |)
 >         (\ [ExArg (DP rn ::$ []), InArg tm] -> do
 >             (ref, spine, _) <- resolveHere rn
->             _ :<: ty <- inferHere (P ref $:$ spine)
+>             _ :<: ty <- inferHere (P ref $:$ toSpine spine)
 >             _ :=>: tv <- elaborate' (ty :>: tm)
 >             tm' <- bquoteHere tv -- force definitional expansion
 >             solveHole ref tm'

@@ -100,9 +100,9 @@ With two direct special cases:
 Schemes are stored fully $\Pi$-lifted with |SchExplicitPI|s, so we may
 need to apply them to a spine of shared parameters:
 
-> applyScheme :: Scheme INTM -> Spine {TT} REF -> Scheme INTM
+> applyScheme :: Scheme INTM -> [REF] -> Scheme INTM
 > applyScheme sch [] = sch
-> applyScheme (SchExplicitPi (x :<: SchType s) schT) (A (NP r) : rs) =
+> applyScheme (SchExplicitPi (x :<: SchType s) schT) (r : rs) =
 >     applyScheme (underScheme 0 r schT) rs
 >   where
 >     underScheme :: Int -> REF -> Scheme INTM -> Scheme INTM

@@ -180,7 +180,7 @@ plus an implicit labelled type that provides evidence for the recursive call.
 >     GirlMother _ (mnom := HOLE _ :<: ty) _ _ <- getMother
 >     pn :=>: _ <- getFakeMother 
 >     let schCall = makeCall (P $ mnom := FAKE :<: ty) 0 sch'
->     us <- (|boySpine getAuncles|)
+>     us <- getBoys
 >     let schCallLocal = applyScheme schCall us
 >     make (x :<: schemeToInTm schCallLocal)
 >     goIn

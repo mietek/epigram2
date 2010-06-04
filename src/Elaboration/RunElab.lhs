@@ -94,7 +94,7 @@ and |False| if the problem was suspended.
 
 > runElab top (ty :>: EResolve rn f) = do
 >     (ref, as, ms) <- resolveHere rn
->     let  tm   = P ref $:$ as
+>     let  tm   = P ref $:$ toSpine as
 >          ms'  = (| (flip applyScheme as) ms |)
 >     (tmv :<: tyv) <- inferHere tm
 >     tyv'  <- bquoteHere tyv
