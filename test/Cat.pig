@@ -25,23 +25,11 @@ root ;
 
 -}
 
-module Cat;
-
-lambda Obj : Set;
-lambda Arr : Set;
-
-make domType := Arr -> Obj : Set;
-make codType := Arr -> Obj : Set;
-make idType := Obj -> Arr : Set;
-make composType := \ dom cod ->
-                   (g : Arr)(f : Arr) -> :- (cod f == dom g) -> Arr  
-		 : (dom : domType)(cod : codType) -> Set ;
-
-let Cat : Set;
-= Sig ( dom : domType
-      ; cod : codType
-      ; id : idType
-      ; compos : composType dom cod
+let Cat (Obj : Set)(Arr : Set) : Set;
+= Sig ( dom : Arr -> Obj
+      ; cod : Arr -> Obj
+      ; id : Obj -> Arr
+      ; compos : (g : Arr)(f : Arr) -> :- (cod f == dom g) -> Arr
       :- (f : Arr)(g : Arr)(h : Arr) => 
          cod f == dom g && cod g == dom h =>
          compos (compos h g) f == compos h (compos g f)
@@ -49,28 +37,10 @@ let Cat : Set;
          compos f (id (dom f)) == f &&
 	 compos (id (cod f)) f == f 
       ; );
-out;
-
-let CatDom (c : Cat) : domType;
-= dom ;
-out;
-
-let CatCod (c : Cat) : codType;
-= cod ;
-out;
-
-let CatId (c : Cat) : idType;
-= id ;
-out;
-
-let CatCompos (c : Cat) : composType (CatDom c) (CatCod c);
-= compos ;
-out;
-
 root;
 
+{-
 -- Example: Category of Set
-
 let SetArr : Set;
 = Sig ( dom : Set
       ; cod : Set
@@ -90,7 +60,16 @@ let SetMap (arr : SetArr) : (SetDom arr) -> (SetCod arr);
 = f;
 root;
 
-let Set-pf-id-dom (f : SetArr) : :- (CatCompos f (id (dom f)) == f) ;
+let SetCompos (g : SetArr)(f : SetArr)(p : :- SetCod f == SetDom g) : SetArr;
+= [ dom cod^1 (\ x -> f^1 (f x))];
+root;
+
+{-
+make Set-pf-assoc : (f : SetArr)(g : SetArr)(h : SetArr)
+                    (pf-g-o-f : :- SetCod f == SetDom g)
+                    (pf-h-o-g : :- SetCod g == SetDom h) ->
+                    :- SetCompos (SetCompos h g pf-h-o-g) f pf-g-o-f  == SetCompos h (SetCompos g f pf-g-o-f) pf-h-o-g;
+-}
 
 {-
 
@@ -111,6 +90,8 @@ let SetCat : Cat Set SetArr;
     lambda g, f, eq;
     give [ (SetDom f) (SetCod g) (\ x -> (SetMap g) ((SetMap f) x)) ];
 -}   
+
+-- root;
 
 {-
 -- Example: Category of finite sets
