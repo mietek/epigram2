@@ -367,18 +367,13 @@ We have some pattern synonyms for common, er, patterns.
 > pattern SET       = C Set                -- set of sets
 > pattern ARR s t   = C (Pi s (L (K t)))   -- simple arrow
 > pattern PI s t    = C (Pi s t)           -- dependent functions
-> pattern CON t     = C (Con t)
-> pattern NV n      = N (V n)
-> pattern NP n      = N (P n)
-> pattern LAV x t   = L (x :. t)
-> pattern PIV x s t = PI s (LAV x t)
-> pattern LK t      = L (K t)
+> pattern CON t     = C (Con t)            -- Container (packing "stuff")
+> pattern NV n      = N (V n)              -- Variable (bound)
+> pattern NP n      = N (P n)              -- Parameter (free)
+> pattern LAV x t   = L (x :. t)           -- Lambda (with variable)
+> pattern LK t      = L (K t)              -- Lambda (with constant)
+> pattern PIV x s t = PI s (LAV x t)       -- Pi (with variable)
 > import <- CanPats
-
-\pierre{What does |V| stand for in |LAV| and |PIV|? Is it |V| for
-        \emph{value} (or \emph{Vendetta}?) I'm surprised then, because
-        these are |TT| terms, not values, right? }
-\conor{|V| is for \emph{variable}.}
 
 We have some type synonyms for commonly occurring instances of |Tm|.
 
