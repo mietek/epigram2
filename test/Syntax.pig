@@ -238,7 +238,6 @@ make geq2 := \ _ _ _ _ eq -> eq % : (S : Set)(s : S)(T : Set)(t : T) -> :- (s ==
 -- ** Refl
 
 make refl1 := refl : :- ((A : Set)(x : A) => x == x);
-make refl2 := refl : :- ((A : Set)(x : A) => x == x);
 
 -- ** Operators
 
