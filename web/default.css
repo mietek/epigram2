@@ -291,8 +291,8 @@ input, textarea, select {
 }
 
 .entry ul{
-    margin: 0;
-    padding: 0;
+    margin: 1em;
+    padding: 1em;
 }
 
 .box2 ul {
