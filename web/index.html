@@ -39,7 +39,6 @@
 			<div class="entry">
 
    <ul>
-    <li>To install Epigram consult <a href="../INSTALL">INSTALL</a></li>
     <li>Read the Epigram <a href="../man/man.html">manual</a></li>
     <li>This pig file is gives lots of examples of Epigram's syntax in
     action: <a href="../test/Syntax.pig">Syntax.pig</a></li>
@@ -108,7 +107,19 @@ development version from our darcs repository. You will need ghc 6.12
 right now and you'll also need cabal install. We're sorry about this
 and we hope to target 6.10 in future.
 </p>
+   <h2>Before you start</h2>
+<p>As we said you'll need ghc 6.12 and cabal-install. Here is some
+limited advice about how to get it:</p>
 
+<h3>Ubuntu 10.04</h3>
+<p>
+Install ghc stuff by running Applications -> Ubuntu Software
+Center. Install: ghc6, darcs, cabal-install, libghc6-mtl-dev.</p>
+
+<h3>OS X Leopard/Snow Leopard Intel</h3>
+<p>The version in macports is only 6.10 at present. We
+suggest you get the binary from
+the <a href="http://www.haskell.org/ghc/">ghc website</a>.</p>
     <h2>Get SHE</h2>
 
 <p>
@@ -120,9 +131,11 @@ fine:
 
 <p>
    <code>
-    $ cabal install she
+    $ cabal install she<br>
+    $ she # this should give a 'user error'
    </code>
 </p>
+<p>If the second line doesn't work it's probably because your path needs amending. cabal-install puts binaries in <code>$HOME/.cabal/bin</code> by default. You should add this to your path.</p>
 
     <h2>Get Epigram</h2>
 
@@ -181,7 +194,7 @@ nudge its ducks into a row.
 
 			</div>
 			<div class="meta">
-				<p class="byline">Posted on 25th May 2010, by James Chapman</p>
+				<p class="byline">Posted on 6th June 2010, by James Chapman</p>
 			</div>
 		</div>
 
