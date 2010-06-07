@@ -48,28 +48,28 @@ lambda Arrs : (X : Objs)(Y : Objs) -> Set;
   arrow |compos g f : A -> C|.
 
   Moreover, these objects satisfy two properties:
+      * identity:
+          for any |f : A -> B|,
+	  |compos f (id_A)| == |compos (id_B) f| == 
       * associativity:
           for any |f : A -> B|, |g : B -> C|, |h : C -> D|,
 	  |compos (compos h g) f == compos h (compos g f)|
-      * identity:
-          for any |f : A -> B|,
-	  |compos f (id_A)| == |compos (id_B) f| == |f|
 
 -}
 
 let CatSig : Set;
 = Sig ( id : (X : Objs) -> Arrs X X 
-                ; compos : (A : Objs)(B : Objs)(C : Objs)
-                           (g : Arrs B C)(f : Arrs A B) ->
-                           Arrs A C
-                :- (X : Objs)(Y : Objs)(f : Arrs X Y) =>
-                   compos X X Y f (id X) == f
-                :- (X : Objs)(Y : Objs)(f : Arrs X Y) =>
-                   compos X Y Y (id Y) f == f
-                :- (A : Objs)(B : Objs)(C : Objs)(D : Objs)
-                   (f : Arrs A B)(g : Arrs B C)(h : Arrs C D) =>
-	           compos A B D (compos B C D h g) f == compos A C D h (compos A B C g f)
-                ; ) ;
+      ; compos : (A : Objs)(B : Objs)(C : Objs)
+                 (g : Arrs B C)(f : Arrs A B) ->
+                 Arrs A C
+      :- (X : Objs)(Y : Objs)(f : Arrs X Y) =>
+         compos X X Y f (id X) == f
+      :- (X : Objs)(Y : Objs)(f : Arrs X Y) =>
+          compos X Y Y (id Y) f == f
+      :- (A : Objs)(B : Objs)(C : Objs)(D : Objs)
+         (f : Arrs A B)(g : Arrs B C)(h : Arrs C D) =>
+         compos A B D (compos B C D h g) f == compos A C D h (compos A B C g f)
+      ; ) ;
 root;
 jump Cat.CatSig;
 out;
@@ -92,6 +92,19 @@ propsimpl;
 root;
 jump Cat.CatSig;
 out;
+
+{-
+Doesn't quite work, I don't know why:
+
+let pf-id-dom (C : Cat) : (:- ((X : Objs)(Y : Objs)(f : Arrs X Y) =>
+                          compos X X Y f (id X) == f));
+
+= (unpack C) - - ! ;
+propsimpl;
+root;
+jump Cat.CatSig;
+out;
+-}
 
 root;
 
@@ -149,9 +162,19 @@ root;
 
 module DiagCat;
 
+{-
+ If you're a BSDM kind of person (you read this file, so you
+ probably are), you could easily generalize that to the product of
+ two categories.
+-}
+
 lambda ObjsA : Set;
 lambda ArrsA : (X : ObjsA)(Y : ObjsA) -> Set;
 lambda CatA : Cat.Cat ObjsA ArrsA;
+
+-- *** Objects
+
+-- Pairs of objects of A
 
 let ObjsDiagA : Set;
 = Sig (ObjsA ; ObjsA);
@@ -159,31 +182,150 @@ root;
 jump DiagCat.ObjsDiagA;
 out;
 
+-- *** Arrows
+
+-- Pairs of arrows of A
+
 let ArrsDiagA (X : ObjsDiagA)(Y : ObjsDiagA) : Set;
 = Sig ( ArrsA xf^1 xf ; ArrsA X Y );
 root;
 jump DiagCat.ObjsDiagA;
 out;
 
+-- *** Category:
+
 let CatDiagA : Cat.Cat ObjsDiagA ArrsDiagA;
 = 'pack [ ?id ?compos ?pf-id-dom ?pf-id-cod ?pf-assoc ];
--- Id:
+-- <1>.1 Id:
     simpl;
     give Cat.id ObjsA ArrsA CatA xf^1;
     give Cat.id ObjsA ArrsA CatA X;
 
--- Compos:
+-- <1>.2 Compos:
    simpl;
    give Cat.compos ObjsA ArrsA CatA xf^5 xf^4 xf^3 xf^2 xf^1;
    give Cat.compos ObjsA ArrsA CatA A B C g f;
 
--- Pf-id-dom: Holy shit!
-   next;
+-- <1>.3 Pf-id-dom:
 
--- Pf-id-cod: same story
-   next;
+--     <2>.1 Split X:
+    lambda X;
+    elim split ObjsA (\ _ -> ObjsA) X;
+    lambda X1, X2;
 
--- Pf-assoc: give up
+--     <2>.2 Split Y:
+    lambda Y;
+    elim [Y] split ObjsA (\ _ -> ObjsA) Y;
+    lambda Y1, Y2;
+
+--     <2>.3 Split f:
+    lambda f;
+    elim [f] split (ArrsA X1 Y1) (\ _ -> ArrsA X2 Y2) f;
+    lambda f1, f2;
+
+--     <2>.4 Split the goal:
+    propsimpl;
+
+--         <3>.1 f1 o id = f1:
+        give (unpack CatA - - !) X1 Y1 f1;
+	propsimpl;
+	next;
+
+--         <3>.1 f2 o id = f2:
+        give (unpack CatA - - !) X2 Y2 f2;
+	propsimpl;
+	next;
+
+--     <2>.5 QED
+
+-- <1>.4 Pf-id-cod: (really boring)
+
+--     <2>.1 Split X:
+    lambda X;
+    elim split ObjsA (\ _ -> ObjsA) X;
+    lambda X1, X2;
+
+--     <2>.2 Split Y:
+    lambda Y;
+    elim [Y] split ObjsA (\ _ -> ObjsA) Y;
+    lambda Y1, Y2;
+
+--     <2>.3 Split f:
+    lambda f;
+    elim [f] split (ArrsA X1 Y1) (\ _ -> ArrsA X2 Y2) f;
+    lambda f1, f2;
+
+--     <2>.4 Split the goal:
+    propsimpl;
+
+--         <3>.1 id o f1 = f1:
+        give (unpack CatA - - - !) X1 Y1 f1;
+	propsimpl;
+	next;
+
+--         <3>.2 id o f2= f2:
+        give (unpack CatA - - - !) X2 Y2 f2;
+	propsimpl;
+	next;
+
+--         <3>.3 QED
+
+--     <2>.5 QED
+
+-- <1>.4 Pf-compos-cod: (really really boring)
+
+--     <2>.1 Split A:
+    lambda A;
+    elim split ObjsA (\ _ -> ObjsA) A;
+    lambda A1, A2;
+
+--     <2>.2 Split B:
+    lambda B;
+    elim [B] split ObjsA (\ _ -> ObjsA) B;
+    lambda B1, B2;
+
+--     <2>.3 Split C:
+    lambda C;
+    elim [C] split ObjsA (\ _ -> ObjsA) C;
+    lambda C1, C2;
+
+--     <2>.4 Split D:
+    lambda D;
+    elim [D] split ObjsA (\ _ -> ObjsA) D;
+    lambda D1, D2;
+
+--     <2>.5 Split f:
+    lambda f;
+    elim [f] split (ArrsA A1 B1) (\ _ -> ArrsA A2 B2) f;
+    lambda f1, f2;
+
+--     <2>.6 Split g:
+    lambda g;
+    elim [g] split (ArrsA B1 C1) (\ _ -> ArrsA B2 C2) g;
+    lambda g1, g2;
+
+--     <2>.7 Split h:
+    lambda h;
+    elim [h] split (ArrsA C1 D1) (\ _ -> ArrsA C2 D2) h;
+    lambda h1, h2;
+
+--     <2>.8 Split the goal:
+    propsimpl;
+
+--         <3>.1 compos A1 B1 D1 (compos B1 C1 D1 h1 g1) f1 == 
+--                 compos A1 C1 D1 h1 (compos A1 B1 C1 g1 f1)
+        give (unpack CatA - - - - !) A1 B1 C1 D1 f1 g1 h1;
+	propsimpl;
+	next;
+
+--         <3>.2 compos A2 B2 D2 (compos B2 C2 D2 h2 g2) f2 == 
+--                  compos A2 C2 D2 h2 (compos A2 B2 C2 g2 f2)
+        give (unpack CatA - - - - !) A2 B2 C2 D2 f2 g2 h2;
+	propsimpl;
+
+--         <3>.3 QED
+
+--     <2>.9 QED
 
 root;
 
@@ -276,5 +418,9 @@ make CatDiagA := DiagCat.CatDiagA ObjsA ArrsA CatA : Cat.Cat ObjsDiagA ArrsDiagA
 make DiagFunctorType := Functor.Functor ObjsA ArrsA CatA 
                                         ObjsDiagA ArrsDiagA CatDiagA : Set;
 
+{-
+Don't do that, this unleashes forces of Hell.
+
 let DiagFunctor : DiagFunctorType;
 = 'pack [ ?obj ?act ?pf-id ?pf-compos ];
+-}
