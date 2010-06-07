@@ -281,7 +281,7 @@ can compute a generic catamorphism, $\cataI$, from $\inductionI$.
 \allI{\:}{(\DSigma{\V{S}}{\V{D}})}{& \V{X}}{\V{P}}{\V{p}}{\pair{\V{s}}{\V{d}}{}} &
     \allI{}{(\V{D}\: \V{s})}{\V{X}}{\V{P}}{\V{p}}{\V{d}} \\
 \allI{\:}{(\DPi{\V{S}}{\V{D}})}{& \V{X}}{\V{P}}{\V{p}}{\V{f}} &
-    \allI{}{(\V{D}\: \V{a})}{\V{X}}{\V{P}}{\V{p}}{(\V{f}\: \V{a})}
+    \LAM{\V{a}}\allI{}{(\V{D}\: \V{a})}{\V{X}}{\V{P}}{\V{p}}{(\V{f}\: \V{a})}
 \end{array}
 \end{array}
 }
@@ -502,7 +502,7 @@ index $\NatZero$ and $\NatSuc$ respectively.:
 \stk{
 \data \D{Vec}\: \PITEL{\V{X}}{\Set} : \PI{\V{n}}{\Nat} \Set \where \\
 \;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
-    \VecNil          & \D{Vec}\:\V{X}\:{\NatZero)}   \\
+    \VecNil          & \D{Vec}\:\V{X}\:{\NatZero}   \\
     \SYMBVecCons & _{\PI{\V{n}}{\Nat}}\V{X} \To \D{Vec}\:{\V{X}}\:{\V{n}} \To \D{Vec}\:{\V{X}}\:{(\NatSuc{\V{n}})}
 \end{array}
 }
@@ -519,7 +519,8 @@ this case, we obtain the following definition:
                         & \bigRedBracket{
                           \begin{array}{l}
                             \DConst{(\V{n} \PropEq \NatZero)} \\
-                            \DSigma{\Nat}{\LAM{\V{m}} \stk{\DProd{\DVar{\V{m}}}{\\\DConst{(\V{n} \PropEq \NatSuc{\V{m}})}}}}
+                            \DSigma{\Nat}{\LAM{\V{m}}
+\stk{\DProd{\DConst{\V{X}}}{\DProd{\DVar{\V{m}}}{\\\DConst{(\V{n} \PropEq \NatSuc{\V{m}})}}}}}
                           \end{array}
                           }
 \end{array}
