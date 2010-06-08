@@ -25,9 +25,9 @@ root ;
 
 data Pack (X : Set) := ( pack : X -> Pack X );
 
-let unpack {X : Set}(C : Pack X) : X;
+let unpackGen (X : Set)(C : Pack X) : X;
 <= Pack.Ind X C;
-define unpack _ ('pack sig) := sig;
+define unpackGen _ ('pack sig) := sig;
 root;
 
 -- * Category
@@ -70,27 +70,29 @@ let CatSig : Set;
          (f : Arrs A B)(g : Arrs B C)(h : Arrs C D) =>
          compos A B D (compos B C D h g) f == compos A C D h (compos A B C g f)
       ; ) ;
-root;
-jump Cat.CatSig;
+-- root;
+-- jump Cat.CatSig;
 out;
 
 make Cat := Pack CatSig : Set;
 make cat := \ c -> 'pack c : CatSig -> Cat;
 
+make unpack := unpackGen CatSig : Cat -> CatSig ;
+
 let id (C : Cat) : ((X : Objs) -> Arrs X X);
 = (unpack C) ! ;
-propsimpl;
-root;
-jump Cat.CatSig;
+-- propsimpl;
+-- root;
+-- jump Cat.CatSig;
 out;
 
 let compos (C : Cat) : (A : Objs)(B : Objs)(C : Objs)
                        (g : Arrs B C)(f : Arrs A B) ->
                        Arrs A C;
 = (unpack C) - ! ;
-propsimpl;
-root;
-jump Cat.CatSig;
+-- propsimpl;
+-- root;
+-- jump Cat.CatSig;
 out;
 
 {-
@@ -172,14 +174,16 @@ lambda ObjsA : Set;
 lambda ArrsA : (X : ObjsA)(Y : ObjsA) -> Set;
 lambda CatA : Cat.Cat ObjsA ArrsA;
 
+make unpack := Cat.unpack ObjsA ArrsA : Cat.Cat ObjsA ArrsA -> Cat.CatSig ObjsA ArrsA ;
+
 -- *** Objects
 
 -- Pairs of objects of A
 
 let ObjsDiagA : Set;
 = Sig (ObjsA ; ObjsA);
-root;
-jump DiagCat.ObjsDiagA;
+-- root;
+-- jump DiagCat.ObjsDiagA;
 out;
 
 -- *** Arrows
@@ -228,13 +232,9 @@ let CatDiagA : Cat.Cat ObjsDiagA ArrsDiagA;
 
 --         <3>.1 f1 o id = f1:
         give (unpack CatA - - !) X1 Y1 f1;
-	propsimpl;
-	next;
 
 --         <3>.1 f2 o id = f2:
         give (unpack CatA - - !) X2 Y2 f2;
-	propsimpl;
-	next;
 
 --     <2>.5 QED
 
@@ -260,13 +260,9 @@ let CatDiagA : Cat.Cat ObjsDiagA ArrsDiagA;
 
 --         <3>.1 id o f1 = f1:
         give (unpack CatA - - - !) X1 Y1 f1;
-	propsimpl;
-	next;
 
 --         <3>.2 id o f2= f2:
         give (unpack CatA - - - !) X2 Y2 f2;
-	propsimpl;
-	next;
 
 --         <3>.3 QED
 
@@ -315,13 +311,10 @@ let CatDiagA : Cat.Cat ObjsDiagA ArrsDiagA;
 --         <3>.1 compos A1 B1 D1 (compos B1 C1 D1 h1 g1) f1 == 
 --                 compos A1 C1 D1 h1 (compos A1 B1 C1 g1 f1)
         give (unpack CatA - - - - !) A1 B1 C1 D1 f1 g1 h1;
-	propsimpl;
-	next;
 
 --         <3>.2 compos A2 B2 D2 (compos B2 C2 D2 h2 g2) f2 == 
 --                  compos A2 C2 D2 h2 (compos A2 B2 C2 g2 f2)
         give (unpack CatA - - - - !) A2 B2 C2 D2 f2 g2 h2;
-	propsimpl;
 
 --         <3>.3 QED
 
@@ -366,8 +359,8 @@ let FunctorSig : Set;
 	 Cat.compos ObjsB ArrsB CatB (obj X) (obj Y) (obj Z)
                     (act Y Z g) (act X Y f)
       ;);
-root;
-jump Functor.FunctorSig;
+-- root;
+-- jump Functor.FunctorSig;
 out;
 
 make Functor := Pack FunctorSig : Set;
@@ -415,12 +408,26 @@ make ObjsDiagA := DiagCat.ObjsDiagA ObjsA ArrsA CatA : Set;
 make ArrsDiagA := DiagCat.ArrsDiagA ObjsA ArrsA CatA : (X : ObjsDiagA)(Y : ObjsDiagA) -> Set;
 make CatDiagA := DiagCat.CatDiagA ObjsA ArrsA CatA : Cat.Cat ObjsDiagA ArrsDiagA;
 
+
+
 make DiagFunctorType := Functor.Functor ObjsA ArrsA CatA 
                                         ObjsDiagA ArrsDiagA CatDiagA : Set;
 
-{-
-Don't do that, this unleashes forces of Hell.
 
 let DiagFunctor : DiagFunctorType;
 = 'pack [ ?obj ?act ?pf-id ?pf-compos ];
--}
+-- Obj:
+    give \ X -> [X , X ];
+
+-- Act:
+    give \ X Y f -> [f , f];
+
+-- Pf-id:
+    propsimpl;
+    next;
+
+-- Pf-compos:
+    propsimpl;
+    
+
+root ;
