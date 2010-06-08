@@ -24,7 +24,8 @@
 >   canTy chev (IMu tt@(_ :?=: (Id ii :& Id x)) i :>: Con y) = do
 >     yyv <- chev (idescOp @@ [ ii
 >                             , x $$ A i 
->                             , L $ HF "i" $ \i -> C (IMu tt i)
+>                             , L $ "i" :. [.i. 
+>                                 C (IMu (fmap (-$ []) tt) (NV i)) ]
 >                             ] :>: y)
 >     return $ Con yyv
 
@@ -98,11 +99,20 @@
 >                 "l" :<: ARR iI SET :-: \l ->
 >                 Target (SET :>: 
 >                           idescOp @@ [ iI , d $$ A i
->                                      , L $ HF "i" $ IMU (|l|) iI d
+>                                      , L $ "i" :. [.i. 
+>                                          IMU (|(l -$ [])|) (iI -$ []) (d -$ []) (NV i)]
 >                                      ]))
 >     in Right . CON $ 
->       coe @@ [ idescOp @@ [iI0, d0 $$ A i0, L $ HF "i" $ IMU (|l0|) iI0 d0] 
->              , idescOp @@ [iI1, d1 $$ A i1, L $ HF "i" $ IMU (|l1|) iI1 d1] 
+>       coe @@ [ idescOp @@ [  iI0, d0 $$ A i0 
+>                           ,  L $ "i" :. [.i. 
+>                               IMU (|(l0 -$ [])|) (iI0 -$ []) (d0 -$ []) (NV i)
+>                              ] 
+>                           ] 
+>              , idescOp @@ [  iI1, d1 $$ A i1 
+>                           ,  L $ "i" :. [.i. 
+>                               IMU (|(l1 -$ [])|) (iI1 -$ []) (d1 -$ []) (NV i)
+>                              ]
+>                           ] 
 >              , CON $ pval refl $$ A typ $$ A vap $$ Out 
 >                                $$ A iI0 $$ A iI1 $$ A qiI
 >                                $$ A d0 $$ A d1 $$ A qd
@@ -117,13 +127,19 @@
 >           laty ("I" :<: SET :-: \iI ->
 >                 "d" :<: ARR iI (idesc $$ A iI $$ A VOID) :-: \d ->
 >                 "i" :<: iI :-: \i ->
->                 Target (SET :>: 
->                           (idescOp @@ [ iI , d $$ A i
->                                       , L $ HF "i" $ IMU Nothing iI d
->                                       ]))) 
+>                 Target 
+>                  (SET :>: 
+>                    (idescOp @@ [ iI , d $$ A i
+>                                , L $ "i" :. [.i.
+>                                    IMU Nothing (iI -$ []) (d -$ []) (NV i)]
+>                                ]))) 
 >     in Right . CON $ 
->       coe @@ [ idescOp @@ [ iI0 , d0 $$ A i0 , L $ HF "i" $ IMU Nothing iI0 d0 ] 
->              , idescOp @@ [ iI1 , d1 $$ A i1 , L $ HF "i" $ IMU Nothing iI1 d1 ] 
+>       coe @@ [ idescOp @@ [ iI0 , d0 $$ A i0
+>                           , L $ "i" :. [.i. 
+>                               IMU Nothing (iI0 -$ []) (d0 -$ []) (NV i) ] ] 
+>              , idescOp @@ [ iI1 , d1 $$ A i1
+>                           , L $ "i" :. [.i. 
+>                               IMU Nothing (iI1 -$ []) (d1 -$ []) (NV i) ] ] 
 >              , CON $ pval refl $$ A typ $$ A vap $$ Out 
 >                                $$ A iI0 $$ A iI1 $$ A qiI
 >                                $$ A d0 $$ A d1 $$ A qd
@@ -135,7 +151,9 @@
 
 > import -> ElimTyRules where
 >   elimTy chev (_ :<: (IMu tt@(_ :?=: (Id ii :& Id x)) i)) Out = 
->     return (Out, idescOp @@ [ii , x $$ A i , L $ HF "i" $ \i -> C (IMu tt i)])
+>     return (Out, 
+>       idescOp @@ [  ii , x $$ A i 
+>                  ,  L $ "i" :. [.i. C (IMu (fmap (-$ []) tt) (NV i)) ] ])
 
 > import -> ElimComputation where
 
@@ -253,7 +271,7 @@
 >         "D" :<: (idesc $$ A _I $$ A VOID)  :-: \ _D ->
 >         "P" :<: ARR _I SET                 :-: \ _P ->
 >         "v" :<: idescOp @@ [_I,_D,_P]      :-: \v ->
->         Target $ idesc $$ A (SIGMA _I (L . HF "i" $ \i -> _P $$ A i)) $$ A VOID
+>         Target $ idesc $$ A (SIGMA _I (L $ "i" :. [.i. _P -$ [NV i]])) $$ A VOID
           
 >   imapBoxOp :: Op
 >   imapBoxOp = Op
@@ -290,30 +308,20 @@
 >         "I" :<: SET :-: \_I ->  
 >         "D" :<: (idesc $$ A _I $$ A VOID) :-: \ _D ->
 >         "X" :<: ARR _I SET :-: \ _X -> 
->         let _IX = SIGMA _I (L . HF "i" $ \i -> _X $$ A i) in
+>         let _IX = SIGMA _I (L $ "i" :. [.i. _X -$ [NV i] ]) in
 >         "P" :<: ARR _IX SET :-: \ _P ->
 >         "p" :<: (pity $ "ix" :<: _IX :-: \ ix -> Target $ _P $$ A ix) :-: \ _ ->
 >         "v" :<: (idescOp @@ [_I,_D,_X]) :-: \v ->
 >          Target (idescOp @@ [_IX, iboxOp @@ [_I,_D,_X,v], _P])
 
->   iinductionOpMethodType = L . HF "I" $ \_I -> 
->                      L . HF "D" $ \_D ->
->                      L . HF "P" $ \_P -> pity $ 
+>   iinductionOpMethodType _I _D _P = pity $ 
 >                        "i" :<: _I :-: \i ->
->                        let mud = L . HF "i" $ \i -> IMU Nothing _I _D i in
+>                        let mud = L $ "i" :. [.i. IMU Nothing (_I -$ []) (_D -$ []) (NV i) ] in
 >                        "x" :<: (idescOp @@ [ _I, _D $$ A i, mud])
 >                                  :-: \x -> Target $
 >                          ARR (idescOp @@ [ SIGMA _I mud
 >                                         , iboxOp @@ [_I, _D $$ A i, mud, x], _P ])
->                              (_P $$ A (PAIR i (CON x)))
-
-<   iinductionOpLabMethodType = L . HF "l" $ \l ->
-<                         L . HF "d" $ \d ->
-<                         L . HF "P" $ \_P ->
-<                         PI (descOp @@ [d, MU (Just l) d])
-<                            (L . HF "x" $ \x ->
-<                             ARR (boxOp @@ [d, MU (Just l) d, _P, x])
-<                                 (_P $$ A (PAIR CON x)))
+>                              (_P $$ A (PAIR i (CON x))) 
 
 >   iinductionOp :: Op
 >   iinductionOp = Op
@@ -339,8 +347,9 @@
 >         "D" :<: ARR _I (idesc $$ A _I $$ A VOID) :-: \_D ->
 >         "i" :<: _I :-: \i ->
 >         "v" :<: IMU Nothing _I _D i :-: \v ->
->         "P" :<: (ARR (SIGMA _I (L . HF "i" $ \i -> IMU Nothing _I _D i)) SET) :-: \_P ->
->         "p" :<: (iinductionOpMethodType $$ A _I $$ A _D $$ A _P) :-: \p ->
+>         "P" :<: (ARR (SIGMA _I (L $ "i" :. [.i.  
+>                   IMU Nothing (_I -$ []) (_D -$ []) (NV i) ])) SET) :-: \_P ->
+>         "p" :<: (iinductionOpMethodType _I _D _P) :-: \p ->
 >         Target (_P $$ A (PAIR i v))
 
 > import -> KeywordConstructors where
@@ -388,9 +397,12 @@ description is not neutral, to improve the pretty-printed representation.
 >     distill es (IMU l _I s i :>: CON (PAIR t x)) 
 >       | Just (e, f) <- sumilike _I (s $$ A i) = do
 >         m   :=>: tv  <- distill es (ENUMT e :>: t)
->         as  :=>: xv  <- distill es (idescOp @@ [  _I,f tv
->                                                ,  L (HF "i" $ \i -> IMU l _I s i)
->                                                ] :>: x)
+>         as  :=>: xv  <- 
+>           distill es (idescOp @@ [  _I,f tv
+>                                  ,  L $ "i" :. [.i. 
+>                                       IMU (fmap (-$ []) l) 
+>                                           (_I -$ []) (s -$ []) (NV i)]
+>                                  ] :>: x)
 >         case m of
 >             DTAG s   -> return $ DTag s (unfold as)  :=>: CON (PAIR tv xv)
 >             _        -> return $ DCON (DPAIR m as)   :=>: CON (PAIR tv xv)
@@ -420,37 +432,39 @@ description is not neutral, to improve the pretty-printed representation.
 
 > import -> RulesCode where
 >   inIDesc :: VAL
->   inIDesc = L $ HF "I" $ \_I -> LK $ IFSIGMA constructors (cases _I)
+>   inIDesc = L $ "I" :. [._I. LK $ IFSIGMA constructors (cases (NV _I)) ]
 >       where constructors = (CONSE (TAG "varD")
 >                            (CONSE (TAG "constD")
 >                            (CONSE (TAG "piD")
 >                            (CONSE (TAG "fpiD")
 >                            (CONSE (TAG "sigmaD")
 >                            (CONSE (TAG "fsigmaD")
->                            (CONSE (TAG "prodD")
+>                            (CONSE (TAG "prodD") 
 >                             NILE)))))))
+>             cases :: INTM -> INTM
 >             cases _I = (PAIR (ISIGMA _I (LK $ ICONST UNIT)) 
 >                     (PAIR (ISIGMA SET (LK $ ICONST UNIT))
->                     (PAIR (ISIGMA SET (L $ HF "S" $ \_S -> 
->                                       (IPROD (IPI _S (LK $ IVAR VOID)) 
->                                              (ICONST UNIT))))
->                     (PAIR (ISIGMA enumU (L $ HF "E" $ \_E ->
->                                       (IPROD (IPI (ENUMT _E) (LK $ IVAR VOID))
->                                              (ICONST UNIT))))
->                     (PAIR (ISIGMA SET (L $ HF "S" $ \_S -> 
->                                       (IPROD (IPI _S (LK $ IVAR VOID)) 
->                                              (ICONST UNIT))))
->                     (PAIR (ISIGMA enumU (L $ HF "E" $ \_E ->
->                                       (IPROD (IFPI _E (LK $ IVAR VOID))
->                                              (ICONST UNIT))))
+>                     (PAIR (ISIGMA SET (L $ "S" :. [._S.  
+>                                       (IPROD (IPI (NV _S) (LK $ IVAR VOID)) 
+>                                              (ICONST UNIT))]))
+>                     (PAIR (ISIGMA (enumU -$ []) (L $ "E" :. [._E.
+>                                       (IPROD (IPI (ENUMT (NV _E)) (LK $ IVAR VOID))
+>                                              (ICONST UNIT))]))
+>                     (PAIR (ISIGMA SET (L $ "S" :. [._S.  
+>                                       (IPROD (IPI (NV _S) (LK $ IVAR VOID)) 
+>                                              (ICONST UNIT))]))
+>                     (PAIR (ISIGMA (enumU -$ []) (L $ "E" :. [._E.
+>                                       (IPROD (IFPI (NV _E) (LK $ IVAR VOID))
+>                                              (ICONST UNIT))]))
 >                     (PAIR (IPROD (IVAR VOID) (IPROD (IVAR VOID) (ICONST UNIT)))
 >                      VOID)))))))
 >   idescFakeREF :: REF
 >   idescFakeREF = [("Primitive", 0), ("IDesc", 0)] 
 >                    := (FAKE :<: ARR SET (ARR UNIT SET))
 >   idesc :: VAL
->   idesc = L $ HF "I" $ \_I -> LK $
->             IMU (Just ((N (P idescFakeREF)) $$ A _I)) UNIT (inIDesc $$ A _I) VOID
+>   idesc = L $ "I" :. [._I. LK $
+>             IMU (Just (N ((P idescFakeREF) :$ A (NV _I)))) 
+>                  UNIT (inIDesc -$ [ NV _I]) VOID ]
 >
 >   idescREF :: REF
 >   idescREF = [("Primitive", 0), ("IDesc", 0)] 
