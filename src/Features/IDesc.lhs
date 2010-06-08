@@ -412,10 +412,7 @@ description is not neutral, to improve the pretty-printed representation.
 >         unfold DU        = []
 >         unfold (DPAIR s t)  = s : unfold t
 >         unfold t            = [t]
->         sumilike :: VAL -> VAL -> Maybe (VAL, VAL -> VAL)
->         sumilike _I (IFSIGMA e b)  = 
->           Just (e, \t -> switchOp @@ [ e , t , LK (idesc $$ A _I $$ A VOID), b ])
->         sumilike _ _               = Nothing
+
 
 > import -> DInTmConstructors where
 
@@ -475,3 +472,8 @@ description is not neutral, to improve the pretty-printed representation.
 >                 := (DEFN inIDesc 
 >                      :<: ARR SET (ARR UNIT (idesc $$ A UNIT $$ A VOID)))
 
+
+>   sumilike :: VAL -> VAL -> Maybe (VAL, VAL -> VAL)
+>   sumilike _I (IFSIGMA e b)  = 
+>       Just (e, \t -> switchOp @@ [ e , t , LK (idesc $$ A _I $$ A VOID), b ])
+>   sumilike _ _               = Nothing

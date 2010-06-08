@@ -119,10 +119,27 @@ an element of an inductive type, we match the tags and values.
 >             return $ CON (PAIR ntm atm) :=>: CON (PAIR nv av)
 >         else throwError' $ err "relabel: mismatched tags!"
 
+Similarly for indexed data types:
+
+> matchProb (IMU l _I d i :>: (DTag s as, CON (PAIR t xs)))
+>   | Just (e, f) <- sumilike _I (d $$ A i) = do
+>     ntm :=>: nv <- elaborate (Loc 0) (ENUMT e :>: DTAG s)
+>     sameTag <- withNSupply $ equal (ENUMT e :>: (nv, t))
+>     if sameTag
+>         then do
+>             atm :=>: av <- matchProb
+>                 (idescOp @@ [_I, f t, L (HF "i" $ \ i -> IMU l _I d i)] :>:
+>                     (foldr DPAIR DU as, xs))
+>             return $ CON (PAIR ntm atm) :=>: CON (PAIR nv av)
+>         else throwError' $ err "relabel: mismatched tags!"
+
+
 > matchProb (ty :>: (w, v)) = do
->     proofTrace $ "ty: "  ++ show ty
->     proofTrace $ "w: "   ++ show w
->     proofTrace $ "v: "   ++ show v
+
+<     proofTrace $ "ty: "  ++ show ty
+<     proofTrace $ "w: "   ++ show w
+<     proofTrace $ "v: "   ++ show v
+
 >     throwError' $ err "relabel: can't match"
 >         ++ errTm w ++ err "with" ++ errTyVal (v :<: ty)
 
