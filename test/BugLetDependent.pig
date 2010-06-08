@@ -1,12 +1,7 @@
--- Go through:
-make NoBug : (X : Set)(f : X -> Enum ['a])(A : :- ((p : X) => f p == (: Enum ['a]) 0 )) -> Set;
+let one (X : Set)(f : X -> Enum ['a])(A : :- ((p : X) => f p == (: Enum ['a]) 0 )) : Set;
 validate;
-undo;
+root;
 
--- Hung Epigram:
---let Bug (X : Set)(f : X -> Enum ['a])(A : :- ((p : X) => f p == (: Enum ['a]) 0 )) : Set;
-
--- Hung Epigram:
-make NoBug : (X : Set)(f : X -> Enum ['a])(A : :- ((p : X) => f p == (: Enum ['a]) 0 )) -> Set;
-lambda X, f;
-simpl;
+let two (Q : Prop)(X : Set)(f : X -> Enum ['a])(A : :- (Q => (p : X) => f p == (: Enum ['a]) 0 )) : Set;
+validate;
+root;

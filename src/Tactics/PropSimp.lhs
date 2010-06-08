@@ -2,7 +2,7 @@
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE TypeOperators, TypeSynonymInstances, GADTs, FlexibleInstances,
->              PatternGuards #-}
+>              PatternGuards, TupleSections #-}
 
 > module Tactics.PropSimp where
 
@@ -111,9 +111,9 @@ To simplify a conjunction, we simplify each conjunct separately, then call the
 
 > propSimplify gamma delta (AND p1 p2) = forkNSupply "psAnd1"
 >     (forceSimplify gamma delta p1)
->     (\ p1Simp -> forkNSupply "psAnd2"
+>     (\ (p1Simp, _) -> forkNSupply "psAnd2"
 >         (forceSimplify gamma delta p2)
->         (\ p2Simp -> return (simplifyAnd p1Simp p2Simp)))
+>         (\ (p2Simp, _) -> return (simplifyAnd p1Simp p2Simp)))
 >   where
 >     simplifyAnd :: Simplify -> Simplify -> Simplify
 
@@ -139,12 +139,12 @@ To simplify |p = x : (:- s) => l|, we first try to simplify |s|:
 >                  (forceSimplifyNamed gamma delta s (fortran l))
 >                  antecedent
 >   where
->     antecedent :: Simplify -> Simplifier Simplify
+>     antecedent :: (Simplify, Bool) -> Simplifier Simplify
 
 If |s| is absurd then |p| is trivial, which we can prove by doing |magic|
 whenever someone gives us an element of |s|.
 
->     antecedent (SimplyAbsurd prfAbsurdS) =
+>     antecedent (SimplyAbsurd prfAbsurdS, _) =
 >       return $ SimplyTrivial $ L . HF "antecedentAbsurd" $ \sv ->
 >                                magic (PRF (l $$ A sv)) (prfAbsurdS sv)
 
@@ -153,10 +153,10 @@ and then simplify |l|. Then |p| simplifies to the result of
 simplifying |l|, with the proofs constructed by $\lambda$-abstracting
 in one direction and applying the proof of |s| in the other direction.
 
->     antecedent (SimplyTrivial prfS) =
+>     antecedent (SimplyTrivial prfS, _) =
 >         forkNSupply  "psImp2" 
 >                      (forceSimplify gamma delta (l $$ A prfS)) 
->                      consequentTrivial
+>                      (consequentTrivial . fst)
 >       where
 >         consequentTrivial :: Simplify -> Simplifier Simplify
 >         consequentTrivial (SimplyAbsurd prfAbsurdT) =
@@ -172,13 +172,13 @@ If |s| simplifies nontrivially, we have a bit more work to do. We simplify |t|
 under the binder by adding the simplified conjuncts of |s| to the context and
 applying |l| to |sh| (the proof of |s| in the extended context). 
 
->     antecedent (Simply sqs sgs sh) =
+>     antecedent (Simply sqs sgs sh, didSimplifyAntecedent) =
 >         forkNSupply  "psImp3" 
 >                      (forceSimplify gamma (delta <+> sqs) (l $$ A sh)) 
 >                      consequent
 >       where
->         consequent :: Simplify -> Simplifier Simplify
->         consequent (SimplyAbsurd prfAbsurdT) = do
+>         consequent :: (Simplify, Bool) -> Simplifier Simplify
+>         consequent (SimplyAbsurd prfAbsurdT, _) = do
 >             madness <- dischargeAllLots sqs (PRF ABSURD)
 >             freshRef ("madness" :<: madness) $ \ref -> 
 >               freshRef ("pref" :<: p) $ \pref -> do
@@ -201,7 +201,7 @@ prove as follows:
       then be passed to |prfT'| to get a proof of |t|.
 \end{enumerate}
 
->         consequent (SimplyTrivial prfT) = do
+>         consequent (SimplyTrivial prfT, _) = do
 >             prfT' <- dischargeLots sqs prfT
 >             return $ SimplyTrivial $ 
 >                      L . HF "consequentTrivial" $ \sv ->
@@ -228,7 +228,8 @@ $\Delta, \Theta \vdash \lambda sv .
          (pg_j \overrightarrow { (sg_i \; sv) } ) } }^\Gamma$
 where $\Theta \cong z_0 : pq_0, ..., z_m : pq_m$.
 
->         consequent (Simply tqs tgs th) = do
+>         consequent (Simply tqs tgs th, didSimplifyConsequent) 
+>           | didSimplifyAntecedent || didSimplifyConsequent = do
 >             pqs <- Data.Traversable.mapM (dischargeRefAlls sqs) tqs
 >             pgs <- Data.Traversable.mapM wrapper tgs
 >
@@ -247,6 +248,10 @@ where $\Theta \cong z_0 : pq_0, ..., z_m : pq_m$.
 >                 pg <- dischargeLots sqs (tg $$ A (NP pref $$ A sh))
 >                 discharge pref pg
 
+If we get to this point, neither the antecedent nor the consequent simplified,
+so we had better give up.
+
+>         consequent _ = (|) 
 
 To simplify a proposition that is universally quantified over a (completely
 canonical) enumeration, we can simplify it for each possible value.
@@ -266,7 +271,7 @@ canonical) enumeration, we can simplify it for each possible value.
 >                          Prelude.foldr PAIR VOID (trail hs)]
 >     process qs1 gs1 hs1 n (ts :< t) = forkNSupply "psEnumImp"
 >         (forceSimplify gamma delta (b $$ A n)) $
->         \ btSimp -> case btSimp of
+>         \ (btSimp, _) -> case btSimp of
 >             SimplyAbsurd prf  -> return $ SimplyAbsurd (\ v -> prf (v $$ A n))
 >             Simply qs2 gs2 h2  -> do
 >                 let gs2' = fmap (..! ($$ A n)) gs2
@@ -279,8 +284,8 @@ reference and simplify |t| under the binder.
 > propSimplify gamma delta p@(ALL s l) = 
 >     freshRef (fortran l :<: s) $ \refS -> 
 >       forkNSupply  "psAll" 
->                    (forceSimplify gamma (delta :< refS) (l $$ A (NP refS))) 
->                    (thingy refS)
+>           (propSimplify gamma (delta :< refS) (l $$ A (NP refS))) 
+>           (thingy refS)
 >   where
 >     thingy :: (NameSupplier m) => REF -> Simplify -> m Simplify
 
@@ -380,7 +385,7 @@ resulting pieces), or just searching the context.
 >        Right TRIVIAL  -> return $ SimplyTrivial (CON VOID)
 >        Right q        -> forkNSupply  "psEq"
 >                                       (forceSimplify gamma delta q)
->                                       equality
+>                                       (equality . fst)
 >          
 >    equality :: Simplify -> Simplifier Simplify
 >    equality (SimplyAbsurd prf) = return $ SimplyAbsurd (prf . ($$ Out))
@@ -426,19 +431,23 @@ As a variant of |propSimplify|, |forceSimplify| guarantees to give a result,
 by trying to simplify the proposition and yielding an identical copy if
 simplification fails. This is useful in cases such as |&&|, where we know
 we can do some simplification even if the conjuncts do not simplify.
+It also returns a boolean indicating whether simplification occurred.
 
 The |forceSimplifyNamed| variant takes a name hint that will be
 used if simplification fails.
 
 > forceSimplify gamma delta p = forceSimplifyNamed gamma delta p ""
 
-> forceSimplifyNamed :: Bwd REF -> Bwd REF -> VAL -> String -> Simplifier Simplify
-> forceSimplifyNamed gamma delta p hint  = propSimplify gamma delta p
->                                        <|> simplifyNone hint (PRF p)
->     where
->       simplifyNone :: (NameSupplier m) => String -> TY -> m Simplify
->       simplifyNone hint ty = freshRef (nameHint hint ty :<: ty) $ \ref ->
->                              return $ SimplyOne ref (idVAL "id") (NP ref)
+> forceSimplifyNamed :: Bwd REF -> Bwd REF -> VAL -> String ->
+>     Simplifier (Simplify, Bool)
+> forceSimplifyNamed gamma delta p hint  =
+>     (propSimplify gamma delta p >>= return . (, True))
+>     <|> simplifyNone hint (PRF p)
+>   where
+>       simplifyNone :: (NameSupplier m) => String -> TY -> m (Simplify, Bool)
+>       simplifyNone hint ty =
+>           freshRef (nameHint hint ty :<: ty) $ \ref ->
+>               return (SimplyOne ref (idVAL "id") (NP ref), False)
 >   
 >       nameHint :: String -> VAL -> String
 >       nameHint hint _ | not (null hint) = hint
