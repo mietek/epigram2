@@ -163,33 +163,43 @@
 %endif
 
 > import -> OpCode where
->   type IDescDispatchTable = (VAL -> VAL,
->                              VAL -> VAL -> VAL,
->                              VAL -> VAL -> VAL,
->                              VAL -> VAL -> VAL,
->                              VAL -> VAL -> VAL,
->                              VAL -> VAL,
->                              VAL -> VAL -> VAL)
-
->   mkLazyIDescDef :: VAL -> IDescDispatchTable -> Either NEU VAL
->   mkLazyIDescDef arg (ivarC, ipiC, ifpiC, isigmaC, ifsigmaC, iconstC, iprodC) =
->     let args = arg $$ Snd in
->       case arg $$ Fst of      
->         IVARN     -> Right $ ivarC (args $$ Fst)
->         IPIN      -> Right $ ipiC (args $$ Fst) (args $$ Snd $$ Fst) 
->         IFPIN     -> Right $ ifpiC (args $$ Fst)  (args $$ Snd $$ Fst)
->         ISIGMAN   -> Right $ isigmaC (args $$ Fst) (args $$ Snd $$ Fst)
->         IFSIGMAN  -> Right $ ifsigmaC (args $$ Fst) (args $$ Snd $$ Fst)
->         ICONSTN   -> Right $ iconstC (args $$ Fst) 
->         IPRODN    -> Right $ iprodC (args $$ Fst) (args $$ Snd $$ Fst)
->         N t     -> Left t
 
 >   idescOp :: Op
 >   idescOp = Op
 >     { opName = "idesc"
 >     , opArity = 3
 >     , opTyTel = idOpTy
->     , opRun = idOpRun
+>     , opRun = runOpTree $ OLam $ \_I -> oData {- idOpRun -}
+>         [ {-VAR-} oTup $ \i -> OLam $ \_P -> ORet $ _P $$ A i
+>         , {-CONST-} oTup $ \_A -> OLam $ \_P -> ORet _A
+>         , {-PI-} oTup $ \_S _T -> OLam $ \_P -> ORet $
+>                    PI _S $ L $ "s" :. [.s. N $ 
+>                      idescOp :@ [ _I -$ [] , _T -$ [NV s], _P -$ [] ]]   
+>         , {-FPI-} oTup $ \_E _Df -> OLam $ \_P -> ORet $ 
+>                     branchesOp @@  
+>                       [  _E 
+>                       ,  (L $ "e" :. [.e. N $  
+>                             idescOp :@  [  _I -$ []
+>                                         ,  _Df -$ [NV e]
+>                                         ,  _P -$ [] 
+>                                         ]]) 
+>                       ]
+>         , {-SIGMA-} oTup $ \_S _T -> OLam $ \_P -> ORet $
+>                       SIGMA _S $ L $ "s" :. [.s. N $ 
+>                         idescOp :@ [ _I -$ [] , _T -$ [NV s], _P -$ [] ]]  
+>         , {-FSIGMA-} oTup $ \_E _Ds -> OLam $ \_P -> ORet $
+>                        SIGMA (ENUMT _E) (L $ "s" :. [.s. N $
+>                          idescOp :@ [ _I -$ []
+>                                     , N $ switchOp :@ 
+>                                             [ _E -$ []
+>                                             , NV s
+>                                             , LK (idesc -$ [ _I -$ []
+>                                                            ,  VOID])
+>                                             , _Ds -$ [] ]
+>                                     , _P -$ [] ] ])
+>         , {-PROD-} oTup $ \_D _D' -> OLam $ \_P -> ORet $
+>                      TIMES (idescOp @@ [_I, _D, _P]) (idescOp @@ [_I, _D', _P])
+>         ]
 >     , opSimp = \_ _ -> empty
 >     } where
 >       idOpTy = 
@@ -197,51 +207,45 @@
 >        "d" :<: (idesc $$ A iI $$ A VOID) :-: \d ->
 >        "X" :<: ARR iI SET :-: \x ->
 >        Target SET
->       idOpRun :: [VAL] -> Either NEU VAL
->       idOpRun [_I, CON _D, _P] = 
->         mkLazyIDescDef _D  (  ivarD _I _P
->                            ,  ipiD _I _P        
->                            ,  ifpiD _I _P        
->                            ,  isigmaD _I _P        
->                            ,  ifsigmaD _I _P        
->                            ,  iconstD _I _P        
->                            ,  iprodD _I _P  
->                            )
->       idOpRun [_I, N n, _P] = Left n 
->       idOpRun x = error (show . length $ x)
->       ivarD _I _P i = _P $$ A i     
->       ipiD _I _P _S _T =
->           PI _S (L . HF "s" $ \s ->
->                  idescOp @@ [ _I, _T $$ A s, _P ])
->       ifpiD _I _P _E _Df =
->           branchesOp @@  [  _E
->                          ,  (L . HF "e" $ \e -> 
->                                idescOp @@  [  _I,  _Df $$ A e,  _P ]) 
->                          ]
->       isigmaD _I _P _S _T = 
->           SIGMA _S (L . HF "s" $ \s ->
->                     idescOp @@ [  _I
->                                ,  _T $$ A s
->                                ,  _P ])
->       ifsigmaD _I _P _E _Ds =
->           SIGMA (ENUMT _E) (L . HF "s" $ \s ->
->                             idescOp @@ [ _I
->                                        , switchOp @@ [ _E
->                                                      , s
->                                                      , LK (idesc $$ A _I $$ A VOID)
->                                                      , _Ds]
->                                        , _P])
->       iconstD _I _P _K = _K
->       iprodD _I _P _D _D' =
->           TIMES  (idescOp @@ [ _I, _D, _P ])
->                  (idescOp @@ [ _I, _D', _P ])
 
 >   iboxOp :: Op
 >   iboxOp = Op
 >     { opName = "ibox"
 >     , opArity = 4
 >     , opTyTel = iboxOpTy
->     , opRun = iboxOpRun
+>     , opRun = runOpTree $ OLam $ \_I -> oData  {- iboxOpRun -}
+>         [ {-VAR-} oTup $ \i -> oLams $ \() v -> ORet $ 
+>                     IVAR (PAIR i v)
+>         , {-CONST-} oTup $ \() -> oLams $ \() () -> ORet $
+>                        ICONST (PRF TRIVIAL)
+>         , {-PI-} oTup $ \_S _T -> oLams $ \_P f -> ORet $
+>                    IPI _S (L $ "s" :. [.s. N $
+>                      iboxOp :@  [  _I -$ [], _T -$ [NV s]
+>                                 ,  _P -$ [], f -$ [NV s]] ])
+>         , {-FPI-} oTup $ \_E _Df -> oLams $ \_P v -> ORet $ 
+>                     IFPI _E (L $ "e" :. [.e. N $ 
+>                       iboxOp :@  [  _I -$ [] , _Df -$ [NV e], _P -$ []
+>                                  ,  N $ switchOp :@ 
+>                                           [  _E -$ [] , NV e  
+>                                           ,  L $ "f" :. [.f. N $  
+>                                                idescOp :@  [  _I -$ []
+>                                                            ,  _Df -$ [NV f]
+>                                                            , _P -$ [] ] ]
+>                                           ,  v -$ []]]])
+>         , {-SIGMA-} oTup $ \() _T -> OLam $ \_P -> OPr $ oLams $ \s d -> ORet $
+>                       iboxOp @@ [_I, _T $$ A s, _P, d]
+>         , {-FSIGMA-} oTup $ \_E _Ds -> OLam $ \_P -> OPr $ oLams $ \e d -> ORet $
+>             iboxOp @@ [_I
+>                       , switchOp @@ [ _E
+>                                     , e
+>                                     , LK (idesc $$ A _I $$ A VOID)
+>                                     , _Ds ]
+>                       , _P 
+>                       , d ]
+>         , {-PROD-} oTup $ \_D _D' -> OLam $ \_P -> OPr $ oLams $ \d d' -> ORet $
+>             IPROD  (iboxOp @@ [_I, _D, _P, d])
+>                     (iboxOp @@ [_I, _D', _P, d'])
+>         ]
 >     , opSimp = \_ _ -> empty
 >     } where
 >       iboxOpTy = 
@@ -250,54 +254,36 @@
 >         "P" :<: ARR _I SET                 :-: \ _P ->
 >         "v" :<: idescOp @@ [_I,_D,_P]      :-: \v ->
 >         Target $ idesc $$ A (SIGMA _I (L . HF "i" $ \i -> _P $$ A i)) $$ A VOID
->       iboxOpRun :: [VAL] -> Either NEU VAL
->       iboxOpRun [_I,CON _D,_P,v] = 
->         mkLazyIDescDef _D  (  ivarD _I _P v
->                            ,  ipiD _I _P v       
->                            ,  ifpiD _I _P v       
->                            ,  isigmaD _I _P v        
->                            ,  ifsigmaD _I _P v       
->                            ,  iconstD _I _P v       
->                            ,  iprodD _I _P v 
->                            )
->       iboxOpRun [_I,N _D,_P,v] = Left _D
->       ivarD _I _P v i = IVAR (PAIR i v)
->       ipiD _I _P f _S _T =
->           IPI _S (L . HF "s" $ \s ->
->                    iboxOp @@ [_I, _T $$ A s, _P, f $$ A s])
->       ifpiD _I _P t _E _Df =
->           IFPI _E (L . HF "e" $ \e ->
->                     iboxOp @@  [  _I, _Df $$ A e, _P
->                                ,  switchOp @@ [_E, e, 
->                                     L (HF "e" $ \e -> 
->                                       idescOp @@ [_I, _Df $$ A e,_P]), t]])
->       isigmaD _I _P sd _S _T =
->           let s = sd $$ Fst
->               d = sd $$ Snd in
->           iboxOp @@ [_I, _T $$ A s, _P, d]
->       ifsigmaD _I _P ed _S _T =
->            let e = ed $$ Fst
->                d = ed $$ Snd in
->            iboxOp @@ [_I
->                      , switchOp @@ [ _S
->                                    , e
->                                    , LK (idesc $$ A _I $$ A VOID)
->                                    , _T ]
->                      , _P 
->                      , d ]
->       iconstD _I _P _ _K = ICONST (PRF TRIVIAL)
->       iprodD _I _P dd' _D _D' =
->           let d = dd' $$ Fst
->               d' = dd' $$ Snd in
->           IPROD  (iboxOp @@ [_I, _D, _P, d])
->                   (iboxOp @@ [_I, _D', _P, d'])
           
 >   imapBoxOp :: Op
 >   imapBoxOp = Op
 >     { opName = "imapBox"
 >     , opArity = 6
 >     , opTyTel = imapBoxOpTy
->     , opRun = imapBoxOpRun
+>     , opRun = runOpTree $ OLam $ \_I -> oData {- imapBoxOpRun -}
+>         [ {-VAR-} oTup $ \i -> oLams $ \() () p v -> ORet $ p $$ A (PAIR i v)
+>         , {-CONST-} oTup $ \() -> oLams $ \() () () () -> ORet $ VOID
+>         , {-PI-} oTup $ \() _T -> oLams $ \_X _P p f -> ORet $
+>             L $ "s" :. [.s. N $ 
+>               imapBoxOp :@  [  _I -$ [], _T -$ [NV s]
+>                             ,  _X -$ [] ,_P -$ [], p -$ [], f -$ [NV s] ] ]
+>         , {-FPI-} oTup $ \() _Df -> oLams $ \_X _P p v -> ORet $ 
+>             L $ "s" :. [.s. N $ 
+>               imapBoxOp :@  [  _I -$ [], _Df -$ [NV s]
+>                             ,  _X -$ [] ,_P -$ [], p -$ [], v -$ [NV s] ] ]
+>         , {-SIGMA-} oTup $ \() _T -> oLams $ \_X _P p -> OPr $ oLams $ \s d -> ORet $
+>             imapBoxOp @@ [  _I, _T $$ A s, _X, _P, p, d]
+>         , {-FSIGMA-} oTup $ \_E _Ds -> oLams $ \_X _P p -> OPr $ oLams $ \e d -> ORet $
+>             imapBoxOp @@ [  _I
+>                          ,  switchOp @@ [  _E, e 
+>                                         ,  LK (idesc $$ A _I $$ A VOID)
+>                                         ,  _Ds
+>                                         ]
+>                          ,  _X, _P, p, d ]
+>         , {-PROD-} oTup $ \_D _D' -> oLams $ \_X _P p -> OPr $ oLams $ \d d' -> ORet $
+>             PAIR (imapBoxOp @@ [_I, _D, _X, _P, p, d]) 
+>                   (imapBoxOp @@ [_I, _D', _X, _P, p, d'])
+>         ]
 >     , opSimp = \_ _ -> empty
 >     } where
 >       imapBoxOpTy =
@@ -309,28 +295,6 @@
 >         "p" :<: (pity $ "ix" :<: _IX :-: \ ix -> Target $ _P $$ A ix) :-: \ _ ->
 >         "v" :<: (idescOp @@ [_I,_D,_X]) :-: \v ->
 >          Target (idescOp @@ [_IX, iboxOp @@ [_I,_D,_X,v], _P])
->       imapBoxOpRun :: [VAL] -> Either NEU VAL
->       imapBoxOpRun [_I, CON _D, _X, _P, p, v]  = 
->         mkLazyIDescDef _D (varD _I _X _P p v, 
->                            piD _I _X _P p v,
->                            fpiD _I _X _P p v,
->                            sigmaD _I _X _P p v,
->                            fsigmaD _I _X _P p v,
->                            constD _I _X _P p v, 
->                            prodD _I _X _P p v) 
->       imapBoxOpRun [_I, N _D, _X, _P, p, v]  = Left _D
->       varD _I _X _P p v i = p $$ A (PAIR i v)
->       piD _I _X _P p v _S _T = 
->         L . HF "s" $ \s -> imapBoxOp @@ [_I,_T $$ A s,_X,_P,p,v $$ A s]
->       fpiD _I _X _P p v _E _Df = 
->         L . HF "s" $ \s -> imapBoxOp @@ [_I,_Df $$ A s,_X,_P,p,v $$ A s]
->       sigmaD _I _X _P p v _S _T = imapBoxOp @@ [_I,_T $$ A (v $$ Fst),_X,_P,p,v $$ Snd]
->       fsigmaD _I _X _P p v _E _Ds =
->         imapBoxOp @@ [_I,switchOp @@ [_E,v $$ Fst,LK (idesc $$ A _I $$ A VOID),_Ds],_X,_P,p,v $$ Snd]
->       constD _I _X _P p v _K = VOID
->       prodD _I _X _P p v _D _D' = 
->         PAIR (imapBoxOp @@ [_I,_D,_X,_P,p,v $$ Fst]) 
->               (imapBoxOp @@ [_I,_D',_X,_P,p,v $$ Snd])
 
 >   iinductionOpMethodType = L . HF "I" $ \_I -> 
 >                      L . HF "D" $ \_D ->
@@ -356,7 +320,18 @@
 >     { opName = "iinduction"
 >     , opArity = 6
 >     , opTyTel = iinductionOpTy
->     , opRun = iinductionOpRun
+>     , opRun = runOpTree $ oLams $ \_I _D i -> OCon $ oLams $ \v _P p -> ORet $
+>         p $$ A i $$ A v 
+>           $$ A (imapBoxOp @@ [ _I, _D $$ A i 
+>                              , (L $ "i" :. [.i.   
+>                                  IMU Nothing (_I -$ []) (_D -$ []) (NV i)])
+>                              , _P
+>                              , L $ "ix" :. [.ix. N $  
+>                                 iinductionOp :@ 
+>                                   [ _I -$ [], _D -$ []
+>                                   , N (V ix :$ Fst), N (V ix :$ Snd)
+>                                   , _P -$ [], p -$ [] ] ]
+>                              , v]) 
 >     , opSimp = \_ _ -> empty
 >     } where
 >       iinductionOpTy = 
@@ -367,16 +342,6 @@
 >         "P" :<: (ARR (SIGMA _I (L . HF "i" $ \i -> IMU Nothing _I _D i)) SET) :-: \_P ->
 >         "p" :<: (iinductionOpMethodType $$ A _I $$ A _D $$ A _P) :-: \p ->
 >         Target (_P $$ A (PAIR i v))
->       iinductionOpRun :: [VAL] -> Either NEU VAL
->       iinductionOpRun [_I, _D, i, CON v, _P, p] = Right $ 
->        p $$ A i $$ A v 
->          $$ A (imapBoxOp @@ [ _I, _D $$ A i 
->                             , (L . HF "i" $ \i -> IMU Nothing _I _D i), _P
->                             , L . HF "ix" $ \ix -> 
->                                iinductionOp @@ 
->                                  [ _I, _D, ix $$ Fst, ix $$ Snd, _P, p ]
->                             , v]) 
->       iinductionOpRun [_, _, _, N x, _,_] = Left x
 
 > import -> KeywordConstructors where
 >   KwIMu :: Keyword
@@ -494,6 +459,5 @@ description is not neutral, to improve the pretty-printed representation.
 >   idescDREF :: REF
 >   idescDREF = [("Primitive", 0), ("IDescD", 0)] 
 >                 := (DEFN inIDesc 
->                      :<: PI SET (L $ HF "I" $ \_I -> 
->                             ARR UNIT (idesc $$ A _I $$ A VOID)))
+>                      :<: ARR SET (ARR UNIT (idesc $$ A UNIT $$ A VOID)))
 
