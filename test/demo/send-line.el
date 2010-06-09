@@ -21,6 +21,7 @@
       (insert "undo")
       (comint-send-input)
       (other-window 1)
+      (forward-line -1)
       (message "Undone"))
 
 (global-set-key "\C-c\C-u" 'send-undo)

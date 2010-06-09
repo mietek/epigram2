@@ -160,14 +160,19 @@ make plus-function-commutative := ? : :- (flip plus == plus) ;
 
 data List (A : Set) := (nil : List A) ; (cons : A -> List A -> List A) ;
 
+elab 'nil : List Bool ;
+elab 'cons 'true 'nil : List Bool ;
+elab 'cons one ('cons two 'nil) : List Nat ;
+
+
 {-
   What happens if we try to write a function to extract the first element of a
-  list? There is nothing we can use to fill the hole.
+  list? There is nothing we can do in the nil case, so we just skip it.
 -}
 
 let head (A : Set)(as : List A) : A ;
 <= List.Ind A as ;
-define head A 'nil := ? ; next ;
+next ;
 define head A ('cons a _) := a ;
 root ;
 
