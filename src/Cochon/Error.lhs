@@ -6,7 +6,7 @@
 > {-# LANGUAGE TypeOperators, TypeSynonymInstances, GADTs,
 >     DeriveFunctor, DeriveFoldable, DeriveTraversable #-}
 
-> module Cochon.Error where
+> module UI.Cochon.Interface.Error where
 
 > import Control.Monad.Error
 > import Text.PrettyPrint.HughesPJ
@@ -20,8 +20,8 @@
 > import ProofState.ProofState
 > import ProofState.ProofKit
 
-> import Distillation.Distiller
-> import Distillation.Moonshine
+> import UI.Cochon.Distillation.Distiller
+> import UI.Cochon.Distillation.Moonshine
 
 %endif
 

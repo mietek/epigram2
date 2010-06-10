@@ -6,7 +6,7 @@
 > {-# LANGUAGE TypeOperators, TypeSynonymInstances, GADTs,
 >     DeriveFunctor, DeriveFoldable, DeriveTraversable #-}
 
-> module Cochon.CommandLexer where
+> module UI.Cochon.Interface.CommandLexer where
 
 > import Control.Applicative
 

@@ -20,8 +20,8 @@
 > import DisplayLang.DisplayTm
 > import DisplayLang.Name
 
-> import Elaboration.ElabMonad
-> import Elaboration.Elaborator
+> import UI.Cochon.Elaboration.ElabMonad
+> import UI.Cochon.Elaboration.Elaborator
 
 > import Kit.MissingLibrary
 

@@ -30,14 +30,14 @@
 > import DisplayLang.Lexer
 > import DisplayLang.PrettyPrint
 
-> import Elaboration.ElabMonad
-> import Elaboration.MakeElab
-> import Elaboration.RunElab
-> import Elaboration.Scheduler
-> import Elaboration.Elaborator
+> import UI.Cochon.Elaboration.ElabMonad
+> import UI.Cochon.Elaboration.MakeElab
+> import UI.Cochon.Elaboration.RunElab
+> import UI.Cochon.Elaboration.Scheduler
+> import UI.Cochon.Elaboration.Elaborator
 
-> import Distillation.Distiller
-> import Distillation.Scheme
+> import UI.Cochon.Distillation.Distiller
+> import UI.Cochon.Distillation.Scheme
 
 > import Kit.BwdFwd
 

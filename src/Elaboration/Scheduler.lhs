@@ -5,7 +5,7 @@
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE GADTs, TypeOperators, TupleSections #-}
 
-> module Elaboration.Scheduler where
+> module UI.Cochon.Elaboration.Scheduler where
 
 > import NameSupply.NameSupply
 
@@ -21,10 +21,10 @@
 
 > import DisplayLang.Name
 
-> import Elaboration.ElabMonad
-> import Elaboration.MakeElab
-> import Elaboration.RunElab
-> import Elaboration.Unification
+> import UI.Cochon.Elaboration.ElabMonad
+> import UI.Cochon.Elaboration.MakeElab
+> import UI.Cochon.Elaboration.RunElab
+> import UI.Cochon.Elaboration.Unification
 
 > import Kit.BwdFwd
 > import Kit.MissingLibrary

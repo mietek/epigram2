@@ -5,7 +5,7 @@
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE TypeOperators #-}
 
-> module Cochon.DevLoad (devLoad, devLoad') where
+> module UI.Cochon.Interface.DevLoad (devLoad, devLoad') where
 
 > import Control.Monad.State
 > import Control.Monad.Error
@@ -17,8 +17,8 @@
 > import Kit.BwdFwd
 > import Kit.Parsley
 
-> import Cochon.Cochon
-> import Cochon.Error
+> import UI.Cochon.Interface.Cochon
+> import UI.Cochon.Interface.Error
 
 > import ProofState.Developments
 
@@ -32,7 +32,7 @@
 > import ProofState.ProofState
 > import ProofState.ProofKit
 
-> import Elaboration.Elaborator
+> import UI.Cochon.Elaboration.Elaborator
 
 > import NameSupply.NameSupply
 > import NameSupply.NameSupplier

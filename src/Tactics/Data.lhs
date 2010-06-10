@@ -25,7 +25,7 @@
 > import ProofState.ProofState
 > import ProofState.ProofKit
 
-> import Elaboration.Elaborator
+> import UI.Cochon.Elaboration.Elaborator
 
 > import DisplayLang.DisplayTm
 > import DisplayLang.Name

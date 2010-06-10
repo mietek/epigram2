@@ -8,7 +8,7 @@
 >              MultiParamTypeClasses, GeneralizedNewtypeDeriving,
 >              PatternGuards #-}
 
-> module Elaboration.ElabMonad where
+> module UI.Cochon.Elaboration.ElabMonad where
 
 > import Control.Applicative
 > import Control.Monad

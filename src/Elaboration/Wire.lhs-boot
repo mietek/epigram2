@@ -1,4 +1,4 @@
-> module Elaboration.Wire where
+> module UI.Cochon.Elaboration.Wire where
 
 > import Evidences.Tm
 > import ProofState.Developments

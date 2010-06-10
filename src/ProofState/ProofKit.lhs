@@ -32,11 +32,11 @@
 > import DisplayLang.Name
 
 We have to use a boot file to resolve the circular dependency between this module
-and |Elaboration.Wire|. We need to make calls to the news propagation code from
+and |UI.Cochon.Elaboration.Wire|. We need to make calls to the news propagation code from
 navigation commands, but the news code uses proof state manipulation commands
 defined here.
 
-> import {-# SOURCE #-} Elaboration.Wire
+> import {-# SOURCE #-} UI.Cochon.Elaboration.Wire
 
 > import Evidences.Tm
 > import Evidences.Rules
