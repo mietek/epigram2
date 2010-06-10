@@ -114,39 +114,39 @@
 %include Tactics/Gadgets.lhs
 %include Tactics/Relabel.lhs
 
-\chapter{Elaboration}
-\label{chap:elaboration}
-
-%include Elaboration/ElabMonad.lhs
-%include Elaboration/MakeElab.lhs
-%include Elaboration/RunElab.lhs
-%include Elaboration/Elaborator.lhs
-%include Elaboration/Scheduler.lhs
-%include Elaboration/Wire.lhs
-%include Elaboration/Unification.lhs
-
-\chapter{Distillation}
-
-%include Distillation/Distiller.lhs
-%include Distillation/Scheme.lhs
-%include Distillation/Moonshine.lhs
-
-\chapter{Cochon}
-
-\input{Cochon/Introduction.tex}
-
-%include Cochon/DevLoad.lhs
-%include Cochon/CommandLexer.lhs
-%include Cochon/UI.Cochon.Interface.lhs
-%include Cochon/Error.lhs
-%include Main.lhs
-
 \chapter{Compiler}
 
 \input{Compiler/Introduction.tex}
 
 %include Compiler/OpDef.lhs
 %include Compiler/Compiler.lhs
+
+\part{Cochon}
+
+\chapter{Elaboration}
+\label{chap:elaboration}
+
+%include UI/Cochon/Elaboration/ElabMonad.lhs
+%include UI/Cochon/Elaboration/MakeElab.lhs
+%include UI/Cochon/Elaboration/RunElab.lhs
+%include UI/Cochon/Elaboration/Elaborator.lhs
+%include UI/Cochon/Elaboration/Scheduler.lhs
+%include UI/Cochon/Elaboration/Wire.lhs
+%include UI/Cochon/Elaboration/Unification.lhs
+
+\chapter{Distillation}
+
+%include UI/Cochon/Distillation/Distiller.lhs
+%include UI/Cochon/Distillation/Scheme.lhs
+%include UI/Cochon/Distillation/Moonshine.lhs
+
+\chapter{Interface}
+
+%include UI/Cochon/Interface/DevLoad.lhs
+%include UI/Cochon/Interface/CommandLexer.lhs
+%include UI/Cochon/Interface/Cochon.lhs
+%include UI/Cochon/Interface/Error.lhs
+%include Main.lhs
 
 \appendix
 
