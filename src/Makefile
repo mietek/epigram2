@@ -28,17 +28,18 @@ LATEXOPTS = -interaction=nonstopmode
 ################################################################
 
 SRCS := $(wildcard *.lhs) \
-	$(wildcard Cochon/*.lhs) \
 	$(wildcard Compiler/*.lhs) \
 	$(wildcard DisplayLang/*.lhs) \
-	$(wildcard Elaboration/*.lhs) \
-	$(wildcard Distillation/*.lhs) \
 	$(wildcard Evidences/*.lhs) \
 	$(wildcard Features/*.lhs) \
 	$(wildcard Kit/*.lhs) \
 	$(wildcard ProofState/*.lhs) \
 	$(wildcard NameSupply/*.lhs) \
-	$(wildcard Tactics/*.lhs)
+	$(wildcard Tactics/*.lhs) \
+	$(wildcard UI/Cochon/Interface/*.lhs) \
+	$(wildcard UI/Cochon/Elaboration/*.lhs) \
+	$(wildcard UI/Cochon/Distillation/*.lhs)
+
 OBJS := $(SRCS:.lhs=.o) 
 
 .SUFFIXES : .o .hs .hi .lhs .hc .s\
