@@ -11,7 +11,7 @@
 
 
 
-\subsection{The |Return| gadget}
+\subsection{The Return gadget}
 
 > import -> CochonTactics where
 >   : unaryInCT "=" (\tm -> elabGiveNext (DLRET tm) >> return "Ta.")
@@ -31,7 +31,10 @@
 >      "define <prob> := <term> - relabels and solves <prob> with <term>")
 
 
-\subsection{The |By| gadget}
+\subsection{The By gadget}
+
+The By gadget, written |<=|, invokes elimination with a motive, then simplifies
+the methods and moves to the first subgoal remaining.
 
 > import -> CochonTactics where
 >   : (simpleCT
@@ -40,14 +43,17 @@
 >                                               |id tokenAscription |)|)
 >     (\ [n,e] -> do
 >         elimCTactic (argOption (unDP . argToEx) n) (argToEx e)
->         optional problemSimplify
->         optional seekGoal
+>         optional problemSimplify            -- simplify first method
+>         many (goDown >> problemSimplify)    -- simplify other methods
+>         many goUp                           -- go back up to motive
+>         goDown                              -- go down to first method
+>         optional seekGoal                   -- jump to goal
 >         return "Eliminated and simplified."
 >     )
 >     "<= [<comma>] <eliminator> - eliminates with a motive.")
 
 
-\subsection{The |solve| gadet}
+\subsection{The Solve gadet}
 
 > import -> CochonTactics where
 >     : simpleCT
