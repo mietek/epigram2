@@ -44,9 +44,9 @@ for each layer, along with the entries in the current development.
 We can extract such a thing from a |ProofContext| using |inBScope|:
 
 > inBScope :: ProofContext -> BScopeContext
-> inBScope (PC layers (entries,_,_) _) = 
+> inBScope (PC layers dev _) = 
 >   (  fmap (\l -> (elders l, last . motherName . mother $ l)) layers
->   ,  entries)
+>   ,  devEntries dev)
 
 An |FScopeContext| is the forwards variant:
 
@@ -176,10 +176,10 @@ then continues with |lookFor|.
 >             else lookUp (x,i-1) (esus,es) (F0,((y,j),fs) :> vfss)
 > lookUp (x,i) ((esus :< (es,(y,j))),B0) (fs,vfss) = 
 >   lookUp (x,i) (esus,es) (F0,((y,j),fs) :> vfss)
-> lookUp (x,i) (esus, es :< e@(M n (es', _, _))) (fs,vfss) | lastNom n == x =
+> lookUp (x,i) (esus, es :< e@(M n (Dev {devEntries=es'}))) (fs,vfss) | lastNom n == x =
 >   if i == 0 then Right (Right es', boyREFs (flat esus es), Nothing, Nothing)
 >             else lookUp (x,i-1) (esus,es) (e:>fs,vfss)
-> lookUp (x,i) (esus, es :< e@(E r (y,j) (Girl kind (es',_,_)) _)) (fs,vfss) | x == y =
+> lookUp (x,i) (esus, es :< e@(E r (y,j) (Girl kind (Dev {devEntries=es'})) _)) (fs,vfss) | x == y =
 >   if i == 0 then Right (Right es', boyREFs (flat esus es), Just r, kindScheme kind)
 >             else lookUp (x,i-1) (esus,es) (e:>fs,vfss)
 > lookUp (x,i) (esus, es :< e@(E r (y,j) (Boy _) _)) (fs,vfss) | x == y =
@@ -194,9 +194,9 @@ then continues with |lookFor|.
 > lookDown (x, i) (e :> es, uess) sp =
 >     if x == (fst $ entryLastName e)
 >     then if i == 0
->          then case entryDev e of
->              Just (zs, _, _)  -> Right (Right zs, sp, entryREF e, entryScheme e)
->              Nothing          -> Right (Right B0, [], entryREF e, entryScheme e) 
+>          then case (|devEntries (entryDev e)|) of
+>              Just zs  -> Right (Right zs, sp, entryREF e, entryScheme e)
+>              Nothing  -> Right (Right B0, [], entryREF e, entryScheme e) 
 >          else lookDown (x, i-1) (es, uess) (pushSpine e sp)
 >     else lookDown (x, i) (es, uess) (pushSpine e sp)
 >   where
@@ -227,9 +227,9 @@ then continues with |lookFor|.
 > huntLocal (x, i) ys (e : es) as =
 >     if x == (fst $ entryLastName e)
 >     then if i == 0
->          then case entryDev e of
->              Just (zs, _, _)  -> lookLocal ys zs as (entryREF e) (entryScheme e)
->              Nothing          -> Left [err "Boys in other Devs are not in scope"] 
+>          then case (|devEntries (entryDev e)|) of
+>              Just zs  -> lookLocal ys zs as (entryREF e) (entryScheme e)
+>              Nothing  -> Left [err "Boys in other Devs are not in scope"] 
 >          else huntLocal (x, i-1) ys es as
 >     else huntLocal (x, i) ys es as 
 > huntLocal (x, i) ys [] as = Left [err $ "Had to give up looking for " ++ x]
@@ -447,9 +447,9 @@ If nothing else matches, we had better give up and go home.
 >   Just (boySpine (flat esus es),Right fsc)
 > partNom hd top ((esus :< (es,not)), B0) (js,vjss) =
 >   partNom hd top (esus,es) (F0,(not,js):>vjss)
-> partNom hd top (esus, es :< M n (es',_,_)) fsc | (hd ++ [top]) == n =
+> partNom hd top (esus, es :< M n (Dev {devEntries=es'})) fsc | (hd ++ [top]) == n =
 >   Just (boySpine (flat esus es),Left es')
-> partNom hd top (esus, es :< E _ top' (Girl _ (es',_,_)) _) fsc | hd ++ [top] == (flatNom esus []) ++ [top'] =
+> partNom hd top (esus, es :< E _ top' (Girl _ (Dev {devEntries=es'})) _) fsc | hd ++ [top] == (flatNom esus []) ++ [top'] =
 >   Just (boySpine (flat esus es),Left es')
 > partNom hd top (esus, es :< e) (fs, vfss)  = partNom hd top (esus, es) (e:>fs,vfss)
 > partNom _ _ _ _ = Nothing
@@ -490,7 +490,7 @@ name component. This also returns the scheme attached, if there is one.
 >   | lastNom n == fst u'                        = countB (i+1)  n (esus, es')
 > countB i n (esus :< (es', u'), B0)             = countB i      n (esus, es')
 >
-> countB i n (esus, es :< M n' (es', _, _))
+> countB i n (esus, es :< M n' (Dev {devEntries=es'}))
 >   | n == n'                                    = (| (i, Nothing) |)
 > countB i n (esus, es :< M n' _)           
 >   | lastNom n == lastNom n'                    = countB (i+1) n (esus, es)
@@ -557,10 +557,10 @@ current location.
 
 > nomRel' :: Int -> (String,Int) -> Entries 
 >                -> Maybe (Int,Entries, Maybe (Scheme INTM))
-> nomRel' o (x,i) (es:<M n (es',_,_)) | (fst . last $ n) == x  = 
+> nomRel' o (x,i) (es:<M n (Dev {devEntries=es'})) | (fst . last $ n) == x  = 
 >   if i == (snd . last $ n) then (| (o,es',Nothing) |) 
 >                            else nomRel' (o+1) (x,i) es
-> nomRel' o (x,i) (es:<E _ (y,j) (Girl kind (es',_,_)) _) | y == x =
+> nomRel' o (x,i) (es:<E _ (y,j) (Girl kind (Dev {devEntries=es'})) _) | y == x =
 >   if i == j then (| (o,es',kindScheme kind) |) else nomRel' (o+1) (x,i) es
 > nomRel' o (x,i) (es:<E _ (y,j) _ _) | y == x = 
 >   if i == j then (| (o,B0,Nothing) |) else nomRel' (o+1) (x,i) es

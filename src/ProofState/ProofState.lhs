@@ -93,23 +93,23 @@ updated information, providing a friendlier interface than |get| and |put|.
 
 > getDevEntries :: ProofStateT e Entries
 > getDevEntries = do
->     (es, _, _) <- getDev
->     return es
+>     dev <- getDev
+>     return $ devEntries dev
 
 > getDevEntry :: ProofStateT e (Entry Bwd)
 > getDevEntry = do
->     (_ :< e, _, _) <- getDev
+>     _ :< e <- getDevEntries
 >     return e
 
 > getDevNSupply :: ProofStateT e NameSupply
 > getDevNSupply = do
->     (_, _, ns) <- getDev
->     return ns
+>     dev <- getDev
+>     return $ devNSupply dev
 
 > getDevTip :: ProofStateT e Tip
 > getDevTip = do
->     (_, tip, _) <- getDev
->     return tip
+>     dev <- getDev
+>     return $ devTip dev
 
 > getGoal :: String -> ProofStateT e (INTM :=>: TY)
 > getGoal s = do
@@ -171,9 +171,9 @@ updated information, providing a friendlier interface than |get| and |put|.
 > getMotherEntry :: ProofStateT e (Entry Bwd)
 > getMotherEntry = do
 >     m <- getMother
->     (es, tip, root) <- getDev
+>     Dev es tip root ss <- getDev
 >     cadets <- getDevCadets
->     let dev = (es <>< cadets, tip, root)
+>     let dev = Dev (es <>< cadets) tip root ss
 >     case m of
 >         GirlMother kind ref xn ty -> return
 >             (E ref xn (Girl kind dev) ty)
@@ -215,23 +215,28 @@ updated information, providing a friendlier interface than |get| and |put|.
 
 > putDevEntry :: Entry Bwd -> ProofStateT e ()
 > putDevEntry e = do
->     (es, tip, nsupply) <- getDev
->     putDev (es :< e, tip, nsupply)
+>     dev <- getDev
+>     putDev dev{devEntries = devEntries dev :< e}
 
 > putDevEntries :: Entries -> ProofStateT e ()
 > putDevEntries es = do
->     (_, tip, nsupply) <- getDev
->     putDev (es, tip, nsupply)
+>     dev <- getDev
+>     putDev dev{devEntries = es}
 
 > putDevNSupply :: NameSupply -> ProofStateT e ()
 > putDevNSupply ns = do
->     (es, tip, _) <- getDev
->     putDev (es, tip, ns)
+>     dev <- getDev
+>     putDev dev{devNSupply = ns}
+
+> putDevSuspendState :: SuspendState -> ProofStateT e ()
+> putDevSuspendState ss = do
+>     dev <- getDev
+>     putDev dev{devSuspendState = ss}
 
 > putDevTip :: Tip -> ProofStateT e ()
 > putDevTip tip = do
->     (es, _, r) <- getDev
->     putDev (es, tip, r)
+>     dev <- getDev
+>     putDev dev{devTip = tip}
 
 > putHoleKind :: HKind -> ProofStateT e ()
 > putHoleKind hk = do
@@ -328,3 +333,15 @@ spine of shared parameters.
 > aunclesToElims F0 = []
 > aunclesToElims (E ref _ (Boy _) _ :> es) = (A (N (P ref))) : aunclesToElims es
 > aunclesToElims (_ :> es) = aunclesToElims es
+
+
+When the current location or one of its children has suspended, we need to
+update the outer layers.
+
+> grandmotherSuspend :: SuspendState -> ProofState ()
+> grandmotherSuspend ss = getLayers >>= putLayers . help ss
+>   where
+>     help :: SuspendState -> Bwd Layer -> Bwd Layer
+>     help ss B0 = B0
+>     help ss (ls :< l) = help ss' ls :< l{laySuspendState = ss'}
+>       where ss' = min ss (laySuspendState l)

@@ -220,11 +220,10 @@ cursor upwards until it finds an entry with a development, then enters it.
 >         es :< e -> case entryDev e of
 >           Nothing   -> cursorUp >> goIn
 >           Just dev  -> do
->              cadets <- getDevCadets
->              tip <- getDevTip
->              nsupply <- getDevNSupply
+>              cadets  <- getDevCadets
+>              oldDev  <- getDev
 >              putLayer (Layer es (entryToMother e) (reverseEntries cadets)
->                            tip nsupply)
+>                            (devTip oldDev) (devNSupply oldDev) (devSuspendState oldDev))
 >              putDev dev
 >              putDevCadets F0
 >              return ()
@@ -241,7 +240,7 @@ of the new focus.
 >     ml <- optional removeLayer
 >     case ml of
 >         Just l -> do
->             putDev (elders l :< e, laytip l, laynsupply l)
+>             putDev $ Dev (elders l :< e) (laytip l) (laynsupply l) (laySuspendState l)
 >             putDevCadets F0
 >             propagateNews True [] (cadets l)
 >             return ()
@@ -273,7 +272,7 @@ layer cadets at the new focus.
 >     goUpAcc (NF acc) = do
 >         l <- getLayer
 >         case l of
->           (Layer (es :< e) m (NF cadets) tip nsupply) -> case entryDev e of
+>           (Layer (es :< e) m (NF cadets) tip nsupply ss) -> case entryDev e of
 >             Just dev -> do
 >                 me <- getMotherEntry
 >                 putDev dev
@@ -298,16 +297,16 @@ boys so they can be put back as layer elders at the new focus.
 >     goDownAcc acc news = do
 >         l <- getLayer
 >         case l of
->           (Layer elders _ (NF (ne :> es)) _ _) -> case ne of
+>           (Layer {elders=elders, cadets=NF (ne :> es)}) -> case ne of
 >             Left nb -> do
 >                 replaceLayer l{cadets=NF es}
 >                 goDownAcc acc (mergeNews news nb)
 >             Right e -> case entryCoerce e of
->               Left (es', tip', nsupply') ->  do
+>               Left (Dev es' tip' nsupply' ss') ->  do
 >                 me <- getMotherEntry
 >                 replaceLayer l{elders=(elders :< me) <+> acc,
 >                                    mother=entryToMother e, cadets=NF es}
->                 putDev (B0, tip', nsupply')
+>                 putDev (Dev B0 tip' nsupply' SuspendNone)
 >                 putDevCadets F0
 >                 news' <- propagateNews True news es'
 >                 return ()
@@ -418,7 +417,7 @@ to the next goal otherwise.
 > makeModule s = do
 >     n <- withNSupply (flip mkName s)
 >     nsupply <- getDevNSupply
->     putDevEntry (M n (B0, Module, freshNSpace nsupply s))
+>     putDevEntry (M n (Dev B0 Module (freshNSpace nsupply s) SuspendNone))
 >     putDevNSupply (freshName nsupply)
 >     return n
 
@@ -599,7 +598,8 @@ current development, after checking that the purported type is in fact a type.
 >     let  ty'  = liftType aus ty
 >          ref  = n := HOLE hk :<: evTm ty'
 >     nsupply <- getDevNSupply
->     putDevEntry (E ref (last n) (Girl LETG (B0, Unknown (ty :=>: tyv), freshNSpace nsupply s')) ty')
+>     let dev = Dev B0 (Unknown (ty :=>: tyv)) (freshNSpace nsupply s') SuspendNone
+>     putDevEntry (E ref (last n) (Girl LETG dev) ty')
 >     putDevNSupply (freshName nsupply)
 >     return (applyAuncles ref aus)
 

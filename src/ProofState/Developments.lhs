@@ -4,7 +4,7 @@
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE FlexibleInstances, TypeOperators, GADTs #-}
+> {-# LANGUAGE FlexibleInstances, TypeOperators, GADTs , StandaloneDeriving #-}
 
 > module ProofState.Developments where
 
@@ -38,9 +38,20 @@ definition:
 < type Dev = (Bwd Entry, Tip, NameSupply)
 
 but generalised this to allow other |Traversable| functors |f| in
-place of |Bwd|, giving:
+place of |Bwd|, and to store a |SuspendState|, giving:
 
-> type Dev f = (f (Entry f), Tip, NameSupply)
+> data Dev f = Dev  {  devEntries       :: f (Entry f)
+>                   ,  devTip           :: Tip
+>                   ,  devNSupply       :: NameSupply
+>                   ,  devSuspendState  :: SuspendState
+>                   }
+
+%if False
+
+> deriving instance Show (Dev Fwd)
+> deriving instance Show (Dev Bwd)
+
+%endif
 
 
 \subsubsection{|Tip|}
@@ -198,6 +209,19 @@ work into the argument spine of a \(\lambda\)-lifted definition:
 >   boy (E r _ (Boy _) _)  = [r]
 >   boy _                  = []
 
+
+
+\subsubsection{Suspension states}
+
+Girls may have suspended elaboration processes attached, indicated by a
+|Suspended| tip. These may be stable or unstable. For efficiency in the
+scheduler, each development stores the state of its least stable child.
+
+> data SuspendState = SuspendUnstable | SuspendStable | SuspendNone
+>   deriving (Eq, Show, Enum, Ord)
+
+
+
 \subsection{Manipulating an |Entry|}
 
 In the following, we define a handful of functions which are quite
@@ -260,6 +284,14 @@ in which case we return an unchanged |Left dev|.
 > entryCoerce (E ref  xn  (Boy k)       ty)      = Right $ E ref xn (Boy k) ty
 > entryCoerce (E _    _   (Girl _ dev)  _)       = Left dev
 > entryCoerce (M _    dev)                       = Left dev
+
+We can extract the |SuspendState| from an entry, noting that boys do not have
+children so cannot contain suspended elaboration processes.
+
+> entrySuspendState :: Traversable f => Entry f -> SuspendState
+> entrySuspendState e = case entryDev e of
+>     Just dev  -> devSuspendState dev
+>     Nothing   -> SuspendNone
 
 
 Finally, we can compare entities for equality by comparing their

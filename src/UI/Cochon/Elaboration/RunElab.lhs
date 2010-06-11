@@ -20,6 +20,7 @@
 > import Features.Features ()
 
 > import ProofState.Developments
+> import ProofState.ProofContext
 > import ProofState.ProofState
 > import ProofState.ProofKit
 > import ProofState.Lifting
@@ -364,8 +365,11 @@ is unstable.
 >                -> ProofState (EXTM :=>: VAL)
 > suspend (x :<: tt) prob = do
 >     r <- make (x :<: termOf tt)
->     Just (E ref xn (Girl kind (es, Unknown utt, nsupply)) tm) <- removeDevEntry
->     putDevEntry (E ref xn (Girl kind (es, Suspended utt prob, nsupply)) tm)
+>     Just (E ref xn (Girl kind dev@(Dev {devTip=Unknown utt})) tm) <- removeDevEntry
+>     putDevEntry (E ref xn (Girl kind dev{devTip=Suspended utt prob}) tm)
+>     let ss = if isUnstable prob then SuspendUnstable else SuspendStable
+>     putDevSuspendState ss
+>     grandmotherSuspend ss
 >     return r
 
 
@@ -376,6 +380,8 @@ location.
 > suspendMe prob = do
 >     Unknown tt <- getDevTip
 >     putDevTip (Suspended tt prob)
+>     let ss = if isUnstable prob then SuspendUnstable else SuspendStable
+>     grandmotherSuspend ss
 >     getMotherDefinition
 
 

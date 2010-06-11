@@ -180,18 +180,18 @@ The |CodeGen| typeclass describes things that are convertible to Epic code.
 
 > flatten :: BoyKind -> Name -> Bwd Name -> Dev Fwd -> 
 >            [(Name, Bwd Name, FnBody)]
-> flatten b ma del (F0, Module, _) = []
-> flatten LAMB ma del (F0, Unknown _, _) = [(ma, del, Missing (cname ma))]
-> flatten LAMB ma del (F0, Defined tm _, _) = 
+> flatten b     ma del (Dev F0 Module _ _) = []
+> flatten LAMB  ma del (Dev F0 (Unknown _) _ _) = [(ma, del, Missing (cname ma))]
+> flatten LAMB  ma del (Dev F0 (Defined tm _) _ _) = 
 >     let (t, (_, defs)) = runState (lambdaLift ma del (fmap refName tm)) 
 >                                   (ma ++ [("lift",0)],[]) in
 >            (ma, del, makeBody t) : defs
-> flatten ALAB ma del (F0, _, _) = [(ma, del, Ignore)]
-> flatten PIB ma del (F0, _, _) = [(ma, del, Ignore)]
-> flatten _ ma del (E (x := _) _ (Boy b) _ :> es, tip, nsupply) =
->     flatten b ma (del :< x) (es, tip, nsupply)
-> flatten b ma del (E (her := _) _ (Girl _ herDev) _ :> es, tip, nsupply) = 
->     flatten LAMB her del herDev ++ flatten b ma del (es, tip, nsupply)
+> flatten ALAB  ma del (Dev F0 _ _ _) = [(ma, del, Ignore)]
+> flatten PIB   ma del (Dev F0 _ _ _) = [(ma, del, Ignore)]
+> flatten _     ma del dev@(Dev {devEntries = E (x := _) _ (Boy b) _ :> es}) =
+>     flatten b ma (del :< x) dev{devEntries=es}
+> flatten b     ma del dev@(Dev {devEntries = E (her := _) _ (Girl _ herDev) _ :> es}) = 
+>     flatten LAMB her del herDev ++ flatten b ma del dev{devEntries=es}
 
 Lambda lifting: every lambda which is not at the top level is lifted out as a
 new top level definition. We keep track of the new top level functions we've

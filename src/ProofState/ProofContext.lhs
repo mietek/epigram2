@@ -5,7 +5,7 @@
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE FlexibleInstances, TypeOperators, TypeSynonymInstances,
->              GADTs, RankNTypes #-}
+>              GADTs, RankNTypes, StandaloneDeriving #-}
 
 > module ProofState.ProofContext where
 
@@ -54,11 +54,13 @@ zipper is a record with the following fields:
 \end{description}
 
 > data Layer = Layer
->   {  elders       :: Entries
->   ,  mother       :: Mother
->   ,  cadets       :: NewsyEntries
->   ,  laytip       :: Tip
->   ,  laynsupply   :: NameSupply }
+>   {  elders           :: Entries
+>   ,  mother           :: Mother
+>   ,  cadets           :: NewsyEntries
+>   ,  laytip           :: Tip
+>   ,  laynsupply       :: NameSupply
+>   ,  laySuspendState  :: SuspendState
+>   }
 >  deriving Show
 
 The derivative makes sense only for |Girl| and |Module|, which have
@@ -91,6 +93,8 @@ to deal with this global context.
 
 
 %if False
+
+> deriving instance Show (Dev NewsyFwd)
 
 > instance Show (NewsyFwd (Entry NewsyFwd)) where
 >     show (NF ls) = show ls
@@ -163,7 +167,7 @@ More generally, we can use one of these perverse functions:
 >
 > rearrangeDev :: (Traversable f, Traversable g) =>
 >     (forall a. f a -> g a) -> Dev f -> Dev g
-> rearrangeDev h (xs, tip, nsupply) = (rearrangeEntries h xs, tip, nsupply)
+> rearrangeDev h d@(Dev {devEntries=xs}) = d{devEntries=rearrangeEntries h xs}
 >     where  rearrangeEntries ::  (Traversable f, Traversable g) =>
 >                                 (forall a. f a -> g a) -> 
 >                                 f (Entry f) -> g (Entry g)
@@ -186,7 +190,7 @@ with the current working development (above the cursor).
 >   deriving Show
 >
 > emptyContext :: ProofContext
-> emptyContext = PC B0 (B0, Module, (B0, 0)) F0
+> emptyContext = PC B0 (Dev B0 Module (B0, 0) SuspendNone) F0
 
 
 \subsubsection{Genealogical kit}
@@ -203,7 +207,7 @@ cursor, including the contents of the current development, thereby
 giving a list of entries that are currently in scope.
 
 > auncles :: ProofContext -> Entries
-> auncles pc@PC{pcDev=(es,_,_)} = greatAuncles pc <+> es
+> auncles pc@PC{pcDev=Dev{devEntries=es}} = greatAuncles pc <+> es
 
 
 \subsubsection{Gratuitous hackery}
@@ -211,7 +215,7 @@ giving a list of entries that are currently in scope.
 > magicImplName = "impl"
 
 > aunclesToImpl :: ProofContext -> [REF :<: INTM]
-> aunclesToImpl pc@PC{pcDev=(es, _, _)} = help (pcLayers pc) (boys es)
+> aunclesToImpl pc@PC{pcDev=Dev{devEntries=es}} = help (pcLayers pc) (boys es)
 >   where
 >     help :: Bwd Layer -> [REF :<: INTM] -> [REF :<: INTM]
 >     help B0 xs = xs
