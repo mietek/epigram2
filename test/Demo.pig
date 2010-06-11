@@ -1,17 +1,27 @@
 {-
-  Epigram demo
-  Pierre-Evariste Dagand and Adam Gundry
-  SICSA PhD Conference, 9th June 2010
+  Epigram: a dependently typed programming language
 
-  ./Pig
+  This file is a demonstration of Cochon, the Epigram interactive interface that
+  looks a bit like a programming language if you squint. Once you have built
+  the system, start it by running "./Pig", then copy lines one at a time from
+  this file to the prompt.
+
+  If you use Emacs, run send-line.el, then open this file in one window and 
+  a shell running Pig in the other window. You can then type C-c C-r to run
+  the current line and C-c C-u to undo it.
 -}
-
 
 {-
   Bool is one of the simplest possible data types, with only two constructors.
 -}
 
 data Bool := (false : Bool) ; (true : Bool) ;
+
+elab 'true : Bool ;
+elab 'false : Bool ;
+
+
+
 
 
 {-
@@ -20,6 +30,7 @@ data Bool := (false : Bool) ; (true : Bool) ;
 -}
 
 data Nat := (zero : Nat) ; (suc : Nat -> Nat) ;
+
 elab 'zero : Nat ;
 make one := 'suc 'zero : Nat ; elab one ;
 make two := 'suc ('suc 'zero) : Nat ; elab two ;
@@ -50,9 +61,9 @@ define plus ('suc k) n := 'suc (plus k n) ;
 root ;
 
 {-
-  We are also allowed to leave "holes" in programs and fill them in later.
   Notice that we did not define plus for the case when the first argument is
-  zero. Watch what happens when we try to evaluate it:
+  zero. We are allowed to leave "holes" in programs and fill them in later.
+  Watch what happens when we try to execute plus:
 -}
 
 elab plus two two ;
@@ -63,7 +74,7 @@ elab plus two two ;
 -}
 
 next ;
-define plus 'zero    n := n ; 
+define plus 'zero n := n ; 
 root ;
 
 {-
@@ -77,8 +88,8 @@ elab plus two two ;
 {-
   A major benefit of explicitly appealing to an induction principle is that we
   can invent our own, rather than being restricted to structural recursion.
-  If we have two numbers x and y, we can eliminate them by comparison, provided we
-  say what to do in three cases:
+  If we have two numbers x and y, we can eliminate them by comparison, provided
+  we say what to do in three cases:
     l - x is less than y
     e - x and y are equal
     g - x is greater than y
@@ -96,12 +107,8 @@ define compare ('suc j) 'zero P l e g := g j 'zero ;
 relabel compare ('suc j) ('suc k) P l e g ;
 <= compare j k ;
 = l ('suc x^2) y^3 ;
-simplify ;
 define compare ('suc j) ('suc j) P l e g := e ('suc j) ;
-simplify ;
 = g x^2 ('suc y^3) ;
-prev ;
-out ;
 root ;
 
 
@@ -114,9 +121,7 @@ root ;
 let max (x : Nat)(y : Nat) : Nat ;
 <= compare x y ;
 = plus x ('suc y) ;
-simplify ;
 = x ;
-simplify ;
 = plus y ('suc x) ;
 root ;
 
@@ -146,7 +151,9 @@ make plus-commutative := ? : :- ((k : Nat)(n : Nat) => plus k n == plus n k) ;
 make flip := (\ f k n -> f n k) : (Nat -> Nat -> Nat) -> Nat -> Nat -> Nat ;
 make plus-function-commutative := ? : :- (flip plus == plus) ;
 
-
+{-
+  See Plus.pig in the Epigram tests directory for proofs of these theorems.
+-}
 
 
 
@@ -204,17 +211,41 @@ elab head Bool 'nil ;
   so we fiddle about behind the scenes to manually build |Vec|.
 -}
 
-load DemoVec.pig ;
+make Vec : Set -> Nat -> Set ;
+lambda A : Set ;
+make VecD : Nat -> IDesc Nat _ ;
+give (\ n -> 'fsigmaD ['vnil 'vcons] [ ('constD (:- ((: Nat) 'zero == n))) ('sigmaD Nat (\ m -> 'prodD ('constD A) ('prodD ('varD m) ('constD (:- ((: Nat) ('suc m) == n)))))) ]) ;
+make Vec := (\ n -> IMu Nat VecD n) : Nat -> Set ;
+make Ind := iinduction Nat VecD : (m : Nat)(v : Vec m)(bp : Sig (n : Nat ; Vec n) -> Set)(me : (k : Nat)(x : idesc Nat (VecD k) Vec)(hs : idesc (Sig (i : Nat ; Vec i))(ibox Nat (VecD k) Vec x) bp) -> bp [k , con x]) -> bp [m , v] ;
+give Vec ;
+
+{-
+  You are not expected to understand this.
+  We also need substitutivity of equality, which we can use as an elimination
+  principle:
+-}
+
+make ship : (X : Set)(x : X)(y : X)(q : :- x == y)(P : X -> Set) -> P x -> P y ;
+lambda X, x, y, q, P, px ;
+give coe (P x) (P y) ?q px ;
+give con (refl (X -> Set) P % x y _) ;
+root ;
+
 
 
 {-
   Now we can safely define the vector version of head. Since we ask for a vector
-  of length at least one, we know we can always return a result.
+  of length at least one, we know we can always return a result. The
+  eliminations by ship are necessary because Epigram is not simplifying all the
+  equations it could, but hopefully it will soon and these will disappear.
 -}
 
 let vhead (A : Set)(n : Nat)(as : Vec A ('suc n)) : A ;
 <= Vec.Ind A ('suc n) as ;
-load DemoVecHeadShips.pig ;
+<= ship Nat 'zero k x ;
+<= ship Nat ('suc s^4) k x ;
+<= ship Nat s^4 n xf ;
+<= ship (Vec.Vec A ('suc s^4)) ('vcons s^4 xf^2 xf^1) as qsm ;
 define vhead _ _ ('vcons _ a _) := a ;
 root ;
 
@@ -237,7 +268,9 @@ let vapp (A : Set)(B : Set)(n : Nat)(fs : Vec (A -> B) n)(as : Vec A n) : Vec B 
 define vapp A B 'zero 'vnil as := 'vnil ;
 
 <= Vec.Ind A k as ;
-load DemoVecAppShips.pig ;
+<= ship Nat 'zero k x^1 ;
+<= ship Nat ('suc s) k x ;
+<= ship Nat s s^2 q ; 
 define vapp A B ('suc j) ('vcons j f fs) ('vcons j a as) := 'vcons j (f a) (vapp A B j fs as) ;
 root ;
 
@@ -256,13 +289,38 @@ elab vapp Nat Nat two fs as ;
     data Fin (n : Nat) :=
       (fzero : (m : Nat) -> Fin ('suc m)) ;
       (fsuc : (m : Nat) -> Fin m -> Fin ('suc m)) ;
+
+  Again, ignore this bit of fiddling about behind the scenes:
 -}
 
-load DemoFin.pig ;
+make Fin : Nat -> Set ;
+make FinD := (\ n -> 'fsigmaD ['fzero 'fsuc] [ ('sigmaD Nat (\ m -> 'constD (:- ((: Nat) ('suc m) == n)))) ('sigmaD Nat (\ m -> 'prodD ('varD m) ('constD (:- ((: Nat) ('suc m) == n))))) ]) : Nat -> IDesc Nat [] ;
+make Fin := (\ n -> IMu Nat FinD n) : Nat -> Set ;
+make Ind := iinduction Nat FinD : (m : Nat)(v : Fin m)(bp : Sig (n : Nat ; Fin n) -> Set)(me : (k : Nat)(x : idesc Nat (FinD k) Fin)(hs : idesc (Sig (i : Nat ; Fin i))(ibox Nat (FinD k) Fin x) bp) -> bp [k , con x]) -> bp [m , v] ;
+give Fin ;
+
 
 elab 'fzero 'zero              : Fin one ;
 elab 'fzero one                : Fin two ;
 elab 'fsuc  one ('fzero 'zero) : Fin two ;
+
+
+
+{-
+  We can prove that, if you have an element of Fin 'zero, you must be lying:
+-}
+
+make nuffin : Fin 'zero -> :- FF ;
+lambda x ;
+elim Fin.Ind 'zero x ;
+lambda k ;
+give con [? ?] ;
+give con \ n q -> ? ;
+<= ship Nat ('suc n) k q ;
+give con \ n -> con \ v q -> ? ;
+<= ship Nat ('suc n) k q ;
+root ;
+
 
 
 {-
@@ -273,7 +331,6 @@ elab 'fsuc  one ('fzero 'zero) : Fin two ;
 -}
 
 let lookup (A : Set)(n : Nat)(as : Vec A n)(fn : Fin n) : A ;
-
 <= Vec.Ind A n as ;
 
 <= ship Nat 'zero k x ;
