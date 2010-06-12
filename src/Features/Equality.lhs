@@ -112,6 +112,7 @@
 > import -> Operators where
 >   eqGreen :
 >   coe :
+>   coh :
 
 > import -> RulesCode where
 >   cohAx = [("Axiom",0),("coh",0)] := (DECL :<: cohType) where

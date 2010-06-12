@@ -244,9 +244,9 @@ make refl1 := refl : :- ((A : Set)(x : A) => x == x);
 make coe1 := coe : (S : Set)(T : Set)
                    (q : :- S == T) -> S -> T;
 
-make coh1 := coh : :- ((X : Set)(Y : Set)
-                       (q : :- X == Y)
-                       (s : X) => s == (coe X Y q s));
+make coh1 := coh : (X : Set)(Y : Set)
+                   (q : :- X == Y)
+                   (s : X) -> :- s == (coe X Y q s);
  
 -- ** Substitution (example)
 
