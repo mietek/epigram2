@@ -1,12 +1,3 @@
-{-
-Local Variables:
-mode: outline-minor
-outline-regexp: "-- [*\f]+"
-outline-level: outline-level
-End:
--}
-
-
 -- Ref.: "Computational Category Theory", Ryderheard, Burstall
 --       [http://golem.ph.utexas.edu/category/2010/03/in_praise_of_dependent_types.html]
 
@@ -431,3 +422,13 @@ let DiagFunctor : DiagFunctorType;
     
 
 root ;
+
+* Appendix
+
+{-
+Local Variables:
+mode: outline-minor
+outline-regexp: "-- [*\f]+"
+outline-level: outline-level
+End:
+-}
