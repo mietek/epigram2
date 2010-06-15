@@ -133,7 +133,8 @@
 >                    "a" :<: aA :-: \ a -> "b" :<: (bB $$ A a) :-: \ b -> Target $
 >                    pP $$ A (PAIR a b))             :-: \ p ->
 >                  Target $ pP $$ A ab
->     , opRun = \ [_ , _ , ab , _ , p] -> Right $ p $$ A (ab $$ Fst) $$ A (ab $$ Snd)
+>     , opRun = runOpTree $
+>         oLams $ \ () () ab () p -> ORet $ p $$ A (ab $$ Fst) $$ A (ab $$ Snd)
 >     , opSimp = \_ _ -> empty
 >     }
 
@@ -210,9 +211,9 @@ from a pair.
 >     return $ LK tm :=>: LK tmv
 
 >   makeElab' loc (PI (SIGMA d r) t :>: DCON f) = do
->     let mt =  PI d . L . HF (fortran r) $ \ a ->
->               PI (r $$ A a) . L . HF (fortran t) $ \ b ->
->               t $$ A (PAIR a b)
+>     let mt =  PI d . L $ (fortran r) :. [.a. 
+>               PI (r -$ [NV a]) . L $ (fortran t) :. [.b. 
+>               t -$ [PAIR (NV a) (NV b)] ] ]
 >     mt'  :=>: _    <- eQuote mt
 >     tm   :=>: tmv  <- subElab loc (mt :>: f)
 >     x <- eLambda (fortran t)

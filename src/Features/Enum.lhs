@@ -13,8 +13,8 @@
 > import -> RulesCode where
 >   inEnumU :: VAL
 >   inEnumU = SIGMAD  (ENUMT constructors)
->                     (L $ HF "c" $ \c -> 
->                      switchDOp @@ [ constructors , cases , c])
+>                     (L $ "c" :. [.c. N $
+>                      switchDOp :@ [ constructors , cases , NV c] ])
 >       where constructors = CONSE (TAG "nil")
 >                            (CONSE (TAG "cons")
 >                             NILE)
@@ -122,22 +122,6 @@
 >                 "p" :<: ARR (ENUMT e) SET :-: \p ->
 >                 Target SET
 
->         bOpRun :: [VAL] -> Either NEU VAL
->         bOpRun [CON arg, p] = mkLazyEnumDef arg (nilECase p, 
->                                                  consECase p)
->         bOpRun [N e , _] = Left e 
-
-%if False
-
->         bOpRun vs = error ("Enum.branches.bOpRun: couldn't handle " ++ show vs)
-
-%endif
-
->         nilECase p = UNIT
->         consECase p t e' = 
->             TIMES (p $$ A ZE) 
->                   (branchesOp @@ [e' , L (HF "x" $ \x -> p $$ A (SU x))])
-
 >   switchOp = Op
 >     { opName  = "switch"
 >     , opArity = 4
@@ -156,19 +140,6 @@
 >           "p" :<: ARR (ENUMT e) SET :-: \p ->
 >           "b" :<: branchesOp @@ [e , p] :-: \b -> 
 >           Target (p $$ A x)
->         sOpRun :: [VAL] -> Either NEU VAL
->         sOpRun [_      , N n , _ , _] = Left n
->         sOpRun [CON arg, n, p, ps] = mkLazyEnumDef arg (error "switchOp: NilE barfs me.", 
->                                                         consECase n p ps)
->
-
->         consECase :: VAL -> VAL -> VAL -> VAL -> VAL -> VAL
->         consECase ZE     p ps t e' = ps $$ Fst
->         consECase (SU n) p ps t e' =
->             switchOp @@ [ e'
->                         , n
->                         , L . HF "x" $ \x -> p $$ A (SU x)
->                         , ps $$ Snd ]
 
 > import -> Coerce where
 >   coerce (EnumT (CONSE _ _,   CONSE _ _))      _  ZE = Right ZE

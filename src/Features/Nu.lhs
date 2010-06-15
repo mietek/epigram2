@@ -62,7 +62,7 @@
 
 > import -> ElimComputation where
 >   COIT d sty f s $$ Out = mapOp @@ [d, sty, NU Nothing d,
->     L . HF "s" $ \ s -> COIT d sty f s,
+>     L $ "s" :. [.s. COIT (d -$ []) (sty -$ []) (f -$ []) (NV s)],
 >     f $$ A s]
 
 > import -> Coerce where

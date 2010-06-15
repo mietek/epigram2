@@ -156,25 +156,6 @@ case for sigma.
 >         "D" :<: desc :-: \dD ->
 >         "X" :<: SET :-: \xX ->
 >         Target SET
->       dOpRun :: [VAL] -> Either NEU VAL
->       dOpRun [CON arg, _X]  = mkLazyDescDef arg (idCase _X, 
->                                                  constCase _X, 
->                                                  prodCase _X, 
->                                                  sigmaCase _X, 
->                                                  piCase _X)
->       dOpRun [N _D, _]      = Left _D
->           
->       idCase _X          = _X
->       constCase _X _Z    = _Z
->       prodCase _X _D _D' = TIMES  (descOp @@ [ _D , _X ])
->                                   (descOp @@ [ _D', _X ])
->       sigmaCase _X _S _T = SIGMA  _S . 
->                                   L $ HF "s" $ \s ->
->                                   descOp @@ [ _T $$ A s, _X ]
->       piCase _X _S _T    = PI  _S . 
->                                L $ HF "s" $ \s ->
->                                descOp @@ [ _T $$ A s, _X ]
-
 
 >   boxOp :: Op
 >   boxOp = Op
@@ -203,29 +184,6 @@ case for sigma.
 >         "P" :<: ARR xX SET :-: \pP ->
 >         "v" :<: (descOp @@ [dD,xX]) :-: \v ->
 >         Target SET
->       boxOpRun :: [VAL] -> Either NEU VAL
->       boxOpRun [CON arg, _X, _P, x]  = mkLazyDescDef arg (idCase _X _P x, 
->                                                       constCase _X _P x, 
->                                                       prodCase _X _P x, 
->                                                       sigmaCase _X _P x, 
->                                                       piCase _X _P x)
->       boxOpRun [N x,           _,_,_] = Left x
->       idCase _X _P x = _P $$ A x
->       constCase _X _P x _Z = _Z
->       prodCase _X _P dd' _D _D' = 
->           let d  = dd' $$ Fst
->               d' = dd' $$ Snd 
->           in TIMES  (boxOp @@ [_D, _X, _P, d])
->                     (boxOp @@ [_D', _X, _P, d'])
->       sigmaCase _X _P ab _S _T = 
->           let a = ab $$ Fst
->               b = ab $$ Snd
->           in boxOp @@ [_T $$ A a, _X, _P, b]
->       piCase _X _P f _S _T =
->           PI  _S . 
->               L $ HF "s" $ \s -> 
->               boxOp @@ [_T $$ A s, _X, _P, f $$ A s]
-
 
 >   mapBoxOp :: Op
 >   mapBoxOp = Op
@@ -256,29 +214,6 @@ case for sigma.
 >         "p" :<: (pity $ "x" :<: xX :-: \ x -> Target $ pP $$ A x) :-: \ _ ->
 >         "v" :<: (descOp @@ [dD,xX]) :-: \v ->
 >          Target (boxOp @@ [dD,xX,pP,v])
->       mapBoxOpRun :: [VAL] -> Either NEU VAL
->       mapBoxOpRun [CON arg, _X, _P, _R, x]  = mkLazyDescDef arg (idCase _X _P _R x, 
->                                                              constCase _X _P _R x, 
->                                                              prodCase _X _P _R x, 
->                                                              sigmaCase _X _P _R x, 
->                                                              piCase _X _P _R x)
->       mapBoxOpRun [N x,     _, _,_,_]       = Left x
->
->       idCase _X _P _R v = _R $$ A v
->       constCase _X _P _R z _Z = z
->       prodCase _X _P _R dd' _D _D' = 
->           let d  = dd' $$ Fst
->               d' = dd' $$ Snd 
->           in PAIR  (mapBoxOp @@ [_D,  _X, _P, _R, d])
->                    (mapBoxOp @@ [_D', _X, _P, _R, d'])
->       sigmaCase _X _P _R ab _S _T =
->           let a = ab $$ Fst
->               b = ab $$ Snd
->           in mapBoxOp @@ [_T $$ A a, _X, _P, _R, b]
->       piCase _X _P _R f _S _T =
->           L . HF "s" $ \s ->
->           mapBoxOp @@ [_T $$ A s, _X, _P, _R, f $$ A s]
-
 
 >   mapOp = Op
 >     { opName  = "map"
@@ -308,56 +243,34 @@ case for sigma.
 >           "f" :<: ARR xX yY :-: \f ->
 >           "v" :<: (descOp @@ [dD, xX]) :-: \v -> 
 >           Target (descOp @@ [dD, yY])
->         mapOpRun :: [VAL] -> Either NEU VAL
->         mapOpRun [CON arg, _X, _Y, f, v]  = mkLazyDescDef arg (idCase _X _Y f v, 
->                                                            constCase _X _Y f v, 
->                                                            prodCase _X _Y f v, 
->                                                            sigmaCase _X _Y f v, 
->                                                            piCase _X _Y f v)
->         mapOpRun [N d,     a, b, f, x] = Left d
->
->         idCase _X _Y sig x = sig $$ A x
->         constCase _X _Y sig z _Z = z
->         prodCase _X _Y sig dd' _D _D' = 
->             let d  = dd' $$ Fst
->                 d' = dd' $$ Snd 
->             in PAIR  (mapOp @@ [_D,  _X, _Y, sig, d])
->                      (mapOp @@ [_D', _X, _Y, sig, d'])
->         sigmaCase _X _Y sig ab _S _T = 
->             let a = ab $$ Fst
->                 b = ab $$ Snd
->             in PAIR a (mapOp @@ [_T $$ A a, _X, _Y, sig, b])
->         piCase _X _Y sig f _S _T =
->             L . HF "s" $ \s ->
->             mapOp @@ [_T $$ A s, _X, _Y, sig, f $$ A s]
->
 >         mapOpSimp :: Alternative m => [VAL] -> NameSupply -> m NEU
 >         mapOpSimp [dD, xX, yY, f, N v] r
 >           | equal (SET :>: (xX, yY)) r && 
 >             equal (ARR xX yY :>: (f, identity)) r = pure v
 >           where
->             identity = L (HF "x" $ \x -> x)
+>             identity = L $ "x" :. [.x. NV x]
 >         mapOpSimp [dD, _, zZ, f, N (mOp :@ [_, xX, _, g, N v])] r
 >           | mOp == mapOp = mapOpSimp args r <|> pure (mapOp :@ args)
 >           where
->             comp f g = L (HF "x" $ \x -> f $$ A (g $$ A x))
+>             comp f g = L $ "x" :. [.x. f -$ [g -$ [NV x]]]
 >             args = [dD, xX, zZ, comp f g, N v]
 >         mapOpSimp _ _ = empty
 
->   inductionOpMethodType = L . HF "d" $ \d ->
->                      L . HF "P" $ \_P ->
->                      PI (descOp @@ [d, MU Nothing d])
->                         (L . HF "x" $ \x ->
->                          ARR (boxOp @@ [d, MU Nothing d, _P, x])
->                              (_P $$ A (CON x)))
+>   inductionOpMethodType = L $ "d" :. [.d.
+>                      L $ "P" :. [._P. 
+>                      PI (N $ descOp :@ [NV d, MU Nothing (NV d)])
+>                         (L $ "x" :. [.x. 
+>                          ARR (N $ boxOp :@ [NV d, MU Nothing (NV d), NV _P, NV x])
+>                              (N (V _P :$ A (CON (NV x)))) ]) ] ]
 
->   inductionOpLabMethodType = L . HF "l" $ \l ->
->                         L . HF "d" $ \d ->
->                         L . HF "P" $ \_P ->
->                         PI (descOp @@ [d, MU (Just l) d])
->                            (L . HF "x" $ \x ->
->                             ARR (boxOp @@ [d, MU (Just l) d, _P, x])
->                                 (_P $$ A (CON x)))
+>   inductionOpLabMethodType = L $ "l" :. [.l.
+>                      L $ "d" :. [.d.
+>                      L $ "P" :. [._P. 
+>                      PI (N $ descOp :@ [NV d, MU (|(NV l)|) (NV d)])
+>                         (L $ "x" :. [.x. 
+>                          ARR (N $ boxOp :@ [NV d, MU (|(NV l)|) (NV d), NV _P, NV x])
+>                              (N (V _P :$ A (CON (NV x)))) ]) ] ] ]
+
 
 >   inductionOp :: Op
 >   inductionOp = Op
@@ -377,30 +290,21 @@ case for sigma.
 >         "P" :<: (ARR (MU Nothing dD) SET) :-: \pP ->
 >         "p" :<: (inductionOpMethodType $$ A dD $$ A pP) :-: \p ->
 >         Target (pP $$ A v)
->       inductionOpRun :: [VAL] -> Either NEU VAL
->       inductionOpRun [dD, CON v, pP, p] = Right $ 
->         p $$ A v $$ A (mapBoxOp @@ [ dD , MU Nothing dD , pP
->                                    , L $ HF "w" $ \w -> 
->                                        inductionOp @@ [ dD , w , pP , p ]
->                                    , v]) 
->       inductionOpRun [_, N x, _,_] = Left x
 
 >   branchesDOp = Op 
 >     { opName   = "branchesD"
 >     , opArity  = 1
 >     , opTyTel  = bOpTy
->     , opRun    = bOpRun
+>     , opRun    = runOpTree $
+>         oData  [ oTup $ ORet UNIT
+>                , oTup $ \ () _E -> ORet $
+>                  TIMES desc
+>                     (branchesDOp @@ [_E])
+>                ]
 >     , opSimp   = \_ _ -> empty
 >     } where
 >         bOpTy = "e" :<: enumU :-: \e ->
 >                 Target SET
->         bOpRun :: [VAL] -> Either NEU VAL
->         bOpRun [CON arg] = mkLazyEnumDef arg (nilECase, 
->                                               consECase)
->         bOpRun [N e] = Left e
->
->         nilECase       = UNIT
->         consECase t e' = TIMES desc (branchesDOp @@ [e'])
 
 
 
@@ -408,7 +312,9 @@ case for sigma.
 >     { opName = "switchD"
 >     , opArity = 3
 >     , opTyTel = sOpTy
->     , opRun = sOpRun
+>     , opRun =  runOpTree $
+>         OLam $ \_ -> OLam $ \bs ->
+>         OCase (map (\x -> proj x bs) [0..])
 >     , opSimp = \_ _ -> empty
 >     } where
 >         sOpTy = 
@@ -416,23 +322,9 @@ case for sigma.
 >           "b" :<: (branchesDOp @@ [e]) :-: \b ->
 >           "x" :<: ENUMT e :-: \x ->
 >           Target desc
->         sOpRun :: [VAL] -> Either NEU VAL
->         sOpRun [_      , _ , N n] = Left n
->         sOpRun [CON arg, ps, n] = mkLazyEnumDef arg (error "switchDOp: NilE barfs me.", 
->                                                      consECase n ps)
+>         proj 0 bs = ORet (bs $$ Fst)
+>         proj i bs = (proj (i - 1) (bs $$ Snd))
 
-%if False
-
->         sOpRun vs = error ("Desc.SwitchD.sOpRun: couldn't handle " ++ show vs)
-
-%endif
-
->
->         consECase :: VAL -> VAL -> VAL -> VAL -> VAL
->         consECase ZE     ps t e' = ps $$ Fst
->         consECase (SU n) ps t e' = switchDOp @@ [ e'
->                                                 , ps $$ Snd
->                                                 , n ]
 
 
 \subsection{Extending the type-checker}
@@ -593,8 +485,8 @@ appropriate place when the proof state is printed.
 > import -> RulesCode where
 >   inDesc :: VAL
 >   inDesc = SUMD constructors
->                (L $ HF "c" $ \c -> 
->                    switchDOp @@ [ constructors , cases , c])
+>                (L $ "c" :. [.c. N $
+>                    switchDOp :@ [ constructors , cases , NV c] ])
 >       where constructors = (CONSE (TAG "idD")
 >                            (CONSE (TAG "constD")
 >                            (CONSE (TAG "sumD")
@@ -604,16 +496,16 @@ appropriate place when the proof state is printed.
 >                             NILE))))))
 >             cases = (PAIR (CONSTD UNIT) 
 >                     (PAIR (SIGMAD SET (L $ K $ CONSTD UNIT))
->                     (PAIR (SIGMAD enumU (L $ HF "E" $ \_E ->
->                                       (PRODD (PID (ENUMT _E) (LK IDD))
->                                              (CONSTD UNIT))))
+>                     (PAIR (SIGMAD (enumU -$ []) (L $ "E" :. [._E.
+>                                       (PRODD (PID (ENUMT (NV _E)) (LK IDD))
+>                                              (CONSTD UNIT))]))
 >                     (PAIR (PRODD IDD (PRODD IDD (CONSTD UNIT)))
->                     (PAIR (SIGMAD SET (L $ HF "S" $ \_S -> 
->                                       (PRODD (PID _S (LK IDD)) 
->                                              (CONSTD UNIT))))
->                     (PAIR (SIGMAD SET (L $ HF "S" $ \_S -> 
->                                       (PRODD (PID _S (LK IDD)) 
->                                              (CONSTD UNIT))))
+>                     (PAIR (SIGMAD SET (L $ "S" :. [._S. 
+>                                       (PRODD (PID (NV _S) (LK IDD)) 
+>                                              (CONSTD UNIT))]))
+>                     (PAIR (SIGMAD SET (L $ "S" :. [._S. 
+>                                       (PRODD (PID (NV _S) (LK IDD)) 
+>                                              (CONSTD UNIT))]))
 >                      VOID))))))
 >   descFakeREF :: REF
 >   descFakeREF = [("Primitive", 0), ("Desc", 0)] := (FAKE :<: SET)

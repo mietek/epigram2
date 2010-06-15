@@ -588,9 +588,9 @@ If |PI (SIGMA d r) t| is the type of functions whose domain is a sigma-type, the
 separately. 
 
 > currySigma :: VAL -> VAL -> VAL -> VAL
-> currySigma d r t = PI d . L . HF (fortran r) $ \ a ->
->               PI (r $$ A a) . L . HF (fortran t) $ \ b ->
->               t $$ A (PAIR a b)
+> currySigma d r t = PI d . L $ (fortran r) :. [.a. 
+>               PI (r -$ [NV a]) . L $ (fortran t) :. [.b. 
+>               t -$ [PAIR (NV a) (NV b)]]]
 
 
 \subsubsection{Simplifying constraints}

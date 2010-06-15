@@ -123,9 +123,7 @@ Elim forms inherited from elsewhere
 >             , opArity = 2
 >             , opTyTel =  "z" :<: PRF ABSURD :-: \ _ ->
 >                          "X" :<: SET :-: \ xX -> Target xX
->             , opRun = \ [q, ty] -> case q of
->                 N z -> Left z
->                 v -> error ("oh bugger: " ++ show v)
+>             , opRun = runOpTree $ OCon $ OBarf
 >             , opSimp = \_ _ -> empty
 >             }
 >   inhEOp = Op { opName = "inh"

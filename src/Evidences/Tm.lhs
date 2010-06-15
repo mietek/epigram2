@@ -600,13 +600,13 @@ We can also throw away a label, should we want to.
 
 \subsection{Term Construction}
 
-It is sometimes useful to construct the identity function as a term or value.
+It is sometimes useful to construct the identity function:
+
+> idVAL :: String -> Tm {In,p} x
+> idVAL x   = L (x :. (N (V 0)))
 
 > idTM :: String -> INTM
-> idTM x   = L (x :. (N (V 0)))
-
-> idVAL :: String -> VAL
-> idVAL x  = L (HF x id)
+> idTM = idVAL
 
 \question{Do we need this operator any more?}
 

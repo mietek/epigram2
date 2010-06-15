@@ -219,11 +219,11 @@ The result of |makeElabInfer| is of type $\SIGMA{\V{X}}{\Set}{X}$, which
 we can represent as an evidence term or value (|sigSetTM| or |sigSetVAL|,
 respectively).
 
-> sigSetTM :: INTM
-> sigSetTM = SIGMA SET (idTM "sst")
-
-> sigSetVAL :: VAL
+> sigSetVAL :: Tm {In,p} x
 > sigSetVAL = SIGMA SET (idVAL "ssv")
+
+> sigSetTM :: INTM
+> sigSetTM =  sigSetVAL 
 
 
 The |extractNeutral| function separates type-term pairs in both term and value

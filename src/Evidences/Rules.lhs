@@ -349,8 +349,8 @@ we cannot fail in this code, but we have to be artificially cautious.
 >                    let tv = inQuote (t :>: v) r
 >                    return $ tv :=>: v
 >
-> inQuote (C x :>: t) r = error $ 
->     "inQuote: type " ++ show (fmap (\_ -> ()) x) ++ 
+> inQuote (x :>: t) r = error $ 
+>     "inQuote: type " ++ show t ++ 
 >     " doesn't admit " ++ show t
 
 
@@ -719,12 +719,10 @@ by the |Primitives| aspect, plus a reference corresponding to each operator.
 >     mkRef op = [("Operators",0),(opName op,0)] := (DEFN opEta :<: opTy)
 >       where
 >         opTy = pity $ opTyTel op
->
->         opEta = opEtaTac (opArity op) []
->
->         opEtaTac :: Int -> [VAL] -> VAL
->         opEtaTac 0 args = op @@ (reverse args) 
->         opEtaTac n args = L $ HF "mkRef" $ \l -> opEtaTac (n-1) (l : args) 
+>         ari = opArity op
+>         args = map NV [(ari-1),(ari-2)..0]
+>         names = take (ari-1) (map (\x -> [x]) ['b'..])
+>         opEta = L $ "a" :. Prelude.foldr (\s x -> L (s :. x)) (N $ op :@ args) names
 
 We can look up the primitive reference corresponding to an operator using
 |lookupOpRef|. This ensures we maintain sharing of these references.
@@ -883,11 +881,12 @@ between incompatible sets.
 
 > coerce :: (Can (VAL,VAL)) -> VAL -> VAL -> Either NEU VAL
 > coerce Set q x = Right x
-> coerce (Pi (sS1, sS2) (tT1, tT2)) q f1 = Right . L . HF (fortran tT2) $ \ s2 ->
->   let  (s1, sq) = coeh sS2 sS1 (CON $ q $$ Fst) s2
->        t1 = f1 $$ A s1
->   in   coe @@ [tT1 $$ A s1, tT2 $$ A s2,
->                  CON $ q $$ Snd $$ A s2 $$ A s1 $$ A sq, t1]
+> coerce (Pi (sS1, sS2) (tT1, tT2)) q f1 = 
+>   Right . L . HF (fortran tT2) $ \ s2 ->
+>     let  (s1, sq) = coeh sS2 sS1 (CON $ q $$ Fst) s2
+>          t1 = f1 $$ A s1
+>     in   coe @@ [tT1 $$ A s1, tT2 $$ A s2,
+>                    CON $ q $$ Snd $$ A s2 $$ A s1 $$ A sq, t1]
 > import <- Coerce
 > coerce _    q  (N x)  = Left x
 > coerce cvv  q  r      = error $ unlines ["coerce: can't cope with sets",
