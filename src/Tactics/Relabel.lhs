@@ -128,7 +128,7 @@ Similarly for indexed data types:
 >     if sameTag
 >         then do
 >             atm :=>: av <- matchProb
->                 (idescOp @@ [_I, f t, L $ "i" :. [.i. IMU (l -$ []) (_I -$ []) (d -$ []) (NV i)] ] :>:
+>                 (idescOp @@ [_I, f t, L $ "i" :. [.i. IMU (fmap (-$ []) l) (_I -$ []) (d -$ []) (NV i)] ] :>:
 >                     (foldr DPAIR DU as, xs))
 >             return $ CON (PAIR ntm atm) :=>: CON (PAIR nv av)
 >         else throwError' $ err "relabel: mismatched tags!"
