@@ -90,6 +90,7 @@
 %include Features/Nu.lhs
 %include Features/Labelled.lhs
 %include Features/Quotient.lhs
+%include Features/Record.lhs
 
 \chapter{The Proof State}
 
@@ -111,6 +112,7 @@
 %include Tactics/Elimination.lhs
 %include Tactics/PropSimp.lhs
 %include Tactics/Data.lhs
+%include Tactics/Record.lhs
 %include Tactics/Gadgets.lhs
 %include Tactics/Relabel.lhs
 

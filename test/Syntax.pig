@@ -1,12 +1,4 @@
 {-
-Local Variables:
-mode: outline-minor
-outline-regexp: "-- [*\f]+"
-outline-level: outline-level
-End:
--}
-
-{-
                             Epigram Syntax
 -}
 
@@ -291,3 +283,12 @@ undo;
 -- Implicit argument:
 let pbm3 {A : Set}(b : A) : Set;
 undo;
+
+
+{-
+Local Variables:
+mode: outline-minor
+outline-regexp: "-- [*\f]+"
+outline-level: outline-level
+End:
+-}
