@@ -350,7 +350,7 @@ we cannot fail in this code, but we have to be artificially cautious.
 >                    return $ tv :=>: v
 >
 > inQuote (x :>: t) r = error $ 
->     "inQuote: type " ++ show t ++ 
+>     "inQuote: type " ++ show x ++ 
 >     " doesn't admit " ++ show t
 
 
