@@ -75,13 +75,29 @@ root;
 -- ** Test:
 
 -- Blow up everywhere. You cannot fake polymorphism, Luke.
-make test1 := begin end : RSig;
+make test1 := begin 
+     	      end : RSig;
+-- I don't want to do that:
+next;
+give (\ _ -> RSig);
+propsimpl;
+next;
+propsimpl;
 
 make test2 := begin 
      	      field 'one (\ _ -> Enum ['a 'b])
+	      end : RSig;
+-- I don't want to suffer that:
+next;
+root;
+
+make test3 := begin 
+     	      field 'one (\ _ -> Enum ['a 'b])
 	      field 'two (\ _ -> Enum ['c 'd])
 	      end : RSig;
-
+-- Nor that:
+next;
+root;
 
 -- ** Target was:
 
