@@ -1,0 +1,46 @@
+Made.
+Made.
+Made.
+Made.
+Made.
+(sig : RSignature) -> Set
+(sig : RSignature) -> EnumU
+(sig : RSignature)(labels : Enum (labels sig)) -> Sig (S : RSignature ; Record S -> Set)
+(sig : RSignature)(labels : Enum (labels sig))(rec : Record sig) -> Record (typeAt sig labels !)
+(sig : RSignature)(labels : Enum (labels sig))(rec : Record sig) -> typeAt sig labels - (fsts sig labels rec)
+Made.
+Made.
+['one 'two]
+['one]
+[empty > 'two : (\ _ -> Enum ['a 'b]) , \ _ -> Enum ['c 'd 'e]]
+[empty , \ _ -> Enum ['a 'b]]
+[]
+[[] , 'a]
+[]
+[[] , 'a]
+'c
+'a
+'e
+'a
+Let there be field.
+Ta.
+Going to root...
+Let there be begin.
+Ta.
+Going to root...
+Let there be end.
+Ta.
+Going to root...
+Made.
+Going to next goal...
+Thank you.
+Solved.
+Going to next goal...
+Solved.
+Made.
+Going to next goal...
+Going to root...
+Made.
+Going to next goal...
+Going to root...
+Loaded.
