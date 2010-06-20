@@ -83,10 +83,10 @@ test = begin fi Test1 fi Test2 fi Test3 end
 
 -- ** Dependant case doesn't:
 
-fiD : {a : Set1} -> (S : Sig) -> ([| S |] -> Set) -> (Sig -> a) -> a
+fiD : {a : Sig -> Set1} -> (S : Sig) -> (A : ([| S |] -> Set)) -> ((S : Sig) -> a S) -> a (S < A)
 fiD S A k = k (S < A)
 
-beginD : {a : Set1} -> (Sig -> a) -> a
+beginD : {a : Sig -> Set1} -> ((S : Sig) -> a S) -> a Epsilon
 beginD k = k Epsilon
 
 endD : (Sig -> Sig)
@@ -94,11 +94,4 @@ endD x = x
 
 
 test2 : Sig
-test2 = {!!} -- beginD fiD (\_ -> Test1) fiD (\_ -> Test2) fiD (\_ -> Test3) endD
-
-{-
-Cannot instantiate the metavariable _183 to (([| S |] → Set) → (Sig
-→ _184) → _184) since it contains the variable S which _183 cannot
-depend on
-when checking that the expression fiD has type Sig → _183
--}
+test2 = beginD fiD ((\ _ -> Test1)) fiD {!!} fiD {!!} endD

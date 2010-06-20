@@ -59,22 +59,29 @@ elab at two 'two y;
 
 -}
 
-let field {a : Set}(S : RSig)(l : UId)(A : Record S -> Set)(k : RSig -> a) : a;
+let field {a : RSig -> Set}(S : RSig)(l : UId)(A : Record S -> Set)(k : (S : RSig) -> a S) : a (RCons S l A);
 = k (RCons S l A);
+root;
 
-let begin {a : Set}(k : RSig -> a) : a ;
+let begin {a : RSig -> Set}(k : (S : RSig) -> a S) : a REmpty ;
 = k REmpty;
+root;
 
 let end (S : RSig) : RSig;
 = S;
+root;
+
 
 -- ** Test:
 
 -- Blow up everywhere. You cannot fake polymorphism, Luke.
-make test := begin 
-     	     field 'one (Enum ['a 'b])
-	     field 'two (\ one -> Enum ['c 'd 'e])
-	     end : RSig;
+make test1 := begin end : RSig;
+
+make test2 := begin 
+     	      field 'one (\ _ -> Enum ['a 'b])
+	      field 'two (\ _ -> Enum ['c 'd])
+	      end : RSig;
+
 
 -- ** Target was:
 
