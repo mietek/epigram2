@@ -143,8 +143,8 @@
 >     } where
 >         typeAtOpTy =  "sig" :<: RSIG :-: \sig ->
 >                       "labels" :<: ENUMT (labelsOp @@ [sig]) :-: \_ ->
->                       Target $ SIGMA RSIG  (L . HF "S" $ \ s ->
->                                            ARR (recordOp @@ [s]) SET)
+>                       Target $ SIGMA RSIG  (L $ "S" :. [.s. 
+>                                            ARR (N $ recordOp :@ [NV s]) SET])
 >         typeAtOpRun :: [VAL] -> Either NEU VAL
 >         typeAtOpRun [REMPTY, _]              = 
 >             error "typeAt: impossible call on Empty"
