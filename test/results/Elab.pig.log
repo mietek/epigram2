@@ -23,11 +23,11 @@ Made.
   elab
     [ hope := Set : Set ;
       eq := _ : :- ((: Set) Set) == hope ;
-    ] [hope , id hope (coe Set hope _ A)] : Sig (sst : Set ; sst) ;
+    ] [hope , id hope (coe Set hope _ A)] : Sig (ssv : Set ; ssv) ;
   f
     [ a := (Set -> Set) : Set ;
     ] ? : a ;
-  elab := [Set , f Set] : Sig (sst : Set ; sst) ;
+  elab := [Set , f Set] : Sig (ssv : Set ; ssv) ;
   x
     [ hope := Set : Set ;
       can := Set : hope ;
