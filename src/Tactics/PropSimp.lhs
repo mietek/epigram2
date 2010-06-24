@@ -11,6 +11,7 @@
 > import Control.Applicative 
 > import Control.Monad.Reader
 
+> import Data.Foldable
 > import Data.Traversable
 
 > import Kit.BwdFwd
@@ -32,6 +33,8 @@
 > import ProofState.Interface.Definition
 > import ProofState.Interface.Parameter
 > import ProofState.Interface.Solving
+
+> import Tactics.Elimination
 
 %endif
 
@@ -482,7 +485,7 @@ repeatedly transforming the proof state into a simpler version, one step
 at a time. It will fail if no simplification is possible.
 
 > problemSimplify :: ProofState (EXTM :=>: VAL)
-> problemSimplify = getHoleGoal >>= simplifyGoal . valueOf
+> problemSimplify = proofTrace "problemSimplify" >> getHoleGoal >>= simplifyGoal . valueOf
 
 > tryProblemSimplify :: ProofState (EXTM :=>: VAL)
 > tryProblemSimplify = problemSimplify <|> getCurrentDefinition
@@ -491,6 +494,7 @@ at a time. It will fail if no simplification is possible.
 > simplifyGoal :: TY -> ProofState (EXTM :=>: VAL)
 
 > simplifyGoal (PI UNIT t) = do
+>     proofTrace "PI UNIT"
 >     t' <- bquoteHere (t $$ A VOID)
 >     make ("u" :<: t')
 >     goIn
@@ -498,6 +502,7 @@ at a time. It will fail if no simplification is possible.
 >     goOut
 >     give (LK (N b))
 > simplifyGoal (PI (SIGMA d r) t) = do
+>     proofTrace "PI SIGMA"
 >     let mt =  PI d . L . HF (fortran r) $ \ a ->
 >               PI (r $$ A a) . L . HF (fortran t) $ \ b ->
 >               t $$ A (PAIR a b)
@@ -509,6 +514,7 @@ at a time. It will fail if no simplification is possible.
 >     x <- lambdaParam (fortran t)
 >     give (N (b :$ A (N (P x :$ Fst)) :$ A (N (P x :$ Snd))))
 > simplifyGoal (PI (ENUMT e) t) = do
+>     proofTrace "PI ENUMT"
 >     t' <- bquoteHere t
 >     e' <- bquoteHere e
 >     make ("e" :<: N (branchesOp :@ [e', t']))
@@ -518,10 +524,11 @@ at a time. It will fail if no simplification is possible.
 >     x <- lambdaParam (fortran t)
 >     give (N (switchOp :@ [e', NP x, t', N b]))
 > simplifyGoal (PI (PRF p) t) = do
+>     proofTrace "PI PRF"
 >     pSimp <- runPropSimplify p
 >     case pSimp of
 >         Nothing -> do
->             lambdaParam (fortran t)
+>             lambdaBoy (fortran t)
 >             tryProblemSimplify
 >         Just (SimplyAbsurd prf) -> do
 >             r <- lambdaParam (fortran t)
@@ -555,6 +562,7 @@ at a time. It will fail if no simplification is possible.
 > simplifyGoal UNIT = give VOID
 
 > simplifyGoal (SIGMA s t) = do
+>     proofTrace "SIGMA"
 >     s' <- bquoteHere s
 >     make (fortran t :<: s')
 >     goIn
@@ -571,6 +579,20 @@ at a time. It will fail if no simplification is possible.
 > simplifyGoal (LABEL _ (PRF TRIVIAL))  = give (LRET VOID)
 
 > simplifyGoal _ = throwError' $ err "simplifyGoal: cannot simplify"
+
+
+The |elimSimplify| command invokes elimination with a motive, simplifies the
+methods, then returns to the original goal.
+
+> elimSimplify :: (TY :>: INTM) -> ProofState ()
+> elimSimplify tt = do
+>     elim Nothing tt
+>     proofTrace "Eliminated!"
+>     toFirstMethod
+>     optional problemSimplify            -- simplify first method
+>     many (goDown >> problemSimplify)    -- simplify other methods
+>     goOut                               -- out to makeE
+>     goOut                               -- out to original goal
 
 
 \subsection{Invoking Simplification}
@@ -590,6 +612,7 @@ current goal with the subgoals, and return a list of them.
 
 > propSimplifyHere :: ProofState (Bwd (EXTM :=>: VAL))
 > propSimplifyHere = do
+>     proofTrace "propSimplifyHere"
 >     (_ :=>: PRF p) <- getHoleGoal
 >     pSimp <- runPropSimplify p
 >     case pSimp of

@@ -130,9 +130,30 @@
 >                       ALL (NV _S) $ L $ "s" :. [.s.
 >                       EQBLUE (NV _S :>: NV s) (NV _S :>: NV s) ]]
 
+>   substEq = [("Primitive", 0), ("substEq", 0)] := DEFN seDef :<: seTy where
+>     seTy = PI SET $ L $ "X" :. [._X.
+>                PI (NV _X) $ L $ "x" :. [.x.
+>                PI (NV _X) $ L $ "y" :. [.y.
+>                PI (PRF (EQBLUE (NV _X :>: NV x) (NV _X :>: NV y))) $ L $ "q" :. [.q.
+>                PI (ARR (NV _X) SET) $ L $ "P" :. [._P.
+>                ARR (N (V _P :$ A (NV x))) (N (V _P :$ A (NV y)))
+>                ]]]]]
+>     seDef = L $ "X" :. [._X.
+>               L $ "x" :. [.x.
+>               L $ "y" :. [.y.
+>               L $ "q" :. [.q.
+>               L $ "P" :. [._P.
+>               L $ "px" :. [.px.
+>               N (coe :@ [N (V _P :$ A (NV x)), N (V _P :$ A (NV y)),
+>                   CON (N (P refl :$ A (ARR (NV _X) SET) :$ A (NV _P) :$ Out
+>                             :$ A (NV x) :$ A (NV y) :$ A (NV q))),
+>                   NV px])
+>               ]]]]]]
+
 > import -> Primitives where
 >   ("cohAx", cohAx) :
 >   ("refl", refl) :
+>   ("substEq", substEq) :
 
 
 In the display syntax, a blue equality can be between arbitrary DExTms,
