@@ -10,7 +10,6 @@
 > import Control.Applicative
 > import Data.Foldable
 > import Data.List
-> import Data.Traversable
 
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
@@ -21,22 +20,14 @@
 > import Evidences.Tm
 > import Evidences.Rules
 
-> import ProofState.Edition.ProofState
-> import ProofState.Edition.GetSet
-> import ProofState.Edition.Navigation
-
-> import ProofState.Interface.Module
-> import ProofState.Interface.ProofKit
-> import ProofState.Interface.Lifting
-> import ProofState.Interface.NameResolution
-> import ProofState.Interface.Name
-> import ProofState.Interface.Definition
-> import ProofState.Interface.Parameter
-> import ProofState.Interface.Solving
+> import ProofState.ProofState
+> import ProofState.ProofKit
+> import ProofState.Lifting
+> import ProofState.NameResolution
 
 > import DisplayLang.Name
 
-> import Elaboration.Elaborator
+> import UI.Cochon.Elaboration.Elaborator
 
 
 
@@ -427,6 +418,22 @@ If $r$ is not in the dependency set, we continue and add $r$ to $\Delta_1$.
 
 
 
+\subsubsection{Finding removable hypotheses}
+
+
+
+> findNonRemovableHyps :: Bwd (REF :<: INTM) -> INTM -> Bwd INTM -> Bwd (REF :<: INTM)
+> findNonRemovableHyps delta goal targets = help delta []
+>   where
+>     deps :: [REF]
+>     deps = collectRefs goal ++ foldMap collectRefs targets
+
+>     help :: Bwd (REF :<: INTM) -> [REF :<: INTM] -> Bwd (REF :<: INTM)
+>     help B0 xs = bwdList xs
+>     help (delta :< (r :<: ty)) xs = help delta
+>         (if r `Data.List.elem` deps then (r :<: ty) : xs else xs)
+
+
 \subsubsection{Representing the context as |Binder|s}
 
 As we have seen, simplifying the motive will involve considering the 
@@ -674,9 +681,10 @@ term. Unless we've screwed things up, |giveOutBelow| should always be happy.
 >     optionalProofTrace $ "goal: " ++ show goal
 >     optionalProofTrace $ "targets: " ++ show targets
 
-Extract non-parametric hypotheses $\Delta_1$ from the context $\Delta$:
+Extract non-parametric, non-removable hypotheses $\Delta_1$ from the context $\Delta$:
 
->     delta1 <- findNonParametricHyps delta elimTy
+>     delta' <- findNonParametricHyps delta elimTy
+>     let delta1 = findNonRemovableHyps delta' goal targets
 >     optionalProofTrace $ "delta1: " ++ show delta1
 
 Transform $\Delta_1$ into Binder form:
@@ -714,7 +722,7 @@ of times as |introMotive| went in:
 
 Now we can combine the pieces to produce the |elim| command: 
 
-> elim :: Maybe REF -> (TY :>: INTM) -> ProofState ()
+> elim :: Maybe REF -> (TY :>: INTM) -> ProofState (EXTM :=>: VAL)
 > elim comma (elimTy :>: elim) = do 
 
 Here we go. First, we need to retrieve some information about our
@@ -747,10 +755,13 @@ because its definition will have been updated when the motive was defined.
 >     Just (elim :=>: _) <- lookupName elimName
 >     give $ N $ elim $## map snd binders
 
->     goIn
->     goIn
->     goTop
->     goDown
+
+This leaves us on the same goal we started with. For interactive use, we will
+typically want to move to the first method:
+
+> toFirstMethod :: ProofState ()
+> toFirstMethod = goIn >> goIn >> goTop >> goDown
+
 
 The |getLocalContext| command takes a comma and returns the local
 context, by looking up the parameters above and dropping those before
@@ -771,11 +782,13 @@ excluded.
 
 We make elimination accessible to the user by adding it as a Cochon tactic:
 
-> elimCTactic :: Maybe RelName -> DExTmRN -> ProofState String
-> elimCTactic c r = do 
+> import -> CochonTacticsCode where
+>   elimCTactic :: Maybe RelName -> DExTmRN -> ProofState String
+>   elimCTactic c r = do 
 >     c' <- traverse resolveDiscard c
 >     (e :=>: _ :<: elimTy) <- elabInfer' r
 >     elim c' (elimTy :>: e)
+>     toFirstMethod
 >     return "Eliminated. Subgoals awaiting work..."
 
 > import -> CochonTactics where
