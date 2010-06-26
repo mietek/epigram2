@@ -54,6 +54,7 @@
 %format tau0
 %format tau1
 %format tau'
+%format rho = "\rho"
 %format upsilon = "\upsilon"
 %format upsilon0
 %format upsilon1
@@ -65,7 +66,7 @@
 \usepackage{color}
 \definecolor{red}{rgb}{1.0,0.0,0.0}
 \newcommand{\TODO}[1]{\NotForPublication{\textcolor{red}{#1}}}
-\newcommand{\NotForPublication}[1]{}
+\newcommand{\NotForPublication}[1]{#1}
 
 \newcommand{\eqsubst}{\equiv}
 \newcommand{\compose}{\cdot}
@@ -159,6 +160,8 @@
 \newcommand{\TY}{\mathrm{\textsc{TY}}}
 \newcommand{\TM}{\mathrm{\textsc{TM}}}
 
+\newcommand{\decl}[2]{#1 #2}
+
 \newcommand{\In}[1]{\ensuremath{\mathit{In}_{#1}}}
 \newcommand{\Out}[1]{\ensuremath{\mathit{Out}_{#1}}}
 \newcommand{\Pre}[2]{\ensuremath{\mathit{Pre}_{#1} \InParam{#2}}}
@@ -210,23 +213,17 @@
 
 \section{Introduction}
 
-\AlgorithmW%%%, also known as the Damas-Milner algorithm, 
-    \ is a well-known type inference algorithm, 
-    based on \citeauthor{robinson_machine-oriented_1965}'s 
-    Unification Algorithm \citeyearpar{robinson_machine-oriented_1965}, 
+\AlgorithmW\ is a well-known type inference algorithm, 
+based on \citeauthor{robinson_machine-oriented_1965}'s 
+Unification Algorithm \citeyearpar{robinson_machine-oriented_1965} 
 for the Hindley-Milner type system \citep{milner_theory_1978}, 
-%%%and proved correct 
-   verified 
-by \citet{damas_principal_1982}.
-%%%It is 
+verified by \citet{damas_principal_1982}.
 
 Successive presentations and formalisations of \AlgorithmW\ have treated the
 underlying unification algorithm as a \scare{black box}, but by considering both
 simultaneously we are able to give a more elegant type inference algorithm.
-In particular, the generalisation step 
-%%%(required when 
-(for 
- inferring the type of a let-expression) becomes straightforward.
+In particular, the generalisation step (for inferring the type of a
+let-expression) becomes straightforward.
 
 This paper is literate Haskell, with full source code available at
 \footnotesize\url{http://personal.cis.strath.ac.uk/~adam/type-inference/}.
@@ -267,7 +264,8 @@ $\Judge{\Gamma}{S}{\Delta}$. Here $\Gamma$ is the input context
 and $\Delta$ the output context (in which $S$ holds). We revisit
 \AlgorithmW\ as a 
 %%%necessary check 
-   sanity check 
+%%%sanity check 
+check
 that our perspective is helpful, 
 as a familiar example of problem solving presented anew, and because
 our context discipline yields a clearer account of generalisation
@@ -279,25 +277,16 @@ This idea of assertions producing a resulting context goes back at least to
    An interesting point of comparison is with the work of Nipkow and 
    co-workers \citep{Nipkow-Prehofer-JFP95,NaraschewskiN-JAR}, 
    but substitutions and new contexts are there kept separate. 
-%%%
-We %%%will 
-   define an ordering on contexts based on 
-%%%the information they contain, 
-   their information content, 
+\TODO{Need to compare with Dunfield.}
+
+We define an ordering on contexts based on their information content, 
 and show that $\Delta$ is minimal with respect to this ordering. If one
 thinks of a context as a set of atomic facts, then $\Delta$ is the least upper
 bound of $\Gamma$ together with the facts required for $S$ to hold.
 In each case, at most one rule matches the input context and condition, and we
-specify a termination order so the rules define algorithms.
-%%%It is straightforward to implement these algorithms 
-   These are straightforward to implement 
-by translating the rule
-systems into %%%
-appropriately monadic
-code. We illustrate this 
-%%%by providing a 
-   with our 
-Haskell implementation.
+specify a termination order so the rules define algorithms. These are
+straightforward to implement by translating the rule systems into appropriately
+monadic code. We illustrate this with our Haskell implementation.
 
 Contexts here are not simply sets of assumptions, but lists containing
 information about type and term variables. The unification problem
@@ -309,18 +298,13 @@ the context, as in dependent type theories. We obtain most general
 unifiers and principal types \emph{just} by keeping entries as far to
 the right as possible, moving them left only when necessary to satisfy
 a constraint. 
-%%%This idea of imposing order restrictions on 
-   Imposing order restrictions on 
-%%%the entries of a context 
-   context entries 
+Imposing order restrictions on context entries 
 is similar to the \emph{ordered hypotheses} of deduction
 systems for non-commutative logic \citep{polakow_natural_1999}.
 
 In contrast to other presentations of unification and Hindley-Milner type
 inference, our algorithm uses explicit definitions to avoid the need for a 
 substitution operation.
-  %%% It thus lends itself to efficient implementation.
-  %%% conor: hostage to fortune?
 (We do use substitution in reasoning about the system.) Many implementations
 of (variations on) the Robinson unification algorithm are incorrect because they
 do not handle substitutions correctly \citep{norvig_correctingwidespread_1991}.
@@ -358,6 +342,7 @@ Epigram~\citep{mcbride.mckinna:view-from-the-left} and informed
 Agda~\citeyearpar{norell:agda}. It is high time we began to explain
 how it works and perhaps to understand it.
 
+\TODO{Explain organisation of paper?}
 
 
 %if showCode
@@ -443,15 +428,17 @@ abstract description of contexts, which may contain type variables and other
 information.
 
 Let $\K$ be a set of sorts, and for each $K \in \K$ let $\V_K$ be a
-set of variables and $\D_K$ a set of \emph{declaration
-properties}. Our running example will be the sort $\TY$, where
+set of variables and $\D_K$ a set of
+%%%\emph{declaration properties}.
+    \emph{properties}.
+Our running example will be the sort $\TY$, where
 $\V_\TY$ is some set of type variables and $\D_\TY$ initially contains
 only the \scare{unbound variable} property $~\hole{}$. Properties of
 variables play the same atomic role in \emph{derivations} that variables
 themselves play in terms.
 
-A \define{context} is a list of declarations $v D$, with
-$v \in \V_K$ and $D \in \D_K$.
+A \define{context} is a list of declarations $\decl{x}{D}$, with
+$x \in \V_K$ and $D \in \D_K$.
 %% and separators $(\fatsemi)$. 
 %%%We write $\emptycontext$ for the empty context, and 
    The empty context is written $\emptycontext$. 
@@ -476,7 +463,9 @@ $$\name{Neutral}
 It is not enough for contexts to be lists of declarations: they must
 be well-founded, that is, each declaration should make sense in
 \emph{its} context.  A context is valid if it declares each variable
-at most once, and each declaration property is meaningful in the
+at most once, and each
+%%%declaration
+property is meaningful in the
 preceding context.  We maintain a map $\ok_K : \D_K \rightarrow
 \Ss$ for every $K \in \K$.  Let $\V_K(\Gamma)$ be the set of
 $K$-variables in $\Gamma$.  We define the context validity statement
@@ -488,8 +477,8 @@ $$
 \Axiom{\emptycontext \entails \valid}
 \qquad
 \Rule{\Gamma \entails \valid    \quad    \Gamma \entails \ok_K D}
-     {\Gamma, v D \entails \valid}
-\side{v \in \V_K \setminus \V_K(\Gamma)}
+     {\Gamma, \decl{x}{D} \entails \valid}
+\side{x \in \V_K \setminus \V_K(\Gamma)}
 $$
 \caption{Rules for context validity}
 \label{fig:contextValidityRules}
@@ -512,14 +501,13 @@ In general, each context entry forces some statement to hold.
 We suppose that there is a map
 $\sem{\cdot}_K : \V_K \times \D_K \rightarrow \Ss$
 for each $K \in \K$, from declarations to statements.
-% such that $$\Gamma \contains v D  \Rightarrow  \Gamma \entails \sem{v D}.$$
 (We typically omit the subscript when the sort is irrelevant or can be inferred.)
-The idea is that $\sem{v D}$ is the statement that holds by virtue of the
-declaration $v D$ in the context.
+The idea is that $\sem{\decl{x}{D}}$ is the statement that holds by virtue of the
+declaration $\decl{d}{D}$ in the context.
 The basic rule of our inference system is
 $$\name{Lookup}
-  \Rule{\Gamma \entails \valid   \quad  v D \in \Gamma}
-       {\Gamma \entailsN \sem{v D}}.$$
+  \Rule{\Gamma \entails \valid   \quad  \decl{x}{D} \in \Gamma}
+       {\Gamma \entailsN \sem{\decl{x}{D}}}.$$
 
 As promised, uses of \textsc{Lookup} act as \scare{variables} in
 derivations.  Our $\sem{\cdot}_K$ associates to an \scare{expression atom} 
@@ -654,6 +642,8 @@ A context suffix is a (forwards) list containing only type variable declarations
 > type Context     = Bwd Entry
 > type Suffix      = Fwd TyEntry
 
+\TODO{Explain why we need |Suffix| or delay it till later.}
+
 The types |Bwd| and |Fwd| are backwards (snoc) and forwards (cons) lists,
 respectively. We overload |B0| for the empty list in each case, and write
 |:<| and |:>| for the backwards and forwards list data constructors.
@@ -670,8 +660,6 @@ context), defined as follows:
 
 The |TyName| component is the next fresh type variable name to use;
 it is an implementation detail not mentioned in the typing rules. 
-% > freshen :: TyName -> Context -> TyName
-% > freshen alpha _Gamma = succ alpha
 The |fresh| function generates a fresh variable name and appends a declaration
 to the context.
 Our choice of |TyName| means that it is easy to choose a name fresh with respect
@@ -679,9 +667,16 @@ to a |Context|.
 
 > fresh :: TyDecl -> Contextual TyName
 > fresh d = do   (beta, _Gamma) <- get
->                put (freshen beta _Gamma, _Gamma :< TY (beta := d))
+>                put (succ beta, _Gamma :< TY (beta := d))
 >                return beta
->   where freshen alpha _Gamma = succ alpha
+
+%  fresh :: TyDecl -> Contextual TyName
+% > fresh d = do   (beta, _Gamma) <- get
+% >                put (freshen beta _Gamma, _Gamma :< TY (beta := d))
+% >                return beta
+% >   where freshen alpha _Gamma = succ alpha
+% > freshen :: TyName -> Context -> TyName
+% > freshen alpha _Gamma = succ alpha
 
 The |getContext|, |putContext| and |modifyContext| functions
 respectively retrieve, replace and update the stored context. They correspond
@@ -721,14 +716,15 @@ $\alpha$ to $\tau$ and other variables to themselves.
 %%%We write $\delta : \Gamma \lei \Delta$ and say
 %%%\define{$\Delta$ is more informative than $\Gamma$} if $\delta$ is a
 %%%substitution from $\Gamma$ to $\Delta$ such that,
-%%%%%%for every $v D \in \Gamma$, we have that 
-%%%   for all $v D \in \Gamma$, we have 
-%%%$\Delta \entails \delta \sem{v D}$. 
+%%%%%%for every $\decl{x}{D} \in \Gamma$, we have that 
+%%%   for all $\decl{x}{D} \in \Gamma$, we have 
+%%%$\Delta \entails \delta \sem{\decl{x}{D}}$. 
+
 Given a substitution $\delta$ from $\Gamma$ to $\Delta$, 
 we write  $\delta : \Gamma \lei \Delta$ and say 
 \define{$\Delta$ is more informative than $\Gamma$} if 
-for all $v D \in \Gamma$, we have 
-$\Delta \entails \delta \sem{v D}$. 
+for all $\decl{x}{D} \in \Gamma$, we have 
+$\Delta \entails \delta \sem{\decl{x}{D}}$. 
 
 We write $\delta \eqsubst \theta : \Gamma \lei \Delta$ if
 $\delta : \Gamma \lei \Delta$, $\theta : \Gamma \lei \Delta$
@@ -809,9 +805,9 @@ $\tau \type$
 and $\tau \equiv \upsilon$ are stable.
 
 \begin{lemma}\label{lei:preorder}
-If $\sem{v D}$ is stable for every declaration $v D$, then
+If $\sem{\decl{x}{D}}$ is stable for every declaration $\decl{x}{D}$, then
 the $\lei$ relation is a preorder, with reflexivity demonstrated by
-the inclusion substitution
+the identity substitution
 $\iota : \Gamma \lei \Gamma : v \mapsto v$, and transitivity by composition:
 $$\delta : \Gamma \lei \Delta  ~~\text{and}~~  \theta : \Delta \lei \Theta
   \quad \Rightarrow \quad  \theta \compose \delta : \Gamma \lei \Theta.$$
@@ -819,11 +815,11 @@ $$\delta : \Gamma \lei \Delta  ~~\text{and}~~  \theta : \Delta \lei \Theta
 
 \begin{proof}
 Reflexivity follows immediately from the \textsc{Lookup} rule.
-For transitivity, suppose $v D \in \Gamma$,
-then $\Delta \entails \delta \sem{v D}$ since
+For transitivity, suppose $\decl{x}{D} \in \Gamma$,
+then $\Delta \entails \delta \sem{\decl{x}{D}}$ since
 $\delta : \Gamma \lei \Delta$.
-Now by stability applied to $\delta \sem{v D}$ using $\theta$, we have
-$\Theta \entails \theta\delta \sem{v D}$ as required.
+Now by stability applied to $\delta \sem{\decl{x}{D}}$ using $\theta$, we have
+$\Theta \entails \theta\delta \sem{\decl{x}{D}}$ as required.
 \end{proof}
 
 
@@ -848,13 +844,16 @@ by transitivity.
 \end{proof}
 
 
-\subsection{Composite statements}
+\subsection{Binding statements}
 
-If $S$ is a statement and $v D$ is a declaration, then we define the
-composite statement $\Sbind{v D}{S}$ with the introduction rule
+\TODO{We don't use these until section 6.1, so should we move them?
+Should we split the lemma?}
+
+If $S$ is a statement and $\decl{x}{D}$ is a declaration, then we define the
+binding statement $\Sbind{\decl{x}{D}}{S}$ with the introduction rule
 $$
-\Rule{\Gamma \entails \ok_K D    \quad    \Gamma, v D \entails S}
-     {\Gamma \entails \Sbind{v D}{S}}
+\Rule{\Gamma \entails \ok_K D    \quad    \Gamma, \decl{x}{D} \entails S}
+     {\Gamma \entails \Sbind{\decl{x}{D}}{S}}
 \side{v \in \V_K \setminus \V_K(\Gamma)}.
 $$
 and neutral elimination rule
@@ -868,8 +867,8 @@ $$
 
 \begin{lemma}[Composition preserves stability]\label{lem:stab-pres}
 If $S$ and $S'$ are stable then $S \wedge S'$ is stable.
-If $v D$ is a declaration and both $\ok_K D$ and $S$ are stable, then
-$\Sbind{v D}{S}$ is stable.
+If $\decl{x}{D}$ is a declaration and both $\ok_K D$ and $S$ are stable, then
+$\Sbind{\decl{x}{D}}{S}$ is stable.
 \end{lemma}
 \begin{proof}
 Suppose $\delta : \Gamma \lei \Delta$, the statements $S$ and $S'$ are stable
@@ -880,15 +879,15 @@ so by stability, $\Delta \entails \delta S$ and $\Delta \entails \delta S'$, so
 $\Delta \entails \delta (S \wedge S')$.
 
 Suppose $\delta : \Gamma \lei \Delta$, the statement $S$ is stable and
-$\Gamma \entails \Sbind{v D}{S}$.  If the proof is by \textsc{Lookup}
+$\Gamma \entails \Sbind{\decl{x}{D}}{S}$.  If the proof is by \textsc{Lookup}
 then $\Delta \entails \delta S$ by definition of information increase.
 Otherwise, $\Gamma \entails \ok_K D$ and
-$\Gamma, v D \entails S$, so by stability, $\Delta \entails \delta \ok_K D$.
-% Let $\delta' = \subst{v}{v}{\delta}$, then
-Now $\delta : \Gamma, v D \lei \Delta, v (\delta D)$
-so by stability of $S$ we have $\Delta, v (\delta D) \entails \delta S$.
-Hence $\Delta \entails \Sbind{v (\delta D)}{\delta S}$
-and so $\Delta \entails \delta \Sbind{v D}{S}$.
+$\Gamma, \decl{x}{D} \entails S$, so by stability, $\Delta \entails \delta (\ok_K D)$.
+% Let $\delta' = \subst{x}{x}{\delta}$, then
+Now $\delta : \Gamma, \decl{x}{D} \lei \Delta, \decl{x}{(\delta D)}$
+so by stability of $S$ we have $\Delta, \decl{x}{(\delta D)} \entails \delta S$.
+Hence $\Delta \entails \Sbind{\decl{x}{(\delta D)}}{\delta S}$
+and so $\Delta \entails \delta \Sbind{\decl{x}{D}}{S}$.
 \TODO{We should at least mention freshness here.}
 \end{proof}
 
@@ -907,9 +906,10 @@ introduced so far is stable. We will ensure stability for all statements in $\Ss
 A problem represents a statement we wish to make hold by increasing information
 in the context. More generally, it is a statement with distinguished output
 positions for which we wish to find a witness in a more informative context.
-Unification is an example of the first kind of problem and type inference 
-%%%an example of 
-the second.
+%% Unification is an example of the first kind of problem and type inference 
+%% the second.
+Unification and type inference are examples of problems, with the latter
+having a single output position (for the type being inferred).
 
 We are interested in creating algorithms to solve problems, preferably in as
 general a way as possible (that is, by making the smallest information increase
@@ -917,11 +917,12 @@ necessary to find a solution). This corresponds to finding a most general
 unifier, in the case of unification, or a principal type in the case of type
 inference.
 
-\TODO{Set of well-posed questions, category of answers.
-Make the categorical structure clearer.}
-%%%Formally, a \define{problem} $P$ consists of
-   Distinguishing output positions with angle brackets $\OutParam{\cdot}$, 
-   formally, a \define{problem} $P$ consists of 
+\TODO{Make the structure of problems clearer.}
+
+We distinguish output positions with angle brackets $\OutParam{\cdot}$ for clarity.
+Formally, a \define{problem} $P$ consists of
+%%   Distinguishing output positions with angle brackets $\OutParam{\cdot}$, 
+%%   formally, a \define{problem} $P$ consists of 
 \begin{itemize}
 \item sets \In{P}\ and \Out{P}\ of input and output parameters,
 \item a precondition map $\Pre{P}{\cdot} : \In{P} \rightarrow \Ss$,
@@ -1013,21 +1014,21 @@ former, note that $\Delta \entails \Prob{P}{a}{r}$ and hence
 $\Theta \entails \theta (\Prob{P}{a}{r})$ by stability of $\Prob{P}{a}{r}$.
 But $\theta (\Prob{P}{a}{r}) = \Prob{P}{a}{\theta r}$ by definition. 
 
-Finally, suppose there is some $\theta : \Gamma \lei \Theta$ 
+Finally, suppose there is some $\phi : \Gamma \lei \Phi$ 
 and outputs $t, u$ such that
-$\Theta \entails \Prob{P \wedge Q}{a, b}{t, u}$, so
-$\Theta \entails \Prob{P}{a}{t}$ and
-$\Theta \entails \Prob{Q}{b}{u}$.
+$\Phi \entails \Prob{P \wedge Q}{a, b}{t, u}$, so
+$\Phi \entails \Prob{P}{a}{t}$ and
+$\Phi \entails \Prob{Q}{b}{u}$.
 Since $\delta : \Jmin{\Gamma}{\Prob{P}{a}{r}}{\Delta}$, there exists
-$\zeta_1 : \Delta \lei \Theta$ such that
-$\theta \eqsubst \zeta_1 \compose \delta$
-and $\Theta \entails \R{P}{\zeta_1 r}{t}$.
+$\zeta_1 : \Delta \lei \Phi$ such that
+$\phi \eqsubst \zeta_1 \compose \delta$
+and $\Phi \entails \R{P}{\zeta_1 r}{t}$.
 But then $\theta : \Jmin{\Delta}{\Prob{Q}{b}{s}}{\Theta}$, so there exists
-$\zeta_2 : \Theta \lei \Theta$ such that
+$\zeta_2 : \Theta \lei \Phi$ such that
 $\zeta_1 \eqsubst \zeta_2 \compose \theta$
-and $\Theta \entails \R{Q}{\zeta_2 s}{u}$.
-Hence $\theta \eqsubst \zeta_2 \compose (\theta \compose \delta)$
-and $\Theta \entails \R{P \wedge Q}{\zeta_2 (\theta r), \zeta_2 s}{t, u}$.
+and $\Phi \entails \R{Q}{\zeta_2 s}{u}$.
+Hence $\phi \eqsubst \zeta_2 \compose (\theta \compose \delta)$
+and $\Phi \entails \R{P \wedge Q}{\zeta_2 (\theta r), \zeta_2 s}{t, u}$.
 \end{proof}
 
 
@@ -1042,14 +1043,10 @@ substitutions, then these are unified to produce a single substitution.
 
 \subsection{Transforming the rule system for equivalence}
 
-We wish to transform 
-%%%these rules 
-   the rules in Figure~\ref{fig:equivRules} 
-into a unification algorithm.
-%%%Starting with the rules in Figure~\ref{fig:equivRules}, 
-   So 
-consider what happens if
-we remove each equivalence closure rule in turn and attempt to prove its
+We wish to transform the equivalence rules in Figure~\ref{fig:equivRules} 
+into a unification algorithm. Consider what happens if
+we remove each of reflexivity, transitivity and symmetry in turn, and attempt to
+prove their
 admissibility. This will fail, but the proof obligations left over give us a more
 specific but equivalent system of algorithmic-looking rules for equivalence.
 \TODO{Reference unfold/fold transformations.}
@@ -1123,15 +1120,15 @@ Now we can see how to construct the algorithm. The structural rule says that whe
 
 It is possible that a context entry may have no bearing on the unification
 problem being solved, and hence can be ignored.
-We define the orthogonality relation $v D \perp X$ (the set of type variables $X$
-does not depend on the declaration $v D$) 
+We define the orthogonality relation $\decl{x}{D} \perp X$ (the set of type variables $X$
+does not depend on the declaration $\decl{x}{D}$) 
 %%%thus:
    to capture this idea: 
 \begin{align*}
 \alpha D \perp X
     &\mathrm{~if~} \alpha \in \V_\TY \setminus X  \\
-v D \perp X
-    &\mathrm{~if~} v \in \V_K, D \in \D_K \mathrm{~for~} K \neq \TY
+\decl{x}{D} \perp X
+    &\mathrm{~if~} x \in \V_K, D \in \D_K \mathrm{~for~} K \neq \TY
 \end{align*}
 
 The rules in Figure~\ref{fig:unifyRules} define our unification algorithm. The
@@ -1162,7 +1159,7 @@ given inputs $\Gamma$, $\Xi$, $\alpha$ and $\tau$
 For clarity, we take a \scare{garbage-in, garbage-out} approach to the
 algorithm: we omit the above sanity conditions from the rules, and
 correspondingly do not check them in the implementation. 
-
+\TODO{Reword this.}
 
 The rules \textsc{Define}, \textsc{Expand} and \textsc{Ignore} have
 symmetric counterparts, 
@@ -1199,8 +1196,8 @@ $$
 $$
 \name{Ignore}
 \Rule{\Junify{\Gamma_0}{\alpha}{\beta}{\Delta_0}}
-     {\Junify{\Gamma_0, v D}{\alpha}{\beta}{\Delta_0, v D}}
-\side{v D \perp \{\alpha, \beta\} }
+     {\Junify{\Gamma_0, \decl{x}{D}}{\alpha}{\beta}{\Delta_0, \decl{x}{D}}}
+\side{\decl{x}{D} \perp \{\alpha, \beta\} }
 $$
 
 $$
@@ -1249,8 +1246,8 @@ $$
 $$
 \name{IgnoreS}
 \Rule{\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\Xi}{\Delta_0}}
-     {\Jinstantiate{\Gamma_0, v D}{\alpha}{\tau}{\Xi}{\Delta_0, v D}}
-\side{v D \perp \FTV{\alpha, \tau, \Xi}}
+     {\Jinstantiate{\Gamma_0, \decl{x}{D}}{\alpha}{\tau}{\Xi}{\Delta_0, \decl{x}{D}}}
+\side{\decl{x}{D} \perp \FTV{\alpha, \tau, \Xi}}
 $$
 
 \caption{Algorithmic rules for unification}
@@ -1309,7 +1306,7 @@ $\Delta \entails \tau \equiv \upsilon$ and
 $\iota : \Gamma \lei \Delta$
 where $\iota$
 % $$\iota: \tyvars{\Gamma} \rightarrow \types{\Delta} : \alpha \mapsto \alpha$$
-is the inclusion substitution.
+is the identity substitution.
 
 \item If
 $\Jinstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$, then
@@ -1416,7 +1413,8 @@ unifier for the two given types; it will fail if the types cannot be
 unified given the current state of the context.
 
 > unify :: Type -> Type -> Contextual ()
-> unify (V alpha) (V beta) = onTop $ \ (gamma := d) -> case
+> unify (V alpha) (V beta) = onTop $
+>   \ (gamma := d) -> case
 >           (gamma == alpha,  gamma == beta,  d         ) of
 >           (True,            True,           _         )  ->  restore                                 
 >           (True,            False,          Hole      )  ->  replace (alpha := Some (V beta) :> F0)  
@@ -1434,7 +1432,8 @@ The |solve| function attempts to unify a variable name with a
 which must be placed into the context before it.
 
 > solve :: TyName -> Suffix -> Type -> Contextual ()
-> solve alpha _Xi tau = onTop $ \ (gamma := d) -> 
+> solve alpha _Xi tau = onTop $
+>   \ (gamma := d) -> 
 >     let occurs = gamma <? tau || gamma <? _Xi in case
 >     (gamma == alpha,  occurs,  d             ) of
 >     (True,            True,    _             )  ->  fail "Occur check failed"
@@ -1547,9 +1546,9 @@ We can then represent schemes as
 
 The outermost bound variable is represented by |Z| and the other variables
 are wrapped in the |S| constructor. For example, the type scheme
-$\forall\alpha\forall\beta.\beta \arrow 2$ is represented as
+$\forall\alpha\forall\beta.\beta \arrow \rho$ (with $\alpha$ unused and $\rho$ free) is represented as
 
-< All (All (Type (V (S Z) :-> V (S (S 2)))))
+< All (All (Type (V (S Z) :-> V (S (S rho)))))
 
 Note that the code forces us to distinguish a type $\tau$ and its corresponding
 type scheme (written $.\tau$), as the latter will be represented by
@@ -1602,8 +1601,9 @@ $$t ::= x ~||~ t~t ~||~ \lambda x . t ~||~ \letIn{x}{t}{t}.$$
 We define the type assignability statement $t : \tau$ by the 
    declarative 
 rules in
-Figure~\ref{fig:typeAssignmentRules}, and the scheme assignability statement
-$t \hasscheme \sigma$ for arbitrary terms $t$ and schemes $\sigma$ thus:
+Figure~\ref{fig:typeAssignmentRules}.
+We can then define scheme assignability
+$t \hasscheme \sigma$ as a map from terms $t$ and schemes $\sigma$ to statements:
 \begin{align*}
 t \hasscheme .\tau   &\mapsto    t : \tau  \\
 t \hasscheme \forall \alpha \sigma  &\mapsto 
@@ -1675,6 +1675,8 @@ a sub-relation $\leiR$, by $\delta : \Gamma \leiR \Delta$ if $\delta :
 \asc \delta\sigma \in \Delta.$$ Thus, if $\Gamma \leiR \Delta$, then
 $\Delta$ assigns the \emph{same} type schemes to term variables as $\Gamma$
 does (modulo substitution).
+
+\TODO{Move the above to after section 7.1, where $\lei$ is modified?}
 
 As with unification, we wish to 
 %%%translate 
@@ -1760,7 +1762,7 @@ $\fatsemi$ separators, provided $\Gamma$ contains at least $n$
 
 We write $\delta : \Gamma \lei \Delta$ if $\delta$ is a
 substitution from $\Gamma$ to $\Delta$ such that, for all 
-$v D \in \Gamma \semidrop n$ and $S \in \sem{v D}$, we have that
+$\decl{x}{D} \in \Gamma \semidrop n$ and $S \in \sem{\decl{x}{D}}$, we have that
 $\Delta \semidrop n$ is defined and 
 %%%$\Delta \entails \delta S$. 
 $\Delta \semidrop n \entails \delta S$. 
@@ -1847,6 +1849,7 @@ so $\Jinstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$ as only the
 By induction and lemma~\ref{lem:unifySound},
 $\tyvars{\Gamma, \Xi} = \tyvars{\Delta}$ and
 $\iota : \Jmin{\Gamma, \Xi}{\Puni{\alpha}{\tau}}{\Delta}$.
+\TODO{Explain the induction and use of Lemma~\ref{lem:unifyComplete} for minimality.}
 
 For the first part, we have
 $$\tyvars{\Gamma \fatsemi \Xi} = \tyvars{\Gamma, \Xi} = \tyvars{\Delta}
@@ -1960,12 +1963,12 @@ $$\Rule{\Sbind{\beta \defn \upsilon}{\Sbind{x \asc .\beta}{\Pinf{t}{\tau}}}}
 % $$
 
 
-The let rule is
+The let rule is \TODO{($\OutParam{\sigma}$ seems dubious)}
 $$
 \Rule{
-      s \hasscheme \sigma
+      s \hasscheme \OutParam{\sigma}
       \quad
-      \Sbind{x \asc \sigma}{w : \tau}
+      \Sbind{x \asc \sigma}{\Pinf{w}{\tau}}
      }
      {\Pinf{\letIn{x}{s}{w}}{\tau}}.
 $$
@@ -1973,14 +1976,14 @@ Writing $\sigma = \gen{\Xi}{.\upsilon}$ and expanding the definition of
 $\hasscheme$, we obtain
 $$
 \Rule{
-      \Sbind{\Xi}{s : \upsilon}
+      \Sbind{\Xi}{\Pinf{s}{\upsilon}}
       \quad
-      \Sbind{x \asc \gen{\Xi}{.\upsilon}}{w : \tau}
+      \Sbind{x \asc \gen{\Xi}{.\upsilon}}{\Pinf{w}{\tau}}
      }
      {\Pinf{\letIn{x}{s}{w}}{\tau}}.
 $$
 where we let $\Sbind{\emptycontext}{S} = S$ and
-$\Sbind{(\Xi, v D)}{S} = \Sbind{\Xi}{\Sbind{v D}{S}}$.
+$\Sbind{(\Xi, \decl{x}{D})}{S} = \Sbind{\Xi}{\Sbind{\decl{x}{D}}{S}}$.
 
 
 But how can we find $\Xi$?
@@ -2486,17 +2489,17 @@ is well-founded.
 \item 
 \begin{enumerate}[(i)]
 \item Suppose $\upsilon = \alpha$ and $\tau = \beta$ are variables.
-Let $\Gamma = \Gamma_0, v D$ and examine $v D$:
+Let $\Gamma = \Gamma_0, \decl{x}{D}$ and examine $\decl{x}{D}$:
 \begin{itemize}
-\item If $v = \alpha = \beta$ are all the same variable, then the
+\item If $x = \alpha = \beta$ are all the same variable, then the
 \textsc{Idle} rule applies, $\Delta = \Gamma$ and the result is trivial.
 
-\item If $v D = \hole{\alpha}$ then the \textsc{Define} rule applies,
+\item If $\decl{x}{D} = \hole{\alpha}$ then the \textsc{Define} rule applies,
 $\Delta = \Gamma_0, \alpha \defn \beta$
 and $\theta : \Delta \lei \Theta$.
-The case $v D = \hole{\beta}$ is similar.
+The case $\decl{x}{D} = \hole{\beta}$ is similar.
 
-\item If $v D = \alpha \defn \chi$ then
+\item If $\decl{x}{D} = \alpha \defn \chi$ then
 $\Theta \entails \theta\alpha \equiv \theta\chi$ by definition of $\lei$,
 and $\Theta \entails \theta\alpha \equiv \theta\beta$ by hypothesis,
 so $\Theta \entails \theta\beta \equiv \theta\chi$ by transitivity and symmetry.
@@ -2511,9 +2514,9 @@ with $\theta_\alpha : \Delta_0 \lei \Theta$.
 Hence the \textsc{Expand} rule applies,
 $\Delta = \Delta_0, \alpha \defn \upsilon$
 and $\theta : \Delta \lei \Theta$.
-The case $v D = \beta \defn \upsilon$ is similar.
+The case $\decl{x}{D} = \beta \defn \upsilon$ is similar.
 
-\item Otherwise, $v D \perp \{ \alpha, \beta \}$ and the \textsc{Ignore} rule
+\item Otherwise, $\decl{x}{D} \perp \{ \alpha, \beta \}$ and the \textsc{Ignore} rule
 applies by a similar argument. \TODO{Give this argument.}
 \end{itemize}
 
@@ -2537,20 +2540,20 @@ $\theta : \Delta \lei \Theta$ by the Optimist's lemma.
 
 \end{enumerate}
 
-\item  Let $\Gamma = \Gamma_0, v D$.
+\item  Let $\Gamma = \Gamma_0, \decl{x}{D}$.
 \begin{enumerate}[(i)]
-\item If $v = \alpha \in \FTV{\tau, \Xi}$, then there is some
+\item If $x = \alpha \in \FTV{\tau, \Xi}$, then there is some
 non-variable type $\chi$ such that
 $\Theta \entails \theta\alpha \equiv \theta\chi$
 and $\alpha \in \FTV{\chi}$.
 \TODO{Explain why this follows.}
 But this cannot occur, by lemma~\ref{lem:occurCheck}.
 
-\item If $v D = \hole{\alpha}$ and $\alpha \notin \FTV{\tau, \Xi}$, then the
+\item If $\decl{x}{D} = \hole{\alpha}$ and $\alpha \notin \FTV{\tau, \Xi}$, then the
 \textsc{DefineS} rule applies, $\Delta = \Gamma_0, \Xi, \alpha := \tau$ and
 $\theta : \Delta \lei \Theta$.
 
-\item If $v D = \alpha \defn \chi$ and $\alpha \notin \FTV{\tau, \Xi}$, then
+\item If $\decl{x}{D} = \alpha \defn \chi$ and $\alpha \notin \FTV{\tau, \Xi}$, then
 $\Theta \entails \theta\alpha \equiv \theta\chi$,
 so $\Theta \entails \theta\chi \equiv \theta\tau$ by symmetry and transitivity. 
 Moreover, $\Gamma_0, \Xi \entails \tau \type$
@@ -2564,16 +2567,16 @@ Hence the \textsc{ExpandS} rule applies with
 $\Delta = \Delta_0, \alpha \defn \chi$
 and $\theta : \Delta \lei \Theta$.
 
-\item If $v = \beta$ for $\alpha \neq \beta$ and
+\item If $x = \beta$ for $\alpha \neq \beta$ and
 $\beta \in \FTV{\upsilon, \Xi}$ then
 $\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\beta D, \Xi}{\Delta}$
 is well-posed, so it has a solution by induction and
 the \textsc{DependS} rule applies. \TODO{Explain this.}
 
-\item Otherwise $v D \perp \FTV{\alpha, \tau, \Xi}$ and
+\item Otherwise $\decl{x}{D} \perp \FTV{\alpha, \tau, \Xi}$ and
 $\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\Xi}{\Delta_0}$
 is well-posed, so it has a solution by induction and
-the \textsc{IgnoreS} rule applies with $\Delta = \Delta_0, v D$.
+the \textsc{IgnoreS} rule applies with $\Delta = \Delta_0, \decl{x}{D}$.
 \TODO{Explain this.}
 \qedhere
 \end{enumerate}
