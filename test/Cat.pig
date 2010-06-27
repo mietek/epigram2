@@ -313,8 +313,89 @@ let CatDiagA : Cat.Cat ObjsDiagA ArrsDiagA;
 
 root;
 
--- * Functor
 
+-- ** Example: Fam I
+
+module Fam;
+
+lambda I : Set;
+
+-- *** Objects
+
+-- Objects are families of types
+
+let ObjsFam : Set;
+= I -> Set;
+out;
+
+-- *** Arrows
+
+-- Point-wise morphisms in Set
+
+let ArrsFam (X : ObjsFam)(Y : ObjsFam) : Set;
+= (i : I) -> X i -> Y i;
+out;
+
+-- *** Category
+
+let CatFam : Cat.Cat ObjsFam ArrsFam;
+= 'pack [ ?id ?compos ?pf-id-dom ?pf-id-cod ?pf-assoc ];
+--    <1>.1 Id:
+          give \ X i x -> x;
+--    <1>.2 Compos:
+          lambda A, B, C, g, f, i;
+     	  give \ x -> g i (f i x);
+--    <1>.3 Pf-id-dom:
+          propsimpl;
+	  next;
+--    <1>.4 Pf-id-cod:
+          propsimpl;
+	  next;
+--    <1>.5 Pf-assoc:
+          propsimpl;
+      
+
+root;
+
+-- ** Example: Slice category
+
+module Slice;
+
+lambda ObjsA : Set;
+lambda ArrsA : (X : ObjsA)(Y : ObjsA) -> Set;
+lambda CatA : Cat.Cat ObjsA ArrsA;
+
+lambda I : ObjsA;
+
+make unpack := Cat.unpack ObjsA ArrsA : Cat.Cat ObjsA ArrsA -> Cat.CatSig ObjsA ArrsA ;
+
+-- *** Objects
+
+-- Morphisms J -> I for J an object of A
+
+let ObjsSliceA : Set;
+= Sig ( J   : ObjsA
+      ; smap : ArrsA J I 
+      ;);
+out;
+
+-- *** Arrows
+
+-- Commuting triangles
+
+let ArrsSliceA (X : ObjsSliceA)(Y : ObjsSliceA) : Set;
+= Sig ( f : ArrsA J^1 J 
+      :- ((unpack CatA) - !) J^1 J I smap f == smap^1 );
+out;
+
+-- *** Category:
+let CatSliceA : Cat.Cat ObjsSliceA ArrsSliceA;
+= 'pack [ ?id ?compos ?pf-id-dom ?pf-id-cod ?pf-assoc ];
+--     Give up now.
+
+root;
+
+-- * Functor
 module Functor;
 
 lambda ObjsA : Set;
@@ -423,7 +504,7 @@ let DiagFunctor : DiagFunctorType;
 
 root ;
 
-* Appendix
+-- * Appendix
 
 {-
 Local Variables:
