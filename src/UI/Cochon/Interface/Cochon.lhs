@@ -493,8 +493,8 @@ Import more tactics from an aspect:
 >                     |id (% oneLineComment %) 
 >                         (% consumeUntil' endOfLine %)
 >                         tokenizeCommands
->                     |id (% openBlockComment %) 
->                         (% consumeUntil' closeBlockComment %) 
+>                     |id (% openBlockComment %)
+>                         (% (eatNestedComments 0) %)
 >                         tokenizeCommands
 >                     |id (spaces *> endOfLine *> tokenizeCommands)
 >                     |consumeUntil' endOfCommand : 
@@ -507,7 +507,13 @@ Import more tactics from an aspect:
 >           openBlockComment = tokenEq '{' *> tokenEq '-'
 >           closeBlockComment = tokenEq '-' *> tokenEq '}'
 >           spaces = many $ tokenEq ' '
-
+>           eatNestedComments (-1) = (|id ~ ()|)
+>           eatNestedComments i = (|id  (% openBlockComment %)
+>                                       (eatNestedComments (i+1))
+>                                  |id (% closeBlockComment %)
+>                                      (eatNestedComments (i-1))
+>                                  |id (% nextToken %)
+>                                      (eatNestedComments i) |)
 
 
 > pCochonTactic :: Parsley Token CTData
