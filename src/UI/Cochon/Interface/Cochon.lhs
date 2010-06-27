@@ -473,12 +473,14 @@ Import more tactics from an aspect:
 >       Left err -> do
 >         putStrLn $ "readCommand: failed to tokenize:\n" ++
 >                    show err
+>         putStrLn $ "Input was: " ++ command
 >         exitFailure
 >       Right toks -> do
 >         case parse pCochonTactics toks of
 >           Left err -> do
 >             putStrLn $ "readCommand: failed to parse:\n" ++
 >                        show err
+>             putStrLn $ "Input was: " ++ command
 >             exitFailure
 >           Right command -> do
 >             return command
