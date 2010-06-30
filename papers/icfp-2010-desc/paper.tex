@@ -8,8 +8,14 @@
 \usepackage{pig}
 \usepackage{url}
 \usepackage{xspace}
+\usepackage{listings}
 
 \include{macros}
+
+%% Haskell-mode for listings
+\lstnewenvironment{code}{\lstset{language=Haskell,
+                                 basicstyle=\small\ttfamily,
+                                 xleftmargin=1cm}}{}
 
 %% Structure
 \newenvironment{structure}{\footnotesize\verbatim}{\endverbatim}

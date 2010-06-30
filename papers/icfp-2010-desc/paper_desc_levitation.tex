@@ -470,21 +470,15 @@ build the free monad over this functor.
 \newcommand{\FMVar}{\C{Var}}
 \newcommand{\FMComposite}{\C{Composite}}
 
-Let us recall the free monad construction. Given a functor $F$, the
-free monad over $F$ is defined by the following datatype:
+Let us recall the free monad construction in, say, Haskell. Given a
+functor \texttt{f}, the free monad over \texttt{f} is defined by the
+following datatype:
 %
-\[
-\stk{
-\data \FMFreeMonad\: \PITEL{\V{F}}{\Set \To \Set} 
-                     \PITEL{\V{X}}{\Set} :
-                     \Set 
-\where \\
-\;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
-    \FMVar           & \V{X} \To \FMFreeMonad\: \V{F}\: \V{X}                            \\
-    \FMComposite     & \V{F} (\FMFreeMonad\: \V{F}\: \V{X}) \To \FMFreeMonad\: \V{F}\: \V{X}    
-\end{array}
-}
-\]
+\begin{code}
+data FreeMonad f x
+    = Var x
+    | Composite (f (FreeMonad f x))
+\end{code}
 %
 Being an inductive type, this $\FMFreeMonad$ datatype is itself
 defined by a pattern functor. It is given by:
