@@ -600,12 +600,11 @@ $\FinZero$ and $\SYMBFinSuc$ both target $\SYMBNatSuc$:
 \end{array}
 }\]
 
-We should precise that forcing a description is not guaranteed to
-remove all constraints. It is subject to future work to see if
-constraints can be entirely eradicated, or presented more conveniently
-to the developer.  Finally, it is worth mentioning that these
-optimisations are \emph{source-to-source} transformations on
-descriptions.
+Note that forcing a description is not guaranteed to remove all
+constraints. It is subject to future work to see if constraints can be
+entirely eradicated, or presented more conveniently to the developer.
+Finally, it is worth mentioning that these optimisations are
+\emph{source-to-source} transformations on descriptions.
 
 \paragraph{Tagged indexed descriptions:}
 
@@ -618,7 +617,7 @@ define tagged indexed descriptions to capture this specificity.
 We divide a tagged indexed description in two parts: first, the
 constructors that do not depend on the index; then, the constructors
 that do. The non-dependent part mirrors the definition for non-indexed
-descriptions. The index-depend part simply indexes the choice of
+descriptions. The index-dependent part simply indexes the choice of
 constructors by $\V{I}$. Hence, by inspecting the index, it is
 possible to enable or disable constructors.
 %
@@ -840,7 +839,7 @@ evaluator. The implementation is as follows:
 
 Hence, we have defined the syntax of a typed language of arithmetic
 and boolean expressions. We have given its semantics through an
-evaluation function. Provided a one step semantic of the language, the
+evaluation function. Provided a one step semantics of the language, the
 big step interpreter is granted without effort thanks to the generic
 catamorphism.
 
@@ -960,7 +959,7 @@ Abstracting away the book-keeping introduced by contexts, this
 definition looks familiar. It is similar to a monadic \bind. This is
 not surprising as we are defining a first-order syntax with variables:
 our datatype enjoys more structure than what we are given. We are
-facing a free monad, where $\SYMBEval$ is the \return\ introducing
+facing a free monad, where $\SYMBEval$ is the \return introducing
 variables. For convenience, we wrap $\discharge$ in a $\V{\sigma}$
 function that picks the context of the right type:
 %
@@ -1015,18 +1014,18 @@ functor coding its free monad: \note{pwm: Whoa there. Maybe we should
 
 
 Just as in the universe of descriptions, this construction comes with
-an obvious \return\ and a substitution operation, the \bind. Its
+an obvious \return and a substitution operation, the \bind. Its
 definition is the following:
 %
 \[\stk{
 \begin{array}{@{}ll}
 \substI : & _{\PI{\V{I}}{\Set}}
-            \PITEL{\V{R}}{\TagIDesc{\V{I}}}
-            \PI{\V{X}, \V{Y}}{\V{I} \To \Set} \\
+            \PI{\V{X}, \V{Y}}{\V{I} \To \Set}
+            \PITEL{\V{R}}{\TagIDesc{\V{I}}} \\
           & (\PI{\V{i}}{\V{I}} \V{X}\:\V{i} \To 
                                \IMu{\V{I}}{(\toIDesc{\FreeIMonad{\V{R}}{\V{I}}{\V{Y}}})}{\V{i}}) \To \\
-          & \PITEL{\V{i}}{\V{I}}
-            \PITEL{\V{D}}{\IMu{\V{I}}{(\toIDesc{\FreeIMonad{\V{R}}{\V{I}}{\V{X}}})}{\V{i}}} \To
+          & \PI{\V{i}}{\V{I}}
+            \IMu{\V{I}}{(\toIDesc{\FreeIMonad{\V{R}}{\V{I}}{\V{X}}})}{\V{i}} \To
             \IMu{\V{I}}{(\toIDesc{\FreeIMonad{\V{R}}{\V{I}}{\V{Y}}})}{\V{i}}
 \end{array} \\
 \substI\: \V{X}\: \V{Y}\: \V{R}\: \V{\sigma}\: \V{i}\: \V{t} = \\
@@ -1060,7 +1059,7 @@ Where  $\F{applyI}$ is defined as follow:
 \end{array}
 }\]
  
-Let us now consider two examples of free indexed monad.
+Let us now consider two examples of free indexed monads.
 
 
 \paragraph{Typed expressions:}
@@ -1081,11 +1080,11 @@ Let us now consider two examples of free indexed monad.
 In Section~\ref{sec:idesc-examples}, we had the intuition that our
 datatypes $\HExprD$ and $\HExprVarD{\V{dom}}$ enjoy a monadic
 structure. We had identified the variable substitution operation as
-the \bind\ of a free monad. To exhibit its monadic structure, we first
+the \bind of a free monad. To exhibit its monadic structure, we first
 have to massage the definition of our datatype.
 
-As previously mentioned, we identify $\SYMBEval$ with the \return\ of
-the free monad, while the other components are the action of the
+As previously mentioned, we identify $\SYMBEval$ with the \return of
+the free monad, while the other components are the actions of the
 monad. As a result, the definition is similar to $\HExprD$ presented
 in Figure~\ref{fig:hexpr-full}, replacing $\HExprAD$ by
 $\HExprAFreeD$:
@@ -1150,7 +1149,7 @@ taking advantage of indexing. Then, we have implemented an evaluator
 for closed term, based on the generic catamorphism function. Using the
 free monad construction, we have automatically derived the language of
 open terms. Using its monadic structure, we have implemented the
-interpreter for open terms in context. Hence, without much efforts, we
+interpreter for open terms in context. Hence, without much effort, we
 have described the syntax of a well-typed language, together with its
 semantics.
 

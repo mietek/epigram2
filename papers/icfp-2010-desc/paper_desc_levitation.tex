@@ -248,7 +248,7 @@ cable' which fixes it.
 
 The definition \(\Desc \mapsto \Mu{\DescD}\) is circular,
 but the offensive recursion is concealed by a prestidigitation.
-Expanding be \(\toDesc{-}\) and propagating types as in
+Expanding \(\toDesc{-}\) and propagating types as in
 Figure~\ref{fig:type-checking} reveals the
 awful truth:
 \[
@@ -406,7 +406,7 @@ notation, for readability's sake.
     \pair{\V{s}}{\F{replace}\: (\V{D}\: \V{s})\: \V{X}\: \V{Y}\: \V{d}\: \V{d'}}{}                                \\
 \F{replace}\: (\DIndx{\V{D}})\:     \V{X}\: \V{Y}\: \pair{\V{x}}{\V{d}}{}\: \pair{\V{y}}{\V{d'}}{} \mapsto        \\
 \qquad  \pair{\V{y}}{\F{replace}\: \V{D}\: \V{X}\: \V{Y}\: \V{d}\: \V{d'}}{}                                      \\
-\F{replace}\: (\DHindx{\V{H}}{\V{D}})\: \V{X}\: \V{Y}\: \pair{\V{f}}{\V{d'}}{}\: \pair{\V{g}}{\V{d'}}{} \mapsto   \\
+\F{replace}\: (\DHindx{\V{H}}{\V{D}})\: \V{X}\: \V{Y}\: \pair{\V{f}}{\V{d}}{}\: \pair{\V{g}}{\V{d'}}{} \mapsto   \\
 \qquad  \pair{\V{g}}{\F{replace}\: \V{D}\: \V{X}\: \V{Y}\: \V{d}\: \V{d'}}{}
 }\]
 %
@@ -462,7 +462,7 @@ PolyP~\cite{jansson:polyp}.
 \end{wstructure}
 
 In this section, we will turn to a more ambitious generic operation on
-datatype. Given a functor, represented as a tagged description, we
+datatypes. Given a functor, represented as a tagged description, we
 build the free monad over this functor.
 
 \newcommand{\FMFreeMonad}{\D{FreeMonad}}
@@ -531,7 +531,7 @@ the full-blown free monad construction.
 Of course, we must equip the resulting datatypes with operations
 delivering a monadic interface. As expected, \(\LAM{\x}\DVar{\x}\)
 plays the r\^ole of \return, embedding variables into terms. The
-\bind\ operation corresponds to \emph{substitution}. We will now
+\bind operation corresponds to \emph{substitution}. We will now
 implement it, as a generic function.
 
 
@@ -539,7 +539,7 @@ implement it, as a generic function.
 \newcommand{\apply}{\F{apply}}
 
 Our implementation will appeal to the $\cata$ function developed
-previously. So, let us write down the types, and fill as much
+previously. So, let us write down the types, and fill as many
 arguments to $\cata$ as possible:
 %
 \[\stk{
@@ -565,7 +565,7 @@ corresponds to the following definition:
 \begin{array}{@{}ll}
 \apply : & \PITEL{\V{D}}{\TagDesc} 
            \PI{\V{X}, \V{Y}}{\Set} 
-           (\V{X} \To \Mu{(\toDesc{\FreeMonad{\V{D}}{\V{X}}})}) \To \\
+           (\V{X} \To \Mu{(\toDesc{\FreeMonad{\V{D}}{\V{Y}}})}) \To \\
          & \descop{\toDesc{\FreeMonad{\V{D}}{\V{X}}}}{\Mu{(\toDesc{\FreeMonad{\V{D}}{\V{Y}}})}} \To
            \Mu{(\toDesc{\FreeMonad{\V{D}}{\V{Y}}})}
 \\
@@ -590,7 +590,7 @@ Filling the sub-goal with $\apply\: \V{D}\: \V{X}\: \V{Y}\:
 implemented the free monad construction for an arbitrary tagged
 description. This gives the developer the ability, for any datatype,
 to extend it with a notion of variable. Then, we have equipped this
-structure with the corresponding monadic operation, \bind\ and
+structure with the corresponding monadic operations, \bind and
 \return. This construction is an example of type-indexed
 datatype~\cite{hinze:generic-haskell}, as found in Generic Haskell:
 from a datatype, we build a new datatype and equip it with its
