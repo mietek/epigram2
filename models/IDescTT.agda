@@ -401,7 +401,7 @@ cata I R T phi i x = indI R (\it -> T (fst it)) (\i xs ms -> phi i (replace (R i
 data Type : Set where
   nat : Type
   bool : Type
-
+  pair : Type -> Type -> Type
 
 --********************************
 -- Typed expressions
@@ -418,10 +418,12 @@ exprFixMenu constt = ( consE (consE nilE) ,
 choiceMenu : Type -> EnumU
 choiceMenu nat = consE nilE
 choiceMenu bool = consE nilE
+choiceMenu (pair x y) = nilE
 
 choiceDessert : (ty : Type) -> spi (choiceMenu ty) (\ _ -> IDesc Type)
 choiceDessert nat = (prod (var nat) (var nat) , Void)
 choiceDessert bool = (prod (var nat) (var nat) , Void )
+choiceDessert (pair x y) = Void
 
 exprSensitiveMenu : SensitiveMenu Type
 exprSensitiveMenu = ( choiceMenu ,  choiceDessert )
@@ -442,6 +444,7 @@ exprIDesc constt D = toIDesc Type  (D constt)
 Val : Type -> Set
 Val nat = Nat
 Val bool = Bool
+Val (pair x y) = (Val x) * (Val y)
 
 closeTerm : Type -> IDesc Type
 closeTerm = exprIDesc Val expr
@@ -461,6 +464,7 @@ eval ty term = cata Type closeTerm Val evalOneStep ty term
               evalOneStep nat ((ESu (ESu (ESu ()))) , t) 
               evalOneStep bool ((ESu (ESu EZe)) , (x , y) ) =   le x y
               evalOneStep bool ((ESu (ESu (ESu ()))) , _) 
+              evalOneStep (pair x y) (ESu (ESu ()) , _)
 
 --********************************************
 -- Free monad construction
@@ -502,10 +506,12 @@ exprFreeFixMenu = ( consE nilE ,
 choiceFreeMenu : Type -> EnumU
 choiceFreeMenu nat = consE nilE
 choiceFreeMenu bool = consE nilE
+choiceFreeMenu (pair x y) = nilE
 
 choiceFreeDessert : (ty : Type) -> spi (choiceFreeMenu ty) (\ _ -> IDesc Type)
 choiceFreeDessert nat = (prod (var nat) (var nat) , Void)
 choiceFreeDessert bool = (prod (var nat) (var nat) , Void )
+choiceFreeDessert (pair x y) = Void
 
 exprFreeSensitiveMenu : SensitiveMenu Type
 exprFreeSensitiveMenu = ( choiceFreeMenu ,  choiceFreeDessert )
@@ -533,6 +539,7 @@ eval' {ty} term = cata Type closeTerm' Val evalOneStep ty term
               evalOneStep nat ((ESu (ESu (ESu ()))) , t) 
               evalOneStep bool ((ESu (ESu EZe)) , (x , y) ) =   le x y
               evalOneStep bool ((ESu (ESu (ESu ()))) , _) 
+              evalOneStep (pair x y) (ESu (ESu ()) , _)
 
 
 --********************************
@@ -600,10 +607,12 @@ evalOpen context tm = eval' (substExpr context discharge tm)
 -- Tests
 --********************************
 
--- V 0 :-> true, V 1 :-> 2
+-- V 0 :-> true, V 1 :-> 2, V 2 :-> ( false , 1 )
 testContext : Context _
-testContext = vcons (bool , con (EZe , true )) (vcons (nat , con (EZe , su (su ze)) ) vnil)
-
+testContext =  vcons (bool , con (EZe , true )) 
+              (vcons (nat , con (EZe , su (su ze)) ) 
+              (vcons (pair bool nat , con (EZe , ( false , su ze )))
+               vnil))
 
 -- V 1
 test1 : IMu (openTerm testContext) nat
@@ -644,3 +653,15 @@ testSubst3 = substExpr testContext
 -- = 2
 testEval3 : Val nat
 testEval3 = evalOpen testContext test3
+
+-- V 2
+test4 : IMu (openTerm testContext) (pair bool nat)
+test4 = con (EZe , r ( fsu (fsu fze) , refl ) )
+
+testSubst4 : IMu closeTerm' (pair bool nat)
+testSubst4 = substExpr testContext 
+                       discharge 
+                       test4
+-- = (false , 1)
+testEval4 : Val (pair bool nat)
+testEval4 = evalOpen testContext test4
