@@ -43,6 +43,9 @@ data _+_ (A : Set)(B : Set) : Set where
 data _==_ {A : Set}(x : A) : A -> Set where
   refl : x == x
 
+subst : forall {x y} -> x == y -> x -> y
+subst refl x = x
+
 cong : {A B : Set}(f : A -> B){x y : A} -> x == y -> f x == f y
 cong f refl = refl
 
@@ -404,12 +407,14 @@ data Type : Set where
 -- Typed expressions
 --********************************
 
+-- Fix menu:
 exprFixMenu : (Type -> Set) -> FixMenu Type
 exprFixMenu constt = ( consE (consE nilE) , 
-                       \ty -> (const (constt ty),
-                              (prod (var bool) (prod (var ty) (var ty)), 
+                       \ty -> (const (constt ty),                        -- Val t
+                              (prod (var bool) (prod (var ty) (var ty)), -- if b then t1 else t2
                                Void)))
 
+-- Indexed menu:
 choiceMenu : Type -> EnumU
 choiceMenu nat = consE nilE
 choiceMenu bool = consE nilE
@@ -421,6 +426,8 @@ choiceDessert bool = (prod (var nat) (var nat) , Void )
 exprSensitiveMenu : SensitiveMenu Type
 exprSensitiveMenu = ( choiceMenu ,  choiceDessert )
 
+
+-- Expression:
 expr : (Type -> Set) -> TagIDesc Type
 expr constt = exprFixMenu constt , exprSensitiveMenu
 
@@ -454,30 +461,6 @@ eval ty term = cata Type closeTerm Val evalOneStep ty term
               evalOneStep nat ((ESu (ESu (ESu ()))) , t) 
               evalOneStep bool ((ESu (ESu EZe)) , (x , y) ) =   le x y
               evalOneStep bool ((ESu (ESu (ESu ()))) , _) 
-
-
---********************************
--- Open terms
---********************************
-
-Var : EnumU -> Type -> Set
-Var dom _ = EnumT dom
-
-openTerm : EnumU -> Type -> IDesc Type
-openTerm dom = exprIDesc (\ty -> Val ty + Var dom ty) expr
-
---********************************
--- Evaluation of open terms
---********************************
-
-discharge : (ty : Type)
-          (vars : EnumU)
-          (context : spi vars (\_ -> IMu closeTerm ty)) ->
-          (Val ty + Var vars ty) -> 
-          IMu closeTerm ty
-discharge ty vars context (l value) = con ( EZe , value )
-discharge ty vars context (r variable) = switch vars (\_ -> IMu closeTerm ty) context variable 
-
 
 --********************************************
 -- Free monad construction
@@ -536,69 +519,128 @@ exprFreeC X = exprFree ** X
 closeTerm' : Type -> IDesc Type
 closeTerm' = toIDesc Type (exprFree ** Val)
 
-openTerm' : EnumU -> Type -> IDesc Type
-openTerm' dom = toIDesc Type (exprFree ** (\ty -> Val ty + Var dom ty))
-
 --********************************
--- Evaluation of open terms'
+-- Closed term' evaluation
 --********************************
 
-discharge' : (ty : Type)
-            (vars : EnumU)
-            (context : spi vars (\_ -> IMu closeTerm' ty)) ->
-            (Val ty + Var vars ty) -> 
-            IMu closeTerm' ty
-discharge' ty vars context (l value) = con (EZe , value) 
-discharge' ty vars context (r variable) = switch vars (\_ -> IMu closeTerm' ty) context variable
-
-chooseDom : (ty : Type)(domNat domBool : EnumU) -> EnumU
-chooseDom nat domNat _ = domNat
-chooseDom bool _ domBool = domBool
-
-chooseGamma : (ty : Type)
-              (dom : EnumU)
-              (gammaNat : spi dom (\_ -> IMu closeTerm' nat))
-              (gammaBool : spi dom (\_ -> IMu closeTerm' bool)) ->
-              spi dom (\_ -> IMu closeTerm' ty)
-chooseGamma nat dom gammaNat gammaBool = gammaNat
-chooseGamma bool dom gammaNat gammaBool = gammaBool
-
-substExpr : (dom : EnumU)
-            (gammaNat : spi dom (\_ -> IMu closeTerm' nat))
-            (gammaBool : spi dom (\_ -> IMu closeTerm' bool))
-            (sigma : (dom : EnumU)
-                     (gammaNat : spi dom (\_ -> IMu closeTerm' nat))
-                     (gammaBool : spi dom (\_ -> IMu closeTerm' bool))
-                     (ty : Type) ->
-                     (Val ty + Var dom ty) ->
-                     IMu closeTerm' ty)
-            (ty : Type) ->
-            IMu (openTerm' dom) ty ->
-            IMu closeTerm' ty
-substExpr dom gammaNat gammaBool sig ty term = 
-    substI (\ty -> Val ty + Var dom ty)
-           Val
-           exprFree
-           (sig dom gammaNat gammaBool)
-           ty
-           term
+eval' : {ty : Type} -> IMu closeTerm' ty -> Val ty
+eval' {ty} term = cata Type closeTerm' Val evalOneStep ty term
+        where evalOneStep : (ty : Type) -> [| closeTerm' ty |] Val -> Val ty
+              evalOneStep _ (EZe , t) = t
+              evalOneStep _ ((ESu EZe) , (true , ( x , _))) = x
+              evalOneStep _ ((ESu EZe) , (false , ( _ , y ))) = y
+              evalOneStep nat ((ESu (ESu EZe)) , (x , y)) = plus x y
+              evalOneStep nat ((ESu (ESu (ESu ()))) , t) 
+              evalOneStep bool ((ESu (ESu EZe)) , (x , y) ) =   le x y
+              evalOneStep bool ((ESu (ESu (ESu ()))) , _) 
 
 
-sigmaExpr : (dom : EnumU)
-            (gammaNat : spi dom (\_ -> IMu closeTerm' nat))
-            (gammaBool : spi dom (\_ -> IMu closeTerm' bool))
-            (ty : Type) ->
-            (Val ty + Var dom ty) ->
-            IMu closeTerm' ty
-sigmaExpr dom gammaNat gammaBool ty v = 
-    discharge' ty
-               dom
-               (chooseGamma ty dom gammaNat gammaBool)
-               v
+--********************************
+-- Open terms
+--********************************
 
-test : IMu (openTerm' (consE (consE nilE))) nat ->
-       IMu closeTerm' nat
-test term = substExpr (consE (consE nilE)) 
-                      ( con ( EZe , ze ) , ( con (EZe , su ze ) , Void )) 
-                      ( con ( EZe , true ) , ( con ( EZe , false ) , Void ))
-                      sigmaExpr nat term
+data Vec (A : Set) : Nat -> Set where
+   vnil : Vec A ze
+   vcons : {n : Nat} -> A -> Vec A n -> Vec A (su n)
+
+data Fin : Nat -> Set where
+  fze : {n : Nat} -> Fin (su n)
+  fsu : {n : Nat} -> Fin n -> Fin (su n)
+
+Context : Nat -> Set
+Context n = Vec (Sigma Type (\ty -> IMu closeTerm' ty)) n
+
+typeAt : {n : Nat}(c : Context n) -> Fin n -> Type
+typeAt {ze} c ()
+typeAt {.(su n)} (vcons x xs) (fze {n}) = fst x
+typeAt {.(su n)} (vcons x xs) (fsu {n} y) = typeAt xs y
+
+lookup : {n : Nat}(c : Context n)(i : Fin n) -> IMu closeTerm' (typeAt c i)
+lookup {ze} c ()
+lookup {su _} (vcons x _) fze = snd x
+lookup {su _} (vcons _ xs) (fsu y) = lookup xs y
+
+
+Var : {n : Nat} -> Context n -> Type -> Set
+Var {n} c ty = Sigma (Fin n) (\i -> typeAt c i == ty)
+
+openTerm : {n : Nat} -> Context n -> Type -> IDesc Type
+openTerm c = toIDesc Type (exprFree ** (\ty -> Val ty + Var c ty))
+
+--********************************
+-- Evaluation of open terms
+--********************************
+
+discharge : {n : Nat}
+             {context : Context n}
+             (ty : Type) ->
+             (Val ty + Var context ty) ->
+             IMu closeTerm' ty
+discharge ty (l value) = con (EZe , value)
+discharge {n} {c} ty (r variable) = subst (cong (IMu closeTerm') (snd variable)) (lookup c (fst variable))
+
+substExpr : {n : Nat}
+             {ty : Type}
+             (context : Context n)
+             (sigma : (ty : Type) ->
+                      (Val ty + Var context ty) ->
+                      IMu closeTerm' ty) ->
+             IMu (openTerm context) ty ->
+             IMu closeTerm' ty
+substExpr {n} {ty} c sig term = 
+    substI (\ty -> Val ty + Var c ty) Val exprFree sig ty term
+
+evalOpen : {n : Nat}{ty : Type}
+           (context : Context n) ->
+           IMu (openTerm context) ty ->
+           Val ty
+evalOpen context tm = eval' (substExpr context discharge tm)
+
+--********************************
+-- Tests
+--********************************
+
+-- V 0 :-> true, V 1 :-> 2
+testContext : Context _
+testContext = vcons (bool , con (EZe , true )) (vcons (nat , con (EZe , su (su ze)) ) vnil)
+
+
+-- V 1
+test1 : IMu (openTerm testContext) nat
+test1 = con (EZe , r ( fsu fze , refl ) )
+
+testSubst1 : IMu closeTerm' nat
+testSubst1 = substExpr testContext 
+                       discharge 
+                       test1
+-- = 2
+testEval1 : Val nat
+testEval1 = evalOpen testContext test1
+
+-- add 1 (V 1)
+test2 : IMu (openTerm testContext) nat
+test2 = con (ESu (ESu EZe) , (con (EZe , l (su ze)) , con ( EZe , r (fsu fze , refl) )) )
+
+testSubst2 : IMu closeTerm' nat
+testSubst2 = substExpr testContext 
+                        discharge 
+                        test2
+
+-- = 3
+testEval2 : Val nat
+testEval2 = evalOpen testContext test2
+
+-- if (V 0) then (V 1) else 0
+test3 : IMu (openTerm testContext) nat
+test3 = con (ESu EZe , (con (EZe , r (fze , refl)) ,
+                       (con (EZe , r (fsu fze , refl)) ,
+                        con (EZe , l ze))))
+
+testSubst3 : IMu closeTerm' nat
+testSubst3 = substExpr testContext 
+                       discharge 
+                       test3
+
+-- = 2
+testEval3 : Val nat
+testEval3 = evalOpen testContext test3
