@@ -80,6 +80,10 @@ le ze _ = true
 le (su _) ze = false
 le (su n) (su n') = le n n'
 
+data List (A : Set) : Set where
+  [] : List A
+  _::_ : A -> List A -> List A
+
 data Vec (A : Set) : Nat -> Set where
    vnil : Vec A ze
    vcons : {n : Nat} -> A -> Vec A n -> Vec A (su n)
@@ -88,6 +92,16 @@ data Fin : Nat -> Set where
   fze : {n : Nat} -> Fin (su n)
   fsu : {n : Nat} -> Fin n -> Fin (su n)
 
+data Comp : Set where
+  LT : Comp
+  EQ : Comp
+  GT : Comp
+
+comp : {n : Nat} -> Fin n -> Fin n -> Comp
+comp fze fze = EQ
+comp fze _ = LT
+comp _ fze = GT
+comp (fsu n) (fsu n') = comp n n'
 
 
 --********************************************
@@ -369,12 +383,54 @@ lookup {su _} (vcons _ xs) (fsu y) = lookup xs y
 
 -- A variable is an index into the context *and* a proof that the
 -- context contains the expected stuff
-Var : {n : Nat} -> Context n -> Type -> Set
-Var {n} c ty = Sigma (Fin n) (\i -> typeAt c i == ty)
+Var : Nat -> Type -> Set
+Var n ty = Fin n
 
 -- Open term: holes are either values or variables in a context
-openTerm : {n : Nat} -> Context n -> Type -> IDesc Type
-openTerm c = toIDesc Type (exprFree ** (\ty -> Val ty + Var c ty))
+openTerm : Nat -> Type -> IDesc Type
+openTerm n = toIDesc Type (exprFree ** (\ty -> Val ty + Var n ty))
+
+data Maybe (A : Set) : Set where
+  Nothing : Maybe A
+  Just : A -> Maybe A
+
+mergeVars : {n : Nat} ->
+            Maybe (List (Fin n * Type)) ->
+            Maybe (List (Fin n * Type)) ->
+            Maybe (List (Fin n * Type))
+mergeVars Nothing _ = Nothing
+mergeVars _ Nothing = Nothing
+mergeVars (Just []) (Just y) = Just y
+mergeVars (Just x) (Just []) = Just x
+mergeVars (Just (x :: xs)) (Just (y :: ys)) with comp (fst x) (fst y) 
+                                              | mergeVars (Just xs) (Just (y :: ys)) 
+                                              | mergeVars (Just (x :: xs)) (Just ys)
+... | LT | _        | Nothing   = Nothing
+... | LT | _        | Just xys  = Just (y :: xys)
+... | EQ | _        | _         = Nothing
+... | GT | Nothing  | _         = Nothing
+... | GT | Just xys | _         = Just (x :: xys)
+
+collectVars : {ty : Type}{n : Nat} -> IMu (openTerm n) ty -> Maybe (List (Fin n * Type))
+collectVars {ty} {n} t = cata Type (openTerm n) (\_ -> Maybe (List (Fin n * Type))) collectVarsHelp ty t
+  where collectVarsHelp : (i : Type) -> [| openTerm n i |] (\ _ -> Maybe (List (Fin n * Type))) -> Maybe (List (Fin n * Type))
+        collectVarsHelp ty (EZe , r n) = Just ((n , ty) :: [])
+        collectVarsHelp ty (EZe , l _) = Just []
+        collectVarsHelp ty (ESu EZe , (t1 , ( t2 , t3))) = mergeVars (mergeVars t1 t2) t3
+        collectVarsHelp nat (ESu (ESu EZe) , (x , y)) = mergeVars x y
+        collectVarsHelp nat (ESu (ESu (ESu ())) , _) 
+        collectVarsHelp bool (ESu (ESu EZe) , (x , y) ) = mergeVars x y
+        collectVarsHelp bool (ESu (ESu (ESu ())) , _) 
+        collectVarsHelp (pair x y) (ESu (ESu ()) , _)
+        
+
+ValidContext : {ty : Type}{n : Nat}(c : Context n)(tm : IMu (openTerm n) ty) -> Set
+ValidContext {ty} {n} c tm  with collectVars tm
+... | Nothing = Zero
+... | (Just y) = checkContext y
+  where checkContext : List (Fin n * Type) -> Set
+        checkContext [] = Unit
+        checkContext ((x , ty) :: xs) = ((typeAt c x) == ty) * checkContext xs 
 
 --********************************
 -- Evaluation of open terms
@@ -386,12 +442,11 @@ openTerm c = toIDesc Type (exprFree ** (\ty -> Val ty + Var c ty))
 discharge : {n : Nat}
             {context : Context n}
             (ty : Type) ->
-            (Val ty + Var context ty) ->
+            (Val ty + Var n ty) ->
             IMu closeTerm ty
 discharge ty (l value) = con (EZe , value)
-discharge {n} {c} ty (r variable) = 
-    subst (cong (IMu closeTerm) (snd variable)) 
-          (lookup c (fst variable))
+discharge {n} {c} ty (r variable) = {!lookup c variable!}
+--          (lookup c (fst variable))
 
 -- |substExpr| is the specialized |substI| to expressions. We get it
 -- generically from the free monad construction.
@@ -399,12 +454,17 @@ substExpr : {n : Nat}
             {ty : Type}
             (context : Context n)
             (sigma : (ty : Type) ->
-                     (Val ty + Var context ty) ->
+                     (Val ty + Var n ty) ->
                      IMu closeTerm ty) ->
-            IMu (openTerm context) ty ->
+            (tm : IMu (openTerm n) ty) ->
+            ValidContext context tm ->
             IMu closeTerm ty
-substExpr {n} {ty} c sig term = 
-    substI (\ty -> Val ty + Var c ty) Val exprFree sig ty term
+substExpr {n} {ty} c sig term valid = 
+    substI (\ty -> Val ty + Var n ty) Val exprFree sig ty term
+
+
+
+{-
 
 -- By first doing substitution to close the term, we can use
 -- evaluation of closed terms, obtaining evaluation of open terms
@@ -477,3 +537,4 @@ testSubst4 = substExpr testContext
 -- = (false , 1)
 testEval4 : Val (pair bool nat)
 testEval4 = evalOpen testContext test4
+-}
