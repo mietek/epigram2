@@ -115,11 +115,13 @@ datatype declarations. We can read a description $\V{D}:\Desc$ as a
 `pattern functor' on $\Set$, with $\SYMBdescop{\V{D}}$ its action on
 an object, \(\V{X}\), soon to be instantiated recursively.
 
-Descriptions are sequential structures, terminated by $\DUnit$, indicating
-the empty tuple. To build
-sigmas-of-sigmas, we define a $\SYMBDSigma$ code, interpreted as a
-$\Sigma$-type. To request a recursive component, we have $\DIndx{\V{D}}$,
-where \(\V{D}\) describes the rest of the node.
+Descriptions are sequential structures, terminated by $\DUnit$,
+indicating the empty tuple. To build sigmas-of-sigmas, we define a
+$\SYMBDSigma$ code, interpreted as a $\Sigma$-type. To request a
+recursive component, we have $\DIndx{\V{D}}$, where \(\V{D}\)
+describes the rest of the node. These codes directly captures the
+notion of sigmas-of-sigmas. An equivalent, more algebraic presentation
+could be given, as illustrated in Section~\ref{sec:indexing-desc}.
 
 \begin{figure}
 \[\stk{
