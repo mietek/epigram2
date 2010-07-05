@@ -315,11 +315,15 @@ with higher priority than for \(\F{switch}\) in general.
  {\switchD{\M{E}}{\M{t'}}}}
 \]
 As a consequence, our definition above now propagates without
-introducing recursion. Of course, by pasting together
-the declaration of \(\Desc\) and its internal copy, we have made
-it appear in its own type. Hardwired as a \emph{fait accompli},
-this creates no regress, although one must assume the definition
-to recheck it.
+introducing recursion. Of course, by pasting together the declaration
+of \(\Desc\) and its internal copy, we have made it appear in its own
+type. Hardwired as a \emph{fait accompli}, this creates no regress,
+although one must assume the definition to recheck it.\footnote{Our
+  Agda model does not formalize the $\SYMBswitchD$
+  construction. However, it proves the isomorphism between the defined
+  descriptions and the coded ones. The role of $\SYMBswitchD$ is to
+  collapse this isomorphism, hence identifiying defined and coded
+  descriptions.}
 
 \begin{wstructure}
 <- Generic programming now!
