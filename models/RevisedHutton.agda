@@ -353,27 +353,31 @@ eval {ty} term = cata Type closeTerm Val evalOneStep ty term
 -- [Open terms]
 --********************************
 
--- Context and context lookup 
-Context : Nat -> Set
-Context n = Vec (Sigma Type (\ty -> IMu closeTerm ty)) n
+-- A context is a snoc-list of types
+-- put otherwise, a context is a type telescope
+data Context : Set where
+  [] : Context
+  _,_ : Context -> Type -> Context
 
-typeAt : {n : Nat}(c : Context n) -> Fin n -> Type
-typeAt {ze} c ()
-typeAt {su _} (vcons x _) fze = fst x
-typeAt {su _} (vcons _ xs) (fsu y) = typeAt xs y
+-- The environment realizes the context, having a value for each type
+Env : Context -> Set
+Env []      = Unit
+Env (G , S)  = Env G * Val S
 
-lookup : {n : Nat}(c : Context n)(i : Fin n) -> IMu closeTerm (typeAt c i)
-lookup {ze} c ()
-lookup {su _} (vcons x _) fze = snd x
-lookup {su _} (vcons _ xs) (fsu y) = lookup xs y
+-- A typed-variable indexes into the context, obtaining a proof that
+-- what we get is what you want (WWGIWYW)
+Var : Context -> Type -> Set
+Var []      T = Zero
+Var (G , S) T = Var G T + (S == T)
 
--- A variable is an index into the context *and* a proof that the
--- context contains the expected stuff
-Var : {n : Nat} -> Context n -> Type -> Set
-Var {n} c ty = Sigma (Fin n) (\i -> typeAt c i == ty)
+-- The lookup gets into the context to extract the value
+lookup : (G : Context) -> Env G -> (T : Type) -> Var G T -> Val T
+lookup []        _       T ()
+lookup (G , .T)  (g , t) T (r refl) = t
+lookup (G , S)   (g , t) T (l x)    = lookup G g T x 
 
 -- Open term: holes are either values or variables in a context
-openTerm : {n : Nat} -> Context n -> Type -> IDesc Type
+openTerm : Context -> Type -> IDesc Type
 openTerm c = toIDesc Type (exprFree ** (\ty -> Val ty + Var c ty))
 
 --********************************
@@ -381,99 +385,96 @@ openTerm c = toIDesc Type (exprFree ** (\ty -> Val ty + Var c ty))
 --********************************
 
 -- |discharge| is the local substitution expected by |substI|. It is
--- just sugar around context lookup, taking care of transmitting the
--- proof
-discharge : {n : Nat}
-            {context : Context n}
+-- just sugar around context lookup
+discharge : (context : Context) ->
+            Env context ->
             (ty : Type) ->
             (Val ty + Var context ty) ->
             IMu closeTerm ty
-discharge ty (l value) = con (EZe , value)
-discharge {n} {c} ty (r variable) = 
-    subst (cong (IMu closeTerm) (snd variable)) 
-          (lookup c (fst variable))
+discharge ctxt env ty (l value) = con (EZe , value)
+discharge ctxt env ty (r variable) = con (EZe , lookup ctxt env ty variable ) 
 
 -- |substExpr| is the specialized |substI| to expressions. We get it
 -- generically from the free monad construction.
-substExpr : {n : Nat}
-            {ty : Type}
-            (context : Context n)
+substExpr : {ty : Type}
+            (context : Context)
             (sigma : (ty : Type) ->
                      (Val ty + Var context ty) ->
                      IMu closeTerm ty) ->
             IMu (openTerm context) ty ->
             IMu closeTerm ty
-substExpr {n} {ty} c sig term = 
+substExpr {ty} c sig term = 
     substI (\ty -> Val ty + Var c ty) Val exprFree sig ty term
 
 -- By first doing substitution to close the term, we can use
 -- evaluation of closed terms, obtaining evaluation of open terms
 -- under a valid context.
-evalOpen : {n : Nat}{ty : Type}
-           (context : Context n) ->
+evalOpen : {ty : Type}(context : Context) ->
+           Env context ->
            IMu (openTerm context) ty ->
            Val ty
-evalOpen context tm = eval (substExpr context discharge tm)
+evalOpen ctxt env tm = eval (substExpr ctxt (discharge ctxt env) tm)
 
 --********************************
 -- Tests
 --********************************
 
+-- Test context:
 -- V 0 :-> true, V 1 :-> 2, V 2 :-> ( false , 1 )
-testContext : Context _
-testContext =  vcons (bool , con (EZe , true )) 
-              (vcons (nat , con (EZe , su (su ze)) ) 
-              (vcons (pair bool nat , con (EZe , ( false , su ze )))
-               vnil))
+testContext : Context
+testContext = (([] , bool) , nat) , pair bool nat
+testEnv : Env testContext
+testEnv = ((Void , true ) , su (su ze)) , (false , su ze) 
 
 -- V 1
 test1 : IMu (openTerm testContext) nat
-test1 = con (EZe , r ( fsu fze , refl ) )
+test1 = con (EZe , r ( l (r refl) ) )
 
 testSubst1 : IMu closeTerm nat
 testSubst1 = substExpr testContext 
-                       discharge 
+                       (discharge testContext testEnv)
                        test1
 -- = 2
 testEval1 : Val nat
-testEval1 = evalOpen testContext test1
+testEval1 = evalOpen testContext testEnv test1
 
 -- add 1 (V 1)
 test2 : IMu (openTerm testContext) nat
-test2 = con (ESu (ESu EZe) , (con (EZe , l (su ze)) , con ( EZe , r (fsu fze , refl) )) )
+test2 = con (ESu (ESu EZe) , (con (EZe , l (su ze)) , con ( EZe , r (l (r refl)) )) )
 
 testSubst2 : IMu closeTerm nat
 testSubst2 = substExpr testContext 
-                        discharge 
+                       (discharge testContext testEnv)
                         test2
 
 -- = 3
 testEval2 : Val nat
-testEval2 = evalOpen testContext test2
+testEval2 = evalOpen testContext testEnv test2
+
 
 -- if (V 0) then (V 1) else 0
 test3 : IMu (openTerm testContext) nat
-test3 = con (ESu EZe , (con (EZe , r (fze , refl)) ,
-                       (con (EZe , r (fsu fze , refl)) ,
+test3 = con (ESu EZe , (con (EZe , r (l (l (r refl)))) ,
+                       (con (EZe , r (l (r refl))) ,
                         con (EZe , l ze))))
 
 testSubst3 : IMu closeTerm nat
 testSubst3 = substExpr testContext 
-                       discharge 
+                       (discharge testContext testEnv)
                        test3
 
 -- = 2
 testEval3 : Val nat
-testEval3 = evalOpen testContext test3
+testEval3 = evalOpen testContext testEnv test3
 
 -- V 2
 test4 : IMu (openTerm testContext) (pair bool nat)
-test4 = con (EZe , r ( fsu (fsu fze) , refl ) )
+test4 = con (EZe , r ( r refl ) )
 
 testSubst4 : IMu closeTerm (pair bool nat)
 testSubst4 = substExpr testContext 
-                       discharge 
+                       (discharge testContext testEnv)
                        test4
 -- = (false , 1)
 testEval4 : Val (pair bool nat)
-testEval4 = evalOpen testContext test4
+testEval4 = evalOpen testContext testEnv test4
