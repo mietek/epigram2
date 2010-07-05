@@ -621,8 +621,8 @@ is either bound to a type (written |Some tau|) or left unbound (written |Hole|).
 > data TyDecl   =  Some Type | {-"\;"-} Hole
 > data TyEntry  =  TyName := TyDecl
 
-Thanks to the relevant |Foldable| instances, all we need to do is define |FTV|
-for entries.
+We define |FTV| for |TyEntry|, and thanks to the relevant |Foldable| instances
+it will automatically be defined for lists of type variable declarations.
 
 > instance FTV TyEntry where
 >    alpha <? (_ := Some tau)  = alpha <? tau
@@ -633,24 +633,28 @@ kind of entry, but later we will add others, so this definition is incomplete.
 % subject to the
 % conditions that each variable is defined at most once, and all variables that
 % occur in a type variable binding must be defined earlier in the list.
-The context validity conditions will be maintained by the algorithm but are not
-enforced by the type system; this is possible in a language such as Agda.
-A context suffix is a (forwards) list containing only type variable declarations.
+% The context validity conditions will be maintained by the algorithm but are not
+% enforced by the type system; this is possible in a language such as Agda.
 
-< data Entry = TY TyEntry | ...
+< data Entry    = TY TyEntry | ...
+< type Context  = Bwd Entry
 
-> type Context     = Bwd Entry
-> type Suffix      = Fwd TyEntry
+%if False
 
-\TODO{Explain why we need |Suffix| or delay it till later.}
+> type Context  = Bwd Entry -- so we can line up the two previous lines
 
-The types |Bwd| and |Fwd| are backwards (snoc) and forwards (cons) lists,
-respectively. We overload |B0| for the empty list in each case, and write
-|:<| and |:>| for the backwards and forwards list data constructors.
-% Data types are cheap, so we might
-% as well make the code match our intution about the meaning of data.
-Lists are monoids with |<+>| the append operator, and the \scare{fish}
-operator |(<><) :: Context -> Suffix -> Context| appends a suffix to a context. 
+%endif
+
+The type |Bwd| is a backwards (snoc) list, with empty list |B0| and data
+constructor |:<|. Lists are monoids with the append operator |<+>|.
+
+% The types |Bwd| and |Fwd| are backwards (snoc) and forwards (cons) lists,
+% respectively. We overload |B0| for the empty list in each case, and write
+% |:<| and |:>| for the backwards and forwards list data constructors.
+%% Data types are cheap, so we might
+%% as well make the code match our intution about the meaning of data.
+% Lists are monoids with |<+>| the append operator, and the \scare{fish}
+% operator |(<><) :: Context -> Suffix -> Context| appends a suffix to a context. 
 
 
 We work in the |Contextual| monad (computations that can fail and mutate the
@@ -1382,7 +1386,25 @@ details, see Appendix.  \end{proof}
 
 \subsection{Implementing unification}
 
-First, we define some helpful machinery.
+First, we define some helpful machinery. A context suffix is a (forwards) list
+containing only type variable declarations. 
+
+> type Suffix      = Fwd TyEntry
+
+Like |Bwd|, the |Fwd| list type has empty list |B0| and data constructor |:>|,
+and it is a monoid with |<+>| being append. The \scare{fish} operator appends a
+suffix to a context.
+
+> (<><) :: Context -> Suffix -> Context
+> _Gamma <>< F0                   = _Gamma
+> _Gamma <>< (alpha := d :> _Xi)  = _Gamma :< TY (alpha := d) <>< _Xi
+
+%if False
+
+> infixl 8 <><
+
+%endif
+
 The |onTop| operator applies its argument to the topmost type variable
 declaration in the context, skipping over any other kinds of entry. The argument
 function may |restore| the previous entry by returning |Nothing|, or it may
@@ -2284,10 +2306,10 @@ The fish operator |(<><)| combines a backward and a forward list to
 produce a backward list. Similarly, the |(<>>)| operator (chips?)
 produces a forward list.
 
-> (<><) :: Context -> Suffix -> Context
-> infixl 8 <><
-> xs <>< F0 = xs
-> xs <>< (alpha := d :> ys) = (xs :< TY (alpha := d) ) <>< ys
+% > (<><) :: Context -> Suffix -> Context
+% > infixl 8 <><
+% > xs <>< F0 = xs
+% > xs <>< (alpha := d :> ys) = (xs :< TY (alpha := d) ) <>< ys
 
 > (<>>) :: Bwd a -> Fwd a -> Fwd a
 > infixl 8 <>>
