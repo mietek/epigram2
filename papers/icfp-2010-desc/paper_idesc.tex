@@ -661,7 +661,7 @@ but more involved.
 \end{wstructure}
 
 %% Types
-\newcommand{\Ty}{\C{Ty}}
+\newcommand{\Ty}{\D{Ty}}
 \newcommand{\Ebool}{\etag{\CN{bool}}}
 \newcommand{\Enat}{\etag{\CN{nat}}}
 
@@ -679,7 +679,7 @@ but more involved.
 \newcommand{\SYMBVal}{\F{Val}\xspace}
 \newcommand{\Val}[1]{\SYMBVal\:#1}
 \newcommand{\SYMBVar}{\F{Var}\xspace}
-\newcommand{\Var}[2]{\SYMBVar_{#1} #2}
+\newcommand{\Var}[2]{\SYMBVar\: #1\: #2}
 
 %% Hutton expressions
 \newcommand{\HExprD}{\C{ExprD}}
@@ -843,31 +843,78 @@ evaluation function. Provided a one step semantics of the language, the
 big step interpreter is granted without effort thanks to the generic
 catamorphism.
 
+\newcommand{\Ctxt}{\D{Context}}
+\newcommand{\SYMBCtxtEmpty}{\C{[]}\xspace}
+\newcommand{\CtxtEmpty}{\SYMBCtxtEmpty}
+\newcommand{\SYMBCtxtSnoc}{\C{snoc}\xspace}
+\newcommand{\CtxtSnoc}[2]{\SYMBCtxtSnoc\:#1\:#2}
+\newcommand{\SYMBEnv}{\F{Env}}
+\newcommand{\Env}[1]{\SYMBEnv\: #1}
+\newcommand{\SYMBlookup}{\F{lookup}}
+\newcommand{\lookup}[4]{\SYMBlookup\: #1\: #2\: #3\: #4}
+
 However, so far, we are only able to define and manipulate
 \emph{closed} terms. By abstracting over $\SYMBVal$, it is possible to
-build and manipulate \emph{open} terms, that is, terms with
-variables. Following $\SYMBVal$, we define $\SYMBVar$ by:
+build and manipulate \emph{open} terms, that is, terms in a
+context. The context is represented by a snoc-list of types:
 %
-\[\stk{
-\Var{}{} : \EnumU \To \Ty \To \Set \\
-\Var{\V{dom}}{\_} = \EnumT{\V{dom}}
+\[
+\stk{
+\data \Ctxt : \Set \where \\
+\;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
+    \SYMBCtxtEmpty  & \Ctxt   \\
+    \SYMBCtxtSnoc   & \Ctxt \To \Ty \To \Ctxt
+\end{array}
 }\]
 %
-Whereas $\SYMBVal$ was mapping the type to the corresponding host type,
-$\SYMBVar$ maps types to a finite set. The finite set -- the context
--- contains closed terms. A variable is therefore a $\SYMBEval$ that
-contains a pointer to a particular element of the finite set -- an
-element of $\EnumT{\V{dom}}$. 
+An environment realises the context, associating a value for each type:
+%
+\[
+\stk{
+\SYMBEnv : \Ctxt \To \Set \\
+\begin{array}{@{}l@{\:\:=\:\:}l}
+\Env{\CtxtEmpty}        & \Unit \\
+\Env{(\CtxtSnoc{G}{S})} & \TIMES{\Env{G}}{\Val{S}}
+\end{array}
+}\]
+%
+In this setting, we define $\SYMBVar$ by:
+%
+\[\stk{
+\Var{}{} : \Ctxt \To \Ty \To \Set \\
+\begin{array}{@{}ll@{\:\:=\:\:}l}
+\Var{\CtxtEmpty}{& T}            & \Void \\
+\Var{(\CtxtSnoc{G}{S})}{& T}     & \SUM{(\Var{G}{T})}{(S \Eq T)}
+\end{array}
+}\]
+%
+While $\SYMBVal$ was mapping the type to the corresponding host type,
+$\SYMBVar$ indexes a value in the context, obtaining a proof that the
+types matches. The $\SYMBlookup$ function precisely follow this
+semantics:
+%
+\[\stk{
+\SYMBlookup : \PI{\V{G}}{\Ctxt} 
+          \Env{\V{G}} \To 
+          \PI{\V{T}}{\Ty} 
+          \Var{\V{G}}{\V{T}} \To
+          \Val{\V{T}} \\
+\begin{array}{@{}lll}
+\lookup{\CtxtEmpty}{               \_}{                   \V{T}}{()}                    &   & \\
+\lookup{(\CtxtSnoc{\V{G}}{.T})}{   \pair{\V{g}}{\V{t}}{}}{\V{T}}{(\SumRight{\C{refl}})} & = & \V{t} \\
+\lookup{(\CtxtSnoc{\V{G}}{\V{S}})}{\pair{\V{g}}{\V{t}}{}}{\V{T}}{(\SumLeft{\V{x}})}     & = & \lookup{\V{G}}{\V{g}}{\V{T}}{\V{x}} 
+\end{array}
+}\]
 
 Consequently, replacing $\Val{\V{ty}}$ by
-$(\SUM{\Val{\V{ty}}}{\Var{\V{dom}}{\V{ty}}})$ in
+$(\SUM{\Val{\V{ty}}}{\Var{\V{G}}{\V{ty}}})$ in
 Figure~\ref{fig:hexpr-full} turns the language of closed terms into a
 language of opened terms with variables and constants. For
 readability, we abbreviate $\LAM{\V{ty}}
-\SUM{\Val{\V{ty}}}{\Var{\V{dom}}{\V{ty}}}$ by
-$\SUM{\SYMBVal}{\Var{\V{dom}}{}}$. \note{Is it polite and
+\SUM{\Val{\V{ty}}}{\Var{\V{G}}{\V{ty}}}$ by
+$\SUM{\SYMBVal}{\Var{\V{G}}{}}$. \note{Is it polite and
   comprehensible to ask that?} This defines a new indexed description,
-called $\HExprVarD{\V{dom}}$.
+called $\HExprVarD{\V{G}}$.
 
 \begin{wstructure}
         <- evaluator, with a context
@@ -893,18 +940,18 @@ following function:
 %
 \[\stk{
 \begin{array}{@{}ll}
-\discharge : & \PITEL{\V{ty}}{\Ty}
-               \PITEL{\V{dom}}{\EnumU} \\
-             & \PI{\V{\gamma}}{\spi{\V{dom}}{(\LAM{\_} \IMu{\Ty}{\toIDesc{\HExprVarD{\V{dom}}}}{\V{ty}})}} \\
-             & (\SUM{\Val{\V{ty}}}{\Var{\V{dom}}{\V{ty}}}) \To
-               \IMu{\Ty}{\toIDesc{\HExprVarD{\V{dom}}}}{\V{ty}} 
+\discharge : & \PI{\V{G}}{\Ctxt}
+               \Env{G} \To
+               \PITEL{\V{ty}}{\Ty} \\
+             & (\SUM{\Val{\V{ty}}}{\Var{\V{G}}{\V{ty}}}) \To
+               \IMu{\Ty}{\toIDesc{\HExprD}}{\V{ty}} 
 \end{array} \\
 \begin{array}{@{}l@{\:\mapsto\:\:}l}
-\discharge\: \V{ty}\: \V{dom}\: \V{\gamma}\: (\SumLeft \V{x})  & \Con{\pair{\SYMBEval}{\V{x}}{}} \\
-\discharge\: \V{ty}\: \V{dom}\: \V{\gamma}\: (\SumRight \V{v}) &
-\end{array}\\
-\qquad\switch{\V{dom}}{(\LAM{\_}
-\IMu{\Ty}{\toIDesc{\HExprVarD{\V{dom}}}}{\V{ty}})}{\V{\gamma}}{\V{v}}
+\discharge\: \V{G}\: \V{g}\: \V{ty}\: (\SumLeft \V{x})  & 
+    \Con{\pair{\SYMBEval}{\V{x}}{}} \\
+\discharge\: \V{G}\: \V{g}\: \V{ty}\: (\SumRight \V{v}) &
+    \Con{\pair{\SYMBEval}{\lookup{\V{G}}{\V{g}}{\V{ty}}{\V{v}}}{}}
+\end{array}
 }\]
 
 \begin{wstructure}
@@ -916,64 +963,29 @@ following function:
 \end{wstructure}
 
 \newcommand{\substH}{\F{substExpr}}
-\newcommand{\domNat}{dom_{\CN{nat}}}
-\newcommand{\domBool}{dom_{\CN{bool}}}
-\newcommand{\gammaNat}{\V{\ensuremath{\gamma_{\CN{nat}}}}}
-\newcommand{\gammaBool}{\V{\ensuremath{\gamma_{\CN{bool}}}}}
-\newcommand{\SYMBGammaSpi}{\F{\ensuremath{\Gamma_{\CN{ty}}}}\xspace}
-\newcommand{\GammaSpi}[2]{\SYMBGammaSpi\: #1\: #2}
-
 
 We are now left with applying $\discharge$ over all variables of the
 term. The type of this operation is the following:
 %
 \[
 \begin{array}{@{}ll}
-\substH  : & \PITEL{\V{dom}}{\EnumU} \\
-           & \PITEL{\V{\gammaNat}}{\GammaSpi{\V{dom}}{\Enat}} 
-             \PITEL{\V{\gammaBool}}{\GammaSpi{\V{dom}}{\Ebool}} \\
-           & \begin{array}{@{}ll}
-             \PI{\V{\sigma}}{& \PITEL{\V{dom}}{\EnumU} \\
-                             & \PITEL{\V{\gammaNat}}
-                                     {\GammaSpi{\V{dom}}{\Enat}} \\
-                             & \PITEL{\V{\gammaBool}}
-                                     {\GammaSpi{\V{dom}}{\Ebool}} \\
-                             & \PI{\V{ty}}{\Ty} (\SUM{\Val{\V{ty}}}{\Var{\V{dom}}{\V{ty}}}) \To \\
-                             & \IMu{\Ty}{\toIDesc{\HExprD}}{\V{ty}}}
-             \end{array}\\
-          & \PI{\V{ty}}{\Ty}
-            \IMu{\Ty}{\toIDesc{\HExprVarD{\V{dom}}}}{\V{ty}} \To \\
-          & \IMu{\Ty}{\toIDesc{\HExprD}}{\V{ty}}
+\substH  : & \PITEL{\V{ty}}{\Ty}
+             \PI{\V{G}}{\Ctxt} \\
+           & \PITEL{\V{\sigma}}{\PI{\V{ty}}{\Ty}
+                                (\SUM{\Val{\V{ty}}}{\Var{\V{G}}{\V{ty}}}) \To
+                                \IMu{\Ty}{\toIDesc{\HExprD}}{\V{ty}}} \\
+          & \To \IMu{\Ty}{\toIDesc{\HExprVarD{\V{G}}}}{\V{ty}} \To 
+            \IMu{\Ty}{\toIDesc{\HExprD}}{\V{ty}}
 \end{array}
 \]
-%
-Where $\SYMBGammaSpi$ corresponds to a context, defined by:
-%
-\[\stk{
-\SYMBGammaSpi : \EnumU \To \Ty \To \Set                                             \\
-\GammaSpi{\V{dom}}{\V{ty}} = \spi{\V{dom}}{(\LAM{\_} \IMu{\Ty}{\toIDesc{\HExprVarD{\V{dom}}}}{\V{ty}})} 
-}\]
-
 
 Abstracting away the book-keeping introduced by contexts, this
 definition looks familiar. It is similar to a monadic \bind. This is
 not surprising as we are defining a first-order syntax with variables:
 our datatype enjoys more structure than what we are given. We are
 facing a free monad, where $\SYMBEval$ is the \return introducing
-variables. For convenience, we wrap $\discharge$ in a $\V{\sigma}$
-function that picks the context of the right type:
-%
-\[
-\F{$\sigma$}\: \V{dom}\: \gammaNat\: \gammaBool\: \V{ty}\: \V{var} \mapsto
-    \F{$\discharge$}\: \V{ty}\: \V{dom}\: \F{$\gamma$}_{\V{ty}}\: \V{var} 
-\]
-%
-Where $\F{$\gamma$}_{\V{ty}}$ is short for
- $\caseB{\V{ty}}{\Enat  \To \gammaNat \\
-                 \Ebool \To \gammaBool}$
-
-Instead of implementing $\substH$ in this special case, we are now
-going to implement the \emph{free indexed-monad construction}.
+variables. Instead of implementing $\substH$ in this special case, we
+are now going to implement the \emph{free indexed-monad construction}.
 
 \subsection{Free indexed monad}
 
@@ -1078,7 +1090,7 @@ Let us now consider two examples of free indexed monads.
 \end{wstructure}
 
 In Section~\ref{sec:idesc-examples}, we had the intuition that our
-datatypes $\HExprD$ and $\HExprVarD{\V{dom}}$ enjoy a monadic
+datatypes $\HExprD$ and $\HExprVarD{\V{G}}$ enjoy a monadic
 structure. We had identified the variable substitution operation as
 the \bind of a free monad. To exhibit its monadic structure, we first
 have to massage the definition of our datatype.
@@ -1107,8 +1119,8 @@ $\HExprAFreeD$:
 We call this datatype $\HExprFreeD$. By a simple unfolding of
 definition, we note that $\FreeIMonad{\HExprFreeD}{\Ty}{\SYMBVal}$
 corresponds to the syntax of closed terms, $\HExprD$. Similarly,
-$\FreeIMonad{\HExprFreeD}{\Ty}{(\SUM{\SYMBVal}{\Var{\V{dom}}{}})}$
-corresponds to expressions with variables, $\HExprVarD{\V{dom}}$.
+$\FreeIMonad{\HExprFreeD}{\Ty}{(\SUM{\SYMBVal}{\Var{\V{G}}{}})}$
+corresponds to expressions with variables, $\HExprVarD{\V{G}}$.
 
 \begin{wstructure}
     /> On open terms, we get a substitution
@@ -1126,20 +1138,18 @@ $\Val{\V{ty}}$. We are left with implementing $\substH$. We simply
 have to fill in the right arguments to $\substI$, the type guiding us:
 %
 \[\stk{
-\substH\: \V{dom}\:
-          \gammaNat\: \gammaBool\:
+\substH\: \V{ty}\:
+          \V{G}\:
+          \V{g}\:
           \V{\sigma}\: 
-          \V{ty}\: 
           \V{term} \mapsto  \\
-\;\;\ \begin{array}{ll}
-       \substI_{\Ty}\: &  \HExprFreeD\: 
-                         (\SUM{\SYMBVal}{\Var{\V{dom}}{}})\: 
-                         \SYMBVal \\
-                      &
-                        (\V{\sigma}\: \V{dom}\: \gammaNat\: \gammaBool)\:
-                        \V{ty}\:
-                        \V{term}
-      \end{array}
+\quad \substI_{\Ty}\:
+               (\SUM{\SYMBVal}{\SYMBVar\: \V{G}})\: 
+               \SYMBVal\:
+               \HExprFreeD\: 
+               \V{\sigma}\:
+               \V{ty}\:
+               \V{term}
 }\]
 %
 Hence completing our implementation of the open terms interpreter. 
