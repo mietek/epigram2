@@ -1,0 +1,35 @@
+\subfigure[Algorithm: cumulative push-side]{
+$$
+\stkc{
+%% Form
+\boxed{\Gamma \vdash \pushN{\CN{term}}{2}{\CN{type}}}
+\\
+\\
+%% Set
+\AxiomSide{i<j \quad \ruleName{Set}{2}}{\pushN{\Set{i}}{2}{\Set{j}}}
+\qquad
+%% Arrow
+\RuleSide{\pushN{S}{2}{\Set{i}} \quad
+          \Bhab{x}{S} \vdash \pushN{T}{2}{\Set{i}}}
+         {\ruleName{Pi}{2}}
+         {\pushN{\PI{\V{x}}{S}{T}}{2}{\Set{i}}}
+\\
+%% Inhabitant of Arrow
+\RuleSide{\Bhab{x}{S} \vdash \pushN{b}{2}{T} }
+         {\ruleName{Lam}{2}}                         
+         {\pushN{\LAM{\V{x}}{b}}{2}{\PI{\V{x}}{S}{T}}} 
+}
+\label{fig:ccomega-algo2-push}
+}
+
+\subfigure[Cumulativity]{
+$$
+\stkc{
+%% Cumulativity (pull)
+\RuleSide{\pullN{M}{2}{A}}
+         {\ruleName{Cuml-pull}{2}}
+         {\pullN{M}{2}{\Up{1}{A}}}
+}
+$$
+\label{fig:ccomega-algo2-cuml}
+}

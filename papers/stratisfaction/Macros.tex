@@ -1,0 +1,97 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Comments
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\newcommand{\question}[1]{\textcolor{red}{question: #1}}
+\newcommand{\pierre}[1]{\textcolor{red}{Pierre:} #1}
+\newcommand{\conor}[1]{\textcolor{red}{Conor:} #1}
+
+\newenvironment{danger}[1][]{\begin{proof}[\textlhdbend #1]}{\end{proof}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+%%%%%%
+%%% Inference Rules (some ancient macros by  Conor)                        %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+%%%%%%
+
+
+\newlength{\rulevgap}
+\setlength{\rulevgap}{0.05in}
+\newlength{\ruleheight}
+\newlength{\ruledepth}
+\newsavebox{\rulebox}
+\newlength{\GapLength}
+\newcommand{\gap}[1]{\settowidth{\GapLength}{#1} \hspace*{\GapLength}}
+\newcommand{\dotstep}[2]{\begin{tabular}[b]{@{}c@{}}
+                          #1\\$\vdots$\\#2
+                          \end{tabular}}
+\newlength{\fracwid}
+\newcommand{\dotfrac}[2]{\settowidth{\fracwid}{$\frac{#1}{#2}$}
+                          \addtolength{\fracwid}{0.1in}
+                          \begin{tabular}[b]{@{}c@{}}
+                          $#1$\\
+                          \parbox[c][0.02in][t]{\fracwid}{\dotfill} \\
+                          $#2$\\
+                          \end{tabular}}
+\newcommand{\Rule}[2]{\savebox{\rulebox}[\width] 
+[b]                         %
+                               {\( \frac{\raisebox{0in} {\( #1  
+\)}}       %
+                                        {\raisebox{-0.03in}{\( #2 \)}}  
+\)}   %
+                       \settoheight{\ruleheight} 
+{\usebox{\rulebox}}          %
+                       \addtolength{\ruleheight} 
+{\rulevgap}                  %
+                       \settodepth{\ruledepth} 
+{\usebox{\rulebox}}            %
+                       \addtolength{\ruledepth} 
+{\rulevgap}                   %
+                       \raisebox{0in}[\ruleheight] 
+[\ruledepth]               %
+                                {\usebox{\rulebox}}}
+\newcommand{\Case}[2]{\savebox{\rulebox}[\width] 
+[b]                         %
+                               {\( \dotfrac{\raisebox{0in} {\( #1  
+\)}}       %
+                                        {\raisebox{-0.03in}{\( #2 \)}}  
+\)}   %
+                       \settoheight{\ruleheight} 
+{\usebox{\rulebox}}          %
+                       \addtolength{\ruleheight} 
+{\rulevgap}                  %
+                       \settodepth{\ruledepth} 
+{\usebox{\rulebox}}            %
+                       \addtolength{\ruledepth} 
+{\rulevgap}                   %
+                       \raisebox{0in}[\ruleheight] 
+[\ruledepth]               %
+                                {\usebox{\rulebox}}}
+\newcommand{\CAxiom}[1]{\savebox{\rulebox}[\width] 
+[b]                        %
+                                {$\frac{}{\raisebox{-0.03in}{$#1$}} 
+$}        %
+                       \settoheight{\ruleheight} 
+{\usebox{\rulebox}}          %
+                       \addtolength{\ruleheight} 
+{\rulevgap}                  %
+                       \settodepth{\ruledepth} 
+{\usebox{\rulebox}}            %
+                       \addtolength{\ruledepth} 
+{\rulevgap}                   %
+                       \raisebox{0in}[\ruleheight] 
+[\ruledepth]               %
+                                {\usebox{\rulebox}}}
+\newcommand{\RuleSide}[3]{\gap{\mbox{$#2$}}  
+\hspace*{0.1in}               %
+                             \Rule{#1}{#3}                          %
+                           \hspace*{0.1in}\mbox{$#2$}}
+\newcommand{\AxiomSide}[2]{\gap{\mbox{$#1$}}  
+\hspace*{0.1in}              %
+                              \CAxiom{#2}                            %
+                            \hspace*{0.1in}\mbox{$#1$}}
+\newcommand{\RULE}[1]{\textbf{#1}}
+\newcommand{\hg}{\hspace{0.192in}}
+

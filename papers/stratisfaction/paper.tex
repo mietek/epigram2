@@ -1,0 +1,1709 @@
+%% * Header 
+
+\documentclass[preprint
+              , authoryear
+              , onecolumn
+              ]{sigplanconf}
+
+%% ** Packages
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{verbatim}
+\usepackage{url}
+\usepackage{xspace}
+\usepackage{subfigure}
+
+\usepackage{pig}
+
+\include{Macros}
+
+%% ** Commands
+
+\newtheorem{definition}{Definition}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+
+\newcommand{\note}[1]{\textcolor{red}{#1}}
+\newcommand{\ie}{\emph{ie.}\xspace}
+
+\newcommand{\redb}[1]{\fcolorbox{red}{white}{$#1$}}
+\newcommand{\blueb}[1]{\fcolorbox{blue}{white}{$#1$}}
+\newcommand{\greenb}[3]{\fcolorbox{green}{white}{$#1$}_{\textcolor{green}{#2}}^{\textcolor{green}{#3}}}
+\newcommand{\blackb}[1]{\fcolorbox{black}{white}{$#1$}}
+
+\newcommand{\ruleName}[2]{(\mathrm{\textsc{#1}}^{#2})}
+\newcommand{\ruleSet}[1]{\ruleName{Set}{#1}}
+\newcommand{\rulePi}[1]{\ruleName{Pi}{#1}}
+\newcommand{\ruleLam}[1]{\ruleName{Lam}{#1}}
+\newcommand{\ruleConv}[1]{\ruleName{Conv}{#1}}
+\newcommand{\ruleVar}[1]{\ruleName{Var}{#1}}
+\newcommand{\ruleAsc}[1]{\ruleName{Asc}{#1}}
+\newcommand{\ruleApp}[1]{\ruleName{App}{#1}}
+\newcommand{\ruleSetEq}[1]{\ruleName{Set-Eq}{#1}}
+\newcommand{\ruleVarEq}[1]{\ruleName{Var-Eq}{#1}}
+\newcommand{\ruleSetKEq}[1]{\ruleName{Set-K-Eq}{#1}}
+\newcommand{\ruleVarKEq}[1]{\ruleName{Var-K-Eq}{#1}}
+\newcommand{\ruleSetVEq}[1]{\ruleName{Set-Var-Eq}{#1}}
+\newcommand{\ruleVarVEq}[1]{\ruleName{Var-Var-Eq}{#1}}
+\newcommand{\rulePiEq}[1]{\ruleName{Pi-Eq}{#1}}
+\newcommand{\ruleLamEq}[1]{\ruleName{Lam-Eq}{#1}}
+\newcommand{\ruleAppEq}[1]{\ruleName{App-Eq}{#1}}
+
+\newcommand{\N}{\mathbb{N}}
+
+\newcommand{\sublift}[3]{#2 \sqsubseteq_{#1} #3}
+
+\begin{document}
+
+%% ** Conference info
+
+%\conferenceinfo{WXYZ '05}{date, City.} 
+%\copyrightyear{2005} 
+%\copyrightdata{[to be supplied]} 
+
+%\titlebanner{banner above paper title}        % These are ignored unless
+%\preprintfooter{short description of paper}   % 'preprint' option specified.
+
+
+%% * Title
+
+
+\title{Stratisfaction}
+
+
+%% Alphabetical ordering.
+\authorinfo{Pierre-\'{E}variste Dagand}
+           {University of Strathclyde}
+           {dagand@cis.strath.ac.uk}
+\authorinfo{Conor McBride}
+           {University of Strathclyde}
+           {conor@cis.strath.ac.uk}
+
+\maketitle
+
+\ColourEpigram
+%\MonochromeEpigram
+
+
+%% * Abstract
+
+\begin{abstract}
+\end{abstract}
+
+%\category{CR-number}{subcategory}{third-level}
+
+%\terms
+%term1, term2
+
+%\keywords
+%keyword1, keyword2
+
+
+%% * Introduction
+\section{Introduction}
+
+%% ** Problem
+%% *** <- Often, definitions are set polymorphic
+%% **** <- Nat
+%% **** <- Sigma type
+%% **** <- Others?
+%% *** -> Leads to code duplication
+%% **** <- Define these objects at each level
+
+%% ** Related work
+%% *** <- Harper-Pollack: constraints too difficult
+%% **** -> Lego, Coq, Agda experiments
+%% ***** -> Leads to more or less powerful systems
+%% **** -> Coq partial implementation, currently extended
+%% **** -> Agda set polymorphism
+
+%% *** -> Agda standard libray
+%% *** -> Formalizations of CT, Voevoedsky
+
+%% * Stratified type-theory
+\section{A Universe Polymorphic Type Theory}
+
+%% ** <- Presentation
+
+\newcommand{\ECC}{ECCE\xspace}
+
+%% *** <- Similar to ECC (FIND REF)
+%% *** <- With CONV and extended CUML rule
+%% **** -> Luo: subtyping: x :<:(N) A -> B ==> x :<:(O) A -> C with B =< C
+%% **** -> Us: polymorphism: x :<:(N) A -> B ==> x :<:(O) Up A -> Up B
+
+%% ***** Lifting operator
+
+\begin{definition}[Lifting operator]
+
+The lifting operator, denoted $\SYMBUp$, is defined by:
+%%
+$$
+\begin{array}{l@{\:\:\mapsto\:\:}l}
+\Up{k}{\Set{i}}                & \Set{i+k} \\
+\Up{k}{\PI{\V{x}}{S}{T}}       & \PI{\V{x}}{\Up{k}{S}}{\Up{k}{T}} \\
+\Up{k}{x_i}                    & x_{i+k} \\
+\Up{k}{\LAM{x}{b}}             & \LAM{x}{\Up{k}{b}} \\
+\Up{k}{f\: s}                  & (\Up{k}{f})\: s
+\end{array}
+$$
+
+\note{$\Up{k}{(\Bhab{t}{T})}$ is embarrassing. In practice, lifts are
+      applied on values, therefore ascriptions have disappeared.}
+
+\end{definition}
+
+%% ***** Lemma: lifting and substitution
+
+\begin{lemma}[Lifting and substitution]
+\label{lemma:up-bound-var}
+
+Lifting commutes with substitution:
+%%
+$$
+\Up{}{(T[s/x])} = (\Up{}{T})[s/x]
+$$
+%%
+And with computation: for a term $a$ and $n$ its $\beta$-normal form,
+\ie $a \leadsto n$, we have:
+%%
+$$
+\Up{}{a} \leadsto \Up{}{n}
+$$
+
+
+\end{lemma}
+
+Hence, we do not need to precise parenthesing: $\Up{}{(T[s/x])} =
+(\Up{}{T})[s/x] = \Up{}{T}[s/x]$.
+
+%% ****** Proof
+
+\begin{proof}
+
+The proof can be decomposed in two cases. First, if $x$ does not
+appear in $T$, $T[s/x] = T$ and the proof is trivial. Second, without
+loss of generality, if $x$ appears once in $T$. Being a variable, it
+carries a number $j$ of pending liftings. There are two subsequent
+cases: $x$ is at the head of a function application (possibly with an
+empty spine), or it is in a spine of argument. In the latter case, by
+definition of $\SYMBUp$, the lifting has no effect on $x$ therefore
+both terms are equal. 
+
+In the former, we have to analyse the effect of lifting and
+substitution on both side. On the right side, $x_j$ is updated to
+$x_{j+k}$ when first computing $\Up{k}{T}$. When substitution happens,
+the liftings are discharged on $s$: the variable $x$ is replaced by
+$\Up{j+k}{s}$. We obtain the term $\Up{k}{T}$ where $x$ is replaced by
+$\Up{j+k}{s}$. On the left side, we first compute $T[s/x]$: $x$ is
+replaced by $\Up{j}{s}$ in $T$. Then, the lifting occurs on the very
+same term at the exception of $\Up{j}{s}$ replacing $x_j$. Hence,
+$\Up{k}{\cdotp}$ happens on $\Up{j}{s}$. We obtain the term
+$\Up{k}{T}$ where $x$ is replaced by $\Up{j+k}{s}$, concluding the
+proof.
+
+\note{Do we consider that computation happens right after (during)
+      substitution? If so, we are in trouble.}
+
+\end{proof}
+
+%% ***** Context lifting
+
+\begin{definition}[Context lifting]
+
+Let $\Gamma$ a valid context.
+
+We define valid \emph{context liftings} by the following sequents:
+%%
+$$
+\CAxiom{\sublift{i}{\epsilon}{\epsilon}}
+\qquad
+\RuleSide{\sublift{i}{\Gamma}{\Delta}}
+         {j \leq i}
+         {\sublift{i}{\Gamma, \Bhab{x}{A}}{\Delta, \Bhab{x}{\Up{j}{A}}}}
+$$
+
+\end{definition}
+
+
+
+\note{There is an elephant in the room here: what kind of result do we
+  have about this polymorphic type-system? Indeed, it's similar to
+  Luo's subtyping presentation of ECC. But it cannot be translated to
+  it (how do you translate our cumulativity rule?). Doing the full
+  normalization proof (Tait and co.) is not super exciting.}
+
+%% *** <- Figure: type theory
+
+\begin{figure}[htb]
+
+\begin{center}
+\input{figure_ecce}
+\end{center}
+
+\caption{\ECC (Specification)}
+
+\end{figure}
+
+
+%% ** <- Full-reflection
+%% *** <- Reflect equality as well as objects
+%% **** <- Stratif. should be as unobtrusive as possible
+%% ***** -> Dealt as much as possible definitionally
+%% *** -> Early Martin-Lof papers
+%% *** -> Palmgren
+%% ** <- Meta-theoretical properties
+%% *** ???
+%% ** /> Just a spec
+%% *** <- Flow of information unclear
+%% *** <- CUML non algorithmic
+
+
+%% * Bidirectionalized
+\section{Bidirectional Presentation}
+
+%% ** <- Push/pull distinction
+\subsection{Introduction to bidirectionality}
+
+%% *** -> Explicit flow of information
+%% *** -> Algorithmic type-checking/synthesis
+%% *** <- Push
+%% **** -> Calculus of constants
+%% *** <- Pull
+%% **** -> Calculus of functions
+%% *** <- Conversion
+%% **** -> Calculus of conversion
+%% *** <- Figure: bidirectional presentation (excepted CUML)
+
+\begin{figure}[p]
+
+\begin{center}
+\input{figure_bidir}
+\end{center}
+
+\caption{Bidirectional presentation (excepted CUML)}
+
+\end{figure}
+
+%% *** <- Proof
+%% **** Equational theory remains unchanged
+%% ***** <- Same rules
+%% **** Sound
+%% ***** [OK] \Gamma \vdash A \ni^1 a \Rightarrow \Gamma \vdash a : A
+%% ***** [OK] \Gamma \vdash a \in^1 A \Rightarrow \Gamma \vdash a : A
+%% ***** Theorem
+
+\begin{theorem}[Soundness]
+
+Let $\Gamma$ a valid context.
+
+\begin{itemize}
+\item If \xspace $\Gamma \vdash \pushN{a}{1}{A}$, then $\Gamma \vdash \Bhab{a}{A}$
+\item If \xspace $\Gamma \vdash \pullN{a}{1}{A}$, then $\Gamma \vdash \Bhab{a}{A}$
+\end{itemize}
+
+\end{theorem}
+
+%% ***** Proof
+
+\begin{proof}
+
+The proof is by induction on the length of a derivation. The base
+cases are $\ruleSet{1}$ and $\ruleVar{1}$ that translates (resp.) to
+$\ruleSet{0}$ and $\ruleVar{0}$. We then proceed structurally for the
+other rules: we simply forget the flow of information, turning $\in$
+and $\ni$ into $:$. Because the equational theory is the same, the
+$\ruleConv{1}$ rule translates directly.
+
+\end{proof}
+
+%% **** Complete
+%% ***** [OK] \Gamma \vdash a : A \Rightarrow \Gamma \vdash A \ni^1 a
+%% ***** Theorem
+
+\begin{theorem}[Completeness]
+
+Let $\Gamma$ a valid context. If \xspace$\Gamma \vdash \Bhab{a}{A}$, then
+$\Gamma \vdash \push{a}{A}$.
+
+\end{theorem}
+
+%% ****** Proof
+
+\begin{proof}
+
+The proof is by induction on the length of a derivation. The base
+cases are $\ruleSet{0}$ and $\ruleVar{0}$. The rule $\ruleSet{0}$
+translates directly to its counterpart $\ruleSet{1}$. In the case of
+the $\ruleVar{}$ rule, we use $\ruleVar{1}$ to get $\pull{x}{A}$,
+followed by the conversion rule $\ruleConv{1}$ for $T = A$, asking for
+$\equalN{A}{A}{1}{\SetTop}$ to hold (trivial).
+
+The induction step is again direct for rules that have a counterpart
+on the push-side. For the one on the pull-side, we proceed as for
+$\ruleVar{0}$-$\ruleVar{1}$: we obtain a pull-oriented rule that we
+trivially convert to its push-side equivalent.
+
+\end{proof}
+
+%% ** <- Fusing CUML push-side
+\subsection{Fusing cumulativity on the push-side}
+
+%% *** <- Types pushed in
+%% **** -> No guess work needed
+%% *** <- Figure: CUML fused on push-side
+
+\begin{figure}
+
+\begin{center}
+\input{figure_infuse}
+
+\subfigure[Algorithm: pull-side]{
+$$
+\stkc{
+%% Form
+\boxed{\Gamma \vdash \pullN{\CN{term}}{2}{\CN{type}}}
+\\
+\\
+%% Variable extraction
+\AxiomSide{\ruleName{Var}{2}}{\Bhab{x}{A} \vdash \pullN{x}{2}{A}}
+\qquad
+%% Type ascription
+\RuleSide{\pushN{T}{2}{\SetTop} \quad
+          \pushN{t}{2}{T}}
+         {\ruleName{Asc}{2}}
+         {\pullN{(\Bhab{t}{T})}{2}{T}}
+\\
+%% Function application
+\RuleSide{\pullN{f}{2}{\PI{\V{x}}{S}{T}} \quad
+          \pushN{s}{2}{A}}
+         {\ruleName{App}{2}}
+         {\pullN{f\: s}{2}{T[s/x]}}
+}
+$$
+\label{fig:ccomega-algo-pull}
+}
+\subfigure[Algorithm: conversion]{
+$$
+\stkc{
+%% Conversion rule
+\RuleSide{\pullN{e}{2}{S} \quad
+          \equalN{S}{T}{2}{\SetTop}}
+         {\ruleName{Conv}{2}}
+         {\pushN{e}{2}{T}}
+\\
+\\
+%% Form
+\boxed{\Gamma \vdash \equalN{\CN{term}}{\CN{term}}{2}{\CN{type}}}
+\\
+\\
+%% Set equality
+\AxiomSide{\ruleName{Set-Eq}{2}}{\equalN{\Set{i}}{\Set{i}}{2}{\SetTop}}
+\\
+%% Variable equality
+\AxiomSide{\ruleName{Var-Eq}{2}}{\Bhab{x}{S} \vdash \equalN{x}{x}{2}{S}}
+\\
+%% Pi equality
+\RuleSide{\equalN{S_1}{S_2}{2}{\SetTop} \quad
+          \Bhab{x}{S_2} \vdash \equalN{T_1}{T_2}{2}{\SetTop}}
+         {\ruleName{Pi-Eq}{2}}
+         {\equalN{\PI{\V{x}}{S_1}{T_1}} 
+                 {\PI{\V{x}}{S_2}{T_2}}{2}{\SetTop}}
+\\
+%% Function equality
+\RuleSide{\Bhab{x}{S} \vdash \equalN{f\: x}{g\: x}{2}{T}}
+         {\ruleName{Lam-Eq}{2}}
+         {\equalN{f}{g}{2}{\PI{\V{x}}{S}{T}}}
+\\
+%% Application equality
+\RuleSide{\equalN{f}{g}{2}{\PI{\V{x}}{S}{T}} \quad
+          \equalN{a}{b}{2}{S}}
+         {\ruleName{App-Eq}{2}}
+         {\equalN{f\: a}{g\: b}{2}{T[b/x]}}
+}
+$$
+\label{fig:ccomega-algo-conv}
+}
+
+\end{center}
+
+\caption{Cumulativity fused push-side}
+
+\end{figure}
+
+
+%% ** <- Proof
+%% *** Equational theory unchanged
+%% *** Sound
+%% **** \Gamma \vdash A \ni^2 a \Rightarrow \Gamma \vdash A \ni^1 a
+%% **** \Gamma \vdash a \ni^2 A \Rightarrow \Gamma \vdash a \in^1 A
+%% **** Theorem 
+
+\begin{theorem}[Soundness]
+
+Let $\Gamma$ a valid context.
+
+\begin{itemize}
+\item If \xspace$\Gamma \vdash \pushN{a}{2}{A}$, then $\Gamma \vdash \pushN{a}{1}{A}$
+\item If \xspace$\Gamma \vdash \pullN{a}{2}{A}$, then $\Gamma \vdash \pullN{a}{1}{A}$
+\end{itemize}
+
+\end{theorem}
+
+%% ***** Proof
+
+\begin{proof}
+
+The proof is by induction on the height of a derivation. The base
+cases are $\ruleSet{2}$ and $\ruleVar{2}$. The translation of
+$\ruleVar{2}$ is direct. Concerning $\ruleSet{2}$, we have the
+following judgment:
+%%
+$$
+\AxiomSide{i < j}{\pushN{\Set{i}}{2}{\Set{j}}}
+$$
+
+This translates to the following derivation:
+%%
+$$
+\stkc{
+\AxiomSide{\ruleSet{1}}{\pushN{\Set{i}}{1}{\Set{i+1}}} \\
+\AxiomSide{\ruleName{Cuml-pull}{1}}{\pushN{\Set{i}}{1}{\Set{i+2}}} \\
+\ldots \\
+\CAxiom{\pushN{\Set{i}}{1}{\Set{j}}}
+}
+$$
+
+The induction step is trivial on the pull-side: the rules being the
+same, they map directly to their counterpart. Similarly on the
+push-side, the only rule that changed is $\ruleSet{2}$ that we have
+already treated in the base case. Hence, all rules translates
+directly.
+
+\end{proof}
+
+%% *** Lemma: lifting preserves equality
+
+\begin{lemma}[Lifting preserves equality]
+\label{lemma:lifting-equality}
+
+Let $\Gamma$ a valid context. Let $k \in N$.
+
+If $\equalN{S}{T}{2}{A}$, then $\equalN{\Up{k}{S}}{\Up{k}{T}}{2}{A}$.
+
+\end{lemma}
+
+%% **** Proof
+
+\begin{proof}
+
+The proof is by induction on the length of an equality judgement. The
+base cases are $\ruleSetEq{2}$ and $\ruleVarEq{2}$. In the
+$\ruleSetEq{2}$ rule, our goal is to prove that
+$\equalN{\Set{i+k}}{\Set{i+k}}{2}{\SetTop}$ that is trivially
+verified. Similarly, in the $\ruleVarEq{2}$ case, we have to verify
+that $\equalN{x_{i+k}}{x_{i+k}}{2}{\SetTop}$, which is indeed true.
+
+The induction step follows naturally, by the structure of the
+judgements and the definition of $\SYMBUp$. 
+
+\end{proof}
+
+
+%% *** Lemma: cumulativity fused push-side
+
+\begin{lemma}[$\ruleName{Cuml-push}{1}$ fused]
+\label{lemma:cuml-push-fused}
+
+Let $\Gamma$ a valid context.
+
+\begin{itemize}
+\item If \xspace$\Gamma \vdash \pushN{M}{1}{A}$, then for all $k \geq 0$ and
+  context $\Delta$ such that $\sublift{k}{\Gamma}{\Delta}$, we have
+  $\Delta \vdash \pushN{M}{2}{\Up{k}{A}}$.
+\item If \xspace$\Gamma \vdash \pullN{A}{1}{\Set{i}}$, then $\Gamma \vdash
+  \pullN{A}{2}{\Set{i}}$
+\end{itemize}
+
+\end{lemma}
+
+%% **** Proof
+
+\begin{proof}
+
+The proof is by induction on the height of a derivation. We focus on
+the push-side rules, as the pull-side remains un-changed between both
+systems. The base case of interest is $\ruleSet{1}$. In this
+case, we have indeed for any $k \geq 0$:
+%%
+$$
+\AxiomSide{i+k+1 > i}{\pushN{\Set{i}}{2}{\Set{i+k+1}}}
+$$
+
+
+The induction step is purely structural in the case of
+$\rulePi{1}$. The interesting cases are $\ruleName{Cuml-push}{1}$,
+$\ruleConv{1}$, and $\ruleLam{1}$. In the $\ruleName{Cuml-push}{1}$
+case, the last rule is the following:
+%%
+$$
+\Rule{\pushN{M}{1}{A}}{\pushN{M}{i}{\Up{}{A}}}
+$$
+%%
+By induction hypothesis on the premise with $\Delta = \Gamma$, we have
+that:
+%%
+$$
+\forall k \geq 0, \Gamma \vdash \pushN{M}{2}{\Up{k}{A}}
+$$
+%%
+From which we can easily conclude the proof of this case:
+%%
+$$
+\forall k \geq 0, \Gamma \vdash \pushN{M}{2}{\Up{k+1}{A}}
+$$
+
+As for the $\ruleConv{1}$ case, the last derivation is the following:
+%%
+$$
+\Rule{\pullN{e}{1}{S} \quad
+      \equalN{S}{T}{1}{\SetTop}}
+     {\pushN{e}{1}{T}}
+$$
+%%
+
+The equational theories of both systems being the same, we can
+transport the equality from the first to the second. By
+Lemma~\ref{lemma:lifting-equality}, we deduce that $\Up{k}{S} \Eq
+\Up{k}{T}$. Moreover, by induction hypothesis, we have that
+$\pullN{e}{2}{S}$. Applying the $\ruleName{Cuml-pull}{2}$ rule
+$k$-times, we obtain $\pullN{e}{2}{\Up{k}{S}}$.  Applying the
+$\ruleConv{2}$ rule, we get the desired conclusion:
+$\pushN{e}{2}{\Up{k}{T}}$.
+
+Finally, the $\ruleLam{1}$ rule corresponds to the following
+derivation:
+%%
+$$
+\Rule{\Bhab{x}{S} \vdash \pushN{b}{1}{T}}
+     {\pushN{\LAM{x}{b}}{1}{\PI{\V{x}}{S}{T}}}
+$$
+%%
+Applying the induction hypothesis on the premises, with a carefully
+chosen $\Delta$, we obtain:
+%%
+$$
+\Bhab{x}{\Up{k}{S}} \vdash \pushN{b}{1}{\Up{k}{T}}
+$$
+%%
+From $\ruleLam{2}$, we then deduce the desired conclusion.
+
+\end{proof}
+
+
+%% *** Complete
+%% **** \Gamma \vdash A \ni^1 a \Rightarrow \Gamma \vdash A \ni^2 a
+%% **** \Gamma \vdash a \ni^1 A \Rightarrow \Gamma \vdash a \in^2 A
+%% **** Theorem
+
+\begin{theorem}[Completeness]
+
+Let $\Gamma$ a valid context.
+
+\begin{itemize}
+\item If \xspace$\Gamma \vdash \pushN{a}{1}{A}$, then $\Gamma \vdash \pushN{a}{2}{A}$
+\item If \xspace$\Gamma \vdash \pullN{a}{1}{A}$, then $\Gamma \vdash \pullN{a}{2}{A}$
+\end{itemize}
+
+\end{theorem}
+
+%% ***** Proof
+
+\begin{proof}
+
+The proof is by induction on the length of a derivation. The base
+cases are $\ruleSet{1}$ and $\ruleVar{1}$. They both translate
+directly to the other system. 
+
+The induction is trivial for all rules --- by existence of an
+identical rule in the other system --- at the exception of the
+$\ruleName{Cuml-push}{1}$ rule. In this case, the last derivation is
+the following:
+%%
+$$
+\Rule{\pushN{M}{1}{A}}
+     {\pushN{M}{1}{\Up{}{A}}}
+$$
+%%
+Applying Lemma \ref{lemma:cuml-push-fused} on the premise, we obtain:
+%%
+$$
+\forall k \geq 0, \Gamma \vdash \pushN{M}{2}{\Up{k}{A}}
+$$
+From which we can conclude, by taking $k$ to be 1.
+
+\end{proof}
+
+%% * Annotated pull-side
+\section{Manually Annotated Stratisfactor}
+
+%% ** <- Generalizing CUML to Up
+%% *** <- x :<: S for S = Set_i
+%% *** <- x :<: A -> B ?
+%% *** -> FTP/GFTP
+%% *** -> x : Set(i) means x : Set(i+)
+%% ** -> Annotating by the lifting required
+%% *** -> Guess work in the hand of the annotator
+%% *** -> Figure: annotated type system
+%% ** <- Figure: Annotated pull-side
+
+\begin{figure}
+
+\begin{center}
+\input{figure_annotated}
+\end{center}
+
+\caption{Annotated pull-side}
+
+\end{figure}
+
+
+%% ** <- Proof
+%% *** GFTP
+%% **** Theorem
+
+\begin{theorem}[GFTP]
+\label{thm:gftp}
+
+Let $\Gamma$ a valid context. 
+
+If \xspace$\Gamma \vdash \pullN{a^{(j)}}{3}{\Up{j}{A}}$, then for any $i \geq j$ and
+for all $\Delta$ such that $\sublift{i}{\Gamma}{\Delta}$, we have:
+%%
+$$
+\RuleSide{\Gamma \vdash \pullN{a^{(j)}}{3}{\Up{j}{A}}}
+         {k \in \N}
+         {\Delta \vdash \pullN{a^{(k)}}{3}{\Up{i}{A}}}
+$$
+
+And similarly on the push-side, for if \xspace
+$\Gamma \vdash \pushN{a}{3}{A}$.
+
+\end{theorem}
+
+%% ***** Proof
+
+\begin{proof}
+
+The proof is by induction on the length of derivations. The base cases
+are $\ruleSet{3}$ and $\ruleVar{3}$. It is easily verified for the
+$\ruleSet{3}$ rule, the interesting case being $\ruleVar{3}$. We have
+that:
+%%
+$$
+\CAxiom{\Bhab{x}{A} \vdash \pullN{x^{(l)}}{3}{\Up{l}{A}}}
+$$
+%%
+We have to find the right annotation $k$ on $x$ so that
+$\pullN{x^{(k)}}{\Up{i}{A}}$ in a context $\Delta$ containing
+$\Bhab{x}{\Up{j}{A}}$ with $j \leq i$. Taking $l$ to be 
+\xspace$i-j \geq 0$, we have the following valid derivation:
+%%
+$$
+\CAxiom{\Bhab{x}{\Up{j}{A}} \vdash \pullN{x^{(i-j)}}{3}{\Up{i-j}{(\Up{j}{A})}}}
+$$
+%%
+Which concludes this case.
+
+The induction steps can be handled easily for all rules pushing a
+$\Set{l}$ into a term. First, the push side is identical to the
+previous one. Hence, Lemma \ref{lemma:cuml-push-fused} still applies
+and gives:
+%%
+$$
+\forall k \geq 0, \Gamma \vdash \pushN{A}{3}{\Set{l+k}}
+$$
+%%
+
+By definiton of $\SYMBUp$, this is equivalent to our goal:
+$\forall i \geq 0, \Gamma \vdash \pushN{a}{3}{\Up{i}{\Set{l}}}$. 
+
+There are two remaining rules on the push side: $\ruleConv{3}$ and
+$\ruleLam{3}$. The premises of the $\ruleConv{3}$ rule tell us that
+$\pullN{e^{(j)}}{3}{\Up{j}{S}}$ and
+$\equalN{\Up{j}{S}}{T}{3}{\SetTop}$. By induction hypothesis, we
+deduce that $\pullN{e^{(k)}}{3}{\Up{i+j}{S}}$ with $k \geq 0$. By
+Lemma \ref{lemma:lifting-equality}, we also deduce that
+$\equalN{\Up{i}{\Up{j}{S}}}{\Up{i}{T}}{3}{\SetTop}$. Hence, by $\ruleConv{3}$,
+we conclude the desired judgement, \ie $\pushN{e}{3}{\Up{i}{T}}$.
+
+The premise of the $\ruleLam{3}$ rule gives $\Bhab{x}{S} \vdash
+\pushN{b}{3}{T}$. By applying the induction hypothesis with a suitably
+lifted context, we get that: $\Bhab{x}{\Up{i}{S}} \vdash
+\pushN{b}{3}{T}$. Applying rule $\ruleLam{3}$, we conclude that
+$\pushN{\LAM{x}{b}}{3}{\Up{i}{\PI{\V{x}}{S}{T}}}$, by definition of
+$\SYMBUp$ on a $\Pi$-type.
+
+Finally, we handle the two remaining rules: $\ruleAsc{3}$ and
+$\ruleApp{3}$. The ascription rule is easy as its type is governed by
+the annotation we set: hence, to obtain an element in $\Up{i}{T}$, we
+simply annotate $\Bhab{t}{T}$ by $(i)$. The premises of the
+$\ruleApp{3}$ rule inform us that
+$\pullN{f^{(j)}}{3}{\PI{\V{x}}{\Up{j}{S}}{\Up{j}{T}}}$ and
+$\pushN{s}{3}{\Up{j}{S}}$. Applying the induction hypothesis on both,
+we get that $\pullN{f^{(k)}}{3}{\PI{\V{x}}{\Up{i}{S}}{\Up{i}{T}}}$ and
+$\pushN{s}{3}{\Up{i}{S}}$. We can apply $\ruleApp{3}$ straightaway and
+conclude that $\pullN{{f\: s}^{(k)}}{3}{\Up{i}{T}[s/x]}$. 
+
+\end{proof}
+
+%% **** FTP
+
+\begin{theorem}[FTP]
+
+In a context $\Gamma$ valid, if $\Gamma \vdash \pullN{a}{3}{A}$, then
+the term $a$ checks all polymorphic instances of $A$, \ie $\forall i
+\geq 0, \Gamma \vdash \pullN{a}{3}{\Up{i}{A}}$
+
+\end{theorem}
+
+%% ***** Proof
+
+\begin{proof}
+
+Corollary of Theorem~\ref{thm:gftp}, taking $\Delta$ to be $\Gamma$.
+
+\end{proof}
+
+%% *** Sound
+%% **** \Gamma \vdash A \ni^3 a \Rightarrow \forall j \geq 0, \Gamma \vdash \Up{j}{A} \ni^2 a
+%% **** \Gamma \vdash a \in^3 A \Rightarrow \forall j \geq 0, \Gamma \vdash a \in^2 \Up{j}{A}
+%% **** Theorem
+
+\begin{theorem}[Soundness]
+
+Let $\Gamma$ a valid context.
+
+\begin{itemize}
+\item If \xspace$\Gamma \vdash \pullN{a^{(j)}}{3}{\Up{j}{A}}$, then for all 
+      $k \in \N$, we have $\Gamma \vdash \pullN{a}{2}{\Up{k}{A}}$
+\item If \xspace$\Gamma \vdash \pushN{a}{3}{A}$, then 
+      $\Gamma \vdash \pushN{a}{2}{A}$
+\end{itemize}
+
+\end{theorem}
+
+%% ***** Proof
+
+\begin{proof}
+
+Let $k \in \N$.
+
+First, the push-side rules of both systems being identical, the
+translation from one system to the other is trivial. Therefore, we
+will focus on the pull-side.
+
+The proof is by induction on the height of derivations. The base case
+of interest here is $\ruleVar{3}$. We have the following:
+%%
+$$
+\CAxiom{\Bhab{x}{A} \vdash \pullN{x^{(j)}}{3}{\Up{j}{A}}}
+$$
+
+This translates to an application of the $\ruleVar{2}$ rule followed
+by as many application of the $\ruleName{Cuml-pull}{2}$ necessary to
+reach $k$:
+%%
+$$
+\stkc{
+\CAxiom{\Bhab{x}{A} \vdash \pullN{x}{2}{A}} \\
+\CAxiom{\Bhab{x}{A} \vdash \pullN{x}{2}{\Up{}{A}}} \\
+\ldots \\
+\CAxiom{\Bhab{x}{A} \vdash \pullN{x}{2}{\Up{k}{A}}}
+}
+$$
+
+The induction step consists in treating the $\ruleAsc{3}$ and
+$\ruleApp{3}$ rules. The $\ruleAsc{3}$ requires exactly the same
+treatment than the $\ruleVar{3}$ rule: by induction hypothesis on the
+premises, we can apply the corresponding rule in the previous
+system. We then use $\ruleName{Cuml-pull}{2}$ to complete the missing
+liftings to reach $\Up{k}{T}$.
+
+The premises of the $\ruleApp{3}$ rule give us that
+$\pullN{f^{(j)}}{3}{\PI{\V{x}}{\Up{j}{S}}{\Up{j}{T}}}$ and
+$\pushN{s}{3}{\Up{j}{S}}$. By induction hypothesis, we get that
+$\pullN{f}{2}{\PI{\V{x}}{\Up{k}{S}}{\Up{k}{T}}}$ and
+$\pushN{s}{2}{S}$. Applying Lemma~\ref{lemma:cuml-push-fused} for
+$\Delta = \Gamma$, we obtain that
+$\pushN{s}{2}{\Up{k}{S}}$. Therefore, by application of $\ruleApp{2}$,
+we deduce that $\pushN{f\: s}{2}{\Up{k}{T}[s/x]}$. 
+
+\end{proof}
+
+%% *** Complete
+%% **** \Gamma \vdash A \ni^2 a \Rightarrow \Gamma \vdash A \ni^3 a
+%% **** \Gamma \vdash a \in^2 A \Rightarrow \Gamma \vdash a \in^3 A
+%% **** Theorem
+
+\begin{theorem}[Completeness]
+
+Let $\Gamma$ be a valid context.
+
+\begin{itemize}
+\item If \xspace$\Gamma \vdash \pullN{a}{2}{A}$, then for any 
+      $k \in \N$, there exists an annotation $j \in \N$ such that we have 
+      $\Gamma \vdash \pullN{a^{(j)}}{3}{\Up{k}{A}}$
+\item If \xspace$\Gamma \vdash \pushN{a}{2}{A}$, then $\Gamma \vdash
+      \pushN{a}{3}{A}$
+\end{itemize}
+
+\end{theorem}
+
+%% ***** Proof
+
+\begin{proof}
+
+Let $k \in \N$
+
+First, the push-side is rather unexciting, as it is the same in both
+systems. Hence, it translates directly from one to another. Therefore,
+we will focus on the pull-side.
+
+The proof is by induction on the height of derivations. The base case
+of interest is $\ruleVar{2}$ here. Hence, we have $\Bhab{x}{A}$ in the
+context. By direct application of $\ruleVar{3}$, we obtain the desired
+result:
+%%
+$$
+\CAxiom{\Bhab{x}{A} \vdash \pullN{x^{(k)}}{3}{\Up{k}{A}}}
+$$
+
+The induction steps consists of the rules $\ruleAsc{2}$,
+$\ruleApp{2}$, and $\ruleName{Cuml-pull}{2}$. The $\ruleAsc{2}$ rule
+translates the same way than the $\ruleVar{2}$ rule. The premises of
+the $\ruleApp{2}$ give us that $\pullN{f}{2}{\PI{\V{x}}{S}{T}}$ and
+$\pushN{s}{2}{S}$. By induction hypothesis, we deduce that
+$\pullN{f^{(k)}}{3}{\Up{k}{(\PI{\V{x}}{S}{T})}}$ and
+$\pushN{s}{3}{S}$. By application of the FTP, we get that
+$\pushN{s}{3}{\Up{k}{S}}$. Applying the $\ruleApp{3}$ rule, we
+conclude that $\pullN{{f\: s}^{(k)}}{3}{\Up{k}{T}[s/x]}$.
+
+We conclude with the $\ruleName{Cuml-pull}{2}$ rule. The derivation
+ends with the following judgment:
+%%
+$$
+\Rule{\pullN{M}{2}{A}}
+     {\pullN{M}{2}{\Up{}{A}}}
+$$
+%%
+By induction hypothesis on the premise, we deduce that $\forall l \in
+\N, \pullN{M^{(l)}}{3}{\Up{l}{A}}$. In particular, we have that
+$\pullN{M^{(k+1)}}{3}{\Up{k}{(\Up{}{A})}}$, which is the expected
+conclusion.
+
+\end{proof}
+
+%% * Semi-automatic
+\section{Semi-automatic Stratisfactor}
+
+
+%% ** <- State properties
+%% *** /> Prove them a posteriori
+%% ** <- Shape classification
+%% *** <- Calculus of constants
+%% **** <- They automatically lift
+%% **** -> No need to adjust them
+%% *** <- Calculus of *polymorphic* functions
+%% **** <- We have to specify where they exist
+%% ***** /> Cannot predict at which level on use-site
+%% ***** -> Introduce variable lifting
+
+The type $\greenb{\Up{j}{A}}{j}{k}$ is an object lifted by an unknown
+amount $j \geq k$.
+
+%% **** <- Use-site: check that a coherent assignment can be made
+%% **** /> App-rule: green on red side
+%% ***** -> Find the minimal assignment k such that A_j=k :>: s
+
+\begin{definition}[Minimal assignment]
+
+Let $k \in \N$.
+
+We say that \emph{$k$ is a minimal assignement} in 
+%%
+$$
+\Rule{\pi}
+     {\pushN{s}{4}{\redb{\greenb{\Up{j}{S}}{j=k}{0}}}}
+$$
+%%
+If, for all uses of the $\ruleSet{4}$ rule in $\pi$, the minimal
+difference of index to a $j$-indexed set is 1.
+
+Put otherwise, the bound on $j$ is tight: decrementing $k$ would lead
+to a size issue.
+
+\end{definition}
+
+%% ***** /> Rely on annotation for now
+%% *** <- Calculus of conversions
+%% **** <- Conversion rule: use-site of a polymorphic object
+%% ***** -> Set the variable
+%% **** <- Push-side orders a given type
+%% ***** -> Can we find an assignment to the variable on S?
+%% ***** -> Conversion rule: S == T
+%% ****** -> Solve variable
+%% ****** -> Check for coherence
+%% ** Figure: semi-automatic type system
+
+\begin{figure}
+
+\begin{center}
+\subfigure[Push-side]{
+\stkc{
+%% Form
+\boxed{\Gamma \vdash \pushN{\CN{term}}{4}{\redb{\CN{type}}}}
+\\
+\\
+%% Set
+\AxiomSide{i < j \quad \ruleSet{4}}{\pushN{\Set{i}}{4}{\redb{\Set{j}}}}
+\qquad
+%% Arrow
+\RuleSide{\pushN{S}{4}{\redb{\Set{i}}} \quad
+          \Bhab{x}{\redb{S}} \vdash \pushN{T}{4}{\redb{\Set{i}}}}
+         {\rulePi{4}}
+         {\pushN{\PI{\V{x}}{S}{T}}{4}{\redb{\Set{i}}}}
+\\
+%% Inhabitant of Arrow
+\RuleSide{\Bhab{x}{\redb{S}} \vdash \pushN{b}{4}{\redb{T}} }
+         {\ruleLam{4}}
+         {\pushN{\LAM{\V{x}}{b}}{4}{\redb{\PI{\V{x}}{S}{T}}}} 
+}
+} \qquad
+\subfigure[Pull-side]{
+\stkc{
+%% Form
+\boxed{\Gamma \vdash \pullN{\CN{term}}{4}{\greenb{\CN{type}}{j}{k}}}
+\\
+\\
+%% Variable extraction
+\AxiomSide{\ruleVar{4}}
+          {\Bhab{x}{\redb{A}} \vdash \pullN{x}{4}{\greenb{\Up{j}{\redb{A}}}{j}{0}}}
+\qquad
+%% Type ascription
+\RuleSide{\pushN{T}{4}{\blueb{\SetTop}} \quad
+          \pushN{t}{4}{\redb{T}}}
+         {\ruleAsc{4}}
+         {\pullN{(\Bhab{t}{\redb{T}})}{4}{\greenb{\Up{j}{T}}{j}{0}}}
+\\
+%% Function application
+\RuleSide{\pullN{f}{4}{\greenb{\PI{\V{x}}{\greenb{\Up{j}{S}}{j}{k}}{\greenb{\Up{T}{j}}{j}{k}}}{j}{k}} \quad
+          \pushN{s}{4}{\redb{\greenb{\Up{j}{S}}{j=l}{k}}}}
+         {k \in \mathbb{N} \quad \ruleApp{4}}
+         {\pullN{f\: s}{4}{\greenb{\Up{j}{T}[s/x]}{j}{k+l}}}
+}
+}
+
+\subfigure[Conversion]{
+$$
+\stkc{
+%% Conversion rule
+\RuleSide{\pullN{e}{4}{\greenb{\Up{j}{S}}{j}{k}} \quad
+          \equalN{\greenb{\Up{j}{S}}{j}{k}}
+                 {\redb{T}}
+                 {4}
+                 {\blueb{\SetTop}}, j = k_1}
+         {\ruleConv{4}}
+         {\pushN{e}{4}{\redb{T}}}
+\\
+\\
+%% Form
+\boxed{\Gamma \vdash \equalN{\greenb{\CN{term}}{j}{k}}{\redb{\CN{term}}}{4}
+                            {\blueb{\CN{type}}}, j = l }
+\\
+\\
+%% Set equality
+\AxiomSide{k_1 = l \quad 
+           \ruleSetKEq{4}}
+          {\equalN{\greenb{\Set{k_1}}{j}{k}}{\redb{\Set{l}}}{4}{\blueb{\SetTop}}, .}
+\\
+\AxiomSide{l - k_1 \geq 0 \quad
+           \ruleSetVEq{4}}
+          {\equalN{\greenb{\Set{j+k_1}}{j}{k}}{\redb{\Set{l}}}{4}{\blueb{\SetTop}}, j = l - k_1}
+\\
+%% Variable equality
+\AxiomSide{k_1 = l \quad \ruleVarKEq{4}}
+          {\Bhab{x}{\blueb{S}} \vdash \equalN{\greenb{x_{k_1}}{j}{k}}
+                                             {\redb{x_l}}
+                                             {4}
+                                             {\blueb{S}}, .}
+\\
+\AxiomSide{l - k_1 \geq 0 \quad \ruleSetVEq{4}}
+          {\Bhab{x}{\blueb{S}} \vdash \equalN{\greenb{x_{j+k_1}}{j}{k}}
+                                             {\redb{x_l}}
+                                             {4}
+                                             {\blueb{S}}, j = l - k_1}
+\\
+%% Pi equality
+\RuleSide{\equalN{\greenb{S_1}{j}{k}}
+                 {\redb{S_2}}
+                 {4}
+                 {\blueb{\SetTop}}, j = k_1 \quad
+          \Bhab{x}{\redb{S_2}} \vdash \equalN{\greenb{T_1}{j}{k}}
+                                             {\redb{T_2}}
+                                             {4}
+                                             {\blueb{\SetTop}}, j = k_1}
+         {\rulePiEq{4}}
+         {\equalN{\greenb{\PI{\V{x}}{\greenb{S_1}{j}{k}}{\greenb{T_1}{j}{k}}}{j}{k}} 
+                 {\redb{\PI{\V{x}}{\redb{S_2}}{\redb{T_2}}}}
+                 {4}
+                 {\blueb{\SetTop}}, j = k_1}
+\\
+%% Function equality
+\RuleSide{\Bhab{x}{\blueb{S}} \vdash \equalN{\greenb{f}{j}{k}\: x}
+                                            {\redb{g}\: x}
+                                            {4}
+                                            {\blueb{T}}, j = k_1 }
+         {\ruleLamEq{4}}
+         {\equalN{\greenb{f}{j}{k}}
+                 {\redb{g}}
+                 {4}
+                 {\blueb{\PI{\V{x}}{S}{T}}}, j = k_1}
+\\
+%% Application equality
+\RuleSide{\equalN{\greenb{f}{j}{k}}
+                 {\redb{g}}
+                 {4}
+                 {\blueb{\PI{\V{x}}{S}{T}}}, j = k_1 \quad
+          \equalN{\greenb{a}{j}{k}}
+                 {\redb{b}}
+                 {4}
+                 {\blueb{S}}, j = k_1}
+         {\ruleAppEq{4}}
+         {\equalN{\greenb{\greenb{f}{j}{k}\: \greenb{a}{j}{k}}{j}{k}}
+                 {\redb{\redb{g}\: \redb{b}}}
+                 {4}
+                 {\blueb{T [\redb{b}/x]}}, j = k_1}
+}
+}
+\end{center}
+
+\caption{Semi-automatic stratisfactor}
+\label{fig:semi-automatic}
+
+\end{figure}
+
+
+
+%% ** <- Proofs
+%% *** <- Color respected - only one live variable at a time
+%% ***** <- Greens under control
+
+\begin{lemma}[Color respect and variable uniqueness]
+
+The following scheme is preserved by the judgments presented in
+Figure~\ref{fig:semi-automatic}:
+\begin{itemize}
+\item A push rule is colored as:
+      $\pushN{\CN{term}}{4}{\redb{\CN{type}}}$,
+\item A pull rule is colored as:
+      $\pullN{\CN{term}}{4}{\greenb{\CN{type}}{j}{k}}$,
+\item An equality judgement is colored as:
+      $\equalN{\greenb{\CN{term}}{j}{k}}{\redb{\CN{term}}}{4}{\blueb{\CN{term}}}$,
+      and
+\item Terms (left of the $\in$ symbol, right of the $\ni$ symbol) are
+      red boxed.
+\end{itemize}
+
+And at any point in time, there exists only one live green variable.
+
+\end{lemma}
+
+%% ***** Proof
+
+\begin{proof}
+
+The proof is by induction on the height of a derivation. The base
+cases are $\ruleSet{4}$, $\ruleVar{4}$, $\ruleSetEq{4}$, and
+$\ruleVarEq{4}$. We simply check that the color of these rules follows
+the color scheme. Note that in $\ruleVar{4}$, uniqueness of variable
+comes from the fact that $A$ is red (containing no variable) from the
+context. Hence, creating a new variable $j$ is safe.
+
+The induction step then consists in considering each rule in turn:
+assuming that the premises are well-colored, we have to check that the
+conclusion is well-colored as well. This is trivial for most
+rules. The only interesting case is $\ruleApp{4}$. Applying the
+induction hypothesis on the premise, we have that
+$\pullN{f}{4}{\greenb{\PI{\V{x}}{\greenb{S}{j}{k}}{\greenb{T}{j}{k}}}{j}{k}}$
+with $f$ red. By setting $j$ to some $l$, we turn the green $S$ into a
+the red term $\redb{\greenb{S}{j=l}{k}}$ hence being coherent with the
+induction hypothesis that also tells us that $s$ is red. Hence, we
+deduce that $f\: s$ is red, inhabiting
+$\greenb{T[s/x]}{j}{k+l}$. Substituting $s$ in $T$ preserves
+uniqueness of variable, as $s$ is red, hence containing no
+variable. Uniqueness of variables also require some care in the
+$\ruleAsc{4}$ rule where we introduce a fresh variable: this is again
+justified by the fact that the type $T$ is red, hence containing no
+variable.
+
+\end{proof}
+
+%% *** <- Variable assigmnent equivalent to lifting on base
+%% **** \Up{l}{\greenb{A}{j=0}{k}} == \greenb{A}{j=l}{k}
+%% **** Lemma
+
+\begin{lemma}[Equivalence of variable assignment and lifting]
+\label{lemma:lifting-var-assgnmt}
+
+Let $l \geq k$. Let $A$ be a green type of variable $j$:
+$\greenb{A}{j}{k}$. The following equality is always verified:
+%%
+$$
+\greenb{\Up{j}{A}}{j=l}{k} = \Up{l}{\greenb{\Up{j}{A}}{j=0}{k}}
+$$
+
+\end{lemma}
+
+%% ***** Proof
+
+\begin{proof}
+
+By manipulating the definitions:
+%%
+$$
+\greenb{\Up{j}{A}}{j=l}{k} = \Up{l}{A} = \Up{l}{\greenb{\Up{j}{A}}{j=0}{k}}
+$$
+
+\end{proof}
+
+%% *** <- No change to the definitional equality
+
+\begin{lemma}[Equivalence of definitional equalities]
+\label{lemma:equiv-def-eq-3-4}
+
+Let $k \in \N$.
+
+\begin{itemize}
+\item If \xspace$\equalN{\Up{l}{S}}{T}{3}{A}$, then
+      $\equalN{\greenb{\Up{j}{S}}{j}{k}}{\redb{T}}{4}{\blueb{A}},j=l$
+\item If \xspace$\equalN{\greenb{\Up{j}{S}}{j}{k}}{\redb{T}}{4}{\blueb{A}},j=k_1$,
+      then $\equalN{\Up{k_1}{S}}{T}{3}{A}$
+\end{itemize}
+
+\end{lemma}
+
+%% **** Proof
+
+\begin{proof}
+
+Both proofs are by induction on the height of a derivation. The
+induction step is purely structural in both cases. The only
+interesting cases are the base cases, $\ruleSetEq{}$ and
+$\ruleVarEq{}$. This is simply a matter of book-keeping.
+
+\end{proof}
+
+%% *** <- Sound
+%% **** \Gamma \vdash A \ni^4 a \Rightarrow \Gamma \vdash A \ni^3 a
+%% **** \Gamma \vdash a \in^4 \greenb{A}{j}{k} \Rightarrow \forall j \leq k, \Gamma \vdash a^{(j)} \in^3 A
+%% **** Theorem
+
+\begin{theorem}[Soundness]
+
+Let $\Gamma$ a valid context. Let $k \in \N$.
+
+\begin{itemize}
+\item If \xspace$\Gamma \vdash \pushN{a}{4}{\redb{A}}$, then 
+      $\Gamma \vdash \pushN{a}{3}{A}$
+\item If \xspace$\Gamma \vdash \pullN{a}{4}{\greenb{\Up{j}{A}}{j}{k}}$, then for all
+      $m \geq k$, we have that $\Gamma \vdash \pullN{a^{(m)}}{4}{\Up{m}{A}}$
+\end{itemize}
+
+\end{theorem}
+
+%% ***** Proof
+
+\begin{proof}
+
+First, apart from the conversion rule, the push-side has not changed
+between the previous system and the new one. Thefore, we will not
+treat thoses cases, the translation being the obvious one.
+
+The proof is by induction on the height of a derivation. The base case
+of interest is $\ruleVar{4}$, which gives us that $\Bhab{x}{A}$
+inhabits the context. By annotation $x$ by some $m \geq 0$, we obtain
+the desired result:
+%%
+$$
+\CAxiom{\Bhab{x}{A} \vdash \pullN{x^{(m)}}{3}{\Up{m}{A}}}
+$$
+
+The induction step consists in studying $\ruleAsc{4}$, $\ruleApp{4}$,
+and $\ruleConv{4}$. The translation of the $\ruleAsc{4}$ rule follows
+the pattern introduced in the proof of the $\ruleVar{4}$ rule.
+
+The $\ruleApp{4}$ rule is the following:
+%%
+$$
+\Rule{\pullN{f}{4}{\PI{\V{x}}{\greenb{\Up{j}{S}}{j}{k}}{\greenb{\Up{j}{T}}{j}{k}}} \quad
+      \pushN{s}{4}{\redb{\greenb{\Up{j}{S}}{j=l}{k}}}}
+     {\pullN{f\: s}{4}{\greenb{\Up{j}{T}}{j}{k+l}}}
+$$
+%%
+By induction hypothesis on the premises, we obtain that $\forall j
+\geq k, \pullN{f^{(j)}}{3}{\PI{\V{x}}{\Up{j}{S}}{\Up{j}{T}}}$ and
+$\Gamma \vdash \pushN{s}{3}{\Up{l}{S}}$. For any $m \geq k+l \geq
+k$, we therefore have that
+$\pullN{f^{(j)}}{3}{\PI{\V{x}}{\Up{j}{S}}{\Up{j}{T}}}$. Moreover, by
+the FTP in (3), we deduce that $\Gamma \vdash \pushN{s}{3}{\Up{m}{S}}$
+holds, $m$ being greater or equal to $l$. Applying $\ruleApp{3}$
+on these premises, we get the desired conclusion.
+
+Finally, let us consider the conversion rule:
+%%
+$$
+\RuleSide{\pullN{e}{4}{\greenb{\Up{j}{S}}{j}{k}} \quad
+          \equalN{\greenb{\Up{j}{S}}{j}{k}}
+                 {\redb{T}}
+                 {4}
+                 {\blueb{\SetTop}}, j = k_1}
+         {\ruleConv{4}}
+         {\pushN{e}{4}{\redb{T}}}
+$$
+%%
+By induction hypothesis on the premise, we get that $\forall j \geq k,
+\pullN{e}{3}{\Up{j}{S}}$. In particular, it also holds for $j = k_1$
+($k_1 \geq k$, by construction). By Lemma~\ref{lemma:equiv-def-eq-3-4},
+we also deduce that $\equalN{\Up{k_1}{S}}{T}{3}{\SetTop}$. Therefore, by
+application of $\ruleConv{3}$, we conclude that $\pushN{e}{3}{T}$.
+
+\end{proof}
+
+%% *** <- Complete
+%% **** \Gamma \vdash A \ni^3 a \Rightarrow \Gamma \vdash A \ni^4 a
+%% **** \Gamma \vdash a^{(l)} \in^3 A \Rightarrow \Gamma \vdash a \in^4 \greenb{A}{j=l}{0}
+%% **** Theorem
+
+\begin{theorem}[Completeness]
+
+Let $\Gamma$ a valid context. Let $k \in \N$.
+
+\begin{itemize}
+\item If \xspace$\Gamma \vdash \pushN{a}{3}{A}$, then 
+      $\Gamma \vdash \pushN{a}{4}{A}$
+\item If for any $l \geq k$, we have 
+      \xspace$\Gamma \vdash \pullN{a^{(l)}}{3}{\Up{l}{A}}$, then 
+      $\Gamma \vdash \pullN{a}{4}{\greenb{\Up{j}{A}}{j}{k}}$
+\end{itemize}
+
+\end{theorem}
+
+%% ***** Proof
+
+\begin{proof}
+
+Again, the push-side is left unchanged between both systems, at the
+exception of the conversion rule. Therefore, we will not explicitly
+treat those cases, which translation is the obvious one.
+
+The proof is by induction on the height of a derivation. The
+interesting base case is $\ruleVar{3}$, which gives us that
+$\Bhab{x}{A}$ is in the context. We simply apply $\ruleVar{4}$ and
+deduce the desired consequence:
+%%
+$$
+\CAxiom{\Bhab{x}{A} \vdash \pullN{x}{4}{\greenb{\Up{j}{A}}{j}{0}}}
+$$
+
+The induction step is reduced to the $\ruleAsc{3}$, $\ruleApp{3}$, and
+$\ruleConv{3}$ rules. The translation of $\ruleAsc{3}$ follows the one
+of $\ruleVar{3}$. The translation of $\ruleApp{3}$ is slightly more
+involved. The premise tells us that $\forall l \geq k,
+\pullN{f^{(l)}}{3}{\PI{\V{x}}{\Up{l}{S}}{\Up{l}{T}}}$ and
+$\pushN{s}{3}{\Up{l}{S}}$. By induction hypothesis, we deduce that
+$\pullN{f}{4}{\greenb{\PI{\V{x}}{\Up{j}{S}}{\Up{j}{T}}}{j}{k}}$ and
+$\pushN{s}{4}{\redb{S}}$. The latter is the same as
+$\pushN{s}{4}{\redb{\greenb{\Up{j}{S}}{j=0}{k}}}$. Hence, by
+application of $\ruleApp{4}$, we deduce the desired conclusion:
+$\pullN{f\: s}{4}{\greenb{\Up{j}{T}[s/x]}{j}{k}}$.
+
+Finally, we treat the conversion rule:
+%%
+$$
+\Rule{\pullN{e^{(l)}}{3}{\Up{l}{S}} \quad
+      \equalN{\Up{l}{S}}{T}{3}{\SetTop}}
+     {\pushN{e}{3}{T}}
+$$
+
+We cannot directly apply the induction hypothesis on
+$\pullN{e^{(l)}}{3}{\Up{l}{S}}$, as it is true for a specific $l$
+here. However, by the FTP, we obtain that $\forall j \geq l,
+\pullN{e^{(j)}}{3}{\Up{j}{S}}$. Here induction hypothesis applies and
+we get that $\pullN{e}{4}{\greenb{\Up{j}{S}}{j}{l}}$. By
+Lemma~\ref{lemma:equiv-def-eq-3-4}, we also have that there exists
+$k_1 \leq l$ such that
+$\equalN{\greenb{S}{j}{l}}{\redb{T}}{4}{\blueb{A}},j=k_1$. Hence, by
+application of $\ruleConv{4}$, we obtain that $\pushN{e}{4}{\redb{T}}$
+
+\end{proof}
+
+%% ** /> How to find k?
+%% * Automated
+\section{Automatic Stratisfactor}
+
+%% ** <- Finding k
+%% *** -> Distinction between type error and size issue
+%% **** <- Type error: \forall k. \Up{k}{\greenb{A}{j=0}} \not \ni s
+%% **** <- Size issue: \exists k. \Up{k}{\greenb{A}{j=0}} \ni s
+%% ***** <- More precisely: \exists k. \forall k' \geq k. \Up{k'}{\greenb{A}{j=0}} \ni s
+%% *** -> Modify push-side to return the differential
+%% **** -> A \ni^5 a, k \Leftrightarrow \forall k' \geq k, \Up{k'}{A} \ni^4 a, \Up{k-1} \not \ni^4 a (or k = 0)
+%% **** -> Proof a posteriori
+%% ** <- Figure: automated type system
+
+\begin{figure}
+
+\begin{center}
+\input{figure_strat}
+\end{center}
+
+\caption{Set polymorphic type theory}
+
+\end{figure}
+
+
+
+%% ** <- Proofs
+%% *** <- Same equational theory
+%% *** <- Push-side gives differential
+%% **** A \ni^5 a, k \Rightarrow \forall k' \geq -\min\: k\: 0, \Up{k'}{A} \ni^4 a
+
+
+
+\begin{lemma}[Push-side is not worst than the optimal bound]
+\label{lemma:push-k-good-enough}
+
+Let $\Gamma$ a valid context.
+
+If \xspace$\Gamma \vdash \pushN{a}{5}{A}, k$, then forall $k'$ such
+that $k' \geq -min(k,0)$ and $\Delta$ such that
+$\sublift{\Gamma}{k'}{\Delta}$, we have $\Gamma \vdash
+\pushN{a}{4}{\Up{k'}{A}}$. For if $\Gamma \vdash \pullN{a}{5}{A}$,
+then $\Gamma \vdash \pullN{a}{4}{A}$.
+
+\end{lemma}
+
+%% ***** Proof
+
+\begin{proof}
+
+First, we do not cover the pull-side in depth: at the exception of the
+$\ruleApp{5}$ rule, the judgements are identical in both systems,
+hence they trivially translate from the one to the other.
+
+We proceed by induction on the height of derivations. The base case is
+the $\ruleSet{5}$ rule:
+%%
+$$
+\CAxiom{\pushN{\Set{i}}{5}{\redb{\Set{j}}}, j - i - 1}
+$$
+%%
+There are two cases to consider: first, if $j-i-1 \leq 0$; second, if
+$j-i-1 > 0$. In the first case, we have to prove that $\forall k' \geq
+i+1-j, \pushN{\Set{i}}{4}{\Up{k'}{\Set{j}}}$. This indeed the case as
+$j + k' \geq j - (j - i - 1) \geq i + 1 > i$, hence satisfying the
+rule $\ruleSet{4}$. In the second case, we have to prove that $\forall
+k' \geq 0, \pushN{Set{i}}{4}{\Up{k'}{\Set{j}}}$. This is the case as
+well, as $j + k' \geq k + i + 1 \geq i + 1 > i$.
+
+The induction steps consists in studying the $\ruleLam{5}$,
+$\ruleConv{5}$, and $\rulePi{5}$. The $\ruleLam{5}$ follows naturally
+from the induction hypothesis on the premise, with $\Delta$ carefully
+chosen to lift the type of $x$: $\Bhab{x}{\Up{k'}{A}}$. Applying
+$\ruleLam{4}$, we get the desired outcome.
+
+The conversion rule requires more work. We have:
+%%
+$$
+\Rule{\pullN{e}{5}{\greenb{\Up{j}{S}}{j}{k}} \quad
+      \equalN{\greenb{S}{j}{k}}{\redb{T}}{5}{\blueb{\SetTop}}, j = k_1}
+     {\pushN{e}{5}{\redb{T}}, 0}
+$$
+%%
+First, by induction hypothesis on the premise, we have that
+$\pullN{e}{5}{\greenb{\Up{j}{S}}{j}{k}}$ for some $k \in \N$ and a
+variable $j$. Moreover, both equational theories are the same, so we
+also have that
+$\equalN{\greenb{S}{j}{k}}{\redb{T}}{4}{\blueb{\SetTop}}, j = k_1$.
+Applying $\ruleConv{4}$, we can readily conclude that
+$\pushN{e}{4}{T}$. The FTP then gives us the expected result: 
+$\forall k' \geq 0, \pushN{e}{4}{\Up{k'}{T}}$.
+
+The last push-side case is $\rulePi{5}$. We have:
+%%
+$$
+\Rule{\pushN{S}{5}{\redb{\Set{i}}}, k_1 \quad
+      \Bhab{x}{\redb{S}} \vdash \pushN{T}{5}{\redb{\Set{i}}}, k_2}
+     {\pushN{\PI{\V{x}}{S}{T}}{5}{\redb{\Set{i}}}, \min k_1 k_2}
+$$
+%%
+By induction hypothesis on the premises, we obtain:
+%%
+$$
+\begin{array}{l}
+\forall k'_1 \geq -\min(k_1, 0), \Gamma \vdash \pushN{S}{4}{\Up{k'_1}{\Set{i}}} \\
+\forall k'_2 \geq -\min(k_2, 0), \Gamma, \Bhab{x}{S} \vdash \pushN{T}{4}{\Up{k'_2}{\Set{i}}}
+\end{array}
+$$
+
+Finally, we shall treat the only interesting pull-side rule:
+$\ruleApp{5}$. We have that:
+%%
+$$
+\RuleSide{\pullN{f}{5}{\greenb{\PI{\V{x}}{\greenb{\Up{j}{S}}{j}{k}}{\greenb{\Up{j}{T}}{j}{k}}}{j}{k}} \quad
+          \pushN{s}{5}{\redb{\greenb{\Up{j}{S}}{j=0}{k}}}, l}
+         {l' = \min l\: 0}
+         {\pullN{f\: s}{5}{\greenb{\Up{j}{T}[\blackb{s}/x]}{j}{k-l'}}}
+$$
+%% 
+
+By induction hypothesis on the premises, we have that
+$\pullN{f}{4}{\greenb{\PI{\V{x}}{\greenb{\Up{j}{S}}{j}{k}}{\greenb{\Up{j}{T}}{j}{k}}}{j}{k}}$
+and $\pushN{s}{4}{\Up{-l'}{\redb{\greenb{\Up{j}{S}}{j=0}{k}}}}$. By
+Lemma~\ref{lemma:lifting-var-assgnmt}, we get that
+$\pushN{s}{4}{\redb{\greenb{\Up{j}{S}}{j=-l'}{k}}}$. Therefore, we can
+apply $\ruleApp{4}$ and deduce the expected conclusion: 
+$\pullN{f\: s}{4}{\greenb{\Up{j}{T}[\blackb{s}/x]}{j}{k-l'}}$.
+
+\end{proof}
+
+%% *** <- Tight bound gives difference of zero
+%% **** \greenb{S}{j=k}{0} \ni^4 s \Rightarrow \greenb{S}{j=k}{0} \ni^5 s, 0
+
+\begin{lemma}[Push-side captures the tight bound]
+\label{lemma:push-k-tight}
+
+
+Let $\Gamma$ a valid context. 
+
+If \xspace$\pushN{s}{4}{\redb{\greenb{\Up{j}{S}}{j=l}{k}}}$ where $l
+\in \N$ is the minimal assignment, then
+$\pushN{s}{5}{\redb{\greenb{\Up{j}{S}}{j=0}{k}}}, -l$. For if
+$\pullN{s}{4}{S}$, then $\pullN{s}{5}{S}$.
+
+\end{lemma}
+
+%% ***** Proof
+
+\begin{proof}
+
+Again, at the exception of the $\ruleApp{4}$ rule, the pull-side is
+identical in both systems, hence we take the trivial translation. The
+proof is by induction on the height of derivations. The base case is
+$\ruleSet{4}$. By definition of $l$, the derivation is the following:
+%%
+$$
+\CAxiom{\pushN{\Set{i}}{4}{\Set{i+1}}}
+$$
+%%
+Which translates to the desired judgement in (5):
+%%
+$$
+\CAxiom{\pushN{\Set{i}}{5}{\Set{i+1}}, 0}
+$$
+
+The induction step consists in treating the cases $\ruleLam{4}$,
+$\rulePi{4}$, and $\ruleConv{4}$ in turn. The treatment of the
+$\ruleLam{4}$ and $\rulePi{4}$ rules is purely structural. Similarly,
+the conversion rule follows by converting the pull-premise to itself
+in (5) while the equality judgement carry over to the new system
+unchanged. We then conclude by applying $\ruleConv{5}$ that directly
+indicate a differential of zero. The $\ruleApp{4}$ rule follows
+naturally, as the induction hypothesis on the premises give directly
+the premises of the $\ruleApp{5}$ rule.
+
+\end{proof}
+
+%% *** <- Sound
+%% **** \Gamma \vdash A \ni^5 a, k \wedge k \geq 0 \Rightarrow \Gamma \vdash A \ni^4 a
+%% **** \Gamma \vdash a \in^5 A \Rightarrow \Gamma \vdash a \in^4 A
+%% **** Theorem
+
+\begin{theorem}[Soundness]
+
+Let $\Gamma$ be a valid context.
+
+\begin{itemize}
+\item If \xspace$\Gamma \vdash \pushN{a}{5}{A}, k$ and $k \geq 0$, then $\Gamma \vdash \pushN{a}{4}{A}$
+\item If \xspace$\Gamma \vdash \pullN{a}{5}{A}$, then $\Gamma \vdash \pullN{a}{4}{A}$
+\end{itemize}
+
+\end{theorem}
+
+%% ***** Proof
+
+\begin{proof}
+
+The proof is by induction on the length of a derivation. The base
+cases are $\ruleVar{5}$ and $\ruleSet{5}$. The $\ruleVar{}$ rule
+translates directly to its counterpart. In the $\ruleSet{5}$ case, we
+know that the differential $k$ is greater or equal to $0$. Therefore,
+we can safely deduce:
+%%
+$$
+\CAxiom{\pushN{\Set{i}}{4}{\Set{j}}}
+$$
+
+The induction step is trivial for most pull-side rules (they have
+their equivalent in the target system), at the exception of the
+$\ruleApp{5}$ rule. On the push-side, we have to treat the
+$\ruleLam{5}$, $\ruleConv{5}$, and $\rulePi{5}$. The $\ruleLam{5}$ and
+$\ruleConv{5}$ cases follow structurally. In the $\rulePi{5}$ case,
+the hypothesis gives us that $\min(k_1, k_2) \geq 0$. We thus deduce
+that $k_1 \geq 0$ and $k_2 \geq 0$ and can apply the induction
+hypothesis on the premises and structurally obtain the desired
+conclusion. 
+
+The application rule calls for some work. We have:
+%%
+$$
+\RuleSide{\pullN{f}{5}{\greenb{\PI{\V{x}}{\greenb{\Up{j}{S}}{j}{k}}{\greenb{\Up{j}{T}}{j}{k}}}{j}{k}} \quad
+          \pushN{s}{5}{\redb{\greenb{\Up{j}{S}}{j=0}{k}}}, l}
+         {l' = \min(l,0)}
+         {\pullN{f\: s}{5}{\greenb{\Up{j}{T}[\blackb{s}/x]}{j}{k-l'}}}
+$$
+%%
+By induction hypothesis, we deduce that
+$\pullN{f}{4}{\greenb{\PI{\V{x}}{\greenb{\Up{j}{S}}{j}{k}}{\greenb{\Up{j}{T}}{j}{k}}}{j}{k}}$. By
+Lemma~\ref{lemma:push-k-good-enough}, we also have that
+$\pushN{s}{5}{\Up{-l'}{\redb{\greenb{\Up{j}{S}}{j=0}{k}}}}$. By
+Lemma~\ref{lemma:lifting-var-assgnmt}, we deduce that
+$\pushN{s}{5}{\redb{\greenb{\Up{j}{S}}{j=-l'}{k}}}$. All conditions
+are met to apply the $\ruleApp{4}$ rule.
+
+\end{proof}
+
+
+%% *** <- Complete
+%% **** \Gamma \vdash A \ni^4 a \Rightarrow \Gamma \vdash A \ni^5 a, k \wedge k \geq 0
+%% **** \Gamma \vdash a \in^4 A \Rightarrow \Gamma \vdash a \in^5 A
+%% **** Theorem
+
+\begin{theorem}[Completeness]
+
+Let $\Gamma$ be a valid context.
+
+\begin{itemize}
+\item If \xspace$\Gamma \vdash \pushN{a}{4}{A}$, then $\Gamma \vdash \pushN{a}{5}{A}, k$ with $k \geq 0$
+\item If \xspace$\Gamma \vdash \pullN{a}{4}{A}$, then $\Gamma \vdash \pullN{a}{5}{A}$
+\end{itemize}
+
+\end{theorem}
+
+%% ***** Proof
+
+\begin{proof}
+
+Most pull-side rules are identical on the source and target side, at
+the exception of the application rule. We will therefore ignore them,
+assuming the naive translation.
+
+The proof is by induction on the height of derivations. The base case
+of interest is $\ruleSet{4}$. The conclusion is easily verified from
+the requirement on levels.
+
+The induction step is unsurprisingly structural for the $\rulePi{4}$,
+$\ruleLam{4}$, and $\ruleConv{4}$ rules. The $\ruleApp{4}$ rule tells
+us that:
+%%
+$$
+\RuleSide{\pullN{f}{4}{\greenb{\PI{\V{x}}{\greenb{\Up{j}{S}}{j}{k}}{\greenb{\Up{T}{j}}{j}{k}}}{j}{k}} \quad
+          \pushN{s}{4}{\redb{\greenb{\Up{j}{S}}{j=l}{k}}}}
+         {k \in \mathbb{N} \quad \ruleApp{4}}
+         {\pullN{f\: s}{4}{\greenb{\Up{j}{T}[s/x]}{j}{k+l}}}
+$$
+%%
+By induction hypothesis, we can readily conclude that
+$\pullN{f}{5}{\greenb{\PI{\V{x}}{\greenb{\Up{j}{S}}{j}{k}}{\greenb{\Up{T}{j}}{j}{k}}}{j}{k}}$. By
+Lemma~\ref{lemma:push-k-tight}, we deduce that
+$\pushN{s}{5}{\redb{\greenb{\Up{j}{S}}{j=0}{k}}}, -l$. Therefore, we
+can apply $\ruleApp{5}$ and obtain the expected conclusion:
+$\pullN{f\: s}{5}{\greenb{\Up{j}{T}[s/x]}{j}{k+l}}$.
+
+\end{proof}
+
+%% * Polymorphic definitions
+%% ** <- Definitions: references
+%% *** <- fully lambda-lifted representation
+%% **** <- ???
+%% *** -> Used through the Var rule
+%% **** -> Automatically polymorphic
+%% ** <- Examples
+%% *** id
+%% *** typeof
+%% *** typeof/id (Eelis)
+%% *** subtyping
+%% ** <- Counter-examples (leading to paradoxes)
+%% *** Define set : Set, typecheck set : set
+%% * With data-types
+%% ** <- Based on Levitation
+%% *** <- (Brief sum up of levitation)
+%% *** /> Work just as well with external presentation
+%% **** /> More challenging in our case
+%% ** <- Assign levels to things of Desc
+%% *** <- data IDesc (I : Set1) : Set1
+%% *** <- desc : {I : Set1} -> IDesc I -> (I -> Set0) -> Set0
+%% *** <- data IMu {I : Set1}(R : I -> IDesc I)(i : I) : Set0
+%% *** <- box : {I : Set1}(D : IDesc I)(P : I -> Set0) -> desc D P -> IDesc (Sigma I P)
+%% *** <- induction : (...)
+%% *** -> Remark that Mu decreases
+%% ** <- Example: Nat : Set0
+%% *** <- Canonical object
+%% *** -> Get automatically Nat at all levels
+%% ** <- Example: List : Set0 -> Set0
+%% *** <- Parameterized object
+%% *** -> Get List translating with its argument
+%% *** -> [ Set0, Set1, Set2 ] : List Set3
+%% ** <- Example: Vector : (n : N) -> Set0 -> Set0
+%% *** <- Indexed object
+%% *** -> Index, canonical, moves as well
+%% ** <- Example: IDesc in IDesc
+%% *** <- Levitation trick
+%% *** -> Fall back to principal type!
+
+%% * Related Work
+%% ** Palmgren
+%% ** Harper-Pollack
+%% ** Courant
+%% ** Agda experimental universe polymorphism
+%% * Conclusion
+\section{Conclusion}
+
+%% ** We did
+%% ** Future work
+
+%% * Bibliography
+
+\bibliography{stratisfaction}
+\bibliographystyle{abbrvnat}
+
+% The bibliography should be embedded for final submission.
+%\begin{thebibliography}{}
+%\softraggedright
+%\end{thebibliography}
+
+%% * Outro
+
+\end{document}
+
+
+
+%% Local Variables:
+%% mode: outline-minor
+%% outline-regexp: "%% [*\f]+"
+%% outline-level: outline-level
+%% End:
+

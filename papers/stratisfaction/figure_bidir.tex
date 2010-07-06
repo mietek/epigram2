@@ -1,0 +1,108 @@
+\subfigure[Algorithm: push-side]{
+$$
+\stkc{
+%% Form
+\boxed{\Gamma \vdash \pushN{\CN{term}}{1}{\CN{type}}}
+\\
+\\
+%% Set
+\AxiomSide{\ruleName{Set}{1}}{\pushN{\Set{i}}{1}{\Set{i+1}}}
+\qquad
+%% Arrow
+\RuleSide{\pushN{S}{1}{\Set{i}} \quad
+          \Bhab{x}{S} \vdash \pushN{T}{1}{\Set{i}}}
+         {\ruleName{Pi}{1}}
+         {\pushN{\PI{\V{x}}{S}{T}}{1}{\Set{i}}}
+\\
+%% Inhabitant of Arrow
+\RuleSide{\Bhab{x}{S} \vdash \pushN{b}{1}{T} }
+         {\ruleName{Lam}{1}}
+         {\pushN{\LAM{\V{x}}{b}}{1}{\PI{\V{x}}{S}{T}}} 
+}
+\label{fig:ccomega-algo-push}
+} \quad
+\subfigure[Algorithm: pull-side]{
+$$
+\stkc{
+%% Form
+\boxed{\Gamma \vdash \pullN{\CN{term}}{1}{\CN{type}}}
+\\
+\\
+%% Variable extraction
+\AxiomSide{\ruleName{Var}{1}}{\Bhab{x}{A} \vdash \pullN{x}{1}{A}}
+\qquad
+%% Type ascription
+\RuleSide{\pushN{T}{1}{\SetTop} \quad
+          \pushN{t}{1}{T}}
+         {\ruleName{Asc}{1}}
+         {\pullN{(\Bhab{t}{T})}{1}{T}}
+\\
+%% Function application
+\RuleSide{\pullN{f}{1}{\PI{\V{x}}{S}{T}} \quad
+          \pushN{s}{1}{A}}
+         {\ruleName{App}{1}}
+         {\pullN{f\: s}{1}{T[s/x]}}
+}
+$$
+\label{fig:ccomega-algo-pull}
+}
+\subfigure[Cumulativity]{
+$$
+\stkc{
+%% Cumulativity (push)
+\RuleSide{\pushN{M}{1}{A}}
+         {\ruleName{Cuml-push}{1}}
+         {\pushN{M}{1}{\Up{}{A}}}
+\\
+%% Cumulativity (pull)
+\RuleSide{\pullN{M}{1}{A}}
+         {\ruleName{Cuml-pull}{1}}
+         {\pullN{M}{1}{\Up{}{A}}}
+}
+$$
+\label{fig:ccomega-algo2-cuml}
+}
+
+
+
+\subfigure[Algorithm: conversion]{
+$$
+\stkc{
+%% Conversion rule
+\RuleSide{\pullN{e}{1}{S} \quad
+          \equalN{S}{T}{1}{\SetTop}}
+         {\ruleName{Conv}{1}}
+         {\pushN{e}{1}{T}}
+\\
+\\
+%% Form
+\boxed{\Gamma \vdash \equalN{\CN{term}}{\CN{term}}{1}{\CN{type}}}
+\\
+\\
+%% Set equality
+\AxiomSide{\ruleName{Set-Eq}{1}}{\equalN{\Set{i}}{\Set{i}}{1}{\SetTop}}
+\\
+%% Variable equality
+\AxiomSide{\ruleName{Var-Eq}{1}}{\Bhab{x}{S} \vdash \equalN{x}{x}{1}{S}}
+\\
+%% Pi equality
+\RuleSide{\equalN{S_1}{S_2}{1}{\SetTop} \quad
+          \Bhab{x}{S_2} \vdash \equalN{T_1}{T_2}{1}{\SetTop}}
+         {\ruleName{Pi-Eq}{1}}
+         {\equal{\PI{\V{x}}{S_1}{T_1}} 
+                {\PI{\V{x}}{S_2}{T_2}}{1}{\SetTop}}
+\\
+%% Function equality
+\RuleSide{\Bhab{x}{S} \vdash \equalN{f\: x}{g\: x}{1}{T}}
+         {\ruleName{Lam-Eq}{1}}
+         {\equalN{f}{g}{1}{\PI{\V{x}}{S}{T}}}
+\\
+%% Application equality
+\RuleSide{\equalN{f}{g}{1}{\PI{\V{x}}{S}{T}} \quad
+          \equalN{a}{b}{1}{S}}
+         {\ruleName{App-Eq}{1}}
+         {\equalN{f\: a}{g\: b}{1}{T[b/x]}}
+}
+$$
+\label{fig:ccomega-algo-cuml}
+}

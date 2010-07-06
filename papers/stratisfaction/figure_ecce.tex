@@ -1,0 +1,71 @@
+$$
+\stkc{
+%% Form
+\boxed{\Gamma \vdash \Bhab{\CN{term}}{\CN{type}}}
+\\
+\\
+%% Set
+\AxiomSide{\ruleName{Set}{0}}{\Bhab{\Set{i}}{\Set{i+1}}}
+\qquad
+%% Arrow
+\RuleSide{\Bhab{S}{\Set{i}} \quad
+          \Bhab{x}{S} \vdash \Bhab{T}{\Set{i}}}
+         {\ruleName{Pi}{0}}
+         {\Bhab{\PI{\V{x}}{S}{T}}{\Set{i}}}
+\\
+%% Inhabitant of Arrow
+\RuleSide{\Bhab{x}{S} \vdash \Bhab{b}{T} }
+         {\ruleName{Lam}{0}}
+         {\Bhab{\LAM{\V{x}_S}{b}}{\PI{\V{x}}{S}{T}}}
+\\
+%% Variable extraction
+\AxiomSide{\ruleName{Var}{0}}{\Bhab{x}{A} \vdash \Bhab{x}{A}}
+\qquad
+%% Type ascription
+\RuleSide{\Bhab{T}{\SetTop} \quad
+          \Bhab{t}{T}}
+         {\ruleName{Asc}{0}}
+         {\Bhab{(\Bhab{t}{T})}{T}}
+\qquad
+%% Function application
+\RuleSide{\Bhab{f}{\PI{\V{x}}{S}{T}} \quad
+          \Bhab{s}{A}}
+         {\ruleName{App}{0}}
+         {\Bhab{f\: s}{T[s/x]}}
+\\
+%% Conversion
+\RuleSide{\Bhab{M}{A} \quad
+          \Bhab{A \Eq B}{\Set{i}}}
+         {\ruleName{Conv}{0}}
+         {\Bhab{M}{B}}
+\\
+%% Set equality
+\AxiomSide{\ruleName{Set-Eq}{0}}{\Bhab{\Set{i} \Eq \Set{i}}{\SetTop}}
+\\
+%% Variable equality
+\AxiomSide{\ruleName{Var-Eq}{0}}{\Bhab{x}{S} \vdash \Bhab{x \Eq x}{S}}
+\\
+%% Pi equality
+\RuleSide{\Bhab{S_1 \Eq S_2}{\SetTop} \quad
+          \Bhab{x}{S_2} \vdash \Bhab{T_1 \Eq T_2}{\SetTop}}
+         {\ruleName{Pi-Eq}{0}}
+         {\Bhab{\PI{\V{x}}{S_1}{T_1} \Eq 
+                \PI{\V{x}}{S_2}{T_2}}{\SetTop}}
+\\
+%% Function equality
+\RuleSide{\Bhab{x}{S} \vdash \Bhab{f\: x \Eq g\: x}{T}}
+         {\ruleName{Lam-Eq}{0}}
+         {\Bhab{f \Eq g}{\PI{\V{x}}{S}{T}}}
+\\
+%% Application equality
+\RuleSide{\Bhab{f \Eq g}{\PI{\V{x}}{S}{T}} \quad
+          \Bhab{a \Eq b}{S}}
+         {\ruleName{App-Eq}{0}}
+         {\Bhab{f\: a \Eq g\: b}{T[b/x]}}
+\\
+%% Cumulativity
+\RuleSide{\Bhab{M}{A}}
+         {\ruleName{Cuml}{0}}
+         {\Bhab{M}{\Up{}{A}}}
+}
+$$

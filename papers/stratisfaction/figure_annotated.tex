@@ -1,0 +1,83 @@
+\subfigure[Algorithm: push-side]{
+$$
+\stkc{
+%% Form
+\boxed{\Gamma \vdash \pushN{\CN{term}}{3}{\CN{type}}}
+\\
+\\
+%% Set
+\AxiomSide{i < j}{\pushN{\Set{i}}{3}{\Set{j}}}
+\qquad
+%% Arrow
+\Rule{\pushN{S}{3}{\Set{i}} \quad
+      \Bhab{x}{S} \vdash \pushN{T}{3}{\Set{i}}}
+     {\pushN{\PI{\V{x}}{S}{T}}{3}{\Set{i}}}
+\\
+%% Inhabitant of Arrow
+\Rule{\Bhab{x}{S} \vdash \pushN{b}{3}{T} }
+     {\pushN{\LAM{\V{x}}{b}}{3}{\PI{\V{x}}{S}{T}}} 
+}
+$$
+\label{fig:ccomega-algo3-push}
+} \quad
+\subfigure[Algorithm: pull-side]{
+$$
+\stkc{
+%% Form
+\boxed{\Gamma \vdash \pullN{\CN{term}}{3}{\CN{type}}}
+\\
+\\
+%% Variable extraction
+\CAxiom{\Bhab{x}{A} \vdash \pullN{x^{(j)}}{3}{\Up{j}{A}}}
+\qquad
+%% Type ascription
+\Rule{\pushN{T}{3}{\SetTop} \quad
+      \pushN{t}{3}{T}}
+     {\pullN{(\Bhab{t}{^{(j)}T})}{3}{\Up{j}{T}}}
+\\
+%% Function application
+\Rule{\pullN{f^{(j)}}{3}{\PI{\V{x}}{\Up{j}{S}}{\Up{j}{T}}} \quad
+      \pushN{s}{3}{\Up{j}{S}}}
+     {\pullN{{f\: s}^{(j)}}{3}{\Up{j}{T}[s/x]}}
+}
+$$
+\label{fig:ccomega-algo3-pull}
+}
+
+\subfigure[Algorithm: conversion]{
+$$
+\stkc{
+%% Conversion rule
+\Rule{\pullN{e^{(j)}}{3}{\Up{j}{S}} \quad
+      \equalN{\Up{j}{S}}{T}{3}{\SetTop}}
+     {\pushN{e}{3}{T}}
+\\
+\\
+%% Form
+\boxed{\Gamma \vdash \equalN{\CN{term}}{\CN{term}}{3}{\CN{type}}}
+\\
+\\
+%% Set equality
+\CAxiom{\equalN{\Set{i}}{\Set{i}}{3}{\SetTop}}
+\\
+%% Variable equality
+\CAxiom{\Bhab{x}{S} \vdash \equalN{x_i}{x_i}{3}{S}}
+\\
+%% Pi equality
+\Rule{\equalN{S_1}{S_2}{3}{\SetTop} \quad
+      \Bhab{x}{S_2} \vdash \equalN{T_1}{T_2}{3}{\SetTop}}
+     {\equalN{\PI{\V{x}}{S_1}{T_1}} 
+             {\PI{\V{x}}{S_2}{T_2}}{3}{\SetTop}}
+\\
+%% Function equality
+\Rule{\Bhab{x}{S} \vdash \equalN{f\: x}{g\: x}{3}{T}}
+     {\equalN{f}{g}{3}{\PI{\V{x}}{S}{T}}}
+\\
+%% Application equality
+\Rule{\equalN{f}{g}{3}{\PI{\V{x}}{S}{T}} \quad
+      \equalN{a}{b}{3}{S}}
+     {\equalN{f\: a}{g\: b}{3}{T[b/x]}}
+}
+$$
+\label{fig:ccomega-algo3-conv}
+}

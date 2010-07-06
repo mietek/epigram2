@@ -1,0 +1,134 @@
+\subfigure[Push-side]{
+%%
+\stkc{
+%% Form
+\boxed{\Gamma \vdash \pushN{\CN{term}}{5}{\redb{\CN{type}}}, k}
+\\
+\\
+%% Set
+\CAxiom{\pushN{\Set{i}}{5}{\redb{\Set{j}}}, j - i - 1}
+\\
+%% Pi
+\Rule{\pushN{S}{5}{\redb{\Set{i}}}, k_1 \quad
+      \Bhab{x}{\redb{S}} \vdash \pushN{T}{5}{\redb{\Set{i}}}, k_2}
+     {\pushN{\PI{\V{x}}{S}{T}}{5}{\redb{\Set{i}}}, \min k_1 k_2}
+\\
+%% Inhabitant of Pi
+\Rule{\Bhab{x}{\redb{S}} \vdash \pushN{b}{5}{\redb{T}}, k }
+     {\pushN{\LAM{\V{x}}{b}}{5}{\redb{\PI{\V{x}}{S}{T}}}, k} 
+\\
+%% Conversion rule
+\Rule{\pullN{e}{5}{\greenb{\Up{j}{S}}{j}{k}} \quad
+      \equalN{\greenb{S}{j}{k}}
+             {\redb{T}}
+             {5}
+             {\blueb{\SetTop}}, j = k_1}
+     {\pushN{e}{5}{\redb{T}}, 0}
+}
+$$
+}
+\subfigure[Pull-side]{
+$$
+\stkc{
+%% Form
+\boxed{\Gamma \vdash \pullN{\CN{term}}{5}{\greenb{\CN{type}}{j}{k}}}
+\\
+\\
+%% Var
+\CAxiom{\Bhab{x}{\redb{T}} \vdash \pullN{x}{5}{\greenb{\Up{j}{\redb{T}}}{j}{k}}} 
+\\
+%% Type ascription
+\RuleSide{\pushN{T}{5}{\blueb{\SetTop}},k_1 \quad
+          \pushN{t}{5}{\redb{T}},k_2}
+         {k_1 \geq 0, k_2 \geq 0}
+         {\pullN{(\Bhab{t}{\redb{T}})}{5}{\greenb{\Up{j}{T}}{j}{k}}}
+\\
+%% Function application
+\RuleSide{\pullN{f}{5}{\greenb{\PI{\V{x}}{\greenb{\Up{j}{S}}{j}{k}}{\greenb{\Up{j}{T}}{j}{k}}}{j}{k}} \quad
+          \pushN{s}{5}{\redb{\greenb{\Up{j}{S}}{j=0}{k}}}, l}
+         {l' = \min l\: 0}
+         {\pullN{f\: s}{5}{\greenb{\Up{j}{T}[\blackb{s}/x]}{j}{k-l'}}}
+}
+$$
+}
+
+\subfigure[Conversion rules]{
+$$
+\stkc{
+%% Form
+\boxed{\Gamma \vdash \equalN{\greenb{\CN{term}}{l}{k}}
+                            {\redb{\CN{term}}}
+                            {5}
+                            {\blueb{\CN{type}}}, j = k_1}
+\\
+\\
+%% Set equality
+\stkc{
+\AxiomSide{k_1 = l}
+          {\equalN{\greenb{\Set{k_1}}{j}{k}}
+                  {\redb{\Set{l}}}
+                  {5}
+                  {\blueb{\SetTop}}, .}
+\qquad
+\AxiomSide{l - k_1 \geq 0}
+          {\equalN{\greenb{\Set{j+k_1}}{j}{k}}
+                  {\redb{\Set{l}}}
+                  {5}
+                  {\blueb{\SetTop}}, j = l - k_1}
+}
+\\
+%% Variable equality
+\stkc{
+\AxiomSide{k_1 = l}
+          {\Bhab{x}{\blueb{S}} \vdash \equalN{\greenb{x_{k_1}}{j}{l}}
+                                             {\redb{x_l}}
+                                             {5}
+                                             {\blueb{S}}, .}
+\quad
+\AxiomSide{l - k_1 \geq 0}
+          {\Bhab{x}{\blueb{S}} \vdash \equalN{\greenb{x_{j+k_1}}{j}{k}}
+                                             {\redb{x_l}}
+                                             {5}
+                                             {\blueb{S}}, j = l - k_1}
+\\
+%% Pi equality
+\Rule{\equalN{\greenb{S_1}{j}{k}}
+             {\redb{S_2}}
+             {5}
+             {\blueb{\SetTop}}, j = k_1 \quad
+      \Bhab{x}{\redb{S_2}} \vdash \equalN{\greenb{T_1}{j}{k}}
+                                         {\redb{T_2}}
+                                         {5}
+                                         {\blueb{\SetTop}}, j = k_1}
+     {\equalN{\greenb{\PI{\V{x}}{\greenb{S_1}{j}{k}}{\greenb{T_1}{j}{k}}}{j}{k}}
+             {\redb{\PI{\V{x}}{\redb{S_2}}{\redb{T_2}}}}
+             {5}
+             {\blueb{\SetTop}}, j = k_1}
+\\
+%% Function equality
+\Rule{\Bhab{x}{\blueb{S}} \vdash \equalN{\greenb{f}{j}{k}\: x}
+                                        {\redb{g}\: x}
+                                        {5}
+                                        {\blueb{T}}, j = k_1 }
+     {\equalN{\greenb{f}{j}{k}}
+             {\redb{g}}
+             {5}
+             {\blueb{\PI{\V{x}}{S}{T}}}, j = k_1}
+\\
+%% Application equality
+\Rule{\equalN{\greenb{f}{j}{k}}
+             {\redb{g}}
+             {5}
+             {\blueb{\PI{\V{x}}{S}{T}}}, j = k_1 \quad
+      \equalN{\greenb{a}{j}{k}}
+             {\redb{b}}
+             {5}
+             {\blueb{S}}, j = k_1}
+     {\equalN{\greenb{\greenb{f}{j}{k}\: \greenb{a}{j}{k}}{j}{k}}
+             {\redb{\redb{g}\: \redb{b}}}
+             {5}
+             {\blueb{T[\redb{b}/x]}}, j = k_1}
+}
+}
+$$
+}
