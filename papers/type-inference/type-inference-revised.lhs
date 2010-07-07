@@ -353,7 +353,7 @@ $$\hole{\alpha}, \hole{\beta}, \gamma \defn \alpha \arrow \beta$$
 is valid, but the context
 $$\alpha \defn \beta, \hole{\beta}$$
 is not, because $\beta$ is not in scope for the definition of $\alpha$.
-This linearisation of the dependency graph means that we should keep context
+This topological sorting of the dependency graph means that we should keep context
 entries as far to the right as possible to retain maximum generality.
 
 The definitions in the context induce an equational theory on types, starting
