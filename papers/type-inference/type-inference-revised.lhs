@@ -525,8 +525,11 @@ defining $\beta \defn \alpha$.
 
 \section{Modelling contexts and statements}
 
+Having seen an implementation of unification, let us try to understand it.
 Let $\K$ be a set of \define{sorts}, and for each $K \in \K$ let $\V_K$ be a
 set of variables and $\D_K$ a set of \define{properties}.
+(We frequently index by $\K$ and omit the subscript if it is obvious from the
+context.)
 We have already seen the sort $\TY$, where
 $\V_\TY$ is some set of type variables and $\D_\TY$ contains
 the \scare{unknown variable} property $~\hole{}$ and \scare{defined variable}
@@ -536,6 +539,7 @@ A \define{context} is a list of \define{declarations} $\decl{x}{D}$, with
 $x \in \V_K$ and $D \in \D_K$.
 The empty context is written $\emptycontext$. 
 We let $\Gamma, \Delta, \Theta$ range over contexts.
+We write $\V_K(\Gamma)$ for the set of variables of $\Gamma$ with sort $K$.
 
 We will build a set $\Ss$ of \define{statements}, assertions which can be judged
 in contexts. For now, the grammar of statements will be
@@ -549,13 +553,12 @@ $\tau$ and $\upsilon$ are equivalent, and both conjuncts hold. \TODO{Tabulate?}
 
 A statement has zero or more
 \define{parameters}, each of which has an associated \define{sanity condition}, 
-a statement which must hold in the context for the original statement to make
+a statement that must hold for the original statement to make
 sense. We have already seen the type equivalence statement
 $\tau \equiv \upsilon$: the sanity
-conditions for $\tau$ and $\upsilon$ are $\tau \type$ and $\upsilon \type$,
-respectively. These require that the parameters are well-defined types. Sanity
-conditions capture what must be true of the context in order to be able to ask
-the question ``does this statement hold?''
+condition for $\tau$ is $\tau \type$ and for $\upsilon$ it is $\upsilon \type$.
+Sanity conditions capture what must be true of the context in order to be able
+to ask the question ``does this statement hold?''
 
 Each declaration in the context causes some statement to hold. For each
 $K \in \K$, we maintain a map $\sem{\cdot}_K : \V_K \times \D_K \rightarrow \Ss$
@@ -567,7 +570,7 @@ declaration $\decl{x}{D}$ in the context. For type variables, we define
 \sem{\alpha \defn \tau} &= \alpha \type \wedge \alpha \equiv \tau
 \end{align*}
 
-We can look up the context in proofs using the inference rule
+We can inspect the context in derivations using the inference rule
 $$\name{Lookup}
   \Rule{\decl{x}{D} \in \Gamma}
        {\Gamma \entailsN \sem{\decl{x}{D}}}.$$
@@ -582,7 +585,7 @@ applied variables. We embed neutral into normal:
 $$\name{Neutral}
   \Rule{\entailsN S}
        {\entails S}.$$
-As the context is constant throughout, it is omitted.
+As the context is constant throughout, it is omitted here and elsewhere.
 
 \subsection{Validity of contexts}
 
@@ -601,7 +604,8 @@ embeds properties in statements. For type properties:
 Now we can define the context validity statement
 $\valid$ as shown in Figure~\ref{fig:contextValidityRules}.
 From now on we will implicitly assume that all contexts we work with are valid,
-and will ensure that we only construct valid contexts.
+and will ensure that we only construct valid contexts. Mostly we will ignore the
+issue of fresh names, since a simple counter suffices for our purposes.
 
 \begin{figure}[ht]
 \boxrule{\Gamma \entails \valid}
@@ -615,6 +619,8 @@ $$
 \caption{Rules for context validity}
 \label{fig:contextValidityRules}
 \end{figure}
+
+\TODO{Example of a context validity derivation?}
 
 
 \subsection{Rules for types and conjunctions}
@@ -642,7 +648,8 @@ forms for composite statements, but supply
 eliminators only for composite \emph{hypotheses}, in effect forcing
 derivations to be cut-free. This facilitates reasoning by induction on
 derivations. We shall ensure that the corresponding elimination rules
-for \emph{normal} judgments are in any case admissible.
+for \emph{normal} judgments are in any case admissible. This is clearly the
+case for conjunction.
 
 
 \section{Information and stable statements}
@@ -664,10 +671,14 @@ We write $\subst{\tau}{\alpha}{}$ for the substitution that maps
 $\alpha$ to $\tau$ and other variables to themselves.
 
 Given a substitution $\delta$ from $\Gamma$ to $\Delta$, 
-we write  $\delta : \Gamma \lei \Delta$ and say 
+we write the \define{information increase} $\delta : \Gamma \lei \Delta$ and say 
 \define{$\Delta$ is more informative than $\Gamma$} if 
 for all $\decl{x}{D} \in \Gamma$, we have 
 $\Delta \entails \delta \sem{\decl{x}{D}}$. 
+We may omit $\delta$ and write $\Gamma \lei \Delta$ if we are only interested
+in the existence of a suitable substitution. This relation between contexts
+ensures that $\Delta$ supports all the statements corresponding to declarations
+in $\Gamma$. 
 
 We write $\delta \eqsubst \theta : \Gamma \lei \Delta$ if
 $\delta : \Gamma \lei \Delta$, $\theta : \Gamma \lei \Delta$
@@ -679,11 +690,6 @@ It is straightforward to verify that $\eqsubst$ is an equivalence relation
 for fixed contexts $\Gamma$ and $\Delta$, and that if
 $\delta \eqsubst \theta$ then
 $\Delta \entails \delta\tau \equiv \theta\tau$ for any $\Gamma$-type $\tau$.
-
-We may omit $\delta$ and write $\Gamma \lei \Delta$ if we are only interested
-in the existence of a suitable substitution. This relation between contexts
-captures the notion of \define{information increase}: $\Delta$ supports all the
-statements corresponding to declarations in $\Gamma$. 
 
 This partial order on contexts is not yet sufficient, because it places no 
 constraints on the order of context entries beyond the dependency order of
@@ -707,23 +713,34 @@ and is invariant under substitution, so it is clearly stable.
 
 We have a standard strategy for proving stability of most statements, which is
 effective by construction. In each case we proceed by induction on the structure
-of derivations. Where the \textsc{Lookup} rule is applied, stability holds by 
-definition of information increase. Otherwise, for rules 
-not referring to the context, we verify that non-recursive hypotheses are stable
+of derivations. Where the \textsc{Neutral} rule is applied, stability holds by 
+the following lemma. Otherwise, for rules not referring to the context, we verify
+that non-recursive hypotheses are stable
 and that recursive hypotheses occur in strictly positive positions, so 
 are stable by induction. Applying this strategy shows that both 
 $\tau \type$ and $\tau \equiv \upsilon$ are stable.
+
+\begin{lemma}[Neutrality]\label{lem:neutrality}
+If $\Gamma \entailsN S$ and $\delta : \Gamma \lei \Delta$ then
+$\Delta \entails \delta S$.
+\end{lemma}
+\begin{proof}
+By structural induction on derivations. If the proof is by \textsc{Lookup}, then
+the result holds by definition of information increase. Otherwise, the proof is
+by a neutral elimination rule, so the result follows by induction and
+admissibility of the corresponding normal elimination rule.
+\end{proof}
 
 \begin{lemma}[Conjunction preserves stability]\label{lem:stab-pres-conj}
 If $S$ and $S'$ are stable then $S \wedge S'$ is stable.
 \end{lemma}
 \begin{proof}
-Suppose $\delta : \Gamma \lei \Delta$, the statements $S$ and $S'$ are stable
-and $\Gamma \entails (S \wedge S')$. If the proof is by \textsc{Lookup}
-then $\Delta \entails \delta (S \wedge S')$ by definition of information
-increase. Otherwise $\Gamma \entails S$ and $\Gamma \entails S'$,
-so by stability, $\Delta \entails \delta S$ and $\Delta \entails \delta S'$, so
-$\Delta \entails \delta (S \wedge S')$.
+Suppose $\delta : \Gamma \lei \Delta$, the statements $S$ and $S'$ are stable,
+and $\Gamma \entails (S \wedge S')$. If the proof is by \textsc{Neutral}
+then $\Delta \entails \delta (S \wedge S')$ by Lemma~\ref{lem:neutrality}.
+Otherwise $\Gamma \entails S$ and $\Gamma \entails S'$,
+so by stability, $\Delta \entails \delta S$ and $\Delta \entails \delta S'$, 
+and hence $\Delta \entails \delta (S \wedge S')$.
 \end{proof}
 
 \begin{lemma}\label{lei:preorder}
@@ -736,7 +753,8 @@ $$\delta : \Gamma \lei \Delta  ~~\text{and}~~  \theta : \Delta \lei \Theta
 \end{lemma}
 
 \begin{proof}
-Reflexivity follows immediately from the \textsc{Lookup} rule.
+Reflexivity follows immediately by applying the \textsc{Lookup} and
+\textsc{Neutral} rules.
 For transitivity, suppose $\decl{x}{D} \in \Gamma$,
 then $\Delta \entails \delta \sem{\decl{x}{D}}$ since
 $\delta : \Gamma \lei \Delta$.
@@ -1041,7 +1059,7 @@ and $\theta\tau$ is not a variable.
 
 Since $\alpha$ is a variable but $\tau$ is not, neither reflexivity nor the
 structural rule apply. Symmetry and transitivity do not apply because their
-hypotheses cannot be satisifed.
+hypotheses cannot be satisfied.
 
 By the well-formedness conditions for contexts, if
 $\alpha \defn \upsilon \in \Gamma$ then $\alpha \notin \FTV{\upsilon}$, so
@@ -1097,12 +1115,19 @@ $$
 $$
 and neutral elimination rule
 $$
-\Rule{\Gamma \entailsN \Sbind{\alpha D}{S}
+\Rule{\entailsN \Sbind{\alpha D}{S}
       \quad
-      \Gamma \entails \subst{\tau}{\alpha}{\sem{\alpha D}}}
-     {\Gamma \entailsN \subst{\tau}{\alpha}{S}}
+      \entails \subst{\tau}{\alpha}{\sem{\decl{\alpha}{D}}}}
+     {\entailsN \subst{\tau}{\alpha}{S}}
 \side{D \in \D_\TY}
-$$
+.$$
+The corresponding normal rule is admissible: if
+$\Gamma \entails \Sbind{\decl{\alpha}{D}}{S}$ by the introduction rule, then
+$\Gamma, \decl{\alpha}{D} \entails S$.
+But $\Gamma \entails \subst{\tau}{\alpha}{\sem{\decl{\alpha}{D}}}$
+implies $\subst{\tau}{\alpha} : \Gamma, \alpha D \lei \Gamma$
+and hence $\Gamma \entails \subst{\tau}{\alpha} S$ by stability.
+As a consequence, Lemma~\ref{lem:neutrality} still holds.
 
 \begin{lemma}[Binding preserves stability]\label{lem:stab-pres-bind}
 If $\decl{x}{D}$ is a declaration and both $\ok_K D$ and $S$ are stable, then
@@ -1110,8 +1135,8 @@ $\Sbind{\decl{x}{D}}{S}$ is stable.
 \end{lemma}
 \begin{proof}
 Suppose $\delta : \Gamma \lei \Delta$, the statement $S$ is stable and
-$\Gamma \entails \Sbind{\decl{x}{D}}{S}$.  If the proof is by \textsc{Lookup}
-then $\Delta \entails \delta S$ by definition of information increase.
+$\Gamma \entails \Sbind{\decl{x}{D}}{S}$.  If the proof is by \textsc{Neutral}
+then the result follows by Lemma~\ref{lem:neutrality}.
 Otherwise, $\Gamma \entails \ok_K D$ and
 $\Gamma, \decl{x}{D} \entails S$, so by stability, $\Delta \entails \delta (\ok_K D)$.
 % Let $\delta' = \subst{x}{x}{\delta}$, then
@@ -1254,8 +1279,8 @@ $$
 
 \subsection{Problems with outputs}
 
-The type inference problem is given by the statement $t : \tau$. 
-However, a crucial difference from our previous work is that the type should
+The type inference problem is given by the statement $t : \tau$. However,
+a crucial difference from the unification problem is that the type should
 be an output of problem-solving, along with the solution context. We need to
 generalise our definition of problems. We associate a \define{mode}
 with each parameter, either \scare{input} or \scare{output}. A \define{problem}
