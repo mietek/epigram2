@@ -67,8 +67,8 @@
 > prettyErrorTok :: ErrorTok DInTmRN -> Doc
 > prettyErrorTok (StrMsg s)              = text s
 > prettyErrorTok (ErrorTm    (v :<: _))  = pretty v maxBound
-> prettyErrorTok (ErrorCan   (v :<: _))  = pretty v maxBound
-> prettyErrorTok (ErrorElim  (e :<: _))  = pretty e maxBound
+> prettyErrorTok (ErrorCan   v)  = pretty v maxBound
+> prettyErrorTok (ErrorElim  e)  = pretty e maxBound
 
 The following cases should be avoided as much as possible:
 

@@ -223,7 +223,7 @@ the distilled spine and the overall type of the application.
 > distillSpine entries  (v :<: ty)    spine      = throwError' $
 >     err "distillSpine: cannot cope with" ++ errTyVal (v :<: ty)
 >     ++ err "which has non-canonical type" ++ errTyVal (ty :<: SET)
->     ++ err "applied to spine" ++ map (ErrorElim . (:<: Nothing)) spine
+>     ++ err "applied to spine" ++ map ErrorElim spine
 
 
 The |toDExTm| helper function will distill a term to produce an |Ex|

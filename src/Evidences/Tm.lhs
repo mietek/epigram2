@@ -640,16 +640,16 @@ following to make it suit your need.
 
 > data ErrorTok t = StrMsg String
 >                 | ErrorTm       (t       :<: Maybe t)
->                 | ErrorCan      (Can t   :<: Maybe t)
->                 | ErrorElim     (Elim t  :<: Maybe t)
+>                 | ErrorCan      (Can t)
+>                 | ErrorElim     (Elim t)
 >                 | ErrorREF REF
 >                 | ErrorVAL      (VAL     :<: Maybe TY)
 
 > instance Functor ErrorTok where 
 >     fmap f (StrMsg x)              = StrMsg x
 >     fmap f (ErrorTm (t :<: mt))    = ErrorTm (f t :<: fmap f mt)
->     fmap f (ErrorCan (t :<: mt))   = ErrorCan (fmap f t :<: fmap f mt)
->     fmap f (ErrorElim (t :<: mt))  = ErrorElim (fmap f t :<: fmap f mt)
+>     fmap f (ErrorCan t)   = ErrorCan (fmap f t)
+>     fmap f (ErrorElim t)  = ErrorElim (fmap f t)
 >     fmap f (ErrorREF r)            = ErrorREF r
 >     fmap f (ErrorVAL (t :<: mt))   = ErrorVAL (t :<: mt)
 
@@ -673,14 +673,11 @@ To ease the writing of error terms, we have a bunch of combinators:
 > err :: String -> ErrorItem t
 > err s = [StrMsg s]
 
-> errTyTm :: (t :<: t) -> ErrorItem t
-> errTyTm (t :<: ty) = [ErrorTm (t :<: Just ty)]
-
 > errTm :: t -> ErrorItem t
 > errTm t = [ErrorTm (t :<: Nothing)]
 
 > errCan :: Can t -> ErrorItem t
-> errCan t = [ErrorCan (t :<: Nothing)]
+> errCan t = [ErrorCan t]
 
 > errTyVal :: (VAL :<: VAL) -> ErrorItem t
 > errTyVal (t :<: ty) = [ErrorVAL (t :<: Just ty)]
@@ -689,7 +686,7 @@ To ease the writing of error terms, we have a bunch of combinators:
 > errVal t = [ErrorVAL (t :<: Nothing)]
 
 > errElim :: Elim t -> ErrorItem t
-> errElim t = [ErrorElim (t :<: Nothing)]
+> errElim t = [ErrorElim t]
 
 > errRef :: REF -> ErrorItem t
 > errRef r = [ErrorREF r]
@@ -698,8 +695,8 @@ To ease the writing of error terms, we have a bunch of combinators:
 > convertErrorVALs :: ErrorTok VAL -> ErrorTok t
 > convertErrorVALs (StrMsg s)             = StrMsg s
 > convertErrorVALs (ErrorTm tt)           = ErrorVAL tt
-> convertErrorVALs (ErrorCan (c :<: t))   = ErrorVAL (C c :<: t)
-> convertErrorVALs (ErrorElim (e :<: t))  = StrMsg $ "ErrorElim " ++ show e
+> convertErrorVALs (ErrorCan c)           = ErrorVAL (C c :<: Nothing)
+> convertErrorVALs (ErrorElim e)          = StrMsg $ "ErrorElim " ++ show e
 > convertErrorVALs (ErrorREF r)           = ErrorREF r
 > convertErrorVALs (ErrorVAL tt)          = ErrorVAL tt
 
