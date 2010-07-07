@@ -1300,10 +1300,147 @@ and $\Theta \entails \zeta\vec{p} \equiv \vec{q}$.
 Thus the type inference problem is given by a context $\Gamma$ and the
 statement $t : ~?$ where $t$ is a term and $?$ represents the output parameter.
 
-
 \TODO{Optimist's lemma a la mode}
 
-\subsection{Understanding 'declare before use' and fatsemi}
+
+\subsection{Preserving order in the context}
+
+We have previously observed, but not yet exploited, the importance of
+declaration order in the context, and that we move declarations left as
+little as possible. Thus rightmost entries are those most local to the problem
+we are solving. This will be useful when we come to implement type inference
+for the |Let| construct, as we want to generalise over \scare{local} type
+variables but not \scare{global} variables.
+
+In order to keep track of locality in the context, we need another kind of
+context entry: the $\fatsemi$ separator. We add a new validity rule 
+$$
+\Rule{\Gamma \entails \valid}
+     {\Gamma \fatsemi \entails \valid}.
+$$
+
+We also refine the $\lei$ relation.
+Let $\semidrop$ be the partial function from contexts and natural numbers to
+contexts taking $\Gamma \semidrop n$ to $\Gamma$ truncated after $n$
+$\fatsemi$ separators, provided $\Gamma$ contains at least $n$ such: 
+\begin{align*}
+\Xi \semidrop 0 &= \Xi  \\
+\Xi \fatsemi \Gamma \semidrop 0 &= \Xi  \\
+\Xi \fatsemi \Gamma \semidrop n+1 &= \Xi \fatsemi (\Gamma \semidrop n)  \\
+\Xi \semidrop n+1 &~\mathrm{undefined}
+\end{align*}
+
+We write $\delta : \Gamma \lei \Delta$ if $\delta$ is a
+substitution from $\Gamma$ to $\Delta$ such that, for all 
+$\decl{x}{D} \in \Gamma \semidrop n$, we have that
+$\Delta \semidrop n$ is defined and 
+$\Delta \semidrop n \entails \delta \sem{\decl{x}{D}}$.
+
+This definition of $\Gamma \lei \Delta$ is stronger than the previous one, 
+because it requires the $\fatsemi$-separated sections of $\Gamma$ and $\Delta$ 
+to correspond in such a way that 
+declarations in the first $n$ sections of
+$\Gamma$ can be interpreted over the first $n$ sections of $\Delta$.
+However, it is fairly straightforward to verify that the previous results 
+hold for the new definition.
+
+Note that if $\delta : \Gamma \fatsemi \Gamma' \lei \Delta \fatsemi \Delta'$,
+where $\Gamma$ and $\Delta$ contain the same number of $\fatsemi$ separators,
+then $\delta||_{\tyvars{\Gamma}} : \Gamma \lei \Delta$.
+\TODO{Is this what we want for the generalist's lemma?}
+
+
+\subsection{Fixing the unification algorithm}
+
+The only place where changing the $\lei$ relation requires extra work is in the
+unification algorithm,
+because it acts structurally over the context, so we need to specify what happens
+when it finds a $\fatsemi$ separator. 
+In fact it suffices to add the following algorithmic rules:
+$$
+\name{Skip}
+\Rule{\Junify{\Gamma_0}{\alpha}{\beta}{\Delta_0}}
+     {\Junify{\Gamma_0 \fatsemi}{\alpha}{\beta}{\Delta_0 \fatsemi}}
+$$
+$$
+\name{Repossess}
+\Rule{\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\Xi}{\Delta_0}}
+     {\Jinstantiate{\Gamma_0 \fatsemi}{\alpha}{\tau}{\Xi}{\Delta_0 \fatsemi}}
+$$
+Proving correctness of the \textsc{Skip} rule is relatively straightforward,
+thanks to the following lemma.
+
+\begin{lemma}
+\TODO{Update this.}
+If $\delta : \Jmin{\Gamma}{\Prob{P}{a}{b}}{\Delta}$ then
+$\delta : \Jmin{\Gamma \fatsemi}{\Prob{P}{a}{b}}{\Delta \fatsemi}$.
+\end{lemma}
+
+The \textsc{Repossess} rule is so named because it moves
+declarations in $\Xi$ to the left of the $\fatsemi$ separator,
+thereby \scare{repossessing} them. Despite such complications, 
+unification still yields a most general solution:
+
+\begin{lemma}[Soundness and generality of \textsc{Repossess} rule]
+\TODO{Update this.}
+If $\Jinstantiate{\Gamma \fatsemi}{\alpha}{\tau}{\Xi}{\Delta \fatsemi}$
+then $\tyvars{\Gamma \fatsemi \Xi} = \tyvars{\Delta \fatsemi}$ and
+$\iota : \Jmin{\Gamma \fatsemi \Xi}{\Puni{\alpha}{\tau}}{\Delta \fatsemi}$.
+\end{lemma}
+\begin{proof}
+Suppose $\Jinstantiate{\Gamma \fatsemi}{\alpha}{\tau}{\Xi}{\Delta \fatsemi}$,
+so $\Jinstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$ as only the
+\textsc{Repossess} rule applies.
+By induction and lemma~\ref{lem:unifySound},
+$\tyvars{\Gamma, \Xi} = \tyvars{\Delta}$ and
+$\iota : \Jmin{\Gamma, \Xi}{\Puni{\alpha}{\tau}}{\Delta}$.
+\TODO{Explain the induction and use of Lemma~\ref{lem:unifyComplete} for minimality.}
+
+For the first part, we have
+$$\tyvars{\Gamma \fatsemi \Xi} = \tyvars{\Gamma, \Xi} = \tyvars{\Delta}
+    = \tyvars{\Delta \fatsemi}.$$
+
+For the second part, since $\iota : \Gamma, \Xi \lei \Delta$ we have
+$\iota : \Gamma \fatsemi \Xi \lei \Delta \fatsemi$,
+and $\Delta \entails \alpha \equiv \tau$ so
+$\Delta \fatsemi \entails \alpha \equiv \tau$.
+
+For minimality, suppose
+$\theta : \Gamma \fatsemi \Xi \lei \Theta \fatsemi \Phi$
+and $\Theta \fatsemi \Phi \entails \theta\alpha \equiv \theta\tau$.
+Observe that  $\alpha \in \tyvars{\Gamma}$ and
+$\beta \in \tyvars{\Xi}  \Rightarrow  \beta \in \FTV{\tau, \Xi}$
+by the sanity conditions.
+Now $\theta\alpha$ is a $\Theta$-type and $\theta\tau$ is equal to it,
+so the only declarations in $\Phi$ that $\theta\tau$ (hereditarily) depends on
+must be definitions over $\Theta$. But all the variables declared in $\Xi$ are
+used in $\tau$, so there is a substitution
+$\psi : \Gamma \fatsemi \Xi \lei \Theta \fatsemi$
+that agrees with $\theta$ on $\Gamma$ and maps variables in $\Xi$ to their
+definitions in $\Theta$.
+Note that $\psi \eqsubst \theta : \Gamma \fatsemi \Xi \lei \Theta \fatsemi \Phi$.
+
+% Now we can filter $\Phi$ to give $\Psi$ consisting only of definitions
+% such that $\Theta \fatsemi \Psi \entails \theta\alpha \equiv \theta\tau$.
+% Let $\psi = \lfloor \Psi \rfloor \compose \theta$, then
+% $\psi : \Gamma \fatsemi \Xi \lei \Theta \fatsemi$
+% and $\Theta \fatsemi \entails \psi\alpha \equiv \psi\tau$.
+
+Hence $\psi : \Gamma, \Xi \lei \Theta$ and
+$\Theta \entails \psi\alpha \equiv \psi\tau$, so by hypothesis there exists
+$\zeta : \Delta \lei \Theta$ such that
+$\psi \eqsubst \zeta \compose \iota : \Gamma, \Xi \lei \Theta$.
+Then $\zeta : \Delta \fatsemi \lei \Theta \fatsemi \Phi$
+and
+$\psi \eqsubst \zeta \compose \iota :
+    \Gamma \fatsemi \Xi \lei \Theta \fatsemi \Phi$,
+so
+$\theta \eqsubst \zeta \compose \iota :
+    \Gamma \fatsemi \Xi \lei \Theta \fatsemi \Phi$.
+\end{proof}
+
+
+
 
 \TODO{Generalist's lemma}
 
