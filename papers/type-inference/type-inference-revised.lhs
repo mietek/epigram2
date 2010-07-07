@@ -1279,10 +1279,10 @@ $$
 
 \subsection{Problems with outputs}
 
-The type inference problem is given by the statement $t : \tau$. However,
+Type inference involves making the statement $t : \tau$ hold. However,
 a crucial difference from the unification problem is that the type should
-be an output of problem-solving, along with the solution context. We need to
-generalise our definition of problems. We associate a \define{mode}
+be an \emph{output} of problem-solving, along with the solution context. We need
+a more liberal definition of problems. We associate a \define{mode}
 with each parameter, either \scare{input} or \scare{output}. A \define{problem}
 is then a pair $(\Gamma, S)$ where $\Gamma$ is a context and $S$ is a statement
 whose input parameters are specified and satisfy their sanity conditions.
@@ -1299,6 +1299,8 @@ and $\Theta \entails \zeta\vec{p} \equiv \vec{q}$.
 
 Thus the type inference problem is given by a context $\Gamma$ and the
 statement $t : ~?$ where $t$ is a term and $?$ represents the output parameter.
+A solution is then an information increase $\delta : \Gamma \lei \Delta$ and a
+type $\tau$ such that $\Delta \entails \tau \type \wedge t : \tau$.
 
 \TODO{Optimist's lemma a la mode}
 
@@ -1442,8 +1444,18 @@ $\theta \eqsubst \zeta \compose \iota :
 
 
 
-\TODO{Generalist's lemma}
-
+\begin{lemma}[The Generalist's lemma]
+\label{lem:generalist}
+If $\Jmin{\Gamma \fatsemi \Gamma'}{S}{\Delta \fatsemi \Delta'}$, where
+$\forget{\Gamma} = \forget{\Delta}$ and $\forget{\Gamma'} = \forget{\Delta'}$,
+then $\Jmin{\Gamma}{\Sbind{\Delta'}{S}}{\Delta}$.
+\TODO{Define $\forget{\cdot}$.}
+\TODO{It's not quite clear what this means for problem outputs. Is $\Delta'$ an
+output? It cannot contain any semicolons.}
+\end{lemma}
+\begin{proof}
+\TODO{Prove this.}
+\end{proof}
 
 
 \subsection{Transforming the rule system for type assignment}
