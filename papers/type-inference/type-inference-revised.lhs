@@ -63,6 +63,17 @@
 %format _Xi0
 %format _Xi1
 
+\newcommand{\ident}[1]{\textrm{#1}}
+%format fresh         = "\ident{fresh}"
+%format getContext    = "\ident{getContext}"
+%format putContext    = "\ident{putContext}"
+%format modifyContext = "\ident{modifyContext}"
+%format onTop         = "\ident{onTop}"
+%format restore       = "\ident{restore}"
+%format replace       = "\ident{replace}"
+%format unify         = "\ident{unify}"
+%format solve         = "\ident{solve}"
+
 \usepackage{color}
 \definecolor{red}{rgb}{1.0,0.0,0.0}
 \newcommand{\TODO}[1]{\NotForPublication{\textcolor{red}{#1}}}
@@ -81,7 +92,7 @@
 \newcommand{\scheme}{\ensuremath{~\mathbf{scheme}}}
 \newcommand{\valid}{\ensuremath{\mathbf{valid}}}
 \newcommand{\ok}{\ensuremath{~\mathbf{ok}}}
-\newcommand{\emptycontext}{\ensuremath{\varepsilon}}
+\newcommand{\emptycontext}{\ensuremath{\mathcal{E}}}
 \newcommand{\letGoal}{\ensuremath{\fatsemi}}
 \newcommand{\letIn}[3]{\ensuremath{\mathrm{let}~ #1 \!:=\! #2 ~\mathrm{in}~ #3}}
 \newcommand{\letS}[3]{\ensuremath{(!#1 \!:=\! #2 ~\mathrm{in}~ #3)}}
@@ -440,8 +451,7 @@ defining $\beta \defn \alpha$.
 
 \begin{minipage}[c]{0.5\linewidth}
 
-\subfigure[][Types, type variables, occur check]{
-\frame{\parbox{\textwidth}{\fixpars\medskip
+\subfigure[][Types, type variables, occur check]{\frame{\parbox{\textwidth}{\fixpars\medskip
 
 > data Ty a  =  V a |  Ty a :-> Ty a
 >     deriving (Functor, Foldable)
@@ -556,7 +566,8 @@ defining $\beta \defn \alpha$.
 \subfigure[][Unification]{\frame{\parbox{\linewidth}{\fixpars\medskip
 
 > unify :: Type -> Type -> Contextual ()
-> unify (V alpha) (V beta) = onTop $
+> unify (tau0 :-> tau1)  (upsilon0 :-> upsilon1)  = unify tau0 upsilon0 >> unify tau1 upsilon1
+> unify (V alpha)        (V beta)                 = onTop $
 >   \ (gamma := d) -> case
 >           (gamma == alpha,  gamma == beta,  d         ) of
 >           (True,            True,           _         )  ->  restore                                 
@@ -567,14 +578,12 @@ defining $\beta \defn \alpha$.
 >           (False,           False,          _         )  ->  unify (V alpha)  (V beta)  >> restore   
 > unify (V alpha)        tau                               =   solve alpha F0 tau
 > unify tau              (V alpha)                         =   solve alpha F0 tau    
-> unify (tau0 :-> tau1)  (upsilon0 :-> upsilon1)           =   unify tau0 upsilon0 >> unify tau1 upsilon1
 
 > solve :: TyName -> Suffix -> Type -> Contextual ()
 > solve alpha _Xi tau = onTop $
->   \ (gamma := d) -> 
->     let occurs = gamma <? tau || gamma <? _Xi in case
+>   \ (gamma := d) -> let occurs = gamma <? tau || gamma <? _Xi in case
 >     (gamma == alpha,  occurs,  d             ) of
->     (True,            True,    _             )  ->  fail "Occur check failed"
+>     (True,            True,    _             )  ->  fail "Occurence detected!"
 >     (True,            False,   Hole          )  ->  replace (_Xi <+> (alpha := Some tau :> F0))
 >     (True,            False,   Some upsilon  )  ->  modifyContext (<>< _Xi)
 >                                                 >>  unify upsilon tau
@@ -589,7 +598,7 @@ defining $\beta \defn \alpha$.
 
 \end{minipage}
 
-\caption{Code for unification}
+\caption{Haskell implementation of unification}
 \label{fig:unifyCode}
 \end{figure*}
 
@@ -608,7 +617,8 @@ Figure~\ref{subfig:contextCode} defines context entries, contexts and suffixes.
 The types |Bwd| and |Fwd| are backwards and forwards lists
 with |B0| for both empty lists and |:<| and |:>| for snoc and cons respectively.
 Lists are monoids with the append operator |<+>|, and the \scare{fish}
-operator |(<><)| appends a suffix to a context.
+operator |(<><)| appends a suffix to a context. We will later extend |Entry| to
+handle term variables, so this definition is incomplete.
 
 Figure~\ref{subfig:monadCode} defines the |Contextual| monad of computations that
 can fail and mutate the context. The |TyName| component is the next fresh type
@@ -616,20 +626,44 @@ variable name to use; it is an implementation detail not mentioned in the typing
 rules. The |fresh| function generates a fresh variable name and appends a
 declaration to the context. Our choice of |TyName| means that it is easy to
 choose a name fresh with respect to a |Context|.
-The |getContext|, |putContext| and |modifyContext| functions
-respectively retrieve, replace and update the stored context. They correspond
-to |get|, |put| and |modify| in the |State| monad, but ignore the first component
-of the state.
 
 Figure~\ref{subfig:onTopCode} implements the |onTop| operator, which applies its
 argument to the topmost type variable declaration in the context, skipping over
-any other kinds of entry. The argument function may |Restore| the previous entry
-or it may return a context extension (containing at least as much information as
-the entry that has been removed) with which to |Replace| it.
+any other kinds of entry we may define later. The argument function may
+|restore| the previous entry, or it may return a context extension (containing
+at least as much information as the entry that has been removed) with which to
+|replace| it.
 
-Figure~\ref{subfig:unifyCode} gives the actual implementation of unification
-and solution of variables with types.
+Figure~\ref{subfig:unifyCode} gives the actual implementations of unification
+and solution. Unification proceeds structurally over types. If it reaches a pair
+of variables, it examines the context, using the |onTop| operator to pick out
+a type variable declaration to consider. Depending on the variables, it will
+then either succeed (by restoring the old entry or replacing it with a new one)
+or continue unifying with an updated contraint.
 
+Solution is called when a variable must be unified with a non-variable type.
+It works similarly to unification of variables, but must accumulate a list of
+the type's dependencies and push them left through the context. It also performs
+the occur check and invokes the monadic failure command if an illegal occurrence
+(which would lead to an infinite type) is detected.
+
+As an example, consider the behaviour of the algorithm when |unify| is called
+on the types $\alpha \arrow \beta$ and $\alpha' \arrow (\beta' \arrow \beta')$
+in the context $\hole{\alpha}, \hole{\beta}, \alpha' \defn \beta, \hole{\beta'}$.
+The first case matches, decomposing the constraint structurally and first
+invoking unify on $\alpha$ and $\alpha'$. The algorithm then traverses the
+context, ignoring $\beta'$, then moving past $\alpha'$ by unifying $\alpha$ and
+$\beta$. This succeds by defining $\beta$ to be $\alpha$, giving the context
+$\hole{\alpha}, \beta \defn \alpha, \alpha' \defn \beta, \hole{\beta'}$.
+
+The second part of the structural decomposition now unifies $\beta$ with
+$\beta' \arrow \beta'$. This calls |solve|, which collects $\beta'$ in the
+dependency suffix, ignores $\alpha'$ and moves past $\beta$ by unifying
+$\alpha$ and $\beta' \arrow \beta'$. Again this succeeds, giving the context
+$\hole{\beta'}, \alpha \defn \beta' \arrow \beta', \beta \defn \alpha,
+\alpha' \defn \beta$.
+
+\TODO{How can we make this example clearer?}
 
 \section{Modelling contexts and statements}
 
