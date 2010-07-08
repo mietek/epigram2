@@ -175,10 +175,11 @@
 \usepackage{eucal}
 \usepackage{natbib}
 \usepackage[T1]{fontenc}
+\usepackage{subfigure}
 \usepackage[colorlinks,draft=false]{hyperref}
 
-\setlength{\parskip}{5pt}
-\setlength{\parindent}{0pt}
+\newcommand{\fixpars}{\setlength{\parskip}{5pt}\setlength{\parindent}{0pt}}
+\fixpars
 
 \newtheorem{lemma}{Lemma}
 
@@ -435,6 +436,13 @@ defining $\beta \defn \alpha$.
 
 \subsection{Implementation of unification}
 
+\begin{figure*}[p]
+
+\begin{minipage}[c]{0.5\linewidth}
+
+\subfigure[][Types, type variables, occur check]{
+\frame{\parbox{\textwidth}{\fixpars\medskip
+
 > data Ty a  =  V a |  Ty a :-> Ty a
 >     deriving (Functor, Foldable)
 
@@ -457,7 +465,10 @@ defining $\beta \defn \alpha$.
 > instance  (Foldable t, FTV a) => FTV (t a) where
 >     alpha <? t = any (alpha <?) t
 
+\label{subfig:typeCode}
+}}}
 
+\subfigure[][Context and suffixes]{\frame{\parbox{\textwidth}{\fixpars\medskip
 
 > data TyDecl   =  Some Type | {-"\;"-} Hole
 > data TyEntry  =  TyName := TyDecl
@@ -468,12 +479,30 @@ defining $\beta \defn \alpha$.
 
 < data Entry    = TY TyEntry | ...
 < type Context  = Bwd Entry
+< type Suffix   = Fwd TyEntry
 
 %if False
 
-> type Context  = Bwd Entry -- so we can line up the two previous lines
+> -- so we can line up the two previous lines
+> type Context  = Bwd Entry
+> type Suffix   = Fwd TyEntry
 
 %endif
+
+> (<><) :: Context -> Suffix -> Context
+> _Gamma <>< F0                   = _Gamma
+> _Gamma <>< (alpha := d :> _Xi)  = _Gamma :< TY (alpha := d) <>< _Xi
+
+%if False
+
+> infixl 8 <><
+
+%endif
+
+\label{subfig:contextCode}
+}}}
+
+\subfigure[][Context manipulation monad]{\frame{\parbox{\linewidth}{\fixpars\medskip
 
 > type Contextual  = StateT (TyName, Context) Maybe
 
@@ -492,19 +521,18 @@ defining $\beta \defn \alpha$.
 > modifyContext :: (Context -> Context) -> Contextual ()
 > modifyContext f = getContext >>= putContext . f
 
-> type Suffix      = Fwd TyEntry
+\label{subfig:monadCode}
+}}}
 
-> (<><) :: Context -> Suffix -> Context
-> _Gamma <>< F0                   = _Gamma
-> _Gamma <>< (alpha := d :> _Xi)  = _Gamma :< TY (alpha := d) <>< _Xi
+\end{minipage}
+\hspace{\medskipamount}
+\begin{minipage}[c]{0.5\linewidth}
 
-%if False
+\subfigure[][Processing the context]{\frame{\parbox{\linewidth}{\fixpars\medskip
 
-> infixl 8 <><
+> data Extension = Restore | Replace Suffix
 
-%endif
-
-> onTop ::  (TyEntry -> Contextual (Maybe Suffix)) 
+> onTop ::  (TyEntry -> Contextual Extension) 
 >             -> Contextual ()
 > onTop f = do
 >     _Gamma :< vD <- getContext
@@ -512,15 +540,20 @@ defining $\beta \defn \alpha$.
 >     case vD of
 >         TY alphaD    -> do  m <- f alphaD
 >                             case m of
->                                 Just _Xi  -> modifyContext (<>< _Xi)
->                                 Nothing   -> modifyContext (:< vD)
+>                                 Replace _Xi  -> modifyContext (<>< _Xi)
+>                                 Restore      -> modifyContext (:< vD)
 >         _            -> onTop f >> modifyContext (:< vD)
 
-> restore :: Contextual (Maybe Suffix)
-> restore = return Nothing
+> restore :: Contextual Extension
+> restore = return Restore
 
-> replace :: Suffix -> Contextual (Maybe Suffix)
-> replace = return . Just
+> replace :: Suffix -> Contextual Extension
+> replace = return . Replace
+
+\label{subfig:onTopCode}
+}}}
+
+\subfigure[][Unification]{\frame{\parbox{\linewidth}{\fixpars\medskip
 
 > unify :: Type -> Type -> Contextual ()
 > unify (V alpha) (V beta) = onTop $
@@ -551,6 +584,51 @@ defining $\beta \defn \alpha$.
 >     (False,           False,   _             )  ->  solve alpha _Xi tau
 >                                                 >>  restore
 
+\label{subfig:unifyCode}
+}}}
+
+\end{minipage}
+
+\caption{Code for unification}
+\label{fig:unifyCode}
+\end{figure*}
+
+The Haskell implementation of our unification algorithm is given in
+Figure~\ref{fig:unifyCode}. 
+
+Figure~\ref{subfig:typeCode} implements types as a foldable functor
+parameterised by the type of variable names. Thanks to a language
+extension in GHC 6.12 \citep{ghc_team_glorious_2009} we can simply
+derive the required typeclass instances.
+For simplicity, we use integers as names.
+We can find free type variables using the typeclass |FTV| with membership
+function |(<?)|. We get most of the required instances for free using |Foldable|.
+
+Figure~\ref{subfig:contextCode} defines context entries, contexts and suffixes.
+The types |Bwd| and |Fwd| are backwards and forwards lists
+with |B0| for both empty lists and |:<| and |:>| for snoc and cons respectively.
+Lists are monoids with the append operator |<+>|, and the \scare{fish}
+operator |(<><)| appends a suffix to a context.
+
+Figure~\ref{subfig:monadCode} defines the |Contextual| monad of computations that
+can fail and mutate the context. The |TyName| component is the next fresh type
+variable name to use; it is an implementation detail not mentioned in the typing
+rules. The |fresh| function generates a fresh variable name and appends a
+declaration to the context. Our choice of |TyName| means that it is easy to
+choose a name fresh with respect to a |Context|.
+The |getContext|, |putContext| and |modifyContext| functions
+respectively retrieve, replace and update the stored context. They correspond
+to |get|, |put| and |modify| in the |State| monad, but ignore the first component
+of the state.
+
+Figure~\ref{subfig:onTopCode} implements the |onTop| operator, which applies its
+argument to the topmost type variable declaration in the context, skipping over
+any other kinds of entry. The argument function may |Restore| the previous entry
+or it may return a context extension (containing at least as much information as
+the entry that has been removed) with which to |Replace| it.
+
+Figure~\ref{subfig:unifyCode} gives the actual implementation of unification
+and solution of variables with types.
 
 
 \section{Modelling contexts and statements}
@@ -637,18 +715,7 @@ From now on we will implicitly assume that all contexts we work with are valid,
 and will ensure that we only construct valid contexts. Mostly we will ignore the
 issue of fresh names, since a simple counter suffices for our purposes.
 
-\begin{figure}[ht]
-\boxrule{\Gamma \entails \valid}
-$$
-\Axiom{\emptycontext \entails \valid}
-\qquad
-\Rule{\Gamma \entails \valid    \quad    \Gamma \entails \ok_K D}
-     {\Gamma, \decl{x}{D} \entails \valid}
-\side{x \in \V_K \setminus \V_K(\Gamma)}
-$$
-\caption{Rules for context validity}
-\label{fig:contextValidityRules}
-\end{figure}
+
 
 \TODO{Example of a context validity derivation?}
 
