@@ -64,15 +64,25 @@
 %format _Xi1
 
 \newcommand{\ident}[1]{\textrm{#1}}
-%format fresh         = "\ident{fresh}"
-%format getContext    = "\ident{getContext}"
-%format putContext    = "\ident{putContext}"
-%format modifyContext = "\ident{modifyContext}"
-%format onTop         = "\ident{onTop}"
-%format restore       = "\ident{restore}"
-%format replace       = "\ident{replace}"
-%format unify         = "\ident{unify}"
-%format solve         = "\ident{solve}"
+%format fresh           = "\ident{fresh}"
+%format getContext      = "\ident{getContext}"
+%format putContext      = "\ident{putContext}"
+%format modifyContext   = "\ident{modifyContext}"
+%format onTop           = "\ident{onTop}"
+%format restore         = "\ident{restore}"
+%format replace         = "\ident{replace}"
+%format unify           = "\ident{unify}"
+%format solve           = "\ident{solve}"
+%format specialise      = "\ident{specialise}"
+%format unpack          = "\ident{unpack}"
+%format fromS           = "\ident{fromS}"
+%format generaliseOver  = "\ident{generaliseOver}"
+%format skimContext     = "\ident{skimContext}"
+%format find            = "\ident{find}"
+%format help            = "\ident{help}"
+%format extract         = "\ident{extract}"
+%format infer           = "\ident{infer}"
+%format bind            = "\ident{bind}"
 
 \usepackage{color}
 \definecolor{red}{rgb}{1.0,0.0,0.0}
@@ -209,7 +219,6 @@
 >               TypeFamilies, StandaloneDeriving, TypeOperators #-}
 
 > import Prelude hiding (any)
-> import Control.Applicative ((<$>))
 > import Control.Monad.State (StateT, get, gets, put, runStateT)
 > import Data.Foldable (Foldable, any, foldMap)
 > import Data.Monoid (Monoid, mappend, mempty)
@@ -1898,15 +1907,17 @@ For details, see Appendix.
 
 \subfigure[][Generalisation]{\frame{\parbox{\textwidth}{\fixpars\medskip
 
-> (>=>) :: Prefix -> Scheme -> Scheme
-> B0                      >=> sigma = sigma
-> (_Xi :< alpha :=   d)  >=> sigma = case d of
->                    Hole     -> _Xi >=> All sigma'
->                    Some nu  -> _Xi >=> LetS nu sigma'
->   where 
->     sigma' = fmap bind sigma
->     bind beta  | alpha == beta  = Z
+> bind :: TyName -> Scheme -> Schm (Index TyName)
+> bind alpha = fmap help
+>   where
+>     help :: TyName -> Index TyName
+>     help beta  | alpha == beta  = Z
 >                | otherwise      = S beta
+
+> (>=>) :: Prefix -> Scheme -> Scheme
+> B0                           >=> sigma = sigma
+> (_Xi :< alpha :=  Hole)      >=> sigma = _Xi >=> All (bind alpha sigma)
+> (_Xi :< alpha :=  Some tau)  >=> sigma = _Xi >=> LetS tau (bind alpha sigma)
 
 > generaliseOver ::  Contextual Type -> Contextual Scheme
 > generaliseOver mt = do
@@ -1921,7 +1932,7 @@ For details, see Appendix.
 >         putContext _Gamma
 >         case vD of
 >             LetGoal    -> return B0
->             TY alphaD  -> (:< alphaD) <$> skimContext
+>             TY alphaD  -> skimContext >>= return . (:< alphaD)
 >             TM _       -> error "Unexpected TM variable!"
 
 \label{subfig:generaliseCode}
@@ -1932,7 +1943,7 @@ For details, see Appendix.
 \begin{minipage}[t]{0.5\linewidth}
 
 
-\subfigure[][Terms and context entries]{\frame{\parbox{\textwidth}{\fixpars\medskip
+\subfigure[][Terms and contexts]{\frame{\parbox{\textwidth}{\fixpars\medskip
 
 > data Tm a  =  X a
 >            |  Tm a :$ Tm a 
@@ -1945,6 +1956,14 @@ For details, see Appendix.
 >
 > data TmEntry  = TmName ::: Scheme
 > data Entry    = TY TyEntry | TM TmEntry | LetGoal
+
+> find :: TmName -> Contextual Scheme
+> find x = getContext >>= help
+>   where
+>     help :: Context -> Contextual Scheme
+>     help (_Gamma :< TM (y ::: sigma)) | x == y  = return sigma
+>     help (_Gamma :< _)                          = help _Gamma
+>     help B0                                     = fail "Missing var!"
 
 \label{subfig:termCode}
 }}}
@@ -1959,9 +1978,8 @@ For details, see Appendix.
 >     return a 
 >   where          
 >     extract ::  Context -> Context
->     extract (_Gamma :< TM (y ::: _))
->         | x == y               = _Gamma
->     extract (_Gamma :< TY xD)  = (extract _Gamma) :< TY xD
+>     extract (_Gamma :< TM (y ::: _)) | x == y = _Gamma
+>     extract (_Gamma :< TY xD) = (extract _Gamma) :< TY xD
 >     extract (_Gamma :< _)  = error "Bad context entry!"
 >     extract B0             = error "Missing TM variable!"
 
@@ -1971,27 +1989,21 @@ For details, see Appendix.
 \subfigure[][Type inference]{\frame{\parbox{\textwidth}{\fixpars\medskip
 
 > infer :: Term -> Contextual Type
-
-> infer (X x) = getContext >>= find >>= specialise
->   where
->     find :: Context -> Contextual Scheme
->     find (_Gamma :< TM (y ::: sigma))
->         | x == y                        = return sigma
->     find (_Gamma :< _)                  = find _Gamma
->     find B0                             = fail "Missing variable!"
-
+>
+> infer (X x) = find x >>= specialise
+>
 > infer (Lam x w) = do
 >     alpha    <- fresh Hole
 >     upsilon  <- x ::: Type (V alpha) >- infer w
 >     return (V alpha :-> upsilon)
-
+>
 > infer (f :$ a) = do
 >     chi      <- infer f
 >     upsilon  <- infer a
 >     beta     <- fresh Hole
 >     unify chi (upsilon :-> V beta)
 >     return (V beta)
-
+>
 > infer (Let x s w) = do
 >     sigma <- generaliseOver (infer s)
 >     x ::: sigma >- infer w
@@ -2006,7 +2018,9 @@ For details, see Appendix.
 \end{figure*}
 
 The Haskell implementation of our type inference algorithm is given in
-Figure~\ref{fig:inferCode}. 
+Figure~\ref{fig:inferCode}. Note that the monadic |fail| is called when
+scope checking fails, whereas |error| indicates that one of the algorithmic
+invariants have been violated.
 
 Figure~\ref{subfig:schemeCode} implements type schemes.
 It is convenient to represent bound variables by de Bruijn indices and free
@@ -2026,7 +2040,8 @@ the top of the context as far as the |LetGoal| marker.
 
 Figure~\ref{subfig:termCode} implements the data type of terms, and gives the
 final definition of |Entry| including type and term variable declarations and
-|LetGoal| markers.
+|LetGoal| markers. It implements the |find| function to look up a term variable
+in the context and return its scheme.
 
 Figure~\ref{subfig:termScopeCode} implements the |(>-)| operator to evaluate
 |Contextual| code in the scope of a term variable, then remove it afterwards.
