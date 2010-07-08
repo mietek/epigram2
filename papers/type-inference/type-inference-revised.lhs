@@ -338,13 +338,28 @@ In \AlgorithmW, the occur-check is used to discover type dependencies just in
 time for generalisation. When inferring the type of the let-expression
 $\letIn{x}{w}{t}$, the type $w$ must first be inferred, then
 quantified over \scare{generic} type variables, i.e.\ those that occur in $w$
-but not the enclosing bindings. This is the only real complexity in \AlgorithmW,
+but not the enclosing bindings. 
+The rule in question, as presented by \citet{clment_simple_1986}, is:
+$$
+\Rule{A \entails e' : \tau'  \qquad  A_x \cup \{ x : \sigma \} \entails e : \tau}
+     {A \entails \letIn{x}{e'}{e} : \tau}
+\side{\sigma = gen(A, \tau')}
+$$
+$$gen(A, \tau) = \begin{cases}
+    \forall \vec{\alpha_i} . \tau  &
+        (FV(\tau) \setminus FV(A) = \{ \alpha_1, \cdots, \alpha_n \})  \\
+    \tau &
+        (FV(\tau) \setminus FV(A) = \emptyset)
+\end{cases}
+$$
+
+\TODO{Explain the above.}
+
+This is the only real complexity in \AlgorithmW,
 and as \citet{milner_theory_1978} wrote, ``the
 reader may still feel that our rules are arbitrarily chosen and only partly
 supported by intuition.'' Experience has shown that the rules are well-chosen
 indeed; perhaps we can now discover the intuition.
-
-\TODO{Present classical \AlgorithmW in more detail?}
 
 In both cases, the occur-check is used to detect dependencies between variables.
 Type variables are traditionally left floating in space and given definitions by
@@ -355,23 +370,6 @@ variables. Even in a simply-typed setting, however, this approach has advantages
 
 
 \section{Unification over a context}
-
-We postpone formal definitions until later, but for the moment we regard a
-context as a left-to-right list of type variables, each of which may be unknown
-(written $\hole{\alpha}$) or defined (written $\alpha \defn \tau$). A context
-is valid if types in definitions must make sense over the preceding contexts.
-For example, the context
-$$\hole{\alpha}, \hole{\beta}, \gamma \defn \alpha \arrow \beta$$
-is valid, but the context
-$$\alpha \defn \beta, \hole{\beta}$$
-is not, because $\beta$ is not in scope for the definition of $\alpha$.
-This topological sorting of the dependency graph means that we should keep context
-entries as far to the right as possible to retain maximum generality.
-
-The definitions in the context induce a nontrivial equational theory on types,
-starting with $\alpha \equiv \tau$ for every definition $\alpha \defn \tau$ in
-the context, then taking the structural and equivalence closure as shown in
-Figure~\ref{fig:oldRules}. 
 
 \begin{figure}[ht]
 \boxrule{\Gamma \entails \valid}
@@ -429,9 +427,23 @@ $$
 \label{fig:oldRules}
 \end{figure}
 
-For example, we have
-$$\hole{\alpha}, \beta \defn \alpha, \gamma \defn \alpha \arrow \beta \entails \beta \arrow \alpha \equiv \gamma.$$
 
+The rules in Figure~\ref{fig:oldRules} define a context as a left-to-right list
+of type variables, each of which may be unknown (written $\hole{\alpha}$) or
+defined (written $\alpha \defn \tau$). A context is valid if the type in
+every definition makes sense over its preceding context.
+For example, the context
+$\hole{\alpha}, \hole{\beta}, \gamma \defn \alpha \arrow \beta$
+is valid, but the context
+$\alpha \defn \beta, \hole{\beta}$
+is not, because $\beta$ is not in scope for the definition of $\alpha$.
+This topological sorting of the dependency graph means that 
+entries on the right are harder to depend on, and correspondingly easier to
+generalise just by the usual process of discharging as hypotheses.
+
+The definitions in the context induce a nontrivial equational theory on types,
+starting with $\alpha \equiv \tau$ for every definition $\alpha \defn \tau$ in
+the context, then taking the structural and equivalence closure.
 Unification is the problem of increasing information in the context (making
 variables more defined) to make a particular equation hold. For example, we
 might start in the context $\hole{\alpha}, \hole{\beta}, \gamma \defn \alpha \arrow \beta$ and aim to solve the equation $\beta \arrow \alpha \equiv \gamma$.
@@ -442,7 +454,10 @@ the equation. In the example, the definition of $\gamma$ tells us that we must
 solve $\beta \arrow \alpha \equiv \alpha \arrow \beta$ over the context
 $\hole{\alpha}, \hole{\beta}$. This constraint decomposes to
 $\alpha \equiv \beta$ and $\beta \equiv \alpha$, which are easily solved by
-defining $\beta \defn \alpha$.
+defining $\beta \defn \alpha$, giving the final judgment
+$$\hole{\alpha}, \beta \defn \alpha, \gamma \defn \alpha \arrow \beta
+    \entails \beta \arrow \alpha \equiv \gamma.$$
+
 
 
 \subsection{Implementation of unification}
