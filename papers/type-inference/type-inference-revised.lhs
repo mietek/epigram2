@@ -266,6 +266,8 @@ more elegant type inference algorithm.  In particular, the generalisation step
 (used when inferring the type of a let-expression) becomes straightforward
 (section ??).
 
+\subsection{Motivating context}
+
 Why revisit \AlgorithmW? This is a first step towards a longer-term objective:
 explaining the elaboration of high-level \emph{dependently typed} programs into
 fully explicit calculi. Elaboration involves inferring \emph{implicit arguments}
@@ -275,34 +277,12 @@ stepwise progress in problem solving from states of partial knowledge.
 We wish to identify local correctness criteria for type inference that
 guarantee global correctness.
 
-\TODO{More crunchiness: forward pointers to claims and contributions}
-
-This paper is literate Haskell, with full source code available at
-\footnotesize\url{http://personal.cis.strath.ac.uk/~adam/type-inference/}\normalsize.
-
-\subsection{Related work} \TODO{Later?}
-
-The idea of assertions producing a resulting context goes back at least to
-\citet{pollack_implicit_1990}. An interesting point of comparison is with the
-work of Nipkow and co-workers. \citet{Nipkow-Prehofer-JFP95} use (unordered)
-input and output contexts to pass information about \scare{sorts} for Haskell
-typeclass inference, alongside a conventional substitution-based presentation
-of unification.
-\citet{NaraschewskiN-JAR} formally prove correctness of \AlgorithmW\ in
-Isabelle/HOL using a counter for fresh variable generation and a monad to
-silently propagate failure; we have used similar techniques in our
-implementation, though we do not consider these issues in the main text.
-
 We are grateful to an anonymous referee for pointing out the work of
 \citet{dunfield_polymorphism_2009} on polymorphism in a bidirectional typesystem.
 Dunfield uses well-founded contexts that contain existential type variables
 (amongst other things). These variables can be solved, and there is an informal
 notion of information increase between input and output contexts, though this is
-used for different purposes. \TODO{More?}
-
-Imposing order restrictions on context entries 
-is similar to the \emph{ordered hypotheses} of deduction
-systems for non-commutative logic \citep{polakow_natural_1999}.
+used for different purposes. \TODO{More? Where should this go?}
 
 In contrast to other presentations of unification and Hindley-Milner type
 inference, our algorithm uses explicit definitions to avoid the need for a 
@@ -326,6 +306,11 @@ its imple-mentation is not discussed. This view of construction underpinned the
 implementation of Epigram~\citep{mcbride.mckinna:view-from-the-left} and informed
 \citeauthor{norell:agda}'s implementation of Agda~\citeyearpar{norell:agda}.
 It is high time we began to explain how it works and perhaps to understand it.
+
+\TODO{More crunchiness: forward pointers to claims and contributions}
+
+This paper is literate Haskell, with full source code available at
+\footnotesize\url{http://personal.cis.strath.ac.uk/~adam/type-inference/}\normalsize.
 
 \subsection{The occur-check}
 
@@ -446,15 +431,18 @@ The definitions in the context induce a nontrivial equational theory on types,
 starting with $\alpha \equiv \tau$ for every definition $\alpha \defn \tau$ in
 the context, then taking the structural and equivalence closure.
 Unification is the problem of increasing information in the context (making
-variables more defined) to make a particular equation hold. For example, we
-might start in the context $\hole{\alpha}, \hole{\beta}, \gamma \defn \alpha \arrow \beta$ and aim to solve the equation $\beta \arrow \alpha \equiv \gamma$.
-
+variables more defined) to make a particular equation hold.
 The idea is that we decompose constraints on the syntactic structure of types
 until we reach variables, then move through the context and update it to solve
-the equation. In the example, the definition of $\gamma$ tells us that we must
+the equation.
+
+For example, we might start in the context
+$\hole{\alpha}, \hole{\beta}, \gamma \defn \alpha \arrow \beta$
+and aim to solve the equation $\beta \arrow \alpha \equiv \gamma$.
+The definition of $\gamma$ tells us that we must
 solve $\beta \arrow \alpha \equiv \alpha \arrow \beta$ over the context
 $\hole{\alpha}, \hole{\beta}$. This constraint decomposes to
-$\alpha \equiv \beta$ and $\beta \equiv \alpha$, which are easily solved by
+$\beta \equiv \alpha$ and $\alpha \equiv \beta$, which are easily solved by
 defining $\beta \defn \alpha$, giving the final judgment
 $$\hole{\alpha}, \beta \defn \alpha, \gamma \defn \alpha \arrow \beta
     \entails \beta \arrow \alpha \equiv \gamma.$$
@@ -619,7 +607,10 @@ $$\hole{\alpha}, \beta \defn \alpha, \gamma \defn \alpha \arrow \beta
 \end{figure*}
 
 The Haskell implementation of our unification algorithm is given in
-Figure~\ref{fig:unifyCode}. 
+Figure~\ref{fig:unifyCode}.
+\citet{NaraschewskiN-JAR} formally proved correctness of \AlgorithmW\ in
+Isabelle/HOL using a counter for fresh variable generation and a monad to
+silently propagate failure; we use similar techniques in our implementation.
 
 Figure~\ref{subfig:typeCode} implements types as a foldable functor
 parameterised by the type of variable names. Thanks to a language
@@ -1079,7 +1070,11 @@ satisfying
 \item $\beta \in \tyvars{\Xi} \Rightarrow \beta \in \FTV{\tau, \Xi}$.
 \end{itemize}
 
-\TODO{Need different notation for algorithm and problem solution}
+The idea of assertions producing a resulting context goes back at least to
+\citet{pollack_implicit_1990}. \citet{Nipkow-Prehofer-JFP95} use (unordered)
+input and output contexts to pass information about \scare{sorts} for Haskell
+typeclass inference, alongside a conventional substitution-based presentation
+of unification.
 
 The rules \textsc{Define}, \textsc{Expand} and \textsc{Ignore} have
 symmetric counterparts, identical apart from interchanging the equated
