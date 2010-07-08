@@ -683,22 +683,20 @@ We have got a contexts and judgments story about equality leading to unification
 and we are likely to have a similar story about type assignment leading to type
 inference. What is the common structure?
 
-\TODO{Rewrite the following to make it less abstract.}
+A \define{context} is a list of \define{declarations} assigning properties to
+variables (here, in particular, type variables). 
+The empty context is written $\emptycontext$ and we let
+$\Gamma, \Delta, \Theta$ range over contexts.
+Let $\V_\TY$ be a set of type
+variables and $\D_\TY$ the properties that may be given to them
+(the \scare{unknown variable} property $~\hole{}$ and \scare{defined variable}
+properties $~\defn{\tau}$ for each type $\tau$).
 
-Let $\K$ be a set of \define{sorts}, and for each $K \in \K$ let $\V_K$ be a
-set of variables and $\D_K$ a set of \define{properties}.
-(We frequently index by $\K$ and omit the subscript if it is obvious from the
-context.)
-We have already seen the sort $\TY$, where
-$\V_\TY$ is some set of type variables and $\D_\TY$ contains
-the \scare{unknown variable} property $~\hole{}$ and \scare{defined variable}
-properties $~\defn{\tau}$ for each type $\tau$.
-
-A \define{context} is a list of \define{declarations} $\decl{x}{D}$, with
-$x \in \V_K$ and $D \in \D_K$.
-The empty context is written $\emptycontext$. 
-We let $\Gamma, \Delta, \Theta$ range over contexts.
-We write $\V_K(\Gamma)$ for the set of variables of $\Gamma$ with sort $K$.
+Later we will introduce corresponding definitions for term variables. Where
+necessary we let $K \in \{ \TY, \TM \}$ represent an arbitrary sort of variable.
+We write $\decl{x}{D}$ for an arbitrary property, where $x \in \V_K$ and
+$D \in \D_K$. The set of variables of $\Gamma$ with sort $K$ is written
+$\V_K(\Gamma)$.
 
 We will build a set $\Ss$ of \define{statements}, assertions which can be judged
 in contexts. For now, the grammar of statements will be
@@ -707,8 +705,8 @@ $$S ::=~ \valid
     ~||~ \tau \equiv \upsilon
     ~||~ S \wedge S$$
 meaning, respectively, that the context is valid, $\tau$ is a type, the types
-$\tau$ and $\upsilon$ are equivalent, and both conjuncts hold. \TODO{Tabulate?}
-\TODO{Note that $\valid$ and $\wedge$ are unit and product.}
+$\tau$ and $\upsilon$ are equivalent, and both conjuncts hold.
+Note that $\valid$ and $\wedge$ are essentially unit and product for statements.
 
 A statement has zero or more
 \define{parameters}, each of which has an associated \define{sanity condition}, 
@@ -719,32 +717,37 @@ condition for $\tau$ is $\tau \type$ and for $\upsilon$ it is $\upsilon \type$.
 Sanity conditions capture what must be true of the context in order to be able
 to ask the question ``does this statement hold?''
 
-Each declaration in the context causes some statement to hold. For each
-$K \in \K$, we maintain a map $\sem{\cdot}_K : \V_K \times \D_K \rightarrow \Ss$
-from declarations to statements.
+Each declaration in the context causes some statement to hold.
+We maintain a map $\sem{\cdot}_K : \V_K \times \D_K \rightarrow \Ss$
+from declarations to statements. (Typically we will omit $K$ when it is obvious.)
 The idea is that $\sem{\decl{x}{D}}$ is the statement that holds by virtue of the
 declaration $\decl{x}{D}$ in the context. For type variables, we define
 \begin{align*}
 \sem{\hole{\alpha}} &= \alpha \type \\
-\sem{\alpha \defn \tau} &= \alpha \type \wedge \alpha \equiv \tau
+\sem{\alpha \defn \tau} &= \alpha \type \wedge \alpha \equiv \tau.
 \end{align*}
 
 We can inspect the context in derivations using the inference rule
 $$\name{Lookup}
   \Rule{\decl{x}{D} \in \Gamma}
        {\Gamma \entailsN \sem{\decl{x}{D}}}.$$
-Note the unusual turnstile symbol in the conclusion of this rule.
+Note the different turnstile symbol in the conclusion of this rule.
 We write the \define{normal judgment} $\Gamma \entails S$
 to mean that the declarations in $\Gamma$ support the statement $S \in
 \Ss$.  We write the \define{neutral judgment} $\Gamma \entailsN S$ to
 mean that $S$ follows directly from applying a fact in $\Gamma$.
 Neutral judgments capture exactly the legitimate appeals to assumptions
 in the context, just as \scare{neutral terms} in $\lambda$-calculus are
-applied variables. We embed neutral into normal: 
+applied variables. Variables are the \scare{atoms} of symbols, and appeals
+to declarations in the context are atoms of derivations.
+
+We embed neutral into normal:
 $$\name{Neutral}
   \Rule{\entailsN S}
        {\entails S}.$$
-As the context is constant throughout, it is omitted here and elsewhere.
+
+The \textsc{Lookup} rule is our only means to extract information from the
+context, so we will omit the contextual plumbing (almost) everywhere else.
 
 \subsection{Validity of contexts}
 
@@ -1351,7 +1354,7 @@ Figure~\ref{fig:schemeValidityRules}.
 The sanity condition on $\sigma$ is just $\valid$.
 
 \begin{figure}[ht]
-\boxrule{\Gamma \entails \sigma \scheme}
+\boxrule{\sigma \scheme}
 
 $$
 \Rule{\tau \type}
@@ -1430,7 +1433,7 @@ t \hasscheme \letS{\alpha}{\tau}{\sigma}  &\mapsto
 Let $\sem{x \asc \sigma}_\TM = x \hasscheme \sigma$.
 
 \begin{figure}[ht]
-\boxrule{\Gamma \entails t : \tau}
+\boxrule{t : \tau}
 
 $$
 \Rule{\Sbind{x \asc .\upsilon}{t : \tau}}
@@ -1974,7 +1977,7 @@ For details, see Appendix.
 \label{subfig:termCode}
 }}}
 
-\subfigure[][Term variable scoping]{\frame{\parbox{\textwidth}{\fixpars\medskip
+\subfigure[][Bringing term variables into scope]{\frame{\parbox{\textwidth}{\fixpars\medskip
 
 > (>-) :: TmEntry -> Contextual a -> Contextual a
 > x ::: sigma >- ma = do
