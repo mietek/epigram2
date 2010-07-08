@@ -683,6 +683,12 @@ $\hole{\beta'}, \alpha \defn \beta' \arrow \beta', \beta \defn \alpha,
 \section{Modelling contexts and statements}
 
 Having seen an implementation of unification, let us try to understand it.
+We have got a contexts and judgments story about equality leading to unification,
+and we are likely to have a similar story about type assignment leading to type
+inference. What is the common structure?
+
+\TODO{Rewrite the following to make it less abstract.}
+
 Let $\K$ be a set of \define{sorts}, and for each $K \in \K$ let $\V_K$ be a
 set of variables and $\D_K$ a set of \define{properties}.
 (We frequently index by $\K$ and omit the subscript if it is obvious from the
@@ -703,10 +709,10 @@ in contexts. For now, the grammar of statements will be
 $$S ::=~ \valid
     ~||~ \tau \type
     ~||~ \tau \equiv \upsilon
-    ~||~ S \wedge S
-    ~||~ \cdots$$
+    ~||~ S \wedge S$$
 meaning, respectively, that the context is valid, $\tau$ is a type, the types
 $\tau$ and $\upsilon$ are equivalent, and both conjuncts hold. \TODO{Tabulate?}
+\TODO{Note that $\valid$ and $\wedge$ are unit and product.}
 
 A statement has zero or more
 \define{parameters}, each of which has an associated \define{sanity condition}, 
@@ -764,23 +770,48 @@ From now on we will implicitly assume that all contexts we work with are valid,
 and will ensure that we only construct valid contexts. Mostly we will ignore the
 issue of fresh names, since a simple counter suffices for our purposes.
 
+\begin{figure}[ht]
+\boxrule{\Gamma \entails \valid}
+$$
+\Axiom{\emptycontext \entails \valid}
+\qquad
+\Rule{\Gamma \entails \valid    \quad    \Gamma \entails \ok_K D}
+     {\Gamma, \decl{x}{D} \entails \valid}
+\side{x \in \V_K \setminus \V_K(\Gamma)}
+$$
+\caption{Rules for context validity}
+\label{fig:contextValidityRules}
+\end{figure}
 
 
 \TODO{Example of a context validity derivation?}
 
 
-\subsection{Rules for types and conjunctions}
+\subsection{Rules for proving statements}
 
-We deduce that variables are types by looking up the context, but we need
-a structural rule for the $\arrow$ type constructor:
+\begin{figure}[ht]
+\boxrules{\tau \type}{\tau \equiv \upsilon}
 $$
 \Rule{\tau \type   \quad   \upsilon \type}
-     {\tau \arrow \upsilon \type}.
+     {\tau \arrow \upsilon \type}
+\qquad
+\Rule{\tau \type}
+     {\tau \equiv \tau}
+\qquad
+\Rule{\upsilon \equiv \tau}
+     {\tau \equiv \upsilon}
 $$
-
-The conjunction of statements $S \wedge S'$ allows us to package multiple facts
-about a single variable, with a normal introduction rule (pairing) and neutral
-elimination rules (projections):
+$$
+\Rule{\tau_0 \equiv \upsilon_0
+      \quad
+      \tau_1 \equiv \upsilon_1}
+     {\tau_0 \arrow \tau_1 \equiv \upsilon_0 \arrow \upsilon_1}
+\qquad
+\Rule{\tau_0 \equiv \tau_1
+      \quad
+      \tau_1 \equiv \tau_2}
+     {\tau_0 \equiv \tau_2}
+$$
 $$\Rule{S \quad S'} {S \wedge S'}
   \qquad
   \Rule{\entailsN S \wedge S'}
@@ -789,13 +820,27 @@ $$\Rule{S \quad S'} {S \wedge S'}
   \Rule{\entailsN S \wedge S'}
        {\entailsN S'}
 $$
+\caption{Rules for types, equivalence and conjunction}
+\label{fig:statementRules}
+\end{figure}
+
+Figure~\ref{fig:statementRules} gives rules for proving statements other than
+$\valid$.
+We deduce that variables are types by looking up the context, but we need
+a structural rule for the $\arrow$ type constructor.
+
+The conjunction of statements $S \wedge S'$ allows us to package multiple facts
+about a single variable, with a normal introduction rule (pairing) and neutral
+elimination rules (projections).
 This is but one instance of a general pattern: we add normal introduction
 forms for composite statements, but supply
 eliminators only for composite \emph{hypotheses}, in effect forcing
 derivations to be cut-free. This facilitates reasoning by induction on
-derivations. We shall ensure that the corresponding elimination rules
-for \emph{normal} judgments are in any case admissible. This is clearly the
-case for conjunction.
+derivations.
+If we added the corresponding projections for \emph{normal} judgments, we
+would lose the hope of a syntax-directed rule system. In any case, we shall
+ensure that the corresponding elimination rules are admissible. This is clearly
+the case for conjunction.
 
 
 \section{Information and stable statements}
