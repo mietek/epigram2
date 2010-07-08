@@ -882,10 +882,10 @@ for fixed contexts $\Gamma$ and $\Delta$, and that if
 $\delta \eqsubst \theta$ then
 $\Delta \entails \delta\tau \equiv \theta\tau$ for any $\Gamma$-type $\tau$.
 
-This partial order on contexts is not yet sufficient, because it places no 
-constraints on the order of context entries beyond the dependency order of
-variables in declarations. We show later how to extend $\lei$ to capture the
-order of entries more precisely. 
+This partial order on contexts is sufficient to ensure stability, as described
+in the following section, but in practice we will work with a more structured
+subrelation of $\lei$. We give up more freedom to achieve a more comprehensible
+algorithm. For example, our algorithm will always use the identity substitution.
 
 
 
@@ -975,29 +975,32 @@ by transitivity.
 \end{proof}
 
 
-\section{Problems}
+\section{Constraint problems}
 
-\subsection{What is a problem?}
-
-A \define{problem} is a pair of a context $\Gamma$ and a statement $S$, where
+A \define{constraint problem} is a pair of a context $\Gamma$ and a statement
+$S$, where
 the sanity conditions of the parameters of $S$ hold in $\Gamma$, but $S$ itself
-does not. We wish to find a \define{solution} (more informative context)
-$\Delta$ such that
-$\iota : \Gamma \lei \Delta$ and $\Delta \entails S$. Thus unification is given
+may not. We wish to find a \define{solution}
+$\delta : \Gamma \lei \Delta$ such that
+$\Delta \entails \delta S$. Thus unification is given
 $\Gamma$, $\tau$ and $\upsilon$ such that
 $\Gamma \entails \tau \type \wedge \upsilon \type$, and
-must find $\Delta$ such that $\Delta \entails \tau \equiv \upsilon$.
+must find $\delta : \Gamma \lei \Delta$ such that
+$\Delta \entails \delta \tau \equiv \delta \upsilon$.
 
 We are interested in finding algorithms to solve problems, preferably in as
 general a way as possible (that is, by making the smallest information increase
 necessary to find a solution). This corresponds to finding a most general
-unifier. The solution $\Delta$ is \define{minimal} if for any
-$\theta: \Gamma \lei \Theta$ such that $\Theta \entails \theta S$, there exists a
+unifier. The solution $\delta : \Gamma \lei \Delta$ is \define{minimal} if for
+any other solution $\theta: \Gamma \lei \Theta$, there exists a
 substitution $\zeta : \Delta \lei \Theta$ such that
-$\theta \eqsubst \zeta \compose \iota$.
-\TODO{Is this enough?}
+$\theta \eqsubst \zeta \compose \iota$ (we say $\theta$ \emph{factors through}
+$\delta$ with \emph{cofactor} $\zeta$).
+
+In fact, we can always find minimal solutions that use the identity substitution.
 We write $\Jmin{\Gamma}{P}{\Delta}$ to mean that $(\Gamma, P)$ is a
-problem with minimal solution $\Delta$. \TODO{Better notation for this?}
+problem with minimal solution $\iota : \Gamma \lei \Delta$.
+\TODO{Better notation for this?}
 
 We can now state the following \scare{greedy} approach to finding minimal
 solutions to such composite problems: find a minimal solution of problem $P$,
@@ -1010,32 +1013,12 @@ $$\Rule{\Jmin{\Gamma}{P}{\Delta}
        {\Jmin{\Gamma}{P \wedge Q}{\Theta}}.$$
 \end{lemma}
 
-\begin{proof} \TODO{Update this!}
-We have that $\theta \compose \delta : \Gamma \lei \Theta$ by 
-Lemma~\ref{lei:preorder}. 
-
-To show $\Theta \entails \Prob{P \wedge Q}{a, b}{\theta r, s}$, it
-suffices to show $\Theta \entails \Prob{P}{a}{\theta r}$ and
-$\Theta \entails \Prob{Q}{b}{s}$. The latter holds by assumption. For the
-former, note that $\Delta \entails \Prob{P}{a}{r}$ and hence
-$\Theta \entails \theta (\Prob{P}{a}{r})$ by stability of $\Prob{P}{a}{r}$.
-But $\theta (\Prob{P}{a}{r}) = \Prob{P}{a}{\theta r}$ by definition. 
-
-Finally, suppose there is some $\phi : \Gamma \lei \Phi$ 
-and outputs $t, u$ such that
-$\Phi \entails \Prob{P \wedge Q}{a, b}{t, u}$, so
-$\Phi \entails \Prob{P}{a}{t}$ and
-$\Phi \entails \Prob{Q}{b}{u}$.
-Since $\delta : \Jmin{\Gamma}{\Prob{P}{a}{r}}{\Delta}$, there exists
-$\zeta_1 : \Delta \lei \Phi$ such that
-$\phi \eqsubst \zeta_1 \compose \delta$
-and $\Phi \entails \R{P}{\zeta_1 r}{t}$.
-But then $\theta : \Jmin{\Delta}{\Prob{Q}{b}{s}}{\Theta}$, so there exists
-$\zeta_2 : \Theta \lei \Phi$ such that
-$\zeta_1 \eqsubst \zeta_2 \compose \theta$
-and $\Phi \entails \R{Q}{\zeta_2 s}{u}$.
-Hence $\phi \eqsubst \zeta_2 \compose (\theta \compose \delta)$
-and $\Phi \entails \R{P \wedge Q}{\zeta_2 (\theta r), \zeta_2 s}{t, u}$.
+\begin{proof}[Sketch]
+Any solution $\phi : \Gamma \lei \Phi$ to $(\Gamma, P \wedge Q)$ must solve
+$(\Gamma, P)$, and hence factor through $\iota : \Gamma \lei \Delta$. But its
+cofactor solves $(\Delta, Q)$, and hence factors through
+$\iota : \Delta \lei \Theta$. For the detailed proof of a
+more general result, see Lemma \TODO{??}.
 \end{proof}
 
 This sequential approach to problem solving is not the only decomposition
