@@ -134,13 +134,8 @@
 \newcommand{\JudgeR}[3]{\ensuremath{#1 \leiR #3 \vdash #2}}
 \newcommand{\Jmin}[3]{\ensuremath{#1 \LEI #3 \vdash #2}}
 \newcommand{\Junify}[4]{\Alg{#1}{\Puni{#2}{#3}}{#4}}
-\newcommand{\JunifyR}[4]{\JudgeR{#1}{\Puni{#2}{#3}}{#4}}
 \newcommand{\Jinstantiate}[5]{\Alg{#1 ~||~ #4}{\Puni{#2}{#3}}{#5}}
-\newcommand{\JinstantiateMin}[5]{\Jmin{#1 ~||~ #4}{\Puni{#2}{#3}}{#5}}
-\newcommand{\Jspec}[4]{\Judge{#1}{#2 \succ #3}{#4}}
-\newcommand{\Jtype}[4]{\Judge{#1}{\Pinf{#2}{#3}}{#4}}
-\newcommand{\JtypeR}[4]{\JudgeR{#1}{\Pinf{#2}{#3}}{#4}}
-\newcommand{\Jhast}[5]{\Judge{#1}{#2 ~\hat:_{#3}~ #4}{#5}}
+\newcommand{\Jtype}[4]{\Alg{#1}{\Pinf{#2}{#3}}{#4}}
 
 \newcommand{\JminR}[3]{\ensuremath{#1 \LEIR #3 \vdash #2}}
 
@@ -1269,7 +1264,7 @@ $\Theta \entails \theta\alpha \equiv \theta\tau$ and
 \item $\beta \in \tyvars{\Xi}  \Rightarrow  \beta \in \FTV{\tau, \Xi}$,
 \end{itemize}
 then there is some context $\Delta$ such that
-$\JinstantiateMin{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$.
+$\Jinstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$.
 \end{enumerate}
 \end{lemma}
 
@@ -1281,10 +1276,25 @@ details, see Appendix.  \end{proof}
 
 
 
-\section{What?}
+\section{Applying these ideas to type inference}
+
+Having implemented unification and defined type schemes, we now turn to the
+problem of type inference for terms. We need to extend our grammar of statements
+to express additions to the context (binding statements) and well-formed schemes,
+then we can add a type assignment statement. The final grammar will be:
+\begin{align*}S ::=~ \valid
+    &~||~ \tau \type
+    ~||~ \tau \equiv \upsilon
+    ~||~ S \wedge S \\
+    &~||~ \Sbind{\decl{x}{D}}{S}
+    ~||~ \sigma \scheme
+    ~||~ t : \tau.
+\end{align*}
 
 \subsection{Binding statements}
 
+To give rule for schemes and type assignment, we need the ability to add
+variables to the context in a controlled way.
 If $S$ is a statement and $\decl{x}{D}$ is a declaration, then we define the
 binding statement $\Sbind{\decl{x}{D}}{S}$ with the introduction rule
 $$
@@ -1328,17 +1338,16 @@ and so $\Delta \entails \delta \Sbind{\decl{x}{D}}{S}$.
 
 \subsection{Type schemes}
 
-To handle polymorphism, term variable properties must
-be type schemes rather than monomorphic types.
-
+To handle let-polymorphism, the context must assign type schemes to term
+variables, rather than monomorphic types.
 A \define{type scheme} $\sigma$ is a type wrapped in one or more $\forall$
-quantifiers or let bindings, with the syntax
+quantifiers or $\letS{\cdot}{\cdot}{\cdot}$ bindings, with the syntax
 $$\sigma ::= .\tau ~||~ \forall\alpha~\sigma ~||~ \letS{\alpha}{\tau}{\sigma}.$$
 We use explicit definitions in type schemes to avoid the need for substitution
 in the type inference algorithm. 
 
-We define a new statement $\sigma \scheme$
-by the rules in Figure~\ref{fig:schemeValidityRules}.
+The new statement $\sigma \scheme$ is given by the rules in
+Figure~\ref{fig:schemeValidityRules}.
 The sanity condition on $\sigma$ is just $\valid$.
 
 \begin{figure}[ht]
@@ -1375,7 +1384,7 @@ defined by
 We will usually be interested in the case $\sigma = .\tau$ for some type $\tau$.
 
 When we infer the specialised type of a variable, we rely on the
-ability to invert this operation, extending the contex with a
+ability to invert this operation, extending the context with a
 \emph{fresh} copy of a scheme's prefix. As shown above, we follow
 \citet{NaraschewskiN-JAR} in achieving freshness with a simple
 counter, built into the |Contextual| monad.
@@ -1393,11 +1402,10 @@ fresh variable names.
 \TODO{Can we replace $\sigma \scheme$ with $\Sbind{\Xi}{\tau \type}$?}
 
 
-\section{Applying these ideas to type inference}
+\subsection{Terms and type assignment}
 
-Having implemented unification and defined type schemes, we now turn to the
-problem of type inference for terms. We will reuse the framework already
-introduced, defining a new sort $\TM$.
+Now we are in a position to reuse the framework already
+introduced, by defining a new sort $\TM$.
 Let $\V_\TM$ be some set of term variables and let $x$ range over $\V_\TM$.
 Term variable declarations $\D_\TM$ are scheme assignments of the form
 $\asc \sigma$, with
@@ -1639,12 +1647,10 @@ $\theta \eqsubst \zeta \compose \iota :
 
 \begin{lemma}[The Generalist's lemma]
 \label{lem:generalist}
-If $\Jmin{\Gamma \fatsemi \Gamma'}{S}{\Delta \fatsemi \Delta'}$, where
-$\forget{\Gamma} = \forget{\Delta}$ and $\forget{\Gamma'} = \forget{\Delta'}$,
-then $\Jmin{\Gamma}{\Sbind{\Delta'}{S}}{\Delta}$.
-\TODO{Define $\forget{\cdot}$.}
-\TODO{It's not quite clear what this means for problem outputs. Is $\Delta'$ an
-output? It cannot contain any semicolons.}
+$$
+\Rule{\Jmin{\Gamma \fatsemi}{t : \tau}{\Delta \fatsemi \Xi}}
+     {\Jmin{\Gamma \fatsemi}{t :: \gen{\Xi}{\tau}}{\Delta}}
+$$
 \end{lemma}
 \begin{proof}
 \TODO{Prove this.}
