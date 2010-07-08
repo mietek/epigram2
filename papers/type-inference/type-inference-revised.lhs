@@ -119,12 +119,13 @@
 \newcommand{\hole}[1]{\ensuremath{#1 \!:= ?}}
 \newcommand{\contains}{\ensuremath{\ni}}
 
+\newcommand{\Alg}[3]{\ensuremath{#1 \twoheadrightarrow #3 \vdash #2}}
 \newcommand{\Judge}[3]{\ensuremath{#1 \lei #3 \vdash #2}}
 \newcommand{\JudgeR}[3]{\ensuremath{#1 \leiR #3 \vdash #2}}
 \newcommand{\Jmin}[3]{\ensuremath{#1 \LEI #3 \vdash #2}}
-\newcommand{\Junify}[4]{\Judge{#1}{\Puni{#2}{#3}}{#4}}
+\newcommand{\Junify}[4]{\Alg{#1}{\Puni{#2}{#3}}{#4}}
 \newcommand{\JunifyR}[4]{\JudgeR{#1}{\Puni{#2}{#3}}{#4}}
-\newcommand{\Jinstantiate}[5]{\Judge{#1 ~||~ #4}{\Puni{#2}{#3}}{#5}}
+\newcommand{\Jinstantiate}[5]{\Alg{#1 ~||~ #4}{\Puni{#2}{#3}}{#5}}
 \newcommand{\JinstantiateMin}[5]{\Jmin{#1 ~||~ #4}{\Puni{#2}{#3}}{#5}}
 \newcommand{\Jspec}[4]{\Judge{#1}{#2 \succ #3}{#4}}
 \newcommand{\Jtype}[4]{\Judge{#1}{\Pinf{#2}{#3}}{#4}}
@@ -1018,7 +1019,7 @@ Any solution $\phi : \Gamma \lei \Phi$ to $(\Gamma, P \wedge Q)$ must solve
 $(\Gamma, P)$, and hence factor through $\iota : \Gamma \lei \Delta$. But its
 cofactor solves $(\Delta, Q)$, and hence factors through
 $\iota : \Delta \lei \Theta$. For the detailed proof of a
-more general result, see Lemma \TODO{??}.
+more general result, see Lemma~\ref{lem:optimistInference}.
 \end{proof}
 
 This sequential approach to problem solving is not the only decomposition
@@ -1451,33 +1452,47 @@ $$
 \end{figure}
 
 
-\subsection{Problems with outputs}
+\subsection{Inference problems}
 
 Type inference involves making the statement $t : \tau$ hold. However,
 a crucial difference from the unification problem is that the type should
 be an \emph{output} of problem-solving, along with the solution context. We need
-a more liberal definition of problems. We associate a \define{mode}
-with each parameter, either \scare{input} or \scare{output}. A \define{problem}
-is then a pair $(\Gamma, S)$ where $\Gamma$ is a context and $S$ is a statement
-whose input parameters are specified and satisfy their sanity conditions.
+a more liberal definition than that of constraint problems.
 
-A \define{solution} consists of an information increase
-$\delta : \Gamma \lei \Delta$ and values for the output parameters $\vec{p}$ 
-such that $\delta S$ and the sanity conditions for the output parameters hold
-in $\Delta$.
+We associate a \define{mode} with each parameter, either \scare{input} or
+\scare{output}, in a statement. For simplicity, assume statements always have
+one parameter of each mode (which may be unit or a product). A \define{problem}
+is a triple $(\Gamma, S, Q)$ where $\Gamma$ is a context, $S$ is a statement and
+$Q$ is a value for the input parameter that satisfies its sanity condition in
+$\Gamma$.
+
+A \define{solution} of $(\Gamma, S, Q)$ consists of an information increase
+$\delta : \Gamma \lei \Delta$ and a value for the output parameter $A$ 
+such that $(\delta Q) A$ and the sanity condition on $A$ hold in $\Delta$.
+
+\TODO{We need a notion of information increase between solutions.}
+
 This solution is \define{minimal} if, for every other solution
-$(\theta : \Gamma \lei \Theta, \vec{q})$ there is a substitution
+$(\theta : \Gamma \lei \Theta, B)$ there is a substitution
 $\zeta : \Delta \lei \Theta$ such that $\theta \eqsubst \zeta \compose \delta$
-and $\Theta \entails \zeta\vec{p} \equiv \vec{q}$.
-\TODO{Define equivalence for vectors of output parameters.}
+and \TODO{what?}.
 
 Thus the type inference problem is given by a context $\Gamma$ and the
 statement $t : ~?$ where $t$ is a term and $?$ represents the output parameter.
 A solution is then an information increase $\delta : \Gamma \lei \Delta$ and a
 type $\tau$ such that $\Delta \entails \tau \type \wedge t : \tau$.
 
-\TODO{Optimist's lemma a la mode}
 
+\begin{lemma}[The Optimist's lemma for inference problems]
+\label{lem:optimistInference}
+The following inference rule is admissible:
+$$\Rule{\Jmin{\Gamma}{Q_1 A_1}{\Delta}
+       \quad  \Jmin{\Delta}{(\subst{A_1}{a} Q_2) A_2}{\Theta}}
+       {\Jmin{\Gamma}{(Q_1[a] \wedge Q_2) (A_1, A_2)}{\Theta}}.$$
+\end{lemma}
+\begin{proof}
+\TODO{Prove this.}
+\end{proof}
 
 \subsection{Preserving order in the context}
 
