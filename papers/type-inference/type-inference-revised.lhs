@@ -356,35 +356,65 @@ is not, because $\beta$ is not in scope for the definition of $\alpha$.
 This topological sorting of the dependency graph means that we should keep context
 entries as far to the right as possible to retain maximum generality.
 
-The definitions in the context induce an equational theory on types, starting
-with $\alpha \equiv \tau$ for every definition $\alpha \defn \tau$ in the
-context, then taking the structural and equivalence closure as shown in
-Figure~\ref{fig:equivRules}. 
+The definitions in the context induce a nontrivial equational theory on types,
+starting with $\alpha \equiv \tau$ for every definition $\alpha \defn \tau$ in
+the context, then taking the structural and equivalence closure as shown in
+Figure~\ref{fig:oldRules}. 
 
 \begin{figure}[ht]
+\boxrule{\Gamma \entails \valid}
+$$
+\Axiom{\emptycontext \entails \valid}
+\qquad
+\Rule{\Gamma \entails \valid}
+     {\Gamma, \hole{\alpha} \entails \valid}
+\side{\alpha \notin \Gamma}
+$$
+$$
+\Rule{\Gamma \entails \valid    \quad    \Gamma \entails \tau \type}
+     {\Gamma, \alpha \defn \tau \entails \valid}
+\side{\alpha \notin \Gamma}
+$$
+
+\bigskip
+
+\boxrule{\Gamma \entails \tau \type}
+
+$$
+\Rule{\Gamma, \alpha \defn \_, \Gamma' \entails \valid}
+     {\Gamma, \alpha \defn \_, \Gamma' \entails \alpha \type}
+\qquad
+\Rule{\Gamma \entails \tau \type   \quad   \Gamma \entails \upsilon \type}
+     {\Gamma \entails \tau \arrow \upsilon \type}.
+$$
+
+\bigskip
+
 \boxrule{\Gamma \entails \tau \equiv \upsilon}
-% \Rule{\alpha \defn \tau}
-%      {\alpha \equiv \tau}
+
 $$
-\Rule{\tau \type}
-     {\tau \equiv \tau}
+\Rule{\Gamma, \alpha \defn \tau, \Gamma' \entails \valid}
+     {\Gamma, \alpha \defn \tau, \Gamma' \entails \alpha \equiv \tau}
 \qquad
-\Rule{\upsilon \equiv \tau}
-     {\tau \equiv \upsilon}
-$$
-$$
-\Rule{\tau_0 \equiv \upsilon_0
-      \quad
-      \tau_1 \equiv \upsilon_1}
-     {\tau_0 \arrow \tau_1 \equiv \upsilon_0 \arrow \upsilon_1}
+\Rule{\Gamma \entails \tau \type}
+     {\Gamma \entails \tau \equiv \tau}
 \qquad
-\Rule{\tau_0 \equiv \tau_1
-      \quad
-      \tau_1 \equiv \tau_2}
-     {\tau_0 \equiv \tau_2}
+\Rule{\Gamma \entails \upsilon \equiv \tau}
+     {\Gamma \entails \tau \equiv \upsilon}
 $$
-\caption{Rules for type equivalence}
-\label{fig:equivRules}
+$$
+\Rule{\Gamma \entails \tau_0 \equiv \upsilon_0
+      \quad
+      \Gamma \entails \tau_1 \equiv \upsilon_1}
+     {\Gamma \entails \tau_0 \arrow \tau_1 \equiv \upsilon_0 \arrow \upsilon_1}
+\qquad
+\Rule{\Gamma \entails \tau_0 \equiv \tau_1
+      \quad
+      \Gamma \entails \tau_1 \equiv \tau_2}
+     {\Gamma \entails \tau_0 \equiv \tau_2}
+$$
+\caption{Rules for validity, types and type equivalence}
+\label{fig:oldRules}
 \end{figure}
 
 For example, we have
