@@ -23,7 +23,7 @@
 %format F0  = "\emptycontext"
 %format B0  = "\emptycontext"
 
-%format Lam (x) (b) = "\lambda" x "." b
+% %format Lam (x) (b) = "\lambda" x "." b
 %format Let (x) (s) (t) = "\letIn{" x "}{" s "}{" t "} "
 %format LetGoal = "\letGoal "
 
@@ -453,7 +453,7 @@ $$\hole{\alpha}, \beta \defn \alpha, \gamma \defn \alpha \arrow \beta
 
 \begin{figure*}[p]
 
-\begin{minipage}[c]{0.5\linewidth}
+\begin{minipage}[t]{0.5\linewidth}
 
 \subfigure[][Types, type variables, occur check]{\frame{\parbox{\textwidth}{\fixpars\medskip
 
@@ -540,7 +540,7 @@ $$\hole{\alpha}, \beta \defn \alpha, \gamma \defn \alpha \arrow \beta
 
 \end{minipage}
 \hspace{\medskipamount}
-\begin{minipage}[c]{0.5\linewidth}
+\begin{minipage}[t]{0.5\linewidth}
 
 \subfigure[][Processing the context]{\frame{\parbox{\linewidth}{\fixpars\medskip
 
@@ -1853,9 +1853,14 @@ For details, see Appendix.
 \end{proof}
 
 
-\subsection{Implementing type inference}
+\subsection{Implementation of type inference}
 \label{sec:inferImplementation}
 
+\begin{figure*}[p]
+
+\begin{minipage}[t]{0.5\linewidth}
+
+\subfigure[][Type schemes]{\frame{\parbox{\textwidth}{\fixpars\medskip
 
 > data Index a = Z | S a
 >     deriving (Functor, Foldable)
@@ -1865,9 +1870,33 @@ For details, see Appendix.
 >              |  LetS (Ty a) (Schm (Index a))
 >     deriving (Functor, Foldable)
 
-> type Scheme = Schm TyName
+> type Scheme  = Schm TyName
+> type Prefix  = Bwd TyEntry 
 
-> type Prefix      = Bwd TyEntry 
+\label{subfig:schemeCode}
+}}}
+
+\subfigure[][Specialisation]{\frame{\parbox{\textwidth}{\fixpars\medskip
+
+> specialise :: Scheme -> Contextual Type
+> specialise (Type tau) = return tau
+> specialise sigma = do
+>     let (d, sigma') = unpack sigma
+>     beta <- fresh d
+>     specialise (fmap (fromS beta) sigma')
+>   where
+>     unpack :: Scheme -> (TyDecl, Schm (Index TyName))
+>     unpack (All sigma')       = (Hole      , sigma')
+>     unpack (LetS tau sigma')  = (Some tau  , sigma')
+>
+>     fromS :: TyName -> Index TyName -> TyName
+>     fromS beta  Z             = beta
+>     fromS beta  (S alpha)     = alpha
+
+\label{subfig:specialiseCode}
+}}}
+
+\subfigure[][Generalisation]{\frame{\parbox{\textwidth}{\fixpars\medskip
 
 > (>=>) :: Prefix -> Scheme -> Scheme
 > B0                      >=> sigma = sigma
@@ -1878,62 +1907,6 @@ For details, see Appendix.
 >     sigma' = fmap bind sigma
 >     bind beta  | alpha == beta  = Z
 >                | otherwise      = S beta
-
-> specialise :: Scheme -> Contextual Type
-> specialise (Type tau) = return tau
-> specialise sigma = do
->     let (d, sigma') = unpack sigma
->     beta <- fresh d
->     specialise (fmap (fromS beta) sigma')
->   where
->     unpack (All sigma') = (Hole, sigma')
->     unpack (LetS tau sigma') = (Some tau, sigma')
->     fromS beta Z          = beta
->     fromS beta (S alpha)  = alpha
-
-
-
-
-> type TmName   = String
-> data TmEntry  = TmName ::: Scheme
-
-> data Tm a  =  X a
->            |  Tm a :$ Tm a 
->            |  Lam a (Tm a)
->            |  Let a (Tm a) (Tm a)
->     deriving (Functor, Foldable)
-
-> type Term      = Tm TmName
-
-> data Entry = TY TyEntry | TM TmEntry | LetGoal
-
-
-> infer :: Term -> Contextual Type
-
-> infer (X x) = getContext >>= find >>= specialise
->   where
->     find :: Context -> Contextual Scheme
->     find (_Gamma :< TM (y ::: sigma))
->         | x == y                        = return sigma
->     find (_Gamma :< _)                  = find _Gamma
->     find B0                             = fail "Missing variable"
-
-> infer (Lam x w) = do
->     alpha    <- fresh Hole
->     upsilon  <- x ::: Type (V alpha) >- infer w
->     return (V alpha :-> upsilon)
-
-> infer (f :$ a) = do
->     chi      <- infer f
->     upsilon  <- infer a
->     beta     <- fresh Hole
->     unify chi (upsilon :-> V beta)
->     return (V beta)
-
-> infer (Let x s w) = do
->     sigma <- generaliseOver (infer s)
->     x ::: sigma >- infer w
-
 
 > generaliseOver ::  Contextual Type -> Contextual Scheme
 > generaliseOver mt = do
@@ -1951,6 +1924,32 @@ For details, see Appendix.
 >             TY alphaD  -> (:< alphaD) <$> skimContext
 >             TM _       -> error "Unexpected TM variable!"
 
+\label{subfig:generaliseCode}
+}}}
+
+\end{minipage}
+\hspace{\medskipamount}
+\begin{minipage}[t]{0.5\linewidth}
+
+
+\subfigure[][Terms and context entries]{\frame{\parbox{\textwidth}{\fixpars\medskip
+
+> data Tm a  =  X a
+>            |  Tm a :$ Tm a 
+>            |  Lam a (Tm a)
+>            |  Let a (Tm a) (Tm a)
+>     deriving (Functor, Foldable)
+
+> type TmName   = String
+> type Term     = Tm TmName
+>
+> data TmEntry  = TmName ::: Scheme
+> data Entry    = TY TyEntry | TM TmEntry | LetGoal
+
+\label{subfig:termCode}
+}}}
+
+\subfigure[][Term variable scoping]{\frame{\parbox{\textwidth}{\fixpars\medskip
 
 > (>-) :: TmEntry -> Contextual a -> Contextual a
 > x ::: sigma >- ma = do
@@ -1965,6 +1964,79 @@ For details, see Appendix.
 >     extract (_Gamma :< TY xD)  = (extract _Gamma) :< TY xD
 >     extract (_Gamma :< _)  = error "Bad context entry!"
 >     extract B0             = error "Missing TM variable!"
+
+\label{subfig:termScopeCode}
+}}}
+
+\subfigure[][Type inference]{\frame{\parbox{\textwidth}{\fixpars\medskip
+
+> infer :: Term -> Contextual Type
+
+> infer (X x) = getContext >>= find >>= specialise
+>   where
+>     find :: Context -> Contextual Scheme
+>     find (_Gamma :< TM (y ::: sigma))
+>         | x == y                        = return sigma
+>     find (_Gamma :< _)                  = find _Gamma
+>     find B0                             = fail "Missing variable!"
+
+> infer (Lam x w) = do
+>     alpha    <- fresh Hole
+>     upsilon  <- x ::: Type (V alpha) >- infer w
+>     return (V alpha :-> upsilon)
+
+> infer (f :$ a) = do
+>     chi      <- infer f
+>     upsilon  <- infer a
+>     beta     <- fresh Hole
+>     unify chi (upsilon :-> V beta)
+>     return (V beta)
+
+> infer (Let x s w) = do
+>     sigma <- generaliseOver (infer s)
+>     x ::: sigma >- infer w
+
+\label{subfig:inferCode}
+}}}
+
+\end{minipage}
+
+\caption{Haskell implementation of type inference}
+\label{fig:inferCode}
+\end{figure*}
+
+The Haskell implementation of our type inference algorithm is given in
+Figure~\ref{fig:inferCode}. 
+
+Figure~\ref{subfig:schemeCode} implements type schemes.
+It is convenient to represent bound variables by de Bruijn indices and free
+variables (i.e.\ those defined in the context) by names
+\citep{mcbride_mckinna_not_number_2004}.
+Moreover, we use
+Haskell's type system to prevent some incorrect manipulations of indices by
+defining the \scare{successor} type
+\citep{bird_paterson_nested_1999, bellegarde_hook_substitution_1994} |Index|,
+where the outermost bound variable is represented by |Z| and the other variables
+are wrapped in the |S| constructor.
+
+Figures~\ref{subfig:specialiseCode} and~\ref{subfig:generaliseCode} implement
+specialisation and generalisation of type schemes. The former unpacks a type
+scheme with fresh variables, while the latter \scare{skims} type variables off
+the top of the context as far as the |LetGoal| marker.
+
+Figure~\ref{subfig:termCode} implements the data type of terms, and gives the
+final definition of |Entry| including type and term variable declarations and
+|LetGoal| markers.
+
+Figure~\ref{subfig:termScopeCode} implements the |(>-)| operator to evaluate
+|Contextual| code in the scope of a term variable, then remove it afterwards.
+This is necessary for dealing with $\lambda$-abstractions and let-bindings 
+during type inference.
+
+Finally, Figure~\ref{subfig:inferCode} implements the type inference algorithm
+itself. It proceeds structurally over the term, adding term variables to the
+context and looking them up as appropriate, and calling |unify| when needed
+to check applications.
 
 
 \section{Discussion}  %%% Concussion?
