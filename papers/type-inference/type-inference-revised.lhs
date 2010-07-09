@@ -129,8 +129,9 @@
 \newcommand{\hasc}{\ensuremath{~\hat{::}~}}
 \newcommand{\hole}[1]{\ensuremath{#1 \!:= ?}}
 \newcommand{\contains}{\ensuremath{\ni}}
+\newcommand{\transto}{\ensuremath{\twoheadrightarrow}}
 
-\newcommand{\Alg}[3]{\ensuremath{#1 \twoheadrightarrow #3 \vdash #2}}
+\newcommand{\Alg}[3]{\ensuremath{#1 \transto #3 \vdash #2}}
 \newcommand{\Judge}[3]{\ensuremath{#1 \lei #3 \vdash #2}}
 \newcommand{\JudgeR}[3]{\ensuremath{#1 \leiR #3 \vdash #2}}
 \newcommand{\Jmin}[3]{\ensuremath{#1 \LEI #3 \vdash #2}}
@@ -660,25 +661,37 @@ the occurs check and invokes the monadic failure command if an illegal occurrenc
 (which would lead to an infinite type) is detected.
 
 As an example, consider the behaviour of the algorithm when |unify| is called
-on the types $\alpha \arrow \beta$ and $\alpha' \arrow (\beta' \arrow \beta')$
-in the context $\hole{\alpha}, \hole{\beta}, \alpha' \defn \beta, \hole{\beta'}$.
-The first case matches, decomposing the constraint structurally and first
-invoking unify on $\alpha$ and $\alpha'$. The algorithm then traverses the
-context, ignoring $\beta'$, then moving past $\alpha'$ by unifying $\alpha$ and
-$\beta$. This succeds by defining $\beta$ to be $\alpha$, giving the context
-$\hole{\alpha}, \beta \defn \alpha, \alpha' \defn \beta, \hole{\beta'}$.
+to solve $\alpha \arrow \beta \equiv \alpha' \arrow (\beta' \arrow \beta')$:
+%
+% in the context $\hole{\alpha}, \hole{\beta}, \alpha' \defn \beta, \hole{\beta'}$.
+% The first case matches, decomposing the constraint structurally and first
+% invoking unify on $\alpha$ and $\alpha'$. The algorithm then traverses the
+% context, ignoring $\beta'$, then moving past $\alpha'$ by unifying $\alpha$ and
+% $\beta$. This succeds by defining $\beta$ to be $\alpha$, giving the context
+% $\hole{\alpha}, \beta \defn \alpha, \alpha' \defn \beta, \hole{\beta'}$.
+%
+% The second part of the structural decomposition now unifies $\beta$ with
+% $\beta' \arrow \beta'$. This calls |solve|, which collects $\beta'$ in the
+% dependency suffix, ignores $\alpha'$ and moves past $\beta$ by unifying
+% $\alpha$ and $\beta' \arrow \beta'$. Again this succeeds, giving the context
+% $\hole{\beta'}, \alpha \defn \beta' \arrow \beta', \beta \defn \alpha,
+% \alpha' \defn \beta$.
+%
+\begin{align*}
+         &\hole{\alpha}, \hole{\beta}, \alpha' \defn \beta, \hole{\beta'}                             &&\textrm{initial context}\\
+\transto~ &\hole{\alpha}, \beta \defn \alpha, \alpha' \defn \beta, \hole{\beta'}                       &\alpha &\equiv \alpha' \\
+\transto~ &\hole{\beta'}, \alpha \defn \beta' \arrow \beta', \beta \defn \alpha, \alpha' \defn \beta   &\beta &\equiv \beta' \arrow \beta' 
+\end{align*}
+The constraint decomposes into two constraints on variables. The first ignores
+$\beta'$, moves past $\alpha'$ by updating the constraint to
+$\alpha \equiv \beta$, then defines $\beta \defn \alpha$.
+The second calls |solve|, which collects $\beta'$ in the dependency suffix,
+ignores $\alpha'$, moves past $\beta$ by updating the constraint to
+$\alpha \equiv \beta' \arrow \beta'$, then defines $\alpha$ after inserting
+$\beta'$.
 
-The second part of the structural decomposition now unifies $\beta$ with
-$\beta' \arrow \beta'$. This calls |solve|, which collects $\beta'$ in the
-dependency suffix, ignores $\alpha'$ and moves past $\beta$ by unifying
-$\alpha$ and $\beta' \arrow \beta'$. Again this succeeds, giving the context
-$\hole{\beta'}, \alpha \defn \beta' \arrow \beta', \beta \defn \alpha,
-\alpha' \defn \beta$.
 
-\TODO{Rewrite example in equational style.}
-
-
-\section{Generalising the picture: modelling statements-in-context}
+\section{Modelling statements-in-context}
 
 Having seen an implementation of unification, let us try to understand it.
 We would like to give a general picture of \scare{statements-in-context} which
@@ -709,16 +722,17 @@ $$S ::=~ \valid
     ~||~ S \wedge S$$
 meaning, respectively, that the context is valid, $\tau$ is a type, the types
 $\tau$ and $\upsilon$ are equivalent, and both conjuncts hold.
-Note that $\valid$ and $\wedge$ are essentially unit and product for statements.
-\TODO{In what?}
+Note that $\valid$ and $\wedge$ give a unit and product for statements.
 
 A statement has zero or more
 \define{parameters}, each of which has an associated \define{sanity condition}, 
-i.e.\ a statement whose truth is pre-supposed for the problem to make sense.
-We have already seen the type equivalence statement
-$\tau \equiv \upsilon$: the sanity
-condition for $\tau$ is $\tau \type$ and for $\upsilon$ it is $\upsilon \type$.
-\TODO{Give all sanity conditions.}
+i.e.\ a statement whose truth is presupposed for the problem to make sense.
+The $\valid$ statement has no parameter and hence no sanity conditions.
+In $\tau \type$, the parameter $\tau$ has sanity condition $\valid$.
+The type equivalence statement $\tau \equiv \upsilon$ has two parameters; the
+sanity conditions are $\tau \type$ and $\upsilon \type$ respectively.
+Finally, $S \wedge S'$ has parameters (and sanity conditions) taken from $S$ and
+$S'$.
 
 Each declaration in the context causes some statement to hold.
 We maintain a map $\sem{\cdot}_K : \V_K \times \D_K \rightarrow \Ss$
@@ -792,6 +806,8 @@ $$
 
 \subsection{Rules for establishing statements}
 
+\TODO{Fix rule box sizes.}
+
 \begin{figure}[ht]
 \boxruless{\tau \type}{\tau \equiv \upsilon}{S \wedge S'}
 $$
@@ -860,7 +876,8 @@ deductions.
 Let $\Gamma$ and $\Delta$ be contexts.
 A \define{substitution from $\Gamma$ to $\Delta$} is a map from
 $\tyvars{\Gamma}$ to $\{ \tau ~||~ \Delta \entails \tau \type \}$.
-\TODO{Talk about TM variables.}
+We could substitute for term variables as well, and give a more general
+definition, but omit this for simplicity.
 Substitutions apply to types and statements in the usual way.
 Composition of substitutions is given by
 $(\theta \compose \delta) (\alpha) = \theta (\delta \alpha)$.
@@ -872,11 +889,9 @@ we write the \define{information increase} $\delta : \Gamma \lei \Delta$ and say
 \define{$\Delta$ is more informative than $\Gamma$} if 
 for all $\decl{x}{D} \in \Gamma$, we have 
 $\Delta \entails \delta \sem{\decl{x}{D}}$. 
-We may omit $\delta$ and write $\Gamma \lei \Delta$ if we are only interested
-in the existence of a suitable substitution. \TODO{Should this mean $\delta = \iota$?}
-This relation between contexts
-ensures that $\Delta$ supports all the statements corresponding to declarations
-in $\Gamma$. 
+That is, $\Delta$ supports all the statements corresponding to declarations
+in $\Gamma$.
+We write $\Gamma \lei \Delta$ if the substitution is the identity $\iota$.
 
 We write $\delta \eqsubst \theta : \Gamma \lei \Delta$ if
 $\delta : \Gamma \lei \Delta$, $\theta : \Gamma \lei \Delta$
@@ -904,7 +919,6 @@ $$\Gamma \entails S  \quad \mathrm{and}  \quad  \delta : \Gamma \lei \Delta
     \quad \Rightarrow \quad  \Delta \entails \delta S.$$
 This says that we can extend a simultaneous substitution on syntax to a
 simultaneous substitution on derivations.
-\TODO{Expand on this.}
 
 Since we only consider valid contexts, the statement $\valid$ always holds,
 and is invariant under substitution, so it is clearly stable.
@@ -1009,7 +1023,6 @@ $\delta$ with \emph{cofactor} $\zeta$).
 In fact, we will always find minimal solutions that use the identity substitution.
 We write $\Jmin{\Gamma}{P}{\Delta}$ to mean that $(\Gamma, P)$ is a
 problem with minimal solution $\iota : \Gamma \lei \Delta$.
-\TODO{Better notation for this?}
 
 We can now state the following \scare{greedy} approach to finding minimal
 solutions to such composite problems: find a minimal solution of problem $P$,
