@@ -108,6 +108,7 @@
 \newcommand{\letS}[3]{\ensuremath{(!#1 \!:=\! #2 ~\mathrm{in}~ #3)}}
 \newcommand{\boxrule}[1]{\begin{center}\framebox{\ensuremath{#1}}\end{center}}
 \newcommand{\boxrules}[2]{\begin{center}\framebox{\ensuremath{#1}}\quad\framebox{\ensuremath{#2}}\end{center}}
+\newcommand{\boxruless}[3]{\begin{center}\framebox{\ensuremath{#1}}\quad\framebox{\ensuremath{#2}}\quad\framebox{\ensuremath{#3}}\end{center}}
 
 \newcommand{\tmvars}[1]{\ensuremath{tmvars(#1)}}
 \newcommand{\tyvars}[1]{\ensuremath{\V_\TY(#1)}}
@@ -289,11 +290,10 @@ notion of information increase between input and output contexts, though this is
 used for different purposes. \TODO{More? Where should this go?}
 
 In contrast to other presentations of unification and Hindley-Milner type
-inference, our algorithm uses explicit definitions to avoid the need for a 
-substitution operation.
-(We do use substitution in reasoning about the system.) Many implementations
-of (variations on) the Robinson unification algorithm are incorrect because they
-do not handle substitutions correctly \citep{norvig_correctingwidespread_1991}.
+inference, our algorithm is based on contexts carrying variable definitions as
+well as declarations. This avoids having to consider substitutions, or
+morphisms between contexts, explicitly.
+(We do use substitution in reasoning about the system.)
 
 This paper has been brewing for a long time. Its origins lie in a constraint
 engine cannibalised by McBride from an implementation of
@@ -316,7 +316,7 @@ It is high time we began to explain how it works and perhaps to understand it.
 This paper is literate Haskell, with full source code available at
 \footnotesize\url{http://personal.cis.strath.ac.uk/~adam/type-inference/}\normalsize.
 
-\subsection{The occur-check}
+\subsection{The occurs check}
 
 Testing whether a variable occurs in a term is used by both Robinson unification
 and \AlgorithmW. In unification, the check is (usually)
@@ -324,7 +324,7 @@ necessary to ensure termination, let alone correctness: the equation
 $\alpha \equiv \alpha \arrow \beta$ has no (finite) solution because the
 right-hand side depends on the left, so it does not make a good definition.
 
-In \AlgorithmW, the occur-check is used to discover type dependencies just in
+In \AlgorithmW, the occurs check is used to discover type dependencies just in
 time for generalisation. When inferring the type of the let-expression
 $\letIn{x}{w}{t}$, the type $w$ must first be inferred, then
 quantified over \scare{generic} type variables, i.e.\ those that occur in $w$
@@ -349,11 +349,11 @@ This is the only real complexity in \AlgorithmW,
 and as \citet{milner_theory_1978} wrote, ``the
 reader may still feel that our rules are arbitrarily chosen and only partly
 supported by intuition.'' Experience has shown that the rules are well-chosen
-indeed; perhaps we can now discover the intuition.
+indeed; perhaps we can recover the intuition.
 
-In both cases, the occur-check is used to detect dependencies between variables.
-Type variables are traditionally left floating in space and given definitions by
-substitutions, but by imposing structure we can manage definitions and
+In both cases, the occurs check is used to detect dependencies between variables.
+Type variables are traditionally left floating in space and given meaning by
+substitution, but by imposing structure we can manage definitions and
 dependencies as we go. Recording type variables in the context is natural when
 dealing with dependent types, since there is no distinction between type and term
 variables. Even in a simply-typed setting, however, this approach has advantages.
@@ -417,6 +417,7 @@ $$
 \label{fig:oldRules}
 \end{figure}
 
+\TODO{Relate contexts to traditional substitutions (triangular).}
 
 The rules in Figure~\ref{fig:oldRules} define a context as a left-to-right list
 of type variables, each of which may be unknown (written $\hole{\alpha}$) or
@@ -431,14 +432,14 @@ This topological sorting of the dependency graph means that
 entries on the right are harder to depend on, and correspondingly easier to
 generalise just by the usual process of discharging as hypotheses.
 
-The definitions in the context induce a nontrivial equational theory on types,
+Definitions in the context induce a nontrivial equational theory on types,
 starting with $\alpha \equiv \tau$ for every definition $\alpha \defn \tau$ in
-the context, then taking the structural and equivalence closure.
-Unification is the problem of increasing information in the context (making
-variables more defined) to make a particular equation hold.
+the context, then taking the congruence closure.
+Unification is the problem of making variable definitions to solve an
+equation. \TODO{Information increase} 
 The idea is that we decompose constraints on the syntactic structure of types
 until we reach variables, then move through the context and update it to solve
-the equation.
+the equation. \TODO{Cf. Baader and Snyder}
 
 For example, we might start in the context
 $\hole{\alpha}, \hole{\beta}, \gamma \defn \alpha \arrow \beta$
@@ -459,7 +460,7 @@ $$\hole{\alpha}, \beta \defn \alpha, \gamma \defn \alpha \arrow \beta
 
 \begin{minipage}[t]{0.5\linewidth}
 
-\subfigure[][Types, type variables, occur check]{\frame{\parbox{\textwidth}{\fixpars\medskip
+\subfigure[][Types, type variables, occurs check]{\frame{\parbox{\textwidth}{\fixpars\medskip
 
 > data Ty a  =  V a |  Ty a :-> Ty a
 >     deriving (Functor, Foldable)
@@ -610,11 +611,11 @@ $$\hole{\alpha}, \beta \defn \alpha, \gamma \defn \alpha \arrow \beta
 \label{fig:unifyCode}
 \end{figure*}
 
-The Haskell implementation of our unification algorithm is given in
+A Haskell implementation of our unification algorithm is given in
 Figure~\ref{fig:unifyCode}.
 \citet{NaraschewskiN-JAR} formally proved correctness of \AlgorithmW\ in
 Isabelle/HOL using a counter for fresh variable generation and a monad to
-silently propagate failure; we use similar techniques in our implementation.
+silently propagate failure; we use similar techniques here.
 
 Figure~\ref{subfig:typeCode} implements types as a foldable functor
 parameterised by the type of variable names. Thanks to a language
@@ -625,7 +626,7 @@ We can find free type variables using the typeclass |FTV| with membership
 function |(<?)|. We get most of the required instances for free using |Foldable|.
 
 Figure~\ref{subfig:contextCode} defines context entries, contexts and suffixes.
-The types |Bwd| and |Fwd| are backwards and forwards lists
+The types |Bwd| and |Fwd|, whose definitions are omitted, are backwards and forwards lists
 with |B0| for both empty lists and |:<| and |:>| for snoc and cons respectively.
 Lists are monoids with the append operator |<+>|, and the \scare{fish}
 operator |(<><)| appends a suffix to a context. We will later extend |Entry| to
@@ -639,8 +640,8 @@ declaration to the context. Our choice of |TyName| means that it is easy to
 choose a name fresh with respect to a |Context|.
 
 Figure~\ref{subfig:onTopCode} implements the |onTop| operator, which applies its
-argument to the topmost type variable declaration in the context, skipping over
-any other kinds of entry we may define later. The argument function may
+argument function to the topmost type variable declaration in the context, skipping over
+the other kinds of entry we will define later. The argument may
 |restore| the previous entry, or it may return a context extension (containing
 at least as much information as the entry that has been removed) with which to
 |replace| it.
@@ -652,10 +653,10 @@ a type variable declaration to consider. Depending on the variables, it will
 then either succeed (by restoring the old entry or replacing it with a new one)
 or continue unifying with an updated contraint.
 
-Solution is called when a variable must be unified with a non-variable type.
+The |solve| function is called when a variable must be unified with a non-variable type.
 It works similarly to unification of variables, but must accumulate a list of
 the type's dependencies and push them left through the context. It also performs
-the occur check and invokes the monadic failure command if an illegal occurrence
+the occurs check and invokes the monadic failure command if an illegal occurrence
 (which would lead to an infinite type) is detected.
 
 As an example, consider the behaviour of the algorithm when |unify| is called
@@ -674,16 +675,18 @@ $\alpha$ and $\beta' \arrow \beta'$. Again this succeeds, giving the context
 $\hole{\beta'}, \alpha \defn \beta' \arrow \beta', \beta \defn \alpha,
 \alpha' \defn \beta$.
 
-\TODO{How can we make this example clearer?}
+\TODO{Rewrite example in equational style.}
 
-\section{Modelling contexts and statements}
+
+\section{Generalising the picture: modelling statements-in-context}
 
 Having seen an implementation of unification, let us try to understand it.
-We have got a contexts and judgments story about equality leading to unification,
-and we are likely to have a similar story about type assignment leading to type
-inference. What is the common structure?
+We would like to give a general picture of \scare{statements-in-context} which
+allows us to view unification and type inference in a uniform setting.
+What is the common structure?
 
-A \define{context} is a list of \define{declarations} assigning properties to
+A \define{context} is a list of \define{declarations} assigning
+\define{properties} to
 variables (here, in particular, type variables). 
 The empty context is written $\emptycontext$ and we let
 $\Gamma, \Delta, \Theta$ range over contexts.
@@ -707,19 +710,19 @@ $$S ::=~ \valid
 meaning, respectively, that the context is valid, $\tau$ is a type, the types
 $\tau$ and $\upsilon$ are equivalent, and both conjuncts hold.
 Note that $\valid$ and $\wedge$ are essentially unit and product for statements.
+\TODO{In what?}
 
 A statement has zero or more
 \define{parameters}, each of which has an associated \define{sanity condition}, 
-a statement that must hold for the original statement to make
-sense. We have already seen the type equivalence statement
+i.e.\ a statement whose truth is pre-supposed for the problem to make sense.
+We have already seen the type equivalence statement
 $\tau \equiv \upsilon$: the sanity
 condition for $\tau$ is $\tau \type$ and for $\upsilon$ it is $\upsilon \type$.
-Sanity conditions capture what must be true of the context in order to be able
-to ask the question ``does this statement hold?''
+\TODO{Give all sanity conditions.}
 
 Each declaration in the context causes some statement to hold.
 We maintain a map $\sem{\cdot}_K : \V_K \times \D_K \rightarrow \Ss$
-from declarations to statements. (Typically we will omit $K$ when it is obvious.)
+from declarations to statements. (Typically we will omit the subscript $K$.)
 The idea is that $\sem{\decl{x}{D}}$ is the statement that holds by virtue of the
 declaration $\decl{x}{D}$ in the context. For type variables, we define
 \begin{align*}
@@ -757,7 +760,8 @@ be well-founded, that is, each declaration should make sense in
 at most once, and each property is meaningful in the
 preceding context.
 
-We maintain a map $\ok_K : \D_K \rightarrow \Ss$ for every $K \in \K$, which 
+Accordingly, 
+we maintain a map $\ok_K : \D_K \rightarrow \Ss$ for every $K \in \K$, which 
 embeds properties in statements. For type properties:
 \begin{align*}
 \ok_\TY (\hole{}) &= \valid \\
@@ -767,7 +771,8 @@ Now we can define the context validity statement
 $\valid$ as shown in Figure~\ref{fig:contextValidityRules}.
 From now on we will implicitly assume that all contexts we work with are valid,
 and will ensure that we only construct valid contexts. Mostly we will ignore the
-issue of fresh names, since a simple counter suffices for our purposes.
+issue of fresh names, since our simple counter implementation suffices for most
+purposes.
 
 \begin{figure}[ht]
 \boxrule{\Gamma \entails \valid}
@@ -782,14 +787,13 @@ $$
 \label{fig:contextValidityRules}
 \end{figure}
 
+\TODO{Relate to traditional presentation - give intuition.}
 
-\TODO{Example of a context validity derivation?}
 
-
-\subsection{Rules for proving statements}
+\subsection{Rules for establishing statements}
 
 \begin{figure}[ht]
-\boxrules{\tau \type}{\tau \equiv \upsilon}
+\boxruless{\tau \type}{\tau \equiv \upsilon}{S \wedge S'}
 $$
 \Rule{\tau \type   \quad   \upsilon \type}
      {\tau \arrow \upsilon \type}
@@ -823,7 +827,7 @@ $$
 \label{fig:statementRules}
 \end{figure}
 
-Figure~\ref{fig:statementRules} gives rules for proving statements other than
+Figure~\ref{fig:statementRules} gives rules for establishing statements other than
 $\valid$.
 We deduce that variables are types by looking up the context, but we need
 a structural rule for the $\arrow$ type constructor.
@@ -831,10 +835,11 @@ a structural rule for the $\arrow$ type constructor.
 The conjunction of statements $S \wedge S'$ allows us to package multiple facts
 about a single variable, with a normal introduction rule (pairing) and neutral
 elimination rules (projections).
-This is but one instance of a general pattern: we add normal introduction
+This is but one instance of a general pattern: we add \emph{normal} introduction
 forms for composite statements, but supply
-eliminators only for composite \emph{hypotheses}, in effect forcing
-derivations to be cut-free. This facilitates reasoning by induction on
+eliminators only for statements which ultimately rest on (composite) hypotheses,
+obtained by \textsc{Lookup}. This forces
+derivations to be cut-free, facilitating reasoning by induction on
 derivations.
 If we added the corresponding projections for \emph{normal} judgments, we
 would lose the hope of a syntax-directed rule system. In any case, we shall
@@ -846,7 +851,8 @@ the case for conjunction.
 
 \subsection{Information order}
 
-Intuitively, defining a variable cannot make equations cease to hold.
+The transition from $\hole{\alpha}$ to $\alpha \defn \tau$ intuitively cannot
+falsify existing equations.
 More generally, if we rely on the context to tell us what we may
 deduce about variables, then making contexts more informative must preserve
 deductions. 
@@ -854,7 +860,8 @@ deductions.
 Let $\Gamma$ and $\Delta$ be contexts.
 A \define{substitution from $\Gamma$ to $\Delta$} is a map from
 $\tyvars{\Gamma}$ to $\{ \tau ~||~ \Delta \entails \tau \type \}$.
-Substitutions apply to types and statements in the obvious way.
+\TODO{Talk about TM variables.}
+Substitutions apply to types and statements in the usual way.
 Composition of substitutions is given by
 $(\theta \compose \delta) (\alpha) = \theta (\delta \alpha)$.
 We write $\subst{\tau}{\alpha}{}$ for the substitution that maps
@@ -866,7 +873,8 @@ we write the \define{information increase} $\delta : \Gamma \lei \Delta$ and say
 for all $\decl{x}{D} \in \Gamma$, we have 
 $\Delta \entails \delta \sem{\decl{x}{D}}$. 
 We may omit $\delta$ and write $\Gamma \lei \Delta$ if we are only interested
-in the existence of a suitable substitution. This relation between contexts
+in the existence of a suitable substitution. \TODO{Should this mean $\delta = \iota$?}
+This relation between contexts
 ensures that $\Delta$ supports all the statements corresponding to declarations
 in $\Gamma$. 
 
@@ -882,7 +890,7 @@ $\delta \eqsubst \theta$ then
 $\Delta \entails \delta\tau \equiv \theta\tau$ for any $\Gamma$-type $\tau$.
 
 This partial order on contexts is sufficient to ensure stability, as described
-in the following section, but in practice we will work with a more structured
+in the following section, but in practice the algorithm will work with a more structured
 subrelation of $\lei$. We give up more freedom to achieve a more comprehensible
 algorithm. For example, our algorithm will always use the identity substitution.
 
@@ -909,6 +917,8 @@ that non-recursive hypotheses are stable
 and that recursive hypotheses occur in strictly positive positions, so 
 are stable by induction. Applying this strategy shows that both 
 $\tau \type$ and $\tau \equiv \upsilon$ are stable.
+
+\TODO{Motivate these lemmas.}
 
 \begin{lemma}[Neutrality]\label{lem:neutrality}
 If $\Gamma \entailsN S$ and $\delta : \Gamma \lei \Delta$ then
@@ -974,7 +984,7 @@ by transitivity.
 \end{proof}
 
 
-\section{Constraint problems}
+\section{Constraints: problems at ground mode}
 
 A \define{constraint problem} is a pair of a context $\Gamma$ and a statement
 $S$, where
@@ -996,7 +1006,7 @@ substitution $\zeta : \Delta \lei \Theta$ such that
 $\theta \eqsubst \zeta \compose \iota$ (we say $\theta$ \emph{factors through}
 $\delta$ with \emph{cofactor} $\zeta$).
 
-In fact, we can always find minimal solutions that use the identity substitution.
+In fact, we will always find minimal solutions that use the identity substitution.
 We write $\Jmin{\Gamma}{P}{\Delta}$ to mean that $(\Gamma, P)$ is a
 problem with minimal solution $\iota : \Gamma \lei \Delta$.
 \TODO{Better notation for this?}
@@ -1039,7 +1049,7 @@ on one side and a type on the other. In each case, we look at the next type
 variable in the context to see what information it gives us, and either solve
 the problem or update our constraint and continue processing the context.
 When solving a variable with a type, we need to accumulate
-the type's dependencies as we encounter them, performing the occur check to
+the type's dependencies as we encounter them, performing the occurs check to
 ensure a solution exists.
 
 It is possible that a context entry may have no bearing on the unification
@@ -1051,7 +1061,7 @@ to capture this idea:
 \alpha D \perp X
     &\mathrm{~if~} \alpha \in \V_\TY \setminus X  \\
 \decl{x}{D} \perp X
-    &\mathrm{~if~} x \in \V_K, D \in \D_K \mathrm{~for~} K \neq \TY
+    &\mathrm{~if~} x \in \V_\TM, D \in \D_\TM
 \end{align*}
 
 The rules in Figure~\ref{fig:unifyRules} define our unification algorithm. The
@@ -1175,7 +1185,7 @@ Observe that we have no rule in the situation where
 $$\Jinstantiate{\Gamma_0, \alpha D}{\alpha}{\tau}{\Xi}{\Delta}
 \mathrm{~with~} \alpha \in \FTV{\tau, \Xi}$$
 so the algorithm fails in this case. 
-This is an occur check failure: $\alpha$ and $\tau$ cannot unify 
+This is an occurs check failure: $\alpha$ and $\tau$ cannot unify 
 if $\alpha$ occurs in
 $\tau$ or in an entry that $\tau$ depends on, and $\tau$ is not a variable.
 Given the single type constructor symbol (the function arrow $\arrow$),
@@ -1184,8 +1194,9 @@ To add these would not significantly complicate matters.
 
 By exposing the contextual structure underlying unification we make
 termination of the algorithm evident. Each recursive appeal to
-unification (directly or via the solving process) either shortens the
-context or preserves the context and decomposes
+unification (directly or via the solving process) either shortens the context
+left of the $~||~$, shortens the overall
+context, or preserves the context and decomposes
 types~\citep{mcbride:unification}. We are correspondingly entitled to
 reason about the total correctness of unification by induction on the
 algorithmic rules.
@@ -1220,8 +1231,8 @@ By induction on the structure of derivations.
 \end{proof}
 
 
-\begin{lemma}[Occur check]
-\label{lem:occurCheck}
+\begin{lemma}[Occurs check]
+\label{lem:occursCheck}
 Let $\alpha$ be a variable and $\tau$ a non-variable type such that
 $\alpha \in \FTV{\tau}$. For every context $\Gamma$ and substitution
 $\theta$, $\Gamma \nvdash \theta\alpha \equiv \theta\tau$ and
@@ -1274,7 +1285,7 @@ $\Jinstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$.
 \begin{proof}[Sketch] Each step preserves all solutions. The
 Optimist's Lemma justifies problem decomposition. The algorithm
 terminates, and the only case not covered by the rules is the case
-where the occur check fails, indicating no unifier exists.  For
+where the occurs check fails, indicating no unifier exists.  For
 details, see Appendix.  \end{proof}
 
 
