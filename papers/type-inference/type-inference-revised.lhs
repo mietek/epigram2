@@ -228,12 +228,13 @@
 
 \conferenceinfo{MSFP '10}{September 25, Baltimore, Maryland, USA.} 
 \copyrightyear{2010} 
-\copyrightdata{\NotForPublication{[to be supplied]}} 
+\copyrightdata{} 
 
 \titlebanner{\NotForPublication{REVISED DRAFT}}
 
 \title{Type inference in context}
-\authorinfo{Adam Gundry \and Conor McBride}
+\authorinfo{Adam Gundry\thanks{Adam Gundry was supported by Microsoft Research through its PhD Scholarship
+Programme.} \and Conor McBride}
            {University of Strathclyde, Glasgow}
            {\{adam.gundry,conor.mcbride\} at cis.strath.ac.uk}
 \authorinfo{James McKinna}
@@ -270,7 +271,7 @@ Most presentations of \AlgorithmW\ have treated the underlying unification
 algorithm as a \scare{black box}, but by considering both together we can give a
 more elegant type inference algorithm.  In particular, the generalisation step
 (used when inferring the type of a let-expression) becomes straightforward
-(section ??).
+(section \TODO{??}).
 
 \subsection{Motivating context}
 
@@ -2169,12 +2170,6 @@ mediating \emph{problems as types}.
 \addcontentsline{toc}{section}{References}
 \bibliographystyle{plainnat}
 \bibliography{lib}
-
-\section{Acknowledgments}
-
-The first author is supported by Microsoft Research through its PhD Scholarship
-Programme.
-
 
 
 \appendix
