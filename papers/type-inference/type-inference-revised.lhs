@@ -1320,14 +1320,14 @@ then we can add a type assignment statement. The final grammar will be:
 
 \subsection{Binding statements}
 
-To give rule for schemes and type assignment, we need the ability to add
+To give rules for schemes and type assignment, we need the ability to add
 variables to the context in a controlled way.
 If $S$ is a statement and $\decl{x}{D}$ is a declaration, then we define the
 binding statement $\Sbind{\decl{x}{D}}{S}$ with the introduction rule
 $$
-\Rule{\Gamma \entails \ok_K D    \quad    \Gamma, \decl{x}{D} \entails S}
+\Rule{\Gamma \entails \ok_K D    \quad    \Gamma, \decl{y}{D} \entails \subst{y}{x} S}
      {\Gamma \entails \Sbind{\decl{x}{D}}{S}}
-\side{v \in \V_K \setminus \V_K(\Gamma)}.
+\side{y \in \V_K \setminus \V_K(\Gamma)}.
 $$
 and neutral elimination rule
 $$
@@ -1337,13 +1337,18 @@ $$
      {\entailsN \subst{\tau}{\alpha}{S}}
 \side{D \in \D_\TY}
 .$$
+\TODO{Explain why we only have this for $\TY$.}
 The corresponding normal rule is admissible: if
 $\Gamma \entails \Sbind{\decl{\alpha}{D}}{S}$ by the introduction rule, then
-$\Gamma, \decl{\alpha}{D} \entails S$.
-But $\Gamma \entails \subst{\tau}{\alpha}{\sem{\decl{\alpha}{D}}}$
-implies $\subst{\tau}{\alpha} : \Gamma, \alpha D \lei \Gamma$
-and hence $\Gamma \entails \subst{\tau}{\alpha} S$ by stability.
+$\Gamma, \decl{\beta}{D} \entails \subst{\beta}{\alpha} S$ where $\beta$ is fresh.
+But $\Gamma \entails \subst{\tau}{\alpha}{\sem{\decl{\alpha}{D}}}$ implies
+$\Gamma \entails \subst{\tau}{\beta}{\sem{\decl{\beta}{D}}}$ and hence
+$\subst{\tau}{\beta} : \Gamma, \beta D \lei \Gamma$.
+By stability, $\Gamma \entails \subst{\tau}{\beta} \subst{\beta}{\alpha} S$, so
+$\Gamma \entails \subst{\tau}{\alpha} S$.
 As a consequence, Lemma~\ref{lem:neutrality} still holds.
+\TODO{Begging the question: cannot use stability without the following lemma,
+which depends on what we are proving.}
 
 \begin{lemma}[Binding preserves stability]\label{lem:stab-pres-bind}
 If $\decl{x}{D}$ is a declaration and both $\ok_K D$ and $S$ are stable, then
@@ -1354,14 +1359,19 @@ Suppose $\delta : \Gamma \lei \Delta$, the statement $S$ is stable and
 $\Gamma \entails \Sbind{\decl{x}{D}}{S}$.  If the proof is by \textsc{Neutral}
 then the result follows by Lemma~\ref{lem:neutrality}.
 Otherwise, $\Gamma \entails \ok_K D$ and
-$\Gamma, \decl{x}{D} \entails S$, so by stability, $\Delta \entails \delta (\ok_K D)$.
+$\Gamma, \decl{y}{D} \entails S$ for fresh $y$.
+By stability (structural induction), $\Delta \entails \delta (\ok_K D)$.
 % Let $\delta' = \subst{x}{x}{\delta}$, then
-Now $\delta : \Gamma, \decl{x}{D} \lei \Delta, \decl{x}{(\delta D)}$
-so by stability of $S$ we have $\Delta, \decl{x}{(\delta D)} \entails \delta S$.
+Now $\delta : \Gamma, \decl{y}{D} \lei \Delta, \decl{y}{(\delta D)}$
+(with $y$ mapped to itself)
+so by stability of $S$ we have $\Delta, \decl{y}{(\delta D)} \entails \delta S$.
 Hence $\Delta \entails \Sbind{\decl{x}{(\delta D)}}{\delta S}$
 and so $\Delta \entails \delta \Sbind{\decl{x}{D}}{S}$.
-\TODO{We should at least mention freshness here.}
 \end{proof}
+
+We write $\Sbind{\Xi}{S}$ where $\Xi$ is a list of declarations, defining
+$\Sbind{\emptycontext}{S} = S$ and
+$\Sbind{(\Xi, \decl{x}{D})}{S} = \Sbind{\Xi}{\Sbind{\decl{x}{D}}{S}}$.
 
 \subsection{Type schemes}
 
@@ -1491,7 +1501,7 @@ $$
 \end{figure}
 
 
-\subsection{Inference problems}
+\subsection{Inference problems: multiple-mode }
 
 Type inference involves making the statement $t : \tau$ hold. However,
 a crucial difference from the unification problem is that the type should
@@ -1500,10 +1510,13 @@ a more liberal definition than that of constraint problems.
 
 We associate a \define{mode} with each parameter, either \scare{input} or
 \scare{output}, in a statement. For simplicity, assume statements always have
-one parameter of each mode (which may be unit or a product). A \define{problem}
+one parameter of each mode (which may be unit or a product). An
+\define{inference problem}
 is a triple $(\Gamma, S, Q)$ where $\Gamma$ is a context, $S$ is a statement and
 $Q$ is a value for the input parameter that satisfies its sanity condition in
 $\Gamma$.
+
+\TODO{Explain conjunction as dependent $\Sigma$.}
 
 A \define{solution} of $(\Gamma, S, Q)$ consists of an information increase
 $\delta : \Gamma \lei \Delta$ and a value for the output parameter $A$ 
@@ -1511,10 +1524,14 @@ such that $(\delta Q) A$ and the sanity condition on $A$ hold in $\Delta$.
 
 \TODO{We need a notion of information increase between solutions.}
 
-This solution is \define{minimal} if, for every other solution
+The solution $(\delta : \Gamma \lei \Delta, A)$ is \define{minimal} if, for
+every other solution
 $(\theta : \Gamma \lei \Theta, B)$ there is a substitution
 $\zeta : \Delta \lei \Theta$ such that $\theta \eqsubst \zeta \compose \delta$
 and \TODO{what?}.
+
+As before, we will look for solutions where $\delta$ is the identity, and write
+$\Jmin{\Gamma}{Q A}{\Delta}$ when this is the case.
 
 Thus the type inference problem is given by a context $\Gamma$ and the
 statement $t : ~?$ where $t$ is a term and $?$ represents the output parameter.
@@ -1709,7 +1726,7 @@ $$\Rule{\Pinf{f}{\chi}
         \quad
         \Sbind{\beta \defn \tau}{\Puni{\chi}{\upsilon \arrow \beta}}
        }
-       {\Sbind{\beta \defn \tau}{\Pinf{f a}{\beta}}}.$$
+       {\Pinf{f a}{\tau}}.$$
 
 
 %if False
@@ -1732,7 +1749,7 @@ $$\Rule{\Sbind{x \asc .\upsilon}{\Pinf{t}{\tau}}}
 which has unknown input $\upsilon$, so we bind a fresh variable $\beta$
 to give
 $$\Rule{\Sbind{\beta \defn \upsilon}{\Sbind{x \asc .\beta}{\Pinf{t}{\tau}}}}
-       {\Sbind{\beta \defn \upsilon}{\Pinf{\lambda x . t}{\beta \arrow \tau}}}.$$
+       {\Pinf{\lambda x . t}{\upsilon \arrow \tau}}.$$
 
 % and hence
 % $$
@@ -1761,8 +1778,6 @@ $$
      }
      {\Pinf{\letIn{x}{s}{w}}{\tau}}.
 $$
-where we let $\Sbind{\emptycontext}{S} = S$ and
-$\Sbind{(\Xi, \decl{x}{D})}{S} = \Sbind{\Xi}{\Sbind{\decl{x}{D}}{S}}$.
 
 
 But how can we find $\Xi$?
@@ -1887,7 +1902,8 @@ for some type $\upsilon$ and context $\Delta$.
 
 \begin{proof}[Sketch]
 The algorithm is structurally recursive over terms, failing only when
-unification fails. Each step locally preserves all possible solutions.
+unification fails or a term variable is not in scope.
+Each step locally preserves all possible solutions.
 For let-expressions, observe that any type specialising any scheme
 for $s$ must certainly specialise the type we infer for $s$, and
 \emph{ipso facto}, the principal type scheme we assign to $x$.
