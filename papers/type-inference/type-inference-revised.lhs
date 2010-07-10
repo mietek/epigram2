@@ -1028,6 +1028,8 @@ problem with minimal solution $\iota : \Gamma \lei \Delta$.
 We can now state the following \scare{greedy} approach to finding minimal
 solutions to such composite problems: find a minimal solution of problem $P$,
 then extend it to (minimally) solve $Q$:
+\TODO{State unhatted version first (obvious thanks to stability), then observe
+that we have minimality as well.} 
 \begin{lemma}[The Optimist's lemma]
 \label{lem:optimist}
 The following inference rule is admissible:
@@ -1055,7 +1057,7 @@ substitution.
 
 \section{The unification algorithm, formally}
 
-Now we can see why the algorithm works. The structural rule means that
+We now present the algorithm formally. The structural rule means that
 whenever we have rigid $\arrow$ symbols on each side, we decompose the problem
 into two subproblems, and thanks to the Optimist's Lemma we can solve these
 sequentially. Otherwise, we either have variables on both sides, or a variable
@@ -1065,6 +1067,9 @@ the problem or update our constraint and continue processing the context.
 When solving a variable with a type, we need to accumulate
 the type's dependencies as we encounter them, performing the occurs check to
 ensure a solution exists.
+
+\TODO{Each rule preserves minimal solutions (like OL), giving soundness and minimality;
+this is why Haskell implementation gives minimal solutions.}
 
 It is possible that a context entry may have no bearing on the unification
 problem being solved, and hence can be ignored.
@@ -1084,7 +1089,9 @@ unification of $\tau$ with $\upsilon$
 succeeds, producing output context $\Delta$, 
 given inputs
 $\Gamma$, $\tau$ and $\upsilon$ satisfying 
-$\Gamma \entails \tau \type \wedge \upsilon \type$. 
+$\Gamma \entails \tau \type \wedge \upsilon \type$.
+
+\TODO{Explain intuition/meaning rather than just giving validity conditions.}
 
 The assertion
 $\Jinstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$
@@ -1101,6 +1108,8 @@ satisfying
 \item $\beta \in \tyvars{\Xi} \Rightarrow \beta \in \FTV{\tau, \Xi}$.
 \end{itemize}
 
+\TODO{Soundness/minimality (and completeness?) lemma here}
+
 The idea of assertions producing a resulting context goes back at least to
 \citet{pollack_implicit_1990}. \citet{Nipkow-Prehofer-JFP95} use (unordered)
 input and output contexts to pass information about \scare{sorts} for Haskell
@@ -1110,6 +1119,8 @@ of unification.
 The rules \textsc{Define}, \textsc{Expand} and \textsc{Ignore} have
 symmetric counterparts, identical apart from interchanging the equated
 terms in the conclusion. Usually we will ignore these without loss of generality.
+
+\TODO{Rearrange rules.}
 
 \begin{figure}[ht]
 \boxrule{\Junify{\Gamma}{\tau}{\upsilon}{\Delta}}
@@ -1219,6 +1230,8 @@ algorithmic rules.
 
 \subsection{Soundness and completeness}
 
+\TODO{Move this lemma. Explain proof properly.}
+
 \begin{lemma}[Soundness of unification]
 \label{lem:unifySound}
 \begin{enumerate}[(a)]
@@ -1252,6 +1265,11 @@ $\alpha \in \FTV{\tau}$. For every context $\Gamma$ and substitution
 $\theta$, $\Gamma \nvdash \theta\alpha \equiv \theta\tau$ and
 $\Gamma \nvdash \theta\tau \equiv \theta\alpha$.
 \end{lemma}
+
+\TODO{Rewrite: if $\alpha \in \Gamma$, $\Gamma \entails \tau \type$,
+$\tau$ is not a variable and there is some substitution
+$\theta : \Gamma \lei \Delta \entails \alpha \equiv \tau$, then
+$\alpha \notin \FTV{\tau}$.}
 
 \begin{proof}
 It suffices to prove $\Gamma \nvdash \alpha \equiv \tau$ and
@@ -1306,10 +1324,10 @@ details, see Appendix.  \end{proof}
 
 \section{Applying these ideas to type inference}
 
-Having implemented unification and defined type schemes, we now turn to the
-problem of type inference for terms. We need to extend our grammar of statements
+We aim to implement type inference for the Hindley-Milner system, so we need to
+introduce type schemes and the term language. We extend the grammar of statements
 to express additions to the context (binding statements) and well-formed schemes,
-then we can add a type assignment statement. The final grammar will be:
+so we can add a type assignment statement. The final grammar will be:
 \begin{align*}S ::=~ \valid
     &~||~ \tau \type
     ~||~ \tau \equiv \upsilon
@@ -1318,6 +1336,8 @@ then we can add a type assignment statement. The final grammar will be:
     ~||~ \sigma \scheme
     ~||~ t : \tau.
 \end{align*}
+
+\TODO{Add scheme assignment as well?}
 
 \subsection{Binding statements}
 
@@ -1420,6 +1440,9 @@ defined by
 \Xi, \alpha \defn \nu &\genarrow \sigma = \Xi \genarrow \letS{\alpha}{\nu}{\sigma}
 \end{align*}
 We will usually be interested in the case $\sigma = .\tau$ for some type $\tau$.
+\TODO{Can we make this about types and omit the dot?}
+
+\TODO{Explain the relationship between a scheme prefix and context suffix.}
 
 When we infer the specialised type of a variable, we rely on the
 ability to invert this operation, extending the context with a
@@ -1467,6 +1490,10 @@ t \hasscheme \letS{\alpha}{\tau}{\sigma}  &\mapsto
 \end{align*}
 Let $\sem{x \asc \sigma}_\TM = x \hasscheme \sigma$.
 
+\TODO{Define $t \hasscheme \sigma$ by
+$\Rule{\Sbind{\Xi}{t : \tau}}
+      {t \hasscheme \gen{\Xi}{\tau}}$.}
+
 \begin{figure}[ht]
 \boxrule{t : \tau}
 
@@ -1513,7 +1540,8 @@ We associate a \define{mode} with each parameter, either \scare{input} or
 \scare{output}, in a statement. For simplicity, assume statements always have
 one parameter of each mode (which may be unit or a product). An
 \define{inference problem}
-is a triple $(\Gamma, S, Q)$ where $\Gamma$ is a context, $S$ is a statement and
+is a triple $(\Gamma, S, Q)$ where $\Gamma$ is a context, $S$ is a statement
+\TODO{(?)} and
 $Q$ is a value for the input parameter that satisfies its sanity condition in
 $\Gamma$.
 
@@ -1523,7 +1551,11 @@ A \define{solution} of $(\Gamma, S, Q)$ consists of an information increase
 $\delta : \Gamma \lei \Delta$ and a value for the output parameter $A$ 
 such that $(\delta Q) A$ and the sanity condition on $A$ hold in $\Delta$.
 
-\TODO{We need a notion of information increase between solutions.}
+\TODO{We need a notion of information increase between solutions: based on
+scheme outputs, with special case for types. We define
+$\delta : \Delta ! \gen{\Xi}{\tau} \lei \Delta' ! \gen{\Xi'}{\tau'}$ to be
+$\delta : \Delta \fatsemi \Xi \lei \Delta' \fatsemi \Xi' \entails \delta \tau \equiv \tau'$. 
+}
 
 The solution $(\delta : \Gamma \lei \Delta, A)$ is \define{minimal} if, for
 every other solution
@@ -1805,6 +1837,10 @@ subsection~\ref{sec:inferImplementation}.
 We use Lemma~\ref{lem:specialise} to ensure in rule \textsc{Var} that
 we compute a suffix \(\Xi\) consisting of fresh names, such that the
 output \ensuremath{\Gamma, \Xi} is well-formed.
+\TODO{``Prefix becomes context suffix.''}
+
+\TODO{Add rule for $\hasscheme$ explicitly, related to declarative version.
+Various possible layouts, so experiment.}
 
 \begin{figure}[ht]
 \boxrule{\Jtype{\Gamma}{t}{\tau}{\Delta}}
@@ -1909,6 +1945,7 @@ For let-expressions, observe that any type specialising any scheme
 for $s$ must certainly specialise the type we infer for $s$, and
 \emph{ipso facto}, the principal type scheme we assign to $x$.
 For details, see Appendix.
+\TODO{No, prove this here.}
 \end{proof}
 
 
