@@ -1077,29 +1077,26 @@ ensure a solution exists.
 \TODO{Each rule preserves minimal solutions (like OL), giving soundness and minimality;
 this is why Haskell implementation gives minimal solutions.}
 
-It is possible that a context entry may have no bearing on the unification
-problem being solved, and hence can be ignored.
-We define the orthogonality relation $\decl{x}{D} \perp X$ (the set of type
-variables $X$ does not depend on the declaration $\decl{x}{D}$) 
+Some context entries have no bearing on the unification problem being solved,
+so they can be ignored.
+We define the orthogonality relation $x \perp X$ (the variable $x$ is
+independent of the set of type variables $X$) 
 to capture this idea: 
 \begin{align*}
-\alpha D \perp X
-    &\mathrm{~if~} \alpha \in \V_\TY \setminus X  \\
-\decl{x}{D} \perp X
-    &\mathrm{~if~} x \in \V_\TM, D \in \D_\TM
+\alpha \perp X &\mathrm{~if~} \alpha \in \V_\TY \setminus X  \\
+x      \perp X &\mathrm{~if~} x \in \V_\TM
 \end{align*}
 
 The rules in Figure~\ref{fig:unifyRules} define our unification algorithm. The
-assertion $\Junify{\Gamma}{\tau}{\upsilon}{\Delta}$ means that 
-unification of $\tau$ with $\upsilon$ 
-succeeds, producing output context $\Delta$, 
-given inputs
+judgment $\Junify{\Gamma}{\tau}{\upsilon}{\Delta}$ means that 
+when given inputs
 $\Gamma$, $\tau$ and $\upsilon$ satisfying 
-$\Gamma \entails \tau \type \wedge \upsilon \type$.
+$\Gamma \entails \tau \type \wedge \upsilon \type$,
+unification succeeds and produces output context $\Delta$.
 
 \TODO{Explain intuition/meaning rather than just giving validity conditions.}
 
-The assertion
+The judgment
 $\Jinstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$
 means that 
 solving $\alpha$ with $\tau$ succeeds,  
@@ -1155,7 +1152,7 @@ $$
 \name{Ignore}
 \Rule{\Junify{\Gamma_0}{\alpha}{\beta}{\Delta_0}}
      {\Junify{\Gamma_0, \decl{x}{D}}{\alpha}{\beta}{\Delta_0, \decl{x}{D}}}
-\side{\decl{x}{D} \perp \{\alpha, \beta\} }
+\side{x \perp \{\alpha, \beta\} }
 $$
 
 $$
@@ -1205,7 +1202,7 @@ $$
 \name{IgnoreS}
 \Rule{\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\Xi}{\Delta_0}}
      {\Jinstantiate{\Gamma_0, \decl{x}{D}}{\alpha}{\tau}{\Xi}{\Delta_0, \decl{x}{D}}}
-\side{\decl{x}{D} \perp \FTV{\alpha, \tau, \Xi}}
+\side{x \perp \FTV{\alpha, \tau, \Xi}}
 $$
 
 \caption{Algorithmic rules for unification}
