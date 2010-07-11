@@ -1074,8 +1074,50 @@ When solving a variable with a type, we need to accumulate
 the type's dependencies as we encounter them, performing the occurs check to
 ensure a solution exists.
 
-\TODO{Each rule preserves minimal solutions (like OL), giving soundness and minimality;
-this is why Haskell implementation gives minimal solutions.}
+The rules in Figure~\ref{fig:unifyRules} define our unification algorithm. The
+judgment $\Junify{\Gamma}{\tau}{\upsilon}{\Delta}$ means that given inputs
+$\Gamma$, $\tau$ and $\upsilon$, unification succeeds and produces output
+context $\Delta$. This is subject to the input sanity condition
+$\Gamma \entails \tau \type \wedge \upsilon \type$.
+
+The judgment
+$\Jinstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$
+means that given inputs $\Gamma$, $\Xi$, $\alpha$ and $\tau$,
+solving $\alpha$ with $\tau$ succeeds,  
+yielding output context $\Delta$. The idea is that the bar ($||$) represents
+progress through the context, and $\Xi$ contains dependencies of $\tau$ (which
+must be placed before $\tau$ for it to be well-defined). Formally, the input
+must satisfy
+\begin{itemize}
+\item $\alpha \in \tyvars{\Gamma}$,
+\item $\Gamma, \Xi \entails \tau \type$,
+\item $\tau$ is not a variable,
+\item $\Xi$ contains only type variable declarations and
+\item $\beta \in \tyvars{\Xi} \Rightarrow \beta \in \FTV{\tau, \Xi}$.
+\end{itemize}
+
+By inspecting the rules, we observe that each rule preserves correct and minimal
+solutions (using the Optimist's Lemma for the \textsc{Decompose} rule), so we
+obtain the following lemma.
+
+\begin{lemma}[Soundness and generality of unification]
+\label{lem:unifySound}
+\begin{enumerate}[(a)]
+\item If $\Junify{\Gamma}{\tau}{\upsilon}{\Delta}$, then
+$\tyvars{\Gamma} = \tyvars{\Delta}$ and
+$\Jmin{\Gamma}{\tau \equiv \upsilon}{\Delta}$.
+
+\item If
+$\Jinstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$, then
+$\tyvars{\Gamma, \Xi} = \tyvars{\Delta}$ and
+$\Jmin{\Gamma, \Xi}{\tau \equiv \upsilon}{\Delta}$.
+\end{enumerate}
+\end{lemma}
+\begin{proof}
+By induction on the structure of derivations.
+\TODO{Should probably say a bit more here.}
+\end{proof}
+
 
 Some context entries have no bearing on the unification problem being solved,
 so they can be ignored.
@@ -1087,46 +1129,22 @@ to capture this idea:
 x      \perp X &\mathrm{~if~} x \in \V_\TM
 \end{align*}
 
-The rules in Figure~\ref{fig:unifyRules} define our unification algorithm. The
-judgment $\Junify{\Gamma}{\tau}{\upsilon}{\Delta}$ means that 
-when given inputs
-$\Gamma$, $\tau$ and $\upsilon$ satisfying 
-$\Gamma \entails \tau \type \wedge \upsilon \type$,
-unification succeeds and produces output context $\Delta$.
-
-\TODO{Explain intuition/meaning rather than just giving validity conditions.}
-
-The judgment
-$\Jinstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$
-means that 
-solving $\alpha$ with $\tau$ succeeds,  
-yielding output $\Delta$,
-given inputs $\Gamma$, $\Xi$, $\alpha$ and $\tau$
-satisfying 
-\begin{itemize}
-\item $\alpha \in \tyvars{\Gamma}$,
-\item $\Gamma, \Xi \entails \tau \type$,
-\item $\tau$ is not a variable,
-\item $\Xi$ contains only type variable declarations and
-\item $\beta \in \tyvars{\Xi} \Rightarrow \beta \in \FTV{\tau, \Xi}$.
-\end{itemize}
-
-\TODO{Soundness/minimality (and completeness?) lemma here}
-
-The idea of assertions producing a resulting context goes back at least to
-\citet{pollack_implicit_1990}. \citet{Nipkow-Prehofer-JFP95} use (unordered)
-input and output contexts to pass information about \scare{sorts} for Haskell
-typeclass inference, alongside a conventional substitution-based presentation
-of unification.
-
 The rules \textsc{Define} and \textsc{Expand} have
 symmetric counterparts, identical apart from interchanging the equated
 terms in the conclusion. Usually we will ignore these without loss of generality.
 
-\TODO{Rearrange rules.}
+\TODO{Rearrange rules?}
 
-\begin{figure}[ht]
+\begin{figure}[t]
 \boxrule{\Junify{\Gamma}{\tau}{\upsilon}{\Delta}}
+
+$$
+\name{Decompose}
+\Rule{\Junify{\Gamma}{\tau_0}{\upsilon_0}{\Delta_0}
+      \quad
+      \Junify{\Delta_0}{\tau_1}{\upsilon_1}{\Delta}}
+    {\Junify{\Gamma}{\tau_0 \arrow \tau_1}{\upsilon_0 \arrow \upsilon_1}{\Delta}}
+$$
 
 $$
 \name{Idle}
@@ -1161,14 +1179,6 @@ $$
      {\Junify{\Gamma}{\alpha}{\tau}{\Delta}}
 %% \side{\tau \neq \alpha}
 \side{\tau \mathrm{~not~variable}}
-$$
-
-$$
-\name{Decompose}
-\Rule{\Junify{\Gamma}{\tau_0}{\upsilon_0}{\Delta_0}
-      \quad
-      \Junify{\Delta_0}{\tau_1}{\upsilon_1}{\Delta}}
-    {\Junify{\Gamma}{\tau_0 \arrow \tau_1}{\upsilon_0 \arrow \upsilon_1}{\Delta}}
 $$
 
 \bigskip
@@ -1220,6 +1230,12 @@ Given the single type constructor symbol (the function arrow $\arrow$),
 there are no failures due to rigid-rigid mismatch. 
 To add these would not significantly complicate matters.
 
+The idea of assertions producing a resulting context goes back at least to
+\citet{pollack_implicit_1990}. \citet{Nipkow-Prehofer-JFP95} use (unordered)
+input and output contexts to pass information about \scare{sorts} for Haskell
+typeclass inference, alongside a conventional substitution-based presentation
+of unification.
+
 By exposing the contextual structure underlying unification we make
 termination of the algorithm evident. Each recursive appeal to
 unification (directly or via the solving process) either shortens the context
@@ -1231,35 +1247,7 @@ algorithmic rules.
 
 
 
-\subsection{Soundness and completeness}
-
-\TODO{Move this lemma. Explain proof properly.}
-
-\begin{lemma}[Soundness of unification]
-\label{lem:unifySound}
-\begin{enumerate}[(a)]
-\item If $\Junify{\Gamma}{\tau}{\upsilon}{\Delta}$, then
-$\tyvars{\Gamma} = \tyvars{\Delta}$,
-% and we have $\iota : \Jmin{\Gamma}{\Puni{\tau}{\upsilon}}{\Delta}$,
-$\Delta \entails \tau \equiv \upsilon$ and
-$\iota : \Gamma \lei \Delta$
-where $\iota$
-% $$\iota: \tyvars{\Gamma} \rightarrow \types{\Delta} : \alpha \mapsto \alpha$$
-is the identity substitution.
-
-\item If
-$\Jinstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$, then
-$\tyvars{\Gamma, \Xi} = \tyvars{\Delta}$,
-$\Delta \entails \alpha \equiv \tau$ and
-$\iota : \Gamma, \Xi \lei \Delta$.
-% $\iota : \Jmin{\Gamma, \Xi}{\Puni{\alpha}{\tau}}{\Delta}$.
-\end{enumerate}
-\end{lemma}
-
-\begin{proof}
-By induction on the structure of derivations.
-\end{proof}
-
+\subsection{Completeness}
 
 \begin{lemma}[Occurs check]
 \label{lem:occursCheck}
