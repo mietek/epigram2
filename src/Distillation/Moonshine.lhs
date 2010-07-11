@@ -6,7 +6,7 @@
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE GADTs, TypeOperators, PatternGuards #-}
 
-> module UI.Cochon.Distillation.Moonshine where
+> module Distillation.Moonshine where
 
 > import Control.Applicative
 > import Data.Traversable
@@ -15,7 +15,7 @@
 
 > import ProofState.ProofState
 
-> import UI.Cochon.Distillation.Distiller
+> import Distillation.Distiller
 
 > import DisplayLang.DisplayTm
 > import DisplayLang.Name

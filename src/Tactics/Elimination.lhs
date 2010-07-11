@@ -28,7 +28,7 @@
 
 > import DisplayLang.Name
 
-> import UI.Cochon.Elaboration.Elaborator
+> import Elaboration.Elaborator
 
 
 

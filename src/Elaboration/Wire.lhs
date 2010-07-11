@@ -7,7 +7,7 @@
 > {-# LANGUAGE FlexibleInstances, TypeOperators, TypeSynonymInstances,
 >              GADTs, RankNTypes, PatternGuards #-}
 
-> module UI.Cochon.Elaboration.Wire where
+> module Elaboration.Wire where
 
 > import Control.Applicative
 
@@ -23,7 +23,7 @@
 > import Evidences.Tm
 > import Evidences.Rules
 
-> import UI.Cochon.Elaboration.ElabMonad
+> import Elaboration.ElabMonad
 
 > import Kit.MissingLibrary
 

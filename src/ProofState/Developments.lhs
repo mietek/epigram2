@@ -18,7 +18,7 @@
 
 > import Evidences.Tm
 
-> import UI.Cochon.Elaboration.ElabMonad
+> import Elaboration.ElabMonad
 
 > import DisplayLang.Scheme
 

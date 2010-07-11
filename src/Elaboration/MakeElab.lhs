@@ -6,7 +6,7 @@
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE GADTs, TypeOperators, TupleSections #-}
 
-> module UI.Cochon.Elaboration.MakeElab where
+> module Elaboration.MakeElab where
 
 > import Control.Applicative
 > import Control.Monad.Error
@@ -25,7 +25,7 @@
 > import DisplayLang.Name
 > import DisplayLang.Scheme
 
-> import UI.Cochon.Elaboration.ElabMonad
+> import Elaboration.ElabMonad
 
 > import Kit.BwdFwd
 > import Kit.MissingLibrary

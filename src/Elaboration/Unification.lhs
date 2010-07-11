@@ -5,7 +5,7 @@
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE GADTs, TypeOperators #-}
 
-> module UI.Cochon.Elaboration.Unification where
+> module Elaboration.Unification where
 
 > import Prelude hiding (any)
 

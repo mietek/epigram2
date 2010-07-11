@@ -6,7 +6,7 @@
 > {-# LANGUAGE TypeOperators, TypeSynonymInstances, GADTs,
 >     DeriveFunctor, DeriveFoldable, DeriveTraversable #-}
 
-> module UI.Cochon.Interface.Cochon where
+> module Cochon.Cochon where
 
 > import Control.Applicative
 > import Control.Monad.State
@@ -40,14 +40,14 @@
 > import Tactics.Data
 > import Tactics.Relabel
 
-> import UI.Cochon.Elaboration.Elaborator
-> import UI.Cochon.Elaboration.Scheduler
-> import UI.Cochon.Elaboration.Unification
+> import Elaboration.Elaborator
+> import Elaboration.Scheduler
+> import Elaboration.Unification
 
-> import UI.Cochon.Distillation.Distiller
+> import Distillation.Distiller
 
-> import UI.Cochon.Interface.CommandLexer
-> import UI.Cochon.Interface.Error
+> import Cochon.CommandLexer
+> import Cochon.Error
 
 > import Compiler.Compiler
 

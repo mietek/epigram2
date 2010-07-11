@@ -6,7 +6,7 @@
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE GADTs, TypeOperators, TupleSections, PatternGuards #-}
 
-> module UI.Cochon.Elaboration.RunElab where
+> module Elaboration.RunElab where
 
 > import Control.Applicative
 > import Control.Monad.Error
@@ -31,11 +31,11 @@
 
 > import Tactics.PropSimp
 
-> import UI.Cochon.Elaboration.ElabMonad
-> import UI.Cochon.Elaboration.MakeElab
-> import UI.Cochon.Elaboration.Unification
+> import Elaboration.ElabMonad
+> import Elaboration.MakeElab
+> import Elaboration.Unification
 
-> import UI.Cochon.Interface.Error
+> import Cochon.Error
 
 > import Kit.BwdFwd
 > import Kit.MissingLibrary

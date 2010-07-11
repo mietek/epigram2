@@ -19,8 +19,8 @@
 
 > import Tactics.Information
 
-> import UI.Cochon.Interface.DevLoad
-> import UI.Cochon.Interface.Cochon
+> import Cochon.DevLoad
+> import Cochon.Cochon
 
 %endif
 

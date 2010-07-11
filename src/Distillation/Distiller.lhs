@@ -6,7 +6,7 @@
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE GADTs, TypeOperators, PatternGuards #-}
 
-> module UI.Cochon.Distillation.Distiller where
+> module Distillation.Distiller where
 
 > import Control.Monad.State
 > import Text.PrettyPrint.HughesPJ (Doc)
