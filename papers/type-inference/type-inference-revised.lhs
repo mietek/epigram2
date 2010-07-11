@@ -1023,11 +1023,19 @@ In fact, we will always find minimal solutions that use the identity substitutio
 We write $\Jmin{\Gamma}{P}{\Delta}$ to mean that $(\Gamma, P)$ is a
 problem with minimal solution $\iota : \Gamma \lei \Delta$.
 
-We can now state the following \scare{greedy} approach to finding minimal
-solutions to such composite problems: find a minimal solution of problem $P$,
-then extend it to (minimally) solve $Q$:
-\TODO{State unhatted version first (obvious thanks to stability), then observe
-that we have minimality as well.} 
+As one might expect, the rule
+$$\Rule{\Judge{\Gamma}{P}{\Delta}
+       \quad  \Judge{\Delta}{Q}{\Theta}}
+       {\Judge{\Gamma}{P \wedge Q}{\Theta}}$$
+is admissible, since stability ensures that if $\Delta$ solves $P$ then any more
+informative context $\theta$ will also solve $P$. More surprisingly, this also
+gives minimal solutions to composite problems, allowing a \scare{greedy} 
+solution strategy.
+%
+% We can now state the following \scare{greedy} approach to finding minimal
+% solutions to such composite problems: find a minimal solution of problem $P$,
+% then extend it to (minimally) solve $Q$:
+%
 \begin{lemma}[The Optimist's lemma]
 \label{lem:optimist}
 The following inference rule is admissible:
