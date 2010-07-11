@@ -345,8 +345,6 @@ $$gen(A, \tau) = \begin{cases}
 \end{cases}
 $$
 
-\TODO{Explain the above.}
-
 This is the only real complexity in \AlgorithmW,
 and as \citet{milner_theory_1978} wrote, ``the
 reader may still feel that our rules are arbitrarily chosen and only partly
@@ -419,8 +417,6 @@ $$
 \label{fig:oldRules}
 \end{figure}
 
-\TODO{Relate contexts to traditional substitutions (triangular).}
-
 The rules in Figure~\ref{fig:oldRules} define a context as a left-to-right list
 of type variables, each of which may be unknown (written $\hole{\alpha}$) or
 defined (written $\alpha \defn \tau$). A context is valid if the type in
@@ -437,20 +433,26 @@ generalise just by the usual process of discharging as hypotheses.
 Definitions in the context induce a nontrivial equational theory on types,
 starting with $\alpha \equiv \tau$ for every definition $\alpha \defn \tau$ in
 the context, then taking the congruence closure.
-Unification is the problem of making variable definitions to solve an
-equation. \TODO{Information increase} 
+Unification is the problem of making variable definitions (increasing
+information) to solve an equation.
 The idea is that we decompose constraints on the syntactic structure of types
 until we reach variables, then move through the context and update it to solve
-the equation. \TODO{Cf. Baader and Snyder}
+the equation. 
+
+\TODO{Relate contexts to traditional substitutions (triangular);
+compare with Baader and Snyder.}
 
 For example, we might start in the context
 $\hole{\alpha}, \hole{\beta}, \gamma \defn \alpha \arrow \beta$
 and aim to solve the equation $\beta \arrow \alpha \equiv \gamma$.
-The definition of $\gamma$ tells us that we must
-solve $\beta \arrow \alpha \equiv \alpha \arrow \beta$ over the context
-$\hole{\alpha}, \hole{\beta}$. This constraint decomposes to
-$\beta \equiv \alpha$ and $\alpha \equiv \beta$, which are easily solved by
-defining $\beta \defn \alpha$, giving the final judgment
+%
+% The definition of $\gamma$ tells us that we must
+% solve $\beta \arrow \alpha \equiv \alpha \arrow \beta$ over the context
+% $\hole{\alpha}, \hole{\beta}$. This constraint decomposes to
+% $\beta \equiv \alpha$ and $\alpha \equiv \beta$, which are easily solved by
+% defining $\beta \defn \alpha$, giving the final judgment
+%
+It suffices to define $\beta \defn \alpha$, giving the final judgment
 $$\hole{\alpha}, \beta \defn \alpha, \gamma \defn \alpha \arrow \beta
     \entails \beta \arrow \alpha \equiv \gamma.$$
 
@@ -920,22 +922,11 @@ $$\Gamma \entails S  \quad \mathrm{and}  \quad  \delta : \Gamma \lei \Delta
     \quad \Rightarrow \quad  \Delta \entails \delta S.$$
 This says that we can extend a simultaneous substitution on syntax to a
 simultaneous substitution on derivations.
-
 Since we only consider valid contexts, the statement $\valid$ always holds,
 and is invariant under substitution, so it is clearly stable.
 
-We have a standard strategy for proving stability of most statements, which is
-effective by construction. In each case we proceed by induction on the structure
-of derivations. Where the \textsc{Neutral} rule is applied, stability holds by 
-the following lemma. Otherwise, for rules not referring to the context, we verify
-that non-recursive hypotheses are stable
-and that recursive hypotheses occur in strictly positive positions, so 
-are stable by induction. Applying this strategy shows that both 
-$\tau \type$ and $\tau \equiv \upsilon$ are stable.
-
-\TODO{Motivate these lemmas.}
-
-\begin{lemma}[Neutrality]\label{lem:neutrality}
+We observe that neutral proofs always ensure stability:
+\begin{lemma}\label{lem:neutrality}
 If $\Gamma \entailsN S$ and $\delta : \Gamma \lei \Delta$ then
 $\Delta \entails \delta S$.
 \end{lemma}
@@ -945,6 +936,14 @@ the result holds by definition of information increase. Otherwise, the proof is
 by a neutral elimination rule, so the result follows by induction and
 admissibility of the corresponding normal elimination rule.
 \end{proof}
+
+We have a standard strategy for proving stability of most statements, which is
+effective by construction. In each case we proceed by induction on the structure
+of derivations. Where the \textsc{Neutral} rule is applied, stability holds by 
+Lemma~\ref{lem:neutrality}. Otherwise, we verify that non-recursive hypotheses
+are stable and that recursive hypotheses occur in strictly positive positions,
+so they are stable by induction. Applying this strategy shows that both 
+$\tau \type$ and $\tau \equiv \upsilon$ are stable.
 
 \begin{lemma}[Conjunction preserves stability]\label{lem:stab-pres-conj}
 If $S$ and $S'$ are stable then $S \wedge S'$ is stable.
@@ -958,6 +957,7 @@ so by stability, $\Delta \entails \delta S$ and $\Delta \entails \delta S'$,
 and hence $\Delta \entails \delta (S \wedge S')$.
 \end{proof}
 
+Thanks to stability, our information order is reasonable:
 \begin{lemma}\label{lei:preorder}
 If $\sem{\decl{x}{D}}$ is stable for every declaration $\decl{x}{D}$, then
 the $\lei$ relation is a preorder, with reflexivity demonstrated by
@@ -966,7 +966,6 @@ $\iota : \Gamma \lei \Gamma : v \mapsto v$, and transitivity by composition:
 $$\delta : \Gamma \lei \Delta  ~~\text{and}~~  \theta : \Delta \lei \Theta
   \quad \Rightarrow \quad  \theta \compose \delta : \Gamma \lei \Theta.$$
 \end{lemma}
-
 \begin{proof}
 Reflexivity follows immediately by applying the \textsc{Lookup} and
 \textsc{Neutral} rules.
@@ -977,7 +976,7 @@ Now by stability applied to $\delta \sem{\decl{x}{D}}$ using $\theta$, we have
 $\Theta \entails \theta\delta \sem{\decl{x}{D}}$ as required.
 \end{proof}
 
-
+\TODO{How do we use the following lemma?}
 \begin{lemma}
 \label{lem:composePreservesEquivSubst}
 If $\delta_0 \eqsubst \delta_1 : \Gamma \lei \Delta$
@@ -985,7 +984,6 @@ and $\theta_0 \eqsubst \theta_1 : \Delta \lei \Theta$
 then $\theta_0 \compose \delta_0  \eqsubst  \theta_1 \compose \delta_1 :
          \Gamma \lei \Theta$.
 \end{lemma}
-
 \begin{proof}
 Fix $\alpha \in \tyvars{\Gamma}$. By definition of $\eqsubst$,
 $\Delta \entails \delta_0\alpha \equiv \delta_1\alpha$,
@@ -1116,7 +1114,7 @@ input and output contexts to pass information about \scare{sorts} for Haskell
 typeclass inference, alongside a conventional substitution-based presentation
 of unification.
 
-The rules \textsc{Define}, \textsc{Expand} and \textsc{Ignore} have
+The rules \textsc{Define} and \textsc{Expand} have
 symmetric counterparts, identical apart from interchanging the equated
 terms in the conclusion. Usually we will ignore these without loss of generality.
 
@@ -1359,17 +1357,17 @@ $$
 \side{D \in \D_\TY}
 .$$
 \TODO{Explain why we only have this for $\TY$.}
-The corresponding normal rule is admissible: if
+The corresponding normal rule is admissible. If
 $\Gamma \entails \Sbind{\decl{\alpha}{D}}{S}$ by the introduction rule, then
 $\Gamma, \decl{\beta}{D} \entails \subst{\beta}{\alpha} S$ where $\beta$ is fresh.
 But $\Gamma \entails \subst{\tau}{\alpha}{\sem{\decl{\alpha}{D}}}$ implies
 $\Gamma \entails \subst{\tau}{\beta}{\sem{\decl{\beta}{D}}}$ and hence
-$\subst{\tau}{\beta} : \Gamma, \beta D \lei \Gamma$.
-By stability, $\Gamma \entails \subst{\tau}{\beta} \subst{\beta}{\alpha} S$, so
-$\Gamma \entails \subst{\tau}{\alpha} S$.
+we can obtain a proof of $\Gamma \entails \subst{\tau}{\alpha} S$ by replacing
+every appeal to \textsc{Lookup} $\beta$ in the proof of 
+$\Gamma, \decl{\beta}{D} \entails \subst{\beta}{\alpha} S$
+with the proof of
+$\Gamma \entails \subst{\tau}{\beta}{\sem{\decl{\beta}{D}}}$.
 As a consequence, Lemma~\ref{lem:neutrality} still holds.
-\TODO{Begging the question: cannot use stability without the following lemma,
-which depends on what we are proving.}
 
 \begin{lemma}[Binding preserves stability]\label{lem:stab-pres-bind}
 If $\decl{x}{D}$ is a declaration and both $\ok_K D$ and $S$ are stable, then
