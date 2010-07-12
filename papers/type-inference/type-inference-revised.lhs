@@ -1796,7 +1796,9 @@ by \scare{skimming off} type
 variables from the top of the context until the $\fatsemi$ is reached.
 
 
-We define the type inference assertion $\Jtype{\Gamma}{t}{\tau}{\Delta}$
+We define 
+   the scheme inference assertion $\Jscheme{\Gamma}{t}{\sigma}{\Delta}$ and 
+   the type inference assertion $\Jtype{\Gamma}{t}{\tau}{\Delta}$
 % (inferring the type of $t$ in $\Gamma_0$ yields $\tau$ in the more informative
 % context $\Gamma_1$)
 by the rules in Figure~\ref{fig:inferRules}.
