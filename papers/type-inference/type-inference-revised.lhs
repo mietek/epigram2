@@ -776,7 +776,7 @@ $$\name{Neutral}
   \Rule{\entailsN S}
        {\entails S}.$$
 
-The \textsc{Lookup} rule is our only means to extract information from the
+The \name{Lookup} rule is our only means to extract information from the
 context, so we will omit the contextual plumbing (almost) everywhere else.
 
 \subsection{Validity of contexts}
@@ -867,7 +867,7 @@ elimination rules (projections).
 This is but one instance of a general pattern: we add \emph{normal} introduction
 forms for composite statements, but supply
 eliminators only for statements which ultimately rest on (composite) hypotheses,
-obtained by \textsc{Lookup}. This forces
+obtained by \name{Lookup}. This forces
 derivations to be cut-free, facilitating reasoning by induction on
 derivations.
 If we added the corresponding projections for \emph{normal} judgments, we
@@ -900,13 +900,16 @@ We write $\subst{\tau}{\alpha}{}$ for the substitution that maps
 $\alpha$ to $\tau$ and other variables to themselves.
 
 Given a substitution $\delta$ from $\Gamma$ to $\Delta$, 
-we write the \define{information increase} $\delta : \Gamma \lei \Delta$ and say 
+we write the \define{information increase} 
+   relation 
+$\delta : \Gamma \lei \Delta$ and say 
 \define{$\Delta$ is more informative than $\Gamma$} if 
 for all $\decl{x}{D} \in \Gamma$, we have 
 $\Delta \entails \delta \sem{\decl{x}{D}}$. 
 That is, $\Delta$ supports all the statements corresponding to declarations
 in $\Gamma$.
-We write $\Gamma \lei \Delta$ if the substitution is the identity $\iota$.
+We write $\Gamma \lei \Delta$ if 
+$\iota : \Gamma \lei \Delta$, where  $\iota$ is the identity substitution.
 
 \TODO{Can we call $\lei$ a relation if we do this?}
 
@@ -945,7 +948,7 @@ If $\Gamma \entailsN S$ and $\delta : \Gamma \lei \Delta$ then
 $\Delta \entails \delta S$.
 \end{lemma}
 \begin{proof}
-By structural induction on derivations. If the proof is by \textsc{Lookup}, then
+By structural induction on derivations. If the proof is by \name{Lookup}, then
 the result holds by definition of information increase. Otherwise, the proof is
 by a neutral elimination rule, so the result follows by induction and
 admissibility of the corresponding normal elimination rule.
@@ -953,7 +956,7 @@ admissibility of the corresponding normal elimination rule.
 
 We have a standard strategy for proving stability of most statements, which is
 effective by construction. In each case we proceed by induction on the structure
-of derivations. Where the \textsc{Neutral} rule is applied, stability holds by 
+of derivations. Where the \name{Neutral} rule is applied, stability holds by 
 Lemma~\ref{lem:neutrality}. Otherwise, we verify that non-recursive hypotheses
 are stable and that recursive hypotheses occur in strictly positive positions,
 so they are stable by induction. Applying this strategy shows that both 
@@ -964,7 +967,7 @@ If $S$ and $S'$ are stable then $S \wedge S'$ is stable.
 \end{lemma}
 \begin{proof}
 Suppose $\delta : \Gamma \lei \Delta$, the statements $S$ and $S'$ are stable,
-and $\Gamma \entails (S \wedge S')$. If the proof is by \textsc{Neutral}
+and $\Gamma \entails (S \wedge S')$. If the proof is by \name{Neutral}
 then $\Delta \entails \delta (S \wedge S')$ by Lemma~\ref{lem:neutrality}.
 Otherwise $\Gamma \entails S$ and $\Gamma \entails S'$,
 so by stability, $\Delta \entails \delta S$ and $\Delta \entails \delta S'$, 
@@ -981,8 +984,8 @@ $$\delta : \Gamma \lei \Delta  ~~\text{and}~~  \theta : \Delta \lei \Theta
   \quad \Rightarrow \quad  \theta \compose \delta : \Gamma \lei \Theta.$$
 \end{lemma}
 \begin{proof}
-Reflexivity follows immediately by applying the \textsc{Lookup} and
-\textsc{Neutral} rules.
+Reflexivity follows immediately by applying the \name{Lookup} and
+\name{Neutral} rules.
 For transitivity, suppose $\decl{x}{D} \in \Gamma$,
 then $\Delta \entails \delta \sem{\decl{x}{D}}$ since
 $\delta : \Gamma \lei \Delta$.
@@ -1015,27 +1018,35 @@ by transitivity.
 \section{Constraints: problems at ground mode}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-A \define{constraint problem} is a pair of a context $\Gamma$ and a statement
+We define a \define{constraint problem} to be a pair of a context $\Gamma$ and a statement
 $S$, where
-the sanity conditions of the parameters of $S$ hold in $\Gamma$, but $S$ itself
-may not. We wish to find a \define{solution}
+the sanity conditions on the parameters of $S$ hold in $\Gamma$, but $S$ itself
+may not. A \define{solution} to such a problem is then an information increase 
 $\delta : \Gamma \lei \Delta$ such that
-$\Delta \entails \delta S$. Thus unification is given
-$\Gamma$, $\tau$ and $\upsilon$ such that
-$\Gamma \entails \tau \type \wedge \upsilon \type$, and
-must find $\delta : \Gamma \lei \Delta$ such that
+$\Delta \entails \delta S$. 
+   In this setting, the \define{unification} problem \((\Gamma, \tau \equiv \upsilon)\) 
+%%%is given $\Gamma$, $\tau$ and $\upsilon$ such that
+   stipulates that 
+$\Gamma \entails \tau \type \wedge \upsilon \type$, and 
+   a solution to the problem ( a \define{unifier}) is given by 
+%%%must find 
+$\delta : \Gamma \lei \Delta$ such that
 $\Delta \entails \delta \tau \equiv \delta \upsilon$.
 
 We are interested in finding algorithms to solve problems, preferably in as
 general a way as possible (that is, by making the smallest information increase
-necessary to find a solution). This corresponds to finding a most general
-unifier. The solution $\delta : \Gamma \lei \Delta$ is \define{minimal} if for
+necessary to find a solution). 
+   For the unification problem, this 
+corresponds to finding a most general
+unifier. The solution $\delta : \Gamma \lei \Delta$ is \define{minimal} if, for
 any other solution $\theta: \Gamma \lei \Theta$, there exists a
 substitution $\zeta : \Delta \lei \Theta$ such that
-$\theta \eqsubst \zeta \compose \iota$ (we say $\theta$ \emph{factors through}
+$\theta \eqsubst \zeta \compose \delta$ (we say $\theta$ \emph{factors through}
 $\delta$ with \emph{cofactor} $\zeta$).
 
-In fact, we will always find minimal solutions that use the identity substitution.
+In fact, we will always find minimal solutions 
+%%%that use the identity substitution. 
+   in the form $\iota : \Gamma \lei \Delta$. 
 We write $\Jmin{\Gamma}{P}{\Delta}$ to mean that $(\Gamma, P)$ is a
 problem with minimal solution $\iota : \Gamma \lei \Delta$.
 
@@ -1103,19 +1114,23 @@ $\Jinstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$
 means that given inputs $\Gamma$, $\Xi$, $\alpha$ and $\tau$,
 solving $\alpha$ with $\tau$ succeeds,  
 yielding output context $\Delta$. The idea is that the bar ($||$) represents
-progress through the context, and $\Xi$ contains dependencies of $\tau$ (which
-must be placed before $\tau$ for it to be well-defined). Formally, the input
+%%%progress through the context, 
+   progress in examining context elements in order, 
+%%%and $\Xi$ contains dependencies of $\tau$ (which
+%%%must be placed before $\tau$ for it to be well-defined). 
+   and $\Xi$ contains exactly those declarations on which $\tau$ depends.  
+Formally, the inputs 
 must satisfy
 \begin{itemize}
 \item $\alpha \in \tyvars{\Gamma}$,
-\item $\Gamma, \Xi \entails \tau \type$,
 \item $\tau$ is not a variable,
+\item $\Gamma, \Xi \entails \tau \type$,
 \item $\Xi$ contains only type variable declarations and
 \item $\beta \in \tyvars{\Xi} \Rightarrow \beta \in \FTV{\tau, \Xi}$.
 \end{itemize}
 
 By inspecting the rules, we observe that each rule preserves correct and minimal
-solutions (using the Optimist's Lemma for the \textsc{Decompose} rule), so we
+solutions (using the Optimist's Lemma for the \name{Decompose} rule), so we
 obtain the following lemma.
 
 \begin{lemma}[Soundness and generality of unification]
@@ -1147,7 +1162,7 @@ to capture this idea:
 x      \perp X &\mathrm{~if~} x \in \V_\TM
 \end{align*}
 
-The rules \textsc{Define} and \textsc{Expand} have
+The rules \name{Define} and \name{Expand} have
 symmetric counterparts, identical apart from interchanging the equated
 terms in the conclusion. Usually we will ignore these without loss of generality.
 
@@ -1292,7 +1307,7 @@ hypotheses cannot be satisfied.
 
 By the well-formedness conditions for contexts, if
 $\alpha \defn \upsilon \in \Gamma$ then $\alpha \notin \FTV{\upsilon}$, so
-the \textsc{Lookup} rule does not apply.
+the \name{Lookup} rule does not apply.
 \end{proof}
 
 
@@ -1374,7 +1389,7 @@ $\Gamma, \decl{\beta}{D} \entails \subst{\beta}{\alpha} S$ where $\beta$ is fres
 But $\Gamma \entails \subst{\tau}{\alpha}{\sem{\decl{\alpha}{D}}}$ implies
 $\Gamma \entails \subst{\tau}{\beta}{\sem{\decl{\beta}{D}}}$ and hence
 we can obtain a proof of $\Gamma \entails \subst{\tau}{\alpha} S$ by replacing
-every appeal to \textsc{Lookup} $\beta$ in the proof of 
+every appeal to \name{Lookup} $\beta$ in the proof of 
 $\Gamma, \decl{\beta}{D} \entails \subst{\beta}{\alpha} S$
 with the proof of
 $\Gamma \entails \subst{\tau}{\beta}{\sem{\decl{\beta}{D}}}$.
@@ -1386,7 +1401,7 @@ $\Sbind{\decl{x}{D}}{S}$ is stable.
 \end{lemma}
 \begin{proof}
 Suppose $\delta : \Gamma \lei \Delta$, the statement $S$ is stable and
-$\Gamma \entails \Sbind{\decl{x}{D}}{S}$.  If the proof is by \textsc{Neutral}
+$\Gamma \entails \Sbind{\decl{x}{D}}{S}$.  If the proof is by \name{Neutral}
 then the result follows by Lemma~\ref{lem:neutrality}.
 Otherwise, $\Gamma \entails \ok_K D$ and
 $\Gamma, \decl{y}{D} \entails S$ for fresh $y$.
@@ -1552,7 +1567,7 @@ $$
 \Rule{\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\Xi}{\Delta_0}}
      {\Jinstantiate{\Gamma_0 \fatsemi}{\alpha}{\tau}{\Xi}{\Delta_0 \fatsemi}}
 $$
-Proving correctness of the \textsc{Skip} rule is relatively straightforward,
+Proving correctness of the \name{Skip} rule is relatively straightforward,
 thanks to the following lemma.
 
 \begin{lemma}
@@ -1561,12 +1576,12 @@ If $\delta : \Jmin{\Gamma}{\Prob{P}{a}{b}}{\Delta}$ then
 $\delta : \Jmin{\Gamma \fatsemi}{\Prob{P}{a}{b}}{\Delta \fatsemi}$.
 \end{lemma}
 
-The \textsc{Repossess} rule is so named because it moves
+The \name{Repossess} rule is so named because it moves
 declarations in $\Xi$ to the left of the $\fatsemi$ separator,
 thereby \scare{repossessing} them. Despite such complications, 
 unification still yields a most general solution:
 
-\begin{lemma}[Soundness and generality of \textsc{Repossess} rule]
+\begin{lemma}[Soundness and generality of \name{Repossess} rule]
 \TODO{Update this.}
 If $\Jinstantiate{\Gamma \fatsemi}{\alpha}{\tau}{\Xi}{\Delta \fatsemi}$
 then $\tyvars{\Gamma \fatsemi \Xi} = \tyvars{\Delta \fatsemi}$ and
@@ -1575,7 +1590,7 @@ $\iota : \Jmin{\Gamma \fatsemi \Xi}{\Puni{\alpha}{\tau}}{\Delta \fatsemi}$.
 \begin{proof}
 Suppose $\Jinstantiate{\Gamma \fatsemi}{\alpha}{\tau}{\Xi}{\Delta \fatsemi}$,
 so $\Jinstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$ as only the
-\textsc{Repossess} rule applies.
+\name{Repossess} rule applies.
 By induction and lemma~\ref{lem:unifySound},
 $\tyvars{\Gamma, \Xi} = \tyvars{\Delta}$ and
 $\iota : \Jmin{\Gamma, \Xi}{\Puni{\alpha}{\tau}}{\Delta}$.
@@ -1826,8 +1841,8 @@ These rules are clearly structural on terms, so yield a terminating
 algorithm, leading naturally to an implementation, given in
 subsection~\ref{sec:inferImplementation}.
 
-%%%\TODO{Say something about freshness of $\Xi$ in \textsc{Var} rule.}
-We use Lemma~\ref{lem:specialise} to ensure in rule \textsc{Var} that
+%%%\TODO{Say something about freshness of $\Xi$ in \name{Var} rule.}
+We use Lemma~\ref{lem:specialise} to ensure in rule \name{Var} that
 we compute a suffix \(\Xi\) consisting of fresh names, such that the
 output \ensuremath{\Gamma, \Xi} is well-formed.
 \TODO{``Scheme prefix becomes context suffix.''}
