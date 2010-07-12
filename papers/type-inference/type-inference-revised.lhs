@@ -5,6 +5,10 @@
 %include lhs2TeX.fmt
 %include lhs2TeX.sty
 
+\DeclareMathAlphabet{\mathkw}{OT1}{cmss}{bx}{n}
+%subst keyword a = "\mathkw{" a "}"
+%subst conid a = "\mathsf{" a "}"
+
 %format <-  = "\leftarrow "
 %format :-> = "\arrow "
 %format <>< = "<\!>\!< "
@@ -24,7 +28,7 @@
 %format B0  = "\emptycontext"
 
 % %format Lam (x) (b) = "\lambda" x "." b
-%format Let (x) (s) (t) = "\letIn{" x "}{" s "}{" t "} "
+% %format Let (x) (s) (t) = "\letIn{" x "}{" s "}{" t "} "
 %format LetGoal = "\letGoal "
 
 %format Hole = "? "
@@ -63,7 +67,20 @@
 %format _Xi0
 %format _Xi1
 
-\newcommand{\ident}[1]{\textrm{#1}}
+\newcommand{\ident}[1]{\mathsf{#1}}
+%format return          = "\ident{return}"
+%format put             = "\ident{put}"
+%format any             = "\ident{any}"
+%format fst             = "\ident{fst}"
+%format snd             = "\ident{snd}"
+%format get             = "\ident{get}"
+%format fmap            = "\ident{fmap}"
+%format gets            = "\ident{gets}"
+%format succ            = "\ident{succ}"
+%format fail            = "\ident{fail}"
+%format error           = "\ident{error}"
+%format otherwise       = "\ident{otherwise}"
+%format occurs          = "\ident{occurs}"
 %format fresh           = "\ident{fresh}"
 %format getContext      = "\ident{getContext}"
 %format putContext      = "\ident{putContext}"
