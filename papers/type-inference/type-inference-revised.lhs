@@ -127,6 +127,8 @@
 \newcommand{\defn}{\ensuremath{\!:=\!}}
 \newcommand{\asc}{\ensuremath{\hasc}}
 \newcommand{\hasc}{\ensuremath{~\hat{::}~}}
+\newcommand{\asch}{\ensuremath{\hasch}}
+\newcommand{\hasch}{\ensuremath{~{::}~}}
 \newcommand{\hole}[1]{\ensuremath{#1 \!:= ?}}
 \newcommand{\contains}{\ensuremath{\ni}}
 \newcommand{\transto}{\ensuremath{\twoheadrightarrow}}
@@ -138,6 +140,7 @@
 \newcommand{\Junify}[4]{\Alg{#1}{\Puni{#2}{#3}}{#4}}
 \newcommand{\Jinstantiate}[5]{\Alg{#1 ~||~ #4}{\Puni{#2}{#3}}{#5}}
 \newcommand{\Jtype}[4]{\Alg{#1}{\Pinf{#2}{#3}}{#4}}
+\newcommand{\Jscheme}[4]{\Alg{#1}{\Psch{#2}{#3}}{#4}}
 
 \newcommand{\JminR}[3]{\ensuremath{#1 \LEIR #3 \vdash #2}}
 
@@ -145,6 +148,7 @@
 \newcommand{\OutParam}[1]{#1}
 \newcommand{\Prob}[3]{#1 \InParam{#2} \OutParam{#3}}
 \newcommand{\Pinf}[2]{#1 : \OutParam{#2}}
+\newcommand{\Psch}[2]{#1 \asch \OutParam{#2}}
 \newcommand{\Puni}[2]{#1 \equiv #2}
 \newcommand{\Pspec}[2]{\Prob{S}{#1}{#2}}
 
@@ -1804,12 +1808,20 @@ subsection~\ref{sec:inferImplementation}.
 We use Lemma~\ref{lem:specialise} to ensure in rule \textsc{Var} that
 we compute a suffix \(\Xi\) consisting of fresh names, such that the
 output \ensuremath{\Gamma, \Xi} is well-formed.
-\TODO{``Prefix becomes context suffix.''}
+\TODO{``Scheme prefix becomes context suffix.''}
 
 \TODO{Add rule for $\hasscheme$ explicitly, related to declarative version.
 Various possible layouts, so experiment.}
 
 \begin{figure}[ht]
+\boxrule{\Jscheme{\Gamma}{s}{\sigma}{\Delta}}
+
+$$
+\name{Gen}
+\Rule{\Jtype{\Gamma \fatsemi}{s}{\upsilon}{\Delta \fatsemi \Xi}}
+     {\Jscheme{\Gamma}{s}{\gen{\Xi}{.\upsilon}}{\Delta}}
+$$ 
+
 \boxrule{\Jtype{\Gamma}{t}{\tau}{\Delta}}
 
 $$
@@ -1838,9 +1850,13 @@ $$
 
 $$
 \name{Let}
-\BigRule{\Jtype{\Gamma \fatsemi}{s}{\upsilon}{\Delta_0 \fatsemi \Xi_0}}
-        {\Jtype{\Delta_0, x \asc \gen{\Xi_0}{.\upsilon}}{w}{\chi}
-               {\Delta_1, x \asc \gen{\Xi_0}{.\upsilon}, \Xi_1}}
+\BigRule%%%{\Jtype{\Gamma \fatsemi}{s}{\upsilon}{\Delta_0 \fatsemi \Xi_0}}
+        %%%{\Jtype{\Delta_0, x \asc \gen{\Xi_0}{.\upsilon}}{w}{\chi}
+        %%%       {\Delta_1, x \asc \gen{\Xi_0}{.\upsilon}, \Xi_1}}
+        %%%{\Jtype{\Gamma}{\letIn{x}{s}{w}}{\chi}{\Delta_1, \Xi_1}}
+        {\Jscheme{\Gamma}{s}{\sigma}{\Delta_0}}
+        {\Jtype{\Delta_0, x \asc \sigma}{w}{\chi}
+               {\Delta_1, x \asc \sigma, \Xi_1}}
         {\Jtype{\Gamma}{\letIn{x}{s}{w}}{\chi}{\Delta_1, \Xi_1}}
 $$
 
