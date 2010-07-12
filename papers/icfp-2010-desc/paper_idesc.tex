@@ -196,8 +196,9 @@ these indexed functors, hence computing a fixpoint of the entire
 However, we still have to define the actual grammar. We obtain it by
 evolving $\Desc$ to cope with indexing. \note{Say something about the
   transformation} The code of $\SYMBIDesc$ is presented in
-Figure~\ref{fig:idesc}. Induction on indexed descriptions is defined
-by:
+Figure~\ref{fig:idesc}. By construction, $\SYMBIDesc$ can only
+describe \emph{strictly positive families}. Induction on indexed
+descriptions is defined by:
 %
 \[\stk{
 \begin{array}{@{}ll}

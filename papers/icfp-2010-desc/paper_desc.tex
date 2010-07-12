@@ -113,7 +113,9 @@ datatype \emph{descriptions} by implementing the signature presented
 in Figure~\ref{fig:desc_universe}, with codes mimicking the grammar of
 datatype declarations. We can read a description $\V{D}:\Desc$ as a
 `pattern functor' on $\Set$, with $\SYMBdescop{\V{D}}$ its action on
-an object, \(\V{X}\), soon to be instantiated recursively.
+an object, \(\V{X}\), soon to be instantiated recursively. Note that
+the functors so described are \emph{strictly positive}, by
+construction.
 
 Descriptions are sequential structures, terminated by $\DUnit$,
 indicating the empty tuple. To build sigmas-of-sigmas, we define a
