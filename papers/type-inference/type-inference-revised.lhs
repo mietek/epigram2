@@ -896,6 +896,8 @@ That is, $\Delta$ supports all the statements corresponding to declarations
 in $\Gamma$.
 We write $\Gamma \lei \Delta$ if the substitution is the identity $\iota$.
 
+\TODO{Can we call $\lei$ a relation if we do this?}
+
 We write $\delta \eqsubst \theta : \Gamma \lei \Delta$ if
 $\delta : \Gamma \lei \Delta$, $\theta : \Gamma \lei \Delta$
 and for all $\alpha \in \tyvars{\Gamma}$,
@@ -1424,7 +1426,7 @@ The set of terms has syntax
 $$t ::= x ~||~ t~t ~||~ \lambda x . t ~||~ \letIn{x}{t}{t}$$
 and $s$, $t$, $w$ range over terms.
 
-The type assignability statement $t : \tau$ is established by the declarative
+The type assignment statement $t : \tau$ is established by the declarative
 rules in Figure~\ref{fig:typeAssignmentRules}. It has two parameters $t$ and
 $\tau$ with sanity conditions $\valid$ and $\tau \type$ respectively.
 We define
@@ -1446,9 +1448,6 @@ $$
       a : \upsilon}
      {f a : \tau}
 $$
-
-%      \forall \upsilon . (\Gamma \entails \sigma \succ \upsilon
-%              \Rightarrow \Gamma \entails s : \upsilon)
 
 $$
 \Rule{
@@ -1485,32 +1484,41 @@ is a triple $(\Gamma, S, Q)$ where $\Gamma$ is a context, $S$ is a statement
 $Q$ is a value for the input parameter that satisfies its sanity condition in
 $\Gamma$.
 
-\TODO{Explain conjunction as dependent $\Sigma$.}
+\TODO{Clarify notation for statements and parameter values. What is $Q A$?}
 
 A \define{solution} of $(\Gamma, S, Q)$ consists of an information increase
 $\delta : \Gamma \lei \Delta$ and a value for the output parameter $A$ 
 such that $(\delta Q) A$ and the sanity condition on $A$ hold in $\Delta$.
 
-\TODO{We need a notion of information increase between solutions: based on
-scheme outputs, with special case for types. We define
-$\delta : \Delta ! \gen{\Xi}{\tau} \lei \Delta' ! \gen{\Xi'}{\tau'}$ to be
-$\delta : \Delta \fatsemi \Xi \lei \Delta' \fatsemi \Xi' \entails \delta \tau \equiv \tau'$. 
-}
+If the output parameter is a scheme, we can compare solutions.
+We say $(\delta : \Gamma \lei \Delta, \gen{\Xi}{\tau})$ is \define{below}
+$(\theta : \Gamma \lei \Theta, \gen{\Psi}{\upsilon})$ if there is some
+substitution
+$\zeta : \Delta, \Xi \lei \Theta, \Psi$ such that
+$\zeta ||_\Delta : \Delta \lei \Theta$,
+$\theta \eqsubst \zeta ||_\Delta \compose \delta$ and 
+$\Theta, \Psi \entails \zeta \tau \equiv \upsilon$.
+If the output is a type, we just instantiate the above definition with
+$\Xi = \emptycontext = \Psi$.
+We will not need any other kinds of output in this paper.
 
-The solution $(\delta : \Gamma \lei \Delta, A)$ is \define{minimal} if, for
-every other solution
-$(\theta : \Gamma \lei \Theta, B)$ there is a substitution
-$\zeta : \Delta \lei \Theta$ such that $\theta \eqsubst \zeta \compose \delta$
-and \TODO{what?}.
-
-As before, we will look for solutions where $\delta$ is the identity, and write
-$\Jmin{\Gamma}{Q A}{\Delta}$ when this is the case.
+A solution is \define{minimal} if it is below every other solution.
+As before, we will look for minimal solutions where $\delta$ is the identity,
+and write $\Jmin{\Gamma}{Q A}{\Delta}$ when this is the case.
 
 Thus the type inference problem is given by a context $\Gamma$ and the
 statement $t : ~?$ where $t$ is a term and $?$ represents the output parameter.
 A solution is then an information increase $\delta : \Gamma \lei \Delta$ and a
 type $\tau$ such that $\Delta \entails \tau \type \wedge t : \tau$.
 
+The conjunction of statements $S \wedge S'$ is unique in that the output of $S$
+may be used in the input of $S'$; in this way it resembles a dependent sum type.
+We write $Q_1[a] \wedge Q_2$ where $a$ is a binding occurrence of a metavariable
+that is in scope in $Q_2$. This allows us to state the fully general version of
+the Optimist's lemma:
+
+\TODO{Complete the proof. Should we do this after introducing $\fatsemi$ so we
+can use it in the definition of minimality?}
 
 \begin{lemma}[The Optimist's lemma for inference problems]
 \label{lem:optimistInference}
@@ -1520,7 +1528,26 @@ $$\Rule{\Jmin{\Gamma}{Q_1 A_1}{\Delta}
        {\Jmin{\Gamma}{(Q_1[a] \wedge Q_2) (A_1, A_2)}{\Theta}}.$$
 \end{lemma}
 \begin{proof}
-\TODO{Prove this.}
+We have $\Gamma \lei \Theta$ by Lemma~\ref{lei:preorder}.
+Furthermore, $\Theta \entails (Q_1[a] \wedge Q_2) (A_1, A_2)$ since
+stability gives $\Theta \entails Q_1 A_1$, and
+$\Theta \entails (\subst{A_1}{a} Q_2) A_2$ by assumption.
+
+Now suppose there is some solution $(\phi : \Gamma \lei \Phi, (B_1, B_2))$, so
+$\Phi \entails Q_1 B_1$ and
+$\Phi \entails (\subst{B_1}{a} Q_2) B_2$.
+Since $\Jmin{\Gamma}{Q_1 A_1}{\Delta}$, there exists
+$\zeta_1 : \Delta \lei \Phi$ such that
+$\phi \eqsubst \zeta_1 \compose \iota$
+and ...
+
+But then $\Jmin{\Delta}{(\subst{A_1}{a} Q_2) A_2}{\Theta}$, so there exists
+$\zeta_2 : \Theta \lei \Phi$ such that
+$\zeta_1 \eqsubst \zeta_2 \compose \iota$
+and ...
+
+Hence $\phi \eqsubst \zeta_2 \compose \iota$
+and ...
 \end{proof}
 
 \subsection{Preserving order in the context}
