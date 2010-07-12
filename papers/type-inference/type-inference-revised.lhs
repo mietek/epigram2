@@ -600,7 +600,7 @@ $$\hole{\alpha}, \beta \defn \alpha, \gamma \defn \alpha \arrow \beta
 > solve alpha _Xi tau = onTop $
 >   \ (gamma := d) -> let occurs = gamma <? tau || gamma <? _Xi in case
 >     (gamma == alpha,  occurs,  d             ) of
->     (True,            True,    _             )  ->  fail "Occurence detected!"
+>     (True,            True,    _             )  ->  fail "Occurrence detected!"
 >     (True,            False,   Hole          )  ->  replace (_Xi <+> (alpha := Some tau :> F0))
 >     (True,            False,   Some upsilon  )  ->  modifyContext (<>< _Xi)
 >                                                 >>  unify upsilon tau
