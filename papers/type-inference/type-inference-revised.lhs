@@ -252,7 +252,9 @@ Programme.} \and Conor McBride}
 \end{abstract}
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Introduction}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsection{\AlgorithmW}
 
@@ -363,7 +365,9 @@ dealing with dependent types, since there is no distinction between type and ter
 variables. Even in a simply-typed setting, however, this approach has advantages.
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Unification over a context}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{figure}[ht]
 \boxrule{\Gamma \entails \valid}
@@ -698,7 +702,9 @@ $\alpha \equiv \beta' \arrow \beta'$, then defines $\alpha$ after inserting
 $\beta'$.
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Modelling statements-in-context}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 Having seen an implementation of unification, let us try to understand it.
 We would like to give a general picture of \scare{statements-in-context} which
@@ -870,7 +876,9 @@ ensure that the corresponding elimination rules are admissible. This is clearly
 the case for conjunction.
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Information and stable statements}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsection{Information order}
 
@@ -1003,7 +1011,9 @@ by transitivity.
 \end{proof}
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Constraints: problems at ground mode}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 A \define{constraint problem} is a pair of a context $\Gamma$ and a statement
 $S$, where
@@ -1067,7 +1077,9 @@ substitution.
 
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{The unification algorithm, formally}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 We now present the algorithm formally. The structural rule means that
 whenever we have rigid $\arrow$ symbols on each side, we decompose the problem
@@ -1318,8 +1330,9 @@ where the occurs check fails, indicating no unifier exists.  For
 details, see Appendix.  \end{proof}
 
 
-
-\section{Applying these ideas to type inference}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Specifying Type Inference}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 We aim to implement type inference for the Hindley-Milner system, so we need to
 introduce type schemes and the term language. We extend the grammar of statements
@@ -1471,88 +1484,9 @@ $$
 \label{fig:typeAssignmentRules}
 \end{figure}
 
-
-\subsection{Inference problems: multiple-mode }
-
-Type inference involves making the statement $t : \tau$ hold. However,
-a crucial difference from the unification problem is that the type should
-be an \emph{output} of problem-solving, along with the solution context. We need
-a more liberal definition than that of constraint problems.
-
-We associate a \define{mode} with each parameter, either \scare{input} or
-\scare{output}, in a statement. For simplicity, assume statements always have
-one parameter of each mode (which may be unit or a product). An
-\define{inference problem}
-is a triple $(\Gamma, S, Q)$ where $\Gamma$ is a context, $S$ is a statement
-\TODO{(?)} and
-$Q$ is a value for the input parameter that satisfies its sanity condition in
-$\Gamma$.
-
-\TODO{Clarify notation for statements and parameter values. What is $Q A$?}
-
-A \define{solution} of $(\Gamma, S, Q)$ consists of an information increase
-$\delta : \Gamma \lei \Delta$ and a value for the output parameter $A$ 
-such that $(\delta Q) A$ and the sanity condition on $A$ hold in $\Delta$.
-
-If the output parameter is a scheme, we can compare solutions.
-We say $(\delta : \Gamma \lei \Delta, \gen{\Xi}{\tau})$ is \define{below}
-$(\theta : \Gamma \lei \Theta, \gen{\Psi}{\upsilon})$ if there is some
-substitution
-$\zeta : \Delta, \Xi \lei \Theta, \Psi$ such that
-$\zeta ||_\Delta : \Delta \lei \Theta$,
-$\theta \eqsubst \zeta ||_\Delta \compose \delta$ and 
-$\Theta, \Psi \entails \zeta \tau \equiv \upsilon$.
-If the output is a type, we just instantiate the above definition with
-$\Xi = \emptycontext = \Psi$.
-We will not need any other kinds of output in this paper.
-
-A solution is \define{minimal} if it is below every other solution.
-As before, we will look for minimal solutions where $\delta$ is the identity,
-and write $\Jmin{\Gamma}{Q A}{\Delta}$ when this is the case.
-
-Thus the type inference problem is given by a context $\Gamma$ and the
-statement $t : ~?$ where $t$ is a term and $?$ represents the output parameter.
-A solution is then an information increase $\delta : \Gamma \lei \Delta$ and a
-type $\tau$ such that $\Delta \entails \tau \type \wedge t : \tau$.
-
-The conjunction of statements $S \wedge S'$ is unique in that the output of $S$
-may be used in the input of $S'$; in this way it resembles a dependent sum type.
-We write $Q_1[a] \wedge Q_2$ where $a$ is a binding occurrence of a metavariable
-that is in scope in $Q_2$. This allows us to state the fully general version of
-the Optimist's lemma:
-
-\TODO{Complete the proof. Should we do this after introducing $\fatsemi$ so we
-can use it in the definition of minimality?}
-
-\begin{lemma}[The Optimist's lemma for inference problems]
-\label{lem:optimistInference}
-The following inference rule is admissible:
-$$\Rule{\Jmin{\Gamma}{Q_1 A_1}{\Delta}
-       \quad  \Jmin{\Delta}{(\subst{A_1}{a} Q_2) A_2}{\Theta}}
-       {\Jmin{\Gamma}{(Q_1[a] \wedge Q_2) (A_1, A_2)}{\Theta}}.$$
-\end{lemma}
-\begin{proof}
-We have $\Gamma \lei \Theta$ by Lemma~\ref{lei:preorder}.
-Furthermore, $\Theta \entails (Q_1[a] \wedge Q_2) (A_1, A_2)$ since
-stability gives $\Theta \entails Q_1 A_1$, and
-$\Theta \entails (\subst{A_1}{a} Q_2) A_2$ by assumption.
-
-Now suppose there is some solution $(\phi : \Gamma \lei \Phi, (B_1, B_2))$, so
-$\Phi \entails Q_1 B_1$ and
-$\Phi \entails (\subst{B_1}{a} Q_2) B_2$.
-Since $\Jmin{\Gamma}{Q_1 A_1}{\Delta}$, there exists
-$\zeta_1 : \Delta \lei \Phi$ such that
-$\phi \eqsubst \zeta_1 \compose \iota$
-and ...
-
-But then $\Jmin{\Delta}{(\subst{A_1}{a} Q_2) A_2}{\Theta}$, so there exists
-$\zeta_2 : \Theta \lei \Phi$ such that
-$\zeta_1 \eqsubst \zeta_2 \compose \iota$
-and ...
-
-Hence $\phi \eqsubst \zeta_2 \compose \iota$
-and ...
-\end{proof}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Generalization by Localization}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsection{Preserving order in the context}
 
@@ -1704,6 +1638,92 @@ $$
 \TODO{Prove this.}
 \end{proof}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Type Inference Problems and Solutions}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\subsection{Inference problems: multiple-mode }
+
+Type inference involves making the statement $t : \tau$ hold. However,
+a crucial difference from the unification problem is that the type should
+be an \emph{output} of problem-solving, along with the solution context. We need
+a more liberal definition than that of constraint problems.
+
+We associate a \define{mode} with each parameter, either \scare{input} or
+\scare{output}, in a statement. For simplicity, assume statements always have
+one parameter of each mode (which may be unit or a product). An
+\define{inference problem}
+is a triple $(\Gamma, S, Q)$ where $\Gamma$ is a context, $S$ is a statement
+\TODO{(?)} and
+$Q$ is a value for the input parameter that satisfies its sanity condition in
+$\Gamma$.
+
+\TODO{Clarify notation for statements and parameter values. What is $Q A$?}
+
+A \define{solution} of $(\Gamma, S, Q)$ consists of an information increase
+$\delta : \Gamma \lei \Delta$ and a value for the output parameter $A$ 
+such that $(\delta Q) A$ and the sanity condition on $A$ hold in $\Delta$.
+
+If the output parameter is a scheme, we can compare solutions.
+We say $(\delta : \Gamma \lei \Delta, \gen{\Xi}{\tau})$ is \define{below}
+$(\theta : \Gamma \lei \Theta, \gen{\Psi}{\upsilon})$ if there is some
+substitution
+$\zeta : \Delta, \Xi \lei \Theta, \Psi$ such that
+$\zeta ||_\Delta : \Delta \lei \Theta$,
+$\theta \eqsubst \zeta ||_\Delta \compose \delta$ and 
+$\Theta, \Psi \entails \zeta \tau \equiv \upsilon$.
+If the output is a type, we just instantiate the above definition with
+$\Xi = \emptycontext = \Psi$.
+We will not need any other kinds of output in this paper.
+
+A solution is \define{minimal} if it is below every other solution.
+As before, we will look for minimal solutions where $\delta$ is the identity,
+and write $\Jmin{\Gamma}{Q A}{\Delta}$ when this is the case.
+
+Thus the type inference problem is given by a context $\Gamma$ and the
+statement $t : ~?$ where $t$ is a term and $?$ represents the output parameter.
+A solution is then an information increase $\delta : \Gamma \lei \Delta$ and a
+type $\tau$ such that $\Delta \entails \tau \type \wedge t : \tau$.
+
+The conjunction of statements $S \wedge S'$ is unique in that the output of $S$
+may be used in the input of $S'$; in this way it resembles a dependent sum type.
+We write $Q_1[a] \wedge Q_2$ where $a$ is a binding occurrence of a metavariable
+that is in scope in $Q_2$. This allows us to state the fully general version of
+the Optimist's lemma:
+
+\TODO{Complete the proof. Should we do this after introducing $\fatsemi$ so we
+can use it in the definition of minimality?}
+
+\begin{lemma}[The Optimist's lemma for inference problems]
+\label{lem:optimistInference}
+The following inference rule is admissible:
+$$\Rule{\Jmin{\Gamma}{Q_1 A_1}{\Delta}
+       \quad  \Jmin{\Delta}{(\subst{A_1}{a} Q_2) A_2}{\Theta}}
+       {\Jmin{\Gamma}{(Q_1[a] \wedge Q_2) (A_1, A_2)}{\Theta}}.$$
+\end{lemma}
+\begin{proof}
+We have $\Gamma \lei \Theta$ by Lemma~\ref{lei:preorder}.
+Furthermore, $\Theta \entails (Q_1[a] \wedge Q_2) (A_1, A_2)$ since
+stability gives $\Theta \entails Q_1 A_1$, and
+$\Theta \entails (\subst{A_1}{a} Q_2) A_2$ by assumption.
+
+Now suppose there is some solution $(\phi : \Gamma \lei \Phi, (B_1, B_2))$, so
+$\Phi \entails Q_1 B_1$ and
+$\Phi \entails (\subst{B_1}{a} Q_2) B_2$.
+Since $\Jmin{\Gamma}{Q_1 A_1}{\Delta}$, there exists
+$\zeta_1 : \Delta \lei \Phi$ such that
+$\phi \eqsubst \zeta_1 \compose \iota$
+and ...
+
+But then $\Jmin{\Delta}{(\subst{A_1}{a} Q_2) A_2}{\Theta}$, so there exists
+$\zeta_2 : \Theta \lei \Phi$ such that
+$\zeta_1 \eqsubst \zeta_2 \compose \iota$
+and ...
+
+Hence $\phi \eqsubst \zeta_2 \compose \iota$
+and ...
+\end{proof}
 
 \subsection{Transforming the rule system for type assignment}
 
@@ -2125,7 +2145,9 @@ context and looking them up as appropriate, and calling |unify| when needed
 to check applications.
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Discussion}  %%% Concussion?
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 We have arrived at an implementation of Hindley-Milner type inference
 which involves all the same steps as \AlgorithmW, but not
