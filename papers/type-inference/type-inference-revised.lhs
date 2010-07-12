@@ -1317,18 +1317,17 @@ details, see Appendix.  \end{proof}
 
 We aim to implement type inference for the Hindley-Milner system, so we need to
 introduce type schemes and the term language. We extend the grammar of statements
-to express additions to the context (binding statements) and well-formed schemes,
-so we can add a type assignment statement. The final grammar will be:
+to express additions to the context (binding statements), well-formed schemes,
+type assignment and scheme assignment. The final grammar will be:
 \begin{align*}S ::=~ \valid
     &~||~ \tau \type
     ~||~ \tau \equiv \upsilon
     ~||~ S \wedge S \\
     &~||~ \Sbind{\decl{x}{D}}{S}
     ~||~ \sigma \scheme
-    ~||~ t : \tau.
+    ~||~ t : \tau
+    ~||~ s \hasscheme \sigma
 \end{align*}
-
-\TODO{Add scheme assignment as well?}
 
 \subsection{Binding statements}
 
@@ -1385,6 +1384,8 @@ We write $\Sbind{\Xi}{S}$ where $\Xi$ is a list of declarations, defining
 $\Sbind{\emptycontext}{S} = S$ and
 $\Sbind{(\Xi, \decl{x}{D})}{S} = \Sbind{\Xi}{\Sbind{\decl{x}{D}}{S}}$.
 
+\TODO{Sanity conditions for binding statements?}
+
 \subsection{Type schemes}
 
 To handle let-polymorphism, the context must assign type schemes to term
@@ -1395,95 +1396,43 @@ $$\sigma ::= .\tau ~||~ \forall\alpha~\sigma ~||~ \letS{\alpha}{\tau}{\sigma}.$$
 We use explicit definitions in type schemes to avoid the need for substitution
 in the type inference algorithm. 
 
-The new statement $\sigma \scheme$ is given by the rules in
-Figure~\ref{fig:schemeValidityRules}.
-The sanity condition on $\sigma$ is just $\valid$.
-
-\begin{figure}[ht]
-\boxrule{\sigma \scheme}
-
-$$
-\Rule{\tau \type}
-     {.\tau \scheme}
-\qquad
-\Rule{\Sbind{\hole{\alpha}}{\sigma \scheme}}
-     {\forall\alpha~\sigma \scheme}
-$$
-
-$$
-\Rule{\upsilon \type   \quad  \Sbind{\alpha \defn \upsilon}{\sigma \scheme}}
-     {\letS{\alpha}{\upsilon}{\sigma} \scheme}
-$$
-
-\caption{Rules for scheme validity}
-\label{fig:schemeValidityRules}
-\end{figure}
-
-
-The structure of these rules strongly suggests that schemes arise by discharging
-a list of type variable declarations over a type. In fact, any scheme can be
-viewed in this way. We write $\gen{\Xi}{\sigma}$ for the generalisation of
-the type scheme $\sigma$ over the prefix of type variable declarations $\Xi$,
-defined by
+Schemes arise by discharging a context suffix (a list of type variable
+declarations) over a type, and any scheme can be viewed in this way. We write
+$\gen{\Xi}{\tau}$ for the generalisation of the type $\tau$ over the suffix of
+type variable declarations $\Xi$, defined by
 \begin{align*}
-\emptycontext         &\genarrow \sigma = \sigma  \\
-\Xi, \hole{\alpha}    &\genarrow \sigma = \Xi \genarrow \forall\alpha~\sigma  \\
-\Xi, \alpha \defn \nu &\genarrow \sigma = \Xi \genarrow \letS{\alpha}{\nu}{\sigma}
+\emptycontext         &\genarrow \tau = \tau  \\
+\hole{\alpha}, \Xi    &\genarrow \tau = \forall\alpha~\gen{\Xi}{\tau}  \\
+\alpha \defn \upsilon, \Xi &\genarrow \tau = \letS{\alpha}{\upsilon}{\gen{\Xi}{\tau}}
 \end{align*}
-We will usually be interested in the case $\sigma = .\tau$ for some type $\tau$.
-\TODO{Can we make this about types and omit the dot?}
 
-\TODO{Explain the relationship between a scheme prefix and context suffix.}
-
-When we infer the specialised type of a variable, we rely on the
-ability to invert this operation, extending the context with a
-\emph{fresh} copy of a scheme's prefix. As shown above, we follow
-\citet{NaraschewskiN-JAR} in achieving freshness with a simple
-counter, built into the |Contextual| monad.
-
-\begin{lemma}
-\label{lem:specialise}
-If $\Gamma \entails \sigma \scheme$ then $\sigma = \Xi\genarrow.\tau$
-for some $\Xi$ and $\tau$ such that $\Gamma,\Xi\entails \tau \type$
-\end{lemma}
-\begin{proof}
-By induction on the structure of $\sigma$, given that it is possible to choose
-fresh variable names.
-\end{proof}
-
-\TODO{Can we replace $\sigma \scheme$ with $\Sbind{\Xi}{\tau \type}$?}
-
+The statement $\sigma \scheme$ is then defined by
+$$\gen{\Xi}{\tau} \scheme = \Sbind{\Xi}{\tau \type}.$$
+The sanity condition is just $\valid$, as for $\tau \type$.
 
 \subsection{Terms and type assignment}
 
 Now we are in a position to reuse the framework already
-introduced, by defining a new sort $\TM$.
+introduced, by defining the sort $\TM$.
 Let $\V_\TM$ be some set of term variables and let $x$ range over $\V_\TM$.
 Term variable declarations $\D_\TM$ are scheme assignments of the form
 $\asc \sigma$, with
 $\ok_\TM (\asc \sigma) = \sigma \scheme$.
 
-Let $\Term$ be the set of terms, with syntax 
-$$t ::= x ~||~ t~t ~||~ \lambda x . t ~||~ \letIn{x}{t}{t}.$$
+% Let $\Term$ be the set of terms, with syntax 
+The set of terms has syntax
+$$t ::= x ~||~ t~t ~||~ \lambda x . t ~||~ \letIn{x}{t}{t}$$
+and $s$, $t$, $w$ range over terms.
 
-We define the type assignability statement $t : \tau$ by the declarative 
-rules in Figure~\ref{fig:typeAssignmentRules}. This has two parameters,
-with sanity conditions $\valid$ and $\tau \type$ respectively.
-
-We can then define scheme assignability $t \hasscheme \sigma$ as a map from
-terms $t$ and schemes $\sigma$ to statements:
-\begin{align*}
-t \hasscheme .\tau   &\mapsto    t : \tau  \\
-t \hasscheme \forall \alpha \sigma  &\mapsto 
-    \Sbind{\hole{\alpha}}{t \hasscheme \sigma}   \\
-t \hasscheme \letS{\alpha}{\tau}{\sigma}  &\mapsto
-    \Sbind{\alpha \defn \tau}{t \hasscheme \sigma}
-\end{align*}
-Let $\sem{x \asc \sigma}_\TM = x \hasscheme \sigma$.
-
-\TODO{Define $t \hasscheme \sigma$ by
-$\Rule{\Sbind{\Xi}{t : \tau}}
-      {t \hasscheme \gen{\Xi}{\tau}}$.}
+The type assignability statement $t : \tau$ is established by the declarative
+rules in Figure~\ref{fig:typeAssignmentRules}. It has two parameters $t$ and
+$\tau$ with sanity conditions $\valid$ and $\tau \type$ respectively.
+We define
+$$t \hasscheme \gen{\Xi}{\tau} = \Sbind{\Xi}{t : \tau}$$
+and observe this gives the parameters $t$ and $\sigma$ sanity conditions
+$\valid$ and $\sigma \scheme$ as one might expect.
+We can interpret term variable declarations as scheme assignment statements:
+$$\sem{x \asc \sigma}_\TM = x \hasscheme \sigma.$$
 
 \begin{figure}[ht]
 \boxrule{t : \tau}
@@ -1958,7 +1907,6 @@ For details, see Appendix.
 >     deriving (Functor, Foldable)
 
 > type Scheme  = Schm TyName
-> type Prefix  = Bwd TyEntry 
 
 \label{subfig:schemeCode}
 }}}
@@ -1992,25 +1940,25 @@ For details, see Appendix.
 >     help beta  | alpha == beta  = Z
 >                | otherwise      = S beta
 
-> (>=>) :: Prefix -> Scheme -> Scheme
-> B0                           >=> sigma = sigma
-> (_Xi :< alpha :=  Hole)      >=> sigma = _Xi >=> All (bind alpha sigma)
-> (_Xi :< alpha :=  Some tau)  >=> sigma = _Xi >=> LetS tau (bind alpha sigma)
+> (>=>) :: Suffix -> Type -> Scheme
+> F0                               >=> tau = Type tau
+> (alpha := Hole          :> _Xi)  >=> tau = All (bind alpha (_Xi >=> tau))
+> (alpha := Some upsilon  :> _Xi)  >=> tau = LetS upsilon (bind alpha (_Xi >=> tau))
 
 > generaliseOver ::  Contextual Type -> Contextual Scheme
 > generaliseOver mt = do
 >     modifyContext (:< LetGoal)
 >     tau <- mt
->     _Xi <- skimContext
->     return (_Xi >=> Type tau)
+>     _Xi <- skimContext F0
+>     return (_Xi >=> tau)
 >   where
->     skimContext :: Contextual Prefix
->     skimContext = do
+>     skimContext :: Suffix -> Contextual Suffix
+>     skimContext _Xi = do
 >         _Gamma :< vD <- getContext
 >         putContext _Gamma
 >         case vD of
->             LetGoal    -> return B0
->             TY alphaD  -> skimContext >>= return . (:< alphaD)
+>             LetGoal    -> return _Xi
+>             TY alphaD  -> skimContext (alphaD :> _Xi)
 >             TM _       -> error "Unexpected TM variable!"
 
 \label{subfig:generaliseCode}
