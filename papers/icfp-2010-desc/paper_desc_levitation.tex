@@ -544,13 +544,13 @@ arguments to $\cata$ as possible:
 \begin{array}{@{}ll}
 \subst : & \PITEL{\V{D}}{\TagDesc}
            \PI{\V{X}, \V{Y}}{\Set} 
-           (\V{X} \To \Mu{(\toDesc{(\FreeMonad{\V{D}}{\V{Y}})})}) \To \\
-         & \Mu{(\toDesc{(\FreeMonad{\V{D}}{\V{X}})})} \To
-           \Mu{(\toDesc{(\FreeMonad{\V{D}}{\V{Y}})})} 
+           (\V{X} \To \Mu{(\toDesc{\FreeMonad{\V{D}}{\V{Y}}})}) \To \\
+         & \Mu{(\toDesc{\FreeMonad{\V{D}}{\V{X}}})} \To
+           \Mu{(\toDesc{\FreeMonad{\V{D}}{\V{Y}}})} 
 \end{array} \\
 \subst\: \V{D}\: \V{X}\: \V{Y}\: \V{\sigma} \mapsto
-  \cata\: (\toDesc{(\FreeMonad{\V{D}}{\V{X}})})\: 
-          (\Mu{(\toDesc{(\FreeMonad{\V{D}}{\V{Y}})})})\: 
+  \cata\: (\toDesc{\FreeMonad{\V{D}}{\V{X}}})\: 
+          (\Mu{(\toDesc{\FreeMonad{\V{D}}{\V{Y}}})})\: 
           \SHED
 }\]
 %
