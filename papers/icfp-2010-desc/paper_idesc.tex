@@ -973,9 +973,9 @@ term. The type of this operation is the following:
 \begin{array}{@{}ll}
 \substH  : & \PITEL{\V{ty}}{\Ty}
              \PI{\V{G}}{\Ctxt} \\
-           & \PITEL{\V{\sigma}}{\PI{\V{ty}}{\Ty}
-                                (\SUM{\Val{\V{ty}}}{\Var{\V{G}}{\V{ty}}}) \To
-                                \IMu{\Ty}{(\toIDesc{\HExprD})}{\V{ty}}} \\
+           & (\PI{\V{ty}}{\Ty}
+              (\SUM{\Val{\V{ty}}}{\Var{\V{G}}{\V{ty}}}) \To
+              \IMu{\Ty}{(\toIDesc{\HExprD})}{\V{ty}}) \\
           & \To \IMu{\Ty}{(\toIDesc{\HExprVarD{\V{G}}})}{\V{ty}} \To 
             \IMu{\Ty}{(\toIDesc{\HExprD})}{\V{ty}}
 \end{array}
