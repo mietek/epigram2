@@ -732,13 +732,15 @@ $\F{leHost}$. We define $\SYMBVal$ as follows:
 In our universe of descriptions, the syntax of this language is
 described by a tagged indexed description. We use the index to carry
 the type: the resulting description is indexed by $\Ty$. We observe
-that some constructors are always defined, namely $\SYMBEcond$
-and $\SYMBEval$. On the other hand, the $\SYMBEplus$ and
-$\SYMBEle$ constructors are index-dependent. $\SYMBEplus$ is
-defined if and only if the result type -- the index -- is $\Enat$,
-whereas $\SYMBEle$ is defined if and only if the index is
-$\Ebool$. The actual code precisely follows this intuition, as shown
-in Figure~\ref{fig:hexpr-full}. 
+that some constructors are always defined, namely $\SYMBEcond$ and
+$\SYMBEval$. On the other hand, the $\SYMBEplus$ and $\SYMBEle$
+constructors are index-dependent. $\SYMBEplus$ is defined if and only
+if the result type -- the index -- is $\Enat$, whereas $\SYMBEle$ is
+defined if and only if the index is $\Ebool$. The actual code
+precisely follows this intuition, as shown in
+Figure~\ref{fig:hexpr-full}. The first element of $\HExprID$
+corresponds to this choice of constructor: the sublists corresponds to
+the constructors enabled by the corresponding type in $\Ty$.
 
 \begin{figure}
 
