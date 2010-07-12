@@ -1160,17 +1160,17 @@ $$
 $$
 
 $$
-\name{Expand}
-\Rule{\Junify{\Gamma_0}{\tau}{\beta}{\Delta_0}}
-     {\Junify{\Gamma_0, \alpha \defn \tau}{\alpha}{\beta}{\Delta_0, \alpha \defn \tau}}
-\side{\alpha \neq \beta}
-$$
-
-$$
 \name{Ignore}
 \Rule{\Junify{\Gamma_0}{\alpha}{\beta}{\Delta_0}}
      {\Junify{\Gamma_0, \decl{x}{D}}{\alpha}{\beta}{\Delta_0, \decl{x}{D}}}
 \side{x \perp \{\alpha, \beta\} }
+$$
+
+$$
+\name{Expand}
+\Rule{\Junify{\Gamma_0}{\tau}{\beta}{\Delta_0}}
+     {\Junify{\Gamma_0, \alpha \defn \tau}{\alpha}{\beta}{\Delta_0, \alpha \defn \tau}}
+\side{\alpha \neq \beta}
 $$
 
 $$
@@ -1194,6 +1194,13 @@ $$
 $$
 
 $$
+\name{IgnoreS}
+\Rule{\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\Xi}{\Delta_0}}
+     {\Jinstantiate{\Gamma_0, \decl{x}{D}}{\alpha}{\tau}{\Xi}{\Delta_0, \decl{x}{D}}}
+\side{x \perp \FTV{\alpha, \tau, \Xi}}
+$$
+
+$$
 \name{ExpandS}
 \Rule{\Junify{\Gamma_0, \Xi}{\upsilon}{\tau}{\Delta_0}}
      {\Jinstantiate{\Gamma_0, \alpha \defn \upsilon}{\alpha}{\tau}{\Xi}
@@ -1206,13 +1213,6 @@ $$
 \Rule{\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\beta D, \Xi}{\Delta}}
      {\Jinstantiate{\Gamma_0, \beta D}{\alpha}{\tau}{\Xi}{\Delta}}
 \side{\alpha \neq \beta, \beta \in \FTV{\tau, \Xi}}
-$$
-
-$$
-\name{IgnoreS}
-\Rule{\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\Xi}{\Delta_0}}
-     {\Jinstantiate{\Gamma_0, \decl{x}{D}}{\alpha}{\tau}{\Xi}{\Delta_0, \decl{x}{D}}}
-\side{x \perp \FTV{\alpha, \tau, \Xi}}
 $$
 
 \caption{Algorithmic rules for unification}
