@@ -339,6 +339,8 @@ provide the `fold', or `iterator', or `catamorphism':
            \Mu{\V{D}} \To \V{T} 
 \]
 
+\newcommand{\SYMBind}{\F{ind}}
+
 However, iteration is inadequate for \emph{dependent} computation.
 We need \emph{induction} to write functions whose type depends on inductive
 data. Following \citet{benke:universe-generic-prog}, we adopt the following:
@@ -357,16 +359,20 @@ data. Following \citet{benke:universe-generic-prog}, we adopt the following:
 }\]
 %
 Here, $\All{\V{D}}{\V{X}}{\V{P}}{\V{d}}$ states that
-$\Bhab{\V{P}}{\V{X} \To \Set}$ holds for every subobject $\V{x}:\V{X}$ in \(\V{D}\), and \(\all{\V{D}}{\V{X}}{\V{P}}{\V{p}}{\V{d}}\) is a
-`dependent map', applying
-some \(\Bhab{\V{p}}{\PIS{\Bhab{\x}{\V{X}}}\V{P}\,\V{x}}\) to each \(\x\)
-contained in \(\V{d}\). The full
-definition (including an extra case, introduced shortly) is presented in
-Figure~\ref{fig:all-predicates}. Note that
-\(\F{ind}\) is our first generic
-operation over descriptions, albeit a hardwired operator.
-Any datatype we define automatically
-comes with an induction principle.
+$\Bhab{\V{P}}{\V{X} \To \Set}$ holds for every subobject $\V{x}:\V{X}$
+in \(\V{D}\), and \(\all{\V{D}}{\V{X}}{\V{P}}{\V{p}}{\V{d}}\) is a
+`dependent map', applying some
+\(\Bhab{\V{p}}{\PIS{\Bhab{\x}{\V{X}}}\V{P}\,\V{x}}\) to each \(\x\)
+contained in \(\V{d}\). The full definition (including an extra case,
+introduced shortly) is presented in
+Figure~\ref{fig:all-predicates}.\footnote{To pass the termination
+  checker, we had to inline the definition of $\SYMBall$ into
+  $\SYMBind$ in our Agda model. A simulation argument shows that the
+  definition presented here terminates if the inlined version
+  does. Hence, although not directly structural, this definition is
+  indeed terminating.} Note that \(\F{ind}\) is our first generic
+operation over descriptions, albeit a hardwired operator.  Any
+datatype we define automatically comes with an induction principle.
 
 We note that the very same functors \(\SYMBdescop{\M{D}}\) also admit greatest
 fixpoints, and we have indeed implemented coinductive types this way, but
