@@ -121,7 +121,7 @@
 \newcommand{\ok}{\ensuremath{~\mathbf{ok}}}
 \newcommand{\emptycontext}{\ensuremath{\mathcal{E}}}
 \newcommand{\letGoal}{\ensuremath{\fatsemi}}
-\newcommand{\letIn}[3]{\ensuremath{\mathrm{let}~ #1 \!:=\! #2 ~\mathrm{in}~ #3}}
+\newcommand{\letIn}[3]{\ensuremath{\mathrm{let}\; #1 \!:=\! #2 \;\mathrm{in}\; #3}}
 \newcommand{\letS}[3]{\ensuremath{(!#1 \!:=\! #2 ~\mathrm{in}~ #3)}}
 \newcommand{\boxrule}[1]{\begin{center}\framebox{\ensuremath{#1}}\end{center}}
 \newcommand{\boxrules}[2]{\begin{center}\framebox{\ensuremath{#1}}\quad\framebox{\ensuremath{#2}}\end{center}}
@@ -274,7 +274,7 @@ Programme.} \and Conor McBride}
 \section{Introduction}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsection{\AlgorithmW}
+%%% \subsection{\AlgorithmW}
 
 \AlgorithmW\ is a well-known type inference algorithm for the Hindley-Milner type
 system \citep{milner_theory_1978, damas_principal_1982}, based on
@@ -283,7 +283,7 @@ system \citep{milner_theory_1978, damas_principal_1982}, based on
 simply-typed $\lambda$-calculus with \scare{let-expressions} for polymorphic
 definitions.
 For example, the term
-$$\letIn{i}{\lambda x . x}{i i}$$
+$$\letIn{i}{\lambda x . x}{i\:i}$$
 is well-typed: $i$ is given a polymorphic type that is instantiated in two
 different ways. The syntax of types is
 $$\tau ::= \alpha ~||~ \tau \arrow \tau.$$
@@ -308,12 +308,6 @@ stepwise progress in problem solving from states of partial knowledge.
 We wish to identify local correctness criteria for type inference that
 guarantee global correctness.
 
-We are grateful to an anonymous referee for pointing out the work of
-\citet{dunfield_polymorphism_2009} on polymorphism in a bidirectional typesystem.
-Dunfield uses well-founded contexts that contain existential type variables
-(amongst other things). These variables can be solved, and there is an informal
-notion of information increase between input and output contexts, though this is
-used for different purposes. \TODO{More? Where should this go?}
 
 In contrast to other presentations of unification and Hindley-Milner type
 inference, our algorithm is based on contexts carrying variable definitions as
@@ -321,7 +315,7 @@ well as declarations. This avoids having to consider substitutions, or
 morphisms between contexts, explicitly.
 (We do use substitution in reasoning about the system.)
 
-This paper has been brewing for a long time. Its origins lie in a constraint
+This paper has been a long time brewing. Its origins lie in a constraint
 engine cannibalised by McBride from an implementation of
 \citeauthor{miller:mixed}'s \scare{mixed prefix}
 unification~\citeyearpar{miller:mixed}, mutating the quantifier prefix into a
@@ -336,6 +330,14 @@ its imple-mentation is not discussed. This view of construction underpinned the
 implementation of Epigram~\citep{mcbride.mckinna:view-from-the-left} and informed
 \citeauthor{norell:agda}'s implementation of Agda~\citeyearpar{norell:agda}.
 It is high time we began to explain how it works and perhaps to understand it.
+
+We are grateful to an anonymous referee for pointing out the work of
+\citet{dunfield_polymorphism_2009} on polymorphism in a bidirectional typesystem.
+Dunfield uses well-founded contexts that contain existential type variables
+(amongst other things). These variables can be solved, and there is an informal
+notion of information increase between input and output contexts, though this is
+used for different purposes. \TODO{More? Where should this go?}
+
 
 \TODO{More crunchiness: forward pointers to claims and contributions}
 
@@ -352,8 +354,8 @@ right-hand side depends on the left, so it does not make a good definition.
 
 In \AlgorithmW, the occurs check is used to discover type dependencies just in
 time for generalisation. When inferring the type of the let-expression
-$\letIn{x}{w}{t}$, the type $w$ must first be inferred, then
-quantified over \scare{generic} type variables, i.e.\ those that occur in $w$
+$\letIn{x}{e'}{e}$, the type of $e'$ must first be inferred, then
+quantified over \scare{generic} type variables, i.e.\ those involved with $e'$
 but not the enclosing bindings. 
 The rule in question, as presented by \citet{clment_simple_1986}, is:
 $$
@@ -368,8 +370,12 @@ $$gen(A, \tau) = \begin{cases}
         (FV(\tau) \setminus FV(A) = \emptyset)
 \end{cases}
 $$
+Here, the typing context is an unordered set of type scheme assignments,
+with \(A_x\) denoting `\(A\) with any \(x\) assignments removed': contexts are
+not designed to reflect lexical scope, so shadowing requires deletion and
+reinsertion.
 
-This is the only real complexity in \AlgorithmW,
+The `let' rule is the only real complexity in \AlgorithmW,
 and as \citet{milner_theory_1978} wrote, ``the
 reader may still feel that our rules are arbitrarily chosen and only partly
 supported by intuition.'' Experience has shown that the rules are well-chosen
