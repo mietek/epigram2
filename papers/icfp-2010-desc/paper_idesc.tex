@@ -939,18 +939,20 @@ discharging variables from the context. Again, we can subdivide this
 problem: first, discharging a single variable from the context; then,
 applying this $\discharge$ function on every variables in the term.
 
+\newcommand{\DotTo}{\mathop{\blue{\dot{\rightarrow}}}}
+
 The $\discharge$ function is relative to the required type and a
 context of the right type. Its action is to map values to themself,
-and variables to their value in context. This corresponds to the
-following function:
+and variables to their value in context. The pointwise indexed
+function type $\PI{\V{i}}{I}{X\: i \To Y\: i}$ is abbreviated  $X
+\DotTo Y$. This corresponds to the following function:
 %
 \[\stk{
 \begin{array}{@{}ll}
 \discharge : & \PI{\V{G}}{\Ctxt}
-               \Env{G} \To
-               \PITEL{\V{ty}}{\Ty} \\
-             & (\SUM{\Val{\V{ty}}}{\Var{\V{G}}{\V{ty}}}) \To
-               \IMu{\Ty}{\HExprD}{\V{ty}} 
+               \Env{G} \To \\
+             & (\SUM{\Val{\V{}}}{\Var{\V{G}}{}}) \DotTo
+               \IMu{\Ty}{\HExprD}{}
 \end{array} \\
 \begin{array}{@{}l@{\:\mapsto\:\:}l}
 \discharge\: \V{G}\: \V{g}\: \V{ty}\: (\SumLeft \V{x})  & 
@@ -975,13 +977,11 @@ term. The type of this operation is the following:
 %
 \[
 \begin{array}{@{}ll}
-\substH  : & \PITEL{\V{ty}}{\Ty}
-             \PI{\V{G}}{\Ctxt} \\
-           & (\PI{\V{ty}}{\Ty}
-              (\SUM{\Val{\V{ty}}}{\Var{\V{G}}{\V{ty}}}) \To
-              \IMu{\Ty}{\HExprD}{\V{ty}}) \\
-          & \To \IMu{\Ty}{\HExprVarD{\V{G}}}{\V{ty}} \To 
-            \IMu{\Ty}{\HExprD}{\V{ty}}
+\substH  : & \PI{\V{G}}{\Ctxt} \\
+           & ((\SUM{\Val{}}{\Var{\V{G}}{}}) \DotTo
+              \IMu{\Ty}{\HExprD}{}) \DotTo \\
+          & \IMu{\Ty}{\HExprVarD{\V{G}}}{} \DotTo 
+            \IMu{\Ty}{\HExprD}{}
 \end{array}
 \]
 
@@ -1040,11 +1040,10 @@ definition is the following:
 \substI : & _{\PI{\V{I}}{\Set}}
             \PI{\V{X}, \V{Y}}{\V{I} \To \Set}
             \PITEL{\V{R}}{\TagIDesc{\V{I}}} \\
-          & (\PI{\V{i}}{\V{I}} \V{X}\:\V{i} \To 
-                               \IMu{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}{\V{i}}) \To \\
-          & \PI{\V{i}}{\V{I}}
-            \IMu{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{X}})}{\V{i}} \To
-            \IMu{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}{\V{i}}
+          & (\V{X} \DotTo 
+             \IMu{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}{}) \To 
+            \IMu{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{X}})}{} \DotTo
+            \IMu{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}{}
 \end{array} \\
 \substI\: \V{X}\: \V{Y}\: \V{R}\: \V{\sigma}\: \V{i}\: \V{t} = \\
 \qquad    \cataI\: \toIDesc{\FreeIMonad{\V{R}}{}{\V{X}}}\:
@@ -1061,15 +1060,13 @@ Where  $\F{applyI}$ is defined as follow:
 \F{applyI} : & _{\PI{\V{I}}{\Set}}
             \PITEL{\V{R}}{\TagIDesc{\V{I}}}
             \PI{\V{X}, \V{Y}}{\V{I} \To \Set} \\
-          & (\PI{\V{i}}{\V{I}} \V{X}\: \V{i} \To \IMu{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}{\V{i}}) \To \\
-          & \PI{\V{i}}{\V{I}} 
-            \idescop{\toIDesc{\FreeIMonad{\V{R}}
+          & (\V{X} \DotTo \IMu{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}{}) \To \\
+          & \idescop{\toIDesc{\FreeIMonad{\V{R}}
                                          {\V{I}}
-                                         {\V{X}}}\: 
-                     \V{i}}
+                                         {\V{X}}}}
                     {\V{I}}
-{\IMu{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}} \To 
-           \IMu{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}{\V{i}}
+                    {\IMu{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}} \DotTo 
+            \IMu{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}{}
 \end{array} \\
 \begin{array}{@{}l@{\:\mapsto\:\:}l}
 \F{applyI}\: \V{R}\: \V{X}\: \V{Y}\: \V{\sigma}\: \V{i}\: \pair{\SYMBDVar}{\V{x}}{}   & \V{\sigma}\: \V{i}\: \V{x}                   \\
@@ -1146,8 +1143,8 @@ $\Val{\V{ty}}$. We are left with implementing $\substH$. We simply
 have to fill in the right arguments to $\substI$, the type guiding us:
 %
 \[\stk{
-\substH\: \V{ty}\:
-          \V{G}\:
+\substH\: \V{G}\:
+          \V{ty}\:          
           \V{g}\:
           \V{\sigma}\: 
           \V{term} \mapsto  \\
