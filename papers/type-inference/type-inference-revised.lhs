@@ -122,6 +122,7 @@
 \newcommand{\LEI}{\ensuremath{~\hat\lei~}}
 \newcommand{\leiR}{\ensuremath{\sqsubseteq}}
 \newcommand{\LEIR}{\ensuremath{~\hat\sqsubseteq~}}
+\newcommand{\lep}{\ensuremath{\leq}}
 
 \newcommand{\arrow}{\ensuremath{\triangleright}}
 \newcommand{\defn}{\ensuremath{\!:=\!}}
@@ -1680,21 +1681,41 @@ A \define{solution} of $(\Gamma, S, Q)$ consists of an information increase
 $\delta : \Gamma \lei \Delta$ and a value for the output parameter $A$ 
 such that $(\delta Q) A$ and the sanity condition on $A$ hold in $\Delta$.
 
-If the output parameter is a scheme, we can compare solutions.
-We say $(\delta : \Gamma \lei \Delta, \gen{\Xi}{\tau})$ is \define{below}
-$(\theta : \Gamma \lei \Theta, \gen{\Psi}{\upsilon})$ if there is some
-substitution
-$\zeta : \Delta, \Xi \lei \Theta, \Psi$ such that
-$\zeta ||_\Delta : \Delta \lei \Theta$,
-$\theta \eqsubst \zeta ||_\Delta \compose \delta$ and 
-$\Theta, \Psi \entails \zeta \tau \equiv \upsilon$.
-If the output is a type, we just instantiate the above definition with
-$\Xi = \emptycontext = \Psi$.
-We will not need any other kinds of output in this paper.
+To generalise the Optimist's lemma to this setting, we need to extend the
+$\lei$ relation to define a preorder on solutions.
+% that is stable in a suitable sense.
+Let $(\delta : \Gamma \lei \Delta, A)$ and
+$(\theta : \Gamma \lei \Theta, B)$ be two solutions. We define the relation
+$\zeta : (\delta, A) \lep_{(\Gamma, Q)} (\theta, B)$ if $\zeta : \Delta \lei \Theta$ and
+$\theta \eqsubst \zeta \compose \delta$, and the appropriate condition holds.
 
-A solution is \define{minimal} if it is below every other solution.
+When the output is a scheme, we have
+$\zeta : (\delta, \gen{\Xi}{\tau}) \lep (\theta, \gen{\Psi}{\upsilon})$
+if there is some $\psi$ such that
+$\zeta ; \psi : \Delta \fatsemi \Xi \lei \Theta \fatsemi \Psi$ and 
+$\Theta \fatsemi \Psi \entails (\zeta ; \psi) \tau \equiv \upsilon$.
+\TODO{Define $\zeta ; \psi$ as composition of substitutions subject to
+appropriate conditions.}
+
+When the output is a type, we just instantiate the above definition with
+$\Xi = \emptycontext = \Psi$, i.e.\ we have
+$\zeta : (\delta, \tau) \lep (\theta, \upsilon)$
+if $\Theta \entails \zeta \tau \equiv \upsilon$.
+
+When the output is a pair (i.e. for conjunctions), we have
+$\zeta : (\delta, (A_0, A_1)) \lep_{(\Gamma, Q_0[a] \wedge Q_1)}
+    (\theta, (B_0, B_1))$ if
+$\zeta : (\delta, A_0) \lep_{(\Gamma, Q_0)} (\theta, B_0)$ and 
+$\zeta : (\iota : \Theta \lei \Theta, \zeta A_1)
+    \lep_{(\Theta, \subst{B_0}{a} Q_1)} (\iota : \Theta \lei \Theta, B_1)$.
+\TODO{Does this make sense? Motivate it.}
+
+A solution $(\delta, A)$ is \define{minimal} if it is below every other solution,
+i.e. \ if $\zeta : (\delta, A) \lep (\theta, B)$ for every solution
+$(\theta, B)$.
 As before, we will look for minimal solutions where $\delta$ is the identity,
-and write $\Jmin{\Gamma}{Q A}{\Delta}$ when this is the case.
+and write $\Jmin{\Gamma}{Q A}{\Delta}$ when $(\iota : \Gamma \lei \Delta, A)$ is
+a minimal solution to $(\Gamma, S, Q)$.
 
 Thus the type inference problem is given by a context $\Gamma$ and the
 statement $t : ~?$ where $t$ is a term and $?$ represents the output parameter.
@@ -1713,31 +1734,28 @@ can use it in the definition of minimality?}
 \begin{lemma}[The Optimist's lemma for inference problems]
 \label{lem:optimistInference}
 The following inference rule is admissible:
-$$\Rule{\Jmin{\Gamma}{Q_1 A_1}{\Delta}
-       \quad  \Jmin{\Delta}{(\subst{A_1}{a} Q_2) A_2}{\Theta}}
-       {\Jmin{\Gamma}{(Q_1[a] \wedge Q_2) (A_1, A_2)}{\Theta}}.$$
+$$\Rule{\Jmin{\Gamma}{Q_0 A_0}{\Delta}
+       \quad  \Jmin{\Delta}{(\subst{A_0}{a} Q_1) A_1}{\Theta}}
+       {\Jmin{\Gamma}{(Q_0[a] \wedge Q_1) (A_0, A_1)}{\Theta}}.$$
 \end{lemma}
 \begin{proof}
 We have $\Gamma \lei \Theta$ by Lemma~\ref{lei:preorder}.
-Furthermore, $\Theta \entails (Q_1[a] \wedge Q_2) (A_1, A_2)$ since
-stability gives $\Theta \entails Q_1 A_1$, and
-$\Theta \entails (\subst{A_1}{a} Q_2) A_2$ by assumption.
+Furthermore, $\Theta \entails (Q_0[a] \wedge Q_1) (A_0, A_1)$ since
+stability gives $\Theta \entails Q_0 A_0$, and
+$\Theta \entails (\subst{A_0}{a} Q_1) A_1$ by assumption.
 
-Now suppose there is some solution $(\phi : \Gamma \lei \Phi, (B_1, B_2))$, so
-$\Phi \entails Q_1 B_1$ and
-$\Phi \entails (\subst{B_1}{a} Q_2) B_2$.
-Since $\Jmin{\Gamma}{Q_1 A_1}{\Delta}$, there exists
-$\zeta_1 : \Delta \lei \Phi$ such that
-$\phi \eqsubst \zeta_1 \compose \iota$
-and ...
+Now suppose there is some other solution
+$(\phi : \Gamma \lei \Phi, (B_0, B_1))$, so
+$\Phi \entails Q_0 B_0$ and
+$\Phi \entails (\subst{B_0}{a} Q_1) B_1$.
+Since $\Jmin{\Gamma}{Q_0 A_0}{\Delta}$, there exists
+$\zeta_0 : (\iota : \Gamma \lei \Delta, A_0)
+               \lep (\phi : \Gamma \lei \Phi, B_0)$.
 
-But then $\Jmin{\Delta}{(\subst{A_1}{a} Q_2) A_2}{\Theta}$, so there exists
-$\zeta_2 : \Theta \lei \Phi$ such that
-$\zeta_1 \eqsubst \zeta_2 \compose \iota$
-and ...
-
-Hence $\phi \eqsubst \zeta_2 \compose \iota$
-and ...
+But then $\Jmin{\Delta}{(\subst{A_0}{a} Q_1) A_1}{\Theta}$...
+% so there exists
+% $\zeta_1 : \Theta \lei \Phi$ such that
+% $\zeta_0 \eqsubst \zeta_1 \compose \iota$
 \end{proof}
 
 \subsection{Transforming the rule system for type assignment}
