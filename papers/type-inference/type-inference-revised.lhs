@@ -123,9 +123,10 @@
 \newcommand{\letGoal}{\ensuremath{\fatsemi}}
 \newcommand{\letIn}[3]{\ensuremath{\mathrm{let}\; #1 \!:=\! #2 \;\mathrm{in}\; #3}}
 \newcommand{\letS}[3]{\ensuremath{(!#1 \!:=\! #2 ~\mathrm{in}~ #3)}}
-\newcommand{\boxrule}[1]{\begin{center}\framebox{\ensuremath{#1}}\end{center}}
-\newcommand{\boxrules}[2]{\begin{center}\framebox{\ensuremath{#1}}\quad\framebox{\ensuremath{#2}}\end{center}}
-\newcommand{\boxruless}[3]{\begin{center}\framebox{\ensuremath{#1}}\quad\framebox{\ensuremath{#2}}\quad\framebox{\ensuremath{#3}}\end{center}}
+\newcommand{\mathframe}[1]{\framebox{\ensuremath{#1}}}
+\newcommand{\boxrule}[1]{\begin{center}\mathframe{#1}\end{center}}
+\newcommand{\boxrules}[2]{\begin{center}\mathframe{#1}\quad\mathframe{#2}\end{center}}
+\newcommand{\boxruless}[3]{\begin{center}\mathframe{#1}\quad\mathframe{#2}\quad\mathframe{#3}\end{center}}
 
 \newcommand{\tmvars}[1]{\ensuremath{tmvars(#1)}}
 \newcommand{\tyvars}[1]{\ensuremath{\V_\TY(#1)}}
@@ -383,7 +384,7 @@ indeed; perhaps we can recover the intuition.
 
 In both cases, the occurs check is used to detect dependencies between variables.
 Type variables are traditionally left floating in space and given meaning by
-substitution, but by imposing structure we can manage definitions and
+substitution, but by exposing structure we can manage definitions and
 dependencies as we go. Recording type variables in the context is natural when
 dealing with dependent types, since there is no distinction between type and term
 variables. Even in a simply-typed setting, however, this approach has advantages.
@@ -393,38 +394,38 @@ variables. Even in a simply-typed setting, however, this approach has advantages
 \section{Unification over a context}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+We begin our study of type inference by revisiting unification for
+type expressions containing free variables. Let us equip ourselves to
+address the problem---solving equations---by explaining which types
+are considered equal, raising the question of which things a given
+context admits as types, and in turn which contexts make sense in the
+first place.
+
 \begin{figure}[ht]
-\boxrule{\Gamma \entails \valid}
-$$
+\[\begin{array}{c}
+\mathframe{\Gamma \entails \valid} \smallskip \\
 \Axiom{\emptycontext \entails \valid}
 \qquad
 \Rule{\Gamma \entails \valid}
      {\Gamma, \hole{\alpha} \entails \valid}
 \side{\alpha \notin \Gamma}
-$$
-$$
+\smallskip \\
 \Rule{\Gamma \entails \valid    \quad    \Gamma \entails \tau \type}
      {\Gamma, \alpha \defn \tau \entails \valid}
 \side{\alpha \notin \Gamma}
-$$
 
-\bigskip
+\bigskip \\
 
-\boxrule{\Gamma \entails \tau \type}
-
-$$
+\mathframe{\Gamma \entails \tau \type} \smallskip \\
 \Rule{\Gamma, \alpha \defn \_, \Gamma' \entails \valid}
      {\Gamma, \alpha \defn \_, \Gamma' \entails \alpha \type}
 \qquad
 \Rule{\Gamma \entails \tau \type   \quad   \Gamma \entails \upsilon \type}
      {\Gamma \entails \tau \arrow \upsilon \type}.
-$$
 
-\bigskip
+\bigskip \\
 
-\boxrule{\Gamma \entails \tau \equiv \upsilon}
-
-$$
+\mathframe{\Gamma \entails \tau \equiv \upsilon} \smallskip \\
 \Rule{\Gamma, \alpha \defn \tau, \Gamma' \entails \valid}
      {\Gamma, \alpha \defn \tau, \Gamma' \entails \alpha \equiv \tau}
 \qquad
@@ -433,8 +434,7 @@ $$
 \qquad
 \Rule{\Gamma \entails \upsilon \equiv \tau}
      {\Gamma \entails \tau \equiv \upsilon}
-$$
-$$
+\smallskip \\
 \Rule{\Gamma \entails \tau_0 \equiv \upsilon_0
       \quad
       \Gamma \entails \tau_1 \equiv \upsilon_1}
@@ -444,7 +444,7 @@ $$
       \quad
       \Gamma \entails \tau_1 \equiv \tau_2}
      {\Gamma \entails \tau_0 \equiv \tau_2}
-$$
+\end{array}\]
 \caption{Rules for validity, types and type equivalence}
 \label{fig:oldRules}
 \end{figure}
