@@ -334,12 +334,16 @@ implementation of Epigram~\citep{mcbride.mckinna:view-from-the-left} and informe
 It is high time we began to explain how it works and perhaps to understand it.
 
 We are grateful to an anonymous referee for pointing out the work of
-\citet{dunfield_polymorphism_2009} on polymorphism in a bidirectional typesystem.
+\citet{dunfield_polymorphism_2009} on polymorphism in a bidirectional type system.
 Dunfield uses well-founded contexts that contain existential type variables
 (amongst other things). These variables can be solved, and there is an informal
 notion of information increase between input and output contexts, though this is
-used for different purposes. \TODO{More? Where should this go?}
+used for different purposes. 
 
+However, our concerns here are different: whilst Dunfield elaborates a
+particular strategy for bidirectional polymorphic checking to a larger
+class of type theories, we are pursuing a methodological understanding
+of the problem-solving strategy in Hindley-Milner type inference.
 
 \TODO{More crunchiness: forward pointers to claims and contributions}
 
