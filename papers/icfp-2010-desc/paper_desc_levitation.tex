@@ -308,7 +308,7 @@ with higher priority than for \(\F{switch}\) in general.
 %
 \[
 \Rule{\Gamma \Vdash
-  \propag{\push{\sqr{\vec{t}}}{\spi{\M{E}}{(\PLAM{x}{\EnumT{E}}\Desc)}}}
+  \propag{\push{\sqr{\vec{t}}}{\spi{\M{E}}{\PLAM{x}{\EnumT{E}}\Desc}}}
                            {\M{t'}}}
      {\Gamma \Vdash
 \propag{\push{\sqr{\vec{t}}}{\EnumT{\M{E}}\To\Desc}}
@@ -387,7 +387,7 @@ $\V{f}$. Let us take a look at this jigsaw:
 %
 We are left with filling the hole. Recall that we have
 \(\Bhab{\V{xs}}{\descop{\V{D}}{\Mu{\V{D}}}}\) and
-\(\Bhab{\V{hs}}{\All{\V{D}}{(\Mu{\V{D}})}{(\LAM{\_} \V{T})}{\V{xs}}}\)
+\(\Bhab{\V{hs}}{\All{\V{D}}{\Mu{\V{D}}}{(\LAM{\_} \V{T})}{\V{xs}}}\)
 at hand. Our goal is to make an element of
 \(\descop{\V{D}}{\V{T}}\). Intuitively, $\V{xs}$ is of the right
 shape, but its sub-elements are of the wrong type. On the other hand,
@@ -550,7 +550,7 @@ arguments to $\cata$ as possible:
 \end{array} \\
 \subst\: \V{D}\: \V{X}\: \V{Y}\: \V{\sigma} \mapsto
   \cata\: (\toDesc{\FreeMonad{\V{D}}{\V{X}}})\: 
-          (\Mu{(\toDesc{\FreeMonad{\V{D}}{\V{Y}}})})\: 
+          \Mu{(\toDesc{\FreeMonad{\V{D}}{\V{Y}}})}\: 
           \SHED
 }\]
 %

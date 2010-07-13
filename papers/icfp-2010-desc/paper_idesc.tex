@@ -222,7 +222,7 @@ descriptions is defined by:
 \qquad
     \V{m}\: \V{i}\: \V{xs}\: (\allI{}
                                     {\V{R}\: \V{i}}
-                                    {\IMu{\V{I}}{\V{R}}{}}
+                                    {(\SYMBIMu_{\V{I}}{\V{R}})}
                                     {\V{P}}
                                     {(\spl{\LAM{\V{i}}\LAM{\V{xs}} \inductionI\: \V{R}\: \V{P}\: \V{m}})}
                                     {\V{xs}})
@@ -813,7 +813,7 @@ algebra -- is sufficient, as $\cataI$ gives, for free, the full
 evaluator. The implementation is as follows:
 %
 \[\stk{
-\evalOne : \PI{\V{ty}}{\Ty} \idescop{\toIDesc{\HExprD}\:\V{ty}}{\Ty}{\SYMBVal}
+\evalOne : \PI{\V{ty}}{\Ty} \idescop{(\toIDesc{\HExprD})\:\V{ty}}{\Ty}{\SYMBVal}
            \To {\Val{\V{ty}}} \\
 \begin{array}{@{}l@{}c@{}l@{\:=\:\:}l}
 \evalOne\: & \_\: & \pair{\SYMBEval}{\V{x}}{}                                             & \V{x} \\
@@ -826,8 +826,8 @@ evaluator. The implementation is as follows:
 \evalH : \PI{\V{ty}}{\Ty} 
            \IMu{\Ty}{\HExprD}{\V{ty}} \To
            \Val{\V{ty}} \\
-\evalH\: \V{ty}\: \V{term} = \cataI_{\Ty}
-                                 \toIDesc{\HExprD}\: 
+\evalH\: \V{ty}\: \V{term} = \cataI_{\Ty} \:
+                                 (\toIDesc{\HExprD})\: 
                                  \SYMBVal\: 
                                  \evalOne\: 
                                  \V{ty}\: 
@@ -950,8 +950,8 @@ function type $\PI{\V{i}}{I}{X\: i \To Y\: i}$ is abbreviated  $X
 \[\stk{
 \begin{array}{@{}ll}
 \discharge : & \PI{\V{G}}{\Ctxt}
-               \Env{G} \To \\
-             & (\SUM{\Val{\V{}}}{\Var{\V{G}}{}}) \DotTo
+               \Env{G} \To 
+              (\SUM{\Val{\V{}}}{\Var{\V{G}}{}}) \DotTo
                \IMu{\Ty}{\HExprD}{}
 \end{array} \\
 \begin{array}{@{}l@{\:\mapsto\:\:}l}
@@ -1041,13 +1041,13 @@ definition is the following:
             \PI{\V{X}, \V{Y}}{\V{I} \To \Set}
             \PITEL{\V{R}}{\TagIDesc{\V{I}}} \\
           & (\V{X} \DotTo 
-             \IMu{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}{}) \To 
-            \IMu{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{X}})}{} \DotTo
-            \IMu{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}{}
+             \SYMBIMu_{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}) \To 
+            \SYMBIMu_{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{X}})} \DotTo
+            \SYMBIMu_{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}
 \end{array} \\
 \substI\: \V{X}\: \V{Y}\: \V{R}\: \V{\sigma}\: \V{i}\: \V{t} = \\
-\qquad    \cataI\: \toIDesc{\FreeIMonad{\V{R}}{}{\V{X}}}\:
-                      (\IMu{}{(\FreeIMonad{\V{R}}{}{\V{Y}})})\:
+\qquad    \cataI\: (\toIDesc{\FreeIMonad{\V{R}}{}{\V{X}}})\:
+                      (\SYMBIMu{(\FreeIMonad{\V{R}}{}{\V{Y}})})\:
                       (\F{applyI}\: \V{R}\: \V{X}\: \V{Y}\: \V{\sigma})\:
                       \V{i}\:
                       \V{t} 
