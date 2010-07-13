@@ -185,6 +185,7 @@
 
 \newcommand{\genarrow}{\ensuremath{\Uparrow}}
 \newcommand{\gen}[2]{\ensuremath{(#1 \genarrow #2)}}
+\newcommand{\gendot}[1]{\ensuremath{.{#1}}}
 \newcommand{\forget}[1]{\ensuremath{\lfloor #1 \rfloor}}
 \newcommand{\hasscheme}{\ensuremath{::}}
 \newcommand{\subcontext}{\ensuremath{\subset}}
@@ -1450,7 +1451,7 @@ To handle let-polymorphism, the context must assign type schemes to term
 variables, rather than monomorphic types.
 A \define{type scheme} $\sigma$ is a type wrapped in one or more $\forall$
 quantifiers or $\letS{\cdot}{\cdot}{\cdot}$ bindings, with the syntax
-$$\sigma ::= .\tau ~||~ \forall\alpha~\sigma ~||~ \letS{\alpha}{\tau}{\sigma}.$$
+$$\sigma ::= \gendot{\tau} ~||~ \forall\alpha~\sigma ~||~ \letS{\alpha}{\tau}{\sigma}.$$
 We use explicit definitions in type schemes to avoid the need for substitution
 in the type inference algorithm. 
 
@@ -1459,7 +1460,7 @@ declarations) over a type, and any scheme can be viewed in this way. We write
 $\gen{\Xi}{\tau}$ for the generalisation of the type $\tau$ over the suffix of
 type variable declarations $\Xi$, defined by
 \begin{align*}
-\emptycontext         &\genarrow \tau = \tau  \\
+\emptycontext         &\genarrow \tau = \gendot{\tau}  \\
 \hole{\alpha}, \Xi    &\genarrow \tau = \forall\alpha~\gen{\Xi}{\tau}  \\
 \alpha \defn \upsilon, \Xi &\genarrow \tau = \letS{\alpha}{\upsilon}{\gen{\Xi}{\tau}}
 \end{align*}
@@ -1496,7 +1497,7 @@ $$\sem{x \asc \sigma}_\TM = x \hasscheme \sigma.$$
 \boxrule{t : \tau}
 
 $$
-\Rule{\Sbind{x \asc .\upsilon}{t : \tau}}
+\Rule{\Sbind{x \asc \gendot{\upsilon}}{t : \tau}}
      {\lambda x.t : \upsilon \arrow \tau}
 \qquad
 \Rule{f : \upsilon \arrow \tau
@@ -1824,17 +1825,17 @@ $$
 
 
 The rule for abstraction is
-$$\Rule{\Sbind{x \asc .\upsilon}{\Pinf{t}{\tau}}}
+$$\Rule{\Sbind{x \asc \gendot{\upsilon}}{\Pinf{t}{\tau}}}
        {\Pinf{\lambda x . t}{\upsilon \arrow \tau}}$$
 which has unknown input $\upsilon$, so we bind a fresh variable $\beta$
 to give
-$$\Rule{\Sbind{\beta \defn \upsilon}{\Sbind{x \asc .\beta}{\Pinf{t}{\tau}}}}
+$$\Rule{\Sbind{\beta \defn \upsilon}{\Sbind{x \asc \gendot{\beta}}{\Pinf{t}{\tau}}}}
        {\Pinf{\lambda x . t}{\upsilon \arrow \tau}}.$$
 
 % and hence
 % $$
-% \Rule{\Jtype{\Gamma_0, \hole{\beta}, x \asc .\beta}{t}{\tau}
-%           {\Gamma_1, x \asc .\beta, \Xi}}
+% \Rule{\Jtype{\Gamma_0, \hole{\beta}, x \asc \gendot{\beta}}{t}{\tau}
+%           {\Gamma_1, x \asc \gendot{\beta}, \Xi}}
 %      {\Jtype{\Gamma_0}{\lambda x.t}{\beta \arrow \tau}{\Gamma_1, \Xi}}
 % $$
 
@@ -1848,13 +1849,13 @@ $$
      }
      {\Pinf{\letIn{x}{s}{w}}{\tau}}.
 $$
-Writing $\sigma = \gen{\Xi}{.\upsilon}$ and expanding the definition of
+Writing $\sigma = \gen{\Xi}{\upsilon}$ and expanding the definition of
 $\hasscheme$, we obtain
 $$
 \Rule{
       \Sbind{\Xi}{\Pinf{s}{\upsilon}}
       \quad
-      \Sbind{x \asc \gen{\Xi}{.\upsilon}}{\Pinf{w}{\tau}}
+      \Sbind{x \asc \gen{\Xi}{\upsilon}}{\Pinf{w}{\tau}}
      }
      {\Pinf{\letIn{x}{s}{w}}{\tau}}.
 $$
@@ -1897,21 +1898,21 @@ Various possible layouts, so experiment.}
 $$
 \name{Gen}
 \Rule{\Jtype{\Gamma \fatsemi}{s}{\upsilon}{\Delta \fatsemi \Xi}}
-     {\Jscheme{\Gamma}{s}{\gen{\Xi}{.\upsilon}}{\Delta}}
+     {\Jscheme{\Gamma}{s}{\gen{\Xi}{\upsilon}}{\Delta}}
 $$ 
 
 \boxrule{\Jtype{\Gamma}{t}{\tau}{\Delta}}
 
 $$
 \name{Var}
-\Rule{x \asc \gen{\Xi}{.\upsilon} \in \Gamma}
+\Rule{x \asc \gen{\Xi}{\upsilon} \in \Gamma}
      {\Jtype{\Gamma}{x}{\upsilon}{\Gamma, \Xi}}
 $$
 
 $$
 \name{Abs}
-\Rule{\Jtype{\Gamma, \hole{\alpha}, x \asc .\alpha}{w}{\upsilon}
-          {\Delta_0, x \asc .\alpha, \Xi}}
+\Rule{\Jtype{\Gamma, \hole{\alpha}, x \asc \gendot{\alpha}}{w}{\upsilon}
+          {\Delta_0, x \asc \gendot{\alpha}, \Xi}}
      {\Jtype{\Gamma}{\lambda x.w}{\alpha \arrow \upsilon}{\Delta_0, \Xi}}
 \side{\alpha \notin \tyvars{\Gamma}}
 $$
@@ -1929,8 +1930,8 @@ $$
 $$
 \name{Let}
 \BigRule%%%{\Jtype{\Gamma \fatsemi}{s}{\upsilon}{\Delta_0 \fatsemi \Xi_0}}
-        %%%{\Jtype{\Delta_0, x \asc \gen{\Xi_0}{.\upsilon}}{w}{\chi}
-        %%%       {\Delta_1, x \asc \gen{\Xi_0}{.\upsilon}, \Xi_1}}
+        %%%{\Jtype{\Delta_0, x \asc \gen{\Xi_0}{\upsilon}}{w}{\chi}
+        %%%       {\Delta_1, x \asc \gen{\Xi_0}{\upsilon}, \Xi_1}}
         %%%{\Jtype{\Gamma}{\letIn{x}{s}{w}}{\chi}{\Delta_1, \Xi_1}}
         {\Jscheme{\Gamma}{s}{\sigma}{\Delta_0}}
         {\Jtype{\Delta_0, x \asc \sigma}{w}{\chi}
