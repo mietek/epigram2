@@ -472,9 +472,6 @@ The idea is that we decompose constraints on the syntactic structure of types
 until we reach variables, then move through the context and update it to solve
 the equation. 
 
-\TODO{Relate contexts to traditional substitutions (triangular);
-compare with Baader and Snyder.}
-
 For example, we might start in the context
 $\hole{\alpha}, \hole{\beta}, \gamma \defn \alpha \arrow \beta$
 and aim to solve the equation $\beta \arrow \alpha \equiv \gamma$.
@@ -489,6 +486,14 @@ It suffices to define $\beta \defn \alpha$, giving the final judgment
 $$\hole{\alpha}, \beta \defn \alpha, \gamma \defn \alpha \arrow \beta
     \entails \beta \arrow \alpha \equiv \gamma.$$
 
+A context thus contains a `triangular substitution', applied on
+demand, but that need not be all. As we proceed with the development,
+the context structure will evolve to hold a variety of information
+about variables of all sorts and some control markers, managing the
+generalisation process.
+
+\TODO{Relate contexts to traditional substitutions (triangular);
+compare with Baader and Snyder.}
 
 
 \subsection{Implementation of unification}
@@ -588,7 +593,7 @@ $$\hole{\alpha}, \beta \defn \alpha, \gamma \defn \alpha \arrow \beta
 
 > data Extension = Restore | Replace Suffix
 
-> onTop ::  (TyEntry -> Contextual Extension) 
+> onTop ::  (TyEntry -> Contextual Extension)
 >             -> Contextual ()
 > onTop f = do
 >     _Gamma :< vD <- getContext
@@ -676,11 +681,12 @@ rules. The |fresh| function generates a fresh variable name and appends a
 declaration to the context. Our choice of |TyName| means that it is easy to
 choose a name fresh with respect to a |Context|.
 
-Figure~\ref{subfig:onTopCode} implements the |onTop| operator, which applies its
-argument function to the topmost type variable declaration in the context, skipping over
-the other kinds of entry we will define later. The argument may
-|restore| the previous entry, or it may return a context extension (containing
-at least as much information as the entry that has been removed) with which to
+Figure~\ref{subfig:onTopCode} implements |onTop|, which delivers the
+typical access pattern for contexts, locally bringing the top variable
+declaration into focus and working over the remainder.  The local
+operation, passed as an argument, may |restore| the previous entry, or
+it may return a context extension (containing at least as much
+information as the entry that has been removed) with which to
 |replace| it.
 
 Figure~\ref{subfig:unifyCode} gives the actual implementations of unification
@@ -697,34 +703,68 @@ the occurs check and invokes the monadic failure command if an illegal occurrenc
 (which would lead to an infinite type) is detected.
 
 As an example, consider the behaviour of the algorithm when |unify| is called
-to solve $\alpha \arrow \beta \equiv \alpha' \arrow (\beta' \arrow \beta')$:
+to solve $\alpha \arrow \beta \equiv \alpha' \arrow (\gamma \arrow \gamma)$:
 %
-% in the context $\hole{\alpha}, \hole{\beta}, \alpha' \defn \beta, \hole{\beta'}$.
+% in the context $\hole{\alpha}, \hole{\beta}, \alpha' \defn \beta, \hole{\gamma}$.
 % The first case matches, decomposing the constraint structurally and first
 % invoking unify on $\alpha$ and $\alpha'$. The algorithm then traverses the
-% context, ignoring $\beta'$, then moving past $\alpha'$ by unifying $\alpha$ and
+% context, ignoring $\gamma$, then moving past $\alpha'$ by unifying $\alpha$ and
 % $\beta$. This succeds by defining $\beta$ to be $\alpha$, giving the context
-% $\hole{\alpha}, \beta \defn \alpha, \alpha' \defn \beta, \hole{\beta'}$.
+% $\hole{\alpha}, \beta \defn \alpha, \alpha' \defn \beta, \hole{\gamma}$.
 %
 % The second part of the structural decomposition now unifies $\beta$ with
-% $\beta' \arrow \beta'$. This calls |solve|, which collects $\beta'$ in the
+% $\gamma \arrow \gamma$. This calls |solve|, which collects $\gamma$ in the
 % dependency suffix, ignores $\alpha'$ and moves past $\beta$ by unifying
-% $\alpha$ and $\beta' \arrow \beta'$. Again this succeeds, giving the context
-% $\hole{\beta'}, \alpha \defn \beta' \arrow \beta', \beta \defn \alpha,
+% $\alpha$ and $\gamma \arrow \gamma$. Again this succeeds, giving the context
+% $\hole{\gamma}, \alpha \defn \gamma \arrow \gamma, \beta \defn \alpha,
 % \alpha' \defn \beta$.
 %
-\begin{align*}
-         &\hole{\alpha}, \hole{\beta}, \alpha' \defn \beta, \hole{\beta'}                             &&\textrm{initial context}\\
-\transto~ &\hole{\alpha}, \beta \defn \alpha, \alpha' \defn \beta, \hole{\beta'}                       &\alpha &\equiv \alpha' \\
-\transto~ &\hole{\beta'}, \alpha \defn \beta' \arrow \beta', \beta \defn \alpha, \alpha' \defn \beta   &\beta &\equiv \beta' \arrow \beta' 
-\end{align*}
+\newcommand{\grot}[1]{\multicolumn{2}{@@{}l@@{}}{\ensuremath{[#1]}}}
+\[\begin{array}{@@{}c@@{}l@@{\,}l@@{\,}l@@{\,}l@@{\,}ll}
+         &\hole{\alpha},& \hole{\beta},& \alpha' \defn \beta,&
+     \hole{\gamma}&                     &\textrm{initially}
+\smallskip\\
+ &
+  \hole{\alpha},& \hole{\beta},& \alpha' \defn \beta,& \hole{\gamma},&
+     [\alpha\equiv\alpha'] \\
+ &
+  \hole{\alpha},& \hole{\beta},& \alpha' \defn \beta,&
+     [\alpha\equiv\alpha'],& \hole{\gamma} \\
+ &
+  \hole{\alpha},& \hole{\beta},&
+     [\alpha\equiv\beta],& \alpha' \defn \beta,& \hole{\gamma}
+\smallskip \\
+\transto~ &\hole{\alpha},&
+    \multicolumn{2}{@@{}c@@{\,}}{\beta \defn \alpha,\;\;}&
+    \alpha' \defn \beta,&
+    \hole{\gamma}                       &\alpha \equiv \alpha'
+\smallskip \\
+ &
+  \hole{\alpha},& \beta\defn\alpha,& \alpha' \defn \beta,& \hole{\gamma},&
+     [\beta\equiv\gamma\arrow\gamma] \\
+ &
+  \hole{\alpha},& \beta\defn\alpha,& \alpha' \defn \beta,&
+     \grot{ \hole{\gamma} \mid \beta\equiv\gamma\arrow\gamma} \\
+ &
+  \hole{\alpha},& \beta\defn\alpha,&
+     \grot{ \hole{\gamma} \mid \beta\equiv\gamma\arrow\gamma},&
+     \alpha' \defn \beta \\
+ &
+  \hole{\alpha},&
+     \grot{\hole{\gamma} \mid \alpha\equiv\gamma\arrow\gamma},&
+     \alpha' \defn \beta,& \beta\defn\alpha
+\smallskip \\
+\transto~ &\hole{\gamma},&
+ \multicolumn{2}{@@{}c@@{\,}}{\alpha \defn \gamma \arrow \gamma,}&
+ \beta \defn \alpha,& \alpha' \defn \beta   &\beta \equiv \gamma \arrow \gamma 
+\end{array}\]
 The constraint decomposes into two constraints on variables. The first ignores
-$\beta'$, moves past $\alpha'$ by updating the constraint to
+$\gamma$, moves past $\alpha'$ by updating the constraint to
 $\alpha \equiv \beta$, then defines $\beta \defn \alpha$.
-The second calls |solve|, which collects $\beta'$ in the dependency suffix,
+The second calls |solve|, which collects $\gamma$ in the dependency suffix,
 ignores $\alpha'$, moves past $\beta$ by updating the constraint to
-$\alpha \equiv \beta' \arrow \beta'$, then defines $\alpha$ after inserting
-$\beta'$.
+$\alpha \equiv \gamma \arrow \gamma$, then defines $\alpha$ after pasting in
+$\gamma$.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1525,7 +1565,7 @@ $$
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Generalization by Localization}
+\section{Generalisation by Localization}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsection{Preserving order in the context}
