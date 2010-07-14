@@ -172,7 +172,8 @@
 \newcommand{\Puni}[2]{#1 \equiv #2}
 \newcommand{\Pspec}[2]{\Prob{S}{#1}{#2}}
 
-\newcommand{\name}[1]{\ensuremath{\mathrm{\textsc{#1}} \;}}
+\newcommand{\name}[1]{\textsc{#1}}
+\newcommand{\namer}[1]{\ensuremath{\mathrm{\name{#1}} \;}}
 \newcommand{\side}[1]{\ensuremath{\; #1}}
 
 \newcommand{\br}[2]{\genfrac{}{}{0pt}{0}{#1}{#2}}
@@ -833,7 +834,7 @@ declaration $\decl{x}{D}$ in the context. For type variables, we define
 \end{align*}
 
 We can inspect the context in derivations using the inference rule
-$$\name{Lookup}
+$$\namer{Lookup}
   \Rule{\decl{x}{D} \in \Gamma}
        {\Gamma \entailsN \sem{\decl{x}{D}}}.$$
 Note the different turnstile symbol in the conclusion of this rule.
@@ -847,7 +848,7 @@ applied variables. Variables are the \scare{atoms} of symbols, and appeals
 to declarations in the context are atoms of derivations.
 
 We embed neutral into normal:
-$$\name{Neutral}
+$$\namer{Neutral}
   \Rule{\entailsN S}
        {\entails S}.$$
 
@@ -1247,7 +1248,7 @@ terms in the conclusion. Usually we will ignore these without loss of generality
 \boxrule{\Junify{\Gamma}{\tau}{\upsilon}{\Delta}}
 
 $$
-\name{Decompose}
+\namer{Decompose}
 \Rule{\Junify{\Gamma}{\tau_0}{\upsilon_0}{\Delta_0}
       \quad
       \Junify{\Delta_0}{\tau_1}{\upsilon_1}{\Delta}}
@@ -1255,34 +1256,34 @@ $$
 $$
 
 $$
-\name{Idle}
+\namer{Idle}
 % \Rule{\Gamma \entails \alpha \type}
 \Axiom{\Junify{\Gamma_0, \alpha D}{\alpha}{\alpha}{\Gamma_0, \alpha D}}
 $$
 
 $$
-\name{Define}
+\namer{Define}
 %\Rule{\Gamma_0 \entails \beta \type}
 \Axiom{\Junify{\Gamma_0, \hole{\alpha}}{\alpha}{\beta}{\Gamma_0, \alpha \defn \beta}}
 \side{\alpha \neq \beta}
 $$
 
 $$
-\name{Ignore}
+\namer{Ignore}
 \Rule{\Junify{\Gamma_0}{\alpha}{\beta}{\Delta_0}}
      {\Junify{\Gamma_0, \decl{x}{D}}{\alpha}{\beta}{\Delta_0, \decl{x}{D}}}
 \side{x \perp \{\alpha, \beta\} }
 $$
 
 $$
-\name{Expand}
+\namer{Expand}
 \Rule{\Junify{\Gamma_0}{\tau}{\beta}{\Delta_0}}
      {\Junify{\Gamma_0, \alpha \defn \tau}{\alpha}{\beta}{\Delta_0, \alpha \defn \tau}}
 \side{\alpha \neq \beta}
 $$
 
 $$
-\name{Solve}
+\namer{Solve}
 \Rule{\Jinstantiate{\Gamma}{\alpha}{\tau}{\emptycontext}{\Delta}}
      {\Junify{\Gamma}{\alpha}{\tau}{\Delta}}
 %% \side{\tau \neq \alpha}
@@ -1294,7 +1295,7 @@ $$
 \boxrule{\Jinstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}}
 
 $$
-\name{DefineS}
+\namer{DefineS}
 % \Rule{\Gamma_0, \Xi \entails \tau \type}
 \Axiom{\Jinstantiate{\Gamma_0, \hole{\alpha}}{\alpha}{\tau}{\Xi}
                    {\Gamma_0, \Xi, \alpha \defn \tau}}
@@ -1302,14 +1303,14 @@ $$
 $$
 
 $$
-\name{IgnoreS}
+\namer{IgnoreS}
 \Rule{\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\Xi}{\Delta_0}}
      {\Jinstantiate{\Gamma_0, \decl{x}{D}}{\alpha}{\tau}{\Xi}{\Delta_0, \decl{x}{D}}}
 \side{x \perp \FTV{\alpha, \tau, \Xi}}
 $$
 
 $$
-\name{ExpandS}
+\namer{ExpandS}
 \Rule{\Junify{\Gamma_0, \Xi}{\upsilon}{\tau}{\Delta_0}}
      {\Jinstantiate{\Gamma_0, \alpha \defn \upsilon}{\alpha}{\tau}{\Xi}
                    {\Delta_0, \alpha \defn \upsilon}}
@@ -1317,7 +1318,7 @@ $$
 $$
 
 $$
-\name{DependS}
+\namer{DependS}
 \Rule{\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\beta D, \Xi}{\Delta}}
      {\Jinstantiate{\Gamma_0, \beta D}{\alpha}{\tau}{\Xi}{\Delta}}
 \side{\alpha \neq \beta, \beta \in \FTV{\tau, \Xi}}
@@ -1633,12 +1634,12 @@ because it acts structurally over the context, so we need to specify what happen
 when it finds a $\fatsemi$ separator. 
 In fact it suffices to add the following algorithmic rules:
 $$
-\name{Skip}
+\namer{Skip}
 \Rule{\Junify{\Gamma_0}{\alpha}{\beta}{\Delta_0}}
      {\Junify{\Gamma_0 \fatsemi}{\alpha}{\beta}{\Delta_0 \fatsemi}}
 $$
 $$
-\name{Repossess}
+\namer{Repossess}
 \Rule{\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\Xi}{\Delta_0}}
      {\Jinstantiate{\Gamma_0 \fatsemi}{\alpha}{\tau}{\Xi}{\Delta_0 \fatsemi}}
 $$
@@ -1965,7 +1966,7 @@ Various possible layouts, so experiment.}
 \boxrule{\Jscheme{\Gamma}{s}{\sigma}{\Delta}}
 
 $$
-\name{Gen}
+\namer{Gen}
 \Rule{\Jtype{\Gamma \fatsemi}{s}{\upsilon}{\Delta \fatsemi \Xi}}
      {\Jscheme{\Gamma}{s}{\gen{\Xi}{\upsilon}}{\Delta}}
 $$ 
@@ -1973,13 +1974,13 @@ $$
 \boxrule{\Jtype{\Gamma}{t}{\tau}{\Delta}}
 
 $$
-\name{Var}
+\namer{Var}
 \Rule{x \asc \gen{\Xi}{\upsilon} \in \Gamma}
      {\Jtype{\Gamma}{x}{\upsilon}{\Gamma, \Xi}}
 $$
 
 $$
-\name{Abs}
+\namer{Abs}
 \Rule{\Jtype{\Gamma, \hole{\alpha}, x \asc \gendot{\alpha}}{w}{\upsilon}
           {\Delta_0, x \asc \gendot{\alpha}, \Xi}}
      {\Jtype{\Gamma}{\lambda x.w}{\alpha \arrow \upsilon}{\Delta_0, \Xi}}
@@ -1987,7 +1988,7 @@ $$
 $$
 
 $$
-\name{App}
+\namer{App}
 \BigRule{\Jtype{\Gamma}{f}{\chi}{\Delta_0}
          \quad
          \Jtype{\Delta_0}{a}{\upsilon}{\Delta_1}}
@@ -1997,7 +1998,7 @@ $$
 $$
 
 $$
-\name{Let}
+\namer{Let}
 \BigRule%%%{\Jtype{\Gamma \fatsemi}{s}{\upsilon}{\Delta_0 \fatsemi \Xi_0}}
         %%%{\Jtype{\Delta_0, x \asc \gen{\Xi_0}{\upsilon}}{w}{\chi}
         %%%       {\Delta_1, x \asc \gen{\Xi_0}{\upsilon}, \Xi_1}}
