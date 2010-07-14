@@ -1444,6 +1444,8 @@ To give rules for schemes and type assignment, we need the ability to add
 variables to the context in a controlled way.
 If $S$ is a statement and $\decl{x}{D}$ is a declaration, then we define the
 binding statement $\Sbind{\decl{x}{D}}{S}$ with the introduction rule
+\TODO{Explain that while we ought to mess about with the freshness renaming in
+this rule, in practice we will ignore it because it isn't important.}
 $$
 \Rule{\Gamma \entails \ok_K D    \quad    \Gamma, \decl{y}{D} \entails \subst{y}{x} S}
      {\Gamma \entails \Sbind{\decl{x}{D}}{S}}
@@ -1457,7 +1459,8 @@ $$
      {\entailsN \subst{\tau}{\alpha}{S}}
 \side{D \in \D_\TY}
 .$$
-\TODO{Explain why we only have this for $\TY$.}
+\TODO{Explain why we only have this for $\TY$: because we have only defined
+substitution for type variables. We could do it in general but we don't need to.}
 The corresponding normal rule is admissible. If
 $\Gamma \entails \Sbind{\decl{\alpha}{D}}{S}$ by the introduction rule, then
 $\Gamma, \decl{\beta}{D} \entails \subst{\beta}{\alpha} S$ where $\beta$ is fresh.
@@ -1749,6 +1752,9 @@ $\Gamma$, suppose we have a
 preorder on $A$ written $\leParam{\Gamma}{\cdot}{\cdot}$. This induces a
 preorder on context-value pairs, with $\delta : \leiParam{\Gamma}{a}{\Delta}{b}$ if
 $\delta : \Gamma \lei \Delta$ and $\leParam{\Delta}{\delta a}{b}$.
+\TODO{The set $A$, or at least sane values in it, somehow depends on $\Gamma$.
+We don't capture this very well. We should make it clearer than values must
+satisfy sanity conditions.}
 
 An \define{$A$-indexed problem family} $x.Q$ with solutions in $B$ is a family
 of input parameters for a statement, indexed by elements of $A$, such that for
@@ -2138,6 +2144,19 @@ $\zeta : \leiRParam{\Delta}{a}{\Theta}{b}$ for some $\zeta$ such that
 $\theta \eqsubst \zeta \compose \iota$.
 
 \TODO{Why do the Optimist's and Generalist's lemmas still hold?}
+
+
+\TODO{Rewrite the soundness, completeness and generality proofs for type
+inference. The point is that our algorithmic rules mirror the transformed set of
+declarative rules, which ensures all three properties.
+Soundness follows because every step in our algorithm corresponds directly to
+a proof in the transformed declarative rules.
+Completeness follows because if a type can be assigned in some context,
+inverting the declarative rule shows that the algorithmic rule applies and its
+hypotheses are satisfied for the induction.
+Generality follows from the lemmas we have previously proved (Optimist,
+Generalist, binding) which say that we can put hats on all the steps.
+Explain this all at a high level, then do one generality step in detail (let?)}
 
 \begin{lemma}[Soundness of type inference]
 \label{lem:inferSound}
