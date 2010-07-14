@@ -1224,7 +1224,17 @@ $\Jmin{\Gamma, \Xi}{\tau \equiv \upsilon}{\Delta}$.
 \end{lemma}
 \begin{proof}
 By induction on the structure of derivations.
-\TODO{Should probably say a bit more here.}
+For each rule, we verify that it preserves the set of type variables and
+that $\iota : \Gamma \lei \Delta$ (i.e.\ it increases information between its
+context input and output).
+
+Solutions to $\tau_0 \arrow \tau_1 \equiv \upsilon_0 \arrow \upsilon_1$ are
+exactly those that solve
+$\tau_0 \equiv \upsilon_0 \wedge \tau_1 \equiv \upsilon_1$, so \name{Decompose}
+gives a minimal solution by the Optimist's lemma.
+
+
+\TODO{More...}
 \end{proof}
 
 
@@ -1361,40 +1371,33 @@ algorithmic rules.
 \begin{lemma}[Occurs check]
 \label{lem:occursCheck}
 Let $\alpha$ be a variable and $\tau$ a non-variable type such that
-$\alpha \in \FTV{\tau}$. For every context $\Gamma$ and substitution
-$\theta$, $\Gamma \nvdash \theta\alpha \equiv \theta\tau$ and
-$\Gamma \nvdash \theta\tau \equiv \theta\alpha$.
+$\alpha \in \FTV{\tau}$. There is no context $\Gamma$ and substitution
+$\theta$ such that $\Gamma \entails \theta\alpha \equiv \theta\tau$ or
+$\Gamma \entails \theta\tau \equiv \theta\alpha$.
 \end{lemma}
-
-\TODO{Rewrite: if $\alpha \in \Gamma$, $\Gamma \entails \tau \type$,
-$\tau$ is not a variable and there is some substitution
-$\theta : \Gamma \lei \Delta \entails \alpha \equiv \tau$, then
-$\alpha \notin \FTV{\tau}$.}
-
 \begin{proof}
-It suffices to prove $\Gamma \nvdash \alpha \equiv \tau$ and
-$\Gamma \nvdash \tau \equiv \alpha$, because
-$\theta\alpha$ must contain a variable $\beta \in \FTV{\theta\tau}$ 
-and $\theta\tau$ is not a variable.
+Suppose otherwise, and let $\Gamma$ and $\theta$ be such that the proof of
+$\Gamma \entails \theta\alpha \equiv \theta\tau$ or
+$\Gamma \entails \theta\tau \equiv \theta\alpha$ is minimal.
 
 Since $\alpha$ is a variable but $\tau$ is not, neither reflexivity nor the
-structural rule apply. Symmetry and transitivity do not apply because their
-hypotheses cannot be satisfied.
+structural rule apply. Symmetry does not apply because its hypothesis requires
+a proof that cannot exist by minimality. \TODO{Why not transitivity?}
 
 By the well-formedness conditions for contexts, if
 $\alpha \defn \upsilon \in \Gamma$ then $\alpha \notin \FTV{\upsilon}$, so
-the \name{Lookup} rule does not apply.
+the proof is not neutral (using \name{Lookup}).
 \end{proof}
 
 
-\begin{lemma}[Completeness and generality of unification]
+\begin{lemma}[Completeness of unification]
 \label{lem:unifyComplete}
 \begin{enumerate}[(a)]
 \item If $\theta : \Gamma \lei \Theta$,
 $\Gamma \entails \upsilon \type \wedge \tau \type$ and
 $\Theta \entails \theta\upsilon \equiv \theta\tau$, then
 there is some context $\Delta$ such that
-$\Jmin{\Gamma}{\Puni{\upsilon}{\tau}}{\Delta}$.
+$\Junify{\Gamma}{\upsilon}{\tau}{\Delta}$.
 
 % with
 % $\theta : \Delta \lei \Theta$. That is, if a unifier for $\tau$ and $\upsilon$
@@ -1402,23 +1405,31 @@ $\Jmin{\Gamma}{\Puni{\upsilon}{\tau}}{\Delta}$.
 
 \item Moreover, if $\theta : \Gamma, \Xi \lei \Theta$ is such that
 $\Theta \entails \theta\alpha \equiv \theta\tau$ and
-\begin{itemize}
-\item $\alpha \in \tyvars{\Gamma}$,
-\item $\Gamma, \Xi \entails \tau \type$,
-\item $\tau$ is not a variable,
-\item $\Xi$ contains only type variable declarations and
-\item $\beta \in \tyvars{\Xi}  \Rightarrow  \beta \in \FTV{\tau, \Xi}$,
-\end{itemize}
+the input conditions are satisfied,
 then there is some context $\Delta$ such that
 $\Jinstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$.
 \end{enumerate}
 \end{lemma}
 
-\begin{proof}[Sketch] Each step preserves all solutions. The
-Optimist's Lemma justifies problem decomposition. The algorithm
-terminates, and the only case not covered by the rules is the case
-where the occurs check fails, indicating no unifier exists.  For
-details, see Appendix.  \end{proof}
+\begin{proof}
+It suffices to show that the algorithm succeeds for every well-formed input in
+which a solution can exist. We proceed by induction on the call graph; since the
+algorithm terminates, this is well-founded. Each step preserves solutions
+(i.e.\ if there is a solution to the equation in the conclusion then there is a
+solution to the equations in the hypothesis).
+
+The only case not covered by the rules is the case where an illegal occurrence
+of a type variable is detected. In this case, we are seeking to solve the
+problem $\alpha \equiv \tau$ in the context
+$\Gamma_0, \decl{\alpha}{D} ~||~ \Xi$ and we have $\alpha \in \FTV{\tau, \Xi}$.
+Substituting out the definitions in $\Xi$ from $\tau$, we obtain a type
+$\upsilon$ such that $\alpha \in \FTV{\upsilon}$, $\upsilon$ is not a variable
+and $\Gamma_0, \decl{\alpha}{D}, \Xi \entails \upsilon \equiv \tau$.
+Now the problem $\alpha \equiv \upsilon$ has the same solutions as
+$\alpha \equiv \tau$, but by Lemma~\ref{lem:occursCheck} it has no solutions.
+
+\TODO{Is this enough?}
+\end{proof}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
