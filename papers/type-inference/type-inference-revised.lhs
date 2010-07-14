@@ -2310,21 +2310,16 @@ mediating \emph{problems as types}.
 
 
 
-
 \phantomsection
 \addcontentsline{toc}{section}{References}
 \bibliographystyle{plainnat}
 \bibliography{lib}
 
 
-\appendix
-
-\section{Appendix}
-
-
-
 
 %if showCode
+
+\appendix
 
 \subsection{Lists}
 
