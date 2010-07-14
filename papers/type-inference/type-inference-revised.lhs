@@ -141,7 +141,8 @@
 \newcommand{\leiR}{\ensuremath{\sqsubseteq}}
 \newcommand{\LEIR}{\ensuremath{~\hat\sqsubseteq~}}
 \newcommand{\lep}{\ensuremath{\leq}}
-\newcommand{\ppre}{\ensuremath{\subset}}
+\newcommand{\ppre}{\ensuremath{\lei^*}}
+\newcommand{\ppreR}{\ensuremath{\leiR^*}}
 
 \newcommand{\arrow}{\ensuremath{\triangleright}}
 \newcommand{\defn}{\ensuremath{\!:=\!}}
@@ -217,7 +218,8 @@
 \newcommand{\pprec}[3]{#1 \entails #2 \ppre #3}
 \newcommand{\pple}[4]{(#1, #2) \ppre (#3, #4)}
 \newcommand{\pconj}[3]{\Sigma #1~#2.#3}
-\newcommand{\Pmin}[4]{#1 ? #2 \LEI #4 ! #3}
+\newcommand{\Pmin}[4]{#1 \,? #2 \LEI #4 \,!\, #3}
+\newcommand{\PminR}[4]{#1 \,? #2 \LEIR #4 \,!\, #3}
 
 \usepackage{amsthm}
 \usepackage{amsmath}
@@ -1742,7 +1744,10 @@ $\theta \eqsubst \zeta \compose \iota :
 
 \subsection{Inference problems: multiple-mode }
 
-\TODO{Tidy up and improve motivation for definitions in this section.}
+\TODO{Tidy up and improve motivation for definitions in this section.
+In particular, we need to sort out which relations we need to make obviously
+distinct and which should be overloaded, bearing in mind the restricted
+versions coming up later.}
 
 Type inference involves making the statement $t : \tau$ hold. However,
 a crucial difference from the unification problem is that the type should
@@ -1791,7 +1796,7 @@ We compare solutions pointwise, so define $\pprec{\Gamma}{(a, b)}{(a', b')}$ to
 mean $\pprec{\Gamma}{a}{a'}$ and $\pprec{\Gamma}{b}{b'}$.
 
 We write $\Pmin{\Gamma}{P}{a}{\Delta}$ if
-$\Gamma \lei \Delta \entails (\delta P) a$,
+$\Gamma \lei \Delta \entails P a$,
 and for all $\theta : \Gamma \lei \Theta$ and $b$ such that
 $\Delta \entails (\theta P) b$, we have
 $\zeta : \pple{\Delta}{a}{\Theta}{b}$ for some $\zeta$ such that
@@ -1867,8 +1872,8 @@ This allows us to prove the following:
 \label{lem:generalist}
 This rule is admissible:
 $$
-\Rule{\Jmin{\Gamma \fatsemi}{t : \tau}{\Delta \fatsemi \Xi}}
-     {\Jmin{\Gamma}{t \hasscheme \gen{\Xi}{\tau}}{\Delta}}
+\Rule{\Pmin{\Gamma \fatsemi}{t :}{\tau}{\Delta \fatsemi \Xi}}
+     {\Pmin{\Gamma}{t \hasscheme}{\gen{\Xi}{\tau}}{\Delta}}
 $$
 \end{lemma}
 \begin{proof}
@@ -2054,13 +2059,16 @@ does (modulo substitution). Since the unification algorithm ignores term
 variables, it is easy to see that all the previous results hold if we
 replace $\lei$ with $\leiR$ throughout.
 
-Corresponding to $\Jmin{\Gamma}{S}{\Delta}$, we write
-$\JminR{\Gamma}{S}{\Delta}$ if $\iota : \Gamma \leiR \Delta$, and for any
-$\theta : \Gamma \leiR \Theta$ such that $\Theta \entails \theta S$ we
-have $\zeta : \Delta \leiR \Theta$ with
+Corresponding to $\ppre$, we write $\delta : (\Gamma, a) \ppreR (\Delta, b)$
+if $\delta : \Gamma \leiR \Delta$ and $\Delta \entails \delta a \ppre b$.
+
+Corresponding to $\Pmin{\Gamma}{P}{a}{\Delta}$, we write
+$\PminR{\Gamma}{P}{a}{\Delta}$ if $\Gamma \leiR \Delta \entails P a$, and for any
+$\theta : \Gamma \leiR \Theta$ such that $\Theta \entails (\theta P) b$ we have
+$\zeta : (\Delta, a) \ppreR (\Theta, b)$ for some $\zeta$ such that
 $\theta \eqsubst \zeta \compose \iota$.
-\TODO{Update with notation for inference problems. Why does the Optimist's
-lemma still hold?}
+
+\TODO{Why do the Optimist's and Generalist's lemmas still hold?}
 
 \begin{lemma}[Soundness of type inference]
 \label{lem:inferSound}
@@ -2086,7 +2094,7 @@ for some type $\upsilon$ and context $\Delta$.
 Moreover, there is a substitution $\zeta : \Delta \leiR \Theta$ such that
 $\Theta \entails \zeta\upsilon \equiv \tau$ and
 $\theta \eqsubst \zeta \compose \iota$. It follows immediately that
-$\JminR{\Gamma}{t : \upsilon}{\Delta}$ since the output of the algorithm does
+$\PminR{\Gamma}{t :}{\upsilon}{\Delta}$ since the output of the algorithm does
 not depend on $\theta$ or $\tau$.
 \end{lemma}
 \begin{proof}
