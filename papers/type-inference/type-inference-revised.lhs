@@ -1634,19 +1634,13 @@ $\Gamma$ can be interpreted over the first $n$ sections of $\Delta$.
 However, it is fairly straightforward to verify that the previous results 
 hold for the new definition.
 
-Note that if $\delta : \Gamma \fatsemi \Gamma' \lei \Delta \fatsemi \Delta'$,
-where $\Gamma$ and $\Delta$ contain the same number of $\fatsemi$ separators,
-then $\delta||_{\tyvars{\Gamma}} : \Gamma \lei \Delta$.
-\TODO{Is this what we want for the generalist's lemma?}
-
 
 \subsection{Fixing the unification algorithm}
 
 The only place where changing the $\lei$ relation requires extra work is in the
-unification algorithm,
-because it acts structurally over the context, so we need to specify what happens
-when it finds a $\fatsemi$ separator. 
-In fact it suffices to add the following algorithmic rules:
+unification algorithm, because it acts structurally over the context. We need to
+specify what happens when it finds a $\fatsemi$ separator if we want to retain
+completeness. We add the following algorithmic rules:
 $$
 \namer{Skip}
 \Rule{\Junify{\Gamma_0}{\alpha}{\beta}{\Delta_0}}
@@ -1657,14 +1651,26 @@ $$
 \Rule{\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\Xi}{\Delta_0}}
      {\Jinstantiate{\Gamma_0 \fatsemi}{\alpha}{\tau}{\Xi}{\Delta_0 \fatsemi}}
 $$
-Proving correctness of the \name{Skip} rule is relatively straightforward,
-thanks to the following lemma.
+
+We must also update the structural induction in Lemma~\ref{lem:unifySound} to
+show that adding the new rules preserves soundness and generality. For the
+\name{Skip} rule, correctness follows immediately from this lemma:
 
 \begin{lemma}
-\TODO{Update this.}
-If $\delta : \Jmin{\Gamma}{\Prob{P}{a}{b}}{\Delta}$ then
-$\delta : \Jmin{\Gamma \fatsemi}{\Prob{P}{a}{b}}{\Delta \fatsemi}$.
+If $\Jmin{\Gamma}{S}{\Delta}$ then $\Jmin{\Gamma \fatsemi}{S}{\Delta \fatsemi}$.
 \end{lemma}
+\begin{proof}
+If $\Gamma \lei \Delta$ then $\Gamma \fatsemi \lei \Delta \fatsemi$ by
+definition. If $\Delta \entails S$ then $\Delta \fatsemi \entails S$ since the
+\name{Lookup} rule is the only one that extracts information from the context,
+and it ignores the $\fatsemi$.
+
+Now suppose $\theta : \Gamma \fatsemi \lei \Theta \fatsemi \Xi$ is such that
+$\Theta \fatsemi \Xi \entails S$. By the definition of $\lei$, we must have
+$\theta : \Gamma \lei \Theta$, so by minimality there exists
+$\zeta : \Delta \lei \Theta$ such that $\theta \eqsubst \zeta \compose \iota$.
+Then $\zeta : \Delta \fatsemi \lei \Theta \fatsemi \Xi$ and we are done.
+\end{proof}
 
 The \name{Repossess} rule is so named because it moves
 declarations in $\Xi$ to the left of the $\fatsemi$ separator,
@@ -1672,26 +1678,24 @@ thereby \scare{repossessing} them. Despite such complications,
 unification still yields a most general solution:
 
 \begin{lemma}[Soundness and generality of \name{Repossess} rule]
-\TODO{Update this.}
 If $\Jinstantiate{\Gamma \fatsemi}{\alpha}{\tau}{\Xi}{\Delta \fatsemi}$
 then $\tyvars{\Gamma \fatsemi \Xi} = \tyvars{\Delta \fatsemi}$ and
-$\iota : \Jmin{\Gamma \fatsemi \Xi}{\Puni{\alpha}{\tau}}{\Delta \fatsemi}$.
+$\Jmin{\Gamma \fatsemi \Xi}{\Puni{\alpha}{\tau}}{\Delta \fatsemi}$.
 \end{lemma}
 \begin{proof}
-Suppose $\Jinstantiate{\Gamma \fatsemi}{\alpha}{\tau}{\Xi}{\Delta \fatsemi}$,
-so $\Jinstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$ as only the
-\name{Repossess} rule applies.
-By induction and lemma~\ref{lem:unifySound},
-$\tyvars{\Gamma, \Xi} = \tyvars{\Delta}$ and
-$\iota : \Jmin{\Gamma, \Xi}{\Puni{\alpha}{\tau}}{\Delta}$.
-\TODO{Explain the induction and use of Lemma~\ref{lem:unifyComplete} for minimality.}
+We extend the structural induction in lemma~\ref{lem:unifySound} with an extra
+case. The only proof of
+$\Jinstantiate{\Gamma \fatsemi}{\alpha}{\tau}{\Xi}{\Delta \fatsemi}$,
+is by \name{Repossess}, so inversion gives
+$\Jinstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$.
+By induction, $\tyvars{\Gamma, \Xi} = \tyvars{\Delta}$ and
+$\Jmin{\Gamma, \Xi}{\Puni{\alpha}{\tau}}{\Delta}$.
 
-For the first part, we have
+We immediately observe that
 $$\tyvars{\Gamma \fatsemi \Xi} = \tyvars{\Gamma, \Xi} = \tyvars{\Delta}
     = \tyvars{\Delta \fatsemi}.$$
-
-For the second part, since $\iota : \Gamma, \Xi \lei \Delta$ we have
-$\iota : \Gamma \fatsemi \Xi \lei \Delta \fatsemi$,
+Moreover, we have $\Gamma, \Xi \lei \Delta$ so
+$\Gamma \fatsemi \Xi \lei \Delta \fatsemi$,
 and $\Delta \entails \alpha \equiv \tau$ so
 $\Delta \fatsemi \entails \alpha \equiv \tau$.
 
@@ -1700,7 +1704,7 @@ $\theta : \Gamma \fatsemi \Xi \lei \Theta \fatsemi \Phi$
 and $\Theta \fatsemi \Phi \entails \theta\alpha \equiv \theta\tau$.
 Observe that  $\alpha \in \tyvars{\Gamma}$ and
 $\beta \in \tyvars{\Xi}  \Rightarrow  \beta \in \FTV{\tau, \Xi}$
-by the sanity conditions.
+by the conditions for the algorithmic judgment.
 Now $\theta\alpha$ is a $\Theta$-type and $\theta\tau$ is equal to it,
 so the only declarations in $\Phi$ that $\theta\tau$ (hereditarily) depends on
 must be definitions over $\Theta$. But all the variables declared in $\Xi$ are
@@ -1709,6 +1713,7 @@ $\psi : \Gamma \fatsemi \Xi \lei \Theta \fatsemi$
 that agrees with $\theta$ on $\Gamma$ and maps variables in $\Xi$ to their
 definitions in $\Theta$.
 Note that $\psi \eqsubst \theta : \Gamma \fatsemi \Xi \lei \Theta \fatsemi \Phi$.
+\TODO{Check and improve this explanation.}
 
 % Now we can filter $\Phi$ to give $\Psi$ consisting only of definitions
 % such that $\Theta \fatsemi \Psi \entails \theta\alpha \equiv \theta\tau$.
@@ -1729,19 +1734,6 @@ $\theta \eqsubst \zeta \compose \iota :
     \Gamma \fatsemi \Xi \lei \Theta \fatsemi \Phi$.
 \end{proof}
 
-
-
-
-\begin{lemma}[The Generalist's lemma]
-\label{lem:generalist}
-$$
-\Rule{\Jmin{\Gamma \fatsemi}{t : \tau}{\Delta \fatsemi \Xi}}
-     {\Jmin{\Gamma \fatsemi}{t :: \gen{\Xi}{\tau}}{\Delta}}
-$$
-\end{lemma}
-\begin{proof}
-\TODO{Prove this.}
-\end{proof}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Type inference problems and solutions}
@@ -1845,7 +1837,9 @@ so we are done.
 \end{proof}
 
 
+\subsection{The Generalist's lemma}
 
+\TODO{Does this order of material make sense? We need more context here.}
 
 When the output is a scheme, we define
 $\pprec{\Gamma}{\gen{\Xi}{\tau}}{\gen{\Psi}{\upsilon}}$
@@ -1862,6 +1856,41 @@ Thus the type inference problem is given by a context $\Gamma$ and the
 statement $t : ~?$ where $t$ is a term and $?$ represents the output parameter.
 A solution is then an information increase $\delta : \Gamma \lei \Delta$ and a
 type $\tau$ such that $\Delta \entails \tau \type \wedge t : \tau$.
+
+Note that if $\delta : \Gamma \fatsemi \Gamma' \lei \Delta \fatsemi \Delta'$,
+where $\Gamma$ and $\Delta$ contain the same number of $\fatsemi$ separators,
+then $\delta||_\Gamma : \Gamma \lei \Delta$.
+\TODO{Have we defined the $||$ notation?}
+This allows us to prove the following:
+
+\begin{lemma}[The Generalist's lemma]
+\label{lem:generalist}
+This rule is admissible:
+$$
+\Rule{\Jmin{\Gamma \fatsemi}{t : \tau}{\Delta \fatsemi \Xi}}
+     {\Jmin{\Gamma}{t \hasscheme \gen{\Xi}{\tau}}{\Delta}}
+$$
+\end{lemma}
+\begin{proof}
+If $\Gamma \fatsemi \lei \Delta \fatsemi \Xi$ then $\Gamma \lei \Delta$ by
+the revised definition of $\lei$. Furthermore,
+$\Delta \entails t \hasscheme \gen{\Xi}{\tau}$ is defined to be
+$\Delta, \Xi \entails t : \tau$, which holds if
+$\Delta \fatsemi \Xi \entails t : \tau$.
+
+For minimality, suppose $\theta : \Gamma \lei \Theta$ is an information increase
+and $\gen{\Psi}{\upsilon}$ is a scheme such that
+$\Theta \entails t \hasscheme \gen{\Psi}{\upsilon}$.
+Then $\Theta, \Psi \entails t : \upsilon$. Now
+$\theta : \Gamma \fatsemi \lei \Theta \fatsemi \Psi \entails t : \upsilon$,
+so by minimality of the hypothesis there is a substitution
+$\zeta : \Delta \fatsemi \Xi \lei \Theta \fatsemi \Psi$ such that
+$\theta \equiv \zeta \compose \iota$ and
+$\Theta \fatsemi \Psi \entails \zeta\tau \equiv \upsilon$.
+Then $\zeta ||_\Delta : \Delta \lei \Theta$,
+$\theta \eqsubst \zeta ||_\Delta \compose \iota : \Gamma \lei \Delta$ and
+$\pprec{\Theta}{\theta\gen{\Xi}{\tau}}{\gen{\Psi}{\upsilon}}$.
+\end{proof}
 
 
 
