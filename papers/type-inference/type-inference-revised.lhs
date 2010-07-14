@@ -332,9 +332,9 @@ Dunfield uses well-founded contexts that contain existential type variables
 notion of information increase between input and output contexts, though this is
 used for different purposes. 
 
-However, our concerns here are different: whilst Dunfield articulates a
+However, our concerns here are different: whilst Dunfield elaborates a
 particular strategy for bidirectional polymorphic checking to a larger
-class of type theories, here we pursue a methodological understanding
+class of type theories, we pursue a methodological understanding
 of the problem-solving strategy in Hindley-Milner type inference.
 
 \TODO{More crunchiness: forward pointers to claims and contributions}
@@ -448,7 +448,7 @@ first place.
 
 The rules in Figure~\ref{fig:oldRules} define a context as a left-to-right list
 of type variables, each of which may be unknown (written $\hole{\alpha}$) or
-defined (written $\alpha \defn \tau$). A context is valid if the type in
+defined (written $\alpha \defn \tau$). A context is \define{valid} if the type in
 every definition makes sense over its preceding context.
 For example, the context
 $\hole{\alpha}, \hole{\beta}, \gamma \defn \alpha \arrow \beta$
@@ -457,7 +457,7 @@ $\alpha \defn \beta, \hole{\beta}$
 is not, because $\beta$ is not in scope for the definition of $\alpha$.
 This topological sorting of the dependency graph means that 
 entries on the right are harder to depend on, and correspondingly easier to
-generalise just by the usual process of discharging as hypotheses.
+generalise, just by discharging them as hypotheses, as usual.
 
 Definitions in the context induce a nontrivial equational theory on types,
 starting with $\alpha \equiv \tau$ for every definition $\alpha \defn \tau$ in
@@ -1194,6 +1194,7 @@ must satisfy
 
 \begin{lemma}[Soundness and generality of unification]
 \label{lem:unifySound}
+
 \begin{enumerate}[(a)]
 \item If $\algUnify{\Gamma}{\tau}{\upsilon}{\Delta}$, then
 $\tyvars{\Gamma} = \tyvars{\Delta}$ and
