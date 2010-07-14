@@ -184,12 +184,12 @@
 \newcommand{\LEIStmt}[3]{\ensuremath{#1 \LEI #3 \vdash #2}}
 \newcommand{\leiParam}[4]{(#1, #2) \lei (#3, #4)}
 \newcommand{\leiRParam}[4]{(#1, #2) \leiR (#3, #4)}
-\newcommand{\LEIProb}[4]{#1 \,? #2 \LEI #4 \,!\, #3}
-\newcommand{\LEIRProb}[4]{#1 \,? #2 \LEIR #4 \,!\, #3}
-\newcommand{\LEIUnify}[4]{\leiStmt{#1}{#2 \equiv #3}{#4}}
-\newcommand{\LEIInfer}[4]{\LEIProb{#1}{(#2 :)}{#3}{#4}}
-\newcommand{\LEIInferScheme}[4]{\LEIProb{#1}{(#2 \hasscheme)}{#3}{#4}}
-\newcommand{\LEIRInfer}[4]{\LEIRProb{#1}{(#2 :)}{#3}{#4}}
+\newcommand{\LEIProb}[4]{#1 \,? #2 \LEI #3 \,!\, #4}
+\newcommand{\LEIRProb}[4]{#1 \,? #2 \LEIR #3 \,!\, #4}
+\newcommand{\LEIUnify}[4]{\leiStmt{#1}{#2 \equiv #4}{#3}}
+\newcommand{\LEIInfer}[4]{\LEIProb{#1}{(#2 :)}{#4}{#3}}
+\newcommand{\LEIInferScheme}[4]{\LEIProb{#1}{(#2 \hasscheme)}{#4}{#3}}
+\newcommand{\LEIRInfer}[4]{\LEIRProb{#1}{(#2 :)}{#4}{#3}}
 
 \newcommand{\alg}[3]{\ensuremath{#1 \transto #3 \entails #2}}
 \newcommand{\algUnify}[4]{\alg{#1}{#2 \equiv #3}{#4}}
@@ -200,7 +200,7 @@
 % Problem bits
 \newcommand{\leParam}[3]{#1 \entails #2 \subset #3}
 \newcommand{\pconj}[3]{\Sigma #1~#2.#3}
-
+\newcommand{\Qbind}[2]{#1 \bullet \Yright #2}
 
 
 
@@ -1768,6 +1768,20 @@ A \define{solution} of $(\Gamma, Q[a])$ consists of an information increase
 $\delta : \Gamma \lei \Delta$ and a value for the output parameter $b \in B$
 such that $(\delta (Q[a])) b$ and the sanity condition on $b$ hold in $\Delta$.
 
+If $A$ and $B$ are preordered for fixed $\Gamma$, we can define a preorder on
+$A \times B$ given by $\leParam{\Gamma}{(a, b)}{(a', b')}$ if
+$\leParam{\Gamma}{a}{a'}$ and $\leParam{\Gamma}{b}{b'}$.
+
+We write $\LEIProb{\Gamma}{P}{\Delta}{a}$ if
+$\Gamma \lei \Delta$, $\Delta \entails P a$,
+and for all $\theta : \Gamma \lei \Theta$ and $b$ such that
+$\Delta \entails (\theta P) b$, we have
+$\zeta : \leiParam{\Delta}{a}{\Theta}{b}$ for some $\zeta$ such that
+$\theta \eqsubst \zeta \compose \iota$.
+
+
+\subsection{The Optimist's lemma}
+
 Let $P$ be a problem with solutions in $A$ and let $Q$ be an $A$-indexed problem
 family with solutions in $B$. Then the conjunction of problems
 $$(\pconj{P}{x}{Q}) (a, b) = P a \wedge Q[a] b$$
@@ -1775,26 +1789,15 @@ is a problem with solutions in $A \times B$. This generalisation of $P \wedge Q$
 and allows the output of $P$ to be used in the input of $Q$, so it resembles a
 dependent sum type.
 
-If $A$ and $B$ are preordered for fixed $\Gamma$, we can define a preorder on
-$A \times B$ given by $\leParam{\Gamma}{(a, b)}{(a', b')}$ if
-$\leParam{\Gamma}{a}{a'}$ and $\leParam{\Gamma}{b}{b'}$.
-
-We write $\LEIProb{\Gamma}{P}{a}{\Delta}$ if
-$\Gamma \lei \Delta$, $\Delta \entails P a$,
-and for all $\theta : \Gamma \lei \Theta$ and $b$ such that
-$\Delta \entails (\theta P) b$, we have
-$\zeta : \leiParam{\Delta}{a}{\Theta}{b}$ for some $\zeta$ such that
-$\theta \eqsubst \zeta \compose \iota$.
-
 This allows us to state the fully general version of
 the Optimist's lemma:
 
 \begin{lemma}[The Optimist's lemma for inference problems]
 \label{lem:optimistInference}
 The following inference rule is admissible:
-$$\Rule{\LEIProb{\Gamma}{P}{b}{\Delta}
-       \quad  \LEIProb{\Delta}{Q[b]}{c}{\Theta}}
-       {\LEIProb{\Gamma}{(\pconj{P}{x}{Q})}{(b, c)}{\Theta}}.$$
+$$\Rule{\LEIProb{\Gamma}{P}{\Delta}{b}
+       \quad  \LEIProb{\Delta}{Q[b]}{\Theta}{c}}
+       {\LEIProb{\Gamma}{(\pconj{P}{x}{Q})}{\Theta}{(b, c)}}.$$
 \end{lemma}
 \begin{proof}
 We have $\Gamma \lei \Theta$ by Lemma~\ref{lei:preorder}.
@@ -1806,14 +1809,14 @@ Now suppose there is some other solution
 $(\phi : \Gamma \lei \Phi, (b', c'))$, so
 $\Phi \entails (\phi P) b'$ and
 $\Phi \entails (\phi Q)[b'] c'$.
-Since $\LEIProb{\Gamma}{P}{b}{\Delta}$, there exists
+Since $\LEIProb{\Gamma}{P}{\Delta}{b}$, there exists
 $\zeta : \Delta \lei \Phi$
 with $\leParam{\Phi}{\zeta b}{b'}$ and $\phi \eqsubst \zeta \compose \iota$.
 
 By definition of an indexed problem family,
 $\Phi \entails (\phi Q)[\zeta b] c'$
 and hence $\Phi \entails (\zeta (Q[b])) c'$.
-But $\LEIProb{\Delta}{Q[b]}{c}{\Theta}$, so there exists
+But $\LEIProb{\Delta}{Q[b]}{\Theta}{c}$, so there exists
 $\xi : \Theta \lei \Phi$ such that $\leParam{\Phi}{\xi c}{c'}$
 and $\zeta \eqsubst \xi \compose \iota$.
 
@@ -1824,6 +1827,7 @@ $\phi \eqsubst \zeta \compose \iota
       \eqsubst \xi \compose \iota$
 so we are done.
 \end{proof}
+
 
 
 \subsection{The Generalist's lemma}
@@ -1889,6 +1893,82 @@ $\theta \eqsubst \restrict{zeta}{\Delta} \compose \iota : \Gamma \lei \Delta$ an
 $\leParam{\Theta}{\theta\gen{\Xi}{\tau}}{\gen{\Psi}{\upsilon}}$.
 \end{proof}
 
+\TODO{The proofs of this lemma and the following two are all somewhat dull.
+Can we omit and summarise them?}
+
+
+\subsection{The binding lemmas}
+
+Just as we have a general notion of conjunction problems, so we can regard
+binding statements as problems. However, there are two ways in which this makes
+sense, depending on the mode of the bound property. Each has a minimality result
+corresponding to the Optimist's lemma and Generalist's lemma.
+
+First, if $Q$ is a problem with output in $A$, then $\Sbind{x \asc \sigma}{Q}$
+is also a problem with output in $A$, with statement
+$$(\Sbind{x \asc \sigma}{Q}) a = \Sbind{x \asc \sigma}{Q a}.$$
+That is, we regard $\sigma$ as an input.
+
+\begin{lemma}
+\label{lem:bindVariableProblem}
+If $\Xi$ contains only type variables, then this rule is admissible:
+$$\Rule{\LEIProb{\Gamma, x \asc \sigma}{Q}{\Delta, x \asc \sigma, \Xi}{a}}
+       {\LEIProb{\Gamma}{(\Sbind{x \asc \sigma}{Q})}{\Delta, \Xi}{a}}$$
+\end{lemma}
+\begin{proof}
+If $\Gamma, x \asc \sigma \lei \Delta, x \asc \sigma, \Xi$ then
+$\Gamma \lei \Delta, \Xi$ since nothing can depend on $x$.
+If $\Delta, x \asc \sigma, \Xi \entails Q a$ then
+$\Delta, \Xi, x \asc \sigma \entails Q a$ (permuting the context) and hence
+$\Delta, \Xi \entails \Sbind{x \asc \sigma}{Q a}$.
+
+If $\theta : \Gamma \lei \Theta$ is such that
+$\Theta \entails \Sbind{x \asc \theta\sigma}{(\theta Q) a'}$ then, by inversion,
+$\Theta, x \asc \theta\sigma \entails (\theta Q) a'$.
+By minimality of the hypothesis, there is
+$\zeta : \Delta, x \asc \sigma, \Xi \lei \Theta, x \asc \theta\sigma$ such that
+$\leParam{\Theta, x \asc \theta\sigma}{\theta a}{a'}$ and
+$\theta \eqsubst \zeta \compose \iota$.
+Now $\zeta : \Delta, \Xi \lei \Theta$ and
+$\leParam{\Theta}{\theta a}{a'}$ so we are done.
+
+\TODO{Should this go after $\leiR$ has been introduced, so we can mention it?
+Also, we are relying on the fact that $\leParam{\cdot}{\cdot}{\cdot}$ is defined
+without reference to term variables.}
+\end{proof}
+
+
+Alternatively, when binding type variables we can regard $D$ as an output, and
+obtain the problem $\Qbind{\beta}{Q}$ with the output being a pair of a type and
+a value in $A$. The corresponding statement is
+$$(\Qbind{\alpha}{Q}) (\tau, a) = \Sbind{\alpha \defn \tau}{Q a}.$$
+
+\TODO{This rule makes clear we need a new notation for problem inputs/outputs!}
+
+\begin{lemma}
+\label{lem:inventVariableProblem}
+This rule is admissible:
+$$\Rule{\LEIProb{\Gamma, \hole{\beta}}{Q}{\Delta}{a}}
+       {\LEIProb{\Gamma}{(\Qbind{\alpha}{Q})}{\Delta}{(\beta, a)}}$$
+\end{lemma}
+\begin{proof}
+If $\Gamma, \hole{\beta} \lei \Delta$ then $\Gamma \lei \Delta$ immediately.
+If $\Delta \entails Q a$ then clearly
+$\Delta, \alpha \defn \beta \entails Q a$ and hence
+$\Delta \entails \Sbind{\alpha \defn \beta}{Q a}$.
+
+If $\theta : \Gamma \lei \Theta$ is such that
+$\Theta \entails \Sbind{\alpha \defn \tau}{Q a'}$, then
+$\Theta, \alpha \defn \tau \entails Q a'$.
+By minimality of the hypothesis with the substitution
+$\phi = \theta \compose \subst{\beta}{\alpha}
+    : \Gamma, \hole{\beta} \lei \Theta, \alpha \defn \tau$,
+there is some $\zeta : \Delta \lei \Theta, \alpha \defn \tau$ such that
+$\leParam{\Theta, \alpha \defn \tau}{\phi a}{a'}$ and
+$\phi \eqsubst \zeta \compose \iota$.
+Now $\subst{\alpha}{\tau} \compose \zeta : \Delta \lei \Theta$...
+\TODO{finish me!}
+\end{proof}
 
 
 
@@ -2051,8 +2131,8 @@ Corresponding to $\leiParam{\Gamma}{a}{\Delta}{b}$, we write
 $\delta : \leiRParam{\Gamma}{a}{\Delta}{b}$
 if $\delta : \Gamma \leiR \Delta$ and $\leParam{\Delta}{\delta a}{b}$.
 
-Corresponding to $\LEIProb{\Gamma}{P}{a}{\Delta}$, we write
-$\LEIRProb{\Gamma}{P}{a}{\Delta}$ if $\Gamma \leiR \Delta \entails P a$, and for any
+Corresponding to $\LEIProb{\Gamma}{P}{\Delta}{a}$, we write
+$\LEIRProb{\Gamma}{P}{\Delta}{a}$ if $\Gamma \leiR \Delta \entails P a$, and for any
 $\theta : \Gamma \leiR \Theta$ such that $\Theta \entails (\theta P) b$ we have
 $\zeta : \leiRParam{\Delta}{a}{\Theta}{b}$ for some $\zeta$ such that
 $\theta \eqsubst \zeta \compose \iota$.
