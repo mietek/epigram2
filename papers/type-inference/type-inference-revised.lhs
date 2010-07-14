@@ -141,6 +141,7 @@
 \newcommand{\leiR}{\ensuremath{\sqsubseteq}}
 \newcommand{\LEIR}{\ensuremath{~\hat\sqsubseteq~}}
 \newcommand{\lep}{\ensuremath{\leq}}
+\newcommand{\ppre}{\ensuremath{\subset}}
 
 \newcommand{\arrow}{\ensuremath{\triangleright}}
 \newcommand{\defn}{\ensuremath{\!:=\!}}
@@ -211,6 +212,11 @@
 \newcommand{\Pre}[2]{\ensuremath{\mathit{Pre}_{#1} \InParam{#2}}}
 \newcommand{\Post}[3]{#1 \InParam{#2} \OutParam{#3}}
 \newcommand{\R}[3]{\ensuremath{\mathit{R}_{#1} \OutParam{#2} \OutParam{#3}}}
+
+\newcommand{\pprec}[3]{#1 \entails #2 \ppre #3}
+\newcommand{\pple}[4]{(#1, #2) \ppre (#3, #4)}
+\newcommand{\pconj}[3]{\Sigma #1~#2.#3}
+\newcommand{\Pmin}[4]{#1 ? #2 \LEI #4 ! #3}
 
 \usepackage{amsthm}
 \usepackage{amsmath}
@@ -1729,102 +1735,121 @@ $$
 
 \subsection{Inference problems: multiple-mode }
 
+\TODO{Tidy up and improve motivation for definitions in this section.}
+
 Type inference involves making the statement $t : \tau$ hold. However,
 a crucial difference from the unification problem is that the type should
 be an \emph{output} of problem-solving, along with the solution context. We need
 a more liberal definition than that of constraint problems.
 
-We associate a \define{mode} with each parameter, either \scare{input} or
-\scare{output}, in a statement. For simplicity, assume statements always have
-one parameter of each mode (which may be unit or a product). An
-\define{inference problem}
-is a triple $(\Gamma, S, Q)$ where $\Gamma$ is a context, $S$ is a statement
-\TODO{(?)} and
-$Q$ is a value for the input parameter that satisfies its sanity condition in
-$\Gamma$.
+We associate a \define{mode} with each parameter in a statement: either
+\scare{input} or \scare{output}. For simplicity, assume statements always have
+one parameter of each mode (which may be unit or a product).
+% An
+% \define{inference problem}
+% is a triple $(\Gamma, S, Q)$ where $\Gamma$ is a context, $S$ is a statement
+% \TODO{(?)} and
+% $Q$ is a value for the input parameter that satisfies its sanity condition in
+% $\Gamma$.
+% \TODO{Clarify notation for statements and parameter values. What is $Q A$?}
 
-\TODO{Clarify notation for statements and parameter values. What is $Q A$?}
+Let $I$ be a set of inputs closed under substitution. For a fixed context
+$\Gamma$, suppose we have a
+preorder $\ppre$ on $I$ written $\pprec{\Gamma}{\cdot}{\cdot}$. This induces a
+preorder on context-input pairs, with $\delta : \pple{\Gamma}{a}{\Delta}{b}$ if
+$\delta : \Gamma \lei \Delta$ and $\pprec{\Delta}{\delta a}{b}$.
 
-A \define{solution} of $(\Gamma, S, Q)$ consists of an information increase
-$\delta : \Gamma \lei \Delta$ and a value for the output parameter $A$ 
-such that $(\delta Q) A$ and the sanity condition on $A$ hold in $\Delta$.
+An \define{$I$-indexed problem family} $x.Q$ with solutions in $J$ is a family
+of input values for a
+statement, indexed by elements of $I$, such that for all $a, a' \in I$, contexts
+$\Gamma$ and output values $b \in J$,
+$$\pprec{\Gamma}{a}{a'} ~\wedge~ \Gamma \entails Q[a'] b
+    \quad\Rightarrow\quad  \Gamma \entails Q[a] b,$$
+where we write $Q[a] b$ for the statement with input at index $a$ and output
+value $b$.
 
-To generalise the Optimist's lemma to this setting, we need to extend the
-$\lei$ relation to define a preorder on solutions.
-% that is stable in a suitable sense.
-Let $(\delta : \Gamma \lei \Delta, A)$ and
-$(\theta : \Gamma \lei \Theta, B)$ be two solutions. We define the relation
-$\zeta : (\delta, A) \lep_{(\Gamma, Q)} (\theta, B)$ if $\zeta : \Delta \lei \Theta$ and
-$\theta \eqsubst \zeta \compose \delta$, and the appropriate condition holds.
+An \define{inference problem} consists of a context $\Gamma$, an
+$I$-indexed problem $Q$ and an index $a \in I$ such that the sanity condition of $Q[a]$
+holds in $\Gamma$.
 
-When the output is a scheme, we have
-$\zeta : (\delta, \gen{\Xi}{\tau}) \lep (\theta, \gen{\Psi}{\upsilon})$
-if there is some $\psi$ such that
-$\zeta ; \psi : \Delta \fatsemi \Xi \lei \Theta \fatsemi \Psi$ and 
-$\Theta \fatsemi \Psi \entails (\zeta ; \psi) \tau \equiv \upsilon$.
-\TODO{Define $\zeta ; \psi$ as composition of substitutions subject to
-appropriate conditions.}
+A \define{solution} of $(\Gamma, Q[a])$ consists of an information increase
+$\delta : \Gamma \lei \Delta$ and a value for the output parameter $b \in J$
+such that $(\delta (Q[a])) b$ and the sanity condition on $b$ hold in $\Delta$.
+
+The conjunction of problems $\pconj{P}{x}{Q}$ generalises $P \wedge Q$ and allows
+the output of $P$ to be used in the input of $Q$; in this way it resembles a
+dependent sum type. We define
+$(\pconj{P}{x}{Q}) (a, b) = P a \wedge Q[a] b$.
+We compare solutions pointwise, so define $\pprec{\Gamma}{(a, b)}{(a', b')}$ to
+mean $\pprec{\Gamma}{a}{a'}$ and $\pprec{\Gamma}{b}{b'}$.
+
+We write $\Pmin{\Gamma}{P}{a}{\Delta}$ if
+$\Gamma \lei \Delta \entails (\delta P) a$,
+and for all $\theta : \Gamma \lei \Theta$ and $b$ such that
+$\Delta \entails (\theta P) b$, we have
+$\zeta : \pple{\Delta}{a}{\Theta}{b}$ for some $\zeta$ such that
+$\theta \eqsubst \zeta \compose \iota$.
+
+This allows us to state the fully general version of
+the Optimist's lemma:
+
+\begin{lemma}[The Optimist's lemma for inference problems]
+\label{lem:optimistInference}
+The following inference rule is admissible:
+$$\Rule{\Pmin{\Gamma}{P}{b}{\Delta}
+       \quad  \Pmin{\Delta}{Q[b]}{c}{\Theta}}
+       {\Pmin{\Gamma}{(\pconj{P}{x}{Q})}{(b, c)}{\Theta}}.$$
+\end{lemma}
+\begin{proof}
+We have $\Gamma \lei \Theta$ by Lemma~\ref{lei:preorder}.
+Furthermore, $\Theta \entails (\pconj{P}{x}{Q}) (b, c)$ since
+stability gives $\Theta \entails P b$, and
+$\Theta \entails Q[b] c$ by assumption.
+
+Now suppose there is some other solution
+$(\phi : \Gamma \lei \Phi, (b', c'))$, so
+$\Phi \entails (\phi P) b'$ and
+$\Phi \entails (\phi Q)[b'] c'$.
+Since $\Pmin{\Gamma}{P}{b}{\Delta}$, there exists
+$\zeta : \Delta \lei \Phi$
+with $\pprec{\Phi}{\zeta b}{b'}$ and $\phi \eqsubst \zeta \compose \iota$.
+
+By definition of an indexed problem family,
+$\Phi \entails (\phi Q)[\zeta b] c'$
+and hence $\Phi \entails (\zeta (Q[b])) c'$.
+But $\Pmin{\Delta}{Q[b]}{c}{\Theta}$, so there exists
+$\xi : \Theta \lei \Phi$ such that $\pprec{\Phi}{\xi c}{c'}$
+and $\zeta \eqsubst \xi \compose \iota$.
+
+Hence $\xi : \Theta \lei \Phi$ and $\pprec{\Phi}{\xi (b, c)}{(b', c')}$
+so $\xi : \pple{\Theta}{(b, c)}{\Phi}{(b', c')}$. Moreover
+$\phi \eqsubst \zeta \compose \iota
+      \eqsubst (\xi \compose \iota) \compose \iota
+      \eqsubst \xi \compose \iota$
+so we are done.
+\end{proof}
+
+
+
+
+When the output is a scheme, we define
+$\pprec{\Gamma}{\gen{\Xi}{\tau}}{\gen{\Psi}{\upsilon}}$
+if there is some $\psi : \Gamma \fatsemi \Xi \lei \Gamma \fatsemi \Psi$
+such that $\Gamma \fatsemi \Psi \entails \psi \tau \equiv \upsilon$
+and $\psi ||_\Gamma \eqsubst \iota$.
 
 When the output is a type, we just instantiate the above definition with
 $\Xi = \emptycontext = \Psi$, i.e.\ we have
-$\zeta : (\delta, \tau) \lep (\theta, \upsilon)$
-if $\Theta \entails \zeta \tau \equiv \upsilon$.
-
-When the output is a pair (i.e. for conjunctions), we have
-$\zeta : (\delta, (A_0, A_1)) \lep_{(\Gamma, Q_0[a] \wedge Q_1)}
-    (\theta, (B_0, B_1))$ if
-$\zeta : (\delta, A_0) \lep_{(\Gamma, Q_0)} (\theta, B_0)$ and 
-$\zeta : (\iota : \Theta \lei \Theta, \zeta A_1)
-    \lep_{(\Theta, \subst{B_0}{a} Q_1)} (\iota : \Theta \lei \Theta, B_1)$.
-\TODO{Does this make sense? Motivate it.}
-
-A solution $(\delta, A)$ is \define{minimal} if it is below every other solution,
-i.e. \ if $\zeta : (\delta, A) \lep (\theta, B)$ for every solution
-$(\theta, B)$.
-As before, we will look for minimal solutions where $\delta$ is the identity,
-and write $\Jmin{\Gamma}{Q A}{\Delta}$ when $(\iota : \Gamma \lei \Delta, A)$ is
-a minimal solution to $(\Gamma, S, Q)$.
+$\pprec{\Gamma}{\tau}{\upsilon}$
+if $\Gamma \entails \tau \equiv \upsilon$.
 
 Thus the type inference problem is given by a context $\Gamma$ and the
 statement $t : ~?$ where $t$ is a term and $?$ represents the output parameter.
 A solution is then an information increase $\delta : \Gamma \lei \Delta$ and a
 type $\tau$ such that $\Delta \entails \tau \type \wedge t : \tau$.
 
-The conjunction of statements $S \wedge S'$ is unique in that the output of $S$
-may be used in the input of $S'$; in this way it resembles a dependent sum type.
-We write $Q_1[a] \wedge Q_2$ where $a$ is a binding occurrence of a metavariable
-that is in scope in $Q_2$. This allows us to state the fully general version of
-the Optimist's lemma:
 
-\TODO{Complete the proof. Should we do this after introducing $\fatsemi$ so we
-can use it in the definition of minimality?}
 
-\begin{lemma}[The Optimist's lemma for inference problems]
-\label{lem:optimistInference}
-The following inference rule is admissible:
-$$\Rule{\Jmin{\Gamma}{Q_0 A_0}{\Delta}
-       \quad  \Jmin{\Delta}{(\subst{A_0}{a} Q_1) A_1}{\Theta}}
-       {\Jmin{\Gamma}{(Q_0[a] \wedge Q_1) (A_0, A_1)}{\Theta}}.$$
-\end{lemma}
-\begin{proof}
-We have $\Gamma \lei \Theta$ by Lemma~\ref{lei:preorder}.
-Furthermore, $\Theta \entails (Q_0[a] \wedge Q_1) (A_0, A_1)$ since
-stability gives $\Theta \entails Q_0 A_0$, and
-$\Theta \entails (\subst{A_0}{a} Q_1) A_1$ by assumption.
-
-Now suppose there is some other solution
-$(\phi : \Gamma \lei \Phi, (B_0, B_1))$, so
-$\Phi \entails Q_0 B_0$ and
-$\Phi \entails (\subst{B_0}{a} Q_1) B_1$.
-Since $\Jmin{\Gamma}{Q_0 A_0}{\Delta}$, there exists
-$\zeta_0 : (\iota : \Gamma \lei \Delta, A_0)
-               \lep (\phi : \Gamma \lei \Phi, B_0)$.
-
-But then $\Jmin{\Delta}{(\subst{A_0}{a} Q_1) A_1}{\Theta}$...
-% so there exists
-% $\zeta_1 : \Theta \lei \Phi$ such that
-% $\zeta_0 \eqsubst \zeta_1 \compose \iota$
-\end{proof}
 
 \subsection{Transforming the rule system for type assignment}
 
