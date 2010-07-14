@@ -347,9 +347,9 @@ Dunfield uses well-founded contexts that contain existential type variables
 notion of information increase between input and output contexts, though this is
 used for different purposes. 
 
-However, our concerns here are different: whilst Dunfield elaborates a
+However, our concerns here are different: whilst Dunfield articulates a
 particular strategy for bidirectional polymorphic checking to a larger
-class of type theories, we are pursuing a methodological understanding
+class of type theories, here we pursue a methodological understanding
 of the problem-solving strategy in Hindley-Milner type inference.
 
 \TODO{More crunchiness: forward pointers to claims and contributions}
