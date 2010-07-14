@@ -127,6 +127,7 @@
 \newcommand{\eqsubst}{\equiv}
 \newcommand{\compose}{\cdot}
 \newcommand{\subst}[3]{[#1/#2]#3}
+\newcommand{\restrict}[2]{#1 ||_{#2}}
 
 % Sets and sorts
 \newcommand{\V}{\mathcal{V}}
@@ -958,6 +959,8 @@ Composition of substitutions is given by
 $(\theta \compose \delta) (\alpha) = \theta (\delta \alpha)$.
 We write $\subst{\tau}{\alpha}{}$ for the substitution that maps
 $\alpha$ to $\tau$ and other variables to themselves.
+If $\delta : \Gamma, \Gamma' \lei \Theta$ we write $\restrict{\delta}{\Gamma}$
+for the restriction of $\delta$ to the type variables in $\Gamma$.
 
 Given a substitution $\delta$ from $\Gamma$ to $\Delta$, 
 we write the \define{information increase} 
@@ -1723,10 +1726,7 @@ $\theta \eqsubst \zeta \compose \iota :
 
 \subsection{Inference problems: multiple-mode }
 
-\TODO{Tidy up and improve motivation for definitions in this section.
-In particular, we need to sort out which relations we need to make obviously
-distinct and which should be overloaded, bearing in mind the restricted
-versions coming up later.}
+\TODO{Tidy up and improve motivation for definitions in this section.}
 
 Type inference involves making the statement $t : \tau$ hold. However,
 a crucial difference from the unification problem is that the type should
@@ -1744,39 +1744,43 @@ one parameter of each mode (which may be unit or a product).
 % $\Gamma$.
 % \TODO{Clarify notation for statements and parameter values. What is $Q A$?}
 
-\TODO{We need this preorder on outputs too!}
-Let $I$ be a set of inputs closed under substitution. For a fixed context
+Let $A$ be a set of values closed under substitution. For a fixed context
 $\Gamma$, suppose we have a
-preorder on $I$ written $\leParam{\Gamma}{\cdot}{\cdot}$. This induces a
-preorder on context-input pairs, with $\delta : \leiParam{\Gamma}{a}{\Delta}{b}$ if
+preorder on $A$ written $\leParam{\Gamma}{\cdot}{\cdot}$. This induces a
+preorder on context-value pairs, with $\delta : \leiParam{\Gamma}{a}{\Delta}{b}$ if
 $\delta : \Gamma \lei \Delta$ and $\leParam{\Delta}{\delta a}{b}$.
 
-An \define{$I$-indexed problem family} $x.Q$ with solutions in $J$ is a family
-of input values for a
-statement, indexed by elements of $I$, such that for all $a, a' \in I$, contexts
-$\Gamma$ and output values $b \in J$,
+An \define{$A$-indexed problem family} $x.Q$ with solutions in $B$ is a family
+of input parameters for a statement, indexed by elements of $A$, such that for
+all $a, a' \in A$, contexts $\Gamma$ and output parameter values $b \in B$,
 $$\leParam{\Gamma}{a}{a'} ~\wedge~ \Gamma \entails Q[a'] b
     \quad\Rightarrow\quad  \Gamma \entails Q[a] b,$$
 where we write $Q[a] b$ for the statement with input at index $a$ and output
-value $b$.
+value $b$. Note that the input parameters for a single statement, and hence
+constraint problems, can be regarded as a family indexed by the unit set with
+the trivial preorder.
 
-An \define{inference problem} consists of a context $\Gamma$, an
-$I$-indexed problem $Q$ and an index $a \in I$ such that the sanity condition of $Q[a]$
+An \define{inference problem} consists of a context $\Gamma$, an $A$-indexed
+problem $Q$ and an index $a \in A$ such that the sanity condition of $Q[a]$
 holds in $\Gamma$.
 
 A \define{solution} of $(\Gamma, Q[a])$ consists of an information increase
-$\delta : \Gamma \lei \Delta$ and a value for the output parameter $b \in J$
+$\delta : \Gamma \lei \Delta$ and a value for the output parameter $b \in B$
 such that $(\delta (Q[a])) b$ and the sanity condition on $b$ hold in $\Delta$.
 
-The conjunction of problems $\pconj{P}{x}{Q}$ generalises $P \wedge Q$ and allows
-the output of $P$ to be used in the input of $Q$; in this way it resembles a
-dependent sum type. We define
-$(\pconj{P}{x}{Q}) (a, b) = P a \wedge Q[a] b$.
-We compare solutions pointwise, so define $\leParam{\Gamma}{(a, b)}{(a', b')}$ to
-mean $\leParam{\Gamma}{a}{a'}$ and $\leParam{\Gamma}{b}{b'}$.
+Let $P$ be a problem with solutions in $A$ and let $Q$ be an $A$-indexed problem
+family with solutions in $B$. Then the conjunction of problems
+$$(\pconj{P}{x}{Q}) (a, b) = P a \wedge Q[a] b$$
+is a problem with solutions in $A \times B$. This generalisation of $P \wedge Q$
+and allows the output of $P$ to be used in the input of $Q$, so it resembles a
+dependent sum type.
+
+If $A$ and $B$ are preordered for fixed $\Gamma$, we can define a preorder on
+$A \times B$ given by $\leParam{\Gamma}{(a, b)}{(a', b')}$ if
+$\leParam{\Gamma}{a}{a'}$ and $\leParam{\Gamma}{b}{b'}$.
 
 We write $\LEIProb{\Gamma}{P}{a}{\Delta}$ if
-$\Gamma \lei \Delta \entails P a$,
+$\Gamma \lei \Delta$, $\Delta \entails P a$,
 and for all $\theta : \Gamma \lei \Theta$ and $b$ such that
 $\Delta \entails (\theta P) b$, we have
 $\zeta : \leiParam{\Delta}{a}{\Theta}{b}$ for some $\zeta$ such that
@@ -1824,28 +1828,35 @@ so we are done.
 
 \subsection{The Generalist's lemma}
 
-\TODO{Does this order of material make sense? We need more context here.}
+We have considered problems with abstract input and output values, including
+the unit set and products, but which sets of concrete values will we actually
+use? Since we want to solve type inference problems, we will be interested in
+types and (more generally) type schemes.
 
-When the output is a scheme, we define
+For a fixed context $\Gamma$, we define the preorder on schemes by
 $\leParam{\Gamma}{\gen{\Xi}{\tau}}{\gen{\Psi}{\upsilon}}$
 if there is some $\psi : \Gamma \fatsemi \Xi \lei \Gamma \fatsemi \Psi$
 such that $\Gamma \fatsemi \Psi \entails \psi \tau \equiv \upsilon$
-and $\psi ||_\Gamma \eqsubst \iota$.
+and $\restrict{psi}{\Gamma} \eqsubst \iota$. That is,
+$\leParam{\Gamma}{\sigma}{\sigma'}$
+if $\sigma$ is a more general type scheme than $\sigma'$.
 
-When the output is a type, we just instantiate the above definition with
-$\Xi = \emptycontext = \Psi$, i.e.\ we have
+Since types are just schemes with no quantifiers, we instantiate the above
+definition with $\Xi = \emptycontext = \Psi$, to get a preorder on types:
 $\leParam{\Gamma}{\tau}{\upsilon}$
 if $\Gamma \entails \tau \equiv \upsilon$.
 
-Thus the type inference problem is given by a context $\Gamma$ and the
-statement $t : ~?$ where $t$ is a term and $?$ represents the output parameter.
-A solution is then an information increase $\delta : \Gamma \lei \Delta$ and a
-type $\tau$ such that $\Delta \entails \tau \type \wedge t : \tau$.
+Thus the type inference problem is given by a context $\Gamma$ and a term
+parameter $t$ as input to the type assignment statement. Following the
+definitions, a solution is an information increase
+$\delta : \Gamma \lei \Delta$ and a type $\tau$ such that
+$\Delta \entails \tau \type \wedge t : \tau$. A solution with output $\tau$ is
+minimal if, given any other solution, we can find a substitution that unifies $\tau$
+and the other type: that is, $\tau$ is a principal type.
 
 Note that if $\delta : \Gamma \fatsemi \Gamma' \lei \Delta \fatsemi \Delta'$,
 where $\Gamma$ and $\Delta$ contain the same number of $\fatsemi$ separators,
-then $\delta||_\Gamma : \Gamma \lei \Delta$.
-\TODO{Have we defined the $||$ notation?}
+then $\restrict{\delta}{\Gamma} : \Gamma \lei \Delta$.
 This allows us to prove the following:
 
 \begin{lemma}[The Generalist's lemma]
@@ -1873,8 +1884,8 @@ so by minimality of the hypothesis there is a substitution
 $\zeta : \Delta \fatsemi \Xi \lei \Theta \fatsemi \Psi$ such that
 $\theta \equiv \zeta \compose \iota$ and
 $\Theta \fatsemi \Psi \entails \zeta\tau \equiv \upsilon$.
-Then $\zeta ||_\Delta : \Delta \lei \Theta$,
-$\theta \eqsubst \zeta ||_\Delta \compose \iota : \Gamma \lei \Delta$ and
+Then $\restrict{\zeta}{\Delta} : \Delta \lei \Theta$,
+$\theta \eqsubst \restrict{zeta}{\Delta} \compose \iota : \Gamma \lei \Delta$ and
 $\leParam{\Theta}{\theta\gen{\Xi}{\tau}}{\gen{\Psi}{\upsilon}}$.
 \end{proof}
 
