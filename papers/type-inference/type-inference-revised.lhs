@@ -106,120 +106,102 @@
 \newcommand{\TODO}[1]{\NotForPublication{\textcolor{red}{#1}}}
 \newcommand{\NotForPublication}[1]{#1}
 
-\newcommand{\eqsubst}{\equiv}
-\newcommand{\compose}{\cdot}
-\newcommand{\subst}[3]{[#1/#2]#3}
-
-\newcommand{\extend}{\ensuremath{\wedge}}
-\newcommand{\yields}{\ensuremath{\dashv}}
-\newcommand{\entails}{\ensuremath{\vdash}}
-\newcommand{\entailsN}{\ensuremath{\Vdash}}
-% \newcommand{\var}{\ensuremath{\defn \_}}
-\newcommand{\type}{\ensuremath{~\mathbf{type}}}
-\newcommand{\scheme}{\ensuremath{~\mathbf{scheme}}}
-\newcommand{\valid}{\ensuremath{\mathbf{valid}}}
-\newcommand{\ok}{\ensuremath{~\mathbf{ok}}}
-\newcommand{\emptycontext}{\ensuremath{\mathcal{E}}}
-\newcommand{\letGoal}{\ensuremath{\fatsemi}}
-\newcommand{\letIn}[3]{\ensuremath{\mathrm{let}\; #1 \!:=\! #2 \;\mathrm{in}\; #3}}
-\newcommand{\letS}[3]{\ensuremath{(!#1 \!:=\! #2 ~\mathrm{in}~ #3)}}
+% Boxes and inference rules
 \newcommand{\mathframe}[1]{\framebox{\ensuremath{#1}}}
 \newcommand{\boxrule}[1]{\begin{center}\mathframe{#1}\end{center}}
 \newcommand{\boxrules}[2]{\begin{center}\mathframe{#1}\quad\mathframe{#2}\end{center}}
 \newcommand{\boxruless}[3]{\begin{center}\mathframe{#1}\quad\mathframe{#2}\quad\mathframe{#3}\end{center}}
-
-\newcommand{\tmvars}[1]{\ensuremath{tmvars(#1)}}
-\newcommand{\tyvars}[1]{\ensuremath{\V_\TY(#1)}}
-\newcommand{\types}[1]{\ensuremath{\T_\TY(#1)}}
-\newcommand{\FTV}[1]{\ensuremath{\mathit{FTV}(#1)}}
-\newcommand{\Type}{\ensuremath{\mathit{Type}}}
-\newcommand{\Term}{\ensuremath{\mathit{Term}}}
-% \newcommand{\Scheme}{\ensuremath{\mathit{Scheme}}}
-
-\newcommand{\lei}{\ensuremath{\preceq}}
-\newcommand{\LEI}{\ensuremath{~\hat\lei~}}
-\newcommand{\leiR}{\ensuremath{\sqsubseteq}}
-\newcommand{\LEIR}{\ensuremath{~\hat\sqsubseteq~}}
-\newcommand{\lep}{\ensuremath{\leq}}
-\newcommand{\ppre}{\ensuremath{\lei^*}}
-\newcommand{\ppreR}{\ensuremath{\leiR^*}}
-
-\newcommand{\arrow}{\ensuremath{\triangleright}}
-\newcommand{\defn}{\ensuremath{\!:=\!}}
-\newcommand{\asc}{\ensuremath{\hasc}}
-\newcommand{\hasc}{\ensuremath{~\hat{::}~}}
-\newcommand{\asch}{\ensuremath{\hasch}}
-\newcommand{\hasch}{\ensuremath{~{::}~}}
-\newcommand{\hole}[1]{\ensuremath{#1 \!:= ?}}
-\newcommand{\contains}{\ensuremath{\ni}}
-\newcommand{\transto}{\ensuremath{\twoheadrightarrow}}
-
-\newcommand{\Alg}[3]{\ensuremath{#1 \transto #3 \vdash #2}}
-\newcommand{\Judge}[3]{\ensuremath{#1 \lei #3 \vdash #2}}
-\newcommand{\JudgeR}[3]{\ensuremath{#1 \leiR #3 \vdash #2}}
-\newcommand{\Jmin}[3]{\ensuremath{#1 \LEI #3 \vdash #2}}
-\newcommand{\Junify}[4]{\Alg{#1}{\Puni{#2}{#3}}{#4}}
-\newcommand{\Jinstantiate}[5]{\Alg{#1 ~||~ #4}{\Puni{#2}{#3}}{#5}}
-\newcommand{\Jtype}[4]{\Alg{#1}{\Pinf{#2}{#3}}{#4}}
-\newcommand{\Jscheme}[4]{\Alg{#1}{\Psch{#2}{#3}}{#4}}
-
-\newcommand{\JminR}[3]{\ensuremath{#1 \LEIR #3 \vdash #2}}
-
-\newcommand{\InParam}[1]{(#1)}
-\newcommand{\OutParam}[1]{#1}
-\newcommand{\Prob}[3]{#1 \InParam{#2} \OutParam{#3}}
-\newcommand{\Pinf}[2]{#1 : \OutParam{#2}}
-\newcommand{\Psch}[2]{#1 \asch \OutParam{#2}}
-\newcommand{\Puni}[2]{#1 \equiv #2}
-\newcommand{\Pspec}[2]{\Prob{S}{#1}{#2}}
-
 \newcommand{\name}[1]{\textsc{#1}}
 \newcommand{\namer}[1]{\ensuremath{\mathrm{\name{#1}} \;}}
 \newcommand{\side}[1]{\ensuremath{\; #1}}
-
 \newcommand{\br}[2]{\genfrac{}{}{0pt}{0}{#1}{#2}}
 \newcommand{\BigRule}[3]{\ensuremath{\Rule{\br{#1}{#2}}{#3}}}
 
-% \newcommand{\sym}{\ensuremath{^\vee}}
-\newcommand{\sem}[1]{\ensuremath{\llbracket #1 \rrbracket}}
-
+% Text
+\newcommand{\define}[1]{\emph{#1}}
+\newcommand{\scare}[1]{`#1'}
 \newcommand{\W}{\ensuremath{\mathcal{W}}}
 \newcommand{\AlgorithmW}{Algorithm~\W}
 
-\newcommand{\genarrow}{\ensuremath{\Uparrow}}
-\newcommand{\gen}[2]{\ensuremath{(#1 \genarrow #2)}}
-\newcommand{\gendot}[1]{\ensuremath{.{#1}}}
-\newcommand{\forget}[1]{\ensuremath{\lfloor #1 \rfloor}}
-\newcommand{\hasscheme}{\ensuremath{::}}
-\newcommand{\subcontext}{\ensuremath{\subset}}
-\newcommand{\semidrop}{\downharpoonright}
-\newcommand{\Sbind}[2]{#1 \Yright #2}
-\newcommand{\spec}{\ensuremath{\succ}}
+% Substitutions
+\newcommand{\eqsubst}{\equiv}
+\newcommand{\compose}{\cdot}
+\newcommand{\subst}[3]{[#1/#2]#3}
 
-\newcommand{\define}[1]{\emph{#1}}
-\newcommand{\scare}[1]{`#1'}
-
+% Sets and sorts
 \newcommand{\V}{\mathcal{V}}
 \newcommand{\D}{\mathcal{D}}
 \newcommand{\Ss}{\mathcal{S}}
 \newcommand{\K}{\mathcal{K}}
-\newcommand{\T}{\mathcal{T}}
 \newcommand{\TY}{\mathrm{\textsc{TY}}}
 \newcommand{\TM}{\mathrm{\textsc{TM}}}
 
+% Context bits
+\newcommand{\entails}{\ensuremath{\vdash}}
+\newcommand{\entailsN}{\ensuremath{\Vdash}}
+\newcommand{\emptycontext}{\ensuremath{\mathcal{E}}}
+\newcommand{\letGoal}{\ensuremath{\fatsemi}}
+\newcommand{\defn}{\ensuremath{\!:=\!}}
+\newcommand{\asc}{\ensuremath{~\hat{::}~}}
+\newcommand{\hole}[1]{\ensuremath{#1 \!:= ?}}
 \newcommand{\decl}[2]{#1 #2}
 
-\newcommand{\In}[1]{\ensuremath{\mathit{In}_{#1}}}
-\newcommand{\Out}[1]{\ensuremath{\mathit{Out}_{#1}}}
-\newcommand{\Pre}[2]{\ensuremath{\mathit{Pre}_{#1} \InParam{#2}}}
-\newcommand{\Post}[3]{#1 \InParam{#2} \OutParam{#3}}
-\newcommand{\R}[3]{\ensuremath{\mathit{R}_{#1} \OutParam{#2} \OutParam{#3}}}
+% Statements
+\newcommand{\type}{\ensuremath{~\mathbf{type}}}
+\newcommand{\scheme}{\ensuremath{~\mathbf{scheme}}}
+\newcommand{\valid}{\ensuremath{\mathbf{valid}}}
+\newcommand{\Sbind}[2]{#1 \Yright #2}
+\newcommand{\hasscheme}{\ensuremath{::}}
+\newcommand{\Pinf}[2]{#1 : #2}
+\newcommand{\Psch}[2]{#1 \hasscheme #2}
+\newcommand{\Puni}[2]{#1 \equiv #2}
 
-\newcommand{\pprec}[3]{#1 \entails #2 \ppre #3}
-\newcommand{\pple}[4]{(#1, #2) \ppre (#3, #4)}
+% Types, terms and schemes
+\newcommand{\arrow}{\ensuremath{\triangleright}}
+\newcommand{\letIn}[3]{\ensuremath{\mathrm{let}\; #1 \!:=\! #2 \;\mathrm{in}\; #3}}
+\newcommand{\letS}[3]{\ensuremath{(!#1 \!:=\! #2 ~\mathrm{in}~ #3)}}
+\newcommand{\genarrow}{\ensuremath{\Uparrow}}
+\newcommand{\gen}[2]{\ensuremath{(#1 \genarrow #2)}}
+\newcommand{\gendot}[1]{\ensuremath{.{#1}}}
+
+% Maps
+\newcommand{\tyvars}[1]{\ensuremath{\V_\TY(#1)}}
+\newcommand{\FTV}[1]{\ensuremath{\mathit{FTV}(#1)}}
+\newcommand{\sem}[1]{\ensuremath{\llbracket #1 \rrbracket}}
+\newcommand{\ok}{\ensuremath{~\mathbf{ok}}}
+\newcommand{\forget}[1]{\ensuremath{\lfloor #1 \rfloor}}
+\newcommand{\semidrop}{\downharpoonright}
+
+% Relations between contexts
+\newcommand{\lei}{\ensuremath{\preceq}}
+\newcommand{\LEI}{\ensuremath{~\hat\lei~}}
+\newcommand{\leiR}{\ensuremath{\sqsubseteq}}
+\newcommand{\LEIR}{\ensuremath{~\hat\sqsubseteq~}}
+\newcommand{\transto}{\ensuremath{\twoheadrightarrow}}
+
+\newcommand{\leiStmt}[3]{\ensuremath{#1 \lei #3 \vdash #2}}
+\newcommand{\LEIStmt}[3]{\ensuremath{#1 \LEI #3 \vdash #2}}
+\newcommand{\leiParam}[4]{(#1, #2) \lei (#3, #4)}
+\newcommand{\leiRParam}[4]{(#1, #2) \leiR (#3, #4)}
+\newcommand{\LEIProb}[4]{#1 \,? #2 \LEI #4 \,!\, #3}
+\newcommand{\LEIRProb}[4]{#1 \,? #2 \LEIR #4 \,!\, #3}
+\newcommand{\LEIUnify}[4]{\leiStmt{#1}{#2 \equiv #3}{#4}}
+\newcommand{\LEIInfer}[4]{\LEIProb{#1}{(#2 :)}{#3}{#4}}
+\newcommand{\LEIInferScheme}[4]{\LEIProb{#1}{(#2 \hasscheme)}{#3}{#4}}
+\newcommand{\LEIRInfer}[4]{\LEIRProb{#1}{(#2 :)}{#3}{#4}}
+
+\newcommand{\alg}[3]{\ensuremath{#1 \transto #3 \entails #2}}
+\newcommand{\algUnify}[4]{\alg{#1}{#2 \equiv #3}{#4}}
+\newcommand{\algInstantiate}[5]{\alg{#1 ~||~ #4}{\Puni{#2}{#3}}{#5}}
+\newcommand{\algInfer}[4]{\alg{#1}{\Pinf{#2}{#3}}{#4}}
+\newcommand{\algInferScheme}[4]{\alg{#1}{\Psch{#2}{#3}}{#4}}
+
+% Problem bits
+\newcommand{\leParam}[3]{#1 \entails #2 \subset #3}
 \newcommand{\pconj}[3]{\Sigma #1~#2.#3}
-\newcommand{\Pmin}[4]{#1 \,? #2 \LEI #4 \,!\, #3}
-\newcommand{\PminR}[4]{#1 \,? #2 \LEIR #4 \,!\, #3}
+
+
+
 
 \usepackage{amsthm}
 \usepackage{amsmath}
@@ -989,8 +971,6 @@ in $\Gamma$.
 We write $\Gamma \lei \Delta$ if 
 $\iota : \Gamma \lei \Delta$, where  $\iota$ is the identity substitution.
 
-\TODO{Can we call $\lei$ a relation if we do this?}
-
 We write $\delta \eqsubst \theta : \Gamma \lei \Delta$ if
 $\delta : \Gamma \lei \Delta$, $\theta : \Gamma \lei \Delta$
 and for all $\alpha \in \tyvars{\Gamma}$,
@@ -1125,13 +1105,13 @@ $\delta$ with \emph{cofactor} $\zeta$).
 In fact, we will always find minimal solutions 
 %%%that use the identity substitution. 
    in the form $\iota : \Gamma \lei \Delta$. 
-We write $\Jmin{\Gamma}{P}{\Delta}$ to mean that $(\Gamma, P)$ is a
+We write $\LEIStmt{\Gamma}{P}{\Delta}$ to mean that $(\Gamma, P)$ is a
 problem with minimal solution $\iota : \Gamma \lei \Delta$.
 
 As one might expect, the rule
-$$\Rule{\Judge{\Gamma}{P}{\Delta}
-       \quad  \Judge{\Delta}{Q}{\Theta}}
-       {\Judge{\Gamma}{P \wedge Q}{\Theta}}$$
+$$\Rule{\leiStmt{\Gamma}{P}{\Delta}
+       \quad  \leiStmt{\Delta}{Q}{\Theta}}
+       {\leiStmt{\Gamma}{P \wedge Q}{\Theta}}$$
 is admissible, since stability ensures that if $\Delta$ solves $P$ then any more
 informative context $\theta$ will also solve $P$. More surprisingly, this also
 gives minimal solutions to composite problems, allowing a \scare{greedy} 
@@ -1144,9 +1124,9 @@ solution strategy.
 \begin{lemma}[The Optimist's lemma]
 \label{lem:optimist}
 The following inference rule is admissible:
-$$\Rule{\Jmin{\Gamma}{P}{\Delta}
-       \quad  \Jmin{\Delta}{Q}{\Theta}}
-       {\Jmin{\Gamma}{P \wedge Q}{\Theta}}.$$
+$$\Rule{\LEIStmt{\Gamma}{P}{\Delta}
+       \quad  \LEIStmt{\Delta}{Q}{\Theta}}
+       {\LEIStmt{\Gamma}{P \wedge Q}{\Theta}}.$$
 \end{lemma}
 
 \begin{proof}[Sketch]
@@ -1182,13 +1162,13 @@ the type's dependencies as we encounter them, performing the occurs check to
 ensure a solution exists.
 
 The rules in Figure~\ref{fig:unifyRules} define our unification algorithm. The
-judgment $\Junify{\Gamma}{\tau}{\upsilon}{\Delta}$ means that given inputs
+judgment $\algUnify{\Gamma}{\tau}{\upsilon}{\Delta}$ means that given inputs
 $\Gamma$, $\tau$ and $\upsilon$, unification succeeds and produces output
 context $\Delta$. This is subject to the input sanity condition
 $\Gamma \entails \tau \type \wedge \upsilon \type$.
 
 The judgment
-$\Jinstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$
+$\algInstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$
 means that given inputs $\Gamma$, $\Xi$, $\alpha$ and $\tau$,
 solving $\alpha$ with $\tau$ succeeds,  
 yielding output context $\Delta$. The idea is that the bar ($||$) represents
@@ -1212,14 +1192,14 @@ must satisfy
 \begin{lemma}[Soundness and generality of unification]
 \label{lem:unifySound}
 \begin{enumerate}[(a)]
-\item If $\Junify{\Gamma}{\tau}{\upsilon}{\Delta}$, then
+\item If $\algUnify{\Gamma}{\tau}{\upsilon}{\Delta}$, then
 $\tyvars{\Gamma} = \tyvars{\Delta}$ and
-$\Jmin{\Gamma}{\tau \equiv \upsilon}{\Delta}$.
+$\LEIStmt{\Gamma}{\tau \equiv \upsilon}{\Delta}$.
 
 \item If
-$\Jinstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$, then
+$\algInstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$, then
 $\tyvars{\Gamma, \Xi} = \tyvars{\Delta}$ and
-$\Jmin{\Gamma, \Xi}{\tau \equiv \upsilon}{\Delta}$.
+$\LEIStmt{\Gamma, \Xi}{\tau \equiv \upsilon}{\Delta}$.
 \end{enumerate}
 \end{lemma}
 \begin{proof}
@@ -1260,82 +1240,82 @@ symmetric counterparts, identical apart from interchanging the equated
 terms in the conclusion. Usually we will ignore these without loss of generality.
 
 \begin{figure}[ht]
-\boxrule{\Junify{\Gamma}{\tau}{\upsilon}{\Delta}}
+\boxrule{\algUnify{\Gamma}{\tau}{\upsilon}{\Delta}}
 
 $$
 \namer{Decompose}
-\Rule{\Junify{\Gamma}{\tau_0}{\upsilon_0}{\Delta_0}
+\Rule{\algUnify{\Gamma}{\tau_0}{\upsilon_0}{\Delta_0}
       \quad
-      \Junify{\Delta_0}{\tau_1}{\upsilon_1}{\Delta}}
-    {\Junify{\Gamma}{\tau_0 \arrow \tau_1}{\upsilon_0 \arrow \upsilon_1}{\Delta}}
+      \algUnify{\Delta_0}{\tau_1}{\upsilon_1}{\Delta}}
+    {\algUnify{\Gamma}{\tau_0 \arrow \tau_1}{\upsilon_0 \arrow \upsilon_1}{\Delta}}
 $$
 
 $$
 \namer{Idle}
 % \Rule{\Gamma \entails \alpha \type}
-\Axiom{\Junify{\Gamma_0, \alpha D}{\alpha}{\alpha}{\Gamma_0, \alpha D}}
+\Axiom{\algUnify{\Gamma_0, \alpha D}{\alpha}{\alpha}{\Gamma_0, \alpha D}}
 $$
 
 $$
 \namer{Define}
 %\Rule{\Gamma_0 \entails \beta \type}
-\Axiom{\Junify{\Gamma_0, \hole{\alpha}}{\alpha}{\beta}{\Gamma_0, \alpha \defn \beta}}
+\Axiom{\algUnify{\Gamma_0, \hole{\alpha}}{\alpha}{\beta}{\Gamma_0, \alpha \defn \beta}}
 \side{\alpha \neq \beta}
 $$
 
 $$
 \namer{Ignore}
-\Rule{\Junify{\Gamma_0}{\alpha}{\beta}{\Delta_0}}
-     {\Junify{\Gamma_0, \decl{x}{D}}{\alpha}{\beta}{\Delta_0, \decl{x}{D}}}
+\Rule{\algUnify{\Gamma_0}{\alpha}{\beta}{\Delta_0}}
+     {\algUnify{\Gamma_0, \decl{x}{D}}{\alpha}{\beta}{\Delta_0, \decl{x}{D}}}
 \side{x \perp \{\alpha, \beta\} }
 $$
 
 $$
 \namer{Expand}
-\Rule{\Junify{\Gamma_0}{\tau}{\beta}{\Delta_0}}
-     {\Junify{\Gamma_0, \alpha \defn \tau}{\alpha}{\beta}{\Delta_0, \alpha \defn \tau}}
+\Rule{\algUnify{\Gamma_0}{\tau}{\beta}{\Delta_0}}
+     {\algUnify{\Gamma_0, \alpha \defn \tau}{\alpha}{\beta}{\Delta_0, \alpha \defn \tau}}
 \side{\alpha \neq \beta}
 $$
 
 $$
 \namer{Solve}
-\Rule{\Jinstantiate{\Gamma}{\alpha}{\tau}{\emptycontext}{\Delta}}
-     {\Junify{\Gamma}{\alpha}{\tau}{\Delta}}
+\Rule{\algInstantiate{\Gamma}{\alpha}{\tau}{\emptycontext}{\Delta}}
+     {\algUnify{\Gamma}{\alpha}{\tau}{\Delta}}
 %% \side{\tau \neq \alpha}
 \side{\tau \mathrm{~not~variable}}
 $$
 
 \bigskip
 
-\boxrule{\Jinstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}}
+\boxrule{\algInstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}}
 
 $$
 \namer{DefineS}
 % \Rule{\Gamma_0, \Xi \entails \tau \type}
-\Axiom{\Jinstantiate{\Gamma_0, \hole{\alpha}}{\alpha}{\tau}{\Xi}
+\Axiom{\algInstantiate{\Gamma_0, \hole{\alpha}}{\alpha}{\tau}{\Xi}
                    {\Gamma_0, \Xi, \alpha \defn \tau}}
 \side{\alpha \notin \FTV{\tau, \Xi}}
 $$
 
 $$
 \namer{IgnoreS}
-\Rule{\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\Xi}{\Delta_0}}
-     {\Jinstantiate{\Gamma_0, \decl{x}{D}}{\alpha}{\tau}{\Xi}{\Delta_0, \decl{x}{D}}}
+\Rule{\algInstantiate{\Gamma_0}{\alpha}{\tau}{\Xi}{\Delta_0}}
+     {\algInstantiate{\Gamma_0, \decl{x}{D}}{\alpha}{\tau}{\Xi}{\Delta_0, \decl{x}{D}}}
 \side{x \perp \FTV{\alpha, \tau, \Xi}}
 $$
 
 $$
 \namer{ExpandS}
-\Rule{\Junify{\Gamma_0, \Xi}{\upsilon}{\tau}{\Delta_0}}
-     {\Jinstantiate{\Gamma_0, \alpha \defn \upsilon}{\alpha}{\tau}{\Xi}
+\Rule{\algUnify{\Gamma_0, \Xi}{\upsilon}{\tau}{\Delta_0}}
+     {\algInstantiate{\Gamma_0, \alpha \defn \upsilon}{\alpha}{\tau}{\Xi}
                    {\Delta_0, \alpha \defn \upsilon}}
 \side{\alpha \notin \FTV{\tau, \Xi}}
 $$
 
 $$
 \namer{DependS}
-\Rule{\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\beta D, \Xi}{\Delta}}
-     {\Jinstantiate{\Gamma_0, \beta D}{\alpha}{\tau}{\Xi}{\Delta}}
+\Rule{\algInstantiate{\Gamma_0}{\alpha}{\tau}{\beta D, \Xi}{\Delta}}
+     {\algInstantiate{\Gamma_0, \beta D}{\alpha}{\tau}{\Xi}{\Delta}}
 \side{\alpha \neq \beta, \beta \in \FTV{\tau, \Xi}}
 $$
 
@@ -1344,7 +1324,7 @@ $$
 \end{figure}
 
 Observe that we have no rule in the situation where 
-$$\Jinstantiate{\Gamma_0, \alpha D}{\alpha}{\tau}{\Xi}{\Delta}
+$$\algInstantiate{\Gamma_0, \alpha D}{\alpha}{\tau}{\Xi}{\Delta}
 \mathrm{~with~} \alpha \in \FTV{\tau, \Xi}$$
 so the algorithm fails in this case. 
 This is an occurs check failure: $\alpha$ and $\tau$ cannot unify 
@@ -1402,7 +1382,7 @@ the proof is not neutral (using \name{Lookup}).
 $\Gamma \entails \upsilon \type \wedge \tau \type$ and
 $\Theta \entails \theta\upsilon \equiv \theta\tau$, then
 there is some context $\Delta$ such that
-$\Junify{\Gamma}{\upsilon}{\tau}{\Delta}$.
+$\algUnify{\Gamma}{\upsilon}{\tau}{\Delta}$.
 
 % with
 % $\theta : \Delta \lei \Theta$. That is, if a unifier for $\tau$ and $\upsilon$
@@ -1412,7 +1392,7 @@ $\Junify{\Gamma}{\upsilon}{\tau}{\Delta}$.
 $\Theta \entails \theta\alpha \equiv \theta\tau$ and
 the input conditions are satisfied,
 then there is some context $\Delta$ such that
-$\Jinstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$.
+$\algInstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$.
 \end{enumerate}
 \end{lemma}
 
@@ -1545,7 +1525,6 @@ Term variable declarations $\D_\TM$ are scheme assignments of the form
 $\asc \sigma$, with
 $\ok_\TM (\asc \sigma) = \sigma \scheme$.
 
-% Let $\Term$ be the set of terms, with syntax 
 The set of terms has syntax
 $$t ::= x ~||~ t~t ~||~ \lambda x . t ~||~ \letIn{x}{t}{t}$$
 and $s$, $t$, $w$ range over terms.
@@ -1645,13 +1624,13 @@ specify what happens when it finds a $\fatsemi$ separator if we want to retain
 completeness. We add the following algorithmic rules:
 $$
 \namer{Skip}
-\Rule{\Junify{\Gamma_0}{\alpha}{\beta}{\Delta_0}}
-     {\Junify{\Gamma_0 \fatsemi}{\alpha}{\beta}{\Delta_0 \fatsemi}}
+\Rule{\algUnify{\Gamma_0}{\alpha}{\beta}{\Delta_0}}
+     {\algUnify{\Gamma_0 \fatsemi}{\alpha}{\beta}{\Delta_0 \fatsemi}}
 $$
 $$
 \namer{Repossess}
-\Rule{\Jinstantiate{\Gamma_0}{\alpha}{\tau}{\Xi}{\Delta_0}}
-     {\Jinstantiate{\Gamma_0 \fatsemi}{\alpha}{\tau}{\Xi}{\Delta_0 \fatsemi}}
+\Rule{\algInstantiate{\Gamma_0}{\alpha}{\tau}{\Xi}{\Delta_0}}
+     {\algInstantiate{\Gamma_0 \fatsemi}{\alpha}{\tau}{\Xi}{\Delta_0 \fatsemi}}
 $$
 
 We must also update the structural induction in Lemma~\ref{lem:unifySound} to
@@ -1659,7 +1638,7 @@ show that adding the new rules preserves soundness and generality. For the
 \name{Skip} rule, correctness follows immediately from this lemma:
 
 \begin{lemma}
-If $\Jmin{\Gamma}{S}{\Delta}$ then $\Jmin{\Gamma \fatsemi}{S}{\Delta \fatsemi}$.
+If $\LEIStmt{\Gamma}{S}{\Delta}$ then $\LEIStmt{\Gamma \fatsemi}{S}{\Delta \fatsemi}$.
 \end{lemma}
 \begin{proof}
 If $\Gamma \lei \Delta$ then $\Gamma \fatsemi \lei \Delta \fatsemi$ by
@@ -1680,18 +1659,18 @@ thereby \scare{repossessing} them. Despite such complications,
 unification still yields a most general solution:
 
 \begin{lemma}[Soundness and generality of \name{Repossess} rule]
-If $\Jinstantiate{\Gamma \fatsemi}{\alpha}{\tau}{\Xi}{\Delta \fatsemi}$
+If $\algInstantiate{\Gamma \fatsemi}{\alpha}{\tau}{\Xi}{\Delta \fatsemi}$
 then $\tyvars{\Gamma \fatsemi \Xi} = \tyvars{\Delta \fatsemi}$ and
-$\Jmin{\Gamma \fatsemi \Xi}{\Puni{\alpha}{\tau}}{\Delta \fatsemi}$.
+$\LEIUnify{\Gamma \fatsemi \Xi}{\alpha}{\tau}{\Delta \fatsemi}$.
 \end{lemma}
 \begin{proof}
 We extend the structural induction in lemma~\ref{lem:unifySound} with an extra
 case. The only proof of
-$\Jinstantiate{\Gamma \fatsemi}{\alpha}{\tau}{\Xi}{\Delta \fatsemi}$,
+$\algInstantiate{\Gamma \fatsemi}{\alpha}{\tau}{\Xi}{\Delta \fatsemi}$,
 is by \name{Repossess}, so inversion gives
-$\Jinstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$.
+$\algInstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$.
 By induction, $\tyvars{\Gamma, \Xi} = \tyvars{\Delta}$ and
-$\Jmin{\Gamma, \Xi}{\Puni{\alpha}{\tau}}{\Delta}$.
+$\LEIUnify{\Gamma, \Xi}{\alpha}{\tau}{\Delta}$.
 
 We immediately observe that
 $$\tyvars{\Gamma \fatsemi \Xi} = \tyvars{\Gamma, \Xi} = \tyvars{\Delta}
@@ -1765,17 +1744,18 @@ one parameter of each mode (which may be unit or a product).
 % $\Gamma$.
 % \TODO{Clarify notation for statements and parameter values. What is $Q A$?}
 
+\TODO{We need this preorder on outputs too!}
 Let $I$ be a set of inputs closed under substitution. For a fixed context
 $\Gamma$, suppose we have a
-preorder $\ppre$ on $I$ written $\pprec{\Gamma}{\cdot}{\cdot}$. This induces a
-preorder on context-input pairs, with $\delta : \pple{\Gamma}{a}{\Delta}{b}$ if
-$\delta : \Gamma \lei \Delta$ and $\pprec{\Delta}{\delta a}{b}$.
+preorder on $I$ written $\leParam{\Gamma}{\cdot}{\cdot}$. This induces a
+preorder on context-input pairs, with $\delta : \leiParam{\Gamma}{a}{\Delta}{b}$ if
+$\delta : \Gamma \lei \Delta$ and $\leParam{\Delta}{\delta a}{b}$.
 
 An \define{$I$-indexed problem family} $x.Q$ with solutions in $J$ is a family
 of input values for a
 statement, indexed by elements of $I$, such that for all $a, a' \in I$, contexts
 $\Gamma$ and output values $b \in J$,
-$$\pprec{\Gamma}{a}{a'} ~\wedge~ \Gamma \entails Q[a'] b
+$$\leParam{\Gamma}{a}{a'} ~\wedge~ \Gamma \entails Q[a'] b
     \quad\Rightarrow\quad  \Gamma \entails Q[a] b,$$
 where we write $Q[a] b$ for the statement with input at index $a$ and output
 value $b$.
@@ -1792,14 +1772,14 @@ The conjunction of problems $\pconj{P}{x}{Q}$ generalises $P \wedge Q$ and allow
 the output of $P$ to be used in the input of $Q$; in this way it resembles a
 dependent sum type. We define
 $(\pconj{P}{x}{Q}) (a, b) = P a \wedge Q[a] b$.
-We compare solutions pointwise, so define $\pprec{\Gamma}{(a, b)}{(a', b')}$ to
-mean $\pprec{\Gamma}{a}{a'}$ and $\pprec{\Gamma}{b}{b'}$.
+We compare solutions pointwise, so define $\leParam{\Gamma}{(a, b)}{(a', b')}$ to
+mean $\leParam{\Gamma}{a}{a'}$ and $\leParam{\Gamma}{b}{b'}$.
 
-We write $\Pmin{\Gamma}{P}{a}{\Delta}$ if
+We write $\LEIProb{\Gamma}{P}{a}{\Delta}$ if
 $\Gamma \lei \Delta \entails P a$,
 and for all $\theta : \Gamma \lei \Theta$ and $b$ such that
 $\Delta \entails (\theta P) b$, we have
-$\zeta : \pple{\Delta}{a}{\Theta}{b}$ for some $\zeta$ such that
+$\zeta : \leiParam{\Delta}{a}{\Theta}{b}$ for some $\zeta$ such that
 $\theta \eqsubst \zeta \compose \iota$.
 
 This allows us to state the fully general version of
@@ -1808,9 +1788,9 @@ the Optimist's lemma:
 \begin{lemma}[The Optimist's lemma for inference problems]
 \label{lem:optimistInference}
 The following inference rule is admissible:
-$$\Rule{\Pmin{\Gamma}{P}{b}{\Delta}
-       \quad  \Pmin{\Delta}{Q[b]}{c}{\Theta}}
-       {\Pmin{\Gamma}{(\pconj{P}{x}{Q})}{(b, c)}{\Theta}}.$$
+$$\Rule{\LEIProb{\Gamma}{P}{b}{\Delta}
+       \quad  \LEIProb{\Delta}{Q[b]}{c}{\Theta}}
+       {\LEIProb{\Gamma}{(\pconj{P}{x}{Q})}{(b, c)}{\Theta}}.$$
 \end{lemma}
 \begin{proof}
 We have $\Gamma \lei \Theta$ by Lemma~\ref{lei:preorder}.
@@ -1822,19 +1802,19 @@ Now suppose there is some other solution
 $(\phi : \Gamma \lei \Phi, (b', c'))$, so
 $\Phi \entails (\phi P) b'$ and
 $\Phi \entails (\phi Q)[b'] c'$.
-Since $\Pmin{\Gamma}{P}{b}{\Delta}$, there exists
+Since $\LEIProb{\Gamma}{P}{b}{\Delta}$, there exists
 $\zeta : \Delta \lei \Phi$
-with $\pprec{\Phi}{\zeta b}{b'}$ and $\phi \eqsubst \zeta \compose \iota$.
+with $\leParam{\Phi}{\zeta b}{b'}$ and $\phi \eqsubst \zeta \compose \iota$.
 
 By definition of an indexed problem family,
 $\Phi \entails (\phi Q)[\zeta b] c'$
 and hence $\Phi \entails (\zeta (Q[b])) c'$.
-But $\Pmin{\Delta}{Q[b]}{c}{\Theta}$, so there exists
-$\xi : \Theta \lei \Phi$ such that $\pprec{\Phi}{\xi c}{c'}$
+But $\LEIProb{\Delta}{Q[b]}{c}{\Theta}$, so there exists
+$\xi : \Theta \lei \Phi$ such that $\leParam{\Phi}{\xi c}{c'}$
 and $\zeta \eqsubst \xi \compose \iota$.
 
-Hence $\xi : \Theta \lei \Phi$ and $\pprec{\Phi}{\xi (b, c)}{(b', c')}$
-so $\xi : \pple{\Theta}{(b, c)}{\Phi}{(b', c')}$. Moreover
+Hence $\xi : \Theta \lei \Phi$ and $\leParam{\Phi}{\xi (b, c)}{(b', c')}$
+so $\xi : \leiParam{\Theta}{(b, c)}{\Phi}{(b', c')}$. Moreover
 $\phi \eqsubst \zeta \compose \iota
       \eqsubst (\xi \compose \iota) \compose \iota
       \eqsubst \xi \compose \iota$
@@ -1847,14 +1827,14 @@ so we are done.
 \TODO{Does this order of material make sense? We need more context here.}
 
 When the output is a scheme, we define
-$\pprec{\Gamma}{\gen{\Xi}{\tau}}{\gen{\Psi}{\upsilon}}$
+$\leParam{\Gamma}{\gen{\Xi}{\tau}}{\gen{\Psi}{\upsilon}}$
 if there is some $\psi : \Gamma \fatsemi \Xi \lei \Gamma \fatsemi \Psi$
 such that $\Gamma \fatsemi \Psi \entails \psi \tau \equiv \upsilon$
 and $\psi ||_\Gamma \eqsubst \iota$.
 
 When the output is a type, we just instantiate the above definition with
 $\Xi = \emptycontext = \Psi$, i.e.\ we have
-$\pprec{\Gamma}{\tau}{\upsilon}$
+$\leParam{\Gamma}{\tau}{\upsilon}$
 if $\Gamma \entails \tau \equiv \upsilon$.
 
 Thus the type inference problem is given by a context $\Gamma$ and the
@@ -1872,8 +1852,8 @@ This allows us to prove the following:
 \label{lem:generalist}
 This rule is admissible:
 $$
-\Rule{\Pmin{\Gamma \fatsemi}{t :}{\tau}{\Delta \fatsemi \Xi}}
-     {\Pmin{\Gamma}{t \hasscheme}{\gen{\Xi}{\tau}}{\Delta}}
+\Rule{\LEIInfer{\Gamma \fatsemi}{t}{\tau}{\Delta \fatsemi \Xi}}
+     {\LEIInferScheme{\Gamma}{t}{\gen{\Xi}{\tau}}{\Delta}}
 $$
 \end{lemma}
 \begin{proof}
@@ -1887,14 +1867,15 @@ For minimality, suppose $\theta : \Gamma \lei \Theta$ is an information increase
 and $\gen{\Psi}{\upsilon}$ is a scheme such that
 $\Theta \entails t \hasscheme \gen{\Psi}{\upsilon}$.
 Then $\Theta, \Psi \entails t : \upsilon$. Now
-$\theta : \Gamma \fatsemi \lei \Theta \fatsemi \Psi \entails t : \upsilon$,
+$\theta : \Gamma \fatsemi \lei \Theta \fatsemi \Psi$
+and $\Theta \fatsemi \Psi \entails t : \upsilon$,
 so by minimality of the hypothesis there is a substitution
 $\zeta : \Delta \fatsemi \Xi \lei \Theta \fatsemi \Psi$ such that
 $\theta \equiv \zeta \compose \iota$ and
 $\Theta \fatsemi \Psi \entails \zeta\tau \equiv \upsilon$.
 Then $\zeta ||_\Delta : \Delta \lei \Theta$,
 $\theta \eqsubst \zeta ||_\Delta \compose \iota : \Gamma \lei \Delta$ and
-$\pprec{\Theta}{\theta\gen{\Xi}{\tau}}{\gen{\Psi}{\upsilon}}$.
+$\leParam{\Theta}{\theta\gen{\Xi}{\tau}}{\gen{\Psi}{\upsilon}}$.
 \end{proof}
 
 
@@ -1932,7 +1913,7 @@ $$
 
 $$
 \Rule{
-      s \hasscheme \OutParam{\sigma}
+      s \hasscheme \sigma
       \quad
       \Sbind{x \asc \sigma}{\Pinf{w}{\tau}}
      }
@@ -1961,8 +1942,8 @@ with the equation allows the same type to be assigned in the old system.
 \TODO{Segue...}
 
 We define 
-   the scheme inference assertion $\Jscheme{\Gamma}{t}{\sigma}{\Delta}$ and 
-   the type inference assertion $\Jtype{\Gamma}{t}{\tau}{\Delta}$
+   the scheme inference assertion $\algInferScheme{\Gamma}{t}{\sigma}{\Delta}$ and 
+   the type inference assertion $\algInfer{\Gamma}{t}{\tau}{\Delta}$
 % (inferring the type of $t$ in $\Gamma_0$ yields $\tau$ in the more informative
 % context $\Gamma_1$)
 by the rules in Figure~\ref{fig:inferRules}.
@@ -1976,50 +1957,50 @@ subsection~\ref{sec:inferImplementation}.
 % output \ensuremath{\Gamma, \Xi} is well-formed.
 
 \begin{figure}[ht]
-\boxrule{\Jscheme{\Gamma}{s}{\sigma}{\Delta}}
+\boxrule{\algInferScheme{\Gamma}{s}{\sigma}{\Delta}}
 
 $$
 \namer{Gen}
-\Rule{\Jtype{\Gamma \fatsemi}{s}{\upsilon}{\Delta \fatsemi \Xi}}
-     {\Jscheme{\Gamma}{s}{\gen{\Xi}{\upsilon}}{\Delta}}
+\Rule{\algInfer{\Gamma \fatsemi}{s}{\upsilon}{\Delta \fatsemi \Xi}}
+     {\algInferScheme{\Gamma}{s}{\gen{\Xi}{\upsilon}}{\Delta}}
 $$ 
 
-\boxrule{\Jtype{\Gamma}{t}{\tau}{\Delta}}
+\boxrule{\algInfer{\Gamma}{t}{\tau}{\Delta}}
 
 $$
 \namer{Var}
 \Rule{x \asc \gen{\Xi}{\upsilon} \in \Gamma}
-     {\Jtype{\Gamma}{x}{\upsilon}{\Gamma, \Xi}}
+     {\algInfer{\Gamma}{x}{\upsilon}{\Gamma, \Xi}}
 $$
 
 $$
 \namer{Abs}
-\Rule{\Jtype{\Gamma, \hole{\alpha}, x \asc \gendot{\alpha}}{w}{\upsilon}
+\Rule{\algInfer{\Gamma, \hole{\alpha}, x \asc \gendot{\alpha}}{w}{\upsilon}
           {\Delta_0, x \asc \gendot{\alpha}, \Xi}}
-     {\Jtype{\Gamma}{\lambda x.w}{\alpha \arrow \upsilon}{\Delta_0, \Xi}}
+     {\algInfer{\Gamma}{\lambda x.w}{\alpha \arrow \upsilon}{\Delta_0, \Xi}}
 \side{\alpha \notin \tyvars{\Gamma}}
 $$
 
 $$
 \namer{App}
-\BigRule{\Jtype{\Gamma}{f}{\chi}{\Delta_0}
+\BigRule{\algInfer{\Gamma}{f}{\chi}{\Delta_0}
          \quad
-         \Jtype{\Delta_0}{a}{\upsilon}{\Delta_1}}
-        {\Junify{\Delta_1, \hole{\beta}}{\chi}{\upsilon \arrow \beta}{\Delta}}
-        {\Jtype{\Gamma}{f a}{\beta}{\Delta}}
+         \algInfer{\Delta_0}{a}{\upsilon}{\Delta_1}}
+        {\algUnify{\Delta_1, \hole{\beta}}{\chi}{\upsilon \arrow \beta}{\Delta}}
+        {\algInfer{\Gamma}{f a}{\beta}{\Delta}}
 \side{\beta \notin \tyvars{\Delta_1}}
 $$
 
 $$
 \namer{Let}
-\BigRule%%%{\Jtype{\Gamma \fatsemi}{s}{\upsilon}{\Delta_0 \fatsemi \Xi_0}}
-        %%%{\Jtype{\Delta_0, x \asc \gen{\Xi_0}{\upsilon}}{w}{\chi}
+\BigRule%%%{\algInfer{\Gamma \fatsemi}{s}{\upsilon}{\Delta_0 \fatsemi \Xi_0}}
+        %%%{\algInfer{\Delta_0, x \asc \gen{\Xi_0}{\upsilon}}{w}{\chi}
         %%%       {\Delta_1, x \asc \gen{\Xi_0}{\upsilon}, \Xi_1}}
-        %%%{\Jtype{\Gamma}{\letIn{x}{s}{w}}{\chi}{\Delta_1, \Xi_1}}
-        {\Jscheme{\Gamma}{s}{\sigma}{\Delta_0}}
-        {\Jtype{\Delta_0, x \asc \sigma}{w}{\chi}
+        %%%{\algInfer{\Gamma}{\letIn{x}{s}{w}}{\chi}{\Delta_1, \Xi_1}}
+        {\algInferScheme{\Gamma}{s}{\sigma}{\Delta_0}}
+        {\algInfer{\Delta_0, x \asc \sigma}{w}{\chi}
                {\Delta_1, x \asc \sigma, \Xi_1}}
-        {\Jtype{\Gamma}{\letIn{x}{s}{w}}{\chi}{\Delta_1, \Xi_1}}
+        {\algInfer{\Gamma}{\letIn{x}{s}{w}}{\chi}{\Delta_1, \Xi_1}}
 $$
 
 \caption{Algorithmic rules for type inference}
@@ -2028,10 +2009,6 @@ $$
 
 
 \subsection{Soundness and completeness}
-
-% We say $\Theta$ is a \define{subcontext} of $\Gamma$, written
-% $\Theta \subcontext \Gamma$, if $\Gamma = \Theta; \Gamma'$ for some context
-% extension $\Gamma'$.
 
 Recall that we defined $\sem{x \asc \sigma}_\TM = x \hasscheme \sigma$, so
 $\Gamma \lei \Delta$ requires $\Delta$ to assign a term variable all the types
@@ -2059,21 +2036,22 @@ does (modulo substitution). Since the unification algorithm ignores term
 variables, it is easy to see that all the previous results hold if we
 replace $\lei$ with $\leiR$ throughout.
 
-Corresponding to $\ppre$, we write $\delta : (\Gamma, a) \ppreR (\Delta, b)$
-if $\delta : \Gamma \leiR \Delta$ and $\Delta \entails \delta a \ppre b$.
+Corresponding to $\leiParam{\Gamma}{a}{\Delta}{b}$, we write
+$\delta : \leiRParam{\Gamma}{a}{\Delta}{b}$
+if $\delta : \Gamma \leiR \Delta$ and $\leParam{\Delta}{\delta a}{b}$.
 
-Corresponding to $\Pmin{\Gamma}{P}{a}{\Delta}$, we write
-$\PminR{\Gamma}{P}{a}{\Delta}$ if $\Gamma \leiR \Delta \entails P a$, and for any
+Corresponding to $\LEIProb{\Gamma}{P}{a}{\Delta}$, we write
+$\LEIRProb{\Gamma}{P}{a}{\Delta}$ if $\Gamma \leiR \Delta \entails P a$, and for any
 $\theta : \Gamma \leiR \Theta$ such that $\Theta \entails (\theta P) b$ we have
-$\zeta : (\Delta, a) \ppreR (\Theta, b)$ for some $\zeta$ such that
+$\zeta : \leiRParam{\Delta}{a}{\Theta}{b}$ for some $\zeta$ such that
 $\theta \eqsubst \zeta \compose \iota$.
 
 \TODO{Why do the Optimist's and Generalist's lemmas still hold?}
 
 \begin{lemma}[Soundness of type inference]
 \label{lem:inferSound}
-If $\Jtype{\Gamma}{t}{\upsilon}{\Delta}$ then
-$\Gamma \leiR \Delta \entails t : \upsilon$.
+If $\algInfer{\Gamma}{t}{\upsilon}{\Delta}$ then
+$\Gamma \leiR\Delta$ and $\Delta \entails t : \upsilon$.
 \end{lemma}
 \begin{proof}
 By induction on the structure of derivations.
@@ -2087,14 +2065,14 @@ declarative system. \TODO{Say more about \name{Let} and \name{Gen}?}
 \label{lem:inferComplete}
 If $t$ can be assigned a type in a more informative context, i.e.\ if there exist
 $\theta : \Gamma \leiR \Theta$ and $\tau$ such that $\Theta \entails t : \tau$,
-then $\Jtype{\Gamma}{t}{\upsilon}{\Delta}$
+then $\algInfer{\Gamma}{t}{\upsilon}{\Delta}$
 for some type $\upsilon$ and context $\Delta$.
 \TODO{Need same thing about type schemes as well.}
 
 Moreover, there is a substitution $\zeta : \Delta \leiR \Theta$ such that
 $\Theta \entails \zeta\upsilon \equiv \tau$ and
 $\theta \eqsubst \zeta \compose \iota$. It follows immediately that
-$\PminR{\Gamma}{t :}{\upsilon}{\Delta}$ since the output of the algorithm does
+$\LEIRInfer{\Gamma}{t}{\upsilon}{\Delta}$ since the output of the algorithm does
 not depend on $\theta$ or $\tau$.
 \end{lemma}
 \begin{proof}
