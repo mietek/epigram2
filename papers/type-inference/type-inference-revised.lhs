@@ -192,7 +192,7 @@
 \newcommand{\hasscheme}{\ensuremath{::}}
 \newcommand{\subcontext}{\ensuremath{\subset}}
 \newcommand{\semidrop}{\downharpoonright}
-\newcommand{\Sbind}[2]{(#1 \Yright #2)}
+\newcommand{\Sbind}[2]{#1 \Yright #2}
 \newcommand{\spec}{\ensuremath{\succ}}
 
 \newcommand{\define}[1]{\emph{#1}}
@@ -1501,12 +1501,12 @@ Now $\delta : \Gamma, \decl{y}{D} \lei \Delta, \decl{y}{(\delta D)}$
 (with $y$ mapped to itself)
 so by stability of $S$ we have $\Delta, \decl{y}{(\delta D)} \entails \delta S$.
 Hence $\Delta \entails \Sbind{\decl{x}{(\delta D)}}{\delta S}$
-and so $\Delta \entails \delta \Sbind{\decl{x}{D}}{S}$.
+and so $\Delta \entails \delta (\Sbind{\decl{x}{D}}{S})$.
 \end{proof}
 
 We write $\Sbind{\Xi}{S}$ where $\Xi$ is a list of declarations, defining
 $\Sbind{\emptycontext}{S} = S$ and
-$\Sbind{(\Xi, \decl{x}{D})}{S} = \Sbind{\Xi}{\Sbind{\decl{x}{D}}{S}}$.
+$\Sbind{(\Xi, \decl{x}{D})}{S} = \Sbind{\Xi}{(\Sbind{\decl{x}{D}}{S})}$.
 
 \TODO{Sanity conditions for binding statements?}
 
