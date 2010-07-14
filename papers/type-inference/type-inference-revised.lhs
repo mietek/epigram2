@@ -1170,7 +1170,7 @@ substitution.
 
 We now present the algorithm formally. The structural rule means that
 whenever we have rigid $\arrow$ symbols on each side, we decompose the problem
-into two subproblems, and thanks to the Optimist's Lemma we can solve these
+into two subproblems, and thanks to the Optimist's lemma we can solve these
 sequentially. Otherwise, we either have variables on both sides, or a variable
 on one side and a type on the other. In each case, we look at the next type
 variable in the context to see what information it gives us, and either solve
@@ -1205,9 +1205,7 @@ must satisfy
 \item $\beta \in \tyvars{\Xi} \Rightarrow \beta \in \FTV{\tau, \Xi}$.
 \end{itemize}
 
-By inspecting the rules, we observe that each rule preserves correct and minimal
-solutions (using the Optimist's Lemma for the \name{Decompose} rule), so we
-obtain the following lemma.
+\TODO{Chat about this lemma. Perhaps it needs to come slightly later?}
 
 \begin{lemma}[Soundness and generality of unification]
 \label{lem:unifySound}
