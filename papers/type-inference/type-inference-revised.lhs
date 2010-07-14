@@ -1919,6 +1919,7 @@ introduced. If an application has a type in the old system, it can be assigned
 the same type in the new system with the equation being reflexive. Conversely,
 if an application has a type in the new system, then using the conversion
 with the equation allows the same type to be assigned in the old system.
+\TODO{Make this a lemma?}
 
 \TODO{Segue...}
 
@@ -2021,38 +2022,75 @@ does (modulo substitution). Since the unification algorithm ignores term
 variables, it is easy to see that all the previous results hold if we
 replace $\lei$ with $\leiR$ throughout.
 
+Corresponding to $\Jmin{\Gamma}{S}{\Delta}$, we write
+$\JminR{\Gamma}{S}{\Delta}$ if $\iota : \Gamma \leiR \Delta$, and for any
+$\theta : \Gamma \leiR \Theta$ such that $\Theta \entails \theta S$ we
+have $\zeta : \Delta \leiR \Theta$ with
+$\theta \eqsubst \zeta \compose \iota$.
+\TODO{Update with notation for inference problems. Why does the Optimist's
+lemma still hold?}
 
 \begin{lemma}[Soundness of type inference]
 \label{lem:inferSound}
 If $\Jtype{\Gamma}{t}{\upsilon}{\Delta}$ then
-$\iota : \Gamma \leiR \Delta$ and $\Delta \entails \Pinf{t}{\upsilon}$.
+$\Gamma \leiR \Delta \entails t : \upsilon$.
 \end{lemma}
-
 \begin{proof}
-% Suppose $\Jtype{\Gamma}{t}{\upsilon}{\Delta}$.
 By induction on the structure of derivations.
-% It is straightforward to verify that $\iota : \Gamma \leiR \Delta$ and
-% $\Delta \entails \upsilon \type \wedge t : \upsilon$.
+The rules correspond directly to rules in Figure~\ref{fig:transformedRules},
+so if the algorithm infers a type then it can be assigned in the transformed
+declarative system. \TODO{Say more about \name{Let} and \name{Gen}?}
 \end{proof}
 
 
 \begin{lemma}[Completeness and generality of type inference]
 \label{lem:inferComplete}
-If $\theta : \Gamma \leiR \Theta$ and $\Theta \entails t : \tau$ then
-$\JminR{\Gamma}{\Pinf{t}{\upsilon}}{\Delta}$
+If $t$ can be assigned a type in a more informative context, i.e.\ if there exist
+$\theta : \Gamma \leiR \Theta$ and $\tau$ such that $\Theta \entails t : \tau$,
+then $\Jtype{\Gamma}{t}{\upsilon}{\Delta}$
 for some type $\upsilon$ and context $\Delta$.
+\TODO{Need same thing about type schemes as well.}
+
+Moreover, there is a substitution $\zeta : \Delta \leiR \Theta$ such that
+$\Theta \entails \zeta\upsilon \equiv \tau$ and
+$\theta \eqsubst \zeta \compose \iota$. It follows immediately that
+$\JminR{\Gamma}{t : \upsilon}{\Delta}$ since the output of the algorithm does
+not depend on $\theta$ or $\tau$.
 \end{lemma}
+\begin{proof}
+The algorithm is structurally recursive over terms, so it must terminate.
+Each step locally preserves all possible solutions, and
+it fails only when unification fails or a term variable is not in scope.
+We proceed by induction on the derivation of $\Theta \entails t : \tau$ in the
+transformed rule system, noting that for each rule this ensures the inductive
+hypothesis applies. Without loss of generality, we ignore the conversion rule,
+as we are only working up to equivalence of types.
 
+If $t = x$ is a variable, then the proof of $\Theta \entails x : \tau$ must
+consist of applying
+$\Theta \entailsN x \hasscheme \gen{\theta\Xi}{\theta\upsilon}$
+to some $\Theta$-types, so it determines a map from the unbound type variables
+of $\Xi$ to types over $\Theta$, and hence a substitution
+$\zeta : \Gamma, \Xi \leiR \Theta$ that agrees with $\theta$ on $\Gamma$ and
+maps type variables in $\Xi$ to their definitions in $\Theta$.
 
-\begin{proof}[Sketch]
-The algorithm is structurally recursive over terms, failing only when
-unification fails or a term variable is not in scope.
-Each step locally preserves all possible solutions.
+If $t = (\letIn{x}{s}{w})$...
 For let-expressions, observe that any type specialising any scheme
 for $s$ must certainly specialise the type we infer for $s$, and
 \emph{ipso facto}, the principal type scheme we assign to $x$.
-For details, see Appendix.
-\TODO{No, prove this here.}
+\TODO{More!}
+
+If $t = \lambda x . w$ is an abstraction, then the proof in the declarative
+system gives
+$\Theta, \alpha \defn \upsilon, x \asc \gendot{\alpha} \entails w : \chi$
+and the inductive hypothesis applies immediately.
+\TODO{Observation about permuting $x$ past $\Xi$?}
+
+If $t = f a$ is an application, then we can apply the Optimist's lemma twice
+and use the hypotheses.
+\TODO{Explain why indexed problem condition is satisfied.}
+\TODO{There is a subtlety here about $\beta$ being an output.}
+
 \end{proof}
 
 
