@@ -1863,7 +1863,7 @@ type $\tau$ such that $\Delta \entails \tau \type \wedge t : \tau$.
 
 
 
-\subsection{Transforming the rule system for type assignment}
+\subsection{Transforming type assignment into type inference}
 
 To transform a rule into an algorithmic form, we proceed clockwise starting from
 the conclusion. For each hypothesis, we must ensure that the problem is fully
@@ -1871,88 +1871,56 @@ specified, inserting variables to stand for unknown problem inputs. Moreover, we
 cannot pattern match on problem outputs, so we ensure there are schematic
 variables in output positions, fixing things up with appeals to unification. 
 
-Consider the rule for application:
-$$\Rule{\Pinf{f}{\upsilon \arrow \tau}  \quad  \Pinf{a}{\upsilon}}
-       {\Pinf{f a}{\tau}}.$$
-Since we cannot match on the output of the first subproblem, we use a
-metavariable instead and add a unification constraint, giving
-$$\Rule{\Pinf{f}{\chi}  \quad \Pinf{a}{\upsilon}
-            \quad  \Puni{\chi}{\upsilon \arrow \tau}}
-       {\Pinf{f a}{\tau}}.$$
-Furthermore, $\tau$ is an input to the unification problem, but it is not
-determined by the previous inputs or outputs, so we have to bind a fresh variable
-$\beta$ instead to give the algorithmic version
-$$\Rule{\Pinf{f}{\chi}
+Figure~\ref{fig:transformedRules} shows the transformed version of the
+declarative rule system. The rule for $\lambda$-abstractions now binds a fresh
+type variable for the argument type, which we will replace with an unknown
+in the algorithm. The rule for application assigns types to the function and
+argument separately, then inserts an equation with a fresh variable for the
+codomain type.
+
+\begin{figure}[ht]
+\boxrule{t : \tau}
+
+$$\Rule{\Sbind{\beta \defn \upsilon, x \asc \gendot{\beta}}{\Pinf{t}{\tau}}}
+       {\Pinf{\lambda x . t}{\upsilon \arrow \tau}}
+\qquad
+\Rule{\Pinf{f}{\chi}
         \quad
         \Pinf{a}{\upsilon}
         \quad
         \Sbind{\beta \defn \tau}{\Puni{\chi}{\upsilon \arrow \beta}}
        }
-       {\Pinf{f a}{\tau}}.$$
-
-
-%if False
-assuming $\beta$ is a fresh variable. Now the algorithmic version uses input and
-output contexts, with $\beta$ initially unknown:
+       {\Pinf{f a}{\tau}}
 $$
-\Rule{\Jtype{\Gamma_0}{f}{\chi}{\Gamma_1}
-         \quad
-         \Jtype{\Gamma_1}{a}{\upsilon}{\Gamma_2}
-         \quad
-         \Junify{\Gamma_2, \hole{\beta}}{\chi}{\upsilon \arrow \beta}{\Gamma_3}}
-        {\Jtype{\Gamma_0}{f a}{\beta}{\Gamma_3}}
-$$
-%endif
 
-
-The rule for abstraction is
-$$\Rule{\Sbind{x \asc \gendot{\upsilon}}{\Pinf{t}{\tau}}}
-       {\Pinf{\lambda x . t}{\upsilon \arrow \tau}}$$
-which has unknown input $\upsilon$, so we bind a fresh variable $\beta$
-to give
-$$\Rule{\Sbind{\beta \defn \upsilon}{\Sbind{x \asc \gendot{\beta}}{\Pinf{t}{\tau}}}}
-       {\Pinf{\lambda x . t}{\upsilon \arrow \tau}}.$$
-
-% and hence
-% $$
-% \Rule{\Jtype{\Gamma_0, \hole{\beta}, x \asc \gendot{\beta}}{t}{\tau}
-%           {\Gamma_1, x \asc \gendot{\beta}, \Xi}}
-%      {\Jtype{\Gamma_0}{\lambda x.t}{\beta \arrow \tau}{\Gamma_1, \Xi}}
-% $$
-
-
-The let rule is
 $$
 \Rule{
       s \hasscheme \OutParam{\sigma}
       \quad
       \Sbind{x \asc \sigma}{\Pinf{w}{\tau}}
      }
-     {\Pinf{\letIn{x}{s}{w}}{\tau}}.
-$$
-Writing $\sigma = \gen{\Xi}{\upsilon}$ and expanding the definition of
-$\hasscheme$, we obtain
-$$
-\Rule{
-      \Sbind{\Xi}{\Pinf{s}{\upsilon}}
+     {\Pinf{\letIn{x}{s}{w}}{\tau}}
+\qquad
+\Rule{t : \tau
       \quad
-      \Sbind{x \asc \gen{\Xi}{\upsilon}}{\Pinf{w}{\tau}}
-     }
-     {\Pinf{\letIn{x}{s}{w}}{\tau}}.
+      \tau \equiv \upsilon}
+     {t : \upsilon}
 $$
 
+\caption{Transformed rules for type assignment}
+\label{fig:transformedRules}
+\end{figure}
 
-But how can we find $\Xi$?
-This is where 
-   we use 
-the $\fatsemi$ separator.  
-%%%becomes necessary. 
-Instead of an
-unknown list of type variables, we just add a $\fatsemi$ to the context, 
-infer the type of $s$, then generalise its type 
-by \scare{skimming off} type
-variables from the top of the context until the $\fatsemi$ is reached.
+We must verify that the rule systems in Figures~\ref{fig:typeAssignmentRules}
+and \ref{fig:transformedRules} are equivalent. This is mostly straightforward,
+as the fresh variable bindings can be substituted out.
+The only difficulty is in the application rule, where an equation has been
+introduced. If an application has a type in the old system, it can be assigned
+the same type in the new system with the equation being reflexive. Conversely,
+if an application has a type in the new system, then using the conversion
+with the equation allows the same type to be assigned in the old system.
 
+\TODO{Segue...}
 
 We define 
    the scheme inference assertion $\Jscheme{\Gamma}{t}{\sigma}{\Delta}$ and 
@@ -1965,13 +1933,9 @@ algorithm, leading naturally to an implementation, given in
 subsection~\ref{sec:inferImplementation}.
 
 %%%\TODO{Say something about freshness of $\Xi$ in \name{Var} rule.}
-We use Lemma~\ref{lem:specialise} to ensure in rule \name{Var} that
-we compute a suffix \(\Xi\) consisting of fresh names, such that the
-output \ensuremath{\Gamma, \Xi} is well-formed.
-\TODO{``Scheme prefix becomes context suffix.''}
-
-\TODO{Add rule for $\hasscheme$ explicitly, related to declarative version.
-Various possible layouts, so experiment.}
+% We use Lemma~\ref{lem:specialise} to ensure in rule \name{Var} that
+% we compute a suffix \(\Xi\) consisting of fresh names, such that the
+% output \ensuremath{\Gamma, \Xi} is well-formed.
 
 \begin{figure}[ht]
 \boxrule{\Jscheme{\Gamma}{s}{\sigma}{\Delta}}
