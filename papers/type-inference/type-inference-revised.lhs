@@ -1225,16 +1225,23 @@ $\Jmin{\Gamma, \Xi}{\tau \equiv \upsilon}{\Delta}$.
 \begin{proof}
 By induction on the structure of derivations.
 For each rule, we verify that it preserves the set of type variables and
-that $\iota : \Gamma \lei \Delta$ (i.e.\ it increases information between its
-context input and output).
+that $\Gamma \lei \Delta$.
 
-Solutions to $\tau_0 \arrow \tau_1 \equiv \upsilon_0 \arrow \upsilon_1$ are
-exactly those that solve
-$\tau_0 \equiv \upsilon_0 \wedge \tau_1 \equiv \upsilon_1$, so \name{Decompose}
-gives a minimal solution by the Optimist's lemma.
+To show minimality, it suffices to assume there is some
+$\theta : \Gamma \lei \Theta$ such that
+$\Theta \entails \theta\tau \equiv \theta\upsilon$, and show
+$\theta : \Delta \lei \Theta$. As the type variables of $\Gamma$ are
+the same as $\Delta$, we simply note that definitions in $\Delta$ hold as
+equations in $\Theta$ for each rule that rewrites or solves the problem.
 
+The only rule not in this form is \name{Decompose}, but solutions to
+$\tau_0 \arrow \tau_1 \equiv \upsilon_0 \arrow \upsilon_1$ are exactly those
+that solve $\tau_0 \equiv \upsilon_0 \wedge \tau_1 \equiv \upsilon_1$,
+so it gives a minimal solution by the Optimist's lemma.
 
-\TODO{More...}
+\TODO{Do we need to say more about part (b)? Should we comment somewhere about
+keeping things right not being necessary for generality at the moment, but
+arising later?}
 \end{proof}
 
 
@@ -1252,9 +1259,7 @@ The rules \name{Define} and \name{Expand} have
 symmetric counterparts, identical apart from interchanging the equated
 terms in the conclusion. Usually we will ignore these without loss of generality.
 
-\TODO{Rearrange rules?}
-
-\begin{figure}[t]
+\begin{figure}[ht]
 \boxrule{\Junify{\Gamma}{\tau}{\upsilon}{\Delta}}
 
 $$
