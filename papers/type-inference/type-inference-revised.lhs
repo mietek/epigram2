@@ -1194,17 +1194,16 @@ must satisfy
 
 \begin{lemma}[Soundness and generality of unification]
 \label{lem:unifySound}
-
 \begin{enumerate}[(a)]
 \item If $\algUnify{\Gamma}{\tau}{\upsilon}{\Delta}$, then
 $\tyvars{\Gamma} = \tyvars{\Delta}$ and
 $\LEIStmt{\Gamma}{\tau \equiv \upsilon}{\Delta}$.
-
 \item If
 $\algInstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$, then
 $\tyvars{\Gamma, \Xi} = \tyvars{\Delta}$ and
-$\LEIStmt{\Gamma, \Xi}{\tau \equiv \upsilon}{\Delta}$.
+$\LEIStmt{\Gamma, \Xi}{\alpha \equiv \tau}{\Delta}$.
 \end{enumerate}
+
 \end{lemma}
 \begin{proof}
 By induction on the structure of derivations.
