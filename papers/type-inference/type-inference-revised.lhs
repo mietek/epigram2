@@ -1895,7 +1895,7 @@ $\zeta : \Delta \fatsemi \Xi \lei \Theta \fatsemi \Psi$ such that
 $\theta \equiv \zeta \compose \iota$ and
 $\Theta \fatsemi \Psi \entails \zeta\tau \equiv \upsilon$.
 Then $\restrict{\zeta}{\Delta} : \Delta \lei \Theta$,
-$\theta \eqsubst \restrict{zeta}{\Delta} \compose \iota : \Gamma \lei \Delta$ and
+$\theta \eqsubst \restrict{\zeta}{\Delta} \compose \iota : \Gamma \lei \Delta$ and
 $\leParam{\Theta}{\theta\gen{\Xi}{\tau}}{\gen{\Psi}{\upsilon}}$.
 \end{proof}
 
