@@ -2145,80 +2145,65 @@ $\theta \eqsubst \zeta \compose \iota$.
 
 \TODO{Why do the Optimist's and Generalist's lemmas still hold?}
 
-
-\TODO{Rewrite the soundness, completeness and generality proofs for type
-inference. The point is that our algorithmic rules mirror the transformed set of
-declarative rules, which ensures all three properties.
-Soundness follows because every step in our algorithm corresponds directly to
-a proof in the transformed declarative rules.
-Completeness follows because if a type can be assigned in some context,
-inverting the declarative rule shows that the algorithmic rule applies and its
-hypotheses are satisfied for the induction.
-Generality follows from the lemmas we have previously proved (Optimist,
-Generalist, binding) which say that we can put hats on all the steps.
-Explain this all at a high level, then do one generality step in detail (let?)}
+Since the algorithmic rules correspond directly to the transformed declarative
+system in Figure~\ref{fig:transformedRules}, we can easily prove soundness,
+completeness and generality of type inference with respect to this system.
+Each proof is by induction on the structure of derivations, observing that each
+algorithmic rule maintains the appropriate properties.
 
 \begin{lemma}[Soundness of type inference]
 \label{lem:inferSound}
-If $\algInfer{\Gamma}{t}{\upsilon}{\Delta}$ then
-$\Gamma \leiR\Delta$ and $\Delta \entails t : \upsilon$.
+If $P$ is a type or scheme inference problem, and $\alg{\Gamma}{P}{\Delta}{a}$,
+then $\Gamma \leiR\Delta$ and $\Delta \entails P a$.
 \end{lemma}
 \begin{proof}
-By induction on the structure of derivations.
-The rules correspond directly to rules in Figure~\ref{fig:transformedRules},
-so if the algorithm infers a type then it can be assigned in the transformed
-declarative system. \TODO{Say more about \name{Let} and \name{Gen}?}
+We maintain this property as an invariant in all the rules.
 \end{proof}
 
-
-\begin{lemma}[Completeness and generality of type inference]
-\label{lem:inferComplete}
-If $t$ can be assigned a type in a more informative context, i.e.\ if there exist
-$\theta : \Gamma \leiR \Theta$ and $\tau$ such that $\Theta \entails t : \tau$,
-then $\algInfer{\Gamma}{t}{\upsilon}{\Delta}$
-for some type $\upsilon$ and context $\Delta$.
-\TODO{Need same thing about type schemes as well.}
-
-Moreover, there is a substitution $\zeta : \Delta \leiR \Theta$ such that
-$\Theta \entails \zeta\upsilon \equiv \tau$ and
-$\theta \eqsubst \zeta \compose \iota$. It follows immediately that
-$\LEIRInfer{\Gamma}{t}{\upsilon}{\Delta}$ since the output of the algorithm does
-not depend on $\theta$ or $\tau$.
+\begin{lemma}[Generality of type inference]
+\label{lem:inferGeneral}
+If $P$ is a type or scheme inference problem, and $\alg{\Gamma}{P}{\Delta}{a}$,
+then $\LEIRProb{\Gamma}{P}{\Delta}{a}$.
 \end{lemma}
 \begin{proof}
-The algorithm is structurally recursive over terms, so it must terminate.
-Each step locally preserves all possible solutions, and
-it fails only when unification fails or a term variable is not in scope.
-We proceed by induction on the derivation of $\Theta \entails t : \tau$ in the
-transformed rule system, noting that for each rule this ensures the inductive
-hypothesis applies. Without loss of generality, we ignore the conversion rule,
-as we are only working up to equivalence of types.
+Thanks to soundness (lemma~\ref{lem:inferSound}) it only remains to show that
+each algorithmic rule becomes admissible if we replace $\transto$ with $\LEIR$.
+\TODO{How to phrase this?}
+All the work has been done in proving the previous lemmas.
 
-If $t = x$ is a variable, then the proof of $\Theta \entails x : \tau$ must
-consist of applying
+The Generalist's lemma proves exactly the property required for the \name{Gen}
+rule. 
+The \name{Abs} rule is minimal by lemmas~\ref{lem:bindVariableProblem} and
+\ref{lem:inventVariableProblem}.
+The \name{App} rule is minimal by two uses of the Optimist's lemma,
+lemma~\ref{lem:inventVariableProblem} and minimality of unification.
+The \name{Let} rule is minimal by the Optimist's lemma and
+lemma~\ref{lem:bindVariableProblem}.
+\TODO{Do \name{Let} rule in detail?}
+
+For the \name{Var} rule, suppose $\theta : \Gamma \leiR \Theta$ and
+$\Theta \entails x : \tau$. By inversion, the proof must consist of
+\name{Lookup} followed by eliminating
 $\Theta \entailsN x \hasscheme \gen{\theta\Xi}{\theta\upsilon}$
-to some $\Theta$-types, so it determines a map from the unbound type variables
-of $\Xi$ to types over $\Theta$, and hence a substitution
+with some $\Theta$-types. Hence it determines a map from the unbound type variables
+of $\Xi$ to types over $\Theta$, i.e.\ a substitution
 $\zeta : \Gamma, \Xi \leiR \Theta$ that agrees with $\theta$ on $\Gamma$ and
 maps type variables in $\Xi$ to their definitions in $\Theta$.
+\TODO{Better way of saying this?}
+\end{proof}
 
-If $t = (\letIn{x}{s}{w})$...
-For let-expressions, observe that any type specialising any scheme
-for $s$ must certainly specialise the type we infer for $s$, and
-\emph{ipso facto}, the principal type scheme we assign to $x$.
-\TODO{More!}
-
-If $t = \lambda x . w$ is an abstraction, then the proof in the declarative
-system gives
-$\Theta, \alpha \defn \upsilon, x \asc \gendot{\alpha} \entails w : \chi$
-and the inductive hypothesis applies immediately.
-\TODO{Observation about permuting $x$ past $\Xi$?}
-
-If $t = f a$ is an application, then we can apply the Optimist's lemma twice
-and use the hypotheses.
-\TODO{Explain why indexed problem condition is satisfied.}
-\TODO{There is a subtlety here about $\beta$ being an output.}
-
+\begin{lemma}[Completeness of type inference]
+\label{lem:inferComplete}
+If $P$ is a type or scheme inference problem, and
+there exist $\theta : \Gamma \leiR \Theta$ and $a'$ such that
+$\Theta \entails (\theta P) a'$, then $\alg{\Gamma}{P}{\Delta}{a}$
+for some context $\Delta$ and output $a$.
+\end{lemma}
+\begin{proof}
+We proceed by induction on the derivation of $\Theta \entails (\theta P) a'$.
+For each rule in the transformed declarative system (excluding conversion)
+there is a corresponding algorithmic rule, and inversion ensures its
+premises are satisfied. \TODO{More?}
 \end{proof}
 
 
