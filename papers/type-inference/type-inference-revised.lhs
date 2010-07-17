@@ -186,7 +186,7 @@
 \newcommand{\leiRParam}[4]{(#1, #2) \leiR (#3, #4)}
 \newcommand{\LEIProb}[4]{#1 \,? #2 \LEI #3 \,!\, #4}
 \newcommand{\LEIRProb}[4]{#1 \,? #2 \LEIR #3 \,!\, #4}
-\newcommand{\LEIUnify}[4]{\leiStmt{#1}{#2 \equiv #4}{#3}}
+\newcommand{\LEIUnify}[4]{\leiStmt{#1}{#2 \equiv #3}{#4}}
 \newcommand{\LEIInfer}[4]{\LEIProb{#1}{(#2 :)}{#4}{#3}}
 \newcommand{\LEIInferScheme}[4]{\LEIProb{#1}{(#2 \hasscheme)}{#4}{#3}}
 \newcommand{\LEIRInfer}[4]{\LEIRProb{#1}{(#2 :)}{#4}{#3}}
@@ -1664,9 +1664,9 @@ declarations in $\Xi$ to the left of the $\fatsemi$ separator,
 thereby \scare{repossessing} them. Despite such complications, 
 unification still yields a most general solution:
 
-\begin{lemma}[Soundness and generality of \name{Repossess} rule]
-If $\algInstantiate{\Gamma \fatsemi}{\alpha}{\tau}{\Xi}{\Delta \fatsemi}$
-then $\tyvars{\Gamma \fatsemi \Xi} = \tyvars{\Delta \fatsemi}$ and
+\begin{lemma}[Soundness and generality of the \name{Repossess} rule]
+Suppose $\algInstantiate{\Gamma \fatsemi}{\alpha}{\tau}{\Xi}{\Delta \fatsemi}$. 
+Then $\tyvars{\Gamma \fatsemi \Xi} = \tyvars{\Delta \fatsemi}$ and
 $\LEIUnify{\Gamma \fatsemi \Xi}{\alpha}{\tau}{\Delta \fatsemi}$.
 \end{lemma}
 \begin{proof}
