@@ -658,8 +658,7 @@ compare with Baader and Snyder~\cite{DBLP:books/el/RV01/BaaderS01}.}
 \label{fig:unifyCode}
 \end{figure*}
 
-A Haskell implementation of our unification algorithm is given in
-Figure~\ref{fig:unifyCode}.
+Figure~\ref{fig:unifyCode} shows a Haskell implementation of our unification algorithm.
 \citet{NaraschewskiN-JAR} formally proved correctness of \AlgorithmW\ in
 Isabelle/HOL using a counter for fresh 
 %%%variable 
@@ -1063,8 +1062,9 @@ admissibility of the corresponding normal elimination rule.
 
 We have a standard approach, effective by construction, 
 to proving stability of most statements. 
-In each case we proceed by induction on the structure
-of derivations. Where the \name{Neutral} rule is applied, stability holds by 
+In each case we proceed by induction on  
+%%%the structure of 
+derivations. Where the \name{Neutral} rule is applied, stability holds by 
 Lemma~\ref{lem:neutrality}. Otherwise, we verify that non-recursive hypotheses
 are stable and that recursive hypotheses occur in strictly positive positions,
 hence are stable by induction. Applying this method shows that both 
@@ -2195,7 +2195,9 @@ $\theta \eqsubst \zeta \compose \iota$.
 Since the algorithmic rules correspond directly to the transformed declarative
 system in Figure~\ref{fig:transformedRules}, we can easily prove soundness,
 completeness and generality of type inference with respect to this system.
-Each proof is by induction on the structure of derivations, observing that each
+Each proof is by induction on 
+%%%the structure of 
+derivations, observing that each
 algorithmic rule maintains the appropriate properties.
 
 \begin{lemma}[Soundness of type inference]
@@ -2408,10 +2410,10 @@ premises are satisfied. \TODO{More?}
 \label{fig:inferCode}
 \end{figure*}
 
-The Haskell implementation of our type inference algorithm is given in
-Figure~\ref{fig:inferCode}. Note that the monadic |fail| is called when
-scope checking fails, whereas |error| indicates that one of the algorithmic
-invariants have been violated.
+Figure~\ref{fig:inferCode} shows the Haskell implementation of our
+type inference algorithm. Note that the monadic |fail| is called if 
+scope checking fails, whereas |error| signals violation of one of the
+algorithmic invariants.
 
 Figure~\ref{subfig:schemeCode} implements type schemes.
 It is convenient to represent bound variables by de Bruijn indices and free
@@ -2425,9 +2427,11 @@ where the outermost bound variable is represented by |Z| and the other variables
 are wrapped in the |S| constructor.
 
 Figures~\ref{subfig:specialiseCode} and~\ref{subfig:generaliseCode} implement
-specialisation and generalisation of type schemes. The former unpacks a type
-scheme with fresh variables, while the latter \scare{skims} type variables off
-the top of the context as far as the |LetGoal| marker.
+specialisation and generalisation of type schemes. The former unpacks a %%%type
+scheme with fresh names, while the latter \scare{skims} 
+%%%type variables 
+   entries 
+off the top of the context as far as the |LetGoal| marker.
 
 Figure~\ref{subfig:termCode} implements the data type of terms, and gives the
 final definition of |Entry| including type and term variable declarations and
