@@ -294,12 +294,16 @@ more elegant type inference algorithm.  In particular, the generalisation step
 \subsection{Motivating context}
 
 Why revisit \AlgorithmW? This is a first step towards a longer-term objective:
-explaining the elaboration of high-level \emph{dependently typed} programs into
-fully explicit calculi. Elaboration involves inferring \emph{implicit arguments}
-by solving constraints, just as \W\ specialises polymorphic type schemes, but
+to explain the elaboration of high-level \emph{dependently typed} programs into
+fully explicit calculi. Just as \W\ specialises polymorphic type schemes, 
+elaboration involves inferring \emph{implicit arguments}
+by solving constraints, but
 with fewer algorithmic guarantees. Pragmatically, we need to account for
 stepwise progress in problem solving from states of partial knowledge.
-We wish to identify local correctness criteria for type inference that
+We 
+%%%wish to identify 
+   seek  
+local correctness criteria for type inference that
 guarantee global correctness.
 
 
@@ -332,9 +336,9 @@ Dunfield uses well-founded contexts that contain existential type variables
 notion of information increase between input and output contexts, though this is
 used for different purposes. 
 
-However, our concerns here are different: whilst Dunfield elaborates a
-particular strategy for bidirectional polymorphic checking to a larger
-class of type theories, we pursue a methodological understanding
+However, our concerns are different: whilst Dunfield elaborates a
+particular approach to bidirectional polymorphic checking to a larger
+class of type theories, here we pursue a methodological understanding
 of the problem-solving strategy in Hindley-Milner type inference.
 
 \TODO{More crunchiness: forward pointers to claims and contributions}
@@ -449,10 +453,10 @@ first place.
 The rules in Figure~\ref{fig:oldRules} define a context as a left-to-right list
 of type variables, each of which may be unknown (written $\hole{\alpha}$) or
 defined (written $\alpha \defn \tau$). A context is \define{valid} if the type in
-every definition makes sense over its preceding context.
+every definition makes sense in its preceding context.
 For example, the context
 $\hole{\alpha}, \hole{\beta}, \gamma \defn \alpha \arrow \beta$
-is valid, but the context
+is valid, while %%%but the context
 $\alpha \defn \beta, \hole{\beta}$
 is not, because $\beta$ is not in scope for the definition of $\alpha$.
 This topological sorting of the dependency graph means that 
