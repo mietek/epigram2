@@ -156,6 +156,8 @@
 \newcommand{\Pinf}[2]{#1 : #2}
 \newcommand{\Psch}[2]{#1 \hasscheme #2}
 \newcommand{\Puni}[2]{#1 \equiv #2}
+\newcommand{\sanity}{sanity condition}
+\newcommand{\Sanity}{Sanity condition}
 
 % Types, terms and schemes
 \newcommand{\arrow}{\ensuremath{\triangleright}}
@@ -659,45 +661,66 @@ compare with Baader and Snyder~\cite{DBLP:books/el/RV01/BaaderS01}.}
 A Haskell implementation of our unification algorithm is given in
 Figure~\ref{fig:unifyCode}.
 \citet{NaraschewskiN-JAR} formally proved correctness of \AlgorithmW\ in
-Isabelle/HOL using a counter for fresh variable generation and a monad to
+Isabelle/HOL using a counter for fresh 
+%%%variable 
+   name 
+generation and a monad to
 silently propagate failure; we use similar techniques here.
 
 Figure~\ref{subfig:typeCode} implements types as a foldable functor
-parameterised by the type of variable names. Thanks to a language
-extension in GHC 6.12 \citep{ghc_team_glorious_2009} we can simply
-derive the required typeclass instances.
-For simplicity, we use integers as names.
-We can find free type variables using the typeclass |FTV| with membership
-function |(<?)|. We get most of the required instances for free using |Foldable|.
+parameterised by a type |TyName| of type variable names;  
+   for simplicity, we use integers.
+We compute free type variables using the typeclass |FTV| with membership
+function |(<?)|. 
+We can simply
+derive the required typeclass instances 
+using |Foldable|, 
+thanks to a language
+extension in GHC 6.12 \citep{ghc_team_glorious_2009}. 
+%%%Thanks to a language
+%%%extension in GHC 6.12 \citep{ghc_team_glorious_2009} we can simply
+%%%derive the required typeclass instances. 
+%%%For simplicity, we use integers as names.
+%%%We can find free type variables using the typeclass |FTV| with membership
+%%%function |(<?)|. We get most of the required instances for free using |Foldable|.
 
 Figure~\ref{subfig:contextCode} defines context entries, contexts and suffixes.
 The types |Bwd| and |Fwd|, whose definitions are omitted, are backwards and forwards lists
-with |B0| for both empty lists and |:<| and |:>| for snoc and cons respectively.
-Lists are monoids with the append operator |<+>|, and the \scare{fish}
-operator |(<><)| appends a suffix to a context. We will later extend |Entry| to
+with |B0| for 
+%%%both empty lists 
+   the empty list 
+and |:<| and |:>| for snoc and cons respectively.
+Lists are monoids for the append operator |<+>|; the \scare{fish}
+operator |(<><)| appends a suffix to a context. We %%%will 
+later extend |Entry| to
 handle term variables, so this definition is incomplete.
 
 Figure~\ref{subfig:monadCode} defines the |Contextual| monad of computations that
-can fail and mutate the context. The |TyName| component is the next fresh type
-variable name to use; it is an implementation detail not mentioned in the typing
-rules. The |fresh| function generates a fresh variable name and appends a
-declaration to the context. Our choice of |TyName| means that it is easy to
+can fail and mutate the context. The |TyName| component is the next fresh 
+%%%type variable name 
+   name 
+to use; it is an implementation detail not mentioned in the typing
+rules. The |fresh| function generates a 
+%%%fresh variable name and appends a 
+   fresh name and appends its
+declaration to the context. Our choice of |TyName| makes it easy to
 choose a name fresh with respect to a |Context|.
 
 Figure~\ref{subfig:onTopCode} implements |onTop|, which delivers the
 typical access pattern for contexts, locally bringing the top variable
 declaration into focus and working over the remainder.  The local
-operation, passed as an argument, may |restore| the previous entry, or
+operation \(f\), passed as an argument, may |restore| the previous entry, or
 it may return a context extension (containing at least as much
 information as the entry that has been removed) with which to
 |replace| it.
 
 Figure~\ref{subfig:unifyCode} gives the actual implementations of unification
 and solution. Unification proceeds structurally over types. If it reaches a pair
-of variables, it examines the context, using the |onTop| operator to pick out
-a type variable declaration to consider. Depending on the variables, it will
-then either succeed (by restoring the old entry or replacing it with a new one)
-or continue unifying with an updated contraint.
+of variables, it examines the context, using the operator |onTop| to pick out
+a variable declaration to consider. Depending on the variables, it %%%will
+then either succeeds, restoring the old entry or replacing it with a new one, 
+or continues %%%unifying 
+with an updated contraint.
 
 The |solve| function is called when a variable must be unified with a non-variable type.
 It works similarly to unification of variables, but must accumulate a list of
@@ -781,17 +804,26 @@ What is the common structure?
 
 A \define{context} is a list of \define{declarations} assigning
 \define{properties} to
-variables (here, in particular, type variables). 
-The empty context is written $\emptycontext$ and we let
-$\Gamma, \Delta, \Theta$ range over contexts.
+%%%variables (here, in particular, type variables). 
+   names (in particular, those of type variables). 
+We let $\Gamma, \Delta, \Theta$ range over contexts.
+The empty context is written $\emptycontext$. 
 Let $\V_\TY$ be a set of type
-variables and $\D_\TY$ the properties that may be given to them
-(the \scare{unknown variable} property $~\hole{}$ and \scare{defined variable}
-properties $~\defn{\tau}$ for each type $\tau$).
+variables and $\D_\TY$ the properties 
+%%%that may be given to them
+   assignable to them 
+(the 
+%%%\scare{unknown variable} 
+   \scare{unknown} 
+property $\,\hole{}$ and 
+%%%\scare{defined variable} 
+   \scare{defined}
+properties $\,\defn{\tau}$ for each type $\tau$).
 
-Later we will introduce corresponding definitions for term variables. Where
-necessary we let $K \in \{ \TY, \TM \}$ represent an arbitrary sort of variable.
-We write $\decl{x}{D}$ for an arbitrary property, where $x \in \V_K$ and
+Later we %%%will 
+introduce corresponding definitions for term variables. Where
+needed we let $K \in \{ \TY, \TM \}$ represent an arbitrary sort of variable.
+We write $\decl{x}{D}$ for an arbitrary property, with $x \in \V_K$ and
 $D \in \D_K$. The set of variables of $\Gamma$ with sort $K$ is written
 $\V_K(\Gamma)$.
 
@@ -806,13 +838,13 @@ $\tau$ and $\upsilon$ are equivalent, and both conjuncts hold.
 Note that $\valid$ and $\wedge$ give a unit and product for statements.
 
 A statement has zero or more
-\define{parameters}, each of which has an associated \define{sanity condition}, 
+\define{parameters}, each of which has an associated \define{\sanity}, 
 i.e.\ a statement whose truth is presupposed for the problem to make sense.
-The $\valid$ statement has no parameter and hence no sanity conditions.
-In $\tau \type$, the parameter $\tau$ has sanity condition $\valid$.
+The $\valid$ statement has no parameter and hence no \sanity s.
+In $\tau \type$, the parameter $\tau$ has \sanity\  $\valid$.
 The type equivalence statement $\tau \equiv \upsilon$ has two parameters; the
-sanity conditions are $\tau \type$ and $\upsilon \type$ respectively.
-Finally, $S \wedge S'$ has parameters (and sanity conditions) taken from $S$ and
+\sanity s are $\tau \type$ and $\upsilon \type$ respectively.
+Finally, $S \wedge S'$ has parameters (and \sanity s) taken from $S$ and
 $S'$.
 
 Each declaration in the context causes some statement to hold.
@@ -1088,7 +1120,7 @@ by transitivity.
 
 We define a \define{constraint problem} to be a pair of a context $\Gamma$ and a statement
 $S$, where
-the sanity conditions on the parameters of $S$ hold in $\Gamma$, but $S$ itself
+the \sanity s on the parameters of $S$ hold in $\Gamma$, but $S$ itself
 may not. A \define{solution} to such a problem is then an information increase 
 $\delta : \Gamma \lei \Delta$ such that
 $\Delta \entails \delta S$. 
@@ -1174,7 +1206,7 @@ ensure a solution exists.
 The rules in Figure~\ref{fig:unifyRules} define our unification algorithm. The
 judgment $\algUnify{\Gamma}{\tau}{\upsilon}{\Delta}$ means that given inputs
 $\Gamma$, $\tau$ and $\upsilon$, unification succeeds and produces output
-context $\Delta$. This is subject to the input sanity condition
+context $\Delta$. This is subject to the input \sanity\ 
 $\Gamma \entails \tau \type \wedge \upsilon \type$.
 
 The judgment
@@ -1503,7 +1535,7 @@ We write $\Sbind{\Xi}{S}$ where $\Xi$ is a list of declarations, defining
 $\Sbind{\emptycontext}{S} = S$ and
 $\Sbind{(\Xi, \decl{x}{D})}{S} = \Sbind{\Xi}{(\Sbind{\decl{x}{D}}{S})}$.
 
-\TODO{Sanity conditions for binding statements?}
+\TODO{\Sanity s for binding statements?}
 
 \subsection{Type schemes}
 
@@ -1527,7 +1559,7 @@ type variable declarations $\Xi$, defined by
 
 The statement $\sigma \scheme$ is then defined by
 $$\gen{\Xi}{\tau} \scheme = \Sbind{\Xi}{\tau \type}.$$
-The sanity condition is just $\valid$, as for $\tau \type$.
+The \sanity\  is just $\valid$, as for $\tau \type$.
 
 \subsection{Terms and type assignment}
 
@@ -1544,10 +1576,10 @@ and $s$, $t$, $w$ range over terms.
 
 The type assignment statement $t : \tau$ is established by the declarative
 rules in Figure~\ref{fig:typeAssignmentRules}. It has two parameters $t$ and
-$\tau$ with sanity conditions $\valid$ and $\tau \type$ respectively.
+$\tau$ with \sanity s $\valid$ and $\tau \type$ respectively.
 We define
 $$t \hasscheme \gen{\Xi}{\tau} = \Sbind{\Xi}{t : \tau}$$
-and observe this gives the parameters $t$ and $\sigma$ sanity conditions
+and observe this gives the parameters $t$ and $\sigma$ \sanity s
 $\valid$ and $\sigma \scheme$ as one might expect.
 We can interpret term variable declarations as scheme assignment statements:
 $$\sem{x \asc \sigma}_\TM = x \hasscheme \sigma.$$
@@ -1750,7 +1782,7 @@ one parameter of each mode (which may be unit or a product).
 % \define{inference problem}
 % is a triple $(\Gamma, S, Q)$ where $\Gamma$ is a context, $S$ is a statement
 % \TODO{(?)} and
-% $Q$ is a value for the input parameter that satisfies its sanity condition in
+% $Q$ is a value for the input parameter that satisfies its \sanity\  in
 % $\Gamma$.
 % \TODO{Clarify notation for statements and parameter values. What is $Q A$?}
 
@@ -1761,7 +1793,7 @@ preorder on context-value pairs, with $\delta : \leiParam{\Gamma}{a}{\Delta}{b}$
 $\delta : \Gamma \lei \Delta$ and $\leParam{\Delta}{\delta a}{b}$.
 \TODO{The set $A$, or at least sane values in it, somehow depends on $\Gamma$.
 We don't capture this very well. We should make it clearer than values must
-satisfy sanity conditions.}
+satisfy \sanity s.}
 
 An \define{$A$-indexed problem family} $x.Q$ with solutions in $B$ is a family
 of input parameters for a statement, indexed by elements of $A$, such that for
@@ -1774,12 +1806,12 @@ constraint problems, can be regarded as a family indexed by the unit set with
 the trivial preorder.
 
 An \define{inference problem} consists of a context $\Gamma$, an $A$-indexed
-problem $Q$ and an index $a \in A$ such that the sanity condition of $Q[a]$
+problem $Q$ and an index $a \in A$ such that the \sanity\  of $Q[a]$
 holds in $\Gamma$.
 
 A \define{solution} of $(\Gamma, Q[a])$ consists of an information increase
 $\delta : \Gamma \lei \Delta$ and a value for the output parameter $b \in B$
-such that $(\delta (Q[a])) b$ and the sanity condition on $b$ hold in $\Delta$.
+such that $(\delta (Q[a])) b$ and the \sanity\  on $b$ hold in $\Delta$.
 
 If $A$ and $B$ are preordered for fixed $\Gamma$, we can define a preorder on
 $A \times B$ given by $\leParam{\Gamma}{(a, b)}{(a', b')}$ if
