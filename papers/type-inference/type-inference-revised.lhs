@@ -402,8 +402,10 @@ by revisiting unification for
 type expressions containing free variables. Let us equip ourselves to
 address the problem---solving equations---by explaining which types
 are considered equal, raising the question of which things a given
-context admits as types, and in turn, which contexts make sense in the
-first place.
+context admits as types, and 
+%%%in turn, 
+   hence, 
+which contexts make sense in the first place.
 
 \begin{figure}[ht]
 \[\begin{array}{c}
@@ -1572,8 +1574,8 @@ The \sanity\  is just $\valid$, as for $\tau \type$.
 \subsection{Terms and type assignment}
 
 Now we are in a position to reuse the framework already
-introduced, by defining the sort $\TM$.
-Let $\V_\TM$ be some set of term variables and let $x$ range over $\V_\TM$.
+introduced, defining a new sort $\TM$, with 
+$\V_\TM$ a set of term variables and $x$ ranging over $\V_\TM$.
 Term variable declarations $\D_\TM$ are scheme assignments of the form
 $\asc \sigma$, with
 $\ok_\TM (\asc \sigma) = \sigma \scheme$.
