@@ -720,7 +720,7 @@ of variables, it examines the context, using the operator |onTop| to pick out
 a variable declaration to consider. Depending on the variables, it %%%will
 then either succeeds, restoring the old entry or replacing it with a new one, 
 or continues %%%unifying 
-with an updated contraint.
+with an updated constraint.
 
 The |solve| function is called when a variable must be unified with a non-variable type.
 It works similarly to unification of variables, but must accumulate a list of
