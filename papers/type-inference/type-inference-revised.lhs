@@ -904,14 +904,15 @@ issue of fresh names, since our simple counter implementation suffices for most
 purposes.
 
 \begin{figure}[ht]
-\boxrule{\Gamma \entails \valid}
-$$
+\[\begin{array}{c}
+\mathframe{\Gamma \entails \valid}
+\bigskip\\
 \Axiom{\emptycontext \entails \valid}
 \qquad
 \Rule{\Gamma \entails \valid    \quad    \Gamma \entails \ok_K D}
      {\Gamma, \decl{x}{D} \entails \valid}
 \side{x \in \V_K \setminus \V_K(\Gamma)}
-$$
+\end{array}\]
 \caption{Rules for context validity}
 \label{fig:contextValidityRules}
 \end{figure}
@@ -924,8 +925,9 @@ $$
 \TODO{Fix rule box sizes.}
 
 \begin{figure}[ht]
-\boxruless{\tau \type}{\tau \equiv \upsilon}{S \wedge S'}
-$$
+\[\begin{array}{c}
+\mathframe{\tau \type}\qquad\mathframe{\tau \equiv \upsilon}\qquad\mathframe{S \wedge S'}
+\bigskip\\
 \Rule{\tau \type   \quad   \upsilon \type}
      {\tau \arrow \upsilon \type}
 \qquad
@@ -934,8 +936,7 @@ $$
 \qquad
 \Rule{\upsilon \equiv \tau}
      {\tau \equiv \upsilon}
-$$
-$$
+\\
 \Rule{\tau_0 \equiv \upsilon_0
       \quad
       \tau_1 \equiv \upsilon_1}
@@ -945,15 +946,15 @@ $$
       \quad
       \tau_1 \equiv \tau_2}
      {\tau_0 \equiv \tau_2}
-$$
-$$\Rule{S \quad S'} {S \wedge S'}
+\\
+\Rule{S \quad S'} {S \wedge S'}
   \qquad
   \Rule{\entailsN S \wedge S'}
        {\entailsN S}
   \qquad
   \Rule{\entailsN S \wedge S'}
        {\entailsN S'}
-$$
+\end{array}\]
 \caption{Rules for types, equivalence and conjunction}
 \label{fig:statementRules}
 \end{figure}
@@ -1244,11 +1245,11 @@ must satisfy
 \begin{lemma}[Soundness and generality of unification]
 \label{lem:unifySound}
 \begin{enumerate}[(a)]
-\item If $\algUnify{\Gamma}{\tau}{\upsilon}{\Delta}$, then
-$\tyvars{\Gamma} = \tyvars{\Delta}$ and
+\item Suppose $\algUnify{\Gamma}{\tau}{\upsilon}{\Delta}$. Then 
+$\tyvars{\Gamma} = \tyvars{\Delta}$ \\ and
 $\LEIStmt{\Gamma}{\tau \equiv \upsilon}{\Delta}$.
-\item If
-$\algInstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$, then
+\item Suppose 
+$\algInstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$. Then 
 $\tyvars{\Gamma, \Xi} = \tyvars{\Delta}$ and
 $\LEIStmt{\Gamma, \Xi}{\alpha \equiv \tau}{\Delta}$.
 \end{enumerate}
@@ -1292,85 +1293,85 @@ symmetric counterparts, identical apart from interchanging the equated
 terms in the conclusion. Usually we will ignore these without loss of generality.
 
 \begin{figure}[ht]
-\boxrule{\algUnify{\Gamma}{\tau}{\upsilon}{\Delta}}
+\[\begin{array}{c}
+\mathframe{\algUnify{\Gamma}{\tau}{\upsilon}{\Delta}}
 
-$$
+\\
 \namer{Decompose}
 \Rule{\algUnify{\Gamma}{\tau_0}{\upsilon_0}{\Delta_0}
       \quad
       \algUnify{\Delta_0}{\tau_1}{\upsilon_1}{\Delta}}
     {\algUnify{\Gamma}{\tau_0 \arrow \tau_1}{\upsilon_0 \arrow \upsilon_1}{\Delta}}
-$$
 
-$$
+\\
+
 \namer{Idle}
 % \Rule{\Gamma \entails \alpha \type}
 \Axiom{\algUnify{\Gamma_0, \alpha D}{\alpha}{\alpha}{\Gamma_0, \alpha D}}
-$$
 
-$$
+\\ 
+
 \namer{Define}
 %\Rule{\Gamma_0 \entails \beta \type}
 \Axiom{\algUnify{\Gamma_0, \hole{\alpha}}{\alpha}{\beta}{\Gamma_0, \alpha \defn \beta}}
 \side{\alpha \neq \beta}
-$$
 
-$$
+\\ 
+
 \namer{Ignore}
 \Rule{\algUnify{\Gamma_0}{\alpha}{\beta}{\Delta_0}}
      {\algUnify{\Gamma_0, \decl{x}{D}}{\alpha}{\beta}{\Delta_0, \decl{x}{D}}}
 \side{x \perp \{\alpha, \beta\} }
-$$
 
-$$
+\\ 
+
 \namer{Expand}
 \Rule{\algUnify{\Gamma_0}{\tau}{\beta}{\Delta_0}}
      {\algUnify{\Gamma_0, \alpha \defn \tau}{\alpha}{\beta}{\Delta_0, \alpha \defn \tau}}
 \side{\alpha \neq \beta}
-$$
 
-$$
+\\ 
+
 \namer{Solve}
 \Rule{\algInstantiate{\Gamma}{\alpha}{\tau}{\emptycontext}{\Delta}}
      {\algUnify{\Gamma}{\alpha}{\tau}{\Delta}}
 %% \side{\tau \neq \alpha}
 \side{\tau \mathrm{~not~variable}}
-$$
 
-\bigskip
+\\
 
-\boxrule{\algInstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}}
+\mathframe{\algInstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}}
 
-$$
+\\
 \namer{DefineS}
 % \Rule{\Gamma_0, \Xi \entails \tau \type}
 \Axiom{\algInstantiate{\Gamma_0, \hole{\alpha}}{\alpha}{\tau}{\Xi}
                    {\Gamma_0, \Xi, \alpha \defn \tau}}
 \side{\alpha \notin \FTV{\tau, \Xi}}
-$$
 
-$$
+\\ 
+
 \namer{IgnoreS}
 \Rule{\algInstantiate{\Gamma_0}{\alpha}{\tau}{\Xi}{\Delta_0}}
      {\algInstantiate{\Gamma_0, \decl{x}{D}}{\alpha}{\tau}{\Xi}{\Delta_0, \decl{x}{D}}}
 \side{x \perp \FTV{\alpha, \tau, \Xi}}
-$$
 
-$$
+\\
+
 \namer{ExpandS}
 \Rule{\algUnify{\Gamma_0, \Xi}{\upsilon}{\tau}{\Delta_0}}
      {\algInstantiate{\Gamma_0, \alpha \defn \upsilon}{\alpha}{\tau}{\Xi}
                    {\Delta_0, \alpha \defn \upsilon}}
 \side{\alpha \notin \FTV{\tau, \Xi}}
-$$
 
-$$
+\\
+
 \namer{DependS}
 \Rule{\algInstantiate{\Gamma_0}{\alpha}{\tau}{\beta D, \Xi}{\Delta}}
      {\algInstantiate{\Gamma_0, \beta D}{\alpha}{\tau}{\Xi}{\Delta}}
 \side{\alpha \neq \beta, \beta \in \FTV{\tau, \Xi}}
-$$
 
+\end{array}\]
 \caption{Algorithmic rules for unification}
 \label{fig:unifyRules}
 \end{figure}
@@ -1595,9 +1596,10 @@ We can interpret term variable declarations as scheme assignment statements:
 $$\sem{x \asc \sigma}_\TM = x \hasscheme \sigma.$$
 
 \begin{figure}[ht]
-\boxrule{t : \tau}
+\[\begin{array}{c}
+\mathframe{t : \tau}
 
-$$
+\smallskip\\
 \Rule{\Sbind{x \asc \gendot{\upsilon}}{t : \tau}}
      {\lambda x.t : \upsilon \arrow \tau}
 \qquad
@@ -1605,9 +1607,9 @@ $$
       \quad
       a : \upsilon}
      {f a : \tau}
-$$
 
-$$
+\smallskip\\
+
 \Rule{
       s \hasscheme \sigma
       \quad
@@ -1619,8 +1621,7 @@ $$
       \quad
       \tau \equiv \upsilon}
      {t : \upsilon}
-$$
-
+\end{array}\]
 \caption{Declarative rules for type assignment}
 \label{fig:typeAssignmentRules}
 \end{figure}
@@ -1646,8 +1647,7 @@ $$
 $$
 
 We also refine the $\lei$ relation.
-Let $\semidrop$ be the partial function from contexts and natural numbers to
-contexts taking $\Gamma \semidrop n$ to $\Gamma$ truncated after $n$
+Let $\semidrop$ be the partial function from contexts $\Gamma$ and natural numbers $n$ which truncates $\Gamma$ after $n$
 $\fatsemi$ separators, provided $\Gamma$ contains at least $n$ such: 
 \begin{align*}
 \Xi \semidrop 0 &= \Xi  \\
@@ -1658,9 +1658,9 @@ $\fatsemi$ separators, provided $\Gamma$ contains at least $n$ such:
 
 We write $\delta : \Gamma \lei \Delta$ if $\delta$ is a
 substitution from $\Gamma$ to $\Delta$ such that, for all 
-$\decl{x}{D} \in \Gamma \semidrop n$, we have that
-$\Delta \semidrop n$ is defined and 
-$\Delta \semidrop n \entails \delta \sem{\decl{x}{D}}$.
+$\decl{x}{D} \in \Gamma \!\semidrop\! n$, we have that
+$\Delta \!\semidrop\! n$ is defined and 
+$\Delta \!\semidrop\! n \entails \delta \sem{\decl{x}{D}}$.
 
 This definition of $\Gamma \lei \Delta$ is stronger than the previous one, 
 because it requires the $\fatsemi$-separated sections of $\Gamma$ and $\Delta$ 
