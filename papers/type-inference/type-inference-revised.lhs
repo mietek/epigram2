@@ -489,7 +489,7 @@ about variables of all sorts and some control markers, managing the
 generalisation process.
 
 \TODO{Relate contexts to traditional substitutions (triangular);
-compare with Baader and Snyder.}
+compare with Baader and Snyder~\cite{DBLP:books/el/RV01/BaaderS01}.}
 
 
 \subsection{Implementation of unification}
