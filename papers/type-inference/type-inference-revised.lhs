@@ -811,14 +811,14 @@ The empty context is written $\emptycontext$.
 Let $\V_\TY$ be a set of type
 variables and $\D_\TY$ the properties 
 %%%that may be given to them
-   assignable to them 
-(the 
+   assignable to them: 
+the 
 %%%\scare{unknown variable} 
    \scare{unknown} 
 property $\,\hole{}$ and 
 %%%\scare{defined variable} 
    \scare{defined}
-properties $\,\defn{\tau}$ for each type $\tau$).
+properties $\,\defn{\tau}$, one for each type $\tau$.
 
 Later we %%%will 
 introduce corresponding definitions for term variables. Where
@@ -871,13 +871,13 @@ in the context, just as \scare{neutral terms} in $\lambda$-calculus are
 applied variables. Variables are the \scare{atoms} of symbols, and appeals
 to declarations in the context are atoms of derivations.
 
-We embed neutral into normal:
+The \name{Lookup} rule is our only means to extract information from the
+context, so we omit contextual plumbing (almost) everywhere else.
+%%%
+For example, embedding neutral judgments into the normal:
 $$\namer{Neutral}
   \Rule{\entailsN S}
        {\entails S}.$$
-
-The \name{Lookup} rule is our only means to extract information from the
-context, so we will omit the contextual plumbing (almost) everywhere else.
 
 \subsection{Validity of contexts}
 
@@ -888,8 +888,9 @@ at most once, and each property is meaningful in the
 preceding context.
 
 Accordingly, 
-we maintain a map $\ok_K : \D_K \rightarrow \Ss$ for every $K \in \K$, which 
-embeds properties in statements. For type properties:
+we maintain a map $\ok_K : \D_K \rightarrow \Ss$, 
+embedding properties in statements, for each $K \in \K$. 
+For type properties:
 \begin{align*}
 \ok_\TY (\hole{}) &= \valid \\
 \ok_\TY (\defn{\tau}) &= \tau \type
@@ -961,18 +962,21 @@ $\valid$.
 We deduce that variables are types by looking up the context, but we need
 a structural rule for the $\arrow$ type constructor.
 
-The conjunction of statements $S \wedge S'$ allows us to package multiple facts
+Statement conjunction $S \wedge S'$ allows us to package multiple facts
 about a single variable, with a normal introduction rule (pairing) and neutral
 elimination rules (projections).
 This is but one instance of a general pattern: we add \emph{normal} introduction
-forms for composite statements, but supply
-eliminators only for statements which ultimately rest on (composite) hypotheses,
+rules for composite forms, but supply
+eliminators only for statements 
+%%%which ultimately rest 
+   ultimately resting 
+on (composite) hypotheses,
 obtained by \name{Lookup}. This forces
 derivations to be cut-free, facilitating reasoning by induction on
 derivations.
-If we added the corresponding projections for \emph{normal} judgments, we
-would lose the hope of a syntax-directed rule system. In any case, we shall
-ensure that the corresponding elimination rules are admissible. This is clearly
+Adding the corresponding projections for \emph{normal} judgments 
+would hamper us in obtaining a syntax-directed rule system. In any case, we shall
+ensure that the corresponding elimination rules are admissible, as is clearly
 the case for conjunction.
 
 
@@ -983,18 +987,19 @@ the case for conjunction.
 \subsection{Information order}
 
 The transition from $\hole{\alpha}$ to $\alpha \defn \tau$ intuitively cannot
-falsify existing equations.
+falsify any existing equations.
 More generally, if we rely on the context to tell us what we may
 deduce about variables, then making contexts more informative must preserve
-deductions. 
+%%%deductions. 
+   derivability of judgments. 
 
 Let $\Gamma$ and $\Delta$ be contexts.
 A \define{substitution from $\Gamma$ to $\Delta$} is a map from
 $\tyvars{\Gamma}$ to $\{ \tau ~||~ \Delta \entails \tau \type \}$.
 We could substitute for term variables as well, and give a more general
-definition, but omit this for simplicity.
+definition, but we omit this for simplicity.
 Substitutions apply to types and statements in the usual way.
-Composition of substitutions is given by
+Composition of substitutions \(\theta, \delta\) is given by
 $(\theta \compose \delta) (\alpha) = \theta (\delta \alpha)$.
 We write $\subst{\tau}{\alpha}{}$ for the substitution that maps
 $\alpha$ to $\tau$ and other variables to themselves.
@@ -1024,8 +1029,10 @@ for fixed contexts $\Gamma$ and $\Delta$, and that if
 $\delta \eqsubst \theta$ then
 $\Delta \entails \delta\tau \equiv \theta\tau$ for any $\Gamma$-type $\tau$.
 
-This partial order on contexts is sufficient to ensure stability, as described
-in the following section, but in practice the algorithm will work with a more structured
+This partial order on contexts suffices to ensure stability, as described
+%%%in the following section, 
+   below, 
+but in practice the algorithm will work with a more structured
 subrelation of $\lei$. We give up more freedom to achieve a more comprehensible
 algorithm. For example, our algorithm will always use the identity substitution.
 
@@ -1054,12 +1061,13 @@ by a neutral elimination rule, so the result follows by induction and
 admissibility of the corresponding normal elimination rule.
 \end{proof}
 
-We have a standard strategy for proving stability of most statements, which is
-effective by construction. In each case we proceed by induction on the structure
+We have a standard approach, effective by construction, 
+to proving stability of most statements. 
+In each case we proceed by induction on the structure
 of derivations. Where the \name{Neutral} rule is applied, stability holds by 
 Lemma~\ref{lem:neutrality}. Otherwise, we verify that non-recursive hypotheses
 are stable and that recursive hypotheses occur in strictly positive positions,
-so they are stable by induction. Applying this strategy shows that both 
+hence are stable by induction. Applying this method shows that both 
 $\tau \type$ and $\tau \equiv \upsilon$ are stable.
 
 \begin{lemma}[Conjunction preserves stability]\label{lem:stab-pres-conj}
