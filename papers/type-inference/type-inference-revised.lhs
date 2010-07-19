@@ -380,7 +380,7 @@ reinsertion.
 The `let' rule is the only real complexity in \AlgorithmW,
 and as \citet{milner_theory_1978} wrote, ``the
 reader may still feel that our rules are arbitrarily chosen and only partly
-supported by intuition.'' Experience has shown that the rules are well-chosen
+supported by intuition.'' Experience has shown the rules to be well-chosen
 indeed; perhaps we can recover the intuition.
 
 In both cases, the occurs check is used to detect dependencies between variables.
@@ -395,11 +395,12 @@ variables. Even in a simply-typed setting, however, this approach has advantages
 \section{Unification over a context}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-We begin our study of type inference by revisiting unification for
+We begin our study %%%of type inference 
+by revisiting unification for
 type expressions containing free variables. Let us equip ourselves to
 address the problem---solving equations---by explaining which types
 are considered equal, raising the question of which things a given
-context admits as types, and in turn which contexts make sense in the
+context admits as types, and in turn, which contexts make sense in the
 first place.
 
 \begin{figure}[ht]
@@ -451,8 +452,10 @@ first place.
 \end{figure}
 
 The rules in Figure~\ref{fig:oldRules} define a context as a left-to-right list
-of type variables, each of which may be unknown (written $\hole{\alpha}$) or
-defined (written $\alpha \defn \tau$). A context is \define{valid} if the type in
+of type variables, each of which may be 
+\define{declared} unknown (written $\hole{\alpha}$) or
+\define{defined} (written $\alpha \defn \tau$). 
+A context is \define{valid} if the type \(\tau\) in
 every definition makes sense in its preceding context.
 For example, the context
 $\hole{\alpha}, \hole{\beta}, \gamma \defn \alpha \arrow \beta$
@@ -472,7 +475,7 @@ The idea is that we decompose constraints on the syntactic structure of types
 until we reach variables, then move through the context and update it to solve
 the equation. 
 
-For example, we might start in the context
+For example, we might start in context
 $\hole{\alpha}, \hole{\beta}, \gamma \defn \alpha \arrow \beta$
 and aim to solve the equation $\beta \arrow \alpha \equiv \gamma$.
 %
