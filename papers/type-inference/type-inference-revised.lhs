@@ -358,7 +358,7 @@ particular approach to bidirectional polymorphic checking to a larger
 class of type theories, here we pursue a methodological understanding
 of the problem-solving strategy in \hindleymilnershort\ type inference.
 
-\TODO{More crunchiness: forward pointers to claims and contributions}
+%%%\TODO{More crunchiness: forward pointers to claims and contributions}
 
 This paper is literate Haskell, with full source code available at
 \footnotesize\url{http://personal.cis.strath.ac.uk/~adam/type-inference/}\normalsize.
@@ -496,7 +496,7 @@ the equation.
 
 For example, we might start in context
 $\hole{\alpha}, \hole{\beta}, \gamma \defn \alpha \arrow \beta$
-and aim to solve the equation $\beta \arrow \alpha \equiv \gamma$.
+aiming to solve the equation $\beta \arrow \alpha \equiv \gamma$.
 %
 % The definition of $\gamma$ tells us that we must
 % solve $\beta \arrow \alpha \equiv \alpha \arrow \beta$ over the context
@@ -504,19 +504,16 @@ and aim to solve the equation $\beta \arrow \alpha \equiv \gamma$.
 % $\beta \equiv \alpha$ and $\alpha \equiv \beta$, which are easily solved by
 % defining $\beta \defn \alpha$, giving the final judgment
 %
-It suffices to define $\beta \defn \alpha$, giving the final judgment
+It suffices to define $\beta \defn \alpha$, giving as final judgment
 $$\hole{\alpha}, \beta \defn \alpha, \gamma \defn \alpha \arrow \beta
     \entails \beta \arrow \alpha \equiv \gamma.$$
 
-A context thus contains a `triangular substitution'~\cite{DBLP:books/el/RV01/BaaderS01}, applied on
-demand, but that need not be all. As we proceed with the development,
+A context thus contains a substitution, applied on demand, 
+in `triangular form'~\cite{DBLP:books/el/RV01/BaaderS01}, 
+but that need not be all. As we proceed with the development,
 the context structure will evolve to hold a variety of information
 about variables of all sorts and some control markers, managing the
 generalisation process.
-
-\TODO{Relate contexts to traditional substitutions (triangular);
-compare with Baader and Snyder.}
-
 
 \subsection{Implementation of unification}
 
@@ -675,12 +672,14 @@ compare with Baader and Snyder.}
 \label{fig:unifyCode}
 \end{figure*}
 
-Figure~\ref{fig:unifyCode} renders our unification algorithm in Haskell.
-\citet{NaraschewskiN-JAR} formally proved correctness of \AlgorithmW\ in
-Isabelle/HOL using a counter for fresh 
+Figure~\ref{fig:unifyCode} renders our unification algorithm in Haskell. 
+%%%\citeauthor{NaraschewskiN-JAR} formally proved correctness of \AlgorithmW\ 
+   \AlgorithmW\ has been formally verified 
+in Isabelle/HOL using a counter for fresh 
 %%%variable 
    name 
-generation and a monad to propagate failure; we use similar techniques here.
+generation and a monad to propagate failure \citep{NaraschewskiN-JAR}; 
+we use similar techniques here.
 
 Figure~\ref{subfig:typeCode} implements types as a foldable functor
 parameterised by a type |TyName| of type variable names;  
@@ -898,24 +897,10 @@ $$\namer{Neutral}
 
 It is not enough for contexts to be lists of declarations: they must
 be well-founded, that is, each declaration should make sense in
-\emph{its} context.  A context is valid if it declares each variable
-at most once, and each property is meaningful in the
-preceding context.
-
-Accordingly, 
-we maintain a map $\ok_K : \D_K \rightarrow \Ss$, 
-embedding properties in statements, for each $K \in \K$. 
-For type properties:
-\[\begin{array}{r@@{\,}l}
-\ok_\TY (\hole{}) &= \valid \\
-\ok_\TY (\defn{\tau}) &= \tau \type
-\end{array}\]
-Now we can define the context validity statement
-$\valid$ as shown in Figure~\ref{fig:contextValidityRules}.
-From now on we will implicitly assume that all contexts we work with are valid,
-and will ensure that we only construct valid contexts. Mostly we will ignore the
-issue of fresh names, since our simple counter implementation suffices for most
-purposes.
+\emph{its} context.  A context is \define{valid} if it declares each name
+at most once, and the assigned property \(D\) is meaningful in the
+preceding context. Rules for the context validity statement
+$\valid$ are given in Figure~\ref{fig:contextValidityRules}.
 
 \begin{figure}[ht]
 \[\begin{array}{c}
@@ -931,12 +916,32 @@ purposes.
 \label{fig:contextValidityRules}
 \end{figure}
 
-\TODO{Relate to traditional presentation - give intuition.}
+The map $\ok_K : \D_K \rightarrow \Ss$, for each $K \in \K$, 
+associates the statement of being meaningful, \(\ok_{K} D\), to each \(D\). 
+%%%For type properties:
+   For types: 
+\[\begin{array}{r@@{\,}l}
+\ok_\TY (\hole{}) &= \valid \\
+\ok_\TY (\defn{\tau}) &= \tau \type
+\end{array}\]
+%%%Now we can define the context validity statement
+%%%$\valid$ as shown in Figure~\ref{fig:contextValidityRules}.
 
+Henceforth we implicitly assume that all contexts we work with are valid,
+and ensure that we only construct valid contexts. Mostly we will ignore the
+issue of fresh names, since our simple counter implementation suffices for most
+purposes.
+
+%%%DONE: don't do this. \TODO{Relate to traditional presentation - give intuition.}
 
 \subsection{Rules for establishing statements}
 
-\TODO{Fix rule box sizes.}
+Figure~\ref{fig:statementRules} gives rules for establishing statements other than
+$\valid$.
+We deduce that variables are types by looking up the context, but we need
+a structural rule for the $\arrow$ type constructor.
+
+%%%DONE: use \mathframe. \TODO{Fix rule box sizes.}
 
 \begin{figure}[ht]
 \[\begin{array}{c}
@@ -973,11 +978,6 @@ purposes.
 \label{fig:statementRules}
 \end{figure}
 
-Figure~\ref{fig:statementRules} gives rules for establishing statements other than
-$\valid$.
-We deduce that variables are types by looking up the context, but we need
-a structural rule for the $\arrow$ type constructor.
-
 Statement conjunction $S \wedge S'$ allows us to package multiple facts
 about a single variable, with a normal introduction rule (pairing) and neutral
 elimination rules (projections).
@@ -1010,29 +1010,35 @@ deduce about variables, then making contexts more informative must preserve
    derivability of judgments. 
 
 Let $\Gamma$ and $\Delta$ be contexts.
-A \define{substitution from $\Gamma$ to $\Delta$} is a map from
+A \define{substitution from $\Gamma$ to $\Delta$} is a map \(\delta\) from
 $\tyvars{\Gamma}$ to $\{ \tau ~||~ \Delta \entails \tau \type \}$.
-We could substitute for term variables as well, and give a more general
+We could also substitute for term variables, and give a more general
 definition, but we omit this for simplicity.
-Substitutions apply to types and statements in the usual way.
+Substitutions act on types and statements as usual. 
 Composition of substitutions \(\theta, \delta\) is given by
 $(\theta \compose \delta) (\alpha) = \theta (\delta \alpha)$.
-We write $\subst{\tau}{\alpha}{}$ for the substitution that maps
-$\alpha$ to $\tau$ and other variables to themselves.
+   The identity substitution is written \(\iota\). 
+%%%We write $\subst{\tau}{\alpha}{}$ for the substitution that maps 
+   The substitution $\subst{\tau}{\alpha}{}$ maps 
+$\alpha$ to $\tau$ and 
+%%%other variables to themselves. 
+   otherwise acts as \(\iota\). 
 If $\delta : \Gamma, \Gamma' \lei \Theta$ we write $\restrict{\delta}{\Gamma}$
 for the restriction of $\delta$ to the type variables in $\Gamma$.
 
-Given a substitution $\delta$ from $\Gamma$ to $\Delta$, 
-we write the \define{information increase} 
+Given $\delta$ from $\Gamma$ to $\Delta$, we 
+write the \define{information increase} 
    relation 
-$\delta : \Gamma \lei \Delta$ and say 
-\define{$\Delta$ is more informative than $\Gamma$} if 
-for all $\decl{x}{D} \in \Gamma$, we have 
+$\delta : \Gamma \lei \Delta$ 
+and 
+say \define{$\Delta$ is more informative than $\Gamma$} 
+if for all $\decl{x}{D} \in \Gamma$, we have 
 $\Delta \entails \delta \sem{\decl{x}{D}}$. 
-That is, $\Delta$ supports all the statements corresponding to declarations
+That is, $\Delta$ supports the statements arising from declarations
 in $\Gamma$.
 We write $\Gamma \lei \Delta$ if 
-$\iota : \Gamma \lei \Delta$, where  $\iota$ is the identity substitution.
+%%%$\iota : \Gamma \lei \Delta$, where  $\iota$ is the identity substitution. 
+   $\iota : \Gamma \lei \Delta$.
 
 We write $\delta \eqsubst \theta : \Gamma \lei \Delta$ if
 $\delta : \Gamma \lei \Delta$, $\theta : \Gamma \lei \Delta$
@@ -1144,21 +1150,21 @@ $\Theta \entails \theta\delta \sem{\decl{x}{D}}$ as required.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 We define a \define{constraint problem} to be a pair of a context $\Gamma$ and a statement
-$S$, where
-the \sanity s on the parameters of $S$ hold in $\Gamma$, but $S$ itself
+$P$, where
+the \sanity s on the parameters of $P$ hold in $\Gamma$, but $P$ itself
 may not. A \define{solution} to such a problem is then an information increase 
 $\delta : \Gamma \lei \Delta$ such that
-$\Delta \entails \delta S$. 
+$\Delta \entails \delta P$. 
    In this setting, the \define{unification} problem \((\Gamma, \tau \equiv \upsilon)\) 
 %%%is given $\Gamma$, $\tau$ and $\upsilon$ such that
    stipulates that 
 $\Gamma \entails \tau \type \wedge \upsilon \type$, and 
-   a solution to the problem ( a \define{unifier}) is given by 
+   a solution to the problem (a \define{unifier}) is given by 
 %%%must find 
 $\delta : \Gamma \lei \Delta$ such that
 $\Delta \entails \delta \tau \equiv \delta \upsilon$.
 
-We are interested in finding algorithms to solve problems, preferably in as
+We are interested in algorithms to solve problems, preferably in as
 general a way as possible (that is, by making the smallest information increase
 necessary to find a solution). 
    For the unification problem, this 
@@ -1168,12 +1174,14 @@ any other solution $\theta: \Gamma \lei \Theta$, there exists a
 substitution $\zeta : \Delta \lei \Theta$ such that
 $\theta \eqsubst \zeta \compose \delta$ (we say $\theta$ \emph{factors through}
 $\delta$ with \emph{cofactor} $\zeta$).
-
-In fact, we will always find minimal solutions 
-%%%that use the identity substitution. 
-   in the form $\iota : \Gamma \lei \Delta$. 
+%%%
 We write $\LEIStmt{\Gamma}{P}{\Delta}$ to mean that $(\Gamma, P)$ is a
 problem with minimal solution $\iota : \Gamma \lei \Delta$.
+In fact, we %%%will 
+always find minimal solutions 
+%%%that use the identity substitution. 
+%%%in the form $\iota : \Gamma \lei \Delta$. 
+   in this form. 
 
 As one might expect, the rule
 $$\Rule{\leiStmt{\Gamma}{P}{\Delta}
