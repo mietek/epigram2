@@ -1478,7 +1478,9 @@ Substituting out the definitions in $\Xi$ from $\tau$, we obtain a type
 $\upsilon$ such that $\alpha \in \FTV{\upsilon}$, $\upsilon$ is not a variable
 and $\Gamma_0, \decl{\alpha}{D}, \Xi \entails \upsilon \equiv \tau$.
 Now the problem $\alpha \equiv \upsilon$ has the same solutions as
-$\alpha \equiv \tau$, but by Lemma~\ref{lem:occursCheck}, there are none.
+$\alpha \equiv \tau$, but by Lemma~\ref{lem:occursCheck} it has no solutions.
+
+\TODO{Is this enough?}
 \end{proof}
 
 
@@ -1601,9 +1603,10 @@ Term variable declarations $\D_\TM$ are scheme assignments of the form
 $\asc \sigma$, with
 $\ok_\TM (\asc \sigma) = \sigma \scheme$.
 
-The set of terms has syntax
+%%%The set of terms has syntax
+   Let $s$, $t$, $w$ range over the set of terms with syntax 
 $$t ::= x ~||~ t~t ~||~ \lambda x . t ~||~ \letIn{x}{t}{t}$$
-and $s$, $t$, $w$ range over terms.
+%%%and $s$, $t$, $w$ range over terms.
 
 The type assignment statement $t : \tau$ is established by the declarative
 rules in Figure~\ref{fig:typeAssignmentRules}. It has two parameters $t$ and
@@ -1719,10 +1722,10 @@ definition. If $\Delta \entails S$ then $\Delta \fatsemi \entails S$ since the
 \name{Lookup} rule is the only one that extracts information from the context,
 and it ignores the $\fatsemi$.
 
-Now suppose $\theta : \Gamma \fatsemi \lei \Theta \fatsemi \Xi$ is such that
-$\Theta \fatsemi \Xi \entails S$. By the definition of $\lei$, we must have
+Now let $\theta : \Gamma \fatsemi \lei \Theta \fatsemi \Xi$ be such that
+$\Theta \fatsemi \Xi \entails S$. By definition of $\lei$, we must have
 $\theta : \Gamma \lei \Theta$, so by minimality there exists
-$\zeta : \Delta \lei \Theta$ such that $\theta \eqsubst \zeta \compose \iota$.
+$\zeta : \Delta \lei \Theta$ with $\theta \eqsubst \zeta \compose \iota$.
 Then $\zeta : \Delta \fatsemi \lei \Theta \fatsemi \Xi$ and we are done.
 \end{proof}
 
@@ -1799,7 +1802,7 @@ $\theta \eqsubst \zeta \compose \iota :
 \TODO{Tidy up and improve motivation for definitions in this section.}
 
 Type inference involves making the statement $t : \tau$ hold. However,
-a crucial difference from the unification problem is that the type should
+a key contrast with unification is that the type should
 be an \emph{output} of problem-solving, along with the solution context. We need
 a more liberal definition than that of constraint problems.
 
@@ -2003,7 +2006,7 @@ $\leParam{\Theta, x \asc \theta\sigma}{\theta a}{a'}$ and
 $\theta \eqsubst \zeta \compose \iota$.
 Now $\zeta : \Delta, \Xi \lei \Theta$ and
 $\leParam{\Theta}{\theta a}{a'}$ so we are done.
-
+%%%
 \TODO{Should this go after $\leiR$ has been introduced, so we can mention it?
 Also, we are relying on the fact that $\leParam{\cdot}{\cdot}{\cdot}$ is defined
 without reference to term variables.}
@@ -2053,11 +2056,15 @@ cannot pattern match on problem outputs, so we ensure there are schematic
 variables in output positions, fixing things up with appeals to unification. 
 
 Figure~\ref{fig:transformedRules} shows the transformed version of the
-declarative rule system. The rule for $\lambda$-abstractions now binds a fresh
-type variable for the argument type, which we will replace with an unknown
-in the algorithm. The rule for application assigns types to the function and
-argument separately, then inserts an equation with a fresh variable for the
-codomain type.
+declarative rule system. The 
+%%%rule for $\lambda$-abstractions 
+   $\lambda$-rule 
+now binds a fresh name for the argument type, which 
+%%%we will replace 
+   gets replaced 
+with an unknown in the algorithm. The rule for application assigns
+types to the function and argument separately, then inserts an
+equation with a fresh name for the codomain type.
 
 \begin{figure}[ht]
 \[\begin{array}{c}
@@ -2095,10 +2102,18 @@ codomain type.
 
 We must verify that the rule systems in Figures~\ref{fig:typeAssignmentRules}
 and \ref{fig:transformedRules} are equivalent. This is mostly straightforward,
-as the fresh variable bindings can be substituted out.
-The only difficulty is in the application rule, where an equation has been
+as 
+%%%the fresh variable bindings 
+   fresh name bindings 
+can be substituted out.
+The only difficulty is in the application rule, where an equation 
+%%%has been
+   is 
 introduced. If an application has a type in the old system, it can be assigned
-the same type in the new system with the equation being reflexive. Conversely,
+the same type in the new system with 
+%%%the equation being reflexive. 
+   using a reflexive equation. 
+Conversely,
 if an application has a type in the new system, then using the conversion
 with the equation allows the same type to be assigned in the old system.
 \TODO{Make this a lemma?}
@@ -2106,13 +2121,16 @@ with the equation allows the same type to be assigned in the old system.
 \TODO{Segue...}
 
 We define 
-   the scheme inference assertion $\algInferScheme{\Gamma}{t}{\sigma}{\Delta}$ and 
-   the type inference assertion $\algInfer{\Gamma}{t}{\tau}{\Delta}$
+   the type inference assertion $\algInfer{\Gamma}{t}{\tau}{\Delta}$ 
+and 
+   the scheme inference assertion $\algInferScheme{\Gamma}{s}{\sigma}{\Delta}$ 
 % (inferring the type of $t$ in $\Gamma_0$ yields $\tau$ in the more informative
 % context $\Gamma_1$)
 by the rules in Figure~\ref{fig:inferRules}.
-These rules are clearly structural on terms, so yield a terminating
-algorithm, leading naturally to an implementation, given in
+As they are clearly structural on terms, they 
+yield a terminating algorithm, 
+%%%leading naturally to an implementation, given in
+   and hence the implementation in 
 subsection~\ref{sec:inferImplementation}.
 
 %%%\TODO{Say something about freshness of $\Xi$ in \name{Var} rule.}
