@@ -675,13 +675,12 @@ compare with Baader and Snyder.}
 \label{fig:unifyCode}
 \end{figure*}
 
-Figure~\ref{fig:unifyCode} shows a Haskell implementation of our unification algorithm.
+Figure~\ref{fig:unifyCode} renders our unification algorithm in Haskell.
 \citet{NaraschewskiN-JAR} formally proved correctness of \AlgorithmW\ in
 Isabelle/HOL using a counter for fresh 
 %%%variable 
    name 
-generation and a monad to
-silently propagate failure; we use similar techniques here.
+generation and a monad to propagate failure; we use similar techniques here.
 
 Figure~\ref{subfig:typeCode} implements types as a foldable functor
 parameterised by a type |TyName| of type variable names;  
@@ -711,8 +710,8 @@ operator |(<><)| appends a suffix to a context. We %%%will
 later extend |Entry| to
 handle term variables, so this definition is incomplete.
 
-Figure~\ref{subfig:monadCode} defines the |Contextual| monad of computations that
-can fail and mutate the context. The |TyName| component is the next fresh 
+Figure~\ref{subfig:monadCode} defines the |Contextual| monad of computations which mutate
+the context or fail. The |TyName| component is the next fresh 
 %%%type variable name 
    name 
 to use; it is an implementation detail not mentioned in the typing
@@ -1181,7 +1180,7 @@ $$\Rule{\leiStmt{\Gamma}{P}{\Delta}
        \quad  \leiStmt{\Delta}{Q}{\Theta}}
        {\leiStmt{\Gamma}{P \wedge Q}{\Theta}}$$
 is admissible, since stability ensures that if $\Delta$ solves $P$ then any more
-informative context $\theta$ will also solve $P$. More surprisingly, this also
+informative context $\Theta$ will also solve $P$. More surprisingly, this also
 gives minimal solutions to composite problems, allowing a \scare{greedy} 
 solution strategy.
 %
@@ -1465,24 +1464,21 @@ $\algInstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$.
 \end{enumerate}
 \end{lemma}
 
-\proofsux\begin{proof}
-It suffices to show that the algorithm succeeds for every well-formed input in
-which a solution can exist. We proceed by induction on the call graph; since the
-algorithm terminates, this is well-founded. Each step preserves solutions
-(i.e.\ if there is a solution to the equation in the conclusion then there is a
-solution to the equations in the hypothesis).
+\proofsux\begin{proof} It suffices to show that the algorithm succeeds
+for every well-formed input in which a solution can exist. As the
+algorithm terminates, we proceed by induction on its call graph. Each
+step preserves solutions: if the equation in a conclusion can be
+solved, so can those in its hypothesis.
 
-The only case not covered by the rules is the case where an illegal occurrence
-of a type variable is detected. In this case, we are seeking to solve the
+The only case the rules omit is the case where an illegal occurrence
+of a type variable is rejected. In this case, we are seeking to solve the
 problem $\alpha \equiv \tau$ in the context
 $\Gamma_0, \decl{\alpha}{D} ~||~ \Xi$ and we have $\alpha \in \FTV{\tau, \Xi}$.
 Substituting out the definitions in $\Xi$ from $\tau$, we obtain a type
 $\upsilon$ such that $\alpha \in \FTV{\upsilon}$, $\upsilon$ is not a variable
 and $\Gamma_0, \decl{\alpha}{D}, \Xi \entails \upsilon \equiv \tau$.
 Now the problem $\alpha \equiv \upsilon$ has the same solutions as
-$\alpha \equiv \tau$, but by Lemma~\ref{lem:occursCheck} it has no solutions.
-
-\TODO{Is this enough?}
+$\alpha \equiv \tau$, but by Lemma~\ref{lem:occursCheck}, there are none.
 \end{proof}
 
 
@@ -1673,12 +1669,12 @@ $$
 We also refine the $\lei$ relation.
 Let $\semidrop$ be the partial function from contexts $\Gamma$ and natural numbers $n$ which truncates $\Gamma$ after $n$
 $\fatsemi$ separators, provided $\Gamma$ contains at least $n$ such: 
-\begin{align*}
+\[\begin{array}{r@@{\,}l}
 \Xi \semidrop 0 &= \Xi  \\
 \Xi \fatsemi \Gamma \semidrop 0 &= \Xi  \\
 \Xi \fatsemi \Gamma \semidrop n+1 &= \Xi \fatsemi (\Gamma \semidrop n)  \\
 \Xi \semidrop n+1 &~\mathrm{undefined}
-\end{align*}
+\end{array}\]
 
 We write $\delta : \Gamma \lei \Delta$ if $\delta$ is a
 substitution from $\Gamma$ to $\Delta$ such that, for all 
@@ -1866,8 +1862,7 @@ is a problem with solutions in $A \times B$. This generalisation of $P \wedge Q$
 and allows the output of $P$ to be used in the input of $Q$, so it resembles a
 dependent sum type.
 
-This allows us to state the fully general version of
-the Optimist's lemma:
+This allows us to state the general Optimist's lemma:
 
 \begin{lemma}[The Optimist's lemma for inference problems]
 \label{lem:optimistInference}
