@@ -1,8 +1,10 @@
-@STRING{jfp = {J. of Functional Programming}}
+@STRING{jfp = {J. Functional Programming}}
 
 @STRING{jfplong = {Journal of Functional Programming}}
 
-@STRING{scp = {Science of Computer Programming}}
+@STRING{scp = {Sci. Comp. Programming}}
+
+@STRING{scplong = {Science of Computer Programming}}
 
 @STRING{lncs = {LNCS}}
 
@@ -51,7 +53,7 @@
   title     = {Handbook of Automated Reasoning (in 2 volumes)},
   publisher = {Elsevier and MIT Press},
   year      = {2001},
-  isbn      = {0-444-50813-9, 0-262-18223-8},
+  OPTisbn      = {0-444-50813-9, 0-262-18223-8},
   bibsource = {DBLP, http://dblp.uni-trier.de}
 }
 
@@ -67,7 +69,7 @@
   OPTaddress = {Amsterdam, The Netherlands},
 }
   issn = {0167-6423},
-  doi = {http://dx.doi.org/10.1016/0167-6423(94)00022-0},
+  OPTdoi = {10.1016/0167-6423(94)00022-0},
 
 
 @article{bird_paterson_nested_1999,
@@ -81,7 +83,7 @@
   eprint = {http://journals.cambridge.org/article_S2739506151},
   abstract = { ABSTRACT &ldquo;I have no data yet. It is a capital mistake to theorise before one has data.&rdquo; Sir Arthur Conan Doyle The Adventures of Sherlock Holmesde Bruijn notation is a coding of lambda terms in which each occurrence of a bound variable x is replaced by a natural number, indicating the &lsquo;distance&rsquo; from the occurrence to the abstraction that introduced x. One might suppose that in any datatype for representing de Bruijn terms, the distance restriction on numbers would have to be maintained as an explicit datatype invariant. However, by using a nested (or non-regular) datatype, we can define a representation in which all terms are well-formed, so that the invariant is enforced automatically by the type system. Programming with nested types is only a little more difficult than programming with regular types, provided we stick to well-established structuring techniques. These involve expressing inductively defined functions in terms of an appropriate fold function for the type, and using fusion laws to establish their properties. In particular, the definition of lambda abstraction and beta reduction is particularly simple, and the proof of their associated properties is entirely mechanical. }
 }
-  doi = {10.1017/S0956796899003366},
+  OPTdoi = {10.1017/S0956796899003366},
 
 
 @inproceedings{clment_simple_1986,
@@ -89,30 +91,30 @@
   title = {A simple applicative language: {mini-ML}},
   shorttitle = {A simple applicative language},
   OPTbooktitle = {Proceedings of the 1986 {ACM} conference on {LISP} and functional programming},
-  booktitle = {Proc. {LISP} and functional programming},
+  booktitle = {Proc. {LISP and Functional Programming}},
   publisher = acm,
   author = {D. Cl\'{e}ment and T. Despeyroux and G. Kahn and J. Despeyroux},
   year = {1986},
   keywords = {inference paper, ml, type inference},
   pages = {13--27}
 }
-  isbn = {0-89791-200-4},
-  doi = {10.1145/319838.319847},
+  OPTisbn = {0-89791-200-4},
+  OPTdoi = {10.1145/319838.319847},
   
 
 @inproceedings{damas_principal_1982,
   OPTaddress = {Albuquerque, New Mexico, USA},
   title = {Principal type-schemes for functional programs},
   OPTbooktitle = {Proceedings of the 9th {ACM} {SIGPLAN-SIGACT} symposium on Principles of Programming Languages (POPL '82)},
-  booktitle = {Proc. (POPL '82)},
+  booktitle = {Proc. POPL '82},
   publisher = acm,
   author = {L. Damas and R. Milner},  
   year = {1982},
   keywords = {hindley milner, inference paper, type inference},
   pages = {207--212}
 },
-  isbn = {0-89791-065-6},
-  doi = {10.1145/582153.582176},
+  OPTisbn = {0-89791-065-6},
+  OPTdoi = {10.1145/582153.582176},
 
 @InProceedings{dunfield_polymorphism_2009,
     author =    {J. Dunfield},
@@ -121,8 +123,9 @@
     pages =     {15--26},
     month =     aug,
     year =      2009,
+    OPTnote =      {\url{http://www.cs.cmu.edu/~joshuad/papers/poly/}}
 }
-    note =      {\url{http://www.cs.cmu.edu/~joshuad/papers/poly/}}
+
 
 @unpublished{ghc_team_glorious_2009,
   title = {The {Glorious Glasgow Haskell Compilation System} User's Guide, Version 6.12.1},
@@ -160,7 +163,8 @@
 @inproceedings{mcadam_unification_1998,
   author = {B. J. {McAdam}},
   title = {On the Unification of Substitutions in Type Inference},
-  booktitle = {Implementation of Functional Languages (IFL' 98)},
+  OPTbooktitle = {Implementation of Functional Languages (IFL' 98)}, 
+  booktitle = {Proc. IFL' 98},
   year = {1998},
   pages = {139--154},
   publisher = sv
@@ -187,10 +191,9 @@
   year = {2004},
   pages = {1--9},
   OPTaddress = {Snowbird, Utah, USA},
-  address = {Snowbird, Utah},
   publisher = acm,
-  isbn = {1-58113-850-4},
-  doi = {http://doi.acm.org/10.1145/1017472.1017477},
+  OPTisbn = {1-58113-850-4},
+  OPTdoi = {10.1145/1017472.1017477},
 }
 
 @PhdThesis{mcbride:thesis,
@@ -198,7 +201,7 @@
   title = 	 "Dependently {T}yped {F}unctional {P}rograms and their {P}roofs",
   school = 	 "University of Edinburgh",
   year = 	 1999, 
-  note   =       {Available from \url{http://www.lfcs.informatics.ed.ac.uk/reports/00/ECS-LFCS-00-419/}}
+  OPTnote   =       {Available from \url{http://www.lfcs.informatics.ed.ac.uk/reports/00/ECS-LFCS-00-419/}}
 }
 
 
@@ -226,7 +229,7 @@
 @Article{         miller:mixed,
   author        = "D. Miller",
   title         = "Unification under a Mixed Prefix",
-  journal       = "J. of Symbolic Computation",
+  journal       = "J. Symbolic Computation",
   year          = 1992,
   volume        = 14,
   number        = 4,
@@ -240,9 +243,9 @@
   volume = {17},
   abstract = {The aim of this work is largely a practical one. A widely employed style of programming, particularly in structure-processing languages which impose no discipline of types, entails defining procedures which work well on objects of a wide variety. We present a formal type discipline for such polymorphic procedures in the context of a simple programming language, and a compile time type-checking algorithm which enforces the discipline. A Semantic Soundness Theorem (based on a formal semantics for the language) states that well-type programs cannot "go wrong" and a Syntactic Soundness Theorem states that if accepts a program then it is well typed. We also discuss extending these results to richer languages; a type-checking algorithm based on is in fact already implemented and working, for the metalanguage {ML} in the Edinburgh {LCF} system.},
   number = {3},
-  journal = {J. of Computer and System Sciences},
+  journal = {J. Computer and System Sciences},
   author = {R. Milner},
-  month = dec,
+  OPTmonth = dec,
   year = {1978},
   keywords = {hindley milner, inference paper, polymorphism, type inference},
   pages = {348--375}
@@ -252,8 +255,8 @@
 @article{NaraschewskiN-JAR,
   author={W. Naraschewski and T. Nipkow},
   title={Type Inference Verified: Algorithm {W} in {Isabelle/HOL}},
-  journal={J. of Automated Reasoning},
-  month=nov,
+  journal={J. Automated Reasoning},
+  OPTmonth=nov,
   year=1999,
   volume=23,
   number=3,
@@ -263,7 +266,7 @@
 
 
 @article{Nipkow-Prehofer-JFP95,
-  author={T. Nipkow and Cd.hristian Prehofer},
+  author={T. Nipkow and C. Prehofer},
   title={Type Reconstruction for Type Classes},
   journal=jfp,
   volume=5,
@@ -277,10 +280,11 @@
   author  = {U. Norell},
   title	  = {Towards a practical programming language based on dependent type
 	     theory},
-  school  = {Department of Computer Science and Engineering, Chalmers University of Technology},
+  OPTschool  = {Department of Computer Science and Engineering, Chalmers University of Technology},
+  school  = {Chalmers University of Technology},
   year	  = 2007,
-  month	  = sep,
-  address = {SE-412 96 G\"{o}teborg, Sweden}
+  OPTmonth	  = sep,
+  OPTaddress = {SE-412 96 G\"{o}teborg, Sweden}
 }
 
 @article{norvig_correctingwidespread_1991,
@@ -313,20 +317,20 @@
   year = {1990},
   month = may,
 }
-  doi = {10.1.1.30.7361}
+  OPTdoi = {10.1.1.30.7361}
 
 
 @article{robinson_machine-oriented_1965,
   title = {A Machine-Oriented Logic Based on the Resolution Principle},
   volume = {12},
   number = {1},
-  journal = {J. of the } # acm,
+  journal = {J} # acm,
   author = {J. A. Robinson},
   year = {1965},
   keywords = {inference paper, unification},
   pages = {23--41}
 }
-  doi = {10.1145/321250.321253},
+  OPTdoi = {10.1145/321250.321253},
 
 @inproceedings{wells_principal_typings_2002,
   author = {J. B. Wells},
@@ -335,7 +339,8 @@
   booktitle = {Proc. ICALP '02},
   year = {2002},
   pages = {913--925},
+  OPTisbn = {3-540-43864-5},
   publisher = sv,
-  address = {London, UK},
+  OPTaddress = {London, UK},
 }
-  isbn = {3-540-43864-5},
+

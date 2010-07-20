@@ -298,8 +298,14 @@ more elegant type inference algorithm.  In particular, the generalisation step
 
 \subsection{Motivating context}
 
-Why revisit \AlgorithmW? This is a first step towards a longer-term objective:
-to explain the elaboration of high-level \emph{dependently typed} programs into
+Why revisit \AlgorithmW? 
+%%%This is 
+   As 
+a first step towards a longer-term objective:
+to explain 
+%%%the elaboration of 
+   how to elaborate 
+high-level \emph{dependently typed} programs into
 fully explicit calculi. Just as \W\ specialises polymorphic type schemes, 
 elaboration involves inferring \emph{implicit arguments}
 by solving constraints, but
@@ -320,20 +326,24 @@ well as declarations. This avoids having to consider substitutions, or
 morphisms between contexts, explicitly.
 (We do use substitution in reasoning about the system.)
 
-This paper has been a long time brewing. Its origins lie in a constraint
+This paper has been a long time brewing. 
+   Its origins lie in a constraint
+%%%It originates in a con-straint
 engine cannibalised by McBride from an implementation of
 \citeauthor{miller:mixed}'s \scare{mixed prefix}
 unification~\citeyearpar{miller:mixed}, mutating the quantifier prefix into a
 context. \citeauthor{mcbride:thesis}'s thesis~\citeyearpar{mcbride:thesis} gives
 an early account of using typing contexts to represent the state of an
-interactive construction system, the \scare{holes} in programs and proofs being 
+interactive construction system, \scare{holes} in programs and proofs being 
 specially designated variables. Contexts carry an information order: increase of
 information preserves typing and equality judgments; proof tactics are
 admissible context validity rules which increase information; unification is
 specified as a tactic which increases information to make an equation hold, but
 its imple-mentation is not discussed. This view of construction underpinned the
 implementation of Epigram~\citep{mcbride.mckinna:view-from-the-left} and informed
-\citeauthor{norell:agda}'s implementation of Agda~\citeyearpar{norell:agda}.
+\citeauthor{norell:agda}'s 
+%%%implementation of Agda~\citeyearpar{norell:agda}. 
+   Agda implementation~\citeyearpar{norell:agda}.
 It is high time we began to explain how it works and perhaps to understand it.
 
 We are grateful to an anonymous referee for pointing out the work of
@@ -402,7 +412,7 @@ variables. Even in a simply-typed setting, however, this approach has advantages
 \section{Unification over a context\label{sec:unif}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-We begin our study %%%of type inference 
+We begin %%%our study of type inference 
 by revisiting unification for
 type expressions containing free variables. Let us equip ourselves to
 address the problem---solving equations---by explaining which types
@@ -498,14 +508,14 @@ It suffices to define $\beta \defn \alpha$, giving the final judgment
 $$\hole{\alpha}, \beta \defn \alpha, \gamma \defn \alpha \arrow \beta
     \entails \beta \arrow \alpha \equiv \gamma.$$
 
-A context thus contains a `triangular substitution', applied on
+A context thus contains a `triangular substitution'~\cite{DBLP:books/el/RV01/BaaderS01}, applied on
 demand, but that need not be all. As we proceed with the development,
 the context structure will evolve to hold a variety of information
 about variables of all sorts and some control markers, managing the
 generalisation process.
 
 \TODO{Relate contexts to traditional substitutions (triangular);
-compare with Baader and Snyder~\cite{DBLP:books/el/RV01/BaaderS01}.}
+compare with Baader and Snyder.}
 
 
 \subsection{Implementation of unification}
