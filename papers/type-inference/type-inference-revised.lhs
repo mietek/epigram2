@@ -104,7 +104,7 @@
 \usepackage{color}
 \definecolor{red}{rgb}{1.0,0.0,0.0}
 \newcommand{\TODO}[1]{\NotForPublication{\textcolor{red}{#1}}}
-\newcommand{\NotForPublication}[1]{#1}
+\newcommand{\NotForPublication}[1]{}
 
 % Boxes and inference rules
 \newcommand{\mathframe}[1]{\framebox{\ensuremath{#1}}}
@@ -2043,9 +2043,10 @@ argument separately, then inserts an equation with a fresh variable for the
 codomain type.
 
 \begin{figure}[ht]
-\boxrule{t : \tau}
-
-$$\Rule{\Sbind{\beta \defn \upsilon, x \asc \gendot{\beta}}{\Pinf{t}{\tau}}}
+\[\begin{array}{c}
+\mathframe{t : \tau}
+\bigskip\\
+\Rule{\Sbind{\beta \defn \upsilon, x \asc \gendot{\beta}}{\Pinf{t}{\tau}}}
        {\Pinf{\lambda x . t}{\upsilon \arrow \tau}}
 \qquad
 \Rule{\Pinf{f}{\chi}
@@ -2055,9 +2056,9 @@ $$\Rule{\Sbind{\beta \defn \upsilon, x \asc \gendot{\beta}}{\Pinf{t}{\tau}}}
         \Sbind{\beta \defn \tau}{\Puni{\chi}{\upsilon \arrow \beta}}
        }
        {\Pinf{f a}{\tau}}
-$$
 
-$$
+\smallskip\\
+
 \Rule{
       s \hasscheme \sigma
       \quad
@@ -2069,8 +2070,8 @@ $$
       \quad
       \tau \equiv \upsilon}
      {t : \upsilon}
-$$
 
+\end{array}\]
 \caption{Transformed rules for type assignment}
 \label{fig:transformedRules}
 \end{figure}
@@ -2103,31 +2104,32 @@ subsection~\ref{sec:inferImplementation}.
 % output \ensuremath{\Gamma, \Xi} is well-formed.
 
 \begin{figure}[ht]
-\boxrule{\algInferScheme{\Gamma}{s}{\sigma}{\Delta}}
+\[\begin{array}{c}
+\mathframe{\algInferScheme{\Gamma}{s}{\sigma}{\Delta}}
 
-$$
+\bigskip\\
 \namer{Gen}
 \Rule{\algInfer{\Gamma \fatsemi}{s}{\upsilon}{\Delta \fatsemi \Xi}}
      {\algInferScheme{\Gamma}{s}{\gen{\Xi}{\upsilon}}{\Delta}}
-$$ 
+\smallskip\\ 
 
-\boxrule{\algInfer{\Gamma}{t}{\tau}{\Delta}}
+\mathframe{\algInfer{\Gamma}{t}{\tau}{\Delta}}
 
-$$
+\bigskip\\
 \namer{Var}
 \Rule{x \asc \gen{\Xi}{\upsilon} \in \Gamma}
      {\algInfer{\Gamma}{x}{\upsilon}{\Gamma, \Xi}}
-$$
 
-$$
+\\
+
 \namer{Abs}
 \Rule{\algInfer{\Gamma, \hole{\alpha}, x \asc \gendot{\alpha}}{w}{\upsilon}
           {\Delta_0, x \asc \gendot{\alpha}, \Xi}}
      {\algInfer{\Gamma}{\lambda x.w}{\alpha \arrow \upsilon}{\Delta_0, \Xi}}
 \side{\alpha \notin \tyvars{\Gamma}}
-$$
 
-$$
+\\
+
 \namer{App}
 \BigRule{\algInfer{\Gamma}{f}{\chi}{\Delta_0}
          \quad
@@ -2135,9 +2137,9 @@ $$
         {\algUnify{\Delta_1, \hole{\beta}}{\chi}{\upsilon \arrow \beta}{\Delta}}
         {\algInfer{\Gamma}{f a}{\beta}{\Delta}}
 \side{\beta \notin \tyvars{\Delta_1}}
-$$
 
-$$
+\\ 
+
 \namer{Let}
 \BigRule%%%{\algInfer{\Gamma \fatsemi}{s}{\upsilon}{\Delta_0 \fatsemi \Xi_0}}
         %%%{\algInfer{\Delta_0, x \asc \gen{\Xi_0}{\upsilon}}{w}{\chi}
@@ -2147,8 +2149,8 @@ $$
         {\algInfer{\Delta_0, x \asc \sigma}{w}{\chi}
                {\Delta_1, x \asc \sigma, \Xi_1}}
         {\algInfer{\Gamma}{\letIn{x}{s}{w}}{\chi}{\Delta_1, \Xi_1}}
-$$
 
+\end{array}\]
 \caption{Algorithmic rules for type inference}
 \label{fig:inferRules}
 \end{figure}
@@ -2517,7 +2519,7 @@ mediating \emph{problems as types}.
 \phantomsection
 \addcontentsline{toc}{section}{References}
 \bibliographystyle{plainnat}
-\bibliography{lib}
+\bibliography{lib-short}
 
 
 
