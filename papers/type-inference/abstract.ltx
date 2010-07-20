@@ -5,7 +5,9 @@
 
 %%% 
 We consider the problems of first-order unification and type inference
-from a very general perspective on problem-solving, namely 
+from a
+%%% very
+general perspective on problem-solving, namely 
 that of information increase in the problem context. 
 %%% 
 This leads to a powerful technique for implementing
@@ -13,19 +15,24 @@ type inference algorithms.
 %%% 
 We describe a unification algorithm and illustrate the technique
 %% by describing an implementation of type inference for
-by applying it to
+%%% by applying it to
+for
 the familiar Hindley-Milner type system, 
 but it can be applied to more advanced type systems.
 %%%
-The algorithms depend on a well-founded invariant on contexts
-in which type variable bindings and type-schemes for terms 
-   may depend only on bindings appearing earlier in the context. 
+The algorithms depend on
+%%% a well-founded invariant on
+\emph{well-founded} contexts:
+%%% in which
+type variable bindings and type-schemes for terms 
+   may depend only on earlier bindings.
 We ensure that 
    unification yields a most general unifier, 
 and that 
    type inference yields principal types, 
 by advancing definitions earlier in the context only when 
-absolutely necessary. 
+%%% absolutely
+necessary. 
 
 %%% 
 %%% old version

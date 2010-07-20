@@ -221,7 +221,7 @@
 \fixpars
 
 \newtheorem{lemma}{Lemma}
-\newcommand{\proofsux}{\vspace*{-0.15in}}
+\newcommand{\proofsux}{\vspace*{-0.2in}}
 
 \include{macros}
 \setlength{\rulevgap}{0.05in}
@@ -281,7 +281,7 @@ system \citep{milner_theory_1978, damas_principal_1982} (henceforth: \scare{\hin
 \citeyearpar{robinson_machine-oriented_1965}. The system consists of
 simply-typed $\lambda$-calculus with \scare{let-expressions} for polymorphic
 definitions.
-For example, the term
+For example, %%% the term
 $$\letIn{i}{\lambda x . x}{i\:i}$$
 is well-typed: $i$ is given a polymorphic type that is instantiated in two
 different ways. The syntax of types is
@@ -858,10 +858,10 @@ We maintain a map $\sem{\cdot}_K : \V_K \times \D_K \rightarrow \Ss$
 from declarations to statements. (Typically we will omit the subscript $K$.)
 The idea is that $\sem{\decl{x}{D}}$ is the statement that holds by virtue of the
 declaration $\decl{x}{D}$ in the context. For type variables, we define
-\begin{align*}
+\[\begin{array}{r@@{\,}l}
 \sem{\hole{\alpha}} &= \alpha \type \\
 \sem{\alpha \defn \tau} &= \alpha \type \wedge \alpha \equiv \tau.
-\end{align*}
+\end{array}\]
 
 We can inspect the context in derivations using the inference rule
 $$\namer{Lookup}
@@ -897,10 +897,10 @@ Accordingly,
 we maintain a map $\ok_K : \D_K \rightarrow \Ss$, 
 embedding properties in statements, for each $K \in \K$. 
 For type properties:
-\begin{align*}
+\[\begin{array}{r@@{\,}l}
 \ok_\TY (\hole{}) &= \valid \\
 \ok_\TY (\defn{\tau}) &= \tau \type
-\end{align*}
+\end{array}\]
 Now we can define the context validity statement
 $\valid$ as shown in Figure~\ref{fig:contextValidityRules}.
 From now on we will implicitly assume that all contexts we work with are valid,
@@ -988,10 +988,10 @@ the case for conjunction.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Information and stable statements\label{sec:stab}}
+\section{An information order for contexts\label{sec:stab}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsection{Information order}
+%%% \subsection{Information order}
 
 The transition from $\hole{\alpha}$ to $\alpha \defn \tau$ intuitively cannot
 falsify any existing equations.
@@ -1045,7 +1045,7 @@ algorithm. For example, our algorithm will always use the identity substitution.
 
 
 
-\subsection{Stability}
+\subsection{Stable statements}
 
 We say a statement $S$ is \define{stable} if it is preserved under information
 increase, that is, if
@@ -1181,7 +1181,7 @@ solution strategy.
 %
 \begin{lemma}[The Optimist's lemma]
 \label{lem:optimist}
-The following inference rule is admissible:
+The following is admissible:
 $$\Rule{\LEIStmt{\Gamma}{P}{\Delta}
        \quad  \LEIStmt{\Delta}{Q}{\Theta}}
        {\LEIStmt{\Gamma}{P \wedge Q}{\Theta}}.$$
@@ -1237,13 +1237,12 @@ yielding output context $\Delta$. The idea is that the bar ($||$) represents
    and $\Xi$ contains exactly those declarations on which $\tau$ depends.  
 Formally, the inputs 
 must satisfy:
-\begin{quote}
-$\alpha \in \tyvars{\Gamma}$, ~
-$\tau$ is not a variable, \\
-$\Gamma, \Xi \entails \tau \type$, ~ 
-$\Xi$ contains only type variable declarations \\
-$\beta \in \tyvars{\Xi} \Rightarrow \beta \in \FTV{\tau, \Xi}$.
-\end{quote}
+
+\hspace*{0.1in}$\alpha \in \tyvars{\Gamma}$, ~
+$\tau$ is not a variable, \\ {}
+\hspace*{0.1in}$\Gamma, \Xi \entails \tau \type$, ~ 
+$\Xi$ contains only type variable declarations \\ {}
+\hspace*{0.1in}$\beta \in \tyvars{\Xi} \Rightarrow \beta \in \FTV{\tau, \Xi}$.
 
 \TODO{Chat about this lemma. Perhaps it needs to come slightly later?}
 
@@ -1288,10 +1287,12 @@ so they can be ignored.
 We define the orthogonality relation $x \perp X$ (the variable $x$ is
 independent of the set of type variables $X$) 
 to capture this idea: 
-\begin{align*}
+\[
+\begin{array}{r@@{\,}l}
 \alpha \perp X &\mathrm{~if~} \alpha \in \V_\TY \setminus X  \\
 x      \perp X &\mathrm{~if~} x \in \V_\TM
-\end{align*}
+\end{array}
+\]
 
 The rules \name{Define} and \name{Expand} have
 symmetric counterparts, identical apart from interchanging the equated
@@ -1483,7 +1484,8 @@ We aim to implement type inference for the \hindleymilner\ system, so we need to
 introduce type schemes and the term language. We extend the grammar of statements
 to express additions to the context (binding statements), well-formed schemes,
 type assignment and scheme assignment. The final grammar will be:
-\begin{align*}S ::=~ \valid
+\[\begin{array}{r@@{\,}l}
+S ::=~ \valid
     &~||~ \tau \type
     ~||~ \tau \equiv \upsilon
     ~||~ S \wedge S \\
@@ -1491,7 +1493,7 @@ type assignment and scheme assignment. The final grammar will be:
     ~||~ \sigma \scheme
     ~||~ t : \tau
     ~||~ s \hasscheme \sigma
-\end{align*}
+\end{array}\]
 
 \subsection{Binding statements}
 
@@ -1567,11 +1569,18 @@ Schemes arise by discharging a context suffix (a list of type variable
 declarations) over a type, and any scheme can be viewed in this way. We write
 $\gen{\Xi}{\tau}$ for the generalisation of the type $\tau$ over the suffix of
 type variable declarations $\Xi$, defined by
-\begin{align*}
+%\begin{align*}
+%\emptycontext         &\genarrow \tau = \gendot{\tau}  \\
+%\hole{\alpha}, \Xi    &\genarrow \tau = \forall\alpha~\gen{\Xi}{\tau}  \\
+%\alpha \defn \upsilon, \Xi &\genarrow \tau = \letS{\alpha}{\upsilon}{\gen{\Xi}{\tau}}
+%\end{align*}
+\[
+\begin{array}{r@@{\,}l}
 \emptycontext         &\genarrow \tau = \gendot{\tau}  \\
 \hole{\alpha}, \Xi    &\genarrow \tau = \forall\alpha~\gen{\Xi}{\tau}  \\
 \alpha \defn \upsilon, \Xi &\genarrow \tau = \letS{\alpha}{\upsilon}{\gen{\Xi}{\tau}}
-\end{align*}
+\end{array}
+\]
 
 The statement $\sigma \scheme$ is then defined by
 $$\gen{\Xi}{\tau} \scheme = \Sbind{\Xi}{\tau \type}.$$
@@ -1632,10 +1641,10 @@ $$\sem{x \asc \sigma}_\TM = x \hasscheme \sigma.$$
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Generalisation by localization\label{sec:genloc}}
+\section{Generalising \emph{local} type variables\label{sec:genloc}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsection{Preserving order in the context}
+%%%\subsection{Preserving order in the context}
 
 We have previously observed, but not yet exploited, the importance of
 declaration order in the context, and that we move declarations left as
@@ -1676,24 +1685,22 @@ However, it is fairly straightforward to verify that the previous results
 hold for the new definition.
 
 
-\subsection{Fixing the unification algorithm}
+\subsection{Amending the unification algorithm}
 
-The only place where changing the $\lei$ relation requires extra work is in the
-unification algorithm, because it acts structurally over the context. We need to
-specify what happens when it finds a $\fatsemi$ separator if we want to retain
-completeness. We add the following algorithmic rules:
-$$
+Modifying $\lei$ makes extra work only in the
+unification algorithm, because the latter acts structurally on contexts, which may
+now contain $\fatsemi$ separators. We extend the algorithmic rules:
+\[\begin{array}{c}
 \namer{Skip}
 \Rule{\algUnify{\Gamma_0}{\alpha}{\beta}{\Delta_0}}
      {\algUnify{\Gamma_0 \fatsemi}{\alpha}{\beta}{\Delta_0 \fatsemi}}
-$$
-$$
+\smallskip\\
 \namer{Repossess}
 \Rule{\algInstantiate{\Gamma_0}{\alpha}{\tau}{\Xi}{\Delta_0}}
      {\algInstantiate{\Gamma_0 \fatsemi}{\alpha}{\tau}{\Xi}{\Delta_0 \fatsemi}}
-$$
+\end{array}\]
 
-We must also update the structural induction in Lemma~\ref{lem:unifySound} to
+We must correspondingly update the induction in Lemma~\ref{lem:unifySound} to
 show that adding the new rules preserves soundness and generality. For the
 \name{Skip} rule, correctness follows immediately from this lemma:
 
@@ -1777,11 +1784,11 @@ $\theta \eqsubst \zeta \compose \iota :
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Type inference problems and solutions\label{sec:tyinf}}
+\section{Type inference problems and their solutions\label{sec:tyinf}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-\subsection{Inference problems: multiple-mode }
+%%%\subsection{Inference problems: multiple-mode }
 
 \TODO{Tidy up and improve motivation for definitions in this section.}
 
@@ -2274,8 +2281,7 @@ premises are satisfied. \TODO{More?}
 
 \subfigure[][Type schemes]{\frame{\parbox{\textwidth}{\fixpars\medskip
 
-> data Index a = Z | S a
->     deriving (Functor, Foldable)
+> data Index a = Z | S a deriving (Functor, Foldable)
 
 > data Schm a  =  Type (Ty a) 
 >              |  All (Schm (Index a))
