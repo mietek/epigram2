@@ -104,7 +104,7 @@
 \usepackage{color}
 \definecolor{red}{rgb}{1.0,0.0,0.0}
 \newcommand{\TODO}[1]{\NotForPublication{\textcolor{red}{#1}}}
-\newcommand{\NotForPublication}[1]{}
+\newcommand{\NotForPublication}[1]{#1}
 
 % Boxes and inference rules
 \newcommand{\mathframe}[1]{\framebox{\ensuremath{#1}}}
