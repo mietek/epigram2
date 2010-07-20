@@ -122,6 +122,8 @@
 \newcommand{\scare}[1]{`#1'}
 \newcommand{\W}{\ensuremath{\mathcal{W}}}
 \newcommand{\AlgorithmW}{Algorithm~\W}
+\newcommand{\hindleymilner}{Hindley-Milner}
+\newcommand{\hindleymilnershort}{HM}
 
 % Substitutions
 \newcommand{\eqsubst}{\equiv}
@@ -268,13 +270,13 @@ Programme.} \and Conor McBride}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Introduction}
+\section{Introduction\label{sec:intro}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%% \subsection{\AlgorithmW}
 
-\AlgorithmW\ is a well-known type inference algorithm for the Hindley-Milner type
-system \citep{milner_theory_1978, damas_principal_1982}, based on
+\AlgorithmW\ is a well-known type inference algorithm for the \hindleymilner\ type
+system \citep{milner_theory_1978, damas_principal_1982} (henceforth: \scare{\hindleymilnershort}), based on
 \citeauthor{robinson_machine-oriented_1965}'s Unification Algorithm
 \citeyearpar{robinson_machine-oriented_1965}. The system consists of
 simply-typed $\lambda$-calculus with \scare{let-expressions} for polymorphic
@@ -292,7 +294,7 @@ Most presentations of \AlgorithmW\ have treated the underlying unification
 algorithm as a \scare{black box}, but by considering both together we can give a
 more elegant type inference algorithm.  In particular, the generalisation step
 (used when inferring the type of a let-expression) becomes straightforward
-(section \TODO{??}).
+(Section \ref{sec:tyinf}).
 
 \subsection{Motivating context}
 
@@ -306,11 +308,13 @@ stepwise progress in problem solving from states of partial knowledge.
 We 
 %%%wish to identify 
    seek  
-local correctness criteria for type inference that
-guarantee global correctness.
+local correctness criteria for type inference 
+%%%that guarantee 
+   guaranteeing 
+global correctness.
 
 
-In contrast to other presentations of unification and Hindley-Milner type
+In contrast to other presentations of unification and \hindleymilnershort\ type
 inference, our algorithm is based on contexts carrying variable definitions as
 well as declarations. This avoids having to consider substitutions, or
 morphisms between contexts, explicitly.
@@ -342,7 +346,7 @@ used for different purposes.
 However, our concerns are different: whilst Dunfield elaborates a
 particular approach to bidirectional polymorphic checking to a larger
 class of type theories, here we pursue a methodological understanding
-of the problem-solving strategy in Hindley-Milner type inference.
+of the problem-solving strategy in \hindleymilnershort\ type inference.
 
 \TODO{More crunchiness: forward pointers to claims and contributions}
 
@@ -395,7 +399,7 @@ variables. Even in a simply-typed setting, however, this approach has advantages
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Unification over a context}
+\section{Unification over a context\label{sec:unif}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 We begin our study %%%of type inference 
@@ -796,7 +800,7 @@ $\gamma$.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Modelling statements-in-context}
+\section{Modelling statements-in-context\label{sec:stmts}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 Having seen an implementation of unification, let us try to understand it.
@@ -984,7 +988,7 @@ the case for conjunction.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Information and stable statements}
+\section{Information and stable statements\label{sec:stab}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsection{Information order}
@@ -1127,7 +1131,7 @@ $\Theta \entails \theta\delta \sem{\decl{x}{D}}$ as required.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Constraints: problems at ground mode}
+\section{Constraints: problems at ground mode\label{sec:constrs}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 We define a \define{constraint problem} to be a pair of a context $\Gamma$ and a statement
@@ -1201,7 +1205,7 @@ substitution.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{The unification algorithm, formally}
+\section{The unification algorithm, formally\label{sec:unif-formal}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 We now present the algorithm formally. The structural rule means that
@@ -1272,7 +1276,7 @@ The only rule not in this form is \name{Decompose}, but solutions to
 $\tau_0 \arrow \tau_1 \equiv \upsilon_0 \arrow \upsilon_1$ are exactly those
 that solve $\tau_0 \equiv \upsilon_0 \wedge \tau_1 \equiv \upsilon_1$,
 so it gives a minimal solution by the Optimist's lemma.
-
+%%%
 \TODO{Do we need to say more about part (b)? Should we comment somewhere about
 keeping things right not being necessary for generality at the moment, but
 arising later?}
@@ -1472,10 +1476,10 @@ $\alpha \equiv \tau$, but by Lemma~\ref{lem:occursCheck} it has no solutions.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Specifying type inference}
+\section{Specifying type inference\label{sec:spec-tyinf}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-We aim to implement type inference for the Hindley-Milner system, so we need to
+We aim to implement type inference for the \hindleymilner\ system, so we need to
 introduce type schemes and the term language. We extend the grammar of statements
 to express additions to the context (binding statements), well-formed schemes,
 type assignment and scheme assignment. The final grammar will be:
@@ -1628,7 +1632,7 @@ $$\sem{x \asc \sigma}_\TM = x \hasscheme \sigma.$$
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Generalisation by localization}
+\section{Generalisation by localization\label{sec:genloc}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsection{Preserving order in the context}
@@ -1773,7 +1777,7 @@ $\theta \eqsubst \zeta \compose \iota :
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Type inference problems and solutions}
+\section{Type inference problems and solutions\label{sec:tyinf}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -2168,7 +2172,7 @@ However, it allows arbitrary generalisation of the schemes assigned to term
 variables which are incompatible with the known and intended value of
 those variables.
 
-As \citet{wells_principal_typings_2002} points out, Hindley-Milner
+As \citet{wells_principal_typings_2002} points out, \hindleymilnershort\ 
 type inference is not in this respect compositional. He carefully
 distinguishes principal \emph{typings}, given the right to demand more
 polymorphism, from Milner's principal \emph{type schemes} and analyses
@@ -2455,10 +2459,10 @@ to check applications.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Discussion}  %%% Concussion?
+\section{Discussion\label{sec:conc}}  %%% Concussion?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-We have arrived at an implementation of Hindley-Milner type inference
+We have arrived at an implementation of \hindleymilner\ type inference
 which involves all the same steps as \AlgorithmW, but not
 necessarily in the same order. In particular, the dependency analysis
 which \W\ performs all of a sudden in the let-rule is here pushed
