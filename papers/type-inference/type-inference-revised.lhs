@@ -219,6 +219,7 @@
 \fixpars
 
 \newtheorem{lemma}{Lemma}
+\newcommand{\proofsux}{\vspace*{-0.15in}}
 
 \include{macros}
 \setlength{\rulevgap}{0.05in}
@@ -906,7 +907,7 @@ purposes.
 \begin{figure}[ht]
 \[\begin{array}{c}
 \mathframe{\Gamma \entails \valid}
-\bigskip\\
+\smallskip\\
 \Axiom{\emptycontext \entails \valid}
 \qquad
 \Rule{\Gamma \entails \valid    \quad    \Gamma \entails \ok_K D}
@@ -927,7 +928,7 @@ purposes.
 \begin{figure}[ht]
 \[\begin{array}{c}
 \mathframe{\tau \type}\qquad\mathframe{\tau \equiv \upsilon}\qquad\mathframe{S \wedge S'}
-\bigskip\\
+\smallskip\\
 \Rule{\tau \type   \quad   \upsilon \type}
      {\tau \arrow \upsilon \type}
 \qquad
@@ -1056,7 +1057,7 @@ We observe that neutral proofs always ensure stability:
 If $\Gamma \entailsN S$ and $\delta : \Gamma \lei \Delta$ then
 $\Delta \entails \delta S$.
 \end{lemma}
-\begin{proof}
+\proofsux\begin{proof}
 By structural induction on derivations. If the proof is by \name{Lookup}, then
 the result holds by definition of information increase. Otherwise, the proof is
 by a neutral elimination rule, so the result follows by induction and
@@ -1076,7 +1077,7 @@ $\tau \type$ and $\tau \equiv \upsilon$ are stable.
 \begin{lemma}[Conjunction preserves stability]\label{lem:stab-pres-conj}
 If $S$ and $S'$ are stable then $S \wedge S'$ is stable.
 \end{lemma}
-\begin{proof}
+\proofsux\begin{proof}
 Suppose $\delta : \Gamma \lei \Delta$, the statements $S$ and $S'$ are stable,
 and $\Gamma \entails (S \wedge S')$. If the proof is by \name{Neutral}
 then $\Delta \entails \delta (S \wedge S')$ by Lemma~\ref{lem:neutrality}.
@@ -1094,7 +1095,7 @@ $\iota : \Gamma \lei \Gamma : v \mapsto v$, and transitivity by composition:
 $$\delta : \Gamma \lei \Delta  ~~\text{and}~~  \theta : \Delta \lei \Theta
   \quad \Rightarrow \quad  \theta \compose \delta : \Gamma \lei \Theta.$$
 \end{lemma}
-\begin{proof}
+\proofsux\begin{proof}
 Reflexivity follows immediately by applying the \name{Lookup} and
 \name{Neutral} rules.
 For transitivity, suppose $\decl{x}{D} \in \Gamma$,
@@ -1104,25 +1105,25 @@ Now by stability applied to $\delta \sem{\decl{x}{D}}$ using $\theta$, we have
 $\Theta \entails \theta\delta \sem{\decl{x}{D}}$ as required.
 \end{proof}
 
-\TODO{How do we use the following lemma?}
-\begin{lemma}
-\label{lem:composePreservesEquivSubst}
-If $\delta_0 \eqsubst \delta_1 : \Gamma \lei \Delta$
-and $\theta_0 \eqsubst \theta_1 : \Delta \lei \Theta$
-then $\theta_0 \compose \delta_0  \eqsubst  \theta_1 \compose \delta_1 :
-         \Gamma \lei \Theta$.
-\end{lemma}
-\begin{proof}
-Fix $\alpha \in \tyvars{\Gamma}$. By definition of $\eqsubst$,
-$\Delta \entails \delta_0\alpha \equiv \delta_1\alpha$,
-so by stability,
-$\Theta \entails \theta_0\delta_0\alpha \equiv \theta_0\delta_1\alpha$.
-Moreover
-$\Theta \entails \theta_0\delta_1\alpha \equiv \theta_1\delta_1\alpha$,
-and hence
-$\Theta \entails \theta_0\delta_0\alpha \equiv \theta_1\delta_1\alpha$
-by transitivity.
-\end{proof}
+%%\TODO{How do we use the following lemma?}
+%%\begin{lemma}
+%%\label{lem:composePreservesEquivSubst}
+%%If $\delta_0 \eqsubst \delta_1 : \Gamma \lei \Delta$
+%%and $\theta_0 \eqsubst \theta_1 : \Delta \lei \Theta$
+%%then $\theta_0 \compose \delta_0  \eqsubst  \theta_1 \compose \delta_1 :
+%%         \Gamma \lei \Theta$.
+%%\end{lemma}
+%%\proofsux\begin{proof}
+%%Fix $\alpha \in \tyvars{\Gamma}$. By definition of $\eqsubst$,
+%%$\Delta \entails \delta_0\alpha \equiv \delta_1\alpha$,
+%%so by stability,
+%%$\Theta \entails \theta_0\delta_0\alpha \equiv \theta_0\delta_1\alpha$.
+%%Moreover
+%%$\Theta \entails \theta_0\delta_1\alpha \equiv \theta_1\delta_1\alpha$,
+%%and hence
+%%$\Theta \entails \theta_0\delta_0\alpha \equiv \theta_1\delta_1\alpha$
+%%by transitivity.
+%%\end{proof}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1182,7 +1183,7 @@ $$\Rule{\LEIStmt{\Gamma}{P}{\Delta}
        {\LEIStmt{\Gamma}{P \wedge Q}{\Theta}}.$$
 \end{lemma}
 
-\begin{proof}[Sketch]
+\proofsux\begin{proof}[Sketch]
 Any solution $\phi : \Gamma \lei \Phi$ to $(\Gamma, P \wedge Q)$ must solve
 $(\Gamma, P)$, and hence factor through $\iota : \Gamma \lei \Delta$. But its
 cofactor solves $(\Delta, Q)$, and hence factors through
@@ -1231,14 +1232,14 @@ yielding output context $\Delta$. The idea is that the bar ($||$) represents
 %%%must be placed before $\tau$ for it to be well-defined). 
    and $\Xi$ contains exactly those declarations on which $\tau$ depends.  
 Formally, the inputs 
-must satisfy
-\begin{itemize}
-\item $\alpha \in \tyvars{\Gamma}$,
-\item $\tau$ is not a variable,
-\item $\Gamma, \Xi \entails \tau \type$,
-\item $\Xi$ contains only type variable declarations and
-\item $\beta \in \tyvars{\Xi} \Rightarrow \beta \in \FTV{\tau, \Xi}$.
-\end{itemize}
+must satisfy:
+\begin{quote}
+$\alpha \in \tyvars{\Gamma}$, ~
+$\tau$ is not a variable, \\
+$\Gamma, \Xi \entails \tau \type$, ~ 
+$\Xi$ contains only type variable declarations \\
+$\beta \in \tyvars{\Xi} \Rightarrow \beta \in \FTV{\tau, \Xi}$.
+\end{quote}
 
 \TODO{Chat about this lemma. Perhaps it needs to come slightly later?}
 
@@ -1255,7 +1256,7 @@ $\LEIStmt{\Gamma, \Xi}{\alpha \equiv \tau}{\Delta}$.
 \end{enumerate}
 
 \end{lemma}
-\begin{proof}
+\proofsux\begin{proof}
 By induction on the structure of derivations.
 For each rule, we verify that it preserves the set of type variables and
 that $\Gamma \lei \Delta$.
@@ -1296,41 +1297,41 @@ terms in the conclusion. Usually we will ignore these without loss of generality
 \[\begin{array}{c}
 \mathframe{\algUnify{\Gamma}{\tau}{\upsilon}{\Delta}}
 
-\\
+\smallskip\\
 \namer{Decompose}
 \Rule{\algUnify{\Gamma}{\tau_0}{\upsilon_0}{\Delta_0}
       \quad
       \algUnify{\Delta_0}{\tau_1}{\upsilon_1}{\Delta}}
     {\algUnify{\Gamma}{\tau_0 \arrow \tau_1}{\upsilon_0 \arrow \upsilon_1}{\Delta}}
 
-\\
+\smallskip\\
 
 \namer{Idle}
 % \Rule{\Gamma \entails \alpha \type}
 \Axiom{\algUnify{\Gamma_0, \alpha D}{\alpha}{\alpha}{\Gamma_0, \alpha D}}
 
-\\ 
+\smallskip\\ 
 
 \namer{Define}
 %\Rule{\Gamma_0 \entails \beta \type}
 \Axiom{\algUnify{\Gamma_0, \hole{\alpha}}{\alpha}{\beta}{\Gamma_0, \alpha \defn \beta}}
 \side{\alpha \neq \beta}
 
-\\ 
+\smallskip\\ 
 
 \namer{Ignore}
 \Rule{\algUnify{\Gamma_0}{\alpha}{\beta}{\Delta_0}}
      {\algUnify{\Gamma_0, \decl{x}{D}}{\alpha}{\beta}{\Delta_0, \decl{x}{D}}}
 \side{x \perp \{\alpha, \beta\} }
 
-\\ 
+\smallskip\\ 
 
 \namer{Expand}
 \Rule{\algUnify{\Gamma_0}{\tau}{\beta}{\Delta_0}}
      {\algUnify{\Gamma_0, \alpha \defn \tau}{\alpha}{\beta}{\Delta_0, \alpha \defn \tau}}
 \side{\alpha \neq \beta}
 
-\\ 
+\smallskip\\ 
 
 \namer{Solve}
 \Rule{\algInstantiate{\Gamma}{\alpha}{\tau}{\emptycontext}{\Delta}}
@@ -1338,25 +1339,25 @@ terms in the conclusion. Usually we will ignore these without loss of generality
 %% \side{\tau \neq \alpha}
 \side{\tau \mathrm{~not~variable}}
 
-\\
+\bigskip\\
 
 \mathframe{\algInstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}}
 
-\\
+\smallskip\\
 \namer{DefineS}
 % \Rule{\Gamma_0, \Xi \entails \tau \type}
 \Axiom{\algInstantiate{\Gamma_0, \hole{\alpha}}{\alpha}{\tau}{\Xi}
                    {\Gamma_0, \Xi, \alpha \defn \tau}}
 \side{\alpha \notin \FTV{\tau, \Xi}}
 
-\\ 
+\smallskip\\ 
 
 \namer{IgnoreS}
 \Rule{\algInstantiate{\Gamma_0}{\alpha}{\tau}{\Xi}{\Delta_0}}
      {\algInstantiate{\Gamma_0, \decl{x}{D}}{\alpha}{\tau}{\Xi}{\Delta_0, \decl{x}{D}}}
 \side{x \perp \FTV{\alpha, \tau, \Xi}}
 
-\\
+\smallskip\\
 
 \namer{ExpandS}
 \Rule{\algUnify{\Gamma_0, \Xi}{\upsilon}{\tau}{\Delta_0}}
@@ -1364,7 +1365,7 @@ terms in the conclusion. Usually we will ignore these without loss of generality
                    {\Delta_0, \alpha \defn \upsilon}}
 \side{\alpha \notin \FTV{\tau, \Xi}}
 
-\\
+\smallskip\\
 
 \namer{DependS}
 \Rule{\algInstantiate{\Gamma_0}{\alpha}{\tau}{\beta D, \Xi}{\Delta}}
@@ -1413,7 +1414,7 @@ $\alpha \in \FTV{\tau}$. There is no context $\Gamma$ and substitution
 $\theta$ such that $\Gamma \entails \theta\alpha \equiv \theta\tau$ or
 $\Gamma \entails \theta\tau \equiv \theta\alpha$.
 \end{lemma}
-\begin{proof}
+\proofsux\begin{proof}
 Suppose otherwise, and let $\Gamma$ and $\theta$ be such that the proof of
 $\Gamma \entails \theta\alpha \equiv \theta\tau$ or
 $\Gamma \entails \theta\tau \equiv \theta\alpha$ is minimal.
@@ -1449,7 +1450,7 @@ $\algInstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$.
 \end{enumerate}
 \end{lemma}
 
-\begin{proof}
+\proofsux\begin{proof}
 It suffices to show that the algorithm succeeds for every well-formed input in
 which a solution can exist. We proceed by induction on the call graph; since the
 algorithm terminates, this is well-founded. Each step preserves solutions
@@ -1527,7 +1528,7 @@ As a consequence, Lemma~\ref{lem:neutrality} still holds.
 If $\decl{x}{D}$ is a declaration and both $\ok_K D$ and $S$ are stable, then
 $\Sbind{\decl{x}{D}}{S}$ is stable.
 \end{lemma}
-\begin{proof}
+\proofsux\begin{proof}
 Suppose $\delta : \Gamma \lei \Delta$, the statement $S$ is stable and
 $\Gamma \entails \Sbind{\decl{x}{D}}{S}$.  If the proof is by \name{Neutral}
 then the result follows by Lemma~\ref{lem:neutrality}.
@@ -1695,7 +1696,7 @@ show that adding the new rules preserves soundness and generality. For the
 \begin{lemma}
 If $\LEIStmt{\Gamma}{S}{\Delta}$ then $\LEIStmt{\Gamma \fatsemi}{S}{\Delta \fatsemi}$.
 \end{lemma}
-\begin{proof}
+\proofsux\begin{proof}
 If $\Gamma \lei \Delta$ then $\Gamma \fatsemi \lei \Delta \fatsemi$ by
 definition. If $\Delta \entails S$ then $\Delta \fatsemi \entails S$ since the
 \name{Lookup} rule is the only one that extracts information from the context,
@@ -1718,7 +1719,7 @@ Suppose $\algInstantiate{\Gamma \fatsemi}{\alpha}{\tau}{\Xi}{\Delta \fatsemi}$.
 Then $\tyvars{\Gamma \fatsemi \Xi} = \tyvars{\Delta \fatsemi}$ and
 $\LEIUnify{\Gamma \fatsemi \Xi}{\alpha}{\tau}{\Delta \fatsemi}$.
 \end{lemma}
-\begin{proof}
+\proofsux\begin{proof}
 We extend the structural induction in lemma~\ref{lem:unifySound} with an extra
 case. The only proof of
 $\algInstantiate{\Gamma \fatsemi}{\alpha}{\tau}{\Xi}{\Delta \fatsemi}$,
@@ -1854,7 +1855,7 @@ $$\Rule{\LEIProb{\Gamma}{P}{\Delta}{b}
        \quad  \LEIProb{\Delta}{Q[b]}{\Theta}{c}}
        {\LEIProb{\Gamma}{(\pconj{P}{x}{Q})}{\Theta}{(b, c)}}.$$
 \end{lemma}
-\begin{proof}
+\proofsux\begin{proof}
 We have $\Gamma \lei \Theta$ by Lemma~\ref{lei:preorder}.
 Furthermore, $\Theta \entails (\pconj{P}{x}{Q}) (b, c)$ since
 stability gives $\Theta \entails P b$, and
@@ -1926,7 +1927,7 @@ $$
      {\LEIInferScheme{\Gamma}{t}{\gen{\Xi}{\tau}}{\Delta}}
 $$
 \end{lemma}
-\begin{proof}
+\proofsux\begin{proof}
 If $\Gamma \fatsemi \lei \Delta \fatsemi \Xi$ then $\Gamma \lei \Delta$ by
 the revised definition of $\lei$. Furthermore,
 $\Delta \entails t \hasscheme \gen{\Xi}{\tau}$ is defined to be
@@ -1970,7 +1971,7 @@ If $\Xi$ contains only type variables, then this rule is admissible:
 $$\Rule{\LEIProb{\Gamma, x \asc \sigma}{Q}{\Delta, x \asc \sigma, \Xi}{a}}
        {\LEIProb{\Gamma}{(\Sbind{x \asc \sigma}{Q})}{\Delta, \Xi}{a}}$$
 \end{lemma}
-\begin{proof}
+\proofsux\begin{proof}
 If $\Gamma, x \asc \sigma \lei \Delta, x \asc \sigma, \Xi$ then
 $\Gamma \lei \Delta, \Xi$ since nothing can depend on $x$.
 If $\Delta, x \asc \sigma, \Xi \entails Q a$ then
@@ -2006,7 +2007,7 @@ This rule is admissible:
 $$\Rule{\LEIProb{\Gamma, \hole{\beta}}{Q}{\Delta}{a}}
        {\LEIProb{\Gamma}{(\Qbind{\alpha}{Q})}{\Delta}{(\beta, a)}}$$
 \end{lemma}
-\begin{proof}
+\proofsux\begin{proof}
 If $\Gamma, \hole{\beta} \lei \Delta$ then $\Gamma \lei \Delta$ immediately.
 If $\Delta \entails Q a$ then clearly
 $\Delta, \alpha \defn \beta \entails Q a$ and hence
@@ -2045,7 +2046,7 @@ codomain type.
 \begin{figure}[ht]
 \[\begin{array}{c}
 \mathframe{t : \tau}
-\bigskip\\
+\smallskip\\
 \Rule{\Sbind{\beta \defn \upsilon, x \asc \gendot{\beta}}{\Pinf{t}{\tau}}}
        {\Pinf{\lambda x . t}{\upsilon \arrow \tau}}
 \qquad
@@ -2107,20 +2108,20 @@ subsection~\ref{sec:inferImplementation}.
 \[\begin{array}{c}
 \mathframe{\algInferScheme{\Gamma}{s}{\sigma}{\Delta}}
 
-\bigskip\\
+\smallskip\\
 \namer{Gen}
 \Rule{\algInfer{\Gamma \fatsemi}{s}{\upsilon}{\Delta \fatsemi \Xi}}
      {\algInferScheme{\Gamma}{s}{\gen{\Xi}{\upsilon}}{\Delta}}
-\smallskip\\ 
+\bigskip\\ 
 
 \mathframe{\algInfer{\Gamma}{t}{\tau}{\Delta}}
 
-\bigskip\\
+\smallskip\\
 \namer{Var}
 \Rule{x \asc \gen{\Xi}{\upsilon} \in \Gamma}
      {\algInfer{\Gamma}{x}{\upsilon}{\Gamma, \Xi}}
 
-\\
+\smallskip\\
 
 \namer{Abs}
 \Rule{\algInfer{\Gamma, \hole{\alpha}, x \asc \gendot{\alpha}}{w}{\upsilon}
@@ -2128,7 +2129,7 @@ subsection~\ref{sec:inferImplementation}.
      {\algInfer{\Gamma}{\lambda x.w}{\alpha \arrow \upsilon}{\Delta_0, \Xi}}
 \side{\alpha \notin \tyvars{\Gamma}}
 
-\\
+\smallskip\\
 
 \namer{App}
 \BigRule{\algInfer{\Gamma}{f}{\chi}{\Delta_0}
@@ -2138,7 +2139,7 @@ subsection~\ref{sec:inferImplementation}.
         {\algInfer{\Gamma}{f a}{\beta}{\Delta}}
 \side{\beta \notin \tyvars{\Delta_1}}
 
-\\ 
+\smallskip\\ 
 
 \namer{Let}
 \BigRule%%%{\algInfer{\Gamma \fatsemi}{s}{\upsilon}{\Delta_0 \fatsemi \Xi_0}}
@@ -2209,7 +2210,7 @@ algorithmic rule maintains the appropriate properties.
 If $P$ is a type or scheme inference problem, and $\alg{\Gamma}{P}{\Delta}{a}$,
 then $\Gamma \leiR\Delta$ and $\Delta \entails P a$.
 \end{lemma}
-\begin{proof}
+\proofsux\begin{proof}
 We maintain this property as an invariant in all the rules.
 \end{proof}
 
@@ -2218,7 +2219,7 @@ We maintain this property as an invariant in all the rules.
 If $P$ is a type or scheme inference problem, and $\alg{\Gamma}{P}{\Delta}{a}$,
 then $\LEIRProb{\Gamma}{P}{\Delta}{a}$.
 \end{lemma}
-\begin{proof}
+\proofsux\begin{proof}
 Thanks to soundness (lemma~\ref{lem:inferSound}) it only remains to show that
 each algorithmic rule becomes admissible if we replace $\transto$ with $\LEIR$.
 \TODO{How to phrase this?}
@@ -2252,7 +2253,7 @@ there exist $\theta : \Gamma \leiR \Theta$ and $a'$ such that
 $\Theta \entails (\theta P) a'$, then $\alg{\Gamma}{P}{\Delta}{a}$
 for some context $\Delta$ and output $a$.
 \end{lemma}
-\begin{proof}
+\proofsux\begin{proof}
 We proceed by induction on the derivation of $\Theta \entails (\theta P) a'$.
 For each rule in the transformed declarative system (excluding conversion)
 there is a corresponding algorithmic rule, and inversion ensures its
