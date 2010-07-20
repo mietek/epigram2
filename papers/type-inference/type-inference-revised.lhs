@@ -104,7 +104,7 @@
 \usepackage{color}
 \definecolor{red}{rgb}{1.0,0.0,0.0}
 \newcommand{\TODO}[1]{\NotForPublication{\textcolor{red}{#1}}}
-\newcommand{\NotForPublication}[1]{#1}
+\newcommand{\NotForPublication}[1]{}
 
 % Boxes and inference rules
 \newcommand{\mathframe}[1]{\framebox{\ensuremath{#1}}}
@@ -301,15 +301,14 @@ more elegant type inference algorithm.  In particular, the generalisation step
 Why revisit \AlgorithmW? 
 %%%This is 
    As 
-a first step towards a longer-term objective:
-to explain 
-%%%the elaboration of 
-   how to elaborate 
-high-level \emph{dependently typed} programs into
-fully explicit calculi. Just as \W\ specialises polymorphic type schemes, 
-elaboration involves inferring \emph{implicit arguments}
-by solving constraints, but
-with fewer algorithmic guarantees. Pragmatically, we need to account for
+a first step towards a longer-term goal:
+%%%to explain the elaboration of 
+   explaining how to elaborate 
+high-level \emph{dependently typed} programs into fully explicit calculi. 
+Just as \W\ specialises polymorphic type schemes, 
+elaboration involves inferring \emph{implicit arguments} by solving constraints, but
+with fewer algorithmic guarantees. Pragmatically, 
+   we need to account for
 stepwise progress in problem solving from states of partial knowledge.
 We 
 %%%wish to identify 
@@ -849,7 +848,7 @@ $$S ::=~ \valid
     ~||~ S \wedge S$$
 meaning, respectively, that the context is valid, $\tau$ is a type, the types
 $\tau$ and $\upsilon$ are equivalent, and both conjuncts hold.
-Note that $\valid$ and $\wedge$ give a unit and product for statements.
+%%%Note that $\valid$ and $\wedge$ give a unit and product for statements.
 
 A statement has zero or more
 \define{parameters}, each of which has an associated \define{\sanity}, 
@@ -883,7 +882,7 @@ mean that $S$ follows directly from applying a fact in $\Gamma$.
 Neutral judgments capture exactly the legitimate appeals to assumptions
 in the context, just as \scare{neutral terms} in $\lambda$-calculus are
 applied variables. Variables are the \scare{atoms} of symbols, and appeals
-to declarations in the context are atoms of derivations.
+to declarations in the context are the atoms of derivations.
 
 The \name{Lookup} rule is our only means to extract information from the
 context, so we omit contextual plumbing (almost) everywhere else.
@@ -927,9 +926,12 @@ associates the statement of being meaningful, \(\ok_{K} D\), to each \(D\).
 %%%Now we can define the context validity statement
 %%%$\valid$ as shown in Figure~\ref{fig:contextValidityRules}.
 
-Henceforth we implicitly assume that all contexts we work with are valid,
-and ensure that we only construct valid contexts. Mostly we will ignore the
-issue of fresh names, since our simple counter implementation suffices for most
+Henceforth we %%%implicitly 
+assume that all contexts treated are valid,
+and ensure we only construct valid ones. We typically ignore 
+%%%the issue of fresh names, 
+   freshness issues, 
+as our simple counter implementation suffices for most
 purposes.
 
 %%%DONE: don't do this. \TODO{Relate to traditional presentation - give intuition.}
@@ -1054,9 +1056,9 @@ $\Delta \entails \delta\tau \equiv \theta\tau$ for any $\Gamma$-type $\tau$.
 This partial order on contexts suffices to ensure stability, as described
 %%%in the following section, 
    below, 
-but in practice the algorithm will work with a more structured
+but in practice the algorithm works with a more structured
 subrelation of $\lei$. We give up more freedom to achieve a more comprehensible
-algorithm. For example, our algorithm will always use the identity substitution.
+algorithm. For example, our algorithm always uses the identity substitution.
 
 
 
@@ -1183,12 +1185,12 @@ always find minimal solutions
 %%%in the form $\iota : \Gamma \lei \Delta$. 
    in this form. 
 
-As one might expect, the rule
+As one might expect, the following rule is admissible:  
 $$\Rule{\leiStmt{\Gamma}{P}{\Delta}
        \quad  \leiStmt{\Delta}{Q}{\Theta}}
        {\leiStmt{\Gamma}{P \wedge Q}{\Theta}}$$
-is admissible, since stability ensures that if $\Delta$ solves $P$ then any more
-informative context $\Theta$ will also solve $P$. More surprisingly, this also
+since stability ensures that if $\Delta$ solves $P$ then any more
+informative context $\Theta$ also solves $P$. More surprisingly, this also
 gives minimal solutions to composite problems, allowing a \scare{greedy} 
 solution strategy.
 %
