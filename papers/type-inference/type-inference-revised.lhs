@@ -1478,9 +1478,7 @@ Substituting out the definitions in $\Xi$ from $\tau$, we obtain a type
 $\upsilon$ such that $\alpha \in \FTV{\upsilon}$, $\upsilon$ is not a variable
 and $\Gamma_0, \decl{\alpha}{D}, \Xi \entails \upsilon \equiv \tau$.
 Now the problem $\alpha \equiv \upsilon$ has the same solutions as
-$\alpha \equiv \tau$, but by Lemma~\ref{lem:occursCheck} it has no solutions.
-
-\TODO{Is this enough?}
+$\alpha \equiv \tau$, but by Lemma~\ref{lem:occursCheck}, there are none.
 \end{proof}
 
 
