@@ -1424,24 +1424,17 @@ algorithmic rules.
 \begin{lemma}[Occurs check]
 \label{lem:occursCheck}
 Let $\alpha$ be a variable and $\tau$ a non-variable type such that
-$\alpha \in \FTV{\tau}$. There is no context $\Gamma$ and substitution
-$\theta$ such that $\Gamma \entails \theta\alpha \equiv \theta\tau$ or
-$\Gamma \entails \theta\tau \equiv \theta\alpha$.
+$\alpha \in \FTV{\tau}$. There is no context $\Theta$ and substitution
+$\theta$ such that $\Theta \entails \theta\alpha \equiv \theta\tau$ or
+$\Theta \entails \theta\tau \equiv \theta\alpha$.
 \end{lemma}
 \proofsux\begin{proof}
-Suppose otherwise, and let $\Gamma$ and $\theta$ be such that the proof of
-$\Gamma \entails \theta\alpha \equiv \theta\tau$ or
-$\Gamma \entails \theta\tau \equiv \theta\alpha$ is minimal.
-
-Since $\alpha$ is a variable but $\tau$ is not, neither reflexivity nor the
-structural rule apply. Symmetry does not apply because its hypothesis requires
-a proof that cannot exist by minimality. \TODO{Why not transitivity?}
-
-By the well-formedness conditions for contexts, if
-$\alpha \defn \upsilon \in \Gamma$ then $\alpha \notin \FTV{\upsilon}$, so
-the proof is not neutral (using \name{Lookup}).
+Suppose otherwise. Moreover, let $\Theta$ contain no definitions
+(by extending $\theta$ to substitute them out). Now,
+$\theta\alpha\equiv\theta\tau$ ensures $\theta\alpha=\theta\tau$,
+but as $\alpha \in \FTV{\tau}$ and $\tau$ is not $\alpha$, $\theta\tau$
+must be a proper subterm of itself, which is impossible.
 \end{proof}
-
 
 \begin{lemma}[Completeness of unification]
 \label{lem:unifyComplete}
