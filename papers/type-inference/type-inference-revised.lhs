@@ -1217,15 +1217,15 @@ substitution.
 \section{The unification algorithm, formally\label{sec:unif-formal}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-We now present the algorithm formally. The structural rule means that
-whenever we have rigid $\arrow$ symbols on each side, we decompose the problem
-into two subproblems, and thanks to the Optimist's lemma we can solve these
-sequentially. Otherwise, we either have variables on both sides, or a variable
-on one side and a type on the other. In each case, we look at the next type
-variable in the context to see what information it gives us, and either solve
-the problem or update our constraint and continue processing the context.
-When solving a variable with a type, we need to accumulate
-the type's dependencies as we encounter them, performing the occurs check to
+We now present the algorithm formally. The structural rule ensures that
+rigid problems, with $\arrow$ on each side, decompose
+into subproblems: by the Optimist's lemma, these we solve
+sequentially. Otherwise, we have either two variables, or a variable
+and a type. In each case, we ask how the rightmost type
+variable in the context helps us, and either solve
+the problem or continue leftward in the context with an updated constraint.
+When solving a variable with a type, we must accumulate
+the type's dependencies as we find them, performing the occurs check to
 ensure a solution exists.
 
 The rules in Figure~\ref{fig:unifyRules} define our unification algorithm. The
@@ -1273,7 +1273,7 @@ By induction on the structure of derivations.
 For each rule, we verify that it preserves the set of type variables and
 that $\Gamma \lei \Delta$.
 
-To show minimality, it suffices to assume there is some
+For minimality, it suffices to take some
 $\theta : \Gamma \lei \Theta$ such that
 $\Theta \entails \theta\tau \equiv \theta\upsilon$, and show
 $\theta : \Delta \lei \Theta$. As the type variables of $\Gamma$ are
@@ -1291,17 +1291,9 @@ arising later?}
 \end{proof}
 
 
-Some context entries have no bearing on the unification problem being solved,
-so they can be ignored.
-We define the orthogonality relation $x \perp X$ (the variable $x$ is
-independent of the set of type variables $X$) 
-to capture this idea: 
-\[
-\begin{array}{r@@{\,}l}
-\alpha \perp X &\mathrm{~if~} \alpha \in \V_\TY \setminus X  \\
-x      \perp X &\mathrm{~if~} x \in \V_\TM
-\end{array}
-\]
+Some context entries have no bearing on the problem at hand.
+We write $x \perp X$ ($x$ is orthogonal to set $X$ of type variables)
+if $x$ is not a type variable or not in $X$.
 
 The rules \name{Define} and \name{Expand} have
 symmetric counterparts, identical apart from interchanging the equated
@@ -1496,27 +1488,26 @@ S ::=~ \valid
 
 \subsection{Binding statements}
 
-To give rules for schemes and type assignment, we need the ability to add
-variables to the context in a controlled way.
+To account for schemes and type assignment, we need a controlled way
+to extend the context.
 If $S$ is a statement and $\decl{x}{D}$ is a declaration, then we define the
-binding statement $\Sbind{\decl{x}{D}}{S}$ with the introduction rule
+binding statement $\Sbind{\decl{x}{D}}{S}$. We give a generic introduction rule,
+but, we make use of neutral elimination only for type variables.
 \TODO{Explain that while we ought to mess about with the freshness renaming in
 this rule, in practice we will ignore it because it isn't important.}
-$$
+\[\begin{array}{c}
 \Rule{\Gamma \entails \ok_K D    \quad    \Gamma, \decl{y}{D} \entails \subst{y}{x} S}
      {\Gamma \entails \Sbind{\decl{x}{D}}{S}}
 \side{y \in \V_K \setminus \V_K(\Gamma)}.
-$$
-and neutral elimination rule
-$$
+\smallskip\\
 \Rule{\entailsN \Sbind{\alpha D}{S}
       \quad
       \entails \subst{\tau}{\alpha}{\sem{\decl{\alpha}{D}}}}
      {\entailsN \subst{\tau}{\alpha}{S}}
 \side{D \in \D_\TY}
-.$$
-\TODO{Explain why we only have this for $\TY$: because we have only defined
-substitution for type variables. We could do it in general but we don't need to.}
+\end{array}\]
+%\TODO{Explain why we only have this for $\TY$: because we have only defined
+%substitution for type variables. We could do it in general but we don't need to.}
 The corresponding normal rule is admissible. If
 $\Gamma \entails \Sbind{\decl{\alpha}{D}}{S}$ by the introduction rule, then
 $\Gamma, \decl{\beta}{D} \entails \subst{\beta}{\alpha} S$ where $\beta$ is fresh.
@@ -1799,7 +1790,7 @@ a more liberal definition than that of constraint problems.
 
 We associate a \define{mode} with each parameter in a statement: either
 \scare{input} or \scare{output}. For simplicity, assume statements always have
-one parameter of each mode (which may be unit or a product).
+one parameter of each mode (which may be trivial or composite).
 % An
 % \define{inference problem}
 % is a triple $(\Gamma, S, Q)$ where $\Gamma$ is a context, $S$ is a statement
@@ -1807,17 +1798,14 @@ one parameter of each mode (which may be unit or a product).
 % $Q$ is a value for the input parameter that satisfies its \sanity\  in
 % $\Gamma$.
 % \TODO{Clarify notation for statements and parameter values. What is $Q A$?}
-
-Let $A$ be a set of values closed under substitution. For a fixed context
+We must extend the apparatus of minimal solutions to problems with outputs.
+Let $B$ be a set of values closed under substitution. For a fixed context
 $\Gamma$, suppose we have a
-preorder on $A$ written $\leParam{\Gamma}{\cdot}{\cdot}$. This induces a
+preorder on $B$ written $\leParam{\Gamma}{\cdot}{\cdot}$. This induces a
 preorder on context-value pairs, with $\delta : \leiParam{\Gamma}{a}{\Delta}{b}$ if
 $\delta : \Gamma \lei \Delta$ and $\leParam{\Delta}{\delta a}{b}$.
-\TODO{The set $A$, or at least sane values in it, somehow depends on $\Gamma$.
-We don't capture this very well. We should make it clearer than values must
-satisfy \sanity s.}
 
-An \define{$A$-indexed problem family} $x.Q$ with solutions in $B$ is a family
+An \define{$A$-indexed problem family $x.Q$ for $B$} is a family
 of input parameters for a statement, indexed by elements of $A$, such that for
 all $a, a' \in A$, contexts $\Gamma$ and output parameter values $b \in B$,
 $$\leParam{\Gamma}{a}{a'} ~\wedge~ \Gamma \entails Q[a'] b
@@ -1849,10 +1837,10 @@ $\theta \eqsubst \zeta \compose \iota$.
 
 \subsection{The Optimist's lemma}
 
-Let $P$ be a problem with solutions in $A$ and let $Q$ be an $A$-indexed problem
-family with solutions in $B$. Then the conjunction of problems
+Let $P$ be a problem for $A$ and let $Q$ be an $A$-indexed problem family for
+$B$. Then the conjunction of problems
 $$(\pconj{P}{x}{Q}) (a, b) = P a \wedge Q[a] b$$
-is a problem with solutions in $A \times B$. This generalisation of $P \wedge Q$
+is a problem for $A \times B$. This generalisation of $P \wedge Q$
 and allows the output of $P$ to be used in the input of $Q$, so it resembles a
 dependent sum type.
 
@@ -1898,10 +1886,10 @@ so we are done.
 
 \subsection{The Generalist's lemma}
 
-We have considered problems with abstract input and output values, including
-the unit set and products, but which sets of concrete values will we actually
-use? Since we want to solve type inference problems, we will be interested in
-types and (more generally) type schemes.
+We have considered problems with abstract inputs and outputs, but
+which sets of concrete values do we actually use? Since we want to
+solve type inference problems, we are interested in types and
+type schemes.
 
 For a fixed context $\Gamma$, we define the preorder on schemes by
 $\leParam{\Gamma}{\gen{\Xi}{\tau}}{\gen{\Psi}{\upsilon}}$
@@ -1970,8 +1958,8 @@ binding statements as problems. However, there are two ways in which this makes
 sense, depending on the mode of the bound property. Each has a minimality result
 corresponding to the Optimist's lemma and Generalist's lemma.
 
-First, if $Q$ is a problem with output in $A$, then $\Sbind{x \asc \sigma}{Q}$
-is also a problem with output in $A$, with statement
+First, if $Q$ is a problem for $A$, then $\Sbind{x \asc \sigma}{Q}$
+is also a problem for $A$, with statement
 $$(\Sbind{x \asc \sigma}{Q}) a = \Sbind{x \asc \sigma}{Q a}.$$
 That is, we regard $\sigma$ as an input.
 
