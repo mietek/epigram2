@@ -1,50 +1,6 @@
 \section{Discussion}
 \label{sec:discussion}
 
-\subsection{Universe stratification}
-
-\begin{wstructure}
-!!! Need Help !!!
-<- Universe stratification
-    <- Stratified agda model
-        <- Fully stratified
-        <- Proof of iso between host and embedding
-    ???
-\end{wstructure}
-
-As such, our type theory suffers from an inconsistency. Indeed, the
-typing rule $\Bhab{\Set}{\Set}$ leads to Girard's paradox. We made
-that choice for presentational convenience, as universe stratification
-is orthogonal to our work. Nonetheless, our universe of description
-stratifies naturally. $\SYMBIDesc$ is self-encoding only in a
-level-polymorphic sense.  Unsurprisingly, $\SYMBIDesc$ at level $l$ is
-of type $\Set^{\blue{l+1}}$. Similarly, the interpretation of
-$\SYMBIDesc$ at level $l$ is an object of type $\Set^{\blue{l}}$:
-%
-\[\stk{\begin{array}{@{}ll}
-\SYMBIDesc^{\blue{l}} (\Bhab{\M{I}}{\Set^{\blue{l+1}}}) & :\Set^{\blue{l+1}} \\
-\DVar{(\Bhab{\M{i}}{\M{I}})} &: \SYMBIDesc^{\blue{l}}{\M{I}} \\
-\DConst{(\Bhab{\M{A}}{\Set^{\blue{l}}})} &:\SYMBIDesc^{\blue{l}}{\M{I}}       \\
-\DProd{(\Bhab{\M{D}}{\SYMBIDesc^{\blue{l}}{\M{I}}})}{(\Bhab{\M{D}}{\SYMBIDesc^{\blue{l}}{\M{I}}})}
-  & :\SYMBIDesc^{\blue{l}}{\M{I}}       \\
-\DSigma{(\Bhab{\M{S}}{\Set^{\blue{l}}})}{(\Bhab{\M{D}}{\M{S}\To\SYMBIDesc^{\blue{l}}{\M{I}}})}
-& : \SYMBIDesc^{\blue{l}}{\M{I}}  \\
-\DPi{(\Bhab{\M{S}}{\Set^{\blue{l}}})}{(\Bhab{\M{D}}{\M{S}\To\SYMBIDesc^{\blue{l}}{\M{I}}})}
-& : \SYMBIDesc^{\blue{l}}{\M{I}}  \\
-\end{array}\smallskip \\
-\idescop{\_\:}{}{}^{\blue{l}} : _{\PI{\V{I}}{\Set^{\blue{l+1}}}} \SYMBIDesc^{\blue{l}}\:\V{I} \To (\V{I} \To \Set^{\blue{l}}) \To \Set^{\blue{l}}    \\
-\ldots
-}
-\]
-Crucially, the types of data stored in an
-\(\SYMBIDesc^{\blue{l}}{\M{I}}\) all live no higher---we may store an
-\(I\) and a \(\Set^{\blue{l}}\) in a \(\Set^{\blue{l+1}}\).  The code
-for \(\SYMBIDesc^{\blue{l}}{\M{I}}\) is an element of
-\(\SYMBIDesc^{\blue{l+1}}{\Unit}\), so there is a spiral, not a cycle.
-We have checked the construction using Agda's universe polymorphism,
-coding $\SYMBIDesc$ in itself and have proved the isomorphism
-between the host and the embedded universes.
-
 \subsection{Related work}
 
 \begin{wstructure}

@@ -1261,35 +1261,4 @@ description. It embraces indexed families of types and, as such,
 allows us to write dependent datatypes. Hence, we have presented
 several example of indexed datatypes. In this context, we have
 presented the free monad construction, together with its monadic
-operations. A summary of the components defining descriptions and
-their indexed counterparts is presented in
-Table~\ref{tab:sumup-operators}.
-
-
-\begin{table}
-
-{\small
-
-\begin{tabular}{|c|c|c|c|}
-\hline
-Desc   & IDesc & Role & Status \\
-\hline
-\hline
-\multicolumn{2}{|c|}{$\EnumU$}                  & Build finite sets           & Levitated \\
-\hline
-$\Desc$               & $\IDesc$               & Describe functors   & Levitated \\
-\hline
-$\SYMBdescop{\_}$         & $\SYMBidescop{\_}{\_}$         & Interpret descriptions      & Hardwired \\
-\hline
-$\SYMBMu$, $\SYMBCon$ & $\SYMBIMu_I$, $\SYMBCon$ & Define fixpoints & Hardwired \\
-\hline
-$\SYMBind$, $\SYMBAll$, $\SYMBall$ & $\inductionI$, $\SYMBAllI$, $\SYMBallI$ & Induction principle & Hardwired \\
-\hline
-\end{tabular}
-
-}
-
-\caption{Summary of constructions on Descriptions}
-\label{tab:sumup-operators}
-
-\end{table}
+operations. 
