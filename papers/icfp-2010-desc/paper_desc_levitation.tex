@@ -116,11 +116,11 @@ condense the entire naming scheme of datatypes \emph{into itself}.
 \end{wstructure}
 
 We shall now fulfil our implementation promises, encoding the universe
-of descriptions. In and of itself, the codes, $\Desc$, is nothing but
-a datatype. We are in the same situation as with $\EnumU$: we ought to
-be able to describe the codes of $\Desc$ in $\Desc$ itself. Hence,
-this code would be a first-class citizen, born with the standard,
-generic equipment of datatypes.
+of descriptions. In and of itself, the codes, $\Desc_n$, is nothing
+but a datatype in $\Set_{n+1}$. We are in the same situation as with
+$\EnumU$: we ought to be able to describe the codes of $\Desc_n$ in
+$\Desc_{n+1}}$ itself. Hence, this code would be a first-class
+  citizen, born with the standard, generic equipment of datatypes.
 
 \subsubsection{First attempt}
 
@@ -135,11 +135,11 @@ generic equipment of datatypes.
 Our first attempt gets stuck quite quickly:
 %
 \[\stk{
-\DescD : \Desc \\
-\DescD \mapsto
+\DescD_n : \Desc_{n+1} \\
+\DescD_n \mapsto
   \tada{\stkm{\DUnit\\ \SYMBDSigma\\ \SYMBDIndx}}
        {\stkm{ \DUnit                                \\
-         \DSigma{\Set}{(\LAM{\V{S}} \SHED)}      \\
+         \DSigma{\Set_{n}}{(\LAM{\V{S}} \SHED)}      \\
          \DIndx{\DUnit}    }                    } \\
 %\begin{array}{@{}ll}
 %\DescD \mapsto \DSigma{\!}{\!} & (\EnumT{[ \DUnit, \DSigma{\!}{\!}, \DIndx{\!} ]})  \\
@@ -163,7 +163,7 @@ $\SYMBDSigma$ is problematic. Recall the specification of
 $\SYMBDSigma$:
 %
 \[
-\DSigma{(\Bhab{\V{S}}{\Set})}{(\Bhab{\V{D}}{\V{S} \To \Desc})} : \Desc\\
+\DSigma{(\Bhab{\V{S}}{\Set_n})}{(\Bhab{\V{D}}{\V{S} \To \Desc_n})} : \Desc_n\\
 \]
 %
 So, we first pack a  $\Set$, $\V{S}$. We should then like
@@ -192,8 +192,14 @@ $\SYMBDHindx$ that takes an indexing set $\V{H}$. Intuitively,
 $\SYMBDHindx$ gives a recursive subobject for each element of $H$.
 %
 \[\stk{
-    \DHindx{(\Bhab{\M{H}}{\Set})}{(\Bhab{\M{D}}{\Desc})} : \Set \smallskip \\
-\descop{\DHindx{\V{H}}{\V{D}}}{\V{X}}     \mapsto \TIMES{(\V{H} \To \V{X})}{\descop{\V{D}}{\V{X}}} \\
+    \Bhab{\DHindx{(\Bhab{\M{H}}{\Set_n})}
+                 {(\Bhab{\M{D}}{\Desc_n})}}
+         {\Desc_n}
+\smallskip \\
+\descop{\DHindx{\V{H}}{\V{D}}}{\V{X}} 
+    \mapsto 
+        \TIMES{(\V{H} \To \V{X})}
+              {\descop{\V{D}}{\V{X}}} \\
 }\]
 
 
@@ -212,14 +218,13 @@ which it is not safe to collapse.}
 We are now able to describe our universe of datatypes:
 %
 \[\stk{
-\DescD : \Desc \\
-\DescD \mapsto\tada
+\DescD_n : \Desc_{n+1} \\
+\DescD_n \mapsto\tada
 {\stkm{ \DUnit\\ \SYMBDSigma\\ \SYMBDIndx\\ \SYMBDHindx}}
-{\stkm{
-\DUnit                                            \\
-                                   \DSigma{\Set}{\LAM{\V{S}} \DHindx{\V{S}}{\DUnit}}   \\
-                                   \DIndx{\DUnit}                                    \\
-                                   \DSigma{\Set}{\LAM{\_} \DIndx{\DUnit}}
+{\stkm{ \DUnit  \\
+        \DSigma{\Set_n}{\LAM{\V{S}} \DHindx{\V{S}}{\DUnit}}   \\
+        \DIndx{\DUnit}                                    \\
+        \DSigma{\Set_n}{\LAM{\_} \DIndx{\DUnit}}
 }}
 }\]
 %
@@ -229,9 +234,9 @@ the higher-order induction on $\V{S}$. The $\SYMBDHindx$ case
 consists in packing a $\Set$ with a recursive argument.
 
 At a first glance, we have achieved our goal. We have described the
-codes of the universe of descriptions. Taking the fixpoint of \(\descop{\DescD}\)
-gives us a datatype exactly like $\Desc$. Might we be
-so bold as to take \(\Desc \mapsto \Mu{\DescD}\) as the levitating
+codes of the universe of descriptions. Taking the fixpoint of \(\descop{\DescD_n}\)
+gives us a datatype exactly like $\Desc_n$. Might we be
+so bold as to take \(\Desc_n \mapsto \Mu{\DescD_n}\) as the levitating
 definition? If we do, we shall come down with a bump! 
 To complete our levitation, just as in the magic trick, requires
 hidden assistance. Let us explain the problem and reveal the `invisible
@@ -246,22 +251,24 @@ cable' which fixes it.
         -> Code with problem for the motive of switch
 \end{wstructure}
 
-The definition \(\Desc \mapsto \Mu{\DescD}\) is circular,
+The definition \(\Desc_n \mapsto \Mu{\DescD_n}\) is circular,
 but the offensive recursion is concealed by a prestidigitation.
 Expanding \(\toDesc{-}\) and propagating types as in
 Figure~\ref{fig:type-checking} reveals the
 awful truth:
 \[
-\Desc\mapsto
-\Mu{\stk{(\DSigma{\EnumT{\sqr{ \DUnit\:\: \SYMBDSigma\:\: \SYMBDIndx\:\: \SYMBDHindx}}\\}
-    {\;\SYMBswitch\:\sqr{ \DUnit\:\: \SYMBDSigma\:\: \SYMBDIndx\:\: \SYMBDHindx}\:(\LAM{\_}\Desc)\\
-\;\sqr{\stkm{
-\DUnit                                            \\
-                                   \DSigma{\Set}{\LAM{\V{S}} \DHindx{\V{S}}{\DUnit}}   \\
-                                   \DIndx{\DUnit}                                    \\
-                                   \DSigma{\Set}{\LAM{\_} \DIndx{\DUnit}}
-}}})}}
+\Desc_n \mapsto
+    \Mu{\stk{(
+        \DSigma{\EnumT{\sqr{ \DUnit\:\: \SYMBDSigma\:\: \SYMBDIndx\:\: \SYMBDHindx}}\\}
+               {\;\SYMBswitch\:\sqr{ \DUnit\:\: \SYMBDSigma\:\: \SYMBDIndx\:\: \SYMBDHindx}\:
+                                   (\LAM{\_}\Desc)\\
+                             \;\sqr{\stkm{
+                                   \DUnit \\
+                                   \DSigma{\Set_n}{\LAM{\V{S}} \DHindx{\V{S}}{\DUnit}} \\
+                                   \DIndx{\DUnit} \\
+                                   \DSigma{\Set_n}{\LAM{\_} \DIndx{\DUnit}}}}})}}
 \]
+%%
 The recursion shows up only because we must specify the return type
 of the general-purpose \(\F{switch}\), and it is computing a \(\Desc\)!
 Although type propagation
