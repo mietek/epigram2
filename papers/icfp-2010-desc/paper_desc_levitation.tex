@@ -188,8 +188,8 @@ universe, we must first enlarge it!
 \end{wstructure}
 
 In order to capture a notion of higher-order induction, we add a code
-$\SYMBDHindx$ that takes an indexing set $\V{H}$. Intuitively,
-$\SYMBDHindx$ gives a recursive subobject for each element of $H$.
+$\SYMBDHindx$ that takes an indexing set $\V{H}$. This amounts to give
+a recursive subobject for each element of $H$.
 %
 \[\stk{
     \DHindx{(\Bhab{\M{H}}{\Set})}{(\Bhab{\M{D}}{\Desc})} : \Set \smallskip \\
@@ -384,19 +384,19 @@ $\V{f}$. Let us take a look at this jigsaw:
 \cata\: \V{D}\: \V{T}\: \V{f} \mapsto
   \sind \LAM{\V{xs}}\LAM{\V{hs}} \V{f}\: \SHED
 }\]
-%
+% 
 We are left with filling the hole. Recall that we have
 \(\Bhab{\V{xs}}{\descop{\V{D}}{\Mu{\V{D}}}}\) and
 \(\Bhab{\V{hs}}{\All{\V{D}}{\Mu{\V{D}}}{(\LAM{\_} \V{T})}{\V{xs}}}\)
 at hand. Our goal is to make an element of
-\(\descop{\V{D}}{\V{T}}\). Intuitively, $\V{xs}$ is of the right
-shape, but its sub-elements are of the wrong type. On the other hand,
-for each sub-element of $\V{xs}$, $\V{hs}$ gives us the corresponding
-element in $\V{T}$.  Therefore, to construct an element of
+\(\descop{\V{D}}{\V{T}}\). $\V{xs}$ is of the right shape, but its
+sub-elements are of the wrong type. On the other hand, for each
+sub-element of $\V{xs}$, $\V{hs}$ gives us the corresponding element
+in $\V{T}$.  Therefore, to construct an element of
 \(\descop{\V{D}}{\V{T}}\), we must replace the recursive components of
 \(\V{xs}\) by their counterparts from \(\V{hs}\). Let us write a
-program to do that---please forgive us if we lapse to a pattern matching
-notation, for readability's sake.
+program to do that---please forgive us if we lapse to a pattern
+matching notation, for readability's sake.
 %
 \[\stk{
 \F{replace} : \stk{\PITEL{\V{D}}{\Desc}
@@ -554,10 +554,9 @@ arguments to $\cata$ as possible:
           \SHED
 }\]
 %
-We are left with implementing the algebra of the
-catamorphism. Intuitively, its role is to catch appearances of
-$\DVar{\V{x}}$ and replace them by $\V{\sigma}\: \V{x}$. This
-corresponds to the following definition:
+We are left with implementing the algebra of the catamorphism. Its
+role is to catch appearances of $\DVar{\V{x}}$ and replace them by
+$\V{\sigma}\: \V{x}$. This corresponds to the following definition:
 %
 \[\stk{
 \begin{array}{@{}ll}
