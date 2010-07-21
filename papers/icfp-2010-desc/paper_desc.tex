@@ -230,10 +230,11 @@ demonstrated by our description of node-labelled binary trees:
 %
 \[\stk{
 \TreeD : \Set \To \Desc \\
-\begin{array}{@{}ll}
-\TreeD \: \V{X} \mapsto \DSigma{ & \EnumT{\sqr{ \TreeLeaf\: \TreeNode }} \\}
-  { & \sqr{ \DUnit \quad
-       ( \DIndx{(\DSigma{\V{X}}{\LAM{\_}\DIndx{\DUnit}})})} }
+\begin{array}{@{}l@{}l}
+\TreeD \: \V{X} \mapsto 
+    \DSigma{ & \EnumT{\sqr{ \TreeLeaf\: \TreeNode }} \\}
+           { & \sqr{ \DUnit \quad
+                     (\DIndx{(\DSigma{\V{X}}{\LAM{\_}\DIndx{\DUnit}})})} }
 \end{array}
 }\]
 %
