@@ -1265,42 +1265,9 @@ $\Xi$ contains only type variable declarations \\ {}
 
 \TODO{Chat about this lemma. Perhaps it needs to come slightly later?}
 
-\begin{lemma}[Soundness and generality of unification]
-\label{lem:unifySound}
-\begin{enumerate}[(a)]
-\item Suppose $\algUnify{\Gamma}{\tau}{\upsilon}{\Delta}$. Then 
-$\tyvars{\Gamma} = \tyvars{\Delta}$ \\ and
-$\LEIStmt{\Gamma}{\tau \equiv \upsilon}{\Delta}$.
-\item Suppose 
-$\algInstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$. Then 
-$\tyvars{\Gamma, \Xi} = \tyvars{\Delta}$ and
-$\LEIStmt{\Gamma, \Xi}{\alpha \equiv \tau}{\Delta}$.
-\end{enumerate}
+\TODO{Yes: in progress. JHM}
 
-\end{lemma}
-\proofsux\begin{proof}
-By induction on the structure of derivations.
-For each rule, we verify that it preserves the set of type variables and
-that $\Gamma \lei \Delta$.
-
-For minimality, it suffices to take some
-$\theta : \Gamma \lei \Theta$ such that
-$\Theta \entails \theta\tau \equiv \theta\upsilon$, and show
-$\theta : \Delta \lei \Theta$. As the type variables of $\Gamma$ are
-the same as $\Delta$, we simply note that definitions in $\Delta$ hold as
-equations in $\Theta$ for each rule that rewrites or solves the problem.
-
-The only rule not in this form is \name{Decompose}, but solutions to
-$\tau_0 \arrow \tau_1 \equiv \upsilon_0 \arrow \upsilon_1$ are exactly those
-that solve $\tau_0 \equiv \upsilon_0 \wedge \tau_1 \equiv \upsilon_1$,
-so it gives a minimal solution by the Optimist's lemma.
-%%%
-\TODO{Do we need to say more about part (b)? Should we comment somewhere about
-keeping things right not being necessary for generality at the moment, but
-arising later?}
-\end{proof}
-
-
+\TODO{fix up the transition here}
 Some context entries have no bearing on the problem at hand.
 We write $x \perp X$ ($x$ is orthogonal to set $X$ of type variables)
 if $x$ is not a type variable or not in $X$.
@@ -1420,8 +1387,44 @@ reason about the total correctness of unification by induction on the
 algorithmic rules.
 
 
+\begin{lemma}[Soundness and generality of unification]
+\label{lem:unifySound}
+\begin{enumerate}[(a)]
+\item Suppose $\algUnify{\Gamma}{\tau}{\upsilon}{\Delta}$. Then 
+$\tyvars{\Gamma} = \tyvars{\Delta}$ \\ and
+$\LEIStmt{\Gamma}{\tau \equiv \upsilon}{\Delta}$.
+\item Suppose 
+$\algInstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$. Then 
+$\tyvars{\Gamma, \Xi} = \tyvars{\Delta}$ and
+$\LEIStmt{\Gamma, \Xi}{\alpha \equiv \tau}{\Delta}$.
+\end{enumerate}
+
+\end{lemma}
+\proofsux\begin{proof}
+By induction on the structure of derivations.
+For each rule, we verify that it preserves the set of type variables and
+that $\Gamma \lei \Delta$.
+
+For minimality, it suffices to take some
+$\theta : \Gamma \lei \Theta$ such that
+$\Theta \entails \theta\tau \equiv \theta\upsilon$, and show
+$\theta : \Delta \lei \Theta$. As the type variables of $\Gamma$ are
+the same as $\Delta$, we simply note that definitions in $\Delta$ hold as
+equations in $\Theta$ for each rule that rewrites or solves the problem.
+
+The only rule not in this form is \name{Decompose}, but solutions to
+$\tau_0 \arrow \tau_1 \equiv \upsilon_0 \arrow \upsilon_1$ are exactly those
+that solve $\tau_0 \equiv \upsilon_0 \wedge \tau_1 \equiv \upsilon_1$,
+so it gives a minimal solution by the Optimist's lemma.
+%%%
+\TODO{Do we need to say more about part (b)? Should we comment somewhere about
+keeping things right not being necessary for generality at the moment, but
+arising later?}
+\end{proof}
+
 
 \subsection{Completeness}
+\TODO{soundness, completeness, and minimality al in one section???}
 
 \begin{lemma}[Occurs check]
 \label{lem:occursCheck}
@@ -1640,6 +1643,34 @@ $$\sem{x \asc \sigma}_\TM = x \hasscheme \sigma.$$
 \caption{Declarative rules for type assignment}
 \label{fig:typeAssignmentRules}
 \end{figure}
+
+\TODO{fix up the segue to \(\leiR\) here} 
+
+Recall that we defined $\sem{x \asc \sigma}_\TM = x \hasscheme \sigma$, so
+$\Gamma \lei \Delta$ requires $\Delta$ to assign a term variable all the types
+that $\Gamma$ assigns it, but allows $x$ to become more polymorphic
+and acquire new types.  This notion certainly retains stability:
+every variable lookup can be simulated in the more general context.
+However, it allows arbitrary generalisation of the schemes assigned to term
+variables which are incompatible with the known and intended value of
+those variables.
+
+As \citet{wells_principal_typings_2002} points out, \hindleymilnershort\ 
+type inference is not in this respect compositional. He carefully
+distinguishes principal \emph{typings}, given the right to demand more
+polymorphism, from Milner's principal \emph{type schemes} and analyses
+how the language of types must be extended to express principal
+typings.
+
+We, too, note this distinction. We cannot hope to find principal types
+with respect to $\lei$, so we capture Milner's compromise by defining
+a sub-relation $\leiR$, by $\delta : \Gamma \leiR \Delta$ if $\delta :
+\Gamma \lei \Delta$ and $$x \asc \sigma \in \Gamma ~\Rightarrow~ x
+\asc \delta\sigma \in \Delta.$$ Thus, if $\Gamma \leiR \Delta$, then
+$\Delta$ assigns the \emph{same} type schemes to term variables as $\Gamma$
+does (modulo substitution). Since the unification algorithm ignores term
+variables, it is easy to see that all the previous results hold if we
+replace $\lei$ with $\leiR$ throughout.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Generalising \emph{local} type variables\label{sec:genloc}}
@@ -2182,31 +2213,7 @@ subsection~\ref{sec:inferImplementation}.
 
 \subsection{Soundness and completeness}
 
-Recall that we defined $\sem{x \asc \sigma}_\TM = x \hasscheme \sigma$, so
-$\Gamma \lei \Delta$ requires $\Delta$ to assign a term variable all the types
-that $\Gamma$ assigns it, but allows $x$ to become more polymorphic
-and acquire new types.  This notion certainly retains stability:
-every variable lookup can be simulated in the more general context.
-However, it allows arbitrary generalisation of the schemes assigned to term
-variables which are incompatible with the known and intended value of
-those variables.
-
-As \citet{wells_principal_typings_2002} points out, \hindleymilnershort\ 
-type inference is not in this respect compositional. He carefully
-distinguishes principal \emph{typings}, given the right to demand more
-polymorphism, from Milner's principal \emph{type schemes} and analyses
-how the language of types must be extended to express principal
-typings.
-
-We, too, note this distinction. We cannot hope to find principal types
-with respect to $\lei$, so we capture Milner's compromise by defining
-a sub-relation $\leiR$, by $\delta : \Gamma \leiR \Delta$ if $\delta :
-\Gamma \lei \Delta$ and $$x \asc \sigma \in \Gamma ~\Rightarrow~ x
-\asc \delta\sigma \in \Delta.$$ Thus, if $\Gamma \leiR \Delta$, then
-$\Delta$ assigns the \emph{same} type schemes to term variables as $\Gamma$
-does (modulo substitution). Since the unification algorithm ignores term
-variables, it is easy to see that all the previous results hold if we
-replace $\lei$ with $\leiR$ throughout.
+\TODO{moved wholesale to section 7; needs a filler-in here to replace}
 
 Corresponding to $\leiParam{\Gamma}{a}{\Delta}{b}$, we write
 $\delta : \leiRParam{\Gamma}{a}{\Delta}{b}$
