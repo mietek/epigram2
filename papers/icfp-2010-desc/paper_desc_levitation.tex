@@ -404,14 +404,16 @@ matching notation, for readability's sake.
                    \PI{\V{xs}}{\descop{\V{D}}{\V{X}}} 
                    \All{\V{D}}{\V{X}}{(\LAM{\_}\V{Y})}{\V{xs}} \To
                    \descop{\V{D}}{\V{Y}}} \\
-\F{replace}\: \DUnit\:          \V{X}\: \V{Y}\: \Void\:          \Void          \mapsto 
-    \Void                                                                                                         \\
-\F{replace}\: (\DSigma{\V{S}}{\V{D}})\: \V{X}\: \V{Y}\: \pair{\V{s}}{\V{d}}{}\: \V{d'}             \mapsto
-    \pair{\V{s}}{\F{replace}\: (\V{D}\: \V{s})\: \V{X}\: \V{Y}\: \V{d}\: \V{d'}}{}                                \\
-\F{replace}\: (\DIndx{\V{D}})\:     \V{X}\: \V{Y}\: \pair{\V{x}}{\V{d}}{}\: \pair{\V{y}}{\V{d'}}{} \mapsto        \\
-\qquad  \pair{\V{y}}{\F{replace}\: \V{D}\: \V{X}\: \V{Y}\: \V{d}\: \V{d'}}{}                                      \\
-\F{replace}\: (\DHindx{\V{H}}{\V{D}})\: \V{X}\: \V{Y}\: \pair{\V{f}}{\V{d}}{}\: \pair{\V{g}}{\V{d'}}{} \mapsto   \\
-\qquad  \pair{\V{g}}{\F{replace}\: \V{D}\: \V{X}\: \V{Y}\: \V{d}\: \V{d'}}{}
+\begin{array}{@{}l@{\:\:\mapsto\:\:}l}
+\F{replace}\: \DUnit\:          \V{X}\: \V{Y}\: \Void\:          \Void   &
+    \Void  \\
+\F{replace}\: (\DSigma{\V{S}}{\V{D}})\: \V{X}\: \V{Y}\: \pair{\V{s}}{\V{d}}{}\: \V{d'}  &
+    \pair{\V{s}}{\F{replace}\: (\V{D}\: \V{s})\: \V{X}\: \V{Y}\: \V{d}\: \V{d'}}{} \\
+\F{replace}\: (\DIndx{\V{D}})\:     \V{X}\: \V{Y}\: \pair{\V{x}}{\V{d}}{}\: \pair{\V{y}}{\V{d'}}{} &
+    \pair{\V{y}}{\F{replace}\: \V{D}\: \V{X}\: \V{Y}\: \V{d}\: \V{d'}}{} \\
+\F{replace}\: (\DHindx{\V{H}}{\V{D}})\: \V{X}\: \V{Y}\: \pair{\V{f}}{\V{d}}{}\: \pair{\V{g}}{\V{d'}}{} &
+ \pair{\V{g}}{\F{replace}\: \V{D}\: \V{X}\: \V{Y}\: \V{d}\: \V{d'}}{}
+\end{array}
 }\]
 %
 Filling the hole in $\F{cata}$ with \(\F{replace}\: \V{D}\:
