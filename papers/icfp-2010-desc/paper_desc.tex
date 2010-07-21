@@ -111,11 +111,14 @@ of datatypes.
 To add inductive types to our type theory, we build a universe of
 datatype \emph{descriptions} by implementing the signature presented
 in Figure~\ref{fig:desc_universe}, with codes mimicking the grammar of
-datatype declarations. We can read a description $\V{D}:\Desc$ as a
-`pattern functor' on $\Set$, with $\SYMBdescop{\V{D}}$ its action on
-an object, \(\V{X}\), soon to be instantiated recursively. Note that
-the functors so described are \emph{strictly positive}, by
-construction.
+datatype declarations. We can read a description $\V{D}:\Desc^{n}$ as
+a `pattern functor' on $\Set^{n}$, with $\SYMBdescop{\V{D}}$ its
+action on an object, \(\V{X}\), soon to be instantiated
+recursively. The superscripts indicate the $\Set$-levels at which we
+\emph{expect} these objects in a stratified system. This is but an
+informal notation, to give a flavor of the stratified
+presentation. Note that the functors so described are \emph{strictly
+  positive}, by construction.
 
 Descriptions are sequential structures, terminated by $\DUnit$,
 indicating the empty tuple. To build sigmas-of-sigmas, we define a
@@ -128,14 +131,14 @@ could be given, as illustrated in Section~\ref{sec:indexing-desc}.
 \begin{figure}
 \[\stk{
 \begin{array}{l}
-\Desc : \Set\\
-\DUnit : \Desc\\
-\DSigma{(\Bhab{\V{S}}{\Set})}{(\Bhab{\V{D}}{\V{S} \To \Desc})} : \Desc\\
-\DIndx{(\Bhab{\V{D}}{\Desc})} : \Desc \\
+\Desc^n : \Set^{n+1}\\
+\DUnit : \Desc^{n}\\
+\DSigma{(\Bhab{\V{S}}{\Set^{n}})}{(\Bhab{\V{D}}{\V{S} \To \Desc^{n}})} : \Desc^{n}\\
+\DIndx{(\Bhab{\V{D}}{\Desc^{n}})} : \Desc^{n} \\
 \end{array}
 \smallskip\\
 \begin{array}{l@{\V{X}\:\mapsto\:}l}     
-\multicolumn{2}{l}{\descop{\_\:}{} : \Desc \To \Set \To \Set} \\
+\multicolumn{2}{l}{\descop{\_\:}{} : \Desc^{n} \To \Set^{n} \To \Set^{n}} \\
  \descop{\DUnit}{} &  \Unit \\
  \descop{\DSigma{\V{S}}{\V{D}}}{} &
      \SIGMAS{\Bhab{\V{s}}{\V{S}}}{\descop{\V{D}\,\V{s}}{\!\V{X}}}  \\
@@ -172,7 +175,7 @@ expression language of Section~\ref{sec:type-propagation}, exploiting
 type propagation.
 %
 \[\stk{
-\NatD : \Desc \\
+\NatD : \Desc^n \\
 \NatD \mapsto \DSigma{\EnumT{\sqr{\NatZero\: \SYMBNatSuc }}}
                      {\sqr{ \DUnit \quad (\DIndx{\DUnit}) }}
 }\]
@@ -205,7 +208,7 @@ With a small change to this definition, we obtain the pattern functor
 for lists:
 %
 \[\stk{
-\ListD : \Set \To \Desc \\
+\ListD : \Set^n \To \Desc^n \\
 \ListD \: \V{X} \mapsto
  \DSigma{\EnumT{\sqr{ \ListNil\: \SYMBListCons }}}
          {\sqr{ \DUnit \quad (\DSigma{\V{X}}{\LAM{\_} \DIndx{\DUnit}}) }}
@@ -229,7 +232,7 @@ Finally, we are not limited to one recursive argument. This is
 demonstrated by our description of node-labelled binary trees:
 %
 \[\stk{
-\TreeD : \Set \To \Desc \\
+\TreeD : \Set^n \To \Desc^n \\
 \begin{array}{@{}l@{}l}
 \TreeD \: \V{X} \mapsto 
     \DSigma{ & \EnumT{\sqr{ \TreeLeaf\: \TreeNode }} \\}
@@ -264,13 +267,13 @@ this is a clear reminder of the sum-of-products style. Every
 description can be forced into this style with a singleton constructor
 if necessary. We characterise tagged descriptions thus:
 \[\stk{
- \TagDesc : \Set \\
- \TagDesc \mapsto \SIGMA{\V{E}}{\EnumU} (\spi{\V{E}}{\LAM{\_} \Desc})
+ \TagDesc^n : \Set^{n+1} \\
+ \TagDesc^n \mapsto \SIGMA{\V{E}}{\EnumU} (\spi{\V{E}}{\LAM{\_} \Desc^n})
 \smallskip\\
-\SYMBtoDesc : \TagDesc\To\Desc \\
+\SYMBtoDesc : \TagDesc^n \To \Desc^n \\
 \SYMBtoDesc \mapsto
 \spl{\LAM{\V{E}}\LAM{\V{D}}
-\DSigma{\EnumT{\V{E}}}{(\F{switch}\:\V{E}\:(\LAM{\_}\Desc)\:\V{D})}}
+\DSigma{\EnumT{\V{E}}}{(\F{switch}\:\V{E}\:(\LAM{\_}\Desc^n)\:\V{D})}}
 }\]
 It is not a great stretch to imagine that the traditional datatype
 declaration syntax might desugar to the \emph{definition} of a datatype
@@ -301,9 +304,9 @@ now construct by \emph{tying the knot}: the element type abstracted
 by the functor is now instantiated recursively:
 %
 \[
-\Rule{\Gamma \vdash \Bhab{\M{D}}{\Desc}}
-     {\Gamma \vdash \Bhab{\Mu{\M{D}}}{\Set}} \qquad
-\Rule{\Gamma \vdash \Bhab{\M{D}}{\Desc} \quad 
+\Rule{\Gamma \vdash \Bhab{\M{D}}{\Desc^n}}
+     {\Gamma \vdash \Bhab{\Mu{\M{D}}}{\Set^n}} \qquad
+\Rule{\Gamma \vdash \Bhab{\M{D}}{\Desc^n} \quad 
       \Gamma \vdash \Bhab{\M{d}}{\descop{\M{D}}{\Mu{\M{D}}}}}
      {\Gamma \vdash \Bhab{\Con{\M{d}}}{\Mu{\M{D}}}}
 \]
@@ -322,8 +325,9 @@ by the functor is now instantiated recursively:
 
 We can now build datatypes and their elements, e.g.:
 \[\stk{
-\Nat\mapsto\Mu{(\toDesc{\pair{\sqr{\NatZero\: \SYMBNatSuc }}
-                       {\sqr{ \DUnit \quad (\DIndx{\DUnit})}}{}})}:\Set
+\Nat \mapsto \Bhab{\Mu{(\toDesc{\pair{\sqr{\NatZero\: \SYMBNatSuc }}
+                               {\sqr{\DUnit \quad (\DIndx{\DUnit})}}{}})}}
+                  {\Set^n}
 \\
 \Con{\sqr{\NatZero}}:\Nat \qquad
 \Con{\sqr{\NatSuc{(\Bhab{n}{\Nat})}}}:\Nat
@@ -334,8 +338,8 @@ elimination principle. Following a categorical intuition, we might
 provide the `fold', or `iterator', or `catamorphism':
 %
 \[
-\F{cata} : \PITEL{\V{D}}{\Desc}
-           \PI{\V{T}}{\Set}
+\F{cata} : \PITEL{\V{D}}{\Desc^n}
+           \PI{\V{T}}{\Set^n}
            (\descop{\V{D}}{\V{T}} \To \V{T}) \To 
            \Mu{\V{D}} \To \V{T} 
 \]
@@ -347,8 +351,8 @@ We need \emph{induction} to write functions whose type depends on inductive
 data. Following \citet{benke:universe-generic-prog}, we adopt the following:
 %
 \[\stk{
-\F{ind} : \stk{ \PITEL{\V{D}}{\Desc}
-                    \PI{\V{P}}{\Mu{\V{D}} \To \Set}         \\
+\F{ind} : \stk{ \PITEL{\V{D}}{\Desc^n}
+                \PI{\V{P}}{\Mu{\V{D}} \To \Set^k}         \\
                (\PI{\V{d}}{\descop{\V{D}}{\Mu{\V{D}}}}       
                 \All{\V{D}}{\Mu{\V{D}}}{\V{P}}{\V{d}} \To \V{P} (\Con{\V{d}})) \To \\
                \PI{\V{x}}{\Mu{\V{D}}} \V{P} \V{x} 
@@ -360,7 +364,7 @@ data. Following \citet{benke:universe-generic-prog}, we adopt the following:
 }\]
 %
 Here, $\All{\V{D}}{\V{X}}{\V{P}}{\V{d}}$ states that
-$\Bhab{\V{P}}{\V{X} \To \Set}$ holds for every subobject $\V{x}:\V{X}$
+$\Bhab{\V{P}}{\V{X} \To \Set^k}$ holds for every subobject $\V{x}:\V{X}$
 in \(\V{D}\), and \(\all{\V{D}}{\V{X}}{\V{P}}{\V{p}}{\V{d}}\) is a
 `dependent map', applying some
 \(\Bhab{\V{p}}{\PIS{\Bhab{\x}{\V{X}}}\V{P}\,\V{x}}\) to each \(\x\)
@@ -371,7 +375,7 @@ Figure~\ref{fig:all-predicates}.\footnote{To pass the termination
   $\SYMBind$ in our Agda model. A simulation argument shows that the
   definition presented here terminates if the inlined version
   does. Hence, although not directly structural, this definition is
-  indeed terminating.} Note that \(\F{ind}\) is our first generic
+  indeed terminating.} Note that $\SYMBind$ is our first generic
 operation over descriptions, albeit a hardwired operator.  Any
 datatype we define automatically comes with an induction principle.
 
@@ -386,11 +390,11 @@ that is a story for another time.
 %%
 \stk{
 \begin{array}{@{}ll}
-\SYMBAll : & \PITEL{\V{D}}{\Desc}
-             \PITEL{\V{X}}{\Set}
-             \PITEL{\V{P}}{\V{X} \To \Set} \\
+\SYMBAll : & \PITEL{\V{D}}{\Desc^n}
+             \PITEL{\V{X}}{\Set^n}
+             \PITEL{\V{P}}{\V{X} \To \Set^k} \\
            & \PI{\V{xs}}{\descop{\V{D}}{\V{X}}} 
-             \Set 
+             \Set^k 
 \end{array} \\
 \begin{array}{@{}l@{}l@{\:=\:\:}l}
 \All{\DUnit}{& \V{X}}{\V{P}}{\Void} &
@@ -408,9 +412,9 @@ that is a story for another time.
 %%
 \stk{
 \begin{array}{@{}ll}
-\SYMBall : & \PITEL{\V{D}}{\Desc}
-             \PITEL{\V{X}}{\Set}
-             \PITEL{\V{P}}{\V{X} \To \Set} \\
+\SYMBall : & \PITEL{\V{D}}{\Desc^n}
+             \PITEL{\V{X}}{\Set^n}
+             \PITEL{\V{P}}{\V{X} \To \Set^k} \\
            & \PITEL{\V{p}}{\PI{\V{x}}{\V{X}} \V{P}\: \V{x}}
              \PI{\V{xs}}{\descop{\V{D}}{\V{X}}} 
              \All{\V{D}}{\V{X}}{\V{P}}{\V{xs}} 
