@@ -192,8 +192,11 @@ $\SYMBDHindx$ that takes an indexing set $\V{H}$. This amounts to give
 a recursive subobject for each element of $H$.
 %
 \[\stk{
-    \DHindx{(\Bhab{\M{H}}{\Set})}{(\Bhab{\M{D}}{\Desc})} : \Set \smallskip \\
-\descop{\DHindx{\V{H}}{\V{D}}}{\V{X}}     \mapsto \TIMES{(\V{H} \To \V{X})}{\descop{\V{D}}{\V{X}}} \\
+    \DHindx{(\Bhab{\M{H}}{\Set})}{(\Bhab{\M{D}}{\Desc})} : \Desc
+    \smallskip \\
+    \descop{\DHindx{\V{H}}{\V{D}}}{\V{X}}     
+        \mapsto 
+            \TIMES{(\V{H} \To \V{X})}{\descop{\V{D}}{\V{X}}} \\
 }\]
 
 
@@ -318,12 +321,37 @@ As a consequence, our definition above now propagates without
 introducing recursion. Of course, by pasting together the declaration
 of \(\Desc\) and its internal copy, we have made it appear in its own
 type. Hardwired as a \emph{fait accompli}, this creates no regress,
-although one must assume the definition to recheck it.\footnote{Our
+although one must assume the definition to recheck it\footnote{Our
   Agda model does not formalize the $\SYMBswitchD$
   construction. However, it proves the isomorphism between the defined
   descriptions and the coded ones. The role of $\SYMBswitchD$ is to
   collapse this isomorphism, hence identifiying defined and coded
-  descriptions.}
+  descriptions.}. Alternatively, we could have extended $\Desc$ with a
+code for \emph{finite} sums, internalizing the $\SYMBswitch$ in the
+interpretation function:
+%%
+\[\stk{
+    \Dsigma{(\Bhab{\V{E}}{\EnumU})}
+           {(\Bhab{\V{B}}{\spi{\V{E}}{\LAM{\_}{\Desc}}})} : \Desc
+    \smallskip \\
+    \descop{\Dsigma{\V{E}}{\V{B}}}{\V{X}}     
+        \mapsto 
+            \SIGMAS{\Bhab{\V{x}}{\EnumT{\V{E}}}}
+                   {\descop{\switch{\V{E}}{(\LAM{\_}{\Desc})}{\V{B}}{\V{x}}}{\V{X}}}    
+}\]
+%%
+Using $\SYMBDsigma$ to switch over the $\Desc$ constructors, we avoid
+mention of $\Desc$ while levitating it. The $\SYMBswitch$ operator is
+pushed into the interpretation function, at which point $\Desc$ indeed
+exists.
+
+%% * There exists alternative
+%% **   <- All we want is to avoid mention of Desc
+%% **   -> Add a code for finite sigma : $\sigma : (e : \EnumU) -> \pi e \Desc -> \Desc$
+%% **       <- Take a finite set in argument
+%% **       <- Interpreted as a switch
+%% **       -> No more need to mention Desc during its construction
+%% **           <- Pushed into intrepretation, at which time it exists
 
 \begin{wstructure}
 <- Generic programming now!
