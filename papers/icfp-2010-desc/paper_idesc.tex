@@ -225,12 +225,12 @@ by \(\DPi{\!}{\!}\).  Upgrade your old $\Desc$
 to a trivially indexed $\IDesc{\Unit}$ as follows!
 \[\begin{array}{@{}ll}
 \upgrade :\Desc & \To\IDesc{\Unit} \\
-\upgrade\:\DUnit & = \DConst{\Unit} \\
+\upgrade\:\DUnit & \mapsto \DConst{\Unit} \\
 \upgrade\:(\DSigma{\V{S}}{\V{D}}) &
-   = \DSigma{\V{S}}{\LAM{\V{s}}\upgrade\:(\V{D}\:\V{s})} \\
-\upgrade\:(\DIndx{\V{D}}) & =
+   \mapsto \DSigma{\V{S}}{\LAM{\V{s}}\upgrade\:(\V{D}\:\V{s})} \\
+\upgrade\:(\DIndx{\V{D}}) & \mapsto
   \DProd{\DVar{\Void}}{\upgrade\:\V{D}} \\
-\upgrade\:(\DHindx{\V{H}}{\V{D}}) & =
+\upgrade\:(\DHindx{\V{H}}{\V{D}}) & \mapsto
   \DProd{(\DPi{\V{H}}{\LAM{\_}\DVar{\Void}})}{\upgrade\:\V{D}} \\
 \end{array}\]
 
@@ -262,7 +262,7 @@ Induction on indexed descriptions is then hardwired thus:
                    \PI{\V{x}}{\IMu{\V{I}}{\V{R}}{\V{i}}}
                    \V{P}\: \pair{\V{i}}{\V{x}}{}
 \end{array} \\
-\inductionI\: \V{R}\: \V{P}\: \V{m}\: \V{i}\: (\Con{\V{xs}}) =  \\
+\inductionI\: \V{R}\: \V{P}\: \V{m}\: \V{i}\: (\Con{\V{xs}}) \mapsto  \\
 \qquad
     \V{m}\: \V{i}\: \V{xs}\: (\allI{}
                                     {\V{R}\: \V{i}}
@@ -290,7 +290,7 @@ as before.
             & \idescop{\V{D}}{\V{I}}{\V{X}} \To
               \IDesc{(\SIGMA{\V{i}}{\V{I}}{\V{X}\: \V{i}})}
 \end{array} \\
-\begin{array}{@{}l@{}l@{\:=\:\:}l}
+\begin{array}{@{}l@{}l@{\:\mapsto\:\:}l}
 \AllI{\:}{(\DVar{\V{i}})}{& \V{X}}{\V{x}} &
     \DVar{\pair{\V{i}}{\V{x}}{}} \\
 \AllI{\:}{(\DConst{\V{K}})}{& \V{X}}{\V{k}} &
@@ -315,7 +315,7 @@ as before.
               \PI{\V{xs}}{\idescop{\V{D}}{\V{I}}{\V{X}}} 
               \idescop{\AllI{}{\V{D}}{\V{X}}{\V{xs}}}{}{\V{P}}
 \end{array} \\
-\begin{array}{@{}l@{}l@{\:=\:\:}l}
+\begin{array}{@{}l@{}l@{\:\mapsto\:\:}l}
 \allI{\:}{(\DVar{\V{i}})}{& \V{X}}{\V{P}}{\V{p}}{\V{x}} &
     \V{p}\: \pair{\V{i}}{\V{x}}{} \\
 \allI{\:}{(\DConst{\V{K}})}{& \V{X}}{\V{P}}{\V{p}}{\V{k}} &
@@ -479,7 +479,7 @@ For basic reassurance, we \(\upgrade\:\NatD\):
 %
 \[\stk{
 \upgrade\:\NatD : \IDesc{\Unit} \\
-\upgrade\:\NatD = \DSigma{(\EnumT{[ \NatZero\: \SYMBNatSuc ]})}
+\upgrade\:\NatD \mapsto \DSigma{(\EnumT{[ \NatZero\: \SYMBNatSuc ]})}
                      {\red{[} (\DConst{\Unit}) \; 
    (\DProd{\DVar{\Void}}{\DConst{\Unit}}) \red{]}}
 }\]
@@ -560,7 +560,7 @@ For vectors:
 %
 \[\stk{
 \VecD : \Set \To \Nat \To \IDesc{\Nat} \\
-\VecD\: \V{X}\: \V{i} = \SYMBDSigma\\
+\VecD\: \V{X}\: \V{i} \mapsto \SYMBDSigma\\
 \quad
 \EnumT{\vtup{r}{\VecNil\\ \SYMBVecCons}}
 \; \vtup{r}{
@@ -759,7 +759,7 @@ $\F{leHost}$. We define $\SYMBVal$ as follows:
 %
 \[\stk{
 \SYMBVal : \Ty \To \Set \\
-\begin{array}{@{}l@{\:=\:\:}l}
+\begin{array}{@{}l@{\:\mapsto\:\:}l}
 \Val{\Enat}   & \Nat \\
 \Val{\Ebool}  & \Bool
 \end{array}
@@ -849,7 +849,7 @@ evaluator. The implementation is as follows:
 \[\stk{
 \evalOne : \PI{\V{ty}}{\Ty} \idescop{(\toIDesc{\HExprD})\:\V{ty}}{\Ty}{\SYMBVal}
            \To {\Val{\V{ty}}} \\
-\begin{array}{@{}l@{}c@{}l@{\:=\:\:}l}
+\begin{array}{@{}l@{}c@{}l@{\:\mapsto\:\:}l}
 \evalOne\: & \_\: & \pair{\SYMBEval}{\V{x}}{}                                             & \V{x} \\
 \evalOne\: & \_\: & \pair{\SYMBEcond}{\pair{\BoolTrue}{\pair{\V{x}}{\_}{}}{}}{}   & \V{x} \\
 \evalOne\: & \_\: & \pair{\SYMBEcond}{\pair{\BoolFalse}{\pair{\_}{\V{y}}{}}{}}{}  & \V{y} \\
@@ -860,7 +860,7 @@ evaluator. The implementation is as follows:
 \evalH : \PI{\V{ty}}{\Ty} 
            \IMu{\Ty}{\HExprD}{\V{ty}} \To
            \Val{\V{ty}} \\
-\evalH\: \V{ty}\: \V{term} = \cataI_{\Ty} \:
+\evalH\: \V{ty}\: \V{term} \mapsto \cataI_{\Ty} \:
                                  (\toIDesc{\HExprD})\: 
                                  \SYMBVal\: 
                                  \evalOne\: 
@@ -912,7 +912,7 @@ An environment realises the context, associating a value for each type:
 \[
 \stk{
 \SYMBEnv : \Ctxt \To \Set \\
-\begin{array}{@{}l@{\:\:=\:\:}l}
+\begin{array}{@{}l@{\:\:\mapsto\:\:}l}
 \Env{\CtxtEmpty}        & \Unit \\
 \Env{(\CtxtSnoc{G}{S})} & \TIMES{\Env{G}}{\Val{S}}
 \end{array}
@@ -922,7 +922,7 @@ In this setting, we define $\SYMBVar$ by:
 %
 \[\stk{
 \Var{}{} : \Ctxt \To \Ty \To \Set \\
-\begin{array}{@{}ll@{\:\:=\:\:}l}
+\begin{array}{@{}ll@{\:\:\mapsto\:\:}l}
 \Var{\CtxtEmpty}{& T}            & \Void \\
 \Var{(\CtxtSnoc{G}{S})}{& T}     & \SUM{(\Var{G}{T})}{(S \Eq T)}
 \end{array}
@@ -941,8 +941,8 @@ semantics:
           \Val{\V{T}} \\
 \begin{array}{@{}lll}
 \lookup{\CtxtEmpty}{               \_}{                   \V{T}}{()}                    &   & \\
-\lookup{(\CtxtSnoc{\V{G}}{.T})}{   \pair{\V{g}}{\V{t}}{}}{\V{T}}{(\SumRight{\C{refl}})} & = & \V{t} \\
-\lookup{(\CtxtSnoc{\V{G}}{\V{S}})}{\pair{\V{g}}{\V{t}}{}}{\V{T}}{(\SumLeft{\V{x}})}     & = & \lookup{\V{G}}{\V{g}}{\V{T}}{\V{x}} 
+\lookup{(\CtxtSnoc{\V{G}}{.T})}{   \pair{\V{g}}{\V{t}}{}}{\V{T}}{(\SumRight{\C{refl}})} & \mapsto & \V{t} \\
+\lookup{(\CtxtSnoc{\V{G}}{\V{S}})}{\pair{\V{g}}{\V{t}}{}}{\V{T}}{(\SumLeft{\V{x}})}     & \mapsto & \lookup{\V{G}}{\V{g}}{\V{T}}{\V{x}} 
 \end{array}
 }\]
 
@@ -1077,7 +1077,7 @@ definition is the following:
             \SYMBIMu_{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{X}})} \DotTo
             \SYMBIMu_{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}
 \end{array} \\
-\substI\: \V{X}\: \V{Y}\: \V{R}\: \V{\sigma}\: \V{i}\: \V{t} = \\
+\substI\: \V{X}\: \V{Y}\: \V{R}\: \V{\sigma}\: \V{i}\: \V{t} \mapsto \\
 \qquad    \cataI\: (\toIDesc{\FreeIMonad{\V{R}}{}{\V{X}}})\:
                       (\SYMBIMu{(\FreeIMonad{\V{R}}{}{\V{Y}})})\:
                       (\F{applyI}\: \V{R}\: \V{X}\: \V{Y}\: \V{\sigma})\:
@@ -1245,7 +1245,7 @@ Then, we get $\IDesc$ by building its free monad:
 The fact that indexed descriptions are closed under substitution
 is potentially of considerable utility, if we can exploit this fact:
 \[
-\idescop{\sigma D}{J}{X} = \idescop{D}{I}{\LAM{i}\idescop{\sigma i}{J}{X}}
+\idescop{\sigma D}{J}{X} \mapsto \idescop{D}{I}{\LAM{i}\idescop{\sigma i}{J}{X}}
 \quad \mbox{where}\;\sigma:I\To\IDesc{J}
 \]
 By observing that a description can be decomposed via substitution, we

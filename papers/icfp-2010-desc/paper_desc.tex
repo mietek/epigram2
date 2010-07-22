@@ -357,7 +357,7 @@ data. Following \citet{benke:universe-generic-prog}, we adopt the following:
                 \All{\V{D}}{\Mu{\V{D}}}{\V{P}}{\V{d}} \To \V{P} (\Con{\V{d}})) \To \\
                \PI{\V{x}}{\Mu{\V{D}}} \V{P} \V{x} 
 } \\
-\F{ind}\, \V{D}\, \V{P}\, \V{m}\, (\Con{\V{d}}) = 
+\F{ind}\, \V{D}\, \V{P}\, \V{m}\, (\Con{\V{d}}) \mapsto 
     \V{m}\, \V{d}\, (\all{\V{D}}{\Mu{\V{D}}}{\V{P}}
                            {(\F{ind}\, \V{D}\, \V{P}\, \V{m})}
                            {\V{d}})
@@ -396,7 +396,7 @@ that is a story for another time.
            & \PI{\V{xs}}{\descop{\V{D}}{\V{X}}} 
              \Set^k 
 \end{array} \\
-\begin{array}{@{}l@{}l@{\:=\:\:}l}
+\begin{array}{@{}l@{}l@{\:\mapsto\:\:}l}
 \All{\DUnit}{& \V{X}}{\V{P}}{\Void} &
     \Unit \\
 \All{(\DSigma{\V{S}}{\V{D}})}{& \V{X}}{\V{P}}{\pair{\V{s}}{\V{d}}{}} &
@@ -419,7 +419,7 @@ that is a story for another time.
              \PI{\V{xs}}{\descop{\V{D}}{\V{X}}} 
              \All{\V{D}}{\V{X}}{\V{P}}{\V{xs}} 
 \end{array} \\
-\begin{array}{@{}l@{}l@{\:=\:\:}l}
+\begin{array}{@{}l@{}l@{\:\mapsto\:\:}l}
 \all{\DUnit}{& \V{X}}{\V{P}}{\V{p}}{\Void} &
     \Void \\
 \all{(\DSigma{\V{S}}{\V{D}})}{& \V{X}}{\V{P}}{\V{p}}{\pair{\V{s}}{\V{d}}{}} &
