@@ -214,21 +214,22 @@ whose fixpoint we then take:
 We define the $\SYMBIDesc$ grammar in Figure~\ref{fig:idesc},
 delivering only \emph{strictly positive} families. As well as
 indexing our descriptions, we have refactored a little, adopting
-a more compositional algebra of codes, where $\Desc$ is rather
-biased towards the familiar right-nested tuples. We now have
+a more compositional algebra of codes, where $\Desc$ is
+biased towards the right-nested tuples. We now have
 \(\DVar{i}\) for recursive `subrequests' at a chosen index \(i\),
-with tupling handled by \(\DProd{}{}\) and higher-order branching
+with tupling by right-associative
+\(\DProd{}{}\) and higher-order branching
 by \(\DPi{\!}{\!}\).  Upgrade your old $\Desc$
 to a trivially indexed $\IDesc{\Unit}$ as follows!
 \[\begin{array}{@{}ll}
 \upgrade :\Desc & \To\IDesc{\Unit} \\
 \upgrade\:\DUnit & = \DConst{\Unit} \\
 \upgrade\:(\DSigma{\V{S}}{\V{D}}) &
-   = \DSigma{\V{S}}{(\LAM{\V{s}}\upgrade\:(\V{D}\:\V{s}))} \\
+   = \DSigma{\V{S}}{\LAM{\V{s}}\upgrade\:(\V{D}\:\V{s})} \\
 \upgrade\:(\DIndx{\V{D}}) & =
   \DProd{\DVar{\Void}}{\upgrade\:\V{D}} \\
 \upgrade\:(\DHindx{\V{H}}{\V{D}}) & =
-  \DProd{(\DPi{\V{H}}{(\LAM{\_}\DVar{\Void})})}{\upgrade\:\V{D}} \\
+  \DProd{(\DPi{\V{H}}{\LAM{\_}\DVar{\Void}})}{\upgrade\:\V{D}} \\
 \end{array}\]
 
 To deliver induction for indexed datatypes, we need the `holds everywhere'
@@ -238,7 +239,7 @@ $\Desc$ admits the $\SYMBall$ construction, $\SYMBIDesc$ is \emph{closed}
 under it! The $\SYMBAllI$
 operator for a description indexed on \(\V{I}\) is strictly positive in
 turn, and has a description indexed on
- some \((\SIGMA{\V{i}}{\V{I}}{\V{X}\: \V{i}})\).
+ some \(\SIGMA{\V{i}}{\V{I}}{\V{X}\: \V{i}}\).
 Induction on indexed descriptions is then hardwired thus:
 %
 \[\stk{
@@ -271,6 +272,7 @@ Induction on indexed descriptions is then hardwired thus:
 %
 The generic catamorphism, $\cataI$, is constructed from $\inductionI$
 as before.
+\note{do this later?}
 
 
 \begin{figure*}
@@ -471,16 +473,18 @@ as before.
         -> This applies to all previous examples
 \end{wstructure}
 
-In order to gain some intuition of $\SYMBIDesc$, let us revisit the
-natural numbers:
+For basic reassurance, we \(\upgrade\:\NatD\):
 %
 \[\stk{
-\NatD : \IDesc{\Unit} \\
-\NatD \mapsto \DSigma{(\EnumT{[ \NatZero\: \SYMBNatSuc ]})}
-                     {\red{[} \DConst{\Unit} \quad \DVar{\Void} \red{]}}
+\upgrade\:\NatD : \IDesc{\Unit} \\
+\upgrade\:\NatD = \DSigma{(\EnumT{[ \NatZero\: \SYMBNatSuc ]})}
+                     {\red{[} (\DConst{\Unit}) \; 
+   (\DProd{\DVar{\Void}}{\DConst{\Unit}}) \red{]}}
 }\]
-
-Of course, we can \(\upgrade\) any inductive type.
+%
+Note that trailing \(\Unit\)'s keep our right-nested, \(\void\)-terminated
+tuple structure, and with it our elaboration machinery.
+We can similarly \(\upgrade\) any inductive type.
 Moreover, \(\IDesc{I}\) can now code a bunch of mutually
 inductive types, if \(I\) enumerates the
 bunch~\cite{paulin:habilitation, yakushev:mutual-def}.
@@ -497,27 +501,29 @@ bunch~\cite{paulin:habilitation, yakushev:mutual-def}.
     -> Behind the scene, relies on the special purpose switchD
 \end{wstructure}
 
-Note that $\IDesc{\V{I}}$ itself is merely an inductive type. Hence,
-we can describe it in $\IDesc{\Unit}$:
+Note that $\IDesc{\V{I}}$ is a plain inductive type, parametrized
+by \(\V{I}\), but indexed trivially.
 %
 \[\stk{
 \IDescD : \PI{\V{I}}{\Set} \IDesc{\Unit} \\
-\begin{array}{@{}ll}
-\IDescD\: \V{I} \mapsto \SYMBDSigma & (\EnumT \sqr{ 
-                                          \SYMBDVar\:\:
-                                          \SYMBDConst\:\:
-                                          \DProd\:\:
-                                          \SYMBDSigma\:\:
+\IDescD\: \V{I} \mapsto \SYMBDSigma \\
+\quad
+ \EnumT\bigRedBracket{\begin{array}{r}
+                                          \SYMBDVar\\
+                                          \SYMBDConst\\
+                                          \DProd{}{}\\
+                                          \SYMBDSigma\\
                                           \SYMBDPi
-                                             }) \\
-                              & \bigRedBracket{\begin{array}{l}
-                                      \DConst{\V{I}}                  \\
-                                      \DConst{\Set}               \\
-                                      \DProd{\DVar{\Void}}{\DVar{\Void}}  \\
-                                      \DSigma{\Set}{(\LAM{\V{S}} \DPi{\V{S}}{(\LAM{\_} \DVar{\Void})})} \\
-                                      \DSigma{\Set}{(\LAM{\V{S}} \DPi{\V{S}}{(\LAM{\_} \DVar{\Void})})}
+                       \end{array}}
+         \; \bigRedBracket{\begin{array}{l@{}l}
+  (\DProd{\DConst{\V{I}} &}{\DConst{\Unit}})                  \\
+  (\DProd{\DConst{\Set}  &}{\DConst{\Unit}})                  \\
+  (\DProd{\DVar{\Void}}{\DProd{\DVar{\Void}&}{\DConst{\Unit}}})  \\
+  (\DSigma{\Set}{\LAM{\V{S}}
+     \DProd{( \DPi{\V{S}}{\LAM{\_} \DVar{\Void}}) &}{\DConst{\Unit}}})     \\
+  (\DSigma{\Set}{\LAM{\V{S}}
+     \DProd{( \DPi{\V{S}}{\LAM{\_} \DVar{\Void}}) &}{\DConst{\Unit}}})     \\
                                    \end{array}}
-\end{array}
 }\]
 
 Therefore, this universe is self-describing and can be
@@ -535,11 +541,11 @@ without mentioning \(\SYMBIDesc\).
 So far, our examples live in $\IDesc{\Unit}$, with no interesting
 indexing. Let us at least have vectors. Recall
 that the constructors $\VecNil$ and $\SYMBVecCons$ are defined only for
-$\NatZero$ and $\NatSuc$ respectively.:
+$\NatZero$ and $\NatSuc$ respectively:
 %
 \[
 \stk{
-\data \D{Vec}\: \PITEL{\V{X}}{\Set} : \PI{\V{n}}{\Nat} \Set \where \\
+\data \D{Vec}\: \PITEL{\V{X}}{\Set} : \PI{\V{i}}{\Nat} \Set \where \\
 \;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
     \VecNil          & \D{Vec}\:\V{X}\:{\NatZero}   \\
     \SYMBVecCons & _{\PI{\V{n}}{\Nat}}\V{X} \To \D{Vec}\:{\V{X}}\:{\V{n}} \To \D{Vec}\:{\V{X}}\:{(\NatSuc{\V{n}})}
@@ -547,30 +553,34 @@ $\NatZero$ and $\NatSuc$ respectively.:
 }
 \]
 
-One way to code constrained datatypes is to appeal to equality. The
-constraints are therefore captured by equations in the datatype. In
-this case, we obtain the following definition:
+One way to code constrained datatypes is to appeal to a suitable
+notion of propositional equality \(\PropEq\) on indices. The
+constraints are expressed as `Henry Ford' equations in the datatype.
+For vectors:
 %
 \[\stk{
 \VecD : \Set \To \Nat \To \IDesc{\Nat} \\
-\begin{array}{@{}l@{}l}
-\VecD\: \V{X}\: \V{n} = \SYMBDSigma & (\EnumT{\sqr{ \VecNil\:\SYMBVecCons }}) \\
-                        & \bigRedBracket{
-                          \begin{array}{l}
-                            \DConst{(\V{n} \PropEq \NatZero)} \\
-                            \DSigma{\Nat}{\LAM{\V{m}}
-\stk{\DProd{\DConst{\V{X}}}{\DProd{\DVar{\V{m}}}{\\\DConst{(\V{n} \PropEq \NatSuc{\V{m}})}}}}}
+\VecD\: \V{X}\: \V{i} = \SYMBDSigma\\
+\quad
+\EnumT{\bigRedBracket{\begin{array}{@{}r@{}}
+\VecNil\\ \SYMBVecCons
+\end{array}}}
+\; \bigRedBracket{
+                          \begin{array}{@{}r@{}}
+                            (\DConst{(\NatZero\PropEq\V{i})}) \\
+ ( \DSigma{\Nat}{\LAM{\V{n}}
+   \DProd{\DConst{\V{X}}}
+     {\DProd{\DVar{\V{n}}}{\DConst{(\NatSuc{\V{n}}\PropEq\V{i})}})}}
                           \end{array}
                           }
-\end{array}
 }\]
 
-In the $\VecNil$ case, a proof must be provided that the index is
-equal to $\NatZero$. In the $\SYMBVecCons$ case, we first store an element
-$\V{m}$ of $\Nat$. However, the constraint stipulates that $\V{m}$
-cannot be \emph{any} natural numbers: it must be ``the index minus
-one''. This translates into the constraint $\V{n} \PropEq
-\NatSuc{\V{m}}$, given a suitable presentation of propositional equality.
+You may choose $\VecNil$ for any index you like as long as it is
+$\NatZero$; in the $\SYMBVecCons$ case, the length of the tail is
+given explicitly, and the index $\V{i}$ must be one more. Our previous
+\(\Unit\)-terminated tuple types can now be seen as the trivial case
+of constraint-terminated tuple types, with elaboration supplying the
+witnesses when trivial.
 
 We have been careful to keep our setup agnostic with respect to
 notions of propositional equality. Any will do, according to your
@@ -606,7 +616,8 @@ following, equivalent definition:
 \VecD \:\PITEL{\V{X}}{\Set} : \Nat \To \IDesc{\Nat} \\
 \begin{array}{@{}lll}
 \VecD\:\V{X}\: \NatZero     & \mapsto & \DConst{\Unit} \\
-\VecD\:\V{X}\: (\NatSuc{\V{n}}) & \mapsto & \DProd{\DConst{\V{X}}}{\DVar{\V{n}}}
+\VecD\:\V{X}\: (\NatSuc{\V{n}}) & \mapsto &
+ \DProd{\DProd{\DConst{\V{X}}}{\DVar{\V{n}}}}{\DConst{\Unit}}
 \end{array}
                                        
 }\]
