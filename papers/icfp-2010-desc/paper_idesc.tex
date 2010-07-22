@@ -15,26 +15,25 @@
     ???
 \end{wstructure}
 
-So far, we have explored the well-known realm of inductive types. We
-have built upon our intuition of ML-like datatypes. In our dependent
-setting, we have provided these datatypes by the mean of $\Desc$, a
-universe of descriptions.
+So far, we have explored the realm of inductive types, building on
+intuition from ML-like datatypes, using type dependency as a
+descriptive tool in $\Desc$ and its interpretation. Let us now make
+dependent types the object as well as the means of our study.
 
-Working with dependent types fosters new opportunities for
-datatypes. The typical example is bounded lists, also known as
-vectors. A vector is a list decorated by its length. Having this
-information prevents hazardous operations, such as taking the head of
-an empty vector: the head function only takes vectors of length
-$\NatSuc{\V{n}}$, as enforced by its type. This is made possible by
-the specificity of dependent types: a term -- the length -- can
-influence a type -- the vector type.
+Dependent datatypes provide a way to work at higher level of
+precision \emph{a priori}, reducing the sources of failure we
+might otherwise need to manage. For the perennial
+example, consider \emph{vectors}---lists indexed by length. By
+making length explicit in the type, we can prevent hazardous
+operations (the type of `head' demands vectors of length
+$\NatSuc{\V{n}}$) and offer stronger guarantees (pointwise
+addition of $\V{n}$-vectors yields an $\V{n}$-vector).
 
-However, these datatypes cannot be defined by mere induction. In the
-case of vectors, for instance, we have to define the whole
-\emph{family} of vectors in one go: vectors of all sizes need to be
-defined at the same time. In dependently-typed languages, the basic
-grammar of datatypes is that of inductive families. To capture this
-grammar, we rely on \emph{indexing}.
+However, these datatypes are not \emph{individually} inductive. For
+instance, we have to define the whole \emph{family} of vectors
+mutually, in one go. In dependently typed languages, the basic grammar
+of datatypes is that of inductive families. To capture this grammar,
+we must account for \emph{indexing}.
 
 %% \subsection{Desc, atomically}
 %% \label{sec:idesc-atomic-desc}
@@ -154,27 +153,45 @@ grammar, we rely on \emph{indexing}.
             <- Where the functor is built
 \end{wstructure}
 
-In the previous section, we have presented the $\Desc$ universe as a
-grammar of functors in the category $\Set$. We have seen how to code
-inductive types in this setting. To describe an inductive family
-indexed by $\Bhab{\V{I}}{\Set}$, we use endofunctors on the category
-$\Set^{\V{I}}$. We call these \emph{indexed functors}. \note{Predicate
-  transformer anyone?} $\V{I} \To \IDesc{\V{I}}$ is our grammar for
-describing these functors. Hence, $\SYMBIDesc$ and its interpretation
-have the following types:
+
+\newcommand{\DotTo}{\mathop{\blue{\dot{\rightarrow}}}}
+
+We presented the $\Desc$ universe as a
+grammar of strictly positive endofunctors on $\Set$ and developed
+inductive types by taking a fixpoint. To describe inductive families
+indexed by some $\Bhab{\V{I}}{\Set}$, we play a similar game with
+endofunctors on the category $\Set^{\V{I}}$,
+families of sets \(\V{X},\V{Y}:\V{I}\To\Set\) for objects, and for morphisms,
+families of functions in \(\V{X}\DotTo\V{Y}\), defined pointwise:
+\[
+\V{X}\DotTo\V{Y} \mapsto \PI{\V{i}}{\V{I}}\V{X}\:\V{i}\To\V{Y}\:\V{i}
+\]
+
+An \emph{indexed functor} in $\Set^{\V{I}}\To\Set^{\V{J}}$ has the
+flavour of a device driver, characterising `responses' to a given
+request in \(\V{J}\) where we may in turn make `subrequests' at indices
+chosen from \(\V{I}\). When we use indexed functors to define inductive
+families of datatypes,
+\(\V{I}\) and \(\V{J}\) coincide: we explain how to make a node fit a given
+index, including subnodes at chosen indices. E.g., if we are asked for a
+vector of length 3, we choose to ask in turn for a tail of length 2.
+
+To code up valid notions of response to a given request, we introduce
+$\SYMBIDesc$ and its interpretation:
 %
 \[\stk{
 \IDesc{(\Bhab{\V{I}}{\Set})} : \Set \smallskip \\
 \idescop{\_}{}{} : _{\PI{\V{I}}{\Set}} \IDesc{\V{I}} \To (\V{I} \To \Set) \To \Set    \\
 }\]
 
-Given these components, we may interpret a \emph{function}
-$\V{R}:\V{I} \To \IDesc{\V{I}}$ is interpreted as a function
-$\V{I} \To \Set^{\V{I}} \To \Set$, which is isomorphic to $\Set^{\V{I}}
-\To \Set^{\V{I}}$, the type of endofunctors on \(\Set^{\V{I}}\).
-Inductive families are fixpoints defined over
-these indexed functors, hence computing a fixpoint of the entire
-\emph{family} of functors:
+An \(\IDesc{\V{I}}\) specifies just \emph{one} response, but a
+request-to-response \emph{function},
+$\V{R}:\V{I} \To \IDesc{\V{I}}$, yields a strictly positive endofunctor
+\[
+  \LAM{\V{X}} \LAM{\V{i}} \idescop{\V{R}\:\V{i}}{\V{I}}{\V{X}} :
+  \Set^{\V{I}} \To \Set^{\V{I}}
+\]
+whose fixpoint we then take:
 %
 \[\stkl{
 \Rule{\Gamma \vdash \Bhab{\V{I}}{\Set} \qquad
@@ -190,15 +207,39 @@ these indexed functors, hence computing a fixpoint of the entire
      {\Gamma \vdash \Bhab{\Con{\V{x}}}{\IMu{\V{I}}{\V{R}}{\V{i}}}}
 }\]
 
+\newcommand{\upgrade}{\F{upgrade}}
 \newcommand{\inductionI}{\F{indI}}
 \newcommand{\cataI}{\F{cataI}}
 
-However, we still have to define the actual grammar. We obtain it by
-evolving $\Desc$ to cope with indexing. \note{Say something about the
-  transformation} The code of $\SYMBIDesc$ is presented in
-Figure~\ref{fig:idesc}. By construction, $\SYMBIDesc$ can only
-describe \emph{strictly positive families}. Induction on indexed
-descriptions is defined by:
+We define the $\SYMBIDesc$ grammar in Figure~\ref{fig:idesc},
+delivering only \emph{strictly positive} families. As well as
+indexing our descriptions, we have refactored a little, adopting
+a more compositional algebra of codes, where $\Desc$ is rather
+biased towards the familiar right-nested tuples. We now have
+\(\DVar{i}\) for recursive `subrequests' at a chosen index \(i\),
+with tupling handled by \(\DProd{}{}\) and higher-order branching
+by \(\DPi{\!}{\!}\).  Upgrade your old $\Desc$
+to a trivially indexed $\IDesc{\Unit}$ as follows!
+\[\begin{array}{@{}ll}
+\upgrade :\Desc & \To\IDesc{\Unit} \\
+\upgrade\:\DUnit & = \DConst{\Unit} \\
+\upgrade\:(\DSigma{\V{S}}{\V{D}}) &
+   = \DSigma{\V{S}}{(\LAM{\V{s}}\upgrade\:(\V{D}\:\V{s}))} \\
+\upgrade\:(\DIndx{\V{D}}) & =
+  \DProd{\DVar{\Void}}{\upgrade\:\V{D}} \\
+\upgrade\:(\DHindx{\V{H}}{\V{D}}) & =
+  \DProd{(\DPi{\V{H}}{(\LAM{\_}\DVar{\Void})})}{\upgrade\:\V{D}} \\
+\end{array}\]
+
+To deliver induction for indexed datatypes, we need the `holds everywhere'
+machinery. We present $\SYMBAllI$ and $\SYMBallI$ in
+Figure~\ref{fig:allI-predicates}, with a twist---where
+$\Desc$ admits the $\SYMBall$ construction, $\SYMBIDesc$ is \emph{closed}
+under it! The $\SYMBAllI$
+operator for a description indexed on \(\V{I}\) is strictly positive in
+turn, and has a description indexed on
+ some \((\SIGMA{\V{i}}{\V{I}}{\V{X}\: \V{i}})\).
+Induction on indexed descriptions is then hardwired thus:
 %
 \[\stk{
 \begin{array}{@{}ll}
@@ -228,9 +269,8 @@ descriptions is defined by:
                                     {\V{xs}})
 }\]
 %
-Where the operators $\SYMBAllI$ and $\SYMBallI$ are
-presented in Figure~\ref{fig:allI-predicates}. As for descriptions, we
-can compute a generic catamorphism, $\cataI$, from $\inductionI$.
+The generic catamorphism, $\cataI$, is constructed from $\inductionI$
+as before.
 
 
 \begin{figure*}
@@ -431,8 +471,8 @@ can compute a generic catamorphism, $\cataI$, from $\inductionI$.
         -> This applies to all previous examples
 \end{wstructure}
 
-In order to gain some intuition of $\SYMBIDesc$, let us re-implement
-the pattern functor of natural numbers:
+In order to gain some intuition of $\SYMBIDesc$, let us revisit the
+natural numbers:
 %
 \[\stk{
 \NatD : \IDesc{\Unit} \\
@@ -440,13 +480,10 @@ the pattern functor of natural numbers:
                      {\red{[} \DConst{\Unit} \quad \DVar{\Void} \red{]}}
 }\]
 
-Because $\Nat$ is just an inductive type, $\NatD$ is a $\Unit$-indexed
-functor. Therefore, the recursive argument is materialised by
-$\DVar{\Void}$, where we were using $\SYMBDIndx$ in the previous
-presentation. This transformation generalises to all inductive
-types. Moreover, we gain the ability to write mutually recursive
-inductive types by indexing with the choice of
-datatypes~\cite{paulin:habilitation, yakushev:mutual-def}.
+Of course, we can \(\upgrade\) any inductive type.
+Moreover, \(\IDesc{I}\) can now code a bunch of mutually
+inductive types, if \(I\) enumerates the
+bunch~\cite{paulin:habilitation, yakushev:mutual-def}.
 
 
 
@@ -483,7 +520,7 @@ we can describe it in $\IDesc{\Unit}$:
 \end{array}
 }\]
 
-Therefore, this universe is self-describing, hence can be
+Therefore, this universe is self-describing and can be
 levitated. As before, we rely on a special purpose $\F{switchID}$
 operator to build the finite function $\bigRedBracket{\ldots}$
 without mentioning \(\SYMBIDesc\).
@@ -495,10 +532,10 @@ without mentioning \(\SYMBIDesc\).
 \newcommand{\SYMBVecCons}{\etag{\CN{vcons}}\xspace}
 \newcommand{\VecCons}[2]{\SYMBVecCons\:#1\:#2}
 
-So far, the examples we have seen live in $\IDesc{\Unit}$, hence are
-not using any indexing. We remedy this by encoding the vectors. Recall
-that the constructors $\VecNil$ and $\SYMBVecCons$ are only defined for an
-index $\NatZero$ and $\NatSuc$ respectively.:
+So far, our examples live in $\IDesc{\Unit}$, with no interesting
+indexing. Let us at least have vectors. Recall
+that the constructors $\VecNil$ and $\SYMBVecCons$ are defined only for
+$\NatZero$ and $\NatSuc$ respectively.:
 %
 \[
 \stk{
@@ -938,8 +975,6 @@ $\evalH$, the second problem is already solved. Let us focus on
 discharging variables from the context. Again, we can subdivide this
 problem: first, discharging a single variable from the context; then,
 applying this $\discharge$ function on every variables in the term.
-
-\newcommand{\DotTo}{\mathop{\blue{\dot{\rightarrow}}}}
 
 The $\discharge$ function is relative to the required type and a
 context of the right type. Its action is to map values to themself,
