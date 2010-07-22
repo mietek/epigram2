@@ -1,6 +1,8 @@
 \section{A Universe of Inductive Families}
 \label{sec:indexing-desc}
 
+\newcommand{\vtup}[2]{\bigRedBracket{\begin{array}{@{}#1@{}}#2\end{array}}}
+
 \begin{wstructure}
 !!! Need Help !!!
 <- Motivation
@@ -508,14 +510,12 @@ by \(\V{I}\), but indexed trivially.
 \IDescD : \PI{\V{I}}{\Set} \IDesc{\Unit} \\
 \IDescD\: \V{I} \mapsto \SYMBDSigma \\
 \quad
- \EnumT\bigRedBracket{\begin{array}{r}
-                                          \SYMBDVar\\
-                                          \SYMBDConst\\
-                                          \DProd{}{}\\
-                                          \SYMBDSigma\\
-                                          \SYMBDPi
-                       \end{array}}
-         \; \bigRedBracket{\begin{array}{l@{}l}
+ \EnumT\vtup{r}{\SYMBDVar\\
+                \SYMBDConst\\
+                \DProd{}{}\\
+                \SYMBDSigma\\
+                \SYMBDPi}
+         \; \vtup{l@{}l}{
   (\DProd{\DConst{\V{I}} &}{\DConst{\Unit}})                  \\
   (\DProd{\DConst{\Set}  &}{\DConst{\Unit}})                  \\
   (\DProd{\DVar{\Void}}{\DProd{\DVar{\Void}&}{\DConst{\Unit}}})  \\
@@ -523,7 +523,7 @@ by \(\V{I}\), but indexed trivially.
      \DProd{( \DPi{\V{S}}{\LAM{\_} \DVar{\Void}}) &}{\DConst{\Unit}}})     \\
   (\DSigma{\Set}{\LAM{\V{S}}
      \DProd{( \DPi{\V{S}}{\LAM{\_} \DVar{\Void}}) &}{\DConst{\Unit}}})     \\
-                                   \end{array}}
+                                   }
 }\]
 
 Therefore, this universe is self-describing and can be
@@ -562,16 +562,12 @@ For vectors:
 \VecD : \Set \To \Nat \To \IDesc{\Nat} \\
 \VecD\: \V{X}\: \V{i} = \SYMBDSigma\\
 \quad
-\EnumT{\bigRedBracket{\begin{array}{@{}r@{}}
-\VecNil\\ \SYMBVecCons
-\end{array}}}
-\; \bigRedBracket{
-                          \begin{array}{@{}r@{}}
+\EnumT{\vtup{r}{\VecNil\\ \SYMBVecCons}}
+\; \vtup{r}{
                             (\DConst{(\NatZero\PropEq\V{i})}) \\
  ( \DSigma{\Nat}{\LAM{\V{n}}
    \DProd{\DConst{\V{X}}}
      {\DProd{\DVar{\V{n}}}{\DConst{(\NatSuc{\V{n}}\PropEq\V{i})}})}}
-                          \end{array}
                           }
 }\]
 
@@ -582,17 +578,15 @@ given explicitly, and the index $\V{i}$ must be one more. Our previous
 of constraint-terminated tuple types, with elaboration supplying the
 witnesses when trivial.
 
-We have been careful to keep our setup agnostic with respect to
-notions of propositional equality. Any will do, according to your
-convictions, or for vectors, none---equality for \(\Nat\) is definable by
-recursion---and many variations are popular. The traditional
-homogeneous identity type used in Coq is not adequate to support
-dependent pattern matching, but its heterogeneous variant, allowing
-equations between elements of arbitrary types, is sufficient to
-allow the translation of structurally recursive pattern matching
-programs to \(\F{indI}\)~\cite{goguen:pattern-matching}. Our present
-inclination is towards the extensional equality proposed by
-\citet{altenkirch:ott}, which also sustains the translation.
+In this paper, we remain anxiously agnostic about
+propositional equality. Any will do, according to
+conviction; many variations are popular. The
+homogeneous identity type used in Coq is ill-suited to
+dependent types, but its heterogeneous variant (forming equations
+regardless of type) allows the translation of pattern
+matching with structural recursion to
+\(\F{indI}\)~\cite{goguen:pattern-matching}. The
+extensional equality of \citet{altenkirch:ott} also sustains the translation.
 
 \begin{wstructure}
 !!! Need Help !!!
@@ -603,27 +597,26 @@ inclination is towards the extensional equality proposed by
     ??? More technical detail needed
 \end{wstructure}
 
-However, sometimes, we can actually remove these equations altogether. Let us
-look back at $\D{Vec}$. We note that the equations are introduced
-because we are \emph{storing} the index of the inductive family.
-However, \emph{inductive families need not store their
-  indices}~\cite{brady:index-inductive-families}.  By examining the
-incoming index, we can apply the \emph{forcing} and \emph{de-tagging}
-optimisations to our initial definition of $\D{Vec}$. This gives the
-following, equivalent definition:
+However, sometimes, the equations are redundant. 
+Looking back at $\D{Vec}$, we find that the equations constrain
+the choice of constructor and stored tail index retrospectively.
+But \emph{inductive families need not store their
+  indices}~\cite{brady:index-inductive-families}!  If we
+analyse the incoming index, we can tidy our description of $\D{Vec}$
+as follows:
 %
 \[\stk{
 \VecD \:\PITEL{\V{X}}{\Set} : \Nat \To \IDesc{\Nat} \\
 \begin{array}{@{}lll}
 \VecD\:\V{X}\: \NatZero     & \mapsto & \DConst{\Unit} \\
 \VecD\:\V{X}\: (\NatSuc{\V{n}}) & \mapsto &
- \DProd{\DProd{\DConst{\V{X}}}{\DVar{\V{n}}}}{\DConst{\Unit}}
+ \DProd{\DConst{\V{X}}}{\DVar{\V{n}}}
 \end{array}
                                        
 }\]
 %
-The equations (and constructors) have simply disappeared. A similar
-example is $\SYMBFin$, specified by:
+The constructors and equations have simply disappeared. A similar
+example is $\SYMBFin$ (bounded numbers), specified by:
 %
 \[
 \stk{
@@ -634,49 +627,44 @@ example is $\SYMBFin$, specified by:
 \end{array}
 }\]
 %
-In this case, we can apply forcing, but not detagging, since both
+In this case, we can eliminate equations but not constructors, since both
 $\FinZero$ and $\SYMBFinSuc$ both target $\SYMBNatSuc$:
 %
 \[\stk{
 \FinD : \Nat \To \IDesc{\Nat} \\
-\begin{array}{@{}lll@{}l}
-\FinD\: \NatZero         & \mapsto & \multicolumn{2}{l}{\DSigma{(\EnumT{\Void})}{\Void} } \\
-\FinD\: (\NatSuc{\V{n}}) & \mapsto & \SYMBDSigma & (\EnumT{\sqr{ \FinZero \: \SYMBFinSuc }}) \\
-                         &         &             & \bigRedBracket{
-                                                   \begin{array}{l}
-                                                       \DConst{\Unit} \\
-                                                       \DVar{\V{n}}
-                                                   \end{array}}
+\begin{array}{@{}lll}
+\FinD\: \NatZero         & \mapsto & \DSigma{\EnumT{\Void}}{\Void} \\
+\FinD\: (\NatSuc{\V{n}}) & \mapsto & \DSigma
+ {\EnumT{\vtup{r}{\FinZero \\ \SYMBFinSuc }}}
+ {\vtup{l}{ (\DConst{\Unit}) \\
+            (\DVar{\V{n}})}}
 \end{array}
 }\]
 
-Note that forcing a description is not guaranteed to remove all
-constraints. It is subject to future work to see if constraints can be
-entirely eradicated, or presented more conveniently to the developer.
-Finally, it is worth mentioning that these optimisations are
-\emph{source-to-source} transformations on descriptions.
+This technique of extracting information by case analysis on indices
+applies to descriptions exactly where Brady's `forcing' and
+`detagging' optimisations apply in compilation. They eliminate just
+those constructors, indices and constraints which are redundant even
+in \emph{open} computation. In \emph{closed} computation, where proofs
+can be trusted, all constraints are dropped.
+
 
 \paragraph{Tagged indexed descriptions:}
 
-When defining an indexed datatype, we have access to its
-index. Therefore, we can use this index to influence the choice of
-constructors. This captures the essence of dependent datatypes: a
-term -- the index -- has the ability to influence the datatype. We
-define tagged indexed descriptions to capture this specificity.
-
-We divide a tagged indexed description in two parts: first, the
+Let us reflect this index analysis technique.
+We can divide a description of tagged indexed data in two: first, the
 constructors that do not depend on the index; then, the constructors
 that do. The non-dependent part mirrors the definition for non-indexed
 descriptions. The index-dependent part simply indexes the choice of
 constructors by $\V{I}$. Hence, by inspecting the index, it is
-possible to enable or disable constructors.
+possible to vary the `menu' of constructors.
 %
 \[
 \begin{array}{@{}l@{\:\mapsto\:\:}l}
  \TagIDesc{\V{I}}  & \TIMES{\ATagIDesc{\V{I}}}{\ITagIDesc{\V{I}}} \\
- \ATagIDesc{\V{I}} & \SIGMA{\V{E}}{\EnumU} (\PI{\V{i}}{\V{I}} \spi{\V{E}}{(\LAM{\_} \IDesc{\V{I}})}) \\
+ \ATagIDesc{\V{I}} & \SIGMA{\V{E}}{\EnumU} \PI{\V{i}}{\V{I}} \spi{\V{E}}{\LAM{\_} \IDesc{\V{I}}} \\
  \ITagIDesc{\V{I}} & 
-     \SIGMA{\V{F}}{\V{I} \To \EnumU} (\PI{\V{i}}{\V{I}} \spi{(\V{F}\: \V{i})}{(\LAM{\_} \IDesc{\V{I}})}) 
+     \SIGMA{\V{F}}{\V{I} \To \EnumU} \PI{\V{i}}{\V{I}} \spi{(\V{F}\: \V{i})}{\LAM{\_} \IDesc{\V{I}}} 
 \end{array}
 \]
 
@@ -694,8 +682,8 @@ constructor $\SYMBListCons$.
 We use the notation $\toIDesc{\V{D}}$ to denote the indexed
 description computed from the tagged indexed description $\V{D}$. Its
 expansion is similar to the definition of \(\SYMBtoDesc\) for tagged
-descriptions. For brevity, we shall also overload $\IMu{ty}{D}$ for
-$\IMu{ty}{(\toIDesc{D})}$, as the bidirectional presentation let us
+descriptions. For brevity, we shall also overload $\IMu{I}{D}$ for
+$\IMu{I}{(\toIDesc{D})}$, as the bidirectional presentation let us
 resolve the ambiguity.
  
 \paragraph{Typed expressions:}
@@ -800,8 +788,7 @@ the constructors enabled by the corresponding type in $\Ty$.
 \\
 \stk{
 \HExprAD : \ATagIDesc{\Ty} \\
-\HExprAD \mapsto \bigRedBracket{
-                 \begin{array}{l}
+\HExprAD \mapsto \vtup{l}{
                    {\sqr{\SYMBEval\: \SYMBEcond \,}} \red{,} \\
                    \LAM{\V{ty}}
                    \bigRedBracket{
@@ -810,7 +797,6 @@ the constructors enabled by the corresponding type in $\Ty$.
                    \DProd{\DVar{\Ebool}}{\DProd{\DVar{\V{ty}}}{\DVar{\V{ty}}}}
                    \end{array}
                    }
-                 \end{array}
                  }
 \\
 \\
