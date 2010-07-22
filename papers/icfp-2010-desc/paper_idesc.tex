@@ -300,7 +300,7 @@ as before.
 \AllI{\:}{(\DSigma{\V{S}}{\V{D}})}{& \V{X}}{\pair{\V{s}}{\V{d}}{}} &
     \AllI{}{(\V{D}\: \V{s})}{\V{X}}{\V{d}} \\
 \AllI{\:}{(\DPi{\V{S}}{\V{D}})}{& \V{X}}{\V{f}} &
-    \DPi{\V{S}}{(\LAM{\V{s}} \AllI{}{(\V{D}\: \V{s})}{\V{X}}{(\V{f}\: \V{s})})}
+    \DPi{\V{S}}{\LAM{\V{s}} \AllI{}{(\V{D}\: \V{s})}{\V{X}}{(\V{f}\: \V{s})}}
 \end{array}
 }
 &
@@ -479,9 +479,9 @@ For basic reassurance, we \(\upgrade\:\NatD\):
 %
 \[\stk{
 \upgrade\:\NatD : \IDesc{\Unit} \\
-\upgrade\:\NatD \mapsto \DSigma{(\EnumT{[ \NatZero\: \SYMBNatSuc ]})}
-                     {\red{[} (\DConst{\Unit}) \; 
-   (\DProd{\DVar{\Void}}{\DConst{\Unit}}) \red{]}}
+\upgrade\:\NatD \mapsto \DSigma{(\EnumT{\sqr{\NatZero\: \SYMBNatSuc}})}
+                     {\sqr{(\DConst{\Unit}) \; 
+                           (\DProd{\DVar{\Void}}{\DConst{\Unit}})}}
 }\]
 %
 Note that trailing \(\Unit\)'s keep our right-nested, \(\void\)-terminated
@@ -634,10 +634,8 @@ $\FinZero$ and $\SYMBFinSuc$ both target $\SYMBNatSuc$:
 \FinD : \Nat \To \IDesc{\Nat} \\
 \begin{array}{@{}lll}
 \FinD\: \NatZero         & \mapsto & \DSigma{\EnumT{\Void}}{\Void} \\
-\FinD\: (\NatSuc{\V{n}}) & \mapsto & \DSigma
- {\EnumT{\vtup{r}{\FinZero \\ \SYMBFinSuc }}}
- {\vtup{l}{ (\DConst{\Unit}) \\
-            (\DVar{\V{n}})}}
+\FinD\: (\NatSuc{\V{n}}) & \mapsto & \DSigma{\EnumT{\sqr{\FinZero\: \SYMBFinSuc}}}
+                                            {\sqr{(\DConst{\Unit})\: (\DVar{\V{n}})}}
 \end{array}
 }\]
 
@@ -1079,7 +1077,7 @@ definition is the following:
 \end{array} \\
 \substI\: \V{X}\: \V{Y}\: \V{R}\: \V{\sigma}\: \V{i}\: \V{t} \mapsto \\
 \qquad    \cataI\: (\toIDesc{\FreeIMonad{\V{R}}{}{\V{X}}})\:
-                      (\SYMBIMu{(\FreeIMonad{\V{R}}{}{\V{Y}})})\:
+                      \SYMBIMu{(\FreeIMonad{\V{R}}{}{\V{Y}})}\:
                       (\F{applyI}\: \V{R}\: \V{X}\: \V{Y}\: \V{\sigma})\:
                       \V{i}\:
                       \V{t} 
@@ -1222,9 +1220,9 @@ is described as follow:
 \IDescFreeD : \ATagIDesc{\Unit} \\
 \begin{array}{@{}ll}
 \IDescFreeD \mapsto \bigRedBracket{\begin{array}{l}
-                                \sqr{\SYMBDConst\:
-                                     \DProd\:
-                                     \SYMBDSigma\: 
+                                \sqr{\SYMBDConst\:\:
+                                     \DProd\:\:
+                                     \SYMBDSigma\:\:
                                      \SYMBDPi} \red{,}\\
                                   \LAM{\_}\bigRedBracket{\begin{array}{l}
                                         \DConst{\Set}               \\

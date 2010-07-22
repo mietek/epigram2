@@ -139,7 +139,7 @@ Our first attempt gets stuck quite quickly:
 \DescD \mapsto
   \tada{\stkm{\DUnit\\ \SYMBDSigma\\ \SYMBDIndx}}
        {\stkm{ \DUnit                                \\
-         \DSigma{\Set}{(\LAM{\V{S}} \SHED)}      \\
+         \DSigma{\Set}{\LAM{\V{S}} \SHED}      \\
          \DIndx{\DUnit}    }                    } \\
 %\begin{array}{@{}ll}
 %\DescD \mapsto \DSigma{\!}{\!} & (\EnumT{[ \DUnit, \DSigma{\!}{\!}, \DIndx{\!} ]})  \\
@@ -445,7 +445,7 @@ matching notation, for readability's sake.
 }\]
 %
 Filling the hole in $\F{cata}$ with \(\F{replace}\: \V{D}\:
-(\Mu{\V{D}})\: \V{T}\: \V{xs}\: \V{hs}\) closes the problem. In the
+\Mu{\V{D}}\: \V{T}\: \V{xs}\: \V{hs}\) closes the problem. In the
 type theory, we have built a generic catamorphism. Any datatype will
 now come equipped with this operation, for free.
 
