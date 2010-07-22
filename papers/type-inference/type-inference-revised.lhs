@@ -314,8 +314,8 @@ We
 %%%wish to identify 
    seek  
 local correctness criteria for type inference 
-%%%that guarantee 
-   guaranteeing 
+   that guarantee 
+%%%guaranteeing 
 global correctness.
 
 
@@ -470,8 +470,8 @@ which contexts make sense in the first place.
 \end{figure}
 
 The rules in Figure~\ref{fig:oldRules} define a context as a left-to-right list
-of type variables, each of which may be 
-\define{declared} unknown (written $\hole{\alpha}$) or
+of type variables, each of which may be declared 
+\define{unknown} (written $\hole{\alpha}$) or
 \define{defined} (written $\alpha \defn \tau$). 
 A context is \define{valid} if the type \(\tau\) in
 every definition makes sense in its preceding context.
@@ -1936,7 +1936,7 @@ For a fixed context $\Gamma$, we define the preorder on schemes by
 $\leParam{\Gamma}{\gen{\Xi}{\tau}}{\gen{\Psi}{\upsilon}}$
 if there is some $\psi : \Gamma \fatsemi \Xi \lei \Gamma \fatsemi \Psi$
 such that $\Gamma \fatsemi \Psi \entails \psi \tau \equiv \upsilon$
-and $\restrict{psi}{\Gamma} \eqsubst \iota$. That is,
+and $\restrict{\psi}{\Gamma} \eqsubst \iota$. That is,
 $\leParam{\Gamma}{\sigma}{\sigma'}$
 if $\sigma$ is a more general type scheme than $\sigma'$.
 
