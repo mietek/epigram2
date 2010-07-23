@@ -272,8 +272,18 @@ Induction on indexed descriptions is then hardwired thus:
 }\]
 %
 The generic catamorphism, $\cataI$, is constructed from $\inductionI$
-as before.
-\note{do this later?}
+as before. Its type becomes more elaborated, to deal with the
+indexing:
+%
+\[
+\begin{array}{@{}l@{}l}
+\cataI :& \PITEL{\V{I}}{\Set}
+          \PITEL{\V{R}}{\V{I} \To \IDesc{\V{I}}} \\
+        & \PI{\V{T}}{\V{I} \To \Set}
+          (\PI{\V{i}}{\V{I}}{\idescop{\V{R}\: \V{i}}{}{\V{T}} \To \V{T}\: \V{i}}) \To
+          \SYMBIMu_{\V{I}}{\V{R}} \DotTo \V{T}
+\end{array}
+\]
 
 
 \begin{figure*}
