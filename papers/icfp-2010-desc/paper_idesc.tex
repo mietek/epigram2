@@ -262,8 +262,7 @@ Induction on indexed descriptions is then hardwired thus:
                    \PI{\V{x}}{\IMu{\V{I}}{\V{R}}{\V{i}}}
                    \V{P}\: \pair{\V{i}}{\V{x}}{}
 \end{array} \\
-\inductionI\: \V{R}\: \V{P}\: \V{m}\: \V{i}\: (\Con{\V{xs}}) \mapsto  \\
-\qquad
+\inductionI\: \V{R}\: \V{P}\: \V{m}\: \V{i}\: (\Con{\V{xs}}) \mapsto 
     \V{m}\: \V{i}\: \V{xs}\: (\allI{}
                                     {\V{R}\: \V{i}}
                                     {(\SYMBIMu_{\V{I}}{\V{R}})}
@@ -680,8 +679,8 @@ constructor $\SYMBListCons$.
 We use the notation $\toIDesc{\V{D}}$ to denote the indexed
 description computed from the tagged indexed description $\V{D}$. Its
 expansion is similar to the definition of \(\SYMBtoDesc\) for tagged
-descriptions. For brevity, we shall also overload $\IMu{I}{D}$ for
-$\IMu{I}{(\toIDesc{D})}$, as the bidirectional presentation let us
+descriptions. For brevity, we shall also overload $\IMu{\V{I}}{\V{D}}$ for
+$\IMu{\V{I}}{(\toIDesc{\V{D}})}$, as the bidirectional presentation let us
 resolve the ambiguity.
  
 \paragraph{Typed expressions:}
@@ -897,13 +896,12 @@ build and manipulate \emph{open} terms, that is, terms in a
 context. The context is represented by a snoc-list of types:
 %
 \[
-\stk{
-\data \Ctxt : \Set \where \\
-\;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
-    \SYMBCtxtEmpty  & \Ctxt   \\
-    \SYMBCtxtSnoc   & \Ctxt \To \Ty \To \Ctxt
+\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
+\Ctxt           & \Set \\
+\SYMBCtxtEmpty  & \Ctxt \\
+\SYMBCtxtSnoc   & \Ctxt \To \Ty \To \Ctxt
 \end{array}
-}\]
+\]
 %
 An environment realises the context, associating a value for each type:
 %
@@ -911,8 +909,8 @@ An environment realises the context, associating a value for each type:
 \stk{
 \SYMBEnv : \Ctxt \To \Set \\
 \begin{array}{@{}l@{\:\:\mapsto\:\:}l}
-\Env{\CtxtEmpty}        & \Unit \\
-\Env{(\CtxtSnoc{G}{S})} & \TIMES{\Env{G}}{\Val{S}}
+\Env{\CtxtEmpty}                & \Unit \\
+\Env{(\CtxtSnoc{\V{G}}{\V{S}})} & \TIMES{\Env{\V{G}}}{\Val{\V{S}}}
 \end{array}
 }\]
 %
@@ -921,8 +919,10 @@ In this setting, we define $\SYMBVar$ by:
 \[\stk{
 \Var{}{} : \Ctxt \To \Ty \To \Set \\
 \begin{array}{@{}ll@{\:\:\mapsto\:\:}l}
-\Var{\CtxtEmpty}{& T}            & \Void \\
-\Var{(\CtxtSnoc{G}{S})}{& T}     & \SUM{(\Var{G}{T})}{(S \PropEq T)}
+\Var{\CtxtEmpty}{& \V{T}}                & 
+    \Void \\
+\Var{(\CtxtSnoc{\V{G}}{\V{S}})}{& \V{T}} & 
+    \SUM{(\Var{\V{G}}{\V{T}})}{(\V{S} \PropEq \V{T})}
 \end{array}
 }\]
 %
@@ -937,10 +937,10 @@ semantics:
           \PI{\V{T}}{\Ty} 
           \Var{\V{G}}{\V{T}} \To
           \Val{\V{T}} \\
-\begin{array}{@{}lll}
-\lookup{\CtxtEmpty}{               \_}{                   \V{T}}{()}                    &   & \\
-\lookup{(\CtxtSnoc{\V{G}}{.T})}{   \pair{\V{g}}{\V{t}}{}}{\V{T}}{(\SumRight{\C{refl}})} & \mapsto & \V{t} \\
-\lookup{(\CtxtSnoc{\V{G}}{\V{S}})}{\pair{\V{g}}{\V{t}}{}}{\V{T}}{(\SumLeft{\V{x}})}     & \mapsto & \lookup{\V{G}}{\V{g}}{\V{T}}{\V{x}} 
+\begin{array}{@{}l@{}l@{}l@{}l@{}lll}
+%% \lookup{& \CtxtEmpty}{& \_}{& \V{T}}{& ()}                    &   & \\
+\lookup{& (\CtxtSnoc{\V{G}}{.T})}{& \pair{\V{g}}{\V{t}}{}}{& \V{T}}{& (\SumRight{\C{refl}})} & \mapsto & \V{t} \\
+\lookup{& (\CtxtSnoc{\V{G}}{\V{S}})}{& \pair{\V{g}}{\V{t}}{}}{& \V{T}}{& (\SumLeft{\V{x}})} & \mapsto & \lookup{\V{G}}{\V{g}}{\V{T}}{\V{x}} 
 \end{array}
 }\]
 
@@ -979,7 +979,7 @@ following function:
 \[\stk{
 \begin{array}{@{}ll}
 \discharge : & \PI{\V{G}}{\Ctxt}
-               \Env{G} \To 
+               \Env{\V{G}} \To 
               (\SUM{\Val{\V{}}}{\Var{\V{G}}{}}) \DotTo
                \IMu{\Ty}{\HExprD}{}
 \end{array} \\
@@ -1242,8 +1242,15 @@ Then, we get $\IDesc$ by building its free monad:
 The fact that indexed descriptions are closed under substitution
 is potentially of considerable utility, if we can exploit this fact:
 \[
-\idescop{\sigma D}{J}{X} \mapsto \idescop{D}{I}{\LAM{i}\idescop{\sigma i}{J}{X}}
-\quad \mbox{where}\;\sigma:I\To\IDesc{J}
+\idescop{\V{\sigma} \V{D}}{\V{J}}{\V{X}} 
+    \mapsto 
+        \idescop{\V{D}}
+                {\V{I}}
+                {\LAM{\V{i}}
+                     {\idescop{\V{\sigma} \V{i}}
+                              {\V{J}}
+                              {\V{X}}}}
+        \quad \mbox{where}\;\V{\sigma}:\V{I}\To\IDesc{\V{J}}
 \]
 By observing that a description can be decomposed via substitution, we
 split its meaning into a superstructure of substructures, e.g. a
