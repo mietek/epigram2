@@ -80,12 +80,12 @@ With dependent types, the notion of sum-of-products translates into
 
 While sigmas-of-sigmas can give a \emph{semantics} for the
 sum-of-products structure in each node of the tree-like values in a
-datatype, we need to account somehow for the recursive structure which
-ties these nodes together. Not for the first time, we do this by
+datatype, we need to account for the recursive structure which
+ties these nodes together. As ever, we do this by
 constructing a \emph{universe}~\cite{martin-lof:itt}. Universes
 are ubiquitous in dependently typed
 programming~\cite{benke:universe-generic-prog, oury:power-of-pi},
-but here we seek to exploit them as the foundation of our notion
+but here we take them as the foundation of our notion
 of datatypes.
 
 %The key idea behind universe construction is our ability to make names
@@ -120,12 +120,12 @@ informal notation, to give a flavor of the stratified
 presentation. Note that the functors so described are \emph{strictly
   positive}, by construction.
 
-Descriptions are sequential structures, terminated by $\DUnit$,
-indicating the empty tuple. To build sigmas-of-sigmas, we define a
+Descriptions are sequential structures ending in $\DUnit$,
+indicating the empty tuple. To build sigmas-of-sigmas, we provide a
 $\SYMBDSigma$ code, interpreted as a $\Sigma$-type. To request a
 recursive component, we have $\DIndx{\V{D}}$, where \(\V{D}\)
-describes the rest of the node. These codes directly captures the
-notion of sigmas-of-sigmas. An equivalent, more algebraic presentation
+describes the rest of the node. These codes give us
+sigmas-of-sigmas with recursive places. An equivalent, more algebraic presentation
 could be given, as illustrated in Section~\ref{sec:indexing-desc}.
 
 \begin{figure}
@@ -155,13 +155,12 @@ could be given, as illustrated in Section~\ref{sec:indexing-desc}.
  
 \end{figure}
 
-You may have noticed that we are a little coy about this presentation,
+We admit to being a little coy,
 writing of `implementing a signature' without clarifying how. A viable
 approach would simply be to extend the theory with constants for the
-constructors and an operator for \(\descop{\V{D}}\). However, in
-Section~\ref{sec:desc-levitate}, you will see what we actually do.  In
-the meantime, let us first gain some intuition for its use by
-developing some examples.
+constructors and an operator for \(\descop{\V{D}}\). In
+Section~\ref{sec:desc-levitate}, you will see what we do instead.
+Meanwhile, let us gain some intuition by developing examples.
 
 \subsection{Examples}
 \label{sec:desc-examples}
@@ -208,8 +207,8 @@ Correspondingly, we can see the injections to the sum:
     -> ListD X Z = 1 + X * Z
 \end{wstructure}
 
-With a small change to this definition, we obtain the pattern functor
-for lists:
+The pattern functor
+for lists needs but a small change:
 %
 \[\stk{
 \ListD : \Set^n \To \Desc^n \\
@@ -218,8 +217,8 @@ for lists:
          {\sqr{ \DUnit \quad (\DSigma{\V{X}}{\LAM{\_} \DIndx{\DUnit}}) }}
 }\]
 %
-The $\SYMBNatSuc$ constructor is turned into a proper
-$\SYMBListCons$, taking an argument in $\V{X}$ followed by a
+The $\SYMBNatSuc$ constructor becomes
+$\SYMBListCons$, taking an $\V{X}$ followed by a
 recursive argument. This code describes the following functor:
 %
 \[    \ListD\: \V{X}\: \V{Z} \mapsto \Unit \mathop{\D{+}} \V{X} \D{\ensuremath{\times}} \V{Z}     \]
@@ -232,8 +231,8 @@ recursive argument. This code describes the following functor:
     -> TreeD X Z = 1 + X * Z * Z
 \end{wstructure}
 
-Finally, we are not limited to one recursive argument. This is
-demonstrated by our description of node-labelled binary trees:
+Of course, we are not limited to one recursive argument. Here are
+the node-labelled binary trees:
 %
 \[\stk{
 \TreeD : \Set^n \To \Desc^n \\
@@ -267,9 +266,9 @@ interpretation of this code corresponds to the following functor:
 From the examples above, we observe that datatypes are defined by a
 $\SYMBDSigma$ whose first argument enumerates the constructors. We
 call codes fitting this pattern \emph{tagged} descriptions. Again,
-this is a clear reminder of the sum-of-products style. Every
+this is a clear reminder of the sum-of-products style. Any
 description can be forced into this style with a singleton constructor
-if necessary. We characterise tagged descriptions thus:
+set. We characterise tagged descriptions thus:
 \[\stk{
  \TagDesc^n : \Set^{n+1} \\
  \TagDesc^n \mapsto \SIGMA{\V{E}}{\EnumU} (\spi{\V{E}}{\LAM{\_} \Desc^n})
@@ -279,9 +278,8 @@ if necessary. We characterise tagged descriptions thus:
 \spl{\LAM{\V{E}}\LAM{\V{D}}
 \DSigma{\EnumT{\V{E}}}{(\F{switch}\:\V{E}\:(\LAM{\_}\Desc^n)\:\V{D})}}
 }\]
-It is not a great stretch to imagine that the traditional datatype
-declaration syntax might desugar to the \emph{definition} of a datatype
-via a tagged description.
+It is not such a stretch to expect that the familiar datatype
+declaration might desugar to the \emph{definitions} of a tagged description.
 
 \begin{wstructure}
 <- Fictive object [figure 'data Desc']
@@ -301,6 +299,7 @@ via a tagged description.
             <- Interpret D with (Mu D) as sub-objects
 \end{wstructure}
 
+\newcommand{\mude}[1]{\D{\(\mu^{\!+}\)}\:#1}
 
 So far, we have built pattern functors with our \(\Desc\) universe.
 Being polynomial functors, they all admit a least fixpoint, which we
@@ -311,8 +310,12 @@ by the functor is now instantiated recursively:
 \Rule{\Gamma \vdash \Bhab{\M{D}}{\Desc^n}}
      {\Gamma \vdash \Bhab{\Mu{\M{D}}}{\Set^n}} \qquad
 \Rule{\Gamma \vdash \Bhab{\M{D}}{\Desc^n} \quad 
-      \Gamma \vdash \Bhab{\M{d}}{\descop{\M{D}}{\Mu{\M{D}}}}}
+      \Gamma \vdash \Bhab{\M{d}}{\descop{\M{D}}{(\Mu{\M{D}})}}}
      {\Gamma \vdash \Bhab{\Con{\M{d}}}{\Mu{\M{D}}}}
+\]
+Tagged descriptions are very common, so we abbreviate:
+\[
+  \mude{}:\TagDesc^n \To \Set^n \qquad \mude{\V{T}}\mapsto\Mu{(\toDesc{\V{T}})}
 \]
 
 \begin{wstructure}
@@ -329,8 +332,8 @@ by the functor is now instantiated recursively:
 
 We can now build datatypes and their elements, e.g.:
 \[\stk{
-\Nat \mapsto \Bhab{\Mu{(\toDesc{\pair{\sqr{\NatZero\: \SYMBNatSuc }}
-                               {\sqr{\DUnit \quad (\DIndx{\DUnit})}}{}})}}
+\Nat \mapsto \Bhab{\mude{\pair{\sqr{\NatZero\: \SYMBNatSuc }}
+                               {\sqr{\DUnit \quad (\DIndx{\DUnit})}}{}}}
                   {\Set^n}
 \\
 \Con{\sqr{\NatZero}}:\Nat \qquad
@@ -357,12 +360,12 @@ data. Following \citet{benke:universe-generic-prog}, we adopt the following:
 \[\stk{
 \F{ind} : \stk{ \PITEL{\V{D}}{\Desc^n}
                 \PI{\V{P}}{\Mu{\V{D}} \To \Set^k}         \\
-               (\PI{\V{d}}{\descop{\V{D}}{\Mu{\V{D}}}}       
-                \All{\V{D}}{\Mu{\V{D}}}{\V{P}}{\V{d}} \To \V{P} (\Con{\V{d}})) \To \\
+               (\PI{\V{d}}{\descop{\V{D}}{(\Mu{\V{D}})}}       
+                \All{\V{D}}{(\Mu{\V{D}})}{\V{P}}{\V{d}} \To \V{P} (\Con{\V{d}})) \To \\
                \PI{\V{x}}{\Mu{\V{D}}} \V{P} \V{x} 
 } \\
 \F{ind}\, \V{D}\, \V{P}\, \V{m}\, (\Con{\V{d}}) \mapsto 
-    \V{m}\, \V{d}\, (\all{\V{D}}{\Mu{\V{D}}}{\V{P}}
+    \V{m}\, \V{d}\, (\all{\V{D}}{(\Mu{\V{D}})}{\V{P}}
                            {(\F{ind}\, \V{D}\, \V{P}\, \V{m})}
                            {\V{d}})
 }\]
@@ -372,20 +375,20 @@ $\Bhab{\V{P}}{\V{X} \To \Set^k}$ holds for every subobject $\V{x}:\V{X}$
 in \(\V{D}\), and \(\all{\V{D}}{\V{X}}{\V{P}}{\V{p}}{\V{d}}\) is a
 `dependent map', applying some
 \(\Bhab{\V{p}}{\PIS{\Bhab{\x}{\V{X}}}\V{P}\,\V{x}}\) to each \(\x\)
-contained in \(\V{d}\). The full definition (including an extra case,
-introduced shortly) is presented in
+contained in \(\V{d}\). The definition (including an extra case,
+introduced soon) is in
 Figure~\ref{fig:all-predicates}.\footnote{To pass the termination
   checker, we had to inline the definition of $\SYMBall$ into
   $\SYMBind$ in our Agda model. A simulation argument shows that the
   definition presented here terminates if the inlined version
   does. Hence, although not directly structural, this definition is
-  indeed terminating.} Note that $\SYMBind$ is our first generic
-operation over descriptions, albeit a hardwired operator.  Any
-datatype we define automatically comes with an induction principle.
+  indeed terminating.} So, $\SYMBind$ is our first
+operation generic over descriptions, albeit hardwired.  Any
+datatype we define comes with induction.
 
-We note that the very same functors \(\SYMBdescop{\M{D}}\) also admit greatest
-fixpoints, and we have indeed implemented coinductive types this way, but
-that is a story for another time.
+Note that the very same functors \(\SYMBdescop{\M{D}}\) also admit greatest
+fixpoints: we have indeed implemented coinductive types this way, but
+that is another story.
 
 \begin{figure*}
 
@@ -462,9 +465,9 @@ that is a story for another time.
 \end{wstructure}
 
 
-We have now enough machinery to build and manipulate inductive
-types at a low level. Let us now apply cosmetic surgery
-to the syntactic overhead. We extend type checking of
+We now have low level machinery to build and manipulate inductive
+types. Let us apply cosmetic surgery
+to reduce the syntactic overhead. We extend type checking of
 expressions:
 %
 \[
@@ -472,7 +475,7 @@ expressions:
 \Gamma\Vdash  
 \propag{
   \push{\sqr{\vec{t}}}
-   {\descop{\M{D}\: n}{\Mu{(\DSigma{\EnumT{\M{E}}}{\M{D}})}}}}
+   {\descop{\M{D}\: n}{(\Mu{(\DSigma{\EnumT{\M{E}}}{\M{D}})})}}}
         {\M{t'}}}
      {\Gamma\Vdash\propag{\push{\etag{c}\: \vec{\M{t}}}
                    {\Mu{(\DSigma{\EnumT{\M{E}}}{\M{D}})}}}
@@ -493,8 +496,8 @@ have done with functions from pairs and enumerations.
 \[
 \Rule{\Gamma\Vdash\stk{
 \propag{\push{\M{f}}
-             {\PI{\V{d}}{\descop{\M{D}}{\Mu{\M{D}}}}       
-                \All{\M{D}}{\Mu{\M{D}}}{(\PLAM{\x}{\Mu{\M{D}}}\M{P})}{\V{d}} \To \M{P}[\Con{\V{d}}/\x]\\}}
+             {\PI{\V{d}}{\descop{\M{D}}{(\Mu{\M{D}})}}       
+                \All{\M{D}}{(\Mu{\M{D}})}{(\PLAM{\x}{\Mu{\M{D}}}\M{P})}{\V{d}} \To \M{P}[\Con{\V{d}}/\x]\\}}
        {\M{f'}}}}
 {\Gamma\Vdash
 \propag{\push{\sind{\M{f}}}
