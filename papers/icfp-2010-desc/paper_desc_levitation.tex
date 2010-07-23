@@ -389,15 +389,13 @@ datatypes. \emph{Generic programming is just
 \end{wstructure}
 
 In Section~\ref{sec:desc-fix-point}, we hardwired a dependent
-$\F{ind}$unction principle, instead of the catamorphism. However, in
-some circumstances, the full power of a dependent elimination is not
-necessary. Let us now derive the catamorphism
-from $\F{ind}$ principle.
+$\F{ind}$uction principle, but sometimes,
+iteration suffices. Let us construct the catamorphism.
 
 \newcommand{\cata}{\F{cata}}
 
-The catamorphism is defined by induction on the description $\V{D}$,
-with a readily propagated non-dependent return type $\V{T}$.
+We proceed by induction on the \emph{data} in \(\Mu{\V{D}}\):
+the non-dependent return type $\V{T}$ is readily propagated.
 Given a node $\V{xs}$
 and the induction hypotheses, the method ought to build an element of
 $\V{T}$. Provided that we know how to make an element of
@@ -413,18 +411,17 @@ $\V{f}$. Let us take a look at this jigsaw:
   \sind \LAM{\V{xs}}\LAM{\V{hs}} \V{f}\: \SHED
 }\]
 % 
-We are left with filling the hole. Recall that we have
+The hole remains: we have
 \(\Bhab{\V{xs}}{\descop{\V{D}}{\Mu{\V{D}}}}\) and
 \(\Bhab{\V{hs}}{\All{\V{D}}{\Mu{\V{D}}}{(\LAM{\_} \V{T})}{\V{xs}}}\)
-at hand. Our goal is to make an element of
-\(\descop{\V{D}}{\V{T}}\). $\V{xs}$ is of the right shape, but its
-sub-elements are of the wrong type. On the other hand, for each
-sub-element of $\V{xs}$, $\V{hs}$ gives us the corresponding element
-in $\V{T}$.  Therefore, to construct an element of
-\(\descop{\V{D}}{\V{T}}\), we must replace the recursive components of
-\(\V{xs}\) by their counterparts from \(\V{hs}\). Let us write a
-program to do that---please forgive us if we lapse to a pattern
-matching notation, for readability's sake.
+to hand, and we need a \(\descop{\V{D}}{\V{T}}\).
+Now, $\V{xs}$ has the right shape, but its
+components have the wrong type. However, for each such
+component, $\V{hs}$ holds the corresponding value
+in $\V{T}$.  We need a function to \(\F{replace}\) the former with the latter:
+this pattern
+matching sketch yields an induction on \(\V{D}\). We fill the hole
+with \(\F{replace}\: \V{D}\:(\Mu{\V{D}})\: \V{T}\: \V{xs}\: \V{hs}\).
 %
 \[\stk{
 \F{replace} : \stk{\PITEL{\V{D}}{\Desc}
@@ -432,22 +429,18 @@ matching notation, for readability's sake.
                    \PI{\V{xs}}{\descop{\V{D}}{\V{X}}} 
                    \All{\V{D}}{\V{X}}{(\LAM{\_}\V{Y})}{\V{xs}} \To
                    \descop{\V{D}}{\V{Y}}} \\
-\begin{array}{@{}l@{\:\:\mapsto\:\:}l}
-\F{replace}\: \DUnit\:          \V{X}\: \V{Y}\: \Void\:          \Void   &
+\begin{array}{@{}l@{\:}l@{\:}l@{\:\:\mapsto\:\:}l}
+\F{replace}\: \DUnit &          \V{X}\: \V{Y}\: \Void&          \Void   &
     \Void  \\
-\F{replace}\: (\DSigma{\V{S}}{\V{D}})\: \V{X}\: \V{Y}\: \pair{\V{s}}{\V{d}}{}\: \V{d'}  &
+\F{replace}\: (\DSigma{\V{S}}{\V{D}})& \V{X}\: \V{Y}\: \pair{\V{s}}{\V{d}}{}& \V{d'}  &
     \pair{\V{s}}{\F{replace}\: (\V{D}\: \V{s})\: \V{X}\: \V{Y}\: \V{d}\: \V{d'}}{} \\
-\F{replace}\: (\DIndx{\V{D}})\:     \V{X}\: \V{Y}\: \pair{\V{x}}{\V{d}}{}\: \pair{\V{y}}{\V{d'}}{} &
+\F{replace}\: (\DIndx{\V{D}})&     \V{X}\: \V{Y}\: \pair{\V{x}}{\V{d}}{}& \pair{\V{y}}{\V{d'}}{} &
     \pair{\V{y}}{\F{replace}\: \V{D}\: \V{X}\: \V{Y}\: \V{d}\: \V{d'}}{} \\
-\F{replace}\: (\DHindx{\V{H}}{\V{D}})\: \V{X}\: \V{Y}\: \pair{\V{f}}{\V{d}}{}\: \pair{\V{g}}{\V{d'}}{} &
+\F{replace}\: (\DHindx{\V{H}}{\V{D}})& \V{X}\: \V{Y}\: \pair{\V{f}}{\V{d}}{}& \pair{\V{g}}{\V{d'}}{} &
  \pair{\V{g}}{\F{replace}\: \V{D}\: \V{X}\: \V{Y}\: \V{d}\: \V{d'}}{}
 \end{array}
 }\]
 %
-Filling the hole in $\F{cata}$ with \(\F{replace}\: \V{D}\:
-\Mu{\V{D}}\: \V{T}\: \V{xs}\: \V{hs}\) closes the problem. In the
-type theory, we have built a generic catamorphism. Any datatype will
-now come equipped with this operation, for free.
 
 %% The astute reader will have been struck by the type of $\F{replace}$:
 %% it is \emph{almost} the morphism part -- sometimes called \emph{map}
@@ -470,13 +463,13 @@ now come equipped with this operation, for free.
             -> Build new objects based on that structure
 \end{wstructure}
 
-With this example, we have shown how we can derive a generic
-operation, the catamorphism, from a pre-existing generic operation,
-the induction principle. This has been made possible by our ability to
-manipulate descriptions as first-class objects: the catamorphism is,
-basically, a function mapping a $\Desc$ to a datatype specific
-operation. This is a form of polytypic programming, as we learned from
-PolyP~\cite{jansson:polyp}.
+We have shown how to derive a generic
+operation, \(\cata\), from a pre-existing generic operation,
+\(\F{ind}\), by
+manipulating descriptions as data: the catamorphism is just a
+function taking each $\Desc$ value to a datatype specific
+operation. This is polytypic programming, as in
+PolyP~\cite{jansson:polyp}, made ordinary.
 
 %% Moreover, the $\F{replace}$ function demonstrates the benefit of an
 %% approach based on universes. The datatypes living in the universe of
