@@ -733,6 +733,10 @@ consider two types, natural numbers and booleans:
 \Ty \mapsto \EnumT{\sqr{\Enat\: \Ebool}}
 \]
 
+\newcommand{\plusHost}{\mathop{\green{+_{\mathrm{H}}}}}
+\newcommand{\leHost}{\mathop{\green{\leq_{\mathrm{H}}}}}
+
+
 An expression of this language is either a value, a conditional
 expression, an addition of numbers, or a comparison of
 numbers. Informally, their type is the following:
@@ -751,8 +755,8 @@ maps a type $ty$ of the object language to the corresponding type in
 the host language. Hence, the arguments of $\SYMBEval$ are ensured to
 be of the expected type. We assume that $\Nat$ and $\Bool$ represent
 natural numbers and booleans in the host language, equipped with an
-addition operation $\F{plusHost}$ and a comparison function
-$\F{leHost}$. We define $\SYMBVal$ as follows:
+addition operation $\plusHost$ and a comparison function
+$\leHost$. We define $\SYMBVal$ as follows:
 %
 \[\stk{
 \SYMBVal : \Ty \To \Set \\
@@ -850,8 +854,8 @@ evaluator. The implementation is as follows:
 \evalOne\: & \_\: & \pair{\SYMBEval}{\V{x}}{}                                             & \V{x} \\
 \evalOne\: & \_\: & \pair{\SYMBEcond}{\pair{\BoolTrue}{\pair{\V{x}}{\_}{}}{}}{}   & \V{x} \\
 \evalOne\: & \_\: & \pair{\SYMBEcond}{\pair{\BoolFalse}{\pair{\_}{\V{y}}{}}{}}{}  & \V{y} \\
-\evalOne\: & \Enat\: & \pair{\SYMBEplus}{\pair{\V{x}}{\V{y}}{}}{}                     & \F{plusHost}\: \V{x}\: \V{y} \\
-\evalOne\: & \Ebool\: & \pair{\SYMBEle}{\pair{\V{x}}{\V{y}}{}}{}                      & \F{leHost}\: \V{x}\: \V{y} 
+\evalOne\: & \Enat\: & \pair{\SYMBEplus}{\pair{\V{x}}{\V{y}}{}}{}                     & \V{x} \plusHost \V{y} \\
+\evalOne\: & \Ebool\: & \pair{\SYMBEle}{\pair{\V{x}}{\V{y}}{}}{}                      & \V{x} \leHost \V{y} 
 \end{array} \\
 \\
 \evalH : \PI{\V{ty}}{\Ty} 
