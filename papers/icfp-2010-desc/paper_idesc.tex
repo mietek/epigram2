@@ -648,6 +648,8 @@ can be trusted, all constraints are dropped.
 
 \paragraph{Tagged indexed descriptions:}
 
+\newcommand{\muide}[2]{\D{\({\mu}^{\!+}\)}\!\!_{#1}\:#2}
+
 Let us reflect this index analysis technique.
 We can divide a description of tagged indexed data in two: first, the
 constructors that do not depend on the index; then, the constructors
@@ -676,12 +678,12 @@ $\NatZero$, we would only propose the constructor
 $\ListNil$. Similarly, for $\NatSuc{n}$, we would only propose the
 constructor $\SYMBListCons$.
 
-We use the notation $\toIDesc{\V{D}}$ to denote the indexed
-description computed from the tagged indexed description $\V{D}$. Its
-expansion is similar to the definition of \(\SYMBtoDesc\) for tagged
-descriptions. For brevity, we shall also overload $\IMu{\V{I}}{\V{D}}$ for
-$\IMu{\V{I}}{(\toIDesc{\V{D}})}$, as the bidirectional presentation let us
-resolve the ambiguity.
+We write $\toIDesc{\V{D}}\:\V{i}$ to denote the $\IDesc{\V{I}}$
+computed from the tagged indexed description $\V{D}$ at index
+$\V{i}$. Its expansion is similar to the definition of \(\SYMBtoDesc\)
+for tagged descriptions, except that it must also append the two parts.
+We again write $\muide{\V{I}}{\V{D}}$ for
+$\IMu{\V{I}}{(\toIDesc{\V{D}})}$.
  
 \paragraph{Typed expressions:}
 
@@ -719,15 +721,15 @@ resolve the ambiguity.
 \newcommand{\Var}[2]{\SYMBVar\: #1\: #2}
 
 %% Hutton expressions
-\newcommand{\HExprD}{\C{ExprD}}
-\newcommand{\HExprAD}{\C{ExprAD}}
-\newcommand{\HExprID}{\C{ExprID}}
+\newcommand{\HExprD}{\F{ExprD}}
+\newcommand{\HExprAD}{\F{ExprAD}}
+\newcommand{\HExprID}{\F{ExprID}}
 \newcommand{\HExprVarD}[1]{\C{ExprD}_{\F{Var},#1}}
 \newcommand{\HExprFreeD}{\C{ExprD}^{\C{Free}}}
 \newcommand{\HExprAFreeD}{\C{ExprAD}^{\C{Free}}}
 
-We are going to define a syntax for a small typed language. We
-consider two types, natural numbers and booleans:
+We are going to define a syntax for a small language with
+two types, natural numbers and booleans:
 %
 \[
 \Ty \mapsto \EnumT{\sqr{\Enat\: \Ebool}}
@@ -737,27 +739,24 @@ consider two types, natural numbers and booleans:
 \newcommand{\leHost}{\mathop{\green{\leq_{\mathrm{H}}}}}
 
 
-An expression of this language is either a value, a conditional
-expression, an addition of numbers, or a comparison of
-numbers. Informally, their type is the following:
+This language has values, conditional
+expression, addition and comparison. Informally, their types are:
 %
 \[
 \begin{array}{l@{\::\:\:}l}
-\SYMBEcond           & \forall \Bhab{\V{ty}}{\Ty} . \Ebool \To \V{ty} \To \V{ty} \To \V{ty}  \\ 
+\SYMBEval            & \Val{\V{ty}} \To \V{ty} \\
+\SYMBEcond           & \Ebool \To \V{ty} \To \V{ty} \To \V{ty}  \\ 
+\end{array}
+\qquad
+\begin{array}{l@{\::\:\:}l}
 \SYMBEplus           & \Enat \To \Enat \To \Enat                           \\
 \SYMBEle             & \Enat \To \Enat \To \Ebool                          \\
-\SYMBEval            & \forall \Bhab{\V{ty}}{\Ty} . \Val{\V{ty}} \To \V{ty}
 \end{array}
 \]
 %
-The function $\SYMBVal$, used in the definition of $\SYMBEval$, simply
-maps a type $ty$ of the object language to the corresponding type in
-the host language. Hence, the arguments of $\SYMBEval$ are ensured to
-be of the expected type. We assume that $\Nat$ and $\Bool$ represent
-natural numbers and booleans in the host language, equipped with an
-addition operation $\plusHost$ and a comparison function
-$\leHost$. We define $\SYMBVal$ as follows:
-%
+The function $\SYMBVal$ interprets object language types in the
+host language, so that arguments to $\SYMBEval$ fit their
+expected type.
 \[\stk{
 \SYMBVal : \Ty \To \Set \\
 \begin{array}{@{}l@{\:\mapsto\:\:}l}
@@ -765,59 +764,56 @@ $\leHost$. We define $\SYMBVal$ as follows:
 \Val{\Ebool}  & \Bool
 \end{array}
 }\]
+We take $\Nat$ and $\Bool$ to represent
+natural numbers and Booleans in the host language, equipped with
+addition $\plusHost$ and comparison $\leHost$.
 
-In our universe of descriptions, the syntax of this language is
-described by a tagged indexed description. We use the index to carry
-the type: the resulting description is indexed by $\Ty$. We observe
-that some constructors are always defined, namely $\SYMBEcond$ and
-$\SYMBEval$. On the other hand, the $\SYMBEplus$ and $\SYMBEle$
-constructors are index-dependent. $\SYMBEplus$ is defined if and only
-if the result type -- the index -- is $\Enat$, whereas $\SYMBEle$ is
-defined if and only if the index is $\Ebool$. The actual code
-precisely follows this intuition, as shown in
-Figure~\ref{fig:hexpr-full}. The first element of $\HExprID$
-corresponds to this choice of constructor: the sublists corresponds to
-the constructors enabled by the corresponding type in $\Ty$.
-
-\begin{figure}
-
+We express our syntax as a tagged indexed description, indexing
+over obhect language types $\Ty$. We note
+that some constructors are always available, namely $\SYMBEval$ and
+$\SYMBEcond$. On the other hand, $\SYMBEplus$ and $\SYMBEle$
+constructors are index-dependent, with $\SYMBEplus$ available just when
+building a $\Enat$, $\SYMBEle$ just for $\Ebool$. The code,
+%%%in Figure~\ref{fig:hexpr-full},
+below,
+reflects this intuition, with the first
+component uniformly offering $\SYMBEval$ and $\SYMBEcond$, the second
+selectively offering $\SYMBEplus$ or $\SYMBEle$.
+%
+%%% \begin{figure}
+%
 \[\stk{
 \stk{
 \HExprD : \TagIDesc{\Ty} \\
-\HExprD \mapsto ( \HExprAD , \HExprID ) \\
-} \\
-\\
+\HExprD \mapsto \sqr{ \HExprAD , \HExprID } \\
+} \smallskip\\
 \stk{
 \HExprAD : \ATagIDesc{\Ty} \\
 \HExprAD \mapsto \vtup{l}{
-                   {\sqr{\SYMBEval\: \SYMBEcond \,}} \red{,} \\
-                   \LAM{\V{ty}}
-                   \bigRedBracket{
-                   \begin{array}{l}
-                   \DConst{(\Val{\V{ty}})} \\
-                   \DProd{\DVar{\Ebool}}{\DProd{\DVar{\V{ty}}}{\DVar{\V{ty}}}}
-                   \end{array}
-                   }
-                 }
-\\
-\\
+   {\vtup{r}{\SYMBEval\\ \SYMBEcond \,}} \red{,} \;
+      \LAM{\V{ty}}
+      \vtup{l@{\:}l}{
+      \DProd{\DConst{(\Val{\V{ty}})}&}{\DConst{\Unit}} \\
+      \DProd{\DProd{\DVar{\Ebool}}{\DProd{\DVar{\V{ty}}}{\DVar{\V{ty}}}}&}
+        {\DConst{\Unit}} \\
+     }
+   }
+\smallskip\\
 } 
 \\
 \stk{
 \HExprID : \ITagIDesc{\Ty} \\
-\HExprID \mapsto \bigRedBracket{
-                 \begin{array}{l}
-                   \sqr{\sqr{\SYMBEplus} \quad \sqr{\SYMBEle}} \red{,} \\
-                   \LAM{\_} \DProd{\DVar{\Enat}}{\DVar{\Enat}} 
-                   \end{array}
+\HExprID \mapsto \vtup{l}{
+                   \vtup{r}{\sqr{\SYMBEplus} \\ \sqr{\SYMBEle}} \red{,} \;
+  \LAM{\_} \sqr{\DProd{\DProd{\DVar{\Enat}}{\DVar{\Enat}}}{\DConst{\Unit}}}
                    }
 }
 }\]
 
-\caption{Syntax of typed expressions}
-\label{fig:hexpr-full}
+%%%\caption{Syntax of typed expressions}
+%%%\label{fig:hexpr-full}
 
-\end{figure}
+%%%\end{figure}
 
 \begin{wstructure}
     -> evaluation: IMu TermD -> Val
@@ -832,32 +828,10 @@ the constructors enabled by the corresponding type in $\Ty$.
 \newcommand{\evalH}{\F{eval}_{\green{\Downarrow}}}
 \newcommand{\evalOne}{\F{eval}_{\green{\downarrow}}}
 
-Having implemented the syntax, we would like to describe its
-semantics. To do so, we implement an evaluator. The type of the
-evaluator is:
-%
-\[
-\evalH : \PI{\V{ty}}{\Ty} 
-         \IMu{\Ty}{\HExprD}{\V{ty}} \To
-         \Val{\V{ty}}
-\]
-%
-The type of $\evalH$ is strikingly similar to a
-catamorphism. Indeed, implementing a single step of evaluation -- the
-algebra -- is sufficient, as $\cataI$ gives, for free, the full
-evaluator. The implementation is as follows:
+Given the syntax, let us supply the
+semantics. We implement an evaluator as a catamorphism:
 %
 \[\stk{
-\evalOne : \PI{\V{ty}}{\Ty} \idescop{(\toIDesc{\HExprD})\:\V{ty}}{\Ty}{\SYMBVal}
-           \To {\Val{\V{ty}}} \\
-\begin{array}{@{}l@{}c@{}l@{\:\mapsto\:\:}l}
-\evalOne\: & \_\: & \pair{\SYMBEval}{\V{x}}{}                                             & \V{x} \\
-\evalOne\: & \_\: & \pair{\SYMBEcond}{\pair{\BoolTrue}{\pair{\V{x}}{\_}{}}{}}{}   & \V{x} \\
-\evalOne\: & \_\: & \pair{\SYMBEcond}{\pair{\BoolFalse}{\pair{\_}{\V{y}}{}}{}}{}  & \V{y} \\
-\evalOne\: & \Enat\: & \pair{\SYMBEplus}{\pair{\V{x}}{\V{y}}{}}{}                     & \V{x} \plusHost \V{y} \\
-\evalOne\: & \Ebool\: & \pair{\SYMBEle}{\pair{\V{x}}{\V{y}}{}}{}                      & \V{x} \leHost \V{y} 
-\end{array} \\
-\\
 \evalH : \PI{\V{ty}}{\Ty} 
            \IMu{\Ty}{\HExprD}{\V{ty}} \To
            \Val{\V{ty}} \\
@@ -867,6 +841,22 @@ evaluator. The implementation is as follows:
                                  \evalOne\: 
                                  \V{ty}\: 
                                  \V{term}
+}\]
+%
+To finish the job, we must supply the algebra which implements a single
+step of evaluation, given subexpressions evaluated already.
+%
+\[\stk{
+\evalOne : \PI{\V{ty}}{\Ty}
+ \idescop{(\toIDesc{\HExprD})\:\V{ty}}{\Ty}{\SYMBVal}
+           \To {\Val{\V{ty}}} \\
+\begin{array}{@{}l@{}c@{}l@{\:\mapsto\:\:}l}
+\evalOne\: & \_\: & (\SYMBEval\;\V{x})                                            & \V{x} \\
+\evalOne\: & \_\: & (\SYMBEcond\:\BoolTrue\:\V{x}\:\_)   & \V{x} \\
+\evalOne\: & \_\: & (\SYMBEcond\:\BoolFalse\:\_\:\V{y})  & \V{y} \\
+\evalOne\: & \Enat\: & (\SYMBEplus\:\V{x}\:\V{y})   & \V{x} \plusHost \V{y} \\
+\evalOne\: & \Ebool\: & (\SYMBEle\:\V{x}\:\V{y})  & \V{x} \leHost \V{y} 
+\end{array}
 }\]
 
 \begin{wstructure}
@@ -878,11 +868,10 @@ evaluator. The implementation is as follows:
                 <- By construction
 \end{wstructure}
 
-Hence, we have defined the syntax of a typed language of arithmetic
-and boolean expressions. We have given its semantics through an
-evaluation function. Provided a one step semantics of the language, the
-big step interpreter is granted without effort thanks to the generic
-catamorphism.
+Hence, we have a type-safe syntax and a tagless interpreter for our
+language, in the spirit
+of~\citet{augustsson.carlsson:dependent.interpreter}, with
+help from the generic catamorphism.
 
 \newcommand{\Ctxt}{\D{Context}}
 \newcommand{\SYMBCtxtEmpty}{\C{[]}\xspace}
