@@ -488,9 +488,10 @@ PolyP~\cite{jansson:polyp}, made ordinary.
         -> Extract it
 \end{wstructure}
 
-In this section, we try a more ambitious generic operation. Given a functor,
-represented as a tagged description, we
-build its free monad.
+In this section, we try a more ambitious generic operation. Given a
+functor---a signature of operations represented as a tagged
+description---we build its free monad, extending the signature with
+variables and substitution.
 %
 \newcommand{\FMFreeMonad}{\D{FreeMonad}}
 \newcommand{\FMFreeMonadD}{\D{FreeMonadD}}
@@ -498,13 +499,12 @@ build its free monad.
 \newcommand{\FMComposite}{\C{Composite}}
 %
 Let us recall this construction in, say, Haskell. Given a
-functor \texttt{f}, the free monad over \texttt{f} is given:
+functor \texttt{f}, the free monad over \texttt{f} is given
+thus:
 %
-\begin{code}
-data FreeMonad f x
-    = Var x
-    | Composite (f (FreeMonad f x))
-\end{code}
+\[
+\texttt{data FreeMonad f x = Var x | Op (f (FreeMonad f x))}
+\]
 %
 Provided \texttt{f} is an instance of \texttt{Functor}, we may
 take \texttt{Var} for \texttt{return} and use \texttt{f}'s
@@ -526,7 +526,7 @@ by a pattern functor:
         -> Mu does the fixpoint
 \end{wstructure}
 
-Our free monad construction takes the functor as a
+Our construction takes the functor as a
 tagged description, and given a set $\V{X}$ of variables, computes the
 tagged description of the free monad pattern functor.
 %
@@ -564,13 +564,13 @@ and start filling in the blanks:
 \begin{array}{@{}ll}
 \subst : & \PITEL{\V{D}}{\TagDesc}
            \PI{\V{X}, \V{Y}}{\Set} 
-           (\V{X} \To \Mu{(\toDesc{(\FreeMonad{\V{D}}{\V{Y}})})}) \To \\
-         & \Mu{(\toDesc{(\FreeMonad{\V{D}}{\V{X}})})} \To
-           \Mu{(\toDesc{(\FreeMonad{\V{D}}{\V{Y}})})} 
+           (\V{X} \To \mude{(\FreeMonad{\V{D}}{\V{Y}})}) \To \\
+         & \mude{(\FreeMonad{\V{D}}{\V{X}})} \To
+           \mude{(\FreeMonad{\V{D}}{\V{Y}})} 
 \end{array} \\
 \subst\: \V{D}\: \V{X}\: \V{Y}\: \V{\sigma} \mapsto
   \cata\: (\toDesc{(\FreeMonad{\V{D}}{\V{X}})})\: 
-          \Mu{(\toDesc{(\FreeMonad{\V{D}}{\V{Y}})})}\: 
+          (\mude{(\FreeMonad{\V{D}}{\V{Y}})})\: 
           \SHED
 }\]
 %
@@ -582,9 +582,9 @@ $\V{\sigma}\: \V{x}$. This corresponds to the following definition:
 \begin{array}{@{}ll}
 \apply : & \PITEL{\V{D}}{\TagDesc} 
            \PI{\V{X}, \V{Y}}{\Set} 
-           (\V{X} \To \Mu{(\toDesc{(\FreeMonad{\V{D}}{\V{Y}})})}) \To \\
-         & \descop{\toDesc{(\FreeMonad{\V{D}}{\V{X}})}}{\Mu{(\toDesc{(\FreeMonad{\V{D}}{\V{Y}})})}} \To
-           \Mu{(\toDesc{(\FreeMonad{\V{D}}{\V{Y}})})}
+           (\V{X} \To \mude{(\FreeMonad{\V{D}}{\V{Y}})}) \To \\
+         & \descop{\toDesc{(\FreeMonad{\V{D}}{\V{X}})}}{(\mude{(\FreeMonad{\V{D}}{\V{Y}})})}
+           \To  \mude{(\FreeMonad{\V{D}}{\V{Y}})}
 \\
 \end{array} \\
 \begin{array}{@{}l@{\:\mapsto\:\:}l}
