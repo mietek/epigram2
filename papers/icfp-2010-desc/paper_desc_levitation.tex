@@ -488,18 +488,17 @@ PolyP~\cite{jansson:polyp}, made ordinary.
         -> Extract it
 \end{wstructure}
 
-In this section, we will turn to a more ambitious generic operation on
-datatypes. Given a functor, represented as a tagged description, we
-build the free monad over this functor.
-
+In this section, we try a more ambitious generic operation. Given a functor,
+represented as a tagged description, we
+build its free monad.
+%
 \newcommand{\FMFreeMonad}{\D{FreeMonad}}
 \newcommand{\FMFreeMonadD}{\D{FreeMonadD}}
 \newcommand{\FMVar}{\C{Var}}
 \newcommand{\FMComposite}{\C{Composite}}
-
-Let us recall the free monad construction in, say, Haskell. Given a
-functor \texttt{f}, the free monad over \texttt{f} is defined by the
-following datatype:
+%
+Let us recall this construction in, say, Haskell. Given a
+functor \texttt{f}, the free monad over \texttt{f} is given:
 %
 \begin{code}
 data FreeMonad f x
@@ -507,11 +506,15 @@ data FreeMonad f x
     | Composite (f (FreeMonad f x))
 \end{code}
 %
-Being an inductive type, this $\FMFreeMonad$ datatype is itself
-defined by a pattern functor. It is given by:
+Provided \texttt{f} is an instance of \texttt{Functor}, we may
+take \texttt{Var} for \texttt{return} and use \texttt{f}'s
+\texttt{fmap} to define \texttt{>>=} as substitution.
+
+Being an inductive type, $\FMFreeMonad$ arises
+by a pattern functor:
 %
 \[
-\FMFreeMonadD\: \V{F}\: \V{X}\: \V{Z} \mapsto \V{X} \mathop{\D{+}} \V{F} \V{Z}
+\FMFreeMonadD\: \V{F}\: \V{X}\: \V{Z} \mapsto \V{X} \mathop{\D{+}} \V{F}\:\V{Z}
 \]
 
 \begin{wstructure}
@@ -523,10 +526,9 @@ defined by a pattern functor. It is given by:
         -> Mu does the fixpoint
 \end{wstructure}
 
-In our setting, the free monad construction will take the functor as a
-tagged description, a set $\V{X}$ of variables, and will compute the
-tagged description of the corresponding free monad. Implementing this
-function is surprisingly easy:
+Our free monad construction takes the functor as a
+tagged description, and given a set $\V{X}$ of variables, computes the
+tagged description of the free monad pattern functor.
 %
 \[\stk{
 \FreeMonad{\_} : \TagDesc \To \Set \To \TagDesc \\
@@ -535,13 +537,13 @@ function is surprisingly easy:
          {\pair{\DSigma{\V{X}}{\DUnit}}{\V{D}}{}}{}
 }\]
 %
-We simply add a constructor, $\SYMBDVar$, and define its argument to
-be a $\DSigma{\V{X}}{\DUnit}$, that is an element of $\V{X}$. We keep
-$\V{E}$ and $\V{D}$ as they were, hence leaving the other constructors
+We simply add a constructor, $\SYMBDVar$, making its arguments
+$\DSigma{\V{X}}{\DUnit}$---just an element of $\V{X}$. 
+$\V{E}$ and $\V{D}$ stay put, leaving the other constructors
 unchanged. Unfolding the interpretation of this definition, we
-convince ourselves that this corresponds to the functor
-$\FMFreeMonadD$. The fixpoint operation ties the knot and gives us
-the full-blown free monad construction.
+find an extended sum, corresponding to the \(\V{X}\D{+}\) in
+$\FMFreeMonadD$. Taking the fixpoint ties the knot and we have our
+data.
 
 \begin{wstructure}
 <- A generic program: monadic substitution [equation]
@@ -549,31 +551,26 @@ the full-blown free monad construction.
         -> Using Fold
 \end{wstructure}
 
-Of course, we must equip the resulting datatypes with operations
-delivering a monadic interface. As expected, \(\LAM{\x}\DVar{\x}\)
-plays the r\^ole of \return, embedding variables into terms. The
-\bind operation corresponds to \emph{substitution}. We will now
-implement it, as a generic function.
-
-
 \newcommand{\subst}{\F{subst}}
 \newcommand{\apply}{\F{apply}}
 
-Our implementation will appeal to the $\cata$ function developed
-previously. So, let us write down the types, and fill as many
-arguments to $\cata$ as possible:
+Now we need the operations. As expected, \(\LAM{\x}\DVar{\x}\)
+plays the r\^ole of \return, making variables terms. Meanwhile,
+\bind is indeed \emph{substitution}, which we now
+implement generically, making use of $\cata$. Let us write the type,
+and start filling in the blanks:
 %
 \[\stk{
 \begin{array}{@{}ll}
 \subst : & \PITEL{\V{D}}{\TagDesc}
            \PI{\V{X}, \V{Y}}{\Set} 
-           (\V{X} \To \Mu{(\toDesc{\FreeMonad{\V{D}}{\V{Y}}})}) \To \\
-         & \Mu{(\toDesc{\FreeMonad{\V{D}}{\V{X}}})} \To
-           \Mu{(\toDesc{\FreeMonad{\V{D}}{\V{Y}}})} 
+           (\V{X} \To \Mu{(\toDesc{(\FreeMonad{\V{D}}{\V{Y}})})}) \To \\
+         & \Mu{(\toDesc{(\FreeMonad{\V{D}}{\V{X}})})} \To
+           \Mu{(\toDesc{(\FreeMonad{\V{D}}{\V{Y}})})} 
 \end{array} \\
 \subst\: \V{D}\: \V{X}\: \V{Y}\: \V{\sigma} \mapsto
-  \cata\: (\toDesc{\FreeMonad{\V{D}}{\V{X}}})\: 
-          \Mu{(\toDesc{\FreeMonad{\V{D}}{\V{Y}}})}\: 
+  \cata\: (\toDesc{(\FreeMonad{\V{D}}{\V{X}})})\: 
+          \Mu{(\toDesc{(\FreeMonad{\V{D}}{\V{Y}})})}\: 
           \SHED
 }\]
 %
@@ -585,9 +582,9 @@ $\V{\sigma}\: \V{x}$. This corresponds to the following definition:
 \begin{array}{@{}ll}
 \apply : & \PITEL{\V{D}}{\TagDesc} 
            \PI{\V{X}, \V{Y}}{\Set} 
-           (\V{X} \To \Mu{(\toDesc{\FreeMonad{\V{D}}{\V{Y}}})}) \To \\
-         & \descop{\toDesc{\FreeMonad{\V{D}}{\V{X}}}}{\Mu{(\toDesc{\FreeMonad{\V{D}}{\V{Y}}})}} \To
-           \Mu{(\toDesc{\FreeMonad{\V{D}}{\V{Y}}})}
+           (\V{X} \To \Mu{(\toDesc{(\FreeMonad{\V{D}}{\V{Y}})})}) \To \\
+         & \descop{\toDesc{(\FreeMonad{\V{D}}{\V{X}})}}{\Mu{(\toDesc{(\FreeMonad{\V{D}}{\V{Y}})})}} \To
+           \Mu{(\toDesc{(\FreeMonad{\V{D}}{\V{Y}})})}
 \\
 \end{array} \\
 \begin{array}{@{}l@{\:\mapsto\:\:}l}
@@ -605,16 +602,11 @@ $\V{\sigma}\: \V{x}$. This corresponds to the following definition:
             <- Substitution / bind
 \end{wstructure}
 
-Filling the sub-goal with $\apply\: \V{D}\: \V{X}\: \V{Y}\:
-\V{\sigma}$ completes the implementation. To sum up, we have
-implemented the free monad construction for an arbitrary tagged
-description. This gives the developer the ability, for any datatype,
-to extend it with a notion of variable. Then, we have equipped this
-structure with the corresponding monadic operations, \bind and
-\return. This construction is an example of type-indexed
-datatype~\cite{hinze:generic-haskell}, as found in Generic Haskell:
-from a datatype, we build a new datatype and equip it with its
-structure.
+We complete the hole with $\apply\: \V{D}\: \V{X}\: \V{Y}\:
+\V{\sigma}$. Every tagged
+description can be seen as a signature of operations: we can uniformly
+add a notion of variable, building a new type from an old one, then
+providing the substitution structure.
 
 \begin{wstructure}
 <- Deriving new data-structure and functions on them
