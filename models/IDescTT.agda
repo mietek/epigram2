@@ -407,12 +407,19 @@ data Type : Set where
 -- Typed expressions
 --********************************
 
+
+Val : Type -> Set
+Val nat = Nat
+Val bool = Bool
+Val (pair x y) = (Val x) * (Val y)
+
+
 -- Fix menu:
-exprFixMenu : (Type -> Set) -> FixMenu Type
-exprFixMenu constt = ( consE (consE nilE) , 
-                       \ty -> (const (constt ty),                        -- Val t
-                              (prod (var bool) (prod (var ty) (var ty)), -- if b then t1 else t2
-                               Void)))
+exprFixMenu : FixMenu Type
+exprFixMenu = ( consE (consE nilE) , 
+                \ty -> (const (Val ty),                           -- Val t
+                       (prod (var bool) (prod (var ty) (var ty)), -- if b then t1 else t2
+                       Void)))
 
 -- Indexed menu:
 choiceMenu : Type -> EnumU
@@ -430,32 +437,27 @@ exprSensitiveMenu = ( choiceMenu ,  choiceDessert )
 
 
 -- Expression:
-expr : (Type -> Set) -> TagIDesc Type
-expr constt = exprFixMenu constt , exprSensitiveMenu
+expr : TagIDesc Type
+expr = exprFixMenu , exprSensitiveMenu
 
-exprIDesc : (Type -> Set) -> ((Type -> Set) -> TagIDesc Type) -> (Type -> IDesc Type)
-exprIDesc constt D = toIDesc Type  (D constt)
+exprIDesc : TagIDesc Type -> (Type -> IDesc Type)
+exprIDesc D = toIDesc Type D
 
 
 --********************************
 -- Closed terms
 --********************************
 
-Val : Type -> Set
-Val nat = Nat
-Val bool = Bool
-Val (pair x y) = (Val x) * (Val y)
-
 closeTerm : Type -> IDesc Type
-closeTerm = exprIDesc Val expr
+closeTerm = exprIDesc expr
 
 
 --********************************
 -- Closed term evaluation
 --********************************
 
-eval : (ty : Type) -> IMu closeTerm ty -> Val ty
-eval ty term = cata Type closeTerm Val evalOneStep ty term
+eval : {ty : Type} -> IMu closeTerm ty -> Val ty
+eval {ty} term = cata Type closeTerm Val evalOneStep ty term
         where evalOneStep : (ty : Type) -> [| closeTerm ty |] Val -> Val ty
               evalOneStep _ (EZe , t) = t
               evalOneStep _ ((ESu EZe) , (true , ( x , _))) = x
@@ -498,32 +500,11 @@ substI {I} X Y R sig i term = cata I (toIDesc I (R ** X)) (IMu (toIDesc I (R ** 
 -- Hutton's razor is free monad
 --********************************************
 
-exprFreeFixMenu : FixMenu Type
-exprFreeFixMenu = ( consE nilE , 
-                    \ty -> (prod (var bool) (prod (var ty) (var ty)), 
-                           Void))
-
-choiceFreeMenu : Type -> EnumU
-choiceFreeMenu nat = consE nilE
-choiceFreeMenu bool = consE nilE
-choiceFreeMenu (pair x y) = nilE
-
-choiceFreeDessert : (ty : Type) -> spi (choiceFreeMenu ty) (\ _ -> IDesc Type)
-choiceFreeDessert nat = (prod (var nat) (var nat) , Void)
-choiceFreeDessert bool = (prod (var nat) (var nat) , Void )
-choiceFreeDessert (pair x y) = Void
-
-exprFreeSensitiveMenu : SensitiveMenu Type
-exprFreeSensitiveMenu = ( choiceFreeMenu ,  choiceFreeDessert )
-
-exprFree : TagIDesc Type
-exprFree = exprFreeFixMenu , exprFreeSensitiveMenu
-
-exprFreeC : (Type -> Set) -> TagIDesc Type
-exprFreeC X = exprFree ** X
+Empty : Type -> Set
+Empty _ = Zero
 
 closeTerm' : Type -> IDesc Type
-closeTerm' = toIDesc Type (exprFree ** Val)
+closeTerm' = toIDesc Type (expr ** Empty)
 
 --********************************
 -- Closed term' evaluation
@@ -532,14 +513,15 @@ closeTerm' = toIDesc Type (exprFree ** Val)
 eval' : {ty : Type} -> IMu closeTerm' ty -> Val ty
 eval' {ty} term = cata Type closeTerm' Val evalOneStep ty term
         where evalOneStep : (ty : Type) -> [| closeTerm' ty |] Val -> Val ty
-              evalOneStep _ (EZe , t) = t
-              evalOneStep _ ((ESu EZe) , (true , ( x , _))) = x
-              evalOneStep _ ((ESu EZe) , (false , ( _ , y ))) = y
-              evalOneStep nat ((ESu (ESu EZe)) , (x , y)) = plus x y
-              evalOneStep nat ((ESu (ESu (ESu ()))) , t) 
-              evalOneStep bool ((ESu (ESu EZe)) , (x , y) ) =   le x y
-              evalOneStep bool ((ESu (ESu (ESu ()))) , _) 
-              evalOneStep (pair x y) (ESu (ESu ()) , _)
+              evalOneStep _ (EZe , ())
+              evalOneStep _ (ESu EZe , t) = t
+              evalOneStep _ ((ESu (ESu EZe)) , (true , ( x , _))) = x
+              evalOneStep _ ((ESu (ESu EZe)) , (false , ( _ , y ))) = y
+              evalOneStep nat ((ESu (ESu (ESu EZe))) , (x , y)) = plus x y
+              evalOneStep nat (((ESu (ESu (ESu (ESu ()))))) , t) 
+              evalOneStep bool ((ESu (ESu (ESu EZe))) , (x , y) ) =   le x y
+              evalOneStep bool ((ESu (ESu (ESu (ESu ())))) , _) 
+              evalOneStep (pair x y) (ESu (ESu (ESu ())) , _)
 
 
 --********************************
@@ -572,7 +554,7 @@ Var : {n : Nat} -> Context n -> Type -> Set
 Var {n} c ty = Sigma (Fin n) (\i -> typeAt c i == ty)
 
 openTerm : {n : Nat} -> Context n -> Type -> IDesc Type
-openTerm c = toIDesc Type (exprFree ** (\ty -> Val ty + Var c ty))
+openTerm c = toIDesc Type (expr ** (Var c))
 
 --********************************
 -- Evaluation of open terms
@@ -581,21 +563,20 @@ openTerm c = toIDesc Type (exprFree ** (\ty -> Val ty + Var c ty))
 discharge : {n : Nat}
              {context : Context n}
              (ty : Type) ->
-             (Val ty + Var context ty) ->
+             Var context ty ->
              IMu closeTerm' ty
-discharge ty (l value) = con (EZe , value)
-discharge {n} {c} ty (r variable) = subst (cong (IMu closeTerm') (snd variable)) (lookup c (fst variable))
+discharge {n} {c} ty variable = subst (cong (IMu closeTerm') (snd variable)) (lookup c (fst variable))
 
 substExpr : {n : Nat}
              {ty : Type}
              (context : Context n)
              (sigma : (ty : Type) ->
-                      (Val ty + Var context ty) ->
+                      Var context ty ->
                       IMu closeTerm' ty) ->
              IMu (openTerm context) ty ->
              IMu closeTerm' ty
 substExpr {n} {ty} c sig term = 
-    substI (\ty -> Val ty + Var c ty) Val exprFree sig ty term
+    substI (Var c) Empty expr sig ty term
 
 evalOpen : {n : Nat}{ty : Type}
            (context : Context n) ->
@@ -609,14 +590,14 @@ evalOpen context tm = eval' (substExpr context discharge tm)
 
 -- V 0 :-> true, V 1 :-> 2, V 2 :-> ( false , 1 )
 testContext : Context _
-testContext =  vcons (bool , con (EZe , true )) 
-              (vcons (nat , con (EZe , su (su ze)) ) 
-              (vcons (pair bool nat , con (EZe , ( false , su ze )))
+testContext =  vcons (bool , con ((ESu EZe) , true )) 
+              (vcons (nat , con ((ESu EZe) , su (su ze)) ) 
+              (vcons (pair bool nat , con ((ESu EZe) , ( false , su ze )))
                vnil))
 
 -- V 1
 test1 : IMu (openTerm testContext) nat
-test1 = con (EZe , r ( fsu fze , refl ) )
+test1 = con (EZe , ( fsu fze , refl ) )
 
 testSubst1 : IMu closeTerm' nat
 testSubst1 = substExpr testContext 
@@ -628,7 +609,7 @@ testEval1 = evalOpen testContext test1
 
 -- add 1 (V 1)
 test2 : IMu (openTerm testContext) nat
-test2 = con (ESu (ESu EZe) , (con (EZe , l (su ze)) , con ( EZe , r (fsu fze , refl) )) )
+test2 = con ((ESu (ESu (ESu EZe))) , (con ((ESu EZe) , (su ze)) , con ( EZe , (fsu fze , refl) )) )
 
 testSubst2 : IMu closeTerm' nat
 testSubst2 = substExpr testContext 
@@ -641,9 +622,9 @@ testEval2 = evalOpen testContext test2
 
 -- if (V 0) then (V 1) else 0
 test3 : IMu (openTerm testContext) nat
-test3 = con (ESu EZe , (con (EZe , r (fze , refl)) ,
-                       (con (EZe , r (fsu fze , refl)) ,
-                        con (EZe , l ze))))
+test3 = con (ESu (ESu EZe) , (con (EZe , (fze , refl)) ,
+                             (con (EZe , (fsu fze , refl)) ,
+                              con (ESu EZe , ze))))
 
 testSubst3 : IMu closeTerm' nat
 testSubst3 = substExpr testContext 
@@ -656,7 +637,7 @@ testEval3 = evalOpen testContext test3
 
 -- V 2
 test4 : IMu (openTerm testContext) (pair bool nat)
-test4 = con (EZe , r ( fsu (fsu fze) , refl ) )
+test4 = con (EZe , ( fsu (fsu fze) , refl ) )
 
 testSubst4 : IMu closeTerm' (pair bool nat)
 testSubst4 = substExpr testContext 
