@@ -641,9 +641,9 @@ providing the substitution structure.
 In this section, we have seen how to \emph{levitate}
 descriptions. From this unusual situation, several questions naturally
 arise. First, we have blurred the line between the implementation of
-data-types and their reflection in themselves. Second, we have abused
-the paradoxical nature of $\Bhab{\Set}{\Set}$ to flatten the hierarchy
-of descriptions. We shall now be more precise about these points.
+data-types and their self-description. Second, we have abused the
+paradoxical nature of $\Bhab{\Set}{\Set}$ to flatten the hierarchy of
+descriptions. We shall now be more precise about these points.
 
 %% * Summary 
 %% ** <- What is the equipment for making data-types
@@ -651,7 +651,7 @@ of descriptions. We shall now be more precise about these points.
 %% ** <- (table 1)
 
 Let us first clarify the status of the implementation. The kit for
-making datatypes is summed up in Table~\ref{tab:sumup-operators}. For
+making datatypes is presented in Table~\ref{tab:sumup-operators}. For
 each operation, we describe its role and its status, making clear
 which components are self-described and which ones are actually
 implemented.
@@ -669,15 +669,15 @@ implemented.
 %% ** <- ``Self-encoding'' only in a level polymorphic sense
 %% ***    -> Agda model: set poly
 
-To tackle the apparent circularity of our construction, let us
+To demystify the apparent circularity of our construction, let us
 consider how it bottoms out in a stratified setting. Using the
 informal level annotations of Section~\ref{sec:universe-desc}, we have
-that \(\Bhab{\DescD_n}{\Desc_{n+1}}\), hence \(\Bhab{\Desc_n \mapsto
-  \Mu{\DescD_n}}{\Set_{n+1}}\). Therefore, there is no circularity in
-the description of descriptions: assuming an hardwired $\Desc_N$
-universe, we can build the tower of descriptions down to
-$\Desc_0$\footnote{We have modelled this process in Agda, hardwiring
-  $\Desc_{42}$ in $\Set_{43}$, then going down. This model does not
+that \(\Bhab{\DescD^n}{\Desc^{n+1}}\), hence \(\Bhab{\Desc^n \mapsto
+  \Mu{\DescD^n}}{\Set^{n+1}}\). Assuming an hardwired $\Desc^N$
+universe, we can build the tower of descriptions down to $\Desc^0$:
+description of descriptions forms a `spiral', rather than a
+circle \footnote{We have modelled this process in Agda, hardwiring
+  $\Desc^{42}$ in $\Set^{43}$, then going down. This model does not
   rely on dependent pattern-matching, induction-recursion, nor set
   polymorphism.}. Hence, in a stratified system, the `self-encoded'
 nature of $\Desc$ appears only in a set polymorphic sense: the
