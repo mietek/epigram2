@@ -347,20 +347,6 @@ indexing:
 \end{figure*}
 
 
-%% \[\stk{
-%% \data \IDesc{} (\Bhab{\V{I}}{\Set}) : \Set \where \\
-%% \;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
-%%     \DVar{}         & I \To \IDesc{I}                                   \\
-%%     \ldots          & \ldots
-%% \end{array} \\
-%% \\
-%% \idescop{\_\:}{}{} :_{\PI{\V{I}}{\Set}} \IDesc{I} \To (\V{I} \To \Set) \To \Set        \\
-%% \begin{array}{@{}l@{\:=\:\:}ll}
-%% \idescop{\DVar{i}}{I}{P}      &  P~i                                                 \\
-%% \ldots                        &  \ldots
-%% \end{array}
-%% }\]
-
 \begin{figure}
 
 \[\stk{\begin{array}{@{}ll}
@@ -390,86 +376,6 @@ indexing:
 
 \end{figure}
 
-%\subsection{Tagged indexed descriptions}
-
-% This discussion seemed out of place to me, so i've moved it a bit later (pwm).
-
-%\begin{wstructure}
-%<- Tagged constructor choice
-%    <- Index available when defining the datatype
-%        -> Can influence the choice of constructors
-%        -> Dependently-typed datatypes
-%            <- term (index) influence types
-%    -> Two parts
-%        <- Always on the menu
-%            <- E : EnumU 
-%            <- ED : E -> IDesc I
-%        <- Index-dependent
-%            <- F : I -> EnumU 
-%            <- FD : (i : I) -> spi (F i) (\_ -> IDesc I)
-%        -> taggedIDesc I == Sigma E ED x Sigma F FD
-%        -> toIDesc : (I : Set) -> taggedIDesc I -> (I -> IDesc I)
-%\end{wstructure}
-%
-%In Section~\ref{sec:desc-examples}, we have defined a \emph{tagged}
-%form for descriptions. This format follows the usual presentation of
-%inductive types as sum-of-product. With indexed description, this
-%definition can be generalized. Indeed, when defining an indexed
-%datatype, we have access to this index. Therefore, we can use this
-%index to influence the choice of constructors. This captures the
-%essence of dependent datatypes: a term -- the index -- has the
-%ability to influence the datatype.
-%
-%For convenience, we divide a tagged indexed description in two parts:
-%first, the constructors that do not depend on the index; then, the
-%constructors that do. The non-dependent part mirrors the definition
-%for non-indexed descriptions: we are provided a finite choice of
-%constructors. The index-depend part simply indexes the choice of
-%constructors by $I$. Hence, by inspecting the index, it is possible to
-%enable or disable the constructors. 
-%
-%\[\stk{
-% \TagIDesc{\V{I}}  \mapsto \TIMES{\ATagIDesc{\V{I}}}{\ITagIDesc{\V{I}}} \\
-% \ATagIDesc{\V{I}} \mapsto \SIGMA{\V{E}}{\EnumU} (\PI{\V{i}}{\V{I}} \spi{\V{E}}{(\LAM{\_} \IDesc{\V{I}})}) \\
-% \ITagIDesc{\V{I}} \mapsto \\
-%\qquad\SIGMA{\V{F}}{\V{I} \To \EnumU} (\PI{\V{i}}{\V{I}} \spi{(\V{F}\: \V{i})}{(\LAM{\_} \IDesc{\V{I}})}) 
-%}\]
-%
-%
-%\begin{wstructure}
-%<- Vectors
-%    Do we treat them in the end? 
-%    What can we say here we haven't with Fin?
-%\end{wstructure}
-%
-%In the case of vectors, for instance, for the index $\NatZero$, we
-%would only propose the constructor $\ListNil$. Similarly, for
-%$\NatSuc{n}$, we only propose the constructor $\ListCons{\!}{\!}$. Hence,
-%we obtain the following definition:
-%
-%\newcommand{\VecD}{\C{VecD}}
-%\newcommand{\VecNil}{\etag{\CN{vnil}}}
-%\newcommand{\VecCons}[2]{\etag{\CN{vcons}}\:#1\:#2}
-%
-%\[\stk{
-%\VecD : \Set \To \TagIDesc{\Nat} \\
-%\begin{array}{@{}ll}
-%\VecD\: \V{X} = \\ \quad\bigRedBracket{ 
-%            \begin{array}{l}
-%                \pair{[]}{\_}{} 
-%                \\\\
-%                \bigRedBracket{
-%                \begin{array}{l} 
-%                  \LAM{\V{n}} \caseB{\V{n}}{\NatZero \mapsto [\VecNil] \\
-%                                   (\NatSuc{\V{n}}) \mapsto [\VecCons{\!}{\!}]} \\
-%                  \LAM{\V{n}} \caseB{\V{n}}{\NatZero \mapsto [\DConst{\Unit}] \\
-%                                   (\NatSuc{\V{n}}) \mapsto [\DSigma{\V{X}}{\DVar{\V{n}}}]}
-%                \end{array}}
-%            \end{array}}
-%\end{array}
-%}\]
-%
-%We will see more instances of this pattern in the following.
 
 
 \subsection{Examples}
@@ -694,336 +600,7 @@ $\V{i}$. Its expansion is similar to the definition of \(\SYMBtoDesc\)
 for tagged descriptions, except that it must also append the two parts.
 We again write $\muide{\V{I}}{\V{D}}$ for
 $\IMu{\V{I}}{(\toIDesc{\V{D}})}$.
- 
-\paragraph{Typed expressions:}
 
-\begin{wstructure}
-<- Hutton's razor
-    <- Types
-        <- 'Nat
-        <- 'Bool
-    <- Term [figure]
-        <- val : Val 'a -> 'a  for Val : Ty -> Set, mapping to Nat and Bool
-        <- cond : 'Bool -> a -> a -> a
-        <- plus : 'Nat -> 'Nat -> 'Nat
-        <- le : 'Nat -> 'Nat -> 'Bool
-\end{wstructure}
-
-%% Types
-\newcommand{\Ty}{\D{Ty}}
-\newcommand{\Ebool}{\etag{\CN{bool}}}
-\newcommand{\Enat}{\etag{\CN{nat}}}
-
-%% Constructors
-\newcommand{\SYMBEval}{\etag{\CN{val}}\xspace}
-\newcommand{\Eval}[1]{\SYMBEval\:#1}
-\newcommand{\SYMBEcond}{\etag{\CN{cond}}\xspace}
-\newcommand{\Econd}[3]{\SYMBEcond\:#1\:#2\:#3}
-\newcommand{\SYMBEplus}{\etag{\CN{plus}}\xspace}
-\newcommand{\Eplus}[2]{\SYMBEplus\:#1\:#2}
-\newcommand{\SYMBEle}{\etag{\CN{le}}\xspace}
-\newcommand{\Ele}[2]{\SYMBEle\:#1\:#2}
-
-%% Index mapper (terminology?)
-\newcommand{\SYMBVal}{\F{Val}\xspace}
-\newcommand{\Val}[1]{\SYMBVal\:#1}
-\newcommand{\SYMBVar}{\F{Var}\xspace}
-\newcommand{\Var}[2]{\SYMBVar\: #1\: #2}
-
-%% Hutton expressions
-\newcommand{\HExprD}{\F{ExprD}}
-\newcommand{\HExprAD}{\F{ExprAD}}
-\newcommand{\HExprID}{\F{ExprID}}
-\newcommand{\HExprVarD}[1]{\C{ExprD}_{\F{Var},#1}}
-\newcommand{\HExprFreeD}{\C{ExprD}^{\C{Free}}}
-\newcommand{\HExprAFreeD}{\C{ExprAD}^{\C{Free}}}
-
-We are going to define a syntax for a small language with
-two types, natural numbers and booleans:
-%
-\[
-\Ty \mapsto \EnumT{\sqr{\Enat\: \Ebool}}
-\]
-
-\newcommand{\plusHost}{\mathop{\green{+_{\mathrm{H}}}}}
-\newcommand{\leHost}{\mathop{\green{\leq_{\mathrm{H}}}}}
-
-
-This language has values, conditional
-expression, addition and comparison. Informally, their types are:
-%
-\[
-\begin{array}{l@{\::\:\:}l}
-\SYMBEval            & \Val{\V{ty}} \To \V{ty} \\
-\SYMBEcond           & \Ebool \To \V{ty} \To \V{ty} \To \V{ty}  \\ 
-\end{array}
-\qquad
-\begin{array}{l@{\::\:\:}l}
-\SYMBEplus           & \Enat \To \Enat \To \Enat                           \\
-\SYMBEle             & \Enat \To \Enat \To \Ebool                          \\
-\end{array}
-\]
-%
-The function $\SYMBVal$ interprets object language types in the
-host language, so that arguments to $\SYMBEval$ fit their
-expected type.
-\[\stk{
-\SYMBVal : \Ty \To \Set \\
-\begin{array}{@{}l@{\:\mapsto\:\:}l}
-\Val{\Enat}   & \Nat \\
-\Val{\Ebool}  & \Bool
-\end{array}
-}\]
-We take $\Nat$ and $\Bool$ to represent
-natural numbers and Booleans in the host language, equipped with
-addition $\plusHost$ and comparison $\leHost$.
-
-We express our syntax as a tagged indexed description, indexing
-over obhect language types $\Ty$. We note
-that some constructors are always available, namely $\SYMBEval$ and
-$\SYMBEcond$. On the other hand, $\SYMBEplus$ and $\SYMBEle$
-constructors are index-dependent, with $\SYMBEplus$ available just when
-building a $\Enat$, $\SYMBEle$ just for $\Ebool$. The code,
-%%%in Figure~\ref{fig:hexpr-full},
-below,
-reflects this intuition, with the first
-component uniformly offering $\SYMBEval$ and $\SYMBEcond$, the second
-selectively offering $\SYMBEplus$ or $\SYMBEle$.
-%
-%%% \begin{figure}
-%
-\[\stk{
-\stk{
-\HExprD : \TagIDesc{\Ty} \\
-\HExprD \mapsto \sqr{ \HExprAD , \HExprID } \\
-} \smallskip\\
-\stk{
-\HExprAD : \ATagIDesc{\Ty} \\
-\HExprAD \mapsto \vtup{l}{
-   {\vtup{r}{\SYMBEval\\ \SYMBEcond \,}} \red{,} \;
-      \LAM{\V{ty}}
-      \vtup{l@{\:}l}{
-      \DProd{\DConst{(\Val{\V{ty}})}&}{\DConst{\Unit}} \\
-      \DProd{\DProd{\DVar{\Ebool}}{\DProd{\DVar{\V{ty}}}{\DVar{\V{ty}}}}&}
-        {\DConst{\Unit}} \\
-     }
-   }
-\smallskip\\
-} 
-\\
-\stk{
-\HExprID : \ITagIDesc{\Ty} \\
-\HExprID \mapsto \vtup{l}{
-                   \vtup{r}{\sqr{\SYMBEplus} \\ \sqr{\SYMBEle}} \red{,} \;
-  \LAM{\_} \sqr{\DProd{\DProd{\DVar{\Enat}}{\DVar{\Enat}}}{\DConst{\Unit}}}
-                   }
-}
-}\]
-
-%%%\caption{Syntax of typed expressions}
-%%%\label{fig:hexpr-full}
-
-%%%\end{figure}
-
-\begin{wstructure}
-    -> evaluation: IMu TermD -> Val
-        -> it is a catamorphism
-            <- Look closer at the type
-        -> implementation [code]
-            <- Just define one reduction step
-            -> cata does the rest
-                /> cata is for free!
-\end{wstructure}
-
-\newcommand{\evalH}{\F{eval}_{\green{\Downarrow}}}
-\newcommand{\evalOne}{\F{eval}_{\green{\downarrow}}}
-
-Given the syntax, let us supply the
-semantics. We implement an evaluator as a catamorphism:
-%
-\[\stk{
-\evalH : \PI{\V{ty}}{\Ty} 
-           \IMu{\Ty}{\HExprD}{\V{ty}} \To
-           \Val{\V{ty}} \\
-\evalH\: \V{ty}\: \V{term} \mapsto \cataI_{\Ty} \:
-                                 (\toIDesc{\HExprD})\: 
-                                 \SYMBVal\: 
-                                 \evalOne\: 
-                                 \V{ty}\: 
-                                 \V{term}
-}\]
-%
-To finish the job, we must supply the algebra which implements a single
-step of evaluation, given subexpressions evaluated already.
-%
-\[\stk{
-\evalOne : \PI{\V{ty}}{\Ty}
- \idescop{(\toIDesc{\HExprD})\:\V{ty}}{\Ty}{\SYMBVal}
-           \To {\Val{\V{ty}}} \\
-\begin{array}{@{}l@{}c@{}l@{\:\mapsto\:\:}l}
-\evalOne\: & \_\: & (\SYMBEval\;\V{x})                                            & \V{x} \\
-\evalOne\: & \_\: & (\SYMBEcond\:\BoolTrue\:\V{x}\:\_)   & \V{x} \\
-\evalOne\: & \_\: & (\SYMBEcond\:\BoolFalse\:\_\:\V{y})  & \V{y} \\
-\evalOne\: & \Enat\: & (\SYMBEplus\:\V{x}\:\V{y})   & \V{x} \plusHost \V{y} \\
-\evalOne\: & \Ebool\: & (\SYMBEle\:\V{x}\:\V{y})  & \V{x} \leHost \V{y} 
-\end{array}
-}\]
-
-\begin{wstructure}
-    /> Closed term
-        <- only constants and operations on them
-        -> Extend Val with Var : Ty -> Set, mapping to EnumU
-            -> Open term
-            -> Language of well-typed terms
-                <- By construction
-\end{wstructure}
-
-Hence, we have a type-safe syntax and a tagless interpreter for our
-language, in the spirit
-of~\citet{augustsson.carlsson:dependent.interpreter}, with
-help from the generic catamorphism.
-
-\newcommand{\Ctxt}{\D{Context}}
-\newcommand{\SYMBCtxtEmpty}{\C{[]}\xspace}
-\newcommand{\CtxtEmpty}{\SYMBCtxtEmpty}
-\newcommand{\SYMBCtxtSnoc}{\C{snoc}\xspace}
-\newcommand{\CtxtSnoc}[2]{\SYMBCtxtSnoc\:#1\:#2}
-\newcommand{\SYMBEnv}{\F{Env}}
-\newcommand{\Env}[1]{\SYMBEnv\: #1}
-\newcommand{\SYMBlookup}{\F{lookup}}
-\newcommand{\lookup}[4]{\SYMBlookup\: #1\: #2\: #3\: #4}
-
-However, so far, we are only able to define and manipulate
-\emph{closed} terms. By abstracting over $\SYMBVal$, it is possible to
-build and manipulate \emph{open} terms, that is, terms in a
-context. The context is represented by a snoc-list of types:
-%
-\[
-\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
-\Ctxt           & \Set \\
-\SYMBCtxtEmpty  & \Ctxt \\
-\SYMBCtxtSnoc   & \Ctxt \To \Ty \To \Ctxt
-\end{array}
-\]
-%
-An environment realises the context, associating a value for each type:
-%
-\[
-\stk{
-\SYMBEnv : \Ctxt \To \Set \\
-\begin{array}{@{}l@{\:\:\mapsto\:\:}l}
-\Env{\CtxtEmpty}                & \Unit \\
-\Env{(\CtxtSnoc{\V{G}}{\V{S}})} & \TIMES{\Env{\V{G}}}{\Val{\V{S}}}
-\end{array}
-}\]
-%
-In this setting, we define $\SYMBVar$ by:
-%
-\[\stk{
-\Var{}{} : \Ctxt \To \Ty \To \Set \\
-\begin{array}{@{}ll@{\:\:\mapsto\:\:}l}
-\Var{\CtxtEmpty}{& \V{T}}                & 
-    \Void \\
-\Var{(\CtxtSnoc{\V{G}}{\V{S}})}{& \V{T}} & 
-    \SUM{(\Var{\V{G}}{\V{T}})}{(\V{S} \PropEq \V{T})}
-\end{array}
-}\]
-%
-While $\SYMBVal$ was mapping the type to the corresponding host type,
-$\SYMBVar$ indexes a value in the context, obtaining a proof that the
-types match. The $\SYMBlookup$ function precisely follow this
-semantics:
-%
-\[\stk{
-\SYMBlookup : \PI{\V{G}}{\Ctxt} 
-          \Env{\V{G}} \To 
-          \PI{\V{T}}{\Ty} 
-          \Var{\V{G}}{\V{T}} \To
-          \Val{\V{T}} \\
-\begin{array}{@{}l@{}l@{}l@{}l@{}lll}
-%% \lookup{& \CtxtEmpty}{& \_}{& \V{T}}{& ()}                    &   & \\
-\lookup{& (\CtxtSnoc{\V{G}}{.T})}{& \pair{\V{g}}{\V{t}}{}}{& \V{T}}{& (\SumRight{\C{refl}})} & \mapsto & \V{t} \\
-\lookup{& (\CtxtSnoc{\V{G}}{\V{S}})}{& \pair{\V{g}}{\V{t}}{}}{& \V{T}}{& (\SumLeft{\V{x}})} & \mapsto & \lookup{\V{G}}{\V{g}}{\V{T}}{\V{x}} 
-\end{array}
-}\]
-
-Consequently, replacing $\Val{\V{ty}}$ by
-$(\SUM{\Val{\V{ty}}}{\Var{\V{G}}{\V{ty}}})$ in
-Figure~\ref{fig:hexpr-full} turns the language of closed terms into a
-language of opened terms with variables and constants. For
-readability, we abbreviate $\LAM{\V{ty}}
-\SUM{\Val{\V{ty}}}{\Var{\V{G}}{\V{ty}}}$ by
-$\SUM{\SYMBVal}{\Var{\V{G}}{}}$. \note{Is it polite and
-  comprehensible to ask that?} This defines a new indexed description,
-called $\HExprVarD{\V{G}}$.
-
-\begin{wstructure}
-        <- evaluator, with a context
-            -> First, close variables
-                -> Perform assignment
-                <- subst [code]
-\end{wstructure}
-
-\newcommand{\discharge}{\F{discharge}}
-
-Again, we would like to give a semantics to this extended language. We
-proceed in two steps: first, we replace the variables by their value
-in the context; then, we evaluate the resulting closed term. Thanks to
-$\evalH$, the second problem is already solved. Let us focus on
-discharging variables from the context. Again, we can subdivide this
-problem: first, discharging a single variable from the context; then,
-applying this $\discharge$ function on every variables in the term.
-
-The $\discharge$ function is relative to the required type and a
-context of the right type. Its action is to map values to themself,
-and variables to their value in context. This corresponds to the
-following function:
-%
-\[\stk{
-\begin{array}{@{}ll}
-\discharge : & \PI{\V{G}}{\Ctxt}
-               \Env{\V{G}} \To 
-              (\SUM{\Val{\V{}}}{\Var{\V{G}}{}}) \DotTo
-               \IMu{\Ty}{\HExprD}{}
-\end{array} \\
-\begin{array}{@{}l@{\:\mapsto\:\:}l}
-\discharge\: \V{G}\: \V{g}\: \V{ty}\: (\SumLeft \V{x})  & 
-    \Con{\pair{\SYMBEval}{\V{x}}{}} \\
-\discharge\: \V{G}\: \V{g}\: \V{ty}\: (\SumRight \V{v}) &
-    \Con{\pair{\SYMBEval}{\lookup{\V{G}}{\V{g}}{\V{ty}}{\V{v}}}{}}
-\end{array}
-}\]
-
-\begin{wstructure}
-            /> Then, perform subst everywhere in the term
-                -> Show type [code]
-                /> This is a bind!?
-                -> There is some more structure 
-                    -> We should try to get it
-\end{wstructure}
-
-\newcommand{\substH}{\F{substExpr}}
-
-We are now left with applying $\discharge$ over all variables of the
-term. The type of this operation is the following:
-%
-\[
-\begin{array}{@{}ll}
-\substH  : & \PI{\V{G}}{\Ctxt} \\
-           & ((\SUM{\Val{}}{\Var{\V{G}}{}}) \DotTo
-              \IMu{\Ty}{\HExprD}{}) \DotTo \\
-          & \IMu{\Ty}{\HExprVarD{\V{G}}}{} \DotTo 
-            \IMu{\Ty}{\HExprD}{}
-\end{array}
-\]
-
-Abstracting away the book-keeping introduced by contexts, this
-definition looks familiar. It is similar to a monadic \bind. This is
-not surprising as we are defining a first-order syntax with variables:
-our datatype enjoys more structure than what we are given. We are
-facing a free monad, where $\SYMBEval$ is the \return introducing
-variables. Instead of implementing $\substH$ in this special case, we
-are now going to implement the \emph{free indexed-monad construction}.
 
 \subsection{Free indexed monad}
 
@@ -1111,110 +688,10 @@ automatically inferred, hence do not have to be typed in. Let us now
 consider two examples of free indexed monads.
 
 
-\paragraph{Typed expressions:}
-
-\begin{wstructure}
-<- Hutton's razor is a free monad
-    <- substI was our candidate bind
-        -> Massage the definition of expr to get it for free
-    <- Finding the functor
-        <- 'val is the return
-        <- The other components are the action
-        -> Updated tagged description [figure]
-    -> Compute the free monad Hutton * X
-        -> With X = Val: We get back our closed terms
-        -> With X = Val + Var vars: We get back our open terms
-\end{wstructure}
-
-In Section~\ref{sec:idesc-examples}, we had the intuition that our
-datatypes $\HExprD$ and $\HExprVarD{\V{G}}$ enjoy a monadic
-structure. We had identified the variable substitution operation as
-the \bind of a free monad. To exhibit its monadic structure, we first
-have to massage the definition of our datatype.
-
-As previously mentioned, we identify $\SYMBEval$ with the \return of
-the free monad, while the other components are the actions of the
-monad. As a result, the definition is similar to $\HExprD$ presented
-in Figure~\ref{fig:hexpr-full}, replacing $\HExprAD$ by
-$\HExprAFreeD$:
-%
-\[\stk{
-\HExprAFreeD : \ATagIDesc{\Ty} \\
-\HExprAFreeD \mapsto \bigRedBracket{
-                 \begin{array}{l}
-                   \EnumT{\sqr{\SYMBEcond}} \red{,} \\
-                   \LAM{\V{ty}}
-                   \bigRedBracket{
-                   \begin{array}{l}
-                   \DProd{\DVar{\Ebool}}{\DProd{\DVar{\V{ty}}}{\DVar{\V{ty}}}}
-                   \end{array}
-                   }
-                 \end{array}
-                 }
-}\]
-
-We call this datatype $\HExprFreeD$. By a simple unfolding of
-definition, we note that $\FreeIMonad{\HExprFreeD}{\Ty}{\SYMBVal}$
-corresponds to the syntax of closed terms, $\HExprD$. Similarly,
-$\FreeIMonad{\HExprFreeD}{\Ty}{(\SUM{\SYMBVal}{\Var{\V{G}}{}})}$
-corresponds to expressions with variables, $\HExprVarD{\V{G}}$.
-
-\begin{wstructure}
-    /> On open terms, we get a substitution
-        -> Apply substI on assgnmt
-            -> Have a well-typed language
-            -> Get a safe evaluator 
-                <- for well-typed terms 
-                <- in well-typed contexts
-\end{wstructure}
-
-The evaluator for closed terms we implemented in
-Section~\ref{sec:idesc-examples} remains unchanged. It reduces closed
-terms in $\FreeIMonad{\HExprFreeD}{\Ty}{\SYMBVal}\: \V{ty}$ to values in
-$\Val{\V{ty}}$. We are left with implementing $\substH$. We simply
-have to fill in the right arguments to $\substI$, the type guiding us:
-%
-\[\stk{
-\substH\: \V{G}\:
-          \V{ty}\:          
-          \V{g}\:
-          \V{\sigma}\: 
-          \V{term} \mapsto  \\
-\quad \substI_{\Ty}\:
-               (\SUM{\SYMBVal}{\SYMBVar\: \V{G}})\: 
-               \SYMBVal\:
-               \HExprFreeD\: 
-               \V{\sigma}\:
-               \V{ty}\:
-               \V{term}
-}\]
-%
-Hence completing our implementation of the open terms interpreter. 
-
-We have defined a well-typed language of arithmetical expressions,
-taking advantage of indexing. Then, we have implemented an evaluator
-for closed term, based on the generic catamorphism function. Using the
-free monad construction, we have automatically derived the language of
-open terms. Using its monadic structure, we have implemented the
-interpreter for open terms in context. Hence, without much effort, we
-have described the syntax of a well-typed language, together with its
-semantics.
-
-\begin{wstructure}
-<- IDesc
-    <- Another instance of free monad
-        <- Var: Return
-        <- Remaining: (not even indexed) functor
-    -> Madness just starts
-        <- map operation
-        <- [ subst sigma D ] X = [D] (\x -> [subst sigma x] X)
-        ???
-\end{wstructure}
-
 \paragraph{Indexed descriptions:}
 
-Another instance of free monad is $\SYMBIDesc$ itself. Indeed,
-$\SYMBDVar$ is nothing but the \return. The remaining constructors are
+An interesting instance of free monad is $\SYMBIDesc$ itself. Indeed,
+$\SYMBDVar$ is nothing but the \return. The remaining constructors form
 the carrier functor, trivially indexed by $\Unit$. The carrier functor
 is described as follow:
 %
@@ -1258,11 +735,358 @@ is potentially of considerable utility, if we can exploit this fact:
 By observing that a description can be decomposed via substitution, we
 split its meaning into a superstructure of substructures, e.g. a
 `database containing salaries', ready for traversal operations
-preserving the former and targeting the latter.
+preserving the former and targeting the latter. We shall now turn to
+some examples of indexed descriptions, as well as a practical use of
+free monad construction.
+ 
+\paragraph{Typed expressions:}
 
-In this section, we have presented the universe of indexed
-description. It embraces indexed families of types and, as such,
-allows us to write dependent datatypes. Hence, we have presented
-several example of indexed datatypes. In this context, we have
-presented the free monad construction, together with its monadic
-operations. 
+\begin{wstructure}
+<- Hutton's razor
+    <- Types
+        <- 'Nat
+        <- 'Bool
+    <- Term [figure]
+        <- val : Val 'a -> 'a  for Val : Ty -> Set, mapping to Nat and Bool
+        <- cond : 'Bool -> a -> a -> a
+        <- plus : 'Nat -> 'Nat -> 'Nat
+        <- le : 'Nat -> 'Nat -> 'Bool
+\end{wstructure}
+
+%% Types
+\newcommand{\Ty}{\D{Ty}}
+\newcommand{\Ebool}{\etag{\CN{bool}}}
+\newcommand{\Enat}{\etag{\CN{nat}}}
+
+%% Constructors
+\newcommand{\SYMBEval}{\etag{\CN{val}}\xspace}
+\newcommand{\SYMBEvar}{\etag{\CN{var}}\xspace}
+\newcommand{\Eval}[1]{\SYMBEval\:#1}
+\newcommand{\SYMBEcond}{\etag{\CN{cond}}\xspace}
+\newcommand{\Econd}[3]{\SYMBEcond\:#1\:#2\:#3}
+\newcommand{\SYMBEplus}{\etag{\CN{plus}}\xspace}
+\newcommand{\Eplus}[2]{\SYMBEplus\:#1\:#2}
+\newcommand{\SYMBEle}{\etag{\CN{le}}\xspace}
+\newcommand{\Ele}[2]{\SYMBEle\:#1\:#2}
+
+%% Index mapper (terminology?)
+\newcommand{\SYMBVal}{\F{Val}\xspace}
+\newcommand{\Val}[1]{\SYMBVal\:#1}
+\newcommand{\SYMBVar}{\F{Var}\xspace}
+\newcommand{\Var}[2]{\SYMBVar\: #1\: #2}
+
+%% Hutton expressions
+\newcommand{\HExprD}{\F{ExprD}}
+\newcommand{\HExprAD}{\F{ExprAD}}
+\newcommand{\HExprID}{\F{ExprID}}
+\newcommand{\HExprVarD}[1]{\C{ExprD}_{\F{Var},#1}}
+\newcommand{\HExprFreeD}{\C{ExprD}^{\C{Free}}}
+\newcommand{\HExprAFreeD}{\C{ExprAD}^{\C{Free}}}
+
+We are going to define a syntax for a small language with
+two types, natural numbers and booleans:
+%
+\[
+\Ty \mapsto \EnumT{\sqr{\Enat\: \Ebool}}
+\]
+
+\newcommand{\plusHost}{\mathop{\green{+_{\mathrm{H}}}}}
+\newcommand{\leHost}{\mathop{\green{\leq_{\mathrm{H}}}}}
+
+
+This language has values, conditional
+expression, addition and comparison. Informally, their types are:
+%
+\[
+\begin{array}{l@{\::\:\:}l}
+\SYMBEval            & \Val{\V{ty}} \To \V{ty} \\
+\SYMBEcond           & \Ebool \To \V{ty} \To \V{ty} \To \V{ty}  \\ 
+\end{array}
+\qquad
+\begin{array}{l@{\::\:\:}l}
+\SYMBEplus           & \Enat \To \Enat \To \Enat                           \\
+\SYMBEle             & \Enat \To \Enat \To \Ebool                          \\
+\end{array}
+\]
+%
+The function $\SYMBVal$ interprets object language types in the
+host language, so that arguments to $\SYMBEval$ fit their
+expected type.
+\[\stk{
+\SYMBVal : \Ty \To \Set \\
+\begin{array}{@{}l@{\:\mapsto\:\:}l}
+\Val{\Enat}   & \Nat \\
+\Val{\Ebool}  & \Bool
+\end{array}
+}\]
+We take $\Nat$ and $\Bool$ to represent
+natural numbers and Booleans in the host language, equipped with
+addition $\plusHost$ and comparison $\leHost$.
+
+We describe our syntax in two steps. First, we give the pattern
+functor of the free monad, defining the operators of the
+language. Second, we apply the free monad construction to obtain a
+language of closed terms and a language of open terms. The operations
+are described by a tagged indexed description, indexing over object
+language types $\Ty$. We note that some constructors are always
+available, namely $\SYMBEval$ and $\SYMBEcond$. On the other hand,
+$\SYMBEplus$ and $\SYMBEle$ constructors are index-dependent, with
+$\SYMBEplus$ available just when building a $\Enat$, $\SYMBEle$ just
+for $\Ebool$. The code, below, reflects this intuition, with the first
+component uniformly offering $\SYMBEval$ and $\SYMBEcond$, the second
+selectively offering $\SYMBEplus$ or $\SYMBEle$.
+%
+%%% \begin{figure}
+%
+\[\stk{
+\stk{
+\HExprD : \TagIDesc{\Ty} \\
+\HExprD \mapsto \sqr{ \HExprAD , \HExprID } \\
+} \smallskip\\
+\stk{
+\HExprAD : \ATagIDesc{\Ty} \\
+\HExprAD \mapsto \vtup{l}{
+   {\vtup{r}{\SYMBEval\\ \SYMBEcond \,}} \red{,} \;
+      \LAM{\V{ty}}
+      \vtup{l@{\:}l}{
+      \DProd{\DConst{(\Val{\V{ty}})}&}{\DConst{\Unit}} \\
+      \DProd{\DProd{\DVar{\Ebool}}{\DProd{\DVar{\V{ty}}}{\DVar{\V{ty}}}}&}
+        {\DConst{\Unit}} \\
+     }
+   }
+\smallskip\\
+} 
+\\
+\stk{
+\HExprID : \ITagIDesc{\Ty} \\
+\HExprID \mapsto \vtup{l}{
+                   \vtup{r}{\sqr{\SYMBEplus} \\ \sqr{\SYMBEle}} \red{,} \;
+  \LAM{\_} \sqr{\DProd{\DProd{\DVar{\Enat}}{\DVar{\Enat}}}{\DConst{\Unit}}}
+                   }
+}
+}\]
+
+%%%\caption{Syntax of typed expressions}
+%%%\label{fig:hexpr-full}
+
+%%%\end{figure}
+
+\begin{wstructure}
+    /> Closed term
+        <- only constants and operations on them
+        -> Extend Val with Var : Ty -> Set, mapping to EnumU
+            -> Open term
+            -> Language of well-typed terms
+                <- By construction
+\end{wstructure}
+
+\newcommand{\Ctxt}{\D{Context}}
+\newcommand{\SYMBCtxtEmpty}{\C{[]}\xspace}
+\newcommand{\CtxtEmpty}{\SYMBCtxtEmpty}
+\newcommand{\SYMBCtxtSnoc}{\C{snoc}\xspace}
+\newcommand{\CtxtSnoc}[2]{\SYMBCtxtSnoc\:#1\:#2}
+\newcommand{\SYMBEnv}{\F{Env}}
+\newcommand{\Env}[1]{\SYMBEnv\: #1}
+\newcommand{\SYMBlookup}{\F{lookup}}
+\newcommand{\lookup}[4]{\SYMBlookup\: #1\: #2\: #3\: #4}
+
+However, so far, we are only able to define and manipulate
+\emph{closed} terms. Adding variables, it is possible to build and
+manipulate \emph{open} terms, that is, terms in a context. The context
+is represented by a snoc-list of types:
+%
+\[
+\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
+\Ctxt           & \Set \\
+\SYMBCtxtEmpty  & \Ctxt \\
+\SYMBCtxtSnoc   & \Ctxt \To \Ty \To \Ctxt
+\end{array}
+\]
+%
+An environment realises the context, associating a value for each type:
+%
+\[
+\stk{
+\SYMBEnv : \Ctxt \To \Set \\
+\begin{array}{@{}l@{\:\:\mapsto\:\:}l}
+\Env{\CtxtEmpty}                & \Unit \\
+\Env{(\CtxtSnoc{\V{G}}{\V{S}})} & \TIMES{\Env{\V{G}}}{\Val{\V{S}}}
+\end{array}
+}\]
+%
+In this setting, we define $\SYMBVar$ by:
+%
+\[\stk{
+\Var{}{} : \Ctxt \To \Ty \To \Set \\
+\begin{array}{@{}ll@{\:\:\mapsto\:\:}l}
+\Var{\CtxtEmpty}{& \V{T}}                & 
+    \Void \\
+\Var{(\CtxtSnoc{\V{G}}{\V{S}})}{& \V{T}} & 
+    \SUM{(\Var{\V{G}}{\V{T}})}{(\V{S} \PropEq \V{T})}
+\end{array}
+}\]
+%
+While $\SYMBVal$ maps the type to the corresponding host type,
+$\SYMBVar$ indexes a value in the context, obtaining a proof that the
+types match. The $\SYMBlookup$ function precisely follow this
+semantics:
+%
+\[\stk{
+\SYMBlookup : \PI{\V{G}}{\Ctxt} 
+          \Env{\V{G}} \To 
+          \PI{\V{T}}{\Ty} 
+          \Var{\V{G}}{\V{T}} \To
+          \Val{\V{T}} \\
+\begin{array}{@{}l@{}l@{}l@{}l@{}lll}
+\lookup{& (\CtxtSnoc{\V{G}}{.T})}{& \pair{\V{g}}{\V{t}}{}}{& \V{T}}{& (\SumRight{\C{refl}})} & \mapsto & \V{t} \\
+\lookup{& (\CtxtSnoc{\V{G}}{\V{S}})}{& \pair{\V{g}}{\V{t}}{}}{& \V{T}}{& (\SumLeft{\V{x}})} & \mapsto & \lookup{\V{G}}{\V{g}}{\V{T}}{\V{x}} 
+\end{array}
+}\]
+
+\newcommand{\SYMBEmpty}{\F{Empty}\xspace}
+\newcommand{\Empty}[1]{\SYMBEmpty\:#1}
+
+\newcommand{\SYMBopenTerm}{\F{openTm}\xspace}
+\newcommand{\openTerm}[1]{\SYMBopenTerm\: #1}
+\newcommand{\closeTerm}{\F{closeTm}}
+
+Consequently, taking the free monad of \(\HExprD\) by \(\SYMBVar\:
+\V{G}\), we obtain the language of open terms in a context \(\V{G}\):
+%
+\[
+\openTerm{\V{G}} \mapsto \FreeIMonad{\HExprD}{\Ty}{(\SYMBVar\:\V{G})}
+\]
+%
+The language of closed terms corresponds to the free monad assigning
+an empty set of values to variables
+%
+\[
+\closeTerm \mapsto \FreeIMonad{\HExprD}{\Ty}{\SYMBEmpty}
+\]
+%
+With
+%
+\[\stk{
+\SYMBEmpty : \Ty \To \Set \\
+\begin{array}{@{}l@{\:\mapsto\:\:}l}
+\Empty{\_}   & \Zero \\
+\end{array}
+}\]
+%
+
+
+\newcommand{\evalH}{\F{eval}_{\green{\Downarrow}}}
+\newcommand{\evalOne}{\F{eval}_{\green{\downarrow}}}
+
+Given the syntax, let us supply the semantics of closed terms. We
+implement an evaluator as a catamorphism:
+%
+\[\stk{
+\evalH : \PI{\V{ty}}{\Ty} 
+           \IMu{\Ty}{\closeTerm}{\V{ty}} \To
+           \Val{\V{ty}} \\
+\evalH\: \V{ty}\: \V{tm} \mapsto \cataI_{\Ty} \:
+                                 (\toIDesc{\closeTerm})\: 
+                                 \SYMBVal\: 
+                                 \evalOne\: 
+                                 \V{ty}\: 
+                                 \V{tm}
+}\]
+%
+To finish the job, we must supply the algebra which implements a single
+step of evaluation, given subexpressions evaluated already.
+%
+\[\stk{
+\evalOne : \PI{\V{ty}}{\Ty}
+ \idescop{(\toIDesc{\closeTerm})\:\V{ty}}{\Ty}{\SYMBVal}
+           \To {\Val{\V{ty}}} \\
+\begin{array}{@{}l@{}c@{}l@{\:\mapsto\:\:}l}
+\evalOne\: & \_\: & (\SYMBEval\;\V{x})                   & \V{x} \\
+\evalOne\: & \_\: & (\SYMBEcond\:\BoolTrue\:\V{x}\:\_)   & \V{x} \\
+\evalOne\: & \_\: & (\SYMBEcond\:\BoolFalse\:\_\:\V{y})  & \V{y} \\
+\evalOne\: & \Enat\: & (\SYMBEplus\:\V{x}\:\V{y})   & \V{x} \plusHost \V{y} \\
+\evalOne\: & \Ebool\: & (\SYMBEle\:\V{x}\:\V{y})  & \V{x} \leHost \V{y} 
+\end{array}
+}\]
+
+
+Hence, we have a type-safe syntax and a tagless interpreter for our
+closed term language, in the spirit
+of~\citet{augustsson.carlsson:dependent.interpreter}, with help from
+the generic catamorphism.
+
+
+\newcommand{\discharge}{\F{discharge}}
+
+Now we would like to give a semantics to the open term language. We
+proceed in two steps: first, we substitute variables by their value in
+the context; then, we evaluate the resulting closed term. Thanks to
+$\evalH$, the second problem is already solved. Let us focus on
+substituting variables from the context. Again, we can subdivide this
+problem: first, discharging a single variable from the context; then,
+applying this $\discharge$ function on every variables in the term.
+
+The $\discharge$ function is relative to the required type and a
+context of the right type. Its action is to map values to themself,
+and variables to their value in context. This corresponds to the
+following function:
+%
+\[\stk{
+\begin{array}{@{}ll}
+\discharge : & \PI{\V{G}}{\Ctxt}
+               \Env{\V{G}} \To 
+               \Var{\V{G}}{} \DotTo
+               \IMu{\Ty}{\closeTerm}{}
+\end{array} \\
+\begin{array}{@{}l@{\:\mapsto\:\:}l}
+\discharge\: \V{G}\: \V{g}\: \V{ty}\: \V{v} &
+    \Con{\pair{\SYMBEval}{\lookup{\V{G}}{\V{g}}{\V{ty}}{\V{v}}}{}}
+\end{array}
+}\]
+
+\begin{wstructure}
+            /> Then, perform subst everywhere in the term
+                -> Show type [code]
+                /> This is a bind!?
+                -> There is some more structure 
+                    -> We should try to get it
+\end{wstructure}
+
+\newcommand{\substH}{\F{substExpr}}
+
+We are now left with applying $\discharge$ over all variables of the
+term.  We simply have to fill in the right arguments to $\substI$, the
+type guiding us:
+%
+\[
+\stk{
+\begin{array}{@{}ll}
+\substH  : & \PI{\V{G}}{\Ctxt} \\
+           & (\Var{\V{G}}{} \DotTo
+              \IMu{\Ty}{\closeTerm}{}) \DotTo \\
+          & \IMu{\Ty}{(\openTerm{\V{G}})}{} \DotTo 
+            \IMu{\Ty}{\closeTerm}{}
+\end{array} \\
+\substH\: \V{G}\:
+          \V{ty}\:          
+          \V{g}\:
+          \V{\sigma}\: 
+          \V{tm} \mapsto  
+\substI_{\Ty}\:
+               (\SYMBVar\: \V{G})\: 
+               \SYMBEmpty\:
+               \HExprD\: 
+               \V{\sigma}\:
+               \V{ty}\:
+               \V{tm}
+}\]
+
+Hence completing our implementation of the open terms interpreter.
+We have defined a well-typed language of arithmetical expressions,
+taking advantage of indexing. Then, we have implemented an evaluator
+for closed term, based on the generic catamorphism function. Using the
+free monad construction, we have automatically derived the language of
+open terms. Using its monadic structure, we have implemented the
+interpreter for open terms in context. Hence, without much effort, we
+have described the syntax of a well-typed language, together with its
+semantics.
