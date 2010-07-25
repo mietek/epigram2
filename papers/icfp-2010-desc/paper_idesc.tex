@@ -967,19 +967,19 @@ monad assigning an empty set of values to variables
 %
 \[
 \closeTerm \mapsto \FreeIMonad{\HExprD}{\Ty}{\SYMBEmpty}
-\]
-%
-With
-%
-\[\stk{
+\quad
+\mbox{where}
+\quad
+\stk{
 \SYMBEmpty : \Ty \To \Set \\
 \begin{array}{@{}l@{\:\:\mapsto\:\:}l}
 \Empty{\_}   & \Zero \\
 \end{array}
 }\]
 %
-Obviously, \(\closeTerm\) and \(\HExprD\) describe isomorphic
-datatypes. For instance, you can update your old \(\HExprD\) to a
+Allowing variables from an empty set is much like forbidding variables,
+so \(\closeTerm\) and \(\HExprD\) describe isomorphic
+datatypes. Correspndingly, you can update your old \(\HExprD\) to a
 shiny \(\closeTerm\) with \(\update\):
 %
 \[\stk{
