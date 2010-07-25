@@ -506,6 +506,10 @@ Empty _ = Zero
 closeTerm' : Type -> IDesc Type
 closeTerm' = toIDesc Type (expr ** Empty)
 
+update : {ty : Type} -> IMu closeTerm ty -> IMu closeTerm' ty
+update {ty} tm = cata Type closeTerm (IMu closeTerm') (\ _ tagTm -> con (ESu (fst tagTm) , (snd tagTm))) ty tm
+
+
 --********************************
 -- Closed term' evaluation
 --********************************
