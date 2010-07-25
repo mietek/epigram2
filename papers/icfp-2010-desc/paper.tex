@@ -371,106 +371,98 @@ in Agda\footnote{This model is available at \\
 %% Conclusion
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Conclusion}
-
-\begin{wstructure}
-<- System developed in a reasonable theory
-    <- Pi, Sigma, Finite sets
-    /> No assumption about the equality
-    -> Low requirement / high applicability
-\end{wstructure}
-
-\begin{wstructure}
-<- Formalize a rationnalized presentation of types
-    <- Working directly with codes is not practical
-    -> Bidirectional type-checking
-        <- Type information flows during type checking/type synthesis
-        -> Elaboration turns high-level expressions to low-level terms
-    -> Should not be afraid by codes
-\end{wstructure}
-
-In this paper, we have presented a universe of datatypes for a
-dependent type theory. To ensure the generality of our proposal, this
-system has been built in a familiar type theory, with no assumption
-about the underlying propositional equality. Because our approach is
-based on codes for universes, we have given a rationalised
-presentation of codes. Thanks to type propagation, we make practical
-the usage of codes for datatypes.
-
-\begin{wstructure}
-<- Dependently-typed presentation of simple inductive types
-    <- Universe of descriptions
-        <- Based on the specificity of dependent types
-            <- Universe of codes
-            <- Sigma types
-        -> External fix-point and generic induction scheme
-    <- Rationalised by type propagation
-        -> Developer does not see the code
-    <- Self-describing
-        <- Step-by-step exposition
-        -> Minimal extension to the type theory
-            <- Just need fix-point and induction
-        -> Closed presentation of datatype
-            -> Non generative
-        -> datatype is just data
-    <- Generic programming is just programming
-        <- Generic catamorphism
-        <- Generic free monad
-\end{wstructure}
-
-To introduce our approach, we have presented a universe of
-description. This universe has the expressive power of simple
-inductive types, as found in ML-like languages. Further, we have
-implemented this universe as a self-described object. Hence, for a
-minimal extension of the type-theory, we get a closed, self-describing
-presentation of datatypes, where datatypes are just data.
-
-\begin{wstructure}
-<- Indexed descriptions for dependent datatypes
-    <- Presented as a slight generalisation of Desc
-        <- Just add indexing
-    <- Develop several examples of datatypes
-        <- Typed syntax
-        <- Constrained datatype a la GADT
-    <- Generic indexed programming
-        <- Indexed free monad
-        <- Substitution
-\end{wstructure}
-
-To capture dependent datatypes, we generalise our presentation to
-support indexing. The universe of indexed descriptions thus built
-encompasses inductive families. Again, this universe is
-self-described. We have developed several examples of dependent
-datatypes and generic functions over them.
-
-\begin{wstructure}
-<- All of this without cheating
-    <- Admit a correct stratification
-    <- Terminating
-    <- Strictly-positive types
-\end{wstructure}
-
-We have presented a self-describing, self-hosted universe for
-datatypes. We have shown the benefit of such approach, by our ability
-to reflect datatypes in the type-theory. This fosters a new way of
-considering generic programming: just as programming. Moreover,
-despite its egg-and-chicken nature, this presentation is free of
-paradox: it has been formalised in Agda, admitting a correct
-stratification.
-
-\paragraph{Future work:} As such, indexed descriptions do
-not cover several extensions of inductive families. One of them is
-induction-recursion. An interesting question is to locate indexed
-descriptions in the spectrum between inductive families and indexed
-induction-recursion. Another popular extension we plan to consider is
-to allow internal fixpoints and higher-kinded datatypes.
-
-Also, we have presented a generic notion of syntax with variables,
-thanks to the free monad construction. We would like to explore a
-notion of syntax with binding. Interestingly, introducing internal
-fixpoints or kinds would turn our universe into such syntax with
-binding. Once again, levitation would reveal itself convenient by
-providing generic tools to handle binding.
+% \section{Conclusion}
+% 
+% \begin{wstructure}
+% <- System developed in a reasonable theory
+%     <- Pi, Sigma, Finite sets
+%     /> No assumption about the equality
+%     -> Low requirement / high applicability
+% \end{wstructure}
+% 
+% \begin{wstructure}
+% <- Formalize a rationnalized presentation of types
+%     <- Working directly with codes is not practical
+%     -> Bidirectional type-checking
+%         <- Type information flows during type checking/type synthesis
+%         -> Elaboration turns high-level expressions to low-level terms
+%     -> Should not be afraid by codes
+% \end{wstructure}
+% 
+% \begin{wstructure}
+% <- Dependently-typed presentation of simple inductive types
+%     <- Universe of descriptions
+%         <- Based on the specificity of dependent types
+%             <- Universe of codes
+%             <- Sigma types
+%         -> External fix-point and generic induction scheme
+%     <- Rationalised by type propagation
+%         -> Developer does not see the code
+%     <- Self-describing
+%         <- Step-by-step exposition
+%         -> Minimal extension to the type theory
+%             <- Just need fix-point and induction
+%         -> Closed presentation of datatype
+%             -> Non generative
+%         -> datatype is just data
+%     <- Generic programming is just programming
+%         <- Generic catamorphism
+%         <- Generic free monad
+% \end{wstructure}
+% 
+% To introduce our approach, we have presented a universe of
+% description. This universe has the expressive power of simple
+% inductive types, as found in ML-like languages. Further, we have
+% implemented this universe as a self-described object. Hence, for a
+% minimal extension of the type-theory, we get a closed, self-describing
+% presentation of datatypes, where datatypes are just data.
+% 
+% \begin{wstructure}
+% <- Indexed descriptions for dependent datatypes
+%     <- Presented as a slight generalisation of Desc
+%         <- Just add indexing
+%     <- Develop several examples of datatypes
+%         <- Typed syntax
+%         <- Constrained datatype a la GADT
+%     <- Generic indexed programming
+%         <- Indexed free monad
+%         <- Substitution
+% \end{wstructure}
+% 
+% To capture dependent datatypes, we generalise our presentation to
+% support indexing. The universe of indexed descriptions thus built
+% encompasses inductive families. Again, this universe is
+% self-described. We have developed several examples of dependent
+% datatypes and generic functions over them.
+% 
+% \begin{wstructure}
+% <- All of this without cheating
+%     <- Admit a correct stratification
+%     <- Terminating
+%     <- Strictly-positive types
+% \end{wstructure}
+% 
+% We have presented a self-describing, self-hosted universe for
+% datatypes. We have shown the benefit of such approach, by our ability
+% to reflect datatypes in the type-theory. This fosters a new way of
+% considering generic programming: just as programming. Moreover,
+% despite its egg-and-chicken nature, this presentation is free of
+% paradox: it has been formalised in Agda, admitting a correct
+% stratification.
+% 
+% \paragraph{Future work:} As such, indexed descriptions do
+% not cover several extensions of inductive families. One of them is
+% induction-recursion. An interesting question is to locate indexed
+% descriptions in the spectrum between inductive families and indexed
+% induction-recursion. Another popular extension we plan to consider is
+% to allow internal fixpoints and higher-kinded datatypes.
+% 
+% Also, we have presented a generic notion of syntax with variables,
+% thanks to the free monad construction. We would like to explore a
+% notion of syntax with binding. Interestingly, introducing internal
+% fixpoints or kinds would turn our universe into such syntax with
+% binding. Once again, levitation would reveal itself convenient by
+% providing generic tools to handle binding.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Appendices

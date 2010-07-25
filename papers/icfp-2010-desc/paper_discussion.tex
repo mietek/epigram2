@@ -1,5 +1,29 @@
-\section{Related work}
+\section{Discussion}
 
+
+In this paper, we have presented a universe of datatypes for a
+dependent type theory. We started from an unremarkable type theory
+with dependent functions and tuples, but relying on few other
+assumptions, especially where propositional equality is concerned.  We
+added finite enumeration sufficient to account for constructor choice,
+and then we built coding systems, first (as a learning experience) for
+simple ML-like inductive types, then for the indexed inductive
+families which dependently typed programmers in Agda, Coq and Epigram
+take for granted. We adopt a bidirectional type propagation mechanism
+to conceal artefacts of the encoding, giving a familiar and practicable
+constructor-based presentation to data.
+
+Crucially to our approach, we ensure that the codes describing
+datatypes inhabit a datatype with a code. In a stratified setting, we
+avoid paradox by ensuring that this type of codes lives uniformly one
+level above the types the codes describe. The adoption of ordinary
+data to describe types admits datatype-generic operations implemented
+just by ordinary programming. In working this way, we make
+considerable use of type equality modulo open computation, silently
+specialising the types of generic operations as far as the datatype
+code for any given usage is known.
+
+\subsection{Related work in Generic Programming}
 
 \begin{wstructure}
 !!! Need Help !!!
@@ -19,48 +43,52 @@
 
 Generic programming is a vast topic. We refer our reader to
 \citet{garcia:generic-comparative-study} for a broad overview of
-generic programming in various languages. In the sole context of
-Haskell, there is a myriad of proposals. These approaches are compared
-in \citet{hinze:generic-approach-comparative} and
-\citet{rodriguez:generic-libs-comparative}.
+generic programming in various languages. For Haskell alone, there is
+a myriad of proposals: 
+\citet{hinze:generic-approach-comparative} and
+\citet{rodriguez:generic-libs-comparative} provide useful comparative
+surveys.
 
 Our approach follows the polytypic programming style, as initiated
 by PolyP~\cite{jansson:polyp}. Indeed, we build generic functions by
-induction on pattern functors. Unlike PolyP, we do not have to resort
-to preprocessing: our datatypes are, natively, nothing but codes.
+induction on pattern functors, exploiting type-level computation
+to avoid the preprocessing phase: our
+datatypes are, natively, nothing but codes.
 
-We share with Generic Haskell the \emph{type-indexed datatype}
-approach~\cite{hinze:generic-haskell}, as exemplified by the free
-monad construction: from a datatype, we can compute new datatypes and
-equip them with their structure. Generic Haskell also features
-\emph{generic views}~\cite{holdermans:generic-view}, transparently
-transforming the structure of datatype definitions. An example is the
-tagged descriptions, presenting datatypes under a sum-of-sigmas
-angle. Unlike Generic Haskell, we do not have to modify the compiler
-to obtain views on datatypes: we can massage descriptions from inside
-our language.
+We have the \emph{type-indexed datatypes} of Generic
+Haskell~\cite{hinze:generic-haskell} for free.
+From one datatype, we can compute
+others and equip them with relevant structure: the free monad
+construction provides one example. Our approach to encoding datatypes
+as data also sustains \emph{generic
+  views}~\cite{holdermans:generic-view}, allowing us to rebias the
+presentation of datatypes conveniently. Tagged descriptions,
+giving us a sum-of-sigmas view, are a natural example.
 
 Unlike Generic Haskell, we do not support polykinded
 programming~\cite{hinze:polytypic-polykinded}. Our descriptions are
-limited to endofunctors on $\Set$ and $\Set^I$. While we could
-\emph{encode} higher-kinded datatypes, we do not plan to adopt this
-strategy. As future work, we plan to extend our universe to capture
-higher-kinded definitions and generic functions over them. For the
-same reason, arity-generic programming~\cite{weirich:arity-generic} is
-out of reach of our current presentation.
+limited to endofunctors on $\Set^I$. Whilst indexing is known
+to be sufficient to \emph{encode} a large class of higher-kinded
+datatypes~\citep{DBLP:conf/ifip2-1/AltenkirchM02}, we should rather
+hope to work in a more compositional style. We are free to write
+higher-order programs manipulating codes, but is not yet clear whether
+that is sufficient to deliver abstraction at higher kinds.
+Similarly, it will be interesting to see whether
+arity-generic programming~\cite{weirich:arity-generic} arises
+just by computing with our codes, or whether a richer abstraction is
+called for.
 
-Another generic programming paradigm is Scrap Your
-Boilerplate~\cite{spj:syb} (SYB). Our proposal is different in various
-ways. The corner stone of SYB is the \emph{spine} view of datatype
-constructors. A piece of data is a spine composed by a constructor
-applied to some arguments. SYB provides a combinator library to write
-generic functions over spines. This relies on a $\CN{Typeable}$
-type-class, allowing dynamic dispatch to datatype-specific
-operations. As a result, SYB is not reflexive: it is restricted to
-datatypes instantiating $\CN{Typeable}$. Moreover, it is limited to
-building generic functions, hence type-indexed datatypes cannot be
-implemented in this framework.
-
+The Scrap Your Boilerplate~\cite{spj:syb} (SYB) approach to generic
+programming offers a way to construct generic functions, based on
+dynamic type-testing via the $\CN{Typeable}$
+type class. SYB cannot compute types from codes, but its dynamic character
+does allow a more flexible \emph{ad hoc} approach to generic data
+traversal. By maintaining the correspondence between codes and types
+whilst supporting arbitrary inspection of codes, we pursue the same
+flexibility statically. The substitutive character of $\SYMBIDesc$
+may allow us to observe and exploit \emph{ad hoc} substructural
+relationships in data, but again, further work is needed if we
+are to make a proper comparison.
 
 \begin{wstructure}
     <- Generic in dependent types
@@ -69,11 +97,15 @@ implemented in this framework.
         <- Universes for generic prog \cite{benke:universe-generic-prog}
 \end{wstructure}
 
-Generic programming in dependent types is not new
-either. \citet{norell:msc-thesis} has given a formalization of
-polytypic programming in Alfa, a precursor of Agda. Similarly,
-\citet{verbruggen:polytype-prog-coq, verbruggen:polytype-coq} have
-developed a framework for polytypic programming in the Coq theorem
+\subsection{Generic Programming with Dependent Types}
+
+Generic programming is not new to dependent
+types. \citet{DBLP:conf/ifip2-1/AltenkirchM02} developed a universe
+of polykinded types in Lego;
+\citet{norell:msc-thesis} gave a formalization of
+polytypic programming in Alfa, a precursor to Agda;
+\citet{verbruggen:polytype-prog-coq, verbruggen:polytype-coq} provided
+a framework for polytypic programming in the Coq theorem
 prover. However, these works aim at \emph{modelling} PolyP or Generic
 Haskell in a dependently-typed setting for the purpose of proving
 correctness properties of Haskell code. Our approach is different in
@@ -88,14 +120,83 @@ our universe of indexed descriptions is equivalent to their universe
 of finitary indexed induction. This is not surprising, as we share the
 same source of inspiration, namely induction-recursion.
 
-However, we differ in several ways. First, their approach is
-generative: each universe extends the base type theory with both type
-formers and elimination rules. Thanks to levitation, we only rely on a
-generic induction and a specialised $\SYMBswitchD$. Second,
-the authors do not tackle the issue of \emph{programming} with
-codes. We have shown how to abstract away codes and give a convenient
-presentation to the developer. The authors often resort to an
-extensional equality, while we have given an equality-agnostic
-presentation. Beside, our universes are arranged so as to use
-definitional equality as much as possible. Hence, in practice, the
-developer is relieved from many proof obligations.
+However, we feel ready to offer a more radical prospectus. Their
+approach is generative: each universe extends the base type theory
+with both type formers and elimination rules. Thanks to levitation, we
+rely only on a generic induction and a specialised $\SYMBswitchD$,
+closing the type theory. We explore \emph{programming} with codes, but
+also how to conceal the encoding when writing `ordinary' programs.
+
+
+\subsection{Metatheoretical Status}
+
+The \(\Set:\Set\) approach we have taken in this paper is convenient
+from an experimental perspective, and it has allowed us to focus
+primarily on the encoding of universes, leaving the question
+of stratification (and with it, consistency, totality,
+and decidability of type checking) to one side. However, we must
+surely face up to the latter, especially since we have taken up the
+habit of constructing `the set of all sets'. A proper account requires
+a concrete proposal for a system of stratified universes which allows
+us to make `level-polymorphic' constructions, and we are actively
+pursuing such a proposal. We hope soon to have something to prove.
+
+In the meantime, we can gain some confidence by systematically
+embedding predicative fragments of our theory within
+systems which already offer a universe hierarchy. We can, at the
+very least, confirm that in UTT-style theories with conventional
+inductive families of types~\citep{luo:utt}, as found in Coq
+(and in Agda if one avoids experimental extensions), we build the
+tower of universes we propose, cut off at an arbitrary height.
+It is correspondingly clear that some such system can be made to
+work, or else that other, longer-standing tools are troubled.
+
+A metatheoretical issue open at time of writing concerns the
+size of the \emph{index} set \(\V{I}\) in \(\IDesc{\V{I}}\). Both Agda
+and recent versions of Coq allow inductive families with \emph{large}
+indices, effectively allowing `higher-kind' fixpoints on
+\(\Set^{\Set}\) and more. They retain the safeguard that the types of
+\emph{substructures} must be as small as the inductively
+defined superstructure. This liberalisation allows us large index sets
+in our models, but whilst it offers no obvious route to paradox by
+smuggling a large universe inside a small type, it is not yet known
+to be safe. We can restrict \(\V{I}\) as necessary to avoid
+paradox, provided \(\Unit\), used to index \(\SYMBIDesc\) itself, is
+`small'.
+
+\subsection{Further Work}
+
+Apart from the need to nail down a stratified version of the system and
+its metatheory, we face plenty of further problems and opportunities.
+Although we have certainly covered Luo's criteria for inductive
+families~\cite{luo:utt}, there are several dimensions in which to
+consider expanding our universe.
+
+Firstly, we seek to encompass
+\emph{inductive-recursive} datatype families~\cite{dybjer:iir}, allowing
+us to interleave the definition and interpretation of data in intricate
+and powerful ways. This interleaving seems particularly useful when
+reflecting the syntax of dependent type systems.
+
+Secondly, we should very much like to extend our
+universe with a codes for internal fixpoints, as
+in~\cite{DBLP:conf/types/MorrisAM04}. The external knot-tying
+approach we have taken here makes types like `trees with lists of subtrees'
+more trouble than they should be. Moreover, if we allow the alternation
+of least and greatest fixpoints, we should expect to gain types which are
+not readily encoded with one external \(\SYMBIMu\).
+
+Thirdly, it would be fascinating to extend our universe with dedicated
+support for syntax with \emph{binding}, not least because a universe
+with internal fixpoints has such a syntax. Harper and Licata have
+demonstrated the potential for and of such an
+encoding~\citep{DBLP:conf/icfp/LicataH09}, boldly encoding the invalid
+definitions along with the valid. A more conservative strategy might
+be to offer improved support for datatypes indexed by an extensible
+context of free variables, with the associated free monad structure
+avoiding capture as shown by~\citet{altenkirch:monadic-lambda}.
+
+Lastly, we must ask how our new presentation of datatypes
+should affect the tools we use to build software. It is not enough to
+change the game: we must enable better play. If datatypes are data,
+what is design?
