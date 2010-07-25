@@ -1,12 +1,47 @@
 ################
 #### PDFLaTeX
 
-LATEXC = pdflatex
+PDFTEX = pdflatex
+PSTEX = latex
 LATEXOPTS = #-interaction=nonstopmode
 
 
-paper : paper.tex paper.bib
-	$(LATEXC) $(LATEXOPTS) paper
-	bibtex paper
-	$(LATEXC) $(LATEXOPTS) paper
-	if egrep Rerun paper.log; then $(LATEXC) $(LATEXOPTS) paper; fi
+################
+## Sources
+
+SRCS=paper.tex
+DEPS := $(wildcard *.tex)
+
+################
+## Make machinery
+
+.SUFFIXES : .tex .pdf .ps
+
+DOCPS := $(SRCS:.tex=.pdf)
+DOCPDF := $(SRCS:.tex=.ps)
+
+.tex.pdf:
+	$(PDFTEX) $<
+	if egrep "\bibliography" $<; then bibtex $*; fi
+	$(PDFTEX) $<
+	if egrep Rerun $*.log; then $(PDFTEX) $< ; fi
+
+.tex.ps:
+	$(PSTEX) $<
+	if egrep "\bibliography" $<; then bibtex $*; fi
+	$(PSTEX) $<
+	if egrep Rerun $*.log; then $(PSTEX) $< ; fi
+	dvips -t letter $*.dvi
+
+################
+## Targets
+
+all: paper
+
+paper.pdf: $(DEPS) pig.sty paper.bib
+
+paper.ps: $(DEPS) pig.sty paper.bib
+
+paper: $(DOCPDF) $(DOCPS)
+
+
