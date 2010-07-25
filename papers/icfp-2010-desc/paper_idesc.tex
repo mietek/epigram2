@@ -602,144 +602,6 @@ for tagged descriptions, except that it must also append the two parts.
 We again write $\muide{\V{I}}{\V{D}}$ for
 $\IMu{\V{I}}{(\toIDesc{\V{D}})}$.
 
-
-\subsection{Free indexed monad}
-
-\begin{wstructure}
-<- Variation on a theme: free imonad construction
-    <- Recall existence of generic free monad construction
-    -> Present its generalisation to IDesc [equation]
-        <- \I -> IDesc I as describing an indexed endofunctor
-        <- Free monad construction
-    -> Still a suitable, generic notion of substitution
-        <- show type signature
-        <- show implementation?? (space! space!)
-\end{wstructure}
-
-In Section~\ref{sec:desc-free-monad}, we have built a free monad
-operation for simple descriptions. The process is similar in the
-indexed world. Namely, given an indexed functor, we derive the indexed
-functor coding its free monad: \note{pwm: Whoa there. Maybe we should
-  say something about IMonads in general before we get to this point?}
-%
-\[\stk{
-\begin{array}{ll}
-\FreeIMonad{\_}{} : & _{\PI{\V{I}}{\Set}}
-                     \PITEL{\V{R}}{\TagIDesc{\V{I}}} 
-                     \PITEL{\V{X}}{\V{I} \To \Set}\To 
-                      \TagIDesc{\V{I}}
-\end{array} \\
-\FreeIMonad{\pair{\V{E}}{\V{F}}{}}{\V{I}}{\V{R}} \mapsto
-    \pair{\pair{\ListCons{\SYMBDVar}{(\fst{\V{E}})}} 
-               {\LAM{\V{i}}
-                \pair{\DConst{(\V{R}\: \V{i})}}
-                     {(\snd{\V{E}})\: \V{i}}{}}{}}
-         {\V{F}}{}
-}\]
-
-
-\newcommand{\substI}{\F{substI}}
-
-
-Just as in the universe of descriptions, this construction comes with
-an obvious \return and a substitution operation, the \bind. Its
-definition is the following:
-%
-\[\stk{
-\begin{array}{@{}ll}
-\substI : & _{\PI{\V{I}}{\Set}}
-            \PI{\V{X}, \V{Y}}{\V{I} \To \Set}
-            \PITEL{\V{R}}{\TagIDesc{\V{I}}} \\
-          & (\V{X} \DotTo 
-             \muide{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}) \To 
-             \muide{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{X}})} \DotTo
-             \muide{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}
-\end{array} \\
-\substI\: \V{X}\: \V{Y}\: \V{R}\: \V{\sigma}\: \V{i}\: \V{t} \mapsto \\
-\qquad    \cataI\: (\toIDesc{\FreeIMonad{\V{R}}{}{\V{X}}})\:
-                      (\muide{\V{Y}}{(\FreeIMonad{\V{R}}{}{\V{Y}})})\:
-                      (\F{applyI}\: \V{R}\: \V{X}\: \V{Y}\: \V{\sigma})\:
-                      \V{i}\:
-                      \V{t} 
-}\]
-% 
-Where  $\F{applyI}$ is defined as follow:
-%
-\[\stk{
-\begin{array}{@{}ll}
-\F{applyI} : & _{\PI{\V{I}}{\Set}}
-            \PITEL{\V{R}}{\TagIDesc{\V{I}}}
-            \PI{\V{X}, \V{Y}}{\V{I} \To \Set} \\
-          & (\V{X} \DotTo \muide{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}{}) \To \\
-          & \idescop{\toIDesc{\FreeIMonad{\V{R}}
-                                         {\V{I}}
-                                         {\V{X}}}}
-                    {\V{I}}
-                    {\muide{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}} \DotTo 
-            \muide{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}{}
-\end{array} \\
-\begin{array}{@{}l@{\:\mapsto\:\:}l}
-\F{applyI}\: \V{R}\: \V{X}\: \V{Y}\: \V{\sigma}\: \V{i}\: \pair{\SYMBDVar}{\V{x}}{}   & \V{\sigma}\: \V{i}\: \V{x}                   \\
-\F{applyI}\: \V{R}\: \V{X}\: \V{Y}\: \V{\sigma}\: \V{i}\: \pair{\V{c}}{\V{ys}}{} & \Con{\pair{\V{c}}{\V{ys}}{}}
-\end{array}
-}\]
- 
-The subscripted types corresponds to implicit arguments that can be
-automatically inferred, hence do not have to be typed in. Let us now
-consider two examples of free indexed monads.
-
-
-\paragraph{Indexed descriptions:}
-
-An interesting instance of free monad is $\SYMBIDesc$ itself. Indeed,
-$\SYMBDVar$ is nothing but the \return. The remaining constructors form
-the carrier functor, trivially indexed by $\Unit$. The carrier functor
-is described as follow:
-%
-\[\stk{
-\IDescFreeD : \ATagIDesc{\Unit} \\
-\begin{array}{@{}ll}
-\IDescFreeD \mapsto \bigRedBracket{\begin{array}{l}
-                                \sqr{\SYMBDConst\:\:
-                                     \DProd\:\:
-                                     \SYMBDSigma\:\:
-                                     \SYMBDPi} \red{,}\\
-                                  \LAM{\_}\bigRedBracket{\begin{array}{l}
-                                        \DConst{\Set}               \\
-                                        \DProd{\DVar{\Void}}{\DVar{\Void}}  \\
-                                        \DSigma{\Set}{(\LAM{\V{S}} \DPi{\V{S}}{(\LAM{\_} \DVar{\Void})})} \\
-                                        \DSigma{\Set}{(\LAM{\V{S}} \DPi{\V{S}}{(\LAM{\_} \DVar{\Void})})}
-                                    \end{array}}\end{array}}
-\end{array}
-}\]
-%
-Then, we get $\IDesc$ by building its free monad:
-%
-\[\stk{
-\IDescD : \PI{\V{I}}{\Set} \TagIDesc{\Unit} \\
-\IDescD\: \V{I} \mapsto \FreeIMonad{\red{[}\IDescFreeD\red{,[}\LAM{\_}\sqr{}\red{,}\LAM{\_}\red{[]]]}}{\Unit}\LAM{\_}\V{I}
-}\]
-
-The fact that indexed descriptions are closed under substitution
-is potentially of considerable utility, if we can exploit this fact:
-\[
-\idescop{\V{\sigma} \V{D}}{\V{J}}{\V{X}} 
-    \mapsto 
-        \idescop{\V{D}}
-                {\V{I}}
-                {\LAM{\V{i}}
-                     {\idescop{\V{\sigma} \V{i}}
-                              {\V{J}}
-                              {\V{X}}}}
-        \quad \mbox{where}\;\V{\sigma}:\V{I}\To\IDesc{\V{J}}
-\]
-By observing that a description can be decomposed via substitution, we
-split its meaning into a superstructure of substructures, e.g. a
-`database containing salaries', ready for traversal operations
-preserving the former and targeting the latter. We shall now turn to
-some examples of indexed descriptions, as well as a practical use of
-free monad construction.
- 
 \paragraph{Typed expressions:}
 
 \begin{wstructure}
@@ -795,8 +657,8 @@ two types, natural numbers and booleans:
 \newcommand{\leHost}{\mathop{\green{\leq_{\mathrm{H}}}}}
 
 
-This language has values, conditional
-expression, addition and comparison. Informally, their types are:
+This language has values, conditional expression, addition and
+comparison. Informally, their types are:
 %
 \[
 \begin{array}{l@{\::\:\:}l}
@@ -813,6 +675,7 @@ expression, addition and comparison. Informally, their types are:
 The function $\SYMBVal$ interprets object language types in the
 host language, so that arguments to $\SYMBEval$ fit their
 expected type.
+%
 \[\stk{
 \SYMBVal : \Ty \To \Set \\
 \begin{array}{@{}l@{\:\mapsto\:\:}l}
@@ -820,16 +683,13 @@ expected type.
 \Val{\Ebool}  & \Bool
 \end{array}
 }\]
-We take $\Nat$ and $\Bool$ to represent
-natural numbers and Booleans in the host language, equipped with
-addition $\plusHost$ and comparison $\leHost$.
+%
+We take $\Nat$ and $\Bool$ to represent natural numbers and Booleans
+in the host language, equipped with addition $\plusHost$ and
+comparison $\leHost$.
 
-We describe our syntax in two steps. First, we give the pattern
-functor of the free monad, defining the operators of the
-language. Second, we apply the free monad construction to obtain a
-language of closed terms and a language of open terms. The operations
-are described by a tagged indexed description, indexing over object
-language types $\Ty$. We note that some constructors are always
+We express our syntax as a tagged indexed description, indexing over
+object language types $\Ty$. We note that some constructors are always
 available, namely $\SYMBEval$ and $\SYMBEcond$. On the other hand,
 $\SYMBEplus$ and $\SYMBEle$ constructors are index-dependent, with
 $\SYMBEplus$ available just when building a $\Enat$, $\SYMBEle$ just
@@ -872,6 +732,147 @@ selectively offering $\SYMBEplus$ or $\SYMBEle$.
 
 %%%\end{figure}
 
+\newcommand{\evalH}{\F{eval}_{\green{\Downarrow}}}
+\newcommand{\evalOne}{\F{eval}_{\green{\downarrow}}}
+
+Given the syntax, let us supply the semantics. We implement an
+evaluator as a catamorphism:
+%
+\[\stk{
+\evalH : \PI{\V{ty}}{\Ty} 
+         \muide{\Ty}{\HExprD}\: \V{ty} \To
+         \Val{\V{ty}} \\
+\evalH\: \V{ty}\: \V{term} \mapsto \cataI_{\Ty} \:
+                                 (\toIDesc{\HExprD})\: 
+                                 \SYMBVal\: 
+                                 \evalOne\: 
+                                 \V{ty}\: 
+                                 \V{term}
+}\]
+%
+To finish the job, we must supply the algebra which implements a single
+step of evaluation, given subexpressions evaluated already.
+%
+\[\stk{
+\evalOne : \PI{\V{ty}}{\Ty}
+ \idescop{(\toIDesc{\HExprD})\:\V{ty}}{\Ty}{\SYMBVal}
+           \To {\Val{\V{ty}}} \\
+\begin{array}{@{}l@{}c@{}l@{\:\mapsto\:\:}l}
+\evalOne\: & \_\: & (\SYMBEval\;\V{x})                                            & \V{x} \\
+\evalOne\: & \_\: & (\SYMBEcond\:\BoolTrue\:\V{x}\:\_)   & \V{x} \\
+\evalOne\: & \_\: & (\SYMBEcond\:\BoolFalse\:\_\:\V{y})  & \V{y} \\
+\evalOne\: & \Enat\: & (\SYMBEplus\:\V{x}\:\V{y})   & \V{x} \plusHost \V{y} \\
+\evalOne\: & \Ebool\: & (\SYMBEle\:\V{x}\:\V{y})  & \V{x} \leHost \V{y} 
+\end{array}
+}\]
+
+\begin{wstructure}
+    /> Closed term
+        <- only constants and operations on them
+        -> Extend Val with Var : Ty -> Set, mapping to EnumU
+            -> Open term
+            -> Language of well-typed terms
+                <- By construction
+\end{wstructure}
+
+Hence, we have a type-safe syntax and a tagless interpreter for our
+language, in the spirit
+of~\citet{augustsson.carlsson:dependent.interpreter}, with help from
+the generic catamorphism. However, so far, we are only able to define
+and manipulate \emph{closed} terms. Adding variables, it is possible
+to build and manipulate \emph{open} terms, that is, terms in a
+context. We shall get this representation, for free, thanks to the
+\emph{free indexed monad} construction.
+
+
+\subsection{Free indexed monad}
+
+\begin{wstructure}
+<- Variation on a theme: free imonad construction
+    <- Recall existence of generic free monad construction
+    -> Present its generalisation to IDesc [equation]
+        <- \I -> IDesc I as describing an indexed endofunctor
+        <- Free monad construction
+    -> Still a suitable, generic notion of substitution
+        <- show type signature
+        <- show implementation?? (space! space!)
+\end{wstructure}
+
+In Section~\ref{sec:desc-free-monad}, we have built a free monad
+operation for simple descriptions. The process is similar in the
+indexed world. Namely, given an indexed functor, we derive the indexed
+functor coding its free monad: \note{pwm: Whoa there. Maybe we should
+  say something about IMonads in general before we get to this point?}
+%
+\[\stk{
+\begin{array}{ll}
+\FreeIMonad{\_}{} : & _{\PI{\V{I}}{\Set}}
+                     \PITEL{\V{R}}{\TagIDesc{\V{I}}} 
+                     \PITEL{\V{X}}{\V{I} \To \Set}\To 
+                      \TagIDesc{\V{I}}
+\end{array} \\
+\FreeIMonad{\pair{\V{E}}{\V{F}}{}}{\V{I}}{\V{R}} \mapsto
+    \pair{\pair{\ListCons{\SYMBDVar}{(\fst{\V{E}})}} 
+               {\LAM{\V{i}}
+                \pair{\DConst{(\V{R}\: \V{i})}}
+                     {(\snd{\V{E}})\: \V{i}}{}}{}}
+         {\V{F}}{}
+}\]
+
+
+\newcommand{\substI}{\F{substI}}
+
+
+Just as in the universe of descriptions, this construction comes with
+an obvious \return and a substitution operation, the \bind. Its
+definition is the following:
+%
+\[\stk{
+\begin{array}{@{}ll}
+\substI : & _{\PI{\V{I}}{\Set}}
+            \PI{\V{X}, \V{Y}}{\V{I} \To \Set}
+            \PITEL{\V{R}}{\TagIDesc{\V{I}}} \\
+          & (\V{X} \DotTo 
+             \muide{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}) \To 
+             \muide{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{X}})} \DotTo
+             \muide{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}
+\end{array} \\
+\substI\: \V{X}\: \V{Y}\: \V{R}\: \V{\sigma}\: \V{i}\: \V{t} \mapsto \\
+\qquad    \cataI_{\V{I}}\: (\toIDesc{\FreeIMonad{\V{R}}{}{\V{X}}})\:
+                      (\muide{\V{Y}}{(\FreeIMonad{\V{R}}{}{\V{Y}})})\:
+                      (\F{applyI}\: \V{R}\: \V{X}\: \V{Y}\: \V{\sigma})\:
+                      \V{i}\:
+                      \V{t} 
+}\]
+% 
+Where  $\F{applyI}$ is defined as follow:
+%
+\[\stk{
+\begin{array}{@{}ll}
+\F{applyI} : & _{\PI{\V{I}}{\Set}}
+            \PITEL{\V{R}}{\TagIDesc{\V{I}}}
+            \PI{\V{X}, \V{Y}}{\V{I} \To \Set} \\
+          & (\V{X} \DotTo \muide{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}{}) \To \\
+          & \idescop{\toIDesc{\FreeIMonad{\V{R}}
+                                         {\V{I}}
+                                         {\V{X}}}}
+                    {\V{I}}
+                    {\muide{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}} \DotTo 
+            \muide{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}{}
+\end{array} \\
+\begin{array}{@{}l@{\:\mapsto\:\:}l}
+\F{applyI}\: \V{R}\: \V{X}\: \V{Y}\: \V{\sigma}\: \V{i}\: \pair{\SYMBDVar}{\V{x}}{}   & \V{\sigma}\: \V{i}\: \V{x}                   \\
+\F{applyI}\: \V{R}\: \V{X}\: \V{Y}\: \V{\sigma}\: \V{i}\: \pair{\V{c}}{\V{ys}}{} & \Con{\pair{\V{c}}{\V{ys}}{}}
+\end{array}
+}\]
+ 
+The subscripted types corresponds to implicit arguments that can be
+automatically inferred, hence do not have to be typed in. Let us now
+consider two examples of free indexed monads.
+
+
+\paragraph{Typed expressions:}
+
 \begin{wstructure}
     /> Closed term
         <- only constants and operations on them
@@ -891,10 +892,11 @@ selectively offering $\SYMBEplus$ or $\SYMBEle$.
 \newcommand{\SYMBlookup}{\F{lookup}}
 \newcommand{\lookup}[4]{\SYMBlookup\: #1\: #2\: #3\: #4}
 
-However, so far, we are only able to define and manipulate
-\emph{closed} terms. Adding variables, it is possible to build and
-manipulate \emph{open} terms, that is, terms in a context. The context
-is represented by a snoc-list of types:
+In the previous section, we have presented a language of closed
+arithmetic expressions. Using the free monad construction, we are
+going to extend this construction to open terms. An open term is
+defined with respect to a context, represented by a snoc-list of
+types:
 %
 \[
 \begin{array}{@{}l@{\::\:\:}l@{\quad}l}
@@ -951,6 +953,8 @@ semantics:
 \newcommand{\openTerm}[1]{\SYMBopenTerm\: #1}
 \newcommand{\closeTerm}{\F{closeTm}}
 
+\newcommand{\update}{\F{update}}
+
 Consequently, taking the free monad of \(\HExprD\) by \(\SYMBVar\:
 \V{G}\), we obtain the language of open terms in a context \(\V{G}\):
 %
@@ -958,8 +962,8 @@ Consequently, taking the free monad of \(\HExprD\) by \(\SYMBVar\:
 \openTerm{\V{G}} \mapsto \FreeIMonad{\HExprD}{\Ty}{(\SYMBVar\:\V{G})}
 \]
 %
-The language of closed terms corresponds to the free monad assigning
-an empty set of values to variables
+In this setting, the language of closed terms corresponds to the free
+monad assigning an empty set of values to variables
 %
 \[
 \closeTerm \mapsto \FreeIMonad{\HExprD}{\Ty}{\SYMBEmpty}
@@ -974,48 +978,25 @@ With
 \end{array}
 }\]
 %
-
-
-\newcommand{\evalH}{\F{eval}_{\green{\Downarrow}}}
-\newcommand{\evalOne}{\F{eval}_{\green{\downarrow}}}
-
-Given the syntax, let us supply the semantics of closed terms. We
-implement an evaluator as a catamorphism:
+Obviously, \(\closeTerm\) and \(\HExprD\) describe isomorphic
+datatypes. For instance, you can update your old \(\HExprD\) to a
+shiny \(\closeTerm\) with \(\update\):
 %
 \[\stk{
-\evalH : \PI{\V{ty}}{\Ty} 
-           \muide{\Ty}{\closeTerm}{\:\V{ty}} \To
-           \Val{\V{ty}} \\
-\evalH\: \V{ty}\: \V{tm} \mapsto \cataI_{\Ty} \:
-                                 (\toIDesc{\closeTerm})\: 
-                                 \SYMBVal\: 
-                                 \evalOne\: 
-                                 \V{ty}\: 
-                                 \V{tm}
-}\]
-%
-To finish the job, we must supply the algebra which implements a single
-step of evaluation, given subexpressions evaluated already.
-%
-\[\stk{
-\evalOne : \PI{\V{ty}}{\Ty}
- \idescop{(\toIDesc{\closeTerm})\:\V{ty}}{\Ty}{\SYMBVal}
-           \To {\Val{\V{ty}}} \\
-\begin{array}{@{}l@{}c@{}l@{\:\mapsto\:\:}l}
-\evalOne\: & \_\: & (\SYMBEval\;\V{x})                   & \V{x} \\
-\evalOne\: & \_\: & (\SYMBEcond\:\BoolTrue\:\V{x}\:\_)   & \V{x} \\
-\evalOne\: & \_\: & (\SYMBEcond\:\BoolFalse\:\_\:\V{y})  & \V{y} \\
-\evalOne\: & \Enat\: & (\SYMBEplus\:\V{x}\:\V{y})   & \V{x} \plusHost \V{y} \\
-\evalOne\: & \Ebool\: & (\SYMBEle\:\V{x}\:\V{y})  & \V{x} \leHost \V{y} 
+\update : \muide{\Ty}{\HExprD} \DotTo \muide{\Ty}{\closeTerm} \\
+\begin{array}{@{}l@{}l}
+\update\: \V{ty}\: \V{tm} \mapsto \cataI_{\Ty}\: & \Ty\:
+                                                  (\toIDesc{\HExprD})\:
+                                                  (\muide{\Ty}{\closeTerm})\: \\
+                                                & (\LAM{\_} \LAM{\pair{\V{tag}}{\V{tm}}{}} \Con{\pair{\Su{\V{tag}}}{\V{tm}}{}})\:
+                                                  \V{ty}\:
+                                                  \V{tm}
 \end{array}
 }\]
-
-
-Hence, we have a type-safe syntax and a tagless interpreter for our
-closed term language, in the spirit
-of~\citet{augustsson.carlsson:dependent.interpreter}, with help from
-the generic catamorphism.
-
+% 
+The other direction of the isomorphism is straightforward, the
+$\SYMBDVar$ case being impossible. Therefore, we are entitled to
+reuse the $\evalH$ function to define the semantics of $\closeTerm$.
 
 \newcommand{\discharge}{\F{discharge}}
 
@@ -1091,3 +1072,55 @@ open terms. Using its monadic structure, we have implemented the
 interpreter for open terms in context. Without much effort, we
 have described the syntax of a well-typed language, together with its
 semantics.
+
+
+\paragraph{Indexed descriptions:}
+
+An interesting instance of free monad is $\SYMBIDesc$ itself. Indeed,
+$\SYMBDVar$ is nothing but the \return. The remaining constructors form
+the carrier functor, trivially indexed by $\Unit$. The carrier functor
+is described as follow:
+%
+\[\stk{
+\IDescFreeD : \ATagIDesc{\Unit} \\
+\begin{array}{@{}ll}
+\IDescFreeD \mapsto \bigRedBracket{\begin{array}{l}
+                                \sqr{\SYMBDConst\:\:
+                                     \DProd\:\:
+                                     \SYMBDSigma\:\:
+                                     \SYMBDPi} \red{,}\\
+                                  \LAM{\_}\bigRedBracket{\begin{array}{l}
+                                        \DConst{\Set}               \\
+                                        \DProd{\DVar{\Void}}{\DVar{\Void}}  \\
+                                        \DSigma{\Set}{(\LAM{\V{S}} \DPi{\V{S}}{(\LAM{\_} \DVar{\Void})})} \\
+                                        \DSigma{\Set}{(\LAM{\V{S}} \DPi{\V{S}}{(\LAM{\_} \DVar{\Void})})}
+                                    \end{array}}\end{array}}
+\end{array}
+}\]
+%
+Then, we get $\IDesc$ by building its free monad:
+%
+\[\stk{
+\IDescD : \PI{\V{I}}{\Set} \TagIDesc{\Unit} \\
+\IDescD\: \V{I} \mapsto \FreeIMonad{\red{[}\IDescFreeD\red{,[}\LAM{\_}\sqr{}\red{,}\LAM{\_}\red{[]]]}}{\Unit}\LAM{\_}\V{I}
+}\]
+
+The fact that indexed descriptions are closed under substitution
+is potentially of considerable utility, if we can exploit this fact:
+\[
+\idescop{\V{\sigma} \V{D}}{\V{J}}{\V{X}} 
+    \mapsto 
+        \idescop{\V{D}}
+                {\V{I}}
+                {\LAM{\V{i}}
+                     {\idescop{\V{\sigma} \V{i}}
+                              {\V{J}}
+                              {\V{X}}}}
+        \quad \mbox{where}\;\V{\sigma}:\V{I}\To\IDesc{\V{J}}
+\]
+By observing that a description can be decomposed via substitution, we
+split its meaning into a superstructure of substructures, e.g. a
+`database containing salaries', ready for traversal operations
+preserving the former and targeting the latter. We shall now turn to
+some practical use of the free monad construction.
+ 
