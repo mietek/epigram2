@@ -564,7 +564,8 @@ can be trusted, all constraints are dropped.
 
 \paragraph{Tagged indexed descriptions:}
 
-\newcommand{\muide}[2]{\D{\({\mu}^{\!+}\)}\!\!_{#1}\:#2}
+\newcommand{\SYMBmuide}{\D{\({\mu}^{\!+}\)}\xspace}
+\newcommand{\muide}[2]{\SYMBmuide\!\!_{#1}\:#2}
 
 Let us reflect this index analysis technique.
 We can divide a description of tagged indexed data in two: first, the
@@ -650,13 +651,13 @@ definition is the following:
             \PI{\V{X}, \V{Y}}{\V{I} \To \Set}
             \PITEL{\V{R}}{\TagIDesc{\V{I}}} \\
           & (\V{X} \DotTo 
-             \SYMBIMu_{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}) \To 
-            \SYMBIMu_{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{X}})} \DotTo
-            \SYMBIMu_{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}
+             \muide{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}) \To 
+             \muide{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{X}})} \DotTo
+             \muide{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}
 \end{array} \\
 \substI\: \V{X}\: \V{Y}\: \V{R}\: \V{\sigma}\: \V{i}\: \V{t} \mapsto \\
 \qquad    \cataI\: (\toIDesc{\FreeIMonad{\V{R}}{}{\V{X}}})\:
-                      \SYMBIMu{(\FreeIMonad{\V{R}}{}{\V{Y}})}\:
+                      (\muide{\V{Y}}{(\FreeIMonad{\V{R}}{}{\V{Y}})})\:
                       (\F{applyI}\: \V{R}\: \V{X}\: \V{Y}\: \V{\sigma})\:
                       \V{i}\:
                       \V{t} 
@@ -669,13 +670,13 @@ Where  $\F{applyI}$ is defined as follow:
 \F{applyI} : & _{\PI{\V{I}}{\Set}}
             \PITEL{\V{R}}{\TagIDesc{\V{I}}}
             \PI{\V{X}, \V{Y}}{\V{I} \To \Set} \\
-          & (\V{X} \DotTo \IMu{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}{}) \To \\
+          & (\V{X} \DotTo \muide{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}{}) \To \\
           & \idescop{\toIDesc{\FreeIMonad{\V{R}}
                                          {\V{I}}
                                          {\V{X}}}}
                     {\V{I}}
-                    {\IMu{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}} \DotTo 
-            \IMu{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}{}
+                    {\muide{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}} \DotTo 
+            \muide{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}{}
 \end{array} \\
 \begin{array}{@{}l@{\:\mapsto\:\:}l}
 \F{applyI}\: \V{R}\: \V{X}\: \V{Y}\: \V{\sigma}\: \V{i}\: \pair{\SYMBDVar}{\V{x}}{}   & \V{\sigma}\: \V{i}\: \V{x}                   \\
@@ -983,7 +984,7 @@ implement an evaluator as a catamorphism:
 %
 \[\stk{
 \evalH : \PI{\V{ty}}{\Ty} 
-           \IMu{\Ty}{\closeTerm}{\V{ty}} \To
+           \muide{\Ty}{\closeTerm}{\:\V{ty}} \To
            \Val{\V{ty}} \\
 \evalH\: \V{ty}\: \V{tm} \mapsto \cataI_{\Ty} \:
                                  (\toIDesc{\closeTerm})\: 
@@ -1036,7 +1037,7 @@ following function:
 \discharge : & \PI{\V{G}}{\Ctxt}
                \Env{\V{G}} \To 
                \Var{\V{G}}{} \DotTo
-               \IMu{\Ty}{\closeTerm}{}
+               \muide{\Ty}{\closeTerm}
 \end{array} \\
 \begin{array}{@{}l@{\:\mapsto\:\:}l}
 \discharge\: \V{G}\: \V{g}\: \V{ty}\: \V{v} &
@@ -1063,9 +1064,9 @@ type guiding us:
 \begin{array}{@{}ll}
 \substH  : & \PI{\V{G}}{\Ctxt} \\
            & (\Var{\V{G}}{} \DotTo
-              \IMu{\Ty}{\closeTerm}{}) \DotTo \\
-          & \IMu{\Ty}{(\openTerm{\V{G}})}{} \DotTo 
-            \IMu{\Ty}{\closeTerm}{}
+              \muide{\Ty}{\closeTerm}) \DotTo \\
+          & \muide{\Ty}{(\openTerm{\V{G}})} \DotTo 
+            \muide{\Ty}{\closeTerm}
 \end{array} \\
 \substH\: \V{G}\:
           \V{ty}\:          
