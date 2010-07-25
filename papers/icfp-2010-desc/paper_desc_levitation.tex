@@ -3,12 +3,12 @@
 
 In this section, we will fulfil our promises and show how we implement
 the signatures, first for the enumerations, and then for the codes of
-the $\Desc$ universe.  Persuading this to perform was a perilous
+the $\Desc^n$ universe.  Persuading these programs to perform was a perilous
 pedagogical peregrination for the protagonist.  Our method was indeed to
 hardwire constants implementing the signatures specified above, in the
 first instance, but then attempt to replace them, step by step, with
 \emph{definitions}: ``Is \(2+2\) still \(4\)?'', ``No, it's a loop!''.
-But we did find a way, so now we hope to convey to the reader the
+But we did find a way, so now we hope to convey to you the
 dizzy feeling of levitation, without the falling.
 
 
@@ -23,10 +23,10 @@ dizzy feeling of levitation, without the falling.
 \end{wstructure}
 
 In Section~\ref{sec:finite-sets}, we specified the
-finite sets of tags. We are going to implement the $\EnumU$ type former and
-its constructors. Recall:
+finite sets of tags. We are going to implement (at every universe level)
+the $\EnumU$ type former and its constructors. Recall:
 %
-\[\Type{\EnumU}\qquad\Bhab{\NilE}{\EnumU}\qquad
+\[\Type{\EnumU}^n\qquad\Bhab{\NilE}{\EnumU}\qquad
 \Bhab{\ConsE{(\Bhab{\M{t}}{\UId})}{(\Bhab{\M{E}}{\EnumU})}}{\EnumU}
 \]
 %
@@ -55,8 +55,8 @@ implement:
     -> Anything else remains the same (switch, EnumT, 0, 1+)
 \end{wstructure}
 
-Let us consider the consequences. We discover that the type
-theory does not need to be extended with a special type former $\EnumU$,
+Let us consider the consequences. We find that the type
+theory does not need a special type former $\EnumU$,
 or special constructors $\NilE$ and $\SYMBConsE$. 
 Moreover, the $\spi{\M{E}}{\M{P}}$ operator, computing tuple types
 of \(\M{P}\)s by recursion on \(\M{E}\) need not be hardwired: we can
@@ -116,11 +116,11 @@ condense the entire naming scheme of datatypes \emph{into itself}.
 \end{wstructure}
 
 We shall now fulfil our implementation promises, encoding the universe
-of descriptions. In and of itself, the codes, $\Desc$, is nothing but
-a datatype. We are in the same situation as with $\EnumU$: we ought to
-be able to describe the codes of $\Desc$ in $\Desc$ itself. Hence,
-this code would be a first-class citizen, born with the standard,
-generic equipment of datatypes.
+of descriptions. $\Desc$ is already some sort of datatype, but we are
+in the same situation as with $\EnumU$: we ought to be able to
+describe it, coding of $\Desc^n$ in $\Desc^{n+1}$, spiralling
+upwards. Hence, this code would be a first-class citizen, born with
+the generic equipment of datatypes.
 
 \subsubsection{First attempt}
 
@@ -135,11 +135,11 @@ generic equipment of datatypes.
 Our first attempt gets stuck quite quickly:
 %
 \[\stk{
-\DescD : \Desc \\
-\DescD \mapsto
+\DescD^n : \Desc^{n+1} \\
+\DescD^n \mapsto
   \tada{\stkm{\DUnit\\ \SYMBDSigma\\ \SYMBDIndx}}
        {\stkm{ \DUnit                                \\
-         \DSigma{\Set}{\LAM{\V{S}} \SHED}      \\
+         \DSigma{\Set^n}{\LAM{\V{S}} \SHED}      \\
          \DIndx{\DUnit}    }                    } \\
 %\begin{array}{@{}ll}
 %\DescD \mapsto \DSigma{\!}{\!} & (\EnumT{[ \DUnit, \DSigma{\!}{\!}, \DIndx{\!} ]})  \\
@@ -154,23 +154,23 @@ Our first attempt gets stuck quite quickly:
 %
 Let us explain where we stand. Much as
 we have done so far, we first offer a constructor choice from
-$\DUnit$, $\SYMBDSigma$, and $\SYMBDIndx$. The reader will notice
-that the `tagged' notation we have used for the $\Desc$ constructors now
-fully makes sense: these were actually the tags we are defining.
+$\DUnit$, $\SYMBDSigma$, and $\SYMBDIndx$. You may notice
+that the `tagged' notation we have used for the $\Desc^n$ constructors now
+fits the facts: these were actually the tags we are defining.
 For $\DUnit$, we immediately reach the end of the description. For
 $\SYMBDIndx$, there is a single recursive argument. Describing
 $\SYMBDSigma$ is problematic. Recall the specification of
 $\SYMBDSigma$:
 %
 \[
-\DSigma{(\Bhab{\V{S}}{\Set})}{(\Bhab{\V{D}}{\V{S} \To \Desc})} : \Desc\\
+\DSigma{(\Bhab{\V{S}}{\Set^n})}{(\Bhab{\V{D}}{\V{S} \To \Desc^n})} : \Desc^n\\
 \]
 %
-So, we first pack a  $\Set$, $\V{S}$. We should then like
+So, we first pack a  $\Set^n$, $\V{S}$, as well we might when working in
+$\Desc^{n+1}$. We should then like
 a recursive argument \emph{indexed} by $\V{S}$, but
-that is an \emph{exponential}, and our presentation is entirely
-first-order so far, delivering only sums-of-products. To code our
-universe, we must first enlarge it!
+that is an \emph{exponential}, and our presentation so far delivers only
+sums-of-products. To code our universe, we must first enlarge it!
 
 
 \subsubsection{Second attempt}
@@ -192,7 +192,7 @@ $\SYMBDHindx$ that takes an indexing set $\V{H}$. This amounts to give
 a recursive subobject for each element of $H$.
 %
 \[\stk{
-    \DHindx{(\Bhab{\M{H}}{\Set})}{(\Bhab{\M{D}}{\Desc})} : \Desc
+    \DHindx{(\Bhab{\M{H}}{\Set^n})}{(\Bhab{\M{D}}{\Desc^n})} : \Desc^n
     \smallskip \\
     \descop{\DHindx{\V{H}}{\V{D}}}{\V{X}}     
         \mapsto 
@@ -207,7 +207,7 @@ not to demand dummy functions from \(\Unit\) in ordinary data,
 e.g. \(\NatSuc{(\LAM{\_}n)}\). It is na{\"\i}ve to imagine that up to
 isomorphism, any representation of data will do.  First-order
 representations are finitary by construction, and thus admit a richer,
-componentwise decidable equality that functions may in
+componentwise decidable equality than functions may in
 general possess.\footnote{E.g., extensionally, there is one inhabitant of
 \(\EnumT{\void}\To\Nat\); intensionally, there is a countable infinitude
 which it is not safe to collapse.}
@@ -215,26 +215,26 @@ which it is not safe to collapse.}
 We are now able to describe our universe of datatypes:
 %
 \[\stk{
-\DescD : \Desc \\
-\DescD \mapsto\tada
+\DescD^n : \Desc^{n+1} \\
+\DescD^n \mapsto\tada
 {\stkm{ \DUnit\\ \SYMBDSigma\\ \SYMBDIndx\\ \SYMBDHindx}}
 {\stkm{
 \DUnit                                            \\
-                                   \DSigma{\Set}{\LAM{\V{S}} \DHindx{\V{S}}{\DUnit}}   \\
+                                   \DSigma{\Set^n}{\LAM{\V{S}} \DHindx{\V{S}}{\DUnit}}   \\
                                    \DIndx{\DUnit}                                    \\
-                                   \DSigma{\Set}{\LAM{\_} \DIndx{\DUnit}}
+                                   \DSigma{\Set^n}{\LAM{\_} \DIndx{\DUnit}}
 }}
 }\]
 %
 The $\DUnit$ and $\SYMBDIndx$ cases remain unchanged, as expected. We
-successfully describe the $\SYMBDSigma$ case, by a simple appeal to
-the higher-order induction on $\V{S}$. The $\SYMBDHindx$ case
-consists in packing a $\Set$ with a recursive argument.
+successfully describe the $\SYMBDSigma$ case via
+the higher-order induction, branching on $\V{S}$. The $\SYMBDHindx$ case
+just packs a $\Set^n$ with a recursive argument.
 
 At a first glance, we have achieved our goal. We have described the
-codes of the universe of descriptions. Taking the fixpoint of \(\descop{\DescD}\)
-gives us a datatype exactly like $\Desc$. Might we be
-so bold as to take \(\Desc \mapsto \Mu{\DescD}\) as the levitating
+codes of the universe of descriptions. The fixpoint of \(\descop{\DescD^n}\)
+is a datatype just like $\Desc^n$, in $\Set^{n+1}$. Might we be
+so bold as to take \(\Desc^n \mapsto \Mu{\DescD^n}\) as the levitating
 definition? If we do, we shall come down with a bump! 
 To complete our levitation, just as in the magic trick, requires
 hidden assistance. Let us explain the problem and reveal the `invisible
@@ -249,24 +249,24 @@ cable' which fixes it.
         -> Code with problem for the motive of switch
 \end{wstructure}
 
-The definition \(\Desc \mapsto \Mu{\DescD}\) is circular,
+The definition \(\Desc^n \mapsto \Mu{\DescD^n}\) is circular,
 but the offensive recursion is concealed by a prestidigitation.
 Expanding \(\toDesc{-}\) and propagating types as in
 Figure~\ref{fig:type-checking} reveals the
 awful truth:
 \[
-\Desc\mapsto
+\Desc^n\mapsto
 \Mu{\stk{(\DSigma{\EnumT{\sqr{ \DUnit\:\: \SYMBDSigma\:\: \SYMBDIndx\:\: \SYMBDHindx}}\\}
-    {\;\SYMBswitch\:\sqr{ \DUnit\:\: \SYMBDSigma\:\: \SYMBDIndx\:\: \SYMBDHindx}\:(\LAM{\_}\Desc)\\
+    {\;\SYMBswitch\:\sqr{ \DUnit\:\: \SYMBDSigma\:\: \SYMBDIndx\:\: \SYMBDHindx}\:(\LAM{\_}\Desc^{n+1})\\
 \;\sqr{\stkm{
 \DUnit                                            \\
-                                   \DSigma{\Set}{\LAM{\V{S}} \DHindx{\V{S}}{\DUnit}}   \\
+                                   \DSigma{\Set^n}{\LAM{\V{S}} \DHindx{\V{S}}{\DUnit}}   \\
                                    \DIndx{\DUnit}                                    \\
-                                   \DSigma{\Set}{\LAM{\_} \DIndx{\DUnit}}
+                                   \DSigma{\Set^n}{\LAM{\_} \DIndx{\DUnit}}
 }}})}}
 \]
 The recursion shows up only because we must specify the return type
-of the general-purpose \(\F{switch}\), and it is computing a \(\Desc\)!
+of the general-purpose \(\F{switch}\), and it is computing a \(\Desc^{n+1}\)!
 Although type propagation
 allows us to hide this detail \emph{when defining a function}, we cannot
 readily suppress this information and check types
@@ -296,13 +296,13 @@ when \(\F{switch}\) is fully applied.
 %motive is.
 
 We are too close to give up now. If only we did not need to
-supply that return type, especially when we know what it must be.
+supply that return type, especially when we know what it must be!
 We eliminate the recursion by \emph{specialising} \(\F{switch}\):
 %
 \[
 \F{switchD} : \PITEL{\V{E}}{\EnumU}   \To
-                (\spi{\V{E}}{\LAM{\_} \Desc}) \To
-                \EnumT{\V{E}} \To \Desc
+                (\spi{\V{E}}{\LAM{\_} \Desc^m}) \To
+                \EnumT{\V{E}} \To \Desc^m
 \]
 %
 The magician's art rests here, in this extension. We conceal it
@@ -311,39 +311,44 @@ with higher priority than for \(\F{switch}\) in general.
 %
 \[
 \Rule{\Gamma \Vdash
-  \propag{\push{\sqr{\vec{t}}}{\spi{\M{E}}{\PLAM{x}{\EnumT{E}}\Desc}}}
+  \propag{\push{\sqr{\vec{t}}}{\spi{\M{E}}{\PLAM{x}{\EnumT{E}}\Desc^m}}}
                            {\M{t'}}}
      {\Gamma \Vdash
-\propag{\push{\sqr{\vec{t}}}{\EnumT{\M{E}}\To\Desc}}
+\propag{\push{\sqr{\vec{t}}}{\EnumT{\M{E}}\To\Desc^m}}
  {\switchD{\M{E}}{\M{t'}}}}
 \]
 As a consequence, our definition above now propagates without
 introducing recursion. Of course, by pasting together the declaration
-of \(\Desc\) and its internal copy, we have made it appear in its own
+of \(\Desc^n\) and its internal copy, we have made it appear in its own
 type. Hardwired as a \emph{fait accompli}, this creates no regress,
-although one must assume the definition to recheck it\footnote{Our
-  Agda model does not formalize the $\SYMBswitchD$
-  construction. However, it proves the isomorphism between the defined
-  descriptions and the coded ones. The role of $\SYMBswitchD$ is to
-  collapse this isomorphism, hence identifiying defined and coded
-  descriptions.}. Alternatively, we could have extended $\Desc$ with a
-code for \emph{finite} sums, internalizing the $\SYMBswitch$ in the
-interpretation function:
+although one must assume the definition to recheck it.
+
+Our Agda model does not formalize the $\SYMBswitchD$
+construction. Instead, we exhibit the isomorphism between declared
+and encoded descriptions. Here, $\SYMBswitchD$ lets us collapse
+this isomorphism, operationally identifying defined and coded
+descriptions.
+
+There are other ways to achieve a sufficient specialisation to avoid a
+recursive code, e.g., extending $\Desc^n$ with specialised codes for
+\emph{finite} sums and products, pushing the $\SYMBswitch$ into the
+interpretation of codes, rather than the code itself. Here, we prefer
+not to add codes to $\Desc^n$ which are otherwise unmotivated.
 %%
-\[\stk{
-    \Dsigma{(\Bhab{\V{E}}{\EnumU})}
-           {(\Bhab{\V{B}}{\spi{\V{E}}{\LAM{\_}{\Desc}}})} : \Desc
-    \smallskip \\
-    \descop{\Dsigma{\V{E}}{\V{B}}}{\V{X}}     
-        \mapsto 
-            \SIGMAS{\Bhab{\V{x}}{\EnumT{\V{E}}}}
-                   {\descop{\switch{\V{E}}{(\LAM{\_}{\Desc})}{\V{B}}{\V{x}}}{\V{X}}}    
-}\]
+%\[\stk{
+%    \Dsigma{(\Bhab{\V{E}}{\EnumU})}
+%           {(\Bhab{\V{B}}{\spi{\V{E}}{\LAM{\_}{\Desc^n}}})} : \Desc^n
+%    \smallskip \\
+%    \descop{\Dsigma{\V{E}}{\V{B}}}{\V{X}}     
+%        \mapsto 
+%            \SIGMAS{\Bhab{\V{x}}{\EnumT{\V{E}}}}
+%                   %{\descop{\switch{\V{E}}{(\LAM{\_}{\Desc})}{\V{B}}{\V{x}}}{\V{X}}}    
+%}\]
 %%
-Using $\SYMBDsigma$ to switch over the $\Desc$ constructors, we avoid
-mention of $\Desc$ while levitating it. The $\SYMBswitch$ operator is
-pushed into the interpretation function, at which point $\Desc$ indeed
-exists.
+%Using $\SYMBDsigma$ to switch over the $\Desc$ constructors, we avoid
+%mention of $\Desc$ while levitating it. The $\SYMBswitch$ operator is
+%pushed into the interpretation function, at which point $\Desc$ indeed
+%exists.
 
 %% * There exists alternative
 %% **   <- All we want is to avoid mention of Desc
@@ -363,16 +368,15 @@ exists.
 \end{wstructure}
 
 
-We have levitated \(\Desc\). Beyond its pedagogical value, this
-exercise has several practical outcomes. First of all, it reveals that
-the $\Desc$ universe is just plain data. As any piece of data, it can
-therefore be inspected and manipulated. Moreover, it is expressed in
-the $\Desc$ universe. As a consequence, it is equipped, for free, with
-an induction principle. So, our ability to inspect and program with
-$\Desc$ is not restricted to a meta-language: we now have all the
-necessary equipment in the theory to \emph{program} over
-datatypes. \emph{Generic programming is just
-  programming}.
+We have levitated \(\Desc\) at every level. Beyond its pedagogical
+value, this exercise has several practical outcomes. First, it
+confirms that each $\Desc$ universe is just plain data. As any piece of
+data, it can therefore be inspected and manipulated. Moreover, it is
+expressed in a $\Desc$ universe. As a consequence, it is equipped,
+for free, with an induction principle. So, our ability to inspect and
+program with $\Desc$ is not restricted to a meta-language: we have
+the necessary equipment to program with \emph{data}, so we can program over
+datatypes. \emph{Generic programming is just programming}.
 
 
 \subsection{The generic catamorphism}
@@ -639,11 +643,12 @@ providing the substitution structure.
 %% ** /> Abusing the paradoxical nature of Set : Set
 
 In this section, we have seen how to \emph{levitate}
-descriptions. From this unusual situation, several questions naturally
-arise. First, we have blurred the line between the implementation of
-data-types and their self-description. Second, we have abused the
-paradoxical nature of $\Bhab{\Set}{\Set}$ to flatten the hierarchy of
-descriptions. We shall now be more precise about these points.
+descriptions. Although our theory, as presented here, takes
+$\Bhab{\Set}{\Set}$, our annotations indicate how a stratified theory
+could code each level from above.  We do not rely on the paradoxical
+nature of $\Bhab{\Set}{\Set}$ to flatten the hierarchy of descriptions
+and fit large inside small.  We shall now be more precise about what
+we have done.
 
 %% * Summary 
 %% ** <- What is the equipment for making data-types
@@ -669,22 +674,26 @@ implemented.
 %% ** <- ``Self-encoding'' only in a level polymorphic sense
 %% ***    -> Agda model: set poly
 
-To demystify the apparent circularity of our construction, let us
-consider how it bottoms out in a stratified setting. Using the
-informal level annotations of Section~\ref{sec:universe-desc}, we have
-that \(\Bhab{\DescD^n}{\Desc^{n+1}}\), hence \(\Bhab{\Desc^n \mapsto
-  \Mu{\DescD^n}}{\Set^{n+1}}\). Assuming an hardwired $\Desc^N$
-universe, we can build the tower of descriptions down to $\Desc^0$:
-description of descriptions forms a `spiral', rather than a
-circle \footnote{We have modelled this process in Agda, hardwiring
-  $\Desc^{42}$ in $\Set^{43}$, then going down. This model does not
-  rely on dependent pattern-matching, induction-recursion, nor set
-  polymorphism.}. Hence, in a stratified system, the `self-encoded'
-nature of $\Desc$ appears only in a set polymorphic sense: the
-principal type of the levitating description generalizes to the type
-of $\Desc$ itself\footnote{This is witnessed in our set polymorphic
-  model in Agda and in our Coq model, crucially relying on typical
-  ambiguity~\cite{harper:implicit-universe}.}.
+In a stratified system, the `self-encoded' nature of $\Desc$ appears
+only in a set polymorphic sense: the principal type of the encoded
+description generalizes to the type of $\Desc$ itself. We encode this
+much in our set polymorphic model in Agda and in our Coq model,
+crucially relying on typical ambiguity~\cite{harper:implicit-universe}.
+We step outside current technology only to replace the declared $\Desc$
+with its encoding.
+
+Even this last step, we can approximate within a standard predicative
+hierarchy. Fix a top level, perhaps \(42\). We may start by declaring
+$\Desc^{42}:\Set^{43}$. We can then construct $\DescD^{41}:\Desc^{42}$
+and thus acquire an encoded $\Desc^{41}$. Although $\Desc^{41}$ is
+encoded, not declared, it includes the relevant descriptions,
+including $\DescD^{40}$. We can thus build the tower of descriptions
+down to $\Desc^0$, encoding every level below the top.  Description of
+descriptions forms a `spiral', rather than a circle. We have modelled
+this process exactly in Agda, without any appeal to dependent
+pattern-matching, induction-recursion, or set polymorphism. All it
+takes to build such a sawn-off model of encodings is inductive
+definition and a cumulative predicative hierarchy of set levels.
 
 \begin{table}
 
