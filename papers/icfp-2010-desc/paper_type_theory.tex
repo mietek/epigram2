@@ -106,8 +106,8 @@ The basic typing rules
 for tuples and functions are also standard, save that we locally adopt
 \(\Set:\Set\) for presentational purposes. Usual techniques to resolve
 this \emph{typical ambiguity} apply~\cite{harper:implicit-universe,
-  luo:utt, courant:explicit-universe}. A formal presentation of a
-stratified system is beyond the scope of this paper and is subject of
+  luo:utt, courant:explicit-universe}. A formal treatment of
+stratification for our system is a matter of
 ongoing work.
 %%  putting presentation before paradox~\cite{girard:set-in-set}.
 %% The usual remedies apply, \emph{stratifying}
@@ -241,7 +241,7 @@ the decidability of equality and thence type checking.
 \end{wstructure}
 
 It is time for our first example of a \emph{universe}. You might
-want to offer a choice of named constructors in your datatypes, we shall
+want to offer a choice of named constructors in your datatypes: we shall
 equip you with sets of tags to choose from. Our plan
 is to implement (by extending the theory, or by encoding) the signature
 %
@@ -369,16 +369,18 @@ We first define the `small product' $\SYMBspi$ operator:
 \[\stk{
 %% spi
 \spi{}{}: \PITEL{\V{E}}{\EnumU}\PITEL{\V{P}}{\EnumT{\V{E}} \To \Set} \To \Set \\
-\begin{array}{@{}l@{\:}l@{\:\mapsto\:\:}l}
+\begin{array}{@{}l@{\:}l@{\;\;\mapsto\;\;}l}
 \spi{\NilE}{& \V{P}}        & \Unit \\
 \spi{(\ConsE{\V{t}}{\V{E}})}{& \V{P}} & \TIMES{\V{P}\: \Ze}{\spi{\V{E}}{\LAM{\V{x}} \V{P}\: (\Su{\V{x}})}}
 \end{array}
 }\]
 %
 This builds a right-nested
-tuple type, demanding an object of $\V{P}\:\V{i}$ for each $\V{i}$ in the given finite
-domain. We can see these tuples as `jump tables' tabulating dependently
-typed functions from the domain. We give this functional
+tuple type, packing a $\V{P}\:\V{i}$ value for each $\V{i}$ in the given
+domain. The step case exposes our notational convention that
+binders scope rightwards as far as possible. These tuples are `jump tables', tabulating dependently
+typed functions.
+We give this functional
 interpretation---the eliminator we need---by the
 $\SYMBswitch$ operator, which, unsurprisingly, iterates projection:
 %

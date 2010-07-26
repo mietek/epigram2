@@ -845,7 +845,7 @@ definition is the following:
                       \V{t} 
 }\]
 % 
-Where  $\F{applyI}$ is defined as follow:
+where  $\F{applyI}$ is defined as follows:
 %
 \[\stk{
 \begin{array}{@{}ll}
@@ -892,7 +892,7 @@ consider two examples of free indexed monads.
 \newcommand{\SYMBlookup}{\F{lookup}}
 \newcommand{\lookup}[4]{\SYMBlookup\: #1\: #2\: #3\: #4}
 
-In the previous section, we have presented a language of closed
+In the previous section, we presented a language of closed
 arithmetic expressions. Using the free monad construction, we are
 going to extend this construction to open terms. An open term is
 defined with respect to a context, represented by a snoc-list of
@@ -917,7 +917,7 @@ An environment realises the context, packing a value for each type:
 \end{array}
 }\]
 %
-In this setting, we define $\SYMBVar$ by:
+In this setting, we define type variables, $\SYMBVar$ by:
 %
 \[\stk{
 \Var{}{} : \Ctxt \To \Ty \To \Set \\
@@ -1071,7 +1071,7 @@ well-typed language, together with its semantics.
 
 An interesting instance of free monad is $\SYMBIDesc$ itself. Indeed,
 $\SYMBDVar$ is nothing but the \return. The remaining constructors form
-the carrier functor, trivially indexed by $\Unit$. The carrier functor
+the carrier functor, trivially indexed by $\Unit$. The signature functor
 is described as follow:
 %
 \[\stk{
@@ -1091,7 +1091,7 @@ is described as follow:
 \end{array}
 }\]
 %
-Then, we get $\IDesc$ by building its free monad:
+We get $\IDesc{\V{I}}$ by extending the signature with variables from \(\V{I}\):
 %
 \[\stk{
 \IDescD : \PI{\V{I}}{\Set} \TagIDesc{\Unit} \\

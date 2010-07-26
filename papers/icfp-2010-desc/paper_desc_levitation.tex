@@ -115,10 +115,8 @@ condense the entire naming scheme of datatypes \emph{into itself}.
         -> It ought to be encoded in itself
 \end{wstructure}
 
-We shall now fulfil our implementation promises, encoding the universe
-of descriptions. $\Desc$ is already some sort of datatype, but we are
-in the same situation as with $\EnumU$: we ought to be able to
-describe it, coding of $\Desc^n$ in $\Desc^{n+1}$, spiralling
+The set of codes, $\Desc$, is already some sort of datatype; as with $\EnumU$,
+we ought to be able to describe it, coding of $\Desc^n$ in $\Desc^{n+1}$, spiralling
 upwards. Hence, this code would be a first-class citizen, born with
 the generic equipment of datatypes.
 
@@ -208,9 +206,9 @@ e.g. \(\NatSuc{(\LAM{\_}n)}\). It is na{\"\i}ve to imagine that up to
 isomorphism, any representation of data will do.  First-order
 representations are finitary by construction, and thus admit a richer,
 componentwise decidable equality than functions may in
-general possess.\footnote{E.g., extensionally, there is one inhabitant of
+general possess.\footnote{E.g., extensionally, there is one function in
 \(\EnumT{\void}\To\Nat\); intensionally, there is a countable infinitude
-which it is not safe to collapse.}
+which it is dangerous to identify definitionally.}
 
 We are now able to describe our universe of datatypes:
 %
@@ -320,7 +318,7 @@ with higher priority than for \(\F{switch}\) in general.
 As a consequence, our definition above now propagates without
 introducing recursion. Of course, by pasting together the declaration
 of \(\Desc^n\) and its internal copy, we have made it appear in its own
-type. Hardwired as a \emph{fait accompli}, this creates no regress,
+type. Hardwired as a trusted \emph{fait accompli}, this creates no regress,
 although one must assume the definition to recheck it.
 
 Our Agda model does not formalise the $\SYMBswitchD$
@@ -592,7 +590,7 @@ $\V{\sigma}\: \V{x}$. This corresponds to the following definition:
 \\
 \end{array} \\
 \begin{array}{@{}l@{\:\mapsto\:\:}l}
-\apply\: \V{D}\: \V{X}\: \V{Y}\: \V{\sigma}\: \pair{\SYMBDVar}{\V{x}}{}   & \V{\sigma}\: \V{x}                   \\
+\apply\: \V{D}\: \V{X}\: \V{Y}\: \V{\sigma}\: \sqr{\DVar{\V{x}}}   & \V{\sigma}\: \V{x}                   \\
 \apply\: \V{D}\: \V{X}\: \V{Y}\: \V{\sigma}\: \pair{\V{c}}{\V{xs}}{} & \Con{\pair{\V{c}}{\V{xs}}{}}
 \end{array}
 }\]
@@ -691,7 +689,7 @@ including $\DescD^{40}$. We can thus build the tower of descriptions
 down to $\Desc^0$, encoding every level below the top.  Description of
 descriptions forms a `spiral', rather than a circle. We have modelled
 this process exactly in Agda, without any appeal to dependent
-pattern-matching, induction-recursion, or set polymorphism. All it
+pattern matching, induction-recursion, or set polymorphism. All it
 takes to build such a sawn-off model of encodings is inductive
 definition and a cumulative predicative hierarchy of set levels.
 

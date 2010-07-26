@@ -11,7 +11,7 @@
 \end{wstructure}
 
 In this section, we describe an implementation of inductive types, as
-we know them in ML-like languages. By working with familiar datatypes,
+we know them from ML-like languages. By working with familiar datatypes,
 we hope to focus on the delivery mechanism, warming up gently to the
 indexed datatypes we really want.  % Our encoding is inspired by
 Dybjer and Setzer's closed formulation of
@@ -40,10 +40,10 @@ $\blue{\Sigma}_{\x : \M{A}} (\M{B}\: \x)$ stresses that
 $\Sigma$-types are `dependent sums', generalising sums over
 arbitrary arities, where simply typed languages have finite sums.
 
-On the other hand, our choice of notation $\SIGMA{\x}{\M{A}}
-(\M{B}\:\x)$ emphasises that $\Sigma$-types generalise products,
+On the other hand, our choice, $\SIGMA{\x}{\M{A}}
+(\M{B}\:\x)$, emphasises that $\Sigma$-types generalise products,
 with the type of the second component depending on the value of the
-first, where simply typed languages do not express such relative validity.
+first. Simply typed languages do not express such relative validity.
 
 \begin{wstructure}
 <- datatypes in the simply-typed world
@@ -116,7 +116,7 @@ a `pattern functor' on $\Set^{n}$, with $\SYMBdescop{\V{D}}$ its
 action on an object, \(\V{X}\), soon to be instantiated
 recursively. The superscripts indicate the $\Set$-levels at which we
 \emph{expect} these objects in a stratified system. This is but an
-informal notation, to give a flavor of the stratified
+informal notation, to give a flavour of the stratified
 presentation. Note that the functors so described are \emph{strictly
   positive}, by construction.
 
@@ -506,8 +506,8 @@ have done with functions from pairs and enumerations.
 \]
 This abbreviation is no substitute for the dependent pattern
 matching to which we are entitled in a high-level language built on top
-of this theory~\cite{goguen:pattern-matching}, but it does at least make
-`assembly language' programming mercifully brief, if hieroglyphic.
+of this theory~\cite{goguen:pattern-matching}. It does at least make
+`assembly language' programming mercifully brief, albeit hieroglyphic.
 \[\stk{
 \F{plus}:\Nat\To\Nat\To\Nat \\
 \F{plus}\mapsto\sind{\spl{\sqr{(\LAM{\_}\LAM{\_}\LAM{\V{y}}\V{y})
