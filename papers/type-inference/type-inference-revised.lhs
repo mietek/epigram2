@@ -354,13 +354,12 @@ We are grateful to an anonymous referee for pointing out the work of
 \citet{dunfield_polymorphism_2009} on polymorphism in a bidirectional type system.
 Dunfield uses well-founded contexts that contain existential type variables
 (amongst other things). These variables can be solved, and there is an informal
-notion of information increase between input and output contexts, though this is
-used for different purposes. 
-
+notion of information increase between input and output contexts.
+%%% though this is used for different purposes. 
 However, our concerns are different: whilst Dunfield elaborates a
 particular approach to bidirectional polymorphic checking to a larger
 class of type theories, here we pursue a methodological understanding
-of the problem-solving strategy in \hindleymilnershort\ type inference.
+of the problem-solving strategy in \hindleymilner\ type inference.
 
 %%%\TODO{More crunchiness: forward pointers to claims and contributions}
 
