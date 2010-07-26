@@ -247,13 +247,13 @@
 
 \begin{document}
 
-\conferenceinfo{MSFP '10}{September 25, Baltimore, Maryland, USA.} 
-\copyrightyear{2010} 
-\copyrightdata{} 
+\conferenceinfo{MSFP'10,} {September 26, 2010, Baltimore, Maryland, USA.}
+\CopyrightYear{2010}
+\copyrightdata{978-1-4503-0251-7/10/09}
 
 \titlebanner{\NotForPublication{REVISED DRAFT}}
 
-\title{Type inference in context}
+\title{Type Inference in Context}
 \authorinfo{Adam Gundry\thanks{Adam Gundry was supported by Microsoft Research through its PhD Scholarship
 Programme.} \and Conor McBride}
            {University of Strathclyde, Glasgow}
@@ -268,6 +268,11 @@ Programme.} \and Conor McBride}
 \input{abstract.ltx}
 \end{abstract}
 
+\category{F.3.3}{Logics and Meanings of Programs}{Studies of Program Constructs}[Type structure]
+% \category{D.3.3}{Programming Languages}{Language Constructs and Features}[Data types and structures]
+
+\terms
+Algorithms, Theory
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Introduction\label{sec:intro}}
