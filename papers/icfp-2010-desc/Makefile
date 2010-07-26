@@ -22,13 +22,13 @@ DOCPDF := $(SRCS:.tex=.ps)
 
 .tex.pdf:
 	$(PDFTEX) $<
-	if egrep "\bibliography" $<; then bibtex $*; fi
+	bibtex $*
 	$(PDFTEX) $<
 	if egrep Rerun $*.log; then $(PDFTEX) $< ; fi
 
 .tex.ps:
 	$(PSTEX) $<
-	if egrep "\bibliography" $<; then bibtex $*; fi
+	bibtex $*
 	$(PSTEX) $<
 	if egrep Rerun $*.log; then $(PSTEX) $< ; fi
 	dvips -t letter $*.dvi
