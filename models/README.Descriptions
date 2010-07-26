@@ -8,6 +8,11 @@ The models of Epigram's universe of descriptions are:
       		 (with type-in-type)
     - Desc.agda: model of descriptions
       		 (with universe polymorphism)
+    - Desc.v: model of descriptions
+      	      (with typical ambiguity)
+    - DescStrat.agda: model of descriptions, with no fancy stuff
+              (chopped of at Desc42, 
+	       see DescStrat.lhs for cutting at any N)
     - IDescTT.agda: model of indexed descriptions
       		    (with type-in-type)
     - IDesc.agda: model of indexed descriptions
