@@ -1,0 +1,3877 @@
+\documentclass[authoryear]{sigplanconf}
+
+\usepackage[T1]{fontenc}
+\usepackage{pslatex}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{verbatim}
+\usepackage{pig}
+\usepackage{url}
+\usepackage{xspace}
+\usepackage{listings}
+\usepackage{flushend}
+
+\include{macros}
+
+%% Haskell-mode for listings
+\lstnewenvironment{code}{\lstset{language=Haskell,
+                                 basicstyle=\small\ttfamily,
+                                 xleftmargin=1cm}}{}
+
+%% Structure
+%\newenvironment{structure}{\footnotesize\verbatim}{\endverbatim}
+\newenvironment{structure}{\comment}{\endcomment}
+
+%% Written bits of Structure
+\newenvironment{wstructure}{\comment}{\endcomment}
+
+%% Comments
+%% \setlength{\marginparwidth}{0.7in}
+%% \newcommand{\note}[1]{\-\marginpar[\raggedright\footnotesize #1]%
+%%                                   {\raggedright\footnotesize #1}}
+\newcommand{\note}[1]{}
+
+%% Syntax
+\newcommand{\bind}{\emph{bind}\xspace}
+\newcommand{\return}{\emph{return}\xspace}
+
+\begin{document}
+
+%\ColourEpigram
+\MonochromeEpigram
+
+\conferenceinfo{ICFP'10,} {September 27--29, 2010, Baltimore, Maryland, USA.}
+\CopyrightYear{2010}
+\copyrightdata{978-1-60558-794-3/10/09}
+
+%\titlebanner{banner above paper title}        % These are ignored unless
+%\preprintfooter{short description of paper}   % 'preprint' option specified.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Title
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\title{The Gentle Art of Levitation}
+
+
+%% Alphabetical ordering.
+\authorinfo{James Chapman}
+           {Institute of Cybernetics, Tallinn University of Technology}
+           {james@cs.ioc.ee}
+\authorinfo{Pierre-\'{E}variste Dagand \\ Conor McBride}
+           {University of Strathclyde}
+           {\{dagand,conor\}@cis.strath.ac.uk}
+\authorinfo{Peter Morris}
+           {University of Nottingham}
+           {pwm@cs.nott.ac.uk}
+
+
+\maketitle
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Abstract
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\begin{abstract}
+  We present a closed dependent type theory whose inductive types
+  are given not by a scheme for generative declarations,
+  but by encoding in a \emph{universe}. Each inductive datatype arises
+  by interpreting its \emph{description}---a
+  first-class value in a datatype of descriptions. Moreover, the
+  latter itself has a description. Datatype-generic programming thus
+  becomes ordinary programming. We show some of the resulting generic
+  operations and deploy them in particular, useful ways on the
+  datatype of datatype descriptions itself. Simulations in existing
+  systems suggest that this
+  apparently self-supporting setup is achievable without paradox or
+  infinite regress.
+\end{abstract}
+
+%\category{CR-number}{subcategory}{third-level}
+\category{D.1.1}{Programming Techniques}{Applicative (Functional) Programming}
+\category{D.3.3}{Language Constructs and Features}{Data types and structures}
+
+\terms
+Design, Languages, Theory
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Introduction
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Introduction}
+
+Dependent datatypes, such as the ubiquitous vectors (lists indexed by
+length) express \emph{relative} notions of data validity. They allow
+us to function in a complex world with a higher standard of basic
+hygiene than is practical with the context-free datatypes of ML-like
+languages. Dependent type systems, as found in
+Agda~\cite{norell:agda}, Coq~\cite{coq},
+Epigram~\cite{mcbride.mckinna:view-from-the-left}, and contemporary
+Haskell~\cite{cheney:gadt, xi:gadt}, are beginning to make themselves useful. As
+with rope, the engineering benefits of type indexing sometimes
+outweigh the difficulties you can arrange with enough of it.
+
+%Dependent types are an appealing technique for building safer and more
+%reliable software. By giving types more expressive power, the
+%developer is able to encode more precise invariants in the types. As a
+%result, more bugs are caught automatically, during
+%type-checking. Because of this benefit, dependently-typed systems have
+%flourished, such as Generalized Abstract Data-Types (GADT) in
+%Haskell~\cite{spj:gadt}, Agda~\cite{norell:agda},
+%Ynot~\cite{morrisett:ynot}, or Epigram~\cite{pigs:epigram}, to name
+%but a few.
+
+\begin{wstructure}
+<- Describe the problem
+    <- Data-types in dependent-type theory
+        <- Much more precise
+            <- More powerful type-system
+            -> Stronger safety guarantees
+\end{wstructure}
+
+%In this paper, we will focus on data-types in such systems. Indeed,
+%the expressive power of the type-system has a direct impact on
+%data-types. Because types can \emph{depend} on terms, our data-types
+%can be made more precise. The typical example is vectors, which type
+%depend on the size of the vector. Having more precision about
+%data-types, we can write safer code: taking the $\CN{head}$ of a
+%vector is \emph{ensured} to succeed whenever its type states that it
+%is a non-empty vector. This property is automatically enforced by the
+%type-checker.
+
+\begin{wstructure}
+        <- Equipped with elimination principle
+            <- Defining functions over them
+            <- Making proofs over them
+\end{wstructure}
+
+%Moreover, in total programming systems, such as Agda, Ynot, or
+%Epigram, data-types come equipped with an elimination principle: while
+%a data-type definition introduces new type formers in the theory, we
+%need an eliminator to dispose of them. Looking through the
+%Curry-Howard lenses, the elimination principle corresponds to an
+%induction principle associated with the data-type. To program over our
+%data-types, we rely on their induction principle, guaranteeing the
+%well-foundedness of our definition.
+
+\begin{wstructure}
+    <- Agda standard library [Nisse file]
+        <- x implementations of natural numbers
+        <- y implementations of lists
+        -> Painful duplication of code and functionality
+            <- Types are (slightly) different
+                -> Same functions need to be re-implemented 
+        -> Crucial need for ``genericity''
+\end{wstructure}
+
+The blessing of expressing just the right type for the job can also be
+a curse. Where once we might have had a small collection of basic
+datatypes and a large library, we now must cope with a cornucopia of
+finely confected structures, subtly designed, subtly different. The
+basic vector equipment is much like that for lists, but we implement
+it separately, often retyping the same code. The Agda standard
+library~\cite{nisse:asl}, for example, sports a writhing mass of
+list-like structures, including vectors, bounded-length lists,
+difference lists, reflexive-transitive closures---the list is
+petrifying. Here, we seek equipment to tame this gorgon's head with
+\emph{reflection}.
+
+\begin{wstructure}
+        /> Coq, Agda: external notion
+            <- Not first-class citizen
+            -> Cannot "compute" with them
+            -> No reflection for data-types (?)
+\end{wstructure}
+
+The business of belonging to a datatype is itself a notion
+relative to the type's \emph{declaration}. Most typed functional
+languages, including those with dependent types, feature a datatype
+declaration construct, external to and extending the language for
+defining values and programs. However, dependent type systems also
+allow us to reflect types as the image of a function from a set of
+`codes'---a \emph{universe construction}~\cite{martin-lof:itt}. 
+Computing with codes, we expose operations on and
+relationships between the types they reflect. Here, we adopt
+the universe as our guiding design principle. We abolish the
+datatype declaration construct, by reflecting it as a datatype of
+datatype descriptions which, moreover, \emph{describes itself}. This
+apparently self-supporting construction is a trick, of course, but
+we shall show the art of it. We contribute
+
+
+%As in the simply-typed world, the definition of
+%data-types is processed by a meta-theoretical engine, before being
+%reifed by extending the type theory with the corresponding type
+%formers and elimination principle. Because of this external apparatus,
+%data-type definition is not \emph{first-class}: we cannot compute with
+%them, such as making new data-types from previous data-types. 
+%
+%This is a rather harsh limitation, in particular in a
+%dependently-typed system. Indeed, reflection~\cite{allen:reflection,
+%  gregoire:ring-solver} is at the heart of many dependently-typed
+%programming techniques. Not having first-class data-type definitions,
+%we have to give up reflection for data-types.
+
+\begin{wstructure}
+    <- Dependent types offer new programming techniques
+        <- Eg.: universe construction
+        /> State of the art haunted by the simply-typed paradigm
+            -> Generative
+            -> Non reflective
+\end{wstructure}
+
+%However, we do not think that we are condemned to such fate. The
+%external presentation of data-types is an heritage of the simply-typed
+%paradigm. Dependently-typed systems have more to offer. Indeed, new
+%programming techniques, unavailable in a simply-typed setting,
+%arises. One of them is \emph{universe
+%  construction}~\cite{martin-lof:itt}. We shall see how this technique
+%help us overcoming the limitations of the standard, non reflective and
+%generative presentation of data-types.
+
+\begin{wstructure}
+<- State contributions
+    <- Closed presentation of data-types 
+        -> No generativity requires
+        -> Subsuming standard inductive families 
+            /> Some popular extensions excluded for now
+    <- Descriptions of data-types are first-class 
+        <- Self-encoded [Section sec:desc-levitate]
+    <- ``generic programming is just programming''
+        <- Ability to inspect data-type definition
+            -> Write program over them
+        <- A generic program works over a class of data-types (???)
+            -> Capture this class by common structure
+            -> Write a program over this common code
+    <- Design a language for generic programming
+        -> First serious attempt
+            /> except possibly Lisp
+                <- ???
+\end{wstructure}
+
+%In this paper, we propose a new approach to building data-types in a
+%dependent-type theory. Our contributions are the following:
+
+\begin{itemize}
+\item a \emph{closed} type theory, extensible only \emph{definitionally},
+  nonetheless equipped with a universe of inductive families of datatypes;
+\item a \emph{self-encoding} of the universe codes as a datatype in the
+  universe---datatype generic programming is just programming;
+\item a bidirectional \emph{type propagation} mechanism to conceal
+  artefacts of the encoding, restoring
+  a convenient presentation of data;
+\item examples of generic operations and constructions over our universe,
+  notably the \emph{free monad} construction;
+\item datatype generic programming delivered \emph{directly},
+  not via some isomorphic
+  model or `view' of declared types.
+\end{itemize}
+
+We study two universes as a means to explore this novel way to equip a
+programming language with its datatypes. We warm up with a universe of
+\emph{simple} datatypes, just sufficient to describe itself. Once we
+have learned this art, we scale up to \emph{indexed} datatypes,
+encompassing the inductive families~\cite{dybjer:families,luo:utt}
+found in Coq and Epigram, and delivering experiments in generic
+programming with applications to the datatype of codes itself.
+
+We aim to deliver proof of concept, showing that a closed theory with
+a self-encoding universe of datatypes can be made practicable, but we
+are sure there are bigger and better universes waiting for a similar
+treatment. Benke, Dybjer and
+Jansson~\cite{benke:universe-generic-prog} provide a useful survey of
+the possibilities, including extension to inductive-recursive
+definition, whose closed-form presentation~\cite{dybjer:axiom-ir,
+  dybjer:ir-initial-algebra} is both an inspiration for the present
+enterprise, and a direction for future study.
+
+The work of Morris, Altenkirch and
+Ghani~\cite{morris:PhD,morris:spf,alti:lics09} on
+(indexed) containers has informed our style of encoding and the
+equipment we choose to develop, but the details here reflect pragmatic
+concerns about intensional properties which demand care in
+practice. We have thus been able to implement our work as the basis
+for datatypes in the Epigram 2 prototype~\cite{pigs:epigram}. We
+have also developed a \emph{stratified} model of our coding scheme
+in Agda and Coq\footnote{This model is available at \\
+\url{http://personal.cis.strath.ac.uk/~dagand/levitate.tar.gz}}.
+
+
+
+
+%\item We present a basic type-theory and extend it with a universe of
+%  finite sets (Section~\ref{sec:type-theory}). We show how coding can
+%  be made practical by putting types at work ;
+%\item We give a closed presentation of inductive data-types, through a
+%  universe of descriptions (Section~\ref{sec:universe-desc}). This
+%  first universe has the expressive power of simple inductive
+%  types. Being closed, this presentation does not require
+%  generativity, hence the type theory remains unchanged when
+%  data-types are introduced ;
+%\item We present a self-encoding of the universe of description inside
+%  itself (Section~\ref{sec:desc-levitate}). As a consequence,
+%  description of data-types appears as first-class object in the type
+%  theory. We illustrate the benefit of a first-order presentation by
+%  implementing a generic catamorphism as well as a generic free monad
+%  construction, together with its monadic operations ;
+%\item We index the universe of descriptions, to subsume standard
+%  inductive families (Section~\ref{sec:indexing-desc}). In this
+%  setting, we develop several examples of dependently-typed
+%  data-structure and some generic operations over them ;
+%\item We have implemented this technology in the Epigram programming
+%  language. This is, we believe, the first attempt to design a
+%  language for generic programming, Lisp having opened the way. We
+%  propose and demonstrate with several examples that generic
+%  programming is just programming. Because data-types are described by
+%  code, we can finally program with them. As a consequence, generic
+%  programs are implemented as functions built from the data-type
+%  definition.
+%\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% The Type Theory
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\section{The Type Theory}
+\label{sec:type-theory}
+
+One challenge in writing this paper is to extricate our account of datatypes from what else is new in Epigram 2. In fact, we demand relatively little from the setup, so we shall start with a `vanilla' theory and add just what we need. The reader accustomed to dependent types will recognise the basis of her favourite system; for those less familiar, we try to keep the presentation self-contained.
+
+\subsection{Base theory}
+
+\begin{wstructure}
+<- Presentation of the formalism
+    <- Standard presentation
+        -> No novelty here
+    <- 3 judgments [equation]
+        -> Context validity
+        -> Typing judgements
+        -> Equality judgements
+\end{wstructure}
+
+We adopt a traditional presentation for our type
+theory, with three mutually defined systems of judgments:
+\emph{context validity}, \emph{typing}, and \emph{equality},
+with the following forms:
+%
+\[
+\begin{array}{ll}
+\G \vdash \Valid                & \mbox{\(\G\) is a valid context, giving types to variables} \\
+\G \vdash \Bhab{\M{t}}{\M{T}}           & \mbox{term \(\M{t}\) has type \(\M{T}\) in context \(\G\)} \\
+\G \vdash \Bhab{\M{s} \equiv \M{t}}{\M{T}}  & \mbox{\(\M{s}\) and \(\M{t}\) are equal at type \(\M{T}\) in context \(\G\)} \\
+\end{array}
+\]
+
+\begin{wstructure}
+    <- Invariants [equation]
+        -> By induction on derivations
+\end{wstructure}
+
+The rules are formulated to ensure that the
+following `sanity checks' hold by induction on derivations
+%
+\[
+\begin{array}{l@{\;\Rightarrow\;\;}l}
+\G            \vdash \Bhab{\M{t}}{\M{T}}            
+    & \G \vdash \Valid\; \wedge\; \G\vdash\Type{\M{T}} \\
+\G            \vdash s \equiv \Bhab{\M{t}}{\M{T}}   
+    & \G \vdash \Bhab{s}{T} \;\wedge\; \G\vdash \Bhab{\M{t}}{\M{T}}
+\end{array} \]
+%
+and that judgments \(\M{J}\) are preserved by well-typed instantiation.
+%
+\[
+\G ; \xS ; \Delta \vdash \M{J}            \;\Rightarrow\;      
+    \G \vdash \Bhab{\M{s}}{\M{S}} \;\Rightarrow\; 
+          \G ; \Delta[\M{s}/\x] \vdash \M{J}[\M{s}/\x] 
+\]
+
+%We are not going to prove the validity of these invariants. They
+%follow rather straightforwardly from the induction rules. For formal
+%proofs, we refer the reader to standard presentations of type theory,
+%such as Luo's seminal work \cite{luo:utt}.
+
+\begin{wstructure}
+    <- Judgemental equality
+        <- Presentation independent of particular implementation choice
+        -> Model in Agda, intensional
+        -> Used in Epigram, OTT
+\end{wstructure}
+
+We specify equality as a judgment, leaving open the details of its implementation, requiring only a congruence including ordinary computation (\(\beta\)-rules), decided, e.g., by testing \(\alpha\)-equivalence of \(\beta\)-normal forms~\cite{DBLP:journals/jfp/Adams06}. Coquand and Abel feature prominently in a literature of richer equalities, involving \(\eta\)-expansion, proof-irrelevance and other attractions~\cite{DBLP:journals/scp/Coquand96,DBLP:conf/tlca/AbelCP09}. Agda and Epigram 2 support such features, Coq currently does not, but they are surplus to requirements here.
+
+% Therefore, we are not tied to a particular implementation
+%choice. In particular, our system has been modelled in Agda, which
+%features an intensional equality. On the other hand, it is used in
+%Epigram, whose equality has a slightly extensional
+%flavor~\cite{altenkirch:ott}. We expect users of fully extensional
+%systems to also find their way through this presentation.
+
+\begin{wstructure}
+<- Context validity [figure no longer]
+    <- Not much to be said
+\end{wstructure}
+
+Context validity ensures that variables inhabit well-formed
+sets.
+%
+\[
+%% Empty context validity
+\Axiom{\vdash \Valid}
+\qquad
+%% Extend context
+\Rule{\G       \vdash \Type{\M{S}}}
+     {\G ; \xS \vdash \Valid}\;\x\not\in\G
+\]
+%
+\begin{wstructure}
+<- Typing judgements [figure]
+    <- Set in Set
+        -> For simplicity of presentation
+        -> Assume that a valid stratification can be inferred
+            <- Harper-Pollack, Luo, Courant
+        -> See later discussion
+    <- Standard presentation of Pi and Sigma types
+\end{wstructure}
+%
+The basic typing rules
+% (Fig.~\ref{fig:typing-judgements})
+for tuples and functions are also standard, save that we locally adopt
+\(\Set:\Set\) for presentational purposes. Usual techniques to resolve
+this \emph{typical ambiguity} apply~\cite{harper:implicit-universe,
+  luo:utt, courant:explicit-universe}. A formal treatment of
+stratification for our system is a matter of
+ongoing work.
+%%  putting presentation before paradox~\cite{girard:set-in-set}.
+%% The usual remedies apply, \emph{stratifying}
+%% \(\Set\)~\cite{harper:implicit-universe, luo:utt,
+%%   courant:explicit-universe}.
+%%
+\input{figure_typing_judgements}
+
+\paragraph{Notation.} We subscript information needed for type synthesis
+but not type checking, e.g., the domain of a \(\LAMBINDER\)-abstraction,
+and suppress it informally where clear. Square brackets denote tuples,
+with a LISP-like right-nesting convention: \(\sqr{a\;b}\) abbreviates
+\(\pair{a}{\pair{b}{\void}{}}{}\).
+
+%We recognise the standard presentation of $\Pi$ and $\Sigma$
+%types, respectively inhabited by lambda terms and dependent
+%pairs. Naturally, there are rules for function application and
+%projections of $\Sigma$-types. Equal types can be substituted, thanks
+%to the conversion rule.
+
+%For the sake of presentation, we postulate a $\Set$ in $\Set$
+%rule. Having this rule makes our type theory inconsistent, by Girard's
+%paradox~\cite{girard:set-in-set}. However, it has been
+%shown~\cite{harper:implicit-universe, luo:utt,
+%  courant:explicit-universe} that a valid stratification can be
+%inferred, automatically or semi-automatically. In the remaining of our
+%presentation, we will assume that such a stratification exists, even
+%though we will keep it implicit. We shall discuss this assumption in
+%Section~\ref{sec:discussion}.
+
+%\begin{figure}
+%
+%\input{figure_typing_judgements}
+%
+%\caption{Typing judgements}
+%\label{fig:typing-judgements}
+%
+%\end{figure}
+
+
+\begin{wstructure}
+<- Judgemental equality [figure]
+    <- symmetry, reflexivity, and transitivity
+    <- beta-rules for lambda and pair
+    <- xi-rule for functions
+    -> Agnostic in the notion of equality
+        <- Doesn't rely on a ``propositional'' equality
+        -> Key: wide applicability of our proposal
+\end{wstructure}
+
+The judgmental equality comprises the computational rules below,
+closed under reflexivity,
+symmetry, transitivity and structural congruence, even under binders.
+We omit the mundane rules which ensure these closure properties for
+reasons of space.
+\input{figure_judgemental_equality}
+Given a suitable stratification of \(\Set\), the
+computation rules yield a terminating evaluation procedure, ensuring
+the decidability of equality and thence type checking.
+
+%Finally, we define the rules governing judgemental equality in
+%Figure~\ref{fig:judgemental-equality}. We implicitly assume that
+%judgemental equality respects symmetry, reflexivity, and
+%transitivity. We capture the computational behavior of the language
+%through the $\beta$-rules for function application and pairs. Finally,
+%we implicitly assume that it respects purely syntactic and structural
+%equality. This includes equality under lambda ($\xi$-rule).
+
+%Crucially, being judgemental, this presentation is agnostic in the
+%notion of equality actually implemented. Indeed, our typing and
+%equality judgements do not rely on a ``propositional'' equality. This
+%freedom is a key point in favour of the wide applicability of our
+%proposal. This judgemental presentation must be read as a
+%\emph{specification}: our proposal works with any propositional
+%equality satisfying this specification. Moreover, our lightweight
+%requirements do not endanger decidability of equality-checking.
+%Obviously, when implementing our technology in an existing
+%type-theory, some opportunities arise. We will present some of them
+%along the course of the paper.
+
+
+%\begin{figure}
+
+%\input{figure_judgemental_equality}
+%
+%\caption{Judgemental equality}
+%\label{fig:judgemental-equality}
+%
+%\end{figure}
+
+
+
+\begin{wstructure}
+!!! Need Help !!!
+<- Meta-theoretical properties
+    <- Assuming a stratified discipline
+    <> The point here is to reassert that dependent types are not evil, 
+       there is no non-terminating type-checker, or such horrible lies <>
+    -> Strongly normalising
+        -> Every program terminates
+    -> Type-checking terminates
+    ???
+\end{wstructure}
+
+
+%This completes our presentation of the type theory. Assuming a
+%stratified discipline of universe, the system we have described enjoy
+%some very strong meta-theoretical properties. Unlike simply typed
+%languages, such as Haskell, dependently-typed systems are
+%\emph{strongly normalising}: every program that type-checks
+%terminates. Moreover, type-checking is decidable and can therefore be
+%implemented by a terminating algorithm.
+%\note{Need some care here. Expansion would be good too. I wanted to
+%  carry the intuition that we are not the bad guys with a
+%  non-terminating type-checker.}
+
+\subsection{Finite enumerations of tags}
+\label{sec:finite-sets}
+
+\begin{wstructure}
+<- Motivation
+    <- Finite sets could be encoded with Unit and Bool
+        /> Hinder the ability to name things
+    <- W-types considered harmful?
+        ???
+    -> For convenience
+        <- Named elements
+        <- Referring by name instead of code
+        -> Types as coding presentation
+            /> Also as coding representation!
+\end{wstructure}
+
+It is time for our first example of a \emph{universe}. You might
+want to offer a choice of named constructors in your datatypes: we shall
+equip you with sets of tags to choose from. Our plan
+is to implement (by extending the theory, or by encoding) the signature
+%
+\[
+  \Type{\EnumU}\qquad \Type{\EnumT{(\Bhab{\M{E}}{\EnumU})}}
+\]
+%
+where some value \(E:\EnumU\) in the `enumeration universe' describes
+a type of tag choices \(\EnumT{E}\). We shall need
+some tags---valid identifiers, marked to indicate that
+they are data, not variables scoped and substitutable---so we hardwire these
+rules:
+%
+\[
+%% UId
+\Rule{\Gamma \vdash \Valid}
+     {\Gamma \vdash \Type{\UId}}
+\qquad
+%% Tag
+\Rule{\Gamma \vdash \Valid}
+     {\Gamma \vdash \Bhab{\Tag{\V{s}}}{\UId}}\;\V{s}\: \mbox{a valid identifier}
+\]
+%
+Let us describe enumerations as lists of tags, with signature:
+%
+\[
+\Bhab{\NilE}{\EnumU}\qquad
+\Bhab{\ConsE{(\Bhab{\M{t}}{\UId})}{(\Bhab{\M{E}}{\EnumU})}}{\EnumU}
+\]
+%
+What are the \emph{values} in \(\EnumT{E}\)? Formally, we represent
+the choice of a tag as a numerical index into \(E\), via new rules:
+%
+\[
+%% Ze
+\Rule{\Gamma \vdash \Valid}
+     {\Gamma \vdash \Bhab{\Ze}{\EnumT{(\ConsE{\M{t}}{\M{E}})}}} 
+\qquad
+%% Su
+\Rule{\Gamma \vdash \Bhab{\M{n}}{\EnumT{\M{E}}}}
+     {\Gamma \vdash \Bhab{\Su{\M{n}}}{\EnumT{(\ConsE{\M{t}}{\M{E}})}}}
+\]
+%
+However, we expect that in practice, you might rather refer to these
+values \emph{by tag}, and we shall ensure that this is possible in due course.
+
+%As a motivating example, we are now going to extend the type theory
+%with a notion of finite set. One could argue that there is no need for
+%such an extension: finite sets, just as any data-structure, can be
+%encoded inside the type theory. A well-known example of such encoding
+%is the Church encoding of natural numbers, which is isomorphic to
+%finite sets. \note{Shall we talk about W-types encoding?}
+
+%However, using encodings is impractical. In the case of finite sets,
+%for instance, we would like to name the elements of the sets. Then, we
+%need to be able to manipulate these elements by their name, instead of
+%their encoding. While we are able to give names to encodings, it is
+%extremely tedious to map the encodings back to a name. Whereas these
+%objects have a structure, the structure is lost during the encoding,
+%when they become anonymous inhabitants of a $\Pi$ or $\Sigma$-type.
+
+%In the simply-typed world, we are used to see types as a coding
+%presentation -- presentation of invariants, presentation of
+%properties. In the dependently-typed world, we also learn to use types
+%as a coding representation: finite sets being good citizens, they
+%ought to be democratically represented at the type level. As we will
+%see, this gives us the ability to name and manipulate them (this is
+%were the democracy analogy goes crazy, I think).
+%\note{Did I got the coding presentation vs. coding representation
+%  story right? No.}
+
+\begin{wstructure}
+<- Implementation [figure]      
+    <- Tags
+        -> Purely informational token
+    <- EnumU
+        -> Universe of finite sets
+    <- EnumT e
+        -> Elements of finite set e
+\end{wstructure}
+
+%The specification of finite sets is presented in
+%Figure~\ref{fig:typing-finite-set}. It is composed of three
+%components. First, we define tags as inhabitants of the $\UId$ type. A
+%tag is solely an informative token, used for diagnostic
+%purposes. Finite sets inhabits the $\EnumU$ type. Unfolding the
+%definition, we get that a finite set is a list of tags. Finally,
+%elements of a finite set $\V{u}$ belong to the corresponding $\EnumT{\V{u}}$
+%type. Intuitively, it corresponds to an index -- a number -- pointing
+%to an element of $\V{u}$.
+
+%\begin{figure}
+
+%\input{figure_finite_sets}
+
+%\caption{Typing rules for finite sets}
+%\label{fig:typing-finite-set}
+
+%\end{figure}
+
+
+\begin{wstructure}
+<- Equipment
+    <- \spi operator
+        <- Equivalent of Pi on finite sets
+        <- First argument: (finite) domain
+        <- Second argument: for each element of the domain, a co-domain
+        -> Inhabitant of \spi: right-nested tuple of solutions
+            <- Skip code for space reasons
+    <- switch operator
+        <- case analyses over x
+        <- index into the \spi tuple to retrieve the corresponding result
+\end{wstructure}
+
+Enumerations come with further machinery. Each \(\EnumT{E}\) needs an
+eliminator, allowing us to branch according to a tag choice. Formally,
+whenever we need such new computational facilities, we add primitive
+operators to the type theory and extend the judgmental equality with
+their computational behavior. However, for compactness and readability, we
+shall write these operators as functional programs (much as we
+model them in Agda).
+
+We first define the `small product' $\SYMBspi$ operator:
+%
+\[\stk{
+%% spi
+\spi{}{}: \PITEL{\V{E}}{\EnumU}\PITEL{\V{P}}{\EnumT{\V{E}} \To \Set} \To \Set \\
+\begin{array}{@{}l@{\:}l@{\;\;\mapsto\;\;}l}
+\spi{\NilE}{& \V{P}}        & \Unit \\
+\spi{(\ConsE{\V{t}}{\V{E}})}{& \V{P}} & \TIMES{\V{P}\: \Ze}{\spi{\V{E}}{\LAM{\V{x}} \V{P}\: (\Su{\V{x}})}}
+\end{array}
+}\]
+%
+This builds a right-nested
+tuple type, packing a $\V{P}\:\V{i}$ value for each $\V{i}$ in the given
+domain. The step case exposes our notational convention that
+binders scope rightwards as far as possible. These tuples are `jump tables', tabulating dependently
+typed functions.
+We give this functional
+interpretation---the eliminator we need---by the
+$\SYMBswitch$ operator, which, unsurprisingly, iterates projection:
+%
+\[\stk{
+%% switch
+\begin{array}{@{}ll}
+\SYMBswitch : \PITEL{\V{E}}{\EnumU}
+               \PITEL{\V{P}}{\EnumT{\V{E}} \To \Set} \To
+              \spi{\V{E}}{\V{P}} \To
+               \PITEL{\V{x}}{\EnumT{\V{E}}} \To \V{P}\: \x
+\end{array} \\
+\begin{array}{@{}l@{\:\mapsto\:\:}l}
+\switch{(\ConsE{\V{t}}{\V{E}})}{\V{P}}{\V{b}}{\Ze}      & \fst{\V{b}} \\
+\switch{(\ConsE{\V{t}}{\V{E}})}{\V{P}}{\V{b}}{(\Su{\V{x}})} & \switch{\V{E}}{(\LAM{\V{x}} \V{P}
+  (\Su{\V{x}}))}{(\snd{\V{b}})}{\V{x}}
+\end{array}
+}\]
+
+%Again, there is a clear equivalent in the full-$\Set$ world: function
+%application. The operational behaviour of $\F{switch}$ is
+%straightforward: $\V{x}$ is peeled off as we move deeper inside the nested
+%tuple $\V{b}$. When $\V{x}$ equals $\Ze$, we simply return the value we are
+%pointing to.
+
+\begin{wstructure}
+<- Equivalent to having a function space over finite sets
+    /> Made non-obvious by low-level encodings
+        <- General issue with codes
+             -> Need to provide an attractive presentation to the user
+    -> Types seem to obfuscate our reading
+        <- Provide ``too much'' information
+        /> False impression: information is actually waiting to be used more widely
+        -> See next Section
+\end{wstructure}
+
+The $\SYMBspi$ and $\SYMBswitch$ operators deliver dependent
+elimination for finite enumerations, but are rather awkward to
+use directly. We do not write the range for a \(\LAMBINDER\)-abstraction, so
+it is galling to supply \(\V{P}\) for functions defined by $\SYMBswitch$.
+Let us therefore find a way to recover the tedious details of the
+encoding from types.
+
+%, they also
+%come with a notion of finite function space. However, we had to
+%extract that intuition from the type, by a careful reading. This seems
+%to contradict our argument in favour of types for coding
+%representation. Here, we are overflown by low-level, very precise type
+%information.
+
+%However, our situation is significantly different from the one we
+%faced with encoded data: while we were suffering from a crucial lack
+%of information, we are now facing too much information, hence losing
+%focus. This is a general issue with the usage of codes, as they convey
+%much more information than what the developer is willing to see. 
+
+%As we will see in the following section, there exists a cure to this
+%problem. In a nutshell, instead of being overflown by typing
+%information, we will put it at work, automatically. The consequence is
+%that, in such system, working with codes is \emph{practical}: one
+%should not be worried by information overload, but how to use it as
+%much as possible. Therefore, we should not be afraid of using codes for
+%practical purposes.
+
+
+\subsection{Type propagation}
+\label{sec:type-propagation}
+
+\begin{wstructure}
+<- Bidirectional type-checking [ref. Turner,Pierce]
+    -> Separating type-checking from type synthesis
+    <- Type checking: push terms into types
+        <- Example: |Pi S T :>: \ x . t| allows us to drop annotation on lambda
+    <- Type synthesis: pull types out of terms
+        <- Example: |x : S l- x :<: S| gives us the type of x
+\end{wstructure}
+
+Our approach to tidying the coding cruft is deeply rooted in the
+bidirectional presentation of type checking from Pierce and
+Turner~\cite{pierce:bidirectional-tc}. They divide
+type inference into two communicating components. In
+\emph{type synthesis}, types are \emph{pulled} out of terms. A
+typical example is a variable in the context:
+%
+\[
+\Rule{\G ; \xS ; \Delta \vdash \Valid}
+     {\G ; \xS ; \Delta \vdash \Bhab{\V{x}}{\M{S}}}
+\]
+%
+Because the context stores the type of the variable, we can extract the
+type whenever the variable is used.
+
+On the other hand, in the \emph{type checking} phase, types are
+\emph{pushed} into terms. We are handed a type together with a term,
+our task consists of checking that the type admits the term. In doing
+so, we can and should use the information
+provided by the type. Therefore, we can relax our requirements on the
+term. Consider \(\LAMBINDER\)-abstraction:
+%
+\[
+\Rule{\G       \vdash \Type{\M{S}} \quad
+      \G ; \xS \vdash \Bhab{\M{t}}{\M{T}}}
+     {\G \vdash \Bhab{\PLAM{\x}{\M{S}} \M{t}}{\PIS{\xS} \M{T}}}
+\]
+%
+The official rules require an annotation specifying the domain.
+However, in type \emph{checking}, the \(\Pi\)-type we push in determines
+the domain, so we can drop the annotation.
+
+\begin{wstructure}
+<- Formalisation: type propagation
+    <- Motivation
+        -> High-level syntax
+            -> exprIn: types are pushed in
+                <- Subject to type *checking*
+            -> exprEx: types are pulled from
+                <- Subject to type *synthesis*
+        -> Translated into our low-level type theory
+        -> Presented as judgements
+    -> Presentation mirrors typing rule of [figure] 
+        -> Ignore identical judgements
+\end{wstructure}
+
+We adapt this idea, yielding a \emph{type
+propagation} system, whose purpose is to elaborate compact
+\emph{expressions} into the terms of our underlying type theory, much
+as in the definition of Epigram
+1~\cite{mcbride.mckinna:view-from-the-left}.  We divide expressions
+into two syntactic categories: $\exprIn$ into which types are pushed,
+and $\exprEx$ from which types are extracted. In the
+bidirectional spirit, the $\exprIn$ are subject to type
+\emph{checking}, while the $\exprEx$---variables and elimination
+forms---admit type \emph{synthesis}. We embed $\exprEx$ into
+$\exprIn$, demanding that the synthesised type coincides with the type
+proposed. The other direction---only necessary to apply
+abstractions or project from pairs---takes a type annotation.
+
+% As the presentation largely
+%mirrors the inference rules of the type theory, we will ignore the
+%judgments that are identical. We refer our reader to the associated
+%technical report~\cite{chapman:desc-tech-report} for the complete
+%system of rules.
+
+\begin{wstructure}
+<- Type synthesis [figure]
+    <- Pull a type out of an exprEx
+    <- Result in a full term, together with its type
+    -> Do *not* need to specify types
+        -> Extracting a term from the context
+        -> Function application
+        -> Projections
+\end{wstructure}
+
+Type synthesis (Fig.~\ref{fig:type-synthesis}) is the \emph{source} of
+types. It follows the \(\exprEx\) syntax, delivering both the
+elaborated term and its type. Terms and expressions never mix: e.g.,
+for application, we instantiate the range with the \emph{term}
+delivered by checking the argument \emph{expression}. Hardwired
+operators are checked as variables.
+
+\begin{figure}
+\input{figure_type_synthesis}
+\caption{Type synthesis}
+\label{fig:type-synthesis}
+\end{figure}
+
+
+\begin{wstructure}
+<- Type checking [figure]
+    <- Push a type in an exprIn
+    <- Result in a full term
+    -> *Use* the type to build the term!
+        -> Domain and co-domain propagation for Pi and Sigma
+        -> Translation of 'tags into EnumTs
+        -> Translation of ['tags ...] into EnumUs
+        -> Finite function space into switch
+\end{wstructure}
+
+Dually, type checking judgments (Fig.~\ref{fig:type-checking})
+are \emph{sinks} for types. From an
+$\exprIn$ and a type pushed into it, they elaborate a low-level
+term, extracting information from the type. Note that we inductively ensure the following `sanity checks':
+%
+\[\stkc{
+\Gamma\Vdash\propag{e}{\pull{t}{T}} \Rightarrow
+  \Gamma\vdash t:T \\
+\Gamma\Vdash\push{\propag{e}{t}}{T} \Rightarrow
+  \Gamma\vdash t:T
+}\]
+
+Canonical set-formers are \emph{checked}: we could exploit
+\(\Set:\Set\) to give them synthesis rules, but this would prejudice
+our future stratification plans. Note that abstraction and pairing are
+free of annotation, as promised. Most of the propagation rules are
+unremarkably structural: we have omitted some mundane rules which just
+follow the pattern, e.g., for \(\UId\).
+
+\begin{figure}
+\input{figure_type_checking}
+\caption{Type checking}
+\label{fig:type-checking}
+\end{figure}
+
+However, we also add abbreviations. We write \(\spl{\M{f}}\),
+pronounced `uncurry \(\M{f}\)' for the function which takes a pair and
+feeds it to \(\M{f}\) one component at a time, letting us name
+them individually. Now, for the finite enumerations, we go to work.
+
+Firstly, we present the codes for enumerations as right-nested tuples
+which, by our LISP convention, we write as unpunctuated lists of tags
+\(\sqr{\etag{t_0}\ldots\etag{t_n}}\).
+Secondly, we can denote an element \emph{by its
+name}: the type pushed in allows us to recover the numerical
+index. We retain the numerical forms to facilitate
+\emph{generic} operations and ensure that shadowing is punished
+fittingly, not fatally.
+Finally, we express functions from enumerations as tuples.
+Any tuple-form, \(\void\) or \(\pair{\_}{\_}{}\), is accepted by the
+function space---the generalised product---if it is accepted by the
+small product. Propagation fills in the appeal to $\SYMBswitch$,
+copying the range information.
+
+Our interactive development tools also perform the
+reverse transformation for intelligible output.
+The encoding of any specific enumeration is thus hidden by these
+translations. Only, and rightly, in enumeration-generic programs is the
+encoding exposed.
+
+\begin{wstructure}
+<- Summary
+    -> Not a novel technique [refs?]
+        /> Used as a boilerplate scrapper
+    -> Make dealing with codes *practical*
+        <- Example: Finite sets/finite function space
+        -> We should not restrain our self in using codes
+            <- We know how to present them to the user
+-> Will extend this machinery in further sections
+\end{wstructure}
+
+%In this section, we have developed a type propagation system based on
+%bidirectional type-checking. Using bidirectional type-checking as a
+%boilerplate scrapper is a well-known
+%technique~\cite{pierce:bidirectional-tc,
+%  xi:bidirectional-tc-bound-array, chlipala:strict-bidirectional-tc}
+%\note{Everybody ok with the citations?}. In our case, we have shown
+%how to instrument bidirectionality to rationalise the expressivity of
+%dependent types. We have illustrated our approach with finite sets. We
+%have abstracted away the low-level presentation of finite sets,
+%offering a convenient syntax instead.
+
+%This example teaches us that we should not be afraid of codes, as soon
+%as type information is available. We have shown how to rationalise
+%this information in a formal presentation. Hence, we have shown that
+%programming with such objects is practical. As we introduce more codes
+%in our theory, we will show how to extend the framework we have
+%developed so far.
+
+Our type propagation mechanism does no constraint
+solving, just copying, so it is just the thin end of the elaboration wedge.
+It can afford us this `assembly
+language' level of civilisation as \(\EnumU\) universe
+specifies not only the \emph{representation} of the
+low-level values in each set as bounded numbers, but also the
+\emph{presentation} of these values as high-level tags. To encode only
+the former, we should merely need the \emph{size} of enumerations, but
+we extract more work from these types by making them more informative.
+We have also, \emph{en passant}, distinguished enumerations which have
+the same cardinality but describe distinct notions:
+\(\EnumT{\sqr{\etag{\CN{red}}\,\etag{\CN{blue}}}}\) is not
+\(\EnumT{\sqr{\etag{\CN{green}}\,\etag{\CN{orange}}}}\).
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% A Universe of simple data-types
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{A Universe of Inductive Datatypes}
+\label{sec:universe-desc}
+
+\begin{wstructure}
+<- Why starting with simple datatypes
+    <- For pedagogical purposes
+        <- datatypes as we know them every day
+        /> Target dependent types
+    -> Cut down version of Induction Recursion
+        -> Presentation evolves independently as we go to dependent types
+\end{wstructure}
+
+In this section, we describe an implementation of inductive types, as
+we know them from ML-like languages. By working with familiar datatypes,
+we hope to focus on the delivery mechanism, warming up gently to the
+indexed datatypes we really want.  % Our encoding is inspired by
+Dybjer and Setzer's closed formulation of
+induction-recursion~\cite{dybjer:axiom-ir}, but without the
+`-recursion'.  An impredicative Church-style encoding of datatypes is
+not adequate for dependently typed programming, as although such
+encodings present data as non-dependent eliminators, they do not
+support dependent \emph{induction}~\cite{geuvers:induction-not-derivable}.
+Whilst the \(\LAMBINDER\)-calculus captures all that data can \emph{do},
+it cannot ultimately delimit all that data can \emph{be}.
+
+\subsection{The power of $\Sigma$}
+
+\begin{wstructure}
+<- The duality of Sigma
+    <- Sigma generalises sum over arbitrary arities
+        -> \Sigma A B == \Sigma_{x : A} B x
+    <- Sigma generalises product to have a dependant second component
+        -> \Sigma A B == (x : A) \times (B x)
+\end{wstructure}
+
+In dependently typed languages, $\Sigma$-types can be interpreted as
+two different generalisations. This duality is reflected in the
+notation we can find in the literature. The notation
+$\blue{\Sigma}_{\x : \M{A}} (\M{B}\: \x)$ stresses that
+$\Sigma$-types are `dependent sums', generalising sums over
+arbitrary arities, where simply typed languages have finite sums.
+
+On the other hand, our choice, $\SIGMA{\x}{\M{A}}
+(\M{B}\:\x)$, emphasises that $\Sigma$-types generalise products,
+with the type of the second component depending on the value of the
+first. Simply typed languages do not express such relative validity.
+
+\begin{wstructure}
+<- datatypes in the simply-typed world
+    -> "sums-of-product"
+        <- Sum of constructors
+        <- Product of arguments
+<- datatypes in the dependently-typed world
+    -> "sigmas-of-sigmas"
+    /> Need ability to manipulate these sigmas
+        -> Define a Code for datatypes
+        -> Together with a sigma-based Interpretation
+\end{wstructure}
+
+In ML-like languages, datatypes are presented as a
+\emph{sum-of-products}. A datatype is defined by a finite sum of
+constructors, each carrying a product of arguments. To embrace
+these datatypes, we have to capture this grammar.
+With dependent types, the notion of sum-of-products translates into
+\emph{sigmas-of-sigmas}.
+
+
+\subsection{The universe of descriptions}
+\label{sec:desc-universe}
+
+\begin{wstructure}
+<- Introduction to Universe construction
+    <- Define a Code
+        -> Name objects
+    <- Define an Interpretation of codes into the type theory
+        -> Give a semantics to objects
+    -> Ability to manipulate code
+    -> Ability to compute with these objects
+\end{wstructure}
+
+While sigmas-of-sigmas can give a \emph{semantics} for the
+sum-of-products structure in each node of the tree-like values in a
+datatype, we need to account for the recursive structure which
+ties these nodes together. We do this by
+constructing a \emph{universe}~\cite{martin-lof:itt}. Universes
+are ubiquitous in dependently typed
+programming~\cite{benke:universe-generic-prog, oury:power-of-pi},
+but here we take them as the foundation of our notion
+of datatypes.
+
+%The key idea behind universe construction is our ability to make names
+%by defining new types. These names are called \emph{codes}. By
+%defining a set of codes, we define the syntax of a language. To give
+%it a semantics, we \emph{interpret} these codes back into the type
+%theory. Hence, codes act as labels, while the type theory provides the
+%computational machinery. Codes being mere labels, we can inspect them,
+%hence regaining structural information. We can also compute over them:
+%deriving new codes from others, or even functions on them.
+
+\begin{wstructure}
+<- Justification of the code 
+    <- [both figures]: cannot be read separately
+    <- Mimic the standard grammar of datatypes description
+        -> Just as we already know it
+        <- '\Sigma for making sigmas-of-sigmas
+        <- 'indx for exhibiting the functoriality
+            -> For recursive arguments
+        <- '1 for end of description
+\end{wstructure}
+
+To add inductive types to our type theory, we build a universe of
+datatype \emph{descriptions} by implementing the signature presented
+in Figure~\ref{fig:desc_universe}, with codes mimicking the grammar of
+datatype declarations. We can read a description $\V{D}:\Desc^{n}$ as
+a `pattern functor' on $\Set^{n}$, with $\SYMBdescop{\V{D}}$ its
+action on an object, \(\V{X}\), soon to be instantiated
+recursively. The superscripts indicate the $\Set$-levels at which we
+\emph{expect} these objects in a stratified system. This is but an
+informal notation, to give a flavour of the stratified
+presentation. Note that the functors so described are \emph{strictly
+  positive}, by construction.
+
+Descriptions are sequential structures ending in $\DUnit$,
+indicating the empty tuple. To build sigmas-of-sigmas, we provide a
+$\SYMBDSigma$ code, interpreted as a $\Sigma$-type. To request a
+recursive component, we have $\DIndx{\V{D}}$, where \(\V{D}\)
+describes the rest of the node. These codes give us
+sigmas-of-sigmas with recursive places. An equivalent, more algebraic presentation
+could be given, as illustrated in Section~\ref{sec:indexing-desc}.
+
+\begin{figure}
+\[\stk{
+\begin{array}{@{}ll}
+\Desc^n 
+    &: \Set^{n+1}\\
+\DUnit 
+    &: \Desc^{n}\\
+\DSigma{(\Bhab{\V{S}}{\Set^{n}})}{(\Bhab{\V{D}}{\V{S} \To \Desc^{n}})} 
+    &: \Desc^{n}\\
+\DIndx{(\Bhab{\V{D}}{\Desc^{n}})} 
+    &: \Desc^{n} \\
+\end{array}
+\smallskip\\
+\begin{array}{l@{\V{X}\:\mapsto\:}l}     
+\multicolumn{2}{l}{\descop{\_\:}{} : \Desc^{n} \To \Set^{n} \To \Set^{n}} \\
+ \descop{\DUnit}{} &  \Unit \\
+ \descop{\DSigma{\V{S}}{\V{D}}}{} &
+     \SIGMAS{\Bhab{\V{s}}{\V{S}}}{\descop{\V{D}\,\V{s}}{\!\V{X}}}  \\
+\descop{\DIndx{\V{D}}}{}  &  \TIMES{\V{X}}{\descop{\V{D}}{\V{X}}}
+\end{array}
+}\]
+
+\caption{Universe of Descriptions}
+\label{fig:desc_universe}
+ 
+\end{figure}
+
+We admit to being a little coy,
+writing of `implementing a signature' without clarifying how. A viable
+approach would simply be to extend the theory with constants for the
+constructors and an operator for \(\descop{\V{D}}\). In
+Section~\ref{sec:desc-levitate}, you will see what we do instead.
+Meanwhile, let us gain some intuition by developing examples.
+
+\subsection{Examples}
+\label{sec:desc-examples}
+
+\begin{wstructure}
+<- Nat
+    <- Sum of zero, suc
+    <- zero case: done
+    <- suc case: leave open and done
+    -> NatD Z = 1 + Z
+\end{wstructure}
+
+We begin with the natural numbers, now working in the high-level
+expression language of Section~\ref{sec:type-propagation}, exploiting
+type propagation.
+%
+\[\stk{
+\NatD : \Desc^n \\
+\NatD \mapsto \DSigma{\EnumT{\sqr{\NatZero\: \SYMBNatSuc }}}
+                     {\sqr{ \DUnit \quad (\DIndx{\DUnit}) }}
+}\]
+%
+Let us explain its construction. First, we use $\SYMBDSigma$ to
+give a choice between the $\NatZero$ and $\SYMBNatSuc$ constructors.
+What follows depends on this choice, so we write the function
+computing the rest of the description in tuple notation.  In the
+$\NatZero$ case, we reach the end of the description. In the
+$\SYMBNatSuc$ case, we attach one recursive argument and close the
+description. Translating the \(\Sigma\) to a binary sum, we have
+effectively described the functor:
+%
+\[    \NatD\: \V{Z} \mapsto \Unit \mathop{\D{+}} \V{Z}    \]
+Correspondingly, we can see the injections to the sum:
+\[
+\sqr{\NatZero}:\descop{\NatD}Z \qquad
+\sqr{\NatSuc{(\Bhab{z}{Z})}}:\descop{\NatD}Z
+\]
+
+\begin{wstructure}
+<- List
+    <- Sum of nil, cons
+    <- nil case: done
+    <- cons case: product of X with leave open and done
+    -> ListD X Z = 1 + X * Z
+\end{wstructure}
+
+The pattern functor
+for lists needs but a small change:
+%
+\[\stk{
+\ListD : \Set^n \To \Desc^n \\
+\ListD \: \V{X} \mapsto
+ \DSigma{\EnumT{\sqr{ \ListNil\: \SYMBListCons }}}
+         {\sqr{ \DUnit \quad (\DSigma{\V{X}}{\LAM{\_} \DIndx{\DUnit}}) }}
+}\]
+%
+The $\SYMBNatSuc$ constructor becomes
+$\SYMBListCons$, taking an $\V{X}$ followed by a
+recursive argument. This code describes the following functor:
+%
+\[    \ListD\: \V{X}\: \V{Z} \mapsto \Unit \mathop{\D{+}} \V{X} \D{\ensuremath{\times}} \V{Z}     \]
+
+\begin{wstructure}
+<- Tree
+    <- sum of leaf, node
+    <- leaf case: done
+    <- node case: product of X with two leave open and done
+    -> TreeD X Z = 1 + X * Z * Z
+\end{wstructure}
+
+Of course, we are not limited to one recursive argument. Here are
+the node-labelled binary trees:
+%
+\[\stk{
+\TreeD : \Set^n \To \Desc^n \\
+\begin{array}{@{}l@{}l}
+\TreeD \: \V{X} \mapsto 
+    \DSigma{ & \EnumT{\sqr{ \TreeLeaf\: \TreeNode }} \\}
+           { & \sqr{ \DUnit \quad
+                     (\DIndx{(\DSigma{\V{X}}{\LAM{\_}\DIndx{\DUnit}})})} }
+\end{array}
+}\]
+%
+Again, we are one evolutionary step away from $\ListD$. However,
+instead of a single call to the induction code, we add another. The
+interpretation of this code corresponds to the following functor:
+%
+\[    \TreeD\: \V{X}\: \V{Z} \mapsto \Unit \mathop{\D{+}} 
+          \V{Z} \Prod \V{X}  \Prod \V{Z}     \]
+
+
+\begin{wstructure}
+<- Tagged description
+    <- Form TDesc = List (UId x Desc) [equation]
+    <- Follow usual sums-of-product presentation of datatype
+        <- Finite set of constructors
+        <- Then whatever you want
+    -> Any Desc datatype can be turned into this form
+        -> No loss of expressive power
+        /> Guarantee a ``constructor form''
+\end{wstructure}
+
+From the examples above, we observe that datatypes are defined by a
+$\SYMBDSigma$ whose first argument enumerates the constructors. We
+call codes fitting this pattern \emph{tagged} descriptions. Again,
+this is a clear reminder of the sum-of-products style. Any
+description can be forced into this style with a singleton constructor
+set. We characterise tagged descriptions thus:
+\[\stk{
+ \TagDesc^n : \Set^{n+1} \\
+ \TagDesc^n \mapsto \SIGMA{\V{E}}{\EnumU} (\spi{\V{E}}{\LAM{\_} \Desc^n})
+\smallskip\\
+\SYMBtoDesc : \TagDesc^n \To \Desc^n \\
+\SYMBtoDesc \mapsto
+\spl{\LAM{\V{E}}\LAM{\V{D}}
+\DSigma{\EnumT{\V{E}}}{(\F{switch}\:\V{E}\:(\LAM{\_}\Desc^n)\:\V{D})}}
+}\]
+It is not such a stretch to expect that the familiar datatype
+declaration might desugar to the \emph{definitions} of a tagged description.
+
+\begin{wstructure}
+<- Fictive object [figure 'data Desc']
+    -> Must be read as a type signature
+    -> See further for its actual implementation
+        <- Subject to our levitation exercise
+\end{wstructure}
+
+\subsection{The least fixpoint}
+\label{sec:desc-fix-point}
+
+\begin{wstructure}
+<- Build the fixpoint of functors
+    <- See examples: need to build their initial algebra
+    -> Extend the type theory with Mu/Con [figure]
+        <- Straightforward definition of a fixpoint
+            <- Interpret D with (Mu D) as sub-objects
+\end{wstructure}
+
+\newcommand{\mude}[1]{\D{\(\mu^{\!+}\)}\:#1}
+
+So far, we have built pattern functors with our \(\Desc\) universe.
+Being polynomial functors, they all admit a least fixpoint, which we
+now construct by \emph{tying the knot}: the element type abstracted
+by the functor is now instantiated recursively:
+%
+\[
+\Rule{\Gamma \vdash \Bhab{\M{D}}{\Desc^n}}
+     {\Gamma \vdash \Bhab{\Mu{\M{D}}}{\Set^n}} \qquad
+\Rule{\Gamma \vdash \Bhab{\M{D}}{\Desc^n} \quad 
+      \Gamma \vdash \Bhab{\M{d}}{\descop{\M{D}}{(\Mu{\M{D}})}}}
+     {\Gamma \vdash \Bhab{\Con{\M{d}}}{\Mu{\M{D}}}}
+\]
+Tagged descriptions are very common, so we abbreviate:
+\[
+  \mude{}:\TagDesc^n \To \Set^n \qquad \mude{\V{T}}\mapsto\Mu{(\toDesc{\V{T}})}
+\]
+
+\begin{wstructure}
+<- Elimination on Mu
+    <- We are used to foldD : \forall X. (desc D X -> X) -> mu D -> X
+        /> Not dependent
+        -> Cannot express some (which one again?) properties
+    -> Develop a dependent induction
+        <- Everywhere/All
+        <- Induction
+    -> *Generic*
+    ???
+\end{wstructure}
+
+We can now build datatypes and their elements, e.g.:
+\[\stk{
+\Nat \mapsto \Bhab{\mude{\pair{\sqr{\NatZero\: \SYMBNatSuc }}
+                               {\sqr{\DUnit \quad (\DIndx{\DUnit})}}{}}}
+                  {\Set^n}
+\\
+\Con{\sqr{\NatZero}}:\Nat \qquad
+\Con{\sqr{\NatSuc{(\Bhab{n}{\Nat})}}}:\Nat
+}\]
+
+But how shall we compute with our data?  We should expect an
+elimination principle. Following a categorical intuition, we might
+provide the `fold', or `iterator', or `catamorphism':
+%
+\[
+\F{cata} : \PITEL{\V{D}}{\Desc^n}
+           \PI{\V{T}}{\Set^n}
+           (\descop{\V{D}}{\V{T}} \To \V{T}) \To 
+           \Mu{\V{D}} \To \V{T} 
+\]
+
+\newcommand{\SYMBind}{\F{ind}}
+
+However, iteration is inadequate for \emph{dependent} computation.
+We need \emph{induction} to write functions whose type depends on inductive
+data. Following \citet{benke:universe-generic-prog}, we adopt the following:
+%
+\[\stk{
+\F{ind} : \stk{ \PITEL{\V{D}}{\Desc^n}
+                \PI{\V{P}}{\Mu{\V{D}} \To \Set^k}         \\
+               (\PI{\V{d}}{\descop{\V{D}}{(\Mu{\V{D}})}}       
+                \All{\V{D}}{(\Mu{\V{D}})}{\V{P}}{\V{d}} \To \V{P} (\Con{\V{d}})) \To \\
+               \PI{\V{x}}{\Mu{\V{D}}} \V{P} \V{x} 
+} \\
+\F{ind}\, \V{D}\, \V{P}\, \V{m}\, (\Con{\V{d}}) \mapsto 
+    \V{m}\, \V{d}\, (\all{\V{D}}{(\Mu{\V{D}})}{\V{P}}
+                           {(\F{ind}\, \V{D}\, \V{P}\, \V{m})}
+                           {\V{d}})
+}\]
+%
+Here, $\All{\V{D}}{\V{X}}{\V{P}}{\V{d}}$ states that
+$\Bhab{\V{P}}{\V{X} \To \Set^k}$ holds for every subobject $\V{x}:\V{X}$
+in \(\V{D}\), and \(\all{\V{D}}{\V{X}}{\V{P}}{\V{p}}{\V{d}}\) is a
+`dependent map', applying some
+\(\Bhab{\V{p}}{\PIS{\Bhab{\x}{\V{X}}}\V{P}\,\V{x}}\) to each \(\x\)
+contained in \(\V{d}\). The definition (including an extra case,
+introduced soon) is in
+Figure~\ref{fig:all-predicates}.\footnote{To pass the termination
+  checker, we had to inline the definition of $\SYMBall$ into
+  $\SYMBind$ in our Agda model. A simulation argument shows that the
+  definition presented here terminates if the inlined version
+  does. Hence, although not directly structural, this definition is
+  indeed terminating.} So, $\SYMBind$ is our first
+operation generic over descriptions, albeit hardwired.  Any
+datatype we define comes with induction.
+
+Note that the very same functors \(\SYMBdescop{\M{D}}\) also admit greatest
+fixpoints: we have indeed implemented coinductive types this way, but
+that is another story.
+
+\begin{figure*}
+
+\[
+\begin{array}{ll}
+%%
+\stk{
+\begin{array}{@{}ll}
+\SYMBAll : & \PITEL{\V{D}}{\Desc^n}
+             \PITEL{\V{X}}{\Set^n}
+             \PITEL{\V{P}}{\V{X} \To \Set^k} \\
+           & \PI{\V{xs}}{\descop{\V{D}}{\V{X}}} 
+             \Set^k 
+\end{array} \\
+\begin{array}{@{}l@{}l@{\:\mapsto\:\:}l}
+\All{\DUnit}{& \V{X}}{\V{P}}{\Void} &
+    \Unit \\
+\All{(\DSigma{\V{S}}{\V{D}})}{& \V{X}}{\V{P}}{\pair{\V{s}}{\V{d}}{}} &
+    \All{(\V{D}\: \V{s})}{\V{X}}{\V{P}}{\V{d}} \\
+\All{(\DIndx{\V{D}})}{& \V{X}}{\V{P}}{\pair{\V{x}}{\V{d}}{}} &
+    \TIMES{\V{P}\: \V{x}}{\All{\V{D}}{\V{X}}{\V{P}}{\V{d}}} \\
+\All{(\DHindx{\V{H}}{\V{D}})}{& \V{X}}{\V{P}}{\pair{\V{f}}{\V{d}}{}} &
+    \TIMES{(\PI{\V{h}}{\V{H}} \V{P}\: (\V{f}\: \V{h}))}
+          {\All{\V{D}}{\V{X}}{\V{P}}{\V{d}}}
+\end{array}
+}
+&
+%%
+\stk{
+\begin{array}{@{}ll}
+\SYMBall : & \PITEL{\V{D}}{\Desc^n}
+             \PITEL{\V{X}}{\Set^n}
+             \PITEL{\V{P}}{\V{X} \To \Set^k} \\
+           & \PITEL{\V{p}}{\PI{\V{x}}{\V{X}} \V{P}\: \V{x}}
+             \PI{\V{xs}}{\descop{\V{D}}{\V{X}}} 
+             \All{\V{D}}{\V{X}}{\V{P}}{\V{xs}} 
+\end{array} \\
+\begin{array}{@{}l@{}l@{\:\mapsto\:\:}l}
+\all{\DUnit}{& \V{X}}{\V{P}}{\V{p}}{\Void} &
+    \Void \\
+\all{(\DSigma{\V{S}}{\V{D}})}{& \V{X}}{\V{P}}{\V{p}}{\pair{\V{s}}{\V{d}}{}} &
+    \all{(\V{D}\: \V{s})}{\V{X}}{\V{P}}{\V{p}}{\V{d}} \\
+\all{(\DIndx{\V{D}})}{& \V{X}}{\V{P}}{\V{p}}{\pair{\V{x}}{\V{d}}{}} &
+    \pair{\V{p}\: \V{x}}
+         {\all{\V{D}}{\V{X}}{\V{P}}{\V{p}}{\V{d}}}{} \\
+\all{(\DHindx{\V{H}}{\V{D}})}{& \V{X}}{\V{P}}{\V{p}}{\pair{\V{f}}{\V{d}}{}} &
+    \pair{\LAM{\V{h}} \V{p}\: (\V{f}\: \V{h})}
+         {\all{\V{D}}{\V{X}}{\V{P}}{\V{p}}{\V{d}}}{}
+\end{array}
+\end{array}
+}
+\]
+
+\caption{Defining and collecting inductive hypotheses}
+\label{fig:all-predicates}
+
+\end{figure*}
+
+
+\subsection{Extending type propagation}
+
+\begin{wstructure}
+<- Extending type propagation
+    <- datatype declaration turns into definitions
+        -> Straightforward translation to Desc
+        -> Creation of a variable referring to the structure
+    <- Labelled Mu
+        /> Just mention the possibility of labelling, no details required
+        -> For the user, objects have names rather than Mu of codes
+    <- Push Mu to an applied name [figure]
+        -> Direct integration into the type propagation machinery
+    -> Coded presentation is practical
+        <- The user never see a code
+\end{wstructure}
+
+
+We now have low level machinery to build and manipulate inductive
+types. Let us apply cosmetic surgery
+to reduce the syntactic overhead. We extend type checking of
+expressions:
+%
+\[
+\Rule{\Gamma\Vdash\propag{\push{\etag{c}}{\EnumT{\M{E}}}}{n} \quad
+\Gamma\Vdash  
+\propag{
+  \push{\sqr{\vec{t}}}
+   {\descop{\M{D}\: n}{(\Mu{(\DSigma{\EnumT{\M{E}}}{\M{D}})})}}}
+        {\M{t'}}}
+     {\Gamma\Vdash\propag{\push{\etag{c}\: \vec{\M{t}}}
+                   {\Mu{(\DSigma{\EnumT{\M{E}}}{\M{D}})}}}
+             {\Con{\pair{n}{\M{t'}}{}}}}
+\]
+%
+Here $\etag{c}\:\vec{t}$ denotes a tag `applied' to a sequence
+of arguments, and \(\sqr{\vec{t}}\) that sequence's repackaging as
+a right-nested tuple. Now we can just write data directly.
+\[
+\NatZero:\Nat\qquad \NatSuc{(\Bhab{n}{\Nat})}:\Nat
+\]
+Once again, the type explains the legible presentation, as well as
+the low-level representation.
+
+We may also simplify appeals to induction by type propagation, as we
+have done with functions from pairs and enumerations.
+\[
+\Rule{\Gamma\Vdash\stk{
+\propag{\push{\M{f}}
+             {\PI{\V{d}}{\descop{\M{D}}{(\Mu{\M{D}})}}       
+                \All{\M{D}}{(\Mu{\M{D}})}{(\PLAM{\x}{\Mu{\M{D}}}\M{P})}{\V{d}} \To \M{P}[\Con{\V{d}}/\x]\\}}
+       {\M{f'}}}}
+{\Gamma\Vdash
+\propag{\push{\sind{\M{f}}}
+             {\PIS{\Bhab{\x}{\Mu{\M{D}}}}\M{P} }}
+       {\F{ind}\:\M{D}\:(\PLAM{\x}{\Mu{\M{D}}}\M{P})\:\M{f'}}}
+\]
+This abbreviation is no substitute for the dependent pattern
+matching to which we are entitled in a high-level language built on top
+of this theory~\cite{goguen:pattern-matching}. It does at least make
+`assembly language' programming mercifully brief, albeit hieroglyphic.
+\[\stk{
+\F{plus}:\Nat\To\Nat\To\Nat \\
+\F{plus}\mapsto\sind{\spl{\sqr{(\LAM{\_}\LAM{\_}\LAM{\V{y}}\V{y})
+  \quad(\LAM{\_}\spl{\LAM{\V{h}}\LAM{\_}\LAM{\V{y}}
+    \NatSuc{(\V{h}\:\V{y})}})}}}
+}\]
+
+This concludes our introduction to the universe of datatype descriptions.
+We have encoded sum-of-products datatypes from the simply-typed world
+as data and equipped them with computation. We have also made sure
+to hide the details by type propagation.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Levitating the universe of descriptions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Levitating the Universe of Descriptions}
+\label{sec:desc-levitate}
+
+In this section, we will fulfil our promises and show how we implement
+the signatures, first for the enumerations, and then for the codes of
+the $\Desc^n$ universe.  Persuading these programs to perform was a perilous
+pedagogical peregrination for the protagonist.  Our method was indeed to
+hardwire constants implementing the signatures specified above, in the
+first instance, but then attempt to replace them, step by step, with
+\emph{definitions}: ``Is \(2+2\) still \(4\)?'', ``No, it's a loop!''.
+But we did find a way, so now we hope to convey to you the
+dizzy feeling of levitation, without the falling.
+
+
+
+\subsection{Implementing finite enumerations}
+
+\begin{wstructure}
+<- Recall typing rules of 1st section
+    -> Make clear they were just promises
+    -> Can be implemented now
+        <- Simply List UId
+\end{wstructure}
+
+In Section~\ref{sec:finite-sets}, we specified the
+finite sets of tags. We are going to implement (at every universe level)
+the $\EnumU$ type former and its constructors. Recall:
+%
+\[\Type{\EnumU}^n\qquad\Bhab{\NilE}{\EnumU}\qquad
+\Bhab{\ConsE{(\Bhab{\M{t}}{\UId})}{(\Bhab{\M{E}}{\EnumU})}}{\EnumU}
+\]
+%
+The $\NilE$ and $\SYMBConsE$ constructors are just the `nil' and
+`cons' or ordinary lists, with elements from \(\UId\).
+Therefore, we
+implement:
+%
+\[
+\EnumU \mapsto \Mu{(\ListD\: \UId)}
+\qquad
+\NilE \mapsto \ListNil
+\qquad
+\ConsE{\M{t}}{\M{E}} \mapsto \ListCons{\M{t}}{\M{E}}
+\]
+
+
+\begin{wstructure}
+<- Consequences
+    -> Type theory doesn't need to be extended with EnumU, NilE, and ConsE
+        <- EnumU == Mu EnumUD
+        <- NilE, ConsE are just tags
+    -> Do not need a specific \spi eliminator
+        <- \spi is an instance of the generic eliminator
+            <- Code?
+    -> Anything else remains the same (switch, EnumT, 0, 1+)
+\end{wstructure}
+
+Let us consider the consequences. We find that the type
+theory does not need a special type former $\EnumU$,
+or special constructors $\NilE$ and $\SYMBConsE$. 
+Moreover, the $\spi{\M{E}}{\M{P}}$ operator, computing tuple types
+of \(\M{P}\)s by recursion on \(\M{E}\) need not be hardwired: we can
+just use the generic $\F{ind}$ operator, as we would for any ordinary
+program.
+
+Note, however, that the universe decoder \(\EnumT{\M{E}}\) \emph{is}
+hardwired, as are the primitive \(\Ze\) and \(\Su\) that
+we use for low-level values, and indeed the \(\SYMBswitch\) operator.
+We cannot dispose of data altogether! We have, however, gained
+the ordinariness of the enumeration \emph{codes}, and hence of generic
+programs which manipulate them. Our next step is similar: we are going to
+condense the entire naming scheme of datatypes \emph{into itself}.
+
+%% Apart from these changes, we are left with implementing the other
+%% components of finite sets. This consists of $\EnumT$, $\Ze$, $\Su$, as
+%% well as the $\F{switch}$ operator. Note that the actual implementation
+%% of $\EnumU$ does not influence our implementation of $\EnumT$: be they
+%% hard-coded or codes in the $\Desc$ universe, the $\EnumU$ objects
+%% behave the same. We have witnessed this effect when carrying the
+%% operation in Epigram, moving from an hard-coded presentation to a
+%% self-hosted one. Absolutely no change to the $\EnumT$ objects was
+%% required.
+
+\begin{wstructure}
+<- Summary of the operation
+    <- The content of the type theory is exactly the same
+        <- before == after
+    /> type naming scheme condenses
+        <- Replace named constructors by codes in the universe of datatypes
+    -> Our next step is a similar move (in essence)
+        /> Condenses the entire naming scheme of datatypes
+\end{wstructure}
+
+%In this section, we have replaced a low-level presentation of finite
+%sets by a self-hosted one, expressed in the universe of
+%descriptions. However, formally, the content of the type theory
+%remains unchanged: objects that were present before the modification
+%are still there. Conversely, we have not introduced any spurious
+%object.
+
+%If not on the content, this modification had an effect on the
+%names. The type naming scheme of the type theory has condensed: named
+%type formers ($\EnumU$) and constructors ($\NilE$ and $\ConsE$) are
+%now replaced by codes and their fixpoint in the universe of
+%descriptions. In essence,
+
+\subsection{Implementing descriptions}
+
+\begin{wstructure}
+<- Realising our promises
+    <- We are going to implement Desc
+    /> Desc is itself a datatype
+        <- Same situation as EnumU
+            <- We want to benefit from generic operations
+        -> It ought to be encoded in itself
+\end{wstructure}
+
+The set of codes, $\Desc$, is already some sort of datatype; as with $\EnumU$,
+we ought to be able to describe it, coding of $\Desc^n$ in $\Desc^{n+1}$, spiralling
+upwards. Hence, this code would be a first-class citizen, born with
+the generic equipment of datatypes.
+
+\subsubsection{First attempt}
+
+\begin{wstructure}
+<- A partial implementation
+    <- '1 and 'indx are easy
+    <- 'sigma is partially doable
+        /> lack the ability to do an higher-order inductive call
+    -> Show partial code [figure]
+\end{wstructure}
+
+Our first attempt gets stuck quite quickly:
+%
+\[\stk{
+\DescD^n : \Desc^{n+1} \\
+\DescD^n \mapsto
+  \tada{\stkm{\DUnit\\ \SYMBDSigma\\ \SYMBDIndx}}
+       {\stkm{ \DUnit                                \\
+         \DSigma{\Set^n}{\LAM{\V{S}} \SHED}      \\
+         \DIndx{\DUnit}    }                    } \\
+%\begin{array}{@{}ll}
+%\DescD \mapsto \DSigma{\!}{\!} & (\EnumT{[ \DUnit, \DSigma{\!}{\!}, \DIndx{\!} ]})  \\
+%                               & \left[\begin{array}{l}
+%                                   \DUnit                                \\
+%                                   \DSigma{\Set}{\LAM{\V{S}} \SHED}      \\
+%                                   \DIndx{\DUnit}                        \\
+%                                 \end{array}
+%                                 \right]
+%\end{array}
+}\]
+%
+Let us explain where we stand. Much as
+we have done so far, we first offer a constructor choice from
+$\DUnit$, $\SYMBDSigma$, and $\SYMBDIndx$. You may notice
+that the `tagged' notation we have used for the $\Desc^n$ constructors now
+fits the facts: these were actually the tags we are defining.
+For $\DUnit$, we immediately reach the end of the description. For
+$\SYMBDIndx$, there is a single recursive argument. Describing
+$\SYMBDSigma$ is problematic. Recall the specification of
+$\SYMBDSigma$:
+%
+\[
+\DSigma{(\Bhab{\V{S}}{\Set^n})}{(\Bhab{\V{D}}{\V{S} \To \Desc^n})} : \Desc^n\\
+\]
+%
+So, we first pack a  $\Set^n$, $\V{S}$, as well we might when working in
+$\Desc^{n+1}$. We should then like
+a recursive argument \emph{indexed} by $\V{S}$, but
+that is an \emph{exponential}, and our presentation so far delivers only
+sums-of-products. To code our universe, we must first enlarge it!
+
+
+\subsubsection{Second attempt}
+
+\begin{wstructure}
+<- Extending the universe of description
+    -> With higher-order induction
+    <- Intuition: index elements in X by H, and go on reading
+        -> indx is isomorph to hindx for H = 1
+    /> Keep indx
+        <- First order!
+        -> Extensionally equal to hindx 1
+        /> Practically, definitional equality on Sigma/Pi cannot cope with it
+    -> Show DescD code
+\end{wstructure}
+
+In order to capture a notion of higher-order induction, we add a code
+$\SYMBDHindx$ that takes an indexing set $\V{H}$. This amounts to give
+a recursive subobject for each element of $H$.
+%
+\[\stk{
+    \DHindx{(\Bhab{\M{H}}{\Set^n})}{(\Bhab{\M{D}}{\Desc^n})} : \Desc^n
+    \smallskip \\
+    \descop{\DHindx{\V{H}}{\V{D}}}{\V{X}}     
+        \mapsto 
+            \TIMES{(\V{H} \To \V{X})}{\descop{\V{D}}{\V{X}}} \\
+}\]
+
+
+Note that up to isomorphism, $\SYMBDIndx$ is subsumed by
+$\DHindx{\Unit}{\!}$. However, the apparent duplication has some
+value.  Unlike its counterpart, $\SYMBDIndx$ is first-order: we prefer
+not to demand dummy functions from \(\Unit\) in ordinary data,
+e.g. \(\NatSuc{(\LAM{\_}n)}\). It is na{\"\i}ve to imagine that up to
+isomorphism, any representation of data will do.  First-order
+representations are finitary by construction, and thus admit a richer,
+componentwise decidable equality than functions may in
+general possess.\footnote{E.g., extensionally, there is one function in
+\(\EnumT{\void}\To\Nat\); intensionally, there is a countable infinitude
+which it is dangerous to identify definitionally.}
+
+We are now able to describe our universe of datatypes:
+%
+\[\stk{
+\DescD^n : \Desc^{n+1} \\
+\DescD^n \mapsto\tada
+{\stkm{ \DUnit\\ \SYMBDSigma\\ \SYMBDIndx\\ \SYMBDHindx}}
+{\stkm{
+\DUnit                                            \\
+                                   \DSigma{\Set^n}{\LAM{\V{S}} \DHindx{\V{S}}{\DUnit}}   \\
+                                   \DIndx{\DUnit}                                    \\
+                                   \DSigma{\Set^n}{\LAM{\_} \DIndx{\DUnit}}
+}}
+}\]
+%
+The $\DUnit$ and $\SYMBDIndx$ cases remain unchanged, as expected. We
+successfully describe the $\SYMBDSigma$ case via
+the higher-order induction, branching on $\V{S}$. The $\SYMBDHindx$ case
+just packs a $\Set^n$ with a recursive argument.
+
+At a first glance, we have achieved our goal. We have described the
+codes of the universe of descriptions. The fixpoint of \(\descop{\DescD^n}\)
+is a datatype just like $\Desc^n$, in $\Set^{n+1}$. Might we be
+so bold as to take \(\Desc^n \mapsto \Mu{\DescD^n}\) as the levitating
+definition? If we do, we shall come down with a bump! 
+To complete our levitation, just as in the magic trick, requires
+hidden assistance. Let us explain the problem and reveal the `invisible
+cable' which fixes it.
+
+\subsubsection{Final move}
+
+\begin{wstructure}
+<- Subtlety: translation of [ ... ]
+    -> Let us do it manually
+        -> Code with problem for the motive of switch
+\end{wstructure}
+
+The definition \(\Desc^n \mapsto \Mu{\DescD^n}\) is circular,
+but the offensive recursion is concealed by a prestidigitation.
+
+Expanding \(\toDesc{-}\) and propagating types as in
+Figure~\ref{fig:type-checking} reveals the
+awful truth:
+\[
+\Desc^n\mapsto
+\Mu{\stk{(\DSigma{\EnumT{\sqr{ \DUnit\:\: \SYMBDSigma\:\: \SYMBDIndx\:\: \SYMBDHindx}}\\}
+    {\;\SYMBswitch\:\sqr{ \DUnit\:\: \SYMBDSigma\:\: \SYMBDIndx\:\: \SYMBDHindx}\:(\LAM{\_}\Desc^{n+1})\\
+\;\sqr{\stkm{
+\DUnit                                            \\
+                                   \DSigma{\Set^n}{\LAM{\V{S}} \DHindx{\V{S}}{\DUnit}}   \\
+                                   \DIndx{\DUnit}                                    \\
+                                   \DSigma{\Set^n}{\LAM{\_} \DIndx{\DUnit}}
+}}})}}
+\]
+The recursion shows up only because we must specify the return type
+of the general-purpose \(\F{switch}\), and it is computing a \(\Desc^{n+1}\)!
+Although type propagation
+allows us to hide this detail \emph{when defining a function}, we cannot
+readily suppress this information and check types
+when \(\F{switch}\) is fully applied.
+
+\begin{wstructure}
+<- The magician trick
+    <- Our problem is to give a motive for switch
+        /> We perfectly know what it ought to be: \_ -> DescD
+    -> Solution: extend the type theory with a special purpose switchD
+        -> Only extension required to the type theory!
+        -> Hidden away to the user by the syntactic sugar
+            -> Sufficient to ensure unavailability as a raw operator
+            <- Another instance of type propagation
+\end{wstructure}
+
+%What happens if we unfold the definition? We ought to build the following term:
+%
+%\[
+%\PLAM{\V{x}}{(\EnumT{\V{E}})} \switch{\V{E}}{(\LAM{\_} %\Mu{\DescD})}{\V{\pi^f}}{\V{x}}
+%\]
+%
+%But this is quite problematic. We are still in the process of
+%constructing $\DescD$, and the motive of $\F{switch}$ is abruptly
+%begging for this very same $\DescD$. Despite our willingness, we
+%cannot materialise such motive. However, we perfectly know what the
+%motive is.
+
+We are too close to give up now. If only we did not need to
+supply that return type, especially when we know what it must be!
+We eliminate the recursion by \emph{specialising} \(\F{switch}\):
+%
+\[
+\F{switchD} : \PITEL{\V{E}}{\EnumU}   \To
+                (\spi{\V{E}}{\LAM{\_} \Desc^m}) \To
+                \EnumT{\V{E}} \To \Desc^m
+\]
+%
+The magician's art rests here, in this extension. We conceal it
+behind a type propagation rule for \(\F{switchD}\) which we apply
+with higher priority than for \(\F{switch}\) in general.
+%
+\[
+\Rule{\Gamma \Vdash
+  \propag{\push{\sqr{\vec{t}}}{\spi{\M{E}}{\PLAM{x}{\EnumT{E}}\Desc^m}}}
+                           {\M{t'}}}
+     {\Gamma \Vdash
+\propag{\push{\sqr{\vec{t}}}{\EnumT{\M{E}}\To\Desc^m}}
+ {\switchD{\M{E}}{\M{t'}}}}
+\]
+As a consequence, our definition above now propagates without
+introducing recursion. Of course, by pasting together the declaration
+of \(\Desc^n\) and its internal copy, we have made it appear in its own
+type. Hardwired as a trusted \emph{fait accompli}, this creates no regress,
+although one must assume the definition to recheck it.
+
+Our Agda model does not formalise the $\SYMBswitchD$
+construction. Instead, we exhibit the isomorphism between declared
+and encoded descriptions. Here, $\SYMBswitchD$ lets us collapse
+this isomorphism, operationally identifying defined and coded
+descriptions.
+
+There are other ways to achieve a sufficient specialisation to avoid a
+recursive code, e.g., extending $\Desc^n$ with specialised codes for
+\emph{finite} sums and products, pushing the $\SYMBswitch$ into the
+interpretation of codes, rather than the code itself. Here, we prefer
+not to add codes to $\Desc^n$ which are otherwise unmotivated.
+%%
+%\[\stk{
+%    \Dsigma{(\Bhab{\V{E}}{\EnumU})}
+%           {(\Bhab{\V{B}}{\spi{\V{E}}{\LAM{\_}{\Desc^n}}})} : \Desc^n
+%    \smallskip \\
+%    \descop{\Dsigma{\V{E}}{\V{B}}}{\V{X}}     
+%        \mapsto 
+%            \SIGMAS{\Bhab{\V{x}}{\EnumT{\V{E}}}}
+%                   %{\descop{\switch{\V{E}}{(\LAM{\_}{\Desc})}{\V{B}}{\V{x}}}{\V{X}}}    
+%}\]
+%%
+%Using $\SYMBDsigma$ to switch over the $\Desc$ constructors, we avoid
+%mention of $\Desc$ while levitating it. The $\SYMBswitch$ operator is
+%pushed into the interpretation function, at which point $\Desc$ indeed
+%exists.
+
+%% * There exists alternative
+%% **   <- All we want is to avoid mention of Desc
+%% **   -> Add a code for finite sigma : $\sigma : (e : \EnumU) -> \pi e \Desc -> \Desc$
+%% **       <- Take a finite set in argument
+%% **       <- Interpreted as a switch
+%% **       -> No more need to mention Desc during its construction
+%% **           <- Pushed into intrepretation, at which time it exists
+
+\begin{wstructure}
+<- Generic programming now!
+    <- Desc is just data
+        -> Can be manipulated
+    <- Free induction scheme on Desc
+        -> Ability to inspect datatypes
+        -> Ability to program on datatypes
+\end{wstructure}
+
+
+We have levitated \(\Desc\) at every level. Beyond its pedagogical
+value, this exercise has several practical outcomes. First, it
+confirms that each $\Desc$ universe is just plain data. As any piece of
+data, it can therefore be inspected and manipulated. Moreover, it is
+expressed in a $\Desc$ universe. As a consequence, it is equipped,
+for free, with an induction principle. So, our ability to inspect and
+program with $\Desc$ is not restricted to a meta-language: we have
+the necessary equipment to program with \emph{data}, so we can program over
+datatypes. \emph{Generic programming is just programming}.
+
+
+\subsection{The generic catamorphism}
+
+\begin{wstructure}
+<- Making cata
+    <- Present the type signature
+    <- Starts with a call to generic induction
+        <- induction on Desc!
+        /> Show types at hand
+        -> Explain how to use inductive hypothesis
+    <- Implement the 'replace' function
+    -> Dependent-typeless catamorphism 
+\end{wstructure}
+
+In Section~\ref{sec:desc-fix-point}, we hardwired a dependent
+$\F{ind}$uction principle, but sometimes,
+iteration suffices. Let us construct the catamorphism.
+
+\newcommand{\cata}{\F{cata}}
+
+We proceed by induction on the \emph{data} in \(\Mu{\V{D}}\):
+the non-dependent return type $\V{T}$ is readily propagated.
+Given a node $\V{xs}$
+and the induction hypotheses, the method ought to build an element of
+$\V{T}$. Provided that we know how to make an element of
+$\descop{\V{D}}{\V{T}}$, this step will be performed by the algebra
+$\V{f}$. Let us take a look at this jigsaw:
+%
+\[\stk{
+\cata : \PITEL{\V{D}}{\Desc}
+           \PI{\V{T}}{\Set}
+           (\descop{\V{D}}{\V{T}} \To \V{T}) \To 
+           \Mu{\V{D}} \To \V{T} \\
+\cata\: \V{D}\: \V{T}\: \V{f} \mapsto
+  \sind \LAM{\V{xs}}\LAM{\V{hs}} \V{f}\: \SHED
+}\]
+% 
+The hole remains: we have
+\(\Bhab{\V{xs}}{\descop{\V{D}}{\Mu{\V{D}}}}\) and
+\(\Bhab{\V{hs}}{\All{\V{D}}{\Mu{\V{D}}}{(\LAM{\_} \V{T})}{\V{xs}}}\)
+to hand, and we need a \(\descop{\V{D}}{\V{T}}\).
+Now, $\V{xs}$ has the right shape, but its
+components have the wrong type. However, for each such
+component, $\V{hs}$ holds the corresponding value
+in $\V{T}$.  We need a function to \(\F{replace}\) the former with the latter:
+this pattern
+matching sketch yields an induction on \(\V{D}\). We fill the hole
+with \(\F{replace}\: \V{D}\:(\Mu{\V{D}})\: \V{T}\: \V{xs}\: \V{hs}\).
+%
+\[\stk{
+\F{replace} : \stk{\PITEL{\V{D}}{\Desc}
+                   \PITEL{\V{X},\V{Y}}{\Set}\\
+                   \PI{\V{xs}}{\descop{\V{D}}{\V{X}}} 
+                   \All{\V{D}}{\V{X}}{(\LAM{\_}\V{Y})}{\V{xs}} \To
+                   \descop{\V{D}}{\V{Y}}} \\
+\begin{array}{@{}l@{\:}l@{\:}l@{\:\:\mapsto\:\:}l}
+\F{replace}\: \DUnit &          \V{X}\: \V{Y}\: \Void&          \Void   &
+    \Void  \\
+\F{replace}\: (\DSigma{\V{S}}{\V{D}})& \V{X}\: \V{Y}\: \pair{\V{s}}{\V{d}}{}& \V{d'}  &
+    \pair{\V{s}}{\F{replace}\: (\V{D}\: \V{s})\: \V{X}\: \V{Y}\: \V{d}\: \V{d'}}{} \\
+\F{replace}\: (\DIndx{\V{D}})&     \V{X}\: \V{Y}\: \pair{\V{x}}{\V{d}}{}& \pair{\V{y}}{\V{d'}}{} &
+    \pair{\V{y}}{\F{replace}\: \V{D}\: \V{X}\: \V{Y}\: \V{d}\: \V{d'}}{} \\
+\F{replace}\: (\DHindx{\V{H}}{\V{D}})& \V{X}\: \V{Y}\: \pair{\V{f}}{\V{d}}{}& \pair{\V{g}}{\V{d'}}{} &
+ \pair{\V{g}}{\F{replace}\: \V{D}\: \V{X}\: \V{Y}\: \V{d}\: \V{d'}}{}
+\end{array}
+}\]
+%
+
+%% The astute reader will have been struck by the type of $\F{replace}$:
+%% it is \emph{almost} the morphism part -- sometimes called \emph{map}
+%% -- of the functor $\V{D}$ from $\V{X}$ to $\V{Y}$ in $\Set$. Just as
+%% the $\F{induction}$ is the dependent version of $\cata$, $\F{replace}$
+%% is the dependent version of the map, which uses the induction
+%% hypotheses. For space reason, we will not present the non-dependent
+%% map. It can be found in the Agda model.
+
+\begin{wstructure}
+<- Deriving generic functions
+    <- Taking a Desc and computing a function
+        <- Desc comes equipped with an induction principle
+        -> Ability to compute more functions from it
+            -> More generic functions
+    <- Inspecting datatypes
+        <- All described byu a Desc code
+        -> Ability to explore the code
+            <- Desc equipped with an induction principle
+            -> Build new objects based on that structure
+\end{wstructure}
+
+We have shown how to derive a generic
+operation, \(\cata\), from a pre-existing generic operation,
+\(\F{ind}\), by
+manipulating descriptions as data: the catamorphism is just a
+function taking each $\Desc$ value to a datatype specific
+operation. This is polytypic programming, as in
+PolyP~\cite{jansson:polyp}, made ordinary.
+
+%% Moreover, the $\F{replace}$ function demonstrates the benefit of an
+%% approach based on universes. The datatypes living in the universe of
+%% descriptions, we are able to \emph{inspect} them. As shown by
+%% $\F{replace}$, it is easy to explore these structures, as well as
+%% building new ones.
+
+\subsection{The generic free monad}
+\label{sec:desc-free-monad}
+
+\begin{wstructure}
+<- A generic program: the free monad construction
+    <- Recall free monad construction in Haskell
+        -> Based on a functor F
+    <- Note that the free monad construction is itself defined by a functor
+        -> Extract it
+\end{wstructure}
+
+In this section, we try a more ambitious generic operation. Given a
+functor---a signature of operations represented as a tagged
+description---we build its free monad, extending the signature with
+variables and substitution.
+%
+\newcommand{\FMFreeMonad}{\D{FreeMonad}}
+\newcommand{\FMFreeMonadD}{\D{FreeMonadD}}
+\newcommand{\FMVar}{\C{Var}}
+\newcommand{\FMComposite}{\C{Composite}}
+%
+Let us recall this construction in, say, Haskell. Given a
+functor \texttt{f}, the free monad over \texttt{f} is given
+thus:
+%
+\[
+\texttt{data FreeMonad f x = Var x | Op (f (FreeMonad f x))}
+\]
+%
+Provided \texttt{f} is an instance of \texttt{Functor}, we may
+take \texttt{Var} for \texttt{return} and use \texttt{f}'s
+\texttt{fmap} to define \texttt{>>=} as substitution.
+
+Being an inductive type, $\FMFreeMonad$ arises
+by a pattern functor:
+%
+\[
+\FMFreeMonadD\: \V{F}\: \V{X}\: \V{Z} \mapsto \V{X} \mathop{\D{+}} \V{F}\:\V{Z}
+\]
+
+\begin{wstructure}
+    <- Encode it in the Desc world [equation]
+        <- F is the Desc we start with
+        <- The free monad functor is what we have just defined
+        <- [\_]* : Desc -> Set -> Desc
+           [\_]* D X = 'cons ['var ('sigma X (\_ -> '1))] D
+        -> Mu does the fixpoint
+\end{wstructure}
+
+Our construction takes the functor as a
+tagged description, and given a set $\V{X}$ of variables, computes the
+tagged description of the free monad pattern functor.
+%
+\[\stk{
+\FreeMonad{\_} : \TagDesc \To \Set \To \TagDesc \\
+\FreeMonad{\pair{\V{E}}{\V{D}}{}}\:\V{X} \mapsto
+    \pair{\pair{\DVar{}}{\V{E}}{}}
+         {\pair{\DSigma{\V{X}}{\DUnit}}{\V{D}}{}}{}
+}\]
+%
+We simply add a constructor, $\SYMBDVar$, making its arguments
+$\DSigma{\V{X}}{\DUnit}$---just an element of $\V{X}$. 
+$\V{E}$ and $\V{D}$ stay put, leaving the other constructors
+unchanged. Unfolding the interpretation of this definition, we
+find an extended sum, corresponding to the \(\V{X}\D{+}\) in
+$\FMFreeMonadD$. Taking the fixpoint ties the knot and we have our
+data.
+
+\begin{wstructure}
+<- A generic program: monadic substitution [equation]
+    <- subst : \forall T X Y. mu ([T]* X) -> (X -> mu ([T]* Y)) -> mu ([T]* Y)
+        -> Using Fold
+\end{wstructure}
+
+\newcommand{\subst}{\F{subst}}
+\newcommand{\apply}{\F{apply}}
+
+Now we need the operations. As expected, \(\LAM{\x}\DVar{\x}\)
+plays the r\^ole of \return, making variables terms. Meanwhile,
+\bind is indeed \emph{substitution}, which we now
+implement generically, making use of $\cata$. Let us write the type,
+and start filling in the blanks:
+%
+\[\stk{
+\begin{array}{@{}ll}
+\subst : & \PITEL{\V{D}}{\TagDesc}
+           \PI{\V{X}, \V{Y}}{\Set} 
+           (\V{X} \To \mude{(\FreeMonad{\V{D}}{\V{Y}})}) \To \\
+         & \mude{(\FreeMonad{\V{D}}{\V{X}})} \To
+           \mude{(\FreeMonad{\V{D}}{\V{Y}})} 
+\end{array} \\
+\subst\: \V{D}\: \V{X}\: \V{Y}\: \V{\sigma} \mapsto
+  \cata\: (\toDesc{(\FreeMonad{\V{D}}{\V{X}})})\: 
+          (\mude{(\FreeMonad{\V{D}}{\V{Y}})})\: 
+          \SHED
+}\]
+%
+We are left with implementing the algebra of the catamorphism. Its
+role is to catch appearances of $\DVar{\V{x}}$ and replace them by
+$\V{\sigma}\: \V{x}$. This corresponds to the following definition:
+%
+\[\stk{
+\begin{array}{@{}ll}
+\apply : & \PITEL{\V{D}}{\TagDesc} 
+           \PI{\V{X}, \V{Y}}{\Set} 
+           (\V{X} \To \mude{(\FreeMonad{\V{D}}{\V{Y}})}) \To \\
+         & \descop{\toDesc{(\FreeMonad{\V{D}}{\V{X}})}}{(\mude{(\FreeMonad{\V{D}}{\V{Y}})})}
+           \To  \mude{(\FreeMonad{\V{D}}{\V{Y}})}
+\\
+\end{array} \\
+\begin{array}{@{}l@{\:\mapsto\:\:}l}
+\apply\: \V{D}\: \V{X}\: \V{Y}\: \V{\sigma}\: \sqr{\DVar{\V{x}}}   & \V{\sigma}\: \V{x}                   \\
+\apply\: \V{D}\: \V{X}\: \V{Y}\: \V{\sigma}\: \pair{\V{c}}{\V{xs}}{} & \Con{\pair{\V{c}}{\V{xs}}{}}
+\end{array}
+}\]
+
+\begin{wstructure}
+    -> Consequences
+        <- We have free monad datatype
+            <- Term + variables
+        <- We have monad operations
+            <- Return / var
+            <- Substitution / bind
+\end{wstructure}
+
+We complete the hole with $\apply\: \V{D}\: \V{X}\: \V{Y}\:
+\V{\sigma}$. Every tagged
+description can be seen as a signature of operations: we can uniformly
+add a notion of variable, building a new type from an old one, then
+providing the substitution structure.
+
+\begin{wstructure}
+<- Deriving new data-structure and functions on them
+    <- Computing the Free Monad of a datatype
+        <- Derive new data-structure from previous one
+            <- It is just code
+        /> New data-structure comes with some equipment
+    <- Computing new functions on computed datatypes
+        <- If data comes with structure, we ought to be able to capture it
+            <- Induction on Desc
+            -> Ability to compute over data
+\end{wstructure}
+
+%% Candidate for removal:
+%% With the free monad construction, we have seen two kinds of generic
+%% operations. Firstly, we have derived a new data-structure from another
+%% one: we make the free monad from its underlying functor. To do so, we
+%% crucially rely on the fact that datatypes are nothing but codes. We
+%% are therefore entitled to modify this code and, in this case, extend
+%% it. Extending a datatype might give rise to a more structured object,
+%% as was the case here.  So, secondly, we have equipped this new
+%% datatype with its inherent structure: the \bind\ and
+%% \return\ operations. We have been able to build them as generic
+%% functions.
+
+\subsection{Skyhooks all the way up?}
+
+%% * Desc in Desc
+%% ** /> Blur the lines between implementation and reflection
+%% ** /> Abusing the paradoxical nature of Set : Set
+
+In this section, we have seen how to \emph{levitate}
+descriptions. Although our theory, as presented here, takes
+$\Bhab{\Set}{\Set}$, our annotations indicate how a stratified theory
+could code each level from above.  We do not rely on the paradoxical
+nature of $\Bhab{\Set}{\Set}$ to flatten the hierarchy of descriptions
+and fit large inside small.  We shall now be more precise about what
+we have done.
+
+%% * Summary 
+%% ** <- What is the equipment for making data-types
+%% ** <- What is reflected, what is implemented
+%% ** <- (table 1)
+
+Let us first clarify the status of the implementation. The kit for
+making datatypes is presented in Table~\ref{tab:sumup-operators}. For
+each operation, we describe its role and its status, making clear
+which components are self-described and which ones are actually
+implemented.
+
+%% * Paradox
+%% ** <- How do we bottom out in a stratified setting?
+%% ** <- Spiral
+%% ***    <- Encoding of DescD_n : Desc_{n+1}
+%% ***    <- Desc_n = Mu DescD_n : Set_{n+1}
+%% ** <- Agda model: Desc_42
+%% ***    <- No dependent pattern-matching
+%% ***    <- No IR
+%% ***    <- Normal universes
+%% ***    -> Straight Agda (UTT)
+%% ** <- ``Self-encoding'' only in a level polymorphic sense
+%% ***    -> Agda model: set poly
+
+In a stratified system, the `self-encoded' nature of $\Desc$ appears
+only in a set polymorphic sense: the principal type of the encoded
+description generalises to the type of $\Desc$ itself. We encode this
+much in our set polymorphic model in Agda and in our Coq model,
+crucially relying on typical ambiguity~\cite{harper:implicit-universe}.
+We step outside current technology only to replace the declared $\Desc$
+with its encoding.
+
+Even this last step, we can approximate within a standard predicative
+hierarchy. Fix a top level, perhaps \(42\). We may start by declaring
+$\Desc^{42}:\Set^{43}$. We can then construct $\DescD^{41}:\Desc^{42}$
+and thus acquire an encoded $\Desc^{41}$. Although $\Desc^{41}$ is
+encoded, not declared, it includes the relevant descriptions,
+including $\DescD^{40}$. We can thus build the tower of descriptions
+down to $\Desc^0$, encoding every level below the top.  Description of
+descriptions forms a `spiral', rather than a circle. We have modelled
+this process exactly in Agda, without any appeal to dependent
+pattern matching, induction-recursion, or set polymorphism. All it
+takes to build such a sawn-off model of encodings is inductive
+definition and a cumulative predicative hierarchy of set levels.
+
+\begin{table}
+
+{
+\begin{center}
+\begin{tabular}{|c|c|c|c|}
+\hline
+Object                & Role                        & Status \\
+\hline
+\hline
+$\EnumU$              & Build finite sets           & Levitated \\
+\hline
+$\Desc$               & Describe pattern functors   & Levitated \\
+\hline
+$\SYMBdescop{\_}$     & Interpret descriptions      & Hardwired \\
+\hline
+$\SYMBMu$, $\SYMBCon$ & Define, inhabit fixpoints   & Hardwired \\
+\hline
+$\SYMBind$, $\SYMBAll$, $\SYMBall$  
+                      & Induction principle         & Hardwired \\
+\hline
+\end{tabular}
+\end{center}
+}
+
+\caption{Summary of constructions on Descriptions}
+\label{tab:sumup-operators}
+
+\end{table}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Indexing descriptions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{A Universe of Inductive Families}
+\label{sec:indexing-desc}
+
+\newcommand{\vtup}[2]{\bigRedBracket{\begin{array}{@{}#1@{}}#2\end{array}}}
+
+\begin{wstructure}
+!!! Need Help !!!
+<- Motivation
+    <- Desc: expressivity of simply-typed datatypes: inductive types
+        <- Values do not influence types
+    /> Example: Vectors
+        <- Cannot be defined by just induction
+            <- Vectors of all size need to be defined at the *same* time
+            -> Defined as a *family* of types
+                -> Index
+        -> I -> IDesc I: Inductive family
+    ???
+\end{wstructure}
+
+So far, we have explored the realm of inductive types, building on
+intuition from ML-like datatypes, using type dependency as a
+descriptive tool in $\Desc$ and its interpretation. Let us now make
+dependent types the object as well as the means of our study.
+
+Dependent datatypes provide a way to work at higher level of
+precision \emph{a priori}, reducing the sources of failure we
+might otherwise need to manage. For the perennial
+example, consider \emph{vectors}---lists indexed by length. By
+making length explicit in the type, we can prevent hazardous
+operations (the type of `head' demands vectors of length
+$\NatSuc{\V{n}}$) and offer stronger guarantees (pointwise
+addition of $\V{n}$-vectors yields an $\V{n}$-vector).
+
+However, these datatypes are not \emph{individually} inductive. For
+instance, we have to define the whole \emph{family} of vectors
+mutually, in one go. In dependently typed languages, the basic grammar
+of datatypes is that of inductive families. To capture this grammar,
+we must account for \emph{indexing}.
+
+%% \subsection{Desc, atomically}
+%% \label{sec:idesc-atomic-desc}
+
+%% \begin{wstructure}
+%% [Outdated: type former presentation instead]
+%% <- Adding hindx have introduced some duplication
+%%     <- indx == hindx 1
+%%     -> We can factor out commonalities 
+%%         /> Obtain an equivalent presentation
+%%         /> Still embeddable (refer to the Agda model)
+%% \end{wstructure}
+
+%% \begin{wstructure}
+%% <- Also replacing '1 by 'const  [figure]
+%%     <- For convenience
+%%         <- 'const X equivalent to 'sigma X (\_ -> '1)
+%%         /> Easier to abstract
+%%             <- Extensionally same
+%%             /> 'const more useful in practice
+%% \end{wstructure}
+
+%% Before moving on to indexed descriptions, we have to carry out some
+%% maintenance work on descriptions. We presented $\Desc$ as the grammar
+%% of inductive types. Hence, the codes closely follow this grammar. In
+%% the following, we adopt an alternative presentation. With
+%% $\DSigma{\!}{\!}$, we are actually \emph{quoting} a standard
+%% type-former, namely
+
+%% $$\Bhab{\Sigma}{\PI{\V{S}}{\Set} \PI{\V{S}}{\Set} \Set}$$
+
+%% In the alternative presentation, we go further and present all our
+%% codes as quotations of standard type-formers. This presentation is
+%% shown in Figure~\ref{fig:type-former-desc}. The reader will notice
+%% that we replace $\DUnit$ by a more general $\DConst{\!}$ code. Whereas
+%% $\DUnit$ was interpreted as the unit set, $\DConst{\V{X}}$ is
+%% interpreted as $\V{X}$, for any $\Bhab{\V{X}}{\Set}$. Extensionally,
+%% $\DConst{\V{X}}$ and $\DSigma{\V{X}}{\DUnit}$ are equivalent. However,
+%% $\DConst{\!}$ is more succinct. More importantly, $\DConst$ is
+%% \emph{first-order}, unlike its equivalent encoding. From a
+%% definitional perspective, we are giving more opportunities to the
+%% type-system, hence reducing the burden on the programmer. For the same
+%% reason, we introduce $\DProd{\!}{\!}$ that overlaps with
+%% $\DSigma{\!}{\!}$.
+
+%% This reorganisation is strictly equivalent to the previous one
+%% (Fig.~\ref{fig:hindx_desc}). Just as the previous version, it is also
+%% self-descriptive. We refer the reader to the companion technical
+%% report for details. In this finer-grained presentation, we can define
+%% $\DIndx{\!}$ and $\DHindx{\!}{\!}$ as follow:
+
+%% \[\begin{array}{l@{\:\mapsto\:\:}l}
+%% \DIndx{\V{D}}         & \DProd{\DId}{\V{D}}                      \\
+%% \DHindx{\V{H}}{\V{D}}     & \DProd{(\DPi{\V{H}}{(\LAM{\_} \DId)})}{\V{D}}
+%% \end{array}
+%% \]
+
+%% Consequently, the examples previously developed can be
+%% straightforwardly translated into this new presentation. For example,
+%% here is the new definition of $\NatD$:
+
+%% \[\stk{
+%% \NatD : \Desc \\
+%% \NatD \mapsto \DSigma{(\EnumT{[ \NatZero, \NatSuc{\!} ]})}
+%%                      {[ \DUnit \quad \DId ]}
+%% }\]
+
+
+%% In the following, we adopt this last version as our de
+%% facto universe of inductive types. In particular, we are going to
+%% evolve this presentation into an indexed one.
+
+%% \note{Shall we talk about the Type Theory being Desc Zero? or such story?}
+
+%% \begin{figure}
+
+%% \[\stk{
+%% \begin{array}{ll}
+%% \stk{
+%% \data \Desc : \Set \where                                      \\
+%% \;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
+%%     \DId            & \Desc                                    \\
+%%     \DConst{\!}     & \Set \To \Desc                           \\
+%%     \DProd{\!}{\!}  & \PI{\V{D}, \V{D'}}{\Desc} \Desc          \\
+%%     \DSigma{\!}{\!} & \PI{\V{S}}{\Set} \PIS{\V{S} \To \Desc} \Desc \\
+%%     \DPi{\!}{\!}    & \PI{\V{S}}{\Set} \PIS{\V{S} \To \Desc} \Desc 
+%% \end{array}
+%% }
+%% \vspace{0.2in}
+%% \\
+%% \stk{
+%% \descop{\_\:}{} : \Desc \To \Set \To \Set \\
+%% \begin{array}{@{}l@{\:=\:\:}ll}
+%% \descop{\DId}{\V{X}}          &  \V{X}                                           \\
+%% \descop{\DConst{\V{Z}}}{\V{X}}    &  \V{Z}                                           \\
+%% \descop{\DProd{\V{D}}{\V{D'}}}{\V{X}} &  \TIMES{\descop{\V{D}}{\V{X}}}{\descop{\V{D}\V{'}}{\V{X}}}       \\
+%% \descop{\DSigma{\V{S}}{\V{D}}}{\V{X}} &  \SIGMA{\V{s}}{\V{S}} \descop{\V{D}\: \V{s}}{\V{X}}          \\
+%% \descop{\DPi{\V{S}}{\V{D}}}{\V{X}}    &  \PI{\V{s}}{\V{S}} \descop{\V{D}\: \V{s}}{\V{X}}            
+%% \end{array}
+%% }
+%% \end{array}
+%% }\]
+
+%% \caption{Universe of descriptions based on Type-formers}
+%% \label{fig:type-former-desc}
+
+%% \end{figure}
+
+\subsection{The universe of indexed descriptions}
+
+\begin{wstructure}
+<- Labelling Id
+    <- We had: data Desc : Set -> Set
+    -> We want: data IDesc : (I -> Set) -> Set
+        <- Indexed functor (?)
+        -> It is sufficient to label Id
+            <- Where the functor is built
+\end{wstructure}
+
+
+\newcommand{\DotTo}{\mathop{\blue{\dot{\rightarrow}}}}
+
+We presented the $\Desc$ universe as a
+grammar of strictly positive endofunctors on $\Set$ and developed
+inductive types by taking a fixpoint. To describe inductive families
+indexed by some $\Bhab{\V{I}}{\Set}$, we play a similar game with
+endofunctors on the category $\Set^{\V{I}}$,
+families of sets \(\V{X},\V{Y}:\V{I}\To\Set\) for objects, and for morphisms,
+families of functions in \(\V{X}\DotTo\V{Y}\), defined pointwise:
+\[
+\V{X}\DotTo\V{Y} \mapsto \PI{\V{i}}{\V{I}}\V{X}\:\V{i}\To\V{Y}\:\V{i}
+\]
+
+An \emph{indexed functor} in $\Set^{\V{I}}\To\Set^{\V{J}}$ has the
+flavour of a device driver, characterising `responses' to a given
+request in \(\V{J}\) where we may in turn make `subrequests' at indices
+chosen from \(\V{I}\). When we use indexed functors to define inductive
+families of datatypes,
+\(\V{I}\) and \(\V{J}\) coincide: we explain how to make a node fit a given
+index, including subnodes at chosen indices. E.g., if we are asked for a
+vector of length 3, we choose to ask in turn for a tail of length 2.
+
+To code up valid notions of response to a given request, we introduce
+$\SYMBIDesc$ and its interpretation:
+%
+\[\stk{
+\IDesc{(\Bhab{\V{I}}{\Set})} : \Set \smallskip \\
+\idescop{\_}{}{} : _{\PI{\V{I}}{\Set}} \IDesc{\V{I}} \To (\V{I} \To \Set) \To \Set    \\
+}\]
+
+An \(\IDesc{\V{I}}\) specifies just \emph{one} response, but a
+request-to-response \emph{function},
+$\V{R}:\V{I} \To \IDesc{\V{I}}$, yields a strictly positive endofunctor
+\[
+  \LAM{\V{X}} \LAM{\V{i}} \idescop{\V{R}\:\V{i}}{\V{I}}{\V{X}} :
+  \Set^{\V{I}} \To \Set^{\V{I}}
+\]
+whose fixpoint we then take:
+%
+\[\stkl{
+\Rule{\Gamma \vdash \Bhab{\V{I}}{\Set} \qquad
+      \Gamma \vdash \Bhab{\V{R}}{\V{I} \To \IDesc{\V{I}}}}
+     {\Gamma \vdash \Bhab{\SYMBIMu_{\V{I}}{\V{R}}}{\V{I}\To\Set}} \qquad
+\\
+\Rule{\begin{array}{l@{\qquad}l}
+          \Gamma \vdash \Bhab{\V{I}}{\Set} &
+          \Gamma \vdash \Bhab{\V{R}}{\V{I} \To \IDesc{\V{I}}} \\
+          \Gamma \vdash \Bhab{\V{i}}{\V{I}} &
+          \Gamma \vdash \Bhab{\V{x}}{\idescop{\V{R}\:\V{i}}{\V{I}}{(\SYMBIMu_{\V{I}}{\V{R}})}}
+      \end{array}}
+     {\Gamma \vdash \Bhab{\Con{\V{x}}}{\IMu{\V{I}}{\V{R}}{\V{i}}}}
+}\]
+
+\newcommand{\upgrade}{\F{upgrade}}
+\newcommand{\inductionI}{\F{indI}}
+\newcommand{\cataI}{\F{cataI}}
+
+We define the $\SYMBIDesc$ grammar in Figure~\ref{fig:idesc},
+delivering only \emph{strictly positive} families. As well as
+indexing our descriptions, we have refactored a little, adopting
+a more compositional algebra of codes, where $\Desc$ is
+biased towards the right-nested tuples. We now have
+\(\DVar{i}\) for recursive `subrequests' at a chosen index \(i\),
+with tupling by right-associative
+\(\DProd{}{}\) and higher-order branching
+by \(\DPi{\!}{\!}\).  Upgrade your old $\Desc$
+to a trivially indexed $\IDesc{\Unit}$ as follows!
+\[\begin{array}{@{}ll}
+\upgrade :\Desc & \To\IDesc{\Unit} \\
+\upgrade\:\DUnit & \mapsto \DConst{\Unit} \\
+\upgrade\:(\DSigma{\V{S}}{\V{D}}) &
+   \mapsto \DSigma{\V{S}}{\LAM{\V{s}}\upgrade\:(\V{D}\:\V{s})} \\
+\upgrade\:(\DIndx{\V{D}}) & \mapsto
+  \DProd{\DVar{\Void}}{\upgrade\:\V{D}} \\
+\upgrade\:(\DHindx{\V{H}}{\V{D}}) & \mapsto
+  \DProd{(\DPi{\V{H}}{\LAM{\_}\DVar{\Void}})}{\upgrade\:\V{D}} \\
+\end{array}\]
+
+To deliver induction for indexed datatypes, we need the `holds everywhere'
+machinery. We present $\SYMBAllI$ and $\SYMBallI$ in
+Figure~\ref{fig:allI-predicates}, with a twist---where
+$\Desc$ admits the $\SYMBall$ construction, $\SYMBIDesc$ is \emph{closed}
+under it! The $\SYMBAllI$
+operator for a description indexed on \(\V{I}\) is strictly positive in
+turn, and has a description indexed on
+ some \(\SIGMA{\V{i}}{\V{I}}{\V{X}\: \V{i}}\).
+Induction on indexed descriptions is then hardwired thus:
+%
+\[\stk{
+\begin{array}{@{}ll}
+\inductionI : & _{\PI{\V{I}}{\Set}}
+                   \PITEL{\V{R}}{\V{I} \To \IDesc{\V{I}}}
+                   \PI{\V{P}}{(\SIGMA{\V{i}}{\V{I}}{\IMu{\V{I}}{\V{R}}{\V{i}}}) \To \Set} \\
+                 & (      \PITEL{\V{i}}{\V{I}} 
+                          \PI{\V{xs}}{\idescop{\V{R}\: \V{i}}{\V{I}}{(\SYMBIMu_{\V{I}}{\V{R}})}} \\
+                 & \   \idescop{\AllI{}
+                                     {(\V{R}\: \V{i})}
+                                     {(\SYMBIMu_{\V{I}}{\V{R}})}
+                                     {\V{xs}}}
+                               {}
+                               {\V{P}} \To
+                       \V{P}\: \pair{\V{i}}{\Con{\V{xs}}}{}) \To \\
+                 & \PITEL{\V{i}}{\V{I}}
+                   \PI{\V{x}}{\IMu{\V{I}}{\V{R}}{\V{i}}}
+                   \V{P}\: \pair{\V{i}}{\V{x}}{}
+\end{array} \\
+\inductionI\: \V{R}\: \V{P}\: \V{m}\: \V{i}\: (\Con{\V{xs}}) \mapsto 
+    \V{m}\: \V{i}\: \V{xs}\: (\allI{}
+                                    {\V{R}\: \V{i}}
+                                    {(\SYMBIMu_{\V{I}}{\V{R}})}
+                                    {\V{P}}
+                                    {(\spl{\LAM{\V{i}}\LAM{\V{xs}} \inductionI\: \V{R}\: \V{P}\: \V{m}})}
+                                    {\V{xs}})
+}\]
+%
+The generic catamorphism, $\cataI$, is constructed from $\inductionI$
+as before. Its type becomes more elaborated, to deal with the
+indexing:
+%
+\[
+\begin{array}{@{}l@{}l}
+\cataI :& \PITEL{\V{I}}{\Set}
+          \PITEL{\V{R}}{\V{I} \To \IDesc{\V{I}}} \\
+        & \PI{\V{T}}{\V{I} \To \Set}
+          (\PI{\V{i}}{\V{I}}{\idescop{\V{R}\: \V{i}}{}{\V{T}} \To \V{T}\: \V{i}}) \To
+          \SYMBIMu_{\V{I}}{\V{R}} \DotTo \V{T}
+\end{array}
+\]
+
+
+\begin{figure*}
+
+\[
+\begin{array}{ll}
+%%
+\stk{
+\begin{array}{@{}ll}
+\SYMBAllI : & _{\PI{\V{I}}{\Set}}
+              \PITEL{\V{D}}{\IDesc{\V{I}}}
+              \PI{\V{X}}{\V{I} \To \Set} \\
+            & \idescop{\V{D}}{\V{I}}{\V{X}} \To
+              \IDesc{(\SIGMA{\V{i}}{\V{I}}{\V{X}\: \V{i}})}
+\end{array} \\
+\begin{array}{@{}l@{}l@{\:\mapsto\:\:}l}
+\AllI{\:}{(\DVar{\V{i}})}{& \V{X}}{\V{x}} &
+    \DVar{\pair{\V{i}}{\V{x}}{}} \\
+\AllI{\:}{(\DConst{\V{K}})}{& \V{X}}{\V{k}} &
+    \DConst{\Unit} \\
+\AllI{\:}{(\DProd{\V{D}}{\V{D'}})}{& \V{X}}{\pair{\V{d}}{\V{d'}}{}} &
+    \DProd{\AllI{}{\V{D}}{\V{X}}{\V{d}}}{\AllI{}{\V{D'}}{\V{X}}{\V{d'}}} \\
+\AllI{\:}{(\DSigma{\V{S}}{\V{D}})}{& \V{X}}{\pair{\V{s}}{\V{d}}{}} &
+    \AllI{}{(\V{D}\: \V{s})}{\V{X}}{\V{d}} \\
+\AllI{\:}{(\DPi{\V{S}}{\V{D}})}{& \V{X}}{\V{f}} &
+    \DPi{\V{S}}{\LAM{\V{s}} \AllI{}{(\V{D}\: \V{s})}{\V{X}}{(\V{f}\: \V{s})}}
+\end{array}
+}
+&
+%%
+\stk{
+\begin{array}{@{}ll}
+\SYMBallI : & _{\PI{\V{I}}{\Set}}
+              \PITEL{\V{D}}{\IDesc{\V{I}}}
+              \PITEL{\V{X}}{\V{I} \To \Set} 
+              \PI{\V{P}}{(\SIGMA{\V{i}}{\V{I}}{\V{X}\: \V{i}}) \To \Set} \\
+            & (\PI{\V{x}}{\SIGMA{\V{i}}{\V{I}}{\V{X}\: \V{i}}} \V{P}\: \V{x}) \To
+              \PI{\V{xs}}{\idescop{\V{D}}{\V{I}}{\V{X}}} 
+              \idescop{\AllI{}{\V{D}}{\V{X}}{\V{xs}}}{}{\V{P}}
+\end{array} \\
+\begin{array}{@{}l@{}l@{\:\mapsto\:\:}l}
+\allI{\:}{(\DVar{\V{i}})}{& \V{X}}{\V{P}}{\V{p}}{\V{x}} &
+    \V{p}\: \pair{\V{i}}{\V{x}}{} \\
+\allI{\:}{(\DConst{\V{K}})}{& \V{X}}{\V{P}}{\V{p}}{\V{k}} &
+    \void \\
+\allI{\:}{(\DProd{\V{D}}{\V{D'}})}{& \V{X}}{\V{P}}{\V{p}}{\pair{\V{d}}{\V{d'}}{}} &
+    \pair{\allI{}{\V{D}}{\V{X}}{\V{P}}{\V{p}}{\V{d}}}
+         {\allI{}{\V{D'}}{\V{X}}{\V{P}}{\V{p}}{\V{d'}}}{} \\
+\allI{\:}{(\DSigma{\V{S}}{\V{D}})}{& \V{X}}{\V{P}}{\V{p}}{\pair{\V{s}}{\V{d}}{}} &
+    \allI{}{(\V{D}\: \V{s})}{\V{X}}{\V{P}}{\V{p}}{\V{d}} \\
+\allI{\:}{(\DPi{\V{S}}{\V{D}})}{& \V{X}}{\V{P}}{\V{p}}{\V{f}} &
+    \LAM{\V{a}}\allI{}{(\V{D}\: \V{a})}{\V{X}}{\V{P}}{\V{p}}{(\V{f}\: \V{a})}
+\end{array}
+\end{array}
+}
+\]
+
+\caption{Indexed induction predicates}
+\label{fig:allI-predicates}
+
+\end{figure*}
+
+
+\begin{figure}
+
+\[\stk{\begin{array}{@{}ll}
+\IDesc{(\Bhab{\V{I}}{\Set})} &: \Set \\
+\DVar{(\Bhab{\V{i}}{\V{I}})} &: \IDesc{\V{I}} \\
+\DConst{(\Bhab{\V{A}}{\Set})} &:\IDesc{\V{I}}       \\
+\DProd{(\Bhab{\V{D}}{\IDesc{\V{I}}})}{(\Bhab{\V{D}}{\IDesc{\V{I}}})}
+  & :\IDesc{\V{I}}       \\
+\DSigma{(\Bhab{\V{S}}{\Set})}{(\Bhab{\V{D}}{\V{S}\To\IDesc{\V{I}}})}
+& : \IDesc{\V{I}}  \\
+\DPi{(\Bhab{\V{S}}{\Set})}{(\Bhab{\V{D}}{\V{S}\To\IDesc{\V{I}}})}
+& : \IDesc{\V{I}}  \\
+\end{array}\smallskip \\
+\idescop{\_\:}{}{} :_{\PI{\V{I}}{\Set}} \IDesc{\V{I}} \To (\V{\V{I}} \To \Set) \To \Set                  \\
+\begin{array}{@{}l@{\V{X}}@{\:\mapsto\:\:}ll}
+\idescop{\DVar{\V{i}}}{\V{I}}{&}      &  \V{X}\: \V{i}                                           \\
+\idescop{\DConst{\V{K}}}{\V{I}}{&}    &  \V{K}                                                   \\
+\idescop{\DProd{\V{D}}{\V{D'}}}{\V{I}}{&} &  \TIMES{\idescop{\V{D}}{\V{I}}{\V{X}}}{\idescop{\V{D'}}{\V{I}}{\V{X}}}       \\
+\idescop{\DSigma{\V{S}}{\V{D}}}{\V{I}}{&} &  \SIGMA{\V{s}}{\V{S}} \idescop{\V{D}\: \V{s}}{\V{I}}{\V{X}}                    \\
+\idescop{\DPi{\V{S}}{\V{D}}}{\V{I}}{&}    &  \PI{\V{s}}{\V{S}} \idescop{\V{D}\: \V{s}}{\V{I}}{\V{X}}            
+\end{array}
+}
+\]
+
+\caption{Universe of indexed descriptions}
+\label{fig:idesc}
+
+\end{figure}
+
+
+
+\subsection{Examples}
+\label{sec:idesc-examples}
+
+\paragraph{Natural numbers:}
+
+\begin{wstructure}
+<- Nat
+    -> [equation]
+    <- Non-indexed types lives in IDesc 1
+        -> This applies to all previous examples
+\end{wstructure}
+
+For basic reassurance, we \(\upgrade\:\NatD\):
+%
+\[\stk{
+\upgrade\:\NatD : \IDesc{\Unit} \\
+\upgrade\:\NatD \mapsto \DSigma{(\EnumT{\sqr{\NatZero\: \SYMBNatSuc}})}
+                     {\sqr{(\DConst{\Unit}) \; 
+                           (\DProd{\DVar{\Void}}{\DConst{\Unit}})}}
+}\]
+%
+Note that trailing \(\Unit\)'s keep our right-nested, \(\void\)-terminated
+tuple structure, and with it our elaboration machinery.
+We can similarly \(\upgrade\) any inductive type.
+Moreover, \(\IDesc{I}\) can now code a bunch of mutually
+inductive types, if \(I\) enumerates the
+bunch~\cite{paulin:habilitation, yakushev:mutual-def}.
+
+
+
+\paragraph{Indexed descriptions:}
+
+\begin{wstructure}
+<- Levitation [figure]
+    <- Following Desc encoding
+        /> Note: simple datatype
+            -> Live in IDesc 1
+    -> Behind the scene, relies on the special purpose switchD
+\end{wstructure}
+
+Note that $\IDesc{\V{I}}$ is a plain inductive type, parametrised
+by \(\V{I}\), but indexed trivially.
+%
+\[\stk{
+\IDescD : \PI{\V{I}}{\Set} \IDesc{\Unit} \\
+\IDescD\: \V{I} \mapsto \SYMBDSigma \\
+\quad
+ \EnumT\vtup{r}{\SYMBDVar\\
+                \SYMBDConst\\
+                \DProd{}{}\\
+                \SYMBDSigma\\
+                \SYMBDPi}
+         \; \vtup{l@{}l}{
+  (\DProd{\DConst{\V{I}} &}{\DConst{\Unit}})                  \\
+  (\DProd{\DConst{\Set}  &}{\DConst{\Unit}})                  \\
+  (\DProd{\DVar{\Void}}{\DProd{\DVar{\Void}&}{\DConst{\Unit}}})  \\
+  (\DSigma{\Set}{\LAM{\V{S}}
+     \DProd{( \DPi{\V{S}}{\LAM{\_} \DVar{\Void}}) &}{\DConst{\Unit}}})     \\
+  (\DSigma{\Set}{\LAM{\V{S}}
+     \DProd{( \DPi{\V{S}}{\LAM{\_} \DVar{\Void}}) &}{\DConst{\Unit}}})     \\
+                                   }
+}\]
+
+Therefore, this universe is self-describing and can be
+levitated. As before, we rely on a special purpose $\F{switchID}$
+operator to build the finite function $\bigRedBracket{\ldots}$
+without mentioning \(\SYMBIDesc\).
+
+\paragraph{Vectors:}
+
+\newcommand{\VecD}{\F{VecD}}
+\newcommand{\VecNil}{\etag{\CN{vnil}}}
+\newcommand{\SYMBVecCons}{\etag{\CN{vcons}}\xspace}
+\newcommand{\VecCons}[2]{\SYMBVecCons\:#1\:#2}
+
+So far, our examples live in $\IDesc{\Unit}$, with no interesting
+indexing. Let us at least have vectors. Recall
+that the constructors $\VecNil$ and $\SYMBVecCons$ are defined only for
+$\NatZero$ and $\NatSuc$ respectively:
+%
+\[
+\stk{
+\data \D{Vec}\: \PITEL{\V{X}}{\Set} : \PI{\V{i}}{\Nat} \Set \where \\
+\;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
+    \VecNil          & \D{Vec}\:\V{X}\:{\NatZero}   \\
+    \SYMBVecCons & _{\PI{\V{n}}{\Nat}}\V{X} \To \D{Vec}\:{\V{X}}\:{\V{n}} \To \D{Vec}\:{\V{X}}\:{(\NatSuc{\V{n}})}
+\end{array}
+}
+\]
+
+One way to code constrained datatypes is to appeal to a suitable
+notion of propositional equality \(\PropEq\) on indices. The
+constraints are expressed as `Henry Ford' equations in the datatype.
+For vectors:
+%
+\[\stk{
+\VecD : \Set \To \Nat \To \IDesc{\Nat} \\
+\VecD\: \V{X}\: \V{i} \mapsto \SYMBDSigma\\
+\quad
+\EnumT{\vtup{r}{\VecNil\\ \SYMBVecCons}}
+\; \vtup{r}{
+                            (\DConst{(\NatZero\PropEq\V{i})}) \\
+ ( \DSigma{\Nat}{\LAM{\V{n}}
+   \DProd{\DConst{\V{X}}}
+     {\DProd{\DVar{\V{n}}}{\DConst{(\NatSuc{\V{n}}\PropEq\V{i})}})}}
+                          }
+}\]
+
+You may choose $\VecNil$ for any index you like as long as it is
+$\NatZero$; in the $\SYMBVecCons$ case, the length of the tail is
+given explicitly, and the index $\V{i}$ must be one more. Our previous
+\(\Unit\)-terminated tuple types can now be seen as the trivial case
+of constraint-terminated tuple types, with elaboration supplying the
+witnesses when trivial.
+
+In this paper, we remain anxiously agnostic about
+propositional equality. Any will do, according to
+conviction; many variations are popular. The
+homogeneous identity type used in Coq is ill-suited to
+dependent types, but its heterogeneous variant (forming equations
+regardless of type) allows the translation of pattern
+matching with structural recursion to
+\(\F{indI}\)~\cite{goguen:pattern-matching}. The
+extensional equality of \citet{altenkirch:ott} also sustains the translation.
+
+\begin{wstructure}
+!!! Need Help !!!
+<- Brady optimisation: forcing
+    <- Source to source translation
+    <- Able to remove some constraints
+    -> Example: Fin [figure]
+    ??? More technical detail needed
+\end{wstructure}
+
+However, sometimes, the equations are redundant. 
+Looking back at $\D{Vec}$, we find that the equations constrain
+the choice of constructor and stored tail index retrospectively.
+But \emph{inductive families need not store their
+  indices}~\cite{brady:index-inductive-families}!  If we
+analyse the incoming index, we can tidy our description of $\D{Vec}$
+as follows:
+%
+\[\stk{
+\VecD \:\PITEL{\V{X}}{\Set} : \Nat \To \IDesc{\Nat} \\
+\begin{array}{@{}lll}
+\VecD\:\V{X}\: \NatZero     & \mapsto & \DConst{\Unit} \\
+\VecD\:\V{X}\: (\NatSuc{\V{n}}) & \mapsto &
+ \DProd{\DConst{\V{X}}}{\DVar{\V{n}}}
+\end{array}
+                                       
+}\]
+%
+The constructors and equations have simply disappeared. A similar
+example is $\SYMBFin$ (bounded numbers), specified by:
+%
+\[
+\stk{
+\data \SYMBFin : \PI{\V{n}}{\Nat} \Set \where \\
+\;\;\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
+    \FinZero      & _{\PI{\V{n}}{\Nat}}\Fin{(\NatSuc{\V{n}})}   \\
+    \SYMBFinSuc   & _{\PI{\V{n}}{\Nat}}\Fin{\V{n}} \To \Fin{(\NatSuc{\V{n}})}
+\end{array}
+}\]
+%
+In this case, we can eliminate equations but not constructors, since both
+$\FinZero$ and $\SYMBFinSuc$ both target $\SYMBNatSuc$:
+%
+\[\stk{
+\FinD : \Nat \To \IDesc{\Nat} \\
+\begin{array}{@{}lll}
+\FinD\: \NatZero         & \mapsto & \DSigma{\EnumT{\Void}}{\Void} \\
+\FinD\: (\NatSuc{\V{n}}) & \mapsto & \DSigma{\EnumT{\sqr{\FinZero\: \SYMBFinSuc}}}
+                                            {\sqr{(\DConst{\Unit})\: (\DVar{\V{n}})}}
+\end{array}
+}\]
+
+This technique of extracting information by case analysis on indices
+applies to descriptions exactly where Brady's `forcing' and
+`detagging' optimisations apply in compilation. They eliminate just
+those constructors, indices and constraints which are redundant even
+in \emph{open} computation. In \emph{closed} computation, where proofs
+can be trusted, all constraints are dropped.
+
+
+\paragraph{Tagged indexed descriptions:}
+
+\newcommand{\SYMBmuide}{\D{\({\mu}^{\!+}\)}\xspace}
+\newcommand{\muide}[2]{\SYMBmuide\!\!_{#1}\:#2}
+
+Let us reflect this index analysis technique.
+We can divide a description of tagged indexed data in two: first, the
+constructors that do not depend on the index; then, the constructors
+that do. The non-dependent part mirrors the definition for non-indexed
+descriptions. The index-dependent part simply indexes the choice of
+constructors by $\V{I}$. Hence, by inspecting the index, it is
+possible to vary the `menu' of constructors.
+%
+\[
+\begin{array}{@{}l@{\:\mapsto\:\:}l}
+ \TagIDesc{\V{I}}  & \TIMES{\ATagIDesc{\V{I}}}{\ITagIDesc{\V{I}}} \\
+ \ATagIDesc{\V{I}} & \SIGMA{\V{E}}{\EnumU} \PI{\V{i}}{\V{I}} \spi{\V{E}}{\LAM{\_} \IDesc{\V{I}}} \\
+ \ITagIDesc{\V{I}} & 
+     \SIGMA{\V{F}}{\V{I} \To \EnumU} \PI{\V{i}}{\V{I}} \spi{(\V{F}\: \V{i})}{\LAM{\_} \IDesc{\V{I}}} 
+\end{array}
+\]
+
+\begin{wstructure}
+<- Vectors
+    Do we treat them in the end? 
+    What can we say here we haven't with Fin?
+\end{wstructure}
+
+In the case of a tagged $\D{Vec}$, for instance, for the index
+$\NatZero$, we would only propose the constructor
+$\ListNil$. Similarly, for $\NatSuc{n}$, we would only propose the
+constructor $\SYMBListCons$.
+
+We write $\toIDesc{\V{D}}\:\V{i}$ to denote the $\IDesc{\V{I}}$
+computed from the tagged indexed description $\V{D}$ at index
+$\V{i}$. Its expansion is similar to the definition of \(\SYMBtoDesc\)
+for tagged descriptions, except that it must also append the two parts.
+We again write $\muide{\V{I}}{\V{D}}$ for
+$\IMu{\V{I}}{(\toIDesc{\V{D}})}$.
+
+\paragraph{Typed expressions:}
+
+\begin{wstructure}
+<- Hutton's razor
+    <- Types
+        <- 'Nat
+        <- 'Bool
+    <- Term [figure]
+        <- val : Val 'a -> 'a  for Val : Ty -> Set, mapping to Nat and Bool
+        <- cond : 'Bool -> a -> a -> a
+        <- plus : 'Nat -> 'Nat -> 'Nat
+        <- le : 'Nat -> 'Nat -> 'Bool
+\end{wstructure}
+
+%% Types
+\newcommand{\Ty}{\D{Ty}}
+\newcommand{\Ebool}{\etag{\CN{bool}}}
+\newcommand{\Enat}{\etag{\CN{nat}}}
+
+%% Constructors
+\newcommand{\SYMBEval}{\etag{\CN{val}}\xspace}
+\newcommand{\SYMBEvar}{\etag{\CN{var}}\xspace}
+\newcommand{\Eval}[1]{\SYMBEval\:#1}
+\newcommand{\SYMBEcond}{\etag{\CN{cond}}\xspace}
+\newcommand{\Econd}[3]{\SYMBEcond\:#1\:#2\:#3}
+\newcommand{\SYMBEplus}{\etag{\CN{plus}}\xspace}
+\newcommand{\Eplus}[2]{\SYMBEplus\:#1\:#2}
+\newcommand{\SYMBEle}{\etag{\CN{le}}\xspace}
+\newcommand{\Ele}[2]{\SYMBEle\:#1\:#2}
+
+%% Index mapper (terminology?)
+\newcommand{\SYMBVal}{\F{Val}\xspace}
+\newcommand{\Val}[1]{\SYMBVal\:#1}
+\newcommand{\SYMBVar}{\F{Var}\xspace}
+\newcommand{\Var}[2]{\SYMBVar\: #1\: #2}
+
+%% Hutton expressions
+\newcommand{\HExprD}{\F{ExprD}}
+\newcommand{\HExprAD}{\F{ExprAD}}
+\newcommand{\HExprID}{\F{ExprID}}
+\newcommand{\HExprVarD}[1]{\C{ExprD}_{\F{Var},#1}}
+\newcommand{\HExprFreeD}{\C{ExprD}^{\C{Free}}}
+\newcommand{\HExprAFreeD}{\C{ExprAD}^{\C{Free}}}
+
+We are going to define a syntax for a small language with
+two types, natural numbers and booleans:
+%
+\[
+\Ty \mapsto \EnumT{\sqr{\Enat\: \Ebool}}
+\]
+
+\newcommand{\plusHost}{\mathop{\green{+_{\mathrm{H}}}}}
+\newcommand{\leHost}{\mathop{\green{\leq_{\mathrm{H}}}}}
+
+
+This language has values, conditional expression, addition and
+comparison. Informally, their types are:
+%
+\[
+\begin{array}{l@{\::\:\:}l}
+\SYMBEval            & \Val{\V{ty}} \To \V{ty} \\
+\SYMBEcond           & \Ebool \To \V{ty} \To \V{ty} \To \V{ty}  \\ 
+\end{array}
+\qquad
+\begin{array}{l@{\::\:\:}l}
+\SYMBEplus           & \Enat \To \Enat \To \Enat                           \\
+\SYMBEle             & \Enat \To \Enat \To \Ebool                          \\
+\end{array}
+\]
+%
+The function $\SYMBVal$ interprets object language types in the
+host language, so that arguments to $\SYMBEval$ fit their
+expected type.
+%
+\[\stk{
+\SYMBVal : \Ty \To \Set \\
+\begin{array}{@{}l@{\:\mapsto\:\:}l}
+\Val{\Enat}   & \Nat \\
+\Val{\Ebool}  & \Bool
+\end{array}
+}\]
+%
+We take $\Nat$ and $\Bool$ to represent natural numbers and Booleans
+in the host language, equipped with addition $\plusHost$ and
+comparison $\leHost$.
+
+We express our syntax as a tagged indexed description, indexing over
+object language types $\Ty$. We note that some constructors are always
+available, namely $\SYMBEval$ and $\SYMBEcond$. On the other hand,
+$\SYMBEplus$ and $\SYMBEle$ constructors are index-dependent, with
+$\SYMBEplus$ available just when building a $\Enat$, $\SYMBEle$ just
+for $\Ebool$. The code, below, reflects this intuition, with the first
+component uniformly offering $\SYMBEval$ and $\SYMBEcond$, the second
+selectively offering $\SYMBEplus$ or $\SYMBEle$.
+%
+%%% \begin{figure}
+%
+\[\stk{
+\stk{
+\HExprD : \TagIDesc{\Ty} \\
+\HExprD \mapsto \sqr{ \HExprAD , \HExprID } \\
+} \smallskip\\
+\stk{
+\HExprAD : \ATagIDesc{\Ty} \\
+\HExprAD \mapsto \vtup{l}{
+   {\vtup{r}{\SYMBEval\\ \SYMBEcond \,}} \red{,} \;
+      \LAM{\V{ty}}
+      \vtup{l@{\:}l}{
+      \DProd{\DConst{(\Val{\V{ty}})}&}{\DConst{\Unit}} \\
+      \DProd{\DProd{\DVar{\Ebool}}{\DProd{\DVar{\V{ty}}}{\DVar{\V{ty}}}}&}
+        {\DConst{\Unit}} \\
+     }
+   }
+\smallskip\\
+} 
+\\
+\stk{
+\HExprID : \ITagIDesc{\Ty} \\
+\HExprID \mapsto \vtup{l}{
+                   \vtup{r}{\sqr{\SYMBEplus} \\ \sqr{\SYMBEle}} \red{,} \;
+  \LAM{\_} \sqr{\DProd{\DProd{\DVar{\Enat}}{\DVar{\Enat}}}{\DConst{\Unit}}}
+                   }
+}
+}\]
+
+%%%\caption{Syntax of typed expressions}
+%%%\label{fig:hexpr-full}
+
+%%%\end{figure}
+
+\newcommand{\evalH}{\F{eval}_{\green{\Downarrow}}}
+\newcommand{\evalOne}{\F{eval}_{\green{\downarrow}}}
+
+Given the syntax, let us supply the semantics. We implement an
+evaluator as a catamorphism:
+%
+\[\stk{
+\evalH : \PI{\V{ty}}{\Ty} 
+         \muide{\Ty}{\HExprD}\: \V{ty} \To
+         \Val{\V{ty}} \\
+\evalH\: \V{ty}\: \V{term} \mapsto \cataI_{\Ty} \:
+                                 (\toIDesc{\HExprD})\: 
+                                 \SYMBVal\: 
+                                 \evalOne\: 
+                                 \V{ty}\: 
+                                 \V{term}
+}\]
+%
+To finish the job, we must supply the algebra which implements a single
+step of evaluation, given subexpressions evaluated already.
+%
+\[\stk{
+\evalOne : \PI{\V{ty}}{\Ty}
+ \idescop{(\toIDesc{\HExprD})\:\V{ty}}{\Ty}{\SYMBVal}
+           \To {\Val{\V{ty}}} \\
+\begin{array}{@{}l@{}c@{}l@{\:\mapsto\:\:}l}
+\evalOne\: & \_\: & (\SYMBEval\;\V{x})                                            & \V{x} \\
+\evalOne\: & \_\: & (\SYMBEcond\:\BoolTrue\:\V{x}\:\_)   & \V{x} \\
+\evalOne\: & \_\: & (\SYMBEcond\:\BoolFalse\:\_\:\V{y})  & \V{y} \\
+\evalOne\: & \Enat\: & (\SYMBEplus\:\V{x}\:\V{y})   & \V{x} \plusHost \V{y} \\
+\evalOne\: & \Ebool\: & (\SYMBEle\:\V{x}\:\V{y})  & \V{x} \leHost \V{y} 
+\end{array}
+}\]
+
+\begin{wstructure}
+    /> Closed term
+        <- only constants and operations on them
+        -> Extend Val with Var : Ty -> Set, mapping to EnumU
+            -> Open term
+            -> Language of well-typed terms
+                <- By construction
+\end{wstructure}
+
+Hence, we have a type-safe syntax and a tagless interpreter for our
+language, in the spirit
+of~\citet{augustsson.carlsson:dependent.interpreter}, with help from
+the generic catamorphism. However, so far, we are only able to define
+and manipulate \emph{closed} terms. Adding variables, it is possible
+to build and manipulate \emph{open} terms, that is, terms in a
+context. We shall get this representation, for free, thanks to the
+\emph{free indexed monad} construction.
+
+
+\subsection{Free indexed monad}
+
+\begin{wstructure}
+<- Variation on a theme: free imonad construction
+    <- Recall existence of generic free monad construction
+    -> Present its generalisation to IDesc [equation]
+        <- \I -> IDesc I as describing an indexed endofunctor
+        <- Free monad construction
+    -> Still a suitable, generic notion of substitution
+        <- show type signature
+        <- show implementation?? (space! space!)
+\end{wstructure}
+
+In Section~\ref{sec:desc-free-monad}, we have built a free monad
+operation for simple descriptions. The process is similar in the
+indexed world. Namely, given an indexed functor, we derive the indexed
+functor coding its free monad: \note{pwm: Whoa there. Maybe we should
+  say something about IMonads in general before we get to this point?}
+%
+\[\stk{
+\begin{array}{ll}
+\FreeIMonad{\_}{} : & _{\PI{\V{I}}{\Set}}
+                     \PITEL{\V{R}}{\TagIDesc{\V{I}}} 
+                     \PITEL{\V{X}}{\V{I} \To \Set}\To 
+                      \TagIDesc{\V{I}}
+\end{array} \\
+\FreeIMonad{\pair{\V{E}}{\V{F}}{}}{\V{I}}{\V{R}} \mapsto
+    \pair{\pair{\ListCons{\SYMBDVar}{(\fst{\V{E}})}} 
+               {\LAM{\V{i}}
+                \pair{\DConst{(\V{R}\: \V{i})}}
+                     {(\snd{\V{E}})\: \V{i}}{}}{}}
+         {\V{F}}{}
+}\]
+
+
+\newcommand{\substI}{\F{substI}}
+
+
+Just as in the universe of descriptions, this construction comes with
+an obvious \return and a substitution operation, the \bind. Its
+definition is the following:
+%
+\[\stk{
+\begin{array}{@{}ll}
+\substI : & _{\PI{\V{I}}{\Set}}
+            \PI{\V{X}, \V{Y}}{\V{I} \To \Set}
+            \PITEL{\V{R}}{\TagIDesc{\V{I}}} \\
+          & (\V{X} \DotTo 
+             \muide{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}) \To 
+             \muide{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{X}})} \DotTo
+             \muide{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}
+\end{array} \\
+\substI\: \V{X}\: \V{Y}\: \V{R}\: \V{\sigma}\: \V{i}\: \V{t} \mapsto \\
+\qquad    \cataI_{\V{I}}\: (\toIDesc{\FreeIMonad{\V{R}}{}{\V{X}}})\:
+                      (\muide{\V{Y}}{(\FreeIMonad{\V{R}}{}{\V{Y}})})\:
+                      (\F{applyI}\: \V{R}\: \V{X}\: \V{Y}\: \V{\sigma})\:
+                      \V{i}\:
+                      \V{t} 
+}\]
+% 
+where  $\F{applyI}$ is defined as follows:
+%
+\[\stk{
+\begin{array}{@{}ll}
+\F{applyI} : & _{\PI{\V{I}}{\Set}}
+            \PITEL{\V{R}}{\TagIDesc{\V{I}}}
+            \PI{\V{X}, \V{Y}}{\V{I} \To \Set} \\
+          & (\V{X} \DotTo \muide{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}{}) \To \\
+          & \idescop{\toIDesc{\FreeIMonad{\V{R}}
+                                         {\V{I}}
+                                         {\V{X}}}}
+                    {\V{I}}
+                    {\muide{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}} \DotTo 
+            \muide{\V{I}}{(\FreeIMonad{\V{R}}{\V{I}}{\V{Y}})}{}
+\end{array} \\
+\begin{array}{@{}l@{\:\mapsto\:\:}l}
+\F{applyI}\: \V{R}\: \V{X}\: \V{Y}\: \V{\sigma}\: \V{i}\: \pair{\SYMBDVar}{\V{x}}{}   & \V{\sigma}\: \V{i}\: \V{x}                   \\
+\F{applyI}\: \V{R}\: \V{X}\: \V{Y}\: \V{\sigma}\: \V{i}\: \pair{\V{c}}{\V{ys}}{} & \Con{\pair{\V{c}}{\V{ys}}{}}
+\end{array}
+}\]
+ 
+The subscripted types corresponds to implicit arguments that can be
+automatically inferred, hence do not have to be typed in. Let us now
+consider two examples of free indexed monads.
+
+
+\paragraph{Typed expressions:}
+
+\begin{wstructure}
+    /> Closed term
+        <- only constants and operations on them
+        -> Extend Val with Var : Ty -> Set, mapping to EnumU
+            -> Open term
+            -> Language of well-typed terms
+                <- By construction
+\end{wstructure}
+
+\newcommand{\Ctxt}{\D{Context}}
+\newcommand{\SYMBCtxtEmpty}{\C{[]}\xspace}
+\newcommand{\CtxtEmpty}{\SYMBCtxtEmpty}
+\newcommand{\SYMBCtxtSnoc}{\C{snoc}\xspace}
+\newcommand{\CtxtSnoc}[2]{\SYMBCtxtSnoc\:#1\:#2}
+\newcommand{\SYMBEnv}{\F{Env}}
+\newcommand{\Env}[1]{\SYMBEnv\: #1}
+\newcommand{\SYMBlookup}{\F{lookup}}
+\newcommand{\lookup}[4]{\SYMBlookup\: #1\: #2\: #3\: #4}
+
+In the previous section, we presented a language of closed
+arithmetic expressions. Using the free monad construction, we are
+going to extend this construction to open terms. An open term is
+defined with respect to a context, represented by a snoc-list of
+types:
+%
+\[
+\begin{array}{@{}l@{\::\:\:}l@{\quad}l}
+\Ctxt           & \Set \\
+\SYMBCtxtEmpty  & \Ctxt \\
+\SYMBCtxtSnoc   & \Ctxt \To \Ty \To \Ctxt
+\end{array}
+\]
+%
+An environment realises the context, packing a value for each type:
+%
+\[
+\stk{
+\SYMBEnv : \Ctxt \To \Set \\
+\begin{array}{@{}l@{\:\:\mapsto\:\:}l}
+\Env{\CtxtEmpty}                & \Unit \\
+\Env{(\CtxtSnoc{\V{G}}{\V{S}})} & \TIMES{\Env{\V{G}}}{\Val{\V{S}}}
+\end{array}
+}\]
+%
+In this setting, we define type variables, $\SYMBVar$ by:
+%
+\[\stk{
+\Var{}{} : \Ctxt \To \Ty \To \Set \\
+\begin{array}{@{}ll@{\:\:\mapsto\:\:}l}
+\Var{\CtxtEmpty}{& \V{T}}                & 
+    \Void \\
+\Var{(\CtxtSnoc{\V{G}}{\V{S}})}{& \V{T}} & 
+    \SUM{(\Var{\V{G}}{\V{T}})}{(\V{S} \PropEq \V{T})}
+\end{array}
+}\]
+%
+While $\SYMBVal$ maps the type to the corresponding host type,
+$\SYMBVar$ indexes a value in the context, obtaining a proof that the
+types match. The $\SYMBlookup$ function precisely follow this
+semantics:
+%
+\[\stk{
+\SYMBlookup : \PI{\V{G}}{\Ctxt} 
+          \Env{\V{G}} \To 
+          \PI{\V{T}}{\Ty} 
+          \Var{\V{G}}{\V{T}} \To
+          \Val{\V{T}} \\
+\begin{array}{@{}l@{}l@{}l@{}l@{}lll}
+\lookup{& (\CtxtSnoc{\V{G}}{.T})}{& \pair{\V{g}}{\V{t}}{}}{& \V{T}}{& (\SumRight{\C{refl}})} & \mapsto & \V{t} \\
+\lookup{& (\CtxtSnoc{\V{G}}{\V{S}})}{& \pair{\V{g}}{\V{t}}{}}{& \V{T}}{& (\SumLeft{\V{x}})} & \mapsto & \lookup{\V{G}}{\V{g}}{\V{T}}{\V{x}} 
+\end{array}
+}\]
+
+\newcommand{\SYMBEmpty}{\F{Empty}\xspace}
+\newcommand{\Empty}[1]{\SYMBEmpty\:#1}
+
+\newcommand{\SYMBopenTerm}{\F{openTm}\xspace}
+\newcommand{\openTerm}[1]{\SYMBopenTerm\: #1}
+\newcommand{\closeTerm}{\F{closeTm}}
+
+\newcommand{\update}{\F{update}}
+
+Consequently, taking the free monad of \(\HExprD\) by \(\SYMBVar\:
+\V{G}\), we obtain the language of open terms in a context \(\V{G}\):
+%
+\[
+\openTerm{\V{G}} \mapsto \FreeIMonad{\HExprD}{\Ty}{(\SYMBVar\:\V{G})}
+\]
+%
+In this setting, the language of closed terms corresponds to the free
+monad assigning an empty set of values to variables
+%
+\[
+\closeTerm \mapsto \FreeIMonad{\HExprD}{\Ty}{\SYMBEmpty}
+\quad
+\mbox{where}
+\quad
+\stk{
+\SYMBEmpty : \Ty \To \Set \\
+\begin{array}{@{}l@{\:\:\mapsto\:\:}l}
+\Empty{\_}   & \Zero \\
+\end{array}
+}\]
+%
+Allowing variables from an empty set is much like forbidding variables,
+so \(\closeTerm\) and \(\HExprD\) describe isomorphic
+datatypes. Correspondingly, you can update an old \(\HExprD\) to a shiny
+\(\closeTerm\):
+%
+\[\stk{
+\update : \muide{\Ty}{\HExprD} \DotTo \muide{\Ty}{\closeTerm} \\
+\begin{array}{@{}l@{}l}
+\update\: \V{ty}\: \V{tm} \mapsto \cataI_{\Ty}\: & (\toIDesc{\HExprD})\:
+                                                  (\muide{\Ty}{\closeTerm})\: \\
+                                                & (\LAM{\_} \LAM{\pair{\V{tag}}{\V{tm}}{}} \Con{\pair{\Su{\V{tag}}}{\V{tm}}{}})\:
+                                                  \V{ty}\:
+                                                  \V{tm}
+\end{array}
+}\]
+% 
+The other direction of the isomorphism is straightforward, the
+$\SYMBDVar$ case being impossible. Therefore, we are entitled to
+reuse the $\evalH$ function to define the semantics of $\closeTerm$.
+
+\newcommand{\discharge}{\F{discharge}}
+
+Now we would like to give a semantics to the open term language. We
+proceed in two steps: first, we substitute variables by their value in
+the context; then, we evaluate the resulting closed term. Thanks to
+$\evalH$, the second problem is already solved. Let us focus on
+substituting variables from the context. Again, we can subdivide this
+problem: first, discharging a single variable from the context; then,
+applying this $\discharge$ function on every variables in the term.
+
+The $\discharge$ function is relative to the required type and a
+context of the right type. Its action is to map values to themselves,
+and variables to their value in context. This corresponds to the
+following function:
+%
+\[\stk{
+\begin{array}{@{}ll}
+\discharge : & \PI{\V{G}}{\Ctxt}
+               \Env{\V{G}} \To 
+               \Var{\V{G}}{} \DotTo
+               \muide{\Ty}{\closeTerm}
+\end{array} \\
+\begin{array}{@{}l@{\:\mapsto\:\:}l}
+\discharge\: \V{G}\: \V{g}\: \V{ty}\: \V{v} &
+    \Con{\pair{\SYMBEval}{\lookup{\V{G}}{\V{g}}{\V{ty}}{\V{v}}}{}}
+\end{array}
+}\]
+
+\begin{wstructure}
+            /> Then, perform subst everywhere in the term
+                -> Show type [code]
+                /> This is a bind!?
+                -> There is some more structure 
+                    -> We should try to get it
+\end{wstructure}
+
+\newcommand{\substH}{\F{substExpr}}
+
+We are now left with applying $\discharge$ over all variables of the
+term.  We simply have to fill in the right arguments to $\substI$, the
+type guiding us:
+%
+\[
+\stk{
+\begin{array}{@{}ll}
+\substH  : & \PI{\V{G}}{\Ctxt} \\
+           & (\Var{\V{G}}{} \DotTo
+              \muide{\Ty}{\closeTerm}) \DotTo \\
+          & \muide{\Ty}{(\openTerm{\V{G}})} \DotTo 
+            \muide{\Ty}{\closeTerm}
+\end{array} \\
+\substH\: \V{G}\:
+          \V{ty}\:          
+          \V{g}\:
+          \V{\sigma}\: 
+          \V{tm} \mapsto  
+\substI_{\Ty}\:
+               (\SYMBVar\: \V{G})\: 
+               \SYMBEmpty\:
+               \HExprD\: 
+               \V{\sigma}\:
+               \V{ty}\:
+               \V{tm}
+}\]
+
+Hence completing our implementation of the open terms
+interpreter. Without much effort, we have described the syntax of a
+well-typed language, together with its semantics.
+
+
+\paragraph{Indexed descriptions:}
+
+An interesting instance of free monad is $\SYMBIDesc$ itself. Indeed,
+$\SYMBDVar$ is nothing but the \return. The remaining constructors form
+the carrier functor, trivially indexed by $\Unit$. The signature functor
+is described as follow:
+%
+\[\stk{
+\IDescFreeD : \ATagIDesc{\Unit} \\
+\begin{array}{@{}ll}
+\IDescFreeD \mapsto \bigRedBracket{\begin{array}{l}
+                                \sqr{\SYMBDConst\:\:
+                                     \DProd\:\:
+                                     \SYMBDSigma\:\:
+                                     \SYMBDPi} \red{,}\\
+                                  \LAM{\_}\bigRedBracket{\begin{array}{l}
+                                        \DConst{\Set}               \\
+                                        \DProd{\DVar{\Void}}{\DVar{\Void}}  \\
+                                        \DSigma{\Set}{(\LAM{\V{S}} \DPi{\V{S}}{(\LAM{\_} \DVar{\Void})})} \\
+                                        \DSigma{\Set}{(\LAM{\V{S}} \DPi{\V{S}}{(\LAM{\_} \DVar{\Void})})}
+                                    \end{array}}\end{array}}
+\end{array}
+}\]
+%
+We get $\IDesc{\V{I}}$ by extending the signature with variables from \(\V{I}\):
+%
+\[\stk{
+\IDescD : \PI{\V{I}}{\Set} \TagIDesc{\Unit} \\
+\IDescD\: \V{I} \mapsto \FreeIMonad{\red{[}\IDescFreeD\red{,[}\LAM{\_}\sqr{}\red{,}\LAM{\_}\red{[]]]}}{\Unit}\LAM{\_}\V{I}
+}\]
+
+The fact that indexed descriptions are closed under substitution
+is potentially of considerable utility, if we can exploit this fact:
+\[
+\idescop{\V{\sigma} \V{D}}{\V{J}}{\V{X}} 
+    \mapsto 
+        \idescop{\V{D}}
+                {\V{I}}
+                {\LAM{\V{i}}
+                     {\idescop{\V{\sigma} \V{i}}
+                              {\V{J}}
+                              {\V{X}}}}
+        \quad \mbox{where}\;\V{\sigma}:\V{I}\To\IDesc{\V{J}}
+\]
+By observing that a description can be decomposed via substitution, we
+split its meaning into a superstructure of substructures, e.g. a
+`database containing salaries', ready for traversal operations
+preserving the former and targeting the latter.
+ 
+%\newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Discussion
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Discussion}
+
+
+In this paper, we have presented a universe of datatypes for a
+dependent type theory. We started from an unremarkable type theory
+with dependent functions and tuples, but relying on few other
+assumptions, especially where propositional equality is concerned.  We
+added finite enumeration sufficient to account for constructor choice,
+and then we built coding systems, first (as a learning experience) for
+simple ML-like inductive types, then for the indexed inductive
+families which dependently typed programmers in Agda, Coq and Epigram
+take for granted. We adopt a bidirectional type propagation mechanism
+to conceal artifacts of the encoding, giving a familiar and practicable
+constructor-based presentation to data.
+
+Crucially to our approach, we ensure that the codes describing
+datatypes inhabit a datatype with a code. In a stratified setting, we
+avoid paradox by ensuring that this type of codes lives uniformly one
+level above the types the codes describe. The adoption of ordinary
+data to describe types admits datatype-generic operations implemented
+just by ordinary programming. In working this way, we make
+considerable use of type equality modulo open computation, silently
+specialising the types of generic operations as far as the datatype
+code for any given usage is known.
+
+\subsection{Related work in Generic Programming}
+
+\begin{wstructure}
+!!! Need Help !!!
+<- Comparison with Induction Recursion
+    ???
+\end{wstructure}
+
+
+\begin{wstructure}
+!!! Need Help !!!
+<- Related Work
+    <- Generic in simply-typed functional languages
+        <- PolyP \cite{jansson:polyp}
+        <- Generic Haskell \cite{hinze:generic-haskell}
+        <- Scratch your boilerplate \cite{spj:syb}
+\end{wstructure}
+
+Generic programming is a vast topic. We refer our reader to
+\citet{garcia:generic-comparative-study} for a broad overview of
+generic programming in various languages. For Haskell alone, there is
+a myriad of proposals: 
+\citet{hinze:generic-approach-comparative} and
+\citet{rodriguez:generic-libs-comparative} provide useful comparative
+surveys.
+
+Our approach follows the polytypic programming style, as initiated
+by PolyP~\cite{jansson:polyp}. Indeed, we build generic functions by
+induction on pattern functors, exploiting type-level computation
+to avoid the preprocessing phase: our
+datatypes are, natively, nothing but codes.
+
+We have the \emph{type-indexed datatypes} of Generic
+Haskell~\cite{hinze:generic-haskell} for free.
+From one datatype, we can compute
+others and equip them with relevant structure: the free monad
+construction provides one example. Our approach to encoding datatypes
+as data also sustains \emph{generic
+  views}~\cite{holdermans:generic-view}, allowing us to rebias the
+presentation of datatypes conveniently. Tagged descriptions,
+giving us a sum-of-sigmas view, are a natural example.
+
+Unlike Generic Haskell, we do not support polykinded
+programming~\cite{hinze:polytypic-polykinded}. Our descriptions are
+limited to endofunctors on $\Set^I$. Whilst indexing is known
+to be sufficient to \emph{encode} a large class of higher-kinded
+datatypes~\citep{DBLP:conf/ifip2-1/AltenkirchM02}, we should rather
+hope to work in a more compositional style. We are free to write
+higher-order programs manipulating codes, but is not yet clear whether
+that is sufficient to deliver abstraction at higher kinds.
+Similarly, it will be interesting to see whether
+arity-generic programming~\cite{weirich:arity-generic} arises
+just by computing with our codes, or whether a richer abstraction is
+called for.
+
+The Scrap Your Boilerplate~\cite{spj:syb} (SYB) approach to generic
+programming offers a way to construct generic functions, based on
+dynamic type-testing via the $\CN{Typeable}$
+type class. SYB cannot compute types from codes, but its dynamic character
+does allow a more flexible \emph{ad hoc} approach to generic data
+traversal. By maintaining the correspondence between codes and types
+whilst supporting arbitrary inspection of codes, we pursue the same
+flexibility statically. The substitutive character of $\SYMBIDesc$
+may allow us to observe and exploit \emph{ad hoc} substructural
+relationships in data, but again, further work is needed if we
+are to make a proper comparison.
+
+\begin{wstructure}
+    <- Generic in dependent types
+        <- Norell \cite{norell:msc-thesis}
+        <- Polytypic prog in Coq \cite{verbruggen:polytype-coq}
+        <- Universes for generic prog \cite{benke:universe-generic-prog}
+\end{wstructure}
+
+\subsection{Generic Programming with Dependent Types}
+
+Generic programming is not new to dependent
+types. \citet{DBLP:conf/ifip2-1/AltenkirchM02} developed a universe
+of polykinded types in Lego;
+\citet{norell:msc-thesis} gave a formalisation of
+polytypic programming in Alfa, a precursor to Agda;
+\citet{verbruggen:polytype-prog-coq, verbruggen:polytype-coq} provided
+a framework for polytypic programming in the Coq theorem
+prover. However, these works aim at \emph{modelling} PolyP or Generic
+Haskell in a dependently-typed setting for the purpose of proving
+correctness properties of Haskell code. Our approach is different in
+that we aim at building a foundation for datatypes, in a
+dependently-typed system, for a dependently-typed system.
+
+Closer to us is the work of \citet{benke:universe-generic-prog}. This
+seminal work introduced the usage of universes for developing generic
+programs. Our universes share similarities to theirs: our universe of
+descriptions is similar to their universe of iterated induction, and
+our universe of indexed descriptions is equivalent to their universe
+of finitary indexed induction. This is not surprising, as we share the
+same source of inspiration, namely induction-recursion.
+
+However, we feel ready to offer a more radical prospectus. Their
+approach is generative: each universe extends the base type theory
+with both type formers and elimination rules. Thanks to levitation, we
+rely only on a generic induction and a specialised $\SYMBswitchD$,
+closing the type theory. We explore \emph{programming} with codes, but
+also how to conceal the encoding when writing `ordinary' programs.
+
+
+\subsection{Metatheoretical Status}
+
+The \(\Set:\Set\) approach we have taken in this paper is convenient
+from an experimental perspective, and it has allowed us to focus
+primarily on the encoding of universes, leaving the question
+of stratification (and with it, consistency, totality,
+and decidability of type checking) to one side. However, we must
+surely face up to the latter, especially since we have taken up the
+habit of constructing `the set of all sets'. A proper account requires
+a concrete proposal for a system of stratified universes which allows
+us to make `level-polymorphic' constructions, and we are actively
+pursuing such a proposal. We hope soon to have something to prove.
+
+In the meantime, we can gain some confidence by systematically
+embedding predicative fragments of our theory within
+systems which already offer a universe hierarchy. We can, at the
+very least, confirm that in UTT-style theories with conventional
+inductive families of types~\citep{luo:utt}, as found in Coq
+(and in Agda if one avoids experimental extensions), we build the
+tower of universes we propose, cut off at an arbitrary height.
+It is correspondingly clear that some such system can be made to
+work, or else that other, longer-standing tools are troubled.
+
+A metatheoretical issue open at time of writing concerns the
+size of the \emph{index} set \(\V{I}\) in \(\IDesc{\V{I}}\). Both Agda
+and recent versions of Coq allow inductive families with \emph{large}
+indices, effectively allowing `higher-kind' fixpoints on
+\(\Set^{\Set}\) and more. They retain the safeguard that the types of
+\emph{substructures} must be as small as the inductively
+defined superstructure. This liberalisation allows us large index sets
+in our models, but whilst it offers no obvious route to paradox by
+smuggling a large universe inside a small type, it is not yet known
+to be safe. We can restrict \(\V{I}\) as necessary to avoid
+paradox, provided \(\Unit\), used to index \(\SYMBIDesc\) itself, is
+`small'.
+
+\subsection{Further Work}
+
+Apart from the need to nail down a stratified version of the system and
+its metatheory, we face plenty of further problems and opportunities.
+Although we have certainly covered Luo's criteria for inductive
+families~\cite{luo:utt}, there are several dimensions in which to
+consider expanding our universe.
+
+Firstly, we seek to encompass
+\emph{inductive-recursive} datatype families~\cite{dybjer:iir}, allowing
+us to interleave the definition and interpretation of data in intricate
+and powerful ways. This interleaving seems particularly useful when
+reflecting the syntax of dependent type systems.
+
+Secondly, we should very much like to extend our
+universe with a codes for internal fixpoints, as
+in~\cite{DBLP:conf/types/MorrisAM04}. The external knot-tying
+approach we have taken here makes types like `trees with lists of subtrees'
+more trouble than they should be. Moreover, if we allow the alternation
+of least and greatest fixpoints, we should expect to gain types which are
+not readily encoded with one external \(\SYMBIMu\).
+
+Thirdly, it would be fascinating to extend our universe with dedicated
+support for syntax with \emph{binding}, not least because a universe
+with internal fixpoints has such a syntax. Harper and Licata have
+demonstrated the potential for and of such an
+encoding~\citep{DBLP:conf/icfp/LicataH09}, boldly encoding the invalid
+definitions along with the valid. A more conservative strategy might
+be to offer improved support for datatypes indexed by an extensible
+context of free variables, with the associated free monad structure
+avoiding capture as shown by~\citet{altenkirch:monadic-lambda}.
+
+Lastly, we must ask how our new presentation of datatypes
+should affect the tools we use to build software. It is not enough to
+change the game: we must enable better play. If datatypes are data,
+what is design?
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Acknowledgments
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\acks
+
+We are grateful to Jos\'{e} Pedro Magalh\~{a}es for his helpful
+comments on a draft of this paper. We are also grateful to the Agda
+team, without which levitation would have been a much more perilous
+exercise. J. Chapman was supported by the Estonian Centre of
+Excellence in Computer Science, EXCS, financed by the European
+Regional Development Fund. P.-\'{E}. Dagand, C. McBride and P. Morris
+are supported by the Engineering and Physical Sciences Research
+Council, Grants EP/G034699/1 and EP/G034109/1.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Bibliography
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\begin{thebibliography}{47}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Abel et~al.()Abel, Coquand, and Pagano]{DBLP:conf/tlca/AbelCP09}
+A.~Abel, T.~Coquand, and M.~Pagano.
+\newblock A modular type-checking algorithm for type theory with singleton
+  types and proof irrelevance.
+\newblock In \emph{TLCA}.
+
+\bibitem[Adams(2006)]{DBLP:journals/jfp/Adams06}
+R.~Adams.
+\newblock Pure type systems with judgemental equality.
+\newblock \emph{JFP}, 2006.
+
+\bibitem[Altenkirch and McBride(2002)]{DBLP:conf/ifip2-1/AltenkirchM02}
+T.~Altenkirch and C.~McBride.
+\newblock Generic programming within dependently typed programming.
+\newblock In \emph{Generic Programming}, 2002.
+
+\bibitem[Altenkirch and Reus(1999)]{altenkirch:monadic-lambda}
+T.~Altenkirch and B.~Reus.
+\newblock Monadic presentations of lambda terms using generalized inductive
+  types.
+\newblock In \emph{Computer Science Logic}. 1999.
+
+\bibitem[Altenkirch et~al.(2007)Altenkirch, McBride, and
+  Swierstra]{altenkirch:ott}
+T.~Altenkirch, C.~McBride, and W.~Swierstra.
+\newblock Observational equality, now!
+\newblock In \emph{PLPV}, 2007.
+
+\bibitem[Augustsson and
+  Carlsson(1999)]{augustsson.carlsson:dependent.interpreter}
+L.~Augustsson and M.~Carlsson.
+\newblock An exercise in dependent types: A well-typed interpreter.
+\newblock {Available at
+  \url{http://www.cs.chalmers.se/~augustss/cayenne/interp.ps}}, 1999.
+
+\bibitem[Benke et~al.(2003)Benke, Dybjer, and
+  Jansson]{benke:universe-generic-prog}
+M.~Benke, P.~Dybjer, and P.~Jansson.
+\newblock Universes for generic programs and proofs in dependent type theory.
+\newblock \emph{Nordic Journal of Computing}, 2003.
+
+\bibitem[Brady et~al.()Brady, Chapman, Dagand, Gundry, McBride, Morris, and
+  Norell]{pigs:epigram}
+E.~Brady, J.~Chapman, P.-E. Dagand, A.~Gundry, C.~McBride, P.~Morris, and
+  U.~Norell.
+\newblock An {E}pigram implementation.
+
+\bibitem[Brady et~al.(2003)Brady, McBride, and
+  McKinna]{brady:index-inductive-families}
+E.~Brady, C.~McBride, and J.~McKinna.
+\newblock Inductive families need not store their indices.
+\newblock In \emph{TYPES}, 2003.
+
+\bibitem[Cheney and Hinze(2003)]{cheney:gadt}
+J.~Cheney and R.~Hinze.
+\newblock First-class phantom types.
+\newblock Technical report, Cornell University, 2003.
+
+\bibitem[Coquand(1996)]{DBLP:journals/scp/Coquand96}
+T.~Coquand.
+\newblock An algorithm for type-checking dependent types.
+\newblock \emph{SCP}, 1996.
+
+\bibitem[Courant(2002)]{courant:explicit-universe}
+J.~Courant.
+\newblock Explicit universes for the calculus of constructions.
+\newblock In \emph{TPHOLs}, 2002.
+
+\bibitem[Danielsson(2010)]{nisse:asl}
+N.~A. Danielsson.
+\newblock The {A}gda standard library, 2010.
+
+\bibitem[Dybjer(1991)]{dybjer:families}
+P.~Dybjer.
+\newblock Inductive sets and families in {M}artin-{L}{\"o}f's type theory.
+\newblock In \emph{Logical {F}rameworks}. 1991.
+
+\bibitem[Dybjer and Setzer(1999)]{dybjer:axiom-ir}
+P.~Dybjer and A.~Setzer.
+\newblock A finite axiomatization of inductive-recursive definitions.
+\newblock In \emph{TLCA}, 1999.
+
+\bibitem[Dybjer and Setzer(2000)]{dybjer:ir-initial-algebra}
+P.~Dybjer and A.~Setzer.
+\newblock Induction-recursion and initial algebras.
+\newblock In \emph{Annals of Pure and Applied Logic}, 2000.
+
+\bibitem[Dybjer and Setzer(2001)]{dybjer:iir}
+P.~Dybjer and A.~Setzer.
+\newblock Indexed induction-recursion.
+\newblock In \emph{Proof Theory in Computer Science}. 2001.
+
+\bibitem[Garcia et~al.(2003)Garcia, Jarvi, Lumsdaine, Siek, and
+  Willcock]{garcia:generic-comparative-study}
+R.~Garcia, J.~Jarvi, A.~Lumsdaine, J.~Siek, and J.~Willcock.
+\newblock A comparative study of language support for generic programming.
+\newblock In \emph{OOPSLA}, 2003.
+
+\bibitem[Geuvers(2001)]{geuvers:induction-not-derivable}
+H.~Geuvers.
+\newblock Induction is not derivable in second order dependent type theory.
+\newblock In \emph{TLCA}, 2001.
+
+\bibitem[Goguen et~al.(2006)Goguen, McBride, and
+  McKinna]{goguen:pattern-matching}
+H.~Goguen, C.~McBride, and J.~McKinna.
+\newblock Eliminating dependent pattern matching.
+\newblock In \emph{Algebra, Meaning and Computation}. 2006.
+
+\bibitem[Harper and Pollack()]{harper:implicit-universe}
+R.~Harper and R.~Pollack.
+\newblock Type checking with universes.
+\newblock In \emph{TAPSOFT'89}.
+
+\bibitem[Hinze(2000)]{hinze:polytypic-polykinded}
+R.~Hinze.
+\newblock Polytypic values possess polykinded types.
+\newblock In \emph{MPC}. 2000.
+
+\bibitem[Hinze et~al.(2002)Hinze, Jeuring, and L\"{o}h]{hinze:generic-haskell}
+R.~Hinze, J.~Jeuring, and A.~L\"{o}h.
+\newblock Type-indexed data types.
+\newblock In \emph{MPC}, 2002.
+
+\bibitem[Hinze et~al.(2007)Hinze, Jeuring, and
+  L\"{o}h]{hinze:generic-approach-comparative}
+R.~Hinze, J.~Jeuring, and A.~L\"{o}h.
+\newblock Comparing approaches to generic programming in {H}askell.
+\newblock In \emph{Datatype-Generic Programming}. 2007.
+
+\bibitem[Holdermans et~al.(2006)Holdermans, Jeuring, L\"{o}h, and
+  Rodriguez]{holdermans:generic-view}
+S.~Holdermans, J.~Jeuring, A.~L\"{o}h, and A.~Rodriguez.
+\newblock Generic views on data types.
+\newblock In \emph{MPC}. 2006.
+
+\bibitem[Jansson and Jeuring(1997)]{jansson:polyp}
+P.~Jansson and J.~Jeuring.
+\newblock Poly{P}---a polytypic programming language extension.
+\newblock In \emph{POPL}, 1997.
+
+\bibitem[L{\"a}mmel and {Peyton Jones}(2003)]{spj:syb}
+R.~L{\"a}mmel and S.~{Peyton Jones}.
+\newblock Scrap your boilerplate: a practical design pattern for generic
+  programming.
+\newblock In \emph{TLDI}, 2003.
+
+\bibitem[Licata and Harper(2009)]{DBLP:conf/icfp/LicataH09}
+D.~R. Licata and R.~Harper.
+\newblock A universe of binding and computation.
+\newblock In \emph{ICFP}, 2009.
+
+\bibitem[Luo(1994)]{luo:utt}
+Z.~Luo.
+\newblock \emph{Computation and Reasoning}.
+\newblock Oxford University Press, 1994.
+
+\bibitem[Martin-L{{\"o}f}(1984)]{martin-lof:itt}
+P.~Martin-L{{\"o}f}.
+\newblock \emph{Intuitionistic Type Theory}.
+\newblock Bibliopolis$\cdot$Napoli, 1984.
+
+\bibitem[McBride and McKinna(2004)]{mcbride.mckinna:view-from-the-left}
+C.~McBride and J.~McKinna.
+\newblock The view from the left.
+\newblock \emph{JFP}, 2004.
+
+\bibitem[Morris(2007)]{morris:PhD}
+P.~Morris.
+\newblock \emph{Constructing Universes for Generic Programming}.
+\newblock PhD thesis, University of Nottingham, 2007.
+
+\bibitem[Morris and Altenkirch(2009)]{alti:lics09}
+P.~Morris and T.~Altenkirch.
+\newblock Indexed containers.
+\newblock In \emph{LICS}, 2009.
+
+\bibitem[Morris et~al.(2004)Morris, Altenkirch, and
+  McBride]{DBLP:conf/types/MorrisAM04}
+P.~Morris, T.~Altenkirch, and C.~McBride.
+\newblock Exploring the regular tree types.
+\newblock In \emph{TYPES}, 2004.
+
+\bibitem[Morris et~al.(2009)Morris, Altenkirch, and Ghani]{morris:spf}
+P.~Morris, T.~Altenkirch, and N.~Ghani.
+\newblock A universe of strictly positive families.
+\newblock \emph{IJCS}, 2009.
+
+\bibitem[Norell(2002)]{norell:msc-thesis}
+U.~Norell.
+\newblock Functional generic programming and type theory.
+\newblock Master's thesis, Chalmers University of Technology, 2002.
+
+\bibitem[Norell(2007)]{norell:agda}
+U.~Norell.
+\newblock \emph{Towards a practical programming language based on dependent
+  type theory}.
+\newblock PhD thesis, Chalmers University of Technology, 2007.
+
+\bibitem[Oury and Swierstra(2008)]{oury:power-of-pi}
+N.~Oury and W.~Swierstra.
+\newblock The power of {P}i.
+\newblock In \emph{ICFP}, 2008.
+
+\bibitem[Paulin-Mohring(1996)]{paulin:habilitation}
+C.~Paulin-Mohring.
+\newblock \emph{D{\'e}finitions inductives en th{\'e}orie des types d'ordre
+  sup{\'e}rieur}.
+\newblock th{\`e}se d'habilitation, ENS Lyon, 1996.
+
+\bibitem[Pierce and Turner(1998)]{pierce:bidirectional-tc}
+B.~C. Pierce and D.~N. Turner.
+\newblock Local type inference.
+\newblock In \emph{POPL}, 1998.
+
+\bibitem[Rodriguez et~al.(2008)Rodriguez, Jeuring, Jansson, Gerdes, Kiselyov,
+  and d.~S.~Oliveira]{rodriguez:generic-libs-comparative}
+A.~Rodriguez, J.~Jeuring, P.~Jansson, A.~Gerdes, O.~Kiselyov, and B.~C.
+  d.~S.~Oliveira.
+\newblock Comparing libraries for generic programming in {H}askell.
+\newblock In \emph{Haskell Symposium}, 2008.
+
+\bibitem[{The Coq Development Team}()]{coq}
+{The Coq Development Team}.
+\newblock \emph{The Coq Proof Assistant Reference Manual}.
+
+\bibitem[Verbruggen et~al.(2008)Verbruggen, de~Vries, and
+  Hughes]{verbruggen:polytype-prog-coq}
+W.~Verbruggen, E.~de~Vries, and A.~Hughes.
+\newblock Polytypic programming in {C}oq.
+\newblock In \emph{WGP}, 2008.
+
+\bibitem[Verbruggen et~al.(2009)Verbruggen, de~Vries, and
+  Hughes]{verbruggen:polytype-coq}
+W.~Verbruggen, E.~de~Vries, and A.~Hughes.
+\newblock Polytypic properties and proofs in {C}oq.
+\newblock In \emph{WGP}, 2009.
+
+\bibitem[Weirich and Casinghino(2010)]{weirich:arity-generic}
+S.~Weirich and C.~Casinghino.
+\newblock Arity-generic datatype-generic programming.
+\newblock In \emph{PLPV}, 2010.
+
+\bibitem[Xi et~al.(2003)Xi, Chen, and Chen]{xi:gadt}
+H.~Xi, C.~Chen, and G.~Chen.
+\newblock Guarded recursive datatype constructors.
+\newblock In \emph{POPL}, 2003.
+
+\bibitem[Yakushev et~al.(2009)Yakushev, Holdermans, L\"{o}h, and
+  Jeuring]{yakushev:mutual-def}
+A.~R. Yakushev, S.~Holdermans, A.~L\"{o}h, and J.~Jeuring.
+\newblock Generic programming with fixed points for mutually recursive
+  datatypes.
+\newblock In \emph{ICFP}, 2009.
+
+\end{thebibliography}
+
+\bibliographystyle{abbrvnat}
+
+% The bibliography should be embedded for final submission.
+%\begin{thebibliography}{}
+%\softraggedright
+%\end{thebibliography}
+
+\end{document}
