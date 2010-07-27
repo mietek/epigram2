@@ -184,27 +184,31 @@
 \newcommand{\LEIR}{\ensuremath{~\hat\sqsubseteq~}}
 \newcommand{\transto}{\ensuremath{\twoheadrightarrow}}
 
-\newcommand{\leiStmt}[3]{\ensuremath{#1 \lei #3 \vdash #2}}
-\newcommand{\LEIStmt}[3]{\ensuremath{#1 \LEI #3 \vdash #2}}
+\newcommand{\iRel}[4]{#1 #3 #4 \entails #2}
+\newcommand{\ioRel}[5]{#1 \circ #2 #3 #4 \bullet #5}
+
+\newcommand{\leiStmt}[3]{\iRel{#1}{#2}{\lei}{#3}}
+\newcommand{\LEIStmt}[3]{\iRel{#1}{#2}{\LEI}{#3}}
 \newcommand{\leiParam}[4]{(#1, #2) \lei (#3, #4)}
 \newcommand{\leiRParam}[4]{(#1, #2) \leiR (#3, #4)}
-\newcommand{\LEIProb}[4]{#1 \,? #2 \LEI #3 \,!\, #4}
-\newcommand{\LEIRProb}[4]{#1 \,? #2 \LEIR #3 \,!\, #4}
+\newcommand{\LEIProb}[4]{\ioRel{#1}{#2}{\LEI}{#3}{#4}}
+\newcommand{\LEIRProb}[4]{\ioRel{#1}{#2}{\LEIR}{#3}{#4}}
 \newcommand{\LEIUnify}[4]{\leiStmt{#1}{#2 \equiv #3}{#4}}
 \newcommand{\LEIInfer}[4]{\LEIProb{#1}{(#2 :)}{#4}{#3}}
 \newcommand{\LEIInferScheme}[4]{\LEIProb{#1}{(#2 \hasscheme)}{#4}{#3}}
 \newcommand{\LEIRInfer}[4]{\LEIRProb{#1}{(#2 :)}{#4}{#3}}
 
-\newcommand{\alg}[3]{\ensuremath{#1 \transto #3 \entails #2}}
-\newcommand{\algUnify}[4]{\alg{#1}{#2 \equiv #3}{#4}}
-\newcommand{\algInstantiate}[5]{\alg{#1 ~||~ #4}{\Puni{#2}{#3}}{#5}}
-\newcommand{\algInfer}[4]{\alg{#1}{\Pinf{#2}{#3}}{#4}}
-\newcommand{\algInferScheme}[4]{\alg{#1}{\Psch{#2}{#3}}{#4}}
+\newcommand{\alg}[4]{\ioRel{#1}{#2}{\transto}{#3}{#4}}
+\newcommand{\ialg}[3]{\iRel{#1}{#2}{\transto}{#3}}
+\newcommand{\algUnify}[4]{\ialg{#1}{#2 \equiv #3}{#4}}
+\newcommand{\algInstantiate}[5]{\ialg{#1 ~||~ #4}{#2 \equiv #3}{#5}}
+\newcommand{\algInfer}[4]{\alg{#1}{#2 :}{#4}{#3}}
+\newcommand{\algInferScheme}[4]{\alg{#1}{#2 \hasscheme}{#4}{#3}}
 
 % Problem bits
 \newcommand{\leParam}[3]{#1 \entails #2 \subset #3}
 \newcommand{\pconj}[3]{\Sigma #1~#2.#3}
-\newcommand{\Qbind}[2]{#1 \bullet \Yright #2}
+\newcommand{\Qbind}[2]{#1 ~ \Yright #2}
 
 
 
