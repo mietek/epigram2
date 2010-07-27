@@ -1990,9 +1990,6 @@ $\theta \eqsubst \restrict{\zeta}{\Delta} \compose \iota : \Gamma \leiR \Delta$ 
 $\leParam{\Theta}{\theta\gen{\Xi}{\tau}}{\gen{\Psi}{\upsilon}}$.
 \end{proof}
 
-\TODO{The proofs of this lemma and the following two are all somewhat dull.
-Can we omit and summarise them?}
-
 
 \subsection{The binding lemmas}
 
@@ -2005,6 +2002,9 @@ First, if $Q$ is a problem for $A$, then $\Sbind{x \asc \sigma}{Q}$
 is also a problem for $A$, with statement
 $$(\Sbind{x \asc \sigma}{Q}) a = \Sbind{x \asc \sigma}{Q a}.$$
 That is, we regard $\sigma$ as an input.
+\TODO{We need to annotate elements of $A$ with $x \asc \sigma$ somehow, so that
+we can define $\leParam{\Gamma}{a_{x\sigma} }{a'_{x\sigma}}$ to be
+$\leParam{\Gamma, x \asc \sigma}{a}{a'}$.}
 
 \begin{lemma}
 \label{lem:bindVariableProblem}
@@ -2029,43 +2029,37 @@ $\theta \eqsubst \zeta \compose \iota$.
 Now $\zeta : \Delta, \Xi \leiR \Theta$ and
 $\leParam{\Theta}{\theta a}{a'}$ so we are done.
 %%%
-\TODO{We are relying on the fact that $\leParam{\cdot}{\cdot}{\cdot}$ is defined
-without reference to term variables.}
+\TODO{This only makes sense if we track binding problem solutions.}
 \end{proof}
 
 
-Alternatively, when binding type variables we can regard the type as an output, and
-obtain the problem $\Qbind{\beta}{Q}$ with the output being a pair of a type and
+Alternatively, when binding type variables we can regard the type as being
+initially unknown, and obtain the problem $\Qbind{\alpha}{Q}$ whose output is
 a value in $A$. The corresponding statement is
-$$(\Qbind{\alpha}{Q}) (\tau, a) = \Sbind{\alpha \defn \tau}{Q a}.$$
-
-\TODO{This rule makes clear we need a new notation for problem inputs/outputs!}
+$$(\Qbind{\alpha}{Q}) a = Q a$$
+but if $S$ is a sanity condition for $Q$ then the corresponding sanity condition
+for $\Qbind{\alpha}{Q}$ is $\Sbind{\hole{\alpha}}{S}$. Thus $\alpha$ need not be
+defined in the context for the problem to make sense, but solutions must define it.
+\TODO{Does this formulation work?} 
 
 \begin{lemma}
 \label{lem:inventVariableProblem}
 This rule is admissible:
-$$\Rule{\LEIRProb{\Gamma, \hole{\beta}}{\subst{\beta}{\alpha}Q}{\Delta}{a}}
-       {\LEIRProb{\Gamma}{(\Qbind{\alpha}{Q})}{\Delta}{(\defn \beta, a)}}$$
+$$\Rule{\LEIRProb{\Gamma, \hole{\alpha}}{Q}{\Delta}{a}}
+       {\LEIRProb{\Gamma}{(\Qbind{\alpha}{Q})}{\Delta}{a}}$$
 \end{lemma}
 \proofsux\begin{proof}
-If $\Gamma, \hole{\beta} \leiR \Delta$ then $\Gamma \leiR \Delta$ immediately.
-If $\Delta \entails Q a$ then
-$\Delta, \alpha \defn \beta \entails Q a$ and hence
-$\Delta \entails \Sbind{\alpha \defn \beta}{Q a}$.
+By hypothesis, $\Delta \entails Q a$ and $\Gamma, \hole{\alpha} \leiR \Delta$ so $\Gamma \leiR \Delta$.
 
 If $\theta : \Gamma \leiR \Theta$ is such that
-$\Theta \entails \Sbind{\alpha \defn \tau'}{Q a'}$, then
-$\Theta, \alpha \defn \tau' \entails Q a'$.
-By (minimality of) the rule's hypothesis with the substitution
-$\phi = \theta \compose \subst{\alpha}{\beta}
-    : \Gamma, \hole{\beta} \leiR \Theta, \alpha \defn \tau'$,
-there is some $\zeta : \Delta \leiR \Theta, \alpha \defn \tau'$ such that
-$\leParam{\Theta, \alpha \defn \tau'}{\zeta a}{a'}$ and
-$\phi \eqsubst \zeta \compose \iota$.
-Now $\psi = \subst{\tau'}{\alpha} \compose \zeta : \Delta \leiR \Theta$,
-$\leParam{\Theta}{\psi a}{a'}$
-\TODO{(why should this even make sense, let alone be true?)}
-and $\theta \eqsubst \psi \compose \iota$.
+$\Theta \entails Q a'$, then
+$\alpha$ must be defined in $\Theta$
+and hence $\theta : \Gamma, \hole{\alpha} \leiR \Theta$
+where $\alpha$ is mapped to itself. 
+By (minimality of) the rule's hypothesis,
+there is some $\zeta : \Delta \leiR \Theta$ such that
+$\leParam{\Theta}{\zeta a}{a'}$ and
+$\theta \eqsubst \zeta \compose \iota$.
 \end{proof}
 
 
