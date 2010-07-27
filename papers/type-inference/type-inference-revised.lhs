@@ -589,6 +589,7 @@ generalisation process.
 
 %endif
 
+\vspace{6pt}
 \label{subfig:contextCode}
 }}}
 
@@ -2298,12 +2299,12 @@ premises are satisfied. \TODO{More?}
 \subfigure[][Type schemes]{\frame{\parbox{\textwidth}{\fixpars\medskip
 
 > data Index a = Z | S a deriving (Functor, Foldable)
-
+>
 > data Schm a  =  Type (Ty a) 
 >              |  All (Schm (Index a))
 >              |  LetS (Ty a) (Schm (Index a))
 >     deriving (Functor, Foldable)
-
+>
 > type Scheme  = Schm TyName
 
 \label{subfig:schemeCode}
@@ -2323,8 +2324,8 @@ premises are satisfied. \TODO{More?}
 >     unpack (LetS tau sigma')  = (Some tau  , sigma')
 >
 >     fromS :: TyName -> Index TyName -> TyName
->     fromS beta  Z             = beta
->     fromS beta  (S alpha)     = alpha
+>     fromS beta  Z          = beta
+>     fromS beta  (S alpha)  = alpha
 
 \label{subfig:specialiseCode}
 }}}
@@ -2359,6 +2360,8 @@ premises are satisfied. \TODO{More?}
 >             TY alphaD  -> skimContext (alphaD :> _Xi)
 >             TM _       -> error "Unexpected TM variable!"
 
+\vspace{1pt}
+
 \label{subfig:generaliseCode}
 }}}
 
@@ -2377,7 +2380,7 @@ premises are satisfied. \TODO{More?}
 
 > type TmName   = String
 > type Term     = Tm TmName
->
+
 > data TmEntry  = TmName ::: Scheme
 > data Entry    = TY TyEntry | TM TmEntry | LetGoal
 
