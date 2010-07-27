@@ -334,7 +334,7 @@ global correctness.
 
 In contrast to other presentations of unification and \hindleymilnershort\ type
 inference, our algorithm is based on contexts carrying variable definitions as
-well as declarations. This avoids having to consider substitutions, or
+well as declarations. This avoids the need to represent substitutions, or
 morphisms between contexts, explicitly.
 (We do use substitution in reasoning about the system.)
 
@@ -715,7 +715,7 @@ with |B0| for
 %%%both empty lists 
    the empty list 
 and |:<| and |:>| for snoc and cons respectively.
-Lists are monoids for the append operator |<+>|; the \scare{fish}
+Lists are monoids under concatenation |(<+>)|; the \scare{fish}
 operator |(<><)| appends a suffix to a context. We %%%will 
 later extend |Entry| to
 handle term variables, so this definition is incomplete.
@@ -823,7 +823,7 @@ $\gamma$.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 Having seen an implementation of unification, let us try to understand it.
-We would like to give a general picture of \scare{statements-in-context} which
+We would like to give a general picture of \scare{statements-in-context} that
 allows us to view unification and type inference in a uniform setting.
 What is the common structure?
 
@@ -1037,8 +1037,6 @@ $(\theta \compose \delta) (\alpha) = \theta (\delta \alpha)$.
 $\alpha$ to $\tau$ and 
 %%%other variables to themselves. 
    otherwise acts as \(\iota\). 
-If $\delta : \Gamma, \Gamma' \lei \Theta$ we write $\restrict{\delta}{\Gamma}$
-for the restriction of $\delta$ to the type variables in $\Gamma$.
 
 Given $\delta$ from $\Gamma$ to $\Delta$, we 
 write the \define{information increase} 
@@ -1053,6 +1051,8 @@ in $\Gamma$.
 We write $\Gamma \lei \Delta$ if 
 %%%$\iota : \Gamma \lei \Delta$, where  $\iota$ is the identity substitution. 
    $\iota : \Gamma \lei \Delta$.
+If $\delta : \Gamma, \Gamma' \lei \Theta$ we write $\restrict{\delta}{\Gamma}$
+for the restriction of $\delta$ to the type variables in $\Gamma$.
 
 We write $\delta \eqsubst \theta : \Gamma \lei \Delta$ if
 $\delta : \Gamma \lei \Delta$, $\theta : \Gamma \lei \Delta$
@@ -1123,15 +1123,15 @@ Thanks to stability, our information order is reasonable:
 \begin{lemma}\label{lei:preorder}
 If $\sem{\decl{x}{D}}$ is stable for every declaration $\decl{x}{D}$, then
 the $\lei$ relation is a preorder, with reflexivity demonstrated by
-the identity substitution
-$\iota : \Gamma \lei \Gamma : v \mapsto v$, and transitivity by composition:
+the identity substitution $\iota : \Gamma \lei \Gamma$, and transitivity by
+composition:
 $$\delta : \Gamma \lei \Delta  ~~\text{and}~~  \theta : \Delta \lei \Theta
   \quad \Rightarrow \quad  \theta \compose \delta : \Gamma \lei \Theta.$$
 \end{lemma}
 \proofsux\begin{proof}
 Reflexivity follows immediately by applying the \name{Lookup} and
 \name{Neutral} rules.
-For transitivity, suppose $\decl{x}{D} \in \Gamma$,
+For transitivity, suppose that $\decl{x}{D} \in \Gamma$,
 then $\Delta \entails \delta \sem{\decl{x}{D}}$ since
 $\delta : \Gamma \lei \Delta$.
 Now by stability applied to $\delta \sem{\decl{x}{D}}$ using $\theta$, we have
@@ -1517,7 +1517,7 @@ To account for schemes and type assignment, we need a controlled way
 to extend the context.
 If $S$ is a statement and $\decl{x}{D}$ is a declaration, then we define the
 binding statement $\Sbind{\decl{x}{D}}{S}$. We give a generic introduction rule,
-but, we make use of neutral elimination only for type variables.
+but we make use of neutral elimination only for type variables.
 \TODO{Explain that while we ought to mess about with the freshness renaming in
 this rule, in practice we will ignore it because it isn't important.}
 \[\begin{array}{c}
