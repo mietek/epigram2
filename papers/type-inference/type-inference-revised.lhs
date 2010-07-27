@@ -188,15 +188,19 @@
 \newcommand{\ioRel}[5]{#1 \circ #2 #3 #4 \bullet #5}
 
 \newcommand{\leiStmt}[3]{\iRel{#1}{#2}{\lei}{#3}}
+\newcommand{\leiRStmt}[3]{\iRel{#1}{#2}{\leiR}{#3}}
 \newcommand{\LEIStmt}[3]{\iRel{#1}{#2}{\LEI}{#3}}
+\newcommand{\LEIRStmt}[3]{\iRel{#1}{#2}{\LEIR}{#3}}
 \newcommand{\leiParam}[4]{(#1, #2) \lei (#3, #4)}
 \newcommand{\leiRParam}[4]{(#1, #2) \leiR (#3, #4)}
 \newcommand{\LEIProb}[4]{\ioRel{#1}{#2}{\LEI}{#3}{#4}}
 \newcommand{\LEIRProb}[4]{\ioRel{#1}{#2}{\LEIR}{#3}{#4}}
 \newcommand{\LEIUnify}[4]{\leiStmt{#1}{#2 \equiv #3}{#4}}
+\newcommand{\LEIRUnify}[4]{\leiRStmt{#1}{#2 \equiv #3}{#4}}
 \newcommand{\LEIInfer}[4]{\LEIProb{#1}{(#2 :)}{#4}{#3}}
-\newcommand{\LEIInferScheme}[4]{\LEIProb{#1}{(#2 \hasscheme)}{#4}{#3}}
 \newcommand{\LEIRInfer}[4]{\LEIRProb{#1}{(#2 :)}{#4}{#3}}
+\newcommand{\LEIInferScheme}[4]{\LEIProb{#1}{(#2 \hasscheme)}{#4}{#3}}
+\newcommand{\LEIRInferScheme}[4]{\LEIRProb{#1}{(#2 \hasscheme)}{#4}{#3}}
 
 \newcommand{\alg}[4]{\ioRel{#1}{#2}{\transto}{#3}{#4}}
 \newcommand{\ialg}[3]{\iRel{#1}{#2}{\transto}{#3}}
@@ -1700,7 +1704,7 @@ $$
      {\Gamma \fatsemi \entails \valid}.
 $$
 
-We also refine the $\lei$ relation.
+We also refine the $\leiR$ relation.
 Let $\semidrop$ be the partial function from contexts $\Gamma$ and natural numbers $n$ which truncates $\Gamma$ after $n$
 $\fatsemi$ separators, provided $\Gamma$ contains at least $n$ such: 
 \[\begin{array}{r@@{\,}l}
@@ -1710,26 +1714,25 @@ $\fatsemi$ separators, provided $\Gamma$ contains at least $n$ such:
 \Xi \semidrop n+1 &~\mathrm{undefined}
 \end{array}\]
 
-We write $\delta : \Gamma \lei \Delta$ if $\delta$ is a
-substitution from $\Gamma$ to $\Delta$ such that, for all 
+We write $\delta : \Gamma \leiR \Delta$ if $\delta$ is a substitution from
+$\Gamma$ to $\Delta$ such that, for all
 $\decl{x}{D} \in \Gamma \!\semidrop\! n$, we have that
 $\Delta \!\semidrop\! n$ is defined and 
-$\Delta \!\semidrop\! n \entails \delta \sem{\decl{x}{D}}$.
-
-This definition of $\Gamma \lei \Delta$ is stronger than the previous one, 
-because it requires the $\fatsemi$-separated sections of $\Gamma$ and $\Delta$ 
-to correspond in such a way that 
-declarations in the first $n$ sections of
+$\Delta \!\semidrop\! n \entails \delta \sem{\decl{x}{D}}$, in addition to the
+requirement that
+$$x \asc \sigma \in \Gamma ~\Rightarrow~ x \asc \delta\sigma \in \Delta.$$
+This definition ensures the $\fatsemi$-separated sections of $\Gamma$ and
+$\Delta$ correspond in such a way that declarations in the first $n$ sections of
 $\Gamma$ can be interpreted over the first $n$ sections of $\Delta$.
-However, it is fairly straightforward to verify that the previous results 
-hold for the new definition.
+% It is fairly straightforward to verify that the previous results for $\lei$ 
+% hold for its sub-relation $\leiR$.
 
 
 \subsection{Amending the unification algorithm}
 
-Modifying $\lei$ makes extra work only in the
-unification algorithm, because the latter acts structurally on contexts, which may
-now contain $\fatsemi$ separators. We extend the algorithmic rules:
+Modifying $\leiR$ makes extra work only in the unification algorithm, because it
+acts structurally on contexts, which may now contain $\fatsemi$ separators. We
+extend the algorithmic rules:
 \[\begin{array}{c}
 \namer{Skip}
 \Rule{\algUnify{\Gamma_0}{\alpha}{\beta}{\Delta_0}}
@@ -1745,19 +1748,19 @@ show that adding the new rules preserves soundness and generality. For the
 \name{Skip} rule, correctness follows immediately from this lemma:
 
 \begin{lemma}
-If $\LEIStmt{\Gamma}{S}{\Delta}$ then $\LEIStmt{\Gamma \fatsemi}{S}{\Delta \fatsemi}$.
+If $\LEIRStmt{\Gamma}{S}{\Delta}$ then $\LEIRStmt{\Gamma \fatsemi}{S}{\Delta \fatsemi}$.
 \end{lemma}
 \proofsux\begin{proof}
-If $\Gamma \lei \Delta$ then $\Gamma \fatsemi \lei \Delta \fatsemi$ by
+If $\Gamma \leiR \Delta$ then $\Gamma \fatsemi \leiR \Delta \fatsemi$ by
 definition. If $\Delta \entails S$ then $\Delta \fatsemi \entails S$ since the
 \name{Lookup} rule is the only one that extracts information from the context,
 and it ignores the $\fatsemi$.
 
-Now let $\theta : \Gamma \fatsemi \lei \Theta \fatsemi \Xi$ be such that
-$\Theta \fatsemi \Xi \entails S$. By definition of $\lei$, we must have
-$\theta : \Gamma \lei \Theta$, so by minimality there exists
-$\zeta : \Delta \lei \Theta$ with $\theta \eqsubst \zeta \compose \iota$.
-Then $\zeta : \Delta \fatsemi \lei \Theta \fatsemi \Xi$ and we are done.
+Now let $\theta : \Gamma \fatsemi \leiR \Theta \fatsemi \Xi$ be such that
+$\Theta \fatsemi \Xi \entails S$. By definition of $\leiR$, we must have
+$\theta : \Gamma \leiR \Theta$, so by minimality there exists
+$\zeta : \Delta \leiR \Theta$ with $\theta \eqsubst \zeta \compose \iota$.
+Then $\zeta : \Delta \fatsemi \leiR \Theta \fatsemi \Xi$ and we are done.
 \end{proof}
 
 The \name{Repossess} rule is so named because it moves
@@ -1768,7 +1771,7 @@ unification still yields a most general solution:
 \begin{lemma}[Soundness and generality of the \name{Repossess} rule]
 Suppose $\algInstantiate{\Gamma \fatsemi}{\alpha}{\tau}{\Xi}{\Delta \fatsemi}$. 
 Then $\tyvars{\Gamma \fatsemi \Xi} = \tyvars{\Delta \fatsemi}$ and
-$\LEIUnify{\Gamma \fatsemi \Xi}{\alpha}{\tau}{\Delta \fatsemi}$.
+$\LEIRUnify{\Gamma \fatsemi \Xi}{\alpha}{\tau}{\Delta \fatsemi}$.
 \end{lemma}
 \proofsux\begin{proof}
 We extend the structural induction in lemma~\ref{lem:unifySound} with an extra
@@ -1777,18 +1780,18 @@ $\algInstantiate{\Gamma \fatsemi}{\alpha}{\tau}{\Xi}{\Delta \fatsemi}$,
 is by \name{Repossess}, so inversion gives
 $\algInstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$.
 By induction, $\tyvars{\Gamma, \Xi} = \tyvars{\Delta}$ and
-$\LEIUnify{\Gamma, \Xi}{\alpha}{\tau}{\Delta}$.
+$\LEIRUnify{\Gamma, \Xi}{\alpha}{\tau}{\Delta}$.
 
 We immediately observe that
 $$\tyvars{\Gamma \fatsemi \Xi} = \tyvars{\Gamma, \Xi} = \tyvars{\Delta}
     = \tyvars{\Delta \fatsemi}.$$
-Moreover, we have $\Gamma, \Xi \lei \Delta$ so
-$\Gamma \fatsemi \Xi \lei \Delta \fatsemi$,
+Moreover, we have $\Gamma, \Xi \leiR \Delta$ so
+$\Gamma \fatsemi \Xi \leiR \Delta \fatsemi$,
 and $\Delta \entails \alpha \equiv \tau$ so
 $\Delta \fatsemi \entails \alpha \equiv \tau$.
 
 For minimality, suppose
-$\theta : \Gamma \fatsemi \Xi \lei \Theta \fatsemi \Phi$
+$\theta : \Gamma \fatsemi \Xi \leiR \Theta \fatsemi \Phi$
 and $\Theta \fatsemi \Phi \entails \theta\alpha \equiv \theta\tau$.
 Observe that  $\alpha \in \tyvars{\Gamma}$ and
 $\beta \in \tyvars{\Xi}  \Rightarrow  \beta \in \FTV{\tau, \Xi}$
@@ -1797,10 +1800,10 @@ Now $\theta\alpha$ is a $\Theta$-type and $\theta\tau$ is equal to it,
 so the only declarations in $\Phi$ that $\theta\tau$ (hereditarily) depends on
 must be definitions over $\Theta$. But all the variables declared in $\Xi$ are
 used in $\tau$, so there is a substitution
-$\psi : \Gamma \fatsemi \Xi \lei \Theta \fatsemi$
+$\psi : \Gamma \fatsemi \Xi \leiR \Theta \fatsemi$
 that agrees with $\theta$ on $\Gamma$ and maps variables in $\Xi$ to their
 definitions in $\Theta$.
-Note that $\psi \eqsubst \theta : \Gamma \fatsemi \Xi \lei \Theta \fatsemi \Phi$.
+Note that $\psi \eqsubst \theta : \Gamma \fatsemi \Xi \leiR \Theta \fatsemi \Phi$.
 \TODO{Check and improve this explanation.}
 
 % Now we can filter $\Phi$ to give $\Psi$ consisting only of definitions
@@ -1809,17 +1812,17 @@ Note that $\psi \eqsubst \theta : \Gamma \fatsemi \Xi \lei \Theta \fatsemi \Phi$
 % $\psi : \Gamma \fatsemi \Xi \lei \Theta \fatsemi$
 % and $\Theta \fatsemi \entails \psi\alpha \equiv \psi\tau$.
 
-Hence $\psi : \Gamma, \Xi \lei \Theta$ and
+Hence $\psi : \Gamma, \Xi \leiR \Theta$ and
 $\Theta \entails \psi\alpha \equiv \psi\tau$, so by hypothesis there exists
-$\zeta : \Delta \lei \Theta$ such that
-$\psi \eqsubst \zeta \compose \iota : \Gamma, \Xi \lei \Theta$.
-Then $\zeta : \Delta \fatsemi \lei \Theta \fatsemi \Phi$
+$\zeta : \Delta \leiR \Theta$ such that
+$\psi \eqsubst \zeta \compose \iota : \Gamma, \Xi \leiR \Theta$.
+Then $\zeta : \Delta \fatsemi \leiR \Theta \fatsemi \Phi$
 and
 $\psi \eqsubst \zeta \compose \iota :
-    \Gamma \fatsemi \Xi \lei \Theta \fatsemi \Phi$,
+    \Gamma \fatsemi \Xi \leiR \Theta \fatsemi \Phi$,
 so
 $\theta \eqsubst \zeta \compose \iota :
-    \Gamma \fatsemi \Xi \lei \Theta \fatsemi \Phi$.
+    \Gamma \fatsemi \Xi \leiR \Theta \fatsemi \Phi$.
 \end{proof}
 
 
@@ -1851,8 +1854,8 @@ We must extend the apparatus of minimal solutions to problems with outputs.
 Let $B$ be a set of values closed under substitution. For a fixed context
 $\Gamma$, suppose we have a
 preorder on $B$ written $\leParam{\Gamma}{\cdot}{\cdot}$. This induces a
-preorder on context-value pairs, with $\delta : \leiParam{\Gamma}{a}{\Delta}{b}$ if
-$\delta : \Gamma \lei \Delta$ and $\leParam{\Delta}{\delta a}{b}$.
+preorder on context-value pairs, with $\delta : \leiRParam{\Gamma}{a}{\Delta}{b}$ if
+$\delta : \Gamma \leiR \Delta$ and $\leParam{\Delta}{\delta a}{b}$.
 
 An \define{$A$-indexed problem family $x.Q$ for $B$} is a family
 of input parameters for a statement, indexed by elements of $A$, such that for
@@ -1869,18 +1872,18 @@ problem $Q$ and an index $a \in A$ such that the \sanity\  of $Q[a]$
 holds in $\Gamma$.
 
 A \define{solution} of $(\Gamma, Q[a])$ consists of an information increase
-$\delta : \Gamma \lei \Delta$ and a value for the output parameter $b \in B$
-such that $(\delta (Q[a])) b$ and the \sanity\  on $b$ hold in $\Delta$.
+$\delta : \Gamma \leiR \Delta$ and a value for the output parameter $b \in B$
+such that $(\delta (Q[a])) b$ and the \sanity\ on $b$ hold in $\Delta$.
 
 If $A$ and $B$ are preordered for fixed $\Gamma$, we can define a preorder on
 $A \times B$ given by $\leParam{\Gamma}{(a, b)}{(a', b')}$ if
 $\leParam{\Gamma}{a}{a'}$ and $\leParam{\Gamma}{b}{b'}$.
 
-We write $\LEIProb{\Gamma}{P}{\Delta}{a}$ if
-$\Gamma \lei \Delta$, $\Delta \entails P a$,
-and for all $\theta : \Gamma \lei \Theta$ and $b$ such that
+We write $\LEIRProb{\Gamma}{P}{\Delta}{a}$ if
+$\Gamma \leiR \Delta$, $\Delta \entails P a$,
+and for all $\theta : \Gamma \leiR \Theta$ and $b$ such that
 $\Delta \entails (\theta P) b$, we have
-$\zeta : \leiParam{\Delta}{a}{\Theta}{b}$ for some $\zeta$ such that
+$\zeta : \leiRParam{\Delta}{a}{\Theta}{b}$ for some $\zeta$ such that
 $\theta \eqsubst \zeta \compose \iota$.
 
 
@@ -1898,33 +1901,33 @@ This allows us to state the general Optimist's lemma:
 \begin{lemma}[The Optimist's lemma for inference problems]
 \label{lem:optimistInference}
 The following inference rule is admissible:
-$$\Rule{\LEIProb{\Gamma}{P}{\Delta}{b}
-       \quad  \LEIProb{\Delta}{Q[b]}{\Theta}{c}}
-       {\LEIProb{\Gamma}{(\pconj{P}{x}{Q})}{\Theta}{(b, c)}}.$$
+$$\Rule{\LEIRProb{\Gamma}{P}{\Delta}{b}
+       \quad  \LEIRProb{\Delta}{Q[b]}{\Theta}{c}}
+       {\LEIRProb{\Gamma}{(\pconj{P}{x}{Q})}{\Theta}{(b, c)}}.$$
 \end{lemma}
 \proofsux\begin{proof}
-We have $\Gamma \lei \Theta$ by Lemma~\ref{lei:preorder}.
+We have $\Gamma \leiR \Theta$ by (updating) Lemma~\ref{lei:preorder}.
 Furthermore, $\Theta \entails (\pconj{P}{x}{Q}) (b, c)$ since
 stability gives $\Theta \entails P b$, and
 $\Theta \entails Q[b] c$ by assumption.
 
 Now suppose there is some other solution
-$(\phi : \Gamma \lei \Phi, (b', c'))$, so
+$(\phi : \Gamma \leiR \Phi, (b', c'))$, so
 $\Phi \entails (\phi P) b'$ and
 $\Phi \entails (\phi Q)[b'] c'$.
-Since $\LEIProb{\Gamma}{P}{\Delta}{b}$, there exists
-$\zeta : \Delta \lei \Phi$
+Since $\LEIRProb{\Gamma}{P}{\Delta}{b}$, there exists
+$\zeta : \Delta \leiR \Phi$
 with $\leParam{\Phi}{\zeta b}{b'}$ and $\phi \eqsubst \zeta \compose \iota$.
 
 By definition of an indexed problem family,
 $\Phi \entails (\phi Q)[\zeta b] c'$
 and hence $\Phi \entails (\zeta (Q[b])) c'$.
-But $\LEIProb{\Delta}{Q[b]}{\Theta}{c}$, so there exists
-$\xi : \Theta \lei \Phi$ such that $\leParam{\Phi}{\xi c}{c'}$
+But $\LEIRProb{\Delta}{Q[b]}{\Theta}{c}$, so there exists
+$\xi : \Theta \leiR \Phi$ such that $\leParam{\Phi}{\xi c}{c'}$
 and $\zeta \eqsubst \xi \compose \iota$.
 
-Hence $\xi : \Theta \lei \Phi$ and $\leParam{\Phi}{\xi (b, c)}{(b', c')}$
-so $\xi : \leiParam{\Theta}{(b, c)}{\Phi}{(b', c')}$. Moreover
+Hence $\xi : \Theta \leiR \Phi$ and $\leParam{\Phi}{\xi (b, c)}{(b', c')}$
+so $\xi : \leiRParam{\Theta}{(b, c)}{\Phi}{(b', c')}$. Moreover
 $\phi \eqsubst \zeta \compose \iota
       \eqsubst (\xi \compose \iota) \compose \iota
       \eqsubst \xi \compose \iota$
@@ -1942,7 +1945,7 @@ type schemes.
 
 For a fixed context $\Gamma$, we define the preorder on schemes by
 $\leParam{\Gamma}{\gen{\Xi}{\tau}}{\gen{\Psi}{\upsilon}}$
-if there is some $\psi : \Gamma \fatsemi \Xi \lei \Gamma \fatsemi \Psi$
+if there is some $\psi : \Gamma \fatsemi \Xi \leiR \Gamma \fatsemi \Psi$
 such that $\Gamma \fatsemi \Psi \entails \psi \tau \equiv \upsilon$
 and $\restrict{\psi}{\Gamma} \eqsubst \iota$. That is,
 $\leParam{\Gamma}{\sigma}{\sigma'}$
@@ -1956,43 +1959,43 @@ if $\Gamma \entails \tau \equiv \upsilon$.
 Thus the type inference problem is given by a context $\Gamma$ and a term
 parameter $t$ as input to the type assignment statement. Following the
 definitions, a solution is an information increase
-$\delta : \Gamma \lei \Delta$ and a type $\tau$ such that
+$\delta : \Gamma \leiR \Delta$ and a type $\tau$ such that
 $\Delta \entails \tau \type \wedge t : \tau$. A solution with output $\tau$ is
 minimal if, given any other solution, we can find a substitution that unifies $\tau$
 and the other type: that is, $\tau$ is a principal type.
 
-Note that if $\delta : \Gamma \fatsemi \Gamma' \lei \Delta \fatsemi \Delta'$,
+Note that if $\delta : \Gamma \fatsemi \Gamma' \leiR \Delta \fatsemi \Delta'$,
 where $\Gamma$ and $\Delta$ contain the same number of $\fatsemi$ separators,
-then $\restrict{\delta}{\Gamma} : \Gamma \lei \Delta$.
+then $\restrict{\delta}{\Gamma} : \Gamma \leiR \Delta$.
 This allows us to prove the following:
 
 \begin{lemma}[The Generalist's lemma]
 \label{lem:generalist}
 This rule is admissible:
 $$
-\Rule{\LEIInfer{\Gamma \fatsemi}{t}{\tau}{\Delta \fatsemi \Xi}}
-     {\LEIInferScheme{\Gamma}{t}{\gen{\Xi}{\tau}}{\Delta}}
+\Rule{\LEIRInfer{\Gamma \fatsemi}{t}{\tau}{\Delta \fatsemi \Xi}}
+     {\LEIRInferScheme{\Gamma}{t}{\gen{\Xi}{\tau}}{\Delta}}
 $$
 \end{lemma}
 \proofsux\begin{proof}
-If $\Gamma \fatsemi \lei \Delta \fatsemi \Xi$ then $\Gamma \lei \Delta$ by
-the revised definition of $\lei$. Furthermore,
+If $\Gamma \fatsemi \leiR \Delta \fatsemi \Xi$ then $\Gamma \leiR \Delta$ by
+definition. Furthermore,
 $\Delta \entails t \hasscheme \gen{\Xi}{\tau}$ is defined to be
-$\Delta, \Xi \entails t : \tau$, which holds if
+$\Delta, \Xi \entails t : \tau$, which holds iff
 $\Delta \fatsemi \Xi \entails t : \tau$.
 
-For minimality, suppose $\theta : \Gamma \lei \Theta$ is an information increase
+For minimality, suppose $\theta : \Gamma \leiR \Theta$ is an information increase
 and $\gen{\Psi}{\upsilon}$ is a scheme such that
 $\Theta \entails t \hasscheme \gen{\Psi}{\upsilon}$.
 Then $\Theta, \Psi \entails t : \upsilon$. Now
-$\theta : \Gamma \fatsemi \lei \Theta \fatsemi \Psi$
+$\theta : \Gamma \fatsemi \leiR \Theta \fatsemi \Psi$
 and $\Theta \fatsemi \Psi \entails t : \upsilon$,
 so by minimality of the hypothesis there is a substitution
-$\zeta : \Delta \fatsemi \Xi \lei \Theta \fatsemi \Psi$ such that
+$\zeta : \Delta \fatsemi \Xi \leiR \Theta \fatsemi \Psi$ such that
 $\theta \equiv \zeta \compose \iota$ and
 $\Theta \fatsemi \Psi \entails \zeta\tau \equiv \upsilon$.
-Then $\restrict{\zeta}{\Delta} : \Delta \lei \Theta$,
-$\theta \eqsubst \restrict{\zeta}{\Delta} \compose \iota : \Gamma \lei \Delta$ and
+Then $\restrict{\zeta}{\Delta} : \Delta \leiR \Theta$,
+$\theta \eqsubst \restrict{\zeta}{\Delta} \compose \iota : \Gamma \leiR \Delta$ and
 $\leParam{\Theta}{\theta\gen{\Xi}{\tau}}{\gen{\Psi}{\upsilon}}$.
 \end{proof}
 
@@ -2015,33 +2018,32 @@ That is, we regard $\sigma$ as an input.
 \begin{lemma}
 \label{lem:bindVariableProblem}
 If $\Xi$ contains only type variables, then this rule is admissible:
-$$\Rule{\LEIProb{\Gamma, x \asc \sigma}{Q}{\Delta, x \asc \sigma, \Xi}{a}}
-       {\LEIProb{\Gamma}{(\Sbind{x \asc \sigma}{Q})}{\Delta, \Xi}{a}}$$
+$$\Rule{\LEIRProb{\Gamma, x \asc \sigma}{Q}{\Delta, x \asc \sigma, \Xi}{a}}
+       {\LEIRProb{\Gamma}{(\Sbind{x \asc \sigma}{Q})}{\Delta, \Xi}{a}}$$
 \end{lemma}
 \proofsux\begin{proof}
-If $\Gamma, x \asc \sigma \lei \Delta, x \asc \sigma, \Xi$ then
-$\Gamma \lei \Delta, \Xi$ since nothing can depend on $x$.
+If $\Gamma, x \asc \sigma \leiR \Delta, x \asc \sigma, \Xi$ then
+$\Gamma \leiR \Delta, \Xi$ since nothing can depend on $x$.
 If $\Delta, x \asc \sigma, \Xi \entails Q a$ then
 $\Delta, \Xi, x \asc \sigma \entails Q a$ (permuting the context) and hence
 $\Delta, \Xi \entails \Sbind{x \asc \sigma}{Q a}$.
 
-If $\theta : \Gamma \lei \Theta$ is such that
+If $\theta : \Gamma \leiR \Theta$ is such that
 $\Theta \entails \Sbind{x \asc \theta\sigma}{(\theta Q) a'}$ then, by inversion,
 $\Theta, x \asc \theta\sigma \entails (\theta Q) a'$.
 By minimality of the hypothesis, there is
-$\zeta : \Delta, x \asc \sigma, \Xi \lei \Theta, x \asc \theta\sigma$ such that
+$\zeta : \Delta, x \asc \sigma, \Xi \leiR \Theta, x \asc \theta\sigma$ such that
 $\leParam{\Theta, x \asc \theta\sigma}{\theta a}{a'}$ and
 $\theta \eqsubst \zeta \compose \iota$.
-Now $\zeta : \Delta, \Xi \lei \Theta$ and
+Now $\zeta : \Delta, \Xi \leiR \Theta$ and
 $\leParam{\Theta}{\theta a}{a'}$ so we are done.
 %%%
-\TODO{Should this go after $\leiR$ has been introduced, so we can mention it?
-Also, we are relying on the fact that $\leParam{\cdot}{\cdot}{\cdot}$ is defined
+\TODO{We are relying on the fact that $\leParam{\cdot}{\cdot}{\cdot}$ is defined
 without reference to term variables.}
 \end{proof}
 
 
-Alternatively, when binding type variables we can regard $D$ as an output, and
+Alternatively, when binding type variables we can regard the type as an output, and
 obtain the problem $\Qbind{\beta}{Q}$ with the output being a pair of a type and
 a value in $A$. The corresponding statement is
 $$(\Qbind{\alpha}{Q}) (\tau, a) = \Sbind{\alpha \defn \tau}{Q a}.$$
@@ -2051,26 +2053,28 @@ $$(\Qbind{\alpha}{Q}) (\tau, a) = \Sbind{\alpha \defn \tau}{Q a}.$$
 \begin{lemma}
 \label{lem:inventVariableProblem}
 This rule is admissible:
-$$\Rule{\LEIProb{\Gamma, \hole{\beta}}{Q}{\Delta}{a}}
-       {\LEIProb{\Gamma}{(\Qbind{\alpha}{Q})}{\Delta}{(\beta, a)}}$$
+$$\Rule{\LEIRProb{\Gamma, \hole{\beta}}{\subst{\beta}{\alpha}Q}{\Delta}{a}}
+       {\LEIRProb{\Gamma}{(\Qbind{\alpha}{Q})}{\Delta}{(\defn \beta, a)}}$$
 \end{lemma}
 \proofsux\begin{proof}
-If $\Gamma, \hole{\beta} \lei \Delta$ then $\Gamma \lei \Delta$ immediately.
-If $\Delta \entails Q a$ then clearly
+If $\Gamma, \hole{\beta} \leiR \Delta$ then $\Gamma \leiR \Delta$ immediately.
+If $\Delta \entails Q a$ then
 $\Delta, \alpha \defn \beta \entails Q a$ and hence
 $\Delta \entails \Sbind{\alpha \defn \beta}{Q a}$.
 
-If $\theta : \Gamma \lei \Theta$ is such that
-$\Theta \entails \Sbind{\alpha \defn \tau}{Q a'}$, then
-$\Theta, \alpha \defn \tau \entails Q a'$.
-By minimality of the hypothesis with the substitution
-$\phi = \theta \compose \subst{\beta}{\alpha}
-    : \Gamma, \hole{\beta} \lei \Theta, \alpha \defn \tau$,
-there is some $\zeta : \Delta \lei \Theta, \alpha \defn \tau$ such that
-$\leParam{\Theta, \alpha \defn \tau}{\phi a}{a'}$ and
+If $\theta : \Gamma \leiR \Theta$ is such that
+$\Theta \entails \Sbind{\alpha \defn \tau'}{Q a'}$, then
+$\Theta, \alpha \defn \tau' \entails Q a'$.
+By (minimality of) the rule's hypothesis with the substitution
+$\phi = \theta \compose \subst{\alpha}{\beta}
+    : \Gamma, \hole{\beta} \leiR \Theta, \alpha \defn \tau'$,
+there is some $\zeta : \Delta \leiR \Theta, \alpha \defn \tau'$ such that
+$\leParam{\Theta, \alpha \defn \tau'}{\zeta a}{a'}$ and
 $\phi \eqsubst \zeta \compose \iota$.
-Now $\subst{\alpha}{\tau} \compose \zeta : \Delta \lei \Theta$...
-\TODO{finish me!}
+Now $\psi = \subst{\tau'}{\alpha} \compose \zeta : \Delta \leiR \Theta$,
+$\leParam{\Theta}{\psi a}{a'}$
+\TODO{(why should this even make sense, let alone be true?)}
+and $\theta \eqsubst \psi \compose \iota$.
 \end{proof}
 
 
@@ -2223,17 +2227,15 @@ subsection~\ref{sec:inferImplementation}.
 
 \TODO{moved wholesale to section 7; needs a filler-in here to replace}
 
-Corresponding to $\leiParam{\Gamma}{a}{\Delta}{b}$, we write
-$\delta : \leiRParam{\Gamma}{a}{\Delta}{b}$
-if $\delta : \Gamma \leiR \Delta$ and $\leParam{\Delta}{\delta a}{b}$.
-
-Corresponding to $\LEIProb{\Gamma}{P}{\Delta}{a}$, we write
-$\LEIRProb{\Gamma}{P}{\Delta}{a}$ if $\Gamma \leiR \Delta \entails P a$, and for any
-$\theta : \Gamma \leiR \Theta$ such that $\Theta \entails (\theta P) b$ we have
-$\zeta : \leiRParam{\Delta}{a}{\Theta}{b}$ for some $\zeta$ such that
-$\theta \eqsubst \zeta \compose \iota$.
-
-\TODO{Why do the Optimist's and Generalist's lemmas still hold?}
+%% Corresponding to $\leiParam{\Gamma}{a}{\Delta}{b}$, we write
+%% $\delta : \leiRParam{\Gamma}{a}{\Delta}{b}$
+%% if $\delta : \Gamma \leiR \Delta$ and $\leParam{\Delta}{\delta a}{b}$.
+%% 
+%% Corresponding to $\LEIProb{\Gamma}{P}{\Delta}{a}$, we write
+%% $\LEIRProb{\Gamma}{P}{\Delta}{a}$ if $\Gamma \leiR \Delta \entails P a$, and for any
+%% $\theta : \Gamma \leiR \Theta$ such that $\Theta \entails (\theta P) b$ we have
+%% $\zeta : \leiRParam{\Delta}{a}{\Theta}{b}$ for some $\zeta$ such that
+%% $\theta \eqsubst \zeta \compose \iota$.
 
 Since the algorithmic rules correspond directly to the transformed declarative
 system in Figure~\ref{fig:transformedRules}, we can easily prove soundness,
