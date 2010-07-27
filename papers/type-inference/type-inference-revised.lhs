@@ -1517,8 +1517,6 @@ to extend the context.
 If $S$ is a statement and $\decl{x}{D}$ is a declaration, then we define the
 binding statement $\Sbind{\decl{x}{D}}{S}$. We give a generic introduction rule,
 but we make use of neutral elimination only for type variables.
-\TODO{Explain that while we ought to mess about with the freshness renaming in
-this rule, in practice we will ignore it because it isn't important.}
 \[\begin{array}{c}
 \Rule{\Gamma \entails \ok_K D    \quad    \Gamma, \decl{y}{D} \entails \subst{y}{x} S}
      {\Gamma \entails \Sbind{\decl{x}{D}}{S}}
@@ -1530,8 +1528,6 @@ this rule, in practice we will ignore it because it isn't important.}
      {\entailsN \subst{\tau}{\alpha}{S}}
 \side{D \in \D_\TY}
 \end{array}\]
-%\TODO{Explain why we only have this for $\TY$: because we have only defined
-%substitution for type variables. We could do it in general but we don't need to.}
 The corresponding normal rule is admissible. If
 $\Gamma \entails \Sbind{\decl{\alpha}{D}}{S}$ by the introduction rule, then
 $\Gamma, \decl{\beta}{D} \entails \subst{\beta}{\alpha} S$ where $\beta$ is fresh.
@@ -1543,6 +1539,10 @@ $\Gamma, \decl{\beta}{D} \entails \subst{\beta}{\alpha} S$
 with the proof of
 $\Gamma \entails \subst{\tau}{\beta}{\sem{\decl{\beta}{D}}}$.
 As a consequence, Lemma~\ref{lem:neutrality} still holds.
+
+While the introduction rule allows renaming to ensure freshness, in practice we
+will ignore this and assume that the bound variable name is always fresh for the
+context.
 
 \begin{lemma}[Binding preserves stability]\label{lem:stab-pres-bind}
 If $\decl{x}{D}$ is a declaration and both $\ok_K D$ and $S$ are stable, then
@@ -1567,7 +1567,9 @@ We write $\Sbind{\Xi}{S}$ where $\Xi$ is a list of declarations, defining
 $\Sbind{\emptycontext}{S} = S$ and
 $\Sbind{(\Xi, \decl{x}{D})}{S} = \Sbind{\Xi}{(\Sbind{\decl{x}{D}}{S})}$.
 
-\TODO{\Sanity s for binding statements?}
+If $S$ is a statement and $C$ is a sanity condition for one of its parameters,
+the statement $\Sbind{x D}{S}$ has sanity condition $\Sbind{x D}{C}$ for the
+corresponding parameter.
 
 \subsection{Type schemes}
 
