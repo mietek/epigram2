@@ -265,10 +265,10 @@
 \authorinfo{Adam Gundry\thanks{Adam Gundry was supported by Microsoft Research through its PhD Scholarship
 Programme.} \and Conor McBride}
            {University of Strathclyde, Glasgow}
-           {\{adam.gundry,conor.mcbride\} at cis.strath.ac.uk}
+           {\{adam.gundry,conor.mcbride\}@@cis.strath.ac.uk}
 \authorinfo{James McKinna}
            {Radboud University, Nijmegen}
-           {james.mckinna at cs.ru.nl}
+           {james.mckinna@@cs.ru.nl}
 
 \maketitle
 
