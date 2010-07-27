@@ -397,7 +397,7 @@ $$gen(A, \tau) = \begin{cases}
         (FV(\tau) \setminus FV(A) = \{ \alpha_1, \cdots, \alpha_n \})  \\
     \tau &
         (FV(\tau) \setminus FV(A) = \emptyset)
-\end{cases}
+\end{cases}.
 $$
 Here, the typing context is an unordered set of type scheme assignments,
 with \(A_x\) denoting `\(A\) with any \(x\) assignments removed': contexts are
@@ -558,7 +558,7 @@ generalisation process.
 \label{subfig:typeCode}
 }}}
 
-\subfigure[][Context and suffixes]{\frame{\parbox{\textwidth}{\fixpars\medskip
+\subfigure[][Contexts and suffixes]{\frame{\parbox{\textwidth}{\fixpars\medskip
 
 > data TyDecl   =  Some Type | {-"\;"-} Hole
 > data TyEntry  =  TyName := TyDecl
@@ -856,8 +856,8 @@ in contexts. For now, the grammar of statements will be
 $$S ::=~ \valid
     ~||~ \tau \type
     ~||~ \tau \equiv \upsilon
-    ~||~ S \wedge S$$
-meaning, respectively, that the context is valid, $\tau$ is a type, the types
+    ~||~ S \wedge S,$$
+meaning (respectively) that the context is valid, $\tau$ is a type, the types
 $\tau$ and $\upsilon$ are equivalent, and both conjuncts hold.
 %%%Note that $\valid$ and $\wedge$ give a unit and product for statements.
 
@@ -1507,7 +1507,7 @@ S ::=~ \valid
     &~||~ \Sbind{\decl{x}{D}}{S}
     ~||~ \sigma \scheme
     ~||~ t : \tau
-    ~||~ s \hasscheme \sigma
+    ~||~ s \hasscheme \sigma.
 \end{array}\]
 
 \subsection{Binding statements}
@@ -1520,7 +1520,7 @@ but we make use of neutral elimination only for type variables.
 \[\begin{array}{c}
 \Rule{\Gamma \entails \ok_K D    \quad    \Gamma, \decl{y}{D} \entails \subst{y}{x} S}
      {\Gamma \entails \Sbind{\decl{x}{D}}{S}}
-\side{y \in \V_K \setminus \V_K(\Gamma)}.
+\side{y \in \V_K \setminus \V_K(\Gamma)}
 \smallskip\\
 \Rule{\entailsN \Sbind{\alpha D}{S}
       \quad
@@ -1611,10 +1611,8 @@ Term variable declarations $\D_\TM$ are scheme assignments of the form
 $\asc \sigma$, with
 $\ok_\TM (\asc \sigma) = \sigma \scheme$.
 
-%%%The set of terms has syntax
-   Let $s$, $t$, $w$ range over the set of terms with syntax 
-$$t ::= x ~||~ t~t ~||~ \lambda x . t ~||~ \letIn{x}{t}{t}$$
-%%%and $s$, $t$, $w$ range over terms.
+Let $s$, $t$, $w$ range over the set of terms with syntax 
+$$t ::= x ~||~ t~t ~||~ \lambda x . t ~||~ \letIn{x}{t}{t}.$$
 
 The type assignment statement $t : \tau$ is established by the declarative
 rules in Figure~\ref{fig:typeAssignmentRules}. It has two parameters $t$ and
@@ -1956,7 +1954,7 @@ This allows us to prove the following:
 This rule is admissible:
 $$
 \Rule{\LEIRInfer{\Gamma \fatsemi}{t}{\tau}{\Delta \fatsemi \Xi}}
-     {\LEIRInferScheme{\Gamma}{t}{\gen{\Xi}{\tau}}{\Delta}}
+     {\LEIRInferScheme{\Gamma}{t}{\gen{\Xi}{\tau}}{\Delta}}.
 $$
 \end{lemma}
 \proofsux\begin{proof}
@@ -2267,7 +2265,7 @@ lemma~\ref{lem:bindVariableProblem}.
 When applying the Optimist's lemma, we must check that the problem on the right
 is an indexed problem family, i.e.\ that 
 $$\leParam{\Gamma}{a}{a'} ~\wedge~ \Gamma \entails Q[a'] b
-    \quad\Rightarrow\quad  \Gamma \entails Q[a] b$$
+    \quad\Rightarrow\quad  \Gamma \entails Q[a] b.$$
 For \name{Let}, this holds because increasing the
 $\leParam{\Gamma}{\cdot}{\cdot}$  relation specialises the type scheme $\sigma$,
 and if a solution can be found with a more specific type scheme then one can be
@@ -2369,7 +2367,7 @@ premises are satisfied. \TODO{More?}
 \begin{minipage}[t]{0.5\linewidth}
 
 
-\subfigure[][Terms and contexts]{\frame{\parbox{\textwidth}{\fixpars\medskip
+\subfigure[][Terms and context entries]{\frame{\parbox{\textwidth}{\fixpars\medskip
 
 > data Tm a  =  X a
 >            |  Tm a :$ Tm a 
