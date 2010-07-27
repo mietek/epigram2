@@ -1860,7 +1860,8 @@ the trivial preorder.
 
 An \define{inference problem} consists of a context $\Gamma$, an $A$-indexed
 problem $Q$ and an index $a \in A$ such that the \sanity\  of $Q[a]$
-holds in $\Gamma$.
+holds in $\Gamma$. If we omit mention of the index, we mean the problem is
+indexed by the unit set. 
 
 A \define{solution} of $(\Gamma, Q[a])$ consists of an information increase
 $\delta : \Gamma \leiR \Delta$ and a value for the output parameter $b \in B$
@@ -2226,13 +2227,17 @@ Since the algorithmic rules correspond directly to the transformed declarative
 system in Figure~\ref{fig:transformedRules}, we can easily prove soundness,
 completeness and generality of type inference with respect to this system.
 Each proof is by induction on 
-%%%the structure of 
 derivations, observing that each
 algorithmic rule maintains the appropriate properties.
 
+Recall that a type inference problem $(\Gamma, P)$ has statement
+$P\, \tau = t : \tau$ where $t$ is a term and $\tau$ is the output type.
+A scheme inference problem has statement $P\, \sigma = t \hasscheme \sigma$
+where $\sigma$ is the output scheme.
+
 \begin{lemma}[Soundness of type inference]
 \label{lem:inferSound}
-If $P$ is a type or scheme inference problem, and $\alg{\Gamma}{P}{\Delta}{a}$,
+If $(\Gamma, P)$ is a type or scheme inference problem, and $\alg{\Gamma}{P}{\Delta}{a}$,
 then $\Gamma \leiR\Delta$ and $\Delta \entails P a$.
 \end{lemma}
 \proofsux\begin{proof}
@@ -2241,24 +2246,14 @@ We maintain this property as an invariant in all the rules.
 
 \begin{lemma}[Generality of type inference]
 \label{lem:inferGeneral}
-If $P$ is a type or scheme inference problem, and $\alg{\Gamma}{P}{\Delta}{a}$,
+If $(\Gamma, P)$ is a type or scheme inference problem, and $\alg{\Gamma}{P}{\Delta}{a}$,
 then $\LEIRProb{\Gamma}{P}{\Delta}{a}$.
 \end{lemma}
 \proofsux\begin{proof}
-Thanks to soundness (lemma~\ref{lem:inferSound}) it only remains to show that
-each algorithmic rule becomes admissible if we replace $\transto$ with $\LEIR$.
-\TODO{How to phrase this?}
-All the work has been done in proving the previous lemmas.
-
-The Generalist's lemma proves exactly the property required for the \name{Gen}
-rule. 
-The \name{Abs} rule is minimal by lemmas~\ref{lem:bindVariableProblem} and
-\ref{lem:inventVariableProblem}.
-The \name{App} rule is minimal by two uses of the Optimist's lemma,
-lemma~\ref{lem:inventVariableProblem} and minimality of unification.
-The \name{Let} rule is minimal by the Optimist's lemma and
-lemma~\ref{lem:bindVariableProblem}.
-\TODO{Do \name{Let} rule in detail?}
+Thanks to soundness (lemma~\ref{lem:inferSound}) it only remains to show 
+generality for the system, i.e.\ that each algorithmic rule becomes
+admissible in the transformed declarative system if we replace
+$\transto$ with $\LEIR$.
 
 For the \name{Var} rule, suppose $\theta : \Gamma \leiR \Theta$ and
 $\Theta \entails x : \tau$. By inversion, the proof must consist of
@@ -2268,12 +2263,31 @@ with some $\Theta$-types. Hence it determines a map from the unbound type variab
 of $\Xi$ to types over $\Theta$, i.e.\ a substitution
 $\zeta : \Gamma, \Xi \leiR \Theta$ that agrees with $\theta$ on $\Gamma$ and
 maps type variables in $\Xi$ to their definitions in $\Theta$.
-\TODO{Better way of saying this?}
+
+All the remaining cases are covered by the previous lemmas.
+The Generalist's lemma proves exactly the property required for the \name{Gen}
+rule. 
+The \name{Abs} rule is minimal by lemmas~\ref{lem:bindVariableProblem} and
+\ref{lem:inventVariableProblem}.
+The \name{App} rule is minimal by two uses of the Optimist's lemma,
+lemma~\ref{lem:inventVariableProblem} and minimality of unification.
+The \name{Let} rule is minimal by the Optimist's lemma and
+lemma~\ref{lem:bindVariableProblem}.
+
+When applying the Optimist's lemma, we must check that the problem on the right
+is an indexed problem family, i.e.\ that 
+$$\leParam{\Gamma}{a}{a'} ~\wedge~ \Gamma \entails Q[a'] b
+    \quad\Rightarrow\quad  \Gamma \entails Q[a] b$$
+For \name{Let}, this holds because increasing the
+$\leParam{\Gamma}{\cdot}{\cdot}$  relation specialises the type scheme $\sigma$,
+and if a solution can be found with a more specific type scheme then one can be
+found with a more general scheme.
+For \name{App}, it holds because the relation is equality on types.
 \end{proof}
 
 \begin{lemma}[Completeness of type inference]
 \label{lem:inferComplete}
-If $P$ is a type or scheme inference problem, and
+If $(\Gamma, P)$ is a type or scheme inference problem, and
 there exist $\theta : \Gamma \leiR \Theta$ and $a'$ such that
 $\Theta \entails (\theta P) a'$, then $\alg{\Gamma}{P}{\Delta}{a}$
 for some context $\Delta$ and output $a$.
