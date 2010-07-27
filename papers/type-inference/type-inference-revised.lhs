@@ -1743,6 +1743,7 @@ extend the algorithmic rules:
      {\algInstantiate{\Gamma_0 \fatsemi}{\alpha}{\tau}{\Xi}{\Delta_0 \fatsemi}}
 \end{array}\]
 
+\TODO{Say something about completeness.}
 We must correspondingly update the induction in Lemma~\ref{lem:unifySound} to
 show that adding the new rules preserves soundness and generality. For the
 \name{Skip} rule, correctness follows immediately from this lemma:
@@ -1776,19 +1777,16 @@ $\LEIRUnify{\Gamma \fatsemi \Xi}{\alpha}{\tau}{\Delta \fatsemi}$.
 \proofsux\begin{proof}
 We extend the structural induction in lemma~\ref{lem:unifySound} with an extra
 case. The only proof of
-$\algInstantiate{\Gamma \fatsemi}{\alpha}{\tau}{\Xi}{\Delta \fatsemi}$,
+$\algInstantiate{\Gamma \fatsemi}{\alpha}{\tau}{\Xi}{\Delta \fatsemi}$
 is by \name{Repossess}, so inversion gives
 $\algInstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$.
 By induction, $\tyvars{\Gamma, \Xi} = \tyvars{\Delta}$ and
 $\LEIRUnify{\Gamma, \Xi}{\alpha}{\tau}{\Delta}$.
 
-We immediately observe that
+We immediately observe that $\Gamma \fatsemi \Xi \leiR \Delta \fatsemi$,
+$\Delta \fatsemi \entails \alpha \equiv \tau$ and
 $$\tyvars{\Gamma \fatsemi \Xi} = \tyvars{\Gamma, \Xi} = \tyvars{\Delta}
     = \tyvars{\Delta \fatsemi}.$$
-Moreover, we have $\Gamma, \Xi \leiR \Delta$ so
-$\Gamma \fatsemi \Xi \leiR \Delta \fatsemi$,
-and $\Delta \entails \alpha \equiv \tau$ so
-$\Delta \fatsemi \entails \alpha \equiv \tau$.
 
 For minimality, suppose
 $\theta : \Gamma \fatsemi \Xi \leiR \Theta \fatsemi \Phi$
@@ -1803,19 +1801,12 @@ used in $\tau$, so there is a substitution
 $\psi : \Gamma \fatsemi \Xi \leiR \Theta \fatsemi$
 that agrees with $\theta$ on $\Gamma$ and maps variables in $\Xi$ to their
 definitions in $\Theta$.
-Note that $\psi \eqsubst \theta : \Gamma \fatsemi \Xi \leiR \Theta \fatsemi \Phi$.
-\TODO{Check and improve this explanation.}
-
-% Now we can filter $\Phi$ to give $\Psi$ consisting only of definitions
-% such that $\Theta \fatsemi \Psi \entails \theta\alpha \equiv \theta\tau$.
-% Let $\psi = \lfloor \Psi \rfloor \compose \theta$, then
-% $\psi : \Gamma \fatsemi \Xi \lei \Theta \fatsemi$
-% and $\Theta \fatsemi \entails \psi\alpha \equiv \psi\tau$.
 
 Hence $\psi : \Gamma, \Xi \leiR \Theta$ and
 $\Theta \entails \psi\alpha \equiv \psi\tau$, so by hypothesis there exists
 $\zeta : \Delta \leiR \Theta$ such that
 $\psi \eqsubst \zeta \compose \iota : \Gamma, \Xi \leiR \Theta$.
+Note that $\psi \eqsubst \theta : \Gamma \fatsemi \Xi \leiR \Theta \fatsemi \Phi$.
 Then $\zeta : \Delta \fatsemi \leiR \Theta \fatsemi \Phi$
 and
 $\psi \eqsubst \zeta \compose \iota :
