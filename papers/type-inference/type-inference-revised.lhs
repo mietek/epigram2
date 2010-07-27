@@ -125,6 +125,11 @@
 \newcommand{\hindleymilner}{Hindley-Milner}
 \newcommand{\hindleymilnershort}{HM}
 
+% Definitions
+\newcommand{\defmap}{\mapsto}
+\newcommand{\centcolon}{\mathrel{\mathop:}}
+\newcommand{\defsyn}{\centcolon\centcolon=}
+
 % Substitutions
 \newcommand{\eqsubst}{\equiv}
 \newcommand{\compose}{\cdot}
@@ -144,9 +149,9 @@
 \newcommand{\entailsN}{\ensuremath{\Vdash}}
 \newcommand{\emptycontext}{\ensuremath{\mathcal{E}}}
 \newcommand{\letGoal}{\ensuremath{\fatsemi}}
-\newcommand{\defn}{\ensuremath{\!:=\!}}
-\newcommand{\asc}{\ensuremath{~\hat{::}~}}
-\newcommand{\hole}[1]{\ensuremath{#1 \!:= ?}}
+\newcommand{\defn}{\ensuremath{\!\centcolon=\!}}
+\newcommand{\asc}{\ensuremath{~\hat{\centcolon\centcolon}~}}
+\newcommand{\hole}[1]{\ensuremath{#1 \!\centcolon= ?}}
 \newcommand{\decl}[2]{#1 #2}
 
 % Statements
@@ -154,7 +159,7 @@
 \newcommand{\scheme}{\ensuremath{~\mathbf{scheme}}}
 \newcommand{\valid}{\ensuremath{\mathbf{valid}}}
 \newcommand{\Sbind}[2]{#1 \Yright #2}
-\newcommand{\hasscheme}{\ensuremath{::}}
+\newcommand{\hasscheme}{\ensuremath{\centcolon\centcolon}}
 \newcommand{\Pinf}[2]{#1 : #2}
 \newcommand{\Psch}[2]{#1 \hasscheme #2}
 \newcommand{\Puni}[2]{#1 \equiv #2}
@@ -163,8 +168,8 @@
 
 % Types, terms and schemes
 \newcommand{\arrow}{\ensuremath{\triangleright}}
-\newcommand{\letIn}[3]{\ensuremath{\mathrm{let}\; #1 \!:=\! #2 \;\mathrm{in}\; #3}}
-\newcommand{\letS}[3]{\ensuremath{(!#1 \!:=\! #2 ~\mathrm{in}~ #3)}}
+\newcommand{\letIn}[3]{\ensuremath{\mathrm{let}\; #1 \!\centcolon=\! #2 \;\mathrm{in}\; #3}}
+\newcommand{\letS}[3]{\ensuremath{(!#1 \!\centcolon=\! #2 ~\mathrm{in}~ #3)}}
 \newcommand{\genarrow}{\ensuremath{\Uparrow}}
 \newcommand{\gen}[2]{\ensuremath{(#1 \genarrow #2)}}
 \newcommand{\gendot}[1]{\ensuremath{.{#1}}}
@@ -298,7 +303,7 @@ For example, %%% the term
 $$\letIn{i}{\lambda x . x}{i\:i}$$
 is well-typed: $i$ is given a polymorphic type that is instantiated in two
 different ways. The syntax of types is
-$$\tau ::= \alpha ~||~ \tau \arrow \tau.$$
+$$\tau \defsyn \alpha ~||~ \tau \arrow \tau.$$
 For simplicity, the function arrow $\arrow$ is our only type constructor.
 We let $\alpha$ and $\beta$ range over type variables and $\tau$ and $\upsilon$
 over types.
@@ -855,7 +860,7 @@ $\V_K(\Gamma)$.
 
 We will build a set $\Ss$ of \define{statements}, assertions that can be judged
 in contexts. For now, the grammar of statements will be
-$$S ::=~ \valid
+$$S \defsyn~ \valid
     ~||~ \tau \type
     ~||~ \tau \equiv \upsilon
     ~||~ S \wedge S,$$
@@ -1502,7 +1507,7 @@ introduce type schemes and the term language. We extend the grammar of statement
 to express additions to the context (binding statements), well-formed schemes,
 type assignment and scheme assignment. The final grammar will be:
 \[\begin{array}{r@@{\,}l}
-S ::=~ \valid
+S \defsyn~ \valid
     &~||~ \tau \type
     ~||~ \tau \equiv \upsilon
     ~||~ S \wedge S \\
@@ -1579,7 +1584,7 @@ To handle let-polymorphism, the context must assign type schemes to term
 variables, rather than monomorphic types.
 A \define{type scheme} $\sigma$ is a type wrapped in one or more $\forall$
 quantifiers or $\letS{\cdot}{\cdot}{\cdot}$ bindings, with the syntax
-$$\sigma ::= \gendot{\tau} ~||~ \forall\alpha~\sigma ~||~ \letS{\alpha}{\tau}{\sigma}.$$
+$$\sigma \defsyn \gendot{\tau} ~||~ \forall\alpha~\sigma ~||~ \letS{\alpha}{\tau}{\sigma}.$$
 We use explicit definitions in type schemes to avoid the need for substitution
 in the type inference algorithm. 
 
@@ -1614,7 +1619,7 @@ $\asc \sigma$, with
 $\ok_\TM (\asc \sigma) = \sigma \scheme$.
 
 Let $s$, $t$, $w$ range over the set of terms with syntax 
-$$t ::= x ~||~ t~t ~||~ \lambda x . t ~||~ \letIn{x}{t}{t}.$$
+$$t \defsyn x ~||~ t~t ~||~ \lambda x . t ~||~ \letIn{x}{t}{t}.$$
 
 The type assignment statement $t : \tau$ is established by the declarative
 rules in Figure~\ref{fig:typeAssignmentRules}. It has two parameters $t$ and
