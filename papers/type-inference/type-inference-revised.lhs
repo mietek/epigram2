@@ -191,7 +191,6 @@
 \newcommand{\leiRStmt}[3]{\iRel{#1}{#2}{\leiR}{#3}}
 \newcommand{\LEIStmt}[3]{\iRel{#1}{#2}{\LEI}{#3}}
 \newcommand{\LEIRStmt}[3]{\iRel{#1}{#2}{\LEIR}{#3}}
-\newcommand{\leiParam}[4]{(#1, #2) \lei (#3, #4)}
 \newcommand{\leiRParam}[4]{(#1, #2) \leiR (#3, #4)}
 \newcommand{\LEIProb}[4]{\ioRel{#1}{#2}{\LEI}{#3}{#4}}
 \newcommand{\LEIRProb}[4]{\ioRel{#1}{#2}{\LEIR}{#3}{#4}}
@@ -1821,27 +1820,16 @@ $\theta \eqsubst \zeta \compose \iota :
 \section{Type inference problems and their solutions\label{sec:tyinf}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-%%%\subsection{Inference problems: multiple-mode }
-
-\TODO{Tidy up and improve motivation for definitions in this section.}
-
 Type inference involves making the statement $t : \tau$ hold. However,
 a key contrast with unification is that the type should
 be an \emph{output} of problem-solving, along with the solution context. We need
 a more liberal definition than that of constraint problems.
-
 We associate a \define{mode} with each parameter in a statement: either
 \scare{input} or \scare{output}. For simplicity, assume statements always have
 one parameter of each mode (which may be trivial or composite).
-% An
-% \define{inference problem}
-% is a triple $(\Gamma, S, Q)$ where $\Gamma$ is a context, $S$ is a statement
-% \TODO{(?)} and
-% $Q$ is a value for the input parameter that satisfies its \sanity\  in
-% $\Gamma$.
-% \TODO{Clarify notation for statements and parameter values. What is $Q A$?}
 We must extend the apparatus of minimal solutions to problems with outputs.
+
+\TODO{Motivate the following.}
 Let $B$ be a set of values closed under substitution. For a fixed context
 $\Gamma$, suppose we have a
 preorder on $B$ written $\leParam{\Gamma}{\cdot}{\cdot}$. This induces a
@@ -1986,9 +1974,9 @@ so by minimality of the hypothesis there is a substitution
 $\zeta : \Delta \fatsemi \Xi \leiR \Theta \fatsemi \Psi$ such that
 $\theta \equiv \zeta \compose \iota$ and
 $\Theta \fatsemi \Psi \entails \zeta\tau \equiv \upsilon$.
-Then $\restrict{\zeta}{\Delta} : \Delta \leiR \Theta$,
-$\theta \eqsubst \restrict{\zeta}{\Delta} \compose \iota : \Gamma \leiR \Delta$ and
-$\leParam{\Theta}{\theta\gen{\Xi}{\tau}}{\gen{\Psi}{\upsilon}}$.
+Then $\restrict{\zeta}{\Delta} : \leiRParam{\Delta}{\gen{\Xi}{\tau}}{\Theta}{\gen{\Psi}{\upsilon}}$
+and
+$\theta \eqsubst \restrict{\zeta}{\Delta} \compose \iota : \Gamma \leiR \Theta$.
 \end{proof}
 
 
