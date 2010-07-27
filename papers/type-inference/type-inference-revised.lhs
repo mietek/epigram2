@@ -884,8 +884,8 @@ from declarations to statements. (Typically we will omit the subscript $K$.)
 The idea is that $\sem{\decl{x}{D}}$ is the statement that holds by virtue of the
 declaration $\decl{x}{D}$ in the context. For type variables, we define
 \[\begin{array}{r@@{\,}l}
-\sem{\hole{\alpha}} &= \alpha \type \\
-\sem{\alpha \defn \tau} &= \alpha \type \wedge \alpha \equiv \tau.
+\sem{\hole{\alpha}} &\defmap \alpha \type \\
+\sem{\alpha \defn \tau} &\defmap \alpha \type \wedge \alpha \equiv \tau.
 \end{array}\]
 
 We can inspect the context in derivations using the inference rule
@@ -938,8 +938,8 @@ associates the statement of being meaningful, \(\ok_{K} D\), to each \(D\).
 %%%For type properties:
    For types: 
 \[\begin{array}{r@@{\,}l}
-\ok_\TY (\hole{}) &= \valid \\
-\ok_\TY (\defn{\tau}) &= \tau \type
+\ok_\TY (\hole{}) &\defmap \valid \\
+\ok_\TY (\defn{\tau}) &\defmap \tau \type
 \end{array}\]
 %%%Now we can define the context validity statement
 %%%$\valid$ as shown in Figure~\ref{fig:contextValidityRules}.
@@ -1571,8 +1571,8 @@ and so $\Delta \entails \delta (\Sbind{\decl{x}{D}}{S})$.
 \end{proof}
 
 We write $\Sbind{\Xi}{S}$ where $\Xi$ is a list of declarations, defining
-$\Sbind{\emptycontext}{S} = S$ and
-$\Sbind{(\Xi, \decl{x}{D})}{S} = \Sbind{\Xi}{(\Sbind{\decl{x}{D}}{S})}$.
+$\Sbind{\emptycontext}{S} \defmap S$ and
+$\Sbind{(\Xi, \decl{x}{D})}{S} \defmap \Sbind{\Xi}{(\Sbind{\decl{x}{D}}{S})}$.
 
 If $S$ is a statement and $C$ is a sanity condition for one of its parameters,
 the statement $\Sbind{x D}{S}$ has sanity condition $\Sbind{x D}{C}$ for the
@@ -1599,14 +1599,14 @@ type variable declarations $\Xi$, defined by
 %\end{align*}
 \[
 \begin{array}{r@@{\,}l}
-\emptycontext         &\genarrow \tau = \gendot{\tau}  \\
-\hole{\alpha}, \Xi    &\genarrow \tau = \forall\alpha~\gen{\Xi}{\tau}  \\
-\alpha \defn \upsilon, \Xi &\genarrow \tau = \letS{\alpha}{\upsilon}{\gen{\Xi}{\tau}}
+\emptycontext         &\genarrow \tau \defmap \gendot{\tau}  \\
+\hole{\alpha}, \Xi    &\genarrow \tau \defmap \forall\alpha~\gen{\Xi}{\tau}  \\
+\alpha \defn \upsilon, \Xi &\genarrow \tau \defmap \letS{\alpha}{\upsilon}{\gen{\Xi}{\tau}}
 \end{array}
 \]
 
 The statement $\sigma \scheme$ is then defined by
-$$\gen{\Xi}{\tau} \scheme = \Sbind{\Xi}{\tau \type}.$$
+$$\gen{\Xi}{\tau} \scheme \defmap \Sbind{\Xi}{\tau \type}.$$
 The \sanity\  is just $\valid$, as for $\tau \type$.
 
 \subsection{Terms and type assignment}
@@ -1625,11 +1625,11 @@ The type assignment statement $t : \tau$ is established by the declarative
 rules in Figure~\ref{fig:typeAssignmentRules}. It has two parameters $t$ and
 $\tau$ with \sanity s $\valid$ and $\tau \type$ respectively.
 We define
-$$t \hasscheme \gen{\Xi}{\tau} = \Sbind{\Xi}{t : \tau}$$
+$$t \hasscheme \gen{\Xi}{\tau} \defmap \Sbind{\Xi}{t : \tau}$$
 and observe this gives the parameters $t$ and $\sigma$ \sanity s
 $\valid$ and $\sigma \scheme$ as one might expect.
 We can interpret term variable declarations as scheme assignment statements:
-$$\sem{x \asc \sigma}_\TM = x \hasscheme \sigma.$$
+$$\sem{x \asc \sigma}_\TM \defmap x \hasscheme \sigma.$$
 
 \begin{figure}[ht]
 \[\begin{array}{c}
@@ -1664,7 +1664,7 @@ $$\sem{x \asc \sigma}_\TM = x \hasscheme \sigma.$$
 
 \TODO{fix up the segue to \(\leiR\) here} 
 
-Recall that we defined $\sem{x \asc \sigma}_\TM = x \hasscheme \sigma$, so
+Recall that we defined $\sem{x \asc \sigma}_\TM \defmap x \hasscheme \sigma$, so
 $\Gamma \lei \Delta$ requires $\Delta$ to assign a term variable all the types
 that $\Gamma$ assigns it, but allows $x$ to become more polymorphic
 and acquire new types.  This notion certainly retains stability:
@@ -1714,9 +1714,9 @@ We also refine the $\leiR$ relation.
 Let $\semidrop$ be the partial function from contexts $\Gamma$ and natural numbers $n$ which truncates $\Gamma$ after $n$
 $\fatsemi$ separators, provided $\Gamma$ contains at least $n$ such: 
 \[\begin{array}{r@@{\,}l}
-\Xi \semidrop 0 &= \Xi  \\
-\Xi \fatsemi \Gamma \semidrop 0 &= \Xi  \\
-\Xi \fatsemi \Gamma \semidrop n+1 &= \Xi \fatsemi (\Gamma \semidrop n)  \\
+\Xi \semidrop 0 &\defmap \Xi  \\
+\Xi \fatsemi \Gamma \semidrop 0 &\defmap \Xi  \\
+\Xi \fatsemi \Gamma \semidrop n+1 &\defmap \Xi \fatsemi (\Gamma \semidrop n)  \\
 \Xi \semidrop n+1 &~\mathrm{undefined}
 \end{array}\]
 %
@@ -1890,7 +1890,7 @@ $\theta \eqsubst \zeta \compose \iota$.
 
 Let $P$ be a problem for $A$ and let $Q$ be an $A$-indexed problem family for
 $B$. Then the conjunction of problems
-$$(\pconj{P}{x}{Q}) (a, b) = P a \wedge Q[a] b$$
+$$(\pconj{P}{x}{Q}) (a, b) \defmap P a \wedge Q[a] b$$
 is a problem for $A \times B$. This \scare{dependent}
 generalisation of $P \wedge Q$
 allows the output of $P$ to be threaded into $Q$.
@@ -2010,7 +2010,7 @@ corresponding to the Optimist's lemma and Generalist's lemma.
 
 First, if $Q$ is a problem for $A$, then $\Sbind{x \asc \sigma}{Q}$
 is also a problem for $A$, with statement
-$$(\Sbind{x \asc \sigma}{Q}) a = \Sbind{x \asc \sigma}{Q a}.$$
+$$(\Sbind{x \asc \sigma}{Q}) a \defmap \Sbind{x \asc \sigma}{Q a}.$$
 That is, we regard $\sigma$ as an input.
 \TODO{We need to annotate elements of $A$ with $x \asc \sigma$ somehow, so that
 we can define $\leParam{\Gamma}{a_{x\sigma} }{a'_{x\sigma}}$ to be
@@ -2048,7 +2048,7 @@ $\leParam{\Theta}{\theta a}{a'}$ so we are done.
 Alternatively, when binding type variables we can regard the type as being
 initially unknown, and obtain the problem $\Qbind{\alpha}{Q}$ whose output is
 a value in $A$. The corresponding statement is
-$$(\Qbind{\alpha}{Q}) a = Q a$$
+$$(\Qbind{\alpha}{Q}) a \defmap Q a$$
 but if $S$ is a sanity condition for $Q$ then the corresponding sanity condition
 for $\Qbind{\alpha}{Q}$ is $\Sbind{\hole{\alpha}}{S}$. Thus $\alpha$ need not be
 defined in the context for the problem to make sense, but solutions must define it.
