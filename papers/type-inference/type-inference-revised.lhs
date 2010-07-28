@@ -1928,21 +1928,21 @@ $$\Rule{\LEIRProb{\Gamma}{P}{\Delta}{b}
 \end{lemma}
 \proofsux\begin{proof}
 We have $\Gamma \leiR \Theta$ by (updating) Lemma~\ref{lei:preorder}.
-Furthermore, $\Theta \entails (\pconj{P}{x}{Q}) (b, c)$ since
-stability gives $\Theta \entails P b$, and
-$\Theta \entails Q[b] c$ by assumption.
+Furthermore, $\Theta \entails \probstmt{(\pconj{P}{x}{Q})}{(b, c)}$ since
+stability gives $\Theta \entails \probstmt{P}{b}$, and
+$\Theta \entails \iprobstmt{Q}{b}{c}$ by assumption.
 
 Now suppose there is some other solution
 $(\phi : \Gamma \leiR \Phi, (b', c'))$, so
-$\Phi \entails (\phi P) b'$ and
-$\Phi \entails (\phi Q)[b'] c'$.
+$\Phi \entails \probsubst{\phi}{P}{b'}$ and
+$\Phi \entails \iprobstmt{(\phi Q)}{b'}{c'}$.
 Since $\LEIRProb{\Gamma}{P}{\Delta}{b}$, there exists
 $\zeta : \Delta \leiR \Phi$
 with $\leParam{\Phi}{\zeta b}{b'}$ and $\phi \eqsubst \zeta \compose \iota$.
 
 By definition of an indexed problem family,
-$\Phi \entails (\phi Q)[\zeta b] c'$
-and hence $\Phi \entails (\zeta (Q[b])) c'$.
+$\Phi \entails \iprobstmt{(\phi Q)}{\zeta b}{c'}$
+and hence $\Phi \entails \iprobsubst{\zeta}{Q}{b}{c'}$.
 But $\LEIRProb{\Delta}{Q[b]}{\Theta}{c}$, so there exists
 $\xi : \Theta \leiR \Phi$ such that $\leParam{\Phi}{\xi c}{c'}$
 and $\zeta \eqsubst \xi \compose \iota$.
@@ -1966,7 +1966,8 @@ concrete values do we actually use? We want to
 solve type inference problems, so we are interested in types and
 type schemes.
 
-For a fixed context $\Gamma$, we define the preorder on schemes by
+The statement $t \hasscheme \sigma$ defines 
+a problem for the set of schemes with preorder given by
 $\leParam{\Gamma}{\gen{\Xi}{\tau}}{\gen{\Psi}{\upsilon}}$
 if there is some $\psi : \Gamma \fatsemi \Xi \leiR \Gamma \fatsemi \Psi$
 such that $\Gamma \fatsemi \Psi \entails \psi \tau \equiv \upsilon$
