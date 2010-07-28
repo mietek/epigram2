@@ -27,18 +27,32 @@ LATEXOPTS = -interaction=nonstopmode
 # Configuration
 ################################################################
 
-SRCS := $(wildcard *.lhs) \
-	$(wildcard Cochon/*.lhs) \
-	$(wildcard Compiler/*.lhs) \
-	$(wildcard DisplayLang/*.lhs) \
-	$(wildcard Elaboration/*.lhs) \
-	$(wildcard Distillation/*.lhs) \
-	$(wildcard Evidences/*.lhs) \
-	$(wildcard Features/*.lhs) \
-	$(wildcard Kit/*.lhs) \
-	$(wildcard ProofState/*.lhs) \
-	$(wildcard NameSupply/*.lhs) \
-	$(wildcard Tactics/*.lhs)
+SRCS_KIT := $(wildcard Kit/*.lhs)
+
+SRCS_COMPILER := $(wildcard Compiler/*.lhs)
+
+SRCS_EVIDENCES := $(wildcard NameSupply/*.lhs) \
+		  $(wildcard Evidences/*.lhs) \
+		  $(wildcard Features/*.lhs)
+
+SRCS_PFSTATE := $(wildcard ProofState/*.lhs)
+
+SRCS_DISPLAYS := $(wildcard DisplayLang/*.lhs) \
+	  	 $(wildcard Elaboration/*.lhs) \
+		 $(wildcard Distillation/*.lhs)
+
+SRCS_TACTICS := $(wildcard Tactics/*.lhs)
+
+SRCS_COCHON := $(wildcard Cochon/*.lhs)
+
+SRCS_MAIN := $(wildcard *.lhs)
+
+SRCS := $(SRCS_KIT) \
+	$(SRCS_COMPILER) \
+	$(SRCS_EVIDENCES) \
+	$(SRCS_PFSTATE) \
+	$(SRCS_DISPLAYS) $(SRCS_TACTICS) \
+	$(SRCS_COCHON) $(SRCS_MAIN)
 OBJS := $(SRCS:.lhs=.o) 
 
 .SUFFIXES : .o .hs .hi .lhs .hc .s\
@@ -71,6 +85,26 @@ depend : $(SRCS)
 dep : depend
 
 
+## Epigram object files:
+# 
+# Let us abuse the power of separate compilation to make some kinda
+# self-contained components. The idea here is to be able to
+# (temporarily) break some parts of the system and not having to
+# care. For instance, one could experiment with the Evidence language,
+# hence breaking everything above. When the situation has stabilized,
+# one can work bit by bit to get the whole tower to compile again.
+
+kit: $(SRCS_KIT:.lhs=.o)
+compiler: $(SRCS_COMPILER:.lhs=.o)
+evidences: $(SRCS_EVIDENCES:.lhs=.o)
+proofstate: $(SRCS_PFSTATE:.lhs=.o)
+displays: $(SRCS_DISPLAYS:.lhs=.o)
+tactics: $(SRCS_TACTICS:.lhs=.o)
+cochon: $(SRCS_COCHON:.lhs=.o)
+main: $(SRCS_MAIN:.lhs=.o)
+
+epigram: kit compiler evidences proofstate displays tactics cochon main
+
 ## Epigram:
 # Link the Epigram binary. Rely on the dependency graph to compile the
 # code. If the dependency graph doesn't exist or has changed, this
@@ -81,7 +115,7 @@ dep : depend
 #
 # Pig takes its orders from HC_OPTS and build a BUILD_MODE. By
 # default, this is a BUILD_DEV, with the corresponding DEV flags.
-Pig : .depend $(OBJS)
+Pig : .depend epigram
 	rm -f $@
 	$(HC) -o $@ $(HC_OPTS) $(OBJS)
 	touch $(BUILD_MODE)
