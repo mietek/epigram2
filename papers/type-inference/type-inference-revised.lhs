@@ -2070,9 +2070,11 @@ $\leParam{(\Sbind{x \asc \sigma}{Q})}{\Theta}{\theta a}{a'}$ so we are done.
 Alternatively, when binding type variables we can regard the type as being
 initially unknown, and obtain the problem $\Qbind{\alpha}{Q}$ whose output is
 a pair of a type and a value in $A$. The corresponding statement is
-$$(\Qbind{\alpha}{Q}) (\tau, b) \defmap \Sbind{\alpha \defn \tau}{Q b}.$$
-
-\TODO{Does this formulation work?} 
+$$(\Qbind{\alpha}{Q}) (\tau, b) \defmap \subst{\tau}{\alpha}(\probstmt{Q}{b})$$
+and the preorder is given by
+$\leParam{(\Qbind{\alpha}{Q})}{\Gamma}{(\tau, a)}{(\upsilon, b)}$ if
+$\Gamma \entails \tau \equiv \upsilon$ and
+$\leParam{Q}{\Gamma}{\subst{\tau}{\alpha} a}{\subst{\upsilon}{\alpha} b}$.
 
 \begin{lemma}
 \label{lem:inventVariableProblem}
@@ -2083,22 +2085,20 @@ $$(\Qbind{\alpha}{Q}) (\tau, b) \defmap \Sbind{\alpha \defn \tau}{Q b}.$$
 \)}
 \end{lemma}
 \proofsux\begin{proof}
-By hypothesis, $\Delta \entails Q b$ so
-$\Delta \entails \Sbind{\alpha \defn \alpha}{Q b}$;
-this makes sense because the first $\alpha$ will be replaced by a fresh variable,
-and the second $\alpha$ is defined in $\Delta$.
-
-Also $\Gamma, \hole{\alpha} \leiR \Delta$ so $\Gamma \leiR \Delta$.
-
+By hypothesis, $\Delta \entails \probstmt{Q}{b}$ so
+$\Delta \entails \subst{\alpha}{\alpha}(\probstmt{Q}{b})$.
+Moreover, $\Gamma, \hole{\alpha} \leiR \Delta$ so $\Gamma \leiR \Delta$.
 If $\theta : \Gamma \leiR \Theta$ is such that
-$\Theta \entails Q a'$, then
-$\alpha$ must be defined in $\Theta$
-and hence $\theta : \Gamma, \hole{\alpha} \leiR \Theta$
-where $\alpha$ is mapped to itself. 
-By (minimality of) the rule's hypothesis,
+$\Theta \entails \subst{\upsilon}{\alpha}(\probstmt{Q}{c})$, then
+$\Theta \entails \probstmt{(\subst{\upsilon}{\alpha} Q)}{(\subst{\upsilon}{\alpha} c)}$.
+By (minimality of) the rule's hypothesis
+applied to the substitution
+$\subst{\upsilon}{\alpha} \compose \theta : \Gamma, \hole{\alpha} \leiR \Theta$,
 there is some $\zeta : \Delta \leiR \Theta$ such that
-$\leParam{}{\Theta}{\zeta a}{a'}$ and
-$\theta \eqsubst \zeta \compose \iota$.
+$\leParam{Q}{\Theta}{\zeta b}{(\subst{\upsilon}{\alpha} c)}$ and
+$\subst{\upsilon}{\alpha} \compose \theta \eqsubst \zeta \compose \iota$.
+Now
+$\zeta : \leiRParam{\Delta}{(\alpha, b)}{\Theta}{(\upsilon, c)}$.
 \end{proof}
 
 
