@@ -1695,7 +1695,7 @@ We have previously observed, but not yet exploited, the importance of
 declaration order in the context, and that we move declarations left as
 little as possible. Thus rightmost entries are those most local to the problem
 we are solving. This will be useful when we come to implement type inference
-for the |Let| construct, as we want to generalise over \scare{local} type
+for the `let' construct, as we want to generalise over \scare{local} type
 variables but not \scare{global} variables.
 
 In order to keep track of locality in the context, we need another kind of
@@ -1714,7 +1714,7 @@ $\fatsemi$ separators, provided $\Gamma$ contains at least $n$ such:
 \Xi \fatsemi \Gamma \semidrop n+1 &= \Xi \fatsemi (\Gamma \semidrop n)  \\
 \Xi \semidrop n+1 &~\mathrm{undefined}
 \end{array}\]
-
+%
 We write $\delta : \Gamma \leiR \Delta$ if $\delta$ is a substitution from
 $\Gamma$ to $\Delta$ such that, for all
 $\decl{x}{D} \in \Gamma \!\semidrop\! n$, we have that
@@ -1722,9 +1722,21 @@ $\Delta \!\semidrop\! n$ is defined and
 $\Delta \!\semidrop\! n \entails \delta \sem{\decl{x}{D}}$, in addition to the
 requirement that
 $$x \asc \sigma \in \Gamma ~\Rightarrow~ x \asc \delta\sigma \in \Delta.$$
-This definition ensures the $\fatsemi$-separated sections of $\Gamma$ and
-$\Delta$ correspond in such a way that declarations in the first $n$ sections of
-$\Gamma$ can be interpreted over the first $n$ sections of $\Delta$.
+We thus make the $\fatsemi$-separated sections of $\Gamma$ and
+$\Delta$ correspond, so that declarations in the first $n$ sections of
+$\Gamma$ can be interpreted over the first $n$ sections of $\Delta$. As
+a consequence, \scare{moving left of \(\fatsemi\)} is an irrevocable
+commitment. In particular, we note that
+\[
+\iota : \Gamma\fatsemi\hole{\alpha},\Delta
+   \leiR \Gamma,\hole{\alpha}\fatsemi\Delta
+\;\;\mbox{but}\;\;
+\iota : \Gamma,\hole{\alpha}\fatsemi\Delta
+   \not\leiR \Gamma\fatsemi\hole{\alpha},\Delta
+\]
+
+
+
 % It is fairly straightforward to verify that the previous results for $\lei$ 
 % hold for its sub-relation $\leiR$.
 
@@ -1733,7 +1745,7 @@ $\Gamma$ can be interpreted over the first $n$ sections of $\Delta$.
 
 Modifying $\leiR$ makes extra work only in the unification algorithm, because it
 acts structurally on contexts, which may now contain $\fatsemi$ separators. We
-extend the algorithmic rules:
+complete the algorithmic rules:
 \[\begin{array}{c}
 \namer{Skip}
 \Rule{\algUnify{\Gamma_0}{\alpha}{\beta}{\Delta_0}}
@@ -1744,7 +1756,6 @@ extend the algorithmic rules:
      {\algInstantiate{\Gamma_0 \fatsemi}{\alpha}{\tau}{\Xi}{\Delta_0 \fatsemi}}
 \end{array}\]
 
-\TODO{Say something about completeness.}
 We must correspondingly update the induction in Lemma~\ref{lem:unifySound} to
 show that adding the new rules preserves soundness and generality. For the
 \name{Skip} rule, correctness follows immediately from this lemma:
@@ -1767,8 +1778,9 @@ Then $\zeta : \Delta \fatsemi \leiR \Theta \fatsemi \Xi$ and we are done.
 
 The \name{Repossess} rule is so named because it moves
 declarations in $\Xi$ to the left of the $\fatsemi$ separator,
-thereby \scare{repossessing} them. Despite such complications, 
-unification still yields a most general solution:
+thereby \scare{repossessing} them. To guarantee a solution
+most general with respect to \(\leiR\),
+we show that $\Xi$'s leftward journey is really necessary.
 
 \begin{lemma}[Soundness and generality of the \name{Repossess} rule]
 Suppose $\algInstantiate{\Gamma \fatsemi}{\alpha}{\tau}{\Xi}{\Delta \fatsemi}$. 
