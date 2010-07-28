@@ -220,7 +220,7 @@
 \newcommand{\probstmt}[2]{#1 #2}
 \newcommand{\probsubst}[3]{(#1 #2) #3}
 
-\newcommand{\leParam}[3]{#2 \subset_{#1} #3}
+\newcommand{\leParam}[4]{#2 \entails #3 \subset_{#1} #4}
 \newcommand{\pconj}[3]{\Sigma #1 #3}
 \newcommand{\Qbind}[2]{#1 ~ \Yright #2}
 
@@ -1857,16 +1857,16 @@ We now extend the apparatus of minimal solutions to problems with outputs.
 What can outputs be, and how can we compare them?
 An \define{output set} is a set $B$ closed under
 substitution, such that every context $\Gamma$ induces a preorder
-$\leParam{\Gamma}{}{}$ on $B$ which is congruent
+$\leParam{}{\Gamma}{\cdot}{\cdot}$ on $B$ which is congruent
 with respect to the definitional equality, i.e.\ if
 $\Gamma \entails \alpha \equiv \tau \wedge \beta \equiv \upsilon$, then
-$\leParam{\Gamma}{b}{c}$ if and only if 
-$\leParam{\Gamma}{\subst{\tau}{\alpha} b}{\subst{\upsilon}{\beta} c}$.
+$\leParam{}{\Gamma}{b}{c}$ if and only if 
+$\leParam{}{\Gamma}{\subst{\tau}{\alpha} b}{\subst{\upsilon}{\beta} c}$.
 \TODO{Other conditions?}
 
 This induces a
 preorder on context-output pairs, with $\delta : \leiRParam{\Gamma}{a}{\Delta}{b}$ if
-$\delta : \Gamma \leiR \Delta$ and $\leParam{\Delta}{\delta a}{b}$.
+$\delta : \Gamma \leiR \Delta$ and $\leParam{}{\Delta}{\delta a}{b}$.
 
 It is not enough to consider output sets, because we need subsequent problems to
 depend on the results of earlier problems. Thus we must index the problems by 
@@ -1877,11 +1877,13 @@ An \define{$A$-indexed problem family $Q$ for $B$} is an output set $B$ and a
 family of input parameters for a statement, indexed by elements of $A$, such
 that the \define{simplicity condition} holds:
 for all $a, a' \in A$, contexts $\Gamma$ and output parameter values $b \in B$,
-$$\leParam{\Gamma}{a}{a'} ~\wedge~ \Gamma \entails \iprobstmt{Q}{a'}{b}
+$$\leParam{}{\Gamma}{a}{a'} ~\wedge~ \Gamma \entails \iprobstmt{Q}{a'}{b}
     \quad\Rightarrow\quad  \Gamma \entails \iprobstmt{Q}{a}{b}.$$
 We write $\iprobcond{Q}{a}$ for the \sanity s on the input parameters at index
 $a$ and $\iprobstmt{Q}{a}{b}$ for the statement with input at index $a$ and
 output value $b$.
+We write $\leParam{Q}{\Gamma}{\cdot}{\cdot}$ for the preorder on the output set
+of $Q$ in context $\Gamma$.
 
 A \define{problem $P$ for $B$} is a problem family indexed by the 
 unit set with the trivial preorder. We simply omit the index in this case.
@@ -1938,16 +1940,16 @@ $\Phi \entails \probsubst{\phi}{P}{b'}$ and
 $\Phi \entails \iprobstmt{(\phi Q)}{b'}{c'}$.
 Since $\LEIRProb{\Gamma}{P}{\Delta}{b}$, there exists
 $\zeta : \Delta \leiR \Phi$
-with $\leParam{\Phi}{\zeta b}{b'}$ and $\phi \eqsubst \zeta \compose \iota$.
+with $\leParam{}{\Phi}{\zeta b}{b'}$ and $\phi \eqsubst \zeta \compose \iota$.
 
 By definition of an indexed problem family,
 $\Phi \entails \iprobstmt{(\phi Q)}{\zeta b}{c'}$
 and hence $\Phi \entails \iprobsubst{\zeta}{Q}{b}{c'}$.
 But $\LEIRProb{\Delta}{Q[b]}{\Theta}{c}$, so there exists
-$\xi : \Theta \leiR \Phi$ such that $\leParam{\Phi}{\xi c}{c'}$
+$\xi : \Theta \leiR \Phi$ such that $\leParam{}{\Phi}{\xi c}{c'}$
 and $\zeta \eqsubst \xi \compose \iota$.
 
-Hence $\xi : \Theta \leiR \Phi$ and $\leParam{\Phi}{\xi (b, c)}{(b', c')}$
+Hence $\xi : \Theta \leiR \Phi$ and $\leParam{}{\Phi}{\xi (b, c)}{(b', c')}$
 so $\xi : \leiRParam{\Theta}{(b, c)}{\Phi}{(b', c')}$. Moreover
 $\phi \eqsubst \zeta \compose \iota
       \eqsubst (\xi \compose \iota) \compose \iota
@@ -1968,16 +1970,16 @@ type schemes.
 
 The statement $t \hasscheme \sigma$ defines 
 a problem for the set of schemes with preorder given by
-$\leParam{\Gamma}{\gen{\Xi}{\tau}}{\gen{\Psi}{\upsilon}}$
+$\leParam{\hasscheme}{\Gamma}{\gen{\Xi}{\tau}}{\gen{\Psi}{\upsilon}}$
 if there is some $\psi : \Gamma \fatsemi \Xi \leiR \Gamma \fatsemi \Psi$
 such that $\Gamma \fatsemi \Psi \entails \psi \tau \equiv \upsilon$
 and $\restrict{\psi}{\Gamma} \eqsubst \iota$. That is,
-$\leParam{\Gamma}{\sigma}{\sigma'}$
+$\leParam{\hasscheme}{\Gamma}{\sigma}{\sigma'}$
 if $\sigma$ is a more general type scheme than $\sigma'$.
 
 Since types are just schemes with no quantifiers, we instantiate the above
 definition with $\Xi = \emptycontext = \Psi$, to get a preorder on types:
-$\leParam{\Gamma}{\tau}{\upsilon}$
+$\leParam{:}{\Gamma}{\tau}{\upsilon}$
 if $\Gamma \entails \tau \equiv \upsilon$.
 
 Thus the type inference problem is given by a context $\Gamma$ and a term
@@ -2033,11 +2035,10 @@ corresponding to the Optimist's lemma and Generalist's lemma.
 
 First, if $Q$ is a problem for $A$, then $\Sbind{x \asc \sigma}{Q}$
 is also a problem for $A$, with statement
-$$(\Sbind{x \asc \sigma}{Q}) a \defmap \Sbind{x \asc \sigma}{Q a}.$$
+$$(\Sbind{x \asc \sigma}{Q}) a \defmap \Sbind{x \asc \sigma}{Q a}$$
+and preorder $\leParam{(\Sbind{x \asc \sigma}{Q})}{\Gamma}{a}{b}$ iff
+$\leParam{Q}{\Gamma, x \asc \sigma}{a}{b}$.
 That is, we regard $\sigma$ as an input.
-\TODO{We need to annotate elements of $A$ with $x \asc \sigma$ somehow, so that
-we can define $\leParam{\Gamma}{a_{x\sigma} }{a'_{x\sigma}}$ to be
-$\leParam{\Gamma, x \asc \sigma}{a}{a'}$.}
 
 \begin{lemma}
 \label{lem:bindVariableProblem}
@@ -2059,12 +2060,10 @@ $\Theta \entails \Sbind{x \asc \theta\sigma}{(\theta Q) a'}$ then, by inversion,
 $\Theta, x \asc \theta\sigma \entails (\theta Q) a'$.
 By minimality of the hypothesis, there is
 $\zeta : \Delta, x \asc \sigma, \Xi \leiR \Theta, x \asc \theta\sigma$ such that
-$\leParam{\Theta, x \asc \theta\sigma}{\theta a}{a'}$ and
+$\leParam{Q}{\Theta, x \asc \theta\sigma}{\theta a}{a'}$ and
 $\theta \eqsubst \zeta \compose \iota$.
 Now $\zeta : \Delta, \Xi \leiR \Theta$ and
-$\leParam{\Theta}{\theta a}{a'}$ so we are done.
-%%%
-\TODO{This only makes sense if we track binding problem solutions.}
+$\leParam{(\Sbind{x \asc \sigma}{Q})}{\Theta}{\theta a}{a'}$ so we are done.
 \end{proof}
 
 
@@ -2098,7 +2097,7 @@ and hence $\theta : \Gamma, \hole{\alpha} \leiR \Theta$
 where $\alpha$ is mapped to itself. 
 By (minimality of) the rule's hypothesis,
 there is some $\zeta : \Delta \leiR \Theta$ such that
-$\leParam{\Theta}{\zeta a}{a'}$ and
+$\leParam{}{\Theta}{\zeta a}{a'}$ and
 $\theta \eqsubst \zeta \compose \iota$.
 \end{proof}
 
@@ -2315,10 +2314,10 @@ lemma~\ref{lem:bindVariableProblem}.
 
 When applying the Optimist's lemma, we must check that the problem on the right
 is an indexed problem family, i.e.\ that 
-$$\leParam{\Gamma}{a}{a'} ~\wedge~ \Gamma \entails Q[a'] b
+$$\leParam{}{\Gamma}{a}{a'} ~\wedge~ \Gamma \entails Q[a'] b
     \quad\Rightarrow\quad  \Gamma \entails Q[a] b.$$
 For \name{Let}, this holds because increasing the
-$\leParam{\Gamma}{\cdot}{\cdot}$  relation specialises the type scheme $\sigma$,
+$\leParam{}{\Gamma}{\cdot}{\cdot}$  relation specialises the type scheme $\sigma$,
 and if a solution can be found with a more specific type scheme then one can be
 found with a more general scheme.
 For \name{App}, it holds because the relation is equality on types.
