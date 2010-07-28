@@ -287,8 +287,9 @@ Algorithms, Theory
 
 %%% \subsection{\AlgorithmW}
 
-\AlgorithmW\ is a well-known type inference algorithm for the \hindleymilner\ type
-system \citep{milner_theory_1978, damas_principal_1982} (henceforth: \scare{\hindleymilnershort}), based on
+\AlgorithmW\ is a well-known type inference algorithm for the \hindleymilner\
+(\hindleymilnershort)
+system \citep{milner_theory_1978, damas_principal_1982}, based on
 \citeauthor{robinson_machine-oriented_1965}'s Unification Algorithm
 \citeyearpar{robinson_machine-oriented_1965}. The system consists of
 simply-typed $\lambda$-calculus with \scare{let-expressions} for polymorphic
@@ -852,7 +853,7 @@ We write $\decl{x}{D}$ for an arbitrary property, with $x \in \V_K$ and
 $D \in \D_K$. The set of variables of $\Gamma$ with sort $K$ is written
 $\V_K(\Gamma)$.
 
-We will build a set $\Ss$ of \define{statements}, assertions which can be judged
+We will build a set $\Ss$ of \define{statements}, assertions that can be judged
 in contexts. For now, the grammar of statements will be
 $$S ::=~ \valid
     ~||~ \tau \type
@@ -864,7 +865,7 @@ $\tau$ and $\upsilon$ are equivalent, and both conjuncts hold.
 
 A statement has zero or more
 \define{parameters}, each of which has an associated \define{\sanity}, 
-i.e.\ a statement whose truth is presupposed for the problem to make sense.
+i.e.\ a statement whose truth is presupposed for the original statement to make sense.
 The $\valid$ statement has no parameter and hence no \sanity s.
 In $\tau \type$, the parameter $\tau$ has \sanity\  $\valid$.
 The type equivalence statement $\tau \equiv \upsilon$ has two parameters; the
