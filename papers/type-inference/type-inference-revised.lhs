@@ -1886,15 +1886,15 @@ $\theta \eqsubst \zeta \compose \iota$.
 Let $P$ be a problem for $A$ and let $Q$ be an $A$-indexed problem family for
 $B$. Then the conjunction of problems
 $$(\pconj{P}{x}{Q}) (a, b) = P a \wedge Q[a] b$$
-is a problem for $A \times B$. This generalisation of $P \wedge Q$
-and allows the output of $P$ to be used in the input of $Q$, so it resembles a
-dependent sum type.
-
-This allows us to state the general Optimist's lemma:
+is a problem for $A \times B$. This \scare{dependent}
+generalisation of $P \wedge Q$
+allows the output of $P$ to be threaded into $Q$.
+%
+We may now give the general Optimist's lemma:
 
 \begin{lemma}[The Optimist's lemma for inference problems]
 \label{lem:optimistInference}
-The following inference rule is admissible:
+%The following inference rule is admissible:
 $$\Rule{\LEIRProb{\Gamma}{P}{\Delta}{b}
        \quad  \LEIRProb{\Delta}{Q[b]}{\Theta}{c}}
        {\LEIRProb{\Gamma}{(\pconj{P}{x}{Q})}{\Theta}{(b, c)}}.$$
@@ -1933,8 +1933,10 @@ so we are done.
 \subsection{The Generalist's lemma}
 
 We have considered problems with abstract inputs and outputs, but
-which sets of concrete values do we actually use? Since we want to
-solve type inference problems, we are interested in types and
+which 
+%sets of
+concrete values do we actually use? We want to
+solve type inference problems, so we are interested in types and
 type schemes.
 
 For a fixed context $\Gamma$, we define the preorder on schemes by
@@ -2011,7 +2013,9 @@ $\leParam{\Gamma, x \asc \sigma}{a}{a'}$.}
 
 \begin{lemma}
 \label{lem:bindVariableProblem}
-If $\Xi$ contains only type variables, then this rule is admissible:
+If $\Xi$ contains only type variables, then
+% this rule is admissible:
+we have:
 $$\Rule{\LEIRProb{\Gamma, x \asc \sigma}{Q}{\Delta, x \asc \sigma, \Xi}{a}}
        {\LEIRProb{\Gamma}{(\Sbind{x \asc \sigma}{Q})}{\Delta, \Xi}{a}}$$
 \end{lemma}
@@ -2047,9 +2051,11 @@ defined in the context for the problem to make sense, but solutions must define 
 
 \begin{lemma}
 \label{lem:inventVariableProblem}
-This rule is admissible:
-$$\Rule{\LEIRProb{\Gamma, \hole{\alpha}}{Q}{\Delta}{a}}
-       {\LEIRProb{\Gamma}{(\Qbind{\alpha}{Q})}{\Delta}{a}}$$
+%This rule is admissible:
+\raisebox{-0.1in}{\qquad\qquad\(
+\Rule{\LEIRProb{\Gamma, \hole{\alpha}}{Q}{\Delta}{a}}
+       {\LEIRProb{\Gamma}{(\Qbind{\alpha}{Q})}{\Delta}{a}}
+\)}
 \end{lemma}
 \proofsux\begin{proof}
 By hypothesis, $\Delta \entails Q a$ and $\Gamma, \hole{\alpha} \leiR \Delta$ so $\Gamma \leiR \Delta$.
@@ -2252,8 +2258,8 @@ If $(\Gamma, P)$ is a type or scheme inference problem, and $\alg{\Gamma}{P}{\De
 then $\LEIRProb{\Gamma}{P}{\Delta}{a}$.
 \end{lemma}
 \proofsux\begin{proof}
-Thanks to soundness (lemma~\ref{lem:inferSound}) it only remains to show 
-generality for the system, i.e.\ that each algorithmic rule becomes
+Given soundness (lemma~\ref{lem:inferSound}), it remains to show 
+generality, i.e.\ that each algorithmic rule becomes
 admissible in the transformed declarative system if we replace
 $\transto$ with $\LEIR$.
 
