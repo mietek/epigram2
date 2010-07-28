@@ -798,12 +798,12 @@ to solve $\alpha \arrow \beta \equiv \alpha' \arrow (\gamma \arrow \gamma)$:
      \grot{ \hole{\gamma} \mid \beta\equiv\gamma\arrow\gamma} \\
  &
   \hole{\alpha},& \beta\defn\alpha,&
-     \grot{ \hole{\gamma} \mid \beta\equiv\gamma\arrow\gamma},&
+     \grot{ \hole{\gamma} \mid \beta\equiv\gamma\arrow\gamma} &
      \alpha' \defn \beta \\
  &
   \hole{\alpha},&
-     \grot{\hole{\gamma} \mid \alpha\equiv\gamma\arrow\gamma},&
-     \alpha' \defn \beta,& \beta\defn\alpha
+     \grot{\hole{\gamma} \mid \alpha\equiv\gamma\arrow\gamma}, &
+     \beta\defn\alpha,& \alpha' \defn \beta
 \smallskip \\
 \transto~ &\hole{\gamma},&
  \multicolumn{2}{@@{}c@@{\,}}{\alpha \defn \gamma \arrow \gamma,}&
