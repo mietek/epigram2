@@ -214,8 +214,14 @@
 \newcommand{\algInferScheme}[4]{\alg{#1}{#2 \hasscheme}{#4}{#3}}
 
 % Problem bits
-\newcommand{\leParam}[3]{#1 \entails #2 \subset #3}
-\newcommand{\pconj}[3]{\Sigma #1~#2.#3}
+\newcommand{\iprobcond}[2]{#1\! [#2]}
+\newcommand{\iprobstmt}[3]{#1\! [#2]\, #3}
+\newcommand{\iprobsubst}[4]{(#1 (#2\! [#3]))\, #4}
+\newcommand{\probstmt}[2]{#1 #2}
+\newcommand{\probsubst}[3]{(#1 #2) #3}
+
+\newcommand{\leParam}[3]{#2 \subset_{#1} #3}
+\newcommand{\pconj}[3]{\Sigma #1 #3}
 \newcommand{\Qbind}[2]{#1 ~ \Yright #2}
 
 
@@ -1846,55 +1852,71 @@ a more liberal definition than that of constraint problems.
 We associate a \define{mode} with each parameter in a statement: either
 \scare{input} or \scare{output}. For simplicity, assume statements always have
 one parameter of each mode (which may be trivial or composite).
-We must extend the apparatus of minimal solutions to problems with outputs.
+We now extend the apparatus of minimal solutions to problems with outputs.
 
-\TODO{Motivate the following.}
-Let $B$ be a set of values closed under substitution. For a fixed context
-$\Gamma$, suppose we have a
-preorder on $B$ written $\leParam{\Gamma}{\cdot}{\cdot}$. This induces a
-preorder on context-value pairs, with $\delta : \leiRParam{\Gamma}{a}{\Delta}{b}$ if
+What can outputs be, and how can we compare them?
+An \define{output set} is a set $B$ closed under
+substitution, such that every context $\Gamma$ induces a preorder
+$\leParam{\Gamma}{}{}$ on $B$ which is congruent
+with respect to the definitional equality, i.e.\ if
+$\Gamma \entails \alpha \equiv \tau \wedge \beta \equiv \upsilon$, then
+$\leParam{\Gamma}{b}{c}$ if and only if 
+$\leParam{\Gamma}{\subst{\tau}{\alpha} b}{\subst{\upsilon}{\beta} c}$.
+\TODO{Other conditions?}
+
+This induces a
+preorder on context-output pairs, with $\delta : \leiRParam{\Gamma}{a}{\Delta}{b}$ if
 $\delta : \Gamma \leiR \Delta$ and $\leParam{\Delta}{\delta a}{b}$.
 
-An \define{$A$-indexed problem family $x.Q$ for $B$} is a family
-of input parameters for a statement, indexed by elements of $A$, such that for
-all $a, a' \in A$, contexts $\Gamma$ and output parameter values $b \in B$,
-$$\leParam{\Gamma}{a}{a'} ~\wedge~ \Gamma \entails Q[a'] b
-    \quad\Rightarrow\quad  \Gamma \entails Q[a] b,$$
-where we write $Q[a] b$ for the statement with input at index $a$ and output
-value $b$. Note that the input parameters for a single statement, and hence
-constraint problems, can be regarded as a family indexed by the unit set with
-the trivial preorder.
+It is not enough to consider output sets, because we need subsequent problems to
+depend on the results of earlier problems. Thus we must index the problems by 
+a set of inputs. 
+
+Let $A$ be an output set.
+An \define{$A$-indexed problem family $Q$ for $B$} is an output set $B$ and a
+family of input parameters for a statement, indexed by elements of $A$, such
+that the \define{simplicity condition} holds:
+for all $a, a' \in A$, contexts $\Gamma$ and output parameter values $b \in B$,
+$$\leParam{\Gamma}{a}{a'} ~\wedge~ \Gamma \entails \iprobstmt{Q}{a'}{b}
+    \quad\Rightarrow\quad  \Gamma \entails \iprobstmt{Q}{a}{b}.$$
+We write $\iprobcond{Q}{a}$ for the \sanity s on the input parameters at index
+$a$ and $\iprobstmt{Q}{a}{b}$ for the statement with input at index $a$ and
+output value $b$.
+
+A \define{problem $P$ for $B$} is a problem family indexed by the 
+unit set with the trivial preorder. We simply omit the index in this case.
 
 An \define{inference problem} consists of a context $\Gamma$, an $A$-indexed
-problem $Q$ and an index $a \in A$ such that the \sanity\  of $Q[a]$
-holds in $\Gamma$. If we omit mention of the index, we mean the problem is
-indexed by the unit set. 
+problem family $Q$ and an index $a \in A$ such that
+$\Gamma \entails \iprobcond{Q}{a}$.
 
-A \define{solution} of $(\Gamma, Q[a])$ consists of an information increase
+A \define{solution} of $(\Gamma, Q, a)$ consists of an information increase
 $\delta : \Gamma \leiR \Delta$ and a value for the output parameter $b \in B$
-such that $(\delta (Q[a])) b$ and the \sanity\ on $b$ hold in $\Delta$.
+such that $\Delta \entails \iprobsubst{\delta}{Q}{a}{b}$.
+% and the \sanity\ on $b$ hold in $\Delta$.
 
-If $A$ and $B$ are preordered for fixed $\Gamma$, we can define a preorder on
-$A \times B$ given by $\leParam{\Gamma}{(a, b)}{(a', b')}$ if
-$\leParam{\Gamma}{a}{a'}$ and $\leParam{\Gamma}{b}{b'}$.
+% If $A$ and $B$ are preordered for fixed $\Gamma$, we can define a preorder on
+% $A \times B$ given by $\leParam{\Gamma}{(a, b)}{(a', b')}$ if
+% $\leParam{\Gamma}{a}{a'}$ and $\leParam{\Gamma}{b}{b'}$.
 
 We write $\LEIRProb{\Gamma}{P}{\Delta}{a}$ if
-$\Gamma \leiR \Delta$, $\Delta \entails P a$,
+$\Gamma \leiR \Delta$, $\Delta \entails \probstmt{P}{a}$,
 and for all $\theta : \Gamma \leiR \Theta$ and $b$ such that
-$\Delta \entails (\theta P) b$, we have
+$\Delta \entails \probsubst{\theta}{P}{b}$, we have
 $\zeta : \leiRParam{\Delta}{a}{\Theta}{b}$ for some $\zeta$ such that
 $\theta \eqsubst \zeta \compose \iota$.
 
 
 \subsection{The Optimist's lemma}
 
-Let $P$ be a problem for $A$ and let $Q$ be an $A$-indexed problem family for
-$B$. Then the conjunction of problems
-$$(\pconj{P}{x}{Q}) (a, b) \defmap P a \wedge Q[a] b$$
-is a problem for $A \times B$. This \scare{dependent}
-generalisation of $P \wedge Q$
+Let $P$ be a problem for $A$ and let $Q$ be an $A$-indexed family for $B$.
+Then the conjunction of problems $\pconj{P}{x}{Q}$ is a problem for $A \times B$
+with the statement
+$$\probstmt{(\pconj{P}{x}{Q})}{(a, b)} \defmap \probstmt{P}{a} \wedge \iprobstmt{Q}{a}{b}$$
+and the preorder defined pointwise.
+This \scare{dependent} generalisation of $P \wedge Q$
 allows the output of $P$ to be threaded into $Q$.
-%
+
 We may now give the general Optimist's lemma:
 
 \begin{lemma}[The Optimist's lemma for inference problems]
@@ -2047,23 +2069,26 @@ $\leParam{\Theta}{\theta a}{a'}$ so we are done.
 
 Alternatively, when binding type variables we can regard the type as being
 initially unknown, and obtain the problem $\Qbind{\alpha}{Q}$ whose output is
-a value in $A$. The corresponding statement is
-$$(\Qbind{\alpha}{Q}) a \defmap Q a$$
-but if $S$ is a sanity condition for $Q$ then the corresponding sanity condition
-for $\Qbind{\alpha}{Q}$ is $\Sbind{\hole{\alpha}}{S}$. Thus $\alpha$ need not be
-defined in the context for the problem to make sense, but solutions must define it.
+a pair of a type and a value in $A$. The corresponding statement is
+$$(\Qbind{\alpha}{Q}) (\tau, b) \defmap \Sbind{\alpha \defn \tau}{Q b}.$$
+
 \TODO{Does this formulation work?} 
 
 \begin{lemma}
 \label{lem:inventVariableProblem}
 %This rule is admissible:
 \raisebox{-0.1in}{\qquad\qquad\(
-\Rule{\LEIRProb{\Gamma, \hole{\alpha}}{Q}{\Delta}{a}}
-       {\LEIRProb{\Gamma}{(\Qbind{\alpha}{Q})}{\Delta}{a}}
+\Rule{\LEIRProb{\Gamma, \hole{\alpha}}{Q}{\Delta}{b}}
+       {\LEIRProb{\Gamma}{(\Qbind{\alpha}{Q})}{\Delta}{(\alpha, b)}}
 \)}
 \end{lemma}
 \proofsux\begin{proof}
-By hypothesis, $\Delta \entails Q a$ and $\Gamma, \hole{\alpha} \leiR \Delta$ so $\Gamma \leiR \Delta$.
+By hypothesis, $\Delta \entails Q b$ so
+$\Delta \entails \Sbind{\alpha \defn \alpha}{Q b}$;
+this makes sense because the first $\alpha$ will be replaced by a fresh variable,
+and the second $\alpha$ is defined in $\Delta$.
+
+Also $\Gamma, \hole{\alpha} \leiR \Delta$ so $\Gamma \leiR \Delta$.
 
 If $\theta : \Gamma \leiR \Theta$ is such that
 $\Theta \entails Q a'$, then
