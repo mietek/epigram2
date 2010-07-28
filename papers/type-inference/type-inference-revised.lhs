@@ -2282,6 +2282,19 @@ then $\Gamma \leiR\Delta$ and $\Delta \entails P a$.
 We maintain this property as an invariant in all the rules.
 \end{proof}
 
+To prove generality, we use the admissible rules in the Optimist's, Generalist's
+and binding lemmas. The algorithmic rules map to compositions of these,
+with multiple hypotheses corresponding to conjunctions of problems.
+To apply the Optimist's lemma, we must check that the problem on the right
+satisfies the \scare{simplicity condition}. For \name{Let}, this means we need
+$$\leParam{\hasscheme}{\Gamma}{\sigma}{\sigma'}
+     ~\wedge~ \Gamma, x \asc \sigma' \entails w : \chi
+     \quad\Rightarrow\quad \Gamma, x \asc \sigma \entails w : \chi,$$
+which says that if a solution can be found with $x$ having a given type scheme
+then one can be found with it having a more general scheme.
+In the \name{App} case, the preorder is definitional equality, so the equation
+on the right must still hold.
+
 \begin{lemma}[Generality of type inference]
 \label{lem:inferGeneral}
 If $(\Gamma, P)$ is a type or scheme inference problem, and $\alg{\Gamma}{P}{\Delta}{a}$,
@@ -2311,16 +2324,6 @@ The \name{App} rule is minimal by two uses of the Optimist's lemma,
 lemma~\ref{lem:inventVariableProblem} and minimality of unification.
 The \name{Let} rule is minimal by the Optimist's lemma and
 lemma~\ref{lem:bindVariableProblem}.
-
-When applying the Optimist's lemma, we must check that the problem on the right
-is an indexed problem family, i.e.\ that 
-$$\leParam{}{\Gamma}{a}{a'} ~\wedge~ \Gamma \entails Q[a'] b
-    \quad\Rightarrow\quad  \Gamma \entails Q[a] b.$$
-For \name{Let}, this holds because increasing the
-$\leParam{}{\Gamma}{\cdot}{\cdot}$  relation specialises the type scheme $\sigma$,
-and if a solution can be found with a more specific type scheme then one can be
-found with a more general scheme.
-For \name{App}, it holds because the relation is equality on types.
 \end{proof}
 
 \begin{lemma}[Completeness of type inference]
