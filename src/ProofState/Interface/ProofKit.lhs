@@ -688,5 +688,5 @@ shared parameters).
 > getFakeMother = do
 >    r <- getFakeRef
 >    inScope <- getInScope
->    let tm = P r $:$ (boySpine inScope)
+>    let tm = P r $:$ (paramSpine inScope)
 >    return $ tm :=>: evTm tm

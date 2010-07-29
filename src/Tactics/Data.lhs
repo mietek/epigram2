@@ -145,7 +145,7 @@
 > elabData :: String -> [ (String , DInTmRN) ] -> 
 >                       [ (String , DInTmRN) ] -> ProofState (EXTM :=>: VAL)
 > elabData nom pars scs = do
->       oldaus <- (| boySpine getInScope |)
+>       oldaus <- (| paramSpine getInScope |)
 >       makeModule nom
 >       goIn
 >       pars' <- traverse (\(x,y) -> do  

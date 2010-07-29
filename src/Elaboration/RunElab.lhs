@@ -92,7 +92,7 @@ and |False| if the problem was suspended.
 > runElab True (ty :>: EFake f) = do
 >     r <- getFakeRef 
 >     inScope <- getInScope
->     runElab True . (ty :>:) $ f (r, boySpine inScope)
+>     runElab True . (ty :>:) $ f (r, paramSpine inScope)
 
 > runElab False (ty :>: EFake f) = runElabTop (ty :>: EFake f)
 
@@ -176,10 +176,10 @@ search the hypotheses for a value with the same label.
 >     es <- getInScope
 >     seekOn es
 >   where
->     seekOn B0                                =    (|)
->     seekOn (es' :< EPARAM boy _ ParamLam _)  =    seekIn (NP boy) (pty boy)
->                                              <|>  seekOn es'
->     seekOn (es' :< _)                        =    seekOn es'
+>     seekOn B0                                  =    (|)
+>     seekOn (es' :< EPARAM param _ ParamLam _)  =    seekIn (NP param) (pty param)
+>                                                <|>  seekOn es'
+>     seekOn (es' :< _)                          =    seekOn es'
 
 >     seekIn :: VAL -> VAL -> ProofState (INTM :=>: VAL, Bool)
 >     seekIn tm (LABEL (N m) u) = do

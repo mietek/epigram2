@@ -175,15 +175,15 @@ then continues with |lookFor|.
 >               Either (StackError t) ResolveState
 > lookUp (x,i) (B0, B0) fs = Left [err $ "Not in scope " ++ x]
 > lookUp (x,i) ((esus :< (es,(y,j))),B0) (fs,vfss) | x == y = 
->   if i == 0 then Right (Left (fs,vfss), boyREFs (flat esus es), Nothing, Nothing)
+>   if i == 0 then Right (Left (fs,vfss), paramREFs (flat esus es), Nothing, Nothing)
 >             else lookUp (x,i-1) (esus,es) (F0,((y,j),fs) :> vfss)
 > lookUp (x,i) ((esus :< (es,(y,j))),B0) (fs,vfss) = 
 >   lookUp (x,i) (esus,es) (F0,((y,j),fs) :> vfss)
 > lookUp (x,i) (esus, es :< e@(M n (Dev {devEntries=es'}))) (fs,vfss) | lastNom n == x =
->   if i == 0 then Right (Right es', boyREFs (flat esus es), Nothing, Nothing)
+>   if i == 0 then Right (Right es', paramREFs (flat esus es), Nothing, Nothing)
 >             else lookUp (x,i-1) (esus,es) (e:>fs,vfss)
 > lookUp (x,i) (esus, es :< e@(EDEF r (y,j) dkind (Dev {devEntries=es'}) _)) (fs,vfss) | x == y =
->   if i == 0 then Right (Right es', boyREFs (flat esus es), Just r, kindScheme dkind)
+>   if i == 0 then Right (Right es', paramREFs (flat esus es), Just r, kindScheme dkind)
 >             else lookUp (x,i-1) (esus,es) (e:>fs,vfss)
 > lookUp (x,i) (esus, es :< e@(EPARAM r (y,j) _ _)) (fs,vfss) | x == y =
 >   if i == 0 then Right (Right B0, [], Just r, Nothing)
@@ -232,7 +232,7 @@ then continues with |lookFor|.
 >     then if i == 0
 >          then case (|devEntries (entryDev e)|) of
 >              Just zs  -> lookLocal ys zs as (entryREF e) (entryScheme e)
->              Nothing  -> Left [err "Boys in other Devs are not in scope"] 
+>              Nothing  -> Left [err "Params in other Devs are not in scope"] 
 >          else huntLocal (x, i-1) ys es as
 >     else huntLocal (x, i) ys es as 
 > huntLocal (x, i) ys [] as = Left [err $ "Had to give up looking for " ++ x]
@@ -447,13 +447,13 @@ If nothing else matches, we had better give up and go home.
 > partNom :: Name -> (String, Int) -> BScopeContext -> FScopeContext
 >                 -> Maybe (Spine {TT} REF, Either Entries FScopeContext)
 > partNom hd top ((esus :< (es,top')), B0) fsc | hd ++ [top] == (flatNom esus []) ++ [top'] =
->   Just (boySpine (flat esus es),Right fsc)
+>   Just (paramSpine (flat esus es),Right fsc)
 > partNom hd top ((esus :< (es,not)), B0) (js,vjss) =
 >   partNom hd top (esus,es) (F0,(not,js):>vjss)
 > partNom hd top (esus, es :< M n (Dev {devEntries=es'})) fsc | (hd ++ [top]) == n =
->   Just (boySpine (flat esus es),Left es')
+>   Just (paramSpine (flat esus es),Left es')
 > partNom hd top (esus, es :< EDEF _ top' _ (Dev {devEntries=es'}) _) fsc | hd ++ [top] == (flatNom esus []) ++ [top'] =
->   Just (boySpine (flat esus es),Left es')
+>   Just (paramSpine (flat esus es),Left es')
 > partNom hd top (esus, es :< e) (fs, vfss)  = partNom hd top (esus, es) (e:>fs,vfss)
 > partNom _ _ _ _ = Nothing
 
@@ -595,7 +595,7 @@ the name part of references, respectively.
 
 > christenName :: BScopeContext -> Name -> RKind -> RelName
 > christenName bsc target rk = s
->   where (s, _, _) = unresolve target rk (boySpine . (uncurry flat) $ bsc) bsc B0
+>   where (s, _, _) = unresolve target rk (paramSpine . (uncurry flat) $ bsc) bsc B0
 >
 > christenREF :: BScopeContext -> REF -> RelName
 > christenREF bsc (target := rk :<: _) = christenName bsc target rk

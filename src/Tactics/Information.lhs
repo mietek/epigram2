@@ -96,7 +96,7 @@ boys if the argument is False or girls if the argument is True.
 >         return $ d $$ prettyBKind k (text (showRelName (christenREF bsc ref))
 >                                               <+> kword KwAsc <+> docTy)
 >     help bsc (es :< EDEF ref _ _ _ _) | gals = do
->         ty     <- bquoteHere $ removeShared (boySpine es) (pty ref)
+>         ty     <- bquoteHere $ removeShared (paramSpine es) (pty ref)
 >         docTy  <- prettyHere (SET :>: ty)
 >         d      <- help bsc es
 >         return $ d $$ (text (showRelName (christenREF bsc ref))

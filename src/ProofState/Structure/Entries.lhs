@@ -33,19 +33,14 @@
 We often need to turn the sequence of boys (parameters) under which we
 work into the argument spine of a \(\lambda\)-lifted definition:
 
-> boySpine :: Entries -> Spine {TT} REF
-> boySpine = foldMap boy where
->   boy :: Entry Bwd -> Spine {TT} REF
->   boy (EPARAM r _ _ _)   = [A (N (P r))]
->   boy _                  = []
+> paramREFs :: Entries -> [REF]
+> paramREFs = foldMap param where
+>   param :: Entry Bwd -> [REF]
+>   param  (EPARAM r _ _ _)   = [r]
+>   param  _                  = []
 
-> boyREFs :: Entries -> [REF]
-> boyREFs = foldMap boy where
->   boy :: Entry Bwd -> [REF]
->   boy (EPARAM r _ _ _)   = [r]
->   boy _                  = []
-
-
+> paramSpine :: Entries -> Spine {TT} REF
+> paramSpine = fmap (A . N . P) . paramREFs
 
 
 In the following, we define a handful of functions which are quite
