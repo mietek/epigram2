@@ -86,7 +86,7 @@ spine of shared parameters.
 >   where tm = P ref $:$ aunclesToElims (aus <>> F0)
 
 > aunclesToElims :: Fwd (Entry Bwd) -> [Elim INTM]
-> aunclesToElims F0 = []
-> aunclesToElims (E ref _ (Parameter _) _ :> es) = (A (N (P ref))) : aunclesToElims es
-> aunclesToElims (_ :> es) = aunclesToElims es
+> aunclesToElims F0                        = []
+> aunclesToElims (EPARAM ref _ _ _ :> es)  = (A (N (P ref))) : aunclesToElims es
+> aunclesToElims (_ :> es)                 = aunclesToElims es
 

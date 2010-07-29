@@ -237,7 +237,7 @@ development.
 >     -- Make a fresh reference of that type
 >     freshRef (x :<: tyv) (\ref ->
 >         -- Register |ref| as a Lambda boy
->         putDevEntry (E ref (lastName ref) (Parameter k) ty)
+>         putDevEntry (EPARAM ref (lastName ref) k ty)
 >       ) 
 >     -- Pass the accumulated commands
 >     return ncs

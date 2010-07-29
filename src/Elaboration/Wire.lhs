@@ -71,12 +71,12 @@ point everyone knows the news anyway.
 A |Boy| is relatively easy to deal with, we just check to see if its type
 has become more defined, and pass on the good news if necessary.
 
-> propagateNews top news (NF (Right (E (name := DECL :<: tv) sn (Parameter k) ty) :> es)) = do
+> propagateNews top news (NF (Right (EPARAM (name := DECL :<: tv) sn k ty) :> es)) = do
 >     case tellNews news ty of
->         (_, NoNews) -> putDevEntry (E (name := DECL :<: tv) sn (Parameter k) ty) >> propagateNews top news (NF es)
+>         (_, NoNews) -> putDevEntry (EPARAM (name := DECL :<: tv) sn k ty) >> propagateNews top news (NF es)
 >         (ty', GoodNews) -> do
 >             let ref = name := DECL :<: evTm ty'
->             putDevEntry (E ref sn (Parameter k) ty')
+>             putDevEntry (EPARAM ref sn k ty')
 >             propagateNews top (addNews (ref, GoodNews) news) (NF es)
 
 Updating girls is a bit more complicated. We proceed as follows:
@@ -87,7 +87,7 @@ Updating girls is a bit more complicated. We proceed as follows:
 \item Continue propagating the latest news.
 \end{enumerate}
 
-> propagateNews top news (NF ((Right e@(E ref sn (Definition _ _) ty)) :> es)) = do
+> propagateNews top news (NF ((Right e@(EDEF ref sn _ _ ty)) :> es)) = do
 >     xs <- jumpIn e
 >     news' <- propagateNews False news xs
 >     news'' <- tellMother news'
@@ -142,10 +142,10 @@ To update a boy, we must:
 \item update the news bulletin with news about this girl.
 \end{enumerate}
 
-> tellEntry news (E (name := DECL :<: tv) sn (Parameter k) ty) = do
+> tellEntry news (EPARAM (name := DECL :<: tv) sn k ty) = do
 >     let (ty' :=>: tv', n)  = tellNewsEval news (ty :=>: tv)
 >     let ref = name := DECL :<: tv'
->     return (addNews (ref, n) news, E ref sn (Parameter k) ty')
+>     return (addNews (ref, n) news, EPARAM ref sn k ty')
 
 To update a hole, we must first check to see if the news bulletin contains a
 definition for it. If so, we fill in the definition (and do not need to
@@ -156,27 +156,27 @@ update the news bulletin). If not, we must:
 \item update the news bulletin with news about this girl.
 \end{enumerate}
 
-> tellEntry news (E ref@(name := HOLE h :<: tyv) sn
->                    (Definition kind dev@(Dev {devTip=Unknown tt})) ty)
+> tellEntry news (EDEF ref@(name := HOLE h :<: tyv) sn
+>                      dkind dev@(Dev {devTip=Unknown tt}) ty)
 >   | Just (ref'@(_ := DEFN tm :<: _), GoodNews) <- getNews news ref = do
 >     tm' <- bquoteHere tm
 >     let  (tt', _) = tellNewsEval news tt
 >          (ty', _) = tellNews news ty
->     return (news, E ref' sn (Definition kind dev{devTip=Defined tm' tt'}) ty')
+>     return (news, EDEF ref' sn dkind (dev{devTip=Defined tm' tt'}) ty')
 >
 >   | otherwise = do
 >     let  (tt', n)             = tellNewsEval news tt
 >          (ty' :=>: tyv', n')  = tellNewsEval news (ty :=>: tyv)
 >          ref                  = name := HOLE h :<: tyv'
 >     return (addNews (ref, min n n') news,
->         E ref sn (Definition kind dev{devTip=Unknown tt'}) ty')
+>         EDEF ref sn dkind (dev{devTip=Unknown tt'}) ty')
 
 To update a hole with a suspended elaboration problem attached, we proceed
 similarly to the previous case, but we also update the elaboration problem.
 \question{What if the news bulletin defines this hole?}
 
-> tellEntry news (E ref@(name := HOLE h :<: tyv) sn
->                    (Definition kind dev@(Dev {devTip=Suspended tt prob})) ty)
+> tellEntry news (EDEF  ref@(name := HOLE h :<: tyv) sn
+>                       dkind dev@(Dev {devTip=Suspended tt prob}) ty)
 >   | Just ne <- getNews news ref = throwError' . err . unlines $ [
 >       "tellEntry: news bulletin contains update", show ne, "for hole", show ref, 
 >        "with suspended computation", show prob]
@@ -187,7 +187,7 @@ similarly to the previous case, but we also update the elaboration problem.
 >          prob'                = tellEProb news prob
 >     grandmotherSuspend (if isUnstable prob' then SuspendUnstable else SuspendStable)
 >     return (addNews (ref, min n n') news,
->         E ref sn (Definition kind dev{devTip=Suspended tt' prob'}) ty')
+>         EDEF ref sn dkind (dev{devTip=Suspended tt' prob'}) ty')
 
 To update a defined girl, we must:
 \begin{enumerate}
@@ -198,7 +198,7 @@ To update a defined girl, we must:
 \item update the news bulletin with news about this girl.
 \end{enumerate}
 
-> tellEntry news (E (name := DEFN tmL :<: tyv) sn (Definition kind dev@(Dev {devTip=Defined tm tt})) ty) = do
+> tellEntry news (EDEF (name := DEFN tmL :<: tyv) sn dkind dev@(Dev {devTip=Defined tm tt}) ty) = do
 >     let  (tt', n)             = tellNewsEval news tt
 >          (ty' :=>: tyv', n')  = tellNewsEval news (ty :=>: tyv)
 >          (tm', n'')           = tellNews news tm
@@ -213,7 +213,7 @@ For paranoia purposes, the following test might be helpful:
 
 >     let ref = name := DEFN (evTm tmL') :<: tyv'
 >     return (addNews (ref, GoodNews {-min (min n n') n''-}) news,
->                 E ref sn (Definition kind dev{devTip=Defined tm' tt'}) ty')
+>                 EDEF ref sn dkind (dev{devTip=Defined tm' tt'}) ty')
 
 The |tellMother| function informs the mother entry about a news bulletin
 that her children have already received, and returns the updated news.

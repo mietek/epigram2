@@ -36,13 +36,13 @@ work into the argument spine of a \(\lambda\)-lifted definition:
 > boySpine :: Entries -> Spine {TT} REF
 > boySpine = foldMap boy where
 >   boy :: Entry Bwd -> Spine {TT} REF
->   boy (E r _ (Parameter _) _)  = [A (N (P r))]
+>   boy (EPARAM r _ _ _)   = [A (N (P r))]
 >   boy _                  = []
 
 > boyREFs :: Entries -> [REF]
 > boyREFs = foldMap boy where
 >   boy :: Entry Bwd -> [REF]
->   boy (E r _ (Parameter _) _)  = [r]
+>   boy (EPARAM r _ _ _)   = [r]
 >   boy _                  = []
 
 
@@ -55,7 +55,7 @@ reading.
 We sometimes wish to determine whether an entry is a |Parameter|:
 
 > isBoy :: Traversable f => Entry f -> Bool
-> isBoy (E _ _ (Parameter _) _)  = True
+> isBoy (EPARAM _ _ _ _)  = True
 > isBoy _                  = False
 
 > entryREF :: Traversable f => Entry f -> Maybe REF
@@ -67,9 +67,9 @@ sub-developments. This works for girls and modules, but will not for
 boys.
 
 > entryDev :: Traversable f => Entry f -> Maybe (Dev f)
-> entryDev (E _ _ (Parameter _) _)          = Nothing
-> entryDev (E _ _ (Definition _ d) _)       = Just d
-> entryDev (M _ d)                    = Just d
+> entryDev (EPARAM _ _ _ _)  = Nothing
+> entryDev (EDEF _ _ _ d _)  = Just d
+> entryDev (M _ d)           = Just d
 
 For display purposes, we often ask the last name or the whole name of
 an |Entry|:
@@ -89,8 +89,8 @@ Some girls have |Scheme|s, and we can extract them thus:
 > kindScheme (PROG sch)  = Just sch
 >
 > entryScheme :: Traversable f => Entry f -> Maybe (Scheme INTM)
-> entryScheme (E _ _ (Definition k _) _)     = kindScheme k
-> entryScheme _                        = Nothing
+> entryScheme (EDEF _ _ k _ _)  = kindScheme k
+> entryScheme _                 = Nothing
 
 The |entryCoerce| function is quite a thing. When defining |Dev|, we
 have been picky in letting any Traversable |f| be the carrier of the
@@ -105,9 +105,9 @@ in which case we return an unchanged |Left dev|.
 
 > entryCoerce ::  (Traversable f, Traversable g) => 
 >                 Entry f -> Either (Dev f) (Entry g)
-> entryCoerce (E ref  xn  (Parameter k)       ty)      = Right $ E ref xn (Parameter k) ty
-> entryCoerce (E _    _   (Definition _ dev)  _)       = Left dev
-> entryCoerce (M _    dev)                       = Left dev
+> entryCoerce (EPARAM ref xn k ty)  = Right $ EPARAM ref xn k ty
+> entryCoerce (EDEF _ _ _ dev _)    = Left dev
+> entryCoerce (M _    dev)          = Left dev
 
 We can extract the |SuspendState| from an entry, noting that boys do not have
 children so cannot contain suspended elaboration processes.

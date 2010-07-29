@@ -151,6 +151,15 @@ cannot.
 >   |  Definition  DefKind (Dev f)
 
 
+For readability, let us collapse the |Entity| into the |Entry| with
+these useful patterns:
+
+> pattern EPARAM ref name paramKind term =
+>     E ref name (Parameter paramKind) term
+> pattern EDEF ref name defKind dev term = 
+>     E ref name (Definition defKind dev) term
+
+
 \paragraph{Kinds of Definitions:}
 
 A \emph{definition} eventually constructs a term, by a (possibly

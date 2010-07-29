@@ -90,14 +90,14 @@ updated information, providing a friendlier interface than |get| and |put|.
 > getBoys = do  
 >     inScope <- getInScope
 >     return $ foldMap boy inScope
->    where boy (E r _ (Parameter _) _)  = [r]
+>    where boy (EPARAM r _ _ _)  = [r]
 >          boy _ = []
 
 > getBoysBwd :: ProofStateT e (Bwd REF)
 > getBoysBwd = do  
 >     inScope <- getInScope
 >     return $ foldMap boy inScope 
->    where boy (E r _ (Parameter _) _)  = (B0 :< r)
+>    where boy (EPARAM r _ _ _)  = (B0 :< r)
 >          boy _ = B0
 
 > getHoleGoal :: ProofStateT e (INTM :=>: TY)
@@ -138,8 +138,7 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     cadets <- getDevCadets
 >     let dev = Dev (es <>< cadets) tip root ss
 >     case m of
->         GirlMother kind ref xn ty -> return
->             (E ref xn (Definition kind dev) ty)
+>         GirlMother dkind ref xn ty -> return (EDEF ref xn dkind dev ty)
 >         ModuleMother n -> return (M n dev)
 
 > getMotherName :: ProofStateT e Name
@@ -223,9 +222,9 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     return ()
 
 > putMotherEntry :: Entry Bwd -> ProofStateT e ()
-> putMotherEntry (E ref xn (Definition kind dev) ty) = do
+> putMotherEntry (EDEF ref xn dkind dev ty) = do
 >     l <- getLayer
->     replaceLayer (l{mother=GirlMother kind ref xn ty})
+>     replaceLayer (l{mother=GirlMother dkind ref xn ty})
 >     putDev dev
 > putMotherEntry (M [] dev) = putDev dev
 > putMotherEntry (M n dev) = do

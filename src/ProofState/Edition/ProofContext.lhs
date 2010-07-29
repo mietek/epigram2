@@ -125,8 +125,8 @@ As often, we need some kit. First, getting the name of a |Mother|:
 Also, turning an entry (|Girl| or |Module|) into a |Mother|:
 
 > entryToMother :: Traversable f => Entry f -> Mother
-> entryToMother (E ref xn (Definition kind _) ty)  = GirlMother kind ref xn ty
-> entryToMother (M n _)                      = ModuleMother n
+> entryToMother (EDEF ref xn dkind _ ty)  = GirlMother dkind ref xn ty
+> entryToMother (M n _)                   = ModuleMother n
 
 
 \subsubsection{Dealing with the global context}
@@ -158,10 +158,10 @@ More generally, we can use one of these perverse functions:
 
 > rearrangeEntry ::  (Traversable f, Traversable g) =>
 >                    (forall a. f a -> g a) -> Entry f -> Entry g
-> rearrangeEntry h (E ref xn (Parameter k) ty)          = 
->     E ref xn (Parameter k) ty
-> rearrangeEntry h (E ref xn (Definition kind dev) ty)  = 
->     E ref xn (Definition kind (rearrangeDev h dev)) ty
+> rearrangeEntry h (EPARAM ref xn k ty)          = 
+>     EPARAM ref xn k ty
+> rearrangeEntry h (EDEF ref xn k dev ty)  = 
+>     EDEF ref xn k (rearrangeDev h dev) ty
 > rearrangeEntry h (M n d)                        = 
 >     M n (rearrangeDev h d)
 >
@@ -225,5 +225,5 @@ giving a list of entries that are currently in scope.
 
 >     boys = foldMap boy
 
->     boy (E r _ (Parameter _) t)  = [r :<: t]
->     boy _                  = []
+>     boy (EPARAM r _ _ t)  = [r :<: t]
+>     boy _                 = []
