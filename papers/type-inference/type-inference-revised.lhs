@@ -2177,27 +2177,19 @@ the same type in the new system with
 Conversely,
 if an application has a type in the new system, then using the conversion
 with the equation allows the same type to be assigned in the old system.
-\TODO{Make this a lemma?}
 
-\TODO{Segue...}
 
-We define 
-   the type inference assertion $\algInfer{\Gamma}{t}{\tau}{\Delta}$ 
-and 
-   the scheme inference assertion $\algInferScheme{\Gamma}{s}{\sigma}{\Delta}$ 
-% (inferring the type of $t$ in $\Gamma_0$ yields $\tau$ in the more informative
-% context $\Gamma_1$)
+Given the transformed rules, we construct the algorithm to match.
+We establish the type inference assertion $\algInfer{\Gamma}{t}{\tau}{\Delta}$ 
+and the scheme inference assertion $\algInferScheme{\Gamma}{s}{\sigma}{\Delta}$ 
 by the rules in Figure~\ref{fig:inferRules}.
-As they are clearly structural on terms, they 
+As they are structural on terms, they 
 yield a terminating algorithm, 
-%%%leading naturally to an implementation, given in
-   and hence the implementation in 
+and hence the implementation in 
 subsection~\ref{sec:inferImplementation}.
-
-%%%\TODO{Say something about freshness of $\Xi$ in \name{Var} rule.}
-% We use Lemma~\ref{lem:specialise} to ensure in rule \name{Var} that
-% we compute a suffix \(\Xi\) consisting of fresh names, such that the
-% output \ensuremath{\Gamma, \Xi} is well-formed.
+The Optimist's lemma
+permits sequential solution of problems and the binding lemmas
+let us interpret binding statements as problems.
 
 \begin{figure}[ht]
 \[\begin{array}{c}
@@ -2254,8 +2246,6 @@ subsection~\ref{sec:inferImplementation}.
 
 \subsection{Soundness and completeness}
 
-\TODO{moved wholesale to section 7; needs a filler-in here to replace}
-
 %% Corresponding to $\leiParam{\Gamma}{a}{\Delta}{b}$, we write
 %% $\delta : \leiRParam{\Gamma}{a}{\Delta}{b}$
 %% if $\delta : \Gamma \leiR \Delta$ and $\leParam{\Delta}{\delta a}{b}$.
@@ -2274,8 +2264,8 @@ derivations, observing that each
 algorithmic rule maintains the appropriate properties.
 
 Recall that a type inference problem $(\Gamma, P)$ has statement
-$P\, \tau = t : \tau$ where $t$ is a term and $\tau$ is the output type.
-A scheme inference problem has statement $P\, \sigma = t \hasscheme \sigma$
+$t : \tau$ where $t$ is a term and $\tau$ is the output type.
+A scheme inference problem has statement $t \hasscheme \sigma$
 where $\sigma$ is the output scheme.
 
 \begin{lemma}[Soundness of type inference]
