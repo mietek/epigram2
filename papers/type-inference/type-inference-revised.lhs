@@ -1380,27 +1380,27 @@ terms in the conclusion. Usually we will ignore these without loss of generality
 
 \namer{Idle}
 % \Rule{\Gamma \entails \alpha \type}
-\Axiom{\algUnify{\Gamma_0, \alpha D}{\alpha}{\alpha}{\Gamma_0, \alpha D}}
+\Axiom{\algUnify{\Gamma, \alpha D}{\alpha}{\alpha}{\Gamma, \alpha D}}
 
 \smallskip\\ 
 
 \namer{Define}
-%\Rule{\Gamma_0 \entails \beta \type}
-\Axiom{\algUnify{\Gamma_0, \hole{\alpha}}{\alpha}{\beta}{\Gamma_0, \alpha \defn \beta}}
+%\Rule{\Gamma \entails \beta \type}
+\Axiom{\algUnify{\Gamma, \hole{\alpha}}{\alpha}{\beta}{\Gamma, \alpha \defn \beta}}
 \side{\alpha \neq \beta}
 
 \smallskip\\ 
 
 \namer{Ignore}
-\Rule{\algUnify{\Gamma_0}{\alpha}{\beta}{\Delta_0}}
-     {\algUnify{\Gamma_0, \decl{x}{D}}{\alpha}{\beta}{\Delta_0, \decl{x}{D}}}
+\Rule{\algUnify{\Gamma}{\alpha}{\beta}{\Delta}}
+     {\algUnify{\Gamma, \decl{x}{D}}{\alpha}{\beta}{\Delta, \decl{x}{D}}}
 \side{x \perp \{\alpha, \beta\} }
 
 \smallskip\\ 
 
 \namer{Expand}
-\Rule{\algUnify{\Gamma_0}{\tau}{\beta}{\Delta_0}}
-     {\algUnify{\Gamma_0, \alpha \defn \tau}{\alpha}{\beta}{\Delta_0, \alpha \defn \tau}}
+\Rule{\algUnify{\Gamma}{\tau}{\beta}{\Delta}}
+     {\algUnify{\Gamma, \alpha \defn \tau}{\alpha}{\beta}{\Delta, \alpha \defn \tau}}
 \side{\alpha \neq \beta}
 
 \smallskip\\ 
@@ -1417,31 +1417,31 @@ terms in the conclusion. Usually we will ignore these without loss of generality
 
 \smallskip\\
 \namer{DefineS}
-% \Rule{\Gamma_0, \Xi \entails \tau \type}
-\Axiom{\algInstantiate{\Gamma_0, \hole{\alpha}}{\alpha}{\tau}{\Xi}
-                   {\Gamma_0, \Xi, \alpha \defn \tau}}
+% \Rule{\Gamma, \Xi \entails \tau \type}
+\Axiom{\algInstantiate{\Gamma, \hole{\alpha}}{\alpha}{\tau}{\Xi}
+                   {\Gamma, \Xi, \alpha \defn \tau}}
 \side{\alpha \notin \FTV{\tau, \Xi}}
 
 \smallskip\\ 
 
 \namer{IgnoreS}
-\Rule{\algInstantiate{\Gamma_0}{\alpha}{\tau}{\Xi}{\Delta_0}}
-     {\algInstantiate{\Gamma_0, \decl{x}{D}}{\alpha}{\tau}{\Xi}{\Delta_0, \decl{x}{D}}}
+\Rule{\algInstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}}
+     {\algInstantiate{\Gamma, \decl{x}{D}}{\alpha}{\tau}{\Xi}{\Delta, \decl{x}{D}}}
 \side{x \perp \FTV{\alpha, \tau, \Xi}}
 
 \smallskip\\
 
 \namer{ExpandS}
-\Rule{\algUnify{\Gamma_0, \Xi}{\upsilon}{\tau}{\Delta_0}}
-     {\algInstantiate{\Gamma_0, \alpha \defn \upsilon}{\alpha}{\tau}{\Xi}
-                   {\Delta_0, \alpha \defn \upsilon}}
+\Rule{\algUnify{\Gamma, \Xi}{\upsilon}{\tau}{\Delta}}
+     {\algInstantiate{\Gamma, \alpha \defn \upsilon}{\alpha}{\tau}{\Xi}
+                   {\Delta, \alpha \defn \upsilon}}
 \side{\alpha \notin \FTV{\tau, \Xi}}
 
 \smallskip\\
 
 \namer{DependS}
-\Rule{\algInstantiate{\Gamma_0}{\alpha}{\tau}{\beta D, \Xi}{\Delta}}
-     {\algInstantiate{\Gamma_0, \beta D}{\alpha}{\tau}{\Xi}{\Delta}}
+\Rule{\algInstantiate{\Gamma}{\alpha}{\tau}{\beta D, \Xi}{\Delta}}
+     {\algInstantiate{\Gamma, \beta D}{\alpha}{\tau}{\Xi}{\Delta}}
 \side{\alpha \neq \beta, \beta \in \FTV{\tau, \Xi}}
 
 \end{array}\]
@@ -1450,7 +1450,7 @@ terms in the conclusion. Usually we will ignore these without loss of generality
 \end{figure}
 
 Observe that no rule applies in the case \((\ddag)\) 
-$$\algInstantiate{\Gamma_0, \alpha D}{\alpha}{\tau}{\Xi}{\Delta}
+$$\algInstantiate{\Gamma, \alpha D}{\alpha}{\tau}{\Xi}{\Delta}
 \mathrm{~with~} \alpha \in \FTV{\tau, \Xi},$$
 %%%so the algorithm fails in this case. 
    where the algorithm fails. 
@@ -1564,10 +1564,10 @@ solved, so can those in its hypothesis.
 The only case the rules omit is the case \((\ddag)\) where an illegal occurrence
 of a type variable is rejected. In this case, we are seeking to solve the
 problem $\alpha \equiv \tau$ in the context
-$\Gamma_0, \decl{\alpha}{D} ~||~ \Xi$ and we have $\alpha \in \FTV{\tau, \Xi}$.
+$\Gamma, \decl{\alpha}{D} ~||~ \Xi$ and we have $\alpha \in \FTV{\tau, \Xi}$.
 Substituting out the definitions in $\Xi$ from $\tau$, we obtain a type
 $\upsilon$ such that $\alpha \in \FTV{\upsilon}$, $\upsilon$ is not a variable
-and $\Gamma_0, \decl{\alpha}{D}, \Xi \entails \upsilon \equiv \tau$.
+and $\Gamma, \decl{\alpha}{D}, \Xi \entails \upsilon \equiv \tau$.
 Now the problem $\alpha \equiv \upsilon$ has the same solutions as
 $\alpha \equiv \tau$, but by Lemma~\ref{lem:occursCheck}, there are 
 %%%none. 
@@ -1855,12 +1855,12 @@ algorithm, because it acts structurally on contexts, which may now contain
 $\fatsemi$ separators. We complete the algorithmic rules:
 \[\begin{array}{c}
 \namer{Skip}
-\Rule{\algUnify{\Gamma_0}{\alpha}{\beta}{\Delta_0}}
-     {\algUnify{\Gamma_0 \fatsemi}{\alpha}{\beta}{\Delta_0 \fatsemi}}
+\Rule{\algUnify{\Gamma}{\alpha}{\beta}{\Delta}}
+     {\algUnify{\Gamma \fatsemi}{\alpha}{\beta}{\Delta \fatsemi}}
 \smallskip\\
 \namer{Repossess}
-\Rule{\algInstantiate{\Gamma_0}{\alpha}{\tau}{\Xi}{\Delta_0}}
-     {\algInstantiate{\Gamma_0 \fatsemi}{\alpha}{\tau}{\Xi}{\Delta_0 \fatsemi}}
+\Rule{\algInstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}}
+     {\algInstantiate{\Gamma \fatsemi}{\alpha}{\tau}{\Xi}{\Delta \fatsemi}}
 \end{array}\]
 
 We must correspondingly update the induction in Lemma~\ref{lem:unifySound} to
@@ -2298,8 +2298,8 @@ let us interpret binding statements as problems.
 
 \namer{Abs}
 \Rule{\algInfer{(\Gamma, \hole{\alpha}, x \asc \gendot{\alpha})}{w}{\upsilon}
-          {(\Delta_0, x \asc \gendot{\alpha}, \Xi)}}
-     {\algInfer{\Gamma}{\lambda x.w}{(\alpha \arrow \upsilon)}{(\Delta_0, \Xi)}}
+          {(\Delta, x \asc \gendot{\alpha}, \Xi)}}
+     {\algInfer{\Gamma}{\lambda x.w}{(\alpha \arrow \upsilon)}{(\Delta, \Xi)}}
 \side{\alpha \notin \tyvars{\Gamma}}
 
 \smallskip\\
@@ -2321,8 +2321,8 @@ let us interpret binding statements as problems.
         %%%{\algInfer{\Gamma}{\letIn{x}{s}{w}}{\chi}{\Delta_1, \Xi_1}}
         {\algInferScheme{\Gamma}{s}{\sigma}{\Delta_0}}
         {\algInfer{(\Delta_0, x \asc \sigma)}{w}{\chi}
-               {(\Delta_1, x \asc \sigma, \Xi_1)}}
-        {\algInfer{\Gamma}{\letIn{x}{s}{w}}{\chi}{(\Delta_1, \Xi_1)}}
+               {(\Delta, x \asc \sigma, \Xi)}}
+        {\algInfer{\Gamma}{\letIn{x}{s}{w}}{\chi}{(\Delta, \Xi)}}
 
 \end{array}\]
 \caption{Algorithmic rules for type inference}
