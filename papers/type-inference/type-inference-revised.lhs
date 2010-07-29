@@ -1,4 +1,4 @@
-\documentclass[authoryear,preprint]{sigplanconf}
+\documentclass[authoryear]{sigplanconf}
 
 %options ghci
 
@@ -233,7 +233,10 @@
 \usepackage{natbib}
 \usepackage[T1]{fontenc}
 \usepackage{subfigure}
-\usepackage[colorlinks,draft=false]{hyperref}
+% \usepackage[colorlinks,draft=true]{hyperref}
+
+\newcommand{\url}[1]{{\tt #1}}
+\newcommand{\phantomsection}{}
 
 \newcommand{\fixpars}{\setlength{\parskip}{5pt}\setlength{\parindent}{0pt}}
 \fixpars
@@ -553,7 +556,7 @@ generalisation process.
 
 \begin{figure*}[p]
 
-\begin{minipage}[t]{0.5\linewidth}
+\begin{minipage}[b]{0.5\linewidth}
 
 \subfigure[][Types, type variables, occurs check]{\frame{\parbox{\textwidth}{\fixpars\medskip
 
@@ -641,7 +644,7 @@ generalisation process.
 
 \end{minipage}
 \hspace{\medskipamount}
-\begin{minipage}[t]{0.5\linewidth}
+\begin{minipage}[b]{0.5\linewidth}
 
 \subfigure[][Processing the context]{\frame{\parbox{\linewidth}{\fixpars\medskip
 
@@ -2349,7 +2352,7 @@ will succeed.
 
 \begin{figure*}[p]
 
-\begin{minipage}[t]{0.5\linewidth}
+\begin{minipage}[b]{0.5\linewidth}
 
 \subfigure[][Type schemes]{\frame{\parbox{\textwidth}{\fixpars\medskip
 
@@ -2422,7 +2425,7 @@ will succeed.
 
 \end{minipage}
 \hspace{\medskipamount}
-\begin{minipage}[t]{0.5\linewidth}
+\begin{minipage}[b]{0.5\linewidth}
 
 
 \subfigure[][Terms and context entries]{\frame{\parbox{\textwidth}{\fixpars\medskip
