@@ -2030,75 +2030,74 @@ $\theta \eqsubst \restrict{\zeta}{\Delta} \compose \iota : \Gamma \leiR \Theta$.
 \subsection{The binding lemmas}
 
 Just as we have a general notion of conjunction problems, so we can regard
-binding statements as problems. However, there are two ways in which this makes
-sense, depending on the mode of the bound property. Each has a minimality result
-corresponding to the Optimist's lemma and Generalist's lemma.
+binding statements as problems. There are two ways to do so, depending on the
+mode of the bound property. Each has a corresponding minimality result.
+% corresponding to the Optimist's lemma and Generalist's lemma.
 
 First, if $Q$ is a problem for $A$, then $\Sbind{x \asc \sigma}{Q}$
-is also a problem for $A$, with statement
+is also a problem for $A$ where we regard $\sigma$ as an input. It has statement
 $$(\Sbind{x \asc \sigma}{Q}) a \defmap \Sbind{x \asc \sigma}{Q a}$$
-and preorder $\leParam{(\Sbind{x \asc \sigma}{Q})}{\Gamma}{a}{b}$ iff
+and preorder given by $\leParam{(\Sbind{x \asc \sigma}{Q})}{\Gamma}{a}{b}$ if
 $\leParam{Q}{\Gamma, x \asc \sigma}{a}{b}$.
-That is, we regard $\sigma$ as an input.
+Minimal solutions are found by bringing $x$ into scope temporarily.
 
 \begin{lemma}
 \label{lem:bindVariableProblem}
-If $\Xi$ contains only type variables, then
-% this rule is admissible:
-we have:
-$$\Rule{\LEIRProb{\Gamma, x \asc \sigma}{Q}{\Delta, x \asc \sigma, \Xi}{a}}
-       {\LEIRProb{\Gamma}{(\Sbind{x \asc \sigma}{Q})}{\Delta, \Xi}{a}}$$
+If $\Xi$ does not contain any $\fatsemi$ separators, then we have:
+$$\Rule{\LEIRProb{(\Gamma, x \asc \sigma)}{Q}{(\Delta, x \asc \sigma, \Xi)}{a}}
+       {\LEIRProb{\Gamma}{(\Sbind{x \asc \sigma}{Q})}{(\Delta, \Xi)}{a}}.$$
 \end{lemma}
 \proofsux\begin{proof}
 If $\Gamma, x \asc \sigma \leiR \Delta, x \asc \sigma, \Xi$ then
-$\Gamma \leiR \Delta, \Xi$ since nothing can depend on $x$.
+$\Gamma \leiR \Delta, \Xi$ since nothing in $\Xi$ can depend on $x$.
 If $\Delta, x \asc \sigma, \Xi \entails Q a$ then
 $\Delta, \Xi, x \asc \sigma \entails Q a$ (permuting the context) and hence
 $\Delta, \Xi \entails \Sbind{x \asc \sigma}{Q a}$.
 
 If $\theta : \Gamma \leiR \Theta$ is such that
-$\Theta \entails \Sbind{x \asc \theta\sigma}{(\theta Q) a'}$ then, by inversion,
+$\Theta \entails \Sbind{x \asc \theta\sigma}{(\theta Q) a'}$, then by inversion,
 $\Theta, x \asc \theta\sigma \entails (\theta Q) a'$.
 By minimality of the hypothesis, there is
 $\zeta : \Delta, x \asc \sigma, \Xi \leiR \Theta, x \asc \theta\sigma$ such that
 $\leParam{Q}{\Theta, x \asc \theta\sigma}{\theta a}{a'}$ and
 $\theta \eqsubst \zeta \compose \iota$.
-Now $\zeta : \Delta, \Xi \leiR \Theta$ and
-$\leParam{(\Sbind{x \asc \sigma}{Q})}{\Theta}{\theta a}{a'}$ so we are done.
+Hence $\zeta : \Delta, \Xi \leiR \Theta$ and
+$\leParam{(\Sbind{x \asc \sigma}{Q})}{\Theta}{\theta a}{a'}$.
 \end{proof}
 
 
-Alternatively, when binding type variables we can regard the type as being
+Alternatively, we can regard a type variable binding as being
 initially unknown, and obtain the problem $\Qbind{\alpha}{Q}$ whose output is
 a pair of a type and a value in $A$. The corresponding statement is
 $$(\Qbind{\alpha}{Q}) (\tau, b) \defmap \subst{\tau}{\alpha}(\probstmt{Q}{b})$$
-and the preorder is given by
+and the output preorder is given by
 $\leParam{(\Qbind{\alpha}{Q})}{\Gamma}{(\tau, a)}{(\upsilon, b)}$ if
 $\Gamma \entails \tau \equiv \upsilon$ and
 $\leParam{Q}{\Gamma}{\subst{\tau}{\alpha} a}{\subst{\upsilon}{\alpha} b}$.
+Minimal solutions arise by adding an unknown to the context and returning it
+as the output:
 
 \begin{lemma}
 \label{lem:inventVariableProblem}
-%This rule is admissible:
 \raisebox{-0.1in}{\qquad\qquad\(
-\Rule{\LEIRProb{\Gamma, \hole{\alpha}}{Q}{\Delta}{b}}
+\Rule{\LEIRProb{(\Gamma, \hole{\alpha})}{Q}{\Delta}{b}}
        {\LEIRProb{\Gamma}{(\Qbind{\alpha}{Q})}{\Delta}{(\alpha, b)}}
 \)}
 \end{lemma}
 \proofsux\begin{proof}
-By hypothesis, $\Delta \entails \probstmt{Q}{b}$ so
+By hypothesis, $\Delta \entails \probstmt{Q}{b}$ so clearly
 $\Delta \entails \subst{\alpha}{\alpha}(\probstmt{Q}{b})$.
 Moreover, $\Gamma, \hole{\alpha} \leiR \Delta$ so $\Gamma \leiR \Delta$.
 If $\theta : \Gamma \leiR \Theta$ is such that
-$\Theta \entails \subst{\upsilon}{\alpha}(\probstmt{Q}{c})$, then
-$\Theta \entails \probstmt{(\subst{\upsilon}{\alpha} Q)}{(\subst{\upsilon}{\alpha} c)}$.
-By (minimality of) the rule's hypothesis
-applied to the substitution
+$\Theta \entails \subst{\upsilon}{\alpha}(\probsubst{\theta}{Q}{c})$, then
+$\Theta \entails \probstmt{(\subst{\upsilon}{\alpha} \theta Q)}{(\subst{\upsilon}{\alpha} c)}$.
+By minimality of the hypothesis
+with the substitution
 $\subst{\upsilon}{\alpha} \compose \theta : \Gamma, \hole{\alpha} \leiR \Theta$,
 there is some $\zeta : \Delta \leiR \Theta$ such that
 $\leParam{Q}{\Theta}{\zeta b}{(\subst{\upsilon}{\alpha} c)}$ and
 $\subst{\upsilon}{\alpha} \compose \theta \eqsubst \zeta \compose \iota$.
-Now
+Hence
 $\zeta : \leiRParam{\Delta}{(\alpha, b)}{\Theta}{(\upsilon, c)}$.
 \end{proof}
 
