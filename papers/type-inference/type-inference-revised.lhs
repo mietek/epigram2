@@ -1099,8 +1099,8 @@ algorithm. For example, our algorithm always uses the identity substitution.
 
 \subsection{Stable statements}
 
-We say a statement $S$ is \define{stable} if it is preserved under information
-increase, that is, if
+A statement $S$ is \define{stable} if information
+increase preserves it, i.e., if
 $$\Gamma \entails S  \quad \mathrm{and}  \quad  \delta : \Gamma \lei \Delta
     \quad \Rightarrow \quad  \Delta \entails \delta S.$$
 This says that we can extend a simultaneous substitution on syntax to a
@@ -1220,14 +1220,14 @@ always find minimal solutions
 %%%in the form $\iota : \Gamma \lei \Delta$. 
    in this form. 
 
-As one might expect, the following rule is admissible:  
-$$\Rule{\leiStmt{\Gamma}{P}{\Delta}
-       \quad  \leiStmt{\Delta}{Q}{\Theta}}
-       {\leiStmt{\Gamma}{P \wedge Q}{\Theta}}$$
-since stability ensures that if $\Delta$ solves $P$ then any more
-informative context $\Theta$ also solves $P$. More surprisingly, this also
-gives minimal solutions to composite problems, allowing a \scare{greedy} 
-solution strategy.
+As one might expect, the following rule is admissible,  
+$$\Rule{\iota:\leiStmt{\Gamma}{P}{\Delta}
+       \quad  \iota:\leiStmt{\Delta}{Q}{\Theta}}
+       {\iota:\leiStmt{\Gamma}{P \wedge Q}{\Theta}}$$
+for stability ensures that if $\Delta$ solves $P$ then any more
+informative context $\Theta$ also solves $P$. More surprisingly, composite
+problems acquire minimal solutions similarly,
+allowing a \scare{greedy}  strategy.
 %
 % We can now state the following \scare{greedy} approach to finding minimal
 % solutions to such composite problems: find a minimal solution of problem $P$,
@@ -2544,45 +2544,44 @@ to check applications.
 
 We have arrived at an implementation of \hindleymilner\ type inference
 which involves all the same steps as \AlgorithmW, but not
-necessarily in the same order. In particular, the dependency analysis
-which \W\ performs all of a sudden in the let-rule is here pushed
-down to a requirement that the underlying unification algorithm
-maintain the well-foundedness of the context.
+necessarily in the same order. In particular, the dependency panic
+which seizes \W\ in the let-rule here becomes
+an invariant that the underlying unification algorithm
+maintain a well-founded context.
 
-Our algorithm is presented as a system of problem transformation
-locally preserving all possibile solutions, hence finding a most
-general global solution if any at all. Accumulating solutions to
-decomposed problems is justified simply by the stability of solutions
-with respect to information increase. We have established a discipline
-of problem solving which happens to be complete for Hindley-Milner
-type inference but in any case maintains a coupling of soundness with
-generality.
+Our algorithm is presented as a problem transformation system locally
+preserving all possibile solutions, hence finding a most general
+global solution if any at all. Accumulating solutions to decomposed
+problems is justified simply by stability of solutions on information
+increase. We have established a discipline of problem solving, happily
+complete for Hindley-Milner type inference, but in any case coupling
+soundness with generality.
 
 Maintain context validity, make definitions anywhere and only where
 there is no choice, so the solutions you find will be general and
 generalisable locally: this is a key design principle for
 elaboration of high-level code in systems like Epigram and Agda; bugs
-arise from its transgression. By giving a disciplined account of
+arise from its transgression. Our disciplined account of
 \scare{current information} in terms of contexts and their information
-ordering, we provide a means to investigate these problems and justify
-the steps we take to repair them.
+ordering provides a principled means to investigate and repair
+these troubles.
 
 We are, however, missing yet more context. Our task was greatly
 simplified by studying a structural type inference process for
 \scare{finished} expressions in a setting where unification is
 complete. Each subproblem is either solved or rejected on first
 inspection---there is never a need for a \scare{later, perhaps} outcome. As
-a result, the conventional control discipline of \scare{direct style} 
+a result, \scare{direct style} 
 recursive programming is adequate to the task. If problems could get
 stuck, how might we abandon them and return to them later? By storing
 their \emph{context}, of course!
 
-Here, we have combined the linguistic contexts for the various sorts
-of variable involved in problems; our next acquisition is the
-syntactic context of the target term, interspersing variable
-declarations with components of its
-\emph{zipper}~\citep{huet:zipper}. We thus become free to abandon
-fixed recursion strategies and refocus wherever progress is to be
+Here, we have combined the \emph{linguistic} contexts for various sorts
+of variable; our next acquisition is the
+\emph{syntactic} context of the target term, interspersing variable
+declarations with pieces of its
+\emph{zipper}~\citep{huet:zipper}. We thus enable a flexible traversal
+strategy, refocusing wherever progress can be
 made. The tree-like proof states of McBride's thesis evolved into
 exactly such \scare{zippers with binding} in the implementation of Epigram.
 
