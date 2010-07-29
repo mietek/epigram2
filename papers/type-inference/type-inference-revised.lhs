@@ -1301,7 +1301,7 @@ $\tau$ is not a variable, \\ {}
 $\Xi$ contains only type variable declarations \\ {}
 \hspace*{0.1in}$\beta \in \tyvars{\Xi} \Rightarrow \beta \in \FTV{\tau, \Xi}$.
 
-Some context entries have no bearing on the problem at hand.
+\TODO{Fix FTV!} Some context entries have no bearing on the problem at hand.
 We write $x \perp X$ ($x$ is orthogonal to set $X$ of type variables)
 if $x$ is not a type variable or not in $X$.
 
