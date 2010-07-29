@@ -7,7 +7,7 @@
 > {-# LANGUAGE FlexibleInstances, TypeOperators, TypeSynonymInstances,
 >              GADTs, RankNTypes, StandaloneDeriving #-}
 
-> module ProofState.ProofContext where
+> module ProofState.Movement.ProofContext where
 
 > import Control.Applicative
 > import Data.Foldable
@@ -16,8 +16,8 @@
 
 > import NameSupply.NameSupply
 
-> import ProofState.Developments
-> import ProofState.News
+> import ProofState.Structure.Developments
+> import ProofState.Edition.News
 
 > import Evidences.Tm
 

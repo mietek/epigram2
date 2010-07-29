@@ -7,7 +7,7 @@
 > {-# LANGUAGE FlexibleInstances, TypeOperators, TypeSynonymInstances,
 >              GADTs, RankNTypes #-}
 
-> module ProofState.ProofState where
+> module ProofState.Edition.ProofState where
 
 > import Control.Monad.State
 > import Data.Foldable
@@ -23,9 +23,9 @@
 > import DisplayLang.Scheme
 > import DisplayLang.Name
 
-> import ProofState.Developments
-> import ProofState.News
-> import ProofState.ProofContext
+> import ProofState.Structure.Developments
+> import ProofState.Edition.News
+> import ProofState.Movement.ProofContext
 
 > import Evidences.Rules
 > import Evidences.Tm

@@ -14,11 +14,11 @@
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
 
-> import ProofState.Developments
-> import ProofState.ProofState
-> import ProofState.ProofContext
-> import ProofState.ProofKit
-> import ProofState.NameResolution
+> import ProofState.Structure.Developments
+> import ProofState.Edition.ProofState
+> import ProofState.Movement.ProofContext
+> import ProofState.Interface.ProofKit
+> import ProofState.Interface.NameResolution
 
 > import DisplayLang.DisplayTm
 > import DisplayLang.Scheme

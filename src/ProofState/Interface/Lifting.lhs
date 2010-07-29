@@ -6,7 +6,7 @@
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE FlexibleInstances, TypeOperators, GADTs #-}
 
-> module ProofState.Lifting where
+> module ProofState.Interface.Lifting where
 
 > import Control.Applicative
 > import Control.Monad.Identity
@@ -18,7 +18,7 @@
 > import Evidences.Mangler
 > import Evidences.Rules
 
-> import ProofState.Developments
+> import ProofState.Structure.Developments
 
 > import Kit.BwdFwd
 > import Kit.MissingLibrary

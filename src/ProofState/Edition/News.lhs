@@ -6,7 +6,7 @@
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE FlexibleInstances, TypeOperators, GADTs #-}
 
-> module ProofState.News where
+> module ProofState.Edition.News where
 
 > import Data.Foldable hiding (foldr)
 > import Data.Maybe

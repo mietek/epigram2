@@ -21,10 +21,10 @@
 > import Evidences.Tm
 > import Evidences.Rules
 
-> import ProofState.ProofState
-> import ProofState.ProofKit
-> import ProofState.Lifting
-> import ProofState.NameResolution
+> import ProofState.Edition.ProofState
+> import ProofState.Interface.ProofKit
+> import ProofState.Interface.Lifting
+> import ProofState.Interface.NameResolution
 
 > import DisplayLang.Name
 

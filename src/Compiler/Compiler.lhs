@@ -27,7 +27,7 @@ generate an executable from a collection of supercombinator definitions.
 > import Evidences.Rules
 > import Evidences.Mangler
 
-> import ProofState.Developments
+> import ProofState.Structure.Developments
 
 > import Features.Features ()
 

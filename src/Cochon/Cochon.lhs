@@ -28,10 +28,10 @@
 > import DisplayLang.DisplayTm
 > import DisplayLang.PrettyPrint
 
-> import ProofState.ProofContext
-> import ProofState.ProofState
-> import ProofState.ProofKit
-> import ProofState.NameResolution
+> import ProofState.Movement.ProofContext
+> import ProofState.Edition.ProofState
+> import ProofState.Interface.ProofKit
+> import ProofState.Interface.NameResolution
 
 > import Tactics.Elimination
 > import Tactics.PropSimp

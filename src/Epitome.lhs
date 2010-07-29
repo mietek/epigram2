@@ -96,13 +96,16 @@
 
 \input{ProofState/Introduction.tex}
 
-%include ProofState/Developments.lhs
-%include ProofState/News.lhs
-%include ProofState/Lifting.lhs
-%include ProofState/ProofContext.lhs
-%include ProofState/ProofState.lhs
-%include ProofState/ProofKit.lhs
-%include ProofState/NameResolution.lhs
+%include ProofState/Structure/Developments.lhs
+
+%include ProofState/Movement/ProofContext.lhs
+
+%include ProofState/Edition/ProofState.lhs
+%include ProofState/Edition/News.lhs
+
+%include ProofState/Interface/ProofKit.lhs
+%include ProofState/Interface/NameResolution.lhs
+%include ProofState/Interface/Lifting.lhs
 
 \chapter{The Proof Tactics}
 

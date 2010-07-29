@@ -16,10 +16,10 @@
 > import Evidences.Rules
 > import Evidences.Tm
 
-> import ProofState.Developments
-> import ProofState.News
-> import ProofState.ProofState
-> import ProofState.ProofKit
+> import ProofState.Structure.Developments
+> import ProofState.Edition.News
+> import ProofState.Edition.ProofState
+> import ProofState.Interface.ProofKit
 
 > import Kit.BwdFwd
 > import Kit.MissingLibrary

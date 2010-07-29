@@ -13,8 +13,8 @@
 > import Evidences.Tm
 > import Evidences.Rules
 
-> import ProofState.ProofState
-> import ProofState.ProofKit
+> import ProofState.Edition.ProofState
+> import ProofState.Interface.ProofKit
 
 > import DisplayLang.Naming
 

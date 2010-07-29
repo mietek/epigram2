@@ -7,7 +7,7 @@
 > {-# LANGUAGE FlexibleInstances, TypeOperators, TypeSynonymInstances,
 >              GADTs, RankNTypes #-}
 
-> module ProofState.ProofKit where
+> module ProofState.Interface.ProofKit where
 
 > import Control.Applicative
 > import Control.Monad.Error
@@ -21,12 +21,12 @@
 > import NameSupply.NameSupply
 > import NameSupply.NameSupplier
 
-> import ProofState.Developments
-> import ProofState.News
-> import ProofState.Lifting
-> import ProofState.ProofContext
-> import ProofState.ProofState
-> import ProofState.NameResolution
+> import ProofState.Structure.Developments
+> import ProofState.Edition.News
+> import ProofState.Interface.Lifting
+> import ProofState.Movement.ProofContext
+> import ProofState.Edition.ProofState
+> import ProofState.Interface.NameResolution
 
 > import DisplayLang.DisplayTm
 > import DisplayLang.Name

@@ -6,7 +6,7 @@
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE FlexibleInstances, TypeOperators, GADTs , StandaloneDeriving #-}
 
-> module ProofState.Developments where
+> module ProofState.Structure.Developments where
 
 > import Data.Foldable
 > import Data.List

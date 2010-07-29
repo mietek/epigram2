@@ -18,11 +18,11 @@
 
 > import Features.Features ()
 
-> import ProofState.Developments
-> import ProofState.Lifting
-> import ProofState.ProofContext
-> import ProofState.ProofState
-> import ProofState.ProofKit
+> import ProofState.Structure.Developments
+> import ProofState.Interface.Lifting
+> import ProofState.Movement.ProofContext
+> import ProofState.Edition.ProofState
+> import ProofState.Interface.ProofKit
 
 > import DisplayLang.DisplayTm
 > import DisplayLang.Name

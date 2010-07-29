@@ -21,9 +21,9 @@
 
 > import NameSupply.NameSupplier
 
-> import ProofState.Developments
-> import ProofState.ProofState
-> import ProofState.ProofKit
+> import ProofState.Structure.Developments
+> import ProofState.Edition.ProofState
+> import ProofState.Interface.ProofKit
 
 > import Elaboration.Elaborator
 

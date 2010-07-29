@@ -19,12 +19,12 @@
 
 > import Features.Features ()
 
-> import ProofState.Developments
-> import ProofState.ProofContext
-> import ProofState.ProofState
-> import ProofState.ProofKit
-> import ProofState.Lifting
-> import ProofState.NameResolution
+> import ProofState.Structure.Developments
+> import ProofState.Movement.ProofContext
+> import ProofState.Edition.ProofState
+> import ProofState.Interface.ProofKit
+> import ProofState.Interface.Lifting
+> import ProofState.Interface.NameResolution
 
 > import DisplayLang.Scheme
 > import DisplayLang.Name

@@ -18,8 +18,8 @@
 
 > import Features.Features ()
 
-> import ProofState.ProofState
-> import ProofState.ProofKit
+> import ProofState.Edition.ProofState
+> import ProofState.Interface.ProofKit
 
 > import DisplayLang.DisplayTm
 > import DisplayLang.Name

@@ -5,7 +5,7 @@
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE GADTs, PatternGuards #-}
 
-> module ProofState.NameResolution where
+> module ProofState.Interface.NameResolution where
 
 > import Control.Applicative
 > import Control.Monad.State
@@ -18,9 +18,9 @@
 
 > import NameSupply.NameSupply
 
-> import ProofState.Developments
-> import ProofState.ProofContext
-> import ProofState.ProofState
+> import ProofState.Structure.Developments
+> import ProofState.Movement.ProofContext
+> import ProofState.Edition.ProofState
 
 > import DisplayLang.Name
 > import DisplayLang.Scheme

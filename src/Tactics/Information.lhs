@@ -17,12 +17,12 @@
 > import qualified Evidences.Rules (($$))
 > import Evidences.Tm
 
-> import ProofState.Developments
-> import ProofState.Lifting
-> import ProofState.ProofContext
-> import ProofState.ProofState
-> import ProofState.ProofKit
-> import ProofState.NameResolution
+> import ProofState.Structure.Developments
+> import ProofState.Interface.Lifting
+> import ProofState.Movement.ProofContext
+> import ProofState.Edition.ProofState
+> import ProofState.Interface.ProofKit
+> import ProofState.Interface.NameResolution
 
 > import DisplayLang.DisplayTm
 > import DisplayLang.Name

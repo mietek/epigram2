@@ -15,7 +15,7 @@
 
 > import Kit.BwdFwd
 
-> import ProofState.ProofContext
+> import ProofState.Movement.ProofContext
 
 > import Tactics.Information
 

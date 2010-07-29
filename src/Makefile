@@ -35,7 +35,10 @@ SRCS_EVIDENCES := $(wildcard NameSupply/*.lhs) \
 		  $(wildcard Evidences/*.lhs) \
 		  $(wildcard Features/*.lhs)
 
-SRCS_PFSTATE := $(wildcard ProofState/*.lhs)
+SRCS_PFSTATE := $(wildcard ProofState/Structure/*.lhs) \
+		$(wildcard ProofState/Movement/*.lhs) \
+		$(wildcard ProofState/Edition/*.lhs) \
+		$(wildcard ProofState/Interface/*.lhs) 
 
 SRCS_DISPLAYS := $(wildcard DisplayLang/*.lhs) \
 	  	 $(wildcard Elaboration/*.lhs) \

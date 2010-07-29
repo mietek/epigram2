@@ -13,8 +13,8 @@
 
 > import Kit.BwdFwd
 
-> import ProofState.Developments
-> import ProofState.ProofState
+> import ProofState.Structure.Developments
+> import ProofState.Edition.ProofState
 
 > import Distillation.Distiller
 

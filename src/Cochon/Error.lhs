@@ -17,8 +17,8 @@
 > import DisplayLang.Name
 > import DisplayLang.PrettyPrint
 
-> import ProofState.ProofState
-> import ProofState.ProofKit
+> import ProofState.Edition.ProofState
+> import ProofState.Interface.ProofKit
 
 > import Distillation.Distiller
 > import Distillation.Moonshine

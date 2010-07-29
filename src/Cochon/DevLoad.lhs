@@ -20,7 +20,7 @@
 > import Cochon.Cochon
 > import Cochon.Error
 
-> import ProofState.Developments
+> import ProofState.Structure.Developments
 
 > import DisplayLang.DisplayTm
 > import DisplayLang.Name
@@ -28,9 +28,9 @@
 > import DisplayLang.TmParse
 > import DisplayLang.PrettyPrint
 
-> import ProofState.ProofContext
-> import ProofState.ProofState
-> import ProofState.ProofKit
+> import ProofState.Movement.ProofContext
+> import ProofState.Edition.ProofState
+> import ProofState.Interface.ProofKit
 
 > import Elaboration.Elaborator
 

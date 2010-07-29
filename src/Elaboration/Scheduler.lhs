@@ -16,10 +16,10 @@
 
 > import Features.Features ()
 
-> import ProofState.Developments
-> import ProofState.Lifting
-> import ProofState.ProofState
-> import ProofState.ProofKit
+> import ProofState.Structure.Developments
+> import ProofState.Interface.Lifting
+> import ProofState.Edition.ProofState
+> import ProofState.Interface.ProofKit
 
 > import DisplayLang.Name
 
