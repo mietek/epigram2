@@ -28,6 +28,7 @@
 > import ProofState.Edition.GetSet
 
 > import ProofState.Interface.ProofKit
+> import ProofState.Interface.NameResolution
 
 > import Elaboration.Elaborator
 

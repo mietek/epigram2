@@ -100,8 +100,12 @@ or value
 \end{itemize}
 
 > data Traversable f => Entry f
->   =  E REF (String, Int) (Entity f) INTM
->   |  M Name (Dev f)
+>   =  E { ref       :: REF 
+>        , lastName  :: (String, Int)
+>        , entity    :: Entity f
+>        , term      :: INTM }
+>   |  M { name      :: Name
+>        , dev       :: (Dev f) }
 
 In the Module case, we have already tied the knot, by defining |M|
 with a sub-development. In the Entity case, we give yet another choice
@@ -132,8 +136,8 @@ of its |Name| in the |(String, Int)| field. Indeed, grabing that
 information asks for traversing the whole |Name| up to the last
 element:
 
-> lastName :: REF -> (String, Int)
-> lastName (n := _) = last n
+> mkLastName :: REF -> (String, Int)
+> mkLastName (n := _) = last n
 
 As we will need it quite frequently for display purposes, we extract
 it once and for all with |lastName| and later rely on the cached version.
@@ -206,9 +210,10 @@ abstraction. It scopes over all following entries and the definitions
 
 \subsubsection{Suspension states}
 
-Girls may have suspended elaboration processes attached, indicated by a
-|Suspended| tip. These may be stable or unstable. For efficiency in the
-scheduler, each development stores the state of its least stable child.
+Definitions may have suspended elaboration processes attached,
+indicated by a |Suspended| tip. These may be stable or unstable. For
+efficiency in the scheduler, each development stores the state of its
+least stable child.
 
 > data SuspendState = SuspendUnstable | SuspendStable | SuspendNone
 >   deriving (Eq, Show, Enum, Ord)

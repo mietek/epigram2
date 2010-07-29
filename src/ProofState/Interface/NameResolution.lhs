@@ -1,4 +1,5 @@
 \section{Resolving and unresolving names}
+\label{sec:name-resolution}
 
 %if False
 
@@ -78,6 +79,19 @@ the name components from the backwards list.
 > flatNom :: Bwd (Entries, (String,Int)) -> Name -> Name
 > flatNom B0 nom = nom
 > flatNom (esus :< (_,u)) nom = flatNom esus (u : nom)
+
+
+We often need to turn the sequence of parameters under which we
+work into the argument spine of a \(\lambda\)-lifted definition:
+
+> paramREFs :: Entries -> [REF]
+> paramREFs = foldMap param where
+>   param :: Entry Bwd -> [REF]
+>   param  (EPARAM r _ _ _)   = [r]
+>   param  _                  = []
+
+> paramSpine :: Entries -> Spine {TT} REF
+> paramSpine = fmap (A . N . P) . paramREFs
 
 
 \subsection{Resolving relative names to references}
@@ -183,7 +197,7 @@ then continues with |lookFor|.
 >   if i == 0 then Right (Right es', paramREFs (flat esus es), Nothing, Nothing)
 >             else lookUp (x,i-1) (esus,es) (e:>fs,vfss)
 > lookUp (x,i) (esus, es :< e@(EDEF r (y,j) dkind (Dev {devEntries=es'}) _)) (fs,vfss) | x == y =
->   if i == 0 then Right (Right es', paramREFs (flat esus es), Just r, kindScheme dkind)
+>   if i == 0 then Right (Right es', paramREFs (flat esus es), Just r, entryScheme e)
 >             else lookUp (x,i-1) (esus,es) (e:>fs,vfss)
 > lookUp (x,i) (esus, es :< e@(EPARAM r (y,j) _ _)) (fs,vfss) | x == y =
 >   if i == 0 then Right (Right B0, [], Just r, Nothing)
@@ -198,8 +212,8 @@ then continues with |lookFor|.
 >     if x == (fst $ entryLastName e)
 >     then if i == 0
 >          then case (|devEntries (entryDev e)|) of
->              Just zs  -> Right (Right zs, sp, entryREF e, entryScheme e)
->              Nothing  -> Right (Right B0, [], entryREF e, entryScheme e) 
+>              Just zs  -> Right (Right zs, sp, entryRef e, entryScheme e)
+>              Nothing  -> Right (Right B0, [], entryRef e, entryScheme e) 
 >          else lookDown (x, i-1) (es, uess) (pushSpine e sp)
 >     else lookDown (x, i) (es, uess) (pushSpine e sp)
 >   where
@@ -231,7 +245,7 @@ then continues with |lookFor|.
 >     if x == (fst $ entryLastName e)
 >     then if i == 0
 >          then case (|devEntries (entryDev e)|) of
->              Just zs  -> lookLocal ys zs as (entryREF e) (entryScheme e)
+>              Just zs  -> lookLocal ys zs as (entryRef e) (entryScheme e)
 >              Nothing  -> Left [err "Params in other Devs are not in scope"] 
 >          else huntLocal (x, i-1) ys es as
 >     else huntLocal (x, i) ys es as 
@@ -273,14 +287,17 @@ X [ \ a : A
    ] 
 \end{verbatim}
 
-How should we print the computer name @X_0.f_0.g_0@ ? A first approximation 
-would be \relname{g} since this is the bit that differs from the name of the
-development we are in (@X_0.f_0@). And, indeed we will always have to print this
-bit of the name. But there's more to it, here we are assuming that we are
-applying @g@  to the same spine of boys as the boys we are currently working
-under, which isn't always true. We need to be able to refer to, for instance,
-\relname{f.g}, which would have type |(b : B) -> T|. So we must really resolve
-names with their spines compared to the current name and boy spine. So:
+How should we print the computer name @X_0.f_0.g_0@ ? A first
+approximation would be \relname{g} since this is the bit that differs
+from the name of the development we are in (@X_0.f_0@). And, indeed we
+will always have to print this bit of the name. But there's more to
+it, here we are assuming that we are applying @g@ to the same spine of
+parameters as the parameters we are currently working under, which
+isn't always true. We need to be able to refer to, for instance,
+\relname{f.g}, which would have type |(b : B) -> T|. So we must really
+resolve names with their spines compared to the current name and
+parameters spine. So:
+
 \begin{itemize}
 \item @X_0.f_0.g_0 a b@ resoves to \relname{g}
 \item @X_0.f_0.g_0 a@ resolves to \relname{f.g}
@@ -536,8 +553,8 @@ location but the spine is different.
 > findF i u (M n _ :> es) | (last $ n) == u = 
 >   Just ((fst u, if i == 0 then Rel 0 else Abs i), Nothing)
 > findF i u@(x,_) (M n _ :> es) | (fst . last $ n) == x = findF (i+1) u es
-> findF i u (EDEF _ v dkind _ _ :> es) | v == u = 
->   Just ((fst u, if i == 0 then Rel 0 else Abs i), kindScheme dkind)
+> findF i u (e@(EDEF _ v dkind _ _) :> es) | v == u = 
+>   Just ((fst u, if i == 0 then Rel 0 else Abs i), entryScheme e)
 > findF i u (E _ v _ _ :> es) | v == u = 
 >   Just ((fst u, if i == 0 then Rel 0 else Abs i), Nothing)
 > findF i u@(x,_) (E _ (y,_) _ _ :> es) | y == x = findF (i+1) u es
@@ -563,8 +580,8 @@ current location.
 > nomRel' o (x,i) (es:<M n (Dev {devEntries=es'})) | (fst . last $ n) == x  = 
 >   if i == (snd . last $ n) then (| (o,es',Nothing) |) 
 >                            else nomRel' (o+1) (x,i) es
-> nomRel' o (x,i) (es:< EDEF _ (y,j) dkind (Dev {devEntries=es'}) _) | y == x =
->   if i == j then (| (o,es',kindScheme dkind) |) else nomRel' (o+1) (x,i) es
+> nomRel' o (x,i) (es:< e@(EDEF _ (y,j) dkind (Dev {devEntries=es'}) _)) | y == x =
+>   if i == j then (| (o,es',entryScheme e) |) else nomRel' (o+1) (x,i) es
 > nomRel' o (x,i) (es:< E _ (y,j) _ _) | y == x = 
 >   if i == j then (| (o,B0,Nothing) |) else nomRel' (o+1) (x,i) es
 > nomRel' o (x,i) (es:<e) = nomRel' o (x,i) es

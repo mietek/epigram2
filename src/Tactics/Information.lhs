@@ -74,8 +74,9 @@ representation of the resulting type.
 >  )
 
 
-The |infoContextual| command displays a distilled list of things in the context,
-boys if the argument is False or girls if the argument is True.
+The |infoContextual| command displays a distilled list of things in
+the context, parameters if the argument is False or definitions if the
+argument is True.
 
 > infoHypotheses  = infoContextual False
 > infoContext     = infoContextual True

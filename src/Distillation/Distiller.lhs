@@ -88,7 +88,7 @@ will switch the entries to |Bwd REF| so this will not be necessary.)
 >                                                    ++ errVal ty 
 >                                                    ++ err " is not lambdable.")
 >     tm' :=>: _ <-  freshRef (x :<: dom) $ \ref ->
->                    distill  (entries :< EPARAM  ref (lastName ref) kind
+>                    distill  (entries :< EPARAM  ref (mkLastName ref) kind
 >                                                 (error "distill: type undefined"))
 >                             (cod (pval ref) :>: underScope sc ref)
 >     return $ DL (convScope sc x tm') :=>: (evTm $ L sc)

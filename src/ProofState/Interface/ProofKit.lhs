@@ -266,8 +266,8 @@ just below the previous focus.
 
 
 The |goUp| command looks through the layer elders for one that has a
-development, accumulating boys it passes over so they be put back as
-layer cadets at the new focus.
+development, accumulating parameters it passes over so they be put
+back as layer cadets at the new focus.
 
 > goUp :: ProofState ()
 > goUp = goUpAcc (NF F0)
@@ -292,7 +292,7 @@ layer cadets at the new focus.
 
 The |goDown| command looks through the layer cadets for one that has a
 development, passing on news it encounters as it goes and accumulating
-boys so they can be put back as layer elders at the new focus.
+parameters so they can be put back as layer elders at the new focus.
 
 > goDown :: ProofState ()
 > goDown = goDownAcc B0 []
@@ -539,7 +539,7 @@ appends a $\lambda$-abstraction with the appropriate type to the current develop
 >       Unknown (pi :=>: ty) -> case lambdable ty of
 >         Just (k, s, t) -> freshRef (x :<: s) (\ref -> do
 >             s' <- bquoteHere s
->             putDevEntry (EPARAM ref (lastName ref) k s')
+>             putDevEntry (EPARAM ref (mkLastName ref) k s')
 >             let tipTyv = t (pval ref)
 >             tipTy <- bquoteHere tipTyv
 >             putDevTip (Unknown (tipTy :=>: tipTyv))
@@ -557,7 +557,7 @@ that the supplied type matches the one at the tip.
 >     tip <- getDevTip
 >     case tip of
 >       Module -> freshRef (x :<: tv) (\ref -> do
->           putDevEntry (EPARAM ref (lastName ref) ParamLam ty)
+>           putDevEntry (EPARAM ref (mkLastName ref) ParamLam ty)
 >           return ref
 >         )
 >       Unknown (pi :=>: gty) -> case lambdable gty of
@@ -565,7 +565,7 @@ that the supplied type matches the one at the tip.
 >           eq <- withNSupply (equal (SET :>: (tv, s)))
 >           if eq
 >             then freshRef (x :<: tv) (\ref -> do
->                 putDevEntry (EPARAM ref (lastName ref) k ty)
+>                 putDevEntry (EPARAM ref (mkLastName ref) k ty)
 >                 let tipTyv = t (pval ref)
 >                 tipTy <- bquoteHere tipTyv
 >                 putDevTip (Unknown (tipTy :=>: tipTyv))
@@ -632,7 +632,7 @@ is also a set; if so, it appends a $\Pi$-abstraction to the current development.
 >     tip <- getDevTip
 >     case tip of
 >         Unknown (_ :=>: SET) -> freshRef (s :<: tv) (\ref -> do
->             putDevEntry (EPARAM ref (lastName ref) ParamPi ty)
+>             putDevEntry (EPARAM ref (mkLastName ref) ParamPi ty)
 >             return ref
 >           )
 >         Unknown _  -> throwError' $ err "piBoy: goal is not of type SET."

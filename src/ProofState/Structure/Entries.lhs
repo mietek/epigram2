@@ -27,65 +27,58 @@
 %endif
 
 
-\pierre{This section is a complete mess. Structure is needed.}
 
+\subsection{Looking into an |Entry|}
 
-We often need to turn the sequence of boys (parameters) under which we
-work into the argument spine of a \(\lambda\)-lifted definition:
+In the following, we define a bunch of helper functions to access
+specific fields of an |Entry|. The field we look for might not exist
+for all possible |Entry|, therefore we work in a |Maybe| world. The
+naming rule of thumb of these function is: prefix |entry| followed by
+the name of one field of the |E| or |M| cases, starting with a capital
+letter.
 
-> paramREFs :: Entries -> [REF]
-> paramREFs = foldMap param where
->   param :: Entry Bwd -> [REF]
->   param  (EPARAM r _ _ _)   = [r]
->   param  _                  = []
+Hence, we have:
 
-> paramSpine :: Entries -> Spine {TT} REF
-> paramSpine = fmap (A . N . P) . paramREFs
-
-
-In the following, we define a handful of functions which are quite
-handy, yet not grandiose. This section can be skipped on a first
-reading.
-
-We sometimes wish to determine whether an entry is a |Parameter|:
-
-> isBoy :: Traversable f => Entry f -> Bool
-> isBoy (EPARAM _ _ _ _)  = True
-> isBoy _                  = False
-
-> entryREF :: Traversable f => Entry f -> Maybe REF
-> entryREF (E r _ _ _)  = Just r
-> entryREF (M _ _)      = Nothing
-
-Given an |Entry|, a natural operation is to extract its
-sub-developments. This works for girls and modules, but will not for
-boys.
-
-> entryDev :: Traversable f => Entry f -> Maybe (Dev f)
-> entryDev (EPARAM _ _ _ _)  = Nothing
-> entryDev (EDEF _ _ _ d _)  = Just d
-> entryDev (M _ d)           = Just d
-
-For display purposes, we often ask the last name or the whole name of
-an |Entry|:
-
-> entryLastName :: Traversable f => Entry f -> (String, Int)
-> entryLastName (E _ xn _ _)  = xn
-> entryLastName (M n _)       = last n
+> entryRef :: Traversable f => Entry f -> Maybe REF
+> entryRef (E r _ _ _)  = Just r
+> entryRef (M _ _)      = Nothing
 >
 > entryName :: Traversable f => Entry f -> Name
 > entryName (E (n := _) _ _ _)  = n
 > entryName (M n _)             = n
-
-Some girls have |Scheme|s, and we can extract them thus:
-
-> kindScheme :: DefKind -> Maybe (Scheme INTM)
-> kindScheme LETG        = Nothing
-> kindScheme (PROG sch)  = Just sch
+>
+> entryLastName :: Traversable f => Entry f -> (String, Int)
+> entryLastName (E _ xn _ _)  = xn
+> entryLastName (M n _)       = last n
 >
 > entryScheme :: Traversable f => Entry f -> Maybe (Scheme INTM)
-> entryScheme (EDEF _ _ k _ _)  = kindScheme k
-> entryScheme _                 = Nothing
+> entryScheme (EDEF _ _ (PROG sch) _ _)  = Just sch
+> entryScheme _                          = Nothing
+>
+> entryDev :: Traversable f => Entry f -> Maybe (Dev f)
+> entryDev (EDEF _ _ _ d _)  = Just d
+> entryDev (M _ d)           = Just d
+> entryDev (EPARAM _ _ _ _)  = Nothing
+>
+> entrySuspendState :: Traversable f => Entry f -> SuspendState
+> entrySuspendState e = case entryDev e of
+>     Just dev  -> devSuspendState dev
+>     Nothing   -> SuspendNone
+
+
+
+\subsection{Entry equality}
+
+
+Two entries are equal if and only if they have the same name:
+
+> instance Traversable f => Eq (Entry f) where
+>     e1 == e2 = entryName e1 == entryName e2
+
+
+
+\subsection{Changing the carrier of an |Entry|}
+
 
 The |entryCoerce| function is quite a thing. When defining |Dev|, we
 have been picky in letting any Traversable |f| be the carrier of the
@@ -94,9 +87,9 @@ sometimes need to jump from one Traversable |f| to another Traversable
 |g|. In this example, we jump from a |NewsyFwd| -- a |Fwd| list -- to
 some |Entries| -- a |Bwd| list.
 
-Changing the type of the carrier is possible for boys, in which case
-we return a |Right entry|. It is not possible for girls and modules,
-in which case we return an unchanged |Left dev|.
+Changing the type of the carrier is possible for parameters, in which
+case we return a |Right entry|. It is not possible for definitions and
+modules, in which case we return an unchanged |Left dev|.
 
 > entryCoerce ::  (Traversable f, Traversable g) => 
 >                 Entry f -> Either (Dev f) (Entry g)
@@ -104,18 +97,4 @@ in which case we return an unchanged |Left dev|.
 > entryCoerce (EDEF _ _ _ dev _)    = Left dev
 > entryCoerce (M _    dev)          = Left dev
 
-We can extract the |SuspendState| from an entry, noting that boys do not have
-children so cannot contain suspended elaboration processes.
-
-> entrySuspendState :: Traversable f => Entry f -> SuspendState
-> entrySuspendState e = case entryDev e of
->     Just dev  -> devSuspendState dev
->     Nothing   -> SuspendNone
-
-
-Finally, we can compare entities for equality by comparing their
-names.
-
-> instance Traversable f => Eq (Entry f) where
->     e1 == e2 = entryName e1 == entryName e2
 
