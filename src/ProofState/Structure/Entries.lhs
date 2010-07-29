@@ -1,5 +1,5 @@
-\section{Entries manipulation}
-\label{sec:entries}
+\section{Managing Entries in a Development}
+\label{sec:structure-entries}
 
 %if False
 

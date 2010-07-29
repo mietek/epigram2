@@ -30,6 +30,7 @@
 
 > import ProofState.Edition.ProofContext
 > import ProofState.Edition.ProofState
+> import ProofState.Edition.Entries
 > import ProofState.Edition.GetSet
 
 > import ProofState.Interface.ProofKit

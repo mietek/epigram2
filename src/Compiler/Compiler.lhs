@@ -316,7 +316,7 @@ We add a Cochon tactic to invoke the compiler.
 >         ,  ctIO = (\ [ExArg (DP r ::$ []), StrArg fn] (locs :< loc) -> do
 >             let  Right dev = evalStateT getDev loc
 >                  Right (n := _) = evalStateT (resolveDiscard r) loc
->             b <- compileCommand n (reverseDev' dev) fn
+>             b <- compileCommand n (reverseDev dev) fn
 >             putStrLn (if b then "Compiled." else "EPIC FAIL")
 >             return (locs :< loc)
 >           )

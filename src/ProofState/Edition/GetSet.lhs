@@ -28,6 +28,8 @@
 > import ProofState.Edition.News
 > import ProofState.Edition.ProofContext
 > import ProofState.Edition.ProofState
+> import ProofState.Edition.Entries
+> import ProofState.Edition.Scope
 
 > import Evidences.Rules
 > import Evidences.Tm
@@ -46,13 +48,13 @@ updated information, providing a friendlier interface than |get| and |put|.
 > getInScope = gets inScope
 
 > getAunclesToImpl :: ProofStateT e [REF :<: INTM]
-> getAunclesToImpl = gets aunclesToImpl
+> getAunclesToImpl = gets definitionsToImpl
 
 > getDev :: ProofStateT e (Dev Bwd)
-> getDev = gets pcDev
+> getDev = gets pcAboveCursor
 
 > getDevCadets :: ProofStateT e (Fwd (Entry Bwd))
-> getDevCadets = gets pcCadets
+> getDevCadets = gets pcBelowCursor
 
 > getDevEntries :: ProofStateT e Entries
 > getDevEntries = do
@@ -84,7 +86,7 @@ updated information, providing a friendlier interface than |get| and |put|.
 >                         ++ err s
 
 > getGreatAuncles :: ProofStateT e Entries
-> getGreatAuncles = gets greatAuncles
+> getGreatAuncles = gets globalScope
 
 > getBoys :: ProofStateT e [REF]
 > getBoys = do  
@@ -102,12 +104,12 @@ updated information, providing a friendlier interface than |get| and |put|.
 
 > getHoleGoal :: ProofStateT e (INTM :=>: TY)
 > getHoleGoal = do
->     GirlMother _ (_ := HOLE _ :<: _) _ _ <- getMother
+>     CDefinition _ (_ := HOLE _ :<: _) _ _ <- getMother
 >     getGoal "getHoleGoal"
 
 > getHoleKind :: ProofStateT e HKind
 > getHoleKind = do
->     GirlMother _ (_ := HOLE hk :<: _) _ _ <- getMother
+>     CDefinition _ (_ := HOLE hk :<: _) _ _ <- getMother
 >     return hk
 
 > getLayer :: ProofStateT e Layer
@@ -118,16 +120,16 @@ updated information, providing a friendlier interface than |get| and |put|.
 > getLayers :: ProofStateT e (Bwd Layer)
 > getLayers = gets pcLayers
 
-> getMother :: ProofStateT e Mother
+> getMother :: ProofStateT e CurrentEntry
 > getMother = do
 >     ls <- getLayers
 >     case ls of
->         _ :< l  -> return (mother l)
->         B0      -> return (ModuleMother []) 
+>         _ :< l  -> return (currentEntry l)
+>         B0      -> return (CModule []) 
 
 > getMotherDefinition :: ProofStateT e (EXTM :=>: VAL)
 > getMotherDefinition = do
->     GirlMother _ ref _ _ <- getMother
+>     CDefinition _ ref _ _ <- getMother
 >     aus <- getGreatAuncles
 >     return (applyAuncles ref aus)
 
@@ -138,14 +140,14 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     cadets <- getDevCadets
 >     let dev = Dev (es <>< cadets) tip root ss
 >     case m of
->         GirlMother dkind ref xn ty -> return (EDEF ref xn dkind dev ty)
->         ModuleMother n -> return (EModule n dev)
+>         CDefinition dkind ref xn ty -> return (EDEF ref xn dkind dev ty)
+>         CModule n -> return (EModule n dev)
 
 > getMotherName :: ProofStateT e Name
 > getMotherName = do
 >     ls <- getLayers
 >     case ls of
->         (_ :< Layer{mother=m}) -> return (motherName m)
+>         (_ :< Layer{currentEntry=m}) -> return (currentEntryName m)
 >         B0 -> return []
 
 
@@ -155,13 +157,13 @@ updated information, providing a friendlier interface than |get| and |put|.
 > insertCadet :: NewsBulletin -> ProofStateT e ()
 > insertCadet news = do
 >     l <- getLayer
->     replaceLayer l{cadets = NF (Left news :> unNF (cadets l))}
+>     replaceLayer l{belowEntries = NF (Left news :> unNF (belowEntries l))}
 >     return ()
 
 > putDev :: Dev Bwd -> ProofStateT e ()
 > putDev dev = do
 >     pc <- get
->     put pc{pcDev=dev}
+>     put pc{pcAboveCursor=dev}
 
 > putDevCadet :: Entry Bwd -> ProofStateT e ()
 > putDevCadet e = do
@@ -172,8 +174,8 @@ updated information, providing a friendlier interface than |get| and |put|.
 > putDevCadets :: Fwd (Entry Bwd) -> ProofStateT e (Fwd (Entry Bwd))
 > putDevCadets cadets = do
 >     pc <- get
->     put pc{pcCadets=cadets}
->     return (pcCadets pc)
+>     put pc{pcBelowCursor=cadets}
+>     return (pcBelowCursor pc)
 
 > putDevEntry :: Entry Bwd -> ProofStateT e ()
 > putDevEntry e = do
@@ -202,8 +204,8 @@ updated information, providing a friendlier interface than |get| and |put|.
 
 > putHoleKind :: HKind -> ProofStateT e ()
 > putHoleKind hk = do
->     GirlMother kind (name := HOLE _ :<: ty) xn tm <- getMother
->     putMother $ GirlMother kind (name := HOLE hk :<: ty) xn tm
+>     CDefinition kind (name := HOLE _ :<: ty) xn tm <- getMother
+>     putMother $ CDefinition kind (name := HOLE hk :<: ty) xn tm
 
 > putLayer :: Layer -> ProofStateT e ()
 > putLayer l = do
@@ -215,27 +217,27 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     pc <- get
 >     put pc{pcLayers=ls}
 
-> putMother :: Mother -> ProofStateT e ()
+> putMother :: CurrentEntry -> ProofStateT e ()
 > putMother m = do
 >     l <- getLayer
->     _ <- replaceLayer l{mother=m}
+>     _ <- replaceLayer l{currentEntry=m}
 >     return ()
 
 > putMotherEntry :: Entry Bwd -> ProofStateT e ()
 > putMotherEntry (EDEF ref xn dkind dev ty) = do
 >     l <- getLayer
->     replaceLayer (l{mother=GirlMother dkind ref xn ty})
+>     replaceLayer (l{currentEntry=CDefinition dkind ref xn ty})
 >     putDev dev
 > putMotherEntry (EModule [] dev) = putDev dev
 > putMotherEntry (EModule n dev) = do
 >     l <- getLayer
->     replaceLayer (l{mother=ModuleMother n})
+>     replaceLayer (l{currentEntry=CModule n})
 >     putDev dev
 
 > putMotherScheme :: Scheme INTM -> ProofState ()
 > putMotherScheme sch = do
->     GirlMother _ ref xn ty <- getMother
->     putMother (GirlMother (PROG sch) ref xn ty)
+>     CDefinition _ ref xn ty <- getMother
+>     putMother (CDefinition (PROG sch) ref xn ty)
 
 \subsubsection{Removers}
 
@@ -260,8 +262,8 @@ updated information, providing a friendlier interface than |get| and |put|.
 > replaceDev :: Dev Bwd -> ProofStateT e (Dev Bwd)
 > replaceDev dev = do
 >     pc <- get
->     put pc{pcDev=dev}
->     return (pcDev pc)
+>     put pc{pcAboveCursor=dev}
+>     return (pcAboveCursor pc)
 
 > replaceDevEntries :: Entries -> ProofStateT e Entries
 > replaceDevEntries es = do

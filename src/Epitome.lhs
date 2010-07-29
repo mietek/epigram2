@@ -101,6 +101,8 @@
 %include ProofState/Edition/News.lhs
 %include ProofState/Edition/ProofContext.lhs
 %include ProofState/Edition/ProofState.lhs
+%include ProofState/Edition/Entries.lhs
+%include ProofState/Edition/Scope.lhs
 %include ProofState/Edition/GetSet.lhs
 
 %include ProofState/Interface/ProofKit.lhs

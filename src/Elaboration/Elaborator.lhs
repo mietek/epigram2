@@ -23,6 +23,7 @@
 > import ProofState.Edition.ProofContext
 > import ProofState.Edition.ProofState
 > import ProofState.Edition.GetSet
+> import ProofState.Edition.Scope
 
 > import ProofState.Interface.ProofKit
 > import ProofState.Interface.Lifting
@@ -101,7 +102,7 @@ a reference to the current goal (applied to the appropriate shared parameters).
 >   where
 >     getDefn :: ProofState (EXTM :=>: VAL)
 >     getDefn = do
->         GirlMother _ ref _ _ <- getMother
+>         CDefinition _ ref _ _ <- getMother
 >         aus <- getGreatAuncles
 >         return (applyAuncles ref aus)
 
@@ -135,6 +136,7 @@ creates a $\Pi$-boy with that type.
 
 
 \subsection{Elaborating programming problems}
+\label{subsec:elab-prog-problem}
 
 The |elabLet| command sets up a programming problem, given a name and
 scheme. The command |let plus (m : Nat)(n : Nat) : Nat| should result
@@ -180,7 +182,7 @@ Now we add a definition with the same name as the function being defined,
 to handle recursive calls. This has the same arguments as the function,
 plus an implicit labelled type that provides evidence for the recursive call.
 
->     GirlMother _ (mnom := HOLE _ :<: ty) _ _ <- getMother
+>     CDefinition _ (mnom := HOLE _ :<: ty) _ _ <- getMother
 >     pn :=>: _ <- getFakeMother 
 >     let schCall = makeCall (P $ mnom := FAKE :<: ty) 0 sch'
 >     us <- getBoys

@@ -27,6 +27,7 @@
 > import ProofState.Edition.ProofContext
 > import ProofState.Edition.News
 > import ProofState.Edition.ProofState
+> import ProofState.Edition.Entries
 > import ProofState.Edition.GetSet
 
 > import ProofState.Interface.Lifting
@@ -114,7 +115,7 @@ may be useful for paranoia purposes.
 > validateHere = do
 >     m <- getMother
 >     case m of
->         GirlMother _ (_ := DEFN tm :<: ty) _ _ -> do
+>         CDefinition _ (_ := DEFN tm :<: ty) _ _ -> do
 >             ty' <- bquoteHere ty
 >             checkHere (SET :>: ty')
 >                 `pushError`  (err "validateHere: girl type failed to type-check: SET does not admit"
@@ -126,7 +127,7 @@ may be useful for paranoia purposes.
 >                              ++ err "does not admit"
 >                              ++ errTyVal (tm :<: ty))
 >             return ()
->         GirlMother _ (_ := HOLE _ :<: ty) _ _ -> do
+>         CDefinition _ (_ := HOLE _ :<: ty) _ _ -> do
 >             ty' <- bquoteHere ty
 >             checkHere (SET :>: ty')
 >                 `pushError`  (err "validateHere: hole type failed to type-check: SET does not admit" 
@@ -226,7 +227,7 @@ cursor upwards until it finds an entry with a development, then enters it.
 >           Just dev  -> do
 >              cadets  <- getDevCadets
 >              oldDev  <- getDev
->              putLayer (Layer es (entryToMother e) (reverseEntries cadets)
+>              putLayer (Layer es (mkCurrentEntry e) (reverseEntries cadets)
 >                            (devTip oldDev) (devNSupply oldDev) (devSuspendState oldDev))
 >              putDev dev
 >              putDevCadets F0
@@ -244,9 +245,9 @@ of the new focus.
 >     ml <- optional removeLayer
 >     case ml of
 >         Just l -> do
->             putDev $ Dev (elders l :< e) (laytip l) (laynsupply l) (laySuspendState l)
+>             putDev $ Dev (aboveEntries l :< e) (layTip l) (layNSupply l) (laySuspendState l)
 >             putDevCadets F0
->             propagateNews True [] (cadets l)
+>             propagateNews True [] (belowEntries l)
 >             return ()
 >         Nothing -> throwError' $ err "goOut: you can't go that way."
 
@@ -258,7 +259,7 @@ just below the previous focus.
 > goOutProperly = do
 >     ls <- getLayers
 >     case ls of
->         _ :< Layer{cadets=cadets} -> do
+>         _ :< Layer{belowEntries=cadets} -> do
 >             goOut
 >             Data.Traversable.mapM (const cursorUp) cadets
 >             return ()
@@ -281,11 +282,11 @@ back as layer cadets at the new focus.
 >                 me <- getMotherEntry
 >                 putDev dev
 >                 putDevCadets F0
->                 replaceLayer l{elders=es, mother=entryToMother e,
->                     cadets=NF (acc <+> (Right (reverseEntry me) :> cadets))}
+>                 replaceLayer l{aboveEntries=es, currentEntry=mkCurrentEntry e,
+>                     belowEntries=NF (acc <+> (Right (reverseEntry me) :> cadets))}
 >                 return ()
 >             Nothing -> do
->                 replaceLayer l{elders=es}
+>                 replaceLayer l{aboveEntries=es}
 >                 goUpAcc (NF (Right (reverseEntry e) :> acc))
 >           _ -> throwError' $ err "goUp: you can't go that way."
 
@@ -301,22 +302,22 @@ parameters so they can be put back as layer elders at the new focus.
 >     goDownAcc acc news = do
 >         l <- getLayer
 >         case l of
->           (Layer {elders=elders, cadets=NF (ne :> es)}) -> case ne of
+>           (Layer {aboveEntries=elders, belowEntries=NF (ne :> es)}) -> case ne of
 >             Left nb -> do
->                 replaceLayer l{cadets=NF es}
+>                 replaceLayer l{belowEntries=NF es}
 >                 goDownAcc acc (mergeNews news nb)
 >             Right e -> case entryCoerce e of
 >               Left (Dev es' tip' nsupply' ss') ->  do
 >                 me <- getMotherEntry
->                 replaceLayer l{elders=(elders :< me) <+> acc,
->                                    mother=entryToMother e, cadets=NF es}
+>                 replaceLayer l{aboveEntries=(elders :< me) <+> acc,
+>                                    currentEntry=mkCurrentEntry e, belowEntries=NF es}
 >                 putDev (Dev B0 tip' nsupply' SuspendNone)
 >                 putDevCadets F0
 >                 news' <- propagateNews True news es'
 >                 return ()
 >               Right e' -> do
 >                 (news', e'') <- tellEntry news e'
->                 replaceLayer l{cadets=NF es}
+>                 replaceLayer l{belowEntries=NF es}
 >                 goDownAcc (acc :< e'') news'
 >           _ -> throwError' $ err "goDown: you can't go that way."
 
@@ -428,11 +429,11 @@ to the next goal otherwise.
 > moduleToGoal :: INTM -> ProofState (EXTM :=>: VAL)
 > moduleToGoal ty = do
 >     (_ :=>: tyv) <- checkHere (SET :>: ty)
->     ModuleMother n <- getMother
+>     CModule n <- getMother
 >     inScope <- getInScope
 >     let  ty' = liftType inScope ty
 >          ref = n := HOLE Waiting :<: evTm ty'
->     putMother (GirlMother LETG ref (last n) ty')
+>     putMother (CDefinition LETG ref (last n) ty')
 >     putDevTip (Unknown (ty :=>: tyv))
 >     return (applyAuncles ref inScope)
 
@@ -521,10 +522,10 @@ next goal (if one exists) instead.
 >             aus <- getGreatAuncles
 >             sibs <- getDevEntries
 >             let tmv = evTm (parBind aus sibs tm)
->             GirlMother kind (name := _ :<: tyv) xn ty <- getMother
+>             CDefinition kind (name := _ :<: tyv) xn ty <- getMother
 >             let ref = name := DEFN tmv :<: tyv
 >             putDevTip (Defined tm (tipTyTm :=>: tipTy))
->             putMother (GirlMother kind ref xn ty)
+>             putMother (CDefinition kind ref xn ty)
 >             updateRef ref
 >             return (applyAuncles ref aus)
 >         _  -> throwError' $ err "give: only possible for incomplete goals."
@@ -681,7 +682,7 @@ shared parameters).
 
 > getFakeRef :: ProofState REF
 > getFakeRef = do
->    GirlMother _  (mnom := HOLE _ :<: ty) _ _ <- getMother
+>    CDefinition _  (mnom := HOLE _ :<: ty) _ _ <- getMother
 >    return (mnom := FAKE :<: ty)
 
 > getFakeMother :: ProofState (EXTM :=>: VAL)

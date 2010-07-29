@@ -19,6 +19,7 @@
 > import ProofState.Edition.ProofContext
 > import ProofState.Edition.News
 > import ProofState.Edition.ProofState
+> import ProofState.Edition.Entries
 > import ProofState.Edition.GetSet
 
 > import ProofState.Interface.Lifting
@@ -119,7 +120,7 @@ a slightly strange thing to do, but is useful for news propagation.
 > jumpIn e = do
 >     Dev es tip nsupply ss <- getDev
 >     cadets <- getDevCadets
->     putLayer (Layer es (entryToMother e) (reverseEntries cadets) tip nsupply ss)
+>     putLayer (Layer es (mkCurrentEntry e) (reverseEntries cadets) tip nsupply ss)
 >     let Just (Dev cs newTip newNSupply newSS) = entryDev e
 >     putDev (Dev B0 newTip newNSupply newSS)
 >     return cs

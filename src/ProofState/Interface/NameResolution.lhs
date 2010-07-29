@@ -23,7 +23,7 @@
 > import ProofState.Structure.Entries
 
 > import ProofState.Edition.ProofContext
-
+> import ProofState.Edition.Entries
 > import ProofState.Edition.ProofState
 
 > import DisplayLang.Name
@@ -49,7 +49,7 @@ We can extract such a thing from a |ProofContext| using |inBScope|:
 
 > inBScope :: ProofContext -> BScopeContext
 > inBScope (PC layers dev _) = 
->   (  fmap (\l -> (elders l, last . motherName . mother $ l)) layers
+>   (  fmap (\l -> (aboveEntries l, last . currentEntryName . currentEntry $ l)) layers
 >   ,  devEntries dev)
 
 An |FScopeContext| is the forwards variant:

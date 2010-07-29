@@ -133,7 +133,7 @@ the saved state. We can get rid of it once we are confident that the new version
 >    
 >    killCadets = do
 >        l <- getLayer
->        replaceLayer (l { cadets = NF F0 })
+>        replaceLayer (l { belowEntries = NF F0 })
 >
 >    hyps :: BScopeContext -> Name -> ProofState Doc
 >    hyps bsc me = do
