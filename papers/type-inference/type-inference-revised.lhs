@@ -1914,14 +1914,13 @@ $\theta \eqsubst \zeta \compose \iota$.
 \subsection{The Optimist's lemma}
 
 Let $P$ be a problem for $A$ and let $Q$ be an $A$-indexed family for $B$.
-Then the conjunction of problems $\pconj{P}{x}{Q}$ is a problem for $A \times B$
-with the statement
+Then the conjunction $\pconj{P}{x}{Q}$ is a problem for $A \times B$
+with statement
 $$\probstmt{(\pconj{P}{x}{Q})}{(a, b)} \defmap \probstmt{P}{a} \wedge \iprobstmt{Q}{a}{b}$$
 and the preorder defined pointwise.
 This \scare{dependent} generalisation of $P \wedge Q$
 allows the output of $P$ to be threaded into $Q$.
-
-We may now give the general Optimist's lemma:
+The Optimist's lemma correspondingly generalises:
 
 \begin{lemma}[The Optimist's lemma for inference problems]
 \label{lem:optimistInference}
@@ -1931,32 +1930,31 @@ $$\Rule{\LEIRProb{\Gamma}{P}{\Delta}{b}
        {\LEIRProb{\Gamma}{(\pconj{P}{x}{Q})}{\Theta}{(b, c)}}.$$
 \end{lemma}
 \proofsux\begin{proof}
-We have $\Gamma \leiR \Theta$ by (updating) Lemma~\ref{lei:preorder}.
+Since $\Gamma \leiR \Delta$ and $\Delta \leiR \Theta$,
+we have $\Gamma \leiR \Theta$ by (updating) Lemma~\ref{lei:preorder}.
 Furthermore, $\Theta \entails \probstmt{(\pconj{P}{x}{Q})}{(b, c)}$ since
-stability gives $\Theta \entails \probstmt{P}{b}$, and
-$\Theta \entails \iprobstmt{Q}{b}{c}$ by assumption.
+$\Theta \entails \iprobstmt{Q}{b}{c}$ by assumption
+and $\Delta \entails \probstmt{P}{b}$ so
+stability gives $\Theta \entails \probstmt{P}{b}$.
 
-Now suppose there is some other solution
+For minimality, suppose there is a solution
 $(\phi : \Gamma \leiR \Phi, (b', c'))$, so
 $\Phi \entails \probsubst{\phi}{P}{b'}$ and
 $\Phi \entails \iprobstmt{(\phi Q)}{b'}{c'}$.
 Since $\LEIRProb{\Gamma}{P}{\Delta}{b}$, there exists
 $\zeta : \Delta \leiR \Phi$
 with $\leParam{}{\Phi}{\zeta b}{b'}$ and $\phi \eqsubst \zeta \compose \iota$.
-
-By definition of an indexed problem family,
+By the simplicity condition,
 $\Phi \entails \iprobstmt{(\phi Q)}{\zeta b}{c'}$
 and hence $\Phi \entails \iprobsubst{\zeta}{Q}{b}{c'}$.
 But $\LEIRProb{\Delta}{Q[b]}{\Theta}{c}$, so there exists
 $\xi : \Theta \leiR \Phi$ such that $\leParam{}{\Phi}{\xi c}{c'}$
 and $\zeta \eqsubst \xi \compose \iota$.
-
-Hence $\xi : \Theta \leiR \Phi$ and $\leParam{}{\Phi}{\xi (b, c)}{(b', c')}$
-so $\xi : \leiRParam{\Theta}{(b, c)}{\Phi}{(b', c')}$. Moreover
+Hence $\leParam{}{\Phi}{\xi (b, c)}{(b', c')}$
+so $\xi : \leiRParam{\Theta}{(b, c)}{\Phi}{(b', c')}$, and
 $\phi \eqsubst \zeta \compose \iota
       \eqsubst (\xi \compose \iota) \compose \iota
-      \eqsubst \xi \compose \iota$
-so we are done.
+      \eqsubst \xi \compose \iota$.
 \end{proof}
 
 
