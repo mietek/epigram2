@@ -2501,26 +2501,26 @@ will succeed.
 
 Figure~\ref{fig:inferCode} shows the Haskell implementation of our
 type inference algorithm. Note that the monadic |fail| is called if 
-scope checking fails, whereas |error| signals violation of one of the
-algorithmic invariants.
+scope checking fails, whereas |error| signals violation of an
+algorithmic invariant.
 
 Figure~\ref{subfig:schemeCode} implements type schemes.
 It is convenient to represent bound variables by de Bruijn indices and free
-variables (i.e.\ those defined in the context) by names
+variables (in the context) by names
 \citep{mcbride_mckinna_not_number_2004}.
-Moreover, we use
+We use
 Haskell's type system to prevent some incorrect manipulations of indices by
-defining the \scare{successor} type
-\citep{bird_paterson_nested_1999, bellegarde_hook_substitution_1994} |Index|,
-where the outermost bound variable is represented by |Z| and the other variables
-are wrapped in the |S| constructor.
+defining a \scare{successor} type |Index|,
+where the outermost bound variable is represented by |Z| and other variables
+are wrapped in the |S| constructor
+\citep{bird_paterson_nested_1999, bellegarde_hook_substitution_1994}.
 
 Figures~\ref{subfig:specialiseCode} and~\ref{subfig:generaliseCode} implement
 specialisation and generalisation of type schemes. The former unpacks a %%%type
-scheme with fresh names, while the latter \scare{skims} 
+scheme with fresh names; the latter \scare{skims} 
 %%%type variables 
    entries 
-off the top of the context as far as the |LetGoal| marker.
+off the top of the context to the |LetGoal| marker.
 
 Figure~\ref{subfig:termCode} implements the data type of terms, and gives the
 final definition of |Entry| including type and term variable declarations and
@@ -2529,13 +2529,15 @@ in the context and return its scheme.
 
 Figure~\ref{subfig:termScopeCode} implements the |(>-)| operator to evaluate
 |Contextual| code in the scope of a term variable, then remove it afterwards.
-This is necessary for dealing with $\lambda$-abstractions and let-bindings 
-during type inference.
+This is necessary for dealing with $\lambda$-abstractions and let-bindings.
 
 Finally, Figure~\ref{subfig:inferCode} implements the type inference algorithm
-itself. It proceeds structurally over the term, adding term variables to the
-context and looking them up as appropriate, and calling |unify| when needed
-to check applications.
+itself. It proceeds structurally over the term,
+% adding term variables to the
+% context and looking them up later, calling |unify|
+%to check applications.
+following the rules in Figure~\ref{fig:inferRules}
+and using the monadic operations.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
