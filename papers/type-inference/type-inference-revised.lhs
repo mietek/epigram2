@@ -1746,7 +1746,9 @@ commitment. In particular, we note that
    \not\leiR \Gamma\fatsemi\hole{\alpha},\Delta
 \]
 
-
+Note also that if $\delta : \Gamma \fatsemi \Gamma' \leiR \Delta \fatsemi \Delta'$,
+where $\Gamma$ and $\Delta$ contain the same number of $\fatsemi$ separators,
+then $\restrict{\delta}{\Gamma} : \Gamma \leiR \Delta$.
 
 % It is fairly straightforward to verify that the previous results for $\lei$ 
 % hold for its sub-relation $\leiR$.
@@ -1990,37 +1992,36 @@ $\Delta \entails \tau \type \wedge t : \tau$. A solution with output $\tau$ is
 minimal if, given any other solution, we can find a substitution that unifies $\tau$
 and the other type: that is, $\tau$ is a principal type.
 
-Note that if $\delta : \Gamma \fatsemi \Gamma' \leiR \Delta \fatsemi \Delta'$,
-where $\Gamma$ and $\Delta$ contain the same number of $\fatsemi$ separators,
-then $\restrict{\delta}{\Gamma} : \Gamma \leiR \Delta$.
-This allows us to prove the following:
+In the type inference algorithm, we will use $\fatsemi$ to determine what can be
+generalised, based on the following lemma.
 
 \begin{lemma}[The Generalist's lemma]
 \label{lem:generalist}
 This rule is admissible:
 $$
-\Rule{\LEIRInfer{\Gamma \fatsemi}{t}{\tau}{\Delta \fatsemi \Xi}}
+\Rule{\LEIRInfer{(\Gamma \fatsemi)}{t}{\tau}{(\Delta \fatsemi \Xi)}}
      {\LEIRInferScheme{\Gamma}{t}{\gen{\Xi}{\tau}}{\Delta}}.
 $$
 \end{lemma}
 \proofsux\begin{proof}
-If $\Gamma \fatsemi \leiR \Delta \fatsemi \Xi$ then $\Gamma \leiR \Delta$ by
+If $\Gamma \fatsemi \leiR \Delta \!\fatsemi\! \Xi$ then $\Gamma \leiR \Delta$ by
 definition. Furthermore,
 $\Delta \entails t \hasscheme \gen{\Xi}{\tau}$ is defined to be
-$\Delta, \Xi \entails t : \tau$, which holds iff
+$\Delta \entails \Sbind{\Xi}{t : \tau}$, which holds iff
 $\Delta \fatsemi \Xi \entails t : \tau$.
 
-For minimality, suppose $\theta : \Gamma \leiR \Theta$ is an information increase
-and $\gen{\Psi}{\upsilon}$ is a scheme such that
+For minimality, suppose $\theta : \Gamma \leiR \Theta$ is an information
+increase and $\gen{\Psi}{\upsilon}$ is a scheme such that
 $\Theta \entails t \hasscheme \gen{\Psi}{\upsilon}$.
-Then $\Theta, \Psi \entails t : \upsilon$. Now
+Then $\Theta, \Psi \entails t~:~\upsilon$. Now
 $\theta : \Gamma \fatsemi \leiR \Theta \fatsemi \Psi$
 and $\Theta \fatsemi \Psi \entails t : \upsilon$,
 so by minimality of the hypothesis there is a substitution
 $\zeta : \Delta \fatsemi \Xi \leiR \Theta \fatsemi \Psi$ such that
 $\theta \equiv \zeta \compose \iota$ and
 $\Theta \fatsemi \Psi \entails \zeta\tau \equiv \upsilon$.
-Then $\restrict{\zeta}{\Delta} : \leiRParam{\Delta}{\gen{\Xi}{\tau}}{\Theta}{\gen{\Psi}{\upsilon}}$
+Then by definition
+$\restrict{\zeta}{\Delta} : \leiRParam{\Delta}{\gen{\Xi}{\tau}}{\Theta}{\gen{\Psi}{\upsilon}}$
 and
 $\theta \eqsubst \restrict{\zeta}{\Delta} \compose \iota : \Gamma \leiR \Theta$.
 \end{proof}
