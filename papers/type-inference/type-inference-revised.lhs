@@ -427,8 +427,7 @@ Type variables are traditionally left floating in space and given meaning by
 substitution, but by exposing structure we can manage definitions and
 dependencies as we go. Recording type variables in the context is natural when
 dealing with dependent types, since there is no distinction between type and term
-variables. Even in a simply-typed setting, however, this approach has advantages.
-
+variables, but it also works well in a simply-typed setting.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Unification over a context\label{sec:unif}}
