@@ -2291,8 +2291,7 @@ $$\leParam{\hasscheme}{\Gamma}{\sigma}{\sigma'}
      \quad\Rightarrow\quad \Gamma, x \asc \sigma \entails w : \chi,$$
 which says that if a solution can be found with $x$ having a given type scheme
 then one can be found with it having a more general scheme.
-In the \name{App} case, the preorder is definitional equality, so the equation
-on the right must still hold.
+The \name{App} case is even more straightforward.
 
 \begin{lemma}[Generality of type inference]
 \label{lem:inferGeneral}
@@ -2334,9 +2333,10 @@ for some context $\Delta$ and output $a$.
 \end{lemma}
 \proofsux\begin{proof}
 We proceed by induction on the derivation of $\Theta \entails (\theta P) a'$.
-For each rule in the transformed declarative system (excluding conversion)
-there is a corresponding algorithmic rule, and inversion ensures its
-premises are satisfied. \TODO{More?}
+Every case in the transformed declarative system (excluding the conversion rule)
+is covered by the algorithm, and it reduces the problem to an equivalent form,
+thereby preserving solutions. Thus if a solution exists, then the algorithm
+will succeed.
 \end{proof}
 
 
