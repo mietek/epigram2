@@ -994,8 +994,8 @@ associates the statement of being meaningful, \(\ok_{K} D\), to each \(D\).
 %%%For type properties:
    For types: 
 \[\begin{array}{r@@{\,}l}
-\ok_\TY (\hole{}) &\defmap \valid \\
-\ok_\TY (\defn{\tau}) &\defmap \tau \type
+\ok_\TY (\,\hole{}) &\defmap \valid \\
+\ok_\TY (\,\defn{\tau}) &\defmap \tau \type
 \end{array}\]
 %%%Now we can define the context validity statement
 %%%$\valid$ as shown in Figure~\ref{fig:contextValidityRules}.
@@ -1481,7 +1481,7 @@ algorithmic rules.
 \subsection{Soundness and completeness}
 
 At present, order in the context is unimportant (providing dependencies are
-respected) but we will see in section~\ref{sec:genloc} that the algorithm does
+respected) but we will see in Section~\ref{sec:genloc} that the algorithm does
 keep entries as far right as possible, which will be necessary for generality
 of type inference.
 
@@ -1897,7 +1897,7 @@ Then $\tyvars{\Gamma \fatsemi \Xi} = \tyvars{\Delta \fatsemi}$ and
 $\LEIRUnify{\Gamma \fatsemi \Xi}{\alpha}{\tau}{\Delta \fatsemi}$.
 \end{lemma}
 \proofsux\begin{proof}
-We extend the structural induction in lemma~\ref{lem:unifySound} with an extra
+We extend the structural induction in Lemma~\ref{lem:unifySound} with an extra
 case. The only proof of
 $\algInstantiate{\Gamma \! \fatsemi}{\alpha}{\tau}{\Xi}{\Delta \fatsemi}$
 is by \name{Repossess}, so inversion gives
@@ -2274,7 +2274,7 @@ by the rules in Figure~\ref{fig:inferRules}.
 As they are structural on terms, they 
 yield a terminating algorithm, 
 and hence the implementation in 
-subsection~\ref{sec:inferImplementation}.
+Subsection~\ref{sec:inferImplementation}.
 The Optimist's lemma
 permits sequential solution of problems and the binding lemmas
 let us interpret binding statements as problems.
@@ -2383,7 +2383,7 @@ If $(\Gamma, P)$ is a type or scheme inference problem, and $\alg{\Gamma}{P}{\De
 then $\LEIRProb{\Gamma}{P}{\Delta}{a}$.
 \end{lemma}
 \proofsux\begin{proof}
-Given soundness (lemma~\ref{lem:inferSound}), it remains to show 
+Given soundness (Lemma~\ref{lem:inferSound}), it remains to show 
 generality, i.e.\ that each algorithmic rule becomes
 admissible in the transformed declarative system if we replace
 $\transto$ with $\LEIR$.
@@ -2391,7 +2391,7 @@ $\transto$ with $\LEIR$.
 For the \name{Var} rule, suppose $\theta : \Gamma \leiR \Theta$ and
 $\Theta \entails x : \tau$. By inversion, the proof must consist of
 the \name{Lookup} rule followed by eliminating 
-$\Theta \entailsN x \hasscheme \gen{\theta\Xi}{\theta\upsilon}$
+$\Theta \entailsN x \hasscheme \gen{\theta\,\Xi}{\theta\upsilon}$
 with some $\Theta$-types. Hence it determines a map from the unbound type variables
 of $\Xi$ to types over $\Theta$, i.e.\ a substitution
 $\zeta : \Gamma, \Xi \leiR \Theta$ that agrees with $\theta$ on $\Gamma$ and
@@ -2400,12 +2400,12 @@ maps type variables in $\Xi$ to their definitions in $\Theta$.
 All the remaining cases are covered by the previous lemmas.
 The Generalist's lemma proves exactly the property required for the \name{Gen}
 rule. 
-The \name{Abs} rule is minimal by lemmas~\ref{lem:bindVariableProblem} and
+The \name{Abs} rule is minimal by Lemmas~\ref{lem:bindVariableProblem} and
 \ref{lem:inventVariableProblem}.
 The \name{App} rule is minimal by two uses of the Optimist's lemma,
-lemma~\ref{lem:inventVariableProblem} and minimality of unification.
+Lemma~\ref{lem:inventVariableProblem} and minimality of unification.
 The \name{Let} rule is minimal by the Optimist's lemma and
-lemma~\ref{lem:bindVariableProblem}.
+Lemma~\ref{lem:bindVariableProblem}.
 \end{proof}
 
 \begin{lemma}[Completeness of type inference]
@@ -2632,7 +2632,7 @@ an invariant that the underlying unification algorithm
 maintain a well-founded context.
 
 Our algorithm is presented as a problem transformation system locally
-preserving all possibile solutions, hence finding a most general
+preserving all possible solutions, hence finding a most general
 global solution if any at all. Accumulating solutions to decomposed
 problems is justified simply by stability of solutions on information
 increase. We have established a discipline of problem solving, happily
