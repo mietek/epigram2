@@ -1324,7 +1324,9 @@ When solving a variable with a type, we must accumulate
 the type's dependencies as we find them, performing the occurs check to
 ensure a solution exists.
 
-The rules in Figure~\ref{fig:unifyRules} define our unification algorithm. The
+The rules in Figure~\ref{fig:unifyRules} define our unification algorithm. 
+The 
+   \define{unify} 
 judgment $\algUnify{\Gamma}{\tau}{\upsilon}{\Delta}$ means that given inputs
 $\Gamma$, $\tau$ and $\upsilon$, 
    satisfying the input \sanity\ 
@@ -1333,8 +1335,9 @@ unification succeeds, yielding output context $\Delta$.
 %%%This is subject to the input \sanity\ 
 %%%$\Gamma \entails \tau \type \wedge \upsilon \type$.
 
-The judgment
-$\algInstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$
+The 
+   \define{solve} 
+judgment $\algInstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$
 means that given inputs $\Gamma$, $\Xi$, $\alpha$ and $\tau$,
 solving $\alpha$ with $\tau$ succeeds,  
 yielding output context $\Delta$. The idea is that the bar $(||)$ represents
@@ -1595,8 +1598,12 @@ S \defsyn~ \valid
 
 To account for schemes and type assignment, we need a controlled way
 to extend the context.
-If $S$ is a statement and $\decl{x}{D}$ is a declaration, then we define the
-binding statement $\Sbind{\decl{x}{D}}{S}$. We give a generic introduction rule,
+%%%If $S$ is a statement and $\decl{x}{D}$ is a declaration, then we define the 
+   Given statement $S$ and declaration $\decl{x}{D}$, then we define the
+%%%binding statement $\Sbind{\decl{x}{D}}{S}$. 
+   statement $\Sbind{\decl{x}{D}}{S}$, binding \(x\) in \(S\), subject to \(D\). 
+
+We give a generic introduction rule,
 but we make use of neutral elimination only for type variables.
 \[\begin{array}{c}
 \Rule{\Gamma \entails \ok_K D    \quad    \Gamma, \decl{y}{D} \entails \subst{y}{x} S}
