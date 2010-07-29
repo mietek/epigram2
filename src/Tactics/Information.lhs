@@ -82,9 +82,9 @@ boys if the argument is False or girls if the argument is True.
 
 > infoContextual :: Bool -> ProofState String
 > infoContextual gals = do
->     aus <- getAuncles
+>     inScope <- getInScope
 >     bsc <- gets inBScope
->     d <- help bsc aus
+>     d <- help bsc inScope
 >     return (renderHouseStyle d)
 >   where
 >     help :: BScopeContext -> Entries -> ProofState Doc
@@ -196,9 +196,9 @@ of the proof state at the current location.
 
 > prettyProofState :: ProofState String
 > prettyProofState = do
->     aus <- getAuncles
+>     inScope <- getInScope
 >     me <- getMotherName
->     d <- prettyPS aus me
+>     d <- prettyPS inScope me
 >     return (renderHouseStyle d)
 >
 > prettyPS :: Entries -> Name -> ProofState Doc

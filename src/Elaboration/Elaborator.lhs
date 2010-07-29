@@ -267,9 +267,9 @@ plus [
 
 > elabLiftedScheme :: Scheme DInTmRN -> ProofState (Scheme INTM, EXTM :=>: VAL)
 > elabLiftedScheme sch = do
->     aus <- getAuncles
->     (sch', tt) <- elabScheme aus sch
->     return (liftScheme aus sch', tt)
+>     inScope <- getInScope
+>     (sch', tt) <- elabScheme inScope sch
+>     return (liftScheme inScope sch', tt)
 
 > liftScheme :: Entries -> Scheme INTM -> Scheme INTM
 > liftScheme B0 sch = sch

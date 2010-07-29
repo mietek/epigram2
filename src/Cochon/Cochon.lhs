@@ -554,8 +554,8 @@ Import more tactics from an aspect:
 
 > printChanges :: ProofContext -> ProofContext -> IO ()
 > printChanges from to = do
->     let Right as = evalStateT getAuncles from
->         Right bs = evalStateT getAuncles to
+>     let Right as = evalStateT getInScope from
+>         Right bs = evalStateT getInScope to
 >     let (lost, gained)  = diff (as <>> F0) (bs <>> F0)
 >     if lost /= F0
 >         then putStrLn ("Left scope: " ++ showEntriesAbs (fmap reverseEntry (NF (fmap Right lost))) )

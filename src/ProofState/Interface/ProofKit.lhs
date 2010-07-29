@@ -429,12 +429,12 @@ to the next goal otherwise.
 > moduleToGoal ty = do
 >     (_ :=>: tyv) <- checkHere (SET :>: ty)
 >     ModuleMother n <- getMother
->     aus <- getAuncles
->     let  ty' = liftType aus ty
+>     inScope <- getInScope
+>     let  ty' = liftType inScope ty
 >          ref = n := HOLE Waiting :<: evTm ty'
 >     putMother (GirlMother LETG ref (last n) ty')
 >     putDevTip (Unknown (ty :=>: tyv))
->     return (applyAuncles ref aus)
+>     return (applyAuncles ref inScope)
 
 > draftModule :: String -> ProofState t -> ProofState t
 > draftModule name draftyStuff = do
@@ -455,12 +455,12 @@ shared parameters.
 
 > lookupName :: Name -> ProofStateT e (Maybe (EXTM :=>: VAL))
 > lookupName name = do
->     aus <- getAuncles
->     case Data.Foldable.find ((name ==) . entryName) aus of
->       Just (E ref _ _ _)  -> return (Just (applyAuncles ref aus))
+>     inScope <- getInScope
+>     case Data.Foldable.find ((name ==) . entryName) inScope of
+>       Just (E ref _ _ _)  -> return (Just (applyAuncles ref inScope))
 >       Nothing             ->
 >         case Data.Foldable.find ((name ==) . refName . snd) primitives of
->           Just (_, ref)  -> return (Just (applyAuncles ref aus))
+>           Just (_, ref)  -> return (Just (applyAuncles ref inScope))
 >           Nothing        -> return Nothing
 
 
@@ -596,16 +596,16 @@ current development, after checking that the purported type is in fact a type.
 >     _ :=>: tyv <- checkHere (SET :>: ty) `pushError`  (err "make: " 
 >                              ++ errTm (DTIN ty)
 >                              ++ err " is not a set.")
->     aus <- getAuncles
+>     inScope <- getInScope
 >     s' <- pickName "G" s
 >     n <- withNSupply (flip mkName s')
->     let  ty'  = liftType aus ty
+>     let  ty'  = liftType inScope ty
 >          ref  = n := HOLE hk :<: evTm ty'
 >     nsupply <- getDevNSupply
 >     let dev = Dev B0 (Unknown (ty :=>: tyv)) (freshNSpace nsupply s') SuspendNone
 >     putDevEntry (E ref (last n) (Girl LETG dev) ty')
 >     putDevNSupply (freshName nsupply)
->     return (applyAuncles ref aus)
+>     return (applyAuncles ref inScope)
 
 
 The |pickName| command takes a prefix suggestion and a name suggestion
@@ -667,8 +667,8 @@ The |ungawa| command looks for a truly obvious thing to do, and does it.
 > infoAuncles :: ProofState String
 > infoAuncles = do
 >     pc <- get
->     aus <- getAuncles
->     return (showEntries (inBScope pc) aus)
+>     inScope <- getInScope
+>     return (showEntries (inBScope pc) inScope)
 
 > infoDump :: ProofState String
 > infoDump = gets show
@@ -687,6 +687,6 @@ shared parameters).
 > getFakeMother :: ProofState (EXTM :=>: VAL)
 > getFakeMother = do
 >    r <- getFakeRef
->    aus <- getAuncles
->    let tm = P r $:$ (boySpine aus)
+>    inScope <- getInScope
+>    let tm = P r $:$ (boySpine inScope)
 >    return $ tm :=>: evTm tm

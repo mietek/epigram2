@@ -138,7 +138,7 @@ match the hoping holes of the first value to parts of the second value.
 
 
 > stripShared :: NEU -> ProofState REF
-> stripShared n = getAuncles >>= stripShared' n
+> stripShared n = getInScope >>= stripShared' n
 >   where
 >     stripShared' :: NEU -> Entries -> ProofState REF
 >     stripShared' (P ref@(_ := HOLE Hoping :<: _)) B0 = return ref

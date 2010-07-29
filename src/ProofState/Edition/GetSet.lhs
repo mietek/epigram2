@@ -42,8 +42,8 @@ updated information, providing a friendlier interface than |get| and |put|.
 
 \subsubsection{Getters}
 
-> getAuncles :: ProofStateT e Entries
-> getAuncles = gets auncles
+> getInScope :: ProofStateT e Entries
+> getInScope = gets inScope
 
 > getAunclesToImpl :: ProofStateT e [REF :<: INTM]
 > getAunclesToImpl = gets aunclesToImpl
@@ -88,15 +88,15 @@ updated information, providing a friendlier interface than |get| and |put|.
 
 > getBoys :: ProofStateT e [REF]
 > getBoys = do  
->     auncles <- getAuncles
->     return $ foldMap boy auncles 
+>     inScope <- getInScope
+>     return $ foldMap boy inScope
 >    where boy (E r _ (Boy _) _)  = [r]
 >          boy _ = []
 
 > getBoysBwd :: ProofStateT e (Bwd REF)
 > getBoysBwd = do  
->     auncles <- getAuncles
->     return $ foldMap boy auncles 
+>     inScope <- getInScope
+>     return $ foldMap boy inScope 
 >    where boy (E r _ (Boy _) _)  = (B0 :< r)
 >          boy _ = B0
 

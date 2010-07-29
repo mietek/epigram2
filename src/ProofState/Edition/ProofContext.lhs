@@ -206,8 +206,8 @@ The |auncles| function returns the elder aunts or uncles of the
 cursor, including the contents of the current development, thereby
 giving a list of entries that are currently in scope.
 
-> auncles :: ProofContext -> Entries
-> auncles pc@PC{pcDev=Dev{devEntries=es}} = greatAuncles pc <+> es
+> inScope :: ProofContext -> Entries
+> inScope pc@PC{pcDev=Dev{devEntries=es}} = greatAuncles pc <+> es
 
 
 \subsubsection{Gratuitous hackery}
