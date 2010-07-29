@@ -283,7 +283,17 @@ Programme.} \and Conor McBride}
 \maketitle
 
 \begin{abstract}
-\input{abstract.ltx}
+We consider the problems of first-order unification and type inference
+from a general perspective on problem-solving, namely that of
+information increase in the problem context.  This leads to a powerful
+technique for implementing type inference algorithms.  We describe a
+unification algorithm and illustrate the technique for the familiar
+Hindley-Milner type system, but it can be applied to more advanced
+type systems.  The algorithms depend on \emph{well-founded} contexts:
+type variable bindings and type-schemes for terms may depend only on
+earlier bindings.  We ensure that unification yields a most general
+unifier, and that type inference yields principal types, by advancing
+definitions earlier in the context only when necessary.
 \end{abstract}
 
 \category{F.3.3}{Logics and Meanings of Programs}{Studies of Program Constructs}[Type structure]
