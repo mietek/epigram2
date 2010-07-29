@@ -150,7 +150,7 @@
 \newcommand{\emptycontext}{\ensuremath{\mathcal{E}}}
 \newcommand{\letGoal}{\ensuremath{\fatsemi}}
 \newcommand{\defn}{\ensuremath{\!\centcolon=\!}}
-\newcommand{\asc}{\ensuremath{~\hat{\centcolon\centcolon}~}}
+\newcommand{\asc}{\ensuremath{\!::\!}}
 \newcommand{\hole}[1]{\ensuremath{#1 \!\centcolon= ?}}
 \newcommand{\decl}[2]{#1 #2}
 
@@ -159,7 +159,7 @@
 \newcommand{\scheme}{\ensuremath{~\mathbf{scheme}}}
 \newcommand{\valid}{\ensuremath{\mathbf{valid}}}
 \newcommand{\Sbind}[2]{#1 \Yright #2}
-\newcommand{\hasscheme}{\ensuremath{\centcolon\centcolon}}
+\newcommand{\hasscheme}{\ensuremath{::}}
 \newcommand{\Pinf}[2]{#1 : #2}
 \newcommand{\Psch}[2]{#1 \hasscheme #2}
 \newcommand{\Puni}[2]{#1 \equiv #2}
@@ -1617,23 +1617,27 @@ The \sanity\  is just $\valid$, as for $\tau \type$.
 \subsection{Terms and type assignment}
 
 Now we are in a position to reuse the framework already
-introduced, defining a new sort $\TM$, with 
+introduced, defining the sort $\TM$, with 
 $\V_\TM$ a set of term variables and $x$ ranging over $\V_\TM$.
-Term variable declarations $\D_\TM$ are scheme assignments of the form
+Term variable properties $\D_\TM$ are scheme assignments of the form
 $\asc \sigma$, with
 $\ok_\TM (\asc \sigma) = \sigma \scheme$.
 
 Let $s$, $t$, $w$ range over the set of terms with syntax 
 $$t \defsyn x ~||~ t~t ~||~ \lambda x . t ~||~ \letIn{x}{t}{t}.$$
 
-The type assignment statement $t : \tau$ is established by the declarative
+The type assignment statement $t : \tau$ is established by the
 rules in Figure~\ref{fig:typeAssignmentRules}. It has two parameters $t$ and
 $\tau$ with \sanity s $\valid$ and $\tau \type$ respectively.
-We define
-$$t \hasscheme \gen{\Xi}{\tau} \defmap \Sbind{\Xi}{t : \tau}$$
-and observe this gives the parameters $t$ and $\sigma$ \sanity s
+We overload notation to define the scheme assignment statement
+$t \hasscheme \sigma$ by
+$$t \hasscheme \gen{\Xi}{\tau} \defmap \Sbind{\Xi}{t : \tau}.$$
+Note this gives the parameters $t$ and $\sigma$ \sanity s
 $\valid$ and $\sigma \scheme$ as one might expect.
-We can interpret term variable declarations as scheme assignment statements:
+This overloading is r
+easonable because the meaning of $\hasscheme$ is clear from
+the context, and the interpretation of declarations embeds them in
+statements:
 $$\sem{x \asc \sigma}_\TM \defmap x \hasscheme \sigma.$$
 
 \begin{figure}[ht]
