@@ -283,6 +283,7 @@ Programme.} \and Conor McBride}
 \maketitle
 
 \begin{abstract}
+
 We consider the problems of first-order unification and type inference
 from a general perspective on problem-solving, namely that of
 information increase in the problem context.  This leads to a powerful
@@ -294,6 +295,7 @@ type variable bindings and type-schemes for terms may depend only on
 earlier bindings.  We ensure that unification yields a most general
 unifier, and that type inference yields principal types, by advancing
 definitions earlier in the context only when necessary.
+
 \end{abstract}
 
 \category{F.3.3}{Logics and Meanings of Programs}{Studies of Program Constructs}[Type structure]
@@ -317,7 +319,7 @@ simply-typed $\lambda$-calculus with \scare{let-expressions} for polymorphic
 definitions.
 For example, %%% the term
 $$\letIn{i}{\lambda x . x}{i\:i}$$
-is well-typed: $i$ is given a polymorphic type that is instantiated in two
+is well-typed: $i$ is given a polymorphic type, which is instantiated in two
 different ways. The syntax of types is
 $$\tau \defsyn \alpha ~||~ \tau \arrow \tau.$$
 For simplicity, the function arrow $\arrow$ is our only type constructor.
@@ -355,9 +357,8 @@ global correctness.
 
 In contrast to other presentations of unification and \hindleymilnershort\ type
 inference, our algorithm is based on contexts carrying variable definitions as
-well as declarations. This avoids the need to represent substitutions, or
-morphisms between contexts, explicitly.
-(We do use substitution in reasoning about the system.)
+well as declarations. This avoids the need to represent substitutions explicitly.
+(We use them to reason about the system.)
 
 This paper has been a long time brewing. 
    Its origins lie in a constraint
@@ -421,15 +422,16 @@ $$gen(A, \tau) = \begin{cases}
         (FV(\tau) \setminus FV(A) = \emptyset)
 \end{cases}.
 $$
-Here, the typing context is an unordered set of type scheme assignments,
-with \(A_x\) denoting `\(A\) with any \(x\) assignments removed': contexts are
-not designed to reflect lexical scope, so shadowing requires deletion and
-reinsertion.
+The typing context is an unordered set of type scheme assignments,
+with \(A_x\) denoting `\(A\) with any \(x\) assignment removed': contexts
+are not designed to
+% do not
+reflect lexical scope, so shadowing requires deletion and reinsertion.
 
 The `let' rule is the only real complexity in \AlgorithmW,
 and as \citet{milner_theory_1978} wrote, ``the
 reader may still feel that our rules are arbitrarily chosen and only partly
-supported by intuition.'' Experience has shown the rules to be well-chosen
+supported by intuition.'' The rules are well-chosen
 indeed; perhaps we can recover the intuition.
 
 In both cases, the occurs check is used to detect dependencies between variables.
@@ -514,7 +516,7 @@ $\alpha \defn \beta, \hole{\beta}$
 is not, because $\beta$ is not in scope for the definition of $\alpha$.
 This topological sorting of the dependency graph means that 
 entries on the right are harder to depend on, and correspondingly easier to
-generalise, just by discharging them as hypotheses, as usual.
+generalise, just by discharging them as hypotheses in the usual way.
 
 Definitions in the context induce a nontrivial equational theory on types,
 starting with $\alpha \equiv \tau$ for every definition $\alpha \defn \tau$ in
@@ -536,12 +538,13 @@ aiming to solve the equation $\beta \arrow \alpha \equiv \gamma$.
 % defining $\beta \defn \alpha$, giving the final judgment
 %
 It suffices to define $\beta \defn \alpha$, giving as final judgment
-$$\hole{\alpha}, \beta \defn \alpha, \gamma \defn \alpha \arrow \beta
-    \entails \beta \arrow \alpha \equiv \gamma.$$
+$\hole{\alpha}, \beta \defn \alpha, \gamma \defn \alpha \arrow \beta
+    \entails \beta \arrow \alpha \equiv \gamma.$
 
-A context thus contains a substitution, applied on demand, 
-in `triangular form'~\cite{DBLP:books/el/RV01/BaaderS01}, 
-but that need not be all. As we proceed with the development,
+A context represents a substitution in `triangular form'~\cite{DBLP:books/el/RV01/BaaderS01}, 
+which can be applied on demand.
+% but that need not be all.
+As we proceed with the development,
 the context structure will evolve to hold a variety of information
 about variables of all sorts and some control markers, managing the
 generalisation process.
@@ -707,19 +710,18 @@ generalisation process.
 Figure~\ref{fig:unifyCode} renders our unification algorithm in Haskell. 
 %%%\citeauthor{NaraschewskiN-JAR} formally proved correctness of \AlgorithmW\ 
    \AlgorithmW\ has been formally verified 
-in Isabelle/HOL using a counter for fresh 
+in Isabelle/HOL by \citet{NaraschewskiN-JAR}, using a counter for fresh 
 %%%variable 
    name 
-generation and a monad to propagate failure \citep{NaraschewskiN-JAR}; 
+generation and a monad to propagate failure; 
 we use similar techniques here.
 
-Figure~\ref{subfig:typeCode} implements types as a foldable functor
-parameterised by a type |TyName| of type variable names;  
+Figure~\ref{subfig:typeCode} implements types as a functor
+parameterised by a type of variable names;  
    for simplicity, we use integers.
 We compute free type variables using the typeclass |FTV| with membership
 function |(<?)|. 
-We can simply
-derive the required typeclass instances 
+The typeclass instances are derived
 using |Foldable|, 
 thanks to a language
 extension in GHC 6.12 \citep{ghc_team_glorious_2009}. 
