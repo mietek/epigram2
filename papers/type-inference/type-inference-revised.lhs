@@ -126,7 +126,7 @@
 \newcommand{\hindleymilnershort}{HM}
 
 % Definitions
-\newcommand{\defmap}{\mapsto}
+\newcommand{\defmap}{~\mapsto~}
 \newcommand{\centcolon}{\mathrel{\mathop:}}
 \newcommand{\defsyn}{\centcolon\centcolon=}
 
