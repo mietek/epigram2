@@ -69,7 +69,7 @@ the data about the working development is the derivative of the |Girl|
 and |Module| data-types defined in
 Section~\ref{sec:developments_entry}.
 
-> data Mother  = GirlMother GirlKind REF (String, Int) INTM
+> data Mother  = GirlMother DefKind REF (String, Int) INTM
 >              | ModuleMother Name
 >     deriving Show
 
@@ -102,8 +102,8 @@ to deal with this global context.
 >     show (E ref xn e t) = intercalate " " ["E", show ref, show xn, show e, show t]
 >     show (M n d) = intercalate " " ["M", show n, show d]
 > instance Show (Entity NewsyFwd) where
->     show (Boy k) = "Boy " ++ show k
->     show (Girl k d) = "Girl " ++ show k ++ " " ++ show d
+>     show (Parameter k) = "Param " ++ show k
+>     show (Definition k d) = "Def " ++ show k ++ " " ++ show d
 > instance Traversable NewsyFwd where
 >     traverse g (NF x) = NF <$> traverse (traverse g) x
 > instance Foldable NewsyFwd where
@@ -125,7 +125,7 @@ As often, we need some kit. First, getting the name of a |Mother|:
 Also, turning an entry (|Girl| or |Module|) into a |Mother|:
 
 > entryToMother :: Traversable f => Entry f -> Mother
-> entryToMother (E ref xn (Girl kind _) ty)  = GirlMother kind ref xn ty
+> entryToMother (E ref xn (Definition kind _) ty)  = GirlMother kind ref xn ty
 > entryToMother (M n _)                      = ModuleMother n
 
 
@@ -158,10 +158,10 @@ More generally, we can use one of these perverse functions:
 
 > rearrangeEntry ::  (Traversable f, Traversable g) =>
 >                    (forall a. f a -> g a) -> Entry f -> Entry g
-> rearrangeEntry h (E ref xn (Boy k) ty)          = 
->     E ref xn (Boy k) ty
-> rearrangeEntry h (E ref xn (Girl kind dev) ty)  = 
->     E ref xn (Girl kind (rearrangeDev h dev)) ty
+> rearrangeEntry h (E ref xn (Parameter k) ty)          = 
+>     E ref xn (Parameter k) ty
+> rearrangeEntry h (E ref xn (Definition kind dev) ty)  = 
+>     E ref xn (Definition kind (rearrangeDev h dev)) ty
 > rearrangeEntry h (M n d)                        = 
 >     M n (rearrangeDev h d)
 >
@@ -225,5 +225,5 @@ giving a list of entries that are currently in scope.
 
 >     boys = foldMap boy
 
->     boy (E r _ (Boy _) t)  = [r :<: t]
+>     boy (E r _ (Parameter _) t)  = [r :<: t]
 >     boy _                  = []

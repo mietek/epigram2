@@ -142,55 +142,55 @@ it once and for all with |lastName| and later rely on the cached version.
 
 \subsubsection{|Entity|}
 
-An |Entity| is gendered: it can either be a |Boy| or a |Girl|. A
-|Girl| can have children, that is sub-developments, whereas a |Boy|
-cannot. 
+An |Entity| is either a |Parameter| or a |Definition|. A |Definition|
+can have children, that is sub-developments, whereas a |Parameter|
+cannot.
 
 > data Traversable f => Entity f
->   =  Boy   BoyKind
->   |  Girl  GirlKind (Dev f)
+>   =  Parameter   ParamKind
+>   |  Definition  DefKind (Dev f)
 
 
-\paragraph{Girls for definitions:}
+\paragraph{Kinds of Definitions:}
 
-A |Girl| represents a \emph{definition}, with a (possibly empty)
-development of sub-objects. The |Tip| of this sub-development will
-either be of |Unknown| or |Defined| kind. \pierre{Can the Tip be
+A \emph{definition} eventually constructs a term, by a (possibly
+empty) development of sub-objects. The |Tip| of this sub-development
+will either be of |Unknown| or |Defined| kind. \pierre{Can the Tip be
 |Suspended|? I suspect so.}
 
-A programming problem is a special kind of |Girl|: it follows a type
-|Scheme| (Section~\ref{sec:display-scheme}), the high-level type of
-the function we are implementing.
+A programming problem is a special kind of definition: it follows a
+type |Scheme| (Section~\ref{sec:display-scheme}), the high-level type
+of the function we are implementing.
 
-> data GirlKind = LETG |  PROG (Scheme INTM)
+> data DefKind = LETG |  PROG (Scheme INTM)
 
 %if False
 
-> instance Show GirlKind where
->     show LETG = "LETG"
->     show (PROG _) = "PROG"
+> instance Show DefKind where
+>     show LETG      = "LETG"
+>     show (PROG _)  = "PROG"
 
 %endif
 
 
-\paragraph{Boys for parameters:}
+\paragraph{Kinds of Parameters:}
 
-A |Boy| represents a parameter (either a $\lambda$, $\forall$ or $\Pi$
-abstraction), which scopes over all following entries and the
-definitions (if any) in the enclosing development.
+A \emph{parameter} is either a $\lambda$, $\forall$ or $\Pi$
+abstraction. It scopes over all following entries and the definitions
+(if any) in the enclosing development.
 
-> data BoyKind = LAMB | ALAB | PIB deriving (Show, Eq)
+> data ParamKind = LAMB | ALAB | PIB deriving (Show, Eq)
 
 
 %if False
 
 > instance Show (Entity Bwd) where
->     show (Boy k) = "Boy " ++ show k
->     show (Girl k d) = "Girl " ++ show k ++ " " ++ show d
+>     show (Parameter k) = "Param " ++ show k
+>     show (Definition k d) = "Def " ++ show k ++ " " ++ show d
 
 > instance Show (Entity Fwd) where
->     show (Boy k) = "Boy " ++ show k
->     show (Girl k d) = "Girl " ++ show k ++ " " ++ show d 
+>     show (Parameter k) = "Param " ++ show k
+>     show (Definition k d) = "Def " ++ show k ++ " " ++ show d 
 
 %endif
 

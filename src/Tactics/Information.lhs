@@ -89,13 +89,13 @@ boys if the argument is False or girls if the argument is True.
 >   where
 >     help :: BScopeContext -> Entries -> ProofState Doc
 >     help bsc B0 = return empty
->     help bsc (es :< E ref _ (Boy k) _) | not gals = do
+>     help bsc (es :< E ref _ (Parameter k) _) | not gals = do
 >         ty     <- bquoteHere (pty ref)
 >         docTy  <- prettyHereAt (pred ArrSize) (SET :>: ty)
 >         d      <- help bsc es
 >         return $ d $$ prettyBKind k (text (showRelName (christenREF bsc ref))
 >                                               <+> kword KwAsc <+> docTy)
->     help bsc (es :< E ref _ (Girl _ _) _) | gals = do
+>     help bsc (es :< E ref _ (Definition _ _) _) | gals = do
 >         ty     <- bquoteHere $ removeShared (boySpine es) (pty ref)
 >         docTy  <- prettyHere (SET :>: ty)
 >         d      <- help bsc es
@@ -139,13 +139,13 @@ the saved state. We can get rid of it once we are confident that the new version
 >        es <- getDevEntries
 >        case (gals, es) of
 >            (_, B0) -> return empty
->            (False, es' :< E ref _ (Boy k) _) -> do
+>            (False, es' :< E ref _ (Parameter k) _) -> do
 >                putDevEntries es'
 >                ty' <- bquoteHere (pty ref)
 >                docTy <- prettyHere (SET :>: ty')
 >                d <- hyps bsc me
 >                return (d $$ prettyBKind k (text (showRelName (christenREF bsc ref)) <+> kword KwAsc <+> docTy))
->            (True, es' :< E ref _ (Girl _ _) _) -> do
+>            (True, es' :< E ref _ (Definition _ _) _) -> do
 >                goIn
 >                es <- getDevEntries
 >                (ty :=>: _) <- getGoal "hyps"
@@ -226,7 +226,7 @@ of the proof state at the current location.
 >         ed <- prettyE e
 >         prettyEs (d $$ ed) es
 >
->     prettyE (E (_ := DECL :<: ty) (x, _) (Boy k) _)  = do
+>     prettyE (E (_ := DECL :<: ty) (x, _) (Parameter k) _)  = do
 >         ty' <- bquoteHere ty
 >         tyd <- prettyHereAt (pred ArrSize) (SET :>: ty')
 >         return (prettyBKind k

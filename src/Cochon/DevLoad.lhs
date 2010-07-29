@@ -51,7 +51,7 @@ information to reconstruct it. Note that at this stage, we simply tag
 each girl with a list of commands to execute later.
 
 > data DevLine
->   =  DLBoy BoyKind String DInTmRN
+>   =  DLBoy ParamKind String DInTmRN
 >   |  DLGirl String [DevLine] (Maybe DInTmRN :<: DInTmRN) [CTData]
 >   |  DLModule String [DevLine] [CTData]
 
@@ -237,7 +237,7 @@ development.
 >     -- Make a fresh reference of that type
 >     freshRef (x :<: tyv) (\ref ->
 >         -- Register |ref| as a Lambda boy
->         putDevEntry (E ref (lastName ref) (Boy k) ty)
+>         putDevEntry (E ref (lastName ref) (Parameter k) ty)
 >       ) 
 >     -- Pass the accumulated commands
 >     return ncs

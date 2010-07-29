@@ -480,7 +480,7 @@ $\Pi S T$ and if so, adds a goal of type $S$ and applies $y$ to it.
 > apply = do
 >   devEntry <- getDevEntry
 >   case devEntry of
->     E ref@(name := k :<: (PI s t)) _ (Girl _ _) _ -> do
+>     E ref@(name := k :<: (PI s t)) _ (Definition _ _) _ -> do
 >         s' <- bquoteHere s
 >         t' <- bquoteHere (t $$ A s)
 >         z :=>: _ <- make ("z" :<: s')
@@ -497,7 +497,7 @@ fills in the goal with this entry.
 > done = do
 >   devEntry <- getDevEntry
 >   case devEntry of
->     E ref _ (Girl _ _) _ -> give (N (P ref))
+>     E ref _ (Definition _ _) _ -> give (N (P ref))
 >     _ -> throwError' $ err "done: last entry in the development must be a girl."
 
 The |give| command checks the provided term has the goal type, and if so, fills in
@@ -539,7 +539,7 @@ appends a $\lambda$-abstraction with the appropriate type to the current develop
 >       Unknown (pi :=>: ty) -> case lambdable ty of
 >         Just (k, s, t) -> freshRef (x :<: s) (\ref -> do
 >             s' <- bquoteHere s
->             putDevEntry (E ref (lastName ref) (Boy k) s')
+>             putDevEntry (E ref (lastName ref) (Parameter k) s')
 >             let tipTyv = t (pval ref)
 >             tipTy <- bquoteHere tipTyv
 >             putDevTip (Unknown (tipTy :=>: tipTyv))
@@ -557,7 +557,7 @@ that the supplied type matches the one at the tip.
 >     tip <- getDevTip
 >     case tip of
 >       Module -> freshRef (x :<: tv) (\ref -> do
->           putDevEntry (E ref (lastName ref) (Boy LAMB) ty)
+>           putDevEntry (E ref (lastName ref) (Parameter LAMB) ty)
 >           return ref
 >         )
 >       Unknown (pi :=>: gty) -> case lambdable gty of
@@ -565,7 +565,7 @@ that the supplied type matches the one at the tip.
 >           eq <- withNSupply (equal (SET :>: (tv, s)))
 >           if eq
 >             then freshRef (x :<: tv) (\ref -> do
->                 putDevEntry (E ref (lastName ref) (Boy k) ty)
+>                 putDevEntry (E ref (lastName ref) (Parameter k) ty)
 >                 let tipTyv = t (pval ref)
 >                 tipTy <- bquoteHere tipTyv
 >                 putDevTip (Unknown (tipTy :=>: tipTyv))
@@ -579,7 +579,7 @@ that the supplied type matches the one at the tip.
 The following piece of kit might profitably be shifted to somewhere more
 general.
 
-> lambdable :: TY -> Maybe (BoyKind, TY, VAL -> TY)
+> lambdable :: TY -> Maybe (ParamKind, TY, VAL -> TY)
 > lambdable (PI s t)         = Just (LAMB, s, (t $$) . A)
 > lambdable (PRF (ALL s p))  = Just (ALAB, s, \v -> PRF (p $$ A v))
 > lambdable _                = Nothing
@@ -603,7 +603,7 @@ current development, after checking that the purported type is in fact a type.
 >          ref  = n := HOLE hk :<: evTm ty'
 >     nsupply <- getDevNSupply
 >     let dev = Dev B0 (Unknown (ty :=>: tyv)) (freshNSpace nsupply s') SuspendNone
->     putDevEntry (E ref (last n) (Girl LETG dev) ty')
+>     putDevEntry (E ref (last n) (Definition LETG dev) ty')
 >     putDevNSupply (freshName nsupply)
 >     return (applyAuncles ref inScope)
 
@@ -632,7 +632,7 @@ is also a set; if so, it appends a $\Pi$-abstraction to the current development.
 >     tip <- getDevTip
 >     case tip of
 >         Unknown (_ :=>: SET) -> freshRef (s :<: tv) (\ref -> do
->             putDevEntry (E ref (lastName ref) (Boy PIB) ty)
+>             putDevEntry (E ref (lastName ref) (Parameter PIB) ty)
 >             return ref
 >           )
 >         Unknown _  -> throwError' $ err "piBoy: goal is not of type SET."

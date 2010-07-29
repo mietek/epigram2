@@ -182,10 +182,10 @@ then continues with |lookFor|.
 > lookUp (x,i) (esus, es :< e@(M n (Dev {devEntries=es'}))) (fs,vfss) | lastNom n == x =
 >   if i == 0 then Right (Right es', boyREFs (flat esus es), Nothing, Nothing)
 >             else lookUp (x,i-1) (esus,es) (e:>fs,vfss)
-> lookUp (x,i) (esus, es :< e@(E r (y,j) (Girl kind (Dev {devEntries=es'})) _)) (fs,vfss) | x == y =
+> lookUp (x,i) (esus, es :< e@(E r (y,j) (Definition kind (Dev {devEntries=es'})) _)) (fs,vfss) | x == y =
 >   if i == 0 then Right (Right es', boyREFs (flat esus es), Just r, kindScheme kind)
 >             else lookUp (x,i-1) (esus,es) (e:>fs,vfss)
-> lookUp (x,i) (esus, es :< e@(E r (y,j) (Boy _) _)) (fs,vfss) | x == y =
+> lookUp (x,i) (esus, es :< e@(E r (y,j) (Parameter _) _)) (fs,vfss) | x == y =
 >   if i == 0 then Right (Right B0, [], Just r, Nothing)
 >             else lookUp (x,i-1) (esus,es) (e:>fs,vfss)
 > lookUp u (esus, es :< e) (fs,vfss) = lookUp u (esus,es) (e:>fs,vfss)
@@ -204,7 +204,7 @@ then continues with |lookFor|.
 >     else lookDown (x, i) (es, uess) (pushSpine e sp)
 >   where
 >     pushSpine :: Entry Bwd -> [REF] -> [REF]
->     pushSpine (E r _ (Boy _) _) sp   = r : sp
+>     pushSpine (E r _ (Parameter _) _) sp   = r : sp
 >     pushSpine _ sp                   = sp
 
 > lookDown (x, i) (F0 , (((y, j), es) :> uess)) sp =
@@ -452,7 +452,7 @@ If nothing else matches, we had better give up and go home.
 >   partNom hd top (esus,es) (F0,(not,js):>vjss)
 > partNom hd top (esus, es :< M n (Dev {devEntries=es'})) fsc | (hd ++ [top]) == n =
 >   Just (boySpine (flat esus es),Left es')
-> partNom hd top (esus, es :< E _ top' (Girl _ (Dev {devEntries=es'})) _) fsc | hd ++ [top] == (flatNom esus []) ++ [top'] =
+> partNom hd top (esus, es :< E _ top' (Definition _ (Dev {devEntries=es'})) _) fsc | hd ++ [top] == (flatNom esus []) ++ [top'] =
 >   Just (boySpine (flat esus es),Left es')
 > partNom hd top (esus, es :< e) (fs, vfss)  = partNom hd top (esus, es) (e:>fs,vfss)
 > partNom _ _ _ _ = Nothing
@@ -536,7 +536,7 @@ location but the spine is different.
 > findF i u (M n _ :> es) | (last $ n) == u = 
 >   Just ((fst u, if i == 0 then Rel 0 else Abs i), Nothing)
 > findF i u@(x,_) (M n _ :> es) | (fst . last $ n) == x = findF (i+1) u es
-> findF i u (E _ v (Girl kind _) _ :> es) | v == u = 
+> findF i u (E _ v (Definition kind _) _ :> es) | v == u = 
 >   Just ((fst u, if i == 0 then Rel 0 else Abs i), kindScheme kind)
 > findF i u (E _ v _ _ :> es) | v == u = 
 >   Just ((fst u, if i == 0 then Rel 0 else Abs i), Nothing)
@@ -563,7 +563,7 @@ current location.
 > nomRel' o (x,i) (es:<M n (Dev {devEntries=es'})) | (fst . last $ n) == x  = 
 >   if i == (snd . last $ n) then (| (o,es',Nothing) |) 
 >                            else nomRel' (o+1) (x,i) es
-> nomRel' o (x,i) (es:<E _ (y,j) (Girl kind (Dev {devEntries=es'})) _) | y == x =
+> nomRel' o (x,i) (es:<E _ (y,j) (Definition kind (Dev {devEntries=es'})) _) | y == x =
 >   if i == j then (| (o,es',kindScheme kind) |) else nomRel' (o+1) (x,i) es
 > nomRel' o (x,i) (es:<E _ (y,j) _ _) | y == x = 
 >   if i == j then (| (o,B0,Nothing) |) else nomRel' (o+1) (x,i) es

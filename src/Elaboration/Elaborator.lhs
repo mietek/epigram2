@@ -273,7 +273,7 @@ plus [
 
 > liftScheme :: Entries -> Scheme INTM -> Scheme INTM
 > liftScheme B0 sch = sch
-> liftScheme (es :< E _ (x, _) (Boy _) s) sch =
+> liftScheme (es :< E _ (x, _) (Parameter _) s) sch =
 >     liftScheme es (SchExplicitPi (x :<: SchType (es -| s)) sch)
 > liftScheme (es :< _) sch = liftScheme es sch
 

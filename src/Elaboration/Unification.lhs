@@ -58,7 +58,7 @@ holes with the new ones.
 >         _ :< e  -> pass e
 >   where
 >     pass :: Entry Bwd -> ProofState (EXTM :=>: VAL)
->     pass (E girl@(girlName := _) _ (Girl _ _) girlTyTm)
+>     pass (E girl@(girlName := _) _ (Definition _ _) girlTyTm)
 >       | name == girlName && occurs girl = throwError' $
 >           err "solveHole: you can't define something in terms of itself!"
 >       | name == girlName = do
@@ -72,7 +72,7 @@ holes with the new ones.
 >           give tm''
 >       | occurs girl = goIn >> solveHole' ref ((girl, girlTyTm):deps) tm
 >       | otherwise = goIn >> solveHole' ref deps tm
->     pass (E boy _ (Boy _) _)
+>     pass (E boy _ (Parameter _) _)
 >       | occurs boy = throwError' $
 >             err "solveHole: boy" ++ errRef boy ++ err "occurs illegally."
 >       | otherwise = cursorUp >> solveHole' ref deps tm
@@ -142,9 +142,9 @@ match the hoping holes of the first value to parts of the second value.
 >   where
 >     stripShared' :: NEU -> Entries -> ProofState REF
 >     stripShared' (P ref@(_ := HOLE Hoping :<: _)) B0 = return ref
->     stripShared' (n :$ A (NP r)) (es :< E boyRef _ (Boy _) _)
+>     stripShared' (n :$ A (NP r)) (es :< E boyRef _ (Parameter _) _)
 >         | r == boyRef                            = stripShared' n es
->     stripShared' n (es :< E _ _ (Girl _ _) _)    = stripShared' n es
+>     stripShared' n (es :< E _ _ (Definition _ _) _)    = stripShared' n es
 >     stripShared' n (es :< M _ _)                 = stripShared' n es
 >     stripShared' n es = do
 >       -- |proofTrace $ "stripShared: fail on " ++ show n|

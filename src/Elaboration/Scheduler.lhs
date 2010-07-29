@@ -78,7 +78,7 @@ resume its mother, then search its children from the top.
 >     cs <- getDevCadets
 >     case cs of
 >         F0                    -> schedulerDone n
->         E _ _ (Boy _) _ :> _  -> cursorDown >> schedulerContinue n
+>         E _ _ (Parameter _) _ :> _  -> cursorDown >> schedulerContinue n
 >         _ :> _                -> do
 >             cursorDown
 >             goIn

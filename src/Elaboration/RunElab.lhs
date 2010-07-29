@@ -177,7 +177,7 @@ search the hypotheses for a value with the same label.
 >     seekOn es
 >   where
 >     seekOn B0                             =    (|)
->     seekOn (es' :< E boy _ (Boy LAMB) _)  =    seekIn (NP boy) (pty boy)
+>     seekOn (es' :< E boy _ (Parameter LAMB) _)  =    seekIn (NP boy) (pty boy)
 >                                           <|>  seekOn es'
 >     seekOn (es' :< _)                     =    seekOn es'
 
@@ -369,8 +369,8 @@ is unstable.
 >                -> ProofState (EXTM :=>: VAL)
 > suspend (x :<: tt) prob = do
 >     r <- make (x :<: termOf tt)
->     Just (E ref xn (Girl kind dev@(Dev {devTip=Unknown utt})) tm) <- removeDevEntry
->     putDevEntry (E ref xn (Girl kind dev{devTip=Suspended utt prob}) tm)
+>     Just (E ref xn (Definition kind dev@(Dev {devTip=Unknown utt})) tm) <- removeDevEntry
+>     putDevEntry (E ref xn (Definition kind dev{devTip=Suspended utt prob}) tm)
 >     let ss = if isUnstable prob then SuspendUnstable else SuspendStable
 >     putDevSuspendState ss
 >     grandmotherSuspend ss

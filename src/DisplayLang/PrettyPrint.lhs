@@ -149,10 +149,10 @@ than a $\lambda$-term is reached.
 > import <- Pretty
 
 
-The |prettyBKind| function pretty-prints a |BoyKind| if supplied
+The |prettyBKind| function pretty-prints a |ParamKind| if supplied
 with a document representing its name and type.
 
-> prettyBKind :: BoyKind -> Doc -> Doc
+> prettyBKind :: ParamKind -> Doc -> Doc
 > prettyBKind LAMB  d = kword KwLambda <+> d <+> kword KwArr
 > prettyBKind ALAB  d = kword KwLambda <+> d <+> kword KwImp
 > prettyBKind PIB   d = parens d <+> kword KwArr

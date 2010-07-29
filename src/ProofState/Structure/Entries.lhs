@@ -36,13 +36,13 @@ work into the argument spine of a \(\lambda\)-lifted definition:
 > boySpine :: Entries -> Spine {TT} REF
 > boySpine = foldMap boy where
 >   boy :: Entry Bwd -> Spine {TT} REF
->   boy (E r _ (Boy _) _)  = [A (N (P r))]
+>   boy (E r _ (Parameter _) _)  = [A (N (P r))]
 >   boy _                  = []
 
 > boyREFs :: Entries -> [REF]
 > boyREFs = foldMap boy where
 >   boy :: Entry Bwd -> [REF]
->   boy (E r _ (Boy _) _)  = [r]
+>   boy (E r _ (Parameter _) _)  = [r]
 >   boy _                  = []
 
 
@@ -52,10 +52,10 @@ In the following, we define a handful of functions which are quite
 handy, yet not grandiose. This section can be skipped on a first
 reading.
 
-We sometimes wish to determine whether an entry is a |Boy|:
+We sometimes wish to determine whether an entry is a |Parameter|:
 
 > isBoy :: Traversable f => Entry f -> Bool
-> isBoy (E _ _ (Boy _) _)  = True
+> isBoy (E _ _ (Parameter _) _)  = True
 > isBoy _                  = False
 
 > entryREF :: Traversable f => Entry f -> Maybe REF
@@ -67,8 +67,8 @@ sub-developments. This works for girls and modules, but will not for
 boys.
 
 > entryDev :: Traversable f => Entry f -> Maybe (Dev f)
-> entryDev (E _ _ (Boy _) _)          = Nothing
-> entryDev (E _ _ (Girl _ d) _)       = Just d
+> entryDev (E _ _ (Parameter _) _)          = Nothing
+> entryDev (E _ _ (Definition _ d) _)       = Just d
 > entryDev (M _ d)                    = Just d
 
 For display purposes, we often ask the last name or the whole name of
@@ -84,12 +84,12 @@ an |Entry|:
 
 Some girls have |Scheme|s, and we can extract them thus:
 
-> kindScheme :: GirlKind -> Maybe (Scheme INTM)
+> kindScheme :: DefKind -> Maybe (Scheme INTM)
 > kindScheme LETG        = Nothing
 > kindScheme (PROG sch)  = Just sch
 >
 > entryScheme :: Traversable f => Entry f -> Maybe (Scheme INTM)
-> entryScheme (E _ _ (Girl k _) _)     = kindScheme k
+> entryScheme (E _ _ (Definition k _) _)     = kindScheme k
 > entryScheme _                        = Nothing
 
 The |entryCoerce| function is quite a thing. When defining |Dev|, we
@@ -105,8 +105,8 @@ in which case we return an unchanged |Left dev|.
 
 > entryCoerce ::  (Traversable f, Traversable g) => 
 >                 Entry f -> Either (Dev f) (Entry g)
-> entryCoerce (E ref  xn  (Boy k)       ty)      = Right $ E ref xn (Boy k) ty
-> entryCoerce (E _    _   (Girl _ dev)  _)       = Left dev
+> entryCoerce (E ref  xn  (Parameter k)       ty)      = Right $ E ref xn (Parameter k) ty
+> entryCoerce (E _    _   (Definition _ dev)  _)       = Left dev
 > entryCoerce (M _    dev)                       = Left dev
 
 We can extract the |SuspendState| from an entry, noting that boys do not have
