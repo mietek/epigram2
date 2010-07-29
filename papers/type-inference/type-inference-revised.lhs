@@ -1847,9 +1847,9 @@ $\theta \eqsubst \zeta \compose \iota :
 \section{Type inference problems and their solutions\label{sec:tyinf}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Type inference involves making the statement $t : \tau$ hold. However,
-a key contrast with unification is that the type should
-be an \emph{output} of problem-solving, along with the solution context. We need
+Type inference involves making the statement $t : \tau$ hold, but
+unlike unification, the type should
+be an \emph{output} of problem-solving along with the solution context. We need
 a more liberal definition than that of constraint problems.
 We associate a \define{mode} with each parameter in a statement: either
 \scare{input} or \scare{output}. For simplicity, assume statements always have
@@ -1864,15 +1864,12 @@ with respect to the definitional equality, i.e.\ if
 $\Gamma \entails \alpha \equiv \tau \wedge \beta \equiv \upsilon$, then
 $\leParam{}{\Gamma}{b}{c}$ if and only if 
 $\leParam{}{\Gamma}{\subst{\tau}{\alpha} b}{\subst{\upsilon}{\beta} c}$.
+This is easily verified for each preorder we use.
 \TODO{Other conditions?}
 
-This induces a
-preorder on context-output pairs, with $\delta : \leiRParam{\Gamma}{a}{\Delta}{b}$ if
-$\delta : \Gamma \leiR \Delta$ and $\leParam{}{\Delta}{\delta a}{b}$.
-
-It is not enough to consider output sets, because we need subsequent problems to
-depend on the results of earlier problems. Thus we must index the problems by 
-a set of inputs. 
+We need subsequent problems to depend on the results of earlier problems,
+threading the output from one into the input of the next. Thus we must index
+problems to determine the input parameters. 
 
 Let $A$ be an output set.
 An \define{$A$-indexed problem family $Q$ for $B$} is an output set $B$ and a
@@ -1881,35 +1878,36 @@ that the \define{simplicity condition} holds:
 for all $a, a' \in A$, contexts $\Gamma$ and output parameter values $b \in B$,
 $$\leParam{}{\Gamma}{a}{a'} ~\wedge~ \Gamma \entails \iprobstmt{Q}{a'}{b}
     \quad\Rightarrow\quad  \Gamma \entails \iprobstmt{Q}{a}{b}.$$
-We write $\iprobcond{Q}{a}$ for the \sanity s on the input parameters at index
-$a$ and $\iprobstmt{Q}{a}{b}$ for the statement with input at index $a$ and
-output value $b$.
-We write $\leParam{Q}{\Gamma}{\cdot}{\cdot}$ for the preorder on the output set
-of $Q$ in context $\Gamma$.
+We write $\iprobstmt{Q}{a}{b}$ for the statement with input at index $a$ and
+output value $b$, and $\iprobcond{Q}{a}$ for the \sanity s on the input
+parameters at index $a$.
+We use $\leParam{Q}{\Gamma}{\cdot}{\cdot}$ for the preorder on the output set.
+The idea behind this contravariant condition is that the preorder
+represents specialisation of solutions, so if a problem can be solved with an
+input $a'$ then it can be solved with the more general $a$.
 
-A \define{problem $P$ for $B$} is a problem family indexed by the 
-unit set with the trivial preorder. We simply omit the index in this case.
-
+Now we can generalise the notion of constraint problem and its solution.
 An \define{inference problem} consists of a context $\Gamma$, an $A$-indexed
 problem family $Q$ and an index $a \in A$ such that
 $\Gamma \entails \iprobcond{Q}{a}$.
-
-A \define{solution} of $(\Gamma, Q, a)$ consists of an information increase
+A \define{solution} of it consists of an information increase
 $\delta : \Gamma \leiR \Delta$ and a value for the output parameter $b \in B$
 such that $\Delta \entails \iprobsubst{\delta}{Q}{a}{b}$.
-% and the \sanity\ on $b$ hold in $\Delta$.
 
-% If $A$ and $B$ are preordered for fixed $\Gamma$, we can define a preorder on
-% $A \times B$ given by $\leParam{\Gamma}{(a, b)}{(a', b')}$ if
-% $\leParam{\Gamma}{a}{a'}$ and $\leParam{\Gamma}{b}{b'}$.
-
-We write $\LEIRProb{\Gamma}{P}{\Delta}{a}$ if
-$\Gamma \leiR \Delta$, $\Delta \entails \probstmt{P}{a}$,
-and for all $\theta : \Gamma \leiR \Theta$ and $b$ such that
-$\Delta \entails \probsubst{\theta}{P}{b}$, we have
-$\zeta : \leiRParam{\Delta}{a}{\Theta}{b}$ for some $\zeta$ such that
+The preorder on outputs induces a
+preorder on context-output pairs, with $\delta : \leiRParam{\Gamma}{a}{\Delta}{b}$ if
+$\delta : \Gamma \leiR \Delta$ and $\leParam{}{\Delta}{\delta a}{b}$.
+We will look for minimal solutions with respect to this preorder,
+and write $\LEIRProb{\Gamma}{Q[a]}{\Delta}{b}$ if
+$(\iota : \Gamma \leiR \Delta, b)$ is a solution (i.e.\ $\Delta \entails \iprobstmt{Q}{a}{b}$)
+and for all solutions $(\theta : \Gamma \leiR \Theta, c)$ we have
+$\zeta : \leiRParam{\Delta}{b}{\Theta}{c}$ for some $\zeta$ such that
 $\theta \eqsubst \zeta \compose \iota$.
+As with unification, we only use the identity substitution
+but are minimal with respect to any solution.
 
+A \define{problem $P$ for $B$} is a problem family indexed by the 
+unit set with the trivial preorder. We simply omit the index in this case.
 
 \subsection{The Optimist's lemma}
 
