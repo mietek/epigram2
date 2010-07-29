@@ -40,16 +40,16 @@ letter.
 Hence, we have:
 
 > entryRef :: Traversable f => Entry f -> Maybe REF
-> entryRef (E r _ _ _)  = Just r
-> entryRef (M _ _)      = Nothing
+> entryRef (EEntity r _ _ _)  = Just r
+> entryRef (EModule _ _)      = Nothing
 >
 > entryName :: Traversable f => Entry f -> Name
-> entryName (E (n := _) _ _ _)  = n
-> entryName (M n _)             = n
+> entryName (EEntity (n := _) _ _ _)  = n
+> entryName (EModule n _)             = n
 >
 > entryLastName :: Traversable f => Entry f -> (String, Int)
-> entryLastName (E _ xn _ _)  = xn
-> entryLastName (M n _)       = last n
+> entryLastName (EEntity _ xn _ _)  = xn
+> entryLastName (EModule n _)       = last n
 >
 > entryScheme :: Traversable f => Entry f -> Maybe (Scheme INTM)
 > entryScheme (EDEF _ _ (PROG sch) _ _)  = Just sch
@@ -57,7 +57,7 @@ Hence, we have:
 >
 > entryDev :: Traversable f => Entry f -> Maybe (Dev f)
 > entryDev (EDEF _ _ _ d _)  = Just d
-> entryDev (M _ d)           = Just d
+> entryDev (EModule _ d)           = Just d
 > entryDev (EPARAM _ _ _ _)  = Nothing
 >
 > entrySuspendState :: Traversable f => Entry f -> SuspendState
@@ -95,6 +95,6 @@ modules, in which case we return an unchanged |Left dev|.
 >                 Entry f -> Either (Dev f) (Entry g)
 > entryCoerce (EPARAM ref xn k ty)  = Right $ EPARAM ref xn k ty
 > entryCoerce (EDEF _ _ _ dev _)    = Left dev
-> entryCoerce (M _    dev)          = Left dev
+> entryCoerce (EModule _    dev)          = Left dev
 
 

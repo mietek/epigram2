@@ -193,7 +193,7 @@ then continues with |lookFor|.
 >             else lookUp (x,i-1) (esus,es) (F0,((y,j),fs) :> vfss)
 > lookUp (x,i) ((esus :< (es,(y,j))),B0) (fs,vfss) = 
 >   lookUp (x,i) (esus,es) (F0,((y,j),fs) :> vfss)
-> lookUp (x,i) (esus, es :< e@(M n (Dev {devEntries=es'}))) (fs,vfss) | lastNom n == x =
+> lookUp (x,i) (esus, es :< e@(EModule n (Dev {devEntries=es'}))) (fs,vfss) | lastNom n == x =
 >   if i == 0 then Right (Right es', paramREFs (flat esus es), Nothing, Nothing)
 >             else lookUp (x,i-1) (esus,es) (e:>fs,vfss)
 > lookUp (x,i) (esus, es :< e@(EDEF r (y,j) dkind (Dev {devEntries=es'}) _)) (fs,vfss) | x == y =
@@ -467,7 +467,7 @@ If nothing else matches, we had better give up and go home.
 >   Just (paramSpine (flat esus es),Right fsc)
 > partNom hd top ((esus :< (es,not)), B0) (js,vjss) =
 >   partNom hd top (esus,es) (F0,(not,js):>vjss)
-> partNom hd top (esus, es :< M n (Dev {devEntries=es'})) fsc | (hd ++ [top]) == n =
+> partNom hd top (esus, es :< EModule n (Dev {devEntries=es'})) fsc | (hd ++ [top]) == n =
 >   Just (paramSpine (flat esus es),Left es')
 > partNom hd top (esus, es :< EDEF _ top' _ (Dev {devEntries=es'}) _) fsc | hd ++ [top] == (flatNom esus []) ++ [top'] =
 >   Just (paramSpine (flat esus es),Left es')
@@ -510,13 +510,13 @@ name component. This also returns the scheme attached, if there is one.
 >   | lastNom n == fst u'                        = countB (i+1)  n (esus, es')
 > countB i n (esus :< (es', u'), B0)             = countB i      n (esus, es')
 >
-> countB i n (esus, es :< M n' (Dev {devEntries=es'}))
+> countB i n (esus, es :< EModule n' (Dev {devEntries=es'}))
 >   | n == n'                                    = (| (i, Nothing) |)
-> countB i n (esus, es :< M n' _)           
+> countB i n (esus, es :< EModule n' _)           
 >   | lastNom n == lastNom n'                    = countB (i+1) n (esus, es)
-> countB i n (esus, es :< e@(E r u' _ _))
+> countB i n (esus, es :< e@(EEntity r u' _ _))
 >   | last n == u' && refName r == n             = (| (i, entryScheme e) |)
-> countB i n (esus, es :< E _ u' _ _)
+> countB i n (esus, es :< EEntity _ u' _ _)
 >   | lastNom n == fst u'                        = countB (i+1) n (esus, es)
 >
 > countB i n (esus, es :< _)                     = countB i n (esus, es)
@@ -544,20 +544,20 @@ location but the spine is different.
 
 > countF :: String -> Fwd (Entry Bwd) -> Int
 > countF x F0 = 0
-> countF x (M n _ :> es) | (fst . last $ n) == x = 1 + countF x es
-> countF x (E _ (y,_) _ _ :> es) | y == x = 1 + countF x es
+> countF x (EModule n _ :> es) | (fst . last $ n) == x = 1 + countF x es
+> countF x (EEntity _ (y,_) _ _ :> es) | y == x = 1 + countF x es
 > countF x (_ :> es) = countF x es
 
 > findF :: Int -> (String,Int) -> Fwd (Entry Bwd) 
 >              -> Maybe ((String,Offs), Maybe (Scheme INTM))
-> findF i u (M n _ :> es) | (last $ n) == u = 
+> findF i u (EModule n _ :> es) | (last $ n) == u = 
 >   Just ((fst u, if i == 0 then Rel 0 else Abs i), Nothing)
-> findF i u@(x,_) (M n _ :> es) | (fst . last $ n) == x = findF (i+1) u es
+> findF i u@(x,_) (EModule n _ :> es) | (fst . last $ n) == x = findF (i+1) u es
 > findF i u (e@(EDEF _ v dkind _ _) :> es) | v == u = 
 >   Just ((fst u, if i == 0 then Rel 0 else Abs i), entryScheme e)
-> findF i u (E _ v _ _ :> es) | v == u = 
+> findF i u (EEntity _ v _ _ :> es) | v == u = 
 >   Just ((fst u, if i == 0 then Rel 0 else Abs i), Nothing)
-> findF i u@(x,_) (E _ (y,_) _ _ :> es) | y == x = findF (i+1) u es
+> findF i u@(x,_) (EEntity _ (y,_) _ _ :> es) | y == x = findF (i+1) u es
 > findF i u (_ :> es) = findF i u es
 > findF _ _ _ = Nothing
 
@@ -577,12 +577,12 @@ current location.
 
 > nomRel' :: Int -> (String,Int) -> Entries 
 >                -> Maybe (Int,Entries, Maybe (Scheme INTM))
-> nomRel' o (x,i) (es:<M n (Dev {devEntries=es'})) | (fst . last $ n) == x  = 
+> nomRel' o (x,i) (es:< EModule n (Dev {devEntries=es'})) | (fst . last $ n) == x  = 
 >   if i == (snd . last $ n) then (| (o,es',Nothing) |) 
 >                            else nomRel' (o+1) (x,i) es
 > nomRel' o (x,i) (es:< e@(EDEF _ (y,j) dkind (Dev {devEntries=es'}) _)) | y == x =
 >   if i == j then (| (o,es',entryScheme e) |) else nomRel' (o+1) (x,i) es
-> nomRel' o (x,i) (es:< E _ (y,j) _ _) | y == x = 
+> nomRel' o (x,i) (es:< EEntity _ (y,j) _ _) | y == x = 
 >   if i == j then (| (o,B0,Nothing) |) else nomRel' (o+1) (x,i) es
 > nomRel' o (x,i) (es:<e) = nomRel' o (x,i) es
 > nomRel' _ _ _ = Nothing
@@ -624,7 +624,7 @@ comma-separated list.
 
 > showEntries :: (Traversable f, Traversable g) => BScopeContext -> f (Entry g) -> String
 > showEntries bsc = intercalate ", " . foldMap
->     (\(E ref _ _ _) -> [showRelName (christenREF bsc ref)])
+>     (\(EEntity ref _ _ _) -> [showRelName (christenREF bsc ref)])
 
 The |showEntriesAbs| function works similarly, but uses absolute names instead of
 christening them.

@@ -100,12 +100,12 @@ or value
 \end{itemize}
 
 > data Traversable f => Entry f
->   =  E { ref       :: REF 
->        , lastName  :: (String, Int)
->        , entity    :: Entity f
->        , term      :: INTM }
->   |  M { name      :: Name
->        , dev       :: (Dev f) }
+>   =  EEntity  { ref       :: REF 
+>               , lastName  :: (String, Int)
+>               , entity    :: Entity f
+>               , term      :: INTM }
+>   |  EModule  { name      :: Name
+>               , dev       :: (Dev f) }
 
 In the Module case, we have already tied the knot, by defining |M|
 with a sub-development. In the Entity case, we give yet another choice
@@ -121,11 +121,11 @@ Typically, we work with developments that use backwards lists, hence
 %if False
 
 > instance Show (Entry Bwd) where
->     show (E ref xn e t) = intercalate " " ["E", show ref, show xn, show e, show t]
->     show (M n d) = intercalate " " ["M", show n, show d]
+>     show (EEntity ref xn e t) = intercalate " " ["E", show ref, show xn, show e, show t]
+>     show (EModule n d) = intercalate " " ["M", show n, show d]
 > instance Show (Entry Fwd) where
->     show (E ref xn e t) = intercalate " " ["E", show ref, show xn, show e, show t]
->     show (M n d) = intercalate " " ["M", show n, show d]
+>     show (EEntity ref xn e t) = intercalate " " ["E", show ref, show xn, show e, show t]
+>     show (EModule n d) = intercalate " " ["M", show n, show d]
 
 %endif
 
@@ -159,9 +159,9 @@ For readability, let us collapse the |Entity| into the |Entry| with
 these useful patterns:
 
 > pattern EPARAM ref name paramKind term =
->     E ref name (Parameter paramKind) term
+>     EEntity ref name (Parameter paramKind) term
 > pattern EDEF ref name defKind dev term = 
->     E ref name (Definition defKind dev) term
+>     EEntity ref name (Definition defKind dev) term
 
 
 \paragraph{Kinds of Definitions:}

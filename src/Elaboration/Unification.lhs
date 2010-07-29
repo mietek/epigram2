@@ -76,7 +76,7 @@ holes with the new ones.
 >       | occurs boy = throwError' $
 >             err "solveHole: boy" ++ errRef boy ++ err "occurs illegally."
 >       | otherwise = cursorUp >> solveHole' ref deps tm
->     pass (M modName _) = goIn >> solveHole' ref deps tm
+>     pass (EModule modName _) = goIn >> solveHole' ref deps tm
 >
 >     occurs :: REF -> Bool
 >     occurs ref = any (== ref) tm || ala M.Any foldMap (any (== ref) . snd) deps
@@ -145,7 +145,7 @@ match the hoping holes of the first value to parts of the second value.
 >     stripShared' (n :$ A (NP r)) (es :< EPARAM boyRef _ _ _)
 >         | r == boyRef                            = stripShared' n es
 >     stripShared' n (es :< EDEF _ _ _ _ _)    = stripShared' n es
->     stripShared' n (es :< M _ _)                 = stripShared' n es
+>     stripShared' n (es :< EModule _ _)       = stripShared' n es
 >     stripShared' n es = do
 >       -- |proofTrace $ "stripShared: fail on " ++ show n|
 >       throwError' $ err "stripShared: fail on" ++ errVal (N n)

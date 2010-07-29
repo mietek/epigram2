@@ -421,7 +421,7 @@ to the next goal otherwise.
 > makeModule s = do
 >     n <- withNSupply (flip mkName s)
 >     nsupply <- getDevNSupply
->     putDevEntry (M n (Dev B0 Module (freshNSpace nsupply s) SuspendNone))
+>     putDevEntry (EModule n (Dev B0 Module (freshNSpace nsupply s) SuspendNone))
 >     putDevNSupply (freshName nsupply)
 >     return n
 
@@ -444,7 +444,7 @@ to the next goal otherwise.
 >     goOutProperly
 >     mm <- removeDevEntry
 >     case mm of
->         Just (M _ _) -> return t
+>         Just (EModule _ _) -> return t
 >         _ -> throwError' . err $ "draftModule: drafty " ++ name
 >                                  ++ " did not end up in the right place!"
 
@@ -457,7 +457,7 @@ shared parameters.
 > lookupName name = do
 >     inScope <- getInScope
 >     case Data.Foldable.find ((name ==) . entryName) inScope of
->       Just (E ref _ _ _)  -> return (Just (applyAuncles ref inScope))
+>       Just (EEntity ref _ _ _)  -> return (Just (applyAuncles ref inScope))
 >       Nothing             ->
 >         case Data.Foldable.find ((name ==) . refName . snd) primitives of
 >           Just (_, ref)  -> return (Just (applyAuncles ref inScope))

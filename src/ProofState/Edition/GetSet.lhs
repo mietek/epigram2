@@ -139,7 +139,7 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     let dev = Dev (es <>< cadets) tip root ss
 >     case m of
 >         GirlMother dkind ref xn ty -> return (EDEF ref xn dkind dev ty)
->         ModuleMother n -> return (M n dev)
+>         ModuleMother n -> return (EModule n dev)
 
 > getMotherName :: ProofStateT e Name
 > getMotherName = do
@@ -226,8 +226,8 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     l <- getLayer
 >     replaceLayer (l{mother=GirlMother dkind ref xn ty})
 >     putDev dev
-> putMotherEntry (M [] dev) = putDev dev
-> putMotherEntry (M n dev) = do
+> putMotherEntry (EModule [] dev) = putDev dev
+> putMotherEntry (EModule n dev) = do
 >     l <- getLayer
 >     replaceLayer (l{mother=ModuleMother n})
 >     putDev dev

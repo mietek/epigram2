@@ -97,7 +97,7 @@ Updating girls is a bit more complicated. We proceed as follows:
 Modules do not carry type information so all we need to do is propagate
 the news to their children.
 
-> propagateNews top news (NF (Right e@(M n d) :> es)) = do
+> propagateNews top news (NF (Right e@(EModule n d) :> es)) = do
 >     xs <- jumpIn e
 >     news' <- propagateNews False news xs
 >     goOut
@@ -134,7 +134,7 @@ getMotherEntry).
 
 Modules carry no type information, so they are easy:
 
-> tellEntry news (M n d) = return (news, M n d)
+> tellEntry news (EModule n d) = return (news, EModule n d)
 
 To update a boy, we must:
 \begin{enumerate}

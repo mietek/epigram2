@@ -99,8 +99,8 @@ to deal with this global context.
 > instance Show (NewsyFwd (Entry NewsyFwd)) where
 >     show (NF ls) = show ls
 > instance Show (Entry NewsyFwd) where
->     show (E ref xn e t) = intercalate " " ["E", show ref, show xn, show e, show t]
->     show (M n d) = intercalate " " ["M", show n, show d]
+>     show (EEntity ref xn e t) = intercalate " " ["E", show ref, show xn, show e, show t]
+>     show (EModule n d) = intercalate " " ["M", show n, show d]
 > instance Show (Entity NewsyFwd) where
 >     show (Parameter k) = "Param " ++ show k
 >     show (Definition k d) = "Def " ++ show k ++ " " ++ show d
@@ -126,7 +126,7 @@ Also, turning an entry (|Girl| or |Module|) into a |Mother|:
 
 > entryToMother :: Traversable f => Entry f -> Mother
 > entryToMother (EDEF ref xn dkind _ ty)  = GirlMother dkind ref xn ty
-> entryToMother (M n _)                   = ModuleMother n
+> entryToMother (EModule n _)                   = ModuleMother n
 
 
 \subsubsection{Dealing with the global context}
@@ -162,8 +162,8 @@ More generally, we can use one of these perverse functions:
 >     EPARAM ref xn k ty
 > rearrangeEntry h (EDEF ref xn k dev ty)  = 
 >     EDEF ref xn k (rearrangeDev h dev) ty
-> rearrangeEntry h (M n d)                        = 
->     M n (rearrangeDev h d)
+> rearrangeEntry h (EModule n d)                        = 
+>     EModule n (rearrangeDev h d)
 >
 > rearrangeDev :: (Traversable f, Traversable g) =>
 >     (forall a. f a -> g a) -> Dev f -> Dev g
