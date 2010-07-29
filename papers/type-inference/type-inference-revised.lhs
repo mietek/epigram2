@@ -425,10 +425,15 @@ $$gen(A, \tau) = \begin{cases}
         (FV(\tau) \setminus FV(A) = \emptyset)
 \end{cases}.
 $$
-The typing context is an unordered set of type scheme assignments,
-with \(A_x\) denoting `\(A\) with any \(x\) assignment removed': contexts
-are not designed to
-% do not
+The context \(A\) is an unordered set of type scheme 
+%%%assignments, 
+   bindings, 
+with \(A_x\) denoting 
+%%%`\(A\) with any \(x\) assignment removed': 
+   `\(A\) minus any \(x\) binding ': such 
+contexts
+%%%are not designed to
+   do not
 reflect lexical scope, so shadowing requires deletion and reinsertion.
 
 The `let' rule is the only real complexity in \AlgorithmW,
@@ -441,8 +446,8 @@ In both cases, the occurs check is used to detect dependencies between variables
 Type variables are traditionally left floating in space and given meaning by
 substitution, but by exposing structure we can manage definitions and
 dependencies as we go. Recording type variables in the context is natural when
-dealing with dependent types, since there is no distinction between type and term
-variables, but it also works well in a simply-typed setting.
+dealing with dependent types, as there is no distinction between type and term
+variables, but it also works well in the simply-typed setting.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Unification over a context\label{sec:unif}}
@@ -524,9 +529,11 @@ generalise, just by discharging them as hypotheses in the usual way.
 Definitions in the context induce a nontrivial equational theory on types,
 starting with $\alpha \equiv \tau$ for every definition $\alpha \defn \tau$ in
 the context, then taking the congruence closure.
-Unification is the problem of making variable definitions (increasing
-information) to solve an equation.
-The idea is that we decompose constraints on the syntactic structure of types
+Unification is the problem of making variable definitions (thus increasing
+information) 
+%%%to solve an equation. 
+   in order to make an equation hold. 
+The idea is to decompose constraints on the syntactic structure of types
 until we reach variables, then move through the context and update it to solve
 the equation. 
 
@@ -767,17 +774,29 @@ information as the entry that has been removed) with which to
 
 Figure~\ref{subfig:unifyCode} gives the actual implementations of unification
 and solution. Unification proceeds structurally over types. If it reaches a pair
-of variables, it examines the context, using the operator |onTop| to pick out
+of variables, it examines the context, using 
+%%%the operator |onTop| 
+   |onTop| 
+to pick out
 a variable declaration to consider. Depending on the variables, it %%%will
 then either succeeds, restoring the old entry or replacing it with a new one, 
 or continues %%%unifying 
 with an updated constraint.
 
-The |solve| function is called when a variable must be unified with a non-variable type.
-It works similarly to unification of variables, but must accumulate a list of
+The |solve| function is called 
+%%%when a variable must be unified 
+   to unify a variable 
+with a non-variable type. 
+It works similarly to 
+%%%unification of variables, 
+   |unify| on variables, 
+but must accumulate a list of
 the type's dependencies and push them left through the context. It also performs
-the occurs check and invokes the monadic failure command if an illegal occurrence
-(which would lead to an infinite type) is detected.
+the occurs check and 
+%%%invokes the monadic failure command 
+   calls the monadic |fail| 
+if an illegal occurrence
+(leading to an infinite type) is detected.
 
 As an example, consider the behaviour of the algorithm when |unify| is called
 to solve $\alpha \arrow \beta \equiv \alpha' \arrow (\gamma \arrow \gamma)$:
@@ -848,8 +867,12 @@ $\gamma$.
 \section{Modelling statements-in-context\label{sec:stmts}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Having seen an implementation of unification, let us try to understand it.
-We would like to give a general picture of \scare{statements-in-context} that
+%%%Having seen an 
+   Given this 
+implementation of unification, let us try to understand it.
+We would like 
+%%%to give 
+a general picture of \scare{statements-in-context} that
 allows us to view unification and type inference in a uniform setting.
 What is the common structure?
 
@@ -893,8 +916,10 @@ A statement has zero or more
 i.e.\ a statement whose truth is presupposed for the original statement to make sense.
 The $\valid$ statement has no parameter and hence no \sanity s.
 In $\tau \type$, the parameter $\tau$ has \sanity\  $\valid$.
-The type equivalence statement $\tau \equiv \upsilon$ has two parameters; the
-\sanity s are $\tau \type$ and $\upsilon \type$ respectively.
+The type equivalence statement $\tau \equiv \upsilon$ has two 
+%%%parameters; the \sanity s are 
+   parameters, with \sanity s 
+$\tau \type$ and $\upsilon \type$ respectively.
 Finally, $S \wedge S'$ has parameters (and \sanity s) taken from $S$ and
 $S'$.
 
@@ -912,15 +937,24 @@ We can inspect the context in derivations using the inference rule
 $$\namer{Lookup}
   \Rule{\decl{x}{D} \in \Gamma}
        {\Gamma \entailsN \sem{\decl{x}{D}}}.$$
-Note the different turnstile symbol in the conclusion of this rule.
+Note the different turnstile 
+%%%symbol 
+in the conclusion of this rule.
 We write the \define{normal judgment} $\Gamma \entails S$
-to mean that the declarations in $\Gamma$ support the statement $S \in
-\Ss$.  We write the \define{neutral judgment} $\Gamma \entailsN S$ to
-mean that $S$ follows directly from applying a fact in $\Gamma$.
-Neutral judgments capture exactly the legitimate appeals to assumptions
+to mean that the declarations in $\Gamma$ support the statement 
+%%%$S \in \Ss$.  
+   \(S\). 
+We write the \define{neutral judgment} $\Gamma \entailsN S$ to
+mean that $S$ follows directly from 
+%%%applying 
+a fact in $\Gamma$.
+Neutral judgments capture exactly the valid appeals to declarations
 in the context, just as \scare{neutral terms} in $\lambda$-calculus are
-applied variables. Variables are the \scare{atoms} of symbols, and appeals
-to declarations in the context are the atoms of derivations.
+%%%applied variables. Variables are the \scare{atoms} of terms, and 
+   applied variables, the \scare{atoms} of terms. 
+%%%appeals to declarations in 
+   Such appeals to 
+the context are the atoms of derivations.
 
 The \name{Lookup} rule is our only means to extract information from the
 context, so we omit contextual plumbing (almost) everywhere else.
@@ -978,7 +1012,10 @@ purposes.
 
 Figure~\ref{fig:statementRules} gives rules for establishing statements other than
 $\valid$.
-We deduce that variables are types by looking up the context, but we need
+We deduce that variables are types by 
+%%%looking up 
+   lookup in 
+the context, but we need
 a structural rule for the $\arrow$ type constructor.
 
 %%%DONE: use \mathframe. \TODO{Fix rule box sizes.}
@@ -1078,7 +1115,9 @@ We write $\Gamma \lei \Delta$ if
 %%%$\iota : \Gamma \lei \Delta$, where  $\iota$ is the identity substitution. 
    $\iota : \Gamma \lei \Delta$.
 If $\delta : \Gamma, \Gamma' \lei \Theta$ we write $\restrict{\delta}{\Gamma}$
-for the restriction of $\delta$ to the type variables in $\Gamma$.
+for the restriction of $\delta$ to 
+%%%the type variables in $\Gamma$.
+   \(\V_\TY(\Gamma)\). 
 
 We write $\delta \eqsubst \theta : \Gamma \lei \Delta$ if
 $\delta : \Gamma \lei \Delta$, $\theta : \Gamma \lei \Delta$
@@ -1091,12 +1130,15 @@ for fixed contexts $\Gamma$ and $\Delta$, and that if
 $\delta \eqsubst \theta$ then
 $\Delta \entails \delta\tau \equiv \theta\tau$ for any $\Gamma$-type $\tau$.
 
-This partial order on contexts suffices to ensure stability, as described
-%%%in the following section, 
-   below, 
-but in practice the algorithm works with a more structured
-subrelation of $\lei$. We give up more freedom to achieve a more comprehensible
-algorithm. For example, our algorithm always uses the identity substitution.
+%%%This partial order on contexts suffices to ensure stability, as described
+%%%%%%in the following section, 
+%%%   below, 
+Lemma~\ref{lei:preorder} below shows that 
+\(\lei\) indeed defines a preorder under suitable stability assumptions, 
+but in practice the algorithm works with a more constrained subrelation:  
+we give up some freedom to achieve a more comprehensible
+algorithm, which always uses \(\iota\). %%%the identity substitution.
+
 
 
 
@@ -1106,49 +1148,55 @@ A statement $S$ is \define{stable} if information
 increase preserves it, i.e., if
 $$\Gamma \entails S  \quad \mathrm{and}  \quad  \delta : \Gamma \lei \Delta
     \quad \Rightarrow \quad  \Delta \entails \delta S.$$
-This says that we can extend a simultaneous substitution on syntax to a
-simultaneous substitution on derivations.
+That is, we can extend a simultaneous substitution on syntax to 
+%%%a simultaneous substitution on derivations. 
+   one on derivations.
 Since we only consider valid contexts, the statement $\valid$ always holds,
-and is invariant under substitution, so it is clearly stable.
+is invariant under substitution, hence is stable.
 
-We observe that neutral proofs always ensure stability:
+We observe that neutral derivations always ensure stability:
 \begin{lemma}\label{lem:neutrality}
 If $\Gamma \entailsN S$ and $\delta : \Gamma \lei \Delta$ then
 $\Delta \entails \delta S$.
 \end{lemma}
 \proofsux\begin{proof}
-By structural induction on derivations. If the proof is by \name{Lookup}, then
-the result holds by definition of information increase. Otherwise, the proof is
-by a neutral elimination rule, so the result follows by induction and
+By 
+%%%structural induction on derivations. If the proof is by \name{Lookup}, then the result 
+   induction on derivations. In the case of \name{Lookup}, it 
+holds by definition of information increase. Otherwise, the proof is
+by a neutral elimination rule, so the result follows by induction, and
 admissibility of the corresponding normal elimination rule.
 \end{proof}
 
-We have a standard approach, effective by construction, 
-to proving stability of most statements. 
-In each case we proceed by induction on  
-%%%the structure of 
-derivations. Where the \name{Neutral} rule is applied, stability holds by 
-Lemma~\ref{lem:neutrality}. Otherwise, we verify that non-recursive hypotheses
+We have a standard way, effective by construction,  
+to prove stability of most 
+%%%statements. In each case we proceed by induction on 
+   statements: we proceed by induction on
+%%%the structure of derivations. Where the \name{Neutral} rule is applied, 
+   derivations. In the \name{Neutral} case, 
+stability holds by 
+Lemma~\ref{lem:neutrality}. Otherwise, we check the non-recursive hypotheses
 are stable and that recursive hypotheses occur in strictly positive positions,
-hence are stable by induction. Applying this method shows that both 
+%%%hence are stable by induction. Applying this method shows that both 
+   so are stable by induction. In this way we see that 
 $\tau \type$ and $\tau \equiv \upsilon$ are stable.
 
 \begin{lemma}[Conjunction preserves stability]\label{lem:stab-pres-conj}
 If $S$ and $S'$ are stable then $S \wedge S'$ is stable.
 \end{lemma}
 \proofsux\begin{proof}
-Suppose $\delta : \Gamma \lei \Delta$, the statements $S$ and $S'$ are stable,
-and $\Gamma \entails (S \wedge S')$. If the proof is by \name{Neutral}
-then $\Delta \entails \delta (S \wedge S')$ by Lemma~\ref{lem:neutrality}.
-Otherwise $\Gamma \entails S$ and $\Gamma \entails S'$,
-so by stability, $\Delta \entails \delta S$ and $\Delta \entails \delta S'$, 
-and hence $\Delta \entails \delta (S \wedge S')$.
+Suppose $S, S'$ are stable,  $\Gamma \entails S \wedge S'$, 
+and $\delta \!:\! \Gamma \lei \Delta$. In the \name{Neutral} case, 
+$\Delta \entails \delta (S \wedge S')$ by Lemma~\ref{lem:neutrality}.
+Otherwise $\Gamma \entails S$ and $\Gamma \entails S'$. 
+By stability, $\Delta \entails \delta S$ and $\Delta \entails \delta S'$,   
+so $\Delta \entails \delta (S \wedge S')$.
 \end{proof}
-
+%%%
 Thanks to stability, our information order is reasonable:
 \begin{lemma}\label{lei:preorder}
 If $\sem{\decl{x}{D}}$ is stable for every declaration $\decl{x}{D}$, then
-the $\lei$ relation is a preorder, with reflexivity demonstrated by
+the $\lei$ relation is a preorder, with reflexivity witnessed by
 the identity substitution $\iota : \Gamma \lei \Gamma$, and transitivity by
 composition:
 $$\delta : \Gamma \lei \Delta  ~~\text{and}~~  \theta : \Delta \lei \Theta
@@ -1278,9 +1326,12 @@ ensure a solution exists.
 
 The rules in Figure~\ref{fig:unifyRules} define our unification algorithm. The
 judgment $\algUnify{\Gamma}{\tau}{\upsilon}{\Delta}$ means that given inputs
-$\Gamma$, $\tau$ and $\upsilon$, unification succeeds and produces output
-context $\Delta$. This is subject to the input \sanity\ 
-$\Gamma \entails \tau \type \wedge \upsilon \type$.
+$\Gamma$, $\tau$ and $\upsilon$, 
+   satisfying the input \sanity\ 
+$\Gamma \entails \tau \type \wedge \upsilon \type$, 
+unification succeeds, yielding output context $\Delta$. 
+%%%This is subject to the input \sanity\ 
+%%%$\Gamma \entails \tau \type \wedge \upsilon \type$.
 
 The judgment
 $\algInstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$
@@ -1293,7 +1344,7 @@ yielding output context $\Delta$. The idea is that the bar $(||)$ represents
 %%%must be placed before $\tau$ for it to be well-defined). 
    and $\Xi$ contains exactly those declarations on which $\tau$ depends.  
 Formally, the inputs 
-must satisfy:
+must satisfy \((\dag)\):
 
 \hspace*{0.1in}$\alpha \in \tyvars{\Gamma}$, ~
 $\tau$ is not a variable, \\ {}
@@ -1301,8 +1352,10 @@ $\tau$ is not a variable, \\ {}
 $\Xi$ contains only type variable declarations \\ {}
 \hspace*{0.1in}$\beta \in \tyvars{\Xi} \Rightarrow \beta \in \FTV{\tau, \Xi}$.
 
-\TODO{Fix FTV!} Some context entries have no bearing on the problem at hand.
-We write $x \perp X$ ($x$ is orthogonal to set $X$ of type variables)
+%%%\TODO{Fix FTV!} 
+The set \(\FTV{\tau}\) records those variables occurring free in type \(\tau\); the notation extends to (sub-)contexts \(\FTV\Xi\) and composite objects \FTV{\tau, \Xi} in the obvious way. 
+Some context entries have no bearing on the problem at hand.
+We write $x \!\perp\! X$ ($x$ is orthogonal to set $X$ of type variables)
 if $x$ is not a type variable or not in $X$.
 
 The rules \name{Define} and \name{Expand} have
@@ -1393,10 +1446,11 @@ terms in the conclusion. Usually we will ignore these without loss of generality
 \label{fig:unifyRules}
 \end{figure}
 
-Observe that no rule applies when
+Observe that no rule applies in the case \((\ddag)\) 
 $$\algInstantiate{\Gamma_0, \alpha D}{\alpha}{\tau}{\Xi}{\Delta}
 \mathrm{~with~} \alpha \in \FTV{\tau, \Xi},$$
-so the algorithm fails in this case. 
+%%%so the algorithm fails in this case. 
+   where the algorithm fails. 
 This is an occurs check failure: $\alpha$ and $\tau$ cannot unify 
 if $\alpha$ occurs in
 $\tau$ or in an entry that $\tau$ depends on, and $\tau$ is not a variable.
@@ -1478,8 +1532,10 @@ must be a proper subterm of itself, which is impossible.
 \begin{lemma}[Completeness of unification]
 \label{lem:unifyComplete}
 \begin{enumerate}[(a)]
-\item If $\theta : \Gamma \lei \Theta$,
-$\Gamma \entails \upsilon \type \wedge \tau \type$ and
+\item If 
+$\theta : \Gamma \lei \Theta$, \\
+$\Gamma \entails \upsilon \type \wedge \tau \type$  
+and
 $\Theta \entails \theta\upsilon \equiv \theta\tau$, then
 there is some context $\Delta$ such that
 $\algUnify{\Gamma}{\upsilon}{\tau}{\Delta}$.
@@ -1490,7 +1546,7 @@ $\algUnify{\Gamma}{\upsilon}{\tau}{\Delta}$.
 
 \item Moreover, if $\theta : \Gamma, \Xi \lei \Theta$ is such that
 $\Theta \entails \theta\alpha \equiv \theta\tau$ and
-the input conditions are satisfied,
+the input conditions \((\dag)\) are satisfied,
 then there is some context $\Delta$ such that
 $\algInstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$.
 \end{enumerate}
@@ -1502,7 +1558,7 @@ algorithm terminates, we proceed by induction on its call graph. Each
 step preserves solutions: if the equation in a conclusion can be
 solved, so can those in its hypothesis.
 
-The only case the rules omit is the case where an illegal occurrence
+The only case the rules omit is the case \((\ddag)\) where an illegal occurrence
 of a type variable is rejected. In this case, we are seeking to solve the
 problem $\alpha \equiv \tau$ in the context
 $\Gamma_0, \decl{\alpha}{D} ~||~ \Xi$ and we have $\alpha \in \FTV{\tau, \Xi}$.
@@ -1510,7 +1566,9 @@ Substituting out the definitions in $\Xi$ from $\tau$, we obtain a type
 $\upsilon$ such that $\alpha \in \FTV{\upsilon}$, $\upsilon$ is not a variable
 and $\Gamma_0, \decl{\alpha}{D}, \Xi \entails \upsilon \equiv \tau$.
 Now the problem $\alpha \equiv \upsilon$ has the same solutions as
-$\alpha \equiv \tau$, but by Lemma~\ref{lem:occursCheck}, there are none.
+$\alpha \equiv \tau$, but by Lemma~\ref{lem:occursCheck}, there are 
+%%%none. 
+   no such. 
 \end{proof}
 
 
@@ -1572,12 +1630,15 @@ If $\decl{x}{D}$ is a declaration and both $\ok_K D$ and $S$ are stable, then
 $\Sbind{\decl{x}{D}}{S}$ is stable.
 \end{lemma}
 \proofsux\begin{proof}
-Suppose $\delta : \Gamma \lei \Delta$, the statement $S$ is stable and
-$\Gamma \entails \Sbind{\decl{x}{D}}{S}$.  If the proof is by \name{Neutral}
-then the result follows by Lemma~\ref{lem:neutrality}.
-Otherwise, $\Gamma \entails \ok_K D$ and
-$\Gamma, \decl{y}{D} \entails S$ for fresh $y$.
-By stability (structural induction), $\Delta \entails \delta (\ok_K D)$.
+Suppose $S$ is stable, $\delta : \Gamma \lei \Delta$ and 
+$\Gamma \entails \Sbind{\decl{x}{D}}{S}$.  
+%%%If the proof is by \name{Neutral} then 
+   In the \name{Neutral} case,  
+the result follows by Lemma~\ref{lem:neutrality}.
+Otherwise, $\Gamma \entails \ok_K D$ and 
+%%%$\Gamma, \decl{y}{D} \entails \subst{y}{x}S$ for fresh $y$.
+   $\Gamma, \decl{y}{D} \entails S$ for fresh $y$.
+By stability (structural induction), $\Delta \entails \delta (\!\ok_K D)$.
 % Let $\delta' = \subst{x}{x}{\delta}$, then
 Now $\delta : \Gamma, \decl{y}{D} \lei \Delta, \decl{y}{(\delta D)}$
 (with $y$ mapped to itself)
@@ -1586,7 +1647,12 @@ Hence $\Delta \entails \Sbind{\decl{x}{(\delta D)}}{\delta S}$
 and so $\Delta \entails \delta (\Sbind{\decl{x}{D}}{S})$.
 \end{proof}
 
-We write $\Sbind{\Xi}{S}$ where $\Xi$ is a list of declarations, defining
+We 
+%%%write 
+   extend the binding notation to 
+$\Sbind{\Xi}{S}$, where $\Xi$ is a list of declarations, 
+%%%defining 
+   by:  
 $\Sbind{\emptycontext}{S} \defmap S$ and
 $\Sbind{(\Xi, \decl{x}{D})}{S} \defmap \Sbind{\Xi}{(\Sbind{\decl{x}{D}}{S})}$.
 
@@ -1631,8 +1697,8 @@ Now we are in a position to reuse the framework already
 introduced, defining the sort $\TM$, with 
 $\V_\TM$ a set of term variables and $x$ ranging over $\V_\TM$.
 Term variable properties $\D_\TM$ are scheme assignments of the form
-$\asc \sigma$, with
-$\ok_\TM (\asc \sigma) = \sigma \scheme$.
+$\,\asc \sigma$, with
+$\ok_\TM (\,\asc \sigma) = \sigma \scheme$.
 
 Let $s$, $t$, $w$ range over the set of terms with syntax 
 $$t \defsyn x ~||~ t~t ~||~ \lambda x . t ~||~ \letIn{x}{t}{t}.$$
@@ -1645,8 +1711,8 @@ $t \hasscheme \sigma$ by
 $$t \hasscheme \gen{\Xi}{\tau} \defmap \Sbind{\Xi}{t : \tau}.$$
 Note this gives the parameters $t$ and $\sigma$ \sanity s
 $\valid$ and $\sigma \scheme$ as one might expect.
-This overloading is r
-easonable because the meaning of $\hasscheme$ is clear from
+This overloading is 
+reasonable because the meaning of $\hasscheme$ is clear from
 the context, and the interpretation of declarations embeds them in
 statements:
 $$\sem{x \asc \sigma}_\TM \defmap x \hasscheme \sigma.$$
@@ -1700,7 +1766,7 @@ typings.
 
 We, too, note this distinction. We cannot hope to find principal types
 with respect to $\lei$, so we will define a subrelation $\leiR$ to capture
-Milner's compromise, requiring that
+Milner's compromise, requiring that, for \(\delta : \Gamma \lei \Delta\), 
 $$x \asc \sigma \in \Gamma ~\Rightarrow~ x \asc \delta\sigma \in \Delta.$$
 If $\Gamma \leiR \Delta$, then
 $\Delta$ assigns the \emph{same} type schemes to term variables as $\Gamma$
@@ -1731,7 +1797,8 @@ $$
      {\Gamma \fatsemi \entails \valid}.
 $$
 
-The $\leiR$ relation must be defined to respect the $\fatsemi$ divisions.
+%%%The $\leiR$ relation must be defined to respect the $\fatsemi$ divisions. 
+   We must then refine the $\leiR$ relation to respect these $\fatsemi$ divisions.
 Let $\semidrop$ be the partial function from contexts $\Gamma$ and natural numbers $n$ which truncates $\Gamma$ after $n$
 $\fatsemi$ separators, provided $\Gamma$ contains at least $n$ such: 
 \[\begin{array}{r@@{\,}l}
@@ -1794,7 +1861,7 @@ show that adding the new rules preserves soundness and generality. For the
 \name{Skip} rule, correctness follows immediately from this lemma:
 
 \begin{lemma}
-If $\LEIRStmt{\Gamma}{S}{\Delta}$ then $\LEIRStmt{\Gamma \fatsemi}{S}{\Delta \fatsemi}$.
+If $\LEIRStmt{\Gamma}{S}{\Delta}$ then $\LEIRStmt{\Gamma \! \fatsemi}{S}{\Delta \fatsemi}$.
 \end{lemma}
 \proofsux\begin{proof}
 If $\Gamma \leiR \Delta$ then $\Gamma \fatsemi \leiR \Delta \fatsemi$ by
@@ -1823,13 +1890,14 @@ $\LEIRUnify{\Gamma \fatsemi \Xi}{\alpha}{\tau}{\Delta \fatsemi}$.
 \proofsux\begin{proof}
 We extend the structural induction in lemma~\ref{lem:unifySound} with an extra
 case. The only proof of
-$\algInstantiate{\Gamma \fatsemi}{\alpha}{\tau}{\Xi}{\Delta \fatsemi}$
+$\algInstantiate{\Gamma \! \fatsemi}{\alpha}{\tau}{\Xi}{\Delta \fatsemi}$
 is by \name{Repossess}, so inversion gives
 $\algInstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$.
 By induction, $\tyvars{\Gamma, \Xi} = \tyvars{\Delta}$ and
 $\LEIRUnify{\Gamma, \Xi}{\alpha}{\tau}{\Delta}$.
 
 We immediately observe that $\Gamma \fatsemi \Xi \leiR \Delta \fatsemi$,
+\, 
 $\Delta \fatsemi \entails \alpha \equiv \tau$ and
 $$\tyvars{\Gamma \fatsemi \Xi} = \tyvars{\Gamma, \Xi} = \tyvars{\Delta}
     = \tyvars{\Delta \fatsemi}.$$
@@ -2313,7 +2381,7 @@ $\transto$ with $\LEIR$.
 
 For the \name{Var} rule, suppose $\theta : \Gamma \leiR \Theta$ and
 $\Theta \entails x : \tau$. By inversion, the proof must consist of
-\name{Lookup} followed by eliminating
+the \name{Lookup} rule followed by eliminating 
 $\Theta \entailsN x \hasscheme \gen{\theta\Xi}{\theta\upsilon}$
 with some $\Theta$-types. Hence it determines a map from the unbound type variables
 of $\Xi$ to types over $\Theta$, i.e.\ a substitution
