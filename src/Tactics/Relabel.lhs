@@ -15,6 +15,8 @@
 > import Evidences.Tm
 
 > import ProofState.Edition.ProofState
+> import ProofState.Edition.GetSet
+
 > import ProofState.Interface.ProofKit
 
 > import DisplayLang.DisplayTm

@@ -19,10 +19,13 @@
 > import Features.Features ()
 
 > import ProofState.Structure.Developments
-> import ProofState.Interface.Lifting
+
 > import ProofState.Edition.ProofContext
 > import ProofState.Edition.ProofState
+> import ProofState.Edition.GetSet
+
 > import ProofState.Interface.ProofKit
+> import ProofState.Interface.Lifting
 
 > import DisplayLang.DisplayTm
 > import DisplayLang.Name

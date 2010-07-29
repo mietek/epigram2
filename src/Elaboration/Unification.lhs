@@ -17,8 +17,11 @@
 > import Evidences.Tm
 
 > import ProofState.Structure.Developments
+
 > import ProofState.Edition.News
 > import ProofState.Edition.ProofState
+> import ProofState.Edition.GetSet
+
 > import ProofState.Interface.ProofKit
 
 > import Kit.BwdFwd

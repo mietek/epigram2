@@ -21,8 +21,8 @@
 > import ProofState.Structure.Entries
 
 > import ProofState.Edition.ProofContext
-
 > import ProofState.Edition.ProofState
+> import ProofState.Edition.GetSet
 
 > import ProofState.Interface.Lifting
 > import ProofState.Interface.ProofKit

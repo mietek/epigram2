@@ -98,9 +98,10 @@
 
 %include ProofState/Structure/Developments.lhs
 
+%include ProofState/Edition/News.lhs
 %include ProofState/Edition/ProofContext.lhs
 %include ProofState/Edition/ProofState.lhs
-%include ProofState/Edition/News.lhs
+%include ProofState/Edition/GetSet.lhs
 
 %include ProofState/Interface/ProofKit.lhs
 %include ProofState/Interface/NameResolution.lhs

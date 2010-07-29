@@ -25,6 +25,7 @@
 > import ProofState.Structure.Entries
 
 > import ProofState.Edition.ProofState
+> import ProofState.Edition.GetSet
 
 > import ProofState.Interface.ProofKit
 

@@ -20,16 +20,18 @@
 > import Cochon.Cochon
 > import Cochon.Error
 
-> import ProofState.Structure.Developments
-
 > import DisplayLang.DisplayTm
 > import DisplayLang.Name
 > import DisplayLang.Lexer
 > import DisplayLang.TmParse
 > import DisplayLang.PrettyPrint
 
+> import ProofState.Structure.Developments
+
 > import ProofState.Edition.ProofContext
 > import ProofState.Edition.ProofState
+> import ProofState.Edition.GetSet
+
 > import ProofState.Interface.ProofKit
 
 > import Elaboration.Elaborator
