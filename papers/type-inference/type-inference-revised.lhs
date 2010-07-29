@@ -931,7 +931,7 @@ from declarations to statements. (Typically we will omit the subscript $K$.)
 The idea is that $\sem{\decl{x}{D}}$ is the statement that holds by virtue of the
 declaration $\decl{x}{D}$ in the context. For type variables, we define
 \[\begin{array}{r@@{\,}l}
-\sem{\hole{\alpha}} &\defmap \alpha \type \\
+\sem{\hole{\alpha}} &\defmap \alpha \type \\ 
 \sem{\alpha \defn \tau} &\defmap \alpha \type \wedge \alpha \equiv \tau.
 \end{array}\]
 
