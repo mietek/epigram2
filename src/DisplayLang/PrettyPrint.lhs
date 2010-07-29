@@ -153,9 +153,9 @@ The |prettyBKind| function pretty-prints a |ParamKind| if supplied
 with a document representing its name and type.
 
 > prettyBKind :: ParamKind -> Doc -> Doc
-> prettyBKind LAMB  d = kword KwLambda <+> d <+> kword KwArr
-> prettyBKind ALAB  d = kword KwLambda <+> d <+> kword KwImp
-> prettyBKind PIB   d = parens d <+> kword KwArr
+> prettyBKind ParamLam  d = kword KwLambda <+> d <+> kword KwArr
+> prettyBKind ParamAll  d = kword KwLambda <+> d <+> kword KwImp
+> prettyBKind ParamPi   d = parens d <+> kword KwArr
 
 
 For debugging purpose, the following quick'n'dirty pretty-printers

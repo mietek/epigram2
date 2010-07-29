@@ -188,7 +188,8 @@ A \emph{parameter} is either a $\lambda$, $\forall$ or $\Pi$
 abstraction. It scopes over all following entries and the definitions
 (if any) in the enclosing development.
 
-> data ParamKind = LAMB | ALAB | PIB deriving (Show, Eq)
+> data ParamKind = ParamLam | ParamAll | ParamPi
+>       deriving (Show, Eq)
 
 
 %if False

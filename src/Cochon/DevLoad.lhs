@@ -131,14 +131,14 @@ $\Pi$-abstraction (represented by @(x : S) ->@).
 
 > pBoy :: Parsley Token DevLine
 > pBoy =  (|  (%keyword KwLambda%)          -- @\@
->             (DLBoy LAMB)              
+>             (DLBoy ParamLam)              
 >             ident                         -- @x@
 >             (%keyword KwAsc%)             -- @:@
 >             (sizedDInTm (pred ArrSize))   -- @T@
 >             (%keyword KwArr%) |)          -- @->@
 >         <|> 
 >             (bracket Round                -- @(@
->              (|  (DLBoy PIB)              
+>              (|  (DLBoy ParamPi)              
 >                  ident                    -- @x@
 >                  (%keyword KwAsc%)        -- @:@
 >                  pDInTm |)) <*            -- @S)@

@@ -557,7 +557,7 @@ that the supplied type matches the one at the tip.
 >     tip <- getDevTip
 >     case tip of
 >       Module -> freshRef (x :<: tv) (\ref -> do
->           putDevEntry (EPARAM ref (lastName ref) LAMB ty)
+>           putDevEntry (EPARAM ref (lastName ref) ParamLam ty)
 >           return ref
 >         )
 >       Unknown (pi :=>: gty) -> case lambdable gty of
@@ -580,8 +580,8 @@ The following piece of kit might profitably be shifted to somewhere more
 general.
 
 > lambdable :: TY -> Maybe (ParamKind, TY, VAL -> TY)
-> lambdable (PI s t)         = Just (LAMB, s, (t $$) . A)
-> lambdable (PRF (ALL s p))  = Just (ALAB, s, \v -> PRF (p $$ A v))
+> lambdable (PI s t)         = Just (ParamLam, s, (t $$) . A)
+> lambdable (PRF (ALL s p))  = Just (ParamAll, s, \v -> PRF (p $$ A v))
 > lambdable _                = Nothing
 
 
@@ -632,7 +632,7 @@ is also a set; if so, it appends a $\Pi$-abstraction to the current development.
 >     tip <- getDevTip
 >     case tip of
 >         Unknown (_ :=>: SET) -> freshRef (s :<: tv) (\ref -> do
->             putDevEntry (EPARAM ref (lastName ref) PIB ty)
+>             putDevEntry (EPARAM ref (lastName ref) ParamPi ty)
 >             return ref
 >           )
 >         Unknown _  -> throwError' $ err "piBoy: goal is not of type SET."

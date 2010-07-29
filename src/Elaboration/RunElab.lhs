@@ -176,10 +176,10 @@ search the hypotheses for a value with the same label.
 >     es <- getInScope
 >     seekOn es
 >   where
->     seekOn B0                             =    (|)
->     seekOn (es' :< EPARAM boy _ LAMB _)  =    seekIn (NP boy) (pty boy)
->                                           <|>  seekOn es'
->     seekOn (es' :< _)                     =    seekOn es'
+>     seekOn B0                                =    (|)
+>     seekOn (es' :< EPARAM boy _ ParamLam _)  =    seekIn (NP boy) (pty boy)
+>                                              <|>  seekOn es'
+>     seekOn (es' :< _)                        =    seekOn es'
 
 >     seekIn :: VAL -> VAL -> ProofState (INTM :=>: VAL, Bool)
 >     seekIn tm (LABEL (N m) u) = do

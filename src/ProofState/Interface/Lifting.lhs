@@ -61,11 +61,11 @@ entries.
 >     help B0                                     B0            t = t
 >     help (delta   :< EPARAM _ (x, _)  _ _)     B0            t = help delta B0 (L (x :. t))
 >     help (delta   :< _)                         B0            t = help delta B0 t
->     help (delnab  :< EPARAM _ (x, _)  LAMB _)  (nabla :< _)  t = 
+>     help (delnab  :< EPARAM _ (x, _)  ParamLam _)  (nabla :< _)  t = 
 >         help delnab nabla (L (x :. t))
->     help (delnab  :< EPARAM _ (x, _)  ALAB _)  (nabla :< _)  t = 
+>     help (delnab  :< EPARAM _ (x, _)  ParamAll _)  (nabla :< _)  t = 
 >         help delnab nabla (L (x :. t))
->     help (delnab  :< EPARAM _ (x, _)  PIB s)   (nabla :< _)  t = 
+>     help (delnab  :< EPARAM _ (x, _)  ParamPi s)   (nabla :< _)  t = 
 >         help delnab nabla (PI (delnab -| s) (L (x :. t)))
 >     help (delnab  :< _)                         (nabla :< _)  t = help delnab nabla t
 
@@ -101,11 +101,11 @@ encounters a $\Pi$-boy.
 
 > inferGoalType :: Bwd (Entry Bwd) -> INTM -> INTM
 > inferGoalType B0 t = t
-> inferGoalType (es :< EPARAM _ (x,_)  LAMB  s)  t        = 
+> inferGoalType (es :< EPARAM _ (x,_)  ParamLam  s)  t        = 
 >     inferGoalType es (PI (es -| s) (L (x :. t)))
-> inferGoalType (es :< EPARAM _ (x,_)  ALAB  s)  (PRF t)  =
+> inferGoalType (es :< EPARAM _ (x,_)  ParamAll  s)  (PRF t)  =
 >     inferGoalType es (PRF (ALL (es -| s) (L (x :. t))))
-> inferGoalType (es :< EPARAM _ (x,_)  PIB   s)  SET      = 
+> inferGoalType (es :< EPARAM _ (x,_)  ParamPi   s)  SET      = 
 >     inferGoalType es SET
 > inferGoalType (es :< _)                        t        = 
 >     inferGoalType es t

@@ -181,17 +181,17 @@ The |CodeGen| typeclass describes things that are convertible to Epic code.
 > flatten :: ParamKind -> Name -> Bwd Name -> Dev Fwd -> 
 >            [(Name, Bwd Name, FnBody)]
 > flatten b     ma del (Dev F0 Module _ _) = []
-> flatten LAMB  ma del (Dev F0 (Unknown _) _ _) = [(ma, del, Missing (cname ma))]
-> flatten LAMB  ma del (Dev F0 (Defined tm _) _ _) = 
+> flatten ParamLam  ma del (Dev F0 (Unknown _) _ _) = [(ma, del, Missing (cname ma))]
+> flatten ParamLam  ma del (Dev F0 (Defined tm _) _ _) = 
 >     let (t, (_, defs)) = runState (lambdaLift ma del (fmap refName tm)) 
 >                                   (ma ++ [("lift",0)],[]) in
 >            (ma, del, makeBody t) : defs
-> flatten ALAB  ma del (Dev F0 _ _ _) = [(ma, del, Ignore)]
-> flatten PIB   ma del (Dev F0 _ _ _) = [(ma, del, Ignore)]
-> flatten _     ma del dev@(Dev {devEntries = EPARAM (x := _) _ b _ :> es}) =
+> flatten ParamAll  ma del (Dev F0 _ _ _) = [(ma, del, Ignore)]
+> flatten ParamPi   ma del (Dev F0 _ _ _) = [(ma, del, Ignore)]
+> flatten _         ma del dev@(Dev {devEntries = EPARAM (x := _) _ b _ :> es}) =
 >     flatten b ma (del :< x) dev{devEntries=es}
-> flatten b     ma del dev@(Dev {devEntries = EDEF (her := _) _ _ herDev _ :> es}) = 
->     flatten LAMB her del herDev ++ flatten b ma del dev{devEntries=es}
+> flatten b         ma del dev@(Dev {devEntries = EDEF (her := _) _ _ herDev _ :> es}) = 
+>     flatten ParamLam her del herDev ++ flatten b ma del dev{devEntries=es}
 
 Lambda lifting: every lambda which is not at the top level is lifted out as a
 new top level definition. We keep track of the new top level functions we've
@@ -263,7 +263,7 @@ compilation was successful.
 
 > compileCommand :: Name -> Dev Fwd -> String -> IO Bool
 > compileCommand mainName dev outfile = do
->     let flat = flatten LAMB [] B0 dev
+>     let flat = flatten ParamLam [] B0 dev
 >     output (makeFns flat) (cname mainName) outfile ""
 
 

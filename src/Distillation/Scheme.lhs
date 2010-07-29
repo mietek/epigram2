@@ -78,7 +78,7 @@ we may as well supply it, though it should not be inspected.
 >     freshRef (x :<: evTm s') $ \ref -> do
 >         -- Distill the codomain
 >         (schT', t') <- distillScheme  
->                          (entries :< EPARAM ref (lastName ref) PIB s')
+>                          (entries :< EPARAM ref (lastName ref) ParamPi s')
 >                          (refs :< ref) 
 >                          schT
 >         return (SchExplicitPi (x :<: schS') schT', PIV x s' t')
@@ -95,7 +95,7 @@ is one.
 >     freshRef (x :<: sv) $ \ref -> do
 >         -- Distill the domain
 >         (schT', t') <- distillScheme 
->                          (entries :< EPARAM ref (lastName ref) PIB s')
+>                          (entries :< EPARAM ref (lastName ref) ParamPi s')
 >                          (refs :< ref) 
 >                          schT
 >         return (SchImplicitPi (x :<: sd) schT', PIV x s' t')
