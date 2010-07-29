@@ -1885,7 +1885,7 @@ $\Gamma \entails \alpha \equiv \tau \wedge \beta \equiv \upsilon$, then
 $\leParam{}{\Gamma}{b}{c}$ if and only if 
 $\leParam{}{\Gamma}{\subst{\tau}{\alpha} b}{\subst{\upsilon}{\beta} c}$.
 This is easily verified for each preorder we use.
-\TODO{Other conditions?}
+%% \TODO{Other conditions?}
 
 We need subsequent problems to depend on the results of earlier problems,
 threading the output from one into the input of the next. Thus we must index
