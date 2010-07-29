@@ -1271,7 +1271,7 @@ The judgment
 $\algInstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$
 means that given inputs $\Gamma$, $\Xi$, $\alpha$ and $\tau$,
 solving $\alpha$ with $\tau$ succeeds,  
-yielding output context $\Delta$. The idea is that the bar ($||$) represents
+yielding output context $\Delta$. The idea is that the bar $(||)$ represents
 %%%progress through the context, 
    progress in examining context elements in order, 
 %%%and $\Xi$ contains dependencies of $\tau$ (which
@@ -1286,11 +1286,6 @@ $\tau$ is not a variable, \\ {}
 $\Xi$ contains only type variable declarations \\ {}
 \hspace*{0.1in}$\beta \in \tyvars{\Xi} \Rightarrow \beta \in \FTV{\tau, \Xi}$.
 
-\TODO{Chat about this lemma. Perhaps it needs to come slightly later?}
-
-\TODO{Yes: in progress. JHM}
-
-\TODO{fix up the transition here}
 Some context entries have no bearing on the problem at hand.
 We write $x \perp X$ ($x$ is orthogonal to set $X$ of type variables)
 if $x$ is not a type variable or not in $X$.
@@ -1383,9 +1378,9 @@ terms in the conclusion. Usually we will ignore these without loss of generality
 \label{fig:unifyRules}
 \end{figure}
 
-Observe that we have no rule in the situation where 
+Observe that no rule applies when
 $$\algInstantiate{\Gamma_0, \alpha D}{\alpha}{\tau}{\Xi}{\Delta}
-\mathrm{~with~} \alpha \in \FTV{\tau, \Xi}$$
+\mathrm{~with~} \alpha \in \FTV{\tau, \Xi},$$
 so the algorithm fails in this case. 
 This is an occurs check failure: $\alpha$ and $\tau$ cannot unify 
 if $\alpha$ occurs in
@@ -1403,16 +1398,22 @@ of unification.
 By exposing the contextual structure underlying unification we make
 termination of the algorithm evident. Each recursive appeal to
 unification (directly or via the solving process) either shortens the context
-left of the $~||~$, shortens the overall
+left of the bar, shortens the overall
 context, or preserves the context and decomposes
 types~\citep{mcbride:unification}. We are correspondingly entitled to
 reason about the total correctness of unification by induction on the
 algorithmic rules.
 
+\subsection{Soundness and completeness}
+
+At present, order in the context is unimportant (providing dependencies are
+respected) but we will see in section~\ref{sec:genloc} that the algorithm does
+keep entries as far right as possible, which will be necessary for generality
+of type inference.
 
 \begin{lemma}[Soundness and generality of unification]
-\label{lem:unifySound}
-\begin{enumerate}[(a)]
+\label{lem:unifySound} ~
+\vspace*{-0.1in}\begin{enumerate}[(a)]
 \item Suppose $\algUnify{\Gamma}{\tau}{\upsilon}{\Delta}$. Then 
 $\tyvars{\Gamma} = \tyvars{\Delta}$ \\ and
 $\LEIStmt{\Gamma}{\tau \equiv \upsilon}{\Delta}$.
@@ -1439,15 +1440,10 @@ The only rule not in this form is \name{Decompose}, but solutions to
 $\tau_0 \arrow \tau_1 \equiv \upsilon_0 \arrow \upsilon_1$ are exactly those
 that solve $\tau_0 \equiv \upsilon_0 \wedge \tau_1 \equiv \upsilon_1$,
 so it gives a minimal solution by the Optimist's lemma.
-%%%
-\TODO{Do we need to say more about part (b)? Should we comment somewhere about
-keeping things right not being necessary for generality at the moment, but
-arising later?}
 \end{proof}
 
-
-\subsection{Completeness}
-\TODO{soundness, completeness, and minimality al in one section???}
+We prove a straightforward lemma about the occurs check, and hence show
+completeness of unification.
 
 \begin{lemma}[Occurs check]
 \label{lem:occursCheck}
