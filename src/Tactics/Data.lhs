@@ -22,7 +22,10 @@
 > import NameSupply.NameSupplier
 
 > import ProofState.Structure.Developments
+> import ProofState.Structure.Entries
+
 > import ProofState.Edition.ProofState
+
 > import ProofState.Interface.ProofKit
 
 > import Elaboration.Elaborator

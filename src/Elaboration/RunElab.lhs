@@ -20,8 +20,12 @@
 > import Features.Features ()
 
 > import ProofState.Structure.Developments
+> import ProofState.Structure.Entries
+
 > import ProofState.Movement.ProofContext
+
 > import ProofState.Edition.ProofState
+
 > import ProofState.Interface.ProofKit
 > import ProofState.Interface.Lifting
 > import ProofState.Interface.NameResolution

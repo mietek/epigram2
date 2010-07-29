@@ -22,10 +22,14 @@
 > import NameSupply.NameSupplier
 
 > import ProofState.Structure.Developments
-> import ProofState.Edition.News
-> import ProofState.Interface.Lifting
+> import ProofState.Structure.Entries
+
 > import ProofState.Movement.ProofContext
+
+> import ProofState.Edition.News
 > import ProofState.Edition.ProofState
+
+> import ProofState.Interface.Lifting
 > import ProofState.Interface.NameResolution
 
 > import DisplayLang.DisplayTm

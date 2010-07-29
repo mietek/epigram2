@@ -18,9 +18,13 @@
 > import Evidences.Tm
 
 > import ProofState.Structure.Developments
-> import ProofState.Interface.Lifting
+> import ProofState.Structure.Entries
+
 > import ProofState.Movement.ProofContext
+
 > import ProofState.Edition.ProofState
+
+> import ProofState.Interface.Lifting
 > import ProofState.Interface.ProofKit
 > import ProofState.Interface.NameResolution
 

@@ -19,7 +19,10 @@
 > import NameSupply.NameSupply
 
 > import ProofState.Structure.Developments
+> import ProofState.Structure.Entries
+
 > import ProofState.Movement.ProofContext
+
 > import ProofState.Edition.ProofState
 
 > import DisplayLang.Name
