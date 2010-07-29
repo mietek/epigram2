@@ -210,8 +210,8 @@
 \newcommand{\ialg}[3]{\iRel{#1}{#2}{\transto}{#3}}
 \newcommand{\algUnify}[4]{\ialg{#1}{#2 \equiv #3}{#4}}
 \newcommand{\algInstantiate}[5]{\ialg{#1 ~||~ #4}{#2 \equiv #3}{#5}}
-\newcommand{\algInfer}[4]{\alg{#1}{#2 :}{#4}{#3}}
-\newcommand{\algInferScheme}[4]{\alg{#1}{#2 \hasscheme}{#4}{#3}}
+\newcommand{\algInfer}[4]{\alg{#1}{(#2 :)}{#4}{#3}}
+\newcommand{\algInferScheme}[4]{\alg{#1}{(#2 \hasscheme)}{#4}{#3}}
 
 % Problem bits
 \newcommand{\iprobcond}[2]{#1\! [#2]}
@@ -2200,7 +2200,7 @@ subsection~\ref{sec:inferImplementation}.
 
 \smallskip\\
 \namer{Gen}
-\Rule{\algInfer{\Gamma \fatsemi}{s}{\upsilon}{\Delta \fatsemi \Xi}}
+\Rule{\algInfer{(\Gamma \fatsemi)}{s}{\upsilon}{(\Delta \fatsemi \Xi)}}
      {\algInferScheme{\Gamma}{s}{\gen{\Xi}{\upsilon}}{\Delta}}
 \bigskip\\ 
 
@@ -2209,14 +2209,14 @@ subsection~\ref{sec:inferImplementation}.
 \smallskip\\
 \namer{Var}
 \Rule{x \asc \gen{\Xi}{\upsilon} \in \Gamma}
-     {\algInfer{\Gamma}{x}{\upsilon}{\Gamma, \Xi}}
+     {\algInfer{\Gamma}{x}{\upsilon}{(\Gamma, \Xi)}}
 
 \smallskip\\
 
 \namer{Abs}
-\Rule{\algInfer{\Gamma, \hole{\alpha}, x \asc \gendot{\alpha}}{w}{\upsilon}
-          {\Delta_0, x \asc \gendot{\alpha}, \Xi}}
-     {\algInfer{\Gamma}{\lambda x.w}{\alpha \arrow \upsilon}{\Delta_0, \Xi}}
+\Rule{\algInfer{(\Gamma, \hole{\alpha}, x \asc \gendot{\alpha})}{w}{\upsilon}
+          {(\Delta_0, x \asc \gendot{\alpha}, \Xi)}}
+     {\algInfer{\Gamma}{\lambda x.w}{(\alpha \arrow \upsilon)}{(\Delta_0, \Xi)}}
 \side{\alpha \notin \tyvars{\Gamma}}
 
 \smallskip\\
@@ -2237,9 +2237,9 @@ subsection~\ref{sec:inferImplementation}.
         %%%       {\Delta_1, x \asc \gen{\Xi_0}{\upsilon}, \Xi_1}}
         %%%{\algInfer{\Gamma}{\letIn{x}{s}{w}}{\chi}{\Delta_1, \Xi_1}}
         {\algInferScheme{\Gamma}{s}{\sigma}{\Delta_0}}
-        {\algInfer{\Delta_0, x \asc \sigma}{w}{\chi}
-               {\Delta_1, x \asc \sigma, \Xi_1}}
-        {\algInfer{\Gamma}{\letIn{x}{s}{w}}{\chi}{\Delta_1, \Xi_1}}
+        {\algInfer{(\Delta_0, x \asc \sigma)}{w}{\chi}
+               {(\Delta_1, x \asc \sigma, \Xi_1)}}
+        {\algInfer{\Gamma}{\letIn{x}{s}{w}}{\chi}{(\Delta_1, \Xi_1)}}
 
 \end{array}\]
 \caption{Algorithmic rules for type inference}
