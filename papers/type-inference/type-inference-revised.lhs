@@ -275,11 +275,13 @@
 \titlebanner{\NotForPublication{REVISED DRAFT}}
 
 \title{Type Inference in Context}
-\authorinfo{Adam Gundry\thanks{Adam Gundry was supported by Microsoft Research through its PhD Scholarship
-Programme.} \and Conor McBride}
+\authorinfo{Adam Gundry\thanks{%%%Adam Gundry was supported 
+                 Supported by the Microsoft Research PhD Scholarship Programme.} 
+            \and Conor McBride}
            {University of Strathclyde, Glasgow}
            {\{adam.gundry,conor.mcbride\}@@cis.strath.ac.uk}
-\authorinfo{James McKinna}
+\authorinfo{James McKinna\thanks{%%%James McKinna was supported 
+                  Supported by the NWO cluster `\textsc{Diamant}'. }}
            {Radboud University, Nijmegen}
            {james.mckinna@@cs.ru.nl}
 
@@ -397,7 +399,7 @@ of the problem-solving strategy in \hindleymilner\ type inference.
 %%%\TODO{More crunchiness: forward pointers to claims and contributions}
 
 This paper is literate Haskell, with full source code available at
-\footnotesize\url{http://personal.cis.strath.ac.uk/~adam/type-inference/}\normalsize.
+\footnotesize\url{http://personal.cis.strath.ac.uk/{\(\sim\)}adam/type-inference/}\normalsize.
 
 \subsection{The occurs check}
 
