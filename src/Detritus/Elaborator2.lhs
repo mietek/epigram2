@@ -20,7 +20,7 @@
 
 > import ProofState.Structure.Developments
 > import ProofState.Interface.Lifting
-> import ProofState.Movement.ProofContext
+> import ProofState.Edition.ProofContext
 > import ProofState.Edition.ProofState
 > import ProofState.Interface.ProofKit
 

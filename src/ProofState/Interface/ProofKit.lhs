@@ -24,7 +24,7 @@
 > import ProofState.Structure.Developments
 > import ProofState.Structure.Entries
 
-> import ProofState.Movement.ProofContext
+> import ProofState.Edition.ProofContext
 
 > import ProofState.Edition.News
 > import ProofState.Edition.ProofState

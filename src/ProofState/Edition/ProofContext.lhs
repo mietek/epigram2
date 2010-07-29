@@ -7,7 +7,7 @@
 > {-# LANGUAGE FlexibleInstances, TypeOperators, TypeSynonymInstances,
 >              GADTs, RankNTypes, StandaloneDeriving #-}
 
-> module ProofState.Movement.ProofContext where
+> module ProofState.Edition.ProofContext where
 
 > import Control.Applicative
 > import Data.Foldable

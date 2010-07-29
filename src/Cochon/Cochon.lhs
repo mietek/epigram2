@@ -28,7 +28,7 @@
 > import DisplayLang.DisplayTm
 > import DisplayLang.PrettyPrint
 
-> import ProofState.Movement.ProofContext
+> import ProofState.Edition.ProofContext
 > import ProofState.Edition.ProofState
 > import ProofState.Interface.ProofKit
 > import ProofState.Interface.NameResolution

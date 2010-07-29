@@ -98,8 +98,7 @@
 
 %include ProofState/Structure/Developments.lhs
 
-%include ProofState/Movement/ProofContext.lhs
-
+%include ProofState/Edition/ProofContext.lhs
 %include ProofState/Edition/ProofState.lhs
 %include ProofState/Edition/News.lhs
 

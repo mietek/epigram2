@@ -16,7 +16,7 @@
 
 > import ProofState.Structure.Developments
 > import ProofState.Edition.ProofState
-> import ProofState.Movement.ProofContext
+> import ProofState.Edition.ProofContext
 > import ProofState.Interface.ProofKit
 > import ProofState.Interface.NameResolution
 

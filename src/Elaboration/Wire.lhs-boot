@@ -3,7 +3,7 @@
 > import Evidences.Tm
 
 > import ProofState.Structure.Developments
-> import ProofState.Movement.ProofContext
+> import ProofState.Edition.ProofContext
 > import ProofState.Edition.News
 > import ProofState.Edition.ProofState
 > import Kit.BwdFwd

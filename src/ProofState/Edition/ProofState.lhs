@@ -25,7 +25,7 @@
 
 > import ProofState.Structure.Developments
 > import ProofState.Edition.News
-> import ProofState.Movement.ProofContext
+> import ProofState.Edition.ProofContext
 
 > import Evidences.Rules
 > import Evidences.Tm
