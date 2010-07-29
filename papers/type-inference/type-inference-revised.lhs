@@ -1671,9 +1671,7 @@ $$\sem{x \asc \sigma}_\TM \defmap x \hasscheme \sigma.$$
 \label{fig:typeAssignmentRules}
 \end{figure}
 
-\TODO{fix up the segue to \(\leiR\) here} 
-
-Recall that we defined $\sem{x \asc \sigma}_\TM \defmap x \hasscheme \sigma$, so
+The definition of
 $\Gamma \lei \Delta$ requires $\Delta$ to assign a term variable all the types
 that $\Gamma$ assigns it, but allows $x$ to become more polymorphic
 and acquire new types.  This notion certainly retains stability:
@@ -1690,14 +1688,17 @@ how the language of types must be extended to express principal
 typings.
 
 We, too, note this distinction. We cannot hope to find principal types
-with respect to $\lei$, so we capture Milner's compromise by defining
-a sub-relation $\leiR$, by $\delta : \Gamma \leiR \Delta$ if $\delta :
-\Gamma \lei \Delta$ and $$x \asc \sigma \in \Gamma ~\Rightarrow~ x
-\asc \delta\sigma \in \Delta.$$ Thus, if $\Gamma \leiR \Delta$, then
+with respect to $\lei$, so we will define a subrelation $\leiR$ to capture
+Milner's compromise, requiring that
+$$x \asc \sigma \in \Gamma ~\Rightarrow~ x \asc \delta\sigma \in \Delta.$$
+If $\Gamma \leiR \Delta$, then
 $\Delta$ assigns the \emph{same} type schemes to term variables as $\Gamma$
 does (modulo substitution). Since the unification algorithm ignores term
-variables, it is easy to see that all the previous results hold if we
-replace $\lei$ with $\leiR$ throughout.
+variables, it must preserve this property.
+% all the previous results hold if we
+% replace $\lei$ with $\leiR$ throughout.
+This is not the full story, however; we need to extend the notion of
+context to complete the definition of the $\leiR$ relation.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Generalising \emph{local} type variables\label{sec:genloc}}
@@ -1719,7 +1720,7 @@ $$
      {\Gamma \fatsemi \entails \valid}.
 $$
 
-We also refine the $\leiR$ relation.
+The $\leiR$ relation must be defined to respect the $\fatsemi$ divisions.
 Let $\semidrop$ be the partial function from contexts $\Gamma$ and natural numbers $n$ which truncates $\Gamma$ after $n$
 $\fatsemi$ separators, provided $\Gamma$ contains at least $n$ such: 
 \[\begin{array}{r@@{\,}l}
@@ -1732,9 +1733,8 @@ $\fatsemi$ separators, provided $\Gamma$ contains at least $n$ such:
 We write $\delta : \Gamma \leiR \Delta$ if $\delta$ is a substitution from
 $\Gamma$ to $\Delta$ such that, for all
 $\decl{x}{D} \in \Gamma \!\semidrop\! n$, we have that
-$\Delta \!\semidrop\! n$ is defined and 
-$\Delta \!\semidrop\! n \entails \delta \sem{\decl{x}{D}}$, in addition to the
-requirement that
+$\Delta \!\semidrop\! n$ is defined,
+$\Delta \!\semidrop\! n \entails \delta \sem{\decl{x}{D}}$ and
 $$x \asc \sigma \in \Gamma ~\Rightarrow~ x \asc \delta\sigma \in \Delta.$$
 We thus make the $\fatsemi$-separated sections of $\Gamma$ and
 $\Delta$ correspond, so that declarations in the first $n$ sections of
@@ -1756,12 +1756,18 @@ then $\restrict{\delta}{\Gamma} : \Gamma \leiR \Delta$.
 % It is fairly straightforward to verify that the previous results for $\lei$ 
 % hold for its sub-relation $\leiR$.
 
+When the contexts contain only type variables, the two relations $\lei$ and
+$\leiR$ coincide; the latter is a proper subrelation if the contexts also 
+contain term variables.
+Hence, most of the previous results hold if we replace $\lei$ with $\leiR$
+throughout.
+
 
 \subsection{Amending the unification algorithm}
 
-Modifying $\leiR$ makes extra work only in the unification algorithm, because it
-acts structurally on contexts, which may now contain $\fatsemi$ separators. We
-complete the algorithmic rules:
+Replacing $\lei$ with $\leiR$ makes extra work only in the unification
+algorithm, because it acts structurally on contexts, which may now contain
+$\fatsemi$ separators. We complete the algorithmic rules:
 \[\begin{array}{c}
 \namer{Skip}
 \Rule{\algUnify{\Gamma_0}{\alpha}{\beta}{\Delta_0}}
