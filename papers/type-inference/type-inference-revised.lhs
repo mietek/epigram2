@@ -987,25 +987,25 @@ a structural rule for the $\arrow$ type constructor.
 \qquad
 \Rule{\tau \type}
      {\tau \equiv \tau}
-\qquad
+\quad
 \Rule{\upsilon \equiv \tau}
      {\tau \equiv \upsilon}
+\quad
+\Rule{\tau_0 \equiv \tau_1
+      \quad
+      \tau_1 \equiv \tau_2}
+     {\tau_0 \equiv \tau_2}
 \\
 \Rule{\tau_0 \equiv \upsilon_0
       \quad
       \tau_1 \equiv \upsilon_1}
      {\tau_0 \arrow \tau_1 \equiv \upsilon_0 \arrow \upsilon_1}
 \qquad
-\Rule{\tau_0 \equiv \tau_1
-      \quad
-      \tau_1 \equiv \tau_2}
-     {\tau_0 \equiv \tau_2}
-\\
 \Rule{S \quad S'} {S \wedge S'}
-  \qquad
+  \quad
   \Rule{\entailsN S \wedge S'}
        {\entailsN S}
-  \qquad
+  \quad
   \Rule{\entailsN S \wedge S'}
        {\entailsN S'}
 \end{array}\]
