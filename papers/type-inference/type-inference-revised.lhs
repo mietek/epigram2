@@ -1337,6 +1337,7 @@ unification succeeds, yielding output context $\Delta$.
 %%%This is subject to the input \sanity\ 
 %%%$\Gamma \entails \tau \type \wedge \upsilon \type$.
 
+\newpage
 The 
    \define{solve} 
 judgment $\algInstantiate{\Gamma}{\alpha}{\tau}{\Xi}{\Delta}$
