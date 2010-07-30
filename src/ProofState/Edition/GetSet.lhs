@@ -131,7 +131,7 @@ updated information, providing a friendlier interface than |get| and |put|.
 > getMotherDefinition = do
 >     CDefinition _ ref _ _ <- getMother
 >     aus <- getGreatAuncles
->     return (applyAuncles ref aus)
+>     return (applySpine ref aus)
 
 > getMotherEntry :: ProofStateT e (Entry Bwd)
 > getMotherEntry = do

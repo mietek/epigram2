@@ -24,6 +24,7 @@
 
 > import ProofState.Edition.ProofContext
 > import ProofState.Edition.Entries
+> import ProofState.Edition.Scope
 > import ProofState.Edition.ProofState
 
 > import DisplayLang.Name
@@ -79,19 +80,6 @@ the name components from the backwards list.
 > flatNom :: Bwd (Entries, (String,Int)) -> Name -> Name
 > flatNom B0 nom = nom
 > flatNom (esus :< (_,u)) nom = flatNom esus (u : nom)
-
-
-We often need to turn the sequence of parameters under which we
-work into the argument spine of a \(\lambda\)-lifted definition:
-
-> paramREFs :: Entries -> [REF]
-> paramREFs = foldMap param where
->   param :: Entry Bwd -> [REF]
->   param  (EPARAM r _ _ _)   = [r]
->   param  _                  = []
-
-> paramSpine :: Entries -> Spine {TT} REF
-> paramSpine = fmap (A . N . P) . paramREFs
 
 
 \subsection{Resolving relative names to references}

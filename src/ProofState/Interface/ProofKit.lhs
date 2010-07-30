@@ -26,6 +26,7 @@
 
 > import ProofState.Edition.ProofContext
 > import ProofState.Edition.News
+> import ProofState.Edition.Scope
 > import ProofState.Edition.ProofState
 > import ProofState.Edition.Entries
 > import ProofState.Edition.GetSet
@@ -435,7 +436,7 @@ to the next goal otherwise.
 >          ref = n := HOLE Waiting :<: evTm ty'
 >     putMother (CDefinition LETG ref (last n) ty')
 >     putDevTip (Unknown (ty :=>: tyv))
->     return (applyAuncles ref inScope)
+>     return (applySpine ref inScope)
 
 > draftModule :: String -> ProofState t -> ProofState t
 > draftModule name draftyStuff = do
@@ -458,10 +459,10 @@ shared parameters.
 > lookupName name = do
 >     inScope <- getInScope
 >     case Data.Foldable.find ((name ==) . entryName) inScope of
->       Just (EEntity ref _ _ _)  -> return (Just (applyAuncles ref inScope))
+>       Just (EEntity ref _ _ _)  -> return (Just (applySpine ref inScope))
 >       Nothing             ->
 >         case Data.Foldable.find ((name ==) . refName . snd) primitives of
->           Just (_, ref)  -> return (Just (applyAuncles ref inScope))
+>           Just (_, ref)  -> return (Just (applySpine ref inScope))
 >           Nothing        -> return Nothing
 
 
@@ -527,7 +528,7 @@ next goal (if one exists) instead.
 >             putDevTip (Defined tm (tipTyTm :=>: tipTy))
 >             putMother (CDefinition kind ref xn ty)
 >             updateRef ref
->             return (applyAuncles ref aus)
+>             return (applySpine ref aus)
 >         _  -> throwError' $ err "give: only possible for incomplete goals."
 
 The |lambdaBoy| command checks that the current goal is a $\Pi$-type, and if so,
@@ -606,7 +607,7 @@ current development, after checking that the purported type is in fact a type.
 >     let dev = Dev B0 (Unknown (ty :=>: tyv)) (freshNSpace nsupply s') SuspendNone
 >     putDevEntry (EDEF ref (last n) LETG dev ty')
 >     putDevNSupply (freshName nsupply)
->     return (applyAuncles ref inScope)
+>     return (applySpine ref inScope)
 
 
 The |pickName| command takes a prefix suggestion and a name suggestion

@@ -24,6 +24,7 @@
 > import DisplayLang.Name
 
 > import ProofState.Structure.Developments
+
 > import ProofState.Edition.News
 > import ProofState.Edition.ProofContext
 
@@ -49,6 +50,8 @@ type synonym:
 > type ProofState = ProofStateT DInTmRN
 
 
+\subsection{Error management toolkit}
+
 Some functions, such as |distill|, are defined in the |ProofStateT
 INTM| monad. However, Cochon lives in a |ProofStateT DInTmRN|
 monad. Therefore, in order to use it, we will need to lift from the
@@ -68,25 +71,14 @@ former to the latter.
 > liftErrorState f = mapStateT (liftError f)
 
 
+\subsection{Tracing in the |ProofState| monad}
 
-\subsubsection{Tracing in the |ProofState| monad}
+That's fairly trivial, yet I'm pretty sure this goddamn laziness won't
+skip some traces (ML programmer speaking here).
 
 > proofTrace :: String -> ProofStateT e ()
 > proofTrace s = do
 >   () <- trace s $ return ()
 >   return ()
 
-\subsubsection{Useful odds and ends}
-
-The |applyAuncles| command applies a reference to the given
-spine of shared parameters.
-
-> applyAuncles :: REF -> Entries -> EXTM :=>: VAL
-> applyAuncles ref aus = tm :=>: evTm tm
->   where tm = P ref $:$ aunclesToElims (aus <>> F0)
-
-> aunclesToElims :: Fwd (Entry Bwd) -> [Elim INTM]
-> aunclesToElims F0                        = []
-> aunclesToElims (EPARAM ref _ _ _ :> es)  = (A (N (P ref))) : aunclesToElims es
-> aunclesToElims (_ :> es)                 = aunclesToElims es
 

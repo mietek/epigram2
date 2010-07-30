@@ -104,7 +104,7 @@ a reference to the current goal (applied to the appropriate shared parameters).
 >     getDefn = do
 >         CDefinition _ ref _ _ <- getMother
 >         aus <- getGreatAuncles
->         return (applyAuncles ref aus)
+>         return (applySpine ref aus)
 
 
 The |elabMake| command elaborates the given display term in a module to

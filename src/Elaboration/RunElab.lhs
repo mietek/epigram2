@@ -23,6 +23,7 @@
 > import ProofState.Structure.Entries
 
 > import ProofState.Edition.ProofContext
+> import ProofState.Edition.Scope
 > import ProofState.Edition.ProofState
 > import ProofState.Edition.GetSet
 

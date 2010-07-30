@@ -21,6 +21,7 @@
 > import ProofState.Edition.ProofContext
 
 > import Evidences.Tm
+> import Evidences.Rules
 
 > import DisplayLang.Scheme
 
@@ -29,6 +30,8 @@
 
 %endif
 
+
+\subsection{Extracting scopes as entries}
 
 
 The |globalScope| function returns the parameters and definitions
@@ -70,3 +73,30 @@ about it, sorry about that.}
 >     params = foldMap param
 >     param (EPARAM r _ _ t)  = [r :<: t]
 >     param _                 = []
+
+
+
+\subsection{Manipulating entries as scopes}
+
+
+
+We often need to turn the sequence of parameters under which we work
+into the argument spine of a \(\lambda\)-lifted definition. Therefore,
+let us extract such spine from a list of entries:
+
+> paramREFs :: Entries -> [REF]
+> paramREFs = foldMap param where
+>   param :: Entry Bwd -> [REF]
+>   param  (EPARAM r _ _ _)   = [r]
+>   param  _                  = []
+
+> paramSpine :: Entries -> Spine {TT} REF
+> paramSpine = fmap (A . N . P) . paramREFs
+
+Similarly, |applySpine| applies a reference to a given spine of
+parameters, provided as a spine. These are the shared parameters of a
+\(\lambda\)-lifted definition.
+
+> applySpine :: REF -> Entries -> EXTM :=>: VAL
+> applySpine ref aus = tm :=>: evTm tm
+>   where tm = P ref $:$ paramSpine aus
