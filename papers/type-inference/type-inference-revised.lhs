@@ -1135,11 +1135,11 @@ $\Delta \entails \delta\tau \equiv \theta\tau$ for any $\Gamma$-type $\tau$.
 %%%This partial order on contexts suffices to ensure stability, as described
 %%%%%%in the following section, 
 %%%   below, 
-Lemma~\ref{lei:preorder} below shows that 
-\(\lei\) indeed defines a preorder under suitable stability assumptions, 
-but in practice the algorithm works with a more constrained subrelation:  
-we give up some freedom to achieve a more comprehensible
-algorithm, which always uses \(\iota\). %%%the identity substitution.
+%Lemma~\ref{lei:preorder} below shows that 
+%\(\lei\) indeed defines a preorder under suitable stability assumptions, 
+%but in practice the algorithm works with a more constrained subrelation:  
+%we give up some freedom to achieve a more comprehensible
+%algorithm, which always uses \(\iota\). %%%the identity substitution.
 
 
 
@@ -1195,7 +1195,8 @@ By stability, $\Delta \entails \delta S$ and $\Delta \entails \delta S'$,
 so $\Delta \entails \delta (S \wedge S')$.
 \end{proof}
 %%%
-Thanks to stability, our information order is reasonable:
+%%Thanks to stability, our information order is reasonable:
+We shall exploit the preorder structure of $\lei$, induced by stability.
 \begin{lemma}\label{lei:preorder}
 If $\sem{\decl{x}{D}}$ is stable for every declaration $\decl{x}{D}$, then
 the $\lei$ relation is a preorder, with reflexivity witnessed by
@@ -1264,22 +1265,21 @@ any other solution $\theta: \Gamma \lei \Theta$, there exists a
 substitution $\zeta : \Delta \lei \Theta$ such that
 $\theta \eqsubst \zeta \compose \delta$ (we say $\theta$ \emph{factors through}
 $\delta$ with \emph{cofactor} $\zeta$).
-%%%
-We write $\LEIStmt{\Gamma}{P}{\Delta}$ to mean that $(\Gamma, P)$ is a
-problem with minimal solution $\iota : \Gamma \lei \Delta$.
-In fact, we %%%will 
-always find minimal solutions 
-%%%that use the identity substitution. 
-%%%in the form $\iota : \Gamma \lei \Delta$. 
-   in this form. 
 
-As one might expect, the following rule is admissible,  
+Variables can become more informative either by definition or by substitution.
+Our algorithms exploit only definition, always choosing solutions
+$\iota : \Gamma \lei \Delta$, but we show these minimal with respect to
+arbitrary information increase. Correspondingly,
+we write $\LEIStmt{\Gamma}{P}{\Delta}$ to mean that $(\Gamma, P)$ is a
+problem with minimal solution $\iota : \Gamma \lei \Delta$.
+
+Unsurprisingly, stability permits \emph{sound} sequential problem solving:
 $$\Rule{\iota:\leiStmt{\Gamma}{P}{\Delta}
        \quad  \iota:\leiStmt{\Delta}{Q}{\Theta}}
-       {\iota:\leiStmt{\Gamma}{P \wedge Q}{\Theta}}$$
-for stability ensures that if $\Delta$ solves $P$ then any more
+       {\iota:\leiStmt{\Gamma}{P \wedge Q}{\Theta}}.$$
+If $\Delta$ solves $P$ then any more
 informative context $\Theta$ also solves $P$. More surprisingly, composite
-problems acquire minimal solutions similarly,
+problems acquire \emph{minimal} solutions similarly,
 allowing a \scare{greedy}  strategy.
 %
 % We can now state the following \scare{greedy} approach to finding minimal
