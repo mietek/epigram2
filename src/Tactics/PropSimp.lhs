@@ -22,6 +22,7 @@
 
 > import Evidences.Tm
 > import Evidences.Rules
+> import Evidences.Mangler
 
 > import ProofState.Edition.ProofState
 > import ProofState.Edition.GetSet
@@ -485,22 +486,40 @@ repeatedly transforming the proof state into a simpler version, one step
 at a time. It will fail if no simplification is possible.
 
 > problemSimplify :: ProofState (EXTM :=>: VAL)
-> problemSimplify = proofTrace "problemSimplify" >> getHoleGoal >>= simplifyGoal . valueOf
+> problemSimplify = do
+>     proofTrace "problemSimplify"
+>     getHoleGoal >>= simplifyGoal True . valueOf >> getMotherDefinition
 
 > tryProblemSimplify :: ProofState (EXTM :=>: VAL)
 > tryProblemSimplify = problemSimplify <|> getCurrentDefinition
 
 
-> simplifyGoal :: TY -> ProofState (EXTM :=>: VAL)
+> trySimplifyGoal :: Bool -> TY -> ProofState (INTM :=>: VAL)
+> trySimplifyGoal True ty = simplifyGoal True ty <|> (neutralise =<< getMotherDefinition)
+> trySimplifyGoal False ty = simplifyGoal False ty <|> (do
+>             ty' <- bquoteHere ty
+>             neutralise =<< make ("tsg" :<: ty'))
 
-> simplifyGoal (PI UNIT t) = do
+> annotate :: INTM -> TY -> ProofState EXTM
+> annotate (N n) _ = return n
+> annotate t ty = bquoteHere ty >>= return . (t :?)
+
+
+> topWrap :: Bool -> INTM :=>: VAL -> ProofState (INTM :=>: VAL)
+> topWrap True tt   = give' (termOf tt) >> return tt
+> topWrap False tt  = return tt
+
+
+> simplifyGoal :: Bool -> TY -> ProofState (INTM :=>: VAL)
+
+> simplifyGoal b (PI UNIT t) = do
 >     proofTrace "PI UNIT"
 >     t' <- bquoteHere (t $$ A VOID)
 >     make ("u" :<: t')
 >     goIn
 >     b :=>: _ <-  tryProblemSimplify
 >     goOut
->     give (LK (N b))
+>     give' (LK (N b))
 > simplifyGoal (PI (SIGMA d r) t) = do
 >     proofTrace "PI SIGMA"
 >     let mt =  PI d . L . HF (fortran r) $ \ a ->
@@ -511,18 +530,18 @@ at a time. It will fail if no simplification is possible.
 >     goIn
 >     b :=>: _ <-  tryProblemSimplify
 >     goOut
->     x <- lambdaParam (fortran t)
->     give (N (b :$ A (N (P x :$ Fst)) :$ A (N (P x :$ Snd))))
+>     x <- lambdaBoy (fortran t)
+>     give' (N (b :$ A (N (P x :$ Fst)) :$ A (N (P x :$ Snd))))
 > simplifyGoal (PI (ENUMT e) t) = do
 >     proofTrace "PI ENUMT"
->     t' <- bquoteHere t
+>     x :=>: xv <- trySimplifyGoal False (branchesOp @@ [e, t])
 >     e' <- bquoteHere e
 >     make ("e" :<: N (branchesOp :@ [e', t']))
 >     goIn
 >     b :=>: _ <-  tryProblemSimplify
 >     goOut
->     x <- lambdaParam (fortran t)
->     give (N (switchOp :@ [e', NP x, t', N b]))
+>     x <- lambdaBoy (fortran t)
+>     give' (N (switchOp :@ [e', NP x, t', N b]))
 > simplifyGoal (PI (PRF p) t) = do
 >     proofTrace "PI PRF"
 >     pSimp <- runPropSimplify p
@@ -534,14 +553,14 @@ at a time. It will fail if no simplification is possible.
 >             r <- lambdaParam (fortran t)
 >             let pr = prf (NP r)
 >             nonsense <- bquoteHere (nEOp @@ [pr, t $$ A (NP r)])
->             give nonsense
+>             give' nonsense
 >         Just (SimplyTrivial prf) -> do
 >             t' <- bquoteHere (t $$ A prf)
 >             make ("r" :<: t')
 >             goIn
 >             b :=>: _ <- tryProblemSimplify
 >             goOut
->             give (LK (N b))
+>             give' (LK (N b))
 >         Just (Simply qs gs h) -> do
 >             q <- dischargePiLots qs (t $$ A h)
 >             q' <- bquoteHere q
@@ -551,34 +570,44 @@ at a time. It will fail if no simplification is possible.
 >             goOut
 >             r <- lambdaParam (fortran t)
 >             prf <- bquoteHere $ bv $$$ (fmap (A . ($$ A (NP r))) gs)
->             give prf
+>             give' prf
 >              
 > simplifyGoal (PI s t) = do
->     lambdaParam (fortran t)
+>     lambdaBoy (fortran t)
 >     tryProblemSimplify 
 
-> simplifyGoal (PRF p) = propSimplifyHere >> getCurrentDefinition
+> simplifyGoal (PRF p) = propSimplifyHere >> getMotherDefinition
 
-> simplifyGoal UNIT = give VOID
+> simplifyGoal UNIT = give' VOID
 
-> simplifyGoal (SIGMA s t) = do
->     proofTrace "SIGMA"
->     s' <- bquoteHere s
->     make (fortran t :<: s')
+> simplifyGoal False g@(PI _ _) = do
+>     proofTrace "PI not"
+>     g' <- bquoteHere g
+>     make ("pig" :<: g')
 >     goIn
->     stm :=>: stv <- tryProblemSimplify
+>     simplifyGoal True g
+>     x :=>: xv <- getMotherDefinition
 >     goOut
->     tty <- bquoteHere (t $$ A stv)
->     make ("t" :<: tty)
+>     return $ N x :=>: xv
+
+> simplifyGoal True (PRF p) = do
+>     proofTrace "PRF top"
+>     propSimplifyHere
+>     getMotherDefinition >>= neutralise
+
+> simplifyGoal False g@(PRF _) = do
+>     proofTrace "PRF not"
+>     g' <- bquoteHere g
+>     make ("prg" :<: g')
 >     goIn
->     ttm :=>: _ <- tryProblemSimplify
+>     x :=>: xv <- simplifyGoal True g
 >     goOut
->     give (PAIR (N stm) (N ttm))
+>     give' (PAIR (N stm) (N ttm))
 
-> simplifyGoal (LABEL _ UNIT)           = give (LRET VOID)
-> simplifyGoal (LABEL _ (PRF TRIVIAL))  = give (LRET VOID)
+> simplifyGoal (LABEL _ UNIT)           = give' (LRET VOID)
+> simplifyGoal (LABEL _ (PRF TRIVIAL))  = give' (LRET VOID)
 
-> simplifyGoal _ = throwError' $ err "simplifyGoal: cannot simplify"
+> simplifyGoal _ _ = throwError' $ err "simplifyGoal: cannot simplify"
 
 
 The |elimSimplify| command invokes elimination with a motive, simplifies the
