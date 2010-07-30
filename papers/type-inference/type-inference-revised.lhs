@@ -2668,19 +2668,31 @@ strategy, refocusing wherever progress can be
 made. The tree-like proof states of McBride's thesis evolved into
 exactly such \scare{zippers with binding} in the implementation of Epigram.
 
-As we have seen, an information increase is nothing other than the
-extension of a simultaneous substitution from variables and terms to
-declarations and derivations. Our generic analysis of the role of
-declarations in derivations shows that stability is endemic, amounting
-to the action of hereditary substitution on \scare{cut-free} derivations.
-And that is exactly what it should be. We have rationalised
-Hindley-Milner type inference by adapting a discipline for
-interactively constructing inhabitants of dependent types as the means
-to manage unknowns when incrementally constructing solutions to
-problems. The analysis can only become clearer, the technology
-simpler, as we bring these two kinds of construction together,
+As we have seen, `information increase' is really the
+elaboration of simultaneous substitution from variables-and-terms to
+declarations-and-derivations. Our analysis of role
+declaration plays in derivation shows that stability is endemic---an
+action of hereditary substitution on \scare{cut-free} derivations.
+And that is just what it should be. We have rationalised
+Hindley-Milner type inference, adapting a discipline for
+incremental term construction in dependent types
+to manage unknowns for incremental problem solving.
+The analysis can only become clearer, the technology
+simpler, as we identify these two kinds of construction,
 mediating \emph{problems as types}.
 
+%As we have seen, an information increase is nothing other than the
+%extension of a simultaneous substitution from variables and terms to
+%declarations and derivations. Our generic analysis of the role of
+%declarations in derivations shows that stability is endemic, amounting
+%to the action of hereditary substitution on \scare{cut-free} derivations.
+%And that is exactly what it should be. We have rationalised
+%Hindley-Milner type inference by adapting a discipline for
+%interactively constructing inhabitants of dependent types as the means
+%to manage unknowns when incrementally constructing solutions to
+%problems. The analysis can only become clearer, the technology
+%simpler, as we bring these two kinds of construction together,
+%mediating \emph{problems as types}.
 
 
 \phantomsection
