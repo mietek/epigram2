@@ -24,10 +24,9 @@ test  : type-inference-revised.lhs
 	$(GHC) $(GHC_OPTS) -o type-inference-revised type-inference-revised.lhs
 	./type-inference-revised
 
-final : type-inference-revised.lhs lib-short.bib
-	$(LHS2TEX) $(LHS2TEX_OPTS) -o msfp31v-gundry.tex type-inference-revised.lhs
+final : type-inference-final.lhs
+	$(LHS2TEX) $(LHS2TEX_OPTS) -o msfp31v-gundry.tex type-inference-final.lhs
 	latex msfp31v-gundry
-	bibtex msfp31v-gundry
 	latex msfp31v-gundry
 	latex msfp31v-gundry
 	dvips -Pdownload35 -t letter -o msfp31v-gundry.ps msfp31v-gundry.dvi
