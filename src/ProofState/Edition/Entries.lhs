@@ -8,24 +8,17 @@
 
 > module ProofState.Edition.Entries where
 
-> import Control.Applicative
-> import Data.Foldable
-> import Data.List
 > import Data.Traversable
 
 > import NameSupply.NameSupply
 
 > import ProofState.Structure.Developments
 
-> import ProofState.Edition.News
 > import ProofState.Edition.ProofContext
 
 > import Evidences.Tm
 
-> import DisplayLang.Scheme
-
 > import Kit.BwdFwd
-> import Kit.MissingLibrary
 
 %endif
 

@@ -27,8 +27,6 @@
 > import NameSupply.NameSupply
 > import NameSupply.NameSupplier
 
-> import {-# SOURCE #-} Compiler.OpDef
-
 > import Features.Features ()
 
 %endif

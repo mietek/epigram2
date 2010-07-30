@@ -22,10 +22,7 @@
 
 > import Evidences.Tm
 
-> import DisplayLang.Scheme
-
 > import Kit.BwdFwd
-> import Kit.MissingLibrary
 
 %endif
 

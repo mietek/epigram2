@@ -15,8 +15,9 @@
 > import Kit.MissingLibrary
 
 > import ProofState.Structure.Developments
+
 > import ProofState.Edition.ProofState
-> import ProofState.Edition.ProofContext
+
 > import ProofState.Interface.ProofKit
 > import ProofState.Interface.NameResolution
 

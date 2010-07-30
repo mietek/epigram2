@@ -8,17 +8,11 @@
 
 > module ProofState.Structure.Entries where
 
-> import Data.Foldable
-> import Data.List
 > import Data.Traversable
-
-> import Kit.BwdFwd
 
 > import NameSupply.NameSupply
 
 > import Evidences.Tm
-
-> import Elaboration.ElabMonad
 
 > import DisplayLang.Scheme
 

@@ -8,7 +8,6 @@
 
 > module ProofState.Structure.Developments where
 
-> import Data.Foldable
 > import Data.List
 > import Data.Traversable
 

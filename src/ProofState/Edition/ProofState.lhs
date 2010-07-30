@@ -10,25 +10,12 @@
 > module ProofState.Edition.ProofState where
 
 > import Control.Monad.State
-> import Data.Foldable
 > import Debug.Trace
 
-> import Kit.BwdFwd
-> import Kit.MissingLibrary
-
-> import NameSupply.NameSupply
-
-> -- XXX: bug "fix" of the dependency graph:
-> import DisplayLang.DisplayTm
-> import DisplayLang.Scheme
 > import DisplayLang.Name
 
-> import ProofState.Structure.Developments
-
-> import ProofState.Edition.News
 > import ProofState.Edition.ProofContext
 
-> import Evidences.Rules
 > import Evidences.Tm
 
 %endif

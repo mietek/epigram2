@@ -8,7 +8,6 @@
 
 > module Distillation.Scheme where
 
-> import Control.Monad.State
 > import Text.PrettyPrint.HughesPJ (Doc)
 
 > import Kit.BwdFwd

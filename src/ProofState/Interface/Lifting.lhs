@@ -8,8 +8,6 @@
 
 > module ProofState.Interface.Lifting where
 
-> import Control.Applicative
-> import Control.Monad.Identity
 > import Data.Foldable
 
 > import NameSupply.NameSupplier
