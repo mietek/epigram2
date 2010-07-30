@@ -21,6 +21,7 @@
 > import ProofState.Edition.ProofState
 > import ProofState.Edition.Entries
 > import ProofState.Edition.GetSet
+> import ProofState.Edition.Navigation
 
 > import ProofState.Interface.Lifting
 > import ProofState.Interface.ProofKit
@@ -42,7 +43,7 @@ a changed reference (that the current development has already processed), it sim
 inserts a news bulletin below the current development.
 
 > updateRef :: REF -> ProofState ()
-> updateRef ref = insertCadet [(ref, GoodNews)]
+> updateRef ref = putNewsBelow [(ref, GoodNews)]
 
 
 The |propagateNews| function takes a current news bulletin and a list of entries
@@ -66,7 +67,7 @@ point everyone knows the news anyway.
 
 > propagateNews True news (NF F0) = do
 >     news' <- tellMother news
->     optional (insertCadet news')
+>     optional (putNewsBelow news')
 >     return news'
 
 A |Boy| is relatively easy to deal with, we just check to see if its type
@@ -74,10 +75,10 @@ has become more defined, and pass on the good news if necessary.
 
 > propagateNews top news (NF (Right (EPARAM (name := DECL :<: tv) sn k ty) :> es)) = do
 >     case tellNews news ty of
->         (_, NoNews) -> putDevEntry (EPARAM (name := DECL :<: tv) sn k ty) >> propagateNews top news (NF es)
+>         (_, NoNews) -> putEntryAbove (EPARAM (name := DECL :<: tv) sn k ty) >> propagateNews top news (NF es)
 >         (ty', GoodNews) -> do
 >             let ref = name := DECL :<: evTm ty'
->             putDevEntry (EPARAM ref sn k ty')
+>             putEntryAbove (EPARAM ref sn k ty')
 >             propagateNews top (addNews (ref, GoodNews) news) (NF es)
 
 Updating girls is a bit more complicated. We proceed as follows:
@@ -118,18 +119,18 @@ a slightly strange thing to do, but is useful for news propagation.
 
 > jumpIn :: Entry NewsyFwd -> ProofState NewsyEntries
 > jumpIn e = do
->     Dev es tip nsupply ss <- getDev
->     cadets <- getDevCadets
+>     Dev es tip nsupply ss <- getAboveCursor
+>     cadets <- getBelowCursor
 >     putLayer (Layer es (mkCurrentEntry e) (reverseEntries cadets) tip nsupply ss)
 >     let Just (Dev cs newTip newNSupply newSS) = entryDev e
->     putDev (Dev B0 newTip newNSupply newSS)
+>     putAboveCursor (Dev B0 newTip newNSupply newSS)
 >     return cs
 
 
 The |tellEntry| function informs an entry about a news bulletin that its
 children have already received. If the entry is a girl, she must be the
 mother of the current cursor position (i.e. the entry should come from
-getMotherEntry).
+getLeaveCurrent).
 
 > tellEntry :: NewsBulletin -> Entry Bwd -> ProofState (NewsBulletin, Entry Bwd)
 
@@ -203,7 +204,7 @@ To update a defined girl, we must:
 >     let  (tt', n)             = tellNewsEval news tt
 >          (ty' :=>: tyv', n')  = tellNewsEval news (ty :=>: tyv)
 >          (tm', n'')           = tellNews news tm
->     aus <- getGreatAuncles
+>     aus <- getGlobalScope
 >     let tmL' = parBind aus (devEntries dev) tm'
 
 For paranoia purposes, the following test might be helpful:
@@ -221,9 +222,9 @@ that her children have already received, and returns the updated news.
 
 > tellMother :: NewsBulletin -> ProofState NewsBulletin
 > tellMother news = do
->     e <- getMotherEntry
+>     e <- getLeaveCurrent
 >     (news', e') <- tellEntry news e 
->     putMotherEntry e'
+>     putLeaveCurrent e'
 >     return news'
 
 

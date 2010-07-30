@@ -119,17 +119,17 @@ the saved state. We can get rid of it once we are confident that the new version
 > infoContextual' gals = do
 >     save <- get
 >     let bsc = inBScope save
->     me <- getMotherName
->     ds <- many (hypsHere bsc me <* optional killCadets <* goOut <* removeDevEntry)
+>     me <- getCurrentName
+>     ds <- many (hypsHere bsc me <* optional killCadets <* goOut <* removeEntryAbove)
 >     d <- hypsHere bsc me
 >     put save
 >     return (renderHouseStyle (vcat (d:reverse ds)))
 >  where
 >    hypsHere :: BScopeContext -> Name -> ProofState Doc
 >    hypsHere bsc me = do
->        es <- getDevEntries
+>        es <- getEntriesAbove
 >        d <- hyps bsc me
->        putDevEntries es
+>        putEntriesAbove es
 >        return d
 >    
 >    killCadets = do
@@ -138,26 +138,26 @@ the saved state. We can get rid of it once we are confident that the new version
 >
 >    hyps :: BScopeContext -> Name -> ProofState Doc
 >    hyps bsc me = do
->        es <- getDevEntries
+>        es <- getEntriesAbove
 >        case (gals, es) of
 >            (_, B0) -> return empty
 >            (False, es' :< EPARAM ref _ k _) -> do
->                putDevEntries es'
+>                putEntriesAbove es'
 >                ty' <- bquoteHere (pty ref)
 >                docTy <- prettyHere (SET :>: ty')
 >                d <- hyps bsc me
 >                return (d $$ prettyBKind k (text (showRelName (christenREF bsc ref)) <+> kword KwAsc <+> docTy))
 >            (True, es' :< EDEF ref _ _ _ _) -> do
 >                goIn
->                es <- getDevEntries
+>                es <- getEntriesAbove
 >                (ty :=>: _) <- getGoal "hyps"
 >                ty' <- bquoteHere (evTm (inferGoalType es ty))
 >                docTy <- prettyHere (SET :>: ty')
 >                goOut
->                putDevEntries es'
+>                putEntriesAbove es'
 >                d <- hyps bsc me
 >                return (d $$ (text (showRelName (christenREF bsc ref)) <+> kword KwAsc <+> docTy))
->            (_, es' :< _) -> putDevEntries es' >> hyps bsc me
+>            (_, es' :< _) -> putEntriesAbove es' >> hyps bsc me
 
 
 > infoScheme :: RelName -> ProofState String
@@ -199,14 +199,14 @@ of the proof state at the current location.
 > prettyProofState :: ProofState String
 > prettyProofState = do
 >     inScope <- getInScope
->     me <- getMotherName
+>     me <- getCurrentName
 >     d <- prettyPS inScope me
 >     return (renderHouseStyle d)
 >
 > prettyPS :: Entries -> Name -> ProofState Doc
 > prettyPS aus me = do
->         es <- replaceDevEntries B0
->         cs <- putDevCadets F0
+>         es <- replaceEntriesAbove B0
+>         cs <- putBelowCursor F0
 >         case (es, cs) of
 >             (B0, F0)  -> prettyEmptyTip
 >             _   -> do
@@ -217,14 +217,14 @@ of the proof state at the current location.
 >                         d'' <- prettyEs empty cs
 >                         return (d $$ text "---" $$ d'')
 >                 tip <- prettyTip
->                 putDevEntries es
->                 putDevCadets cs
+>                 putEntriesAbove es
+>                 putBelowCursor cs
 >                 return (lbrack <+> d' $$ rbrack <+> tip)
 >  where
 >     prettyEs :: Doc -> Fwd (Entry Bwd) -> ProofState Doc
 >     prettyEs d F0         = return d
 >     prettyEs d (e :> es) = do
->         putDevEntry e
+>         putEntryAbove e
 >         ed <- prettyE e
 >         prettyEs (d $$ ed) es
 >

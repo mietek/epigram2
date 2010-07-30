@@ -480,7 +480,7 @@ at a time. It will fail if no simplification is possible.
 > problemSimplify = getHoleGoal >>= simplifyGoal . valueOf
 
 > tryProblemSimplify :: ProofState (EXTM :=>: VAL)
-> tryProblemSimplify = problemSimplify <|> getMotherDefinition
+> tryProblemSimplify = problemSimplify <|> getCurrentDefinition
 
 
 > simplifyGoal :: TY -> ProofState (EXTM :=>: VAL)
@@ -545,7 +545,7 @@ at a time. It will fail if no simplification is possible.
 >     lambdaBoy (fortran t)
 >     tryProblemSimplify 
 
-> simplifyGoal (PRF p) = propSimplifyHere >> getMotherDefinition
+> simplifyGoal (PRF p) = propSimplifyHere >> getCurrentDefinition
 
 > simplifyGoal UNIT = give' VOID
 
@@ -573,8 +573,8 @@ at a time. It will fail if no simplification is possible.
 > runPropSimplify :: VAL -> ProofState (Maybe Simplify)
 > runPropSimplify p = do
 >     nsupply <- askNSupply
->     es <- getBoysBwd
->     return $ runReaderT (propSimplify es B0 p) nsupply
+>     es <- getParamsInScope
+>     return $ runReaderT (propSimplify (bwdList es) B0 p) nsupply
 
 The |propSimplifyHere| command attempts propositional simplification on the
 current location, which must be an open goal of type |PRF p| for some |p|.

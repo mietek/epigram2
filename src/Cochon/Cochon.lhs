@@ -123,7 +123,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >
 >     showInputLine :: ProofState String
 >     showInputLine = do
->         mn <- optional getMotherName
+>         mn <- optional getCurrentName
 >         case mn of
 >             Just n   -> return $ showName n ++ " > "
 >             Nothing  -> return "> "

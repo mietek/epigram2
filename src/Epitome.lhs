@@ -104,6 +104,7 @@
 %include ProofState/Edition/Entries.lhs
 %include ProofState/Edition/Scope.lhs
 %include ProofState/Edition/GetSet.lhs
+%include ProofState/Edition/Navigation.lhs
 
 %include ProofState/Interface/ProofKit.lhs
 %include ProofState/Interface/NameResolution.lhs

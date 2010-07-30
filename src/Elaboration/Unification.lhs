@@ -38,7 +38,7 @@ cursor position) and returns there afterwards.
 
 > solveHole :: REF -> INTM -> ProofState (EXTM :=>: VAL)
 > solveHole ref tm = do
->     here <- getMotherName
+>     here <- getCurrentName
 >     r <- solveHole' ref [] tm
 >     cursorBottom
 >     goTo here
@@ -52,7 +52,7 @@ holes with the new ones.
 
 > solveHole' :: REF -> [(REF, INTM)] -> INTM -> ProofState (EXTM :=>: VAL)
 > solveHole' ref@(name := HOLE _ :<: _) deps tm = do
->     es <- getDevEntries
+>     es <- getEntriesAbove
 >     case es of
 >         B0      -> goOutProperly >> cursorUp >> solveHole' ref deps tm
 >         _ :< e  -> pass e
@@ -66,7 +66,7 @@ holes with the new ones.
 >           news <- makeDeps deps []
 >           cursorDown
 >           goIn
->           insertCadet news
+>           putNewsBelow news
 >           let (tm', _) = tellNews news tm
 >           tm'' <- bquoteHere (evTm tm')
 >           give tm''

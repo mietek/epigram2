@@ -49,7 +49,7 @@ it. The |startScheduler| command runs the scheduler from the current location,
 so it will stabilise the children and return to where it started.
 
 > startScheduler :: ProofState ()
-> startScheduler = getMotherName >>= scheduler
+> startScheduler = getCurrentName >>= scheduler
 
 In general, the scheduler might have to move non-locally (e.g. in order to solve
 goals elsewhere in the proof state), so it keeps track of a target location to
@@ -60,7 +60,7 @@ state and starts searching from the top of the development. If not, it calls
 
 > scheduler :: Name -> ProofState ()
 > scheduler n = do
->     ss <- (|devSuspendState getDev|)
+>     ss <- (|devSuspendState getAboveCursor|)
 >     case ss of
 >         SuspendUnstable  -> do  putDevSuspendState SuspendNone
 >                                 cursorTop
@@ -75,7 +75,7 @@ resume its mother, then search its children from the top.
 
 > schedulerContinue :: Name -> ProofState ()
 > schedulerContinue n = do
->     cs <- getDevCadets
+>     cs <- getBelowCursor
 >     case cs of
 >         F0                    -> schedulerDone n
 >         EPARAM _ _ _ _ :> _   -> cursorDown >> schedulerContinue n
@@ -91,7 +91,7 @@ If so, we stop; otherwise, we resume the mother and continue searching.
 
 > schedulerDone :: Name -> ProofState ()
 > schedulerDone n = do
->         mn <- getMotherName
+>         mn <- getCurrentName
 >         case mn of
 >             _ | mn == n  -> cursorBottom
 >             []           -> error "scheduler: got lost!"
@@ -114,7 +114,7 @@ elaboration process was resumed (not whether the process succeeded).
 >   case tip of
 >     Suspended (ty :=>: tyv) prob | isUnstable prob -> do
 >         putDevTip (Unknown (ty :=>: tyv))
->         mn <- getMotherName
+>         mn <- getCurrentName
 >         schedTrace $ "scheduler: resuming elaboration on " ++ showName mn
 >                           ++ ":  \n" ++ show prob
 >         mtt <- resume (ty :=>: tyv) prob
@@ -149,7 +149,7 @@ been suspended) then the cursor could be anywhere earlier in the proof state.
 >     return Nothing
 > resume _ (WaitSolve ref@(_ := HOLE _ :<: _) stt prob) = do
 >     suspendMe prob
->     mn <- getMotherName
+>     mn <- getCurrentName
 >     tm <- bquoteHere (valueOf . maybeEval $ stt) -- force definitional expansion
 >     solveHole' ref [] tm -- takes us to who knows where
 >     return Nothing
@@ -160,8 +160,8 @@ can we reorganise things to use propositional rather than definitional
 equality here?}
 
 > resume tt (WaitSolve ref@(_ := DEFN tmv' :<: ty) stt prob) = do
->     aus   <- getGreatAuncles
->     sibs  <- getDevEntries
+>     aus   <- getGlobalScope
+>     sibs  <- getEntriesAbove
 >     let  stt'  = maybeEval stt
 >          stm   = parBind aus sibs (termOf stt')
 >     eq <- withNSupply $ equal (ty :>: (evTm stm, tmv'))

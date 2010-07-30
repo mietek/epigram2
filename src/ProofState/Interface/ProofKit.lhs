@@ -30,6 +30,7 @@
 > import ProofState.Edition.ProofState
 > import ProofState.Edition.Entries
 > import ProofState.Edition.GetSet
+> import ProofState.Edition.Navigation
 
 > import ProofState.Interface.Lifting
 > import ProofState.Interface.NameResolution
@@ -114,7 +115,7 @@ may be useful for paranoia purposes.
 
 > validateHere :: ProofState ()
 > validateHere = do
->     m <- getMother
+>     m <- getCurrentEntry
 >     case m of
 >         CDefinition _ (_ := DEFN tm :<: ty) _ _ -> do
 >             ty' <- bquoteHere ty
@@ -195,23 +196,23 @@ below, or vice versa.
 
 > cursorUp :: ProofState ()
 > cursorUp = do
->     es' <- getDevEntries
+>     es' <- getEntriesAbove
 >     case es' of
 >         es :< e -> do
->             cadets <- getDevCadets
->             putDevEntries es
->             putDevCadets (e :> cadets)
+>             cadets <- getBelowCursor
+>             putEntriesAbove es
+>             putBelowCursor (e :> cadets)
 >             return ()
 >         B0 -> throwError' $ err "cursorUp: cannot move cursor up."
 
 > cursorDown :: ProofState ()
 > cursorDown = do
->     es <- getDevEntries
->     cadets' <- getDevCadets
+>     es <- getEntriesAbove
+>     cadets' <- getBelowCursor
 >     case cadets' of
 >         cadet :> cadets -> do
->             putDevEntries (es :< cadet)
->             putDevCadets cadets
+>             putEntriesAbove (es :< cadet)
+>             putBelowCursor cadets
 >             return ()
 >         F0 -> throwError' $ err "cursorDown: cannot move cursor down."
 
@@ -220,18 +221,18 @@ cursor upwards until it finds an entry with a development, then enters it.
 
 > goIn :: ProofState ()
 > goIn = do
->     es' <- getDevEntries
+>     es' <- getEntriesAbove
 >     case es' of
 >         B0 -> throwError' $ err "goIn: you can't go that way."
 >         es :< e -> case entryDev e of
 >           Nothing   -> cursorUp >> goIn
 >           Just dev  -> do
->              cadets  <- getDevCadets
->              oldDev  <- getDev
+>              cadets  <- getBelowCursor
+>              oldDev  <- getAboveCursor
 >              putLayer (Layer es (mkCurrentEntry e) (reverseEntries cadets)
 >                            (devTip oldDev) (devNSupply oldDev) (devSuspendState oldDev))
->              putDev dev
->              putDevCadets F0
+>              putAboveCursor dev
+>              putBelowCursor F0
 >              return ()
 
 
@@ -242,12 +243,12 @@ of the new focus.
 
 > goOut :: ProofState ()
 > goOut = do
->     e <- getMotherEntry
+>     e <- getLeaveCurrent
 >     ml <- optional removeLayer
 >     case ml of
 >         Just l -> do
->             putDev $ Dev (aboveEntries l :< e) (layTip l) (layNSupply l) (laySuspendState l)
->             putDevCadets F0
+>             putAboveCursor $ Dev (aboveEntries l :< e) (layTip l) (layNSupply l) (laySuspendState l)
+>             putBelowCursor F0
 >             propagateNews True [] (belowEntries l)
 >             return ()
 >         Nothing -> throwError' $ err "goOut: you can't go that way."
@@ -280,9 +281,9 @@ back as layer cadets at the new focus.
 >         case l of
 >           (Layer (es :< e) m (NF cadets) tip nsupply ss) -> case entryDev e of
 >             Just dev -> do
->                 me <- getMotherEntry
->                 putDev dev
->                 putDevCadets F0
+>                 me <- getLeaveCurrent
+>                 putAboveCursor dev
+>                 putBelowCursor F0
 >                 replaceLayer l{aboveEntries=es, currentEntry=mkCurrentEntry e,
 >                     belowEntries=NF (acc <+> (Right (reverseEntry me) :> cadets))}
 >                 return ()
@@ -309,11 +310,11 @@ parameters so they can be put back as layer elders at the new focus.
 >                 goDownAcc acc (mergeNews news nb)
 >             Right e -> case entryCoerce e of
 >               Left (Dev es' tip' nsupply' ss') ->  do
->                 me <- getMotherEntry
+>                 me <- getLeaveCurrent
 >                 replaceLayer l{aboveEntries=(elders :< me) <+> acc,
 >                                    currentEntry=mkCurrentEntry e, belowEntries=NF es}
->                 putDev (Dev B0 tip' nsupply' SuspendNone)
->                 putDevCadets F0
+>                 putAboveCursor (Dev B0 tip' nsupply' SuspendNone)
+>                 putBelowCursor F0
 >                 news' <- propagateNews True news es'
 >                 return ()
 >               Right e' -> do
@@ -358,10 +359,10 @@ starting from the root module.
 >     seek :: (String, Int) -> ProofState ()
 >     seek xn = do
 >         goIn
->         m <- getMotherName
+>         m <- getCurrentName
 >         if xn == last m
 >             then return ()
->             else goUp `untilA` (guard . (== xn) . last =<< getMotherName)
+>             else goUp `untilA` (guard . (== xn) . last =<< getCurrentName)
 
 
 \subsection{Goal Search Commands}
@@ -423,18 +424,18 @@ to the next goal otherwise.
 > makeModule s = do
 >     n <- withNSupply (flip mkName s)
 >     nsupply <- getDevNSupply
->     putDevEntry (EModule n (Dev B0 Module (freshNSpace nsupply s) SuspendNone))
+>     putEntryAbove (EModule n (Dev B0 Module (freshNSpace nsupply s) SuspendNone))
 >     putDevNSupply (freshName nsupply)
 >     return n
 
 > moduleToGoal :: INTM -> ProofState (EXTM :=>: VAL)
 > moduleToGoal ty = do
 >     (_ :=>: tyv) <- checkHere (SET :>: ty)
->     CModule n <- getMother
+>     CModule n <- getCurrentEntry
 >     inScope <- getInScope
 >     let  ty' = liftType inScope ty
 >          ref = n := HOLE Waiting :<: evTm ty'
->     putMother (CDefinition LETG ref (last n) ty')
+>     putCurrentEntry (CDefinition LETG ref (last n) ty')
 >     putDevTip (Unknown (ty :=>: tyv))
 >     return (applySpine ref inScope)
 
@@ -444,7 +445,7 @@ to the next goal otherwise.
 >     goIn
 >     t <- draftyStuff
 >     goOutProperly
->     mm <- removeDevEntry
+>     mm <- removeEntryAbove
 >     case mm of
 >         Just (EModule _ _) -> return t
 >         _ -> throwError' . err $ "draftModule: drafty " ++ name
@@ -480,7 +481,7 @@ $\Pi S T$ and if so, adds a goal of type $S$ and applies $y$ to it.
 
 > apply :: ProofState (EXTM :=>: VAL)
 > apply = do
->   devEntry <- getDevEntry
+>   devEntry <- getEntryAbove
 >   case devEntry of
 >     EDEF ref@(name := k :<: (PI s t)) _ _ _ _ -> do
 >         s' <- bquoteHere s
@@ -497,7 +498,7 @@ fills in the goal with this entry.
 
 > done :: ProofState (EXTM :=>: VAL)
 > done = do
->   devEntry <- getDevEntry
+>   devEntry <- getEntryAbove
 >   case devEntry of
 >     EDEF ref _ _ _ _ -> give (N (P ref))
 >     _ -> throwError' $ err "done: last entry in the development must be a girl."
@@ -520,13 +521,13 @@ next goal (if one exists) instead.
 >             checkHere (tipTy :>: tm) `pushError`
 >                 (err "give: typechecking failed:" ++ errTm (DTIN tm)
 >                  ++ err "is not of type" ++ errTyVal (tipTy :<: SET))
->             aus <- getGreatAuncles
->             sibs <- getDevEntries
+>             aus <- getGlobalScope
+>             sibs <- getEntriesAbove
 >             let tmv = evTm (parBind aus sibs tm)
->             CDefinition kind (name := _ :<: tyv) xn ty <- getMother
+>             CDefinition kind (name := _ :<: tyv) xn ty <- getCurrentEntry
 >             let ref = name := DEFN tmv :<: tyv
 >             putDevTip (Defined tm (tipTyTm :=>: tipTy))
->             putMother (CDefinition kind ref xn ty)
+>             putCurrentEntry (CDefinition kind ref xn ty)
 >             updateRef ref
 >             return (applySpine ref aus)
 >         _  -> throwError' $ err "give: only possible for incomplete goals."
@@ -541,7 +542,7 @@ appends a $\lambda$-abstraction with the appropriate type to the current develop
 >       Unknown (pi :=>: ty) -> case lambdable ty of
 >         Just (k, s, t) -> freshRef (x :<: s) (\ref -> do
 >             s' <- bquoteHere s
->             putDevEntry (EPARAM ref (mkLastName ref) k s')
+>             putEntryAbove (EPARAM ref (mkLastName ref) k s')
 >             let tipTyv = t (pval ref)
 >             tipTy <- bquoteHere tipTyv
 >             putDevTip (Unknown (tipTy :=>: tipTyv))
@@ -559,7 +560,7 @@ that the supplied type matches the one at the tip.
 >     tip <- getDevTip
 >     case tip of
 >       Module -> freshRef (x :<: tv) (\ref -> do
->           putDevEntry (EPARAM ref (mkLastName ref) ParamLam ty)
+>           putEntryAbove (EPARAM ref (mkLastName ref) ParamLam ty)
 >           return ref
 >         )
 >       Unknown (pi :=>: gty) -> case lambdable gty of
@@ -567,7 +568,7 @@ that the supplied type matches the one at the tip.
 >           eq <- withNSupply (equal (SET :>: (tv, s)))
 >           if eq
 >             then freshRef (x :<: tv) (\ref -> do
->                 putDevEntry (EPARAM ref (mkLastName ref) k ty)
+>                 putEntryAbove (EPARAM ref (mkLastName ref) k ty)
 >                 let tipTyv = t (pval ref)
 >                 tipTy <- bquoteHere tipTyv
 >                 putDevTip (Unknown (tipTy :=>: tipTyv))
@@ -605,7 +606,7 @@ current development, after checking that the purported type is in fact a type.
 >          ref  = n := HOLE hk :<: evTm ty'
 >     nsupply <- getDevNSupply
 >     let dev = Dev B0 (Unknown (ty :=>: tyv)) (freshNSpace nsupply s') SuspendNone
->     putDevEntry (EDEF ref (last n) LETG dev ty')
+>     putEntryAbove (EDEF ref (last n) LETG dev ty')
 >     putDevNSupply (freshName nsupply)
 >     return (applySpine ref inScope)
 
@@ -617,7 +618,7 @@ name if the name suggestion is empty.
 > pickName :: String -> String -> ProofState String
 > pickName "" s = pickName "x" s
 > pickName prefix ""  = do
->     m <- getMotherName
+>     m <- getCurrentName
 >     r <- getDevNSupply
 >     return (prefix ++ show (foldMap snd m + snd r))
 > pickName _ s   = return s
@@ -634,7 +635,7 @@ is also a set; if so, it appends a $\Pi$-abstraction to the current development.
 >     tip <- getDevTip
 >     case tip of
 >         Unknown (_ :=>: SET) -> freshRef (s :<: tv) (\ref -> do
->             putDevEntry (EPARAM ref (mkLastName ref) ParamPi ty)
+>             putEntryAbove (EPARAM ref (mkLastName ref) ParamPi ty)
 >             return ref
 >           )
 >         Unknown _  -> throwError' $ err "piBoy: goal is not of type SET."
@@ -683,7 +684,7 @@ shared parameters).
 
 > getFakeRef :: ProofState REF
 > getFakeRef = do
->    CDefinition _  (mnom := HOLE _ :<: ty) _ _ <- getMother
+>    CDefinition _  (mnom := HOLE _ :<: ty) _ _ <- getCurrentEntry
 >    return (mnom := FAKE :<: ty)
 
 > getFakeMother :: ProofState (EXTM :=>: VAL)
@@ -692,3 +693,18 @@ shared parameters).
 >    inScope <- getInScope
 >    let tm = P r $:$ (paramSpine inScope)
 >    return $ tm :=>: evTm tm
+
+
+
+
+
+When the current location or one of its children has suspended, we need to
+update the outer layers.
+
+> grandmotherSuspend :: SuspendState -> ProofState ()
+> grandmotherSuspend ss = getLayers >>= putLayers . help ss
+>   where
+>     help :: SuspendState -> Bwd Layer -> Bwd Layer
+>     help ss B0 = B0
+>     help ss (ls :< l) = help ss' ls :< l{laySuspendState = ss'}
+>       where ss' = min ss (laySuspendState l)

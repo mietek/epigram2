@@ -174,7 +174,7 @@
 >       make ("DataTy" :<: SET)
 >       goIn
 >       (dty :=>: _) <- give (MU (Just (N lt)) (N d))
->       EEntity r _ _ _ <- getDevEntry
+>       EEntity r _ _ _ <- getEntryAbove
 >       traverse (makeCon (N e) (N (P r $:$ oldaus))) cs
 
 We specialise the induction operator to this datatype, ensuring the label is

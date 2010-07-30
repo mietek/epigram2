@@ -753,7 +753,7 @@ always be excluded.
 
 > getLocalContext :: Maybe REF -> ProofState (Bwd (REF :<: INTM))
 > getLocalContext comma = do
->     delta <- getAunclesToImpl
+>     delta <- getDefinitionsToImpl
 >     return . bwdList $ case comma of 
 >         Nothing  -> delta
 >         Just c   -> dropWhile (\ (r :<: _) -> c /= r) delta

@@ -82,10 +82,10 @@ and |False| if the problem was suspended.
 > runElab True (ty :>: ECry e) = do
 >     e' <- distillErrors e
 >     let msg = show (prettyStackError e')
->     mn <- getMotherName
+>     mn <- getCurrentName
 >     proofTrace ("Hole " ++ showName mn ++ " started crying:\n" ++ msg)
 >     putHoleKind (Crying msg)
->     t :=>: tv <- getMotherDefinition
+>     t :=>: tv <- getCurrentDefinition
 >     return (N t :=>: tv, False)
 
 > runElab False (ty :>: ECry e) = runElabTop (ty :>: ECry e)
@@ -126,7 +126,7 @@ are encountered below the top level.
 >     (tm :=>: tmv, okay) <- runElab True (ty :>: elab)
 >     if okay
 >         then  return . (, True)  =<< neutralise =<< give tm
->         else  return . (, False) =<< neutralise =<< getMotherDefinition <* goOut
+>         else  return . (, False) =<< neutralise =<< getCurrentDefinition <* goOut
 
 
 \subsection{Interpreting elaboration problems}
@@ -353,7 +353,7 @@ ideally we should cry rather than hoping for something patently absurd.
 > lastHope :: Bool -> TY -> ProofState (INTM :=>: VAL, Bool)
 > lastHope True ty = do
 >     putHoleKind Hoping
->     return . (, False) =<< neutralise =<< getMotherDefinition
+>     return . (, False) =<< neutralise =<< getCurrentDefinition
 > lastHope False ty = do
 >     ty' <- bquoteHere ty
 >     return . (, True) =<< neutralise =<< make' Hoping ("hope" :<: ty')
@@ -370,8 +370,8 @@ is unstable.
 >                -> ProofState (EXTM :=>: VAL)
 > suspend (x :<: tt) prob = do
 >     r <- make (x :<: termOf tt)
->     Just (EDEF ref xn dkind dev@(Dev {devTip=Unknown utt}) tm) <- removeDevEntry
->     putDevEntry (EDEF ref xn dkind (dev{devTip=Suspended utt prob}) tm)
+>     Just (EDEF ref xn dkind dev@(Dev {devTip=Unknown utt}) tm) <- removeEntryAbove
+>     putEntryAbove (EDEF ref xn dkind (dev{devTip=Suspended utt prob}) tm)
 >     let ss = if isUnstable prob then SuspendUnstable else SuspendStable
 >     putDevSuspendState ss
 >     grandmotherSuspend ss
@@ -387,7 +387,7 @@ location.
 >     putDevTip (Suspended tt prob)
 >     let ss = if isUnstable prob then SuspendUnstable else SuspendStable
 >     grandmotherSuspend ss
->     getMotherDefinition
+>     getCurrentDefinition
 
 
 The |suspendThis| command attaches the problem to the current hole if the

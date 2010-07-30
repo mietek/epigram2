@@ -36,46 +36,66 @@
 
 %endif
 
-We provide various functions to get information from the proof state and store
-updated information, providing a friendlier interface than |get| and |put|.
+We provide various functions to get information from the proof state
+and store updated information, providing a friendlier interface than
+|get| and |put|. The rule of thumb for naming these functions is to
+prefix the name of a field by the action (|get|, |put|, |remove|, or
+|replace|).
 
 \question{That would be great to have an illustration of the behavior
           of each of these functions on a development.}
 
-\subsubsection{Getters}
+\pierre{Some of these functions pattern-match aggressively, at the
+risk of failing. Others carefully wrap their results in a |Maybe|. It
+would be good to decide a uniform approach there.}
 
-> getInScope :: ProofStateT e Entries
-> getInScope = gets inScope
 
-> getAunclesToImpl :: ProofStateT e [REF :<: INTM]
-> getAunclesToImpl = gets definitionsToImpl
+\subsection{Getters}
 
-> getDev :: ProofStateT e (Dev Bwd)
-> getDev = gets pcAboveCursor
 
-> getDevCadets :: ProofStateT e (Fwd (Entry Bwd))
-> getDevCadets = gets pcBelowCursor
+\subsubsection{Getting in |ProofContext|}
 
-> getDevEntries :: ProofStateT e Entries
-> getDevEntries = do
->     dev <- getDev
+> getLayers :: ProofStateT e (Bwd Layer)
+> getLayers = gets pcLayers
+>
+> getAboveCursor :: ProofStateT e (Dev Bwd)
+> getAboveCursor = gets pcAboveCursor
+>
+> getBelowCursor :: ProofStateT e (Fwd (Entry Bwd))
+> getBelowCursor = gets pcBelowCursor
+
+And some specialized versions:
+
+> getLayer :: ProofStateT e Layer
+> getLayer = do
+>     _ :< l <- getLayers
+>     return l
+
+
+\subsubsection{Getting in |AboveCursor|}
+
+> getEntriesAbove :: ProofStateT e Entries
+> getEntriesAbove = do
+>     dev <- getAboveCursor
 >     return $ devEntries dev
-
-> getDevEntry :: ProofStateT e (Entry Bwd)
-> getDevEntry = do
->     _ :< e <- getDevEntries
->     return e
-
+>
 > getDevNSupply :: ProofStateT e NameSupply
 > getDevNSupply = do
->     dev <- getDev
+>     dev <- getAboveCursor
 >     return $ devNSupply dev
-
+>
 > getDevTip :: ProofStateT e Tip
 > getDevTip = do
->     dev <- getDev
+>     dev <- getAboveCursor
 >     return $ devTip dev
 
+And some specialized versions:
+
+> getEntryAbove :: ProofStateT e (Entry Bwd)
+> getEntryAbove = do
+>     _ :< e <- getEntriesAbove
+>     return e
+>
 > getGoal :: String -> ProofStateT e (INTM :=>: TY)
 > getGoal s = do
 >     tip <- getDevTip
@@ -85,171 +105,161 @@ updated information, providing a friendlier interface than |get| and |put|.
 >       _ -> throwError'  $ err "getGoal: fail to match a goal in " 
 >                         ++ err s
 
-> getGreatAuncles :: ProofStateT e Entries
-> getGreatAuncles = gets globalScope
+\subsubsection{Getting in the |Layers|}
 
-> getBoys :: ProofStateT e [REF]
-> getBoys = do  
->     inScope <- getInScope
->     return $ foldMap boy inScope
->    where boy (EPARAM r _ _ _)  = [r]
->          boy _ = []
-
-> getBoysBwd :: ProofStateT e (Bwd REF)
-> getBoysBwd = do  
->     inScope <- getInScope
->     return $ foldMap boy inScope 
->    where boy (EPARAM r _ _ _)  = (B0 :< r)
->          boy _ = B0
-
-> getHoleGoal :: ProofStateT e (INTM :=>: TY)
-> getHoleGoal = do
->     CDefinition _ (_ := HOLE _ :<: _) _ _ <- getMother
->     getGoal "getHoleGoal"
-
-> getHoleKind :: ProofStateT e HKind
-> getHoleKind = do
->     CDefinition _ (_ := HOLE hk :<: _) _ _ <- getMother
->     return hk
-
-> getLayer :: ProofStateT e Layer
-> getLayer = do
->     ls :< l <- getLayers
->     return l
-
-> getLayers :: ProofStateT e (Bwd Layer)
-> getLayers = gets pcLayers
-
-> getMother :: ProofStateT e CurrentEntry
-> getMother = do
+> getCurrentEntry :: ProofStateT e CurrentEntry
+> getCurrentEntry = do
 >     ls <- getLayers
 >     case ls of
 >         _ :< l  -> return (currentEntry l)
 >         B0      -> return (CModule []) 
 
-> getMotherDefinition :: ProofStateT e (EXTM :=>: VAL)
-> getMotherDefinition = do
->     CDefinition _ ref _ _ <- getMother
->     aus <- getGreatAuncles
->     return (applySpine ref aus)
+\subsubsection{Getting in the |CurrentEntry|}
 
-> getMotherEntry :: ProofStateT e (Entry Bwd)
-> getMotherEntry = do
->     m <- getMother
->     Dev es tip root ss <- getDev
->     cadets <- getDevCadets
->     let dev = Dev (es <>< cadets) tip root ss
->     case m of
->         CDefinition dkind ref xn ty -> return (EDEF ref xn dkind dev ty)
->         CModule n -> return (EModule n dev)
+> getCurrentName :: ProofStateT e Name
+> getCurrentName = do
+>     cEntry <-  getCurrentEntry
+>     case cEntry of
+>       CModule [] -> return []
+>       _ -> return $ currentEntryName cEntry
+>
+> getCurrentDefinition :: ProofStateT e (EXTM :=>: VAL)
+> getCurrentDefinition = do
+>     CDefinition _ ref _ _ <- getCurrentEntry
+>     scope <- getGlobalScope
+>     return (applySpine ref scope)
 
-> getMotherName :: ProofStateT e Name
-> getMotherName = do
->     ls <- getLayers
->     case ls of
->         (_ :< Layer{currentEntry=m}) -> return (currentEntryName m)
->         B0 -> return []
+\paragraph{Getting in the |HOLE|}
+
+> getHoleGoal :: ProofStateT e (INTM :=>: TY)
+> getHoleGoal = do
+>     CDefinition _ (_ := HOLE _ :<: _) _ _ <- getCurrentEntry
+>     getGoal "getHoleGoal"
+>
+> getHoleKind :: ProofStateT e HKind
+> getHoleKind = do
+>     CDefinition _ (_ := HOLE hk :<: _) _ _ <- getCurrentEntry
+>     return hk
 
 
-\subsubsection{Putters}
+
+\subsubsection{Getting the Scopes}
+
+> getInScope :: ProofStateT e Entries
+> getInScope = gets inScope
+>
+> getDefinitionsToImpl :: ProofStateT e [REF :<: INTM]
+> getDefinitionsToImpl = gets definitionsToImpl
+>
+> getGlobalScope :: ProofStateT e Entries
+> getGlobalScope = gets globalScope
+>
+> getParamsInScope :: ProofStateT e [REF]
+> getParamsInScope = do  
+>     inScope <- getInScope
+>     return $ paramREFs inScope
 
 
-> insertCadet :: NewsBulletin -> ProofStateT e ()
-> insertCadet news = do
->     l <- getLayer
->     replaceLayer l{belowEntries = NF (Left news :> unNF (belowEntries l))}
->     return ()
+\subsection{Putters}
 
-> putDev :: Dev Bwd -> ProofStateT e ()
-> putDev dev = do
->     pc <- get
->     put pc{pcAboveCursor=dev}
 
-> putDevCadet :: Entry Bwd -> ProofStateT e ()
-> putDevCadet e = do
->     cadets <- getDevCadets
->     putDevCadets (e :> cadets)
->     return ()
-
-> putDevCadets :: Fwd (Entry Bwd) -> ProofStateT e (Fwd (Entry Bwd))
-> putDevCadets cadets = do
->     pc <- get
->     put pc{pcBelowCursor=cadets}
->     return (pcBelowCursor pc)
-
-> putDevEntry :: Entry Bwd -> ProofStateT e ()
-> putDevEntry e = do
->     dev <- getDev
->     putDev dev{devEntries = devEntries dev :< e}
-
-> putDevEntries :: Entries -> ProofStateT e ()
-> putDevEntries es = do
->     dev <- getDev
->     putDev dev{devEntries = es}
-
-> putDevNSupply :: NameSupply -> ProofStateT e ()
-> putDevNSupply ns = do
->     dev <- getDev
->     putDev dev{devNSupply = ns}
-
-> putDevSuspendState :: SuspendState -> ProofStateT e ()
-> putDevSuspendState ss = do
->     dev <- getDev
->     putDev dev{devSuspendState = ss}
-
-> putDevTip :: Tip -> ProofStateT e ()
-> putDevTip tip = do
->     dev <- getDev
->     putDev dev{devTip = tip}
-
-> putHoleKind :: HKind -> ProofStateT e ()
-> putHoleKind hk = do
->     CDefinition kind (name := HOLE _ :<: ty) xn tm <- getMother
->     putMother $ CDefinition kind (name := HOLE hk :<: ty) xn tm
-
-> putLayer :: Layer -> ProofStateT e ()
-> putLayer l = do
->     pc@PC{pcLayers=ls} <- get
->     put pc{pcLayers=ls :< l}
+\subsubsection{Putting in |ProofContext|}
 
 > putLayers :: Bwd Layer -> ProofStateT e ()
 > putLayers ls = do
 >     pc <- get
 >     put pc{pcLayers=ls}
+>
+> putAboveCursor :: Dev Bwd -> ProofStateT e ()
+> putAboveCursor dev = do
+>     replaceAboveCursor dev
+>     return ()
 
-> putMother :: CurrentEntry -> ProofStateT e ()
-> putMother m = do
+> putBelowCursor :: Fwd (Entry Bwd) -> ProofStateT e (Fwd (Entry Bwd))
+> putBelowCursor cadets = do
+>     pc <- get
+>     put pc{pcBelowCursor=cadets}
+>     return (pcBelowCursor pc)
+
+And some specialized versions:
+
+> putLayer :: Layer -> ProofStateT e ()
+> putLayer l = do
+>     pc@PC{pcLayers=ls} <- get
+>     put pc{pcLayers=ls :< l}
+>
+> putEntryBelowCursor :: Entry Bwd -> ProofStateT e ()
+> putEntryBelowCursor e = do
+>     below <- getBelowCursor
+>     putBelowCursor (e :> below)
+>     return ()
+
+
+
+\subsubsection{Putting in |AboveCursor|}
+
+> putEntriesAbove :: Entries -> ProofStateT e ()
+> putEntriesAbove es = do
+>     replaceEntriesAbove es
+>     return ()
+>
+> putDevNSupply :: NameSupply -> ProofStateT e ()
+> putDevNSupply ns = do
+>     dev <- getAboveCursor
+>     putAboveCursor dev{devNSupply = ns}
+>
+> putDevSuspendState :: SuspendState -> ProofStateT e ()
+> putDevSuspendState ss = do
+>     dev <- getAboveCursor
+>     putAboveCursor dev{devSuspendState = ss}
+>
+> putDevTip :: Tip -> ProofStateT e ()
+> putDevTip tip = do
+>     dev <- getAboveCursor
+>     putAboveCursor dev{devTip = tip}
+
+And some specialized versions:
+
+> putEntryAbove :: Entry Bwd -> ProofStateT e ()
+> putEntryAbove e = do
+>     dev <- getAboveCursor
+>     putAboveCursor dev{devEntries = devEntries dev :< e}
+
+\subsubsection{Putting in the |Layers|}
+
+> putCurrentEntry :: CurrentEntry -> ProofStateT e ()
+> putCurrentEntry m = do
 >     l <- getLayer
 >     _ <- replaceLayer l{currentEntry=m}
 >     return ()
-
-> putMotherEntry :: Entry Bwd -> ProofStateT e ()
-> putMotherEntry (EDEF ref xn dkind dev ty) = do
+>
+> putNewsBelow :: NewsBulletin -> ProofStateT e ()
+> putNewsBelow news = do
 >     l <- getLayer
->     replaceLayer (l{currentEntry=CDefinition dkind ref xn ty})
->     putDev dev
-> putMotherEntry (EModule [] dev) = putDev dev
-> putMotherEntry (EModule n dev) = do
->     l <- getLayer
->     replaceLayer (l{currentEntry=CModule n})
->     putDev dev
-
-> putMotherScheme :: Scheme INTM -> ProofState ()
-> putMotherScheme sch = do
->     CDefinition _ ref xn ty <- getMother
->     putMother (CDefinition (PROG sch) ref xn ty)
-
-\subsubsection{Removers}
+>     replaceLayer l{belowEntries = NF (Left news :> unNF (belowEntries l))}
+>     return ()
 
 
-> removeDevEntry :: ProofStateT e (Maybe (Entry Bwd))
-> removeDevEntry = do
->     es <- getDevEntries
->     case es of
->       B0 -> return Nothing
->       (es' :< e) -> do
->         putDevEntries es'
->         return (Just e)
+\subsubsection{Putting in the |CurrentEntry|}
+
+\paragraph{Putting in the |PROG|}
+
+> putCurrentScheme :: Scheme INTM -> ProofState ()
+> putCurrentScheme sch = do
+>     CDefinition _ ref xn ty <- getCurrentEntry
+>     putCurrentEntry $ CDefinition (PROG sch) ref xn ty
+
+\paragraph{Putting in the |HOLE|}
+
+> putHoleKind :: HKind -> ProofStateT e ()
+> putHoleKind hk = do
+>     CDefinition kind (name := HOLE _ :<: ty) xn tm <- getCurrentEntry
+>     putCurrentEntry $ CDefinition kind (name := HOLE hk :<: ty) xn tm
+
+
+\subsection{Removers}
+
+\subsubsection{Remove in |ProofContext|}
 
 > removeLayer :: ProofStateT e Layer
 > removeLayer = do
@@ -257,19 +267,29 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     put pc{pcLayers=ls}
 >     return l
 
-\subsubsection{Replacers}
+\subsubsection{Removing in |AboveEntries|}
 
-> replaceDev :: Dev Bwd -> ProofStateT e (Dev Bwd)
-> replaceDev dev = do
+> removeEntryAbove :: ProofStateT e (Maybe (Entry Bwd))
+> removeEntryAbove = do
+>     es <- getEntriesAbove
+>     case es of
+>       B0 -> return Nothing
+>       (es' :< e) -> do
+>         putEntriesAbove es'
+>         return $ Just e
+
+
+\subsection{Replacers}
+
+\subsubsection{Replacing into |ProofContext|}
+
+> replaceAboveCursor :: Dev Bwd -> ProofStateT e (Dev Bwd)
+> replaceAboveCursor dev = do
 >     pc <- get
 >     put pc{pcAboveCursor=dev}
 >     return (pcAboveCursor pc)
 
-> replaceDevEntries :: Entries -> ProofStateT e Entries
-> replaceDevEntries es = do
->     es' <- getDevEntries
->     putDevEntries es
->     return es'
+And some specialized version:
 
 > replaceLayer :: Layer -> ProofStateT e Layer
 > replaceLayer l = do
@@ -277,14 +297,13 @@ updated information, providing a friendlier interface than |get| and |put|.
 >     putLayers (ls :< l)
 >     return l'
 
+\subsubsection{Replacing in |AboveCursor|}
 
-When the current location or one of its children has suspended, we need to
-update the outer layers.
+> replaceEntriesAbove :: Entries -> ProofStateT e Entries
+> replaceEntriesAbove es = do
+>     dev <- getAboveCursor
+>     putAboveCursor dev{devEntries = es}
+>     return (devEntries dev)
 
-> grandmotherSuspend :: SuspendState -> ProofState ()
-> grandmotherSuspend ss = getLayers >>= putLayers . help ss
->   where
->     help :: SuspendState -> Bwd Layer -> Bwd Layer
->     help ss B0 = B0
->     help ss (ls :< l) = help ss' ls :< l{laySuspendState = ss'}
->       where ss' = min ss (laySuspendState l)
+
+

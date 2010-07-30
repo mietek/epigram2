@@ -314,7 +314,7 @@ We add a Cochon tactic to invoke the compiler.
 >         {  ctName = "compile"
 >         ,  ctParse = (|(|(B0 :<) tokenName|) :< tokenString|)
 >         ,  ctIO = (\ [ExArg (DP r ::$ []), StrArg fn] (locs :< loc) -> do
->             let  Right dev = evalStateT getDev loc
+>             let  Right dev = evalStateT getAboveCursor loc
 >                  Right (n := _) = evalStateT (resolveDiscard r) loc
 >             b <- compileCommand n (reverseDev dev) fn
 >             putStrLn (if b then "Compiled." else "EPIC FAIL")

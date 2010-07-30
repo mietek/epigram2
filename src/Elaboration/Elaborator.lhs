@@ -102,8 +102,8 @@ a reference to the current goal (applied to the appropriate shared parameters).
 >   where
 >     getDefn :: ProofState (EXTM :=>: VAL)
 >     getDefn = do
->         CDefinition _ ref _ _ <- getMother
->         aus <- getGreatAuncles
+>         CDefinition _ ref _ _ <- getCurrentEntry
+>         aus <- getGlobalScope
 >         return (applySpine ref aus)
 
 
@@ -176,20 +176,20 @@ then convert the module into a goal with the scheme assigned.
 >     goIn
 >     (sch', ty :=>: _) <- elabLiftedScheme sch
 >     moduleToGoal (N ty)     
->     putMotherScheme sch'
+>     putCurrentScheme sch'
 
 Now we add a definition with the same name as the function being defined,
 to handle recursive calls. This has the same arguments as the function,
 plus an implicit labelled type that provides evidence for the recursive call.
 
->     CDefinition _ (mnom := HOLE _ :<: ty) _ _ <- getMother
+>     CDefinition _ (mnom := HOLE _ :<: ty) _ _ <- getCurrentEntry
 >     pn :=>: _ <- getFakeMother 
 >     let schCall = makeCall (P $ mnom := FAKE :<: ty) 0 sch'
->     us <- getBoys
+>     us <- getParamsInScope
 >     let schCallLocal = applyScheme schCall us
 >     make (x :<: schemeToInTm schCallLocal)
 >     goIn
->     putMotherScheme schCall
+>     putCurrentScheme schCall
 >     refs <- traverse lambdaBoy (schemeNames schCallLocal)
 >     give (N (P (last refs) :$ Call (N (pn $## map NP (init refs)))))
 
@@ -239,7 +239,7 @@ plus [
 
 > elabProgram :: [String] -> ProofState (EXTM :=>: VAL)
 > elabProgram args = do
->     n   <- getMotherName
+>     n   <- getCurrentName
 >     pn  <- getFakeMother 
 >     (gUnlifted :=>: _) <- getHoleGoal
 >     let newty  = pity (mkTel (unN $ valueOf pn) (evTm gUnlifted) [] args)
@@ -292,13 +292,13 @@ plus [
 >     goIn
 >     (s', ty :=>: _) <- elabScheme es s
 >     piBoy (x :<: N ty)
->     e <- getDevEntry
+>     e <- getEntryAbove
 >     (t', tt) <- elabScheme (es :< e) t
 >     return (SchExplicitPi (x :<: s') t', tt)
 
 > elabScheme es (SchImplicitPi (x :<: s) t) = do
 >     ss <- elaborate' (SET :>: s)
 >     piBoy (x :<: termOf ss)
->     e <- getDevEntry
+>     e <- getEntryAbove
 >     (t', tt) <- elabScheme (es :< e) t
 >     return (SchImplicitPi (x :<: (es -| termOf ss)) t', tt)
