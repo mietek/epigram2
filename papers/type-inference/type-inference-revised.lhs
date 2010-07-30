@@ -1260,14 +1260,15 @@ general a way as possible (that is, by making the smallest information increase
 necessary to find a solution). 
    For the unification problem, this 
 corresponds to finding a most general
-unifier. The solution $\delta : \Gamma \lei \Delta$ is \define{minimal} if, for
+unifier. We say
+the solution $\delta : \Gamma \lei \Delta$ is \define{minimal} if, for
 any other solution $\theta: \Gamma \lei \Theta$, there exists a
 substitution $\zeta : \Delta \lei \Theta$ such that
 $\theta \eqsubst \zeta \compose \delta$ (we say $\theta$ \emph{factors through}
 $\delta$ with \emph{cofactor} $\zeta$).
 
 Variables can become more informative either by definition or by substitution.
-Our algorithms exploit only definition, always choosing solutions
+Our algorithms exploit only the former, always choosing solutions of the form
 $\iota : \Gamma \lei \Delta$, but we show these minimal with respect to
 arbitrary information increase. Correspondingly,
 we write $\LEIStmt{\Gamma}{P}{\Delta}$ to mean that $(\Gamma, P)$ is a
