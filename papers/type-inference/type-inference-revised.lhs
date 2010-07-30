@@ -1648,11 +1648,11 @@ the result follows by Lemma~\ref{lem:neutrality}.
 Otherwise, $\Gamma \entails \ok_K D$ and 
 %%%$\Gamma, \decl{y}{D} \entails \subst{y}{x}S$ for fresh $y$.
    $\Gamma, \decl{x}{D} \entails S$.
-By stability (structural induction), $\Delta \entails \delta (\!\ok_K D)$.
+By stability and inductive hypothesis, $\Delta \entails \delta (\!\ok_K D)$.
 % Let $\delta' = \subst{x}{x}{\delta}$, then
-Now $\delta : \Gamma, \decl{x}{D} \lei \Delta, \decl{x}{(\delta D)}$
+Now we have $\delta : \Gamma, \decl{x}{D} \lei \Delta, \decl{x}{(\delta D)}$
 %(with $y$ mapped to itself)
-so by stability of $S$ we have $\Delta, \decl{x}{(\delta D)} \entails \delta S$.
+so we also have $\Delta, \decl{x}{(\delta D)} \entails \delta S$ by stability of $S$.
 Hence $\Delta \entails \Sbind{\decl{x}{(\delta D)}}{\delta S}$
 and so $\Delta \entails \delta (\Sbind{\decl{x}{D}}{S})$.
 \end{proof}
