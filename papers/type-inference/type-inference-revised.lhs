@@ -1639,19 +1639,20 @@ If $\decl{x}{D}$ is a declaration and both $\ok_K D$ and $S$ are stable, then
 $\Sbind{\decl{x}{D}}{S}$ is stable.
 \end{lemma}
 \proofsux\begin{proof}
-Suppose $S$ is stable, $\delta : \Gamma \lei \Delta$ and 
+Suppose $S$ is stable, $\delta : \Gamma \lei \Delta$, $x$ chosen
+fresh for $\Gamma$ and $\Delta$, and 
 $\Gamma \entails \Sbind{\decl{x}{D}}{S}$.  
 %%%If the proof is by \name{Neutral} then 
    In the \name{Neutral} case,  
 the result follows by Lemma~\ref{lem:neutrality}.
 Otherwise, $\Gamma \entails \ok_K D$ and 
 %%%$\Gamma, \decl{y}{D} \entails \subst{y}{x}S$ for fresh $y$.
-   $\Gamma, \decl{y}{D} \entails S$ for fresh $y$.
+   $\Gamma, \decl{x}{D} \entails S$.
 By stability (structural induction), $\Delta \entails \delta (\!\ok_K D)$.
 % Let $\delta' = \subst{x}{x}{\delta}$, then
-Now $\delta : \Gamma, \decl{y}{D} \lei \Delta, \decl{y}{(\delta D)}$
-(with $y$ mapped to itself)
-so by stability of $S$ we have $\Delta, \decl{y}{(\delta D)} \entails \delta S$.
+Now $\delta : \Gamma, \decl{x}{D} \lei \Delta, \decl{x}{(\delta D)}$
+%(with $y$ mapped to itself)
+so by stability of $S$ we have $\Delta, \decl{x}{(\delta D)} \entails \delta S$.
 Hence $\Delta \entails \Sbind{\decl{x}{(\delta D)}}{\delta S}$
 and so $\Delta \entails \delta (\Sbind{\decl{x}{D}}{S})$.
 \end{proof}

@@ -9,7 +9,7 @@ LHS2TEX_OPTS = --poly
 GHC = ghc
 GHC_OPTS = -package mtl
 
-revised : type-inference-revised.lhs lib.bib
+revised : type-inference-revised.lhs lib-short.bib
 	$(LHS2TEX) $(LHS2TEX_OPTS) -o type-inference-revised.tex type-inference-revised.lhs
 	$(LATEXC) $(LATEX_OPTS) type-inference-revised
 	bibtex type-inference-revised
