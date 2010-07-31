@@ -1,5 +1,5 @@
-\section{Navigating in the |ProofState|}
-
+\section{Navigating in the Proof Context}
+\label{sec:proofstate-edition-navigation}
 
 %if False
 

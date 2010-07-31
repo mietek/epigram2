@@ -23,6 +23,7 @@
 > import ProofState.Edition.GetSet
 > import ProofState.Edition.Navigation
 
+> import ProofState.Interface.Search
 > import ProofState.Interface.ProofKit
 
 > import Kit.BwdFwd

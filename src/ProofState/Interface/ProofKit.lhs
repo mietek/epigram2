@@ -33,6 +33,7 @@
 > import ProofState.Edition.Navigation
 
 > import ProofState.Interface.Lifting
+> import ProofState.Interface.Search
 > import ProofState.Interface.NameResolution
 
 > import DisplayLang.DisplayTm
@@ -146,60 +147,6 @@ may be useful for paranoia purposes.
 
 
 
-
-The |goTo| command moves the focus to the entry with the given long name,
-starting from the root module.
-
-> goTo :: Name -> ProofState ()
-> goTo name = goRoot >> goTo' name
->   where
->     goTo' :: Name -> ProofState ()
->     goTo' [] = return ()
->     goTo' (xn:xns) = (seek xn >> goTo' xns)
->         `pushError` (err "goTo: could not find " ++ err (showName (xn:xns)))
->
->     seek :: (String, Int) -> ProofState ()
->     seek xn = do
->         goIn
->         m <- getCurrentName
->         if xn == last m
->             then return ()
->             else goUp `untilA` (guard . (== xn) . last =<< getCurrentName)
-
-
-\subsection{Goal Search Commands}
-
-The |isGoal| command succeeds (returning |()|) if the current location is a goal,
-and fails (yielding |Nothing|) if not.
-
-> isGoal :: ProofState ()
-> isGoal = do
->     Unknown _ <- getDevTip
->     return ()
-
-
-We can now compactly describe how to search the proof state for goals, by giving
-several alternatives for where to go next and continuing until a goal is reached.
-
-> prevStep :: ProofState ()
-> prevStep = ((goUp >> much goIn) <|> goOut) `pushError` (err "prevStep: no previous steps.")
->
-> prevGoal :: ProofState ()
-> prevGoal = (prevStep `untilA` isGoal) `pushError` (err "prevGoal: no previous goals.")
->
-> nextStep :: ProofState ()
-> nextStep = ((goIn >> goTop) <|> goDown <|> (goOut `untilA` goDown))
->                `pushError` (err "nextStep: no more steps.")
->
-> nextGoal :: ProofState ()
-> nextGoal = (nextStep `untilA` isGoal) `pushError` (err "nextGoal: no more goals.")
-
-
-Sometimes we want to stay at the current location if it is a goal, and go
-to the next goal otherwise.
-
-> seekGoal :: ProofState ()
-> seekGoal = isGoal <|> nextGoal
 
 
 \subsection{Module Commands}
