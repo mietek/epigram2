@@ -51,6 +51,16 @@
 %endif
 
 
+> infoAuncles :: ProofState String
+> infoAuncles = do
+>     pc <- get
+>     inScope <- getInScope
+>     return (showEntries (inBScope pc) inScope)
+
+> infoDump :: ProofState String
+> infoDump = gets show
+
+
 The |infoElaborate| command calls |elabInfer| on the given neutral display term,
 evaluates the resulting term, bquotes it and returns a pretty-printed string
 representation. Note that it works in its own module which it discards at the

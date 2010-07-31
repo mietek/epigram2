@@ -12,19 +12,12 @@
 > import Control.Applicative
 > import Control.Monad
 
-> import Data.Traversable
-
-> import Kit.BwdFwd
 > import Kit.MissingLibrary
 
 > import NameSupply.NameSupply
 
 > import ProofState.Structure.Developments
-> import ProofState.Structure.Entries
 
-> import ProofState.Edition.ProofContext
-> import ProofState.Edition.Entries
-> import ProofState.Edition.News
 > import ProofState.Edition.ProofState
 > import ProofState.Edition.GetSet
 > import ProofState.Edition.Navigation

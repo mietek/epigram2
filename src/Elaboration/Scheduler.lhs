@@ -24,6 +24,7 @@
 
 > import ProofState.Interface.Lifting
 > import ProofState.Interface.ProofKit
+> import ProofState.Interface.Solving
 
 > import DisplayLang.Name
 

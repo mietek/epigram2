@@ -29,6 +29,10 @@
 > import ProofState.Interface.ProofKit
 > import ProofState.Interface.Lifting
 > import ProofState.Interface.NameResolution
+> import ProofState.Interface.Name
+> import ProofState.Interface.Definition
+> import ProofState.Interface.Parameter
+> import ProofState.Interface.Solving
 
 > import DisplayLang.Scheme
 > import DisplayLang.Name
@@ -355,7 +359,7 @@ ideally we should cry rather than hoping for something patently absurd.
 >     return . (, False) =<< neutralise =<< getCurrentDefinition
 > lastHope False ty = do
 >     ty' <- bquoteHere ty
->     return . (, True) =<< neutralise =<< make' Hoping ("hope" :<: ty')
+>     return . (, True) =<< neutralise =<< makeKinded Hoping ("hope" :<: ty')
 
 
 \subsection{Suspending computation}

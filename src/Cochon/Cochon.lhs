@@ -38,6 +38,8 @@
 > import ProofState.Interface.ProofKit
 > import ProofState.Interface.Module
 > import ProofState.Interface.NameResolution
+> import ProofState.Interface.Solving
+> import ProofState.Interface.Parameter
 
 > import Tactics.Elimination
 > import Tactics.PropSimp

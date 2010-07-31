@@ -18,8 +18,9 @@
 
 > import ProofState.Edition.ProofState
 
-> import ProofState.Interface.ProofKit
 > import ProofState.Interface.NameResolution
+> import ProofState.Interface.Parameter
+> import ProofState.Interface.Name
 
 > import DisplayLang.DisplayTm
 > import DisplayLang.Scheme

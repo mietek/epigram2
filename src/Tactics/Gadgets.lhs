@@ -53,7 +53,7 @@ the methods and moves to the first subgoal remaining.
 >     "<= [<comma>] <eliminator> - eliminates with a motive.")
 
 
-\subsection{The Solve gadet}
+\subsection{The Solve gadget}
 
 > import -> CochonTactics where
 >     : simpleCT

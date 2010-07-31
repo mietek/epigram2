@@ -34,7 +34,7 @@ C : Set
 z : Sig (x : Set ; Set ; Set ;)
 Enum ['a 'b]
 Sig (x : Set ; x -> Set)
-f.G1 (Sig (x : Set ; x -> Set))
-[Set , \ x -> f.G1 x]
+f.Goal1 (Sig (x : Set ; x -> Set))
+[Set , \ x -> f.Goal1 x]
 [Set Set Set]
 Loaded.

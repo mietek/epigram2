@@ -8,36 +8,21 @@
 
 > module ProofState.Interface.Module where
 
-> import Control.Applicative
-> import Control.Monad.Error
-> import Control.Monad.State
-> import Data.Foldable
-> import Data.Traversable
-
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
 
 > import NameSupply.NameSupply
-> import NameSupply.NameSupplier
 
 > import ProofState.Structure.Developments
-> import ProofState.Structure.Entries
 
 > import ProofState.Edition.ProofContext
-> import ProofState.Edition.News
 > import ProofState.Edition.Scope
 > import ProofState.Edition.ProofState
-> import ProofState.Edition.Entries
 > import ProofState.Edition.GetSet
 > import ProofState.Edition.Navigation
 
 > import ProofState.Interface.Lifting
-> import ProofState.Interface.Search
-> import ProofState.Interface.NameResolution
 > import ProofState.Interface.ProofKit
-
-> import DisplayLang.DisplayTm
-> import DisplayLang.Name
 
 > import Evidences.Tm
 > import Evidences.Rules

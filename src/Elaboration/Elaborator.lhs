@@ -30,6 +30,9 @@
 > import ProofState.Interface.Module
 > import ProofState.Interface.ProofKit
 > import ProofState.Interface.Lifting
+> import ProofState.Interface.Parameter
+> import ProofState.Interface.Definition
+> import ProofState.Interface.Solving 
 
 > import DisplayLang.DisplayTm
 > import DisplayLang.Name

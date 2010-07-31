@@ -119,6 +119,10 @@
 %include ProofState/Edition/Navigation.lhs
 
 %include ProofState/Interface/ProofKit.lhs
+%include ProofState/Interface/Name.lhs
+%include ProofState/Interface/Parameter.lhs
+%include ProofState/Interface/Definition.lhs
+%include ProofState/Interface/Solving.lhs
 %include ProofState/Interface/NameResolution.lhs
 %include ProofState/Interface/Lifting.lhs
 

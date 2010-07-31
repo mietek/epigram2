@@ -483,7 +483,7 @@ we fall back to the equality defined above.
 
 
 \subsection{References}
-\label{sec:references}
+\label{sec:evidences.tm-references}
 
 References are the key way we represent free variables, declared,
 defined, and deluded. References carry not only names, but types and

@@ -30,6 +30,9 @@
 
 > import ProofState.Interface.ProofKit
 > import ProofState.Interface.Module
+> import ProofState.Interface.Definition
+> import ProofState.Interface.Parameter
+> import ProofState.Interface.Solving
 
 > import Elaboration.Elaborator
 

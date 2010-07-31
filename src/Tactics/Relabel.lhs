@@ -19,6 +19,8 @@
 > import ProofState.Edition.Navigation
 
 > import ProofState.Interface.ProofKit
+> import ProofState.Interface.Definition
+> import ProofState.Interface.Solving
 
 > import DisplayLang.DisplayTm
 > import DisplayLang.Name

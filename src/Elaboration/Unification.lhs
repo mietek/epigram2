@@ -25,6 +25,8 @@
 
 > import ProofState.Interface.Search
 > import ProofState.Interface.ProofKit
+> import ProofState.Interface.Definition
+> import ProofState.Interface.Solving
 
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
