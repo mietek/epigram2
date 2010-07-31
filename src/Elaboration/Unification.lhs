@@ -73,7 +73,7 @@ holes with the new ones.
 >           putNewsBelow news
 >           let (tm', _) = tellNews news tm
 >           tm'' <- bquoteHere (evTm tm')
->           give tm''
+>           giveOutBelow tm''
 >       | occurs girl = goIn >> solveHole' ref ((girl, girlTyTm):deps) tm
 >       | otherwise = goIn >> solveHole' ref deps tm
 >     pass (EPARAM boy _ _ _)

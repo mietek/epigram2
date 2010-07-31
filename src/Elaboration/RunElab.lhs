@@ -128,7 +128,7 @@ are encountered below the top level.
 >     goIn
 >     (tm :=>: tmv, okay) <- runElab True (ty :>: elab)
 >     if okay
->         then  return . (, True)  =<< neutralise =<< give tm
+>         then  return . (, True)  =<< neutralise =<< giveOutBelow tm
 >         else  return . (, False) =<< neutralise =<< getCurrentDefinition <* goOut
 
 

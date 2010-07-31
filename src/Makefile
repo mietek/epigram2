@@ -6,7 +6,7 @@
 #### GHC
 
 HC              = ghc
-HC_PACKAGE      = -package mtl -package pretty
+HC_PACKAGE      = -package mtl -package pretty -hide-package monads-fd
 HC_OPTS_DEV     = $(HC_PACKAGE)
 HC_OPTS_TEST    = $(HC_PACKAGE) -fhpc
 HC_OPTS_RELEASE = $(HC_PACKAGE) -O2
@@ -84,7 +84,7 @@ all:
 # Sigma.lhs causes the re-compilation of the (empty) file Sigma.lhs,
 # without causing the re-compilation of Rules.lhs, for example.
 depend : $(SRCS)
-	$(HC) -M -dep-makefile .depend $(SRCS)
+	$(HC) $(HC_PACKAGE) -M -dep-makefile .depend $(SRCS)
 dep : depend
 
 

@@ -168,7 +168,7 @@ Convert the module to a goal, solve it (using the subgoals created above)
 and go to the next subproblem, i.e. making the motive $P$:
 
 >     moduleToGoal returnType
->     give' $ N $ (e ?? PI motiveTypeTm telTypeTm) $## (N p : trail methods)
+>     give $ N $ (e ?? PI motiveTypeTm telTypeTm) $## (N p : trail methods)
 >     goIn
 >     goTop
 >     return (elimName, motiveType, targets)
@@ -570,7 +570,7 @@ to simplify its constraint.
 
 >     b :=>: _  <- make ("sig" :<: mtFresh')
 >     ref       <- lambdaParam (fortran tFresh)
->     give' (N (b :$ A (N (P ref :$ Fst)) :$ A (N (P ref :$ Snd))))
+>     give (N (b :$ A (N (P ref :$ Fst)) :$ A (N (P ref :$ Snd))))
 >     goIn
 
 >     sTarg' <- bquoteHere (SIGMA dTarg rTarg)
@@ -666,7 +666,7 @@ applied to the non-updated target.
 
 Finally, we can make the motive, hence closing the subgoal. This
 simply consists in chaining the commands above, and give the computed
-term. Unless we've screwed things up, |give| should always be happy.
+term. Unless we've screwed things up, |giveOutBelow| should always be happy.
 
 > makeMotive ::  TY -> INTM -> Bwd (REF :<: INTM) -> Bwd INTM -> TY ->
 >                ProofState [Binder]
@@ -698,7 +698,7 @@ Discharge the binders over the goal type to produce the motive:
 
 >     let goal'' = liftType' (fmap fst binders') goal'
 >     optionalProofTrace $ "goal'': " ++ show goal''
->     give goal''
+>     giveOutBelow goal''
 
 Return to the construction of the rebuilt eliminator, by going out the same number
 of times as |introMotive| went in:
@@ -745,7 +745,7 @@ Note that we have to look up the latest version of the rebuilt eliminator
 because its definition will have been updated when the motive was defined.
 
 >     Just (elim :=>: _) <- lookupName elimName
->     give' $ N $ elim $## map snd binders
+>     give $ N $ elim $## map snd binders
 
 >     goIn
 >     goIn

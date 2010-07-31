@@ -143,7 +143,7 @@
 >             goIn
 >             (c :=>: _) <- elabGive (DTAG s)
 >             rs <- traverse (\x -> lambdaParam x) i
->             give $ CON (PAIR (N c) (body rs))
+>             giveOutBelow $ CON (PAIR (N c) (body rs))
 >             return ()
 
 
@@ -166,17 +166,17 @@
 >                       (map (\(_,_,r) -> A (NP r)) pars')) scs
 >       make ("ConNames" :<: NP enumREF) 
 >       goIn
->       (e :=>: ev) <- give (foldr (\(t,_) e -> CONSE (TAG t) e) NILE scs)
+>       (e :=>: ev) <- giveOutBelow (foldr (\(t,_) e -> CONSE (TAG t) e) NILE scs)
 >       make ("ConDescs" :<: N (branchesOp :@ [ N e, L $ K (NP descREF)])) -- ARR (ENUMT (N e)) (NP descREF)
 >       goIn
->       (cs' :=>: _) <- give (foldr PAIR VOID (map (\(_,_,c,_,_) -> c) cs))
+>       (cs' :=>: _) <- giveOutBelow (foldr PAIR VOID (map (\(_,_,c,_,_) -> c) cs))
 >       make ("DataDesc" :<: NP descREF)
 >       goIn
->       (d :=>: dv) <- give (SUMD (N e) (L ("s" :. N (switchDOp :@ [N e, N cs', NV 0]))))
+>       (d :=>: dv) <- giveOutBelow (SUMD (N e) (L ("s" :. N (switchDOp :@ [N e, N cs', NV 0]))))
 >       lt :=>: _ <- getFakeMother 
 >       make ("DataTy" :<: SET)
 >       goIn
->       (dty :=>: _) <- give (MU (Just (N lt)) (N d))
+>       (dty :=>: _) <- giveOutBelow (MU (Just (N lt)) (N d))
 >       EEntity r _ _ _ <- getEntryAbove
 >       traverse (makeCon (N e) (N (P r $:$ oldaus))) cs
 
@@ -188,10 +188,10 @@ assigned throughout, so the label will be preserved when eliminating by inductio
 >       indTy' <- bquoteHere indTy
 >       make ("Ind" :<: setLabel (N lt) indTy')
 >       goIn
->       give (N indTm)
+>       giveOutBelow (N indTm)
 >       
 
->       give $ N dty
+>       giveOutBelow $ N dty
 
 
 This is a hack, and should probably be replaced with a version that tests for

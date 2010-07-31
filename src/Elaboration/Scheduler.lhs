@@ -121,7 +121,7 @@ elaboration process was resumed (not whether the process succeeded).
 >                           ++ ":  \n" ++ show prob
 >         mtt <- resume (ty :=>: tyv) prob
 >         case mtt of
->             Just tt  ->  give' (termOf tt)
+>             Just tt  ->  give (termOf tt)
 >                      >>  schedTrace "scheduler: elaboration done."
 >             Nothing  ->  schedTrace "scheduler: elaboration suspended."
 >         return True

@@ -56,16 +56,19 @@ entries.
 >             INTM {- $\Gamma$ -}
 > parBind delta nabla t = help delnab nabla (delnab -| t) where
 >     delnab = delta <+> nabla
->     help B0                                     B0            t = t
->     help (delta   :< EPARAM _ (x, _)  _ _)     B0            t = help delta B0 (L (x :. t))
->     help (delta   :< _)                         B0            t = help delta B0 t
+>     help B0                                        B0            t = t
+>     help (delta   :< EPARAM _ (x, _)  _ _)         B0            t =
+>         help delta B0 (L (x :. t))
+>     help (delta   :< _)                            B0            t = 
+>         help delta B0 t
 >     help (delnab  :< EPARAM _ (x, _)  ParamLam _)  (nabla :< _)  t = 
 >         help delnab nabla (L (x :. t))
 >     help (delnab  :< EPARAM _ (x, _)  ParamAll _)  (nabla :< _)  t = 
 >         help delnab nabla (L (x :. t))
 >     help (delnab  :< EPARAM _ (x, _)  ParamPi s)   (nabla :< _)  t = 
 >         help delnab nabla (PI (delnab -| s) (L (x :. t)))
->     help (delnab  :< _)                         (nabla :< _)  t = help delnab nabla t
+>     help (delnab  :< _)                            (nabla :< _)  t = 
+>         help delnab nabla t
 
 
 \subsection{Binding a type}

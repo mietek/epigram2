@@ -103,7 +103,7 @@ a reference to the current goal (applied to the appropriate shared parameters).
 >         (Unknown _, DQ "")  -> getDefn
 >         (Unknown _, _)      -> do
 >             (tm' :=>: _, done) <- elaborateHere' tm
->             if done then give' tm' else getDefn
+>             if done then give tm' else getDefn
 >         _  -> throwError' $ err "elabGive: only possible for incomplete goals."
 >   where
 >     getDefn :: ProofState (EXTM :=>: VAL)
@@ -197,7 +197,7 @@ plus an implicit labelled type that provides evidence for the recursive call.
 >     goIn
 >     putCurrentScheme schCall
 >     refs <- traverse lambdaParam (schemeNames schCallLocal)
->     give (N (P (last refs) :$ Call (N (pn $## map NP (init refs)))))
+>     giveOutBelow (N (P (last refs) :$ Call (N (pn $## map NP (init refs)))))
 
 For now we just call |elabProgram| to set up the remainder of the programming
 problem. This could be implemented more cleanly, but it works.
@@ -254,7 +254,7 @@ plus [
 >     argrefs      <- traverse lambdaParam args
 >     let  fcall  = termOf pn $## (map NP argrefs) 
 >          call   = impl $## (map NP argrefs) :$ Call (N fcall)
->     r <- give' (N call)
+>     r <- give (N call)
 >     goIn
 >     return r
 >   where
@@ -290,7 +290,7 @@ plus [
 
 > elabScheme es (SchType ty) = do
 >     ty' :=>: _ <- elaborate' (SET :>: ty)
->     tt <- give ty'
+>     tt <- giveOutBelow ty'
 >     return (SchType (es -| ty'), tt)
 
 > elabScheme es (SchExplicitPi (x :<: s) t) = do

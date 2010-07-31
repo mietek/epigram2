@@ -49,7 +49,7 @@ and refines the proof state appropriately.
 >                     n    <- matchArgs (pty r) (P r) as ts'
 >                     ty'  <- bquoteHere ty
 >                     g :=>: _ <- make ("relabel" :<: LABEL (N n) ty')
->                     give' (N g)
+>                     give (N g)
 >                     goIn
 >                 else  throwError' $ err "relabel: mismatched function name!"
 >         _ -> throwError' $ err "relabel: goal is not a labelled type!"
@@ -93,7 +93,7 @@ definition in the context.
 >     v'   <- bquoteHere v
 >     make (p :<: ty')
 >     goIn
->     neutralise =<< give v'
+>     neutralise =<< giveOutBelow v'
 
 If it is an underscore then we make no changes to the value.
 

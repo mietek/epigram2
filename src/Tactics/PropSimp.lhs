@@ -496,7 +496,7 @@ at a time. It will fail if no simplification is possible.
 >     goIn
 >     b :=>: _ <-  tryProblemSimplify
 >     goOut
->     give' (LK (N b))
+>     give (LK (N b))
 > simplifyGoal (PI (SIGMA d r) t) = do
 >     let mt =  PI d . L . HF (fortran r) $ \ a ->
 >               PI (r $$ A a) . L . HF (fortran t) $ \ b ->
@@ -507,7 +507,7 @@ at a time. It will fail if no simplification is possible.
 >     b :=>: _ <-  tryProblemSimplify
 >     goOut
 >     x <- lambdaParam (fortran t)
->     give' (N (b :$ A (N (P x :$ Fst)) :$ A (N (P x :$ Snd))))
+>     give (N (b :$ A (N (P x :$ Fst)) :$ A (N (P x :$ Snd))))
 > simplifyGoal (PI (ENUMT e) t) = do
 >     t' <- bquoteHere t
 >     e' <- bquoteHere e
@@ -516,7 +516,7 @@ at a time. It will fail if no simplification is possible.
 >     b :=>: _ <-  tryProblemSimplify
 >     goOut
 >     x <- lambdaParam (fortran t)
->     give' (N (switchOp :@ [e', NP x, t', N b]))
+>     give (N (switchOp :@ [e', NP x, t', N b]))
 > simplifyGoal (PI (PRF p) t) = do
 >     pSimp <- runPropSimplify p
 >     case pSimp of
@@ -527,14 +527,14 @@ at a time. It will fail if no simplification is possible.
 >             r <- lambdaParam (fortran t)
 >             let pr = prf (NP r)
 >             nonsense <- bquoteHere (nEOp @@ [pr, t $$ A (NP r)])
->             give' nonsense
+>             give nonsense
 >         Just (SimplyTrivial prf) -> do
 >             t' <- bquoteHere (t $$ A prf)
 >             make ("r" :<: t')
 >             goIn
 >             b :=>: _ <- tryProblemSimplify
 >             goOut
->             give' (LK (N b))
+>             give (LK (N b))
 >         Just (Simply qs gs h) -> do
 >             q <- dischargePiLots qs (t $$ A h)
 >             q' <- bquoteHere q
@@ -544,7 +544,7 @@ at a time. It will fail if no simplification is possible.
 >             goOut
 >             r <- lambdaParam (fortran t)
 >             prf <- bquoteHere $ bv $$$ (fmap (A . ($$ A (NP r))) gs)
->             give' prf
+>             give prf
 >              
 > simplifyGoal (PI s t) = do
 >     lambdaParam (fortran t)
@@ -552,7 +552,7 @@ at a time. It will fail if no simplification is possible.
 
 > simplifyGoal (PRF p) = propSimplifyHere >> getCurrentDefinition
 
-> simplifyGoal UNIT = give' VOID
+> simplifyGoal UNIT = give VOID
 
 > simplifyGoal (SIGMA s t) = do
 >     s' <- bquoteHere s
@@ -565,10 +565,10 @@ at a time. It will fail if no simplification is possible.
 >     goIn
 >     ttm :=>: _ <- tryProblemSimplify
 >     goOut
->     give' (PAIR (N stm) (N ttm))
+>     give (PAIR (N stm) (N ttm))
 
-> simplifyGoal (LABEL _ UNIT)           = give' (LRET VOID)
-> simplifyGoal (LABEL _ (PRF TRIVIAL))  = give' (LRET VOID)
+> simplifyGoal (LABEL _ UNIT)           = give (LRET VOID)
+> simplifyGoal (LABEL _ (PRF TRIVIAL))  = give (LRET VOID)
 
 > simplifyGoal _ = throwError' $ err "simplifyGoal: cannot simplify"
 
@@ -596,13 +596,13 @@ current goal with the subgoals, and return a list of them.
 >         Nothing                   -> throwError' $ err "propSimplifyHere: unable to simplify."
 >         Just (SimplyAbsurd _)     -> throwError' $ err "propSimplifyHere: oh no, goal is absurd!"
 >
->         Just (SimplyTrivial prf)  -> bquoteHere prf >>= give' >> return B0
+>         Just (SimplyTrivial prf)  -> bquoteHere prf >>= give >> return B0
 >
 >         Just (Simply qs _ h) -> do
 >             qrs  <- Data.Traversable.mapM makeSubgoal qs
 >             h'   <- dischargeLots qs h
 >             prf  <- bquoteHere (h' $$$ fmap (A . valueOf) qrs)
->             give' prf
+>             give prf
 >             return qrs
 
 The |makeSubgoal| command makes a new subgoal whose type corresponds to the type
