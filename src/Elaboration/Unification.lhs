@@ -62,10 +62,10 @@ holes with the new ones.
 >         _ :< e  -> pass e
 >   where
 >     pass :: Entry Bwd -> ProofState (EXTM :=>: VAL)
->     pass (EDEF girl@(girlName := _) _ _ _ girlTyTm)
->       | name == girlName && occurs girl = throwError' $
+>     pass (EDEF def@(defName := _) _ _ _ defTyTm)
+>       | name == defName && occurs def = throwError' $
 >           err "solveHole: you can't define something in terms of itself!"
->       | name == girlName = do
+>       | name == defName = do
 >           cursorUp
 >           news <- makeDeps deps []
 >           cursorDown
@@ -74,7 +74,7 @@ holes with the new ones.
 >           let (tm', _) = tellNews news tm
 >           tm'' <- bquoteHere (evTm tm')
 >           giveOutBelow tm''
->       | occurs girl = goIn >> solveHole' ref ((girl, girlTyTm):deps) tm
+>       | occurs def = goIn >> solveHole' ref ((def, defTyTm):deps) tm
 >       | otherwise = goIn >> solveHole' ref deps tm
 >     pass (EPARAM param _ _ _)
 >       | occurs param = throwError' $

@@ -82,9 +82,9 @@ necessary.
 >             putEntryAbove (EPARAM ref sn k ty')
 >             propagateNews top (addNews (ref, GoodNews) news) (NF es)
 
-Updating girls is a bit more complicated. We proceed as follows:
+Updating definitions is a bit more complicated. We proceed as follows:
 \begin{enumerate}
-\item Add the girl to the context, using |jumpIn|.
+\item Add the definition to the context, using |jumpIn|.
 \item Recursively propagate the news to the children.
 \item Call |tellMother| to update the girl herself.
 \item Continue propagating the latest news.
@@ -128,10 +128,10 @@ a slightly strange thing to do, but is useful for news propagation.
 >     return cs
 
 
-The |tellEntry| function informs an entry about a news bulletin that its
-children have already received. If the entry is a girl, she must be the
-mother of the current cursor position (i.e. the entry should come from
-getLeaveCurrent).
+The |tellEntry| function informs an entry about a news bulletin that
+its children have already received. If the entry is a definition, she
+must be the current entry of the current cursor position (i.e. the
+entry should come from getLeaveCurrent).
 
 > tellEntry :: NewsBulletin -> Entry Bwd -> ProofState (NewsBulletin, Entry Bwd)
 
@@ -142,7 +142,7 @@ Modules carry no type information, so they are easy:
 To update a parameter, we must:
 \begin{enumerate}
 \item update the overall type of the entry, and
-\item update the news bulletin with news about this girl.
+\item update the news bulletin with news about this definition.
 \end{enumerate}
 
 > tellEntry news (EPARAM (name := DECL :<: tv) sn k ty) = do
@@ -156,7 +156,7 @@ update the news bulletin). If not, we must:
 \begin{enumerate}
 \item update the tip type;
 \item update the overall type of the entry, as stored in the reference; and
-\item update the news bulletin with news about this girl.
+\item update the news bulletin with news about this definition.
 \end{enumerate}
 
 > tellEntry news (EDEF ref@(name := HOLE h :<: tyv) sn
@@ -192,13 +192,13 @@ similarly to the previous case, but we also update the elaboration problem.
 >     return (addNews (ref, min n n') news,
 >         EDEF ref sn dkind (dev{devTip=Suspended tt' prob'}) ty')
 
-To update a defined girl, we must:
+To update a closed definition (|Defined|), we must:
 \begin{enumerate}
 \item update the tip type;
 \item update the overall type of the entry, as stored in the reference;
 \item update the definition and re-evaluate it
          (\question{could this be made more efficient?}); and
-\item update the news bulletin with news about this girl.
+\item update the news bulletin with news about this definition.
 \end{enumerate}
 
 > tellEntry news (EDEF (name := DEFN tmL :<: tyv) sn dkind dev@(Dev {devTip=Defined tm tt}) ty) = do

@@ -128,7 +128,7 @@ solve the goal |S|. We have this tactic too and, guess what, it is
 >         goIn
 >         giveOutBelow $ N $ P f :$ A (N sTm)
 >     _ -> throwError' $ err  $ "apply: last entry in the development" 
->                             ++ " must be a girl with a pi-type."
+>                             ++ " must be a definition with a pi-type."
 
 The |ungawa| command looks for a truly obvious thing to do, and does it.
 

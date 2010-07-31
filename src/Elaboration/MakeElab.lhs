@@ -120,13 +120,14 @@ produce an evidence term. The |makeElab| and |makeElabInfer| functions read a
 display term and use the capabilities of the |Elab| monad to produce a
 corresponding evidence term. 
 
-When part of the display syntax needs to be elaborated as a subproblem, we call
-|subElab| or |subElabInfer| rather than |makeElab| or |makeElabInfer| to ensure
-that elaboration does
-not take place at the top level. This means that if the subproblem needs to
-modify the proof state (for example, to introduce a $\lambda$) it will
-create a new girl to work in. It also ensures that the subproblem can terminate
-with the |eElab| instruction, providing a syntactic representation.
+When part of the display syntax needs to be elaborated as a
+subproblem, we call |subElab| or |subElabInfer| rather than |makeElab|
+or |makeElabInfer| to ensure that elaboration does not take place at
+the top level. This means that if the subproblem needs to modify the
+proof state (for example, to introduce a $\lambda$) it will create a
+new definition to work in. It also ensures that the subproblem can
+terminate with the |eElab| instruction, providing a syntactic
+representation.
 
 > subElab :: Loc -> (TY :>: DInTmRN) -> Elab (INTM :=>: VAL)
 > subElab loc (ty :>: tm) = eCompute (ty :>: makeElab loc tm)

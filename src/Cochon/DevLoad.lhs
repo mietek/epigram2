@@ -49,27 +49,27 @@
 To parse a development, we represent it as a list of |DevLine|s, each
 of which corresponds to a |Parameter| or |Definition| entry and stores
 enough information to reconstruct it. Note that at this stage, we
-simply tag each girl with a list of commands to execute later.
+simply tag each definition with a list of commands to execute later.
 
 > data DevLine
 >   =  DLParam ParamKind String DInTmRN
->   |  DLGirl String [DevLine] (Maybe DInTmRN :<: DInTmRN) [CTData]
+>   |  DLDef String [DevLine] (Maybe DInTmRN :<: DInTmRN) [CTData]
 >   |  DLModule String [DevLine] [CTData]
 
-A module may have a list of girls in square brackets, followed by an optional
-semicolon-separated list of commands.
+A module may have a list of definitions in square brackets, followed
+by an optional semicolon-separated list of commands.
 
 > parseDevelopment :: Parsley Token [DevLine]
-> parseDevelopment  = bracket Square (many (pGirl <|> pModule)) 
+> parseDevelopment  = bracket Square (many (pDef <|> pModule)) 
 >                   <|> pure []
 
-\subsubsection{Parsing Girls}
+\subsubsection{Parsing definitions}
 
-A girl is an identifier, followed by a list of children, a definition
+A definition is an identifier, followed by a list of children, a definition
 (which may be @?@), and optionally a list of commands:
 
-> pGirl :: Parsley Token DevLine
-> pGirl =  (| DLGirl  ident                  -- identifier
+> pDef :: Parsley Token DevLine
+> pDef =  (| DLDef    ident                  -- identifier
 >                     pLines                 -- childrens (optional)
 >                     pDefn                  -- definition
 >                     pCTSuffix              -- commands (optional)
@@ -84,7 +84,7 @@ parameters. Parameters are defined below. The absence of
 sub-development is signaled by the @:=@ symbol.
 
 > pLines  :: Parsley Token [DevLine]
-> pLines  =  bracket Square (many (pGirl <|> pParam <|> pModule)) 
+> pLines  =  bracket Square (many (pDef <|> pParam <|> pModule)) 
 >         <|> (keyword KwDefn *> pure [])
 
 \paragraph{Parsing definitions:}
@@ -164,16 +164,16 @@ the magic happen and the |ProofState| is updated.
 
 > makeEntry :: DevLine -> [NamedCommand] -> ProofState [NamedCommand]
 
-\paragraph{Making a Girl:}
+\paragraph{Making a definition:}
 
-To make a girl, we operate in 4 steps. First of all, we jump in a
-module in which we make our kids. Once this is done, we resolve our
+To make a definition, we operate in 4 steps. First of all, we jump in
+a module in which we make our kids. Once this is done, we resolve our
 display syntax goal into a term: we are therefore able to turn the
-module in a girl. The third step consists in solving the problem if we
-were provided a solution, or give up if not. Finally, we accumulate
-the commands which might have been issued.
+module in a definition. The third step consists in solving the problem
+if we were provided a solution, or give up if not. Finally, we
+accumulate the commands which might have been issued.
 
-> makeEntry (DLGirl x kids (mtipTm :<: tipTys) commands) ncs = do
+> makeEntry (DLDef x kids (mtipTm :<: tipTys) commands) ncs = do
 >     -- Open a module named by her name
 >     n <- makeModule x
 >     goIn
@@ -181,7 +181,7 @@ the commands which might have been issued.
 >     ncs' <- makeDev kids ncs
 >     -- Translate |tipTys| into a real |INTM|
 >     tipTy :=>: tipTyv <- elaborate' (SET :>: tipTys)
->     -- Turn the module into a Girl of |tipTy|
+>     -- Turn the module into a definition of |tipTy|
 >     moduleToGoal tipTy
 >     -- Were we provided a solution?
 >     case mtipTm of
@@ -204,8 +204,9 @@ the commands which might have been issued.
 
 \paragraph{Making a Module:}
 
-Making a module involves much less effort than to make a girl. This is
-indeed a stripped-down version of the above code for girls. 
+Making a module involves much less effort than to make a
+definition. This is indeed a stripped-down version of the above code
+for definitions.
 
 > makeEntry (DLModule x kids commands) ncs = do
 >     -- Make the module

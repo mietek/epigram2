@@ -117,7 +117,7 @@ location, which may be useful for paranoia purposes.
 >         CDefinition _ (_ := DEFN tm :<: ty) _ _ -> do
 >             ty' <- bquoteHere ty
 >             checkHere (SET :>: ty')
->                 `pushError`  (err "validateHere: girl type failed to type-check: SET does not admit"
+>                 `pushError`  (err "validateHere: definition type failed to type-check: SET does not admit"
 >                              ++ errTyVal (ty :<: SET))
 >             tm' <- bquoteHere tm
 >             checkHere (ty :>: tm')
