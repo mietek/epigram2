@@ -133,7 +133,7 @@ creates a $\Pi$-boy with that type.
 > elabPiBoy :: (String :<: DInTmRN) -> ProofState REF
 > elabPiBoy (s :<: ty) = do
 >     tt <- elaborate' (SET :>: ty)
->     piParam' (s :<: tt)
+>     piParamUnsafe (s :<: tt)
 
 > elabLamBoy :: (String :<: DInTmRN) -> ProofState REF
 > elabLamBoy (s :<: ty) = do

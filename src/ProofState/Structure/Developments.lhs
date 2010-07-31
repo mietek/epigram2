@@ -195,6 +195,15 @@ abstraction. It scopes over all following entries and the definitions
 >       deriving (Show, Eq)
 
 
+The link between a type and the kind of parameter allowed is defined
+by |lambdable|:
+
+> lambdable :: TY -> Maybe (ParamKind, TY, VAL -> TY)
+> lambdable (PI s t)         = Just (ParamLam, s, (t $$) . A)
+> lambdable (PRF (ALL s p))  = Just (ParamAll, s, \v -> PRF (p $$ A v))
+> lambdable _                = Nothing
+
+
 %if False
 
 > instance Show (Entity Bwd) where

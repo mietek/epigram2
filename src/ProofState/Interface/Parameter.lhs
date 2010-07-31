@@ -26,14 +26,7 @@
 
 
 
-The following piece of kit might profitably be shifted to somewhere more
-general.
-
-> lambdable :: TY -> Maybe (ParamKind, TY, VAL -> TY)
-> lambdable (PI s t)         = Just (ParamLam, s, (t $$) . A)
-> lambdable (PRF (ALL s p))  = Just (ParamAll, s, \v -> PRF (p $$ A v))
-> lambdable _                = Nothing
-
+\subsection{|\|-abstraction}
 
 
 When working at solving a goal, we might be able to introduce an
@@ -67,15 +60,13 @@ the cursor while working on a goal.
 >       _    -> throwError' $ err "lambdaParam: only possible for incomplete goals."
 
 
+\subsection{Assumptions}
 
 With |lambdaParam|, we can introduce parameters under a proof
 goal. However, when working under a module, we would like to be able
-to introduce hypothesis of some type
-
- The |lambdaParamTyped|
-variant allows a type to be specified, so it can be used with
-modules. If used at an |Unknown| tip, it will check that the supplied
-type matches the one at the tip.
+to introduce hypothesis of some type. This corresponds to some kind of
+``Assume'' mechanism, where we assume the existence of an object of
+the provided type under the given module.
 
 > assumeParam :: (String :<: (INTM :=>: TY)) -> ProofState REF
 > assumeParam (x :<: (tyTm :=>: ty))  = do
@@ -90,21 +81,29 @@ type matches the one at the tip.
 >       _    -> throwError' $ err "assumeParam: only possible for modules."
 
 
+\subsection{|Pi|-abstraction}
 
-
-The |piParam| command checks that the current goal is of type SET, and that the supplied type
-is also a set; if so, it appends a $\Pi$-abstraction to the current development.
+When working at defining a type (an object in |Set|), we can freely
+introduce |Pi|-abstractions. This is precisely what |piParam| let us
+do.
 
 > piParam :: (String :<: INTM) -> ProofState REF
-> piParam (s :<: ty) = checkHere (SET :>: ty) >>= piParam' . (s :<:)
+> piParam (s :<: ty) = do
+>   ttv <- checkHere $ SET :>: ty
+>   piParamUnsafe $ s :<: ttv
 
-> piParam' :: (String :<: (INTM :=>: TY)) -> ProofState REF
-> piParam' (s :<: (ty :=>: tv)) = do
+The variant |piParamUnsafe| will not check that the proposed type is
+indeed a type, so it requires further attention.
+
+> piParamUnsafe :: (String :<: (INTM :=>: TY)) -> ProofState REF
+> piParamUnsafe (s :<: (tyTm :=>: ty)) = do
 >     tip <- getDevTip
 >     case tip of
->         Unknown (_ :=>: SET) -> freshRef (s :<: tv) (\ref -> do
->             putEntryAbove (EPARAM ref (mkLastName ref) ParamPi ty)
+>         Unknown (_ :=>: SET) -> 
+>           -- Working on a goal of type |Set|
+>           freshRef (s :<: ty) $ \ref -> do
+>             -- Simply introduce the parameter
+>             putEntryAbove $ EPARAM ref (mkLastName ref) ParamPi tyTm
 >             return ref
->           )
 >         Unknown _  -> throwError' $ err "piParam: goal is not of type SET."
 >         _          -> throwError' $ err "piParam: only possible for incomplete goals."
