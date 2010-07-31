@@ -24,6 +24,7 @@
 > import ProofState.Edition.ProofState
 > import ProofState.Edition.GetSet
 > import ProofState.Edition.Scope
+> import ProofState.Edition.Navigation
 
 > import ProofState.Interface.ProofKit
 > import ProofState.Interface.Lifting
@@ -117,7 +118,7 @@ subgoals produced by elaboration will be children of the resulting goal.
 >     goIn
 >     ty' :=>: _ <- elaborate' (SET :>: ty)
 >     tm <- moduleToGoal ty'
->     goOutProperly
+>     goOutBelow
 >     return tm
 
 

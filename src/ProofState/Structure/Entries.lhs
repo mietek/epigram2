@@ -51,7 +51,7 @@ Hence, we have:
 >
 > entryDev :: Traversable f => Entry f -> Maybe (Dev f)
 > entryDev (EDEF _ _ _ d _)  = Just d
-> entryDev (EModule _ d)           = Just d
+> entryDev (EModule _ d)     = Just d
 > entryDev (EPARAM _ _ _ _)  = Nothing
 >
 > entrySuspendState :: Traversable f => Entry f -> SuspendState
@@ -87,8 +87,8 @@ modules, in which case we return an unchanged |Left dev|.
 
 > entryCoerce ::  (Traversable f, Traversable g) => 
 >                 Entry f -> Either (Dev f) (Entry g)
-> entryCoerce (EPARAM ref xn k ty)  = Right $ EPARAM ref xn k ty
-> entryCoerce (EDEF _ _ _ dev _)    = Left dev
-> entryCoerce (EModule _    dev)          = Left dev
+> entryCoerce (EPARAM ref xn k ty)  =  Right $ EPARAM ref xn k ty
+> entryCoerce (EDEF _ _ _ dev _)    =  Left dev
+> entryCoerce (EModule _ dev)       =  Left dev
 
 

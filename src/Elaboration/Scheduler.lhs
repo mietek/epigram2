@@ -20,6 +20,7 @@
 
 > import ProofState.Edition.ProofState
 > import ProofState.Edition.GetSet
+> import ProofState.Edition.Navigation
 
 > import ProofState.Interface.Lifting
 > import ProofState.Interface.ProofKit
@@ -99,7 +100,7 @@ If so, we stop; otherwise, we resume the mother and continue searching.
 >                 b <- resumeMother
 >                 if b  then scheduler n
 >                       else do
->                           goOutProperly
+>                           goOutBelow
 >                           schedulerContinue n
 
 

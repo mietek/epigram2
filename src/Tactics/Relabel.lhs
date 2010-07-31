@@ -16,6 +16,7 @@
 
 > import ProofState.Edition.ProofState
 > import ProofState.Edition.GetSet
+> import ProofState.Edition.Navigation
 
 > import ProofState.Interface.ProofKit
 

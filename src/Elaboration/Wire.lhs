@@ -224,7 +224,7 @@ that her children have already received, and returns the updated news.
 > tellMother news = do
 >     e <- getLeaveCurrent
 >     (news', e') <- tellEntry news e 
->     putLeaveCurrent e'
+>     putEnterCurrent e'
 >     return news'
 
 

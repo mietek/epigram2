@@ -144,185 +144,6 @@ may be useful for paranoia purposes.
 >   f goal
 
 
-\subsection{Navigation Commands}
-
-\subsubsection{Single-step Navigation}
-
-First, some vocabulary. The \emph{focus} is the current development; it contains
-a \emph{cursor} which is the point at which changes take place. Consider
-the following example:
-
-\begin{verbatim}
-[
-  A := ? : S
-  B [
-    D := ? : S
-    \ x : S
-    E := ? : S
-    \ y : S ___ cursor here
-  ] : S
-  C := ? : S
-]
-\end{verbatim}
-
-Suppose the cursor is initially at the bottom of the development |B|, which
-is in focus. We provide the following commands to navigate the proof state:
-\begin{itemize}
-\item |cursorUp| moves the cursor up by one entry (under |E| in the example);
-\item |cursorDown| moves the cursor down by one entry (illegal in the example);
-\item |goIn| moves the focus into the girl or module above the cursor,
-      and leaves the cursor at the bottom of the development
-      (inside |E| in the example);
-\item |goOut| moves the focus out to the development that contains it, with
-      the cursor at the bottom of the development (under |C| in the example);
-\item |goOutProperly| moves the focus out to the development that contains
-      it, with the cursor under the previously focused entry
-      (under |B| in the example);
-\item |goUp| moves the focus to the next eldest girl or module and leaves the
-      cursor at the bottom (inside |A| in the example); and
-\item |goDown| moves the focus to the next youngest girl or module and leaves
-      the cursor at the bottom (inside |C| in the example).
-\end{itemize}
-
-These commands fail with an error if they are impossible because the
-proof context is not in the required form. Things are slightly more complicated
-than the above description because of the possibility of news bulletins below
-the cursor; as these are propagated lazily, they must be pushed down when the
-cursor or focus move.
-
-The |cursorUp| and |cursorDown| commands are straightforward, because there
-is no news to worry about. We simply move an entry above the cursor to one
-below, or vice versa.
-
-> cursorUp :: ProofState ()
-> cursorUp = do
->     es' <- getEntriesAbove
->     case es' of
->         es :< e -> do
->             cadets <- getBelowCursor
->             putEntriesAbove es
->             putBelowCursor (e :> cadets)
->             return ()
->         B0 -> throwError' $ err "cursorUp: cannot move cursor up."
-
-> cursorDown :: ProofState ()
-> cursorDown = do
->     es <- getEntriesAbove
->     cadets' <- getBelowCursor
->     case cadets' of
->         cadet :> cadets -> do
->             putEntriesAbove (es :< cadet)
->             putBelowCursor cadets
->             return ()
->         F0 -> throwError' $ err "cursorDown: cannot move cursor down."
-
-The |goIn| command has no news to worry about either; it simply moves the
-cursor upwards until it finds an entry with a development, then enters it.
-
-> goIn :: ProofState ()
-> goIn = do
->     es' <- getEntriesAbove
->     case es' of
->         B0 -> throwError' $ err "goIn: you can't go that way."
->         es :< e -> case entryDev e of
->           Nothing   -> cursorUp >> goIn
->           Just dev  -> do
->              cadets  <- getBelowCursor
->              oldDev  <- getAboveCursor
->              putLayer (Layer es (mkCurrentEntry e) (reverseEntries cadets)
->                            (devTip oldDev) (devNSupply oldDev) (devSuspendState oldDev))
->              putAboveCursor dev
->              putBelowCursor F0
->              return ()
-
-
-The |goOut| command has to deal with any news that may be present in the cadets
-of the current layer (i.e. down from the focus). It updates the cadets,
-starting with the empty bulletin, so it ends up with the cursor at the bottom
-of the new focus.
-
-> goOut :: ProofState ()
-> goOut = do
->     e <- getLeaveCurrent
->     ml <- optional removeLayer
->     case ml of
->         Just l -> do
->             putAboveCursor $ Dev (aboveEntries l :< e) (layTip l) (layNSupply l) (laySuspendState l)
->             putBelowCursor F0
->             propagateNews True [] (belowEntries l)
->             return ()
->         Nothing -> throwError' $ err "goOut: you can't go that way."
-
-
-The |goOutProperly| variant calls |goOut|, then moves the cursor back up to
-just below the previous focus.
-
-> goOutProperly :: ProofState ()
-> goOutProperly = do
->     ls <- getLayers
->     case ls of
->         _ :< Layer{belowEntries=cadets} -> do
->             goOut
->             Data.Traversable.mapM (const cursorUp) cadets
->             return ()
->         B0 -> throwError' $ err "goOutProperly: you can't go that way."
-
-
-The |goUp| command looks through the layer elders for one that has a
-development, accumulating parameters it passes over so they be put
-back as layer cadets at the new focus.
-
-> goUp :: ProofState ()
-> goUp = goUpAcc (NF F0)
->   where
->     goUpAcc :: NewsyEntries -> ProofState ()
->     goUpAcc (NF acc) = do
->         l <- getLayer
->         case l of
->           (Layer (es :< e) m (NF cadets) tip nsupply ss) -> case entryDev e of
->             Just dev -> do
->                 me <- getLeaveCurrent
->                 putAboveCursor dev
->                 putBelowCursor F0
->                 replaceLayer l{aboveEntries=es, currentEntry=mkCurrentEntry e,
->                     belowEntries=NF (acc <+> (Right (reverseEntry me) :> cadets))}
->                 return ()
->             Nothing -> do
->                 replaceLayer l{aboveEntries=es}
->                 goUpAcc (NF (Right (reverseEntry e) :> acc))
->           _ -> throwError' $ err "goUp: you can't go that way."
-
-
-The |goDown| command looks through the layer cadets for one that has a
-development, passing on news it encounters as it goes and accumulating
-parameters so they can be put back as layer elders at the new focus.
-
-> goDown :: ProofState ()
-> goDown = goDownAcc B0 []
->   where
->     goDownAcc :: Entries -> NewsBulletin -> ProofState ()
->     goDownAcc acc news = do
->         l <- getLayer
->         case l of
->           (Layer {aboveEntries=elders, belowEntries=NF (ne :> es)}) -> case ne of
->             Left nb -> do
->                 replaceLayer l{belowEntries=NF es}
->                 goDownAcc acc (mergeNews news nb)
->             Right e -> case entryCoerce e of
->               Left (Dev es' tip' nsupply' ss') ->  do
->                 me <- getLeaveCurrent
->                 replaceLayer l{aboveEntries=(elders :< me) <+> acc,
->                                    currentEntry=mkCurrentEntry e, belowEntries=NF es}
->                 putAboveCursor (Dev B0 tip' nsupply' SuspendNone)
->                 putBelowCursor F0
->                 news' <- propagateNews True news es'
->                 return ()
->               Right e' -> do
->                 (news', e'') <- tellEntry news e'
->                 replaceLayer l{belowEntries=NF es}
->                 goDownAcc (acc :< e'') news'
->           _ -> throwError' $ err "goDown: you can't go that way."
-
 
 \subsubsection{Many-step Navigation}
 
@@ -444,7 +265,7 @@ to the next goal otherwise.
 >     makeModule name
 >     goIn
 >     t <- draftyStuff
->     goOutProperly
+>     goOutBelow
 >     mm <- removeEntryAbove
 >     case mm of
 >         Just (EModule _ _) -> return t
@@ -508,7 +329,7 @@ the goal, updates the reference and goes out. The |giveNext| variant moves to th
 next goal (if one exists) instead.
 
 > give :: INTM -> ProofState (EXTM :=>: VAL)
-> give tm = give' tm <* goOutProperly
+> give tm = give' tm <* goOutBelow
 
 > giveNext :: INTM -> ProofState (EXTM :=>: VAL)
 > giveNext tm = give' tm <* (nextGoal <|> goOut)

@@ -20,7 +20,7 @@ BUILD_MODE	= BUILD_DEV
 #### PDFLaTeX
 
 LATEXC = pdflatex
-LATEXOPTS = -interaction=nonstopmode
+#LATEXOPTS = -interaction=nonstopmode
 
 
 ################################################################

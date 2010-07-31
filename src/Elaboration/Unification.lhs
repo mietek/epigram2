@@ -21,6 +21,7 @@
 > import ProofState.Edition.News
 > import ProofState.Edition.ProofState
 > import ProofState.Edition.GetSet
+> import ProofState.Edition.Navigation
 
 > import ProofState.Interface.ProofKit
 
@@ -54,7 +55,7 @@ holes with the new ones.
 > solveHole' ref@(name := HOLE _ :<: _) deps tm = do
 >     es <- getEntriesAbove
 >     case es of
->         B0      -> goOutProperly >> cursorUp >> solveHole' ref deps tm
+>         B0      -> goOutBelow >> cursorUp >> solveHole' ref deps tm
 >         _ :< e  -> pass e
 >   where
 >     pass :: Entry Bwd -> ProofState (EXTM :=>: VAL)

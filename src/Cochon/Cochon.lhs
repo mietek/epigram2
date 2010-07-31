@@ -32,6 +32,7 @@
 > import ProofState.Edition.ProofState
 > import ProofState.Edition.Entries
 > import ProofState.Edition.GetSet
+> import ProofState.Edition.Navigation
 
 > import ProofState.Interface.ProofKit
 > import ProofState.Interface.NameResolution
@@ -338,7 +339,7 @@ Navigation tactics:
 
 >   : nullaryCT "in" (goIn >> return "Going in...")
 >       "in - moves to the bottom-most development within the current one."
->   : nullaryCT "out" (goOutProperly >> return "Going out...")
+>   : nullaryCT "out" (goOutBelow >> return "Going out...")
 >       "out - moves to the development containing the current one."
 >   : nullaryCT "up" (goUp >> return "Going up...")
 >       "up - moves to the development above the current one."

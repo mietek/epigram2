@@ -17,6 +17,8 @@
 \usepackage{amsthm}
 \usepackage{manfnt}
 \usepackage{makeidx}
+\usepackage{subfigure}
+
 \usepackage{pig}
 
 %include lhs2TeX.fmt
@@ -24,6 +26,16 @@
 %include polycode.fmt
 
 %include stuff.fmt
+
+\newbox\subfigbox
+\makeatletter
+\newenvironment{subfloat}
+               {\def\caption##1{\gdef\subcapsave{\relax##1}}%
+                \let\subcapsave\@@empty
+                \setbox\subfigbox\hbox
+                \bgroup}
+               {\egroup\subfigure[\subcapsave]{\box\subfigbox}}
+\makeatother
 
 \input{Documentation/Macros.tex}
 

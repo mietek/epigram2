@@ -123,7 +123,7 @@ And some specialized versions:
 >     scope <- getGlobalScope
 >     return (applySpine ref scope)
 
-\paragraph{Getting in the |HOLE|}
+\paragraph{Getting in the |HOLE|\\}
 
 > getHoleGoal :: ProofStateT e (INTM :=>: TY)
 > getHoleGoal = do
@@ -236,14 +236,14 @@ And some specialized versions:
 
 \subsubsection{Putting in the |CurrentEntry|}
 
-\paragraph{Putting in the |PROG|}
+\paragraph{Putting in the |PROG|\\}
 
 > putCurrentScheme :: Scheme INTM -> ProofState ()
 > putCurrentScheme sch = do
 >     CDefinition _ ref xn ty <- getCurrentEntry
 >     putCurrentEntry $ CDefinition (PROG sch) ref xn ty
 
-\paragraph{Putting in the |HOLE|}
+\paragraph{Putting in the |HOLE|\\}
 
 > putHoleKind :: HKind -> ProofStateT e ()
 > putHoleKind hk = do

@@ -24,6 +24,7 @@
 > import ProofState.Edition.Scope
 > import ProofState.Edition.ProofState
 > import ProofState.Edition.GetSet
+> import ProofState.Edition.Navigation
 
 > import ProofState.Interface.ProofKit
 > import ProofState.Interface.Lifting

@@ -69,7 +69,7 @@ Error: goUp: you can't go that way.
 ] ? : Set
 Going out...
 I'm sorry, Dave. I'm afraid I can't do that.
-Error: goOutProperly: you can't go that way.
+Error: goOutBelow: you can't go that way.
 Going in...
 I'm sorry, Dave. I'm afraid I can't do that.
 Error: goIn: you can't go that way.
