@@ -63,7 +63,7 @@ and |False| if the problem was suspended.
 
 > runElab True (ty :>: ELambda x f) = case lambdable ty of
 >     Just (_, s, tyf) -> do
->         ref <- lambdaBoy x
+>         ref <- lambdaParam x
 >         runElab True (tyf (NP ref) :>: f ref)
 >     Nothing -> throwError' $ err "runElab: type" ++ errTyVal (ty :<: SET)
 >                                  ++ err "is not lambdable!"

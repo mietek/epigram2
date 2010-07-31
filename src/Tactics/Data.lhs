@@ -53,7 +53,7 @@
 > elabCons nom ty ps (s , t) = do
 >             make ((s ++ "Ty") :<: ARR ty SET)
 >             goIn 
->             r <- lambdaBoy nom
+>             r <- lambdaParam nom
 >             (tyi :=>: v) <- elabGive' t
 >             (x,i,y) <- ty2desc r ps (v $$ A (NP r))
 >             goOut
@@ -142,7 +142,7 @@
 >             make ("conc" :<: ENUMT e)
 >             goIn
 >             (c :=>: _) <- elabGive (DTAG s)
->             rs <- traverse (\x -> lambdaBoy x) i
+>             rs <- traverse (\x -> lambdaParam x) i
 >             give $ CON (PAIR (N c) (body rs))
 >             return ()
 
@@ -157,7 +157,7 @@
 >         make ((x ++ "ParTy") :<: SET)
 >         goIn
 >         (yt :=>: yv) <- elabGive y
->         r <- lambdaBoy' (x :<: (N yt :=>: yv))
+>         r <- lambdaParamTyped (x :<: (N yt :=>: yv))
 >         return (x,yt,r)) pars
 >       moduleToGoal SET
 >       cs <- traverse (elabCons nom 

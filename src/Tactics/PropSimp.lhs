@@ -506,7 +506,7 @@ at a time. It will fail if no simplification is possible.
 >     goIn
 >     b :=>: _ <-  tryProblemSimplify
 >     goOut
->     x <- lambdaBoy (fortran t)
+>     x <- lambdaParam (fortran t)
 >     give' (N (b :$ A (N (P x :$ Fst)) :$ A (N (P x :$ Snd))))
 > simplifyGoal (PI (ENUMT e) t) = do
 >     t' <- bquoteHere t
@@ -515,16 +515,16 @@ at a time. It will fail if no simplification is possible.
 >     goIn
 >     b :=>: _ <-  tryProblemSimplify
 >     goOut
->     x <- lambdaBoy (fortran t)
+>     x <- lambdaParam (fortran t)
 >     give' (N (switchOp :@ [e', NP x, t', N b]))
 > simplifyGoal (PI (PRF p) t) = do
 >     pSimp <- runPropSimplify p
 >     case pSimp of
 >         Nothing -> do
->             lambdaBoy (fortran t)
+>             lambdaParam (fortran t)
 >             tryProblemSimplify
 >         Just (SimplyAbsurd prf) -> do
->             r <- lambdaBoy (fortran t)
+>             r <- lambdaParam (fortran t)
 >             let pr = prf (NP r)
 >             nonsense <- bquoteHere (nEOp @@ [pr, t $$ A (NP r)])
 >             give' nonsense
@@ -542,12 +542,12 @@ at a time. It will fail if no simplification is possible.
 >             goIn
 >             _ :=>: bv <- tryProblemSimplify
 >             goOut
->             r <- lambdaBoy (fortran t)
+>             r <- lambdaParam (fortran t)
 >             prf <- bquoteHere $ bv $$$ (fmap (A . ($$ A (NP r))) gs)
 >             give' prf
 >              
 > simplifyGoal (PI s t) = do
->     lambdaBoy (fortran t)
+>     lambdaParam (fortran t)
 >     tryProblemSimplify 
 
 > simplifyGoal (PRF p) = propSimplifyHere >> getCurrentDefinition

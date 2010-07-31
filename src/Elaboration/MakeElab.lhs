@@ -167,7 +167,7 @@ creating some trivial children.
 >     tm :=>: tmv <- subElab loc (t :>: dtm)
 >     return $ LK tm :=>: LK tmv
 
-Otherwise, we can simply create a |lambdaBoy| in the current development, and
+Otherwise, we can simply create a |lambdaParam| in the current development, and
 carry on elaborating. We can call |makeElab| here, rather than |subElab|,
 because it is a tail call.
 

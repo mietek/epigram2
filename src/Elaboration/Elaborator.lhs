@@ -133,12 +133,12 @@ creates a $\Pi$-boy with that type.
 > elabPiBoy :: (String :<: DInTmRN) -> ProofState REF
 > elabPiBoy (s :<: ty) = do
 >     tt <- elaborate' (SET :>: ty)
->     piBoy' (s :<: tt)
+>     piParam' (s :<: tt)
 
 > elabLamBoy :: (String :<: DInTmRN) -> ProofState REF
 > elabLamBoy (s :<: ty) = do
 >     tt <- elaborate' (SET :>: ty)
->     lambdaBoy' (s :<: tt)
+>     lambdaParamTyped (s :<: tt)
 
 
 \subsection{Elaborating programming problems}
@@ -196,7 +196,7 @@ plus an implicit labelled type that provides evidence for the recursive call.
 >     make (x :<: schemeToInTm schCallLocal)
 >     goIn
 >     putCurrentScheme schCall
->     refs <- traverse lambdaBoy (schemeNames schCallLocal)
+>     refs <- traverse lambdaParam (schemeNames schCallLocal)
 >     give (N (P (last refs) :$ Call (N (pn $## map NP (init refs)))))
 
 For now we just call |elabProgram| to set up the remainder of the programming
@@ -251,7 +251,7 @@ plus [
 >     let newty  = pity (mkTel (unN $ valueOf pn) (evTm gUnlifted) [] args)
 >     newty'       <- bquoteHere newty
 >     impl :=>: _  <- make (magicImplName :<: newty') 
->     argrefs      <- traverse lambdaBoy args
+>     argrefs      <- traverse lambdaParam args
 >     let  fcall  = termOf pn $## (map NP argrefs) 
 >          call   = impl $## (map NP argrefs) :$ Call (N fcall)
 >     r <- give' (N call)
@@ -297,14 +297,14 @@ plus [
 >     make ("tau" :<: SET)
 >     goIn
 >     (s', ty :=>: _) <- elabScheme es s
->     piBoy (x :<: N ty)
+>     piParam (x :<: N ty)
 >     e <- getEntryAbove
 >     (t', tt) <- elabScheme (es :< e) t
 >     return (SchExplicitPi (x :<: s') t', tt)
 
 > elabScheme es (SchImplicitPi (x :<: s) t) = do
 >     ss <- elaborate' (SET :>: s)
->     piBoy (x :<: termOf ss)
+>     piParam (x :<: termOf ss)
 >     e <- getEntryAbove
 >     (t', tt) <- elabScheme (es :< e) t
 >     return (SchImplicitPi (x :<: (es -| termOf ss)) t', tt)

@@ -282,7 +282,7 @@ Construction tactics:
 >          (\ args -> case last args of
 >              InArg ty  -> Data.Traversable.mapM (elabLamBoy . (:<: ty) . argToStr) (init args)
 >                               >> return "Made lambda boy!"
->              _         -> Data.Traversable.mapM (lambdaBoy . argToStr) args
+>              _         -> Data.Traversable.mapM (lambdaParam . argToStr) args
 >                               >> return "Made lambda boy!"
 >            )
 >          ("lambda <labels> - introduces one or more hypotheses.\n"++

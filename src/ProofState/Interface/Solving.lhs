@@ -110,6 +110,6 @@ goal of the same type, and fills it in with the parameter.
 The |ungawa| command looks for a truly obvious thing to do, and does it.
 
 > ungawa :: ProofState ()
-> ungawa =  ignore done <|> ignore apply <|> ignore (lambdaBoy "ug")
+> ungawa =  ignore done <|> ignore apply <|> ignore (lambdaParam "ug")
 >           `pushError` (err "ungawa: no can do.")
 

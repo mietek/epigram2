@@ -106,7 +106,7 @@ eliminator, namely:
 \end{itemize}
 
 To analyze the eliminator, we play a nice game. One option would be to
-jump in a |draftModule|, introduce |lambdaBoys|, then retrieve and
+jump in a |draftModule|, introduce |lambdaParam|s, then retrieve and
 check the different parts as we go along. However, this would mean that the
 terms would be built from references that would become invalid when the
 draft module was dropped. Therefore, we would suffer the burden (and danger)
@@ -545,7 +545,7 @@ are fresh references that do not depend on the binders. Hence we can implement
 
 The |introMotive| command starts with two copies of the motive type and a list of
 targets. It must be called inside the goal for the motive. It unfolds the types in
-parallel, introducing fresh |lambdaBoy|s on the left and working through the
+parallel, introducing fresh |lambdaParam|s on the left and working through the
 targets on the right; as it does so, it accumulates constraints between the
 introduced references (in $\Xi$) and the targets. It also returns the number of
 extra definitions created when simplifying the motive (e.g. splitting sigmas).
@@ -569,7 +569,7 @@ to simplify its constraint.
 >     mtFresh' <- bquoteHere mtFresh
 
 >     b :=>: _  <- make ("sig" :<: mtFresh')
->     ref       <- lambdaBoy (fortran tFresh)
+>     ref       <- lambdaParam (fortran tFresh)
 >     give' (N (b :$ A (N (P ref :$ Fst)) :$ A (N (P ref :$ Snd))))
 >     goIn
 
@@ -582,7 +582,7 @@ to simplify its constraint.
 >     isVar _       = False
 
 > introMotive (PI sFresh tFresh) (PI sTarg tTarg) (x:xs) cs n = do
->     ref      <- lambdaBoy (fortran tFresh)
+>     ref      <- lambdaParam (fortran tFresh)
 >     sFresh'  <- bquoteHere sFresh
 >     sTarg'   <- bquoteHere sTarg
 >     let c = (ref :<: sFresh', (x :~>: x) :<: (sTarg' :~>: sTarg'))
