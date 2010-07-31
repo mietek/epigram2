@@ -33,7 +33,7 @@
 
 
 The |getFakeCurrentEntry| command returns a neutral application of a
-fake reference that represents the mother of the current
+fake reference that represents the current entry of the current
 location. Note that its type is $\lambda$-lifted over its great
 uncles, but it is then applied to them (as shared parameters).
 

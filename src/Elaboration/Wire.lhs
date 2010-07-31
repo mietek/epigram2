@@ -60,13 +60,14 @@ If we have nothing to say and nobody to tell, we might as well give up and go ho
 
 > propagateNews False news (NF F0) = return news
 
-If there are no entries to process, we should tell the mother (if there is one),
-stash the bulletin after the current location and stop. Note that the insertion is
-optional because it will fail when we have reached the end of the module, at which
-point everyone knows the news anyway.
+If there are no entries to process, we should tell the current entry
+(if there is one), stash the bulletin after the current location and
+stop. Note that the insertion is optional because it will fail when we
+have reached the end of the module, at which point everyone knows the
+news anyway.
 
 > propagateNews True news (NF F0) = do
->     news' <- tellMother news
+>     news' <- tellCurrentEntry news
 >     optional (putNewsBelow news')
 >     return news'
 
@@ -86,14 +87,14 @@ Updating definitions is a bit more complicated. We proceed as follows:
 \begin{enumerate}
 \item Add the definition to the context, using |jumpIn|.
 \item Recursively propagate the news to the children.
-\item Call |tellMother| to update the girl herself.
+\item Call |tellCurrentEntry| to update the definition itself.
 \item Continue propagating the latest news.
 \end{enumerate}
 
 > propagateNews top news (NF ((Right e@(EDEF ref sn _ _ ty)) :> es)) = do
 >     xs <- jumpIn e
 >     news' <- propagateNews False news xs
->     news'' <- tellMother news'
+>     news'' <- tellCurrentEntry news'
 >     goOut
 >     propagateNews top news'' (NF es)
 
@@ -188,7 +189,7 @@ similarly to the previous case, but we also update the elaboration problem.
 >          (ty' :=>: tyv', n')  = tellNewsEval news (ty :=>: tyv)
 >          ref                  = name := HOLE h :<: tyv'
 >          prob'                = tellEProb news prob
->     grandmotherSuspend (if isUnstable prob' then SuspendUnstable else SuspendStable)
+>     suspendHierarchy (if isUnstable prob' then SuspendUnstable else SuspendStable)
 >     return (addNews (ref, min n n') news,
 >         EDEF ref sn dkind (dev{devTip=Suspended tt' prob'}) ty')
 
@@ -218,11 +219,12 @@ For paranoia purposes, the following test might be helpful:
 >     return (addNews (ref, GoodNews {-min (min n n') n''-}) news,
 >                 EDEF ref sn dkind (dev{devTip=Defined tm' tt'}) ty')
 
-The |tellMother| function informs the mother entry about a news bulletin
-that her children have already received, and returns the updated news.
+The |tellCurrentEntry| function informs the current entry about a news
+bulletin that her children have already received, and returns the
+updated news.
 
-> tellMother :: NewsBulletin -> ProofState NewsBulletin
-> tellMother news = do
+> tellCurrentEntry :: NewsBulletin -> ProofState NewsBulletin
+> tellCurrentEntry news = do
 >     e <- getLeaveCurrent
 >     (news', e') <- tellEntry news e 
 >     putEnterCurrent e'
@@ -238,8 +240,8 @@ that her children have already received, and returns the updated news.
 When the current location or one of its children has suspended, we need to
 update the outer layers.
 
-> grandmotherSuspend :: SuspendState -> ProofState ()
-> grandmotherSuspend ss = getLayers >>= putLayers . help ss
+> suspendHierarchy :: SuspendState -> ProofState ()
+> suspendHierarchy ss = getLayers >>= putLayers . help ss
 >   where
 >     help :: SuspendState -> Bwd Layer -> Bwd Layer
 >     help ss B0 = B0

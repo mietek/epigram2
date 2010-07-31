@@ -85,12 +85,13 @@ search its children from the top.
 >         _ :> _                -> do
 >             cursorDown
 >             goIn
->             resumeMother
+>             resumeCurrentEntry
 >             scheduler n
 
 
-Once done, the |schedulerDone| command checks if this is the target location.
-If so, we stop; otherwise, we resume the mother and continue searching.
+Once done, the |schedulerDone| command checks if this is the target
+location.  If so, we stop; otherwise, we resume the current entry and
+continue searching.
 
 > schedulerDone :: Name -> ProofState ()
 > schedulerDone n = do
@@ -99,20 +100,21 @@ If so, we stop; otherwise, we resume the mother and continue searching.
 >             _ | mn == n  -> cursorBottom
 >             []           -> error "scheduler: got lost!"
 >             _            -> do
->                 b <- resumeMother
+>                 b <- resumeCurrentEntry
 >                 if b  then scheduler n
 >                       else do
 >                           goOutBelow
 >                           schedulerContinue n
 
 
-The |resumeMother| command checks for an unstable elaboration problem on the
-mother of the current location, and resumes elaboration if it finds one. If
-elaboration succeeds, it gives the resulting term. It returns whether an
-elaboration process was resumed (not whether the process succeeded).
+The |resumeCurrentEntry| command checks for an unstable elaboration
+problem on the current entry of the current location, and resumes
+elaboration if it finds one. If elaboration succeeds, it gives the
+resulting term. It returns whether an elaboration process was resumed
+(not whether the process succeeded).
 
-> resumeMother :: ProofState Bool
-> resumeMother = do
+> resumeCurrentEntry :: ProofState Bool
+> resumeCurrentEntry = do
 >   tip <- getDevTip
 >   case tip of
 >     Suspended (ty :=>: tyv) prob | isUnstable prob -> do

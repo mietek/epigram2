@@ -379,7 +379,7 @@ is unstable.
 >     putEntryAbove (EDEF ref xn dkind (dev{devTip=Suspended utt prob}) tm)
 >     let ss = if isUnstable prob then SuspendUnstable else SuspendStable
 >     putDevSuspendState ss
->     grandmotherSuspend ss
+>     suspendHierarchy ss
 >     return r
 
 
@@ -391,7 +391,7 @@ location.
 >     Unknown tt <- getDevTip
 >     putDevTip (Suspended tt prob)
 >     let ss = if isUnstable prob then SuspendUnstable else SuspendStable
->     grandmotherSuspend ss
+>     suspendHierarchy ss
 >     getCurrentDefinition
 
 
