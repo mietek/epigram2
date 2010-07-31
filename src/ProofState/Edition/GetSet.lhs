@@ -175,9 +175,9 @@ And some specialized versions:
 >     return ()
 
 > putBelowCursor :: Fwd (Entry Bwd) -> ProofStateT e (Fwd (Entry Bwd))
-> putBelowCursor cadets = do
+> putBelowCursor below = do
 >     pc <- get
->     put pc{pcBelowCursor=cadets}
+>     put pc{pcBelowCursor=below}
 >     return (pcBelowCursor pc)
 
 And some specialized versions:

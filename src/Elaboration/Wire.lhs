@@ -122,8 +122,8 @@ a slightly strange thing to do, but is useful for news propagation.
 > jumpIn :: Entry NewsyFwd -> ProofState NewsyEntries
 > jumpIn e = do
 >     Dev es tip nsupply ss <- getAboveCursor
->     cadets <- getBelowCursor
->     putLayer (Layer es (mkCurrentEntry e) (reverseEntries cadets) tip nsupply ss)
+>     below <- getBelowCursor
+>     putLayer (Layer es (mkCurrentEntry e) (reverseEntries below) tip nsupply ss)
 >     let Just (Dev cs newTip newNSupply newSS) = entryDev e
 >     putAboveCursor (Dev B0 newTip newNSupply newSS)
 >     return cs

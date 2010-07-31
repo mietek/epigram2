@@ -132,7 +132,7 @@ the saved state. We can get rid of it once we are confident that the new version
 >     save <- get
 >     let bsc = inBScope save
 >     me <- getCurrentName
->     ds <- many (hypsHere bsc me <* optional killCadets <* goOut <* removeEntryAbove)
+>     ds <- many (hypsHere bsc me <* optional killBelow <* goOut <* removeEntryAbove)
 >     d <- hypsHere bsc me
 >     put save
 >     return (renderHouseStyle (vcat (d:reverse ds)))
@@ -144,7 +144,7 @@ the saved state. We can get rid of it once we are confident that the new version
 >        putEntriesAbove es
 >        return d
 >    
->    killCadets = do
+>    killBelow = do
 >        l <- getLayer
 >        replaceLayer (l { belowEntries = NF F0 })
 >
