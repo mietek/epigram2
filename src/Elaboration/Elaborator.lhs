@@ -190,7 +190,7 @@ to handle recursive calls. This has the same arguments as the function,
 plus an implicit labelled type that provides evidence for the recursive call.
 
 >     CDefinition _ (mnom := HOLE _ :<: ty) _ _ <- getCurrentEntry
->     pn :=>: _ <- getFakeMother 
+>     pn :=>: _ <- getFakeCurrentEntry 
 >     let schCall = makeCall (P $ mnom := FAKE :<: ty) 0 sch'
 >     us <- getParamsInScope
 >     let schCallLocal = applyScheme schCall us
@@ -247,7 +247,7 @@ plus [
 > elabProgram :: [String] -> ProofState (EXTM :=>: VAL)
 > elabProgram args = do
 >     n   <- getCurrentName
->     pn  <- getFakeMother 
+>     pn  <- getFakeCurrentEntry 
 >     (gUnlifted :=>: _) <- getHoleGoal
 >     let newty  = pity (mkTel (unN $ valueOf pn) (evTm gUnlifted) [] args)
 >     newty'       <- bquoteHere newty

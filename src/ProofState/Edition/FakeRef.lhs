@@ -32,10 +32,10 @@
 %endif
 
 
-The |getFakeMother| command returns a neutral application of a fake reference
-that represents the mother of the current location. Note that its type is
-$\lambda$-lifted over its great uncles, but it is then applied to them (as
-shared parameters).
+The |getFakeCurrentEntry| command returns a neutral application of a
+fake reference that represents the mother of the current
+location. Note that its type is $\lambda$-lifted over its great
+uncles, but it is then applied to them (as shared parameters).
 
 \pierre{This requires further documentation. I'm not familiar with
 these fake things, so I cannot tell more about it now.}
@@ -45,8 +45,8 @@ these fake things, so I cannot tell more about it now.}
 >    CDefinition _  (cEntryName := HOLE _ :<: ty) _ _ <- getCurrentEntry
 >    return $ cEntryName := FAKE :<: ty
 
-> getFakeMother :: ProofState (EXTM :=>: VAL)
-> getFakeMother = do
+> getFakeCurrentEntry :: ProofState (EXTM :=>: VAL)
+> getFakeCurrentEntry = do
 >    r <- getFakeRef
 >    inScope <- getInScope
 >    let tm = P r $:$ (paramSpine inScope)

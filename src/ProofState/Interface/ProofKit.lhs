@@ -145,13 +145,3 @@ belong to this file but where could it go?}
 
 > neutralise :: Monad m => (EXTM :=>: VAL) -> m (INTM :=>: VAL)
 > neutralise (n :=>: v) = return $ N n :=>: v
-
-
-
-
-
-
-
-
-
-
