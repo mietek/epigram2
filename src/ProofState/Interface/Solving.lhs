@@ -86,34 +86,50 @@ and moves to the next goal, if one is available.
 
 
 
-\subsection{}
+\subsection{Finding trivial solutions}
 
-The |apply| command checks if the last entry in the development is a girl $y$ with type
-$\Pi S T$ and if so, adds a goal of type $S$ and applies $y$ to it.
 
-> apply :: ProofState (EXTM :=>: VAL)
-> apply = do
->   devEntry <- getEntryAbove
->   case devEntry of
->     EDEF ref@(name := k :<: (PI s t)) _ _ _ _ -> do
->         s' <- bquoteHere s
->         t' <- bquoteHere (t $$ A s)
->         z :=>: _ <- make ("z" :<: s')
->         make ("w" :<: t')
->         goIn
->         giveOutBelow (N (P ref :$ A (N z)))
->     _ -> throwError' $ err  $ "apply: last entry in the development" 
->                             ++ " must be a girl with a pi-type."
-
-The |done| command checks if the last entry in the development is a girl, and if so,
-fills in the goal with this entry.
+Often, to solve a goal, we make a definition that contains further
+developments and, eventually, leads to a solution. To solve the goal,
+we are therefore left to |give| this definition. This is the role of
+the |done| command that tries to |give| the entry above the cursor.
 
 > done :: ProofState (EXTM :=>: VAL)
 > done = do
 >   devEntry <- getEntryAbove
 >   case devEntry of
->     EDEF ref _ _ _ _ -> giveOutBelow (N (P ref))
->     _ -> throwError' $ err "done: last entry in the development must be a girl."
+>     EDEF ref _ _ _ _ -> do
+>         -- The entry above is indeed a definition
+>         giveOutBelow $ NP ref
+>     _ -> do
+>         -- The entry was not a definition
+>         throwError' $ err "done: entry above cursor must be a definition."
+
+
+Slightly more sophisticated is the well-known |apply| tactic in Coq:
+we are trying to solve a goal of type |T| while we have a definition
+of type |Pi S T|. We can therefore solve the goal |T| provided we can
+solve the goal |S|. We have this tactic too and, guess what, it is
+|apply|.
+
+> apply :: ProofState (EXTM :=>: VAL)
+> apply = do
+>   devEntry <- getEntryAbove
+>   case devEntry of
+>     EDEF f@(_ := _ :<: (PI _S _T)) _ _ _ _ -> do
+>         -- The entry above is a proof of |Pi S T|
+>
+>         -- Ask for a proof of |S|
+>         _STm <- bquoteHere _S
+>         sTm :=>: s <- make $ "s" :<: _STm
+>         -- Make a proof of |T|
+>         _TTm <- bquoteHere $ _T $$ A s
+>         make $ "t" :<: _TTm
+>         goIn
+>         giveOutBelow $ N $ P f :$ A (N sTm)
+>     _ -> throwError' $ err  $ "apply: last entry in the development" 
+>                             ++ " must be a girl with a pi-type."
+
 
 The |select| command takes a term representing a neutral parameter, makes a new
 goal of the same type, and fills it in with the parameter.
@@ -125,6 +141,7 @@ goal of the same type, and fills it in with the parameter.
 >     goIn
 >     giveOutBelow tm
 > select _ = throwError' $ err "select: term is not a parameter."
+
 
 The |ungawa| command looks for a truly obvious thing to do, and does it.
 
