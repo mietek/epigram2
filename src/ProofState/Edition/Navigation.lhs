@@ -45,6 +45,11 @@ might hit a news bulletin. A news bulletin is a lazy edition
 process. In order to move, we have to propogate the news, hence
 effectively editing the proof state.
 
+
+
+\subsection{One-step navigation}
+
+
 We shall now develop this navigation kit, comfortably installed in the
 |ProofState| monad. First, some vocabulary. The \emph{focus} is the
 current development; it contains a \emph{cursor} which is the point at
@@ -364,3 +369,25 @@ parameteres on our way.
 >             -- There is no down
 >             throwError' $ err "goDown: you can't go that way."
 
+
+
+\subsection{Many-step Navigation}
+
+
+The following functions are trivial iterations of the ones developed
+above. 
+
+> cursorTop :: ProofState ()
+> cursorTop = much cursorUp
+>
+> cursorBottom :: ProofState ()
+> cursorBottom = much cursorDown
+>
+> goTop :: ProofState ()
+> goTop = much goUp
+>
+> goBottom :: ProofState ()
+> goBottom = much goDown
+>
+> goRoot :: ProofState ()
+> goRoot = much goOut

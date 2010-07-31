@@ -145,25 +145,6 @@ may be useful for paranoia purposes.
 
 
 
-\subsubsection{Many-step Navigation}
-
-The |cursorTop|, |cursorBottom|, |goTop|, |goBottom| and |goRoot| commands
-apply the corresponding single-step commands zero or more times.
-
-> cursorTop :: ProofState ()
-> cursorTop = much cursorUp
-
-> cursorBottom :: ProofState ()
-> cursorBottom = much cursorDown
-
-> goTop :: ProofState ()
-> goTop = much goUp
-
-> goBottom :: ProofState ()
-> goBottom = much goDown
-
-> goRoot :: ProofState ()
-> goRoot = much goOut
 
 
 The |goTo| command moves the focus to the entry with the given long name,
@@ -187,23 +168,6 @@ starting from the root module.
 
 
 \subsection{Goal Search Commands}
-
-To implement goal search, we need a few useful bits of kit...
-
-The |untilA| operator runs its first argument one or more times until its second
-argument succeeds, at which point it returns the result. If the first argument
-fails, the whole operation fails.
-
-> untilA :: Alternative f => f () -> f a -> f a
-> g `untilA` test = g *> try
->     where try = test <|> (g *> try)
-
-The |much| operator runs its argument until it fails, then returns the state of
-its last success. It is very similar to |many|, except that it throws away the
-results.
-
-> much :: Alternative f => f () -> f ()
-> much f = (f *> much f) <|> pure ()
 
 The |isGoal| command succeeds (returning |()|) if the current location is a goal,
 and fails (yielding |Nothing|) if not.
