@@ -753,10 +753,11 @@ because its definition will have been updated when the motive was defined.
 >     goDown
 
 The |getLocalContext| command takes a comma and returns the local
-context, by looking up the uncles and dropping those before the comma,
-if one is supplied.  Regardless of the comma, we only go back as far
-as a |CurrentEntry| with name |magicImplName| if one exists, so shared
-parameters for programming problems will always be excluded.
+context, by looking up the parameters above and dropping those before
+the comma, if one is supplied.  Regardless of the comma, we only go
+back as far as a |CurrentEntry| with name |magicImplName| if one
+exists, so shared parameters for programming problems will always be
+excluded.
 
 > getLocalContext :: Maybe REF -> ProofState (Bwd (REF :<: INTM))
 > getLocalContext comma = do

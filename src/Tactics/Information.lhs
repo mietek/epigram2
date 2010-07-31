@@ -51,8 +51,8 @@
 %endif
 
 
-> infoAuncles :: ProofState String
-> infoAuncles = do
+> infoInScope :: ProofState String
+> infoInScope = do
 >     pc <- get
 >     inScope <- getInScope
 >     return (showEntries (inBScope pc) inScope)
@@ -314,14 +314,14 @@ final type-term pair (using a quick hack).
 >       "scheme <name> - looks up the scheme on the definition <name>."
 
 >   : unaryStringCT "show" (\s -> case s of
->         "auncles"  -> infoAuncles
+>         "inscope"  -> infoInScope
 >         "context"  -> infoContext 
 >         "dump"     -> infoDump
 >         "hyps"     -> infoHypotheses
 >         "state"    -> prettyProofState
 >         _          -> return "show: please specify exactly what to show."
 >       )
->       "show <auncles/context/dump/hyps/state> - displays useless information."
+>       "show <inscope/context/dump/hyps/state> - displays useless information."
 
 >   : unaryExCT "whatis" infoWhatIs
 >       "whatis <term> - prints the various representations of <term>."

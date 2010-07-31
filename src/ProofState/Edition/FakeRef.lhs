@@ -34,8 +34,9 @@
 
 The |getFakeCurrentEntry| command returns a neutral application of a
 fake reference that represents the current entry of the current
-location. Note that its type is $\lambda$-lifted over its great
-uncles, but it is then applied to them (as shared parameters).
+location. Note that its type is $\lambda$-lifted over its parameters
+in global scope, but it is then applied to them (as shared
+parameters).
 
 \pierre{This requires further documentation. I'm not familiar with
 these fake things, so I cannot tell more about it now.}

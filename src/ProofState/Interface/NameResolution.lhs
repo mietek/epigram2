@@ -403,8 +403,9 @@ Otherwise, we actually have to do some work. We work in the |Maybe| monad and
 >         Nothing      -> maybe (failNom tar, 0, Nothing) id $
 >             case (partNoms tar msc [] B0, rk) of
 
-If the reference is a |DECL|, then it had better be one of our uncles, and we
-do not need to worry about shared parameters. We simply call |nomTop| to find it.
+If the reference is a |DECL|, then it had better be a parameter above,
+and we do not need to worry about shared parameters. We simply call
+|nomTop| to find it.
 
 >                 (_, DECL) ->  do
 >                     (x, ms) <- nomTop tar (mesus, mes <+> les)
@@ -607,9 +608,9 @@ the name part of references, respectively.
 > christenREF bsc (target := rk :<: _) = christenName bsc target rk
 
 
-The |showEntries| function folds over a bunch of entries, christening them with
-the given auncles and current name, and intercalating to produce a
-comma-separated list.
+The |showEntries| function folds over a bunch of entries, christening
+them with the given entries in scope and current name, and
+intercalating to produce a comma-separated list.
 
 > showEntries :: (Traversable f, Traversable g) => BScopeContext -> f (Entry g) -> String
 > showEntries bsc = intercalate ", " . foldMap
