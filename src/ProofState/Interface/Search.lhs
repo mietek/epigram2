@@ -29,7 +29,7 @@
 %endif
 
 
-In Section~\ref{sec:proofstate-edition-navigation}, we have developped
+In Section~\ref{sec:Proofstate.Edition.Navigation}, we have developped
 several commands to navigate in the proof context. Here, we extend
 these to be able \emph{search} in the proof context.
 

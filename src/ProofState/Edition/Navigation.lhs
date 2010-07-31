@@ -1,5 +1,5 @@
 \section{Navigating in the Proof Context}
-\label{sec:proofstate-edition-navigation}
+\label{sec:Proofstate.Edition.Navigation}
 
 %if False
 
@@ -32,16 +32,17 @@
 %endif
 
 
-In Section~\ref{sec:developments}, we have developed the notion of
-|Development|, a tree reifing the proof construction process. In order
-to navigate this tree, we have computed its zipper in
-Section~\ref{sec:proof_context}, the |ProofContext|. At this stage, we
-have a notion of \emph{movement} in the proof context.
+In Section~\ref{sec:ProofState.Structure.Developments}, we have
+developed the notion of |Development|, a tree reifing the proof
+construction process. In order to navigate this tree, we have computed
+its zipper in Section~\ref{sec:ProofState.Edition.ProofContext}, the
+|ProofContext|. At this stage, we have a notion of \emph{movement} in
+the proof context.
 
 However, we had to postpone the development of navigation commands to
 this stage, where we have the ability to \emph{edit} the |ProofState|
-(Section~\ref{sec:proof_state_monad}). Indeed, when moving down, we
-might hit a news bulletin. A news bulletin is a lazy edition
+(Section~\ref{sec:ProofState.Edition.ProofState}). Indeed, when moving
+down, we might hit a news bulletin. A news bulletin is a lazy edition
 process. In order to move, we have to propogate the news, hence
 effectively editing the proof state.
 
@@ -54,15 +55,16 @@ We shall now develop this navigation kit, comfortably installed in the
 |ProofState| monad. First, some vocabulary. The \emph{focus} is the
 current development; it contains a \emph{cursor} which is the point at
 which changes take place. Consider the following development presented
-in Figure~\ref{fig:navigation-devpmt}: we have that the development
-|B| is in focus, with |y| above the cursor and |z| below it.
+in Figure~\ref{fig:ProofState.Edition.Navigation.devpmt}: we have that
+the development |B| is in focus, with |y| above the cursor and |z|
+below it.
 
 \begin{figure}
 
 {\include{ProofState/Edition/NavigationExamples}}
 
 \caption{Navigation in a development}
-\label{fig:navigation-devpmt}
+\label{fig:ProofState.Edition.Navigation.devpmt}
 \end{figure}
 
 

@@ -1,5 +1,5 @@
 \section{Resolving and unresolving names}
-\label{sec:name-resolution}
+\label{sec:ProofState.Interface.NameResolution}
 
 %if False
 
@@ -244,7 +244,7 @@ then continues with |lookFor|.
 
 
 \subsection{Unresolving absolute names to relative names}
-\label{subsec:christening}
+\label{subsec:ProofState.Interface.NameResolution.christening}
 
 Just as resolution automatically supplies parameters to references
 which are actually lifted, so its inverse, \emph{christening}, must

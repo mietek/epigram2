@@ -1,5 +1,5 @@
 \section{Proof Context}
-\label{sec:proof_context}
+\label{sec:ProofState.Edition.ProofContext}
 
 %if False
 
@@ -26,8 +26,8 @@
 
 %endif
 
-Recall from Section~\ref{sec:developments} the definition of a
-development:
+Recall from Section~\ref{sec:ProofState.Structure.Developments} the
+definition of a development:
 
 < type Dev = (f (Entry f), Tip, NameSupply)
 
@@ -68,7 +68,7 @@ The derivative makes sense only for definitions and modules, which
 have sub-developments. Parameters being childless, they `derive to
 0'. Hence, the data about the working development is the derivative of
 the Definition and Module data-types defined in
-Section~\ref{sec:developments_entry}.
+Section~\ref{subsubsec:ProofState.Structure.Developments.entry}.
 
 > data CurrentEntry  =  CDefinition DefKind REF (String, Int) INTM
 >                    |  CModule Name
@@ -77,8 +77,9 @@ Section~\ref{sec:developments_entry}.
 One would expect the |belowEntries| to be an |Entries|, just as the
 |aboveEntries|. However, the |belowEntries| needs to be a richer
 structure to support the news infrastructure
-(Section~\ref{sec:news}). Indeed, we propagate reference updates
-lazily, by pushing news bulletin below the current cursor.
+(Section~\ref{sec:ProofState.Edition.News}). Indeed, we propagate
+reference updates lazily, by pushing news bulletin below the current
+cursor.
 
 Hence, the |belowEntries| are not only normal entries but also contain
 news. We define a |newtype| for the composition of the |Fwd| and

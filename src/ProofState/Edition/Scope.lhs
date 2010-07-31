@@ -46,8 +46,8 @@ location.
 
 The |definitionsToImpl| function lists the entries above the cursor
 that have been issued during elaboration of a programming problem
-(Section~\ref{subsec:elab-prog-problem}). \pierre{That's all I know
-about it, sorry about that.}
+(Section~\ref{subsec:Elaborator.Elaborator.elab-prog-problem}). \pierre{That's
+all I know about it, sorry about that.}
 
 \pierre{This really is a hack. I hope it will disapear any time soon.}
 

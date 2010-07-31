@@ -1,5 +1,5 @@
 \section{Lambda-lifting and discharging}
-\label{sec:lifting}
+\label{sec:ProofState.Interface.Lifting}
 
 %if False
 

@@ -1,5 +1,5 @@
 \section{The Scheme distiller}
-\label{sec:scheme-distiller}
+\label{sec:Distillation.Scheme}
 
 %if False
 
@@ -35,9 +35,9 @@
 
 Distilling a scheme is similar in spirit to distilling a $\Pi$-type,
 in particular the $\lambda$-abstraction of its codomain
-(section~\ref{subsec:distiller-int}). Provided a
-|Scheme INTM|, we compute the same scheme structure, with Display
-terms instead.
+(section~\ref{subsec:Distillation.Distiller.intm}). Provided a |Scheme
+INTM|, we compute the same scheme structure, with Display terms
+instead.
 
 To do so, we proceed structurally, using |distill| on types and,
 recursively, |distillScheme| on schemes. Each time we go through a

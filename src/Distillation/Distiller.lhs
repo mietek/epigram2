@@ -1,5 +1,5 @@
 \section{The distiller}
-\label{sec:distiller}
+\label{sec:Distillation.Distiller}
 
 %if False
 
@@ -38,13 +38,13 @@
 
 The distiller, like the elaborator, is organized on a |check|/|infer|
 basis, following the type-checker implementation in
-Section~\ref{subsec:type-checking}. |distill| mirrors |check| ---
-distilling |INTM|s, while |distillInfer| mirrors |infer| --- distilling
-|EXTM|s.
+Section~\ref{subsec:Evidences.Rules.type-checking}. |distill| mirrors
+|check| --- distilling |INTM|s, while |distillInfer| mirrors |infer|
+--- distilling |EXTM|s.
 
 
 \subsection{Distilling |INTM|s}
-\label{subsec:distiller-intm}
+\label{subsec:Distillation.Distiller.intm}
 
 The |distill| command converts a typed |INTM| in the Evidence language
 to a term in the Display language; that is, it reverses |elaborate|.
@@ -58,7 +58,8 @@ rules in |distillBase|.
 
 When going under a binder, we have to introduce fresh names to distill
 further. When christening, these fresh names have to be dealt with
-separately (see |unresolve| in Section~\ref{subsec:christening}):
+separately (see |unresolve| in
+Section~\ref{subsec:ProofState.Interface.NameResolution.christening}):
 indeed, they are actually bound variables. Hence, we collect this
 \emph{local scope} as a list of |Entries|. \question{Does |unresolve|
 really need |Entries|, or can it cope with |Bwd REF| instead?}
@@ -121,9 +122,9 @@ local scope of fresh references.
 Moreover, recall that the |DExTm| terms are in Spine form: they are
 composed of a |DHead| --- either parameter, type annotation, or
 embedding of |ExTm| --- and followed by a spine of eliminators. To
-perform this translation, we accumulate a |spine| and distill it 
-when we reach the head. Doing so, shared parameters can be removed
-(see subsection~\ref{subsec:christening}).
+perform this translation, we accumulate a |spine| and distill it when
+we reach the head. Doing so, shared parameters can be removed (see
+subsection~\ref{subsec:ProofState.Interface.NameResolution.christening}).
 
 > distillInfer ::  Entries -> EXTM -> Spine {TT} REF -> 
 >                  ProofStateT INTM (DExTmRN :<: TY)

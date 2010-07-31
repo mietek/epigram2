@@ -1,5 +1,5 @@
 \section{Using the |Elab| language}
-\label{sec:make_elab}
+\label{sec:Elaboration.MakeElab}
 
 %if False
 
@@ -212,9 +212,9 @@ If nothing else matches, give up and report an error.
 \subsection{Elaborating |DExTm|s}
 
 The |makeElabInfer| command is to |infer| in
-subsection~\ref{subsec:type-inference} as |makeElab| is to |check|. It elaborates
-the display term and infers its type to produce a type-term pair in the evidence
-language.
+subsection~\ref{subsec:Evidences.Rules.type-inference} as |makeElab|
+is to |check|. It elaborates the display term and infers its type to
+produce a type-term pair in the evidence language.
 
 The result of |makeElabInfer| is of type $\SIGMA{\V{X}}{\Set}{X}$, which
 we can represent as an evidence term or value (|sigSetTM| or |sigSetVAL|,

@@ -1,5 +1,5 @@
 \section{The |Elab| Monad}
-\label{sec:elab_monad}
+\label{sec:Elaboration.ElabMonad}
 
 %if False
 

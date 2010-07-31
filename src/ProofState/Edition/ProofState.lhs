@@ -1,5 +1,5 @@
 \section{The |ProofState| monad}
-\label{sec:proof_state_monad}
+\label{sec:ProofState.Edition.ProofState}
 
 %if False
 

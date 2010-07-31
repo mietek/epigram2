@@ -1,5 +1,5 @@
 \section{Pretty-printing}
-\label{sec:pretty_printer}
+\label{sec:DisplayLang.PrettyPrint}
 
 %if False
 

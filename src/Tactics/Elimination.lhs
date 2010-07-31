@@ -77,7 +77,7 @@ We will define |elim| this way:
 
 
 \subsection{Analyzing the eliminator}
-\label{subsec:tactics-elimination-analysis}
+\label{subsec:Tactics.Elimination.analysis}
 
 Presented as a development, |elim| is called in the context
 \begin{center}

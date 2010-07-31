@@ -25,8 +25,8 @@
 
 \subsubsection{Manipulating the |CurrentEntry|}
 
-As with entries in Section~\ref{sec:structure-entries}, we need some
-kit operating on any kind of |CurrentEntry|. So far, this is
+As with entries in Section~\ref{sec:ProofState.Structure.Entries}, we
+need some kit operating on any kind of |CurrentEntry|. So far, this is
 restricted to getting its name:
 
 > currentEntryName :: CurrentEntry -> Name

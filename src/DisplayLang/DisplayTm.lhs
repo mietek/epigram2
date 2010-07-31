@@ -45,7 +45,7 @@ However, we have removed the following:
 \begin{itemize}
 \item Type ascriptions, replaced by type annotations ; and
 \item Operators, replaced by a parameter containing the corresponding
-reference in |primitives| (Section \ref{subsec:operators})
+reference in |primitives| (Section \ref{subsec:Evidences.Rules.operators})
 \end{itemize}
 
 

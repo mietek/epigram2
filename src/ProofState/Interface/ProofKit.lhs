@@ -1,5 +1,5 @@
 \section{The |ProofState| Kit}
-\label{sec:proof_state_kit}
+\label{sec:ProofState.Interface.ProofKit}
 
 %if False
 
@@ -42,9 +42,10 @@ module, we export these operations as part of the Interface.
 \subsection{Accessing the |NameSupply|}
 
 
-By definition of the |Development| in Section~\ref{sec:developments},
-we have that every entry is associated a namespace by the mean of a
-local name supply. As a result, the |ProofState| can almost be made a
+By definition of the |Development| in
+Section~\ref{sec:ProofState.Structure.Developments}, we have that
+every entry is associated a namespace by the mean of a local name
+supply. As a result, the |ProofState| can almost be made a
 |NameSupplier|. The exception being that it cannot fork the name
 supply, because it cannot generates new namespaces.
 

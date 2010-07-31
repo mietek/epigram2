@@ -39,13 +39,13 @@ cursor. The meat is actually in |makeKinded|, below.
 
 When making a new definition, the reference to this definition bears a
 \emph{hole kind}
-(Section~\ref{sec:evidences.tm-references}). User-generated goals are
-of kind |Waiting|: waiting for the user to solve it (or, if lucky, an
-automation tool could nail it down). For making these kind of
+(Section~\ref{subsec:Evidences.Tm.references}). User-generated goals
+are of kind |Waiting|: waiting for the user to solve it (or, if lucky,
+an automation tool could nail it down). For making these kind of
 definition, we will use the |make| command above. However, during
-Elaboration for instance (Section~\ref{sec:elaborator}), the proof
-system will insert goals itself, with a somewhat changing mood such as
-|Hoping| or |Crying|.
+Elaboration for instance (Section~\ref{sec:Elaborator.Elaborator}),
+the proof system will insert goals itself, with a somewhat changing
+mood such as |Hoping| or |Crying|.
 
 > makeKinded :: HKind -> (String :<: INTM) -> ProofState (EXTM :=>: VAL)
 > makeKinded holeKind (name :<: ty) = do

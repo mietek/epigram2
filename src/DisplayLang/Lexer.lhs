@@ -1,5 +1,5 @@
 \section{Lexer}
-\label{sec:lexer}
+\label{sec:DisplayLang.Lexer}
 
 The lexical structure is extremely simple. The reason is that Cochon
 being an interactive theorem prover, its inputs will be

@@ -97,7 +97,7 @@ as:
 >     askNSupply = ask
 
 \subsection{The |Check| monad is a |NameSupplier|}
-\label{sec:check_monad}
+\label{subsec:NameSupply.NameSupplier.check-monad}
 
 One such example is the |Check| monad:
 

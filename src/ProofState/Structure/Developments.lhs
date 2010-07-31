@@ -1,5 +1,5 @@
 \section{Developments}
-\label{sec:developments}
+\label{sec:ProofState.Structure.Developments}
 
 %if False
 
@@ -79,7 +79,7 @@ Finally, a development can be finalised, in which case it is
 
 
 \subsubsection{|Entry|}
-\label{sec:developments_entry}
+\label{subsubsec:ProofState.Structure.Developments.entry}
 
 As mentionned above, a |Dev| is a kind of tree. The branches are
 introduced by the container |f (Entry f)| where |f| is Traversable,
@@ -172,8 +172,8 @@ will either be of |Unknown| or |Defined| kind. \pierre{Can the Tip be
 |Suspended|? I suspect so.}
 
 A programming problem is a special kind of definition: it follows a
-type |Scheme| (Section~\ref{sec:display-scheme}), the high-level type
-of the function we are implementing.
+type |Scheme| (Section~\ref{sec:DisplayLang.Scheme}), the high-level
+type of the function we are implementing.
 
 > data DefKind = LETG |  PROG (Scheme INTM)
 

@@ -1,5 +1,5 @@
 \section{Managing Entries in a Development}
-\label{sec:structure-entries}
+\label{sec:ProofState.Structure.Entries}
 
 %if False
 
@@ -76,10 +76,11 @@ Two entries are equal if and only if they have the same name:
 
 The |entryCoerce| function is quite a thing. When defining |Dev|, we
 have been picky in letting any Traversable |f| be the carrier of the
-|f (Entry f)|. As shown in Section~\ref{sec:proof_context}, we
-sometimes need to jump from one Traversable |f| to another Traversable
-|g|. In this example, we jump from a |NewsyFwd| -- a |Fwd| list -- to
-some |Entries| -- a |Bwd| list.
+|f (Entry f)|. As shown in
+Section~\ref{sec:ProofState.Edition.ProofContext}, we sometimes need
+to jump from one Traversable |f| to another Traversable |g|. In this
+example, we jump from a |NewsyFwd| -- a |Fwd| list -- to some
+|Entries| -- a |Bwd| list.
 
 Changing the type of the carrier is possible for parameters, in which
 case we return a |Right entry|. It is not possible for definitions and

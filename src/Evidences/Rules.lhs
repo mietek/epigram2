@@ -1,5 +1,5 @@
 \section{Rules}
-\label{sec:rules}
+\label{sec:Evidences.Rules}
 
 %if False
 
@@ -58,30 +58,37 @@ Formally, the computation rules of the featureless language are the
 following:
 
 \begin{eqnarray}
-(\lambda \_ . v) u & \mapsto & v                            \label{eqn:elim_cstt} \\
-(\lambda x . t) v  & \mapsto & \mbox{eval } t[x \mapsto v]  \label{eqn:elim_bind} \\
-\mbox{unpack}(Con\ t) & \mapsto & t                         \label{eqn:elim_con}  \\
-(N n) \$\$ ee      & \mapsto & N (n \:\$ e)                 \label{eqn:elim_stuck}
+(\lambda \_ . v) u & \mapsto & v                            
+    \label{eqn:Evidences.Rules.elim-cstt} \\
+(\lambda x . t) v  & \mapsto & \mbox{eval } t[x \mapsto v]  
+    \label{eqn:Evidences.Rules.elim-bind} \\
+\mbox{unpack}(Con\ t) & \mapsto & t                         
+    \label{eqn:Evidences.Rules.elim-con}  \\
+(N n) \$\$ ee      & \mapsto & N (n \:\$ e)                 
+    \label{eqn:Evidences.Rules.elim-stuck}
 \end{eqnarray}
 
-The rules \ref{eqn:elim_cstt} and \ref{eqn:elim_bind} are standard
-lambda calculus stories. Rule \ref{eqn:elim_con} is the expected
-"unpacking the packer" rule. Rule \ref{eqn:elim_stuck} is justified as
-follow: if no application rule applies, this means that we are
-stuck. This can happen if and only if the application is itself
-stuck. The stuckness therefore propagates to the whole elimination.
+The rules \ref{eqn:Evidences.Rules.elim-cstt} and
+\ref{eqn:Evidences.Rules.elim-bind} are standard lambda calculus
+stories. Rule \ref{eqn:Evidences.Rules.elim-con} is the expected
+"unpacking the packer" rule. Rule \ref{eqn:Evidences.Rules.elim-stuck}
+is justified as follow: if no application rule applies, this means
+that we are stuck. This can happen if and only if the application is
+itself stuck. The stuckness therefore propagates to the whole
+elimination.
 
 This translates into the following code:
 
 > ($$) :: VAL -> Elim VAL -> VAL
-> L (K v)      $$ A _  = v                 -- By \ref{eqn:elim_cstt}
-> L (H g _ t)  $$ A v  = eval t (g :< v)   -- By \ref{eqn:elim_bind}
-> L (HF _ f)   $$ A v  = f v               -- By \ref{eqn:elim_bind}
-> L (x :. t)   $$ A v  = eval t (B0 :< v)  -- By \ref{eqn:elim_bind}
-> C (Con t)    $$ Out  = t                 -- By \ref{eqn:elim_con}
+> L (K v)      $$ A _  = v                 -- By \ref{eqn:Evidences.Rules.elim-cstt}
+> L (H g _ t)  $$ A v  = eval t (g :< v)   -- By \ref{eqn:Evidences.Rules.elim-bind}
+> L (HF _ f)   $$ A v  = f v               -- By \ref{eqn:Evidences.Rules.elim-bind}
+> L (x :. t)   $$ A v  = eval t (B0 :< v)  -- By \ref{eqn:Evidences.Rules.elim-bind}
+> C (Con t)    $$ Out  = t                 -- By \ref{eqn:Evidences.Rules.elim-con}
 > import <- ElimComputation                -- Extensions
-> N n          $$ e    = N (n :$ e)        -- By \ref{eqn:elim_stuck}
-> f            $$ e    = error ("Can't eliminate\n" ++ show f ++ "\nwith eliminator\n" ++ show e)
+> N n          $$ e    = N (n :$ e)        -- By \ref{eqn:Evidences.Rules.elim-stuck}
+> f            $$ e    =  error $  "Can't eliminate\n" ++ show f ++ 
+>                                  "\nwith eliminator\n" ++ show e
 
 
 The left fold of |$$| applies a value to a bunch of eliminators:
@@ -184,7 +191,7 @@ interpreter defined above with the empty environment.
 
 
 \subsubsection{Canonical objects}
-\label{sec:canTy}
+\label{subsubsec:Evidences.Rules.canTy}
 
 
 Historically, canonical terms were type-checked by the following
@@ -232,7 +239,7 @@ using |canTy|.
 
 
 \subsubsection{Eliminators}
-\label{sec:elimTy}
+\label{subsubsec:Evidences.Rules.elimTy}
 
 Type-checking eliminators mirrors |canTy|. |elimTy| is provided with a
 checker-evaluator, a value |f| of inferred typed |t|, ie. a |f :<: t|
@@ -276,7 +283,8 @@ Testing for equality is a direct application of normalization by
 evaluation\cite{dybjer:nbe, chapman:phd, dybjer:dependent_types_work}:
 to compare two values, we first bring them to their normal form. Then,
 it is a simple matter of syntactic equality, as defined in Section
-\ref{sec:syntactic_equality}, to compare the normal forms.
+\ref{subsec:Evidences.Tm.syntactic-equality}, to compare the normal
+forms.
 
 > equal :: (TY :>: (VAL,VAL)) -> NameSupply -> Bool
 > equal (ty :>: (v1,v2)) r = quote (ty :>: v1) r == quote (ty :>: v2) r
@@ -532,7 +540,7 @@ under a lambda and we are discharged.
 >       Just n  -> n
 
 \subsection{Type checking}
-\label{subsec:type-checking}
+\label{subsec:Evidences.Rules.type-checking}
 
 Here starts the bidirectional type-checking story. In this section, we
 address the Checking side. In the next section, we implement the
@@ -549,7 +557,7 @@ $$\Gamma \vdash \mbox{TY} \ni \mbox{Tm \{In,.\} p}$$
 
 Technically, we also need a name supply and handle failure with a
 convenient monad. Therefore, we jump in the |Check| monad defined in
-Section~\ref{sec:check_monad}.
+Section~\ref{subsec:NameSupply.NameSupplier.check-monad}.
 
 > check :: (TY :>: INTM) -> Check INTM (INTM :=>: VAL)
 
@@ -614,7 +622,7 @@ has matched, then we have to give up.
 
 
 \subsection{Type inference}
-\label{subsec:type-inference}
+\label{subsec:Evidences.Rules.type-inference}
 
 On the inference side, we also have a valid typing environment
 $\Gamma$ that is used to pull types |TY| out of |Ex| terms:
@@ -691,7 +699,7 @@ fishy.
 
 
 \subsection{Operators and primitives}
-\label{subsec:operators}
+\label{subsec:Evidences.Rules.operators}
 
 In this section, we weave some She aspects. In particular, we bring
 inside @Rules.lhs@ the |operators| defined by feature files,
@@ -793,9 +801,10 @@ Let's have some observational equality, now!
 Does nested use of import aspects work?}
 
 
-The |eqGreen| operator, defined in section~\ref{sec:features_equality},
-computes the proposition that two values are equal if their containing
-sets are equal. We write |<->| for application of this operator.
+The |eqGreen| operator, defined in
+section~\ref{sec:Features.Equality}, computes the proposition that two
+values are equal if their containing sets are equal. We write |<->|
+for application of this operator.
 
 > (<->) :: (TY :>: VAL) -> (TY :>: VAL) -> VAL
 > (y0 :>: t0) <-> (y1 :>: t1) = eqGreen @@ [y0,t0,y1,t1]

@@ -1,5 +1,5 @@
 \section{Implementing the |Elab| monad}
-\label{sec:run_elab}
+\label{sec:Elaborator.RunElab}
 
 %if False
 

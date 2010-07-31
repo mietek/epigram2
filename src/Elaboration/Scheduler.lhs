@@ -38,12 +38,14 @@
 
 %endif
 
-Handling elaboration essentially requires writing an operating system. Having
-defined how to execute processes in section~\ref{sec:elaborator}, we now turn
-our attention to process scheduling. The scheduler is called when an
-elaboration process yields (either halting after solving its goal, halting
-with an error, or suspending work until later). It searches downwards in the
-proof state for unstable elaboration problems and executes any it finds.
+Handling elaboration essentially requires writing an operating
+system. Having defined how to execute processes in
+section~\ref{sec:Elaborator.Elaborator}, we now turn our attention to
+process scheduling. The scheduler is called when an elaboration
+process yields (either halting after solving its goal, halting with an
+error, or suspending work until later). It searches downwards in the
+proof state for unstable elaboration problems and executes any it
+finds.
 
 When the scheduler is started, all problems before the working location should
 be stable, but there may be unstable problems in the current location and below

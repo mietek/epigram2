@@ -1,5 +1,5 @@
 \section{The Moonshine distillery}
-\label{sec:moonshine-distiller}
+\label{sec:Distillation.Moonshine}
 
 %if False
 

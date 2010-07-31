@@ -1,5 +1,5 @@
 \section{Schemes}
-\label{sec:display-scheme}
+\label{sec:DisplayLang.Scheme}
 
 %if False
 

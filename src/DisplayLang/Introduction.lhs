@@ -19,15 +19,17 @@ transformation between representations.
      +-------------- Doc <------------- DInTmRN <------------+
 \end{verbatim}
 
-In the beginning was the |String|. This gets lexed (section \ref{sec:lexer})
-to produce a list of |Token|s, which are parsed (section \ref{sec:parser}) to
-give an |DInTm RelName| (a term in the display syntax containing relative
-names). The display term is then elaborated (section \ref{sec:elaborator})
-in the |ProofState| monad to produce an |INTM| (a term in the evidence
-language).
+In the beginning was the |String|. This gets lexed (section
+\ref{sec:DisplayLang.Lexer}) to produce a list of |Token|s, which are
+parsed (section \ref{sec:DisplayLang.TmParse}) to give an |DInTm
+RelName| (a term in the display syntax containing relative names). The
+display term is then elaborated (section
+\ref{sec:Elaborator.Elaborator}) in the |ProofState| monad to produce
+an |INTM| (a term in the evidence language).
 
-Reversing the process, the distiller (section \ref{sec:distiller}) converts
-an evidence term back to a display term, and the pretty-printer
-(section \ref{sec:pretty_printer}) renders this as a |String|.
+Reversing the process, the distiller (section
+\ref{sec:Distillation.Distiller}) converts an evidence term back to a
+display term, and the pretty-printer (section
+\ref{sec:DisplayLang.PrettyPrint}) renders this as a |String|.
 
 %% TODO: this diagram ought to be quickchecked

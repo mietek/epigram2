@@ -1,5 +1,5 @@
 \section{Invoking the Elaborator}
-\label{sec:elaborator}
+\label{sec:Elaborator.Elaborator}
 
 %if False
 
@@ -52,10 +52,11 @@
 
 \subsection{Elaborating terms}
 
-The |elaborate| command elaborates a term in display syntax, given its type,
-to produce an elaborated term and its value representation. It behaves
-similarly to |check| from subsection~\ref{subsec:type-checking}, except that
-it operates in the |Elab| monad, so it can create subgoals and
+The |elaborate| command elaborates a term in display syntax, given its
+type, to produce an elaborated term and its value representation. It
+behaves similarly to |check| from
+subsection~\ref{subsec:Evidences.Rules.type-checking}, except that it
+operates in the |Elab| monad, so it can create subgoals and
 $\lambda$-lift terms.
 
 > elaborate :: Loc -> (TY :>: DInTmRN) -> ProofState (INTM :=>: VAL)
@@ -143,7 +144,7 @@ creates a $\Pi$ with that type.
 
 
 \subsection{Elaborating programming problems}
-\label{subsec:elab-prog-problem}
+\label{subsec:Elaborator.Elaborator.elab-prog-problem}
 
 The |elabLet| command sets up a programming problem, given a name and
 scheme. The command |let plus (m : Nat)(n : Nat) : Nat| should result

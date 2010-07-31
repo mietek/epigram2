@@ -1,5 +1,5 @@
 \section{News about updated references}
-\label{sec:news}
+\label{sec:ProofState.Edition.News}
 
 %if False
 
@@ -18,13 +18,13 @@
 %endif
 
 
-The news system represents stored updates to references. For performance
-reasons, we do not wish to traverse the entire proof state every time
-modifications are made to one part of the tree. Instead, we store news
-entries below the cursor, and update following entries when the cursor
-moves down. This section describes the data that is stored in the
-proof state, and section \ref{sec:wire_service} describes how news is
-propagated.
+The news system represents stored updates to references. For
+performance reasons, we do not wish to traverse the entire proof state
+every time modifications are made to one part of the tree. Instead, we
+store news entries below the cursor, and update following entries when
+the cursor moves down. This section describes the data that is stored
+in the proof state, and section \ref{sec:Elaboration.Wire} describes
+how news is propagated.
 
 
 \subsection{News}

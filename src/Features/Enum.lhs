@@ -1,5 +1,5 @@
 \section{Enum}
-\label{sec:enum}
+\label{sec:Features.Enum}
 
 %if False
 

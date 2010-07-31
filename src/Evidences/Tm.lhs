@@ -327,7 +327,8 @@ arguments is correct, we return them labelled with their type and the
 type of the result.
 
 However, we had to generalize it. Following the evolution of |canTy|
-in Section~\ref{sec:canTy}, we have adopted the following scheme:
+in Section~\ref{subsubsec:Evidences.Rules.canTy}, we have adopted the
+following scheme:
 
 > opTy ::  (Alternative m, MonadError (StackError t) m) =>
 >          Op -> (TY :>: t -> m (s :=>: VAL)) -> [t] ->
@@ -339,7 +340,8 @@ evaluation function to perform type-checking at the same time. We also
 liberalise the return type to |s|, to give more freedom in the choice
 of the checker-evaluator. This change impacts on |exQuote|, |infer|,
 and |useOp|. If this definition is not clear now, it should become
-clear after the definition of |canTy| in Section~\ref{sec:canTy}.
+clear after the definition of |canTy| in
+Section~\ref{subsubsec:Evidences.Rules.canTy}.
 
 > opTy op chev ss
 >   | length ss == opArity op = telCheck chev (opTyTel op :>: ss)
@@ -424,7 +426,7 @@ term is in fact neutral.
 
 
 \subsection{Syntactic Equality}
-\label{sec:syntactic_equality}
+\label{subsec:Evidences.Tm.syntactic-equality}
 
 
 In the following, we implement definitional equality on terms. In this
@@ -476,14 +478,14 @@ irrelevant. We intend this for proofs, but there may be other things
 >   _ == _ = True
 
 In this section, we have defined the syntactic equality on terms. The
-general definition of syntactic equality remains to be done. It is
-the subject of Section~\ref{sec:rules}: there, we rely on
-\emph{quotation} to turn values into terms. Once turned into terms, 
-we fall back to the equality defined above.
+general definition of syntactic equality remains to be done. It is the
+subject of Section~\ref{sec:Evidences.Rules}: there, we rely on
+\emph{quotation} to turn values into terms. Once turned into terms, we
+fall back to the equality defined above.
 
 
 \subsection{References}
-\label{sec:evidences.tm-references}
+\label{subsec:Evidences.Tm.references}
 
 References are the key way we represent free variables, declared,
 defined, and deluded. References carry not only names, but types and
@@ -566,7 +568,7 @@ hysterectomy stops it computing.
 >   deriving (Show)
 
 For example, labels are used in the presentation of the |Enum|
-(Section~\ref{sec:enum}) and |Desc| (Section~\ref{sec:desc})
+(Section~\ref{sec:Features.Enum}) and |Desc| (Section~\ref{sec:Features.Desc})
 data-types. These data-types are themselves implemented as fix-points
 of non human-readable descriptions, hence we hide the details behind a
 label. The curious reader is referred to their implementation. Anybody

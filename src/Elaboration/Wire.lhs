@@ -1,5 +1,5 @@
 \section{Wire Service}
-\label{sec:wire_service}
+\label{sec:Elaboration.Wire}
 
 %if False
 

@@ -1,5 +1,5 @@
 \section{Parsing Terms}
-\label{sec:parser}
+\label{sec:DisplayLang.TmParse}
 
 %if False
 
