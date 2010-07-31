@@ -333,8 +333,6 @@ Construction tactics:
 >       (\ as -> elabProgram (map argToStr as) >> return "Programming.")
 >       "program <labels>: set up a programming problem."
 
->   : unaryNameCT "select" (\ x -> resolveDiscard x >>= select . N . P >> return "Selected.")
->       "select <name> - defines a copy of <name> in the current development."
 >   : nullaryCT "ungawa" (ungawa >> return "Ungawa!")
 >       "ungawa - tries to solve the current goal in a stupid way."
 

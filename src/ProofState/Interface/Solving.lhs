@@ -130,19 +130,6 @@ solve the goal |S|. We have this tactic too and, guess what, it is
 >     _ -> throwError' $ err  $ "apply: last entry in the development" 
 >                             ++ " must be a girl with a pi-type."
 
-
-The |select| command takes a term representing a neutral parameter, makes a new
-goal of the same type, and fills it in with the parameter.
-
-> select :: INTM -> ProofState (EXTM :=>: VAL)
-> select tm@(N (P (name := k :<: ty))) = do
->     ty' <- bquoteHere ty
->     make (fst (last name) :<: ty')
->     goIn
->     giveOutBelow tm
-> select _ = throwError' $ err "select: term is not a parameter."
-
-
 The |ungawa| command looks for a truly obvious thing to do, and does it.
 
 > ungawa :: ProofState ()
