@@ -138,7 +138,7 @@ creates a $\Pi$-boy with that type.
 > elabLamBoy :: (String :<: DInTmRN) -> ProofState REF
 > elabLamBoy (s :<: ty) = do
 >     tt <- elaborate' (SET :>: ty)
->     lambdaParamTyped (s :<: tt)
+>     assumeParam (s :<: tt)
 
 
 \subsection{Elaborating programming problems}

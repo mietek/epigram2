@@ -77,11 +77,8 @@ variant allows a type to be specified, so it can be used with
 modules. If used at an |Unknown| tip, it will check that the supplied
 type matches the one at the tip.
 
-\pierre{This is an embarrassing copy-paste of the definition above,
-with further refinments. I wish this kind of stuff could be avoided.}
-
-> lambdaParamTyped :: (String :<: (INTM :=>: TY)) -> ProofState REF
-> lambdaParamTyped (x :<: (tyTm :=>: ty))  = do
+> assumeParam :: (String :<: (INTM :=>: TY)) -> ProofState REF
+> assumeParam (x :<: (tyTm :=>: ty))  = do
 >     tip <- getDevTip
 >     case tip of
 >       Module -> 
@@ -90,26 +87,7 @@ with further refinments. I wish this kind of stuff could be avoided.}
 >           -- Simply make the reference
 >           putEntryAbove $ EPARAM ref (mkLastName ref) ParamLam tyTm
 >           return ref
->       Unknown (pi :=>: goalTy) ->
->         -- Working at solving a goal
->         case lambdable goalTy of
->         Just (paramKind, s, t) -> do
->           eq <- withNSupply $ equal (SET :>: (ty, s))
->           case eq of
->            True -> 
->             -- Proposed type conforms to actual domain
->             freshRef (x :<: ty) $ \ref -> do
->               -- Introduce the parameter
->               putEntryAbove $ EPARAM ref (mkLastName ref) paramKind tyTm
->               -- Update the Tip accordingly
->               let tipTy = t $ pval ref
->               tipTyTm <- bquoteHere tipTy
->               putDevTip $ Unknown (tipTyTm :=>: tipTy)
->               -- Return a reference to the parameter
->               return ref
->            False -> throwError' $ err "lambdaParamTyped: given type does not match domain of goal."
->         _  -> throwError' $ err "lambdaParamTyped: goal is not a pi-type or all-proof."
->       _    -> throwError' $ err "lambdaParamTyped: only possible for modules or incomplete goals."
+>       _    -> throwError' $ err "assumeParam: only possible for modules."
 
 
 

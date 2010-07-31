@@ -157,7 +157,7 @@
 >         make ((x ++ "ParTy") :<: SET)
 >         goIn
 >         (yt :=>: yv) <- elabGive y
->         r <- lambdaParamTyped (x :<: (N yt :=>: yv))
+>         r <- assumeParam (x :<: (N yt :=>: yv))
 >         return (x,yt,r)) pars
 >       moduleToGoal SET
 >       cs <- traverse (elabCons nom 
