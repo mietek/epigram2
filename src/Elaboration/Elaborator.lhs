@@ -25,6 +25,7 @@
 > import ProofState.Edition.GetSet
 > import ProofState.Edition.Scope
 > import ProofState.Edition.Navigation
+> import ProofState.Edition.FakeRef
 
 > import ProofState.Interface.Search
 > import ProofState.Interface.Module

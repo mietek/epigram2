@@ -230,3 +230,17 @@ that her children have already received, and returns the updated news.
 
 > tellEProb :: NewsBulletin -> EProb -> EProb
 > tellEProb news = fmap (getLatest news)
+
+
+
+
+When the current location or one of its children has suspended, we need to
+update the outer layers.
+
+> grandmotherSuspend :: SuspendState -> ProofState ()
+> grandmotherSuspend ss = getLayers >>= putLayers . help ss
+>   where
+>     help :: SuspendState -> Bwd Layer -> Bwd Layer
+>     help ss B0 = B0
+>     help ss (ls :< l) = help ss' ls :< l{laySuspendState = ss'}
+>       where ss' = min ss (laySuspendState l)

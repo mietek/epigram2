@@ -98,6 +98,11 @@ And some specialized versions:
 >       Defined _ (ty :=>: tyTy) -> return (ty :=>: tyTy)
 >       _ -> throwError'  $ err "getGoal: fail to match a goal in " 
 >                         ++ err s
+>
+> withGoal :: (VAL -> ProofState ()) -> ProofState ()
+> withGoal f = do
+>   (_ :=>: goal) <- getGoal "withGoal"
+>   f goal
 
 \subsubsection{Getting in the |Layers|}
 

@@ -309,3 +309,11 @@ results.
 
 > much :: Alternative f => f () -> f ()
 > much f = (f *> much f) <|> pure ()
+
+
+\subsection{Monadic Kit}
+
+> ignore :: Monad m => m a -> m ()
+> ignore f = do
+>     f
+>     return ()

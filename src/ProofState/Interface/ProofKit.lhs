@@ -32,19 +32,26 @@
 
 %endif
 
-\question{There are some serious re-ordering of functions to be done
-here, in order to improve the narrative.}
+
+The proof state lives on a rich substrate of operations, inherited
+from the |ProofContext| as well as the |ProofState| monad. In this
+module, we export these operations as part of the Interface.
 
 
-\subsection{Asking for Evidence}
 
-A |ProofState| is almost a |NameSupplier|, but it cannot fork the
-name supply.
+\subsection{Accessing the |NameSupply|}
+
+
+By definition of the |Development| in Section~\ref{sec:developments},
+we have that every entry is associated a namespace by the mean of a
+local name supply. As a result, the |ProofState| can almost be made a
+|NameSupplier|. The exception being that it cannot fork the name
+supply, because it cannot generates new namespaces.
 
 > instance NameSupplier (ProofStateT e) where
 >     freshRef (s :<: ty) f = do
 >         nsupply <- getDevNSupply
->         freshRef (s :<: ty) (\ref nsupply' -> do
+>         freshRef (s :<: ty) ( \ref nsupply' -> do
 >             putDevNSupply nsupply'
 >             f ref
 >           ) nsupply
@@ -53,8 +60,8 @@ name supply.
 >     
 >     askNSupply = getDevNSupply
 
-We also provide an operator to lift functions from a name supply
-to proof state commands.
+We also provide an operator to lift functions from a name supply to
+proof state commands.
 
 > withNSupply :: (NameSupply -> x) -> ProofState x
 > withNSupply f = getDevNSupply >>= return . f
@@ -68,32 +75,40 @@ has finished.
 \end{danger}
 
 
-The |bquoteHere| command $\beta$-quotes a term using the current name supply.
+\subsection{Accessing the type-checker}
+
+
+First off, we can access the $\beta$-normalizer: the |bquoteHere|
+command $\beta$-quotes a term using the local name supply.
 
 > bquoteHere :: Tm {d, VV} REF -> ProofState (Tm {d, TT} REF)
 > bquoteHere tm = withNSupply $ bquote B0 tm
 
+
+Secondly, any type-checking problem (defined in the |Check| monad) can
+be executed in the |ProofState|.
 
 > runCheckHere :: (ErrorTok e -> ErrorTok DInTmRN) -> Check e a -> ProofState a
 > runCheckHere f c = do
 >     me <- withNSupply $ liftError' f . typeCheck c
 >     lift me
 
-
-Similarly, |checkHere| type-checks a term using the local name supply...
+As a consequence, we have |checkHere| to |check| terms against types:
 
 > checkHere :: (TY :>: INTM) -> ProofState (INTM :=>: VAL)
 > checkHere tt = runCheckHere (fmap DTIN) $ check tt
 
-... and |inferHere| infers the type of a term using the local name supply.
+and |inferHere| to |infer| types from terms:
 
 > inferHere :: EXTM -> ProofState (VAL :<: TY)
 > inferHere tm = runCheckHere (fmap DTIN) $ infer tm
 
 
+\subsection{Being paranoiac}
 
-The |validateHere| performs some checks on the current location, which
-may be useful for paranoia purposes.
+
+The |validateHere| command performs some sanity checks on the current
+location, which may be useful for paranoia purposes.
 
 > validateHere :: ProofState ()
 > validateHere = do
@@ -120,67 +135,23 @@ may be useful for paranoia purposes.
 >         _ -> return ()
 
 
-> withGoal :: (VAL -> ProofState ()) -> ProofState ()
-> withGoal f = do
->   (_ :=>: goal) <- getGoal "withGoal"
->   f goal
+
+\subsection{From |EXTM| to |INTM|}
 
 
-
-
-
-
-
-
-\subsection{Construction Commands}
-
-Various commands yield an |EXTM :=>: VAL|, and we sometimes need to convert
-this to an |INTM :=>: VAL|:
+Various commands yield an |EXTM :=>: VAL|, and we sometimes need to
+convert this to an |INTM :=>: VAL|. \pierre{This does not really
+belong to this file but where could it go?}
 
 > neutralise :: Monad m => (EXTM :=>: VAL) -> m (INTM :=>: VAL)
-> neutralise (n :=>: v) = return (N n :=>: v)
+> neutralise (n :=>: v) = return $ N n :=>: v
 
 
 
 
 
-> ignore :: ProofState a -> ProofState ()
-> ignore f = do
->     f
->     return ()
-
-     
-
-
-
-The |getFakeMother| command returns a neutral application of a fake reference
-that represents the mother of the current location. Note that its type is
-$\lambda$-lifted over its great uncles, but it is then applied to them (as
-shared parameters).
-
-> getFakeRef :: ProofState REF
-> getFakeRef = do
->    CDefinition _  (mnom := HOLE _ :<: ty) _ _ <- getCurrentEntry
->    return (mnom := FAKE :<: ty)
-
-> getFakeMother :: ProofState (EXTM :=>: VAL)
-> getFakeMother = do
->    r <- getFakeRef
->    inScope <- getInScope
->    let tm = P r $:$ (paramSpine inScope)
->    return $ tm :=>: evTm tm
 
 
 
 
 
-When the current location or one of its children has suspended, we need to
-update the outer layers.
-
-> grandmotherSuspend :: SuspendState -> ProofState ()
-> grandmotherSuspend ss = getLayers >>= putLayers . help ss
->   where
->     help :: SuspendState -> Bwd Layer -> Bwd Layer
->     help ss B0 = B0
->     help ss (ls :< l) = help ss' ls :< l{laySuspendState = ss'}
->       where ss' = min ss (laySuspendState l)

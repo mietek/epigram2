@@ -25,6 +25,7 @@
 > import ProofState.Edition.ProofState
 > import ProofState.Edition.GetSet
 > import ProofState.Edition.Navigation
+> import ProofState.Edition.FakeRef
 
 > import ProofState.Interface.ProofKit
 > import ProofState.Interface.Lifting
@@ -42,6 +43,7 @@
 > import Elaboration.ElabMonad
 > import Elaboration.MakeElab
 > import Elaboration.Unification
+> import Elaboration.Wire
 
 > import Cochon.Error
 
