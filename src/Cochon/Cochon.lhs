@@ -280,10 +280,10 @@ Construction tactics:
 >           | bwdList (pSep (keyword KwComma) tokenString)
 >           |)
 >          (\ args -> case last args of
->              InArg ty  -> Data.Traversable.mapM (elabLamBoy . (:<: ty) . argToStr) (init args)
->                               >> return "Made lambda boy!"
+>              InArg ty  -> Data.Traversable.mapM (elabLamParam . (:<: ty) . argToStr) (init args)
+>                               >> return "Made lambda!"
 >              _         -> Data.Traversable.mapM (lambdaParam . argToStr) args
->                               >> return "Made lambda boy!"
+>                               >> return "Made lambda!"
 >            )
 >          ("lambda <labels> - introduces one or more hypotheses.\n"++
 >           "lambda <labels> : <type> - introduces new module parameters or hypotheses.")
@@ -324,8 +324,8 @@ Construction tactics:
 >   : simpleCT
 >         "pi"
 >          (| (|(B0 :<) tokenString (%keyword KwAsc%)|) :< tokenInTm |)
->         (\ [StrArg s, InArg ty] -> elabPiBoy (s :<: ty) >> return "Made pi boy!")
->         "pi <x> : <type> - introduces a pi boy."
+>         (\ [StrArg s, InArg ty] -> elabPiParam (s :<: ty) >> return "Made pi!")
+>         "pi <x> : <type> - introduces a pi."
 
 >   : simpleCT
 >       "program"

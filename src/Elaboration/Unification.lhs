@@ -76,9 +76,9 @@ holes with the new ones.
 >           giveOutBelow tm''
 >       | occurs girl = goIn >> solveHole' ref ((girl, girlTyTm):deps) tm
 >       | otherwise = goIn >> solveHole' ref deps tm
->     pass (EPARAM boy _ _ _)
->       | occurs boy = throwError' $
->             err "solveHole: boy" ++ errRef boy ++ err "occurs illegally."
+>     pass (EPARAM param _ _ _)
+>       | occurs param = throwError' $
+>             err "solveHole: param" ++ errRef param ++ err "occurs illegally."
 >       | otherwise = cursorUp >> solveHole' ref deps tm
 >     pass (EModule modName _) = goIn >> solveHole' ref deps tm
 >
@@ -146,8 +146,8 @@ match the hoping holes of the first value to parts of the second value.
 >   where
 >     stripShared' :: NEU -> Entries -> ProofState REF
 >     stripShared' (P ref@(_ := HOLE Hoping :<: _)) B0 = return ref
->     stripShared' (n :$ A (NP r)) (es :< EPARAM boyRef _ _ _)
->         | r == boyRef                            = stripShared' n es
+>     stripShared' (n :$ A (NP r)) (es :< EPARAM paramRef _ _ _)
+>         | r == paramRef                      = stripShared' n es
 >     stripShared' n (es :< EDEF _ _ _ _ _)    = stripShared' n es
 >     stripShared' n (es :< EModule _ _)       = stripShared' n es
 >     stripShared' n es = do

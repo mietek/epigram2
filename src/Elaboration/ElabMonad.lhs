@@ -37,7 +37,7 @@ instructions to define a monad that follows the syntax of this language,
 then write an interpreter to run the syntax in the |ProofState| monad.
 
 > eLambda      :: String -> Elab REF
->              -- create a $\lambda$-boy and return its REF
+>              -- create a $\lambda$ and return its REF
 > eGoal        :: Elab TY
 >              -- return the type of the goal
 > eWait        :: String -> TY -> Elab (EXTM :=>: VAL)

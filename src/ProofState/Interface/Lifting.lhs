@@ -16,6 +16,8 @@
 > import Evidences.Mangler
 > import Evidences.Rules
 
+> import ProofState.Edition.Scope
+
 > import ProofState.Structure.Developments
 
 > import Kit.BwdFwd
@@ -23,6 +25,8 @@
 
 %endif
 
+\pierre{I think that, after some clean-up, the following could well be
+moved in @ProofState.Edition.Scope@}
 
 In the following, we define 4 useful functions manipulating terms in a
 context of entries. These functions provide the basic toolkit for
@@ -34,14 +38,13 @@ the implementer.
 \subsection{Discharging entries in a term}
 
 
-The ``discharge into'' operator |(-|)| takes a list of entries and a term, and
-changes the term so that boys in the list of entries are represented by
-de Brujin indices. It makes key use of the (-||) mangler.
+The ``discharge into'' operator |(-|)| takes a list of entries and a
+term, and changes the term so that parameters in the list of entries
+are represented by de Brujin indices. It makes key use of the (-||)
+mangler.
 
 > (-|) :: Entries -> INTM -> INTM
-> es -| tm = (bwdList $ foldMap boy es) -|| tm
->   where boy (EPARAM r _ _ _)  = [r]
->         boy _                  = []
+> es -| tm = (bwdList $ paramREFs es) -|| tm
 
 \subsection{Binding a term}
 
@@ -76,9 +79,9 @@ entries.
 The |liftType| function $\Pi$-binds a type over a list of entries.
 
 > liftType :: Entries -> INTM -> INTM
-> liftType es = liftType' (bwdList $ foldMap boy es) 
->   where boy (EPARAM r _ _ t) = [r :<: t]
->         boy _ = []
+> liftType es = liftType' (bwdList $ foldMap param es) 
+>   where param (EPARAM r _ _ t) = [r :<: t]
+>         param _ = []
 
 > liftType' :: Bwd (REF :<: INTM) -> INTM -> INTM
 > liftType' rtys t = pis rs tys (rs -|| t)
@@ -97,8 +100,8 @@ The |liftType| function $\Pi$-binds a type over a list of entries.
 \subsection{Making a type out of a goal}
 
 The |inferGoalType| function $\Pi$-binds the type when it encounters a
-$\lambda$-boy in the list of entries, and produces |SET| when it
-encounters a $\Pi$-boy.
+$\lambda$ in the list of entries, and produces |SET| when it
+encounters a $\Pi$.
 
 > inferGoalType :: Bwd (Entry Bwd) -> INTM -> INTM
 > inferGoalType B0 t = t

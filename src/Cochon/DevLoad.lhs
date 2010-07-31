@@ -47,12 +47,12 @@
 \subsection{Parsing a Development}
 
 To parse a development, we represent it as a list of |DevLine|s, each
-of which corresponds to a |Boy| or |Girl| entry and stores enough
-information to reconstruct it. Note that at this stage, we simply tag
-each girl with a list of commands to execute later.
+of which corresponds to a |Parameter| or |Definition| entry and stores
+enough information to reconstruct it. Note that at this stage, we
+simply tag each girl with a list of commands to execute later.
 
 > data DevLine
->   =  DLBoy ParamKind String DInTmRN
+>   =  DLParam ParamKind String DInTmRN
 >   |  DLGirl String [DevLine] (Maybe DInTmRN :<: DInTmRN) [CTData]
 >   |  DLModule String [DevLine] [CTData]
 
@@ -79,12 +79,12 @@ A girl is an identifier, followed by a list of children, a definition
 \paragraph{Parsing children:}
 
 Children, if any, are enclosed inside square brackets. They can be of
-several types: girl and module, that we have already defined, or
-boy. Boy are defined below. The absence of children is signaled by the
-@:=@ symbol.
+several types: definitions, that we have already defined, or
+parameters. Parameters are defined below. The absence of
+sub-development is signaled by the @:=@ symbol.
 
 > pLines  :: Parsley Token [DevLine]
-> pLines  =  bracket Square (many (pGirl <|> pBoy <|> pModule)) 
+> pLines  =  bracket Square (many (pGirl <|> pParam <|> pModule)) 
 >         <|> (keyword KwDefn *> pure [])
 
 \paragraph{Parsing definitions:}
@@ -125,21 +125,21 @@ A module is similar, but has no definition.
 >                         (%keyword KwSemi%) 
 >            |)
 
-\subsubsection{Parsing Boys}
+\subsubsection{Parsing Parameters}
 
-A boy is a $\lambda$-abstraction (represented by @\ x : T ->@) or a
+A parameter is a $\lambda$-abstraction (represented by @\ x : T ->@) or a
 $\Pi$-abstraction (represented by @(x : S) ->@).
 
-> pBoy :: Parsley Token DevLine
-> pBoy =  (|  (%keyword KwLambda%)          -- @\@
->             (DLBoy ParamLam)              
+> pParam :: Parsley Token DevLine
+> pParam =  (|  (%keyword KwLambda%)          -- @\@
+>             (DLParam ParamLam)              
 >             ident                         -- @x@
 >             (%keyword KwAsc%)             -- @:@
 >             (sizedDInTm (pred ArrSize))   -- @T@
 >             (%keyword KwArr%) |)          -- @->@
 >         <|> 
 >             (bracket Round                -- @(@
->              (|  (DLBoy ParamPi)              
+>              (|  (DLParam ParamPi)              
 >                  ident                    -- @x@
 >                  (%keyword KwAsc%)        -- @:@
 >                  pDInTm |)) <*            -- @S)@
@@ -225,19 +225,19 @@ indeed a stripped-down version of the above code for girls.
 >                -- With the ones from the kids
 >                return $ (n, commands) : ncs'
 
-\paragraph{Making a Boy:}
+\paragraph{Making a Parameter:}
 
-To make a boy, be him Lambda or Pi, is straightforward. First, we need
-to translate the type in display syntax to an |INTM|. Then, we make a
-fresh reference of that type. Finally, we store that reference in the
-development. 
+To make a parameter, be it Lambda or Pi, is straightforward. First, we
+need to translate the type in display syntax to an |INTM|. Then, we
+make a fresh reference of that type. Finally, we store that reference
+in the development.
 
-> makeEntry (DLBoy k x tys) ncs = do
+> makeEntry (DLParam k x tys) ncs = do
 >     -- Translate the display |tys| into an |INTM|
 >     ty :=>: tyv <- elaborate' (SET :>: tys)
 >     -- Make a fresh reference of that type
 >     freshRef (x :<: tyv) (\ref ->
->         -- Register |ref| as a Lambda boy
+>         -- Register |ref| as a Lambda
 >         putEntryAbove (EPARAM ref (mkLastName ref) k ty)
 >       ) 
 >     -- Pass the accumulated commands

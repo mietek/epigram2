@@ -70,8 +70,9 @@ point everyone knows the news anyway.
 >     optional (putNewsBelow news')
 >     return news'
 
-A |Boy| is relatively easy to deal with, we just check to see if its type
-has become more defined, and pass on the good news if necessary.
+A |Parameter| is relatively easy to deal with, we just check to see if
+its type has become more defined, and pass on the good news if
+necessary.
 
 > propagateNews top news (NF (Right (EPARAM (name := DECL :<: tv) sn k ty) :> es)) = do
 >     case tellNews news ty of
@@ -138,7 +139,7 @@ Modules carry no type information, so they are easy:
 
 > tellEntry news (EModule n d) = return (news, EModule n d)
 
-To update a boy, we must:
+To update a parameter, we must:
 \begin{enumerate}
 \item update the overall type of the entry, and
 \item update the news bulletin with news about this girl.

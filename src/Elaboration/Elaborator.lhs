@@ -128,16 +128,16 @@ subgoals produced by elaboration will be children of the resulting goal.
 >     return tm
 
 
-The |elabPiBoy| command elaborates the given display term to produce a type, and
-creates a $\Pi$-boy with that type.
+The |elabPiParam| command elaborates the given display term to produce a type, and
+creates a $\Pi$ with that type.
 
-> elabPiBoy :: (String :<: DInTmRN) -> ProofState REF
-> elabPiBoy (s :<: ty) = do
+> elabPiParam :: (String :<: DInTmRN) -> ProofState REF
+> elabPiParam (s :<: ty) = do
 >     tt <- elaborate' (SET :>: ty)
 >     piParamUnsafe (s :<: tt)
 
-> elabLamBoy :: (String :<: DInTmRN) -> ProofState REF
-> elabLamBoy (s :<: ty) = do
+> elabLamParam :: (String :<: DInTmRN) -> ProofState REF
+> elabLamParam (s :<: ty) = do
 >     tt <- elaborate' (SET :>: ty)
 >     assumeParam (s :<: tt)
 

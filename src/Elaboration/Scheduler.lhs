@@ -71,7 +71,7 @@ state and starts searching from the top of the development. If not, it calls
 
 The |schedulerContinue| command processes the cadets. The suspend state should
 describe the entries above the cursor. If there are no cadets to search, we are
-done. If we find a boy, we simply move past it, because it cannot have a
+done. If we find a parameter, we simply move past it, because it cannot have a
 suspended problem attached. If we find a module or a girl, we enter it, try to
 resume its mother, then search its children from the top.
 

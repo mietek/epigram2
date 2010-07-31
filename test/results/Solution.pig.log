@@ -14,9 +14,9 @@ Made.
 Made.
 I'm sorry, Dave. I'm afraid I can't do that.
 Error: solveHole: you can't define something in terms of itself!
-Made lambda boy!
+Made lambda!
 I'm sorry, Dave. I'm afraid I can't do that.
-Error: solveHole: boy M_4.X_2 occurs illegally.
+Error: solveHole: param M_4.X_2 occurs illegally.
 [ D := ? : Set ;
   d := ? : D ;
   \ X : Set ->

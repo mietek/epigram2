@@ -124,7 +124,7 @@ When part of the display syntax needs to be elaborated as a subproblem, we call
 |subElab| or |subElabInfer| rather than |makeElab| or |makeElabInfer| to ensure
 that elaboration does
 not take place at the top level. This means that if the subproblem needs to
-modify the proof state (for example, to introduce a $\lambda$-boy) it will
+modify the proof state (for example, to introduce a $\lambda$) it will
 create a new girl to work in. It also ensures that the subproblem can terminate
 with the |eElab| instruction, providing a syntactic representation.
 
