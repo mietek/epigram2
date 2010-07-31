@@ -36,6 +36,7 @@
 
 > import ProofState.Interface.Search
 > import ProofState.Interface.ProofKit
+> import ProofState.Interface.Module
 > import ProofState.Interface.NameResolution
 
 > import Tactics.Elimination

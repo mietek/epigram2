@@ -148,42 +148,6 @@ may be useful for paranoia purposes.
 
 
 
-
-\subsection{Module Commands}
-
-
-> makeModule :: String -> ProofState Name
-> makeModule s = do
->     n <- withNSupply (flip mkName s)
->     nsupply <- getDevNSupply
->     putEntryAbove (EModule n (Dev B0 Module (freshNSpace nsupply s) SuspendNone))
->     putDevNSupply (freshName nsupply)
->     return n
-
-> moduleToGoal :: INTM -> ProofState (EXTM :=>: VAL)
-> moduleToGoal ty = do
->     (_ :=>: tyv) <- checkHere (SET :>: ty)
->     CModule n <- getCurrentEntry
->     inScope <- getInScope
->     let  ty' = liftType inScope ty
->          ref = n := HOLE Waiting :<: evTm ty'
->     putCurrentEntry (CDefinition LETG ref (last n) ty')
->     putDevTip (Unknown (ty :=>: tyv))
->     return (applySpine ref inScope)
-
-> draftModule :: String -> ProofState t -> ProofState t
-> draftModule name draftyStuff = do
->     makeModule name
->     goIn
->     t <- draftyStuff
->     goOutBelow
->     mm <- removeEntryAbove
->     case mm of
->         Just (EModule _ _) -> return t
->         _ -> throwError' . err $ "draftModule: drafty " ++ name
->                                  ++ " did not end up in the right place!"
-
-
 The |lookupName| function looks up a name in the context (including axioms and
 primitives); if found, it returns the reference applied to the spine of
 shared parameters.

@@ -28,6 +28,7 @@
 
 > import ProofState.Interface.Lifting
 > import ProofState.Interface.ProofKit
+> import ProofState.Interface.Module
 > import ProofState.Interface.NameResolution
 
 > import DisplayLang.DisplayTm

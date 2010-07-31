@@ -25,6 +25,7 @@
 > import ProofState.Edition.GetSet
 > import ProofState.Edition.Navigation
 
+> import ProofState.Interface.Module
 > import ProofState.Interface.ProofKit
 > import ProofState.Interface.Lifting
 > import ProofState.Interface.NameResolution
@@ -72,6 +73,7 @@ We will define |elim| this way:
 
 
 \subsection{Analyzing the eliminator}
+\label{subsec:tactics-elimination-analysis}
 
 Presented as a development, |elim| is called in the context
 \begin{center}

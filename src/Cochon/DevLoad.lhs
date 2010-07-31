@@ -34,6 +34,7 @@
 > import ProofState.Edition.Navigation
 
 > import ProofState.Interface.ProofKit
+> import ProofState.Interface.Module
 
 > import Elaboration.Elaborator
 
