@@ -41,9 +41,9 @@ Typographical note: in this section, we write \relname{f} for a relative name
 (component) and @f_0@ for an absolute name (component).
 
 A |BScopeContext| contains information from the |ProofContext|
-required for name resolution: a list of the elders and last component
-of the current entry's name for each layer, along with the entries in
-the current development.
+required for name resolution: a list of the above entries and last
+component of the current entry's name for each layer, along with the
+entries in the current development.
 
 > type BScopeContext =  (Bwd (Entries, (String, Int)), Entries) 
 
