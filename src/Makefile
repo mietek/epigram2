@@ -5,8 +5,7 @@
 ################
 #### GHC
 
-HC              = ghc
-HC_PACKAGE      = -package mtl -package pretty
+HC              = ghc -hide-all-packages
 HC_OPTS_DEV     = $(HC_PACKAGE)
 HC_OPTS_TEST    = $(HC_PACKAGE) -fhpc
 HC_OPTS_RELEASE = $(HC_PACKAGE) -O2

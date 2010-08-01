@@ -1,3 +1,6 @@
+# cabal stuffs
+^dist
+
 # ICFP paper
 papers/icfp-2010-desc/propagation\.pdf
 papers/icfp-2010-desc/type_theory\.pdf

@@ -1,0 +1,12 @@
+Name:           Epigram
+Version:        0.1
+Cabal-Version:  >= 1.2
+license:        MIT
+Author:         The Epigram Posse
+Synopsis:       A dependently-typed programming language
+Build-Type:     Custom
+
+Executable Pig
+  Build-Depends:  base, mtl, haskell98, pretty, filepath
+  Main-Is:        Main.lhs
+  Hs-Source-Dirs: src
