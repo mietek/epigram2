@@ -502,12 +502,12 @@ at a time. It will fail if no simplification is possible.
 > trySimplifyGoal :: Bool -> TY -> ProofState (INTM :=>: VAL)
 > trySimplifyGoal True ty = simplifyGoal True ty <|> (neutralise =<< getCurrentDefinition)
 > trySimplifyGoal False ty = simplifyGoal False ty <|> (do
->             ty' <- {-# SCC "a_tsg" #-} bquoteHere ty
+>             ty' <- bquoteHere ty
 >             neutralise =<< make ("tsg" :<: ty'))
 
 > annotate :: INTM -> TY -> ProofState EXTM
 > annotate (N n) _ = return n
-> annotate t ty = ({-# SCC "a_annotate" #-} bquoteHere ty) >>= return . (t :?)
+> annotate t ty = bquoteHere ty >>= return . (t :?)
 
 
 > topWrap :: Bool -> INTM :=>: VAL -> ProofState (INTM :=>: VAL)
@@ -572,10 +572,10 @@ at a time. It will fail if no simplification is possible.
 >         Just (SimplyAbsurd prf) -> do
 >             r <- lambdaParam (fortran t)
 >             let pr = prf (NP r)
->             nonsense <- {-# SCC "a_sg_pi_prf_absurd" #-} bquoteHere (nEOp @@ [pr, t $$ A (NP r)])
+>             nonsense <- bquoteHere (nEOp @@ [pr, t $$ A (NP r)])
 >             neutralise =<< give nonsense
 >         Just (SimplyTrivial prf) -> do
->             t' <- {-# SCC "a_sg_pi_prf_trivial" #-} bquoteHere (t $$ A prf)
+>             t' <- bquoteHere (t $$ A prf)
 >             make ("r" :<: t')
 >             goIn
 >             b :=>: _ <- tryProblemSimplify
@@ -584,7 +584,7 @@ at a time. It will fail if no simplification is possible.
 >             neutralise =<< give (LK (N b))
 >         Just (Simply qs gs h) -> do
 >             q <- dischargePiLots qs (t $$ A h)
->             q' <- {-# SCC "a_sg_pi_prf_simp_1" #-} bquoteHere q
+>             q' <- bquoteHere q
 >             make ("psimp" :<: q')
 >             goIn
 >             bt :=>: _ <- tryProblemSimplify
@@ -600,7 +600,7 @@ at a time. It will fail if no simplification is possible.
 
 > simplifyGoal False g@(PI _ _) = do
 >     simpTrace "PI not"
->     g' <- {-# SCC "a_sg_pi" #-} bquoteHere g
+>     g' <- bquoteHere g
 >     make ("pig" :<: g')
 >     goIn
 >     simplifyGoal True g
@@ -615,7 +615,7 @@ at a time. It will fail if no simplification is possible.
 
 > simplifyGoal False g@(PRF _) = do
 >     simpTrace "PRF not"
->     g' <- {-# SCC "a_sg_prf" #-} bquoteHere g
+>     g' <- bquoteHere g
 >     make ("prg" :<: g')
 >     goIn
 >     x :=>: xv <- simplifyGoal True g
@@ -679,7 +679,7 @@ current goal with the subgoals, and return a list of them.
 >         Just (Simply qs _ h) -> do
 >             qrs  <- Data.Traversable.mapM makeSubgoal qs
 >             h'   <- dischargeLots qs h
->             prf  <- {-# SCC "a_psh_simp" #-} bquoteHere (h' $$$ fmap (A . valueOf) qrs)
+>             prf  <- bquoteHere (h' $$$ fmap (A . valueOf) qrs)
 >             give prf
 >             return qrs
 
@@ -688,7 +688,7 @@ of the given reference, and returns its term and value representations.
 
 > makeSubgoal :: REF -> ProofState (EXTM :=>: VAL)
 > makeSubgoal ref = do
->     q'  <- {-# SCC "a_ms" #-} bquoteHere (pty ref)
+>     q'  <- bquoteHere (pty ref)
 >     x   <- pickName "q" (fst (last (refName ref)))
 >     make (x :<: q')
 
