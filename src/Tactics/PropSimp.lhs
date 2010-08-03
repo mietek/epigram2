@@ -481,13 +481,18 @@ There are various things we can do to simplify the problem:
       (of type unit or proof of trivial, for example).
 \end{itemize}
 
+We need a proper logging system!
+
+> simpTrace :: String -> ProofState ()
+> simpTrace s = return ()
+
 The |problemSimplify| command performs these simplifications. It works by
 repeatedly transforming the proof state into a simpler version, one step
 at a time. It will fail if no simplification is possible.
 
 > problemSimplify :: ProofState (EXTM :=>: VAL)
 > problemSimplify = do
->     proofTrace "problemSimplify"
+>     simpTrace "problemSimplify"
 >     getHoleGoal >>= simplifyGoal True . valueOf >> getMotherDefinition
 
 > tryProblemSimplify :: ProofState (EXTM :=>: VAL)
@@ -497,12 +502,12 @@ at a time. It will fail if no simplification is possible.
 > trySimplifyGoal :: Bool -> TY -> ProofState (INTM :=>: VAL)
 > trySimplifyGoal True ty = simplifyGoal True ty <|> (neutralise =<< getMotherDefinition)
 > trySimplifyGoal False ty = simplifyGoal False ty <|> (do
->             ty' <- bquoteHere ty
+>             ty' <- {-# SCC "a_tsg" #-} bquoteHere ty
 >             neutralise =<< make ("tsg" :<: ty'))
 
 > annotate :: INTM -> TY -> ProofState EXTM
 > annotate (N n) _ = return n
-> annotate t ty = bquoteHere ty >>= return . (t :?)
+> annotate t ty = ({-# SCC "a_annotate" #-} bquoteHere ty) >>= return . (t :?)
 
 
 > topWrap :: Bool -> INTM :=>: VAL -> ProofState (INTM :=>: VAL)
@@ -513,7 +518,7 @@ at a time. It will fail if no simplification is possible.
 > simplifyGoal :: Bool -> TY -> ProofState (INTM :=>: VAL)
 
 > simplifyGoal b (PI UNIT t) = do
->     proofTrace "PI UNIT"
+>     simpTrace "PI UNIT"
 >     t' <- bquoteHere (t $$ A VOID)
 >     make ("u" :<: t')
 >     goIn
@@ -521,7 +526,7 @@ at a time. It will fail if no simplification is possible.
 >     goOut
 >     give' (LK (N b))
 > simplifyGoal (PI (SIGMA d r) t) = do
->     proofTrace "PI SIGMA"
+>     simpTrace "PI SIGMA"
 >     let mt =  PI d . L . HF (fortran r) $ \ a ->
 >               PI (r $$ A a) . L . HF (fortran t) $ \ b ->
 >               t $$ A (PAIR a b)
@@ -533,7 +538,7 @@ at a time. It will fail if no simplification is possible.
 >     x <- lambdaBoy (fortran t)
 >     give' (N (b :$ A (N (P x :$ Fst)) :$ A (N (P x :$ Snd))))
 > simplifyGoal (PI (ENUMT e) t) = do
->     proofTrace "PI ENUMT"
+>     simpTrace "PI ENUMT"
 >     x :=>: xv <- trySimplifyGoal False (branchesOp @@ [e, t])
 >     e' <- bquoteHere e
 >     make ("e" :<: N (branchesOp :@ [e', t']))
@@ -543,7 +548,7 @@ at a time. It will fail if no simplification is possible.
 >     x <- lambdaBoy (fortran t)
 >     give' (N (switchOp :@ [e', NP x, t', N b]))
 > simplifyGoal (PI (PRF p) t) = do
->     proofTrace "PI PRF"
+>     simpTrace "PI PRF"
 >     pSimp <- runPropSimplify p
 >     case pSimp of
 >         Nothing -> do
@@ -552,10 +557,10 @@ at a time. It will fail if no simplification is possible.
 >         Just (SimplyAbsurd prf) -> do
 >             r <- lambdaParam (fortran t)
 >             let pr = prf (NP r)
->             nonsense <- bquoteHere (nEOp @@ [pr, t $$ A (NP r)])
+>             nonsense <- {-# SCC "a_sg_pi_prf_absurd" #-} bquoteHere (nEOp @@ [pr, t $$ A (NP r)])
 >             give' nonsense
 >         Just (SimplyTrivial prf) -> do
->             t' <- bquoteHere (t $$ A prf)
+>             t' <- {-# SCC "a_sg_pi_prf_trivial" #-} bquoteHere (t $$ A prf)
 >             make ("r" :<: t')
 >             goIn
 >             b :=>: _ <- tryProblemSimplify
@@ -563,10 +568,10 @@ at a time. It will fail if no simplification is possible.
 >             give' (LK (N b))
 >         Just (Simply qs gs h) -> do
 >             q <- dischargePiLots qs (t $$ A h)
->             q' <- bquoteHere q
+>             q' <- {-# SCC "a_sg_pi_prf_simp_1" #-} bquoteHere q
 >             make ("psimp" :<: q')
 >             goIn
->             _ :=>: bv <- tryProblemSimplify
+>             bt :=>: _ <- tryProblemSimplify
 >             goOut
 >             r <- lambdaParam (fortran t)
 >             prf <- bquoteHere $ bv $$$ (fmap (A . ($$ A (NP r))) gs)
@@ -581,8 +586,8 @@ at a time. It will fail if no simplification is possible.
 > simplifyGoal UNIT = give' VOID
 
 > simplifyGoal False g@(PI _ _) = do
->     proofTrace "PI not"
->     g' <- bquoteHere g
+>     simpTrace "PI not"
+>     g' <- {-# SCC "a_sg_pi" #-} bquoteHere g
 >     make ("pig" :<: g')
 >     goIn
 >     simplifyGoal True g
@@ -591,13 +596,13 @@ at a time. It will fail if no simplification is possible.
 >     return $ N x :=>: xv
 
 > simplifyGoal True (PRF p) = do
->     proofTrace "PRF top"
+>     simpTrace "PRF top"
 >     propSimplifyHere
 >     getMotherDefinition >>= neutralise
 
 > simplifyGoal False g@(PRF _) = do
->     proofTrace "PRF not"
->     g' <- bquoteHere g
+>     simpTrace "PRF not"
+>     g' <- {-# SCC "a_sg_prf" #-} bquoteHere g
 >     make ("prg" :<: g')
 >     goIn
 >     x :=>: xv <- simplifyGoal True g
@@ -616,7 +621,7 @@ methods, then returns to the original goal.
 > elimSimplify :: (TY :>: INTM) -> ProofState ()
 > elimSimplify tt = do
 >     elim Nothing tt
->     proofTrace "Eliminated!"
+>     simpTrace "Eliminated!"
 >     toFirstMethod
 >     optional problemSimplify            -- simplify first method
 >     many (goDown >> problemSimplify)    -- simplify other methods
@@ -641,19 +646,19 @@ current goal with the subgoals, and return a list of them.
 
 > propSimplifyHere :: ProofState (Bwd (EXTM :=>: VAL))
 > propSimplifyHere = do
->     proofTrace "propSimplifyHere"
+>     simpTrace "propSimplifyHere"
 >     (_ :=>: PRF p) <- getHoleGoal
 >     pSimp <- runPropSimplify p
 >     case pSimp of
 >         Nothing                   -> throwError' $ err "propSimplifyHere: unable to simplify."
 >         Just (SimplyAbsurd _)     -> throwError' $ err "propSimplifyHere: oh no, goal is absurd!"
 >
->         Just (SimplyTrivial prf)  -> bquoteHere prf >>= give >> return B0
+>         Just (SimplyTrivial prf)  -> bquoteHere prf >>= give' >> return B0
 >
 >         Just (Simply qs _ h) -> do
 >             qrs  <- Data.Traversable.mapM makeSubgoal qs
 >             h'   <- dischargeLots qs h
->             prf  <- bquoteHere (h' $$$ fmap (A . valueOf) qrs)
+>             prf  <- {-# SCC "a_psh_simp" #-} bquoteHere (h' $$$ fmap (A . valueOf) qrs)
 >             give prf
 >             return qrs
 
@@ -662,7 +667,7 @@ of the given reference, and returns its term and value representations.
 
 > makeSubgoal :: REF -> ProofState (EXTM :=>: VAL)
 > makeSubgoal ref = do
->     q'  <- bquoteHere (pty ref)
+>     q'  <- {-# SCC "a_ms" #-} bquoteHere (pty ref)
 >     x   <- pickName "q" (fst (last (refName ref)))
 >     make (x :<: q')
 
