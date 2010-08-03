@@ -4,14 +4,6 @@
 
 -- * Some Kit
 
--- ** Substitution
-
-make subst : (X : Set)(x : X)(y : X)(q : :- x == y)(P : X -> Set) -> P x -> P y ;
-lambda X, x, y, q, P, px ;
-give coe (P x) (P y) ?q px ;
-give con (refl (X -> Set) P % x y _) ;
-root ;
-
 -- ** Packing stuffs (avoid Sigma deconstruction)
 
 data Pack (X : Set) := ( pack : X -> Pack X );
@@ -193,12 +185,12 @@ let CatDiagA : Cat.Cat ObjsDiagA ArrsDiagA;
 = 'pack [ ?id ?compos ?pf-id-dom ?pf-id-cod ?pf-assoc ];
 -- <1>.1 Id:
     simpl;
-    give Cat.id ObjsA ArrsA CatA xf^1;
+    give Cat.id ObjsA ArrsA CatA xf;
     give Cat.id ObjsA ArrsA CatA X;
 
 -- <1>.2 Compos:
    simpl;
-   give Cat.compos ObjsA ArrsA CatA xf^5 xf^4 xf^3 xf^2 xf^1;
+   give Cat.compos ObjsA ArrsA CatA xf^4 xf^3 xf^2 xf^1 xf;
    give Cat.compos ObjsA ArrsA CatA A B C g f;
 
 -- <1>.3 Pf-id-dom:
