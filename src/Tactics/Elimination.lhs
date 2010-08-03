@@ -420,7 +420,11 @@ If $r$ is not in the dependency set, we continue and add $r$ to $\Delta_1$.
 
 \subsubsection{Finding removable hypotheses}
 
-
+We need to do something like this to find removable hypotheses (those about
+which we gain no information and hence might as well not abstract over).
+However, the problem is more complex than just dependency analysis,
+because of labelled types. The |shouldKeep| function doesn't work properly and
+should be replaced with a proper type-directed traversal for this to make sense.
 
 > findNonRemovableHyps :: Bwd (REF :<: INTM) -> INTM -> Bwd INTM -> Bwd (REF :<: INTM)
 > findNonRemovableHyps delta goal targets = help delta []
@@ -431,7 +435,20 @@ If $r$ is not in the dependency set, we continue and add $r$ to $\Delta_1$.
 >     help :: Bwd (REF :<: INTM) -> [REF :<: INTM] -> Bwd (REF :<: INTM)
 >     help B0 xs = bwdList xs
 >     help (delta :< (r :<: ty)) xs = help delta
->         (if r `Data.List.elem` deps then (r :<: ty) : xs else xs)
+>         (if (r `Data.List.elem` deps) || shouldKeep ty
+>             then (r :<: ty) : xs else xs)
+
+>     shouldKeep :: Tm {d, TT} REF -> Bool
+>     shouldKeep (LABEL _ _) = True
+>     shouldKeep (C c) = Data.Foldable.any shouldKeep c
+>     shouldKeep (L (_ :. t)) = shouldKeep t
+>     shouldKeep (L (H _ _ t)) = shouldKeep t
+>     shouldKeep (L (K t)) = shouldKeep t
+>     shouldKeep (N t) = shouldKeep t
+>     shouldKeep (t :? _) = shouldKeep t
+>     shouldKeep (t :$ A u) = shouldKeep t || shouldKeep u
+>     shouldKeep (_ :@ ts) = Data.Foldable.any shouldKeep ts
+>     shouldKeep _ = False
 
 
 \subsubsection{Representing the context as |Binder|s}
@@ -683,9 +700,9 @@ term. Unless we've screwed things up, |giveOutBelow| should always be happy.
 
 Extract non-parametric, non-removable hypotheses $\Delta_1$ from the context $\Delta$:
 
->     delta' <- findNonParametricHyps delta elimTy
->     let delta1 = findNonRemovableHyps delta' goal targets
->     optionalProofTrace $ "delta1: " ++ show delta1
+>     optionalProofTrace $ "delta: " ++ show (fmap (\ ((n := _) :<: _) -> n) delta)
+>     delta1 <- findNonParametricHyps delta elimTy
+>     optionalProofTrace $ "delta1: " ++ show (fmap (\ ((n := _) :<: _) -> n) delta1)
 
 Transform $\Delta_1$ into Binder form:
 
