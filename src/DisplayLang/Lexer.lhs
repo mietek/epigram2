@@ -133,7 +133,7 @@ to:
 > parseWord :: Parsley Char String
 > parseWord = (|id (some $ tokenFilter (\t -> not $ elem t $ space ++ bracketChars ++ protected)) 
 >              |(: []) (tokenFilter (flip elem protected))|)
->     where protected = ",`'"
+>     where protected = ",`';"
 
 As we are at it, we can test for word equality, that is build a parser
 matching a given word:
