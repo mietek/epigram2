@@ -14,17 +14,11 @@ elab plus ('suc ('suc 'zero)) ('suc ('suc 'zero)) ;
 
 -- Now we will prove that plus is commutative. First, some useful gadgetry...
 
--- Substitutivity of equality:
-make ship : (X : Set)(x : X)(y : X)(q : :- x == y)(P : X -> Set) -> P x -> P y ;
-lambda X, x, y, q, P, px ;
-give coe (P x) (P y) ?q px ;
-give con (refl (X -> Set) P % x y _) ;
-root ;
-
 -- Transitivity of equality:
 make trans : :- ((X : Set)(a : X)(b : X)(c : X) => a == b => b == c => a == c) ;
 lambda X, a, b, c, p, q ;
-<= ship X a b _ ;
+elim substEq X a b _ ;
+give \ c p q -> q ;
 root ;
 
 -- Reversing the order of arguments to functions:
@@ -60,7 +54,7 @@ root ;
 make plusCommF : :- (flip plus == plus) ;
 simplify ;
 lambda k1, k2, p, n1, n2, q ;
-<= ship Nat k1 k2 _ ;
-<= ship Nat n1 n2 _ ; 
+<= substEq Nat k1 k2 _ ;
+<= substEq Nat n1 n2 _ ; 
 give plusComm n1^1 k1 ;
 root ;

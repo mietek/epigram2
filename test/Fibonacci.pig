@@ -25,10 +25,10 @@ root ;
 
 -- We can build such a structure if we can get P k from the P j for j < k:
 let aux-gen (P : Nat -> Set)(r : (k : Nat) -> aux P k -> P k)(n : Nat) : aux P n ;
-<= [n] Nat.Ind n ;
+<= Nat.Ind n ;
 = [? , ?] ;
-give r xf^1 (aux-gen P^1 r xf^1) ;
-give aux-gen P^1 r xf^1 ;
+give r xf^1 (aux-gen P r xf^1) ;
+give aux-gen P r xf^1 ;
 root ;
 
 -- Now the recursion principle is just a minor modification:
@@ -41,10 +41,11 @@ make NatRec := (\ n P r -> r n (aux-gen P r n)) : (n : Nat)(P : Nat -> Set)(r : 
 let fib (n : Nat) : Nat ;
 <= NatRec n ;
 <= NatCase k ;
-= 'suc 'zero ;
-<= NatCase xf^2 ;
-= 'suc 'zero ;
-= plus (fib xf^4) (fib ('suc xf^4)) ;
+define fib 'zero := 'suc 'zero ;
+relabel fib ('suc j) ;
+<= NatCase j ;
+define fib ('suc 'zero) := 'suc 'zero ;
+define fib ('suc ('suc m)) := plus (fib m) (fib ('suc m)) ;
 root ;
 
 -- Hooray, fib is defined and we can go ahead and count the rabbits:

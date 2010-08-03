@@ -209,6 +209,7 @@ elab head Bool 'nil ;
 
   Unfortunately the |data| syntax is not yet implemented for indexed data types,
   so we fiddle about behind the scenes to manually build |Vec|.
+  You are not expected to understand this.
 -}
 
 make Vec : Set -> Nat -> Set ;
@@ -220,32 +221,12 @@ make Ind := iinduction Nat VecD : (m : Nat)(v : Vec m)(bp : Sig (n : Nat ; Vec n
 give Vec ;
 
 {-
-  You are not expected to understand this.
-  We also need substitutivity of equality, which we can use as an elimination
-  principle:
--}
-
-make ship : (X : Set)(x : X)(y : X)(q : :- x == y)(P : X -> Set) -> P x -> P y ;
-lambda X, x, y, q, P, px ;
-give coe (P x) (P y) ?q px ;
-give con (refl (X -> Set) P % x y _) ;
-root ;
-
-
-
-{-
   Now we can safely define the vector version of head. Since we ask for a vector
-  of length at least one, we know we can always return a result. The
-  eliminations by ship are necessary because Epigram is not simplifying all the
-  equations it could, but hopefully it will soon and these will disappear.
+  of length at least one, we know we can always return a result.
 -}
 
 let vhead (A : Set)(n : Nat)(as : Vec A ('suc n)) : A ;
 <= Vec.Ind A ('suc n) as ;
-<= ship Nat 'zero k x ;
-<= ship Nat ('suc s^4) k x ;
-<= ship Nat s^4 n xf ;
-<= ship (Vec.Vec A ('suc s^4)) ('vcons s^4 xf^2 xf^1) as qsm ;
 define vhead _ _ ('vcons _ a _) := a ;
 root ;
 
@@ -263,14 +244,8 @@ elab vhead Bool one ('vcons one 'false ('vcons 'zero 'true 'vnil)) ;
 
 let vapp (A : Set)(B : Set)(n : Nat)(fs : Vec (A -> B) n)(as : Vec A n) : Vec B n ;
 <= Vec.Ind (A -> B) n fs ;
-
-<= ship Nat 'zero k x ;
 define vapp A B 'zero 'vnil as := 'vnil ;
-
-<= Vec.Ind A k as ;
-<= ship Nat 'zero k x^1 ;
-<= ship Nat ('suc s) k x ;
-<= ship Nat s s^2 q ; 
+<= Vec.Ind A ('suc s) as ;
 define vapp A B ('suc j) ('vcons j f fs) ('vcons j a as) := 'vcons j (f a) (vapp A B j fs as) ;
 root ;
 
@@ -312,13 +287,7 @@ elab 'fsuc  one ('fzero 'zero) : Fin two ;
 
 make nuffin : Fin 'zero -> :- FF ;
 lambda x ;
-elim Fin.Ind 'zero x ;
-lambda k ;
-give con [? ?] ;
-give con \ n q -> ? ;
-<= ship Nat ('suc n) k q ;
-give con \ n -> con \ v q -> ? ;
-<= ship Nat ('suc n) k q ;
+<= Fin.Ind 'zero x ;
 root ;
 
 
@@ -332,17 +301,12 @@ root ;
 
 let lookup (A : Set)(n : Nat)(as : Vec A n)(fn : Fin n) : A ;
 <= Vec.Ind A n as ;
-
-<= ship Nat 'zero k x ;
 define lookup A 'zero 'vnil fn := naughtE (nuffin fn) A	 ;
 
-<= ship Nat ('suc s^4) k x ;
-<= Fin.Ind ('suc s^4) fn ;
-= xf^2 ;
+<= Fin.Ind ('suc s) fn ;
+define lookup A ('suc _) ('vcons _ a _) ('fzero _) := a ;
 
-<= ship Nat ('suc s^3) k^1 x^1 ;
-<= ship Nat s^5 s xf ;
-= lookup A s^8 xf^1 xf^7 ;
+define lookup A ('suc s) ('vcons _ a as) ('fsuc _ n) := lookup A s as n ;
 root ;
 
 

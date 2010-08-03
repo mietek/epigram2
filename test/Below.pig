@@ -26,7 +26,7 @@ simplify ;
 = BH./ (xf^1 s) ys r (xf s ys r) ;
 
 simplify ;
-= (s : s^2) -> BH./ (xf^1 s) (ys s) (r s) (xf s (ys s) (r s)) ;
+= (s : s) -> BH./ (xf^1 s) (ys s) (r s) (xf s (ys s) (r s)) ;
 
 
 

@@ -1,10 +1,3 @@
-make ship : (X : Set)(x : X)(y : X)(q : :- x == y)(P : X -> Set) -> P x -> P y ;
-lambda X, x, y, q, P, px ;
-give coe (P x) (P y) ?q px ;
-give con (refl (X -> Set) P % x y _) ;
-root ;
-
-
 data Nat := (zero : Nat) ; (suc : Nat -> Nat) ;
 make zero := 'zero : Nat ;
 make suc := (\ x -> 'suc x) : Nat -> Nat ;
@@ -39,14 +32,8 @@ make VecInd := iinduction Nat VecD : (m : Nat)(v : Vec m)
 
 let vappend (m : Nat)(as : Vec m)(n : Nat)(bs : Vec n) : Vec (plus m n) ;
 <= VecInd m as ;
-
-<= ship Nat 'zero k x ;
 = bs ;
-
-<= ship Nat ('suc s^4) k x ;
-= cons (plus s^4 n) xf^2 (vappend s^4 xf^1 n bs) ;
-
-
+= cons (plus s n) xf^2 (vappend s xf^1 n bs) ;
 root ;
 
 make A := Enum ['a 'b 'c] : Set ;
@@ -58,17 +45,8 @@ elab vab ;
 elab Vec.vappend A ('suc ('suc 'zero)) vab ('suc ('suc 'zero)) vab ;
 
 let vtail (A : Set)(n : Nat)(as : Vec.Vec A ('suc n)) : Vec.Vec A n ;
-elim Vec.VecInd A ('suc n) as ;
-give \ k -> con [? ?] ;
-
-lambda kzero ;
-<= ship Nat 'zero k kzero ;
-
-give con \ j -> con \ a -> con \ as -> \ ksuc -> ? ;
-<= ship Nat ('suc j) k ksuc ;
-<= ship Nat j n xf ;
-= as^1 ;
-
+<= Vec.VecInd A ('suc n) as ;
+= xf^9 ;
 root ;
 
 elab vtail A ('suc 'zero) vab ;
