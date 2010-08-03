@@ -1,8 +1,3 @@
-Appended goal!
-Made lambda boy!
-Thank you.
-Thank you.
-Going to root...
 Data'd.
 Made.
 Made.
@@ -32,12 +27,6 @@ Made.
 'cons ('suc 'zero) 'a ('cons 'zero 'b 'nil)
 'cons ('suc ('suc ('suc 'zero))) 'a ('cons ('suc ('suc 'zero)) 'b ('cons ('suc 'zero) 'a ('cons 'zero 'b 'nil)))
 Let there be vtail.
-Eliminated. Subgoals awaiting work...
-Thank you.
-Made lambda boy!
-Eliminated and simplified.
-Thank you.
-Eliminated and simplified.
 Eliminated and simplified.
 Ta.
 Going to root...

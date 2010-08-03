@@ -18,6 +18,8 @@
 
 > import Evidences.Tm
 
+> import Kit.MissingLibrary
+
 %endif
 
 %format ::$ = ":\!\!:\!\!\$"

@@ -20,14 +20,20 @@
 > import Evidences.Tm
 > import Evidences.Rules
 
-> import ProofState.ProofState
-> import ProofState.ProofKit
-> import ProofState.Lifting
-> import ProofState.NameResolution
+> import ProofState.Edition.ProofState
+> import ProofState.Edition.GetSet
+> import ProofState.Edition.Navigation
+
+> import ProofState.Interface.Module
+> import ProofState.Interface.ProofKit
+> import ProofState.Interface.Lifting
+> import ProofState.Interface.NameResolution
+> import ProofState.Interface.Name
+> import ProofState.Interface.Definition
+> import ProofState.Interface.Parameter
+> import ProofState.Interface.Solving
 
 > import DisplayLang.Name
-
-> import UI.Cochon.Elaboration.Elaborator
 
 
 

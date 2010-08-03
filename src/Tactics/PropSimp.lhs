@@ -493,14 +493,14 @@ at a time. It will fail if no simplification is possible.
 > problemSimplify :: ProofState (EXTM :=>: VAL)
 > problemSimplify = do
 >     simpTrace "problemSimplify"
->     getHoleGoal >>= simplifyGoal True . valueOf >> getMotherDefinition
+>     getHoleGoal >>= simplifyGoal True . valueOf >> getCurrentDefinition
 
 > tryProblemSimplify :: ProofState (EXTM :=>: VAL)
 > tryProblemSimplify = problemSimplify <|> getCurrentDefinition
 
 
 > trySimplifyGoal :: Bool -> TY -> ProofState (INTM :=>: VAL)
-> trySimplifyGoal True ty = simplifyGoal True ty <|> (neutralise =<< getMotherDefinition)
+> trySimplifyGoal True ty = simplifyGoal True ty <|> (neutralise =<< getCurrentDefinition)
 > trySimplifyGoal False ty = simplifyGoal False ty <|> (do
 >             ty' <- {-# SCC "a_tsg" #-} bquoteHere ty
 >             neutralise =<< make ("tsg" :<: ty'))
@@ -511,7 +511,7 @@ at a time. It will fail if no simplification is possible.
 
 
 > topWrap :: Bool -> INTM :=>: VAL -> ProofState (INTM :=>: VAL)
-> topWrap True tt   = give' (termOf tt) >> return tt
+> topWrap True tt   = give (termOf tt) >> return tt
 > topWrap False tt  = return tt
 
 
@@ -519,53 +519,69 @@ at a time. It will fail if no simplification is possible.
 
 > simplifyGoal b (PI UNIT t) = do
 >     simpTrace "PI UNIT"
->     t' <- bquoteHere (t $$ A VOID)
->     make ("u" :<: t')
->     goIn
->     b :=>: _ <-  tryProblemSimplify
->     goOut
->     give' (LK (N b))
-> simplifyGoal (PI (SIGMA d r) t) = do
+>     x :=>: xv <- trySimplifyGoal False (t $$ A VOID)
+>     topWrap b $ LK x :=>: LK xv
+
+> simplifyGoal b (PI (SIGMA d r) t) = do
 >     simpTrace "PI SIGMA"
->     let mt =  PI d . L . HF (fortran r) $ \ a ->
->               PI (r $$ A a) . L . HF (fortran t) $ \ b ->
->               t $$ A (PAIR a b)
->     mt' <- bquoteHere mt
->     make ("s" :<: mt')
->     goIn
->     b :=>: _ <-  tryProblemSimplify
->     goOut
->     x <- lambdaBoy (fortran t)
->     give' (N (b :$ A (N (P x :$ Fst)) :$ A (N (P x :$ Snd))))
-> simplifyGoal (PI (ENUMT e) t) = do
+>     let mt =  PI d . L $ (fortran r) :. [.a. 
+>               PI (r -$ [NV a]) . L $ (fortran t) :. [.b. 
+>               t -$ [PAIR (NV a) (NV b)] ] ]
+>     x :=>: xv <- simplifyGoal False mt
+>     ex <- annotate x mt
+>     let body = N (ex :$ A (N (V 0 :$ Fst)) :$ A (N (V 0 :$ Snd)))
+>     topWrap b $ L ("ps" :. body) :=>: L ("ps" :. body)
+
+> simplifyGoal b (PI (ENUMT e) t) = do
 >     simpTrace "PI ENUMT"
 >     x :=>: xv <- trySimplifyGoal False (branchesOp @@ [e, t])
 >     e' <- bquoteHere e
->     make ("e" :<: N (branchesOp :@ [e', t']))
->     goIn
->     b :=>: _ <-  tryProblemSimplify
->     goOut
->     x <- lambdaBoy (fortran t)
->     give' (N (switchOp :@ [e', NP x, t', N b]))
-> simplifyGoal (PI (PRF p) t) = do
+>     t' <- bquoteHere t
+>     let body = N (switchOp :@ [e', NV 0, t', x])
+>     topWrap b $ L ("pe" :. body) :=>: L ("pe" :. body)            
+
+> simplifyGoal True (PI (PRF p) t) = do
 >     simpTrace "PI PRF"
 >     pSimp <- runPropSimplify p
 >     case pSimp of
 >         Nothing -> do
->             lambdaBoy (fortran t)
->             tryProblemSimplify
+>             ns <- askNSupply
+>             case p of
+>                 EQBLUE (_X :>: x) (_Y :>: NP y@(yn := DECL :<: _))
+>                  | equal (SET :>: (_X, _Y)) ns -> do
+>                   t' <- bquoteHere t
+>                   if y `Data.Foldable.elem` t'
+>                    then do
+>                     simpTrace $ "elimSimp: " ++ show yn
+>                     q    <- lambdaParam "qe"
+>                     _X'  <- bquoteHere _X
+>                     x'   <- bquoteHere x
+>                     let  ety  =  PI (ARR _X SET) $ L $ "P" :. [._P.
+>                                  ARR (N (V _P :$ A x'))
+>                                      (N (V _P :$ A (NP y)))
+>                                  ]
+>                          ex   =  P substEq :$ A _X' :$ A x' :$ A (NP y) :$ A (NP q)
+>                     elimSimplify (ety :>: N ex)
+>                     neutralise =<< getCurrentDefinition
+>                    else do
+>                     ref <- lambdaParam (fortran t)
+>                     trySimplifyGoal True (t $$ A (NP ref))
+>                 _ -> do
+>                     ref <- lambdaParam (fortran t)
+>                     trySimplifyGoal True (t $$ A (NP ref))
 >         Just (SimplyAbsurd prf) -> do
 >             r <- lambdaParam (fortran t)
 >             let pr = prf (NP r)
 >             nonsense <- {-# SCC "a_sg_pi_prf_absurd" #-} bquoteHere (nEOp @@ [pr, t $$ A (NP r)])
->             give' nonsense
+>             neutralise =<< give nonsense
 >         Just (SimplyTrivial prf) -> do
 >             t' <- {-# SCC "a_sg_pi_prf_trivial" #-} bquoteHere (t $$ A prf)
 >             make ("r" :<: t')
 >             goIn
 >             b :=>: _ <- tryProblemSimplify
 >             goOut
->             give' (LK (N b))
+
+>             neutralise =<< give (LK (N b))
 >         Just (Simply qs gs h) -> do
 >             q <- dischargePiLots qs (t $$ A h)
 >             q' <- {-# SCC "a_sg_pi_prf_simp_1" #-} bquoteHere q
@@ -574,16 +590,13 @@ at a time. It will fail if no simplification is possible.
 >             bt :=>: _ <- tryProblemSimplify
 >             goOut
 >             r <- lambdaParam (fortran t)
->             prf <- bquoteHere $ bv $$$ (fmap (A . ($$ A (NP r))) gs)
->             give' prf
->              
-> simplifyGoal (PI s t) = do
->     lambdaBoy (fortran t)
->     tryProblemSimplify 
+>             gs' <- traverse (bquoteHere . ($$ A (NP r))) gs
+>             neutralise =<< give (N (bt $## trail gs'))
 
-> simplifyGoal (PRF p) = propSimplifyHere >> getMotherDefinition
-
-> simplifyGoal UNIT = give' VOID
+> simplifyGoal True (PI s t) = do
+>     simpTrace "PI top"
+>     ref <- lambdaParam (fortran t)
+>     trySimplifyGoal True (t $$ A (NP ref))
 
 > simplifyGoal False g@(PI _ _) = do
 >     simpTrace "PI not"
@@ -591,14 +604,14 @@ at a time. It will fail if no simplification is possible.
 >     make ("pig" :<: g')
 >     goIn
 >     simplifyGoal True g
->     x :=>: xv <- getMotherDefinition
+>     x :=>: xv <- getCurrentDefinition
 >     goOut
 >     return $ N x :=>: xv
 
 > simplifyGoal True (PRF p) = do
 >     simpTrace "PRF top"
 >     propSimplifyHere
->     getMotherDefinition >>= neutralise
+>     getCurrentDefinition >>= neutralise
 
 > simplifyGoal False g@(PRF _) = do
 >     simpTrace "PRF not"
@@ -607,10 +620,18 @@ at a time. It will fail if no simplification is possible.
 >     goIn
 >     x :=>: xv <- simplifyGoal True g
 >     goOut
->     give' (PAIR (N stm) (N ttm))
+>     return $ x :=>: xv
 
-> simplifyGoal (LABEL _ UNIT)           = give' (LRET VOID)
-> simplifyGoal (LABEL _ (PRF TRIVIAL))  = give' (LRET VOID)
+> simplifyGoal b UNIT = topWrap b $ VOID :=>: VOID
+
+> simplifyGoal b (SIGMA s t) = do
+>     simpTrace "SIGMA"
+>     stm :=>: sv <- trySimplifyGoal False s
+>     ttm :=>: tv <- trySimplifyGoal False (t $$ A sv)
+>     topWrap b $ PAIR stm ttm :=>: PAIR sv tv
+
+> simplifyGoal b (LABEL _ UNIT)           = topWrap b $ LRET VOID :=>: LRET VOID
+> simplifyGoal b (LABEL _ (PRF TRIVIAL))  = topWrap b $ LRET VOID :=>: LRET VOID
 
 > simplifyGoal _ _ = throwError' $ err "simplifyGoal: cannot simplify"
 
@@ -653,7 +674,7 @@ current goal with the subgoals, and return a list of them.
 >         Nothing                   -> throwError' $ err "propSimplifyHere: unable to simplify."
 >         Just (SimplyAbsurd _)     -> throwError' $ err "propSimplifyHere: oh no, goal is absurd!"
 >
->         Just (SimplyTrivial prf)  -> bquoteHere prf >>= give' >> return B0
+>         Just (SimplyTrivial prf)  -> bquoteHere prf >>= give >> return B0
 >
 >         Just (Simply qs _ h) -> do
 >             qrs  <- Data.Traversable.mapM makeSubgoal qs
