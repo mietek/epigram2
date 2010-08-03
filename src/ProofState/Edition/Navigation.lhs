@@ -353,7 +353,9 @@ parameteres on our way.
 >                                     ,  currentEntry  =  mkCurrentEntry e
 >                                     ,  belowEntries  =  NF belowNE }
 >                   -- Put the cursor at the bottom of the development
->                   -- \pierre{Why is there a |SuspendNone| here? not ss'?}
+>                   -- The suspend state is cleared because there are no
+>                   -- entries in the |Dev|; the state will be updated
+>                   -- during news propagation.
 >                   putAboveCursor (Dev B0 tip' nsupply' SuspendNone)
 >                   putBelowCursor F0
 >                   -- Push the collected news from above into the entries

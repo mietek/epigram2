@@ -56,19 +56,14 @@ place of |Bwd|, and to store a |SuspendState|, giving:
 
 \subsubsection{|Tip|}
 
-Let us review the different kind of Developments available. The first
-kind is a |Module|. A module is a development that cannot have a type
-or value. It simply packs up some other developments. 
-
-A development can also be an |Unknown| term of a given type -- the
-type being presented both as a term and as a value (for performance
-purposes). This is a typical case of \emph{development}: we are
-currently building an unknown satisfying the given type.
-
-Finally, a development can be finalised, in which case it is
-|Defined|: it has built a term satisfying the given type.
-
-\pierre{What about |Suspended|?}
+There are two kinds of Developments available: modules and definitions.
+A |Module| is a development that cannot have a type or value, but
+simply packs up some other developments. A development holding a
+definition can be in one of three states: an |Unknown| of the given
+type, a |Suspended| elaboration problem for producing a value of the
+type (see section~\ref{sec:Elaboration.ElabMonad}), or a |Defined| term
+of the type. Note that the type is presented as both a term and a
+value for performance purposes. 
 
 > data Tip
 >   = Module
@@ -168,8 +163,7 @@ these useful patterns:
 
 A \emph{definition} eventually constructs a term, by a (possibly
 empty) development of sub-objects. The |Tip| of this sub-development
-will either be of |Unknown| or |Defined| kind. \pierre{Can the Tip be
-|Suspended|? I suspect so.}
+will be |Unknown|, |Suspended| or |Defined|.
 
 A programming problem is a special kind of definition: it follows a
 type |Scheme| (Section~\ref{sec:DisplayLang.Scheme}), the high-level

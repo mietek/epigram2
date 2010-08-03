@@ -95,8 +95,9 @@ not.
 The |getLatest| function returns the most up-to-date copy of the given
 reference, either the one from the bulletin if it is present, or the
 one passed in otherwise. If given a |FAKE| reference, it will always
-return one \pierre{Why?}, regardless of the status of the reference in
-the bulletin.
+return one, regardless of the status of the reference in the bulletin.
+This ensures that fake references in labels have their types updated
+without turning into real definitions unexpectedly.
 
 > getLatest :: NewsBulletin -> REF -> REF
 > getLatest news ref@(nom := FAKE :<: _) = nom := FAKE :<: ty
