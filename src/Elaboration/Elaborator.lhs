@@ -83,6 +83,21 @@ $\lambda$-lift terms.
 > elabInfer' = elabInfer (Loc 0)
 
 
+Sometimes (for example, if we are about to apply elimination with a motive) we
+really want elaboration to proceed as much as possible. The |elabInferFully| command
+creates a definition for the argument, elaborates it and runs the scheduler.
+
+> elabInferFully :: DExTmRN -> ProofState (EXTM :=>: VAL :<: TY)
+> elabInferFully tm = do
+>     make ("eif" :<: sigSetTM)
+>     goIn
+>     (tm :=>: _, b) <- runElab True (sigSetVAL :>: makeElabInfer (Loc 0) tm)
+>     when b (ignore (give tm))
+>     startScheduler
+>     (tm :=>: v) <- getCurrentDefinition
+>     goOut
+>     return (tm :$ Snd :=>: v $$ Snd :<: v $$ Fst)
+
 
 \subsection{Elaborating construction commands}
 
