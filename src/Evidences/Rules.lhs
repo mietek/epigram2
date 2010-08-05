@@ -908,7 +908,8 @@ hence during evaluation, because it avoids forcing the types of references.
 
 
 > partialEq :: VAL -> VAL -> VAL -> Bool
-> partialEq _ _ (N (P r :$ _ :$ _)) | r == refl = True
+> partialEq _ _ (N (P r :$ _ :$ _))    | r == refl                = True
+> partialEq (C (Mu t1)) (C (Mu t2)) _  | eqLabelIncomplete t1 t2  = True
 > partialEq _ _ _ = False
 
 Sadly we cannot do the following, because it is not safe to invent a name supply.

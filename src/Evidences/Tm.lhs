@@ -432,7 +432,7 @@ term is in fact neutral.
 In the following, we implement definitional equality on terms. In this
 case, it's mainly structural.
 
-> instance Eq x => Eq (Tm {d, TT} x) where
+> instance Eq x => Eq (Tm {d, p} x) where
 
 First, a bunch of straightforward structural inductions:
 
@@ -459,7 +459,7 @@ should only ever see full binders thanks to $\eta$-expansion; the remaining
 cases are for sound but not complete approximation of the definitional
 equality.
 
-> instance Eq x => Eq (Scope {TT} x) where
+> instance Eq x => Eq (Scope {p} x) where
 >   (_ :. t0)  == (_ :. t1)  = t0 == t1
 >   K t0       == K t1       = t0 == t1
 >   _          == _          = False
@@ -593,6 +593,12 @@ If we have a labelled |INTM|, we can try to extract the name from the label.
 > extractLabelName :: Labelled f INTM -> Maybe Name
 > extractLabelName (Just (N l) :?=: _) = (|refName (extractREF l)|)
 > extractLabelName _ = Nothing
+
+We can compare value labels in a sound but incomplete fashion:
+
+> eqLabelIncomplete :: Eq t => Labelled f t -> Labelled f t -> Bool
+> eqLabelIncomplete (Just x :?=: _)  (Just y :?=: _)  = x == y
+> eqLabelIncomplete _                _                = False
 
 We can also throw away a label, should we want to.
 
