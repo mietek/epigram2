@@ -5,7 +5,14 @@
 ################
 #### GHC
 
-HC              = ghc -hide-all-packages
+HC              = ghc
+HC_PACKAGE      = -hide-all-packages \
+	          -package mtl \
+		  -package pretty \
+		  -package base \
+		  -package haskell98 \
+	          -package filepath \
+		  $(HC_CABAL_PACKAGE)
 HC_OPTS_DEV     = $(HC_PACKAGE)
 HC_OPTS_TEST    = $(HC_PACKAGE) -fhpc
 HC_OPTS_RELEASE = $(HC_PACKAGE) -O2

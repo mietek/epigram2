@@ -21,7 +21,7 @@ import Distribution.Simple.Setup
 
 callMake :: PackageDescription -> LocalBuildInfo -> UserHooks -> BuildFlags -> IO ()
 callMake pkgDesc buildInfo userHooks buildFlags = do
-  let pkgs =  "HC_PACKAGE=\"" ++ 
+  let pkgs =  "HC_CABAL_PACKAGE=\"" ++ 
               (intercalate " "
               (map (\(Dependency (PackageName name) _) -> "-package " ++ name) $ 
                buildDepends pkgDesc))
