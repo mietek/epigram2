@@ -843,12 +843,22 @@ constructors are identical) and requiring that the subterms are equal.
 >     Right t0'  = canTy (\tx@(t :>: x) -> Right (tx :=>: x)) (ty0 :>: t0)
 >     Right t1'  = canTy (\tx@(t :>: x) -> Right (tx :=>: x)) (ty1 :>: t1)
 
+If we are trying to equate a function and a canonical value, we
+don't have much hope.
+
+> opRunEqGreen [_,     L _,   _,     C _   ] = Right ABSURD
+> opRunEqGreen [_,     C _,   _,     L _   ] = Right ABSURD
+
 If one of the arguments is neutral, we blame it for being unable to compute.
 
 > opRunEqGreen [C _,   N t0,  C _,   _     ] = Left t0
 > opRunEqGreen [C _,   _,     C _,   N t1  ] = Left t1
 > opRunEqGreen [N y0,  _,     _,     _     ] = Left y0 
 > opRunEqGreen [_,     _,     N y1,  _     ] = Left y1
+
+Otherwise, something has gone horribly wrong.
+
+> opRunEqGreen as = error $ "opRunEqGreen: unmatched " ++ show as
 
 
 The |mkEqConj| function builds a conjunction of |eqGreen| propositions
