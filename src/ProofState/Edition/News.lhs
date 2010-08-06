@@ -8,6 +8,9 @@
 
 > module ProofState.Edition.News where
 
+> import Control.Monad.Writer
+> import Data.Traversable
+
 > import Data.Foldable hiding (foldr)
 > import Data.Maybe
 > import Data.Monoid hiding (All)
@@ -131,13 +134,22 @@ in either.
 
 The |tellNews| function applies a bulletin to a term. It returns the updated
 term and the news about it (i.e.\ the least nice news of any reference used
-in the term).
+in the term). Using the |Writer| monad allows the term to be updated and the
+news about it calculated in a single traversal. Note that we ensure |FAKE|
+references remain as they are, as in |getLatest|.
 
 > tellNews :: NewsBulletin -> Tm {d, TT} REF -> (Tm {d, TT} REF, News)
 > tellNews []    tm = (tm, NoNews)
-> tellNews news  tm = case foldMap (lookupNews news) tm of
->     NoNews  -> (tm, NoNews)
->     n       -> (fmap (getLatest news) tm, n)
+> tellNews news  tm = runWriter $ traverse teller tm
+>   where
+>     teller :: REF -> Writer News REF
+>     teller r = case getNews news r of
+>         Nothing -> return r
+>         Just (r', n) -> tell n >> return (fixFake r r')
+>
+>     fixFake :: REF -> REF -> REF
+>     fixFake (_ := FAKE :<: _)  (n := _ :<: ty)  = n := FAKE :<: ty
+>     fixFake _                  r                = r
 
 The |tellNewsEval| function takes a bulletin, term and its present value.
 It updates the term with the bulletin and re-evaluates it if necessary.
