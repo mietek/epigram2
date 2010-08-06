@@ -213,7 +213,7 @@ elab head Bool 'nil ;
 -}
 
 make Vec : Set -> Nat -> Set ;
-lambda A : Set ;
+lambda A ;
 make VecD : Nat -> IDesc Nat _ ;
 give (\ n -> 'fsigmaD ['vnil 'vcons] [ ('constD (:- ((: Nat) 'zero == n))) ('sigmaD Nat (\ m -> 'prodD ('constD A) ('prodD ('varD m) ('constD (:- ((: Nat) ('suc m) == n)))))) ]) ;
 make Vec := (\ n -> IMu Nat VecD n) : Nat -> Set ;

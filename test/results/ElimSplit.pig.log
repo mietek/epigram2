@@ -10,12 +10,14 @@ Going to root...
   Z := ? : Set ;
   f
     [ \ xy : Sig X Y ->
+      eif
+        := [((P : Sig X Y -> Set)(p : (a : X)(b : Y a) -> P [a , b]) -> P xy) , split X Y xy] : Sig (ssv : Set ; ssv) ;
       makeE
         [ P
             [ \ xf : Sig X Y ->
             ] Z : Set ;
           m := ? : (a : X)(b : Y a) -> P [a , b] ;
-        ] split X Y xy P m : P xy ;
+        ] eif - P m : P xy ;
     ] makeE : Z ;
 ]
 Loaded.
