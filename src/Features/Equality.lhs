@@ -150,10 +150,33 @@
 >                   NV px])
 >               ]]]]]]
 
+>   symEq = [("Primitive", 0), ("symEq", 0)] := DEFN def :<: ty where
+>     ty = PRF $ ALL SET $ L $ "X" :. [._X.
+>                    ALL (NV _X) $ L $ "x" :. [.x.
+>                    ALL (NV _X) $ L $ "y" :. [.y.
+>                    IMP (EQBLUE (NV _X :>: NV x) (NV _X :>: NV y))
+>                    (EQBLUE (NV _X :>: NV y) (NV _X :>: NV x))
+>                ]]]
+>     def = L $ "X" :. [._X.
+>           L $ "x" :. [.x.
+>           L $ "y" :. [.y.
+>           L $ "q" :. [.q.
+>           N (P refl :$ A (ARR (NV _X) SET)
+>               :$ A (L $ "z" :. [.z.
+>                   PRF (EQBLUE (NV _X :>: NV z) (NV _X :>: NV x))])
+>               :$ Out
+>               :$ A (NV x)
+>               :$ A (NV y)
+>               :$ A (NV q)
+>               :$ Fst
+>               :$ A (N (P refl :$ A (NV _X) :$ A (NV x))))
+>           ]]]]
+
 > import -> Primitives where
 >   ("cohAx", cohAx) :
 >   ("refl", refl) :
 >   ("substEq", substEq) :
+>   ("symEq", symEq) :
 
 
 In the display syntax, a blue equality can be between arbitrary DExTms,

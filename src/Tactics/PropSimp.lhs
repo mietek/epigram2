@@ -540,6 +540,9 @@ at a time. It will fail if no simplification is possible.
 >     let body = N (switchOp :@ [e', NV 0, t', x])
 >     topWrap b $ L ("pe" :. body) :=>: L ("pe" :. body)            
 
+
+This monstrosity needs to be simplified and documented.
+
 > simplifyGoal True (PI (PRF p) t) = do
 >     simpTrace "PI PRF"
 >     pSimp <- runPropSimplify p
@@ -561,6 +564,25 @@ at a time. It will fail if no simplification is possible.
 >                                      (N (V _P :$ A (NP y)))
 >                                  ]
 >                          ex   =  P substEq :$ A _X' :$ A x' :$ A (NP y) :$ A (NP q)
+>                     elimSimplify (ety :>: N ex)
+>                     neutralise =<< getCurrentDefinition
+>                    else do
+>                     ref <- lambdaParam (fortran t)
+>                     trySimplifyGoal True (t $$ A (NP ref))
+>                 EQBLUE (_Y :>: NP y@(yn := DECL :<: _)) (_X :>: x)
+>                  | equal (SET :>: (_X, _Y)) ns -> do
+>                   t' <- bquoteHere t
+>                   if y `Data.Foldable.elem` t'
+>                    then do
+>                     simpTrace $ "elimSimp: " ++ show yn
+>                     q    <- lambdaParam "qe"
+>                     _X'  <- bquoteHere _X
+>                     x'   <- bquoteHere x
+>                     let  ety  =  PI (ARR _X SET) $ L $ "P" :. [._P.
+>                                  ARR (N (V _P :$ A x'))
+>                                      (N (V _P :$ A (NP y)))
+>                                  ]
+>                          ex   =  P substEq :$ A _X' :$ A x' :$ A (NP y) :$ A (N (P symEq :$ A _X' :$ A (NP y) :$ A x' :$ A (NP q)))
 >                     elimSimplify (ety :>: N ex)
 >                     neutralise =<< getCurrentDefinition
 >                    else do
