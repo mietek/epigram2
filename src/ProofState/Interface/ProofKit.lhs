@@ -137,7 +137,7 @@ location, which may be useful for paranoia purposes.
 
 
 
-\subsection{From |EXTM| to |INTM|}
+\subsection{From |EXTM| to |INTM| and back again}
 
 
 Various commands yield an |EXTM :=>: VAL|, and we sometimes need to
@@ -146,3 +146,10 @@ belong to this file but where could it go?}
 
 > neutralise :: Monad m => (EXTM :=>: VAL) -> m (INTM :=>: VAL)
 > neutralise (n :=>: v) = return $ N n :=>: v
+
+Conversely, sometimes we have an |INTM| and the value representation of its
+type, but need an |EXTM|. We avoid |bquote| if possible.
+
+> annotate :: INTM -> TY -> ProofState EXTM
+> annotate (N n)  _   = return n
+> annotate t      ty  = bquoteHere ty >>= return . (t :?)
