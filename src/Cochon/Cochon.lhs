@@ -42,7 +42,8 @@
 > import ProofState.Interface.Parameter
 
 > import Tactics.Elimination
-> import Tactics.PropSimp
+> import Tactics.PropositionSimplify
+> import Tactics.ProblemSimplify
 > import Tactics.Information
 > import Tactics.Gadgets
 > import Tactics.Data

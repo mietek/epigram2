@@ -136,11 +136,12 @@
 
 %include Tactics/Information.lhs
 %include Tactics/Elimination.lhs
-%include Tactics/PropSimp.lhs
+%include Tactics/PropositionSimplify.lhs
+%include Tactics/ProblemSimplify.lhs
 %include Tactics/Data.lhs
 %include Tactics/Record.lhs
-%include Tactics/Gadgets.lhs
 %include Tactics/Relabel.lhs
+%include Tactics/Gadgets.lhs
 
 \chapter{Elaboration}
 \label{chap:elaboration}

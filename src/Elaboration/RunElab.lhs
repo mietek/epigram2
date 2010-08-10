@@ -38,7 +38,7 @@
 > import DisplayLang.Scheme
 > import DisplayLang.Name
 
-> import Tactics.PropSimp
+> import Tactics.PropositionSimplify
 
 > import Elaboration.ElabMonad
 > import Elaboration.MakeElab
