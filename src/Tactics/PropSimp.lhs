@@ -488,31 +488,30 @@ We need a proper logging system!
 
 The |problemSimplify| command performs these simplifications. It works by
 repeatedly transforming the proof state into a simpler version, one step
-at a time. It will fail if no simplification is possible.
+at a time. It will fail if no simplification is possible. The real work is done
+in |simplifyGoal| below.
 
 > problemSimplify :: ProofState (EXTM :=>: VAL)
 > problemSimplify = do
 >     simpTrace "problemSimplify"
 >     getHoleGoal >>= simplifyGoal True . valueOf >> getCurrentDefinition
 
-> tryProblemSimplify :: ProofState (EXTM :=>: VAL)
-> tryProblemSimplify = problemSimplify <|> getCurrentDefinition
-
 
 > trySimplifyGoal :: Bool -> TY -> ProofState (INTM :=>: VAL)
-> trySimplifyGoal True ty = simplifyGoal True ty <|> (neutralise =<< getCurrentDefinition)
-> trySimplifyGoal False ty = simplifyGoal False ty <|> (do
->             ty' <- bquoteHere ty
->             neutralise =<< make ("tsg" :<: ty'))
+> trySimplifyGoal True   ty = simplifyGoal True ty <|>
+>                                 (neutralise =<< getCurrentDefinition)
+> trySimplifyGoal False  ty = simplifyGoal False ty <|> (do
+>                                 ty' <- bquoteHere ty
+>                                 neutralise =<< make ("tsg" :<: ty'))
 
 > annotate :: INTM -> TY -> ProofState EXTM
-> annotate (N n) _ = return n
-> annotate t ty = bquoteHere ty >>= return . (t :?)
+> annotate (N n)  _   = return n
+> annotate t      ty  = bquoteHere ty >>= return . (t :?)
 
 
 > topWrap :: Bool -> INTM :=>: VAL -> ProofState (INTM :=>: VAL)
-> topWrap True tt   = give (termOf tt) >> return tt
-> topWrap False tt  = return tt
+> topWrap True   tt = give (termOf tt) >> return tt
+> topWrap False  tt = return tt
 
 
 > simplifyGoal :: Bool -> TY -> ProofState (INTM :=>: VAL)
@@ -546,79 +545,60 @@ This monstrosity needs to be simplified and documented.
 > simplifyGoal True (PI (PRF p) t) = do
 >     simpTrace "PI PRF"
 >     pSimp <- runPropSimplify p
->     case pSimp of
->         Nothing -> do
->             ns <- askNSupply
->             case p of
->                 EQBLUE (_X :>: x) (_Y :>: NP y@(yn := DECL :<: _))
->                  | equal (SET :>: (_X, _Y)) ns -> do
->                   t' <- bquoteHere t
->                   if y `Data.Foldable.elem` t'
->                    then do
->                     simpTrace $ "elimSimp: " ++ show yn
->                     q    <- lambdaParam "qe"
->                     _X'  <- bquoteHere _X
->                     x'   <- bquoteHere x
->                     let  ety  =  PI (ARR _X SET) $ L $ "P" :. [._P.
->                                  ARR (N (V _P :$ A x'))
->                                      (N (V _P :$ A (NP y)))
->                                  ]
->                          ex   =  P substEq :$ A _X' :$ A x' :$ A (NP y) :$ A (NP q)
->                     elimSimplify (ety :>: N ex)
->                     neutralise =<< getCurrentDefinition
->                    else do
->                     ref <- lambdaParam (fortran t)
->                     trySimplifyGoal True (t $$ A (NP ref))
->                 EQBLUE (_Y :>: NP y@(yn := DECL :<: _)) (_X :>: x)
->                  | equal (SET :>: (_X, _Y)) ns -> do
->                   t' <- bquoteHere t
->                   if y `Data.Foldable.elem` t'
->                    then do
->                     simpTrace $ "elimSimp: " ++ show yn
->                     q    <- lambdaParam "qe"
->                     _X'  <- bquoteHere _X
->                     x'   <- bquoteHere x
->                     let  ety  =  PI (ARR _X SET) $ L $ "P" :. [._P.
->                                  ARR (N (V _P :$ A x'))
->                                      (N (V _P :$ A (NP y)))
->                                  ]
->                          ex   =  P substEq :$ A _X' :$ A x' :$ A (NP y) :$ A (N (P symEq :$ A _X' :$ A (NP y) :$ A x' :$ A (NP q)))
->                     elimSimplify (ety :>: N ex)
->                     neutralise =<< getCurrentDefinition
->                    else do
->                     ref <- lambdaParam (fortran t)
->                     trySimplifyGoal True (t $$ A (NP ref))
->                 _ -> do
->                     ref <- lambdaParam (fortran t)
->                     trySimplifyGoal True (t $$ A (NP ref))
->         Just (SimplyAbsurd prf) -> do
->             r <- lambdaParam (fortran t)
->             let pr = prf (NP r)
->             nonsense <- bquoteHere (nEOp @@ [pr, t $$ A (NP r)])
->             neutralise =<< give nonsense
->         Just (SimplyTrivial prf) -> do
->             t' <- bquoteHere (t $$ A prf)
->             make ("r" :<: t')
->             goIn
->             b :=>: _ <- tryProblemSimplify
->             goOut
-
->             neutralise =<< give (LK (N b))
->         Just (Simply qs gs h) -> do
->             q <- dischargePiLots qs (t $$ A h)
->             q' <- bquoteHere q
->             make ("psimp" :<: q')
->             goIn
->             bt :=>: _ <- tryProblemSimplify
->             goOut
->             r <- lambdaParam (fortran t)
->             gs' <- traverse (bquoteHere . ($$ A (NP r))) gs
->             neutralise =<< give (N (bt $## trail gs'))
+>     maybe (elimEquation p t <|> passHypothesis t) (simplifyProp p t) pSimp
+>   where
+>     elimEquation :: VAL -> VAL -> ProofState (INTM :=>: VAL) 
+>     elimEquation (EQBLUE (_X :>: x) (_Y :>: NP y@(yn := DECL :<: _))) t = do
+>         guard =<< (withNSupply $ equal (SET :>: (_X, _Y)))
+>         t' <- bquoteHere t
+>         guard $ y `Data.Foldable.elem` t'
+>         simpTrace $ "elimSimp: " ++ show yn
+>         q    <- lambdaParam "qe"
+>         _X'  <- bquoteHere _X
+>         x'   <- bquoteHere x
+>         let  ety  =  PI (ARR _X SET) $ L $ "P" :. [._P.
+>                          ARR (N (V _P :$ A x')) (N (V _P :$ A (NP y)))
+>                      ]
+>              ex   =  P substEq :$ A _X' :$ A x' :$ A (NP y) :$ A (NP q)
+>         elimSimplify (ety :>: N ex)
+>         neutralise =<< getCurrentDefinition
+>     elimEquation (EQBLUE (_Y :>: NP y@(yn := DECL :<: _)) (_X :>: x)) t = do
+>         guard =<< (withNSupply $ equal (SET :>: (_X, _Y)))
+>         t' <- bquoteHere t
+>         guard $ y `Data.Foldable.elem` t'
+>         simpTrace $ "elimSimp: " ++ show yn
+>         q    <- lambdaParam "qe"
+>         _X'  <- bquoteHere _X
+>         x'   <- bquoteHere x
+>         let  ety  =  PI (ARR _X SET) $ L $ "P" :. [._P.
+>                          ARR (N (V _P :$ A x')) (N (V _P :$ A (NP y)))
+>                      ]
+>              ex   =  P substEq :$ A _X' :$ A x' :$ A (NP y) :$ A
+>                          (N (P symEq :$ A _X' :$ A (NP y) :$ A x' :$ A (NP q)))
+>         elimSimplify (ety :>: N ex)
+>         neutralise =<< getCurrentDefinition
+>     elimEquation _ _ = (|)
+>     
+>     simplifyProp :: VAL -> VAL -> Simplify -> ProofState (INTM :=>: VAL)
+>     simplifyProp p t (SimplyAbsurd prf) = do
+>         r <- lambdaParam (fortran t)
+>         let pr = prf (NP r)
+>         nonsense <- bquoteHere (nEOp @@ [pr, t $$ A (NP r)])
+>         neutralise =<< give nonsense
+>     simplifyProp p t (SimplyTrivial prf) = do
+>         x :=>: xv <- trySimplifyGoal False (t $$ A prf)
+>         neutralise =<< give (LK x)
+>     simplifyProp p t (Simply qs gs h) = do
+>         q <- dischargePiLots qs (t $$ A h)
+>         x :=>: xv <- trySimplifyGoal False q
+>         y <- annotate x q
+>         r <- lambdaParam (fortran t)
+>         gs' <- traverse (bquoteHere . ($$ A (NP r))) gs
+>         neutralise =<< give (N (y $## trail gs'))
 
 > simplifyGoal True (PI s t) = do
 >     simpTrace "PI top"
->     ref <- lambdaParam (fortran t)
->     trySimplifyGoal True (t $$ A (NP ref))
+>     passHypothesis t
 
 > simplifyGoal False g@(PI _ _) = do
 >     simpTrace "PI not"
@@ -657,6 +637,12 @@ This monstrosity needs to be simplified and documented.
 
 > simplifyGoal _ _ = throwError' $ err "simplifyGoal: cannot simplify"
 
+
+
+> passHypothesis :: VAL -> ProofState (INTM :=>: VAL)                     
+> passHypothesis t = do
+>     ref <- lambdaParam (fortran t)
+>     trySimplifyGoal True (t $$ A (NP ref))
 
 The |elimSimplify| command invokes elimination with a motive, simplifies the
 methods, then returns to the original goal.
