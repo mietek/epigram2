@@ -1,3 +1,9 @@
+\newcommand{\simpto}{\leadsto}
+\newcommand{\and}{\wedge}
+\newcommand{\conj}[2]{\bigwedge_{#2} \vec{{#1}_{#2}}}
+\newcommand{\BlueEq}[4]{(\Bhab{#2}{#1}) \EQ (\Bhab{#4}{#3})}
+\newcommand{\GreenEq}[4]{(\Bhab{#2}{#1}) \green{\leftrightarrow} (\Bhab{#4}{#3})}
+
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
@@ -42,41 +48,104 @@ We need a proper logging system!
 
 \subsection{Setting the Scene}
 
-\question{What should the terminology be?}
-
-A \emph{normal proposition}\index{normal proposition} is either
-|Absurd| or a conjunction of q-neutral propositions. A \emph{q-neutral
-proposition}\index{q-neutral proposition} is either:
-
+A \emph{simple proposition}\index{simple proposition} is either
+$\Absurd$ or a (possibly trivial) conjunction, where each conjunct is:
 \begin{itemize}
-\item a neutral term of type |Prop|;
+\item a neutral term of type $\Prop$;
 \item a blue equation with (at least) one neutral side;
-\item |(x : S) => P|, with |S| not a proof and |P| q-neutral; or
-\item |(x :- P) => Q|, with |P| and |Q| q-neutral and |P| not |Absurd|.
+\item $\ALL{x}{S} P$, with $S$ not a proof and $P$ simple; or
+\item $P \Imply Q$, with $P$ and $Q$ simple and $P$ not $\Absurd$.
 \end{itemize}
-By extension, a \emph{q-neutral context}\index{q-neutral context} is a
-context all of whose propositions are q-neutral.
+
+We write $\Gamma \Tn P \simpto R$ to mean that the proposition $P$ in context
+$\Gamma$ simplifies to the simple proposition $R$. The rules in
+Figure~\ref{fig:Tactics.PropositionSimplify.rules}
+define this judgment, and the implementation follows these rules.
+
+\begin{figure}[ht]
+
+$$
+\CAxiom{\Gamma \Tn \Trivial \simpto \Trivial}
+\qquad
+\CAxiom{\Gamma \Tn \Absurd \simpto \Absurd}
+$$
+
+$$
+\Rule{\Gamma \Tn P \simpto \Absurd}
+     {\Gamma \Tn P \and Q \simpto \Absurd}
+\qquad
+\Rule{\Gamma \Tn Q \simpto \Absurd}
+     {\Gamma \Tn P \and Q \simpto \Absurd}
+\qquad
+\Rule{\Gamma \Tn P \simpto \conj{P}{i}  \quad  \Gamma \Tn Q \simpto \conj{Q}{j}}
+     {\Gamma \Tn P \and Q \simpto \conj{P}{i} \and \conj{Q}{j}}
+$$
+
+$$
+\Rule{\Gamma \Tn P \simpto \Absurd}
+     {\Gamma \Tn P \Imply Q \simpto \Trivial}
+\qquad
+\Rule{\Gamma \Tn P \simpto \conj{P}{i}  \quad
+      \Gamma, \vec{P_i} \Tn Q \simpto \Trivial}
+     {\Gamma \Tn P \Imply Q \simpto \Trivial}
+\qquad
+\Rule{\Gamma \Tn P \simpto \conj{P}{i}  \quad
+      \Gamma, \vec{P_i} \Tn Q \simpto \Absurd}
+     {\Gamma \Tn P \Imply Q \simpto \vec{P_i} \Imply \Absurd}
+$$
+
+$$
+\Rule{\Gamma \Tn P \simpto \conj{P}{i}  \quad
+      \Gamma, \vec{P_i} \Tn Q \simpto \conj{Q}{j}}
+     {\Gamma \Tn P \Imply Q \simpto \vec{P_i} \Imply (\conj{Q}{j})}
+$$
+
+$$
+\Rule{\Gamma, \Bhab{x}{S} \Tn Q \simpto \Absurd}
+     {\Gamma \Tn \ALL{x}{S} Q \simpto \ALL{x}{S} \Absurd}
+\qquad
+\Rule{\Gamma, \Bhab{x}{S} \Tn Q \simpto \Trivial}
+     {\Gamma \Tn \ALL{x}{S} Q \simpto \Trivial}
+\qquad
+\Rule{\Gamma, \Bhab{x}{S} \Tn Q \simpto \conj{Q}{j}}
+     {\Gamma \Tn \ALL{x}{S} Q \simpto \ALL{x}{S} (\conj{Q}{j})}
+$$
+
+$$
+\CAxiom{\Gamma \Tn \BlueEq{S}{s}{S}{s} \simpto \Trivial}
+\qquad
+\Rule{\Gamma \Tn \GreenEq{S}{s}{T}{t} \simpto R}
+     {\Gamma \Tn \BlueEq{S}{s}{T}{t} \simpto R}
+\qquad
+\Rule{\Gamma \Vdash P}
+     {\Gamma \Tn P \simpto \Trivial}
+$$
+
+\caption{Propositional simplification rules}
+\label{fig:Tactics.PropositionSimplify.rules}
+\end{figure}
 
 
-Given $\Delta \vdash \Bhab{p}{\Prop}$, the propositional simplifier will either 
+Given $\Gamma \vdash \Bhab{P}{\Prop}$, the propositional simplifier will either:
 \begin{itemize}
 
-\item discover that $p$ is absurd and provide a proof $\Delta \vdash
-\Bhab{f}{(\prf{p} \Imply \Absurd)}$, represented by |Left f|; or
+\item discover that $P$ is absurd and provide a proof
+$\Gamma \vdash \Bhab{f}{(\prf{P} \Imply \Absurd)}$,
+represented by |Left f|; or
 
-\item simplify $p$ to a conjunction $\bigwedge_i q_i$ together with
-proofs $\Delta \vdash \Bhab{g_i}{(\prf{p} \Imply q_i)}$ and $\Delta,
-\Gamma \vdash \Bhab{h}{(\prf{p})}$, where $\Gamma = \{q_i\}_i$,
-represented by |Right (qs, gs, h)|.
+\item simplify $P$ to a conjunction $\conj{P}{i}$ together with
+proofs $\Gamma \vdash \Bhab{g_i}{(\prf{P} \Imply P_i)}$ and
+$\Gamma, \vec{P_i} \vdash \Bhab{h}{(\prf{P})}$,
+represented by |Right (ps, gs, h)|.
 
 \end{itemize}
 
 > type Simplify = Either (VAL -> VAL) (Bwd REF, Bwd VAL, VAL)
 
-> pattern Simply qs gs h     = Right (qs, gs, h)
+> pattern Simply ps gs h     = Right (ps, gs, h)
 > pattern SimplyAbsurd prf   = Left prf
 > pattern SimplyTrivial prf  = Simply B0 B0 prf
-> pattern SimplyOne q g h    = Simply (B0 :< q) (B0 :< g) h
+> pattern SimplyOne p g h    = Simply (B0 :< p) (B0 :< g) h
 
 
 > type Simplifier x = ReaderT NameSupply Maybe x
