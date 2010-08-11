@@ -48,6 +48,7 @@
 > import Tactics.Gadgets
 > import Tactics.Data
 > import Tactics.Relabel
+> import Tactics.ShowHaskell
 
 > import Elaboration.Elaborator
 > import Elaboration.Scheduler

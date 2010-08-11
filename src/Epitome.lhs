@@ -142,6 +142,7 @@
 %include Tactics/Record.lhs
 %include Tactics/Relabel.lhs
 %include Tactics/Gadgets.lhs
+%include Tactics/ShowHaskell.lhs
 
 \chapter{Elaboration}
 \label{chap:elaboration}
