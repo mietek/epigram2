@@ -5,10 +5,7 @@ Hurrah!
 Hurrah!
 Going to root...
 'suc ('suc ('suc ('suc 'zero)))
-Appended goal!
-Made lambda!
-Eliminated. Subgoals awaiting work...
-Thank you.
+Let there be trans.
 Going to root...
 Made.
 Appended goal!
@@ -31,7 +28,6 @@ Going to root...
 Appended goal!
 Simplified.
 Made lambda!
-Eliminated and simplified.
 Eliminated and simplified.
 Thank you.
 Going to root...
