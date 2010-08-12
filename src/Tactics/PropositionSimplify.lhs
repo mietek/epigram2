@@ -350,33 +350,37 @@ so we had better give up.
 
 >         consequent _ = (|) 
 
+
 To simplify a proposition that is universally quantified over a (completely
 canonical) enumeration, we can simplify it for each possible value.
 
-> {-
-
 > propSimplify gamma delta p@(ALL (ENUMT e) b) | Just ts <- getTags B0 e = 
->     process B0 B0 B0 ZE ts
+>     process B0 B0 B0 (ZE :=>: ZE) ts
 >   where
 >     getTags :: Bwd VAL -> VAL -> Maybe (Bwd VAL)
 >     getTags ts NILE         = (| ts |)
 >     getTags ts (CONSE t e)  = getTags (ts :< t) e
 >     getTags ts _            = (|)
 >
->     process :: Bwd REF -> Bwd VAL -> Bwd VAL -> VAL -> Bwd VAL
->         -> Simplifier Simplify
->     process qs gs hs n B0 = return $ Simply qs gs $ L $ HF "xe" $ \ x ->
->         switchOp @@ [e, x, L (HF "yb" $ \ y -> PRF (b $$ A y)),
->                          Prelude.foldr PAIR VOID (trail hs)]
->     process qs1 gs1 hs1 n (ts :< t) = forkNSupply "psEnumImp"
->         (forceSimplify gamma delta (b $$ A n)) $
+>     process :: Bwd (REF :<: INTM) -> Bwd (EXTM -> INTM) -> Bwd INTM ->
+>         INTM :=>: VAL -> Bwd VAL -> Simplifier Simplify
+>     process qs gs hs (n :=>: nv) B0 = do
+>         e' <- bquote B0 e
+>         b' <- bquote B0 b
+>         let b'' = b' ?? ARR (ENUMT e') PROP
+>         return $ Simply qs gs $
+>             L $ "xe" :. N (switchOp :@ [e', NV 0,
+>                                         L $ "yb" :. PRF (N (b'' :$ A (NV 0))),
+>                                         Prelude.foldr PAIR VOID (trail hs)])
+>     process qs1 gs1 hs1 (n :=>: nv) (ts :< t) = forkNSupply "psEnumImp"
+>         (forceSimplify gamma delta (b $$ A nv)) $
 >         \ (btSimp, _) -> case btSimp of
->             SimplyAbsurd prf  -> return $ SimplyAbsurd (\ v -> prf (v $$ A n))
+>             SimplyAbsurd prf  -> return $ SimplyAbsurd (prf . (:$ A n))
 >             Simply qs2 gs2 h2  -> do
->                 let gs2' = fmap (..! ($$ A n)) gs2
->                 process (qs1 <+> qs2) (gs1 <+> gs2') (hs1 :< h2) (SU n) ts
+>                 let gs2' = fmap (. (:$ A n)) gs2
+>                 process (qs1 <+> qs2) (gs1 <+> gs2') (hs1 :< h2)
+>                         (SU n :=>: SU nv) ts
 
-> -}
 
 To simplify |p = (x : s) => t| where |s| is not a proof set, we generate a fresh
 reference and simplify |t| under the binder.
