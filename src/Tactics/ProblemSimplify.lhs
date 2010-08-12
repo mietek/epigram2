@@ -185,7 +185,7 @@ the context and carry on. Note that this assumes we are at the top level.
 >         let y = x ?? q
 >         r <- lambdaParam (fortran t)
 >         let gs' = fmap ($ (P r)) gs
->         neutralise =<< give (N (y $## trail gs'))
+>         neutralise =<< give (N (y $## gs'))
 
 Otherwise, we simplify $\Pi$-types by introducing a hypothesis, provided we are
 at the top level.

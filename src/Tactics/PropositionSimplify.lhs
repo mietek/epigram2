@@ -285,12 +285,11 @@ where $\Theta \cong z_0 : pq_0, ..., z_m : pq_m$.
 >           | simplifiedP || simplifiedQ = do
 >             let ris = fmap (dischargeAllREF pis) qis
 >             let rgs = fmap wrapper qgs
->             rh <- mkFun $ \ ref ->
->                 let squiz  = fmap ($ (P ref)) pgs
->                     h      = substitute qis (fmap (\ (pq :<: _) ->
->                                                    N (P pq $## trail squiz))
->                                              ris) qh
->                 in substitute pis squiz h
+>             rh <- mkFun $ \ pref ->
+>                 let piPrfs  = fmap ($ (P pref)) pgs
+>                     qiPrfs  = fmap (\ (ri :<: _) -> N (P ri $## piPrfs)) ris
+>                     h       = substitute qis qiPrfs qh
+>                 in substitute pis piPrfs h
 >             return $ Simply ris rgs rh
 >           where
 >             wrapper :: (EXTM -> INTM) -> EXTM -> INTM

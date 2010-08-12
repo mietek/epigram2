@@ -9,11 +9,13 @@
 
 > module Evidences.Tm where
 
+> import Prelude hiding (foldl)
+
 > import Control.Applicative
 > import Control.Monad.Error
 > import qualified Data.Monoid as M
-> import Data.Foldable hiding (foldl)
-> import Data.List
+> import Data.Foldable
+> import Data.List hiding (foldl)
 > import Data.Traversable
 
 > import Kit.MissingLibrary
@@ -635,8 +637,8 @@ It is sometimes useful to construct the identity function:
 
 The aptly named |$##| operator applies an |ExTm| to a list of |InTm|s.
 
-> ($##) :: Tm {Ex, p} x -> [Tm {In, p} x] -> Tm {Ex, p} x
-> f $## xs = f $:$ (map A xs)
+> ($##) :: (Functor t, Foldable t) => ExTm x -> t (InTm x) -> ExTm x
+> f $## xs = foldl (\ v w -> v :$ A w) f xs
 
 Sensible name advice is a hard problem. The |fortran| function tries to extract
 a useful name from a term.  
