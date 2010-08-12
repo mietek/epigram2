@@ -515,8 +515,11 @@ inside |val| and, when found, bind it to the De Bruijn index 0. This
 corresponds to beta-quoting |val| with |ref|. Then, well, we put that
 under a lambda and we are discharged.
 
-> discharge :: NameSupplier m => REF -> VAL -> m VAL
-> discharge ref val = (| (evTm . L . (fst (last (refName ref)) :.)) (bquote (B0 :< ref) val) |)
+\adam{Do we need |discharge| for anything? It seems like this is better done
+with terms rather than values. I have commented it out for the time being.}
+
+< discharge :: NameSupplier m => REF -> VAL -> m VAL
+< discharge ref val = (| (evTm . L . (fst (last (refName ref)) :.)) (bquote (B0 :< ref) val) |)
 
 
 \subsection{Simplification of stuck terms}

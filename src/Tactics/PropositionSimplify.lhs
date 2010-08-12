@@ -266,7 +266,7 @@ applying |l| to |sh| (the proof of |s| in the extended context).
 >       where
 >         consequent :: (Simplify, Bool) -> Simplifier Simplify
 >         consequent (SimplyAbsurd prfAbsurdT, _) = do
->             let madness = dischargeAllLots' sqs (PRF ABSURD)
+>             let madness = dischargeAll sqs (PRF ABSURD)
 >             freshRef ("madness" :<: evTm madness) $ \ madRef ->
 >               freshRef ("sRef" :<: s) $ \ sRef -> do
 >                 l' <- bquote B0 l
@@ -277,9 +277,9 @@ applying |l| to |sh| (the proof of |s| in the extended context).
 >                         PRF (N (l'' :$ A (NP sRef)))
 >                       ])
 >                 return $ SimplyOne (madRef :<: madness)
->                     (\ pv -> dischargeLots' (fmap fstEx sqs)
+>                     (\ pv -> dischargeLam (fmap fstEx sqs)
 >                                             (prfAbsurdT (pv :$ A sh)))
->                     (dischargeLots' (B0 :< sRef) body)
+>                     (dischargeLam (B0 :< sRef) body)
 
 
 If the consequent |t| is trivial, then the implication is trivial, which we can
@@ -295,7 +295,7 @@ prove as follows:
 >         consequent (SimplyTrivial prfT, _) = 
 >             freshRef ("sRef" :<: PRF s) $ \ sRef -> do
 >                 let z = substitute sqs (fmap ($ (P sRef)) sgs) prfT
->                 let prf' = dischargeLots' (B0 :< sRef) z
+>                 let prf' = dischargeLam (B0 :< sRef) z
 >                 return $ SimplyTrivial prf'
 
 Otherwise, if the consequent simplifies, we proceed as follows.
@@ -321,28 +321,17 @@ where $\Theta \cong z_0 : pq_0, ..., z_m : pq_m$.
 
 >         consequent (Simply tqs tgs th, didSimplifyConsequent) 
 >           | didSimplifyAntecedent || didSimplifyConsequent = do
->             let pqs = fmap (dischargeRefAlls' sqs) tqs
+>             let pqs = fmap (dischargeAllREF sqs) tqs
 >             let pgs = fmap wrapper tgs
 >             freshRef ("sref" :<: PRF s) $ \ sref -> do
 >                 let  squiz  = fmap ($ (P sref)) sgs
 >                 let th2 = substitute tqs (fmap (\ (pq :<: _) -> N (P pq $## trail squiz)) pqs) th
 >                 let th4 = substitute sqs squiz th2
->                 let ph = dischargeLots' (B0 :< sref) th4
+>                 let ph = dischargeLam (B0 :< sref) th4
 >                 return $ Simply pqs pgs ph
-
-> {-
->                 let th1 = dischargeLots' (fmap fstEx tqs) th
->                 let  sgSpine  = fmap (\sg -> A (sg $$ A (NP sref))) sgs
->                      th2      = th1 $$$ fmap (\pq -> A (NP pq $$$ sgSpine)) pqs
->                 th3 <- dischargeLots sqs th2
->                 let th4 = th3 $$$ sgSpine
->                 ph <- discharge sref th4
->                 return $ Simply pqs pgs ph
-> -}
->
 >           where
 >             wrapper :: (EXTM -> INTM) -> EXTM -> INTM
->             wrapper tg p = dischargeLots' (fmap fstEx sqs) (tg (p :$ A sh))
+>             wrapper tg p = dischargeLam (fmap fstEx sqs) (tg (p :$ A sh))
 
 
 If we get to this point, neither the antecedent nor the consequent simplified,
@@ -410,17 +399,17 @@ If |t| is absurd, then |p| simplifies to |(x : s) => FF|.
 If |t| is trivial, then |p| is trivial.
 
 >     thingy s' refS (SimplyTrivial prf) =
->         return $ SimplyTrivial (dischargeLots' (B0 :< refS) prf)
+>         return $ SimplyTrivial (dischargeLam (B0 :< refS) prf)
 
 Otherwise, |p| simplifies to a conjunction of propositions |(x : s) =>
 q| for each |q| in the simplification of |t|.
 
 
 >     thingy s' refS (Simply qs gs h) = do
->         let pqs = fmap (dischargeRefAlls' (B0 :< (refS :<: s'))) qs
+>         let pqs = fmap (dischargeAllREF (B0 :< (refS :<: s'))) qs
 >         let pgs = fmap wrapper gs
 >         let h2 = substitute qs (fmap (\ (q :<: ty) -> N (P q :$ A (NP refS))) pqs) h
->         let ph = dischargeLots' (B0 :< refS) h2
+>         let ph = dischargeLam (B0 :< refS) h2
 >         return (Simply pqs pgs ph)
 >       where
 

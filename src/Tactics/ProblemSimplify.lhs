@@ -180,7 +180,7 @@ the context and carry on. Note that this assumes we are at the top level.
 >     simplifyProp p t (Simply qs gs h) = do
 >         t'   <- bquoteHere t
 >         t''  <- annotate t' (ARR (PRF p) SET)                                      
->         let q = dischargePiLots' qs (N (t'' :$ A h))
+>         let q = dischargePi qs (N (t'' :$ A h))
 >         x :=>: xv <- trySimplifyGoal False (evTm q)
 >         let y = x ?? q
 >         r <- lambdaParam (fortran t)
