@@ -16,7 +16,6 @@
 
 > import Control.Applicative 
 > import Control.Monad.Reader
-> import Control.Monad.Identity
 
 > import Data.Traversable
 
@@ -219,9 +218,7 @@ in one direction and applying the proof of $P$ in the other direction.
 >         consequentTrivial (SimplyAbsurd qx) =
 >             return $ SimplyAbsurd (qx . (:$ A pt))
 >         consequentTrivial (Simply qis qgs qh) = 
->             return $ Simply  qis
->                              (fmap (. (:$ A pt)) qgs)
->                              (LK qh)
+>             return $ Simply qis (fmap (. (:$ A pt)) qgs) (LK qh)
 
 If $P$ simplifies nontrivially, we have a bit more work to do. We add the
 simplified conjuncts of $P$ to the context and apply $L$ to the proof of
@@ -240,15 +237,17 @@ of the |pis|, then applying the simplified proposition to these.
 
 >         consequent (SimplyAbsurd qx, _) = do
 >             let pisImplyFF = dischargeAll pis (PRF ABSURD)
->             freshRef ("pif" :<: evTm pisImplyFF) $ \ madRef -> do
+>             freshRef ("ri" :<: evTm pisImplyFF) $ \ riRef -> do
 >                 l'   <- bquote B0 l
 >                 l''  <- annotate l' (ARR (PRF p) PROP)
->                 rh   <- mkFun $ \ pref -> N (nEOp :@ [
->                             N (P madRef $## map ($ (P pref)) (trail pgs)),
->                             PRF (N (l'' :$ A (NP pref)))
->                           ])
->                 return $ SimplyOne (madRef :<: pisImplyFF)
->                     (\ t -> dischargeLam (fmap fstEx pis) (qx (t :$ A ph)))
+>                 rh   <- mkFun $ \ pref ->
+>                             let  piPrfs = fmap ($ (P pref)) pgs
+>                             in   N (nEOp :@ [
+>                                      N (P riRef $## piPrfs),
+>                                      PRF (N (l'' :$ A (NP pref)))
+>                                  ])
+>                 return $ SimplyOne (riRef :<: pisImplyFF)
+>                     (\ rt -> dischargeLam (fmap fstEx pis) (qx (rt :$ A ph)))
 >                     rh
 
 
@@ -260,26 +259,12 @@ prove by applying the |pgs| to a hypothetical proof of $P$ to get proofs of the
 >             rh <- mkFun $ \ pref -> substitute pis (fmap ($ (P pref)) pgs) qt
 >             return $ SimplyTrivial rh
 
-Otherwise, if the consequent simplifies, we proceed as follows.
-
-Suppose that $\Delta \vdash s \leadsto \bigwedge_i sq_i$
-with proofs $\Delta \vdash sg_i : s \Rightarrow sq_i$ and
-$\Delta, \Gamma \vdash sh : s$ where $\Gamma = x_0 : sq_0, ..., x_n : sq_n$.
-
-Suppose further that $\Delta, \Gamma \vdash t \leadsto \bigwedge_j tq_j$
-with proofs $\Delta \vdash tg_j : t \Rightarrow tq_j$ and
-$\Delta, \Gamma, \Xi \vdash sh : s$ where $\Xi = y_0 : tq_0, ..., y_m : tq_m$.
-
-Let $\overline t ^ \Gamma$ denote $t$ discharged over all the hypotheses in $\Gamma$.
-Then $\Delta \vdash (x :\!\!\!- s) \Rightarrow t \leadsto \bigwedge_j pq_j$
-where $pq_j \cong \Gamma \Rightarrow tq_j$, with proofs
-$\Delta \vdash pg_j \cong \lambda pv . 
-    \overline { tg_j (pv \; sh) } ^ \Gamma : p \rightarrow pq_j$
-and
-$\Delta, \Theta \vdash \lambda sv .
-     \overline { \overline {th}^\Xi \overrightarrow { 
-         (pg_j \overrightarrow { (sg_i \; sv) } ) } }^\Gamma$
-where $\Theta \cong z_0 : pq_0, ..., z_m : pq_m$.
+Otherwise, if $Q$ simplifies, then the implication simplifies to a conjunction of
+implications. Each implication is from the simplified components of $P$ to a
+single simplified component of $Q$. To prove the original implication, we
+assume a proof of $P$, then construct proofs of the |pis| from it and proofs of
+the |qis| by applying the proofs of the |ris| to these. We can then substitute
+these proofs for the |pis| and |qis| in the proof of $Q$.
 
 >         consequent (Simply qis qgs qh, simplifiedQ) 
 >           | simplifiedP || simplifiedQ = do
@@ -288,8 +273,7 @@ where $\Theta \cong z_0 : pq_0, ..., z_m : pq_m$.
 >             rh <- mkFun $ \ pref ->
 >                 let piPrfs  = fmap ($ (P pref)) pgs
 >                     qiPrfs  = fmap (\ (ri :<: _) -> N (P ri $## piPrfs)) ris
->                     h       = substitute qis qiPrfs qh
->                 in substitute pis piPrfs h
+>                 in substitute pis piPrfs (substitute qis qiPrfs qh)
 >             return $ Simply ris rgs rh
 >           where
 >             wrapper :: (EXTM -> INTM) -> EXTM -> INTM
