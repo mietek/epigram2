@@ -174,100 +174,91 @@ Simplifying $\Trivial$ and $\Absurd$ is remarkably easy.
 > propSimplify _ _ TRIVIAL  = return (SimplyTrivial  VOID)
 
 
-To simplify a conjunction, we simplify each conjunct separately, then call the
-|simplifyAnd| helper function to combine the results.
+To simplify a conjunction $P \wedge Q$, we simplify each conjunct separately,
+then call the |simplifyAnd| helper function to combine the results. If either
+conjunct is absurd, then we can easily show that the conjunction is absurd.
+Otherwise, we append the lists of conjuncts and pre-compose the proofs with
+|Fst| or |Snd| as appropriate.
 
-> propSimplify gamma delta (AND p1 p2) = forkSimplify gamma delta p1 $
->     \ (p1Simp, _) -> forkSimplify gamma delta p2 $
->         \ (p2Simp, _) -> return $ simplifyAnd p1Simp p2Simp
->   where
->     simplifyAnd :: Simplify -> Simplify -> Simplify
-
-If either |p| or |q| is absurd, then we can easily show that |p && q| is absurd:
-
->     simplifyAnd (SimplyAbsurd prf) _ = SimplyAbsurd (prf . (:$ Fst))
->     simplifyAnd _ (SimplyAbsurd prf) = SimplyAbsurd (prf . (:$ Snd))
-         
-Otherwise, we can simplify the conjunction, pre-composing the proofs with
-the application of |Fst| or |Snd| as appropriate.
-
->     simplifyAnd (Simply q1s g1s h1) (Simply q2s g2s h2) =
->         Simply  (q1s <+> q2s)
->                 (fmap (. (:$ Fst)) g1s <+> (fmap (. (:$ Snd)) g2s))
->                 (PAIR h1 h2)
+> propSimplify gamma delta (AND p q) = forkSimplify gamma delta p $
+>     \ pr -> case fst pr of
+>         SimplyAbsurd px    -> return $ SimplyAbsurd (px . (:$ Fst))
+>         Simply pis pgs ph  -> forkSimplify gamma delta q $
+>             \ qr -> case fst qr of
+>                 SimplyAbsurd qx   -> return $ SimplyAbsurd (qx . (:$ Snd))
+>                 Simply qis qgs qh  -> return $ Simply (pis <+> qis)
+>                     (fmap (. (:$ Fst)) pgs <+> (fmap (. (:$ Snd)) qgs))
+>                     (PAIR ph qh)
 
 
+To simplify $\ALL{x}{\prf{P}} L x$, we first try to simplify $P$:
 
-To simplify |p = x : (:- s) => l|, we first try to simplify |s|:
-
-> propSimplify gamma delta p@(ALL (PRF s) l) =
->    forkSimplify' (fortran l) gamma delta s antecedent
+> propSimplify gamma delta (ALL (PRF p) l) =
+>    forkSimplify' (fortran l) gamma delta p antecedent
 >   where
 >     antecedent :: (Simplify, Bool) -> Simplifier Simplify
 
-If |s| is absurd then |p| is trivial, which we can prove by doing |magic|
-whenever someone gives us an element of |s|.
+If $P$ is absurd then the implication is trivial, which we can prove by absurdity
+elimination whenever someone gives us a proof of $P$:
 
->     antecedent (SimplyAbsurd prfAbsurdS, _) = do
+>     antecedent (SimplyAbsurd px, _) = do
 >       l'   <- bquote B0 l
->       l''  <- annotate l' (ARR (PRF s) PROP)
->       return . SimplyTrivial . L $ "antecedentAbsurd" :.
->           (N (nEOp :@ [prfAbsurdS (V 0), PRF (N (l'' :$ A (NV 0)))]))
+>       l''  <- annotate l' (ARR (PRF p) PROP)
+>       return . SimplyTrivial . L $ "absurd" :.
+>           (N (nEOp :@ [px (V 0), PRF (N (l'' :$ A (NV 0)))]))
 
-If |s| is trivial, then we go under the binder by applying the proof,
-and then simplify |l|. Then |p| simplifies to the result of
-simplifying |l|, with the proofs constructed by $\lambda$-abstracting
-in one direction and applying the proof of |s| in the other direction.
+If $P$ is trivial, then we go under $L$ by applying the proof and simplify the
+resulting proposition $Q$. The implication simplifies to the result of
+simplifying $Q$, with the proofs constructed by $\lambda$-abstracting
+in one direction and applying the proof of $P$ in the other direction.
 
->     antecedent (SimplyTrivial prfS, _) =
->         forkSimplify gamma delta (l $$ A (evTm prfS)) (consequentTrivial . fst)
+>     antecedent (SimplyTrivial pt, _) =
+>         forkSimplify gamma delta (l $$ A (evTm pt)) (consequentTrivial . fst)
 >       where
 >         consequentTrivial :: Simplify -> Simplifier Simplify
->         consequentTrivial (SimplyAbsurd prfAbsurdT) =
->             return $ SimplyAbsurd (prfAbsurdT . (:$ A prfS))
->         consequentTrivial (SimplyTrivial prfT)  = 
->             return $ SimplyTrivial (LK prfT)
->         consequentTrivial (Simply tqs tgs th)   = 
->             return $ Simply  tqs
->                              (fmap (. (:$ A prfS)) tgs)
->                              (LK th)
+>         consequentTrivial (SimplyAbsurd qx) =
+>             return $ SimplyAbsurd (qx . (:$ A pt))
+>         consequentTrivial (Simply qis qgs qh) = 
+>             return $ Simply  qis
+>                              (fmap (. (:$ A pt)) qgs)
+>                              (LK qh)
 
-If |s| simplifies nontrivially, we have a bit more work to do. We simplify |t|
-under the binder by adding the simplified conjuncts of |s| to the context and
-applying |l| to |sh| (the proof of |s| in the extended context). 
+If $P$ simplifies nontrivially, we have a bit more work to do. We add the
+simplified conjuncts of $P$ to the context and apply $L$ to the proof of
+$P$ in the extended context, giving a new proposition $Q$. We then simplify $Q$.
 
->     antecedent (Simply sqs sgs sh, didSimplifyAntecedent) =
->         forkSimplify gamma (delta <+> sqs) (l $$ A (evTm sh)) consequent
+>     antecedent (Simply pis pgs ph, simplifiedP) = do
+>         let q = l $$ A (evTm ph)
+>         forkSimplify gamma (delta <+> pis) q consequent
 >       where
 >         consequent :: (Simplify, Bool) -> Simplifier Simplify
->         consequent (SimplyAbsurd prfAbsurdT, _) = do
->             let madness = dischargeAll sqs (PRF ABSURD)
->             freshRef ("madness" :<: evTm madness) $ \ madRef -> do
+
+If $Q$ is absurd, then the simplified proposition is an implication from the
+simplified conjuncts of $P$ to $\Absurd$. The proof of the original implication
+is by absurdity elimination, applying the |pgs| to the proof of $P$ to get proofs
+of the |pis|, then applying the simplified proposition to these.
+
+>         consequent (SimplyAbsurd qx, _) = do
+>             let pisImplyFF = dischargeAll pis (PRF ABSURD)
+>             freshRef ("pif" :<: evTm pisImplyFF) $ \ madRef -> do
 >                 l'   <- bquote B0 l
->                 l''  <- annotate l' (ARR (PRF s) PROP)
->                 prf  <- mkFun $ \ sRef -> N (nEOp :@ [
->                             N (P madRef $## map ($ (P sRef)) (trail sgs)),
->                             PRF (N (l'' :$ A (NP sRef)))
+>                 l''  <- annotate l' (ARR (PRF p) PROP)
+>                 rh   <- mkFun $ \ pref -> N (nEOp :@ [
+>                             N (P madRef $## map ($ (P pref)) (trail pgs)),
+>                             PRF (N (l'' :$ A (NP pref)))
 >                           ])
->                 return $ SimplyOne (madRef :<: madness)
->                     (\ pv -> dischargeLam (fmap fstEx sqs)
->                                             (prfAbsurdT (pv :$ A sh)))
->                     prf
+>                 return $ SimplyOne (madRef :<: pisImplyFF)
+>                     (\ t -> dischargeLam (fmap fstEx pis) (qx (t :$ A ph)))
+>                     rh
 
 
-If the consequent |t| is trivial, then the implication is trivial, which we can
-prove as follows:
-\begin{enumerate}
-\item Discharge the proof of |t| over the conjuncts |sqs| to get a
-      $\lambda$-lifted proof |prfT'|.
-\item Construct a proof of |(x :\!\!- s) => t| that takes a proof of
-      |s| and applies the proofs |sgs| to get proofs of the |sqs|, which can
-      then be passed to |prfT'| to get a proof of |t|.
-\end{enumerate}
+If the consequent $Q$ is trivial, then the implication is trivial, which we can
+prove by applying the |pgs| to a hypothetical proof of $P$ to get proofs of the
+|pis|, then substituting these for the |pis| in the proof of $Q$.
 
->         consequent (SimplyTrivial prfT, _) = do
->             prf <- mkFun $ \ ref -> substitute sqs (fmap ($ (P ref)) sgs) prfT
->             return $ SimplyTrivial prf
+>         consequent (SimplyTrivial qt, _) = do
+>             rh <- mkFun $ \ pref -> substitute pis (fmap ($ (P pref)) pgs) qt
+>             return $ SimplyTrivial rh
 
 Otherwise, if the consequent simplifies, we proceed as follows.
 
@@ -290,20 +281,20 @@ $\Delta, \Theta \vdash \lambda sv .
          (pg_j \overrightarrow { (sg_i \; sv) } ) } }^\Gamma$
 where $\Theta \cong z_0 : pq_0, ..., z_m : pq_m$.
 
->         consequent (Simply tqs tgs th, didSimplifyConsequent) 
->           | didSimplifyAntecedent || didSimplifyConsequent = do
->             let pqs = fmap (dischargeAllREF sqs) tqs
->             let pgs = fmap wrapper tgs
->             ph <- mkFun $ \ ref ->
->                 let squiz  = fmap ($ (P ref)) sgs
->                     th2    = substitute tqs (fmap (\ (pq :<: _) ->
+>         consequent (Simply qis qgs qh, simplifiedQ) 
+>           | simplifiedP || simplifiedQ = do
+>             let ris = fmap (dischargeAllREF pis) qis
+>             let rgs = fmap wrapper qgs
+>             rh <- mkFun $ \ ref ->
+>                 let squiz  = fmap ($ (P ref)) pgs
+>                     h      = substitute qis (fmap (\ (pq :<: _) ->
 >                                                    N (P pq $## trail squiz))
->                                              pqs) th
->                 in substitute sqs squiz th2
->             return $ Simply pqs pgs ph
+>                                              ris) qh
+>                 in substitute pis squiz h
+>             return $ Simply ris rgs rh
 >           where
 >             wrapper :: (EXTM -> INTM) -> EXTM -> INTM
->             wrapper tg p = dischargeLam (fmap fstEx sqs) (tg (p :$ A sh))
+>             wrapper qg pv = dischargeLam (fmap fstEx pis) (qg (pv :$ A ph))
 
 
 If we get to this point, neither the antecedent nor the consequent simplified,
