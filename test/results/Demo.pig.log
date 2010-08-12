@@ -54,13 +54,7 @@ Going to root...
 'true
 'false
 head Bool 'nil
-Appended goal!
-Made lambda boy!
-Appended goal!
-Thank you.
-Made.
-Made.
-Thank you.
+Data'd.
 Let there be vhead.
 Eliminated and simplified.
 Hurrah!
@@ -70,27 +64,24 @@ Going to root...
 Let there be vapp.
 Eliminated and simplified.
 Hurrah!
+Relabelled.
 Eliminated and simplified.
 Hurrah!
 Going to root...
 Made.
 Made.
 'vcons ('suc 'zero) ('suc ('suc ('suc 'zero))) ('vcons 'zero ('suc 'zero) 'vnil)
-Appended goal!
-Made.
-Made.
-Made.
-Thank you.
+Data'd.
 'fzero 'zero
 'fzero ('suc 'zero)
 'fsuc ('suc 'zero) ('fzero 'zero)
-Appended goal!
-Made lambda boy!
+Let there be nuffin.
 Eliminated and simplified.
 Going to root...
 Let there be lookup.
 Eliminated and simplified.
 Hurrah!
+Relabelled.
 Eliminated and simplified.
 Hurrah!
 Hurrah!

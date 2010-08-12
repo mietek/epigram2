@@ -197,28 +197,11 @@ elab head Bool 'nil ;
   How can we resolve this problem? Perhaps instead of using lists, we should
   work with vectors: lists indexed by their length. 
 
-  We need a dependent type: the type needs to depend on a value (the length).
-  Eventually, Epigram will allow something like this for the type of vectors:
-
-    data Vec (A : Set) (n : Nat) :=
-      (vnil : Vec A 'zero) ;
-      (vcons : (m : Nat) -> A -> Vec A m -> Vec A ('suc m)) ;
-
-  Note that |n| is an index, not a parameter: it varies depending on which
-  constructor you choose.
-
-  Unfortunately the |data| syntax is not yet implemented for indexed data types,
-  so we fiddle about behind the scenes to manually build |Vec|.
-  You are not expected to understand this.
+  In the following line, note that the natural number is an index, not a
+  parameter: it varies depending on which constructor you choose.
 -}
 
-make Vec : Set -> Nat -> Set ;
-lambda A ;
-make VecD : Nat -> IDesc Nat _ ;
-give (\ n -> 'fsigmaD ['vnil 'vcons] [ ('constD (:- ((: Nat) 'zero == n))) ('sigmaD Nat (\ m -> 'prodD ('constD A) ('prodD ('varD m) ('constD (:- ((: Nat) ('suc m) == n)))))) ]) ;
-make Vec := (\ n -> IMu Nat VecD n) : Nat -> Set ;
-make Ind := iinduction Nat VecD : (m : Nat)(v : Vec m)(bp : Sig (n : Nat ; Vec n) -> Set)(me : (k : Nat)(x : idesc Nat (VecD k) Vec)(hs : idesc (Sig (i : Nat ; Vec i))(ibox Nat (VecD k) Vec x) bp) -> bp [k , con x]) -> bp [m , v] ;
-give Vec ;
+idata Vec (A : Set) : Nat -> Set := (vnil : Vec A 'zero) ; (vcons : (n : Nat) -> A -> Vec A n -> Vec A ('suc n)) ;
 
 {-
   Now we can safely define the vector version of head. Since we ask for a vector
@@ -245,7 +228,8 @@ elab vhead Bool one ('vcons one 'false ('vcons 'zero 'true 'vnil)) ;
 let vapp (A : Set)(B : Set)(n : Nat)(fs : Vec (A -> B) n)(as : Vec A n) : Vec B n ;
 <= Vec.Ind (A -> B) n fs ;
 define vapp A B 'zero 'vnil as := 'vnil ;
-<= Vec.Ind A ('suc s) as ;
+relabel vapp A B ('suc j) ('vcons j f fs) as ;
+<= Vec.Ind A ('suc j) as ;
 define vapp A B ('suc j) ('vcons j f fs) ('vcons j a as) := 'vcons j (f a) (vapp A B j fs as) ;
 root ;
 
@@ -259,21 +243,10 @@ elab vapp Nat Nat two fs as ;
 
 {-
   Another dependent type is the type of finite numbers: |Fin n| is the type of
-  natural numbers less than |n|. In imaginary syntax, this might be written:
-
-    data Fin (n : Nat) :=
-      (fzero : (m : Nat) -> Fin ('suc m)) ;
-      (fsuc : (m : Nat) -> Fin m -> Fin ('suc m)) ;
-
-  Again, ignore this bit of fiddling about behind the scenes:
+  natural numbers less than |n|.
 -}
 
-make Fin : Nat -> Set ;
-make FinD := (\ n -> 'fsigmaD ['fzero 'fsuc] [ ('sigmaD Nat (\ m -> 'constD (:- ((: Nat) ('suc m) == n)))) ('sigmaD Nat (\ m -> 'prodD ('varD m) ('constD (:- ((: Nat) ('suc m) == n))))) ]) : Nat -> IDesc Nat [] ;
-make Fin := (\ n -> IMu Nat FinD n) : Nat -> Set ;
-make Ind := iinduction Nat FinD : (m : Nat)(v : Fin m)(bp : Sig (n : Nat ; Fin n) -> Set)(me : (k : Nat)(x : idesc Nat (FinD k) Fin)(hs : idesc (Sig (i : Nat ; Fin i))(ibox Nat (FinD k) Fin x) bp) -> bp [k , con x]) -> bp [m , v] ;
-give Fin ;
-
+idata Fin : Nat -> Set := (fzero : (n : Nat) -> Fin ('suc n)) ; (fsuc : (n : Nat) -> Fin n -> Fin ('suc n)) ;
 
 elab 'fzero 'zero              : Fin one ;
 elab 'fzero one                : Fin two ;
@@ -285,8 +258,7 @@ elab 'fsuc  one ('fzero 'zero) : Fin two ;
   We can prove that, if you have an element of Fin 'zero, you must be lying:
 -}
 
-make nuffin : Fin 'zero -> :- FF ;
-lambda x ;
+let nuffin (x : Fin 'zero) : :- FF ;
 <= Fin.Ind 'zero x ;
 root ;
 
@@ -302,11 +274,10 @@ root ;
 let lookup (A : Set)(n : Nat)(as : Vec A n)(fn : Fin n) : A ;
 <= Vec.Ind A n as ;
 define lookup A 'zero 'vnil fn := naughtE (nuffin fn) A	 ;
-
-<= Fin.Ind ('suc s) fn ;
-define lookup A ('suc _) ('vcons _ a _) ('fzero _) := a ;
-
-define lookup A ('suc s) ('vcons _ a as) ('fsuc _ n) := lookup A s as n ;
+relabel lookup A ('suc k) ('vcons k a as) fn ;
+<= Fin.Ind ('suc k) fn ;
+define lookup A ('suc k) ('vcons k a _) ('fzero k) := a ;
+define lookup A ('suc k) ('vcons k a as) ('fsuc k fn) := lookup A k as fn ;
 root ;
 
 
