@@ -400,6 +400,18 @@ we can pull the type |typ| out of the |thing|. Therefore, we can read
 > data tm :<: ty = tm :<: ty  deriving (Show,Eq)
 > infix 4 :<:
 
+> fstIn :: (a :>: b) -> a
+> fstIn (x :>: _) = x
+
+> sndIn :: (a :>: b) -> b
+> sndIn (_ :>: x) = x
+
+> fstEx :: (a :<: b) -> a
+> fstEx (x :<: _) = x
+
+> sndEx :: (a :<: b) -> b
+> sndEx (_ :<: x) = x
+
 As we are discussing syntactic sugar, we define the ``reduces to'' symbol:
 
 > data t :=>: v = t :=>: v deriving (Show, Eq)

@@ -38,9 +38,9 @@ the implementer.
 \subsection{Discharging entries in a term}
 
 
-The ``discharge into'' operator |(-|)| takes a list of entries and a
+The ``discharge into'' operator |(-||)| takes a list of entries and a
 term, and changes the term so that parameters in the list of entries
-are represented by de Brujin indices. It makes key use of the (-||)
+are represented by de Brujin indices. It makes key use of the |(-||||)|
 mangler.
 
 > (-|) :: Entries -> INTM -> INTM
@@ -120,6 +120,10 @@ encounters a $\Pi$.
 
 \question{This needs lots of refactoring.}
 
+> wrapLambdas :: Bwd REF -> INTM -> INTM
+> wrapLambdas B0 tm = tm
+> wrapLambdas (bs :< (n := _)) tm = wrapLambdas bs (L (fst (last n) :. tm))
+
 The |dischargeLots| function discharges and $\lambda$-binds a list of
 references over a |VAL|.
 
@@ -127,11 +131,9 @@ references over a |VAL|.
 > dischargeLots bs v = do
 >     v' <- bquote bs v
 >     return (evTm (wrapLambdas bs v'))
->   where
->     wrapLambdas :: Bwd REF -> INTM -> INTM
->     wrapLambdas B0 tm = tm
->     wrapLambdas (bs :< (n := _)) tm = wrapLambdas bs (L (fst (last n) :. tm))
 
+> dischargeLots' :: Bwd REF -> INTM -> INTM
+> dischargeLots' bs v = wrapLambdas bs (bs -|| v)
 
 The |dischargeFLots| function discharges and binds a list of
 references over a |VAL|. The |binder| is informed whether or not the
@@ -155,6 +157,15 @@ variable is actually used.
 >     contains :: INTM -> REF -> Bool
 >     contains tm ref = Data.Foldable.any (== ref) tm
 
+> dischargeFLots' ::  (String -> INTM -> INTM -> INTM) ->
+>                         Bwd (REF :<: INTM) -> INTM -> INTM
+> dischargeFLots' binder bs v = wrapFs bs (fmap fstEx bs -|| v)
+>   where
+>     wrapFs :: Bwd (REF :<: INTM) -> INTM -> INTM
+>     wrapFs B0 tm = tm
+>     wrapFs (bs :< ((n := _) :<: ty)) tm =
+>         wrapFs bs (binder (fst (last n)) ty tm)
+
 Hence, we can easily discharge then $\forall$-bind or discharge then
 $\Pi$-bind. Note that when the bound variable is not used, a |K|
 binder is used.
@@ -174,6 +185,13 @@ binder is used.
 >     f False  x p q = PI p (LK q)
 
 
+> dischargeAllLots' :: Bwd (REF :<: INTM) -> INTM -> INTM
+> dischargeAllLots' = dischargeFLots' (\ x p (PRF q) -> PRF (ALLV x p q))
+>
+> dischargePiLots' :: Bwd (REF :<: INTM) -> INTM -> INTM
+> dischargePiLots' = dischargeFLots' PIV
+
+
 The |dischargeRef| function calls |dischargeLots| on the type of a reference.
 
 > dischargeRef :: (NameSupplier m) => Bwd REF -> REF -> m REF
@@ -188,6 +206,12 @@ The |dischargeRefAlls| function calls |dischargeAllLots| on the type of a refere
 > dischargeRefAlls bs (n := DECL :<: ty) = do
 >     ty' <- dischargeAllLots bs ty
 >     return (n := DECL :<: ty')
+
+> dischargeRefAlls' :: Bwd (REF :<: INTM) -> REF :<: INTM -> REF :<: INTM
+> dischargeRefAlls' bs ((n := DECL :<: _) :<: ty) =
+>     (n := DECL :<: evTm ty') :<: ty'
+>   where ty' = dischargeAllLots' bs ty
+
 
 The |dischargeRefPis| function calls |dischargePiLots| on the type of a reference.
 

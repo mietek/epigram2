@@ -236,21 +236,18 @@ the propositional simplification machinery.
 >     pSimp <- runPropSimplify p
 >     case pSimp of
 >         Just (SimplyTrivial prf) -> do
->             prf' <- bquoteHere prf
->             return (prf' :=>: prf, True)
+>             return (prf :=>: evTm prf, True)
 >         Just (SimplyAbsurd _) -> runElab top (PRF p :>:
 >             ECry [err "simplifyProof: proposition is absurd:"
 >                          ++ errTyVal (p :<: PROP)])
 >         Just (Simply qs _ h) -> do
->             qrs <- Data.Traversable.mapM partProof qs
->             h' <- dischargeLots qs h
->             let prf = h' $$$ qrs
->             prf' <- bquoteHere prf
->             return (prf' :=>: prf, True)
+>             qrs <- traverse partProof qs
+>             let prf = substitute qs qrs h
+>             return (prf :=>: evTm prf, True)
 >         Nothing -> subProof top (PRF p)
 >   where
->     partProof :: REF -> ProofState (Elim VAL)
->     partProof ref = return . A . valueOf . fst =<< subProof False (pty ref)
+>     partProof :: (REF :<: INTM) -> ProofState INTM
+>     partProof (ref :<: _) = return . termOf . fst =<< subProof False (pty ref)
 
 >     subProof :: Bool -> VAL -> ProofState (INTM :=>: VAL, Bool)
 >     subProof top (PRF p) = flexiProof top p <|> lastHope top (PRF p)

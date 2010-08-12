@@ -170,19 +170,21 @@ the context and carry on. Note that this assumes we are at the top level.
 >     
 >     simplifyProp :: VAL -> VAL -> Simplify -> ProofState (INTM :=>: VAL)
 >     simplifyProp p t (SimplyAbsurd prf) = do
->         r <- lambdaParam (fortran t)
->         let pr = prf (NP r)
->         nonsense <- bquoteHere (nEOp @@ [pr, t $$ A (NP r)])
->         neutralise =<< give nonsense
+>         r    <- lambdaParam (fortran t)
+>         t'   <- bquoteHere t
+>         t''  <- annotate t' (ARR (PRF p) SET)
+>         neutralise =<< give (N (nEOp :@ [prf (P r), N (t'' :$ A (NP r))]))
 >     simplifyProp p t (SimplyTrivial prf) = do
->         x :=>: xv <- trySimplifyGoal False (t $$ A prf)
+>         x :=>: xv <- trySimplifyGoal False (t $$ A (evTm prf))
 >         neutralise =<< give (LK x)
 >     simplifyProp p t (Simply qs gs h) = do
->         q <- dischargePiLots qs (t $$ A h)
->         x :=>: xv <- trySimplifyGoal False q
->         y <- annotate x q
+>         t'   <- bquoteHere t
+>         t''  <- annotate t' (ARR (PRF p) SET)                                      
+>         let q = dischargePiLots' qs (N (t'' :$ A h))
+>         x :=>: xv <- trySimplifyGoal False (evTm q)
+>         let y = x ?? q
 >         r <- lambdaParam (fortran t)
->         gs' <- traverse (bquoteHere . ($$ A (NP r))) gs
+>         let gs' = fmap ($ (P r)) gs
 >         neutralise =<< give (N (y $## trail gs'))
 
 Otherwise, we simplify $\Pi$-types by introducing a hypothesis, provided we are
@@ -232,8 +234,7 @@ unless we know we are going to solve the goal completely.
 >     pSimp <- runPropSimplify p
 >     case pSimp of
 >         Just (SimplyTrivial prf) -> do
->             prf' <- bquoteHere prf
->             topWrap b $ LRET prf' :=>: LRET prf
+>             topWrap b $ LRET prf :=>: LRET (evTm prf)
 >         _ -> (|)
 
 If the goal is a $\Sigma$-type, we might as well split it into its components.
