@@ -173,13 +173,13 @@ $P$ (first argument) and from proofs of $P$ to proofs of $Q$ (second argument).
 The |propSimplify| command takes a global context, local context and proposition;
 it attempts to simplify the proposition following the rules above.
 
-> propSimplify :: Bwd REF -> Bwd (REF :<: INTM) -> VAL -> Simplifier Simplify
+> propSimplify :: Bwd REF -> VAL -> Simplifier Simplify
 
 
 Simplifying $\Trivial$ and $\Absurd$ is remarkably easy.
 
-> propSimplify _ _ ABSURD   = return (SimplyAbsurd   N)
-> propSimplify _ _ TRIVIAL  = return (SimplyTrivial  VOID)
+> propSimplify _ ABSURD   = return (SimplyAbsurd   N)
+> propSimplify _ TRIVIAL  = return (SimplyTrivial  VOID)
 
 
 To simplify a conjunction $P \wedge Q$, we simplify each conjunct separately,
@@ -188,10 +188,10 @@ conjunct is absurd, then we can easily show that the conjunction is absurd.
 Otherwise, we append the lists of conjuncts and pre-compose the proofs with
 |Fst| or |Snd| as appropriate.
 
-> propSimplify gamma delta (AND p q) = forkSimplify gamma delta p $
+> propSimplify delta (AND p q) = forkSimplify delta p $
 >     \ pr -> case fst pr of
 >         SimplyAbsurd px    -> return $ SimplyAbsurd (px . (:$ Fst))
->         Simply pis pgs ph  -> forkSimplify gamma delta q $
+>         Simply pis pgs ph  -> forkSimplify delta q $
 >             \ qr -> case fst qr of
 >                 SimplyAbsurd qx    -> return $ SimplyAbsurd (qx . (:$ Snd))
 >                 Simply qis qgs qh  -> return $ Simply (pis <+> qis)
@@ -201,8 +201,8 @@ Otherwise, we append the lists of conjuncts and pre-compose the proofs with
 
 To simplify $\ALL{x}{\prf{P}} L x$, we first try to simplify $P$:
 
-> propSimplify gamma delta (ALL (PRF p) l) =
->    forkSimplify' (fortran l) gamma delta p antecedent
+> propSimplify delta (ALL (PRF p) l) =
+>    forkSimplify' (fortran l) delta p antecedent
 >   where
 >     antecedent :: (Simplify, Bool) -> Simplifier Simplify
 
@@ -221,7 +221,7 @@ simplifying $Q$, with the proofs constructed by $\lambda$-abstracting
 in one direction and applying the proof of $P$ in the other direction.
 
 >     antecedent (SimplyTrivial pt, _) =
->         forkSimplify gamma delta (l $$ A (evTm pt))
+>         forkSimplify delta (l $$ A (evTm pt))
 >             (return . simplifyTransform (:$ A pt) LK . fst)
 
 If $P$ simplifies nontrivially, we have a bit more work to do. We add the
@@ -230,7 +230,7 @@ $P$ in the extended context, giving a new proposition $Q$. We then simplify $Q$.
 
 >     antecedent x@(Simply pis pgs ph, simplifiedP) = do
 >         let q = l $$ A (evTm ph)
->         forkSimplify gamma (delta <+> pis) q (consequent x)
+>         forkSimplify (delta <+> fmap fstEx pis) q (consequent x)
      
 >     consequent :: (Simplify, Bool) -> (Simplify, Bool) -> Simplifier Simplify
 
@@ -293,7 +293,7 @@ so we had better give up.
 To simplify a proposition that is universally quantified over a (completely
 canonical) enumeration, we can simplify it for each possible value.
 
-> propSimplify gamma delta p@(ALL (ENUMT e) b) | Just ts <- getTags B0 e = 
+> propSimplify delta p@(ALL (ENUMT e) b) | Just ts <- getTags B0 e = 
 >     process B0 B0 B0 (ZE :=>: ZE) ts
 >   where
 >     getTags :: Bwd VAL -> VAL -> Maybe (Bwd VAL)
@@ -312,7 +312,7 @@ canonical) enumeration, we can simplify it for each possible value.
 >                                         L $ "yb" :. PRF (N (b'' :$ A (NV 0))),
 >                                         Prelude.foldr PAIR VOID (trail hs)])
 >     process qs1 gs1 hs1 (n :=>: nv) (ts :< t) =
->         forkSimplify gamma delta (b $$ A nv) $ \ (btSimp, _) -> case btSimp of
+>         forkSimplify delta (b $$ A nv) $ \ (btSimp, _) -> case btSimp of
 >             SimplyAbsurd prf  -> return $ SimplyAbsurd (prf . (:$ A n))
 >             Simply qs2 gs2 h2  -> do
 >                 let gs2' = fmap (. (:$ A n)) gs2
@@ -320,102 +320,90 @@ canonical) enumeration, we can simplify it for each possible value.
 >                         (SU n :=>: SU nv) ts
 
 
-To simplify |p = (x : s) => t| where |s| is not a proof set, we generate a fresh
-reference and simplify |t| under the binder.
+To simplify $\ALL{x}{S} L x$ where $S$ is not of the form $\prf{P}$, we generate
+a fresh reference and apply $L$ to it to get the proposition $Q$ under the
+binder, which we can then simplify.
 
-> propSimplify gamma delta p@(ALL s l) = do
->     s' <- bquote B0 s
->     freshRef (fortran l :<: s) $ \ refS -> 
+> propSimplify delta p@(ALL s l) = freshRef (fortran l :<: s) $ \ refS -> 
 >       forkNSupply  "psAll" 
->           (propSimplify gamma (delta :< (refS :<: s')) (l $$ A (NP refS))) 
->           (thingy s' refS)
+>           (propSimplify (delta :< refS) (l $$ A (NP refS))) 
+>           (consequent refS)
 >   where
->     thingy :: (NameSupplier m) => INTM -> REF -> Simplify -> m Simplify
+>     consequent :: REF -> Simplify -> Simplifier Simplify
 
-If |t| is absurd, then |p| simplifies to |(x : s) => FF|. 
+If $Q$ is absurd, then the proposition simplifies to $\ALL{x}{S} \Absurd$,
+with proofs by absurdity elimination in each direction.
 
->     thingy s' refS (SimplyAbsurd prf) =
+>     consequent refS (SimplyAbsurd qx) =
 >       freshRef ("psA" :<: PRF (ALL s (LK ABSURD))) $ \ refA -> do
 >         l' <- bquote B0 l
->         let l'' = l' :? ARR (PRF s') PROP
+>         s' <- bquote B0 s
+>         let l'' = l' ?? ARR (PRF s') PROP
 >         return $
 >           SimplyOne  (refA :<: PRF (ALL s' (LK ABSURD)))
->                      (\ pv -> N (nEOp :@ [prf (pv :$ A (NP refS)),
+>                      (\ pv -> N (nEOp :@ [qx (pv :$ A (NP refS)),
 >                                           PRF (ALL s' (LK ABSURD))]))
 >                      (L $ "cabs2" :. N (nEOp :@ [N (P refA :$ A (NV 0)),
 >                                                  PRF (N (l'' :$ A (NV 0)))]))
 
-If |t| is trivial, then |p| is trivial.
+If $Q$ is trivial, then the proposition is also trivial, just by
+$\lambda$-binding the variable in the proof.
 
->     thingy s' refS (SimplyTrivial prf) =
->         return $ SimplyTrivial (dischargeLam (B0 :< refS) prf)
+>     consequent refS (SimplyTrivial qt) =
+>         return $ SimplyTrivial (dischargeLam (B0 :< refS) qt)
 
-Otherwise, |p| simplifies to a conjunction of propositions |(x : s) =>
-q| for each |q| in the simplification of |t|.
+Otherwise, $Q$ simplifies to a conjunction of propositions $\ALL{x}{S} Q_i$
+for each $Q_i$ in the simplification of $Q$.
 
-
->     thingy s' refS (Simply qs gs h) = do
->         let pqs = fmap (dischargeAllREF (B0 :< (refS :<: s'))) qs
->         let pgs = fmap wrapper gs
->         let h2 = substitute qs (fmap (\ (q :<: ty) -> N (P q :$ A (NP refS))) pqs) h
->         let ph = dischargeLam (B0 :< refS) h2
->         return (Simply pqs pgs ph)
->       where
-
-The |wrapper| says how to get a proof |pg : p -> pq| given a proof |g : t -> q|.
-Since |pq == (x : s) => q| we can give back a function that takes proofs
-|pv : p| and |sv : s|, applies |pv| to |sv| to give a proof of |t|, then
-applies |g| to this proof to get a proof of |q|.
-
->         wrapper :: (EXTM -> INTM) -> EXTM -> INTM
->         wrapper g pv = L $ "s" :. g (pv :$ A (NV 0))
+>     consequent refS (Simply qis qgs qh) = do
+>         s' <- bquote B0 s
+>         let  pis     = fmap (dischargeAllREF (B0 :< (refS :<: s'))) qis
+>              pgs     = fmap (\ qg pv -> L $ "s" :. qg (pv :$ A (NV 0))) qgs
+>              qiPrfs  = fmap (\ (pi :<: _) -> N (P pi :$ A (NP refS))) pis
+>              ph      = dischargeLam (B0 :< refS) (substitute qis qiPrfs qh)
+>         return (Simply pis pgs ph)
 
 
 To simplify a blue equation, we use |simplifyBlue|.
 
-> propSimplify gamma delta (EQBLUE (sty :>: s) (tty :>: t)) = 
->     simplifyBlue True gamma delta (sty :>: s) (tty :>: t)
+> propSimplify delta (EQBLUE (sty :>: s) (tty :>: t)) = 
+>     simplifyBlue True delta (sty :>: s) (tty :>: t)
 
 
-To simplify a green equation, we cannot unroll the corresponding blue
-equation because we would get infinite loops, but we can use the other
+To simplify a stuck green equation, we cannot unroll the corresponding blue
+equation because we would get an infinite loop, but we can use the other
 simplifications for blue equations. If we do not find a proof, we
 return the blue version as the simplification result because it is
 nicer than a green equation for the user.
 
-> propSimplify gamma delta p@(N (op :@ [sty, s, tty, t]))
->   | op == eqGreen = do
->       m     <- optional $ simplifyBlue False gamma delta (sty :>: s) (tty :>: t)
->       sty'  <- bquote B0 sty
->       s'    <- bquote B0 s
->       tty'  <- bquote B0 tty
->       t'    <- bquote B0 t
->       let q = PRF (EQBLUE (sty' :>: s') (tty' :>: t'))
->       case m of
->           Just (SimplyTrivial prf) -> return $ SimplyTrivial
->               (N (prf :? q :$ Out))
->           Nothing ->
->              freshRef ("q" :<: PRF (EQBLUE (sty :>: s) (tty :>: t))) $ \ qRef ->
->                return $ SimplyOne  (qRef :<: q)
->                                    (CON . N)
->                                    (N (P qRef :$ Out))
+> propSimplify delta p@(N (op :@ [sty, s, tty, t])) | op == eqGreen = do
+>     m   <- optional $ simplifyBlue False delta (sty :>: s) (tty :>: t)
+>     let q = PRF (EQBLUE (sty :>: s) (tty :>: t))
+>     q'  <- bquote B0 q
+>     case m of
+>         Just (SimplyTrivial prf) ->
+>             return . SimplyTrivial $ N (prf ?? q' :$ Out)
+>         _ -> freshRef ("q" :<: q) $ \ qRef ->
+>             return $ SimplyOne (qRef :<: q') (CON . N) (N (P qRef :$ Out))
 
 
-If nothing matches, we can always try searching the context.
+If nothing else matches, we can always try searching the context.
 
-> propSimplify gamma delta p = propSearch gamma delta p
+> propSimplify delta p = propSearch delta p
 
 
 The |simplifyBlue| command attempts to simplify a blue equation using
-refl, optionally unrolling it (calling eqGreen and simplifying the
-resulting pieces), or just searching the context.
+|refl|, optionally unrolling it (calling eqGreen and simplifying the
+resulting pieces), or just searching the context. Note that if the
+|canUnroll| boolean is |False|, this will either find a proof of the
+equation and return |SimplyTrivial|, or it will fail.
 
-> simplifyBlue ::  Bool -> Bwd REF -> Bwd (REF :<: INTM) -> TY :>: VAL
->                  -> TY :>: VAL -> Simplifier Simplify 
-> simplifyBlue canUnroll gamma delta (sty :>: s) (tty :>: t) = 
+> simplifyBlue ::  Bool -> Bwd REF -> TY :>: VAL -> TY :>: VAL ->
+>     Simplifier Simplify 
+> simplifyBlue canUnroll delta (sty :>: s) (tty :>: t) = 
 >     useRefl
 >     <|> unroll canUnroll
->     <|> propSearch gamma delta (EQBLUE (sty :>: s) (tty :>: t))
+>     <|> propSearch delta (EQBLUE (sty :>: s) (tty :>: t))
 >  where
 >    useRefl :: Simplifier Simplify
 >    useRefl = do
@@ -430,7 +418,7 @@ resulting pieces), or just searching the context.
 >    unroll True   = case opRun eqGreen [sty, s, tty, t] of
 >        Left _         -> (|)
 >        Right TRIVIAL  -> return $ SimplyTrivial (CON VOID)
->        Right q        -> forkSimplify gamma delta q
+>        Right q        -> forkSimplify delta q
 >            (return . simplifyTransform (:$ Out) CON . fst)
 
 
@@ -441,9 +429,9 @@ test if the consequent matches the goal; if so, |backchain| then calls
 |seekProof| to attempt to prove the hypotheses, in the context with the
 backchained proposition removed. 
 
-> propSearch :: Bwd REF -> Bwd (REF :<: INTM) -> VAL -> Simplifier Simplify
-> propSearch gamma delta p = do
->     prf <- seekProof (gamma <+> fmap fstEx delta) F0 p
+> propSearch :: Bwd REF -> VAL -> Simplifier Simplify
+> propSearch delta p = do
+>     prf <- seekProof delta F0 p
 >     prf' <- bquote B0 prf
 >     return $ SimplyTrivial prf'
 >   where 
@@ -473,10 +461,9 @@ simplification occurred. This is useful in cases such as |&&|, where we know
 we can do some simplification even if the conjuncts do not simplify.
 The first argument is an optional hint for the name of the reference.
 
-> forceSimplify :: String -> Bwd REF -> Bwd (REF :<: INTM) -> VAL ->
->     Simplifier (Simplify, Bool)
-> forceSimplify hint gamma delta p =
->     (propSimplify gamma delta p >>= return . (, True))
+> forceSimplify :: String -> Bwd REF -> VAL -> Simplifier (Simplify, Bool)
+> forceSimplify hint delta p =
+>     (propSimplify delta p >>= return . (, True))
 >     <|> simplifyNone (PRF p)
 >   where
 >       simplifyNone :: (NameSupplier m) => TY -> m (Simplify, Bool)
@@ -497,51 +484,59 @@ To ensure correctness of fresh name generation, we need to fork the name supply
 before performing additional simplification, so we define helper functions to
 fork then call |forceSimplify|.
 
-> forkSimplify :: Bwd REF -> Bwd (REF :<: INTM) -> VAL ->
+> forkSimplify :: Bwd REF -> VAL ->
 >     ((Simplify, Bool) -> Simplifier a) -> Simplifier a
 > forkSimplify = forkSimplify' ""
 
-> forkSimplify' :: String -> Bwd REF -> Bwd (REF :<: INTM) -> VAL ->
+> forkSimplify' :: String -> Bwd REF -> VAL ->
 >     ((Simplify, Bool) -> Simplifier a) -> Simplifier a
-> forkSimplify' hint gamma delta p f = forkNSupply "fS"
->     (forceSimplify hint gamma delta p) f
+> forkSimplify' hint delta p f = forkNSupply "fS"
+>     (forceSimplify hint delta p) f
 
 \subsection{Invoking Simplification}
 
+When in the |ProofState|, we can simplify a proposition using the current name
+supply and context:
+
 > runPropSimplify :: VAL -> ProofState (Maybe Simplify)
 > runPropSimplify p = do
->     nsupply <- askNSupply
->     es <- getParamsInScope
->     return $ runReaderT (propSimplify (bwdList es) B0 p) nsupply
+>     nsupply  <- askNSupply
+>     es       <- getParamsInScope
+>     return $ runReaderT (propSimplify (bwdList es) p) nsupply
+
 
 The |propSimplifyHere| command attempts propositional simplification on the
 current location, which must be an open goal of type |PRF p| for some |p|.
 If it is unable to simplify |p| or simplifies it to |FF|, it will fail and
 throw an error. Otherwise, it will create zero or more new subgoals
 (from the conjuncts of the simplified proposition, if any), solve the
-current goal with the subgoals, and return a list of them.
+current goal with the subgoals, and return a list of their types.
 
-> propSimplifyHere :: ProofState (Bwd (EXTM :=>: VAL))
+> propSimplifyHere :: ProofState (Bwd INTM)
 > propSimplifyHere = do
 >     simpTrace "propSimplifyHere"
 >     (_ :=>: PRF p) <- getHoleGoal
 >     pSimp <- runPropSimplify p
 >     case pSimp of
->         Nothing                   -> throwError' $ err "propSimplifyHere: unable to simplify."
->         Just (SimplyAbsurd _)     -> throwError' $ err "propSimplifyHere: oh no, goal is absurd!"
+>         Nothing                   ->
+>             throwError' $ err "propSimplifyHere: unable to simplify."
+>         Just (SimplyAbsurd _)     ->
+>             throwError' $ err "propSimplifyHere: oh no, goal is absurd!"
 >         Just (SimplyTrivial prf)  -> give prf >> return B0
->         Just (Simply qs _ h)      -> do
->             qrs <- traverse makeSubgoal qs
->             give (substitute qs (fmap (N . termOf) qrs) h)
->             return qrs
+>         Just (Simply pis _ ph)    -> do
+>             subs <- traverse makeSubgoal pis
+>             give (substitute pis subs ph)
+>             return (fmap sndEx pis)
+>   where
 
 The |makeSubgoal| command makes a new subgoal whose type corresponds to the type
-of the given reference, and returns its term and value representations.
+of the given reference, and returns its term representation.
 
-> makeSubgoal :: REF :<: INTM -> ProofState (EXTM :=>: VAL)
-> makeSubgoal (ref :<: q') = do
->     x   <- pickName "q" (fst (last (refName ref)))
->     make (x :<: q')
+>     makeSubgoal :: REF :<: INTM -> ProofState INTM
+>     makeSubgoal (ref :<: q') = do
+>         x         <- pickName "q" (fst (last (refName ref)))
+>         t :=>: _  <- make (x :<: q')
+>         return (N t)
 
 
 The |propSimplify| tactic attempts to simplify the type of the current goal,
@@ -556,17 +551,13 @@ but this is left for backwards compatibility.
 >         case subs of
 >             B0  -> return "Solved."
 >             _   -> do
->                 subStrs <- Data.Traversable.mapM (prettyType . termOf)  subs
+>                 subStrs <- traverse prettyType subs
 >                 nextGoal
 >                 return ("Simplified to:\n" ++ 
 >                     foldMap (\s -> s ++ "\n") subStrs)
 >       where
->         prettyType :: EXTM -> ProofState String
->         prettyType tm = do
->             (_ :<: ty) <- inferHere tm
->             ty' <- bquoteHere ty
->             d <- prettyHere (SET :>: ty')
->             return (renderHouseStyle d)
+>         prettyType :: INTM -> ProofState String
+>         prettyType ty = prettyHere (SET :>: ty) >>= return . renderHouseStyle
 
 > import -> CochonTactics where
 >   : nullaryCT "propsimplify" propSimplifyTactic
