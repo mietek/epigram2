@@ -136,3 +136,11 @@ make g := ? : (:- P) -> Prop ;
 make w : :- ((x : :- P) => g x) ;
 propsimplify ;
 root ;
+
+make en : :- ((x : Enum ['a 'b 'c]) => P) ;
+propsimplify ;
+root ;
+
+make en2 : :- ((x : Enum ['a 'b]) => x == (: Enum ['a 'b]) 'a) ;
+propsimplify ;
+root ;
