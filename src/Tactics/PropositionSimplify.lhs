@@ -159,6 +159,15 @@ failure. This could just as well be an arbitrary monad supporting these effects.
 > type Simplifier x = ReaderT NameSupply Maybe x
 
 
+We can transform a simplification of a proposition $P$ into a simplification of
+another proposition $Q$ if we have functions from proofs of $Q$ to proofs of
+$P$ (first argument) and from proofs of $P$ to proofs of $Q$ (second argument).
+
+> simplifyTransform :: (EXTM -> EXTM) -> (INTM -> INTM) -> Simplify -> Simplify
+> simplifyTransform e f (SimplyAbsurd prf)  = SimplyAbsurd (prf . e)
+> simplifyTransform e f (Simply ps gs h)    = Simply ps (fmap (. e) gs) (f h)
+
+
 \subsection{Simplification in Action}
 
 The |propSimplify| command takes a global context, local context and proposition;
@@ -184,7 +193,7 @@ Otherwise, we append the lists of conjuncts and pre-compose the proofs with
 >         SimplyAbsurd px    -> return $ SimplyAbsurd (px . (:$ Fst))
 >         Simply pis pgs ph  -> forkSimplify gamma delta q $
 >             \ qr -> case fst qr of
->                 SimplyAbsurd qx   -> return $ SimplyAbsurd (qx . (:$ Snd))
+>                 SimplyAbsurd qx    -> return $ SimplyAbsurd (qx . (:$ Snd))
 >                 Simply qis qgs qh  -> return $ Simply (pis <+> qis)
 >                     (fmap (. (:$ Fst)) pgs <+> (fmap (. (:$ Snd)) qgs))
 >                     (PAIR ph qh)
@@ -212,30 +221,25 @@ simplifying $Q$, with the proofs constructed by $\lambda$-abstracting
 in one direction and applying the proof of $P$ in the other direction.
 
 >     antecedent (SimplyTrivial pt, _) =
->         forkSimplify gamma delta (l $$ A (evTm pt)) (consequentTrivial . fst)
->       where
->         consequentTrivial :: Simplify -> Simplifier Simplify
->         consequentTrivial (SimplyAbsurd qx) =
->             return $ SimplyAbsurd (qx . (:$ A pt))
->         consequentTrivial (Simply qis qgs qh) = 
->             return $ Simply qis (fmap (. (:$ A pt)) qgs) (LK qh)
+>         forkSimplify gamma delta (l $$ A (evTm pt))
+>             (return . simplifyTransform (:$ A pt) LK . fst)
 
 If $P$ simplifies nontrivially, we have a bit more work to do. We add the
 simplified conjuncts of $P$ to the context and apply $L$ to the proof of
 $P$ in the extended context, giving a new proposition $Q$. We then simplify $Q$.
 
->     antecedent (Simply pis pgs ph, simplifiedP) = do
+>     antecedent x@(Simply pis pgs ph, simplifiedP) = do
 >         let q = l $$ A (evTm ph)
->         forkSimplify gamma (delta <+> pis) q consequent
->       where
->         consequent :: (Simplify, Bool) -> Simplifier Simplify
+>         forkSimplify gamma (delta <+> pis) q (consequent x)
+     
+>     consequent :: (Simplify, Bool) -> (Simplify, Bool) -> Simplifier Simplify
 
 If $Q$ is absurd, then the simplified proposition is an implication from the
 simplified conjuncts of $P$ to $\Absurd$. The proof of the original implication
 is by absurdity elimination, applying the |pgs| to the proof of $P$ to get proofs
 of the |pis|, then applying the simplified proposition to these.
 
->         consequent (SimplyAbsurd qx, _) = do
+>     consequent (Simply pis pgs ph, _) (SimplyAbsurd qx, _) = do
 >             let pisImplyFF = dischargeAll pis (PRF ABSURD)
 >             freshRef ("ri" :<: evTm pisImplyFF) $ \ riRef -> do
 >                 l'   <- bquote B0 l
@@ -255,7 +259,7 @@ If the consequent $Q$ is trivial, then the implication is trivial, which we can
 prove by applying the |pgs| to a hypothetical proof of $P$ to get proofs of the
 |pis|, then substituting these for the |pis| in the proof of $Q$.
 
->         consequent (SimplyTrivial qt, _) = do
+>     consequent (Simply pis pgs ph, _) (SimplyTrivial qt, _) = do
 >             rh <- mkFun $ \ pref -> substitute pis (fmap ($ (P pref)) pgs) qt
 >             return $ SimplyTrivial rh
 
@@ -266,8 +270,8 @@ assume a proof of $P$, then construct proofs of the |pis| from it and proofs of
 the |qis| by applying the proofs of the |ris| to these. We can then substitute
 these proofs for the |pis| and |qis| in the proof of $Q$.
 
->         consequent (Simply qis qgs qh, simplifiedQ) 
->           | simplifiedP || simplifiedQ = do
+>     consequent (Simply pis pgs ph, simpP) (Simply qis qgs qh, simpQ) 
+>         | simpP || simpQ = do
 >             let ris = fmap (dischargeAllREF pis) qis
 >             let rgs = fmap wrapper qgs
 >             rh <- mkFun $ \ pref ->
@@ -283,7 +287,7 @@ these proofs for the |pis| and |qis| in the proof of $Q$.
 If we get to this point, neither the antecedent nor the consequent simplified,
 so we had better give up.
 
->         consequent _ = (|) 
+>     consequent (_, False) (_, False) = (|) 
 
 
 To simplify a proposition that is universally quantified over a (completely
@@ -426,15 +430,8 @@ resulting pieces), or just searching the context.
 >    unroll True   = case opRun eqGreen [sty, s, tty, t] of
 >        Left _         -> (|)
 >        Right TRIVIAL  -> return $ SimplyTrivial (CON VOID)
->        Right q        -> forkSimplify gamma delta q (equality . fst)
->          
->    equality :: Simplify -> Simplifier Simplify
->    equality (SimplyAbsurd prf) = return $ SimplyAbsurd (prf . (:$ Out))
->    equality (Simply qs gs h) = return $ Simply  qs
->                                                 (fmap (. (:$ Out)) gs)
->                                                 (CON h)
-
-
+>        Right q        -> forkSimplify gamma delta q
+>            (return . simplifyTransform (:$ Out) CON . fst)
 
 
 The |propSearch| operation searches the context for a proof of the proposition,
@@ -462,7 +459,7 @@ backchained proposition removed.
 >                                                                       
 >     backchain (rs :< ref) fs ss p q = do
 >         guard =<< (asks . equal $ PROP :>: (p, q))
->         ssPrfs <- Data.Traversable.mapM (seekProof (rs <>< fs) F0 . unPRF . pty) ss
+>         ssPrfs <- traverse (seekProof (rs <>< fs) F0 . unPRF . pty) ss
 >         return $ pval ref $$$ fmap A ssPrfs
 >
 >     unPRF :: VAL -> VAL
@@ -532,10 +529,8 @@ current goal with the subgoals, and return a list of them.
 >     case pSimp of
 >         Nothing                   -> throwError' $ err "propSimplifyHere: unable to simplify."
 >         Just (SimplyAbsurd _)     -> throwError' $ err "propSimplifyHere: oh no, goal is absurd!"
->
 >         Just (SimplyTrivial prf)  -> give prf >> return B0
->
->         Just (Simply qs _ h) -> do
+>         Just (Simply qs _ h)      -> do
 >             qrs <- traverse makeSubgoal qs
 >             give (substitute qs (fmap (N . termOf) qrs) h)
 >             return qrs
