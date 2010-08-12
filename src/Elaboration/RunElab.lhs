@@ -16,6 +16,7 @@
 
 > import Evidences.Tm
 > import Evidences.Rules
+> import Evidences.Mangler
 
 > import Features.Features ()
 

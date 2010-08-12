@@ -178,3 +178,10 @@ to having two references with the same name but different types.
 > dischargeAllREF bs ((n := DECL :<: _) :<: ty) =
 >     (n := DECL :<: evTm ty') :<: ty'
 >   where ty' = dischargeAll bs ty
+
+The |mkFun| function turns a Haskell function into a term by applying it to a
+fresh reference and discharging over that reference.
+
+> mkFun :: NameSupplier m => (REF -> INTM) -> m INTM
+> mkFun f = freshRef ("fy" :<: error "mkFun: reference type undefined") $
+>     \ ref -> return $ dischargeLam (B0 :< ref) (f ref)

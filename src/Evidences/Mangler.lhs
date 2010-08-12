@@ -118,3 +118,26 @@ building $\lambda$-abstractions in the proof state.
 >     h (ys :< y) x i
 >       | x == y     = V i
 >       | otherwise  = h ys x (i + 1)
+
+
+\subsection{The substitute mangler}
+
+The |substitute| function implements substitution for closed terms: given a list
+of typed references, a corresponding list of terms and a target term, it
+substitutes the terms for the references in the target.
+
+> substitute :: Bwd (REF :<: INTM) -> Bwd INTM -> INTM -> INTM
+> substitute bs vs t = substMangle bs vs %% t
+>   where
+>     substMangle :: Bwd (REF :<: INTM) -> Bwd INTM -> Mangle Identity REF REF
+>     substMangle bs vs = Mang
+>       {  mangP = \ x ies -> (|(help bs vs x $:$) ies|)
+>       ,  mangV = \ i ies -> (|(V i $:$) ies|)
+>       ,  mangB = \ _ -> substMangle bs vs
+>       }
+>     
+>     help :: Bwd (REF :<: INTM) -> Bwd INTM -> REF -> EXTM
+>     help B0 B0 x = P x
+>     help (bs :< (y :<: ty)) (vs :< v) x
+>       | x == y     = v ?? ty
+>       | otherwise  = help bs vs x
