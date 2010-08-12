@@ -15,10 +15,8 @@ elab plus ('suc ('suc 'zero)) ('suc ('suc 'zero)) ;
 -- Now we will prove that plus is commutative. First, some useful gadgetry...
 
 -- Transitivity of equality:
-make trans : :- ((X : Set)(a : X)(b : X)(c : X) => a == b => b == c => a == c) ;
-lambda X, a, b, c, p, q ;
-elim substEq X a b _ ;
-give \ c p q -> q ;
+let trans (X : Set)(a : X)(b : X)(c : X)(p : :- a == b)(q : :- b == c) : :- a == c ;
+-- Well, that was easy!
 root ;
 
 -- Reversing the order of arguments to functions:
@@ -55,6 +53,5 @@ make plusCommF : :- (flip plus == plus) ;
 simplify ;
 lambda k1, k2, p, n1, n2, q ;
 <= substEq Nat k1 k2 _ ;
-<= substEq Nat n1 n2 _ ; 
 give plusComm n1^1 k1 ;
 root ;
