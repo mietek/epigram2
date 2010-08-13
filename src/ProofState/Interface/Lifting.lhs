@@ -10,11 +10,8 @@
 
 > import Data.Foldable
 
-> import NameSupply.NameSupplier
-
 > import Evidences.Tm
 > import Evidences.Mangler
-> import Evidences.Rules
 
 > import ProofState.Edition.Scope
 
@@ -113,75 +110,3 @@ encounters a $\Pi$.
 >     inferGoalType es SET
 > inferGoalType (es :< _)                        t        = 
 >     inferGoalType es t
-
-
-
-\subsection{Discharging}
-
-\adam{This needs to move to somewhere more sensible, out of the ProofState.}
-
-The |dischargeLam| function discharges and $\lambda$-binds a list of references
-over a term.
-
-> dischargeLam :: Bwd REF -> INTM -> INTM
-> dischargeLam bs v = wrapLambdas bs (bs -|| v)
->   where
->     wrapLambdas :: Bwd REF -> INTM -> INTM
->     wrapLambdas B0 tm = tm
->     wrapLambdas (bs :< (n := _)) tm = wrapLambdas bs (L (fst (last n) :. tm))
-
-The |dischargeF| function discharges and binds a list of typed references over a
-term, using the given |binder| function at each step. The |binder| takes a |Bool|
-indicating whether the corresponding reference occurred in the original term, the
-name advice for the binder, the type of the reference and the term to be bound.
-
-> dischargeF ::  (Bool -> String -> INTM -> INTM -> INTM) ->
->                         Bwd (REF :<: INTM) -> INTM -> INTM
-> dischargeF binder bs v =
->     wrapFs bs (fmap (v `contains`) bs') (bs' -|| v)
->   where
->     bs' = fmap fstEx bs
->
->     contains :: INTM -> REF -> Bool
->     contains = flip Data.Foldable.elem
->
->     wrapFs :: Bwd (REF :<: INTM) -> Bwd Bool -> INTM -> INTM
->     wrapFs B0 B0 tm = tm
->     wrapFs (bs :< ((n := _) :<: ty)) (cs :< c) tm =
->         wrapFs bs cs (binder c (fst (last n)) ty tm)
-
-Using the above, we can easily discharge and $\forall$-bind or discharge and
-$\Pi$-bind. Note that when the bound variable is not used, a |K| binder is used.
-For |dischargeAll|, the initial term must be in the form |PRF q| for some
-proposition |q|. 
-
-> dischargeAll :: Bwd (REF :<: INTM) -> INTM -> INTM
-> dischargeAll = dischargeF f
->   where 
->     f :: Bool -> String -> INTM -> INTM -> INTM
->     f True   x p (PRF q) = PRF (ALLV x p q)
->     f False  x p (PRF q) = PRF (ALL p (LK q))
-
-> dischargePi :: Bwd (REF :<: INTM) -> INTM -> INTM
-> dischargePi = dischargeF f
->   where
->     f :: Bool -> String -> INTM -> INTM -> INTM
->     f True   x p q = PIV x p q
->     f False  x p q = PI p (LK q)
-
-The |dischargeAllREF| function calls |dischargeAll| on the type of a reference,
-producing a reference with the same name but whose type is $\forall$-abstracted
-over the list of references. This should be used with caution, as it could lead
-to having two references with the same name but different types.
-
-> dischargeAllREF :: Bwd (REF :<: INTM) -> REF :<: INTM -> REF :<: INTM
-> dischargeAllREF bs ((n := DECL :<: _) :<: ty) =
->     (n := DECL :<: evTm ty') :<: ty'
->   where ty' = dischargeAll bs ty
-
-The |mkFun| function turns a Haskell function into a term by applying it to a
-fresh reference and discharging over that reference.
-
-> mkFun :: NameSupplier m => (REF -> INTM) -> m INTM
-> mkFun f = freshRef ("fy" :<: error "mkFun: reference type undefined") $
->     \ ref -> return $ dischargeLam (B0 :< ref) (f ref)

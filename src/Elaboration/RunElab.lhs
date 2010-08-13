@@ -17,6 +17,7 @@
 > import Evidences.Tm
 > import Evidences.Rules
 > import Evidences.Mangler
+> import Evidences.Utilities
 
 > import Features.Features ()
 
@@ -29,7 +30,6 @@
 > import ProofState.Edition.FakeRef
 
 > import ProofState.Interface.ProofKit
-> import ProofState.Interface.Lifting
 > import ProofState.Interface.NameResolution
 > import ProofState.Interface.Name
 > import ProofState.Interface.Definition

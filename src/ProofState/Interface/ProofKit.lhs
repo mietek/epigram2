@@ -134,22 +134,3 @@ location, which may be useful for paranoia purposes.
 >                              ++ errTyVal (ty :<: SET))
 >             return ()
 >         _ -> return ()
-
-
-
-\subsection{From |EXTM| to |INTM| and back again}
-
-\pierre{This does not really belong to this file but where could it go?}
-
-Various commands yield an |EXTM :=>: VAL|, and we sometimes need to
-convert this to an |INTM :=>: VAL|.
-
-> neutralise :: Monad m => (EXTM :=>: VAL) -> m (INTM :=>: VAL)
-> neutralise (n :=>: v) = return $ N n :=>: v
-
-Conversely, sometimes we have an |INTM| and the value representation of its
-type, but need an |EXTM|. We avoid |bquote| if possible.
-
-> annotate :: NameSupplier m => INTM -> TY -> m EXTM
-> annotate (N n)  _   = return n
-> annotate t      ty  = bquote B0 ty >>= return . (t :?)

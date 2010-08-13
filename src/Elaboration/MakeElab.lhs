@@ -15,11 +15,11 @@
 
 > import Evidences.Tm
 > import Evidences.Rules
+> import Evidences.Utilities
 
 > import Features.Features ()
 
 > import ProofState.Edition.ProofState
-> import ProofState.Interface.ProofKit
 
 > import DisplayLang.DisplayTm
 > import DisplayLang.Name

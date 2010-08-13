@@ -13,6 +13,7 @@
 
 > import Evidences.Rules
 > import Evidences.Tm
+> import Evidences.Utilities
 
 > import ProofState.Edition.ProofState
 > import ProofState.Edition.GetSet

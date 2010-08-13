@@ -73,6 +73,7 @@
 %include Evidences/Tm.lhs
 %include Evidences/Mangler.lhs
 %include Evidences/Rules.lhs
+%include Evidences/Utilities.lhs
 
 \chapter{The Display Language}
 

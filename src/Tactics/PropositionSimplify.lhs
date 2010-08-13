@@ -28,12 +28,11 @@
 > import Evidences.Tm
 > import Evidences.Rules
 > import Evidences.Mangler
+> import Evidences.Utilities
 
 > import ProofState.Edition.ProofState
 > import ProofState.Edition.GetSet
 
-> import ProofState.Interface.ProofKit
-> import ProofState.Interface.Lifting
 > import ProofState.Interface.Name
 > import ProofState.Interface.Definition
 > import ProofState.Interface.Solving
