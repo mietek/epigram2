@@ -171,7 +171,11 @@ $P$ (first argument) and from proofs of $P$ to proofs of $Q$ (second argument).
 \subsection{Simplification in Action}
 
 The |propSimplify| command takes a global context, local context and proposition;
-it attempts to simplify the proposition following the rules above.
+it attempts to simplify the proposition following the rules above. if the result
+is |SimplyAbsurd| or |SimplyTrivial| then no simplification is guaranteed to
+have taken place, but if it is |Simply| one or more new propositions then these
+will be simpler than the original proposition. Note that this may fail if no
+simplification is possible.
 
 > propSimplify :: Bwd REF -> VAL -> Simplifier Simplify
 
@@ -227,9 +231,12 @@ in one direction and applying the proof of $P$ in the other direction.
 If $P$ simplifies nontrivially, we have a bit more work to do. We add the
 simplified conjuncts of $P$ to the context and apply $L$ to the proof of
 $P$ in the extended context, giving a new proposition $Q$. We then simplify $Q$.
+If $P$ did not simplify and $Q$ is syntactically equal to $\Absurd$ then we have
+to give up, as otherwise we would end up simplifying the proposition to itself.
 
 >     antecedent x@(Simply pis pgs ph, simplifiedP) = do
 >         let q = l $$ A (evTm ph)
+>         guard (simplifiedP || not (q == ABSURD))
 >         forkSimplify (delta <+> fmap fstEx pis) q (consequent x)
      
 >     consequent :: (Simplify, Bool) -> (Simplify, Bool) -> Simplifier Simplify

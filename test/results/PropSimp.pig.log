@@ -74,9 +74,8 @@ Simplified to:
 
 Going to root...
 Appended goal!
-Simplified to:
-:- ((P => FF) => FF)
-
+I'm sorry, Dave. I'm afraid I can't do that.
+Error: propSimplifyHere: unable to simplify.
 Going to root...
 Appended goal!
 Solved.
