@@ -144,3 +144,15 @@ root ;
 make en2 : :- ((x : Enum ['a 'b]) => x == (: Enum ['a 'b]) 'a) ;
 propsimplify ;
 root ;
+
+make sf : :- ((x : A) => FF) ;
+propsimplify ;
+root ;
+
+make sf2 : :- ((x : A) => FF && TT) ;
+propsimplify ;
+root ;
+
+make sp : :- ((x : A) => P) ;
+propsimplify ;
+root ;

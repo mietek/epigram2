@@ -331,10 +331,10 @@ To simplify $\ALL{x}{S} L x$ where $S$ is not of the form $\prf{P}$, we generate
 a fresh reference and apply $L$ to it to get the proposition $Q$ under the
 binder, which we can then simplify.
 
-> propSimplify delta p@(ALL s l) = freshRef (fortran l :<: s) $ \ refS -> 
->       forkNSupply  "psAll" 
->           (propSimplify (delta :< refS) (l $$ A (NP refS))) 
->           (consequent refS)
+> propSimplify delta p@(ALL s l) = freshRef (fortran l :<: s) $ \ refS -> do 
+>     let q = l $$ A (NP refS)
+>     guard (not (q == ABSURD))
+>     forkPropSimplify (delta :< refS) q (consequent refS)
 >   where
 >     consequent :: REF -> Simplify -> Simplifier Simplify
 
@@ -345,7 +345,7 @@ with proofs by absurdity elimination in each direction.
 >       freshRef ("psA" :<: PRF (ALL s (LK ABSURD))) $ \ refA -> do
 >         l' <- bquote B0 l
 >         s' <- bquote B0 s
->         let l'' = l' ?? ARR (PRF s') PROP
+>         let l'' = l' ?? ARR s' PROP
 >         return $
 >           SimplyOne  (refA :<: PRF (ALL s' (LK ABSURD)))
 >                      (\ pv -> N (nEOp :@ [qx (pv :$ A (NP refS)),
@@ -489,7 +489,7 @@ The first argument is an optional hint for the name of the reference.
 
 To ensure correctness of fresh name generation, we need to fork the name supply
 before performing additional simplification, so we define helper functions to
-fork then call |forceSimplify|.
+fork then call |propSimplify| or |forceSimplify|.
 
 > forkSimplify :: Bwd REF -> VAL ->
 >     ((Simplify, Bool) -> Simplifier a) -> Simplifier a
@@ -499,6 +499,11 @@ fork then call |forceSimplify|.
 >     ((Simplify, Bool) -> Simplifier a) -> Simplifier a
 > forkSimplify' hint delta p f = forkNSupply "fS"
 >     (forceSimplify hint delta p) f
+
+> forkPropSimplify :: Bwd REF -> VAL ->
+>     (Simplify -> Simplifier a) -> Simplifier a
+> forkPropSimplify delta p f = forkNSupply "fPS" (propSimplify delta p) f
+
 
 \subsection{Invoking Simplification}
 

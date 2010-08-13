@@ -151,4 +151,17 @@ Appended goal!
 I'm sorry, Dave. I'm afraid I can't do that.
 Error: propSimplifyHere: oh no, goal is absurd!
 Going to root...
+Appended goal!
+I'm sorry, Dave. I'm afraid I can't do that.
+Error: propSimplifyHere: unable to simplify.
+Going to root...
+Appended goal!
+Simplified to:
+:- ((_ : A) => FF)
+
+Going to root...
+Appended goal!
+I'm sorry, Dave. I'm afraid I can't do that.
+Error: propSimplifyHere: unable to simplify.
+Going to root...
 Loaded.
