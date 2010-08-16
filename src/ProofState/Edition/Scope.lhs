@@ -82,7 +82,7 @@ let us extract such spine from a list of entries:
 >   param  (EPARAM r _ _ _)   = [r]
 >   param  _                  = []
 
-> paramSpine :: Entries -> Spine {TT} REF
+> paramSpine :: Entries -> Spine {p} REF
 > paramSpine = fmap (A . N . P) . paramREFs
 
 Similarly, |applySpine| applies a reference to a given spine of

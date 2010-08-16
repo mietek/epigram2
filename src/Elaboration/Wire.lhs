@@ -22,6 +22,7 @@
 > import ProofState.Edition.Entries
 > import ProofState.Edition.GetSet
 > import ProofState.Edition.Navigation
+> import ProofState.Edition.Scope
 
 > import ProofState.Interface.Lifting
 > import ProofState.Interface.ProofKit
@@ -163,7 +164,8 @@ update the news bulletin). If not, we must:
 > tellEntry news (EDEF ref@(name := HOLE h :<: tyv) sn
 >                      dkind dev@(Dev {devTip=Unknown tt}) ty)
 >   | Just (ref'@(_ := DEFN tm :<: _), GoodNews) <- getNews news ref = do
->     tm' <- bquoteHere tm
+>     es   <- getInScope
+>     tm'  <- bquoteHere (tm $$$ paramSpine es)
 >     let  (tt', _) = tellNewsEval news tt
 >          (ty', _) = tellNews news ty
 >     return (news, EDEF ref' sn dkind (dev{devTip=Defined tm' tt'}) ty')

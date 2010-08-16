@@ -62,7 +62,7 @@ holes with the new ones.
 >         _ :< e  -> pass e
 >   where
 >     pass :: Entry Bwd -> ProofState (EXTM :=>: VAL)
->     pass (EDEF def@(defName := _) _ _ _ defTyTm)
+>     pass (EDEF def@(defName := _) _ _ _ _)
 >       | name == defName && occurs def = throwError' $
 >           err "solveHole: you can't define something in terms of itself!"
 >       | name == defName = do
@@ -74,7 +74,10 @@ holes with the new ones.
 >           let (tm', _) = tellNews news tm
 >           tm'' <- bquoteHere (evTm tm')
 >           giveOutBelow tm''
->       | occurs def = goIn >> solveHole' ref ((def, defTyTm):deps) tm
+>       | occurs def = do
+>           goIn
+>           ty :=>: _ <- getGoal "solveHole"
+>           solveHole' ref ((def, ty):deps) tm
 >       | otherwise = goIn >> solveHole' ref deps tm
 >     pass (EPARAM param _ _ _)
 >       | occurs param = throwError' $
@@ -89,8 +92,9 @@ holes with the new ones.
 >     makeDeps [] news = return news
 >     makeDeps ((name := HOLE _ :<: tyv, ty) : deps) news = do
 >         let (ty', _) = tellNews news ty
->         _ :=>: rv <- make (fst (last name) :<: ty')
->         makeDeps deps ((name := DEFN rv :<: tyv, GoodNews) : news)
+>         make (fst (last name) :<: ty')
+>         EDEF ref _ _ _ _ <- getEntryAbove
+>         makeDeps deps ((name := DEFN (NP ref) :<: tyv, GoodNews) : news)
 >     makeDeps _ _ = throwError' $ err "makeDeps: bad reference kind! Perhaps "
 >         ++ err "solveHole was called with a term containing unexpanded definitions?"
 
