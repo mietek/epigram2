@@ -90,9 +90,9 @@ holes with the new ones.
 
 >     makeDeps :: [(REF, INTM)] -> NewsBulletin -> ProofState NewsBulletin
 >     makeDeps [] news = return news
->     makeDeps ((name := HOLE _ :<: tyv, ty) : deps) news = do
+>     makeDeps ((name := HOLE k :<: tyv, ty) : deps) news = do
 >         let (ty', _) = tellNews news ty
->         make (fst (last name) :<: ty')
+>         makeKinded k (fst (last name) :<: ty')
 >         EDEF ref _ _ _ _ <- getEntryAbove
 >         makeDeps deps ((name := DEFN (NP ref) :<: tyv, GoodNews) : news)
 >     makeDeps _ _ = throwError' $ err "makeDeps: bad reference kind! Perhaps "

@@ -33,7 +33,7 @@ Solved.
       d := ? : D ;
       \ X : Set ->
     ] ;
-  hope := ? : :- M.D == ((: Set) Set) ;
+  hope := HOPE? : :- M.D == ((: Set) Set) ;
   G := coe M.D Set hope M.d : Set ;
   hope := hope^1 : :- M.D == ((: Set) Set) ;
 ]
