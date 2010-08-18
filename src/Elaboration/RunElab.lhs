@@ -322,9 +322,8 @@ because we end up trying to move definitions with processes attached.}
 
 <          N (coe :@ [_S', _T', q', s']) :=>: Just (coe @@ [_S, _T, q, s])
 
->          eprob  = (WaitSolve ref (s' :=>: Just s)
->                      (ElabDone (N (P refl :$ A _S' :$ A s')
->                           :=>: Just (pval refl $$ A _S $$ A s))))
+>          eprob  = WaitSolve ref (s' :=>: Just s) ElabHope
+
 >     suspendThis top ("eq" :<: PRF p' :=>: PRF p) eprob
 > flexiProofLeft _ _ _ = (|)
 
@@ -341,9 +340,7 @@ because we end up trying to move definitions with processes attached.}
 >     _T'  <- bquoteHere _T
 >     let  p      = EQBLUE (_S   :>: s   ) (_T   :>: N t   )
 >          p'     = EQBLUE (_S'  :>: s'  ) (_T'  :>: N t'  )
->          eprob  = (WaitSolve ref (s' :=>: Just s)
->                      (ElabDone (N (P refl :$ A _S' :$ A s')
->                           :=>: Just (pval refl $$ A _S $$ A s))))
+>          eprob  = WaitSolve ref (s' :=>: Just s) ElabHope
 >     suspendThis top ("eq" :<: PRF p' :=>: PRF p) eprob
 > flexiProofRight _ _ _ = (|)
 

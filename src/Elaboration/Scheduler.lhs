@@ -162,22 +162,30 @@ been suspended) then the cursor could be anywhere earlier in the proof state.
 >     return Nothing
 
 If we have a |WaitSolve| problem where the hole has already been solved with
-something else, we need to check the solution is compatible. \question{How
-can we reorganise things to use propositional rather than definitional
-equality here?}
+something else, we need to ensure the solution is compatible. If the two
+solutions are definitionally equal, everything is fine, otherwise we hope
+for a proof of their equality. \adam{At the moment this proof isn't used,
+but hoping for it might cause things to be solved usefully anyway. Is
+there a better way to do this?}
 
 > resume tt (WaitSolve ref@(_ := DEFN tmv' :<: ty) stt prob) = do
 >     aus   <- getGlobalScope
 >     sibs  <- getEntriesAbove
 >     let  stt'  = maybeEval stt
 >          stm   = parBind aus sibs (termOf stt')
->     eq <- withNSupply $ equal (ty :>: (evTm stm, tmv'))
+>          stv   = evTm stm
+>     eq <- withNSupply $ equal (ty :>: (stv, tmv'))
 >     if eq
 >         then  resume tt prob
->         else  throwError' $ err "resume: hole" ++ errRef ref ++
->                    err "has been solved with" ++ errTyVal (tmv' :<: ty) ++
->                    err "but I wanted to solve it with" ++
->                            errTyVal (valueOf stt' :<: ty)
+
+>         else  runElabHope False (PRF (EQBLUE (ty :>: tmv') (ty :>: stv))) >>
+>               schedTrace "resume: WaitSolve failed!" >> resume tt prob
+
+<         else  throwError' $ err "resume: hole" ++ errRef ref ++
+<                    err "has been solved with" ++ errTyVal (tmv' :<: ty) ++
+<                    err "but I wanted to solve it with" ++
+<                            errTyVal (valueOf stt' :<: ty)
+
 
 > resume tt (ElabSchedule prob) = resume tt prob
 
