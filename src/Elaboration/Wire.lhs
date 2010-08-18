@@ -160,6 +160,8 @@ update the news bulletin). If not, we must:
 \item update the overall type of the entry, as stored in the reference; and
 \item update the news bulletin with news about this definition.
 \end{enumerate}
+If the hole is |Hoping| and we have good news about its type, then we
+restart elaboration to see if it can make any progress.
 
 > tellEntry news (EDEF ref@(name := HOLE h :<: tyv) sn
 >                      dkind dev@(Dev {devTip=Unknown tt}) ty)
@@ -174,18 +176,25 @@ update the news bulletin). If not, we must:
 >     let  (tt', n)             = tellNewsEval news tt
 >          (ty' :=>: tyv', n')  = tellNewsEval news (ty :=>: tyv)
 >          ref                  = name := HOLE h :<: tyv'
+>          tip                  = case (min n n', h) of
+>                                     (GoodNews, Hoping)  -> Suspended tt' ElabHope
+>                                     _                   -> Unknown tt'
 >     return (addNews (ref, min n n') news,
->         EDEF ref sn dkind (dev{devTip=Unknown tt'}) ty')
+>         EDEF ref sn dkind (dev{devTip=tip}) ty')
 
 To update a hole with a suspended elaboration problem attached, we proceed
 similarly to the previous case, but we also update the elaboration problem.
-\question{What if the news bulletin defines this hole?}
+If the news bulletin defines this hole, it had better just be hoping for
+a solution, in which case we can safely ignore the attached |ElabHope| process.
 
 > tellEntry news (EDEF  ref@(name := HOLE h :<: tyv) sn
 >                       dkind dev@(Dev {devTip=Suspended tt prob}) ty)
->   | Just ne <- getNews news ref = throwError' . err . unlines $ [
->       "tellEntry: news bulletin contains update", show ne, "for hole", show ref, 
->        "with suspended computation", show prob]
+>   | Just ne <- getNews news ref = case prob of
+>       ElabHope  -> tellEntry news (EDEF ref sn dkind (dev{devTip=Unknown tt}) ty)
+>       _         -> throwError' . err . unlines $ [
+>                     "tellEntry: news bulletin contains update", show ne,
+>                     "for hole", show ref,
+>                     "with suspended computation", show prob]
 >   | otherwise = do
 >     let  (tt', n)             = tellNewsEval news tt
 >          (ty' :=>: tyv', n')  = tellNewsEval news (ty :=>: tyv)

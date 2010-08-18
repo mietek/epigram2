@@ -13,7 +13,6 @@ root ;
 -- That's ok
 let unif1 (X : Set)(x : X) : X ;
 = test1./ X X id x ;
-give _ ;
 root ;
 
 -- That's "type-checking failed"

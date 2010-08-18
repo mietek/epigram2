@@ -80,9 +80,7 @@ make test1 := begin
 -- I don't want to do that:
 next;
 give (\ _ -> RSig);
-propsimpl;
-next;
-propsimpl;
+root ;
 
 make test2 := begin 
      	      field 'one (\ _ -> Enum ['a 'b])

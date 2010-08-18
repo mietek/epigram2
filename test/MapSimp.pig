@@ -10,8 +10,6 @@ root ;
 
 let law-map-id (D : Desc)(X : Set)(x : desc D X) : Set ;
 = :- map D X X id x == x ;
--- Perhaps this hole should be solved automatically?
-give _ ;
 root ;
 
 let simpl-map-id (D : Desc)(X : Set)(x : desc D X) : law-map-id D X x ;
