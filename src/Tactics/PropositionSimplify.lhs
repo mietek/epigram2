@@ -1,6 +1,6 @@
 \newcommand{\simpto}{\leadsto}
 \newcommand{\and}{\wedge}
-\newcommand{\conj}[2]{\bigwedge_{#2} \vec{{#1}_{#2}}}
+\newcommand{\conj}[2]{\bigwedge_{#2} {#1}_{#2}}
 \newcommand{\BlueEq}[4]{(\Bhab{#2}{#1}) \EQ (\Bhab{#4}{#3})}
 \newcommand{\GreenEq}[4]{(\Bhab{#2}{#1}) \green{\leftrightarrow} (\Bhab{#4}{#3})}
 
