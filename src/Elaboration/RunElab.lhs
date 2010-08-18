@@ -50,6 +50,7 @@
 
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
+> import Kit.Trace
 
 %endif
 

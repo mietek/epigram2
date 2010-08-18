@@ -10,7 +10,6 @@
 > module ProofState.Edition.ProofState where
 
 > import Control.Monad.State
-> import Debug.Trace
 
 > import DisplayLang.Name
 
@@ -56,16 +55,3 @@ former to the latter.
 
 > liftErrorState :: (a -> b) -> ProofStateT a c -> ProofStateT b c
 > liftErrorState f = mapStateT (liftError f)
-
-
-\subsection{Tracing in the |ProofState| monad}
-
-That's fairly trivial, yet I'm pretty sure this goddamn laziness won't
-skip some traces (ML programmer speaking here).
-
-> proofTrace :: String -> ProofStateT e ()
-> proofTrace s = do
->   () <- trace s $ return ()
->   return ()
-
-

@@ -35,6 +35,7 @@
 
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
+> import Kit.Trace
 
 %endif
 
@@ -193,12 +194,3 @@ there a better way to do this?}
 > ifSnd :: (a, Bool) -> Maybe a
 > ifSnd (a,  True)   = Just a
 > ifSnd (_,  False)  = Nothing
-
-
-Trace messages from the scheduler are essential for debugging but annoying
-otherwise, so we can enable or disable them at compile time.
-
-> schedTrace :: String -> ProofState ()
-> schedTrace s = if schedTracing then proofTrace s else return ()
-
-> schedTracing = False

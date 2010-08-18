@@ -186,6 +186,7 @@
 %include Kit/BwdFwd.lhs
 %include Kit/Parsley.lhs
 %include Kit/MissingLibrary.lhs
+%include Kit/Trace.lhs
 
 \cleardoublepage
 \phantomsection

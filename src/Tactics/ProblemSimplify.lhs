@@ -16,6 +16,7 @@
 
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
+> import Kit.Trace
 
 > import Evidences.Tm
 > import Evidences.Rules

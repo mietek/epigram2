@@ -13,6 +13,7 @@
 
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
+> import Kit.Trace
 
 > import NameSupply.NameSupply
 > import NameSupply.NameSupplier
@@ -616,7 +617,7 @@ to simplify its constraint.
 >     sFresh'  <- bquoteHere sFresh
 >     sTarg'   <- bquoteHere sTarg
 >     let c = (ref :<: sFresh', (x :~>: x) :<: (sTarg' :~>: sTarg'))
->     optionalProofTrace $ "CONSTRAINT: " ++ show c
+>     elimTrace $ "CONSTRAINT: " ++ show c
 >     introMotive (tFresh $$ A (NP ref)) (tTarg $$ A (evTm x)) xs (cs :< c) n
 
 > introMotive SET SET [] cs n = return (cs, n)
@@ -682,17 +683,13 @@ applied to the non-updated target.
 >     -> ProofState (Bwd Binder, INTM)
 > passConstraint bs (x :<: xt, (s :~>: s') :<: (st :~>: st')) cs tm = do
 >     let qt = PRF (EQBLUE (xt :>: NP x) (st' :>: s'))
->     optionalProofTrace $ "PASS: " ++ show qt
+>     elimTrace $ "PASS: " ++ show qt
 >     freshRef ("qsm" :<: evTm qt)
 >         (\ q -> simplifyMotive
 >             (bs :< (q :<: qt, N (P refl :$ A st :$ A s))) cs tm)
 
 
 \subsubsection{Building the motive}
-
-> optionalProofTrace s = if on then proofTrace s else return ()
->   where on = False
-
 
 Finally, we can make the motive, hence closing the subgoal. This
 simply consists in chaining the commands above, and give the computed
@@ -701,14 +698,14 @@ term. Unless we've screwed things up, |giveOutBelow| should always be happy.
 > makeMotive ::  TY -> INTM -> Bwd (REF :<: INTM) -> Bwd INTM -> TY ->
 >                ProofState [Binder]
 > makeMotive motiveType goal delta targets elimTy = do
->     optionalProofTrace $ "goal: " ++ show goal
->     optionalProofTrace $ "targets: " ++ show targets
+>     elimTrace $ "goal: " ++ show goal
+>     elimTrace $ "targets: " ++ show targets
 
 Extract non-parametric, non-removable hypotheses $\Delta_1$ from the context $\Delta$:
 
->     optionalProofTrace $ "delta: " ++ show (fmap (\ ((n := _) :<: _) -> n) delta)
+>     elimTrace $ "delta: " ++ show (fmap (\ ((n := _) :<: _) -> n) delta)
 >     delta1 <- findNonParametricHyps delta elimTy
->     optionalProofTrace $ "delta1: " ++ show (fmap (\ ((n := _) :<: _) -> n) delta1)
+>     elimTrace $ "delta1: " ++ show (fmap (\ ((n := _) :<: _) -> n) delta1)
 
 Transform $\Delta_1$ into Binder form:
 
@@ -717,18 +714,18 @@ Transform $\Delta_1$ into Binder form:
 Introduce $\Xi$ and generate constraints between its references and the targets:
 
 >     (constraints, n) <- introMotive motiveType motiveType (trail targets) B0 0
->     optionalProofTrace $ "constraints: " ++ show constraints
+>     elimTrace $ "constraints: " ++ show constraints
 
 Simplify the constraints to produce an updated list of binders and goal type:
 
 >     (binders', goal') <- simplifyMotive binders (constraints <>> F0) goal
->     optionalProofTrace $ "binders': " ++ show binders'
->     optionalProofTrace $ "goal': " ++ show goal'
+>     elimTrace $ "binders': " ++ show binders'
+>     elimTrace $ "goal': " ++ show goal'
 
 Discharge the binders over the goal type to produce the motive:
 
 >     let goal'' = liftType' (fmap fst binders') goal'
->     optionalProofTrace $ "goal'': " ++ show goal''
+>     elimTrace $ "goal'': " ++ show goal''
 >     giveOutBelow goal''
 
 Return to the construction of the rebuilt eliminator, by going out the same number

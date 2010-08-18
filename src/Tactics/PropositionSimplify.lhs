@@ -21,6 +21,7 @@
 
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
+> import Kit.Trace
 
 > import NameSupply.NameSupply
 > import NameSupply.NameSupplier
@@ -40,11 +41,6 @@
 %endif
 
 \section{Propositional Simplification}
-
-We need a proper logging system!
-
-> simpTrace :: String -> ProofState ()
-> simpTrace s = return ()
 
 \subsection{Setting the Scene}
 
