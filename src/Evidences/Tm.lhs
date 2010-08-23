@@ -329,7 +329,7 @@ arguments is correct, we return them labelled with their type and the
 type of the result.
 
 However, we had to generalize it. Following the evolution of |canTy|
-in Section~\ref{subsubsec:Evidences.Rules.canTy}, we have adopted the
+in Section~\ref{subsubsec:Evidences.TypeChecker.canTy}, we have adopted the
 following scheme:
 
 > opTy ::  (Alternative m, MonadError (StackError t) m) =>
@@ -343,7 +343,7 @@ liberalise the return type to |s|, to give more freedom in the choice
 of the checker-evaluator. This change impacts on |exQuote|, |infer|,
 and |useOp|. If this definition is not clear now, it should become
 clear after the definition of |canTy| in
-Section~\ref{subsubsec:Evidences.Rules.canTy}.
+Section~\ref{subsubsec:Evidences.TypeChecker.canTy}.
 
 > opTy op chev ss
 >   | length ss == opArity op = telCheck chev (opTyTel op :>: ss)
@@ -493,7 +493,7 @@ irrelevant. We intend this for proofs, but there may be other things
 
 In this section, we have defined the syntactic equality on terms. The
 general definition of syntactic equality remains to be done. It is the
-subject of Section~\ref{sec:Evidences.Rules}: there, we rely on
+subject of Section~\ref{sec:Evidences.DefinitionalEquality}: there, we rely on
 \emph{quotation} to turn values into terms. Once turned into terms, we
 fall back to the equality defined above.
 

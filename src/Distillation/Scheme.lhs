@@ -24,9 +24,9 @@
 
 > import NameSupply.NameSupplier
 
-> import Evidences.Rules
 > import Evidences.Tm
 > import Evidences.Mangler
+> import Evidences.Eval
 
 %endif
 

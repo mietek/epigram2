@@ -14,7 +14,11 @@
 > import NameSupply.NameSupplier
 
 > import Evidences.Tm
-> import Evidences.Rules
+> import Evidences.TypeChecker
+> import Evidences.Eval
+> import Evidences.Operators
+> import Evidences.BetaQuotation
+> import Evidences.DefinitionalEquality
 > import Evidences.Utilities
 
 > import Features.Features ()
@@ -212,7 +216,7 @@ If nothing else matches, give up and report an error.
 \subsection{Elaborating |DExTm|s}
 
 The |makeElabInfer| command is to |infer| in
-subsection~\ref{subsec:Evidences.Rules.type-inference} as |makeElab|
+subsection~\ref{subsec:Evidences.TypeChecker.type-inference} as |makeElab|
 is to |check|. It elaborates the display term and infers its type to
 produce a type-term pair in the evidence language.
 

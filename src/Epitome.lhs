@@ -72,7 +72,13 @@
 
 %include Evidences/Tm.lhs
 %include Evidences/Mangler.lhs
-%include Evidences/Rules.lhs
+%include Evidences/Eval.lhs
+%include Evidences/TypeChecker.lhs
+%include Evidences/DefinitionalEquality.lhs
+%include Evidences/BetaQuotation.lhs
+%include Evidences/Operators.lhs
+%include Evidences/OperatorDSL.lhs
+%include Evidences/PropositionalEquality.lhs
 %include Evidences/Utilities.lhs
 
 \chapter{The Display Language}

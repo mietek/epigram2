@@ -17,10 +17,7 @@
 > import NameSupply.NameSupply
 > import NameSupply.NameSupplier
 
-> import ProofState.Structure.Developments
-
 > import ProofState.Edition.ProofContext
-> import ProofState.Edition.Scope
 > import ProofState.Edition.ProofState
 > import ProofState.Edition.GetSet
 
@@ -28,7 +25,8 @@
 > import DisplayLang.Name
 
 > import Evidences.Tm
-> import Evidences.Rules
+> import Evidences.TypeChecker
+> import Evidences.BetaQuotation
 
 %endif
 

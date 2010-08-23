@@ -13,8 +13,8 @@
 > import Data.Traversable
 
 > import Evidences.Tm
-> import Evidences.Rules
 > import Evidences.Mangler
+> import Evidences.Eval
 
 > import Features.Features ()
 
@@ -55,7 +55,7 @@
 The |elaborate| command elaborates a term in display syntax, given its
 type, to produce an elaborated term and its value representation. It
 behaves similarly to |check| from
-subsection~\ref{subsec:Evidences.Rules.type-checking}, except that it
+subsection~\ref{subsec:Evidences.TypeChecker.type-checking}, except that it
 operates in the |Elab| monad, so it can create subgoals and
 $\lambda$-lift terms.
 

@@ -11,9 +11,11 @@
 > import Data.Foldable hiding (foldr)
 > import Data.Traversable
 
-> import Evidences.Rules
 > import Evidences.Tm
 > import Evidences.Utilities
+> import Evidences.Eval
+> import Evidences.Operators
+> import Evidences.DefinitionalEquality
 
 > import ProofState.Edition.ProofState
 > import ProofState.Edition.GetSet

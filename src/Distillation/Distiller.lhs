@@ -18,8 +18,8 @@
 
 > import ProofState.Edition.ProofState
 
+> import ProofState.Interface.ProofKit         
 > import ProofState.Interface.NameResolution
-> import ProofState.Interface.Parameter
 > import ProofState.Interface.Name
 
 > import DisplayLang.DisplayTm
@@ -29,16 +29,19 @@
 
 > import NameSupply.NameSupplier
 
-> import Evidences.Rules
 > import Evidences.Tm
 > import Evidences.Mangler
+> import Evidences.TypeChecker
+> import Evidences.Eval
+> import Evidences.Operators
+> import Evidences.DefinitionalEquality
 
 %endif
 
 
 The distiller, like the elaborator, is organized on a |check|/|infer|
 basis, following the type-checker implementation in
-Section~\ref{subsec:Evidences.Rules.type-checking}. |distill| mirrors
+Section~\ref{subsec:Evidences.TypeChecker.type-checking}. |distill| mirrors
 |check| --- distilling |INTM|s, while |distillInfer| mirrors |infer|
 --- distilling |EXTM|s.
 

@@ -13,8 +13,8 @@
 
 > import NameSupply.NameSupply
 
-> import Evidences.Rules hiding (($$))
-> import qualified Evidences.Rules (($$))
+> import Evidences.Eval hiding (($$))
+> import qualified Evidences.Eval (($$))
 > import Evidences.Tm
 
 > import ProofState.Structure.Developments
@@ -119,7 +119,7 @@ argument is True.
 
 >     removeShared :: Spine {TT} REF -> TY -> TY
 >     removeShared []       ty        = ty
->     removeShared (A (NP r) : as) (PI s t)  = t Evidences.Rules.$$ A (NP r)
+>     removeShared (A (NP r) : as) (PI s t)  = t Evidences.Eval.$$ A (NP r)
 
 
 This old implementation is written using a horrible imperative hack that saves

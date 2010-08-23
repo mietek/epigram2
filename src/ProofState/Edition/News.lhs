@@ -13,10 +13,9 @@
 
 > import Data.Foldable hiding (foldr)
 > import Data.Maybe
-> import Data.Monoid hiding (All)
 
-> import Evidences.Rules
 > import Evidences.Tm
+> import Evidences.Eval
 
 %endif
 

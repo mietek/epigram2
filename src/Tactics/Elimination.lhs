@@ -19,17 +19,18 @@
 > import NameSupply.NameSupplier
 
 > import Evidences.Tm
-> import Evidences.Rules
+> import Evidences.Eval
+> import Evidences.Operators
+> import Evidences.DefinitionalEquality
 
 > import ProofState.Edition.ProofState
 > import ProofState.Edition.GetSet
 > import ProofState.Edition.Navigation
 
+> import ProofState.Interface.Name
 > import ProofState.Interface.Module
 > import ProofState.Interface.ProofKit
 > import ProofState.Interface.Lifting
-> import ProofState.Interface.NameResolution
-> import ProofState.Interface.Name
 > import ProofState.Interface.Definition
 > import ProofState.Interface.Parameter
 > import ProofState.Interface.Solving

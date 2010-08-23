@@ -10,18 +10,17 @@
 > import Control.Applicative
 > import Control.Monad.Identity
 
-> import Data.Monoid hiding (All)
 > import Data.Traversable
 
 > import Kit.MissingLibrary
 
 > import Evidences.Tm
-> import Evidences.Rules
 > import Evidences.Mangler
+> import Evidences.Eval
+> import Evidences.Operators
+> import Evidences.DefinitionalEquality
 
 > import NameSupply.NameSupplier
-
-> import ProofState.Structure.Developments
 
 > import ProofState.Edition.Scope
 > import ProofState.Edition.ProofState
@@ -37,7 +36,6 @@
 
 > import Elaboration.Elaborator
 
-> import DisplayLang.DisplayTm
 > import DisplayLang.Name
 
 > import Tactics.Data

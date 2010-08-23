@@ -29,7 +29,7 @@
 > import DisplayLang.DisplayTm
 
 > import Evidences.Tm
-> import Evidences.Rules
+> import Evidences.Eval
 
 > import {-# SOURCE #-} Elaboration.Wire
 

@@ -20,7 +20,6 @@
 > import ProofState.Interface.ProofKit
 
 > import Evidences.Tm
-> import Evidences.Rules
 
 %endif
 

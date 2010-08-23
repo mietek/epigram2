@@ -14,7 +14,8 @@ coherently.
 > module Compiler.OpDef where
 
 > import Evidences.Tm
-> import Evidences.Rules
+> import Evidences.Eval
+> import Evidences.Operators
 
 %endif
 

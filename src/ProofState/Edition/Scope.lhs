@@ -15,7 +15,7 @@
 > import ProofState.Edition.ProofContext
 
 > import Evidences.Tm
-> import Evidences.Rules
+> import Evidences.Eval
 
 > import Kit.BwdFwd
 > import Kit.MissingLibrary

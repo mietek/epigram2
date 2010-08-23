@@ -25,7 +25,7 @@
 > import ProofState.Interface.ProofKit
 
 > import Evidences.Tm
-> import Evidences.Rules
+> import Evidences.Eval
 
 %endif
 

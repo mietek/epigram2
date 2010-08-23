@@ -20,7 +20,7 @@
 > import ProofState.Edition.GetSet
 
 > import Evidences.Tm
-> import Evidences.Rules
+> import Evidences.Operators
 
 
 %endif

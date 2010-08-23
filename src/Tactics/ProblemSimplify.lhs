@@ -12,22 +12,22 @@
 > import Control.Monad.Reader
 
 > import Data.Foldable
-> import Data.Traversable
 
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
 > import Kit.Trace
 
 > import Evidences.Tm
-> import Evidences.Rules
 > import Evidences.Utilities
+> import Evidences.Eval
+> import Evidences.Operators
+> import Evidences.DefinitionalEquality
 
 > import ProofState.Edition.ProofState
 > import ProofState.Edition.GetSet
 > import ProofState.Edition.Navigation
 
 > import ProofState.Interface.ProofKit
-> import ProofState.Interface.Lifting
 > import ProofState.Interface.Definition
 > import ProofState.Interface.Parameter
 > import ProofState.Interface.Solving

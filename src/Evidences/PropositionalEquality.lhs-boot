@@ -1,0 +1,12 @@
+> {-# OPTIONS_GHC -F -pgmF she #-}
+> {-# LANGUAGE TypeOperators, GADTs, KindSignatures,
+>     TypeSynonymInstances, FlexibleInstances, FlexibleContexts, PatternGuards #-}
+
+> module Evidences.PropositionalEquality where
+
+> import Evidences.Tm
+
+
+> opRunEqGreen :: [VAL] -> Either NEU VAL
+> coerce :: (Can (VAL,VAL)) -> VAL -> VAL -> Either NEU VAL
+> partialEq :: VAL -> VAL -> VAL -> Bool

@@ -26,7 +26,7 @@
 > import DisplayLang.DisplayTm
 
 > import Evidences.Tm
-> import Evidences.Rules
+> import Evidences.Eval
 
 %endif
 

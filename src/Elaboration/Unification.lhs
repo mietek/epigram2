@@ -13,8 +13,11 @@
 > import Data.Foldable
 > import qualified Data.Monoid as M
 
-> import Evidences.Rules
 > import Evidences.Tm
+> import Evidences.Eval
+> import Evidences.Operators
+> import Evidences.DefinitionalEquality
+> import Evidences.PropositionalEquality
 
 > import ProofState.Structure.Developments
 

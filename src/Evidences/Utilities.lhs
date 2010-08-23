@@ -17,7 +17,8 @@
 
 > import Evidences.Tm
 > import Evidences.Mangler
-> import Evidences.Rules
+> import Evidences.BetaQuotation
+> import Evidences.Eval
 
 > import Kit.BwdFwd
 

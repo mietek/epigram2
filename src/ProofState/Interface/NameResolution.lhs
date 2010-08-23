@@ -31,7 +31,7 @@
 > import DisplayLang.Scheme
 
 > import Evidences.Tm
-> import Evidences.Rules
+> import Evidences.Operators
 
 %endif
 

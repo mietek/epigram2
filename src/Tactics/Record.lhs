@@ -7,27 +7,11 @@
 
 > module Tactics.Record where
 
-> import Control.Applicative
-> import Control.Monad.Identity
-
-> import Data.Monoid hiding (All)
-> import Data.Traversable
-
-> import Kit.MissingLibrary
-
 > import Evidences.Tm
-> import Evidences.Rules
 > import Evidences.Mangler
 
-> import NameSupply.NameSupplier
-
-> import ProofState.Structure.Developments
 > import ProofState.Edition.ProofState
-> import ProofState.Interface.ProofKit
 
-> import Elaboration.Elaborator
-
-> import DisplayLang.DisplayTm
 > import DisplayLang.Name
 
 %endif

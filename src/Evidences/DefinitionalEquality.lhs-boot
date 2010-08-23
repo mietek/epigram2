@@ -1,0 +1,11 @@
+> {-# OPTIONS_GHC -F -pgmF she #-}
+> {-# LANGUAGE TypeOperators, GADTs, KindSignatures,
+>     TypeSynonymInstances, FlexibleInstances, FlexibleContexts, PatternGuards #-}
+
+> module Evidences.DefinitionalEquality where
+
+> import NameSupply.NameSupply
+
+> import Evidences.Tm
+
+> equal :: (TY :>: (VAL,VAL)) -> NameSupply -> Bool

@@ -27,8 +27,11 @@
 > import NameSupply.NameSupplier
 
 > import Evidences.Tm
-> import Evidences.Rules
 > import Evidences.Mangler
+> import Evidences.Eval
+> import Evidences.Operators
+> import Evidences.BetaQuotation
+> import Evidences.DefinitionalEquality
 > import Evidences.Utilities
 
 > import ProofState.Edition.ProofState

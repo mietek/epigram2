@@ -16,7 +16,7 @@
 > import NameSupply.NameSupply
 
 > import Evidences.Tm
-> import Evidences.Rules
+> import Evidences.Eval
 
 > import Elaboration.ElabMonad
 

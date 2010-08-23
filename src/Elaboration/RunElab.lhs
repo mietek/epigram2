@@ -15,8 +15,10 @@
 > import NameSupply.NameSupplier
 
 > import Evidences.Tm
-> import Evidences.Rules
 > import Evidences.Mangler
+> import Evidences.Eval
+> import Evidences.Operators
+> import Evidences.DefinitionalEquality
 > import Evidences.Utilities
 
 > import Features.Features ()
