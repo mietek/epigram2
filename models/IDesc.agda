@@ -127,12 +127,12 @@ data IMu {l : Level}{I : Set (suc l)}(R : I -> IDesc {l = l} I)(i : I) : Set l w
 -- Predicate: Box
 --********************************************
 
-box : {l : Level}{I : Set (suc l)}(D : IDesc I)(P : I -> Set l) -> desc D P -> IDesc (Sigma I P)
-box (var i)     P x        = var (i , x)
-box (const X)   P x        = const Unit
-box (prod D D') P (d , d') = prod (box D P d) (box D' P d')
-box (sigma S T) P (a , b)  = box (T a) P b
-box (pi S T)    P f        = pi S (\s -> box (T s) P (f s))
+box : {l : Level}{I : Set (suc l)}(D : IDesc I)(X : I -> Set l) -> desc D X -> IDesc (Sigma I X)
+box (var i)     X x        = var (i , x)
+box (const _)   X x        = const Unit
+box (prod D D') X (d , d') = prod (box D X d) (box D' X d')
+box (sigma S T) X (a , b)  = box (T a) X b
+box (pi S T)    X f        = pi S (\s -> box (T s) X (f s))
 
 --********************************************
 -- Elimination principle: induction
