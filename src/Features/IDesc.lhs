@@ -425,6 +425,8 @@ description is not neutral, to improve the pretty-printed representation.
 > import -> Primitives where
 >   ("IDesc", idescREF) :
 >   ("IDescD", idescDREF) :
+>   ("icase", icaseREF) :
+>   ("idind", idindREF) :
 
 
 > import -> RulesCode where
@@ -477,3 +479,533 @@ description is not neutral, to improve the pretty-printed representation.
 >   sumilike _I (IFSIGMA e b)  = 
 >       Just (e, \t -> switchOp @@ [ e , t , LK (idesc $$ A _I $$ A VOID), b ])
 >   sumilike _ _               = Nothing
+
+
+
+
+
+>   icaseREF :: REF
+>   icaseREF = [("Primitive", 0), ("icase", 0)] := (DEFN cdef :<: cty) 
+
+>   idindREF :: REF
+>   idindREF = [("Primitive", 0), ("idind", 0)] := (DEFN idef :<: ity) 
+
+
+We build a case gadget for idata, the haskell code below is generated from 
+this Cochon command - some sort of Prelude is really in order here, the
+question is how to go about bootstrapping it...
+
+make case :=  \ iI e cs i x pP p -> iinduction iI (\ j -> con ['fsigmaD , [e (cs j)] ]) i x pP (\ j y _ -> switch e (y !) (\ t -> ((k : iI)(xs : idesc iI (switch e t (\ u -> IDesc iI []) (cs k)) (\ l -> IMu iI (\ m -> con ['fsigmaD , [e (cs m)] ]) l)) -> pP [k , con [t , xs]])) p j (y -))
+          : (iI : Set) (e : EnumU) (cs : iI -> branches e (\ u -> IDesc iI []))
+             (i : iI) (x : IMu iI (\ j -> con ['fsigmaD , [e (cs j)] ]) i)
+              (pP : Sig (j : iI ; IMu iI (\ k -> con ['fsigmaD , [e (cs k)] ]) j) -> Set)
+               (p : branches e
+                      (\ t -> (j : iI) ->
+                         (xs : idesc iI (switch e t (\ u -> IDesc iI []) (cs j))
+                                 (\ k -> IMu iI (\ l -> con ['fsigmaD , [e (cs l)] ]) k))
+                      -> pP [ j , con [ t , xs ] ]))
+                 -> pP [ i , x ] ;
+
+Using this enables us to avoid the enum splitting we currently do.
+
+>   cty  = (PI SET (L $ "I" :. [.iI. (PI (MU (Just (N (P enumREF))) (CON
+>     (PAIR (SU (SU (SU (SU ZE)))) (PAIR (ENUMT (CON (PAIR (SU ZE) (PAIR (TAG
+>     "nil") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG "cons") (PAIR (CON (PAIR ZE
+>     VOID)) VOID)))) VOID))))) (PAIR (L $ "c" :. [.c. (N (switchDOp :@ [(CON
+>     (PAIR (SU ZE) (PAIR (TAG "nil") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG
+>     "cons") (PAIR (CON (PAIR ZE VOID)) VOID)))) VOID)))), (PAIR (CON (PAIR
+>     (SU ZE) (PAIR UNIT VOID))) (PAIR (CON (PAIR (SU (SU (SU (SU ZE))))
+>     (PAIR UID (PAIR (LK (CON (PAIR (SU (SU (SU ZE))) (PAIR (CON (PAIR ZE
+>     VOID)) (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID))) VOID))))) VOID))))
+>     VOID)), (NV c)]))]) VOID))))) (L $ "e" :. [.e. (PI (ARR (NV iI) (N
+>     (branchesOp :@ [(NV e), (L $ "u" :. [.u. (IMU (Just (N ((P idescREF) :$
+>     (A (NV iI))))) UNIT (LK (CON (PAIR (SU (SU (SU (SU (SU ZE))))) (PAIR
+>     (CON (PAIR (SU ZE) (PAIR (TAG "varD") (PAIR (CON (PAIR (SU ZE) (PAIR
+>     (TAG "constD") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG "piD") (PAIR (CON
+>     (PAIR (SU ZE) (PAIR (TAG "fpiD") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG
+>     "sigmaD") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG "fsigmaD") (PAIR (CON
+>     (PAIR (SU ZE) (PAIR (TAG "prodD") (PAIR (CON (PAIR ZE VOID)) VOID))))
+>     VOID)))) VOID)))) VOID)))) VOID)))) VOID)))) VOID)))) (PAIR (PAIR (CON
+>     (PAIR (SU (SU (SU (SU ZE)))) (PAIR (NV iI) (PAIR (LK (CON (PAIR (SU ZE)
+>     (PAIR UNIT VOID)))) VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU ZE))))
+>     (PAIR SET (PAIR (LK (CON (PAIR (SU ZE) (PAIR UNIT VOID)))) VOID))))
+>     (PAIR (CON (PAIR (SU (SU (SU (SU ZE)))) (PAIR SET (PAIR (L $ "S" :.
+>     [.sS. (CON (PAIR (SU (SU (SU (SU (SU (SU ZE)))))) (PAIR (CON (PAIR (SU
+>     (SU ZE)) (PAIR (NV sS) (PAIR (LK (CON (PAIR ZE (PAIR VOID VOID))))
+>     VOID)))) (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID))) VOID))))])
+>     VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU ZE)))) (PAIR (MU (Just (N (P
+>     enumREF))) (CON (PAIR (SU (SU (SU (SU ZE)))) (PAIR (ENUMT (CON (PAIR
+>     (SU ZE) (PAIR (TAG "nil") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG "cons")
+>     (PAIR (CON (PAIR ZE VOID)) VOID)))) VOID))))) (PAIR (L $ "c" :. [.c. (N
+>     (switchDOp :@ [(CON (PAIR (SU ZE) (PAIR (TAG "nil") (PAIR (CON (PAIR
+>     (SU ZE) (PAIR (TAG "cons") (PAIR (CON (PAIR ZE VOID)) VOID))))
+>     VOID)))), (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID))) (PAIR (CON (PAIR
+>     (SU (SU (SU (SU ZE)))) (PAIR UID (PAIR (LK (CON (PAIR (SU (SU (SU ZE)))
+>     (PAIR (CON (PAIR ZE VOID)) (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID)))
+>     VOID))))) VOID)))) VOID)), (NV c)]))]) VOID))))) (PAIR (L $ "E" :.
+>     [.eE.  (CON (PAIR (SU (SU (SU (SU (SU (SU ZE)))))) (PAIR (CON (PAIR (SU
+>     (SU ZE)) (PAIR (ENUMT (NV eE)) (PAIR (LK (CON (PAIR ZE (PAIR VOID
+>     VOID)))) VOID)))) (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID)))
+>     VOID))))]) VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU ZE)))) (PAIR SET
+>     (PAIR (L $ "S" :. [.sS. (CON (PAIR (SU (SU (SU (SU (SU (SU ZE))))))
+>     (PAIR (CON (PAIR (SU (SU ZE)) (PAIR (NV sS) (PAIR (LK (CON (PAIR ZE
+>     (PAIR VOID VOID)))) VOID)))) (PAIR (CON (PAIR (SU ZE) (PAIR UNIT
+>     VOID))) VOID))))]) VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU ZE))))
+>     (PAIR (MU (Just (N (P enumREF))) (CON (PAIR (SU (SU (SU (SU ZE))))
+>     (PAIR (ENUMT (CON (PAIR (SU ZE) (PAIR (TAG "nil") (PAIR (CON (PAIR (SU
+>     ZE) (PAIR (TAG "cons") (PAIR (CON (PAIR ZE VOID)) VOID)))) VOID)))))
+>     (PAIR (L $ "c" :.  [.c. (N (switchDOp :@ [(CON (PAIR (SU ZE) (PAIR (TAG
+>     "nil") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG "cons") (PAIR (CON (PAIR ZE
+>     VOID)) VOID)))) VOID)))), (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID)))
+>     (PAIR (CON (PAIR (SU (SU (SU (SU ZE)))) (PAIR UID (PAIR (LK (CON (PAIR
+>     (SU (SU (SU ZE))) (PAIR (CON (PAIR ZE VOID)) (PAIR (CON (PAIR (SU ZE)
+>     (PAIR UNIT VOID))) VOID))))) VOID)))) VOID)), (NV c)]))]) VOID)))))
+>     (PAIR (L $ "E" :. [.eE.  (CON (PAIR (SU (SU (SU (SU (SU (SU ZE))))))
+>     (PAIR (CON (PAIR (SU (SU (SU ZE))) (PAIR (NV eE) (PAIR (LK (CON (PAIR
+>     ZE (PAIR VOID VOID)))) VOID)))) (PAIR (CON (PAIR (SU ZE) (PAIR UNIT
+>     VOID))) VOID))))]) VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU (SU (SU
+>     ZE)))))) (PAIR (CON (PAIR ZE (PAIR VOID VOID))) (PAIR (CON (PAIR (SU
+>     (SU (SU (SU (SU (SU ZE)))))) (PAIR (CON (PAIR ZE (PAIR VOID VOID)))
+>     (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID))) VOID)))) VOID))))
+>     VOID))))))) VOID))))) VOID)])]))) (L $ "cs" :. [.cs. (PI (NV iI) (L $
+>     "i" :. [.i.  (PI (IMU Nothing (NV iI) (L $ "j" :. [.j. (CON (PAIR (SU
+>     (SU (SU (SU (SU ZE))))) (PAIR (NV e) (PAIR (N ((V cs) :$ (A (NV j))))
+>     VOID))))]) (NV i)) (L $ "x" :. [.x.  (PI (ARR (SIGMA (NV iI) (L $ "j"
+>     :. [.j. (IMU Nothing (NV iI) (L $ "k" :. [.k. (CON (PAIR (SU (SU (SU
+>     (SU (SU ZE))))) (PAIR (NV e) (PAIR (N ((V cs) :$ (A (NV k))))
+>     VOID))))]) (NV j))])) SET) (L $ "P" :. [.pP. (PI (N (branchesOp :@
+>     [(NV e), (L $ "t" :. [.t.  (PI (NV iI) (L $ "j" :. [.j. (PI (N (idescOp
+>     :@ [(NV iI), (N (switchOp :@ [(NV e), (NV t), (L $ "u" :. [.u. (IMU
+>     (Just (N ((P idescREF) :$ (A (NV iI))))) UNIT (LK (CON (PAIR (SU (SU
+>     (SU (SU (SU ZE))))) (PAIR (CON (PAIR (SU ZE) (PAIR (TAG "varD") (PAIR
+>     (CON (PAIR (SU ZE) (PAIR (TAG "constD") (PAIR (CON (PAIR (SU ZE) (PAIR
+>     (TAG "piD") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG "fpiD") (PAIR (CON
+>     (PAIR (SU ZE) (PAIR (TAG "sigmaD") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG
+>     "fsigmaD") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG "prodD") (PAIR (CON
+>     (PAIR ZE VOID)) VOID)))) VOID)))) VOID)))) VOID)))) VOID)))) VOID))))
+>     VOID)))) (PAIR (PAIR (CON (PAIR (SU (SU (SU (SU ZE)))) (PAIR (NV iI)
+>     (PAIR (LK (CON (PAIR (SU ZE) (PAIR UNIT VOID)))) VOID)))) (PAIR (CON
+>     (PAIR (SU (SU (SU (SU ZE)))) (PAIR SET (PAIR (LK (CON (PAIR (SU ZE)
+>     (PAIR UNIT VOID)))) VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU ZE))))
+>     (PAIR SET (PAIR (L $ "S" :.  [.sS. (CON (PAIR (SU (SU (SU (SU (SU (SU
+>     ZE)))))) (PAIR (CON (PAIR (SU (SU ZE)) (PAIR (NV sS) (PAIR (LK (CON
+>     (PAIR ZE (PAIR VOID VOID)))) VOID)))) (PAIR (CON (PAIR (SU ZE) (PAIR
+>     UNIT VOID))) VOID))))]) VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU
+>     ZE)))) (PAIR (MU (Just (N (P enumREF))) (CON (PAIR (SU (SU (SU (SU
+>     ZE)))) (PAIR (ENUMT (CON (PAIR (SU ZE) (PAIR (TAG "nil") (PAIR (CON
+>     (PAIR (SU ZE) (PAIR (TAG "cons") (PAIR (CON (PAIR ZE VOID)) VOID))))
+>     VOID))))) (PAIR (L $ "c" :. [.c. (N (switchDOp :@ [(CON (PAIR (SU ZE)
+>     (PAIR (TAG "nil") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG "cons") (PAIR
+>     (CON (PAIR ZE VOID)) VOID)))) VOID)))), (PAIR (CON (PAIR (SU ZE) (PAIR
+>     UNIT VOID))) (PAIR (CON (PAIR (SU (SU (SU (SU ZE)))) (PAIR UID (PAIR
+>     (LK (CON (PAIR (SU (SU (SU ZE))) (PAIR (CON (PAIR ZE VOID)) (PAIR (CON
+>     (PAIR (SU ZE) (PAIR UNIT VOID))) VOID))))) VOID)))) VOID)), (NV c)]))])
+>     VOID))))) (PAIR (L $ "E" :. [.eE.  (CON (PAIR (SU (SU (SU (SU (SU (SU
+>     ZE)))))) (PAIR (CON (PAIR (SU (SU ZE)) (PAIR (ENUMT (NV eE)) (PAIR (LK
+>     (CON (PAIR ZE (PAIR VOID VOID)))) VOID)))) (PAIR (CON (PAIR (SU ZE)
+>     (PAIR UNIT VOID))) VOID))))]) VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU
+>     ZE)))) (PAIR SET (PAIR (L $ "S" :. [.sS. (CON (PAIR (SU (SU (SU (SU
+>     (SU (SU ZE)))))) (PAIR (CON (PAIR (SU (SU ZE)) (PAIR (NV sS) (PAIR (LK
+>     (CON (PAIR ZE (PAIR VOID VOID)))) VOID)))) (PAIR (CON (PAIR (SU ZE)
+>     (PAIR UNIT VOID))) VOID))))]) VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU
+>     ZE)))) (PAIR (MU (Just (N (P enumREF))) (CON (PAIR (SU (SU (SU (SU
+>     ZE)))) (PAIR (ENUMT (CON (PAIR (SU ZE) (PAIR (TAG "nil") (PAIR (CON
+>     (PAIR (SU ZE) (PAIR (TAG "cons") (PAIR (CON (PAIR ZE VOID)) VOID))))
+>     VOID))))) (PAIR (L $ "c" :.  [.c. (N (switchDOp :@ [(CON (PAIR (SU ZE)
+>     (PAIR (TAG "nil") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG "cons") (PAIR
+>     (CON (PAIR ZE VOID)) VOID)))) VOID)))), (PAIR (CON (PAIR (SU ZE) (PAIR
+>     UNIT VOID))) (PAIR (CON (PAIR (SU (SU (SU (SU ZE)))) (PAIR UID (PAIR
+>     (LK (CON (PAIR (SU (SU (SU ZE))) (PAIR (CON (PAIR ZE VOID)) (PAIR (CON
+>     (PAIR (SU ZE) (PAIR UNIT VOID))) VOID))))) VOID)))) VOID)), (NV c)]))])
+>     VOID))))) (PAIR (L $ "E" :. [.eE.  (CON (PAIR (SU (SU (SU (SU (SU (SU
+>     ZE)))))) (PAIR (CON (PAIR (SU (SU (SU ZE))) (PAIR (NV eE) (PAIR (LK
+>     (CON (PAIR ZE (PAIR VOID VOID)))) VOID)))) (PAIR (CON (PAIR (SU ZE)
+>     (PAIR UNIT VOID))) VOID))))]) VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU
+>     (SU (SU ZE)))))) (PAIR (CON (PAIR ZE (PAIR VOID VOID))) (PAIR (CON
+>     (PAIR (SU (SU (SU (SU (SU (SU ZE)))))) (PAIR (CON (PAIR ZE (PAIR VOID
+>     VOID))) (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID))) VOID)))) VOID))))
+>     VOID))))))) VOID))))) VOID)]), (N ((V cs) :$ (A (NV j))))])), (L $ "k"
+>     :. [.k. (IMU Nothing (NV iI) (L $ "l" :. [.l. (CON (PAIR (SU (SU (SU
+>     (SU (SU ZE))))) (PAIR (NV e) (PAIR (N ((V cs) :$ (A (NV l))))
+>     VOID))))]) (NV k))])])) (L $ "xs" :. [.xs. (N ((V pP) :$ (A (PAIR (NV
+>     j) (CON (PAIR (NV t) (NV xs)))))))]))]))])])) (L $ "p" :. [.p. (N ((V
+>     pP) :$ (A (PAIR (NV i) (NV x)))))]))]))]))]))]))]))]))
+
+
+>   cdef = (L $ "I" :. [.iI. (L $ "e" :. [.e. (L $ "cs" :. [.cs. (L $ "i"
+>     :. [.i. (L $ "x" :. [.x. (L $ "P" :. [.pP. (L $ "p" :. [.p. (N
+>     (iinductionOp :@ [(NV iI), (L $ "j" :. [.j. (CON (PAIR (SU (SU (SU (SU
+>     (SU ZE))))) (PAIR (NV e) (PAIR (N ((V cs) :$ (A (NV j)))) VOID))))]),
+>     (NV i), (NV x), (NV pP), (L $ "j" :. [.j. (L $ "y" :. [.y. (LK (N
+>     (((switchOp :@ [(NV e), (N ((V y) :$ Fst)), (L $ "t" :. [.t. (PI (NV
+>     iI) (L $ "k" :. [.k. (PI (N (idescOp :@ [(NV iI), (N (switchOp :@ [(NV
+>     e), (NV t), (L $ "u" :. [.u. (IMU (Just (N ((P idescREF) :$ (A (NV
+>     iI))))) UNIT (LK (CON (PAIR (SU (SU (SU (SU (SU ZE))))) (PAIR (CON
+>     (PAIR (SU ZE) (PAIR (TAG "varD") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG
+>     "constD") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG "piD") (PAIR (CON (PAIR
+>     (SU ZE) (PAIR (TAG "fpiD") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG
+>     "sigmaD") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG "fsigmaD") (PAIR (CON
+>     (PAIR (SU ZE) (PAIR (TAG "prodD") (PAIR (CON (PAIR ZE VOID)) VOID))))
+>     VOID)))) VOID)))) VOID)))) VOID)))) VOID)))) VOID)))) (PAIR (PAIR (CON
+>     (PAIR (SU (SU (SU (SU ZE)))) (PAIR (NV iI) (PAIR (LK (CON (PAIR (SU ZE)
+>     (PAIR UNIT VOID)))) VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU ZE))))
+>     (PAIR SET (PAIR (LK (CON (PAIR (SU ZE) (PAIR UNIT VOID)))) VOID))))
+>     (PAIR (CON (PAIR (SU (SU (SU (SU ZE)))) (PAIR SET (PAIR (L $ "S" :.
+>     [.sS. (CON (PAIR (SU (SU (SU (SU (SU (SU ZE)))))) (PAIR (CON (PAIR (SU
+>     (SU ZE)) (PAIR (NV sS) (PAIR (LK (CON (PAIR ZE (PAIR VOID VOID))))
+>     VOID)))) (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID))) VOID))))])
+>     VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU ZE)))) (PAIR (MU (Just (N (P
+>     enumREF))) (CON (PAIR (SU (SU (SU (SU ZE)))) (PAIR (ENUMT (CON (PAIR
+>     (SU ZE) (PAIR (TAG "nil") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG "cons")
+>     (PAIR (CON (PAIR ZE VOID)) VOID)))) VOID))))) (PAIR (L $ "c" :. [.c. (N
+>     (switchDOp :@ [(CON (PAIR (SU ZE) (PAIR (TAG "nil") (PAIR (CON (PAIR
+>     (SU ZE) (PAIR (TAG "cons") (PAIR (CON (PAIR ZE VOID)) VOID))))
+>     VOID)))), (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID))) (PAIR (CON (PAIR
+>     (SU (SU (SU (SU ZE)))) (PAIR UID (PAIR (LK (CON (PAIR (SU (SU (SU ZE)))
+>     (PAIR (CON (PAIR ZE VOID)) (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID)))
+>     VOID))))) VOID)))) VOID)), (NV c)]))]) VOID))))) (PAIR (L $ "E" :.
+>     [.eE.  (CON (PAIR (SU (SU (SU (SU (SU (SU ZE)))))) (PAIR (CON (PAIR (SU
+>     (SU ZE)) (PAIR (ENUMT (NV eE)) (PAIR (LK (CON (PAIR ZE (PAIR VOID
+>     VOID)))) VOID)))) (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID)))
+>     VOID))))]) VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU ZE)))) (PAIR SET
+>     (PAIR (L $ "S" :. [.sS. (CON (PAIR (SU (SU (SU (SU (SU (SU ZE))))))
+>     (PAIR (CON (PAIR (SU (SU ZE)) (PAIR (NV sS) (PAIR (LK (CON (PAIR ZE
+>     (PAIR VOID VOID)))) VOID)))) (PAIR (CON (PAIR (SU ZE) (PAIR UNIT
+>     VOID))) VOID))))]) VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU ZE))))
+>     (PAIR (MU (Just (N (P enumREF))) (CON (PAIR (SU (SU (SU (SU ZE))))
+>     (PAIR (ENUMT (CON (PAIR (SU ZE) (PAIR (TAG "nil") (PAIR (CON (PAIR (SU
+>     ZE) (PAIR (TAG "cons") (PAIR (CON (PAIR ZE VOID)) VOID)))) VOID)))))
+>     (PAIR (L $ "c" :. [.c. (N (switchDOp :@ [(CON (PAIR (SU ZE) (PAIR (TAG
+>     "nil") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG "cons") (PAIR (CON (PAIR ZE
+>     VOID)) VOID)))) VOID)))), (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID)))
+>     (PAIR (CON (PAIR (SU (SU (SU (SU ZE)))) (PAIR UID (PAIR (LK (CON (PAIR
+>     (SU (SU (SU ZE))) (PAIR (CON (PAIR ZE VOID)) (PAIR (CON (PAIR (SU ZE)
+>     (PAIR UNIT VOID))) VOID))))) VOID)))) VOID)), (NV c)]))]) VOID)))))
+>     (PAIR (L $ "E" :. [.eE. (CON (PAIR (SU (SU (SU (SU (SU (SU ZE))))))
+>     (PAIR (CON (PAIR (SU (SU (SU ZE))) (PAIR (NV eE) (PAIR (LK (CON (PAIR
+>     ZE (PAIR VOID VOID)))) VOID)))) (PAIR (CON (PAIR (SU ZE) (PAIR UNIT
+>     VOID))) VOID))))]) VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU (SU (SU
+>     ZE)))))) (PAIR (CON (PAIR ZE (PAIR VOID VOID))) (PAIR (CON (PAIR (SU
+>     (SU (SU (SU (SU (SU ZE)))))) (PAIR (CON (PAIR ZE (PAIR VOID VOID)))
+>     (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID))) VOID)))) VOID))))
+>     VOID))))))) VOID))))) VOID)]), (N ((V cs) :$ (A (NV k))))])), (L $ "l"
+>     :. [.l. (IMU Nothing (NV iI) (L $ "m" :. [.m. (CON (PAIR (SU (SU (SU
+>     (SU (SU ZE))))) (PAIR (NV e) (PAIR (N ((V cs) :$ (A (NV m))))
+>     VOID))))]) (NV l))])])) (L $ "xs" :. [.xs. (N ((V pP) :$ (A (PAIR (NV
+>     k) (CON (PAIR (NV t) (NV xs)))))))]))]))]), (NV p)]) :$ (A (NV j))) :$
+>     (A (N ((V y) :$ Snd))))))])])]))])])])])])])])
+
+Same for induction, based on this def:
+
+make dind :=  \ iI e cs i x pP p -> iinduction iI (\ j -> con ['fsigmaD , [e (cs j)] ]) i x pP (\ j y h -> switch e (y !) (\ t -> ((k : iI)(xs : idesc iI (switch e t (\ u -> IDesc iI []) (cs k)) (\ l -> IMu iI (\ m -> con ['fsigmaD , [e (cs m)] ]) l))(hs : idesc (Sig (l : iI ; IMu iI (\ m -> con ['fsigmaD , [e (cs m)] ]) l)) (ibox iI (switch e t (\ u -> IDesc iI []) (cs k)) (\ l -> IMu iI (\ m -> con ['fsigmaD , [e (cs m)] ]) l) xs) pP) -> pP [k , con [t , xs]])) p j (y -) h)
+          : (iI : Set) (e : EnumU) (cs : iI -> branches e (\ u -> IDesc iI [])) 
+             (i : iI) (x : IMu iI (\ j -> con ['fsigmaD , [e (cs j)] ]) i) 
+              (pP : Sig (j : iI ; IMu iI (\ k -> con ['fsigmaD , [e (cs k)] ]) j) -> Set) 
+               (p : branches e 
+                      (\ t -> (j : iI) ->
+                         (xs : idesc iI (switch e t (\ u -> IDesc iI []) (cs j)) (\ k -> IMu iI (\ l -> con ['fsigmaD , [e (cs l)] ]) k)) 
+                         (hs : idesc (Sig (k : iI ; IMu iI (\ l -> con ['fsigmaD , [e (cs l)] ]) k)) (ibox iI (switch e t (\ u -> IDesc iI []) (cs j)) (\ k -> IMu iI (\ l -> con ['fsigmaD , [e (cs l)] ]) k) xs) pP) 
+                      -> pP [ j , con [ t , xs ] ]))
+                 -> pP [ i , x ] ;
+
+>   ity   = (PI SET (L $ "I" :. [.iI. (PI (MU (Just (N (P enumREF))) (CON
+>     (PAIR (SU (SU (SU (SU ZE)))) (PAIR (ENUMT (CON (PAIR (SU ZE) (PAIR (TAG
+>     "nil") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG "cons") (PAIR (CON (PAIR ZE
+>     VOID)) VOID)))) VOID))))) (PAIR (L $ "c" :. [.c. (N (switchDOp :@ [(CON
+>     (PAIR (SU ZE) (PAIR (TAG "nil") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG
+>     "cons") (PAIR (CON (PAIR ZE VOID)) VOID)))) VOID)))), (PAIR (CON (PAIR
+>     (SU ZE) (PAIR UNIT VOID))) (PAIR (CON (PAIR (SU (SU (SU (SU ZE))))
+>     (PAIR UID (PAIR (LK (CON (PAIR (SU (SU (SU ZE))) (PAIR (CON (PAIR ZE
+>     VOID)) (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID))) VOID))))) VOID))))
+>     VOID)), (NV c)]))]) VOID))))) (L $ "e" :. [.e. (PI (ARR (NV iI) (N
+>     (branchesOp :@ [(NV e), (L $ "u" :. [.u. (IMU (Just (N ((P idescREF) :$
+>     (A (NV iI))))) UNIT (LK (CON (PAIR (SU (SU (SU (SU (SU ZE))))) (PAIR
+>     (CON (PAIR (SU ZE) (PAIR (TAG "varD") (PAIR (CON (PAIR (SU ZE) (PAIR
+>     (TAG "constD") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG "piD") (PAIR (CON
+>     (PAIR (SU ZE) (PAIR (TAG "fpiD") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG
+>     "sigmaD") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG "fsigmaD") (PAIR (CON
+>     (PAIR (SU ZE) (PAIR (TAG "prodD") (PAIR (CON (PAIR ZE VOID)) VOID))))
+>     VOID)))) VOID)))) VOID)))) VOID)))) VOID)))) VOID)))) (PAIR (PAIR (CON
+>     (PAIR (SU (SU (SU (SU ZE)))) (PAIR (NV iI) (PAIR (LK (CON (PAIR (SU ZE)
+>     (PAIR UNIT VOID)))) VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU ZE))))
+>     (PAIR SET (PAIR (LK (CON (PAIR (SU ZE) (PAIR UNIT VOID)))) VOID))))
+>     (PAIR (CON (PAIR (SU (SU (SU (SU ZE)))) (PAIR SET (PAIR (L $ "S" :.
+>     [.sS. (CON (PAIR (SU (SU (SU (SU (SU (SU ZE)))))) (PAIR (CON (PAIR (SU
+>     (SU ZE)) (PAIR (NV sS) (PAIR (LK (CON (PAIR ZE (PAIR VOID VOID))))
+>     VOID)))) (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID))) VOID))))])
+>     VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU ZE)))) (PAIR (MU (Just (N (P
+>     enumREF))) (CON (PAIR (SU (SU (SU (SU ZE)))) (PAIR (ENUMT (CON (PAIR
+>     (SU ZE) (PAIR (TAG "nil") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG "cons")
+>     (PAIR (CON (PAIR ZE VOID)) VOID)))) VOID))))) (PAIR (L $ "c" :. [.c. (N
+>     (switchDOp :@ [(CON (PAIR (SU ZE) (PAIR (TAG "nil") (PAIR (CON (PAIR
+>     (SU ZE) (PAIR (TAG "cons") (PAIR (CON (PAIR ZE VOID)) VOID))))
+>     VOID)))), (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID))) (PAIR (CON (PAIR
+>     (SU (SU (SU (SU ZE)))) (PAIR UID (PAIR (LK (CON (PAIR (SU (SU (SU ZE)))
+>     (PAIR (CON (PAIR ZE VOID)) (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID)))
+>     VOID))))) VOID)))) VOID)), (NV c)]))]) VOID))))) (PAIR (L $ "E" :.
+>     [.eE.  (CON (PAIR (SU (SU (SU (SU (SU (SU ZE)))))) (PAIR (CON (PAIR (SU
+>     (SU ZE)) (PAIR (ENUMT (NV eE)) (PAIR (LK (CON (PAIR ZE (PAIR VOID
+>     VOID)))) VOID)))) (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID)))
+>     VOID))))]) VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU ZE)))) (PAIR SET
+>     (PAIR (L $ "S" :. [.sS. (CON (PAIR (SU (SU (SU (SU (SU (SU ZE))))))
+>     (PAIR (CON (PAIR (SU (SU ZE)) (PAIR (NV sS) (PAIR (LK (CON (PAIR ZE
+>     (PAIR VOID VOID)))) VOID)))) (PAIR (CON (PAIR (SU ZE) (PAIR UNIT
+>     VOID))) VOID))))]) VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU ZE))))
+>     (PAIR (MU (Just (N (P enumREF))) (CON (PAIR (SU (SU (SU (SU ZE))))
+>     (PAIR (ENUMT (CON (PAIR (SU ZE) (PAIR (TAG "nil") (PAIR (CON (PAIR (SU
+>     ZE) (PAIR (TAG "cons") (PAIR (CON (PAIR ZE VOID)) VOID)))) VOID)))))
+>     (PAIR (L $ "c" :.  [.c. (N (switchDOp :@ [(CON (PAIR (SU ZE) (PAIR (TAG
+>     "nil") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG "cons") (PAIR (CON (PAIR ZE
+>     VOID)) VOID)))) VOID)))), (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID)))
+>     (PAIR (CON (PAIR (SU (SU (SU (SU ZE)))) (PAIR UID (PAIR (LK (CON (PAIR
+>     (SU (SU (SU ZE))) (PAIR (CON (PAIR ZE VOID)) (PAIR (CON (PAIR (SU ZE)
+>     (PAIR UNIT VOID))) VOID))))) VOID)))) VOID)), (NV c)]))]) VOID)))))
+>     (PAIR (L $ "E" :. [.eE.  (CON (PAIR (SU (SU (SU (SU (SU (SU ZE))))))
+>     (PAIR (CON (PAIR (SU (SU (SU ZE))) (PAIR (NV eE) (PAIR (LK (CON (PAIR
+>     ZE (PAIR VOID VOID)))) VOID)))) (PAIR (CON (PAIR (SU ZE) (PAIR UNIT
+>     VOID))) VOID))))]) VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU (SU (SU
+>     ZE)))))) (PAIR (CON (PAIR ZE (PAIR VOID VOID))) (PAIR (CON (PAIR (SU
+>     (SU (SU (SU (SU (SU ZE)))))) (PAIR (CON (PAIR ZE (PAIR VOID VOID)))
+>     (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID))) VOID)))) VOID))))
+>     VOID))))))) VOID))))) VOID)])]))) (L $ "cs" :. [.cs. (PI (NV iI) (L $
+>     "i" :. [.i. (PI (IMU Nothing (NV iI) (L $ "j" :. [.j. (CON (PAIR (SU
+>     (SU (SU (SU (SU ZE))))) (PAIR (NV e) (PAIR (N ((V cs) :$ (A (NV j))))
+>     VOID))))]) (NV i)) (L $ "x" :. [.x.  (PI (ARR (SIGMA (NV iI) (L $ "j"
+>     :. [.j. (IMU Nothing (NV iI) (L $ "k" :. [.k. (CON (PAIR (SU (SU (SU
+>     (SU (SU ZE))))) (PAIR (NV e) (PAIR (N ((V cs) :$ (A (NV k))))
+>     VOID))))]) (NV j))])) SET) (L $ "P" :. [.pP. (PI (N (branchesOp :@
+>     [(NV e), (L $ "t" :. [.t.  (PI (NV iI) (L $ "j" :. [.j. (PI (N (idescOp
+>     :@ [(NV iI), (N (switchOp :@ [(NV e), (NV t), (L $ "u" :. [.u. (IMU
+>     (Just (N ((P idescREF) :$ (A (NV iI))))) UNIT (LK (CON (PAIR (SU (SU
+>     (SU (SU (SU ZE))))) (PAIR (CON (PAIR (SU ZE) (PAIR (TAG "varD") (PAIR
+>     (CON (PAIR (SU ZE) (PAIR (TAG "constD") (PAIR (CON (PAIR (SU ZE) (PAIR
+>     (TAG "piD") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG "fpiD") (PAIR (CON
+>     (PAIR (SU ZE) (PAIR (TAG "sigmaD") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG
+>     "fsigmaD") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG "prodD") (PAIR (CON
+>     (PAIR ZE VOID)) VOID)))) VOID)))) VOID)))) VOID)))) VOID)))) VOID))))
+>     VOID)))) (PAIR (PAIR (CON (PAIR (SU (SU (SU (SU ZE)))) (PAIR (NV iI)
+>     (PAIR (LK (CON (PAIR (SU ZE) (PAIR UNIT VOID)))) VOID)))) (PAIR (CON
+>     (PAIR (SU (SU (SU (SU ZE)))) (PAIR SET (PAIR (LK (CON (PAIR (SU ZE)
+>     (PAIR UNIT VOID)))) VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU ZE))))
+>     (PAIR SET (PAIR (L $ "S" :.  [.sS. (CON (PAIR (SU (SU (SU (SU (SU (SU
+>     ZE)))))) (PAIR (CON (PAIR (SU (SU ZE)) (PAIR (NV sS) (PAIR (LK (CON
+>     (PAIR ZE (PAIR VOID VOID)))) VOID)))) (PAIR (CON (PAIR (SU ZE) (PAIR
+>     UNIT VOID))) VOID))))]) VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU
+>     ZE)))) (PAIR (MU (Just (N (P enumREF))) (CON (PAIR (SU (SU (SU (SU
+>     ZE)))) (PAIR (ENUMT (CON (PAIR (SU ZE) (PAIR (TAG "nil") (PAIR (CON
+>     (PAIR (SU ZE) (PAIR (TAG "cons") (PAIR (CON (PAIR ZE VOID)) VOID))))
+>     VOID))))) (PAIR (L $ "c" :. [.c. (N (switchDOp :@ [(CON (PAIR (SU ZE)
+>     (PAIR (TAG "nil") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG "cons") (PAIR
+>     (CON (PAIR ZE VOID)) VOID)))) VOID)))), (PAIR (CON (PAIR (SU ZE) (PAIR
+>     UNIT VOID))) (PAIR (CON (PAIR (SU (SU (SU (SU ZE)))) (PAIR UID (PAIR
+>     (LK (CON (PAIR (SU (SU (SU ZE))) (PAIR (CON (PAIR ZE VOID)) (PAIR (CON
+>     (PAIR (SU ZE) (PAIR UNIT VOID))) VOID))))) VOID)))) VOID)), (NV c)]))])
+>     VOID))))) (PAIR (L $ "E" :. [.eE.  (CON (PAIR (SU (SU (SU (SU (SU (SU
+>     ZE)))))) (PAIR (CON (PAIR (SU (SU ZE)) (PAIR (ENUMT (NV eE)) (PAIR (LK
+>     (CON (PAIR ZE (PAIR VOID VOID)))) VOID)))) (PAIR (CON (PAIR (SU ZE)
+>     (PAIR UNIT VOID))) VOID))))]) VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU
+>     ZE)))) (PAIR SET (PAIR (L $ "S" :. [.sS. (CON (PAIR (SU (SU (SU (SU
+>     (SU (SU ZE)))))) (PAIR (CON (PAIR (SU (SU ZE)) (PAIR (NV sS) (PAIR (LK
+>     (CON (PAIR ZE (PAIR VOID VOID)))) VOID)))) (PAIR (CON (PAIR (SU ZE)
+>     (PAIR UNIT VOID))) VOID))))]) VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU
+>     ZE)))) (PAIR (MU (Just (N (P enumREF))) (CON (PAIR (SU (SU (SU (SU
+>     ZE)))) (PAIR (ENUMT (CON (PAIR (SU ZE) (PAIR (TAG "nil") (PAIR (CON
+>     (PAIR (SU ZE) (PAIR (TAG "cons") (PAIR (CON (PAIR ZE VOID)) VOID))))
+>     VOID))))) (PAIR (L $ "c" :.  [.c. (N (switchDOp :@ [(CON (PAIR (SU ZE)
+>     (PAIR (TAG "nil") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG "cons") (PAIR
+>     (CON (PAIR ZE VOID)) VOID)))) VOID)))), (PAIR (CON (PAIR (SU ZE) (PAIR
+>     UNIT VOID))) (PAIR (CON (PAIR (SU (SU (SU (SU ZE)))) (PAIR UID (PAIR
+>     (LK (CON (PAIR (SU (SU (SU ZE))) (PAIR (CON (PAIR ZE VOID)) (PAIR (CON
+>     (PAIR (SU ZE) (PAIR UNIT VOID))) VOID))))) VOID)))) VOID)), (NV c)]))])
+>     VOID))))) (PAIR (L $ "E" :. [.eE.  (CON (PAIR (SU (SU (SU (SU (SU (SU
+>     ZE)))))) (PAIR (CON (PAIR (SU (SU (SU ZE))) (PAIR (NV eE) (PAIR (LK
+>     (CON (PAIR ZE (PAIR VOID VOID)))) VOID)))) (PAIR (CON (PAIR (SU ZE)
+>     (PAIR UNIT VOID))) VOID))))]) VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU
+>     (SU (SU ZE)))))) (PAIR (CON (PAIR ZE (PAIR VOID VOID))) (PAIR (CON
+>     (PAIR (SU (SU (SU (SU (SU (SU ZE)))))) (PAIR (CON (PAIR ZE (PAIR VOID
+>     VOID))) (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID))) VOID)))) VOID))))
+>     VOID))))))) VOID))))) VOID)]), (N ((V cs) :$ (A (NV j))))])), (L $ "k"
+>     :. [.k. (IMU Nothing (NV iI) (L $ "l" :. [.l. (CON (PAIR (SU (SU (SU
+>     (SU (SU ZE))))) (PAIR (NV e) (PAIR (N ((V cs) :$ (A (NV l))))
+>     VOID))))]) (NV k))])])) (L $ "xs" :. [.xs. (PI (N (idescOp :@ [(SIGMA
+>     (NV iI) (L $ "k" :. [.k. (IMU Nothing (NV iI) (L $ "l" :. [.l. (CON
+>     (PAIR (SU (SU (SU (SU (SU ZE))))) (PAIR (NV e) (PAIR (N ((V cs) :$ (A
+>     (NV l)))) VOID))))]) (NV k))])), (N (iboxOp :@ [(NV iI), (N (switchOp
+>     :@ [(NV e), (NV t), (L $ "u" :. [.u. (IMU (Just (N ((P idescREF) :$ (A
+>     (NV iI))))) UNIT (LK (CON (PAIR (SU (SU (SU (SU (SU ZE))))) (PAIR (CON
+>     (PAIR (SU ZE) (PAIR (TAG "varD") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG
+>     "constD") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG "piD") (PAIR (CON (PAIR
+>     (SU ZE) (PAIR (TAG "fpiD") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG
+>     "sigmaD") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG "fsigmaD") (PAIR (CON
+>     (PAIR (SU ZE) (PAIR (TAG "prodD") (PAIR (CON (PAIR ZE VOID)) VOID))))
+>     VOID)))) VOID)))) VOID)))) VOID)))) VOID)))) VOID)))) (PAIR (PAIR (CON
+>     (PAIR (SU (SU (SU (SU ZE)))) (PAIR (NV iI) (PAIR (LK (CON (PAIR (SU ZE)
+>     (PAIR UNIT VOID)))) VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU ZE))))
+>     (PAIR SET (PAIR (LK (CON (PAIR (SU ZE) (PAIR UNIT VOID)))) VOID))))
+>     (PAIR (CON (PAIR (SU (SU (SU (SU ZE)))) (PAIR SET (PAIR (L $ "S" :.
+>     [.sS. (CON (PAIR (SU (SU (SU (SU (SU (SU ZE)))))) (PAIR (CON (PAIR (SU
+>     (SU ZE)) (PAIR (NV sS) (PAIR (LK (CON (PAIR ZE (PAIR VOID VOID))))
+>     VOID)))) (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID))) VOID))))])
+>     VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU ZE)))) (PAIR (MU (Just (N (P
+>     enumREF))) (CON (PAIR (SU (SU (SU (SU ZE)))) (PAIR (ENUMT (CON (PAIR
+>     (SU ZE) (PAIR (TAG "nil") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG "cons")
+>     (PAIR (CON (PAIR ZE VOID)) VOID)))) VOID))))) (PAIR (L $ "c" :. [.c. (N
+>     (switchDOp :@ [(CON (PAIR (SU ZE) (PAIR (TAG "nil") (PAIR (CON (PAIR
+>     (SU ZE) (PAIR (TAG "cons") (PAIR (CON (PAIR ZE VOID)) VOID))))
+>     VOID)))), (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID))) (PAIR (CON (PAIR
+>     (SU (SU (SU (SU ZE)))) (PAIR UID (PAIR (LK (CON (PAIR (SU (SU (SU ZE)))
+>     (PAIR (CON (PAIR ZE VOID)) (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID)))
+>     VOID))))) VOID)))) VOID)), (NV c)]))]) VOID))))) (PAIR (L $ "E" :.
+>     [.eE. (CON (PAIR (SU (SU (SU (SU (SU (SU ZE)))))) (PAIR (CON (PAIR (SU
+>     (SU ZE)) (PAIR (ENUMT (NV eE)) (PAIR (LK (CON (PAIR ZE (PAIR VOID
+>     VOID)))) VOID)))) (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID)))
+>     VOID))))]) VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU ZE)))) (PAIR SET
+>     (PAIR (L $ "S" :. [.sS. (CON (PAIR (SU (SU (SU (SU (SU (SU ZE))))))
+>     (PAIR (CON (PAIR (SU (SU ZE)) (PAIR (NV sS) (PAIR (LK (CON (PAIR ZE
+>     (PAIR VOID VOID)))) VOID)))) (PAIR (CON (PAIR (SU ZE) (PAIR UNIT
+>     VOID))) VOID))))]) VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU ZE))))
+>     (PAIR (MU (Just (N (P enumREF))) (CON (PAIR (SU (SU (SU (SU ZE))))
+>     (PAIR (ENUMT (CON (PAIR (SU ZE) (PAIR (TAG "nil") (PAIR (CON (PAIR (SU
+>     ZE) (PAIR (TAG "cons") (PAIR (CON (PAIR ZE VOID)) VOID)))) VOID)))))
+>     (PAIR (L $ "c" :. [.c. (N (switchDOp :@ [(CON (PAIR (SU ZE) (PAIR (TAG
+>     "nil") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG "cons") (PAIR (CON (PAIR ZE
+>     VOID)) VOID)))) VOID)))), (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID)))
+>     (PAIR (CON (PAIR (SU (SU (SU (SU ZE)))) (PAIR UID (PAIR (LK (CON (PAIR
+>     (SU (SU (SU ZE))) (PAIR (CON (PAIR ZE VOID)) (PAIR (CON (PAIR (SU ZE)
+>     (PAIR UNIT VOID))) VOID))))) VOID)))) VOID)), (NV c)]))]) VOID)))))
+>     (PAIR (L $ "E" :. [.eE. (CON (PAIR (SU (SU (SU (SU (SU (SU ZE))))))
+>     (PAIR (CON (PAIR (SU (SU (SU ZE))) (PAIR (NV eE) (PAIR (LK (CON (PAIR
+>     ZE (PAIR VOID VOID)))) VOID)))) (PAIR (CON (PAIR (SU ZE) (PAIR UNIT
+>     VOID))) VOID))))]) VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU (SU (SU
+>     ZE)))))) (PAIR (CON (PAIR ZE (PAIR VOID VOID))) (PAIR (CON (PAIR (SU
+>     (SU (SU (SU (SU (SU ZE)))))) (PAIR (CON (PAIR ZE (PAIR VOID VOID)))
+>     (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID))) VOID)))) VOID))))
+>     VOID))))))) VOID))))) VOID)]), (N ((V cs) :$ (A (NV j))))])), (L $ "k"
+>     :. [.k. (IMU Nothing (NV iI) (L $ "l" :. [.l. (CON (PAIR (SU (SU (SU
+>     (SU (SU ZE))))) (PAIR (NV e) (PAIR (N ((V cs) :$ (A (NV l))))
+>     VOID))))]) (NV k))]), (NV xs)])), (NV pP)])) (L $ "hs" :. [.hs.  (N ((V
+>     pP) :$ (A (PAIR (NV j) (CON (PAIR (NV t) (NV xs)))))))]))]))]))])])) (L
+>     $ "p" :. [.p. (N ((V pP) :$ (A (PAIR (NV i) (NV
+>     x)))))]))]))]))]))]))]))]))
+
+
+
+>   idef  = (L $ "I" :. [.iI. (L $ "e" :. [.e. (L $ "cs" :. [.cs. (L $ "i"
+>     :. [.i. (L $ "x" :. [.x. (L $ "P" :. [.pP. (L $ "p" :. [.p. (N
+>     (iinductionOp :@ [(NV iI), (L $ "j" :. [.j. (CON (PAIR (SU (SU (SU (SU
+>     (SU ZE))))) (PAIR (NV e) (PAIR (N ((V cs) :$ (A (NV j)))) VOID))))]),
+>     (NV i), (NV x), (NV pP), (L $ "j" :. [.j. (L $ "y" :. [.y. (L $ "h" :.
+>     [.h. (N ((((switchOp :@ [(NV e), (N ((V y) :$ Fst)), (L $ "t" :. [.t.
+>     (PI (NV iI) (L $ "k" :. [.k. (PI (N (idescOp :@ [(NV iI), (N (switchOp
+>     :@ [(NV e), (NV t), (L $ "u" :. [.u. (IMU (Just (N ((P idescREF) :$ (A
+>     (NV iI))))) UNIT (LK (CON (PAIR (SU (SU (SU (SU (SU ZE))))) (PAIR (CON
+>     (PAIR (SU ZE) (PAIR (TAG "varD") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG
+>     "constD") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG "piD") (PAIR (CON (PAIR
+>     (SU ZE) (PAIR (TAG "fpiD") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG
+>     "sigmaD") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG "fsigmaD") (PAIR (CON
+>     (PAIR (SU ZE) (PAIR (TAG "prodD") (PAIR (CON (PAIR ZE VOID)) VOID))))
+>     VOID)))) VOID)))) VOID)))) VOID)))) VOID)))) VOID)))) (PAIR (PAIR (CON
+>     (PAIR (SU (SU (SU (SU ZE)))) (PAIR (NV iI) (PAIR (LK (CON (PAIR (SU ZE)
+>     (PAIR UNIT VOID)))) VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU ZE))))
+>     (PAIR SET (PAIR (LK (CON (PAIR (SU ZE) (PAIR UNIT VOID)))) VOID))))
+>     (PAIR (CON (PAIR (SU (SU (SU (SU ZE)))) (PAIR SET (PAIR (L $ "S" :.
+>     [.sS. (CON (PAIR (SU (SU (SU (SU (SU (SU ZE)))))) (PAIR (CON (PAIR (SU
+>     (SU ZE)) (PAIR (NV sS) (PAIR (LK (CON (PAIR ZE (PAIR VOID VOID))))
+>     VOID)))) (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID))) VOID))))])
+>     VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU ZE)))) (PAIR (MU (Just (N (P
+>     enumREF))) (CON (PAIR (SU (SU (SU (SU ZE)))) (PAIR (ENUMT (CON (PAIR
+>     (SU ZE) (PAIR (TAG "nil") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG "cons")
+>     (PAIR (CON (PAIR ZE VOID)) VOID)))) VOID))))) (PAIR (L $ "c" :. [.c. (N
+>     (switchDOp :@ [(CON (PAIR (SU ZE) (PAIR (TAG "nil") (PAIR (CON (PAIR
+>     (SU ZE) (PAIR (TAG "cons") (PAIR (CON (PAIR ZE VOID)) VOID))))
+>     VOID)))), (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID))) (PAIR (CON (PAIR
+>     (SU (SU (SU (SU ZE)))) (PAIR UID (PAIR (LK (CON (PAIR (SU (SU (SU ZE)))
+>     (PAIR (CON (PAIR ZE VOID)) (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID)))
+>     VOID))))) VOID)))) VOID)), (NV c)]))]) VOID))))) (PAIR (L $ "E" :.
+>     [.eE.  (CON (PAIR (SU (SU (SU (SU (SU (SU ZE)))))) (PAIR (CON (PAIR (SU
+>     (SU ZE)) (PAIR (ENUMT (NV eE)) (PAIR (LK (CON (PAIR ZE (PAIR VOID
+>     VOID)))) VOID)))) (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID)))
+>     VOID))))]) VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU ZE)))) (PAIR SET
+>     (PAIR (L $ "S" :. [.sS. (CON (PAIR (SU (SU (SU (SU (SU (SU ZE))))))
+>     (PAIR (CON (PAIR (SU (SU ZE)) (PAIR (NV sS) (PAIR (LK (CON (PAIR ZE
+>     (PAIR VOID VOID)))) VOID)))) (PAIR (CON (PAIR (SU ZE) (PAIR UNIT
+>     VOID))) VOID))))]) VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU ZE))))
+>     (PAIR (MU (Just (N (P enumREF))) (CON (PAIR (SU (SU (SU (SU ZE))))
+>     (PAIR (ENUMT (CON (PAIR (SU ZE) (PAIR (TAG "nil") (PAIR (CON (PAIR (SU
+>     ZE) (PAIR (TAG "cons") (PAIR (CON (PAIR ZE VOID)) VOID)))) VOID)))))
+>     (PAIR (L $ "c" :.  [.c. (N (switchDOp :@ [(CON (PAIR (SU ZE) (PAIR (TAG
+>     "nil") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG "cons") (PAIR (CON (PAIR ZE
+>     VOID)) VOID)))) VOID)))), (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID)))
+>     (PAIR (CON (PAIR (SU (SU (SU (SU ZE)))) (PAIR UID (PAIR (LK (CON (PAIR
+>     (SU (SU (SU ZE))) (PAIR (CON (PAIR ZE VOID)) (PAIR (CON (PAIR (SU ZE)
+>     (PAIR UNIT VOID))) VOID))))) VOID)))) VOID)), (NV c)]))]) VOID)))))
+>     (PAIR (L $ "E" :. [.eE.  (CON (PAIR (SU (SU (SU (SU (SU (SU ZE))))))
+>     (PAIR (CON (PAIR (SU (SU (SU ZE))) (PAIR (NV eE) (PAIR (LK (CON (PAIR
+>     ZE (PAIR VOID VOID)))) VOID)))) (PAIR (CON (PAIR (SU ZE) (PAIR UNIT
+>     VOID))) VOID))))]) VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU (SU (SU
+>     ZE)))))) (PAIR (CON (PAIR ZE (PAIR VOID VOID))) (PAIR (CON (PAIR (SU
+>     (SU (SU (SU (SU (SU ZE)))))) (PAIR (CON (PAIR ZE (PAIR VOID VOID)))
+>     (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID))) VOID)))) VOID))))
+>     VOID))))))) VOID))))) VOID)]), (N ((V cs) :$ (A (NV k))))])), (L $ "l"
+>     :. [.l. (IMU Nothing (NV iI) (L $ "m" :. [.m. (CON (PAIR (SU (SU (SU
+>     (SU (SU ZE))))) (PAIR (NV e) (PAIR (N ((V cs) :$ (A (NV m))))
+>     VOID))))]) (NV l))])])) (L $ "xs" :.  [.xs. (PI (N (idescOp :@ [(SIGMA
+>     (NV iI) (L $ "l" :. [.l. (IMU Nothing (NV iI) (L $ "m" :. [.m. (CON
+>     (PAIR (SU (SU (SU (SU (SU ZE))))) (PAIR (NV e) (PAIR (N ((V cs) :$ (A
+>     (NV m)))) VOID))))]) (NV l))])), (N (iboxOp :@ [(NV iI), (N (switchOp
+>     :@ [(NV e), (NV t), (L $ "u" :. [.u.  (IMU (Just (N ((P idescREF) :$ (A
+>     (NV iI))))) UNIT (LK (CON (PAIR (SU (SU (SU (SU (SU ZE))))) (PAIR (CON
+>     (PAIR (SU ZE) (PAIR (TAG "varD") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG
+>     "constD") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG "piD") (PAIR (CON (PAIR
+>     (SU ZE) (PAIR (TAG "fpiD") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG
+>     "sigmaD") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG "fsigmaD") (PAIR (CON
+>     (PAIR (SU ZE) (PAIR (TAG "prodD") (PAIR (CON (PAIR ZE VOID)) VOID))))
+>     VOID)))) VOID)))) VOID)))) VOID)))) VOID)))) VOID)))) (PAIR (PAIR (CON
+>     (PAIR (SU (SU (SU (SU ZE)))) (PAIR (NV iI) (PAIR (LK (CON (PAIR (SU ZE)
+>     (PAIR UNIT VOID)))) VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU ZE))))
+>     (PAIR SET (PAIR (LK (CON (PAIR (SU ZE) (PAIR UNIT VOID)))) VOID))))
+>     (PAIR (CON (PAIR (SU (SU (SU (SU ZE)))) (PAIR SET (PAIR (L $ "S" :.
+>     [.sS. (CON (PAIR (SU (SU (SU (SU (SU (SU ZE)))))) (PAIR (CON (PAIR (SU
+>     (SU ZE)) (PAIR (NV sS) (PAIR (LK (CON (PAIR ZE (PAIR VOID VOID))))
+>     VOID)))) (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID))) VOID))))])
+>     VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU ZE)))) (PAIR (MU (Just (N (P
+>     enumREF))) (CON (PAIR (SU (SU (SU (SU ZE)))) (PAIR (ENUMT (CON (PAIR
+>     (SU ZE) (PAIR (TAG "nil") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG "cons")
+>     (PAIR (CON (PAIR ZE VOID)) VOID)))) VOID))))) (PAIR (L $ "c" :.  [.c.
+>     (N (switchDOp :@ [(CON (PAIR (SU ZE) (PAIR (TAG "nil") (PAIR (CON (PAIR
+>     (SU ZE) (PAIR (TAG "cons") (PAIR (CON (PAIR ZE VOID)) VOID))))
+>     VOID)))), (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID))) (PAIR (CON (PAIR
+>     (SU (SU (SU (SU ZE)))) (PAIR UID (PAIR (LK (CON (PAIR (SU (SU (SU ZE)))
+>     (PAIR (CON (PAIR ZE VOID)) (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID)))
+>     VOID))))) VOID)))) VOID)), (NV c)]))]) VOID))))) (PAIR (L $ "E" :.
+>     [.eE.  (CON (PAIR (SU (SU (SU (SU (SU (SU ZE)))))) (PAIR (CON (PAIR (SU
+>     (SU ZE)) (PAIR (ENUMT (NV eE)) (PAIR (LK (CON (PAIR ZE (PAIR VOID
+>     VOID)))) VOID)))) (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID)))
+>     VOID))))]) VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU ZE)))) (PAIR SET
+>     (PAIR (L $ "S" :. [.sS. (CON (PAIR (SU (SU (SU (SU (SU (SU ZE))))))
+>     (PAIR (CON (PAIR (SU (SU ZE)) (PAIR (NV sS) (PAIR (LK (CON (PAIR ZE
+>     (PAIR VOID VOID)))) VOID)))) (PAIR (CON (PAIR (SU ZE) (PAIR UNIT
+>     VOID))) VOID))))]) VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU ZE))))
+>     (PAIR (MU (Just (N (P enumREF))) (CON (PAIR (SU (SU (SU (SU ZE))))
+>     (PAIR (ENUMT (CON (PAIR (SU ZE) (PAIR (TAG "nil") (PAIR (CON (PAIR (SU
+>     ZE) (PAIR (TAG "cons") (PAIR (CON (PAIR ZE VOID)) VOID)))) VOID)))))
+>     (PAIR (L $ "c" :.  [.c. (N (switchDOp :@ [(CON (PAIR (SU ZE) (PAIR (TAG
+>     "nil") (PAIR (CON (PAIR (SU ZE) (PAIR (TAG "cons") (PAIR (CON (PAIR ZE
+>     VOID)) VOID)))) VOID)))), (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID)))
+>     (PAIR (CON (PAIR (SU (SU (SU (SU ZE)))) (PAIR UID (PAIR (LK (CON (PAIR
+>     (SU (SU (SU ZE))) (PAIR (CON (PAIR ZE VOID)) (PAIR (CON (PAIR (SU ZE)
+>     (PAIR UNIT VOID))) VOID))))) VOID)))) VOID)), (NV c)]))]) VOID)))))
+>     (PAIR (L $ "E" :. [.eE.  (CON (PAIR (SU (SU (SU (SU (SU (SU ZE))))))
+>     (PAIR (CON (PAIR (SU (SU (SU ZE))) (PAIR (NV eE) (PAIR (LK (CON (PAIR
+>     ZE (PAIR VOID VOID)))) VOID)))) (PAIR (CON (PAIR (SU ZE) (PAIR UNIT
+>     VOID))) VOID))))]) VOID)))) (PAIR (CON (PAIR (SU (SU (SU (SU (SU (SU
+>     ZE)))))) (PAIR (CON (PAIR ZE (PAIR VOID VOID))) (PAIR (CON (PAIR (SU
+>     (SU (SU (SU (SU (SU ZE)))))) (PAIR (CON (PAIR ZE (PAIR VOID VOID)))
+>     (PAIR (CON (PAIR (SU ZE) (PAIR UNIT VOID))) VOID)))) VOID))))
+>     VOID))))))) VOID))))) VOID)]), (N ((V cs) :$ (A (NV k))))])), (L $ "l"
+>     :. [.l. (IMU Nothing (NV iI) (L $ "m" :. [.m. (CON (PAIR (SU (SU (SU
+>     (SU (SU ZE))))) (PAIR (NV e) (PAIR (N ((V cs) :$ (A (NV m))))
+>     VOID))))]) (NV l))]), (NV xs)])), (NV pP)])) (L $ "hs" :. [.hs. (N ((V
+>     pP) :$ (A (PAIR (NV k) (CON (PAIR (NV t) (NV xs)))))))]))]))]))]), (NV
+>     p)]) :$ (A (NV j))) :$ (A (N ((V y) :$ Snd)))) :$ (A (NV
+>     h))))])])])]))])])])])])])])

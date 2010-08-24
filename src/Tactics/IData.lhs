@@ -152,12 +152,27 @@
 We specialise the induction operator to this datatype, ensuring the label is
 assigned throughout, so the label will be preserved when eliminating by induction.
 
->   let indTm = P (lookupOpRef iinductionOp) :$ A (N indtye) :$ A d
->   indV :<: indTy <- inferHere indTm
->   indTy' <- bquoteHere indTy
->   make ("Ind" :<: setLabel (N lt) indTy')
+<   let indTm = P (lookupOpRef iinductionOp) :$ A (N indtye) :$ A d
+<   indV :<: indTy <- inferHere indTm
+<   indTy' <- bquoteHere indTy
+<   make ("Ind" :<: isetLabel (N lt) indTy')
+<   goIn
+<   giveOutBelow (N indTm)
+
+
+>   let caseTm = P (icaseREF) :$ A (N indtye) :$ A (N e) :$ A (N cs')
+>   caseV :<: caseTy <- inferHere caseTm
+>   caseTy' <- bquoteHere caseTy
+>   make ("Case" :<: isetLabel (N lt) caseTy')
 >   goIn
->   giveOutBelow (N indTm)
+>   giveOutBelow (N caseTm)
+
+>   let dindTm = P (idindREF) :$ A (N indtye) :$ A (N e) :$ A (N cs')
+>   dindV :<: dindTy <- inferHere dindTm
+>   dindTy' <- bquoteHere dindTy
+>   make ("Ind" :<: isetLabel (N lt) dindTy')
+>   goIn
+>   giveOutBelow (N dindTm)
 
 >   giveOutBelow $ N dty
 
@@ -190,7 +205,7 @@ equality, so it doesn't catch the wrong |MU|s.
 >                (keyword KwAsc)
 >                tokenInTm) (|()|)
 >              keyword KwAsc
->              indty <- tokenAppInTm
+>              indty <- tokenInTm
 >              keyword KwArr
 >              keyword KwSet
 >              keyword KwDefn
@@ -204,5 +219,5 @@ equality, so it doesn't catch the wrong |MU|s.
 >                     ielabData nom (argList (argPair argToStr argToIn) pars) 
 >                      (argToIn indty) (argList (argPair argToStr argToIn) cons)
 >                       >> return "Data'd.")
->         ,  ctHelp = "data <name> [<para>]* := [(<con> : <ty>) ;]* - builds a data type for thee."
+>         ,  ctHelp = "idata <name> [<para>]* : <inx> -> Set  := [(<con> : <ty>) ;]* - builds a data type for thee."
 >         } 
