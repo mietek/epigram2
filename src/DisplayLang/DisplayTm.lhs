@@ -166,6 +166,28 @@ document.
 > instance Traversable (ExTmWrap p) where
 >   traverse f (ExTmWrap x) = pure (ExTmWrap x)
 
+The following are essentially saying that |DInTm| is traversable in its first
+argument, as well as its second.
+
+> traverseDTIN :: Applicative f => (p -> f q) -> DInTm p x -> f (DInTm q x)
+> traverseDTIN f (DL (x ::. tm)) = (|DL (|(x ::.) (traverseDTIN f tm)|)|)
+> traverseDTIN f (DL (DK tm)) = (|DL (|DK (traverseDTIN f tm)|)|)
+> traverseDTIN f (DC c) = (|DC (traverse (traverseDTIN f) c)|)
+> traverseDTIN f (DN n) = (|DN (traverseDTEX f n)|)
+> traverseDTIN f (DQ s) = (|(DQ s)|)
+> traverseDTIN f DU     = (|DU|)
+> traverseDTIN f (DTIN tm) = (|DTIN (traverse f tm)|)
+> import <- DInTmTraverse
+
+> traverseDTEX :: Applicative f => (p -> f q) -> DExTm p x -> f (DExTm q x)
+> traverseDTEX f (h ::$ as) = (|(traverseDHead f h) ::$ (traverse (traverse (traverseDTIN f)) as)|)
+
+> traverseDHead :: Applicative f => (p -> f q) -> DHead p x -> f (DHead q x)
+> traverseDHead f (DP x) = (|(DP x)|)
+> traverseDHead f (DType tm) = (|DType (traverseDTIN f tm)|)
+> traverseDHead f (DTEX tm) = (|DTEX (traverse f tm)|)
+
+
 %endif
 
 
