@@ -495,6 +495,7 @@ We build a case gadget for idata, the haskell code below is generated from
 this Cochon command - some sort of Prelude is really in order here, the
 question is how to go about bootstrapping it...
 
+\begin{verbatim}
 make case :=  \ iI e cs i x pP p -> iinduction iI (\ j -> con ['fsigmaD , [e (cs j)] ]) i x pP (\ j y _ -> switch e (y !) (\ t -> ((k : iI)(xs : idesc iI (switch e t (\ u -> IDesc iI []) (cs k)) (\ l -> IMu iI (\ m -> con ['fsigmaD , [e (cs m)] ]) l)) -> pP [k , con [t , xs]])) p j (y -))
           : (iI : Set) (e : EnumU) (cs : iI -> branches e (\ u -> IDesc iI []))
              (i : iI) (x : IMu iI (\ j -> con ['fsigmaD , [e (cs j)] ]) i)
@@ -505,6 +506,7 @@ make case :=  \ iI e cs i x pP p -> iinduction iI (\ j -> con ['fsigmaD , [e (cs
                                  (\ k -> IMu iI (\ l -> con ['fsigmaD , [e (cs l)] ]) k))
                       -> pP [ j , con [ t , xs ] ]))
                  -> pP [ i , x ] ;
+\end{verbatim}
 
 Using this enables us to avoid the enum splitting we currently do.
 
@@ -697,6 +699,7 @@ Using this enables us to avoid the enum splitting we currently do.
 
 Same for induction, based on this def:
 
+\begin{verbatim}
 make dind :=  \ iI e cs i x pP p -> iinduction iI (\ j -> con ['fsigmaD , [e (cs j)] ]) i x pP (\ j y h -> switch e (y !) (\ t -> ((k : iI)(xs : idesc iI (switch e t (\ u -> IDesc iI []) (cs k)) (\ l -> IMu iI (\ m -> con ['fsigmaD , [e (cs m)] ]) l))(hs : idesc (Sig (l : iI ; IMu iI (\ m -> con ['fsigmaD , [e (cs m)] ]) l)) (ibox iI (switch e t (\ u -> IDesc iI []) (cs k)) (\ l -> IMu iI (\ m -> con ['fsigmaD , [e (cs m)] ]) l) xs) pP) -> pP [k , con [t , xs]])) p j (y -) h)
           : (iI : Set) (e : EnumU) (cs : iI -> branches e (\ u -> IDesc iI [])) 
              (i : iI) (x : IMu iI (\ j -> con ['fsigmaD , [e (cs j)] ]) i) 
@@ -707,6 +710,7 @@ make dind :=  \ iI e cs i x pP p -> iinduction iI (\ j -> con ['fsigmaD , [e (cs
                          (hs : idesc (Sig (k : iI ; IMu iI (\ l -> con ['fsigmaD , [e (cs l)] ]) k)) (ibox iI (switch e t (\ u -> IDesc iI []) (cs j)) (\ k -> IMu iI (\ l -> con ['fsigmaD , [e (cs l)] ]) k) xs) pP) 
                       -> pP [ j , con [ t , xs ] ]))
                  -> pP [ i , x ] ;
+\end{verbatim}
 
 >   ity   = (PI SET (L $ "I" :. [.iI. (PI (MU (Just (N (P enumREF))) (CON
 >     (PAIR (SU (SU (SU (SU ZE)))) (PAIR (ENUMT (CON (PAIR (SU ZE) (PAIR (TAG
