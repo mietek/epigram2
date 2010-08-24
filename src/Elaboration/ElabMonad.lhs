@@ -59,7 +59,7 @@ then write an interpreter to run the syntax in the |ProofState| monad.
 The instruction signature given above is implemented using the following monad.
 
 > data Elab x
->     =  Bale x
+>     =  EReturn x
 >     |  ELambda String (REF -> Elab x)
 >     |  EGoal (TY -> Elab x)
 >     |  EWait String TY (EXTM :=>: VAL -> Elab x)
@@ -73,15 +73,15 @@ The instruction signature given above is implemented using the following monad.
 
 Now we can define the instructions we wanted:
 
-> eLambda       = flip ELambda Bale
-> eGoal         = EGoal Bale
-> eWait x ty    = EWait x ty Bale
+> eLambda       = flip ELambda EReturn
+> eGoal         = EGoal EReturn
+> eWait x ty    = EWait x ty EReturn
 > eCry          = ECry
 > eElab loc p   = EElab loc p
-> eCompute      = flip ECompute Bale
-> eFake         = EFake Bale
-> eResolve      = flip EResolve Bale
-> eAskNSupply   = EAskNSupply Bale
+> eCompute      = flip ECompute EReturn
+> eFake         = EFake EReturn
+> eResolve      = flip EResolve EReturn
+> eAskNSupply   = EAskNSupply EReturn
 
 > eFaker :: Elab (EXTM :=>: VAL)
 > eFaker = do
@@ -185,22 +185,22 @@ functions for producing and manipulating these.
 
 
 > instance Show x => Show (Elab x) where
->     show (Bale x)           = "Bale (" ++ show x ++ ")"
+>     show (EReturn x)        = "EReturn (" ++ show x ++ ")"
 >     show (ELambda s _)      = "ELambda " ++ s ++ " (...)"
 >     show (EGoal _)          = "EGoal (...)"
 >     show (EWait s ty _)     = "EWait " ++ show s ++ " (" ++ show ty ++ ") (...)"
 >     show (ECry _)           = "ECry (...)"
 >     show (EElab l tp)       = "EElab " ++ show l ++ " (" ++ show tp ++ ")"
 >     show (ECompute te _)    = "ECompute (" ++ show te ++ ") (...)"
->     show (EFake _)        = "EFake " ++ " (...)"
+>     show (EFake _)          = "EFake " ++ " (...)"
 >     show (EResolve rn _)    = "EResolve " ++ show rn ++ " (...)"
 >     show (EAskNSupply _)    = "EAskNSupply (...)"
 
 > instance Monad Elab where
 >     fail s  = ECry [err $ "fail: " ++ s]
->     return  = Bale
+>     return  = EReturn
 >
->     Bale x           >>= k = k x
+>     EReturn x        >>= k = k x
 >     ELambda s f      >>= k = ELambda s      ((k =<<) . f)
 >     EGoal f          >>= k = EGoal          ((k =<<) . f)
 >     EWait s t f      >>= k = EWait s t      ((k =<<) . f)

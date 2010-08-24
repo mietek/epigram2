@@ -65,7 +65,7 @@ and |False| if the problem was suspended.
 
 > runElab :: Bool -> (TY :>: Elab (INTM :=>: VAL))
 >                       -> ProofState (INTM :=>: VAL, Bool)
-> runElab _ (_ :>: Bale x) = return (x, True)
+> runElab _ (_ :>: EReturn x) = return (x, True)
 
 > runElab True (ty :>: ELambda x f) = case lambdable ty of
 >     Just (_, s, tyf) -> do
