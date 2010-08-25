@@ -13,7 +13,12 @@
 
 Let us enumerate the different flavours of tracing available:
 
-> data Trace = ProofTrace | SimpTrace | ElimTrace | SchedTrace
+> data Trace =  ProofTrace 
+>            |  SimpTrace 
+>            |  ElimTrace 
+>            |  SchedTrace
+>            |  ElabTrace
+>               deriving Show
 
 We then can switch each one on or off individually:
 
@@ -22,14 +27,15 @@ We then can switch each one on or off individually:
 > traceEnabled SimpTrace   = False
 > traceEnabled ElimTrace   = False
 > traceEnabled SchedTrace  = False
+> traceEnabled ElabTrace   = True
 
 That's fairly trivial, yet I'm pretty sure this goddamn laziness won't
 skip some traces (ML programmer speaking here).
 
 > monadTrace :: Monad m => Trace -> String -> m ()
 > monadTrace t s  | traceEnabled t  = do
->                                       () <- trace s $ return ()
->                                       return ()
+>     () <- trace  ("[" ++ show t ++ "] " ++ s) $ return ()
+>     return ()
 >                 | otherwise       = return ()
 
 Some handy aliases for the tracing function:
@@ -38,3 +44,4 @@ Some handy aliases for the tracing function:
 > simpTrace   = monadTrace SimpTrace
 > elimTrace   = monadTrace ElimTrace
 > schedTrace  = monadTrace SchedTrace
+> elabTrace   = monadTrace ElabTrace

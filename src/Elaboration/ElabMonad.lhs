@@ -97,9 +97,17 @@ to which source code locations. For the moment, |Loc|s are just ignored.
 
 \subsection{Syntactic representation of elaboration problems}
 
-An |ElabProb| is a syntactic representation of an elaboration problem, which
-can be suspended, stored in the proof state and later updated with news. It
-caches the value representations of terms it contains.
+An |ElabProb| is a syntactic representation of an elaboration
+problem\index{elaboration problem}, which can be suspended, stored in
+the proof state and later updated with news. It caches the value
+representations of terms it contains.
+
+\pierre{I don't understand |ElabSchedule|.}  
+\pierre{I don't see the link between |Elab| and |ElabProb|, if there
+is supposed to be one. In the end, what \emph{is} an elaboration
+problem?}
+\pierre{What does \emph{suspended} mean?}
+\pierre{Are news the only way to solve an elaboration problem?}
 
 > data ElabProb x
 >     =  ElabDone (InTm x :=>: Maybe VAL)
@@ -124,9 +132,15 @@ updated anyway.
 
 > type EProb = ElabProb REF
 
-An elaboration problem is said to be \emph{unstable} if the scheduler can make
-progress on it, and \emph{stable} if not. At present, the only kind of stable
-elaboration problem is waiting for a non-canonical term to become canonical.
+An elaboration problem is said to be \emph{unstable}\index{elaboration
+problem!unstable} if the scheduler can make progress on it, and
+\emph{stable}\emph{elaboration problem!stable} if not. At present, the
+only kind of stable elaboration problem is waiting for a non-canonical
+term to become canonical.
+
+\pierre{At this stage, the notion of scheduler has not been
+introduced. Therefore, stable or unstable doesn't speak to me. What is
+the scheduler doing?}
 
 > isUnstable :: EProb -> Bool
 > isUnstable (ElabDone _)                                    = True

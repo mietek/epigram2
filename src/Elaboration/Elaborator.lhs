@@ -59,24 +59,28 @@ subsection~\ref{subsec:Evidences.TypeChecker.type-checking}, except that it
 operates in the |Elab| monad, so it can create subgoals and
 $\lambda$-lift terms.
 
+\pierre{How do we know we are at |Toplevel|?}
+
 > elaborate :: Loc -> (TY :>: DInTmRN) -> ProofState (INTM :=>: VAL)
-> elaborate loc (ty :>: tm) = runElab False (ty :>: makeElab loc tm)
+> elaborate loc (ty :>: tm) = runElab Toplevel (ty :>: makeElab loc tm)
 >     >>= return . fst
 
 > elaborate' = elaborate (Loc 0)
 
 
-> elaborateHere :: Loc -> DInTmRN -> ProofState (INTM :=>: VAL, Bool)
+> elaborateHere :: Loc -> DInTmRN -> ProofState (INTM :=>: VAL, ElabStatus)
 > elaborateHere loc tm = do
 >     _ :=>: ty <- getHoleGoal
->     runElab True (ty :>: makeElab loc tm)
+>     runElab WithinDevelopment (ty :>: makeElab loc tm)
 
 > elaborateHere' = elaborateHere (Loc 0)
 
 
+\pierre{How do we know we are at |Toplevel|?}
+
 > elabInfer :: Loc -> DExTmRN -> ProofState (INTM :=>: VAL :<: TY)
 > elabInfer loc tm = do
->     (tt, _) <- runElab False (sigSetVAL :>: makeElabInfer loc tm)
+>     (tt, _) <- runElab Toplevel (sigSetVAL :>: makeElabInfer loc tm)
 >     let (tt' :<: _ :=>: ty) = extractNeutral tt
 >     return (tt' :<: ty)
 
@@ -87,12 +91,14 @@ Sometimes (for example, if we are about to apply elimination with a motive) we
 really want elaboration to proceed as much as possible. The |elabInferFully| command
 creates a definition for the argument, elaborates it and runs the scheduler.
 
+\pierre{How do we know we are |WithinDevelopment|?}
+
 > elabInferFully :: DExTmRN -> ProofState (EXTM :=>: VAL :<: TY)
 > elabInferFully tm = do
 >     make ("eif" :<: sigSetTM)
 >     goIn
->     (tm :=>: _, b) <- runElab True (sigSetVAL :>: makeElabInfer (Loc 0) tm)
->     when b (ignore (give tm))
+>     (tm :=>: _, status) <- runElab WithinDevelopment (sigSetVAL :>: makeElabInfer (Loc 0) tm)
+>     when (status == ElabSuccess) (ignore (give tm))
 >     startScheduler
 >     (tm :=>: v) <- getCurrentDefinition
 >     goOut
@@ -119,8 +125,10 @@ a reference to the current goal (applied to the appropriate shared parameters).
 >     case (tip, tm) of         
 >         (Unknown _, DQ "")  -> getDefn
 >         (Unknown _, _)      -> do
->             (tm' :=>: _, done) <- elaborateHere' tm
->             if done then give tm' else getDefn
+>             (tm' :=>: _, status) <- elaborateHere' tm
+>             case status of
+>               ElabSuccess -> give tm'
+>               ElabSuspended -> getDefn
 >         _  -> throwError' $ err "elabGive: only possible for incomplete goals."
 >   where
 >     getDefn :: ProofState (EXTM :=>: VAL)

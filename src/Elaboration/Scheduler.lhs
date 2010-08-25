@@ -140,14 +140,16 @@ current location, we can |resume| it to try to produce a term. If this suceeds,
 the cursor will be in the same location, but if it fails (i.e.\ the problem has
 been suspended) then the cursor could be anywhere earlier in the proof state.
 
+\pierre{How do we know that we are |WithinDevelopment|?}
+
 > resume :: (INTM :=>: VAL) -> EProb -> ProofState (Maybe (INTM :=>: VAL))
 > resume _ (ElabDone tt) = return . Just . maybeEval $ tt
 > resume (ty :=>: tyv) ElabHope = 
->     return . ifSnd =<< runElabHope True tyv
+>     return . ifSnd =<< runElabHope WithinDevelopment tyv
 > resume (ty :=>: tyv) (ElabProb tm) = 
->     return . ifSnd =<< runElab True (tyv :>: makeElab (Loc 0) tm)
+>     return . ifSnd =<< runElab WithinDevelopment (tyv :>: makeElab (Loc 0) tm)
 > resume (ty :=>: tyv) (ElabInferProb tm) =
->     return . ifSnd =<< runElab True (tyv :>: makeElabInfer (Loc 0) tm)
+>     return . ifSnd =<< runElab WithinDevelopment (tyv :>: makeElabInfer (Loc 0) tm)
 > resume (ty :=>: tyv) (WaitCan (tm :=>: Just (C v)) prob) =
 >     resume (ty :=>: tyv) prob
 > resume (ty :=>: tyv) (WaitCan (tm :=>: Nothing) prob) =
@@ -180,7 +182,9 @@ there a better way to do this?}
 >     if eq
 >         then  resume tt prob
 
->         else  runElabHope False (PRF (EQBLUE (ty :>: tmv') (ty :>: stv))) >>
+\pierre{How do we know that we are at |Toplevel|?}
+
+>         else  runElabHope Toplevel (PRF (EQBLUE (ty :>: tmv') (ty :>: stv))) >>
 >               schedTrace "resume: WaitSolve failed!" >> resume tt prob
 
 <         else  throwError' $ err "resume: hole" ++ errRef ref ++
@@ -192,6 +196,6 @@ there a better way to do this?}
 > resume tt (ElabSchedule prob) = resume tt prob
 
 
-> ifSnd :: (a, Bool) -> Maybe a
-> ifSnd (a,  True)   = Just a
-> ifSnd (_,  False)  = Nothing
+> ifSnd :: (a, ElabStatus) -> Maybe a
+> ifSnd (a,  ElabSuccess)   = Just a
+> ifSnd (_,  ElabSuspended)  = Nothing
