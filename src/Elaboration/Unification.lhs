@@ -114,9 +114,9 @@ match the hoping holes of the first value to parts of the second value.
 > valueMatch (ty :>: (v, w)) = equationMatch $ (ty :>: v) <-> (ty :>: w)
 >   where
 >     equationMatch :: VAL -> ProofState [(REF, VAL)]
->     equationMatch TRIVIAL    = return []
->     equationMatch ABSURD     = throwError' $ err "valueMatch: absurd!"
->     equationMatch (AND p q)  = (| (equationMatch p) ++ (equationMatch q) |)
+>     equationMatch TRIVIAL      = return []
+>     equationMatch ABSURD       = throwError' $ err "valueMatch: absurd!"
+>     equationMatch (AND p q)    = (| (equationMatch p) ++ (equationMatch q) |)
 >     equationMatch p@(ALL _ _)  = bquoteHere p >>= higherMatch
 >     equationMatch (N (op :@ [_S, N s, _T, t]))
 >       | op == eqGreen = do

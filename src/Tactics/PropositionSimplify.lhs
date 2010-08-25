@@ -1,3 +1,6 @@
+\section{Propositional Simplification}
+\label{sec:Tactics.PropositionSimplify}
+
 \newcommand{\simpto}{\leadsto}
 \newcommand{\and}{\wedge}
 \newcommand{\conj}[2]{\bigwedge_{#2} {#1}_{#2}}
@@ -42,8 +45,6 @@
 > import ProofState.Interface.Solving
 
 %endif
-
-\section{Propositional Simplification}
 
 \subsection{Setting the Scene}
 

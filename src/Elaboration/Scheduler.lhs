@@ -1,4 +1,5 @@
 \section{The Scheduler}
+\label{sec:Elaboration.Scheduler}
 
 %if False
 
