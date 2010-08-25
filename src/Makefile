@@ -195,8 +195,8 @@ test:
 ## Tags (emacs):
 etags:
 	rm -f TAGS
-	echo ":etags" | ghci -v0 Main.lhs
-	while [ ! -f TAGS ]; do echo ":etags" | ghci -v0 Main.lhs; done
+	echo ":etags" | ghci $(HC_PACKAGE) -v0 Main.lhs
+	while [ ! -f TAGS ]; do echo ":etags" | ghci $(HC_PACKAGE) -v0 Main.lhs; done
 
 ## Clean:
 clean:
