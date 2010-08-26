@@ -8,8 +8,10 @@
 > import ProofState.Edition.ProofState
 > import Kit.BwdFwd
 
+> data AtToplevel = Toplevel | WithinDevelopment
+
 > updateRef :: REF -> ProofState ()
 
-> propagateNews :: Bool -> NewsBulletin -> NewsyEntries -> ProofState NewsBulletin
+> propagateNews :: AtToplevel -> NewsBulletin -> NewsyEntries -> ProofState NewsBulletin
 
 > tellEntry :: NewsBulletin -> Entry Bwd -> ProofState (NewsBulletin, Entry Bwd)

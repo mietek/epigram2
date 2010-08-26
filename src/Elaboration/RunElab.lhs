@@ -46,7 +46,7 @@
 > import Elaboration.ElabMonad
 > import Elaboration.MakeElab
 > import Elaboration.Unification
-> import Elaboration.Wire
+> import Elaboration.Wire hiding (AtToplevel (..))
 
 > import Cochon.Error
 
@@ -57,6 +57,7 @@
 %endif
 
 \subsection{Running elaboration processes}
+\label{subsec:Elaborator.RunElab.runElab}
 
 The |runElab| proof state command actually interprets an |Elab x| in
 the proof state. In other words, we define here the semantics of the
