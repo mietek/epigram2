@@ -109,6 +109,47 @@ ie. the eliminator, in |Elim (s :=>: VAL)| and the type of the result in
 \question{Why not asking |m| to be |Alternative| too?}
 
 
+\subsubsection{Operators}
+
+The |opTy| function explains how to interpret the telescope |opTyTel|:
+it labels the operator's arguments with the types they must have and
+delivers the type of the whole application. To do that, one must be
+able to evaluate arguments. It is vital to type-check the sub-terms
+(left to right) before trusting the type at the end. This corresponds
+to the following type:
+
+< opTy :: forall t. (t -> VAL) -> [t] -> Maybe ([TY :>: t] , TY)
+< opTy ev args = (...)
+
+Where we are provided an evaluator |ev| and the list of arguments,
+which length should be the arity of the operator. If the type of the
+arguments is correct, we return them labelled with their type and the
+type of the result.
+
+However, we had to generalize it. Following the evolution of |canTy|
+in Section~\ref{subsubsec:Evidences.TypeChecker.canTy}, we have adopted the
+following scheme:
+
+> opTy ::  (Alternative m, MonadError (StackError t) m) =>
+>          Op -> (TY :>: t -> m (s :=>: VAL)) -> [t] ->
+>          m ([s :=>: VAL], TY)
+
+First, the |MonadError| constraint allows seamless integration in the
+world of things that might fail. Second, we have extended the
+evaluation function to perform type-checking at the same time. We also
+liberalise the return type to |s|, to give more freedom in the choice
+of the checker-evaluator. This change impacts on |exQuote|, |infer|,
+and |useOp|. If this definition is not clear now, it should become
+clear after the definition of |canTy| in
+Section~\ref{subsubsec:Evidences.TypeChecker.canTy}.
+
+> opTy op chev ss
+>   | length ss == opArity op = telCheck chev (opTyTel op :>: ss)
+> opTy op _ _ = throwError' $  (err "operator arity error: ")
+>                              ++ (err $ opName op)
+
+
+
 \subsubsection{discharge}
 
 Given a value, we might want to discharge an hypothesis used deep down
