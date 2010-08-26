@@ -149,21 +149,6 @@ Section~\ref{subsubsec:Evidences.TypeChecker.canTy}.
 >                              ++ (err $ opName op)
 
 
-
-\subsubsection{discharge}
-
-Given a value, we might want to discharge an hypothesis used deep down
-in it. That is, provided a free variable |ref|, we have to track it
-inside |val| and, when found, bind it to the De Bruijn index 0. This
-corresponds to beta-quoting |val| with |ref|. Then, well, we put that
-under a lambda and we are discharged.
-
-\adam{Do we need |discharge| for anything? It seems like this is better done
-with terms rather than values. I have commented it out for the time being.}
-
-< discharge :: NameSupplier m => REF -> VAL -> m VAL
-< discharge ref val = (| (evTm . L . (fst (last (refName ref)) :.)) (bquote (B0 :< ref) val) |)
-
 \subsection{Type checking}
 \label{subsec:Evidences.TypeChecker.type-checking}
 
