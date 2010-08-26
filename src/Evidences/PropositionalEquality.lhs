@@ -13,7 +13,7 @@
 > import Kit.MissingLibrary
 
 > import Evidences.Tm
-> import {-# SOURCE #-} Evidences.Eval
+> import Evidences.Eval
 > import Evidences.Operators
 > import Evidences.TypeChecker
 

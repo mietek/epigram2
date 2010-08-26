@@ -15,7 +15,7 @@
 > import Kit.MissingLibrary
 
 > import Evidences.Tm
-> import {-# SOURCE #-} Evidences.Eval
+> import Evidences.Eval
 > import Evidences.TypeChecker
 
 > import NameSupply.NameSupply
@@ -102,8 +102,7 @@ we cannot fail in this code, but we have to be artificially cautious.
 >                    return $ tv :=>: v
 >
 > inQuote (x :>: t) r = error $ 
->     "inQuote: type " ++ show x ++ 
->     " doesn't admit " ++ show t
+>     "inQuote: type " ++ show x ++ " doesn't admit " ++ show t
 
 
 \subsection{$\eta$-expansion}
