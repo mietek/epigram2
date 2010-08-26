@@ -260,8 +260,6 @@ A key component of the definition of operators is the typing
 telescope. Hence, we first describe the implementation of the
 telescope.
 
-
-
 \paragraph{Telescope}
 
 A telescope |TEL| represents the standard notion of telescope in Type
@@ -310,8 +308,6 @@ telescope, checking and evaluating as it moves further.
 >     return (ssv : svs , x) 
 > telCheck _ _ = throwError' $ err "telCheck: opTy mismatch"
 
-
-
 \paragraph{Running the operator}
 
 The |opRun| field implements the computational behavior: given
@@ -319,10 +315,6 @@ suitable arguments, we should receive a value, or failing that, the
 neutral term to blame for the failure of computation. For example, if
 |append| were an operator, it would compute if the first list is nil
 or cons, but complain about the first list if it is neutral.
-
-
-
-
 
 
 \subsection{Useful Abbreviations}

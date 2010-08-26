@@ -33,13 +33,12 @@ the idea is the same.
 \begin{danger}
 
 It is important to note that we are in a |NameSupplier| and we don't
-require a specially crafted |NameSupply| (unlike |quote| and |quop|,
-as described above). Because of that, we have to maintain the
-variables we have generated and to which De Bruijn index they
-correspond. This is the role of the backward list of references. Note
-also that we let the user provide an initial environment of
-references: this is useful to discharge a bunch of assumptions inside
-a term. The typical use-case is |discharge|, below.
+require a specially crafted |NameSupply| (unlike |quote| and
+|quop|). Because of that, we have to maintain the variables we have
+generated and to which De Bruijn index they correspond. This is the
+role of the backward list of references. Note also that we let the
+user provide an initial environment of references: this is useful to
+discharge a bunch of assumptions inside a term.
 
 \end{danger}
 
@@ -60,7 +59,14 @@ Constant lambdas are painlessly structural.
 > bquote refs (L (K t))   = (| LK (bquote refs t) |)
 
 When we see a syntactic lambda value, we are very happy, because
-quotation is just renaming.
+quotation is just renaming. 
+
+\pierre{This is part of Conor's experiment on Term
+representations. The following line could be de-commented and that
+would be ok. However, this does not compute as much as the next case,
+hence the current Cochon user has to see things he doesn't want to
+see. This could be solved by some Distillation work but we prefer to
+avoid over-engineering Cochon's Distillation for the time being.}
 
 > -- bquote refs (L (x :. t)) = (| (refs -|| L (x :. t)) |)
 

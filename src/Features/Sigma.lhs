@@ -130,7 +130,8 @@
 >                  "ab"  :<: SIGMA aA bB             :-: \ ab ->
 >                  "P"   :<: ARR (SIGMA aA bB) SET   :-: \ pP ->
 >                  "p"   :<: pity (
->                    "a" :<: aA :-: \ a -> "b" :<: (bB $$ A a) :-: \ b -> Target $
+>                    "a" :<: aA :-: \ a -> 
+>                    "b" :<: (bB $$ A a) :-: \ b -> Target $
 >                    pP $$ A (PAIR a b))             :-: \ p ->
 >                  Target $ pP $$ A ab
 >     , opRun = runOpTree $
