@@ -25,8 +25,10 @@ location. Note that its type is $\lambda$-lifted over its parameters
 in global scope, but it is then applied to them (as shared
 parameters).
 
-\pierre{This requires further documentation. I'm not familiar with
-these fake things, so I cannot tell more about it now.}
+\pierre{Soon enough, this should disappear. We hope to indroduce
+"high-level names" cleanly into the ProofState. They will cover the
+role currently played by |FakeRef|s to name label and let us find them
+into the ProofState.}
 
 > getFakeRef :: ProofState REF
 > getFakeRef = do
