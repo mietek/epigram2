@@ -1,0 +1,123 @@
+\documentclass{article}
+\usepackage{palatino}
+\usepackage{a4}
+
+\begin{document}
+
+\title{Epigram 2\\
+       more design thoughts}
+\author{Conor McBride}
+\maketitle
+
+\section{Introduction}
+
+With the underlying type theory beginning to settle, it's time to
+think a bit more about how the high-level Epigram language might
+work. This document contains some ideas, and delineates some gaps.
+
+I shall write mainly in the present tense, intending that the
+assertions I make become true at some point.
+
+\section{The Coauthor Transducer Model}
+
+As an experience, Epigram programming is interactive. As a document,
+an Epigram program is the `minute' of an interaction. To load and
+check an Epigram program is to replay the minuted interaction,
+checking its plausibility.
+
+Epigram operates as a \textbf{transducer}, consuming a source
+file, and producing a modified source file, marked up with error
+reports and responses to requests for help. The transducer is
+idempotent. Epigram thus acts like a mechanical coauthor, offering
+opinions and responding to requests for contribution.
+
+Epigram has a high-level \textbf{source} language, in which
+\texttt{.epi} documents are written, and a low-level \textbf{evidence}
+language, into which documents are \textbf{elaborated}. The system
+thus works by constructing a sequence of definitions in the evidence
+language elaborating the definitions found in its input. The
+elaboration process is, by its nature, incremental. The system
+maintains the correspondence between regions of the source document
+and definitions at the evidence layer: the output file may thus be
+generated from the final \textbf{proof state} of the elaboration
+process.
+
+In addition to generating the output file, the system will (on
+request) dump the final proof state in a textual format---a
+\texttt{.gram} file. From a \texttt{.gram} file, both input and output
+\texttt{.epi} files are recoverable, hence the patch from one to the
+other is computable. Given a \texttt{.gram} file and
+a patch to its output \texttt{.epi}, a new input \texttt{.epi} can be
+constructed, which can be processed in turn, resulting in a new output
+\texttt{.epi}, and hence a further patch. Editor integration is thus
+unnecessary, but in any case easy.
+
+A separate (or at least separable) component, based on Edwin Brady's
+\textsc{epic} compiler, can generate a \texttt{.gram} file from an
+executable. The latter, if executed, offers a straightforward
+read-eval-print loop for first-order expressions constructed over the
+signature of definitions provided by the original source. Incomplete
+definitions in the source may result in run-time errors: these are the
+only run-time errors.  Such an executable, invoked with an argument,
+treats that argument as a single command session.
+
+Markdown is king.
+
+In the event that Epigram programs ever become large enough to
+necessitate modular development, \texttt{.gram} files will be generated
+on a per-module basis. We may thus become interested in patches
+between states of these \texttt{.gram} files as a means to transmit
+changes downstream.
+
+
+\section{Interactive Problem Solving}
+
+Epigram documents show the declaration and partial solution of problems.
+Problem solving is mediated as an interactive process. Every problem
+in the source language can be encoded as a type in the evidence
+language. Solving a problem in the source language amounts to finding
+an inhabitant of the type which encodes it, by a process of
+hierarchical refinement.
+
+A \textbf{document} is a series of \textbf{developments}. A
+development comprises a \textbf{declaration} introducing a problem,
+and a \textbf{refinement} reducing the problem to a hopefully
+empty collection of subproblems. Too much abstraction: example, please!
+\newcommand{\capbox}[2]{\raisebox{0.12in}{\begin{array}[t]{|l|}\hline
+      #1 \vspace*{-0.05in}\\
+    \hfill\mbox{\scriptsize{#2}} \\ \hline\end{array}}}
+\newcommand{\Ts}[1]{\texttt{#1}\;}
+\newcommand{\co}{\;:\;}
+\newcommand{\sco}{;\;\;}
+\newcommand{\cm}{,\;}
+\[
+\capbox{
+  \Ts{let}
+    \capbox{
+      \capbox{\Ts{x} \cm \Ts{y}\co \Ts{Nat}}{declaration}\\
+      \Ts{--------------}\\
+      \capbox{\Ts{x} \Ts{+} \Ts{y}}{template} \co \capbox{\Ts{Nat}}{type}
+      }
+      {declaration}\\ \\
+  \capbox{
+     \capbox{\Ts{x}\Ts{+}\Ts{y}}{problem}
+       \capbox{\Ts{<=}\capbox{\Ts{induction}\Ts{x}}{eliminator}}{tactic}\\
+     \capbox{
+      \{\;\capbox{\capbox{\Ts{'zero}\Ts{+}\Ts{y}}{problem}
+                  \capbox{\Ts{=} \capbox{\Ts{y}}{term}}{tactic}
+                  \capbox{}{block}
+          }{refinement}\\
+      ;\;\capbox{\capbox{\Ts{'suc}\Ts{x}\Ts{+}\Ts{y}}{problem}
+                 \capbox{\Ts{=} \capbox{\Ts{'suc}
+                   \capbox{\{!\;!\}}{shed}}{term}}{tactic}
+                  \capbox{}{block}
+         }{refinement}\\
+      \}
+      }{block}
+    }
+    {refinement}}
+    {development}
+\]
+
+
+\end{document}
