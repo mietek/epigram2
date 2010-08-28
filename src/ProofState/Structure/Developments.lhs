@@ -98,7 +98,8 @@ or value
 >   =  EEntity  { ref       :: REF 
 >               , lastName  :: (String, Int)
 >               , entity    :: Entity f
->               , term      :: INTM }
+>               , term      :: INTM 
+>               , anchor    :: Maybe String }
 >   |  EModule  { name      :: Name
 >               , dev       :: (Dev f) }
 
@@ -116,10 +117,10 @@ Typically, we work with developments that use backwards lists, hence
 %if False
 
 > instance Show (Entry Bwd) where
->     show (EEntity ref xn e t) = intercalate " " ["E", show ref, show xn, show e, show t]
+>     show (EEntity ref xn e t a) = intercalate " " ["E", show ref, show xn, show e, show t, show a]
 >     show (EModule n d) = intercalate " " ["M", show n, show d]
 > instance Show (Entry Fwd) where
->     show (EEntity ref xn e t) = intercalate " " ["E", show ref, show xn, show e, show t]
+>     show (EEntity ref xn e t a) = intercalate " " ["E", show ref, show xn, show e, show t, show a]
 >     show (EModule n d) = intercalate " " ["M", show n, show d]
 
 %endif
@@ -153,10 +154,10 @@ cannot.
 For readability, let us collapse the |Entity| into the |Entry| with
 these useful patterns:
 
-> pattern EPARAM ref name paramKind term =
->     EEntity ref name (Parameter paramKind) term
-> pattern EDEF ref name defKind dev term = 
->     EEntity ref name (Definition defKind dev) term
+> pattern EPARAM ref name paramKind term anchor =
+>     EEntity ref name (Parameter paramKind) term anchor
+> pattern EDEF ref name defKind dev term anchor = 
+>     EEntity ref name (Definition defKind dev) term anchor
 
 
 \paragraph{Kinds of Definitions:}

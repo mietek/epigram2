@@ -32,7 +32,7 @@ into the ProofState.}
 
 > getFakeRef :: ProofState REF
 > getFakeRef = do
->    CDefinition _  (cEntryName := HOLE _ :<: ty) _ _ <- getCurrentEntry
+>    CDefinition _  (cEntryName := HOLE _ :<: ty) _ _ _ <- getCurrentEntry
 >    return $ cEntryName := FAKE :<: ty
 
 > getFakeCurrentEntry :: ProofState (EXTM :=>: VAL)

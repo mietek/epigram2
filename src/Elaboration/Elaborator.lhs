@@ -133,7 +133,7 @@ a reference to the current goal (applied to the appropriate shared parameters).
 >   where
 >     getDefn :: ProofState (EXTM :=>: VAL)
 >     getDefn = do
->         CDefinition _ ref _ _ <- getCurrentEntry
+>         CDefinition _ ref _ _ _ <- getCurrentEntry
 >         aus <- getGlobalScope
 >         return (applySpine ref aus)
 
@@ -213,7 +213,7 @@ Now we add a definition with the same name as the function being defined,
 to handle recursive calls. This has the same arguments as the function,
 plus an implicit labelled type that provides evidence for the recursive call.
 
->     CDefinition _ (mnom := HOLE _ :<: ty) _ _ <- getCurrentEntry
+>     CDefinition _ (mnom := HOLE _ :<: ty) _ _ _ <- getCurrentEntry
 >     pn :=>: _ <- getFakeCurrentEntry 
 >     let schCall = makeCall (P $ mnom := FAKE :<: ty) 0 sch'
 >     us <- getParamsInScope
@@ -305,10 +305,10 @@ plus [
 >     return (liftScheme inScope sch', tt)
 
 > liftScheme :: Entries -> Scheme INTM -> Scheme INTM
-> liftScheme B0 sch = sch
-> liftScheme (es :< EPARAM _ (x, _) _ s) sch =
+> liftScheme B0 sch                             = sch
+> liftScheme (es :< EPARAM _ (x, _) _ s _) sch  =
 >     liftScheme es (SchExplicitPi (x :<: SchType (es -| s)) sch)
-> liftScheme (es :< _) sch = liftScheme es sch
+> liftScheme (es :< _) sch                      = liftScheme es sch
 
 
 > elabScheme :: Entries -> Scheme DInTmRN -> ProofState (Scheme INTM, EXTM :=>: VAL)

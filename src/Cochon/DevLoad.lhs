@@ -239,8 +239,7 @@ in the development.
 >     -- Make a fresh reference of that type
 >     freshRef (x :<: tyv) (\ref ->
 >         -- Register |ref| as a Lambda
->         putEntryAbove (EPARAM ref (mkLastName ref) k ty)
->       ) 
+>         putEntryAbove (EPARAM ref (mkLastName ref) k ty Nothing)) 
 >     -- Pass the accumulated commands
 >     return ncs
 

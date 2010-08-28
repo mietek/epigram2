@@ -187,9 +187,9 @@ The |CodeGen| typeclass describes things that are convertible to Epic code.
 >            (ma, del, makeBody t) : defs
 > flatten ParamAll  ma del (Dev F0 _ _ _) = [(ma, del, Ignore)]
 > flatten ParamPi   ma del (Dev F0 _ _ _) = [(ma, del, Ignore)]
-> flatten _         ma del dev@(Dev {devEntries = EPARAM (x := _) _ b _ :> es}) =
+> flatten _         ma del dev@(Dev {devEntries = EPARAM (x := _) _ b _ _ :> es}) =
 >     flatten b ma (del :< x) dev{devEntries=es}
-> flatten b         ma del dev@(Dev {devEntries = EDEF (her := _) _ _ herDev _ :> es}) = 
+> flatten b         ma del dev@(Dev {devEntries = EDEF (her := _) _ _ herDev _ _ :> es}) = 
 >     flatten ParamLam her del herDev ++ flatten b ma del dev{devEntries=es}
 
 Lambda lifting: every lambda which is not at the top level is lifted out as a

@@ -65,7 +65,7 @@ holes with the new ones.
 >         _ :< e  -> pass e
 >   where
 >     pass :: Entry Bwd -> ProofState (EXTM :=>: VAL)
->     pass (EDEF def@(defName := _) _ _ _ _)
+>     pass (EDEF def@(defName := _) _ _ _ _ _)
 >       | name == defName && occurs def = throwError' $
 >           err "solveHole: you can't define something in terms of itself!"
 >       | name == defName = do
@@ -82,7 +82,7 @@ holes with the new ones.
 >           ty :=>: _ <- getGoal "solveHole"
 >           solveHole' ref ((def, ty):deps) tm
 >       | otherwise = goIn >> solveHole' ref deps tm
->     pass (EPARAM param _ _ _)
+>     pass (EPARAM param _ _ _ _)
 >       | occurs param = throwError' $
 >             err "solveHole: param" ++ errRef param ++ err "occurs illegally."
 >       | otherwise = cursorUp >> solveHole' ref deps tm
@@ -96,7 +96,7 @@ holes with the new ones.
 >     makeDeps ((name := HOLE k :<: tyv, ty) : deps) news = do
 >         let (ty', _) = tellNews news ty
 >         makeKinded k (fst (last name) :<: ty')
->         EDEF ref _ _ _ _ <- getEntryAbove
+>         EDEF ref _ _ _ _ _ <- getEntryAbove
 >         makeDeps deps ((name := DEFN (NP ref) :<: tyv, GoodNews) : news)
 >     makeDeps _ _ = throwError' $ err "makeDeps: bad reference kind! Perhaps "
 >         ++ err "solveHole was called with a term containing unexpanded definitions?"
@@ -153,9 +153,9 @@ match the hoping holes of the first value to parts of the second value.
 >   where
 >     stripShared' :: NEU -> Entries -> ProofState REF
 >     stripShared' (P ref@(_ := HOLE Hoping :<: _)) B0 = return ref
->     stripShared' (n :$ A (NP r)) (es :< EPARAM paramRef _ _ _)
+>     stripShared' (n :$ A (NP r)) (es :< EPARAM paramRef _ _ _ _)
 >         | r == paramRef                      = stripShared' n es
->     stripShared' n (es :< EDEF _ _ _ _ _)    = stripShared' n es
+>     stripShared' n (es :< EDEF _ _ _ _ _ _)  = stripShared' n es
 >     stripShared' n (es :< EModule _ _)       = stripShared' n es
 >     stripShared' n es = do
 >       -- |proofTrace $ "stripShared: fail on " ++ show n|

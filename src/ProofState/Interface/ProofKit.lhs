@@ -113,7 +113,7 @@ location, which may be useful for paranoia purposes.
 > validateHere = do
 >     m <- getCurrentEntry
 >     case m of
->         CDefinition _ (_ := DEFN tm :<: ty) _ _ -> do
+>         CDefinition _ (_ := DEFN tm :<: ty) _ _ _ -> do
 >             ty' <- bquoteHere ty
 >             checkHere (SET :>: ty')
 >                 `pushError`  (err "validateHere: definition type failed to type-check: SET does not admit"
@@ -125,7 +125,7 @@ location, which may be useful for paranoia purposes.
 >                              ++ err "does not admit"
 >                              ++ errTyVal (tm :<: ty))
 >             return ()
->         CDefinition _ (_ := HOLE _ :<: ty) _ _ -> do
+>         CDefinition _ (_ := HOLE _ :<: ty) _ _ _ -> do
 >             ty' <- bquoteHere ty
 >             checkHere (SET :>: ty')
 >                 `pushError`  (err "validateHere: hole type failed to type-check: SET does not admit" 

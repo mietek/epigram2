@@ -103,13 +103,13 @@ argument is True.
 >   where
 >     help :: BScopeContext -> Entries -> ProofState Doc
 >     help bsc B0 = return empty
->     help bsc (es :< EPARAM ref _ k _) | not gals = do
+>     help bsc (es :< EPARAM ref _ k _ _) | not gals = do
 >         ty     <- bquoteHere (pty ref)
 >         docTy  <- prettyHereAt (pred ArrSize) (SET :>: ty)
 >         d      <- help bsc es
 >         return $ d $$ prettyBKind k (text (showRelName (christenREF bsc ref))
 >                                               <+> kword KwAsc <+> docTy)
->     help bsc (es :< EDEF ref _ _ _ _) | gals = do
+>     help bsc (es :< EDEF ref _ _ _ _ _) | gals = do
 >         ty     <- bquoteHere $ removeShared (paramSpine es) (pty ref)
 >         docTy  <- prettyHere (SET :>: ty)
 >         d      <- help bsc es
@@ -153,13 +153,13 @@ the saved state. We can get rid of it once we are confident that the new version
 >        es <- getEntriesAbove
 >        case (gals, es) of
 >            (_, B0) -> return empty
->            (False, es' :< EPARAM ref _ k _) -> do
+>            (False, es' :< EPARAM ref _ k _ _) -> do
 >                putEntriesAbove es'
 >                ty' <- bquoteHere (pty ref)
 >                docTy <- prettyHere (SET :>: ty')
 >                d <- hyps bsc me
 >                return (d $$ prettyBKind k (text (showRelName (christenREF bsc ref)) <+> kword KwAsc <+> docTy))
->            (True, es' :< EDEF ref _ _ _ _) -> do
+>            (True, es' :< EDEF ref _ _ _ _ _) -> do
 >                goIn
 >                es <- getEntriesAbove
 >                (ty :=>: _) <- getGoal "hyps"
@@ -240,7 +240,7 @@ of the proof state at the current location.
 >         ed <- prettyE e
 >         prettyEs (d $$ ed) es
 >
->     prettyE (EPARAM (_ := DECL :<: ty) (x, _) k _)  = do
+>     prettyE (EPARAM (_ := DECL :<: ty) (x, _) k _ _)  = do
 >         ty' <- bquoteHere ty
 >         tyd <- prettyHereAt (pred ArrSize) (SET :>: ty')
 >         return (prettyBKind k

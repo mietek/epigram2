@@ -68,6 +68,6 @@ mood such as |Hoping| or |Crying|.
 >                   , devSuspendState  =  SuspendNone }
 >     -- Put the entry in the proof context
 >     putDevNSupply $ freshName nsupply
->     putEntryAbove $ EDEF ref (last n) LETG dev liftedTy
+>     putEntryAbove $ EDEF ref (last n) LETG dev liftedTy Nothing
 >     -- Return a reference to the goal
 >     return $ applySpine ref inScope

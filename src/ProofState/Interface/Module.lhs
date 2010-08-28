@@ -66,7 +66,7 @@ Section~\ref{subsec:Tactics.Elimination.analysis}.
 >     inScope <- getInScope
 >     let  ty' = liftType inScope ty
 >          ref = n := HOLE Waiting :<: evTm ty'
->     putCurrentEntry $ CDefinition LETG ref (last n) ty'
+>     putCurrentEntry $ CDefinition LETG ref (last n) ty' Nothing
 >     putDevTip $ Unknown (ty :=>: tyv)
 >     return $ applySpine ref inScope
 

@@ -30,16 +30,16 @@ need some kit operating on any kind of |CurrentEntry|. So far, this is
 restricted to getting its name:
 
 > currentEntryName :: CurrentEntry -> Name
-> currentEntryName  (CDefinition _ (n := _) _ _)  = n
-> currentEntryName  (CModule n)                   = n
+> currentEntryName  (CDefinition _ (n := _) _ _ _)  = n
+> currentEntryName  (CModule n)                     = n
 
 
 There is an obvious (forgetful) map from entry (Definition or Module)
 to a current entry:
 
 > mkCurrentEntry :: Traversable f => Entry f -> CurrentEntry
-> mkCurrentEntry (EDEF ref xn dkind _ ty)  = CDefinition dkind ref xn ty
-> mkCurrentEntry (EModule n _)             = CModule n
+> mkCurrentEntry (EDEF ref xn dkind _ ty a)  = CDefinition dkind ref xn ty a
+> mkCurrentEntry (EModule n _)               = CModule n
 
 
 
@@ -57,10 +57,10 @@ and |Dev f|:
 
 > rearrangeEntry ::  (Traversable f, Traversable g) =>
 >                    (forall a. f a -> g a) -> Entry f -> Entry g
-> rearrangeEntry h (EPARAM ref xn k ty)    =  EPARAM ref xn k ty
-> rearrangeEntry h (EDEF ref xn k dev ty)  = 
->     EDEF ref xn k (rearrangeDev h dev) ty
-> rearrangeEntry h (EModule n d)           =  EModule n (rearrangeDev h d)
+> rearrangeEntry h (EPARAM ref xn k ty a)    =  EPARAM ref xn k ty a
+> rearrangeEntry h (EDEF ref xn k dev ty a)  = 
+>     EDEF ref xn k (rearrangeDev h dev) ty a
+> rearrangeEntry h (EModule n d)             =  EModule n (rearrangeDev h d)
 >
 > rearrangeDev :: (Traversable f, Traversable g) =>
 >     (forall a. f a -> g a) -> Dev f -> Dev g

@@ -70,7 +70,7 @@ have sub-developments. Parameters being childless, they `derive to
 the Definition and Module data-types defined in
 Section~\ref{subsubsec:ProofState.Structure.Developments.entry}.
 
-> data CurrentEntry  =  CDefinition DefKind REF (String, Int) INTM
+> data CurrentEntry  =  CDefinition DefKind REF (String, Int) INTM (Maybe String)
 >                    |  CModule Name
 >     deriving Show
 
@@ -102,7 +102,7 @@ justifies some piece of kit to deal with this global context.
 > instance Show (NewsyFwd (Entry NewsyFwd)) where
 >     show (NF ls) = show ls
 > instance Show (Entry NewsyFwd) where
->     show (EEntity ref xn e t) = intercalate " " ["E", show ref, show xn, show e, show t]
+>     show (EEntity ref xn e t a) = intercalate " " ["E", show ref, show xn, show e, show t, show a]
 >     show (EModule n d) = intercalate " " ["M", show n, show d]
 > instance Show (Entity NewsyFwd) where
 >     show (Parameter k) = "Param " ++ show k

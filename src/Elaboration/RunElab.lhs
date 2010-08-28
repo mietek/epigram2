@@ -353,10 +353,10 @@ search the hypotheses for a value with the same label.
 The traversal of the hypotheses is carried by |seekOn|. It searches
 parameters and hands them to |seekIn|.
 
->       seekOn B0                                  =    (|)
->       seekOn (es' :< EPARAM param _ ParamLam _)  =    seekIn (NP param) (pty param)
->                                                  <|>  seekOn es'
->       seekOn (es' :< _)                          =    seekOn es'
+>       seekOn B0                                    =    (|)
+>       seekOn (es' :< EPARAM param _ ParamLam _ _)  =    seekIn (NP param) (pty param)
+>                                                    <|>  seekOn es'
+>       seekOn (es' :< _)                            =    seekOn es'
 
 Then, |seekIn| tries to match the label we are looking for with an
 hypothesis we have found. Recall that a label is a telescope
@@ -606,8 +606,8 @@ is unstable.
 >     -- Make a hole
 >     r <- make (x :<: termOf tt)
 >     -- Store the suspended problem
->     Just (EDEF ref xn dkind dev@(Dev {devTip=Unknown utt}) tm) <- removeEntryAbove
->     putEntryAbove (EDEF ref xn dkind (dev{devTip=Suspended utt prob}) tm)
+>     Just (EDEF ref xn dkind dev@(Dev {devTip=Unknown utt}) tm anchor) <- removeEntryAbove
+>     putEntryAbove (EDEF ref xn dkind (dev{devTip=Suspended utt prob}) tm anchor)
 >     -- Mark the Suspension state
 >     let ss = if isUnstable prob then SuspendUnstable else SuspendStable
 >     putDevSuspendState ss

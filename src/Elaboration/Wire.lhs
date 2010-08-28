@@ -93,15 +93,15 @@ its type has become more defined, and pass on the good news if
 necessary.
 
 > propagateNews  top news 
->                (NF (Right (EPARAM (name := DECL :<: tv) sn k ty) :> es)) = do
+>                (NF (Right (EPARAM (name := DECL :<: tv) sn k ty a) :> es)) = do
 >     case tellNews news ty of
 >         (_, NoNews) -> do
 >           let ref = name := DECL :<: tv
->           putEntryAbove (EPARAM ref sn k ty) 
+>           putEntryAbove (EPARAM ref sn k ty a) 
 >           propagateNews top news (NF es)
 >         (ty', GoodNews) -> do
 >           let ref = name := DECL :<: evTm ty'
->           putEntryAbove (EPARAM ref sn k ty')
+>           putEntryAbove (EPARAM ref sn k ty' a)
 >           propagateNews top (addNews (ref, GoodNews) news) (NF es)
 
 Updating definitions is a bit more complicated. \pierre{Why?} We
@@ -113,7 +113,7 @@ proceed as follows:
 \item Continue propagating the latest news.
 \end{enumerate}
 
-> propagateNews top news (NF ((Right e@(EDEF ref sn _ _ ty)) :> es)) = do
+> propagateNews top news (NF ((Right e@(EDEF ref sn _ _ ty _)) :> es)) = do
 >     -- \pierre{Understand use of |jumpIn|}
 >     xs <- jumpIn e
 >     news' <- propagateNews Toplevel news xs
@@ -199,10 +199,10 @@ The update of a parameter consists in:
       been updated
 \end{enumerate}
 
-> tellEntry news (EPARAM (name := DECL :<: tv) sn k ty) = do
+> tellEntry news (EPARAM (name := DECL :<: tv) sn k ty anchor) = do
 >     let (ty' :=>: tv', n)  = tellNewsEval news (ty :=>: tv)
 >     let ref = name := DECL :<: tv'
->     return (addNews (ref, n) news, EPARAM ref sn k ty')
+>     return (addNews (ref, n) news, EPARAM ref sn k ty' anchor)
 
 To update a hole, we must first check to see if the news bulletin contains a
 definition for it. If so, we fill in the definition (and do not need to
@@ -215,8 +215,8 @@ update the news bulletin). If not, we must  \pierre{why?}:
 If the hole is |Hoping| and we have good news about its type, then we
 restart elaboration to see if it can make any progress.
 
-> tellEntry news (EDEF ref@(name := HOLE h :<: tyv) sn
->                      dkind dev@(Dev {devTip=Unknown tt}) ty)
+> tellEntry news (EDEF  ref@(name := HOLE h :<: tyv) sn
+>                       dkind dev@(Dev {devTip=Unknown tt}) ty anchor)
 >   | Just (ref'@(_ := DEFN tm :<: _), GoodNews) <- getNews news ref = do
 >     -- We have a Definition for it
 >     es   <- getInScope
@@ -224,7 +224,7 @@ restart elaboration to see if it can make any progress.
 >     let  (tt', _) = tellNewsEval news tt
 >          (ty', _) = tellNews news ty
 >     -- Define the hole
->     return (news, EDEF ref' sn dkind (dev{devTip=Defined tm' tt'}) ty')
+>     return (news, EDEF ref' sn dkind (dev{devTip=Defined tm' tt'}) ty' anchor)
 >
 >   | otherwise = do
 >     -- Not a Definition
@@ -235,7 +235,7 @@ restart elaboration to see if it can make any progress.
 >                                  (GoodNews, Hoping)  -> Suspended tt' ElabHope
 >                                  _                   -> Unknown tt'
 >     return  (addNews (ref, min n n') news,
->             EDEF ref sn dkind (dev{devTip=tip}) ty')
+>             EDEF ref sn dkind (dev{devTip=tip}) ty' anchor)
 
 To update a hole with a suspended elaboration problem attached, we
 proceed similarly to the previous case, but we also update the
@@ -246,13 +246,13 @@ are meant to enforce? Or something that might break one day? See bug
 process.
 
 > tellEntry news (EDEF  ref@(name := HOLE h :<: tyv) sn
->                       dkind dev@(Dev {devTip=Suspended tt prob}) ty)
+>                       dkind dev@(Dev {devTip=Suspended tt prob}) ty anchor)
 >   | Just ne <- getNews news ref = do
 >      -- We have a Definition for it
 >      case prob of
 >       ElabHope  -> do
 >         -- The elaboration strategy \emph{has to} be to |Hope|
->         tellEntry news (EDEF ref sn dkind (dev{devTip=Unknown tt}) ty)
+>         tellEntry news (EDEF ref sn dkind (dev{devTip=Unknown tt}) ty anchor)
 >       _         -> do
 >         -- \pierre{Is that a |throwError| or an |error|?}
 >         throwError' . err . unlines $ [
@@ -270,7 +270,7 @@ process.
 >                                   else SuspendStable
 >     suspendHierarchy state
 >     return  (addNews (ref, min n n') news,
->             EDEF ref sn dkind (dev{devTip=Suspended tt' prob'}) ty')
+>             EDEF ref sn dkind (dev{devTip=Suspended tt' prob'}) ty' anchor)
 >         where tellEProb :: NewsBulletin -> EProb -> EProb
 >               tellEProb news = fmap (getLatest news)
 
@@ -284,7 +284,8 @@ To update a closed definition (|Defined|), we must:
 \item update the news bulletin with news about this definition.
 \end{enumerate}
 
-> tellEntry news (EDEF (name := DEFN tmL :<: tyv) sn dkind dev@(Dev {devTip=Defined tm tt}) ty) = do
+> tellEntry news (EDEF  (name := DEFN tmL :<: tyv) sn dkind 
+>                       dev@(Dev {devTip=Defined tm tt}) ty anchor) = do
 >     let  (tt', n)             = tellNewsEval news tt
 >          (ty' :=>: tyv', n')  = tellNewsEval news (ty :=>: tyv)
 >          (tm', n'')           = tellNews news tm
@@ -298,8 +299,8 @@ For paranoia purposes, the following test might be helpful:
 <                                 show tmL', "is not of type", show ty' ]
 
 >     let ref = name := DEFN (evTm tmL') :<: tyv'
->     return (addNews (ref, GoodNews {-min (min n n') n''-}) news,
->                 EDEF ref sn dkind (dev{devTip=Defined tm' tt'}) ty')
+>     return  (addNews (ref, GoodNews {-min (min n n') n''-}) news,
+>             EDEF ref sn dkind (dev{devTip=Defined tm' tt'}) ty' anchor)
 
 
 The |tellCurrentEntry| function informs the current entry about a news

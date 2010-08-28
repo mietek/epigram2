@@ -124,7 +124,7 @@ And some specialized versions:
 >
 > getCurrentDefinition :: ProofStateT e (EXTM :=>: VAL)
 > getCurrentDefinition = do
->     CDefinition _ ref _ _ <- getCurrentEntry
+>     CDefinition _ ref _ _ _ <- getCurrentEntry
 >     scope <- getGlobalScope
 >     return (applySpine ref scope)
 
@@ -132,12 +132,12 @@ And some specialized versions:
 
 > getHoleGoal :: ProofStateT e (INTM :=>: TY)
 > getHoleGoal = do
->     CDefinition _ (_ := HOLE _ :<: _) _ _ <- getCurrentEntry
+>     CDefinition _ (_ := HOLE _ :<: _) _ _ _ <- getCurrentEntry
 >     getGoal "getHoleGoal"
 >
 > getHoleKind :: ProofStateT e HKind
 > getHoleKind = do
->     CDefinition _ (_ := HOLE hk :<: _) _ _ <- getCurrentEntry
+>     CDefinition _ (_ := HOLE hk :<: _) _ _ _ <- getCurrentEntry
 >     return hk
 
 
@@ -245,15 +245,15 @@ And some specialized versions:
 
 > putCurrentScheme :: Scheme INTM -> ProofState ()
 > putCurrentScheme sch = do
->     CDefinition _ ref xn ty <- getCurrentEntry
->     putCurrentEntry $ CDefinition (PROG sch) ref xn ty
+>     CDefinition _ ref xn ty a <- getCurrentEntry
+>     putCurrentEntry $ CDefinition (PROG sch) ref xn ty a
 
 \paragraph{Putting in the |HOLE|\\}
 
 > putHoleKind :: HKind -> ProofStateT e ()
 > putHoleKind hk = do
->     CDefinition kind (name := HOLE _ :<: ty) xn tm <- getCurrentEntry
->     putCurrentEntry $ CDefinition kind (name := HOLE hk :<: ty) xn tm
+>     CDefinition kind (name := HOLE _ :<: ty) xn tm a <- getCurrentEntry
+>     putCurrentEntry $ CDefinition kind (name := HOLE hk :<: ty) xn tm a
 
 
 \subsection{Removers}
