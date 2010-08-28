@@ -25,5 +25,6 @@ current version of the system.
 > import Features.Labelled   ()
 > import Features.Quotient   ()
 > import Features.FreeMonad  ()
-> import Features.Record  ()
+> import Features.Record     ()
+> import Features.Anchor     ()
 
