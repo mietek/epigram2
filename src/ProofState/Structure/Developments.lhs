@@ -94,12 +94,14 @@ or value
 
 \end{itemize}
 
+> type Anchor = String
+
 > data Traversable f => Entry f
 >   =  EEntity  { ref       :: REF 
 >               , lastName  :: (String, Int)
 >               , entity    :: Entity f
 >               , term      :: INTM 
->               , anchor    :: Maybe String }
+>               , anchor    :: Maybe Anchor }
 >   |  EModule  { name      :: Name
 >               , dev       :: (Dev f) }
 
