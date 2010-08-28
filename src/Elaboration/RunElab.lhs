@@ -588,7 +588,7 @@ behavior of |lastHope| depending on the top-level position.}
 >     return . (, ElabSuspended) =<< neutralise =<< getCurrentDefinition
 > lastHope Toplevel ty = do
 >     ty' <- bquoteHere ty
->     return . (, ElabSuccess) =<< neutralise =<< makeKinded Hoping ("hope" :<: ty')
+>     return . (, ElabSuccess) =<< neutralise =<< makeKinded Nothing Hoping ("hope" :<: ty')
 
 
 \subsection{Suspending computation}

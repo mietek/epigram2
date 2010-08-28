@@ -35,7 +35,7 @@ The |make| command adds a named goal of the given type above the
 cursor. The meat is actually in |makeKinded|, below.
 
 > make :: (String :<: INTM) -> ProofState (EXTM :=>: VAL)
-> make = makeKinded Waiting
+> make = makeKinded Nothing Waiting
 
 When making a new definition, the reference to this definition bears a
 \emph{hole kind}
@@ -47,8 +47,9 @@ Elaboration for instance (Section~\ref{sec:Elaborator.Elaborator}),
 the proof system will insert goals itself, with a somewhat changing
 mood such as |Hoping| or |Crying|.
 
-> makeKinded :: HKind -> (String :<: INTM) -> ProofState (EXTM :=>: VAL)
-> makeKinded holeKind (name :<: ty) = do
+> makeKinded :: Maybe Anchor ->  HKind -> (String :<: INTM) -> 
+>                          ProofState (EXTM :=>: VAL)
+> makeKinded manchor holeKind (name :<: ty) = do
 >     -- Check that the type is indeed a type
 >     _ :=>: tyv <- checkHere (SET :>: ty) 
 >                     `pushError`  
@@ -68,6 +69,6 @@ mood such as |Hoping| or |Crying|.
 >                   , devSuspendState  =  SuspendNone }
 >     -- Put the entry in the proof context
 >     putDevNSupply $ freshName nsupply
->     putEntryAbove $ EDEF ref (last n) LETG dev liftedTy Nothing
+>     putEntryAbove $ EDEF ref (last n) LETG dev liftedTy manchor
 >     -- Return a reference to the goal
 >     return $ applySpine ref inScope
