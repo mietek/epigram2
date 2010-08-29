@@ -64,24 +64,29 @@ data Label : Set where
 >     pattern ANCHORS        = C Anchors
 >     pattern ANCHOR u t ts  = C (Anchor u t ts)
 >     pattern ALLOWEDBY t    = C (AllowedBy t)
->     pattern ALLOWEDEPSILON t = C (AllowedEpsilon t)
+>     pattern ALLOWEDEPSILON = C AllowedEpsilon
 >     pattern ALLOWEDCONS _S _T q s ts = C (AllowedCons _S _T q s ts) 
 
 > import -> CanDisplayPats where
->     {- empty -}
+>    pattern DANCHOR s  = DAnchor s
 
 > import -> CanPretty where
+>     pretty (Anchor (DTAG u) t ts) = const (text u) --XXX: incomplete, have to deal with ts
 >     {- Not yet implemented -}
 
 > import -> CanTraverse where
 >     traverse _ Anchors = (| Anchors |)
 >     traverse f (Anchor u t ts) = (|Anchor (f u) (f t) (f ts)|)
->     {- To be continued -}
+>     traverse f (AllowedBy t) = (|AllowedBy (f t)|)
+>     traverse f AllowedEpsilon = (|AllowedEpsilon|)
+>     traverse f (AllowedCons _S _T q s ts) = (|AllowedCons (f _S) (f _T) (f q) (f s) (f ts)|)
 
 > import -> CanHalfZip where
 >     halfZip Anchors Anchors = Just Anchors
 >     halfZip (Anchor u1 t1 ts1) (Anchor u2 t2 ts2) = Just $ Anchor (u1, u2) (t1, t2) (ts1, ts2)
->     {- To be continued -}
+>     halfZip (AllowedBy t1) (AllowedBy t2) = Just $ AllowedBy (t1, t2)
+>     halfZip AllowedEpsilon AllowedEpsilon = Just $ AllowedEpsilon
+>     halfZip (AllowedCons _S1 _T1 q1 s1 ts1) (AllowedCons _S2 _T2 q2 s2 ts2) = Just $ AllowedCons (_S1, _S2) (_T1, _T2) (q1, q2) (s1, s2) (ts1, ts2)
 
 \subsection{Plugging in eliminators}
 
@@ -132,10 +137,13 @@ data Label : Set where
 \subsection{Extending the display language}
 
 > import -> DInTmConstructors where
+>   DAnchor :: String -> DInTm p x -- XXX: For now, should add args later
 
 > import -> DInTmTraverse where
+>   traverseDTIN f (DAnchor s) = (|(DAnchor s)|)
 
 > import -> DInTmPretty where
+>   pretty (DANCHOR s)     = const (text s)
 
 > import -> Pretty where
 
@@ -158,4 +166,5 @@ data Label : Set where
 > import -> MakeElabRules where
  
 > import -> DistillRules where
+
 
