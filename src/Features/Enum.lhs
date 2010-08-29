@@ -24,7 +24,7 @@
 >   enumFakeREF :: REF
 >   enumFakeREF = [("Primitive", 0), ("EnumU", 0)] := (FAKE :<: SET) 
 >   enumU :: VAL
->   enumU = MU (Just (N (P enumFakeREF))) inEnumU
+>   enumU = MU (Just (ANCHOR (TAG "EnumU") SET ALLOWEDEPSILON)) inEnumU
 >   enumREF :: REF
 >   enumREF = [("Primitive", 0), ("EnumU", 0)] := (DEFN enumU :<: SET) 
 >   enumDREF :: REF

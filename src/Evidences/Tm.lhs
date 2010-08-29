@@ -557,9 +557,11 @@ If we have a labelled |INTM|, we can try to extract the name from the label.
 > extractREF (tm :$ _)  = extractREF tm
 > extractREF _          = Nothing
 
+> {-
 > extractLabelName :: Labelled f INTM -> Maybe Name
-> extractLabelName (Just (N l) :?=: _) = (|refName (extractREF l)|)
+> extractLabelName (Just (ANCHOR (TAG l) _ _) :?=: _) = error "extractLabelName: To be implemented"{-(|refName (extractREF l)|)-}
 > extractLabelName _ = Nothing
+> -} 
 
 We can compare value labels in a sound but incomplete fashion:
 

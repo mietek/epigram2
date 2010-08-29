@@ -17,7 +17,7 @@
 
 > import -> CanTyRules where
 >   canTy chev (Set :>: Mu (ml :?=: Id x))     = do
->     mlv <- traverse (chev . (SET :>:)) ml
+>     mlv <- traverse (chev . (ANCHORS :>:)) ml
 >     xxv@(x :=>: xv) <- chev (desc :>: x)
 >     return $ Mu (mlv :?=: Id xxv)
 >   canTy chev (t@(Mu (_ :?=: Id x)) :>: Con y) = do
@@ -60,7 +60,7 @@
 >                                       (DPAIR s (DPAIR t DVOID)))
 
 > import -> CanPretty where
->   pretty (Mu (Just l   :?=: _))     = pretty l
+>   pretty (Mu (Just l   :?=: _)) = pretty l
 >   pretty (Mu (Nothing  :?=: Id t))  = wrapDoc
 >       (kword KwMu <+> pretty t ArgSize)
 >       AppSize
@@ -340,7 +340,7 @@ case for sigma.
 > import -> Coerce where
 >   coerce (Mu (Just (l0,l1) :?=: Id (d0,d1))) q (CON x) =
 >     let (typ :>: vap) = laty ("d" :<: desc :-: \d ->
->                               "l" :<: SET :-: \l ->
+>                               "l" :<: ANCHORS :-: \l ->
 >                               Target (SET :>: descOp @@ [d,MU (Just l) d])) 
 >     in Right . CON $ 
 >       coe @@ [ descOp @@ [ d0 , MU (Just l0) d0 ] 
@@ -379,9 +379,9 @@ data. This cannot apply in general because it leads to infinite loops when
 elaborating illegal values for some descriptions. Perhaps we should remove it
 for enumerations as well.
 
->     makeElab' loc (MU l@(Just (NP r)) d :>: DVOID) | r == enumFakeREF = 
+>     makeElab' loc (MU l@(Just (ANCHOR (TAG r) _ _)) d :>: DVOID) | r == "EnumU" = 
 >         makeElab' loc (MU l d :>: DCON (DPAIR DZE DVOID))
->     makeElab' loc (MU l@(Just (NP r)) d :>: DPAIR s t) | r == enumFakeREF =
+>     makeElab' loc (MU l@(Just (ANCHOR (TAG r) _ _)) d :>: DPAIR s t) | r == "EnumU" =
 >         makeElab' loc (MU l d :>: DCON (DPAIR (DSU DZE) (DPAIR s (DPAIR t DVOID))))
 
 More usefully, we elaborate a tag with a bunch of arguments by converting it
@@ -398,16 +398,21 @@ description. This is often useful when constructing user-visible data types. It
 is not helpful when the description is a bound variable, however, so we check
 for that case and do not label it.
 
+> {-
 >     makeElab' loc (SET :>: DMU Nothing d) = do
 >         dt :=>: dv <- subElab loc (desc :>: d)
 >         if shouldLabel dv
->             then do  (lt :=>: lv) <- eFaker 
->                      return $ MU (Just (N lt)) dt :=>: MU (Just lv) dv
->             else     return $ MU Nothing dt :=>: MU Nothing dv
+>             then do  proofTrace "Shoul label"
+>                      name <- eAnchor
+>                      let anchor = ANCHOR (TAG name) SET ALLOWEDEPSILON
+>                      return $ MU (Just anchor) dt :=>: MU (Just anchor) dv
+>             else do  proofTrace "Don't label"
+>                      return $ MU Nothing dt :=>: MU Nothing dv
 >       where
 >         shouldLabel :: VAL -> Bool
 >         shouldLabel (NP (_ := DECL :<: _))  = False
 >         shouldLabel _                       = True
+> -}
  
 >     makeElab' loc (PI (MU l d) t :>: DCON f) = do
 >         d'  :=>: _    <- eQuote d
@@ -426,12 +431,12 @@ We don't want this in general, but it is useful in special cases (when the data
 type is really supposed to be a list, as in |EnumD|).
 \question{When else should we use this representation?}
 
->     distill _ (MU (Just (NP r)) _ :>: CON (PAIR ZE VOID)) | r == enumFakeREF =
+>     distill _ (MU (Just (ANCHOR (TAG r) _ _)) _ :>: CON (PAIR ZE VOID)) | r == "EnumU" =
 >         return (DVOID :=>: CON (PAIR ZE VOID))
 
->     distill es (C ty@(Mu (Just (NP r) :?=: _)) :>:
+>     distill es (C ty@(Mu (Just (ANCHOR (TAG r) _ _) :?=: _)) :>:
 >       C c@(Con (PAIR (SU ZE) (PAIR _ (PAIR _ VOID)))))
->       | r == enumFakeREF = do
+>       | r == "EnumU" = do
 >         Con (DPAIR _ (DPAIR s (DPAIR t _)) :=>: v) <- canTy  (distill es)
 >                                                              (ty :>: c)
 >         return ((DPAIR s t) :=>: CON v)
@@ -457,14 +462,23 @@ then we can (probably) turn it into a tag applied to some arguments.
 If a label is not in scope, we remove it, so the definition appears at the
 appropriate place when the proof state is printed.
 
->     distill es (SET :>: tm@(C (Mu ltm))) 
->       | Just name <- extractLabelName ltm = do
->           mtm <- lookupName name
->           case mtm of
->               Nothing  -> distill es (SET :>: C (Mu (dropLabel ltm)))
->               Just _   -> do
->                   cc <- canTy (distill es) (Set :>: Mu ltm)
->                   return ((DC $ fmap termOf cc) :=>: evTm tm)
+>     distill es (SET :>: tm@(C (Mu ltm@(Just _ :?=: _)))) = do
+>       proofTrace $ "Distill a Mu"
+>       ref <- extractLabelName ltm
+>       case ref of 
+>         Just (name := _) -> do
+>             proofTrace "Found"
+>             cc <- canTy (distill es) (Set :>: Mu ltm)
+>             return ((DC $ fmap termOf cc) :=>: evTm tm)
+>         Nothing -> do
+>             proofTrace "Wtf, nothing?"
+>             distill es (SET :>: C (Mu (dropLabel ltm)))
+>         where extractLabelName :: Labelled Id INTM -> ProofStateT e (Maybe REF)
+>               extractLabelName (Just (ANCHOR (TAG t) _ _) :?=: _)
+>                   | t == "EnumU" = return $ Just enumDREF
+>                   | t == "Desc" = return $ Just descDREF
+>                   | otherwise = resolveAnchor t
+>               extractLabelName (Nothing :?=: _) = return Nothing
 
 
 
@@ -511,7 +525,7 @@ appropriate place when the proof state is printed.
 >   descFakeREF :: REF
 >   descFakeREF = [("Primitive", 0), ("Desc", 0)] := (FAKE :<: SET)
 >   desc :: VAL
->   desc = MU (Just (N (P descFakeREF))) inDesc
+>   desc = MU (Just (ANCHOR (TAG "Desc") SET ALLOWEDEPSILON)) inDesc
 >
 >   descREF :: REF
 >   descREF = [("Primitive", 0), ("Desc", 0)] := (DEFN desc :<: SET)

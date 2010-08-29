@@ -58,7 +58,10 @@ Hence, we have:
 > entrySuspendState e = case entryDev e of
 >     Just dev  -> devSuspendState dev
 >     Nothing   -> SuspendNone
-
+>
+> entryAnchor :: Traversable f => Entry f -> Maybe Anchor
+> entryAnchor (EEntity _ _ _ _ anchor)  = anchor
+> entryAnchor (EModule _ _)             = Nothing
 
 
 \subsection{Entry equality}

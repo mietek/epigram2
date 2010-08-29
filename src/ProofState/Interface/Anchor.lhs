@@ -9,6 +9,8 @@
 
 > module ProofState.Interface.Anchor where
 
+> import Debug.Trace
+
 > import Control.Applicative
 > import Control.Monad
 
@@ -17,6 +19,7 @@
 
 > import Kit.MissingLibrary
 > import Kit.BwdFwd
+> import Kit.Trace
 
 > import NameSupply.NameSupply
 
@@ -50,18 +53,27 @@ To cope with shadowing, we will need some form of |RelativeAnchor|:
 
 With shadowing punished by De Bruijn. Meanwhile, let's keep it simple.
 
-> resolveAnchor :: Anchor -> ProofState (Maybe REF)
+
+> resolveAnchor :: Anchor -> ProofStateT e (Maybe REF)
 > resolveAnchor anchor = do
 >   scope <- getInScope
->   case foldMap (resolveAnchor' anchor) scope of
->     B0          -> return Nothing
->     (_ :< ref)  -> return $ Just ref
->     where resolveAnchor' :: Anchor -> Entry Bwd -> Bwd REF
->           resolveAnchor' anchor (EEntity _ _ _ _ Nothing) = B0
->           resolveAnchor' anchor (EEntity r _ _ _ (Just anchor'))
->               | anchor == anchor' = B0 :< r
->               | otherwise = B0
->           resolveAnchor' anchor (EModule _ _) = B0
+>   case seekAnchor scope of
+>     B0 -> return $ Nothing
+>     _ :< ref -> return $ Just ref
+>     where seekAnchor :: Entries -> Bwd REF
+>           seekAnchor B0 = (|)
+>           seekAnchor (scope :< EPARAM ref _ _ _ (Just anchor')) 
+>                            | anchor' == anchor = {-trace ("Pgot! " ++ anchor') $-} B0 :< ref
+>                            | otherwise = {-trace ("Pgot " ++ anchor') $-} seekAnchor scope
+>           seekAnchor (scope :< EPARAM ref _ _ _ Nothing) = {-trace "Param" $-} seekAnchor scope
+>           seekAnchor (scope :< EDEF ref _ _ dev _ (Just anchor'))
+>                            | anchor' == anchor = {-trace ("Dgot! " ++ anchor') $-} B0 :< ref
+>                            | otherwise =  {-trace ("Dgot " ++ anchor') $-} seekAnchor (devEntries dev) 
+>                                           <+> seekAnchor scope
+>           seekAnchor (scope :< EDEF ref _ _ dev _ Nothing) = {-trace "def" $-}  seekAnchor (devEntries dev) 
+>                                           <+> seekAnchor scope
+>           seekAnchor (scope :< EModule _ dev) = {-trace "module" $-} seekAnchor (devEntries dev) <+> seekAnchor scope
+
 
 Find the entry corresponding to the given anchor:
 

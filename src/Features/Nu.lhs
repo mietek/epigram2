@@ -135,6 +135,8 @@ and call canTy directly rather than letting distill do it for us.
 If a label is not in scope, we remove it, so the definition appears at the
 appropriate place when the proof state is printed.
 
+> -- XXX: FIX following Desc code
+> {-
 >     distill es (SET :>: tm@(C (Nu ltm))) 
 >       | Just name <- extractLabelName ltm = do
 >           mtm <- lookupName name
@@ -143,3 +145,4 @@ appropriate place when the proof state is printed.
 >               Just _   -> do
 >                   cc <- canTy (distill es) (Set :>: Nu ltm)
 >                   return ((DC $ fmap termOf cc) :=>: evTm tm)
+> -}

@@ -173,13 +173,13 @@
 >       make ("ConDescs" :<: N (branchesOp :@ [ N e, L $ K (NP descREF)])) -- ARR (ENUMT (N e)) (NP descREF)
 >       goIn
 >       (cs' :=>: _) <- giveOutBelow (foldr PAIR VOID (map (\(_,_,c,_,_) -> c) cs))
->       make ("DataDesc" :<: NP descREF)
+>       makeKinded (Just nom) Waiting ("DataDesc" :<: NP descREF)
 >       goIn
 >       (d :=>: dv) <- giveOutBelow (SUMD (N e) (L ("s" :. N (switchDOp :@ [N e, N cs', NV 0]))))
 >       lt :=>: _ <- getFakeCurrentEntry
 >       make ("DataTy" :<: SET)
 >       goIn
->       (dty :=>: _) <- giveOutBelow (MU (Just (N lt)) (N d))
+>       (dty :=>: _) <- giveOutBelow (MU (Just (ANCHOR (TAG nom) SET ALLOWEDEPSILON)) (N d))
 >       EEntity r _ _ _ _ <- getEntryAbove
 >       traverse (makeCon (N e) (N (P r $:$ oldaus))) cs
 
@@ -189,7 +189,7 @@ assigned throughout, so the label will be preserved when eliminating by inductio
 >       let indTm = P (lookupOpRef inductionOp) :$ A (N d)
 >       indV :<: indTy <- inferHere indTm
 >       indTy' <- bquoteHere indTy
->       make ("Ind" :<: setLabel (N lt) indTy')
+>       make ("Ind" :<: setLabel (ANCHOR (TAG nom) SET ALLOWEDEPSILON) indTy')
 >       goIn
 >       giveOutBelow (N indTm)
 >       
