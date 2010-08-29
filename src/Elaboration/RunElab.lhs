@@ -87,6 +87,7 @@ following:
 > inDevelopmentOnly (ELambda _ _)  =  True
 > inDevelopmentOnly (ECry _)       =  True
 > inDevelopmentOnly (EFake _)      =  True
+> inDevelopmentOnly (EAnchor _)    =  True
 > inDevelopmentOnly _              =  False
 
 \pierre{What is the formal definition of "top-level"?} 
@@ -169,6 +170,13 @@ task. This representation is interpreted and executed by
 >     r <- getFakeRef 
 >     inScope <- getInScope
 >     runElab WithinDevelopment . (ty :>:) $ f (r, paramSpine inScope)
+
+|EAnchor| extracts the name of the current entry.
+
+> runElab WithinDevelopment (ty :>: EAnchor f) = do
+>     name <- getCurrentName
+>     runElab WithinDevelopment . (ty :>:) $ f (fst (last name))
+
 
 |EResolve| provides a name-resolution service: given a relative name,
  it finds the term and potentially the scheme of the definition the
