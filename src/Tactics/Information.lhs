@@ -240,17 +240,20 @@ of the proof state at the current location.
 >         ed <- prettyE e
 >         prettyEs (d $$ ed) es
 >
->     prettyE (EPARAM (_ := DECL :<: ty) (x, _) k _ _)  = do
+>     prettyE (EPARAM (_ := DECL :<: ty) (x, _) k _ anchor)  = do
 >         ty' <- bquoteHere ty
 >         tyd <- prettyHereAt (pred ArrSize) (SET :>: ty')
 >         return (prettyBKind k
->                  (text x <+> kword KwAsc <+> tyd))
+>                  (text x  <+> (maybe empty (brackets . brackets . text) anchor)
+>                           <+> kword KwAsc
+>                           <+> tyd))
 >      
 >     prettyE e = do
 >         goIn
 >         d <- prettyPS aus me
 >         goOut
->         return (sep  [  text (fst (entryLastName e))
+>         return (sep  [  text (fst (entryLastName e)) 
+>                         <+> (maybe empty (brackets . brackets . text) $ entryAnchor e) 
 >                      ,  nest 2 d <+> kword KwSemi
 >                      ])
 >
