@@ -47,7 +47,7 @@
 
 \title{An Epigram Implementation}
 \author{Edwin Brady,  James Chapman, Pierre-\'{E}variste Dagand, \\
-   Adam Gundry, Conor McBride, Peter Morris, Ulf Norell
+   Adam Gundry, Conor McBride, Peter Morris, Ulf Norell, Nicolas Oury
 }
 \maketitle
 
