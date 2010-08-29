@@ -63,16 +63,16 @@ With shadowing punished by De Bruijn. Meanwhile, let's keep it simple.
 >     where seekAnchor :: Entries -> Bwd REF
 >           seekAnchor B0 = (|)
 >           seekAnchor (scope :< EPARAM ref _ _ _ (Just anchor')) 
->                            | anchor' == anchor = {-trace ("Pgot! " ++ anchor') $-} B0 :< ref
->                            | otherwise = {-trace ("Pgot " ++ anchor') $-} seekAnchor scope
->           seekAnchor (scope :< EPARAM ref _ _ _ Nothing) = {-trace "Param" $-} seekAnchor scope
+>                            | anchor' == anchor = B0 :< ref
+>           seekAnchor (scope :< EPARAM ref _ _ _ Nothing) = seekAnchor scope
 >           seekAnchor (scope :< EDEF ref _ _ dev _ (Just anchor'))
->                            | anchor' == anchor = {-trace ("Dgot! " ++ anchor') $-} B0 :< ref
->                            | otherwise =  {-trace ("Dgot " ++ anchor') $-} seekAnchor (devEntries dev) 
->                                           <+> seekAnchor scope
->           seekAnchor (scope :< EDEF ref _ _ dev _ Nothing) = {-trace "def" $-}  seekAnchor (devEntries dev) 
->                                           <+> seekAnchor scope
->           seekAnchor (scope :< EModule _ dev) = {-trace "module" $-} seekAnchor (devEntries dev) <+> seekAnchor scope
+>                            | anchor' == anchor = B0 :< ref
+>           seekAnchor (scope :< EDEF ref _ _ dev _ Nothing) = 
+>                         seekAnchor (devEntries dev) 
+>                         <+> seekAnchor scope
+>           seekAnchor (scope :< EModule _ dev) = 
+>                         seekAnchor (devEntries dev) 
+>                         <+> seekAnchor scope
 
 
 Find the entry corresponding to the given anchor:
