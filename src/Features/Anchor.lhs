@@ -9,22 +9,6 @@
 %endif
 
 
-infixr 5 _∷_
-
-data AllowedBy : Set -> Set where
-  ε    : forall {T} -> 
-         AllowedBy T
-  _∷_  : {S : Set}{T : S -> Set} -> 
-         (s : S)(ts : AllowedBy (T s)) -> AllowedBy ((x : S) -> T x)
-
-UId = String
-
--- The universe (that's a tiny one):
-
-data Label : Set where
-  label : (u : UId)(T : Set)(ts : AllowedBy T) -> Label
-
-
 \subsection{Plugging in canonical forms}
 
 > import -> CanConstructors where

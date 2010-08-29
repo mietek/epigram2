@@ -14,7 +14,6 @@
 
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
-> import Kit.Trace
 
 > import ProofState.Structure.Developments
 
@@ -23,7 +22,6 @@
 > import ProofState.Interface.ProofKit         
 > import ProofState.Interface.NameResolution
 > import ProofState.Interface.Name
-> import ProofState.Interface.Anchor
 
 > import DisplayLang.DisplayTm
 > import DisplayLang.Scheme

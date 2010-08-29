@@ -9,30 +9,20 @@
 
 > module ProofState.Interface.Anchor where
 
-> import Debug.Trace
-
 > import Control.Applicative
-> import Control.Monad
 
 > import Data.Foldable
 > import Data.Traversable
 
 > import Kit.MissingLibrary
 > import Kit.BwdFwd
-> import Kit.Trace
-
-> import NameSupply.NameSupply
 
 > import ProofState.Structure.Developments
 
 > import ProofState.Edition.ProofState
 > import ProofState.Edition.GetSet
-> import ProofState.Edition.Navigation
-> import ProofState.Edition.Scope
 
 > import Evidences.Tm
-
-> import DisplayLang.Name
 
 %endif
 
