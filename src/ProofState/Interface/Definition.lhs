@@ -47,8 +47,8 @@ Elaboration for instance (Section~\ref{sec:Elaborator.Elaborator}),
 the proof system will insert goals itself, with a somewhat changing
 mood such as |Hoping| or |Crying|.
 
-> makeKinded :: Maybe Anchor ->  HKind -> (String :<: INTM) -> 
->                          ProofState (EXTM :=>: VAL)
+> makeKinded :: Maybe String ->  HKind -> (String :<: INTM) -> 
+>                                ProofState (EXTM :=>: VAL)
 > makeKinded manchor holeKind (name :<: ty) = do
 >     -- Check that the type is indeed a type
 >     _ :=>: tyv <- checkHere (SET :>: ty) 

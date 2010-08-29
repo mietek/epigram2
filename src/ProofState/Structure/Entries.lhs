@@ -59,7 +59,7 @@ Hence, we have:
 >     Just dev  -> devSuspendState dev
 >     Nothing   -> SuspendNone
 >
-> entryAnchor :: Traversable f => Entry f -> Maybe Anchor
+> entryAnchor :: Traversable f => Entry f -> Maybe String
 > entryAnchor (EEntity _ _ _ _ anchor)  = anchor
 > entryAnchor (EModule _ _)             = Nothing
 

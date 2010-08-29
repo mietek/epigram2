@@ -54,7 +54,7 @@ To cope with shadowing, we will need some form of |RelativeAnchor|:
 With shadowing punished by De Bruijn. Meanwhile, let's keep it simple.
 
 
-> resolveAnchor :: Anchor -> ProofStateT e (Maybe REF)
+> resolveAnchor :: String -> ProofStateT e (Maybe REF)
 > resolveAnchor anchor = do
 >   scope <- getInScope
 >   case seekAnchor scope of
@@ -77,11 +77,11 @@ With shadowing punished by De Bruijn. Meanwhile, let's keep it simple.
 
 Find the entry corresponding to the given anchor:
 
-> findAnchor :: Anchor -> ProofState ()
+> findAnchor :: String -> ProofState ()
 > findAnchor = undefined
 
 Redefine the entry corresponding from the given anchor, so that's name
 is the second anchor:
 
-> renameAnchor :: Anchor -> Anchor -> ProofState ()
+> renameAnchor :: String -> String -> ProofState ()
 > renameAnchor = undefined
