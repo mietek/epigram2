@@ -71,18 +71,6 @@ indeed, they are actually bound variables. Hence, we collect this
 really need |Entries|, or can it cope with |Bwd REF| instead?}
 
 > distill :: Entries -> (TY :>: INTM) -> ProofStateT INTM (DInTmRN :=>: VAL)
-> distill _ (ANCHORS :>: x@(ANCHOR (TAG u) t ts)) = return (DANCHOR u :=>: evTm x)
-> distill es (SET :>: tm@(C (Mu ltm@(Just _ :?=: _)))) = do
->       proofTrace $ "Distill a Mu"
->       proofTrace "Found"
->       cc <- canTy (distill es) (Set :>: Mu ltm)
->       return ((DC $ fmap termOf cc) :=>: evTm tm)
->         where extractLabelName :: Labelled Id INTM -> ProofStateT e (Maybe REF)
->               extractLabelName (Just (ANCHOR (TAG t) _ _) :?=: _)
->                   | t == "EnumU" = return $ Just enumDREF
->                   | t == "Desc" = return $ Just descDREF
->                   | otherwise = resolveAnchor t
->               extractLabelName (Nothing :?=: _) = return Nothing
 > import <- DistillRules
 > distill entries tt = distillBase entries tt
 

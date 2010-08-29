@@ -147,20 +147,7 @@ we abstract it out. Thus |makeElab'| actually implements elaboration.
 > makeElab loc tm = makeElab' loc . (:>: tm) =<< eGoal
 
 > makeElab' :: Loc -> (TY :>: DInTmRN) -> Elab (INTM :=>: VAL)
-> makeElab' loc (SET :>: DMU Nothing d) = do
->         dt :=>: dv <- subElab loc (desc :>: d)
->         if shouldLabel dv
->             then do  -- elabTrace "Should label"
->                      name <- eAnchor
->                      -- elabTrace $ "name: " ++ name
->                      let anchor = ANCHOR (TAG name) SET ALLOWEDEPSILON
->                      return $ MU (Just anchor) dt :=>: MU (Just anchor) dv
->             else do  {-elabTrace "Don't label"-}
->                      return $ MU Nothing dt :=>: MU Nothing dv
->       where
->         shouldLabel :: VAL -> Bool
->         shouldLabel (NP (_ := DECL :<: _))  = False
->         shouldLabel _                       = True
+
 > import <- MakeElabRules
 
 

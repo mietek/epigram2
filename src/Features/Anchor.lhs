@@ -68,10 +68,12 @@ data Label : Set where
 >     pattern ALLOWEDCONS _S _T q s ts = C (AllowedCons _S _T q s ts) 
 
 > import -> CanDisplayPats where
->    pattern DANCHOR s  = DAnchor s
+>    pattern DANCHOR s args = DAnchor s args
 
 > import -> CanPretty where
->     pretty (Anchor (DTAG u) t ts) = const (text u) --XXX: incomplete, have to deal with ts
+>     pretty (Anchor (DTAG u) t ts) = wrapDoc (text u <+> pretty ts ArgSize) ArgSize
+>     pretty AllowedEpsilon = const empty
+>     pretty (AllowedCons _ _ _ s ts) = wrapDoc (pretty s ArgSize <+> pretty ts ArgSize) ArgSize
 >     {- Not yet implemented -}
 
 > import -> CanTraverse where
@@ -137,13 +139,13 @@ data Label : Set where
 \subsection{Extending the display language}
 
 > import -> DInTmConstructors where
->   DAnchor :: String -> DInTm p x -- XXX: For now, should add args later
+>   DAnchor :: String -> DInTm p x -> DInTm p x 
 
 > import -> DInTmTraverse where
->   traverseDTIN f (DAnchor s) = (|(DAnchor s)|)
+>   traverseDTIN f (DAnchor s args) = (|(DAnchor s) (traverseDTIN f args)|)
 
 > import -> DInTmPretty where
->   pretty (DANCHOR s)     = const (text s)
+>   pretty (DANCHOR s args)  = wrapDoc (text s <+> pretty args ArgSize) ArgSize
 
 > import -> Pretty where
 
@@ -166,5 +168,8 @@ data Label : Set where
 > import -> MakeElabRules where
  
 > import -> DistillRules where
+>   distill es (ANCHORS :>: x@(ANCHOR (TAG u) t ts)) = do
+>     (displayTs :=>: _) <- distill es (ALLOWEDBY (evTm t) :>: ts)
+>     return (DANCHOR u displayTs :=>: evTm x)
 
 

@@ -398,21 +398,17 @@ description. This is often useful when constructing user-visible data types. It
 is not helpful when the description is a bound variable, however, so we check
 for that case and do not label it.
 
-> {-
 >     makeElab' loc (SET :>: DMU Nothing d) = do
 >         dt :=>: dv <- subElab loc (desc :>: d)
 >         if shouldLabel dv
->             then do  proofTrace "Shoul label"
->                      name <- eAnchor
+>             then do  name <- eAnchor
 >                      let anchor = ANCHOR (TAG name) SET ALLOWEDEPSILON
 >                      return $ MU (Just anchor) dt :=>: MU (Just anchor) dv
->             else do  proofTrace "Don't label"
->                      return $ MU Nothing dt :=>: MU Nothing dv
+>             else return $ MU Nothing dt :=>: MU Nothing dv
 >       where
 >         shouldLabel :: VAL -> Bool
 >         shouldLabel (NP (_ := DECL :<: _))  = False
 >         shouldLabel _                       = True
-> -}
  
 >     makeElab' loc (PI (MU l d) t :>: DCON f) = do
 >         d'  :=>: _    <- eQuote d
@@ -463,24 +459,8 @@ If a label is not in scope, we remove it, so the definition appears at the
 appropriate place when the proof state is printed.
 
 >     distill es (SET :>: tm@(C (Mu ltm@(Just _ :?=: _)))) = do
->       proofTrace $ "Distill a Mu"
->       ref <- extractLabelName ltm
->       case ref of 
->         Just (name := _) -> do
->             proofTrace "Found"
->             cc <- canTy (distill es) (Set :>: Mu ltm)
->             return ((DC $ fmap termOf cc) :=>: evTm tm)
->         Nothing -> do
->             proofTrace "Wtf, nothing?"
->             distill es (SET :>: C (Mu (dropLabel ltm)))
->         where extractLabelName :: Labelled Id INTM -> ProofStateT e (Maybe REF)
->               extractLabelName (Just (ANCHOR (TAG t) _ _) :?=: _)
->                   | t == "EnumU" = return $ Just enumDREF
->                   | t == "Desc" = return $ Just descDREF
->                   | otherwise = resolveAnchor t
->               extractLabelName (Nothing :?=: _) = return Nothing
-
-
+>       cc <- canTy (distill es) (Set :>: Mu ltm)
+>       return ((DC $ fmap termOf cc) :=>: evTm tm)
 
 
 > import -> DInTmConstructors where

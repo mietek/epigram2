@@ -147,8 +147,14 @@
 >             (c :=>: _) <- elabGive (DTAG s)
 >             rs <- traverse (\x -> lambdaParam x) i
 >             giveOutBelow $ CON (PAIR (N c) (body rs))
->             return ()
+>             return () 
 
+> mkAllowed :: [(String, EXTM, REF)] -> (INTM, INTM)
+> mkAllowed = foldr mkAllowedHelp (SET, ALLOWEDEPSILON)
+>     where mkAllowedHelp (x, ty, r) (allowingTy, allowedTy) =
+>             let allowingTy' = L $ x :. (capM r 0 %% allowingTy) in
+>             (PI (N ty) allowingTy',
+>              ALLOWEDCONS (N ty) allowingTy' (N (P refl :$ A SET :$ A (PI (N ty) allowingTy'))) (NP r) allowedTy)
 
 > elabData :: String -> [ (String , DInTmRN) ] -> 
 >                       [ (String , DInTmRN) ] -> ProofState (EXTM :=>: VAL)
@@ -179,7 +185,9 @@
 >       lt :=>: _ <- getFakeCurrentEntry
 >       make ("DataTy" :<: SET)
 >       goIn
->       (dty :=>: _) <- giveOutBelow (MU (Just (ANCHOR (TAG nom) SET ALLOWEDEPSILON)) (N d))
+>       let (allowingTy, allowedBy) = mkAllowed pars'
+>           anchor = ANCHOR (TAG nom) allowingTy allowedBy
+>       (dty :=>: _) <- giveOutBelow (MU (Just anchor) (N d))
 >       EEntity r _ _ _ _ <- getEntryAbove
 >       traverse (makeCon (N e) (N (P r $:$ oldaus))) cs
 
@@ -189,7 +197,7 @@ assigned throughout, so the label will be preserved when eliminating by inductio
 >       let indTm = P (lookupOpRef inductionOp) :$ A (N d)
 >       indV :<: indTy <- inferHere indTm
 >       indTy' <- bquoteHere indTy
->       make ("Ind" :<: setLabel (ANCHOR (TAG nom) SET ALLOWEDEPSILON) indTy')
+>       make ("Ind" :<: setLabel anchor indTy')
 >       goIn
 >       giveOutBelow (N indTm)
 >       
