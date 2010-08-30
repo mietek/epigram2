@@ -47,7 +47,7 @@
 > import Elaboration.ElabMonad
 > import Elaboration.MakeElab
 > import Elaboration.Unification
-> import Elaboration.Wire hiding (AtToplevel (..))
+> import Elaboration.Wire
 
 > import Cochon.Error
 

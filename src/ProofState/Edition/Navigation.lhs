@@ -246,7 +246,7 @@ development, with the additional burden of dealing with news.
 >                                   ,  devNSupply       =  layNSupply l
 >                                   ,  devSuspendState  =  laySuspendState l }
 >             putBelowCursor F0
->             propagateNews WithinDevelopment [] (belowEntries l)
+>             propagateNews NormalPropagate [] (belowEntries l)
 >             -- Here, the cursor is at the bottom of the current development
 >             return ()
 >         Nothing -> do
@@ -359,7 +359,7 @@ parameteres on our way.
 >                   putAboveCursor (Dev B0 tip' nsupply' SuspendNone)
 >                   putBelowCursor F0
 >                   -- Push the collected news from above into the entries
->                   propagateNews WithinDevelopment visitedNews es'
+>                   propagateNews NormalPropagate visitedNews es'
 >                   return ()
 >                 Right param -> do
 >                   -- Parameter:
