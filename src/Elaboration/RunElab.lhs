@@ -63,96 +63,82 @@ The |runElab| proof state command actually interprets an |Elab x| in
 the proof state. In other words, we define here the semantics of the
 |Elab| syntax.
 
-> runElab :: AtToplevel ->  (TY :>: Elab (INTM :=>: VAL)) -> 
+> runElab :: WorkTarget ->  (TY :>: Elab (INTM :=>: VAL)) -> 
 >                           ProofState (INTM :=>: VAL, ElabStatus)
 
-Intuitively, the |Elab| code describes a series of ProofState
-operations executed within the development of a definition of the
-given type. \pierre{What is the semantics of the command? Why do we
-give a type?} \pierre{Instead of passing the type around, couldn't we
-get it from the |currentEntry| dynamically?}
+This command is given a type and a program in the |Elab| DSL for creating an
+element of that type. It is also given a flag indicating whether elaboration
+is working on the current goal in the proof state. If the target is the current
+goal, the type pushed in must match the type of the goal. 
 
-However, if we are at the top-level of the ProofState, we are not
-working under a development: therefore, we manually track our position
-using the |AtToplevel| flag. \pierre{See bug \#51 concerning |AtTopLevel|}
+> data WorkTarget = WorkCurrentGoal | WorkElsewhere
 
-> data AtToplevel = Toplevel | WithinDevelopment
-
-When we are at the top-level, we artificially create a definition and
-repeat the operation within the newly created development. The
-commands that cannot be executed at the top-level are the
-following:
-
-> inDevelopmentOnly :: Elab x -> Bool
-> inDevelopmentOnly (ELambda _ _)  =  True
-> inDevelopmentOnly (ECry _)       =  True
-> inDevelopmentOnly (EFake _)      =  True
-> inDevelopmentOnly (EAnchor _)    =  True
-> inDevelopmentOnly _              =  False
-
-\pierre{What is the formal definition of "top-level"?} 
-\pierre{Why Lambda and friends needs a special case?}
-
-
-The execution of an elaboration either succeeds, meaning that a term
-has been made \pierre{right?}, or ends in a suspended state, meaning that
-further informations are awaited before being able to move on.
+It will return the term produced by elaboration, and a flag indicating whether
+elaboration was completely successful or had to suspend. If elaboration
+suspended when working on the curent goal, the term will be a reference to that
+goal, so it cannot be solved.
 
 > data ElabStatus = ElabSuccess | ElabSuspended deriving Eq
 
+Some |Elab| instructions can only be used when working on the current goal,
+for example introducting a lambda. We identify these so we can make a new
+subgoal when trying to execute them elsewhere.
+
+> currentGoalOnly :: Elab x -> Bool
+> currentGoalOnly (ELambda _ _)  =  True
+> currentGoalOnly (ECry _)       =  True
+> currentGoalOnly (EFake _)      =  True
+> currentGoalOnly (EAnchor _)    =  True
+> currentGoalOnly _              =  False
+
+
 Now, let us give the semantics of each command in turn. First of all,
-we catch all commands that are \emph{incompatible} with the top-level
-and redirect them to the specially crafted |runElabToplevel|.
+we catch all commands that can only run on the current goal,
+and redirect them to the specially crafted |runElabNewGoal|.
 
-> runElab Toplevel (ty :>: elab) | inDevelopmentOnly elab = runElabToplevel (ty :>: elab)
+> runElab WorkElsewhere (ty :>: elab) | currentGoalOnly elab = runElabNewGoal (ty :>: elab)
 
-|EReturn| is the @return@ of the monad. It does nothing and always
- succeeds.
+|EReturn| is the @return@ of the monad. It does nothing and always succeeds.
 
 > runElab _ (_ :>: EReturn x) = return (x, ElabSuccess)
 
 |ELambda| creates a \(\lambda\)-parameter, if this is allowed by the
 type we are elaborating to.
 
-> runElab WithinDevelopment (ty :>: ELambda x f) = do
->   case lambdable ty of
+> runElab WorkCurrentGoal (ty :>: ELambda x f) = case lambdable ty of
 >     Just (_, s, tyf) -> do
 >         ref <- lambdaParam x
->         runElab WithinDevelopment (tyf (NP ref) :>: f ref)
+>         runElab WorkCurrentGoal (tyf (NP ref) :>: f ref)
 >     Nothing -> throwError' $ err "runElab: type" ++ errTyVal (ty :<: SET)
 >                                  ++ err "is not lambdable!"
 
-|EGoal| retrieves the current goal and use it to form a subsequent
- elaboration task.
+|EGoal| retrieves the current goal and passes it to the elaboration task.
 
-> runElab top (ty :>: EGoal f) = runElab top (ty :>: f ty)
+> runElab wrk (ty :>: EGoal f) = runElab wrk (ty :>: f ty)
 
-|EWait| makes a |Waiting| hole and pass it along to the next
- elaboration task.
+|EWait| makes a |Waiting| hole and pass it along to the next elaboration task.
 
-> runElab top (ty :>: EWait s tyWait f) = do
+> runElab wrk (ty :>: EWait s tyWait f) = do
 >     tyWait' <- bquoteHere tyWait
 >     tt <- make (s :<: tyWait')
->     runElab top (ty :>: f tt)
+>     runElab wrk (ty :>: f tt)
 
-|EElab| contains a syntactic representation of an elaboration
-task. This representation is interpreted and executed by
-|runElabProb|.
+|EElab| contains a syntactic representation of an elaboration problem. This
+representation is interpreted and executed by |runElabProb|.
 
-> runElab top (ty :>: EElab l p)  = runElabProb top l (ty :>: p)
+> runElab wrk (ty :>: EElab l p)  = runElabProb wrk l (ty :>: p)
 
 |ECompute| allows us to combine elaboration tasks: we run a first task
  and pass its result to the next elaboration task.
 
 > runElab top (ty :>: ECompute (tyComp :>: elab) f) = do
->     -- \question{how do we know we are at toplevel?}
->     (e , _) <- runElab Toplevel (tyComp :>: elab) 
+>     (e , _) <- runElab WorkElsewhere (tyComp :>: elab) 
 >     runElab top (ty :>: f e)
 
 |ECry| is used to report an error. It updates the current entry into a
  crying state.
 
-> runElab WithinDevelopment (ty :>: ECry e) = do
+> runElab WorkCurrentGoal (ty :>: ECry e) = do
 >     e' <- distillErrors e
 >     let msg = show (prettyStackError e')
 >     mn <- getCurrentName
@@ -166,29 +152,29 @@ task. This representation is interpreted and executed by
  implementation of labels, this should go away when we label
  high-level objects with high-level names}.
 
-> runElab WithinDevelopment (ty :>: EFake f) = do
+> runElab WorkCurrentGoal (ty :>: EFake f) = do
 >     r <- getFakeRef 
 >     inScope <- getInScope
->     runElab WithinDevelopment . (ty :>:) $ f (r, paramSpine inScope)
+>     runElab WorkCurrentGoal . (ty :>:) $ f (r, paramSpine inScope)
 
 |EAnchor| extracts the name of the current entry.
 
-> runElab WithinDevelopment (ty :>: EAnchor f) = do
+> runElab WorkCurrentGoal (ty :>: EAnchor f) = do
 >     name <- getCurrentName
->     runElab WithinDevelopment . (ty :>:) $ f (fst (last name))
+>     runElab WorkCurrentGoal . (ty :>:) $ f (fst (last name))
 
 
 |EResolve| provides a name-resolution service: given a relative name,
  it finds the term and potentially the scheme of the definition the
  name refers to. This is passed onto the next elaboration task.
 
-> runElab top (ty :>: EResolve rn f) = do
+> runElab wrk (ty :>: EResolve rn f) = do
 >     (ref, as, ms) <- resolveHere rn
 >     let  tm   = P ref $:$ toSpine as
 >          ms'  = (| (flip applyScheme as) ms |)
 >     (tmv :<: tyv) <- inferHere tm
 >     tyv'  <- bquoteHere tyv
->     runElab top (ty :>: f (PAIR tyv' (N tm) :=>: PAIR tyv tmv, ms'))
+>     runElab wrk (ty :>: f (PAIR tyv' (N tm) :=>: PAIR tyv tmv, ms'))
 >   
 
 |EAskNSupply| gives access to the name supply to the next elaboration
@@ -202,25 +188,24 @@ dangling into some definitions, or clashes could happen.
 
 \end{danger}
 
-> runElab top (ty :>: EAskNSupply f) = do
+> runElab wrk (ty :>: EAskNSupply f) = do
 >     nsupply <- askNSupply
->     runElab top (ty :>: f nsupply)
+>     runElab wrk (ty :>: f nsupply)
 
 
-As mentioned above, when we are at the top-level, some commands
-requires an artificial development to be created before they are
-executed. This is the purpose of |runElabToplevel|: it creates a dummy
-definition and hands back the elaboration task to |runElab|.
+As mentioned above, some commands can only be used when elaboration is taking
+place in the current goal. This is the purpose of |runElabNewGoal|: it creates
+a dummy definition and hands back the elaboration task to |runElab|.
 
-> runElabToplevel :: (TY :>: Elab (INTM :=>: VAL)) -> ProofState (INTM :=>: VAL, ElabStatus)
-> runElabToplevel (ty :>: elab) = do
+> runElabNewGoal :: (TY :>: Elab (INTM :=>: VAL)) -> ProofState (INTM :=>: VAL, ElabStatus)
+> runElabNewGoal (ty :>: elab) = do
 >     -- Make a dummy definition
 >     ty' <- bquoteHere ty
 >     x <- pickName "h" ""
 >     make (x :<: ty')
 >     -- Enter its development
 >     goIn
->     (tm :=>: tmv, status) <- runElab WithinDevelopment (ty :>: elab)
+>     (tm :=>: tmv, status) <- runElab WorkCurrentGoal (ty :>: elab)
 >     -- Leave the development, one way or the other
 >     case status of
 >       ElabSuccess -> do
@@ -242,42 +227,42 @@ The |runElabProb| interprets the syntactic representation of an
 elaboration problem. In other words, this function defines the
 semantics of the |EProb| language.
 
-> runElabProb :: AtToplevel ->  Loc -> (TY :>: EProb) -> 
+> runElabProb :: WorkTarget ->  Loc -> (TY :>: EProb) -> 
 >                               ProofState (INTM :=>: VAL, ElabStatus)
 
 |ElabDone tt| always succeed at returning the given term |tt|.
 
-> runElabProb top loc (ty :>: ElabDone tt)  = 
+> runElabProb wrk loc (ty :>: ElabDone tt)  = 
 >     return (maybeEval tt, ElabSuccess)
 
 |ElabProb tm| asks for the elaboration of the display term |tm| (for
  pushed-in terms).
 
-> runElabProb top loc (ty :>: ElabProb tm)  =
->     runElab top (ty :>: makeElab loc tm)
+> runElabProb wrk loc (ty :>: ElabProb tm)  =
+>     runElab wrk (ty :>: makeElab loc tm)
 
 |ElabInferProb tm| asks for the elaboration and type inference of the
  display term |tm| (for pull-out terms).
 
-> runElabProb top loc (ty :>: ElabInferProb tm) =
->     runElab top (ty :>: makeElabInfer loc tm)
+> runElabProb wrk loc (ty :>: ElabInferProb tm) =
+>     runElab wrk (ty :>: makeElabInfer loc tm)
 
-|WaitCan tm prob| conditiones the interpretation of the elaboration
- problem |prob| to the fact that |tm| is indeed a canonical
- objects. Otherwise, the problem is indefinitely suspended.
+|WaitCan tm prob| prevents the interpretation of the elaboration
+ problem |prob| until |tm| is indeed a canonical
+ object. Otherwise, the problem is indefinitely suspended.
 
 \pierre{This fall-through pattern-match reminds me of Duff's devices.}
 
-> runElabProb top loc (ty :>: WaitCan (_ :=>: Just (C _)) prob) =
->     runElabProb top loc (ty :>: prob)
-> runElabProb top loc (ty :>: WaitCan (tm :=>: Nothing) prob) =
->     runElabProb top loc (ty :>: WaitCan (tm :=>: Just (evTm tm)) prob)
+> runElabProb wrk loc (ty :>: WaitCan (_ :=>: Just (C _)) prob) =
+>     runElabProb wrk loc (ty :>: prob)
+> runElabProb wrk loc (ty :>: WaitCan (tm :=>: Nothing) prob) =
+>     runElabProb wrk loc (ty :>: WaitCan (tm :=>: Just (evTm tm)) prob)
 
 The semantics of the |ElabHope| command is specifically given by the
 |runElabHope| interpreter in
 Section~\ref{subsec:Elaboration.RunElab.elabHope}.
 
-> runElabProb top loc (ty :>: ElabHope)     = runElabHope top ty
+> runElabProb wrk loc (ty :>: ElabHope)     = runElabHope wrk ty
 
 Any case that has not matched yet ends in a suspended state: we cannot
 make progress on it right now. The suspension of an elaboration
@@ -290,14 +275,13 @@ be able to make some progress.
 The following problems are suspended, for different reasons:
 \begin{itemize}
 
-\item A |WaitCan| command offering an object that is \emph{not}
+\item a |WaitCan| command offering an object that is \emph{not}
 canonical;
 
-\item A |WaitSolve| command, because we can make a term out of thin
-air and we hope that the scheduler will be able to make some progress
-for us; and
+\item a |WaitSolve| command, because we cannot solve references during
+elaboration, but the scheduler can do so later; and
 
-\item A |ElabSchedule| command, which purpose is to suspend the
+\item an |ElabSchedule| command, whose purpose is to suspend the
 current elaboration and call the scheduler.
 
 \end{itemize}
@@ -329,7 +313,7 @@ type, we might be able to solve the problem immediately:
 \item An element of type |UNIT| is |VOID|;
 
 \item A proof of a proposition might be found or refined by the
-Propositional simplifier
+propositional simplifier
 (Section~\ref{sec:Tactics.PropositionSimplify}); and
 
 \item The solution of a programming is often an induction hypothesis
@@ -340,11 +324,11 @@ that is sitting in our context
 If these strategies do not match or fail to solve the problem, we just
 create a hole.
 
-> runElabHope :: AtToplevel -> TY -> ProofState (INTM :=>: VAL, ElabStatus)
-> runElabHope top UNIT                = return (VOID :=>: VOID, ElabSuccess)
-> runElabHope top (PRF p)             = simplifyProof top p
-> runElabHope top v@(LABEL (N l) ty)  = seekLabel top l ty <|> lastHope top v
-> runElabHope top ty                  = lastHope top ty
+> runElabHope :: WorkTarget -> TY -> ProofState (INTM :=>: VAL, ElabStatus)
+> runElabHope wrk UNIT                = return (VOID :=>: VOID, ElabSuccess)
+> runElabHope wrk (PRF p)             = simplifyProof wrk p
+> runElabHope wrk v@(LABEL (N l) ty)  = seekLabel wrk l ty <|> lastHope wrk v
+> runElabHope wrk ty                  = lastHope wrk ty
 
 
 \subsubsection{Hoping for labelled types}
@@ -352,8 +336,8 @@ create a hole.
 If we are looking for a labelled type (e.g.\ to make a recursive call), we
 search the hypotheses for a value with the same label.
 
-> seekLabel :: AtToplevel -> NEU -> VAL -> ProofState (INTM :=>: VAL, ElabStatus)
-> seekLabel top label ty = do
+> seekLabel :: WorkTarget -> NEU -> VAL -> ProofState (INTM :=>: VAL, ElabStatus)
+> seekLabel wrk label ty = do
 >     es <- getInScope
 >     seekOn es
 >     where
@@ -368,27 +352,23 @@ parameters and hands them to |seekIn|.
 
 Then, |seekIn| tries to match the label we are looking for with an
 hypothesis we have found. Recall that a label is a telescope
-targetting a label, hence we try to peal off this telescope to match
+targetting a label, hence we try to peel off this telescope to match
 the label. 
 
 >       seekIn :: VAL -> VAL -> ProofState (INTM :=>: VAL, ElabStatus)
 
-On our way to the label, we instantiate this bit and move forward.
-
-\pierre{What do we do with the resulting hoping problems later on? Are
-they solved at some point?}
-
-\pierre{Note that making |s| at |Toplevel| means that |lastHope| will
-deal with it as an |ElabSuccess|. This might be an important
-invariant?}
+On our way to the label, we instantiate the hypotheses by hoping and move
+forward. Any hoping problems left might be solved when matching the label
+later on, but they might also remain outstanding. 
+\adam{We should ensure that no hoping holes are left at the end, possibly by
+accumulating a list of fresh references here rather than hoping holes.}
 
 >       seekIn tm (PI s t) = do
->        -- \question{How do we know we are |Toplevel| here?}
->        (st :=>: sv, _) <- runElabHope Toplevel s 
+>        (st :=>: sv, _) <- runElabHope WorkElsewhere s 
 >        seekIn (tm $$ A sv) (t $$ A sv)
 
-We have reached a label! The question is then "is it the one we are looking
-for?". 
+We have reached a label! The question is then ``is it the one we are looking
+for?'' 
 
 >       seekIn tm (LABEL (N foundLabel) u) = do
 >         -- Tries to match the labels
@@ -402,23 +382,21 @@ for?".
 >           -- Match the telescopes
 >           subst    <- matchParams (pty ref) vvs [] 
 >           waitTm <- makeWait subst tmTm
->           suspendThis top ("label" :<: labelTmVal) waitTm
+>           suspendThis wrk ("label" :<: labelTmVal) waitTm
 >          _ -> 
 >           -- Failure.
 >           (|)
 
 
-If, in our way to the label, the pealing fails, we must give up.
+If, in our way to the label, the peeling fails, we must give up.
 
 >       seekIn tm ty = (|)
-
-
 
 
 \pierre{Hopefully, this code will become less hairy when we have
 proper high-level names.}
 
-Because labels are stored lambda-lifted, we have to peal off their
+Because labels are stored lambda-lifted, we have to peel off their
 parameters. Besides, we must accumulate them as we later need to check
 that they are indeed equivalent (|matchParams|).
 
@@ -465,41 +443,40 @@ needs a better story.}
 If we are hoping for a proof of a proposition, we first try simplifying it using
 the propositional simplification machinery.
 
-> simplifyProof :: AtToplevel -> VAL -> ProofState (INTM :=>: VAL, ElabStatus)
-> simplifyProof top p = do
+> simplifyProof :: WorkTarget -> VAL -> ProofState (INTM :=>: VAL, ElabStatus)
+> simplifyProof wrk p = do
 >     pSimp <- runPropSimplify p
 >     case pSimp of
 >         Just (SimplyTrivial prf) -> do
 >             return (prf :=>: evTm prf, ElabSuccess)
->         Just (SimplyAbsurd _) -> runElab top (PRF p :>:
+>         Just (SimplyAbsurd _) -> runElab wrk (PRF p :>:
 >             ECry [err "simplifyProof: proposition is absurd:"
 >                          ++ errTyVal (p :<: PROP)])
 >         Just (Simply qs _ h) -> do
 >             qrs <- traverse partProof qs
 >             let prf = substitute qs qrs h
 >             return (prf :=>: evTm prf, ElabSuccess)
->         Nothing -> subProof top (PRF p)
+>         Nothing -> subProof wrk (PRF p)
 >   where
 >     partProof :: (REF :<: INTM) -> ProofState INTM
 >     partProof (ref :<: _) = do
->       -- \question{how do we know we are at toplevel here?}
->       ((tm :=>: _) , _) <- subProof Toplevel (pty ref)
+>       ((tm :=>: _) , _) <- subProof WorkElsewhere (pty ref)
 >       return tm
 
->     subProof :: AtToplevel -> VAL -> ProofState (INTM :=>: VAL, ElabStatus)
->     subProof top (PRF p) = flexiProof top p <|> lastHope top (PRF p)
+>     subProof :: WorkTarget -> VAL -> ProofState (INTM :=>: VAL, ElabStatus)
+>     subProof wrk (PRF p) = flexiProof wrk p <|> lastHope wrk (PRF p)
 
 
 After simplification has dealt with the easy stuff, it calls |flexiProof| to
 solve any flex-rigid equations (by suspending a solution process on a subgoal
 and returning the subgoal). 
 
-> flexiProof :: AtToplevel -> VAL -> ProofState (INTM :=>: VAL, ElabStatus)
+> flexiProof :: WorkTarget -> VAL -> ProofState (INTM :=>: VAL, ElabStatus)
 
-> flexiProof top (EQBLUE (_S :>: s) (_T :>: t)) = 
+> flexiProof wrk (EQBLUE (_S :>: s) (_T :>: t)) = 
 >     flexiProofMatch           (_S :>: s) (_T :>: t)
->     <|> flexiProofLeft   top  (_S :>: s) (_T :>: t)
->     <|> flexiProofRight  top  (_S :>: s) (_T :>: t)
+>     <|> flexiProofLeft   wrk  (_S :>: s) (_T :>: t)
+>     <|> flexiProofRight  wrk  (_S :>: s) (_T :>: t)
 > flexiProof _ _ = (|)
 
 If we are trying to prove an equation between the same fake reference applied to
@@ -522,8 +499,7 @@ This case arises frequently when proving label equality to make recursive calls.
 >         -> ProofState (Bwd (VAL, VAL, VAL))
 >     proveBits ty [] prfs = return prfs
 >     proveBits (PI s t) ((as, at):ps) prfs = do
->         -- \question{how do we know we are at toplevel here?}
->         (_ :=>: prf, _) <- simplifyProof Toplevel (EQBLUE (s :>: as) (s :>: at)) 
+>         (_ :=>: prf, _) <- simplifyProof WorkElsewhere (EQBLUE (s :>: as) (s :>: at)) 
 >         proveBits (t $$ A as) ps (prfs :< (as, at, prf))
 
 >     smash :: VAL -> [(VAL, VAL, VAL)] -> VAL
@@ -542,9 +518,9 @@ insert a coercion rather than demanding definitional equality of the sets?
 See Elab.pig for an example where this makes the elaboration process fragile,
 because we end up trying to move definitions with processes attached.}
 
-> flexiProofLeft :: AtToplevel -> (TY :>: VAL) -> (TY :>: VAL)
+> flexiProofLeft :: WorkTarget -> (TY :>: VAL) -> (TY :>: VAL)
 >     -> ProofState (INTM :=>: VAL, ElabStatus)
-> flexiProofLeft top (_T :>: N t) (_S :>: s) = do
+> flexiProofLeft wrk (_T :>: N t) (_S :>: s) = do
 >     guard =<< withNSupply (equal (SET :>: (_S, _T)))
 
 <     (q' :=>: q, _) <- simplifyProof False (EQBLUE (SET :>: _S) (SET :>: _T))
@@ -561,14 +537,14 @@ because we end up trying to move definitions with processes attached.}
 
 >          eprob  = WaitSolve ref (s' :=>: Just s) ElabHope
 
->     suspendThis top ("eq" :<: PRF p' :=>: PRF p) eprob
+>     suspendThis wrk ("eq" :<: PRF p' :=>: PRF p) eprob
 > flexiProofLeft _ _ _ = (|)
 
 
 
-> flexiProofRight :: AtToplevel -> (TY :>: VAL) -> (TY :>: VAL)
+> flexiProofRight :: WorkTarget -> (TY :>: VAL) -> (TY :>: VAL)
 >     -> ProofState (INTM :=>: VAL, ElabStatus)
-> flexiProofRight top (_S :>: s) (_T :>: N t) = do
+> flexiProofRight wrk (_S :>: s) (_T :>: N t) = do
 >     guard =<< withNSupply (equal (SET :>: (_S, _T)))
 >     ref  <- stripShared t
 >     s'   <- bquoteHere s
@@ -578,23 +554,23 @@ because we end up trying to move definitions with processes attached.}
 >     let  p      = EQBLUE (_S   :>: s   ) (_T   :>: N t   )
 >          p'     = EQBLUE (_S'  :>: s'  ) (_T'  :>: N t'  )
 >          eprob  = WaitSolve ref (s' :=>: Just s) ElabHope
->     suspendThis top ("eq" :<: PRF p' :=>: PRF p) eprob
+>     suspendThis wrk ("eq" :<: PRF p' :=>: PRF p) eprob
 > flexiProofRight _ _ _ = (|)
 
 
 
 
-If all else fails, we can hope for anything we like by creating a
-subgoal, though ideally we should cry rather than hoping for something
-patently absurd \pierre{Does that mean that the current code is not
-doing the ideal thing?  Or what?}. \pierre{Todo: justify the different
-behavior of |lastHope| depending on the top-level position.}
+If all else fails, we can hope for anything we like by leaving a hoping
+subgoal, either using the current one (if we are working on it) or creating a
+new subgoal. Ideally we should cry rather than hoping for something
+patently absurd: at the moment we reject some impossible hopes but do not
+always spot them.
 
-> lastHope :: AtToplevel -> TY -> ProofState (INTM :=>: VAL, ElabStatus)
-> lastHope WithinDevelopment ty = do
+> lastHope :: WorkTarget -> TY -> ProofState (INTM :=>: VAL, ElabStatus)
+> lastHope WorkCurrentGoal ty = do
 >     putHoleKind Hoping
 >     return . (, ElabSuspended) =<< neutralise =<< getCurrentDefinition
-> lastHope Toplevel ty = do
+> lastHope WorkElsewhere ty = do
 >     ty' <- bquoteHere ty
 >     return . (, ElabSuccess) =<< neutralise =<< makeKinded Nothing Hoping ("hope" :<: ty')
 
@@ -639,12 +615,12 @@ state. That's an invariant.}
 >     getCurrentDefinition
 
 
-The |suspendThis| command attaches the problem to the current hole if
-we are not at top-level, and creates a new subgoal otherwise.
+The |suspendThis| command attaches the problem to the current goal if
+we are working on it, and creates a new subgoal otherwise.
 
-> suspendThis :: AtToplevel ->  (String :<: INTM :=>: TY) -> EProb -> 
+> suspendThis :: WorkTarget ->  (String :<: INTM :=>: TY) -> EProb -> 
 >                               ProofState (INTM :=>: VAL, ElabStatus)
-> suspendThis WithinDevelopment _ ep  = 
+> suspendThis WorkCurrentGoal _ ep  = 
 >     return . (, ElabSuspended)  =<< neutralise =<< suspendMe ep
-> suspendThis Toplevel  stt  ep = 
->     return . (, ElabSuccess)   =<< neutralise =<< suspend stt ep
+> suspendThis WorkElsewhere  stt  ep = 
+>     return . (, ElabSuccess)    =<< neutralise =<< suspend stt ep

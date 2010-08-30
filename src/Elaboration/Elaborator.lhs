@@ -59,10 +59,8 @@ subsection~\ref{subsec:Evidences.TypeChecker.type-checking}, except that it
 operates in the |Elab| monad, so it can create subgoals and
 $\lambda$-lift terms.
 
-\pierre{How do we know we are at |Toplevel|?}
-
 > elaborate :: Loc -> (TY :>: DInTmRN) -> ProofState (INTM :=>: VAL)
-> elaborate loc (ty :>: tm) = runElab Toplevel (ty :>: makeElab loc tm)
+> elaborate loc (ty :>: tm) = runElab WorkElsewhere (ty :>: makeElab loc tm)
 >     >>= return . fst
 
 > elaborate' = elaborate (Loc 0)
@@ -71,16 +69,14 @@ $\lambda$-lift terms.
 > elaborateHere :: Loc -> DInTmRN -> ProofState (INTM :=>: VAL, ElabStatus)
 > elaborateHere loc tm = do
 >     _ :=>: ty <- getHoleGoal
->     runElab WithinDevelopment (ty :>: makeElab loc tm)
+>     runElab WorkCurrentGoal (ty :>: makeElab loc tm)
 
 > elaborateHere' = elaborateHere (Loc 0)
 
 
-\pierre{How do we know we are at |Toplevel|?}
-
 > elabInfer :: Loc -> DExTmRN -> ProofState (INTM :=>: VAL :<: TY)
 > elabInfer loc tm = do
->     (tt, _) <- runElab Toplevel (sigSetVAL :>: makeElabInfer loc tm)
+>     (tt, _) <- runElab WorkElsewhere (sigSetVAL :>: makeElabInfer loc tm)
 >     let (tt' :<: _ :=>: ty) = extractNeutral tt
 >     return (tt' :<: ty)
 
@@ -91,13 +87,11 @@ Sometimes (for example, if we are about to apply elimination with a motive) we
 really want elaboration to proceed as much as possible. The |elabInferFully| command
 creates a definition for the argument, elaborates it and runs the scheduler.
 
-\pierre{How do we know we are |WithinDevelopment|?}
-
 > elabInferFully :: DExTmRN -> ProofState (EXTM :=>: VAL :<: TY)
 > elabInferFully tm = do
 >     make ("eif" :<: sigSetTM)
 >     goIn
->     (tm :=>: _, status) <- runElab WithinDevelopment (sigSetVAL :>: makeElabInfer (Loc 0) tm)
+>     (tm :=>: _, status) <- runElab WorkCurrentGoal (sigSetVAL :>: makeElabInfer (Loc 0) tm)
 >     when (status == ElabSuccess) (ignore (give tm))
 >     startScheduler
 >     (tm :=>: v) <- getCurrentDefinition
