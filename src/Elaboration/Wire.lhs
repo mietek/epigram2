@@ -30,7 +30,7 @@
 > import Evidences.Tm
 > import Evidences.Eval
 
-> import Elaboration.ElabMonad
+> import Elaboration.ElabProb
 
 > import Kit.MissingLibrary
 

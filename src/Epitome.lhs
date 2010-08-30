@@ -154,6 +154,7 @@
 \chapter{Elaboration}
 \label{chap:elaboration}
 
+%include Elaboration/ElabProb.lhs
 %include Elaboration/ElabMonad.lhs
 %include Elaboration/MakeElab.lhs
 %include Elaboration/RunElab.lhs

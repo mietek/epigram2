@@ -43,6 +43,7 @@
 
 > import Tactics.PropositionSimplify
 
+> import Elaboration.ElabProb
 > import Elaboration.ElabMonad
 > import Elaboration.MakeElab
 > import Elaboration.Unification

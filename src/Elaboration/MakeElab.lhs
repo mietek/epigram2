@@ -29,6 +29,7 @@
 > import DisplayLang.Name
 > import DisplayLang.Scheme
 
+> import Elaboration.ElabProb
 > import Elaboration.ElabMonad
 
 > import Kit.BwdFwd

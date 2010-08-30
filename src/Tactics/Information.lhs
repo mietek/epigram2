@@ -37,6 +37,7 @@
 > import DisplayLang.Lexer
 > import DisplayLang.PrettyPrint
 
+> import Elaboration.ElabProb
 > import Elaboration.ElabMonad
 > import Elaboration.MakeElab
 > import Elaboration.RunElab
