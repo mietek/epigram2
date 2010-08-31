@@ -205,7 +205,7 @@ equality, so it doesn't catch the wrong |MU|s.
 >                (keyword KwAsc)
 >                tokenInTm) (|()|)
 >              keyword KwAsc
->              indty <- tokenInTm
+>              indty <- tokenAppInTm
 >              keyword KwArr
 >              keyword KwSet
 >              keyword KwDefn
