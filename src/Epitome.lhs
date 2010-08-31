@@ -110,6 +110,7 @@
 %include Features/Labelled.lhs
 %include Features/Quotient.lhs
 %include Features/Record.lhs
+%include Features/Anchor.lhs
 
 \chapter{The Proof State}
 
@@ -136,6 +137,7 @@
 %include ProofState/Interface/Solving.lhs
 %include ProofState/Interface/NameResolution.lhs
 %include ProofState/Interface/Lifting.lhs
+%include ProofState/Interface/Anchor.lhs
 
 \chapter{The Proof Tactics}
 
