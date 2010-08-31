@@ -84,9 +84,8 @@ The variables of embedded Evidence terms are denoted by |p|. Hence,
 there is two potentially distinct set of free variables.
 
 While we reuse the |Can| and |Elim| functors from |Tm|, we redefine
-the notion of scope.
-
-\pierre{Why is |DExTm| in Spine-form?}
+the notion of scope. We store |DExTm|s so as to give easy access to
+the head and spine for elaboration and pretty-printing.
 
 
 %if False
@@ -131,17 +130,16 @@ Spines of eliminators are just like in the evidence language:
 \subsubsection{Embedding evidence terms}
 
 The |DT| and |DTEx| constructors allow evidence terms to be treated as |In| and
-|Ex| display terms, respectively. This is useful for elaboration, but such terms
-cannot be pretty-printed. 
-
-\pierre{Why is it ``useful for elaboration'' to be able to embed
-        |InTm| and |ExTm|s?}
+|Ex| display terms, respectively. This is useful for elaboration, because it
+allows the elaborator to combine finished terms with display syntax and
+continue elaborating. Such terms cannot be pretty-printed, however, so they
+should not be used in the distiller.
 
 \begin{danger}
 
 To make |deriving Traversable| work properly, we have to
 |newtype|-wrap them and manually give trivial |Traversable| instances
-for the wrappers. The instanciation code is hidden in the literate
+for the wrappers. The instantiation code is hidden in the literate
 document.
 
 \end{danger}
@@ -220,9 +218,6 @@ places.
 > pattern DLK t       = DL (DK t)
 > pattern DTY ty tm   = DType ty ::$ [A tm]
 > import <- CanDisplayPats
-
-\pierre{Same question about |DLAV| and |DPIV| than in @Tm.lhs@ about
-        |LAV| and |PIV|.}
 
 
 \subsection{Sizes}
