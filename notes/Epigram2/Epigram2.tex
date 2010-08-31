@@ -53,8 +53,8 @@ constructed, which can be processed in turn, resulting in a new output
 unnecessary, but in any case easy.
 
 A separate (or at least separable) component, based on Edwin Brady's
-\textsc{epic} compiler, can generate a \texttt{.gram} file from an
-executable. The latter, if executed, offers a straightforward
+\textsc{epic} compiler, can generate an executable from a \texttt{.gram}
+file. The former, if executed, offers a straightforward
 read-eval-print loop for first-order expressions constructed over the
 signature of definitions provided by the original source. Incomplete
 definitions in the source may result in run-time errors: these are the
@@ -107,7 +107,7 @@ empty collection of subproblems. Too much abstraction: example, please!
                   \capbox{\Ts{=} \capbox{\Ts{y}}{term}}{tactic}
                   \capbox{}{block}
           }{refinement}\\
-      ;\;\capbox{\capbox{\Ts{'suc}\Ts{x}\Ts{+}\Ts{y}}{problem}
+      ;\;\capbox{\capbox{\Ts{'suc}\Ts{x'}\Ts{+}\Ts{y}}{problem}
                  \capbox{\Ts{=} \capbox{\Ts{'suc}
                    \capbox{\{!\;!\}}{shed}}{term}}{tactic}
                   \capbox{}{block}
@@ -119,5 +119,38 @@ empty collection of subproblems. Too much abstraction: example, please!
     {development}
 \]
 
+Lots of points show up from this example. I'll skim through them,
+starting with the declaration: we give a template for addition,
+hypothesizing declarations for the fields of the template, then giving
+a type for the whole thing. This template determines the initial
+problem. You can tell which tokens in the template are punctuation
+rather than placeholders, because they don't have declarations!
+Note that here, we can see value declarations, but we shall also have
+propositional declarations, \(\texttt{:-}\;P\), where a proposition is
+asserted anonymously---\(P\) then gives the shapes of problems for
+refinement, i.e., propositional goals.
+
+Refinements go `\textbf{problem} \textbf{tactic} \textbf{block}'. A
+refinement is an offer to solve a problem of a particular form.
+Correspondingly, the elaborator needs to check that the refinement
+offered suits the problem or problems at hand: the rigidity of this
+check will soften with time, but the minimum acceptable level is that
+the refinement's problem freely determines the programmer's choice of
+names for the variables in the problem. Working interactively, of course,
+the problem parts of refinements are generated mechanically from the
+problems at hand, ensuring a match.
+
+A tactic provides the means to split a problem into zero or more
+subproblems. The \texttt{<=} (`by') tactic invokes an \textbf{eliminator}
+in the elimination-with-a-motive style. The \texttt{=} (`return') tactic
+takes a term explaining how to compute the return value, and leaves no
+subproblems. There will doubtless be others, not least the notorious
+\texttt{with}.
+
+The \textbf{shed}, \texttt{\{! !\}}, stands in place of a piece of program
+(most syntactic categories, not just terms) to indicate that the programmer
+has yet to choose something, thus causing elaboration to suspend. Note
+that a tactic \texttt{= \{! !\}} does commit to return, where a
+shed directly in a tactic place does not.
 
 \end{document}
