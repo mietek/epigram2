@@ -1,35 +1,23 @@
 make DescInd := induction DescD : (v : Desc)(P : Desc -> Set)(p : (x : desc DescD Desc) -> box DescD Desc P x -> P (con x)) -> P v ;
 
 let Below (D : Desc)(Q : Mu D -> Set)(x : Mu D) : Set ;
-<= [x] induction D x ;
+<= induction D x ;
 
 let BH (X : Desc)(ys : desc X (Mu D))(r : box X (Mu D) P ys) : Set ;
 prev ;
-= BH D x xf ;
+define Below D Q _ := BH D x xf ;
+next ;
 
-elim [X] DescInd X ;
-give con [? ? ? ? ? ?] ;
-
-simplify ;
-= Sig (Below D Q ys ; Q ys) ;
-
-simplify ;
-= Sig () ;
-
-give con \ e -> con \ b -> con con \ rec -> con con \ t ys r -> ? ;
-= BH./ (b t) ys r (rec t ys r) ;
-
-simplify ;
-= Sig (BH xf^5 xf^1 xf ; BH xf^4 ys r) ;
-
-simplify ;
-= BH./ (xf^1 s) ys r (xf s ys r) ;
-
-simplify ;
-= (s : s) -> BH./ (xf^1 s) (ys s) (r s) (xf s (ys s) (r s)) ;
-
-
-
+<= DescInd X ;
+define BH _ _ _ _ _ _ 'idD ys r := Sig (Below D Q ys ; Q ys) ;
+define BH _ _ _ _ _ _ ('constD _) ys [] := Sig () ;
+define BH _ _ _ _ _ _ ('sumD e t) [c , ys] r := BH (t c) ys r ;
+give xf c ys r ;
+define BH _ _ _ _ _ _ ('prodD a b) [c , ys] [r1 , r2] := Sig (BH a c r1 ; BH b ys r2) ;
+define BH _ _ _ _ _ _ ('sigmaD e t) [c , ys] r := BH (t c) ys r ;
+give xf c ys r ;
+define BH _ _ _ _ _ _ ('piD S T) ys r := (s : S) -> BH (T s) (ys s) (r s) ;
+give xf s (ys s) (r s) ;
 root ;
 
 

@@ -116,15 +116,22 @@ Given a function from a $\Sigma$-type, we can split it into its components.
 
 Similarly, if we have a function from an enumeration, we can split it into its
 branches. \adam{we should not do this automatically at all, but we need to
-modify the induction principles generated for data types first.}
+modify the induction principles generated for data types first.
+For the moment, we check the enumeration is completely canonical, thereby
+avoiding the worst problems with this simplification step.}
 
-> simplifyGoal b (PI (ENUMT e) t) = do
+> simplifyGoal b (PI (ENUMT e) t) | checkTags e = do
 >     simpTrace "PI ENUMT"
 >     x :=>: xv <- trySimplifyGoal False (branchesOp @@ [e, t])
 >     e' <- bquoteHere e
 >     t' <- bquoteHere t
 >     let body = N (switchOp :@ [e', NV 0, t', x])
 >     topWrap b $ L ("pe" :. body) :=>: L ("pe" :. body)            
+>   where
+>     checkTags :: VAL -> Bool
+>     checkTags NILE         = True
+>     checkTags (CONSE _ e)  = checkTags e
+>     checkTags _            = False
 
 If we have a function from a proof, we call on propositional simplification to
 help out. If the proposition is absurd we win, and if it simplifies into a
