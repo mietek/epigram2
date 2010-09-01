@@ -181,6 +181,13 @@
 %include Cochon/Error.lhs
 %include Main.lhs
 
+\chapter{The Source Language}
+
+%include SourceLang/Structure.lhs
+%include SourceLang/Parser.lhs
+%include SourceLang/Elaborator.lhs
+%include SourceLang/Example.lhs
+
 \chapter{Compiler}
 
 \input{Compiler/Introduction.tex}

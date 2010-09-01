@@ -48,7 +48,8 @@ SRCS_PFSTATE := $(wildcard ProofState/Structure/*.lhs) \
 
 SRCS_DISPLAYS := $(wildcard DisplayLang/*.lhs) \
 	  	 $(wildcard Elaboration/*.lhs) \
-		 $(wildcard Distillation/*.lhs)
+		 $(wildcard Distillation/*.lhs) \
+		 $(wildcard SourceLang/*.lhs)
 
 SRCS_TACTICS := $(wildcard Tactics/*.lhs)
 
