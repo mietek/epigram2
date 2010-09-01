@@ -401,15 +401,14 @@ Because labels are stored lambda-lifted, we have to peel off their
 parameters. Besides, we must accumulate them as we later need to check
 that they are indeed equivalent (|matchParams|).
 
-> {-
-> -- \pierre{Move to Elaboration.}
-> matchLabels :: NEU -> NEU -> [(VAL, VAL)] -> Maybe (REF, [(VAL, VAL)])
-> matchLabels (P ref@(sn := _ :<: _)) (P (tn := _ :<: _)) ps
->     | sn == tn   = Just (ref, ps)
->     | otherwise  = Nothing
-> matchLabels (s :$ A as) (t :$ A at) ps = matchLabels s t ((as, at):ps)
-> matchLabels _ _ _ = Nothing 
-> -}
+< -- \pierre{Move to Elaboration.}
+< matchLabels :: NEU -> NEU -> [(VAL, VAL)] -> Maybe (REF, [(VAL, VAL)])
+< matchLabels (P ref@(sn := _ :<: _)) (P (tn := _ :<: _)) ps
+<     | sn == tn   = Just (ref, ps)
+<     | otherwise  = Nothing
+< matchLabels (s :$ A as) (t :$ A at) ps = matchLabels s t ((as, at):ps)
+< matchLabels _ _ _ = Nothing 
+
 
 \pierre{This is fairly disgusting as well. Could we find a
 presentation where |matchParams| and |makeWait| are fused? Instead of
@@ -424,14 +423,13 @@ unification will resolve them. \pierre{Is it \emph{guaranteed} to
 solve them all? Or some could refuse to unify?}. \pierre{This bit
 needs a better story.}
 
-> {-
-> -- \pierre{Move to Elaboration.}
-> matchParams :: TY -> [(VAL, VAL)] -> [(REF, VAL)] -> ProofState [(REF, VAL)]
-> matchParams ty        []               subst = return subst
-> matchParams (PI s t)  ((as, at) : ps)  subst = do
->     subst' <- valueMatch (s :>: (as, at))
->     matchParams (t $$ A as) ps (subst ++ subst')
-> -}
+< -- \pierre{Move to Elaboration.}
+< matchParams :: TY -> [(VAL, VAL)] -> [(REF, VAL)] -> ProofState [(REF, VAL)]
+< matchParams ty        []               subst = return subst
+< matchParams (PI s t)  ((as, at) : ps)  subst = do
+<     subst' <- valueMatch (s :>: (as, at))
+<     matchParams (t $$ A as) ps (subst ++ subst')
+
 > makeWait :: [(REF, VAL)] -> INTM -> ProofState EProb
 > makeWait []              g  = 
 >     return $ ElabDone (g :=>: Nothing)
