@@ -107,6 +107,27 @@ holes with the new ones.
 
 \subsection{Matching}
 
+
+\pierre{|matchLabels| and |matchParams| comes from Elaboration. Note
+that |matchLabels| is abused in a nasty way. This is a temporary
+fix. Note also that we removed the check that |sn| and |tn| are
+|Fake|. Go to hell if you're unhappy.}
+
+> matchLabels :: NEU -> NEU -> [(VAL, VAL)] -> Maybe (REF, [(VAL, VAL)])
+> matchLabels (P ref@(sn := _ :<: _)) (P (tn := _ :<: _)) ps
+>     | sn == tn   = Just (ref, ps)
+>     | otherwise  = Nothing
+> matchLabels (s :$ A as) (t :$ A at) ps = matchLabels s t ((as, at):ps)
+> matchLabels _ _ _ = Nothing 
+
+
+> matchParams :: TY -> [(VAL, VAL)] -> [(REF, VAL)] -> ProofState [(REF, VAL)]
+> matchParams ty        []               subst = return subst
+> matchParams (PI s t)  ((as, at) : ps)  subst = do
+>     subst' <- valueMatch (s :>: (as, at))
+>     matchParams (t $$ A as) ps (subst ++ subst')
+
+
 The |valueMatch| command takes a pair of values of the same type, and attempts to
 match the hoping holes of the first value to parts of the second value.
 
@@ -118,6 +139,10 @@ match the hoping holes of the first value to parts of the second value.
 >     equationMatch ABSURD       = throwError' $ err "valueMatch: absurd!"
 >     equationMatch (AND p q)    = (| (equationMatch p) ++ (equationMatch q) |)
 >     equationMatch p@(ALL _ _)  = bquoteHere p >>= higherMatch
+>     equationMatch (N (op :@ [_S, N s, _T, N t])) 
+>         | op == eqGreen ,
+>           Just (ref, args) <- matchLabels s t [] = 
+>       matchParams (pty ref) args []
 >     equationMatch (N (op :@ [_S, N s, _T, t]))
 >       | op == eqGreen = do
 >         -- |proofTrace $ "match: " ++ unlines (map show [_S, N s, _T, t])|
