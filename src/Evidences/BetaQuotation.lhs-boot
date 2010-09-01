@@ -1,0 +1,10 @@
+> {-# OPTIONS_GHC -F -pgmF she #-}
+
+> module Evidences.BetaQuotation where
+
+> import NameSupply.NameSupplier
+> import Evidences.Tm
+
+> import Kit.BwdFwd
+
+> bquote :: NameSupplier m => Bwd REF -> Tm {d,VV} REF -> m (Tm {d,TT} REF)

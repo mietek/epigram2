@@ -19,8 +19,10 @@
 > import Evidences.OperatorDSL
 > import {-# SOURCE #-} Evidences.DefinitionalEquality
 > import {-# SOURCE #-} Evidences.PropositionalEquality
+> import {-# SOURCE #-} Evidences.BetaQuotation
 
 > import NameSupply.NameSupply
+> import NameSupply.NameSupplier
 
 > import Features.Features ()
 
@@ -50,11 +52,22 @@ by the |Primitives| aspect, plus a reference corresponding to each operator.
 >     mkRef :: Op -> REF
 >     mkRef op = [("Operators",0),(opName op,0)] := (DEFN opEta :<: opTy)
 >       where
->         opTy = pity $ opTyTel op
+>         opTy = pity (opTyTel op) (((B0 :<  ("Operators",0) :< 
+>                                            (opName op,0) :<
+>                                            ("opTy",0)), 0) :: NameSupply)
 >         ari = opArity op
 >         args = map NV [(ari-1),(ari-2)..0]
 >         names = take (ari-1) (map (\x -> [x]) ['b'..])
 >         opEta = L $ "a" :. Prelude.foldr (\s x -> L (s :. x)) (N $ op :@ args) names
+>
+>         pity :: NameSupplier m => TEL TY -> m TY
+>         pity (Target t)       = return t
+>         pity (x :<: s :-: t)  = do
+>           freshRef  (x :<: error "pity': type undefined")
+>                     (\xref -> do
+>                        t <- pity $ t (pval xref)
+>                        t <- bquote (B0 :< xref) t
+>                        return $ PI s (L $ x :. t))
 
 We can look up the primitive reference corresponding to an operator using
 |lookupOpRef|. This ensures we maintain sharing of these references.
