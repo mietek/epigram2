@@ -25,30 +25,21 @@ root ;
 
 {-
   We will need a mapBox-like gadget that changes the predicate.
-  This is a straightforward induction on descriptions, made messy
-  by over-aggressive problem simplification and under-aggressive
-  recursive call search.
+  This is a straightforward induction on descriptions.
 -}
 
 let boxer (X : Set)(P : X -> Set)(Q : X -> Set)(q : (y : X) -> P y -> Q y)(D : Desc)(x : desc D X)(b : box D X P x) : box D X Q x ;
-elim DescInd D ;
-give con [? ? ? ? ? ?] ;
-simplify ;
-= q x b ;
-simplify ;
-give con \ E -> con \ F -> con con \ rec -> con \ X P Q q -> con \ c x b -> ? ;
-= boxer X P Q q (F c) x b ;
-give rec c X P Q q x b ;
-simplify ;
-= [? , ?] ;
-give boxer X P Q q xf^5 xf^1 xf ;
-give boxer X P Q q xf^4 x b ;
-simplify ;
-= boxer X P Q q (xf^1 s) x b ;
-give xf s X P Q q x b ;
-simplify ;
-= \ sv -> boxer X P Q q (xf^1 sv) (x sv) (b sv) ;
-give xf sv X P Q q (x sv) (b sv) ;
+<= DescInd D ;
+define boxer X P Q q 'idD x b := q x b ;
+define boxer X P Q q ('sumD E F) [c , x] b := boxer X P Q q (F c) x b ;
+
+-- Why doesn't recursion spotting work if these holes are substituted out?
+define boxer X P Q q ('prodD E F) [a , b] [c , d] := [? , ?] ;
+give boxer X P Q q E a c ;
+give boxer X P Q q F b d ;
+
+define boxer X P Q q ('sigmaD E F) [s , x] b := boxer X P Q q (F s) x b ;
+define boxer X P Q q ('piD S T) x b := \ s -> boxer X P Q q (T s) (x s) (b s) ;
 root ;
 
 {-

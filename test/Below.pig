@@ -12,12 +12,9 @@ next ;
 define BH _ _ _ _ _ _ 'idD ys r := Sig (Below D Q ys ; Q ys) ;
 define BH _ _ _ _ _ _ ('constD _) ys [] := Sig () ;
 define BH _ _ _ _ _ _ ('sumD e t) [c , ys] r := BH (t c) ys r ;
-give xf c ys r ;
 define BH _ _ _ _ _ _ ('prodD a b) [c , ys] [r1 , r2] := Sig (BH a c r1 ; BH b ys r2) ;
 define BH _ _ _ _ _ _ ('sigmaD e t) [c , ys] r := BH (t c) ys r ;
-give xf c ys r ;
 define BH _ _ _ _ _ _ ('piD S T) ys r := (s : S) -> BH (T s) (ys s) (r s) ;
-give xf s (ys s) (r s) ;
 root ;
 
 
