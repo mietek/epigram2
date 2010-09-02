@@ -11,20 +11,19 @@
   </header>
   <section>
    <h3>Chapter 1 - Introduction</h3>
-   <p> 
-    Epigram 2 is intended to be a full-scale dependently typed
+   <p> Epigram 2 is intended to be a full-scale dependently typed
     programming language in the spirit of Epigram 1 and Agda. It isn't
-    finished yet. We've made some of the bits and plugged them
-    together. This document explains how to interact with the system
-    as it exists at the moment.
+    finished yet. This document explains how to interact with the
+    system as it exists at the moment.
    </p>
    <p>
-    At the time of writing the best way to do this is to use the
-    Cochon tool for interactive program development. Cochon looks more
-    like a theorem prover than a programming IDE and it's quite low
-    level: the guts are showing. Read on for a tutorial of how to
-    write some simple programs in Cochon. For a glossary of Cochon
-    commands skip to the appendix.
+    Work on the high level programming language has just started. In
+    the meantime we can write programs in a more low level fashion
+    using Cochon. Cochon looks more like a theorem prover than
+    a programming IDE and it's quite low level: the guts are
+    showing. Read on for a tutorial of how to write some simple
+    programs in Cochon. For a glossary of Cochon commands skip to the
+    appendix.
    </p>
   </section>
   <section>
@@ -156,10 +155,11 @@
    and we must deliver a <code>Nat</code>. To do this we first
    indicate to Cochon that we would like to proceed by induction
    on <code>m</code>:</p>
-   <p><code>plus_4.plus-impl_2 &gt; &lt;= Nat.Ind m</code></p>
+   <p><code>plus_5.impl_2 &gt; &lt;= Nat.Ind m</code></p>
    <p>Cochon tells us that things have been <code>Eliminated and
-   simplified.</code> To me it looks more complicated but if we look
-   carefully we see our programming problem has changed:</p>
+   simplified.</code> Simplified? To me it looks more complicated but
+   if we look carefully we see our programming problem has
+   changed:</p>
    <p><code>Programming: &lt; plus^1 'zero n : Nat &gt;</code></p>
    <p>We know very well that 0 + n = n and our first thought might be
    to respond <code>give n</code>. But this doesn't work. Our goal is
@@ -177,12 +177,13 @@
    of these will do and after pressing return Cochon
    says <code>Ta.</code> and moves us to the next goal:</p>
    <p><code>Programming: &lt; plus^1 ('suc xf^1) n : Nat &gt;</code></p>
-   <p><code>xf^1</code> isn't the nicest name, <code>m</code> would
-   have been nicer but let's not make a fuss about it now. We can fill
-   in the step case with this:</p>
-   <p><code>... &gt; = 'suc (plus xf^1 n)</code></p>
-   <p>Cochon responds with just <code>Ta.</code> as we don't have
-   anymore goals.
+   <p><code>xf^1</code> isn't the nicest name, <code>m</code> would be
+   better so instead of using <code>=</code> again let's use a
+   different tactic that lets us choose our own names</p>
+   <p><code>... &gt; define plus ('suc m) n := 'suc (plus m n)</code></p>
+
+   <p>Cochon responds with just <code>Hurrah!</code>. He must really
+   like this tactic.
    <p>We can get back to the root and then check that 2 + 2 indeed
    equals 4.</p>
    <p><code>&gt; elab plus two two</code></p>
@@ -251,7 +252,7 @@
   </section>
   <footer>
   <hr>
-   <address>Last modified 18th May 2010 by James Chapman</address>
+   <address>Last modified 2nd September 2010 by James Chapman</address>
   </footer>
  </body>
 </html>
