@@ -213,7 +213,7 @@
    anyway). As usual, parameters occur before the colon and indices
    afterwards.</p>
 
-   <p><code>idata Vec (A : Set) : Nat -&gt; Set := (nil : Vec A 'zero) ;
+   <p><code>&gt; idata Vec (A : Set) : Nat -&gt; Set := (nil : Vec A 'zero) ;
    (cons : A -&gt; (n : Nat) -&gt; Vec A n -&gt; Vec A ('suc n))
    ;</code></p>
 
@@ -223,17 +223,17 @@
    hand are now dealt with automatically. Now you can write the program
    you would expect, more or less.</p>
 
-   <p><code>let append (A : Set)(m : Nat)(as : Vec A m)(n : Nat)(bs : Vec
-   A n) : Vec A (plus m n) ;<br /> &lt;= Vec.Ind A m as ;<br /> define
-   append A 'zero 'nil n bs := bs ;<br /> define append A ('suc k) ('cons
-   a k as) n bs := 'cons a (plus k n) (append A k as n bs) ;<br /> root
+   <p><code>&gt; let append (A : Set)(m : Nat)(as : Vec A m)(n : Nat)(bs : Vec
+   A n) : Vec A (plus m n) ;<br />&gt; &lt;= Vec.Ind A m as ;<br />&gt; define
+   append A 'zero 'nil n bs := bs ;<br />&gt; define append A ('suc k) ('cons
+   a k as) n bs := 'cons a (plus k n) (append A k as n bs) ;<br />&gt; root
    ;</code></p>
 
    <p>Finally, let us test our function:</p>
 
-   <p><code>make as := 'cons 'true one ('cons 'false 'zero 'nil) : Vec
-   Bool two ;<br /> make bs := 'cons 'false one ('cons 'true 'zero 'nil)
-   : Vec Bool two ;<br /> elaborate append Bool two as two bs
+   <p><code>&gt; make as := 'cons 'true one ('cons 'false 'zero 'nil) : Vec
+   Bool two ;<br />&gt; make bs := 'cons 'false one ('cons 'true 'zero 'nil)
+   : Vec Bool two ;<br />&gt; elaborate append Bool two as two bs
    ;</code></p>
 
    <p>The output is not as pretty as it could be, and better implicit
@@ -248,7 +248,15 @@
      
      <dt>
       <code>
-       data <i>type</i> := (<i>con</i> : <i>type</i>) ; <i>more_cons</i>
+       data <i>name</i> := (<i>con</i> : <i>type</i>) ; <i>more_cons</i>
+      </code>
+     </dt>
+     <dd>Introduce a new indexed data type.Note currently the number
+     of indices must be one.</dd>
+
+     <dt>
+      <code>
+       idata <i>name</i> (<i>name</i> : <i>type</i>) : <i>type</i> := (<i>con</i> : <i>type</i>) ; <i>more_cons</i>
       </code>
      </dt>
      <dd>Introduce a new data type.</dd>
@@ -288,6 +296,9 @@
 
      <dt><code>=</code></dt>
      <dd>Sugar for <code>give return</code>.</dd>
+     <dt><code>define fun arg1 arg2 = val</code></dt>
+     <dd>Like <code>=</code> but you can rename the arguments.
+     <dd>
     </dl>
   </section>
   <footer>
