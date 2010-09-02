@@ -212,7 +212,7 @@ case for sigma.
 >         "D" :<: desc :-: \ dD ->
 >         "X" :<: SET :-: \ xX ->
 >         "P" :<: ARR xX SET :-: \ pP ->
->         "p" :<: (pity $ "x" :<: xX :-: \ x -> Target $ pP $$ A x) :-: \ _ ->
+>         "p" :<: (PI xX $ L $ "x" :. [.x. pP -$ [ NV x ] ]) :-: \ _ ->
 >         "v" :<: (descOp @@ [dD,xX]) :-: \v ->
 >          Target (boxOp @@ [dD,xX,pP,v])
 
@@ -339,9 +339,9 @@ case for sigma.
 
 > import -> Coerce where
 >   coerce (Mu (Just (l0,l1) :?=: Id (d0,d1))) q (CON x) =
->     let (typ :>: vap) = laty ("d" :<: desc :-: \d ->
->                               "l" :<: ANCHORS :-: \l ->
->                               Target (SET :>: descOp @@ [d,MU (Just l) d])) 
+>     let typ = ARR desc (ARR ANCHORS SET)
+>         vap = L $ "d" :. [.d. L $ "l" :. [.l. N $  
+>                 descOp :@ [NV d,MU (Just $ NV l) (NV d)] ] ] 
 >     in Right . CON $ 
 >       coe @@ [ descOp @@ [ d0 , MU (Just l0) d0 ] 
 >              , descOp @@ [ d1 , MU (Just l1) d1 ]
@@ -350,8 +350,9 @@ case for sigma.
 >                                $$ A l0 $$ A l1 $$ A (CON $ q $$ Fst)
 >              , x ]
 >   coerce (Mu (Nothing :?=: Id (d0,d1))) q (CON x) =
->     let (typ :>: vap) = laty ("d" :<: desc :-: \d ->
->                               Target (SET :>: descOp @@ [d,MU Nothing d]))  
+>     let typ = ARR desc SET
+>         vap = L $ "d" :. [.d. N $   
+>                 descOp :@ [NV d,MU Nothing (NV d)] ] 
 >     in Right . CON $ 
 >       coe @@ [ descOp @@ [ d0 , MU Nothing d0 ] 
 >              , descOp @@ [ d1 , MU Nothing d1 ]

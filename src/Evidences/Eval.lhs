@@ -71,7 +71,6 @@ This translates into the following code:
 > ($$) :: VAL -> Elim VAL -> VAL
 > L (K v)      $$ A _  = v                 -- By \ref{eqn:Evidences.Rules.elim-cstt}
 > L (H g _ t)  $$ A v  = eval t (g :< v)   -- By \ref{eqn:Evidences.Rules.elim-bind}
-> L (HF _ f)   $$ A v  = f v               -- By \ref{eqn:Evidences.Rules.elim-bind}
 > L (x :. t)   $$ A v  = eval t (B0 :< v)  -- By \ref{eqn:Evidences.Rules.elim-bind}
 > C (Con t)    $$ Out  = t                 -- By \ref{eqn:Evidences.Rules.elim-con}
 > import <- ElimComputation                -- Extensions
@@ -127,9 +126,6 @@ This naturally leads to the following code:
 > body (K v)     g   = K (eval v g)
 > body (x :. t)  B0  = x :. t  -- closed lambdas stay syntax
 > body (x :. t)  g   = H g x t
-> --body (x :. t)  g   = HF x (\v -> eval t (g :< v))
-
-\conor{I'm in the process of restoring first-order closures.}
 
 \subsection{Evaluator}
 

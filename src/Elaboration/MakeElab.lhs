@@ -320,7 +320,7 @@ the overall type-term pair from the result.
 >                              (tm :=>: tv :<: PI sd t) [] = do
 >         let sv = eval (schemeToInTm schS) (fmap valueOf es)
 >         tm :=>: tv <- eCompute
->             (PI sv (L . HF x . const $ sigSetVAL) :>: do
+>             (PI sv (L $ K sigSetVAL) :>: do
 >                 r <- eLambda x
 >                 let rt = NP r
 >                 handleSchemeArgs (es :< (rt :=>: rt)) schT

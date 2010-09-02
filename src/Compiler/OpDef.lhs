@@ -97,6 +97,6 @@ all of this could be captured in the definition of Op.
 >            (Dec n (\k ->
 >               Val (switchOp @@ [arg $$ Snd $$ Fst, 
 >                                 k,
->                                 L . HF "x" $ \x -> p $$ A (SU x),
+>                                 L $ "x" :. [.x.  p -$ [ SU (NV x) ] ],
 >                                 ps $$ Snd]))))
 >            ))))

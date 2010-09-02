@@ -481,7 +481,6 @@ The first argument is an optional hint for the name of the reference.
 >       nameHint :: VAL -> String
 >       nameHint _ | not (null hint)  = hint
 >       nameHint (NP (n := _))        = fst (last n)
->       nameHint (L (HF s _))         = s
 >       nameHint (L (H _ s _))        = s
 >       nameHint (L (s :. _))         = s
 >       nameHint _                    = "xnh"

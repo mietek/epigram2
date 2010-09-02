@@ -60,14 +60,6 @@ by the |Primitives| aspect, plus a reference corresponding to each operator.
 >         names = take (ari-1) (map (\x -> [x]) ['b'..])
 >         opEta = L $ "a" :. Prelude.foldr (\s x -> L (s :. x)) (N $ op :@ args) names
 >
->         pity :: NameSupplier m => TEL TY -> m TY
->         pity (Target t)       = return t
->         pity (x :<: s :-: t)  = do
->           freshRef  (x :<: error "pity': type undefined")
->                     (\xref -> do
->                        t <- pity $ t (pval xref)
->                        t <- bquote (B0 :< xref) t
->                        return $ PI s (L $ x :. t))
 
 We can look up the primitive reference corresponding to an operator using
 |lookupOpRef|. This ensures we maintain sharing of these references.
@@ -77,3 +69,11 @@ We can look up the primitive reference corresponding to an operator using
 >     Just ref  -> ref
 >     Nothing   -> error $ "lookupOpRef: missing operator primitive " ++ show op
 
+> pity :: NameSupplier m => TEL TY -> m TY
+> pity (Target t)       = return t
+> pity (x :<: s :-: t)  = do
+>   freshRef  (x :<: error "pity': type undefined")
+>             (\xref -> do
+>                t <- pity $ t (pval xref)
+>                t <- bquote (B0 :< xref) t
+>                return $ PI s (L $ x :. t))

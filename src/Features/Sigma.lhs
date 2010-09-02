@@ -125,14 +125,14 @@
 > import -> OpCode where
 >   splitOp = Op
 >     { opName = "split" , opArity = 5
->     , opTyTel =  "A"   :<: SET                     :-: \ aA ->
->                  "B"   :<: ARR aA SET              :-: \ bB ->
->                  "ab"  :<: SIGMA aA bB             :-: \ ab ->
->                  "P"   :<: ARR (SIGMA aA bB) SET   :-: \ pP ->
->                  "p"   :<: pity (
->                    "a" :<: aA :-: \ a -> 
->                    "b" :<: (bB $$ A a) :-: \ b -> Target $
->                    pP $$ A (PAIR a b))             :-: \ p ->
+>     , opTyTel =  "A"   :<: SET                          :-: \ aA ->
+>                  "B"   :<: ARR aA SET                   :-: \ bB ->
+>                  "ab"  :<: SIGMA aA bB                  :-: \ ab ->
+>                  "P"   :<: ARR (SIGMA aA bB) SET        :-: \ pP ->
+>                  "p"   :<: (
+>                    PI aA $ L $ "a" :. [.a. 
+>                     PI (bB -$ [ NV a ]) $ L $ "b" :. [.b.
+>                      pP -$ [ PAIR (NV a) (NV b) ] ] ])  :-: \ p ->
 >                  Target $ pP $$ A ab
 >     , opRun = runOpTree $
 >         oLams $ \ () () ab () p -> ORet $ p $$ A (ab $$ Fst) $$ A (ab $$ Snd)

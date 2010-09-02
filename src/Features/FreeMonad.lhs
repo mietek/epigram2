@@ -79,8 +79,9 @@
 >       substMonadOpRun :: [VAL] -> Either NEU VAL
 >       substMonadOpRun [dD, xX, yY, f, COMPOSITE ts] = Right . COMPOSITE $
 >         mapOp @@ [  dD, MONAD dD xX, MONAD dD yY,
->                     L . HF "t" $ \ t ->
->                     substMonadOp @@ [dD, xX, yY, f, t],
+>                     L $ "t" :. [.t. N $
+>                     substMonadOp :@ [  dD -$ [], xX -$ [], yY -$ []
+>                                     ,  f -$ [], NV t] ] ,
 >                     ts]
 >       substMonadOpRun [d, x, y, f, RETURN z]  = Right $ f $$ A z
 >       substMonadOpRun [d, x, y, f, N t]    = Left t
@@ -93,7 +94,9 @@
 >           ret = eval (L ("x" :. [.x. RETURN (NV x)])) B0
 >       substMonadOpSimp [d, y, z, f, N (sOp :@ [_, x, _, g, N t])] r
 >         | sOp == substMonadOp = pure $ substMonadOp :@ [d, x, z, comp, N t]
->         where  comp = L . HF "x" $ \ x -> substMonadOp @@ [d, y, z, f, g $$ A x]
+>         where  comp = L $ "x" :. [.x. N $
+>                         substMonadOp :@ [ d -$ [], y -$ [], z -$ []
+>                                         , f -$ [], g -$ [ NV x ] ] ]
 >       substMonadOpSimp _ _ = empty
 
 >   elimMonadOp :: Op
@@ -104,13 +107,12 @@
 >                  "X" :<: SET                        :-: \ xX ->
 >                  "t" :<: MONAD dD xX                :-: \ t ->
 >                  "P" :<: ARR (MONAD dD xX) SET      :-: \ pP ->
->                  "c" :<: (pity $
->                     "ts" :<: descOp @@ [dD, MONAD dD xX]         :-: \ ts ->
->                     "hs" :<: boxOp @@ [dD, MONAD dD xX, pP, ts]  :-: \ _ ->
->                      Target $ pP $$ A (COMPOSITE ts))  :-: \ _ ->
->                  "v" :<: (pity $
->                     "x" :<: xX :-: \ x ->
->                     Target $ pP $$ A (RETURN x))       :-: \ _ ->
+>                  "c" :<: (PI (descOp @@ [dD, MONAD dD xX]) $ L $ "ts" :. [.ts.
+>                            ARR (N (boxOp :@ [  dD -$ []
+>                                             ,  MONAD (dD -$ []) (xX -$ [])
+>                                             ,  pP -$ [] , NV ts])) 
+>                             (pP -$ [COMPOSITE (NV ts) ])])  :-: \ _ ->
+>                  "v" :<: (PI xX $ L $ "x" :. [.x. pP -$ [ RETURN (NV x) ] ])       :-: \ _ ->
 >                  Target $ pP $$ A t
 >     , opRun = elimMonadOpRun
 >     , opSimp = \_ _ -> empty
@@ -118,7 +120,9 @@
 >       elimMonadOpRun :: [VAL] -> Either NEU VAL
 >       elimMonadOpRun [d,x,COMPOSITE ts,bp,mc,mv] = Right $ 
 >         mc $$ A ts $$ A (mapBoxOp @@ [d, MONAD d x, bp,
->           L . HF "t" $ \ t -> elimMonadOp @@ [d, x, t, bp, mc, mv],
+>           L $ "t" :. [.t. N $ elimMonadOp :@ [  d -$ [], x -$ []
+>                                              ,  NV t , bp -$ []
+>                                              ,  mc -$ [], mv -$ [] ] ] ,
 >           ts])
 >       elimMonadOpRun [d,x,RETURN z,bp,mc,mv] = Right $ mv $$ A z
 >       elimMonadOpRun [_,_,N n,_,_,_] = Left n

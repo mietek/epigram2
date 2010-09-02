@@ -131,8 +131,8 @@ Elim forms inherited from elsewhere
 >               , opTyTel = "S" :<: SET :-: \ ty ->
 >                           "p" :<: PRF (INH ty) :-: \ p ->
 >                           "P" :<: IMP (PRF (INH ty)) PROP :-: \ pred ->
->                           "m" :<: PI ty (L $ HF "s" $ \ t -> 
->                                            pred $$ A (WIT t)) :-: \ _ -> 
+>                           "m" :<: PI ty (L $ "s" :. [.t.  
+>                                            pred -$ [ WIT (NV t) ] ]) :-: \ _ -> 
 >                           Target (PRF (pred $$ A p))
 >               , opRun = \[_,p,_,m] -> case p of
 >                                         WIT t -> Right $ m $$ A t

@@ -68,9 +68,9 @@
 > import -> Coerce where
 >   -- coerce :: (Can (VAL,VAL)) -> VAL -> VAL -> Either NEU VAL
 >   coerce (Nu (Just (l0,l1) :?=: Id (d0,d1))) q (CON x) =
->     let (typ :>: vap) = laty ("d" :<: desc :-: \d ->
->                               "l" :<: SET :-: \l ->
->                               Target (SET :>: descOp @@ [d,NU (Just l) d])) 
+>     let typ = ARR desc (ARR SET SET)
+>         vap = L $ "d" :. [.d. L $ "l" :. [.l. N $  
+>                 descOp :@ [NV d,NU (Just $ NV l) (NV d)] ] ] 
 >     in Right . CON $ 
 >       coe @@ [ descOp @@ [ d0 , NU (Just l0) d0 ] 
 >              , descOp @@ [ d1 , NU (Just l1) d1 ]
@@ -79,8 +79,9 @@
 >                                $$ A l0 $$ A l1 $$ A (CON $ q $$ Fst)
 >              , x ]
 >   coerce (Nu (Nothing :?=: Id (d0,d1))) q (CON x) =
->     let (typ :>: vap) = laty ("d" :<: desc :-: \d ->
->                               Target (SET :>: descOp @@ [d,NU Nothing d]))  
+>     let typ = ARR desc SET
+>         vap = L $ "d" :. [.d. N $   
+>                 descOp :@ [NV d,NU Nothing (NV d)] ] 
 >     in Right . CON $ 
 >       coe @@ [ descOp @@ [ d0 , NU Nothing d0 ] 
 >              , descOp @@ [ d1 , NU Nothing d1 ]

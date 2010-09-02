@@ -15,6 +15,8 @@
 > import Evidences.Tm
 > import Evidences.Mangler
 > import Evidences.Eval
+> import Evidences.TypeChecker
+> import Evidences.Operators
 
 > import Features.Features ()
 
@@ -267,7 +269,7 @@ plus [
 >     n   <- getCurrentName
 >     pn  <- getFakeCurrentEntry 
 >     (gUnlifted :=>: _) <- getHoleGoal
->     let newty  = pity (mkTel (unN $ valueOf pn) (evTm gUnlifted) [] args)
+>     newty <- withNSupply $ pity (mkTel (unN $ valueOf pn) (evTm gUnlifted) [] args)
 >     newty'       <- bquoteHere newty
 >     impl :=>: _  <- make (magicImplName :<: newty') 
 >     argrefs      <- traverse lambdaParam args

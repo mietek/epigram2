@@ -41,20 +41,20 @@ relation over |A|.
 >   equivalenceRelation :: VAL -> VAL -> VAL
 >   equivalenceRelation a r =
 >     -- refl
->     AND (allty $ "x" :<: a :-: \x -> Target $ x =~ x) $
+>     AND (ALL a $ L $ "x" :. [.x. x =~ x ]) $
 >     -- sym
->     AND (allty $ "x" :<: a :-: \x ->
->                  "y" :<: a :-: \y ->
->                  Target $ IMP (x =~ y) (y =~ x)
+>     AND (ALL a $ L $ "x" :. [.x. 
+>           ALL (a -$ []) $ L $ "y" :. [.y. 
+>            IMP (x =~ y) (y =~ x) ] ]
 >         ) $
 >     -- trans
->         (allty $ "x" :<: a :-: \x ->
->                  "y" :<: a :-: \y ->
->                  "z" :<: a :-: \z ->
->                  Target $ IMP (x =~ y) (IMP (y =~ z) (x =~ z))
+>         (ALL a $ L $ "x" :. [.x. 
+>           ALL (a -$ []) $ L $ "y" :. [.y. 
+>            ALL (a -$ []) $ L $ "z" :. [.z. 
+>             IMP (x =~ y) (IMP (y =~ z) (x =~ z)) ] ] ]
 >         )
 >     where
->       x =~ y = r $$ A x $$ A y
+>       x =~ y = r -$ [ NV x , NV y ]
 
 > import -> CanTyRules where
 >   canTy chev (Set :>: Quotient x r p) = do
@@ -82,14 +82,16 @@ relation over |A|.
 >                 "p" :<: PRF (equivalenceRelation _X _R) :-: \p ->
 >                 "z" :<: QUOTIENT _X _R p                :-: \z ->
 >                 "P" :<: ARR (QUOTIENT _X _R p) SET      :-: \_P ->
->                 "m" :<: pity ("x" :<: _X :-: \x -> Target $ _P $$ A (CLASS x))
+>                 "m" :<: (PI _X $ L $ "x" :. [.x. _P -$ [ CLASS (NV x) ] ])
 >                                                         :-: \m ->
->                 "h" :<: PRF (allty ("x" :<: _X :-: \x ->
->                                     "y" :<: _X :-: \y ->
->                                     Target $ IMP (_R $$ A x $$ A y)
->                                               (EQBLUE (_P $$ A (CLASS x) :>: m $$ A x)
->                                                       (_P $$ A (CLASS y) :>: m $$ A y))
->                                    ))                   :-: \_ ->
+>                 "h" :<: PRF (ALL _X $ L $ "x" :. [.x.
+>                               ALL (_X -$ []) $ L $ "y" :. [.y.
+>                                IMP (_R -$ [ NV x , NV y ])
+>                                 (EQBLUE (_P -$ [ CLASS (NV x) ] 
+>                                             :>: m -$ [ NV x ])
+>                                         (_P -$ [ CLASS (NV y) ] 
+>                                             :>: m -$ [ NV y ])) ] ]) 
+>                                                         :-: \_ ->
 >                 Target $ _P $$ A z
 >     , opRun = run
 >     , opSimp = \_ _ -> empty
@@ -101,9 +103,9 @@ relation over |A|.
 
 > import -> OpRunEqGreen where
 >   opRunEqGreen [QUOTIENT a r _, CLASS x, QUOTIENT b s _, CLASS y] =
->     Right $ ALL b . L . HF "x2" $ \x2 ->
->               IMP (EQBLUE (a :>: x) (b :>: x2))
->                   (s $$ A x2 $$ A y)
+>     Right $ ALL b $ L $ "x2" :. [.x2. 
+>               IMP (EQBLUE ((a -$ []) :>: (x -$ [])) ((b -$ []) :>: NV x2))
+>                   (s -$ [NV x2 , y -$ [] ]) ]
 >   opRunEqGreen [QUOTIENT a r _, N x, QUOTIENT b s _, _]   = Left x
 >   opRunEqGreen [QUOTIENT a r _, _,   QUOTIENT b s _, N y] = Left y
 

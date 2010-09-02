@@ -156,12 +156,6 @@ with phase. In \emph{terms}, |x :. t| is a \emph{binder}: the |t| is a
 de Bruijn term with a new bound variable 0, and the old ones
 incremented. The |x| is just advice for display name selection.
 
-In values, |HF x body| is an higher-order binding. As previously, |x|
-is just name advice. On the other hand, |body| is a stored function
-awaiting a value, the bound variable, to compute a \emph{fully
-evaluated} value. The substitution is therefore partially inherited
-from Haskell. 
-
 \begin{danger}
 It is important to ensure that |body| computes to a
 fully evaluated value, otherwise say "good bye" to strong
@@ -181,7 +175,6 @@ both syntactic and functional scopes in both places.}
 > data Scope :: {Phase} -> * -> * where
 >   (:.)  :: String -> Tm {In, TT} x           -> Scope p{-TT-} x  -- binding
 >   H     :: ENV -> String -> Tm {In, TT} x    -> Scope p{-VV-} x  
->   HF    :: String -> (VAL -> Tm {In, VV} x)  -> Scope p{-VV-} x   
 >   K     :: Tm {In, p} x                      -> Scope p x     -- constant
 
 
@@ -273,25 +266,6 @@ terminated by a |Target|.
 
 \question{Couldn't we derive |TEL| in |Foldable| or equivalent and get
 |telCheck| as a |fold|?}
-
-Easily, a telescope can be turned into a sequence of $\Pi$ types:
-
-> pity :: TEL TY -> TY
-> pity (Target t)          = t
-> pity (x :<: s :-: t)  = PI s (L (HF x $ pity . t))
-
-> laty :: TEL (TY :>: VAL) -> (TY :>: VAL)
-> laty (Target t)        = t
-> laty (x :<: s :-: t)   =
->   PI s (body (\(ty :>: _) -> ty)) :>: body (\(_ :>: val) -> val)
->     where body f = L (HF x $ f . laty . t)
-
-
-And, similarly, as a sequence of $\forall$s:
-
-> allty :: TEL VAL -> VAL
-> allty (Target t)          = t
-> allty (x :<: s :-: t)  = ALL s (L (HF x $ allty . t))
 
 The interpretation of the telescope is carried by |telCheck|. On the
 model of |opTy| defined below, this interpretation uses a generic
@@ -595,7 +569,6 @@ a useful name from a term.
 > fortran :: Tm {In, p} x -> String
 > fortran (L (x :. _))   | not (null x) = x
 > fortran (L (H _ x _))   | not (null x) = x
-> fortran (L (HF x  _))  | not (null x) = x
 > fortran _ = "xf"
 
 If we have a bunch of references we can make them into a spine:
@@ -723,7 +696,6 @@ To ease the writing of error terms, we have a bunch of combinators:
 > instance Show x => Show (Scope p x) where
 >   show (x :. t)   = show x ++ " :. " ++ show t
 >   show (H g x t) = "H (" ++ show g ++ ") " ++ x ++ "(" ++ show t ++ ")"
->   show (HF x t)  = "..."
 >   show (K t) = "K (" ++ show t ++")"
 
 > instance Show Op where

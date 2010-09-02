@@ -92,16 +92,20 @@
 >         qiI = CON $ q $$ Snd $$ Fst
 >         qi  = CON $ q $$ Snd $$ Snd $$ Snd
 >         qd = CON $ q $$ Snd $$ Snd $$ Fst
->         (typ :>: vap) = 
->           laty ("I" :<: SET :-: \iI ->
->                 "d" :<: ARR iI (idesc $$ A iI $$ A VOID) :-: \d ->
->                 "i" :<: iI :-: \i ->
->                 "l" :<: ARR iI SET :-: \l ->
->                 Target (SET :>: 
->                           idescOp @@ [ iI , d $$ A i
->                                      , L $ "i" :. [.i. 
->                                          IMU (|(l -$ [])|) (iI -$ []) (d -$ []) (NV i)]
->                                      ]))
+>         typ = 
+>           PI SET $ L $ "iI" :. [.iI.
+>            ARR (ARR (NV iI) (idesc -$ [ NV iI , VOID ])) $  
+>             ARR (NV iI) $  
+>              ARR (ARR (NV iI) SET) SET ]
+>         vap =
+>           L $ "iI" :. [.iI.
+>            L $ "d" :. [.d. 
+>             L $ "i" :. [.i. 
+>              L $ "l" :. [.l. N $ 
+>               idescOp :@ [ NV iI , N (V d :$ A (NV i))
+>                          , L $ "j" :. [.j. 
+>                             IMU (|(NV l)|) (NV iI) (NV d) (NV j)]
+>                          ] ] ] ] ]
 >     in Right . CON $ 
 >       coe @@ [ idescOp @@ [  iI0, d0 $$ A i0 
 >                           ,  L $ "i" :. [.i. 
@@ -123,16 +127,18 @@
 >     let qiI = CON $ q $$ Fst
 >         qi  = CON $ q $$ Snd $$ Snd
 >         qd = CON $ q $$ Snd $$ Fst
->         (typ :>: vap) = 
->           laty ("I" :<: SET :-: \iI ->
->                 "d" :<: ARR iI (idesc $$ A iI $$ A VOID) :-: \d ->
->                 "i" :<: iI :-: \i ->
->                 Target 
->                  (SET :>: 
->                    (idescOp @@ [ iI , d $$ A i
->                                , L $ "i" :. [.i.
->                                    IMU Nothing (iI -$ []) (d -$ []) (NV i)]
->                                ]))) 
+>         typ = 
+>           PI SET $ L $ "iI" :. [.iI.
+>            ARR (ARR (NV iI) (idesc -$ [ NV iI , VOID ])) $  
+>             ARR (NV iI) SET ]
+>         vap =
+>           L $ "iI" :. [.iI.
+>            L $ "d" :. [.d. 
+>             L $ "i" :. [.i. N $ 
+>               idescOp :@ [ NV iI , N (V d :$ A (NV i))
+>                          , L $ "j" :. [.j. 
+>                             IMU Nothing (NV iI) (NV d) (NV j)]
+>                          ] ] ] ] 
 >     in Right . CON $ 
 >       coe @@ [ idescOp @@ [ iI0 , d0 $$ A i0
 >                           , L $ "i" :. [.i. 
@@ -310,18 +316,19 @@
 >         "X" :<: ARR _I SET :-: \ _X -> 
 >         let _IX = SIGMA _I (L $ "i" :. [.i. _X -$ [NV i] ]) in
 >         "P" :<: ARR _IX SET :-: \ _P ->
->         "p" :<: (pity $ "ix" :<: _IX :-: \ ix -> Target $ _P $$ A ix) :-: \ _ ->
+>         "p" :<: (PI _IX $ L $ "ix" :. [.ix. _P -$ [ NV ix ] ] ) :-: \ _ ->
 >         "v" :<: (idescOp @@ [_I,_D,_X]) :-: \v ->
 >          Target (idescOp @@ [_IX, iboxOp @@ [_I,_D,_X,v], _P])
 
->   iinductionOpMethodType _I _D _P = pity $ 
->                        "i" :<: _I :-: \i ->
->                        let mud = L $ "i" :. [.i. IMU Nothing (_I -$ []) (_D -$ []) (NV i) ] in
->                        "x" :<: (idescOp @@ [ _I, _D $$ A i, mud])
->                                  :-: \x -> Target $
->                          ARR (idescOp @@ [ SIGMA _I mud
->                                         , iboxOp @@ [_I, _D $$ A i, mud, x], _P ])
->                              (_P $$ A (PAIR i (CON x))) 
+>   iinductionOpMethodType _I _D _P =  
+>       PI _I $ L $ "i" :. [.i.
+>        let _It = _I -$ []
+>            mud = L $ "j" :. [.j. IMU Nothing _It (_D -$ []) (NV j) ] 
+>        in PI (N (idescOp :@ [ _It, _D -$ [ NV i ], mud])) $ L $ "x" :. [.x.
+>            ARR (N (idescOp :@ [ SIGMA _It mud
+>                               , N (iboxOp :@ [_It, _D -$ [ NV i ], mud, NV x])
+>                               , _P -$ [] ]))
+>             (_P -$ [ PAIR (NV i) (CON (NV x)) ]) ] ] 
 
 >   iinductionOp :: Op
 >   iinductionOp = Op

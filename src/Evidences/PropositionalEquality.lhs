@@ -38,6 +38,8 @@ for application of this operator.
 > (<->) :: (TY :>: VAL) -> (TY :>: VAL) -> VAL
 > (y0 :>: t0) <-> (y1 :>: t1) = eqGreen @@ [y0,t0,y1,t1]
 
+> (<:-:>) :: (INTM :>: INTM) -> (INTM :>: INTM) -> INTM
+> (y0 :>: t0) <:-:> (y1 :>: t1) = N $ eqGreen :@ [y0,t0,y1,t1]
 
 We define the computational behaviour of the |eqGreen| operator as follows,
 
@@ -46,15 +48,18 @@ We define the computational behaviour of the |eqGreen| operator as follows,
 > import <- OpRunEqGreen
 
 > opRunEqGreen [C (Pi sS1 tT1), f1, C (Pi sS2 tT2), f2] = Right $ 
->   ALL sS1 . L . HF "s1" $  \ s1 -> ALL sS2 . L . HF "s2" $ \ s2 ->
->   IMP  (EQBLUE (sS1 :>: s1) (sS2 :>: s2)) $
->   (tT1 $$ A s1 :>: f1 $$ A s1) <-> (tT2 $$ A s2 :>: f2 $$ A s2)
+>   ALL sS1 $ L $ "s1" :.  [.s1. 
+>    ALL (sS2 -$ []) $ L $ "s2" :. [.s2. 
+>     IMP  (EQBLUE ((sS1 -$ []) :>: NV s1) ((sS2 -$ []) :>: NV s2)) $
+>      (tT1 -$ [ NV s1 ] :>: f1 -$ [ NV s1 ]) 
+>        <:-:> (tT2 -$ [ NV s2 ] :>: f2 -$ [ NV s2 ]) ] ] 
 
 > opRunEqGreen [SET, PI sS1 tT1, SET, PI sS2 tT2] = Right $
->    AND  ((SET :>: sS2) <-> (SET :>: sS1))
->         (ALL sS2 . L . HF "s2" $ \ s2 -> ALL sS1 . L . HF "s1" $  \ s1 ->
->            IMP  (EQBLUE (sS2 :>: s2) (sS1 :>: s1)) $
->            (SET :>: tT1 $$ A s1) <-> (SET :>: tT2 $$ A s2))
+>    AND  ((SET :>: sS2) <-> (SET :>: sS1)) $
+>          ALL sS2 $ L $ "s2" :. [.s2.  
+>           ALL (sS1 -$ []) $ L $ "s1" :. [.s1.  
+>            IMP  (EQBLUE ((sS2 -$ []) :>: NV s2) ((sS1 -$ []) :>: NV s1)) $
+>             (SET :>: (tT1 -$ [ NV s1 ])) <:-:> (SET :>: (tT2 -$ [ NV s2 ])) ] ]
 
 > opRunEqGreen [SET, C (Mu (_ :?=: Id t0)), SET, C (Mu (_ :?=: Id t1))] = 
 >     opRunEqGreen [desc, t0, desc, t1]
@@ -109,8 +114,13 @@ axiom |coh| to produce the proof.
 
 > coeh :: TY -> TY -> VAL -> VAL -> (VAL, VAL)
 > coeh s t q v | partialEq s t q  = (v, pval refl $$ A s $$ A v)
-> coeh s t q v = (coe @@ [s, t, q, v], coh @@ [s, t, q, v])
+> coeh s t q v = (  coe @@ [s , t , q , v]
+>                ,  coh @@ [s , t , q , v])
 
+> coehin :: TY -> TY -> VAL -> INTM -> (INTM, INTM)
+> coehin s t q v | partialEq s t q  = (v, pval refl -$ [ s -$ [] , v ])
+> coehin s t q v = (  N $ coe :@ [s -$ [], t -$ [], q -$ [], v]
+>                  ,  N $ coh :@ [s -$ [], t -$ [], q -$ [], v])
 
 The |coerce| function transports values between equal canonical sets. Given two
 sets built from the same canonical constructor (represented as |Can (VAL, VAL)|,
@@ -128,11 +138,11 @@ between incompatible sets.
 > coerce :: (Can (VAL,VAL)) -> VAL -> VAL -> Either NEU VAL
 > coerce Set q x = Right x
 > coerce (Pi (sS1, sS2) (tT1, tT2)) q f1 = 
->   Right . L . HF (fortran tT2) $ \ s2 ->
->     let  (s1, sq) = coeh sS2 sS1 (CON $ q $$ Fst) s2
->          t1 = f1 $$ A s1
->     in   coe @@ [tT1 $$ A s1, tT2 $$ A s2,
->                    CON $ q $$ Snd $$ A s2 $$ A s1 $$ A sq, t1]
+>   Right . L $ (fortran tT2) :. [.s2. N $ 
+>     let  (s1, sq) = coehin sS2 sS1 (CON $ q $$ Fst) (NV s2)
+>          t1 = f1 -$ [ s1 ]
+>     in   coe :@ [  tT1 -$ [ s1 ], tT2 -$ [ NV s2 ]
+>                 ,  CON $ (q $$ Snd) -$ [ NV s2 , s1 , sq ] , t1 ] ]
 > import <- Coerce
 > coerce _    q  (N x)  = Left x
 > coerce cvv  q  r      = error $ unlines ["coerce: can't cope with sets",
