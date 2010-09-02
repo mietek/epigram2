@@ -198,7 +198,47 @@
       &gt; compile twoplustwo twoplustwo
     </code>
    </p>
-   <p>I'll stop here as we've temporarily overtaken reality.</p>
+   <p><strike>I'll stop here as we've temporarily overtaken
+   reality.</strike> Reality moves in fits and starts if you don't pay
+   close attention it can whizz past when you're not looking.</p>
+  </section>
+  <h3>Chapter 5 - My second Epigram program</h3>
+   <p>This section is ingloriously ripped from the epilogue
+   post <a href="http://www.e-pig.org/epilogue/?p=683">The Art of the
+   Possible</a>.</p>
+
+   <p>With those preliminaries out of the way, on to the new
+   stuff. First, Peter&#8217;s shiny new <code>idata</code> tactic allows
+   indexed data types to be written in a nice syntax (nicer than codes,
+   anyway). As usual, parameters occur before the colon and indices
+   afterwards.</p>
+
+   <p><code>idata Vec (A : Set) : Nat -&gt; Set := (nil : Vec A 'zero) ;
+   (cons : A -&gt; (n : Nat) -&gt; Vec A n -&gt; Vec A ('suc n))
+   ;</code></p>
+
+   <p>Once we have <code>plus</code> and vectors, what could be more
+   natural than writing vector append? This has become much more pleasant
+   in recent weeks, because equations that once had to be eliminated by
+   hand are now dealt with automatically. Now you can write the program
+   you would expect, more or less.</p>
+
+   <p><code>let append (A : Set)(m : Nat)(as : Vec A m)(n : Nat)(bs : Vec
+   A n) : Vec A (plus m n) ;<br /> &lt;= Vec.Ind A m as ;<br /> define
+   append A 'zero 'nil n bs := bs ;<br /> define append A ('suc k) ('cons
+   a k as) n bs := 'cons a (plus k n) (append A k as n bs) ;<br /> root
+   ;</code></p>
+
+   <p>Finally, let us test our function:</p>
+
+   <p><code>make as := 'cons 'true one ('cons 'false 'zero 'nil) : Vec
+   Bool two ;<br /> make bs := 'cons 'false one ('cons 'true 'zero 'nil)
+   : Vec Bool two ;<br /> elaborate append Bool two as two bs
+   ;</code></p>
+
+   <p>The output is not as pretty as it could be, and better implicit
+   argument support could make the code a bit less verbose, but working
+   with Epigram is starting to look like programming!</p>
   </section>
   <section>
    <h3>Appendix - List of Cochon commands</h3>
