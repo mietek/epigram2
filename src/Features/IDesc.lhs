@@ -434,29 +434,33 @@ description is not neutral, to improve the pretty-printed representation.
 >   ("IDescD", idescDREF) :
 >   ("icase", icaseREF) :
 >   ("idind", idindREF) :
+>   ("IDescConstructors", idescConstREF) :
+>   ("IDescBranches", idescBranchesREF) :
 
 
 > import -> RulesCode where
 >   inIDesc :: VAL
 >   inIDesc = L $ "I" :. [._I. LK $ IFSIGMA constructors (cases (NV _I)) ]
->       where constructors = (CONSE (TAG "varD")
->                            (CONSE (TAG "constD")
->                            (CONSE (TAG "piD")
->                            (CONSE (TAG "fpiD")
->                            (CONSE (TAG "sigmaD")
->                            (CONSE (TAG "fsigmaD")
->                            (CONSE (TAG "prodD") 
->                             NILE)))))))
->             cases :: INTM -> INTM
->             cases _I = (PAIR (ISIGMA _I (LK $ ICONST UNIT)) 
->                     (PAIR (ISIGMA SET (LK $ ICONST UNIT))
->                     (PAIR (ISIGMA SET (L $ "S" :. [._S.  
->                                       (IPROD (IPI (NV _S) (LK $ IVAR VOID)) 
->                                              (ICONST UNIT))]))
->                     (PAIR (ISIGMA (enumU -$ []) (L $ "E" :. [._E.
->                                       (IPROD (IPI (ENUMT (NV _E)) (LK $ IVAR VOID))
->                                              (ICONST UNIT))]))
->                     (PAIR (ISIGMA SET (L $ "S" :. [._S.  
+
+>   constructors = (CONSE (TAG "varD")
+>                             (CONSE (TAG "constD")
+>                  (CONSE (TAG "piD")
+>                   (CONSE (TAG "fpiD")
+>                    (CONSE (TAG "sigmaD")
+>                     (CONSE (TAG "fsigmaD")
+>                      (CONSE (TAG "prodD") 
+>                       NILE)))))))
+
+>   cases :: INTM -> INTM
+>   cases _I = (PAIR (ISIGMA _I (LK $ ICONST UNIT)) 
+>            (PAIR (ISIGMA SET (LK $ ICONST UNIT))
+>            (PAIR (ISIGMA SET (L $ "S" :. [._S.  
+>                   (IPROD (IPI (NV _S) (LK $ IVAR VOID)) 
+>                          (ICONST UNIT))]))
+>            (PAIR (ISIGMA (enumU -$ []) (L $ "E" :. [._E.
+>                  (IPROD (IPI (ENUMT (NV _E)) (LK $ IVAR VOID))
+>                  (ICONST UNIT))]))
+>             (PAIR (ISIGMA SET (L $ "S" :. [._S.  
 >                                       (IPROD (IPI (NV _S) (LK $ IVAR VOID)) 
 >                                              (ICONST UNIT))]))
 >                     (PAIR (ISIGMA (enumU -$ []) (L $ "E" :. [._E.
@@ -464,6 +468,7 @@ description is not neutral, to improve the pretty-printed representation.
 >                                              (ICONST UNIT))]))
 >                     (PAIR (IPROD (IVAR VOID) (IPROD (IVAR VOID) (ICONST UNIT)))
 >                      VOID)))))))
+
 >   idescFakeREF :: REF
 >   idescFakeREF = [("Primitive", 0), ("IDesc", 0)] 
 >                    := (FAKE :<: ARR SET (ARR UNIT SET))
@@ -481,6 +486,16 @@ description is not neutral, to improve the pretty-printed representation.
 >                 := (DEFN inIDesc 
 >                      :<: ARR SET (ARR UNIT (idesc $$ A UNIT $$ A VOID)))
 
+>   idescConstREF :: REF
+>   idescConstREF = [("Primitive", 0), ("IDescConstructors", 0)]
+>                    := (DEFN constructors :<: enumU)
+>
+>   idescBranchesREF :: REF
+>   idescBranchesREF = [("Primitive", 0), ("IDescBranches", 0)]
+>                       := (DEFN (L $ "I" :. [._I. cases (NV _I)])) :<:
+>                            PI SET (L $ "I" :. [._I. 
+>                              N $ branchesOp :@ [ constructors, 
+>                                                  LK $ N (P idescREF :$ A UNIT :$ A VOID)]])
 
 >   sumilike :: VAL -> VAL -> Maybe (VAL, VAL -> VAL)
 >   sumilike _I (IFSIGMA e b)  = 
