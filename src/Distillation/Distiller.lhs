@@ -75,7 +75,10 @@ really need |Entries|, or can it cope with |Bwd REF| instead?}
 >   let lab = evTm ((l :? ARR _I ANCHORS) :$ A i)
 >   labTm                <- withNSupply $ bquote B0 lab
 >   (labDisplay :=>: _)  <- distill es (ANCHORS :>: labTm)
->   return $ (DIMu labDisplay :=>: evTm tm)
+>   _It :=>: _Iv <- distill es (SET :>: _I)
+>   st :=>: sv <- distill es (ARR _Iv (idesc $$ A _Iv) :>: s)
+>   it :=>: iv <- distill es (_Iv :>: i)
+>   return $ (DIMU (Just labDisplay) _It st it :=>: evTm tm)
 
 > import <- DistillRules
 > distill entries tt = distillBase entries tt

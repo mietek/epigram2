@@ -11,13 +11,13 @@
 \subsection{Extending the display language}
 
 > import -> DInTmConstructors where
->   DIMu :: DInTm p x -> DInTm p x 
+>   DIMu :: Labelled (Id :*: Id) (DInTm p x) -> DInTm p x  -> DInTm p x 
 
 > import -> DInTmTraverse where
->   traverseDTIN f (DIMu s) = (|DIMu (traverseDTIN f s)|)
+>   traverseDTIN f (DIMu s i) = (|DIMu (traverse (traverseDTIN f) s) (traverseDTIN f i)|)
 
 > import -> DInTmPretty where
->   pretty (DIMu s)  = pretty s
+>   pretty (DIMu (Just s :?=: _) _)  = pretty s
 
 \subsection{Plugging Canonical terms in}
 
@@ -70,8 +70,8 @@
 >   pattern DIFSIGMAN  = DSU (DSU (DSU (DSU (DSU DZE))))
 >   pattern DIPRODN    = DSU (DSU (DSU (DSU (DSU (DSU DZE)))))
 
->   pattern DDIMU l        = DIMu l
->   pattern DIMU l ii x i  = DC (IMu (l :?=: (Id ii :& Id x)) i) 
+>   pattern DIMU l ii x i  = DIMu (l :?=: (Id ii :& Id x)) i
+> --  pattern DIMU l ii x i  = DC (IMu (l :?=: (Id ii :& Id x)) i) 
 >   pattern DIVAR i        = DCON (DPAIR DIVARN     (DPAIR i DVOID))
 >   pattern DIPI s t       = DCON (DPAIR DIPIN      (DPAIR s (DPAIR t DVOID)))
 >   pattern DIFPI s t      = DCON (DPAIR DIFPIN     (DPAIR s (DPAIR t DVOID)))
