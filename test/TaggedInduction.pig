@@ -1,3 +1,4 @@
+module TData ;
 {- 
 
 Induction for Tagged Data Types.
@@ -102,3 +103,5 @@ It would be marvellous if this file could form the basis of some kind of
 prelude - if you have any thoughts on how, then don't hold your tongue (:
 
 -}
+
+root ;
