@@ -71,7 +71,6 @@
 >   pattern DIPRODN    = DSU (DSU (DSU (DSU (DSU (DSU DZE)))))
 
 >   pattern DIMU l ii x i  = DIMu (l :?=: (Id ii :& Id x)) i
-> --  pattern DIMU l ii x i  = DC (IMu (l :?=: (Id ii :& Id x)) i) 
 >   pattern DIVAR i        = DCON (DPAIR DIVARN     (DPAIR i DVOID))
 >   pattern DIPI s t       = DCON (DPAIR DIPIN      (DPAIR s (DPAIR t DVOID)))
 >   pattern DIFPI s t      = DCON (DPAIR DIFPIN     (DPAIR s (DPAIR t DVOID)))
@@ -388,42 +387,19 @@ description is not neutral, to improve the pretty-printed representation.
 >       iI  :=>: iIv  <- subElab loc (SET :>: iI)
 >       d   :=>: dv   <- subElab loc (ARR iIv (idesc $$ A iIv) :>: d)
 >       i   :=>: iv   <- subElab loc (iIv :>: i)
+
 >       if shouldLabel dv
->           then do  name <- eAnchor
+>           then do
+>                    name <- eAnchor
 >                    let anchor = ANCHOR (TAG name) SET ALLOWEDEPSILON
 >                    return $ IMU (Just (LK anchor)) iI d i
->                              :=>: IMU (Just (LK anchor)) iIv dv iv
+>                             :=>: IMU (Just (LK anchor)) iIv dv iv
 >           else return $ IMU Nothing iI d i
 >                             :=>: IMU Nothing iIv dv iv
 >    where
 >      shouldLabel :: VAL -> Bool
 >      shouldLabel (N _)  = False
 >      shouldLabel _      = True
-
-
-> {-
->   makeElab' loc (SET :>: DIMU Nothing iI d i) = do
->       (r,sp) <- eFake
->       let l = (P r) $:$ (init sp)
->       iI  :=>: iIv  <- subElab loc (SET :>: iI)
->       d   :=>: dv   <- subElab loc (ARR iIv (idesc $$ A iIv $$ A VOID) :>: d)
->       i   :=>: iv   <- subElab loc (iIv :>: i)
-
-\question{What is this check for? How can we implement it correctly?}
-
-<       guard =<< eEqual (SET :>: (iv, NP (last sp)))
-<       -- should check i doesn't appear in d (fairly safe it's not in iI :))
-
->       if shouldLabel dv
->           then return $ IMU (Just (N l)) iI d i
->                             :=>: IMU (Just (evTm l)) iIv dv iv
->           else return $ IMU Nothing iI d i
->                             :=>: IMU Nothing iIv dv iv
->    where
->      shouldLabel :: VAL -> Bool
->      shouldLabel (N _)  = False
->      shouldLabel _      = True
-> -}
 
 >   makeElab' loc (ty@(IMU _ _ _ _) :>: DTag s xs) =
 >       makeElab' loc (ty :>: DCON (DPAIR (DTAG s) (foldr DPAIR DU xs)))
@@ -448,6 +424,16 @@ description is not neutral, to improve the pretty-printed representation.
 >         unfold DU        = []
 >         unfold (DPAIR s t)  = s : unfold t
 >         unfold t            = [t]
+
+
+>     distill es (SET :>: tm@(C (IMu ltm@(Just l :?=: (Id _I :& Id s)) i))) = do
+>       let lab = evTm ((l :? ARR _I ANCHORS) :$ A i)
+>       labTm                <- withNSupply $ bquote B0 lab
+>       (labDisplay :=>: _)  <- distill es (ANCHORS :>: labTm)
+>       _It :=>: _Iv         <- distill es (SET :>: _I)
+>       st :=>: sv           <- distill es (ARR _Iv (idesc $$ A _Iv) :>: s)
+>       it :=>: iv           <- distill es (_Iv :>: i)
+>       return $ (DIMU (Just labDisplay) _It st it :=>: evTm tm)
 
 
 > import -> DInTmConstructors where
