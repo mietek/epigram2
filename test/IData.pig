@@ -1,3 +1,5 @@
+load TaggedInduction.pig;
+
 idata Empty : Sig () -> Set := ;
 infer Empty.Ind ;
 idata One : Sig () -> Set := (one : One _) ;

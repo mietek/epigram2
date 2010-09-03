@@ -170,21 +170,30 @@ assigned throughout, so the label will be preserved when eliminating by inductio
 This code attempts to find out if the definitions from tests/TaggedInduction
 are in scope, if so you get nicer induction principles (:
 
+>   (do (icase,_,_) <- resolveHere [("TData",Rel 0),("tcase",Rel 0)]
+>       let caseTm = P icase :$ A (N indtye) :$ A (PAIR (N e) (PAIR (N cs') VOID))
+>       caseV :<: caseTy <- inferHere caseTm
+>       caseTy' <- bquoteHere caseTy
+>       make ("Case" :<: isetLabel (L $ "i" :. [.i. label]) caseTy')
+>       goIn
+>       giveOutBelow (N caseTm)
+>       return ()) `catchError` \_ -> return ()
 
->   let caseTm = P (icaseREF) :$ A (N indtye) :$ A (N e) :$ A (N cs')
->   caseV :<: caseTy <- inferHere caseTm
->   caseTy' <- bquoteHere caseTy
->   make ("Case" :<: isetLabel (N lt) caseTy')
->   goIn
->   giveOutBelow (N caseTm)
-
->   let dindTm = P (idindREF) :$ A (N indtye) :$ A (N e) :$ A (N cs')
->   dindV :<: dindTy <- inferHere dindTm
->   dindTy' <- bquoteHere dindTy
->   make ("Ind" :<: isetLabel (N lt) dindTy')
->   goIn
->   giveOutBelow (N dindTm)
-
+>   (do (dind,_,_) <- resolveHere [("TData",Rel 0),("tind",Rel 0)]
+>       let dindT = P dind :$ A (N indtye) :$ A (PAIR (N e) (PAIR (N cs') VOID))
+>       dindV :<: dindTy <- inferHere dindT
+>       dindTy' <- bquoteHere dindTy
+>       make ("Ind" :<: isetLabel (L $ "i" :. [.i. label]) dindTy')
+>       goIn
+>       giveOutBelow (N dindT)
+>       return ()) `catchError` \_ -> 
+>     (do let indTm = P (lookupOpRef iinductionOp) :$ A (N indtye) :$ A d
+>         indV :<: indTy <- inferHere indTm
+>         indTy' <- bquoteHere indTy
+>         make ("Ind" :<: isetLabel (L $ "i" :. [.i. label]) indTy')
+>         goIn
+>         giveOutBelow (N indTm)
+>         return ())
 >   giveOutBelow $ N dty
 
 
@@ -192,7 +201,8 @@ This is a hack, and should probably be replaced with a version that tests for
 equality, so it doesn't catch the wrong |MU|s.
 
 > isetLabel :: INTM -> INTM -> INTM
-> isetLabel l (IMU Nothing ity tm i) = IMU {- XXX: (Just l)-} Nothing ity tm i
+> isetLabel l (IMU Nothing ity tm i) = IMU (Just l) ity tm i
+> isetLabel l (IMU (Just (LK (ANCHOR (TAG x) _ _))) ity tm i) | x == "dataTy" = IMU (Just l) ity tm i
 > isetLabel l (L (x :. t)) = L (x :. isetLabel l t)
 > isetLabel l (L (K t)) = L (K (isetLabel l t))
 > isetLabel l (C c) = C (fmap (isetLabel l) c)

@@ -1,15 +1,22 @@
+Made module.
+Made.
+Made.
+Made.
+Made.
+Made.
+Going to root...
 Data'd.
-(i : Sig ())(x : Empty [])(P : Sig (j : Sig () ; Empty []) -> Set)(p : Sig ()) -> P [[] , x]
+(i : Sig ())(x : Empty [])(P : Sig (i : Sig () ; Empty []) -> Set)(p : Sig ()) -> P [[] , x]
 Data'd.
 'one
-(i : Sig ())(x : One [])(P : Sig (j : Sig () ; One []) -> Set)(p : Sig ((j : Sig ())(xs : :- j == ((: Sig ()) []))(hs : :- TT) -> P [[] , 'one] ;)) -> P [[] , x]
+(i : Sig ())(x : One [])(P : Sig (i : Sig () ; One []) -> Set)(p : Sig ((i : Sig ())(xs : :- i == ((: Sig ()) []))(ihs : :- TT) -> P [[] , 'one] ;)) -> P [[] , x]
 Data'd.
 'suc ('suc 'zero)
-(i : Sig ())(x : Nat [])(P : Sig (j : Sig () ; Nat []) -> Set)(p : Sig ((j : Sig ())(xs : :- j == ((: Sig ()) []))(hs : :- TT) -> P [[] , 'zero] ; (j : Sig ())(xs : Sig (Nat [] ; :- j == ((: Sig ()) [])))(hs : Sig (P [[] , xs !] ; :- TT)) -> P [[] , 'suc xs] ;)) -> P [[] , x]
+(i : Sig ())(x : Nat [])(P : Sig (i : Sig () ; Nat []) -> Set)(p : Sig ((i : Sig ())(xs : :- i == ((: Sig ()) []))(ihs : :- TT) -> P [[] , 'zero] ; (i : Sig ())(xs : Sig (Nat [] ; :- i == ((: Sig ()) [])))(ihs : Sig (P [[] , xs !] ; :- TT)) -> P [[] , 'suc xs] ;)) -> P [[] , x]
 Data'd.
 Made.
 'cons 'a ('suc 'zero) ('cons 'b 'zero 'nil)
-(A : Set)(i : Nat [])(x : Vec A i)(P : Sig (j : Nat [] ; Vec A j) -> Set)(p : Sig ((j : Nat [])(xs : :- j == ((: Nat []) 'zero))(hs : :- TT) -> P [j , 'nil xs] ; (j : Nat [])(xs : Sig (s : A ; s : Nat [] ; Vec A s ; :- j == ((: Nat []) ('suc s))))(hs : Sig (P [(xs - !) , xs - - !] ; :- TT)) -> P [j , 'cons xs] ;)) -> P [i , x]
+(A : Set)(i : Nat [])(x : Vec A i)(P : Sig (i : Nat [] ; Vec A i) -> Set)(p : Sig ((i : Nat [])(xs : :- i == ((: Nat []) 'zero))(ihs : :- TT) -> P [i , 'nil xs] ; (i : Nat [])(xs : Sig (s : A ; s : Nat [] ; Vec A s ; :- i == ((: Nat []) ('suc s))))(ihs : Sig (P [(xs - !) , xs - - !] ; :- TT)) -> P [i , 'cons xs] ;)) -> P [i , x]
 Let there be vtail.
 Eliminated and simplified.
 Hurrah!
