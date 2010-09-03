@@ -61,8 +61,7 @@
 >         (\i -> ity2desc indty r ps (NP i) (v $$ A (NP r)) >>=
 >                  \x -> (| ((L $ "i" :. (capM i 0 %% x))
 >                           :? ARR (N indty) 
->                                  (N (P idescREF :$ A (N indty)
->                                                 :$ A VOID))) |))
+>                                  (N (P idescREF :$ A (N indty)))) |))
 >   goOut
 >   return (s, tyi, x)
 
@@ -109,6 +108,19 @@
 >   return (IVAR i'')
 > ity2h _ _ _ _ = throwError' (err "If you think this should work maybe you should have a chat with Dr Morris about it.")
 
+> imkAllowed :: (String, EXTM, INTM) -> [(String, EXTM, REF)] -> (INTM, INTM)
+> imkAllowed (s, ty, i) = foldr mkAllowedHelp ((ARR (N ty) SET, 
+>                                              ALLOWEDCONS  (N ty) 
+>                                                           (LK SET)
+>                                                           (N (P refl :$ A SET :$ A (ARR (N ty) SET)))
+>                                                           i
+>                                                           ALLOWEDEPSILON))
+>     where mkAllowedHelp (x, ty, r) (allowingTy, allowedTy) =
+>             let allowingTy' = L $ x :. (capM r 0 %% allowingTy) in
+>             (PI (N ty) allowingTy',
+>              ALLOWEDCONS (N ty) allowingTy' (N (P refl :$ A SET :$ A (PI (N ty) allowingTy'))) (NP r) allowedTy)
+
+
 > ielabData :: String -> [ (String , DInTmRN) ] -> DInTmRN ->
 >                        [ (String , DInTmRN) ] -> ProofState (EXTM :=>: VAL)
 > ielabData nom pars indty scs = do
@@ -137,8 +149,7 @@
 >   make ("ConDescs" :<: 
 >           ARR (N indtye) (N (branchesOp 
 >                               :@ [ N e
->                                  , L $ K (N (P idescREF :$ A (N indtye)
->                                                         :$ A VOID))
+>                                  , L $ K (N (P idescREF :$ A (N indtye)))
 >                                  ])))
 >   goIn
 >   i <- lambdaParam "i"
@@ -149,7 +160,9 @@
 >   goIn
 >   i <- lambdaParam "i"
 >   let d = L $ "i" :.IFSIGMA (N e) (N (cs' :$ A (NV 0)))
->   (dty :=>: _) <- giveOutBelow (IMU (Just (N lt)) (N indtye) d (NP i))
+>       (allowingTy, allowedBy)  =  imkAllowed ("i", indtye, NV 0) pars' -- NV 0 refers to the .i. in the giveOut
+>       label                    =  ANCHOR (TAG nom) allowingTy allowedBy
+>   (dty :=>: _) <- giveOutBelow (IMU (Just (L $ "i" :. [.i. label])) (N indtye) d (NP i))
 
 We specialise the induction operator to this datatype, ensuring the label is
 assigned throughout, so the label will be preserved when eliminating by induction.
@@ -157,30 +170,20 @@ assigned throughout, so the label will be preserved when eliminating by inductio
 This code attempts to find out if the definitions from tests/TaggedInduction
 are in scope, if so you get nicer induction principles (:
 
->   (do (icase,_,_) <- resolveHere [("TData",Rel 0),("tcase",Rel 0)]
->       let caseTm = P icase :$ A (N indtye) :$ A (PAIR (N e) (PAIR (N cs') VOID))
->       caseV :<: caseTy <- inferHere caseTm
->       caseTy' <- bquoteHere caseTy
->       make ("Case" :<: isetLabel (N lt) caseTy')
->       goIn
->       giveOutBelow (N caseTm)
->       return ()) `catchError` \_ -> return ()
 
->   (do (dind,_,_) <- resolveHere [("TData",Rel 0),("tind",Rel 0)]
->       let dindT = P dind :$ A (N indtye) :$ A (PAIR (N e) (PAIR (N cs') VOID))
->       dindV :<: dindTy <- inferHere dindT
->       dindTy' <- bquoteHere dindTy
->       make ("Ind" :<: isetLabel (N lt) dindTy')
->       goIn
->       giveOutBelow (N dindT)
->       return ()) `catchError` \_ -> 
->     (do let indTm = P (lookupOpRef iinductionOp) :$ A (N indtye) :$ A d
->         indV :<: indTy <- inferHere indTm
->         indTy' <- bquoteHere indTy
->         make ("Ind" :<: isetLabel (N lt) indTy')
->         goIn
->         giveOutBelow (N indTm)
->         return ())
+>   let caseTm = P (icaseREF) :$ A (N indtye) :$ A (N e) :$ A (N cs')
+>   caseV :<: caseTy <- inferHere caseTm
+>   caseTy' <- bquoteHere caseTy
+>   make ("Case" :<: isetLabel (N lt) caseTy')
+>   goIn
+>   giveOutBelow (N caseTm)
+
+>   let dindTm = P (idindREF) :$ A (N indtye) :$ A (N e) :$ A (N cs')
+>   dindV :<: dindTy <- inferHere dindTm
+>   dindTy' <- bquoteHere dindTy
+>   make ("Ind" :<: isetLabel (N lt) dindTy')
+>   goIn
+>   giveOutBelow (N dindTm)
 
 >   giveOutBelow $ N dty
 
@@ -189,7 +192,7 @@ This is a hack, and should probably be replaced with a version that tests for
 equality, so it doesn't catch the wrong |MU|s.
 
 > isetLabel :: INTM -> INTM -> INTM
-> isetLabel l (IMU Nothing ity tm i) = IMU (Just l) ity tm i
+> isetLabel l (IMU Nothing ity tm i) = IMU {- XXX: (Just l)-} Nothing ity tm i
 > isetLabel l (L (x :. t)) = L (x :. isetLabel l t)
 > isetLabel l (L (K t)) = L (K (isetLabel l t))
 > isetLabel l (C c) = C (fmap (isetLabel l) c)
