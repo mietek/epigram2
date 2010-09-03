@@ -5,7 +5,7 @@ make ship := (\ X x y q P p ->
 
 make Bool := (Enum ['true 'false]) : Set ;
 
-make SoD : Bool -> IDesc Bool _;
+make SoD : Bool -> IDesc Bool;
 lambda b ;
 give 'fsigmaD ['oh] [('constD (:- ((: Bool) 'true) == b))] ;
 

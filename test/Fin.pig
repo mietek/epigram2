@@ -5,7 +5,7 @@ make ship := (\ X x y q P p ->
 
 make NatF : :- TT -> Set ;
 
-make NatD := (\ _ -> 'fsigmaD ['zero 'suc] [ ('constD (:- TT)) ('prodD ('varD _) ('constD (:- TT))) ]) : (:- TT) -> IDesc (:- TT) [] ;
+make NatD := (\ _ -> 'fsigmaD ['zero 'suc] [ ('constD (:- TT)) ('prodD ('varD _) ('constD (:- TT))) ]) : (:- TT) -> IDesc (:- TT) ;
 lambda v ;
 give IMu (:- TT) NatD v ;
 

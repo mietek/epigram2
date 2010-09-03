@@ -10,7 +10,7 @@ make plus := con con [(\ _ _ y -> y) (\ _ -> con \ h _ y -> suc (h y))] : Nat ->
 module Vec ;
 lambda A : Set ;
 make Vec : Nat -> Set ;
-make VecD : Nat -> IDesc Nat _ ;
+make VecD : Nat -> IDesc Nat ;
 give (\ n -> 'fsigmaD ['nil 'cons] [ ('constD (:- (n == zero))) ('sigmaD Nat (\ m -> 'prodD ('constD A) ('prodD ('varD m) ('constD (:- (n == suc m)))))) ]) ;
 lambda n ;
 give IMu Nat VecD n ;

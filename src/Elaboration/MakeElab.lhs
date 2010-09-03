@@ -148,6 +148,24 @@ we abstract it out. Thus |makeElab'| actually implements elaboration.
 
 > makeElab' :: Loc -> (TY :>: DInTmRN) -> Elab (INTM :=>: VAL)
 
+> makeElab' loc (SET :>: DIMU Nothing iI d i) = do
+>       iI  :=>: iIv  <- subElab loc (SET :>: iI)
+>       d   :=>: dv   <- subElab loc (ARR iIv (idesc $$ A iIv) :>: d)
+>       i   :=>: iv   <- subElab loc (iIv :>: i)
+
+>       if shouldLabel dv
+>           then do
+>                    name <- eAnchor
+>                    let anchor = ANCHOR (TAG name) SET ALLOWEDEPSILON
+>                    return $ IMU (Just (LK anchor)) iI d i
+>                             :=>: IMU (Just (LK anchor)) iIv dv iv
+>           else return $ IMU Nothing iI d i
+>                             :=>: IMU Nothing iIv dv iv
+>    where
+>      shouldLabel :: VAL -> Bool
+>      shouldLabel (N _)  = False
+>      shouldLabel _      = True
+
 > import <- MakeElabRules
 
 

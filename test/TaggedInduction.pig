@@ -12,7 +12,7 @@ bunch of descriptions, which can depend on the index given:
 
 -}
 
-make TData  := \ I -> Sig (e : EnumU ; I -> branches e (\ t -> IDesc I _) ;) 
+make TData  := \ I -> Sig (e : EnumU ; I -> branches e (\ t -> IDesc I) ;) 
             : Set -> Set ;
 
 
@@ -23,7 +23,7 @@ Given these things, we can build and IDesc, and a Set for the data type:
 -}
 
 make dataD := \ I td i -> con ['fsigmaD , [(td !) (td - ! i)] ] 
-           : (I : Set) -> TData I -> I -> IDesc I _ ;
+           : (I : Set) -> TData I -> I -> IDesc I ;
 
 make dataTy := \ I td i -> IMu I (dataD I td) i 
             : (I : Set) -> TData I -> I -> Set ;
@@ -43,22 +43,22 @@ make tind :=  \ I td i x P p ->
                        (\ t -> ((i : I)
                                 (xs : idesc I 
                                         (switch (td !) t 
-                                          (\ t -> IDesc I []) (td - ! i))      
+                                          (\ t -> IDesc I) (td - ! i))      
                                           (\ i -> dataTy I td i))
                                 (ihs : idesc (Sig (i : I ; dataTy I td i)) 
                                          (ibox I (switch (td !) t 
-                                                  (\ t -> IDesc I _) (td - ! i))
+                                                  (\ t -> IDesc I) (td - ! i))
                                             (dataTy I td) xs) P)
                                 -> P [i , con [t , xs]])) p i (y -) h)
           : (I : Set) (td : TData I) (i : I) (x : dataTy I td i) 
               (P : Sig (i : I ; dataTy I td i) -> Set) 
                (p : branches (td !) 
                       (\ t -> (i : I) ->
-                              (xs : idesc I (switch (td !) t (\ t -> IDesc I _) 
+                              (xs : idesc I (switch (td !) t (\ t -> IDesc I) 
                                       (td - ! i)) (dataTy I td)) 
                          (ihs : idesc 
                                   (Sig (i : I ; dataTy I td i))
-                                  (ibox I (switch (td !) t (\ t -> IDesc I _) 
+                                  (ibox I (switch (td !) t (\ t -> IDesc I) 
                                              (td - ! i))
                                     (dataTy I td) xs)
                                   P)
@@ -81,14 +81,14 @@ make tcase :=  \ I td i x P p ->
                         (\ t -> ((i : I)
                                  (xs : idesc I 
                                          (switch (td !) t 
-                                           (\ t -> IDesc I []) (td - ! i))      
+                                           (\ t -> IDesc I) (td - ! i))      
                                            (\ i -> dataTy I td i))
                                  -> P [i , con [t , xs]])) p i (y -))
            : (I : Set) (td : TData I) (i : I) (x : dataTy I td i) 
                (P : Sig (i : I ; dataTy I td i) -> Set) 
                 (p : branches (td !) 
                       (\ t -> (i : I) ->
-                              (xs : idesc I (switch (td !) t (\ t -> IDesc I _)
+                              (xs : idesc I (switch (td !) t (\ t -> IDesc I)
                                      (td - ! i)) (dataTy I td)) 
                                -> P [ i , con [ t , xs ] ]))
                  -> P [ i , x ] ;

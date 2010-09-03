@@ -12,7 +12,7 @@ root ;
 module Vec ;
 lambda A : Set ;
 
-make VecD : Nat -> IDesc Nat _ ;
+make VecD : Nat -> IDesc Nat ;
 give (\ n -> 'fsigmaD ['nil 'cons] [ ('constD (:- (zero == n))) ('sigmaD Nat (\ m -> 'prodD ('constD A) ('prodD ('varD m) ('constD (:- (suc m == n)))))) ]) ;
 
 make Vec : Nat -> Set ;

@@ -384,6 +384,23 @@ description is not neutral, to improve the pretty-printed representation.
 
 > import -> MakeElabRules where
 
+>   makeElab' loc (SET :>: DIMU Nothing iI d i) = do
+>       iI  :=>: iIv  <- subElab loc (SET :>: iI)
+>       d   :=>: dv   <- subElab loc (ARR iIv (idesc $$ A iIv) :>: d)
+>       i   :=>: iv   <- subElab loc (iIv :>: i)
+>       if shouldLabel dv
+>           then do  name <- eAnchor
+>                    let anchor = ANCHOR (TAG name) SET ALLOWEDEPSILON
+>                    return $ IMU (Just (LK anchor)) iI d i
+>                              :=>: IMU (Just (LK anchor)) iIv dv iv
+>           else return $ IMU Nothing iI d i
+>                             :=>: IMU Nothing iIv dv iv
+>    where
+>      shouldLabel :: VAL -> Bool
+>      shouldLabel (N _)  = False
+>      shouldLabel _      = True
+
+
 > {-
 >   makeElab' loc (SET :>: DIMU Nothing iI d i) = do
 >       (r,sp) <- eFake
