@@ -32,12 +32,7 @@ let boxer (X : Set)(P : X -> Set)(Q : X -> Set)(q : (y : X) -> P y -> Q y)(D : D
 <= DescInd D ;
 define boxer X P Q q 'idD x b := q x b ;
 define boxer X P Q q ('sumD E F) [c , x] b := boxer X P Q q (F c) x b ;
-
--- Why doesn't recursion spotting work if these holes are substituted out?
-define boxer X P Q q ('prodD E F) [a , b] [c , d] := [? , ?] ;
-give boxer X P Q q E a c ;
-give boxer X P Q q F b d ;
-
+define boxer X P Q q ('prodD E F) [a , b] [c , d] := [(boxer X P Q q E a c) , (boxer X P Q q F b d)] ;
 define boxer X P Q q ('sigmaD E F) [s , x] b := boxer X P Q q (F s) x b ;
 define boxer X P Q q ('piD S T) x b := \ s -> boxer X P Q q (T s) (x s) (b s) ;
 root ;
