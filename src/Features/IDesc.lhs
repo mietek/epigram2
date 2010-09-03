@@ -17,8 +17,8 @@
 > import -> CanTyRules where
 >   canTy chev (Set :>: IMu (ml :?=: (Id ii :& Id x)) i)  = do
 >     iiiiv@(ii :=>: iiv) <- chev (SET :>: ii)
->     mlv <- traverse (chev . (ARR iiv SET :>:)) ml
->     xxv@(x :=>: xv) <- chev (ARR iiv (idesc $$ A iiv $$ A VOID) :>: x)
+>     mlv <- traverse (chev . (ARR iiv ANCHORS :>:)) ml
+>     xxv@(x :=>: xv) <- chev (ARR iiv (idesc $$ A iiv) :>: x)
 >     iiv <- chev (iiv :>: i)
 >     return $ IMu (mlv :?=: (Id iiiiv :& Id xxv)) iiv
 >   canTy chev (IMu tt@(_ :?=: (Id ii :& Id x)) i :>: Con y) = do
@@ -94,9 +94,9 @@
 >         qd = CON $ q $$ Snd $$ Snd $$ Fst
 >         typ = 
 >           PI SET $ L $ "iI" :. [.iI.
->            ARR (ARR (NV iI) (idesc -$ [ NV iI , VOID ])) $  
+>            ARR (ARR (NV iI) (idesc -$ [ NV iI ])) $  
 >             ARR (NV iI) $  
->              ARR (ARR (NV iI) SET) SET ]
+>              ARR (ARR (NV iI) ANCHORS) SET ]
 >         vap =
 >           L $ "iI" :. [.iI.
 >            L $ "d" :. [.d. 
@@ -129,7 +129,7 @@
 >         qd = CON $ q $$ Snd $$ Fst
 >         typ = 
 >           PI SET $ L $ "iI" :. [.iI.
->            ARR (ARR (NV iI) (idesc -$ [ NV iI , VOID ])) $  
+>            ARR (ARR (NV iI) (idesc -$ [ NV iI ])) $  
 >             ARR (NV iI) SET ]
 >         vap =
 >           L $ "iI" :. [.iI.
@@ -217,8 +217,7 @@
 >                                     , N $ switchOp :@ 
 >                                             [ _E -$ []
 >                                             , NV s
->                                             , LK (idesc -$ [ _I -$ []
->                                                            ,  VOID])
+>                                             , LK (idesc -$ [ _I -$ []])
 >                                             , _Ds -$ [] ]
 >                                     , _P -$ [] ] ])
 >         , {-PROD-} oTup $ \_D _D' -> OLam $ \_P -> ORet $
@@ -228,7 +227,7 @@
 >     } where
 >       idOpTy = 
 >        "I" :<: SET :-: \iI ->
->        "d" :<: (idesc $$ A iI $$ A VOID) :-: \d ->
+>        "d" :<: (idesc $$ A iI) :-: \d ->
 >        "X" :<: ARR iI SET :-: \x ->
 >        Target SET
 
@@ -262,7 +261,7 @@
 >             iboxOp @@ [_I
 >                       , switchOp @@ [ _E
 >                                     , e
->                                     , LK (idesc $$ A _I $$ A VOID)
+>                                     , LK (idesc $$ A _I)
 >                                     , _Ds ]
 >                       , _P 
 >                       , d ]
@@ -274,10 +273,10 @@
 >     } where
 >       iboxOpTy = 
 >         "I" :<: SET                        :-: \ _I ->
->         "D" :<: (idesc $$ A _I $$ A VOID)  :-: \ _D ->
+>         "D" :<: (idesc $$ A _I)  :-: \ _D ->
 >         "P" :<: ARR _I SET                 :-: \ _P ->
 >         "v" :<: idescOp @@ [_I,_D,_P]      :-: \v ->
->         Target $ idesc $$ A (SIGMA _I (L $ "i" :. [.i. _P -$ [NV i]])) $$ A VOID
+>         Target $ idesc $$ A (SIGMA _I (L $ "i" :. [.i. _P -$ [NV i]]))
           
 >   imapBoxOp :: Op
 >   imapBoxOp = Op
@@ -300,7 +299,7 @@
 >         , {-FSIGMA-} oTup $ \_E _Ds -> oLams $ \_X _P p -> OPr $ oLams $ \e d -> ORet $
 >             imapBoxOp @@ [  _I
 >                          ,  switchOp @@ [  _E, e 
->                                         ,  LK (idesc $$ A _I $$ A VOID)
+>                                         ,  LK (idesc $$ A _I)
 >                                         ,  _Ds
 >                                         ]
 >                          ,  _X, _P, p, d ]
@@ -312,7 +311,7 @@
 >     } where
 >       imapBoxOpTy =
 >         "I" :<: SET :-: \_I ->  
->         "D" :<: (idesc $$ A _I $$ A VOID) :-: \ _D ->
+>         "D" :<: (idesc $$ A _I) :-: \ _D ->
 >         "X" :<: ARR _I SET :-: \ _X -> 
 >         let _IX = SIGMA _I (L $ "i" :. [.i. _X -$ [NV i] ]) in
 >         "P" :<: ARR _IX SET :-: \ _P ->
@@ -351,7 +350,7 @@
 >     } where
 >       iinductionOpTy = 
 >         "I" :<: SET :-: \_I ->
->         "D" :<: ARR _I (idesc $$ A _I $$ A VOID) :-: \_D ->
+>         "D" :<: ARR _I (idesc $$ A _I) :-: \_D ->
 >         "i" :<: _I :-: \i ->
 >         "v" :<: IMU Nothing _I _D i :-: \v ->
 >         "P" :<: (ARR (SIGMA _I (L $ "i" :. [.i.  
@@ -373,6 +372,8 @@ Just like |Mu|, when elaborating |IMu| we attach a display label if the
 description is not neutral, to improve the pretty-printed representation.
 
 > import -> MakeElabRules where
+
+> {-
 >   makeElab' loc (SET :>: DIMU Nothing iI d i) = do
 >       (r,sp) <- eFake
 >       let l = (P r) $:$ (init sp)
@@ -394,7 +395,7 @@ description is not neutral, to improve the pretty-printed representation.
 >      shouldLabel :: VAL -> Bool
 >      shouldLabel (N _)  = False
 >      shouldLabel _      = True
-
+> -}
 
 >   makeElab' loc (ty@(IMU _ _ _ _) :>: DTag s xs) =
 >       makeElab' loc (ty :>: DCON (DPAIR (DTAG s) (foldr DPAIR DU xs)))
@@ -471,18 +472,24 @@ description is not neutral, to improve the pretty-printed representation.
 >   idescFakeREF = [("Primitive", 0), ("IDesc", 0)] 
 >                    := (FAKE :<: ARR SET (ARR UNIT SET))
 >   idesc :: VAL
->   idesc = L $ "I" :. [._I. LK $
->             IMU (Just (N ((P idescFakeREF) :$ A (NV _I)))) 
+>   idesc = L $ "I" :. [._I. 
+>             IMU (Just (L $ "i" :. [.i. ANCHOR  (TAG "IDesc") 
+>                                                (ARR SET SET)
+>                                                (ALLOWEDCONS  SET 
+>                                                              (LK SET)
+>                                                              (N (P refl :$ A SET :$ A (ARR SET SET)))
+>                                                              (NV _I) 
+>                                                              ALLOWEDEPSILON)]))
 >                  UNIT (inIDesc -$ [ NV _I]) VOID ]
 >
 >   idescREF :: REF
 >   idescREF = [("Primitive", 0), ("IDesc", 0)] 
->                := (DEFN idesc :<: ARR SET (ARR UNIT SET))
+>                := (DEFN idesc :<: ARR SET SET)
 >
 >   idescDREF :: REF
 >   idescDREF = [("Primitive", 0), ("IDescD", 0)] 
 >                 := (DEFN inIDesc 
->                      :<: ARR SET (ARR UNIT (idesc $$ A UNIT $$ A VOID)))
+>                      :<: ARR SET (ARR UNIT (idesc $$ A UNIT)))
 
 >   idescConstREF :: REF
 >   idescConstREF = [("Primitive", 0), ("IDescConstructors", 0)]
@@ -493,10 +500,10 @@ description is not neutral, to improve the pretty-printed representation.
 >                       := (DEFN (L $ "I" :. [._I. cases (NV _I)])) :<:
 >                            PI SET (L $ "I" :. [._I. 
 >                              N $ branchesOp :@ [ constructors, 
->                                                  LK $ N (P idescREF :$ A UNIT :$ A VOID)]])
+>                                                  LK $ N (P idescREF :$ A UNIT)]])
 
 >   sumilike :: VAL -> VAL -> Maybe (VAL, VAL -> VAL)
 >   sumilike _I (IFSIGMA e b)  = 
->       Just (e, \t -> switchOp @@ [ e , t , LK (idesc $$ A _I $$ A VOID), b ])
+>       Just (e, \t -> switchOp @@ [ e , t , LK (idesc $$ A _I), b ])
 >   sumilike _ _               = Nothing
 
