@@ -8,6 +8,16 @@
 
 %endif
 
+\subsection{Extending the display language}
+
+> import -> DInTmConstructors where
+>   DIMu :: DInTm p x -> DInTm p x 
+
+> import -> DInTmTraverse where
+>   traverseDTIN f (DIMu s) = (|DIMu (traverseDTIN f s)|)
+
+> import -> DInTmPretty where
+>   pretty (DIMu s)  = pretty s
 
 \subsection{Plugging Canonical terms in}
 
@@ -60,6 +70,7 @@
 >   pattern DIFSIGMAN  = DSU (DSU (DSU (DSU (DSU DZE))))
 >   pattern DIPRODN    = DSU (DSU (DSU (DSU (DSU (DSU DZE)))))
 
+>   pattern DDIMU l        = DIMu l
 >   pattern DIMU l ii x i  = DC (IMu (l :?=: (Id ii :& Id x)) i) 
 >   pattern DIVAR i        = DCON (DPAIR DIVARN     (DPAIR i DVOID))
 >   pattern DIPI s t       = DCON (DPAIR DIPIN      (DPAIR s (DPAIR t DVOID)))
@@ -442,7 +453,7 @@ description is not neutral, to improve the pretty-printed representation.
 >   inIDesc = L $ "I" :. [._I. LK $ IFSIGMA constructors (cases (NV _I)) ]
 
 >   constructors = (CONSE (TAG "varD")
->                             (CONSE (TAG "constD")
+>                  (CONSE (TAG "constD")
 >                  (CONSE (TAG "piD")
 >                   (CONSE (TAG "fpiD")
 >                    (CONSE (TAG "sigmaD")

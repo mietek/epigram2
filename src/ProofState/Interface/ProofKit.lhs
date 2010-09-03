@@ -62,7 +62,7 @@ supply, because it cannot generates new namespaces.
 We also provide an operator to lift functions from a name supply to
 proof state commands.
 
-> withNSupply :: (NameSupply -> x) -> ProofState x
+> withNSupply :: (NameSupply -> x) -> ProofStateT e x
 > withNSupply f = getDevNSupply >>= return . f
 
 \begin{danger}[Read-only name supply]

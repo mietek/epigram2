@@ -33,6 +33,7 @@
 > import Evidences.Tm
 > import Evidences.Mangler
 > import Evidences.TypeChecker
+> import Evidences.BetaQuotation
 > import Evidences.Eval
 > import Evidences.Operators
 > import Evidences.DefinitionalEquality
@@ -69,6 +70,13 @@ indeed, they are actually bound variables. Hence, we collect this
 really need |Entries|, or can it cope with |Bwd REF| instead?}
 
 > distill :: Entries -> (TY :>: INTM) -> ProofStateT INTM (DInTmRN :=>: VAL)
+
+> distill es (SET :>: tm@(C (IMu ltm@(Just l :?=: (Id _I :& Id s)) i))) = do
+>   let lab = evTm ((l :? ARR _I ANCHORS) :$ A i)
+>   labTm                <- withNSupply $ bquote B0 lab
+>   (labDisplay :=>: _)  <- distill es (ANCHORS :>: labTm)
+>   return $ (DIMu labDisplay :=>: evTm tm)
+
 > import <- DistillRules
 > distill entries tt = distillBase entries tt
 
