@@ -10,6 +10,14 @@
 
 \subsection{Extending the display language}
 
+We introduce a special DIMu for display purposes. While its definition
+is the same than |IMu|, its "typing" is not: the label of an |IMu| is
+presented as a lambda-bound anchor. When we are displaying a
+particular |IMu|, we precisely know at which index we are considering
+it. Therefore, a |DIMu| takes an anchor directly. The distillation
+rule takes care of taking applying the lambda-bound anchor to the
+index of |IMu| to make a fully applied anchor |DIMu|.
+
 > import -> DInTmConstructors where
 >   DIMu :: Labelled (Id :*: Id) (DInTm p x) -> DInTm p x  -> DInTm p x 
 

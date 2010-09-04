@@ -160,7 +160,8 @@
 >   goIn
 >   i <- lambdaParam "i"
 >   let d = L $ "i" :.IFSIGMA (N e) (N (cs' :$ A (NV 0)))
->       (allowingTy, allowedBy)  =  imkAllowed ("i", indtye, NV 0) pars' -- NV 0 refers to the .i. in the giveOut
+>       (allowingTy, allowedBy)  =  imkAllowed ("i", indtye, NV 0) pars' 
+>                         -- \pierre{XXX: NV 0 refers to the .i. in the giveOut}
 >       label                    =  ANCHOR (TAG nom) allowingTy allowedBy
 >   (dty :=>: _) <- giveOutBelow (IMU (Just (L $ "i" :. [.i. label])) (N indtye) d (NP i))
 
@@ -200,9 +201,17 @@ are in scope, if so you get nicer induction principles (:
 This is a hack, and should probably be replaced with a version that tests for
 equality, so it doesn't catch the wrong |MU|s.
 
+\pierre{The match on the |dataTy| anchor is yet another disgusting
+hack. When loading the @TaggedInduction.pig@ file, you are able to get
+much nicer induction principles. However, the resulting induction
+principle will target |dataTy| instead of the current
+|nom|. Therefore, we hack the hack so that it hacks when you hack. Yo,
+dawg.}
+
 > isetLabel :: INTM -> INTM -> INTM
 > isetLabel l (IMU Nothing ity tm i) = IMU (Just l) ity tm i
-> isetLabel l (IMU (Just (LK (ANCHOR (TAG x) _ _))) ity tm i) | x == "dataTy" = IMU (Just l) ity tm i
+> isetLabel l (IMU (Just (LK (ANCHOR (TAG x) _ _))) ity tm i) 
+>               | x == "dataTy" = IMU (Just l) ity tm i
 > isetLabel l (L (x :. t)) = L (x :. isetLabel l t)
 > isetLabel l (L (K t)) = L (K (isetLabel l t))
 > isetLabel l (C c) = C (fmap (isetLabel l) c)
