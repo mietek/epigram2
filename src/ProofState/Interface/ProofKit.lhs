@@ -80,7 +80,7 @@ has finished.
 First off, we can access the $\beta$-normalizer: the |bquoteHere|
 command $\beta$-quotes a term using the local name supply.
 
-> bquoteHere :: Tm {d, VV} REF -> ProofState (Tm {d, TT} REF)
+> bquoteHere :: Tm {d, VV} REF -> ProofStateT e (Tm {d, TT} REF)
 > bquoteHere tm = withNSupply $ bquote B0 tm
 
 

@@ -436,7 +436,7 @@ description is not neutral, to improve the pretty-printed representation.
 
 >     distill es (SET :>: tm@(C (IMu ltm@(Just l :?=: (Id _I :& Id s)) i))) = do
 >       let lab = evTm ((l :? ARR _I ANCHORS) :$ A i)
->       labTm                <- withNSupply $ bquote B0 lab
+>       labTm                <- bquoteHere lab
 >       (labDisplay :=>: _)  <- distill es (ANCHORS :>: labTm)
 >       _It :=>: _Iv         <- distill es (SET :>: _I)
 >       st :=>: sv           <- distill es (ARR _Iv (idesc $$ A _Iv) :>: s)
