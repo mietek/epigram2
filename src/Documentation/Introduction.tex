@@ -1,6 +1,46 @@
-\section{In the beginning}
 
-We really should write something informative here.
+\emph{''I believe that the time is ripe for significantly better
+  documentation of programs, and that we can best achieve this by
+  considering programs to be works of literature.''} Donald Knuth,
+1992.
+
+This document is intended to realise this lofty aim for the
+implementation of Epigram. Although, given that it is being written by
+several different people at once, the plot changes constantly, and
+it's currently pushing 300 pages even though it has barely been started,
+I don't expect it'll be a best seller.
+
+Epigram is a many faceted beast whose facets are constructed roughly
+one on top of the other. This document starts by describing its
+bowels: the core type theory which serves as Epigram's language of
+evidence and into which programs are elaborated. We then proceed
+outwards and upwards until we reach its snorting, wild eyed, and rabid
+face, a.k.a. the high-level language.
+
+\section{In the beginning}
+In the beginning there was Epigram 1. The Epigram 1 language was
+designed by Conor McBride and James McKinna in their weighty paper
+``The view from the left''\cite{conor.james:viewfromleft}. It descibes
+a programming language with support for inductive families and
+dependent pattern matching. Notably pattern matching is an added extra
+to the type theory.  Instead, pattern matching programs in the high
+level language are \emph{elaborated} into type theoretic expressions
+made of traditional eliminators in the underlying theory. An
+implementation of Epigram 1 was written by Conor and with its
+idiosyncratic emacs interface with 2d syntax, one could make small
+experiments. Unfortunately this prototype implementation proved
+unscalable and unmaintainable. Since then Agda 2 and Coq's Russell
+language have assimilated many of Epigram 1's features and many of
+Epigram's programs can be written in these two other languages.
+
+Epigram 2 is not just an attempt at a better implementation of Epigram
+1; it has a radically different underlying type theory which supports
+interesting features in the high-level language. Firstly, it supports
+extensional equality of functions in an intentional theory by using
+observational equality. Secondly, it is a closed type theory where new
+data definitions are new codes in a universe of datatype descriptions
+whose validity is internally guaranteed rather than decreed to be
+acceptable by an external checker.
 
 \subsection{Recommended Reading}
 
