@@ -186,9 +186,17 @@ the context and carry on. Note that this assumes we are at the top level.
 >     simplifyProp p t (SimplyTrivial prf) = do
 >         x :=>: xv <- trySimplifyGoal False (t $$ A (evTm prf))
 >         neutralise =<< give (LK x)
+>     simplifyProp p t (SimplyOne (_ :<: qst) g h) = do
+>         t'   <- bquoteHere t
+>         t''  <- annotate t' (ARR (PRF p) SET)
+>         let q = PIV (fortran t) qst (N (t'' :$ A h))
+>         x :=>: xv <- trySimplifyGoal False (evTm q)
+>         let y = x ?? q
+>         r <- lambdaParam (fortran t)
+>         neutralise =<< give (N (y :$ A (g (P r))))
 >     simplifyProp p t (Simply qs gs h) = do
 >         t'   <- bquoteHere t
->         t''  <- annotate t' (ARR (PRF p) SET)                                      
+>         t''  <- annotate t' (ARR (PRF p) SET)
 >         let q = dischargePi qs (N (t'' :$ A h))
 >         x :=>: xv <- trySimplifyGoal False (evTm q)
 >         let y = x ?? q
