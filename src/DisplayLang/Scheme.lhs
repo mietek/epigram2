@@ -14,6 +14,7 @@
 
 > import Evidences.Tm
 > import Evidences.Mangler
+> import Evidences.Eval
 
 > import DisplayLang.DisplayTm
 
@@ -112,3 +113,11 @@ need to apply them to a spine of shared parameters:
 >     underScheme n r (SchImplicitPi (x :<: s) schT) =
 >         SchImplicitPi (x :<: under n r %% s) (underScheme (n+1) r schT)
 
+
+\subsection{Schemes in error messages}
+
+We can cheaply embed schemes in error messages by converting them to types
+and evaluating. Really, we ought to add schemes as a kind of |ErrorTok|.
+
+> errScheme :: Scheme INTM -> ErrorItem t
+> errScheme sch = errTyVal (evTm (schemeToInTm sch) :<: SET)

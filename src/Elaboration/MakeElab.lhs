@@ -334,10 +334,10 @@ the overall type-term pair from the result.
 Otherwise, we probably have a scheme with an explicit $\Pi$-binding but an
 eliminator other than application, so we give up and throw an error. 
 
->     handleSchemeArgs es sch ttt as = throwError' . err . unlines $ [
->         "handleSchemeArgs: cannot handle scheme", show sch,
->         "with neutral term", show ttt,
->         "and eliminators", show as]
+>     handleSchemeArgs es sch (_ :=>: v :<: ty) as = throwError' $
+>         err "handleSchemeArgs: cannot handle scheme" ++ errScheme sch ++
+>         err "with neutral term" ++ errTyVal (v :<: ty) ++
+>         err "and eliminators" ++ map ErrorElim as
 
 
 The |handleArgs| function is a simplified version of |handleSchemeArgs|, for
