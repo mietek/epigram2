@@ -7,11 +7,14 @@
 
 > module Elaboration.Unification where
 
-> import Prelude hiding (any)
+> import Prelude hiding (any, elem)
 
 > import Control.Applicative
+> import Control.Monad
 > import Data.Foldable
 > import qualified Data.Monoid as M
+
+> import NameSupply.NameSupplier
 
 > import Evidences.Tm
 > import Evidences.Eval
@@ -34,6 +37,7 @@
 
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
+> import Kit.Trace
 
 %endif
 
@@ -122,59 +126,60 @@ fix. Note also that we removed the check that |sn| and |tn| are
 > matchLabels _ _ _ = Nothing 
 
 
-> matchParams :: TY -> [(VAL, VAL)] -> [(REF, VAL)] -> ProofState [(REF, VAL)]
-> matchParams ty        []               subst = return subst
-> matchParams (PI s t)  ((as, at) : ps)  subst = do
->     subst' <- valueMatch (s :>: (as, at))
->     matchParams (t $$ A as) ps (subst ++ subst')
+> matchParams :: Bwd REF -> TY -> [(VAL, VAL)] -> [(REF, VAL)] -> ProofState [(REF, VAL)]
+> matchParams rs ty        []               subst = return subst
+> matchParams rs (PI s t)  ((as, at) : ps)  subst = do
+>     subst' <- matchValues rs (s :>: (as, at))
+>     matchParams rs (t $$ A as) ps (subst ++ subst')
 
 
-The |valueMatch| command takes a pair of values of the same type, and attempts to
-match the hoping holes of the first value to parts of the second value.
+The |matchValues| command takes a pair of values of the same type, and attempts
+to match the hoping holes of the first value to parts of the second value.
 
-> valueMatch :: TY :>: (VAL, VAL) -> ProofState [(REF, VAL)]
-> valueMatch (ty :>: (v, w)) = equationMatch $ (ty :>: v) <-> (ty :>: w)
+> matchValues :: Bwd REF -> TY :>: (VAL, VAL) -> ProofState [(REF, VAL)]
+> matchValues rs (_ :>: (NP x, t)) | x `elem` rs = return [(x, t)]
+> matchValues rs (PI s t :>: (v, w)) = freshRef (fortran t :<: s) $ \ sRef -> do
+>     let sv = pval sRef
+>     matchValues rs (t $$ A sv :>: (v $$ A sv, w $$ A sv))
+> matchValues rs (ty :>: (v, w)) = solveEquation $ (ty :>: v) <-> (ty :>: w)
 >   where
->     equationMatch :: VAL -> ProofState [(REF, VAL)]
->     equationMatch TRIVIAL      = return []
->     equationMatch ABSURD       = throwError' $ err "valueMatch: absurd!"
->     equationMatch (AND p q)    = (| (equationMatch p) ++ (equationMatch q) |)
->     equationMatch p@(ALL _ _)  = bquoteHere p >>= higherMatch
->     equationMatch (N (op :@ [_S, N s, _T, N t])) 
+>     solveEquation :: VAL -> ProofState [(REF, VAL)]
+>     solveEquation TRIVIAL      = return []
+>     solveEquation ABSURD       = throwError' $ err "solveEquation: absurd!"
+>     solveEquation (AND p q)    = (| (solveEquation p) ++ (solveEquation q) |)
+>     solveEquation (N (op :@ [_S, N s, _T, N t])) 
 >         | op == eqGreen ,
 >           Just (ref, args) <- matchLabels s t [] = 
->       matchParams (pty ref) args []
->     equationMatch (N (op :@ [_S, N s, _T, t]))
+>       matchParams rs (pty ref) args []
+>     solveEquation (N (op :@ [_S, NP ref, _T, t]))
+>       | op == eqGreen && ref `elem` rs = return [(ref, t)]
+>     solveEquation (N (op :@ [_S, N s, _T, N t]))
+>       | op == eqGreen = (| fst (matchNeutral rs s t) |)
+>     solveEquation (N (op :@ [_S, s, _T, t]))
 >       | op == eqGreen = do
->         -- |proofTrace $ "match: " ++ unlines (map show [_S, N s, _T, t])|
->         b1 <- withNSupply $ equal (SET :>: (_S, _T))
->         b2 <- withNSupply $ equal (_S :>: (N s, t))
->         if b1 && b2
->             then return []
->             else do
->                 ref <- stripShared s
->                 return [(ref, t)]
->     equationMatch v          = do
->       -- |proofTrace $ "equationMatch: unmatched " ++ show v|
->       throwError' . err $ "equationMatch: unmatched " ++ show v
+>         guard =<< (withNSupply $ equal (SET :>: (_S, _T)))
+>         guard =<< (withNSupply $ equal (_S :>: (s, t)))
+>         return []
+>     solveEquation v = error $ "solveEquation: unmatched " ++ show v
 
->     higherMatch :: INTM -> ProofState [(REF, VAL)]
->     higherMatch (ALLV _ _S (ALLV _ _T (IMP (EQBLUE _ _) q))) = higherMatch q
->     higherMatch (N (op :@ [_, N fa, _, N ga])) | op == eqGreen = 
->         case (extractREF fa, extractREF ga) of
->             (Just fRef, Just gRef) | fRef == gRef -> return []
->             (Just fRef@(_ := HOLE Hoping :<: _), Just gRef@(_ := DECL :<: _)) ->
->                 return [(fRef, pval gRef)]
->             (Just fRef@(_ := HOLE Hoping :<: _), Just gRef) -> do
->                 es <- getInScope
->                 return [(fRef, valueOf $ applySpine gRef es)]
->             _ ->  do
->                 -- |proofTrace $ "higherMatch: unextracted " ++ show (fa, ga)|
->                 throwError' . err $ "higherMatch: unextracted " ++ show (fa, ga)
->     higherMatch v = do
->       -- |proofTrace $ "higherMatch: unmatched " ++ show v|
->       throwError' . err $ "higherMatch: unmatched " ++ show v
 
+> matchNeutral :: Bwd REF -> NEU -> NEU -> ProofState ([(REF, VAL)], TY)
+> matchNeutral rs (P x)   t     | x `elem` rs  = return ([(x, N t)], pty x)
+> matchNeutral rs (P x)  (P y)  | x == y       = return ([], pty x)
+> matchNeutral rs (f :$ e) (g :$ d)            = do
+>     (ss, ty)    <- matchNeutral rs f g
+>     (ss', ty')  <- matchElim rs ty e d
+>     return (ss ++ ss', ty')
+> matchNeutral rs (fOp :@ as) (gOp :@ bs) | fOp == gOp =
+>     undefined -- matchParams rs (pity (opTyTel fOp)) (zip as bs) []
+> matchNeutral rs a b = throwError' $ err "matchNeutral: unmatched "
+>                           ++ errVal (N a) ++ err "and" ++ errVal (N b)
+
+> matchElim :: Bwd REF -> TY -> Elim VAL -> Elim VAL -> ProofState ([(REF, VAL)], TY)
+> matchElim rs (PI s t) (A a) (A b) = do
+>     ss <- matchValues rs (s :>: (a, b))
+>     return (ss, t $$ A a)
+> matchElim rs ty a b = throwError' $ err "matchElim: unmatched!"
 
 
 > stripShared :: NEU -> ProofState REF

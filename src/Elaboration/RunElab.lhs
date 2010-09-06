@@ -40,6 +40,7 @@
 
 > import DisplayLang.Scheme
 > import DisplayLang.Name
+> import DisplayLang.PrettyPrint
 
 > import Tactics.PropositionSimplify
 
@@ -48,6 +49,8 @@
 > import Elaboration.MakeElab
 > import Elaboration.Unification
 > import Elaboration.Wire
+
+> import Distillation.Distiller
 
 > import Cochon.Error
 
@@ -346,9 +349,14 @@ search the hypotheses for a value with the same label.
 The traversal of the hypotheses is carried by |seekOn|. It searches
 parameters and hands them to |seekIn|.
 
->       seekOn B0                                    =    (|)
->       seekOn (es' :< EPARAM param _ ParamLam _ _)  =    seekIn (NP param) (pty param)
->                                                    <|>  seekOn es'
+>       seekOn B0                                    = do
+>           label' <- bquoteHere label
+>           s <- prettyHere (ty :>: N label')
+>           proofTrace $ "Failed to resolve recursive call to "
+>                            ++ renderHouseStyle s
+>           (|)
+>       seekOn (es' :< EPARAM param _ ParamLam _ _)  = 
+>           seekIn B0 (P param) (pty param) <|> seekOn es'
 >       seekOn (es' :< _)                            =    seekOn es'
 
 Then, |seekIn| tries to match the label we are looking for with an
@@ -356,42 +364,50 @@ hypothesis we have found. Recall that a label is a telescope
 targetting a label, hence we try to peel off this telescope to match
 the label. 
 
->       seekIn :: VAL -> VAL -> ProofState (INTM :=>: VAL, ElabStatus)
+>       seekIn :: Bwd REF -> EXTM -> VAL -> ProofState (INTM :=>: VAL, ElabStatus)
 
-On our way to the label, we instantiate the hypotheses by hoping and move
-forward. Any hoping problems left might be solved when matching the label
-later on, but they might also remain outstanding. 
-\adam{We should ensure that no hoping holes are left at the end, possibly by
-accumulating a list of fresh references here rather than hoping holes.}
+On our way to the label, we instantiate the hypotheses with fresh references.
 
->       seekIn tm (PI s t) = do
->        (st :=>: sv, _) <- runElabHope WorkElsewhere s 
->        seekIn (tm $$ A sv) (t $$ A sv)
+>       seekIn rs tm (PI s t) = freshRef (fortran t :<: s) $ \ sRef ->
+>           seekIn (rs :< sRef) (tm :$ A (NP sRef)) (t $$ A (pval sRef))
 
 We have reached a label! The question is then ``is it the one we are looking
 for?'' 
 
->       seekIn tm (LABEL (N foundLabel) u) = do
->         -- Tries to match the labels
->         case matchLabels foundLabel label [] of
->          Just (ref, vvs) -> do
->           -- Success!
->           labelTm  <- bquoteHere label
->           tyTm     <- bquoteHere ty
->           tmTm     <- bquoteHere tm
->           let labelTmVal = LABEL (N labelTm) tyTm :=>: LABEL (N label) ty
->           -- Match the telescopes
->           subst    <- matchParams (pty ref) vvs [] 
->           waitTm <- makeWait subst tmTm
->           suspendThis wrk ("label" :<: labelTmVal) waitTm
->          _ -> 
->           -- Failure.
->           (|)
+>       seekIn rs tm (LABEL (N foundLabel) u) = do
+>           -- Tries to match the labels
+>           {-proofTrace $ "rs: " ++ show rs
+>           proofTrace $ "tm: " ++ show tm
+>           proofTrace $ "foundLabel: " ++ show foundLabel
+>           proofTrace $ "u: " ++ show u
+>           proofTrace $ "label: " ++ show label-}
+>           case matchLabels foundLabel label [] of
+>               Just (ref, vvs) -> do
+>                   -- Success!
+>                   -- proofTrace $ "matchLabels success: " ++ show (ref, vvs)
+>                   labelTm  <- bquoteHere label
+>                   tyTm     <- bquoteHere ty
+>                   -- Match the telescopes
+>                   subst    <- matchParams rs (pty ref) vvs []
+>                   -- proofTrace $ "subst: " ++ show subst
+>                   (xs, vs) <- splitSubst subst
+>                   let c = substitute xs vs (N tm)
+>                   -- proofTrace $ "c: " ++ show c
+>                   return (c :=>: evTm c, ElabSuccess)
+>               _ -> (|) -- Failure.
+>         where
+>           splitSubst :: [(REF, VAL)] -> ProofState (Bwd (REF :<: INTM), Bwd INTM)
+>           splitSubst [] = return (B0, B0)
+>           splitSubst ((r, t):rts) = do
+>               (xs, vs) <- splitSubst rts
+>               ty <- bquoteHere (pty r)
+>               tm <- bquoteHere t
+>               return (xs :< (r :<: ty), vs :< tm)
 
 
-If, in our way to the label, the peeling fails, we must give up.
+If, in our way to the label the peeling fails, then we must give up.
 
->       seekIn tm ty = (|)
+>       seekIn rs tm ty = (|)
 
 
 \pierre{Hopefully, this code will become less hairy when we have
@@ -401,13 +417,7 @@ Because labels are stored lambda-lifted, we have to peel off their
 parameters. Besides, we must accumulate them as we later need to check
 that they are indeed equivalent (|matchParams|).
 
-< -- \pierre{Move to Elaboration.}
-< matchLabels :: NEU -> NEU -> [(VAL, VAL)] -> Maybe (REF, [(VAL, VAL)])
-< matchLabels (P ref@(sn := _ :<: _)) (P (tn := _ :<: _)) ps
-<     | sn == tn   = Just (ref, ps)
-<     | otherwise  = Nothing
-< matchLabels (s :$ A as) (t :$ A at) ps = matchLabels s t ((as, at):ps)
-< matchLabels _ _ _ = Nothing 
+
 
 
 \pierre{This is fairly disgusting as well. Could we find a
@@ -422,13 +432,6 @@ latter has been elaborated as waiting holes in the ProofState:
 unification will resolve them. \pierre{Is it \emph{guaranteed} to
 solve them all? Or some could refuse to unify?}. \pierre{This bit
 needs a better story.}
-
-< -- \pierre{Move to Elaboration.}
-< matchParams :: TY -> [(VAL, VAL)] -> [(REF, VAL)] -> ProofState [(REF, VAL)]
-< matchParams ty        []               subst = return subst
-< matchParams (PI s t)  ((as, at) : ps)  subst = do
-<     subst' <- valueMatch (s :>: (as, at))
-<     matchParams (t $$ A as) ps (subst ++ subst')
 
 > makeWait :: [(REF, VAL)] -> INTM -> ProofState EProb
 > makeWait []              g  = 
