@@ -25,6 +25,7 @@
 > import ProofState.Edition.ProofState
 > import ProofState.Edition.GetSet
 > import ProofState.Edition.Navigation
+> import ProofState.Edition.Scope
 
 > import ProofState.Interface.Search
 > import ProofState.Interface.ProofKit
@@ -162,8 +163,11 @@ match the hoping holes of the first value to parts of the second value.
 >     higherMatch (N (op :@ [_, N fa, _, N ga])) | op == eqGreen = 
 >         case (extractREF fa, extractREF ga) of
 >             (Just fRef, Just gRef) | fRef == gRef -> return []
->             (Just fRef@(_ := HOLE Hoping :<: _), Just gRef) ->
+>             (Just fRef@(_ := HOLE Hoping :<: _), Just gRef@(_ := DECL :<: _)) ->
 >                 return [(fRef, pval gRef)]
+>             (Just fRef@(_ := HOLE Hoping :<: _), Just gRef) -> do
+>                 es <- getInScope
+>                 return [(fRef, valueOf $ applySpine gRef es)]
 >             _ ->  do
 >                 -- |proofTrace $ "higherMatch: unextracted " ++ show (fa, ga)|
 >                 throwError' . err $ "higherMatch: unextracted " ++ show (fa, ga)
