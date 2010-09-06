@@ -81,15 +81,15 @@ proposition |q|.
 > dischargeAll = dischargeF f
 >   where 
 >     f :: Bool -> String -> INTM -> INTM -> INTM
->     f True   x p (PRF q) = PRF (ALLV x p q)
->     f False  x p (PRF q) = PRF (ALL p (LK q))
+>     f False  x (PRF p)  (PRF q) = PRF (IMP p q)
+>     f _      x s        (PRF q) = PRF (ALLV x s q)
 
 > dischargePi :: Bwd (REF :<: INTM) -> INTM -> INTM
 > dischargePi = dischargeF f
 >   where
 >     f :: Bool -> String -> INTM -> INTM -> INTM
->     f True   x p q = PIV x p q
->     f False  x p q = PI p (LK q)
+>     f _   x p q = PIV x p q
+
 
 The |dischargeAllREF| function calls |dischargeAll| on the type of a reference,
 producing a reference with the same name but whose type is $\forall$-abstracted

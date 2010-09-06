@@ -156,3 +156,7 @@ root ;
 make sp : :- ((x : A) => P) ;
 propsimplify ;
 root ;
+
+make bug74 : :- (((x : A) => (FF && FF)) => (FF && FF)) ;
+propsimplify ;
+root ;

@@ -340,15 +340,14 @@ binder, which we can then simplify.
 If $Q$ is absurd, then the proposition simplifies to $\ALL{x}{S} \Absurd$,
 with proofs by absurdity elimination in each direction.
 
->     consequent refS (SimplyAbsurd qx) =
->       freshRef ("psA" :<: PRF (ALL s (LK ABSURD))) $ \ refA -> do
+>     consequent refS (SimplyAbsurd qx) = do
+>       freshRef ("psA" :<: PRF (ALLV (fortran l) s ABSURD)) $ \ refA -> do
 >         l' <- bquote B0 l
 >         s' <- bquote B0 s
 >         let l'' = l' ?? ARR s' PROP
 >         return $
->           SimplyOne  (refA :<: PRF (ALL s' (LK ABSURD)))
->                      (\ pv -> N (nEOp :@ [qx (pv :$ A (NP refS)),
->                                           PRF (ALL s' (LK ABSURD))]))
+>           SimplyOne  (refA :<: PRF (ALLV (fortran l) s' ABSURD))
+>                      (\ pv -> L $ "cab" :. qx ((inc 0 %%# pv) :$ A (NV 0)))
 >                      (L $ "cabs2" :. N (nEOp :@ [N (P refA :$ A (NV 0)),
 >                                                  PRF (N (l'' :$ A (NV 0)))]))
 

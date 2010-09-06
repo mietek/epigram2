@@ -61,8 +61,8 @@ Solved.
 Going to root...
 Appended goal!
 Simplified to:
-:- ((_ : Set) => P)
-:- ((_ : Set) => Q)
+:- ((x : Set) => P)
+:- ((x : Set) => Q)
 
 Going to root...
 Appended goal!
@@ -157,11 +157,16 @@ Error: propSimplifyHere: unable to simplify.
 Going to root...
 Appended goal!
 Simplified to:
-:- ((_ : A) => FF)
+:- ((x : A) => FF)
 
 Going to root...
 Appended goal!
 I'm sorry, Dave. I'm afraid I can't do that.
 Error: propSimplifyHere: unable to simplify.
+Going to root...
+Appended goal!
+Simplified to:
+:- (((x : A) => FF) => FF)
+
 Going to root...
 Loaded.
