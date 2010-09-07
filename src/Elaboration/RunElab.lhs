@@ -371,39 +371,26 @@ On our way to the label, we instantiate the hypotheses with fresh references.
 >       seekIn rs tm (PI s t) = freshRef (fortran t :<: s) $ \ sRef ->
 >           seekIn (rs :< sRef) (tm :$ A (NP sRef)) (t $$ A (pval sRef))
 
-We have reached a label! The question is then ``is it the one we are looking
-for?'' 
+We have reached a label! The question is then ``is this the one we are looking
+for?'' First we call on the matcher (see
+subsection~\ref{subsec:Elaboration.Unification.Matching}) to find values for
+the fresh references and generate a substitution, then we apply this
+substitution to the call term.
 
 >       seekIn rs tm (LABEL (N foundLabel) u) = do
->           -- Tries to match the labels
->           {-proofTrace $ "rs: " ++ show rs
->           proofTrace $ "tm: " ++ show tm
->           proofTrace $ "foundLabel: " ++ show foundLabel
->           proofTrace $ "u: " ++ show u
->           proofTrace $ "label: " ++ show label-}
->           case matchLabels foundLabel label [] of
->               Just (ref, vvs) -> do
->                   -- Success!
->                   -- proofTrace $ "matchLabels success: " ++ show (ref, vvs)
->                   labelTm  <- bquoteHere label
->                   tyTm     <- bquoteHere ty
->                   -- Match the telescopes
->                   subst    <- matchParams rs (pty ref) vvs []
->                   -- proofTrace $ "subst: " ++ show subst
->                   (xs, vs) <- splitSubst subst
->                   let c = substitute xs vs (N tm)
->                   -- proofTrace $ "c: " ++ show c
->                   return (c :=>: evTm c, ElabSuccess)
->               _ -> (|) -- Failure.
+>           (ss, _)   <- matchNeutral rs [] foundLabel label
+>           (xs, vs)  <- splitSubst ss
+>           let c = substitute xs vs (N tm)
+>           return (c :=>: evTm c, ElabSuccess)
 >         where
->           splitSubst :: [(REF, VAL)] -> ProofState (Bwd (REF :<: INTM), Bwd INTM)
->           splitSubst [] = return (B0, B0)
->           splitSubst ((r, t):rts) = do
+>           splitSubst :: [(REF, VAL)] ->
+>                             ProofState (Bwd (REF :<: INTM), Bwd INTM)
+>           splitSubst []            = return (B0, B0)
+>           splitSubst ((r, t):rts)  = do
 >               (xs, vs) <- splitSubst rts
 >               ty <- bquoteHere (pty r)
 >               tm <- bquoteHere t
->               return (xs :< (r :<: ty), vs :< tm)
-
+>               return (xs :< (r :<: substitute xs vs ty), vs :< substitute xs vs tm)
 
 If, in our way to the label the peeling fails, then we must give up.
 
@@ -433,13 +420,6 @@ unification will resolve them. \pierre{Is it \emph{guaranteed} to
 solve them all? Or some could refuse to unify?}. \pierre{This bit
 needs a better story.}
 
-> makeWait :: [(REF, VAL)] -> INTM -> ProofState EProb
-> makeWait []              g  = 
->     return $ ElabDone (g :=>: Nothing)
-> makeWait ((r, v) : rvs)  g  = do
->     v' <- bquoteHere v
->     ep <- makeWait rvs g
->     return $ WaitSolve r (v' :=>: Just v) ep
 
 
 \subsubsection{Simplifying proofs}
@@ -494,7 +474,7 @@ This case arises frequently when proving label equality to make recursive calls.
 > flexiProofMatch :: (TY :>: VAL) -> (TY :>: VAL)
 >     -> ProofState (INTM :=>: VAL, ElabStatus)
 > flexiProofMatch (_S :>: N s) (_T :>: N t)
->   | Just (ref, ps) <- matchLabels s t [] = do
+>   | Just (ref, ps) <- pairSpines s t [] = do
 >     let ty = pty ref
 >     prfs <- proveBits ty ps B0
 >     let  q  = NP refl $$ A ty $$ A (NP ref) $$ Out
@@ -502,6 +482,13 @@ This case arises frequently when proving label equality to make recursive calls.
 >     r' <- bquoteHere r
 >     return (r' :=>: r, ElabSuccess)
 >   where
+>     pairSpines :: NEU -> NEU -> [(VAL, VAL)] -> Maybe (REF, [(VAL, VAL)])
+>     pairSpines (P ref@(sn := _ :<: _)) (P (tn := _ :<: _)) ps
+>       | sn == tn   = Just (ref, ps)
+>       | otherwise  = Nothing
+>     pairSpines (s :$ A as) (t :$ A at) ps = pairSpines s t ((as, at):ps)
+>     pairSpines _ _ _ = Nothing 
+
 >     proveBits :: TY -> [(VAL, VAL)] -> Bwd (VAL, VAL, VAL)
 >         -> ProofState (Bwd (VAL, VAL, VAL))
 >     proveBits ty [] prfs = return prfs
