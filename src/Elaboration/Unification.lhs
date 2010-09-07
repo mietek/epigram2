@@ -41,6 +41,8 @@
 
 %endif
 
+\adam{This section should probably be split in two and moved to Tactics.}
+
 \subsection{Solving flex-rigid problems}
 
 The |solveHole| command solves a flex-rigid problem by filling in the reference
@@ -146,8 +148,10 @@ substituted out. Any references left with no value at the end are unconstrained
 by the matching problem.
 
 The |matchValue| command requires the type of the values to be pushed in.
-\adam{can we be sure the references used to expand pi-types will not appear
-in the final output?}
+It expands elements of $\Pi$-types by applying them to fresh references,
+then attempts to solve the resulting equation.
+\adam{we need to stop the expansion references from escaping: consider
+@match (X : Set) ; (: Set -> Set) \ x -> X ; \ x -> x@.}
 
 > matchValue :: MatchSubst -> TY :>: (VAL, VAL) -> ProofState MatchSubst
 > matchValue rs (_ :>: (NP x, t)) | x `elemSubst` rs = insertSubst x t rs
@@ -176,8 +180,9 @@ in the final output?}
 >     solveEquation rs v = error $ "solveEquation: unmatched " ++ show v
 
 
-The |matchNeutral| command generates the type of the values as well as the
-matching substitution.
+The |matchNeutral| command matches two neutrals, and returns their type along
+with the matching substitution.
+\adam{this needs to handle operators.}
 
 > matchNeutral :: MatchSubst-> NEU -> NEU -> ProofState (MatchSubst, TY)
 > matchNeutral rs (P x)   t     | x `elemSubst` rs  = do
@@ -191,8 +196,10 @@ matching substitution.
 >                           ++ errVal (N a) ++ err "and" ++ errVal (N b)
 
 
-The |matchElim| command requires the type of the neutral being eliminated, and
-produces the type of the whole elimination.
+The |matchElim| command matches two eliminators, given the type of the neutral
+being eliminated; it returns the type of the whole elimination along with the
+matching substitution.
+\adam{this needs to handle eliminators other than application.}
 
 > matchElim :: MatchSubst -> TY -> Elim VAL -> Elim VAL ->
 >                  ProofState (MatchSubst, TY)
@@ -203,6 +210,44 @@ produces the type of the whole elimination.
 
 
 
+For testing purposes, we define a @match@ tactic that takes a telescope of
+parameters to solve for, a neutral term for which those parameters are in scope,
+and another term of the same type. It prints out the resulting substitution.
+
+> import -> CochonTacticsCode where
+>     matchCTactic :: [(String, DInTmRN)] -> DExTmRN -> DInTmRN -> ProofState String
+>     matchCTactic xs a b = draftModule "__match" $ do
+>         rs <- traverse matchHyp xs
+>         (_ :=>: av :<: ty) <- elabInfer' a
+>         cursorTop
+>         (_ :=>: bv) <- elaborate' (ty :>: b)
+>         rs' <- matchValue (bwdList rs) (ty :>: (av, bv))
+>         return (show rs')
+>       where
+>         matchHyp :: (String, DInTmRN) -> ProofState (REF, Maybe VAL)
+>         matchHyp (s, t) = do
+>             tt  <- elaborate' (SET :>: t)
+>             r   <- assumeParam (s :<: tt)
+>             return (r, Nothing)
+
+> import -> CochonTactics where
+>   : (simpleCT 
+>     "match"
+>     (do
+>         pars <- tokenListArgs (bracket Round $ tokenPairArgs
+>                                       tokenString
+>                                       (keyword KwAsc)
+>                                       tokenInTm) (| () |)
+>         keyword KwSemi
+>         tm1 <- tokenExTm
+>         keyword KwSemi
+>         tm2 <- tokenInTm
+>         return (B0 :< pars :< tm1 :< tm2)
+>      )
+>      (\ [pars, ExArg a, InArg b] ->
+>          matchCTactic (argList (argPair argToStr argToIn) pars) a b)
+>      "match [<para>]* ; <term> ; <term> - match parameters in first term against second."
+>    )
 
 
 \adam{where should this live?}
