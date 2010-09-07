@@ -106,9 +106,9 @@ define compare 'zero ('suc k) P l e g := l 'zero k ;
 define compare ('suc j) 'zero P l e g := g j 'zero ;
 relabel compare ('suc j) ('suc k) P l e g ;
 <= compare j k ;
-= l ('suc x^2) y^3 ;
+= l ('suc fx^5) fx^4 ;
 define compare ('suc j) ('suc j) P l e g := e ('suc j) ;
-= g x^2 ('suc y^3) ;
+= g fx^5 ('suc fx^4) ;
 root ;
 
 
@@ -118,11 +118,11 @@ root ;
   simpler example:
 -}
 
-let max (x : Nat)(y : Nat) : Nat ;
-<= compare x y ;
-= plus x ('suc y) ;
-= x ;
-= plus y ('suc x) ;
+let max (a : Nat)(b : Nat) : Nat ;
+<= compare a b ;
+= plus a ('suc b) ;
+= a ;
+= plus b ('suc a) ;
 root ;
 
 elab max two one ;

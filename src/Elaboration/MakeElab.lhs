@@ -296,7 +296,7 @@ context |es|.
 
 >     handleSchemeArgs es  (SchImplicitPi (x :<: s) schT)
 >                              (tm :=>: tv :<: PI sd t) as = do
->         stm :=>: sv <- eHopeFor (eval s (fmap valueOf es))
+>         stm :=>: sv <- eHopeFor (eval s (fmap valueOf es, []))
 >         handleSchemeArgs (es :< (stm :=>: sv)) schT
 >             (tm :$ A stm :=>: tv $$ A sv :<: t $$ A sv) as
 
@@ -307,7 +307,7 @@ push the expected type into the argument and carry on.
 >     handleSchemeArgs es  (SchExplicitPi (x :<: schS) schT)
 >                              (tm :=>: tv :<: PI sd t) (A a : as) = do
 >         let s' = schemeToInTm schS
->         atm :=>: av <- subElab loc (eval s' (fmap valueOf es) :>: a)
+>         atm :=>: av <- subElab loc (eval s' (fmap valueOf es, []) :>: a)
 >         handleSchemeArgs (es :< (atm :=>: av)) schT
 >             (tm :$ A atm :=>: tv $$ A av :<: t $$ A av) as
 
@@ -318,7 +318,7 @@ the overall type-term pair from the result.
 
 >     handleSchemeArgs es  (SchExplicitPi (x :<: schS) schT)
 >                              (tm :=>: tv :<: PI sd t) [] = do
->         let sv = eval (schemeToInTm schS) (fmap valueOf es)
+>         let sv = eval (schemeToInTm schS) (fmap valueOf es, [])
 >         tm :=>: tv <- eCompute
 >             (PI sv (L $ K sigSetVAL) :>: do
 >                 r <- eLambda x

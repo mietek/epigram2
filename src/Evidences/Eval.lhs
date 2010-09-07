@@ -69,15 +69,19 @@ elimination.
 This translates into the following code:
 
 > ($$) :: VAL -> Elim VAL -> VAL
-> L (K v)      $$ A _  = v                 -- By \ref{eqn:Evidences.Rules.elim-cstt}
-> L (H g _ t)  $$ A v  = eval t (g :< v)   -- By \ref{eqn:Evidences.Rules.elim-bind}
-> L (x :. t)   $$ A v  = eval t (B0 :< v)  -- By \ref{eqn:Evidences.Rules.elim-bind}
-> C (Con t)    $$ Out  = t                 -- By \ref{eqn:Evidences.Rules.elim-con}
-> import <- ElimComputation                -- Extensions
-> N n          $$ e    = N (n :$ e)        -- By \ref{eqn:Evidences.Rules.elim-stuck}
+> L (K v)      $$ A _  = v               -- By \ref{eqn:Evidences.Rules.elim-cstt}
+> L (H (vs, rho) x t)  $$ A v
+>   = eval t (vs :< v, naming x v rho)   -- By \ref{eqn:Evidences.Rules.elim-bind}
+> L (x :. t)   $$ A v
+>   = eval t (B0 :< v, naming x v [])    -- By \ref{eqn:Evidences.Rules.elim-bind}
+> C (Con t)    $$ Out  = t               -- By \ref{eqn:Evidences.Rules.elim-con}
+> import <- ElimComputation              -- Extensions
+> N n          $$ e    = N (n :$ e)      -- By \ref{eqn:Evidences.Rules.elim-stuck}
 > f            $$ e    =  error $  "Can't eliminate\n" ++ show f ++ 
 >                                  "\nwith eliminator\n" ++ show e
 
+The |naming| operation amends the current naming scheme, taking account
+the instantiation of x: see below.
 
 The left fold of |$$| applies a value to a bunch of eliminators:
 
@@ -123,9 +127,12 @@ value.
 This naturally leads to the following code:
 
 > body :: Scope {TT} REF -> ENV -> Scope {VV} REF
-> body (K v)     g   = K (eval v g)
-> body (x :. t)  B0  = x :. t  -- closed lambdas stay syntax
-> body (x :. t)  g   = H g x t
+> body (K v)     g            = K (eval v g)
+> body (x :. t)  (B0, rho)    = txtSub rho x :. t  -- closed lambdas stay syntax
+> body (x :. t)  g@(_, rho)   = H g (txtSub rho x) t
+
+Now, as well as making closures, the current renaming scheme is applied
+to the bound variable name, for cosmetic purposes.
 
 \subsection{Evaluator}
 
@@ -153,20 +160,60 @@ from the environment (f). Elimination is handled by |$$| defined above
 (g). And similarly for operators with |@@| (h).
 
 > eval :: Tm {d, TT} REF -> ENV -> VAL
-> eval (L b)       = (|L (body b)|)                                -- By (a)
-> eval (C c)       = (|C (eval ^$ c)|)                             -- By (b)
-> eval (N n)       = eval n                                        -- By (c)
-> eval (t :? _)    = eval t                                        -- By (d)
-> eval (P x)       = (|(pval x)|)                                  -- By (e)
-> eval (V i)       = fromMaybe (error "eval: bad index") . (!. i)  -- By (f)
-> eval (t :$ e)    = (|eval t $$ (eval ^$ e)|)                     -- By (g)
-> eval (op :@ vs)  = (|(op @@) (eval ^$ vs)|)                      -- By (h)
+> eval (L b)       = (|L (body b)|)                -- By (a)
+> eval (C c)       = (|C (eval ^$ c)|)             -- By (b)
+> eval (N n)       = eval n                        -- By (c)
+> eval (t :? _)    = eval t                        -- By (d)
+> eval (P x)       = (|(pval x)|)                  -- By (e)
+> eval (V i)       = evar i                        -- By (f)
+> eval (t :$ e)    = (|eval t $$ (eval ^$ e)|)     -- By (g)
+> eval (op :@ vs)  = (|(op @@) (eval ^$ vs)|)      -- By (h)
 > eval (Yuk v)     = (|v|)
+
+> evar :: Int -> ENV -> VAL
+> evar i (vs, ts) = fromMaybe (error "eval: bad index") (vs !. i)
 
 
 Finally, the evaluation of a closed term simply consists in calling the
 interpreter defined above with the empty environment.
 
 > evTm :: Tm {d, TT} REF -> VAL
-> evTm t = eval t B0
+> evTm t = eval t (B0, [])
 
+
+\subsection{Alpha-conversion on the fly}
+
+Here's a bit of a dirty trick which sometimes results in better name choices.
+We firstly need the notion of a textual substitution from Tm.lhs. 
+
+< type TXTSUB = [(Char, String)]   -- renaming plan
+
+That's a plan for mapping characters to strings. We apply them
+to strings like this, with no change to characters which aren't
+mapped.
+
+> txtSub :: TXTSUB -> String -> String
+> txtSub ts = foldMap blat where blat c = fromMaybe [c] $ lookup c ts
+
+The |ENV| type packs up a renaming scheme, which we apply to every
+bound variable name advice string that we encounter as we go: the
+deed is done in |body|, above.
+
+The renaming scheme is amended every time we instantiate a bound variable
+with a free variable. Starting from the right, each characte of the bound
+name is mapped to the corresponding character of the free name. The first
+character of the bound name is mapped to the whole remaining prefix. So
+instantiating |"xys"| with |"monks"| maps |'y'| to |"k"| and |'x'| to |"mon"|.
+The idea is that matching the target of an eliminator in this way will
+give good names to the variables bound in its methods, if we're lucky and
+well prepared.
+
+> naming :: String -> VAL -> TXTSUB -> TXTSUB
+> naming x (N (P y)) rho 
+>   = mkMap (reverse x) (reverse (refNameAdvice y)) rho where
+>     mkMap ""        _         rho  = rho
+>     mkMap _         ""        rho  = rho
+>     mkMap [c]       s         rho  | s /= [c]  = (c, s) : rho
+>     mkMap (c : cs)  (c' : s)  rho  | c /= c'   = mkMap cs s ((c, [c']) : rho)
+>     mkMap (_ : cs)  (_ : s)   rho  = mkMap cs s rho
+> naming _ _ rho = rho

@@ -91,7 +91,7 @@
 >         | equal (SET :>: (x, y)) r &&
 >           equal (ARR x (MONAD d x) :>: (f, ret)) r = pure t
 >         where
->           ret = eval (L ("x" :. [.x. RETURN (NV x)])) B0
+>           ret = L ("x" :. [.x. RETURN (NV x)])
 >       substMonadOpSimp [d, y, z, f, N (sOp :@ [_, x, _, g, N t])] r
 >         | sOp == substMonadOp = pure $ substMonadOp :@ [d, x, z, comp, N t]
 >         where  comp = L $ "x" :. [.x. N $

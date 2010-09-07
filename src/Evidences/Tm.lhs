@@ -315,7 +315,8 @@ We have some type synonyms for commonly occurring instances of |Tm|.
 > type VAL    = Tm {In, VV} REF
 > type TY     = VAL
 > type NEU    = Tm {Ex, VV} REF
-> type ENV    = Bwd VAL
+> type ENV    = (Bwd VAL, TXTSUB)  -- values for deBruijn indices
+> type TXTSUB = [(Char, String)]   -- renaming plan
 
 We have special pairs for types going into and coming out of
 stuff. We write |typ :>: thing| to say that |typ| accepts the
@@ -564,12 +565,18 @@ The aptly named |$##| operator applies an |ExTm| to a list of |InTm|s.
 > f $## xs = foldl (\ v w -> v :$ A w) f xs
 
 Sensible name advice is a hard problem. The |fortran| function tries to extract
-a useful name from a term.  
+a useful name from a binder.  
 
 > fortran :: Tm {In, p} x -> String
 > fortran (L (x :. _))   | not (null x) = x
 > fortran (L (H _ x _))   | not (null x) = x
 > fortran _ = "xf"
+
+Similarly, it is useful to extract name advice from a |REF|.
+
+> refNameAdvice :: REF -> String
+> refNameAdvice = fst . last . refName
+
 
 If we have a bunch of references we can make them into a spine:
 
