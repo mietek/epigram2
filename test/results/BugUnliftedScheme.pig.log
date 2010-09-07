@@ -1,3 +1,5 @@
+[ProofTrace] Failed to resolve recursive call to M.f A a
+[ProofTrace] Failed to resolve recursive call to f a
 Made module.
 Made lambda!
 Let there be f.
