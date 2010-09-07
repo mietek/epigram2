@@ -113,73 +113,93 @@ holes with the new ones.
 \subsection{Matching}
 \label{subsec:Elaboration.Unification.Matching}
 
-The matching commands, defined below, all follow the same pattern. They take a
-list of references to solve for, a substitution so far (represented as an
-association list) and a pair of objects. The references being solved must only
-exist in the first object. They produce a unifying substitution.
+A \emph{matching substitution} is a list of references with their values, if any.
+
+> type MatchSubst = Bwd (REF, Maybe VAL)
+
+It is easy to decide if a reference is an element of such a substitution:
+
+> elemSubst :: REF -> MatchSubst -> Bool
+> elemSubst r = any ((r ==) . fst)
+
+When inserting a new reference-value pair into the substitution, we ensure that
+it is consistent with any value already given to the reference.
+
+> insertSubst :: REF -> VAL -> MatchSubst -> ProofState MatchSubst
+> insertSubst x t B0 = error "insertSubst: reference not found!"
+> insertSubst x t (rs :< (y, m)) | x == y = case m of
+>     Nothing  -> return (rs :< (x, Just t))
+>     Just u   -> do
+>         guard =<< withNSupply (equal (pty x :>: (t, u)))
+>         return (rs :< (y, m))
+> insertSubst x t (rs :< (y, m)) = (| (insertSubst x t rs) :< ~(y, m) |)
+
+
+The matching commands, defined below, take a matching substitution (initially
+with no values for the references) and a pair of objects. The references must
+only exist in the first object, and each reference may only depend on those
+before it (in the usual telescopic style). Each command will produce an updated
+substitution, potentially with more references defined.
+
+Note that the resulting values may contain earlier references that need to be
+substituted out. Any references left with no value at the end are unconstrained
+by the matching problem.
 
 The |matchValue| command requires the type of the values to be pushed in.
+\adam{can we be sure the references used to expand pi-types will not appear
+in the final output?}
 
-> matchValue :: Bwd REF -> [(REF, VAL)] -> TY :>: (VAL, VAL) -> ProofState [(REF, VAL)]
-> matchValue rs ss (_ :>: (NP x, t)) | x `elem` rs = insertSubst x t ss
-> matchValue rs ss (PI s t :>: (v, w)) =
+> matchValue :: MatchSubst -> TY :>: (VAL, VAL) -> ProofState MatchSubst
+> matchValue rs (_ :>: (NP x, t)) | x `elemSubst` rs = insertSubst x t rs
+> matchValue rs (PI s t :>: (v, w)) =
 >     freshRef ("expand" :<: s) $ \ sRef -> do
 >         let sv = pval sRef
->         matchValue rs ss (t $$ A sv :>: (v $$ A sv, w $$ A sv))
-> matchValue rs ss (ty :>: (v, w)) =
->     solveEquation ss $ (ty :>: v) <-> (ty :>: w)
+>         matchValue rs (t $$ A sv :>: (v $$ A sv, w $$ A sv))
+> matchValue rs (ty :>: (v, w)) =
+>     solveEquation rs $ (ty :>: v) <-> (ty :>: w)
 >   where
->     solveEquation :: [(REF, VAL)] -> VAL -> ProofState [(REF, VAL)]
->     solveEquation ss TRIVIAL      = return ss
->     solveEquation ss ABSURD       = throwError' $ err "solveEquation: absurd!"
->     solveEquation ss (AND p q)    = do
->         ss' <- solveEquation ss p
->         solveEquation ss' q
->     solveEquation ss (N (op :@ [_S, NP x, _T, t]))
->       | op == eqGreen && x `elem` rs = insertSubst x t ss
->     solveEquation ss (N (op :@ [_S, N s, _T, N t]))
->       | op == eqGreen = (| fst (matchNeutral rs ss s t) |)
->     solveEquation ss (N (op :@ [_S, s, _T, t]))
+>     solveEquation :: MatchSubst -> VAL -> ProofState MatchSubst
+>     solveEquation rs TRIVIAL      = return rs
+>     solveEquation rs ABSURD       = throwError' $ err "solveEquation: absurd!"
+>     solveEquation rs (AND p q)    = do
+>         rs' <- solveEquation rs p
+>         solveEquation rs' q
+>     solveEquation rs (N (op :@ [_S, NP x, _T, t]))
+>       | op == eqGreen && x `elemSubst` rs = insertSubst x t rs
+>     solveEquation rs (N (op :@ [_S, N s, _T, N t]))
+>       | op == eqGreen = (| fst (matchNeutral rs s t) |)
+>     solveEquation rs (N (op :@ [_S, s, _T, t]))
 >       | op == eqGreen = do
 >         guard =<< (withNSupply $ equal (SET :>: (_S, _T)))
 >         guard =<< (withNSupply $ equal (_S :>: (s, t)))
->         return ss
->     solveEquation ss v = error $ "solveEquation: unmatched " ++ show v
+>         return rs
+>     solveEquation rs v = error $ "solveEquation: unmatched " ++ show v
 
 
-The |matchNeutral| command generates the type of the values as an additional
-output.
+The |matchNeutral| command generates the type of the values as well as the
+matching substitution.
 
-> matchNeutral :: Bwd REF -> [(REF, VAL)] -> NEU -> NEU -> ProofState ([(REF, VAL)], TY)
-> matchNeutral rs ss (P x)   t     | x `elem` rs  = do
->     ss' <- insertSubst x (N t) ss
->     return (ss', pty x)
-> matchNeutral rs ss (P x)  (P y)  | x == y       = return (ss, pty x)
-> matchNeutral rs ss (f :$ e) (g :$ d)            = do
->     (ss', ty) <- matchNeutral rs ss f g
->     matchElim rs ss' ty e d
-> matchNeutral rs ss a b = throwError' $ err "matchNeutral: unmatched "
+> matchNeutral :: MatchSubst-> NEU -> NEU -> ProofState (MatchSubst, TY)
+> matchNeutral rs (P x)   t     | x `elemSubst` rs  = do
+>     rs' <- insertSubst x (N t) rs
+>     return (rs', pty x)
+> matchNeutral rs (P x)  (P y)  | x == y       = return (rs, pty x)
+> matchNeutral rs (f :$ e) (g :$ d)            = do
+>     (rs', ty) <- matchNeutral rs f g
+>     matchElim rs' ty e d
+> matchNeutral rs a b = throwError' $ err "matchNeutral: unmatched "
 >                           ++ errVal (N a) ++ err "and" ++ errVal (N b)
 
 
 The |matchElim| command requires the type of the neutral being eliminated, and
 produces the type of the whole elimination.
 
-> matchElim :: Bwd REF -> [(REF, VAL)] -> TY -> Elim VAL -> Elim VAL -> ProofState ([(REF, VAL)], TY)
-> matchElim rs ss (PI s t) (A a) (A b) = do
->     ss' <- matchValue rs ss (s :>: (a, b))
->     return (ss', t $$ A a)
-> matchElim rs ss ty a b = throwError' $ err "matchElim: unmatched!"
-
-
-When inserting a new reference-value pair into the substitution, we ensure that
-it is consistent with any value already given to the reference.
-
-> insertSubst :: REF -> VAL -> [(REF, VAL)] -> ProofState [(REF, VAL)]
-> insertSubst x t ss | Just u <- lookup x ss = do
->     guard =<< withNSupply (equal (pty x :>: (t, u)))
->     return ss
-> insertSubst x t ss = return ((x, t) : ss)
+> matchElim :: MatchSubst -> TY -> Elim VAL -> Elim VAL ->
+>                  ProofState (MatchSubst, TY)
+> matchElim rs (PI s t) (A a) (A b) = do
+>     rs' <- matchValue rs (s :>: (a, b))
+>     return (rs', t $$ A a)
+> matchElim rs ty a b = throwError' $ err "matchElim: unmatched!"
 
 
 

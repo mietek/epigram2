@@ -374,52 +374,39 @@ On our way to the label, we instantiate the hypotheses with fresh references.
 We have reached a label! The question is then ``is this the one we are looking
 for?'' First we call on the matcher (see
 subsection~\ref{subsec:Elaboration.Unification.Matching}) to find values for
-the fresh references and generate a substitution, then we apply this
-substitution to the call term.
+the fresh references, then we generate a substitution from these values and
+apply it to the call term.
 
 >       seekIn rs tm (LABEL (N foundLabel) u) = do
->           (ss, _)   <- matchNeutral rs [] foundLabel label
->           (xs, vs)  <- splitSubst ss
+>           (ss, _)   <- matchNeutral (fmap (, Nothing) rs) foundLabel label
+>           (xs, vs)  <- processSubst ss
 >           let c = substitute xs vs (N tm)
 >           return (c :=>: evTm c, ElabSuccess)
->         where
->           splitSubst :: [(REF, VAL)] ->
->                             ProofState (Bwd (REF :<: INTM), Bwd INTM)
->           splitSubst []            = return (B0, B0)
->           splitSubst ((r, t):rts)  = do
->               (xs, vs) <- splitSubst rts
->               ty <- bquoteHere (pty r)
->               tm <- bquoteHere t
->               return (xs :< (r :<: substitute xs vs ty), vs :< substitute xs vs tm)
 
 If, in our way to the label the peeling fails, then we must give up.
 
 >       seekIn rs tm ty = (|)
 
 
-\pierre{Hopefully, this code will become less hairy when we have
-proper high-level names.}
+To generate a substitution, we quote the value given to each reference and
+substitute out the preceding references. If a reference has no value, i.e. it
+is unconstrained by the matching problem, we hope for a solution.
+\adam{we could do some dependency analysis here to avoid cluttering the proof
+state with hopes that we don't make use of.}
 
-Because labels are stored lambda-lifted, we have to peel off their
-parameters. Besides, we must accumulate them as we later need to check
-that they are indeed equivalent (|matchParams|).
-
-
-
-
-\pierre{This is fairly disgusting as well. Could we find a
-presentation where |matchParams| and |makeWait| are fused? Instead of
-a first pass that generates a weirdly reversed list and a second pass
-that does something semantically sensible.}
-
-When we know that we are talking about the same label, we are facing a
-unification problem: the arguments of the label we are looking for
-have to be matched to the arguments of the label we have found. The
-latter has been elaborated as waiting holes in the ProofState:
-unification will resolve them. \pierre{Is it \emph{guaranteed} to
-solve them all? Or some could refuse to unify?}. \pierre{This bit
-needs a better story.}
-
+>       processSubst :: MatchSubst -> ProofState (Bwd (REF :<: INTM), Bwd INTM)
+>       processSubst B0            = return (B0, B0)
+>       processSubst (rs :< (r, Just t))  = do
+>           (xs, vs)  <- processSubst rs
+>           ty        <- bquoteHere (pty r)
+>           tm        <- bquoteHere t
+>           return (xs :< (r :<: substitute xs vs ty), vs :< substitute xs vs tm)
+>       processSubst (rs :< (r, Nothing))  = do
+>           (xs, vs)  <- processSubst rs
+>           ty        <- bquoteHere (pty r)
+>           let ty' = substitute xs vs ty
+>           (tm :=>: _, _)  <- runElabHope WorkElsewhere (evTm ty')
+>           return (xs :< (r :<: ty'), vs :< tm)
 
 
 \subsubsection{Simplifying proofs}
