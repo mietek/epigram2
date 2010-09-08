@@ -378,7 +378,7 @@ to find values for the fresh references, then we generate a substitution from
 these values and apply it to the call term.
 
 >       seekIn rs tm (LABEL (N foundLabel) u) = do
->           (ss, _)   <- matchNeutral (fmap (, Nothing) rs) foundLabel label
+>           (ss, _)   <- matchNeutral (fmap (, Nothing) rs) B0 foundLabel label
 >           (xs, vs)  <- processSubst ss
 >           let c = substitute xs vs (N tm)
 >           return (c :=>: evTm c, ElabSuccess)

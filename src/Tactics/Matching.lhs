@@ -66,17 +66,20 @@ by the matching problem.
 
 The |matchValue| command requires the type of the values to be pushed in.
 It expands elements of $\Pi$-types by applying them to fresh references,
-then attempts to solve the resulting equation.
-\adam{we need to stop the expansion references from escaping: consider
-@match (X : Set) ; (: Set -> Set) \ x -> X ; \ x -> x@.}
+which must not occur in solution values (this might otherwise happen when given
+a higher-order matching problem with no solutions). The fresh references are
+therefore collected in a list and |checkSafe| (defined below) is called to
+ensure none of the unsafe references occur.
 
-> matchValue :: MatchSubst -> TY :>: (VAL, VAL) -> ProofState MatchSubst
-> matchValue rs (_ :>: (NP x, t)) | x `elemSubst` rs = insertSubst x t rs
-> matchValue rs (PI s t :>: (v, w)) =
+> matchValue :: MatchSubst -> Bwd REF -> TY :>: (VAL, VAL) ->
+>                   ProofState MatchSubst
+> matchValue rs zs (_ :>: (NP x, t)) | x `elemSubst` rs =
+>     checkSafe zs t >> insertSubst x t rs
+> matchValue rs zs (PI s t :>: (v, w)) =
 >     freshRef ("expand" :<: s) $ \ sRef -> do
 >         let sv = pval sRef
->         matchValue rs (t $$ A sv :>: (v $$ A sv, w $$ A sv))
-> matchValue rs (ty :>: (v, w)) =
+>         matchValue rs (zs :< sRef) (t $$ A sv :>: (v $$ A sv, w $$ A sv))
+> matchValue rs zs (ty :>: (v, w)) =
 >     solveEquation rs $ (ty :>: v) <-> (ty :>: w)
 >   where
 >     solveEquation :: MatchSubst -> VAL -> ProofState MatchSubst
@@ -86,9 +89,10 @@ then attempts to solve the resulting equation.
 >         rs' <- solveEquation rs p
 >         solveEquation rs' q
 >     solveEquation rs (N (op :@ [_S, NP x, _T, t]))
->       | op == eqGreen && x `elemSubst` rs = insertSubst x t rs
+>       | op == eqGreen && x `elemSubst` rs =
+>             checkSafe zs t >> insertSubst x t rs
 >     solveEquation rs (N (op :@ [_S, N s, _T, N t]))
->       | op == eqGreen = (| fst (matchNeutral rs s t) |)
+>       | op == eqGreen = (| fst (matchNeutral rs zs s t) |)
 >     solveEquation rs (N (op :@ [_S, s, _T, t]))
 >       | op == eqGreen = do
 >         guard =<< (withNSupply $ equal (SET :>: (_S, _T)))
@@ -101,15 +105,17 @@ The |matchNeutral| command matches two neutrals, and returns their type along
 with the matching substitution.
 \adam{this needs to handle operators.}
 
-> matchNeutral :: MatchSubst-> NEU -> NEU -> ProofState (MatchSubst, TY)
-> matchNeutral rs (P x)   t     | x `elemSubst` rs  = do
+> matchNeutral :: MatchSubst -> Bwd REF -> NEU -> NEU ->
+>                     ProofState (MatchSubst, TY)
+> matchNeutral rs zs (P x)   t     | x `elemSubst` rs  = do
+>     checkSafe zs (N t)
 >     rs' <- insertSubst x (N t) rs
 >     return (rs', pty x)
-> matchNeutral rs (P x)  (P y)  | x == y       = return (rs, pty x)
-> matchNeutral rs (f :$ e) (g :$ d)            = do
->     (rs', ty) <- matchNeutral rs f g
->     matchElim rs' ty e d
-> matchNeutral rs a b = throwError' $ err "matchNeutral: unmatched "
+> matchNeutral rs zs (P x)  (P y)  | x == y            = return (rs, pty x)
+> matchNeutral rs zs (f :$ e) (g :$ d)                 = do
+>     (rs', ty) <- matchNeutral rs zs f g
+>     matchElim rs' zs ty e d
+> matchNeutral rs zs a b = throwError' $ err "matchNeutral: unmatched "
 >                           ++ errVal (N a) ++ err "and" ++ errVal (N b)
 
 
@@ -118,13 +124,21 @@ being eliminated; it returns the type of the whole elimination along with the
 matching substitution.
 \adam{this needs to handle eliminators other than application.}
 
-> matchElim :: MatchSubst -> TY -> Elim VAL -> Elim VAL ->
+> matchElim :: MatchSubst -> Bwd REF -> TY -> Elim VAL -> Elim VAL ->
 >                  ProofState (MatchSubst, TY)
-> matchElim rs (PI s t) (A a) (A b) = do
->     rs' <- matchValue rs (s :>: (a, b))
+> matchElim rs zs (PI s t) (A a) (A b) = do
+>     rs' <- matchValue rs zs (s :>: (a, b))
 >     return (rs', t $$ A a)
-> matchElim rs ty a b = throwError' $ err "matchElim: unmatched!"
+> matchElim rs zs ty a b = throwError' $ err "matchElim: unmatched!"
 
+
+As noted above, fresh references generated when expanding $\Pi$-types must not
+occur as solutions to matching problems. The |checkSafe| function throws an
+error if any of the references occur in the value.
+
+> checkSafe :: Bwd REF -> VAL -> ProofState ()
+> checkSafe zs t  | any (`elem` t) zs  = throwError' $ err "checkSafe: unsafe!"
+>                 | otherwise          = return ()
 
 
 For testing purposes, we define a @match@ tactic that takes a telescope of
@@ -138,7 +152,7 @@ and another term of the same type. It prints out the resulting substitution.
 >         (_ :=>: av :<: ty) <- elabInfer' a
 >         cursorTop
 >         (_ :=>: bv) <- elaborate' (ty :>: b)
->         rs' <- matchValue (bwdList rs) (ty :>: (av, bv))
+>         rs' <- matchValue (bwdList rs) B0 (ty :>: (av, bv))
 >         return (show rs')
 >       where
 >         matchHyp :: (String, DInTmRN) -> ProofState (REF, Maybe VAL)
