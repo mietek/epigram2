@@ -103,7 +103,6 @@ ensure none of the unsafe references occur.
 
 The |matchNeutral| command matches two neutrals, and returns their type along
 with the matching substitution.
-\adam{this needs to handle operators.}
 
 > matchNeutral :: MatchSubst -> Bwd REF -> NEU -> NEU ->
 >                     ProofState (MatchSubst, TY)
@@ -115,6 +114,9 @@ with the matching substitution.
 > matchNeutral rs zs (f :$ e) (g :$ d)                 = do
 >     (rs', ty) <- matchNeutral rs zs f g
 >     matchElim rs' zs ty e d
+> matchNeutral rs zs (fOp :@ as) (gOp :@ bs) | fOp == gOp = do
+>     ty <- pity (opTyTel fOp)
+>     matchArgs rs zs ty as bs
 > matchNeutral rs zs a b = throwError' $ err "matchNeutral: unmatched "
 >                           ++ errVal (N a) ++ err "and" ++ errVal (N b)
 
@@ -122,7 +124,7 @@ with the matching substitution.
 The |matchElim| command matches two eliminators, given the type of the neutral
 being eliminated; it returns the type of the whole elimination along with the
 matching substitution.
-\adam{this needs to handle eliminators other than application.}
+\adam{can this handle eliminators other than application?}
 
 > matchElim :: MatchSubst -> Bwd REF -> TY -> Elim VAL -> Elim VAL ->
 >                  ProofState (MatchSubst, TY)
@@ -130,6 +132,17 @@ matching substitution.
 >     rs' <- matchValue rs zs (s :>: (a, b))
 >     return (rs', t $$ A a)
 > matchElim rs zs ty a b = throwError' $ err "matchElim: unmatched!"
+
+
+The |matchArgs| command matches two lists of operator arguments, given the
+telescope type, and also returns the type of the operator application.
+
+> matchArgs :: MatchSubst -> Bwd REF -> TY -> [VAL] -> [VAL] ->
+>                  ProofState (MatchSubst, TY)
+> matchArgs rs zs ty [] [] = return (rs, ty)
+> matchArgs rs zs (PI s t) (a:as) (b:bs) = do
+>     rs' <- matchValue rs zs (s :>: (a, b))
+>     matchArgs rs' zs (t $$ A a) as bs
 
 
 As noted above, fresh references generated when expanding $\Pi$-types must not
