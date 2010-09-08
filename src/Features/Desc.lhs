@@ -36,28 +36,28 @@
 >   pattern SIGMAN  = SU (SU (SU (SU ZE)))
 >   pattern PIN     = SU (SU (SU (SU (SU ZE))))
 
->   pattern MU l x      = C (Mu (l :?=: Id x))
->   pattern IDD         = CON (PAIR IDN     VOID)
->   pattern CONSTD x    = CON (PAIR CONSTN  (PAIR x VOID))
->   pattern SUMD e b    = CON (PAIR SUMN    (PAIR e (PAIR b VOID)))
->   pattern PRODD d d'  = CON (PAIR PRODN   (PAIR d (PAIR d' VOID)))
->   pattern SIGMAD s t  = CON (PAIR SIGMAN  (PAIR s (PAIR t VOID)))
->   pattern PID s t     = CON (PAIR PIN     (PAIR s (PAIR t VOID)))
+>   pattern MU l x        = C (Mu (l :?=: Id x))
+>   pattern IDD           = CON (PAIR IDN     VOID)
+>   pattern CONSTD x      = CON (PAIR CONSTN  (PAIR x VOID))
+>   pattern SUMD e b      = CON (PAIR SUMN    (PAIR e (PAIR b VOID)))
+>   pattern PRODD u d d'  = CON (PAIR PRODN   (PAIR u (PAIR d (PAIR d' VOID))))
+>   pattern SIGMAD s t    = CON (PAIR SIGMAN  (PAIR s (PAIR t VOID)))
+>   pattern PID s t       = CON (PAIR PIN     (PAIR s (PAIR t VOID)))
 
 > import -> CanDisplayPats where
->   pattern DMU l x      = DC (Mu (l :?=: Id x))
->   pattern DIDD         = DCON (DPAIR  DZE 
->                                       DVOID)
->   pattern DCONSTD x    = DCON (DPAIR  (DSU DZE)
->                                       (DPAIR x DVOID))
->   pattern DSUMD e b    = DCON (DPAIR  (DSU (DSU DZE))
->                                       (DPAIR e (DPAIR b DVOID)))
->   pattern DPRODD d d'  = DCON (DPAIR  (DSU (DSU (DSU DZE)))
->                                       (DPAIR d (DPAIR d' DVOID)))
->   pattern DSIGMAD s t  = DCON (DPAIR  (DSU (DSU (DSU (DSU DZE))))
->                                       (DPAIR s (DPAIR t DVOID)))
->   pattern DPID s t     = DCON (DPAIR  (DSU (DSU (DSU (DSU (DSU DZE)))))
->                                       (DPAIR s (DPAIR t DVOID)))
+>   pattern DMU l x        = DC (Mu (l :?=: Id x))
+>   pattern DIDD           = DCON (DPAIR  DZE 
+>                                         DVOID)
+>   pattern DCONSTD x      = DCON (DPAIR  (DSU DZE)
+>                                         (DPAIR x DVOID))
+>   pattern DSUMD e b      = DCON (DPAIR  (DSU (DSU DZE))
+>                                         (DPAIR e (DPAIR b DVOID)))
+>   pattern DPRODD u d d'  = DCON (DPAIR  (DSU (DSU (DSU DZE)))
+>                                         (DPAIR u (DPAIR d (DPAIR d' DVOID))))
+>   pattern DSIGMAD s t    = DCON (DPAIR  (DSU (DSU (DSU (DSU DZE))))
+>                                         (DPAIR s (DPAIR t DVOID)))
+>   pattern DPID s t       = DCON (DPAIR  (DSU (DSU (DSU (DSU (DSU DZE)))))
+>                                         (DPAIR s (DPAIR t DVOID)))
 
 > import -> CanPretty where
 >   pretty (Mu (Just l   :?=: _)) = pretty l
@@ -142,13 +142,14 @@ case for sigma.
 >         , {-SUM-} oTup $ \_E _D -> OLam $ \_X -> ORet $
 >                     SIGMA (ENUMT _E) $ L $ "c" :. [.c. N $
 >                        descOp :@ [_D -$ [NV c], _X -$ []]]
->         , {-PROD-} oTup $ \_D _D' -> OLam $ \_X -> ORet $
->                     TIMES (descOp @@ [_D, _X]) (descOp @@ [_D', _X])
+>         , {-PROD-} oTup $ \u _D _D' -> OLam $ \_X -> ORet $
+>                     SIGMA (descOp @@ [_D, _X]) 
+>                           (L $ (unTag u) :. (N $ descOp :@ [_D' -$ [], _X -$ []]))
 >         , {-SIGMA-} oTup $ \_S _D -> OLam $ \_X -> ORet $
->                     SIGMA _S $ L $ "s" :. [.s. N $
+>                     SIGMA _S $ L $ (fortran _D) :. [.s. N $
 >                       descOp :@ [_D -$ [NV s], _X -$ []]]
 >         , {-PI-} oTup $ \_S _D -> OLam $ \_X -> ORet $
->                     PI _S $ L $ "s" :. [.s. N $
+>                     PI _S $ L $ (fortran _D) :. [.s. N $
 >                       descOp :@ [_D -$ [NV s], _X -$ []]]
 >         ]
 >     , opSimp = \_ _ -> empty
@@ -158,6 +159,9 @@ case for sigma.
 >         "X" :<: SET :-: \xX ->
 >         Target SET
 
+>   unTag :: VAL -> String
+>   unTag (TAG u) = u
+>   unTag _ = "x"
 >   boxOp :: Op
 >   boxOp = Op
 >     { opName = "box"
@@ -168,13 +172,13 @@ case for sigma.
 >         , {-CONST-} oTup $ \ () ->  oLams $ \ () () () -> ORet UNIT
 >         , {-SUM-} oTup $ \ () _D -> oLams $ \_X _P -> OPr $ oLams $ \c d ->
 >              ORet $ boxOp @@ [_D $$ A c, _X, _P, d]
->         , {-PROD-} oTup $ \_D _D' -> oLams $ \_X _P -> OPr $ oLams $ \d d' ->
->              ORet $ TIMES (boxOp @@ [_D, _X, _P, d])
->                           (boxOp @@ [_D', _X, _P, d'])
+>         , {-PROD-} oTup $ \u _D _D' -> oLams $ \_X _P -> OPr $ oLams $ \d d' ->
+>              ORet $ SIGMA (boxOp @@ [_D, _X, _P, d]) (L $ (unTag u ++ "h") :. 
+>                        (N (boxOp :@ [_D' -$ [], _X -$ [], _P -$ [], d' -$ []])))
 >         , {-SIGMA-} oTup $ \ () _D -> oLams $ \_X _P -> OPr $ oLams $ \s d ->
 >              ORet $ boxOp @@ [_D $$ A s, _X, _P, d]
 >         , {-PI-} oTup $ \_S _D -> oLams $ \_X _P f ->
->              ORet $ PI _S $ L $ "s" :. [.s. N $
+>              ORet $ PI _S $ L $ (fortran _D) :. [.s. N $
 >                 boxOp :@ [_D -$ [NV s], _X -$ [] , _P -$ [] , f -$ [NV s]]]
 >         ]
 >     , opSimp = \_ _ -> empty
@@ -196,13 +200,13 @@ case for sigma.
 >       , {-CONST-} oTup $ \ () ->  oLams $ \ () () () () -> ORet VOID
 >       , {-SUM-} oTup $ \ () _D -> oLams $ \_X _P p -> OPr $ oLams $ \c d ->
 >            ORet $ mapBoxOp @@ [_D $$ A c, _X, _P, p, d]
->       , {-PROD-} oTup $ \_D _D' -> oLams $ \_X _P p -> OPr $ oLams $ \d d' ->
+>       , {-PROD-} oTup $ \() _D _D' -> oLams $ \_X _P p -> OPr $ oLams $ \d d' ->
 >            ORet $ PAIR (mapBoxOp @@ [_D, _X, _P, p, d])
 >                        (mapBoxOp @@ [_D', _X, _P, p, d'])
 >       , {-SIGMA-} oTup $ \ () _D -> oLams $ \_X _P p -> OPr $ oLams $ \s d ->
 >            ORet $ mapBoxOp @@ [_D $$ A s, _X, _P, p, d]
 >       , {-PI-} oTup $ \() _D -> oLams $ \_X _P p f ->
->            ORet $ L $ "s" :. [.s. N $
+>            ORet $ L $ (fortran _D) :. [.s. N $
 >              mapBoxOp :@ [_D -$ [NV s], _X -$ [] , _P -$ [] , p -$ [],
 >                            f -$ [NV s]]]
 >       ]
@@ -225,13 +229,13 @@ case for sigma.
 >       , {-CONST-} oTup $ \ () -> oLams $ \ () () () a -> ORet a
 >       , {-SUM-} oTup $ \ () _D -> oLams $ \_X _Y f -> OPr $ oLams $ \c d ->
 >           ORet $ PAIR c (mapOp @@ [_D $$ A c, _X, _Y, f, d])
->       , {-PROD-} oTup $ \_D _D' -> oLams $ \_X _Y f -> OPr $ oLams $ \d d' ->
+>       , {-PROD-} oTup $ \() _D _D' -> oLams $ \_X _Y f -> OPr $ oLams $ \d d' ->
 >           ORet $ PAIR (mapOp @@ [_D, _X, _Y, f, d])
 >                       (mapOp @@ [_D', _X, _Y, f, d'])
 >       , {-SIGMA-} oTup $ \ () _D -> oLams $ \_X _Y f -> OPr $ oLams $ \s d ->
 >            ORet $ PAIR s (mapOp @@ [_D $$ A s, _X, _Y, f, d])
 >       , {-PI-} oTup $ \() _D -> oLams $ \_X _Y f g ->
->            ORet $ L $ "s" :. [.s. N $
+>            ORet $ L $ (fortran _D) :. [.s. N $
 >              mapOp :@ [_D -$ [NV s], _X -$ [] , _Y -$ [] , f -$ [],
 >                            g -$ [NV s]]]
 >       ]
@@ -493,14 +497,14 @@ appropriate place when the proof state is printed.
 >             cases = (PAIR (CONSTD UNIT) 
 >                     (PAIR (SIGMAD SET (L $ K $ CONSTD UNIT))
 >                     (PAIR (SIGMAD (enumU -$ []) (L $ "E" :. [._E.
->                                       (PRODD (PID (ENUMT (NV _E)) (LK IDD))
+>                                       (PRODD (TAG "T") (PID (ENUMT (NV _E)) (LK IDD))
 >                                              (CONSTD UNIT))]))
->                     (PAIR (PRODD IDD (PRODD IDD (CONSTD UNIT)))
+>                     (PAIR (SIGMAD UID (L $ "u" :. PRODD (TAG "C") IDD (PRODD (TAG "D") IDD (CONSTD UNIT))))
 >                     (PAIR (SIGMAD SET (L $ "S" :. [._S. 
->                                       (PRODD (PID (NV _S) (LK IDD)) 
+>                                       (PRODD (TAG "T") (PID (NV _S) (LK IDD)) 
 >                                              (CONSTD UNIT))]))
 >                     (PAIR (SIGMAD SET (L $ "S" :. [._S. 
->                                       (PRODD (PID (NV _S) (LK IDD)) 
+>                                       (PRODD (TAG "T") (PID (NV _S) (LK IDD)) 
 >                                              (CONSTD UNIT))]))
 >                      VOID))))))
 >   descFakeREF :: REF

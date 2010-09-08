@@ -1,7 +1,7 @@
 make Nat := Mu (con ['sigmaD (Enum ['zero 
                                     'suc]) 
                              [ (con ['constD (Sig ())]) 
-			       (con ['prodD (con ['idD]) (con ['constD (Sig ())]) ])]]) : Set ;
+			       (con ['prodD 'n (con ['idD]) (con ['constD (Sig ())]) ])]]) : Set ;
 make zero := con ['zero] : Nat ;
 make suc := (\ x -> con ['suc x]) : Nat -> Nat ;
 make one := (suc zero) : Nat ;
@@ -12,7 +12,7 @@ make plus := con con [(\ r r y -> y) (\ r -> con \ h r y -> suc (h y))] : Nat ->
 make ExprD : Desc ;
 give con ['sigmaD (Enum ['num 'add]) [ ? ? ]] ;
   give con ['sigmaD Nat (\ n -> con ['constD (Sig ())])] ;
-  give con ['prodD (con ['idD]) (con ['prodD (con ['idD]) (con ['constD (Sig ())])])] ; 
+  give con ['prodD 'f (con ['idD]) (con ['prodD 'a (con ['idD]) (con ['constD (Sig ())])])] ; 
 root ;
 
 make Expr := (\ X -> Monad ExprD X) : Set -> Set ;

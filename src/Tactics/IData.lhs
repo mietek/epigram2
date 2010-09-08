@@ -39,6 +39,7 @@
 > import Elaboration.Elaborator
 
 > import DisplayLang.Name
+> import DisplayLang.DisplayTm
 
 > import Tactics.Data
 
@@ -51,44 +52,45 @@
 >                ProofState ( String          -- con name
 >                           , EXTM            -- con ty
 >                           , EXTM            -- con desc
+>                           , [String]
 >                           )
 > ielabCons nom ty (indty :=>: indtyv) ps (s , t) = do
 >   make ((s ++ "Ty") :<: ARR ty SET)
 >   goIn 
 >   r <- lambdaParam nom
 >   (tyi :=>: v) <- elabGive' t
->   x <- freshRef ("i" :<: indtyv) 
+>   (x,y) <- freshRef ("i" :<: indtyv) 
 >         (\i -> ity2desc indty r ps (NP i) (v $$ A (NP r)) >>=
->                  \x -> (| ((L $ "i" :. (capM i 0 %% x))
+>                  \(x,y) -> return ((L $ "i" :. (capM i 0 %% x))
 >                           :? ARR (N indty) 
->                                  (N (P idescREF :$ A (N indty)))) |))
+>                                  (N (P idescREF :$ A (N indty))),y))
 >   goOut
->   return (s, tyi, x)
+>   return (s, tyi, x, y)
 
-> ity2desc :: EXTM -> REF -> [Elim VAL] -> VAL -> VAL -> ProofState INTM
+> ity2desc :: EXTM -> REF -> [Elim VAL] -> VAL -> VAL -> ProofState (INTM,[String])
 > ity2desc indty r ps ind (PI a b) = do
 >             let anom = fortran b
 >             a' <- bquoteHere a
 >             if occurs r a' 
 >               then do 
 >                 a'' <- ity2h indty r ps a
->                 b' <- freshRef ("betternotturnuplater":<:a)
->                         (\s -> do b' <- ity2desc indty r ps ind (b $$ A (NP s))
+>                 (b',us) <- freshRef (fortran b:<:a)
+>                         (\s -> do (b',us) <- ity2desc indty r ps ind (b $$ A (NP s))
 >                                   when (occurs s b') $ 
 >                                     throwError' (err "Bad dependency")
->                                   return b')
->                 return $ IPROD a'' b'
+>                                   return (b',us))
+>                 return (IPROD (TAG anom) a'' b',anom : us)
 >               else do 
 >                 freshRef (anom :<: a) 
 >                  (\s -> ity2desc indty r ps ind (b $$ A (NP s)) >>= 
->                           \x -> 
->                             (| (ISIGMA a' (L $ "a" :. (capM s 0 %% x))) |))
+>                           \(x,y) -> 
+>                             return (ISIGMA a' (L $ (fortran b) :. (capM s 0 %% x)),y))
 > ity2desc indty r ps i (N (x :$ A i')) = do 
 >             b <- withNSupply (equal (SET :>: (N x, NP r $$$ ps)))
 >             unless b $ throwError' (err "C doesn't target T")   
 >             i'' <- bquoteHere i
 >             i''' <- bquoteHere i'
->             return (ICONST (PRF (EQBLUE (N indty :>: i'') (N indty :>: i'''))))
+>             return (ICONST (PRF (EQBLUE (N indty :>: i'') (N indty :>: i'''))),[])
 > ity2desc _ _ _ _ _ = throwError' (err "If you think this should work maybe you should have a chat with Dr Morris about it.")
 
 > ity2h :: EXTM -> REF -> [Elim VAL] -> VAL -> ProofState INTM
@@ -99,7 +101,7 @@
 >     else do
 >       b' <- freshRef (fortran b :<: a) 
 >               (\s -> ity2h indty r ps (b $$ A (NP s)) >>= \x -> 
->                        (| (L $ "a" :. (capM s 0 %% x) ) |))
+>                        (| (L $ (fortran b) :. (capM s 0 %% x) ) |))
 >       return (IPI a' b')
 > ity2h indty r ps (N (x :$ A i')) = do
 >   b <- withNSupply (equal (SET :>: (N x, NP r $$$ ps)))
@@ -135,7 +137,7 @@
 >     return (x,yt,r)) pars
 >   make ("indTy" :<: SET)
 >   goIn
->   indty'@(indtye :=>: _) <- elabGive indty
+>   indty'@(indtye :=>: indtyv) <- elabGive indty
 >   moduleToGoal (ARR (N indtye) SET)
 >   cs <- traverse (ielabCons nom 
 >                   (foldr (\(x,s,r) t -> 
@@ -153,9 +155,8 @@
 >                                  ])))
 >   goIn
 >   i <- lambdaParam "i"
->   (cs' :=>: _) <- giveOutBelow (foldr PAIR VOID (map (\(_,_,c) -> N (c :$ A (NP i))) cs))
+>   (cs' :=>: _) <- giveOutBelow (foldr PAIR VOID (map (\(_,_,c,_) -> N (c :$ A (NP i))) cs))
 
->   lt :=>: _ <- getFakeCurrentEntry
 >   make ("DataTy" :<: ARR (N indtye) SET)
 >   goIn
 >   i <- lambdaParam "i"
@@ -163,7 +164,7 @@
 >       (allowingTy, allowedBy)  =  imkAllowed ("i", indtye, NV 0) pars' 
 >                         -- \pierre{XXX: NV 0 refers to the .i. in the giveOut}
 >       label                    =  ANCHOR (TAG nom) allowingTy allowedBy
->   (dty :=>: _) <- giveOutBelow (IMU (Just (L $ "i" :. [.i. label])) (N indtye) d (NP i))
+>   (dty :=>: dtyv) <- giveOutBelow (IMU (Just (L $ "i" :. [.i. label])) (N indtye) d (NP i))
 
 We specialise the induction operator to this datatype, ensuring the label is
 assigned throughout, so the label will be preserved when eliminating by induction.
@@ -172,20 +173,32 @@ This code attempts to find out if the definitions from tests/TaggedInduction
 are in scope, if so you get nicer induction principles (:
 
 >   (do (icase,_,_) <- resolveHere [("TData",Rel 0),("tcase",Rel 0)]
->       let caseTm = P icase :$ A (N indtye) :$ A (PAIR (N e) (PAIR (N cs') VOID))
+>       makeModule "Case"
+>       goIn
+>       i <- assumeParam ("i" :<: (N indtye :=>: indtyv))
+>       v <- assumeParam (comprefold (concat (map (\(_,_,_,c) -> c) cs)) 
+>                         :<: (N (dty :$ A (NP i)) :=>: dtyv $$ A (NP i)))
+>       let caseTm = P icase :$ A (N indtye) 
+>                            :$ A (PAIR (N e) (PAIR (N cs') VOID))
+>                            :$ A (NP i) :$ A (NP v)
 >       caseV :<: caseTy <- inferHere caseTm
 >       caseTy' <- bquoteHere caseTy
->       make ("Case" :<: isetLabel (L $ "i" :. [.i. label]) caseTy')
->       goIn
+>       moduleToGoal (isetLabel (L $ "i" :. [.i. label]) caseTy')
 >       giveOutBelow (N caseTm)
 >       return ()) `catchError` \_ -> return ()
 
 >   (do (dind,_,_) <- resolveHere [("TData",Rel 0),("tind",Rel 0)]
->       let dindT = P dind :$ A (N indtye) :$ A (PAIR (N e) (PAIR (N cs') VOID))
+>       makeModule "Ind"
+>       goIn
+>       i <- assumeParam ("i" :<: (N indtye :=>: indtyv))
+>       v <- assumeParam (comprefold (concat (map (\(_,_,_,c) -> c) cs)) 
+>                         :<: (N (dty :$ A (NP i)) :=>: dtyv $$ A (NP i)))
+>       let dindT = P dind :$ A (N indtye) 
+>                          :$ A (PAIR (N e) (PAIR (N cs') VOID))
+>                          :$ A (NP i) :$ A (NP v)
 >       dindV :<: dindTy <- inferHere dindT
 >       dindTy' <- bquoteHere dindTy
->       make ("Ind" :<: isetLabel (L $ "i" :. [.i. label]) dindTy')
->       goIn
+>       moduleToGoal (isetLabel (L $ "i" :. [.i. label]) dindTy')
 >       giveOutBelow (N dindT)
 >       return ()) `catchError` \_ -> 
 >     (do let indTm = P (lookupOpRef iinductionOp) :$ A (N indtye) :$ A d

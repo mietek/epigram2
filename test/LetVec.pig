@@ -1,11 +1,11 @@
-data Nat := (zero : Nat) ; (suc : Nat -> Nat) ;
+data Nat := (zero : Nat) ; (suc : (n : Nat) -> Nat) ;
 make zero := 'zero : Nat ;
 make suc := (\ x -> 'suc x) : Nat -> Nat ;
 
 let plus (m : Nat)(n : Nat) : Nat ;
 <= Nat.Ind m ;
 = n ;
-= 'suc (plus xf^1 n) ;
+= 'suc (plus n^1 n) ;
 root ;
 
 
@@ -13,7 +13,7 @@ module Vec ;
 lambda A : Set ;
 
 make VecD : Nat -> IDesc Nat ;
-give (\ n -> 'fsigmaD ['nil 'cons] [ ('constD (:- (zero == n))) ('sigmaD Nat (\ m -> 'prodD ('constD A) ('prodD ('varD m) ('constD (:- (suc m == n)))))) ]) ;
+give (\ n -> 'fsigmaD ['nil 'cons] [ ('constD (:- (zero == n))) ('sigmaD Nat (\ m -> 'prodD 'a ('constD A) ('prodD 'as ('varD m) ('constD (:- (suc m == n)))))) ]) ;
 
 make Vec : Nat -> Set ;
 lambda n ;

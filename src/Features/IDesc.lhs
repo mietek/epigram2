@@ -67,7 +67,7 @@ index of |IMu| to make a fully applied anchor |DIMu|.
 >   pattern ISIGMA s t    = CON (PAIR ISIGMAN   (PAIR s (PAIR t VOID)))
 >   pattern IFSIGMA s t   = CON (PAIR IFSIGMAN  (PAIR s (PAIR t VOID)))
 >   pattern ICONST p      = CON (PAIR ICONSTN   (PAIR p VOID))
->   pattern IPROD x y     = CON (PAIR IPRODN    (PAIR x (PAIR y VOID)))
+>   pattern IPROD u x y   = CON (PAIR IPRODN    (PAIR u (PAIR x (PAIR y VOID))))
 
 > import -> CanDisplayPats where
 >   pattern DIVARN     = DZE
@@ -85,7 +85,7 @@ index of |IMu| to make a fully applied anchor |DIMu|.
 >   pattern DISIGMA s t    = DCON (DPAIR DISIGMAN   (DPAIR s (DPAIR t DVOID)))
 >   pattern DIFSIGMA s t   = DCON (DPAIR DIFSIGMAN  (DPAIR s (DPAIR t DVOID)))
 >   pattern DICONST p      = DCON (DPAIR DICONSTN   (DPAIR p DVOID))
->   pattern DIPROD x y     = DCON (DPAIR DIPRODN    (DPAIR x (DPAIR y DVOID)))
+>   pattern DIPROD u x y   = DCON (DPAIR DIPRODN    (DPAIR (DPAIR x (DPAIR y DVOID))))
 
 
 > import -> CanPretty where
@@ -227,10 +227,10 @@ index of |IMu| to make a fully applied anchor |DIMu|.
 >                                         ]]) 
 >                       ]
 >         , {-SIGMA-} oTup $ \_S _T -> OLam $ \_P -> ORet $
->                       SIGMA _S $ L $ "s" :. [.s. N $ 
+>                       SIGMA _S $ L $ (fortran _T) :. [.s. N $ 
 >                         idescOp :@ [ _I -$ [] , _T -$ [NV s], _P -$ [] ]]  
 >         , {-FSIGMA-} oTup $ \_E _Ds -> OLam $ \_P -> ORet $
->                        SIGMA (ENUMT _E) (L $ "s" :. [.s. N $
+>                        SIGMA (ENUMT _E) (L $ (fortran _Ds) :. [.s. N $
 >                          idescOp :@ [ _I -$ []
 >                                     , N $ switchOp :@ 
 >                                             [ _E -$ []
@@ -238,8 +238,9 @@ index of |IMu| to make a fully applied anchor |DIMu|.
 >                                             , LK (idesc -$ [ _I -$ []])
 >                                             , _Ds -$ [] ]
 >                                     , _P -$ [] ] ])
->         , {-PROD-} oTup $ \_D _D' -> OLam $ \_P -> ORet $
->                      TIMES (idescOp @@ [_I, _D, _P]) (idescOp @@ [_I, _D', _P])
+>         , {-PROD-} oTup $ \u _D _D' -> OLam $ \_P -> ORet $
+>                      SIGMA (idescOp @@ [_I, _D, _P]) $ L $ (unTag u) :. 
+>                         (N (idescOp :@ [_I -$ [], _D' -$ [], _P -$ []]))
 >         ]
 >     , opSimp = \_ _ -> empty
 >     } where
@@ -283,8 +284,8 @@ index of |IMu| to make a fully applied anchor |DIMu|.
 >                                     , _Ds ]
 >                       , _P 
 >                       , d ]
->         , {-PROD-} oTup $ \_D _D' -> OLam $ \_P -> OPr $ oLams $ \d d' -> ORet $
->             IPROD  (iboxOp @@ [_I, _D, _P, d])
+>         , {-PROD-} oTup $ \u _D _D' -> OLam $ \_P -> OPr $ oLams $ \d d' -> ORet $
+>             IPROD  (TAG (unTag u ++ "h")) (iboxOp @@ [_I, _D, _P, d])
 >                     (iboxOp @@ [_I, _D', _P, d'])
 >         ]
 >     , opSimp = \_ _ -> empty
@@ -321,7 +322,7 @@ index of |IMu| to make a fully applied anchor |DIMu|.
 >                                         ,  _Ds
 >                                         ]
 >                          ,  _X, _P, p, d ]
->         , {-PROD-} oTup $ \_D _D' -> oLams $ \_X _P p -> OPr $ oLams $ \d d' -> ORet $
+>         , {-PROD-} oTup $ \() _D _D' -> oLams $ \_X _P p -> OPr $ oLams $ \d d' -> ORet $
 >             PAIR (imapBoxOp @@ [_I, _D, _X, _P, p, d]) 
 >                   (imapBoxOp @@ [_I, _D', _X, _P, p, d'])
 >         ]
@@ -476,18 +477,18 @@ description is not neutral, to improve the pretty-printed representation.
 >   cases _I = (PAIR (ISIGMA _I (LK $ ICONST UNIT)) 
 >            (PAIR (ISIGMA SET (LK $ ICONST UNIT))
 >            (PAIR (ISIGMA SET (L $ "S" :. [._S.  
->                   (IPROD (IPI (NV _S) (LK $ IVAR VOID)) 
+>                   (IPROD (TAG "T") (IPI (NV _S) (LK $ IVAR VOID)) 
 >                          (ICONST UNIT))]))
 >            (PAIR (ISIGMA (enumU -$ []) (L $ "E" :. [._E.
->                  (IPROD (IPI (ENUMT (NV _E)) (LK $ IVAR VOID))
+>                  (IPROD (TAG "T") (IPI (ENUMT (NV _E)) (LK $ IVAR VOID))
 >                  (ICONST UNIT))]))
 >             (PAIR (ISIGMA SET (L $ "S" :. [._S.  
->                                       (IPROD (IPI (NV _S) (LK $ IVAR VOID)) 
+>                                       (IPROD (TAG "T") (IPI (NV _S) (LK $ IVAR VOID)) 
 >                                              (ICONST UNIT))]))
 >                     (PAIR (ISIGMA (enumU -$ []) (L $ "E" :. [._E.
->                                       (IPROD (IFPI (NV _E) (LK $ IVAR VOID))
+>                                       (IPROD (TAG "T") (IFPI (NV _E) (LK $ IVAR VOID))
 >                                              (ICONST UNIT))]))
->                     (PAIR (IPROD (IVAR VOID) (IPROD (IVAR VOID) (ICONST UNIT)))
+>                     (PAIR (ISIGMA UID (L $ "u" :. (IPROD (TAG "C") (IVAR VOID) (IPROD (TAG "D") (IVAR VOID) (ICONST UNIT)))))
 >                      VOID)))))))
 
 >   idescFakeREF :: REF

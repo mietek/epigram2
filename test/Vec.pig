@@ -1,7 +1,7 @@
 make Nat := (Mu con ['sigmaD (Enum ['zero 
                                     'suc]) 
                              [ (con ['constD (Sig ())]) 
-			       (con ['prodD (con ['idD]) (con ['constD (Sig ())]) ])]]) : Set ;
+			       (con ['prodD 'n (con ['idD]) (con ['constD (Sig ())]) ])]]) : Set ;
 make zero := con ['zero] : Nat ;
 make suc := (\ x -> con ['suc x]) : Nat -> Nat ;
 make one := (suc zero) : Nat ;
@@ -11,7 +11,7 @@ module Vec ;
 lambda A : Set ;
 make Vec : Nat -> Set ;
 make VecD : Nat -> IDesc Nat ;
-give (\ n -> 'fsigmaD ['nil 'cons] [ ('constD (:- (n == zero))) ('sigmaD Nat (\ m -> 'prodD ('constD A) ('prodD ('varD m) ('constD (:- (n == suc m)))))) ]) ;
+give (\ n -> 'fsigmaD ['nil 'cons] [ ('constD (:- (n == zero))) ('sigmaD Nat (\ m -> 'prodD 'a ('constD A) ('prodD 'as ('varD m) ('constD (:- (n == suc m)))))) ]) ;
 lambda n ;
 give IMu Nat VecD n ;
 make nil := 'nil : Vec 'zero ;

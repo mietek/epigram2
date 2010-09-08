@@ -1,5 +1,5 @@
 -- Let's have some natural numbers...
-data Nat := (zero : Nat) ; (suc : Nat -> Nat) ;
+data Nat := (zero : Nat) ; (suc : (n : Nat) -> Nat) ;
 
 -- Now we can write plus like this:
 let plus (m : Nat)(n : Nat) : Nat ;
@@ -35,7 +35,7 @@ root ;
 make plusS : :- ((k : Nat)(n : Nat) => plus k ('suc n) == (: Nat) ('suc (plus k n))) ;
 lambda k, n ;
 <= Nat.Ind k ;
-give xf n ;
+give nh n ;
 root ;
 
 -- Given some arguments, plus is commutative:
@@ -43,9 +43,9 @@ make plusComm : :- ((k : Nat)(n : Nat) => plus k n == plus n k) ;
 lambda k, n ;
 <= Nat.Ind n ;
 give plusZ k ;
-give trans Nat (plus k ('suc xf^1)) ('suc (plus k xf^1)) ('suc (plus xf^1 k)) (plusS k xf^1) ? ;
+give trans Nat (plus k ('suc n)) ('suc (plus k n)) ('suc (plus n k)) (plusS k n) ? ;
 simplify ;
-give xf k ;
+give nh k ;
 root ;
 
 -- We really have equality between the *functions* |plus| and |flip plus|:

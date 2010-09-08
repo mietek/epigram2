@@ -12,7 +12,7 @@ let f (D : Desc) : Desc ;
 define f 'idD := 'idD ;
 define f ('constD K) := 'constD K ;
 define f ('sumD e b) := 'sigmaD (Enum e) b ;
-define f ('prodD D E) := 'prodD D E ;
+define f ('prodD u D E) := 'prodD u D E ;
 define f ('sigmaD S T) := 'sigmaD S T ;
 define f ('piD S T) := 'piD S T ;
 root ;

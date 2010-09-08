@@ -51,6 +51,7 @@
 >                        , EXTM            -- con ty
 >                        , INTM            -- con desc
 >                        , [String]        -- arg names
+>                        , [String]        -- rec arg names
 >                        , [REF] -> INTM   -- smart con body
 >                        )
 > elabCons nom ty ps (s , t) = do
@@ -58,38 +59,38 @@
 >             goIn 
 >             r <- lambdaParam nom
 >             (tyi :=>: v) <- elabGive' t
->             (x,i,y) <- ty2desc r ps (v $$ A (NP r))
+>             (x,i,j,y) <- ty2desc r ps (v $$ A (NP r))
 >             goOut
->             return (s, tyi, x, i, y)
+>             return (s, tyi, x, i, j, y)
 
 > ty2desc :: REF -> [Elim VAL] -> VAL -> 
->            ProofState (INTM, [String], [REF] -> INTM)
+>            ProofState (INTM, [String], [String], [REF] -> INTM)
 > ty2desc r ps (PI a b) = do
 >             let anom = fortran b
 >             a' <- bquoteHere a
 >             if occurs r a' 
 >               then do 
 >                 (a'',i) <- ty2h r ps a
->                 (b',j,c) <- freshRef ("betternotturnuplater":<:a)
->                             (\s -> do (b',j,c) <- ty2desc r ps (b $$ A (N (P s)))
+>                 (b',j,k,c) <- freshRef (fortran b:<:a)
+>                             (\s -> do (b',j,k,c) <- ty2desc r ps (b $$ A (N (P s)))
 >                                       when (occurs s b') $ 
 >                                         throwError' (err "Bad dependency")
->                                       return (b',j,c))
+>                                       return (b',j,k,c))
 >                 case i of
->                   0 -> return $ (PRODD IDD  b', anom : j,\(v:vs) -> PAIR (NP v) (c vs))
->                   _ -> return $ (PRODD (PID a'' IDD) b' , anom : j
+>                   0 -> return $ (PRODD (TAG anom) IDD  b', anom : j, anom : k,\(v:vs) -> PAIR (NP v) (c vs))
+>                   _ -> return $ (PRODD (TAG anom) (PID a'' IDD) b' , anom : j , anom : k
 >                                 , \(v:vs) -> PAIR (L $ anom :. uncur i (P v) (V 0))
 >                                                   (c vs))
 >               else do 
 >                 freshRef (anom :<: a) 
 >                  (\s -> ty2desc r ps (b $$ A (NP s)) >>= 
->                           \(x,j,y) -> 
->                             (| ( SIGMAD a' (L $ "a" :. (capM s 0 %% x)), anom : j
+>                           \(x,j,k,y) -> 
+>                             (| ( SIGMAD a' (L $ "a" :. (capM s 0 %% x)), anom : j, k
 >                                , \(v:vs) -> PAIR (NP v) (swapM s v %% (y vs))) |))
 > ty2desc r ps x = do 
 >             b <- withNSupply (equal (SET :>: (x, NP r $$$ ps)))
 >             unless b $ throwError' (err "C doesn't target T")   
->             return (CONSTD UNIT,[],\[] -> VOID)
+>             return (CONSTD UNIT,[],[],\[] -> VOID)
 
 > ty2h :: REF -> [Elim VAL] -> VAL -> ProofState (INTM,Int)
 > ty2h r ps (PI a b) = do
@@ -139,7 +140,7 @@
 > uncur 1 v t = N (v :$ A (N t))
 > uncur i v t = uncur (i-1) (v :$ A (N (t :$ Fst))) (t :$ Snd)
 
-> makeCon e t (s,ty,_,i,body) = do
+> makeCon e t (s,ty,_,i,_,body) = do
 >             make (s :<: N (ty :$ A t))
 >             goIn
 >             make ("conc" :<: ENUMT e)
@@ -178,7 +179,7 @@
 >       (e :=>: ev) <- giveOutBelow (foldr (\(t,_) e -> CONSE (TAG t) e) NILE scs)
 >       make ("ConDescs" :<: N (branchesOp :@ [ N e, L $ K (NP descREF)])) -- ARR (ENUMT (N e)) (NP descREF)
 >       goIn
->       (cs' :=>: _) <- giveOutBelow (foldr PAIR VOID (map (\(_,_,c,_,_) -> c) cs))
+>       (cs' :=>: _) <- giveOutBelow (foldr PAIR VOID (map (\(_,_,c,_,_,_) -> c) cs))
 >       makeKinded (Just nom) Waiting ("DataDesc" :<: NP descREF)
 >       goIn
 >       (d :=>: dv) <- giveOutBelow (SUMD (N e) (L ("s" :. N (switchDOp :@ [N e, N cs', NV 0]))))
@@ -187,23 +188,34 @@
 >       goIn
 >       let (allowingTy, allowedBy) = mkAllowed pars'
 >           anchor = ANCHOR (TAG nom) allowingTy allowedBy
->       (dty :=>: _) <- giveOutBelow (MU (Just anchor) (N d))
+>       (dty :=>: dtyv) <- giveOutBelow (MU (Just anchor) (N d))
 >       EEntity r _ _ _ _ <- getEntryAbove
 >       traverse (makeCon (N e) (N (P r $:$ oldaus))) cs
 
 We specialise the induction operator to this datatype, ensuring the label is
 assigned throughout, so the label will be preserved when eliminating by induction.
 
->       let indTm = P (lookupOpRef inductionOp) :$ A (N d)
+>       makeModule "Ind"
+>       goIn
+>       v <- assumeParam (comprefold (concat (map (\(_,_,_,_,c,_) -> c) cs)) :<: (N dty :=>: dtyv))
+>       let indTm = P (lookupOpRef inductionOp) :$ A (N d) :$ A (NP v) 
 >       indV :<: indTy <- inferHere indTm
 >       indTy' <- bquoteHere indTy
->       make ("Ind" :<: setLabel anchor indTy')
->       goIn
+>       moduleToGoal (setLabel anchor indTy')
 >       giveOutBelow (N indTm)
 >       
 
 >       giveOutBelow $ N dty
 
+> compre :: Eq a => [a] -> [a] -> [a]
+> compre [] _ = []
+> compre _ [] = []
+> compre (a : as) (b : bs) | a == b = a : compre as bs
+> compre (a : as) (b : bs) = []
+
+> comprefold :: Eq a => [[a]] -> [a]
+> comprefold [] = []
+> comprefold (as : ass) = foldr compre as ass
 
 This is a hack, and should probably be replaced with a version that tests for
 equality, so it doesn't catch the wrong |MU|s.

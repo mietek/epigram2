@@ -32,7 +32,7 @@ let boxer (X : Set)(P : X -> Set)(Q : X -> Set)(q : (y : X) -> P y -> Q y)(D : D
 <= DescInd D ;
 define boxer X P Q q 'idD x b := q x b ;
 define boxer X P Q q ('sumD E F) [c , x] b := boxer X P Q q (F c) x b ;
-define boxer X P Q q ('prodD E F) [a , b] [c , d] := [(boxer X P Q q E a c) , (boxer X P Q q F b d)] ;
+define boxer X P Q q ('prodD u E F) [a , b] [c , d] := [(boxer X P Q q E a c) , (boxer X P Q q F b d)] ;
 define boxer X P Q q ('sigmaD E F) [s , x] b := boxer X P Q q (F s) x b ;
 define boxer X P Q q ('piD S T) x b := \ s -> boxer X P Q q (T s) (x s) (b s) ;
 root ;
@@ -56,9 +56,9 @@ root ;
   Nat by hand, but the data tactic could easily generate this.
 -}
 
-make NatTDesc := [ ['zero 'suc] , [('constD (Sig ())) ('prodD 'idD ('constD (Sig ())))]] : TagDesc ;
+make NatTDesc := [ ['zero 'suc] , [('constD (Sig ())) ('prodD 'n 'idD ('constD (Sig ())))]] : TagDesc ;
 make Nat := Mu (toDesc NatTDesc) : Set ;
-make NatInd := Ind NatTDesc : (v : Nat)(P : Nat -> Set)(p : Bits NatTDesc P) -> P v ;
+make NatInd := Ind NatTDesc : (n : Nat)(P : Nat -> Set)(p : Bits NatTDesc P) -> P n ;
 
 {-
   Note that when we eliminate by the induction principle, we have

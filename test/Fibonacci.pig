@@ -1,9 +1,9 @@
 -- We are going to build the recursion principle for natural numbers.
 -- We need to define the natural numbers, their case analysis principle and
 -- addition:
-data Nat := (zero : Nat) ; (suc : Nat -> Nat) ;
+data Nat := (zero : Nat) ; (suc : (n : Nat) -> Nat) ;
 
-make NatCase : (n : Nat)(P : Nat -> Set)(p : (x : desc Nat.DataDesc Nat) -> P (con x)) -> P n ;
+make NatCase : (n : Nat)(P : (n : Nat) -> Set)(p : (nt : desc Nat.DataDesc Nat) -> P (con nt)) -> P n ;
 lambda n, P, p ;
 give Nat.Ind n P (\ x _ -> p x) ;
 root ;
@@ -11,7 +11,7 @@ root ;
 let plus (m : Nat)(n : Nat) : Nat ;
 <= Nat.Ind m ;
 = n ;
-= 'suc (plus xf^1 n) ;
+= 'suc (plus n^1 n) ;
 root ;
 
 
@@ -20,19 +20,19 @@ root ;
 let aux (P : Nat -> Set)(n : Nat) : Set ;
 <= Nat.Ind n ;
 = Sig () ;
-= Sig (P xf^1 ; aux P xf^1) ;
+= Sig (np : P n ; aux P n) ;
 root ;
 
 -- We can build such a structure if we can get P k from the P j for j < k:
-let aux-gen (P : Nat -> Set)(r : (k : Nat) -> aux P k -> P k)(n : Nat) : aux P n ;
+let aux-gen (n : Nat)(P : Nat -> Set)(nr : (n : Nat) -> aux P n -> P n) : aux P n ;
 <= Nat.Ind n ;
 = [? , ?] ;
-give r xf^1 (aux-gen P r xf^1) ;
-give aux-gen P r xf^1 ;
+give nr n (aux-gen n P nr) ;
+give aux-gen n P nr ;
 root ;
 
 -- Now the recursion principle is just a minor modification:
-make NatRec := (\ n P r -> r n (aux-gen P r n)) : (n : Nat)(P : Nat -> Set)(r : (k : Nat) -> aux P k -> P k) -> P n ;
+make NatRec := (\ n P m -> m n (aux-gen n P m)) : (n : Nat)(P : (n : Nat) -> Set)(m : (n : Nat) -> (nrec : aux P n) -> P n) -> P n ;
 
 
 -- Let's use NatRec to simulate rabbit population growth.
@@ -40,12 +40,12 @@ make NatRec := (\ n P r -> r n (aux-gen P r n)) : (n : Nat)(P : Nat -> Set)(r : 
 -- The Fibonacci function is defined by recursion and case analysis (twice):
 let fib (n : Nat) : Nat ;
 <= NatRec n ;
-<= NatCase k ;
-define fib 'zero := 'suc 'zero ;
-relabel fib ('suc j) ;
-<= NatCase j ;
-define fib ('suc 'zero) := 'suc 'zero ;
-define fib ('suc ('suc m)) := plus (fib m) (fib ('suc m)) ;
+<= NatCase n ;
+= 'suc 'zero ;
+<= NatCase n^1 ;
+= 'suc 'zero ;
+= plus (fib n^3) (fib ('suc n^3)) ;
+-- there seem to be too many Nats in the context, for why?
 root ;
 
 -- Hooray, fib is defined and we can go ahead and count the rabbits:

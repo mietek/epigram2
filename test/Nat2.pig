@@ -1,7 +1,7 @@
 make nat := (Mu con ['sigmaD (Enum ['zero 
                                     'suc]) 
                              [ (con ['constD (Sig ())]) 
-			       (con ['prodD (con ['idD]) (con ['constD (Sig ())]) ])]]) : Set ;
+			       (con ['prodD 'n (con ['idD]) (con ['constD (Sig ())]) ])]]) : Set ;
 make zero := con ['zero] : nat ;
 make suc := (\ x -> con ['suc x]) : nat -> nat ;
 make one := (suc zero) : nat ;

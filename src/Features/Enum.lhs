@@ -19,7 +19,7 @@
 >                            (CONSE (TAG "cons")
 >                             NILE)
 >             cases = PAIR (CONSTD UNIT)
->                     (PAIR (SIGMAD UID (L $ K (PRODD IDD (CONSTD UNIT))))
+>                     (PAIR (SIGMAD UID (L $ "t" :. (PRODD (TAG "E") IDD (CONSTD UNIT))))
 >                      VOID)
 >   enumFakeREF :: REF
 >   enumFakeREF = [("Primitive", 0), ("EnumU", 0)] := (FAKE :<: SET) 

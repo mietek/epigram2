@@ -1,7 +1,7 @@
 Sig ()
 Sig ()
-Sig ((s : Enum (v !)) -> P (v - ! s) ;)
-Sig (P (v !) ; P (v - !) ;)
-Sig ((s : v !) -> P (v - ! s) ;)
-Sig ((s : v !) -> P (v - ! s) ;)
+Sig (Th : (xf : Enum (v !)) -> P (v - ! xf) ;)
+Sig (Ch : P (v - !) ; Dh : P (v - - !) ;)
+Sig (Th : (xf : v !) -> P (v - ! xf) ;)
+Sig (Th : (xf : v !) -> P (v - ! xf) ;)
 Loaded.

@@ -1,12 +1,12 @@
 -- Let's have some natural numbers...
-data Nat := (zero : Nat) ; (suc : Nat -> Nat) ;
+data Nat := (zero : Nat) ; (suc : (n : Nat) -> Nat) ;
 
 -- Now we can write plus like this:
 let plus (m : Nat)(n : Nat) : Nat ;
 <= Nat.Ind m ;
 = n ;
 -- Sorry about the terrible name choice!
-= 'suc (plus xf^1 n) ;
+= 'suc (plus n^1 n) ;
 
 -- Just to show this really works:
 root ;
