@@ -18,8 +18,8 @@ Made.
 Made.
 Let there be vappend.
 Eliminated and simplified.
-Ta.
-Ta.
+Hurrah!
+Hurrah!
 Going to root...
 Made.
 'nil
@@ -28,7 +28,7 @@ Made.
 'cons ('suc ('suc ('suc 'zero))) 'a ('cons ('suc ('suc 'zero)) 'b ('cons ('suc 'zero) 'a ('cons 'zero 'b 'nil)))
 Let there be vtail.
 Eliminated and simplified.
-Ta.
+Hurrah!
 Going to root...
 'cons 'zero 'b 'nil
 Loaded.

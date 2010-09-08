@@ -32,8 +32,8 @@ make VecInd := iinduction Nat VecD : (m : Nat)(v : Vec m)
 
 let vappend (m : Nat)(as : Vec m)(n : Nat)(bs : Vec n) : Vec (plus m n) ;
 <= VecInd m as ;
-= bs ;
-= cons (plus s n) xf^2 (vappend s xf^1 n bs) ;
+define vappend _ 'zero 'nil k bs := bs ;
+define vappend _ ('suc s) ('cons s a as) k bs := cons (plus s k) a (vappend s as k bs) ;
 root ;
 
 make A := Enum ['a 'b 'c] : Set ;
@@ -46,7 +46,7 @@ elab Vec.vappend A ('suc ('suc 'zero)) vab ('suc ('suc 'zero)) vab ;
 
 let vtail (A : Set)(n : Nat)(as : Vec.Vec A ('suc n)) : Vec.Vec A n ;
 <= Vec.VecInd A ('suc n) as ;
-= xf^9 ;
+define vtail A s ('cons s a as) := as ;
 root ;
 
 elab vtail A ('suc 'zero) vab ;
