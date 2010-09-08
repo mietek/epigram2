@@ -43,11 +43,12 @@
 > import DisplayLang.PrettyPrint
 
 > import Tactics.PropositionSimplify
+> import Tactics.Matching
+> import Tactics.Unification
 
 > import Elaboration.ElabProb
 > import Elaboration.ElabMonad
 > import Elaboration.MakeElab
-> import Elaboration.Unification
 > import Elaboration.Wire
 
 > import Distillation.Distiller
@@ -372,10 +373,9 @@ On our way to the label, we instantiate the hypotheses with fresh references.
 >           seekIn (rs :< sRef) (tm :$ A (NP sRef)) (t $$ A (pval sRef))
 
 We have reached a label! The question is then ``is this the one we are looking
-for?'' First we call on the matcher (see
-subsection~\ref{subsec:Elaboration.Unification.Matching}) to find values for
-the fresh references, then we generate a substitution from these values and
-apply it to the call term.
+for?'' First we call on the matcher (see section~\ref{subsec:Tactics.Matching})
+to find values for the fresh references, then we generate a substitution from
+these values and apply it to the call term.
 
 >       seekIn rs tm (LABEL (N foundLabel) u) = do
 >           (ss, _)   <- matchNeutral (fmap (, Nothing) rs) foundLabel label

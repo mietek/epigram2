@@ -50,10 +50,11 @@
 > import Tactics.IData
 > import Tactics.Relabel
 > import Tactics.ShowHaskell
+> import Tactics.Matching
+> import Tactics.Unification
 
 > import Elaboration.Elaborator
 > import Elaboration.Scheduler
-> import Elaboration.Unification
 
 > import Distillation.Distiller
 
