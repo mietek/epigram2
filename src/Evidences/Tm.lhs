@@ -174,7 +174,7 @@ both syntactic and functional scopes in both places.}
 
 > data Scope :: {Phase} -> * -> * where
 >   (:.)  :: String -> Tm {In, TT} x           -> Scope p{-TT-} x  -- binding
->   H     :: ENV -> String -> Tm {In, TT} x    -> Scope p{-VV-} x  
+>   H     :: Env x -> String -> Tm {In, TT} x    -> Scope p{-VV-} x  
 >   K     :: Tm {In, p} x                      -> Scope p x     -- constant
 
 
@@ -315,8 +315,9 @@ We have some type synonyms for commonly occurring instances of |Tm|.
 > type VAL    = Tm {In, VV} REF
 > type TY     = VAL
 > type NEU    = Tm {Ex, VV} REF
-> type ENV    = (Bwd VAL, TXTSUB)  -- values for deBruijn indices
-> type TXTSUB = [(Char, String)]   -- renaming plan
+> type Env x  = (Bwd (Tm {In, VV} x), TXTSUB)  -- values for deBruijn indices
+> type ENV    = Env REF
+> type TXTSUB = [(Char, String)]        -- renaming plan
 
 We have special pairs for types going into and coming out of
 stuff. We write |typ :>: thing| to say that |typ| accepts the
@@ -708,13 +709,14 @@ To ease the writing of error terms, we have a bunch of combinators:
 > instance Show Op where
 >   show = opName
 
-> instance Functor (Scope {TT}) where
+> instance Functor (Scope {p}) where
 >   fmap = fmapDefault
-> instance Foldable (Scope {TT}) where
+> instance Foldable (Scope {p}) where
 >   foldMap = foldMapDefault
-> instance Traversable (Scope {TT}) where
+> instance Traversable (Scope {p}) where
 >   traverse f (x :. t)   = (|(x :.) (traverse f t)|)
 >   traverse f (K t)      = (|K (traverse f t)|)
+>   traverse f (H (e, s) x t)  = (|H (| (traverse (traverse f) e) , ~s|) ~x (traverse f t)|)
 
 > instance Traversable f => Functor (Labelled f) where
 >   fmap = fmapDefault
@@ -729,11 +731,11 @@ To ease the writing of error terms, we have a bunch of combinators:
 >   halfZip (_       :?=: fs)  (_      :?=: ft)  = 
 >     (| (Nothing  :?=:) (halfZip fs ft) |)
 
-> instance Functor (Tm {d,TT}) where
+> instance Functor (Tm {d,p}) where
 >   fmap = fmapDefault
-> instance Foldable (Tm {d,TT}) where
+> instance Foldable (Tm {d,p}) where
 >   foldMap = foldMapDefault
-> instance Traversable (Tm {d,TT}) where
+> instance Traversable (Tm {d,p}) where
 >   traverse f (L sc)     = (|L (traverse f sc)|)
 >   traverse f (C c)      = (|C (traverse (traverse f) c)|)
 >   traverse f (N n)      = (|N (traverse f n)|)
