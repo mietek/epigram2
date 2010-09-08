@@ -253,7 +253,8 @@ dawg.}
 >              keyword KwSet
 >              keyword KwDefn
 >              scs <- tokenListArgs (bracket Round $ tokenPairArgs
->                tokenString
+>                (|id (%keyword KwTag%)
+>                     tokenString |)
 >                (keyword KwAsc)
 >                tokenInTm)
 >               (keyword KwSemi)

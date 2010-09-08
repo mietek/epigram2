@@ -1,4 +1,4 @@
-data List (A : Set) := (nil : List A) ; (cons : A -> List A -> List A) ;
+data List (A : Set) := ('nil : List A) ; ('cons : A -> List A -> List A) ;
 
 let nil {A : Set} : List A ;
 define nil _ := 'nil ;
@@ -35,7 +35,7 @@ root ;
 
 elab list-map T (Enum ['x 'y]) ['x 'x 'y] L ;
 
-data Nat := (zero : Nat) ; (suc : Nat -> Nat) ;
+data Nat := ('zero : Nat) ; ('suc : Nat -> Nat) ;
 
 let plus (m : Nat)(n : Nat) : Nat ;
 <= Nat.Ind m ;

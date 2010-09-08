@@ -246,7 +246,8 @@ equality, so it doesn't catch the wrong |MU|s.
 >                tokenInTm) (|()|)
 >              keyword KwDefn
 >              scs <- tokenListArgs (bracket Round $ tokenPairArgs
->                tokenString
+>                (|id (%keyword KwTag%)
+>                     tokenString |)
 >                (keyword KwAsc)
 >                tokenInTm)
 >               (keyword KwSemi)

@@ -1,4 +1,4 @@
-data Nat := (zero : Nat) ; (suc : (n : Nat) -> Nat);
+data Nat := ('zero : Nat) ; ('suc : (n : Nat) -> Nat);
 
 let Le (x : Nat)(y : Nat) : Prop;
 <= Nat.Ind x;

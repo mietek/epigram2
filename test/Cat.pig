@@ -6,7 +6,7 @@
 
 -- ** Packing stuffs (avoid Sigma deconstruction)
 
-data Pack (X : Set) := ( pack : X -> Pack X );
+data Pack (X : Set) := ( 'pack : X -> Pack X );
 
 let unpackGen (X : Set)(C : Pack X) : X;
 <= Pack.Ind X C;

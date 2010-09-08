@@ -15,7 +15,7 @@
   Bool is one of the simplest possible data types, with only two constructors.
 -}
 
-data Bool := (false : Bool) ; (true : Bool) ;
+data Bool := ('false : Bool) ; ('true : Bool) ;
 
 elab 'true : Bool ;
 elab 'false : Bool ;
@@ -29,7 +29,7 @@ elab 'false : Bool ;
   every number has a successor. 
 -}
 
-data Nat := (zero : Nat) ; (suc : Nat -> Nat) ;
+data Nat := ('zero : Nat) ; ('suc : Nat -> Nat) ;
 
 elab 'zero : Nat ;
 make one := 'suc 'zero : Nat ; elab one ;
@@ -165,7 +165,7 @@ make plus-function-commutative := ? : :- (flip plus == plus) ;
   A list is either empty (nil) or a value followed by a list (cons).
 -}
 
-data List (A : Set) := (nil : List A) ; (cons : A -> List A -> List A) ;
+data List (A : Set) := ('nil : List A) ; ('cons : A -> List A -> List A) ;
 
 elab 'nil : List Bool ;
 elab 'cons 'true 'nil : List Bool ;
@@ -201,7 +201,7 @@ elab head Bool 'nil ;
   parameter: it varies depending on which constructor you choose.
 -}
 
-idata Vec (A : Set) : Nat -> Set := (vnil : Vec A 'zero) ; (vcons : (n : Nat) -> A -> Vec A n -> Vec A ('suc n)) ;
+idata Vec (A : Set) : Nat -> Set := ('vnil : Vec A 'zero) ; ('vcons : (n : Nat) -> A -> Vec A n -> Vec A ('suc n)) ;
 
 {-
   Now we can safely define the vector version of head. Since we ask for a vector
@@ -246,7 +246,7 @@ elab vapp Nat Nat two fs as ;
   natural numbers less than |n|.
 -}
 
-idata Fin : Nat -> Set := (fzero : (n : Nat) -> Fin ('suc n)) ; (fsuc : (n : Nat) -> Fin n -> Fin ('suc n)) ;
+idata Fin : Nat -> Set := ('fzero : (n : Nat) -> Fin ('suc n)) ; ('fsuc : (n : Nat) -> Fin n -> Fin ('suc n)) ;
 
 elab 'fzero 'zero              : Fin one ;
 elab 'fzero one                : Fin two ;

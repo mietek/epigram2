@@ -1,11 +1,11 @@
-data Nat := (zero : Nat) ; (suc : Nat -> Nat) ;
-idata Fin : Nat -> Set := (zero : (n : Nat) -> Fin ('suc n)) ; (suc : (n : Nat) -> Fin n -> Fin ('suc n)) ;
+data Nat := ('zero : Nat) ; ('suc : Nat -> Nat) ;
+idata Fin : Nat -> Set := ('zero : (n : Nat) -> Fin ('suc n)) ; ('suc : (n : Nat) -> Fin n -> Fin ('suc n)) ;
 let wk (m : Nat)(n : Nat)(f : Fin m -> Fin n)(i : Fin ('suc m)) : Fin ('suc n) ;
 --<= Fin.Ind ('suc m) i ;
 --define wk m n f ('zero m) := 'zero n ;
 --define wk m n f ('suc m i) := 'suc n (f i) ;
 root ;
-idata Lam : Nat -> Set := (var : (n : Nat) -> Fin n -> Lam n) ; (app : (n : Nat) -> Lam n -> Lam n -> Lam n) ; (lam : (n : Nat) -> Lam ('suc n) -> Lam n) ;
+idata Lam : Nat -> Set := ('var : (n : Nat) -> Fin n -> Lam n) ; ('app : (n : Nat) -> Lam n -> Lam n -> Lam n) ; ('lam : (n : Nat) -> Lam ('suc n) -> Lam n) ;
 let ren (m : Nat)(n : Nat)(f : Fin m -> Fin n)(t : Lam m) : Lam n ;
 <= Lam.Ind m t ;
 define ren m n f ('var m i) := 'var n (f i) ;

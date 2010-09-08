@@ -1,4 +1,4 @@
-data Nat := (zero : Nat) ; (suc : (n : Nat) -> Nat) ;
+data Nat := ('zero : Nat) ; ('suc : (n : Nat) -> Nat) ;
 make zero := 'zero : Nat ;
 make suc := (\ x -> 'suc x) : Nat -> Nat ;
 

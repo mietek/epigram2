@@ -252,18 +252,18 @@ make subst := (\ X x y q P p ->
 
 -- * Data-type definitions
 
-data Nat := (zero : Nat) 
-          ; (suc : Nat -> Nat);
+data Nat := ('zero : Nat) 
+          ; ('suc : Nat -> Nat);
 
--- No: data Nat := (zero : Nat) ;
---                 (suc : Nat -> Nat);
+-- No: data Nat := ('zero : Nat) ;
+--                 ('suc : Nat -> Nat);
 -- because an end-of-line is a ";"
 
-data List (X : Set) := (nil : List X) 
-                     ; (cons : X -> List X -> List X);
+data List (X : Set) := ('nil : List X) 
+                     ; ('cons : X -> List X -> List X);
 
-data Tree (X : Set) := (leaf : Tree X) 
-                     ; (node : X -> Tree X -> Tree X -> Tree X);
+data Tree (X : Set) := ('leaf : Tree X) 
+                     ; ('node : X -> Tree X -> Tree X -> Tree X);
 
 -- ** Inhabitants of data-types
 

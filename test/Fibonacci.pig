@@ -1,7 +1,7 @@
 -- We are going to build the recursion principle for natural numbers.
 -- We need to define the natural numbers, their case analysis principle and
 -- addition:
-data Nat := (zero : Nat) ; (suc : (n : Nat) -> Nat) ;
+data Nat := ('zero : Nat) ; ('suc : (n : Nat) -> Nat) ;
 
 make NatCase : (n : Nat)(P : (n : Nat) -> Set)(p : (nt : desc Nat.DataDesc Nat) -> P (con nt)) -> P n ;
 lambda n, P, p ;

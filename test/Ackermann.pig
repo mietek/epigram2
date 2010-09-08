@@ -1,4 +1,4 @@
-data Nat := (zero : Nat) ; (suc : (n : Nat) -> Nat) ;
+data Nat := ('zero : Nat) ; ('suc : (n : Nat) -> Nat) ;
 
 -- Okay, so this is cheating: we implement the Ackermann function
 -- using higher-order magic.

@@ -1,8 +1,8 @@
 -- The interesting thing is that |node| has two sub-trees, so
 -- |induction| can (should be able to) go both left and right.
 
-data Tree := (leaf : Tree) 
-     	   ; (node : (tl : Tree) (tr : Tree) -> Tree)
+data Tree := ('leaf : Tree) 
+     	   ; ('node : (tl : Tree) (tr : Tree) -> Tree)
 	   ;
 
 

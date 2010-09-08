@@ -1,4 +1,4 @@
-data Nat := (zero : Nat) ; (suc : Nat -> Nat) ;
+data Nat := ('zero : Nat) ; ('suc : Nat -> Nat) ;
 
 let A (m : Nat)(n : Nat) : Nat ;
 <= Nat.Ind m ;

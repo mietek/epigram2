@@ -1,5 +1,5 @@
 -- Let's have some natural numbers...
-data Nat := (zero : Nat) ; (suc : (n : Nat) -> Nat) ;
+data Nat := ('zero : Nat) ; ('suc : (n : Nat) -> Nat) ;
 
 -- Now we can write plus like this:
 let plus (m : Nat)(n : Nat) : Nat ;
