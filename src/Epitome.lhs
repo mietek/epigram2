@@ -152,6 +152,8 @@
 %include Tactics/Relabel.lhs
 %include Tactics/Gadgets.lhs
 %include Tactics/ShowHaskell.lhs
+%include Tactics/Unification.lhs
+%include Tactics/Matching.lhs
 
 \chapter{Elaboration}
 \label{chap:elaboration}
@@ -163,7 +165,6 @@
 %include Elaboration/Elaborator.lhs
 %include Elaboration/Scheduler.lhs
 %include Elaboration/Wire.lhs
-%include Elaboration/Unification.lhs
 
 \chapter{Distillation}
 
