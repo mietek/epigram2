@@ -85,7 +85,7 @@ index of |IMu| to make a fully applied anchor |DIMu|.
 >   pattern DISIGMA s t    = DCON (DPAIR DISIGMAN   (DPAIR s (DPAIR t DVOID)))
 >   pattern DIFSIGMA s t   = DCON (DPAIR DIFSIGMAN  (DPAIR s (DPAIR t DVOID)))
 >   pattern DICONST p      = DCON (DPAIR DICONSTN   (DPAIR p DVOID))
->   pattern DIPROD u x y   = DCON (DPAIR DIPRODN    (DPAIR (DPAIR x (DPAIR y DVOID))))
+>   pattern DIPROD u x y   = DCON (DPAIR DIPRODN    (DPAIR u (DPAIR x (DPAIR y DVOID))))
 
 
 > import -> CanPretty where
