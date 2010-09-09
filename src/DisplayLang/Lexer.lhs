@@ -162,6 +162,8 @@ things...
 >     KwSemi        :: Keyword
 >     KwDefn        :: Keyword
 >     KwUnderscore  :: Keyword
+>     KwEq          :: Keyword
+>     KwBy          :: Keyword
 
 >     KwSet         :: Keyword
 >     KwPi          :: Keyword
@@ -183,6 +185,9 @@ things...
 > key KwSemi        = ";"
 > key KwDefn        = ":="
 > key KwUnderscore  = "_"
+> key KwEq          = "="
+> key KwBy          = "<="
+
 
 > key KwSet         = "Set"
 > key KwPi          = "Pi"
@@ -274,6 +279,13 @@ is not more difficult than that:
 
 > keyword :: Keyword -> Parsley Token ()
 > keyword s = tokenEq (Keyword s)
+
+And we can match any keyword (though we rarely want to) using:
+
+> anyKeyword :: Parsley Token Keyword
+> anyKeyword = pFilter filterKeyword nextToken
+>     where filterKeyword (Keyword k)  = Just k
+>           filterKeyword _            = Nothing
 
 Parsing an identifier or a number is as simple as:
 

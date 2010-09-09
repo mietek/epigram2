@@ -528,7 +528,9 @@ Import more tactics from an aspect:
 
 > pCochonTactic :: Parsley Token CTData
 > pCochonTactic  = do
->     x <- ident
+>     x <- (|id ident
+>           |key anyKeyword
+>           |)
 >     case tacticsMatching x of
 >         [ct] -> do
 >             args <- ctParse ct

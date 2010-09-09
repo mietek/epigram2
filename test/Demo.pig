@@ -55,9 +55,9 @@ make two := 'suc ('suc 'zero) : Nat ; elab two ;
 -}
 
 let plus (m : Nat)(n : Nat) : Nat ;
-<= Nat.Ind m ;
+refine plus m n <= Nat.Ind m ;
 next ;
-define plus ('suc k) n := 'suc (plus k n) ;
+refine plus ('suc k) n = 'suc (plus k n) ;
 root ;
 
 {-
@@ -74,7 +74,7 @@ elab plus two two ;
 -}
 
 next ;
-define plus 'zero n := n ; 
+refine plus 'zero n = n ; 
 root ;
 
 {-
@@ -96,19 +96,18 @@ elab plus two two ;
 -}
 
 let compare (x : Nat)(y : Nat)(P : Nat -> Nat -> Set)(l : (x : Nat)(y : Nat) -> P x (plus x ('suc y)))(e : (x : Nat) -> P x x)(g : (x : Nat)(y : Nat) -> P (plus y ('suc x)) y) : P x y ;
-<= Nat.Ind x ;
+refine compare x y P l e g <= Nat.Ind x ;
 
-<= Nat.Ind y ;
-define compare 'zero 'zero    P l e g := e 'zero ;
-define compare 'zero ('suc k) P l e g := l 'zero k ;
+refine compare 'zero y P l e g <= Nat.Ind y ;
+refine compare 'zero 'zero    P l e g = e 'zero ;
+refine compare 'zero ('suc k) P l e g = l 'zero k ;
 
-<= Nat.Ind y ;
-define compare ('suc j) 'zero P l e g := g j 'zero ;
-relabel compare ('suc j) ('suc k) P l e g ;
-<= compare j k ;
-= l ('suc fx^5) fx^4 ;
-define compare ('suc j) ('suc j) P l e g := e ('suc j) ;
-= g fx^5 ('suc fx^4) ;
+refine compare ('suc j) y P l e g <= Nat.Ind y ;
+refine compare ('suc j) 'zero P l e g = g j 'zero ;
+refine compare ('suc j) ('suc k) P l e g <= compare j k ;
+= l ('suc fx^2) fx^1 ;
+refine compare ('suc j) ('suc j) P l e g = e ('suc j) ;
+= g fx^2 ('suc fx^1) ;
 root ;
 
 
@@ -119,9 +118,9 @@ root ;
 -}
 
 let max (a : Nat)(b : Nat) : Nat ;
-<= compare a b ;
+refine max a b <= compare a b ;
 = plus a ('suc b) ;
-= a ;
+refine max a a = a ;
 = plus b ('suc a) ;
 root ;
 
@@ -178,9 +177,9 @@ elab 'cons one ('cons two 'nil) : List Nat ;
 -}
 
 let head (A : Set)(as : List A) : A ;
-<= List.Ind A as ;
+refine head A as <= List.Ind A as ;
 next ;
-define head A ('cons a _) := a ;
+refine head A ('cons a _) = a ;
 root ;
 
 
@@ -209,8 +208,8 @@ idata Vec (A : Set) : Nat -> Set := ('vnil : Vec A 'zero) ; ('vcons : (n : Nat) 
 -}
 
 let vhead (A : Set)(n : Nat)(as : Vec A ('suc n)) : A ;
-<= Vec.Ind A ('suc n) as ;
-define vhead _ _ ('vcons _ a _) := a ;
+refine vhead A n as <= Vec.Ind A ('suc n) as ;
+refine vhead A n ('vcons n a as) = a ;
 root ;
 
 
@@ -226,11 +225,10 @@ elab vhead Bool one ('vcons one 'false ('vcons 'zero 'true 'vnil)) ;
 -}
 
 let vapp (A : Set)(B : Set)(n : Nat)(fs : Vec (A -> B) n)(as : Vec A n) : Vec B n ;
-<= Vec.Ind (A -> B) n fs ;
-define vapp A B 'zero 'vnil as := 'vnil ;
-relabel vapp A B ('suc j) ('vcons j f fs) as ;
-<= Vec.Ind A ('suc j) as ;
-define vapp A B ('suc j) ('vcons j f fs) ('vcons j a as) := 'vcons j (f a) (vapp A B j fs as) ;
+refine vapp A B n fs as <= Vec.Ind (A -> B) n fs ;
+refine vapp A B 'zero 'vnil as = 'vnil ;
+refine vapp A B ('suc j) ('vcons j f fs) as <= Vec.Ind A ('suc j) as ;
+refine vapp A B ('suc j) ('vcons j f fs) ('vcons j a as) = 'vcons j (f a) (vapp A B j fs as) ;
 root ;
 
 
@@ -259,7 +257,7 @@ elab 'fsuc  one ('fzero 'zero) : Fin two ;
 -}
 
 let nuffin (x : Fin 'zero) : :- FF ;
-<= Fin.Ind 'zero x ;
+refine nuffin x <= Fin.Ind 'zero x ;
 root ;
 
 
@@ -272,12 +270,11 @@ root ;
 -}
 
 let lookup (A : Set)(n : Nat)(as : Vec A n)(fn : Fin n) : A ;
-<= Vec.Ind A n as ;
-define lookup A 'zero 'vnil fn := naughtE (nuffin fn) A	 ;
-relabel lookup A ('suc k) ('vcons k a as) fn ;
-<= Fin.Ind ('suc k) fn ;
-define lookup A ('suc k) ('vcons k a _) ('fzero k) := a ;
-define lookup A ('suc k) ('vcons k a as) ('fsuc k fn) := lookup A k as fn ;
+refine lookup A n as fn <= Vec.Ind A n as ;
+refine lookup A 'zero 'vnil fn = naughtE (nuffin fn) A	 ;
+refine lookup A ('suc k) ('vcons k a as) fn <= Fin.Ind ('suc k) fn ;
+refine lookup A ('suc k) ('vcons k a _) ('fzero k) = a ;
+refine lookup A ('suc k) ('vcons k a as) ('fsuc k fn) = lookup A k as fn ;
 root ;
 
 

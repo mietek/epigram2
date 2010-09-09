@@ -3,9 +3,9 @@ data Nat := ('zero : Nat) ; ('suc : (n : Nat) -> Nat) ;
 
 -- Now we can write plus like this:
 let plus (m : Nat)(n : Nat) : Nat ;
-<= Nat.Ind m ;
-define plus 'zero n := n ;
-define plus ('suc k) n := 'suc (plus k n) ;
+refine plus m        n <= Nat.Ind m ;
+refine plus 'zero    n = n ;
+refine plus ('suc k) n = 'suc (plus k n) ;
 
 -- Just to show this really works:
 root ;
@@ -26,26 +26,24 @@ make flip := (\ f k n -> f n k) : (Nat -> Nat -> Nat) -> Nat -> Nat -> Nat ;
 -- And here come the proofs...
 
 -- A lemma:
-make plusZ : :- ((m : Nat) => plus m 'zero == m) ;
-lambda m ;
-<= Nat.Ind m ;
+let plusZ (m : Nat) : :- plus m 'zero == m ;
+refine plusZ m <= Nat.Ind m ;
+-- This is slightly cheeky and ought to be squashed by proof search:
+refine plusZ ('suc n) = plusZ n ;
 root ; 
 
 -- Another lemma:
-make plusS : :- ((k : Nat)(n : Nat) => plus k ('suc n) == (: Nat) ('suc (plus k n))) ;
-lambda k, n ;
-<= Nat.Ind k ;
-give nh n ;
+let plusS (k : Nat)(n : Nat) : :- plus k ('suc n) == plus ('suc k) n ;
+refine plusS k n <= Nat.Ind k ;
+-- Again, proof search should hit this:
+refine plusS ('suc j) n = plusS j n ;
 root ;
 
 -- Given some arguments, plus is commutative:
-make plusComm : :- ((k : Nat)(n : Nat) => plus k n == plus n k) ;
-lambda k, n ;
-<= Nat.Ind n ;
-give plusZ k ;
-give trans Nat (plus k ('suc n)) ('suc (plus k n)) ('suc (plus n k)) (plusS k n) ? ;
-simplify ;
-give nh k ;
+let plusComm (k : Nat)(n : Nat) : :- plus k n == plus n k ;
+refine plusComm k n <= Nat.Ind n ;
+refine plusComm k 'zero = plusZ k ;
+refine plusComm k ('suc m) = trans Nat (plus k ('suc m)) ('suc (plus k m)) ('suc (plus m k)) (plusS k n) (plusComm k n) ;
 root ;
 
 -- We really have equality between the *functions* |plus| and |flip plus|:
