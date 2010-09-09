@@ -4,7 +4,7 @@ Let there be idescInduction.
 \ P : (IDesc I -> Set) ->
 \ pf-Pi : :- ((E : EnumU)(T : Enum E -> IDesc I) => FF) ->
 \ pf-Sigma : :- ((E : EnumU)(T : branches E (\ _ -> IDesc I)) => FF) ->
-\ pf-Prod : :- ((x : IDesc I)(y : IDesc I) => FF) ->
+\ pf-Prod : :- ((u : UId)(x : IDesc I)(y : IDesc I) => FF) ->
 \ methodVar : ((i : I) -> P ('varD i)) ->
 \ methodConst : ((K : Set) -> P ('constD K)) ->
 \ methodPi : ((S : Set)(T : S -> IDesc I) -> P ('piD S T)) ->

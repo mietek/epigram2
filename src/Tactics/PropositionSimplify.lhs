@@ -363,7 +363,7 @@ for each $Q_i$ in the simplification of $Q$.
 >     consequent refS (Simply qis qgs qh) = do
 >         s' <- bquote B0 s
 >         let  pis     = fmap (dischargeAllREF (B0 :< (refS :<: s'))) qis
->              pgs     = fmap (\ qg pv -> L $ "s" :. qg (pv :$ A (NV 0))) qgs
+>              pgs     = fmap (\ qg pv -> L $ "s" :. qg ((inc 0 %%# pv) :$ A (NV 0))) qgs
 >              qiPrfs  = fmap (\ (pi :<: _) -> N (P pi :$ A (NP refS))) pis
 >              ph      = dischargeLam (B0 :< refS) (substitute qis qiPrfs qh)
 >         return (Simply pis pgs ph)
