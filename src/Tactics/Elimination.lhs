@@ -747,7 +747,7 @@ of times as |introMotive| went in:
 
 Now we can combine the pieces to produce the |elim| command: 
 
-> elim :: Maybe REF -> (TY :>: EXTM) -> ProofState (EXTM :=>: VAL)
+> elim :: Maybe REF -> (TY :>: EXTM) -> ProofState [EXTM :=>: VAL]
 > elim comma (elimTy :>: elim) = do 
 
 Here we go. First, we need to retrieve some information about our
@@ -813,7 +813,7 @@ Finally we move back to the bottom of the original development:
 
 >     goOut
 >     goOut
->     return tt
+>     return liftedMethods
 
 > toMotive :: ProofState ()
 > toMotive = goIn >> goIn >> goTop

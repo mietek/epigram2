@@ -6,12 +6,13 @@
 
 > module Tactics.ProblemSimplify where
 
-> import Prelude hiding (any, foldl)
+> import Prelude hiding (any, foldl, elem)
 
 > import Control.Applicative 
 > import Control.Monad.Reader
 
 > import Data.Foldable
+> import Data.Traversable
 
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
@@ -22,15 +23,18 @@
 > import Evidences.Eval
 > import Evidences.Operators
 > import Evidences.DefinitionalEquality
+> import Evidences.Mangler
 
 > import ProofState.Edition.ProofState
 > import ProofState.Edition.GetSet
 > import ProofState.Edition.Navigation
+> import ProofState.Edition.Scope
 
 > import ProofState.Interface.ProofKit
 > import ProofState.Interface.Definition
 > import ProofState.Interface.Parameter
 > import ProofState.Interface.Solving
+> import ProofState.Interface.Lifting
 
 > import Tactics.Elimination
 > import Tactics.PropositionSimplify
@@ -80,11 +84,21 @@ to continue, but give back the current result if no more simplification is
 possible. If not at the top level, this has to create a new goal.
 
 > trySimplifyGoal :: Bool -> TY -> ProofState (INTM :=>: VAL)
-> trySimplifyGoal True   ty = simplifyGoal True ty <|>
+> trySimplifyGoal True   g = simplifyGoal True g <|>
 >                                 (neutralise =<< getCurrentDefinition)
-> trySimplifyGoal False  ty = simplifyGoal False ty <|> (do
->                                 ty' <- bquoteHere ty
->                                 neutralise =<< make ("tsg" :<: ty'))
+> trySimplifyGoal False  g = simplifyGoal False g <|> (do
+>     g'  <- bquoteHere g
+>     es  <- getEntriesAbove
+>     cursorAboveLambdas
+>     make ("tsg" :<: liftType es g')
+>     goIn
+>     let rs = paramREFs es
+>     traverse (lambdaParam . refNameAdvice) rs
+>     x :=>: xv <- getCurrentDefinition
+>     goOut
+>     let z = x $## map NP rs
+>     return $ N z :=>: evTm z
+>   )
 
 We implement the simplification steps in |simplifyGoal|. This takes a boolean
 parameter indicating whether simplification is at the top level, and a type
@@ -149,7 +163,7 @@ the context and carry on. Note that this assumes we are at the top level.
 >     elimEquation (EQBLUE (_X :>: x) (_Y :>: NP y@(yn := DECL :<: _))) t = do
 >         guard =<< (withNSupply $ equal (SET :>: (_X, _Y)))
 >         t' <- bquoteHere t
->         guard $ y `Data.Foldable.elem` t'
+>         guard $ y `elem` t'
 >         simpTrace $ "elimSimp: " ++ show yn
 >         q    <- lambdaParam "qe"
 >         _X'  <- bquoteHere _X
@@ -163,7 +177,7 @@ the context and carry on. Note that this assumes we are at the top level.
 >     elimEquation (EQBLUE (_Y :>: NP y@(yn := DECL :<: _)) (_X :>: x)) t = do
 >         guard =<< (withNSupply $ equal (SET :>: (_X, _Y)))
 >         t' <- bquoteHere t
->         guard $ y `Data.Foldable.elem` t'
+>         guard $ y `elem` t'
 >         simpTrace $ "elimSimp: " ++ show yn
 >         q    <- lambdaParam "qe"
 >         _X'  <- bquoteHere _X
@@ -216,12 +230,18 @@ To simplify a $\Pi$-type when not at the top level, we have to create a subgoal.
 > simplifyGoal False g@(PI _ _) = do
 >     simpTrace "PI not"
 >     g' <- bquoteHere g
->     make ("pig" :<: g')
+>     es <- getEntriesAbove
+>     cursorAboveLambdas
+>     make ("pig" :<: liftType es g')
 >     goIn
->     simplifyGoal True g
+>     let rs = paramREFs es
+>     traverse (lambdaParam . refNameAdvice) rs
+>     _ :=>: ty <- getHoleGoal
+>     simplifyGoal True ty
 >     x :=>: xv <- getCurrentDefinition
 >     goOut
->     return $ N x :=>: xv
+>     let z = x $## map NP rs
+>     return $ N z :=>: evTm z
 
 When the goal is a proof of a proposition, and we are at the top level, we can
 just invoke propositional simplification...
@@ -287,13 +307,19 @@ methods, then returns to the original goal.
 
 > elimSimplify :: (TY :>: EXTM) -> ProofState ()
 > elimSimplify tt = do
->     elim Nothing tt
+>     methods <- elim Nothing tt
 >     simpTrace "Eliminated!"
 >     toFirstMethod
->     optional problemSimplify            -- simplify first method
->     many (goDown >> problemSimplify)    -- simplify other methods
->     goOut                               -- out to makeE
->     goOut                               -- out to original goal
+>     replicateM_ (length methods) (optional problemSimplify >> goDown)
+>     goOut
+
+
+> cursorAboveLambdas :: ProofState ()
+> cursorAboveLambdas = do
+>     es <- getEntriesAbove
+>     case paramREFs es of
+>         []  -> return ()
+>         _   -> cursorUp >> cursorAboveLambdas
 
 
 
