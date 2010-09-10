@@ -141,6 +141,14 @@ Similarly for indexed data types:
 >             return $ CON (PAIR ntm atm) :=>: CON (PAIR nv av)
 >         else throwError' $ err "relabel: mismatched tags!"
 
+Lest we forget, tags may also belong to enumerations!
+
+> matchProb (ENUMT e :>: (DTag s [], t)) = do
+>   ntm :=>: nv <- elaborate (Loc 0) (ENUMT e :>: DTAG s)
+>   sameTag <- withNSupply $ equal (ENUMT e :>: (nv, t))
+>   if sameTag
+>     then return $ ntm :=>: nv
+>     else throwError' $ err "relabel: mismatched tags!"
 
 > matchProb (ty :>: (w, v)) = do
 
