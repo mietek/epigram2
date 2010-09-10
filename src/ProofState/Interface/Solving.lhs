@@ -136,3 +136,20 @@ The |ungawa| command looks for a truly obvious thing to do, and does it.
 > ungawa =  ignore done <|> ignore apply <|> ignore (lambdaParam "ug")
 >           `pushError` (err "ungawa: no can do.")
 
+
+\subsection{Refining the proof state}
+
+To refine the proof state, we must supply a new goal type and a realiser, which
+takes values in the new type to values in the original type. The
+|refineProofState| command creates a new subgoal at the top of the working
+development, so the entries in that development are not in scope. 
+
+> refineProofState :: INTM -> (EXTM -> INTM) -> ProofState ()
+> refineProofState ty realiser = do
+>     cursorTop
+>     t :=>: _ <- make ("refine" :<: ty)
+>     cursorBottom
+>     give (realiser t)
+>     cursorTop
+>     cursorDown
+>     goIn

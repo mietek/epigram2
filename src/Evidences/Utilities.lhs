@@ -107,3 +107,17 @@ fresh reference and discharging over that reference.
 > mkFun :: NameSupplier m => (REF -> INTM) -> m INTM
 > mkFun f = freshRef ("fy" :<: error "mkFun: reference type undefined") $
 >     \ ref -> return $ dischargeLam (B0 :< ref) (f ref)
+
+
+\subsection{Term construction and deconstruction}
+
+The |splitSpine| function takes a neutral value and tries to split it into a
+reference and a spine of arguments to which it is applied.
+\adam{where should this live?}
+
+> splitSpine :: NEU -> Maybe (REF, [VAL])
+> splitSpine (P r) = return (r, [])
+> splitSpine (n :$ A a) = do
+>     (r, as) <- splitSpine n
+>     return (r, as ++ [a])
+> splitSpine _ = Nothing
