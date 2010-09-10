@@ -138,18 +138,20 @@ Similarly for indexed data types:
 
 > matchProb (IMU l _I d i :>: (DTag s as, CON (PAIR t xs))) rl
 >   | Just (e, f) <- sumilike _I (d $$ A i) = do
->     ntm :=>: nv <- elaborate (Loc 0) (ENUMT e :>: DTAG s)
->     sameTag <- withNSupply $ equal (ENUMT e :>: (nv, t))
->     if sameTag
->         then do
->             atm :=>: av <- matchProb
->                 (idescOp @@ [_I, f t, L $ "i" :. [.i. IMU (fmap (-$ []) l) (_I -$ []) (d -$ []) (NV i)] ] :>:
->                     (foldr DPAIR DU as, xs))
->             return $ CON (PAIR ntm atm) :=>: CON (PAIR nv av)
->         else throwError' $ err "relabel: mismatched tags!"
+>     ntm :=>: nv  <- elaborate (Loc 0) (ENUMT e :>: DTAG s)
+>     sameTag      <- withNSupply $ equal (ENUMT e :>: (nv, t))
+>     unless sameTag $ throwError' $ err "relabel: mismatched tags!"
+>     matchProb (idescOp @@ [_I, f t,
+>         L $ "i" :. [.i. IMU (fmap (-$ []) l) (_I -$ []) (d -$ []) (NV i)] ]
+>             :>: (foldr DPAIR DU as, xs)) rl
 
+Lest we forget, tags may also belong to enumerations!
 
-> matchProb (ty :>: (w, v)) = do
+> matchProb (ENUMT e :>: (DTag s [], t)) rl = do
+>   ntm :=>: nv <- elaborate (Loc 0) (ENUMT e :>: DTAG s)
+>   sameTag <- withNSupply $ equal (ENUMT e :>: (nv, t))
+>   unless sameTag $ throwError' $ err "relabel: mismatched tags!"
+>   return rl
 
 Nothing else matches? We had better give up.
 
