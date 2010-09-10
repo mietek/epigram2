@@ -10,6 +10,6 @@ make N-induction := ? : (n : N)(P : N -> Set) ->
 make plus : N -> N -> N;
 lambda x ;
 elim N-induction x ;
-give \ _ -> x ;
+give \ n -> n ;
 give \ _ ih y -> suc (ih y) ;
 

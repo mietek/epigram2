@@ -41,10 +41,11 @@ make NatRec := (\ n P m -> m n (aux-gen n P m)) : (n : Nat)(P : (n : Nat) -> Set
 let fib (n : Nat) : Nat ;
 <= NatRec n ;
 <= NatCase n ;
-= 'suc 'zero ;
-<= NatCase n^1 ;
-= 'suc 'zero ;
-= plus (fib n^3) (fib ('suc n^3)) ;
+define fib 'zero := 'suc 'zero ;
+relabel fib ('suc m) ;
+<= NatCase m ;
+define fib ('suc 'zero) := 'suc 'zero ;
+define fib ('suc ('suc k)) := plus (fib k) (fib ('suc k)) ;
 -- there seem to be too many Nats in the context, for why?
 root ;
 

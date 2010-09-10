@@ -9,7 +9,7 @@ Made.
 Appended goal!
 Made lambda!
 Eliminated. Subgoals awaiting work...
-:= ? : (k : N) -> P (suc k) (f0 k)
+:= ? : (k : N)(x : Fin (suc zero))(qsm : :- (suc k) == (suc zero))(qsm : :- (f0 k) == x) -> T x
 Going to next goal...
-:= ? : (k : N)(y : Fin k) -> P k y -> P (suc k) (fs k y)
+:= ? : (k : N)(y : Fin k) -> ((x : Fin (suc zero))(qsm : :- k == (suc zero))(qsm : :- y == x) -> T x) -> (x : Fin (suc zero))(qsm : :- (suc k) == (suc zero))(qsm : :- (fs k y) == x) -> T x
 Loaded.

@@ -4,7 +4,7 @@ data Nat := ('zero : Nat) ; ('suc : (n : Nat) -> Nat) ;
 -- using higher-order magic.
 
 let Iter (f : Nat -> Nat)(n : Nat) : Nat ;
-<= [n] Nat.Ind n ;
+<= Nat.Ind n ;
 = f ('suc 'zero) ;
 = f (Iter f n) ;
 root ;

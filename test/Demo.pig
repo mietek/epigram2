@@ -29,7 +29,7 @@ elab 'false : Bool ;
   every number has a successor. 
 -}
 
-data Nat := ('zero : Nat) ; ('suc : Nat -> Nat) ;
+data Nat := ('zero : Nat) ; ('suc : (n : Nat) -> Nat) ;
 
 elab 'zero : Nat ;
 make one := 'suc 'zero : Nat ; elab one ;
@@ -105,9 +105,9 @@ refine compare 'zero ('suc k) P l e g = l 'zero k ;
 refine compare ('suc j) y P l e g <= Nat.Ind y ;
 refine compare ('suc j) 'zero P l e g = g j 'zero ;
 refine compare ('suc j) ('suc k) P l e g <= compare j k ;
-= l ('suc fx^2) fx^1 ;
+= l ('suc j) k ;
 refine compare ('suc j) ('suc j) P l e g = e ('suc j) ;
-= g fx^2 ('suc fx^1) ;
+= g j ('suc k) ;
 root ;
 
 

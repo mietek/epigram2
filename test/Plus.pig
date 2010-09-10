@@ -43,7 +43,7 @@ root ;
 let plusComm (k : Nat)(n : Nat) : :- plus k n == plus n k ;
 refine plusComm k n <= Nat.Ind n ;
 refine plusComm k 'zero = plusZ k ;
-refine plusComm k ('suc m) = trans Nat (plus k ('suc m)) ('suc (plus k m)) ('suc (plus m k)) (plusS k n) (plusComm k n) ;
+refine plusComm k ('suc m) = trans Nat (plus k ('suc m)) ('suc (plus k m)) ('suc (plus m k)) (plusS k m) (plusComm k m) ;
 root ;
 
 -- We really have equality between the *functions* |plus| and |flip plus|:
@@ -51,5 +51,5 @@ make plusCommF : :- (flip plus == plus) ;
 simplify ;
 lambda k1, k2, p, n1, n2, q ;
 <= substEq Nat k1 k2 _ ;
-give plusComm n1^1 k1 ;
+give plusComm n1 k1 ;
 root ;

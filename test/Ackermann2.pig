@@ -3,9 +3,10 @@ data Nat := ('zero : Nat) ; ('suc : Nat -> Nat) ;
 let A (m : Nat)(n : Nat) : Nat ;
 <= Nat.Ind m ;
 define A 'zero n := 'suc n ;
-<= [n] Nat.Ind n ;
+<= Nat.Ind n ;
 define A ('suc m) 'zero := A m ('suc 'zero) ;
 define A ('suc m) ('suc n) := A m (A ('suc m) n) ;
+give \ n -> _ ;
 root ;
 
 elab A 'zero 'zero ;

@@ -9,15 +9,16 @@ Going to root...
   Y := ? : X -> Set ;
   Z := ? : Set ;
   f
-    [ \ xy : Sig X Y ->
+    [ lm := ? : (x : X)(y : Y x) -> Z ;
+      \ xy : Sig X Y ->
       eif
         := [((P : Sig X Y -> Set)(p : (x : X)(y : Y x) -> P [x , y]) -> P xy) , split X Y xy] : Sig (ssv : Set ; ssv) ;
       makeE
-        [ P
+        [ motive
             [ \ xf : Sig X Y ->
             ] Z : Set ;
-          m := ? : (x : X)(y : Y x) -> P [x , y] ;
-        ] eif - P m : P xy ;
+          method := lm : (x : X)(y : Y x) -> motive [x , y] ;
+        ] eif - motive method : motive xy ;
     ] makeE : Z ;
 ]
 Loaded.

@@ -44,7 +44,7 @@ root ;
 make Ind : (T : TagDesc)(v : toSet T)(P : toSet T -> Set)(p : Bits T P) -> P v ;
 simplify ;
 elim induction (toDesc [E , T]) v ;
-give con \ e x b P p -> ? ;
+give \ E T -> con \ e x b P p -> ? ;
 give switch E e (\ e -> ((x : desc (T e) (toSet [E , T])) -> box (T e) (toSet [E , T]) P x -> P (con [e , x]))) p x ? ;
 give boxer (toSet [E , T]) (\ v -> ((P : toSet [E , T] -> Set)(p : branches E (\ e -> ((x : desc (T e) (toSet [E , T])) -> box (T e) (toSet [E , T]) P x -> P (con [e , x])))) -> P v)) P ?q (T e) x b ;
 simplify ;

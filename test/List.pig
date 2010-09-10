@@ -28,7 +28,7 @@ make T := Enum ['a 'b 'c] : Set ;
 make L := append T (cons 'a (cons 'b nil)) (sing 'c) : List T ;
 
 let list-map (A : Set)(B : Set)(f : A -> B)(as : List A) : List B ;
-<= [as] List.Ind A as ;
+<= List.Ind A as ;
 define list-map _ _ _ 'nil := 'nil ;
 define list-map A B f ('cons a as) := 'cons (f a) (list-map A B f as) ;
 root ;

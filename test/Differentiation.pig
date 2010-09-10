@@ -13,7 +13,7 @@ define delta 'idD := 'constD (Sig ()) ;
 define delta ('constD _) := 'constD (:- FF) ;
 
 -- Enumerations are just finite sums, so differentiation is linear:
-define delta ('sumD e b) := 'sumD e (\ x -> delta (T x)) ;
+define delta ('sumD e b) := 'sumD e (\ x -> delta (b x)) ;
 
 -- Everyone loves the product rule:
 define delta ('prodD u D1 D2) := 'sigmaD (Enum ['left 'right]) [('prodD 'l (delta D1) D2) ('prodD 'r D1 (delta D2))] ;

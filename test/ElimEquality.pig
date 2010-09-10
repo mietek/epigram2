@@ -13,10 +13,9 @@ lambda T;
 lambda x;
 
 -- Apply elim, with the internal context starting at x:
-elim [x] substitute X t x ;
+elim substitute X t x ;
 
 show state;
-elab P;
 
 {-
 

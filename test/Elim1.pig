@@ -8,5 +8,5 @@ lambda P ;
 lambda Q ;
 lambda PorQ ;
 elim or-elim P Q PorQ ;
-give \ p _ -> or-right Q P^1 p ;
-give \ q _ -> or-left Q P^1 q ;
+give \ P Q p _ -> or-right Q P p ;
+give \ P Q q _ -> or-left Q P q ;
