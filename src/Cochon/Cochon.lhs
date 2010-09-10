@@ -283,11 +283,13 @@ Construction tactics:
 >          (| (|bwdList (pSep (keyword KwComma) tokenString) (%keyword KwAsc%)|) :< tokenInTm 
 >           | bwdList (pSep (keyword KwComma) tokenString)
 >           |)
->          (\ args -> case last args of
->              InArg ty  -> Data.Traversable.mapM (elabLamParam . (:<: ty) . argToStr) (init args)
->                               >> return "Made lambda!"
->              _         -> Data.Traversable.mapM (lambdaParam . argToStr) args
->                               >> return "Made lambda!"
+>          (\ args -> case args of
+>             [] -> return "This lambda needs no introduction!"
+>             _ -> case last args of
+>               InArg ty  -> Data.Traversable.mapM (elabLamParam . (:<: ty) . argToStr) (init args)
+>                                >> return "Made lambda!"
+>               _         -> Data.Traversable.mapM (lambdaParam . argToStr) args
+>                                >> return "Made lambda!"
 >            )
 >          ("lambda <labels> - introduces one or more hypotheses.\n"++
 >           "lambda <labels> : <type> - introduces new module parameters or hypotheses.")
