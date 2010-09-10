@@ -47,7 +47,6 @@ the methods and moves to the first subgoal remaining.
 >         optional problemSimplify            -- simplify first method
 >         many (goDown >> problemSimplify)    -- simplify other methods
 >         many goUp                           -- go back up to motive
->         goDown                              -- go down to first method
 >         optional seekGoal                   -- jump to goal
 >         return "Eliminated and simplified."
 

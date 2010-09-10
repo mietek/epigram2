@@ -158,7 +158,7 @@ the context and carry on. Note that this assumes we are at the top level.
 >                          ARR (N (V _P :$ A x')) (N (V _P :$ A (NP y)))
 >                      ]
 >              ex   =  P substEq :$ A _X' :$ A x' :$ A (NP y) :$ A (NP q)
->         elimSimplify (ety :>: N ex)
+>         elimSimplify (ety :>: ex)
 >         neutralise =<< getCurrentDefinition
 >     elimEquation (EQBLUE (_Y :>: NP y@(yn := DECL :<: _)) (_X :>: x)) t = do
 >         guard =<< (withNSupply $ equal (SET :>: (_X, _Y)))
@@ -173,7 +173,7 @@ the context and carry on. Note that this assumes we are at the top level.
 >                      ]
 >              ex   =  P substEq :$ A _X' :$ A x' :$ A (NP y) :$ A
 >                          (N (P symEq :$ A _X' :$ A (NP y) :$ A x' :$ A (NP q)))
->         elimSimplify (ety :>: N ex)
+>         elimSimplify (ety :>: ex)
 >         neutralise =<< getCurrentDefinition
 >     elimEquation _ _ = (|)
 >     
@@ -285,7 +285,7 @@ codomain function of the $\Pi$-type.
 The |elimSimplify| command invokes elimination with a motive, simplifies the
 methods, then returns to the original goal.
 
-> elimSimplify :: (TY :>: INTM) -> ProofState ()
+> elimSimplify :: (TY :>: EXTM) -> ProofState ()
 > elimSimplify tt = do
 >     elim Nothing tt
 >     simpTrace "Eliminated!"

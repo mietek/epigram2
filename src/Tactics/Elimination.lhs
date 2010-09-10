@@ -7,9 +7,13 @@
 
 > module Tactics.Elimination where
 
+> import Prelude hiding (elem)
+
 > import Control.Applicative
+> import Control.Monad
 > import Data.Foldable
-> import Data.List
+> import Data.List hiding (elem)
+> import Data.Traversable
 
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
@@ -141,8 +145,8 @@ subgoals for the motive and methods. It returns the name of the rebuilt
 eliminator, the motive type and the list of targets; the cursor is left on
 the motive subgoal.
 
-> introElim :: (TY :>: INTM) -> ProofState (Name, TY, Bwd INTM)
-> introElim (PI motiveType telType :>: e) = do
+> introElim :: (TY :>: EXTM) -> ProofState (Name, TY, Bwd INTM)
+> introElim (PI motiveType telType :>: elim) = do
 
 Make a module, which we will convert to a goal of type $P \vec{t}$ later:
 
@@ -151,23 +155,23 @@ Make a module, which we will convert to a goal of type $P \vec{t}$ later:
 
 Make a goal for the motive:
 
->     motiveTypeTm  <- bquoteHere motiveType
->     telTypeTm     <- bquoteHere telType
->     p :=>: pv     <- make $ "P" :<: motiveTypeTm
+>     motiveTypeTm           <- bquoteHere motiveType
+>     telTypeTm              <- bquoteHere telType
+>     motive :=>: motiveVal  <- make $ "motive" :<: motiveTypeTm
 
 Make goals for the methods and find the return type:
 
->     (methods, returnType) <- makeMethods B0 (telType $$ A pv)
+>     (methods, returnType) <- makeMethods B0 (telType $$ A motiveVal)
 
 Check motive and grab the targets (the terms that are applied to it):
 
->     targets <- checkTargets returnType motiveType (pv :<: motiveType)
+>     targets <- checkTargets returnType motiveType (motiveVal :<: motiveType)
 
 Convert the module to a goal, solve it (using the subgoals created above)
 and go to the next subproblem, i.e. making the motive $P$:
 
 >     moduleToGoal returnType
->     give $ N $ (e ?? PI motiveTypeTm telTypeTm) $## (N p : trail methods)
+>     give $ N $ elim :$ A (N motive) $## methods
 >     goIn
 >     goTop
 >     return (elimName, motiveType, targets)
@@ -191,7 +195,7 @@ been consummed.
 > makeMethods :: Bwd INTM -> TY -> ProofState (Bwd INTM, INTM)
 > makeMethods ms (PI s t) = do
 >     sTm        <- bquoteHere s
->     m :=>: mv  <- make $ "m" :<: sTm
+>     m :=>: mv  <- make $ "method" :<: sTm
 >     makeMethods (ms :< N m) (t $$ A mv)
 > makeMethods ms target = do
 >     targetTm <- bquoteHere target
@@ -375,7 +379,7 @@ the eliminator, and returns the filtered context $\Delta_1$. The initial
 dependencies are those of the motive and methods. 
 
 > findNonParametricHyps :: Bwd (REF :<: INTM) -> TY
->     -> ProofState (Bwd (REF :<: INTM))
+>     -> ProofState (Bwd (REF :<: INTM), Bwd (REF :<: INTM))
 > findNonParametricHyps delta elimTy = do
 >     argTypes <- unfoldTelescope elimTy
 >     let deps = foldMap collectRefs argTypes
@@ -417,12 +421,15 @@ type of $r$ to the dependency set, then continue.
 If $r$ is not in the dependency set, we continue and add $r$ to $\Delta_1$.
 
 > removeDependencies :: Bwd (REF :<: INTM) -> [REF]
->     -> ProofState (Bwd (REF :<: INTM))
+>     -> ProofState (Bwd (REF :<: INTM), Bwd (REF :<: INTM))
 > removeDependencies (rs :< (r :<: rTy)) deps
->   | r `usedIn` deps  = removeDependencies rs (deps `union` collectRefs rTy)
->   | otherwise        = (| (removeDependencies rs deps) :< ~(r :<: rTy) |)
->   where usedIn = Data.Foldable.elem
-> removeDependencies B0 deps = return B0
+>   | r `elem` deps  = do
+>       (delta0, delta1) <- removeDependencies rs (deps `union` collectRefs rTy)
+>       return (delta0 :< (r :<: rTy), delta1)
+>   | otherwise      = do
+>       (delta0, delta1) <- removeDependencies rs deps
+>       return (delta0, delta1 :< (r :<: rTy))
+> removeDependencies B0 deps = return (B0, B0)
 
 
 
@@ -443,7 +450,7 @@ should be replaced with a proper type-directed traversal for this to make sense.
 >     help :: Bwd (REF :<: INTM) -> [REF :<: INTM] -> Bwd (REF :<: INTM)
 >     help B0 xs = bwdList xs
 >     help (delta :< (r :<: ty)) xs = help delta
->         (if (r `Data.List.elem` deps) || shouldKeep ty
+>         (if (r `elem` deps) || shouldKeep ty
 >             then (r :<: ty) : xs else xs)
 
 >     shouldKeep :: Tm {d, TT} REF -> Bool
@@ -697,7 +704,7 @@ simply consists in chaining the commands above, and give the computed
 term. Unless we've screwed things up, |giveOutBelow| should always be happy.
 
 > makeMotive ::  TY -> INTM -> Bwd (REF :<: INTM) -> Bwd INTM -> TY ->
->                ProofState [Binder]
+>                ProofState (Bwd (REF :<: INTM), [Binder])
 > makeMotive motiveType goal delta targets elimTy = do
 >     elimTrace $ "goal: " ++ show goal
 >     elimTrace $ "targets: " ++ show targets
@@ -705,7 +712,7 @@ term. Unless we've screwed things up, |giveOutBelow| should always be happy.
 Extract non-parametric, non-removable hypotheses $\Delta_1$ from the context $\Delta$:
 
 >     elimTrace $ "delta: " ++ show (fmap (\ ((n := _) :<: _) -> n) delta)
->     delta1 <- findNonParametricHyps delta elimTy
+>     (delta0, delta1) <- findNonParametricHyps delta elimTy
 >     elimTrace $ "delta1: " ++ show (fmap (\ ((n := _) :<: _) -> n) delta1)
 
 Transform $\Delta_1$ into Binder form:
@@ -732,18 +739,15 @@ Discharge the binders over the goal type to produce the motive:
 Return to the construction of the rebuilt eliminator, by going out the same number
 of times as |introMotive| went in:
 
->     rep n goOut
->     return $ trail binders'
->   where
->     rep :: Int -> ProofState () -> ProofState ()
->     rep 0  _  = return ()
->     rep n  a  = a >> rep (n - 1) a
+>     replicateM_ n goOut
+>     return (delta0, trail binders')
+
 
 \subsection{Putting things together}
 
 Now we can combine the pieces to produce the |elim| command: 
 
-> elim :: Maybe REF -> (TY :>: INTM) -> ProofState (EXTM :=>: VAL)
+> elim :: Maybe REF -> (TY :>: EXTM) -> ProofState (EXTM :=>: VAL)
 > elim comma (elimTy :>: elim) = do 
 
 Here we go. First, we need to retrieve some information about our
@@ -760,7 +764,7 @@ everything is correct, and make subgoals for the motive and methods.
 Then we call |makeMotive| to introduce the indices, build and simplify
 constraints, and solve the motive subgoal. 
 
->     binders <- makeMotive motiveType goal delta targets elimTy
+>     (delta0, binders) <- makeMotive motiveType goal delta targets elimTy
 
 We leave the definition of the rebuilt eliminator, with the methods
 unimplemented, and return to the original problem.
@@ -774,15 +778,52 @@ Note that we have to look up the latest version of the rebuilt eliminator
 because its definition will have been updated when the motive was defined.
 
 >     Just (elim :=>: _) <- lookupName elimName
->     give $ N $ elim $## map snd binders
+>     tt <- give $ N $ elim $## map snd binders
+
+Now we have to move the methods. We use the usual trick: make new definitions
+and solve the old goals with the new ones. First we collect the types of the
+methods, quoting them (to expand the definition of the motive) and lifting them
+over $\Delta_0$:
+
+>     toMotive
+>     methodTypes <- many $ do
+>         goDown
+>         _ :=>: ty <- getHoleGoal
+>         ty' <- bquoteHere ty
+>         return (liftType' delta0 ty')
+
+Next we move to the top of the original development, and make the lifted methods:
+
+>     goOut  -- to makeE
+>     goOut  -- to the original goal
+>     cursorTop
+>     liftedMethods <- traverse (make . ("lm" :<:)) methodTypes
+
+Then we return to the methods and solve them with the lifted versions:
+
+>     cursorBottom
+>     toMotive
+>     let args = fmap (NP . fstEx) delta0
+>     flip traverse liftedMethods $ \ tt -> do
+>         goDown
+>         give $ N $ termOf tt $## args
+>      
+
+Finally we move back to the bottom of the original development:   
+
+>     goOut
+>     goOut
+>     return tt
+
+> toMotive :: ProofState ()
+> toMotive = goIn >> goIn >> goTop
 
 
 This leaves us on the same goal we started with. For interactive use, we will
-typically want to move to the first method:
+typically want to move to the first (lifted) method:
 
 > toFirstMethod :: ProofState ()
-> toFirstMethod = goIn >> goIn >> goTop >> goDown
-
+> toFirstMethod = goIn >> goTop
 
 The |getLocalContext| command takes a comma and returns the local
 context, by looking up the parameters above and dropping those before
@@ -808,7 +849,7 @@ We make elimination accessible to the user by adding it as a Cochon tactic:
 >   elimCTactic c r = do 
 >     c' <- traverse resolveDiscard c
 >     (e :=>: _ :<: elimTy) <- elabInferFully r
->     elim c' (elimTy :>: N e)
+>     elim c' (elimTy :>: e)
 >     toFirstMethod
 >     return "Eliminated. Subgoals awaiting work..."
 
