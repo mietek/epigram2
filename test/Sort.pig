@@ -1,11 +1,11 @@
 data Nat := ('zero : Nat) ; ('suc : (n : Nat) -> Nat);
 
 let Le (x : Nat)(y : Nat) : Prop;
-<= Nat.Ind x;
-define Le 'zero y := TT;
-<= Nat.Ind y;
-define Le ('suc x) 'zero := FF;
-define Le ('suc x) ('suc y) := Le x y;
+refine Le x y <= Nat.Ind x ;
+refine   Le 'zero y = TT;
+refine   Le ('suc x) y <= Nat.Ind y;
+refine     Le ('suc x) 'zero    = FF;
+refine     Le ('suc x) ('suc y) = Le x y;
 root;
 
 {-
