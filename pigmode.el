@@ -2,8 +2,6 @@
 ;; Command line shortcuts
 ;; ****************************************************************
 
-;; Window with code
-(setq code-win (selected-window))
 ;; Window with Pig running
 (setq pig-win 'nil)
 
@@ -13,11 +11,13 @@
 
 (defun open-pig ()
       "Open Pig"
-      (setq pig-win (split-window code-win 'nil 'nil))
-      (select-window pig-win)
-      (setq shell-file-name "Pig")
-      (shell)
-      (select-window code-win)
+      (interactive)
+      (delete-other-windows)
+      (switch-to-buffer-other-window "*Pig*")
+      (erase-buffer)
+      (comint-run "Pig")
+      (other-window -1)
+      (setq pig-win 't)
       (message "Pig opened"))
 
 (defun send-line ()
@@ -29,22 +29,20 @@
       (setq line-command (buffer-substring begin end))
       (setq real-line-command (replace-regexp-in-string "--.*\n" "" line-command))
       (setq real-line-command (replace-regexp-in-string "\n" " " real-line-command))
-      (select-window pig-win)
-      (goto-char (point-max))
-      (insert real-line-command)
-      (comint-send-input)
-      (select-window code-win)
+      (with-current-buffer "*Pig*"
+	(goto-char (point-max))
+	(insert real-line-command)
+	(comint-send-input))
       (message "Line executed"))
 
 (defun send-undo ()
       "Send undo to Pig"
       (may-open-pig)
       (interactive)
-      (select-window pig-win)
-      (goto-char (point-max))
-      (insert "undo")
-      (comint-send-input)
-      (select-window code-win)
+      (with-current-buffer "*Pig*"
+	(goto-char (point-max))
+	(insert "undo")
+	(comint-send-input))
       (forward-line -1)
       (message "Undone"))
 
@@ -52,11 +50,10 @@
       "Send 'show state' to Pig"
       (may-open-pig)
       (interactive)
-      (select-window pig-win)
-      (goto-char (point-max))
-      (insert "show state")
-      (comint-send-input)
-      (select-window code-win)
+      (with-current-buffer "*Pig*"
+	(goto-char (point-max))
+	(insert "show state")
+	(comint-send-input))
       (message "State shown"))
 
 
