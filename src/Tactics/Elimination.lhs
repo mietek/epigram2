@@ -156,7 +156,7 @@ Make a module, which we will convert to a goal of type $P \vec{t}$ later:
 Make a goal for the motive:
 
 >     motiveTypeTm           <- bquoteHere motiveType
->     telTypeTm              <- bquoteHere telType
+>     -- telTypeTm              <- bquoteHere telType
 >     motive :=>: motiveVal  <- make $ "motive" :<: motiveTypeTm
 
 Make goals for the methods and find the return type:
