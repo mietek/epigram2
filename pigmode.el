@@ -25,9 +25,10 @@
       (may-open-pig)
       (interactive)
       (setq begin (line-beginning-position))
-      (setq end (re-search-forward ";\n"))
+      (setq end (re-search-forward ";[[:space:]]*\n"))
       (setq line-command (buffer-substring begin end))
-      (setq real-line-command (replace-regexp-in-string "\n" " " line-command))
+      (setq real-line-command (replace-regexp-in-string "--.*\n" "" line-command))
+      (setq real-line-command (replace-regexp-in-string "\n" " " real-line-command))
       (select-window pig-win)
       (goto-char (point-max))
       (insert real-line-command)
@@ -88,6 +89,7 @@
     ("'[[:alnum:]]*" . font-lock-type-face)
     (,pig-tactics-regexp . font-lock-builtin-face)
     (";\n" . font-lock-builtin-face)
+    ("--.*$" . font-lock-comment-face)
     ))
 
 
@@ -125,7 +127,7 @@ For detail, see `comment-dwim'."
   (define-key pig-mode-map "\C-c\C-s" 'send-show-state)
 
   ;; Syntax table for comments
-  (modify-syntax-entry ?- ". 12b" pig-mode-syntax-table)
+  (modify-syntax-entry ?- "_ 12b" pig-mode-syntax-table)
   (modify-syntax-entry ?\n "> b" pig-mode-syntax-table)
   (modify-syntax-entry ?{ ". 1" pig-mode-syntax-table)
   (modify-syntax-entry ?} ". 4" pig-mode-syntax-table)
