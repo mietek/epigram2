@@ -83,18 +83,9 @@ Here we have a very basic command-driven interface to the proof state monad.
 >     putStr $ fst $ runProofState showPrompt loc
 >     hFlush stdout
 >     l <- getLine
->     case parse tokenize l of 
->         Left pf -> do
->             putStrLn ("Tokenize failure: " ++ describePFailure pf id)
->             cochon' (locs :< loc)
->         Right ts ->
->           case parse pCochonTactics ts of
->               Left pf -> do
->                   putStrLn ("Parse failure: " ++ describePFailure pf (intercalate " " . map crushToken))
->                   cochon' (locs :< loc)
->               Right cds -> do
->                   locs' <- doCTactics cds (locs :< loc)
->                   cochon' locs'
+>     commands <- readCommand l
+>     locs' <- doCTactics commands (locs :< loc)
+>     cochon' locs'
 
 
 > paranoid = False

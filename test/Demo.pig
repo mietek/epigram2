@@ -29,7 +29,7 @@ elab 'false : Bool ;
   every number has a successor. 
 -}
 
-data Nat := ('zero : Nat) ; ('suc : (n : Nat) -> Nat) ;
+data Nat := ('zero : Nat) ; ('suc : Nat -> Nat) ;
 
 elab 'zero : Nat ;
 make one := 'suc 'zero : Nat ; elab one ;
