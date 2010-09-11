@@ -8,13 +8,10 @@ refine     Le ('suc x) 'zero    = FF;
 refine     Le ('suc x) ('suc y) = Le x y;
 root;
 
-{-
 let owotoNat (x : Nat)(y : Nat)(P : Set)
              (ple : (:- Le x y) -> P)
              (pge : (:- Le y x) -> P)
-             : P
--}
-let owotoNat (x : Nat)(y : Nat)(P : Set)             (ple : (:- Le x y) -> P)             (pge : (:- Le y x) -> P)             : P;
+             : P ;
 refine owotoNat x y P ple pge <= Nat.Ind x;
 refine   owotoNat 'zero y P ple pge = ple _;
 refine   owotoNat ('suc x) y P ple pge <= Nat.Ind y;
@@ -39,7 +36,7 @@ refine     BTLe X LE 'top ('el y) = FF ;
 refine     BTLe X LE 'top 'top = TT ;
 root;
 
-let Bounds : Set
+let Bounds : Set ;
 refine Bounds = Sig (l : BT Nat ; u : BT Nat ; ) ;
 root;
 
