@@ -31,12 +31,14 @@ The following flags can be passed to the executable:
 > data Options = LoadFile FilePath
 >              | CheckFile FilePath
 >              | PrintFile FilePath
+>              | Interactive
 >              | Help
 >
 > options :: [OptDescr Options]
 > options = [ Option ['l'] ["load"]  (ReqArg LoadFile "FILE")   "Load the development"
 >           , Option ['c'] ["check"] (ReqArg CheckFile "FILE")  "Check the development"
 >           , Option ['p'] ["print"] (ReqArg PrintFile "FILE")  "Print the development"
+>           , Option ['i'] ["interactive"] (NoArg Interactive)  "Interactive mode"
 >           , Option ['h'] ["help"]  (NoArg Help)               "Help! Help!"
 >           ]
 
@@ -80,6 +82,9 @@ either.
 >          -- Load a development (no flag provided):
 >          ([],(file:[]),[])            -> do
 >            loadDev file
+>          -- Empty development:
+>          (Interactive : _,[],[])      -> do
+>            cochon emptyContext            
 >          -- Empty development:
 >          ([],[],[])                   -> do
 >            cochon emptyContext            
