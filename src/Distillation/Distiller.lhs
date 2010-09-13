@@ -152,9 +152,13 @@ elimination with the shared parameters and implicit arguments removed.
 >     (e', ty') <- distillSpine entries (evTm tm :<: ty) spine
 >     -- Remove shared parameters and implicit arguments
 >     let  spine1  = drop argsToDrop e'
->          spine2  = maybe spine1 (hideImplicit spine1) mSch 
+>          spine2  = maybe spine1 (hideImplicit spine1) mSch
+>     -- Ignore de Bruijn index on FAKE references (issue 87)
+>     let relName' = case (relName, kind) of
+>                          ([(s, _)], FAKE)  -> [(s, Rel 0)]
+>                          _                 -> relName
 >     -- Return the relative name applied to the simplified spine
->     return $ (DP relName ::$ spine2) :<: ty'
+>     return $ (DP relName' ::$ spine2) :<: ty'
 >   where
 
 If the parameter has a scheme attached, we need to remove implicit arguments

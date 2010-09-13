@@ -11,10 +11,10 @@ Going to root...
       f
         [ f-type := Set : Set ;
           f
-            [ \ c : < f^1 : Set > ->
-            ] f^1 : Set ;
-          impl := ? : < f^1 : Set > ;
-        ] f^1 : f-type ;
+            [ \ c : < f : Set > ->
+            ] f : Set ;
+          impl := ? : < f : Set > ;
+        ] f : f-type ;
       f
         [ f-type
             [ tau := A : Set ;
@@ -22,20 +22,20 @@ Going to root...
             ] A : Set ;
           f
             [ \ a : A ->
-              \ c : < f^1 a : A > ->
-            ] f^1 a : A ;
+              \ c : < f a : A > ->
+            ] f a : A ;
           impl
             [ \ a : A ->
               g
                 [ g-type := Set : Set ;
                   g
-                    [ \ c : < g^1 : Set > ->
-                    ] g^1 : Set ;
-                  impl := ? : < g^1 : Set > ;
-                ] g^1 : g-type ;
-            ] ? : < f^1 a : A > ;
+                    [ \ c : < g : Set > ->
+                    ] g : Set ;
+                  impl := ? : < g : Set > ;
+                ] g : g-type ;
+            ] ? : < f a : A > ;
           \ a : A ->
-        ] f^1 a : A ;
+        ] f a : A ;
     ] ;
 ]
 \ A -> X.f^1 A
@@ -51,7 +51,7 @@ Going in...
 \ A : Set ->
 f^1 : Set
 f : (a : A) -> A
-f^1
+f
 Set
 : Set
 \ a -> f a
@@ -72,9 +72,9 @@ Going in...
 \ a : A ->
 f^2 : Set
 f-type : Set
-f : (a : A)(c : < f^1 a : A >) -> A
+f : (a : A)(c : < f a : A >) -> A
 g : (a : A) -> Set
-f^2
+f
 Set
 : Set
 \ A -> X.f A
