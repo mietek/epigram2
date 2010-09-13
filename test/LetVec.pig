@@ -32,8 +32,8 @@ make VecInd := iinduction Nat VecD : (m : Nat)(v : Vec m)
 
 let vappend (m : Nat)(as : Vec m)(n : Nat)(bs : Vec n) : Vec (plus m n) ;
 <= VecInd m as ;
-define vappend _ 'zero 'nil k bs := bs ;
-define vappend _ ('suc s) ('cons s a as) k bs := cons (plus s k) a (vappend s as k bs) ;
+define vappend 'zero 'nil k bs := bs ;
+define vappend ('suc s) ('cons s a as) k bs := cons (plus s k) a (vappend s as k bs) ;
 root ;
 
 make A := Enum ['a 'b 'c] : Set ;

@@ -105,9 +105,9 @@ refine compare 'zero ('suc k) P l e g = l 'zero k ;
 refine compare ('suc j) y P l e g <= Nat.Ind y ;
 refine compare ('suc j) 'zero P l e g = g j 'zero ;
 refine compare ('suc j) ('suc k) P l e g <= compare j k ;
-= l ('suc j) k ;
+refine compare ('suc j) ('suc (plus j ('suc k))) P l e g = l ('suc j) k ;
 refine compare ('suc j) ('suc j) P l e g = e ('suc j) ;
-= g j ('suc k) ;
+refine compare ('suc (plus k ('suc j))) ('suc k) P l e g = g j ('suc k) ;
 root ;
 
 
@@ -119,9 +119,9 @@ root ;
 
 let max (a : Nat)(b : Nat) : Nat ;
 refine max a b <= compare a b ;
-= plus a ('suc b) ;
+refine max a (plus a ('suc b)) = plus a ('suc b) ;
 refine max a a = a ;
-= plus b ('suc a) ;
+refine max (plus b ('suc a)) b = plus b ('suc a) ;
 root ;
 
 elab max two one ;
