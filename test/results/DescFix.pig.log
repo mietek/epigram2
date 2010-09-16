@@ -1,0 +1,68 @@
+Made.
+Let there be BH.
+Eliminated and simplified.
+Hurrah!
+Hurrah!
+Hurrah!
+Hurrah!
+Hurrah!
+Hurrah!
+Going to root...
+Appended goal!
+Made lambda!
+Eliminated. Subgoals awaiting work...
+Made lambda!
+Thank you.
+Going to root...
+Made.
+Made.
+Made.
+Sig ()
+Sig (Sig (Sig () ; Q 'zero) ;)
+Sig (Sig (Sig (Sig (Sig () ; Q 'zero) ;) ; Q ('suc 'zero)) ;)
+Sig (Sig (Sig (Sig (Sig (Sig (Sig () ; Q 'zero) ;) ; Q ('suc 'zero)) ;) ; Q ('suc ('suc 'zero))) ;)
+Made.
+Sig (Sig (Sig (Sig () ;) ; Q ('leaf 'zero)) ; Sig (Sig (Sig (Sig (Sig () ;) ; Q ('leaf ('suc 'zero))) ; Sig (Sig (Sig () ;) ; Q ('leaf ('suc ('suc 'zero)))) ;) ; Q ('node ('leaf ('suc 'zero)) ('leaf ('suc ('suc 'zero))))) ;)
+Let there be genHelp.
+Eliminated and simplified.
+Ta.
+Thank you.
+Thank you.
+Hurrah!
+Relabelled.
+Ta.
+Thank you.
+Thank you.
+Hurrah!
+Hurrah!
+Going to root...
+Appended goal!
+Made lambda!
+Eliminated. Subgoals awaiting work...
+Made lambda!
+Thank you.
+Going to root...
+Let there be Fix.
+Hurrah!
+Going to root...
+Data'd.
+Appended goal!
+Made lambda!
+Thank you.
+Going to root...
+Made.
+Let there be plus.
+Eliminated and simplified.
+Eliminated and simplified.
+Hurrah!
+Hurrah!
+Going to root...
+Let there be fib.
+Eliminated and simplified.
+Eliminated and simplified.
+Hurrah!
+Eliminated and simplified.
+Hurrah!
+Hurrah!
+Going to root...
+Loaded.

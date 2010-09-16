@@ -1,0 +1,42 @@
+[ProofTrace] Failed to resolve recursive call to BH I D Q (switch E e (\ e -> IDesc I) T) y r
+Made module.
+Made.
+Made.
+Made.
+Made.
+Made.
+Going to root...
+Made module.
+Made lambda!
+Made.
+Made.
+Going to root...
+Let there be BH.
+Eliminated and simplified.
+Hurrah!
+Hurrah!
+Hurrah!
+Hurrah!
+Hurrah!
+Hurrah!
+Going to next goal...
+Hurrah!
+Going to root...
+Appended goal!
+Made lambda!
+Eliminated. Subgoals awaiting work...
+Made lambda!
+Thank you.
+Going to root...
+Let there be genHelp.
+Going to root...
+Appended goal!
+Made lambda!
+Eliminated. Subgoals awaiting work...
+Made lambda!
+Thank you.
+Going to root...
+Let there be Fix.
+Hurrah!
+Going to root...
+Loaded.
