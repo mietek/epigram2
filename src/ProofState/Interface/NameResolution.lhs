@@ -613,8 +613,10 @@ them with the given entries in scope and current name, and
 intercalating to produce a comma-separated list.
 
 > showEntries :: (Traversable f, Traversable g) => BScopeContext -> f (Entry g) -> String
-> showEntries bsc = intercalate ", " . foldMap
->     (\(EEntity ref _ _ _ _) -> [showRelName (christenREF bsc ref)])
+> showEntries bsc = intercalate ", " . foldMap f
+>   where
+>     f e | Just r <- entryRef e  = [showRelName (christenREF bsc r)]
+>         | otherwise             = []
 
 The |showEntriesAbs| function works similarly, but uses absolute names instead of
 christening them.
