@@ -50,26 +50,27 @@
    <p>and press return.</p>
   </section>
   <section>
-   <h3>Chapter 4 - My first Epigram Program</h3>
+   <h3>Chapter 4 - My first Epigram Program: 2 + 2</h3>
    <p>
     As a first warm-up exercise we will perform the arithmetic feat of
     adding two and two. First of all let's define the natural numbers
     in Peano style. Enter the following at Cochon's prompt and press
     return:
    </p>
-   <p><code>&gt; data Nat := (zero : Nat) ; (suc : Nat -> Nat)</code></p>
+   <p><code>&gt; data Nat := ('zero : Nat) ; ('suc : Nat -> Nat)</code></p>
    <p>We defined a new data type <code>Nat</code> and with two
-   constructors <code>zero</code> which takes no arguments
-   and <code>suc</code> which takes a natural number and gives us back
-   another natural number. There are two canonical forms of natural
-   number: either it's zero; or it's the successor of another natural
-   number. When we define a datatype in Epigram, and give constructors
-   for its canonical forms, we are automatically given a computation
-   mechanism (an elimination principle) which says that if we want to
-   write a program that consumes elements of that datatype we need
-   only explain what to do for its canonical forms. This is because
-   any element of a datatype is equal to an element in canonical
-   form.
+   constructors <code>'zero</code> which takes no arguments
+   and <code>'suc</code> which takes a natural number and gives us
+   back another natural number. The <code>'</code> is Epigram's
+   current notation for a constructor name. There are two canonical
+   forms of natural number: either it's zero; or it's the successor of
+   another natural number. When we define a datatype in Epigram, and
+   give constructors for its canonical forms, we are automatically
+   given a computation mechanism (an elimination principle) which says
+   that if we want to write a program that consumes elements of that
+   datatype we need only explain what to do for its canonical
+   forms. This is because any element of a datatype is equal to an
+   element in canonical form.
    </p>
    <p>If we want to look at the gory details of what this has
    generated we can type</p>
@@ -152,10 +153,14 @@
    </p>
    <p>So, we now have a programming problem, our context
    contains <code>m</code> and <code>n</code> of type <code>Nat</code>
-   and we must deliver a <code>Nat</code>. To do this we first
+   and we must deliver a <code>Nat</code>. To solve programming
+   problems we use the <code>refine</code> tactic. We give a left hand
+   side which allows us to choose suitable names for the arguments,
+   either <code><=</code> (invoke a principle such as induction)
+   or <code>=</code> (return something) and a right hand side. Here we
    indicate to Cochon that we would like to proceed by induction
    on <code>m</code>:</p>
-   <p><code>plus_5.impl_2 &gt; &lt;= Nat.Ind m</code></p>
+   <p><code>plus_5.impl_2 &gt; refine plus m n  &lt;= Nat.Ind m</code></p>
    <p>Cochon tells us that things have been <code>Eliminated and
    simplified.</code> Simplified? To me it looks more complicated but
    if we look carefully we see our programming problem has
@@ -163,29 +168,25 @@
    <p><code>Programming: &lt; plus^1 'zero n : Nat &gt;</code></p>
    <p>We know very well that 0 + n = n and our first thought might be
    to respond <code>give n</code>. But this doesn't work. Our goal is
-   not just a natural number it is a <i>programming problem</i>. To
-   fill in such a goal we use a new keyword <code>return</code>. So we
-   must type:</p>
+   not just a natural number it is a <i>programming problem</i> which
+   must be sovled using <code>refine</code>, this time accompanied
+   by <code>=</code>.  So, we must type:</p>
    <p>
     <code>
-     ... &gt; give return n
+     ... &gt; refine plus 'zero n = n
     </code>
    </p>
-   <p>Or if we are lazy (we are) we could type:</p>
-   <p><code>... &gt; = n</code></p>
-   <p>This is just shorthand for the <code>give return</code>. Either
-   of these will do and after pressing return Cochon
-   says <code>Ta.</code> and moves us to the next goal:</p>
-   <p><code>Programming: &lt; plus^1 ('suc xf^1) n : Nat &gt;</code></p>
-   <p><code>xf^1</code> isn't the nicest name, <code>m</code> would be
-   better so instead of using <code>=</code> again let's use a
-   different tactic that lets us choose our own names</p>
-   <p><code>... &gt; define plus ('suc m) n := 'suc (plus m n)</code></p>
+   <p>After pressing return Cochon
+   says <code>Hurrah.</code> and moves us to the next goal:</p>
+   <p><code>Programming: &lt; plus^1 ('suc xf) n : Nat &gt;</code></p>
+   <p><code>xf</code> isn't the nicest name, <code>m</code> would be
+   better so we type:</p>
+   <p><code>... &gt; refine plus ('suc m) n := 'suc (plus m n)</code></p>
 
-   <p>Cochon responds with just <code>Hurrah!</code>. He must really
-   like this tactic.
-   <p>We can get back to the root and then check that 2 + 2 indeed
-   equals 4.</p>
+   <p>Cochon responds with <code>Hurrah!</code>. Our definition is
+   complete but we are left inside it. To extracate ourselves we can type</p>
+   <p><code>... &gt; root</code></p>
+   and then to check that 2 + 2 indeed equals 4:</p>
    <p><code>&gt; elab plus two two</code></p>
    <p>
     <code>'suc ('suc ('suc ('suc 'zero)))</code></p>
@@ -202,19 +203,19 @@
    reality.</strike> Reality moves in fits and starts if you don't pay
    close attention it can whizz past when you're not looking.</p>
   </section>
-  <h3>Chapter 5 - My second Epigram program</h3>
+  <h3>Chapter 5 - My second Epigram program: vector append</h3>
    <p>This section is ingloriously ripped from the epilogue
    post <a href="http://www.e-pig.org/epilogue/?p=683">The Art of the
    Possible</a>.</p>
 
    <p>With those preliminaries out of the way, on to the new
-   stuff. First, Peter&#8217;s shiny new <code>idata</code> tactic allows
+   stuff. First, Peter's shiny new <code>idata</code> tactic allows
    indexed data types to be written in a nice syntax (nicer than codes,
    anyway). As usual, parameters occur before the colon and indices
    afterwards.</p>
 
-   <p><code>&gt; idata Vec (A : Set) : Nat -&gt; Set := (nil : Vec A 'zero) ;
-   (cons : A -&gt; (n : Nat) -&gt; Vec A n -&gt; Vec A ('suc n))
+   <p><code>&gt; idata Vec (A : Set) : Nat -&gt; Set := ('nil : Vec A 'zero) ;
+   ('cons : A -&gt; (n : Nat) -&gt; Vec A n -&gt; Vec A ('suc n))
    ;</code></p>
 
    <p>Once we have <code>plus</code> and vectors, what could be more
@@ -223,10 +224,14 @@
    hand are now dealt with automatically. Now you can write the program
    you would expect, more or less.</p>
 
-   <p><code>&gt; let append (A : Set)(m : Nat)(as : Vec A m)(n : Nat)(bs : Vec
-   A n) : Vec A (plus m n) ;<br />&gt; &lt;= Vec.Ind A m as ;<br />&gt; define
-   append A 'zero 'nil n bs := bs ;<br />&gt; define append A ('suc k) ('cons
-   a k as) n bs := 'cons a (plus k n) (append A k as n bs) ;<br />&gt; root
+   <p><code>
+     &gt; let append (A : Set)(m : Nat)(as : Vec A m)(n : Nat)(bs : Vec
+       A n) : Vec A (plus m n) ;<br />
+     &gt; &lt;= Vec.Ind A m as ;<br />
+     &gt; refine append A 'zero 'nil n bs := bs ;<br />
+     &gt; refine append A ('suc k) ('cons
+        a k as) n bs := 'cons a (plus k n) (append A k as n bs) ;<br />
+     &gt; root
    ;</code></p>
 
    <p>Finally, let us test our function:</p>
@@ -251,25 +256,34 @@
        data <i>name</i> := (<i>con</i> : <i>type</i>) ; <i>more_cons</i>
       </code>
      </dt>
-     <dd>Introduce a new indexed data type.Note currently the number
-     of indices must be one.</dd>
+     <dd>Introduce a new data type. Note that constructor names must
+     begin with an apostrophe.</dd>
 
      <dt>
       <code>
        idata <i>name</i> (<i>name</i> : <i>type</i>) : <i>type</i> := (<i>con</i> : <i>type</i>) ; <i>more_cons</i>
       </code>
      </dt>
-     <dd>Introduce a new data type.</dd>
+     <dd>Introduce a new indexed data type. Note that constructor
+     names must begin with an apostrophe.</dd>
      
      <dt><code>make <i>name</i> : <i>type</i></code></dt>
      <dd>Introduce a new definition.</dd>
      
-     <dt><code>let <i>name</i> : <i>type</i></code></dt>
-     <dd>Introduce a new (recursive) definition.</dd>
-     
      <dt><code>give <i>expr</i></code></dt>
      <dd>Fill in current goal with an expression.</dd>
     
+     <dt><code>let <i>name</i> : <i>type</i></code></dt>
+     <dd>Introduce a new (recursive) definition.</dd>
+     
+     <dt><code>refine <i>f</i> <u><i>args</i></u> [<=,=] <i>expr</i></code><dt>
+     <dd>Fill in a programming problem. It allows us to rename the
+     arguments <code><i><u>args</i></u></code>, then indictate whether
+     we invoking some further principe to analyze the problem further
+     (e.g by induction) by <code><=</code> or we use <code>=</code> to
+     indicate that we are going to return something. Then we give a
+     right hand side, be it a principle or a return value.</p>
+
      <dt><code>elab <i>expr</i></code></dt>
      <dd>Elaborate an expression.</dd>
      
@@ -290,15 +304,6 @@
 
      <dt><code>prev</code></dt>
      <dd>Go to previous goal.</dd>
-
-     <dt><code>return <i>expr</i></code></dt>
-     <dd>the thing that goes in a programming problem.</dd>
-
-     <dt><code>=</code></dt>
-     <dd>Sugar for <code>give return</code>.</dd>
-     <dt><code>define fun arg1 arg2 = val</code></dt>
-     <dd>Like <code>=</code> but you can rename the arguments.
-     <dd>
     </dl>
   </section>
   <footer>
