@@ -81,12 +81,12 @@
 
 
 (defvar pig-mode-font-lock-keywords
-  `((,pig-commands-regexp . font-lock-keyword-face)
+  `(("^[ \t]*--.*" . font-lock-comment-face)
+    (,pig-commands-regexp . font-lock-keyword-face)
     ("\\(:=\\|<=\\|= \\)" . font-lock-keyword-face)
     ("'[[:alnum:]]*" . font-lock-comment-face)
     (,pig-tactics-regexp . font-lock-builtin-face)
     (";\n" . font-lock-builtin-face)
-    ("--.*$" . font-lock-constant-face)
     ))
 
 
