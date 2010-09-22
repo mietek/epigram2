@@ -11,28 +11,44 @@
 
 
 > import -> RulesCode where
->   inEnumU :: VAL
->   inEnumU = SIGMAD  (ENUMT constructors)
+
+>   enumConstructors :: Tm {In, p} x
+>   enumConstructors = CONSE (TAG "nil") (CONSE (TAG "cons") NILE)
+
+>   enumBranches :: Tm {In, p} x
+>   enumBranches =
+>       PAIR (CONSTD UNIT)
+>           (PAIR (SIGMAD UID (L $ "t" :. (PRODD (TAG "E") IDD (CONSTD UNIT))))
+>               VOID)
+
+>   enumD :: Tm {In, p} x
+>   enumD = SIGMAD  (ENUMT enumConstructors)
 >                     (L $ "c" :. [.c. N $
->                      switchDOp :@ [ constructors , cases , NV c] ])
->       where constructors = CONSE (TAG "nil")
->                            (CONSE (TAG "cons")
->                             NILE)
->             cases = PAIR (CONSTD UNIT)
->                     (PAIR (SIGMAD UID (L $ "t" :. (PRODD (TAG "E") IDD (CONSTD UNIT))))
->                      VOID)
->   enumFakeREF :: REF
->   enumFakeREF = [("Primitive", 0), ("EnumU", 0)] := (FAKE :<: SET) 
->   enumU :: VAL
->   enumU = MU (Just (ANCHOR (TAG "EnumU") SET ALLOWEDEPSILON)) inEnumU
+>                         switchDOp :@ [ enumConstructors , enumBranches , NV c] ])
+
+>   enumU :: Tm {In, p} x
+>   enumU = MU (Just (ANCHOR (TAG "EnumU") SET ALLOWEDEPSILON)) enumD
+
 >   enumREF :: REF
->   enumREF = [("Primitive", 0), ("EnumU", 0)] := (DEFN enumU :<: SET) 
+>   enumREF = [("Primitive", 0), ("EnumU", 0)] := DEFN enumU :<: SET 
+
 >   enumDREF :: REF
->   enumDREF = [("Primitive", 0), ("EnumD", 0)] := DEFN inEnumU :<: desc
+>   enumDREF = [("Primitive", 0), ("EnumD", 0)] := DEFN enumD :<: desc
+
+>   enumConstructorsREF :: REF
+>   enumConstructorsREF = [("Primitive", 0), ("EnumConstructors", 0)] :=
+>       DEFN enumConstructors :<: enumU
+
+>   enumBranchesREF :: REF
+>   enumBranchesREF = [("Primitive", 0), ("EnumBranches", 0)] :=
+>       DEFN enumBranches :<:
+>           branchesOp @@ [enumConstructors, LK desc]
 
 > import -> Primitives where
 >   ("EnumU", enumREF)   :
 >   ("EnumD", enumDREF)  :
+>   ("EnumConstructors", enumConstructorsREF) :
+>   ("EnumBranches", enumBranchesREF) :
 
 > import -> CanConstructors where
 >   EnumT  :: t -> Can t
@@ -83,7 +99,7 @@
 >   prettyEnumIndex n (DSU t)  = prettyEnumIndex (succ n) t
 >   prettyEnumIndex n tm       = wrapDoc
 >       (int n <+> kword KwPlus <+> pretty tm ArgSize)
->       ArgSize
+>       AppSize
 
 > import -> CanTyRules where
 >   canTy chev (Set :>: EnumT e)  = do
@@ -141,6 +157,39 @@
 >           "b" :<: branchesOp @@ [e , p] :-: \b -> 
 >           Target (p $$ A x)
 
+>   enumInductionOp = Op
+>     {  opName = "enumInduction"
+>     ,  opArity = 5
+>     ,  opTyTel = eOpTy
+>     ,  opRun = runOpTree $
+>        oData  [  oTup $ OSet $ \ c -> OBarf
+>               ,  oTup $ \ t e ->
+>                  OSet $ \ c ->
+>                  oLams $ \ p mz ms -> 
+>                  case c of
+>                    Ze      -> ORet (mz $$ A t $$ A e)
+>                    (Su x)  -> ORet (ms $$ A t $$ A e $$ A x $$ A
+>                                            (enumInductionOp @@ [e, x, p, mz, ms]))
+>               ]
+>     ,  opSimp = \ _ _ -> empty
+>     } where
+>       eOpTy =
+>         "e" :<: enumU :-: \ e ->
+>         "x" :<: ENUMT e :-: \ x ->
+>         "p" :<: ARR (SIGMA enumU (L $ "e" :. [.e. ENUMT (NV e)])) SET :-: \ p ->
+>         "mz" :<: (PI UID $ L $ "t" :. [.t.
+>                      PI enumU $ L $ "e" :. [.e.
+>                          p -$ [PAIR (CONSE (NV t) (NV e)) ZE]
+>                      ]]) :-: \ mz ->
+>         "ms" :<: (PI UID $ L $ "t" :. [.t.
+>                      PI enumU $ L $ "e" :. [.e.
+>                      PI (ENUMT (NV e)) $ L $ "x" :. [.x.
+>                      ARR (p -$ [PAIR (NV e) (NV x)])
+>                          (p -$ [PAIR (CONSE (NV t) (NV e)) (SU (NV x))])
+>                      ]]]) :-: \ ms ->
+>         Target (p $$ A (PAIR e x))
+
+
 > import -> Coerce where
 >   coerce (EnumT (CONSE _ _,   CONSE _ _))      _  ZE = Right ZE
 >   coerce (EnumT (CONSE _ e1,  CONSE _ e2))     q  (SU x) = Right . SU $
@@ -154,6 +203,7 @@
 > import -> Operators where
 >   branchesOp :
 >   switchOp :
+>   enumInductionOp :
 
 > import -> OpCompile where
 >     ("branches", _) -> Ignore
