@@ -138,15 +138,13 @@ fine:
 <p>If the second line doesn't work it's probably because your path needs amending. cabal-install puts binaries in <code>$HOME/.cabal/bin</code> by default. You should add this to your path.</p>
 
     <h2>Get Epigram</h2>
-
 <p>
    <code>
      $ darcs get 
      <a href="http://www.e-pig.org/darcs/Pig09/">
       http://www.e-pig.org/darcs/Pig09/</a><br/>
-     $ cd Pig09/src<br/>
-     $ make dep<br/>
-     $ make Pig<br/>
+     $ cd Pig09<br/>
+     $ cabal install<br/>
    </code>
 </p>
 
@@ -172,29 +170,17 @@ You can just update from the darcs repo:
 </p>
 
 <p>
-   <code>$ darcs pull</code>
-</p>
-
-<p>
-If <code>make Pig</code> unexpectedly fails, then this is often
-  worth a punt:
-</p>
-<p>
    <code>
-    $ make clean<br/>
-    $ make dep<br/>
-    $ make Pig<br/>
+    $ darcs pull<br/>
+    $ cabal clean<br/>
+    $ cabal install<br/>
    </code>
 </p>
-<p>
-Sometimes you don't need the <code>make dep</code> but Epigram's build
-environment is currently a bit flakey and this can sometimes gently
-nudge its ducks into a row.
-</p>
-
+<p>Now might be a good time to take a look at the <a href="../man/man.html">manual</a>. Alternatively, just type:</p>
+<p><code>$ Pig </code></p>
 			</div>
 			<div class="meta">
-				<p class="byline">Posted on 6th June 2010, by James Chapman</p>
+				<p class="byline">Posted on 22nd September 2010, by James Chapman</p>
 			</div>
 		</div>
 
