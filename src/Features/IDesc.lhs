@@ -25,7 +25,10 @@ index of |IMu| to make a fully applied anchor |DIMu|.
 >   traverseDTIN f (DIMu s i) = (|DIMu (traverse (traverseDTIN f) s) (traverseDTIN f i)|)
 
 > import -> DInTmPretty where
->   pretty (DIMu (Just s :?=: _) _)  = pretty s
+>   pretty (DIMu (Just s   :?=: _) _)  = pretty s
+>   pretty (DIMu (Nothing  :?=: (Id ii :& Id d)) i)  = wrapDoc
+>       (kword KwIMu <+> pretty ii ArgSize <+> pretty d ArgSize <+> pretty i ArgSize)
+>       AppSize
 
 \subsection{Plugging Canonical terms in}
 
@@ -386,29 +389,13 @@ index of |IMu| to make a fully applied anchor |DIMu|.
 > import -> DInTmParsersSpecial where
 >   (AndSize, (|(DIMU Nothing) (%keyword KwIMu%) (sizedDInTm ArgSize) (sizedDInTm ArgSize) (sizedDInTm ArgSize)|)) :
 
-
-Just like |Mu|, when elaborating |IMu| we attach a display label if the
-description is not neutral, to improve the pretty-printed representation.
-
 > import -> MakeElabRules where
 
 >   makeElab' loc (SET :>: DIMU Nothing iI d i) = do
 >       iI  :=>: iIv  <- subElab loc (SET :>: iI)
 >       d   :=>: dv   <- subElab loc (ARR iIv (idesc $$ A iIv) :>: d)
 >       i   :=>: iv   <- subElab loc (iIv :>: i)
-
->       if shouldLabel dv
->           then do
->                    name <- eAnchor
->                    let anchor = ANCHOR (TAG name) SET ALLOWEDEPSILON
->                    return $ IMU (Just (LK anchor)) iI d i
->                             :=>: IMU (Just (LK anchor)) iIv dv iv
->           else return $ IMU Nothing iI d i
->                             :=>: IMU Nothing iIv dv iv
->    where
->      shouldLabel :: VAL -> Bool
->      shouldLabel (N _)  = False
->      shouldLabel _      = True
+>       return $ IMU Nothing iI d i :=>: IMU Nothing iIv dv iv
 
 >   makeElab' loc (ty@(IMU _ _ _ _) :>: DTag s xs) =
 >       makeElab' loc (ty :>: DCON (DPAIR (DTAG s) (foldr DPAIR DU xs)))

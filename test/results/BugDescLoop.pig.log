@@ -1,5 +1,5 @@
-[ElabTrace] Hole __infoElaborate_1.h3_2 started crying:
-Error: canTy: the proposed value  [?r]  is not of type  h1
+[ElabTrace] Hole __infoElaborate_1.h2_1 started crying:
+Error: canTy: the proposed value  [?r]  is not of type  Mu ('sigmaD (Enum ['leaf 'node]) [('constD (Sig ())) ('prodD 'l 'idD 'idD)])
 Made.
-'node l h3
+'node l h2
 Loaded.

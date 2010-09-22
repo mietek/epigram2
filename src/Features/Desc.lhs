@@ -398,23 +398,10 @@ having a certain standard format, so it does not work in general.
 >         makeElab' loc (MU l d :>: DCON (foldr DPAIR DVOID (DTAG s : xs)))
 
 
-When elaborating |Mu| we can attach a label for display instead of the underlying
-description. This is often useful when constructing user-visible data types. It
-is not helpful when the description is a bound variable, however, so we check
-for that case and do not label it.
+The following case exists only for backwards compatibility (gah). It allows
+functions on inductive types to be constructed by writing |con| in the right places.
+It can disappear as soon as someone bothers to update the test suite.
 
->     makeElab' loc (SET :>: DMU Nothing d) = do
->         dt :=>: dv <- subElab loc (desc :>: d)
->         if shouldLabel dv
->             then do  name <- eAnchor
->                      let anchor = ANCHOR (TAG name) SET ALLOWEDEPSILON
->                      return $ MU (Just anchor) dt :=>: MU (Just anchor) dv
->             else return $ MU Nothing dt :=>: MU Nothing dv
->       where
->         shouldLabel :: VAL -> Bool
->         shouldLabel (NP (_ := DECL :<: _))  = False
->         shouldLabel _                       = True
- 
 >     makeElab' loc (PI (MU l d) t :>: DCON f) = do
 >         d'  :=>: _    <- eQuote d
 >         t'  :=>: _    <- eQuote t
@@ -424,6 +411,8 @@ for that case and do not label it.
 >         x <- eLambda (fortran t)
 >         return $ N (  inductionOp :@  [d',  NP x, t',  tm   ])
 >                :=>:   inductionOp @@  [d,   NP x, t,   tmv  ]
+
+
 
 > import -> DistillRules where
 
@@ -460,43 +449,32 @@ then we can (probably) turn it into a tag applied to some arguments.
 >         unfold t            = [t]
 
 
-If a label is not in scope, we remove it, so the definition appears at the
-appropriate place when the proof state is printed.
-
->     distill es (SET :>: tm@(C (Mu ltm@(Just _ :?=: _)))) = do
->       cc <- canTy (distill es) (Set :>: Mu ltm)
->       return ((DC $ fmap termOf cc) :=>: evTm tm)
-
-
-> import -> DInTmConstructors where
-
-> import -> DInTmPretty where
-
-> import -> Pretty where
-
 \subsection{Adding Primitive references in Cochon}
 
 > import -> Primitives where
 >   ("Desc", descREF) :
 >   ("DescD", descDREF) :
+>   ("DescConstructors", descConstructorsREF) :
+>   ("DescBranches", descBranchesREF) :
+
 
 \subsection{Bootstrapping}
 
 > import -> RulesCode where
->   inDesc :: VAL
->   inDesc = SUMD constructors
->                (L $ "c" :. [.c. N $
->                    switchDOp :@ [ constructors , cases , NV c] ])
->       where constructors = (CONSE (TAG "idD")
+
+>   descConstructors :: Tm {In, p} x
+>   descConstructors =  CONSE (TAG "idD")
 >                            (CONSE (TAG "constD")
 >                            (CONSE (TAG "sumD")
 >                            (CONSE (TAG "prodD")
 >                            (CONSE (TAG "sigmaD")
 >                            (CONSE (TAG "piD")
->                             NILE))))))
->             cases = (PAIR (CONSTD UNIT) 
+>                             NILE)))))
+
+>   descBranches :: Tm {In, p} x
+>   descBranches = (PAIR (CONSTD UNIT) 
 >                     (PAIR (SIGMAD SET (L $ K $ CONSTD UNIT))
->                     (PAIR (SIGMAD (enumU -$ []) (L $ "E" :. [._E.
+>                     (PAIR (SIGMAD enumU (L $ "E" :. [._E.
 >                                       (PRODD (TAG "T") (PID (ENUMT (NV _E)) (LK IDD))
 >                                              (CONSTD UNIT))]))
 >                     (PAIR (SIGMAD UID (L $ "u" :. PRODD (TAG "C") IDD (PRODD (TAG "D") IDD (CONSTD UNIT))))
@@ -507,17 +485,28 @@ appropriate place when the proof state is printed.
 >                                       (PRODD (TAG "T") (PID (NV _S) (LK IDD)) 
 >                                              (CONSTD UNIT))]))
 >                      VOID))))))
->   descFakeREF :: REF
->   descFakeREF = [("Primitive", 0), ("Desc", 0)] := (FAKE :<: SET)
->   desc :: VAL
->   desc = MU (Just (ANCHOR (TAG "Desc") SET ALLOWEDEPSILON)) inDesc
+
+>   descD :: Tm {In, p} x
+>   descD = SUMD descConstructors
+>                (L $ "c" :. [.c. N $
+>                    switchDOp :@ [ descConstructors , descBranches , NV c] ])
+
+>   desc :: Tm {In, p} x
+>   desc = MU (Just (ANCHOR (TAG "Desc") SET ALLOWEDEPSILON)) descD
 >
 >   descREF :: REF
->   descREF = [("Primitive", 0), ("Desc", 0)] := (DEFN desc :<: SET)
+>   descREF = [("Primitive", 0), ("Desc", 0)] := DEFN desc :<: SET
 >
 >   descDREF :: REF
->   descDREF = [("Primitive", 0), ("DescD", 0)] := (DEFN inDesc :<: desc)
+>   descDREF = [("Primitive", 0), ("DescD", 0)] := DEFN descD :<: desc
 
+>   descConstructorsREF :: REF
+>   descConstructorsREF = [("Primitive", 0), ("DescConstructors", 0)] :=
+>       DEFN descConstructors :<: enumU
+
+>   descBranchesREF :: REF
+>   descBranchesREF = [("Primitive", 0), ("DescBranches", 0)] :=
+>       DEFN descBranches :<: branchesOp @@ [descConstructors, LK desc]
 
 The |sumlike| function determines whether a value representing a description
 is a sum or a sigma from an enumerate. If so, it returns |Just| the enumeration
