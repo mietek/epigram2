@@ -37,17 +37,28 @@
    <h3>Chapter 3 - Running Epigram</h3>
    <p>
     For the moment we interact with Epigram using the Cochon
-    interactive theorem prover:
+    interactive theorem prover. You can invoke it directly at the command line:
    </p>
    <p>
-    <code>$ cd Pig09/src</code><br>
-    <code>$ ./Pig</code>
+    <code>$ Pig</code>
    </p>
    <p>Cochon responds with a prompt:</p>
    <p><code>&gt; _</code></p>
    <p>To exit Cochon you can type
    <p><code>&gt; quit_</code>
    <p>and press return.</p>
+
+   <p>You can also run it in emacs if you insert something like this
+   in your <code>.emacs</code>:</p>
+   <p><code>(load "/home/dave/Pig09/pigmode.el")</code></p>
+   <p>This gives some syntax highlighting for <code>.pig</code>
+   files. With the cursor on the first line of a pig file, press C-c
+   C-r. This will open a seperate emacs 'window' containing Cochon and
+   send the first line of your file to it. Further presses of C-c C-r
+   will send subsequent lines. We can interact with (and quit!)
+   Cochon in its emacs window just as we did from the command
+   line.</p> Have a look in the <code>test</code> directory for some
+   sample pig files.
   </section>
   <section>
    <h3>Chapter 4 - My first Epigram Program: 2 + 2</h3>
