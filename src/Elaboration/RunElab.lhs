@@ -372,6 +372,15 @@ On our way to the label, we instantiate the hypotheses with fresh references.
 >       seekIn rs tm (PI s t) = freshRef (fortran t :<: s) $ \ sRef ->
 >           seekIn (rs :< sRef) (tm :$ A (NP sRef)) (t $$ A (pval sRef))
 
+We might have to go inside branches (essentially finite $\Pi$-types).
+
+>       seekIn rs tm (N (op :@ [e, p])) | op == branchesOp =
+>           freshRef (fortran p :<: e) $ \ eRef -> do
+>               e' <- bquoteHere e
+>               p' <- bquoteHere p
+>               seekIn (rs :< eRef) (switchOp :@ [e', NP eRef, p', N tm])
+>                   (p $$ A (pval eRef))
+
 We have reached a label! The question is then ``is this the one we are looking
 for?'' First we call on the matcher (see section~\ref{subsec:Tactics.Matching})
 to find values for the fresh references, then we generate a substitution from
