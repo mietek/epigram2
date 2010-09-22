@@ -57,7 +57,7 @@
     in Peano style. Enter the following at Cochon's prompt and press
     return:
    </p>
-   <p><code>&gt; data Nat := ('zero : Nat) ; ('suc : Nat -> Nat)</code></p>
+   <p><code>&gt; data Nat := ('zero : Nat) ; ('suc : Nat -&gt; Nat)</code></p>
    <p>We defined a new data type <code>Nat</code> and with two
    constructors <code>'zero</code> which takes no arguments
    and <code>'suc</code> which takes a natural number and gives us
@@ -75,7 +75,7 @@
    <p>If we want to look at the gory details of what this has
    generated we can type</p>
    <p>
-    <code>&gt show state</code>
+    <code>&gt; show state</code>
    </p>
    <p>
     Having defined <code>Nat</code> we can now define some numbers. Let's
@@ -92,11 +92,11 @@
     </code>
    </p>
    <p>and the prompt has changed:</p>
-   <p><code>one_1 &gt;</code</p>
+   <p><code>one_1 &gt;</code></p>
    <p>This tells us we are no longer at the root of the proof state,
    instead we are inside the goal one_1. The <code>_1</code> part is
    just appended to the name internally to guarantee that names are
-   unique. This is an example of the innards visible in Cochon.
+   unique. This is an example of the innards visible in Cochon.</p>
    <p>
     We have created a programming problem called <code>one^1</code> of
     type <code>Nat</code>. We can fill it in directly by responding:
@@ -156,7 +156,7 @@
    and we must deliver a <code>Nat</code>. To solve programming
    problems we use the <code>refine</code> tactic. We give a left hand
    side which allows us to choose suitable names for the arguments,
-   either <code><=</code> (invoke a principle such as induction)
+   either <code>&lt;=</code> (invoke a principle such as induction)
    or <code>=</code> (return something) and a right hand side. Here we
    indicate to Cochon that we would like to proceed by induction
    on <code>m</code>:</p>
@@ -186,7 +186,7 @@
    <p>Cochon responds with <code>Hurrah!</code>. Our definition is
    complete but we are left inside it. To extracate ourselves we can type</p>
    <p><code>... &gt; root</code></p>
-   and then to check that 2 + 2 indeed equals 4:</p>
+   <p>and then to check that 2 + 2 indeed equals 4:</p>
    <p><code>&gt; elab plus two two</code></p>
    <p>
     <code>'suc ('suc ('suc ('suc 'zero)))</code></p>
@@ -199,30 +199,38 @@
       &gt; compile twoplustwo twoplustwo
     </code>
    </p>
-   <p><strike>I'll stop here as we've temporarily overtaken
-   reality.</strike> Reality moves in fits and starts if you don't pay
-   close attention it can whizz past when you're not looking.</p>
   </section>
-  <h3>Chapter 5 - My second Epigram program: vector append</h3>
-   <p>This section is ingloriously ripped from the epilogue
+  <section>
+  <h3>Chapter 5 - Vectors and Finite sets</h3>
+   <p>This section started out as the epilogue
    post <a href="http://www.e-pig.org/epilogue/?p=683">The Art of the
    Possible</a>.</p>
 
-   <p>With those preliminaries out of the way, on to the new
-   stuff. First, Peter's shiny new <code>idata</code> tactic allows
+   <p>Peter's shiny new <code>idata</code> tactic allows
    indexed data types to be written in a nice syntax (nicer than codes,
-   anyway). As usual, parameters occur before the colon and indices
-   afterwards.</p>
+   anyway). As in Agda, parameters occur before the colon and indices
+   afterwards. We define vectors, parameristed by a carrier
+   type <code>A</code> and indexed by their length (hence the
+   type <code>Nat -&gt; Set</code>). The empty vector is
+   made by the constructor <code>'nil</code> which takes no arguments and has
+   length <code>'zero</code>. A nonempty vector is made by the
+   constructor <code>'cons</code> which attaches a new element to an
+   old vector. It takes arguments for the new
+   element of the carrier <code>A</code>, the length of the old
+   vector <code>(n : Nat)</code>, the old vector of type <code>Vec A n</code>
+   and produces a new vector of type <code>Vec A ('suc n)</code>. The
+   explicit length argument to <code>'cons</code> will be made
+   implicit in the future.
 
    <p><code>&gt; idata Vec (A : Set) : Nat -&gt; Set := ('nil : Vec A 'zero) ;
    ('cons : A -&gt; (n : Nat) -&gt; Vec A n -&gt; Vec A ('suc n))
    ;</code></p>
 
    <p>Once we have <code>plus</code> and vectors, what could be more
-   natural than writing vector append? This has become much more pleasant
-   in recent weeks, because equations that once had to be eliminated by
-   hand are now dealt with automatically. Now you can write the program
-   you would expect, more or less.</p>
+   natural than writing vector append? Apart from the extra noise of
+   the explicit length arguments the program is identical to list
+   append. In the future we will be able to make the lenght arguments
+   implicit on the left and the right as we do in Agda.</p>
 
    <p><code>
      &gt; let append (A : Set)(m : Nat)(as : Vec A m)(n : Nat)(bs : Vec
@@ -241,9 +249,138 @@
    : Vec Bool two ;<br />&gt; elaborate append Bool two as two bs
    ;</code></p>
 
-   <p>The output is not as pretty as it could be, and better implicit
-   argument support could make the code a bit less verbose, but working
-   with Epigram is starting to look like programming!</p>
+   <p>We can use the length information present in the type of a
+   vector to guarantee that we never get an error akin to 'array index
+   out of bounds'. To do this we introduce a type of bounded
+   indices: <code>Fin</code>. This type will be familiar to some but
+   it's rather mysterious if you haven't seen it before. The idea is
+   that it represents elements of a finite set of indices which is
+   indexed by its size <code>Fin n</code> corresponds to the set
+   {0,...,n}. The element <code>'zero</code> is present in all
+   non-empty finite sets hence it's type <code>Fin ('suc n)</code> for
+   any <code>n</code>. The constructor <code>'suc</code> makes an
+   element a non-empty finite set by taking an element in a finite set
+   one shorter. Note there is no way of making an element of the empty
+   finite set as neither constructor can target <code>Fin
+   'zero</code>. The best way to get your head around this type is to
+   try to enumerate all the possible elements of the first few finite
+   sets: <code>Fin 'zero</code>; <code>Fin ('suc 'zero)</code>;
+   etc.</p>
+
+   <p><code>&gt; idata Fin : Nat -&gt; Set := ('zero : (n : Nat) -&gt; Fin ('suc
+   n)) ; ('suc : (n : Nat) -&gt; Fin n -&gt; Fin ('suc n)) ; </code></p>
+
+   <p>Having defined <code>Fin</code> we can now define a lookup
+   function for vectors that will never go out of bounds, we do this
+   by taking a vector of length <code>n</code> and an index from a
+   finite set of <code>n</code> elements.</p>
+
+   <p><code>&gt; let lookup (A : Set)(n : Nat)(as : Vec A n)(i : Fin n) : A
+   ;</code></p>  
+
+   <p>We proceed by induction on the index <code>i</code>. We could
+   have chosen to start with induction on the vector <code>as</code>
+   but choosing the index means we only have to deal with cases for
+   the possible indexes, there are only indexes in non-empty index sets and
+   hence into non-empty vectors.</p>
+
+   <p><code>&gt; refine lookup A n as i &lt;= Fin.Ind n i ;</code></p>
+
+   <p>This gives us a programming problem:</p>
+
+   <p><code>Programming: &lt; lookup A ('suc n) as ('zero n)
+   &gt; </code></p>
+
+   <p>We notice that the length argument is <code>'suc n</code> and
+   sure enough if we do case analysis on the vector <code>as</code> we
+   will only get a case for <code>'cons</code>. Here we use induction
+   as a heavy handed way of doing case analysis. Case analysis is a
+   neutered induction with its induction principle cut off.</p>
+
+   <p><code>&gt; refine lookup A ('suc n) as ('zero n) &lt;= Vec.Ind A ('suc
+   n) as ;<br>
+           Programming: &lt; lookup A ('suc n) ('cons n a as) ('zero n) : A &gt;
+ </code></p>
+
+  <p>Having performed enough analysis we can fill in this case, for
+  the index <code>'zero</code> we will return the head
+  element <code>a</code> of the vector:</p>
+  
+  <p><code>&gt; refine lookup A ('suc n) ('cons n a as) ('zero n)  = a ; </code></p>
+
+  <p>Epigram responds <code>Hurrah!</code> and presents us with the
+  next problem:</p>
+
+  <p><code>Programming: &lt; lookup A ('suc n) as ('suc n i) : A &gt;</code></p>
+
+  <p>As before we must have a non-empty vector as the length argument
+  is <code>'suc n</code>. We do case analysis on the vector with our induction
+  principle again and get a more informative problem:</p>
+
+  <p><code>&gt; refine lookup A ('suc n) as ('suc n i) &lt;= Vec.Ind A ('suc
+  n) as ; <br>
+           Programming: &lt; lookup A ('suc n) ('cons n a as) ('suc n i)
+  : A &gt;</code></p>
+
+  <p>This time our index is greater than zero, so we must peal off the
+  outer <code>'cons</code> constructor of the vector
+  and continue the lookup on the tail of the vector. To do this we
+  also decrement the index by one by pealing off the <code>'suc</code>
+  constructor:</p>
+
+  <p><code>&gt; refine lookup A ('suc n) ('cons n a as) ('suc n i)  = lookup A n
+  as i ; </code></p>
+
+  <p>We get another <code>Hurrah!</code> and our definition is
+  complete. We have defined a lookup function that takes a vector and
+  an index that is guaranteed to be within the vector and we return an
+  element of the vector's carrier. What would this function do if we
+  didn't give it the index argument? It would be a function that takes
+  a vector <code>Vec A n</code> and returns a function <code>Fin n -&gt;
+  A</code>. What is such a function? It is a higher-order
+  representation of a vector. So, lookup takes a first order vector
+  and returns a higher order one. Can we go the other way? Yes. Let's
+  define a function <code>tabulate</code> which takes a function of
+  type <code>Fin n -&gt; A</code> and gives us a first order
+  representation of it as a type <code>Vec A n</code>.
+
+  <p><code>&gt; let tabulate (A : Set)(n : Nat)(f : Fin n -&gt; A) : Vec A n
+  ; </code><p>
+
+  <p>How do we proceed? Well, there's not choice, let's do induction
+  on <code>n</code>:</p>
+
+  <p><code>&gt; refine tabulate A n f &lt;= Nat.Ind n ; </code></p>
+
+  <p>This gives us the programming problem:</p>
+  
+  <p><code>Programming: &lt; tabulate A 'zero f : Vec A 'zero &gt;</code></p>
+
+  <p>Well, that's easy we just have to make an empty vector:</P>
+  
+  <p><code>&gt; refine tabulate A 'zero f = 'nil ; </code></p>
+
+  <p>On to the case for <code>'suc</code>:</p>
+
+  <p><code>Programming: &lt; tabulate A ('suc n) f : Vec A ('suc n) &gt;</code></p>
+
+  <p>The idea is to fill the vector from left to right by enumerating
+   f 0, f 1, f 2, etc. So, we start by <code>'cons n (f ('zero
+   n))</code> but what do we give as the tail of the vector? If we
+   look in the context we can see that can invoke our inductive
+   hypothesis <code>&lt; tabulate A n f : Vec A n &gt;</code>. This will do
+   fine for the tail of the vector the only problem is we need a
+   function <code>f</code> of type <code>Fin n -&gt; A</code> and
+   our <code>f</code> is of type <code>Fin ('suc n) -&gt; A</code>. If we
+   were somehow able to overlook this type error then we'd end up with
+   a vector f 0, f 0, f 0, etc. We need to increment the
+   index each time we make a recursive call. We do this by passing the
+   function <code>\ i -&gt; f ('suc n i)</code> to tabulate with does the
+   job and has the correct type:</p>
+
+   <p><code>&gt; refine tabulate A ('suc n) f = 'cons n (f ('zero n))
+   (tabulate A n (\ i -&gt; f ('suc n i))) ; </code></p>
+
   </section>
   <section>
    <h3>Appendix - List of Cochon commands</h3>
@@ -276,13 +413,13 @@
      <dt><code>let <i>name</i> : <i>type</i></code></dt>
      <dd>Introduce a new (recursive) definition.</dd>
      
-     <dt><code>refine <i>f</i> <u><i>args</i></u> [<=,=] <i>expr</i></code><dt>
+     <dt><code>refine <i>f</i> <u><i>args</i></u> [&lt;=,=] <i>expr</i></code><dt>
      <dd>Fill in a programming problem. It allows us to rename the
-     arguments <code><i><u>args</i></u></code>, then indictate whether
+     arguments <code><i><u>args</u></i></code>, then indictate whether
      we invoking some further principe to analyze the problem further
-     (e.g by induction) by <code><=</code> or we use <code>=</code> to
+     (e.g by induction) by <code>&lt;=</code> or we use <code>=</code> to
      indicate that we are going to return something. Then we give a
-     right hand side, be it a principle or a return value.</p>
+     right hand side, be it a principle or a return value.</dd>
 
      <dt><code>elab <i>expr</i></code></dt>
      <dd>Elaborate an expression.</dd>
