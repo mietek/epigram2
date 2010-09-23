@@ -19,17 +19,17 @@
    <p>
     Work on the high level programming language has just started. In
     the meantime we can write programs in a more low level fashion
-    using Cochon. Cochon looks more like a theorem prover than
-    a programming IDE and it's quite low level: the guts are
-    showing. Read on for a tutorial of how to write some simple
-    programs in Cochon. For a glossary of Cochon commands skip to the
-    appendix.
+    using Cochon. Cochon looks more like a theorem prover than a
+    programming IDE and it's quite low level; if you look closely you
+    can see the cogs whirring. Read on for a tutorial of how to write
+    some simple programs in Cochon. For a glossary of Cochon commands
+    skip to the appendix.
    </p>
   </section>
   <section>
    <h3>Chapter 2 - Installation</h3>
    <p>
-    For downloading and installing Epigram see 
+    For downloading and installing Epigram
     <a href="../web/download.html">look here</a>.
    </p>
   </section>
@@ -43,22 +43,24 @@
     <code>$ Pig</code>
    </p>
    <p>Cochon responds with a prompt:</p>
-   <p><code>&gt; _</code></p>
+   <p><code>&gt;</code></p>
    <p>To exit Cochon you can type
-   <p><code>&gt; quit_</code>
+   <p><code>&gt; quit</code>
    <p>and press return.</p>
 
    <p>You can also run it in emacs if you insert something like this
    in your <code>.emacs</code>:</p>
    <p><code>(load "/home/dave/Pig09/pigmode.el")</code></p>
-   <p>This gives some syntax highlighting for <code>.pig</code>
-   files. With the cursor on the first line of a pig file, press C-c
-   C-r. This will open a seperate emacs 'window' containing Cochon and
-   send the first line of your file to it. Further presses of C-c C-r
-   will send subsequent lines. We can interact with (and quit!)
-   Cochon in its emacs window just as we did from the command
-   line.</p> Have a look in the <code>test</code> directory for some
-   sample pig files.
+   <p>Then when you open a <code>.pig</code> file you should get some
+   syntax highlighting. A pig file is just a sequence of Cochon
+   commands seperated by semicolons. With the cursor on the first line
+   of said pig file, press C-c C-r. This will open a seperate emacs
+   'window' for Cochon in the bottom half of the 'frame' and send the
+   first line of your file to it. Further presses of C-c C-r will send
+   subsequent lines. We can interact with (and quit!)  Cochon in its
+   emacs window just as we did from the command line.</p> Have a look
+   in the <code>test</code> directory for some
+   sample <code>.pig</code> files.
   </section>
   <section>
    <h3>Chapter 4 - My first Epigram Program: 2 + 2</h3>
@@ -117,15 +119,13 @@
    </p>
    <p>Cochon responds</p>
    <p><code>Thank you.</code></p>
-   <p>What are the apostrophies? Well, they are the tags of the
-   constructors we generated. If we want to refer to 0
-   as <code>zero</code> we can define it using <code>make</code> as we
-   did for <code>one</code>.
-   <p>We can 'test our new definition by typing:</p>
+   <p>Note that <code>one</code> doesn't have an apostrophe at the
+   beginning as it is not a constructor. We can 'test' our new
+   definition by typing:</p>
    <p><code>&gt; elab one</code></p>
    <p>Cochon responds</p>
    <p><code>'suc 'zero</code></p>
-   <p>What a relief!</p>
+   <p>Well, that's a relief!</p>
    <p>For the purposes of doing some gratuitous navigation in Cochon
    let's define a couple more constants:</p>
    <p><code>&gt; make two : Nat</code></p>
@@ -159,7 +159,7 @@
      Let there be plus.<br>
      \ m : Nat -&gt;<br>
      \ n : Nat -&gt;<br>
-     Programming: &lt; plus^1 m n : Nat &gt;<br>
+     Programming: &lt; plus m n : Nat &gt;<br>
     </code>
    </p>
    <p>So, we now have a programming problem, our context
@@ -171,12 +171,13 @@
    or <code>=</code> (return something) and a right hand side. Here we
    indicate to Cochon that we would like to proceed by induction
    on <code>m</code>:</p>
-   <p><code>plus_5.impl_2 &gt; refine plus m n  &lt;= Nat.Ind m</code></p>
+   <p><code>... &gt; refine plus m n  &lt;= Nat.Ind m</code></p>
    <p>Cochon tells us that things have been <code>Eliminated and
    simplified.</code> Simplified? To me it looks more complicated but
-   if we look carefully we see our programming problem has
+   if we look carefully we see our context and the programming problem have
    changed:</p>
-   <p><code>Programming: &lt; plus^1 'zero n : Nat &gt;</code></p>
+   <p><code>\ n : Nat -><br>
+            Programming: &lt; plus 'zero n : Nat &gt;</code></p>
    <p>We know very well that 0 + n = n and our first thought might be
    to respond <code>give n</code>. But this doesn't work. Our goal is
    not just a natural number it is a <i>programming problem</i> which
@@ -189,7 +190,7 @@
    </p>
    <p>After pressing return Cochon
    says <code>Hurrah.</code> and moves us to the next goal:</p>
-   <p><code>Programming: &lt; plus^1 ('suc xf) n : Nat &gt;</code></p>
+   <p><code>Programming: &lt; plus ('suc xf) n : Nat &gt;</code></p>
    <p><code>xf</code> isn't the nicest name, <code>m</code> would be
    better so we type:</p>
    <p><code>... &gt; refine plus ('suc m) n := 'suc (plus m n)</code></p>
@@ -219,7 +220,12 @@
 
    <p>Peter's shiny new <code>idata</code> tactic allows
    indexed data types to be written in a nice syntax (nicer than codes,
-   anyway). As in Agda, parameters occur before the colon and indices
+   anyway):</p>
+   <p><code>&gt; idata Vec (A : Set) : Nat -&gt; Set := ('nil : Vec A 'zero) ;
+   ('cons : A -&gt; (n : Nat) -&gt; Vec A n -&gt; Vec A ('suc n))
+   </code></p>  
+   <p>
+   As in Agda, parameters occur before the colon and indices
    afterwards. We define vectors, parameristed by a carrier
    type <code>A</code> and indexed by their length (hence the
    type <code>Nat -&gt; Set</code>). The empty vector is
@@ -233,20 +239,18 @@
    explicit length argument to <code>'cons</code> will be made
    implicit in the future.
 
-   <p><code>&gt; idata Vec (A : Set) : Nat -&gt; Set := ('nil : Vec A 'zero) ;
-   ('cons : A -&gt; (n : Nat) -&gt; Vec A n -&gt; Vec A ('suc n))
-   ;</code></p>
-
    <p>Once we have <code>plus</code> and vectors, what could be more
    natural than writing vector append? Apart from the extra noise of
    the explicit length arguments the program is identical to list
    append. In the future we will be able to make the lenght arguments
-   implicit on the left and the right as we do in Agda.</p>
+   implicit on the left and the right as we do in Agda. One could also
+   say that without the extra noise of the elements of <code>A</code>
+   the program is identical to <code>plus</code>.</p>
 
    <p><code>
      &gt; let append (A : Set)(m : Nat)(as : Vec A m)(n : Nat)(bs : Vec
        A n) : Vec A (plus m n) ;<br />
-     &gt; &lt;= Vec.Ind A m as ;<br />
+     &gt; refine append A m n as bs &lt;= Vec.Ind A m as ;<br />
      &gt; refine append A 'zero 'nil n bs := bs ;<br />
      &gt; refine append A ('suc k) ('cons
         a k as) n bs := 'cons a (plus k n) (append A k as n bs) ;<br />
@@ -263,12 +267,13 @@
    <p>We can use the length information present in the type of a
    vector to guarantee that we never get an error akin to 'array index
    out of bounds'. To do this we introduce a type of bounded
-   indices: <code>Fin</code>. This type will be familiar to some but
-   it's rather mysterious if you haven't seen it before. The idea is
-   that it represents elements of a finite set of indices which is
-   indexed by its size <code>Fin n</code> corresponds to the set
-   {0,...,n}. The element <code>'zero</code> is present in all
-   non-empty finite sets hence it's type <code>Fin ('suc n)</code> for
+   indices: <code>Fin</code> and then use it to write a safe lookup
+   function. This type will be familiar to some but it's rather
+   mysterious if you haven't seen it before. The idea is that it
+   represents elements of a finite set of indices which is indexed by
+   its size. <code>Fin n</code> corresponds to the set {0,...,n}. The
+   element <code>'zero</code> is present in all non-empty finite sets
+   hence its type <code>Fin ('suc n)</code> for
    any <code>n</code>. The constructor <code>'suc</code> makes an
    element a non-empty finite set by taking an element in a finite set
    one shorter. Note there is no way of making an element of the empty
@@ -306,7 +311,7 @@
    sure enough if we do case analysis on the vector <code>as</code> we
    will only get a case for <code>'cons</code>. Here we use induction
    as a heavy handed way of doing case analysis. Case analysis is a
-   neutered induction with its induction principle cut off.</p>
+   neutered induction with the inductive hypothesis cut off.</p>
 
    <p><code>&gt; refine lookup A ('suc n) as ('zero n) &lt;= Vec.Ind A ('suc
    n) as ;<br>
@@ -367,7 +372,8 @@
   
   <p><code>Programming: &lt; tabulate A 'zero f : Vec A 'zero &gt;</code></p>
 
-  <p>Well, that's easy we just have to make an empty vector:</P>
+  <p>Well, we don't need to use our brains just yet. We need to make
+  an empty vector. So, we only have one option; <code>'nil</code>.</p>
   
   <p><code>&gt; refine tabulate A 'zero f = 'nil ; </code></p>
 
@@ -376,18 +382,18 @@
   <p><code>Programming: &lt; tabulate A ('suc n) f : Vec A ('suc n) &gt;</code></p>
 
   <p>The idea is to fill the vector from left to right by enumerating
-   f 0, f 1, f 2, etc. So, we start by <code>'cons n (f ('zero
-   n))</code> but what do we give as the tail of the vector? If we
-   look in the context we can see that can invoke our inductive
-   hypothesis <code>&lt; tabulate A n f : Vec A n &gt;</code>. This will do
-   fine for the tail of the vector the only problem is we need a
-   function <code>f</code> of type <code>Fin n -&gt; A</code> and
-   our <code>f</code> is of type <code>Fin ('suc n) -&gt; A</code>. If we
-   were somehow able to overlook this type error then we'd end up with
-   a vector f 0, f 0, f 0, etc. We need to increment the
-   index each time we make a recursive call. We do this by passing the
-   function <code>\ i -&gt; f ('suc n i)</code> to tabulate with does the
-   job and has the correct type:</p>
+  f 0, f 1, f 2, etc. So, we start by <code>'cons n (f ('zero
+  n))</code> but what do we give as the tail of the vector? If we look
+  in the context we can see that can invoke our inductive
+  hypothesis <code>&lt; tabulate A n f : Vec A n &gt;</code>. This
+  will do fine for the tail of the vector the only problem is we need
+  a function <code>f</code> of type <code>Fin n -&gt; A</code> and
+  our <code>f</code> is of type <code>Fin ('suc n) -&gt; A</code>. If
+  we were somehow able to overlook this type error then we'd end up
+  with a vector f 0, f 0, f 0, etc. We need to increment the index
+  each time we make a recursive call. We do this by passing the
+  function <code>\ i -&gt; f ('suc n i)</code> to tabulate with does
+  the job and has the correct type:</p>
 
    <p><code>&gt; refine tabulate A ('suc n) f = 'cons n (f ('zero n))
    (tabulate A n (\ i -&gt; f ('suc n i))) ; </code></p>
@@ -401,7 +407,7 @@
      
      <dt>
       <code>
-       data <i>name</i> := (<i>con</i> : <i>type</i>) ; <i>more_cons</i>
+       data <i>name</i> := (<i>'con</i> : <i>type</i>) ; ...
       </code>
      </dt>
      <dd>Introduce a new data type. Note that constructor names must
@@ -409,7 +415,7 @@
 
      <dt>
       <code>
-       idata <i>name</i> (<i>name</i> : <i>type</i>) : <i>type</i> := (<i>con</i> : <i>type</i>) ; <i>more_cons</i>
+       idata <i>name</i> (<i>name</i> : <i>type</i>) : <i>type</i> := (<i>'con</i> : <i>type</i>) ; ...
       </code>
      </dt>
      <dd>Introduce a new indexed data type. Note that constructor
@@ -424,9 +430,9 @@
      <dt><code>let <i>name</i> : <i>type</i></code></dt>
      <dd>Introduce a new (recursive) definition.</dd>
      
-     <dt><code>refine <i>f</i> <u><i>args</i></u> [&lt;=,=] <i>expr</i></code><dt>
+     <dt><code>refine <i>name</i> <i>arg1 ...</i> [&lt;=,=] <i>expr</i></code><dt>
      <dd>Fill in a programming problem. It allows us to rename the
-     arguments <code><i><u>args</u></i></code>, then indictate whether
+     arguments, then indictate whether
      we invoking some further principe to analyze the problem further
      (e.g by induction) by <code>&lt;=</code> or we use <code>=</code> to
      indicate that we are going to return something. Then we give a
