@@ -1,0 +1,998 @@
+\documentclass{beamer}
+
+\usepackage{tikz}
+\usepackage{listings}
+\usepackage{amssymb}
+\usepackage{stmaryrd}
+\usepackage{alltt}
+\usepackage{xspace}
+\usepackage{color}
+
+\usepackage{pig}
+
+\definecolor{gray_ulisses}{gray}{0.55}
+\definecolor{castanho_ulisses}{rgb}{0.71,0.33,0.14}
+\definecolor{preto_ulisses}{rgb}{0.41,0.20,0.04}
+\definecolor{green_ulises}{rgb}{0.2,0.75,0}
+
+\include{macros}
+
+\ColourEpigram
+
+\usetikzlibrary{matrix,arrows}
+
+\usetheme{Boadilla}
+\setbeamertemplate{navigation symbols}{} 
+
+\title[The Gentle Art of Levitation]{The Gentle Art of Levitation}
+
+\author[Pierre-Evariste Dagand]{James Chapman$^\dag$ \and 
+				Pierre-\'{E}variste Dagand$^\ddag$ \\
+				Conor McBride$^\ddag$ \and 
+				Peter Morris$^*$}
+
+\institute[ICFP 2010]
+          {Institute of Cybernetics, Tallinn University of Technology$^\dagger$ \and
+	   University of Strathclyde$^\ddag$ \and
+	   University of Nottingham$^*$}
+
+\date{September 27, 2010}
+
+%% \lstdefinelanguage{HaskellUlisses} {
+%% 	basicstyle=\ttfamily\tiny,
+%% 	sensitive=true,
+%% 	morecomment=[l][\color{gray_ulisses}\ttfamily\tiny]{--},
+%% 	morecomment=[s][\color{gray_ulisses}\ttfamily\tiny]{\{-}{-\}},
+%% 	morestring=[b]",
+%% 	stringstyle=\color{red},
+%% 	showstringspaces=false,
+%% 	numberstyle=\tiny,
+%% 	numberblanklines=true,
+%% 	showspaces=false,
+%% 	breaklines=true,
+%% 	showtabs=false,
+
+%% }
+
+\lstloadlanguages{Haskell}
+\lstnewenvironment{hcode}
+    {\lstset{}%
+      \csname lst@SetFirstLabel\endcsname}
+    {\csname lst@SaveFirstLabel\endcsname}
+    \lstset{
+      basicstyle=\ttfamily \scriptsize,
+      flexiblecolumns=false,
+      basewidth={0.5em,0.45em},
+      literate={+}{{$+$}}1 {/}{{$/$}}1 {*}{{$*$}}1 {=}{{$=$}}1
+               {>}{{$>$}}1 {<}{{$<$}}1
+               {\\\\}{{\char`\\\char`\\}}1
+               {->}{{$\rightarrow$}}2 {>=}{{$\geq$}}2 {<-}{{$\leftarrow$}}2
+               {<=}{{$\leq$}}2 {=>}{{$\Rightarrow$}}2 
+               {>>}{{$>>$}}2 {>>=}{{>>=}}2
+               {>>>}{{$>>>$}}4
+               {/\\}{{$\wedge$}}2
+               {|}{{$\mid$}}1
+               {~}{{\ }}1
+               {alpha}{{$\alpha$}}1 {beta}{{$\beta$}}1 {gamma}{{$\gamma$}}1 {delta}{{$\delta$}}1,
+	emph=
+	{[3]
+		case,class,data,deriving,do,else,if,import, newtype, infixl,infixr,instance,let,
+		module,of,primitive,then,type,where
+	},
+	emphstyle={[3]\color{castanho_ulisses}\textbf},
+	emph=
+	{[4]
+		quot,rem,div,mod,elem,notElem,seq
+	},
+	emphstyle={[4]\color{castanho_ulisses}\textbf},
+	emph=
+	{[5]
+		EQ,False,GT,Just,LT,Left,Nothing,Right,True,Show,Eq,Ord,Num
+	},
+	emphstyle={[5]\color{preto_ulisses}\textbf}
+    }
+
+\lstnewenvironment{ccode}
+    {\lstset{}%
+      \csname lst@SetFirstLabel\endcsname}
+    {\csname lst@SaveFirstLabel\endcsname}
+    \lstset{
+      basicstyle=\ttfamily \scriptsize,
+      flexiblecolumns=false,
+      basewidth={0.5em,0.45em},
+      boxpos=t,
+    }
+
+
+\begin{document}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{The Gentle Art of Levitation}
+
+\begin{frame}
+
+\titlepage
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Datatypes in Functional Programming}
+
+\begin{frame}[fragile]
+
+  \frametitle{Inductive datatypes}
+
+\begin{block}{An inductive type}
+
+  \begin{center}
+    \begin{minipage}{5.5cm}
+      \begin{hcode}
+data List z = Nil | Cons z (List z)
+      \end{hcode}
+    \end{minipage}
+  \end{center}
+\end{block}
+
+\begin{block}{The essence of inductive types}
+
+  \begin{center}
+    \begin{columns}
+      \begin{column}{5cm}
+        \begin{minipage}{6cm}
+          \begin{hcode}
+data ListF z list = Nil | Cons z list
+     deriving Functor
+          \end{hcode}
+        \end{minipage}
+      \end{column}
+      \begin{column}{5cm}
+
+        {\scriptsize
+\[
+    \mathit{ListF}\: z\: \mathit{list} = 1 + z \times \mathit{list} 
+\]}
+      \end{column}
+    \end{columns}
+
+
+    \begin{minipage}{6cm}
+      \begin{hcode}
+newtype Mu f = In { in :: f (Mu f) }
+      \end{hcode}
+    \end{minipage}
+
+%cata :: Functor f => (f t -> t) -> Mu f -> t
+%cata phi (In x) = phi (fmap (cata phi) x)
+
+    \begin{minipage}{5cm}
+      \begin{hcode}
+type List z = Mu (ListF z)
+      \end{hcode}
+%% {\scriptsize
+%% \[
+%% \mathit{List}\: z = \mu \mathit{list}. \mathit{ListF}\: (\mathit{list}\: z)
+%% \]}
+    \end{minipage}
+  \end{center}
+
+\end{block}
+
+\end{frame}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% \begin{frame}[fragile]
+
+%% \frametitle{The essence of inductive types}
+
+%% \begin{block}{As seen by Richard Squiggol}
+%%   \vspace*{-0.5cm}
+%%   \begin{columns}
+%%     \begin{column}{6cm}
+%%       \begin{center}
+%%       \begin{minipage}{4cm}
+%%       \begin{hcode}
+%% data NatF nat = Zero 
+%%               | Suc nat
+%%      deriving Functor
+%%       \end{hcode}
+%%       \end{minipage}
+%%       \end{center}
+%%     \end{column}
+%%     \begin{column}{6cm}
+%%       \begin{center}
+%%       \begin{minipage}{5cm}
+%%       \begin{hcode}
+%% data ListF z list = Nil 
+%%                   | Cons z list
+%%      deriving Functor
+%%       \end{hcode}
+%%       \end{minipage}
+%%       \end{center}
+%%     \end{column}
+%%   \end{columns}
+
+%% \vspace*{-0.5cm}
+%% \begin{center}
+%%   \begin{minipage}{8cm}
+%%   \begin{hcode}
+%% newtype Mu f = In { in :: f (Mu f) }
+
+%% cata :: Functor f => (f t -> t) -> Mu f -> t
+%% cata phi (In x) = phi (fmap (cata phi) x)
+%%   \end{hcode}
+%%   \end{minipage}
+%% \end{center}
+
+%%   \vspace*{-0.5cm}
+%%   \begin{columns}
+%%     \begin{column}{4cm}
+%%       \begin{hcode}
+%% type Nat = Mu NatF
+%%       \end{hcode}
+%%     \end{column}
+%%     \begin{column}{4cm}
+%%       \begin{hcode}
+%% type List z = Mu (ListF z)
+%%       \end{hcode}
+%%     \end{column}
+%%   \end{columns}
+%% \end{block}
+
+%% \begin{block}{As seen by Saunders Categorist}
+
+%% \vspace*{-0.5cm}
+
+%%   \begin{columns}
+%%     \begin{column}{5cm}
+%% \[
+%% \begin{array}{l}
+%% \mathrm{NatF}\: \mathrm{nat} = 1 + \mathrm{nat} \\
+%% \mathrm{Nat} = \mu \mathrm{nat}. \mathrm{NatF}\: \mathrm{nat}
+%% \end{array}
+%% \]
+%%     \end{column}
+%%     \begin{column}{5cm}
+%% \[
+%% \begin{array}{l}
+%% \mathrm{ListF}\: z\: \mathrm{list} = 1 + z \times \mathrm{list} \\
+%% \mathrm{List}\: z = \mu \mathrm{list}. \mathrm{ListF}\: (\mathrm{list}\: z)
+%% \end{array}
+%% \]
+%%     \end{column}
+%%   \end{columns}
+%% \end{block}
+
+
+%% \end{frame}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+
+\frametitle{The Power of Sigma!}
+
+\begin{columns}
+  \begin{column}{5cm}
+    \begin{block}{Datatypes in ML}
+      \begin{itemize}
+      \item ``sum-of-products''
+      \item \(\mathit{ListF}\: z\: \mathit{list} = 1 + z \times \mathit{list}\)
+      \end{itemize}
+    \end{block}
+  \end{column}
+  \begin{column}{6cm}
+    \begin{block}{Dependent types?}
+    \begin{itemize}
+    \item \(\Sigma\) for sum: \(\Sigma_{\Bhab{x\:}{\:S}} T\)
+    \item \(\Sigma\) for product: \((\Bhab{x}{S}) \times T\)
+    \end{itemize}
+    \end{block}
+  \end{column}
+\end{columns}
+
+\begin{block}{Desc: a universe of datatypes}
+
+\begin{columns}
+  \begin{column}{5cm}
+\[\stk{
+\begin{array}{@{}l@{\::\:}l}
+\Desc    & \Set  \\
+\multicolumn{2}{l}{} \\
+\DUnit   & \Desc \\
+\DSigma{(\Bhab{\V{S}}{\Set})}{(\Bhab{\V{D}}{\V{S} \To \Desc})} 
+         & \Desc \\
+\DIndx{(\Bhab{\V{D}}{\Desc})} 
+         & \Desc \\
+\end{array}
+}\]
+  \end{column}
+  \begin{column}{5cm}
+\[\stk{
+\begin{array}{l@{\mapsto\:}l}     
+\multicolumn{2}{l}{\descop{\_\:}{} : \Desc \To \Set \To \Set} \\
+\multicolumn{2}{l}{} \\
+ \descop{\DUnit}{\V{X}}                &  
+     \Unit \\
+ \descop{\DSigma{\V{S}}{\V{D}}}{\V{X}} &
+     \SIGMAS{\Bhab{\V{s}}{\V{S}}}{\descop{\V{D}\,\V{s}}{\!\V{X}}}  \\
+\descop{\DIndx{\V{D}}}{\V{X}}          &  
+     \TIMES{\V{X}}{\descop{\V{D}}{\V{X}}}
+\end{array}
+}\]
+  \end{column}  
+\end{columns}
+
+\end{block}
+
+\end{frame}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+
+\frametitle{Example}
+
+\begin{block}{The universe of datatypes}
+
+\begin{columns}
+  \begin{column}{5cm}
+\[\stk{
+\begin{array}{@{}l@{\::\:}l}
+\DUnit   & \Desc \\
+\DSigma{(\Bhab{\V{S}}{\Set})}{(\Bhab{\V{D}}{\V{S} \To \Desc})} 
+         & \Desc \\
+\DIndx{(\Bhab{\V{D}}{\Desc})} 
+         & \Desc \\
+\end{array}
+}\]
+  \end{column}
+  \begin{column}{5cm}
+\[\stk{
+\begin{array}{l@{\mapsto\:}l}     
+ \descop{\DUnit}{\V{X}}                &  
+     \Unit \\
+ \descop{\DSigma{\V{S}}{\V{D}}}{\V{X}} &
+     \SIGMAS{\Bhab{\V{s}}{\V{S}}}{\descop{\V{D}\,\V{s}}{\!\V{X}}}  \\
+\descop{\DIndx{\V{D}}}{\V{X}}          &  
+     \TIMES{\V{X}}{\descop{\V{D}}{\V{X}}}
+\end{array}
+}\]
+  \end{column}  
+\end{columns}
+
+\end{block}
+
+\[
+    \mathit{ListF}\: z\: \mathit{list} = 1 + z \times \mathit{list} 
+\]
+
+\begin{alertblock}{Pattern functor of List}
+
+\[\stk{
+\ListD : \Set \To \Desc \\
+\ListD \: \V{Z} \mapsto
+ \only<-1>{\SHEDARG{\Desc}}
+ \only<2->{
+ \DSigma{\only<-2>{\SHEDARG{\Bhab{\V{?S}}{\Set}}}
+         \only<3->{
+         \EnumT{\sqr{\begin{array}{l}
+                         \ListNil \\
+                         \SYMBListCons
+                     \end{array}}}}}
+         {\only<-2>{\SHEDARG{\V{?S} \To \Desc}}
+          \only<3>{\SHEDARG{\EnumT{\sqr{\vdots}} \To \Desc}}
+          \only<4->{
+          \gsqr{\begin{array}{l}
+                  \only<-4>{\SHEDARG{\Desc}}
+                  \only<5->{
+                  \DUnit} \\
+                  \only<-5>{\SHEDARG{\Desc}}
+                  \only<6->{
+                  \DSigma{\V{Z}}{(\LAM{\_} \only<-6>{\SHEDARG{\Desc}}
+                                           \only<7->{\DIndx{\DUnit}})}}
+                 \end{array}}{\LAM{\_} \Desc}}}}
+}\]
+
+\end{alertblock}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}[fragile]
+
+\frametitle{Fixpoint and induction}
+
+%% \begin{block}{Initial algebra}
+
+%% \begin{center}
+%%   \begin{minipage}{8cm}
+%%   \begin{hcode}
+%% newtype Mu f = In { in :: f (Mu f) }
+
+%% cata :: Functor f => (f t -> t) -> Mu f -> t
+%% cata phi (In x) = phi (fmap (cata phi) x)
+%%   \end{hcode}
+%%   \end{minipage}
+%% \end{center}
+%% \end{block}
+
+\begin{block}{Fix-point of Descriptions}
+
+\[
+\Rule{\Gamma \vdash \Bhab{\M{D}}{\Desc}}
+     {\Gamma \vdash \Bhab{\Mu{\M{D}}}{\Set}} 
+\qquad \qquad
+\Rule{\Gamma \vdash \Bhab{\M{D}}{\Desc} \quad 
+      \Gamma \vdash \Bhab{\M{d}}{\descop{\M{D}}{(\Mu{\M{D}})}}}
+     {\Gamma \vdash \Bhab{\Con{\M{d}}}{\Mu{\M{D}}}}
+\]
+\end{block}
+
+\begin{block}{Induction principle}
+\[
+\F{ind} : \stk{ \PITEL{\V{D}}{\Desc}
+                \PI{\V{P}}{\Mu{\V{D}} \To \Set}         \\
+               (\PI{\V{d}}{\descop{\V{D}}{(\Mu{\V{D}})}}       
+                \All{\V{D}}{(\Mu{\V{D}})}{\V{P}}{\V{d}} \To \V{P} (\Con{\V{d}})) \To \\
+               \PI{\V{x}}{\Mu{\V{D}}} \V{P} \V{x} 
+}\]
+\end{block}
+
+\[
+    \List\: \V{Z} \mapsto \Mu{(\ListD\: \V{Z})} 
+\]
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+
+\frametitle{Another example?}
+
+\begin{block}{The code of our universe}
+
+\[\stk{
+\begin{array}{@{}l@{\::\:}l}
+\Desc    & \Set  \\
+
+\DUnit   & \Desc \\
+\DSigma{(\Bhab{\V{S}}{\Set})}{(\Bhab{\V{D}}{\V{S} \To \Desc})} 
+         & \Desc \\
+\DIndx{(\Bhab{\V{D}}{\Desc})} 
+         & \Desc \\
+\end{array}
+}\]
+\end{block}
+
+\begin{center}
+\emph{It is nothing but an inductive type!}
+\end{center}
+
+\begin{block}{Let's \emph{describe} it!}
+
+\[\stk{
+\DescD : \Desc \\
+\DescD \mapsto 
+            \only<-1>{\SHEDARG{\Desc}}
+            \uncover<2->{
+            \DSigma{\only<-2>{\SHEDARG{\Bhab{\V{?S}}{\Set}}}
+                    \only<3->{
+                    \EnumT{\sqr{\begin{array}{l}
+                                     \DUnit\\
+                                     \SYMBDSigma\\
+                                     \SYMBDIndx
+                                \end{array}}}}}
+                   {\only<-2>{\SHEDARG{\V{?S} \To \Desc}}
+                    \only<3->{
+                    \gsqr{\begin{array}{l}
+                            \only<-3>{\SHEDARG{\Desc}}
+                            \only<4->{\DUnit}\\
+                            \only<-5>{\SHEDARG{\Desc}}
+                            \only<6->{\DSigma{\Set}{\LAM{\V{S}} \SHEDARG{\Desc}}}\\
+                            \only<-4>{\SHEDARG{\Desc}}
+                            \only<5->{\DIndx{\DUnit}}\\
+                          \end{array}}{\LAM{\_} \Desc}}}}
+}\]
+
+\end{block}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+
+\frametitle{Second attempt}
+
+\begin{block}{Extending the universe}
+\vspace*{-0.5cm}
+\begin{columns}
+  \begin{column}{5cm}
+\[
+\begin{array}{@{}l@{\::\:}l}
+\DUnit   & \Desc \\
+\DSigma{(\Bhab{\V{S}}{\Set})}{(\Bhab{\V{D}}{\V{S} \To \Desc})} 
+         & \Desc \\
+\DIndx{(\Bhab{\V{D}}{\Desc})} 
+         & \Desc \\
+\DHindx{(\Bhab{\V{H}}{\Set})}{(\Bhab{\V{D}}{\Desc})} 
+         & \Desc
+\end{array}
+\]
+  \end{column}
+  \begin{column}{6cm}
+\[
+\begin{array}{@{}ll}     
+ & \\
+ & \\
+ & \\
+\descop{\DHindx{\V{H}}{\V{D}}}{\V{X}}  & \mapsto\:
+     \TIMES{(\V{H} \To \V{X})}{\descop{\V{D}}{\V{X}}} 
+\end{array}
+\]
+  \end{column}
+\end{columns}
+
+\end{block}
+
+\begin{block}{Let's try again!}
+
+\[\stk{
+\DescD : \Desc \\
+\DescD \mapsto 
+            \DSigma{\EnumT{\sqr{\begin{array}{l}
+                                     \DUnit\\
+                                     \SYMBDSigma\\
+                                     \SYMBDIndx \\
+                                     \SYMBDHindx
+                                \end{array}}}}
+                   {\gsqr{\begin{array}{l}
+                            \DUnit\\
+                            \DSigma{\Set}{\LAM{\V{S}}{\only<-1>{\SHEDARG{\Desc}}
+                                                      \only<2->{\DHindx{\V{S}}{\DUnit}}}}\\
+                            \DIndx{\DUnit}\\
+                            \only<-2>{\SHEDARG{\Desc}}
+                            \only<3->{\DSigma{\Set}{\LAM{\_} \only<-3>{\SHEDARG{\Desc}}
+                                                             \uncover<4->{\DIndx{\DUnit}}}}
+                          \end{array}}{\LAM{\_} \Desc}} \\
+}\]
+
+\end{block}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+
+\frametitle{Levitation!}
+
+\begin{block}{The problem}
+
+\[\stk{
+\DescD \mapsto 
+            \DSigma{\EnumT{\sqr{\begin{array}{l}
+                                     \DUnit\\
+                                     \SYMBDSigma\\
+                                     \SYMBDIndx \\
+                                     \SYMBDHindx
+                                \end{array}}}}
+                   {\gsqr{\begin{array}{l}
+                            \DUnit\\
+                            \DSigma{\Set}{\LAM{\V{S}}{\DHindx{\V{S}}{\DUnit}}}\\
+                            \DIndx{\DUnit}\\
+                            \DSigma{\Set}{\LAM{\_} \DIndx{\DUnit}}
+                          \end{array}}{\LAM{\_} \only<-1>{\Desc}\only<2->{\redBG{\Desc}}}} \\
+\Desc \mapsto \Mu{\DescD}
+}\]
+
+\end{block}
+
+\begin{block}{One solution}
+\[\stk{
+\DescD \mapsto 
+            \DSigma{\EnumT{\sqr{\begin{array}{l}
+                                     \DUnit\\
+                                     \SYMBDSigma\\
+                                     \SYMBDIndx \\
+                                     \SYMBDHindx
+                                \end{array}}}}
+                   {\gcurly{\begin{array}{l}
+                            \DUnit\\
+                            \DSigma{\Set}{\LAM{\V{S}}{\DHindx{\V{S}}{\DUnit}}}\\
+                            \DIndx{\DUnit}\\
+                            \DSigma{\Set}{\LAM{\_} \DIndx{\DUnit}}
+                          \end{array}}} \\
+\Desc \mapsto \Mu{\DescD}
+}\]
+\end{block}
+
+\end{frame}
+
+
+\newcommand{\SYMBind}{\F{ind}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+
+\frametitle{Stepping back}
+
+\begin{block}{The implementation}
+
+\begin{center}
+\begin{tabular}{|c|c|c|c|}
+\hline
+Object                & Role                        & Status \\
+\hline
+\hline
+$\Desc$               & Describe pattern functors   & Levitated \\
+\hline
+$\SYMBdescop{\_}$     & Interpret descriptions      & Hardwired \\
+\hline
+$\SYMBMu$, $\SYMBCon$ & Define, inhabit fixpoints   & Hardwired \\
+\hline
+$\SYMBind$, $\SYMBAll$, $\SYMBall$  
+                      & Induction principle         & Hardwired \\
+\hline
+\end{tabular}
+\end{center}
+
+\end{block}
+
+\begin{block}{Consequences}
+\begin{itemize}
+\item Closed, non-generative presentation of datatypes
+\item \(\Desc\) is plain data
+\item \(\Desc\) comes with an induction principle, for free
+\end{itemize}
+\end{block}
+
+\begin{center}
+\huge{Generic programing is \emph{just} programming!}
+\end{center}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+
+\frametitle{Generic programming in action}
+\framesubtitle{The catamorphism}
+
+\[\stk{
+\F{cata} : \PITEL{\V{D}}{\Desc}
+           \PI{\V{T}}{\Set}
+           (\descop{\V{D}}{\V{T}} \To \V{T}) \To 
+           \Mu{\V{D}} \To \V{T} \\
+\F{cata}\: \V{D}\: \V{T}\: \V{f} \mapsto
+  \SYMBind\: \stk{
+                \only<-1>{\SHEDARG{\Bhab{\V{?D}}{{\Desc}}}\:}
+                \only<2->{\V{D}\:}
+                \only<-2>{\SHEDARG{\Bhab{\V{?P}}{{\Mu{\only<-1>{\V{?D}} \only<2->{\V{D}}} \To \Set}}}}
+                \only<3->{(\LAM{\_}{\V{T}})} \\
+                \only<-3>{\SHEDARG{{
+                          \PI{\V{d}}{\descop{\only<-1>{\V{?D}} \only<2->{\V{D}}}{(\Mu{\only<-1>{\V{?D}} \only<2->{\V{D}}})}}       
+                          \All{\only<-1>{\V{?D}} \only<2->{\V{D}}}
+                              {(\Mu{\only<-1>{\V{?D}} \only<2->{\V{D}}})}
+                              {\only<-2>{\V{?P}} \only<3->{(\LAM{\_}{\V{T}})}}
+                              {\V{d}} \To \only<-2>{\V{?P} (\Con{\V{d}})} \only<3->{\V{T}}}}}
+                \only<4->{(\LAM{\V{xs}} \LAM{\V{hs}}
+                  \only<-4>{\SHEDARG{\V{T}}}
+                  \only<5->{\V{f}\:
+                    \only<-5>{\SHEDARG{{\descop{\V{D}}{\V{T}}}}}
+                    \only<6->{(\F{replace}\: \V{D}\: 
+                                             \V{\Mu{\V{D}}}\: 
+                                             \V{T}\:
+                                             \V{xs}\:
+                                             \V{hs})}})}
+            }
+}\]
+
+\[\stk{
+\uncover<6->{
+\F{replace} : \PITEL{\V{D}}{\Desc}
+              \PITEL{\V{X},\V{Y}}{\Set}
+              \PI{\V{xs}}{\descop{\V{D}}{\V{X}}} 
+                  \All{\V{D}}{\V{X}}{(\LAM{\_}\V{Y})}{\V{xs}} \To
+                  \descop{\V{D}}{\V{Y}} \\
+\begin{array}{@{}l@{\:}l@{\:}l@{\:\:\mapsto\:\:}l}
+\F{replace}\: \DUnit &          \V{X}\: \V{Y}\: \Void&          \Void   &
+    \only<-6>{\SHEDARG{\Unit}}
+    \uncover<7->{\Void}  \\
+\F{replace}\: (\DSigma{\V{S}}{\V{D}})& \V{X}\: \V{Y}\: \pair{\V{s}}{\V{d}}{}& \V{d'}  &
+    \only<-7>{\SHEDARG{\SIGMA{\V{s}}{\V{S}}{\descop{\V{D}\: \V{s}}{\V{Y}}}}}
+    \uncover<8->{\pair{\V{s}}{\F{replace}\: (\V{D}\: \V{s})\: \V{X}\: \V{Y}\: \V{d}\: \V{d'}}{}} \\
+\F{replace}\: (\DIndx{\V{D}})&     \V{X}\: \V{Y}\: \pair{\V{x}}{\V{d}}{}& \pair{\V{y}}{\V{d'}}{} &
+    \only<-8>{\SHEDARG{\TIMES{\V{Y}}{\descop{\V{D}}{\V{Y}}}}}
+    \uncover<9->{\pair{\V{y}}{\F{replace}\: \V{D}\: \V{X}\: \V{Y}\: \V{d}\: \V{d'}}{}} \\
+\F{replace}\: (\DHindx{\V{H}}{\V{D}})& \V{X}\: \V{Y}\: \pair{\V{f}}{\V{d}}{}& \pair{\V{g}}{\V{d'}}{} &
+    \only<-9>{\SHEDARG{\TIMES{\V{\V{H} \To \V{Y}}}{\descop{\V{D}}{\V{Y}}}}}
+    \uncover<10->{\pair{\V{g}}{\F{replace}\: \V{D}\: \V{X}\: \V{Y}\: \V{d}\: \V{d'}}{}}
+\end{array}}
+}\]
+
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}[fragile]
+
+\frametitle{Generic programming in action}
+\framesubtitle{The Free Monad}
+
+\begin{block}{Tagged descriptions}
+\[\stk{
+ \TagDesc : \Set \\
+ \TagDesc \mapsto \SIGMA{\sqr{\ldots}}{\EnumU} ({\sqr{\ldots}}^{\Desc}) \\
+}\]
+%
+\begin{columns}
+  \begin{column}{4cm}
+\[
+  \SYMBtoDesc : \TagDesc \To \Desc 
+\]
+  \end{column}
+  \begin{column}{6cm}
+\[
+\NatD \mapsto \toDesc{\pair{\sqr{\begin{array}{l} 
+                                   \NatZero\\
+                                   \SYMBNatSuc
+                                 \end{array}}}
+                           {\sqr{\begin{array}{l}
+                                   \DUnit \\
+                                   \DIndx{\DUnit}
+                                 \end{array}}}{}}
+\]
+  \end{column}
+\end{columns}
+
+\end{block}
+
+
+\begin{center}
+\begin{minipage}{8cm}
+\begin{hcode}
+data FreeMonad f x = Var x | Op (f (FreeMonad f x))
+\end{hcode}
+\end{minipage}
+\end{center}
+
+
+
+\newcommand{\FMFreeMonad}{\D{FreeMonad}}
+\newcommand{\FMFreeMonadD}{\D{FreeMonadD}}
+\newcommand{\FMVar}{\C{Var}}
+\newcommand{\FMComposite}{\C{Composite}}
+
+\vspace*{-0.5cm}
+\begin{block}{The Free Monad construction}
+
+\[\stk{
+\FreeMonad{\_} : \TagDesc \To \Set \To \TagDesc \\
+\FreeMonad{\pair{\V{E}}{\V{D}}{}}\:\V{X} \mapsto
+    \pair{\pair{\DVar{}}{\V{E}}{}}
+         {\pair{\DSigma{\V{X}}{\DUnit}}{\V{D}}{}}{}
+}\]
+
+\end{block}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+
+\frametitle{Conclusion}
+
+\begin{block}{We have presented\ldots}
+\begin{itemize}
+\item A rationalised universe of inductive types
+\item A self-encoding of the universe of types
+\item Some generic programming operations and constructions
+\end{itemize}
+\end{block}
+
+\begin{block}{Future work}
+
+\begin{itemize}
+\item Generalising to Induction-Recursion
+\item Internal fixpoints
+\item If datatypes are data, what is design?
+\end{itemize}
+
+\end{block}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+
+\begin{center}
+  (Backup slides)
+\end{center}
+
+\end{frame}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\atag}[1]{\green{`#1`}}
+\newcommand{\SYMBCUnit}{\atag{1}}
+\newcommand{\SYMBCSigma}{\atag{\Sigma}}
+\newcommand{\SYMBCIndx}{\atag{\CN{ind}\!\times\!}}
+\newcommand{\SYMBCHindx}{\atag{\CN{hind}\!\times\!}}
+
+
+\begin{frame}
+
+\frametitle{\(\Desc\) is data!}
+
+
+\[\stk{
+\Bhab{\Desc}{\Set}\\
+\Desc \:\:\mapsto\: \Mu{\DescD}\\
+\\
+\Bhab{\SYMBCUnit}{\Desc}\\
+\SYMBCUnit \:\:\mapsto\: 
+    \Con{\pair{\SYMBDUnit}{\void}{}}\\
+\\
+\Bhab{\SYMBCSigma}
+     {\PITEL{\V{S}}{\Set} 
+      \PI{\V{D}}{\V{S} \To \Desc}{\Desc}} \\
+\SYMBCSigma\: \V{S}\: \V{D} \:\:\mapsto 
+    \Con{\pair{\SYMBDSigma}
+              {\pair{\V{S}}
+                    {\pair{\V{D}}
+                          {\void}{}}{}}{}} \\
+\\
+\Bhab{\SYMBCIndx}
+     {\PI{\V{D}}{\Desc}{\Desc}} \\
+\SYMBCIndx\: \V{D} \:\:\mapsto\: 
+    \Con{\pair{\SYMBDIndx}
+              {\pair{\V{D}}
+                    {\void}{}}{}} \\
+\\
+\Bhab{\SYMBCHindx}
+     {\PITEL{\V{H}}{\Set}
+      \PI{\V{D}}{\Desc}{\Desc}} \\
+\SYMBCHindx\: \V{H}\: \V{D} \:\:\mapsto\: 
+    \Con{\pair{\SYMBDHindx}
+              {\pair{\V{H}}
+                    {\pair{\V{D}}
+                          {\void}{}}{}}{}}
+}\]
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+
+\frametitle{Skyhooks all the way up?}
+
+\begin{columns}
+  \begin{column}{6cm}
+\[
+\begin{array}{@{}l@{}l}
+\Desc^n 
+    &: \Set^{n+1}\\
+\DUnit 
+    &: \Desc^{n}\\
+\DSigma{(\Bhab{\V{S}}{\Set^{n}})}{(\Bhab{\V{D}}{\V{S} \To \Desc^{n}})} 
+    &: \Desc^{n}\\
+\DIndx{(\Bhab{\V{D}}{\Desc^{n}})} 
+    &: \Desc^{n} \\
+\DHindx{(\Bhab{\V{H}}{\Set^n})}{(\Bhab{\V{D}}{\Desc^n})} 
+    &: \Desc^n
+\end{array}
+\]
+  \end{column}
+  \begin{column}{6cm}
+\[
+\begin{array}{l@{\:\mapsto\:}l}     
+\multicolumn{2}{l}{\descop{\_\:}{} : \Desc^{n} \To \Set^{n} \To \Set^{n}} \\
+\descop{\DUnit}{\V{X}} &  
+     \Unit \\
+\descop{\DSigma{\V{S}}{\V{D}}}{\V{X}} &
+     \SIGMAS{\Bhab{\V{s}}{\V{S}}}{\descop{\V{D}\,\V{s}}{\!\V{X}}}  \\
+\descop{\DIndx{\V{D}}}{\V{X}}  &  
+     \TIMES{\V{X}}{\descop{\V{D}}{\V{X}}} \\
+\descop{\DHindx{\V{H}}{\V{D}}}{\V{X}} &
+     \TIMES{(\V{H} \To \V{X})}{\descop{\V{D}}{\V{X}}} 
+\end{array}
+\]
+  \end{column}
+\end{columns}
+
+
+\[\stk{
+\\
+\Bhab{\Desc^{n+1}}{\Set^{n+2}} \\
+\\
+\Bhab{\DescD^{n}}{\Desc^{n+1}} \\
+\Bhab{\Desc^{n}}{\Set^{n+1}} \\
+\Desc^{n} \mapsto \Mu{\DescD^{n}}
+}\]
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\SYMBDpi}{\etag{\pi}\xspace}
+\newcommand{\Dpi}[2]{\SYMBDpi\:#1\:#2}
+
+
+\begin{frame}
+
+\frametitle{Alternative encoding}
+
+\[\stk{
+\begin{array}{@{}l@{}l}
+\Desc^n 
+    &: \Set^{n+1}\\
+\DUnit 
+    &: \Desc^{n}\\
+\DSigma{(\Bhab{\V{S}}{\Set^{n}})}{(\Bhab{\V{D}}{\V{S} \To \Desc^{n}})} 
+    &: \Desc^{n}\\
+\DIndx{(\Bhab{\V{D}}{\Desc^{n}})} 
+    &: \Desc^{n} \\
+\DHindx{(\Bhab{\V{H}}{\Set^n})}{(\Bhab{\V{D}}{\Desc^n})} 
+    &: \Desc^n \\
+\Dsigma{(\Bhab{\V{E}}{\EnumU^n})}{(\Bhab{\V{B}}{\spi{\V{E}}{\LAM{\_}{\Desc^n}}})}
+    &: \Desc^n \\
+\Dpi{(\Bhab{\V{E}}{\EnumU^n})}{(\Bhab{\V{D}}{\EnumT{\V{E}} \To \Desc^n})}
+    &: \Desc^n
+\end{array}
+\\
+\\
+\begin{array}{l@{\:\mapsto\:}l}     
+\multicolumn{2}{l}{\descop{\_\:}{} : \Desc^{n} \To \Set^{n} \To \Set^{n}} \\
+\descop{\DUnit}{\V{X}} &  
+     \Unit \\
+\descop{\DSigma{\V{S}}{\V{D}}}{\V{X}} &
+     \SIGMAS{\Bhab{\V{s}}{\V{S}}}{\descop{\V{D}\,\V{s}}{\!\V{X}}}  \\
+\descop{\DIndx{\V{D}}}{\V{X}}  &  
+     \TIMES{\V{X}}{\descop{\V{D}}{\V{X}}} \\
+\descop{\DHindx{\V{H}}{\V{D}}}{\V{X}} &
+     \TIMES{(\V{H} \To \V{X})}{\descop{\V{D}}{\V{X}}} \\
+\descop{\Dsigma{\V{E}}{\V{B}}}{\V{X}} &
+     \SIGMAS{\Bhab{\V{e}}{\EnumT{\V{E}}}}{\descop{\switch{\V{E}}{\V{e}}{(\LAM{\_}{\Desc})}{\V{B}}}{\V{X}}} \\
+\descop{\Dpi{\V{E}}{\V{D}}}{\V{X}} &
+     \spi{\V{E}}{\LAM{\V{e}}{\descop{\V{D}\: \V{e}}{\V{X}}}}
+\end{array}
+}\]
+
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+
+\frametitle{Universe of inductive families}
+
+\[\stk{\begin{array}{@{}ll}
+\IDesc{(\Bhab{\V{I}}{\Set})} 
+    &: \Set \\
+\DVar{(\Bhab{\V{i}}{\V{I}})} 
+    &: \IDesc{\V{I}} \\
+\DConst{(\Bhab{\V{A}}{\Set})} 
+    &: \IDesc{\V{I}}       \\
+\DProd{(\Bhab{\V{D}}{\IDesc{\V{I}}})}{(\Bhab{\V{D}}{\IDesc{\V{I}}})}
+    &: \IDesc{\V{I}}       \\
+\DSigma{(\Bhab{\V{S}}{\Set})}{(\Bhab{\V{D}}{\V{S}\To\IDesc{\V{I}}})}
+    &: \IDesc{\V{I}}  \\
+\DPi{(\Bhab{\V{S}}{\Set})}{(\Bhab{\V{D}}{\V{S}\To\IDesc{\V{I}}})}
+    &: \IDesc{\V{I}}  \\
+\end{array}
+\\
+\\
+\idescop{\_\:}{}{} :_{\PI{\V{I}}{\Set}} \IDesc{\V{I}} \To (\V{\V{I}} \To \Set) \To \Set                  \\
+\begin{array}{@{}l@{\:\mapsto\:\:}ll}
+\idescop{\DVar{\V{i}}}{\V{I}}{\V{X}&}      &  \V{X}\: \V{i}                                           \\
+\idescop{\DConst{\V{K}}}{\V{I}}{\V{X}&}    &  \V{K}                                                   \\
+\idescop{\DProd{\V{D}}{\V{D'}}}{\V{I}}{\V{X}&} &  \TIMES{\idescop{\V{D}}{\V{I}}{\V{X}}}{\idescop{\V{D'}}{\V{I}}{\V{X}}}       \\
+\idescop{\DSigma{\V{S}}{\V{D}}}{\V{I}}{\V{X}&} &  \SIGMA{\V{s}}{\V{S}} \idescop{\V{D}\: \V{s}}{\V{I}}{\V{X}}                    \\
+\idescop{\DPi{\V{S}}{\V{D}}}{\V{I}}{\V{X}&}    &  \PI{\V{s}}{\V{S}} \idescop{\V{D}\: \V{s}}{\V{I}}{\V{X}}            
+\end{array}
+}\]
+
+
+\end{frame}
+
+\end{document}

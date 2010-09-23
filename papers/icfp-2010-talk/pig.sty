@@ -1,0 +1,492 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%                                                         %%%%%%%%%%
+%%%%%%%%%%     Epigram LaTeX Style                                 %%%%%%%%%%
+%%%%%%%%%%                                                         %%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%% This file is intended to replace the old macros.ltx.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Colours                                                               %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\usepackage{color}
+\newcommand{\redFG}[1]{\textcolor[rgb]{0.6,0,0}{#1}}
+\newcommand{\redBG}[1]{\colorbox[rgb]{1,0,0}{#1}}
+\newcommand{\greenFG}[1]{\textcolor[rgb]{0,0.4,0}{#1}}
+\newcommand{\blueFG}[1]{\textcolor[rgb]{0,0,0.8}{#1}}
+\newcommand{\orangeFG}[1]{\textcolor[rgb]{0.8,0.4,0}{#1}}
+\newcommand{\purpleFG}[1]{\textcolor[rgb]{0.4,0,0.4}{#1}}
+\newcommand{\yellowFG}[1]{\textcolor{yellow}{#1}}
+\newcommand{\brownFG}[1]{\textcolor[rgb]{0.5,0.2,0.2}{#1}}
+\newcommand{\blackFG}[1]{\textcolor[rgb]{0,0,0}{#1}}
+\newcommand{\whiteFG}[1]{\textcolor[rgb]{1,1,1}{#1}}
+\newcommand{\yellowBG}[1]{\colorbox[rgb]{1,1,0.2}{#1}}
+\newcommand{\brownBG}[1]{\colorbox[rgb]{1.0,0.7,0.4}{#1}}
+\newcommand{\greyBG}[1]{\colorbox[rgb]{0.7,0.7,0.7}{#1}}
+
+\newcommand{\ColourEpigram}{
+  \newcommand{\red}{\redFG}
+  \newcommand{\green}{\greenFG}
+  \newcommand{\blue}{\blueFG}
+  \newcommand{\orange}{\orangeFG}
+  \newcommand{\purple}{\purpleFG}
+  \newcommand{\yellow}{\yellowBG}
+  \newcommand{\brown}{\brownFG}
+  \newcommand{\black}{\blackFG}
+  \newcommand{\white}{\whiteFG}
+}
+
+\newcommand{\MonochromeEpigram}{
+  \newcommand{\red}{\blackFG}
+  \newcommand{\green}{\blackFG}
+  \newcommand{\blue}{\blackFG}
+  \newcommand{\orange}{\blackFG}
+  \newcommand{\purple}{\blackFG}
+  \newcommand{\yellow}{\greyBG}
+  \newcommand{\brown}{\blackFG}
+  \newcommand{\black}{\blackFG}
+  \newcommand{\white}{\blackFG}
+}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Emphasis                                                              %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%% It's good to separate definitional emphasis...
+
+\newcommand{\demph}{\textbf}
+
+%%% ...from rhetorical emphasis.
+
+\newcommand{\remph}{\textit}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Identifier Fonts                                                      %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\CN}{\textsf}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Expressions                                                           %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\usepackage{upgreek}
+
+\newcommand{\LAMBINDER}{\red{\uplambda}}
+\newcommand{\Bhab}[2]{#1\!:\!#2}
+\newcommand{\To}{\mathop{\blue{\rightarrow}}}
+\newcommand{\Prod}{\mathop{\blue{\times}}}
+\newcommand{\mto}{\mathop{\red{\mapsto}}}
+
+\newcommand{\exprIn}{\CN{exprIn}}
+\newcommand{\exprEx}{\CN{exprEx}}
+\newcommand{\push}[2]{#2 \ni #1}
+\newcommand{\pull}[2]{#1 \in #2}
+\newcommand{\SYMBpropag}{\triangleright\xspace}
+\newcommand{\propag}[2]{#1 \:\SYMBpropag\: #2}
+
+\newcommand{\PiTy}[2]{\blue{\Pi}\: #1\: #2}
+\newcommand{\PITEL}[2]{\blue{(}\Bhab{#1}{#2}\blue{)}}
+\newcommand{\PI}[2]{\PITEL{#1}{#2}\To}
+\newcommand{\PIS}[1]{\blue{(}#1\blue{)}\To}
+
+\newcommand{\LLAM}[2]{\LAMBINDER\Bhab{#1}{#2}.\,}
+\newcommand{\LAM}[1]{\LAMBINDER #1 .\,}
+\newcommand{\PLAM}[2]{\LAMBINDER_{#2} #1 .\,}
+
+\newcommand{\TYPE}{\blue{\star}}
+\newcommand{\EQ}{\mathrel{\D{=}}}
+
+
+\newcommand{\FROG}{\mbox{\(\backslash\!\!\!\mid\!\!\!\slash\)}}
+
+\newcommand{\ang}[1]{\red{\left<\black{#1}\right>}}
+\newcommand{\sqr}[1]{\red{\left[\black{#1}\right]}}
+\newcommand{\gsqr}[2]{\green{{\left[\black{#1}\right]}^{\black{#2}}}}
+\newcommand{\gcurly}[1]{\green{{\left\{\black{#1}\right\}}}}
+\newcommand{\rbar}{\red{|}}
+
+\DeclareMathAlphabet{\mathkw}{OT1}{cmss}{bx}{n}
+\newcommand{\K}[1]{\mathkw{#1}}
+\newcommand{\M}[1]{\mathit{#1}}
+\newcommand{\G}{\Gamma}
+\newcommand{\V}[1]{\purple{\mathit{#1}}}
+\newcommand{\p}{\purple{'}}
+\newcommand{\D}[1]{\blue{\CN{#1}}}
+\newcommand{\bquote}{\textrm{\textquoteright}}
+\newcommand{\etag}[1]{\red{\bquote #1}}
+\newcommand{\C}[1]{\red{\CN{#1}}}
+\newcommand{\F}[1]{\green{\CN{#1}}}
+\newcommand{\U}[1]{\orange{\CN{#1}}}
+
+\newcommand{\Enum}{\D{Enum}}
+\newcommand{\SYMBenum}{\D{enum}\xspace}
+\newcommand{\enum}[1]{\SYMBenum\:#1}
+
+\newcommand{\Sig}{\D{Sig}}
+\newcommand{\SYMBdom}{\F{dom}\xspace}
+\newcommand{\dom}[1]{\SYMBdom\:#1}
+\newcommand{\SYMBsig}{\D{sig}\xspace}
+\newcommand{\sig}[1]{\SYMBsig\:#1}
+\newcommand{\Refl}{\overline}
+
+\newcommand{\Rhab}{:}
+
+\newcommand{\Ret}[1]{\:\FATR\:#1}
+\newcommand{\By}[1]{\:\FATL\:#1}
+\newcommand{\Refute}[1]{\:\FROG\:#1}
+\newcommand{\With}[1]{\:\&\:#1}
+
+\newcommand{\refl}[1]{\purple{\overline{\black{#1}}}}
+\newcommand{\coe}[4]{#4\:\green{\left[\black{#3:#1\EQ#2}\right>}}
+\newcommand{\coh}[4]%
+  {#4\:\green{\left[\!\left[\black{#3:#1\EQ#2}\right|\!\right>}}
+
+\newcommand{\qcoe}[3]{#1\:\green{\F{coe}(\black{#2\EQ #3})}}
+\newcommand{\qcoh}[3]{#1\:\green{\F{coh}(\black{#2\EQ #3})}}
+\newcommand{\qcong}[3]{#1\:\green{\F{cong}(\black{#2:#3})}}
+
+\newcommand{\naughtE}[1]{#1\:\green{\FROG}}
+\newcommand{\caseE}[1]{#1\:\F{case}}
+\newcommand{\ExpandE}[1]{#1\:\F{Expand}}
+\newcommand{\DecodeE}[1]{#1\:\F{Decode}}
+\newcommand{\KitE}[2]{#1\:\F{Kit(}#2\F{)}}
+\newcommand{\hd}{\green{\bullet}}
+\newcommand{\tl}{\green{-}}
+\newcommand{\rZ}{\red{\mathsf{0}}}
+\newcommand{\rS}{\red{\mathsf{S}}}
+
+%% Context
+\newcommand{\Valid}{\textsc{valid}}
+
+%% Set
+\newcommand{\Set}{\blue{\textsc{Set}}}
+\newcommand{\Type}[1]{{#1}:\Set}
+
+%% Sigma
+\newcommand{\SigmaTy}[2]{\blue{\Sigma}\: #1\: #2}
+\newcommand{\SIGMA}[2]{\blue{(}\Bhab{#1}{#2}\blue{)}\Prod}
+\newcommand{\SIGMAS}[1]{\blue{(}#1\blue{)}\Prod}
+\newcommand{\TIMES}[1]{#1 \Prod}
+\newcommand{\pair}[3]{\red{\left[\black{#1},\black{#2}\right]_{\black{#3}}}}
+\newcommand{\SYMBfst}{\F{$\pi_0$}\xspace}
+\newcommand{\fst}[1]{\SYMBfst\: #1}
+\newcommand{\SYMBsnd}{\F{$\pi_1$}\xspace}
+\newcommand{\snd}[1]{\SYMBsnd\: #1}
+\newcommand{\spl}[1]{\green{\wedge}#1}
+
+%% Sum
+\newcommand{\SUM}[1]{#1 \blue{+}}
+\newcommand{\SumLeft}[1]{\C{left}~#1}
+\newcommand{\SumRight}[1]{\C{right}~#1}
+
+%% Prop
+\newcommand{\Prop}{\blue{\textsc{Prop}}}
+\newcommand{\prf}[1]{{:\!\!-}~#1}
+\newcommand{\True}{\CN{TT}}
+\newcommand{\PropEq}{\mathrel{\D{==}}}
+
+%% UId
+\newcommand{\UId}{\D{Tag}}
+\newcommand{\Tag}[1]{\red{\CN{'}}#1}
+
+%% Enum
+\newcommand{\EnumU}{\D{En}}
+\newcommand{\NilE}{\C{nE}}
+\newcommand{\SYMBConsE}{\C{cE}\xspace}
+\newcommand{\ConsE}[2]{\SYMBConsE\:#1\:#2}
+
+\newcommand{\EnumT}[1]{\D{\#}#1}
+\newcommand{\Ze}{\C{$0$}}
+\newcommand{\Su}[1]{\C{$1\!+$}#1}
+
+\newcommand{\SYMBspi}{\F{$\pi$}\xspace}
+\newcommand{\spi}[2]{\SYMBspi\:#1\:#2}
+\newcommand{\SYMBswitch}{\green{\CN{switch}}\xspace}
+\newcommand{\switch}[4]{\SYMBswitch\:#1\:#2\:#3\:#4}
+\newcommand{\SYMBspiD}{\F{$\pi_D$}\xspace}
+\newcommand{\spiD}[1]{\SYMBspiD\:#1}
+\newcommand{\SYMBswitchD}{\green{\CN{switchD}}\xspace}
+\newcommand{\switchD}[3]{\SYMBswitchD\:#1\:#2\:#3}
+
+\newcommand{\Unit}{\D{1}}
+\newcommand{\void}{\C{[]}}
+\newcommand{\Void}{\void}  %grrr
+
+\newcommand{\Zero}{\EnumT{\void}}
+
+%% Desc
+\usepackage{stmaryrd}
+
+
+\newcommand{\Desc}{\D{Desc}}
+\newcommand{\DescD}{\F{DescD}}
+\newcommand{\TagDesc}{\F{TagDesc}}
+\newcommand{\SYMBtoDesc}{\F{de}\xspace}
+\newcommand{\toDesc}[1]{\SYMBtoDesc\:{#1}}
+
+\newcommand{\tada}[2]{
+  \toDesc{\red{\left[
+  \left[\black{#1}\right],
+  \left[\black{#2}\right]
+  \right]}}}
+
+
+\newcommand{\SYMBdescop}[1]{\green{\llbracket} #1 \green{\rrbracket}\xspace}
+\newcommand{\descop}[2]{\SYMBdescop{#1}\:#2}
+
+\newcommand{\SYMBDUnit}{\etag{1}}
+\newcommand{\DUnit}{\SYMBDUnit}
+\newcommand{\SYMBDSigma}{\etag{\Sigma}\xspace}
+\newcommand{\DSigma}[2]{\SYMBDSigma\:#1\:#2}
+\newcommand{\SYMBDIndx}{\etag{\CN{ind}\!\times}\xspace}
+\newcommand{\DIndx}[1]{\SYMBDIndx\:#1}
+
+\newcommand{\SYMBDHindx}{\etag{\CN{hind}\!\times}\xspace}
+\newcommand{\DHindx}[2]{\SYMBDHindx\:#1\:#2}
+
+\newcommand{\SYMBDPi}{\etag{\Pi}\xspace}
+\newcommand{\DPi}[2]{\SYMBDPi\:#1\:#2}
+\newcommand{\DProd}[2]{#1 \mathop{\etag{\!\times}} #2}
+\newcommand{\DId}{\etag{\CN{id}}}
+
+\newcommand{\SYMBDsigma}{\etag{\sigma}\xspace}
+\newcommand{\Dsigma}[2]{\SYMBDsigma\:#1\:#2}
+
+%% Mu
+\newcommand{\SYMBMu}{\blue{\mu}\xspace}
+\newcommand{\Mu}[1]{\SYMBMu #1}
+\newcommand{\SYMBCon}{\C{con}\xspace}
+\newcommand{\Con}[1]{\SYMBCon\:#1}
+\newcommand{\SYMBAll}{\F{All}\xspace}
+\newcommand{\All}[4]{\SYMBAll\:#1\:#2\:#3\:#4}
+\newcommand{\SYMBall}{\F{all}\xspace}
+\newcommand{\all}[5]{\SYMBall\:#1\:#2\:#3\:#4\:#5}
+\newcommand{\sind}[1]{\F{\(\circlearrowleft\)}#1}
+
+%% IDesc
+\newcommand{\SYMBIDesc}{\D{IDesc}\xspace}
+\newcommand{\IDesc}[1]{\SYMBIDesc\:#1}
+\newcommand{\IDescD}{\F{IDescD}}
+\newcommand{\IDescFreeD}{\C{IDescD}^{\C{Sig}}}
+\newcommand{\SYMBATagIDesc}{\F{AlwaysD}\xspace}
+\newcommand{\ATagIDesc}[1]{\SYMBATagIDesc\:#1}
+\newcommand{\SYMBITagIDesc}{\F{IndexedD}\xspace}
+\newcommand{\ITagIDesc}[1]{\SYMBITagIDesc\:#1}
+\newcommand{\SYMBTagIDesc}{\F{TagIDesc}\xspace}
+\newcommand{\TagIDesc}[1]{\SYMBTagIDesc\:#1}
+\newcommand{\SYMBtoIDesc}{\F{de}\xspace}
+\newcommand{\toIDesc}[1]{\SYMBtoIDesc\:{#1}}
+
+\newcommand{\SYMBidescop}[2]{\green{\llbracket} #1 \green{\rrbracket}_{#2} \xspace}
+\newcommand{\idescop}[3]{\SYMBidescop{#1}{#2}\:#3}
+
+\newcommand{\SYMBDVar}{\etag{\CN{var}}\xspace}
+\newcommand{\DVar}[1]{\SYMBDVar\:#1}
+\newcommand{\SYMBDConst}{\etag{\CN{k}}\xspace}
+\newcommand{\DConst}[1]{\SYMBDConst\:#1}
+
+%% IMu
+\newcommand{\SYMBIMu}{\blue{\mu}\xspace}
+\newcommand{\IMu}[3]{\SYMBIMu_{#1} #2\:#3}
+\newcommand{\SYMBAllI}{\F{AllI}\xspace}
+\newcommand{\AllI}[4]{\SYMBAllI_{#1}#2\:#3\:#4}
+\newcommand{\SYMBallI}{\F{allI}\xspace}
+\newcommand{\allI}[6]{\SYMBallI_{#1}#2\:#3\:#4\:#5\:#6}
+
+
+%% Agda-style data-type declaration
+\newcommand{\data}{\mathkw{data}\;}
+\newcommand{\where}{\;\mathkw{where}}
+\newcommand{\case}[2]{\mathkw{case}\:#1\:\mathkw{of} 
+  \begin{array}{l}
+    #2
+  \end{array}}
+\newcommand{\caseB}[2]{\mathkw{case}\:#1\:\mathkw{of} 
+  \left\{
+  \begin{array}{l}
+    #2
+  \end{array}
+  \right.}
+
+
+%% Free monad
+\newcommand{\FreeMonad}[2]{{#1}^{\F{\(\ast\)}}#2}
+\newcommand{\FreeIMonad}[3]{{#1}^{\F{\(\ast\)}}_{#2}\:#3}
+
+%% Bool
+\newcommand{\Bool}{\D{Bool}}
+\newcommand{\BoolTrue}{\etag{\CN{true}}}
+\newcommand{\BoolFalse}{\etag{\CN{false}}}
+
+
+%% Nat
+\newcommand{\Nat}{\D{Nat}}
+\newcommand{\NatD}{\F{NatD}}
+\newcommand{\NatZero}{\etag{\CN{zero}}}
+\newcommand{\SYMBNatSuc}{\etag{\CN{suc}}\xspace}
+\newcommand{\NatSuc}[1]{\SYMBNatSuc\:#1}
+
+%% List
+\newcommand{\List}{\D{List}}
+\newcommand{\ListD}{\F{ListD}}
+\newcommand{\ListNil}{\etag{\CN{nil}}}
+\newcommand{\SYMBListCons}{\etag{\CN{cons}}\xspace}
+\newcommand{\ListCons}[2]{\SYMBListCons\:#1\:#2}
+
+%% Tree
+\newcommand{\Tree}{\D{Tree}}
+\newcommand{\TreeD}{\F{TreeD}}
+\newcommand{\TreeLeaf}{\etag{\CN{leaf}}}
+\newcommand{\TreeNode}{\etag{\CN{node}}}
+
+%% Lambda terms
+\newcommand{\LambdaT}{\D{LambdaT}}
+\newcommand{\LambdaTD}{\F{LambdaTD}}
+\newcommand{\LambdaTFreeD}{\LambdaTD^{\C{Free}}}
+\newcommand{\LambdaTVar}{\etag{\CN{v}}}
+\newcommand{\LambdaTApp}{\etag{\CN{app}}}
+\newcommand{\LambdaTLam}{\etag{\CN{lam}}}
+
+%% Fin
+\newcommand{\SYMBFin}{\D{Fin}\xspace}
+\newcommand{\Fin}[1]{\SYMBFin\:#1}
+\newcommand{\FinD}{\F{FinD}}
+\newcommand{\FinZero}{\etag{\CN{fz}}}
+\newcommand{\SYMBFinSuc}{\etag{\CN{fs}}\xspace}
+\newcommand{\FinSuc}[1]{\SYMBFinSuc\:#1}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Grammars                                                              %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\SC}{\textsc}  %% syntactic category
+\newcommand{\Grammar}[2]{
+  \begin{array}[t]{rrll}
+    #1 & ::= & #2
+  \end{array}
+}
+\newcommand{\Gor}{\\ & | &}  %% separator making new row of array
+\newcommand{\GNew}[1]{\medskip \\ #1 & ::= &}
+\newcommand{\Gbr}[2]{\!\left\lgroup #2 \right\rgroup^{\!\!#1}}
+
+\newcommand{\wbox}{\square}
+\newcommand{\bbox}{\blacksquare}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Judgments                                                             %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\EC}{\mathcal{E}}
+\newcommand{\Tn}{\vdash}
+\newcommand{\Eq}{\equiv}
+\newcommand{\x}{\V{x}}
+\newcommand{\xS}{\Bhab{\x}{\M{S}}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Computation Relations                                                 %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\usepackage{amssymb}
+\newcommand{\step}[1]{\leadsto_{#1}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Meta-Computation Relations                                            %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\mq}{\mathrel{\Longrightarrow}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Nonexamples                                                           %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%% Non-examples in display math must be explicitly marked as such, in order
+%%% to avoid dangerous wrong learnings.
+
+\newcommand{\BAD}{\mbox{\(\red{(\times)}\)}}
+\newcommand{\NONEXAMPLE}[1]{
+\[
+\BAD\qquad
+#1
+\]%
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Source                                                                %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newenvironment{source}{\[\begin{array}[t]{ll}}{\end{array}\]}
+
+\newcommand{\letH}[2]{\K{let} & #1 \quad #2}
+\newcommand{\letV}[2]{\K{let} & #1 \\ #2}
+
+\newcommand{\sgap}{\medskip \\}
+\newcommand{\X}{l@{\:}}
+\newcommand{\I}{@{\!\_}l@{}}
+\newcommand{\prog}[2]{\begin{array}[t]{@{}#1}#2\end{array}}
+\newcommand{\dent}[2]{\multicolumn{#1}{@{\;\;}l}{#2}}
+\newcommand{\UPI}[1]{\PIBINDER{#1}\FATR}
+\newcommand{\ULAM}[1]{\LAMBINDER{#1}\FATR}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Vertical Arrangement                                                  %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\STL}[1]{\begin{array}[t]{@{}l@{}}#1\end{array}}
+\newcommand{\STC}[1]{\begin{array}[t]{@{}c@{}}#1\end{array}}
+\newcommand{\CASES}[1]{\begin{array}[t]{@{}l@{\;\mapsto\;}l@{}}#1\end{array}}
+
+\newcommand{\stkm}[1]{\begin{array}{@{}l@{}}#1\end{array}}
+\newcommand{\stk}[1]{\begin{array}[t]{@{}l@{}}#1\end{array}}
+\newcommand{\stkl}[1]{\begin{array}[b]{@{}l@{}}#1\end{array}}
+\newcommand{\stkc}[1]{\begin{array}[b]{@{}c@{}}#1\end{array}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Ecce                                                                  %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\ecce}[1]{\begin{array}{@{}l@{\;}l}#1\end{array}}
+
+\newcommand{\ecDEFN}[4]{
+\F{#1}&[\\
+\multicolumn{2}{@{}l}{\quad\ecce{#2}}\\
+\;]&\FATR\;#3\;:\:#4 \\
+}
+\newcommand{\ecDefn}[4]{
+\F{#1} & [#2]\;\FATR\;#3\;:\:#4 \\
+}
+\newcommand{\ecdefn}[3]{
+\F{#1} & \FATR\;#2\;:\:#3 \\
+}
+\newcommand{\ecHOLE}[3]{
+\U{#1} & [\\
+\multicolumn{2}{@{}l}{\quad\ecce{#2}}\\
+\;]&\FATR\;?\;:\:#3\\
+}
+\newcommand{\ecHole}[3]{
+\U{#1}&[#2]\;\FATR\;?\;:\:#3 \\
+}
+\newcommand{\echole}[2]{
+\U{#1} & \FATR\;?\;:\:#2 \\
+}
+\newcommand{\ecpara}[2]{
+\V{#1} & :\;#2 \\
+}
+
+\newcommand{\bigRedBracket}[1]{\ensuremath\red{\left[\blackFG{#1}\right]}}
+
+\newcommand{\SHED}{\raisebox{0in}[0in][0in]{\yellow{\(\{?\}\)}}}
+\newcommand{\SHEDARG}[1]{\yellow{\(\{#1\}\)}}
+
+
