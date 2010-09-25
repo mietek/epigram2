@@ -400,6 +400,49 @@
 
   </section>
   <section>
+  <h3>Lambda Calculus</h3>
+  <p>We can define the well-scoped lambda terms as an datatype indexed
+  by the number of varialbes it in scope. Any term of this type will
+  be guaranteed to be well-scoped, it will have no possibility of
+  dangling variables or unintended capture. We use the
+  type <code>Fin</code> again. This time to represent nameless
+  variables as de Bruijn indices:</p>
+
+  <p><code>&gt; idata Fin : Nat -&gt; Set := ('zero : (n : Nat) -&gt; Fin ('suc
+  n)) ; ('suc : (n : Nat) -&gt; Fin n -&gt; Fin ('suc n)) ; </code></p>
+
+  <p>Before proceeding to define lambda terms we explain how to weaken
+  a renaming:</p>
+
+  <p><code>let wk (m : Nat)(n : Nat)(f : Fin m -&gt; Fin n)(i : Fin ('suc
+  m)) : Fin ('suc n) ;<br>
+  refine wk m n f i &lt;= Fin.Ind ('suc m) i ;<br>
+  refine wk m n f ('zero m) = 'zero n ;<br>
+  refine wk m n f ('suc m i) = 'suc n (f i) ;
+  </code></p>
+
+  <p>The data type of lambda terms is defined as follow:</p>
+
+  <p><code>idata Lam : Nat -&gt; Set := ('var : (n : Nat) -&gt; Fin n -&gt; Lam
+  n) ; ('app : (n : Nat) -&gt; Lam n -&gt; Lam n -&gt; Lam n) ; ('lam : (n :
+  Nat) -&gt; Lam ('suc n) -&gt; Lam n) ;</code></p>
+
+  <p>Having defined lambda terms we define renaming:</p>
+
+  <p<code>let ren (m : Nat)(n : Nat)(f : Fin m -&gt; Fin n)(t : Lam m)
+  : Lam n ; <br>
+  refine ren m n f t &lt;= Lam.Ind m t ; <br>
+  refine ren m n f ('var m i) = 'var n (f i) ; <br>
+  refine ren m n f ('app m t u) = 'app n (ren m n f t) (ren m n f u) ; <br>
+  refine ren m n f ('lam m t) = 'lam n (ren ('suc m) ('suc n) (wk m n f)
+		      t) ; 
+  </code></p>
+
+  <p>Unfortunately feeding the last line of this definition to Cochon
+  triggers a space leak at the time of writing</p>
+
+  </section>
+  <section>
    <h3>Appendix - List of Cochon commands</h3>
     <dl>
      <dt><code>quit</code></dt>
