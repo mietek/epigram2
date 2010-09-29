@@ -12,6 +12,7 @@
 
 > import Control.Applicative
 > import Control.Monad
+> import Control.Monad.State
 > import Data.Foldable
 
 > import NameSupply.NameSupplier
@@ -21,6 +22,7 @@
 > import Evidences.Operators
 > import Evidences.DefinitionalEquality
 > import Evidences.PropositionalEquality
+> import Evidences.TypeChecker
 
 > import ProofState.Edition.ProofState
 
@@ -44,14 +46,17 @@ It is easy to decide if a reference is an element of such a substitution:
 When inserting a new reference-value pair into the substitution, we ensure that
 it is consistent with any value already given to the reference.
 
-> insertSubst :: REF -> VAL -> MatchSubst -> ProofState MatchSubst
-> insertSubst x t B0 = error "insertSubst: reference not found!"
-> insertSubst x t (rs :< (y, m)) | x == y = case m of
->     Nothing  -> return (rs :< (x, Just t))
->     Just u   -> do
->         guard =<< withNSupply (equal (pty x :>: (t, u)))
->         return (rs :< (y, m))
-> insertSubst x t (rs :< (y, m)) = (| (insertSubst x t rs) :< ~(y, m) |)
+> insertSubst :: REF -> VAL -> StateT MatchSubst ProofState ()
+> insertSubst x t = get >>= flip help F0
+>   where
+>     help :: MatchSubst -> Fwd (REF, Maybe VAL) -> StateT MatchSubst ProofState ()
+>     help B0 fs = error "insertSubst: reference not found!"
+>     help (rs :< (y, m)) fs | x == y = case m of
+>         Nothing  -> put (rs :< (x, Just t) <>< fs)
+>         Just u   -> do
+>             guard =<< (lift $ withNSupply (equal (pty x :>: (t, u))))
+>             put (rs :< (y, m) <>< fs)
+>     help (rs :< (y, m)) fs = help rs ((y, m) :> fs)
 
 
 The matching commands, defined below, take a matching substitution (initially
@@ -71,78 +76,77 @@ a higher-order matching problem with no solutions). The fresh references are
 therefore collected in a list and |checkSafe| (defined below) is called to
 ensure none of the unsafe references occur.
 
-> matchValue :: MatchSubst -> Bwd REF -> TY :>: (VAL, VAL) ->
->                   ProofState MatchSubst
-> matchValue rs zs (_ :>: (NP x, t)) | x `elemSubst` rs =
->     checkSafe zs t >> insertSubst x t rs
-> matchValue rs zs (PI s t :>: (v, w)) =
->     freshRef ("expand" :<: s) $ \ sRef -> do
+\adam{This is broken, because it assumes all eliminators are injective (including
+projections). If you do something too complicated, it may end up matching
+references with things of the wrong type. A cheap improvement would be to check
+types before calling |insertSubst|, thereby giving a sound but incomplete matching
+algorithm. Really we should do proper higher-order matching.} 
+
+> matchValue :: Bwd REF -> TY :>: (VAL, VAL) -> StateT MatchSubst ProofState ()
+> matchValue zs (ty :>: (NP x, t)) = do
+>     rs <- get
+>     if x `elemSubst` rs
+>         then  lift (checkSafe zs t) >> insertSubst x t
+>         else  matchValue' zs (ty :>: (NP x, t))
+> matchValue zs tvv = matchValue' zs tvv
+
+> matchValue' :: Bwd REF -> TY :>: (VAL, VAL) -> StateT MatchSubst ProofState ()
+> matchValue' zs (PI s t :>: (v, w)) = do
+>     rs <- get
+>     rs' <- lift $ freshRef ("expand" :<: s) $ \ sRef -> do
 >         let sv = pval sRef
->         matchValue rs (zs :< sRef) (t $$ A sv :>: (v $$ A sv, w $$ A sv))
-> matchValue rs zs (ty :>: (v, w)) =
->     solveEquation rs $ (ty :>: v) <-> (ty :>: w)
->   where
->     solveEquation :: MatchSubst -> VAL -> ProofState MatchSubst
->     solveEquation rs TRIVIAL      = return rs
->     solveEquation rs ABSURD       = throwError' $ err "solveEquation: absurd!"
->     solveEquation rs (AND p q)    = do
->         rs' <- solveEquation rs p
->         solveEquation rs' q
->     solveEquation rs (N (op :@ [_S, NP x, _T, t]))
->       | op == eqGreen && x `elemSubst` rs =
->             checkSafe zs t >> insertSubst x t rs
->     solveEquation rs (N (op :@ [_S, N s, _T, N t]))
->       | op == eqGreen = (| fst (matchNeutral rs zs s t) |)
->     solveEquation rs (N (op :@ [_S, s, _T, t]))
->       | op == eqGreen = do
->         guard =<< (withNSupply $ equal (SET :>: (_S, _T)))
->         guard =<< (withNSupply $ equal (_S :>: (s, t)))
->         return rs
->     solveEquation rs v = error $ "solveEquation: unmatched " ++ show v
+>         execStateT (matchValue (zs :< sRef) (t $$ A sv :>: (v $$ A sv, w $$ A sv))) rs
+>     put rs'
+
+> matchValue' zs (C cty :>: (C cs, C ct)) = case halfZip cs ct of
+>     Nothing   -> throwError' $ err "matchValue: unmatched constructors!"
+>     Just cst  -> do
+>         (mapStateT $ mapStateT $ liftError'
+>             (\ v -> convertErrorVALs (fmap fst v)))
+>             (canTy (chevMatchValue zs) (cty :>: cst))
+>         return ()
+
+> matchValue' zs (_ :>: (N s, N t)) = matchNeutral zs s t >> return ()
+
+> matchValue' zs tvv = guard =<< (lift $ withNSupply $ equal tvv)
+
+
+> chevMatchValue :: Bwd REF -> TY :>: (VAL, VAL) ->
+>     StateT MatchSubst (ProofStateT (VAL, VAL)) (() :=>: VAL)
+> chevMatchValue zs tvv@(_ :>: (v, _)) = do
+>     (mapStateT $ mapStateT $ liftError' (error "matchValue: unconvertable error!"))
+>         $ matchValue zs tvv
+>     return (() :=>: v)
 
 
 The |matchNeutral| command matches two neutrals, and returns their type along
 with the matching substitution.
 
-> matchNeutral :: MatchSubst -> Bwd REF -> NEU -> NEU ->
->                     ProofState (MatchSubst, TY)
-> matchNeutral rs zs (P x)   t     | x `elemSubst` rs  = do
->     checkSafe zs (N t)
->     rs' <- insertSubst x (N t) rs
->     return (rs', pty x)
-> matchNeutral rs zs (P x)  (P y)  | x == y            = return (rs, pty x)
-> matchNeutral rs zs (f :$ e) (g :$ d)                 = do
->     (rs', ty) <- matchNeutral rs zs f g
->     matchElim rs' zs ty e d
-> matchNeutral rs zs (fOp :@ as) (gOp :@ bs) | fOp == gOp = do
->     ty <- pity (opTyTel fOp)
->     matchArgs rs zs ty as bs
-> matchNeutral rs zs a b = throwError' $ err "matchNeutral: unmatched "
+> matchNeutral :: Bwd REF -> NEU -> NEU -> StateT MatchSubst ProofState TY
+> matchNeutral zs (P x) t = do
+>     rs <- get
+>     if x `elemSubst` rs
+>         then do
+>             lift $ checkSafe zs (N t)
+>             insertSubst x (N t)
+>             return (pty x)
+>         else matchNeutral' zs (P x) t
+> matchNeutral zs a b = matchNeutral' zs a b
+
+> matchNeutral' :: Bwd REF -> NEU -> NEU -> StateT MatchSubst ProofState TY
+> matchNeutral' zs (P x)  (P y)  | x == y            = return (pty x)
+> matchNeutral' zs (f :$ e) (g :$ d)                 = do
+>     C ty <- matchNeutral zs f g
+>     case halfZip e d of
+>         Nothing  -> throwError' $ err "matchNeutral: unmatched eliminators!"
+>         Just ed  -> do
+>             (_, ty') <- (mapStateT $ mapStateT $ liftError' (error "matchNeutral: unconvertable error!")) $ elimTy (chevMatchValue zs) (N f :<: ty) ed
+>             return ty'
+> matchNeutral' zs (fOp :@ as) (gOp :@ bs) | fOp == gOp = do
+>     (_, ty) <- (mapStateT $ mapStateT $ liftError' (error "matchNeutral: unconvertable error!")) $ opTy fOp (chevMatchValue zs) (zip as bs)
+>     return ty
+> matchNeutral' zs a b = throwError' $ err "matchNeutral: unmatched "
 >                           ++ errVal (N a) ++ err "and" ++ errVal (N b)
-
-
-The |matchElim| command matches two eliminators, given the type of the neutral
-being eliminated; it returns the type of the whole elimination along with the
-matching substitution.
-\adam{can this handle eliminators other than application?}
-
-> matchElim :: MatchSubst -> Bwd REF -> TY -> Elim VAL -> Elim VAL ->
->                  ProofState (MatchSubst, TY)
-> matchElim rs zs (PI s t) (A a) (A b) = do
->     rs' <- matchValue rs zs (s :>: (a, b))
->     return (rs', t $$ A a)
-> matchElim rs zs ty a b = throwError' $ err "matchElim: unmatched!"
-
-
-The |matchArgs| command matches two lists of operator arguments, given the
-telescope type, and also returns the type of the operator application.
-
-> matchArgs :: MatchSubst -> Bwd REF -> TY -> [VAL] -> [VAL] ->
->                  ProofState (MatchSubst, TY)
-> matchArgs rs zs ty [] [] = return (rs, ty)
-> matchArgs rs zs (PI s t) (a:as) (b:bs) = do
->     rs' <- matchValue rs zs (s :>: (a, b))
->     matchArgs rs' zs (t $$ A a) as bs
 
 
 As noted above, fresh references generated when expanding $\Pi$-types must not
@@ -165,7 +169,7 @@ and another term of the same type. It prints out the resulting substitution.
 >         (_ :=>: av :<: ty) <- elabInfer' a
 >         cursorTop
 >         (_ :=>: bv) <- elaborate' (ty :>: b)
->         rs' <- matchValue (bwdList rs) B0 (ty :>: (av, bv))
+>         rs' <- runStateT (matchValue B0 (ty :>: (av, bv))) (bwdList rs)
 >         return (show rs')
 >       where
 >         matchHyp :: (String, DInTmRN) -> ProofState (REF, Maybe VAL)
