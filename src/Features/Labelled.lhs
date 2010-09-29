@@ -38,6 +38,9 @@
 >   halfZip (Label l1 t1) (Label l2 t2) = Just (Label (l1,l2) (t1,t2))
 >   halfZip (LRet x) (LRet y)           = Just (LRet (x,y))
 
+> import -> ElimHalfZip where
+>   halfZip (Call t1) (Call t2) = Just (Call (t1, t2))
+
 > import -> CanPretty where
 >   pretty (Label l t) = const (kword KwLabel <+>
 >       pretty l maxBound <+> kword KwAsc <+> pretty t maxBound

@@ -678,6 +678,17 @@ To ease the writing of error terms, we have a bunch of combinators:
 >   traverse _ Out    = (|Out|)
 >   import <- ElimTraverse
 
+> instance HalfZip Elim where
+>   halfZip (A s) (A t)  = Just $ A (s, t)
+>   import <- ElimHalfZip
+>   halfZip _ _          = Nothing
+
+> instance Functor Elim where
+>   fmap = fmapDefault
+> instance Foldable Elim where
+>   foldMap = foldMapDefault
+
+
 > instance Functor Irr where
 >   fmap = fmapDefault
 > instance Foldable Irr where
@@ -685,10 +696,6 @@ To ease the writing of error terms, we have a bunch of combinators:
 > instance Traversable Irr where
 >    traverse f (Irr x) = (|Irr (f x)|)
 
-> instance Functor Elim where
->   fmap = fmapDefault
-> instance Foldable Elim where
->   foldMap = foldMapDefault
 
 > instance Show x => Show (Tm dp x) where
 >   show (L s)       = "L (" ++ show s ++ ")"

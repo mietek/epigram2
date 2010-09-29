@@ -98,6 +98,10 @@
 >   traverse f Fst  = (|Fst|)
 >   traverse f Snd  = (|Snd|)
 
+> import -> ElimHalfZip where
+>   halfZip Fst Fst = (|Fst|)
+>   halfZip Snd Snd = (|Snd|)
+
 > import -> CanTyRules where
 >   canTy _   (Set :>: Unit) = return Unit
 >   canTy chev  (Set :>: Sigma s t) = do
