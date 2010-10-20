@@ -1,0 +1,102 @@
+\documentclass{article}
+\usepackage{palatino}
+\usepackage{a4}
+\usepackage{alltt}
+\usepackage{xspace}
+\usepackage{pig}
+
+\include{macros}
+
+\ColourEpigram
+
+\begin{document}
+
+
+\section*{Notion of \emph{equivalence relation}:}
+
+\[
+\stkl{
+\SYMBequivrel : \PI{\V{A}}{\Set} 
+                (\V{A} \To \V{A} \To \Prop) \To
+                \Prop \\
+\begin{array}{@{}lcl}
+\equivrel{\V{A}}{\V{R}} \mapsto &        & \eforall{\V{x}}
+                                              {\V{A}}
+                                              {\V{x} \mathop{\V{R}} \V{x}} \\
+                        & \SYMBeand & \eforall{\V{x}\, \V{y}}
+                                              {\V{A}}
+                                              {\V{x} \mathop{\V{R}} \V{y} 
+                                               \Imp \V{y} \mathop{\V{R}} \V{x}} \\
+                        & \SYMBeand & \eforall{\V{x}\, \V{y}\, \V{z}}
+                                              {\V{A}}
+                                              {\V{x} \mathop{\V{R}} \V{y} 
+                                               \Imp \V{y} \mathop{\V{R}} \V{z}
+                                               \Imp \V{x} \mathop{\V{R}} \V{z}} 
+\end{array}
+}
+\]
+
+\section*{Type formers:}
+
+Given a set \(\V{A}\) and an equivalence relation \(\V{R}\) over
+\(\V{A}\), the quotient of \(\V{A}\) by \(\V{R}\) is denoted
+\(\Quotient{\V{A}}{\V{R}}{\V{p}}\), with \(\V{p}\) the proof that
+\(\V{R}\) is indeed an equivalence relation.
+
+
+\[
+\stkl{
+\Rule{\stkc{\Bhab{\V{A}}{\Set} \quad
+            \Bhab{\V{R}}{\V{A} \To \V{A} \To \Prop} \\
+            \Bhab{\V{p}}{\prf{(\equivrel{\V{A}}{\V{R}})}}}}
+     {\Bhab{\Quotient{\V{A}}{\V{R}}{\V{p}}}{\Set}}
+\qquad
+
+\Rule{\Bhab{\V{x}}{A}}
+     {\Bhab{\class{\V{x}}}{\Quotient{A}{R}{p}}}
+}
+\]
+
+\section*{Elimination rule:}
+
+\[
+\stkl{
+\begin{array}{@{}ll}
+\SYMBelimQuotient : & \PITEL{\V{A}}{\Set}
+                      \PITEL{\V{R}}{\V{A} \To \V{A} \To \Prop}
+                      \PITEL{\V{p}}{\prf{(\equivrel{\V{A}}{\V{R}})}} \\
+                    & \PITEL{\V{z}}{\Quotient{\V{A}}{\V{R}}{\V{p}}}
+                      \PITEL{\V{P}}{\Quotient{\V{A}}{\V{R}}{\V{p}} \To \Set} \\
+                    & \PITEL{\V{m}}{\PI{\V{x}}{\V{A}}{\V{P}\:(\class{\V{x}})}}
+                      \PI{\V{h}}{\prf{(\eforall{\V{x}\, \V{y}}{\V{A}}
+                                       \V{x} \mathop{\V{R}} \V{y}
+                                       \Imp (\Bhab{\V{m}\: \V{x}}{\V{P}\: \V{x}}) 
+                                              \PropEq 
+                                            (\Bhab{\V{m}\: \V{y}}{\V{P}\: \V{y}}))}} 
+                      \V{P}\: \V{z}
+\end{array}\\
+\elimQuotient{\V{A}}{\V{R}}{\V{p}}{(\class{\V{x}})}{\V{P}}{\V{m}}{\V{h}} \mapsto \V{m}\: \V{z}
+}
+\]
+
+
+\section*{Propositional equality:}
+
+\[
+\Rule{\eforall{\V{b}}{\V{B}}
+      (\Bhab{\V{x}}{\V{A}}) \PropEq (\Bhab{\V{b}}{\V{B}})
+       \Imp \V{b} \mathop{S} \V{y}}
+     {(\Bhab{\class{\V{x}}}{\Quotient{A}{R}{p}})
+        \PropEq
+      (\Bhab{\class{\V{y}}}{\Quotient{B}{S}{q}})}
+\]
+
+
+\section*{Note:}
+
+The notion of propositional equality in use here comes from the
+``Observational Equality, Now!'' paper. In particular, the \(\PropEq\)
+equality is heterogeneous (hence the type ascriptions). The \(\prf{}\)
+constructor embeds objects of \(\Prop\) into \(\Set\).
+
+\end{document}
