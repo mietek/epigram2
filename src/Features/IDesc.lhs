@@ -461,22 +461,23 @@ index of |IMu| to make a fully applied anchor |DIMu|.
 >                       NILE)))))))
 
 >   cases :: INTM -> INTM
->   cases _I = (PAIR (ISIGMA _I (LK $ ICONST UNIT)) 
->            (PAIR (ISIGMA SET (LK $ ICONST UNIT))
->            (PAIR (ISIGMA SET (L $ "S" :. [._S.  
->                   (IPROD (TAG "T") (IPI (NV _S) (LK $ IVAR VOID)) 
->                          (ICONST UNIT))]))
->            (PAIR (ISIGMA (enumU -$ []) (L $ "E" :. [._E.
->                  (IPROD (TAG "T") (IPI (ENUMT (NV _E)) (LK $ IVAR VOID))
->                  (ICONST UNIT))]))
->             (PAIR (ISIGMA SET (L $ "S" :. [._S.  
->                                       (IPROD (TAG "T") (IPI (NV _S) (LK $ IVAR VOID)) 
->                                              (ICONST UNIT))]))
->                     (PAIR (ISIGMA (enumU -$ []) (L $ "E" :. [._E.
->                                       (IPROD (TAG "T") (IFPI (NV _E) (LK $ IVAR VOID))
->                                              (ICONST UNIT))]))
->                     (PAIR (ISIGMA UID (L $ "u" :. (IPROD (TAG "C") (IVAR VOID) (IPROD (TAG "D") (IVAR VOID) (ICONST UNIT)))))
->                      VOID)))))))
+>   cases _I = 
+>    {- varD: -}    (PAIR (ISIGMA _I (LK $ ICONST UNIT)) 
+>    {- constD: -}  (PAIR (ISIGMA SET (LK $ ICONST UNIT))
+>    {- piD: -}     (PAIR (ISIGMA SET (L $ "S" :. [._S.  
+>                     (IPROD (TAG "T") (IPI (NV _S) (LK $ IVAR VOID)) 
+>                            (ICONST UNIT))]))
+>    {- fpiD: -}    (PAIR (ISIGMA (enumU -$ []) (L $ "E" :. [._E.
+>                     (IPROD (TAG "T") (IPI (ENUMT (NV _E)) (LK $ IVAR VOID))
+>                            (ICONST UNIT))]))
+>    {- sigmaD: -}  (PAIR (ISIGMA SET (L $ "S" :. [._S.  
+>                     (IPROD (TAG "T") (IPI (NV _S) (LK $ IVAR VOID)) 
+>                            (ICONST UNIT))]))
+>    {- fsigmaD: -} (PAIR (ISIGMA (enumU -$ []) (L $ "E" :. [._E.
+>                     (IPROD (TAG "T") (IFPI (NV _E) (LK $ IVAR VOID))
+>                            (ICONST UNIT))]))
+>    {- prodD: -}   (PAIR (ISIGMA UID (L $ "u" :. (IPROD (TAG "C") (IVAR VOID) (IPROD (TAG "D") (IVAR VOID) (ICONST UNIT)))))
+>                     VOID)))))))
 
 >   idescFakeREF :: REF
 >   idescFakeREF = [("Primitive", 0), ("IDesc", 0)] 
