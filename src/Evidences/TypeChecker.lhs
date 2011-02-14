@@ -25,8 +25,6 @@
 
 > import NameSupply.NameSupplier
 
-> import Features.Features ()
-
 %endif
 
 
@@ -73,7 +71,131 @@ using |canTy|.
 >   ssv@(s :=>: sv) <- chev (SET :>: s)
 >   ttv@(t :=>: tv) <- chev (ARR sv SET :>: t)
 >   return $ Pi ssv ttv
-> import <- CanTyRules
+> -- import <- CanTyRules
+> -- [Feature = Anchor]
+> canTy chev (Set :>: Anchors) = return Anchors
+> canTy chev (Anchors :>: Anchor u t ts) = do
+>     uuv <- chev (UID :>: u)
+>     ttv@(t :=>: tv) <- chev (SET :>: t)
+>     tstsv <- chev (ALLOWEDBY tv :>: ts)
+>     return $ Anchor uuv ttv tstsv
+> canTy chev (Set :>: AllowedBy t) = do
+>     ttv <- chev (SET :>: t)
+>     return $ AllowedBy ttv
+> canTy chev (AllowedBy t :>: AllowedEpsilon) = do
+>     return $ AllowedEpsilon
+> canTy chev (AllowedBy ty :>: AllowedCons _S _T q s ts) = do
+>     _SSv@(_S :=>: _Sv) <- chev (SET :>: _S)
+>     _TTv@(_T :=>: _Tv) <- chev (ARR _Sv SET :>: _T)
+>     qqv <- chev (PRF (EQBLUE (SET :>: ty) (SET :>: PI _Sv _Tv)) :>: q)
+>     ssv@(s :=>: sv) <- chev (_Sv :>: s)
+>     tstsv <- chev (ALLOWEDBY (_Tv $$ (A sv)) :>: ts)
+>     return $ AllowedCons _SSv _TTv qqv ssv tstsv
+> -- [/Feature = Anchor]
+> -- [Feature = Enum]
+> canTy chev (Set :>: EnumT e)  = do
+>   eev@(e :=>: ev) <- chev (enumU :>: e)
+>   return $ EnumT eev
+> canTy _ (EnumT (CON e) :>: Ze)       | CONSN <- e $$ Fst  = return Ze 
+> canTy chev (EnumT (CON e) :>: Su n)  | CONSN <- e $$ Fst  = do
+>   nnv@(n :=>: nv) <- chev (ENUMT (e $$ Snd $$ Snd $$ Fst) :>: n)
+>   return $ Su nnv
+> -- [/Feature = Enum]
+> -- [Feature = Equality]
+> canTy chev (Prop :>: EqBlue (y0 :>: t0) (y1 :>: t1)) = do
+>   y0y0v@(y0 :=>: y0v) <- chev (SET :>: y0)
+>   t0t0v@(t0 :=>: t0v) <- chev (y0v :>: t0)
+>   y1y1v@(y1 :=>: y1v) <- chev (SET :>: y1)
+>   t1t1v@(t1 :=>: t1v) <- chev (y1v :>: t1)
+>   return $ EqBlue (y0y0v :>: t0t0v) (y1y1v :>: t1t1v)
+> canTy chev (Prf (EQBLUE (y0 :>: t0) (y1 :>: t1)) :>: Con p) = do
+>   ppv@(p :=>: pv) <- chev (PRF (eqGreen @@ [y0, t0, y1, t1]) :>: p)
+>   return $ Con ppv
+> -- [/Feature = Equality]
+> -- [Feature = IDesc]
+> canTy chev (Set :>: IMu (ml :?=: (Id ii :& Id x)) i)  = do
+>   iiiiv@(ii :=>: iiv) <- chev (SET :>: ii)
+>   mlv <- traverse (chev . (ARR iiv ANCHORS :>:)) ml
+>   xxv@(x :=>: xv) <- chev (ARR iiv (idesc $$ A iiv) :>: x)
+>   iiv <- chev (iiv :>: i)
+>   return $ IMu (mlv :?=: (Id iiiiv :& Id xxv)) iiv
+> canTy chev (IMu tt@(_ :?=: (Id ii :& Id x)) i :>: Con y) = do
+>   yyv <- chev (idescOp @@ [ ii
+>                           , x $$ A i 
+>                           , L $ "i" :. [.i. 
+>                               C (IMu (fmap (-$ []) tt) (NV i)) ]
+>                           ] :>: y)
+>   return $ Con yyv
+> -- [/Feature = IDesc]
+> -- [Feature = Labelled]
+> canTy chev (Set :>: Label l t) = do
+>    ttv@(t :=>: tv) <- chev (SET :>: t)
+>    llv@(l :=>: lv) <- chev (tv :>: l)
+>    return (Label llv ttv)
+> canTy chev (Label l ty :>: LRet t) = do
+>    ttv@(t :=>: tv) <- chev (ty :>: t)
+>    return (LRet ttv)
+> -- [/Feature = Labelled]
+> -- [Feature = Problem]
+> canTy chev (Set :>: Prob) = return Prob
+> canTy chev (Prob :>: ProbLabel u s a) = do
+>   uuv <- chev (UID :>: u)
+>   ssv@(_ :=>: sv) <- chev (SCH :>: s)
+>   aav <- chev (argsOp @@ [sv] :>: a)
+>   return $ ProbLabel uuv ssv aav
+> canTy chev (Prob :>: PatPi u s p) = do
+>   uuv <- chev (UID :>: u)
+>   ssv <- chev (SET :>: s)
+>   ppv <- chev (PROB :>: p)
+>   return $ PatPi uuv ssv ppv
+
+> canTy chev (Set :>: Sch) = return Sch
+> canTy chev (Sch :>: SchTy s) = do
+>   ssv <- chev (SET :>: s)
+>   return $ SchTy ssv
+> canTy chev (Sch :>: SchExpPi s t) = do
+>   ssv@(_ :=>: sv) <- chev (SCH :>: s)
+>   ttv <- chev (ARR (schTypeOp @@ [sv]) SCH :>: t)
+>   return $ SchExpPi ssv ttv
+> canTy chev (Sch :>: SchImpPi s t) = do
+>   ssv@(_ :=>: sv) <- chev (SET :>: s)
+>   ttv <- chev (ARR sv SCH :>: t)
+>   return $ SchImpPi ssv ttv
+> -- [/Feature = Problem]
+> -- [Feature = Prop]
+> canTy _   (Set :>: Prop) = return Prop
+> canTy chev  (Set :>: Prf p) = (|Prf (chev (PROP :>: p))|)
+> canTy chev  (Prop :>: All s p) = do
+>   ssv@(_ :=>: sv) <- chev (SET :>: s)
+>   ppv <- chev (ARR sv PROP :>: p)
+>   return $ All ssv ppv
+> canTy chev  (Prop :>: And p q) = 
+>   (|And (chev (PROP :>: p)) (chev (PROP :>: q))|)
+> canTy _  (Prop :>: Trivial) = return Trivial
+> canTy _   (Prop :>: Absurd) = return Absurd
+> canTy chev  (Prf p :>: Box (Irr x)) = (|(Box . Irr) (chev (PRF p :>: x))|)
+> canTy chev (Prf (AND p q) :>: Pair x y) = do
+>   (|Pair (chev (PRF p :>: x)) (chev (PRF q :>: y))|)
+> canTy _   (Prf TRIVIAL :>: Void) = return Void
+> canTy chev (Prop :>: Inh ty) = (|Inh (chev (SET :>: ty))|)
+> canTy chev (Prf (INH ty) :>: Wit t) = (|Wit (chev (ty :>: t))|)
+> -- [/Feature = Prop]
+> -- [Feature = Sigma]
+> canTy _   (Set :>: Unit) = return Unit
+> canTy chev  (Set :>: Sigma s t) = do
+>   ssv@(s :=>: sv) <- chev (SET :>: s)
+>   ttv@(t :=>: tv) <- chev (ARR sv SET :>: t)
+>   return $ Sigma ssv ttv
+> canTy _   (Unit :>: Void) = return Void
+> canTy chev  (Sigma s t :>: Pair x y) =  do
+>   xxv@(x :=>: xv) <- chev (s :>: x)
+>   yyv@(y :=>: yv) <- chev ((t $$ A xv) :>: y)
+>   return $ Pair xxv yyv
+> -- [/Feature = Sigma]
+> -- [Feature = UId]
+> canTy _  (Set :>: UId)    = return UId
+> canTy _  (UId :>: Tag s)  = return (Tag s)
+> -- [/Feature = UId]
 > canTy  chev (ty :>: x)  = throwError'  $ err "canTy: the proposed value "
 >                                        ++ errCan x
 >                                        ++ err " is not of type " 
@@ -100,7 +222,33 @@ ie. the eliminator, in |Elim (s :=>: VAL)| and the type of the result in
 > elimTy chev (f :<: Pi s t) (A e) = do
 >   eev@(e :=>: ev) <- chev (s :>: e)
 >   return $ (A eev, t $$ A ev) 
-> import <- ElimTyRules
+> -- import <- ElimTyRules
+> -- [Feature = Equality]
+> elimTy chev (_ :<: Prf (EQBLUE (t0 :>: x0) (t1 :>: x1))) Out =
+>   return (Out, PRF (eqGreen @@ [t0 , x0 , t1 , x1]))
+> -- [/Feature = Equality]
+> -- [Feature = IDesc]
+> elimTy chev (_ :<: (IMu tt@(_ :?=: (Id ii :& Id x)) i)) Out = 
+>   return (Out, 
+>     idescOp @@ [  ii , x $$ A i 
+>                ,  L $ "i" :. [.i. C (IMu (fmap (-$ []) tt) (NV i)) ] ])
+> -- [/Feature = IDesc]
+> -- [Feature = Labelled]
+> elimTy chev (_ :<: Label _ t) (Call l) = do
+>    llv@(l :=>: lv) <- chev (t :>: l)
+>    return (Call llv, t)
+> -- [/Feature = Labelled]
+> -- [Feature = Prop]
+> elimTy chev (f :<: Prf (ALL p q))      (A e)  = do
+>   eev@(e :=>: ev) <- chev (p :>: e)
+>   return $ (A eev, PRF (q $$ A ev))
+> elimTy chev (_ :<: Prf (AND p q))      Fst    = return (Fst, PRF p)
+> elimTy chev (_ :<: Prf (AND p q))      Snd    = return (Snd, PRF q)
+> -- [/Feature = Prop]
+> -- [Feature = Sigma]
+> elimTy chev (_ :<: Sigma s t) Fst = return (Fst, s)
+> elimTy chev (p :<: Sigma s t) Snd = return (Snd, t $$ A (p $$ Fst))
+> -- [/Feature = Sigma]
 > elimTy _  (v :<: t) e = throwError'  $ err "elimTy: failed to eliminate" 
 >                                      ++ errTyVal (v :<: (C t)) 
 >                                      ++ err "with" 
@@ -224,7 +372,15 @@ This translates naturally into the following code:
 Finally, we can extend the checker with the |Check| aspect. If no rule
 has matched, then we have to give up.
 
-> import <- Check
+> -- import <- Check
+> -- [Feature = Prop]
+> check (PRF (ALL p q) :>: L sc)  = do
+>   freshRef  ("" :<: p)
+>             (\ref -> check (  PRF (q $$ A (pval ref)) :>: 
+>                               underScope sc ref))
+>   return $ L sc :=>: (evTm $ L sc)
+> -- [/Feature = Prop]
+
 > check (ty :>: tm) = throwError'  $ err "check: type mismatch: type"
 >                                  ++ errTyVal (ty :<: SET)
 >                                  ++ err "does not admit"

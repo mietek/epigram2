@@ -21,8 +21,6 @@
 > import Kit.MissingLibrary
 > import Kit.BwdFwd
 
-> import Features.Features ()
-
 > import NameSupply.NameSupply
 
 %endif
@@ -192,7 +190,59 @@ in using a She aspect.
 >   Set   :: Can t                                   -- set of sets
 >   Pi    :: t -> t -> Can t                         -- functions
 >   Con   :: t -> Can t                              -- packing
->   import <- CanConstructors
+>   -- import <- CanConstructors
+>   -- [Feature = Anchor]
+>   Anchors  ::  Can t
+>   Anchor   ::  t -> t -> t -> Can t
+>   AllowedBy :: t -> Can t
+>   AllowedEpsilon :: Can t
+>   AllowedCons :: t -> t -> t -> t -> t -> Can t
+>   -- [/Feature = Anchor]
+>   -- [Feature = Enum]
+>   EnumT  :: t -> Can t
+>   Ze     :: Can t
+>   Su     :: t -> Can t 
+>   -- [/Feature = Enum]
+>   -- [Feature = Equality]
+>   EqBlue :: (t :>: t) -> (t :>: t) -> Can t
+>   -- [/Feature = Equality]
+>   -- [Feature = IDesc]
+>   IMu     :: Labelled (Id :*: Id) t -> t -> Can t
+>   -- [/Feature = IDesc]
+>   -- [Feature = Labelled]
+>   Label  :: t -> t -> Can t
+>   LRet   :: t -> Can t
+>   -- [/Feature = Labelled]
+>   -- [Feature = Problem]
+>   Prob       :: Can t
+>   ProbLabel  :: t -> t -> t -> Can t
+>   PatPi      :: t -> t -> t -> Can t
+>   Sch        :: Can t
+>   SchTy      :: t -> Can t
+>   SchExpPi   :: t -> t -> Can t
+>   SchImpPi    :: t -> t -> Can t
+>   -- [/Feature = Problem]
+>   -- [Feature = Prop]
+>   Prop    :: Can t
+>   Prf     :: t -> Can t
+>   All     :: t -> t -> Can t
+>   And     :: t -> t -> Can t
+>   Trivial :: Can t
+>   Absurd  :: Can t
+>   Box     :: Irr t -> Can t
+>   Inh     :: t -> Can t
+>   Wit     :: t -> Can t
+>   -- [/Feature = Prop]
+>   -- [Feature = Sigma]
+>   Unit   :: Can t
+>   Void   :: Can t
+>   Sigma  :: t -> t -> Can t
+>   Pair   :: t -> t -> Can t 
+>   -- [/Feature = Sigma]
+>   -- [Feature = UId]
+>   UId    :: Can t
+>   Tag    :: String -> Can t
+>   -- [/Feature = UId]
 >   deriving (Show, Eq)
 
 
@@ -215,7 +265,14 @@ eliminators for types with \(\eta\)-laws go here.
 > data Elim :: * -> * where
 >   A     :: t -> Elim t                             -- application
 >   Out   :: Elim t                                  -- unpacks Con
->   import <- ElimConstructors
+>   -- import <- ElimConstructors
+>   -- [Feature = Labelled]
+>   Call   :: t -> Elim t
+>   -- [/Feature = Labelled]
+>   -- [Feature = Sigma]
+>   Fst    :: Elim t
+>   Snd    :: Elim t
+>   -- [/Feature = Sigma]
 >   deriving (Show, Eq)
 
 Just as |Con| was packing things up, we define here |Out| to unpack
@@ -304,7 +361,84 @@ We have some pattern synonyms for common, er, patterns.
 > pattern LAV x t   = L (x :. t)           -- Lambda (with variable)
 > pattern LK t      = L (K t)              -- Lambda (with constant)
 > pattern PIV x s t = PI s (LAV x t)       -- Pi (with variable)
-> import <- CanPats
+> -- import <- CanPats
+> -- [Feature = Anchor]
+> pattern ANCHORS        = C Anchors
+> pattern ANCHOR u t ts  = C (Anchor u t ts)
+> pattern ALLOWEDBY t    = C (AllowedBy t)
+> pattern ALLOWEDEPSILON = C AllowedEpsilon
+> pattern ALLOWEDCONS _S _T q s ts = C (AllowedCons _S _T q s ts) 
+> -- [/Feature = Anchor]
+> -- [Feature = Enum]
+> pattern ZE         = C Ze
+> pattern SU n       = C (Su n)
+
+> pattern NILN       = ZE
+> pattern CONSN      = SU ZE
+
+> pattern ENUMT e    = C (EnumT e) 
+> pattern NILE       = CON (PAIR NILN VOID)
+> pattern CONSE t e  = CON (PAIR CONSN (PAIR t (PAIR e VOID)))
+> -- [/Feature = Enum]
+> -- [Feature = Equality]
+> pattern EQBLUE p q = C (EqBlue p q)
+> -- [/Feature = Equality]
+> -- [Feature = IDesc]
+> pattern IVARN     = ZE
+> pattern ICONSTN   = SU ZE
+> pattern IPIN      = SU (SU ZE)
+> pattern IFPIN     = SU (SU (SU ZE))
+> pattern ISIGMAN   = SU (SU (SU (SU ZE)))
+> pattern IFSIGMAN  = SU (SU (SU (SU (SU ZE))))
+> pattern IPRODN    = SU (SU (SU (SU (SU (SU ZE)))))
+
+> pattern IMU l ii x i  = C (IMu (l :?=: (Id ii :& Id x)) i) 
+> pattern IVAR i        = CON (PAIR IVARN     (PAIR i VOID))
+> pattern IPI s t       = CON (PAIR IPIN      (PAIR s (PAIR t VOID)))
+> pattern IFPI s t      = CON (PAIR IFPIN     (PAIR s (PAIR t VOID)))
+> pattern ISIGMA s t    = CON (PAIR ISIGMAN   (PAIR s (PAIR t VOID)))
+> pattern IFSIGMA s t   = CON (PAIR IFSIGMAN  (PAIR s (PAIR t VOID)))
+> pattern ICONST p      = CON (PAIR ICONSTN   (PAIR p VOID))
+> pattern IPROD u x y   = CON (PAIR IPRODN    (PAIR u (PAIR x (PAIR y VOID))))
+> -- [/Feature = IDesc]
+> -- [Feature = Labelled]
+> pattern LABEL l t = C (Label l t)
+> pattern LRET t    = C (LRet t)
+> -- [/Feature = Labelled]
+> -- [Feature = Problem]
+> pattern PROB             = C Prob
+> pattern PROBLABEL u s a  = C (ProbLabel u s a)
+> pattern PATPI u s p      = C (PatPi u s p)
+> pattern SCH              = C Sch
+> pattern SCHTY s          = C (SchTy s)
+> pattern SCHEXPPI s t     = C (SchExpPi s t)
+> pattern SCHIMPPI s t     = C (SchImpPi s t)
+> -- [/Feature = Problem]
+> -- [Feature = Prop]
+> pattern PROP        = C Prop
+> pattern PRF p       = C (Prf p)
+> pattern ALL p q     = C (All p q)
+> pattern IMP p q     = ALL (PRF p) (L (K q))
+> pattern ALLV x s p  = ALL s (LAV x p)
+> pattern AND p q     = C (And p q)
+> pattern TRIVIAL     = C Trivial
+> pattern ABSURD      = C Absurd
+> pattern BOX p       = C (Box p)
+> pattern INH ty      = C (Inh ty)
+> pattern WIT t       = C (Wit t)
+> -- [/Feature = Prop]
+> -- [Feature = Sigma]
+> pattern SIGMA p q = C (Sigma p q)
+> pattern PAIR  p q = C (Pair p q)
+> pattern UNIT      = C Unit
+> pattern VOID      = C Void
+> pattern Times x y = Sigma x (L (K y))
+> pattern TIMES x y = C (Times x y)  
+> -- [/Feature = Sigma]
+> -- [Feature = UId]
+> pattern UID    = C UId
+> pattern TAG s  = C (Tag s)
+> -- [/Feature = UId]
 
 We have some type synonyms for commonly occurring instances of |Tm|.
 
@@ -569,7 +703,7 @@ Sensible name advice is a hard problem. The |fortran| function tries to extract
 a useful name from a binder.  
 
 > fortran :: Tm {In, p} x -> String
-> fortran (L (x :. _))   | not (null x) = x
+> fortran (L (x :. _))    | not (null x) = x
 > fortran (L (H _ x _))   | not (null x) = x
 > fortran _ = "xf"
 
@@ -659,14 +793,113 @@ To ease the writing of error terms, we have a bunch of combinators:
 >   traverse f Set       = (|Set|)
 >   traverse f (Pi s t)  = (|Pi (f s) (f t)|)
 >   traverse f (Con t)   = (|Con (f t)|)
->   import <- CanTraverse
+>   -- import <- CanTraverse
+>   -- [Feature = Anchor]
+>   traverse _ Anchors = (| Anchors |)
+>   traverse f (Anchor u t ts) = (|Anchor (f u) (f t) (f ts)|)
+>   traverse f (AllowedBy t) = (|AllowedBy (f t)|)
+>   traverse f AllowedEpsilon = (|AllowedEpsilon|)
+>   traverse f (AllowedCons _S _T q s ts) = (|AllowedCons (f _S) (f _T) (f q) (f s) (f ts)|)
+>   -- [/Feature = Anchor]
+>   -- [Feature = Enum]
+>   traverse f (EnumT e)    = (|EnumT (f e)|)
+>   traverse f Ze           = (|Ze|)
+>   traverse f (Su n)       = (|Su (f n)|) 
+>   -- [/Feature = Enum]
+>   -- [Feature = Equality]
+>   traverse f (EqBlue (pty :>: p) (qty :>: q)) =
+>     (|EqBlue (|(:>:) (f pty) (f p)|) (|(:>:) (f qty) (f q)|)|)
+>   -- [/Feature = Equality]
+>   -- [Feature = IDesc]
+>   traverse f (IMu l i)     = (|IMu (traverse f l) (f i)|)
+>   -- [/Feature = IDesc]
+>   -- [Feature = Labelled]
+>   traverse f (Label l t) = (| Label (f l) (f t) |)
+>   traverse f (LRet t)    = (| LRet (f t) |)
+>   -- [/Feature = Labelled]
+>   -- [Feature = Problem]
+>   traverse _ Prob = (| Prob |)
+>   traverse f (ProbLabel u s a) = (|ProbLabel (f u) (f s) (f a)|)
+>   traverse f (PatPi u s p) = (|PatPi (f u) (f s) (f p)|)
+>   traverse _ Sch = (| Sch |)
+>   traverse f (SchTy t)      = (|SchTy (f t)|)
+>   traverse f (SchExpPi s t) = (|SchExpPi (f s) (f t)|)
+>   traverse f (SchImpPi s t) = (|SchImpPi (f s) (f t)|)
+>   -- [/Feature = Problem]
+>   -- [Feature = Prop]
+>   traverse _ Prop      = (|Prop|)
+>   traverse f (Prf p)   = (|Prf (f p)|)
+>   traverse f (All p q) = (|All (f p) (f q)|)
+>   traverse f (And p q) = (|And (f p) (f q)|)
+>   traverse _ Trivial   = (|Trivial|)
+>   traverse _ Absurd    = (|Absurd|)
+>   traverse f (Box p)   = (|Box (traverse f p)|)
+>   traverse f (Inh ty)  = (|Inh (f ty)|)
+>   traverse f (Wit t)   = (|Wit (f t)|)
+>   -- [/Feature = Prop]
+>   -- [Feature = Sigma]
+>   traverse f Unit         = (|Unit|)
+>   traverse f Void         = (|Void|)
+>   traverse f (Sigma s t)  = (|Sigma (f s) (f t)|)
+>   traverse f (Pair x y)   = (|Pair (f x) (f y)|) 
+>   -- [/Feature = Sigma]
+>   -- [Feature = UId]
+>   traverse f UId          = (|UId|)
+>   traverse f (Tag s)      = (|(Tag s)|)
+>   -- [/Feature = UId]
 
 > instance HalfZip Can where
->    halfZip Set        Set        = Just Set
->    halfZip (Pi s1 t1) (Pi s2 t2) = Just $ Pi (s1,s2) (t1,t2)
->    halfZip (Con t1)   (Con t2)   = Just $ Con (t1,t2)
->    import <- CanHalfZip
->    halfZip _          _          = Nothing
+>   halfZip Set        Set        = Just Set
+>   halfZip (Pi s1 t1) (Pi s2 t2) = Just $ Pi (s1,s2) (t1,t2)
+>   halfZip (Con t1)   (Con t2)   = Just $ Con (t1,t2)
+>   -- import <- CanHalfZip
+>   -- [Feature = Anchor]
+>   halfZip Anchors Anchors = Just Anchors
+>   halfZip (Anchor u1 t1 ts1) (Anchor u2 t2 ts2) = Just $ Anchor (u1, u2) (t1, t2) (ts1, ts2)
+>   halfZip (AllowedBy t1) (AllowedBy t2) = Just $ AllowedBy (t1, t2)
+>   halfZip AllowedEpsilon AllowedEpsilon = Just $ AllowedEpsilon
+>   halfZip (AllowedCons _S1 _T1 q1 s1 ts1) (AllowedCons _S2 _T2 q2 s2 ts2) = Just $ AllowedCons (_S1, _S2) (_T1, _T2) (q1, q2) (s1, s2) (ts1, ts2)
+>   -- [/Feature = Anchor]
+>   -- [Feature = Enum]
+>   halfZip (EnumT t0) (EnumT t1) = Just (EnumT (t0,t1))
+>   halfZip Ze Ze = Just Ze
+>   halfZip (Su t0) (Su t1) = Just (Su (t0,t1))
+>   -- [/Feature = Enum]
+>   -- [Feature = Equality]
+>   halfZip (EqBlue (pty0 :>: p0) (qty0 :>: q0)) (EqBlue (pty1 :>: p1) (qty1 :>: q1)) = Just $ 
+>     EqBlue ((pty0,pty1) :>: (p0,p1)) ((qty0,qty1) :>: (q0,q1)) 
+>   -- [/Feature = Equality]
+>   -- [Feature = IDesc]
+>   halfZip (IMu l0 i0) (IMu l1 i1) = (|(\p -> IMu p (i0,i1)) (halfZip l0 l1)|)
+>   -- [/Feature = IDesc]
+>   -- [Feature = Labelled]
+>   halfZip (Label l1 t1) (Label l2 t2) = Just (Label (l1,l2) (t1,t2))
+>   halfZip (LRet x) (LRet y)           = Just (LRet (x,y))
+>   -- [/Feature = Labelled]
+>   -- [Feature = Problem]
+>   halfZip Prob Prob = Just Prob
+>   halfZip (ProbLabel u1 s1 a1) (ProbLabel u2 s2 a2) = Just $ ProbLabel (u1, u2) (s1, s2) (a1, a2)
+>   halfZip (PatPi u1 s1 p1) (PatPi u2 s2 p2) = Just $ PatPi (u1, u2) (s1, s2) (p1, p2)
+>   halfZip Sch Sch = Just Sch
+>   halfZip (SchTy s1) (SchTy s2) = Just $ SchTy (s1, s2)
+>   halfZip (SchExpPi s1 t1) (SchExpPi s2 t2) = Just $ SchExpPi (s1, s2) (t1, t2)
+>   halfZip (SchImpPi s1 t1) (SchImpPi s2 t2) = Just $ SchImpPi (s1, s2) (t1, t2)
+>   -- [/Feature = Problem]
+>   -- [Feature = Prop]
+>   halfZip  Prop      Prop      = Just Prop
+>   halfZip  (Prf p0)  (Prf p1)  = Just (Prf (p0, p1))
+>   -- [/Feature = Prop]
+>   -- [Feature = Sigma]
+>   halfZip Unit Unit = Just Unit
+>   halfZip (Sigma s0 t0) (Sigma s1 t1) = Just (Sigma (s0,s1) (t0,t1))
+>   halfZip Void Void = Just Void
+>   halfZip (Pair s0 t0) (Pair s1 t1) = Just (Pair (s0,s1) (t0,t1))
+>   -- [/Feature = Sigma]
+>   -- [Feature = UId]
+>   halfZip UId UId = Just UId
+>   halfZip (Tag s) (Tag s') | s == s' = Just (Tag s)
+>   -- [/Feature = UId]
+>   halfZip _          _          = Nothing
 
 > instance Functor Can where
 >   fmap = fmapDefault
@@ -676,11 +909,25 @@ To ease the writing of error terms, we have a bunch of combinators:
 > instance Traversable Elim where
 >   traverse f (A s)  = (|A (f s)|)
 >   traverse _ Out    = (|Out|)
->   import <- ElimTraverse
+>   -- import <- ElimTraverse
+>   -- [Feature = Labelled]
+>   traverse f (Call l) = (| Call (f l) |)
+>   -- [/Feature = Labelled]
+>   -- [Feature = Sigma]
+>   traverse f Fst  = (|Fst|)
+>   traverse f Snd  = (|Snd|)
+>   -- [/Feature = Sigma]
 
 > instance HalfZip Elim where
 >   halfZip (A s) (A t)  = Just $ A (s, t)
->   import <- ElimHalfZip
+>   -- import <- ElimHalfZip
+>   -- [Feature = Labelled]
+>   halfZip (Call t1) (Call t2) = Just (Call (t1, t2))
+>   -- [/Feature = Labelled]
+>   -- [Feature = Sigma]
+>   halfZip Fst Fst = (|Fst|)
+>   halfZip Snd Snd = (|Snd|)
+>   -- [/Feature = Sigma]
 >   halfZip _ _          = Nothing
 
 > instance Functor Elim where

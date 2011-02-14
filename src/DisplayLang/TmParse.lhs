@@ -19,8 +19,6 @@
 > import DisplayLang.Scheme
 > import DisplayLang.Lexer
 
-> import Features.Features ()
-
 > import Evidences.Tm
 
 %endif
@@ -159,16 +157,52 @@ the parser.
 
 > elimParsers :: SizedParserList (Elim DInTmRN)
 > elimParsers = arrange $ 
->     import <- ElimParsers
->   
+>     -- import <- ElimParsers
+>     -- [Feature = Labelled]
+>     (AppSize, (| Call (%keyword KwCall%) ~DU |)) :
+>     -- [/Feature = Labelled]
+>     -- [Feature = Sigma]
+>     (AppSize, (| Fst (%keyword KwFst%) |)) :
+>     (AppSize, (| Snd (%keyword KwSnd%) |)) :
+>     -- [/Feature = Sigma]
 >     (AppSize, (| Out (%keyword KwOut%) |)) :
 >     (AppSize, (| A (sizedDInTm ArgSize) |)) :
 >     []
       
 > inDTmParsersSpecial :: SizedParserList DInTmRN
 > inDTmParsersSpecial = arrange $ 
->     import <- DInTmParsersSpecial
->
+>     -- import <- DInTmParsersSpecial
+>     -- [Feature = Enum]
+>     (ArgSize, (|mkNum (|read digits|) (optional $ (keyword KwPlus) *> sizedDInTm ArgSize)|)) :
+>     (AndSize, (|DENUMT (%keyword KwEnum%) (sizedDInTm ArgSize)|)) :
+>     -- [/Feature = Enum]
+>     -- [Feature = IDesc]
+>     (AndSize, (|(DIMU Nothing) (%keyword KwIMu%) (sizedDInTm ArgSize) (sizedDInTm ArgSize) (sizedDInTm ArgSize)|)) :
+>     -- [/Feature = IDesc]
+>     -- [Feature = Labelled]
+>     (ArgSize, (|DLABEL (%keyword KwLabel%) (sizedDInTm AppSize) (%keyword KwAsc%) (sizedDInTm ArgSize) (%keyword KwLabelEnd%)|)) :
+>     (ArgSize, (|DLRET (%keyword KwRet%) (sizedDInTm ArgSize)|)) :
+>     -- [/Feature = Labelled]
+>     -- [Feature = Prop]
+>     (ArgSize, (|DPROP     (%keyword KwProp%)|)) :
+>     (ArgSize, (|DABSURD   (%keyword KwAbsurd%)|)) :
+>     (ArgSize, (|DTRIVIAL  (%keyword KwTrivial%)|)) :
+>     (AndSize, (|DPRF      (%keyword KwPrf%) (sizedDInTm AndSize)|)) :
+>     (AndSize, (|DINH      (%keyword KwInh%) (sizedDInTm ArgSize)|)) :
+>     (AndSize, (|DWIT      (%keyword KwWit%) (sizedDInTm ArgSize)|)) :
+>     (AndSize, (|DALL      (%keyword KwAll%) (sizedDInTm ArgSize) (sizedDInTm ArgSize)|)) :
+>     -- [/Feature = Prop]
+>     -- [Feature = Sigma]
+>     (ArgSize, (|id (bracket Square tuple)|)) :
+>     (ArgSize, (|id (%keyword KwSig%) (bracket Round sigma)|)) :
+>     (ArgSize, (|DSIGMA (%keyword KwSig%) (sizedDInTm ArgSize) (sizedDInTm ArgSize)|)) :
+>     -- [/Feature = Sigma]
+>     -- [Feature = UId]
+>     (ArgSize, (|DUID (%keyword KwUId%)|)) :
+>     (ArgSize, (|DTAG (%keyword KwTag%) ident|)) :
+>     (AppSize, (|DTag (%keyword KwTag%) ident (many (sizedDInTm ArgSize))|)) :
+>     -- [/Feature = UId]
+
 >     (ArgSize, (|DSET (%keyword KwSet%)|)) :
 >     (ArgSize, (|DQ (pFilter questionFilter ident)|)) :
 >     (ArgSize, (|DU (%keyword KwUnderscore%)|)) :
@@ -185,7 +219,15 @@ the parser.
 
 > inDTmParsersMore :: ParamParserList DInTmRN DInTmRN
 > inDTmParsersMore = arrange $ 
->     import <- DInTmParsersMore
+>     -- import <- DInTmParsersMore
+>     -- [Feature = Equality]
+>     (EqSize, \ t -> (| DEqBlue  (pFilter isEx (pure t)) (%keyword KwEqBlue%)
+>                                 (pFilter isEx (sizedDInTm (pred EqSize))) |)) :
+>     -- [/Feature = Equality]
+>     -- [Feature = Prop]
+>     (AndSize, \ s -> (| (DAND s) (%keyword KwAnd%) (sizedDInTm AndSize)  |)) :
+>     (ArrSize, \ s -> (| (DIMP s) (%keyword KwImp%) (sizedDInTm PiSize)   |)) :
+>     -- [/Feature = Prop]
 
 >     (ArrSize, \ s -> (| (DARR s) (%keyword KwArr%) (sizedDInTm PiSize) |)) :
 >     []
@@ -193,7 +235,43 @@ the parser.
 
 \subsection{Parser support code}
 
-> import <- ParserCode
+> -- import <- ParserCode
+> -- [Feature = Enum]
+> mkNum :: Int -> Maybe DInTmRN -> DInTmRN
+> mkNum 0 Nothing = DZE
+> mkNum 0 (Just t) = t
+> mkNum n t = DSU (mkNum (n-1) t)
+> -- [/Feature = Enum]
+
+> -- [Feature = Equality]
+> isEx :: DInTmRN -> Maybe DExTmRN
+> isEx (DN tm)  = Just tm
+> isEx _        = Nothing
+> -- [/Feature = Equality]
+
+> -- [Feature = Sigma]
+> tuple :: Parsley Token DInTmRN
+> tuple =
+>     (|DPAIR (sizedDInTm ArgSize) (| id (%keyword KwComma%) pDInTm
+>                                   | id tuple |)
+>      |DVOID (% pEndOfStream %)
+>      |)
+
+> sigma :: Parsley Token DInTmRN
+> sigma = (|mkSigma (optional (ident <* keyword KwAsc)) pDInTm sigmaMore
+>          |DUNIT (% pEndOfStream %)
+>          |)
+
+> sigmaMore :: Parsley Token DInTmRN
+> sigmaMore = (|id (% keyword KwSemi %) (sigma <|> pDInTm)
+>              |(\p s -> mkSigma Nothing (DPRF p) s) (% keyword KwPrf %) pDInTm sigmaMore
+>              |(\x -> DPRF x) (% keyword KwPrf %) pDInTm
+>              |)
+
+> mkSigma :: Maybe String -> DInTmRN -> DInTmRN -> DInTmRN
+> mkSigma Nothing s t = DSIGMA s (DL (DK t))
+> mkSigma (Just x) s t = DSIGMA s (DL (x ::. t))
+> -- [/Feature = Sigma]
 
 > questionFilter :: String -> Maybe String
 > questionFilter ('?':s)  = Just s

@@ -11,6 +11,7 @@
 > import Control.Monad.Identity
 > import Control.Monad.Error
 
+> import Data.Monoid hiding (All)
 > import Data.Traversable
 
 > import Kit.MissingLibrary
@@ -40,8 +41,6 @@
 
 > import DisplayLang.Name
 > import DisplayLang.DisplayTm
-
-> import Tactics.Data
 
 %endif
 
@@ -265,3 +264,45 @@ dawg.}
 >                       >> return "Data'd.")
 >         ,  ctHelp = "idata <name> [<para>]* : <inx> -> Set  := [(<con> : <ty>) ;]* - builds a data type for thee."
 >         } 
+
+> occursM :: REF -> Mangle (Ko Any) REF REF
+> occursM r = Mang
+>             {  mangP = \ x _ -> Ko (Any (r == x))
+>             ,  mangV = \ _ _ -> Ko (Any False)
+>             ,  mangB = \ _ -> occursM r
+>             }
+
+> swapM :: REF -> REF -> Mangle Identity REF REF
+> swapM r s = Mang
+>             {  mangP = \ x xes ->
+>                          if x == r then (| ((P s) $:$) xes |)
+>                                    else (| ((P x) $:$) xes |)
+>             ,  mangV = \ i ies -> (|(V i $:$) ies|)
+>             ,  mangB = \ _ -> swapM r s
+>             }
+
+> capM :: REF -> Int -> Mangle Identity REF REF
+> capM r i = Mang
+>             {  mangP = \ x xes ->
+>                          if x == r then (| ((V i) $:$) xes |)
+>                                    else (| ((P x) $:$) xes |)
+>             ,  mangV = \ j jes -> (|(V j $:$) jes|)
+>             ,  mangB = \ _ -> capM r (i+1)
+>             }
+
+> occurs :: REF -> INTM -> Bool
+> occurs r i = getAny (unKo (occursM r % i))
+
+> uncur 1 v t = N (v :$ A (N t))
+> uncur i v t = uncur (i-1) (v :$ A (N (t :$ Fst))) (t :$ Snd)
+
+> compre :: Eq a => [a] -> [a] -> [a] 
+> compre [] _ = [] 
+> compre _ [] = [] 
+> compre (a : as) (b : bs) | a == b = a : compre as bs 
+> compre (a : as) (b : bs) = [] 
+ 
+> comprefold :: Eq a => [[a]] -> [a] 
+> comprefold [] = [] 
+> comprefold (as : ass) = foldr compre as ass 
+

@@ -16,8 +16,6 @@
 > import Evidences.Eval
 > import Evidences.DefinitionalEquality
 
-> import Features.Features ()
-
 > import ProofState.Structure.Developments
 
 > import ProofState.Edition.ProofState

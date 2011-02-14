@@ -21,8 +21,6 @@
 > import NameSupply.NameSupply
 > import NameSupply.NameSupplier
 
-> import Features.Features ()
-
 %endif
 
 Testing for equality is a direct application of normalization by
@@ -121,7 +119,16 @@ term.
 >   L ("__etaExpandA" :.
 >      fresh ("__etaExpandB" :<: s) 
 >      (\v  -> inQuote (t $$ A v :>: (f $$ A v))) r)
-> import <- CanEtaExpand
+> -- import <- CanEtaExpand
+> -- [Feature = Prop]
+> etaExpand (Prf p :>: x) r = Just (BOX (Irr (inQuote (PRF p :>: x) r)))
+> -- [/Feature = Prop]
+> -- [Feature = Sigma]
+> etaExpand (Unit :>: v) r = Just VOID
+> etaExpand (Sigma s t :>: p) r = let x = p $$ Fst in 
+>   Just (PAIR (inQuote (s :>: x) r) (inQuote (t $$ (A x) :>: (p $$ Snd)) r))
+> -- [/Feature = Sigma]
+
 > etaExpand _                  _ = Nothing
 
 

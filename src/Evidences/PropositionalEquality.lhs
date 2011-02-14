@@ -17,8 +17,6 @@
 > import Evidences.Operators
 > import Evidences.TypeChecker
 
-> import Features.Features ()
-
 %endif
 
 Let's have some observational equality, now!
@@ -45,7 +43,21 @@ We define the computational behaviour of the |eqGreen| operator as follows,
 
 > opRunEqGreen :: [VAL] -> Either NEU VAL
 
-> import <- OpRunEqGreen
+> -- import <- OpRunEqGreen
+> -- [Feature = Prop]
+> opRunEqGreen [PROP,t1,PROP,t2] = Right $ AND (IMP t1 t2) (IMP t2 t1)
+> opRunEqGreen [PRF _,_,PRF _,_] = Right TRIVIAL
+> -- [/Feature = Prop]
+> -- [Feature = Sigma]
+> opRunEqGreen [UNIT,_,UNIT,_] = Right TRIVIAL
+> opRunEqGreen [SIGMA s1 t1,p1,SIGMA s2 t2,p2] = Right $
+>   AND (eqGreen @@ [s1,p1 $$ Fst,s2,p2 $$ Fst])
+>       (eqGreen @@ [t1 $$ A (p1 $$ Fst),p1 $$ Snd,t2 $$ A (p2 $$ Fst),p2 $$ Snd])
+> -- [/Feature = Sigma]
+> -- [Feature = UId]
+> opRunEqGreen [UID,TAG s1,UID,TAG s2] | s1 == s2 = Right $ TRIVIAL
+> opRunEqGreen [UID,TAG _,UID,TAG _] = Right $ ABSURD
+> -- [/Feature = UId]
 
 > opRunEqGreen [C (Pi sS1 tT1), f1, C (Pi sS2 tT2), f2] = Right $ 
 >   ALL sS1 $ L $ "s1" :.  [.s1. 
@@ -60,9 +72,6 @@ We define the computational behaviour of the |eqGreen| operator as follows,
 >           ALL (sS1 -$ []) $ L $ "s1" :. [.s1.  
 >            IMP  (EQBLUE ((sS2 -$ []) :>: NV s2) ((sS1 -$ []) :>: NV s1)) $
 >             (SET :>: (tT1 -$ [ NV s1 ])) <:-:> (SET :>: (tT2 -$ [ NV s2 ])) ] ]
-
-> opRunEqGreen [SET, C (Mu (_ :?=: Id t0)), SET, C (Mu (_ :?=: Id t1))] = 
->     opRunEqGreen [desc, t0, desc, t1]
 
 Unless overridden by a feature or preceding case, we determine equality
 of canonical values in canonical sets by labelling subterms of the values
@@ -143,7 +152,104 @@ between incompatible sets.
 >          t1 = f1 -$ [ s1 ]
 >     in   coe :@ [  tT1 -$ [ s1 ], tT2 -$ [ NV s2 ]
 >                 ,  CON $ (q $$ Snd) -$ [ NV s2 , s1 , sq ] , t1 ] ]
-> import <- Coerce
+> -- import <- Coerce
+> -- [Feature = Enum]
+> coerce (EnumT (CONSE _ _,   CONSE _ _))      _  ZE = Right ZE
+> coerce (EnumT (CONSE _ e1,  CONSE _ e2))     q  (SU x) = Right . SU $
+>   coe @@ [ENUMT e1, ENUMT e2, CON $ q $$ Snd $$ Snd $$ Fst, x]  -- |CONSE| tails
+> coerce (EnumT (NILE,        NILE))           q  x = Right x
+> coerce (EnumT (NILE,        t@(CONSE _ _)))  q  x = Right $
+>   nEOp @@ [q, ENUMT t]
+> coerce (EnumT (CONSE _ _,   NILE))           q  x = Right $
+>   nEOp @@ [q, ENUMT NILE]
+> -- [/Feature = Enum]
+> -- [Feature = IDesc]
+> coerce (IMu (Just (l0,l1) :?=: 
+>             (Id (iI0,iI1) :& Id (d0,d1))) (i0,i1)) q (CON x) = 
+>   let ql  = CON $ q $$ Fst
+>       qiI = CON $ q $$ Snd $$ Fst
+>       qi  = CON $ q $$ Snd $$ Snd $$ Snd
+>       qd = CON $ q $$ Snd $$ Snd $$ Fst
+>       typ = 
+>         PI SET $ L $ "iI" :. [.iI.
+>          ARR (ARR (NV iI) (idesc -$ [ NV iI ])) $  
+>           ARR (NV iI) $  
+>            ARR (ARR (NV iI) ANCHORS) SET ]
+>       vap =
+>         L $ "iI" :. [.iI.
+>          L $ "d" :. [.d. 
+>           L $ "i" :. [.i. 
+>            L $ "l" :. [.l. N $ 
+>             idescOp :@ [ NV iI , N (V d :$ A (NV i))
+>                        , L $ "j" :. [.j. 
+>                           IMU (|(NV l)|) (NV iI) (NV d) (NV j)]
+>                        ] ] ] ] ]
+>   in Right . CON $ 
+>     coe @@ [ idescOp @@ [  iI0, d0 $$ A i0 
+>                         ,  L $ "i" :. [.i. 
+>                             IMU (|(l0 -$ [])|) (iI0 -$ []) (d0 -$ []) (NV i)
+>                            ] 
+>                         ] 
+>            , idescOp @@ [  iI1, d1 $$ A i1 
+>                         ,  L $ "i" :. [.i. 
+>                             IMU (|(l1 -$ [])|) (iI1 -$ []) (d1 -$ []) (NV i)
+>                            ]
+>                         ] 
+>            , CON $ pval refl $$ A typ $$ A vap $$ Out 
+>                              $$ A iI0 $$ A iI1 $$ A qiI
+>                              $$ A d0 $$ A d1 $$ A qd
+>                              $$ A i0 $$ A i1 $$ A qi
+>                              $$ A l0 $$ A l1 $$ A ql
+>            , x ]
+> coerce (IMu (Nothing :?=: (Id (iI0,iI1) :& Id (d0,d1))) (i0,i1)) q (CON x) =
+>   let qiI = CON $ q $$ Fst
+>       qi  = CON $ q $$ Snd $$ Snd
+>       qd = CON $ q $$ Snd $$ Fst
+>       typ = 
+>         PI SET $ L $ "iI" :. [.iI.
+>          ARR (ARR (NV iI) (idesc -$ [ NV iI ])) $  
+>           ARR (NV iI) SET ]
+>       vap =
+>         L $ "iI" :. [.iI.
+>          L $ "d" :. [.d. 
+>           L $ "i" :. [.i. N $ 
+>             idescOp :@ [ NV iI , N (V d :$ A (NV i))
+>                        , L $ "j" :. [.j. 
+>                           IMU Nothing (NV iI) (NV d) (NV j)]
+>                        ] ] ] ] 
+>   in Right . CON $ 
+>     coe @@ [ idescOp @@ [ iI0 , d0 $$ A i0
+>                         , L $ "i" :. [.i. 
+>                             IMU Nothing (iI0 -$ []) (d0 -$ []) (NV i) ] ] 
+>            , idescOp @@ [ iI1 , d1 $$ A i1
+>                         , L $ "i" :. [.i. 
+>                             IMU Nothing (iI1 -$ []) (d1 -$ []) (NV i) ] ] 
+>            , CON $ pval refl $$ A typ $$ A vap $$ Out 
+>                              $$ A iI0 $$ A iI1 $$ A qiI
+>                              $$ A d0 $$ A d1 $$ A qd
+>                              $$ A i0 $$ A i1 $$ A qi
+>            , x ]
+> -- [/Feature = IDesc]
+> -- [Feature = Labelled]
+> coerce (Label (l1, l2) (t1, t2)) q (LRET t) =
+>     Right $ LRET $ coe @@ [t1, t2, CON (q $$ Snd), t]
+> -- [/Feature = Labelled]
+> -- [Feature = Prop]
+> coerce Prop              q pP  = Right pP
+> coerce (Prf (pP1, pP2))  q p   = Right $ q $$ Fst $$ A p
+> -- [/Feature = Prop]
+> -- [Feature = Sigma]
+> coerce (Sigma (sS1, sS2) (tT1, tT2)) q p = Right . PAIR s2 $
+>   coe @@ [  tT1 $$ A s1, tT2 $$ A s2
+>          ,  CON $ q $$ Snd $$ A s1 $$ A s2 $$ A sq
+>          ,  p $$ Snd] where
+>     s1 = p $$ Fst
+>     (s2, sq) = coeh sS1 sS2 (CON $ q $$ Fst) s1
+> coerce Unit q s = Right s
+> -- [/Feature = Sigma]
+> -- [Feature = UId]
+> coerce UId _ u = Right u
+> -- [/Feature = UId]
 > coerce _    q  (N x)  = Left x
 > coerce cvv  q  r      = error $ unlines ["coerce: can't cope with sets",
 >                             show cvv, "and proof", show q, "and value", show r]
@@ -158,7 +264,7 @@ hence during evaluation, because it avoids forcing the types of references.
 
 > partialEq :: VAL -> VAL -> VAL -> Bool
 > partialEq _ _ (N (P r :$ _ :$ _))    | r == refl                = True
-> partialEq (C (Mu t1)) (C (Mu t2)) _  | eqLabelIncomplete t1 t2  = True
+> partialEq (C (IMu t1 _)) (C (IMu t2 _)) _  | eqLabelIncomplete t1 t2  = True
 > partialEq _ _ _ = False
 
 Sadly we cannot do the following, because it is not safe to invent a name supply.

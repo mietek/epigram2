@@ -92,26 +92,6 @@
 %include DisplayLang/TmParse.lhs
 %include DisplayLang/PrettyPrint.lhs
 
-\chapter{Feature by Feature}
-
-\input{Features/Introduction.tex}
-
-%include Features/Features.lhs
-%include Features/Skeleton.lhs
-%include Features/UId.lhs
-%include Features/Enum.lhs
-%include Features/Sigma.lhs
-%include Features/Prop.lhs
-%include Features/Desc.lhs
-%include Features/IDesc.lhs
-%include Features/Equality.lhs
-%include Features/FreeMonad.lhs
-%include Features/Nu.lhs
-%include Features/Labelled.lhs
-%include Features/Quotient.lhs
-%include Features/Record.lhs
-%include Features/Anchor.lhs
-
 \chapter{The Proof State}
 
 \input{ProofState/Introduction.tex}
@@ -147,7 +127,6 @@
 %include Tactics/Elimination.lhs
 %include Tactics/PropositionSimplify.lhs
 %include Tactics/ProblemSimplify.lhs
-%include Tactics/Data.lhs
 %include Tactics/Record.lhs
 %include Tactics/Relabel.lhs
 %include Tactics/Gadgets.lhs

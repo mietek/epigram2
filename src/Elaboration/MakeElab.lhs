@@ -21,8 +21,6 @@
 > import Evidences.DefinitionalEquality
 > import Evidences.Utilities
 
-> import Features.Features ()
-
 > import ProofState.Edition.ProofState
 
 > import DisplayLang.DisplayTm
@@ -147,9 +145,60 @@ we abstract it out. Thus |makeElab'| actually implements elaboration.
 > makeElab loc tm = makeElab' loc . (:>: tm) =<< eGoal
 
 > makeElab' :: Loc -> (TY :>: DInTmRN) -> Elab (INTM :=>: VAL)
+> -- import <- MakeElabRules
+> -- [Feature = Enum] 
+> makeElab' loc (PI (ENUMT e) t :>: m) | isTuply m = do
+>     t' :=>: _ <- eQuote t
+>     e' :=>: _ <- eQuote e
+>     tm :=>: tmv <- subElab loc (branchesOp @@ [e, t] :>: m)
+>     x <- eLambda (fortran t)
+>     return $ N (switchOp :@ [e', NP x, t', tm])
+>                    :=>: switchOp @@ [e, NP x, t, tmv]
+>   where
+>     isTuply :: DInTmRN -> Bool
+>     isTuply DVOID        = True
+>     isTuply (DPAIR _ _)  = True
+>     isTuply _            = False
 
-> import <- MakeElabRules
+To elaborate a tag with an enumeration as its type, we search for the
+tag in the enumeration to determine the appropriate index.
 
+> makeElab' loc (ENUMT t :>: DTAG a) = findTag a t 0
+>   where
+>     findTag :: String -> TY -> Int -> Elab (INTM :=>: VAL)
+>     findTag a (CONSE (TAG b) t) n
+>       | a == b        = return (toNum n :=>: toNum n)
+>       | otherwise     = findTag a t (succ n)
+>     findTag a _ n  = throwError' . err $ "elaborate: tag `" 
+>                                           ++ a 
+>                                           ++ " not found in enumeration."
+>                       
+>     toNum :: Int -> Tm {In, p} x
+>     toNum 0  = ZE
+>     toNum n  = SU (toNum (n-1))
+> -- [/Feature = Enum] 
+> -- [Feature = Equality] 
+> makeElab' loc (PROP :>: DEqBlue t u) = do
+>     ttt <- subElabInfer loc t
+>     utt <- subElabInfer loc u
+>     let ttm :=>: tv :<: tty :=>: ttyv = extractNeutral ttt
+>     let utm :=>: uv :<: uty :=>: utyv = extractNeutral utt
+>     return $  EQBLUE (tty   :>: ttm)  (uty   :>: utm)
+>         :=>:  EQBLUE (ttyv  :>: tv)   (utyv  :>: uv)
+> -- [/Feature = Equality] 
+> -- [Feature = IDesc] 
+> makeElab' loc (SET :>: DIMU Nothing iI d i) = do
+>     iI  :=>: iIv  <- subElab loc (SET :>: iI)
+>     d   :=>: dv   <- subElab loc (ARR iIv (idesc $$ A iIv) :>: d)
+>     i   :=>: iv   <- subElab loc (iIv :>: i)
+>     return $ IMU Nothing iI d i :=>: IMU Nothing iIv dv iv
+
+> makeElab' loc (ty@(IMU _ _ _ _) :>: DTag s xs) =
+>     makeElab' loc (ty :>: DCON (DPAIR (DTAG s) (foldr DPAIR DU xs)))
+> -- [/Feature = IDesc] 
+> -- [Feature = UId] 
+> makeElab' loc (UID :>: DTAG s) = return $ TAG s :=>: TAG s
+> -- [/Feature = UId] 
 
 We use underscores |DU| in elaboration to mean "figure this out yourself", while
 question marks |DQ| require us to wait for a user-provided value.

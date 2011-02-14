@@ -38,8 +38,7 @@ SRCS_KIT := $(wildcard Kit/*.lhs)
 SRCS_COMPILER := $(wildcard Compiler/*.lhs)
 
 SRCS_EVIDENCES := $(wildcard NameSupply/*.lhs) \
-		  $(wildcard Evidences/*.lhs) \
-		  $(wildcard Features/*.lhs)
+		  $(wildcard Evidences/*.lhs) 
 
 SRCS_PFSTATE := $(wildcard ProofState/Structure/*.lhs) \
 		$(wildcard ProofState/Movement/*.lhs) \
@@ -77,7 +76,6 @@ OBJS := $(SRCS:.lhs=.o)
 #     * make Epigram binary
 #     * make the literate document
 all: 
-	$(MAKE) depend 
 	$(MAKE) Pig Epitome
 
 ## Dependency graph:
@@ -85,11 +83,6 @@ all:
 #
 # This calls She on every source file, therefore it is painfully
 # slow. Unless explicitly asked to, we avoid running it.
-#
-# The dependency graph is broken wrt. She aspects: the typical example
-# is Features.lhs, which import code from Sigma for example. Changing
-# Sigma.lhs causes the re-compilation of the (empty) file Sigma.lhs,
-# without causing the re-compilation of Rules.lhs, for example.
 depend : $(SRCS)
 	$(HC) $(HC_PACKAGE) -M -dep-makefile .depend $(SRCS)
 dep : depend

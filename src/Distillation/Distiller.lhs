@@ -71,7 +71,78 @@ really need |Entries|, or can it cope with |Bwd REF| instead?}
 
 > distill :: Entries -> (TY :>: INTM) -> ProofStateT INTM (DInTmRN :=>: VAL)
 
-> import <- DistillRules
+> -- import <- DistillRules
+> -- [Feature = Anchor]
+> distill es (ANCHORS :>: x@(ANCHOR (TAG u) t ts)) = do
+>   (displayTs :=>: _) <- distill es (ALLOWEDBY (evTm t) :>: ts)
+>   return (DANCHOR u displayTs :=>: evTm x)
+> -- [/Feature = Anchor]
+> -- [Feature = Enum]
+> distill _ (ENUMT t :>: tm) | Just r <- findIndex (t :>: tm) = return r
+>   where
+>     findIndex :: (VAL :>: INTM) -> Maybe (DInTmRN :=>: VAL)
+>     findIndex (CONSE (TAG s)  _ :>: ZE)    = Just (DTAG s :=>: evTm tm)
+>     findIndex (CONSE _        a :>: SU b)  = findIndex (a :>: b)
+>     findIndex _                            = Nothing
+
+Since elaboration turns lists into functions from enumerated types, we can
+do the reverse when distilling. This is slightly dubious.
+
+> distill es (PI (ENUMT e) t :>: L (x :. N (op :@ [e', NV 0, t', b]))) 
+>   | op == switchOp = distill es (branchesOp @@ [e, t] :>: b)
+> -- [/Feature = Enum]
+> -- [Feature = Equality]
+> distill es (PROP :>: tm@(EQBLUE (tty :>: t) (uty :>: u))) = do
+>     t' <- toDExTm es (tty :>: t)
+>     u' <- toDExTm es (uty :>: u)
+>     return $ DEqBlue t' u' :=>: evTm tm
+
+When distilling a proof of an equation, we first check to see if the equation
+holds definitionally. If so, we avoid forcing the proof and return refl instead.
+
+> distill es (p@(PRF (EQBLUE (_S :>: s) (_T :>: t))) :>: q) = do
+>     r <- askNSupply
+>     if equal (SET :>: (_S, _T)) r && equal (_S :>: (s, t)) r
+>         then return (DU :=>: N (P refl :$ A _S :$ A s))
+>         else distillBase es (p :>: q)
+> -- [/Feature = Equality]
+> -- [Feature = IDesc]
+> distill es (IMU l _I s i :>: CON (PAIR t x)) 
+>   | Just (e, f) <- sumilike _I (s $$ A i) = do
+>     m   :=>: tv  <- distill es (ENUMT e :>: t)
+>     as  :=>: xv  <- 
+>       distill es (idescOp @@ [  _I,f tv
+>                              ,  L $ "i" :. [.i. 
+>                                   IMU (fmap (-$ []) l) 
+>                                       (_I -$ []) (s -$ []) (NV i)]
+>                              ] :>: x)
+>     case m of
+>         DTAG s   -> return $ DTag s (unfold as)  :=>: CON (PAIR tv xv)
+>         _        -> return $ DCON (DPAIR m as)   :=>: CON (PAIR tv xv)
+>   where
+>     unfold :: DInTmRN -> [DInTmRN]
+>     unfold DVOID        = []
+>     unfold DU        = []
+>     unfold (DPAIR s t)  = s : unfold t
+>     unfold t            = [t]
+
+
+> distill es (SET :>: tm@(C (IMu ltm@(Just l :?=: (Id _I :& Id s)) i))) = do
+>   let lab = evTm ((l :? ARR _I ANCHORS) :$ A i)
+>   labTm                <- bquoteHere lab
+>   (labDisplay :=>: _)  <- distill es (ANCHORS :>: labTm)
+>   _It :=>: _Iv         <- distill es (SET :>: _I)
+>   st :=>: sv           <- distill es (ARR _Iv (idesc $$ A _Iv) :>: s)
+>   it :=>: iv           <- distill es (_Iv :>: i)
+>   return $ (DIMU (Just labDisplay) _It st it :=>: evTm tm)
+> -- [/Feature = IDesc]
+> -- [Feature = Prop]
+> distill es (PRF TRIVIAL :>: _) = return (DU :=>: VOID)
+> -- [/Feature = Prop]
+> -- [Feature = Sigma]
+> distill es (UNIT :>: _) = return $ DVOID :=>: VOID
+> -- [/Feature = Sigma]
+
 > distill entries tt = distillBase entries tt
 
 We separate out the standard distillation cases (without aspect
@@ -135,7 +206,10 @@ subsection~\ref{subsec:ProofState.Interface.NameResolution.christening}).
 > distillInfer ::  Entries -> EXTM -> Spine {TT} REF -> 
 >                  ProofStateT INTM (DExTmRN :<: TY)
 >
-> import <- DistillInferRules
+> -- import <- DistillInferRules
+> -- [Feature = Labelled]
+> distillInfer es (t :$ Call (N l)) as = distillInfer es l as
+> -- [/Feature = Labelled]
 
 To distill a parameter with a spine of eliminators, we use |unresolve|
 to determine a relative name for the reference, the number of shared

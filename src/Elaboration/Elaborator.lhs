@@ -18,8 +18,6 @@
 > import Evidences.TypeChecker
 > import Evidences.Operators
 
-> import Features.Features ()
-
 > import ProofState.Structure.Developments
 
 > import ProofState.Edition.ProofContext

@@ -46,7 +46,6 @@
 > import Tactics.ProblemSimplify
 > import Tactics.Information
 > import Tactics.Gadgets
-> import Tactics.Data
 > import Tactics.IData
 > import Tactics.Relabel
 > import Tactics.ShowHaskell

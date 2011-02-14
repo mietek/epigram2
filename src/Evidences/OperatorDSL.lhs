@@ -14,8 +14,6 @@
 > import Evidences.Tm
 > import {-# SOURCE #-} Evidences.Eval
 
-> import Features.Features ()
-
 %endif
 
 \pierre{Crying for documentation (and more user-friendly syntax).}

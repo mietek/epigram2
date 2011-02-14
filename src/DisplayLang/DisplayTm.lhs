@@ -14,8 +14,6 @@
 > import Data.Foldable hiding (foldl)
 > import Data.Traversable
 
-> import Features.Features ()
-
 > import Evidences.Tm
 
 > import Kit.MissingLibrary
@@ -66,7 +64,24 @@ parameter. Thanks to this hack, we can use |deriving Traversable|.
 >     DQ     :: String           ->  DInTm p x -- hole
 >     DU     ::                      DInTm p x -- underscore
 >     DT     :: InTmWrap p x     ->  DInTm p x -- embedding
->     import <- DInTmConstructors
+>     -- import <- DInTmConstructors
+>     -- [Feature = Anchor]
+>     DAnchor :: String -> DInTm p x -> DInTm p x 
+>     -- [/Feature = Anchor]
+>     -- [Feature = Equality]
+
+In the display syntax, a blue equality can be between arbitrary DExTms,
+rather than ascriptions. To allow this, we add a suitable constructor |DEqBlue|
+to DInTm, along with appropriate elaboration and distillation rules.
+
+>     DEqBlue :: DExTm p x -> DExTm p x -> DInTm p x
+>     -- [/Feature = Equality]
+>     -- [Feature = IDesc]
+>     DIMu :: Labelled (Id :*: Id) (DInTm p x) -> DInTm p x  -> DInTm p x 
+>     -- [/Feature = IDesc]
+>     -- [Feature = UId]
+>     DTag :: String -> [DInTm p x] -> DInTm p x
+>     -- [/Feature = UId]
 >  deriving (Functor, Foldable, Traversable, Show)
 >
 > data DExTm p x = DHead p x ::$ DSpine p x
@@ -177,7 +192,20 @@ argument, as well as its second.
 > traverseDTIN f (DQ s) = (|(DQ s)|)
 > traverseDTIN f DU     = (|DU|)
 > traverseDTIN f (DTIN tm) = (|DTIN (traverse f tm)|)
-> import <- DInTmTraverse
+> -- import <- DInTmTraverse
+> -- [Feature = Anchor]
+> traverseDTIN f (DAnchor s args) = (|(DAnchor s) (traverseDTIN f args)|)
+> -- [/Feature = Anchor]
+> -- [Feature = Equality]
+> traverseDTIN f (DEqBlue t u) =
+>   (| DEqBlue (traverseDTEX f t) (traverseDTEX f u) |)
+> -- [/Feature = Equality]
+> -- [Feature = IDesc]
+> traverseDTIN f (DIMu s i) = (|DIMu (traverse (traverseDTIN f) s) (traverseDTIN f i)|)
+> -- [/Feature = IDesc]
+> -- [Feature = UId]
+> traverseDTIN f (DTag s xs) = (|(DTag s) (traverse (traverseDTIN f) xs)|)
+> -- [/Feature = UId]
 
 > traverseDTEX :: Applicative f => (p -> f q) -> DExTm p x -> f (DExTm q x)
 > traverseDTEX f (h ::$ as) = (|(traverseDHead f h) ::$ (traverse (traverse (traverseDTIN f)) as)|)
@@ -217,8 +245,64 @@ places.
 > pattern DPIV x s t  = DPI s (DLAV x t)
 > pattern DLK t       = DL (DK t)
 > pattern DTY ty tm   = DType ty ::$ [A tm]
-> import <- CanDisplayPats
+> -- import <- CanDisplayPats
+> -- [Feature = Anchor]
+> pattern DANCHOR s args = DAnchor s args
+> -- [/Feature = Anchor]
+> -- [Feature = Enum]
+> pattern DENUMT e    = DC (EnumT e) 
+> pattern DNILE       = DCON (DPAIR {-(DTAG "nil")-} DZE DVOID)
+> pattern DCONSE t e  = DCON (DPAIR {- (DTAG "cons") -} (DSU DZE) (DPAIR t (DPAIR e DVOID)))
+> pattern DZE         = DC Ze
+> pattern DSU n       = DC (Su n)
+> -- [/Feature = Enum]
+> -- [Feature = IDesc]
+> pattern DIVARN     = DZE
+> pattern DICONSTN   = DSU DZE
+> pattern DIPIN      = DSU (DSU DZE)
+> pattern DIFPIN     = DSU (DSU (DSU DZE))
+> pattern DISIGMAN   = DSU (DSU (DSU (DSU DZE)))
+> pattern DIFSIGMAN  = DSU (DSU (DSU (DSU (DSU DZE))))
+> pattern DIPRODN    = DSU (DSU (DSU (DSU (DSU (DSU DZE)))))
 
+> pattern DIMU l ii x i  = DIMu (l :?=: (Id ii :& Id x)) i
+> pattern DIVAR i        = DCON (DPAIR DIVARN     (DPAIR i DVOID))
+> pattern DIPI s t       = DCON (DPAIR DIPIN      (DPAIR s (DPAIR t DVOID)))
+> pattern DIFPI s t      = DCON (DPAIR DIFPIN     (DPAIR s (DPAIR t DVOID)))
+> pattern DISIGMA s t    = DCON (DPAIR DISIGMAN   (DPAIR s (DPAIR t DVOID)))
+> pattern DIFSIGMA s t   = DCON (DPAIR DIFSIGMAN  (DPAIR s (DPAIR t DVOID)))
+> pattern DICONST p      = DCON (DPAIR DICONSTN   (DPAIR p DVOID))
+> pattern DIPROD u x y   = DCON (DPAIR DIPRODN    (DPAIR u (DPAIR x (DPAIR y DVOID))))
+> -- [/Feature = IDesc]
+> -- [Feature = Labelled]
+> pattern DLABEL l t = DC (Label l t)
+> pattern DLRET t    = DC (LRet t)
+> -- [/Feature = Labelled]
+> -- [Feature = Prop]
+> pattern DPROP        = DC Prop
+> pattern DPRF p       = DC (Prf p)
+> pattern DALL p q     = DC (All p q)
+> pattern DIMP p q     = DALL (DPRF p) (DL (DK q))
+> pattern DALLV x s p  = DALL s (DLAV x p)
+> pattern DAND p q     = DC (And p q)
+> pattern DTRIVIAL     = DC Trivial
+> pattern DABSURD      = DC Absurd
+> pattern DBOX p       = DC (Box p)
+> pattern DINH ty      = DC (Inh ty)
+> pattern DWIT t       = DC (Wit t)
+> -- [/Feature = Prop]
+> -- [Feature = Sigma]
+> pattern DSIGMA p q = DC (Sigma p q)
+> pattern DPAIR  p q = DC (Pair p q)
+> pattern DUNIT      = DC Unit
+> pattern DVOID      = DC Void
+> pattern DTimes x y = Sigma x (DL (DK y))
+> pattern DTIMES x y = DC (DTimes x y)
+> -- [/Feature = Sigma]
+> -- [Feature = UId]
+> pattern DUID    = DC UId
+> pattern DTAG s  = DTag s []
+> -- [/Feature = UId]
 
 \subsection{Sizes}
 

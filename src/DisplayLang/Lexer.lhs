@@ -28,8 +28,6 @@ identifiers unless they're keywords.
 > import Data.List
 > import Data.Char
 
-> import Features.Features
-
 > import Kit.Parsley
 
 %endif
@@ -155,30 +153,122 @@ things...
 
 > data Keyword where
 
->     import <- KeywordConstructors
+>   -- import <- KeywordConstructors
+>   -- [Feature = Enum]
+>   KwEnum        :: Keyword
+>   KwPlus        :: Keyword
+>   -- [/Feature = Enum]
+>   -- [Feature = Equality]
+>   KwEqBlue :: Keyword
+>   -- [/Feature = Equality]
+>   -- [Feature = IDesc]
+>   KwIMu :: Keyword
+>   -- [/Feature = IDesc]
+>   -- [Feature = Labelled]
+>   KwCall      :: Keyword
+>   KwLabel     :: Keyword
+>   KwLabelEnd  :: Keyword
+>   KwRet       :: Keyword
+>   -- [/Feature = Labelled]
+>   -- [Feature = Problem]
+>   KwProb       :: Keyword
+>   KwProbLabel  :: Keyword
+>   KwPatPi      :: Keyword
+>   KwSch        :: Keyword
+>   KwSchTy      :: Keyword
+>   KwExpPi      :: Keyword
+>   KwImpPi      :: Keyword
+>   -- [/Feature = Problem]
+>   -- [Feature = Prop]
+>   KwProp     :: Keyword
+>   KwAbsurd   :: Keyword
+>   KwTrivial  :: Keyword
+>   KwPrf      :: Keyword
+>   KwAnd      :: Keyword
+>   KwArr      :: Keyword
+>   KwImp      :: Keyword
+>   KwAll      :: Keyword
+>   KwInh      :: Keyword
+>   KwWit      :: Keyword
+>   -- [/Feature = Prop]
+>   -- [Feature = Sigma]
+>   KwFst  :: Keyword
+>   KwSnd  :: Keyword
+>   KwSig  :: Keyword
+>   -- [/Feature = Sigma]
+>   -- [Feature = UId]
+>   KwUId  :: Keyword
+>   KwTag  :: Keyword
+>   -- [/Feature = UId]
 
->     KwAsc         :: Keyword
->     KwComma       :: Keyword
->     KwSemi        :: Keyword
->     KwDefn        :: Keyword
->     KwUnderscore  :: Keyword
->     KwEq          :: Keyword
->     KwBy          :: Keyword
+>   KwAsc         :: Keyword
+>   KwComma       :: Keyword
+>   KwSemi        :: Keyword
+>   KwDefn        :: Keyword
+>   KwUnderscore  :: Keyword
+>   KwEq          :: Keyword
+>   KwBy          :: Keyword
 
->     KwSet         :: Keyword
->     KwPi          :: Keyword
->     KwLambda      :: Keyword
+>   KwSet         :: Keyword
+>   KwPi          :: Keyword
+>   KwLambda      :: Keyword
 
->     KwCon         :: Keyword
->     KwOut         :: Keyword
+>   KwCon         :: Keyword
+>   KwOut         :: Keyword
 
->   deriving (Bounded, Enum, Eq, Show)
+>  deriving (Bounded, Enum, Eq, Show)
 
 ...and they look like this:
 
 > key :: Keyword -> String
 
-> import <- KeywordTable
+> -- import <- KeywordTable
+> -- [Feature = Enum]
+> key KwEnum      = "Enum"
+> key KwPlus      = "+"
+> -- [/Feature = Enum]
+> -- [Feature = Equality]
+> key KwEqBlue = "=="
+> -- [/Feature = Equality]
+> -- [Feature = IDesc]
+> key KwIMu      = "IMu"
+> -- [/Feature = IDesc]
+> -- [/Feature = Labelled]
+> key KwCall      = "call"
+> key KwLabel     = "<"
+> key KwLabelEnd  = ">"
+> key KwRet       = "return"  -- rename me
+> -- [/Feature = Labelled]
+> -- [Feature = Problem]
+> key KwProb       = "Prob"
+> key KwProbLabel  = "ProbLabel"
+> key KwPatPi      = "PatPi"
+> key KwSch        = "Sch"
+> key KwSchTy      = "SchTy"
+> key KwExpPi      = "ExpPi"
+> key KwImpPi      = "ImpPi"
+> -- [/Feature = Problem]
+> -- [Feature = Prop]
+> key KwProp      = "Prop"
+> key KwAbsurd    = "FF"
+> key KwTrivial   = "TT"
+> key KwPrf       = ":-"
+> key KwAnd       = "&&"
+> key KwArr       = "->"
+> key KwImp       = "=>"
+> key KwAll       = "All"
+> key KwInh       = "Inh"
+> key KwWit       = "wit"
+> -- [/Feature = Prop]
+> -- [Feature = Sigma]
+> key KwFst       = "!"
+> key KwSnd       = "-"
+> key KwSig       = "Sig"
+> -- [/Feature = Sigma]
+> -- [Feature = UId]
+> key KwUId       = "UId"
+> key KwTag       = "'"
+> -- [/Feature = UId]
 
 > key KwAsc         = ":"
 > key KwComma       = ","

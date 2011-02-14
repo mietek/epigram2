@@ -22,8 +22,6 @@
 > import Evidences.DefinitionalEquality
 > import Evidences.Utilities
 
-> import Features.Features ()
-
 > import ProofState.Structure.Developments
 
 > import ProofState.Edition.Scope

@@ -28,8 +28,6 @@ generate an executable from a collection of supercombinator definitions.
 
 > import ProofState.Structure.Developments
 
-> import Features.Features ()
-
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
 
@@ -103,7 +101,19 @@ Lots of canonical things are just there for the typechecker, and we don't care
 about them. So we'll just ignore everything that isn't otherwise explained.
 
 > instance CNameable n => MakeBody (Can (Tm {In, p} n)) where
->     import <- CanCompile
+>     -- import <- CanCompile
+>     -- [Feature = Enum]
+>     makeBody Ze = CTag 0
+>     makeBody (Su x) = STag (makeBody x)
+>     -- [/Feature = Enum]
+>     -- [Feature = Labelled]
+>     makeBody (Label l t) = makeBody t
+>     makeBody (LRet t)    = makeBody t
+>     -- [/Feature = Labelled]
+>     -- [Feature = Sigma]
+>     makeBody (Pair x y) = Tuple [makeBody x, makeBody y]
+>     makeBody Void = Tuple []
+>     -- [/Feature = Sigma]
 >     makeBody (Con t)  = makeBody t
 >     makeBody _        = Ignore
 
@@ -113,7 +123,14 @@ about them. So we'll just ignore everything that isn't otherwise explained.
 >              appArgs (f :$ (A a)) acc = appArgs f (makeBody a:acc)
 >              appArgs f acc = App (makeBody f) acc
 >     makeBody (f, Out) = makeBody f
->     import <- ElimCompile
+>     -- import <- ElimCompile
+>     -- [Feature = Labelled]
+>     makeBody (f, Call l) = makeBody f
+>     -- [/Feature = Labelled]
+>     -- [Feature = Sigma]
+>     makeBody (arg, Fst) = Proj (makeBody arg) 0
+>     makeBody (arg, Snd) = Proj (makeBody arg) 1
+>     -- [/Feature = Sigma]
 
 Operators will, in many cases, just compile to an application of a function we
 write by hand in the Epic support file @epic/support.e@.
@@ -122,7 +139,24 @@ write by hand in the Epic support file @epic/support.e@.
 > instance CNameable n => MakeBody (Op, [Tm {In, p} n]) where
 >     makeBody (Op name arity _ _ _, args) 
 >          = case (name, map makeBody args) of
->                import <- OpCompile
+>                -- import <- OpCompile
+>                -- [Feature = Enum]
+>                ("branches", _) -> Ignore
+>                ("switch", [e, x, p, b]) -> App (Var "__switch") [Ignore, x, Ignore, b]
+>                -- [/Feature = Enum]
+>                -- [Feature = IDesc]
+
+%if False
+
+<                ("iinduction", [iI,d,i,v,bp,p]) -> App (Var "__iinduction") [d, p, i, v]
+<                ("imapBox", [iI,d,x,bp,p,v]) -> App (Var "__imapBox") [d, p, v]
+
+%endif
+
+>                -- [/Feature = IDesc]
+>                -- [Feature = Sigma]
+>                ("split", [_,_,y,_,f]) -> App (Var "__split") [f,y] 
+>                -- [/Feature = Sigma]
 >                _ -> Lazy (Error ("Unknown operator" ++ show name))
 >                     -- |error ("Unknown operator" ++ show name)|
 
@@ -351,7 +385,10 @@ Generating operator definitions from descriptions
 
 > opList :: [(String, OpDef)]
 > opList = (
->   import <- OpGenerate
+>   -- import <- OpGenerate
+>   -- [Feature = Enum]
+>   ("switch", switchTest) :
+>   -- [/Feature = Enum]
 >   [])
 
 > opGen :: [(CName, CompileFn)]
