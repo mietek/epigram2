@@ -90,6 +90,20 @@ do the reverse when distilling. This is slightly dubious.
 
 > distill es (PI (ENUMT e) t :>: L (x :. N (op :@ [e', NV 0, t', b]))) 
 >   | op == switchOp = distill es (branchesOp @@ [e, t] :>: b)
+
+The following cases turn vaguely list-like data into actual lists.
+We don't want this in general, but it is useful in special cases (when the data
+type is really supposed to be a list, as in |EnumD|).
+\question{When else should we use this representation?}
+
+> distill _ (IMU (Just (L (K (ANCHOR (TAG r) _ _)))) _ _ _ :>: CON (PAIR ZE VOID)) | r == "EnumU" =
+>     return (DVOID :=>: CON (PAIR ZE VOID))
+
+> distill es (C ty@(IMu (Just (LK (ANCHOR (TAG r) _ _)) :?=: _) _) :>:
+>   C c@(Con (PAIR (SU ZE) (PAIR _ (PAIR _ VOID))))) | r == "EnumU" = do
+>     Con (DPAIR _ (DPAIR s (DPAIR t _)) :=>: v) <- canTy  (distill es)
+>                                                          (ty :>: c)
+>     return ((DPAIR s t) :=>: CON v)
 > -- [/Feature = Enum]
 > -- [Feature = Equality]
 > distill es (PROP :>: tm@(EQBLUE (tty :>: t) (uty :>: u))) = do

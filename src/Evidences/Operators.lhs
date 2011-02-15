@@ -532,7 +532,8 @@ We can look up the primitive reference corresponding to an operator using
 >          IFSIGMA enumConstructors enumBranches
 
 > enumU :: Tm {In, p} x
-> enumU = IMU (Just (ANCHOR (TAG "EnumU") SET ALLOWEDEPSILON)) UNIT enumD VOID
+> enumU = IMU (Just (LK $ ANCHOR  (TAG "EnumU") SET ALLOWEDEPSILON))
+>              UNIT enumD VOID
 
 > enumREF :: REF
 > enumREF = [("Primitive", 0), ("EnumU", 0)] := DEFN enumU :<: SET 

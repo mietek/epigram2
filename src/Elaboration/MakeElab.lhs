@@ -176,6 +176,16 @@ tag in the enumeration to determine the appropriate index.
 >     toNum :: Int -> Tm {In, p} x
 >     toNum 0  = ZE
 >     toNum n  = SU (toNum (n-1))
+
+We elaborate list-like syntax for enumerations into the corresponding inductive
+data. This cannot apply in general because it leads to infinite loops when
+elaborating illegal values for some descriptions. Perhaps we should remove it
+for enumerations as well.
+
+> makeElab' loc (IMU l@(Just (LK (ANCHOR (TAG r) _ _))) _I d i :>: DVOID) | r == "EnumU" = 
+>     makeElab' loc (IMU l _I d i :>: DCON (DPAIR DZE DVOID))
+> makeElab' loc (IMU l@(Just (LK (ANCHOR (TAG r) _ _))) _I d i :>: DPAIR s t) | r == "EnumU" =
+>     makeElab' loc (IMU l _I d i :>: DCON (DPAIR (DSU DZE) (DPAIR s (DPAIR t DVOID))))
 > -- [/Feature = Enum] 
 > -- [Feature = Equality] 
 > makeElab' loc (PROP :>: DEqBlue t u) = do
