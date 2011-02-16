@@ -6,11 +6,12 @@
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE TypeOperators, GADTs, KindSignatures, RankNTypes,
 >     MultiParamTypeClasses, TypeSynonymInstances, FlexibleInstances,
->     FlexibleContexts, ScopedTypeVariables #-}
+>     FlexibleContexts, ScopedTypeVariables, TypeFamilies #-}
 
 > module Evidences.NewTm where
 
 > import Prelude hiding (foldl, exp)
+> import ShePrelude
 
 > import Control.Applicative
 > import Control.Monad.Error
@@ -34,7 +35,10 @@
 
 > data Part = Head | Body
 
-> data Status = Val | Exp
+> data Status :: * where
+>   Val :: Status
+>   Exp :: Status
+>   deriving SheSingleton
 
 > data Tm :: {Part, Status, Nat} -> * where
 >   L     :: Env {n, m} -> String -> Tm {Body, s, S m}   -> Tm {Body, s', n}
@@ -111,69 +115,63 @@
 > pattern HD         = Hd :- []
 > pattern TL         = Tl :- []
 
-> (//) :: Env {Z, n} -> Tm {p, s, n} -> VAL
-> g // L g' x b = L (g <+< g') x b 
-> g // LK e = LK (g :/ e)
-> g // (c :- es) = c :- (fmap (g :/) es)
-> g // (h :$ es) = (g // h) $$$ fmap (g :/) es
-> (Nothing, _) // D d ez o = valD d ez o
-> (Just es, _) // D d ez o = valD d (fmap ((Just es, INix) :/) ez) o
-> (es, ez) // V i = ENil // (ez !.! i)
-> (Just es, _) // P (l, _) = ENil // (es !! l)
-> (Nothing, _) // P lt = P lt :$ B0
-> g // (g' :/ e) = (g <+< g') // e
+> eval :: forall n p s' . pi (s :: Status) . 
+>           Env {Z, n} -> Tm {p, s', n} -> Tm {Body, s, Z}
+> eval {s} g (L g' x b) = L (g <+< g') x b
+> eval {s} g (LK e) = LK (g :/ e)
+> eval {s} g (c :- es) = c :- (fmap (g :/) es)
+> eval {s} g (h :$ es) = applys {s} (eval {s} g h) (fmap (g :/) es)
+> eval {s} (Nothing, _) (D d ez o) = mkD {s} d ez o
+> eval {s} (Just es, _) (D d ez o) = mkD {s} d (fmap ((Just es, INix) :/) ez) o
+> eval {s} (es, ez) (V i) = eval {s} ENil (ez !.! i)
+> eval {s} (Nothing, _) (P lt) = P lt :$ B0
+> eval {s} (Just es, _) (P (l, _)) = eval {s} ENil (es !! l)
+> eval {s} g (g' :/ e) = eval {s} (g <+< g') e
 
-> ($$) :: VAL -> Tm {Body, s, Z} -> VAL
-> L (gl, gi) _ b $$ a = (gl, gi :<: a) // b 
-> LK e $$ _ = ENil // e
-> D d es (Eat o) $$ a = valD d (es :< exp a) o  
-> D d es (Case os) $$ a = 
+> (//) :: Env {Z, n} -> Tm {p, s, n} -> VAL
+> (//) = eval {Val}
+
+> apply :: forall s' . pi (s :: Status) . 
+>          Tm {Body, s, Z} -> Tm {Body, s', Z} -> Tm {Body, s, Z} 
+> apply {s} (L (gl, gi) _ b) a = eval {s} (gl, gi :<: a) b 
+> apply {s} (LK e) _ = eval {s} ENil e
+> apply {s} (D d es (Eat o)) a = mkD {s} d (es :< exp a) o  
+> apply {Val} (D d es (Case os)) a = 
 >   case ENil // a of
 >     (c :- as) -> case lookup c os of
->       (Just o) -> foldl ($$) (valD d es o) as
+>       (Just o) -> foldl ($$) (mkD {Val} d es o) as
 >       Nothing -> error "You muppet"             
 >     x -> D d (es :< exp x) (StuckCase os) :$ B0
-> D d es (Split o) $$ a = 
->   valD d es o $$ (exp a :$ (B0 :< HD)) $$ (exp a :$ (B0 :< TL))
-> PAIR a b $$ HD = ENil // a
-> PAIR a b $$ TL = ENil // b
+> apply {Val} (D d es (Split o)) a = 
+>   mkD {Val} d es o $$ (exp a :$ (B0 :< HD)) $$ (exp a :$ (B0 :< TL))
+> apply {Exp} d@(D _ _ _) a = (ENil :/ d) :$ (B0 :< exp a)  
+> apply {s} (PAIR a b) HD = eval {s} ENil a
+> apply {s} (PAIR a b) TL = eval {s} ENil b
+
+> ($$) :: VAL -> Tm {Body, s, Z} -> VAL
+> ($$) = apply {Val}
+
+> applys :: pi (s :: Status) . Tm {Body, s, Z} -> Bwd EXP -> Tm {Body, s, Z}
+> applys {s} v B0 = v
+> applys {s} v (ez :< e) = apply {s} (applys {s} v ez) e
 
 > ($$$) :: VAL -> Bwd EXP -> VAL
-> v $$$ B0 = v
-> v $$$ (ez :< e) = (v $$$ ez) $$ e
+> ($$$) = applys {Val}
 
-> valD :: DEF -> Bwd EXP -> Operator {p, s} -> VAL
-> valD d es (Emit t)               = (Just (trail es), INix) // t
-> valD d es (Eat o)                = D d es (Eat o)
-> valD d es Hole                   = D d es Hole :$ B0
-> valD d es (Case os)              = D d es (Case os) 
-> valD d (es :< e) (StuckCase os)  = D d es (Case os) $$ e
+> mkD :: forall s' p . pi (s :: Status) . 
+>        DEF -> Bwd EXP -> Operator {p, s'} -> Tm {Body, s, Z}
+> mkD {s} d es (Emit t)               = eval {s} (Just (trail es), INix) t
+> mkD {s} d es (Eat o)                = D d es (Eat o)
+> mkD {s} d es Hole                   = D d es Hole :$ B0
+> mkD {s} d es (Case os)              = D d es (Case os) 
+> mkD {s} d (es :< e) (StuckCase os)  = apply {s} (D d es (Case os)) e
 
-> ($?) :: EXP -> EXP -> EXP
-> L (gl, gi) _ b $? a = (gl, gi :<: a) /? b 
-> LK e $? _ = (Nothing, INil) /? e
-> D d es (Eat o) $? a = expD d (es :< a) o 
-> d@(D _ _ _) $? a = (ENil :/ d) :$ (B0 :< a)  
+> ($?) :: EXP -> Tm {Body, s, Z} -> EXP
+> ($?) = apply {Exp}
 
 > ($?$) :: EXP -> Bwd EXP -> EXP
-> v $?$ B0 = v
-> v $?$ (ez :< e) = (v $?$ ez) $? e
+> ($?$) = applys {Exp}
 
 > (/?) :: Env {Z, n} -> Tm {p, s, n} -> EXP
-> g /? L g' x b = L (g <+< g') x b 
-> g /? LK e = LK (g :/ e)
-> g /? (c :- es) = c :- (fmap (g :/) es)
-> g /? (h :$ es) = (g /? h) $?$ fmap (g :/) es
-> (Nothing, _) /? D d ez o = expD d ez o
-> (Just es, _) /? D d ez o = expD d (fmap ((Just es, INix) :/) ez) o
-> (es, ez) /? V i = ENil /? (ez !.! i)
-> (Nothing, _) /? P lt = P lt :$ B0
-> (Just es, _) /? P (l, _) = ENil /? (es !! l)
-> g /? (g' :/ e) = (g <+< g') /? e
+> (/?) = eval {Exp}
 
-> expD :: DEF -> Bwd EXP -> Operator {p, s} -> EXP
-> expD d es (Emit t)  = D d es (Emit t)
-> expD d es (Eat o)   = D d es (Eat o) 
-> expD d es Hole      = D d es Hole :$ B0
-> expD d es (Case os)              = D d es (Case os) 
-> expD d (es :< e) (StuckCase os)  = D d es (Case os) $? e
