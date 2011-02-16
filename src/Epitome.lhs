@@ -59,18 +59,13 @@
 
 \input{Documentation/Language.tex}
 
-\chapter{The Name Supply}
-
-\input{NameSupply/Introduction.tex}
-
-%include NameSupply/NameSupply.lhs
-%include NameSupply/NameSupplier.lhs
-
 \chapter{The Evidence Language}
 
 \input{Evidences/Introduction.tex}
 
 %include Evidences/Tm.lhs
+%include Evidences/TmJig.lhs
+%include Evidences/NameSupply.lhs
 %include Evidences/Mangler.lhs
 %include Evidences/Eval.lhs
 %include Evidences/TypeChecker.lhs
