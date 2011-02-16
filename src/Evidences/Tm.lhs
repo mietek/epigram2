@@ -44,7 +44,7 @@
 >   D     :: DEF -> Bwd EXP -> Operator {p, s}           -> Tm {p, s,  n}
 
 >   V     :: Fin {n}      {- dB i -}                     -> Tm {Head, s,  n}
->   P     :: (Int, TYPE)  {- dB l -}                     -> Tm {Head, s,  n}
+>   P     :: (Int, TY)  {- dB l -}                     -> Tm {Head, s,  n}
 
 >   (:/)  :: Env {n, m} -> Tm {p, s, m}                  -> Tm {p', Exp, n}
 
@@ -61,19 +61,19 @@
 > data IEnv :: {Nat, Nat} -> * where
 >  INix   :: IEnv {n, Z}
 >  INil   :: IEnv {n, n}
->  (:<:)  :: IEnv {m, n} -> Tm {Body, s, Z} -> IEnv {m, S n} 
+>  (:<<:)  :: IEnv {m, n} -> Tm {Body, s, Z} -> IEnv {m, S n} 
 
 > exp :: Tm {p, s, n} -> Tm {p', Exp, n}
 > exp = (:/) ENil 
 
 > (!.!) :: IEnv {Z, n} -> Fin {n} -> Tm {Body, Exp, Z}
-> (ez :<: e) !.! Fz = exp e 
-> (ez :<: e) !.! Fs i = ez !.! i
+> (ez :<<: e) !.! Fz = exp e 
+> (ez :<<: e) !.! Fs i = ez !.! i
 
 > (<:<) :: IEnv {m, n} -> IEnv {n, o} -> IEnv {m, o}
 > g <:< INix = INix
 > g <:< INil = g
-> g <:< (g' :<: e) = (g <:< g') :<: e
+> g <:< (g' :<<: e) = (g <:< g') :<<: e
 
 > (<+<) :: Env {m, n} -> Env {n, o} -> Env {m, o}
 > (gl, gi) <+< (gl', gi') = (gln, gi <:< gi')
@@ -85,11 +85,11 @@
 
 > pattern ENil = (Nothing, INil)
 
-> type DEF = (String, TYPE, Operator {Body, Exp})
+> type DEF = (String, TY, Operator {Body, Exp})
 
 > type EXP = Tm {Body, Exp, Z}
 > type VAL = Tm {Body, Val, Z}
-> type TYPE = VAL
+> type TY = VAL
 
 > data Can :: * where
 >   Set    :: Can                            -- set of sets
@@ -129,7 +129,7 @@
 
 > apply :: forall s' . pi (s :: Status) . 
 >          Tm {Body, s, Z} -> Tm {Body, s', Z} -> Tm {Body, s, Z} 
-> apply {s} (L (gl, gi) _ b) a = eval {s} (gl, gi :<: a) b 
+> apply {s} (L (gl, gi) _ b) a = eval {s} (gl, gi :<<: a) b 
 > apply {s} (LK e) _ = eval {s} ENil e
 > apply {s} (D d es (Eat o)) a = mkD {s} d (es :< exp a) o  
 > apply {Val} (D d es (Case os)) a = 
@@ -171,3 +171,47 @@
 > (/?) :: Env {Z, n} -> Tm {p, s, n} -> EXP
 > (/?) = eval {Exp}
 
+
+
+
+
+
+We have special pairs for types going into and coming out of
+stuff. We write |typ :>: thing| to say that |typ| accepts the
+term |thing|, i.e.\ we can push the |typ| in the |thing|. Conversely, we
+write |thing :<: typ| to say that |thing| is of inferred type |typ|, i.e.\
+we can pull the type |typ| out of the |thing|. Therefore, we can read
+|:>:| as ``accepts'' and |:<:| as ``has inferred type''.
+
+> data ty :>: tm = ty :>: tm  deriving (Show,Eq)
+> infix 4 :>:
+> data tm :<: ty = tm :<: ty  deriving (Show,Eq)
+> infix 4 :<:
+
+> fstIn :: (a :>: b) -> a
+> fstIn (x :>: _) = x
+
+> sndIn :: (a :>: b) -> b
+> sndIn (_ :>: x) = x
+
+> fstEx :: (a :<: b) -> a
+> fstEx (x :<: _) = x
+
+> sndEx :: (a :<: b) -> b
+> sndEx (_ :<: x) = x
+
+As we are discussing syntactic sugar, we define the ``reduces to'' symbol:
+
+> data t :=>: v = t :=>: v deriving (Show, Eq)
+> infix 5 :=>:
+
+with the associated projections:
+
+> valueOf :: (t :=>: v) -> v
+> valueOf (_ :=>: v) = v
+>
+> termOf :: (t :=>: v) -> t
+> termOf (t :=>: _) = t
+
+Intuitively, |t :=>: v| can be read as ``the term |t| reduces to the
+value |v|''.

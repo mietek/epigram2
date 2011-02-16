@@ -29,10 +29,10 @@
 
 > data Vec :: {Nat} -> * -> * where
 >   V0     :: Vec {Z} x
->   (:>:)  :: x -> Vec {n} x -> Vec {S n} x
+>   (:>>:)  :: x -> Vec {n} x -> Vec {S n} x
 >   deriving ()
 
-> infixr 4 :>:
+> infixr 4 :>>:
 
 > fog :: Fin {n} -> Int
 > fog Fz = 0
@@ -47,43 +47,43 @@
 >   _ == _ = False
 
 > (!>!) :: Vec {n} x -> Fin {n} -> x
-> (x :>: xs) !>! Fz    = x
-> (x :>: xs) !>! Fs i  = xs !>! i
+> (x :>>: xs) !>! Fz    = x
+> (x :>>: xs) !>! Fs i  = xs !>! i
 
 > instance Show x => Show (Vec {n} x) where
 >   show V0          = "V0"
->   show (x :>: xs)  = show x ++ " :>: " ++ show xs
+>   show (x :>>: xs)  = show x ++ " :>>: " ++ show xs
 
 > instance Functor (Vec {n}) where
 >   fmap f V0          = V0
->   fmap f (x :>: xs)  = f x :>: fmap f xs
+>   fmap f (x :>>: xs)  = f x :>>: fmap f xs
 
 > instance {:n :: Nat:} => Applicative (Vec {n}) where
 >   pure = vec {:n :: Nat:} where
 >     vec :: forall x. pi (n :: Nat). x -> Vec {n} x
 >     vec {Z}    x = V0
->     vec {S n}  x = x :>: vec n x
+>     vec {S n}  x = x :>>: vec n x
 >   (<*>) = vapp where
 >     vapp :: Vec {m} (s -> t) -> Vec {m} s -> Vec {m} t
 >     vapp V0          V0          = V0
->     vapp (f :>: fs)  (s :>: ss)  = f s :>: vapp fs ss
+>     vapp (f :>>: fs)  (s :>>: ss)  = f s :>>: vapp fs ss
 
 > vhead :: Vec {S n} x -> x
-> vhead (x :>: xs) = x
+> vhead (x :>>: xs) = x
 
 > vtail :: Vec {S n} x -> Vec {n} x
-> vtail (x :>: xs) = xs
+> vtail (x :>>: xs) = xs
 
 > instance {:n :: Nat:} => Monad (Vec {n}) where
 >   return = pure
 >   (>>=) = vdiag where
 >     vdiag :: Vec {m} a -> (a -> Vec {m} b) -> Vec {m} b
 >     vdiag V0          f = V0
->     vdiag (x :>: xs)  f = vhead (f x) :>: vdiag xs (vtail . f)
+>     vdiag (x :>>: xs)  f = vhead (f x) :>>: vdiag xs (vtail . f)
 
 > instance Traversable (Vec {n}) where
 >   traverse f V0          = (| V0 |)
->   traverse f (x :>: xs)  = (| f x :>: traverse f xs |)
+>   traverse f (x :>>: xs)  = (| f x :>>: traverse f xs |)
 
 > instance Foldable (Vec {n}) where
 >   foldMap = foldMapDefault
