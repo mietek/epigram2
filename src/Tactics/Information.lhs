@@ -11,11 +11,10 @@
 > import Control.Monad.State
 > import Text.PrettyPrint.HughesPJ
 
-> import NameSupply.NameSupply
-
 > import Evidences.Eval hiding (($$))
 > import qualified Evidences.Eval (($$))
 > import Evidences.Tm
+> import Evidences.NameSupply
 
 > import ProofState.Structure.Developments
 > import ProofState.Structure.Entries

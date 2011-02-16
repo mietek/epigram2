@@ -37,10 +37,8 @@
 
 > import Elaboration.Elaborator
 
-> import NameSupply.NameSupply
-> import NameSupply.NameSupplier
-
 > import Evidences.Tm
+> import Evidences.NameSupply
 
 %endif
 

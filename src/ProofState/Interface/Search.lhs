@@ -14,8 +14,6 @@
 
 > import Kit.MissingLibrary
 
-> import NameSupply.NameSupply
-
 > import ProofState.Structure.Developments
 
 > import ProofState.Edition.ProofState
@@ -23,6 +21,7 @@
 > import ProofState.Edition.Navigation
 
 > import Evidences.Tm
+> import Evidences.NameSupply
 
 > import DisplayLang.Name
 

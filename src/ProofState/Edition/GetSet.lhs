@@ -14,8 +14,6 @@
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
 
-> import NameSupply.NameSupply
-
 > import DisplayLang.Scheme
 
 > import ProofState.Structure.Developments
@@ -27,6 +25,7 @@
 > import ProofState.Edition.Scope
 
 > import Evidences.Tm
+> import Evidences.NameSupply
 
 %endif
 

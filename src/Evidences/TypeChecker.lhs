@@ -18,12 +18,11 @@
 > import Kit.MissingLibrary
 
 > import Evidences.Tm
+> import Evidences.NameSupply
 > import Evidences.Mangler
 > import Evidences.Eval
 > import {-# SOURCE #-} Evidences.DefinitionalEquality
 > import Evidences.Operators
-
-> import NameSupply.NameSupplier
 
 %endif
 
@@ -315,7 +314,7 @@ $$\Gamma \vdash \mbox{TY} \ni \mbox{Tm \{In,.\} p}$$
 
 Technically, we also need a name supply and handle failure with a
 convenient monad. Therefore, we jump in the |Check| monad defined in
-Section~\ref{subsec:NameSupply.NameSupplier.check-monad}.
+Section~\ref{subsec:Evidences.NameSupplier.check-monad}.
 
 > check :: (TY :>: INTM) -> Check INTM (INTM :=>: VAL)
 

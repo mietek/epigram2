@@ -18,8 +18,7 @@
 > import Evidences.Eval
 > import Evidences.TypeChecker
 
-> import NameSupply.NameSupply
-> import NameSupply.NameSupplier
+> import Evidences.NameSupply
 
 %endif
 

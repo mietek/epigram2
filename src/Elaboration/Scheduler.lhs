@@ -10,9 +10,8 @@
 
 > import Control.Applicative
 
-> import NameSupply.NameSupply
-
 > import Evidences.Tm
+> import Evidences.NameSupply
 > import Evidences.Eval
 > import Evidences.DefinitionalEquality
 

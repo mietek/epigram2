@@ -13,9 +13,8 @@
 > import Control.Monad.State
 > import Data.Traversable
 
-> import NameSupply.NameSupplier
-
 > import Evidences.Tm
+> import Evidences.NameSupply
 > import Evidences.Mangler
 > import Evidences.Eval
 > import Evidences.Operators

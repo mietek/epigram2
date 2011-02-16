@@ -24,8 +24,8 @@
 > import Kit.BwdFwd
 > import Kit.NatFinVec
 
-> import NameSupply.NameSupply
 > import Evidences.Tm
+> import Evidences.NameSupply
 
 %endif
 

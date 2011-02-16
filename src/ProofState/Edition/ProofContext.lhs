@@ -14,13 +14,12 @@
 > import Data.List
 > import Data.Traversable
 
-> import NameSupply.NameSupply
-
 > import ProofState.Structure.Developments
 
 > import ProofState.Edition.News
 
 > import Evidences.Tm
+> import Evidences.NameSupply
 
 > import Kit.BwdFwd
 

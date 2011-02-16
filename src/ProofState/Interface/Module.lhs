@@ -11,8 +11,6 @@
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
 
-> import NameSupply.NameSupply
-
 > import ProofState.Structure.Developments
 
 > import ProofState.Edition.ProofContext
@@ -25,6 +23,7 @@
 > import ProofState.Interface.ProofKit
 
 > import Evidences.Tm
+> import Evidences.NameSupply
 > import Evidences.Eval
 
 %endif

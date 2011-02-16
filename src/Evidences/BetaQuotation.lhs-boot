@@ -2,8 +2,8 @@
 
 > module Evidences.BetaQuotation where
 
-> import NameSupply.NameSupplier
 > import Evidences.Tm
+> import Evidences.NameSupply
 
 > import Kit.BwdFwd
 

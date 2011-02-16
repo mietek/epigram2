@@ -18,9 +18,8 @@
 > import System.Exit
 > import System.IO 
 
-> import NameSupply.NameSupply
-
 > import Evidences.Tm hiding (In)
+> import Evidences.NameSupply
 
 > import DisplayLang.Lexer
 > import DisplayLang.Name

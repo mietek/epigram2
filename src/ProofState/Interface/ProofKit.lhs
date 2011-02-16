@@ -14,9 +14,6 @@
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
 
-> import NameSupply.NameSupply
-> import NameSupply.NameSupplier
-
 > import ProofState.Edition.ProofContext
 > import ProofState.Edition.ProofState
 > import ProofState.Edition.GetSet
@@ -25,6 +22,7 @@
 > import DisplayLang.Name
 
 > import Evidences.Tm
+> import Evidences.NameSupply
 > import Evidences.TypeChecker
 > import Evidences.BetaQuotation
 

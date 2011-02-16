@@ -15,14 +15,12 @@
 > import Kit.MissingLibrary
 
 > import Evidences.Tm
+> import Evidences.NameSupply
 > import {-# SOURCE #-} Evidences.Eval
 > import Evidences.OperatorDSL
 > import {-# SOURCE #-} Evidences.DefinitionalEquality
 > import {-# SOURCE #-} Evidences.PropositionalEquality
 > import {-# SOURCE #-} Evidences.BetaQuotation
-
-> import NameSupply.NameSupply
-> import NameSupply.NameSupplier
 
 %endif
 

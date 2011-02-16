@@ -19,10 +19,8 @@
 > import Kit.MissingLibrary
 > import Kit.Trace
 
-> import NameSupply.NameSupply
-> import NameSupply.NameSupplier
-
 > import Evidences.Tm
+> import Evidences.NameSupply
 > import Evidences.Eval
 > import Evidences.Operators
 > import Evidences.DefinitionalEquality

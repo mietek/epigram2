@@ -15,9 +15,9 @@
 > import Kit.BwdFwd
 
 > import Evidences.Tm
+> import Evidences.NameSupply
 > import Evidences.Eval
 
-> import NameSupply.NameSupplier
 
 %endif
 

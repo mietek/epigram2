@@ -13,10 +13,9 @@
 
 > import Kit.BwdFwd
 
-> import NameSupply.NameSupply
-
 > import Evidences.Tm
 > import Evidences.Eval
+> import Evidences.NameSupply
 
 > import Elaboration.ElabProb
 

@@ -15,9 +15,8 @@
 > import Control.Monad.State
 > import Data.Foldable
 
-> import NameSupply.NameSupplier
-
 > import Evidences.Tm
+> import Evidences.NameSupply
 > import Evidences.Eval
 > import Evidences.Operators
 > import Evidences.DefinitionalEquality

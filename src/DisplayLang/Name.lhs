@@ -8,9 +8,8 @@
 
 > import Data.List
 
-> import NameSupply.NameSupply
-
 > import Evidences.Tm
+> import Evidences.NameSupply
 
 > import DisplayLang.DisplayTm
 

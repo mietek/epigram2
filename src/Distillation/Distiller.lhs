@@ -28,9 +28,8 @@
 > import DisplayLang.Name
 > import DisplayLang.PrettyPrint
 
-> import NameSupply.NameSupplier
-
 > import Evidences.Tm
+> import Evidences.NameSupply
 > import Evidences.Mangler
 > import Evidences.TypeChecker
 > import Evidences.BetaQuotation

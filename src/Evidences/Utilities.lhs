@@ -13,9 +13,8 @@
 
 > import Data.Foldable
 
-> import NameSupply.NameSupplier
-
 > import Evidences.Tm
+> import Evidences.NameSupply
 > import Evidences.Mangler
 > import Evidences.BetaQuotation
 > import Evidences.Eval

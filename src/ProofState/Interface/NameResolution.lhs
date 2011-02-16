@@ -17,8 +17,6 @@
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
 
-> import NameSupply.NameSupply
-
 > import ProofState.Structure.Developments
 > import ProofState.Structure.Entries
 
@@ -31,6 +29,7 @@
 > import DisplayLang.Scheme
 
 > import Evidences.Tm
+> import Evidences.NameSupply
 > import Evidences.Operators
 
 %endif

@@ -10,8 +10,6 @@
 
 > import Data.Foldable
 
-> import NameSupply.NameSupply
-
 > import ProofState.Structure.Developments
 > import ProofState.Structure.Entries
 
@@ -20,6 +18,7 @@
 > import ProofState.Edition.GetSet
 
 > import Evidences.Tm
+> import Evidences.NameSupply
 > import Evidences.Operators
 
 

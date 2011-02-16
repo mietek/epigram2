@@ -17,12 +17,11 @@
 > import Kit.MissingLibrary
 
 > import Evidences.Tm
+> import Evidences.NameSupply
 > import Evidences.Mangler
 > import Evidences.Eval
 > import Evidences.Operators
 > import Evidences.DefinitionalEquality
-
-> import NameSupply.NameSupplier
 
 > import ProofState.Edition.Scope
 > import ProofState.Edition.ProofState

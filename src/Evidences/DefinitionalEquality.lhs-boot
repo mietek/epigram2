@@ -4,8 +4,7 @@
 
 > module Evidences.DefinitionalEquality where
 
-> import NameSupply.NameSupply
-
 > import Evidences.Tm
+> import Evidences.NameSupply
 
 > equal :: (TY :>: (VAL,VAL)) -> NameSupply -> Bool

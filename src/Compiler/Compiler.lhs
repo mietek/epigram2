@@ -21,8 +21,7 @@ generate an executable from a collection of supercombinator definitions.
 > import Data.Traversable
 > import Control.Applicative
 
-> import NameSupply.NameSupply
-
+> import Evidences.NameSupply
 > import Evidences.Tm
 > import Evidences.Mangler
 

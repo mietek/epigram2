@@ -10,9 +10,8 @@
 
 > import Data.Traversable
 
-> import NameSupply.NameSupply
-
 > import Evidences.Tm
+> import Evidences.NameSupply
 
 > import DisplayLang.Scheme
 

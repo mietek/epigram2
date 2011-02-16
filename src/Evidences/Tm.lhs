@@ -24,9 +24,10 @@
 > import Kit.BwdFwd
 > import Kit.NatFinVec
 
-> import NameSupply.NameSupply
-
 %endif
+
+
+> type Name = [(String, Int)]
 
 > data Part = Head | Body
 

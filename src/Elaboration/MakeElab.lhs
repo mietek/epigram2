@@ -11,9 +11,8 @@
 > import Control.Applicative
 > import Control.Monad.Error
 
-> import NameSupply.NameSupplier
-
 > import Evidences.Tm
+> import Evidences.NameSupply
 > import Evidences.TypeChecker
 > import Evidences.Eval
 > import Evidences.Operators
