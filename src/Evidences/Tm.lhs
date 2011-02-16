@@ -44,7 +44,7 @@
 >   D     :: DEF -> Bwd EXP -> Operator {p, s}           -> Tm {p, s,  n}
 
 >   V     :: Fin {n}      {- dB i -}                     -> Tm {Head, s,  n}
->   P     :: (Int, TY)  {- dB l -}                     -> Tm {Head, s,  n}
+>   P     :: (Int, String, TY)  {- dB l -}                     -> Tm {Head, s,  n}
 
 >   (:/)  :: Env {n, m} -> Tm {p, s, m}                  -> Tm {p', Exp, n}
 
@@ -64,7 +64,10 @@
 >  (:<<:)  :: IEnv {m, n} -> Tm {Body, s, Z} -> IEnv {m, S n} 
 
 > exp :: Tm {p, s, n} -> Tm {p', Exp, n}
-> exp = (:/) ENil 
+> exp = (:/) ENil
+
+> ev :: Tm {p, Exp, Z} -> VAL
+> ev = (ENil //) 
 
 > (!.!) :: IEnv {Z, n} -> Fin {n} -> Tm {Body, Exp, Z}
 > (ez :<<: e) !.! Fz = exp e 
@@ -89,7 +92,7 @@
 
 > type EXP = Tm {Body, Exp, Z}
 > type VAL = Tm {Body, Val, Z}
-> type TY = VAL
+> type TY = EXP
 
 > data Can :: * where
 >   Set    :: Can                            -- set of sets
@@ -111,7 +114,7 @@
 > pattern HD         = Hd :- []
 > pattern TL         = Tl :- []
 
-> eval :: forall n p s' . pi (s :: Status) . 
+> eval :: forall m n p s' . pi (s :: Status) . 
 >           Env {Z, n} -> Tm {p, s', n} -> Tm {Body, s, Z}
 > eval {s} g (L g' x b) = L (g <+< g') x b
 > eval {s} g (LK e) = LK (g :/ e)
@@ -121,11 +124,11 @@
 > eval {s} (Just es, _) (D d ez o) = mkD {s} d (fmap ((Just es, INix) :/) ez) o
 > eval {s} (es, ez) (V i) = eval {s} ENil (ez !.! i)
 > eval {s} (Nothing, _) (P lt) = P lt :$ B0
-> eval {s} (Just es, _) (P (l, _)) = eval {s} ENil (es !! l)
+> eval {s} (Just es, _) (P (l, _, _)) = eval {s} ENil (es !! l)
 > eval {s} g (g' :/ e) = eval {s} (g <+< g') e
 
-> (//) :: Env {Z, n} -> Tm {p, s, n} -> VAL
-> (//) = eval {Val}
+> (//) :: {:s :: Status:} => Env {Z, n} -> Tm {p, s', n} -> Tm {Body, s, Z}
+> (//) = eval {:s :: Status:}
 
 > apply :: forall s' . pi (s :: Status) . 
 >          Tm {Body, s, Z} -> Tm {Body, s', Z} -> Tm {Body, s, Z} 
@@ -133,7 +136,7 @@
 > apply {s} (LK e) _ = eval {s} ENil e
 > apply {s} (D d es (Eat o)) a = mkD {s} d (es :< exp a) o  
 > apply {Val} (D d es (Case os)) a = 
->   case ENil // a of
+>   case (ENil // a :: VAL) of
 >     (c :- as) -> case lookup c os of
 >       (Just o) -> foldl ($$) (mkD {Val} d es o) as
 >       Nothing -> error "You muppet"             
@@ -144,15 +147,15 @@
 > apply {s} (PAIR a b) HD = eval {s} ENil a
 > apply {s} (PAIR a b) TL = eval {s} ENil b
 
-> ($$) :: VAL -> Tm {Body, s, Z} -> VAL
-> ($$) = apply {Val}
+> ($$) :: {:s :: Status:} => Tm {Body, s, Z} -> Tm {Body, s', Z} -> Tm {Body, s, Z}
+> ($$) = apply {:s :: Status:}
 
 > applys :: pi (s :: Status) . Tm {Body, s, Z} -> Bwd EXP -> Tm {Body, s, Z}
 > applys {s} v B0 = v
 > applys {s} v (ez :< e) = apply {s} (applys {s} v ez) e
 
-> ($$$) :: VAL -> Bwd EXP -> VAL
-> ($$$) = applys {Val}
+> ($$$) :: {:s :: Status:} => Tm {Body, s, Z} -> Bwd EXP -> Tm {Body, s, Z}
+> ($$$) = applys {:s :: Status:}
 
 > mkD :: forall s' p . pi (s :: Status) . 
 >        DEF -> Bwd EXP -> Operator {p, s'} -> Tm {Body, s, Z}
@@ -161,18 +164,6 @@
 > mkD {s} d es Hole                   = D d es Hole :$ B0
 > mkD {s} d es (Case os)              = D d es (Case os) 
 > mkD {s} d (es :< e) (StuckCase os)  = apply {s} (D d es (Case os)) e
-
-> ($?) :: EXP -> Tm {Body, s, Z} -> EXP
-> ($?) = apply {Exp}
-
-> ($?$) :: EXP -> Bwd EXP -> EXP
-> ($?$) = applys {Exp}
-
-> (/?) :: Env {Z, n} -> Tm {p, s, n} -> EXP
-> (/?) = eval {Exp}
-
-
-
 
 
 

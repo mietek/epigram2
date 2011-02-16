@@ -5,7 +5,7 @@
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE GADTs, KindSignatures, TypeOperators, TypeFamilies, FlexibleContexts,
 >     MultiParamTypeClasses, UndecidableInstances, ScopedTypeVariables,
->     RankNTypes #-}
+>     RankNTypes, FlexibleInstances #-}
 
 > module Kit.NatFinVec where
 
@@ -87,3 +87,21 @@
 
 > instance Foldable (Vec {n}) where
 >   foldMap = foldMapDefault
+
+> class Leq (m :: {Nat}) (n :: {Nat}) where
+>   finj :: Fin {m} -> Fin {n}
+
+> instance Leq n n where
+>   finj = id
+
+> instance (o ~ {S n}, Leq m n) => Leq m o where
+>   finj = Fs . finj
+
+> bound :: pi (n :: Nat) . Int -> Maybe (Fin {n})
+> bound {Z} _ = Nothing
+> bound {S n} 0 = (| Fz |)
+> bound {S n} m = (| Fs (bound {n} (m - 1)) |)
+
+> mkInt :: pi (n :: Nat) . Int
+> mkInt {Z} = 0
+> mkInt {S n} = 1 + mkInt n

@@ -30,14 +30,6 @@
 %endif
 
 
-> class Leq (m :: {Nat}) (n :: {Nat}) where
->   finj :: Fin {m} -> Fin {n}
-
-> instance Leq n n where
->   finj = id
-
-> instance (o ~ {S n}, Leq m n) => Leq m o where
->   finj = Fs . finj
 
 > class Wrapper (t :: *) (n :: {Nat}) | t -> n where
 >   wrapper :: Tm {Head, Exp, n} -> Bwd (Tm {Body, Exp, n}) -> t
