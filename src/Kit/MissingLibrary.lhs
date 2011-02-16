@@ -277,6 +277,9 @@ Grr.
 > instance (HalfZip p, HalfZip q) => HalfZip (p :*: q) where
 >   halfZip (x0 :& y0) (x1 :& y1) = (| (halfZip x0 x1) :& (halfZip y0 y1) |)
 
+> instance HalfZip [] where
+>   halfZip [] [] = (| [] |)
+>   halfZip (a : as) (b : bs) = (| ~(a,b) : halfZip as bs |)
 
 
 %if False
