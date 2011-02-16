@@ -87,7 +87,7 @@
 
 > pattern ENil = (Nothing, INil)
 
-> type DEF = ()
+> type DEF = (String, TYPE, Operator {Body, Exp})
 
 > type EXP = Tm {Body, Exp, Z}
 > type VAL = Tm {Body, Val, Z}
@@ -98,7 +98,7 @@
 >   Pi    :: Can {S (S Z)}                           -- functions
 >   Con   :: Can {S Z}                               -- packing
 
-> pattern SET       = Set :- VNil          -- set of sets
+> pattern SET       = Set :- Vnil          -- set of sets
 > pattern ARR s t   = Pi :- Vcons s (Vcons (LK t) Vnil)  -- simple arrow
 > pattern PI s t    = Pi :- Vcons s (Vcons t Vnil)       -- dependent functions
 > pattern CON t     = Con :- Vcons t Vnil            -- Container (packing "stuff")
