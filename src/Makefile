@@ -12,6 +12,7 @@ HC_PACKAGE      = -hide-all-packages \
 		  -package base \
 		  -package haskell98 \
 	          -package filepath \
+		  -package she \
 		  $(HC_CABAL_PACKAGE)
 HC_OPTS_DEV     = $(HC_PACKAGE)
 HC_OPTS_TEST    = $(HC_PACKAGE) -fhpc
