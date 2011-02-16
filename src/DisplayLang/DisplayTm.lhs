@@ -16,7 +16,9 @@
 
 > import Evidences.Tm
 
+> import Kit.BwdFwd
 > import Kit.MissingLibrary
+> import Kit.NatFinVec
 
 %endif
 
@@ -57,16 +59,16 @@ parameter. Thanks to this hack, we can use |deriving Traversable|.
 
 \end{danger}
 
-> data DInTm :: * -> * -> * where
->     DL     :: DScope p x       ->  DInTm p x -- \(\lambda\)
->     DC     :: Can (DInTm p x)  ->  DInTm p x -- canonical
->     DN     :: DExTm p x        ->  DInTm p x -- neutral
->     DQ     :: String           ->  DInTm p x -- hole
->     DU     ::                      DInTm p x -- underscore
->     DT     :: InTmWrap p x     ->  DInTm p x -- embedding
+> data DInTm :: * -> * where
+>     DL     :: DScope x          ->  DInTm x -- \(\lambda\)
+>     DC     :: Can -> [DInTm x]  ->  DInTm x -- canonical
+>     DN     :: DExTm x           ->  DInTm x -- neutral
+>     DQ     :: String            ->  DInTm x -- hole
+>     DU     ::                       DInTm x -- underscore
+>     DT     :: InTmWrap x        ->  DInTm x -- embedding
 >     -- import <- DInTmConstructors
 >     -- [Feature = Anchor]
->     DAnchor :: String -> DInTm p x -> DInTm p x 
+>     DAnchor :: String -> DInTm x -> DInTm x 
 >     -- [/Feature = Anchor]
 >     -- [Feature = Equality]
 
@@ -74,23 +76,23 @@ In the display syntax, a blue equality can be between arbitrary DExTms,
 rather than ascriptions. To allow this, we add a suitable constructor |DEqBlue|
 to DInTm, along with appropriate elaboration and distillation rules.
 
->     DEqBlue :: DExTm p x -> DExTm p x -> DInTm p x
+>     DEqBlue :: DExTm x -> DExTm x -> DInTm x
 >     -- [/Feature = Equality]
 >     -- [Feature = IDesc]
->     DIMu :: Labelled (Id :*: Id) (DInTm p x) -> DInTm p x  -> DInTm p x 
+>     -- DIMu :: Labelled (Id :*: Id) (DInTm p x) -> DInTm p x  -> DInTm p x 
 >     -- [/Feature = IDesc]
 >     -- [Feature = UId]
->     DTag :: String -> [DInTm p x] -> DInTm p x
+>     DTag :: String -> [DInTm x] -> DInTm x
 >     -- [/Feature = UId]
 >  deriving (Functor, Foldable, Traversable, Show)
 >
-> data DExTm p x = DHead p x ::$ DSpine p x
+> data DExTm x = DHead x ::$ DSpine x
 >   deriving (Functor, Foldable, Traversable, Show)
 >
-> data DHead :: * -> * -> * where
->     DP     :: x                -> DHead  p x -- parameter
->     DType  :: DInTm p x        -> DHead  p x -- type annotation
->     DTEx   :: ExTmWrap p x     -> DHead  p x -- embedding
+> data DHead :: * -> * where
+>     DP     :: x           -> DHead x -- parameter
+>     DType  :: DInTm x     -> DHead x -- type annotation
+>     DTEx   :: ExTmWrap x  -> DHead x -- embedding
 >  deriving (Functor, Foldable, Traversable, Show)
 
 Note that, again, we are polymorphic in the representation of free
@@ -105,7 +107,7 @@ the head and spine for elaboration and pretty-printing.
 
 %if False
 
-> dfortran :: DInTm p x -> String
+> dfortran :: DInTm x -> String
 > dfortran (DL (x ::. _)) | not (null x) = x
 > dfortran _ = "x"
 
@@ -119,27 +121,27 @@ only ever consider \emph{terms} here, while |Scope| had to deal with
 \emph{values}. Hence, we give this purely syntaxic, first-order
 representation of scopes:
 
-> data DScope :: * -> * -> * where
->     (::.)  :: String -> DInTm p x  -> DScope p x  -- binding
->     DK     :: DInTm p x            -> DScope p x  -- constant
+> data DScope :: * -> * where
+>     (::.)  :: String -> DInTm x  -> DScope x  -- binding
+>     DK     :: DInTm x            -> DScope x  -- constant
 >   deriving (Functor, Foldable, Traversable, Show)
 
 We provide handy projection functions to get the name and body of a scope:
 
-> dScopeName :: DScope p x -> String
+> dScopeName :: DScope x -> String
 > dScopeName (x ::. _)  = x
 > dScopeName (DK _)     = "_"
 
-> dScopeTm :: DScope p x -> DInTm p x
+> dScopeTm :: DScope x -> DInTm x
 > dScopeTm (_ ::. tm)  = tm
 > dScopeTm (DK tm)     = tm
 
 Spines of eliminators are just like in the evidence language:
 
-> type DSpine p x = [Elim (DInTm p x)]
+> type DSpine x = Bwd (DInTm x)
 
-> ($::$) :: DExTm p x -> Elim (DInTm p x) -> DExTm p x
-> (h ::$ s) $::$ a = h ::$ (s ++ [a])
+> ($::$) :: DExTm x -> DInTm x -> DExTm x
+> (h ::$ s) $::$ a = h ::$ (s :< a)
 
 
 \subsubsection{Embedding evidence terms}
@@ -159,30 +161,37 @@ document.
 
 \end{danger}
 
-> newtype InTmWrap  p x = InTmWrap  (InTm p)  deriving Show
-> newtype ExTmWrap  p x = ExTmWrap  (ExTm p)  deriving Show
+
+
+> newtype InTmWrap  x = InTmWrap  EXP
+> newtype ExTmWrap  x = ExTmWrap  (Tm {Head, Exp, Z})
 
 > pattern DTIN x = DT (InTmWrap x)
 > pattern DTEX x = DTEx (ExTmWrap x)
 
-%if False
 
-> instance Functor (InTmWrap p) where
+> instance Functor InTmWrap where
 >   fmap = fmapDefault
-> instance Foldable (InTmWrap p) where
+> instance Foldable InTmWrap where
 >   foldMap = foldMapDefault
-> instance Traversable (InTmWrap p) where
+> instance Traversable InTmWrap where
 >   traverse f (InTmWrap x) = pure (InTmWrap x)
+> instance Show (InTmWrap x) where
+>   show x = "InTm"
 
-> instance Functor (ExTmWrap p) where
+> instance Functor ExTmWrap where
 >   fmap = fmapDefault
-> instance Foldable (ExTmWrap p) where
+> instance Foldable ExTmWrap where
 >   foldMap = foldMapDefault
-> instance Traversable (ExTmWrap p) where
+> instance Traversable ExTmWrap where
 >   traverse f (ExTmWrap x) = pure (ExTmWrap x)
+> instance Show (ExTmWrap x) where
+>   show x = "ExTm"
 
 The following are essentially saying that |DInTm| is traversable in its first
 argument, as well as its second.
+
+> {-
 
 > traverseDTIN :: Applicative f => (p -> f q) -> DInTm p x -> f (DInTm q x)
 > traverseDTIN f (DL (x ::. tm)) = (|DL (|(x ::.) (traverseDTIN f tm)|)|)
@@ -201,7 +210,7 @@ argument, as well as its second.
 >   (| DEqBlue (traverseDTEX f t) (traverseDTEX f u) |)
 > -- [/Feature = Equality]
 > -- [Feature = IDesc]
-> traverseDTIN f (DIMu s i) = (|DIMu (traverse (traverseDTIN f) s) (traverseDTIN f i)|)
+> -- traverseDTIN f (DIMu s i) = (|DIMu (traverse (traverseDTIN f) s) (traverseDTIN f i)|)
 > -- [/Feature = IDesc]
 > -- [Feature = UId]
 > traverseDTIN f (DTag s xs) = (|(DTag s) (traverse (traverseDTIN f) xs)|)
@@ -215,8 +224,7 @@ argument, as well as its second.
 > traverseDHead f (DType tm) = (|DType (traverseDTIN f tm)|)
 > traverseDHead f (DTEX tm) = (|DTEX (traverse f tm)|)
 
-
-%endif
+> -}
 
 
 \subsubsection{Type annotations}

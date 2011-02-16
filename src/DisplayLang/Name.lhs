@@ -33,13 +33,11 @@ name.
 As a consequence, there is whole new family of objects: terms which
 variables are relative names. So it goes:
 
-> type InTmRN = InTm RelName
-> type ExTmRN = ExTm RelName
-> type DInTmRN = DInTm REF RelName
-> type DExTmRN = DExTm REF RelName
-> type DSPINE = DSpine REF RelName
-> type DHEAD = DHead REF RelName
-> type DSCOPE = DScope REF RelName
+> type DInTmRN  = DInTm RelName
+> type DExTmRN  = DExTm RelName
+> type DSPINE   = DSpine RelName
+> type DHEAD    = DHead RelName
+> type DSCOPE   = DScope RelName
 
 
 
