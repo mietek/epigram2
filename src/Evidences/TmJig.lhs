@@ -65,14 +65,14 @@
 > (x, s) -** t = SIGMA s (la x t)
 
 > ugly :: Vec {n} String -> Tm {p, s, n} -> String
-> ugly xs (L ENil x b) = "(\\ " ++ x ++ " -> " ++ ugly (x :>: xs) b ++ ")"
+> ugly xs (L ENil x b) = "(\\ " ++ x ++ " -> " ++ ugly (x :>>: xs) b ++ ")"
 > ugly xs (LK e)       = "(\\ _ -> " ++ ugly xs e ++ ")"
 > ugly xs (ARR s t) = "(" ++ ugly xs s ++ " -> " ++ ugly xs t ++ ")"
 > ugly xs (PI s (L ENil x t)) = "((" ++ x ++ " : " ++ ugly xs s ++ ") -> "
->                              ++ ugly (x :>: xs) t ++ ")"
+>                              ++ ugly (x :>>: xs) t ++ ")"
 > ugly xs (TIMES s t) = "(" ++ ugly xs s ++ " * " ++ ugly xs t ++ ")"
 > ugly xs (SIGMA s (L ENil x t)) = "((" ++ x ++ " : " ++ ugly xs s ++ ") * "
->                              ++ ugly (x :>: xs) t ++ ")"
+>                              ++ ugly (x :>>: xs) t ++ ")"
 > ugly xs SET = "Set"
 > ugly xs (h :$ B0) = ugly xs h
 > ugly xs (h :$ es) = "(" ++ ugly xs h ++ foldMap (\ e -> " " ++ ugly xs e) es ++ ")"

@@ -3,7 +3,7 @@
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE TypeOperators #-}
+> {-# LANGUAGE TypeOperators, FlexibleInstances #-}
 
 > module Evidences.NameSupply where
 
@@ -34,8 +34,8 @@ unique, while the |Int| uniquely identifies the namespace.
 Therefore, creating a fresh name in a given namespace simply consists
 of incrementing the name counter:
 
-> freshName :: NameSupply -> NameSupply
-> freshName (sis, i) = (sis, i + 1)
+> freshen :: NameSupply -> NameSupply
+> freshen (sis, i) = (sis, i + 1)
 
 Whereas creating a fresh namespace involves stacking up a new name
 |s|, uniquely identified by |i|, and initializing the per-namespace
@@ -67,13 +67,12 @@ So, what does |NameSupplier| offer?
 
 > class (Applicative m, Monad m) => NameSupplier m where
 
-First, |freshRef| enables the safe creation of fresh names inside the
-structure: it is provided with an informative name, the variable type,
-and a \emph{body} consuming that free variable. It returns the body
-with the free variable filled in, while maintaining the coherency of
-the namespace.
+First, |freshName| enables the safe creation of fresh names inside the
+structure: it is provided with name advice and a \emph{body}. It calls
+the body with a fresh name, while maintaining the coherency of the
+namespace.
 
->     freshRef    :: (String :<: TY) -> (REF -> m t) -> m t
+>     freshName :: String -> (Name -> m t) -> m t
 
 Similarly, |forkNSupply| is a safe wrapper around |freshName| and
 |freshNSpace|: |forkNSupply subname child dad| runs the |child| with
@@ -99,8 +98,8 @@ monad on steroids. This might not be true forever; we can hope to replace
 
 Sometimes you want a fresh value rather than a reference:
 
-> fresh :: NameSupplier m => (String :<: TY) -> (VAL -> m t) -> m t
-> fresh xty f = freshRef xty (f . pval)
+< fresh :: NameSupplier m => (String :<: TY) -> (VAL -> m t) -> m t
+< fresh xty f = freshRef xty (f . pval)
 
 
 
@@ -110,8 +109,8 @@ To illustrate the implementation of a |NameSupplier|, we implement the
 |NameSupply| Reader monad:
 
 > instance NameSupplier ((->) NameSupply) where
->     freshRef (x :<: ty) f r = f (mkName r x := DECL :<: ty) (freshName r)
->     forkNSupply s child dad nsupply = (dad . child) (freshNSpace nsupply s) (freshName nsupply)
+>     freshName x f r = f (mkName r x) (freshen r)
+>     forkNSupply s child dad nsupply = (dad . child) (freshNSpace nsupply s) (freshen nsupply)
 >     askNSupply r = r
 
 
@@ -123,12 +122,12 @@ can actually get it for any |ReaderT NameSupply|. This is as simple
 as:
 
 > instance (Monad m, Applicative m) => NameSupplier (ReaderT NameSupply m) where
->     freshRef st body = do
+>     freshName st body = do
 >         nsupply <- ask
->         lift $ freshRef st (runReaderT . body) nsupply
+>         lift $ freshName st (runReaderT . body) nsupply
 >     forkNSupply s child dad = do
 >         c <- local (flip freshNSpace s) child
->         d <- local freshName (dad c)
+>         d <- local freshen (dad c)
 >         return d
 >     askNSupply = ask
 
@@ -137,12 +136,12 @@ as:
 
 One such example is the |Check| monad:
 
-> type Check e = ReaderT NameSupply (Either (StackError e))
+> type Check = ReaderT NameSupply (Either StackError)
 
 That is, a Reader of |NameSupply| on top of an Error of
 |StackError|. Running a type-checking process is therefore a simple
 |runReader| operation:
 
-> typeCheck :: Check e a -> NameSupply -> Either (StackError e) a
-> typeCheck = runReaderT
+> runCheck :: Check a -> NameSupply -> Either StackError a
+> runCheck = runReaderT
 
