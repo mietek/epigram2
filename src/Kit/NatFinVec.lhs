@@ -5,7 +5,7 @@
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE GADTs, KindSignatures, TypeOperators, TypeFamilies, FlexibleContexts,
 >     MultiParamTypeClasses, UndecidableInstances, ScopedTypeVariables,
->     RankNTypes, FlexibleInstances #-}
+>     RankNTypes, FlexibleInstances, OverlappingInstances #-}
 
 > module Kit.NatFinVec where
 

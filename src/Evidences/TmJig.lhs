@@ -40,6 +40,9 @@
 > instance (s ~ Tm {Body, Exp, n}, Wrapper t n) => Wrapper (s -> t) n where
 >   wrapper f es e = wrapper f (es :< e) 
 
+> wr :: Wrapper t {n} => EXP -> t
+> wr e = wrapper (wk e) B0
+
  instance (Wrapper s n, Wrapper t n) => Wrapper (s, t) n where
    wrapper f es = (wrapper f es, wrapper f es)
 
@@ -52,13 +55,13 @@
 >        Tm {Body, s, m}
 > la s b = cough $ \ fz -> L ENil s (b (wrapper (V (finj fz)) B0))
 
-> (->>) :: (String, Tm {Body, s, m}) ->
+> (->>) :: (String, Tm {Body, Exp, m}) ->
 >          ((forall t n. (Wrapper t n, Leq {S m} n) => t)
 >            -> Tm {Body, Exp, S m}) ->
 >        Tm {Body, s, m}
 > (x, s) ->> t = PI s (la x t)
 
-> (-**) :: (String, Tm {Body, s, m}) ->
+> (-**) :: (String, Tm {Body, Exp, m}) ->
 >          ((forall t n. (Wrapper t n, Leq {S m} n) => t)
 >            -> Tm {Body, Exp, S m}) ->
 >        Tm {Body, s, m}
@@ -77,7 +80,7 @@
 > ugly xs (h :$ B0) = ugly xs h
 > ugly xs (h :$ es) = "(" ++ ugly xs h ++ foldMap (\ e -> " " ++ ugly xs e) es ++ ")"
 > ugly xs (V i) = xs !>! i
-> ugly xs (P (i, t)) = "!" ++ show i
+> ugly xs (P (i, s, t)) = s
 > ugly xs (D (s, _, _) B0 _) = s
 > ugly xs (D (s, _, _) es _) = "(" ++ s ++ foldMap (\ e -> " " ++ ugly V0 e) es ++ ")"
 > ugly xs (ENil :/ e) = ugly xs e

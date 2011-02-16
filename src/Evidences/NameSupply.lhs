@@ -131,17 +131,17 @@ as:
 >         return d
 >     askNSupply = ask
 
-\subsection{The |Check| monad is a |NameSupplier|}
-\label{subsec:Evidences.NameSupplier.check-monad}
+\subsection{The |Fresh| monad is a |NameSupplier|}
+\label{subsec:Evidences.NameSupplier.fresh-monad}
 
-One such example is the |Check| monad:
+One such example is the |Fresh| monad:
 
-> type Check = ReaderT NameSupply (Either StackError)
+> type Fresh = ReaderT NameSupply (Either StackError)
 
 That is, a Reader of |NameSupply| on top of an Error of
 |StackError|. Running a type-checking process is therefore a simple
 |runReader| operation:
 
-> runCheck :: Check a -> NameSupply -> Either StackError a
-> runCheck = runReaderT
+> runFresh :: Fresh a -> NameSupply -> Either StackError a
+> runFresh = runReaderT
 

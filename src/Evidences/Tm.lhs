@@ -37,15 +37,15 @@
 >   deriving SheSingleton
 
 > data Tm :: {Part, Status, Nat} -> * where
->   L     :: Env {n, m} -> String -> Tm {Body, s, S m}   -> Tm {Body, s', n}
->   LK    :: Tm {Body, s, n}                             -> Tm {Body, s', n}
->   (:-)  :: Can -> [Tm {Body, s, n}]                -> Tm {Body, s', n}
->   (:$)  :: Tm {Head, s, n} -> Bwd (Tm {Body, Exp, n})  -> Tm {Body, s,  n}
->   D     :: DEF -> Bwd EXP -> Operator {p, s}           -> Tm {p, s,  n}
-
->   V     :: Fin {n}      {- dB i -}                     -> Tm {Head, s,  n}
->   P     :: (Int, String, TY)  {- dB l -}                     -> Tm {Head, s,  n}
-
+>   L     :: Env {n, m} -> String -> Tm {Body, Exp, S m}   -> Tm {Body, s, n}
+>   LK    :: Tm {Body, Exp, n}                             -> Tm {Body, s, n}
+>   (:-)  :: Can -> [Tm {Body, Exp, n}]                    -> Tm {Body, s, n}
+>   (:$)  :: Tm {Head, s, n} -> Bwd (Tm {Body, Exp, n})  -> Tm {Body, s, n}
+>   D     :: DEF -> Bwd EXP -> Operator {p, s}             -> Tm {p, s,  n}
+>
+>   V     :: Fin {n}      {- dB i -}                       -> Tm {Head, s,  n}
+>   P     :: (Int, String, TY)    {- dB l -}                       -> Tm {Head, s,  n}
+>
 >   (:/)  :: Env {n, m} -> Tm {p, s, m}                  -> Tm {p', Exp, n}
 
 > data Operator :: {Part, Status} -> * where
@@ -100,8 +100,8 @@
 >   Sigma  :: Can                            -- products 
 >   Pair   :: Can                            -- pairs
 >   Con    :: Can                            -- packing
->   Hd     :: Can
->   Tl     :: Can
+>   One    :: Can
+>   Zero   :: Can
 >   deriving (Eq, Show)
 
 > pattern SET        = Set :- []             -- set of sets
@@ -111,8 +111,8 @@
 > pattern SIGMA s t  = Sigma :- [s, t]       -- dependent product
 > pattern PAIR a b   = Pair :- [a, b]        -- pairing
 > pattern CON t      = Con :- [t]            -- Container (packing "stuff")
-> pattern HD         = Hd :- []
-> pattern TL         = Tl :- []
+> pattern ONE        = One :- []
+> pattern ZERO       = Zero :- []
 
 > eval :: forall m n p s' . pi (s :: Status) . 
 >           Env {Z, n} -> Tm {p, s', n} -> Tm {Body, s, Z}
@@ -142,10 +142,10 @@
 >       Nothing -> error "You muppet"             
 >     x -> D d (es :< exp x) (StuckCase os) :$ B0
 > apply {Val} (D d es (Split o)) a = 
->   mkD {Val} d es o $$ (exp a :$ (B0 :< HD)) $$ (exp a :$ (B0 :< TL))
+>   mkD {Val} d es o $$ (exp a :$ (B0 :< ZERO)) $$ (exp a :$ (B0 :< ONE))
 > apply {Exp} d@(D _ _ _) a = (ENil :/ d) :$ (B0 :< exp a)  
-> apply {s} (PAIR a b) HD = eval {s} ENil a
-> apply {s} (PAIR a b) TL = eval {s} ENil b
+> apply {s} (PAIR a b) ZERO = eval {s} ENil a
+> apply {s} (PAIR a b) ONE = eval {s} ENil b
 
 > ($$) :: {:s :: Status:} => Tm {Body, s, Z} -> Tm {Body, s', Z} -> Tm {Body, s, Z}
 > ($$) = apply {:s :: Status:}
@@ -165,6 +165,12 @@
 > mkD {s} d es (Case os)              = D d es (Case os) 
 > mkD {s} d (es :< e) (StuckCase os)  = apply {s} (D d es (Case os)) e
 
+
+
+> wk :: Tm {p, s, Z} -> Tm {p', Exp, n}
+> wk t = (Nothing, INix) :/ t
+
+> (***) = TIMES
 
 
 We have special pairs for types going into and coming out of
@@ -206,3 +212,18 @@ with the associated projections:
 
 Intuitively, |t :=>: v| can be read as ``the term |t| reduces to the
 value |v|''.
+
+
+
+
+
+> data ErrorTok = StrMsg String
+
+An error is list of error tokens:
+
+> type ErrorItem = [ErrorTok]
+
+Errors a reported in a stack, as failure is likely to be followed by
+further failures. The top of the stack is the head of the list.
+
+> type StackError = [ErrorItem]
