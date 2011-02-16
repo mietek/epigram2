@@ -22,6 +22,7 @@
 
 > import Kit.MissingLibrary
 > import Kit.BwdFwd
+> import Kit.NatFinVec
 
 > import NameSupply.NameSupply
 > import Evidences.NewTm
@@ -65,23 +66,28 @@
 >        Tm {Body, s, m}
 > (x, s) ->> t = PI s (la x t)
 
-> vproj :: Vec {n} x -> Fin {n} -> x
-> vproj (Vcons x xs) Fz = x
-> vproj (Vcons x xs) (Fs i) = vproj xs i
+> (-**) :: (String, Tm {Body, s, m}) ->
+>          ((forall t n. (Wrapper t n, Leq {S m} n) => t)
+>            -> Tm {Body, Exp, S m}) ->
+>        Tm {Body, s, m}
+> (x, s) -** t = SIGMA s (la x t)
 
 > ugly :: Vec {n} String -> Tm {p, s, n} -> String
-> ugly xs (L ENil x b) = "(\\ " ++ x ++ " -> " ++ ugly (Vcons x xs) b ++ ")"
+> ugly xs (L ENil x b) = "(\\ " ++ x ++ " -> " ++ ugly (x :>: xs) b ++ ")"
 > ugly xs (LK e)       = "(\\ _ -> " ++ ugly xs e ++ ")"
 > ugly xs (ARR s t) = "(" ++ ugly xs s ++ " -> " ++ ugly xs t ++ ")"
 > ugly xs (PI s (L ENil x t)) = "((" ++ x ++ " : " ++ ugly xs s ++ ") -> "
->                              ++ ugly (Vcons x xs) t ++ ")"
+>                              ++ ugly (x :>: xs) t ++ ")"
+> ugly xs (TIMES s t) = "(" ++ ugly xs s ++ " * " ++ ugly xs t ++ ")"
+> ugly xs (SIGMA s (L ENil x t)) = "((" ++ x ++ " : " ++ ugly xs s ++ ") * "
+>                              ++ ugly (x :>: xs) t ++ ")"
 > ugly xs SET = "Set"
 > ugly xs (h :$ B0) = ugly xs h
 > ugly xs (h :$ es) = "(" ++ ugly xs h ++ foldMap (\ e -> " " ++ ugly xs e) es ++ ")"
-> ugly xs (V i) = vproj xs i
+> ugly xs (V i) = xs !>! i
 > ugly xs (P (i, t)) = "!" ++ show i
 > ugly xs (D (s, _, _) B0 _) = s
-> ugly xs (D (s, _, _) es _) = "(" ++ s ++ foldMap (\ e -> " " ++ ugly Vnil e) es ++ ")"
+> ugly xs (D (s, _, _) es _) = "(" ++ s ++ foldMap (\ e -> " " ++ ugly V0 e) es ++ ")"
 > ugly xs (ENil :/ e) = ugly xs e
 > ugly _ _ = "???"
 

@@ -22,16 +22,11 @@
 
 > import Kit.MissingLibrary
 > import Kit.BwdFwd
+> import Kit.NatFinVec
 
 > import NameSupply.NameSupply
 
 %endif
-
-> data Nat = Z | S Nat
-
-> data Fin :: {Nat} -> * where
->   Fz :: Fin {S n}
->   Fs :: Fin {n} -> Fin {S n}
 
 > data Part = Head | Body
 

@@ -1,7 +1,64 @@
 \documentclass{article}
 \usepackage{palatino}
-\usepackage{a4}
+\usepackage{a4wide}
 \usepackage{alltt}
+\usepackage{bbold}
+
+%%%%%%%%% INFERENCE RULES
+
+\newlength{\rulevgap}
+\setlength{\rulevgap}{0.05in}
+\newlength{\ruleheight}
+\newlength{\ruledepth}
+\newsavebox{\rulebox}
+\newlength{\GapLength}
+\newcommand{\gap}[1]{\settowidth{\GapLength}{#1} \hspace*{\GapLength}}
+\newcommand{\dotstep}[2]{\begin{tabular}[b]{@{}c@{}}
+                         #1\\$\vdots$\\#2
+                         \end{tabular}}
+\newlength{\fracwid}
+\newcommand{\dotfrac}[2]{\settowidth{\fracwid}{$\frac{#1}{#2}$}
+                         \addtolength{\fracwid}{0.1in}
+                         \begin{tabular}[b]{@{}c@{}}
+                         $#1$\\
+                         \parbox[c][0.02in][t]{\fracwid}{\dotfill} \\
+                         $#2$\\
+                         \end{tabular}}
+\newcommand{\Rule}[2]{\savebox{\rulebox}[\width][b]                         %
+                              {\( \frac{\raisebox{0in} {\( #1 \)}}       %
+                                       {\raisebox{-0.03in}{\( #2 \)}} \)}   %
+                      \settoheight{\ruleheight}{\usebox{\rulebox}}          %
+                      \addtolength{\ruleheight}{\rulevgap}                  %
+                      \settodepth{\ruledepth}{\usebox{\rulebox}}            %
+                      \addtolength{\ruledepth}{\rulevgap}                   %
+                      \raisebox{0in}[\ruleheight][\ruledepth]               %
+                               {\usebox{\rulebox}}}
+\newcommand{\Case}[2]{\savebox{\rulebox}[\width][b]                         %
+                              {\( \dotfrac{\raisebox{0in} {\( #1 \)}}       %
+                                       {\raisebox{-0.03in}{\( #2 \)}} \)}   %
+                      \settoheight{\ruleheight}{\usebox{\rulebox}}          %
+                      \addtolength{\ruleheight}{\rulevgap}                  %
+                      \settodepth{\ruledepth}{\usebox{\rulebox}}            %
+                      \addtolength{\ruledepth}{\rulevgap}                   %
+                      \raisebox{0in}[\ruleheight][\ruledepth]               %
+                               {\usebox{\rulebox}}}
+\newcommand{\Axiom}[1]{\savebox{\rulebox}[\width][b]                        %
+                               {$\frac{}{\raisebox{-0.03in}{$#1$}}$}        %
+                      \settoheight{\ruleheight}{\usebox{\rulebox}}          %
+                      \addtolength{\ruleheight}{\rulevgap}                  %
+                      \settodepth{\ruledepth}{\usebox{\rulebox}}            %
+                      \addtolength{\ruledepth}{\rulevgap}                   %
+                      \raisebox{0in}[\ruleheight][\ruledepth]               %
+                               {\usebox{\rulebox}}}
+\newcommand{\RuleSide}[3]{\gap{\mbox{$#2$}} \hspace*{0.1in}               %
+                            \Rule{#1}{#3}                          %
+                          \hspace*{0.1in}\mbox{$#2$}}
+\newcommand{\AxiomSide}[2]{\gap{\mbox{$#1$}} \hspace*{0.1in}              %
+                             \Axiom{#2}                            %
+                           \hspace*{0.1in}\mbox{$#1$}}
+\newcommand{\RULE}[1]{\textbf{#1}}
+\newcommand{\hg}{\quad}
+
 
 \begin{document}
 
@@ -289,4 +346,227 @@ context, so side-problems allow us to seed the context appropriately.
 Moreover, elaboration models type constraints as propositional equations,
 so you can fix type-glitches (where provably equal types mismatch
 definitionally) by adding the proofs to a \texttt{where}-clause.
+
+
+\section{Kernel Mustered}
+
+\newcommand{\SC}{\textsc}
+\newcommand{\Set}[1]{\mathrm{Set}^{#1}}
+\newcommand{\PI}[2]{(#1\!:\!#2)\to}
+\newcommand{\SG}[2]{(#1\!:\!#2)\times}
+\newcommand{\ONE}{\mathrm{1}}
+\newcommand{\ifr}{\underline}
+\newcommand{\lam}[1]{\lambda#1\mapsto}
+\newcommand{\pr}[2]{[#1 | #2]}
+\newcommand{\vd}{[]}
+\newcommand{\cum}{\preceq}
+\newcommand{\car}[1]{#1\:!}
+\newcommand{\cdr}[1]{#1\:-}
+\newcommand{\nm}{\Downarrow}
+\newcommand{\SJ}[4]{#1\:\{#2 \mapsto #3\}\nm#4}
+\newcommand{\letin}[3]{\mathrm{let}\: #1 = #2 \:\mathrm{in}\: #3}
+
+It's a moving target, but not a bad plan to write it down once in a
+while.
+
+\[\begin{array}{rcll}
+\SC{ChkTm} & ::= &  \Set{n} & n\in\mathbb{N} \\
+  &|& \PI{v}{\SC{ChkTm}}\SC{ChkTm} & \mbox{dependent function type} \\
+  &|& \SG{v}{\SC{ChkTm}}\SC{ChkTm} & \mbox{dependent pair type} \\
+  &|& \ONE \\
+  &|& \lam{v}\SC{ChkTm} \\
+  &|& \pr{\SC{ChkTm}}{\SC{ChkTm}} & \mbox{pair}\\
+  &|& \vd \\
+  &|& \letin{v}{\SC{InfTm}}{\SC{ChkTm}} \\
+  &|& \ifr{\SC{InfTm}} & \mbox{explicit direction change}
+\medskip \\
+\SC{InfTm} & ::= & v & \mbox{bound variable, untyped}\\
+  &|& x_{:\SC{Nm}} & \mbox{free variable, typed}\\
+  &|& f_{\mapsto\SC{Nm}:\SC{Nm}} & \mbox{definition, with value
+    and type}\\
+  &|& \SC{InfTm}\:\SC{ChkTm} & \mbox{application} \\
+  &|& \car{\SC{InfTm}} & \mbox{car}\\
+  &|& \cdr{\SC{InfTm}} & \mbox{cdr}\\
+  &|& (:\SC{ChkTm}) & \mbox{identity cast at given type}
+\end{array}\]
+
+If you eliminate \(v\)'s with no binder,
+definitions, defined variables, and identity casts, \(\SC{ChkTm}\)
+becomes \(\SC{Nm}\) and \(\SC{InfTm}\) becomes \(\SC{Ne}\), the
+\emph{normal} and \emph{neutral} terms, respectively. Let us define
+untyped computation relations of the following forms:
+\[\begin{array}{c}
+\SJ{\SC{Nm}}{v}{\SC{Nm}}{\SC{Nm}}\\
+\SJ{\SC{Ne}}{v}{\SC{Nm}}{\SC{Nm}}\\
+\SC{Nm}\:\SC{Nm} \mapsto \SC{Nm}\\
+\car{\SC{Nm}} \mapsto \SC{Nm}\\
+\cdr{\SC{Nm}} \mapsto \SC{Nm}\\
+\end{array}\]
+
+Note that substituting a \SC{Ne} for a \(v\) preserves its \SC{Ne}-ness
+and requires no worry about variable capture. Similarly, we may substitute
+a \SC{ChkTm} for a \(v\) and get a \SC{ChkTm}.
+
+The typing judgments are then as follows:
+\[\begin{array}{lr}
+(\{\Set{\omega}\}\cup\SC{Nm})\ni\SC{ChkTm}\nm\SC{Nm} & \mbox{type checking}\\
+\SC{InfTm}\nm{\SC{Nm}}\in\SC{Nm} & \mbox{type inference}\\
+\SC{Nm}\cum\SC{Nm} & \mbox{cumulativity}\\
+\SC{Nm}\ni\SC{Nm}\equiv\SC{Nm} &
+\mbox{equality} \\
+\SC{Ne}\equiv\SC{Ne}\in\SC{Nm} & \mbox{equality} \\
+\end{array}\]
+
+Type checking. Where \(x\) or \(f\) appears in premises but not
+conclusion, it is chosen fresh.
+\[\begin{array}{c}
+\Axiom{\Set{j}\ni\Set{i}\nm\Set{i}}\;j>i \quad
+\Axiom{\Set{i}\ni\ONE\nm\ONE} \quad
+\Rule{s\nm s'\in S\hg S\cum T}
+  {T\ni\ifr{s}\nm s'}
+\\
+
+\Rule{\Set{i}\ni S\nm S' \hg \Set{i}\ni T[x_{:S}/v]\nm T'[x_{:S}/v]}
+  {\Set{i}\ni\PI{v}{S}T\nm \PI{v}{S'}{T'}}
+\quad
+\Rule{\Set{i}\ni S\nm S' \hg \Set{i}\ni T[x_{:S}/v]\nm T'[x_{:S}/v]}
+  {\Set{i}\ni\SG{v}{S}T\nm \SG{v}{S'}{T'}}
+\\
+
+\Rule{T[x_{:S}/u]\ni t[x_{:S}/v]\nm t'[x_{:S}/v]}
+  {\PI{u}{S}{T}\ni\lam{v}t\nm\lam{v}t'}
+\quad
+\Rule{S\ni s\nm s'\hg \SJ{T}{v}{s'}{T'}\hg T' \ni t\nm t'}
+  {\SG{v}{S}T \ni \pr{s}{t} \nm \pr{s'}{t'}}
+\quad
+\Axiom{\ONE\ni\vd\nm\vd}\\
+\Rule{s\nm s'\in S\hg T\ni t[f_{\mapsto s':S}/v]\nm t'}
+  {T\ni\letin{v}{s}{t}\nm t'}
+
+\end{array}\]
+
+Type inference. Note no rule for bound vars.
+\[\begin{array}{c}
+\Axiom{x_{:S}\nm\ifr{x_{:S}}\in S} \quad \Axiom{f_{\mapsto s : S}\nm s \in S}
+\quad
+\Rule{\Set{\omega}\ni T}
+  {(:T)\nm\lam{v}v\in \PI{v}{T}T}
+ \\
+\Rule{f\nm f'\in\PI{v}{S}T \hg S\ni s\nm s'
+   \hg \SJ{T}{v}{s'}{T'} \hg f'\:s'\mapsto t'}
+  {f\:s\nm t' \in T'}
+\\
+\Rule{p\nm p'\in\SG{v}{S}T\hg \car{p'}\mapsto s'}
+  {s' \in S}
+\quad
+\Rule{p\nm p'\in\SG{v}{S}T\hg \car{p'}\mapsto s' \hg \SJ{T}{v}{s'}{T'}
+   \hg \cdr{p'}\mapsto t'}
+  {\cdr{p}\nm t' \in T'}
+\end{array}\]
+
+Cumulativity.
+\[\begin{array}{c}
+\Axiom{\Set{i}\cum\Set{j}}\;i\le j
+\quad
+\Rule{S'\cum S \quad T[x_{S'}/u]\cum T'[x_{S'}/v]}
+  {\PI{u}{S}T \cum \PI{v}{S'}T'}
+\quad
+\Rule{S\cum S' \quad T[x_{S}/u]\cum T'[x_{S}/v]}
+  {\SG{u}{S}T \cum \SG{v}{S'}T'}
+\quad
+\Axiom{\ONE\cum\ONE}
+\\
+\Rule{\ifr{S} \equiv \ifr{T}\in\Set{n}}
+  {S \cum T}
+\end{array}\]
+
+Equality for checkable terms.
+\[\begin{array}{c}
+\Axiom{\Set{j}\ni\Set{i}\equiv\Set{i}}\;j>i
+\\
+\Rule{\Set{i}\ni S'\equiv S \hg \Set{i}\ni T[x_{S'}/u] \equiv T'[x_{s'}/v]}
+  {\Set{i}\ni \PI{u}{S}T\equiv\PI{v}{S'}{T'}}
+\\
+\Rule{\Set{i}\ni S\equiv S' \hg \Set{i}\ni T[x_{S}/u] \equiv T'[x_{s'}/v]}
+  {\Set{i}\ni \SG{u}{S}T\equiv\SG{v}{S'}{T'}}
+\\
+\Rule{\PI{v}{S}T \ni f \hg \PI{v}{S}T \ni f' \hg
+ f\:\ifr{x_{:S}}\mapsto t\hg f'\:\ifr{x_{:S}}\mapsto t' \hg T[x_{:S}/v]\ni t \equiv t'}
+  {\PI{v}{S}T \ni f \equiv f'}
+\\
+\Rule{\begin{array}{c}
+\SG{v}{S}T \ni p \hg \SG{v}{S}T \ni p' \\
+\car{p}\mapsto s \hg \cdr{p}\mapsto t \hg 
+\car{p'}\mapsto s' \hg \cdr{p'}\mapsto t' \\
+S\ni s\equiv s' \hg \SJ{T}{v}{s}{T'} \hg T'\ni t\equiv t'
+\end{array}}
+  {\SG{v}{S}T \ni p \equiv p'}
+\quad
+\Rule{\ONE\ni t \hg \ONE \ni t'}
+  {\ONE\ni t \equiv t'}
+\\
+\Rule{s\equiv t \in S \hg S\cum T}
+  {T\ni\ifr{s}\equiv\ifr{t}}
+\end{array}\]
+
+Equality for inferrable terms.
+\[\begin{array}{c}
+\Axiom{x_{:S}\equiv x_{:S}\in S}
+\quad
+\Rule{f\equiv f'\in\PI{v}{S}T \hg S\ni s\equiv s' \hg \SJ{T}{v}{s}{T'}}
+  {f\:s\equiv f'\:s'\in T'}
+\\
+\Rule{p\equiv p'\in\SG{v}{S}T}
+  {\car{p}\equiv \car{p'}\in S}
+\quad
+\Rule{p\equiv p'\in\SG{v}{S}T}
+  {\cdr{p}\equiv \cdr{p'}\in T[\car{p}/v]}
+\end{array}\]
+
+Computation.
+\[\begin{array}{c}
+\Rule{\SJ{t}{v}{s}{t'}}
+  {(\lam{v}t)\:s\mapsto t'} \quad
+\Axiom{\ifr{f}\:s \mapsto \ifr{f\:s}}
+\quad
+\Axiom{\car{\pr{s}{t}}\mapsto s}\quad
+\Axiom{\car{\ifr{p}} \mapsto \ifr{\car{p}}}\quad
+\Axiom{\cdr{\pr{s}{t}}\mapsto t}\quad
+\Axiom{\cdr{\ifr{p}} \mapsto \ifr{\cdr{p}}}
+\end{array}\]
+
+Normal substitution.
+\[\begin{array}{c}
+\Axiom{\SJ{\Set{i}}{v}{r}{\Set{i}}}
+\\
+\Rule{\SJ{S}{v}{r}{S'}\quad\SJ{T[x_{S'}/u]}{v}{r}{T'[x_{S'}/u]}}
+  {\SJ{(\PI{u}{S}T)}{v}{r}{\PI{u}{S'}T'}}
+\\
+\Rule{\SJ{S}{v}{r}{S'}\quad\SJ{T[x_{S'}/u]}{v}{r}{T'[x_{S'}/u]}}
+  {\SJ{(\SG{u}{S}T)}{v}{r}{\SG{u}{S'}T'}}
+\\
+\Rule{\SJ{t[x_{S'}/u]}{v}{r}{t'[x_{S'}/u]}}
+  {\SJ{(\lam{u}{t})}{v}{r}{\lam{u}t'}}
+\quad
+\Rule{\SJ{s}{v}{r}{s'}\hg\SJ{t}{v}{r}{t'}}
+  {\SJ{\pr{s}{t}}{v}{r}{\pr{s'}{t'}}}
+\quad
+\Axiom{\SJ{\vd}{v}{r}{\vd}}
+\\
+\Rule{\SJ{t}{v}{r}{t'}}
+  {\SJ{\ifr{t}}{v}{r}{t'}}
+\end{array}\]
+
+Neutral substitution.
+\[\begin{array}{c}
+\Axiom{\SJ{v}{v}{r}{r}} \quad
+\Axiom{\SJ{x_{:S}}{v}{r}{\ifr{x_{:S}}}} \\
+\Rule{\SJ{f}{v}{r}{f'}\hg\SJ{s}{v}{r}{s'}\hg f'\:s'\mapsto t'}
+  {\SJ{(f\:s)}{v}{r}{t'}} \\
+\Rule{\SJ{p}{v}{r}{p'}\hg\car{p'}\mapsto s'}
+  {\SJ{(\car{p})}{v}{r}{s'}} \quad
+\Rule{\SJ{p}{v}{r}{p'}\hg\cdr{p'}\mapsto t'}
+  {\SJ{(\cdr{p})}{v}{r}{t'}}
+\end{array}\]
+
 \end{document}
