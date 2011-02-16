@@ -99,7 +99,7 @@
 >   Con    :: Can                            -- packing
 >   Hd     :: Can
 >   Tl     :: Can
->   deriving Eq
+>   deriving (Eq, Show)
 
 > pattern SET        = Set :- []             -- set of sets
 > pattern ARR s t    = Pi :- [s, (LK t)]     -- simple arrow
