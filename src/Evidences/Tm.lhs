@@ -24,6 +24,8 @@
 > import Kit.BwdFwd
 > import Kit.NatFinVec
 
+> import Unsafe.Coerce
+
 %endif
 
 
@@ -63,8 +65,25 @@
 >  INil   :: IEnv {n, n}
 >  (:<<:)  :: IEnv {m, n} -> Tm {Body, s, Z} -> IEnv {m, S n} 
 
-> exp :: Tm {p, s, n} -> Tm {p', Exp, n}
-> exp = (:/) ENil
+> exp :: Tm {p, s, n} -> Tm {p, Exp, n}
+> exp = unsafeCoerce
+> {-
+> exp (L a b c) = L a b c
+> exp (LK a) = LK a
+> exp (a :- b) = a :- b
+> exp (a :$ b) = exp a :$ b
+> exp (V i) = V i
+> exp (P l) = P l
+> exp (a :/ b) = a :/ b
+> exp (D a b c) = D a b (expo c)
+>  where expo :: Operator {p, s} -> Operator {p, Exp}
+>        expo (Eat o) = Eat o
+>        expo (Emit t) = Emit t
+>        expo Hole = Hole
+>        expo (Case os) = Case os
+>        expo (StuckCase os) = StuckCase os
+>        expo (Split o) = Split o
+> -}
 
 > ev :: Tm {p, Exp, Z} -> VAL
 > ev = (ENil //) 
@@ -142,7 +161,7 @@
 >       Nothing -> error "You muppet"             
 >     x -> D d (es :< exp x) (StuckCase os) :$ B0
 > apply {Val} (D d es (Split o)) a = 
->   mkD {Val} d es o $$ (exp a :$ (B0 :< ZERO)) $$ (exp a :$ (B0 :< ONE))
+>   mkD {Val} d es o $$ ((ENil :/ a) :$ (B0 :< ZERO)) $$ ((ENil :/ a) :$ (B0 :< ONE))
 > apply {Exp} d@(D _ _ _) a = (ENil :/ d) :$ (B0 :< exp a)  
 > apply {s} (PAIR a b) ZERO = eval {s} ENil a
 > apply {s} (PAIR a b) ONE = eval {s} ENil b
@@ -165,7 +184,9 @@
 > mkD {s} d es (Case os)              = D d es (Case os) 
 > mkD {s} d (es :< e) (StuckCase os)  = apply {s} (D d es (Case os)) e
 
-
+> fortran :: String -> Tm {Body, s, n} -> Tm {Body, s, n} -> String
+> fortran _ (L _ s _) _ = s
+> fortran s _ _ = s
 
 > wk :: Tm {p, s, Z} -> Tm {p', Exp, n}
 > wk t = (Nothing, INix) :/ t
