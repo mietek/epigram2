@@ -1,4 +1,4 @@
-\subsection{NewTmJig}
+\subsection{TmJig}
 
 
 %if False
@@ -9,7 +9,7 @@
 >     FlexibleContexts, ScopedTypeVariables, FunctionalDependencies,
 >     OverlappingInstances, UndecidableInstances, TypeFamilies #-}
 
-> module Evidences.NewTmJig where
+> module Evidences.TmJig where
 
 > import Prelude hiding (foldl)
 
@@ -25,7 +25,7 @@
 > import Kit.NatFinVec
 
 > import NameSupply.NameSupply
-> import Evidences.NewTm
+> import Evidences.Tm
 
 %endif
 
