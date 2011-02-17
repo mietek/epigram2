@@ -92,14 +92,16 @@
 > (ez :<<: e) !.! Fz = exp e 
 > (ez :<<: e) !.! Fs i = ez !.! i
 
-> (<:<) :: IEnv {m, n} -> IEnv {n, o} -> IEnv {m, o}
-> g <:< INix = INix
-> g <:< INil = g
-> g <:< (g' :<<: e) = (g <:< g') :<<: e
+> (<:<) :: Env {m, n} -> EXP -> Env {m, S n}
+> (gl, gi) <:< e = (gl, gi :<<: e)
 
 > (<+<) :: Env {m, n} -> Env {n, o} -> Env {m, o}
-> (gl, gi) <+< (gl', gi') = (gln, gi <:< gi')
+> (gl, gi) <+< (gl', gi') = (gln, gi <<< gi')
 >   where 
+>    (<<<) :: forall m n o. IEnv {m, n} -> IEnv {n, o} -> IEnv {m, o}
+>    g <<< INix = INix
+>    g <<< INil = g
+>    g <<< (g' :<<: e) = (g <<< g') :<<: e
 >    gln = case (gl, gl') of
 >     (_, Just y) -> Just y
 >     (Just x, _) -> Just x
