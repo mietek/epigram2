@@ -58,6 +58,8 @@
 >   StuckCase  :: [(Can, Operator {Body, s})] -> Operator {Head, s'}
 >   Split  :: Operator {p, s} -> Operator {Body, s'}
 
+-- Why not make the first component an array?
+
 > type Env nm = (Maybe [EXP], IEnv nm)
 
 > data IEnv :: {Nat, Nat} -> * where
@@ -167,6 +169,8 @@
 > apply {Exp} d@(D _ _ _) a = (ENil :/ d) :$ (B0 :< exp a)  
 > apply {s} (PAIR a b) ZERO = eval {s} ENil a
 > apply {s} (PAIR a b) ONE = eval {s} ENil b
+> apply {s} (h :$ ss) a = h :$ (ss :< exp a)
+> apply {Exp} (g :/ t) a = (g :/ t) :$ (B0 :< exp a)
 
 > ($$) :: {:s :: Status:} => Tm {Body, s, Z} -> Tm {Body, s', Z} -> Tm {Body, s, Z}
 > ($$) = apply {:s :: Status:}

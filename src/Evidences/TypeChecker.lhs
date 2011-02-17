@@ -29,11 +29,12 @@
 
 > canTy :: (Can, [EXP]) :>: Can -> Maybe VAL
 > canTy ((Set, []) :>: Set)    = (| ONE |)
-> canTy ((Set, []) :>: Pi)     = return $ ("S", SET) -** \ _S -> ARR _S SET *** ONE
-> canTy ((Set, []) :>: Sigma)  = return $ ("S", SET) -** \ _S -> ARR _S SET *** ONE
+> canTy ((Set, []) :>: Pi)     = pure $ ("S", SET) -** \ _S -> ARR _S SET *** ONE
+> canTy ((Set, []) :>: Sigma)  = pure $ ("S", SET) -** \ _S -> ARR _S SET *** ONE
 > canTy ((Set, []) :>: One)    = (| ONE |)
+> canTy ((Set, []) :>: Zero)   = (| ONE |)
 
-> canTy ((Sigma, [_S, _T]) :>: Pair)  = return $ ("s", _S) -** \ s -> wr _T s *** ONE
+> canTy ((Sigma, [_S, _T]) :>: Pair)  = pure $ ("s", _S) -** \ s -> wr _T s *** ONE
 > canTy ((One, []) :>: Zero)          = (| ONE |)
 > canTy _ = (|)
 
@@ -55,6 +56,9 @@ here.
 >   PI _S _T -> chk (l + 1) (_T $$ x' :>: (g <+< g' <:< x', b)) where
 >     x' = P (l, x, _S) :$ B0
 >   _ -> (|)
+> chk l (_T :>: (g, LK b)) = case ev _T of
+>   PI _S _T -> chk (l + 1) (_T $$ x' :>: (g, b)) where
+>     x' = P (l, "s", _S) :$ B0
 
 > chks :: Int -> VAL :>: (Env {Z, n}, [Tm {Body, s, n}]) -> Maybe ()
 > chks l (ONE           :>:  (g, []))     = (|()|)
