@@ -16,6 +16,8 @@
 
 > import Data.Traversable
 
+> import ShePrelude
+
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
 > import Kit.NatFinVec
@@ -60,6 +62,16 @@ here.
 >   PI _S _T -> chk (l + 1) (_T $$ x' :>: (g, b)) where
 >     x' = P (l, "s", _S) :$ B0
 
+> chk l (_T :>: (g, t@(V _ :$ _))) = chk l (_T :>: (ENil, eval {Val} g t))
+
+> chk l (_T :>: (g, h :$ ss)) = do
+>   (ty, es) <- headTySpine l (g, h)
+>   -- spiny thing
+>   return ()
+
+> chk l (_T :>: (g, g' :/ t)) = chk l (_T :>: (g <+< g', toBody t))
+
+
 > chks :: Int -> VAL :>: (Env {Z, n}, [Tm {Body, s, n}]) -> Maybe ()
 > chks l (ONE           :>:  (g, []))     = (|()|)
 > chks l (SIGMA _S _T   :>:  (g, s : t))  = do
@@ -67,6 +79,13 @@ here.
 >   chks l (ev (_T $$ s') :>: (g, t))
 > chks _ _ = (|)
 
+
+
+
+> headTySpine :: Int -> (Env {Z, n}, Tm {Head, s, n}) -> Maybe (TY, [EXP])
+> headTySpine l (g, D (x, ty, o) es _)  = pure (ty, rewindStk es [])
+> headTySpine l (g, P (i, s, ty))       = pure (ty, [])
+> headTySpine _ _                       = (|)
 
 
 

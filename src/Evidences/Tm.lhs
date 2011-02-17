@@ -6,7 +6,8 @@
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE TypeOperators, GADTs, KindSignatures, RankNTypes,
 >     MultiParamTypeClasses, TypeSynonymInstances, FlexibleInstances,
->     FlexibleContexts, ScopedTypeVariables, TypeFamilies #-}
+>     FlexibleContexts, ScopedTypeVariables, TypeFamilies,
+>     DeriveFunctor, DeriveFoldable, DeriveTraversable #-}
 
 > module Evidences.Tm where
 
@@ -31,7 +32,10 @@
 
 > type Name = [(String, Int)]
 
-> data Part = Head | Body
+> data Part :: * where
+>   Head :: Part
+>   Body :: Part
+>   deriving SheSingleton
 
 > data Status :: * where
 >   Val :: Status
@@ -39,16 +43,16 @@
 >   deriving SheSingleton
 
 > data Tm :: {Part, Status, Nat} -> * where
->   L     :: Env {n, m} -> String -> Tm {Body, Exp, S m}   -> Tm {Body, s, n}
->   LK    :: Tm {Body, Exp, n}                             -> Tm {Body, s, n}
->   (:-)  :: Can -> [Tm {Body, Exp, n}]                    -> Tm {Body, s, n}
->   (:$)  :: Tm {Head, s, n} -> Bwd (Tm {Body, Exp, n})  -> Tm {Body, s, n}
->   D     :: DEF -> Bwd EXP -> Operator {p, s}             -> Tm {p, s,  n}
+>   L     :: Env {n, m} -> String -> Tm {Body, Exp, S m}    -> Tm {Body, s, n}
+>   LK    :: Tm {Body, Exp, n}                              -> Tm {Body, s, n}
+>   (:-)  :: Can -> [Tm {Body, Exp, n}]                     -> Tm {Body, s, n}
+>   (:$)  :: Tm {Head, s, n} -> Bwd (Tm {Body, Exp, n})     -> Tm {Body, s, n}
+>   D     :: DEF -> Stk EXP -> Operator {p, s}              -> Tm {p, s,  n}
 >
->   V     :: Fin {n}      {- dB i -}                       -> Tm {Head, s,  n}
->   P     :: (Int, String, TY)    {- dB l -}                       -> Tm {Head, s,  n}
+>   V     :: Fin {n}      {- dB i -}                        -> Tm {Head, s,  n}
+>   P     :: (Int, String, TY)    {- dB l -}                -> Tm {Head, s,  n}
 >
->   (:/)  :: Env {n, m} -> Tm {p, s, m}                  -> Tm {p', Exp, n}
+>   (:/)  :: {: p :: Part :} => Env {n, m} -> Tm {p, s, m}  -> Tm {p', Exp, n}
 
 > data Operator :: {Part, Status} -> * where
 >   Eat    :: Operator {p, s} -> Operator {Body, s'}
@@ -57,6 +61,21 @@
 >   Case   :: [(Can , Operator {Body, s})] -> Operator {Body, s'}
 >   StuckCase  :: [(Can, Operator {Body, s})] -> Operator {Head, s'}
 >   Split  :: Operator {p, s} -> Operator {Body, s'}
+
+
+> data Stk x  =  S0
+>             |  Stk x :<!: x
+>             |  SSplit (Stk x)
+>             |  SCase Can Int (Stk x)
+>   deriving (Functor, Foldable, Traversable)
+
+> rewindStk :: Stk EXP -> [EXP] -> [EXP]
+> rewindStk S0 es                  = es
+> rewindStk (s :<!: e) es          = rewindStk s (e:es)
+> rewindStk (SSplit s) (e1:e2:es)  = rewindStk s (PAIR e1 e2 : es)
+> rewindStk (SCase c i s) es    = rewindStk s ((c :- es1) : es2)
+>   where (es1, es2) = splitAt i es
+
 
 -- Why not make the first component an array?
 
@@ -157,13 +176,13 @@
 >          Tm {Body, s, Z} -> Tm {Body, s', Z} -> Tm {Body, s, Z} 
 > apply {s} (L (gl, gi) _ b) a = eval {s} (gl, gi :<<: a) b 
 > apply {s} (LK e) _ = eval {s} ENil e
-> apply {s} (D d es (Eat o)) a = mkD {s} d (es :< exp a) o  
+> apply {s} (D d es (Eat o)) a = mkD {s} d (es :<!: exp a) o  
 > apply {Val} (D d es (Case os)) a = 
 >   case (ENil // a :: VAL) of
 >     (c :- as) -> case lookup c os of
 >       (Just o) -> foldl ($$) (mkD {Val} d es o) as
 >       Nothing -> error "You muppet"             
->     x -> D d (es :< exp x) (StuckCase os) :$ B0
+>     x -> D d (es :<!: exp x) (StuckCase os) :$ B0
 > apply {Val} (D d es (Split o)) a = 
 >   mkD {Val} d es o $$ ((ENil :/ a) :$ (B0 :< ZERO)) $$ ((ENil :/ a) :$ (B0 :< ONE))
 > apply {Exp} d@(D _ _ _) a = (ENil :/ d) :$ (B0 :< exp a)  
@@ -183,18 +202,18 @@
 > ($$$) = applys {:s :: Status:}
 
 > mkD :: forall s' p . pi (s :: Status) . 
->        DEF -> Bwd EXP -> Operator {p, s'} -> Tm {Body, s, Z}
+>        DEF -> Stk EXP -> Operator {p, s'} -> Tm {Body, s, Z}
 > mkD {s} d es (Emit t)               = eval {s} (Just (trail es), INix) t
 > mkD {s} d es (Eat o)                = D d es (Eat o)
 > mkD {s} d es Hole                   = D d es Hole :$ B0
 > mkD {s} d es (Case os)              = D d es (Case os) 
-> mkD {s} d (es :< e) (StuckCase os)  = apply {s} (D d es (Case os)) e
+> mkD {s} d (es :<!: e) (StuckCase os)  = apply {s} (D d es (Case os)) e
 
 > fortran :: String -> Tm {Body, s, n} -> Tm {Body, s, n} -> String
 > fortran _ (L _ s _) _ = s
 > fortran s _ _ = s
 
-> wk :: Tm {p, s, Z} -> Tm {p', Exp, n}
+> wk :: {: p :: Part :} => Tm {p, s, Z} -> Tm {p', Exp, n}
 > wk t = (Nothing, INix) :/ t
 
 > (***) = TIMES
@@ -239,4 +258,14 @@ with the associated projections:
 
 Intuitively, |t :=>: v| can be read as ``the term |t| reduces to the
 value |v|''.
+
+
+
+
+> bod :: forall s n. pi (p :: Part). Tm {p, s, n} -> Tm {Body, s, n}
+> bod {Body} = id
+> bod {Head} = (:$ B0)
+
+> toBody :: {: p :: Part :} => Tm {p, s, n} -> Tm {Body, s, n}
+> toBody = bod {:p :: Part :}
 

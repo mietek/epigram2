@@ -84,7 +84,7 @@
 > ugly xs (h :$ es) = "(" ++ ugly xs h ++ foldMap (\ e -> " " ++ ugly xs e) es ++ ")"
 > ugly xs (V i) = xs !>! i
 > ugly xs (P (i, s, t)) = s
-> ugly xs (D (s, _, _) B0 _) = s
+> ugly xs (D (s, _, _) S0 _) = s
 > ugly xs (D (s, _, _) es _) = "(" ++ s ++ foldMap (\ e -> " " ++ ugly V0 e) es ++ ")"
 > ugly xs (ENil :/ e) = ugly xs e
 > ugly _ _ = "???"
