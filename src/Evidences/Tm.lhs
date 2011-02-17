@@ -236,17 +236,3 @@ with the associated projections:
 Intuitively, |t :=>: v| can be read as ``the term |t| reduces to the
 value |v|''.
 
-
-
-
-
-> data ErrorTok = StrMsg String
-
-An error is list of error tokens:
-
-> type ErrorItem = [ErrorTok]
-
-Errors a reported in a stack, as failure is likely to be followed by
-further failures. The top of the stack is the head of the list.
-
-> type StackError = [ErrorItem]

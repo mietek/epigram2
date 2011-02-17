@@ -15,6 +15,7 @@
 > import Kit.MissingLibrary
 
 > import Evidences.Tm
+> import Evidences.ErrorHandling
 
 %endif
 

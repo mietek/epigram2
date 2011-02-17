@@ -25,7 +25,6 @@
 > import Kit.NatFinVec
 
 > import Evidences.Tm
-> import Evidences.NameSupply
 
 %endif
 
