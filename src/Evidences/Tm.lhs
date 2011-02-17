@@ -209,9 +209,10 @@
 > mkD {s} d es (Case os)              = D d es (Case os) 
 > mkD {s} d (es :<!: e) (StuckCase os)  = apply {s} (D d es (Case os)) e
 
-> fortran :: String -> Tm {Body, s, n} -> Tm {Body, s, n} -> String
-> fortran _ (L _ s _) _ = s
-> fortran s _ _ = s
+> fortran :: String -> [Tm {Body, Val, n}] -> Tm {Body, Val, n} -> String
+> fortran _ (L _ s _:_) _ = s
+> fortran s (_:x) y = fortran s x y
+> fortran s [] _ = s
 
 > wk :: {: p :: Part :} => Tm {p, s, Z} -> Tm {p', Exp, n}
 > wk t = (Nothing, INix) :/ t
