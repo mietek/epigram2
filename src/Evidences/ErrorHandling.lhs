@@ -7,7 +7,6 @@
 > import Control.Monad.Error
 
 > import Evidences.Tm
-> import Evidences.TmJig
 
 > import Kit.NatFinVec
 

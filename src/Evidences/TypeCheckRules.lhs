@@ -6,7 +6,6 @@
 > import Control.Applicative
 
 > import Evidences.Tm
-> import Evidences.TmJig
 
 > canTy :: (Can, [EXP]) :>: Can -> Maybe VAL
 > canTy ((Set, []) :>: Set)    = (| ONE |)

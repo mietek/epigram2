@@ -25,7 +25,6 @@
 > import Kit.NatFinVec
 
 > import Evidences.Tm
-> import Evidences.TmJig
 > import Evidences.TypeCheckRules
 
 %endif
@@ -42,45 +41,48 @@
 
 > ty4 = ARR ONE ONE
 
-> swap = L ENil "t"  (PAIR (V Fz :$ (B0 :< ONE)) (V Fz :$ (B0 :< ZERO)))
-> tm4 = L ENil "t"  (PAIR (V Fz :$ (B0 :< ZERO)) (V Fz :$ (B0 :< ONE)))
+> swap = L ENil "t"  (PAIR (V Fz :$ (B0 :< Tl)) (V Fz :$ (B0 :< Hd)))
+> tm4 = L ENil "t"  (PAIR (V Fz :$ (B0 :< Hd)) (V Fz :$ (B0 :< Tl)))
 
-> comp = L ENil "g" $ L ENil "f" $ L ENil "x" $ V (Fs (Fs Fz)) :$ (B0 :< (V (Fs Fz) :$ (B0 :< (V Fz :$ B0))))
+> comp = L ENil "g" $ L ENil "f" $ L ENil "x" $ (V (Fs (Fs Fz))) :$ (B0 :<
+>          A (V (Fs Fz) :$ (B0 :< A (V Fz :$ B0))))
 
-> tm5 = (ENil :/ comp) :$ (B0 :< swap :< swap)
+> tm5 = (ENil :/ comp) :$ (B0 :< A swap :< A swap)
 
 > etaQuote :: (EXP :>: EXP) -> VAL
 > etaQuote (t :>: e) = etaQuoten {Z} (ev t :>: e)
 
 > etaQuoten :: pi (n :: Nat) . (VAL :>: EXP) -> Tm {Body, Val, n}
 > etaQuoten {l} (PI s t :>: f) = 
->   L ENil nom (exp (etaQuoten {S l} (ev (t $$ x) :>: f $$ x)))
+>   L ENil nom (exp (etaQuoten {S l} (ev (t $$. x) :>: f $$. x)))
 >   where x :: EXP 
 >         x = P (mkInt l, nom, exp s) :$ B0
 >         nom = fortran "x" [ev f, ev t] undefined 
 > etaQuoten {l} (SIGMA s t :>: p) = 
->   PAIR (exp (etaQuoten {l} (ev s :>: p $$ ZERO))) 
->        (exp (etaQuoten {l} (ev (t $$ s) :>: p $$ ONE)))
+>   PAIR (exp (etaQuoten {l} (ev s :>: p $$ Hd))) 
+>        (exp (etaQuoten {l} (ev (t $$. s) :>: p $$ Tl)))
 > etaQuoten {l} (ONE :>: _) = ZERO
 > etaQuoten {l} (t :>: e) = etaQuotev {l} (t :>: ev e)
 
 > etaQuotev :: pi (n :: Nat) . (VAL :>: VAL) -> Tm {Body, Val, n}
 > etaQuotev {l} (tc :- as :>: vc :- bs) = case canTy ((tc, as) :>: vc) of
 >   Nothing -> error "It will nae fit"
->   Just t  -> vc :- etaQuoteTEL {l} (t :>: bs) 
+>   Just t  -> vc :- etaQuoteTEL {l} (t :>: bs)
 
 > etaQuotev {l} (t :>: x :$ es) = 
 >   let  (h :<: t) = etahQuote {l} x  
 >   in   h :$ bwdList (etaQuoteSp {l} (x :$ B0 :<: ev t) (trail es))
 
-> etaQuoteSp :: pi (n :: Nat) . (VAL :<: VAL) -> [EXP] -> [Tm {Body, Exp, n}]
+> etaQuoteSp :: pi (n :: Nat) . (VAL :<: VAL) -> [Elim EXP] -> 
+>                 [Elim (Tm {Body, Exp, n})]
 > etaQuoteSp {n} (e :<: t) [] = []
-> etaQuoteSp {n} (e :<: PI s t) (a:as) = exp (etaQuoten {n} (ev s :>: a)) :
->     etaQuoteSp {n} (e $$ a :<: ev (t $$ a)) as
-> etaQuoteSp {n} (e :<: SIGMA s t) (p:as) = case ev p of
->   ZERO -> ZERO : etaQuoteSp {n} (e $$ ZERO :<: ev s) as
->   ONE  -> ONE : etaQuoteSp {n} (e $$ ONE :<: ev t $$ (e $$ ZERO)) as 
-> etaQuoteSp {n} (e :<: t) es = error $ "erk " ++ ugly V0 e ++ " :<: " ++ ugly V0 t ++ "... " ++ Data.List.concat (map (ugly V0) es)
+> etaQuoteSp {n} (e :<: PI s t) (A a:as) = 
+>   A (exp (etaQuoten {n} (ev s :>: a))) :
+>     etaQuoteSp {n} (e $$. a :<: ev (t $$. a)) as
+> etaQuoteSp {n} (e :<: SIGMA s t) (Hd : as) =
+>   Hd : etaQuoteSp {n} (e $$ Hd :<: ev s) as
+> etaQuoteSp {n} (e :<: SIGMA s t) (Tl : as) =
+>   Tl : etaQuoteSp {n} (e $$ Tl :<: ev t $$. (e $$ Hd)) as 
 
 > {-
 > etaQuotev {l} (t :>: x :$ es) = 
@@ -93,12 +95,12 @@
 > etaQuoteSp {n} ht@(h :<: t) (es :< e) = case (etaQuoteSp {n} ht es, e) of
 >   (vs :<: PI s t, _) -> 
 >     (vs :< exp (etaQuoten {n} (ev s :>: e))) :<: ev (t $$ e) 
->   (vs :<: SIGMA s t, ZERO) -> (vs :< ZERO :<: ev s) 
->   (vs :<: SIGMA s t, ONE) -> (vs :< ONE) :<: undefined  
+>   (vs :<: SIGMA s t, Hd) -> (vs :< Hd :<: ev s) 
+>   (vs :<: SIGMA s t, Tl) -> (vs :< Tl) :<: undefined  
 
 <     t :: Tm {Body, Exp, Z}, h :: Tm {Head, Val, n} 
  
-<     (vs :< ONE :<: wk t :$ (B0 :< (exp h :$ (vs :< ZERO)))) 
+<     (vs :< Tl :<: wk t :$ (B0 :< (exp h :$ (vs :< Hd)))) 
 
 > -}
 
@@ -110,4 +112,4 @@
 > etaQuoteTEL :: pi (n :: Nat) . (VAL :>: [EXP]) -> [Tm {Body, Exp, n}]
 > etaQuoteTEL {l} (ONE :>: []) = []
 > etaQuoteTEL {l} (SIGMA s t :>: e : es) = 
->  exp (etaQuoten {l} (ev s :>: e)) : etaQuoteTEL {l} (ev (t $$ e) :>: es)
+>  exp (etaQuoten {l} (ev s :>: e)) : etaQuoteTEL {l} (ev (t $$. e) :>: es)

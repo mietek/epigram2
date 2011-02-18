@@ -7,7 +7,8 @@
 > {-# LANGUAGE TypeOperators, GADTs, KindSignatures, RankNTypes,
 >     MultiParamTypeClasses, TypeSynonymInstances, FlexibleInstances,
 >     FlexibleContexts, ScopedTypeVariables, TypeFamilies,
->     DeriveFunctor, DeriveFoldable, DeriveTraversable #-}
+>     DeriveFunctor, DeriveFoldable, DeriveTraversable,
+>     FunctionalDependencies, UndecidableInstances #-}
 
 > module Evidences.Tm where
 
@@ -40,13 +41,14 @@
 > data Status :: * where
 >   Val :: Status
 >   Exp :: Status
->   deriving SheSingleton
+>   deriving (SheSingleton, Show)
 
 > data Tm :: {Part, Status, Nat} -> * where
 >   L     :: Env {n, m} -> String -> Tm {Body, Exp, S m}    -> Tm {Body, s, n}
 >   LK    :: Tm {Body, Exp, n}                              -> Tm {Body, s, n}
 >   (:-)  :: Can -> [Tm {Body, Exp, n}]                     -> Tm {Body, s, n}
->   (:$)  :: Tm {Head, s, n} -> Bwd (Tm {Body, Exp, n})     -> Tm {Body, s, n}
+>   (:$)  :: Tm {Head, s, n} -> Bwd (Elim (Tm {Body, Exp, n}))
+>                                                           -> Tm {Body, s, n}
 >   D     :: DEF -> Stk EXP -> Operator {p, s}              -> Tm {p, s,  n}
 >
 >   V     :: Fin {n}      {- dB i -}                        -> Tm {Head, s,  n}
@@ -136,6 +138,13 @@
 > type VAL = Tm {Body, Val, Z}
 > type TY = EXP
 
+> data Elim :: * -> * where
+>   A  :: t -> Elim t
+>   Hd :: Elim t
+>   Tl :: Elim t
+>   Out :: Elim t
+>   deriving (Show, Eq, Foldable, Traversable, Functor)
+
 > data Can :: * where
 >   Set    :: Can                            -- set of sets
 >   Pi     :: Can                            -- functions
@@ -161,7 +170,7 @@
 > eval {s} g (L g' x b) = L (g <+< g') x b
 > eval {s} g (LK e) = LK (g :/ e)
 > eval {s} g (c :- es) = c :- (fmap (g :/) es)
-> eval {s} g (h :$ es) = applys {s} (eval {s} g h) (fmap (g :/) es)
+> eval {s} g (h :$ es) = applys {s} (eval {s} g h) (fmap (fmap (g :/)) es)
 > eval {s} (Nothing, _) (D d ez o) = mkD {s} d ez o
 > eval {s} (Just es, _) (D d ez o) = mkD {s} d (fmap ((Just es, INix) :/) ez) o
 > eval {s} (es, ez) (V i) = eval {s} ENil (ez !.! i)
@@ -173,33 +182,44 @@
 > (//) = eval {:s :: Status:}
 
 > apply :: forall s' . pi (s :: Status) . 
->          Tm {Body, s, Z} -> Tm {Body, s', Z} -> Tm {Body, s, Z} 
-> apply {s} (L (gl, gi) _ b) a = eval {s} (gl, gi :<<: a) b 
+>          Tm {Body, s, Z} -> Elim (Tm {Body, s', Z}) -> Tm {Body, s, Z} 
+> apply {s} (L (gl, gi) _ b) (A a) = eval {s} (gl, gi :<<: a) b 
 > apply {s} (LK e) _ = eval {s} ENil e
-> apply {s} (D d es (Eat o)) a = mkD {s} d (es :<!: exp a) o  
-> apply {Val} (D d es (Case os)) a = 
+> apply {s} (D d es (Eat o)) (A a) = mkD {s} d (es :<!: exp a) o  
+> apply {Val} (D d es (Case os)) (A a) = 
 >   case (ENil // a :: VAL) of
 >     (c :- as) -> case lookup c os of
->       (Just o) -> foldl ($$) (mkD {Val} d es o) as
+>       (Just o) -> foldl ($$.) (mkD {Val} d es o) as
 >       Nothing -> error "You muppet"             
 >     x -> D d (es :<!: exp x) (StuckCase os) :$ B0
-> apply {Val} (D d es (Split o)) a = 
->   mkD {Val} d es o $$ ((ENil :/ a) :$ (B0 :< ZERO)) $$ ((ENil :/ a) :$ (B0 :< ONE))
-> apply {Exp} d@(D _ _ _) a = (ENil :/ d) :$ (B0 :< exp a)  
-> apply {s} (PAIR a b) ZERO = eval {s} ENil a
-> apply {s} (PAIR a b) ONE = eval {s} ENil b
-> apply {s} (h :$ ss) a = h :$ (ss :< exp a)
-> apply {Exp} (g :/ t) a = (g :/ t) :$ (B0 :< exp a)
+> apply {Val} (D d es (Split o)) (A a) = 
+>   mkD {Val} d es o $$. ((ENil :/ a) :$ (B0 :< Hd)) $$. ((ENil :/ a) :$ (B0 :< Tl))
+> apply {Exp} d@(D _ _ _) a = (ENil :/ d) :$ (B0 :< fmap exp a)  
+> apply {s} (PAIR a b) Hd = eval {s} ENil a
+> apply {s} (PAIR a b) Tl = eval {s} ENil b
+> apply {s} (h :$ ss) a = h :$ (ss :< fmap exp a)
+> apply {Exp} (g :/ t) a = (g :/ t) :$ (B0 :< fmap exp a)
 
-> ($$) :: {:s :: Status:} => Tm {Body, s, Z} -> Tm {Body, s', Z} -> Tm {Body, s, Z}
+> ($$) :: {:s :: Status:} => 
+>         Tm {Body, s, Z} -> Elim (Tm {Body, s', Z}) -> Tm {Body, s, Z}
 > ($$) = apply {:s :: Status:}
 
-> applys :: pi (s :: Status) . Tm {Body, s, Z} -> Bwd EXP -> Tm {Body, s, Z}
+> ($$.) :: {:s :: Status:} => 
+>         Tm {Body, s, Z} -> Tm {Body, s', Z} -> Tm {Body, s, Z}
+> f $$. a = f $$ A a 
+
+> applys :: pi (s :: Status) . 
+>           Tm {Body, s, Z} -> Bwd (Elim EXP) -> Tm {Body, s, Z}
 > applys {s} v B0 = v
 > applys {s} v (ez :< e) = apply {s} (applys {s} v ez) e
 
-> ($$$) :: {:s :: Status:} => Tm {Body, s, Z} -> Bwd EXP -> Tm {Body, s, Z}
+> ($$$) :: {:s :: Status:} => 
+>          Tm {Body, s, Z} -> Bwd (Elim EXP) -> Tm {Body, s, Z}
 > ($$$) = applys {:s :: Status:}
+
+> ($$$.) :: {:s :: Status:} => 
+>          Tm {Body, s, Z} -> Bwd EXP -> Tm {Body, s, Z}
+> f $$$. as = f $$$ fmap A as
 
 > mkD :: forall s' p . pi (s :: Status) . 
 >        DEF -> Stk EXP -> Operator {p, s'} -> Tm {Body, s, Z}
@@ -207,7 +227,7 @@
 > mkD {s} d es (Eat o)                = D d es (Eat o)
 > mkD {s} d es Hole                   = D d es Hole :$ B0
 > mkD {s} d es (Case os)              = D d es (Case os) 
-> mkD {s} d (es :<!: e) (StuckCase os)  = apply {s} (D d es (Case os)) e
+> mkD {s} d (es :<!: e) (StuckCase os)  = apply {s} (D d es (Case os)) (A e)
 
 > fortran :: String -> [Tm {Body, Val, n}] -> Tm {Body, Val, n} -> String
 > fortran _ (L _ s _:_) _ = s
@@ -272,3 +292,70 @@ value |v|''.
 > toBody :: {: p :: Part :} => Tm {p, s, n} -> Tm {Body, s, n}
 > toBody = bod {:p :: Part :}
 
+> class Wrapper (t :: *) (n :: {Nat}) | t -> n where
+>   wrapper :: Tm {Head, Exp, n} -> Bwd (Tm {Body, Exp, n}) -> t
+
+> instance Wrapper (Tm {Body, Exp, n}) n where
+>   wrapper h es = h :$ fmap A es
+
+> instance (s ~ Tm {Body, Exp, n}, Wrapper t n) => Wrapper (s -> t) n where
+>   wrapper f es e = wrapper f (es :< e) 
+
+> wr :: Wrapper t {n} => EXP -> t
+> wr e = wrapper (wk e) B0
+
+ instance (Wrapper s n, Wrapper t n) => Wrapper (s, t) n where
+   wrapper f es = (wrapper f es, wrapper f es)
+
+> cough :: (Fin {S m} -> Tm {p, b, m}) -> Tm {p, b, m}
+> cough f = f Fz  -- coughs up the zero you want
+
+> la ::  String ->
+>        ((forall t n. (Wrapper t n, Leq {S m} n) => t)
+>          -> Tm {Body, Exp, S m}) ->
+>        Tm {Body, s, m}
+> la s b = cough $ \ fz -> L ENil s (b (wrapper (V (finj fz)) B0))
+
+> (->>) :: (String, Tm {Body, Exp, m}) ->
+>          ((forall t n. (Wrapper t n, Leq {S m} n) => t)
+>            -> Tm {Body, Exp, S m}) ->
+>        Tm {Body, s, m}
+> (x, s) ->> t = PI s (la x t)
+
+> (-**) :: (String, Tm {Body, Exp, m}) ->
+>          ((forall t n. (Wrapper t n, Leq {S m} n) => t)
+>            -> Tm {Body, Exp, S m}) ->
+>        Tm {Body, s, m}
+> (x, s) -** t = SIGMA s (la x t)
+
+> ugly :: Vec {n} String -> Tm {p, s, n} -> String
+> ugly xs (L ENil x b) = "(\\ " ++ x ++ " -> " ++ ugly (x :>>: xs) b ++ ")"
+> ugly xs (L _    x b)  = "(\\ " ++ x ++ " -> ???)"
+> ugly xs (LK e)       = "(\\ _ -> " ++ ugly xs e ++ ")"
+> ugly xs (ARR s t) = "(" ++ ugly xs s ++ " -> " ++ ugly xs t ++ ")"
+> ugly xs (PI s (L ENil x t)) = "((" ++ x ++ " : " ++ ugly xs s ++ ") -> "
+>                              ++ ugly (x :>>: xs) t ++ ")"
+> ugly xs (PI s (L _    x t)) = "((" ++ x ++ " : " ++ ugly xs s ++ ") -> ???)"
+> ugly xs (TIMES s t) = "(" ++ ugly xs s ++ " * " ++ ugly xs t ++ ")"
+> ugly xs (SIGMA s (L ENil x t)) = "((" ++ x ++ " : " ++ ugly xs s ++ ") * "
+>                              ++ ugly (x :>>: xs) t ++ ")"
+> ugly xs (SIGMA s (L _    x t)) = "((" ++ x ++ " : " ++ ugly xs s ++ ") * ??? )"
+> ugly xs (c :- []) = show c
+> ugly xs (c :- es) = "(" ++ show c ++ foldMap (\ e -> " " ++ ugly xs e) es ++ ")"
+> ugly xs (h :$ B0) = ugly xs h
+> ugly xs (h :$ es) = "(" ++ ugly xs h ++ foldMap (\ e -> " " ++ uglyElim xs e) es ++ ")"
+> ugly xs (V i) = xs !>! i
+> ugly xs (P (i, s, t)) = s
+> ugly xs (D (s, _, _) S0 _) = s
+> ugly xs (D (s, _, _) es _) = "(" ++ s ++ foldMap (\ e -> " " ++ ugly V0 e) es ++ ")"
+> ugly xs (ENil :/ e) = ugly xs e
+> ugly _ _ = "???"
+
+> uglyElim :: Vec {n} String -> Elim (Tm {p, s, n}) -> String
+> uglyElim v (A e) = ugly v e
+> uglyElim v Hd = "!"
+> uglyElim v Tl = "-"
+> uglyElim v Out = "%"
+
+> instance {:n :: Nat:} => Show (Tm {p, s, n}) where
+>   show t = ugly (fmap (\ i -> "v" ++ show i) vUpTo') t

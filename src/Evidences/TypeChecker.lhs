@@ -23,7 +23,6 @@
 > import Kit.NatFinVec
 
 > import Evidences.Tm
-> import Evidences.TmJig
 > import Evidences.NameSupply
 > import Evidences.DefinitionalEquality
 > import Evidences.TypeCheckRules
@@ -50,18 +49,18 @@ here.
 >     chks l (_Ts :>: (g, es))
 >   _ -> (|)
 > chk l (_T :>: (g, L g' x b)) = case ev _T of
->   PI _S _T -> chk (l + 1) (_T $$ x' :>: (g <+< g' <:< x', b)) where
+>   PI _S _T -> chk (l + 1) (_T $$. x' :>: (g <+< g' <:< x', b)) where
 >     x' = P (l, x, _S) :$ B0
 >   _ -> (|)
 > chk l (_T :>: (g, LK b)) = case ev _T of
->   PI _S _T -> chk (l + 1) (_T $$ x' :>: (g, b)) where
+>   PI _S _T -> chk (l + 1) (_T $$. x' :>: (g, b)) where
 >     x' = P (l, "s", _S) :$ B0
 
 > chk l (_T :>: (g, t@(V _ :$ _))) = chk l (_T :>: (ENil, eval {Val} g t))
 
 > chk l (_T :>: (g, h :$ ss)) = do
 >   (tty, es) <- headTySpine l (g, h)
->   _T' <- spInf l tty (g, map wk es ++ trail ss)
+>   _T' <- spInf l tty (g, map (A . wk) es ++ trail ss)
 >   guard $ equal (SET :>: (_T, _T'))
 >   return ()
 
@@ -72,7 +71,7 @@ here.
 > chks l (ONE           :>:  (g, []))     = (|()|)
 > chks l (SIGMA _S _T   :>:  (g, s : t))  = do
 >   s' <- chev l (_S :>: (g, s))
->   chks l (ev (_T $$ s') :>: (g, t))
+>   chks l (ev (_T $$. s') :>: (g, t))
 > chks _ _ = (|)
 
 
@@ -85,15 +84,15 @@ here.
 
 
 
-> spInf :: Int -> (EXP :<: TY) -> (Env {Z, n}, [Tm {Body, s, n}]) -> Maybe TY
+> spInf :: Int -> (EXP :<: TY) -> 
+>          (Env {Z, n}, [Elim (Tm {Body, s, n})]) -> Maybe TY
 > spInf l (_ :<: _T) (g, [])     = pure _T
-> spInf l (e :<: _T) (g, a:as) = case ev _T of
->     PI _S _T -> do
+> spInf l (e :<: _T) (g, a:as) = case (ev _T, a) of
+>     (PI _S _T, A a) -> do
 >         a <- chev l (_S :>: (g, a))
->         spInf l (e $$ a :<: _T $$ a) (g, as)
->     SIGMA _S _T -> case eval {Val} g a of -- is this safe?
->         ZERO  -> spInf l (e $$ ZERO :<: _S) (g, as)
->         ONE   -> spInf l (e $$ ONE :<: _T $$ (e $$ ZERO)) (g, as)
+>         spInf l (e $$. a :<: _T $$. a) (g, as)
+>     (SIGMA _S _T, Hd) -> spInf l (e $$ Hd :<: _S) (g, as)
+>     (SIGMA _S _T, Tl) -> spInf l (e $$ Tl :<: _T $$. (e $$ Hd)) (g, as)
 
 
 
