@@ -26,7 +26,6 @@
 
 > import Evidences.Tm
 > import Evidences.TmJig
-> import Evidences.TypeChecker
 > import Evidences.EtaQuote
 
 %endif

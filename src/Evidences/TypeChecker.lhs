@@ -25,6 +25,8 @@
 > import Evidences.Tm
 > import Evidences.TmJig
 > import Evidences.NameSupply
+> import Evidences.DefinitionalEquality
+> import Evidences.TypeCheckRules
 
 %endif
 
@@ -32,17 +34,6 @@
 > typeCheck :: (TY :>: EXP) -> Maybe ()
 > typeCheck (ty :>: t) = chk 0 (ty :>: (ENil, t))
 
-
-> canTy :: (Can, [EXP]) :>: Can -> Maybe VAL
-> canTy ((Set, []) :>: Set)    = (| ONE |)
-> canTy ((Set, []) :>: Pi)     = pure $ ("S", SET) -** \ _S -> ARR _S SET *** ONE
-> canTy ((Set, []) :>: Sigma)  = pure $ ("S", SET) -** \ _S -> ARR _S SET *** ONE
-> canTy ((Set, []) :>: One)    = (| ONE |)
-> canTy ((Set, []) :>: Zero)   = (| ONE |)
-
-> canTy ((Sigma, [_S, _T]) :>: Pair)  = pure $ ("s", _S) -** \ s -> wr _T s *** ONE
-> canTy ((One, []) :>: Zero)          = (| ONE |)
-> canTy _ = (|)
 
 It's just possible that variable-management should be baked into a monad,
 here.
@@ -71,7 +62,7 @@ here.
 > chk l (_T :>: (g, h :$ ss)) = do
 >   (tty, es) <- headTySpine l (g, h)
 >   _T' <- spInf l tty (g, map wk es ++ trail ss)
->   -- need to check _T == _T' here
+>   guard $ equal (SET :>: (_T, _T'))
 >   return ()
 
 > chk l (_T :>: (g, g' :/ t)) = chk l (_T :>: (g <+< g', toBody t))
