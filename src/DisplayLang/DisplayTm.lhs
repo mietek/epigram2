@@ -67,9 +67,11 @@ parameter. Thanks to this hack, we can use |deriving Traversable|.
 >     DU     ::                       DInTm x -- underscore
 >     DT     :: InTmWrap x        ->  DInTm x -- embedding
 >     -- import <- DInTmConstructors
+
+>     {-
 >     -- [Feature = Anchor]
 >     DAnchor :: String -> DInTm x -> DInTm x 
->     -- [/Feature = Anchor]
+>     -- [/Feature = Anchor] 
 >     -- [Feature = Equality]
 
 In the display syntax, a blue equality can be between arbitrary DExTms,
@@ -84,6 +86,7 @@ to DInTm, along with appropriate elaboration and distillation rules.
 >     -- [Feature = UId]
 >     DTag :: String -> [DInTm x] -> DInTm x
 >     -- [/Feature = UId]
+>     -}
 >  deriving (Functor, Foldable, Traversable, Show)
 >
 > data DExTm x = DHead x ::$ DSpine x
@@ -138,10 +141,10 @@ We provide handy projection functions to get the name and body of a scope:
 
 Spines of eliminators are just like in the evidence language:
 
-> type DSpine x = Bwd (DInTm x)
+> type DSpine x = Bwd (Elim (DInTm x))
 
 > ($::$) :: DExTm x -> DInTm x -> DExTm x
-> (h ::$ s) $::$ a = h ::$ (s :< a)
+> (h ::$ s) $::$ a = h ::$ (s :< A a)
 
 
 \subsubsection{Embedding evidence terms}
