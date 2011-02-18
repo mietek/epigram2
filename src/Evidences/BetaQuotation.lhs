@@ -22,6 +22,8 @@
 %endif
 
 
+> {-
+
 As we are in the quotation business, let us define $\beta$-quotation,
 ie. |bquote|. Unlike |quote|, |bquote| does not perform
 $\eta$-expansion, it just brings the term in $\beta$-normal
@@ -87,3 +89,5 @@ as we can. Simple, easy.
 > bquote refs (n :$ v)    = (| (bquote refs n) :$ (traverse (bquote refs) v) |)
 > bquote refs (op :@ vs)  = (| (op :@) (traverse (bquote refs) vs) |)
 
+
+> -}

@@ -61,7 +61,7 @@ zipper is a record with the following fields:
 >   ,  layNSupply       :: NameSupply
 >   ,  laySuspendState  :: SuspendState
 >   }
->  deriving Show
+>  -- deriving Show
 
 The derivative makes sense only for definitions and modules, which
 have sub-developments. Parameters being childless, they `derive to
@@ -69,7 +69,7 @@ have sub-developments. Parameters being childless, they `derive to
 the Definition and Module data-types defined in
 Section~\ref{subsubsec:ProofState.Structure.Developments.entry}.
 
-> data CurrentEntry  =  CDefinition DefKind REF (String, Int) INTM (Maybe String)
+> data CurrentEntry  =  CDefinition DEF
 >                    |  CModule Name
 >     deriving Show
 
@@ -96,6 +96,7 @@ justifies some piece of kit to deal with this global context.
 
 %if False
 
+> {-
 > deriving instance Show (Dev NewsyFwd)
 
 > instance Show (NewsyFwd (Entry NewsyFwd)) where
@@ -106,6 +107,9 @@ justifies some piece of kit to deal with this global context.
 > instance Show (Entity NewsyFwd) where
 >     show (Parameter k) = "Param " ++ show k
 >     show (Definition k d) = "Def " ++ show k ++ " " ++ show d
+
+> -}
+
 > instance Traversable NewsyFwd where
 >     traverse g (NF x) = NF <$> traverse (traverse g) x
 > instance Foldable NewsyFwd where
@@ -128,7 +132,7 @@ below the cursor (|pcBelowCursor|)..
 >     ,  pcAboveCursor  :: Dev Bwd
 >     ,  pcBelowCursor  :: Fwd (Entry Bwd)
 >     }
->   deriving Show
+>   -- deriving Show
 
 The |emptyContext| corresponds to the following (purposedly verbose)
 definition:

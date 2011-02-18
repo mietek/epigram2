@@ -7,4 +7,4 @@
 
 > import Kit.BwdFwd
 
-> bquote :: NameSupplier m => Bwd REF -> Tm {d,VV} REF -> m (Tm {d,TT} REF)
+> -- bquote :: NameSupplier m => Bwd REF -> Tm {d,VV} REF -> m (Tm {d,TT} REF)

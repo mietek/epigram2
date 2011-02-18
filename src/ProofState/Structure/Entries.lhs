@@ -13,7 +13,7 @@
 > import Evidences.Tm
 > import Evidences.NameSupply
 
-> import DisplayLang.Scheme
+> -- import DisplayLang.Scheme
 
 > import ProofState.Structure.Developments
 
@@ -32,6 +32,7 @@ letter.
 
 Hence, we have:
 
+> {-
 > entryRef :: Traversable f => Entry f -> Maybe REF
 > entryRef (EEntity r _ _ _ _)    = Just r
 > entryRef (EModule _ _)  = Nothing
@@ -95,3 +96,5 @@ modules, in which case we return an unchanged |Left dev|.
 > entryCoerce (EModule _ dev)       =  Left dev
 
 
+
+> -}

@@ -14,12 +14,11 @@
 > import Kit.BwdFwd
 
 > import Evidences.Tm
-> import Evidences.Eval
 > import Evidences.NameSupply
 
-> import Elaboration.ElabProb
+> -- import Elaboration.ElabProb
 
-> import DisplayLang.Scheme
+> -- import DisplayLang.Scheme
 
 %endif
 
@@ -42,6 +41,7 @@ place of |Bwd|, and to store a |SuspendState|, giving:
 > data Dev f = Dev  {  devEntries       :: f (Entry f)
 >                   ,  devTip           :: Tip
 >                   ,  devNSupply       :: NameSupply
+>                   ,  devLevelCount    :: Int
 >                   ,  devSuspendState  :: SuspendState
 >                   }
 
@@ -49,6 +49,9 @@ place of |Bwd|, and to store a |SuspendState|, giving:
 
 > deriving instance Show (Dev Fwd)
 > deriving instance Show (Dev Bwd)
+
+> deriving instance Show (Entry Fwd)
+> deriving instance Show (Entry Bwd)
 
 %endif
 
@@ -66,9 +69,11 @@ value for performance purposes.
 
 > data Tip
 >   = Module
->   | Unknown (INTM :=>: TY)
->   | Suspended (INTM :=>: TY) EProb
->   | Defined INTM (INTM :=>: TY)
+>   | Unknown TY
+
+<   | Suspended (INTM :=>: TY) EProb
+
+>   | Defined (TY :>: EXP)
 >   deriving Show
 
 
@@ -94,13 +99,17 @@ or value
 \end{itemize}
 
 > data Traversable f => Entry f
->   =  EEntity  { ref       :: REF 
->               , lastName  :: (String, Int)
->               , entity    :: Entity f
->               , term      :: INTM 
->               , anchor    :: Maybe String }
->   |  EModule  { name      :: Name
->               , dev       :: (Dev f) }
+>   =  EDef     {  def        :: DEF 
+>               ,  dev        :: Dev f
+>               }
+>   |  EParam   {  paramKind   :: ParamKind
+>               ,  paramName   :: String
+>               ,  paramType   :: TY
+>               ,  paramLevel  :: Int
+>               }
+>   |  EModule  {  name       :: Name
+>               ,  dev        :: (Dev f)
+>               }
 
 In the Module case, we have already tied the knot, by defining |M|
 with a sub-development. In the Entity case, we give yet another choice
@@ -115,12 +124,14 @@ Typically, we work with developments that use backwards lists, hence
 
 %if False
 
+> {-
 > instance Show (Entry Bwd) where
 >     show (EEntity ref xn e t a) = intercalate " " ["E", show ref, show xn, show e, show t, show a]
 >     show (EModule n d) = intercalate " " ["M", show n, show d]
 > instance Show (Entry Fwd) where
 >     show (EEntity ref xn e t a) = intercalate " " ["E", show ref, show xn, show e, show t, show a]
 >     show (EModule n d) = intercalate " " ["M", show n, show d]
+> -}
 
 %endif
 
@@ -131,32 +142,13 @@ of its |Name| in the |(String, Int)| field. Indeed, grabing that
 information asks for traversing the whole |Name| up to the last
 element:
 
-> mkLastName :: REF -> (String, Int)
-> mkLastName (n := _) = last n
+> mkLastName :: DEF -> (String, Int)
+> mkLastName = last . defName
 
 As we will need it quite frequently for display purposes, we extract
 it once and for all with |lastName| and later rely on the cached version.
 
 \end{danger}
-
-\subsubsection{|Entity|}
-
-An |Entity| is either a |Parameter| or a |Definition|. A |Definition|
-can have children, that is sub-developments, whereas a |Parameter|
-cannot.
-
-> data Traversable f => Entity f
->   =  Parameter   ParamKind
->   |  Definition  DefKind (Dev f)
-
-
-For readability, let us collapse the |Entity| into the |Entry| with
-these useful patterns:
-
-> pattern EPARAM ref name paramKind term anchor =
->     EEntity ref name (Parameter paramKind) term anchor
-> pattern EDEF ref name defKind dev term anchor = 
->     EEntity ref name (Definition defKind dev) term anchor
 
 
 \paragraph{Kinds of Definitions:}
@@ -169,6 +161,7 @@ A programming problem is a special kind of definition: it follows a
 type |Scheme| (Section~\ref{sec:DisplayLang.Scheme}), the high-level
 type of the function we are implementing.
 
+> {-
 > data DefKind = LETG |  PROG (Scheme INTM)
 
 %if False
@@ -179,6 +172,7 @@ type of the function we are implementing.
 
 %endif
 
+> -}
 
 \paragraph{Kinds of Parameters:}
 
@@ -193,14 +187,15 @@ abstraction. It scopes over all following entries and the definitions
 The link between a type and the kind of parameter allowed is defined
 by |lambdable|:
 
-> lambdable :: TY -> Maybe (ParamKind, TY, VAL -> TY)
-> lambdable (PI s t)         = Just (ParamLam, s, (t $$) . A)
-> lambdable (PRF (ALL s p))  = Just (ParamAll, s, \v -> PRF (p $$ A v))
+> lambdable :: VAL -> Maybe (ParamKind, TY, EXP -> TY)
+> lambdable (PI s t)         = Just (ParamLam, s, (t $$.))
+> --lambdable (PRF (ALL s p))  = Just (ParamAll, s, \v -> PRF (p $$ A v))
 > lambdable _                = Nothing
 
 
 %if False
 
+> {-
 > instance Show (Entity Bwd) where
 >     show (Parameter k) = "Param " ++ show k
 >     show (Definition k d) = "Def " ++ show k ++ " " ++ show d
@@ -208,6 +203,7 @@ by |lambdable|:
 > instance Show (Entity Fwd) where
 >     show (Parameter k) = "Param " ++ show k
 >     show (Definition k d) = "Def " ++ show k ++ " " ++ show d 
+> -}
 
 %endif
 

@@ -4,6 +4,8 @@
 
 > module Evidences.Eval where
 
+> {-
+
 > import Data.Foldable
 > import Evidences.Tm
 
@@ -11,3 +13,5 @@
 > ($$$) :: (Foldable f) => VAL -> f (Elim VAL) -> VAL
 > (@@) :: Op -> [VAL] -> VAL
 > eval :: Tm {d, TT} REF -> ENV -> VAL
+
+> -}

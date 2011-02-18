@@ -49,7 +49,7 @@
 >   (:-)  :: Can -> [Tm {Body, Exp, n}]                     -> Tm {Body, s, n}
 >   (:$)  :: Tm {Head, s, n} -> Bwd (Elim (Tm {Body, Exp, n}))
 >                                                           -> Tm {Body, s, n}
->   D     :: DEF -> Stk EXP -> Operator {p, s}              -> Tm {p, s,  n}
+>   D     :: {: p :: Part :} => DEF -> Stk EXP -> Operator {p, s}              -> Tm {p, s,  n}
 >
 >   V     :: Fin {n}      {- dB i -}                        -> Tm {Head, s,  n}
 >   P     :: (Int, String, TY)    {- dB l -}                -> Tm {Head, s,  n}
@@ -64,6 +64,8 @@
 >   StuckCase  :: [(Can, Operator {Body, s})] -> Operator {Head, s'}
 >   Split  :: Operator {p, s} -> Operator {Body, s'}
 
+> instance Show (Operator {p, s}) where
+>   show o = "oooo"
 
 > data Stk x  =  S0
 >             |  Stk x :<!: x
@@ -132,7 +134,14 @@
 
 > pattern ENil = (Nothing, INil)
 
-> type DEF = (String, TY, Operator {Body, Exp})
+> data DEF = DEF  {  defName :: Name
+>                 ,  defTy :: TY
+>                 ,  defOp :: Operator {Body, Exp}
+>                 }
+>   deriving Show
+
+> instance Eq DEF where
+>   d1 == d2 = defName d1 == defName d2
 
 > type EXP = Tm {Body, Exp, Z}
 > type VAL = Tm {Body, Val, Z}
@@ -346,8 +355,8 @@ value |v|''.
 > ugly xs (h :$ es) = "(" ++ ugly xs h ++ foldMap (\ e -> " " ++ uglyElim xs e) es ++ ")"
 > ugly xs (V i) = xs !>! i
 > ugly xs (P (i, s, t)) = s
-> ugly xs (D (s, _, _) S0 _) = s
-> ugly xs (D (s, _, _) es _) = "(" ++ s ++ foldMap (\ e -> " " ++ ugly V0 e) es ++ ")"
+> ugly xs (D d S0 _) = show (defName d)
+> ugly xs (D d es _) = "(" ++ show (defName d) ++ foldMap (\ e -> " " ++ ugly V0 e) es ++ ")"
 > ugly xs (ENil :/ e) = ugly xs e
 > ugly _ _ = "???"
 

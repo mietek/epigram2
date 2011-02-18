@@ -16,6 +16,8 @@
 
 %endif
 
+> {-
+
 \pierre{Crying for documentation (and more user-friendly syntax).}
 
 Based on, but not quite the same as Edwin's experimental operator
@@ -70,3 +72,4 @@ Grot! Why does the |Monad (Either e)| instance demand |(Error e)|? I shut it up.
 > instance Error NEU where
 >   strMsg = error
 
+> -}

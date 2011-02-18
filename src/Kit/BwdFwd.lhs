@@ -33,6 +33,10 @@ Backward and forward lists, applicative with zipping.
 > fwdList :: [x] -> Fwd x
 > fwdList = foldr (:>) F0
 
+> bwdZipWith :: (a -> b -> c) -> Bwd a -> Bwd b -> Bwd c
+> bwdZipWith f B0 B0 = B0
+> bwdZipWith f (as :< a) (bs :< b) = bwdZipWith f as bs :< f a b
+
 > (<><) :: Bwd x -> Fwd x -> Bwd x
 > infixl 5 <><
 > xs <>< F0 = xs

@@ -21,6 +21,7 @@
 
 %endif
 
+> {-
 
 In this section, we implement an interpreter for Epigram. As one would
 expect, it will become handy during type-checking. We assume that
@@ -222,3 +223,5 @@ well prepared.
 >     mkMap (c : cs)  (c' : s)  rho  | c /= c'   = mkMap cs s ((c, [c']) : rho)
 >     mkMap (_ : cs)  (_ : s)   rho  = mkMap cs s rho
 > naming _ _ rho = rho
+
+> -}

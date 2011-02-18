@@ -25,6 +25,8 @@
 %endif
 
 
+> {-
+
 In this section, we weave some She aspects. In particular, we bring
 inside @Rules.lhs@ the |operators| defined by feature files,
 along with any auxiliary code.
@@ -679,3 +681,5 @@ We can look up the primitive reference corresponding to an operator using
 > sumilike _ _               = Nothing
 
 > -- [/Feature = IDesc]
+
+> -}

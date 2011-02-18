@@ -78,7 +78,7 @@ here.
 
 
 > headTySpine :: Int -> (Env {Z, n}, Tm {Head, s, n}) -> Maybe (EXP :<: TY, [EXP])
-> headTySpine l (g, D (x, ty, o) es _)  = pure (D (x, ty, o) S0 o :<: ty, rewindStk es [])
+> headTySpine l (g, D d es _)  = pure (D d S0 (defOp d) :<: defTy d, rewindStk es [])
 > headTySpine l (g, P (i, s, ty))       = pure (P (i, s, ty) :$ B0 :<: ty, [])
 > headTySpine _ _                       = (|)
 
@@ -98,3 +98,10 @@ here.
 
 
 
+> polyIdTy, polyIdTm, compTy, compTm, badCompTm :: EXP
+> polyIdTy = ("_X", SET) ->> \ _X -> ARR _X _X
+> polyIdTm = LK $ la "x" $ \ x -> x
+
+> compTy = (SET --> SET) --> (SET --> SET) --> SET --> SET
+> compTm = la "g" $ \ g -> la "f" $ \ f -> la "x" $ \ x -> g (f x)
+> badCompTm = la "g" $ \ g -> la "f" $ \ f -> la "x" $ \ x -> f

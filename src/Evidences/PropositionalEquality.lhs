@@ -19,6 +19,8 @@
 
 %endif
 
+> {-
+
 Let's have some observational equality, now!
 \cite{altenkirch_mcbride_swierstra:obs_equality}
 
@@ -271,3 +273,5 @@ Sadly we cannot do the following, because it is not safe to invent a name supply
 
 < partialEq s t _ = bquote B0 s ns == bquote B0 t ns
 <   where ns = (B0 :< ("__partialEq", 0), 0) :: NameSupply
+
+> -}

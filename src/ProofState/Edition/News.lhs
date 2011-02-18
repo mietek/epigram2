@@ -8,11 +8,16 @@
 
 > module ProofState.Edition.News where
 
+> import Prelude hiding (exp)
+
+> import Control.Applicative
 > import Control.Monad.Writer
 > import Data.Traversable
 
 > import Data.Foldable hiding (foldr)
 > import Data.Maybe
+
+> import Kit.BwdFwd
 
 > import Evidences.Tm
 > import Evidences.Eval
@@ -41,7 +46,8 @@ When we come to implement functionality to remove definitions from the proof sta
 we will also need |BadNews| (the reference has changed but is not more informative)
 and |DeletedNews| (the reference has gone completely).
 
-> data News = DeletedNews | BadNews | GoodNews | NoNews deriving (Eq, Ord, Show)
+> data News = DeletedNews | BadNews | GoodNews | NoNews
+>     deriving (Eq, Ord, Show)
 
 Handily, |News| is a monoid where the neutral element is |NoNews| and composing
 two |News| takes the less nice.
@@ -51,18 +57,30 @@ two |News| takes the less nice.
 >     mappend  = min
 
 
+> data BoyNews = BadBoyNews TY | GoodBoyNews TY | NoBoyNews
+>     deriving (Eq, Show)
+
+> instance Monoid BoyNews where
+>     mempty                 = NoBoyNews
+>     NoBoyNews `mappend` n  = n
+>     n `mappend` NoBoyNews  = n
+>     GoodBoyNews t1 `mappend` GoodBoyNews t2 = GoodBoyNews t1
+>     -- do bad boy news soon
+
+
 \subsection{News Bulletin}
 
 A |NewsBulletin| is a list of pairs of updated references and the news about them.
 
-> type NewsBulletin = [(REF, News)]
+> type GirlNewsBulletin = [(DEF, News)]
+> type NewsBulletin = (GirlNewsBulletin, Bwd BoyNews)
 
 
 \subsubsection{Adding news}
 
 The |addNews| function adds the given news to the bulletin, if it is newsworthy.
 
-> addNews :: (REF, News) -> NewsBulletin ->  NewsBulletin
+> addNews :: (DEF, News) -> GirlNewsBulletin ->  GirlNewsBulletin
 > addNews (_,  NoNews)  old  = old
 > addNews (r,  n)       old  = (r, n `mappend` n') : old' where
 >   -- Find previous versions n' (if any), 
@@ -82,17 +100,25 @@ The |lookupNews| function returns the news about a reference contained
 in the bulletin, which may be |NoNews| if the reference is not
 present.
 
-> lookupNews :: NewsBulletin -> REF -> News
-> lookupNews nb ref = fromMaybe NoNews (lookup ref nb)
+> lookupNews :: NewsBulletin -> DEF -> News
+> lookupNews (nb, _) ref = fromMaybe NoNews (lookup ref nb)
+
+> lookupBoyNews :: NewsBulletin -> Int -> BoyNews
+> lookupBoyNews (_, bs) l = fromJust $ bs !. (bwdLength bs - 1 - l)
 
 
 The |getNews| function looks for a reference in the news bulletin,
 and returns it with its news if it is found, or returns |Nothing| if
 not.
 
-> getNews :: NewsBulletin -> REF -> Maybe (REF, News)
-> getNews nb ref = find ((== ref) . fst) nb
+> getNews :: NewsBulletin -> DEF -> Maybe (DEF, News)
+> getNews (nb, _) ref = find ((== ref) . fst) nb
 
+> getBoyNews :: NewsBulletin -> (Int, String, TY) -> Writer News (Int, String, TY)
+> getBoyNews bull (l, s, t) = case lookupBoyNews bull l of
+>     NoBoyNews       -> pure (l, s, t)
+>     GoodBoyNews t'  -> tell GoodNews >> pure (l, s, t')
+>     BadBoyNews t'   -> tell BadNews >> pure (l, s, t')
 
 The |getLatest| function returns the most up-to-date copy of the given
 reference, either the one from the bulletin if it is present, or the
@@ -101,19 +127,11 @@ return one, regardless of the status of the reference in the bulletin.
 This ensures that fake references in labels have their types updated
 without turning into real definitions unexpectedly.
 
-> getLatest :: NewsBulletin -> REF -> REF
-> getLatest news ref@(nom := FAKE :<: _) = nom := FAKE :<: ty
->     where _ := _ :<: ty = realGetLatest news ref
-> getLatest news ref = realGetLatest news ref
-
-This is implemented via |realGetLatest|, which ignores fakery. The slightly odd
-recursive case arises because equality for references just compares their names.
-
-> realGetLatest :: NewsBulletin -> REF -> REF
-> realGetLatest []                ref = ref
-> realGetLatest ((ref', _):news)  ref
+> getLatest :: NewsBulletin -> DEF -> DEF
+> getLatest ([], _)              ref = ref
+> getLatest ((ref', _):news, _)  ref
 >     | ref == ref'  = ref'
->     | otherwise    = getLatest news ref
+>     | otherwise    = getLatest (news, B0) ref
 
 
 
@@ -125,8 +143,9 @@ produce a single bulletin with the worst news about every reference mentioned
 in either.
 
 > mergeNews :: NewsBulletin -> NewsBulletin -> NewsBulletin
-> mergeNews new [] = new
-> mergeNews new old = foldr addNews old new
+> mergeNews new ([], B0) = new
+> mergeNews (newg, newb) (oldg, oldb) =
+>     (foldr addNews oldg newg, bwdZipWith mappend newb oldb)
 
 
 \subsubsection{Read all about it}
@@ -137,23 +156,26 @@ in the term). Using the |Writer| monad allows the term to be updated and the
 news about it calculated in a single traversal. Note that we ensure |FAKE|
 references remain as they are, as in |getLatest|.
 
-> tellNews :: NewsBulletin -> Tm {d, TT} REF -> (Tm {d, TT} REF, News)
-> tellNews []    tm = (tm, NoNews)
-> tellNews news  tm = runWriter $ traverse teller tm
+> tellNews :: NewsBulletin -> EXP -> (EXP, News)
+> tellNews ([], B0)    tm = (tm, NoNews)
+> tellNews bull  tm = runWriter $ traverseTm tm
 >   where
->     teller :: REF -> Writer News REF
->     teller r = case getNews news r of
->         Nothing -> return r
->         Just (r', n) -> tell n >> return (fixFake r r')
+>     traverseTm :: Tm {p, s, n} -> Writer News (Tm {Body, Exp, n})
+>     traverseTm (L g x b) = (| L (traverseEnv g) ~x (traverseTm b) |)
+>     traverseTm (LK b) = (| LK (traverseTm b) |)
+>     traverseTm (c :- es) = (| (c :-) (traverse traverseTm es) |)
+>     traverseTm (f :$ as) = (| ((ENil :/) <$> traverseTm f) :$ (traverse (traverse traverseTm) as) |)
+>     traverseTm (D d ss o) = do
+>         let (ss', ns) = runWriter $ traverse traverseTm ss
+>         tell ns
+>         case (getNews bull d, ns) of
+>           (Nothing, NoNews)  -> pure $ toBody $ exp $ D d ss o
+>           (Just (d', n), _)  -> tell n 
+>                              >> pure ((ENil :/D d' S0 (defOp d')) :$ fmap (A . wk) (bwdList (rewindStk ss' [])))
+>           (Nothing, _)       -> pure $ (ENil :/ D d S0 (defOp d)) :$ fmap (A . wk) (bwdList (rewindStk ss' []))
+>     traverseTm (V i) = (| (V i :$ B0) |)
+>     traverseTm (P lst) = (| (| P (getBoyNews bull lst) |) :$ ~B0 |)
+>     traverseTm (g :/ t) = (| (traverseEnv g) :/ (traverseTm t) |)
 >
->     fixFake :: REF -> REF -> REF
->     fixFake (_ := FAKE :<: _)  (n := _ :<: ty)  = n := FAKE :<: ty
->     fixFake _                  r                = r
-
-The |tellNewsEval| function takes a bulletin, term and its present value.
-It updates the term with the bulletin and re-evaluates it if necessary.
-
-> tellNewsEval :: NewsBulletin -> INTM :=>: VAL -> (INTM :=>: VAL, News)
-> tellNewsEval news (tm :=>: tv) = case tellNews news tm of
->     (_,    NoNews)    -> (tm   :=>: tv,        NoNews)
->     (tm',  GoodNews)  -> (tm'  :=>: evTm tm',  GoodNews)
+>     traverseEnv :: Env {n, m} -> Writer News (Env {n, m})
+>     traverseEnv = undefined

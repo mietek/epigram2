@@ -7,4 +7,4 @@
 > import Evidences.Tm
 > import Evidences.NameSupply
 
-> equal :: (TY :>: (VAL,VAL)) -> NameSupply -> Bool
+> equal :: (TY :>: (EXP,EXP)) -> Bool
