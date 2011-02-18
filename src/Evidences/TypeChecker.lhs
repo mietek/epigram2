@@ -29,6 +29,10 @@
 %endif
 
 
+> typeCheck :: (TY :>: EXP) -> Maybe ()
+> typeCheck (ty :>: t) = chk 0 (ty :>: (ENil, t))
+
+
 > canTy :: (Can, [EXP]) :>: Can -> Maybe VAL
 > canTy ((Set, []) :>: Set)    = (| ONE |)
 > canTy ((Set, []) :>: Pi)     = pure $ ("S", SET) -** \ _S -> ARR _S SET *** ONE
@@ -65,8 +69,9 @@ here.
 > chk l (_T :>: (g, t@(V _ :$ _))) = chk l (_T :>: (ENil, eval {Val} g t))
 
 > chk l (_T :>: (g, h :$ ss)) = do
->   (ty, es) <- headTySpine l (g, h)
->   -- spiny thing
+>   (tty, es) <- headTySpine l (g, h)
+>   _T' <- spInf l tty (g, map wk es ++ trail ss)
+>   -- need to check _T == _T' here
 >   return ()
 
 > chk l (_T :>: (g, g' :/ t)) = chk l (_T :>: (g <+< g', toBody t))
@@ -82,10 +87,22 @@ here.
 
 
 
-> headTySpine :: Int -> (Env {Z, n}, Tm {Head, s, n}) -> Maybe (TY, [EXP])
-> headTySpine l (g, D (x, ty, o) es _)  = pure (ty, rewindStk es [])
-> headTySpine l (g, P (i, s, ty))       = pure (ty, [])
+> headTySpine :: Int -> (Env {Z, n}, Tm {Head, s, n}) -> Maybe (EXP :<: TY, [EXP])
+> headTySpine l (g, D (x, ty, o) es _)  = pure (D (x, ty, o) S0 o :<: ty, rewindStk es [])
+> headTySpine l (g, P (i, s, ty))       = pure (P (i, s, ty) :$ B0 :<: ty, [])
 > headTySpine _ _                       = (|)
+
+
+
+> spInf :: Int -> (EXP :<: TY) -> (Env {Z, n}, [Tm {Body, s, n}]) -> Maybe TY
+> spInf l (_ :<: _T) (g, [])     = pure _T
+> spInf l (e :<: _T) (g, a:as) = case ev _T of
+>     PI _S _T -> do
+>         a <- chev l (_S :>: (g, a))
+>         spInf l (e $$ a :<: _T $$ a) (g, as)
+>     SIGMA _S _T -> case eval {Val} g a of -- is this safe?
+>         ZERO  -> spInf l (e $$ ZERO :<: _S) (g, as)
+>         ONE   -> spInf l (e $$ ONE :<: _T $$ (e $$ ZERO)) (g, as)
 
 
 
