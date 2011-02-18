@@ -1,3 +1,4 @@
+
 \section{\eta Quotation}
 
 %if False
@@ -29,7 +30,6 @@
 
 %endif
 
-
 > levi :: pi (n :: Nat) . Int -> Maybe (Fin {n})
 > levi {n} l = bound {n} (mkInt n - l - 1)
 
@@ -38,7 +38,16 @@
 
 > ty2 = ARR (SET *** SET) (SET *** SET)
 
-> ty3 = ARR (ONE *** ARR SET SET) (ONE *** ARR SET SET)
+> ty3 = ARR (SET *** SET) (SET *** SET)
+
+> ty4 = ARR ONE ONE
+
+> swap = L ENil "t"  (PAIR (V Fz :$ (B0 :< ONE)) (V Fz :$ (B0 :< ZERO)))
+> tm4 = L ENil "t"  (PAIR (V Fz :$ (B0 :< ZERO)) (V Fz :$ (B0 :< ONE)))
+
+> comp = L ENil "g" $ L ENil "f" $ L ENil "x" $ V (Fs (Fs Fz)) :$ (B0 :< (V (Fs Fz) :$ (B0 :< (V Fz :$ B0))))
+
+> tm5 = (ENil :/ comp) :$ (B0 :< swap :< swap)
 
 > etaQuote :: (EXP :>: EXP) -> VAL
 > etaQuote (t :>: e) = etaQuoten {Z} (ev t :>: e)

@@ -67,7 +67,7 @@
 >             |  Stk x :<!: x
 >             |  SSplit (Stk x)
 >             |  SCase Can Int (Stk x)
->   deriving (Functor, Foldable, Traversable)
+>   deriving (Eq, Functor, Foldable, Traversable)
 
 > rewindStk :: Stk EXP -> [EXP] -> [EXP]
 > rewindStk S0 es                  = es
