@@ -34,6 +34,9 @@
 
 %endif
 
+
+> {-
+
 \newcommand{\relname}[1]{\textit{#1}}
 
 Typographical note: in this section, we write \relname{f} for a relative name 
@@ -616,6 +619,8 @@ intercalating to produce a comma-separated list.
 >   where
 >     f e | Just r <- entryRef e  = [showRelName (christenREF bsc r)]
 >         | otherwise             = []
+
+> -}
 
 The |showEntriesAbs| function works similarly, but uses absolute names instead of
 christening them.

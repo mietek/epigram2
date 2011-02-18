@@ -18,7 +18,7 @@
 > import System.Exit
 > import System.IO 
 
-> import Evidences.Tm hiding (In)
+> import Evidences.Tm
 > import Evidences.NameSupply
 
 > import DisplayLang.Lexer
@@ -33,10 +33,15 @@
 > import ProofState.Edition.GetSet
 > import ProofState.Edition.Navigation
 
+
 > import ProofState.Interface.Search
 > import ProofState.Interface.ProofKit
-> import ProofState.Interface.Module
 > import ProofState.Interface.NameResolution
+
+
+> {-
+
+> import ProofState.Interface.Module
 > import ProofState.Interface.Solving
 > import ProofState.Interface.Parameter
 
@@ -54,12 +59,14 @@
 > import Elaboration.Elaborator
 > import Elaboration.Scheduler
 
+> -}
+
 > import Distillation.Distiller
 
 > import Cochon.CommandLexer
 > import Cochon.Error
 
-> import Compiler.Compiler
+> -- import Compiler.Compiler
 
 > import Kit.BwdFwd
 > import Kit.Parsley
@@ -105,7 +112,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >         then validateCtxt loc
 >         else return ()
 >   where validateCtxt loc = do
->             case evalStateT (validateHere `catchError` catchUnprettyErrors) loc of
+>             case evalStateT validateHere loc of
 >               Left ss -> do
 >                          putStrLn "*** Warning: definition failed to type-check! ***"
 >                          putStrLn $ renderHouseStyle $ prettyStackError ss
@@ -113,7 +120,10 @@ Here we have a very basic command-driven interface to the proof state monad.
 
 
 > showPrompt :: ProofState String
-> showPrompt = do
+> showPrompt = showInputLine
+>   where
+
+> {-
 >     mty <- optional getHoleGoal
 >     case mty of
 >         Just (_ :=>: ty)  -> (|(showGoal ty) ++ showInputLine|)
@@ -127,6 +137,8 @@ Here we have a very basic command-driven interface to the proof state monad.
 >     showGoal ty = do
 >         s <- prettyHere . (SET :>:) =<< bquoteHere ty
 >         return $ "Goal: " ++ show s ++ "\n"
+> -}
+
 >
 >     showInputLine :: ProofState String
 >     showInputLine = do
@@ -195,7 +207,7 @@ the error message) and |Maybe| a new proof context.
 > runProofState :: ProofState String -> ProofContext
 >     -> (String, Maybe ProofContext)
 > runProofState m loc =
->     case runStateT (m `catchError` catchUnprettyErrors) loc of
+>     case runStateT m loc of
 >         Right (s, loc')  -> (s, Just loc')
 >         Left ss          -> (renderHouseStyle $ prettyStackError ss, Nothing)
 
@@ -203,7 +215,7 @@ the error message) and |Maybe| a new proof context.
 
 > simpleOutput :: ProofState String -> Bwd ProofContext -> IO (Bwd ProofContext)
 > simpleOutput eval (locs :< loc) = do
->     case runProofState (eval <* startScheduler) loc of
+>     case runProofState eval loc of
 >         (s, Just loc') -> do
 >             putStrLn s
 >             return (locs :< loc :< loc')
@@ -245,7 +257,7 @@ unary tactics.
 >     (eval . argToIn . head)
 >     help
 
-> unDP :: DExTm p x -> x
+> unDP :: DExTm x -> x
 > unDP (DP ref ::$ []) = ref
 
 > unaryNameCT :: String -> (RelName -> ProofState String) -> String -> CochonTactic
@@ -269,6 +281,7 @@ The master list of Cochon tactics.
 
 Construction tactics:
 
+> {-
 
 >     nullaryCT "apply" (apply >> return "Applied.")
 >       "apply - applies the last entry in the development to a new subgoal."
@@ -387,7 +400,9 @@ Miscellaneous tactics:
 >         ,  ctHelp = "execute <command> - executes the given system command."
 >         }
 
->     : CochonTactic
+> -}
+
+>     CochonTactic
 >         {  ctName = "help"
 >         ,  ctParse = (| (B0 :<) tokenString
 >                       | B0
@@ -403,14 +418,16 @@ Miscellaneous tactics:
 >         ,  ctHelp = "help - displays a list of supported tactics.\n"
 >                       ++ "help <tactic> - displays help about <tactic>.\n\n"
 >                       ++ "What, you expected 'help help' to produce an amusing response?"
->         }
+>         } :
 
->     : CochonTactic
+>     CochonTactic
 >         {  ctName = "quit"
 >         ,  ctParse = pure B0
 >         ,  ctIO = (\ _ _ -> exitSuccess)
 >         ,  ctHelp = "quit - terminates the program."
->         }
+>         } :
+
+> {-
 
 >     : CochonTactic
 >         {  ctName = "save"
@@ -453,7 +470,10 @@ Miscellaneous tactics:
 Import more tactics from an aspect:
 
 >     import <- CochonTactics
->     : [] )
+
+> -}
+
+>     [] )
 
 > import <- CochonTacticsCode
 
@@ -561,9 +581,11 @@ Import more tactics from an aspect:
 
 
 
-
 > printChanges :: ProofContext -> ProofContext -> IO ()
-> printChanges from to = do
+> printChanges from to = return ()
+
+> {-
+>  do
 >     let Right as = evalStateT getInScope from
 >         Right bs = evalStateT getInScope to
 >     let (lost, gained)  = diff (as <>> F0) (bs <>> F0)
@@ -573,6 +595,7 @@ Import more tactics from an aspect:
 >     if gained /= F0
 >        then putStrLn ("Entered scope: " ++ showEntriesAbs (fmap reverseEntry (NF (fmap Right gained))))
 >        else return ()
+> -}
 
 > diff :: (Eq a, Show a) => Fwd a -> Fwd a -> (Fwd a, Fwd a)
 > diff (x :> xs) (y :> ys)

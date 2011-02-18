@@ -29,6 +29,8 @@
 %endif
 
 
+> {-
+
 The proof state lives on a rich substrate of operations, inherited
 from the |ProofContext| as well as the |ProofState| monad. In this
 module, we export these operations as part of the Interface.
@@ -130,3 +132,8 @@ location, which may be useful for paranoia purposes.
 >                              ++ errTyVal (ty :<: SET))
 >             return ()
 >         _ -> return ()
+
+> -}
+
+> validateHere :: ProofState ()
+> validateHere = return () -- ha ha ha ha

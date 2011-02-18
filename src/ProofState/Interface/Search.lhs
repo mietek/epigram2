@@ -22,6 +22,7 @@
 
 > import Evidences.Tm
 > import Evidences.NameSupply
+> import Evidences.ErrorHandling
 
 > import DisplayLang.Name
 

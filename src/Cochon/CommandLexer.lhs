@@ -31,7 +31,7 @@ with projection functions.
 > data CochonArg = StrArg String 
 >                | InArg DInTmRN 
 >                | ExArg DExTmRN
->                | SchemeArg (Scheme DInTmRN)
+>  --              | SchemeArg (Scheme DInTmRN)
 >                | Optional CochonArg
 >                | NoCochonArg
 >                | ListArgs [ CochonArg ]
@@ -61,8 +61,10 @@ with projection functions.
 > tokenString :: Parsley Token CochonArg
 > tokenString = (| StrArg ident |)
 
+> {-
 > tokenScheme :: Parsley Token CochonArg
 > tokenScheme = (| SchemeArg pScheme |)
+> -}
 
 > tokenOption :: Parsley Token CochonArg -> Parsley Token CochonArg
 > tokenOption p = (| Optional (bracket Square p) 

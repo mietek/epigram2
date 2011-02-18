@@ -11,7 +11,8 @@
 > import Control.Monad.Error
 > import Text.PrettyPrint.HughesPJ
 
-> import Evidences.Tm hiding (In)
+> import Evidences.Tm
+> import Evidences.ErrorHandling
 
 > import DisplayLang.DisplayTm
 > import DisplayLang.Name
@@ -25,6 +26,8 @@
 
 %endif
 
+
+> {-
 
 \subsection{Catching the gremlins before they leave |ProofState|}
 
@@ -49,12 +52,12 @@
 >     return $ ErrorTm (d :<: Nothing)
 > distillError e = return e
 
-
+> -}
 
 \subsection{Pretty-printing the stack trace}
 
 
-> prettyStackError :: StackError DInTmRN -> Doc
+> prettyStackError :: StackError -> Doc
 > prettyStackError e = 
 >     vcat $
 >     fmap (text "Error:" <+>) $
@@ -64,14 +67,6 @@
 >      prettyErrorTok) e
 
 
-> prettyErrorTok :: ErrorTok DInTmRN -> Doc
-> prettyErrorTok (StrMsg s)              = text s
-> prettyErrorTok (ErrorTm    (v :<: _))  = pretty v maxBound
-> prettyErrorTok (ErrorCan   v)  = pretty v maxBound
-> prettyErrorTok (ErrorElim  e)  = pretty e maxBound
-
-The following cases should be avoided as much as possible:
-
-> prettyErrorTok (ErrorREF (name := _))  = text $ showName name
-> prettyErrorTok (ErrorVAL (v :<: _))    = text "ErrorVAL" <>
->                                              (brackets $ text $ show v)
+> prettyErrorTok :: ErrorTok -> Doc
+> prettyErrorTok (StrMsg s)    = text s
+> prettyErrorTok (ErrorTm tt)  = text $ show tt

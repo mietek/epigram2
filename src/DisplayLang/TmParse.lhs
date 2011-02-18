@@ -159,11 +159,11 @@ the parser.
 > elimParsers = arrange $ 
 >     -- import <- ElimParsers
 >     -- [Feature = Labelled]
->     (AppSize, (| Call (%keyword KwCall%) ~DU |)) :
+>     -- (AppSize, (| Call (%keyword KwCall%) ~DU |)) :
 >     -- [/Feature = Labelled]
 >     -- [Feature = Sigma]
->     (AppSize, (| Fst (%keyword KwFst%) |)) :
->     (AppSize, (| Snd (%keyword KwSnd%) |)) :
+>     (AppSize, (| Hd (%keyword KwFst%) |)) :
+>     (AppSize, (| Tl (%keyword KwSnd%) |)) :
 >     -- [/Feature = Sigma]
 >     (AppSize, (| Out (%keyword KwOut%) |)) :
 >     (AppSize, (| A (sizedDInTm ArgSize) |)) :
@@ -171,6 +171,8 @@ the parser.
       
 > inDTmParsersSpecial :: SizedParserList DInTmRN
 > inDTmParsersSpecial = arrange $ 
+
+> {-
 >     -- import <- DInTmParsersSpecial
 >     -- [Feature = Enum]
 >     (ArgSize, (|mkNum (|read digits|) (optional $ (keyword KwPlus) *> sizedDInTm ArgSize)|)) :
@@ -192,16 +194,21 @@ the parser.
 >     (AndSize, (|DWIT      (%keyword KwWit%) (sizedDInTm ArgSize)|)) :
 >     (AndSize, (|DALL      (%keyword KwAll%) (sizedDInTm ArgSize) (sizedDInTm ArgSize)|)) :
 >     -- [/Feature = Prop]
+> -}
+
 >     -- [Feature = Sigma]
 >     (ArgSize, (|id (bracket Square tuple)|)) :
 >     (ArgSize, (|id (%keyword KwSig%) (bracket Round sigma)|)) :
 >     (ArgSize, (|DSIGMA (%keyword KwSig%) (sizedDInTm ArgSize) (sizedDInTm ArgSize)|)) :
 >     -- [/Feature = Sigma]
+
+> {-
 >     -- [Feature = UId]
 >     (ArgSize, (|DUID (%keyword KwUId%)|)) :
 >     (ArgSize, (|DTAG (%keyword KwTag%) ident|)) :
 >     (AppSize, (|DTag (%keyword KwTag%) ident (many (sizedDInTm ArgSize))|)) :
 >     -- [/Feature = UId]
+> -}
 
 >     (ArgSize, (|DSET (%keyword KwSet%)|)) :
 >     (ArgSize, (|DQ (pFilter questionFilter ident)|)) :
@@ -212,14 +219,17 @@ the parser.
 >     (PiSize, (|(flip iter)  
 >                   (some (bracket Round 
 >                        (|(ident <|> underscore) , (%keyword KwAsc%) pDInTm|)))
->                   (| (uncurry mkDPIV) (%keyword KwArr%)
->                    | (uncurry mkDALLV) (%keyword KwImp%) |)
+>                   (| (uncurry mkDPIV) (%keyword KwArr%) |)
+
+<                    | (uncurry mkDALLV) (%keyword KwImp%) |)
+
 >                   pDInTm |)) :
 >     []
 
 > inDTmParsersMore :: ParamParserList DInTmRN DInTmRN
 > inDTmParsersMore = arrange $ 
 >     -- import <- DInTmParsersMore
+> {-
 >     -- [Feature = Equality]
 >     (EqSize, \ t -> (| DEqBlue  (pFilter isEx (pure t)) (%keyword KwEqBlue%)
 >                                 (pFilter isEx (sizedDInTm (pred EqSize))) |)) :
@@ -228,12 +238,15 @@ the parser.
 >     (AndSize, \ s -> (| (DAND s) (%keyword KwAnd%) (sizedDInTm AndSize)  |)) :
 >     (ArrSize, \ s -> (| (DIMP s) (%keyword KwImp%) (sizedDInTm PiSize)   |)) :
 >     -- [/Feature = Prop]
+> -}
 
 >     (ArrSize, \ s -> (| (DARR s) (%keyword KwArr%) (sizedDInTm PiSize) |)) :
 >     []
 
 
 \subsection{Parser support code}
+
+> {-
 
 > -- import <- ParserCode
 > -- [Feature = Enum]
@@ -248,6 +261,8 @@ the parser.
 > isEx (DN tm)  = Just tm
 > isEx _        = Nothing
 > -- [/Feature = Equality]
+
+> -}
 
 > -- [Feature = Sigma]
 > tuple :: Parsley Token DInTmRN
@@ -264,8 +279,10 @@ the parser.
 
 > sigmaMore :: Parsley Token DInTmRN
 > sigmaMore = (|id (% keyword KwSemi %) (sigma <|> pDInTm)
->              |(\p s -> mkSigma Nothing (DPRF p) s) (% keyword KwPrf %) pDInTm sigmaMore
->              |(\x -> DPRF x) (% keyword KwPrf %) pDInTm
+
+<              |(\p s -> mkSigma Nothing (DPRF p) s) (% keyword KwPrf %) pDInTm sigmaMore
+<              |(\x -> DPRF x) (% keyword KwPrf %) pDInTm
+
 >              |)
 
 > mkSigma :: Maybe String -> DInTmRN -> DInTmRN -> DInTmRN
@@ -288,12 +305,18 @@ the parser.
 > mkDPIV   "_"  s t = DPI s (DL (DK t))
 > mkDPIV   x    s t = DPIV x s t
 
+
+> {-
+
 > mkDALLV :: String -> DInTmRN -> DInTmRN -> DInTmRN
 > mkDALLV  "_"  s p = DALL s (DL (DK p))
 > mkDALLV  x    s p = DALLV x s p
 
+> -}
 
 \subsection{Parsing schemes}
+
+> {-
 
 > pScheme :: Parsley Token (Scheme DInTmRN)
 > pScheme = (|mkScheme (many pSchemeBit) (%keyword KwAsc%) pDInTm|)
@@ -306,3 +329,5 @@ the parser.
 >     mkScheme [] ty = SchType ty
 >     mkScheme ((x, Left   s) : bits) ty = SchExplicitPi  (x :<: s) (mkScheme bits ty)
 >     mkScheme ((x, Right  s) : bits) ty = SchImplicitPi  (x :<: s) (mkScheme bits ty)
+
+> -}

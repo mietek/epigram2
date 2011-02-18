@@ -59,6 +59,11 @@ by partially applying |wrapDoc| to a document and its size.
 The |Can| functor is fairly easy to pretty-print, the only complexity
 being with $\Pi$-types.
 
+> instance Pretty Can where
+>     pretty c _ = text $ show c
+
+> {-
+
 > instance Pretty (Can DInTmRN) where
 >     pretty Set       = const (kword KwSet)
 >     pretty (Pi s t)  = prettyPi empty (DPI s t)
@@ -120,6 +125,8 @@ being with $\Pi$-types.
 >     pretty (Tag s)  = const (kword KwTag <> text s)
 >     -- [/Feature = UId]
 
+> -}
+
 The |prettyPi| function takes a document representing the domains
 so far, a term and the current size. It accumulates domains until a
 non(dependent) $\Pi$-type is found, then calls |prettyPiMore| to
@@ -150,11 +157,11 @@ The |Elim| functor is straightforward.
 >     pretty Out    = const (kword KwOut)
 >     -- import <- ElimPretty
 >     -- [Feature = Labelled]
->     pretty (Call _) = const (kword KwCall)
+>     -- pretty (Call _) = const (kword KwCall)
 >     -- [/Feature = Labelled]
 >     -- [Feature = Sigma]
->     pretty Fst = const (kword KwFst)
->     pretty Snd = const (kword KwSnd)
+>     pretty Hd = const (kword KwFst)
+>     pretty Tl = const (kword KwSnd)
 >     -- [/Feature = Sigma]
 >     pretty elim   = const (quotes . text . show $ elim)
 
@@ -175,10 +182,12 @@ than a $\lambda$-term is reached.
 
 > instance Pretty DInTmRN where
 >     pretty (DL s)          = pretty s
->     pretty (DC c)          = pretty c
+>     pretty (DC c es)       = wrapDoc (pretty c ArgSize <+> sep (map (flip pretty ArgSize) es)) AppSize
 >     pretty (DN n)          = pretty n
 >     pretty (DQ x)          = const (char '?' <> text x)
 >     pretty DU              = const (kword KwUnderscore)
+
+> {-
 >     -- import <- DInTmPretty
 >     -- [Feature = Anchor]
 >     pretty (DANCHOR s args)  = wrapDoc (text s <+> pretty args ArgSize) ArgSize
@@ -199,6 +208,8 @@ than a $\lambda$-term is reached.
 >     pretty (DTag s xs)  = wrapDoc (kword KwTag <> text s
 >       <+> hsep (map (flip pretty ArgSize) xs)) AppSize
 >     -- [/Feature = UId]
+> -}
+
 >     pretty indtm           = const (quotes . text . show $ indtm)
 
 
@@ -213,6 +224,7 @@ than a $\lambda$-term is reached.
 >     pretty (DType ty)   = const (parens (kword KwAsc <+> pretty ty maxBound))
 >     pretty (DTEx ex)    = const (quotes . text . show $ ex)
 
+> {-
 > instance Pretty (Scheme DInTmRN) where
 >     pretty (SchType ty) = wrapDoc (kword KwAsc <+> pretty ty maxBound) ArrSize
 >     pretty (SchExplicitPi (x :<: schS) schT) = wrapDoc (
@@ -223,7 +235,9 @@ than a $\lambda$-term is reached.
 >         braces (text x <+> kword KwAsc <+> pretty s maxBound)
 >             <+> pretty schT maxBound
 >         ) ArrSize         
+> -}
 
+> {-
 > -- import <- Pretty
 > -- [Feature = Enum]
 > prettyEnumIndex :: Int -> DInTmRN -> Size -> Doc
@@ -250,6 +264,8 @@ than a $\lambda$-term is reached.
 >   | isEmpty bs  = wrapDoc d PiSize
 >   | otherwise   = wrapDoc (bs <+> kword KwImp <+> d) PiSize
 > -- [/Feature = Prop]
+
+> -}
 
 > -- [Feature = Sigma]
 > prettyPair :: DInTmRN -> Size -> Doc

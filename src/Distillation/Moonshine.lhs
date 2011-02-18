@@ -33,6 +33,8 @@ This is mostly for error-message generation.
 \question{Presumably |moonshine| should accumulate |Entries| like
 |distill| and friends?}
 
+> {-
+
 > moonshine :: INTM -> ProofStateT INTM DInTmRN
 > moonshine (LK t) = do
 >     t' <- moonshine t
@@ -50,3 +52,4 @@ This is mostly for error-message generation.
 > moonshine t = return (DTIN t)
 
 
+> -}

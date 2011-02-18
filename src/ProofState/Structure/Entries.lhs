@@ -36,11 +36,13 @@ Hence, we have:
 > entryRef :: Traversable f => Entry f -> Maybe REF
 > entryRef (EEntity r _ _ _ _)    = Just r
 > entryRef (EModule _ _)  = Nothing
->
+> -}
+
 > entryName :: Traversable f => Entry f -> Name
-> entryName (EEntity (n := _) _ _ _ _)  = n
+> entryName (EDef d _)  = defName d
 > entryName (EModule n _)             = n
->
+
+> {-
 > entryLastName :: Traversable f => Entry f -> (String, Int)
 > entryLastName (EEntity _ xn _ _ _)  = xn
 > entryLastName (EModule n _)       = last n

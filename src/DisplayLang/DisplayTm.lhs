@@ -141,10 +141,10 @@ We provide handy projection functions to get the name and body of a scope:
 
 Spines of eliminators are just like in the evidence language:
 
-> type DSpine x = Bwd (Elim (DInTm x))
+> type DSpine x = [Elim (DInTm x)]
 
-> ($::$) :: DExTm x -> DInTm x -> DExTm x
-> (h ::$ s) $::$ a = h ::$ (s :< A a)
+> ($::$) :: DExTm x -> Elim (DInTm x) -> DExTm x
+> (h ::$ s) $::$ a = h ::$ (s ++ [a])
 
 
 \subsubsection{Embedding evidence terms}
@@ -247,10 +247,10 @@ The convention for display term pattern synonyms is that they should match
 their evidence term counterparts, but with the addition of |D|s in appropriate
 places.
 
-> pattern DSET        = DC Set              
+> pattern DSET        = DC Set []             
 > pattern DARR s t    = DPI s (DL (DK t)) 
-> pattern DPI s t     = DC (Pi s t)         
-> pattern DCON t      = DC (Con t)
+> pattern DPI s t     = DC Pi [s, t]
+> pattern DCON t      = DC Con [t]
 > pattern DNP n       = DN (DP n ::$ [])
 > pattern DLAV x t    = DL (x ::. t)
 > pattern DPIV x s t  = DPI s (DLAV x t)
@@ -303,11 +303,11 @@ places.
 > pattern DWIT t       = DC (Wit t)
 > -- [/Feature = Prop]
 > -- [Feature = Sigma]
-> pattern DSIGMA p q = DC (Sigma p q)
-> pattern DPAIR  p q = DC (Pair p q)
-> pattern DUNIT      = DC Unit
-> pattern DVOID      = DC Void
-> pattern DTimes x y = Sigma x (DL (DK y))
+> pattern DSIGMA p q = DC Sigma [p, q]
+> pattern DPAIR  p q = DC Pair [p, q]
+> pattern DUNIT      = DC One []
+> pattern DVOID      = DC Zero []
+> pattern DTimes x y = Sigma [x, (DL (DK y))]
 > pattern DTIMES x y = DC (DTimes x y)
 > -- [/Feature = Sigma]
 > -- [Feature = UId]
