@@ -105,3 +105,13 @@
 > mkInt :: pi (n :: Nat) . Int
 > mkInt {Z} = 0
 > mkInt {S n} = 1 + mkInt n
+
+> vUpTo :: pi (n :: Nat) . Vec {n} Int
+> vUpTo {n} = help {n} 0
+>   where
+>     help :: pi (n :: Nat). Int -> Vec {n} Int
+>     help {Z} m = V0
+>     help {S n} m = m :>>: help {n} (m+1)
+
+> vUpTo' :: {:n :: Nat:} => Vec {n} Int
+> vUpTo' = vUpTo {:n :: Nat:}

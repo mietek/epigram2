@@ -20,6 +20,8 @@
 > import Data.List hiding (foldl)
 > import Data.Traversable
 
+> import ShePrelude
+
 > import Kit.MissingLibrary
 > import Kit.BwdFwd
 > import Kit.NatFinVec
@@ -89,3 +91,6 @@
 > ugly xs (ENil :/ e) = ugly xs e
 > ugly _ _ = "???"
 
+
+> instance {:n :: Nat:} => Show (Tm {p, s, n}) where
+>   show t = ugly (fmap (\ i -> "v" ++ show i) vUpTo') t

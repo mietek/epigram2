@@ -218,6 +218,8 @@
 > wk t = (Nothing, INix) :/ t
 
 > (***) = TIMES
+> (-->) = ARR
+> infixr 5 -->, ***
 
 
 We have special pairs for types going into and coming out of
