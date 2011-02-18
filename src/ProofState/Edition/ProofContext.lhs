@@ -59,6 +59,7 @@ zipper is a record with the following fields:
 >   ,  belowEntries     :: NewsyEntries
 >   ,  layTip           :: Tip
 >   ,  layNSupply       :: NameSupply
+>   ,  layLevelCount    :: Int
 >   ,  laySuspendState  :: SuspendState
 >   }
 >  -- deriving Show

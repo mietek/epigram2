@@ -48,12 +48,15 @@ Hence, we have:
 > entryScheme :: Traversable f => Entry f -> Maybe (Scheme INTM)
 > entryScheme (EDEF _ _ (PROG sch) _ _ _)  = Just sch
 > entryScheme _                          = Nothing
->
+> -}
+
+
 > entryDev :: Traversable f => Entry f -> Maybe (Dev f)
-> entryDev (EDEF _ _ _ d _ _)  = Just d
+> entryDev (EDef _ d)        = Just d
 > entryDev (EModule _ d)     = Just d
-> entryDev (EPARAM _ _ _ _ _)  = Nothing
->
+> entryDev (EParam _ _ _ _)  = Nothing
+
+> {-
 > entrySuspendState :: Traversable f => Entry f -> SuspendState
 > entrySuspendState e = case entryDev e of
 >     Just dev  -> devSuspendState dev
@@ -72,7 +75,7 @@ Two entries are equal if and only if they have the same name:
 > instance Traversable f => Eq (Entry f) where
 >     e1 == e2 = entryName e1 == entryName e2
 
-
+> -}
 
 \subsection{Changing the carrier of an |Entry|}
 
@@ -91,10 +94,9 @@ modules, in which case we return an unchanged |Left dev|.
 
 > entryCoerce ::  (Traversable f, Traversable g) => 
 >                 Entry f -> Either (Dev f) (Entry g)
-> entryCoerce (EPARAM ref xn k ty anchor)  =  Right $ EPARAM ref xn k ty anchor
-> entryCoerce (EDEF _ _ _ dev _ _)    =  Left dev
-> entryCoerce (EModule _ dev)       =  Left dev
+> entryCoerce (EParam k n t l)  =  Right $ EParam k n t l
+> entryCoerce (EDef _ dev)      =  Left dev
+> entryCoerce (EModule _ dev)   =  Left dev
 
 
 
-> -}

@@ -26,6 +26,7 @@
 
 > import Evidences.Tm
 > import Evidences.NameSupply
+> import Evidences.ErrorHandling
 
 %endif
 
@@ -43,23 +44,24 @@ risk of failing. Others carefully wrap their results in a |Maybe|. It
 would be good to decide a uniform approach there.}
 
 
+
 \subsection{Getters}
 
 
 \subsubsection{Getting in |ProofContext|}
 
-> getLayers :: ProofStateT e (Bwd Layer)
+> getLayers :: ProofState (Bwd Layer)
 > getLayers = gets pcLayers
 >
-> getAboveCursor :: ProofStateT e (Dev Bwd)
+> getAboveCursor :: ProofState (Dev Bwd)
 > getAboveCursor = gets pcAboveCursor
 >
-> getBelowCursor :: ProofStateT e (Fwd (Entry Bwd))
+> getBelowCursor :: ProofState (Fwd (Entry Bwd))
 > getBelowCursor = gets pcBelowCursor
 
 And some specialized versions:
 
-> getLayer :: ProofStateT e Layer
+> getLayer :: ProofState Layer
 > getLayer = do
 >     _ :< l <- getLayers
 >     return l
@@ -67,45 +69,43 @@ And some specialized versions:
 
 \subsubsection{Getting in |AboveCursor|}
 
-> getEntriesAbove :: ProofStateT e Entries
+> getEntriesAbove :: ProofState Entries
 > getEntriesAbove = do
 >     dev <- getAboveCursor
 >     return $ devEntries dev
 >
-> getDevNSupply :: ProofStateT e NameSupply
+> getDevNSupply :: ProofState NameSupply
 > getDevNSupply = do
 >     dev <- getAboveCursor
 >     return $ devNSupply dev
 >
-> getDevTip :: ProofStateT e Tip
+> getDevTip :: ProofState Tip
 > getDevTip = do
 >     dev <- getAboveCursor
 >     return $ devTip dev
 
 And some specialized versions:
 
-> getEntryAbove :: ProofStateT e (Entry Bwd)
+> getEntryAbove :: ProofState (Entry Bwd)
 > getEntryAbove = do
 >     _ :< e <- getEntriesAbove
 >     return e
 >
-> getGoal :: String -> ProofStateT e (INTM :=>: TY)
+> getGoal :: String -> ProofState TY
 > getGoal s = do
 >     tip <- getDevTip
 >     case tip of
->       Unknown (ty :=>: tyTy) -> return (ty :=>: tyTy)
->       Defined _ (ty :=>: tyTy) -> return (ty :=>: tyTy)
+>       Unknown ty          -> return ty
+>       Defined (ty :>: _)  -> return ty
 >       _ -> throwError'  $ err "getGoal: fail to match a goal in " 
 >                         ++ err s
 >
-> withGoal :: (VAL -> ProofState ()) -> ProofState ()
-> withGoal f = do
->   (_ :=>: goal) <- getGoal "withGoal"
->   f goal
+> withGoal :: (TY -> ProofState ()) -> ProofState ()
+> withGoal f = getGoal "withGoal" >>= f
 
 \subsubsection{Getting in the |Layers|}
 
-> getCurrentEntry :: ProofStateT e CurrentEntry
+> getCurrentEntry :: ProofState CurrentEntry
 > getCurrentEntry = do
 >     ls <- getLayers
 >     case ls of
@@ -114,66 +114,77 @@ And some specialized versions:
 
 \subsubsection{Getting in the |CurrentEntry|}
 
-> getCurrentName :: ProofStateT e Name
+> getCurrentName :: ProofState Name
 > getCurrentName = do
 >     cEntry <-  getCurrentEntry
 >     case cEntry of
 >       CModule [] -> return []
 >       _ -> return $ currentEntryName cEntry
 >
-> getCurrentDefinition :: ProofStateT e (EXTM :=>: VAL)
+> {-
+
+> getCurrentDefinition :: ProofState EXP
 > getCurrentDefinition = do
->     CDefinition _ ref _ _ _ <- getCurrentEntry
+>     CDefinition d <- getCurrentEntry
 >     scope <- getGlobalScope
->     return (applySpine ref scope)
+>     return $ D d S0 (defOp d) $$$. scope
+
+> -}
 
 \paragraph{Getting in the |HOLE|\\}
 
-> getHoleGoal :: ProofStateT e (INTM :=>: TY)
+> {-
+
+> getHoleGoal :: ProofState (INTM :=>: TY)
 > getHoleGoal = do
 >     CDefinition _ (_ := HOLE _ :<: _) _ _ _ <- getCurrentEntry
 >     getGoal "getHoleGoal"
 >
-> getHoleKind :: ProofStateT e HKind
+> getHoleKind :: ProofState HKind
 > getHoleKind = do
 >     CDefinition _ (_ := HOLE hk :<: _) _ _ _ <- getCurrentEntry
 >     return hk
 
+> -}
 
 
 \subsubsection{Getting the Scopes}
 
-> getInScope :: ProofStateT e Entries
+> getInScope :: ProofState Entries
 > getInScope = gets inScope
->
-> getDefinitionsToImpl :: ProofStateT e [REF :<: INTM]
+
+> {-
+> getDefinitionsToImpl :: ProofState [REF :<: INTM]
 > getDefinitionsToImpl = gets definitionsToImpl
->
-> getGlobalScope :: ProofStateT e Entries
+> -}
+
+> getGlobalScope :: ProofState Entries
 > getGlobalScope = gets globalScope
 >
-> getParamsInScope :: ProofStateT e [REF]
+
+> {-
+> getParamsInScope :: ProofState [REF]
 > getParamsInScope = do  
 >     inScope <- getInScope
 >     return $ paramREFs inScope
-
+> -}
 
 \subsection{Putters}
 
 
 \subsubsection{Putting in |ProofContext|}
 
-> putLayers :: Bwd Layer -> ProofStateT e ()
+> putLayers :: Bwd Layer -> ProofState ()
 > putLayers ls = do
 >     pc <- get
 >     put pc{pcLayers=ls}
 >
-> putAboveCursor :: Dev Bwd -> ProofStateT e ()
+> putAboveCursor :: Dev Bwd -> ProofState ()
 > putAboveCursor dev = do
 >     replaceAboveCursor dev
 >     return ()
 
-> putBelowCursor :: Fwd (Entry Bwd) -> ProofStateT e (Fwd (Entry Bwd))
+> putBelowCursor :: Fwd (Entry Bwd) -> ProofState (Fwd (Entry Bwd))
 > putBelowCursor below = do
 >     pc <- get
 >     put pc{pcBelowCursor=below}
@@ -181,12 +192,12 @@ And some specialized versions:
 
 And some specialized versions:
 
-> putLayer :: Layer -> ProofStateT e ()
+> putLayer :: Layer -> ProofState ()
 > putLayer l = do
 >     pc@PC{pcLayers=ls} <- get
 >     put pc{pcLayers=ls :< l}
 >
-> putEntryBelowCursor :: Entry Bwd -> ProofStateT e ()
+> putEntryBelowCursor :: Entry Bwd -> ProofState ()
 > putEntryBelowCursor e = do
 >     below <- getBelowCursor
 >     putBelowCursor (e :> below)
@@ -196,42 +207,42 @@ And some specialized versions:
 
 \subsubsection{Putting in |AboveCursor|}
 
-> putEntriesAbove :: Entries -> ProofStateT e ()
+> putEntriesAbove :: Entries -> ProofState ()
 > putEntriesAbove es = do
 >     replaceEntriesAbove es
 >     return ()
 >
-> putDevNSupply :: NameSupply -> ProofStateT e ()
+> putDevNSupply :: NameSupply -> ProofState ()
 > putDevNSupply ns = do
 >     dev <- getAboveCursor
 >     putAboveCursor dev{devNSupply = ns}
 >
-> putDevSuspendState :: SuspendState -> ProofStateT e ()
+> putDevSuspendState :: SuspendState -> ProofState ()
 > putDevSuspendState ss = do
 >     dev <- getAboveCursor
 >     putAboveCursor dev{devSuspendState = ss}
 >
-> putDevTip :: Tip -> ProofStateT e ()
+> putDevTip :: Tip -> ProofState ()
 > putDevTip tip = do
 >     dev <- getAboveCursor
 >     putAboveCursor dev{devTip = tip}
 
 And some specialized versions:
 
-> putEntryAbove :: Entry Bwd -> ProofStateT e ()
+> putEntryAbove :: Entry Bwd -> ProofState ()
 > putEntryAbove e = do
 >     dev <- getAboveCursor
 >     putAboveCursor dev{devEntries = devEntries dev :< e}
 
 \subsubsection{Putting in the |Layers|}
 
-> putCurrentEntry :: CurrentEntry -> ProofStateT e ()
+> putCurrentEntry :: CurrentEntry -> ProofState ()
 > putCurrentEntry m = do
 >     l <- getLayer
 >     _ <- replaceLayer l{currentEntry=m}
 >     return ()
 >
-> putNewsBelow :: NewsBulletin -> ProofStateT e ()
+> putNewsBelow :: NewsBulletin -> ProofState ()
 > putNewsBelow news = do
 >     l <- getLayer
 >     replaceLayer l{belowEntries = NF (Left news :> unNF (belowEntries l))}
@@ -242,6 +253,8 @@ And some specialized versions:
 
 \paragraph{Putting in the |PROG|\\}
 
+> {-
+
 > putCurrentScheme :: Scheme INTM -> ProofState ()
 > putCurrentScheme sch = do
 >     CDefinition _ ref xn ty a <- getCurrentEntry
@@ -249,17 +262,20 @@ And some specialized versions:
 
 \paragraph{Putting in the |HOLE|\\}
 
-> putHoleKind :: HKind -> ProofStateT e ()
+
+
+> putHoleKind :: HKind -> ProofState ()
 > putHoleKind hk = do
 >     CDefinition kind (name := HOLE _ :<: ty) xn tm a <- getCurrentEntry
 >     putCurrentEntry $ CDefinition kind (name := HOLE hk :<: ty) xn tm a
 
+> -}
 
 \subsection{Removers}
 
 \subsubsection{Remove in |ProofContext|}
 
-> removeLayer :: ProofStateT e Layer
+> removeLayer :: ProofState Layer
 > removeLayer = do
 >     pc@PC{pcLayers=ls :< l} <- get
 >     put pc{pcLayers=ls}
@@ -267,7 +283,7 @@ And some specialized versions:
 
 \subsubsection{Removing in |AboveEntries|}
 
-> removeEntryAbove :: ProofStateT e (Maybe (Entry Bwd))
+> removeEntryAbove :: ProofState (Maybe (Entry Bwd))
 > removeEntryAbove = do
 >     es <- getEntriesAbove
 >     case es of
@@ -281,7 +297,7 @@ And some specialized versions:
 
 \subsubsection{Replacing into |ProofContext|}
 
-> replaceAboveCursor :: Dev Bwd -> ProofStateT e (Dev Bwd)
+> replaceAboveCursor :: Dev Bwd -> ProofState (Dev Bwd)
 > replaceAboveCursor dev = do
 >     pc <- get
 >     put pc{pcAboveCursor=dev}
@@ -289,7 +305,7 @@ And some specialized versions:
 
 And some specialized version:
 
-> replaceLayer :: Layer -> ProofStateT e Layer
+> replaceLayer :: Layer -> ProofState Layer
 > replaceLayer l = do
 >     (ls :< l') <- getLayers
 >     putLayers (ls :< l)
@@ -297,11 +313,9 @@ And some specialized version:
 
 \subsubsection{Replacing in |AboveCursor|}
 
-> replaceEntriesAbove :: Entries -> ProofStateT e Entries
+> replaceEntriesAbove :: Entries -> ProofState Entries
 > replaceEntriesAbove es = do
 >     dev <- getAboveCursor
 >     putAboveCursor dev{devEntries = es}
 >     return (devEntries dev)
-
-
 

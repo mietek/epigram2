@@ -25,9 +25,10 @@
 > import ProofState.Edition.ProofState
 > import ProofState.Edition.GetSet
 
-> import {-# SOURCE #-} Elaboration.Wire
+> -- import {-# SOURCE #-} Elaboration.Wire
 
 > import Evidences.Tm
+> import Evidences.ErrorHandling
 
 %endif
 
@@ -126,20 +127,20 @@ back the current entry.
 > getLeaveCurrent :: ProofState (Entry Bwd)
 > getLeaveCurrent = do
 >     currentEntry <- getCurrentEntry
->     Dev above tip root state <- getAboveCursor
+>     Dev above tip root l state <- getAboveCursor
 >     below <- getBelowCursor
->     let dev = Dev (above <>< below) tip root state
+>     let dev = Dev (above <>< below) tip root l state
 >     case currentEntry of
->         CDefinition dkind ref xn ty a  ->  return $ EDEF ref xn dkind dev ty a
->         CModule n                      ->  return $ EModule n dev
+>         CDefinition def  ->  return $ EDef def dev
+>         CModule n        ->  return $ EModule n dev
 
 Conversely, when entering a new development, the former entry needs to
 be \emph{unzipped} to form the current development. 
 
 > putEnterCurrent :: Entry Bwd -> ProofState ()
-> putEnterCurrent (EDEF ref xn dkind dev ty a) = do
+> putEnterCurrent (EDef def dev) = do
 >     l <- getLayer
->     replaceLayer $ l { currentEntry = CDefinition dkind ref xn ty a}
+>     replaceLayer $ l { currentEntry = CDefinition def}
 >     putAboveCursor dev
 > putEnterCurrent (EModule [] dev) = putAboveCursor dev
 > putEnterCurrent (EModule n dev) = do
@@ -216,12 +217,13 @@ definition. If one can be found, it enters it and goes at the bottom.
 >              oldFocus  <- getAboveCursor
 >              below  <- getBelowCursor
 >              -- Set the focus to this Definition
->              putLayer $ Layer  {  aboveEntries = aboveE
->                                ,  currentEntry = mkCurrentEntry e
->                                ,  belowEntries = reverseEntries below
->                                ,  layTip = devTip oldFocus
->                                ,  layNSupply = devNSupply oldFocus
->                                ,  laySuspendState = devSuspendState oldFocus }
+>              putLayer $ Layer  {  aboveEntries     = aboveE
+>                                ,  currentEntry     = mkCurrentEntry e
+>                                ,  belowEntries     = reverseEntries below
+>                                ,  layTip           = devTip oldFocus
+>                                ,  layNSupply       = devNSupply oldFocus
+>                                ,  layLevelCount    = devLevelCount oldFocus
+>                                ,  laySuspendState  = devSuspendState oldFocus }
 >              -- Set cursor at the bottom
 >              putAboveCursor dev
 >              putBelowCursor F0
@@ -244,9 +246,10 @@ development, with the additional burden of dealing with news.
 >             putAboveCursor $ Dev  {  devEntries       =  aboveEntries l :< e
 >                                   ,  devTip           =  layTip l
 >                                   ,  devNSupply       =  layNSupply l
+>                                   ,  devLevelCount    =  layLevelCount l
 >                                   ,  devSuspendState  =  laySuspendState l }
 >             putBelowCursor F0
->             propagateNews NormalPropagate [] (belowEntries l)
+>             -- propagateNews NormalPropagate [] (belowEntries l)
 >             -- Here, the cursor is at the bottom of the current development
 >             return ()
 >         Nothing -> do
@@ -285,7 +288,7 @@ the new development.
 >         -- Get the directly enclosing layer
 >         l <- getLayer
 >         case l of
->           (Layer (aboveE :< e) m (NF below) tip nsupply state) -> 
+>           (Layer (aboveE :< e) m (NF below) tip nsupply le state) -> 
 >             -- It has at least one entry
 >             case entryDev e of
 >             Just dev -> do
@@ -321,13 +324,13 @@ dealing with news: we accumulate them as we go, updating the
 parameteres on our way.
 
 > goDown :: ProofState ()
-> goDown = goDownAcc B0 []
+> goDown = goDownAcc B0 NONEWS
 >   where
 >     goDownAcc :: Entries -> NewsBulletin -> ProofState ()
 >     goDownAcc visitedAbove visitedNews = do
 >         -- Get the directly enclosing layer
->         l <- getLayer
->         case l of
+>         lay <- getLayer
+>         case lay of
 >           (Layer {aboveEntries = above , belowEntries=NF (ne :> belowNE)}) -> 
 >             -- What is the entry below?
 >             case ne of
@@ -335,39 +338,40 @@ parameteres on our way.
 >                 -- A news bulletin:
 >
 >                 -- Keep going down, accumulating the news
->                 replaceLayer $ l { belowEntries = NF belowNE }
+>                 replaceLayer $ lay { belowEntries = NF belowNE }
 >                 goDownAcc visitedAbove $ mergeNews visitedNews newsBulletin
 >             Right e -> 
 >                 -- A real entry:
 >                 
 >                 -- Definition or Parameter?
 >                 case entryCoerce e of
->                 Left (Dev es' tip' nsupply' ss') -> do
+>                 Left (Dev es' tip' nsupply' l' ss') -> do
 >                   -- Definition:
 >                    
 >                   -- Leave our current position
 >                   currentE <- getLeaveCurrent
 >                   -- Set focus on this definition
 >                   let aboveE = (above :< currentE) <+> visitedAbove
->                   replaceLayer $ l  {  aboveEntries  =  aboveE
+>                   replaceLayer $ lay  {  aboveEntries  =  aboveE
 >                                     ,  currentEntry  =  mkCurrentEntry e
 >                                     ,  belowEntries  =  NF belowNE }
 >                   -- Put the cursor at the bottom of the development
 >                   -- The suspend state is cleared because there are no
 >                   -- entries in the |Dev|; the state will be updated
 >                   -- during news propagation.
->                   putAboveCursor (Dev B0 tip' nsupply' SuspendNone)
+>                   putAboveCursor (Dev B0 tip' nsupply' l' SuspendNone)
 >                   putBelowCursor F0
 >                   -- Push the collected news from above into the entries
->                   propagateNews NormalPropagate visitedNews es'
+>                   -- propagateNews NormalPropagate visitedNews es'
 >                   return ()
 >                 Right param -> do
 >                   -- Parameter:
 >
 >                   -- Push the news into it
->                   (news, param') <- tellEntry visitedNews param
+>                   -- (news, param') <- tellEntry visitedNews param
+>                   let (news, param') = (visitedNews, param)
 >                   -- Keep going down
->                   replaceLayer  $ l { belowEntries = NF belowNE }
+>                   replaceLayer  $ lay { belowEntries = NF belowNE }
 >                   goDownAcc (visitedAbove :< param') news
 >           _ -> do
 >             -- There is no down

@@ -18,6 +18,8 @@
 
 %endif
 
+> {-
+
 Variable manipulation, in all its forms, ought be handled by the
 mangler. A |Mangle f x y| is a record that describes how to deal with
 parameters of type |x|, variables and binders, producing terms with
@@ -157,3 +159,5 @@ has gone under, so as to not increment them.
 >     ,  mangV = \j ies -> (|(V (if j >= n then j+1 else j) $:$) ies|)
 >     ,  mangB = \_ -> inc (n+1)
 >     }
+
+> -}

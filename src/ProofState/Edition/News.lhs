@@ -75,6 +75,7 @@ A |NewsBulletin| is a list of pairs of updated references and the news about the
 > type GirlNewsBulletin = [(DEF, News)]
 > type NewsBulletin = (GirlNewsBulletin, Bwd BoyNews)
 
+> pattern NONEWS = ([], B0)
 
 \subsubsection{Adding news}
 

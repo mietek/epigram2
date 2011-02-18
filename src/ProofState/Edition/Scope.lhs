@@ -51,6 +51,8 @@ all I know about it, sorry about that.}
 
 \pierre{This really is a hack. I hope it will disapear any time soon.}
 
+> {-
+
 > magicImplName = "impl"
 >
 > definitionsToImpl :: ProofContext -> [REF :<: INTM]
@@ -65,6 +67,7 @@ all I know about it, sorry about that.}
 >     params = foldMap param
 >     param (EPARAM r _ _ t _)  = [r :<: t]
 >     param _                 = []
+
 
 
 
@@ -92,3 +95,5 @@ parameters, provided as a spine. These are the shared parameters of a
 > applySpine :: REF -> Entries -> EXTM :=>: VAL
 > applySpine ref aus = tm :=>: evTm tm
 >   where tm = P ref $:$ paramSpine aus
+
+> -}

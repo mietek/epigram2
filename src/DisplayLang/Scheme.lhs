@@ -23,6 +23,8 @@
 \subsection{Schemes for implicit arguments}
 
 
+> {-
+
 A definition may have a |Scheme|, which allows us to handle implicit
 syntax. A |Scheme| is defined by:
 %%
@@ -121,3 +123,5 @@ and evaluating. Really, we ought to add schemes as a kind of |ErrorTok|.
 
 > errScheme :: Scheme INTM -> ErrorItem t
 > errScheme sch = errTyVal (evTm (schemeToInTm sch) :<: SET)
+
+> -}
