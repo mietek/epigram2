@@ -32,23 +32,6 @@
 > levi :: pi (n :: Nat) . Int -> Maybe (Fin {n})
 > levi {n} l = bound {n} (mkInt n - l - 1)
 
-> ty = ("F",(("S", SET) ->> \ _ -> SET)) ->> \_ -> (("S", SET) ->> \ _ -> SET)
-> tm = la "y" $ \ x -> x
-
-> ty2 = ARR (SET *** SET) (SET *** SET)
-
-> ty3 = ARR (SET *** SET) (SET *** SET)
-
-> ty4 = ARR ONE ONE
-
-> swap = L ENil "t"  (PAIR (V Fz :$ (B0 :< Tl)) (V Fz :$ (B0 :< Hd)))
-> tm4 = L ENil "t"  (PAIR (V Fz :$ (B0 :< Hd)) (V Fz :$ (B0 :< Tl)))
-
-> comp = L ENil "g" $ L ENil "f" $ L ENil "x" $ (V (Fs (Fs Fz))) :$ (B0 :<
->          A (V (Fs Fz) :$ (B0 :< A (V Fz :$ B0))))
-
-> tm5 = (ENil :/ comp) :$ (B0 :< A swap :< A swap)
-
 > etaQuote :: (EXP :>: EXP) -> VAL
 > etaQuote (t :>: e) = etaQuoten {Z} (ev t :>: e)
 

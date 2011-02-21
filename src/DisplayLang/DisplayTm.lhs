@@ -247,7 +247,7 @@ The convention for display term pattern synonyms is that they should match
 their evidence term counterparts, but with the addition of |D|s in appropriate
 places.
 
-> pattern DSET        = DC Set []             
+> pattern DSET        = DC Set []            
 > pattern DARR s t    = DPI s (DL (DK t)) 
 > pattern DPI s t     = DC Pi [s, t]
 > pattern DCON t      = DC Con [t]
@@ -256,7 +256,7 @@ places.
 > pattern DPIV x s t  = DPI s (DLAV x t)
 > pattern DLK t       = DL (DK t)
 > pattern DTY ty tm   = DType ty ::$ [A tm]
-> -- import <- CanDisplayPats
+> {-- import <- CanDisplayPats
 > -- [Feature = Anchor]
 > pattern DANCHOR s args = DAnchor s args
 > -- [/Feature = Anchor]
@@ -302,18 +302,17 @@ places.
 > pattern DINH ty      = DC (Inh ty)
 > pattern DWIT t       = DC (Wit t)
 > -- [/Feature = Prop]
-> -- [Feature = Sigma]
-> pattern DSIGMA p q = DC Sigma [p, q]
-> pattern DPAIR  p q = DC Pair [p, q]
+> -- [Feature = Sigma] -}
+> pattern DSIGMA p q = DC Sigma [p , q]
+> pattern DPAIR  p q = DC Pair [p , q]
 > pattern DUNIT      = DC One []
 > pattern DVOID      = DC Zero []
-> pattern DTimes x y = Sigma [x, (DL (DK y))]
-> pattern DTIMES x y = DC (DTimes x y)
+> pattern DTIMES x y = DC Sigma [x , DL (DK y)]
 > -- [/Feature = Sigma]
-> -- [Feature = UId]
+> {-- [Feature = UId]
 > pattern DUID    = DC UId
 > pattern DTAG s  = DTag s []
-> -- [/Feature = UId]
+> -- [/Feature = UId] -}
 
 \subsection{Sizes}
 

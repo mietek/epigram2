@@ -16,7 +16,7 @@
 
 > import DisplayLang.DisplayTm
 > import DisplayLang.Name
-> import DisplayLang.Scheme
+> -- import DisplayLang.Scheme
 > import DisplayLang.Lexer
 
 > import Evidences.Tm
@@ -60,10 +60,10 @@ The |Can| functor is fairly easy to pretty-print, the only complexity
 being with $\Pi$-types.
 
 > instance Pretty Can where
->     pretty c _ = text $ show c
+>   pretty Set = const (kword KwSet)
+>   pretty Con = const (kword KwCon)
 
 > {-
-
 > instance Pretty (Can DInTmRN) where
 >     pretty Set       = const (kword KwSet)
 >     pretty (Pi s t)  = prettyPi empty (DPI s t)
@@ -124,8 +124,9 @@ being with $\Pi$-types.
 >     pretty UId      = const (kword KwUId)
 >     pretty (Tag s)  = const (kword KwTag <> text s)
 >     -- [/Feature = UId]
-
 > -}
+
+
 
 The |prettyPi| function takes a document representing the domains
 so far, a term and the current size. It accumulates domains until a
@@ -182,33 +183,39 @@ than a $\lambda$-term is reached.
 
 > instance Pretty DInTmRN where
 >     pretty (DL s)          = pretty s
->     pretty (DC c es)       = wrapDoc (pretty c ArgSize <+> sep (map (flip pretty ArgSize) es)) AppSize
+>     pretty (DC Pi [s , t])  = prettyPi empty (DPI s t)
+>     pretty (DC One [])         = wrapDoc (kword KwSig <+> parens empty) AppSize
+>     pretty (DC Zero [])         = prettyPair DVOID
+>     pretty (DC Sigma [s , t])  = prettySigma empty (DSIGMA s t)
+>     pretty (DC Pair [a , b])   = prettyPair (DPAIR a b)
+>     pretty (DC c [])       = pretty c
+>     pretty (DC c as)  = wrapDoc
+>         (pretty c AppSize <+> hsep (map (flip pretty ArgSize) as))
+>         AppSize
 >     pretty (DN n)          = pretty n
 >     pretty (DQ x)          = const (char '?' <> text x)
 >     pretty DU              = const (kword KwUnderscore)
 
-> {-
->     -- import <- DInTmPretty
->     -- [Feature = Anchor]
->     pretty (DANCHOR s args)  = wrapDoc (text s <+> pretty args ArgSize) ArgSize
->     -- [/Feature = Anchor]
->     -- [Feature = Equality]
->     pretty (DEqBlue t u) = wrapDoc
->       (pretty t ArgSize <+> kword KwEqBlue <+> pretty u ArgSize)
->       ArgSize
->     -- [/Feature = Equality]
->     -- [Feature = IDesc]
->     pretty (DIMu (Just s   :?=: _) _)  = pretty s
->     pretty (DIMu (Nothing  :?=: (Id ii :& Id d)) i)  = wrapDoc
->         (kword KwIMu <+> pretty ii ArgSize <+> pretty d ArgSize <+> pretty i ArgSize)
->         AppSize
->     -- [/Feature = IDesc]
->     -- [Feature = UId]
->     pretty (DTAG s)     = const (kword KwTag <> text s)
->     pretty (DTag s xs)  = wrapDoc (kword KwTag <> text s
->       <+> hsep (map (flip pretty ArgSize) xs)) AppSize
->     -- [/Feature = UId]
-> -}
+<     -- import <- DInTmPretty
+<     {-- [Feature = Anchor]
+<     pretty (DANCHOR s args)  = wrapDoc (text s <+> pretty args ArgSize) ArgSize
+<     -- [/Feature = Anchor]
+<     -- [Feature = Equality]
+<     pretty (DEqBlue t u) = wrapDoc
+<       (pretty t ArgSize <+> kword KwEqBlue <+> pretty u ArgSize)
+<       ArgSize
+<     -- [/Feature = Equality]
+<     -- [Feature = IDesc]
+<     pretty (DIMu (Just s   :?=: _) _)  = pretty s
+<     pretty (DIMu (Nothing  :?=: (Id ii :& Id d)) i)  = wrapDoc
+<         (kword KwIMu <+> pretty ii ArgSize <+> pretty d ArgSize <+> pretty i ArgSize)
+<         AppSize
+<     -- [/Feature = IDesc]
+<     -- [Feature = UId]
+<     pretty (DTAG s)     = const (kword KwTag <> text s)
+<     pretty (DTag s xs)  = wrapDoc (kword KwTag <> text s
+<       <+> hsep (map (flip pretty ArgSize) xs)) AppSize
+<     -- [/Feature = UId]
 
 >     pretty indtm           = const (quotes . text . show $ indtm)
 
@@ -216,7 +223,7 @@ than a $\lambda$-term is reached.
 > instance Pretty DExTmRN where
 >     pretty (n ::$ [])   = pretty n
 >     pretty (n ::$ els)  = wrapDoc
->         (pretty n AppSize <+> hsep (map (flip pretty ArgSize) els))
+>         (pretty n AppSize <+> hsep (map (flip pretty ArgSize) (trail els)))
 >         AppSize
 
 > instance Pretty DHEAD where
@@ -237,35 +244,32 @@ than a $\lambda$-term is reached.
 >         ) ArrSize         
 > -}
 
-> {-
-> -- import <- Pretty
-> -- [Feature = Enum]
-> prettyEnumIndex :: Int -> DInTmRN -> Size -> Doc
-> prettyEnumIndex n DZE      = const (int n)
-> prettyEnumIndex n (DSU t)  = prettyEnumIndex (succ n) t
-> prettyEnumIndex n tm       = wrapDoc
->     (int n <+> kword KwPlus <+> pretty tm ArgSize)
->     AppSize
-> -- [/Feature = Enum]
+< -- import <- Pretty
+< -- [Feature = Enum]
+< prettyEnumIndex :: Int -> DInTmRN -> Size -> Doc
+< prettyEnumIndex n DZE      = const (int n)
+< prettyEnumIndex n (DSU t)  = prettyEnumIndex (succ n) t
+< prettyEnumIndex n tm       = wrapDoc
+<     (int n <+> kword KwPlus <+> pretty tm ArgSize)
+<     AppSize
+< -- [/Feature = Enum]
 
-> -- [Feature = Prop]
-> prettyAll :: Doc -> DInTmRN -> Size -> Doc
-> prettyAll bs (DALL (DPRF p) (DL (DK q))) = prettyAllMore bs
->   (pretty p (pred PiSize) <+> kword KwImp <+> pretty q PiSize)
-> prettyAll bs (DALL s (DL (x ::. t))) =
->   prettyAll (bs <> parens (text x <+> kword KwAsc <+> pretty s maxBound)) t
-> prettyAll bs (DALL s (DL (DK t))) = prettyAll bs (DALL s (DL ("_" ::. t)))
-> prettyAll bs (DALL s t) = prettyAllMore bs
->   (kword KwAll <+> pretty s minBound <+> pretty t minBound)
-> prettyAll bs tm = prettyAllMore bs (pretty tm PiSize)
->
-> prettyAllMore :: Doc -> Doc -> Size -> Doc
-> prettyAllMore bs d
->   | isEmpty bs  = wrapDoc d PiSize
->   | otherwise   = wrapDoc (bs <+> kword KwImp <+> d) PiSize
-> -- [/Feature = Prop]
-
-> -}
+< -- [Feature = Prop]
+< prettyAll :: Doc -> DInTmRN -> Size -> Doc
+< prettyAll bs (DALL (DPRF p) (DL (DK q))) = prettyAllMore bs
+<   (pretty p (pred PiSize) <+> kword KwImp <+> pretty q PiSize)
+< prettyAll bs (DALL s (DL (x ::. t))) =
+<   prettyAll (bs <> parens (text x <+> kword KwAsc <+> pretty s maxBound)) t
+< prettyAll bs (DALL s (DL (DK t))) = prettyAll bs (DALL s (DL ("_" ::. t)))
+< prettyAll bs (DALL s t) = prettyAllMore bs
+<   (kword KwAll <+> pretty s minBound <+> pretty t minBound)
+< prettyAll bs tm = prettyAllMore bs (pretty tm PiSize)
+<
+< prettyAllMore :: Doc -> Doc -> Size -> Doc
+< prettyAllMore bs d
+<   | isEmpty bs  = wrapDoc d PiSize
+<   | otherwise   = wrapDoc (bs <+> kword KwImp <+> d) PiSize
+< -- [/Feature = Prop]
 
 > -- [Feature = Sigma]
 > prettyPair :: DInTmRN -> Size -> Doc
@@ -290,7 +294,8 @@ than a $\lambda$-term is reached.
 > prettySigmaDone s t
 >   | isEmpty s  = wrapDoc t AppSize
 >   | otherwise  = wrapDoc (kword KwSig <+> parens (s <+> t)) AppSize
-> -- [/Feature = Sigma]
+> -- [/Feature = Sigma] 
+
 
 The |prettyBKind| function pretty-prints a |ParamKind| if supplied
 with a document representing its name and type.
