@@ -73,6 +73,13 @@
 >             |  SCase Can Int (Stk x)
 >   deriving (Eq, Functor, Foldable, Traversable)
 
+> instance HalfZip Stk where
+>   halfZip S0 S0 = (| S0 |)
+>   halfZip (s :<!: x) (t :<!: y) = (| halfZip s t :<!: ~(x,y) |)
+>   halfZip (SSplit s) (SSplit t) = (| SSplit (halfZip s t) |)
+>   halfZip (SCase c i s) (SCase d j t) | c == d && i == j = (| SCase ~c ~i (halfZip s t) |)
+>   halfZip _ _ = (|)
+
 > rewindStk :: Stk EXP -> [EXP] -> [EXP]
 > rewindStk S0 es                  = es
 > rewindStk (s :<!: e) es          = rewindStk s (e:es)
