@@ -45,6 +45,9 @@
 >   PAIR (exp (etaQuoten {l} (ev s :>: p $$ Hd))) 
 >        (exp (etaQuoten {l} (ev (t $$. s) :>: p $$ Tl)))
 > etaQuoten {l} (ONE :>: _) = ZERO
+> -- [Feature = Prop]
+> etaQuoten {l} (PRF _ :>: _) = CHKD
+> -- [Feature = Prf]
 > etaQuoten {l} (t :>: e) = etaQuotev {l} (t :>: ev e)
 
 > etaQuotev :: pi (n :: Nat) . (VAL :>: VAL) -> Tm {Body, Val, n}

@@ -174,23 +174,6 @@ type of the function we are implementing.
 
 > -}
 
-\paragraph{Kinds of Parameters:}
-
-A \emph{parameter} is either a $\lambda$, $\forall$ or $\Pi$
-abstraction. It scopes over all following entries and the definitions
-(if any) in the enclosing development.
-
-> data ParamKind = ParamLam | ParamAll | ParamPi
->       deriving (Show, Eq)
-
-
-The link between a type and the kind of parameter allowed is defined
-by |lambdable|:
-
-> lambdable :: VAL -> Maybe (ParamKind, TY, EXP -> TY)
-> lambdable (PI s t)         = Just (ParamLam, s, (t $$.))
-> --lambdable (PRF (ALL s p))  = Just (ParamAll, s, \v -> PRF (p $$ A v))
-> lambdable _                = Nothing
 
 
 %if False

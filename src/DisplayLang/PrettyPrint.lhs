@@ -62,6 +62,11 @@ being with $\Pi$-types.
 > instance Pretty Can where
 >   pretty Set = const (kword KwSet)
 >   pretty Con = const (kword KwCon)
+>   pretty Zero = const (kword KwAbsurd)
+>   pretty One = const (kword KwTrivial)
+>   pretty Prf = const (kword KwPrf)
+>   pretty Inh = const (kword KwInh)
+>   pretty Wit = const (kword KwWit)
 
 > {-
 > instance Pretty (Can DInTmRN) where
@@ -182,12 +187,19 @@ than a $\lambda$-term is reached.
 
 
 > instance Pretty DInTmRN where
->     pretty (DL s)          = pretty s
->     pretty (DC Pi [s , t])  = prettyPi empty (DPI s t)
->     pretty (DC One [])         = wrapDoc (kword KwSig <+> parens empty) AppSize
->     pretty (DC Zero [])         = prettyPair DVOID
->     pretty (DC Sigma [s , t])  = prettySigma empty (DSIGMA s t)
->     pretty (DC Pair [a , b])   = prettyPair (DPAIR a b)
+>     pretty (DL s)                   = pretty s
+>     pretty (DC Pi [s , t])          = prettyPi empty (DPI s t)
+>     pretty (DC One [])              = wrapDoc (kword KwSig <+> parens empty) AppSize
+>     pretty (DC Zero [])             = prettyPair DVOID
+>     pretty (DC Sigma [s , t])       = prettySigma empty (DSIGMA s t)
+>     pretty (DC Pair [a , b])        = prettyPair (DPAIR a b)
+>     -- [Feature = Prop]
+>     pretty (DC And [p, q])      = wrapDoc
+>         (pretty p (pred AndSize) <+> kword KwAnd <+> pretty q AndSize)
+>         AndSize
+>     pretty (DC Prf [DC All [p, q]]  = 
+>       wrapDoc (pretty Prf AppSize <+> prettyAll empty (DALL p q)) AppSize
+>     -- [/Feature = Prop]
 >     pretty (DC c [])       = pretty c
 >     pretty (DC c as)  = wrapDoc
 >         (pretty c AppSize <+> hsep (map (flip pretty ArgSize) as))
@@ -254,22 +266,22 @@ than a $\lambda$-term is reached.
 <     AppSize
 < -- [/Feature = Enum]
 
-< -- [Feature = Prop]
-< prettyAll :: Doc -> DInTmRN -> Size -> Doc
-< prettyAll bs (DALL (DPRF p) (DL (DK q))) = prettyAllMore bs
-<   (pretty p (pred PiSize) <+> kword KwImp <+> pretty q PiSize)
-< prettyAll bs (DALL s (DL (x ::. t))) =
-<   prettyAll (bs <> parens (text x <+> kword KwAsc <+> pretty s maxBound)) t
-< prettyAll bs (DALL s (DL (DK t))) = prettyAll bs (DALL s (DL ("_" ::. t)))
-< prettyAll bs (DALL s t) = prettyAllMore bs
-<   (kword KwAll <+> pretty s minBound <+> pretty t minBound)
-< prettyAll bs tm = prettyAllMore bs (pretty tm PiSize)
-<
-< prettyAllMore :: Doc -> Doc -> Size -> Doc
-< prettyAllMore bs d
-<   | isEmpty bs  = wrapDoc d PiSize
-<   | otherwise   = wrapDoc (bs <+> kword KwImp <+> d) PiSize
-< -- [/Feature = Prop]
+> -- [Feature = Prop]
+> prettyAll :: Doc -> DInTmRN -> Size -> Doc
+> prettyAll bs (DALL (DPRF p) (DL (DK q))) = prettyAllMore bs
+>   (pretty p (pred PiSize) <+> kword KwImp <+> pretty q PiSize)
+> prettyAll bs (DALL s (DL (x ::. t))) =
+>   prettyAll (bs <> parens (text x <+> kword KwAsc <+> pretty s maxBound)) t
+> prettyAll bs (DALL s (DL (DK t))) = prettyAll bs (DALL s (DL ("_" ::. t)))
+> prettyAll bs (DALL s t) = prettyAllMore bs
+>   (kword KwAll <+> pretty s minBound <+> pretty t minBound)
+> prettyAll bs tm = prettyAllMore bs (pretty tm PiSize)
+>
+> prettyAllMore :: Doc -> Doc -> Size -> Doc
+> prettyAllMore bs d
+>   | isEmpty bs  = wrapDoc d PiSize
+>   | otherwise   = wrapDoc (bs <+> kword KwImp <+> d) PiSize
+> -- [/Feature = Prop]
 
 > -- [Feature = Sigma]
 > prettyPair :: DInTmRN -> Size -> Doc

@@ -31,8 +31,8 @@
 >   (k, s, t) -> DLAV n $ distill (ev (t (P (l, n, s) :$ B0)) 
 >                                   :>: ((g <:< (P (l, n, s) :$ B0)) // b)) (l + 1)
 > distill (ty :>: LK b) l = case fromJust $ lambdable ty of
->   (_, _, t) -> DLK $ 
->     distill (ev (t (error "Vac L with non vac Pi in distill")) :>: ev b) l
+>   (_, s, t) -> DLK $ 
+>     distill (ev (t (P (l,"s",s) :$ B0)) :>: ev b) (l+1)
 > distill (ty :>: h@(P (l', n, s)) :$ as) l = 
 >   DN $ DP [(n,Abs l')] ::$ 
 >     (distillSpine (ev s :>: (h :$ B0, trail as)) l)
@@ -52,8 +52,8 @@
 > distillSpine (ty :>: (h :$ az, A a : as)) l = case fromJust $ lambdable ty of 
 >   (k, s, t) ->     A (distill (ev s :>: (ev a)) l) 
 >                 :  distillSpine (ev (t a) :>: (h :$ (az :< A a), as)) l
-> distillSpine (SIGMA s t :>: (h :$ az , Hd : as)) l = 
->   Hd : distillSpine (ev s :>: (h :$ (az :< Hd) , as)) l
-> distillSpine (SIGMA s t :>: (h :$ az , Tl : as)) l = 
->   Tl : distillSpine (ev (t $$ A (h :$ (az :< Hd))) :>: (h :$ (az :< Tl) , as)) l
+> distillSpine (ty :>: (h :$ az , Hd : as)) l = case fromJust $ projable ty of
+>   (s, t) -> Hd : distillSpine (ev s :>: (h :$ (az :< Hd) , as)) l
+> distillSpine (ty :>: (h :$ az , Tl : as)) l = case fromJust $ projable ty of
+>   (s, t) -> Tl : distillSpine (ev (t (h :$ (az :< Hd))) :>: (h :$ (az :< Tl) , as)) l
 > distillSpine _ _  = error "Deep!"

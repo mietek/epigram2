@@ -48,13 +48,13 @@ here.
 >     _Ts <- canTy ((_C, as) :>: c)
 >     chks l (_Ts :>: (g, es))
 >   _ -> (|)
-> chk l (_T :>: (g, L g' x b)) = case ev _T of
->   PI _S _T -> chk (l + 1) (_T $$. x' :>: (g <+< g' <:< x', b)) where
+> chk l (_T :>: (g, L g' x b)) = case lambdable (ev _T) of
+>   Just (_, _S, _T) -> chk (l + 1) (_T x' :>: (g <+< g' <:< x', b)) where
 >     x' = P (l, x, _S) :$ B0
 >   _ -> (|)
-> chk l (_T :>: (g, LK b)) = case ev _T of
->   PI _S _T -> chk (l + 1) (_T $$. x' :>: (g, b)) where
->     x' = P (l, "s", _S) :$ B0
+> chk l (_T :>: (g, LK b)) = case lambdable (ev _T) of
+>   Just (_, _S, _T) -> chk (l + 1) (_T x' :>: (g, b)) where
+>     x' =  P (l, "s", _S) :$ B0
 
 > chk l (_T :>: (g, t@(V _ :$ _))) = chk l (_T :>: (ENil, eval {Val} g t))
 
@@ -88,11 +88,16 @@ here.
 >          (Env {Z, n}, [Elim (Tm {Body, s, n})]) -> Maybe TY
 > spInf l (_ :<: _T) (g, [])     = pure _T
 > spInf l (e :<: _T) (g, a:as) = case (ev _T, a) of
->     (PI _S _T, A a) -> do
+>     (_T, A a) -> case lambdable _T of 
+>       Just (_, _S, _T) -> do
 >         a <- chev l (_S :>: (g, a))
->         spInf l (e $$. a :<: _T $$. a) (g, as)
->     (SIGMA _S _T, Hd) -> spInf l (e $$ Hd :<: _S) (g, as)
->     (SIGMA _S _T, Tl) -> spInf l (e $$ Tl :<: _T $$. (e $$ Hd)) (g, as)
+>         spInf l (e $$. a :<: _T a) (g, as)
+>       Nothing -> (|)
+>     (_T, Hd) -> case projable _T of
+>       Just (_S, _T)  -> spInf l (e $$ Hd :<: _S) (g, as)
+>     (_T, Tl) -> case projable _T of
+>       Just (_S, _T)  -> spInf l (e $$ Tl :<: _T (e $$ Hd)) (g, as)
+>     _         -> (|)
 
 
 

@@ -160,19 +160,37 @@
 >   Sigma  :: Can                            -- products 
 >   Pair   :: Can                            -- pairs
 >   Con    :: Can                            -- packing
->   One    :: Can
->   Zero   :: Can
+>   One    :: Can                            -- things that have a certain one-ness
+>   Zero   :: Can                            -- things that have a certain zero-ness
+>   -- [Feature = Prop]
+>   Prop   :: Can                            -- set of props
+>   Prf    :: Can                            -- set of proofs of a prop
+>   Inh    :: Can                            -- set inhabitation prop
+>   Wit    :: Can                            -- witness to inhabitation 
+>   And    :: Can                            -- prop conj
+>   Chkd   :: Can                            -- content of a proof after type checking
+>   -- [/Feature = Prop]
 >   deriving (Eq, Show)
 
-> pattern SET        = Set :- []             -- set of sets
-> pattern ARR s t    = Pi :- [s, (LK t)]     -- simple arrow
-> pattern PI s t     = Pi :- [s, t]          -- dependent functions
-> pattern TIMES s t  = Sigma :- [s, (LK t)]  -- simple arrow
-> pattern SIGMA s t  = Sigma :- [s, t]       -- dependent product
-> pattern PAIR a b   = Pair :- [a, b]        -- pairing
-> pattern CON t      = Con :- [t]            -- Container (packing "stuff")
+> pattern SET        = Set :- []             
+> pattern ARR s t    = Pi :- [s, (LK t)]     
+> pattern PI s t     = Pi :- [s, t]          
+> pattern TIMES s t  = Sigma :- [s, (LK t)]  
+> pattern SIGMA s t  = Sigma :- [s, t]      
+> pattern PAIR a b   = Pair :- [a, b]      
+> pattern CON t      = Con :- [t]         
 > pattern ONE        = One :- []
 > pattern ZERO       = Zero :- []
+>   -- [Feature = Prop]
+> pattern PROP       = Prop :- []
+> pattern PRF _P     = Prf :- [_P]
+> pattern INH _T     = Prop :- [_T]
+> pattern WIT t      = Prop :- [t]
+> pattern AND _P _Q  = Prop :- [_P,_Q]
+> pattern All        = PI                  -- Possibly useful alias
+> pattern ALL _S _P  = All :- [_S, _P]
+> pattern CHKD       = Chkd :- []
+>   -- [/Feature = Prop]
 
 > eval :: forall m n p s' . pi (s :: Status) . 
 >           Env {Z, n} -> Tm {p, s', n} -> Tm {Body, s, Z}
@@ -248,7 +266,8 @@
 
 > (***) = TIMES
 > (-->) = ARR
-> infixr 5 -->, ***
+> (==>) = ARR . PRF
+> infixr 5 ==>, -->, ***
 
 
 We have special pairs for types going into and coming out of
@@ -291,7 +310,32 @@ with the associated projections:
 Intuitively, |t :=>: v| can be read as ``the term |t| reduces to the
 value |v|''.
 
+\paragraph{Kinds of Parameters:}
 
+A \emph{parameter} is either a $\lambda$, $\forall$ or $\Pi$
+abstraction. It scopes over all following entries and the definitions
+(if any) in the enclosing development.
+
+> data ParamKind = ParamLam | ParamAll | ParamPi
+>       deriving (Show, Eq)
+
+
+The link between a type and the kind of parameter allowed is defined
+by |lambdable|:
+
+> lambdable :: VAL -> Maybe (ParamKind, TY, Tm {Body, s, Z} -> TY)
+> lambdable (PI s t)         = Just (ParamLam, s, (t $$.))
+> lambdable (PRF _P) = case ev _P of
+>   (PI s p)  -> Just (ParamAll, s, \v -> PRF (p $$ A v))
+>   _         -> (|)
+> lambdable _                = Nothing
+
+> projable :: VAL -> Maybe (TY, Tm {Body, s, Z} -> TY)
+> projable (SIGMA s t)         = Just (s, (t $$.))
+> projable (PRF _P) = case ev _P of
+>   (AND _P _Q)  -> Just (PRF _P, \_ -> PRF _Q)
+>   _            -> (|)
+> projable _                = Nothing
 
 
 > bod :: forall s n. pi (p :: Part). Tm {p, s, n} -> Tm {Body, s, n}
