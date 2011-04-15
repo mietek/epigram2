@@ -5,13 +5,15 @@
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE GADTs, KindSignatures, TypeOperators, TypeFamilies, FlexibleContexts,
 >     MultiParamTypeClasses, UndecidableInstances, ScopedTypeVariables,
->     RankNTypes, FlexibleInstances, OverlappingInstances #-}
+>     RankNTypes, FlexibleInstances, OverlappingInstances, TypeFamilies #-}
 
 > module Kit.NatFinVec where
 
 > import Control.Applicative
 > import Data.Foldable
 > import Data.Traversable
+
+> import Kit.BwdFwd
 
 > import ShePrelude
 
@@ -49,6 +51,11 @@
 > (!>!) :: Vec {n} x -> Fin {n} -> x
 > (x :>>: xs) !>! Fz    = x
 > (x :>>: xs) !>! Fs i  = xs !>! i
+
+> (!<!) :: Eq x => x -> Vec {n} x -> Maybe (Fin {n})
+> x !<! (x' :>>: xs) | x == x'  = (| Fz |)
+> x !<! (_ :>>: xs)             = (| Fs (x !<! xs) |)
+> _ !<! _                       = (|)
 
 > instance Show x => Show (Vec {n} x) where
 >   show V0          = "V0"
@@ -106,6 +113,17 @@
 > mkInt {Z} = 0
 > mkInt {S n} = 1 + mkInt n
 
+> emb :: Fin {n} -> Fin {S n}
+> emb Fz = Fz
+> emb (Fs i) = Fs (emb i)
+
+> fmax' :: pi (n :: Nat). Fin {S n}
+> fmax' {Z} = Fz
+> fmax' {S n} = Fs (fmax' {n}) 
+
+> fmax :: {: n :: Nat :} => Fin {S n}
+> fmax = fmax' {: n :: Nat :}
+
 > vUpTo :: pi (n :: Nat) . Vec {n} Int
 > vUpTo {n} = help {n} 0
 >   where
@@ -115,3 +133,37 @@
 
 > vUpTo' :: {:n :: Nat:} => Vec {n} Int
 > vUpTo' = vUpTo {:n :: Nat:}
+
+> vUpToF :: pi (n :: Nat) . Vec {n} (Fin {n})
+> vUpToF {n} = help {n} 
+>   where
+>     help :: pi (n :: Nat).  Vec {n} (Fin {n})
+>     help {Z} = V0
+>     help {S n} = Fz :>>: fmap Fs (help {n})
+
+> vUpToF' :: {:n :: Nat:} => Vec {n} (Fin {n}) 
+> vUpToF' = vUpToF {:n :: Nat:}
+
+> vDownFromF :: pi (n :: Nat) . Vec {n} (Fin {n})
+> vDownFromF {n} = help {n} 
+>   where
+>     help :: pi (n :: Nat).  Vec {n} (Fin {n})
+>     help {Z} = V0
+>     help {S n} = fmax' {n} :>>: fmap emb (help {n})
+
+> vDownFromF' :: {:n :: Nat:} => Vec {n} (Fin {n}) 
+> vDownFromF' = vDownFromF {:n :: Nat:}
+
+> listVec :: [a] -> (pi (n :: Nat). Vec {n} a -> t) -> t
+> listVec [] f = f {Z} V0
+> listVec (x : xs) f = listVec xs (\ n ys -> f {S n} (x :>>: ys))
+
+> fwdVec :: Fwd a -> (pi (n :: Nat). Vec {n} a -> t) -> t
+> fwdVec F0 f = f {Z} V0
+> fwdVec (x :> xs) f = fwdVec xs (\ n ys -> f {S n} (x :>>: ys))
+
+> bwdVec :: Bwd a -> (pi (n :: Nat). Vec {n} a -> t) -> t
+> bwdVec B0 f = f {Z} V0
+> bwdVec (xs :< x) f = bwdVec xs (\ n ys -> f {S n} (x :>>: ys))
+
+

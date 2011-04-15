@@ -79,6 +79,11 @@ And some specialized versions:
 >     dev <- getAboveCursor
 >     return $ devNSupply dev
 >
+> getDevLev :: ProofState Int
+> getDevLev = do
+>     dev <- getAboveCursor
+>     return $ devLevelCount dev
+>
 > getDevTip :: ProofState Tip
 > getDevTip = do
 >     dev <- getAboveCursor
@@ -162,12 +167,10 @@ And some specialized versions:
 > getGlobalScope = gets globalScope
 >
 
-> {-
-> getParamsInScope :: ProofState [REF]
+> getParamsInScope :: ProofState [(ParamKind, String, TY)]
 > getParamsInScope = do  
 >     inScope <- getInScope
->     return $ paramREFs inScope
-> -}
+>     return $ params inScope
 
 \subsection{Putters}
 

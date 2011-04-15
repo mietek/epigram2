@@ -58,7 +58,7 @@ two |News| takes the less nice.
 
 
 > data BoyNews = BadBoyNews TY | GoodBoyNews TY | NoBoyNews
->     deriving (Eq, Show)
+>     deriving (Show)
 
 > instance Monoid BoyNews where
 >     mempty                 = NoBoyNews
@@ -178,5 +178,5 @@ references remain as they are, as in |getLatest|.
 >     traverseTm (P lst) = (| (| P (getBoyNews bull lst) |) :$ ~B0 |)
 >     traverseTm (g :/ t) = (| (traverseEnv g) :/ (traverseTm t) |)
 >
->     traverseEnv :: Env {n, m} -> Writer News (Env {n, m})
+>     traverseEnv :: Env {n} {m} -> Writer News (Env {n} {m})
 >     traverseEnv = undefined

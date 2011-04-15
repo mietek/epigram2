@@ -37,12 +37,12 @@
 It's just possible that variable-management should be baked into a monad,
 here.
 
-> chev :: Int -> TY :>: (Env {Z, n}, Tm {Body, s, n}) -> Maybe VAL
+> chev :: Int -> TY :>: (Env {Z} {n}, Tm {Body, s, n}) -> Maybe VAL
 > chev l prob@(_ :>: (g, t)) = do
 >   chk l prob
 >   return (ev (g :/ t))
 
-> chk :: Int -> TY :>: (Env {Z, n}, Tm {Body, s, n}) -> Maybe ()
+> chk :: Int -> TY :>: (Env {Z} {n}, Tm {Body, s, n}) -> Maybe ()
 > chk l (_T :>: (g, c :- es)) = case ev _T of
 >   _C :- as -> do
 >     _Ts <- canTy ((_C, as) :>: c)
@@ -67,7 +67,7 @@ here.
 > chk l (_T :>: (g, g' :/ t)) = chk l (_T :>: (g <+< g', toBody t))
 
 
-> chks :: Int -> VAL :>: (Env {Z, n}, [Tm {Body, s, n}]) -> Maybe ()
+> chks :: Int -> VAL :>: (Env {Z} {n}, [Tm {Body, s, n}]) -> Maybe ()
 > chks l (ONE           :>:  (g, []))     = (|()|)
 > chks l (SIGMA _S _T   :>:  (g, s : t))  = do
 >   s' <- chev l (_S :>: (g, s))
@@ -77,7 +77,7 @@ here.
 
 
 
-> headTySpine :: Int -> (Env {Z, n}, Tm {Head, s, n}) -> Maybe (EXP :<: TY, [EXP])
+> headTySpine :: Int -> (Env {Z} {n}, Tm {Head, s, n}) -> Maybe (EXP :<: TY, [EXP])
 > headTySpine l (g, D d es _)  = pure (D d S0 (defOp d) :<: defTy d, rewindStk es [])
 > headTySpine l (g, P (i, s, ty))       = pure (P (i, s, ty) :$ B0 :<: ty, [])
 > headTySpine _ _                       = (|)
@@ -85,7 +85,7 @@ here.
 
 
 > spInf :: Int -> (EXP :<: TY) -> 
->          (Env {Z, n}, [Elim (Tm {Body, s, n})]) -> Maybe TY
+>          (Env {Z} {n}, [Elim (Tm {Body, s, n})]) -> Maybe TY
 > spInf l (_ :<: _T) (g, [])     = pure _T
 > spInf l (e :<: _T) (g, a:as) = case (ev _T, a) of
 >     (_T, A a) -> case lambdable _T of 

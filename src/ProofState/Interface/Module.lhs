@@ -8,7 +8,12 @@
 
 > module ProofState.Interface.Module where
 
+> import ShePrelude
+
+> import Data.Foldable
+
 > import Kit.BwdFwd
+> import Kit.NatFinVec
 > import Kit.MissingLibrary
 
 > import ProofState.Structure.Developments
@@ -19,7 +24,8 @@
 > import ProofState.Edition.GetSet
 > import ProofState.Edition.Navigation
 
-> import ProofState.Interface.Lifting
+< import ProofState.Interface.Lifting
+
 > import ProofState.Interface.ProofKit
 
 > import Evidences.Tm
@@ -38,15 +44,17 @@ level. For making modules, we use |makeModule|.
 > makeModule :: String -> ProofState Name
 > makeModule s = do
 >     nsupply <- getDevNSupply
+>     lev <- getDevLev
 >     let n = mkName nsupply s
 >     -- Insert a new entry above, the empty module |s|
 >     let dev = Dev {  devEntries       =  B0
 >                   ,  devTip           =  Module 
 >                   ,  devNSupply       =  freshNSpace nsupply s
->                   ,  devSuspendState  =  SuspendNone }
+>                   ,  devSuspendState  =  SuspendNone 
+>                   ,  devLevelCount    =  lev }
 >     putEntryAbove $ EModule  {  name   =  n 
 >                              ,  dev    =  dev}
->     putDevNSupply $ freshName nsupply
+>     putDevNSupply $ freshen nsupply
 >     return n
 
 
@@ -58,22 +66,32 @@ definition of a certain type (a goal). Turning a module into a goal is
 implemented by |moduleToGoal|. An instance of this pattern appears in
 Section~\ref{subsec:Tactics.Elimination.analysis}.
 
-> moduleToGoal :: INTM -> ProofState (EXTM :=>: VAL)
+
+> moduleToGoal :: EXP -> ProofState VAL
 > moduleToGoal ty = do
->     (_ :=>: tyv) <- checkHere (SET :>: ty)
+>     chkPS (SET :>: ty)
 >     CModule n <- getCurrentEntry
 >     inScope <- getInScope
->     let  ty' = liftType inScope ty
->          ref = n := HOLE Waiting :<: evTm ty'
->     putCurrentEntry $ CDefinition LETG ref (last n) ty' Nothing
->     putDevTip $ Unknown (ty :=>: tyv)
->     return $ applySpine ref inScope
+>     let  binScope = boys inScope
+>          ty' = (bwdVec (fmap (\(_, s, t) -> (s, t)) binScope) (\ n ys -> piLift n ys)) ty
+>          op = eat (Data.Foldable.foldr (\_ -> (1+)) 0 binScope) Hole 
+>          def = DEF n ty' op
+>     putCurrentEntry $ CDefinition def 
+>     putDevTip $ Unknown (ENil // ty)
+>     return $ D def S0 op $$$ fmap (\x -> A (P x :$ B0)) binScope 
+>  where 
+>    boys :: Entries -> Bwd (Int, String, TY)
+>    boys B0 = B0
+>    boys (es :< EParam _ s t l) =  boys es :< (l, s, t)
+>    boys (es :< _) =  boys es 
 
 
 The last usage of modules is to mess around: introducing things in the
 proof context to later, in one go, remove it all. One need to be
 extremely careful with the removed objects: the risk of introducing
 dangling references is high.
+
+> {-
 
 > draftModule :: String -> ProofState t -> ProofState t
 > draftModule name draftyStuff = do
@@ -86,3 +104,5 @@ dangling references is high.
 >         Just (EModule _ _) -> return t
 >         _ -> throwError' . err $ "draftModule: drafty " ++ name
 >                                  ++ " did not end up in the right place!"
+
+> -}

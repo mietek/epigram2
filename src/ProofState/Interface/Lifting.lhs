@@ -22,23 +22,12 @@
 
 %endif
 
-\pierre{I think that, after some clean-up, the following could well be
-moved in @ProofState.Edition.Scope@}
 
-In the following, we define 4 useful functions manipulating terms in a
-context of entries. These functions provide the basic toolkit for
-operations like lambda-lifting, or the manipulation of the proof
-state. Therefore, this section has to be read with the tired eye of
-the implementer.
+
 
 
 \subsection{Discharging entries in a term}
 
-
-The ``discharge into'' operator |(-||)| takes a list of entries and a
-term, and changes the term so that parameters in the list of entries
-are represented by de Brujin indices. It makes key use of the |(-||||)|
-mangler.
 
 > (-|) :: Entries -> INTM -> INTM
 > es -| tm = (bwdList $ paramREFs es) -|| tm

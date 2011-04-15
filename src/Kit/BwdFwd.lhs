@@ -37,6 +37,10 @@ Backward and forward lists, applicative with zipping.
 >   halfZip B0 B0 = (| B0 |)
 >   halfZip (as :< a) (bs :< b) = (| halfZip as bs :< ~(a,b) |)
 
+> bwdZipWith :: (a -> b -> c) -> Bwd a -> Bwd b -> Bwd c
+> bwdZipWith f (as :< a) (bs :< b) = bwdZipWith f as bs :< f a b
+> bwdZipWith _ _ _ = B0
+
 > (<><) :: Bwd x -> Fwd x -> Bwd x
 > infixl 5 <><
 > xs <>< F0 = xs

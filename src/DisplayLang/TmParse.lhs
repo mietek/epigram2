@@ -185,6 +185,8 @@ the parser.
 >     (ArgSize, (|DLABEL (%keyword KwLabel%) (sizedDInTm AppSize) (%keyword KwAsc%) (sizedDInTm ArgSize) (%keyword KwLabelEnd%)|)) :
 >     (ArgSize, (|DLRET (%keyword KwRet%) (sizedDInTm ArgSize)|)) :
 >     -- [/Feature = Labelled]
+>     -}
+
 >     -- [Feature = Prop]
 >     (ArgSize, (|DPROP     (%keyword KwProp%)|)) :
 >     (ArgSize, (|DABSURD   (%keyword KwAbsurd%)|)) :
@@ -194,7 +196,6 @@ the parser.
 >     (AndSize, (|DWIT      (%keyword KwWit%) (sizedDInTm ArgSize)|)) :
 >     (AndSize, (|DALL      (%keyword KwAll%) (sizedDInTm ArgSize) (sizedDInTm ArgSize)|)) :
 >     -- [/Feature = Prop]
-> -}
 
 >     -- [Feature = Sigma]
 >     (ArgSize, (|id (bracket Square tuple)|)) :
@@ -234,11 +235,12 @@ the parser.
 >     (EqSize, \ t -> (| DEqBlue  (pFilter isEx (pure t)) (%keyword KwEqBlue%)
 >                                 (pFilter isEx (sizedDInTm (pred EqSize))) |)) :
 >     -- [/Feature = Equality]
+> -}
+
 >     -- [Feature = Prop]
 >     (AndSize, \ s -> (| (DAND s) (%keyword KwAnd%) (sizedDInTm AndSize)  |)) :
 >     (ArrSize, \ s -> (| (DIMP s) (%keyword KwImp%) (sizedDInTm PiSize)   |)) :
 >     -- [/Feature = Prop]
-> -}
 
 >     (ArrSize, \ s -> (| (DARR s) (%keyword KwArr%) (sizedDInTm PiSize) |)) :
 >     []
@@ -306,13 +308,9 @@ the parser.
 > mkDPIV   x    s t = DPIV x s t
 
 
-> {-
-
 > mkDALLV :: String -> DInTmRN -> DInTmRN -> DInTmRN
 > mkDALLV  "_"  s p = DALL s (DL (DK p))
 > mkDALLV  x    s p = DALLV x s p
-
-> -}
 
 \subsection{Parsing schemes}
 

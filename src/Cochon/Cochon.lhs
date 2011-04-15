@@ -26,6 +26,7 @@
 > import DisplayLang.TmParse
 > import DisplayLang.DisplayTm
 > import DisplayLang.PrettyPrint
+> import DisplayLang.DumbTrans
 
 > import ProofState.Edition.ProofContext
 > import ProofState.Edition.ProofState
@@ -39,9 +40,10 @@
 > import ProofState.Interface.NameResolution
 
 
+> import ProofState.Interface.Module
+
 > {-
 
-> import ProofState.Interface.Module
 > import ProofState.Interface.Solving
 > import ProofState.Interface.Parameter
 
@@ -281,6 +283,8 @@ The master list of Cochon tactics.
 
 Construction tactics:
 
+>     unaryInCT "parse" (\tm -> (| show (dumbPS tm) |)) "" : 
+
 > {-
 
 >     nullaryCT "apply" (apply >> return "Applied.")
@@ -335,8 +339,12 @@ Construction tactics:
 >        ("make <x> : <type> - creates a new goal of the given type.\n"
 >            ++ "make <x> := <term> - adds a definition to the context.")
 
->   : unaryStringCT "module" (\s -> makeModule s >> goIn >> return "Made module.")
->       "module <x> - creates a module with name <x>."
+> -}
+
+>     unaryStringCT "module" (\s -> makeModule s >> goIn >> return "Made module.")
+>       "module <x> - creates a module with name <x>." :
+
+> {-
 
 >   : simpleCT
 >         "pi"
@@ -353,31 +361,34 @@ Construction tactics:
 >   : nullaryCT "ungawa" (ungawa >> return "Ungawa!")
 >       "ungawa - tries to solve the current goal in a stupid way."
 
+> -}
 
 Navigation tactics:
 
->   : nullaryCT "in" (goIn >> return "Going in...")
->       "in - moves to the bottom-most development within the current one."
->   : nullaryCT "out" (goOutBelow >> return "Going out...")
->       "out - moves to the development containing the current one."
->   : nullaryCT "up" (goUp >> return "Going up...")
->       "up - moves to the development above the current one."
->   : nullaryCT "down" (goDown >> return "Going down...")
->       "down - moves to the development below the current one."
->   : nullaryCT "top" (many goUp >> return "Going to top...")
->       "top - moves to the top-most development at the current level."
->   : nullaryCT "bottom" (many goDown >> return "Going to bottom...")
->       "bottom - moves to the bottom-most development at the current level."
->   : nullaryCT "previous" (prevGoal >> return "Going to previous goal...")
->       "previous - searches for the previous goal in the proof state."
->   : nullaryCT "root" (many goOut >> return "Going to root...")
->       "root - moves to the root of the proof state."
->   : nullaryCT "next" ( nextGoal >> return "Going to next goal...")
->       "next - searches for the next goal in the proof state."
->   : nullaryCT "first"  (some prevGoal >> return "Going to first goal...")
->       "first - searches for the first goal in the proof state."
->   : nullaryCT "last"   (some nextGoal >> return "Going to last goal...")
->       "last - searches for the last goal in the proof state."
+>     nullaryCT "in" (goIn >> return "Going in...")
+>       "in - moves to the bottom-most development within the current one." :
+>     nullaryCT "out" (goOutBelow >> return "Going out...")
+>       "out - moves to the development containing the current one." :
+>     nullaryCT "up" (goUp >> return "Going up...")
+>       "up - moves to the development above the current one." :
+>     nullaryCT "down" (goDown >> return "Going down...")
+>       "down - moves to the development below the current one." :
+>     nullaryCT "top" (many goUp >> return "Going to top...")
+>       "top - moves to the top-most development at the current level." :
+>     nullaryCT "bottom" (many goDown >> return "Going to bottom...")
+>       "bottom - moves to the bottom-most development at the current level." :
+>     nullaryCT "previous" (prevGoal >> return "Going to previous goal...")
+>       "previous - searches for the previous goal in the proof state." :
+>     nullaryCT "root" (many goOut >> return "Going to root...")
+>       "root - moves to the root of the proof state." :
+>     nullaryCT "next" ( nextGoal >> return "Going to next goal...")
+>       "next - searches for the next goal in the proof state." :
+>     nullaryCT "first"  (some prevGoal >> return "Going to first goal...")
+>       "first - searches for the first goal in the proof state." :
+>     nullaryCT "last"   (some nextGoal >> return "Going to last goal...")
+>       "last - searches for the last goal in the proof state." :
+
+> {-
 
 >   : unaryNameCT "jump" (\ x -> do
 >       (n := _) <- resolveDiscard x

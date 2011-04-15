@@ -10,6 +10,7 @@
 > module ProofState.Interface.ProofKit where
 
 > import Control.Monad.Error
+> import Control.Applicative
 
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
@@ -28,6 +29,12 @@
 
 %endif
 
+> chkPS :: (TY :>: EXP) -> ProofState ()
+> chkPS (ty :>: e) = do
+>  lev <- getDevLev
+>  case chk lev (ty :>: (ENil, e)) of
+>    Just _ -> (| () |)
+>    Nothing -> fail "Doesn't type check!"
 
 > {-
 

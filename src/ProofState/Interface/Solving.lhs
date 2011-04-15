@@ -44,6 +44,8 @@ if it type-checks. At the end of the operation, the cursor has not
 moved: we are still under the goal, which has now been |Defined|. Note
 that entries below the cursor are (lazily) notified of the good news.
 
+> {-
+
 > give :: INTM -> ProofState (EXTM :=>: VAL)
 > give tm = do
 >     tip <- getDevTip
@@ -153,3 +155,5 @@ development, so the entries in that development are not in scope.
 >     cursorTop
 >     cursorDown
 >     goIn
+
+> -}

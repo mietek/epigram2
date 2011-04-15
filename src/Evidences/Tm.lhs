@@ -44,25 +44,30 @@
 >   deriving (SheSingleton, Show)
 
 > data Tm :: {Part, Status, Nat} -> * where
->   L     :: Env {n, m} -> String -> Tm {Body, Exp, S m}    -> Tm {Body, s, n}
+>   L     :: Env {n} {m} -> String -> Tm {Body, Exp, S m}   -> Tm {Body, s, n}
 >   LK    :: Tm {Body, Exp, n}                              -> Tm {Body, s, n}
 >   (:-)  :: Can -> [Tm {Body, Exp, n}]                     -> Tm {Body, s, n}
 >   (:$)  :: Tm {Head, s, n} -> Bwd (Elim (Tm {Body, Exp, n}))
 >                                                           -> Tm {Body, s, n}
->   D     :: {: p :: Part :} => DEF -> Stk EXP -> Operator {p, s}              -> Tm {p, s,  n}
+>   D     :: {: p :: Part :} => DEF -> Stk EXP -> Operator {p, s}    
+>                                                           -> Tm {p, s,  n}
 >
 >   V     :: Fin {n}      {- dB i -}                        -> Tm {Head, s,  n}
 >   P     :: (Int, String, TY)    {- dB l -}                -> Tm {Head, s,  n}
 >
->   (:/)  :: {: p :: Part :} => Env {n, m} -> Tm {p, s, m}  -> Tm {p', Exp, n}
+>   (:/)  :: {: p :: Part :} => Env {n} {m} -> Tm {p, s, m}  -> Tm {p', Exp, n}
 
 > data Operator :: {Part, Status} -> * where
 >   Eat    :: Operator {p, s} -> Operator {Body, s'}
 >   Emit   :: Tm {Body, Exp, Z} -> Operator {Body, Exp}
->   Hole   :: Operator {Head, s}
+>   Hole   :: Operator {p, s}
 >   Case   :: [(Can , Operator {Body, s})] -> Operator {Body, s'}
 >   StuckCase  :: [(Can, Operator {Body, s})] -> Operator {Head, s'}
 >   Split  :: Operator {p, s} -> Operator {Body, s'}
+
+> eat :: Int -> Operator {Body, s} -> Operator {Body, s}
+> eat 0 o = o
+> eat n o = Eat (eat (n-1) o) 
 
 > instance Show (Operator {p, s}) where
 >   show o = "oooo"
@@ -90,7 +95,7 @@
 
 -- Why not make the first component an array?
 
-> type Env nm = (Maybe [EXP], IEnv nm)
+> type Env n m = (Maybe [Tm {Body, Exp, n}], IEnv {n, m})
 
 > data IEnv :: {Nat, Nat} -> * where
 >  INix   :: IEnv {n, Z}
@@ -124,10 +129,10 @@
 > (ez :<<: e) !.! Fz = exp e 
 > (ez :<<: e) !.! Fs i = ez !.! i
 
-> (<:<) :: Env {m, n} -> EXP -> Env {m, S n}
+> (<:<) :: Env {m} {n} -> EXP -> Env {m} {S n}
 > (gl, gi) <:< e = (gl, gi :<<: e)
 
-> (<+<) :: Env {m, n} -> Env {n, o} -> Env {m, o}
+> (<+<) :: Env {m} {n} -> Env {n} {o} -> Env {m} {o}
 > (gl, gi) <+< (gl', gi') = (gln, gi <<< gi')
 >   where 
 >    (<<<) :: forall m n o. IEnv {m, n} -> IEnv {n, o} -> IEnv {m, o}
@@ -135,11 +140,12 @@
 >    g <<< INil = g
 >    g <<< (g' :<<: e) = (g <<< g') :<<: e
 >    gln = case (gl, gl') of
->     (_, Just y) -> Just y
+>     (_, Just y) -> Just (map ((gl, gi) :/) y)
 >     (Just x, _) -> Just x
 >     _           -> Nothing
 
 > pattern ENil = (Nothing, INil)
+> pattern ENix = (Nothing, INix)
 
 > data DEF = DEF  {  defName :: Name
 >                 ,  defTy :: TY
@@ -194,13 +200,13 @@
 > pattern INH _T     = Prop :- [_T]
 > pattern WIT t      = Prop :- [t]
 > pattern AND _P _Q  = Prop :- [_P,_Q]
-> pattern All        = PI                  -- Possibly useful alias
+> pattern All        = Pi                  -- Possibly useful alias
 > pattern ALL _S _P  = All :- [_S, _P]
 > pattern CHKD       = Chkd :- []
 >   -- [/Feature = Prop]
 
 > eval :: forall m n p s' . pi (s :: Status) . 
->           Env {Z, n} -> Tm {p, s', n} -> Tm {Body, s, Z}
+>           Env {Z} {n} -> Tm {p, s', n} -> Tm {Body, s, Z}
 > eval {s} g (L g' x b) = L (g <+< g') x b
 > eval {s} g (LK e) = LK (g :/ e)
 > eval {s} g (c :- es) = c :- (fmap (g :/) es)
@@ -212,7 +218,7 @@
 > eval {s} (Just es, _) (P (l, _, _)) = eval {s} ENil (es !! l)
 > eval {s} g (g' :/ e) = eval {s} (g <+< g') e
 
-> (//) :: {:s :: Status:} => Env {Z, n} -> Tm {p, s', n} -> Tm {Body, s, Z}
+> (//) :: {:s :: Status:} => Env {Z} {n} -> Tm {p, s', n} -> Tm {Body, s, Z}
 > (//) = eval {:s :: Status:}
 
 > apply :: forall s' . pi (s :: Status) . 
@@ -419,3 +425,21 @@ by |lambdable|:
 
 > instance {:n :: Nat:} => Show (Tm {p, s, n}) where
 >   show t = ugly (fmap (\ i -> "v" ++ show i) vUpTo') t
+
+Pos could use a nice abstraction to do the following:
+
+> capture :: pi (m :: Nat). EXP -> Tm {Body, Exp, m}
+> capture {m} t = (Just (Data.Foldable.foldr (\i l -> (V i :$ B0) : l) [] (vDownFromF {m})) , INix) :/ t
+
+> capture' :: {: m :: Nat :} =>  EXP -> Tm {Body, Exp, m}
+> capture' = capture {: m :: Nat :} 
+
+> piLift :: pi (n :: Nat). Vec {n} (String, TY) -> TY -> TY
+> piLift {n} bs t = pil bs (capture {n} t) 
+>   where
+>     pil :: Vec {m} (String, TY) -> Tm {Body, Exp, m} -> EXP
+>     pil V0 t = t
+>     pil ((s,ty) :>>: sts) t = pil sts $ PI (wk ty) (L ENil s t)
+
+> piLift' :: {: n :: Nat :} => Vec {n} (String, TY) -> TY -> TY
+> piLift' = piLift {: n :: Nat :}

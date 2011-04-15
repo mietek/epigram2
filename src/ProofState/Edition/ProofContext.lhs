@@ -143,5 +143,6 @@ definition:
 >                    ,  pcAboveCursor = Dev  {  devEntries       = B0
 >                                            ,  devTip           = Module
 >                                            ,  devNSupply       = (B0, 0)
->                                            ,  devSuspendState  = SuspendNone }
+>                                            ,  devSuspendState  = SuspendNone
+>                                            ,  devLevelCount    = 0 }
 >                    ,  pcBelowCursor = F0 }

@@ -79,11 +79,15 @@ We often need to turn the sequence of parameters under which we work
 into the argument spine of a \(\lambda\)-lifted definition. Therefore,
 let us extract such spine from a list of entries:
 
-> paramREFs :: Entries -> [REF]
-> paramREFs = foldMap param where
->   param :: Entry Bwd -> [REF]
->   param  (EPARAM r _ _ _ _)   = [r]
+> -}
+
+> params :: Entries -> [(ParamKind, String, TY)]
+> params = foldMap param where
+>   param :: Entry Bwd -> [(ParamKind, String, TY)]
+>   param  (EParam k s t _)   = [(k, s, t)]
 >   param  _                  = []
+
+> {-
 
 > paramSpine :: Entries -> Spine {p} REF
 > paramSpine = fmap (A . N . P) . paramREFs
