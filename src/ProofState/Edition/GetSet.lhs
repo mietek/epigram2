@@ -10,6 +10,7 @@
 > module ProofState.Edition.GetSet where
 
 > import Control.Monad.State
+> import Data.Foldable
 
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
@@ -178,6 +179,15 @@ And some specialized versions:
 > getParamsInScope = do  
 >     inScope <- getInScope
 >     return $ params inScope
+
+> getDefsInScope :: ProofState [DEF]
+> getDefsInScope = do  
+>     inScope <- getInScope
+>     return $ foldMap def inScope
+>   where
+>     def (EDef def _)  = [def]
+>     def _             = []
+
 
 \subsection{Putters}
 

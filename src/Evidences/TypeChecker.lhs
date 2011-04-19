@@ -26,32 +26,36 @@
 > import Evidences.NameSupply
 > import Evidences.DefinitionalEquality
 > import Evidences.TypeCheckRules
+> import Evidences.ErrorHandling
 
 %endif
 
 
-> typeCheck :: (TY :>: EXP) -> Maybe ()
+> typeCheck :: (Applicative m, MonadError StackError m) =>
+>                  (TY :>: EXP) -> m ()
 > typeCheck (ty :>: t) = chk 0 (ty :>: (ENil, t))
 
 
 It's just possible that variable-management should be baked into a monad,
 here.
 
-> chev :: Int -> TY :>: (Env {Z} {n}, Tm {Body, s, n}) -> Maybe VAL
+> chev :: (Applicative m, MonadError StackError m) => 
+>             Int -> TY :>: (Env {Z} {n}, Tm {Body, s, n}) -> m VAL
 > chev l prob@(_ :>: (g, t)) = do
 >   chk l prob
 >   return (ev (g :/ t))
 
-> chk :: Int -> TY :>: (Env {Z} {n}, Tm {Body, s, n}) -> Maybe ()
+> chk :: (Applicative m, MonadError StackError m) => 
+>            Int -> TY :>: (Env {Z} {n}, Tm {Body, s, n}) -> m ()
 > chk l (_T :>: (g, c :- es)) = case ev _T of
 >   _C :- as -> do
->     _Ts <- canTy ((_C, as) :>: c)
+>     _Ts <- canTyM ((_C, as) :>: c)
 >     chks l (_Ts :>: (g, es))
->   _ -> (|)
+>   _ -> throwError' $ err "canonical inhabitant of non-canonical type"
 > chk l (_T :>: (g, L g' x b)) = case lambdable (ev _T) of
 >   Just (_, _S, _T) -> chk (l + 1) (_T x' :>: (g <+< g' <:< x', b)) where
 >     x' = P (l, x, _S) :$ B0
->   _ -> (|)
+>   _ -> throwError' $ err "lambda inhabiting non-canonical type"
 > chk l (_T :>: (g, LK b)) = case lambdable (ev _T) of
 >   Just (_, _S, _T) -> chk (l + 1) (_T x' :>: (g, b)) where
 >     x' =  P (l, "s", _S) :$ B0
@@ -61,43 +65,48 @@ here.
 > chk l (_T :>: (g, h :$ ss)) = do
 >   (tty, es) <- headTySpine l (g, h)
 >   _T' <- spInf l tty (g, map (A . wk) es ++ trail ss)
->   guard $ equal (SET :>: (_T, _T'))
->   return ()
+>   if equal l (SET :>: (_T, _T'))
+>       then return ()
+>       else throwError' $ err "change of direction"
 
 > chk l (_T :>: (g, g' :/ t)) = chk l (_T :>: (g <+< g', toBody t))
 
 
-> chks :: Int -> VAL :>: (Env {Z} {n}, [Tm {Body, s, n}]) -> Maybe ()
+> chks :: (Applicative m, MonadError StackError m) => 
+>             Int -> VAL :>: (Env {Z} {n}, [Tm {Body, s, n}]) -> m ()
 > chks l (ONE           :>:  (g, []))     = (|()|)
 > chks l (SIGMA _S _T   :>:  (g, s : t))  = do
 >   s' <- chev l (_S :>: (g, s))
 >   chks l (ev (_T $$. s') :>: (g, t))
-> chks _ _ = (|)
+> chks _ _ = throwError' $ err "spine-checking failure"
 
 
 
 
-> headTySpine :: Int -> (Env {Z} {n}, Tm {Head, s, n}) -> Maybe (EXP :<: TY, [EXP])
-> headTySpine l (g, D d es _)  = pure (D d S0 (defOp d) :<: defTy d, rewindStk es [])
-> headTySpine l (g, P (i, s, ty))       = pure (P (i, s, ty) :$ B0 :<: ty, [])
-> headTySpine _ _                       = (|)
+> headTySpine :: (Applicative m, MonadError StackError m) => 
+>                    Int -> (Env {Z} {n}, Tm {Head, s, n}) ->
+>                        m (EXP :<: TY, [EXP])
+> headTySpine l (g, D d es _)      = pure (D d S0 (defOp d) :<: defTy d, rewindStk es [])
+> headTySpine l (g, P (i, s, ty))  = pure (P (i, s, ty) :$ B0 :<: ty, [])
+> headTySpine _ _                  = throwError' $ err "headTySpine with bad head"
 
 
 
-> spInf :: Int -> (EXP :<: TY) -> 
->          (Env {Z} {n}, [Elim (Tm {Body, s, n})]) -> Maybe TY
+> spInf :: (Applicative m, MonadError StackError m) => 
+>              Int -> (EXP :<: TY) ->
+>                  (Env {Z} {n}, [Elim (Tm {Body, s, n})]) -> m TY
 > spInf l (_ :<: _T) (g, [])     = pure _T
 > spInf l (e :<: _T) (g, a:as) = case (ev _T, a) of
 >     (_T, A a) -> case lambdable _T of 
 >       Just (_, _S, _T) -> do
 >         a <- chev l (_S :>: (g, a))
 >         spInf l (e $$. a :<: _T a) (g, as)
->       Nothing -> (|)
+>       Nothing -> throwError' $ err "spInf: not lambdable"
 >     (_T, Hd) -> case projable _T of
 >       Just (_S, _T)  -> spInf l (e $$ Hd :<: _S) (g, as)
 >     (_T, Tl) -> case projable _T of
 >       Just (_S, _T)  -> spInf l (e $$ Tl :<: _T (e $$ Hd)) (g, as)
->     _         -> (|)
+>     _         -> throwError' $ err "spInf: bad"
 
 
 

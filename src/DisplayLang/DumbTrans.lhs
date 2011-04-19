@@ -42,8 +42,9 @@
 
 > dumbPS :: DInTmRN -> ProofState EXP
 > dumbPS t = do
+>   glog <- getDefsInScope
 >   glob <- getParamsInScope 
->   case dumbDInTm t [] (map (\(a,b,c) -> (b,c)) glob) V0 of
+>   case dumbDInTm t glog (map (\(a,b,c) -> (b,c)) glob) V0 of
 >     Left s -> fail s
 >     Right e -> return e
 

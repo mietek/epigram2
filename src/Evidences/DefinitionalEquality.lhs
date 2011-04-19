@@ -29,8 +29,10 @@
 
 %endif
 
-> equal :: (TY :>: (EXP,EXP)) -> Bool
-> equal (t :>: (x, y)) = compare (etaQuote (t :>: x)) (etaQuote (t :>: y))
+> equal :: Int -> (TY :>: (EXP,EXP)) -> Bool
+> equal l (t :>: (x, y)) = intNat l (\ n -> 
+>     let t' = ev t in
+>     compare (etaQuoten {n} (t' :>: x)) (etaQuoten {n} (t' :>: y)))
 >   where compare :: Tm {p, s, n} -> Tm {p, s, n} -> Bool
 >         compare (LK b1)        (LK b2)        = compare b1 b2
 >         compare (L ENil _ b1)  (L ENil _ b2)  = compare b1 b2

@@ -113,6 +113,10 @@
 > mkInt {Z} = 0
 > mkInt {S n} = 1 + mkInt n
 
+> intNat :: Int -> (pi (n :: Nat) . a) -> a
+> intNat 0 f = f {Z}
+> intNat n f = intNat (n-1) (\ m -> f {S m})
+
 > emb :: Fin {n} -> Fin {S n}
 > emb Fz = Fz
 > emb (Fs i) = Fs (emb i)
