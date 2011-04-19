@@ -22,6 +22,8 @@
 
 %endif
 
+> {-
+
 
 An |ElabProb| is a syntactic representation of an elaboration
 problem\index{elaboration problem}. Examples include elaborating
@@ -131,3 +133,5 @@ functions for producing and manipulating these.
 > travEval f (tm :=>: _) = (|traverse f tm :=>: ~Nothing|)
 
 %endif
+
+> -}

@@ -138,6 +138,13 @@ And some specialized versions:
 
 \paragraph{Getting in the |HOLE|\\}
 
+> getHoleGoal :: ProofState TY
+> getHoleGoal= do
+>     tip <- getDevTip
+>     case tip of
+>       Unknown ty  -> return ty
+>       _           -> throwError' $ err "getHoleGoal: goal is not a hole"
+
 > {-
 
 > getHoleGoal :: ProofState (INTM :=>: TY)
@@ -205,6 +212,11 @@ And some specialized versions:
 >     below <- getBelowCursor
 >     putBelowCursor (e :> below)
 >     return ()
+
+> putDevLev :: Int -> ProofState ()
+> putDevLev l = do
+>     dev <- getAboveCursor
+>     putAboveCursor (dev{devLevelCount=l})
 
 
 

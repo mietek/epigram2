@@ -35,7 +35,7 @@
 %endif
 
 
-> {-
+
 
 \newcommand{\relname}[1]{\textit{#1}}
 
@@ -84,6 +84,8 @@ the name components from the backwards list.
 > flatNom B0 nom = nom
 > flatNom (esus :< (_,u)) nom = flatNom esus (u : nom)
 
+
+> {-
 
 \subsection{Resolving relative names to references}
 
@@ -628,7 +630,9 @@ christening them.
 > showEntriesAbs :: Traversable f => f (Entry f) -> String
 > showEntriesAbs = intercalate ", " . foldMap f
 >   where
->     f e = [showName (entryName e)]
+>     f (EDef def _)      = [showName (defName def)]
+>     f (EParam _ x _ l)  = [x ++ " (" ++ show l ++ ")"]
+>     f (EModule n _)     = [showName n]
 
 
 

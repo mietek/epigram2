@@ -43,8 +43,11 @@
 >           d1 == d2 && maybe False id (| (F.all (uncurry compare)) (halfZip es1 es2) |)
 >         compare (V i)          (V j)          = i == j
 >         compare (P (i, _, _))  (P (j, _, _))  = i == j
->         compareE (A x) (A y) = compare x y
->         compareE Hd Hd = True
->         compareE Tl Tl = True
->         compareE Out Out = True
->         compareE _ _ = False
+>         compare _              _              = False
+
+>         compareE :: Elim (Tm {p, s, n}) -> Elim (Tm {p, s, n}) -> Bool
+>         compareE (A x) (A y)  = compare x y
+>         compareE Hd    Hd     = True
+>         compareE Tl    Tl     = True
+>         compareE Out   Out    = True
+>         compareE _     _      = False

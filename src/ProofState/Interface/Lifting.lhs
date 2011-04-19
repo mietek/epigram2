@@ -23,6 +23,7 @@
 %endif
 
 
+> {-
 
 
 
@@ -99,3 +100,5 @@ encounters a $\Pi$.
 >     inferGoalType es SET
 > inferGoalType (es :< _)                        t        = 
 >     inferGoalType es t
+
+> -}

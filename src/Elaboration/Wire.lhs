@@ -36,6 +36,8 @@
 
 %endif
 
+> {-
+
 \subsection{Updating a reference}
 
 Here we describe how to handle updates to references in the proof
@@ -310,3 +312,5 @@ update the outer layers.
 >     help ss B0 = B0
 >     help ss (ls :< l) = help ss' ls :< l{laySuspendState = ss'}
 >       where ss' = min ss (laySuspendState l)
+
+> -}

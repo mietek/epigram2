@@ -16,10 +16,13 @@
 > import ProofState.Edition.Scope
 > import ProofState.Edition.ProofState
 > import ProofState.Edition.GetSet
+> import ProofState.Edition.Navigation
 
-> import ProofState.Interface.Lifting
-> import ProofState.Interface.Name
+< import ProofState.Interface.Lifting
+< import ProofState.Interface.Name
+
 > import ProofState.Interface.ProofKit
+> import ProofState.Interface.Module
 
 > import DisplayLang.DisplayTm
 
@@ -29,6 +32,16 @@
 
 %endif
 
+
+> make :: (String :<: EXP) -> ProofState EXP
+> make (s :<: ty) = do
+>     makeModule s
+>     goIn
+>     e <- moduleToGoal ty
+>     goOut
+>     return e
+
+> {-
 
 The |make| command adds a named goal of the given type above the
 cursor. The meat is actually in |makeKinded|, below.
@@ -71,3 +84,5 @@ mood such as |Hoping| or |Crying|.
 >     putEntryAbove $ EDEF ref (last n) LETG dev liftedTy manchor
 >     -- Return a reference to the goal
 >     return $ applySpine ref inScope
+
+> -}

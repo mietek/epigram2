@@ -32,15 +32,14 @@ letter.
 
 Hence, we have:
 
-> {-
-> entryRef :: Traversable f => Entry f -> Maybe REF
-> entryRef (EEntity r _ _ _ _)    = Just r
-> entryRef (EModule _ _)  = Nothing
-> -}
+> entryDef :: Traversable f => Entry f -> Maybe DEF
+> entryDef (EDef d _)  = Just d
+> entryDef _           = Nothing
 
-> entryName :: Traversable f => Entry f -> Name
-> entryName (EDef d _)  = defName d
-> entryName (EModule n _)             = n
+> entryName :: Traversable f => Entry f -> Maybe Name
+> entryName (EDef d _)        = Just $ defName d
+> entryName (EModule n _)     = Just n
+> entryName (EParam _ _ _ _)  = Nothing
 
 > {-
 > entryLastName :: Traversable f => Entry f -> (String, Int)

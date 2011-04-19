@@ -259,7 +259,7 @@ places.
 > -- [Feature = Prop]
 > pattern DPROP        = DC Prop []
 > pattern DPRF p       = DC Prf [p]
-> pattern DALL p q     = DC All [p, q]
+> pattern DALL p q     = DPI p q
 > pattern DIMP p q     = DALL (DPRF p) (DL (DK q))
 > pattern DALLV x s p  = DALL s (DLAV x p)
 > pattern DAND p q     = DC And [p, q]

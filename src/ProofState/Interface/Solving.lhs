@@ -30,6 +30,7 @@
 
 > import Evidences.Tm
 > import Evidences.Eval
+> import Evidences.ErrorHandling
 
 > import {-# SOURCE #-} Elaboration.Wire
 
@@ -44,33 +45,29 @@ if it type-checks. At the end of the operation, the cursor has not
 moved: we are still under the goal, which has now been |Defined|. Note
 that entries below the cursor are (lazily) notified of the good news.
 
-> {-
-
-> give :: INTM -> ProofState (EXTM :=>: VAL)
+> give :: EXP -> ProofState DEF
 > give tm = do
 >     tip <- getDevTip
 >     case tip of         
->         Unknown (tipTyTm :=>: tipTy) -> do
+>         Unknown tipTy -> do
 >             -- Working on a goal
 >
->             -- The |tm| is of the expected type
->             checkHere (tipTy :>: tm) 
+>             -- Check that |tm| is of the expected type
+>             chkPS (tipTy :>: tm) 
 >                 `pushError`
->                 (err "give: typechecking failed:" ++ errTm (DTIN tm)
->                  ++ err "is not of type" ++ errTyVal (tipTy :<: SET))
->             -- Lambda lift the given solution
->             globalScope <- getGlobalScope
->             above <- getEntriesAbove
->             let tmv = evTm $ parBind globalScope above tm
+>                 (err "give: typechecking failed:" ++ errTm tm
+>                  ++ err "is not of type" ++ errTyTm (SET :>: tipTy))
+
 >             -- Update the entry as Defined, together with its definition
->             CDefinition kind (name := _ :<: ty) xn tyTm a <- getCurrentEntry
->             let ref = name := DEFN tmv :<: ty
->             putDevTip $ Defined tm $ tipTyTm :=>: tipTy
->             putCurrentEntry $ CDefinition kind ref xn tyTm a
+>             CDefinition def@DEF{defOp=Hole} <- getCurrentEntry
+>             lev <- getDevLev
+>             let def' = def{defOp=eat lev (Emit tm)}
+>             putDevTip $ Defined (tipTy :>: tm)
+>             putCurrentEntry $ CDefinition def'
 >             -- Propagate the good news
->             updateRef ref
+>             -- updateRef ref
 >             -- Return the reference
->             return $ applySpine ref globalScope
+>             return def'
 >         _  -> throwError' $ err "give: only possible for incomplete goals."
 
 For convenience, we combine giving a solution and moving. Indeed,
@@ -80,13 +77,16 @@ after |give|, the cursor stands in a rather boring position: under a
 now-defined entry. A second variant is |giveNext| that gives as well
 and moves to the next goal, if one is available.
 
-> giveOutBelow :: INTM -> ProofState (EXTM :=>: VAL)
+> giveOutBelow :: EXP -> ProofState DEF
 > giveOutBelow tm = give tm <* goOutBelow
 >
-> giveNext :: INTM -> ProofState (EXTM :=>: VAL)
+> giveNext :: EXP -> ProofState DEF
 > giveNext tm = give tm <* (nextGoal <|> goOut)
 
 
+
+
+> {-
 
 \subsection{Finding trivial solutions}
 

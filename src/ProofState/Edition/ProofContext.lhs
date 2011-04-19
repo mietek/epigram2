@@ -62,7 +62,7 @@ zipper is a record with the following fields:
 >   ,  layLevelCount    :: Int
 >   ,  laySuspendState  :: SuspendState
 >   }
->  -- deriving Show
+>  deriving Show
 
 The derivative makes sense only for definitions and modules, which
 have sub-developments. Parameters being childless, they `derive to
@@ -97,19 +97,14 @@ justifies some piece of kit to deal with this global context.
 
 %if False
 
-> {-
 > deriving instance Show (Dev NewsyFwd)
 
 > instance Show (NewsyFwd (Entry NewsyFwd)) where
 >     show (NF ls) = show ls
 > instance Show (Entry NewsyFwd) where
->     show (EEntity ref xn e t a) = intercalate " " ["E", show ref, show xn, show e, show t, show a]
->     show (EModule n d) = intercalate " " ["M", show n, show d]
-> instance Show (Entity NewsyFwd) where
->     show (Parameter k) = "Param " ++ show k
->     show (Definition k d) = "Def " ++ show k ++ " " ++ show d
-
-> -}
+>     show (EDef def dev) = intercalate " " ["D", show def, show dev]
+>     show (EParam k n t l) = intercalate " " ["P", show k, show n, show t, show l]
+>     show (EModule n dev) = intercalate " " ["M", show n, show dev]
 
 > instance Traversable NewsyFwd where
 >     traverse g (NF x) = NF <$> traverse (traverse g) x
@@ -133,7 +128,7 @@ below the cursor (|pcBelowCursor|)..
 >     ,  pcAboveCursor  :: Dev Bwd
 >     ,  pcBelowCursor  :: Fwd (Entry Bwd)
 >     }
->   -- deriving Show
+>   deriving Show
 
 The |emptyContext| corresponds to the following (purposedly verbose)
 definition:

@@ -19,6 +19,8 @@
 %endif
 
 
+> {-
+
 The |getFakeCurrentEntry| command returns a neutral application of a
 fake reference that represents the current entry of the current
 location. Note that its type is $\lambda$-lifted over its parameters
@@ -41,3 +43,5 @@ into the ProofState.}
 >    inScope <- getInScope
 >    let tm = P r $:$ (paramSpine inScope)
 >    return $ tm :=>: evTm tm
+
+> -}

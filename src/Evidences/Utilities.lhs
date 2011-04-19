@@ -23,6 +23,8 @@
 
 %endif
 
+> {-
+
 \subsection{From |EXTM| to |INTM| and back again}
 
 Various commands yield an |EXTM :=>: VAL|, and we sometimes need to
@@ -120,3 +122,5 @@ reference and a spine of arguments to which it is applied.
 >     (r, as) <- splitSpine n
 >     return (r, as ++ [a])
 > splitSpine _ = Nothing
+
+> -}

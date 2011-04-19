@@ -11,9 +11,8 @@
 > import Control.Monad.State
 > import Text.PrettyPrint.HughesPJ
 
-> import Evidences.Eval hiding (($$))
-> import qualified Evidences.Eval (($$))
-> import Evidences.Tm
+> import Evidences.Eval
+> import Evidences.Tm hiding (($$))
 > import Evidences.NameSupply
 
 > import ProofState.Structure.Developments
@@ -36,15 +35,18 @@
 > import DisplayLang.Lexer
 > import DisplayLang.PrettyPrint
 
+> {-
 > import Elaboration.ElabProb
 > import Elaboration.ElabMonad
 > import Elaboration.MakeElab
 > import Elaboration.RunElab
 > import Elaboration.Scheduler
 > import Elaboration.Elaborator
+> -}
 
 > import Distillation.Distiller
 > import Distillation.Scheme
+
 
 > import Kit.BwdFwd
 
@@ -55,11 +57,13 @@
 > infoInScope = do
 >     pc <- get
 >     inScope <- getInScope
->     return (showEntries (inBScope pc) inScope)
+>     return (showEntriesAbs inScope)
 
 > infoDump :: ProofState String
 > infoDump = gets show
 
+
+> {-
 
 The |infoElaborate| command calls |elabInfer| on the given neutral display term,
 evaluates the resulting term, bquotes it and returns a pretty-printed string
@@ -204,6 +208,7 @@ The |infoWhatIs| command displays a term in various representations.
 >         ])
 >   )
 
+> -}
 
 The |prettyProofState| command generates a pretty-printed representation
 of the proof state at the current location.
@@ -240,20 +245,26 @@ of the proof state at the current location.
 >         ed <- prettyE e
 >         prettyEs (d $$ ed) es
 >
->     prettyE (EPARAM (_ := DECL :<: ty) (x, _) k _ anchor)  = do
->         ty' <- bquoteHere ty
->         tyd <- prettyHereAt (pred ArrSize) (SET :>: ty')
+>     prettyE (EParam k x ty l)  = do
+>         tyd <- distillPS (SET :>: ty)
 >         return (prettyBKind k
->                  (text x  <+> (maybe empty (brackets . brackets . text) anchor)
->                           <+> kword KwAsc
->                           <+> tyd))
+>                  (text x  <+> kword KwAsc
+>                           <+> pretty tyd (pred ArrSize)
+>                           <+> parens (int l)))
 >      
->     prettyE e = do
+>     prettyE (EDef def _) = do
 >         goIn
 >         d <- prettyPS aus me
 >         goOut
->         return (sep  [  text (fst (entryLastName e)) 
->                         <+> (maybe empty (brackets . brackets . text) $ entryAnchor e) 
+>         return (sep  [  text (fst (last (defName def))) 
+>                      ,  nest 2 d <+> kword KwSemi
+>                      ])
+
+>     prettyE (EModule n _) = do
+>         goIn
+>         d <- prettyPS aus me
+>         goOut
+>         return (sep  [  text (fst (last n)) 
 >                      ,  nest 2 d <+> kword KwSemi
 >                      ])
 >
@@ -271,25 +282,24 @@ of the proof state at the current location.
 >         tip <- getDevTip
 >         case tip of
 >             Module -> return empty
->             Unknown (ty :=>: _) -> do
->                 hk <- getHoleKind
->                 tyd <- prettyHere (SET :>: ty)
->                 return (prettyHKind hk <+> kword KwAsc <+> tyd)
->             Suspended (ty :=>: _) prob -> do
->                 hk <- getHoleKind
->                 tyd <- prettyHere (SET :>: ty)
->                 return (text ("(SUSPENDED: " ++ show prob ++ ")")
->                             <+> prettyHKind hk <+> kword KwAsc <+> tyd)
->             Defined tm (ty :=>: tyv) -> do
->                 tyd <- prettyHere (SET :>: ty)
->                 tmd <- prettyHereAt (pred ArrSize) (tyv :>: tm)
->                 return (tmd <+> kword KwAsc <+> tyd)
+>             Unknown ty -> do
+>                 tyd <- distillPS (SET :>: ty)
+>                 return (text "?" <+> kword KwAsc <+> pretty tyd maxBound)
 
->     prettyHKind :: HKind -> Doc
->     prettyHKind Waiting     = text "?"
->     prettyHKind Hoping      = text "HOPE?"
->     prettyHKind (Crying s)  = text ("CRY <<" ++ s ++ ">>")
+<             Suspended (ty :=>: _) prob -> do
+<                 hk <- getHoleKind
+<                 tyd <- prettyHere (SET :>: ty)
+<                 return (text ("(SUSPENDED: " ++ show prob ++ ")")
+<                             <+> prettyHKind hk <+> kword KwAsc <+> tyd)
 
+>             Defined (ty :>: tm) -> do
+>                 tyd <- distillPS (SET :>: ty)
+>                 tmd <- distillPS (ty :>: tm)
+>                 return (pretty tmd (pred ArrSize) <+> kword KwAsc
+>                             <+> pretty tyd maxBound)
+
+
+> {-
 
 The |elm| Cochon tactic elaborates a term, then starts the scheduler to
 stabilise the proof state, and returns a pretty-printed representation of the
@@ -316,15 +326,7 @@ final type-term pair (using a quick hack).
 >   : unaryNameCT "scheme" infoScheme
 >       "scheme <name> - looks up the scheme on the definition <name>."
 
->   : unaryStringCT "show" (\s -> case s of
->         "inscope"  -> infoInScope
->         "context"  -> infoContext 
->         "dump"     -> infoDump
->         "hyps"     -> infoHypotheses
->         "state"    -> prettyProofState
->         _          -> return "show: please specify exactly what to show."
->       )
->       "show <inscope/context/dump/hyps/state> - displays useless information."
-
 >   : unaryExCT "whatis" infoWhatIs
 >       "whatis <term> - prints the various representations of <term>."
+
+> -}

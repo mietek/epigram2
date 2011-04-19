@@ -8,6 +8,8 @@
 > import ProofState.Edition.ProofState
 > import Kit.BwdFwd
 
+> {-
+
 > data PropagateStatus = NormalPropagate | RecursivePropagate
 
 > updateRef :: REF -> ProofState ()
@@ -15,3 +17,5 @@
 > propagateNews :: PropagateStatus -> NewsBulletin -> NewsyEntries -> ProofState NewsBulletin
 
 > tellEntry :: NewsBulletin -> Entry Bwd -> ProofState (NewsBulletin, Entry Bwd)
+
+> -}

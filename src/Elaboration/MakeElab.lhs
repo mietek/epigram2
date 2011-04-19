@@ -34,6 +34,8 @@
 
 %endif
 
+> {-
+
 \subsection{Tools for writing elaborators}
 
 The |eCan| instruction asks for the current goal to be solved by the given
@@ -430,3 +432,6 @@ canonical, so we suspend elaboration and record the current problem.
 >     handleArgs (tm :=>: tv :<: ty) as = do
 >         tt <- eQuote ty
 >         eCan tt (ElabInferProb (DTEX tm ::$ as))
+
+
+> -}

@@ -29,6 +29,8 @@
 
 %endif
 
+> {-
+
 
 \subsection{Distilling schemes}
 
@@ -123,3 +125,5 @@ ProofState usage.
 > prettySchemeHere sch = do
 >     sch' <- distillSchemeHere sch
 >     return $ pretty sch' maxBound
+
+> -}

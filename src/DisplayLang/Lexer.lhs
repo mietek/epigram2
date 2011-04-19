@@ -354,7 +354,6 @@ opening bracket with the one of the closing bracket.
 >           parseCloseBracket (RoundB s) = matchBracketB s ')'
 >           parseCloseBracket (SquareB s) = matchBracketB s ']'
 >           parseCloseBracket (CurlyB s) = matchBracketB s '}'
->           parseBracket x = tokenFilter (flip elem x)
 >           matchBracketB s bra = (|id ~ () (% tokenEq '|' %) 
 >                                           (% wordEq s %) 
 >                                           (% tokenEq bra %) |)

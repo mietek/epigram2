@@ -200,8 +200,7 @@
 > pattern INH _T     = Prop :- [_T]
 > pattern WIT t      = Prop :- [t]
 > pattern AND _P _Q  = Prop :- [_P,_Q]
-> pattern All        = Pi                  -- Possibly useful alias
-> pattern ALL _S _P  = All :- [_S, _P]
+> pattern ALL _S _P  = Pi :- [_S, _P]
 > pattern CHKD       = Chkd :- []
 >   -- [/Feature = Prop]
 

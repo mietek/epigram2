@@ -32,6 +32,8 @@
 
 %endif
 
+> {-
+
 \subsection{Solving flex-rigid problems}
 
 The |solveHole| command solves a flex-rigid problem by filling in the reference
@@ -115,3 +117,5 @@ holes with the new ones.
 >     stripShared' n es = do
 >       -- |proofTrace $ "stripShared: fail on " ++ show n|
 >       throwError' $ err "stripShared: fail on" ++ errVal (N n)
+
+> -}

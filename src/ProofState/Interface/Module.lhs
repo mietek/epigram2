@@ -67,7 +67,7 @@ implemented by |moduleToGoal|. An instance of this pattern appears in
 Section~\ref{subsec:Tactics.Elimination.analysis}.
 
 
-> moduleToGoal :: EXP -> ProofState VAL
+> moduleToGoal :: EXP -> ProofState EXP
 > moduleToGoal ty = do
 >     chkPS (SET :>: ty)
 >     CModule n <- getCurrentEntry

@@ -24,7 +24,7 @@
 
 %endif
 
-
+> {-
 
 The |lookupName| function looks up a name in the context (including axioms and
 primitives); if found, it returns the reference applied to the spine of
@@ -53,3 +53,5 @@ name if the name suggestion is empty.
 >     r <- getDevNSupply
 >     return $ prefix ++ show (foldMap snd m + snd r)
 > pickName _ s   = return s
+
+> -}

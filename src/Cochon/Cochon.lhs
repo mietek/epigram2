@@ -38,19 +38,17 @@
 > import ProofState.Interface.Search
 > import ProofState.Interface.ProofKit
 > import ProofState.Interface.NameResolution
-
-
+> import ProofState.Interface.Definition
 > import ProofState.Interface.Module
+> import ProofState.Interface.Parameter
+> import ProofState.Interface.Solving
+
+> import Tactics.Information
 
 > {-
-
-> import ProofState.Interface.Solving
-> import ProofState.Interface.Parameter
-
 > import Tactics.Elimination
 > import Tactics.PropositionSimplify
 > import Tactics.ProblemSimplify
-> import Tactics.Information
 > import Tactics.Gadgets
 > import Tactics.IData
 > import Tactics.Relabel
@@ -122,25 +120,22 @@ Here we have a very basic command-driven interface to the proof state monad.
 
 
 > showPrompt :: ProofState String
-> showPrompt = showInputLine
->   where
-
-> {-
+> showPrompt = do
 >     mty <- optional getHoleGoal
 >     case mty of
->         Just (_ :=>: ty)  -> (|(showGoal ty) ++ showInputLine|)
->         Nothing           -> showInputLine
+>         Just ty  -> (|(showGoal ty) ++ showInputLine|)
+>         Nothing  -> showInputLine
 >   where
 >     showGoal :: TY -> ProofState String
->     showGoal ty@(LABEL _ _) = do
->         h <- infoHypotheses
->         s <- prettyHere . (SET :>:) =<< bquoteHere ty
->         return $ h ++ "\n" ++ "Programming: " ++ show s ++ "\n"
->     showGoal ty = do
->         s <- prettyHere . (SET :>:) =<< bquoteHere ty
->         return $ "Goal: " ++ show s ++ "\n"
-> -}
 
+<     showGoal ty@(LABEL _ _) = do
+<         h <- infoHypotheses
+<         s <- prettyHere . (SET :>:) =<< bquoteHere ty
+<         return $ h ++ "\n" ++ "Programming: " ++ show s ++ "\n"
+
+>     showGoal ty = do
+>         ty <- distillPS (SET :>: ty)
+>         return $ "Goal: " ++ show (pretty ty maxBound) ++ "\n"
 >
 >     showInputLine :: ProofState String
 >     showInputLine = do
@@ -286,13 +281,16 @@ Construction tactics:
 >     unaryInCT "parse" (\tm -> (| show (dumbPS tm) |)) "" : 
 
 > {-
-
 >     nullaryCT "apply" (apply >> return "Applied.")
 >       "apply - applies the last entry in the development to a new subgoal."
 >   : nullaryCT "done" (done >> return "Done.")
 >       "done - solves the goal with the last entry in the development."
->   : unaryInCT "give" (\tm -> elabGiveNext tm >> return "Thank you.")
->       "give <term> - solves the goal with <term>."
+> -}
+
+>   unaryInCT "give" (\tm -> dumbPS tm >>= giveNext >> return "Thank you.")
+>       "give <term> - solves the goal with <term>." :
+
+> {-
 >   : simpleCT 
 >         "lambda"
 >          (| (|bwdList (pSep (keyword KwComma) tokenString) (%keyword KwAsc%)|) :< tokenInTm 
@@ -308,7 +306,25 @@ Construction tactics:
 >            )
 >          ("lambda <labels> - introduces one or more hypotheses.\n"++
 >           "lambda <labels> : <type> - introduces new module parameters or hypotheses.")
+> -}
 
+
+>   simpleCT 
+>         "lambda"
+>          (| (|bwdList (pSep (keyword KwComma) tokenString) (%keyword KwAsc%)|) :< tokenInTm 
+>           | bwdList (pSep (keyword KwComma) tokenString)
+>           |)
+>          (\ args -> case args of
+>             []  -> return "This lambda needs no introduction!"
+>             _   -> case last args of
+>                    _  -> traverse (lambdaParam . argToStr) args >> return "Made lambda!"
+>            )
+>          ("lambda <labels> - introduces one or more hypotheses.\n") :
+>           -- "lambda <labels> : <type> - introduces new module parameters or hypotheses.") :
+
+
+
+> {-
 >   : simpleCT
 >         "let"
 >         (| (| (B0 :< ) tokenString |) :< tokenScheme |)
@@ -340,6 +356,20 @@ Construction tactics:
 >            ++ "make <x> := <term> - adds a definition to the context.")
 
 > -}
+
+>   simpleCT
+>         "make"
+>         (| (|(B0 :<) tokenString (%keyword KwAsc%)|) :< tokenInTm
+>          |)
+>         (\ (StrArg s:tyOrTm) -> case tyOrTm of
+>             [InArg ty] -> do
+>                 ty <- dumbPS ty
+>                 make (s :<: ty)
+>                 goIn
+>                 return "Appended goal!"
+>         )
+>        ("make <x> : <type> - creates a new goal of the given type.\n") :
+>            -- ++ "make <x> := <term> - adds a definition to the context.") :
 
 >     unaryStringCT "module" (\s -> makeModule s >> goIn >> return "Made module.")
 >       "module <x> - creates a module with name <x>." :
@@ -484,9 +514,20 @@ Import more tactics from an aspect:
 
 > -}
 
+
+>   unaryStringCT "show" (\ s -> case s of
+>         "inscope"  -> infoInScope
+>         "context"  -> return "" -- infoContext 
+>         "dump"     -> infoDump
+>         "hyps"     -> return "" -- infoHypotheses
+>         "state"    -> prettyProofState
+>         _          -> return "show: please specify exactly what to show."
+>       )
+>       "show <inscope/context/dump/hyps/state> - displays useless information." :
+
 >     [] )
 
-> import <- CochonTacticsCode
+< import <- CochonTacticsCode
 
 
 > pFileName :: Parsley Token String

@@ -197,7 +197,7 @@ than a $\lambda$-term is reached.
 >     pretty (DC And [p, q])      = wrapDoc
 >         (pretty p (pred AndSize) <+> kword KwAnd <+> pretty q AndSize)
 >         AndSize
->     pretty (DC Prf [DC All [p, q]])  = 
+>     pretty (DC Prf [DALL p q])  = 
 >       wrapDoc (pretty Prf AppSize <+> prettyAll empty (DALL p q) ArgSize) AppSize
 >     -- [/Feature = Prop]
 >     pretty (DC c [])       = pretty c

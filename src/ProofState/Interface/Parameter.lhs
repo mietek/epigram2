@@ -9,6 +9,8 @@
 > module ProofState.Interface.Parameter where
 
 > import Kit.MissingLibrary
+> import Kit.NatFinVec
+> import Kit.BwdFwd
 
 > import ProofState.Structure.Developments
 
@@ -19,6 +21,7 @@
 
 > import Evidences.Tm
 > import Evidences.NameSupply
+> import Evidences.ErrorHandling
 
 %endif
 
@@ -35,28 +38,27 @@ parameter (a lambda, or a forall) and its type. This automation is
 implemented by |lambdaParam| that lets you introduce a parameter above
 the cursor while working on a goal.
 
-> lambdaParam :: String -> ProofState REF
+> lambdaParam :: String -> ProofState (Tm {Head, s, Z})
 > lambdaParam x = do
 >     tip <- getDevTip
 >     case tip of
->       Unknown (pi :=>: ty) -> 
->         -- Working at solving a goal
->         case lambdable ty of
->         Just (paramKind, s, t) -> 
->             -- Where can rightfully introduce a lambda
->             freshRef (x :<: s) $ \ref -> do
->               sTm <- bquoteHere s
+>       Unknown ty ->
+>         case lambdable (ev ty) of
+>           Just (paramKind, s, t) -> do
 >               -- Insert the parameter above the cursor
->               putEntryAbove $ EPARAM ref (mkLastName ref) paramKind sTm Nothing
+>               l <- getDevLev
+>               putEntryAbove $ EParam paramKind x s l
+>               putDevLev (succ l)
 >               -- Update the Tip
->               let tipTy = t $ pval ref
->               tipTyTm <- bquoteHere tipTy
->               putDevTip (Unknown (tipTyTm :=>: tipTy))
+>               let tipTy = t $ P (l, x, s) :$ B0
+>               putDevTip $ Unknown tipTy
 >               -- Return the reference to the parameter
->               return ref
->         _  -> throwError' $ err "lambdaParam: goal is not a pi-type or all-proof."
+>               return $ P (l, x, s)
+>           _  -> throwError' $ err "lambdaParam: goal is not a pi-type or all-proof."
 >       _    -> throwError' $ err "lambdaParam: only possible for incomplete goals."
 
+
+> {-
 
 \subsection{Assumptions}
 
@@ -105,3 +107,6 @@ indeed a type, so it requires further attention.
 >             return ref
 >         Unknown _  -> throwError' $ err "piParam: goal is not of type SET."
 >         _          -> throwError' $ err "piParam: only possible for incomplete goals."
+
+
+> -}

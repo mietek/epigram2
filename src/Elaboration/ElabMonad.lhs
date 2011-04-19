@@ -25,6 +25,8 @@
 
 %endif
 
+> {-
+
 Because writing elaborators is a tricky business, we would like to have a
 domain-specific language to write them with. We use the following set of
 instructions to define a monad that follows the syntax of this language,
@@ -140,3 +142,5 @@ to which source code locations. For the moment, |Loc|s are just ignored.
 >     catchError x _         = x
 
 %endif
+
+> -}

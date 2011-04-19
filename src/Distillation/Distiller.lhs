@@ -18,12 +18,20 @@
 > import DisplayLang.Name
 
 > import ProofState.Structure.Developments
+> import ProofState.Edition.ProofState
+> import ProofState.Edition.GetSet
 
 > import Kit.BwdFwd
 > import Kit.NatFinVec
 > import Kit.MissingLibrary 
 
 %endif
+
+
+> distillPS :: (EXP :>: EXP) -> ProofState DInTmRN
+> distillPS (ty :>: tm) = do
+>     lev <- getDevLev
+>     return $ distill (ev ty :>: ev tm) lev
 
 
 > distill :: VAL :>: VAL -> Int -> DInTmRN
