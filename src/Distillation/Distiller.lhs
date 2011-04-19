@@ -47,7 +47,10 @@
 > distill ((tyc :- tyas) :>: (c :- as)) l = case canTy ((tyc , tyas) :>: c) of
 >   Nothing -> error "Tin thadger wasp unit"
 >   Just tel -> DC c $ distillCan (tel :>: as) l
-> distill _ _ = error "Balls"
+> distill (ty :>: h@(D def ss op) :$ ts) l =
+>   DN $ DP (nameToRelName (defName def)) ::$
+>     (distillSpine (ev (defTy def) :>: (h :$ B0, map A (rewindStk ss []) ++ trail ts)) l)
+> distill tt _ = error $ "Distiller can't cope with " ++ show tt
 
 > distillCan :: (VAL :>: [EXP]) -> Int -> [DInTmRN]
 > distillCan (ONE :>: []) l = []

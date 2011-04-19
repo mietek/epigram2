@@ -68,5 +68,6 @@
 
 
 > prettyErrorTok :: ErrorTok -> Doc
-> prettyErrorTok (StrMsg s)    = text s
-> prettyErrorTok (ErrorTm tt)  = text $ show tt
+> prettyErrorTok (StrMsg s)                  = text s
+> prettyErrorTok (ErrorTm (Nothing :>: tm))  = text $ show tm
+> prettyErrorTok (ErrorTm (Just ty :>: tm))  = text $ show tm ++ " : " ++ show ty

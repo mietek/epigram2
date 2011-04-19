@@ -83,12 +83,14 @@ here.
 
 
 
-> headTySpine :: (Applicative m, MonadError StackError m) => 
->                    Int -> (Env {Z} {n}, Tm {Head, s, n}) ->
+> headTySpine :: (Applicative m, MonadError StackError m, {: p :: Part :} ) => 
+>                    Int -> (Env {Z} {n}, Tm {p, s, n}) ->
 >                        m (EXP :<: TY, [EXP])
+> headTySpine l (g, g' :/ h)       = headTySpine l (g <+< g', h)
 > headTySpine l (g, D d es _)      = pure (D d S0 (defOp d) :<: defTy d, rewindStk es [])
 > headTySpine l (g, P (i, s, ty))  = pure (P (i, s, ty) :$ B0 :<: ty, [])
-> headTySpine _ _                  = throwError' $ err "headTySpine with bad head"
+> headTySpine _ (g, h)             = throwError' $
+>     err "headTySpine with bad head" ++ errTm (exp (g :/ h :$ B0))
 
 
 

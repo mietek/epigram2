@@ -56,4 +56,8 @@ The |showName| function converts an absolute name to a string
 absolutely. 
 
 > showName :: Name -> String
-> showName = showRelName . map (\(x, i) -> (x, Abs i))
+> showName = showRelName . nameToRelName
+
+
+> nameToRelName :: Name -> RelName
+> nameToRelName = map (\(x, i) -> (x, Abs i))
