@@ -41,21 +41,30 @@
 > distill (ty :>: LK b) l = case fromJust $ lambdable ty of
 >   (_, s, t) -> DLK $ 
 >     distill (ev (t (P (l,"s",s) :$ B0)) :>: ev b) (l+1)
-> distill (ty :>: h@(P (l', n, s)) :$ as) l = 
->   DN $ DP [(n,Abs l')] ::$ 
->     (distillSpine (ev s :>: (h :$ B0, trail as)) l)
+
+> distill (ty :>: h :$ as) l =
+>     let (dh, ty, ss) = distillHead h
+>         das = distillSpine (ev ty :>: (h :$ B0, ss ++ trail as)) l
+>     in DN (dh ::$ das)
+
 > distill ((tyc :- tyas) :>: (c :- as)) l = case canTy ((tyc , tyas) :>: c) of
 >   Nothing -> error "Tin thadger wasp unit"
 >   Just tel -> DC c $ distillCan (tel :>: as) l
-> distill (ty :>: h@(D def ss op) :$ ts) l =
->   DN $ DP (nameToRelName (defName def)) ::$
->     (distillSpine (ev (defTy def) :>: (h :$ B0, map A (rewindStk ss []) ++ trail ts)) l)
+
 > distill tt _ = error $ "Distiller can't cope with " ++ show tt
 
 > distillCan :: (VAL :>: [EXP]) -> Int -> [DInTmRN]
 > distillCan (ONE :>: []) l = []
 > distillCan (SIGMA s t :>: a : as) l = 
 >   distill (ev s :>: ev a) l : distillCan (ev (t $$ A a) :>: as) l
+
+
+> distillHead :: Tm {p, s, Z} -> (DHead RelName, TY, [Elim EXP])
+> distillHead (P (l', n, s)) = (DP [(n,Abs l')], s, [])
+> distillHead (D def ss op)  = (DP (nameToRelName (defName def)),
+>                                  defTy def,
+>                                  map A (rewindStk ss []))
+> distillHead t = error $ "distillHead: barf " ++ show t
 
 
 > distillSpine :: VAL :>: (VAL, [Elim (Tm {Body, Exp, Z})]) -> Int -> [Elim DInTmRN]
