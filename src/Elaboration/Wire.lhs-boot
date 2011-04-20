@@ -8,14 +8,10 @@
 > import ProofState.Edition.ProofState
 > import Kit.BwdFwd
 
-> {-
+> updateDef :: DEF -> ProofState ()
 
-> data PropagateStatus = NormalPropagate | RecursivePropagate
+> startPropagateNews :: NewsyEntries -> ProofState ()
 
-> updateRef :: REF -> ProofState ()
+> runPropagateNews :: NewsBulletin -> NewsyEntries -> ProofState ()
 
-> propagateNews :: PropagateStatus -> NewsBulletin -> NewsyEntries -> ProofState NewsBulletin
-
-> tellEntry :: NewsBulletin -> Entry Bwd -> ProofState (NewsBulletin, Entry Bwd)
-
-> -}
+> tellParamEntry :: NewsBulletin -> Entry Bwd -> (Entry Bwd, NewsBulletin)

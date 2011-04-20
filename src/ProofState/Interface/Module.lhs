@@ -70,15 +70,10 @@ Section~\ref{subsec:Tactics.Elimination.analysis}.
 > moduleToGoal :: EXP -> ProofState EXP
 > moduleToGoal ty = do
 >     chkPS (SET :>: ty)
->     CModule n <- getCurrentEntry
->     inScope <- getInScope
->     let  binScope = boys inScope
->          ty' = (bwdVec (fmap (\(_, s, t) -> (s, t)) binScope) (\ n ys -> piLift n ys)) ty
->          op = eat (Data.Foldable.foldr (\_ -> (1+)) 0 binScope) Hole 
->          def = DEF n ty' op
->     putCurrentEntry $ CDefinition def 
->     putDevTip $ Unknown (ENil // ty)
->     return $ D def S0 op $$$ fmap (\x -> A (P x :$ B0)) binScope 
+>     CModule _ <- getCurrentEntry
+>     putDevTip $ Unknown ty
+>     (_, t) <- updateDefFromTip
+>     return t
 >  where 
 >    boys :: Entries -> Bwd (Int, String, TY)
 >    boys B0 = B0

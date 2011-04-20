@@ -59,13 +59,12 @@ that entries below the cursor are (lazily) notified of the good news.
 >                  ++ err "is not of type" ++ errTyTm (SET :>: tipTy))
 
 >             -- Update the entry as Defined, together with its definition
->             CDefinition def@DEF{defOp=Hole} <- getCurrentEntry
->             lev <- getDevLev
->             let def' = def{defOp=eat lev (Emit tm)}
 >             putDevTip $ Defined (tipTy :>: tm)
->             putCurrentEntry $ CDefinition def'
+>             (def', _) <- updateDefFromTip
+
 >             -- Propagate the good news
->             -- updateRef ref
+>             updateDef def'
+
 >             -- Return the reference
 >             return def'
 >         _  -> throwError' $ err "give: only possible for incomplete goals."

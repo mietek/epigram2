@@ -25,7 +25,7 @@
 > import ProofState.Edition.ProofState
 > import ProofState.Edition.GetSet
 
-> -- import {-# SOURCE #-} Elaboration.Wire
+> import {-# SOURCE #-} Elaboration.Wire
 
 > import Evidences.Tm
 > import Evidences.ErrorHandling
@@ -205,29 +205,34 @@ definition. If one can be found, it enters it and goes at the bottom.
 > goIn = do
 >     above <- getEntriesAbove
 >     case above of
->         B0 -> do
->           -- Nothing above: we cannot go above
->           throwError' $ err "goIn: you can't go that way."
+>         -- Nothing above: we cannot go above
+>         B0 -> throwError' $ err "goIn: you can't go that way."
+>
+>         -- Something above: does it have a subdevelopment? 
 >         aboveE :< e -> case entryDev e of
->           Nothing   -> do
->              -- This entry is not a Definition: look further up
->              cursorUp >> goIn
->           Just dev  -> do
->              -- We are right into a Definition
->              oldFocus  <- getAboveCursor
->              below  <- getBelowCursor
->              -- Set the focus to this Definition
->              putLayer $ Layer  {  aboveEntries     = aboveE
->                                ,  currentEntry     = mkCurrentEntry e
->                                ,  belowEntries     = reverseEntries below
->                                ,  layTip           = devTip oldFocus
->                                ,  layNSupply       = devNSupply oldFocus
->                                ,  layLevelCount    = devLevelCount oldFocus
->                                ,  laySuspendState  = devSuspendState oldFocus }
->              -- Set cursor at the bottom
->              putAboveCursor dev
->              putBelowCursor F0
->              return ()
+>             -- No: look further up
+>             Nothing   -> cursorUp >> goIn
+>
+>             -- Yes: go inside it
+>             Just dev  -> goInHere
+
+> goInHere :: ProofState ()
+> goInHere = do
+>     oldFocus  <- getAboveCursor
+>     below     <- getBelowCursor
+>     let aboveE :< e  = devEntries oldFocus
+>         Just dev     = entryDev e
+>     putLayer $ Layer  {  aboveEntries     = aboveE
+>                       ,  currentEntry     = mkCurrentEntry e
+>                       ,  belowEntries     = reverseEntries below
+>                       ,  layTip           = devTip oldFocus
+>                       ,  layNSupply       = devNSupply oldFocus
+>                       ,  layLevelCount    = devLevelCount oldFocus
+>                       ,  laySuspendState  = devSuspendState oldFocus
+>                       }
+>     putAboveCursor dev
+>     putBelowCursor F0
+>     return ()
 
 
 The |goOut| command moves the focus to the outer layer, with the
@@ -249,7 +254,7 @@ development, with the additional burden of dealing with news.
 >                                   ,  devLevelCount    =  layLevelCount l
 >                                   ,  devSuspendState  =  laySuspendState l }
 >             putBelowCursor F0
->             -- propagateNews NormalPropagate [] (belowEntries l)
+>             startPropagateNews (belowEntries l)
 >             -- Here, the cursor is at the bottom of the current development
 >             return ()
 >         Nothing -> do
@@ -324,7 +329,9 @@ dealing with news: we accumulate them as we go, updating the
 parameteres on our way.
 
 > goDown :: ProofState ()
-> goDown = goDownAcc B0 NONEWS
+> goDown = do
+>     bc <- getBoyCount
+>     goDownAcc B0 NONEWS
 >   where
 >     goDownAcc :: Entries -> NewsBulletin -> ProofState ()
 >     goDownAcc visitedAbove visitedNews = do
@@ -362,16 +369,15 @@ parameteres on our way.
 >                   putAboveCursor (Dev B0 tip' nsupply' l' SuspendNone)
 >                   putBelowCursor F0
 >                   -- Push the collected news from above into the entries
->                   -- propagateNews NormalPropagate visitedNews es'
+>                   runPropagateNews visitedNews es'
 >                   return ()
 >                 Right param -> do
 >                   -- Parameter:
 >
 >                   -- Push the news into it
->                   -- (news, param') <- tellEntry visitedNews param
->                   let (news, param') = (visitedNews, param)
+>                   let (param', news) = tellParamEntry visitedNews param
 >                   -- Keep going down
->                   replaceLayer  $ lay { belowEntries = NF belowNE }
+>                   replaceLayer $ lay { belowEntries = NF belowNE }
 >                   goDownAcc (visitedAbove :< param') news
 >           _ -> do
 >             -- There is no down

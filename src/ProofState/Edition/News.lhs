@@ -67,19 +67,34 @@ two |News| takes the less nice.
 >     GoodBoyNews t1 `mappend` GoodBoyNews t2 = GoodBoyNews t1
 >     -- do bad boy news soon
 
+> toBoyNews :: News -> TY -> BoyNews
+> toBoyNews NoNews    _   = NoBoyNews
+> toBoyNews GoodNews  ty  = GoodBoyNews ty
+> toBoyNews BadNews   ty  = BadBoyNews ty
 
 \subsection{News Bulletin}
 
 A |NewsBulletin| is a list of pairs of updated references and the news about them.
 
-> type GirlNewsBulletin = [(DEF, News)]
-> type NewsBulletin = (GirlNewsBulletin, Bwd BoyNews)
+> type GirlNewsBulletin  = [(DEF, News)]
+> type BoyNewsBulletin   = Maybe (Bwd BoyNews)
+> type NewsBulletin      = (GirlNewsBulletin, BoyNewsBulletin)
 
-> pattern NONEWS = ([], B0)
+> noBoyNews :: Int -> Bwd BoyNews
+> noBoyNews i = bwdList (replicate i NoBoyNews)
+
+> pattern NONEWS = ([], Nothing)
+
+> boring :: NewsBulletin -> Bool
+> boring NONEWS  = True
+> boring _       = False
 
 \subsubsection{Adding news}
 
 The |addNews| function adds the given news to the bulletin, if it is newsworthy.
+
+> addGirlNews :: (DEF, News) -> NewsBulletin ->  NewsBulletin
+> addGirlNews dn (gns, bns) = (addNews dn gns, bns)
 
 > addNews :: (DEF, News) -> GirlNewsBulletin ->  GirlNewsBulletin
 > addNews (_,  NoNews)  old  = old
@@ -94,6 +109,17 @@ The |addNews| function adds the given news to the bulletin, if it is newsworthy.
 Using |seek|, we enforce the invariant that any reference
 appears at most once in a |NewsBulletin|.
 
+> {-
+> addBoyNews :: (Int, BoyNews) -> NewsBulletin -> NewsBulletin
+> addBoyNews (_, NoBoyNews) news = news
+> addBoyNews (l, bn) (gs, bs) =
+>     (gs, bwdInsertAt (bwdLength bs - l - 1) bn bs)
+>   where
+>     bwdInsertAt :: Int -> a -> Bwd a -> Bwd a
+>     bwdInsertAt 0 a (bs :< _) = bs :< a
+>     bwdInsertAt n a (bs :< b) = bwdInsertAt (n-1) a bs :< b
+> -}
+
 
 \subsubsection{Getting the latest news}
 
@@ -105,7 +131,10 @@ present.
 > lookupNews (nb, _) ref = fromMaybe NoNews (lookup ref nb)
 
 > lookupBoyNews :: NewsBulletin -> Int -> BoyNews
-> lookupBoyNews (_, bs) l = fromJust $ bs !. (bwdLength bs - 1 - l)
+> lookupBoyNews (_, Nothing) _ = NoBoyNews
+> lookupBoyNews (_, Just bs) l = case bs !. (bwdLength bs - 1 - l) of
+>     Just bn  -> bn
+>     Nothing  -> error $ "lookupBoyNews: missing news about boy " ++ show l
 
 
 The |getNews| function looks for a reference in the news bulletin,
@@ -132,7 +161,7 @@ without turning into real definitions unexpectedly.
 > getLatest ([], _)              ref = ref
 > getLatest ((ref', _):news, _)  ref
 >     | ref == ref'  = ref'
->     | otherwise    = getLatest (news, B0) ref
+>     | otherwise    = getLatest (news, Nothing) ref
 
 
 
@@ -144,9 +173,16 @@ produce a single bulletin with the worst news about every reference mentioned
 in either.
 
 > mergeNews :: NewsBulletin -> NewsBulletin -> NewsBulletin
-> mergeNews new ([], B0) = new
+> mergeNews new NONEWS = new
 > mergeNews (newg, newb) (oldg, oldb) =
->     (foldr addNews oldg newg, bwdZipWith mappend newb oldb)
+>     (foldr addNews oldg newg, mergeBoyNews newb oldb)
+
+
+> mergeBoyNews (Just newb) (Just oldb)  = Just (bwdZipWith mappend newb oldb)
+> mergeBoyNews (Just newb) Nothing      = Just newb
+> mergeBoyNews Nothing     (Just oldb)  = Just oldb
+> mergeBoyNews Nothing     Nothing      = Nothing
+
 
 
 \subsubsection{Read all about it}
@@ -158,8 +194,8 @@ news about it calculated in a single traversal. Note that we ensure |FAKE|
 references remain as they are, as in |getLatest|.
 
 > tellNews :: NewsBulletin -> EXP -> (EXP, News)
-> tellNews ([], B0)    tm = (tm, NoNews)
-> tellNews bull  tm = runWriter $ traverseTm tm
+> tellNews NONEWS tm = (tm, NoNews)
+> tellNews bull   tm = runWriter $ traverseTm tm
 >   where
 >     traverseTm :: Tm {p, s, n} -> Writer News (Tm {Body, Exp, n})
 >     traverseTm (L g x b) = (| L (traverseEnv g) ~x (traverseTm b) |)
@@ -179,4 +215,10 @@ references remain as they are, as in |getLatest|.
 >     traverseTm (g :/ t) = (| (traverseEnv g) :/ (traverseTm t) |)
 >
 >     traverseEnv :: Env {n} {m} -> Writer News (Env {n} {m})
->     traverseEnv = undefined
+>     traverseEnv (mlev, iev) = (| (traverse (traverse traverseTm) mlev)
+>                                  , traverseIEnv iev |)
+
+>     traverseIEnv :: IEnv {n, m} -> Writer News (IEnv {n, m})
+>     traverseIEnv INix = pure INix
+>     traverseIEnv INil = pure INil
+>     traverseIEnv (g :<<: t) = (| (traverseIEnv g) :<<: traverseTm t |)

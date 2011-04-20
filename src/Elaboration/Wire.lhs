@@ -10,6 +10,7 @@
 > module Elaboration.Wire where
 
 > import Control.Applicative
+> import Control.Monad
 
 > import Kit.BwdFwd
 
@@ -36,8 +37,6 @@
 
 %endif
 
-> {-
-
 \subsection{Updating a reference}
 
 Here we describe how to handle updates to references in the proof
@@ -47,34 +46,11 @@ tree. When |updateRef| is called to announce a changed reference (that
 the current development has already processed), it simply inserts a
 news bulletin below the current development.
 
-> updateRef :: REF -> ProofState ()
-> updateRef ref = putNewsBelow [(ref, GoodNews)]
+> updateDef :: DEF -> ProofState ()
+> updateDef def = putNewsBelow ([(def, GoodNews)], Nothing)
 
 
 \subsection{Committing news into the ProofState}
-
-The |propagateNews| function takes a current news bulletin and a list
-of entries to \emph{add} to the current development. It applies the
-news bulletin to each entry in turn, picking up other bulletins along
-the way. This function is called when navigating to a development that
-may contain news bulletins, so they can be pushed out of sight.
-
-> propagateNews :: PropagateStatus ->  NewsBulletin -> NewsyEntries -> 
->                                      ProofState NewsBulletin
-
-We need to keep track of whether news propagation was called normally or as a
-recursive call. If called normally, we will stash the news bulletin the proof
-state when done, but this is unnecessary if news propagation will continue
-outside the recursive call.
-
-> data PropagateStatus = NormalPropagate | RecursivePropagate
-
-If we have nothing to say and nobody to tell, we might as well give up
-and go home. If we were called recursively and have nobody to listen to
-the news, we give up as well.
-
-> propagateNews _ [] (NF F0) = return []
-> propagateNews RecursivePropagate news (NF F0) = return news
 
 If there are no entries to process, we should tell the current entry
 (there is one, as we are within a development), stash the bulletin
@@ -82,37 +58,51 @@ after the current location and stop. Note that the insertion is
 optional because it will fail when we have reached the end of the
 module, at which point everyone knows the news anyway.
 
-> propagateNews NormalPropagate news (NF F0) = do
->     news' <- tellCurrentEntry news
->     optional (putNewsBelow news')
->     return news'
+> startPropagateNews :: NewsyEntries -> ProofState ()
+> startPropagateNews es = runPropagateNews NONEWS es
 
-To update a |Parameter|, we check to see if its type has become more defined,
-and pass on the good news if necessary.
+> runPropagateNews :: NewsBulletin -> NewsyEntries -> ProofState ()
+> runPropagateNews news es = do
+>     news' <- propagateNews news es
+>     unless (boring news') $ do
+>         news' <- tellCurrentEntry news
+>         optional (putNewsBelow news')
+>         return ()
 
-> propagateNews  top news 
->                (NF (Right (EPARAM (name := DECL :<: tv) sn k ty a) :> es)) = do
->     case tellNews news ty of
->         (_, NoNews) -> do
->           let ref = name := DECL :<: tv
->           putEntryAbove (EPARAM ref sn k ty a) 
->           propagateNews top news (NF es)
->         (ty', GoodNews) -> do
->           let ref = name := DECL :<: evTm ty'
->           putEntryAbove (EPARAM ref sn k ty' a)
->           propagateNews top (addNews (ref, GoodNews) news) (NF es)
+
+The |propagateNews| function takes a current news bulletin and a list
+of entries to \emph{add} to the current development. It applies the
+news bulletin to each entry in turn, picking up other bulletins along
+the way. This function is called when navigating to a development that
+may contain news bulletins, so they can be pushed out of sight.
+
+> propagateNews :: NewsBulletin -> NewsyEntries -> 
+>                      ProofState NewsBulletin
+
+If we have nothing to say, we might as well give up and go home.
+
+> propagateNews news (NF F0) = return news
+
+
+To update a parameter, we check to see if its type has become more
+defined, and pass on the good news if necessary.
+
+> propagateNews news (NF (Right (EParam k n ty l) :> es)) = do
+>     let (e', news') = tellParamEntry news (EParam k n ty l)
+>     putEntryAbove e'
+>     propagateNews news' (NF es)
 
 To update definitions or modules, we call on |propagateNewsWithin|.
 
-> propagateNews top news (NF (Right e :> es)) = do
+> propagateNews news (NF (Right e :> es)) = do
 >     news' <- propagateNewsWithin news e
->     propagateNews top news' (NF es)
+>     propagateNews news' (NF es)
 
 Finally, if we encounter an older news bulletin when propagating news,
 we can simply merge the two together.
 
-> propagateNews top news (NF (Left oldNews :> es)) =
->   propagateNews top (mergeNews news oldNews) (NF es)
+> propagateNews news (NF (Left oldNews :> es)) =
+>   propagateNews (mergeNews news oldNews) (NF es)
 
 
 The |propagateNewsWithin| command will:
@@ -125,16 +115,11 @@ The |propagateNewsWithin| command will:
 
 > propagateNewsWithin :: NewsBulletin -> Entry NewsyFwd -> ProofState NewsBulletin
 > propagateNewsWithin news e = do
->     -- Get current context and insert it as a layer
->     Dev es tip nsupply ss <- getAboveCursor
->     below <- getBelowCursor
->     putLayer (Layer es (mkCurrentEntry e) (reverseEntries below) tip nsupply ss)
->     -- Extract new information and make it the current location
->     let Just (Dev cs newTip newNSupply newSS) = entryDev e
->     putAboveCursor (Dev B0 newTip newNSupply newSS)
->     putBelowCursor F0
+>     putEntryAbove $ modifyEntryDev (\ dev -> dev{devEntries=B0}) e
+>     goInHere
+>     let Just Dev{devEntries=es} = entryDev e
 >     -- Propagate news through children and current entry
->     news'   <- propagateNews RecursivePropagate news cs
+>     news'   <- propagateNews news es
 >     news''  <- tellCurrentEntry news'
 >     -- Go out to where we were before
 >     goOut
@@ -143,7 +128,54 @@ The |propagateNewsWithin| command will:
 
 \subsection{Informing a current entry about its development}
 
-\pierre{To be more carefully reviewed.}
+The update of a parameter consists in:
+\begin{enumerate}
+\item updating its type based on the news we received, and
+\item adding to the news bulletin the fact that this parameter has
+      been updated
+\end{enumerate}
+
+News about the parameter will be appended to the news bulletin, so the
+bulletin must contain boy news for all the previous parameters.
+
+> tellParamEntry :: NewsBulletin -> Entry Bwd -> (Entry Bwd, NewsBulletin)
+> tellParamEntry (gns, bns) (EParam k n ty l) = 
+>     let (ty', ne) = tellNews (gns, bns) ty
+>         bns' = case (bns, ne) of
+>                  (Just bs, _)      -> Just (bs :< toBoyNews ne ty')
+>                  (Nothing, NoNews) -> Nothing
+>                  (Nothing, _)      -> Just (noBoyNews l :< toBoyNews ne ty')
+>     in (EParam k n ty' l, (gns, bns'))
+
+
+
+The |tellCurrentEntry| function informs the current entry about a news
+bulletin that her children have already received, and returns the
+updated news.
+
+> tellCurrentEntry :: NewsBulletin -> ProofState NewsBulletin
+> tellCurrentEntry news = do
+>     tip <- getDevTip
+>     let (tip', ne) = tellTip news tip
+>     case ne of
+>         NoNews    -> return news
+>         GoodNews  -> do
+>             putDevTip tip'
+>             (def, _) <- updateDefFromTip
+>             return $ addGirlNews (def, ne) news
+
+> tellTip :: NewsBulletin -> Tip -> (Tip, News)
+> tellTip _ Module = (Module, NoNews)
+> tellTip news (Unknown ty) = (Unknown ty', ne)
+>   where (ty', ne) = tellNews news ty
+> tellTip news (Defined (ty :>: tm)) = (Defined (ty' :>: tm'), ne)
+>   where (ty', ne1) = tellNews news ty
+>         (tm', ne2) = tellNews news tm
+>         ne         = min ne1 ne2
+
+
+
+> {-
 
 The |tellEntry| function informs an entry about a news bulletin that
 its development (if any) have already received. It applies the news
@@ -178,18 +210,6 @@ Modules carry no type information, so they are easy:
 
 > tellEntry news (EModule n d) = return (news, EModule n d)
 
-The update of a parameter consists in:
-\begin{enumerate}
-\item updating its type based on the news we received, and
-\item adding to the news bulletin the fact that this parameter has
-      been updated
-\end{enumerate}
-
-> tellEntry news (EPARAM (name := DECL :<: tv) sn k ty anchor) = do
->     let (ty' :=>: tv', n)  = tellNewsEval news (ty :=>: tv)
->     let ref = name := DECL :<: tv'
->     return (addNews (ref, n) news, EPARAM ref sn k ty' anchor)
-
 To update a hole, we must first check to see if the news bulletin contains a
 definition for it. If so, we fill in the definition (and do not need to
 update the news bulletin). If not, we must  \pierre{why?}:
@@ -201,8 +221,8 @@ update the news bulletin). If not, we must  \pierre{why?}:
 If the hole is |Hoping| and we have good news about its type, then we
 restart elaboration to see if it can make any progress.
 
-> tellEntry news (EDEF  ref@(name := HOLE h :<: tyv) sn
->                       dkind dev@(Dev {devTip=Unknown tt}) ty anchor)
+> tellEntry news (EDef def dev)  -- ref@(name := HOLE h :<: tyv) sn
+>                       -- dkind dev@(Dev {devTip=Unknown tt}) ty anchor)
 >   | Just (ref'@(_ := DEFN tm :<: _), GoodNews) <- getNews news ref = do
 >     -- We have a Definition for it
 >     es   <- getInScope
@@ -223,6 +243,8 @@ restart elaboration to see if it can make any progress.
 >     return  (addNews (ref, min n n') news,
 >             EDEF ref sn dkind (dev{devTip=tip}) ty' anchor)
 
+
+
 To update a hole with a suspended elaboration problem attached, we
 proceed similarly to the previous case, but we also update the
 elaboration problem.  If the news bulletin defines this hole, it had
@@ -230,6 +252,8 @@ better just be hoping for a solution \pierre{Is this an invariant we
 are meant to enforce? Or something that might break one day? See bug
 \#53.}, in which case we can safely ignore the attached |ElabHope|
 process.
+
+
 
 > tellEntry news (EDEF  ref@(name := HOLE h :<: tyv) sn
 >                       dkind dev@(Dev {devTip=Suspended tt prob}) ty anchor)
@@ -261,6 +285,7 @@ process.
 >               tellEProb news = fmap (getLatest news)
 
 
+
 To update a closed definition (|Defined|), we must:
 \begin{enumerate}
 \item update the tip type;
@@ -270,35 +295,16 @@ To update a closed definition (|Defined|), we must:
 \item update the news bulletin with news about this definition.
 \end{enumerate}
 
-> tellEntry news (EDEF  (name := DEFN tmL :<: tyv) sn dkind 
->                       dev@(Dev {devTip=Defined tm tt}) ty anchor) = do
->     let  (tt', n)             = tellNewsEval news tt
->          (ty' :=>: tyv', n')  = tellNewsEval news (ty :=>: tyv)
->          (tm', n'')           = tellNews news tm
->     aus <- getGlobalScope
->     let tmL' = parBind aus (devEntries dev) tm'
+> tellEntry news (EDef def dev@(Dev {devTip=Defined (ty :>: tm)})) = do  
+>     let  (ty', ne)   = tellNews news ty 
+>          (tm', ne')  = tellNews news tm
 
-For paranoia purposes, the following test might be helpful:
-
-<     mc <- withNSupply (inCheck $ check (tyv' :>: tmL'))
-<     mc `catchEither` unlines ["tellEntry " ++ showName name ++ ":",
-<                                 show tmL', "is not of type", show ty' ]
-
->     let ref = name := DEFN (evTm tmL') :<: tyv'
->     return  (addNews (ref, GoodNews {-min (min n n') n''-}) news,
->             EDEF ref sn dkind (dev{devTip=Defined tm' tt'}) ty' anchor)
+>     let def' = def{defTy=dty'}name := DEFN (evTm tmL') :<: tyv'
+>     return  (addNews (def', min ne ne') news,
+>             EDef def' (dev{devTip=Defined (ty' :>: tm')}))
 
 
-The |tellCurrentEntry| function informs the current entry about a news
-bulletin that her children have already received, and returns the
-updated news.
 
-> tellCurrentEntry :: NewsBulletin -> ProofState NewsBulletin
-> tellCurrentEntry news = do
->     e <- getLeaveCurrent
->     (news', e') <- tellEntry news e 
->     putEnterCurrent e'
->     return news'
 
 
 
@@ -312,5 +318,6 @@ update the outer layers.
 >     help ss B0 = B0
 >     help ss (ls :< l) = help ss' ls :< l{laySuspendState = ss'}
 >       where ss' = min ss (laySuspendState l)
+
 
 > -}

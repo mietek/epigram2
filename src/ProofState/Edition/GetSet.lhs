@@ -14,6 +14,7 @@
 
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
+> import Kit.NatFinVec
 
 > import DisplayLang.Scheme
 
@@ -344,3 +345,50 @@ And some specialized version:
 >     putAboveCursor dev{devEntries = es}
 >     return (devEntries dev)
 
+
+
+
+
+> getBoyCount :: ProofState Int
+> getBoyCount = do
+>     inScope <- getInScope
+>     return $ Data.Foldable.foldr countParam 0 inScope
+>   where
+>     countParam (EParam _ _ _ _) n = 1 + n
+>     countParam _                n = n
+
+
+The |updateDefFromTip| command updates the current entry (which must
+be a definition) after its tip has been updated. It lambda-lifts the
+tip type (and term, if there is one) to produce an updated |DEF|,
+which it stores as the current entry. It returns the updated |DEF|
+along with the result of applying it to the spine of shared
+parameters.
+
+This is used by |give| and |make|, plus the news propagation
+machinery. Perhaps it should move somewhere more logical.
+
+> updateDefFromTip :: ProofState (DEF, EXP)
+> updateDefFromTip = do
+>     tip <- getDevTip
+>     nom <- getCurrentName
+>     let ty = case tip of
+>                  Unknown t          -> t
+>                  Defined (t :>: _)  -> t
+>     inScope <- getInScope
+>     let  binScope = boys inScope
+>          ty' = bwdVec (fmap (\(_, s, t) -> (s, t)) binScope)
+>                           (\ n ys -> piLift n ys) ty
+>          lev = Data.Foldable.foldr (\_ -> (1+)) 0 binScope
+>          op = eat lev (tipToOp tip)
+>          def' = DEF nom ty' op
+>     putCurrentEntry $ CDefinition def'
+>     return (def', D def' S0 op $$$ fmap (\x -> A (P x :$ B0)) binScope)
+>  where 
+>    boys :: Entries -> Bwd (Int, String, TY)
+>    boys B0 = B0
+>    boys (es :< EParam _ s t l) =  boys es :< (l, s, t)
+>    boys (es :< _) =  boys es 
+
+>    tipToOp (Unknown _)           = Hole
+>    tipToOp (Defined (_ :>: tm))  = Emit tm

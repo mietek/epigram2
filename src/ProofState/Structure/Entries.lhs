@@ -57,6 +57,12 @@ Hence, we have:
 > entryDev (EModule _ d)     = Just d
 > entryDev (EParam _ _ _ _)  = Nothing
 
+> modifyEntryDev :: (Traversable f, Traversable g) =>
+>                       (Dev f -> Dev g) -> Entry f -> Entry g
+> modifyEntryDev f (EDef def dev) = EDef def (f dev)
+> modifyEntryDev f (EModule n dev) = EModule n (f dev)
+> modifyEntryDev f (EParam k n t l) = EParam k n t l
+
 > {-
 > entrySuspendState :: Traversable f => Entry f -> SuspendState
 > entrySuspendState e = case entryDev e of
