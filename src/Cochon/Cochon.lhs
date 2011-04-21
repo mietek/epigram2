@@ -317,10 +317,14 @@ Construction tactics:
 >          (\ args -> case args of
 >             []  -> return "This lambda needs no introduction!"
 >             _   -> case last args of
->                    _  -> traverse (lambdaParam . argToStr) args >> return "Made lambda!"
+>               InArg ty  -> do
+>                  ty' <- dumbPS ty 
+>                  Data.Traversable.mapM (assumeParam {- lamParam -} . (:<: ty') . argToStr) (init args)
+>                                >> return "Made lambda!"
+>               _  -> traverse (lambdaParam . argToStr) args >> return "Made lambda!"
 >            )
->          ("lambda <labels> - introduces one or more hypotheses.\n") :
->           -- "lambda <labels> : <type> - introduces new module parameters or hypotheses.") :
+>          ("lambda <labels> - introduces one or more hypotheses.\n" ++
+>           "lambda <labels> : <type> - introduces new module parameters or hypotheses.") :
 
 
 
