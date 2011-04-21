@@ -193,6 +193,10 @@ etags:
 	echo ":etags" | ghci $(HC_PACKAGE) -v0 Main.lhs
 	while [ ! -f TAGS ]; do echo ":etags" | ghci $(HC_PACKAGE) -v0 Main.lhs; done
 
+## hasktags is much quicker, because it ignores she
+hasktags: $(SRCS)
+	hasktags $(SRCS)
+
 ## Clean:
 clean:
 	rm -f $(SRCS:.lhs=.o)          \
