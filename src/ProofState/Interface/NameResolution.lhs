@@ -12,6 +12,7 @@
 > import Control.Monad.State
 > import Data.Foldable hiding (elem, find)
 > import Data.List
+> import Data.Maybe
 > import Data.Traversable
 
 > import Kit.BwdFwd
@@ -24,11 +25,14 @@
 > import ProofState.Edition.Entries
 > import ProofState.Edition.Scope
 > import ProofState.Edition.ProofState
+> import ProofState.Edition.GetSet
 
 > import DisplayLang.Name
-> import DisplayLang.Scheme
+
+< import DisplayLang.Scheme
 
 > import Evidences.Tm
+> import Evidences.ErrorHandling
 > import Evidences.NameSupply
 > import Evidences.Operators
 
@@ -84,9 +88,6 @@ the name components from the backwards list.
 > flatNom B0 nom = nom
 > flatNom (esus :< (_,u)) nom = flatNom esus (u : nom)
 
-
-> {-
-
 \subsection{Resolving relative names to references}
 
 We need to resolve local longnames as references. We resolve \relname{f.x.y.z}
@@ -100,15 +101,17 @@ When in the process of resolving a relative name, we keep track of a
 |ResolveState|. \question{What do the components mean?}
 
 > type ResolveState =  (  Either FScopeContext Entries
->                      ,  [REF]
->                      ,  Maybe REF 
->                      ,  Maybe (Scheme INTM)
+>                      ,  Int
+>                      ,  Maybe DEF 
+>                      ,  Maybe () -- (Scheme INTM)
 >                      )
 
 The outcome of the process is a |ResolveResult|: a reference, a list of shared
 parameters to which it should be applied, and a scheme for it (if there is one).
 
-> type ResolveResult = (REF, [REF], Maybe (Scheme INTM))
+> type ResolveResult = Either (Int, String, TY) (DEF, Int, Maybe ())
+
+< type ResolveResult = (REF, [REF], Maybe (Scheme INTM))
 
 
 The |resolveHere| command resolves a relative name to a reference,
@@ -117,25 +120,30 @@ possibly a scheme. If the name ends with "./", the scheme will be
 discarded, so all parameters can be provided explicitly.
 \question{What should the syntax be for this, and where should it be handled?}
 
-> resolveHere :: RelName -> ProofState ResolveResult
+> resolveHere :: RelName -> ProofState (Tm {Body, s, n}, Int, Maybe ())
 > resolveHere x = do
->     let (x', b) = shouldDiscardScheme x
+>     let (x', b) = (x, True) -- shouldDiscardScheme x
 >     uess <- gets inBScope
->     (r, s, ms) <- resolve x' uess 
+>     l <- getDevLev
+>     res <- resolve x' l uess 
 >        `catchEither` (err $ "resolveHere: cannot resolve name: "
 >                             ++ showRelName x')
->     return (r, s, if b then Nothing else ms)
->   where
->     shouldDiscardScheme :: RelName -> (RelName, Bool)
->     shouldDiscardScheme x =  if fst (last x) == "/"
->                              then  (init x,  True)
->                              else  (x,       False)
+>     case res of
+>       Left (l, s, t) -> return $ (P (l, s, t) :$ B0 , 0, Nothing)
+>       Right (d, i, m) -> return $ (D d S0 (defOp d), i, m)
+>     return $ undefined  -- res'  -- (r, s, if b then Nothing else ms)
+
+<   where
+<     shouldDiscardScheme :: RelName -> (RelName, Bool)
+<     shouldDiscardScheme x =  if fst (last x) == "/"
+<                              then  (init x,  True)
+<                              else  (x,       False)
 
 The |resolveDiscard| command resolves a relative name to a reference,
 discarding any shared parameters it should be applied to.
 
-> resolveDiscard :: RelName -> ProofState REF
-> resolveDiscard x = resolveHere x >>= (\ (r, _, _) -> return r)
+< resolveDiscard :: RelName -> ProofState DEF
+< resolveDiscard x = resolveHere x >>= (\ (r, _, _) -> return r)
 
 
 There are four stages relating to whether we are looking up or down
@@ -154,65 +162,75 @@ The |resolve| function starts the name resolution process: if the name is a
 primitive we are done, otherwise it invokes |lookUp| or |lookDown| as appropriate
 then continues with |lookFor|.
 
-> resolve :: RelName -> BScopeContext -> Either (StackError t) ResolveResult
-> resolve [(y, Rel 0)] _
->   | Just ref <- lookup y primitives  = Right (ref, [], Nothing)
-> resolve ((x, Rel i) : us)  bsc = lookUp (x, i) bsc (bToF bsc)   >>= lookFor us
-> resolve ((x, Abs i) : us)  bsc = lookDown (x, i) (bToF bsc) []  >>= lookFor us
-> resolve []                 bsc = Left [err "Oh no, the empty name"]
+> resolve :: RelName -> Int -> BScopeContext -> Either (StackError) ResolveResult
+
+< resolve [(y, Rel 0)] l _
+<   | Just ref <- lookup y primitives  = Right (ref, [], Nothing)
+
+> resolve ((x, Rel i) : us)  l bsc = do
+>   x <- lookUp (x, i) l bsc (bToF bsc)   
+>   case x of
+>     (Right y) -> lookFor us y
+>     (Left z) -> Right (Left z)
+> resolve ((x, Abs i) : us)  l bsc = lookDown (x, i) (bToF bsc) 0  >>= lookFor us
+> resolve []                 l bsc = Left [err "Oh no, the empty name"]
 
 
-> lookFor :: RelName -> ResolveState -> Either (StackError t) ResolveResult
-> lookFor [] (_,         sp, Just r,   ms)  = Right (r, sp, ms) 
-> lookFor [] (Left fsc,  sp, Nothing,  _)   = Left [err "Direct ancestors are not in scope!"]
-> lookFor us (Left fsc,  sp, _,        _)   = do 
->     (x, _, z) <- lookFor' us fsc
->     return (x, sp, z)
-> lookFor us (Right es, sp, mr, ms)         = lookLocal us es sp mr ms
+> lookFor :: RelName -> ResolveState -> Either (StackError) ResolveResult
+> lookFor [] (_,         l, Just r,   ms)  = Right (Right (r, l, ms))
+> lookFor [] (Left fsc,  l, Nothing,  _)   = Left [err "Direct ancestors are not in scope!"]
+> lookFor us (Left fsc,  l, _,        _)   = do 
+>     res <- lookFor' us 0 fsc
+>     case res of 
+>       Right (x, _, z) -> return $ Right (x, l, z) 
+> lookFor us (Right es,  l, mr, ms)         = lookLocal us es l mr ms
 
 
-> lookFor' :: RelName -> FScopeContext -> Either (StackError t) ResolveResult
-> lookFor' ((x, Abs i) : us)  fsc = lookDown (x, i) fsc []  >>= lookFor us
-> lookFor' ((x, Rel 0) : us)  fsc = lookDown (x, 0) fsc []  >>= lookFor us
-> lookFor' ((x, Rel i) : us)  fsc = Left [err "Yeah, good luck with that"]
-> lookFor' []                 fsc = Left [err "Oh no, the empty name"]
+> lookFor' :: RelName -> Int -> FScopeContext -> Either (StackError) ResolveResult
+> lookFor' ((x, Abs i) : us)  l fsc = lookDown (x, i) fsc 0  >>= lookFor us
+> lookFor' ((x, Rel 0) : us)  l fsc = lookDown (x, 0) fsc 0  >>= lookFor us
+> lookFor' ((x, Rel i) : us)  l fsc = Left [err "Yeah, good luck with that"]
+> lookFor' []                 l fsc = Left [err "Oh no, the empty name"]
 
 
-> lookUp :: (String, Int) -> BScopeContext -> FScopeContext -> 
->               Either (StackError t) ResolveState
-> lookUp (x,i) (B0, B0) fs = Left [err $ "Not in scope " ++ x]
-> lookUp (x,i) ((esus :< (es,(y,j))),B0) (fs,vfss) | x == y = 
->   if i == 0 then Right (Left (fs,vfss), paramREFs (flat esus es), Nothing, Nothing)
->             else lookUp (x,i-1) (esus,es) (F0,((y,j),fs) :> vfss)
-> lookUp (x,i) ((esus :< (es,(y,j))),B0) (fs,vfss) = 
->   lookUp (x,i) (esus,es) (F0,((y,j),fs) :> vfss)
-> lookUp (x,i) (esus, es :< e@(EModule n (Dev {devEntries=es'}))) (fs,vfss) | lastNom n == x =
->   if i == 0 then Right (Right es', paramREFs (flat esus es), Nothing, Nothing)
->             else lookUp (x,i-1) (esus,es) (e:>fs,vfss)
-> lookUp (x,i) (esus, es :< e@(EDEF r (y,j) dkind (Dev {devEntries=es'}) _ _)) (fs,vfss) | x == y =
->   if i == 0 then Right (Right es', paramREFs (flat esus es), Just r, entryScheme e)
->             else lookUp (x,i-1) (esus,es) (e:>fs,vfss)
-> lookUp (x,i) (esus, es :< e@(EPARAM r (y,j) _ _ _)) (fs,vfss) | x == y =
->   if i == 0 then Right (Right B0, [], Just r, Nothing)
->             else lookUp (x,i-1) (esus,es) (e:>fs,vfss)
-> lookUp u (esus, es :< e) (fs,vfss) = lookUp u (esus,es) (e:>fs,vfss)
+> lookUp :: (String, Int) -> Int -> BScopeContext -> FScopeContext -> 
+>               Either (StackError) (Either (Int, String, TY) ResolveState)
+> lookUp (x,i) l (B0, B0) fs = Left [err $ "Not in scope " ++ x]
+> lookUp (x,i) l ((esus :< (es,(y,j))),B0) (fs,vfss) | x == y = 
+>   if i == 0 then Right (Right (Left (fs,vfss), l, Nothing, Nothing))
+>             else lookUp (x,i-1) l (esus,es) (F0,((y,j),fs) :> vfss)
+> lookUp (x,i) l ((esus :< (es,(y,j))),B0) (fs,vfss) = 
+>   lookUp (x,i) l (esus,es) (F0,((y,j),fs) :> vfss)
+> lookUp (x,i) l (esus, es :< e@(EModule n (Dev {devEntries=es'}))) (fs,vfss) | lastNom n == x =
+>   if i == 0 then Right (Right (Right es', l, Nothing, Nothing))
+>             else lookUp (x,i-1) l (esus,es) (e:>fs,vfss)
+> lookUp (x,i) l (esus, es :< e@(EDef d (Dev {devEntries=es'}))) (fs,vfss) 
+>     | x == (fst $ last $ defName d) =
+>   if i == 0 then Right (Right (Right es', l, Just d, Nothing)) -- entryScheme e))
+>             else lookUp (x,i-1) l (esus,es) (e:>fs,vfss)
+> lookUp (x,i) l (esus, es :< e@(EParam _ s t l')) (fs,vfss) | x == s =
+>   if i == 0 then Right (Left (l', s, t))
+>             else lookUp (x,i-1) (l-1) (esus,es) (e:>fs,vfss)
+> lookUp (x,i) l (esus, es :< e@(EParam _ _ _ _)) (fs,vfss) =
+>             lookUp (x,i-1) (l-1) (esus,es) (e:>fs,vfss)
+> lookUp u l (esus, es :< e) (fs,vfss) = lookUp u l (esus,es) (e:>fs,vfss)
 
 
-> lookDown :: (String,Int) -> FScopeContext -> [REF] -> 
->                 Either (StackError t) ResolveState
+> lookDown :: (String,Int) -> FScopeContext -> Int -> 
+>                 Either (StackError) ResolveState
 
 > lookDown (x, i) (e :> es, uess) sp =
->     if x == (fst $ entryLastName e)
+>     if x == (fst $ last $ fromJust $ entryName e)
 >     then if i == 0
 >          then case (|devEntries (entryDev e)|) of
->              Just zs  -> Right (Right zs, sp, entryRef e, entryScheme e)
->              Nothing  -> Right (Right B0, [], entryRef e, entryScheme e) 
+>              Just zs  -> Right (Right zs, sp, entryDef e, Nothing ) -- entryScheme e))
+>              Nothing  -> Right (Right B0, 0,  entryDef e, Nothing ) -- entryScheme e)) 
 >          else lookDown (x, i-1) (es, uess) (pushSpine e sp)
 >     else lookDown (x, i) (es, uess) (pushSpine e sp)
 >   where
->     pushSpine :: Entry Bwd -> [REF] -> [REF]
->     pushSpine (EPARAM r _ _ _ _) sp   = r : sp
->     pushSpine _ sp                   = sp
+>     pushSpine :: Entry Bwd -> Int -> Int
+>     pushSpine (EParam _ _ _ _) sp   =  sp + 1
+>     pushSpine _ sp                  =  sp
 
 > lookDown (x, i) (F0 , (((y, j), es) :> uess)) sp =
 >     if x == y
@@ -224,27 +242,27 @@ then continues with |lookFor|.
 > lookDown (x, i) (F0, F0) fs = Left [err $ "Not in scope " ++ x]
 
 
-> lookLocal :: RelName -> Entries -> [REF] -> Maybe REF -> Maybe (Scheme INTM) ->
->                  Either (StackError t) ResolveResult
+> lookLocal :: RelName -> Entries -> Int -> Maybe DEF -> Maybe () {- (Scheme INTM) -} ->
+>                  Either (StackError) ResolveResult
 > lookLocal ((x, Rel i) : ys) es sp _ _  = huntLocal (x, i) ys (reverse $ trail es) sp
 > lookLocal ((x, Abs i) : ys) es sp _ _  = huntLocal (x, i) ys (trail es) sp
-> lookLocal [] _ sp  (Just r)  ms        = Right (r, sp, ms)
+> lookLocal [] _ sp  (Just r)  ms        = Right (Right (r, sp, ms))
 > lookLocal [] _ _   Nothing   _         = Left [err "Modules have no term representation"]
 
 
-> huntLocal :: (String, Int) -> RelName -> [Entry Bwd] -> [REF] ->
->                      Either (StackError t) ResolveResult
+> huntLocal :: (String, Int) -> RelName -> [Entry Bwd] -> Int ->
+>                      Either (StackError) ResolveResult
 > huntLocal (x, i) ys (e : es) as =
->     if x == (fst $ entryLastName e)
+>     if x == (fst $ last $ fromJust $ entryName e)
 >     then if i == 0
 >          then case (|devEntries (entryDev e)|) of
->              Just zs  -> lookLocal ys zs as (entryRef e) (entryScheme e)
+>              Just zs  -> lookLocal ys zs as (entryDef e) Nothing -- (entryScheme e)
 >              Nothing  -> Left [err "Params in other Devs are not in scope"] 
 >          else huntLocal (x, i-1) ys es as
 >     else huntLocal (x, i) ys es as 
 > huntLocal (x, i) ys [] as = Left [err $ "Had to give up looking for " ++ x]
 
-
+> {-
 
 
 \subsection{Unresolving absolute names to relative names}
@@ -575,12 +593,13 @@ current location.
 >   if i == (snd . last $ n) then (| (o,es',Nothing) |) 
 >                            else nomRel' (o+1) (x,i) es
 > nomRel' o (x,i) (es:< e@(EDEF _ (y,j) dkind (Dev {devEntries=es'}) _ _)) | y == x =
->   if i == j then (| (o,es',entryScheme e) |) else nomRel' (o+1) (x,i) es
+>   if i == j then (| (o,es',Nothing {-entryScheme e-}) |) else nomRel' (o+1) (x,i) es
 > nomRel' o (x,i) (es:< EEntity _ (y,j) _ _ _) | y == x = 
 >   if i == j then (| (o,B0,Nothing) |) else nomRel' (o+1) (x,i) es
 > nomRel' o (x,i) (es:<e) = nomRel' o (x,i) es
 > nomRel' _ _ _ = Nothing
 
+> -}
 
 \subsubsection{Useful oddments for unresolution}
 
@@ -598,6 +617,7 @@ erroneous terms, which may not be well-scoped.
 > failNom :: Name -> RelName
 > failNom nom = ("!!!",Rel 0):(map (\(a,b) -> (a,Abs b)) nom)
 
+> {-
 
 \subsubsection{Invoking unresolution}
 
@@ -619,7 +639,7 @@ intercalating to produce a comma-separated list.
 > showEntries :: (Traversable f, Traversable g) => BScopeContext -> f (Entry g) -> String
 > showEntries bsc = intercalate ", " . foldMap f
 >   where
->     f e | Just r <- entryRef e  = [showRelName (christenREF bsc r)]
+>     f e | Just r <- entryDef e  = [showRelName (christenREF bsc r)]
 >         | otherwise             = []
 
 > -}
