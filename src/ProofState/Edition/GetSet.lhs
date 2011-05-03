@@ -380,7 +380,7 @@ machinery. Perhaps it should move somewhere more logical.
 >          ty' = bwdVec (fmap (\(_, s, t) -> (s, t)) binScope)
 >                           (\ n ys -> piLift n ys) ty
 >          lev = Data.Foldable.foldr (\_ -> (1+)) 0 binScope
->          op = eat lev (tipToOp tip)
+>          op = eats lev (tipToOp tip)
 >          def' = DEF nom ty' op
 >     putCurrentEntry $ CDefinition def'
 >     return (def', D def' S0 op $$$ fmap (\x -> A (P x :$ B0)) binScope)

@@ -65,9 +65,44 @@
 >   StuckCase  :: [(Can, Operator {Body, s})] -> Operator {Head, s'}
 >   Split  :: Operator {p, s} -> Operator {Body, s'}
 
-> eat :: Int -> Operator {Body, s} -> Operator {Body, s}
-> eat 0 o = o
-> eat n o = Eat (eat (n-1) o) 
+> type OpMaker s = Int -> Operator {Body,s}
+
+> eat :: String -> ((forall t. Wrapper t {Z} => t) -> OpMaker s') -> OpMaker s
+> eat y b p = let x :: Tm {Head, Exp, Z} ; x = P (p,y,undefined) 
+>             in  Eat (b (wrapper x B0) (p + 1))
+
+> emit :: Tm {Body, Exp, Z} -> OpMaker {Exp}
+> emit x _ = Emit x
+
+> cases :: [(Can , OpMaker s)] -> OpMaker s'
+> cases ps i = Case $ map (\(c,om) -> (c,om i)) ps
+
+> mkDEF :: Name -> TY -> OpMaker {Exp} -> DEF
+> mkDEF nom ty f = DEF
+>  { defName = nom
+>  , defTy   = ty
+>  , defOp   = f 0
+>  }
+
+> idDEF :: DEF
+> idDEF = mkDEF [("id",0)] (("S",SET) ->> \_S -> _S --> _S) $
+>  eat "S" $ \ _S -> eat "s" $ \ s -> emit s
+
+> switchDEF :: DEF
+> switchDEF = mkDEF 
+>   [("switch",0)]
+>   (("S",SET) ->> \_S -> 
+>    ("T",_S --> SET) ->> \_T -> 
+>    ("C",SET) ->> \_C -> 
+>    (("x",_S) ->> \ x -> _T x --> _C) --> 
+>    (("x",_S) -** \ x -> _T x) --> _C) $
+>   eat "S" $ \ _S -> eat "T" $ \ _T -> eat "C" $ \ _C -> 
+>     eat "f" $ \ f -> eat "s" $ \ s -> eat "t" $ \ t ->
+>     emit (f (PAIR s t))
+
+> eats :: Int -> Operator {Body, s} -> Operator {Body, s}
+> eats 0 o = o
+> eats n o = Eat (eats (n-1) o) 
 
 > instance Show (Operator {p, s}) where
 >   show o = "oooo"
@@ -172,7 +207,7 @@
 >   Pi     :: Can                            -- functions
 >   Sigma  :: Can                            -- products 
 >   Pair   :: Can                            -- pairs
->   Con    :: Can                            -- packing
+>   Con    :: Can                            -- general purpose constructor
 >   One    :: Can                            -- things that have a certain one-ness
 >   Zero   :: Can                            -- things that have a certain zero-ness
 >   -- [Feature = Prop]
@@ -183,6 +218,9 @@
 >   And    :: Can                            -- prop conj
 >   Chkd   :: Can                            -- content of a proof after type checking
 >   -- [/Feature = Prop]
+>   -- [Feature = Eq]
+>   Eq     :: Can                            -- equality type
+>   -- [/Feature = Eq]
 >   deriving (Eq, Show)
 
 > pattern SET        = Set :- []             
@@ -226,7 +264,7 @@
 > apply {s} (LK e) _ = eval {s} ENil e
 > apply {s} (D d es (Eat o)) (A a) = mkD {s} d (es :<!: exp a) o  
 > apply {Val} (D d es (Case os)) (A a) = 
->   case (ENil // a :: VAL) of
+>   case (ENil // a :: VAL) of -- check that it's canonical
 >     (c :- as) -> case lookup c os of
 >       (Just o) -> foldl ($$.) (mkD {Val} d es o) as
 >       Nothing -> error "You muppet"             
