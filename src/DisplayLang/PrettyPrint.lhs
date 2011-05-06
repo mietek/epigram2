@@ -65,6 +65,7 @@ being with $\Pi$-types.
 >   pretty Zero = const (kword KwAbsurd)
 >   pretty One = const (kword KwTrivial)
 >   pretty Prf = const (kword KwPrf)
+>   pretty Prop = const (kword KwProp)
 >   pretty Inh = const (kword KwInh)
 >   pretty Wit = const (kword KwWit)
 

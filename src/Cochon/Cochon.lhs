@@ -71,6 +71,7 @@
 > import Kit.BwdFwd
 > import Kit.Parsley
 > import Kit.MissingLibrary
+> import Kit.NatFinVec
 
 %endif
 
@@ -289,6 +290,11 @@ Construction tactics:
 
 >   unaryInCT "give" (\tm -> dumbPS tm >>= giveNext >> return "Thank you.")
 >       "give <term> - solves the goal with <term>." :
+
+>   unaryInCT "inspect" (\tm -> do
+>     t <- dumbPS tm
+>     return (ugly V0 (ev t))) "" :
+     
 
 > {-
 >   : simpleCT 

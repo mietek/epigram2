@@ -10,6 +10,7 @@
 > import Evidences.ErrorHandling
 
 > import Kit.MissingLibrary
+> import Kit.NatFinVec
 
 > canTy :: (Can, [EXP]) :>: Can -> Maybe VAL
 > canTy ((Set, []) :>: Set)    = (| ONE |)

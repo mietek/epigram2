@@ -74,6 +74,10 @@
 > emit :: Tm {Body, Exp, Z} -> OpMaker {Exp}
 > emit x _ = Emit x
 
+> split :: OpMaker s -> OpMaker s'
+> split o i = Split (o i)
+
+
 > cases :: [(Can , OpMaker s)] -> OpMaker s'
 > cases ps i = Case $ map (\(c,om) -> (c,om i)) ps
 
@@ -85,20 +89,41 @@
 >  }
 
 > idDEF :: DEF
-> idDEF = mkDEF [("id",0)] (("S",SET) ->> \_S -> _S --> _S) $
+> idDEF = mkDEF [("PRIM",0),("id",0)] (("S",SET) ->> \_S -> _S --> _S) $
 >  eat "S" $ \ _S -> eat "s" $ \ s -> emit s
 
-> switchDEF :: DEF
-> switchDEF = mkDEF 
->   [("switch",0)]
+> uncurryDEF :: DEF
+> uncurryDEF = mkDEF 
+>   [("PRIM",0),("uncurry",0)]
 >   (("S",SET) ->> \_S -> 
 >    ("T",_S --> SET) ->> \_T -> 
 >    ("C",SET) ->> \_C -> 
 >    (("x",_S) ->> \ x -> _T x --> _C) --> 
 >    (("x",_S) -** \ x -> _T x) --> _C) $
 >   eat "S" $ \ _S -> eat "T" $ \ _T -> eat "C" $ \ _C -> 
->     eat "f" $ \ f -> eat "s" $ \ s -> eat "t" $ \ t ->
->     emit (f (PAIR s t))
+>     eat "f" $ \ f -> split $ eat "s" $ \ s -> eat "t" $ \ t ->
+>     emit (f s t)
+
+> zeroElimDEF :: DEF
+> zeroElimDEF = mkDEF
+>   [("PRIM",0),("zeroElim",0)]
+>   (ZERO --> (("S",SET) ->> \_S -> _S))
+>   (cases [])
+
+> inhElimDEF :: DEF
+> inhElimDEF = mkDEF
+>   [("PRIM",0),("inhElim",0)]
+>   (("T",SET) ->> \_T ->
+>    ("p",PRF (INH _T)) ->> \p ->
+>    ("P",PRF (INH _T) --> PROP) ->> \_P ->
+>    ("m",(("t",_T) ->> \t -> PRF (_P (WIT t)))) ->> \m ->
+>    PRF (_P p)) $
+>   eat "T" $ \_T ->
+>    cases [(Wit , eat "t" $ \t -> eat "P" $ \_P -> eat "m" $ \m -> 
+>             emit (m t))]
+>    
+> prims :: [ DEF ] 
+> prims = [ idDEF , uncurryDEF , zeroElimDEF , inhElimDEF ]
 
 > eats :: Int -> Operator {Body, s} -> Operator {Body, s}
 > eats 0 o = o
@@ -235,9 +260,9 @@
 >   -- [Feature = Prop]
 > pattern PROP       = Prop :- []
 > pattern PRF _P     = Prf :- [_P]
-> pattern INH _T     = Prop :- [_T]
-> pattern WIT t      = Prop :- [t]
-> pattern AND _P _Q  = Prop :- [_P,_Q]
+> pattern INH _T     = Inh :- [_T]
+> pattern WIT t      = Wit :- [t]
+> pattern AND _P _Q  = And :- [_P,_Q]
 > pattern ALL _S _P  = Pi :- [_S, _P]
 > pattern CHKD       = Chkd :- []
 >   -- [/Feature = Prop]
@@ -304,6 +329,7 @@
 > mkD {s} d es (Eat o)                = D d es (Eat o)
 > mkD {s} d es Hole                   = D d es Hole :$ B0
 > mkD {s} d es (Case os)              = D d es (Case os) 
+> mkD {s} d es (Split o)              = D d es (Split o) 
 > mkD {s} d (es :<!: e) (StuckCase os)  = apply {s} (D d es (Case os)) (A e)
 
 > fortran :: String -> [Tm {Body, Val, n}] -> Tm {Body, Val, n} -> String

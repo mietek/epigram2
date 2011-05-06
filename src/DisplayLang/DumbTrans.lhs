@@ -44,7 +44,7 @@
 > dumbPS t = do
 >   glog <- getDefsInScope
 >   glob <- getParamsInScope 
->   case dumbDInTm t glog (map (\(a,b,c) -> (b,c)) glob) V0 of
+>   case dumbDInTm t (prims ++ glog) (map (\(a,b,c) -> (b,c)) glob) V0 of
 >     Left s -> fail s
 >     Right e -> return e
 
