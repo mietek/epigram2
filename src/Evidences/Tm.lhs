@@ -12,7 +12,7 @@
 
 > module Evidences.Tm where
 
-> import Prelude hiding (foldl, exp)
+> import Prelude hiding (foldl, exp, all)
 > import ShePrelude
 
 > import Control.Applicative
@@ -20,7 +20,7 @@
 > import Control.Monad.Writer
 > import qualified Data.Monoid as M
 > import Data.Foldable
-> import Data.List hiding (foldl)
+> import Data.List hiding (foldl, all)
 > import Data.Traversable
 
 > import Kit.MissingLibrary
@@ -56,7 +56,13 @@
 >   V     :: Fin {n}      {- dB i -}                        -> Tm {Head, s,  n}
 >   P     :: (Int, String, TY)    {- dB l -}                -> Tm {Head, s,  n}
 >
+>   Refl  :: Tm {Body, Exp, n} -> Tm {Body, Exp, n}         -> Tm {Head, s,  n}
+>   Coeh  :: Coeh -> Tm {Body, Exp, n} -> Tm {Body, Exp, n}
+>                 -> Tm {Body, Exp, n} -> Tm {Body, Exp, n} ->Tm {Head, s,  n}
+>
 >   (:/)  :: {: p :: Part :} => Env {n} {m} -> Tm {p, s, m}  -> Tm {p', Exp, n}
+
+> data Coeh = Coe | Coh deriving (Eq, Show)
 
 > data Operator :: {Part, Status} -> * where
 >   Eat    :: Operator {p, s} -> Operator {Body, s'}
@@ -203,6 +209,8 @@
 >   Hd :: Elim t
 >   Tl :: Elim t
 >   Out :: Elim t
+>   QA :: t -> t -> t -> Elim t   -- applies an equation between functions to equal arguments
+>   Sym :: Elim t                 -- symmetry of equality
 >   deriving (Show, Eq, Foldable, Traversable, Functor)
 
 > data Can :: * where
@@ -219,10 +227,11 @@
 >   Inh    :: Can                            -- set inhabitation prop
 >   Wit    :: Can                            -- witness to inhabitation 
 >   And    :: Can                            -- prop conj
->   Chkd   :: Can                            -- content of a proof after type checking
+>   Chkd   :: Can                            -- content of a proof for equality checking
 >   -- [/Feature = Prop]
 >   -- [Feature = Eq]
 >   Eq     :: Can                            -- equality type
+>   Ext    :: Can                            -- proof by appeal to extensionality
 >   -- [/Feature = Eq]
 >   deriving (Eq, Show)
 
@@ -254,6 +263,7 @@
 > exp (a :$ b) = exp a :$ b
 > exp (V i) = V i
 > exp (P l) = P l
+> exp (Refl _S s) = Refl _S s
 > exp (a :/ b) = a :/ b
 > exp (D a b c) = D a b (expo c)
 >  where expo :: Operator {p, s} -> Operator {p, Exp}
@@ -279,6 +289,10 @@
 > eval {s} (es, ez) (V i) = eval {s} ENil (ez !.! i)
 > eval {s} (Nothing, _) (P lt) = P lt :$ B0
 > eval {s} (Just es, _) (P (l, _, _)) = eval {s} ENil (es !! l)
+> eval {s} g (Refl _X x) = Refl (g :/ _X) (g :/ x) :$ B0
+> eval {Val} g (Coeh Coe _S _T _Q s) = fst (coeh (g // _S) (g // _T) (g // _Q) (g // s))
+> eval {Val} g (Coeh Coh _S _T _Q s) = snd (coeh (g // _S) (g // _T) (g // _Q) (g // s))
+> eval {Exp} g c@(Coeh _ _ _ _ _) = g :/ c
 > eval {s} g (g' :/ e) = eval {s} (g <+< g') e
 
 > (//) :: {:s :: Status:} => Env {Z} {n} -> Tm {p, s', n} -> Tm {Body, s, Z}
@@ -300,8 +314,53 @@
 > apply {Exp} d@(D _ _ _) a = (ENil :/ d) :$ (B0 :< fmap exp a)  
 > apply {s} (PAIR a b) Hd = eval {s} ENil a
 > apply {s} (PAIR a b) Tl = eval {s} ENil b
+> apply {s} (Ext :- [f]) (QA a b q) =
+>   apply {s} (apply {s} (apply {s} (eval {s} ENil f) (A a)) (A b)) (A q)
+> apply {_} (Refl _F f :$ B0) (QA s _ q) | isRefl (ENil // q :: VAL) = case ev _F of
+>   PI _S _T -> Refl (_T $$. s) (f $$. s) :$ B0
+> apply {_} q Sym | isRefl (ENil // q :: VAL) = q
+> apply {_} (r@(Refl _T t) :$ B0) Hd = case (ev _T, ev t) of
+>   (SET, PI _S _T) -> Refl SET _S :$ B0
+>   (SET, SIGMA _S _T) -> Refl SET _S :$ B0
+>   (SIGMA _S _T, p) -> Refl _S (exp (p $$ Hd)) :$ B0
+>   (PROP, p) -> la "p" $ \ p -> p
+>   _ -> r :$ (B0 :< Hd)
+> apply {_} (r@(Refl _T t) :$ B0) Tl = case (ev _T, ev t) of
+>   (SET, PI _S _T) -> Refl (_S --> SET) _T :$ B0
+>   (SET, SIGMA _S _T) -> Refl (_S --> SET) _T :$ B0
+>   (SIGMA _S _T, p) -> Refl (_T $$. (p $$ Hd)) (exp (p $$ Tl)) :$ B0
+>   (PROP, p) -> la "p" $ \ p -> p
+>   _ -> r :$ (B0 :< Tl)
+> apply {_} (h :$ (ss :< Sym)) Sym = h :$ ss
+> apply {s} (PAIR a b) Sym = PAIR (apply {Exp} a Sym) (apply {Exp} b Sym)
+> apply {s} (CON z) Sym = CON z
+> apply {s} (Ext :- [f]) Sym = Ext :- [la "a" $ \ a -> la "b" $ \ b -> la "q" $ \ q ->
+>   nix f :$ (B0 :< A b :< A a :< A (V Fz {- q, yuk -} :$ (B0 :< Sym)) :< Sym)]
 > apply {s} (h :$ ss) a = h :$ (ss :< fmap exp a)
 > apply {Exp} (g :/ t) a = (g :/ t) :$ (B0 :< fmap exp a)
+
+This thing does coercion and coherence.
+
+> coeh :: VAL -> VAL -> VAL -> VAL -> (VAL, VAL)
+> coeh _S _ _Q s | isRefl _Q = (s, Refl (exp _S) (exp s) :$ B0)
+> coeh SET SET _ _S = (_S, Refl SET (exp _S) :$ B0)
+> coeh (PI _S _T) (PI _S' _T') _Q f =
+>  (let _QS = _Q $$ Hd $$ Sym
+>   in  la "s'" $ \ s' ->
+>       let  s = Coeh Coe (nix _S') (nix _S) (nix _QS) s' :$ B0
+>            q = Coeh Coh (nix _S') (nix _S) (nix _QS) s' :$ (B0 :< Sym)
+>       in  Coeh Coe (nix _T :$ (B0 :< A s)) (nix _T' :$ (B0 :< A s'))
+>              (nix _Q :$ (B0 :< Tl :< QA s s' q)) (nix f :$ (B0 :< A s)) :$ B0
+>  , Coeh Coh (PI _S _T) (PI _S' _T')  (exp _Q) (exp f) :$ B0)
+> coeh (SIGMA _S _T) (SIGMA _S' _T') _Q p =
+>   let s = p $$ Hd
+>       (s', q) = coeh (ev _S) (ev _S') (_Q $$ Hd) s'
+>       (t', q') = coeh (ev _T $$. s) (ev _T' $$. s') (_Q $$ Tl $$ QA s s' q) (p $$ Tl)
+>   in  (PAIR (exp s') (exp t'), PAIR (exp q) (exp q'))
+> coeh (PRF _) (PRF _) _Q p = (_Q $$ Hd $$. p, ZERO)
+
+> coeh _S _T _Q s = (Coeh Coe (exp _S) (exp _T) (exp _Q) (exp s) :$ B0,
+>                    Coeh Coh (exp _S) (exp _T) (exp _Q) (exp s) :$ B0)
 
 > ($$) :: {:s :: Status:} => 
 >         Tm {Body, s, Z} -> Elim (Tm {Body, s', Z}) -> Tm {Body, s, Z}
@@ -324,6 +383,9 @@
 >          Tm {Body, s, Z} -> Bwd EXP -> Tm {Body, s, Z}
 > f $$$. as = f $$$ fmap A as
 
+> nix :: {: p :: Part :} => Tm {p, s, Z}  -> Tm {p', Exp, n}
+> nix e = ENix :/ e
+
 > mkD :: forall s' p . pi (s :: Status) . 
 >        DEF -> Stk EXP -> Operator {p, s'} -> Tm {Body, s, Z}
 > mkD {s} d es (Emit t)               = eval {s} (Just (trail es), INix) t
@@ -345,6 +407,15 @@
 > (-->) = ARR
 > (==>) = ARR . PRF
 > infixr 5 ==>, -->, ***
+
+We have a sound but incomplete test for whether an equality proof is
+by reflexivity, the basis for proof compaction and various other
+optimizations.
+
+> isRefl :: VAL -> Bool
+> isRefl (Refl _ _ :$ _) = True
+> isRefl (_ :- es) = all (isRefl . ev) es
+> isRefl _ = False
 
 
 We have special pairs for types going into and coming out of
@@ -406,13 +477,6 @@ by |lambdable|:
 >   (PI s p)  -> Just (ParamAll, s, \v -> PRF (p $$ A v))
 >   _         -> (|)
 > lambdable _                = Nothing
-
-> projable :: VAL -> Maybe (TY, Tm {Body, s, Z} -> TY)
-> projable (SIGMA s t)         = Just (s, (t $$.))
-> projable (PRF _P) = case ev _P of
->   (AND _P _Q)  -> Just (PRF _P, \_ -> PRF _Q)
->   _            -> (|)
-> projable _                = Nothing
 
 
 > bod :: forall s n. pi (p :: Part). Tm {p, s, n} -> Tm {Body, s, n}
@@ -476,6 +540,11 @@ by |lambdable|:
 > ugly xs (h :$ es) = "(" ++ ugly xs h ++ foldMap (\ e -> " " ++ uglyElim xs e) es ++ ")"
 > ugly xs (V i) = xs !>! i
 > ugly xs (P (i, s, t)) = s
+> ugly xs (Refl _S s) = "(refl " ++ ugly xs _S ++ " " ++ ugly xs s ++ ")"
+> ugly xs (Coeh Coe _S _T _Q s) =
+>   "(coe " ++ ugly xs _S ++ " " ++ ugly xs _T ++ " " ++ ugly xs _Q ++ " " ++ ugly xs s ++ ")"
+> ugly xs (Coeh Coh _S _T _Q s) =
+>   "(coe " ++ ugly xs _S ++ " " ++ ugly xs _T ++ " " ++ ugly xs _Q ++ " " ++ ugly xs s ++ ")"
 > ugly xs (D d S0 _) = "DEF: " ++ show (defName d)
 > ugly xs (D d es _) = "(" ++ show (defName d) ++ foldMap (\ e -> " " ++ ugly V0 e) (rewindStk es []) ++ ")"
 > ugly xs (ENil :/ e) = ugly xs e

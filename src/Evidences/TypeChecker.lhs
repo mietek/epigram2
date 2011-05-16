@@ -92,6 +92,21 @@ here.
 > headTySpine l (g, g' :/ h)       = headTySpine l (g <+< g', h)
 > headTySpine l (g, D d es _)      = pure (D d S0 (defOp d) :<: defTy d, rewindStk es [])
 > headTySpine l (g, P (i, s, ty))  = pure (P (i, s, ty) :$ B0 :<: ty, [])
+> headTySpine l (g, Refl _S s)     = do
+>   _S <- chev l (SET :>: (g, _S))
+>   let _S' = exp _S
+>   s <- chev l (exp _S :>: (g, s))
+>   let s' = exp s
+>   return ((Refl _S' (exp s') :$ B0) :<: PRF (Eq :- [_S', s', _S', s']), [])
+> headTySpine l (g, Coeh c _S _T _Q s) = do
+>   _S <- chev l (SET :>: (g, _S))
+>   _T <- chev l (SET :>: (g, _T))
+>   _Q <- chev l (PRF (Eq :- [SET, exp _S, SET, exp _T]) :>: (g, _Q))
+>   s <- chev l (exp _S :>: (g, s))
+>   let (s', q') = coeh _S _T _Q s
+>   case c of
+>     Coe -> return (exp s' :<: exp _T, [])
+>     Coh -> return (exp q' :<: PRF (Eq :- [exp _S, exp s, exp _T, exp s']), [])
 > headTySpine _ (g, h)             = throwError' $
 >     err "headTySpine with bad head" ++ errTm (exp (ev (g :/ h :$ B0)))
 
@@ -111,6 +126,20 @@ here.
 >       Just (_S, _T)  -> spInf l (e $$ Hd :<: _S) (g, as)
 >     (_T, Tl) -> case projable _T of
 >       Just (_S, _T)  -> spInf l (e $$ Tl :<: _T (e $$ Hd)) (g, as)
+>     (PRF _P, QA s u q)  -> case ev _P of
+>       Eq :- [_X, f, _Y, h] -> case (ev _X, ev _Y) of
+>         (PI _S _T, PI _U _V) -> do
+>           s <- chev l (_S :>: (g, s))
+>           u <- chev l (_U :>: (g, u))
+>           q <- chev l (PRF (Eq :- [_S, exp s, _U, exp u]) :>: (g, q))
+>           spInf l (e $$ QA s u q
+>                   :<: PRF (Eq :- [_T $$. s, f $$. s, _V $$. u, h $$. u]))
+>             (g, as)
+>         _ -> throwError' $ err "spInf: applied equation not between functions"
+>       _ -> throwError' $ err "spInf: equation application on non-equation"
+>     (PRF _P, Sym)  -> case ev _P of
+>       Eq :- [_X, x, _Y, y] -> spInf l (e $$ Sym :<: PRF (Eq :- [_Y, y, _X, x])) (g, as)
+>       _ -> throwError' $ err "spInf: symmetry on non-equation"
 >     _         -> throwError' $ err "spInf: bad"
 
 
