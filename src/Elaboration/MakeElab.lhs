@@ -4,9 +4,11 @@
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE GADTs, TypeOperators, TupleSections #-}
+> {-# LANGUAGE GADTs, TypeOperators, TupleSections, PatternGuards #-}
 
 > module Elaboration.MakeElab where
+
+> import Prelude hiding (exp)
 
 > import Control.Applicative
 > import Control.Monad.Error
@@ -14,15 +16,18 @@
 > import Evidences.Tm
 > import Evidences.NameSupply
 > import Evidences.TypeChecker
+> import Evidences.TypeCheckRules
 > import Evidences.Eval
 > import Evidences.Operators
 > import Evidences.BetaQuotation
 > import Evidences.DefinitionalEquality
 > import Evidences.Utilities
+> import Evidences.ErrorHandling
 
 > import ProofState.Edition.ProofState
 
 > import DisplayLang.DisplayTm
+> import DisplayLang.PrettyPrint
 > import DisplayLang.Name
 > import DisplayLang.Scheme
 
@@ -34,48 +39,45 @@
 
 %endif
 
-> {-
-
 \subsection{Tools for writing elaborators}
 
 The |eCan| instruction asks for the current goal to be solved by the given
 elaboration problem when the supplied value is canonical.
 
-> eCan :: INTM :=>: VAL -> EProb -> Elab a
-> eCan (_ :=>: C _)  prob = eElab (Loc 0) prob
-> eCan tt            prob = eElab (Loc 0) (WaitCan (justEval tt) prob)
-
+> eCan :: VAL -> EProb -> Elab a
+> eCan (_ :- _)   prob = eElab (Loc 0) prob
+> eCan tt         prob = eElab (Loc 0) (WaitCan (exp tt) prob)
 
 We can type-check a term using the |eCheck| instruction.
 
-> eCheck :: (TY :>: INTM) -> Elab (INTM :=>: VAL)
-> eCheck tytm = do
->     nsupply <- eAskNSupply
->     case liftError DTIN (typeCheck (check tytm) nsupply) of
->         Left e    -> throwError e
->         Right tt  -> return tt
-
+> eCheck :: (TY :>: EXP) -> Elab ()
+> eCheck (ty :>: tm) = do
+>     l <- eAskDevLev
+>     chk l (ty :>: (ENil,tm))
 
 The |eCoerce| instruction attempts to coerce a value from the first type to
 the second type, either trivially (if the types are definitionally equal) or by
 hoping for a proof of the appropriate equation and inserting a coercion.
 
-> eCoerce :: INTM :=>: VAL -> INTM :=>: VAL -> INTM :=>: VAL -> Elab (INTM :=>: VAL)
-> eCoerce (_S :=>: _Sv) (_T :=>: _Tv) (s :=>: sv) = do
->     eq <- eEqual $ SET :>: (_Sv, _Tv)
+> eCoerce :: EXP -> EXP -> EXP -> Elab EXP
+> eCoerce _S _T s = do
+>     eq <- eEqual $ SET :>: (_S, _T)
 >     if eq
->         then return (s :=>: sv)
->         else do
+>         then return s
+>         else throwError' $ err "Implement Coe"
+
+> {-
+>    do
 >             q :=>: qv <- eHopeFor $ PRF (EQBLUE (SET :>: _Sv) (SET :>: _Tv))
 >             return $ N (coe :@ [_S, _T, q, s]) :=>: coe @@ [_Sv, _Tv, qv, sv]
-
+> -}
 
 The |eEqual| instruction determines if two types are definitionally equal.
 
-> eEqual :: (TY :>: (VAL, VAL)) -> Elab Bool
+> eEqual :: (TY :>: (EXP, EXP)) -> Elab Bool
 > eEqual tyvv = do
->     nsupply <- eAskNSupply
->     return (equal tyvv nsupply)
+>     nsupply <- eAskDevLev
+>     return (equal nsupply tyvv)
 
 
 The |eHope| instruction hopes that the current goal can be solved.
@@ -86,35 +88,23 @@ The |eHope| instruction hopes that the current goal can be solved.
 
 The |eHopeFor| instruction hopes for an element of a type.
 
-> eHopeFor :: TY -> Elab (INTM :=>: VAL)
+> eHopeFor :: TY -> Elab EXP
 > eHopeFor ty = eCompute (ty :>: eHope)
-
 
 The |eInfer| instruction infers the type of an evidence term.
 
-> eInfer :: EXTM -> Elab (INTM :=>: VAL)
+> eInfer :: EXP -> Elab EXP
 > eInfer tm = do
->     nsupply <- eAskNSupply
->     case liftError DTIN (typeCheck (infer tm) nsupply) of
->         Left e    -> throwError e
->         Right (tv :<: ty)  -> do
->             ty' :=>: _ <- eQuote ty
->             return $ PAIR ty' (N tm) :=>: PAIR ty tv
-
-
-The |eQuote| instruction $\beta$-quotes a value to produce a term representation.
-
-> eQuote :: VAL -> Elab (INTM :=>: VAL)
-> eQuote v = do
->     nsupply <- eAskNSupply
->     return (bquote B0 v nsupply :=>: v)
+>     l <- eAskDevLev
+>     ty <- inf l (ENil, tm) 
+>     return $ PAIR ty tm 
 
 
 The |eSchedule| instruction asks for the scheduler to deal with other problems
 before returning its result.
 
-> eSchedule :: (INTM :=>: VAL) -> Elab a
-> eSchedule (tm :=>: tv) = eElab (Loc 0) (ElabSchedule (ElabDone (tm :=>: Just tv)))
+> eSchedule :: EXP -> Elab a
+> eSchedule tm = eElab (Loc 0) (ElabSchedule (ElabDone tm))
 
 
 \subsection{Elaborating |DInTm|s}
@@ -133,19 +123,23 @@ new definition to work in. It also ensures that the subproblem can
 terminate with the |eElab| instruction, providing a syntactic
 representation.
 
-> subElab :: Loc -> (TY :>: DInTmRN) -> Elab (INTM :=>: VAL)
+> subElab :: Loc -> (TY :>: DInTmRN) -> Elab EXP
 > subElab loc (ty :>: tm) = eCompute (ty :>: makeElab loc tm)
 
-> subElabInfer :: Loc -> DExTmRN -> Elab (INTM :=>: VAL)
-> subElabInfer loc tm = eCompute (sigSetVAL :>: makeElabInfer loc tm)
+> subElabInfer :: Loc -> DExTmRN -> Elab EXP
+> subElabInfer loc tm = eCompute (sigSet :>: makeElabInfer loc tm)
 
 Since we frequently pattern-match on the goal type when elaborating |In| terms,
 we abstract it out. Thus |makeElab'| actually implements elaboration.
 
-> makeElab :: Loc -> DInTmRN -> Elab (INTM :=>: VAL)
-> makeElab loc tm = makeElab' loc . (:>: tm) =<< eGoal
 
-> makeElab' :: Loc -> (TY :>: DInTmRN) -> Elab (INTM :=>: VAL)
+> makeElab :: Loc -> DInTmRN -> Elab EXP
+> makeElab loc tm = makeElab' loc . (:>: tm) . ev =<< eGoal
+
+> makeElab' :: Loc -> (VAL :>: DInTmRN) -> Elab EXP
+
+> {-
+
 > -- import <- MakeElabRules
 > -- [Feature = Enum] 
 > makeElab' loc (PI (ENUMT e) t :>: m) | isTuply m = do
@@ -211,27 +205,38 @@ for enumerations as well.
 > makeElab' loc (UID :>: DTAG s) = return $ TAG s :=>: TAG s
 > -- [/Feature = UId] 
 
+> -}
+
 We use underscores |DU| in elaboration to mean "figure this out yourself", while
 question marks |DQ| require us to wait for a user-provided value.
 
 > makeElab' loc (ty :>: DU) = eHope
-> makeElab' loc (ty :>: DQ s) = eWait s ty >>= neutralise
+> makeElab' loc (ty :>: DQ s) = eWait s (exp ty)
 
 
 Elaborating a canonical term with canonical type is a job for |canTy|.
 
-> makeElab' loc (C ty :>: DC tm) = do
->     v <- canTy (subElab loc) (ty :>: tm)
->     return $ (C $ fmap termOf v) :=>: (C $ fmap valueOf v)
-
+> makeElab' loc ((c :- as)  :>: DC d bs) = do
+>     tbs <- canTyM ((c , as) :>: d)
+>     bs' <- elabCan (tbs :>: bs)
+>     return (d :- bs')
+>   where
+>    elabCan :: (VAL :>: [ DInTmRN ]) -> Elab [ EXP ]  
+>    elabCan (ONE :>: []) = (| [] |)
+>    elabCan (SIGMA _S _T :>: (b : bs)) = do 
+>      b' <- subElab loc (_S :>: b) 
+>      bs' <- elabCan (ev (_T $$. b') :>: bs)
+>      return (b' : bs')
 
 There are a few possibilities for elaborating $\lambda$-abstractions. If both the
 range and term are constants, then we simply |makeElab| underneath. This avoids
 creating some trivial children. 
 
-> makeElab' loc (PI s (L (K t)) :>: DL (DK dtm)) = do
->     tm :=>: tmv <- subElab loc (t :>: dtm)
->     return $ LK tm :=>: LK tmv
+
+> makeElab' loc (PI s lkt :>: DL (DK dtm)) | LK t <- ev lkt = do
+>     tm <- subElab loc (t :>: dtm)
+>     return $ LK tm 
+
 
 Otherwise, we can simply create a |lambdaParam| in the current development, and
 carry on elaborating. We can call |makeElab| here, rather than |subElab|,
@@ -247,32 +252,28 @@ coercing the result to the required type. (Note that |eCoerce| will check if the
 types are equal, and if so it will not insert a redundant coercion.)
 
 > makeElab' loc (w :>: DN n) = do
->     w' :=>: _ <- eQuote w
 >     tt <- subElabInfer loc n
->     let (yt :=>: yn :<: ty :=>: tyv) = extractNeutral tt
->     eCoerce (ty :=>: tyv) (w' :=>: w) (yt :=>: yn)
+>     let (tm :<: ty) = extractNeutral tt
+>     eCoerce ty (exp w) tm
+
 
 
 If we already have an evidence term, we just type-check it. This allows
 elaboration code to partially elaborate a display term then embed the
 resulting evidence term and call the elaborator again.
 
-> makeElab' loc (ty :>: DTIN tm) = eCheck (ty :>: tm)
+> makeElab' loc (ty :>: DTIN tm) = eCheck (exp ty :>: tm) >> return tm
 
 
 If the type is neutral and none of the preceding cases match,
 there is nothing we can do but wait for the type to become canonical.
+Else fail.
 
-> makeElab' loc (N ty :>: tm) = do
->     tt <- eQuote (N ty)
->     eCan tt (ElabProb tm)
-
-
-If nothing else matches, give up and report an error.
-
-> makeElab' loc (ty :>: tm) = throwError' $ err "makeElab: can't push"
->     ++ errTyVal (ty :<: SET) ++ err "into" ++ errTm tm 
-
+> makeElab' loc (ty :>: tm) = case ty of
+>   _ :- _  -> throwError' $ err "makeElab: can't push"
+>                            ++ errTyTm (SET :>: exp ty) ++ err "into"
+>                            ++ err (renderHouseStyle (pretty tm AppSize)) 
+>   _ -> eCan ty (ElabProb tm)
 
 \subsection{Elaborating |DExTm|s}
 
@@ -281,26 +282,20 @@ subsection~\ref{subsec:Evidences.TypeChecker.type-inference} as |makeElab|
 is to |check|. It elaborates the display term and infers its type to
 produce a type-term pair in the evidence language.
 
-The result of |makeElabInfer| is of type $\SIGMA{\V{X}}{\Set}{X}$, which
-we can represent as an evidence term or value (|sigSetTM| or |sigSetVAL|,
-respectively).
+The result of |makeElabInfer| is of type $\SIGMA{\V{X}}{\Set}{X}$.
 
-> sigSetVAL :: Tm {In,p} x
-> sigSetVAL = SIGMA SET (idVAL "ssv")
+> sigSet :: Tm {Body, Exp, n}
+> sigSet = SIGMA SET (la "ssv" $ \ x -> x)
 
-> sigSetTM :: INTM
-> sigSetTM =  sigSetVAL 
-
+> idTM :: String ->   Tm {Body, Exp, n}
+> idTM s = la s $ \ x -> x
 
 The |extractNeutral| function separates type-term pairs in both term and value
 forms. It avoids clutter in the term representation by splitting it up if it
 happens to be a canonical pair, or applying the appropriate eliminators if not.
 
-> extractNeutral :: INTM :=>: VAL -> INTM :=>: VAL :<: INTM :=>: TY
-> extractNeutral (PAIR ty tm :=>: PAIR tyv tmv) = tm :=>: tmv :<: ty :=>: tyv
-> extractNeutral (PAIR ty tm :=>: tv) = tm :=>: tv $$ Snd :<: ty :=>: tv $$ Fst
-> extractNeutral (tm :=>: tv) = N (tm' :$ Snd) :=>: tv $$ Snd :<: N (tm' :$ Fst) :=>: tv $$ Fst
->   where tm' = tm ?? sigSetTM
+> extractNeutral :: EXP -> EXP :<: TY
+> extractNeutral t = (t $$ Tl) :<: (t $$ Hd) 
 
 
 Since we use a head-spine representation for display terms, we need to
@@ -311,31 +306,33 @@ may be a parameter, which is resolved; an embedded evidence term,
 which is checked; or a type annotation, which is converted to the
 identity function at the given type.
 
-> makeElabInferHead :: Loc -> DHEAD -> Elab (INTM :=>: VAL, Maybe (Scheme INTM))
+> makeElabInferHead :: Loc -> DHEAD -> Elab (EXP, Maybe (Scheme EXP))
 > makeElabInferHead loc (DP rn)     = eResolve rn
 > makeElabInferHead loc (DTEX tm)   = (| (eInfer tm) , ~Nothing |)
 > makeElabInferHead loc (DType ty)  = do
->     tm :=>: v <- subElab loc (SET :>: ty)
->     return (typeAnnotTM tm :=>: typeAnnotVAL v, Nothing)
+>     tm <- subElab loc (SET :>: ty)
+>     return (typeAnnotTM tm, Nothing)
 >   where
->     typeAnnotTM :: INTM -> INTM
+>     typeAnnotTM :: EXP -> EXP
 >     typeAnnotTM tm = PAIR (ARR tm tm) (idTM "typeAnnot")
->     typeAnnotVAL :: VAL -> VAL
->     typeAnnotVAL v = PAIR (ARR v v) (idVAL "typeAnnot")
 
 
 Now we can implement |makeElabInfer|. We use |makeElabInferHead| to elaborate
 the head of the neutral term, then call |handleArgs| or |handleSchemeArgs| to
 process the spine of eliminators.
 
-> makeElabInfer :: Loc -> DExTmRN -> Elab (INTM :=>: VAL)
+
+> makeElabInfer :: Loc -> DExTmRN -> Elab EXP
+
 > makeElabInfer loc (t ::$ ss) = do
 >     (tt, ms) <- makeElabInferHead loc t
->     let (tm :=>: tmv :<: ty :=>: tyv) = extractNeutral tt
+>     let (tm :<: ty) = extractNeutral tt
 >     case ms of
->         Just sch  -> handleSchemeArgs B0 sch  (tm ?? ty :=>: tmv :<: tyv) ss
->         Nothing   -> handleArgs               (tm ?? ty :=>: tmv :<: tyv) ss
+>         Just sch  -> error "Scheme what scheme?" -- handleSchemeArgs B0 sch  (tm ?? ty :=>: tmv :<: tyv) ss
+>         Nothing   -> handleArgs (tm :<: ev ty) ss
 >   where
+
+> {-
 
 The |handleSchemeArgs| function takes a list of terms (corresponding to
 de Bruijn-indexed variables), the scheme, term and type of the neutral, and a
@@ -399,23 +396,36 @@ eliminator other than application, so we give up and throw an error.
 >         err "with neutral term" ++ errTyVal (v :<: ty) ++
 >         err "and eliminators" ++ map ErrorElim as
 
+> -}
+
 
 The |handleArgs| function is a simplified version of |handleSchemeArgs|, for
 neutral terms without schemes. It takes a typed neutral term and a spine of
 eliminators in display syntax, and produces a set-value pair in the |Elab| monad.
 
->     handleArgs :: (EXTM :=>: VAL :<: TY) -> DSPINE -> Elab (INTM :=>: VAL)
+>     handleArgs :: (EXP :<: VAL) -> DSPINE -> Elab EXP
 
 If we have run out of eliminators, then we just give back the neutral term with
 its type.
 
->     handleArgs (tm :=>: tv :<: ty) [] = do
->         ty' :=>: _ <- eQuote ty
->         return $ PAIR ty' (N tm) :=>: PAIR ty tv
+>     handleArgs (tm :<: ty) [] = do
+>         return $ PAIR (exp ty) tm
 
 If we have a term of a labelled type being eliminated with |Call|, we need to
 attach the appropriate label to the call and continue with the returned type.
 
+>     handleArgs (tm :<: ty) (A a : as) | 
+>            Just (_, _S, _T) <- lambdable ty = do
+>         a' <- subElab loc (_S :>: a)  
+>         handleArgs (tm $$. a' :<: ev (_T a')) as
+>     handleArgs (tm :<: ty) (Hd : as) | Just (_S, _T) <- projable ty =
+>         handleArgs (tm $$ Hd :<: ev _S) as
+>     handleArgs (tm :<: ty) (Tl : as) | Just (_S, _T) <- projable ty =
+>         handleArgs (tm $$ Tl :<: ev (_T (tm $$ Hd))) as
+>     handleArgs (tm :<: _ :- _) _ =
+>         throwError' $ err "badly typed elimintation in handleArgs?"
+
+> {-
 >     handleArgs (t :=>: v :<: LABEL l ty) (Call _ : as) = do
 >         l' :=>: _ <- eQuote l
 >         handleArgs (t :$ Call l' :=>: v $$ Call l :<: ty) as
@@ -426,12 +436,11 @@ For all other eliminators, assuming the type is canonical we can use |elimTy|.
 >         (a', ty') <- elimTy (subElab loc) (v :<: cty) a
 >         handleArgs (t :$ fmap termOf a' :=>: v $$ fmap valueOf a' :<: ty') as
 
+> -}
+
 Otherwise, we cannot do anything apart from waiting for the type to become
 canonical, so we suspend elaboration and record the current problem.
 
->     handleArgs (tm :=>: tv :<: ty) as = do
->         tt <- eQuote ty
->         eCan tt (ElabInferProb (DTEX tm ::$ as))
+>     handleArgs (tm :<: ty) as = do
+>         eCan ty (ElabInferProb (DTEX tm ::$ as))
 
-
-> -}

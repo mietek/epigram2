@@ -34,7 +34,6 @@
 >  lev <- getDevLev
 >  chk lev (ty :>: (ENil, e))
 
-> {-
 
 The proof state lives on a rich substrate of operations, inherited
 from the |ProofContext| as well as the |ProofState| monad. In this
@@ -52,12 +51,12 @@ supply. As a result, the |ProofState| can almost be made a
 |NameSupplier|. The exception being that it cannot fork the name
 supply, because it cannot generates new namespaces.
 
-> instance NameSupplier (ProofStateT e) where
->     freshRef (s :<: ty) f = do
+> instance NameSupplier ProofState where
+>     freshName s f = do
 >         nsupply <- getDevNSupply
->         freshRef (s :<: ty) ( \ref nsupply' -> do
+>         freshName s ( \n nsupply' -> do
 >             putDevNSupply nsupply'
->             f ref
+>             f n
 >           ) nsupply
 >
 >     forkNSupply = error "ProofState does not provide forkNSupply"
@@ -67,7 +66,7 @@ supply, because it cannot generates new namespaces.
 We also provide an operator to lift functions from a name supply to
 proof state commands.
 
-> withNSupply :: (NameSupply -> x) -> ProofStateT e x
+> withNSupply :: (NameSupply -> x) -> ProofState x
 > withNSupply f = getDevNSupply >>= return . f
 
 \begin{danger}[Read-only name supply]
@@ -82,31 +81,14 @@ has finished.
 \subsection{Accessing the type-checker}
 
 
-First off, we can access the $\beta$-normalizer: the |bquoteHere|
-command $\beta$-quotes a term using the local name supply.
 
-> bquoteHere :: Tm {d, VV} REF -> ProofStateT e (Tm {d, TT} REF)
-> bquoteHere tm = withNSupply $ bquote B0 tm
+> checkHere :: (TY :>: EXP) -> ProofState ()
+> checkHere (ty :>: tm) = getDevLev >>= \ l -> chk l (ty :>: (ENil, tm))
 
+> inferHere :: EXP -> ProofState TY
+> inferHere tt = getDevLev >>= \ l -> inf l (ENil, tt)
 
-Secondly, any type-checking problem (defined in the |Check| monad) can
-be executed in the |ProofState|.
-
-> runCheckHere :: (ErrorTok e -> ErrorTok DInTmRN) -> Check e a -> ProofState a
-> runCheckHere f c = do
->     me <- withNSupply $ liftError' f . typeCheck c
->     lift me
-
-As a consequence, we have |checkHere| to |check| terms against types:
-
-> checkHere :: (TY :>: INTM) -> ProofState (INTM :=>: VAL)
-> checkHere tt = runCheckHere (fmap DTIN) $ check tt
-
-and |inferHere| to |infer| types from terms:
-
-> inferHere :: EXTM -> ProofState (VAL :<: TY)
-> inferHere tm = runCheckHere (fmap DTIN) $ infer tm
-
+> {-
 
 \subsection{Being paranoiac}
 

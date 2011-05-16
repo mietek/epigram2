@@ -230,7 +230,7 @@ than a $\lambda$-term is reached.
 <       <+> hsep (map (flip pretty ArgSize) xs)) AppSize
 <     -- [/Feature = UId]
 
->     pretty indtm           = const (quotes . text . show $ indtm)
+>     pretty (DTIN indtm)           = const (quotes . text . show $ indtm)
 
 
 > instance Pretty DExTmRN where

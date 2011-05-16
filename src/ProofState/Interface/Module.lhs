@@ -71,7 +71,7 @@ Section~\ref{subsec:Tactics.Elimination.analysis}.
 > moduleToGoal ty = do
 >     chkPS (SET :>: ty)
 >     CModule _ <- getCurrentEntry
->     putDevTip $ Unknown ty
+>     putDevTip $ Unknown ty Waiting
 >     (_, t) <- updateDefFromTip
 >     return t
 >  where 

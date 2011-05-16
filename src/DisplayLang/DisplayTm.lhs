@@ -167,7 +167,7 @@ document.
 
 
 > newtype InTmWrap  x = InTmWrap  EXP
-> newtype ExTmWrap  x = ExTmWrap  (Tm {Head, Exp, Z})
+> newtype ExTmWrap  x = ExTmWrap  EXP
 
 > pattern DTIN x = DT (InTmWrap x)
 > pattern DTEX x = DTEx (ExTmWrap x)

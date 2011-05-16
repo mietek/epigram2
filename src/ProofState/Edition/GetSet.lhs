@@ -102,7 +102,7 @@ And some specialized versions:
 > getGoal s = do
 >     tip <- getDevTip
 >     case tip of
->       Unknown ty          -> return ty
+>       Unknown ty _        -> return ty
 >       Defined (ty :>: _)  -> return ty
 >       _ -> throwError'  $ err "getGoal: fail to match a goal in " 
 >                         ++ err s
@@ -128,15 +128,19 @@ And some specialized versions:
 >       CModule [] -> return []
 >       _ -> return $ currentEntryName cEntry
 >
-> {-
 
-> getCurrentDefinition :: ProofState EXP
+> getCurrentDefinition :: ProofState DEF 
 > getCurrentDefinition = do
 >     CDefinition d <- getCurrentEntry
->     scope <- getGlobalScope
->     return $ D d S0 (defOp d) $$$. scope
+>     return  d  
 
-> -}
+> getCurrentDefinitionLocal :: ProofState EXP 
+> getCurrentDefinitionLocal = do
+>     d <- getCurrentDefinition
+>     es <- getGlobalScope
+>     return $ D d S0 (defOp d) $$$ paramSpine es
+
+ 
 
 \paragraph{Getting in the |HOLE|\\}
 
@@ -144,22 +148,17 @@ And some specialized versions:
 > getHoleGoal= do
 >     tip <- getDevTip
 >     case tip of
->       Unknown ty  -> return ty
->       _           -> throwError' $ err "getHoleGoal: goal is not a hole"
+>       Unknown ty _  -> return ty
+>       _             -> throwError' $ err "getHoleGoal: goal is not a hole"
 
-> {-
-
-> getHoleGoal :: ProofState (INTM :=>: TY)
-> getHoleGoal = do
->     CDefinition _ (_ := HOLE _ :<: _) _ _ _ <- getCurrentEntry
->     getGoal "getHoleGoal"
->
 > getHoleKind :: ProofState HKind
 > getHoleKind = do
->     CDefinition _ (_ := HOLE hk :<: _) _ _ _ <- getCurrentEntry
->     return hk
+>     tip <- getDevTip
+>     case tip of
+>       Unknown _ hk  -> return hk
+>       _             -> throwError' $ err "getHoleKind: goal is not a hole"
 
-> -}
+
 
 
 \subsubsection{Getting the Scopes}
@@ -176,7 +175,7 @@ And some specialized versions:
 > getGlobalScope = gets globalScope
 >
 
-> getParamsInScope :: ProofState [(ParamKind, String, TY)]
+> getParamsInScope :: ProofState [ Tm {Body, Exp, n} ]
 > getParamsInScope = do  
 >     inScope <- getInScope
 >     return $ params inScope
@@ -286,16 +285,17 @@ And some specialized versions:
 >     CDefinition _ ref xn ty a <- getCurrentEntry
 >     putCurrentEntry $ CDefinition (PROG sch) ref xn ty a
 
+> -}
+
 \paragraph{Putting in the |HOLE|\\}
-
-
 
 > putHoleKind :: HKind -> ProofState ()
 > putHoleKind hk = do
->     CDefinition kind (name := HOLE _ :<: ty) xn tm a <- getCurrentEntry
->     putCurrentEntry $ CDefinition kind (name := HOLE hk :<: ty) xn tm a
+>     tip <- getDevTip
+>     case tip of
+>       Unknown ty _  -> putDevTip (Unknown ty hk)
+>       _             -> throwError' $ err "putHoleKind: goal is not a hole"
 
-> -}
 
 \subsection{Removers}
 
@@ -373,7 +373,7 @@ machinery. Perhaps it should move somewhere more logical.
 >     tip <- getDevTip
 >     nom <- getCurrentName
 >     let ty = case tip of
->                  Unknown t          -> t
+>                  Unknown t _        -> t
 >                  Defined (t :>: _)  -> t
 >     inScope <- getInScope
 >     let  binScope = boys inScope
@@ -390,5 +390,5 @@ machinery. Perhaps it should move somewhere more logical.
 >    boys (es :< EParam _ s t l) =  boys es :< (l, s, t)
 >    boys (es :< _) =  boys es 
 
->    tipToOp (Unknown _)           = Hole
+>    tipToOp (Unknown _ _)         = Hole
 >    tipToOp (Defined (_ :>: tm))  = Emit tm

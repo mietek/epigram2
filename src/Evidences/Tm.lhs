@@ -17,6 +17,7 @@
 
 > import Control.Applicative
 > import Control.Monad.Error
+> import Control.Monad.Writer
 > import qualified Data.Monoid as M
 > import Data.Foldable
 > import Data.List hiding (foldl)
@@ -76,7 +77,6 @@
 
 > split :: OpMaker s -> OpMaker s'
 > split o i = Split (o i)
-
 
 > cases :: [(Can , OpMaker s)] -> OpMaker s'
 > cases ps i = Case $ map (\(c,om) -> (c,om i)) ps
@@ -162,28 +162,6 @@
 >  INil   :: IEnv {n, n}
 >  (:<<:)  :: IEnv {m, n} -> Tm {Body, s, Z} -> IEnv {m, S n} 
 
-> exp :: Tm {p, s, n} -> Tm {p, Exp, n}
-> exp = unsafeCoerce
-> {-
-> exp (L a b c) = L a b c
-> exp (LK a) = LK a
-> exp (a :- b) = a :- b
-> exp (a :$ b) = exp a :$ b
-> exp (V i) = V i
-> exp (P l) = P l
-> exp (a :/ b) = a :/ b
-> exp (D a b c) = D a b (expo c)
->  where expo :: Operator {p, s} -> Operator {p, Exp}
->        expo (Eat o) = Eat o
->        expo (Emit t) = Emit t
->        expo Hole = Hole
->        expo (Case os) = Case os
->        expo (StuckCase os) = StuckCase os
->        expo (Split o) = Split o
-> -}
-
-> ev :: Tm {p, Exp, Z} -> VAL
-> ev = (ENil //) 
 
 > (!.!) :: IEnv {Z, n} -> Fin {n} -> Tm {Body, Exp, Z}
 > (ez :<<: e) !.! Fz = exp e 
@@ -267,6 +245,29 @@
 > pattern CHKD       = Chkd :- []
 >   -- [/Feature = Prop]
 
+> exp :: Tm {p, s, n} -> Tm {p, Exp, n}
+> exp = unsafeCoerce
+> {-
+> exp (L a b c) = L a b c
+> exp (LK a) = LK a
+> exp (a :- b) = a :- b
+> exp (a :$ b) = exp a :$ b
+> exp (V i) = V i
+> exp (P l) = P l
+> exp (a :/ b) = a :/ b
+> exp (D a b c) = D a b (expo c)
+>  where expo :: Operator {p, s} -> Operator {p, Exp}
+>        expo (Eat o) = Eat o
+>        expo (Emit t) = Emit t
+>        expo Hole = Hole
+>        expo (Case os) = Case os
+>        expo (StuckCase os) = StuckCase os
+>        expo (Split o) = Split o
+> -}
+
+> ev :: Tm {p, Exp, Z} -> VAL
+> ev = (ENil //)
+ 
 > eval :: forall m n p s' . pi (s :: Status) . 
 >           Env {Z} {n} -> Tm {p, s', n} -> Tm {Body, s, Z}
 > eval {s} g (L g' x b) = L (g <+< g') x b
@@ -475,8 +476,8 @@ by |lambdable|:
 > ugly xs (h :$ es) = "(" ++ ugly xs h ++ foldMap (\ e -> " " ++ uglyElim xs e) es ++ ")"
 > ugly xs (V i) = xs !>! i
 > ugly xs (P (i, s, t)) = s
-> ugly xs (D d S0 _) = show (defName d)
-> ugly xs (D d es _) = "(" ++ show (defName d) ++ foldMap (\ e -> " " ++ ugly V0 e) es ++ ")"
+> ugly xs (D d S0 _) = "DEF: " ++ show (defName d)
+> ugly xs (D d es _) = "(" ++ show (defName d) ++ foldMap (\ e -> " " ++ ugly V0 e) (rewindStk es []) ++ ")"
 > ugly xs (ENil :/ e) = ugly xs e
 > ugly _ _ = "???"
 
@@ -506,3 +507,4 @@ Pos could use a nice abstraction to do the following:
 
 > piLift' :: {: n :: Nat :} => Vec {n} (String, TY) -> TY -> TY
 > piLift' = piLift {: n :: Nat :}
+

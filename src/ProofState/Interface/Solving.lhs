@@ -49,7 +49,7 @@ that entries below the cursor are (lazily) notified of the good news.
 > give tm = do
 >     tip <- getDevTip
 >     case tip of         
->         Unknown tipTy -> do
+>         Unknown tipTy hk -> do
 >             -- Working on a goal
 >
 >             -- Check that |tm| is of the expected type

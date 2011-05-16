@@ -27,32 +27,28 @@
 %endif
 
 
-> {-
-
 \subsection{Catching the gremlins before they leave |ProofState|}
 
 
-> catchUnprettyErrors :: StackError DInTmRN -> ProofState a
+> catchUnprettyErrors :: StackError -> ProofState a
 > catchUnprettyErrors e = do
 >                   e' <- distillErrors e
 >                   throwError e'
 
-> distillErrors :: StackError DInTmRN -> ProofState (StackError DInTmRN)
+> distillErrors :: StackError -> ProofState StackError 
 > distillErrors e = sequence $ fmap (sequence . fmap distillError) e
 
-> distillError :: ErrorTok DInTmRN -> ProofState (ErrorTok DInTmRN)
-> distillError (ErrorVAL (v :<: mt)) = do
->     vTm   <- bquoteHere v
->     vDTm  <- case mt of
->         Just t   -> return . termOf =<< distillHere (t :>: vTm)
->         Nothing  -> liftErrorState DTIN (moonshine vTm)
->     return $ ErrorTm (vDTm :<: Nothing)
-> distillError (ErrorTm (DTIN t :<: mt)) = do
->     d <- liftErrorState DTIN (moonshine t)
->     return $ ErrorTm (d :<: Nothing)
+> distillError :: ErrorTok -> ProofState ErrorTok 
+> distillError e@(ErrorTm (Nothing :>: t)) = (do
+>     d <- moonshine 0 t
+>     return $ StrMsg (renderHouseStyle (pretty d AppSize))) 
+>   `catchError` \_ -> return e
+> distillError e@(ErrorTm (Just ty :>: t)) = (do
+>     d <- distill (ev ty :>: ev t) 0
+>     return $ StrMsg (renderHouseStyle (pretty d AppSize))) 
+>   `catchError` \_ -> return e
 > distillError e = return e
 
-> -}
 
 \subsection{Pretty-printing the stack trace}
 

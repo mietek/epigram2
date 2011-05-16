@@ -166,7 +166,7 @@ updated news.
 
 > tellTip :: NewsBulletin -> Tip -> (Tip, News)
 > tellTip _ Module = (Module, NoNews)
-> tellTip news (Unknown ty) = (Unknown ty', ne)
+> tellTip news (Unknown ty hk) = (Unknown ty' hk, ne)
 >   where (ty', ne) = tellNews news ty
 > tellTip news (Defined (ty :>: tm)) = (Defined (ty' :>: tm'), ne)
 >   where (ty', ne1) = tellNews news ty
@@ -305,6 +305,7 @@ To update a closed definition (|Defined|), we must:
 
 
 
+> -}
 
 
 
@@ -320,4 +321,3 @@ update the outer layers.
 >       where ss' = min ss (laySuspendState l)
 
 
-> -}

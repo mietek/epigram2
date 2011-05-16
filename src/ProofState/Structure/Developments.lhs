@@ -16,7 +16,7 @@
 > import Evidences.Tm
 > import Evidences.NameSupply
 
-> -- import Elaboration.ElabProb
+> import Elaboration.ElabProb
 
 > -- import DisplayLang.Scheme
 
@@ -67,12 +67,13 @@ type (see section~\ref{sec:Elaboration.ElabMonad}), or a |Defined| term
 of the type. Note that the type is presented as both a term and a
 value for performance purposes. 
 
+> data HKind = Crying String | Waiting | Hoping
+>   deriving Show
+
 > data Tip
 >   = Module
->   | Unknown TY
-
-<   | Suspended (INTM :=>: TY) EProb
-
+>   | Unknown TY HKind
+>   | Suspended TY EProb HKind
 >   | Defined (TY :>: EXP)
 >   deriving Show
 

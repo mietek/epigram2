@@ -15,14 +15,14 @@
 > import Data.Traversable
 
 > import Evidences.Tm
-> import Evidences.Eval
+> import Evidences.ErrorHandling
 
 > import DisplayLang.DisplayTm
 > import DisplayLang.Name
 
-%endif
+> import Kit.NatFinVec
 
-> {-
+%endif
 
 
 An |ElabProb| is a syntactic representation of an elaboration
@@ -43,28 +43,21 @@ before coming back to work on this one. It doesn't seem to be used at the moment
 so perhaps we can get rid of it. This data type may need to be redesigned to
 allow solution of hoping holes earlier in the elaboration process.}
 
-> data ElabProb x
->     =  ElabDone (InTm x :=>: Maybe VAL)
+> data EProb 
+>     =  ElabDone EXP 
 >        -- succeed with given term
 >     |  ElabHope
 >        -- hope for a solution to turn up
->     |  ElabProb (DInTm x RelName)
+>     |  ElabProb (DInTm RelName)
 >        -- elaborate |In| display term
->     |  ElabInferProb (DExTm x RelName)
+>     |  ElabInferProb (DExTm RelName)
 >        -- elaborate and infer type of |Ex| display term
->     |  WaitCan (InTm x :=>: Maybe VAL) (ElabProb x)
+>     |  WaitCan EXP EProb 
 >        -- wait for value to become canonical
->     |  WaitSolve x (InTm x :=>: Maybe VAL) (ElabProb x)
+>     |  WaitSolve DEF EXP EProb
 >        -- wait for reference to be solved with term
->     |  ElabSchedule (ElabProb x)
+>     |  ElabSchedule EProb
 >        -- kick off the scheduler
-
-|ElabProb| is a traversable functor, parameterised by the type of references,
-which are typically |REF|s. Note that traversal will discard the cached values,
-but this is okay because the terms need to be re-evaluated after they have been
-updated anyway.
-
-> type EProb = ElabProb REF
 
 An elaboration problem is said to be \emph{unstable}\index{elaboration
 problem!unstable} if the scheduler can make progress on it, and
@@ -83,8 +76,7 @@ various components fit together.}
 > isUnstable ElabHope                                        = True
 > isUnstable (ElabProb _)                                    = True
 > isUnstable (ElabInferProb _)                               = True
-> isUnstable (WaitCan (_ :=>: Just (C _)) _)                 = True
-> isUnstable (WaitCan (tm :=>: Nothing) _) | C _ <- evTm tm  = True
+> isUnstable (WaitCan tm  _) | _ :- _ <- ev tm               = True
 > isUnstable (WaitCan _ _)                                   = False
 > isUnstable (WaitSolve _ _ _)                               = True
 > isUnstable (ElabSchedule _)                                = True
@@ -93,45 +85,19 @@ various components fit together.}
 Since |ElabProb| caches value representations of its terms, we define some handy
 functions for producing and manipulating these.
 
-> justEval :: INTM :=>: VAL -> INTM :=>: Maybe VAL
-> justEval (tm :=>: v) = tm :=>: Just v
->
-> maybeEval :: INTM :=>: Maybe VAL -> INTM :=>: VAL
-> maybeEval (tm :=>: Just v)   =  tm :=>:  v
-> maybeEval (tm :=>: Nothing)  =  tm :=>:  evTm tm
-
 
 %if False
 
-> instance Show a => Show (ElabProb a) where
->     show (ElabDone tt)            = "ElabDone (" ++ show tt ++ ")"
+> instance Show EProb where
+>     show (ElabDone tt)            = "ElabDone (" ++ ugly V0 tt ++ ")"
 >     show ElabHope                 = "ElabHope"
 >     show (ElabProb tm)            = "ElabProb (" ++ show tm ++ ")"
 >     show (ElabInferProb tm)       = "ElabInferProb (" ++ show tm ++ ")"
->     show (WaitCan tt prob)        = "WaitCan (" ++ show tt ++ ") ("
+>     show (WaitCan tt prob)        = "WaitCan (" ++ ugly V0 tt ++ ") ("
 >                                         ++ show prob ++ ")"
->     show (WaitSolve ref tt prob)  = "WaitSolve (" ++ show ref ++ ") ("
->                                         ++ show tt ++ ") (" ++ show prob ++ ")"
+>     show (WaitSolve def tt prob)  = "WaitSolve (D ???) ("
+>                                         ++ ugly V0 tt ++ ") (" ++ show prob ++ ")"
 >     show (ElabSchedule prob)      = "ElabSchedule (" ++ show prob ++ ")"
-
-> instance Functor ElabProb where
->     fmap = fmapDefault
-
-> instance Foldable ElabProb where
->     foldMap = foldMapDefault
-
-> instance Traversable ElabProb where
->     traverse f (ElabDone tt)            = (|ElabDone (travEval f tt)|)
->     traverse f ElabHope                 = (|ElabHope|)
->     traverse f (ElabProb tm)            = (|ElabProb (traverseDTIN f tm)|)
->     traverse f (ElabInferProb tm)       = (|ElabInferProb (traverseDTEX f tm)|)
->     traverse f (WaitCan tt prob)        = (|WaitCan (travEval f tt) (traverse f prob)|)
->     traverse f (WaitSolve ref tt prob)  = (|WaitSolve (f ref) (travEval f tt) (traverse f prob)|)
->     traverse f (ElabSchedule prob)      = (|ElabSchedule (traverse f prob)|)
-
-> travEval :: Applicative f => (p -> f q) -> InTm p :=>: Maybe VAL -> f (InTm q :=>: Maybe VAL)
-> travEval f (tm :=>: _) = (|traverse f tm :=>: ~Nothing|)
 
 %endif
 
-> -}

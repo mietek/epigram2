@@ -8,6 +8,8 @@
 
 > module Elaboration.RunElab where
 
+> import Prelude hiding (foldl, exp)
+
 > import Control.Applicative
 > import Control.Monad.Error
 > import Control.Monad.State
@@ -20,6 +22,7 @@
 > import Evidences.Operators
 > import Evidences.DefinitionalEquality
 > import Evidences.Utilities
+> import Evidences.ErrorHandling
 
 > import ProofState.Structure.Developments
 
@@ -40,9 +43,9 @@
 > import DisplayLang.Name
 > import DisplayLang.PrettyPrint
 
-> import Tactics.PropositionSimplify
-> import Tactics.Matching
-> import Tactics.Unification
+< import Tactics.PropositionSimplify
+< import Tactics.Matching
+< import Tactics.Unification
 
 > import Elaboration.ElabProb
 > import Elaboration.ElabMonad
@@ -66,8 +69,8 @@ The |runElab| proof state command actually interprets an |Elab x| in
 the proof state. In other words, we define here the semantics of the
 |Elab| syntax.
 
-> runElab :: WorkTarget ->  (TY :>: Elab (INTM :=>: VAL)) -> 
->                           ProofState (INTM :=>: VAL, ElabStatus)
+> runElab :: WorkTarget ->  (TY :>: Elab EXP) -> 
+>                           ProofState (EXP, ElabStatus)
 
 This command is given a type and a program in the |Elab| DSL for creating an
 element of that type. It is also given a flag indicating whether elaboration
@@ -89,9 +92,11 @@ subgoal when trying to execute them elsewhere.
 
 > currentGoalOnly :: Elab x -> Bool
 > currentGoalOnly (ELambda _ _)  =  True
+
 > currentGoalOnly (ECry _)       =  True
-> currentGoalOnly (EFake _)      =  True
-> currentGoalOnly (EAnchor _)    =  True
+
+< currentGoalOnly (EAnchor _)    =  True
+
 > currentGoalOnly _              =  False
 
 
@@ -105,25 +110,26 @@ and redirect them to the specially crafted |runElabNewGoal|.
 
 > runElab _ (_ :>: EReturn x) = return (x, ElabSuccess)
 
+
 |ELambda| creates a \(\lambda\)-parameter, if this is allowed by the
 type we are elaborating to.
 
-> runElab WorkCurrentGoal (ty :>: ELambda x f) = case lambdable ty of
+> runElab WorkCurrentGoal (ty :>: ELambda x f) = case lambdable (ev ty) of
 >     Just (_, s, tyf) -> do
->         ref <- lambdaParam x
->         runElab WorkCurrentGoal (tyf (NP ref) :>: f ref)
->     Nothing -> throwError' $ err "runElab: type" ++ errTyVal (ty :<: SET)
+>         h <- lambdaParam x
+>         runElab WorkCurrentGoal (tyf (h :$ B0) :>: f h)
+>     Nothing -> throwError' $ err "runElab: type" ++ errTyTm (SET :>: ty)
 >                                  ++ err "is not lambdable!"
 
 |EGoal| retrieves the current goal and passes it to the elaboration task.
 
 > runElab wrk (ty :>: EGoal f) = runElab wrk (ty :>: f ty)
 
+
 |EWait| makes a |Waiting| hole and pass it along to the next elaboration task.
 
 > runElab wrk (ty :>: EWait s tyWait f) = do
->     tyWait' <- bquoteHere tyWait
->     tt <- make (s :<: tyWait')
+>     tt <- make (s :<: tyWait)
 >     runElab wrk (ty :>: f tt)
 
 |EElab| contains a syntactic representation of an elaboration problem. This
@@ -142,20 +148,25 @@ representation is interpreted and executed by |runElabProb|.
  crying state.
 
 > runElab WorkCurrentGoal (ty :>: ECry e) = do
->     e' <- distillErrors e
->     let msg = show (prettyStackError e')
+
+<     e' <- distillErrors e
+<     let msg = show (prettyStackError e')
+
+>     let msg = "ECry"
+
 >     mn <- getCurrentName
 >     elabTrace $ "Hole " ++ showName mn ++ " started crying:\n" ++ msg
 >     putHoleKind (Crying msg)
->     t :=>: tv <- getCurrentDefinition
->     return (N t :=>: tv, ElabSuspended)
+>     t <- getCurrentDefinitionLocal
+>     return (t, ElabSuspended)
+
+> {-
 
 |EFake| extracts the reference of the current entry and presents it as
  a fake reference. \pierre{This is an artifact of our current
  implementation of labels, this should go away when we label
  high-level objects with high-level names}.
 
-> runElab WorkCurrentGoal (ty :>: EFake f) = do
 >     r <- getFakeRef 
 >     inScope <- getInScope
 >     runElab WorkCurrentGoal . (ty :>:) $ f (r, paramSpine inScope)
@@ -166,19 +177,26 @@ representation is interpreted and executed by |runElabProb|.
 >     name <- getCurrentName
 >     runElab WorkCurrentGoal . (ty :>:) $ f (fst (last name))
 
+> -}
 
 |EResolve| provides a name-resolution service: given a relative name,
  it finds the term and potentially the scheme of the definition the
  name refers to. This is passed onto the next elaboration task.
 
+
 > runElab wrk (ty :>: EResolve rn f) = do
->     (ref, as, ms) <- resolveHere rn
->     let  tm   = P ref $:$ toSpine as
->          ms'  = (| (flip applyScheme as) ms |)
->     (tmv :<: tyv) <- inferHere tm
->     tyv'  <- bquoteHere tyv
->     runElab wrk (ty :>: f (PAIR tyv' (N tm) :=>: PAIR tyv tmv, ms'))
->   
+>     (t, l, ms) <- resolveHere rn
+>     es <- getGlobalScope
+>     let  tm   = t $$$. bwdList (take l (params es))
+
+<          ms'  = (| (flip applyScheme as) ms |)
+
+>     ty <- inferHere tm
+
+<     tyv'  <- bquoteHere tyv
+
+>     runElab wrk (ty :>: f (PAIR ty tm , ms))
+
 
 |EAskNSupply| gives access to the name supply to the next elaboration
  task.
@@ -195,33 +213,37 @@ dangling into some definitions, or clashes could happen.
 >     nsupply <- askNSupply
 >     runElab wrk (ty :>: f nsupply)
 
+> runElab wrk (ty :>: EAskDevLev f) = do
+>     l <- getDevLev
+>     runElab wrk (ty :>: f l)
+
+> runElab _ (_ :>: e) = error $ show e
 
 As mentioned above, some commands can only be used when elaboration is taking
 place in the current goal. This is the purpose of |runElabNewGoal|: it creates
 a dummy definition and hands back the elaboration task to |runElab|.
 
-> runElabNewGoal :: (TY :>: Elab (INTM :=>: VAL)) -> ProofState (INTM :=>: VAL, ElabStatus)
+> runElabNewGoal :: (TY :>: Elab EXP) -> ProofState (EXP, ElabStatus)
 > runElabNewGoal (ty :>: elab) = do
 >     -- Make a dummy definition
->     ty' <- bquoteHere ty
 >     x <- pickName "h" ""
->     make (x :<: ty')
+>     make (x :<: ty)
 >     -- Enter its development
 >     goIn
->     (tm :=>: tmv, status) <- runElab WorkCurrentGoal (ty :>: elab)
+>     (tm, status) <- runElab WorkCurrentGoal (ty :>: elab)
 >     -- Leave the development, one way or the other
->     case status of
->       ElabSuccess -> do
+>     d <- case status of
+>            ElabSuccess -> do
 >                 -- By finalising it
->                 t <- giveOutBelow tm
->                 e <- neutralise t
->                 return (e , ElabSuccess)
->       ElabSuspended -> do
+>                 d <- giveOutBelow tm
+>                 return d
+>            ElabSuspended -> do
 >                 -- By leaving it unfinished
->                 currentDef <- getCurrentDefinition
->                 e <- neutralise currentDef
+>                 d <- getCurrentDefinition
 >                 goOut
->                 return (e , ElabSuspended)
+>                 return d
+>     es <- getGlobalScope
+>     return $ (D d S0 (defOp d) $$$ paramSpine es, status) 
 
 
 \subsection{Interpreting elaboration problems}
@@ -231,18 +253,20 @@ elaboration problem. In other words, this function defines the
 semantics of the |EProb| language.
 
 > runElabProb :: WorkTarget ->  Loc -> (TY :>: EProb) -> 
->                               ProofState (INTM :=>: VAL, ElabStatus)
+>                               ProofState (EXP, ElabStatus)
+
 
 |ElabDone tt| always succeed at returning the given term |tt|.
 
 > runElabProb wrk loc (ty :>: ElabDone tt)  = 
->     return (maybeEval tt, ElabSuccess)
+>     return (tt, ElabSuccess)
 
 |ElabProb tm| asks for the elaboration of the display term |tm| (for
  pushed-in terms).
 
 > runElabProb wrk loc (ty :>: ElabProb tm)  =
 >     runElab wrk (ty :>: makeElab loc tm)
+
 
 |ElabInferProb tm| asks for the elaboration and type inference of the
  display term |tm| (for pull-out terms).
@@ -256,16 +280,18 @@ semantics of the |EProb| language.
 
 \pierre{This fall-through pattern-match reminds me of Duff's devices.}
 
-> runElabProb wrk loc (ty :>: WaitCan (_ :=>: Just (C _)) prob) =
->     runElabProb wrk loc (ty :>: prob)
-> runElabProb wrk loc (ty :>: WaitCan (tm :=>: Nothing) prob) =
->     runElabProb wrk loc (ty :>: WaitCan (tm :=>: Just (evTm tm)) prob)
+> runElabProb wrk loc (ty :>: p@(WaitCan tm prob)) =
+>   case ev tm of
+>     c :- as -> runElabProb wrk loc (ty :>: prob)
+>     _ -> suspendThis wrk ("can" :<: ty) p Waiting
+
 
 The semantics of the |ElabHope| command is specifically given by the
 |runElabHope| interpreter in
 Section~\ref{subsec:Elaboration.RunElab.elabHope}.
 
-> runElabProb wrk loc (ty :>: ElabHope)     = runElabHope wrk ty
+> runElabProb wrk loc (ty :>: ElabHope)     = runElabHope wrk (ev ty)
+
 
 Any case that has not matched yet ends in a suspended state: we cannot
 make progress on it right now. The suspension of an elaboration
@@ -295,14 +321,14 @@ there must be a nice way to present suspension that covers these 3
 cases.}
 
 > runElabProb top loc (ty :>: prob) = do
->     ty' <- bquoteHere ty
->     suspendThis top (name prob :<: ty' :=>: ty) prob
+>     suspendThis top (name prob :<: ty) prob Waiting
 >   where
 >     name :: EProb -> String
 >     name (WaitCan _ _)      = "can"
 >     name (WaitSolve _ _ _)  = "solve"
 >     name (ElabSchedule _)   = "suspend"
 >     name _                  = error "runElabProb: unexpected suspension."
+
 
 
 \subsection{Hoping, hoping, hoping}
@@ -313,7 +339,7 @@ hopes for an element of a given type. In a few cases, based on the
 type, we might be able to solve the problem immediately:
 \begin{itemize}
 
-\item An element of type |UNIT| is |VOID|;
+\item An element of type |ONE| is |ZERO|;
 
 \item A proof of a proposition might be found or refined by the
 propositional simplifier
@@ -327,12 +353,17 @@ that is sitting in our context
 If these strategies do not match or fail to solve the problem, we just
 create a hole.
 
-> runElabHope :: WorkTarget -> TY -> ProofState (INTM :=>: VAL, ElabStatus)
-> runElabHope wrk UNIT                = return (VOID :=>: VOID, ElabSuccess)
+> runElabHope :: WorkTarget -> VAL -> ProofState (EXP, ElabStatus)
+> runElabHope wrk ONE                = return (ZERO, ElabSuccess)
+
+> {-
 > runElabHope wrk (PRF p)             = simplifyProof wrk p
 > runElabHope wrk v@(LABEL (N l) ty)  = seekLabel wrk l ty <|> lastHope wrk v
+> -}
+
 > runElabHope wrk ty                  = lastHope wrk ty
 
+> {-
 
 \subsubsection{Hoping for labelled types}
 
@@ -414,7 +445,6 @@ state with hopes that we don't make use of.}
 >           let ty' = substitute xs vs ty
 >           (tm :=>: _, _)  <- runElabHope WorkElsewhere (evTm ty')
 >           return (xs :< (r :<: ty'), vs :< tm)
-
 
 \subsubsection{Simplifying proofs}
 \label{subsubsec:Elaboration.RunElab.proofs}
@@ -546,7 +576,7 @@ because we end up trying to move definitions with processes attached.}
 > flexiProofRight _ _ _ = (|)
 
 
-
+> -}
 
 If all else fails, we can hope for anything we like by leaving a hoping
 subgoal, either using the current one (if we are working on it) or creating a
@@ -554,13 +584,12 @@ new subgoal. Ideally we should cry rather than hoping for something
 patently absurd: at the moment we reject some impossible hopes but do not
 always spot them.
 
-> lastHope :: WorkTarget -> TY -> ProofState (INTM :=>: VAL, ElabStatus)
+> lastHope :: WorkTarget -> VAL -> ProofState (EXP, ElabStatus)
 > lastHope WorkCurrentGoal ty = do
 >     putHoleKind Hoping
->     return . (, ElabSuspended) =<< neutralise =<< getCurrentDefinition
+>     return . (, ElabSuspended) =<< getCurrentDefinitionLocal
 > lastHope WorkElsewhere ty = do
->     ty' <- bquoteHere ty
->     return . (, ElabSuccess) =<< neutralise =<< makeKinded Nothing Hoping ("hope" :<: ty')
+>     return . (, ElabSuccess) =<< makeKinded Nothing Hoping ("hope" :<: exp ty)
 
 
 \subsection{Suspending computation}
@@ -568,47 +597,49 @@ always spot them.
 
 \pierre{To be reviewed.}
 
+
 The |suspend| command can be used to delay elaboration, by creating a subgoal
 of the given type and attaching a suspended elaboration problem to its tip.
 When the scheduler hits the goal, the elaboration problem will restart if it
 is unstable.
 
-> suspend :: (String :<: INTM :=>: TY) -> EProb -> ProofState (EXTM :=>: VAL)
-> suspend (x :<: tt) prob = do
+> suspend :: (String :<: EXP) -> EProb -> HKind -> ProofState EXP
+> suspend (x :<: tt) prob hk = do
 >     -- Make a hole
->     r <- make (x :<: termOf tt)
+>     r <- make (x :<: tt)
+>     goIn
 >     -- Store the suspended problem
->     Just (EDEF ref xn dkind dev@(Dev {devTip=Unknown utt}) tm anchor) <- removeEntryAbove
->     putEntryAbove (EDEF ref xn dkind (dev{devTip=Suspended utt prob}) tm anchor)
+>     putDevTip (Suspended tt prob hk)
 >     -- Mark the Suspension state
+>     goOutBelow
 >     let ss = if isUnstable prob then SuspendUnstable else SuspendStable
 >     putDevSuspendState ss
 >     -- Mark for Scheduler action \pierre{right?}
 >     suspendHierarchy ss
 >     return r
 
-
 The |suspendMe| command attaches a suspended elaboration problem to
 the current location. \pierre{We expect the tip to be in an |Unknown|
 state. That's an invariant.}
 
-> suspendMe :: EProb -> ProofState (EXTM :=>: VAL)
+> suspendMe :: EProb -> ProofState EXP
 > suspendMe prob = do
 >     -- Store the suspended problem in the Tip
->     Unknown tt <- getDevTip
->     putDevTip (Suspended tt prob)
+>     Unknown tt hk <- getDevTip
+>     putDevTip (Suspended tt prob hk)
 >     -- Mark for Scheduler action \pierre{right?}
 >     let ss = if isUnstable prob then SuspendUnstable else SuspendStable
 >     suspendHierarchy ss
->     getCurrentDefinition
+>     getCurrentDefinitionLocal
 
 
 The |suspendThis| command attaches the problem to the current goal if
 we are working on it, and creates a new subgoal otherwise.
 
-> suspendThis :: WorkTarget ->  (String :<: INTM :=>: TY) -> EProb -> 
->                               ProofState (INTM :=>: VAL, ElabStatus)
-> suspendThis WorkCurrentGoal _ ep  = 
->     return . (, ElabSuspended)  =<< neutralise =<< suspendMe ep
-> suspendThis WorkElsewhere  stt  ep = 
->     return . (, ElabSuccess)    =<< neutralise =<< suspend stt ep
+> suspendThis :: WorkTarget ->  (String :<: EXP) -> EProb -> HKind -> 
+>                               ProofState (EXP, ElabStatus)
+> suspendThis WorkCurrentGoal _ ep hk = 
+>     return . (, ElabSuspended) =<< suspendMe ep
+> suspendThis WorkElsewhere  stt  ep hk = 
+>     return . (, ElabSuccess)   =<< suspend stt ep hk
+

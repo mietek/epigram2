@@ -282,11 +282,11 @@ of the proof state at the current location.
 >         tip <- getDevTip
 >         case tip of
 >             Module -> return empty
->             Unknown ty -> do
+>             Unknown ty _ -> do
 >                 tyd <- distillPS (SET :>: ty)
 >                 return (text "?" <+> kword KwAsc <+> pretty tyd maxBound)
 
-<             Suspended (ty :=>: _) prob -> do
+<             Suspended ty  _ prob -> do
 <                 hk <- getHoleKind
 <                 tyd <- prettyHere (SET :>: ty)
 <                 return (text ("(SUSPENDED: " ++ show prob ++ ")")

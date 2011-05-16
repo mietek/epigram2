@@ -81,16 +81,29 @@ let us extract such spine from a list of entries:
 
 > -}
 
-> params :: Entries -> [(ParamKind, String, TY)]
-> params = foldMap param where
->   param :: Entry Bwd -> [(ParamKind, String, TY)]
->   param  (EParam k s t _)   = [(k, s, t)]
->   param  _                  = []
+> params :: Entries -> [ (Tm {Body, Exp, n}) ]
+> params es = fst (params' es [])
+
+> params' :: Entries -> [ (Tm {Body, Exp, n}) ] -> ([ (Tm {Body, Exp, n}) ], Int)
+> params' B0 c = (c, 0)
+> params' (ez :< (EParam _ s t _)) c = 
+>   let  (as, l) = params' ez ((P (l, s, t) :$ B0) : c)
+>   in   (as, l+1)
+> params' (ez :< _) c = params' ez c
+
+
+> paramSpine :: Entries -> Bwd (Elim (Tm {Body, Exp, n}))
+> paramSpine = fst . paramSpine'
+
+> paramSpine' :: Entries -> (Bwd (Elim (Tm {Body, Exp, n})), Int)
+> paramSpine' B0 = (B0, 0)
+> paramSpine' (ez :< (EParam _ s t _)) = 
+>   let  (az, l) = paramSpine' ez
+>   in   (az :< A (P (l, s, t) :$ B0), l+1)
+> paramSpine' (ez :< _) = paramSpine' ez
+
 
 > {-
-
-> paramSpine :: Entries -> Spine {p} REF
-> paramSpine = fmap (A . N . P) . paramREFs
 
 Similarly, |applySpine| applies a reference to a given spine of
 parameters, provided as a spine. These are the shared parameters of a

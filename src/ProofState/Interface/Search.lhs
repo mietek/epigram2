@@ -70,7 +70,7 @@ have the check the |Tip|.
 
 > isGoal :: ProofState ()
 > isGoal = do
->     Unknown _ <- getDevTip
+>     Unknown _ _ <- getDevTip
 >     return ()
 
 Let us start with some gymnastic. We implement |prevStep| and

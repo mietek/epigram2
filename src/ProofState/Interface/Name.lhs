@@ -40,7 +40,7 @@ shared parameters.
 >           Just (_, ref)  -> return $ Just $ applySpine ref inScope
 >           Nothing        -> return Nothing
 
-
+> -}
 
 The |pickName| command takes a prefix suggestion and a name suggestion
 (either of which may be empty), and returns a more-likely-to-be-unique
@@ -54,4 +54,4 @@ name if the name suggestion is empty.
 >     return $ prefix ++ show (foldMap snd m + snd r)
 > pickName _ s   = return s
 
-> -}
+> 

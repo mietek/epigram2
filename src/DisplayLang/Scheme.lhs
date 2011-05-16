@@ -14,7 +14,6 @@
 
 > import Evidences.Tm
 > import Evidences.Mangler
-> import Evidences.Eval
 
 > import DisplayLang.DisplayTm
 
@@ -43,6 +42,12 @@ Crucially, an implicit $\Pi$ hides a real type, not another scheme: we
 forbid ``higher-schemes'' for mental sanity reasons. For the sake of
 generality, we will parameterise over the exact representation of
 types:
+
+> -}
+
+> data Scheme x  =  Scheeme
+
+> {-
 
 > data Scheme x  =  SchType x
 >                |  SchExplicitPi (String :<: Scheme x) (Scheme x)

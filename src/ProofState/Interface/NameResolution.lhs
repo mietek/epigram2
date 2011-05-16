@@ -29,7 +29,7 @@
 
 > import DisplayLang.Name
 
-< import DisplayLang.Scheme
+> import DisplayLang.Scheme
 
 > import Evidences.Tm
 > import Evidences.ErrorHandling
@@ -103,13 +103,13 @@ When in the process of resolving a relative name, we keep track of a
 > type ResolveState =  (  Either FScopeContext Entries
 >                      ,  Int
 >                      ,  Maybe DEF 
->                      ,  Maybe () -- (Scheme INTM)
+>                      ,  Maybe (Scheme EXP)
 >                      )
 
 The outcome of the process is a |ResolveResult|: a reference, a list of shared
 parameters to which it should be applied, and a scheme for it (if there is one).
 
-> type ResolveResult = Either (Int, String, TY) (DEF, Int, Maybe ())
+> type ResolveResult = Either (Int, String, TY) (DEF, Int, Maybe (Scheme EXP))
 
 < type ResolveResult = (REF, [REF], Maybe (Scheme INTM))
 
@@ -120,7 +120,7 @@ possibly a scheme. If the name ends with "./", the scheme will be
 discarded, so all parameters can be provided explicitly.
 \question{What should the syntax be for this, and where should it be handled?}
 
-> resolveHere :: RelName -> ProofState (Tm {Body, s, n}, Int, Maybe ())
+> resolveHere :: RelName -> ProofState (Tm {Body, Exp, n}, Int, Maybe (Scheme EXP))
 > resolveHere x = do
 >     let (x', b) = (x, True) -- shouldDiscardScheme x
 >     uess <- gets inBScope
@@ -130,8 +130,7 @@ discarded, so all parameters can be provided explicitly.
 >                             ++ showRelName x')
 >     case res of
 >       Left (l, s, t) -> return $ (P (l, s, t) :$ B0 , 0, Nothing)
->       Right (d, i, m) -> return $ (D d S0 (defOp d), i, m)
->     return $ undefined  -- res'  -- (r, s, if b then Nothing else ms)
+>       Right (d, i, m) -> return $ (D d S0 (defOp d), i, if b then Nothing else m)
 
 <   where
 <     shouldDiscardScheme :: RelName -> (RelName, Bool)
@@ -168,7 +167,7 @@ then continues with |lookFor|.
 <   | Just ref <- lookup y primitives  = Right (ref, [], Nothing)
 
 > resolve ((x, Rel i) : us)  l bsc = do
->   x <- lookUp (x, i) l bsc (bToF bsc)   
+>   x <- lookUp (x, i) l bsc (F0, F0)   
 >   case x of
 >     (Right y) -> lookFor us y
 >     (Left z) -> Right (Left z)
@@ -195,7 +194,7 @@ then continues with |lookFor|.
 
 > lookUp :: (String, Int) -> Int -> BScopeContext -> FScopeContext -> 
 >               Either (StackError) (Either (Int, String, TY) ResolveState)
-> lookUp (x,i) l (B0, B0) fs = Left [err $ "Not in scope " ++ x]
+> lookUp (x,i) l (B0, B0) fs = Left [err $ "lookup: Not in scope " ++ x]
 > lookUp (x,i) l ((esus :< (es,(y,j))),B0) (fs,vfss) | x == y = 
 >   if i == 0 then Right (Right (Left (fs,vfss), l, Nothing, Nothing))
 >             else lookUp (x,i-1) l (esus,es) (F0,((y,j),fs) :> vfss)
@@ -212,7 +211,7 @@ then continues with |lookFor|.
 >   if i == 0 then Right (Left (l', s, t))
 >             else lookUp (x,i-1) (l-1) (esus,es) (e:>fs,vfss)
 > lookUp (x,i) l (esus, es :< e@(EParam _ _ _ _)) (fs,vfss) =
->             lookUp (x,i-1) (l-1) (esus,es) (e:>fs,vfss)
+>             lookUp (x,i) (l-1) (esus,es) (e:>fs,vfss)
 > lookUp u l (esus, es :< e) (fs,vfss) = lookUp u l (esus,es) (e:>fs,vfss)
 
 
@@ -242,7 +241,7 @@ then continues with |lookFor|.
 > lookDown (x, i) (F0, F0) fs = Left [err $ "Not in scope " ++ x]
 
 
-> lookLocal :: RelName -> Entries -> Int -> Maybe DEF -> Maybe () {- (Scheme INTM) -} ->
+> lookLocal :: RelName -> Entries -> Int -> Maybe DEF -> Maybe (Scheme EXP) ->
 >                  Either (StackError) ResolveResult
 > lookLocal ((x, Rel i) : ys) es sp _ _  = huntLocal (x, i) ys (reverse $ trail es) sp
 > lookLocal ((x, Abs i) : ys) es sp _ _  = huntLocal (x, i) ys (trail es) sp

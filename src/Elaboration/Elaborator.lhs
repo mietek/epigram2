@@ -17,6 +17,7 @@
 > import Evidences.Eval
 > import Evidences.TypeChecker
 > import Evidences.Operators
+> import Evidences.ErrorHandling
 
 > import ProofState.Structure.Developments
 
@@ -45,6 +46,7 @@
 > import Elaboration.Scheduler
 
 > import Kit.BwdFwd
+> import Kit.NatFinVec
 > import Kit.MissingLibrary
 
 %endif
@@ -59,25 +61,25 @@ subsection~\ref{subsec:Evidences.TypeChecker.type-checking}, except that it
 operates in the |Elab| monad, so it can create subgoals and
 $\lambda$-lift terms.
 
-> elaborate :: Loc -> (TY :>: DInTmRN) -> ProofState (INTM :=>: VAL)
+> elaborate :: Loc -> (TY :>: DInTmRN) -> ProofState EXP
 > elaborate loc (ty :>: tm) = runElab WorkElsewhere (ty :>: makeElab loc tm)
 >     >>= return . fst
 
 > elaborate' = elaborate (Loc 0)
 
 
-> elaborateHere :: Loc -> DInTmRN -> ProofState (INTM :=>: VAL, ElabStatus)
+> elaborateHere :: Loc -> DInTmRN -> ProofState (EXP, ElabStatus)
 > elaborateHere loc tm = do
->     _ :=>: ty <- getHoleGoal
+>     ty <- getHoleGoal
 >     runElab WorkCurrentGoal (ty :>: makeElab loc tm)
 
 > elaborateHere' = elaborateHere (Loc 0)
 
 
-> elabInfer :: Loc -> DExTmRN -> ProofState (INTM :=>: VAL :<: TY)
+> elabInfer :: Loc -> DExTmRN -> ProofState (EXP :<: TY)
 > elabInfer loc tm = do
->     (tt, _) <- runElab WorkElsewhere (sigSetVAL :>: makeElabInfer loc tm)
->     let (tt' :<: _ :=>: ty) = extractNeutral tt
+>     (tt, _) <- runElab WorkElsewhere (sigSet :>: makeElabInfer loc tm)
+>     let (tt' :<: ty) = extractNeutral tt
 >     return (tt' :<: ty)
 
 > elabInfer' = elabInfer (Loc 0)
@@ -87,16 +89,16 @@ Sometimes (for example, if we are about to apply elimination with a motive) we
 really want elaboration to proceed as much as possible. The |elabInferFully| command
 creates a definition for the argument, elaborates it and runs the scheduler.
 
-> elabInferFully :: DExTmRN -> ProofState (EXTM :=>: VAL :<: TY)
+> elabInferFully :: DExTmRN -> ProofState (EXP :<: TY)
 > elabInferFully tm = do
->     make ("eif" :<: sigSetTM)
+>     make ("eif" :<: sigSet)
 >     goIn
->     (tm :=>: _, status) <- runElab WorkCurrentGoal (sigSetVAL :>: makeElabInfer (Loc 0) tm)
+>     (tm, status) <- runElab WorkCurrentGoal (sigSet :>: makeElabInfer (Loc 0) tm)
 >     when (status == ElabSuccess) (ignore (give tm))
 >     startScheduler
->     (tm :=>: v) <- getCurrentDefinition
+>     tm <- getCurrentDefinitionLocal
 >     goOut
->     return (tm :$ Snd :=>: v $$ Snd :<: v $$ Fst)
+>     return (tm $$ Tl :<: tm $$ Hd)
 
 
 \subsection{Elaborating construction commands}
@@ -107,40 +109,34 @@ the current goal, and calls the |give| command on the resulting term. If its arg
 is a nameless question mark, it avoids creating a pointless subgoal by simply returning
 a reference to the current goal (applied to the appropriate shared parameters).
 
-> elabGive :: DInTmRN -> ProofState (EXTM :=>: VAL)
+> elabGive :: DInTmRN -> ProofState EXP
 > elabGive tm = elabGive' tm <* startScheduler <* goOut
 
-> elabGiveNext :: DInTmRN -> ProofState (EXTM :=>: VAL)
+> elabGiveNext :: DInTmRN -> ProofState EXP 
 > elabGiveNext tm = elabGive' tm <* startScheduler <* (nextGoal <|> goOut)
 
-> elabGive' :: DInTmRN -> ProofState (EXTM :=>: VAL)
+> elabGive' :: DInTmRN -> ProofState EXP 
 > elabGive' tm = do
 >     tip <- getDevTip
 >     case (tip, tm) of         
->         (Unknown _, DQ "")  -> getDefn
->         (Unknown _, _)      -> do
->             (tm' :=>: _, status) <- elaborateHere' tm
+>         (Unknown _ _, DQ "")  -> return ()
+>         (Unknown _ _, _)      -> do
+>             (tm' , status) <- elaborateHere' tm
 >             case status of
->               ElabSuccess -> give tm'
->               ElabSuspended -> getDefn
+>               ElabSuccess -> give tm' >> return ()
+>               ElabSuspended -> return () 
 >         _  -> throwError' $ err "elabGive: only possible for incomplete goals."
->   where
->     getDefn :: ProofState (EXTM :=>: VAL)
->     getDefn = do
->         CDefinition _ ref _ _ _ <- getCurrentEntry
->         aus <- getGlobalScope
->         return (applySpine ref aus)
-
+>     getCurrentDefinitionLocal
 
 The |elabMake| command elaborates the given display term in a module to
 produce a type, then converts the module to a goal with that type. Thus any
 subgoals produced by elaboration will be children of the resulting goal.
 
-> elabMake :: (String :<: DInTmRN) -> ProofState (EXTM :=>: VAL)
+> elabMake :: (String :<: DInTmRN) -> ProofState EXP
 > elabMake (s :<: ty) = do
 >     makeModule s
 >     goIn
->     ty' :=>: _ <- elaborate' (SET :>: ty)
+>     ty' <- elaborate' (SET :>: ty)
 >     tm <- moduleToGoal ty'
 >     goOutBelow
 >     return tm
@@ -149,12 +145,12 @@ subgoals produced by elaboration will be children of the resulting goal.
 The |elabPiParam| command elaborates the given display term to produce a type, and
 creates a $\Pi$ with that type.
 
-> elabPiParam :: (String :<: DInTmRN) -> ProofState REF
+> elabPiParam :: (String :<: DInTmRN) -> ProofState (Tm {Head, s, Z})
 > elabPiParam (s :<: ty) = do
 >     tt <- elaborate' (SET :>: ty)
 >     piParamUnsafe (s :<: tt)
 
-> elabLamParam :: (String :<: DInTmRN) -> ProofState REF
+> elabLamParam :: (String :<: DInTmRN) -> ProofState (Tm {Head, s, Z})
 > elabLamParam (s :<: ty) = do
 >     tt <- elaborate' (SET :>: ty)
 >     assumeParam (s :<: tt)
@@ -188,6 +184,8 @@ plus
       \ n : Nat ->
     ] plus-impl m n call : Nat ;
 \end{verbatim}
+
+> {-
 
 > elabLet :: (String :<: Scheme DInTmRN) -> ProofState (EXTM :=>: VAL)
 > elabLet (x :<: sch) = do
@@ -315,3 +313,5 @@ plus [
 >     e <- getEntryAbove
 >     (t', tt) <- elabScheme (es :< e) t
 >     return (SchImplicitPi (x :<: (es -| termOf ss)) t', tt)
+
+> -}

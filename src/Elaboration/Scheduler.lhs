@@ -8,6 +8,8 @@
 
 > module Elaboration.Scheduler where
 
+> import Prelude hiding (exp)
+
 > import Control.Applicative
 
 > import Evidences.Tm
@@ -84,9 +86,9 @@ its current entry, then search its children from the top.
 > schedulerContinue n = do
 >     cs <- getBelowCursor
 >     case cs of
->         F0                      -> schedulerDone n
->         EPARAM _ _ _ _ _ :> _   -> cursorDown >> schedulerContinue n
->         _ :> _                  -> do
+>         F0                    -> schedulerDone n
+>         EParam _ _ _ _ :> _   -> cursorDown >> schedulerContinue n
+>         _ :> _                -> do
 >             cursorDown
 >             goIn
 >             resumeCurrentEntry
@@ -111,6 +113,7 @@ continue searching.
 >                           schedulerContinue n
 
 
+
 The |resumeCurrentEntry| command checks for an unstable elaboration
 problem on the current entry of the current location, and resumes
 elaboration if it finds one. If elaboration succeeds, it gives the
@@ -121,18 +124,19 @@ resulting term. It returns whether an elaboration process was resumed
 > resumeCurrentEntry = do
 >   tip <- getDevTip
 >   case tip of
->     Suspended (ty :=>: tyv) prob | isUnstable prob -> do
->         putDevTip (Unknown (ty :=>: tyv))
+>     Suspended ty prob hk | isUnstable prob -> do
+>         putDevTip (Unknown ty hk)
 >         mn <- getCurrentName
 >         schedTrace $ "scheduler: resuming elaboration on " ++ showName mn
 >                           ++ ":  \n" ++ show prob
->         mtt <- resume (ty :=>: tyv) prob
+>         mtt <- resume (ev ty) prob
 >         case mtt of
->             Just tt  ->  give (termOf tt)
+>             Just tt  ->  give tt
 >                      >>  schedTrace "scheduler: elaboration done."
 >             Nothing  ->  schedTrace "scheduler: elaboration suspended."
 >         return True
 >     _ -> return False
+
 
 
 Given a (potentially, but not necessarily, unstable) elaboration problem for the
@@ -140,28 +144,30 @@ current location, we can |resume| it to try to produce a term. If this suceeds,
 the cursor will be in the same location, but if it fails (i.e.\ the problem has
 been suspended) then the cursor could be anywhere earlier in the proof state.
 
-> resume :: (INTM :=>: VAL) -> EProb -> ProofState (Maybe (INTM :=>: VAL))
-> resume _ (ElabDone tt) = return . Just . maybeEval $ tt
-> resume (ty :=>: tyv) ElabHope = 
->     return . ifSnd =<< runElabHope WorkCurrentGoal tyv
-> resume (ty :=>: tyv) (ElabProb tm) = 
->     return . ifSnd =<< runElab WorkCurrentGoal (tyv :>: makeElab (Loc 0) tm)
-> resume (ty :=>: tyv) (ElabInferProb tm) =
->     return . ifSnd =<< runElab WorkCurrentGoal (tyv :>: makeElabInfer (Loc 0) tm)
-> resume (ty :=>: tyv) (WaitCan (tm :=>: Just (C v)) prob) =
->     resume (ty :=>: tyv) prob
-> resume (ty :=>: tyv) (WaitCan (tm :=>: Nothing) prob) =
->     resume (ty :=>: tyv) (WaitCan (tm :=>: Just (evTm tm)) prob)
-> resume _ prob@(WaitCan (tm :=>: _) _) = do
+> resume :: VAL -> EProb -> ProofState (Maybe EXP)
+
+> resume _ (ElabDone tt) = return $ (| (exp tt) |)
+> resume ty ElabHope = 
+>     return . ifSnd =<< runElabHope WorkCurrentGoal ty
+> resume ty (ElabProb tm) = 
+>     return . ifSnd =<< runElab WorkCurrentGoal (exp ty :>: makeElab (Loc 0) tm)
+> resume ty (ElabInferProb tm) =
+>     return . ifSnd =<< runElab WorkCurrentGoal (exp ty :>: makeElabInfer (Loc 0) tm)
+> resume ty (WaitCan tm prob) = case ev tm of
+>   _ :- _  -> resume ty prob
+>   _       -> do
 >     schedTrace $ "Suspended waiting for " ++ show tm ++ " to become canonical."
 >     suspendMe prob
 >     return Nothing
-> resume _ (WaitSolve ref@(_ := HOLE _ :<: _) stt prob) = do
+> resume _ (WaitSolve def@(DEF _ _ Hole) t prob) = do
 >     suspendMe prob
 >     mn <- getCurrentName
->     tm <- bquoteHere (valueOf . maybeEval $ stt) -- force definitional expansion
->     solveHole' ref [] tm -- takes us to who knows where
+>     -- tm <- exp (ev t) -- force definitional expansion
+>     solveHole' (defName def) [] (exp (ev t)) -- takes us to who knows where
 >     return Nothing
+
+> {- p
+
 
 If we have a |WaitSolve| problem where the hole has already been solved with
 something else, we need to ensure the solution is compatible. If the two
@@ -191,7 +197,9 @@ there a better way to do this?}
 
 > resume tt (ElabSchedule prob) = resume tt prob
 
+> -}
 
 > ifSnd :: (a, ElabStatus) -> Maybe a
 > ifSnd (a,  ElabSuccess)   = Just a
 > ifSnd (_,  ElabSuspended)  = Nothing
+

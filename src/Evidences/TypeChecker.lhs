@@ -35,6 +35,7 @@
 >                  (TY :>: EXP) -> m ()
 > typeCheck (ty :>: t) = chk 0 (ty :>: (ENil, t))
 
+>
 
 It's just possible that variable-management should be baked into a monad,
 here.
@@ -62,15 +63,17 @@ here.
 
 > chk l (_T :>: (g, t@(V _ :$ _))) = chk l (_T :>: (ENil, eval {Val} g t))
 
-> chk l (_T :>: (g, h :$ ss)) = do
->   (tty, es) <- headTySpine l (g, h)
->   _T' <- spInf l tty (g, map (A . wk) es ++ trail ss)
->   if equal l (SET :>: (_T, _T'))
->       then return ()
->       else throwError' $ err "change of direction"
-
 > chk l (_T :>: (g, g' :/ t)) = chk l (_T :>: (g <+< g', toBody t))
 
+> chk l (_T :>: t) = do
+>   _T' <- inf l t
+>   if equal l (SET :>: (_T, _T'))
+>       then return ()
+>       else throwError' $ [  StrMsg "Inferred type: "
+>                          ,  ErrorTm (Just SET :>: _T')
+>                          ,  StrMsg " is not equal to expected type: " 
+>                          ,  ErrorTm (Just SET :>: _T)
+>                          ]
 
 > chks :: (Applicative m, MonadError StackError m) => 
 >             Int -> VAL :>: (Env {Z} {n}, [Tm {Body, s, n}]) -> m ()
@@ -90,7 +93,7 @@ here.
 > headTySpine l (g, D d es _)      = pure (D d S0 (defOp d) :<: defTy d, rewindStk es [])
 > headTySpine l (g, P (i, s, ty))  = pure (P (i, s, ty) :$ B0 :<: ty, [])
 > headTySpine _ (g, h)             = throwError' $
->     err "headTySpine with bad head" ++ errTm (exp (g :/ h :$ B0))
+>     err "headTySpine with bad head" ++ errTm (exp (ev (g :/ h :$ B0)))
 
 
 
@@ -111,7 +114,17 @@ here.
 >     _         -> throwError' $ err "spInf: bad"
 
 
-
+> inf :: (Applicative m, MonadError StackError m) => 
+>            Int -> (Env {Z} {n}, Tm {Body, s, n}) -> m TY
+> inf l (g, h :$ ss) = do
+>   (tty, es) <- headTySpine l (g, h)
+>   _T <- spInf l tty (g, map (A . wk) es ++ trail ss)
+>   return _T
+> inf l (g, d@(D _ _ _)) = do
+>   (tty, es) <- headTySpine l (g, d)
+>   _T <- spInf l tty (g, map (A . wk) es)
+>   return _T
+> inf _ _ = throwError' $ err "type inference failure"
 
 
 > polyIdTy, polyIdTm, compTy, compTm, badCompTm :: EXP

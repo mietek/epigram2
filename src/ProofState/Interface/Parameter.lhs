@@ -42,7 +42,7 @@ the cursor while working on a goal.
 > lambdaParam x = do
 >     tip <- getDevTip
 >     case tip of
->       Unknown ty ->
+>       Unknown ty hk ->
 >         case lambdable (ev ty) of
 >           Just (paramKind, s, t) -> do
 >               -- Insert the parameter above the cursor
@@ -51,7 +51,7 @@ the cursor while working on a goal.
 >               putDevLev (succ l)
 >               -- Update the Tip
 >               let tipTy = t $ P (l, x, s) :$ B0
->               putDevTip $ Unknown tipTy
+>               putDevTip $ Unknown tipTy hk
 >               -- Return the reference to the parameter
 >               return $ P (l, x, s)
 >           _  -> throwError' $ err "lambdaParam: goal is not a pi-type or all-proof."
@@ -96,13 +96,13 @@ indeed a type, so it requires further attention.
 > piParamUnsafe (s :<: ty) = do
 >     tip <- getDevTip
 >     case tip of
->         Unknown SET -> do
+>         Unknown SET hk -> do
 >           -- Working on a goal of type |Set|
 >           l <- getDevLev
 >           -- Simply introduce the parameter
 >           putEntryAbove $ EParam ParamPi s ty l
 >           putDevLev (succ l)
 >           return $ P (l, s, ty)
->         Unknown _  -> throwError' $ err "piParam: goal is not of type SET."
->         _          -> throwError' $ err "piParam: only possible for incomplete goals."
+>         Unknown _ _ -> throwError' $ err "piParam: goal is not of type SET."
+>         _           -> throwError' $ err "piParam: only possible for incomplete goals."
 

@@ -26,7 +26,6 @@
 > import DisplayLang.TmParse
 > import DisplayLang.DisplayTm
 > import DisplayLang.PrettyPrint
-> import DisplayLang.DumbTrans
 
 > import ProofState.Edition.ProofContext
 > import ProofState.Edition.ProofState
@@ -54,12 +53,12 @@
 > import Tactics.Relabel
 > import Tactics.ShowHaskell
 > import Tactics.Matching
+> -}
+
 > import Tactics.Unification
 
 > import Elaboration.Elaborator
 > import Elaboration.Scheduler
-
-> -}
 
 > import Distillation.Distiller
 
@@ -129,10 +128,12 @@ Here we have a very basic command-driven interface to the proof state monad.
 >   where
 >     showGoal :: TY -> ProofState String
 
-<     showGoal ty@(LABEL _ _) = do
-<         h <- infoHypotheses
-<         s <- prettyHere . (SET :>:) =<< bquoteHere ty
-<         return $ h ++ "\n" ++ "Programming: " ++ show s ++ "\n"
+> {-
+>     showGoal ty@(LABEL _ _) = do
+>         h <- infoHypotheses
+>         s <- prettyHere . (SET :>:) =<< bquoteHere ty
+>         return $ h ++ "\n" ++ "Programming: " ++ show s ++ "\n"
+> -}
 
 >     showGoal ty = do
 >         ty <- distillPS (SET :>: ty)
@@ -205,7 +206,7 @@ the error message) and |Maybe| a new proof context.
 > runProofState :: ProofState String -> ProofContext
 >     -> (String, Maybe ProofContext)
 > runProofState m loc =
->     case runStateT m loc of
+>     case runStateT (catchError m catchUnprettyErrors) loc of
 >         Right (s, loc')  -> (s, Just loc')
 >         Left ss          -> (renderHouseStyle $ prettyStackError ss, Nothing)
 
@@ -279,8 +280,6 @@ The master list of Cochon tactics.
 
 Construction tactics:
 
->     unaryInCT "parse" (\tm -> (| show (dumbPS tm) |)) "" : 
-
 > {-
 >     nullaryCT "apply" (apply >> return "Applied.")
 >       "apply - applies the last entry in the development to a new subgoal."
@@ -288,16 +287,18 @@ Construction tactics:
 >       "done - solves the goal with the last entry in the development."
 > -}
 
->   unaryInCT "give" (\tm -> dumbPS tm >>= giveNext >> return "Thank you.")
+>   unaryInCT "give" (\tm -> elabGiveNext tm >> return "Thank you.")
 >       "give <term> - solves the goal with <term>." :
 
->   unaryInCT "inspect" (\tm -> do
->     t <- dumbPS tm
->     return (ugly V0 (ev t))) "" :
+>   unaryExCT "inspect" (\tm -> do
+>     t :<: ty <- elabInfer' tm
+>     dt <- distillPS (ty :>: t)
+>     dty <- distillPS (SET :>: ty)
+>     return $ (renderHouseStyle (pretty dt AppSize)) ++ " :::: " ++ 
+>              (renderHouseStyle (pretty dty AppSize))) ""  :
      
 
-> {-
->   : simpleCT 
+>   simpleCT 
 >         "lambda"
 >          (| (|bwdList (pSep (keyword KwComma) tokenString) (%keyword KwAsc%)|) :< tokenInTm 
 >           | bwdList (pSep (keyword KwComma) tokenString)
@@ -311,26 +312,8 @@ Construction tactics:
 >                                >> return "Made lambda!"
 >            )
 >          ("lambda <labels> - introduces one or more hypotheses.\n"++
->           "lambda <labels> : <type> - introduces new module parameters or hypotheses.")
-> -}
-
-
->   simpleCT 
->         "lambda"
->          (| (|bwdList (pSep (keyword KwComma) tokenString) (%keyword KwAsc%)|) :< tokenInTm 
->           | bwdList (pSep (keyword KwComma) tokenString)
->           |)
->          (\ args -> case args of
->             []  -> return "This lambda needs no introduction!"
->             _   -> case last args of
->               InArg ty  -> do
->                  ty' <- dumbPS ty 
->                  Data.Traversable.mapM (assumeParam {- lamParam -} . (:<: ty') . argToStr) (init args)
->                                >> return "Made lambda!"
->               _  -> traverse (lambdaParam . argToStr) args >> return "Made lambda!"
->            )
->          ("lambda <labels> - introduces one or more hypotheses.\n" ++
 >           "lambda <labels> : <type> - introduces new module parameters or hypotheses.") :
+
 
 
 
@@ -345,7 +328,9 @@ Construction tactics:
 >             return ("Let there be " ++ x ++ "."))
 >         "let <label> <scheme> : <type> - set up a programming problem with a scheme."
 
->   : simpleCT
+> -}
+
+>   simpleCT
 >         "make"
 >         (| (|(B0 :<) tokenString (%keyword KwAsc%)|) :< tokenInTm
 >          | (|(B0 :<) tokenString (%keyword KwDefn%) |) <>< 
@@ -363,35 +348,19 @@ Construction tactics:
 >                 return "Made."
 >         )
 >        ("make <x> : <type> - creates a new goal of the given type.\n"
->            ++ "make <x> := <term> - adds a definition to the context.")
-
-> -}
-
->   simpleCT
->         "make"
->         (| (|(B0 :<) tokenString (%keyword KwAsc%)|) :< tokenInTm
->          |)
->         (\ (StrArg s:tyOrTm) -> case tyOrTm of
->             [InArg ty] -> do
->                 ty <- dumbPS ty
->                 make (s :<: ty)
->                 goIn
->                 return "Appended goal!"
->         )
->        ("make <x> : <type> - creates a new goal of the given type.\n") :
->            -- ++ "make <x> := <term> - adds a definition to the context.") :
+>            ++ "make <x> := <term> - adds a definition to the context.") :
 
 >     unaryStringCT "module" (\s -> makeModule s >> goIn >> return "Made module.")
 >       "module <x> - creates a module with name <x>." :
 
-> {-
 
->   : simpleCT
+>   simpleCT
 >         "pi"
 >          (| (|(B0 :<) tokenString (%keyword KwAsc%)|) :< tokenInTm |)
 >         (\ [StrArg s, InArg ty] -> elabPiParam (s :<: ty) >> return "Made pi!")
->         "pi <x> : <type> - introduces a pi."
+>         "pi <x> : <type> - introduces a pi." :
 
+> {-
 >   : simpleCT
 >       "program"
 >       (|bwdList (pSep (keyword KwComma) tokenString)|)
@@ -493,7 +462,9 @@ Miscellaneous tactics:
 >         }
 >             
 
->     : CochonTactic 
+> -}
+
+>     CochonTactic 
 >         {  ctName = "undo"
 >         ,  ctParse = pure B0
 >         ,  ctIO = (\ _ (locs :< loc) -> case locs of
@@ -501,7 +472,9 @@ Miscellaneous tactics:
 >             _   -> putStrLn "Undone."       >> return locs
 >          )
 >         ,  ctHelp = "undo - goes back to a previous state."
->         }
+>         } :
+
+> {-
 
 >     : nullaryCT "validate" (validateHere >> return "Validated.")
 >         "validate - re-checks the definition at the current location."  

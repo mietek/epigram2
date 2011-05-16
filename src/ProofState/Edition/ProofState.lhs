@@ -58,5 +58,4 @@ former to the latter.
 
 > liftErrorState :: (a -> b) -> ProofStateT a c -> ProofStateT b c
 > liftErrorState f = mapStateT (liftError f)
-
 > -}
