@@ -15,7 +15,6 @@
 > import Control.Applicative
 
 > import Evidences.Tm
-> import Evidences.Eval
 > import Evidences.ErrorHandling
 
 > import DisplayLang.Name

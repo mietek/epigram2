@@ -36,7 +36,6 @@
 > import Evidences.Tm
 > import Evidences.ErrorHandling
 > import Evidences.NameSupply
-> import Evidences.Operators
 > import Evidences.DefinitionalEquality
 
 %endif

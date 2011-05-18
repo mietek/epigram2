@@ -29,7 +29,6 @@
 > import ProofState.Interface.ProofKit
 
 > import Evidences.Tm
-> import Evidences.Eval
 
 > import Elaboration.ElabProb
 

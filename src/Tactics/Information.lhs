@@ -11,7 +11,6 @@
 > import Control.Monad.State
 > import Text.PrettyPrint.HughesPJ
 
-> import Evidences.Eval
 > import Evidences.Tm hiding (($$))
 > import Evidences.NameSupply
 
@@ -35,14 +34,12 @@
 > import DisplayLang.Lexer
 > import DisplayLang.PrettyPrint
 
-> {-
 > import Elaboration.ElabProb
 > import Elaboration.ElabMonad
 > import Elaboration.MakeElab
 > import Elaboration.RunElab
 > import Elaboration.Scheduler
 > import Elaboration.Elaborator
-> -}
 
 > import Distillation.Distiller
 > import Distillation.Scheme

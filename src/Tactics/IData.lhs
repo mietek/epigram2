@@ -18,16 +18,12 @@
 
 > import Evidences.Tm
 > import Evidences.NameSupply
-> import Evidences.Mangler
-> import Evidences.Eval
-> import Evidences.Operators
 > import Evidences.DefinitionalEquality
 
 > import ProofState.Edition.Scope
 > import ProofState.Edition.ProofState
 > import ProofState.Edition.GetSet
 > import ProofState.Edition.Navigation
-> import ProofState.Edition.FakeRef
 
 > import ProofState.Interface.ProofKit
 > import ProofState.Interface.Module
@@ -43,7 +39,7 @@
 
 %endif
 
-
+> {-
 
 > ielabCons :: String -> INTM -> (EXTM :=>: VAL) -> 
 >                [Elim VAL] -> (String , DInTmRN) -> 
@@ -304,4 +300,4 @@ dawg.}
 > comprefold :: Eq a => [[a]] -> [a] 
 > comprefold [] = [] 
 > comprefold (as : ass) = foldr compre as ass 
-
+> -}

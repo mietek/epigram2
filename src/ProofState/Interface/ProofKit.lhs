@@ -25,7 +25,6 @@
 > import Evidences.Tm
 > import Evidences.NameSupply
 > import Evidences.TypeChecker
-> import Evidences.BetaQuotation
 
 %endif
 

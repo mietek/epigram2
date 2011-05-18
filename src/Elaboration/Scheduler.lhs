@@ -14,7 +14,6 @@
 
 > import Evidences.Tm
 > import Evidences.NameSupply
-> import Evidences.Eval
 > import Evidences.DefinitionalEquality
 
 > import ProofState.Structure.Developments

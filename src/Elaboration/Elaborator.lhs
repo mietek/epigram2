@@ -13,10 +13,7 @@
 > import Data.Traversable
 
 > import Evidences.Tm
-> import Evidences.Mangler
-> import Evidences.Eval
 > import Evidences.TypeChecker
-> import Evidences.Operators
 > import Evidences.ErrorHandling
 
 > import ProofState.Structure.Developments
@@ -26,7 +23,6 @@
 > import ProofState.Edition.GetSet
 > import ProofState.Edition.Scope
 > import ProofState.Edition.Navigation
-> import ProofState.Edition.FakeRef
 
 > import ProofState.Interface.Search
 > import ProofState.Interface.Module

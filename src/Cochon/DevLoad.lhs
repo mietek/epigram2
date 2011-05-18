@@ -5,7 +5,7 @@
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE TypeOperators #-}
 
-> module Cochon.DevLoad (devLoad, devLoad') where
+> module Cochon.DevLoad  where
 
 > import Control.Monad.State
 > import Control.Monad.Error
@@ -41,6 +41,8 @@
 > import Evidences.NameSupply
 
 %endif
+
+> {-
 
 \subsection{Parsing a Development}
 
@@ -303,3 +305,5 @@ The following companion function takes care of the dirty details:
 >             Right dev -> do
 >               -- Return the result
 >               return dev
+
+> -}

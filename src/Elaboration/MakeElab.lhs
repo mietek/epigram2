@@ -17,11 +17,7 @@
 > import Evidences.NameSupply
 > import Evidences.TypeChecker
 > import Evidences.TypeCheckRules
-> import Evidences.Eval
-> import Evidences.Operators
-> import Evidences.BetaQuotation
 > import Evidences.DefinitionalEquality
-> import Evidences.Utilities
 > import Evidences.ErrorHandling
 
 > import ProofState.Edition.ProofState

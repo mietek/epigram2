@@ -8,7 +8,6 @@
 > module Tactics.Record where
 
 > import Evidences.Tm
-> import Evidences.Mangler
 
 > import ProofState.Edition.ProofState
 

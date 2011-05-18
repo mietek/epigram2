@@ -19,7 +19,6 @@
 
 > import Evidences.Tm
 > import Evidences.NameSupply
-> import Evidences.Operators
 
 
 %endif

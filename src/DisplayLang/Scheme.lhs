@@ -13,7 +13,6 @@
 > import Data.Traversable
 
 > import Evidences.Tm
-> import Evidences.Mangler
 
 > import DisplayLang.DisplayTm
 

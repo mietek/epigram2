@@ -94,8 +94,8 @@ either.
 >                                usageInfo message options))
 >  where
 >    withFile :: String -> (Bwd ProofContext -> IO a) -> IO a
->    withFile "-" g = devLoad' (Just stdin) (return []) >>= g
->    withFile file g = devLoad file >>= g
+>    withFile "-" g = error "reconstruct Cochom/DevLoad.lhs Fst, K?" -- devLoad' (Just stdin) (return []) >>= g
+>    withFile file g = error "reconstruct Cochom/DevLoad.lhs Fst, K?" -- devLoad file >>= g
 
 >    loadDev :: String -> IO ()
 >    loadDev file = withFile file cochon'

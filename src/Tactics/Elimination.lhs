@@ -21,8 +21,6 @@
 
 > import Evidences.Tm
 > import Evidences.NameSupply
-> import Evidences.Eval
-> import Evidences.Operators
 > import Evidences.DefinitionalEquality
 
 > import ProofState.Edition.ProofState
@@ -43,6 +41,7 @@
 
 %endif
 
+> {-
 
 Elimination with a motive works on a goal prepared \emph{by the user} in the form
 $$\Gamma, \Delta \vdash ? : T$$
@@ -858,3 +857,5 @@ We make elimination accessible to the user by adding it as a Cochon tactic:
 >                                               |id tokenAscription |)|)
 >     (\[n,e] -> elimCTactic (argOption (unDP . argToEx) n) (argToEx e))
 >     "eliminate [<comma>] <eliminator> - eliminates with a motive.")
+
+> -}

@@ -23,17 +23,16 @@ generate an executable from a collection of supercombinator definitions.
 
 > import Evidences.NameSupply
 > import Evidences.Tm
-> import Evidences.Mangler
 
 > import ProofState.Structure.Developments
 
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
 
-> import Compiler.OpDef
-
 %endif
 
+
+> {-
 
 \subsection{Representing Epic syntax}
 
@@ -424,3 +423,5 @@ A simple test case
 > testOut = output program (cname test) "testout"
 
 %endif
+
+> -}

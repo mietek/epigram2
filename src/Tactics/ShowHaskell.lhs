@@ -23,6 +23,8 @@
 
 %endif
 
+> {-
+
 \section{Converting Epigram definitions to Haskell}
 
 > dumpHaskell :: INTM :=>: VAL :<: TY -> ProofState String
@@ -123,3 +125,5 @@
 > import -> CochonTactics where
 >   : unaryExCT "haskell" (\ t -> elabInfer' t >>= dumpHaskell)
 >       "haskell - renders an Epigram term as a Haskell definition."
+
+> -}

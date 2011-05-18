@@ -17,11 +17,7 @@
 
 > import Evidences.Tm
 > import Evidences.NameSupply
-> import Evidences.Mangler
-> import Evidences.Eval
-> import Evidences.Operators
 > import Evidences.DefinitionalEquality
-> import Evidences.Utilities
 > import Evidences.ErrorHandling
 
 > import ProofState.Structure.Developments
@@ -30,7 +26,6 @@
 > import ProofState.Edition.ProofState
 > import ProofState.Edition.GetSet
 > import ProofState.Edition.Navigation
-> import ProofState.Edition.FakeRef
 
 > import ProofState.Interface.ProofKit
 > import ProofState.Interface.NameResolution

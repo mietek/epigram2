@@ -17,10 +17,7 @@
 
 > import Evidences.Tm
 > import Evidences.NameSupply
-> import Evidences.Eval
-> import Evidences.Operators
 > import Evidences.DefinitionalEquality
-> import Evidences.PropositionalEquality
 > import Evidences.TypeChecker
 
 > import ProofState.Edition.ProofState
@@ -32,6 +29,7 @@
 
 %endif
 
+> {-
 
 A \emph{matching substitution} is a list of references with their values, if any.
 
@@ -195,3 +193,5 @@ and another term of the same type. It prints out the resulting substitution.
 >          matchCTactic (argList (argPair argToStr argToIn) pars) a b)
 >      "match [<para>]* ; <term> ; <term> - match parameters in first term against second."
 >    )
+
+> -}

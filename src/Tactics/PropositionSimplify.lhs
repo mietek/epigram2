@@ -28,12 +28,7 @@
 
 > import Evidences.Tm
 > import Evidences.NameSupply
-> import Evidences.Mangler
-> import Evidences.Eval
-> import Evidences.Operators
-> import Evidences.BetaQuotation
 > import Evidences.DefinitionalEquality
-> import Evidences.Utilities
 
 > import ProofState.Edition.ProofState
 > import ProofState.Edition.GetSet
@@ -43,6 +38,8 @@
 > import ProofState.Interface.Solving
 
 %endif
+
+> {-
 
 \subsection{Setting the Scene}
 
@@ -569,3 +566,5 @@ but this is left for backwards compatibility.
 > import -> CochonTactics where
 >   : nullaryCT "propsimplify" propSimplifyTactic
 >       "propsimplify - applies propositional simplification to the current goal."
+
+> -}
