@@ -45,16 +45,16 @@
 >   deriving (SheSingleton, Show)
 
 > data Tm :: {Part, Status, Nat} -> * where
->   L     :: Env {n} {m} -> String -> Tm {Body, Exp, S m}   -> Tm {Body, s, n}
->   LK    :: Tm {Body, Exp, n}                              -> Tm {Body, s, n}
->   (:-)  :: Can -> [Tm {Body, Exp, n}]                     -> Tm {Body, s, n}
+>   L     :: Env {n} {m} -> String -> Tm {Body, Exp, S m}    -> Tm {Body, s, n}
+>   LK    :: Tm {Body, Exp, n}                               -> Tm {Body, s, n}
+>   (:-)  :: Can -> [Tm {Body, Exp, n}]                      -> Tm {Body, s, n}
 >   (:$)  :: Tm {Head, s, n} -> Bwd (Elim (Tm {Body, Exp, n}))
->                                                           -> Tm {Body, s, n}
+>                                                            -> Tm {Body, s, n}
 >   D     :: {: p :: Part :} => DEF -> Stk EXP -> Operator {p, s}    
->                                                           -> Tm {p, s,  n}
+>                                                            -> Tm {p, s,  n}
 >
->   V     :: Fin {n}      {- dB i -}                        -> Tm {Head, s,  n}
->   P     :: (Int, String, TY)    {- dB l -}                -> Tm {Head, s,  n}
+>   V     :: Fin {n}      {- dB i -}                         -> Tm {Head, s,  n}
+>   P     :: (Int, String, TY)    {- dB l -}                 -> Tm {Head, s,  n}
 >
 >   Refl  :: Tm {Body, Exp, n} -> Tm {Body, Exp, n}         -> Tm {Head, s,  n}
 >   Coeh  :: Coeh -> Tm {Body, Exp, n} -> Tm {Body, Exp, n}
@@ -478,6 +478,14 @@ by |lambdable|:
 >   _         -> (|)
 > lambdable _                = Nothing
 
+> forlambdabletran :: String -> VAL -> Maybe (ParamKind, String, TY, Tm {Body, s, Z} -> TY)
+> forlambdabletran c (PI s t)         = 
+>   Just (ParamLam, fortran c [ev t] undefined, s, (t $$.))
+> forlambdabletran c (PRF _P) = case ev _P of
+>   (PI s p)  -> 
+>     Just (ParamAll, fortran c [ev p] undefined, s, \v -> PRF (p $$ A v))
+>   _         -> (|)
+> forlambdabletran _ _                = Nothing
 
 > bod :: forall s n. pi (p :: Part). Tm {p, s, n} -> Tm {Body, s, n}
 > bod {Body} = id

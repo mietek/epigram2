@@ -11,6 +11,8 @@
 > import Control.Monad.Error
 > import Text.PrettyPrint.HughesPJ
 
+> import Kit.BwdFwd
+
 > import Evidences.Tm
 > import Evidences.ErrorHandling
 
@@ -40,11 +42,11 @@
 
 > distillError :: ErrorTok -> ProofState ErrorTok 
 > distillError e@(ErrorTm (Nothing :>: t)) = (do
->     d <- moonshine 0 t
+>     d <- moonshine t
 >     return $ StrMsg (renderHouseStyle (pretty d AppSize))) 
 >   `catchError` \_ -> return e
 > distillError e@(ErrorTm (Just ty :>: t)) = (do
->     d <- distill (ev ty :>: ev t) 0
+>     d <- distill (ev ty :>: ev t) (0, B0)
 >     return $ StrMsg (renderHouseStyle (pretty d AppSize))) 
 >   `catchError` \_ -> return e
 > distillError e = return e

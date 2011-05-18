@@ -8,10 +8,12 @@
 
 > module ProofState.Interface.NameResolution where
 
+> import Prelude hiding (compare, all)
+
 > import Control.Applicative
 > import Control.Monad.State
 > import Data.Foldable hiding (elem, find)
-> import Data.List
+> import Data.List hiding (all)
 > import Data.Maybe
 > import Data.Traversable
 
@@ -35,6 +37,7 @@
 > import Evidences.ErrorHandling
 > import Evidences.NameSupply
 > import Evidences.Operators
+> import Evidences.DefinitionalEquality
 
 %endif
 
@@ -141,8 +144,10 @@ discarded, so all parameters can be provided explicitly.
 The |resolveDiscard| command resolves a relative name to a reference,
 discarding any shared parameters it should be applied to.
 
-< resolveDiscard :: RelName -> ProofState DEF
-< resolveDiscard x = resolveHere x >>= (\ (r, _, _) -> return r)
+> resolveDiscard :: RelName -> ProofState DEF
+> resolveDiscard x = resolveHere x >>= (\ (d, _, _) -> return (unD d))
+>   where unD :: Tm {Body, Exp, n} -> DEF
+>         unD (D d _ _) = d
 
 
 There are four stages relating to whether we are looking up or down
@@ -163,8 +168,9 @@ then continues with |lookFor|.
 
 > resolve :: RelName -> Int -> BScopeContext -> Either (StackError) ResolveResult
 
-< resolve [(y, Rel 0)] l _
-<   | Just ref <- lookup y primitives  = Right (ref, [], Nothing)
+> resolve [(y, Rel 0)] l _
+>   | Just def <- find (\ a -> defName a == [("PRIM",0),(y,0)]) prims 
+>       = Right (Right (def, 0, Nothing))
 
 > resolve ((x, Rel i) : us)  l bsc = do
 >   x <- lookUp (x, i) l bsc (F0, F0)   
@@ -217,20 +223,20 @@ then continues with |lookFor|.
 
 > lookDown :: (String,Int) -> FScopeContext -> Int -> 
 >                 Either (StackError) ResolveState
-
+> lookDown (x, 0) (EParam _ s _ _ :> es, uess) sp | x == s =
+>   Left [err "lookDown Param"]
+> lookDown (x, i) (e@(EParam _ s _ _) :> es, uess) sp | x == s =
+>   lookDown (x, i-1) (es, uess) (pushSpine e sp)
+> lookDown (x, i) (e@(EParam _ s _ _) :> es, uess) sp =
+>   lookDown (x, i) (es, uess) (pushSpine e sp)
 > lookDown (x, i) (e :> es, uess) sp =
->     if x == (fst $ last $ fromJust $ entryName e)
+>     if x == (fst $ last $ maybe (error "A") id $ entryName e)
 >     then if i == 0
 >          then case (|devEntries (entryDev e)|) of
 >              Just zs  -> Right (Right zs, sp, entryDef e, Nothing ) -- entryScheme e))
 >              Nothing  -> Right (Right B0, 0,  entryDef e, Nothing ) -- entryScheme e)) 
 >          else lookDown (x, i-1) (es, uess) (pushSpine e sp)
 >     else lookDown (x, i) (es, uess) (pushSpine e sp)
->   where
->     pushSpine :: Entry Bwd -> Int -> Int
->     pushSpine (EParam _ _ _ _) sp   =  sp + 1
->     pushSpine _ sp                  =  sp
-
 > lookDown (x, i) (F0 , (((y, j), es) :> uess)) sp =
 >     if x == y
 >     then if i == 0
@@ -239,6 +245,11 @@ then continues with |lookFor|.
 >     else lookDown (x, i) (es, uess) sp 
 
 > lookDown (x, i) (F0, F0) fs = Left [err $ "Not in scope " ++ x]
+
+> pushSpine :: Entry Bwd -> Int -> Int
+> pushSpine (EParam _ _ _ _) sp   =  sp + 1
+> pushSpine _ sp                  =  sp
+
 
 
 > lookLocal :: RelName -> Entries -> Int -> Maybe DEF -> Maybe (Scheme EXP) ->
@@ -251,8 +262,14 @@ then continues with |lookFor|.
 
 > huntLocal :: (String, Int) -> RelName -> [Entry Bwd] -> Int ->
 >                      Either (StackError) ResolveResult
+> huntLocal (x, 0) ys (EParam _ s _ _ : es) as | x == s =
+>    Left [err "Params in other Devs are not in scope"] 
+> huntLocal (x, i) ys (EParam _ s _ _ : es) as | x == s =
+>    huntLocal (x, i-1) ys es as
+> huntLocal (x, i) ys (EParam _ s _ _ : es) as =
+>    huntLocal (x, i) ys es as 
 > huntLocal (x, i) ys (e : es) as =
->     if x == (fst $ last $ fromJust $ entryName e)
+>     if x == (fst $ last $ maybe (error "B") id $ entryName e)
 >     then if i == 0
 >          then case (|devEntries (entryDev e)|) of
 >              Just zs  -> lookLocal ys zs as (entryDef e) Nothing -- (entryScheme e)
@@ -261,7 +278,6 @@ then continues with |lookFor|.
 >     else huntLocal (x, i) ys es as 
 > huntLocal (x, i) ys [] as = Left [err $ "Had to give up looking for " ++ x]
 
-> {-
 
 
 \subsection{Unresolving absolute names to relative names}
@@ -406,54 +422,55 @@ arguments to which it is applied, the context in which we are viewing it and
 a list of entries in local scope. We obtain a relative name, the number of
 shared parameters to drop, and the scheme of the name (if there is one).
 
-> unresolve :: Name -> RKind -> Spine {TT} REF -> BScopeContext
->                   -> Entries -> (RelName, Int, Maybe (Scheme INTM))
-> unresolve tar rk tas msc@(mesus, mes) les = 
+> unresolveP :: (Int, String, TY) -> Bwd (Int, String, TY) -> ProofState RelName
+> unresolveP (l, s, t) ps = do
+>   let les = fmap (\ (l, s, t) -> EParam ParamLam s t l) ps
+>   (mesus, mes) <- gets inBScope
+>   return $ maybe (failNom [(s,l)]) id $ findParam l s (mesus, mes <+> les) 0
 
-We first check if the name refers to an element of the |primitives| list:
+> findParam :: Int -> String -> BScopeContext -> Int -> Maybe RelName
+> findParam l s (esus :< (es', (s',_)), B0) o | s == s' = 
+>   findParam l s (esus, es') (o+1)
+> findParam l s (esus :< (es', u'), B0) o = 
+>   findParam l s (esus, es') o
+> findParam l s (esus, es :< EModule n _) o | s == lastNom n =
+>   findParam l s (esus, es) (o+1)
+> findParam l s (esus, es :< EDef d _) o | s == lastNom (defName d) =
+>   findParam l s (esus, es) (o+1)
+> findParam l s (esus, es :< EParam k s' t' l') o | l == l' = 
+>   (| [(s,Rel o)] |)
+> findParam l s (esus, es :< EParam k s' t' l') o | s == s' = 
+>   findParam l s (esus, es) (o+1)
+> findParam l s (esus, es :< _) o = findParam l s (esus, es) o
 
->     case find ((tar ==) . refName . snd) primitives of
 
-If so, we return its short name with no shared parameters and no scheme.
 
->         Just (s, _)  -> ([(s, Rel 0)], 0, Nothing)
+> unresolveD :: DEF -> Bwd (Int, String, TY) -> Bwd (Elim EXP) -> 
+>               ProofState (RelName, Maybe TY, [ Elim EXP ])
+> unresolveD d ps sp 
+>     | ("PRIM",0) == head (defName d) =
+>   return $ (map (\(a,b) -> (a, Rel 0)) $ tail (defName d), Just $ defTy d, trail sp) 
+> unresolveD d ps tsp = do
+>   let les = fmap (\ (l, s, t) -> EParam ParamLam s t l) ps
+>   (mesus, mes) <- gets inBScope
+>   maybe (return (failNom (defName d), Nothing, trail tsp)) return $
+>     case partNoms (defName d) (mesus,mes) [] B0 of
+>       (Just (xs, Just (top, nom, sp, es))) -> do
+>         let  (top', nom', i, fsc) = matchUp (xs :<
+>                                               (top, nom, sp, (F0, F0))) tsp
+>              mnom = take (length nom' - length nom) nom'
+>         (tn,  tms)  <- nomTop top' (mesus, mes <+> les)
+>         (an,  ams)  <- nomAbs mnom fsc
+>         (rn,  rms)  <- nomRel nom (es <+> les) Nothing 
+>         let ms = case  (null nom,  null mnom) of
+>                        (True,      True)   -> tms
+>                        (True,      False)  -> ams
+>                        (False,     _)      -> rms
+>         return ((tn : an) ++ rn, Just (defTy d $$$ i) , drop (bwdLength i) (trail tsp))
 
-Otherwise, we actually have to do some work. We work in the |Maybe| monad and
-|failNom| will be called if unresolution fails.
+>       _ -> Nothing
 
->         Nothing      -> maybe (failNom tar, 0, Nothing) id $
->             case (partNoms tar msc [] B0, rk) of
 
-If the reference is a |DECL|, then it had better be a parameter above,
-and we do not need to worry about shared parameters. We simply call
-|nomTop| to find it.
-
->                 (_, DECL) ->  do
->                     (x, ms) <- nomTop tar (mesus, mes <+> les)
->                     return ([x], 0, ms)
-
->                 (Just (xs, Just (top, nom, sp, es)), _) -> do
->                     let  (top', nom', i, fsc) = matchUp (xs :<
->                                                   (top, nom, sp, (F0, F0))) tas
->                          mnom = take (length nom' - length nom) nom'
->                     (tn,  tms)  <- nomTop top' (mesus, mes <+> les)
->                     (an,  ams)  <- nomAbs mnom fsc
->                     (rn,  rms)  <- nomRel nom (es <+> les) Nothing 
->                     let ms = case  (null nom,  null mnom) of
->                                    (True,      True)   -> tms
->                                    (True,      False)  -> ams
->                                    (False,     _)      -> rms
->                     return ((tn : an) ++ rn, i, ms)
-
->                 (Just (xs, Nothing), FAKE) -> do
->                     let (top', nom', i, fsc) = matchUp xs tas 
->                     (tn, tms) <- nomTop top' (mesus, mes <+> les)
->                     (an, ams) <- nomAbs nom' fsc
->                     return ((tn : an), i, if null nom' then tms else ams)
-
-If nothing else matches, we had better give up and go home.
-
->                 _ -> Nothing
 
 
 \paragraph{Parting the noms}
@@ -461,9 +478,9 @@ If nothing else matches, we had better give up and go home.
 \question{Does anyone know what this does?}
 
 > partNoms :: Name -> BScopeContext -> Name 
->                  -> Bwd (Name, Name, Spine {TT} REF, FScopeContext)
->                  -> Maybe ( Bwd (Name, Name, Spine {TT} REF, FScopeContext) 
->                     , Maybe (Name,Name, Spine {TT} REF, Entries) ) 
+>                  -> Bwd (Name, Name, Bwd (Elim EXP), FScopeContext)
+>                  -> Maybe ( Bwd (Name, Name, Bwd (Elim EXP), FScopeContext) 
+>                           , Maybe (Name,Name, Bwd (Elim EXP), Entries) ) 
 > partNoms [] bsc _ xs = Just (xs, Nothing)
 > partNoms nom@(top:rest) bsc n xs = case partNom n top bsc (F0,F0) of
 >  Just (sp, Left es) -> Just (xs, Just (n ++ [top], rest, sp, es))
@@ -473,14 +490,16 @@ If nothing else matches, we had better give up and go home.
 
 
 > partNom :: Name -> (String, Int) -> BScopeContext -> FScopeContext
->                 -> Maybe (Spine {TT} REF, Either Entries FScopeContext)
+>                 -> Maybe (Bwd (Elim EXP), Either Entries FScopeContext)
 > partNom hd top ((esus :< (es,top')), B0) fsc | hd ++ [top] == (flatNom esus []) ++ [top'] =
 >   Just (paramSpine (flat esus es),Right fsc)
 > partNom hd top ((esus :< (es,not)), B0) (js,vjss) =
 >   partNom hd top (esus,es) (F0,(not,js):>vjss)
-> partNom hd top (esus, es :< EModule n (Dev {devEntries=es'})) fsc | (hd ++ [top]) == n =
+> partNom hd top (esus, es :< EModule n (Dev {devEntries=es'})) fsc 
+>     | (hd ++ [top]) == n =
 >   Just (paramSpine (flat esus es),Left es')
-> partNom hd top (esus, es :< EDEF _ top' _ (Dev {devEntries=es'}) _ _) fsc | hd ++ [top] == (flatNom esus []) ++ [top'] =
+> partNom hd top (esus, es :< EDef d (Dev {devEntries=es'})) fsc 
+>     | hd ++ [top] == defName d =
 >   Just (paramSpine (flat esus es),Left es')
 > partNom hd top (esus, es :< e) (fs, vfss)  = partNom hd top (esus, es) (e:>fs,vfss)
 > partNom _ _ _ _ = Nothing
@@ -492,10 +511,11 @@ If we have a backward list of gibberish and a spine, it is not hard to go
 back until the spine from the gibberish is a prefix of the given spine,
 then return the gibberish.
 
-> matchUp :: Bwd (Name, Name, Spine {TT} REF, FScopeContext) 
->              -> Spine {TT} REF ->  (Name, Name, Int, FScopeContext)
+> matchUp :: Bwd (Name, Name, Bwd (Elim EXP), FScopeContext) 
+>              -> Bwd (Elim EXP) 
+>              -> (Name, Name, Bwd (Elim EXP), FScopeContext)
 > matchUp (xs :< (x, nom, sp, fsc)) tas
->     | sp `isPrefixOf` tas  = (x, nom, length sp, fsc)
+>     | all id (bwdZipWith compareE sp tas)  = (x, nom, sp, fsc)
 > matchUp (xs :< _) tas      = matchUp xs tas
 
 
@@ -505,7 +525,7 @@ First, |nomTop| handles the section where the name differs from our current
 position. We call it by its |lastNom| but need to look up the offset and
 scheme.
 
-> nomTop :: Name -> BScopeContext -> Maybe ((String,Offs),Maybe (Scheme INTM))
+> nomTop :: Name -> BScopeContext -> Maybe ((String,Offs),Maybe (Scheme EXP))
 > nomTop n bsc = do
 >     (i, ms) <- countB 0 n bsc
 >     return ((lastNom n, Rel i), ms)
@@ -514,7 +534,7 @@ To determine the relative offset, |nomTop| uses |countB|, which looks backwards
 through the context, counting the number of things in scope with the same last
 name component. This also returns the scheme attached, if there is one.
 
-> countB :: Int -> Name -> BScopeContext -> Maybe (Int, Maybe (Scheme INTM))
+> countB :: Int -> Name -> BScopeContext -> Maybe (Int, Maybe (Scheme EXP))
 > countB i n (esus :< (es', u'), B0)
 >   | last n == u' && flatNom esus [] == init n  = (| (i, Nothing) |)
 > countB i n (esus :< (es', u'), B0)
@@ -525,14 +545,16 @@ name component. This also returns the scheme attached, if there is one.
 >   | n == n'                                    = (| (i, Nothing) |)
 > countB i n (esus, es :< EModule n' _)           
 >   | lastNom n == lastNom n'                    = countB (i+1) n (esus, es)
-> countB i n (esus, es :< e@(EEntity r u' _ _ _))
->   | last n == u' && refName r == n             = (| (i, entryScheme e) |)
-> countB i n (esus, es :< EEntity _ u' _ _ _)
->   | lastNom n == fst u'                        = countB (i+1) n (esus, es)
+> countB i n (esus, es :< EDef d (Dev {devEntries=es'}))
+>   | n == defName d                             = (| (i, Nothing) |)
+> countB i n (esus, es :< EDef d _)           
+>   | lastNom n == lastNom (defName d)           = countB (i+1) n (esus, es)
+> countB i n (esus, es :< e@(EParam k s t l))
+>   | lastNom n == s                             = countB (i+1) n (esus, es)
 >
 > countB i n (esus, es :< _)                     = countB i n (esus, es)
 >
-> countB _ n _                                   = Nothing 
+> countB _ n _                                   = Nothing
 
 
 
@@ -541,8 +563,8 @@ name component. This also returns the scheme attached, if there is one.
 Next, |nomAbs| handles the section where the name is the same as the current
 location but the spine is different.
 
-> nomAbs :: Name -> FScopeContext -> Maybe (RelName, Maybe (Scheme INTM))
-> nomAbs [u] (es,(_,es'):>uess) = do
+> nomAbs :: Name -> FScopeContext -> Maybe (RelName, Maybe (Scheme EXP))
+> nomAbs [u] (es,uess) = do
 >   (v,ms) <- findF 0 u es
 >   (| ([v],ms) |)
 > nomAbs ((x,_):nom) (es,(_,es'):>uess) = do 
@@ -556,22 +578,21 @@ location but the spine is different.
 > countF :: String -> Fwd (Entry Bwd) -> Int
 > countF x F0 = 0
 > countF x (EModule n _ :> es) | (fst . last $ n) == x = 1 + countF x es
-> countF x (EEntity _ (y,_) _ _ _ :> es) | y == x = 1 + countF x es
+> countF x (EDef d _ :> es) | (fst . last $ defName d) == x = 1 + countF x es
+> countF x (EParam _ s _ _ :> es) | s == x = 1 + countF x es
 > countF x (_ :> es) = countF x es
 
+
 > findF :: Int -> (String,Int) -> Fwd (Entry Bwd) 
->              -> Maybe ((String,Offs), Maybe (Scheme INTM))
+>              -> Maybe ((String,Offs), Maybe (Scheme EXP))
 > findF i u (EModule n _ :> es) | (last $ n) == u = 
 >   Just ((fst u, if i == 0 then Rel 0 else Abs i), Nothing)
 > findF i u@(x,_) (EModule n _ :> es) | (fst . last $ n) == x = findF (i+1) u es
-> findF i u (e@(EDEF _ v dkind _ _ _) :> es) | v == u = 
->   Just ((fst u, if i == 0 then Rel 0 else Abs i), entryScheme e)
-> findF i u (EEntity _ v _ _ _ :> es) | v == u = 
->   Just ((fst u, if i == 0 then Rel 0 else Abs i), Nothing)
-> findF i u@(x,_) (EEntity _ (y,_) _ _ _ :> es) | y == x = findF (i+1) u es
+> findF i u (EDef d _  :> es) | last (defName d) == u = 
+>   Just ((fst u, if i == 0 then Rel 0 else Abs i), Nothing) --entryScheme e)
+> findF i u@(x,_) (EParam _ y _ _ :> es) | y == x = findF (i+1) u es
 > findF i u (_ :> es) = findF i u es
 > findF _ _ _ = Nothing
-
 
 \paragraph{Same name and spine}
 
@@ -579,7 +600,7 @@ Finally, |nomRel| handles the section where the name and spine both match the
 current location.
 
 > nomRel :: Name -> Entries 
->                -> Maybe (Scheme INTM) -> Maybe (RelName, Maybe (Scheme INTM)) 
+>                -> Maybe (Scheme EXP) -> Maybe (RelName, Maybe (Scheme EXP)) 
 > nomRel [] _ ms = (| ([], ms) |)
 > nomRel (x : nom) es _ = do
 >   (i,es',ms) <- nomRel' 0 x es
@@ -587,18 +608,16 @@ current location.
 >   return ((fst x,Rel i):nom',ms')
 
 > nomRel' :: Int -> (String,Int) -> Entries 
->                -> Maybe (Int,Entries, Maybe (Scheme INTM))
+>                -> Maybe (Int,Entries, Maybe (Scheme EXP))
 > nomRel' o (x,i) (es:< EModule n (Dev {devEntries=es'})) | (fst . last $ n) == x  = 
 >   if i == (snd . last $ n) then (| (o,es',Nothing) |) 
 >                            else nomRel' (o+1) (x,i) es
-> nomRel' o (x,i) (es:< e@(EDEF _ (y,j) dkind (Dev {devEntries=es'}) _ _)) | y == x =
->   if i == j then (| (o,es',Nothing {-entryScheme e-}) |) else nomRel' (o+1) (x,i) es
-> nomRel' o (x,i) (es:< EEntity _ (y,j) _ _ _) | y == x = 
->   if i == j then (| (o,B0,Nothing) |) else nomRel' (o+1) (x,i) es
+> nomRel' o (x,i) (es:< e@(EDef d (Dev {devEntries=es'}))) | (fst . last $ defName d) == x =
+>   if i == (snd . last $ defName d) then (| (o,es',Nothing {-entryScheme e-}) |) else nomRel' (o+1) (x,i) es
+> nomRel' o (x,i) (es:< EParam _ y _ _) | y == x = nomRel' (o+1) (x,i) es
 > nomRel' o (x,i) (es:<e) = nomRel' o (x,i) es
 > nomRel' _ _ _ = Nothing
 
-> -}
 
 \subsubsection{Useful oddments for unresolution}
 

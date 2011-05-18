@@ -24,6 +24,7 @@
 > import ProofState.Structure.Developments
 > import ProofState.Edition.ProofState
 > import ProofState.Edition.GetSet
+> import ProofState.Interface.NameResolution
 
 > import Kit.BwdFwd
 > import Kit.NatFinVec
@@ -35,36 +36,30 @@
 > distillPS :: (EXP :>: EXP) -> ProofState DInTmRN
 > distillPS (ty :>: tm) = do
 >     lev <- getDevLev
->     distill (ev ty :>: ev tm) lev
+>     distill (ev ty :>: ev tm) (lev, B0)
 
 
-> distill :: (Applicative m, MonadError StackError m) => 
->              VAL :>: VAL -> Int -> m DInTmRN
-> distill (ty :>: L g n b) l = case fromJust $ lambdable ty of
+> distill :: VAL :>: VAL -> (Int, Bwd (Int, String, TY)) -> ProofState DInTmRN
+> distill (ty :>: L g n b) (l,ps) = case fromJust $ lambdable ty of
 >   (k, s, t) -> 
 >     (| (DLAV n) (distill (ev (t (P (l, n, s) :$ B0)) 
->                           :>: ((g <:< (P (l, n, s) :$ B0)) // b)) (l + 1))
+>                           :>: ((g <:< (P (l, n, s) :$ B0)) // b)) 
+>                   (l + 1,ps:<(l,n,s)))
 >     |)
 > distill (ty :>: LK b) l = case fromJust $ lambdable ty of
 >   (_, s, t) -> 
->      (| DLK  (distill (ev (t (P (l,"s",s) :$ B0)) :>: ev b) (l+1))
+>      (| DLK  (distill (ev (t (error "LKdistill")) :>: ev b) l)
 >      |)
 
-> distill (ty :>: h@(D d s _)) l = case lambdable ty of
->   Just (k, s, t) -> 
->     (| (DLAV "x") (distill (ev (t (P (l, "x", s) :$ B0)) 
->                              :>: (h $$. (P (l, "x", s) :$ B0))) (l + 1))
->     |)
->   Nothing -> do
->     let dh  =  DP (nameToRelName (defName d))
->         ty  =  defTy d
->         ss  =  map A (rewindStk s [])
->     das <- distillSpine (ev ty :>: (h, ss)) l
->     (| (DN (dh ::$ das)) |)
+> distill (ty :>: h@(D d sd _)) (l,ps) = do
+>   (nom, ty, as) <- unresolveD d ps (bwdList $ map A $ rewindStk sd [])
+>   let ty'  =  maybe (defTy d) id ty
+>   das <- distillSpine (ev ty' :>: (h, as)) (l,ps)
+>   (| (DN (DP nom ::$ das)) |)
 
-> distill (ty :>: h :$ as) l = do
->     (dh, ty, ss) <- distillHead h
->     das <- distillSpine (ev ty :>: (h :$ B0, ss ++ trail as)) l
+> distill (ty :>: h :$ as) (l, es) = do
+>     (dh, ty, ss) <- distillHead h es
+>     das <- distillSpine (ev ty :>: (h :$ B0, ss ++ trail as)) (l, es)
 >     return $ DN (dh ::$ das)
 
 > distill ((tyc :- tyas) :>: (c :- as)) l = case canTy ((tyc , tyas) :>: c) of
@@ -74,25 +69,24 @@
 
 > distill tt _ = throwError' $ err $ "Distiller can't cope with " ++ show tt
 
-> distillCan :: (Applicative m, MonadError StackError m) => 
->                 (VAL :>: [EXP]) -> Int -> m [DInTmRN]
+> distillCan :: (VAL :>: [EXP]) -> (Int, Bwd (Int, String, TY)) -> ProofState [DInTmRN]
 > distillCan (ONE :>: []) l = (| [] |)
 > distillCan (SIGMA s t :>: a : as) l = 
 >   (| (distill (ev s :>: ev a) l) : (distillCan (ev (t $$ A a) :>: as) l) |)
 
 
-> distillHead :: (Applicative m, MonadError StackError m) => 
->                  Tm {p, s, Z} -> m (DHead RelName, TY, [Elim EXP])
-> distillHead (P (l', n, s)) = return (DP [(n,Abs l')], s, [])
-> distillHead (D def ss op)  = return (DP (nameToRelName (defName def)),
->                                      defTy def,
->                                      map A (rewindStk ss []))
-> distillHead t = throwError' $ err $ "distillHead: barf " ++ show t
+> distillHead :: Tm {p, s, Z} -> Bwd (Int, String, TY) ->  ProofState (DHead RelName, TY, [Elim EXP])
+> distillHead (P (l', n, s)) es = do
+>   r <- unresolveP (l', n, s) es 
+>   return (DP r, s, [])
+> distillHead (D def ss op)  es = do
+>   (nom, ty, as) <- unresolveD def es (bwdList $ map A $ rewindStk ss [])
+>   return (DP nom, maybe (defTy def) id ty, as)
+> distillHead t _ = throwError' $ err $ "distillHead: barf " ++ show t
 
 
-> distillSpine :: (Applicative m, MonadError StackError m) => 
->                   VAL :>: (VAL, [Elim (Tm {Body, Exp, Z})]) -> 
->                   Int -> m [Elim DInTmRN]
+> distillSpine :: VAL :>: (VAL, [Elim (Tm {Body, Exp, Z})]) -> 
+>                 (Int, Bwd (Int, String, TY)) -> ProofState [Elim DInTmRN]
 > distillSpine (_ :>: (_, [])) _ = (| [] |)
 > distillSpine (ty :>: (h :$ az, A a : as)) l = case fromJust $ lambdable ty of 
 >   (k, s, t) -> do
