@@ -60,14 +60,23 @@ The |Can| functor is fairly easy to pretty-print, the only complexity
 being with $\Pi$-types.
 
 > instance Pretty Can where
->   pretty Set = const (kword KwSet)
->   pretty Con = const (kword KwCon)
->   pretty Zero = const (kword KwAbsurd)
->   pretty One = const (kword KwTrivial)
->   pretty Prf = const (kword KwPrf)
->   pretty Prop = const (kword KwProp)
->   pretty Inh = const (kword KwInh)
->   pretty Wit = const (kword KwWit)
+>   pretty Set    = const (kword KwSet)
+>   pretty Con    = const (kword KwCon)
+>   pretty Zero   = const (kword KwAbsurd)
+>   pretty One    = const (kword KwTrivial)
+>   pretty Prf    = const (kword KwPrf)
+>   pretty Prop   = const (kword KwProp)
+>   pretty Inh    = const (kword KwInh)
+>   pretty Wit    = const (kword KwWit)
+>   -- [Feature = Enum]
+>   pretty EnumU  = const (kword KwEnumU)
+>   pretty EnumT  = const (kword KwEnum) 
+>   -- [/Feature = Enum]
+>     -- [Feature = UId]
+>   pretty UId      = const (kword KwUId)
+>   pretty (Tag s)  = const (kword KwTag <> text s)
+>   -- [/Feature = UId]
+>   pretty c        = error $ show c
 
 > {-
 > instance Pretty (Can DInTmRN) where
@@ -126,10 +135,7 @@ being with $\Pi$-types.
 >     pretty (Sigma s t)  = prettySigma empty (DSIGMA s t)
 >     pretty (Pair a b)   = prettyPair (DPAIR a b)
 >     -- [/Feature = Sigma]
->     -- [Feature = UId]
->     pretty UId      = const (kword KwUId)
->     pretty (Tag s)  = const (kword KwTag <> text s)
->     -- [/Feature = UId]
+>
 > -}
 
 
@@ -201,6 +207,13 @@ than a $\lambda$-term is reached.
 >     pretty (DC Prf [DALL p q])  = 
 >       wrapDoc (pretty Prf AppSize <+> prettyAll empty (DALL p q) ArgSize) AppSize
 >     -- [/Feature = Prop]
+>     -- [Feature = Enum]
+>     pretty (DC Ze [])           = const (int 0)
+>     pretty (DC Su [])          = error "NYERK" -- prettyEnumIndex 1 t
+>     pretty (DC Su [t])          = prettyEnumIndex 1 t
+>     pretty (DC NilE [])              = prettyEnumU DNILE
+>     pretty (DC ConsE [a , b])        = prettyEnumU (DCONSE a b)
+>     -- [/Feature = Enum]
 >     pretty (DC c [])       = pretty c
 >     pretty (DC c as)  = wrapDoc
 >         (pretty c AppSize <+> hsep (map (flip pretty ArgSize) as))
@@ -224,11 +237,12 @@ than a $\lambda$-term is reached.
 <         (kword KwIMu <+> pretty ii ArgSize <+> pretty d ArgSize <+> pretty i ArgSize)
 <         AppSize
 <     -- [/Feature = IDesc]
-<     -- [Feature = UId]
-<     pretty (DTAG s)     = const (kword KwTag <> text s)
-<     pretty (DTag s xs)  = wrapDoc (kword KwTag <> text s
-<       <+> hsep (map (flip pretty ArgSize) xs)) AppSize
-<     -- [/Feature = UId]
+
+>     -- [Feature = UId]
+>     pretty (DTAG s)     = const (kword KwTag <> text s)
+>     pretty (DC (Tag s) xs)  = wrapDoc (kword KwTag <> text s
+>       <+> hsep (map (flip pretty ArgSize) xs)) AppSize
+>     -- [/Feature = UId]
 
 >     pretty (DTIN indtm)           = const (quotes . text . show $ indtm)
 
@@ -257,15 +271,15 @@ than a $\lambda$-term is reached.
 >         ) ArrSize         
 > -}
 
-< -- import <- Pretty
-< -- [Feature = Enum]
-< prettyEnumIndex :: Int -> DInTmRN -> Size -> Doc
-< prettyEnumIndex n DZE      = const (int n)
-< prettyEnumIndex n (DSU t)  = prettyEnumIndex (succ n) t
-< prettyEnumIndex n tm       = wrapDoc
-<     (int n <+> kword KwPlus <+> pretty tm ArgSize)
-<     AppSize
-< -- [/Feature = Enum]
+> -- import <- Pretty
+> -- [Feature = UId]
+> prettyEnumIndex :: Int -> DInTmRN -> Size -> Doc
+> prettyEnumIndex n DZE      = const (int n)
+> prettyEnumIndex n (DSU t)  = prettyEnumIndex (succ n) t
+> prettyEnumIndex n tm       = wrapDoc
+>     (int n <+> kword KwPlus <+> pretty tm ArgSize)
+>     AppSize
+> -- [/Feature = UId]
 
 > -- [Feature = Prop]
 > prettyAll :: Doc -> DInTmRN -> Size -> Doc
@@ -309,6 +323,15 @@ than a $\lambda$-term is reached.
 >   | otherwise  = wrapDoc (kword KwSig <+> parens (s <+> t)) AppSize
 > -- [/Feature = Sigma] 
 
+> -- [Feature = Enum]
+> prettyEnumU :: DInTmRN -> Size -> Doc
+> prettyEnumU p = const (brackets (prettyEnumUMore empty p))
+
+> prettyEnumUMore :: Doc -> DInTmRN -> Doc
+> prettyEnumUMore d DNILE        = d
+> prettyEnumUMore d (DCONSE a b)  = prettyEnumUMore (d <+> pretty a minBound) b
+> prettyEnumUMore d t            = d <+> kword KwComma <+> pretty t maxBound
+> -- [/Feature = Enum]
 
 The |prettyBKind| function pretty-prints a |ParamKind| if supplied
 with a document representing its name and type.

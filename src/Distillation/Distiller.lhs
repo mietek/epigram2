@@ -62,6 +62,13 @@
 >     das <- distillSpine (ev ty :>: (h :$ B0, ss ++ trail as)) (l, es)
 >     return $ DN (dh ::$ das)
 
+> distill (ENUMT _E :>: tm) l | Just r <- findIndex (ev _E :>: tm) = return r
+>   where
+>     findIndex :: (VAL :>: VAL) -> Maybe DInTmRN
+>     findIndex (CONSE t  _ :>: ZE)  | (TAG s) <- ev t = Just (DTAG s)
+>     findIndex (CONSE _        a :>: SU b)  = findIndex (ev a :>: ev b)
+>     findIndex _                            = Nothing
+
 > distill ((tyc :- tyas) :>: (c :- as)) l = case canTy ((tyc , tyas) :>: c) of
 >   Nothing -> throwError' $ err "Tin thadger wasp unit"
 >   Just tel -> (| (DC c) (distillCan (tel :>: as) l) |)

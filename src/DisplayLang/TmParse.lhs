@@ -204,13 +204,11 @@ the parser.
 >     (ArgSize, (|DSIGMA (%keyword KwSig%) (sizedDInTm ArgSize) (sizedDInTm ArgSize)|)) :
 >     -- [/Feature = Sigma]
 
-> {-
 >     -- [Feature = UId]
 >     (ArgSize, (|DUID (%keyword KwUId%)|)) :
 >     (ArgSize, (|DTAG (%keyword KwTag%) ident|)) :
->     (AppSize, (|DTag (%keyword KwTag%) ident (many (sizedDInTm ArgSize))|)) :
+>     (AppSize, (|(DC . Tag) (%keyword KwTag%) ident (many (sizedDInTm ArgSize))|)) :
 >     -- [/Feature = UId]
-> -}
 
 >     (ArgSize, (|DSET (%keyword KwSet%)|)) :
 >     (ArgSize, (|DQ (pFilter questionFilter ident)|)) :

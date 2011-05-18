@@ -59,8 +59,9 @@
 > canTy ((Set, []) :>: EnumT)          = (| (ENUMU *** ONE) |)
 > canTy ((EnumU, []) :>: NilE)         = (| ONE |)
 > canTy ((EnumU, []) :>: ConsE)        = (| (UID *** ENUMU *** ONE) |)
-> canTy ((EnumT, [_,_]) :>: Ze)        = (| ONE |) 
-> canTy ((EnumT, [_,e]) :>: Su)        = (| (ENUMT e *** ONE) |) 
+> canTy ((EnumT, [_E]) :>: n)          = case (ev _E, n) of
+>   (CONSE _ _, Ze) -> (| ONE |) 
+>   (CONSE _ e, Su) -> (| (ENUMT e *** ONE) |) 
 > -- [/Feature = Enum]
 
 > canTy _ = (|)
