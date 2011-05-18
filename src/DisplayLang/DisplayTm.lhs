@@ -275,17 +275,22 @@ places.
 > pattern DVOID      = DC Zero []
 > pattern DTIMES x y = DC Sigma [x , DL (DK y)]
 > -- [/Feature = Sigma]
+> -- [Feature = Enum]
+> pattern DENUMU      = DC EnumU [] 
+> pattern DENUMT e    = DC EnumT [e] 
+> pattern DNILE       = DC NilE [] -- DCON (DPAIR {-(DTAG "nil")-} DZE DVOID)
+> pattern DCONSE t e  = DC ConsE [t, e] -- DCON (DPAIR {- (DTAG "cons") -} (DSU DZE) (DPAIR t (DPAIR e DVOID)))
+> pattern DZE         = DC Ze []
+> pattern DSU n       = DC Su [n]
+> -- [/Feature = Enum]
+> -- [Feature = UId]
+> pattern DUID    = DC UId []
+> pattern DTAG s  = DC (Tag s) []
+> -- [/Feature = UId] 
 > {-- import <- CanDisplayPats
 > -- [Feature = Anchor]
 > pattern DANCHOR s args = DAnchor s args
 > -- [/Feature = Anchor]
-> -- [Feature = Enum]
-> pattern DENUMT e    = DC (EnumT e) 
-> pattern DNILE       = DCON (DPAIR {-(DTAG "nil")-} DZE DVOID)
-> pattern DCONSE t e  = DCON (DPAIR {- (DTAG "cons") -} (DSU DZE) (DPAIR t (DPAIR e DVOID)))
-> pattern DZE         = DC Ze
-> pattern DSU n       = DC (Su n)
-> -- [/Feature = Enum]
 > -- [Feature = IDesc]
 > pattern DIVARN     = DZE
 > pattern DICONSTN   = DSU DZE
@@ -308,10 +313,7 @@ places.
 > pattern DLABEL l t = DC (Label l t)
 > pattern DLRET t    = DC (LRet t)
 > -- [/Feature = Labelled]
-> -- [Feature = UId]
-> pattern DUID    = DC UId
-> pattern DTAG s  = DTag s []
-> -- [/Feature = UId] -}
+> -}
 
 \subsection{Sizes}
 

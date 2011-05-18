@@ -14,24 +14,28 @@
 > import Kit.NatFinVec
 
 > canTy :: (Can, [EXP]) :>: Can -> Maybe VAL
-> canTy ((Set, []) :>: Set)    = (| ONE |)
-> canTy ((Set, []) :>: Pi)     = pure $ ("S", SET) -** \ _S -> ARR _S SET *** ONE
-> canTy ((Set, []) :>: Sigma)  = pure $ ("S", SET) -** \ _S -> ARR _S SET *** ONE
-> canTy ((Set, []) :>: Zero)   = (| ONE |)  -- really? use false prop instead?
-> canTy ((Set, []) :>: One)    = (| ONE |)  -- really? use false prop instead?
+> canTy ((Set, []) :>: Set)            = (| ONE |)
+> canTy ((Set, []) :>: Pi)             = 
+>   pure $ ("S", SET) -** \ _S -> ARR _S SET *** ONE
+> canTy ((Set, []) :>: Sigma)          =
+>   pure $ ("S", SET) -** \ _S -> ARR _S SET *** ONE
+> canTy ((Set, []) :>: Zero)           = (| ONE |)
+> canTy ((Set, []) :>: One)            = (| ONE |)
 
-> canTy ((Sigma, [_S, _T]) :>: Pair)  = pure $ ("s", _S) -** \ s -> wr _T s *** ONE
-> canTy ((One, []) :>: Zero)          = (| ONE |)
+> canTy ((Sigma, [_S, _T]) :>: Pair)   = 
+>   pure $ ("s", _S) -** \ s -> wr _T s *** ONE
+> canTy ((One, []) :>: Zero)           = (| ONE |)
 
 > -- [Feature = Prop]
-> canTy ((Set, []) :>: Prop)    = (| ONE |)
-> canTy ((Set, []) :>: Prf)     = (| (PROP *** ONE) |)
-> canTy ((Prop, []) :>: Pi)     = (| (("S", SET) -** \ _S -> ARR _S PROP *** ONE) |)
-> canTy ((Prop, []) :>: Zero)   = (| ONE |)
-> canTy ((Prop, []) :>: One)    = (| ONE |)
-> canTy ((Prop, []) :>: Inh)    = (| (SET *** ONE) |)
-> canTy ((Prop, []) :>: And)    = (| (PROP *** PROP *** ONE) |)
-> canTy ((Prf, [_P]) :>: p)     = case (ev _P, p) of
+> canTy ((Set, []) :>: Prop)           = (| ONE |)
+> canTy ((Set, []) :>: Prf)            = (| (PROP *** ONE) |)
+> canTy ((Prop, []) :>: Pi)            = 
+>   (| (("S", SET) -** \ _S -> ARR _S PROP *** ONE) |)
+> canTy ((Prop, []) :>: Zero)          = (| ONE |)
+> canTy ((Prop, []) :>: One)           = (| ONE |)
+> canTy ((Prop, []) :>: Inh)           = (| (SET *** ONE) |)
+> canTy ((Prop, []) :>: And)           = (| (PROP *** PROP *** ONE) |)
+> canTy ((Prf, [_P]) :>: p)            = case (ev _P, p) of
 >   (ONE, Zero) -> (| ONE |)
 >   (INH _T, Wit) -> (| (_T *** ONE) |)
 >   (AND _P _Q, Pair) -> (| (PRF _P *** PRF _Q *** ONE) |)
@@ -46,6 +50,18 @@
 >     prfs [] = ONE
 >     prfs (_P : _Ps) = PRF _P *** prfs _Ps
 > -- [/Feature = Prop]
+> -- [Feature = UId]
+> canTy ((Set, []) :>: UId)            = (| ONE |)
+> canTy ((UId, []) :>: Tag _)          = (| ONE |)
+> -- [/Feature = UId]
+> -- [Feature = Enum]
+> canTy ((Set, []) :>: EnumU)          = (| ONE |)
+> canTy ((Set, []) :>: EnumT)          = (| (ENUMU *** ONE) |)
+> canTy ((EnumU, []) :>: NilE)         = (| ONE |)
+> canTy ((EnumU, []) :>: ConsE)        = (| (UID *** ENUMU *** ONE) |)
+> canTy ((EnumT, [_,_]) :>: Ze)        = (| ONE |) 
+> canTy ((EnumT, [_,e]) :>: Su)        = (| (ENUMT e *** ONE) |) 
+> -- [/Feature = Enum]
 
 > canTy _ = (|)
 

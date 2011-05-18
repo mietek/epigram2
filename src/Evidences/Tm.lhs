@@ -64,6 +64,94 @@
 
 > data Coeh = Coe | Coh deriving (Eq, Show)
 
+> data DEF = DEF  {  defName :: Name
+>                 ,  defTy :: TY
+>                 ,  defOp :: Operator {Body, Exp}
+>                 }
+>   deriving Show
+
+> instance Eq DEF where
+>   d1 == d2 = defName d1 == defName d2
+
+> type EXP = Tm {Body, Exp, Z}
+> type VAL = Tm {Body, Val, Z}
+> type TY = EXP
+
+> data Elim :: * -> * where
+>   A  :: t -> Elim t
+>   Hd :: Elim t
+>   Tl :: Elim t
+>   Out :: Elim t
+>   QA :: t -> t -> t -> Elim t   -- applies an equation between functions to equal arguments
+>   Sym :: Elim t                 -- symmetry of equality
+>   deriving (Show, Eq, Foldable, Traversable, Functor)
+
+> data Can :: * where
+>   Set    :: Can                            -- set of sets
+>   Pi     :: Can                            -- functions
+>   Sigma  :: Can                            -- products 
+>   Pair   :: Can                            -- pairs
+>   Con    :: Can                            -- general purpose constructor
+>   One    :: Can                            -- things that have a certain one-ness
+>   Zero   :: Can                            -- things that have a certain zero-ness
+>   -- [Feature = Prop]
+>   Prop   :: Can                            -- set of props
+>   Prf    :: Can                            -- set of proofs of a prop
+>   Inh    :: Can                            -- set inhabitation prop
+>   Wit    :: Can                            -- witness to inhabitation 
+>   And    :: Can                            -- prop conj
+>   Chkd   :: Can                            -- content of a proof for equality checking
+>   -- [/Feature = Prop]
+>   -- [Feature = Eq]
+>   Eq     :: Can                            -- equality type
+>   Ext    :: Can                            -- proof by appeal to extensionality
+>   -- [/Feature = Eq]
+>   -- [Feature = UId]
+>   UId    :: Can
+>   Tag    :: String -> Can
+>   -- [/Feature = UId]
+>   -- [Feature = Enum]
+>   EnumU  :: Can  -- levitate me!
+>   NilE   :: Can  -- levitate me!
+>   ConsE  :: Can  -- levitate me! 
+>   EnumT  :: Can
+>   Ze     :: Can
+>   Su     :: Can 
+>   -- [/Feature = Enum]
+
+>   deriving (Eq, Show)
+
+> pattern SET        = Set :- []             
+> pattern ARR s t    = Pi :- [s, (LK t)]     
+> pattern PI s t     = Pi :- [s, t]          
+> pattern TIMES s t  = Sigma :- [s, (LK t)]  
+> pattern SIGMA s t  = Sigma :- [s, t]      
+> pattern PAIR a b   = Pair :- [a, b]      
+> pattern CON t      = Con :- [t]         
+> pattern ONE        = One :- []
+> pattern ZERO       = Zero :- []
+>   -- [Feature = Prop]
+> pattern PROP       = Prop :- []
+> pattern PRF _P     = Prf :- [_P]
+> pattern INH _T     = Inh :- [_T]
+> pattern WIT t      = Wit :- [t]
+> pattern AND _P _Q  = And :- [_P,_Q]
+> pattern ALL _S _P  = Pi :- [_S, _P]
+> pattern CHKD       = Chkd :- []
+>   -- [/Feature = Prop]
+>   -- [Feature = UId]
+> pattern UID        = UId :- []
+> pattern TAG t      = Tag t :- []
+>   -- [/Feature = UId]
+>   -- [Feature = Enum]
+> pattern ENUMU      = EnumU :- [] 
+> pattern NILE       = NilE :- []
+> pattern CONSE t e  = ConsE :- [t, e]
+> pattern ENUMT e    = EnumT :- [e]
+> pattern ZE         = Ze :- []
+> pattern SU n       = Su :- [n]
+>   -- [/Feature = Enum]
+
 > data Operator :: {Part, Status} -> * where
 >   Eat    :: Operator {p, s} -> Operator {Body, s'}
 >   Emit   :: Tm {Body, Exp, Z} -> Operator {Body, Exp}
@@ -86,6 +174,9 @@
 
 > cases :: [(Can , OpMaker s)] -> OpMaker s'
 > cases ps i = Case $ map (\(c,om) -> (c,om i)) ps
+
+> def :: DEF -> EXP
+> def d = D d S0 (defOp d)
 
 > mkDEF :: Name -> TY -> OpMaker {Exp} -> DEF
 > mkDEF nom ty f = DEF
@@ -127,7 +218,40 @@
 >   eat "T" $ \_T ->
 >    cases [(Wit , eat "t" $ \t -> eat "P" $ \_P -> eat "m" $ \m -> 
 >             emit (m t))]
->    
+
+> branchesDEF :: DEF
+> branchesDEF = mkDEF
+>   [("PRIM",0),("branches",0)]
+>   (("E",ENUMU) ->> \_E ->
+>    ("P",ARR (ENUMT _E) SET) ->> \_P ->
+>    SET)
+>   branchesOP
+>     where 
+>      branchesOP = cases  
+>       [  (NilE , eat "P" $ \_P -> emit ONE)
+>       ,  (ConsE , eat "T" $ \_T -> eat "E" $ \_E -> eat "P" $ \_P -> emit $
+>                     TIMES (_P $$. ZE) 
+>                       (wr (D branchesDEF S0 (branchesOP 0)) 
+>                           _E (la "n" $ \n -> wr _P (SU n))) )]
+
+> switchDEF :: DEF
+> switchDEF = mkDEF
+>   [("PRIM",0),("switch",0)]
+>   (("E",ENUMU) ->> \_E ->
+>    ("x",ENUMT _E) ->> \x ->
+>    ("P",ARR (ENUMT _E) SET) ->> \_P ->
+>    ("b",wr (D branchesDEF S0 (defOp branchesDEF)) _E _P) ->> \b -> 
+>    _P x)
+>   switchOP
+>     where
+>      switchOP = cases  
+>        [  (NilE , cases [])
+>        ,  (ConsE , eat "T" $ \_T -> eat "E" $ \_E -> cases 
+>             [  (Ze , eat "P" $ \_P -> eat "b" $ \b -> emit (b $$ Hd))
+>             ,  (Su , eat "x" $ \x -> eat "P" $ \_P -> eat "b" $ \b ->
+>                        emit (wr (D switchDEF S0 (switchOP 0)) 
+>                                   _E x _P (b $$ Tl)))  ]) ]
+
 > prims :: [ DEF ] 
 > prims = [ idDEF , uncurryDEF , zeroElimDEF , inhElimDEF ]
 
@@ -191,68 +315,6 @@
 > pattern ENil = (Nothing, INil)
 > pattern ENix = (Nothing, INix)
 
-> data DEF = DEF  {  defName :: Name
->                 ,  defTy :: TY
->                 ,  defOp :: Operator {Body, Exp}
->                 }
->   deriving Show
-
-> instance Eq DEF where
->   d1 == d2 = defName d1 == defName d2
-
-> type EXP = Tm {Body, Exp, Z}
-> type VAL = Tm {Body, Val, Z}
-> type TY = EXP
-
-> data Elim :: * -> * where
->   A  :: t -> Elim t
->   Hd :: Elim t
->   Tl :: Elim t
->   Out :: Elim t
->   QA :: t -> t -> t -> Elim t   -- applies an equation between functions to equal arguments
->   Sym :: Elim t                 -- symmetry of equality
->   deriving (Show, Eq, Foldable, Traversable, Functor)
-
-> data Can :: * where
->   Set    :: Can                            -- set of sets
->   Pi     :: Can                            -- functions
->   Sigma  :: Can                            -- products 
->   Pair   :: Can                            -- pairs
->   Con    :: Can                            -- general purpose constructor
->   One    :: Can                            -- things that have a certain one-ness
->   Zero   :: Can                            -- things that have a certain zero-ness
->   -- [Feature = Prop]
->   Prop   :: Can                            -- set of props
->   Prf    :: Can                            -- set of proofs of a prop
->   Inh    :: Can                            -- set inhabitation prop
->   Wit    :: Can                            -- witness to inhabitation 
->   And    :: Can                            -- prop conj
->   Chkd   :: Can                            -- content of a proof for equality checking
->   -- [/Feature = Prop]
->   -- [Feature = Eq]
->   Eq     :: Can                            -- equality type
->   Ext    :: Can                            -- proof by appeal to extensionality
->   -- [/Feature = Eq]
->   deriving (Eq, Show)
-
-> pattern SET        = Set :- []             
-> pattern ARR s t    = Pi :- [s, (LK t)]     
-> pattern PI s t     = Pi :- [s, t]          
-> pattern TIMES s t  = Sigma :- [s, (LK t)]  
-> pattern SIGMA s t  = Sigma :- [s, t]      
-> pattern PAIR a b   = Pair :- [a, b]      
-> pattern CON t      = Con :- [t]         
-> pattern ONE        = One :- []
-> pattern ZERO       = Zero :- []
->   -- [Feature = Prop]
-> pattern PROP       = Prop :- []
-> pattern PRF _P     = Prf :- [_P]
-> pattern INH _T     = Inh :- [_T]
-> pattern WIT t      = Wit :- [t]
-> pattern AND _P _Q  = And :- [_P,_Q]
-> pattern ALL _S _P  = Pi :- [_S, _P]
-> pattern CHKD       = Chkd :- []
->   -- [/Feature = Prop]
 
 > exp :: Tm {p, s, n} -> Tm {p, Exp, n}
 > exp = unsafeCoerce

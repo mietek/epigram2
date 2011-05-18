@@ -138,17 +138,13 @@ we abstract it out. Thus |makeElab'| actually implements elaboration.
 
 > makeElab' :: Loc -> (VAL :>: DInTmRN) -> Elab EXP
 
-> {-
 
 > -- import <- MakeElabRules
 > -- [Feature = Enum] 
-> makeElab' loc (PI (ENUMT e) t :>: m) | isTuply m = do
->     t' :=>: _ <- eQuote t
->     e' :=>: _ <- eQuote e
->     tm :=>: tmv <- subElab loc (branchesOp @@ [e, t] :>: m)
->     x <- eLambda (fortran t)
->     return $ N (switchOp :@ [e', NP x, t', tm])
->                    :=>: switchOp @@ [e, NP x, t, tmv]
+> makeElab' loc (PI s t :>: m) | ENUMT e <- ev s , isTuply m = do
+>     tm <- subElab loc (wr (def branchesDEF) e t :>: m)
+>     x <-  eLambda (fortran "n" [ev t] undefined)
+>     return $ (wr (def switchDEF) e (x :$ B0) t tm)
 >   where
 >     isTuply :: DInTmRN -> Bool
 >     isTuply DVOID        = True
@@ -158,17 +154,17 @@ we abstract it out. Thus |makeElab'| actually implements elaboration.
 To elaborate a tag with an enumeration as its type, we search for the
 tag in the enumeration to determine the appropriate index.
 
-> makeElab' loc (ENUMT t :>: DTAG a) = findTag a t 0
+> makeElab' loc (ENUMT t :>: DTAG a) = findTag a (ev t) 0
 >   where
->     findTag :: String -> TY -> Int -> Elab (INTM :=>: VAL)
->     findTag a (CONSE (TAG b) t) n
->       | a == b        = return (toNum n :=>: toNum n)
->       | otherwise     = findTag a t (succ n)
+>     findTag :: String -> VAL -> Int -> Elab EXP
+>     findTag a (CONSE t e) n
+>       | TAG b <- ev t , a == b        = return (toNum n)
+>       | otherwise                     = findTag a (ev e) (succ n)
 >     findTag a _ n  = throwError' . err $ "elaborate: tag `" 
 >                                           ++ a 
 >                                           ++ " not found in enumeration."
 >                       
->     toNum :: Int -> Tm {In, p} x
+>     toNum :: Int -> EXP
 >     toNum 0  = ZE
 >     toNum n  = SU (toNum (n-1))
 
@@ -177,11 +173,16 @@ data. This cannot apply in general because it leads to infinite loops when
 elaborating illegal values for some descriptions. Perhaps we should remove it
 for enumerations as well.
 
-> makeElab' loc (IMU l@(Just (LK (ANCHOR (TAG r) _ _))) _I d i :>: DVOID) | r == "EnumU" = 
->     makeElab' loc (IMU l _I d i :>: DCON (DPAIR DZE DVOID))
-> makeElab' loc (IMU l@(Just (LK (ANCHOR (TAG r) _ _))) _I d i :>: DPAIR s t) | r == "EnumU" =
->     makeElab' loc (IMU l _I d i :>: DCON (DPAIR (DSU DZE) (DPAIR s (DPAIR t DVOID))))
+> makeElab' loc (ENUMU :>: DVOID) = 
+>     makeElab' loc (ENUMU :>: DNILE)
+> makeElab' loc (ENUMU :>: DPAIR s t) =
+>     makeElab' loc (ENUMU :>: DCONSE s t)
 > -- [/Feature = Enum] 
+
+
+
+> {-
+
 > -- [Feature = Equality] 
 > makeElab' loc (PROP :>: DEqBlue t u) = do
 >     ttt <- subElabInfer loc t

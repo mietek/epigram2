@@ -174,10 +174,6 @@ the parser.
 
 > {-
 >     -- import <- DInTmParsersSpecial
->     -- [Feature = Enum]
->     (ArgSize, (|mkNum (|read digits|) (optional $ (keyword KwPlus) *> sizedDInTm ArgSize)|)) :
->     (AndSize, (|DENUMT (%keyword KwEnum%) (sizedDInTm ArgSize)|)) :
->     -- [/Feature = Enum]
 >     -- [Feature = IDesc]
 >     (AndSize, (|(DIMU Nothing) (%keyword KwIMu%) (sizedDInTm ArgSize) (sizedDInTm ArgSize) (sizedDInTm ArgSize)|)) :
 >     -- [/Feature = IDesc]
@@ -187,6 +183,11 @@ the parser.
 >     -- [/Feature = Labelled]
 >     -}
 
+>     -- [Feature = Enum]
+>     (ArgSize, (|DENUMU     (%keyword KwEnumU%)|)) :
+>     (ArgSize, (|mkNum (|read digits|) (optional $ (keyword KwPlus) *> sizedDInTm ArgSize)|)) :
+>     (AndSize, (|DENUMT (%keyword KwEnum%) (sizedDInTm ArgSize)|)) :
+>     -- [/Feature = Enum]
 >     -- [Feature = Prop]
 >     (ArgSize, (|DPROP     (%keyword KwProp%)|)) :
 >     (ArgSize, (|DABSURD   (%keyword KwAbsurd%)|)) :
@@ -248,7 +249,6 @@ the parser.
 
 \subsection{Parser support code}
 
-> {-
 
 > -- import <- ParserCode
 > -- [Feature = Enum]
@@ -257,6 +257,8 @@ the parser.
 > mkNum 0 (Just t) = t
 > mkNum n t = DSU (mkNum (n-1) t)
 > -- [/Feature = Enum]
+
+> {-
 
 > -- [Feature = Equality]
 > isEx :: DInTmRN -> Maybe DExTmRN
