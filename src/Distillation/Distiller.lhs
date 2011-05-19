@@ -147,11 +147,12 @@
 >       x' <- distill (ev _SD :>: ev x) l
 >       y' <- distill (ev _TD :>: ev y) l
 >       q' <- distill (PRF (EQ _SD x _TD y) :>: ev q) l
->       distillSpine (PRF (EQ (_SC x) (f $$. x) (_TC y) (g $$. y)) :>: 
->                      (tm $$ (QA x y q), as)) l
+>       (| (QA x' y' q' :) 
+>            (distillSpine (PRF (EQ (_SC x) (f $$. x) (_TC y) (g $$. y)) :>: 
+>                      (tm $$ (QA x y q), as)) l) |)
 >
 > distillSpine (PRF _P :>: (tm, Sym : as)) l | EQ _S s _T t <- ev _P =
->       distillSpine (PRF (EQ _T t _S s) :>: (tm $$ Sym, as)) l
+>   (| (Sym :) (distillSpine (PRF (EQ _T t _S s) :>: (tm $$ Sym, as)) l) |)
 
 > -- [/Feature = Equality]
 > distillSpine _ _  = throwError' (err "Deep!")
