@@ -651,21 +651,21 @@ Pos could use a nice abstraction to do the following:
 > partCapture' = partCapture {: m :: Nat :} 
 
 > piLift :: pi (n :: Nat). Vec {n} (String, TY) -> TY -> TY
-> piLift {n} bs t = pil bs (capture {n} t) 
+> piLift {n} bs t = pil {n} bs (capture {n} t) 
 >   where
->     pil :: Vec {m} (String, TY) -> Tm {Body, Exp, m} -> EXP
->     pil V0 t = t
->     pil ((s,ty) :>>: sts) t = pil sts $ PI (wk ty) (L ENil s t)
+>     pil :: pi (m :: Nat) . Vec {m} (String, TY) -> Tm {Body, Exp, m} -> EXP
+>     pil {Z} V0 t = t
+>     pil {S m} ((s,ty) :>>: sts) t = pil {m} sts $ PI (capture {m} ty) (L ENil s t)
 
 > piLift' :: {: n :: Nat :} => Vec {n} (String, TY) -> TY -> TY
 > piLift' = piLift {: n :: Nat :}
 
 > partPiLift :: pi (n :: Nat). [ EXP ] -> Vec {n} (String, TY) -> TY -> TY
-> partPiLift {n} e bs t = pil bs (partCapture {n} e t) 
+> partPiLift {n} e bs t = pil {n} bs (partCapture {n} e t) 
 >   where
->     pil :: Vec {m} (String, TY) -> Tm {Body, Exp, m} -> EXP
->     pil V0 t = t
->     pil ((s,ty) :>>: sts) t = pil sts $ PI (wk ty) (L ENil s t)
+>     pil ::  pi (m :: Nat) . Vec {m} (String, TY) -> Tm {Body, Exp, m} -> EXP
+>     pil {Z} V0 t = t
+>     pil {S m} ((s,ty) :>>: sts) t = pil {m} sts $ PI (partCapture {m} e ty) (L ENil s t)
 
 > partPiLift' :: {: n :: Nat :} => [ EXP ] -> Vec {n} (String, TY) -> TY -> TY
 > partPiLift' = partPiLift {: n :: Nat :}
