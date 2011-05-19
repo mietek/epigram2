@@ -124,8 +124,10 @@ here.
 >       Nothing -> throwError' $ err "spInf: not lambdable"
 >     (_T, Hd) -> case projable _T of
 >       Just (_S, _T)  -> spInf l (e $$ Hd :<: _S) (g, as)
+>       Nothing -> throwError' $ err "spInf: not projable"
 >     (_T, Tl) -> case projable _T of
 >       Just (_S, _T)  -> spInf l (e $$ Tl :<: _T (e $$ Hd)) (g, as)
+>       Nothing -> throwError' $ err "spInf: not projable"
 >     (PRF _P, QA s u q)  -> case ev _P of
 >       Eq :- [_X, f, _Y, h] -> case (ev _X, ev _Y) of
 >         (PI _S _T, PI _U _V) -> do
