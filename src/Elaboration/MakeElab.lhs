@@ -60,13 +60,9 @@ hoping for a proof of the appropriate equation and inserting a coercion.
 >     eq <- eEqual $ SET :>: (_S, _T)
 >     if eq
 >         then return s
->         else throwError' $ err "Implement Coe"
-
-> {-
->    do
->             q :=>: qv <- eHopeFor $ PRF (EQBLUE (SET :>: _Sv) (SET :>: _Tv))
->             return $ N (coe :@ [_S, _T, q, s]) :=>: coe @@ [_Sv, _Tv, qv, sv]
-> -}
+>         else do
+>             q <- eHopeFor $ PRF (EQ SET _S SET _T)
+>             return $ (Coeh Coe _S _T q s :$ B0) 
 
 The |eEqual| instruction determines if two types are definitionally equal.
 
@@ -174,20 +170,16 @@ for enumerations as well.
 > makeElab' loc (ENUMU :>: DPAIR s t) =
 >     makeElab' loc (ENUMU :>: DCONSE s t)
 > -- [/Feature = Enum] 
-
-
+> -- [Feature = Equality] 
+> makeElab' loc (PROP :>: DEq s t) = do
+>     s_S <- subElabInfer loc s
+>     t_T <- subElabInfer loc t
+>     let s :<: _S = extractNeutral s_S
+>     let t :<: _T = extractNeutral t_T
+>     return $  EQ _S s _T t
+> -- [/Feature = Equality] 
 
 > {-
-
-> -- [Feature = Equality] 
-> makeElab' loc (PROP :>: DEqBlue t u) = do
->     ttt <- subElabInfer loc t
->     utt <- subElabInfer loc u
->     let ttm :=>: tv :<: tty :=>: ttyv = extractNeutral ttt
->     let utm :=>: uv :<: uty :=>: utyv = extractNeutral utt
->     return $  EQBLUE (tty   :>: ttm)  (uty   :>: utm)
->         :=>:  EQBLUE (ttyv  :>: tv)   (utyv  :>: uv)
-> -- [/Feature = Equality] 
 > -- [Feature = IDesc] 
 > makeElab' loc (SET :>: DIMU Nothing iI d i) = do
 >     iI  :=>: iIv  <- subElab loc (SET :>: iI)
@@ -312,6 +304,23 @@ identity function at the given type.
 >   where
 >     typeAnnotTM :: EXP -> EXP
 >     typeAnnotTM tm = PAIR (ARR tm tm) (idTM "typeAnnot")
+> -- [Feature = Equality]
+> makeElabInferHead loc (DRefl _T t) = do
+>   _T' <- subElab loc (SET :>: _T)
+>   t' <- subElab loc (_T' :>: t)
+>   (| (PAIR (PRF (EQ _T' t' _T' t')) (Refl _T' t' :$ B0), Nothing) |)
+> makeElabInferHead loc (DCoeh coeh _S _T q s) = do
+>     _S' <- subElab loc (SET :>: _S)
+>     _T' <- subElab loc (SET :>: _T)
+>     q' <- subElab loc (PRF (EQ SET _S' SET _T') :>: q)
+>     s' <- subElab loc (_S' :>: s)
+>     (| (PAIR (eorh coeh _S' _T' q' s') (Coeh coeh _S' _T' q' s' :$ B0), Nothing) |)
+>   where
+>     eorh :: Coeh -> EXP -> EXP -> EXP -> EXP -> EXP
+>     eorh Coe _ _T' _ _ = _T'
+>     eorh Coh _S' _T' q' s' = 
+>       PRF (EQ _S' s' _T' (Coeh Coe _S' _T' q' s' :$ B0))
+> -- [Feature = Equality]
 
 
 Now we can implement |makeElabInfer|. We use |makeElabInferHead| to elaborate
@@ -419,6 +428,22 @@ attach the appropriate label to the call and continue with the returned type.
 >         handleArgs (tm $$ Hd :<: ev _S) as
 >     handleArgs (tm :<: ty) (Tl : as) | Just (_S, _T) <- projable ty =
 >         handleArgs (tm $$ Tl :<: ev (_T (tm $$ Hd))) as
+
+>     -- [Feature = Equality]
+>     handleArgs (tm :<: PRF _P) (QA x y q : as) 
+>           | EQ _S f _T g <- ev _P
+>           , Just (_, _SD, _SC) <- lambdable (ev _S)  
+>           , Just (_, _TD, _TC) <- lambdable (ev _T) = do
+>       x' <- subElab loc (_SD :>: x)
+>       y' <- subElab loc (_TD :>: y)
+>       q' <- subElab loc (PRF (EQ _SD x' _TD y') :>: q)
+>       handleArgs (tm $$ (QA x' y' q') :<: 
+>                    PRF (EQ (_SC x') (f $$. x') (_TC y') (g $$. y'))) as
+>
+>     handleArgs (tm :<: PRF _P) (Sym : as) | EQ _S s _T t <- ev _P =
+>       handleArgs (tm $$ Sym :<: PRF (EQ _T t _S s)) as
+>     -- [Feature = Equality]
+
 >     handleArgs (tm :<: _ :- _) _ =
 >         throwError' $ err "badly typed elimintation in handleArgs?"
 

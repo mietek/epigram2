@@ -160,7 +160,13 @@ things...
 >   KwPlus        :: Keyword
 >   -- [/Feature = Enum]
 >   -- [Feature = Equality]
->   KwEqBlue :: Keyword
+>   KwPEq   :: Keyword
+>   KwExt   :: Keyword
+>   KwRefl  :: Keyword
+>   KwCoe   :: Keyword
+>   KwCoh   :: Keyword
+>   KwQA    :: Keyword
+>   KwSym   :: Keyword
 >   -- [/Feature = Equality]
 >   -- [Feature = IDesc]
 >   KwIMu :: Keyword
@@ -230,7 +236,13 @@ things...
 > key KwPlus      = "+"
 > -- [/Feature = Enum]
 > -- [Feature = Equality]
-> key KwEqBlue = "=="
+> key KwPEq    = "=="
+> key KwExt    = "ext"
+> key KwRefl   = "refl"
+> key KwCoe    = "coe"
+> key KwCoh    = "coh" 
+> key KwQA     = "$=" 
+> key KwSym    = "sym"
 > -- [/Feature = Equality]
 > -- [Feature = IDesc]
 > key KwIMu      = "IMu"

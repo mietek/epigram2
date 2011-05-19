@@ -67,19 +67,20 @@ parameter. Thanks to this hack, we can use |deriving Traversable|.
 >     DU     ::                       DInTm x -- underscore
 >     DT     :: InTmWrap x        ->  DInTm x -- embedding
 >     -- import <- DInTmConstructors
+>    
+>     -- [Feature = Equality]
+
+In the display syntax, an equality can be between arbitrary DExTms,
+rather than ascriptions. To allow this, we add a suitable constructor |DEq|
+to DInTm, along with appropriate elaboration and distillation rules.
+
+>     DEq :: DExTm x -> DExTm x -> DInTm x
+>     -- [/Feature = Equality]
 
 >     {-
 >     -- [Feature = Anchor]
 >     DAnchor :: String -> DInTm x -> DInTm x 
 >     -- [/Feature = Anchor] 
->     -- [Feature = Equality]
-
-In the display syntax, a blue equality can be between arbitrary DExTms,
-rather than ascriptions. To allow this, we add a suitable constructor |DEqBlue|
-to DInTm, along with appropriate elaboration and distillation rules.
-
->     DEqBlue :: DExTm x -> DExTm x -> DInTm x
->     -- [/Feature = Equality]
 >     -- [Feature = IDesc]
 >     -- DIMu :: Labelled (Id :*: Id) (DInTm p x) -> DInTm p x  -> DInTm p x 
 >     -- [/Feature = IDesc]
@@ -96,6 +97,10 @@ to DInTm, along with appropriate elaboration and distillation rules.
 >     DP     :: x           -> DHead x -- parameter
 >     DType  :: DInTm x     -> DHead x -- type annotation
 >     DTEx   :: ExTmWrap x  -> DHead x -- embedding
+>     -- [Feature = Equality]
+>     DRefl  :: DInTm x ->  DInTm x -> DHead x 
+>     DCoeh  :: Coeh -> DInTm x ->  DInTm x ->  DInTm x -> DInTm x -> DHead x 
+>     -- [/Feature = Equality]
 >  deriving (Functor, Foldable, Traversable, Show)
 
 Note that, again, we are polymorphic in the representation of free
@@ -268,7 +273,10 @@ places.
 > pattern DINH ty      = DC Inh [ty]
 > pattern DWIT t       = DC Wit [t]
 > -- [/Feature = Prop]
-> -- [Feature = Sigma] -}
+> -- [Feature = Equality]
+> pattern DEXT f       = DC Ext [f]
+> -- [/Feature = Equality]
+> -- [Feature = Sigma] 
 > pattern DSIGMA p q = DC Sigma [p , q]
 > pattern DPAIR  p q = DC Pair [p , q]
 > pattern DUNIT      = DC One []

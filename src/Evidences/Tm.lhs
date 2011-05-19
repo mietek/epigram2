@@ -139,6 +139,10 @@
 > pattern ALL _S _P  = Pi :- [_S, _P]
 > pattern CHKD       = Chkd :- []
 >   -- [/Feature = Prop]
+>   -- [Feature = Eq]
+> pattern EQ _S s _T t  = Eq :- [_S, s, _T, t]
+> pattern EXT _P        = Ext :- [_P]
+>   -- [/Feature = Eq]
 >   -- [Feature = UId]
 > pattern UID        = UId :- []
 > pattern TAG t      = Tag t :- []
@@ -376,6 +380,8 @@
 > apply {Exp} d@(D _ _ _) a = (ENil :/ d) :$ (B0 :< fmap exp a)  
 > apply {s} (PAIR a b) Hd = eval {s} ENil a
 > apply {s} (PAIR a b) Tl = eval {s} ENil b
+> apply {s} (CON t) Out = eval {s} ENil t
+> -- [Feature = Eq]
 > apply {s} (Ext :- [f]) (QA a b q) =
 >   apply {s} (apply {s} (apply {s} (eval {s} ENil f) (A a)) (A b)) (A q)
 > apply {_} (Refl _F f :$ B0) (QA s _ q) | isRefl (ENil // q :: VAL) = case ev _F of
@@ -398,6 +404,7 @@
 > apply {s} (CON z) Sym = CON z
 > apply {s} (Ext :- [f]) Sym = Ext :- [la "a" $ \ a -> la "b" $ \ b -> la "q" $ \ q ->
 >   nix f :$ (B0 :< A b :< A a :< A (V Fz {- q, yuk -} :$ (B0 :< Sym)) :< Sym)]
+> -- [/Feature = Eq]
 > apply {s} (h :$ ss) a = h :$ (ss :< fmap exp a)
 > apply {Exp} (g :/ t) a = (g :/ t) :$ (B0 :< fmap exp a)
 

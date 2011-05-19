@@ -35,11 +35,14 @@
 > canTy ((Prop, []) :>: One)           = (| ONE |)
 > canTy ((Prop, []) :>: Inh)           = (| (SET *** ONE) |)
 > canTy ((Prop, []) :>: And)           = (| (PROP *** PROP *** ONE) |)
+> canTy ((Prop, []) :>: Eq)            = pure $
+>   (("S", SET) -** \ _S -> _S ***
+>    ("T", SET) -** \ _T -> _T *** ONE)
 > canTy ((Prf, [_P]) :>: p)            = case (ev _P, p) of
 >   (ONE, Zero) -> (| ONE |)
 >   (INH _T, Wit) -> (| (_T *** ONE) |)
 >   (AND _P _Q, Pair) -> (| (PRF _P *** PRF _Q *** ONE) |)
->   (Eq :- [_S, s, _T, t], c) -> case (ev _S, ev _T) of
+>   (EQ _S s _T t, c) -> case (ev _S, ev _T) of
 >     (_C :- es, _C' :- es') -> case eqUnfold ((_C, es) :>: s) ((_C', es') :>: t) of
 >       Just (c', _Ps) | c == c' -> (| (prfs _Ps) |)
 >       _ -> (|)
@@ -71,7 +74,7 @@
 > projable (SIGMA s t)         = Just (s, (t $$.))
 > projable (PRF _P) = case ev _P of
 >   AND _P _Q  -> Just (PRF _P, \_ -> PRF _Q)
->   Eq :- [_S, s, _T, t] -> case (ev _S, ev _T) of
+>   EQ _S s _T t -> case (ev _S, ev _T) of
 >     (_C :- es, _C' :- es') -> case eqUnfold ((_C, es) :>: s) ((_C', es') :>: t) of
 >       Just (Pair, [_P, _Q]) -> Just (PRF _P, \_ -> PRF _Q)
 >       _ -> (|)
@@ -95,10 +98,10 @@
 > eqUnfold ((Pi, [_S, _T]) :>: f) ((Pi, [_S', _T']) :>: f') = pure (Ext,
 >   [("s", _S) ->> \ s -> ("s'", nix _S') ->> \ s' ->
 >    let ss = B0 :< A s ; ss' = B0 :< A s'
->    in  Eq :- [nix _S, s, nix _S', s'] ==>
->        Eq :- [nix _T :$ ss, nix f :$ ss, nix _T' :$ ss', nix f' :$ ss']])
+>    in  EQ (nix _S) s (nix _S') s' ==>
+>        EQ (nix _T :$ ss) (nix f :$ ss) (nix _T' :$ ss') (nix f' :$ ss')])
 > eqUnfold ((Sigma, [_S, _T]) :>: p) ((Sigma, [_S', _T']) :>: p') =
->   pure (Pair, [Eq :- [_S, s, _S', s'], Eq :- [_T $$. s, t, _T' $$. s', t']])
+>   pure (Pair, [EQ _S s _S' s', EQ (_T $$. s) t (_T' $$. s') t'])
 >   where s = p $$ Hd ; t = p $$ Tl ; s' = p' $$ Hd ; t' = p $$ Tl
 > eqUnfold ((Prf, [_]) :>: _) ((Prf, [_]) :>: _) = pure (Zero, [])
 > eqUnfold _ _ = pure (Con, [ZERO])
@@ -106,11 +109,11 @@
 > eqSetUnfold :: VAL -> VAL -> Maybe (Can, [EXP])
 > eqSetUnfold SET SET = pure (Zero, [])
 > eqSetUnfold (PI _S _T) (PI _S' _T') = pure (Pair,
->   [  Eq :- [SET, _S, SET, _S']
->   ,  Eq :- [_S --> SET, _T, _S' --> SET, _T']])
+>   [  EQ SET _S SET _S'
+>   ,  EQ (_S --> SET) _T (_S' --> SET) _T'])
 > eqSetUnfold (SIGMA _S _T) (SIGMA _S' _T') = pure (Pair,
->   [  Eq :- [SET, _S, SET, _S']
->   ,  Eq :- [_S --> SET, _T, _S' --> SET, _T']])
+>   [  EQ SET _S SET _S'
+>   ,  EQ (_S --> SET) _T (_S' --> SET) _T'])
 > eqSetUnfold (PRF _P) (PRF _Q) =
 >   pure (Pair, [_P ==> _Q, _Q ==> _P])
 > eqSetUnfold _ _ = pure (Con, [ZERO])

@@ -153,6 +153,16 @@ the parser.
 > headParsers = arrange $ 
 >    (ArgSize, (| DType (bracket Round (keyword KwAsc *> pDInTm))|)) :
 >    (ArgSize, (| DP nameParse |)) :
+>     -- [Feature = Equality]
+>    (ArgSize, (| DRefl (%keyword KwRefl%) (sizedDInTm ArgSize) 
+>                       (sizedDInTm ArgSize)  |)) :
+>    (ArgSize, (| DCoeh ~Coe (%keyword KwCoe%) (sizedDInTm ArgSize) 
+>                       (sizedDInTm ArgSize) (sizedDInTm ArgSize) 
+>                      (sizedDInTm ArgSize)  |)) :
+>    (ArgSize, (| DCoeh ~Coh (%keyword KwCoe%) (sizedDInTm ArgSize) 
+>                      (sizedDInTm ArgSize) (sizedDInTm ArgSize) 
+>                      (sizedDInTm ArgSize)  |)) :
+>     -- [/Feature = Equality]
 >    []
 
 > elimParsers :: SizedParserList (Elim DInTmRN)
@@ -165,6 +175,11 @@ the parser.
 >     (AppSize, (| Hd (%keyword KwFst%) |)) :
 >     (AppSize, (| Tl (%keyword KwSnd%) |)) :
 >     -- [/Feature = Sigma]
+>     -- [Feature = Equality]
+>     (AppSize, (| Sym (%keyword KwSym%) |)) :
+>     (AppSize, (| QA (%keyword KwQA%) (sizedDInTm ArgSize) 
+>                       (sizedDInTm ArgSize) (sizedDInTm ArgSize)  |)) :
+>     -- [/Feature = Equality]
 >     (AppSize, (| Out (%keyword KwOut%) |)) :
 >     (AppSize, (| A (sizedDInTm ArgSize) |)) :
 >     []
@@ -197,7 +212,9 @@ the parser.
 >     (AndSize, (|DWIT      (%keyword KwWit%) (sizedDInTm ArgSize)|)) :
 >     (AndSize, (|DALL      (%keyword KwAll%) (sizedDInTm ArgSize) (sizedDInTm ArgSize)|)) :
 >     -- [/Feature = Prop]
-
+>     -- [Feature = Equality]
+>     (AndSize, (|DEXT      (%keyword KwExt%) (sizedDInTm AndSize)|)) :
+>     -- [/Feature = Equality]
 >     -- [Feature = Sigma]
 >     (ArgSize, (|id (bracket Square tuple)|)) :
 >     (ArgSize, (|id (%keyword KwSig%) (bracket Round sigma)|)) :
@@ -229,12 +246,10 @@ the parser.
 > inDTmParsersMore :: ParamParserList DInTmRN DInTmRN
 > inDTmParsersMore = arrange $ 
 >     -- import <- DInTmParsersMore
-> {-
 >     -- [Feature = Equality]
->     (EqSize, \ t -> (| DEqBlue  (pFilter isEx (pure t)) (%keyword KwEqBlue%)
->                                 (pFilter isEx (sizedDInTm (pred EqSize))) |)) :
+>     (EqSize, \ t -> (| DEq  (pFilter isEx (pure t)) (%keyword KwPEq%)
+>                             (pFilter isEx (sizedDInTm (pred EqSize))) |)) :
 >     -- [/Feature = Equality]
-> -}
 
 >     -- [Feature = Prop]
 >     (AndSize, \ s -> (| (DAND s) (%keyword KwAnd%) (sizedDInTm AndSize)  |)) :
@@ -256,7 +271,6 @@ the parser.
 > mkNum n t = DSU (mkNum (n-1) t)
 > -- [/Feature = Enum]
 
-> {-
 
 > -- [Feature = Equality]
 > isEx :: DInTmRN -> Maybe DExTmRN
@@ -264,7 +278,6 @@ the parser.
 > isEx _        = Nothing
 > -- [/Feature = Equality]
 
-> -}
 
 > -- [Feature = Sigma]
 > tuple :: Parsley Token DInTmRN

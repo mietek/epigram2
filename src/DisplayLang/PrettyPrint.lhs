@@ -76,6 +76,10 @@ being with $\Pi$-types.
 >   pretty UId      = const (kword KwUId)
 >   pretty (Tag s)  = const (kword KwTag <> text s)
 >   -- [/Feature = UId]
+>   -- [Feature = Equality]
+>   pretty Ext      = const (kword KwExt)
+>   pretty Eq       = const (kword KwPEq)
+>   -- [/Feature = Equality]
 >   pretty c        = error $ show c
 
 > {-
@@ -95,13 +99,6 @@ being with $\Pi$-types.
 >     pretty Ze         = const (int 0)
 >     pretty (Su t)     = prettyEnumIndex 1 t
 >     -- [/Feature = Enum]
->     -- [Feature = Equality]
->     pretty (EqBlue pp qq) = pretty (DEqBlue (foo pp) (foo qq))
->       where
->         foo :: (DInTmRN :>: DInTmRN) -> DExTmRN
->         foo (_    :>: DN x  ) = x
->         foo (xty  :>: x     ) = DType xty ::$ [A x] 
->     -- [/Feature = Equality]
 >     -- [Feature = IDesc]
 >     pretty (IMu (Just l   :?=: _) i)  = wrapDoc
 >         (pretty l AppSize <+> pretty i ArgSize)
@@ -176,6 +173,11 @@ The |Elim| functor is straightforward.
 >     pretty Hd = const (kword KwFst)
 >     pretty Tl = const (kword KwSnd)
 >     -- [/Feature = Sigma]
+>     -- [Feature = Equality]
+>     pretty (QA x y q)  = const $ kword KwQA <+> pretty x ArgSize <+>
+>                                    pretty y ArgSize <+> pretty q ArgSize
+>     pretty Sym  = const (kword KwSym)
+>     -- [/Feature = Equality]
 >     pretty elim   = const (quotes . text . show $ elim)
 
 
@@ -209,7 +211,6 @@ than a $\lambda$-term is reached.
 >     -- [/Feature = Prop]
 >     -- [Feature = Enum]
 >     pretty (DC Ze [])           = const (int 0)
->     pretty (DC Su [])          = error "NYERK" -- prettyEnumIndex 1 t
 >     pretty (DC Su [t])          = prettyEnumIndex 1 t
 >     pretty (DC NilE [])              = prettyEnumU DNILE
 >     pretty (DC ConsE [a , b])        = prettyEnumU (DCONSE a b)
@@ -221,16 +222,16 @@ than a $\lambda$-term is reached.
 >     pretty (DN n)          = pretty n
 >     pretty (DQ x)          = const (char '?' <> text x)
 >     pretty DU              = const (kword KwUnderscore)
+>     -- [Feature = Equality]
+>     pretty (DEq t u) = wrapDoc
+>       (pretty t ArgSize <+> kword KwPEq <+> pretty u ArgSize)
+>       ArgSize
+>     -- [/Feature = Equality]
 
 <     -- import <- DInTmPretty
 <     {-- [Feature = Anchor]
 <     pretty (DANCHOR s args)  = wrapDoc (text s <+> pretty args ArgSize) ArgSize
 <     -- [/Feature = Anchor]
-<     -- [Feature = Equality]
-<     pretty (DEqBlue t u) = wrapDoc
-<       (pretty t ArgSize <+> kword KwEqBlue <+> pretty u ArgSize)
-<       ArgSize
-<     -- [/Feature = Equality]
 <     -- [Feature = IDesc]
 <     pretty (DIMu (Just s   :?=: _) _)  = pretty s
 <     pretty (DIMu (Nothing  :?=: (Id ii :& Id d)) i)  = wrapDoc
@@ -257,6 +258,17 @@ than a $\lambda$-term is reached.
 >     pretty (DP x)       = const (text (showRelName x)) 
 >     pretty (DType ty)   = const (parens (kword KwAsc <+> pretty ty maxBound))
 >     pretty (DTEx ex)    = const (quotes . text . show $ ex)
+>     pretty (DRefl _S s) = wrapDoc (kword KwRefl <+> pretty _S ArgSize
+>                                                 <+> pretty s ArgSize)
+>                             AppSize
+>     pretty (DCoeh coeh _S _T q s) = 
+>       wrapDoc (kword (eorh coeh) <+> pretty _S ArgSize <+> pretty _T ArgSize
+>                                  <+> pretty q ArgSize <+> pretty s ArgSize)
+>           AppSize
+>         where eorh :: Coeh -> Keyword
+>               eorh Coe = KwCoe
+>               eorh Coh = KwCoh
+
 
 > {-
 > instance Pretty (Scheme DInTmRN) where
