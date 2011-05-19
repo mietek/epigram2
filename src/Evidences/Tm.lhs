@@ -482,10 +482,14 @@ by reflexivity, the basis for proof compaction and various other
 optimizations.
 
 > isRefl :: VAL -> Bool
-> isRefl (Refl _ _ :$ _) = True
+> isRefl (Refl _ _ :$ es) = isReflSp es 
 > isRefl (_ :- es) = all (isRefl . ev) es
 > isRefl _ = False
 
+> isReflSp :: Bwd (Elim EXP) -> Bool
+> isReflSp B0 = True
+> isReflSp (es :< QA _ _ q) = isReflSp es && isRefl (ev q)
+> isReflSp (es :< _) = isReflSp es
 
 We have special pairs for types going into and coming out of
 stuff. We write |typ :>: thing| to say that |typ| accepts the
