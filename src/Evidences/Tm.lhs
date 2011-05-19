@@ -644,6 +644,12 @@ Pos could use a nice abstraction to do the following:
 > capture' :: {: m :: Nat :} =>  EXP -> Tm {Body, Exp, m}
 > capture' = capture {: m :: Nat :} 
 
+> partCapture :: pi (m :: Nat). [ EXP ] -> EXP -> Tm {Body, Exp, m}
+> partCapture {m} e t = (Just $ (map wk e) ++ (Data.Foldable.foldr (\i l -> (V i :$ B0) : l) [] (vDownFromF {m})) , INix) :/ t
+
+> partCapture' :: {: m :: Nat :} => [ EXP ] -> EXP -> Tm {Body, Exp, m}
+> partCapture' = partCapture {: m :: Nat :} 
+
 > piLift :: pi (n :: Nat). Vec {n} (String, TY) -> TY -> TY
 > piLift {n} bs t = pil bs (capture {n} t) 
 >   where
@@ -653,4 +659,14 @@ Pos could use a nice abstraction to do the following:
 
 > piLift' :: {: n :: Nat :} => Vec {n} (String, TY) -> TY -> TY
 > piLift' = piLift {: n :: Nat :}
+
+> partPiLift :: pi (n :: Nat). [ EXP ] -> Vec {n} (String, TY) -> TY -> TY
+> partPiLift {n} e bs t = pil bs (partCapture {n} e t) 
+>   where
+>     pil :: Vec {m} (String, TY) -> Tm {Body, Exp, m} -> EXP
+>     pil V0 t = t
+>     pil ((s,ty) :>>: sts) t = pil sts $ PI (wk ty) (L ENil s t)
+
+> partPiLift' :: {: n :: Nat :} => [ EXP ] -> Vec {n} (String, TY) -> TY -> TY
+> partPiLift' = partPiLift {: n :: Nat :}
 

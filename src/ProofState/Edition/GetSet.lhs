@@ -10,6 +10,7 @@
 > module ProofState.Edition.GetSet where
 
 > import Control.Monad.State
+> import Control.Applicative
 > import Data.Foldable
 
 > import Kit.BwdFwd
@@ -375,20 +376,31 @@ machinery. Perhaps it should move somewhere more logical.
 >     let ty = case tip of
 >                  Unknown t _        -> t
 >                  Defined (t :>: _)  -> t
+>     es <- getEntriesAbove
 >     inScope <- getInScope
->     let  binScope = boys inScope
->          ty' = bwdVec (fmap (\(_, s, t) -> (s, t)) binScope)
+>     let  lbinScope = boys es
+>          binScope = boys inScope
+>          (bs, ls) = blah binScope lbinScope
+>          ty' = bwdVec (fmap (\(_, s, t) -> (s, t)) bs)
 >                           (\ n ys -> piLift n ys) ty
->          lev = Data.Foldable.foldr (\_ -> (1+)) 0 binScope
->          op = eats lev (tipToOp tip)
+>          lev = Data.Foldable.foldr (\_ -> (1+)) 0 bs
+>          op =  tipToOp lev (trail (fmap (\x -> P x :$ B0) bs)) ls tip
 >          def' = DEF nom ty' op
 >     putCurrentEntry $ CDefinition def'
->     return (def', D def' S0 op $$$ fmap (\x -> A (P x :$ B0)) binScope)
+>     return (def', D def' S0 op $$$ fmap (\x -> A (P x :$ B0)) bs)
 >  where 
->    boys :: Entries -> Bwd (Int, String, TY)
+>    boys :: Entries -> Bwd (ParamKind, Int, String, TY)
 >    boys B0 = B0
->    boys (es :< EParam _ s t l) =  boys es :< (l, s, t)
+>    boys (es :< EParam k s t l) =  boys es :< (k, l, s, t)
 >    boys (es :< _) =  boys es 
 
->    tipToOp (Unknown _ _)         = Hole
->    tipToOp (Defined (_ :>: tm))  = Emit tm
+>    blah :: Bwd (ParamKind, Int, String, TY) -> Bwd (ParamKind, Int, String, TY)  
+>              -> (Bwd (Int, String, TY), Fwd (String, TY))
+>    blah (bs :< _) (ls :< (ParamPi, _, s, t)) = 
+>      let (bs' , ls') = blah bs ls in (bs', (s,t) :> ls')
+>    blah bs _ =  (fmap (\(_,x,y,z) -> (x,y,z)) bs, F0)
+
+>    tipToOp :: Int -> [ EXP ] -> Fwd (String, TY) -> Tip -> Operator {Body, Exp}
+>    tipToOp i e f (Unknown _ _)         = eats i Hole
+>    tipToOp i e f (Defined (_ :>: tm))  = 
+>      eats i $ Emit (fwdVec f (\ n ys -> partPiLift {n} e ys) tm)
