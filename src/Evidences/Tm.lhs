@@ -407,6 +407,7 @@
 > -- [/Feature = Eq]
 > apply {s} (h :$ ss) a = h :$ (ss :< fmap exp a)
 > apply {Exp} (g :/ t) a = (g :/ t) :$ (B0 :< fmap exp a)
+> apply {s} x a = error $ show x ++ " $$ " ++ show a
 
 This thing does coercion and coherence.
 
@@ -654,23 +655,23 @@ Pos could use a nice abstraction to do the following:
 > partCapture' :: {: m :: Nat :} => [ EXP ] -> EXP -> Tm {Body, Exp, m}
 > partCapture' = partCapture {: m :: Nat :} 
 
-> piLift :: pi (n :: Nat). Vec {n} (String, TY) -> TY -> TY
+> piLift :: pi (n :: Nat). BVec {n} (String, TY) -> TY -> TY
 > piLift {n} bs t = pil {n} bs (capture {n} t) 
 >   where
->     pil :: pi (m :: Nat) . Vec {m} (String, TY) -> Tm {Body, Exp, m} -> EXP
->     pil {Z} V0 t = t
->     pil {S m} ((s,ty) :>>: sts) t = pil {m} sts $ PI (capture {m} ty) (L ENil s t)
+>     pil :: pi (m :: Nat) . BVec {m} (String, TY) -> Tm {Body, Exp, m} -> EXP
+>     pil {Z} BV0 t = t
+>     pil {S m} (sts :<<<: (s,ty)) t = pil {m} sts $ PI (capture {m} ty) (L ENil s t)
 
-> piLift' :: {: n :: Nat :} => Vec {n} (String, TY) -> TY -> TY
+> piLift' :: {: n :: Nat :} => BVec {n} (String, TY) -> TY -> TY
 > piLift' = piLift {: n :: Nat :}
 
-> partPiLift :: pi (n :: Nat). [ EXP ] -> Vec {n} (String, TY) -> TY -> TY
+> partPiLift :: pi (n :: Nat). [ EXP ] -> BVec {n} (String, TY) -> TY -> TY
 > partPiLift {n} e bs t = pil {n} bs (partCapture {n} e t) 
 >   where
->     pil ::  pi (m :: Nat) . Vec {m} (String, TY) -> Tm {Body, Exp, m} -> EXP
->     pil {Z} V0 t = t
->     pil {S m} ((s,ty) :>>: sts) t = pil {m} sts $ PI (partCapture {m} e ty) (L ENil s t)
+>     pil ::  pi (m :: Nat) . BVec {m} (String, TY) -> Tm {Body, Exp, m} -> EXP
+>     pil {Z} BV0 t = t
+>     pil {S m} (sts :<<<: (s, ty)) t = pil {m} sts $ PI (partCapture {m} e ty) (L ENil s t)
 
-> partPiLift' :: {: n :: Nat :} => [ EXP ] -> Vec {n} (String, TY) -> TY -> TY
+> partPiLift' :: {: n :: Nat :} => [ EXP ] -> BVec {n} (String, TY) -> TY -> TY
 > partPiLift' = partPiLift {: n :: Nat :}
 

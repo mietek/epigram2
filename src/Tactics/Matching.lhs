@@ -4,23 +4,28 @@
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE GADTs, TypeOperators, PatternGuards #-}
+> {-# LANGUAGE GADTs, TypeOperators, PatternGuards, FlexibleContexts #-}
 
 > module Tactics.Matching where
 
-> import Prelude hiding (any, elem)
+> import Prelude hiding (any, elem, exp)
 
 > import Control.Applicative
 > import Control.Monad
 > import Control.Monad.State
+> import Control.Monad.Error
 > import Data.Foldable
+> import Data.Maybe
 
 > import Evidences.Tm
 > import Evidences.NameSupply
 > import Evidences.DefinitionalEquality
 > import Evidences.TypeChecker
+> import Evidences.TypeCheckRules
+> import Evidences.ErrorHandling
 
 > import ProofState.Edition.ProofState
+> import ProofState.Edition.GetSet
 
 > import ProofState.Interface.ProofKit
 
@@ -29,30 +34,30 @@
 
 %endif
 
-> {-
-
 A \emph{matching substitution} is a list of references with their values, if any.
 
-> type MatchSubst = Bwd (REF, Maybe VAL)
+> type MatchSubst = Bwd ((Int, String, TY), Maybe EXP)
 
 It is easy to decide if a reference is an element of such a substitution:
 
-> elemSubst :: REF -> MatchSubst -> Bool
-> elemSubst r = any ((r ==) . fst)
+> elemSubst :: (Int, String, TY) -> MatchSubst -> Bool
+> elemSubst (l,_,_) = any ((\(l',_,_) -> l == l') . fst)
 
 When inserting a new reference-value pair into the substitution, we ensure that
 it is consistent with any value already given to the reference.
 
-> insertSubst :: REF -> VAL -> StateT MatchSubst ProofState ()
-> insertSubst x t = get >>= flip help F0
+> insertSubst :: (Applicative m, MonadError StackError m) => 
+>                Int -> (Int, String, TY) -> EXP -> StateT MatchSubst m ()
+> insertSubst lev a@(l,x,ty) t = get >>= flip help F0
 >   where
->     help :: MatchSubst -> Fwd (REF, Maybe VAL) -> StateT MatchSubst ProofState ()
+>     help :: (Applicative m, MonadError StackError m) => 
+>             MatchSubst -> Fwd ((Int, String, TY), Maybe EXP) -> StateT MatchSubst m ()
 >     help B0 fs = error "insertSubst: reference not found!"
->     help (rs :< (y, m)) fs | x == y = case m of
->         Nothing  -> put (rs :< (x, Just t) <>< fs)
->         Just u   -> do
->             guard =<< (lift $ withNSupply (equal (pty x :>: (t, u))))
->             put (rs :< (y, m) <>< fs)
+>     help (rs :< (b@(l',x',ty'), m)) fs | l == l' = case m of
+>         Nothing  -> put (rs :< (a, Just t) <>< fs)
+>         Just u   -> if (equal lev (ty :>: (t, u))) 
+>                     then put (rs :< (b, m) <>< fs)
+>                     else throwError' $ err "Multiple Solutions to matching problem"
 >     help (rs :< (y, m)) fs = help rs ((y, m) :> fs)
 
 
@@ -79,47 +84,61 @@ references with things of the wrong type. A cheap improvement would be to check
 types before calling |insertSubst|, thereby giving a sound but incomplete matching
 algorithm. Really we should do proper higher-order matching.} 
 
-> matchValue :: Bwd REF -> TY :>: (VAL, VAL) -> StateT MatchSubst ProofState ()
-> matchValue zs (ty :>: (NP x, t)) = do
+> matchValue :: (Applicative m, MonadError StackError m) => 
+>               Int -> Bwd (Int, String, TY) -> TY :>: (VAL, VAL) -> StateT MatchSubst m ()
+> matchValue lev zs (ty :>: (P x :$ B0, t)) = do
 >     rs <- get
 >     if x `elemSubst` rs
->         then  lift (checkSafe zs t) >> insertSubst x t
->         else  matchValue' zs (ty :>: (NP x, t))
-> matchValue zs tvv = matchValue' zs tvv
+>         then  lift (checkSafe zs t) >> insertSubst lev x (exp t)
+>         else  matchValue' lev zs (ev ty :>: (P x :$ B0, t))
+> matchValue lev zs (ty :>: vv) = matchValue' lev zs (ev ty :>: vv)
 
-> matchValue' :: Bwd REF -> TY :>: (VAL, VAL) -> StateT MatchSubst ProofState ()
-> matchValue' zs (PI s t :>: (v, w)) = do
+
+
+> matchValue' :: (Applicative m, MonadError StackError m) => 
+>                Int -> Bwd (Int, String, TY) -> VAL :>: (VAL, VAL) -> StateT MatchSubst m ()
+
+> matchValue' lev zs (PI s t :>: (v, w)) = do
 >     rs <- get
->     rs' <- lift $ freshRef ("expand" :<: s) $ \ sRef -> do
->         let sv = pval sRef
->         execStateT (matchValue (zs :< sRef) (t $$ A sv :>: (v $$ A sv, w $$ A sv))) rs
+>     rs' <- lift $ do
+>         let lxty = (lev, "expand", s)
+>         let p = P lxty :$ B0
+>         execStateT (matchValue (lev+1) (zs :< lxty) (t $$ A p :>: (v $$ A p, w $$ A p))) rs
 >     put rs'
 
-> matchValue' zs (C cty :>: (C cs, C ct)) = case halfZip cs ct of
->     Nothing   -> throwError' $ err "matchValue: unmatched constructors!"
->     Just cst  -> do
->         (mapStateT $ mapStateT $ liftError'
->             (\ v -> convertErrorVALs (fmap fst v)))
->             (canTy (chevMatchValue zs) (cty :>: cst))
->         return ()
+> matchValue' lev zs (cty :- asty :>: (cs :- ass, ct :- tas)) | cs == ct = 
+>   matchCan lev zs (fromJust (canTy ((cty, asty) :>: cs)) :>: (ass, tas))
 
-> matchValue' zs (_ :>: (N s, N t)) = matchNeutral zs s t >> return ()
+> matchValue' lev zs (cty :- asty :>: (cs :- ass, ct :- tas)) = 
+>     throwError' $ err "matchValue: unmatched constructors!"
 
-> matchValue' zs tvv = guard =<< (lift $ withNSupply $ equal tvv)
+> matchValue' lev zs (_ :>: (s@(D def ss op), t@(D def' ss' op'))) = 
+>   matchNeutral lev zs s t >> return ()
+
+> matchValue' lev zs (_ :>: (s@(_ :$ _), t@(_ :$ _))) = matchNeutral lev zs s t >> return ()
+
+> matchValue' lev zs (ty :>: (v, w)) | (equal lev (exp ty :>: (exp v, exp w))) = return ()
+
+> matchValue' _ _ _ = throwError' $ err "matchValue' flail"
 
 
-> chevMatchValue :: Bwd REF -> TY :>: (VAL, VAL) ->
->     StateT MatchSubst (ProofStateT (VAL, VAL)) (() :=>: VAL)
-> chevMatchValue zs tvv@(_ :>: (v, _)) = do
->     (mapStateT $ mapStateT $ liftError' (error "matchValue: unconvertable error!"))
->         $ matchValue zs tvv
->     return (() :=>: v)
-
+> matchCan :: (Applicative m, MonadError StackError m) => 
+>             Int -> Bwd (Int, String, TY) -> VAL :>: ([EXP], [EXP]) -> StateT MatchSubst m ()
+> matchCan lev zs (ONE :>: ([],[])) = return ()
+> matchCan lev zs (SIGMA s t :>: (a : as, b : bs)) = do
+>   let bv = ev b
+>   matchValue lev zs (s :>: (ev a, bv))
+>   matchCan lev zs (ev t $$. bv :>: (as, bs))
 
 The |matchNeutral| command matches two neutrals, and returns their type along
 with the matching substitution.
 
-> matchNeutral :: Bwd REF -> NEU -> NEU -> StateT MatchSubst ProofState TY
+> matchNeutral :: (Applicative m, MonadError StackError m) => 
+>                 Int -> Bwd (Int, String, TY) -> VAL -> VAL -> StateT MatchSubst m TY
+> matchNeutral = undefined
+
+> {-
+
 > matchNeutral zs (P x) t = do
 >     rs <- get
 >     if x `elemSubst` rs
@@ -145,12 +164,18 @@ with the matching substitution.
 > matchNeutral' zs a b = throwError' $ err "matchNeutral: unmatched "
 >                           ++ errVal (N a) ++ err "and" ++ errVal (N b)
 
+> -}
 
 As noted above, fresh references generated when expanding $\Pi$-types must not
 occur as solutions to matching problems. The |checkSafe| function throws an
 error if any of the references occur in the value.
 
-> checkSafe :: Bwd REF -> VAL -> ProofState ()
+> checkSafe :: (Applicative m, MonadError StackError m) => 
+>              Bwd (Int, String, TY) -> VAL -> m ()
+> checkSafe = undefined
+
+
+> {-
 > checkSafe zs t  | any (`elem` t) zs  = throwError' $ err "checkSafe: unsafe!"
 >                 | otherwise          = return ()
 

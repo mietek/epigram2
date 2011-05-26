@@ -303,7 +303,7 @@ identity function at the given type.
 >     return (typeAnnotTM tm, Nothing)
 >   where
 >     typeAnnotTM :: EXP -> EXP
->     typeAnnotTM tm = PAIR (ARR tm tm) (idTM "typeAnnot")
+>     typeAnnotTM tm = PAIR (ARR tm tm) (la "typeAnnot" $ \ x -> x)
 > -- [Feature = Equality]
 > makeElabInferHead loc (DRefl _T t) = do
 >   _T' <- subElab loc (SET :>: _T)
@@ -336,6 +336,7 @@ process the spine of eliminators.
 >     case ms of
 >         Just sch  -> error "Scheme what scheme?" -- handleSchemeArgs B0 sch  (tm ?? ty :=>: tmv :<: tyv) ss
 >         Nothing   -> handleArgs (tm :<: ev ty) ss
+>     
 >   where
 
 > {-
@@ -444,8 +445,10 @@ attach the appropriate label to the call and continue with the returned type.
 >       handleArgs (tm $$ Sym :<: PRF (EQ _T t _S s)) as
 >     -- [Feature = Equality]
 
->     handleArgs (tm :<: _ :- _) _ =
->         throwError' $ err "badly typed elimintation in handleArgs?"
+>     handleArgs (tm :<: ty@(_ :- _)) as =
+>         throwError' $ [StrMsg $ "badly typed elimintation in handleArgs? " ++ show tm ,
+>                        ErrorTm (Just SET :>: exp ty) ,
+>                        StrMsg $ foldr (++) "" (map show as) ]
 
 > {-
 >     handleArgs (t :=>: v :<: LABEL l ty) (Call _ : as) = do

@@ -290,13 +290,6 @@ Construction tactics:
 >   unaryInCT "give" (\tm -> elabGiveNext tm >> return "Thank you.")
 >       "give <term> - solves the goal with <term>." :
 
->   unaryExCT "inspect" (\tm -> do
->     t :<: ty <- elabInfer' tm
->     dt <- distillPS (ty :>: t)
->     dty <- distillPS (SET :>: ty)
->     return $ (renderHouseStyle (pretty dt AppSize)) ++ " :::: " ++ 
->              (renderHouseStyle (pretty dty AppSize))) ""  :
-     
 
 >   simpleCT 
 >         "lambda"
@@ -498,7 +491,7 @@ Import more tactics from an aspect:
 > -}
 
 
->   unaryStringCT "show" (\ s -> case s of
+>     unaryStringCT "show" (\ s -> case s of
 >         "inscope"  -> infoInScope
 >         "context"  -> return "" -- infoContext 
 >         "dump"     -> infoDump
@@ -507,6 +500,23 @@ Import more tactics from an aspect:
 >         _          -> return "show: please specify exactly what to show."
 >       )
 >       "show <inscope/context/dump/hyps/state> - displays useless information." :
+
+>     unaryExCT "elm" elmCT "elm <term> - elaborate <term>, stabilise and print type-term pair." :
+
+>     unaryExCT "elaborate" infoElaborate
+>       "elaborate <term> - elaborates, evaluates, quotes, distills and pretty-prints <term>." :
+>     unaryExCT "infer" infoInfer
+>       "infer <term> - elaborates <term> and infers its type." :
+
+>     unaryInCT "parse" (return . show)
+>       "parse <term> - parses <term> and displays the internal display-sytnax representation." :
+
+<     unaryNameCT "scheme" infoScheme
+<       "scheme <name> - looks up the scheme on the definition <name>."
+
+>     unaryExCT "whatis" infoWhatIs
+>       "whatis <term> - prints the various representations of <term>." :
+
 
 >     [] )
 

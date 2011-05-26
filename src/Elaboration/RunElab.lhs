@@ -55,6 +55,7 @@
 > import Kit.MissingLibrary
 > import Kit.Trace
 
+
 %endif
 
 \subsection{Running elaboration processes}
@@ -144,10 +145,9 @@ representation is interpreted and executed by |runElabProb|.
 
 > runElab WorkCurrentGoal (ty :>: ECry e) = do
 
-<     e' <- distillErrors e
-<     let msg = show (prettyStackError e')
+>     e' <- distillErrors e
+>     let msg = show (prettyStackError e')
 
->     let msg = "ECry"
 
 >     mn <- getCurrentName
 >     elabTrace $ "Hole " ++ showName mn ++ " started crying:\n" ++ msg
@@ -181,16 +181,17 @@ representation is interpreted and executed by |runElabProb|.
 
 > runElab wrk (ty :>: EResolve rn f) = do
 >     (t, l, ms) <- resolveHere rn
->     es <- getGlobalScope
->     let  tm   = t $$$. bwdList (take l (params es))
+>     es <- getInScope
+>     let  tm = t $$$. bwdList (take l (params es))
 
 <          ms'  = (| (flip applyScheme as) ms |)
 
->     ty <- inferHere tm
+>     tt <- inferHere t
+>     ty' <- inferSpHere (t :<: tt) (map A (take l (params es))) 
 
 <     tyv'  <- bquoteHere tyv
 
->     runElab wrk (ty :>: f (PAIR ty tm , ms))
+>     runElab wrk (ty :>: f (PAIR ty' tm , ms))
 
 
 |EAskNSupply| gives access to the name supply to the next elaboration
@@ -228,18 +229,15 @@ a dummy definition and hands back the elaboration task to |runElab|.
 >     (tm, status) <- runElab WorkCurrentGoal (ty :>: elab)
 >     -- Leave the development, one way or the other
 >     d <- case status of
->            ElabSuccess -> do
->                 -- By finalising it
->                 d <- giveOutBelow tm
->                 return d
+>            ElabSuccess -> giveOutBelow tm
 >            ElabSuspended -> do
 >                 -- By leaving it unfinished
 >                 d <- getCurrentDefinition
 >                 goOut
 >                 return d
->     es <- getGlobalScope
+>     es <- getInScope
 >     return $ (D d S0 (defOp d) $$$ paramSpine es, status) 
-
+  
 
 \subsection{Interpreting elaboration problems}
 

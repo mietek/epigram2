@@ -350,13 +350,6 @@ The |distillHere| command distills a term in the current context.
 The |prettyHere| command distills a term in the current context,
 then passes it to the pretty-printer.
 
-> prettyHere :: (TY :>: INTM) -> ProofState Doc
-> prettyHere = prettyHereAt maxBound
-
-> prettyHereAt :: Size -> (TY :>: INTM) -> ProofState Doc
-> prettyHereAt size tt = do
->     dtm :=>: _ <- distillHere tt
->     return (pretty dtm size)
 
 
 

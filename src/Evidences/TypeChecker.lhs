@@ -28,6 +28,7 @@
 > import Evidences.TypeCheckRules
 > import Evidences.ErrorHandling
 
+
 %endif
 
 
@@ -71,7 +72,7 @@ here.
 >       then return ()
 >       else throwError' $ [  StrMsg "Inferred type: "
 >                          ,  ErrorTm (Just SET :>: _T')
->                          ,  StrMsg " is not equal to expected type: " 
+>                          ,  StrMsg "is not equal to expected type:" 
 >                          ,  ErrorTm (Just SET :>: _T)
 >                          ]
 
@@ -155,7 +156,8 @@ here.
 >   (tty, es) <- headTySpine l (g, d)
 >   _T <- spInf l tty (g, map (A . wk) es)
 >   return _T
-> inf _ _ = throwError' $ err "type inference failure"
+> inf l (g, g' :/ t) = inf l (g <+< g', toBody t)
+> inf _ (g, t) = throwError' $ [ErrorTm (Nothing :>: g :/ t) , StrMsg  "type inference failure"]
 
 
 > polyIdTy, polyIdTm, compTy, compTm, badCompTm :: EXP

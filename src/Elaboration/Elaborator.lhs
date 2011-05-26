@@ -45,6 +45,7 @@
 > import Kit.NatFinVec
 > import Kit.MissingLibrary
 
+
 %endif
 
 
@@ -75,8 +76,7 @@ $\lambda$-lift terms.
 > elabInfer :: Loc -> DExTmRN -> ProofState (EXP :<: TY)
 > elabInfer loc tm = do
 >     (tt, _) <- runElab WorkElsewhere (sigSet :>: makeElabInfer loc tm)
->     let (tt' :<: ty) = extractNeutral tt
->     return (tt' :<: ty)
+>     return $ extractNeutral tt
 
 > elabInfer' = elabInfer (Loc 0)
 

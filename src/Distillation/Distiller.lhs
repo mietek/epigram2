@@ -20,6 +20,7 @@
 
 > import DisplayLang.DisplayTm
 > import DisplayLang.Name
+> import DisplayLang.PrettyPrint
 
 > import ProofState.Structure.Developments
 > import ProofState.Edition.ProofState
@@ -30,6 +31,9 @@
 > import Kit.NatFinVec
 > import Kit.MissingLibrary 
 
+> import Text.PrettyPrint.HughesPJ (Doc)
+
+
 %endif
 
 
@@ -38,6 +42,14 @@
 >     lev <- getDevLev
 >     distill (ev ty :>: ev tm) (lev, B0)
 
+
+> prettyPS :: (TY :>: EXP) -> ProofState Doc
+> prettyPS = prettyPSAt maxBound
+
+> prettyPSAt :: Size -> (TY :>: EXP) -> ProofState Doc
+> prettyPSAt size tt = do
+>     dtm <- distillPS tt
+>     return (pretty dtm size)
 
 > distill :: VAL :>: VAL -> (Int, Bwd (Int, String, TY)) -> ProofState DInTmRN
 > distill (ty :>: L g n b) (l,ps) = case fromJust $ lambdable ty of
@@ -124,20 +136,20 @@
 > distillSpine :: VAL :>: (VAL, [Elim (Tm {Body, Exp, Z})]) -> 
 >                 (Int, Bwd (Int, String, TY)) -> ProofState [Elim DInTmRN]
 > distillSpine (_ :>: (_, [])) _ = (| [] |)
-> distillSpine (ty :>: (h :$ az, A a : as)) l = case fromJust $ lambdable ty of 
+> distillSpine (ty :>: (haz, A a : as)) l = case fromJust $ lambdable ty of 
 >   (k, s, t) -> do
 >     a' <- (distill (ev s :>: (ev a)) l)
->     as' <- distillSpine (ev (t a) :>: (h :$ (az :< A a), as)) l
+>     as' <- distillSpine (ev (t a) :>: (haz $$ A a, as)) l
 >     return $ A a' : as'
-> distillSpine (ty :>: (h :$ az , Hd : as)) l = case fromJust $ projable ty of
+> distillSpine (ty :>: (haz , Hd : as)) l = case fromJust $ projable ty of
 >   (s, t) -> 
 >     (| (Hd :) 
->        (distillSpine (ev s :>: (h :$ (az :< Hd) , as)) l)
+>        (distillSpine (ev s :>: (haz $$ Hd , as)) l)
 >     |)
-> distillSpine (ty :>: (h :$ az , Tl : as)) l = case fromJust $ projable ty of
+> distillSpine (ty :>: (haz , Tl : as)) l = case fromJust $ projable ty of
 >   (s, t) -> 
 >     (| (Tl :) 
->        (distillSpine (ev (t (h :$ (az :< Hd))) :>: (h :$ (az :< Tl) , as)) l)
+>        (distillSpine (ev (t (haz $$ Hd)) :>: (haz $$ Tl , as)) l)
 >     |)
 > -- [Feature = Equality]
 > distillSpine (PRF _P :>: (tm, QA x y q : as)) l
@@ -155,4 +167,4 @@
 >   (| (Sym :) (distillSpine (PRF (EQ _T t _S s) :>: (tm $$ Sym, as)) l) |)
 
 > -- [/Feature = Equality]
-> distillSpine _ _  = throwError' (err "Deep!")
+> distillSpine (_ :>: (_, (t : _))) _  = throwError' (err $ show t)

@@ -60,7 +60,6 @@
 > infoDump = gets show
 
 
-> {-
 
 The |infoElaborate| command calls |elabInfer| on the given neutral display term,
 evaluates the resulting term, bquotes it and returns a pretty-printed string
@@ -69,9 +68,8 @@ end, so it will not leave any subgoals lying around in the proof state.
 
 > infoElaborate :: DExTmRN -> ProofState String
 > infoElaborate tm = draftModule "__infoElaborate" (do
->     (tm' :=>: tmv :<: ty) <- elabInfer' tm
->     tm'' <- bquoteHere tmv
->     s <- prettyHere (ty :>: tm'')
+>     (tm' :<: ty) <- elabInfer' tm
+>     s <- prettyPS (ty :>: tm')
 >     return (renderHouseStyle s)
 >  )
 
@@ -82,11 +80,12 @@ representation of the resulting type.
 > infoInfer :: DExTmRN -> ProofState String
 > infoInfer tm = draftModule "__infoInfer" (do
 >     (_ :<: ty) <- elabInfer' tm
->     ty' <- bquoteHere ty
->     s <- prettyHere (SET :>: ty')
+>     s <- prettyPS (SET :>: ty)
 >     return (renderHouseStyle s)
 >  )
 
+
+> {-
 
 The |infoContextual| command displays a distilled list of things in
 the context, parameters if the argument is False or definitions if the
@@ -106,13 +105,13 @@ argument is True.
 >     help bsc B0 = return empty
 >     help bsc (es :< EPARAM ref _ k _ _) | not gals = do
 >         ty     <- bquoteHere (pty ref)
->         docTy  <- prettyHereAt (pred ArrSize) (SET :>: ty)
+>         docTy  <- prettyPSAt (pred ArrSize) (SET :>: ty)
 >         d      <- help bsc es
 >         return $ d $$ prettyBKind k (text (showRelName (christenREF bsc ref))
 >                                               <+> kword KwAsc <+> docTy)
 >     help bsc (es :< EDEF ref _ _ _ _ _) | gals = do
 >         ty     <- bquoteHere $ removeShared (paramSpine es) (pty ref)
->         docTy  <- prettyHere (SET :>: ty)
+>         docTy  <- prettyPS (SET :>: ty)
 >         d      <- help bsc es
 >         return $ d $$ (text (showRelName (christenREF bsc ref))
 >                                 <+> kword KwAsc <+> docTy)
@@ -157,7 +156,7 @@ the saved state. We can get rid of it once we are confident that the new version
 >            (False, es' :< EPARAM ref _ k _ _) -> do
 >                putEntriesAbove es'
 >                ty' <- bquoteHere (pty ref)
->                docTy <- prettyHere (SET :>: ty')
+>                docTy <- prettyPS (SET :>: ty')
 >                d <- hyps bsc me
 >                return (d $$ prettyBKind k (text (showRelName (christenREF bsc ref)) <+> kword KwAsc <+> docTy))
 >            (True, es' :< EDEF ref _ _ _ _ _) -> do
@@ -165,7 +164,7 @@ the saved state. We can get rid of it once we are confident that the new version
 >                es <- getEntriesAbove
 >                (ty :=>: _) <- getGoal "hyps"
 >                ty' <- bquoteHere (evTm (inferGoalType es ty))
->                docTy <- prettyHere (SET :>: ty')
+>                docTy <- prettyPS (SET :>: ty')
 >                goOut
 >                putEntriesAbove es'
 >                d <- hyps bsc me
@@ -182,30 +181,26 @@ the saved state. We can get rid of it once we are confident that the new version
 >             return (renderHouseStyle d)
 >         Nothing -> return (showRelName x ++ " does not have a scheme.")
 
+> -}
 
 The |infoWhatIs| command displays a term in various representations.
 
 > infoWhatIs :: DExTmRN -> ProofState String
 > infoWhatIs tmd = draftModule "__infoWhatIs" (do
->     (tm :=>: tmv :<: tyv) <- elabInfer' tmd
->     tmq <- bquoteHere tmv
->     tms :=>: _ <- distillHere (tyv :>: tmq)
->     ty <- bquoteHere tyv
->     tys :=>: _ <- distillHere (SET :>: ty)
+>     (tm :<: ty) <- elabInfer' tmd
+>     tms <- distillPS (ty :>: tm)
+>     tys <- distillPS (SET :>: ty)
 >     return (unlines
 >         [  "Parsed term:", show tmd
 >         ,  "Elaborated term:", show tm
->         ,  "Quoted term:", show tmq
 >         ,  "Distilled term:", show tms
 >         ,  "Pretty-printed term:", renderHouseStyle (pretty tms maxBound)
->         ,  "Inferred type:", show tyv
->         ,   "Quoted type:", show ty
+>         ,  "Inferred type:", show ty
 >         ,   "Distilled type:", show tys
 >         ,   "Pretty-printed type:", renderHouseStyle (pretty tys maxBound)
 >         ])
 >   )
 
-> -}
 
 The |prettyProofState| command generates a pretty-printed representation
 of the proof state at the current location.
@@ -214,11 +209,11 @@ of the proof state at the current location.
 > prettyProofState = do
 >     inScope <- getInScope
 >     me <- getCurrentName
->     d <- prettyPS inScope me
+>     d <- prettyES inScope me
 >     return (renderHouseStyle d)
 >
-> prettyPS :: Entries -> Name -> ProofState Doc
-> prettyPS aus me = do
+> prettyES :: Entries -> Name -> ProofState Doc
+> prettyES aus me = do
 >         es <- replaceEntriesAbove B0
 >         cs <- putBelowCursor F0
 >         case (es, cs) of
@@ -246,12 +241,11 @@ of the proof state at the current location.
 >         tyd <- distillPS (SET :>: ty)
 >         return (prettyBKind k
 >                  (text x  <+> kword KwAsc
->                           <+> pretty tyd (pred ArrSize)
->                           <+> parens (int l)))
+>                           <+> pretty tyd (pred ArrSize)))
 >      
 >     prettyE (EDef def _) = do
 >         goIn
->         d <- prettyPS aus me
+>         d <- prettyES aus me
 >         goOut
 >         return (sep  [  text (fst (last (defName def))) 
 >                      ,  nest 2 d <+> kword KwSemi
@@ -259,7 +253,7 @@ of the proof state at the current location.
 
 >     prettyE (EModule n _) = do
 >         goIn
->         d <- prettyPS aus me
+>         d <- prettyES aus me
 >         goOut
 >         return (sep  [  text (fst (last n)) 
 >                      ,  nest 2 d <+> kword KwSemi
@@ -285,7 +279,7 @@ of the proof state at the current location.
 
 <             Suspended ty  _ prob -> do
 <                 hk <- getHoleKind
-<                 tyd <- prettyHere (SET :>: ty)
+<                 tyd <- prettyPS (SET :>: ty)
 <                 return (text ("(SUSPENDED: " ++ show prob ++ ")")
 <                             <+> prettyHKind hk <+> kword KwAsc <+> tyd)
 
@@ -296,7 +290,6 @@ of the proof state at the current location.
 >                             <+> pretty tyd maxBound)
 
 
-> {-
 
 The |elm| Cochon tactic elaborates a term, then starts the scheduler to
 stabilise the proof state, and returns a pretty-printed representation of the
@@ -304,26 +297,8 @@ final type-term pair (using a quick hack).
 
 > elmCT :: DExTmRN -> ProofState String
 > elmCT tm = do
->     suspend ("elab" :<: sigSetTM :=>: sigSetVAL) (ElabInferProb tm)
+>     suspend ("elab" :<: sigSet) (ElabInferProb tm) Hoping
 >     startScheduler
 >     infoElaborate (DP [("elab", Rel 0)] ::$ [])
 
 
-> import -> CochonTactics where
->   : unaryExCT "elm" elmCT "elm <term> - elaborate <term>, stabilise and print type-term pair."
-
->   : unaryExCT "elaborate" infoElaborate
->       "elaborate <term> - elaborates, evaluates, quotes, distills and pretty-prints <term>."
->   : unaryExCT "infer" infoInfer
->       "infer <term> - elaborates <term> and infers its type."
-
->   : unaryInCT "parse" (return . show)
->       "parse <term> - parses <term> and displays the internal display-sytnax representation."
-
->   : unaryNameCT "scheme" infoScheme
->       "scheme <name> - looks up the scheme on the definition <name>."
-
->   : unaryExCT "whatis" infoWhatIs
->       "whatis <term> - prints the various representations of <term>."
-
-> -}

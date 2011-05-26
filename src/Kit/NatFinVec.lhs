@@ -36,6 +36,14 @@
 
 > infixr 4 :>>:
 
+> data BVec :: {Nat} -> * -> * where
+>   BV0     :: BVec {Z} x
+>   (:<<<:)  :: BVec {n} x -> x -> BVec {S n} x
+>   deriving ()
+
+> infixr 4 :<<<:
+
+
 > fog :: Fin {n} -> Int
 > fog Fz = 0
 > fog (Fs i) = 1 + fog i
@@ -166,8 +174,8 @@
 > fwdVec F0 f = f {Z} V0
 > fwdVec (x :> xs) f = fwdVec xs (\ n ys -> f {S n} (x :>>: ys))
 
-> bwdVec :: Bwd a -> (pi (n :: Nat). Vec {n} a -> t) -> t
-> bwdVec B0 f = f {Z} V0
-> bwdVec (xs :< x) f = bwdVec xs (\ n ys -> f {S n} (x :>>: ys))
+> bwdVec :: Bwd a -> (pi (n :: Nat). BVec {n} a -> t) -> t
+> bwdVec B0 f = f {Z} BV0
+> bwdVec (xs :< x) f = bwdVec xs (\ n ys -> f {S n} (ys :<<<: x))
 
 

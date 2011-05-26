@@ -395,12 +395,13 @@ machinery. Perhaps it should move somewhere more logical.
 >    boys (es :< _) =  boys es 
 
 >    blah :: Bwd (ParamKind, Int, String, TY) -> Bwd (ParamKind, Int, String, TY)  
->              -> (Bwd (Int, String, TY), Fwd (String, TY))
+>              -> (Bwd (Int, String, TY), Bwd (String, TY))
 >    blah (bs :< _) (ls :< (ParamPi, _, s, t)) = 
->      let (bs' , ls') = blah bs ls in (bs', (s,t) :> ls')
->    blah bs _ =  (fmap (\(_,x,y,z) -> (x,y,z)) bs, F0)
+>      let (bs' , ls') = blah bs ls in (bs', ls' :< (s,t))
+>    blah bs _ =  (fmap (\(_,x,y,z) -> (x,y,z)) bs, B0)
 
->    tipToOp :: Int -> [ EXP ] -> Fwd (String, TY) -> Tip -> Operator {Body, Exp}
+>    tipToOp :: Int -> [ EXP ] -> Bwd (String, TY) -> Tip -> Operator {Body, Exp}
 >    tipToOp i e f (Unknown _ _)         = eats i Hole
+>    tipToOp i e B0 (Defined (_ :>: tm))  = eats i $ Emit tm
 >    tipToOp i e f (Defined (_ :>: tm))  = 
->      eats i $ Emit (fwdVec f (\ n ys -> partPiLift {n} e ys) tm)
+>      eats i $ Emit (bwdVec f (\ n ys -> partPiLift {n} e ys) tm)

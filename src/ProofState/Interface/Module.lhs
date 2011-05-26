@@ -30,6 +30,7 @@
 
 > import Evidences.Tm
 > import Evidences.NameSupply
+> import Evidences.ErrorHandling
 
 %endif
 
@@ -85,7 +86,6 @@ proof context to later, in one go, remove it all. One need to be
 extremely careful with the removed objects: the risk of introducing
 dangling references is high.
 
-> {-
 
 > draftModule :: String -> ProofState t -> ProofState t
 > draftModule name draftyStuff = do
@@ -99,4 +99,3 @@ dangling references is high.
 >         _ -> throwError' . err $ "draftModule: drafty " ++ name
 >                                  ++ " did not end up in the right place!"
 
-> -}

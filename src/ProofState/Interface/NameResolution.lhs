@@ -37,6 +37,7 @@
 > import Evidences.ErrorHandling
 > import Evidences.NameSupply
 > import Evidences.DefinitionalEquality
+> import Evidences.TypeChecker
 
 %endif
 
@@ -450,12 +451,13 @@ shared parameters to drop, and the scheme of the name (if there is one).
 >     | ("PRIM",0) == head (defName d) =
 >   return $ (map (\(a,b) -> (a, Rel 0)) $ tail (defName d), Just $ defTy d, trail sp) 
 > unresolveD d ps tsp = do
+>   lev <- getDevLev
 >   let les = fmap (\ (l, s, t) -> EParam ParamLam s t l) ps
 >   (mesus, mes) <- gets inBScope
->   maybe (return (failNom (defName d), Nothing, trail tsp)) return $
+>   (nn , os , ns) <- maybe (return (failNom (defName d), Nothing, trail tsp)) return $
 >     case partNoms (defName d) (mesus,mes) [] B0 of
 >       (Just (xs, Just (top, nom, sp, es))) -> do
->         let  (top', nom', i, fsc) = matchUp (xs :<
+>         let  (top', nom', i, fsc) = maybe (top, nom, B0, bToF (mesus,mes) ) id $ matchUp (xs :<
 >                                               (top, nom, sp, (F0, F0))) tsp
 >              mnom = take (length nom' - length nom) nom'
 >         (tn,  tms)  <- nomTop top' (mesus, mes <+> les)
@@ -465,10 +467,15 @@ shared parameters to drop, and the scheme of the name (if there is one).
 >                        (True,      True)   -> tms
 >                        (True,      False)  -> ams
 >                        (False,     _)      -> rms
->         return ((tn : an) ++ rn, Just (defTy d $$$ i) , drop (bwdLength i) (trail tsp))
+>         return ((tn : an) ++ rn, Just i , drop (bwdLength i) (trail tsp))
 
 >       _ -> Nothing
 
+>   case os of
+>     Nothing -> return (nn, Nothing, ns)
+>     Just i -> do
+>       ty <- spInf lev (D d S0 (defOp d) :<: defTy d) (ENil, trail i)
+>       return (nn, Just ty, ns)
 
 
 
@@ -512,11 +519,11 @@ then return the gibberish.
 
 > matchUp :: Bwd (Name, Name, Bwd (Elim EXP), FScopeContext) 
 >              -> Bwd (Elim EXP) 
->              -> (Name, Name, Bwd (Elim EXP), FScopeContext)
+>              -> Maybe (Name, Name, Bwd (Elim EXP), FScopeContext)
 > matchUp (xs :< (x, nom, sp, fsc)) tas
->     | all id (bwdZipWith compareE sp tas)  = (x, nom, sp, fsc)
+>     | all id (bwdZipWith compareE sp tas)  = Just (x, nom, sp, fsc)
 > matchUp (xs :< _) tas      = matchUp xs tas
-
+> matchUp _ _ = Nothing
 
 \paragraph{Different name}
 

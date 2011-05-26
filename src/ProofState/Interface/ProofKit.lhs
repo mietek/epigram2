@@ -26,6 +26,7 @@
 > import Evidences.NameSupply
 > import Evidences.TypeChecker
 
+
 %endif
 
 > chkPS :: (TY :>: EXP) -> ProofState ()
@@ -86,6 +87,9 @@ has finished.
 
 > inferHere :: EXP -> ProofState TY
 > inferHere tt = getDevLev >>= \ l -> inf l (ENil, tt)
+
+> inferSpHere :: (EXP :<: TY) -> [Elim EXP] -> ProofState TY
+> inferSpHere ety es = getDevLev >>= \ l -> spInf l ety (ENil , es)
 
 > {-
 
