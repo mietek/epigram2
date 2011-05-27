@@ -8,6 +8,8 @@
 
 > module Distillation.Distiller where
 
+> import ShePrelude
+
 > import Control.Applicative
 > import Control.Monad.Error
 
@@ -62,6 +64,15 @@
 >   (_, s, t) -> 
 >      (| DLK  (distill (ev (t (error "LKdistill")) :>: ev b) l)
 >      |)
+
+> distill (ty :>: h@(D d sd (Eat o))) (l,ps) = 
+>   case forlambdabletran "o" ty of
+>     Just (k, x, s, t) -> 
+>       (| (DLAV x) (distill (ev (t (P (l, x, s) :$ B0)) 
+>                             :>: mkD {Val} d (sd :<!: (P (l, x, s) :$ B0)) o) 
+>                     (l + 1,ps:<(l,x,s)))
+>       |)
+
 
 > distill (ty :>: h@(D d sd _)) (l,ps) = do
 >   (nom, ty, as) <- unresolveD d ps (bwdList $ map A $ rewindStk sd [])

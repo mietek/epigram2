@@ -59,15 +59,16 @@ here.
 >     x' = P (l, x, _S) :$ B0
 >   _ -> throwError' $ err "lambda inhabiting non-canonical type"
 > chk l (_T :>: (g, LK b)) = case lambdable (ev _T) of
->   Just (_, _S, _T) -> chk (l + 1) (_T x' :>: (g, b)) where
->     x' =  P (l, "s", _S) :$ B0
+>   Just (_, _S, _T) -> chk l (_T undefined :>: (g, b)) 
 
 > chk l (_T :>: (g, t@(V _ :$ _))) = chk l (_T :>: (ENil, eval {Val} g t))
+> chk l (_T :>: (g, t@((g' :/ L _ _ _) :$ _))) = chk l (_T :>: (ENil, eval {Val} g t))
+> chk l (_T :>: (g, t@((g' :/ LK _) :$ _))) = chk l (_T :>: (ENil, eval {Val} g t))
 
 > chk l (_T :>: (g, g' :/ t)) = chk l (_T :>: (g <+< g', toBody t))
 
-> chk l (_T :>: t) = do
->   _T' <- inf l t
+> chk l (_T :>: t@(g,tm)) = do
+>   _T' <- inf l (g, tm)
 >   if equal l (SET :>: (_T, _T'))
 >       then return ()
 >       else throwError' $ [  StrMsg "Inferred type: "

@@ -56,9 +56,9 @@
 >   V     :: Fin {n}      {- dB i -}                         -> Tm {Head, s,  n}
 >   P     :: (Int, String, TY)    {- dB l -}                 -> Tm {Head, s,  n}
 >
->   Refl  :: Tm {Body, Exp, n} -> Tm {Body, Exp, n}         -> Tm {Head, s,  n}
+>   Refl  :: Tm {Body, Exp, n} -> Tm {Body, Exp, n}          -> Tm {Head, s,  n}
 >   Coeh  :: Coeh -> Tm {Body, Exp, n} -> Tm {Body, Exp, n}
->                 -> Tm {Body, Exp, n} -> Tm {Body, Exp, n} ->Tm {Head, s,  n}
+>                 -> Tm {Body, Exp, n} -> Tm {Body, Exp, n}  -> Tm {Head, s,  n}
 >
 >   (:/)  :: {: p :: Part :} => Env {n} {m} -> Tm {p, s, m}  -> Tm {p', Exp, n}
 
