@@ -65,8 +65,8 @@
 >      (| DLK  (distill (ev (t (error "LKdistill")) :>: ev b) l)
 >      |)
 
-> distill (ty :>: h@(D d sd (Eat o))) (l,ps) = 
->   case forlambdabletran "o" ty of
+> distill (ty :>: h@(D d sd (Eat n o))) (l,ps) = 
+>   case forlambdabletran (maybe "o" id n) ty of
 >     Just (k, x, s, t) -> 
 >       (| (DLAV x) (distill (ev (t (P (l, x, s) :$ B0)) 
 >                             :>: mkD {Val} d (sd :<!: (P (l, x, s) :$ B0)) o) 

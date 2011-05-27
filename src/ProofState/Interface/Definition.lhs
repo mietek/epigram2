@@ -79,7 +79,7 @@ mood such as |Hoping| or |Crying|.
 >     let  binScope  = boys inScope
 >          liftedTy = bwdVec (fmap (\(_, s, t) -> (s, t)) (boys inScope))
 >                             (\ n ys -> piLift n ys) ty
->          def = DEF n liftedTy (eats lev Hole)
+>          def = DEF n liftedTy (eats (trail (fmap (\(_,s,_) -> s) (boys inScope))) Hole)
 >     -- Make an entry for the goal, with an empty development
 >     let dev = Dev { devEntries       =  B0
 >                   , devTip           =  Unknown ty holeKind

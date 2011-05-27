@@ -157,7 +157,7 @@
 >   -- [/Feature = Enum]
 
 > data Operator :: {Part, Status} -> * where
->   Eat    :: Operator {p, s} -> Operator {Body, s'}
+>   Eat    :: Maybe String -> Operator {p, s} -> Operator {Body, s'}
 >   Emit   :: Tm {Body, Exp, Z} -> Operator {Body, Exp}
 >   Hole   :: Operator {p, s}
 >   Case   :: [(Can , Operator {Body, s})] -> Operator {Body, s'}
@@ -168,7 +168,7 @@
 
 > eat :: String -> ((forall t. Wrapper t {Z} => t) -> OpMaker s') -> OpMaker s
 > eat y b p = let x :: Tm {Head, Exp, Z} ; x = P (p,y,undefined) 
->             in  Eat (b (wrapper x B0) (p + 1))
+>             in  Eat (Just y) (b (wrapper x B0) (p + 1))
 
 > emit :: Tm {Body, Exp, Z} -> OpMaker {Exp}
 > emit x _ = Emit x
@@ -259,9 +259,9 @@
 > prims :: [ DEF ] 
 > prims = [ idDEF , uncurryDEF , zeroElimDEF , inhElimDEF ]
 
-> eats :: Int -> Operator {Body, s} -> Operator {Body, s}
-> eats 0 o = o
-> eats n o = Eat (eats (n-1) o) 
+> eats :: [String] -> Operator {Body, s} -> Operator {Body, s}
+> eats [] o = o
+> eats (n : ns) o = Eat (Just n) (eats ns o) 
 
 > instance Show (Operator {p, s}) where
 >   show o = "oooo"
@@ -368,7 +368,7 @@
 >          Tm {Body, s, Z} -> Elim (Tm {Body, s', Z}) -> Tm {Body, s, Z} 
 > apply {s} (L (gl, gi) _ b) (A a) = eval {s} (gl, gi :<<: a) b 
 > apply {s} (LK e) _ = eval {s} ENil e
-> apply {s} (D d es (Eat o)) (A a) = mkD {s} d (es :<!: exp a) o  
+> apply {s} (D d es (Eat _ o)) (A a) = mkD {s} d (es :<!: exp a) o  
 > apply {Val} (D d es (Case os)) (A a) = 
 >   case (ENil // a :: VAL) of -- check that it's canonical
 >     (c :- as) -> case lookup c os of
@@ -459,7 +459,7 @@ This thing does coercion and coherence.
 > mkD :: forall s' p . pi (s :: Status) . 
 >        DEF -> Stk EXP -> Operator {p, s'} -> Tm {Body, s, Z}
 > mkD {s} d es (Emit t)               = eval {s} (Just (trail es), INix) t
-> mkD {s} d es (Eat o)                = D d es (Eat o)
+> mkD {s} d es (Eat n o)                = D d es (Eat n o)
 > mkD {s} d es Hole                   = D d es Hole :$ B0
 > mkD {s} d es (Case os)              = D d es (Case os) 
 > mkD {s} d es (Split o)              = D d es (Split o) 

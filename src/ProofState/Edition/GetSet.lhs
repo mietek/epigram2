@@ -384,7 +384,7 @@ machinery. Perhaps it should move somewhere more logical.
 >          ty' = bwdVec (fmap (\(_, s, t) -> (s, t)) bs)
 >                           (\ n ys -> piLift n ys) ty
 >          lev = Data.Foldable.foldr (\_ -> (1+)) 0 bs
->          op =  tipToOp lev (trail (fmap (\x -> P x :$ B0) bs)) ls tip
+>          op =  tipToOp (trail (fmap (\(_,s,_) -> s) bs)) (trail (fmap (\x -> P x :$ B0) bs)) ls tip
 >          def' = DEF nom ty' op
 >     putCurrentEntry $ CDefinition def'
 >     return (def', D def' S0 op $$$ fmap (\x -> A (P x :$ B0)) bs)
@@ -400,7 +400,7 @@ machinery. Perhaps it should move somewhere more logical.
 >      let (bs' , ls') = blah bs ls in (bs', ls' :< (s,t))
 >    blah bs _ =  (fmap (\(_,x,y,z) -> (x,y,z)) bs, B0)
 
->    tipToOp :: Int -> [ EXP ] -> Bwd (String, TY) -> Tip -> Operator {Body, Exp}
+>    tipToOp :: [String] -> [ EXP ] -> Bwd (String, TY) -> Tip -> Operator {Body, Exp}
 >    tipToOp i e f (Unknown _ _)         = eats i Hole
 >    tipToOp i e B0 (Defined (_ :>: tm))  = eats i $ Emit tm
 >    tipToOp i e f (Defined (_ :>: tm))  = 
