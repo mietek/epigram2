@@ -52,8 +52,9 @@
 > import Tactics.IData
 > import Tactics.Relabel
 > import Tactics.ShowHaskell
-> import Tactics.Matching
 > -}
+
+> import Tactics.Matching
 
 > import Tactics.Unification
 
@@ -490,6 +491,22 @@ Import more tactics from an aspect:
 
 > -}
 
+>     simpleCT 
+>     "match"
+>     (do
+>         pars <- tokenListArgs (bracket Round $ tokenPairArgs
+>                                       tokenString
+>                                       (keyword KwAsc)
+>                                       tokenInTm) (| () |)
+>         keyword KwSemi
+>         tm1 <- tokenExTm
+>         keyword KwSemi
+>         tm2 <- tokenInTm
+>         return (B0 :< pars :< tm1 :< tm2)
+>      )
+>      (\ [pars, ExArg a, InArg b] ->
+>          matchCTactic (argList (argPair argToStr argToIn) pars) a b)
+>      "match [<para>]* ; <term> ; <term> - match parameters in first term against second." :
 
 >     unaryStringCT "show" (\ s -> case s of
 >         "inscope"  -> infoInScope
@@ -647,3 +664,18 @@ Import more tactics from an aspect:
 >     | x == y     = diff xs ys
 >     | otherwise  = (x :> xs, y :> ys)
 > diff xs ys = (xs, ys)
+
+> matchCTactic :: [(String, DInTmRN)] -> DExTmRN -> DInTmRN -> ProofState String
+> matchCTactic xs a b = draftModule "__match" $ do
+>     lev <- getDevLev
+>     rs <- traverse matchHyp xs
+>     (a' :<: ty) <- elabInfer' a
+>     b' <- elaborate' (ty :>: b)
+>     rs' <- runStateT (matchValue lev B0 (ty :>: (ev a', ev b'))) (bwdList rs)
+>     return (show rs')
+>   where
+>     matchHyp :: (String, DInTmRN) -> ProofState ((Int, String, TY), Maybe EXP)
+>     matchHyp (s, t) = do
+>         tt  <- elaborate' (SET :>: t)
+>         P x   <- (assumeParam (s :<: tt) :: ProofState (Tm {Head, Exp, Z}))
+>         return (x , Nothing)

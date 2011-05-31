@@ -26,8 +26,9 @@
 
 > import ProofState.Edition.ProofState
 > import ProofState.Edition.GetSet
-
 > import ProofState.Interface.ProofKit
+
+> import Tactics.Unification
 
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
@@ -113,9 +114,32 @@ algorithm. Really we should do proper higher-order matching.}
 >     throwError' $ err "matchValue: unmatched constructors!"
 
 > matchValue' lev zs (_ :>: (s@(D def ss op), t@(D def' ss' op'))) = 
->   matchNeutral lev zs s t >> return ()
+>  undefined --  matchNeutral lev zs s t >> return ()
 
-> matchValue' lev zs (_ :>: (s@(_ :$ _), t@(_ :$ _))) = matchNeutral lev zs s t >> return ()
+> matchValue' lev zs (_ :>: (P (l,n,_T) :$ as, hb :$ bs)) = do 
+>     rs <- get
+>     let mabs = trail $ bwdZipWith halfZip as bs 
+>     ab <- case sequence mabs of
+>       Nothing -> throwError' $ err "matchValue: mismatched Elim"
+>       Just ab -> return ab
+>     matchSpine lev zs (_T :>: P (l, n, _T) :$ B0) ab
+>     if ((l,n,_T) `elemSubst` rs) 
+>      then do
+>       lift $ checkSafe zs (hb :$ B0)
+>       insertSubst lev (l, n, _T) (exp (hb :$ B0))
+>       return ()
+>      else case hb of 
+>       P (l',_,_) -> if l == l' then return () else throwError' (err n)
+
+> matchValue' lev zs (_ :>: ((D adef sas _) :$ as, (D bdef sbs _ :$ bs))) |
+>   adef == bdef = do  
+>     let mabs = trail $ bwdZipWith halfZip 
+>                          (fmap A (bwdList $ rewindStk sas []) <+> as)
+>                          (fmap A (bwdList $ rewindStk sbs []) <+> bs) 
+>     ab <- case sequence mabs of
+>       Nothing -> throwError' $ err "matchValue: mismatched Elim"
+>       Just ab -> return ab
+>     matchSpine lev zs (defTy adef :>: D adef S0 (defOp adef)) ab     
 
 > matchValue' lev zs (ty :>: (v, w)) | (equal lev (exp ty :>: (exp v, exp w))) = return ()
 
@@ -123,48 +147,29 @@ algorithm. Really we should do proper higher-order matching.}
 
 
 > matchCan :: (Applicative m, MonadError StackError m) => 
->             Int -> Bwd (Int, String, TY) -> VAL :>: ([EXP], [EXP]) -> StateT MatchSubst m ()
+>             Int -> Bwd (Int, String, TY) -> 
+>             VAL :>: ([EXP], [EXP]) -> StateT MatchSubst m ()
 > matchCan lev zs (ONE :>: ([],[])) = return ()
 > matchCan lev zs (SIGMA s t :>: (a : as, b : bs)) = do
 >   let bv = ev b
 >   matchValue lev zs (s :>: (ev a, bv))
 >   matchCan lev zs (ev t $$. bv :>: (as, bs))
 
-The |matchNeutral| command matches two neutrals, and returns their type along
-with the matching substitution.
+> matchSpine :: (Applicative m, MonadError StackError m) => 
+>               Int -> Bwd (Int, String, TY) -> (TY :>: EXP) -> 
+>               [Elim (EXP, EXP)] -> StateT MatchSubst m ()
+> matchSpine l zs (ty :>: e) [] = return ()
+> matchSpine l zs (ty :>: e) (A (a,b) : ab) = case lambdable (ev ty) of
+>   Just (_,s,t) -> do
+>     matchValue l zs (s :>: (ev a, ev b))
+>     matchSpine l zs (t a :>: e $$. a) ab
+> matchSpine l zs (ty :>: e) (Hd : ab) = case projable (ev ty) of
+>   Just (s,t) -> matchSpine l zs (s :>: e $$ Hd) ab
+> matchSpine l zs (ty :>: e) (Tl : ab) = case projable (ev ty) of
+>   Just (s,t) -> matchSpine l zs (t (e $$ Hd) :>: (e $$ Tl)) ab
+>  
 
-> matchNeutral :: (Applicative m, MonadError StackError m) => 
->                 Int -> Bwd (Int, String, TY) -> VAL -> VAL -> StateT MatchSubst m TY
-> matchNeutral = undefined
-
-> {-
-
-> matchNeutral zs (P x) t = do
->     rs <- get
->     if x `elemSubst` rs
->         then do
->             lift $ checkSafe zs (N t)
->             insertSubst x (N t)
->             return (pty x)
->         else matchNeutral' zs (P x) t
-> matchNeutral zs a b = matchNeutral' zs a b
-
-> matchNeutral' :: Bwd REF -> NEU -> NEU -> StateT MatchSubst ProofState TY
-> matchNeutral' zs (P x)  (P y)  | x == y            = return (pty x)
-> matchNeutral' zs (f :$ e) (g :$ d)                 = do
->     C ty <- matchNeutral zs f g
->     case halfZip e d of
->         Nothing  -> throwError' $ err "matchNeutral: unmatched eliminators!"
->         Just ed  -> do
->             (_, ty') <- (mapStateT $ mapStateT $ liftError' (error "matchNeutral: unconvertable error!")) $ elimTy (chevMatchValue zs) (N f :<: ty) ed
->             return ty'
-> matchNeutral' zs (fOp :@ as) (gOp :@ bs) | fOp == gOp = do
->     (_, ty) <- (mapStateT $ mapStateT $ liftError' (error "matchNeutral: unconvertable error!")) $ opTy fOp (chevMatchValue zs) (zip as bs)
->     return ty
-> matchNeutral' zs a b = throwError' $ err "matchNeutral: unmatched "
->                           ++ errVal (N a) ++ err "and" ++ errVal (N b)
-
-> -}
+Need to add rulez for Equalidee.
 
 As noted above, fresh references generated when expanding $\Pi$-types must not
 occur as solutions to matching problems. The |checkSafe| function throws an
@@ -172,51 +177,13 @@ error if any of the references occur in the value.
 
 > checkSafe :: (Applicative m, MonadError StackError m) => 
 >              Bwd (Int, String, TY) -> VAL -> m ()
-> checkSafe = undefined
-
-
-> {-
-> checkSafe zs t  | any (`elem` t) zs  = throwError' $ err "checkSafe: unsafe!"
+> checkSafe zs t  | any (\(l,_,_) -> occurs Nothing [l] [] t) zs  = throwError' $ err "checkSafe: unsafe!"
 >                 | otherwise          = return ()
 
 
 For testing purposes, we define a @match@ tactic that takes a telescope of
 parameters to solve for, a neutral term for which those parameters are in scope,
 and another term of the same type. It prints out the resulting substitution.
+(See Cochon.Cochon.lhs)
 
-> import -> CochonTacticsCode where
->     matchCTactic :: [(String, DInTmRN)] -> DExTmRN -> DInTmRN -> ProofState String
->     matchCTactic xs a b = draftModule "__match" $ do
->         rs <- traverse matchHyp xs
->         (_ :=>: av :<: ty) <- elabInfer' a
->         cursorTop
->         (_ :=>: bv) <- elaborate' (ty :>: b)
->         rs' <- runStateT (matchValue B0 (ty :>: (av, bv))) (bwdList rs)
->         return (show rs')
->       where
->         matchHyp :: (String, DInTmRN) -> ProofState (REF, Maybe VAL)
->         matchHyp (s, t) = do
->             tt  <- elaborate' (SET :>: t)
->             r   <- assumeParam (s :<: tt)
->             return (r, Nothing)
 
-> import -> CochonTactics where
->   : (simpleCT 
->     "match"
->     (do
->         pars <- tokenListArgs (bracket Round $ tokenPairArgs
->                                       tokenString
->                                       (keyword KwAsc)
->                                       tokenInTm) (| () |)
->         keyword KwSemi
->         tm1 <- tokenExTm
->         keyword KwSemi
->         tm2 <- tokenInTm
->         return (B0 :< pars :< tm1 :< tm2)
->      )
->      (\ [pars, ExArg a, InArg b] ->
->          matchCTactic (argList (argPair argToStr argToIn) pars) a b)
->      "match [<para>]* ; <term> ; <term> - match parameters in first term against second."
->    )
-
-> -}

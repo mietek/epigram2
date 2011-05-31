@@ -86,6 +86,15 @@
 >   Sym :: Elim t                 -- symmetry of equality
 >   deriving (Show, Eq, Foldable, Traversable, Functor)
 
+> instance HalfZip Elim where
+>   halfZip (A a) (A b) = (| (A (a, b)) |) 
+>   halfZip Hd Hd = (| Hd |) 
+>   halfZip Tl Tl = (| Tl |) 
+>   halfZip Out Out = (| Out |) 
+>   halfZip (QA aa ab ac) (QA ba bb bc) = (| (QA (aa, ba) (ab, bb) (ac, bc)) |) 
+>   halfZip Sym Sym = (| Sym |)
+>   halfZip _ _ = (|) 
+
 > data Can :: * where
 >   Set    :: Can                            -- set of sets
 >   Pi     :: Can                            -- functions
