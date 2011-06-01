@@ -125,7 +125,7 @@ discarded, so all parameters can be provided explicitly.
 
 > resolveHere :: RelName -> ProofState (Tm {Body, Exp, n}, Int, Maybe Scheme)
 > resolveHere x = do
->     let (x', b) = (x, True) -- shouldDiscardScheme x
+>     let (x', b) = shouldDiscardScheme x
 >     uess <- gets inBScope
 >     l <- getDevLev
 >     res <- resolve x' l uess 
@@ -135,11 +135,11 @@ discarded, so all parameters can be provided explicitly.
 >       Left (l, s, t) -> return $ (P (l, s, t) :$ B0 , 0, Nothing)
 >       Right (d, i, m) -> return $ (D d S0 (defOp d), i, if b then Nothing else m)
 
-<   where
-<     shouldDiscardScheme :: RelName -> (RelName, Bool)
-<     shouldDiscardScheme x =  if fst (last x) == "/"
-<                              then  (init x,  True)
-<                              else  (x,       False)
+>   where
+>     shouldDiscardScheme :: RelName -> (RelName, Bool)
+>     shouldDiscardScheme x =  if fst (last x) == "/"
+>                              then  (init x,  True)
+>                              else  (x,       False)
 
 The |resolveDiscard| command resolves a relative name to a reference,
 discarding any shared parameters it should be applied to.
@@ -233,8 +233,8 @@ then continues with |lookFor|.
 >     if x == (fst $ last $ maybe (error "A") id $ entryName e)
 >     then if i == 0
 >          then case (|devEntries (entryDev e)|) of
->              Just zs  -> Right (Right zs, sp, entryDef e, Nothing ) -- entryScheme e))
->              Nothing  -> Right (Right B0, 0,  entryDef e, Nothing ) -- entryScheme e)) 
+>              Just zs  -> Right (Right zs, sp, entryDef e, entryScheme e)
+>              Nothing  -> Right (Right B0, 0,  entryDef e, entryScheme e) 
 >          else lookDown (x, i-1) (es, uess) (pushSpine e sp)
 >     else lookDown (x, i) (es, uess) (pushSpine e sp)
 > lookDown (x, i) (F0 , (((y, j), es) :> uess)) sp =
@@ -272,7 +272,7 @@ then continues with |lookFor|.
 >     if x == (fst $ last $ maybe (error "B") id $ entryName e)
 >     then if i == 0
 >          then case (|devEntries (entryDev e)|) of
->              Just zs  -> lookLocal ys zs as (entryDef e) Nothing -- (entryScheme e)
+>              Just zs  -> lookLocal ys zs as (entryDef e) (entryScheme e)
 >              Nothing  -> Left [err "Params in other Devs are not in scope"] 
 >          else huntLocal (x, i-1) ys es as
 >     else huntLocal (x, i) ys es as 
