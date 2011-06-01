@@ -442,7 +442,7 @@ shared parameters to drop, and the scheme of the name (if there is one).
 > findParam l s (esus, es :< EParam k s' t' l') o | s == s' = 
 >   findParam l s (esus, es) (o+1)
 > findParam l s (esus, es :< _) o = findParam l s (esus, es) o
-
+> findParam _ _ _ _ = Nothing
 
 
 > unresolveD :: DEF -> Bwd (Int, String, TY) -> Bwd (Elim EXP) -> 
