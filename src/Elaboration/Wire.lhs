@@ -168,11 +168,34 @@ updated news.
 > tellTip news (Unknown ty hk) = (Unknown ty' hk, ne)
 >   where (ty', ne) = tellNews news ty
 > tellTip news (Defined (ty :>: tm)) = (Defined (ty' :>: tm'), ne)
->   where (ty', ne1) = tellNews news ty
->         (tm', ne2) = tellNews news tm
->         ne         = min ne1 ne2
+>   where  (ty', ne1) = tellNews news ty
+>          (tm', ne2) = tellNews news tm
+>          ne         = min ne1 ne2
+> tellTip news (Suspended ty ep hk) = (Suspended ty' ep' hk, ne)
+>   where  (ty', ne1)  = tellNews news ty
+>          (ep', ne2)  = tellEProb news ep
+>          ne          = min ne1 ne2
 
 
+> tellEProb :: NewsBulletin -> EProb -> (EProb, News)
+> tellEProb news (ElabDone t) = (ElabDone t', ne)
+>   where (t', ne) = tellNews news t
+> tellEProb news ElabHope = (ElabHope, NoNews)
+> tellEProb news (ElabProb p) = (ElabProb p, NoNews)
+> tellEProb news (ElabInferProb p) = (ElabInferProb p, NoNews)
+> tellEProb news (WaitCan t ep) = (WaitCan t' ep', ne)
+>   where  (t', ne1)   = tellNews news t
+>          (ep', ne2)  = tellEProb news ep
+>          ne          = min ne1 ne2
+> tellEProb news (WaitSolve d t ep) = (WaitSolve d' t' ep', ne)
+>   where  (d', ne1)    = case getNews news d of
+>                            Just dn  -> dn
+>                            Nothing  -> (d, NoNews)
+>          (t', ne2)    = tellNews news t
+>          (ep', ne3)   = tellEProb news ep
+>          ne           = min (min ne1 ne2) ne3
+> tellEProb news (ElabSchedule ep) = (ElabSchedule ep', ne)
+>   where (ep', ne) = tellEProb news ep
 
 > {-
 

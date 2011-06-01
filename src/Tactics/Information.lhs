@@ -275,15 +275,14 @@ of the proof state at the current location.
 >         tip <- getDevTip
 >         case tip of
 >             Module -> return empty
->             Unknown ty _ -> do
+>             Unknown ty hk -> do
 >                 tyd <- distillPS (SET :>: ty)
->                 return (text "?" <+> kword KwAsc <+> pretty tyd maxBound)
+>                 return (prettyHKind hk <+> kword KwAsc <+> pretty tyd maxBound)
 
-<             Suspended ty  _ prob -> do
-<                 hk <- getHoleKind
-<                 tyd <- prettyPS (SET :>: ty)
-<                 return (text ("(SUSPENDED: " ++ show prob ++ ")")
-<                             <+> prettyHKind hk <+> kword KwAsc <+> tyd)
+>             Suspended ty prob hk -> do
+>                 tyd <- prettyPS (SET :>: ty)
+>                 return (text ("(SUSPENDED: " ++ show prob ++ ")")
+>                             <+> prettyHKind hk <+> kword KwAsc <+> tyd)
 
 >             Defined (ty :>: tm) -> do
 >                 tyd <- distillPS (SET :>: ty)
@@ -291,6 +290,10 @@ of the proof state at the current location.
 >                 return (pretty tmd (pred ArrSize) <+> kword KwAsc
 >                             <+> pretty tyd maxBound)
 
+>     prettyHKind :: HKind -> Doc
+>     prettyHKind Waiting    = text "?"
+>     prettyHKind Hoping     = text "HOPING?"
+>     prettyHKind (Crying s) = text $ "(CRYING: " ++ s ++ ")"
 
 
 The |elm| Cochon tactic elaborates a term, then starts the scheduler to
