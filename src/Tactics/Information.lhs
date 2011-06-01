@@ -176,10 +176,10 @@ the saved state. We can get rid of it once we are confident that the new version
 
 > infoScheme :: RelName -> ProofState String
 > infoScheme x = do
->     (_, as, ms) <- resolveHere x
+>     (_, l, ms) <- resolveHere x
 >     case ms of
 >         Just sch -> do
->             d <- prettySchemePS sch -- (applyScheme sch as)
+>             d <- prettySchemePS (stripScheme l sch)
 >             return (renderHouseStyle d)
 >         Nothing -> return (showRelName x ++ " does not have a scheme.")
 

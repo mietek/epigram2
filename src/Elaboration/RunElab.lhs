@@ -182,16 +182,11 @@ representation is interpreted and executed by |runElabProb|.
 > runElab wrk (ty :>: EResolve rn f) = do
 >     (t, l, ms) <- resolveHere rn
 >     es <- getInScope
->     let  tm = t $$$. bwdList (take l (params es))
-
-<          ms'  = (| (flip applyScheme as) ms |)
-
+>     let  tm   = t $$$. bwdList (take l (params es))
+>          ms'  = (| (stripScheme l) ms |)
 >     tt <- inferHere t
 >     ty' <- inferSpHere (t :<: tt) (map A (take l (params es))) 
-
-<     tyv'  <- bquoteHere tyv
-
->     runElab wrk (ty :>: f (PAIR ty' tm , ms))
+>     runElab wrk (ty :>: f (PAIR ty' tm , ms'))
 
 
 |EAskNSupply| gives access to the name supply to the next elaboration

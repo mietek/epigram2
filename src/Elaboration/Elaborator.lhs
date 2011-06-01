@@ -278,8 +278,6 @@ plus [
 
 \subsection{Elaborating schemes}
 
-This doesn't handle shared parameters properly.
-
 > elabLiftedScheme :: DScheme -> ProofState (Scheme, TY)
 > elabLiftedScheme sch = do
 >     inScope    <- getInScope

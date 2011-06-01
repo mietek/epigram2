@@ -102,7 +102,12 @@ We can also convert a |Scheme| into a |Tm|:
 \subsection{Unlifting schemes}
 
 Schemes are stored fully $\Pi$-lifted with |SchExplicitPI|s, so we may
-need to apply them to a spine of shared parameters:
+need to strip them of a spine of shared parameters:
+
+> stripScheme :: Int -> Scheme -> Scheme
+> stripScheme 0 sch = sch
+> stripScheme n (SchExplicitPi (x :<: SchType s) schT) = stripScheme (n-1) schT
+
 
 > {-
 
