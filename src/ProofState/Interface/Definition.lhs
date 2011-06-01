@@ -88,7 +88,7 @@ mood such as |Hoping| or |Crying|.
 >                   , devLevelCount    =  lev }
 >     -- Put the entry in the proof context
 >     putDevNSupply $ freshen nsupply
->     putEntryAbove $ EDef def dev
+>     putEntryAbove $ EDef def dev Nothing
 >     -- Return a reference to the goal
 >     return $  D def S0 (defOp def) $$$ fmap (\x -> A (P x :$ B0)) binScope
 >  where 

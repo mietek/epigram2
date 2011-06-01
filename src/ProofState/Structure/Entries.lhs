@@ -13,7 +13,7 @@
 > import Evidences.Tm
 > import Evidences.NameSupply
 
-> -- import DisplayLang.Scheme
+> import DisplayLang.Scheme
 
 > import ProofState.Structure.Developments
 
@@ -33,11 +33,11 @@ letter.
 Hence, we have:
 
 > entryDef :: Traversable f => Entry f -> Maybe DEF
-> entryDef (EDef d _)  = Just d
-> entryDef _           = Nothing
+> entryDef (EDef d _ _)  = Just d
+> entryDef _             = Nothing
 
 > entryName :: Traversable f => Entry f -> Maybe Name
-> entryName (EDef d _)        = Just $ defName d
+> entryName (EDef d _ _)      = Just $ defName d
 > entryName (EModule n _)     = Just n
 > entryName (EParam _ _ _ _)  = Nothing
 
@@ -45,21 +45,22 @@ Hence, we have:
 > entryLastName :: Traversable f => Entry f -> (String, Int)
 > entryLastName (EEntity _ xn _ _ _)  = xn
 > entryLastName (EModule n _)       = last n
->
-> entryScheme :: Traversable f => Entry f -> Maybe (Scheme INTM)
-> entryScheme (EDEF _ _ (PROG sch) _ _ _)  = Just sch
-> entryScheme _                          = Nothing
 > -}
+
+> entryScheme :: Traversable f => Entry f -> Maybe Scheme
+> entryScheme (EDef _ _ ms)  = ms
+> entryScheme _              = Nothing
+
 
 
 > entryDev :: Traversable f => Entry f -> Maybe (Dev f)
-> entryDev (EDef _ d)        = Just d
+> entryDev (EDef _ d _)      = Just d
 > entryDev (EModule _ d)     = Just d
 > entryDev (EParam _ _ _ _)  = Nothing
 
 > modifyEntryDev :: (Traversable f, Traversable g) =>
 >                       (Dev f -> Dev g) -> Entry f -> Entry g
-> modifyEntryDev f (EDef def dev) = EDef def (f dev)
+> modifyEntryDev f (EDef def dev sch) = EDef def (f dev) sch
 > modifyEntryDev f (EModule n dev) = EModule n (f dev)
 > modifyEntryDev f (EParam k n t l) = EParam k n t l
 
@@ -102,7 +103,7 @@ modules, in which case we return an unchanged |Left dev|.
 > entryCoerce ::  (Traversable f, Traversable g) => 
 >                 Entry f -> Either (Dev f) (Entry g)
 > entryCoerce (EParam k n t l)  =  Right $ EParam k n t l
-> entryCoerce (EDef _ dev)      =  Left dev
+> entryCoerce (EDef _ dev _)    =  Left dev
 > entryCoerce (EModule _ dev)   =  Left dev
 
 

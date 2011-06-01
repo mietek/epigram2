@@ -16,7 +16,7 @@
 
 > import DisplayLang.DisplayTm
 > import DisplayLang.Name
-> -- import DisplayLang.Scheme
+> import DisplayLang.Scheme
 > import DisplayLang.Lexer
 
 > import Evidences.Tm
@@ -270,8 +270,7 @@ than a $\lambda$-term is reached.
 >               eorh Coh = KwCoh
 
 
-> {-
-> instance Pretty (Scheme DInTmRN) where
+> instance Pretty DScheme where
 >     pretty (SchType ty) = wrapDoc (kword KwAsc <+> pretty ty maxBound) ArrSize
 >     pretty (SchExplicitPi (x :<: schS) schT) = wrapDoc (
 >         parens (text x <+> pretty schS maxBound)
@@ -281,7 +280,7 @@ than a $\lambda$-term is reached.
 >         braces (text x <+> kword KwAsc <+> pretty s maxBound)
 >             <+> pretty schT maxBound
 >         ) ArrSize         
-> -}
+
 
 > -- import <- Pretty
 > -- [Feature = UId]

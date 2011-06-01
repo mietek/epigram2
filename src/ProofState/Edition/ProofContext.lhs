@@ -21,6 +21,8 @@
 > import Evidences.Tm
 > import Evidences.NameSupply
 
+> import DisplayLang.Scheme
+
 > import Kit.BwdFwd
 
 %endif
@@ -70,7 +72,7 @@ have sub-developments. Parameters being childless, they `derive to
 the Definition and Module data-types defined in
 Section~\ref{subsubsec:ProofState.Structure.Developments.entry}.
 
-> data CurrentEntry  =  CDefinition DEF
+> data CurrentEntry  =  CDefinition DEF (Maybe Scheme)
 >                    |  CModule Name
 >     deriving Show
 
@@ -102,7 +104,7 @@ justifies some piece of kit to deal with this global context.
 > instance Show (NewsyFwd (Entry NewsyFwd)) where
 >     show (NF ls) = show ls
 > instance Show (Entry NewsyFwd) where
->     show (EDef def dev) = intercalate " " ["D", show def, show dev]
+>     show (EDef def dev sch) = intercalate " " ["D", show def, show dev, show sch]
 >     show (EParam k n t l) = intercalate " " ["P", show k, show n, show t, show l]
 >     show (EModule n dev) = intercalate " " ["M", show n, show dev]
 

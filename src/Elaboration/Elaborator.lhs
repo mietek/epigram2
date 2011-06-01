@@ -181,9 +181,8 @@ plus
     ] plus-impl m n call : Nat ;
 \end{verbatim}
 
-> {-
 
-> elabLet :: (String :<: Scheme DInTmRN) -> ProofState (EXTM :=>: VAL)
+> elabLet :: (String :<: DScheme) -> ProofState ()
 > elabLet (x :<: sch) = do
 >     makeModule x
 >     goIn
@@ -193,9 +192,12 @@ then convert the module into a goal with the scheme assigned.
 
 >     make (x ++ "-type" :<: SET)
 >     goIn
->     (sch', ty :=>: _) <- elabLiftedScheme sch
->     moduleToGoal (N ty)     
+>     (sch', ty) <- elabLiftedScheme sch
+>     moduleToGoal ty
 >     putCurrentScheme sch'
+
+> {-
+
 
 Now we add a definition with the same name as the function being defined,
 to handle recursive calls. This has the same arguments as the function,
@@ -272,42 +274,41 @@ plus [
 >     unN (N n) = n
 
 
+> -}
+
 \subsection{Elaborating schemes}
 
-> elabLiftedScheme :: Scheme DInTmRN -> ProofState (Scheme INTM, EXTM :=>: VAL)
-> elabLiftedScheme sch = do
->     inScope <- getInScope
->     (sch', tt) <- elabScheme inScope sch
->     return (liftScheme inScope sch', tt)
 
-> liftScheme :: Entries -> Scheme INTM -> Scheme INTM
+> elabLiftedScheme :: DScheme -> ProofState (Scheme, TY)
+> elabLiftedScheme sch = do
+>     inScope     <- getInScope
+>     (sch', ty)  <- elabScheme sch
+>     return (liftScheme inScope sch', ty)
+
+> liftScheme :: Entries -> Scheme -> Scheme
 > liftScheme B0 sch                             = sch
-> liftScheme (es :< EPARAM _ (x, _) _ s _) sch  =
->     liftScheme es (SchExplicitPi (x :<: SchType (es -| s)) sch)
+> liftScheme (es :< EParam _ x s _) sch  =
+>     liftScheme es (SchExplicitPi (x :<: SchType s) sch)
 > liftScheme (es :< _) sch                      = liftScheme es sch
 
 
-> elabScheme :: Entries -> Scheme DInTmRN -> ProofState (Scheme INTM, EXTM :=>: VAL)
+> elabScheme :: DScheme -> ProofState (Scheme, TY)
 
-> elabScheme es (SchType ty) = do
->     ty' :=>: _ <- elaborate' (SET :>: ty)
->     tt <- giveOutBelow ty'
->     return (SchType (es -| ty'), tt)
+> elabScheme (SchType ty) = do
+>     ty' <- elaborate' (SET :>: ty)
+>     giveOutBelow ty'
+>     return (SchType ty', ty')
 
-> elabScheme es (SchExplicitPi (x :<: s) t) = do
+> elabScheme (SchExplicitPi (x :<: s) t) = do
 >     make ("tau" :<: SET)
 >     goIn
->     (s', ty :=>: _) <- elabScheme es s
->     piParam (x :<: N ty)
->     e <- getEntryAbove
->     (t', tt) <- elabScheme (es :< e) t
->     return (SchExplicitPi (x :<: s') t', tt)
+>     (s', sty) <- elabScheme s
+>     piParam (x :<: sty)
+>     (t', tty) <- elabScheme t
+>     return (SchExplicitPi (x :<: s') t', tty)
 
-> elabScheme es (SchImplicitPi (x :<: s) t) = do
->     ss <- elaborate' (SET :>: s)
->     piParam (x :<: termOf ss)
->     e <- getEntryAbove
->     (t', tt) <- elabScheme (es :< e) t
->     return (SchImplicitPi (x :<: (es -| termOf ss)) t', tt)
-
-> -}
+> elabScheme (SchImplicitPi (x :<: s) t) = do
+>     sty <- elaborate' (SET :>: s)
+>     piParam (x :<: sty)
+>     (t', tty) <- elabScheme t
+>     return (SchImplicitPi (x :<: sty) t', tty)

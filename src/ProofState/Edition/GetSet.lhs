@@ -132,7 +132,7 @@ And some specialized versions:
 
 > getCurrentDefinition :: ProofState DEF 
 > getCurrentDefinition = do
->     CDefinition d <- getCurrentEntry
+>     CDefinition d _ <- getCurrentEntry
 >     return  d  
 
 > getCurrentDefinitionLocal :: ProofState EXP 
@@ -141,6 +141,12 @@ And some specialized versions:
 >     es <- getGlobalScope
 >     return $ D d S0 (defOp d) $$$ paramSpine es
 
+> getCurrentScheme :: ProofState (Maybe Scheme)
+> getCurrentScheme = do
+>     e <- getCurrentEntry
+>     case e of
+>         CDefinition _ sch  -> return sch
+>         _                  -> return Nothing
  
 
 \paragraph{Getting in the |HOLE|\\}
@@ -186,8 +192,8 @@ And some specialized versions:
 >     inScope <- getInScope
 >     return $ foldMap def inScope
 >   where
->     def (EDef def _)  = [def]
->     def _             = []
+>     def (EDef def _ _)  = [def]
+>     def _               = []
 
 
 \subsection{Putters}
@@ -279,14 +285,10 @@ And some specialized versions:
 
 \paragraph{Putting in the |PROG|\\}
 
-> {-
-
-> putCurrentScheme :: Scheme INTM -> ProofState ()
+> putCurrentScheme :: Scheme -> ProofState ()
 > putCurrentScheme sch = do
->     CDefinition _ ref xn ty a <- getCurrentEntry
->     putCurrentEntry $ CDefinition (PROG sch) ref xn ty a
-
-> -}
+>     CDefinition def _ <- getCurrentEntry
+>     putCurrentEntry $ CDefinition def (Just sch)
 
 \paragraph{Putting in the |HOLE|\\}
 
@@ -386,7 +388,8 @@ machinery. Perhaps it should move somewhere more logical.
 >          lev = Data.Foldable.foldr (\_ -> (1+)) 0 bs
 >          op =  tipToOp (trail (fmap (\(_,s,_) -> s) bs)) (trail (fmap (\x -> P x :$ B0) bs)) ls tip
 >          def' = DEF nom ty' op
->     putCurrentEntry $ CDefinition def'
+>     sch <- getCurrentScheme -- TODO: do we need to update this scheme?
+>     putCurrentEntry $ CDefinition def' sch
 >     return (def', D def' S0 op $$$ fmap (\x -> A (P x :$ B0)) bs)
 >  where 
 >    boys :: Entries -> Bwd (ParamKind, Int, String, TY)

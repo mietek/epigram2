@@ -327,18 +327,14 @@ the parser.
 
 \subsection{Parsing schemes}
 
-> {-
-
-> pScheme :: Parsley Token (Scheme DInTmRN)
+> pScheme :: Parsley Token DScheme
 > pScheme = (|mkScheme (many pSchemeBit) (%keyword KwAsc%) pDInTm|)
 >   where
->     pSchemeBit :: Parsley Token (String, Either (Scheme DInTmRN) DInTmRN)
+>     pSchemeBit :: Parsley Token (String, Either DScheme DInTmRN)
 >     pSchemeBit = bracket Round (| ident , (%keyword KwAsc%) (| (Left . SchType) pDInTm |) |)
 >                  <|> bracket Curly (| ident , (%keyword KwAsc%) (| Right pDInTm |) |)
 >     
->     mkScheme :: [(String, Either (Scheme DInTmRN) DInTmRN)] -> DInTmRN -> Scheme DInTmRN
+>     mkScheme :: [(String, Either DScheme DInTmRN)] -> DInTmRN -> DScheme
 >     mkScheme [] ty = SchType ty
 >     mkScheme ((x, Left   s) : bits) ty = SchExplicitPi  (x :<: s) (mkScheme bits ty)
 >     mkScheme ((x, Right  s) : bits) ty = SchImplicitPi  (x :<: s) (mkScheme bits ty)
-
-> -}

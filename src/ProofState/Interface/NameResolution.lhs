@@ -106,13 +106,13 @@ When in the process of resolving a relative name, we keep track of a
 > type ResolveState =  (  Either FScopeContext Entries
 >                      ,  Int
 >                      ,  Maybe DEF 
->                      ,  Maybe (Scheme EXP)
+>                      ,  Maybe Scheme
 >                      )
 
 The outcome of the process is a |ResolveResult|: a reference, a list of shared
 parameters to which it should be applied, and a scheme for it (if there is one).
 
-> type ResolveResult = Either (Int, String, TY) (DEF, Int, Maybe (Scheme EXP))
+> type ResolveResult = Either (Int, String, TY) (DEF, Int, Maybe Scheme)
 
 < type ResolveResult = (REF, [REF], Maybe (Scheme INTM))
 
@@ -123,7 +123,7 @@ possibly a scheme. If the name ends with "./", the scheme will be
 discarded, so all parameters can be provided explicitly.
 \question{What should the syntax be for this, and where should it be handled?}
 
-> resolveHere :: RelName -> ProofState (Tm {Body, Exp, n}, Int, Maybe (Scheme EXP))
+> resolveHere :: RelName -> ProofState (Tm {Body, Exp, n}, Int, Maybe Scheme)
 > resolveHere x = do
 >     let (x', b) = (x, True) -- shouldDiscardScheme x
 >     uess <- gets inBScope
@@ -209,9 +209,9 @@ then continues with |lookFor|.
 > lookUp (x,i) l (esus, es :< e@(EModule n (Dev {devEntries=es'}))) (fs,vfss) | lastNom n == x =
 >   if i == 0 then Right (Right (Right es', l, Nothing, Nothing))
 >             else lookUp (x,i-1) l (esus,es) (e:>fs,vfss)
-> lookUp (x,i) l (esus, es :< e@(EDef d (Dev {devEntries=es'}))) (fs,vfss) 
+> lookUp (x,i) l (esus, es :< e@(EDef d (Dev {devEntries=es'}) sch)) (fs,vfss) 
 >     | x == (fst $ last $ defName d) =
->   if i == 0 then Right (Right (Right es', l, Just d, Nothing)) -- entryScheme e))
+>   if i == 0 then Right (Right (Right es', l, Just d, sch))
 >             else lookUp (x,i-1) l (esus,es) (e:>fs,vfss)
 > lookUp (x,i) l (esus, es :< e@(EParam _ s t l')) (fs,vfss) | x == s =
 >   if i == 0 then Right (Left (l', s, t))
@@ -252,7 +252,7 @@ then continues with |lookFor|.
 
 
 
-> lookLocal :: RelName -> Entries -> Int -> Maybe DEF -> Maybe (Scheme EXP) ->
+> lookLocal :: RelName -> Entries -> Int -> Maybe DEF -> Maybe Scheme ->
 >                  Either (StackError) ResolveResult
 > lookLocal ((x, Rel i) : ys) es sp _ _  = huntLocal (x, i) ys (reverse $ trail es) sp
 > lookLocal ((x, Abs i) : ys) es sp _ _  = huntLocal (x, i) ys (trail es) sp
@@ -435,7 +435,7 @@ shared parameters to drop, and the scheme of the name (if there is one).
 >   findParam l s (esus, es') o
 > findParam l s (esus, es :< EModule n _) o | s == lastNom n =
 >   findParam l s (esus, es) (o+1)
-> findParam l s (esus, es :< EDef d _) o | s == lastNom (defName d) =
+> findParam l s (esus, es :< EDef d _ _) o | s == lastNom (defName d) =
 >   findParam l s (esus, es) (o+1)
 > findParam l s (esus, es :< EParam k s' t' l') o | l == l' = 
 >   (| [(s,Rel o)] |)
@@ -504,7 +504,7 @@ shared parameters to drop, and the scheme of the name (if there is one).
 > partNom hd top (esus, es :< EModule n (Dev {devEntries=es'})) fsc 
 >     | (hd ++ [top]) == n =
 >   Just (paramSpine (flat esus es),Left es')
-> partNom hd top (esus, es :< EDef d (Dev {devEntries=es'})) fsc 
+> partNom hd top (esus, es :< EDef d (Dev {devEntries=es'}) _) fsc 
 >     | hd ++ [top] == defName d =
 >   Just (paramSpine (flat esus es),Left es')
 > partNom hd top (esus, es :< e) (fs, vfss)  = partNom hd top (esus, es) (e:>fs,vfss)
@@ -531,7 +531,7 @@ First, |nomTop| handles the section where the name differs from our current
 position. We call it by its |lastNom| but need to look up the offset and
 scheme.
 
-> nomTop :: Name -> BScopeContext -> Maybe ((String,Offs),Maybe (Scheme EXP))
+> nomTop :: Name -> BScopeContext -> Maybe ((String,Offs),Maybe Scheme)
 > nomTop n bsc = do
 >     (i, ms) <- countB 0 n bsc
 >     return ((lastNom n, Rel i), ms)
@@ -540,7 +540,7 @@ To determine the relative offset, |nomTop| uses |countB|, which looks backwards
 through the context, counting the number of things in scope with the same last
 name component. This also returns the scheme attached, if there is one.
 
-> countB :: Int -> Name -> BScopeContext -> Maybe (Int, Maybe (Scheme EXP))
+> countB :: Int -> Name -> BScopeContext -> Maybe (Int, Maybe Scheme)
 > countB i n (esus :< (es', u'), B0)
 >   | last n == u' && flatNom esus [] == init n  = (| (i, Nothing) |)
 > countB i n (esus :< (es', u'), B0)
@@ -551,9 +551,9 @@ name component. This also returns the scheme attached, if there is one.
 >   | n == n'                                    = (| (i, Nothing) |)
 > countB i n (esus, es :< EModule n' _)           
 >   | lastNom n == lastNom n'                    = countB (i+1) n (esus, es)
-> countB i n (esus, es :< EDef d (Dev {devEntries=es'}))
+> countB i n (esus, es :< EDef d (Dev {devEntries=es'}) _)
 >   | n == defName d                             = (| (i, Nothing) |)
-> countB i n (esus, es :< EDef d _)           
+> countB i n (esus, es :< EDef d _ _)           
 >   | lastNom n == lastNom (defName d)           = countB (i+1) n (esus, es)
 > countB i n (esus, es :< e@(EParam k s t l))
 >   | lastNom n == s                             = countB (i+1) n (esus, es)
@@ -569,7 +569,7 @@ name component. This also returns the scheme attached, if there is one.
 Next, |nomAbs| handles the section where the name is the same as the current
 location but the spine is different.
 
-> nomAbs :: Name -> FScopeContext -> Maybe (RelName, Maybe (Scheme EXP))
+> nomAbs :: Name -> FScopeContext -> Maybe (RelName, Maybe Scheme)
 > nomAbs [u] (es,uess) = do
 >   (v,ms) <- findF 0 u es
 >   (| ([v],ms) |)
@@ -584,18 +584,18 @@ location but the spine is different.
 > countF :: String -> Fwd (Entry Bwd) -> Int
 > countF x F0 = 0
 > countF x (EModule n _ :> es) | (fst . last $ n) == x = 1 + countF x es
-> countF x (EDef d _ :> es) | (fst . last $ defName d) == x = 1 + countF x es
+> countF x (EDef d _ _ :> es) | (fst . last $ defName d) == x = 1 + countF x es
 > countF x (EParam _ s _ _ :> es) | s == x = 1 + countF x es
 > countF x (_ :> es) = countF x es
 
 
 > findF :: Int -> (String,Int) -> Fwd (Entry Bwd) 
->              -> Maybe ((String,Offs), Maybe (Scheme EXP))
+>              -> Maybe ((String,Offs), Maybe Scheme)
 > findF i u (EModule n _ :> es) | (last $ n) == u = 
 >   Just ((fst u, if i == 0 then Rel 0 else Abs i), Nothing)
 > findF i u@(x,_) (EModule n _ :> es) | (fst . last $ n) == x = findF (i+1) u es
-> findF i u (EDef d _  :> es) | last (defName d) == u = 
->   Just ((fst u, if i == 0 then Rel 0 else Abs i), Nothing) --entryScheme e)
+> findF i u (EDef d _ sch  :> es) | last (defName d) == u = 
+>   Just ((fst u, if i == 0 then Rel 0 else Abs i), sch)
 > findF i u@(x,_) (EParam _ y _ _ :> es) | y == x = findF (i+1) u es
 > findF i u (_ :> es) = findF i u es
 > findF _ _ _ = Nothing
@@ -606,7 +606,7 @@ Finally, |nomRel| handles the section where the name and spine both match the
 current location.
 
 > nomRel :: Name -> Entries 
->                -> Maybe (Scheme EXP) -> Maybe (RelName, Maybe (Scheme EXP)) 
+>                -> Maybe Scheme -> Maybe (RelName, Maybe Scheme) 
 > nomRel [] _ ms = (| ([], ms) |)
 > nomRel (x : nom) es _ = do
 >   (i,es',ms) <- nomRel' 0 x es
@@ -614,12 +614,12 @@ current location.
 >   return ((fst x,Rel i):nom',ms')
 
 > nomRel' :: Int -> (String,Int) -> Entries 
->                -> Maybe (Int,Entries, Maybe (Scheme EXP))
+>                -> Maybe (Int,Entries, Maybe Scheme)
 > nomRel' o (x,i) (es:< EModule n (Dev {devEntries=es'})) | (fst . last $ n) == x  = 
 >   if i == (snd . last $ n) then (| (o,es',Nothing) |) 
 >                            else nomRel' (o+1) (x,i) es
-> nomRel' o (x,i) (es:< e@(EDef d (Dev {devEntries=es'}))) | (fst . last $ defName d) == x =
->   if i == (snd . last $ defName d) then (| (o,es',Nothing {-entryScheme e-}) |) else nomRel' (o+1) (x,i) es
+> nomRel' o (x,i) (es:< e@(EDef d (Dev {devEntries=es'}) sch)) | (fst . last $ defName d) == x =
+>   if i == (snd . last $ defName d) then (| (o,es',sch) |) else nomRel' (o+1) (x,i) es
 > nomRel' o (x,i) (es:< EParam _ y _ _) | y == x = nomRel' (o+1) (x,i) es
 > nomRel' o (x,i) (es:<e) = nomRel' o (x,i) es
 > nomRel' _ _ _ = Nothing
@@ -674,7 +674,7 @@ christening them.
 > showEntriesAbs :: Traversable f => f (Entry f) -> String
 > showEntriesAbs = intercalate ", " . foldMap f
 >   where
->     f (EDef def _)      = [showName (defName def)]
+>     f (EDef def _ _)      = [showName (defName def)]
 >     f (EParam _ x _ l)  = [x ++ " (" ++ show l ++ ")"]
 >     f (EModule n _)     = [showName n]
 

@@ -308,21 +308,15 @@ Construction tactics:
 >          ("lambda <labels> - introduces one or more hypotheses.\n"++
 >           "lambda <labels> : <type> - introduces new module parameters or hypotheses.") :
 
-
-
-
-> {-
->   : simpleCT
+>   simpleCT
 >         "let"
 >         (| (| (B0 :< ) tokenString |) :< tokenScheme |)
 >         (\ [StrArg x, SchemeArg s] -> do
 >             elabLet (x :<: s)
->             optional problemSimplify
->             optional seekGoal
+>             -- optional problemSimplify
+>             -- optional seekGoal
 >             return ("Let there be " ++ x ++ "."))
->         "let <label> <scheme> : <type> - set up a programming problem with a scheme."
-
-> -}
+>         "let <label> <scheme> : <type> - set up a programming problem with a scheme." :
 
 >   simpleCT
 >         "make"
@@ -528,8 +522,8 @@ Import more tactics from an aspect:
 >     unaryInCT "parse" (return . show)
 >       "parse <term> - parses <term> and displays the internal display-sytnax representation." :
 
-<     unaryNameCT "scheme" infoScheme
-<       "scheme <name> - looks up the scheme on the definition <name>."
+>     unaryNameCT "scheme" infoScheme
+>       "scheme <name> - looks up the scheme on the definition <name>." :
 
 >     unaryExCT "whatis" infoWhatIs
 >       "whatis <term> - prints the various representations of <term>." :

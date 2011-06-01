@@ -171,17 +171,19 @@ the saved state. We can get rid of it once we are confident that the new version
 >                return (d $$ (text (showRelName (christenREF bsc ref)) <+> kword KwAsc <+> docTy))
 >            (_, es' :< _) -> putEntriesAbove es' >> hyps bsc me
 
+> -}
+
 
 > infoScheme :: RelName -> ProofState String
 > infoScheme x = do
 >     (_, as, ms) <- resolveHere x
 >     case ms of
 >         Just sch -> do
->             d <- prettySchemeHere (applyScheme sch as)
+>             d <- prettySchemePS sch -- (applyScheme sch as)
 >             return (renderHouseStyle d)
 >         Nothing -> return (showRelName x ++ " does not have a scheme.")
 
-> -}
+
 
 The |infoWhatIs| command displays a term in various representations.
 
@@ -243,7 +245,7 @@ of the proof state at the current location.
 >                  (text x  <+> kword KwAsc
 >                           <+> pretty tyd (pred ArrSize)))
 >      
->     prettyE (EDef def _) = do
+>     prettyE (EDef def _ _) = do
 >         goIn
 >         d <- prettyES aus me
 >         goOut

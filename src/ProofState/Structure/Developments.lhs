@@ -18,7 +18,7 @@
 
 > import Elaboration.ElabProb
 
-> -- import DisplayLang.Scheme
+> import DisplayLang.Scheme
 
 %endif
 
@@ -102,6 +102,7 @@ or value
 > data Traversable f => Entry f
 >   =  EDef     {  def        :: DEF 
 >               ,  dev        :: Dev f
+>               ,  scheme     :: Maybe Scheme
 >               }
 >   |  EParam   {  paramKind   :: ParamKind
 >               ,  paramName   :: String

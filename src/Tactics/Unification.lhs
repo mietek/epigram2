@@ -63,7 +63,7 @@ holes with the new ones.
 >         _ :< e  -> pass e
 >   where
 >     pass :: Entry Bwd -> ProofState EXP
->     pass (EDef def@(DEF defName _ _) dev)
+>     pass (EDef def@(DEF defName _ _) dev _)
 >       | name == defName && occursD defName = throwError' $
 >           err "solveHole: you can't define something in terms of itself!"
 >       | name == defName = do
@@ -95,7 +95,7 @@ holes with the new ones.
 >     makeDeps ((old, Unknown ty k) : deps) news = do
 >         let (ty', _) = tellNews news ty
 >         makeKinded Nothing k (fst (last name) :<: ty')
->         EDef def _ <- getEntryAbove
+>         EDef def _ _ <- getEntryAbove
 >         let op = Emit (D def S0 (defOp def))
 >         makeDeps deps (addGirlNews (old{defOp = op}, GoodNews) news)
 >     makeDeps _ _ = throwError' $ err "makeDeps: bad reference kind! Perhaps "

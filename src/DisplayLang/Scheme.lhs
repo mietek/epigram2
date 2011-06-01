@@ -4,7 +4,7 @@
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE TypeOperators, GADTs #-}
+> {-# LANGUAGE TypeOperators, GADTs, KindSignatures #-}
 
 > module DisplayLang.Scheme where
 
@@ -15,13 +15,15 @@
 > import Evidences.Tm
 
 > import DisplayLang.DisplayTm
+> import DisplayLang.Name
+
+> import Kit.NatFinVec
 
 %endif
 
 \subsection{Schemes for implicit arguments}
 
 
-> {-
 
 A definition may have a |Scheme|, which allows us to handle implicit
 syntax. A |Scheme| is defined by:
@@ -42,19 +44,20 @@ forbid ``higher-schemes'' for mental sanity reasons. For the sake of
 generality, we will parameterise over the exact representation of
 types:
 
-> -}
 
-> data Scheme x  =  Scheeme
-
-> {-
-
-> data Scheme x  =  SchType x
->                |  SchExplicitPi (String :<: Scheme x) (Scheme x)
->                |  SchImplicitPi (String :<: x) (Scheme x)
+> data Sch :: * -> * where
+>     SchType        :: x                           -> Sch x
+>     SchExplicitPi  :: String :<: Sch x  -> Sch x  -> Sch x
+>     SchImplicitPi  :: String :<: x      -> Sch x  -> Sch x
 >   deriving Show
+
+> type Scheme = Sch EXP
+> type DScheme = Sch DInTmRN
+
 
 %if False
 
+> {-
 > instance Functor Scheme where
 >     fmap = fmapDefault
 
@@ -67,6 +70,7 @@ types:
 >         (| SchExplicitPi (| (x :<:) (traverse f schS) |) (traverse f schT) |)
 >     traverse f (SchImplicitPi (x :<: s) schT) = 
 >         (| SchImplicitPi (| (x :<:) (f s) |) (traverse f schT) |)
+> -}
 
 %endif
 
@@ -75,7 +79,7 @@ types:
 
 Given a scheme, we can extract the names of its $\Pi$s:
 
-> schemeNames :: Scheme x -> [String]
+> schemeNames :: Sch x -> [String]
 > schemeNames (SchType _) = []
 > schemeNames (SchExplicitPi (x :<: _) sch) = x : schemeNames sch
 > schemeNames (SchImplicitPi (x :<: _) sch) = x : schemeNames sch
@@ -83,29 +87,24 @@ Given a scheme, we can extract the names of its $\Pi$s:
 
 \subsection{Turning schemes to terms}
 
-We can also convert a |Scheme x| to an |x|, if we are given a way to
-interpret $\Pi$-bindings:
+We can also convert a |Scheme| into a |Tm|:
 
-> schemeToType :: (String -> x -> x -> x) -> Scheme x -> x
-> schemeToType _ (SchType ty) = ty
-> schemeToType piv (SchExplicitPi (x :<: s) t) = 
->     piv x (schemeToType piv s) (schemeToType piv t)
-> schemeToType piv (SchImplicitPi (x :<: s) t) =
->     piv x s (schemeToType piv t)
-
-With two direct special cases:
-
-> schemeToInTm :: Scheme (InTm x) -> InTm x
-> schemeToInTm = schemeToType PIV
->
-> schemeToDInTm :: Scheme (DInTm p x) -> DInTm p x
-> schemeToDInTm = schemeToType DPIV
+> {-
+> schemeToType :: Sch {n} -> Tm {Body, Exp, n}
+> schemeToType (SchType ty) = ty
+> schemeToType (SchExplicitPi (x :<: s) t) = 
+>     Pi :- [schemeToType s, L ENil x (schemeToType t)]
+> schemeToType (SchImplicitPi (x :<: s) t) =
+>     Pi :- [s, L ENil x (schemeToType t)]
+> -}
 
 
 \subsection{Unlifting schemes}
 
 Schemes are stored fully $\Pi$-lifted with |SchExplicitPI|s, so we may
 need to apply them to a spine of shared parameters:
+
+> {-
 
 > applyScheme :: Scheme INTM -> [REF] -> Scheme INTM
 > applyScheme sch [] = sch
@@ -119,13 +118,14 @@ need to apply them to a spine of shared parameters:
 >     underScheme n r (SchImplicitPi (x :<: s) schT) =
 >         SchImplicitPi (x :<: under n r %% s) (underScheme (n+1) r schT)
 
+> -}
 
 \subsection{Schemes in error messages}
 
 We can cheaply embed schemes in error messages by converting them to types
 and evaluating. Really, we ought to add schemes as a kind of |ErrorTok|.
 
+> {-
 > errScheme :: Scheme INTM -> ErrorItem t
 > errScheme sch = errTyVal (evTm (schemeToInTm sch) :<: SET)
-
 > -}

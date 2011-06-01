@@ -131,16 +131,16 @@ back the current entry.
 >     below <- getBelowCursor
 >     let dev = Dev (above <>< below) tip root l state
 >     case currentEntry of
->         CDefinition def  ->  return $ EDef def dev
->         CModule n        ->  return $ EModule n dev
+>         CDefinition def sch  ->  return $ EDef def dev sch
+>         CModule n            ->  return $ EModule n dev
 
 Conversely, when entering a new development, the former entry needs to
 be \emph{unzipped} to form the current development. 
 
 > putEnterCurrent :: Entry Bwd -> ProofState ()
-> putEnterCurrent (EDef def dev) = do
+> putEnterCurrent (EDef def dev sch) = do
 >     l <- getLayer
->     replaceLayer $ l { currentEntry = CDefinition def}
+>     replaceLayer $ l { currentEntry = CDefinition def sch}
 >     putAboveCursor dev
 > putEnterCurrent (EModule [] dev) = putAboveCursor dev
 > putEnterCurrent (EModule n dev) = do

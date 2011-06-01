@@ -8,12 +8,15 @@
 
 > module Distillation.Scheme where
 
+> import Control.Applicative
+
 > import Text.PrettyPrint.HughesPJ (Doc)
 
 > import Kit.BwdFwd
 
 > import ProofState.Structure.Developments
 > import ProofState.Edition.ProofState
+> import ProofState.Edition.GetSet
 
 > import Distillation.Distiller
 
@@ -25,9 +28,9 @@
 > import Evidences.Tm
 > import Evidences.NameSupply
 
-%endif
+> import Kit.NatFinVec
 
-> {-
+%endif
 
 
 \subsection{Distilling schemes}
@@ -48,66 +51,36 @@ as well as the collected list of references we have made so far. It
 turns the |INTM| scheme into an a Display term scheme with relative
 names.
 
-> distillScheme ::  Entries -> Bwd REF -> Scheme INTM -> 
->                   ProofStateT INTM (Scheme DInTmRN, INTM)
+> distillScheme ::  (Int, Bwd (Int, String, TY)) -> Scheme -> 
+>                       ProofState (DScheme, TY)
 
 On a ground type, there is not much to be done: |distill| does the
-distillation job for us. However, we first have to turn the
-de Bruijn indices into references.
+distillation job for us.
 
-> distillScheme entries refs (SchType ty) = do
->     -- Instantiate de Bruijn indices with |refs|
->     let ty1 = underneath refs ty
->     -- Distill the type
->     ty2 :=>: _ <- distill entries (SET :>: ty1)
->     return (SchType ty2, ty1)
+> distillScheme lps (SchType ty) = do
+>     dty <- distill (SET :>: ev ty) lps
+>     return (SchType dty, ty)
 
 On an explicit $\Pi$, the domain is itself a scheme, so it needs to be
-distilled. Then, we go under the binder and distill the codomain,
-carrying the new |ref| and extending the local entries with it.
-The new reference is in local scope, so we need to extend the entries
-with it for later distillation. We know the |INTM| form of its type so
-we may as well supply it, though it should not be inspected.
+distilled. Then, we go under the binder and distill the codomain.
 
-> distillScheme entries refs (SchExplicitPi (x :<: schS) schT) = do
+> distillScheme (l, ps) (SchExplicitPi (x :<: schS) schT) = do
 >     -- Distill the domain
->     (schS', s') <- distillScheme entries refs schS
->     -- Under a fresh |ref|\ldots
->     freshRef (x :<: evTm s') $ \ref -> do
->         -- Distill the codomain
->         (schT', t') <- distillScheme  
->                          (entries :< EPARAM ref (mkLastName ref) ParamPi s' Nothing)
->                          (refs :< ref) 
->                          schT
->         return (SchExplicitPi (x :<: schS') schT', PIV x s' t')
+>     (schS', sty) <- distillScheme (l, ps) schS
+>     -- Distill the codomain
+>     (schT', tty) <- distillScheme (l+1, ps :< (l, x, sty)) schT
+>     return (SchExplicitPi (x :<: schS') schT', partPiLift' (error "wook") (BV0 :<<<: (x, sty)) tty)
 
 On an implicit $\Pi$, the operation is fairly similar. Instead of
 |distillScheme|-ing the domain, we proceed as for ground types --- it
 is one. 
 
-> distillScheme entries refs (SchImplicitPi (x :<: s) schT) = do
->     -- Distill the domain as a ground type
->     let s' = underneath refs s
->     sd :=>: sv <- distill entries (SET :>: s')
->     -- Under a fresh |ref|\ldots
->     freshRef (x :<: sv) $ \ref -> do
->         -- Distill the domain
->         (schT', t') <- distillScheme 
->                          (entries :< EPARAM ref (mkLastName ref) ParamPi s' Nothing)
->                          (refs :< ref) 
->                          schT
->         return (SchImplicitPi (x :<: sd) schT', PIV x s' t')
-
-
-We have been helped by |underneath|, which replaces (de Bruijn indexed)
-variables in a term with references from the given list.
-
-> underneath :: Bwd REF -> INTM -> INTM
-> underneath = underneath' 0 
->     where 
->       underneath' :: Int -> Bwd REF -> INTM -> INTM
->       underneath' _ B0          tm = tm
->       underneath' n (rs :< ref) tm = underneath' (n+1) rs (under n ref %% tm)
+> distillScheme (l, ps) (SchImplicitPi (x :<: s) schT) = do
+>     -- Distill the domain
+>     s' <- distill (SET :>: ev s) (l, ps)
+>     -- Distill the codomain
+>     (schT', t') <- distillScheme (l+1, ps :< (l, x, s)) schT
+>     return (SchImplicitPi (x :<: s') schT', partPiLift' (error "wook") (BV0 :<<<: (x, s)) t')
 
 
 \subsection{ProofState interface}
@@ -115,13 +88,12 @@ variables in a term with references from the given list.
 For ease of use, |distillScheme| is packaged specially for easy
 ProofState usage.
 
-> distillSchemeHere :: Scheme INTM -> ProofState (Scheme DInTmRN)
-> distillSchemeHere sch = do
->     return . fst =<< (liftErrorState DTIN $ distillScheme B0 B0 sch)
+> distillSchemePS :: Scheme -> ProofState DScheme
+> distillSchemePS sch = do
+>     lev <- getDevLev
+>     fst <$> distillScheme (lev, B0) sch
 >
-> prettySchemeHere :: Scheme INTM -> ProofState Doc
-> prettySchemeHere sch = do
->     sch' <- distillSchemeHere sch
+> prettySchemePS :: Scheme -> ProofState Doc
+> prettySchemePS sch = do
+>     sch' <- distillSchemePS sch
 >     return $ pretty sch' maxBound
-
-> -}

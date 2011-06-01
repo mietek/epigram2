@@ -50,7 +50,7 @@ then write an interpreter to run the syntax in the |ProofState| monad.
 < eFake        :: Elab (REF, Spine {TT} REF)
 <              -- return a fake reference to the current goal and the current spine
 
-> eResolve     :: RelName -> Elab (EXP, Maybe (Scheme EXP))
+> eResolve     :: RelName -> Elab (EXP, Maybe Scheme)
 >              -- resolve a name to a term and maybe a scheme
 > eAskNSupply  :: Elab NameSupply
 >              -- return a fresh name supply
@@ -70,7 +70,7 @@ The instruction signature given above is implemented using the following monad.
 <     |  EFake ((REF, Spine {TT} REF) -> Elab x)
 <     |  EAnchor (String -> Elab x)
 
->     |  EResolve RelName ((EXP, Maybe (Scheme EXP)) -> Elab x)
+>     |  EResolve RelName ((EXP, Maybe Scheme) -> Elab x)
 >     |  EAskNSupply (NameSupply -> Elab x)
 >     |  EAskDevLev (Int -> Elab x)
 

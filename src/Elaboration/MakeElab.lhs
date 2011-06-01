@@ -295,7 +295,7 @@ may be a parameter, which is resolved; an embedded evidence term,
 which is checked; or a type annotation, which is converted to the
 identity function at the given type.
 
-> makeElabInferHead :: Loc -> DHEAD -> Elab (EXP, Maybe (Scheme EXP))
+> makeElabInferHead :: Loc -> DHEAD -> Elab (EXP, Maybe Scheme)
 > makeElabInferHead loc (DP rn)     = eResolve rn
 > makeElabInferHead loc (DTEX tm)   = (| (eInfer tm) , ~Nothing |)
 > makeElabInferHead loc (DType ty)  = do

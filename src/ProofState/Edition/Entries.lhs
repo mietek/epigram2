@@ -29,7 +29,7 @@ need some kit operating on any kind of |CurrentEntry|. So far, this is
 restricted to getting its name:
 
 > currentEntryName :: CurrentEntry -> Name
-> currentEntryName  (CDefinition d)  = defName d
+> currentEntryName  (CDefinition d _)  = defName d
 > currentEntryName  (CModule n)      = n
 
 
@@ -37,8 +37,8 @@ There is an obvious (forgetful) map from entry (Definition or Module)
 to a current entry:
 
 > mkCurrentEntry :: Traversable f => Entry f -> CurrentEntry
-> mkCurrentEntry (EDef def _)   = CDefinition def
-> mkCurrentEntry (EModule n _)  = CModule n
+> mkCurrentEntry (EDef def _ sch)  = CDefinition def sch
+> mkCurrentEntry (EModule n _)     = CModule n
 
 
 
@@ -58,8 +58,8 @@ and |Dev f|:
 > rearrangeEntry ::  (Traversable f, Traversable g) =>
 >                    (forall a. f a -> g a) -> Entry f -> Entry g
 > rearrangeEntry h (EParam k n t l)    =  EParam k n t l
-> rearrangeEntry h (EDef def dev)  =  EDef def (rearrangeDev h dev)
-> rearrangeEntry h (EModule n d)             =  EModule n (rearrangeDev h d)
+> rearrangeEntry h (EDef def dev sch)  =  EDef def (rearrangeDev h dev) sch
+> rearrangeEntry h (EModule n d)       =  EModule n (rearrangeDev h d)
 >
 > rearrangeDev :: (Traversable f, Traversable g) =>
 >     (forall a. f a -> g a) -> Dev f -> Dev g
