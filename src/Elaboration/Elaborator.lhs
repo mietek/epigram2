@@ -278,12 +278,13 @@ plus [
 
 \subsection{Elaborating schemes}
 
+This doesn't handle shared parameters properly.
 
 > elabLiftedScheme :: DScheme -> ProofState (Scheme, TY)
 > elabLiftedScheme sch = do
->     inScope     <- getInScope
->     (sch', ty)  <- elabScheme sch
->     return (liftScheme inScope sch', ty)
+>     inScope    <- getInScope
+>     (sch', d)  <- elabScheme sch
+>     return (liftScheme inScope sch', Evidences.Tm.def d $$$ paramSpine inScope)
 
 > liftScheme :: Entries -> Scheme -> Scheme
 > liftScheme B0 sch                             = sch
@@ -292,23 +293,24 @@ plus [
 > liftScheme (es :< _) sch                      = liftScheme es sch
 
 
-> elabScheme :: DScheme -> ProofState (Scheme, TY)
+> elabScheme :: DScheme -> ProofState (Scheme, DEF)
 
 > elabScheme (SchType ty) = do
->     ty' <- elaborate' (SET :>: ty)
->     giveOutBelow ty'
->     return (SchType ty', ty')
+>     ty'  <- elaborate' (SET :>: ty)
+>     d    <- giveOutBelow ty'
+>     return (SchType ty', d)
 
 > elabScheme (SchExplicitPi (x :<: s) t) = do
 >     make ("tau" :<: SET)
 >     goIn
->     (s', sty) <- elabScheme s
->     piParam (x :<: sty)
->     (t', tty) <- elabScheme t
->     return (SchExplicitPi (x :<: s') t', tty)
+>     (s', sd) <- elabScheme s
+>     es <- getInScope
+>     piParam (x :<: Evidences.Tm.def sd $$$ paramSpine es)
+>     (t', td) <- elabScheme t
+>     return (SchExplicitPi (x :<: s') t', td)
 
 > elabScheme (SchImplicitPi (x :<: s) t) = do
 >     sty <- elaborate' (SET :>: s)
 >     piParam (x :<: sty)
->     (t', tty) <- elabScheme t
->     return (SchImplicitPi (x :<: sty) t', tty)
+>     (t', td) <- elabScheme t
+>     return (SchImplicitPi (x :<: sty) t', td)

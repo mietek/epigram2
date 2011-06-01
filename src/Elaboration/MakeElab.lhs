@@ -334,76 +334,75 @@ process the spine of eliminators.
 >     (tt, ms) <- makeElabInferHead loc t
 >     let (tm :<: ty) = extractNeutral tt
 >     case ms of
->         Just sch  -> error "Scheme what scheme?" -- handleSchemeArgs B0 sch  (tm ?? ty :=>: tmv :<: tyv) ss
+>         Just sch  -> handleSchemeArgs B0 sch (tm :<: ev ty) ss
 >         Nothing   -> handleArgs (tm :<: ev ty) ss
 >     
 >   where
 
-> {-
 
-The |handleSchemeArgs| function takes a list of terms (corresponding to
-de Bruijn-indexed variables), the scheme, term and type of the neutral, and a
-spine of eliminators in display syntax. It elaborates the eliminators and applies
-them to the neutral term, using the scheme to handle insertion of implicit
-arguments.
 
->     handleSchemeArgs :: Bwd (INTM :=>: VAL) -> Scheme INTM ->
->         EXTM :=>: VAL :<: TY -> DSPINE -> Elab (INTM :=>: VAL)
+The |handleSchemeArgs| function takes a list of terms (corresponding
+to de Bruijn-level variables), the scheme, term and type of the
+neutral, and a spine of eliminators in display syntax. It elaborates
+the eliminators and applies them to the neutral term, using the scheme
+to handle insertion of implicit arguments.
 
-If the scheme is just a type, then we call on the non-scheme |handleArgs|.
+>     handleSchemeArgs :: Bwd EXP -> Scheme ->
+>         EXP :<: VAL -> DSPINE -> Elab EXP
+
+If the scheme is just a type, then we call on the non-scheme
+|handleArgs|.
 
 >     handleSchemeArgs es (SchType _) ttt as = handleArgs ttt as
 
-If the scheme has an implicit $\Pi$-binding, then we hope for a value of the
-relevant type and carry on. Note that we evaluate the type of the binding in the
-context |es|.
+If the scheme has an implicit $\Pi$-binding, then we hope for a value
+of the relevant type and carry on. Note that we evaluate the type of
+the binding in the context |es|.
 
 >     handleSchemeArgs es  (SchImplicitPi (x :<: s) schT)
->                              (tm :=>: tv :<: PI sd t) as = do
->         stm :=>: sv <- eHopeFor (eval s (fmap valueOf es, []))
->         handleSchemeArgs (es :< (stm :=>: sv)) schT
->             (tm :$ A stm :=>: tv $$ A sv :<: t $$ A sv) as
+>                              (tm :<: PI sd t) as = do
+>         stm <- eHopeFor $ (Just (trail es), INil) :/ s
+>         handleSchemeArgs (es :< stm) schT
+>             (tm $$ A stm :<: ev t $$ A stm) as
 
-If the scheme has an explicit $\Pi$-binding and we have an argument, then we can
-push the expected type into the argument and carry on.
-\question{Does this case need to be modified for higher-order schemes?}
-
->     handleSchemeArgs es  (SchExplicitPi (x :<: schS) schT)
->                              (tm :=>: tv :<: PI sd t) (A a : as) = do
->         let s' = schemeToInTm schS
->         atm :=>: av <- subElab loc (eval s' (fmap valueOf es, []) :>: a)
->         handleSchemeArgs (es :< (atm :=>: av)) schT
->             (tm :$ A atm :=>: tv $$ A av :<: t $$ A av) as
-
-If the scheme has an explicit $\Pi$-binding, but we have no more eliminators,
-then we go under the binder and continue processing the scheme in order to
-insert any implicit arguments that might be there. We then have to reconstruct
-the overall type-term pair from the result.
+If the scheme has an explicit $\Pi$-binding and we have an argument,
+then we can push the expected type into the argument and carry on.
 
 >     handleSchemeArgs es  (SchExplicitPi (x :<: schS) schT)
->                              (tm :=>: tv :<: PI sd t) [] = do
->         let sv = eval (schemeToInTm schS) (fmap valueOf es, [])
->         tm :=>: tv <- eCompute
->             (PI sv (L $ K sigSetVAL) :>: do
+>                              (tm :<: PI sd t) (A a : as) = do
+>         atm <- subElab loc (sd :>: a)
+>         handleSchemeArgs (es :< atm) schT
+>             (tm $$ A atm :<: ev t $$ A atm) as
+
+
+If the scheme has an explicit $\Pi$-binding, but we have no more
+eliminators, then we go under the binder and continue processing the
+scheme in order to insert any implicit arguments that might be
+there. We then have to reconstruct the overall type-term pair from the
+result.
+
+>     handleSchemeArgs es  (SchExplicitPi (x :<: schS) schT)
+>                              (tm :<: PI sd t) [] = do
+>         tm2 <- eCompute
+>             (ARR sd sigSet :>: do
 >                 r <- eLambda x
->                 let rt = NP r
->                 handleSchemeArgs (es :< (rt :=>: rt)) schT
->                     (tm :$ A rt :=>: tv $$ A rt :<: t $$ A rt) []
+>                 let rt = r :$ B0
+>                 handleSchemeArgs (es :< rt) schT
+>                     (tm $$ A rt :<: ev t $$ A rt) []
 >             )
->         s' :=>: _ <- eQuote sv
->         let  atm  = tm ?? PIV x s' sigSetTM :$ A (NV 0)
->              rtm  = PAIR (PIV x s' (N (atm :$ Fst))) (LAV x (N (atm :$ Snd)))
->         return $ rtm :=>: evTm rtm
+>         return $ PAIR ((x, sd) ->> \ x -> wk tm2 :$ (B0 :< A x :< Hd))
+>                       (la x $ \ x -> wk tm2 :$ (B0 :< A x :< Tl))
 
-Otherwise, we probably have a scheme with an explicit $\Pi$-binding but an
-eliminator other than application, so we give up and throw an error. 
+Otherwise, we probably have a scheme with an explicit $\Pi$-binding
+but an eliminator other than application, so we give up and throw an
+error.
 
->     handleSchemeArgs es sch (_ :=>: v :<: ty) as = throwError' $
->         err "handleSchemeArgs: cannot handle scheme" ++ errScheme sch ++
->         err "with neutral term" ++ errTyVal (v :<: ty) ++
->         err "and eliminators" ++ map ErrorElim as
+>     handleSchemeArgs es sch (tm :<: ty) as = throwError' $
+>         err "handleSchemeArgs: cannot handle scheme " ++ -- errScheme sch ++
+>         err "with neutral term" ++ errTyTm (exp ty :>: tm)
+>         -- ++ err "and eliminators" ++ map ErrorElim as
 
-> -}
+
 
 
 The |handleArgs| function is a simplified version of |handleSchemeArgs|, for
