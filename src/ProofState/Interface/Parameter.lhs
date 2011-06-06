@@ -47,14 +47,14 @@ the cursor while working on a goal.
 >     tip <- getDevTip
 >     case tip of
 >       Unknown ty hk ->
->         case (ev ty) of
->           PI s t -> do
+>         case lambdable (ev ty) of
+>           (k, s, t) -> do
 >               -- Insert the parameter above the cursor
 >               l <- getDevLev
->               putEntryAbove $ EParam ParamLam x (ENil // s) l
+>               putEntryAbove $ EParam k x s l
 >               putDevLev (succ l)
 >               -- Update the Tip
->               let tipTy = t $$. (P (l, x, s) :$ B0)
+>               let tipTy = t (P (l, x, s) :$ B0)
 >               putDevTip $ Unknown tipTy hk
 >               (d,_) <- updateDefFromTip
 >               -- Return the reference to the parameter
