@@ -64,8 +64,8 @@ module, at which point everyone knows the news anyway.
 > runPropagateNews news es = do
 >     news' <- propagateNews news es
 >     unless (boring news') $ do
->         news' <- tellCurrentEntry news
->         optional (putNewsBelow news')
+>         news'' <- tellCurrentEntry news'
+>         optional (putNewsBelow news'')
 >         return ()
 
 
