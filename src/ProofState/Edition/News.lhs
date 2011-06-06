@@ -211,6 +211,16 @@ references remain as they are, as in |getLatest|.
 >           (Nothing, _)       -> pure $ (ENil :/ D d S0 (defOp d)) :$ fmap (A . wk) (bwdList (rewindStk ss' []))
 >     traverseTm (V i) = (| (V i :$ B0) |)
 >     traverseTm (P lst) = (| (| P (getBoyNews bull lst) |) :$ ~B0 |)
+>     traverseTm (Refl _X x) = do
+>       _X' <- traverseTm _X 
+>       x' <- traverseTm x
+>       return (Refl _X' x' :$ B0) 
+>     traverseTm (Coeh coeh _X _Y p x) = do
+>       _X' <- traverseTm _X
+>       _Y' <- traverseTm _Y 
+>       p' <- traverseTm p
+>       x' <- traverseTm x
+>       return (Coeh coeh _X' _Y' p' x' :$ B0) 
 >     traverseTm (g :/ t) = (| (traverseEnv g) :/ (traverseTm t) |)
 >
 >     traverseEnv :: Env {n} {m} -> Writer News (Env {n} {m})

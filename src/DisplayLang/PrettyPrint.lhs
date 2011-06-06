@@ -80,6 +80,9 @@ being with $\Pi$-types.
 >   pretty Ext      = const (kword KwExt)
 >   pretty Eq       = const (kword KwPEq)
 >   -- [/Feature = Equality]
+>   -- [Feature = Label]
+>   pretty Ret      = const (kword KwRet) 
+>   -- [/Feature = Label]
 >   pretty c        = error $ show c
 
 > {-
@@ -107,12 +110,6 @@ being with $\Pi$-types.
 >         (kword KwIMu <+> pretty ii ArgSize <+> pretty d ArgSize <+> pretty i ArgSize)
 >         AppSize
 >     -- [/Feature = IDesc]
->     -- [Feature = Labelled]
->     pretty (Label l t) = const (kword KwLabel <+>
->         pretty l maxBound <+> kword KwAsc <+> pretty t maxBound
->         <+> kword KwLabelEnd)
->     pretty (LRet x) = wrapDoc (kword KwRet <+> pretty x ArgSize) ArgSize
->     -- [/Feature = Labelled]
 >     -- [Feature = Prop]
 >     pretty Prop           = const (kword KwProp)
 >     pretty (Prf p)        = wrapDoc (kword KwPrf <+> pretty p AndSize) AppSize
@@ -215,6 +212,11 @@ than a $\lambda$-term is reached.
 >     pretty (DC NilE [])              = prettyEnumU DNILE
 >     pretty (DC ConsE [a , b])        = prettyEnumU (DCONSE a b)
 >     -- [/Feature = Enum]
+>     -- [Feature = Label]
+>     pretty (DC Label [t, l]) = const (kword KwLabel <+>
+>         pretty l maxBound <+> kword KwAsc <+> pretty t maxBound
+>         <+> kword KwLabelEnd)
+>     -- [Feature = Label]
 >     pretty (DC c [])       = pretty c
 >     pretty (DC c as)  = wrapDoc
 >         (pretty c AppSize <+> hsep (map (flip pretty ArgSize) as))

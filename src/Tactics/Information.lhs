@@ -62,7 +62,7 @@
 
 
 The |infoElaborate| command calls |elabInfer| on the given neutral display term,
-evaluates the resulting term, bquotes it and returns a pretty-printed string
+evaluates the resulting term and returns a pretty-printed string
 representation. Note that it works in its own module which it discards at the
 end, so it will not leave any subgoals lying around in the proof state.
 
@@ -85,7 +85,6 @@ representation of the resulting type.
 >  )
 
 
-> {-
 
 The |infoContextual| command displays a distilled list of things in
 the context, parameters if the argument is False or definitions if the
@@ -103,19 +102,23 @@ argument is True.
 >   where
 >     help :: BScopeContext -> Entries -> ProofState Doc
 >     help bsc B0 = return empty
->     help bsc (es :< EPARAM ref _ k _ _) | not gals = do
->         ty     <- bquoteHere (pty ref)
+>     help bsc (es :< EParam k s ty _) | not gals = do
 >         docTy  <- prettyPSAt (pred ArrSize) (SET :>: ty)
 >         d      <- help bsc es
->         return $ d $$ prettyBKind k (text (showRelName (christenREF bsc ref))
->                                               <+> kword KwAsc <+> docTy)
+>         return $ d $$ prettyBKind k (text s <+> kword KwAsc <+> docTy)
+
+>     {-
 >     help bsc (es :< EDEF ref _ _ _ _ _) | gals = do
 >         ty     <- bquoteHere $ removeShared (paramSpine es) (pty ref)
 >         docTy  <- prettyPS (SET :>: ty)
 >         d      <- help bsc es
 >         return $ d $$ (text (showRelName (christenREF bsc ref))
 >                                 <+> kword KwAsc <+> docTy)
+>     -}
+
 >     help bsc (es :< _) = help bsc es
+
+> {-
 
 >     removeShared :: Spine {TT} REF -> TY -> TY
 >     removeShared []       ty        = ty

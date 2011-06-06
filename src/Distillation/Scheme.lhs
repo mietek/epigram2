@@ -51,36 +51,36 @@ as well as the collected list of references we have made so far. It
 turns the |INTM| scheme into an a Display term scheme with relative
 names.
 
-> distillScheme ::  (Int, Bwd (Int, String, TY)) -> Scheme -> 
+> distillScheme :: [ EXP ] -> (Int, Bwd (Int, String, TY)) -> Scheme -> 
 >                       ProofState (DScheme, TY)
 
 On a ground type, there is not much to be done: |distill| does the
 distillation job for us.
 
-> distillScheme lps (SchType ty) = do
+> distillScheme bs lps (SchType ty) = do
 >     dty <- distill (SET :>: ev ty) lps
 >     return (SchType dty, ty)
 
 On an explicit $\Pi$, the domain is itself a scheme, so it needs to be
 distilled. Then, we go under the binder and distill the codomain.
 
-> distillScheme (l, ps) (SchExplicitPi (x :<: schS) schT) = do
+> distillScheme bs (l, ps) (SchExplicitPi (x :<: schS) schT) = do
 >     -- Distill the domain
->     (schS', sty) <- distillScheme (l, ps) schS
+>     (schS', sty) <- distillScheme bs (l, ps) schS
 >     -- Distill the codomain
->     (schT', tty) <- distillScheme (l+1, ps :< (l, x, sty)) schT
->     return (SchExplicitPi (x :<: schS') schT', partPiLift' (error "wook") (BV0 :<<<: (x, sty)) tty)
+>     (schT', tty) <- distillScheme bs (l+1, ps :< (l, x, sty)) schT
+>     return (SchExplicitPi (x :<: schS') schT', partPiLift' bs (BV0 :<<<: (x, sty)) tty)
 
 On an implicit $\Pi$, the operation is fairly similar. Instead of
 |distillScheme|-ing the domain, we proceed as for ground types --- it
 is one. 
 
-> distillScheme (l, ps) (SchImplicitPi (x :<: s) schT) = do
+> distillScheme bs (l, ps) (SchImplicitPi (x :<: s) schT) = do
 >     -- Distill the domain
 >     s' <- distill (SET :>: ev s) (l, ps)
 >     -- Distill the codomain
->     (schT', t') <- distillScheme (l+1, ps :< (l, x, s)) schT
->     return (SchImplicitPi (x :<: s') schT', partPiLift' (error "wook") (BV0 :<<<: (x, s)) t')
+>     (schT', t') <- distillScheme bs (l+1, ps :< (l, x, s)) schT
+>     return (SchImplicitPi (x :<: s') schT', partPiLift' bs (BV0 :<<<: (x, s)) t')
 
 
 \subsection{ProofState interface}
@@ -91,7 +91,11 @@ ProofState usage.
 > distillSchemePS :: Scheme -> ProofState DScheme
 > distillSchemePS sch = do
 >     lev <- getDevLev
->     fst <$> distillScheme (lev, B0) sch
+>     es <- getInScope
+>     fst <$> distillScheme (boys es []) (lev, B0) sch
+>   where boys B0 bs = bs
+>         boys (es :< EParam k s t l) bs = boys es ((P (l, s, t) :$ B0) : bs)
+>         boys (es :< _) bs = boys es bs
 >
 > prettySchemePS :: Scheme -> ProofState Doc
 > prettySchemePS sch = do

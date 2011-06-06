@@ -82,8 +82,13 @@
 >   Hd :: Elim t
 >   Tl :: Elim t
 >   Out :: Elim t
+>   -- [Feature = Equality]
 >   QA :: t -> t -> t -> Elim t   -- applies an equation between functions to equal arguments
 >   Sym :: Elim t                 -- symmetry of equality
+>   -- [/Feature: = Equality]
+>   -- [Feature: = Label]
+>   Call :: t -> Elim t
+>   -- [/Feature: = Label]
 >   deriving (Show, Eq, Foldable, Traversable, Functor)
 
 > instance HalfZip Elim where
@@ -127,6 +132,10 @@
 >   Ze     :: Can
 >   Su     :: Can 
 >   -- [/Feature = Enum]
+>   -- [Feature = Label]
+>   Label  :: Can
+>   Ret    :: Can
+>   -- [/Feature = Label]
 
 >   deriving (Eq, Show)
 
@@ -164,6 +173,10 @@
 > pattern ZE         = Ze :- []
 > pattern SU n       = Su :- [n]
 >   -- [/Feature = Enum]
+>   -- [Feature = Label]
+> pattern LABEL t l  = Label :- [t, l]
+> pattern RET x      = Ret :- [x]
+>   -- [/Feature = Label]
 
 > data Operator :: {Part, Status} -> * where
 >   Eat    :: Maybe String -> Operator {p, s} -> Operator {Body, s'}
@@ -414,6 +427,9 @@
 > apply {s} (Ext :- [f]) Sym = Ext :- [la "a" $ \ a -> la "b" $ \ b -> la "q" $ \ q ->
 >   nix f :$ (B0 :< A b :< A a :< A (V Fz {- q, yuk -} :$ (B0 :< Sym)) :< Sym)]
 > -- [/Feature = Eq]
+> -- [Feature = Label]
+> apply {s} (RET t) (Call l) = eval {s} ENil t
+> -- [/Feature = Label]
 > apply {s} (h :$ ss) a = h :$ (ss :< fmap exp a)
 > apply {Exp} (g :/ t) a = (g :/ t) :$ (B0 :< fmap exp a)
 > apply {s} x a = error $ show x ++ " $$ " ++ show a

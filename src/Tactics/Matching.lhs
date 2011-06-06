@@ -113,9 +113,6 @@ algorithm. Really we should do proper higher-order matching.}
 > matchValue' lev zs (cty :- asty :>: (cs :- ass, ct :- tas)) = 
 >     throwError' $ err "matchValue: unmatched constructors!"
 
-> matchValue' lev zs (_ :>: (s@(D def ss op), t@(D def' ss' op'))) = 
->  undefined --  matchNeutral lev zs s t >> return ()
-
 > matchValue' lev zs (_ :>: (P (l,n,_T) :$ as, hb :$ bs)) = do 
 >     rs <- get
 >     let mabs = trail $ bwdZipWith halfZip as bs 
@@ -140,6 +137,14 @@ algorithm. Really we should do proper higher-order matching.}
 >       Nothing -> throwError' $ err "matchValue: mismatched Elim"
 >       Just ab -> return ab
 >     matchSpine lev zs (defTy adef :>: D adef S0 (defOp adef)) ab     
+
+> matchValue' lev zs (_ :>: (s@(D def ss op), t@(D def' ss' op'))) | 
+>    def == def' = matchSpine lev zs 
+>                     (defTy def :>: D def S0 (defOp def)) 
+>                                    (zipWith (\x y -> A (x,y)) 
+>                                      (rewindStk ss [])
+>                                      (rewindStk ss' [])) >> return ()
+
 
 > matchValue' lev zs (ty :>: (v, w)) | (equal lev (exp ty :>: (exp v, exp w))) = return ()
 

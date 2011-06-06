@@ -38,8 +38,9 @@
 > import DisplayLang.Name
 > import DisplayLang.PrettyPrint
 
+> import Tactics.Matching
+
 < import Tactics.PropositionSimplify
-< import Tactics.Matching
 < import Tactics.Unification
 
 > import Elaboration.ElabProb
@@ -54,6 +55,7 @@
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
 > import Kit.Trace
+> import Kit.NatFinVec
 
 
 %endif
@@ -342,23 +344,22 @@ If these strategies do not match or fail to solve the problem, we just
 create a hole.
 
 > runElabHope :: WorkTarget -> VAL -> ProofState (EXP, ElabStatus)
-> runElabHope wrk ONE                = return (ZERO, ElabSuccess)
+> runElabHope wrk ONE             = return (ZERO, ElabSuccess)
 
 > {-
 > runElabHope wrk (PRF p)             = simplifyProof wrk p
-> runElabHope wrk v@(LABEL (N l) ty)  = seekLabel wrk l ty <|> lastHope wrk v
 > -}
 
-> runElabHope wrk ty                  = lastHope wrk ty
+> runElabHope wrk v@(LABEL ty l)  = seekLabel wrk l ty <|> lastHope wrk v
+> runElabHope wrk ty              = lastHope wrk ty
 
-> {-
 
 \subsubsection{Hoping for labelled types}
 
 If we are looking for a labelled type (e.g.\ to make a recursive call), we
 search the hypotheses for a value with the same label.
 
-> seekLabel :: WorkTarget -> NEU -> VAL -> ProofState (INTM :=>: VAL, ElabStatus)
+> seekLabel :: WorkTarget -> EXP -> TY -> ProofState (EXP, ElabStatus)
 > seekLabel wrk label ty = do
 >     es <- getInScope
 >     seekOn es
@@ -368,13 +369,12 @@ The traversal of the hypotheses is carried by |seekOn|. It searches
 parameters and hands them to |seekIn|.
 
 >       seekOn B0                                    = do
->           label' <- bquoteHere label
->           s <- prettyHere (ty :>: N label')
+>           s <- prettyPS (ty :>: label)
 >           proofTrace $ "Failed to resolve recursive call to "
 >                            ++ renderHouseStyle s
 >           (|)
->       seekOn (es' :< EPARAM param _ ParamLam _ _)  = 
->           seekIn B0 (P param) (pty param) <|> seekOn es'
+>       seekOn (es' :< EParam ParamLam s t l)  = undefined 
+>           seekIn es' B0 (P (l, s, t) :$ B0) (ev t) <|> seekOn es'
 >       seekOn (es' :< _)                            =    seekOn es'
 
 Then, |seekIn| tries to match the label we are looking for with an
@@ -382,12 +382,17 @@ hypothesis we have found. Recall that a label is a telescope
 targetting a label, hence we try to peel off this telescope to match
 the label. 
 
->       seekIn :: Bwd REF -> EXTM -> VAL -> ProofState (INTM :=>: VAL, ElabStatus)
+>       seekIn :: Int -> Entries -> Bwd (Int, String, TY) -> EXP -> 
+>                 VAL -> ProofState (EXP, ElabStatus)
 
 On our way to the label, we instantiate the hypotheses with fresh references.
 
->       seekIn rs tm (PI s t) = freshRef (fortran t :<: s) $ \ sRef ->
->           seekIn (rs :< sRef) (tm :$ A (NP sRef)) (t $$ A (pval sRef))
+>       seekIn lev es rs tm (PI s t) = 
+>         let dlst = (lev, fortran "x" [ev t] undefined, s)
+>         in  seekIn (lev + 1) es (rs :< dlst) (tm $$. (P dlst :$ B0)) 
+>                                              (ev (t $$. (P dlst :$ B0)))
+
+> {-
 
 We might have to go inside branches (essentially finite $\Pi$-types).
 
@@ -398,20 +403,28 @@ We might have to go inside branches (essentially finite $\Pi$-types).
 >               seekIn (rs :< eRef) (switchOp :@ [e', NP eRef, p', N tm])
 >                   (p $$ A (pval eRef))
 
+> -}
+
 We have reached a label! The question is then ``is this the one we are looking
 for?'' First we call on the matcher (see section~\ref{subsec:Tactics.Matching})
 to find values for the fresh references, then we generate a substitution from
 these values and apply it to the call term.
 
->       seekIn rs tm (LABEL (N foundLabel) u) = do
->           ss <- execStateT (matchNeutral B0 foundLabel label) (fmap (, Nothing) rs)
->           (xs, vs)  <- processSubst ss
->           let c = substitute xs vs (N tm)
->           return (c :=>: evTm c, ElabSuccess)
+>       seekIn lev es rs tm (LABEL u foundLabel) | equal lev (SET :>: (ty,u)) =
+>         do
+>           ss <- execStateT (matchValue lev B0 
+>                     (u :>: (ev foundLabel, ev label))) (fmap (, Nothing) rs)
+>           ss'  <- processSubst (boys es []) ss 
+>           return ((Just ss', INil) :/ tm, ElabSuccess)
 
 If, in our way to the label the peeling fails, then we must give up.
 
->       seekIn rs tm ty = (|)
+>       seekIn _ _ _ _ _ = (|)
+
+>       boys :: Entries -> [EXP] -> [EXP]
+>       boys B0 bs = bs
+>       boys (es :< EParam _ s t l) bs = boys es (P (l, s, t) :$ B0 : bs)
+>       boys (es :< _) bs = boys es bs
 
 
 To generate a substitution, we quote the value given to each reference and
@@ -420,19 +433,17 @@ is unconstrained by the matching problem, we hope for a solution.
 \adam{we could do some dependency analysis here to avoid cluttering the proof
 state with hopes that we don't make use of.}
 
->       processSubst :: MatchSubst -> ProofState (Bwd (REF :<: INTM), Bwd INTM)
->       processSubst B0            = return (B0, B0)
->       processSubst (rs :< (r, Just t))  = do
->           (xs, vs)  <- processSubst rs
->           ty        <- bquoteHere (pty r)
->           tm        <- bquoteHere t
->           return (xs :< (r :<: substitute xs vs ty), vs :< substitute xs vs tm)
->       processSubst (rs :< (r, Nothing))  = do
->           (xs, vs)  <- processSubst rs
->           ty        <- bquoteHere (pty r)
->           let ty' = substitute xs vs ty
->           (tm :=>: _, _)  <- runElabHope WorkElsewhere (evTm ty')
->           return (xs :< (r :<: ty'), vs :< tm)
+>       processSubst :: [EXP] -> MatchSubst -> ProofState [EXP]
+>       processSubst bs B0           = return bs
+>       processSubst bs (rs :< (_, Just t))  = do
+>           ss  <- processSubst bs rs
+>           return (ss ++ [ (Just ss, INil) :/ t ])
+>       processSubst bs (rs :< ((_,_,ty), Nothing))  = do
+>           ss  <- processSubst bs rs
+>           (tm, _)  <- runElabHope WorkElsewhere (ev ((Just ss, INil) :/ ty))
+>           return (ss ++ [tm])
+
+> {- 
 
 \subsubsection{Simplifying proofs}
 \label{subsubsec:Elaboration.RunElab.proofs}

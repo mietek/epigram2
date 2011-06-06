@@ -8,6 +8,7 @@
 
 > module Distillation.Distiller where
 
+> import Prelude hiding (exp)
 > import ShePrelude
 
 > import Control.Applicative
@@ -34,7 +35,6 @@
 > import Kit.MissingLibrary 
 
 > import Text.PrettyPrint.HughesPJ (Doc)
-
 
 %endif
 
@@ -65,13 +65,15 @@
 >      (| DLK  (distill (ev (t (error "LKdistill")) :>: ev b) l)
 >      |)
 
-> distill (ty :>: h@(D d sd (Eat n o))) (l,ps) = 
->   case forlambdabletran (maybe "o" id n) ty of
->     Just (k, x, s, t) -> 
->       (| (DLAV x) (distill (ev (t (P (l, x, s) :$ B0)) 
->                             :>: mkD {Val} d (sd :<!: (P (l, x, s) :$ B0)) o) 
->                     (l + 1,ps:<(l,x,s)))
->       |)
+We don't always want to do this, but often do want to, go figure:
+
+< distill (ty :>: h@(D d sd (Eat n o))) (l,ps) = 
+<   case forlambdabletran (maybe "o" id n) ty of
+<     Just (k, x, s, t) -> 
+<       (| (DLAV x) (distill (ev (t (P (l, x, s) :$ B0)) 
+<                             :>: mkD {Val} d (sd :<!: (P (l, x, s) :$ B0)) o) 
+<                     (l + 1,ps:<(l,x,s)))
+<       |)
 
 
 > distill (ty :>: h@(D d sd _)) (l,ps) = do
@@ -81,9 +83,20 @@
 >   (| (DN (DP nom ::$ das)) |)
 
 > distill (ty :>: h :$ as) l = do
->     (dh, ty, ss) <- distillHead h l
->     das <- distillSpine (ev ty :>: (h :$ B0, ss ++ trail as)) l
+>     -- [Feature = Label
+>     let (h',as') = stripCall h as []
+>     -- [/Feature = Label]
+>     (dh, ty, ss) <- distillHead h as' l
+>     das <- distillSpine (ev ty :>: (ev h', ss)) l
 >     return $ DN (dh ::$ das)
+>     -- [Feature = Label
+>  where
+>     stripCall :: Tm {Head, s, Z} -> Bwd (Elim EXP) -> [Elim EXP] -> 
+>                  (EXP, [Elim EXP])
+>     stripCall h B0 as = (exp h :$ B0, as)
+>     stripCall _ (_ :< Call l) as = (l, as)  
+>     stripCall h (az :< a) as = stripCall h az (a : as)
+>     -- [/Feature = Label]
 
 > distill (ENUMT _E :>: tm) l | Just r <- findIndex (ev _E :>: tm) = return r
 >   where
@@ -114,25 +127,25 @@
 >   (| (distill (ev s :>: ev a) l) : (distillCan (ev (t $$ A a) :>: as) l) |)
 
 
-> distillHead :: Tm {p, s, Z} -> (Int,Bwd (Int, String, TY)) ->  ProofState (DHead RelName, TY, [Elim EXP])
-> distillHead (P (l', n, s)) (l,es) = do
+> distillHead :: Tm {p, s, Z} -> [ Elim EXP ] -> (Int,Bwd (Int, String, TY)) ->  ProofState (DHead RelName, TY, [Elim EXP])
+> distillHead (P (l', n, s)) as (l,es) = do
 >   r <- unresolveP (l', n, s) es 
->   return (DP r, s, [])
-> distillHead (D def ss op)  (l,es) = do
->   (nom, ty, as) <- unresolveD def es (bwdList $ map A $ rewindStk ss [])
->   return (DP nom, maybe (defTy def) id ty, as)
+>   return (DP r, s, as)
+> distillHead (D def ss op) as (l,es) = do
+>   (nom, ty, as') <- unresolveD def es ((bwdList ((map A $ rewindStk ss []) ++ as)))
+>   return (DP nom, maybe (defTy def) id ty, as')
 
 > -- [Feature = Equality]
-> distillHead (Refl _T t) l = do
+> distillHead (Refl _T t) as l = do
 >   _T' <- distill (SET :>: ev _T) l
 >   t' <- distill (ev _T :>: ev t) l
->   (| (DRefl _T' t', PRF (EQ _T t _T t), []) |)
-> distillHead (Coeh coeh _S _T q s) l = do
+>   (| (DRefl _T' t', PRF (EQ _T t _T t), as) |)
+> distillHead (Coeh coeh _S _T q s) as l = do
 >     _S' <- distill (SET :>: ev _S) l
 >     _T' <- distill (SET :>: ev _T) l
 >     q' <- distill (PRF (EQ SET _S SET _T) :>: ev q) l
 >     s' <- distill (ev _S :>: ev s) l
->     (| (DCoeh coeh _S' _T' q' s', eorh coeh _S _T q s, []) |)
+>     (| (DCoeh coeh _S' _T' q' s', eorh coeh _S _T q s, as) |)
 >   where
 >     eorh :: Coeh -> EXP -> EXP -> EXP -> EXP -> EXP
 >     eorh Coe _ _T' _ _ = _T'
@@ -141,7 +154,7 @@
 >     
 > -- [/Feature = Equality]
 
-> distillHead t _ = throwError' $ err $ "distillHead: barf " ++ show t
+> distillHead t _ _ = throwError' $ err $ "distillHead: barf " ++ show t
 
 
 > distillSpine :: VAL :>: (VAL, [Elim (Tm {Body, Exp, Z})]) -> 
@@ -176,6 +189,5 @@
 >
 > distillSpine (PRF _P :>: (tm, Sym : as)) l | EQ _S s _T t <- ev _P =
 >   (| (Sym :) (distillSpine (PRF (EQ _T t _S s) :>: (tm $$ Sym, as)) l) |)
-
 > -- [/Feature = Equality]
 > distillSpine (_ :>: (_, (t : _))) _  = throwError' (err $ show t)

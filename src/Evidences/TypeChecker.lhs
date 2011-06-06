@@ -57,9 +57,11 @@ here.
 > chk l (_T :>: (g, L g' x b)) = case lambdable (ev _T) of
 >   Just (_, _S, _T) -> chk (l + 1) (_T x' :>: (g <+< g' <:< x', b)) where
 >     x' = P (l, x, _S) :$ B0
->   _ -> throwError' $ err "lambda inhabiting non-canonical type"
-> chk l (_T :>: (g, LK b)) = case lambdable (ev _T) of
+>   _ -> throwError' $ err ("lambda inhabiting non-canonical type: " ++ 
+>                       (show $ ev _T))
+> chk l (_T :>: (g, LK b)) = case lambdable (ev _T) of 
 >   Just (_, _S, _T) -> chk l (_T undefined :>: (g, b)) 
+>   _ -> throwError' $ err ("klambda inhabiting non-canonical type")
 
 > chk l (_T :>: (g, t@(V _ :$ _))) = chk l (_T :>: (ENil, eval {Val} g t))
 > chk l (_T :>: (g, t@((g' :/ L _ _ _) :$ _))) = chk l (_T :>: (ENil, eval {Val} g t))
@@ -144,6 +146,11 @@ here.
 >     (PRF _P, Sym)  -> case ev _P of
 >       Eq :- [_X, x, _Y, y] -> spInf l (e $$ Sym :<: PRF (Eq :- [_Y, y, _X, x])) (g, as)
 >       _ -> throwError' $ err "spInf: symmetry on non-equation"
+>     -- [Feature = Label]
+>     (LABEL _T _, Call lab) -> do
+>       a <- chev l (_T :>: (g, lab)) 
+>       spInf l (e $$ Call a :<: _T) (g, as) 
+>     -- [/Feature = Label]
 >     _         -> throwError' $ err "spInf: bad"
 
 

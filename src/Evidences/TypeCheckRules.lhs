@@ -66,6 +66,11 @@
 >   (CONSE _ _, Ze) -> (| ONE |) 
 >   (CONSE _ e, Su) -> (| (ENUMT e *** ONE) |) 
 > -- [/Feature = Enum]
+> -- [Feature = Label]
+> canTy ((Set, []) :>: Label)          = 
+>   pure $ ("T", SET) -** \ _T -> _T *** ONE
+> canTy ((Label, [_T, _]) :>: Ret) = (| (_T *** ONE) |)
+> -- [/Feature = Label]
 
 > canTy _ = (|)
 

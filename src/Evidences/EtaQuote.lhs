@@ -94,7 +94,7 @@
 
 > etahQuote :: pi (n :: Nat) . Tm {Head, Val, Z} -> (Tm {Head, Val, n} :<: TY)
 > etahQuote {n} (P (l, x, s)) = case levi {n} l of
->   Nothing -> error "Dutch level overflow"
+>   Nothing -> P (l, x, s) :<: s
 >   Just i -> (V i :<: s)
 > etahQuote {n} (Refl _S s) = 
 >   Refl (exp $ etaQuoten {n} (SET :>: _S)) (exp $ etaQuoten {n} (ev _S :>: s)) 
@@ -108,8 +108,7 @@
 >  where eorh :: Coeh -> EXP
 >        eorh Coe = _S
 >        eorh Coh = PRF (EQ _S s _T (Coeh Coe _S _T q s :$ B0))
-> etahQuote {n} (D def ss op) = D def ss op 
->       :<: (defTy def $$$. (bwdList (rewindStk ss [])))
+> etahQuote {n} (D def S0 Hole) = D def S0 Hole :<: defTy def 
 > etahQuote {n} x = error $ ugly V0 x    
 
 > etaQuoteTEL :: pi (n :: Nat) . (VAL :>: [EXP]) -> [Tm {Body, Exp, n}]

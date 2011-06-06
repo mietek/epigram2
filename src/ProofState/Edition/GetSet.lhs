@@ -378,19 +378,19 @@ machinery. Perhaps it should move somewhere more logical.
 >     let ty = case tip of
 >                  Unknown t _        -> t
 >                  Defined (t :>: _)  -> t
->     es <- getEntriesAbove
->     inScope <- getInScope
->     let  lbinScope = boys es
->          binScope = boys inScope
->          (bs, ls) = blah binScope lbinScope
->          ty' = bwdVec (fmap (\(_, s, t) -> (s, t)) bs)
+>     les <- getEntriesAbove
+>     es <- getInScope
+>     let  lbs = boys les
+>          bs = boys es
+>          (ls, pis) = blah bs lbs
+>          ty' = bwdVec (fmap (\(_, s, t) -> (s, t)) ls)
 >                           (\ n ys -> piLift n ys) ty
->          lev = Data.Foldable.foldr (\_ -> (1+)) 0 bs
->          op =  tipToOp (trail (fmap (\(_,s,_) -> s) bs)) (trail (fmap (\x -> P x :$ B0) bs)) ls tip
+>          op =  tipToOp (trail (fmap (\(_,s,_) -> s) ls)) 
+>                        (trail (fmap (\x -> P x :$ B0) ls)) pis tip
 >          def' = DEF nom ty' op
 >     sch <- getCurrentScheme -- TODO: do we need to update this scheme?
 >     putCurrentEntry $ CDefinition def' sch
->     return (def', D def' S0 op $$$ fmap (\x -> A (P x :$ B0)) bs)
+>     return (def', D def' S0 op $$$ fmap (\x -> A (P x :$ B0)) ls)
 >  where 
 >    boys :: Entries -> Bwd (ParamKind, Int, String, TY)
 >    boys B0 = B0
@@ -404,7 +404,7 @@ machinery. Perhaps it should move somewhere more logical.
 >    blah bs _ =  (fmap (\(_,x,y,z) -> (x,y,z)) bs, B0)
 
 >    tipToOp :: [String] -> [ EXP ] -> Bwd (String, TY) -> Tip -> Operator {Body, Exp}
->    tipToOp i e f (Unknown _ _)         = eats i Hole
+>    tipToOp i e f (Unknown _ _)         = Hole
 >    tipToOp i e B0 (Defined (_ :>: tm))  = eats i $ Emit tm
->    tipToOp i e f (Defined (_ :>: tm))  = 
+>    tipToOp i e f (Defined (_ :>: tm))  =  
 >      eats i $ Emit (bwdVec f (\ n ys -> partPiLift {n} e ys) tm)

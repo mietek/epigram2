@@ -19,6 +19,7 @@
 
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
+> import Kit.NatFinVec
 
 > import ProofState.Structure.Developments
 > import ProofState.Structure.Entries
@@ -438,7 +439,7 @@ shared parameters to drop, and the scheme of the name (if there is one).
 > findParam l s (esus, es :< EDef d _ _) o | s == lastNom (defName d) =
 >   findParam l s (esus, es) (o+1)
 > findParam l s (esus, es :< EParam k s' t' l') o | l == l' = 
->   (| [(s,Rel o)] |)
+>   (| [(s',Rel o)] |)
 > findParam l s (esus, es :< EParam k s' t' l') o | s == s' = 
 >   findParam l s (esus, es) (o+1)
 > findParam l s (esus, es :< _) o = findParam l s (esus, es) o
@@ -457,8 +458,8 @@ shared parameters to drop, and the scheme of the name (if there is one).
 >   (nn , os , ns) <- maybe (return (failNom (defName d), Nothing, trail tsp)) return $
 >     case partNoms (defName d) (mesus,mes) [] B0 of
 >       (Just (xs, Just (top, nom, sp, es))) -> do
->         let  (top', nom', i, fsc) = maybe (top, nom, B0, bToF (mesus,mes) ) id $ matchUp (xs :<
->                                               (top, nom, sp, (F0, F0))) tsp
+>         let  (top', nom', i, fsc) = fromJust $ matchUp (xs :<
+>                           (top, nom, sp, (F0, F0))) (fst $ foo 0 (trail tsp))
 >              mnom = take (length nom' - length nom) nom'
 >         (tn,  tms)  <- nomTop top' (mesus, mes <+> les)
 >         (an,  ams)  <- nomAbs mnom fsc
@@ -477,7 +478,10 @@ shared parameters to drop, and the scheme of the name (if there is one).
 >       ty <- spInf lev (D d S0 (defOp d) :<: defTy d) (ENil, trail i)
 >       return (nn, Just ty, ns)
 
-
+> foo :: Int -> [ Elim EXP ] -> (Int, Bool)
+> foo i [] = (i, True)
+> foo i (A a : as) | P (l, _, _) :$ B0 <- ev a , i == l = foo (i + 1) as
+> foo i _ = (i, False) 
 
 \paragraph{Parting the noms}
 
@@ -518,10 +522,10 @@ back until the spine from the gibberish is a prefix of the given spine,
 then return the gibberish.
 
 > matchUp :: Bwd (Name, Name, Bwd (Elim EXP), FScopeContext) 
->              -> Bwd (Elim EXP) 
+>              -> Int 
 >              -> Maybe (Name, Name, Bwd (Elim EXP), FScopeContext)
 > matchUp (xs :< (x, nom, sp, fsc)) tas
->     | all id (bwdZipWith compareE sp tas)  = Just (x, nom, sp, fsc)
+>     | bwdLength sp <= tas  = Just (x, nom, sp, fsc)
 > matchUp (xs :< _) tas      = matchUp xs tas
 > matchUp _ _ = Nothing
 

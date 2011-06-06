@@ -8,6 +8,10 @@
 
 > module ProofState.Interface.Parameter where
 
+> import Prelude hiding (exp)
+
+> import Control.Monad.Error
+
 > import Kit.MissingLibrary
 > import Kit.NatFinVec
 > import Kit.BwdFwd
@@ -43,15 +47,16 @@ the cursor while working on a goal.
 >     tip <- getDevTip
 >     case tip of
 >       Unknown ty hk ->
->         case lambdable (ev ty) of
->           Just (paramKind, s, t) -> do
+>         case (ev ty) of
+>           PI s t -> do
 >               -- Insert the parameter above the cursor
 >               l <- getDevLev
->               putEntryAbove $ EParam paramKind x s l
+>               putEntryAbove $ EParam ParamLam x (ENil // s) l
 >               putDevLev (succ l)
 >               -- Update the Tip
->               let tipTy = t $ P (l, x, s) :$ B0
+>               let tipTy = t $$. (P (l, x, s) :$ B0)
 >               putDevTip $ Unknown tipTy hk
+>               (d,_) <- updateDefFromTip
 >               -- Return the reference to the parameter
 >               return $ P (l, x, s)
 >           _  -> throwError' $ err "lambdaParam: goal is not a pi-type or all-proof."
@@ -87,7 +92,7 @@ do.
 > piParam :: (String :<: EXP) -> ProofState (Tm {Head, s, Z})
 > piParam (s :<: ty) = do
 >   chkPS $ SET :>: ty
->   piParamUnsafe $ s :<: (ENil // ty)
+>   piParamUnsafe $ s :<: ty
 
 The variant |piParamUnsafe| will not check that the proposed type is
 indeed a type, so it requires further attention.

@@ -129,12 +129,10 @@ Here we have a very basic command-driven interface to the proof state monad.
 >   where
 >     showGoal :: TY -> ProofState String
 
-> {-
 >     showGoal ty@(LABEL _ _) = do
 >         h <- infoHypotheses
->         s <- prettyHere . (SET :>:) =<< bquoteHere ty
+>         s <- prettyPS (SET :>: ty)
 >         return $ h ++ "\n" ++ "Programming: " ++ show s ++ "\n"
-> -}
 
 >     showGoal ty = do
 >         ty <- distillPS (SET :>: ty)
@@ -506,7 +504,7 @@ Import more tactics from an aspect:
 >         "inscope"  -> infoInScope
 >         "context"  -> return "" -- infoContext 
 >         "dump"     -> infoDump
->         "hyps"     -> return "" -- infoHypotheses
+>         "hyps"     -> infoHypotheses
 >         "state"    -> prettyProofState
 >         _          -> return "show: please specify exactly what to show."
 >       )

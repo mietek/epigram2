@@ -33,6 +33,7 @@
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
 
+
 %endif
 
 \subsection{Tools for writing elaborators}
@@ -417,9 +418,6 @@ its type.
 >     handleArgs (tm :<: ty) [] = do
 >         return $ PAIR (exp ty) tm
 
-If we have a term of a labelled type being eliminated with |Call|, we need to
-attach the appropriate label to the call and continue with the returned type.
-
 >     handleArgs (tm :<: ty) (A a : as) | 
 >            Just (_, _S, _T) <- lambdable ty = do
 >         a' <- subElab loc (_S :>: a)  
@@ -449,18 +447,12 @@ attach the appropriate label to the call and continue with the returned type.
 >                        ErrorTm (Just SET :>: exp ty) ,
 >                        StrMsg $ foldr (++) "" (map show as) ]
 
-> {-
->     handleArgs (t :=>: v :<: LABEL l ty) (Call _ : as) = do
->         l' :=>: _ <- eQuote l
->         handleArgs (t :$ Call l' :=>: v $$ Call l :<: ty) as
+If we have a term of a labelled type being eliminated with |Call|, we need to
+attach the appropriate label to the call and continue with the returned type.
 
-For all other eliminators, assuming the type is canonical we can use |elimTy|.
+>     handleArgs (t :<: LABEL ty l) (Call _ : as) = do
+>         handleArgs (t $$ Call l :<: ev ty) as
 
->     handleArgs (t :=>: v :<: C cty) (a : as) = do
->         (a', ty') <- elimTy (subElab loc) (v :<: cty) a
->         handleArgs (t :$ fmap termOf a' :=>: v $$ fmap valueOf a' :<: ty') as
-
-> -}
 
 Otherwise, we cannot do anything apart from waiting for the type to become
 canonical, so we suspend elaboration and record the current problem.

@@ -72,7 +72,8 @@ Section~\ref{subsec:Tactics.Elimination.analysis}.
 >     chkPS (SET :>: ty)
 >     CModule _ <- getCurrentEntry
 >     putDevTip $ Unknown ty Waiting
->     (_, t) <- updateDefFromTip
+>     (d, t) <- updateDefFromTip
+>     chkPS (SET :>: defTy d)    
 >     return t
 >  where 
 >    boys :: Entries -> Bwd (Int, String, TY)
