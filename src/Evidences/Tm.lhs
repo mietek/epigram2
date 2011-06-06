@@ -313,13 +313,13 @@
 > (<:<) :: Env {m} {n} -> EXP -> Env {m} {S n}
 > (gl, gi) <:< e = (gl, gi :<<: e)
 
-> (<+<) :: Env {m} {n} -> Env {n} {o} -> Env {m} {o}
+> (<+<) :: Env {Z} {n} -> Env {n} {o} -> Env {Z} {o}
 > (gl, gi) <+< (gl', gi') = (gln, gi <<< gi')
 >   where 
->    (<<<) :: forall m n o. IEnv {m, n} -> IEnv {n, o} -> IEnv {m, o}
+>    (<<<) :: forall m n o. IEnv {Z, n} -> IEnv {n, o} -> IEnv {Z, o}
 >    g <<< INix = INix
 >    g <<< INil = g
->    g <<< (g' :<<: e) = (g <<< g') :<<: e
+>    g <<< (g' :<<: e) = (g <<< g') :<<: ((gl, INil) :/ e)
 >    gln = case (gl, gl') of
 >     (_, Just y) -> Just (map ((gl, gi) :/) y)
 >     (Just x, _) -> Just x
