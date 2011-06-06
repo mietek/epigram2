@@ -179,3 +179,6 @@
 > bwdVec (xs :< x) f = bwdVec xs (\ n ys -> f {S n} (ys :<<<: x))
 
 
+> vlength :: Vec {n} a -> Int
+> vlength V0 = 0
+> vlength (_ :>>: xs) = 1 + vlength xs

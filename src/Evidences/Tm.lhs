@@ -630,7 +630,7 @@ by |lambdable|:
 > ugly xs (h :$ B0) = ugly xs h
 > ugly xs (h :$ es) = "(" ++ ugly xs h ++ foldMap (\ e -> " " ++ uglyElim xs e) es ++ ")"
 > ugly xs (V i) = xs !>! i
-> ugly xs (P (i, s, t)) = s
+> ugly xs (P (i, s, t)) = s ++ "(P" ++ show i ++ ")"
 > ugly xs (Refl _S s) = "(refl " ++ ugly xs _S ++ " " ++ ugly xs s ++ ")"
 > ugly xs (Coeh Coe _S _T _Q s) =
 >   "(coe " ++ ugly xs _S ++ " " ++ ugly xs _T ++ " " ++ ugly xs _Q ++ " " ++ ugly xs s ++ ")"
@@ -638,8 +638,27 @@ by |lambdable|:
 >   "(coe " ++ ugly xs _S ++ " " ++ ugly xs _T ++ " " ++ ugly xs _Q ++ " " ++ ugly xs s ++ ")"
 > ugly xs (D d S0 _) = "DEF: " ++ show (defName d)
 > ugly xs (D d es _) = "(" ++ show (defName d) ++ foldMap (\ e -> " " ++ ugly V0 e) (rewindStk es []) ++ ")"
-> ugly xs (ENil :/ e) = ugly xs e
+> ugly xs (g :/ e) = uglyEnv xs g e
 > ugly _ _ = "???"
+
+> uglyEnv :: Vec {n} String -> Env {n} {m} -> Tm {p, s, m} -> String
+> uglyEnv xs (Nothing, INil)  e = "((Nothing, INil) :/ " ++ ugly xs e ++ ")"
+> uglyEnv xs (Nothing, INix)  e = "((Nothing, INix) :/ " ++ ugly V0 e ++ ")"
+> uglyEnv xs (Just as, INix)  e = "((Just " ++ uglyLEnv xs as ++ ", INix) :/ " ++ ugly V0 e ++ ")"
+> uglyEnv xs (Just as, INil)  e = "((Just " ++ uglyLEnv xs as ++ ", INil) :/ " ++ ugly xs e ++ ")"
+> uglyEnv xs (Nothing, ie)     e = "((Nothing, " ++ s  ++ ") :/ " ++ ugly ys e ++ ")"
+>   where (s, ys) = uglyIEnv xs ie
+> uglyEnv xs (Just as, ie)     e = "((Just " ++ uglyLEnv xs as ++", " ++ s ++ ") :/ " ++ ugly ys e ++ ")"
+>   where (s, ys) = uglyIEnv xs ie
+
+> uglyIEnv :: Vec {n} String -> IEnv {n, m} -> (String, Vec {m} String)
+> uglyIEnv xs INil        = ("INil", xs)
+> uglyIEnv xs INix        = ("INix", V0)
+> uglyIEnv xs (g :<<: t)  = (s ++ " :<<: " ++ ugly V0 t, ("V" ++ show (vlength ys) :>>: ys))
+>   where (s, ys) = uglyIEnv xs g
+
+> uglyLEnv :: Vec {n} String -> [Tm {Body, Exp, n}] -> String
+> uglyLEnv xs as = "[" ++ intercalate "," (map (ugly xs) as) ++ "]"
 
 > uglyElim :: Vec {n} String -> Elim (Tm {p, s, n}) -> String
 > uglyElim v (A e) = ugly v e
