@@ -48,7 +48,7 @@ the cursor while working on a goal.
 >     case tip of
 >       Unknown ty hk ->
 >         case lambdable (ev ty) of
->           (k, s, t) -> do
+>           Just (k, s, t) -> do
 >               -- Insert the parameter above the cursor
 >               l <- getDevLev
 >               putEntryAbove $ EParam k x s l
