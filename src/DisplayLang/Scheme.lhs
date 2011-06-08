@@ -4,9 +4,11 @@
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE TypeOperators, GADTs, KindSignatures #-}
+> {-# LANGUAGE TypeOperators, GADTs, KindSignatures, RankNTypes #-}
 
 > module DisplayLang.Scheme where
+
+> import ShePrelude
 
 > import Control.Applicative
 > import Data.Foldable hiding (foldl)
@@ -89,14 +91,12 @@ Given a scheme, we can extract the names of its $\Pi$s:
 
 We can also convert a |Scheme| into a |Tm|:
 
-> {-
-> schemeToType :: Sch {n} -> Tm {Body, Exp, n}
-> schemeToType (SchType ty) = ty
-> schemeToType (SchExplicitPi (x :<: s) t) = 
->     Pi :- [schemeToType s, L ENil x (schemeToType t)]
-> schemeToType (SchImplicitPi (x :<: s) t) =
->     Pi :- [s, L ENil x (schemeToType t)]
-> -}
+> schemeToType :: pi (n :: Nat). [ EXP ] -> Scheme -> Tm {Body, Exp, n}
+> schemeToType {n} es (SchType ty) = partCapture {n} es ty
+> schemeToType {n} es (SchExplicitPi (x :<: s) t) = 
+>     Pi :- [schemeToType {n} es s, L ENil x (schemeToType {S n} es t)]
+> schemeToType {n} es (SchImplicitPi (x :<: s) t) =
+>     Pi :- [partCapture {n} es s, L ENil x (schemeToType {S n} es t)]
 
 
 \subsection{Unlifting schemes}

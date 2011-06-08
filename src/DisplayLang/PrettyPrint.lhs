@@ -163,9 +163,9 @@ The |Elim| functor is straightforward.
 >     pretty (A t)  = pretty t
 >     pretty Out    = const (kword KwOut)
 >     -- import <- ElimPretty
->     -- [Feature = Labelled]
->     -- pretty (Call _) = const (kword KwCall)
->     -- [/Feature = Labelled]
+>     -- [Feature = Label]
+>     pretty (Call _) = const (kword KwCall)
+>     -- [/Feature = Label]
 >     -- [Feature = Sigma]
 >     pretty Hd = const (kword KwFst)
 >     pretty Tl = const (kword KwSnd)

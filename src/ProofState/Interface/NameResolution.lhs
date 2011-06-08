@@ -40,6 +40,7 @@
 > import Evidences.DefinitionalEquality
 > import Evidences.TypeChecker
 
+
 %endif
 
 
@@ -447,15 +448,17 @@ shared parameters to drop, and the scheme of the name (if there is one).
 
 
 > unresolveD :: DEF -> Bwd (Int, String, TY) -> Bwd (Elim EXP) -> 
->               ProofState (RelName, Maybe TY, [ Elim EXP ])
+>               ProofState (RelName, Maybe TY, [ Elim EXP ], Maybe Scheme)
 > unresolveD d ps sp 
 >     | ("PRIM",0) == head (defName d) =
->   return $ (map (\(a,b) -> (a, Rel 0)) $ tail (defName d), Just $ defTy d, trail sp) 
+>   return $  (  map (\(a,b) -> (a, Rel 0)) $ tail (defName d)
+>             ,  Just $ defTy d, trail sp, Nothing) 
 > unresolveD d ps tsp = do
 >   lev <- getDevLev
 >   let les = fmap (\ (l, s, t) -> EParam ParamLam s t l) ps
 >   (mesus, mes) <- gets inBScope
->   (nn , os , ns) <- maybe (return (failNom (defName d), Nothing, trail tsp)) return $
+>   (nn , os , ns, ms) <- 
+>       maybe (return (failNom (defName d), Nothing, trail tsp, Nothing)) return $
 >     case partNoms (defName d) (mesus,mes) [] B0 of
 >       (Just (xs, Just (top, nom, sp, es))) -> do
 >         let  (top', nom', i, fsc) = fromJust $ matchUp (xs :<
@@ -468,15 +471,20 @@ shared parameters to drop, and the scheme of the name (if there is one).
 >                        (True,      True)   -> tms
 >                        (True,      False)  -> ams
 >                        (False,     _)      -> rms
->         return ((tn : an) ++ rn, Just i , drop (bwdLength i) (trail tsp))
+>         return ((tn : an) ++ rn, Just i , drop (bwdLength i) (trail tsp), fmap (stripScheme (bwdLength i)) ms)
+>       (Just (xs, _)) -> do
+>         let (top', nom', i, fsc) = fromJust $ matchUp xs (fst $ foo 0 $ trail tsp) 
+>         (tn, tms) <- nomTop top' (mesus, mes <+> les)
+>         (an, ams) <- nomAbs nom' fsc
+>         return ((tn : an), Just i,drop (bwdLength i) (trail tsp), fmap (stripScheme (bwdLength i)) (if null nom' then tms else ams))
 
 >       _ -> Nothing
 
 >   case os of
->     Nothing -> return (nn, Nothing, ns)
+>     Nothing -> return (nn, Nothing, ns, Nothing)
 >     Just i -> do
 >       ty <- spInf lev (D d S0 (defOp d) :<: defTy d) (ENil, trail i)
->       return (nn, Just ty, ns)
+>       return (nn, Just ty, ns, ms)
 
 > foo :: Int -> [ Elim EXP ] -> (Int, Bool)
 > foo i [] = (i, True)

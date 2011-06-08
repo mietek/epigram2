@@ -77,24 +77,29 @@ We don't always want to do this, but often do want to, go figure:
 
 
 > distill (ty :>: h@(D d sd _)) (l,ps) = do
->   (nom, ty, as) <- unresolveD d ps (bwdList $ map A $ rewindStk sd [])
+>   (nom, ty, as, ms) <- unresolveD d ps (bwdList $ map A $ rewindStk sd [])
 >   let ty'  =  maybe (defTy d) id ty
 >   das <- distillSpine (ev ty' :>: (h, as)) (l,ps)
 >   (| (DN (DP nom ::$ das)) |)
 
+< distill (ty :>: h :$ as) l = do
+<     let (h',as') = stripCall h as []
+<     (dh, ty, ss) <- distillHead h as' l
+<     das <- distillSpine (ev ty :>: (ev h', ss)) l
+<     return $ DN (dh ::$ das)
+
+>     -- [Feature = Label]
 > distill (ty :>: h :$ as) l = do
->     -- [Feature = Label
 >     let (h',as') = stripCall h as []
->     -- [/Feature = Label]
->     (dh, ty, ss) <- distillHead h as' l
->     das <- distillSpine (ev ty :>: (ev h', ss)) l
+>     (dh, ty, ss) <- distillHead h' as' l
+>     das <- distillSpine (ev ty :>: (toBody h, ss)) l
 >     return $ DN (dh ::$ das)
->     -- [Feature = Label
 >  where
 >     stripCall :: Tm {Head, s, Z} -> Bwd (Elim EXP) -> [Elim EXP] -> 
->                  (EXP, [Elim EXP])
->     stripCall h B0 as = (exp h :$ B0, as)
->     stripCall _ (_ :< Call l) as = (l, as)  
+>                  (Tm {Head, Exp, Z}, [Elim EXP])
+>     stripCall h B0 as = (exp h, as)
+>     stripCall _ (_ :< Call l) as | hl :$ las <- ev l = 
+>       (exp hl, trail las ++ as)  
 >     stripCall h (az :< a) as = stripCall h az (a : as)
 >     -- [/Feature = Label]
 
@@ -132,7 +137,7 @@ We don't always want to do this, but often do want to, go figure:
 >   r <- unresolveP (l', n, s) es 
 >   return (DP r, s, as)
 > distillHead (D def ss op) as (l,es) = do
->   (nom, ty, as') <- unresolveD def es ((bwdList ((map A $ rewindStk ss []) ++ as)))
+>   (nom, ty, as', ms) <- unresolveD def es ((bwdList ((map A $ rewindStk ss []) ++ as)))
 >   return (DP nom, maybe (defTy def) id ty, as')
 
 > -- [Feature = Equality]
@@ -190,4 +195,4 @@ We don't always want to do this, but often do want to, go figure:
 > distillSpine (PRF _P :>: (tm, Sym : as)) l | EQ _S s _T t <- ev _P =
 >   (| (Sym :) (distillSpine (PRF (EQ _T t _S s) :>: (tm $$ Sym, as)) l) |)
 > -- [/Feature = Equality]
-> distillSpine (_ :>: (_, (t : _))) _  = throwError' (err $ show t)
+> distillSpine (_ :>: (_, (t : _))) _  = throwError' (err $ "dS: " ++ show t)

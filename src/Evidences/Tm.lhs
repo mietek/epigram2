@@ -646,7 +646,7 @@ by |lambdable|:
 > ugly xs (h :$ B0) = ugly xs h
 > ugly xs (h :$ es) = "(" ++ ugly xs h ++ foldMap (\ e -> " " ++ uglyElim xs e) es ++ ")"
 > ugly xs (V i) = xs !>! i
-> ugly xs (P (i, s, t)) = s ++ "(P" ++ show i ++ ")"
+> ugly xs (P (i, s, t)) = s ++ " (P " ++ show i ++ ")"
 > ugly xs (Refl _S s) = "(refl " ++ ugly xs _S ++ " " ++ ugly xs s ++ ")"
 > ugly xs (Coeh Coe _S _T _Q s) =
 >   "(coe " ++ ugly xs _S ++ " " ++ ugly xs _T ++ " " ++ ugly xs _Q ++ " " ++ ugly xs s ++ ")"
@@ -681,6 +681,7 @@ by |lambdable|:
 > uglyElim v Hd = "!"
 > uglyElim v Tl = "-"
 > uglyElim v Out = "%"
+> uglyElim v (Call e) = "<<Call " ++ ugly v e ++ ">>"
 
 > instance {:n :: Nat:} => Show (Tm {p, s, n}) where
 >   show t = ugly (fmap (\ i -> "v" ++ show i) vUpTo') t

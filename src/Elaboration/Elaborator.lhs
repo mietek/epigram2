@@ -11,6 +11,7 @@
 > import Control.Applicative
 > import Control.Monad.Identity
 > import Data.Traversable
+> import Data.Foldable
 
 > import Evidences.Tm
 > import Evidences.TypeChecker
@@ -45,6 +46,7 @@
 > import Kit.NatFinVec
 > import Kit.MissingLibrary
 
+> import Debug.Trace
 
 %endif
 
@@ -196,85 +198,72 @@ then convert the module into a goal with the scheme assigned.
 >     moduleToGoal ty
 >     putCurrentScheme sch'
 
-> {-
 
 
 Now we add a definition with the same name as the function being defined,
 to handle recursive calls. This has the same arguments as the function,
 plus an implicit labelled type that provides evidence for the recursive call.
 
->     CDefinition _ (mnom := HOLE _ :<: ty) _ _ _ <- getCurrentEntry
->     pn :=>: _ <- getFakeCurrentEntry 
->     let schCall = makeCall (P $ mnom := FAKE :<: ty) 0 sch'
+>     CDefinition def _ <- getCurrentEntry
+> 
+>     lev <- getDevLev
+>     -- pn :=>: _ <- getFakeCurrentEntry 
+>     let fake :: Tm {Head, Exp, Z} ; fake = D def S0 Hole
+>     let schCall = makeCall fake 0 B0 sch'
 >     us <- getParamsInScope
->     let schCallLocal = applyScheme schCall us
->     make (x :<: schemeToInTm schCallLocal)
+>     let schCallLocal = stripScheme lev schCall
+>     let ty = schemeToType {Z} (trail us) schCallLocal
+>     make (x :<: ty)
 >     goIn
 >     putCurrentScheme schCall
->     refs <- traverse lambdaParam (schemeNames schCallLocal)
->     giveOutBelow (N (P (last refs) :$ Call (N (pn $## map NP (init refs)))))
+>     let noms = schemeNames schCallLocal
+>     traverse lambdaParam noms
+>     us' <- getParamsInScope
+>     let refs' :: Bwd (Elim EXP) ; refs' = bwdList $ map (\x -> A x) (init us')
+>     let ll :: EXP ; ll = fake :$ refs'
+>     giveOutBelow $ last us' $$ Call ll
 
 For now we just call |elabProgram| to set up the remainder of the programming
 problem. This could be implemented more cleanly, but it works.
 
->     elabProgram (init $ schemeNames schCallLocal)
+>     makeModule "impl"
+>     goIn
+>     (pis,ty') <- piSch fake sch' (trail us)
+>     moduleToGoal ty'
+>     imp <- getCurrentDefinition 
+>     goOut 
+>     traverse lambdaParam (schemeNames sch')
+>     as <- getParamsInScope
+>     let refs'' :: Bwd (Elim EXP) ; refs'' = bwdList $ map (\x -> A x) as
+>     let ll' :: EXP ; ll' = fake :$ refs''
+>     give (D imp S0 (defOp imp) $$$ (refs'' :< Call ll'))
+>     goIn 
 >   where
 
 Sorry for the horrible de Bruijn index mangling.
 \question{Perhaps we should use something
-like |TEL| to represent schemes as telescopes of values?}
+like | TEL| to represent schemes as telescopes of values?}
 
->     makeCall :: EXTM -> Int -> Scheme INTM -> Scheme INTM
->     makeCall l n (SchType ty) =
->         SchImplicitPi ("c" :<: LABEL (N (l $## fmap NV [n-1,n-2..0])) ty)
->             (SchType (inc 0 %% ty))
->     makeCall l n (SchImplicitPi (x :<: s) schT) =
->         SchImplicitPi (x :<: s) (makeCall l (n+1) schT)
->     makeCall l n (SchExplicitPi (x :<: schS) schT) =
->         SchExplicitPi (x :<: schS) (makeCall l (n+1) schT)
+>     makeCall :: Tm {Head, Exp, Z} -> Int -> Bwd EXP -> Scheme -> Scheme 
+>     makeCall l n as (SchType ty) =
+>         SchImplicitPi ("c" :<: LABEL ty (l :$ fmap A as))
+>             (SchType ty)
+>     makeCall l n as (SchImplicitPi (x :<: s) schT) =
+>         SchImplicitPi (x :<: s) (makeCall l (n+1) (as :< P (n,x,s) :$ B0) schT)
+>     makeCall l n as (SchExplicitPi (x :<: schS) schT) =
+>         SchExplicitPi (x :<: schS) (makeCall l (n+1) (as :<
+>           P (n,x,schemeToType {Z} (trail as) schS) :$ B0) schT )
 
-
-The |elabProgram| command adds a label to a type, given a list of arguments.
-e.g. with a goal |plus : Nat -> Nat -> Nat|, |program x,y| will give a proof
-state of:
-
-\begin{verbatim}
-plus [
-  plus := ? : (x : Nat) -> (y : Nat) -> <plus x y : Nat>
-  \ x : Nat
-  \ y : Nat
-] plus x y call : Nat
-\end{verbatim}
-
-> elabProgram :: [String] -> ProofState (EXTM :=>: VAL)
-> elabProgram args = do
->     n   <- getCurrentName
->     pn  <- getFakeCurrentEntry 
->     (gUnlifted :=>: _) <- getHoleGoal
->     newty <- withNSupply $ pity (mkTel (unN $ valueOf pn) (evTm gUnlifted) [] args)
->     newty'       <- bquoteHere newty
->     impl :=>: _  <- make (magicImplName :<: newty') 
->     argrefs      <- traverse lambdaParam args
->     let  fcall  = termOf pn $## (map NP argrefs) 
->          call   = impl $## (map NP argrefs) :$ Call (N fcall)
->     r <- give (N call)
->     goIn
->     return r
->   where
->     mkTel :: NEU -> TY -> [VAL] -> [String] -> TEL TY
->     mkTel n (PI s t) args (x:xs)
->         = (x :<: s) :-: (\val -> mkTel n (t $$ A val) (val:args) xs)
->     mkTel n r args _ = Target (LABEL (mkL n (reverse args)) r)
->         
->     mkL :: NEU -> [VAL] -> VAL
->     mkL n [] = N n
->     mkL n (x:xs) = mkL (n :$ (A x)) xs
-
->     unN :: VAL -> NEU
->     unN (N n) = n
-
-
-> -}
+>     piSch :: Tm {Head, Exp, Z} -> Scheme -> Bwd EXP -> ProofState ([Tm {Head, Exp, Z}],TY)
+>     piSch h (SchImplicitPi xhazt schT) as = do
+>       x <- assumeParam xhazt
+>       (xs,ty) <- piSch h schT (as :< x :$ B0)
+>       return (x : xs,ty)
+>     piSch h (SchExplicitPi (x :<: schS) schT) as = do
+>       x <- assumeParam (x :<: schemeToType {Z} (trail as) schS)
+>       (xs,ty) <- piSch h schT (as :< x :$ B0)
+>       return (x : xs,ty)
+>     piSch h (SchType ty) as = return ([],LABEL ty (h :$ fmap A as))       
 
 \subsection{Elaborating schemes}
 

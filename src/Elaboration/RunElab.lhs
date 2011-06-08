@@ -373,8 +373,8 @@ parameters and hands them to |seekIn|.
 >           proofTrace $ "Failed to resolve recursive call to "
 >                            ++ renderHouseStyle s
 >           (|)
->       seekOn (es' :< EParam ParamLam s t l)  = undefined 
->           seekIn es' B0 (P (l, s, t) :$ B0) (ev t) <|> seekOn es'
+>       seekOn (es' :< EParam ParamLam s t l)  =  
+>           seekIn l es' B0 (P (l, s, t) :$ B0) (ev t) <|> seekOn es'
 >       seekOn (es' :< _)                            =    seekOn es'
 
 Then, |seekIn| tries to match the label we are looking for with an
