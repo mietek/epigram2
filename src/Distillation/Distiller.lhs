@@ -23,6 +23,7 @@
 
 > import DisplayLang.DisplayTm
 > import DisplayLang.Name
+> import DisplayLang.Scheme
 > import DisplayLang.PrettyPrint
 
 > import ProofState.Structure.Developments
@@ -79,20 +80,20 @@ We don't always want to do this, but often do want to, go figure:
 > distill (ty :>: h@(D d sd _)) (l,ps) = do
 >   (nom, ty, as, ms) <- unresolveD d ps (bwdList $ map A $ rewindStk sd [])
 >   let ty'  =  maybe (defTy d) id ty
->   das <- distillSpine (ev ty' :>: (h, as)) (l,ps)
+>   das <- distillSpine (ev ty' :>: (h, as, ms)) (l,ps)
 >   (| (DN (DP nom ::$ das)) |)
 
 < distill (ty :>: h :$ as) l = do
 <     let (h',as') = stripCall h as []
-<     (dh, ty, ss) <- distillHead h as' l
-<     das <- distillSpine (ev ty :>: (ev h', ss)) l
+<     (dh, ty, ss, ms) <- distillHead h as' l
+<     das <- distillSpine (ev ty :>: (ev h', ss, ms)) l
 <     return $ DN (dh ::$ das)
 
 >     -- [Feature = Label]
 > distill (ty :>: h :$ as) l = do
 >     let (h',as') = stripCall h as []
->     (dh, ty, ss) <- distillHead h' as' l
->     das <- distillSpine (ev ty :>: (toBody h, ss)) l
+>     (dh, ty, ss, ms) <- distillHead h' as' l
+>     das <- distillSpine (ev ty :>: (toBody h, ss, ms)) l
 >     return $ DN (dh ::$ das)
 >  where
 >     stripCall :: Tm {Head, s, Z} -> Bwd (Elim EXP) -> [Elim EXP] -> 
@@ -132,25 +133,26 @@ We don't always want to do this, but often do want to, go figure:
 >   (| (distill (ev s :>: ev a) l) : (distillCan (ev (t $$ A a) :>: as) l) |)
 
 
-> distillHead :: Tm {p, s, Z} -> [ Elim EXP ] -> (Int,Bwd (Int, String, TY)) ->  ProofState (DHead RelName, TY, [Elim EXP])
+> distillHead :: Tm {p, s, Z} -> [ Elim EXP ] -> (Int,Bwd (Int, String, TY)) -> 
+>                ProofState (DHead RelName, TY, [Elim EXP], Maybe Scheme)
 > distillHead (P (l', n, s)) as (l,es) = do
 >   r <- unresolveP (l', n, s) es 
->   return (DP r, s, as)
+>   return (DP r, s, as, Nothing)
 > distillHead (D def ss op) as (l,es) = do
 >   (nom, ty, as', ms) <- unresolveD def es ((bwdList ((map A $ rewindStk ss []) ++ as)))
->   return (DP nom, maybe (defTy def) id ty, as')
+>   return (DP nom, maybe (defTy def) id ty, as', ms)
 
 > -- [Feature = Equality]
 > distillHead (Refl _T t) as l = do
 >   _T' <- distill (SET :>: ev _T) l
 >   t' <- distill (ev _T :>: ev t) l
->   (| (DRefl _T' t', PRF (EQ _T t _T t), as) |)
+>   (| (DRefl _T' t', PRF (EQ _T t _T t), as, Nothing) |)
 > distillHead (Coeh coeh _S _T q s) as l = do
 >     _S' <- distill (SET :>: ev _S) l
 >     _T' <- distill (SET :>: ev _T) l
 >     q' <- distill (PRF (EQ SET _S SET _T) :>: ev q) l
 >     s' <- distill (ev _S :>: ev s) l
->     (| (DCoeh coeh _S' _T' q' s', eorh coeh _S _T q s, as) |)
+>     (| (DCoeh coeh _S' _T' q' s', eorh coeh _S _T q s, as, Nothing) |)
 >   where
 >     eorh :: Coeh -> EXP -> EXP -> EXP -> EXP -> EXP
 >     eorh Coe _ _T' _ _ = _T'
@@ -162,26 +164,32 @@ We don't always want to do this, but often do want to, go figure:
 > distillHead t _ _ = throwError' $ err $ "distillHead: barf " ++ show t
 
 
-> distillSpine :: VAL :>: (VAL, [Elim (Tm {Body, Exp, Z})]) -> 
+> distillSpine :: VAL :>: (VAL, [Elim (Tm {Body, Exp, Z})], Maybe Scheme) -> 
 >                 (Int, Bwd (Int, String, TY)) -> ProofState [Elim DInTmRN]
-> distillSpine (_ :>: (_, [])) _ = (| [] |)
-> distillSpine (ty :>: (haz, A a : as)) l = case fromJust $ lambdable ty of 
->   (k, s, t) -> do
->     a' <- (distill (ev s :>: (ev a)) l)
->     as' <- distillSpine (ev (t a) :>: (haz $$ A a, as)) l
->     return $ A a' : as'
-> distillSpine (ty :>: (haz , Hd : as)) l = case fromJust $ projable ty of
+> distillSpine (_ :>: (_, [], _)) _ = (| [] |)
+> distillSpine (ty :>: (haz, A a : as, Just (SchImplicitPi _ sch))) l = 
+>   case fromJust $ lambdable ty of 
+>     (k, s, t) -> do
+>       as' <- distillSpine (ev (t a) :>: (haz $$ A a, as, Just sch)) l
+>       return $ as'
+> distillSpine (ty :>: (haz, A a : as, sch)) l = 
+>   case fromJust $ lambdable ty of 
+>     (k, s, t) -> do
+>       a' <- (distill (ev s :>: (ev a)) l)
+>       as' <- distillSpine (ev (t a) :>: (haz $$ A a, as, fmap (stripScheme 1) sch)) l
+>       return $ A a' : as'
+> distillSpine (ty :>: (haz , Hd : as, _)) l = case fromJust $ projable ty of
 >   (s, t) -> 
 >     (| (Hd :) 
->        (distillSpine (ev s :>: (haz $$ Hd , as)) l)
+>        (distillSpine (ev s :>: (haz $$ Hd , as, Nothing)) l)
 >     |)
-> distillSpine (ty :>: (haz , Tl : as)) l = case fromJust $ projable ty of
+> distillSpine (ty :>: (haz , Tl : as, _)) l = case fromJust $ projable ty of
 >   (s, t) -> 
 >     (| (Tl :) 
->        (distillSpine (ev (t (haz $$ Hd)) :>: (haz $$ Tl , as)) l)
+>        (distillSpine (ev (t (haz $$ Hd)) :>: (haz $$ Tl , as, Nothing)) l)
 >     |)
 > -- [Feature = Equality]
-> distillSpine (PRF _P :>: (tm, QA x y q : as)) l
+> distillSpine (PRF _P :>: (tm, QA x y q : as, _)) l
 >           | EQ _S f _T g <- ev _P
 >           , Just (_, _SD, _SC) <- lambdable (ev _S)  
 >           , Just (_, _TD, _TC) <- lambdable (ev _T) = do
@@ -190,9 +198,9 @@ We don't always want to do this, but often do want to, go figure:
 >       q' <- distill (PRF (EQ _SD x _TD y) :>: ev q) l
 >       (| (QA x' y' q' :) 
 >            (distillSpine (PRF (EQ (_SC x) (f $$. x) (_TC y) (g $$. y)) :>: 
->                      (tm $$ (QA x y q), as)) l) |)
+>                      (tm $$ (QA x y q), as, Nothing)) l) |)
 >
-> distillSpine (PRF _P :>: (tm, Sym : as)) l | EQ _S s _T t <- ev _P =
->   (| (Sym :) (distillSpine (PRF (EQ _T t _S s) :>: (tm $$ Sym, as)) l) |)
+> distillSpine (PRF _P :>: (tm, Sym : as, _)) l | EQ _S s _T t <- ev _P =
+>   (| (Sym :) (distillSpine (PRF (EQ _T t _S s) :>: (tm $$ Sym, as, Nothing)) l) |)
 > -- [/Feature = Equality]
-> distillSpine (_ :>: (_, (t : _))) _  = throwError' (err $ "dS: " ++ show t)
+> distillSpine (_ :>: (_, (t : _), _)) _  = throwError' (err $ "dS: " ++ show t)

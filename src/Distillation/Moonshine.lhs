@@ -45,13 +45,13 @@ This is mostly for error-message generation.
 >     as' <- traverse (moonshine' l es) as
 >     return $ DC c as'
 > moonshine' l es n@(f :$ as) = (do
->     (f', ty, ss) <- distillHead f (trail as) (l,es)
->     as' <- distillSpine (ev ty :>: (ev f , ss)) (l, es)
+>     (f', ty, ss, ms) <- distillHead f (trail as) (l,es)
+>     as' <- distillSpine (ev ty :>: (ev f , ss, ms)) (l, es)
 >     return $ DN (f' ::$ as')
 >   ) `catchError` \_ -> return (DTIN n)
 > moonshine' l es d@(D _ _ _) = (do
->     (f', ty, ss) <- distillHead d [] (l,es)
->     as' <- distillSpine (ev ty :>: (ev d , ss)) (l, es)
+>     (f', ty, ss, ms) <- distillHead d [] (l,es)
+>     as' <- distillSpine (ev ty :>: (ev d , ss, ms)) (l, es)
 >     return $ DN (f' ::$ as')
 >   ) `catchError` \_ -> return (DTIN d)
 > moonshine' l es t = return (DTIN t)

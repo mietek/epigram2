@@ -40,7 +40,6 @@
 > import Evidences.DefinitionalEquality
 > import Evidences.TypeChecker
 
-
 %endif
 
 
@@ -478,7 +477,7 @@ shared parameters to drop, and the scheme of the name (if there is one).
 >         (an, ams) <- nomAbs nom' fsc
 >         return ((tn : an), Just i,drop (bwdLength i) (trail tsp), fmap (stripScheme (bwdLength i)) (if null nom' then tms else ams))
 
->       _ -> Nothing
+>       _ -> Nothing 
 
 >   case os of
 >     Nothing -> return (nn, Nothing, ns, Nothing)
@@ -563,8 +562,8 @@ name component. This also returns the scheme attached, if there is one.
 >   | n == n'                                    = (| (i, Nothing) |)
 > countB i n (esus, es :< EModule n' _)           
 >   | lastNom n == lastNom n'                    = countB (i+1) n (esus, es)
-> countB i n (esus, es :< EDef d (Dev {devEntries=es'}) _)
->   | n == defName d                             = (| (i, Nothing) |)
+> countB i n (esus, es :< EDef d (Dev {devEntries=es'}) ms)
+>   | n == defName d                             = (| (i, ms) |)
 > countB i n (esus, es :< EDef d _ _)           
 >   | lastNom n == lastNom (defName d)           = countB (i+1) n (esus, es)
 > countB i n (esus, es :< e@(EParam k s t l))
