@@ -150,7 +150,7 @@ here.
 >       a <- chev l (_T :>: (g, lab)) 
 >       spInf l (e $$ Call a :<: _T) (g, as) 
 >     -- [/Feature = Label]
->     _         -> throwError' $ err "spInf: bad"
+>     (_T,_)         -> throwError' $ err ("spInf: bad " ++ show e)
 
 
 > inf :: (Applicative m, MonadError StackError m) => 

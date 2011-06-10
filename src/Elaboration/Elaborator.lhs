@@ -240,10 +240,6 @@ problem. This could be implemented more cleanly, but it works.
 >     goIn 
 >   where
 
-Sorry for the horrible de Bruijn index mangling.
-\question{Perhaps we should use something
-like | TEL| to represent schemes as telescopes of values?}
-
 >     makeCall :: Tm {Head, Exp, Z} -> Int -> Bwd EXP -> Scheme -> Scheme 
 >     makeCall l n as (SchType ty) =
 >         SchImplicitPi ("c" :<: LABEL ty (l :$ fmap A as))

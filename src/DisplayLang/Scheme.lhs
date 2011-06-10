@@ -92,17 +92,17 @@ Given a scheme, we can extract the names of its $\Pi$s:
 
 We can also convert a |Scheme| into a |Tm|:
 
-> schemeToType' :: Int -> Scheme -> (Bwd (Int, String, TY), EXP)
-> schemeToType' l (SchType ty) = (B0,ty)
+> schemeToType' :: Int -> Scheme -> ([(Int, String, TY)], EXP)
+> schemeToType' l (SchType ty) = ([],ty)
 > schemeToType' l (SchExplicitPi (x :<: s) t) = 
->   let (ez,ty) = schemeToType' (l+1) t in (ez :< (l,x,schemeToType l s),ty)
+>   let (es,ty) = schemeToType' (l+1) t in ((l,x,schemeToType l s) : es,ty)
 > schemeToType' l (SchImplicitPi (x :<: s) t) =
->   let (ez,ty) = schemeToType' (l+1) t in (ez :< (l,x,s),ty)
+>   let (es,ty) = schemeToType' (l+1) t in ((l,x,s):es,ty)
 
 > schemeToType :: Int -> Scheme -> EXP
 > schemeToType l s = 
->   let (bz, ty) = schemeToType' l s 
->   in bwdVec bz (\n ys -> piLift {n} ys ty)
+>   let (bs, ty) = schemeToType' l s 
+>   in bwdVec (bwdList bs) (\n ys -> piLift {n} ys ty)
 
 \subsection{Unlifting schemes}
 
