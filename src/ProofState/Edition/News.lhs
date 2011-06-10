@@ -226,7 +226,8 @@ references remain as they are, as in |getLatest|.
 >     traverseTm (g :/ t) = (| (traverseEnv g) :/ (traverseTm t) |)
 >
 >     traverseEnv :: Env {n} {m} -> Writer News (Env {n} {m})
->     traverseEnv (mlev, iev) = (| (traverse (traverse traverseTm) mlev)
+>     traverseEnv (lev, iev) = 
+>       (| (traverse (\ (i,x) -> (| (\t -> (i,t)) (traverseTm x) |)) lev)
 >                                  , traverseIEnv iev |)
 
 >     traverseIEnv :: IEnv {n, m} -> Writer News (IEnv {n, m})

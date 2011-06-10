@@ -360,7 +360,7 @@ the binding in the context |es|.
 
 >     handleSchemeArgs es  (SchImplicitPi (x :<: s) schT)
 >                              (tm :<: PI sd t) as = do
->         stm <- eHopeFor $ (Just (trail es), INil) :/ s
+>         stm <- eHopeFor $ (zip [0..] (trail es), INil) :/ s
 >         handleSchemeArgs (es :< stm) schT
 >             (tm $$ A stm :<: ev t $$ A stm) as
 

@@ -131,10 +131,10 @@ What fresh hell is this:
 > occursEnv :: Maybe Name -> [Int] -> [Fin m] -> Env {m} {n} -> ([Int] , [Fin {n}]) 
 > occursEnv n p v (lenv,ienv) = (occursLEnv n p v lenv, occursIEnv n p v ienv)
 
-> occursLEnv :: Maybe Name -> [Int] -> [Fin {n}] -> Maybe [Tm {Body, Exp, n}] -> [Int]
-> occursLEnv n p v Nothing = p
-> occursLEnv n p v (Just ts) = 
->   map fst (filter (\ x -> occurs n p v (snd x)) (zip  [0..] ts))
+> occursLEnv :: Maybe Name -> [Int] -> [Fin {n}] -> LEnv {n} -> [Int]
+> occursLEnv n p v [] = []
+> occursLEnv n p v ((l, t) : lenv) = 
+>    if occurs n p v t then l : occursLEnv n p v lenv else  occursLEnv n p v lenv 
 
 > occursIEnv :: Maybe Name -> [Int] -> [Fin {m}] -> IEnv {m, n} -> [Fin {n}] 
 > occursIEnv n p v INix = []

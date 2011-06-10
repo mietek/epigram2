@@ -67,7 +67,7 @@ mood such as |Hoping| or |Crying|.
 >     -- Make a reference for the goal, with a lambda-lifted type
 >     inScope <- getInScope
 >     let  binScope  = boys inScope
->          liftedTy = bwdVec (fmap (\(_, s, t) -> (s, t)) (boys inScope))
+>          liftedTy = bwdVec (boys inScope)
 >                             (\ n ys -> piLift n ys) ty
 >          def = DEF n liftedTy Hole
 

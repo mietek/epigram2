@@ -69,7 +69,7 @@ distilled. Then, we go under the binder and distill the codomain.
 >     (schS', sty) <- distillScheme bs (l, ps) schS
 >     -- Distill the codomain
 >     (schT', tty) <- distillScheme bs (l+1, ps :< (l, x, sty)) schT
->     return (SchExplicitPi (x :<: schS') schT', partPiLift' bs (BV0 :<<<: (x, sty)) tty)
+>     return (SchExplicitPi (x :<: schS') schT', piLift' (BV0 :<<<: (l, x, sty)) tty)
 
 On an implicit $\Pi$, the operation is fairly similar. Instead of
 |distillScheme|-ing the domain, we proceed as for ground types --- it
@@ -80,7 +80,7 @@ is one.
 >     s' <- distill (SET :>: ev s) (l, ps)
 >     -- Distill the codomain
 >     (schT', t') <- distillScheme bs (l+1, ps :< (l, x, s)) schT
->     return (SchImplicitPi (x :<: s') schT', partPiLift' bs (BV0 :<<<: (x, s)) t')
+>     return (SchImplicitPi (x :<: s') schT', piLift' (BV0 :<<<: (l, x, s)) t')
 
 
 \subsection{ProofState interface}

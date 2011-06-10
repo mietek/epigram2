@@ -212,7 +212,7 @@ plus an implicit labelled type that provides evidence for the recursive call.
 >     let schCall = makeCall fake 0 B0 sch'
 >     us <- getParamsInScope
 >     let schCallLocal = stripScheme lev schCall
->     let ty = schemeToType {Z} (trail us) schCallLocal
+>     let ty = schemeToType lev schCallLocal
 >     make (x :<: ty)
 >     goIn
 >     putCurrentScheme schCall
@@ -252,7 +252,7 @@ like | TEL| to represent schemes as telescopes of values?}
 >         SchImplicitPi (x :<: s) (makeCall l (n+1) (as :< P (n,x,s) :$ B0) schT)
 >     makeCall l n as (SchExplicitPi (x :<: schS) schT) =
 >         SchExplicitPi (x :<: schS) (makeCall l (n+1) (as :<
->           P (n,x,schemeToType {Z} (trail as) schS) :$ B0) schT )
+>           P (n,x,schemeToType n schS) :$ B0) schT )
 
 >     piSch :: Tm {Head, Exp, Z} -> Scheme -> Bwd EXP -> ProofState ([Tm {Head, Exp, Z}],TY)
 >     piSch h (SchImplicitPi xhazt schT) as = do
@@ -260,7 +260,8 @@ like | TEL| to represent schemes as telescopes of values?}
 >       (xs,ty) <- piSch h schT (as :< x :$ B0)
 >       return (x : xs,ty)
 >     piSch h (SchExplicitPi (x :<: schS) schT) as = do
->       x <- assumeParam (x :<: schemeToType {Z} (trail as) schS)
+>       lev <- getDevLev 
+>       x <- assumeParam (x :<: schemeToType lev schS)
 >       (xs,ty) <- piSch h schT (as :< x :$ B0)
 >       return (x : xs,ty)
 >     piSch h (SchType ty) as = return ([],LABEL ty (h :$ fmap A as))       

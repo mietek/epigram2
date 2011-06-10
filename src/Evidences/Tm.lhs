@@ -313,9 +313,10 @@
 >   where (es1, es2) = splitAt i es
 
 
--- Why not make the first component an array?
 
-> type Env n m = (Maybe [Tm {Body, Exp, n}], IEnv {n, m})
+> type Env n m = (LEnv {n}, IEnv {n, m})
+
+> type LEnv n = [(Int, Tm {Body, Exp, n})]
 
 > data IEnv :: {Nat, Nat} -> * where
 >  INix   :: IEnv {n, Z}
@@ -337,13 +338,12 @@
 >    g <<< INix = INix
 >    g <<< INil = g
 >    g <<< (g' :<<: e) = (g <<< g') :<<: ((gl, INil) :/ e)
->    gln = case (gl, gl') of
->     (_, Just y) -> Just (map ((gl, gi) :/) y)
->     (Just x, _) -> Just x
->     _           -> Nothing
+>    gln = case gl' of
+>     [] -> gl
+>     y -> map (\(l,x) -> (l , (gl, gi) :/ x)) y
 
-> pattern ENil = (Nothing, INil)
-> pattern ENix = (Nothing, INix)
+> pattern ENil = ([], INil)
+> pattern ENix = ([], INix)
 
 
 > exp :: Tm {p, s, n} -> Tm {p, Exp, n}
@@ -376,11 +376,12 @@
 > eval {s} g (LK e) = LK (g :/ e)
 > eval {s} g (c :- es) = c :- (fmap (g :/) es)
 > eval {s} g (h :$ es) = applys {s} (eval {s} g h) (fmap (fmap (g :/)) es)
-> eval {s} (Nothing, _) (D d ez o) = mkD {s} d ez o
-> eval {s} (Just es, _) (D d ez o) = mkD {s} d (fmap ((Just es, INix) :/) ez) o
+> eval {s} ([], _) (D d ez o) = mkD {s} d ez o
+> eval {s} (es, _) (D d ez o) = mkD {s} d (fmap ((es, INix) :/) ez) o
 > eval {s} (es, ez) (V i) = eval {s} ENil (ez !.! i)
-> eval {s} (Nothing, _) (P lt) = P lt :$ B0
-> eval {s} (Just es, _) (P (l, _, _)) = eval {s} ENil (es !! l)
+> eval {s} (es, _) (P lt@(l, _, _)) = case lookup l es of
+>   Just t -> eval {s} ENil t
+>   Nothing -> P lt :$ B0
 > eval {s} g (Refl _X x) = Refl (g :/ _X) (g :/ x) :$ B0
 > eval {Val} g (Coeh Coe _S _T _Q s) = fst (coeh (g // _S) (g // _T) (g // _Q) (g // s))
 > eval {Val} g (Coeh Coh _S _T _Q s) = snd (coeh (g // _S) (g // _T) (g // _Q) (g // s))
@@ -487,7 +488,7 @@ This thing does coercion and coherence.
 
 > mkD :: forall s' p . pi (s :: Status) . 
 >        DEF -> Stk EXP -> Operator {p, s'} -> Tm {Body, s, Z}
-> mkD {s} d es (Emit t)               = eval {s} (Just (trail es), INix) t
+> mkD {s} d es (Emit t)               = eval {s} (zip [0..] (trail es), INix) t
 > mkD {s} d es (Eat n o)                = D d es (Eat n o)
 > mkD {s} d es Hole                   = D d es Hole :$ B0
 > mkD {s} d es (Case os)              = D d es (Case os) 
@@ -500,7 +501,7 @@ This thing does coercion and coherence.
 > fortran s [] _ = s
 
 > wk :: {: p :: Part :} => Tm {p, s, Z} -> Tm {p', Exp, n}
-> wk t = (Nothing, INix) :/ t
+> wk t = ([], INix) :/ t
 
 > (***) = TIMES
 > (-->) = ARR
@@ -662,13 +663,13 @@ by |lambdable|:
 > ugly _ _ = "???"
 
 > uglyEnv :: Vec {n} String -> Env {n} {m} -> Tm {p, s, m} -> String
-> uglyEnv xs (Nothing, INil)  e = "((Nothing, INil) :/ " ++ ugly xs e ++ ")"
-> uglyEnv xs (Nothing, INix)  e = "((Nothing, INix) :/ " ++ ugly V0 e ++ ")"
-> uglyEnv xs (Just as, INix)  e = "((Just " ++ uglyLEnv xs as ++ ", INix) :/ " ++ ugly V0 e ++ ")"
-> uglyEnv xs (Just as, INil)  e = "((Just " ++ uglyLEnv xs as ++ ", INil) :/ " ++ ugly xs e ++ ")"
-> uglyEnv xs (Nothing, ie)     e = "((Nothing, " ++ s  ++ ") :/ " ++ ugly ys e ++ ")"
+> uglyEnv xs ([], INil)  e = "(([], INil) :/ " ++ ugly xs e ++ ")"
+> uglyEnv xs ([], INix)  e = "(([], INix) :/ " ++ ugly V0 e ++ ")"
+> uglyEnv xs (as, INix)  e = "((" ++ uglyLEnv xs as ++ ", INix) :/ " ++ ugly V0 e ++ ")"
+> uglyEnv xs (as, INil)  e = "((" ++ uglyLEnv xs as ++ ", INil) :/ " ++ ugly xs e ++ ")"
+> uglyEnv xs ([], ie)     e = "(([], " ++ s  ++ ") :/ " ++ ugly ys e ++ ")"
 >   where (s, ys) = uglyIEnv xs ie
-> uglyEnv xs (Just as, ie)     e = "((Just " ++ uglyLEnv xs as ++", " ++ s ++ ") :/ " ++ ugly ys e ++ ")"
+> uglyEnv xs (as, ie)     e = "((" ++ uglyLEnv xs as ++", " ++ s ++ ") :/ " ++ ugly ys e ++ ")"
 >   where (s, ys) = uglyIEnv xs ie
 
 > uglyIEnv :: Vec {n} String -> IEnv {n, m} -> (String, Vec {m} String)
@@ -677,8 +678,9 @@ by |lambdable|:
 > uglyIEnv xs (g :<<: t)  = (s ++ " :<<: " ++ ugly V0 t, ("V" ++ show (vlength ys) :>>: ys))
 >   where (s, ys) = uglyIEnv xs g
 
-> uglyLEnv :: Vec {n} String -> [Tm {Body, Exp, n}] -> String
-> uglyLEnv xs as = "[" ++ intercalate "," (map (ugly xs) as) ++ "]"
+> uglyLEnv :: Vec {n} String -> [(Int,Tm {Body, Exp, n})] -> String
+> uglyLEnv xs as = "[" ++ 
+>   intercalate "," (map (\ (l,t) -> "(" ++ show l ++ ", " ++ ugly xs t ++ ")") as) ++ "]"
 
 > uglyElim :: Vec {n} String -> Elim (Tm {p, s, n}) -> String
 > uglyElim v (A e) = ugly v e
@@ -692,35 +694,31 @@ by |lambdable|:
 
 Pos could use a nice abstraction to do the following:
 
-> capture :: pi (m :: Nat). EXP -> Tm {Body, Exp, m}
-> capture {m} t = (Just (Data.Foldable.foldr (\i l -> (V i :$ B0) : l) [] (vDownFromF {m})) , INix) :/ t
-
-> capture' :: {: m :: Nat :} =>  EXP -> Tm {Body, Exp, m}
-> capture' = capture {: m :: Nat :} 
-
-> partCapture :: pi (m :: Nat). [ EXP ] -> EXP -> Tm {Body, Exp, m}
-> partCapture {m} e t = (Just $ (map wk e) ++ (Data.Foldable.foldr (\i l -> (V i :$ B0) : l) [] (vDownFromF {m})) , INix) :/ t
-
-> partCapture' :: {: m :: Nat :} => [ EXP ] -> EXP -> Tm {Body, Exp, m}
-> partCapture' = partCapture {: m :: Nat :} 
-
-> piLift :: pi (n :: Nat). BVec {n} (String, TY) -> TY -> TY
-> piLift {n} bs t = pil {n} bs (capture {n} t) 
->   where
->     pil :: pi (m :: Nat) . BVec {m} (String, TY) -> Tm {Body, Exp, m} -> EXP
->     pil {Z} BV0 t = t
->     pil {S m} (sts :<<<: (s,ty)) t = pil {m} sts $ PI (capture {m} ty) (L ENil s t)
-
-> piLift' :: {: n :: Nat :} => BVec {n} (String, TY) -> TY -> TY
+> piLift' :: {: n :: Nat :} => BVec {n} (Int, String, TY) -> TY -> TY
 > piLift' = piLift {: n :: Nat :}
 
-> partPiLift :: pi (n :: Nat). [ EXP ] -> BVec {n} (String, TY) -> TY -> TY
-> partPiLift {n} e bs t = pil {n} bs (partCapture {n} e t) 
+> piLift :: pi (n :: Nat). BVec {n} (Int, String, TY) -> TY -> TY
+> piLift {n} bs t = spil {n} bs (capture {n} bs t)
 >   where
->     pil ::  pi (m :: Nat) . BVec {m} (String, TY) -> Tm {Body, Exp, m} -> EXP
->     pil {Z} BV0 t = t
->     pil {S m} (sts :<<<: (s, ty)) t = pil {m} sts $ PI (partCapture {m} e ty) (L ENil s t)
+>     spil :: pi (m :: Nat) . BVec {m} (Int, String, TY) -> Tm {Body, Exp, m} -> EXP
+>     spil {Z} BV0 t = t
+>     spil {S m} (sts :<<<: (_, s, ty)) t = 
+>      spil {m} sts $ PI (capture {m} sts ty) (L ENil s t)
 
-> partPiLift' :: {: n :: Nat :} => [ EXP ] -> BVec {n} (String, TY) -> TY -> TY
-> partPiLift' = partPiLift {: n :: Nat :}
+
+> capture' :: {: n :: Nat :} => BVec {n} (Int, String, TY) ->
+>                  EXP -> Tm {Body, Exp, n}
+> capture' = capture {: n :: Nat :}
+
+> capture :: pi (n :: Nat). BVec {n} (Int, String, TY) ->
+>                 EXP -> Tm {Body, Exp, n}
+> capture {n} bs t = (splif {n} bs (bvDownFromF {n}) [], INix) :/ t
+>   where
+>     splif :: forall m . pi (n :: Nat). BVec {n} (Int, String, TY) -> 
+>              BVec {n} (Fin {m}) -> [ (Int, Tm {Body, Exp, m}) ] -> 
+>              [ (Int, Tm {Body, Exp, m}) ]
+>     splif {Z} _ _ es = es
+>     splif {S n} (ls :<<<: (l,_,_)) (vs :<<<: v) es = 
+>       splif {n} ls vs ((l,V v :$ B0) : es)
+
 

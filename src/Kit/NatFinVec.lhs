@@ -83,6 +83,10 @@
 >     vapp V0          V0          = V0
 >     vapp (f :>>: fs)  (s :>>: ss)  = f s :>>: vapp fs ss
 
+> instance Functor (BVec {n}) where
+>   fmap f BV0          = BV0
+>   fmap f (xs :<<<: x)  = fmap f xs :<<<: f x
+
 > vhead :: Vec {S n} x -> x
 > vhead (x :>>: xs) = x
 
@@ -165,6 +169,16 @@
 
 > vDownFromF' :: {:n :: Nat:} => Vec {n} (Fin {n}) 
 > vDownFromF' = vDownFromF {:n :: Nat:}
+
+> bvDownFromF :: pi (n :: Nat) . BVec {n} (Fin {n})
+> bvDownFromF {n} = help {n} 
+>   where
+>     help :: pi (n :: Nat).  BVec {n} (Fin {n})
+>     help {Z} = BV0
+>     help {S n} = fmap Fs (help {n}) :<<<: Fz
+
+> bvDownFromF' :: {:n :: Nat:} => BVec {n} (Fin {n}) 
+> bvDownFromF' = bvDownFromF {:n :: Nat:}
 
 > listVec :: [a] -> (pi (n :: Nat). Vec {n} a -> t) -> t
 > listVec [] f = f {Z} V0

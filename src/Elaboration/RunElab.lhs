@@ -408,8 +408,8 @@ these values and apply it to the call term.
 >         do
 >           ss <- execStateT (matchValue lev B0 
 >                     (u :>: (ev foundLabel, ev label))) (fmap (, Nothing) rs)
->           ss'  <- processSubst (boys es []) ss 
->           return ((Just ss', INil) :/ tm, ElabSuccess)
+>           ss'  <- processSubst [] ss 
+>           return ((ss', INil) :/ tm, ElabSuccess)
 
 If, in our way to the label the peeling fails, then we must give up.
 
@@ -427,15 +427,15 @@ is unconstrained by the matching problem, we hope for a solution.
 \adam{we could do some dependency analysis here to avoid cluttering the proof
 state with hopes that we don't make use of.}
 
->       processSubst :: [EXP] -> MatchSubst -> ProofState [EXP]
+>       processSubst :: LEnv {Z} -> MatchSubst -> ProofState (LEnv {Z})
 >       processSubst bs B0           = return bs
->       processSubst bs (rs :< (_, Just t))  = do
+>       processSubst bs (rs :< ((l,_,_), Just t))  = do
 >           ss  <- processSubst bs rs
->           return (ss ++ [ (Just ss, INil) :/ t ])
->       processSubst bs (rs :< ((_,_,ty), Nothing))  = do
+>           return ((l, (ss, INil) :/ t) : ss)
+>       processSubst bs (rs :< ((l,_,ty), Nothing))  = do
 >           ss  <- processSubst bs rs
->           (tm, _)  <- runElabHope WorkElsewhere (ev ((Just ss, INil) :/ ty))
->           return (ss ++ [tm])
+>           (tm, _)  <- runElabHope WorkElsewhere (ev ((ss, INil) :/ ty))
+>           return ((l,tm) : ss)
 
 
 \subsubsection{Simplifying proofs}

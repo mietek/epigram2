@@ -385,10 +385,8 @@ machinery. Perhaps it should move somewhere more logical.
 >     let  lbs = boys les
 >          bs = boys es
 >          (ls, pis) = blah bs lbs
->          ty' = bwdVec (fmap (\(_, s, t) -> (s, t)) ls)
->                           (\ n ys -> piLift n ys) ty
->          op =  tipToOp (trail (fmap (\(_,s,_) -> s) ls)) 
->                        (trail (fmap (\x -> P x :$ B0) ls)) pis tip
+>          ty' = bwdVec ls (\ n ys -> piLift n ys) ty
+>          op =  tipToOp (trail (fmap (\(_,s,_) -> s) ls)) pis tip
 >          def' = DEF nom ty' op
 >     sch <- getCurrentScheme -- TODO: do we need to update this scheme?
 >     putCurrentEntry $ CDefinition def' sch
@@ -400,13 +398,13 @@ machinery. Perhaps it should move somewhere more logical.
 >    boys (es :< _) =  boys es 
 
 >    blah :: Bwd (ParamKind, Int, String, TY) -> Bwd (ParamKind, Int, String, TY)  
->              -> (Bwd (Int, String, TY), Bwd (String, TY))
->    blah (bs :< _) (ls :< (ParamPi, _, s, t)) = 
->      let (bs' , ls') = blah bs ls in (bs', ls' :< (s,t))
+>              -> (Bwd (Int, String, TY), Bwd (Int, String, TY))
+>    blah (bs :< _) (ls :< (ParamPi, l, s, t)) = 
+>      let (bs' , ls') = blah bs ls in (bs', ls' :< (l,s,t))
 >    blah bs _ =  (fmap (\(_,x,y,z) -> (x,y,z)) bs, B0)
 
->    tipToOp :: [String] -> [ EXP ] -> Bwd (String, TY) -> Tip -> Operator {Body, Exp}
->    tipToOp i e f (Unknown _ _)         = Hole
->    tipToOp i e B0 (Defined (_ :>: tm))  = eats i $ Emit tm
->    tipToOp i e f (Defined (_ :>: tm))  =  
->      eats i $ Emit (bwdVec f (\ n ys -> partPiLift {n} e ys) tm)
+>    tipToOp :: [String] -> Bwd (Int, String, TY) -> Tip -> Operator {Body, Exp}
+>    tipToOp i f (Unknown _ _)         = Hole
+>    tipToOp i B0 (Defined (_ :>: tm))  = eats i $ Emit tm
+>    tipToOp i f (Defined (_ :>: tm))  =  
+>      eats i $ Emit (bwdVec f (\ n ys -> piLift {n} ys) tm)

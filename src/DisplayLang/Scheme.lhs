@@ -19,6 +19,7 @@
 > import DisplayLang.DisplayTm
 > import DisplayLang.Name
 
+> import Kit.BwdFwd
 > import Kit.NatFinVec
 
 %endif
@@ -91,13 +92,17 @@ Given a scheme, we can extract the names of its $\Pi$s:
 
 We can also convert a |Scheme| into a |Tm|:
 
-> schemeToType :: pi (n :: Nat). [ EXP ] -> Scheme -> Tm {Body, Exp, n}
-> schemeToType {n} es (SchType ty) = partCapture {n} es ty
-> schemeToType {n} es (SchExplicitPi (x :<: s) t) = 
->     Pi :- [schemeToType {n} es s, L ENil x (schemeToType {S n} es t)]
-> schemeToType {n} es (SchImplicitPi (x :<: s) t) =
->     Pi :- [partCapture {n} es s, L ENil x (schemeToType {S n} es t)]
+> schemeToType' :: Int -> Scheme -> (Bwd (Int, String, TY), EXP)
+> schemeToType' l (SchType ty) = (B0,ty)
+> schemeToType' l (SchExplicitPi (x :<: s) t) = 
+>   let (ez,ty) = schemeToType' (l+1) t in (ez :< (l,x,schemeToType l s),ty)
+> schemeToType' l (SchImplicitPi (x :<: s) t) =
+>   let (ez,ty) = schemeToType' (l+1) t in (ez :< (l,x,s),ty)
 
+> schemeToType :: Int -> Scheme -> EXP
+> schemeToType l s = 
+>   let (bz, ty) = schemeToType' l s 
+>   in bwdVec bz (\n ys -> piLift {n} ys ty)
 
 \subsection{Unlifting schemes}
 
