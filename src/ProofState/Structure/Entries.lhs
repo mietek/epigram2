@@ -1,6 +1,8 @@
 \section{Managing Entries in a Development}
 \label{sec:ProofState.Structure.Entries}
 
+Move to |ProofState.Structure|?
+
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
@@ -41,11 +43,10 @@ Hence, we have:
 > entryName (EModule n _)     = Just n
 > entryName (EParam _ _ _ _)  = Nothing
 
-> {-
-> entryLastName :: Traversable f => Entry f -> (String, Int)
-> entryLastName (EEntity _ xn _ _ _)  = xn
-> entryLastName (EModule n _)       = last n
-> -}
+
+< entryLastName :: Traversable f => Entry f -> (String, Int)
+< entryLastName (EEntity _ xn _ _ _)  = xn
+< entryLastName (EModule n _)       = last n
 
 > entryScheme :: Traversable f => Entry f -> Maybe Scheme
 > entryScheme (EDef _ _ ms)  = ms
@@ -64,15 +65,16 @@ Hence, we have:
 > modifyEntryDev f (EModule n dev) = EModule n (f dev)
 > modifyEntryDev f (EParam k n t l) = EParam k n t l
 
-> {-
+
 > entrySuspendState :: Traversable f => Entry f -> SuspendState
 > entrySuspendState e = case entryDev e of
 >     Just dev  -> devSuspendState dev
 >     Nothing   -> SuspendNone
->
-> entryAnchor :: Traversable f => Entry f -> Maybe String
-> entryAnchor (EEntity _ _ _ _ anchor)  = anchor
-> entryAnchor (EModule _ _)             = Nothing
+
+
+< entryAnchor :: Traversable f => Entry f -> Maybe String
+< entryAnchor (EEntity _ _ _ _ anchor)  = anchor
+< entryAnchor (EModule _ _)             = Nothing
 
 
 \subsection{Entry equality}
@@ -80,10 +82,10 @@ Hence, we have:
 
 Two entries are equal if and only if they have the same name:
 
-> instance Traversable f => Eq (Entry f) where
->     e1 == e2 = entryName e1 == entryName e2
+< instance Traversable f => Eq (Entry f) where
+<     e1 == e2 = entryName e1 == entryName e2
 
-> -}
+
 
 \subsection{Changing the carrier of an |Entry|}
 

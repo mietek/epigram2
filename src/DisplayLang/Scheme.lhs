@@ -109,28 +109,12 @@ need to strip them of a spine of shared parameters:
 > stripScheme n (SchExplicitPi (x :<: SchType s) schT) = stripScheme (n-1) schT
 
 
-> {-
-
-> applyScheme :: Scheme INTM -> [REF] -> Scheme INTM
-> applyScheme sch [] = sch
-> applyScheme (SchExplicitPi (x :<: SchType s) schT) (r : rs) =
->     applyScheme (underScheme 0 r schT) rs
->   where
->     underScheme :: Int -> REF -> Scheme INTM -> Scheme INTM
->     underScheme n r (SchType ty) = SchType (under n r %% ty)
->     underScheme n r (SchExplicitPi (x :<: schS) schT) =
->         SchExplicitPi (x :<: underScheme n r schS) (underScheme (n+1) r schT)
->     underScheme n r (SchImplicitPi (x :<: s) schT) =
->         SchImplicitPi (x :<: under n r %% s) (underScheme (n+1) r schT)
-
-> -}
-
 \subsection{Schemes in error messages}
 
 We can cheaply embed schemes in error messages by converting them to types
 and evaluating. Really, we ought to add schemes as a kind of |ErrorTok|.
 
-> {-
-> errScheme :: Scheme INTM -> ErrorItem t
-> errScheme sch = errTyVal (evTm (schemeToInTm sch) :<: SET)
-> -}
+
+< errScheme :: Scheme INTM -> ErrorItem t
+< errScheme sch = errTyVal (evTm (schemeToInTm sch) :<: SET)
+

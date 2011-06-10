@@ -180,22 +180,20 @@ for enumerations as well.
 >     return $  EQ _S s _T t
 > -- [/Feature = Equality] 
 
-> {-
-> -- [Feature = IDesc] 
-> makeElab' loc (SET :>: DIMU Nothing iI d i) = do
->     iI  :=>: iIv  <- subElab loc (SET :>: iI)
->     d   :=>: dv   <- subElab loc (ARR iIv (idesc $$ A iIv) :>: d)
->     i   :=>: iv   <- subElab loc (iIv :>: i)
->     return $ IMU Nothing iI d i :=>: IMU Nothing iIv dv iv
+< -- [Feature = IDesc] 
+< makeElab' loc (SET :>: DIMU Nothing iI d i) = do
+<     iI  :=>: iIv  <- subElab loc (SET :>: iI)
+<     d   :=>: dv   <- subElab loc (ARR iIv (idesc $$ A iIv) :>: d)
+<     i   :=>: iv   <- subElab loc (iIv :>: i)
+<     return $ IMU Nothing iI d i :=>: IMU Nothing iIv dv iv
 
-> makeElab' loc (ty@(IMU _ _ _ _) :>: DTag s xs) =
->     makeElab' loc (ty :>: DCON (DPAIR (DTAG s) (foldr DPAIR DU xs)))
-> -- [/Feature = IDesc] 
-> -- [Feature = UId] 
-> makeElab' loc (UID :>: DTAG s) = return $ TAG s :=>: TAG s
-> -- [/Feature = UId] 
+< makeElab' loc (ty@(IMU _ _ _ _) :>: DTag s xs) =
+<     makeElab' loc (ty :>: DCON (DPAIR (DTAG s) (foldr DPAIR DU xs)))
+< -- [/Feature = IDesc] 
+< -- [Feature = UId] 
+< makeElab' loc (UID :>: DTAG s) = return $ TAG s :=>: TAG s
+< -- [/Feature = UId] 
 
-> -}
 
 We use underscores |DU| in elaboration to mean "figure this out yourself", while
 question marks |DQ| require us to wait for a user-provided value.

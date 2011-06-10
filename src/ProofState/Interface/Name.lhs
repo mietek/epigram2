@@ -1,5 +1,7 @@
 \section{Name management}
 
+Move to |ProofState.Interface|?
+
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
@@ -23,23 +25,22 @@
 
 %endif
 
-> {-
 
 The |lookupName| function looks up a name in the context (including axioms and
 primitives); if found, it returns the reference applied to the spine of
 shared parameters.
 
-> lookupName :: Name -> ProofStateT e (Maybe (EXTM :=>: VAL))
-> lookupName name = do
->     inScope <- getInScope
->     case find ((name ==) . entryName) inScope of
->       Just (EEntity ref _ _ _ _)  -> return $ Just $ applySpine ref inScope
->       Nothing             ->
->         case find ((name ==) . refName . snd) primitives of
->           Just (_, ref)  -> return $ Just $ applySpine ref inScope
->           Nothing        -> return Nothing
+< lookupName :: Name -> ProofStateT e (Maybe (EXTM :=>: VAL))
+< lookupName name = do
+<     inScope <- getInScope
+<     case find ((name ==) . entryName) inScope of
+<       Just (EEntity ref _ _ _ _)  -> return $ Just $ applySpine ref inScope
+<       Nothing             ->
+<         case find ((name ==) . refName . snd) primitives of
+<           Just (_, ref)  -> return $ Just $ applySpine ref inScope
+<           Nothing        -> return Nothing
 
-> -}
+
 
 The |pickName| command takes a prefix suggestion and a name suggestion
 (either of which may be empty), and returns a more-likely-to-be-unique

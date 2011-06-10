@@ -157,24 +157,22 @@ representation is interpreted and executed by |runElabProb|.
 >     t <- getCurrentDefinitionLocal
 >     return (t, ElabSuspended)
 
-> {-
 
 |EFake| extracts the reference of the current entry and presents it as
  a fake reference. \pierre{This is an artifact of our current
  implementation of labels, this should go away when we label
  high-level objects with high-level names}.
 
->     r <- getFakeRef 
->     inScope <- getInScope
->     runElab WorkCurrentGoal . (ty :>:) $ f (r, paramSpine inScope)
+<     r <- getFakeRef 
+<     inScope <- getInScope
+<     runElab WorkCurrentGoal . (ty :>:) $ f (r, paramSpine inScope)
 
 |EAnchor| extracts the name of the current entry.
 
-> runElab WorkCurrentGoal (ty :>: EAnchor f) = do
->     name <- getCurrentName
->     runElab WorkCurrentGoal . (ty :>:) $ f (fst (last name))
+< runElab WorkCurrentGoal (ty :>: EAnchor f) = do
+<     name <- getCurrentName
+<     runElab WorkCurrentGoal . (ty :>:) $ f (fst (last name))
 
-> -}
 
 |EResolve| provides a name-resolution service: given a relative name,
  it finds the term and potentially the scheme of the definition the
@@ -392,18 +390,14 @@ On our way to the label, we instantiate the hypotheses with fresh references.
 >         in  seekIn (lev + 1) es (rs :< dlst) (tm $$. (P dlst :$ B0)) 
 >                                              (ev (t $$. (P dlst :$ B0)))
 
-> {-
-
 We might have to go inside branches (essentially finite $\Pi$-types).
 
->       seekIn rs tm (N (op :@ [e, p])) | op == branchesOp =
->           freshRef (fortran p :<: e) $ \ eRef -> do
->               e' <- bquoteHere e
->               p' <- bquoteHere p
->               seekIn (rs :< eRef) (switchOp :@ [e', NP eRef, p', N tm])
->                   (p $$ A (pval eRef))
-
-> -}
+<       seekIn rs tm (N (op :@ [e, p])) | op == branchesOp =
+<           freshRef (fortran p :<: e) $ \ eRef -> do
+<               e' <- bquoteHere e
+<               p' <- bquoteHere p
+<               seekIn (rs :< eRef) (switchOp :@ [e', NP eRef, p', N tm])
+<                   (p $$ A (pval eRef))
 
 We have reached a label! The question is then ``is this the one we are looking
 for?'' First we call on the matcher (see section~\ref{subsec:Tactics.Matching})
@@ -443,7 +437,6 @@ state with hopes that we don't make use of.}
 >           (tm, _)  <- runElabHope WorkElsewhere (ev ((Just ss, INil) :/ ty))
 >           return (ss ++ [tm])
 
-> {- 
 
 \subsubsection{Simplifying proofs}
 \label{subsubsec:Elaboration.RunElab.proofs}
@@ -453,77 +446,77 @@ state with hopes that we don't make use of.}
 If we are hoping for a proof of a proposition, we first try simplifying it using
 the propositional simplification machinery.
 
-> simplifyProof :: WorkTarget -> VAL -> ProofState (INTM :=>: VAL, ElabStatus)
-> simplifyProof wrk p = do
->     pSimp <- runPropSimplify p
->     case pSimp of
->         Just (SimplyTrivial prf) -> do
->             return (prf :=>: evTm prf, ElabSuccess)
->         Just (SimplyAbsurd _) -> runElab wrk (PRF p :>:
->             ECry [err "simplifyProof: proposition is absurd:"
->                          ++ errTyVal (p :<: PROP)])
->         Just (Simply qs _ h) -> do
->             qrs <- traverse partProof qs
->             let prf = substitute qs qrs h
->             return (prf :=>: evTm prf, ElabSuccess)
->         Nothing -> subProof wrk (PRF p)
->   where
->     partProof :: (REF :<: INTM) -> ProofState INTM
->     partProof (ref :<: _) = do
->       ((tm :=>: _) , _) <- subProof WorkElsewhere (pty ref)
->       return tm
+< simplifyProof :: WorkTarget -> VAL -> ProofState (INTM :=>: VAL, ElabStatus)
+< simplifyProof wrk p = do
+<     pSimp <- runPropSimplify p
+<     case pSimp of
+<         Just (SimplyTrivial prf) -> do
+<             return (prf :=>: evTm prf, ElabSuccess)
+<         Just (SimplyAbsurd _) -> runElab wrk (PRF p :>:
+<             ECry [err "simplifyProof: proposition is absurd:"
+<                          ++ errTyVal (p :<: PROP)])
+<         Just (Simply qs _ h) -> do
+<             qrs <- traverse partProof qs
+<             let prf = substitute qs qrs h
+<             return (prf :=>: evTm prf, ElabSuccess)
+<         Nothing -> subProof wrk (PRF p)
+<   where
+<     partProof :: (REF :<: INTM) -> ProofState INTM
+<     partProof (ref :<: _) = do
+<       ((tm :=>: _) , _) <- subProof WorkElsewhere (pty ref)
+<       return tm
 
->     subProof :: WorkTarget -> VAL -> ProofState (INTM :=>: VAL, ElabStatus)
->     subProof wrk (PRF p) = flexiProof wrk p <|> lastHope wrk (PRF p)
+<     subProof :: WorkTarget -> VAL -> ProofState (INTM :=>: VAL, ElabStatus)
+<     subProof wrk (PRF p) = flexiProof wrk p <|> lastHope wrk (PRF p)
 
 
 After simplification has dealt with the easy stuff, it calls |flexiProof| to
 solve any flex-rigid equations (by suspending a solution process on a subgoal
 and returning the subgoal). 
 
-> flexiProof :: WorkTarget -> VAL -> ProofState (INTM :=>: VAL, ElabStatus)
+< flexiProof :: WorkTarget -> VAL -> ProofState (INTM :=>: VAL, ElabStatus)
 
-> flexiProof wrk (EQBLUE (_S :>: s) (_T :>: t)) = 
->     flexiProofMatch           (_S :>: s) (_T :>: t)
->     <|> flexiProofLeft   wrk  (_S :>: s) (_T :>: t)
->     <|> flexiProofRight  wrk  (_S :>: s) (_T :>: t)
-> flexiProof _ _ = (|)
+< flexiProof wrk (EQBLUE (_S :>: s) (_T :>: t)) = 
+<     flexiProofMatch           (_S :>: s) (_T :>: t)
+<     <|> flexiProofLeft   wrk  (_S :>: s) (_T :>: t)
+<     <|> flexiProofRight  wrk  (_S :>: s) (_T :>: t)
+< flexiProof _ _ = (|)
 
 If we are trying to prove an equation between the same fake reference applied to
 two lists of parameters, we prove equality of the parameters and use reflexivity.
 This case arises frequently when proving label equality to make recursive calls.
 \question{Do we need this case, or are we better off using matching?}
 
-> flexiProofMatch :: (TY :>: VAL) -> (TY :>: VAL)
->     -> ProofState (INTM :=>: VAL, ElabStatus)
-> flexiProofMatch (_S :>: N s) (_T :>: N t)
->   | Just (ref, ps) <- pairSpines s t [] = do
->     let ty = pty ref
->     prfs <- proveBits ty ps B0
->     let  q  = NP refl $$ A ty $$ A (NP ref) $$ Out
->          r  = CON (smash q (trail prfs))
->     r' <- bquoteHere r
->     return (r' :=>: r, ElabSuccess)
->   where
->     pairSpines :: NEU -> NEU -> [(VAL, VAL)] -> Maybe (REF, [(VAL, VAL)])
->     pairSpines (P ref@(sn := _ :<: _)) (P (tn := _ :<: _)) ps
->       | sn == tn   = Just (ref, ps)
->       | otherwise  = Nothing
->     pairSpines (s :$ A as) (t :$ A at) ps = pairSpines s t ((as, at):ps)
->     pairSpines _ _ _ = Nothing 
+< flexiProofMatch :: (TY :>: VAL) -> (TY :>: VAL)
+<     -> ProofState (INTM :=>: VAL, ElabStatus)
+< flexiProofMatch (_S :>: N s) (_T :>: N t)
+<   | Just (ref, ps) <- pairSpines s t [] = do
+<     let ty = pty ref
+<     prfs <- proveBits ty ps B0
+<     let  q  = NP refl $$ A ty $$ A (NP ref) $$ Out
+<          r  = CON (smash q (trail prfs))
+<     r' <- bquoteHere r
+<     return (r' :=>: r, ElabSuccess)
+<   where
+<     pairSpines :: NEU -> NEU -> [(VAL, VAL)] -> Maybe (REF, [(VAL, VAL)])
+<     pairSpines (P ref@(sn := _ :<: _)) (P (tn := _ :<: _)) ps
+<       | sn == tn   = Just (ref, ps)
+<       | otherwise  = Nothing
+<     pairSpines (s :$ A as) (t :$ A at) ps = pairSpines s t ((as, at):ps)
+<     pairSpines _ _ _ = Nothing 
 
->     proveBits :: TY -> [(VAL, VAL)] -> Bwd (VAL, VAL, VAL)
->         -> ProofState (Bwd (VAL, VAL, VAL))
->     proveBits ty [] prfs = return prfs
->     proveBits (PI s t) ((as, at):ps) prfs = do
->         (_ :=>: prf, _) <- simplifyProof WorkElsewhere (EQBLUE (s :>: as) (s :>: at)) 
->         proveBits (t $$ A as) ps (prfs :< (as, at, prf))
+<     proveBits :: TY -> [(VAL, VAL)] -> Bwd (VAL, VAL, VAL)
+<         -> ProofState (Bwd (VAL, VAL, VAL))
+<     proveBits ty [] prfs = return prfs
+<     proveBits (PI s t) ((as, at):ps) prfs = do
+<         (_ :=>: prf, _) <- simplifyProof WorkElsewhere (EQBLUE (s :>: as) (s :>: at)) 
+<         proveBits (t $$ A as) ps (prfs :< (as, at, prf))
 
->     smash :: VAL -> [(VAL, VAL, VAL)] -> VAL
->     smash q [] = q
->     smash q ((as, at, prf):ps) = smash (q $$ A as $$ A at $$ A prf) ps
+<     smash :: VAL -> [(VAL, VAL, VAL)] -> VAL
+<     smash q [] = q
+<     smash q ((as, at, prf):ps) = smash (q $$ A as $$ A at $$ A prf) ps
 
-> flexiProofMatch _ _ = (|)
+< flexiProofMatch _ _ = (|)
 
 If one side of the equation is a hoping hole applied to the shared parameters of
 our current location, we can solve it with the other side of the equation.
@@ -535,47 +528,45 @@ insert a coercion rather than demanding definitional equality of the sets?
 See Elab.pig for an example where this makes the elaboration process fragile,
 because we end up trying to move definitions with processes attached.}
 
-> flexiProofLeft :: WorkTarget -> (TY :>: VAL) -> (TY :>: VAL)
->     -> ProofState (INTM :=>: VAL, ElabStatus)
-> flexiProofLeft wrk (_T :>: N t) (_S :>: s) = do
->     guard =<< withNSupply (equal (SET :>: (_S, _T)))
+< flexiProofLeft :: WorkTarget -> (TY :>: VAL) -> (TY :>: VAL)
+<     -> ProofState (INTM :=>: VAL, ElabStatus)
+< flexiProofLeft wrk (_T :>: N t) (_S :>: s) = do
+<     guard =<< withNSupply (equal (SET :>: (_S, _T)))
 
 <     (q' :=>: q, _) <- simplifyProof False (EQBLUE (SET :>: _S) (SET :>: _T))
 
->     ref  <- stripShared t
->     s'   <- bquoteHere s
->     _S'  <- bquoteHere _S
->     t'   <- bquoteHere t
->     _T'  <- bquoteHere _T
->     let  p      = EQBLUE (_T   :>: N t   ) (_S   :>: s   )
->          p'     = EQBLUE (_T'  :>: N t'  ) (_S'  :>: s'  )
+<     ref  <- stripShared t
+<     s'   <- bquoteHere s
+<     _S'  <- bquoteHere _S
+<     t'   <- bquoteHere t
+<     _T'  <- bquoteHere _T
+<     let  p      = EQBLUE (_T   :>: N t   ) (_S   :>: s   )
+<          p'     = EQBLUE (_T'  :>: N t'  ) (_S'  :>: s'  )
 
 <          N (coe :@ [_S', _T', q', s']) :=>: Just (coe @@ [_S, _T, q, s])
 
->          eprob  = WaitSolve ref (s' :=>: Just s) ElabHope
+<          eprob  = WaitSolve ref (s' :=>: Just s) ElabHope
 
->     suspendThis wrk ("eq" :<: PRF p' :=>: PRF p) eprob
-> flexiProofLeft _ _ _ = (|)
-
-
-
-> flexiProofRight :: WorkTarget -> (TY :>: VAL) -> (TY :>: VAL)
->     -> ProofState (INTM :=>: VAL, ElabStatus)
-> flexiProofRight wrk (_S :>: s) (_T :>: N t) = do
->     guard =<< withNSupply (equal (SET :>: (_S, _T)))
->     ref  <- stripShared t
->     s'   <- bquoteHere s
->     _S'  <- bquoteHere _S
->     t'   <- bquoteHere t
->     _T'  <- bquoteHere _T
->     let  p      = EQBLUE (_S   :>: s   ) (_T   :>: N t   )
->          p'     = EQBLUE (_S'  :>: s'  ) (_T'  :>: N t'  )
->          eprob  = WaitSolve ref (s' :=>: Just s) ElabHope
->     suspendThis wrk ("eq" :<: PRF p' :=>: PRF p) eprob
-> flexiProofRight _ _ _ = (|)
+<     suspendThis wrk ("eq" :<: PRF p' :=>: PRF p) eprob
+< flexiProofLeft _ _ _ = (|)
 
 
-> -}
+
+< flexiProofRight :: WorkTarget -> (TY :>: VAL) -> (TY :>: VAL)
+<     -> ProofState (INTM :=>: VAL, ElabStatus)
+< flexiProofRight wrk (_S :>: s) (_T :>: N t) = do
+<     guard =<< withNSupply (equal (SET :>: (_S, _T)))
+<     ref  <- stripShared t
+<     s'   <- bquoteHere s
+<     _S'  <- bquoteHere _S
+<     t'   <- bquoteHere t
+<     _T'  <- bquoteHere _T
+<     let  p      = EQBLUE (_S   :>: s   ) (_T   :>: N t   )
+<          p'     = EQBLUE (_S'  :>: s'  ) (_T'  :>: N t'  )
+<          eprob  = WaitSolve ref (s' :=>: Just s) ElabHope
+<     suspendThis wrk ("eq" :<: PRF p' :=>: PRF p) eprob
+< flexiProofRight _ _ _ = (|)
+
 
 If all else fails, we can hope for anything we like by leaving a hoping
 subgoal, either using the current one (if we are working on it) or creating a

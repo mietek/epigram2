@@ -1,6 +1,8 @@
 \section{The |ProofState| Kit}
 \label{sec:ProofState.Interface.ProofKit}
 
+Move to |ProofState.Interface|?
+
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
@@ -91,7 +93,7 @@ has finished.
 > inferSpHere :: (EXP :<: TY) -> [Elim EXP] -> ProofState TY
 > inferSpHere ety es = getDevLev >>= \ l -> spInf l ety (ENil , es)
 
-> {-
+
 
 \subsection{Being paranoiac}
 
@@ -99,31 +101,30 @@ has finished.
 The |validateHere| command performs some sanity checks on the current
 location, which may be useful for paranoia purposes.
 
-> validateHere :: ProofState ()
-> validateHere = do
->     m <- getCurrentEntry
->     case m of
->         CDefinition _ (_ := DEFN tm :<: ty) _ _ _ -> do
->             ty' <- bquoteHere ty
->             checkHere (SET :>: ty')
->                 `pushError`  (err "validateHere: definition type failed to type-check: SET does not admit"
->                              ++ errTyVal (ty :<: SET))
->             tm' <- bquoteHere tm
->             checkHere (ty :>: tm')
->                 `pushError`  (err "validateHere: definition failed to type-check:"
->                              ++ errTyVal (ty :<: SET)
->                              ++ err "does not admit"
->                              ++ errTyVal (tm :<: ty))
->             return ()
->         CDefinition _ (_ := HOLE _ :<: ty) _ _ _ -> do
->             ty' <- bquoteHere ty
->             checkHere (SET :>: ty')
->                 `pushError`  (err "validateHere: hole type failed to type-check: SET does not admit" 
->                              ++ errTyVal (ty :<: SET))
->             return ()
->         _ -> return ()
+< validateHere :: ProofState ()
+< validateHere = do
+<     m <- getCurrentEntry
+<     case m of
+<         CDefinition _ (_ := DEFN tm :<: ty) _ _ _ -> do
+<             ty' <- bquoteHere ty
+<             checkHere (SET :>: ty')
+<                 `pushError`  (err "validateHere: definition type failed to type-check: SET does not admit"
+<                              ++ errTyVal (ty :<: SET))
+<             tm' <- bquoteHere tm
+<             checkHere (ty :>: tm')
+<                 `pushError`  (err "validateHere: definition failed to type-check:"
+<                              ++ errTyVal (ty :<: SET)
+<                              ++ err "does not admit"
+<                              ++ errTyVal (tm :<: ty))
+<             return ()
+<         CDefinition _ (_ := HOLE _ :<: ty) _ _ _ -> do
+<             ty' <- bquoteHere ty
+<             checkHere (SET :>: ty')
+<                 `pushError`  (err "validateHere: hole type failed to type-check: SET does not admit" 
+<                              ++ errTyVal (ty :<: SET))
+<             return ()
+<         _ -> return ()
 
-> -}
 
 > validateHere :: ProofState ()
 > validateHere = return () -- ha ha ha ha

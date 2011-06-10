@@ -107,22 +107,22 @@ argument is True.
 >         d      <- help bsc es
 >         return $ d $$ prettyBKind k (text s <+> kword KwAsc <+> docTy)
 
->     {-
->     help bsc (es :< EDEF ref _ _ _ _ _) | gals = do
->         ty     <- bquoteHere $ removeShared (paramSpine es) (pty ref)
->         docTy  <- prettyPS (SET :>: ty)
->         d      <- help bsc es
->         return $ d $$ (text (showRelName (christenREF bsc ref))
->                                 <+> kword KwAsc <+> docTy)
->     -}
+
+<     help bsc (es :< EDEF ref _ _ _ _ _) | gals = do
+<         ty     <- bquoteHere $ removeShared (paramSpine es) (pty ref)
+<         docTy  <- prettyPS (SET :>: ty)
+<         d      <- help bsc es
+<         return $ d $$ (text (showRelName (christenREF bsc ref))
+<                                 <+> kword KwAsc <+> docTy)
+
 
 >     help bsc (es :< _) = help bsc es
 
-> {-
 
->     removeShared :: Spine {TT} REF -> TY -> TY
->     removeShared []       ty        = ty
->     removeShared (A (NP r) : as) (PI s t)  = t Evidences.Eval.$$ A (NP r)
+
+<     removeShared :: Spine {TT} REF -> TY -> TY
+<     removeShared []       ty        = ty
+<     removeShared (A (NP r) : as) (PI s t)  = t Evidences.Eval.$$ A (NP r)
 
 
 This old implementation is written using a horrible imperative hack that saves
@@ -130,51 +130,50 @@ the state, throws away bits of the context to produce an answer, then restores
 the saved state. We can get rid of it once we are confident that the new version
 (above) produces suitable output.
 
-> infoContextual' :: Bool -> ProofState String
-> infoContextual' gals = do
->     save <- get
->     let bsc = inBScope save
->     me <- getCurrentName
->     ds <- many (hypsHere bsc me <* optional killBelow <* goOut <* removeEntryAbove)
->     d <- hypsHere bsc me
->     put save
->     return (renderHouseStyle (vcat (d:reverse ds)))
->  where
->    hypsHere :: BScopeContext -> Name -> ProofState Doc
->    hypsHere bsc me = do
->        es <- getEntriesAbove
->        d <- hyps bsc me
->        putEntriesAbove es
->        return d
->    
->    killBelow = do
->        l <- getLayer
->        replaceLayer (l { belowEntries = NF F0 })
->
->    hyps :: BScopeContext -> Name -> ProofState Doc
->    hyps bsc me = do
->        es <- getEntriesAbove
->        case (gals, es) of
->            (_, B0) -> return empty
->            (False, es' :< EPARAM ref _ k _ _) -> do
->                putEntriesAbove es'
->                ty' <- bquoteHere (pty ref)
->                docTy <- prettyPS (SET :>: ty')
->                d <- hyps bsc me
->                return (d $$ prettyBKind k (text (showRelName (christenREF bsc ref)) <+> kword KwAsc <+> docTy))
->            (True, es' :< EDEF ref _ _ _ _ _) -> do
->                goIn
->                es <- getEntriesAbove
->                (ty :=>: _) <- getGoal "hyps"
->                ty' <- bquoteHere (evTm (inferGoalType es ty))
->                docTy <- prettyPS (SET :>: ty')
->                goOut
->                putEntriesAbove es'
->                d <- hyps bsc me
->                return (d $$ (text (showRelName (christenREF bsc ref)) <+> kword KwAsc <+> docTy))
->            (_, es' :< _) -> putEntriesAbove es' >> hyps bsc me
+< infoContextual' :: Bool -> ProofState String
+< infoContextual' gals = do
+<     save <- get
+<     let bsc = inBScope save
+<     me <- getCurrentName
+<     ds <- many (hypsHere bsc me <* optional killBelow <* goOut <* removeEntryAbove)
+<     d <- hypsHere bsc me
+<     put save
+<     return (renderHouseStyle (vcat (d:reverse ds)))
+<  where
+<    hypsHere :: BScopeContext -> Name -> ProofState Doc
+<    hypsHere bsc me = do
+<        es <- getEntriesAbove
+<        d <- hyps bsc me
+<        putEntriesAbove es
+<        return d
+<    
+<    killBelow = do
+<        l <- getLayer
+<        replaceLayer (l { belowEntries = NF F0 })
+<
+<    hyps :: BScopeContext -> Name -> ProofState Doc
+<    hyps bsc me = do
+<        es <- getEntriesAbove
+<        case (gals, es) of
+<            (_, B0) -> return empty
+<            (False, es' :< EPARAM ref _ k _ _) -> do
+<                putEntriesAbove es'
+<                ty' <- bquoteHere (pty ref)
+<                docTy <- prettyPS (SET :>: ty')
+<                d <- hyps bsc me
+<                return (d $$ prettyBKind k (text (showRelName (christenREF bsc ref)) <+> kword KwAsc <+> docTy))
+<            (True, es' :< EDEF ref _ _ _ _ _) -> do
+<                goIn
+<                es <- getEntriesAbove
+<                (ty :=>: _) <- getGoal "hyps"
+<                ty' <- bquoteHere (evTm (inferGoalType es ty))
+<                docTy <- prettyPS (SET :>: ty')
+<                goOut
+<                putEntriesAbove es'
+<                d <- hyps bsc me
+<                return (d $$ (text (showRelName (christenREF bsc ref)) <+> kword KwAsc <+> docTy))
+<            (_, es' :< _) -> putEntriesAbove es' >> hyps bsc me
 
-> -}
 
 
 > infoScheme :: RelName -> ProofState String

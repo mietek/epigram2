@@ -1,3 +1,7 @@
+\section{Error Handling}
+
+%if False
+
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE TypeOperators, TypeSynonymInstances #-}
 
@@ -9,6 +13,8 @@
 > import Evidences.Tm
 
 > import Kit.NatFinVec
+
+%endif
 
 
 > data ErrorTok  =  StrMsg String

@@ -1,6 +1,8 @@
 \section{Proof Context}
 \label{sec:ProofState.Edition.ProofContext}
 
+Move to |ProofState.ProofContext|?
+
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}

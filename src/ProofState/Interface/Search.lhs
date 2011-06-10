@@ -1,5 +1,6 @@
 \section{Searching in the Proof Context}
 
+Move to |ProofState.Navigation|?
 
 %if False
 

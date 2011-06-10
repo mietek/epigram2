@@ -1,5 +1,7 @@
 \section{Solving goals}
 
+Move to |ProofState.Interface|?
+
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
@@ -85,7 +87,7 @@ and moves to the next goal, if one is available.
 
 
 
-> {-
+
 
 \subsection{Finding trivial solutions}
 
@@ -95,16 +97,16 @@ developments and, eventually, leads to a solution. To solve the goal,
 we are therefore left to |give| this definition. This is the role of
 the |done| command that tries to |give| the entry above the cursor.
 
-> done :: ProofState (EXTM :=>: VAL)
-> done = do
->   devEntry <- getEntryAbove
->   case devEntry of
->     EDEF ref _ _ _ _ _ -> do
->         -- The entry above is indeed a definition
->         giveOutBelow $ NP ref
->     _ -> do
->         -- The entry was not a definition
->         throwError' $ err "done: entry above cursor must be a definition."
+< done :: ProofState (EXTM :=>: VAL)
+< done = do
+<   devEntry <- getEntryAbove
+<   case devEntry of
+<     EDEF ref _ _ _ _ _ -> do
+<         -- The entry above is indeed a definition
+<         giveOutBelow $ NP ref
+<     _ -> do
+<         -- The entry was not a definition
+<         throwError' $ err "done: entry above cursor must be a definition."
 
 
 Slightly more sophisticated is the well-known |apply| tactic in Coq:
@@ -113,29 +115,29 @@ of type |Pi S T|. We can therefore solve the goal |T| provided we can
 solve the goal |S|. We have this tactic too and, guess what, it is
 |apply|.
 
-> apply :: ProofState (EXTM :=>: VAL)
-> apply = do
->   devEntry <- getEntryAbove
->   case devEntry of
->     EDEF f@(_ := _ :<: (PI _S _T)) _ _ _ _ _ -> do
->         -- The entry above is a proof of |Pi S T|
->
->         -- Ask for a proof of |S|
->         _STm <- bquoteHere _S
->         sTm :=>: s <- make $ "s" :<: _STm
->         -- Make a proof of |T|
->         _TTm <- bquoteHere $ _T $$ A s
->         make $ "t" :<: _TTm
->         goIn
->         giveOutBelow $ N $ P f :$ A (N sTm)
->     _ -> throwError' $ err  $ "apply: last entry in the development" 
->                             ++ " must be a definition with a pi-type."
+< apply :: ProofState (EXTM :=>: VAL)
+< apply = do
+<   devEntry <- getEntryAbove
+<   case devEntry of
+<     EDEF f@(_ := _ :<: (PI _S _T)) _ _ _ _ _ -> do
+<         -- The entry above is a proof of |Pi S T|
+<
+<         -- Ask for a proof of |S|
+<         _STm <- bquoteHere _S
+<         sTm :=>: s <- make $ "s" :<: _STm
+<         -- Make a proof of |T|
+<         _TTm <- bquoteHere $ _T $$ A s
+<         make $ "t" :<: _TTm
+<         goIn
+<         giveOutBelow $ N $ P f :$ A (N sTm)
+<     _ -> throwError' $ err  $ "apply: last entry in the development" 
+<                             ++ " must be a definition with a pi-type."
 
 The |ungawa| command looks for a truly obvious thing to do, and does it.
 
-> ungawa :: ProofState ()
-> ungawa =  ignore done <|> ignore apply <|> ignore (lambdaParam "ug")
->           `pushError` (err "ungawa: no can do.")
+< ungawa :: ProofState ()
+< ungawa =  ignore done <|> ignore apply <|> ignore (lambdaParam "ug")
+<           `pushError` (err "ungawa: no can do.")
 
 
 \subsection{Refining the proof state}
@@ -145,14 +147,13 @@ takes values in the new type to values in the original type. The
 |refineProofState| command creates a new subgoal at the top of the working
 development, so the entries in that development are not in scope. 
 
-> refineProofState :: INTM -> (EXTM -> INTM) -> ProofState ()
-> refineProofState ty realiser = do
->     cursorTop
->     t :=>: _ <- make ("refine" :<: ty)
->     cursorBottom
->     give (realiser t)
->     cursorTop
->     cursorDown
->     goIn
+< refineProofState :: INTM -> (EXTM -> INTM) -> ProofState ()
+< refineProofState ty realiser = do
+<     cursorTop
+<     t :=>: _ <- make ("refine" :<: ty)
+<     cursorBottom
+<     give (realiser t)
+<     cursorTop
+<     cursorDown
+<     goIn
 
-> -}

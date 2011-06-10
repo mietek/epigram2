@@ -1,6 +1,8 @@
 \section{Developments}
 \label{sec:ProofState.Structure.Developments}
 
+Move to |ProofState.Structure|?
+
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
@@ -152,29 +154,6 @@ it once and for all with |lastName| and later rely on the cached version.
 
 \end{danger}
 
-
-\paragraph{Kinds of Definitions:}
-
-A \emph{definition} eventually constructs a term, by a (possibly
-empty) development of sub-objects. The |Tip| of this sub-development
-will be |Unknown|, |Suspended| or |Defined|.
-
-A programming problem is a special kind of definition: it follows a
-type |Scheme| (Section~\ref{sec:DisplayLang.Scheme}), the high-level
-type of the function we are implementing.
-
-> {-
-> data DefKind = LETG |  PROG (Scheme INTM)
-
-%if False
-
-> instance Show DefKind where
->     show LETG      = "LETG"
->     show (PROG _)  = "PROG"
-
-%endif
-
-> -}
 
 
 

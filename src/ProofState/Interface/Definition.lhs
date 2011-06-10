@@ -1,5 +1,7 @@
 \section{Making Definitions}
 
+Move to |ProofState.Interface|?
+
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
@@ -34,18 +36,6 @@
 
 %endif
 
-> {-
-
-> make :: (String :<: EXP) -> ProofState EXP
-> make (s :<: ty) = do
->     makeModule s
->     goIn
->     e <- moduleToGoal ty
->     goOut
->     return e
-
-> -}
-
 The |make| command adds a named goal of the given type above the
 cursor. The meat is actually in |makeKinded|, below.
 
@@ -79,7 +69,9 @@ mood such as |Hoping| or |Crying|.
 >     let  binScope  = boys inScope
 >          liftedTy = bwdVec (fmap (\(_, s, t) -> (s, t)) (boys inScope))
 >                             (\ n ys -> piLift n ys) ty
->          def = DEF n liftedTy Hole -- (eats (trail (fmap (\(_,s,_) -> s) (boys inScope))) Hole)
+>          def = DEF n liftedTy Hole
+
+<  (eats (trail (fmap (\(_,s,_) -> s) (boys inScope))) Hole)
 
 >     -- Make an entry for the goal, with an empty development
 >     let dev = Dev { devEntries       =  B0

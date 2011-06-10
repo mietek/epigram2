@@ -1,5 +1,7 @@
 \section{Modules in Proof Context}
 
+Move to |ProofState.Interface|?
+
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
@@ -69,7 +71,7 @@ Section~\ref{subsec:Tactics.Elimination.analysis}.
 
 > moduleToGoal :: EXP -> ProofState EXP
 > moduleToGoal ty = do
->     chkPS (SET :>: ty)
+>     chkPS (SET :>: ty) `pushError` err "moduleToGoal: not a set"
 >     CModule _ <- getCurrentEntry
 >     putDevTip $ Unknown ty Waiting
 >     (d, t) <- updateDefFromTip

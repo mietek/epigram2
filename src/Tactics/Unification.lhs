@@ -101,24 +101,20 @@ holes with the new ones.
 >     makeDeps _ _ = throwError' $ err "makeDeps: bad reference kind! Perhaps "
 >         ++ err "solveHole was called with a term containing unexpanded definitions?"
 
-> {-
-
 \adam{where should this live?}
 
-> stripShared :: NEU -> ProofState REF
-> stripShared n = getInScope >>= stripShared' n
->   where
->     stripShared' :: NEU -> Entries -> ProofState REF
->     stripShared' (P ref@(_ := HOLE Hoping :<: _)) B0 = return ref
->     stripShared' (n :$ A (NP r)) (es :< EPARAM paramRef _ _ _ _)
->         | r == paramRef                      = stripShared' n es
->     stripShared' n (es :< EDEF _ _ _ _ _ _)  = stripShared' n es
->     stripShared' n (es :< EModule _ _)       = stripShared' n es
->     stripShared' n es = do
->       -- |proofTrace $ "stripShared: fail on " ++ show n|
->       throwError' $ err "stripShared: fail on" ++ errVal (N n)
-
-> -}
+< stripShared :: NEU -> ProofState REF
+< stripShared n = getInScope >>= stripShared' n
+<   where
+<     stripShared' :: NEU -> Entries -> ProofState REF
+<     stripShared' (P ref@(_ := HOLE Hoping :<: _)) B0 = return ref
+<     stripShared' (n :$ A (NP r)) (es :< EPARAM paramRef _ _ _ _)
+<         | r == paramRef                      = stripShared' n es
+<     stripShared' n (es :< EDEF _ _ _ _ _ _)  = stripShared' n es
+<     stripShared' n (es :< EModule _ _)       = stripShared' n es
+<     stripShared' n es = do
+<       -- |proofTrace $ "stripShared: fail on " ++ show n|
+<       throwError' $ err "stripShared: fail on" ++ errVal (N n)
 
 What fresh hell is this:
 

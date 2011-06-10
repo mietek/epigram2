@@ -1,6 +1,8 @@
 \section{Navigating in the Proof Context}
 \label{sec:Proofstate.Edition.Navigation}
 
+Move to |ProofState.Navigation|?
+
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}

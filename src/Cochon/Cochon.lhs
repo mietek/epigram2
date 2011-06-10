@@ -346,17 +346,16 @@ Construction tactics:
 >         (\ [StrArg s, InArg ty] -> elabPiParam (s :<: ty) >> return "Made pi!")
 >         "pi <x> : <type> - introduces a pi." :
 
-> {-
->   : simpleCT
->       "program"
->       (|bwdList (pSep (keyword KwComma) tokenString)|)
->       (\ as -> elabProgram (map argToStr as) >> return "Programming.")
->       "program <labels>: set up a programming problem."
 
->   : nullaryCT "ungawa" (ungawa >> return "Ungawa!")
->       "ungawa - tries to solve the current goal in a stupid way."
+<   : simpleCT
+<       "program"
+<       (|bwdList (pSep (keyword KwComma) tokenString)|)
+<       (\ as -> elabProgram (map argToStr as) >> return "Programming.")
+<       "program <labels>: set up a programming problem."
 
-> -}
+<   : nullaryCT "ungawa" (ungawa >> return "Ungawa!")
+<       "ungawa - tries to solve the current goal in a stupid way."
+
 
 Navigation tactics:
 
@@ -383,30 +382,26 @@ Navigation tactics:
 >     nullaryCT "last"   (some nextGoal >> return "Going to last goal...")
 >       "last - searches for the last goal in the proof state." :
 
-> {-
-
->   : unaryNameCT "jump" (\ x -> do
->       (n := _) <- resolveDiscard x
->       goTo n
->       return ("Jumping to " ++ showName n ++ "...")
->     )
->       "jump <name> - moves to the definition of <name>."
+<   : unaryNameCT "jump" (\ x -> do
+<       (n := _) <- resolveDiscard x
+<       goTo n
+<       return ("Jumping to " ++ showName n ++ "...")
+<     )
+<       "jump <name> - moves to the definition of <name>."
 
 
 Miscellaneous tactics:
 
->   : CochonTactic
->         {  ctName = "execute"
->         ,  ctParse = (|(B0 :<) tokenString|)
->         ,  ctIO = (\ [StrArg fn] (locs :< loc) -> do
->             exit <- system fn
->             putStrLn $ if (exit == ExitSuccess) then "Success." else "Failure."
->             return (locs :< loc)
->           )
->         ,  ctHelp = "execute <command> - executes the given system command."
->         }
-
-> -}
+<   : CochonTactic
+<         {  ctName = "execute"
+<         ,  ctParse = (|(B0 :<) tokenString|)
+<         ,  ctIO = (\ [StrArg fn] (locs :< loc) -> do
+<             exit <- system fn
+<             putStrLn $ if (exit == ExitSuccess) then "Success." else "Failure."
+<             return (locs :< loc)
+<           )
+<         ,  ctHelp = "execute <command> - executes the given system command."
+<         }
 
 >     CochonTactic
 >         {  ctName = "help"
@@ -433,22 +428,19 @@ Miscellaneous tactics:
 >         ,  ctHelp = "quit - terminates the program."
 >         } :
 
-> {-
 
->     : CochonTactic
->         {  ctName = "save"
->         ,  ctParse = (| (B0 :<) tokenString |)
->         ,  ctIO = (\ [StrArg fn] (locs :< loc) -> do
->             let Right s = evalStateT (much goOut >> prettyProofState) loc
->             writeFile fn s
->             putStrLn "Saved."
->             return (locs :< loc)
->           )
->         ,  ctHelp = "save <file> - saves proof state to the given file."
->         }
->             
-
-> -}
+<     : CochonTactic
+<         {  ctName = "save"
+<         ,  ctParse = (| (B0 :<) tokenString |)
+<         ,  ctIO = (\ [StrArg fn] (locs :< loc) -> do
+<             let Right s = evalStateT (much goOut >> prettyProofState) loc
+<             writeFile fn s
+<             putStrLn "Saved."
+<             return (locs :< loc)
+<           )
+<         ,  ctHelp = "save <file> - saves proof state to the given file."
+<         }
+<             
 
 >     CochonTactic 
 >         {  ctName = "undo"
@@ -460,28 +452,26 @@ Miscellaneous tactics:
 >         ,  ctHelp = "undo - goes back to a previous state."
 >         } :
 
-> {-
 
->     : nullaryCT "validate" (validateHere >> return "Validated.")
->         "validate - re-checks the definition at the current location."  
+<     : nullaryCT "validate" (validateHere >> return "Validated.")
+<         "validate - re-checks the definition at the current location."  
 
->     : CochonTactic 
->         {  ctName = "load"
->         ,  ctParse = (| (B0 :<) tokenString |)
->         ,  ctIO = (\ [StrArg file] locs -> do
->                    commands <- withFile file ReadMode readCommands
->                                `catchError` \_ -> do
->                                  putStrLn $ "File " ++ file ++ " does not exist. Ignored."
->                                  return []
->                    doCTactics commands locs)
->         ,  ctHelp = "load <f> - load the commands stored in <f>"
->         }
+<     : CochonTactic 
+<         {  ctName = "load"
+<         ,  ctParse = (| (B0 :<) tokenString |)
+<         ,  ctIO = (\ [StrArg file] locs -> do
+<                    commands <- withFile file ReadMode readCommands
+<                                `catchError` \_ -> do
+<                                  putStrLn $ "File " ++ file ++ " does not exist. Ignored."
+<                                  return []
+<                    doCTactics commands locs)
+<         ,  ctHelp = "load <f> - load the commands stored in <f>"
+<         }
 
 Import more tactics from an aspect:
 
->     import <- CochonTactics
+<     import <- CochonTactics
 
-> -}
 
 >     simpleCT 
 >     "match"

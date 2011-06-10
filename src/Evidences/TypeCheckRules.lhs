@@ -1,3 +1,7 @@
+\section{TypeCheckRules}
+
+%if False
+
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE TypeOperators, GADTs, FlexibleContexts #-}
 
@@ -12,6 +16,8 @@
 > import Kit.MissingLibrary
 > import Kit.BwdFwd
 > import Kit.NatFinVec
+
+%endif
 
 > canTy :: (Can, [EXP]) :>: Can -> Maybe VAL
 > canTy ((Set, []) :>: Set)            = (| ONE |)

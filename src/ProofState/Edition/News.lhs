@@ -1,6 +1,8 @@
 \section{News about updated references}
 \label{sec:ProofState.Edition.News}
 
+Move to |Evidences.News|?
+
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
@@ -108,16 +110,16 @@ The |addNews| function adds the given news to the bulletin, if it is newsworthy.
 Using |seek|, we enforce the invariant that any reference
 appears at most once in a |NewsBulletin|.
 
-> {-
-> addBoyNews :: (Int, BoyNews) -> NewsBulletin -> NewsBulletin
-> addBoyNews (_, NoBoyNews) news = news
-> addBoyNews (l, bn) (gs, bs) =
->     (gs, bwdInsertAt (bwdLength bs - l - 1) bn bs)
->   where
->     bwdInsertAt :: Int -> a -> Bwd a -> Bwd a
->     bwdInsertAt 0 a (bs :< _) = bs :< a
->     bwdInsertAt n a (bs :< b) = bwdInsertAt (n-1) a bs :< b
-> -}
+
+< addBoyNews :: (Int, BoyNews) -> NewsBulletin -> NewsBulletin
+< addBoyNews (_, NoBoyNews) news = news
+< addBoyNews (l, bn) (gs, bs) =
+<     (gs, bwdInsertAt (bwdLength bs - l - 1) bn bs)
+<   where
+<     bwdInsertAt :: Int -> a -> Bwd a -> Bwd a
+<     bwdInsertAt 0 a (bs :< _) = bs :< a
+<     bwdInsertAt n a (bs :< b) = bwdInsertAt (n-1) a bs :< b
+
 
 
 \subsubsection{Getting the latest news}

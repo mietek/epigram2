@@ -1,6 +1,8 @@
 \section{The |ProofState| monad}
 \label{sec:ProofState.Edition.ProofState}
 
+Move to |ProofState.ProofContext|?
+
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
@@ -36,26 +38,3 @@ type synonym:
 
 
 
-
-\subsection{Error management toolkit}
-
-Some functions, such as |distill|, are defined in the |ProofStateT
-INTM| monad. However, Cochon lives in a |ProofStateT DInTmRN|
-monad. Therefore, in order to use it, we will need to lift from the
-former to the latter.
-
-> {-
-
-> mapStackError :: (ErrorTok a -> ErrorTok b) -> StackError a -> StackError b
-> mapStackError = fmap . fmap
-
-> liftError :: (a -> b) -> Either (StackError a) c -> Either (StackError b) c
-> liftError f = either (Left . mapStackError (fmap f)) Right
-
-> liftError' :: (ErrorTok a -> ErrorTok b) -> Either (StackError a) c
->     -> Either (StackError b) c
-> liftError' f = either (Left . mapStackError f) Right
-
-> liftErrorState :: (a -> b) -> ProofStateT a c -> ProofStateT b c
-> liftErrorState f = mapStateT (liftError f)
-> -}

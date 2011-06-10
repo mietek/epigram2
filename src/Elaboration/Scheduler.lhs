@@ -165,8 +165,6 @@ been suspended) then the cursor could be anywhere earlier in the proof state.
 >     solveHole' (defName def) [] (exp (ev t)) -- takes us to who knows where
 >     return Nothing
 
-> {- p
-
 
 If we have a |WaitSolve| problem where the hole has already been solved with
 something else, we need to ensure the solution is compatible. If the two
@@ -175,18 +173,18 @@ for a proof of their equality. \adam{At the moment this proof isn't used,
 but hoping for it might cause things to be solved usefully anyway. Is
 there a better way to do this?}
 
-> resume tt (WaitSolve ref@(_ := DEFN tmv' :<: ty) stt prob) = do
->     aus   <- getGlobalScope
->     sibs  <- getEntriesAbove
->     let  stt'  = maybeEval stt
->          stm   = parBind aus sibs (termOf stt')
->          stv   = evTm stm
->     eq <- withNSupply $ equal (ty :>: (stv, tmv'))
->     if eq
->         then  resume tt prob
+< resume tt (WaitSolve ref@(_ := DEFN tmv' :<: ty) stt prob) = do
+<     aus   <- getGlobalScope
+<     sibs  <- getEntriesAbove
+<     let  stt'  = maybeEval stt
+<          stm   = parBind aus sibs (termOf stt')
+<          stv   = evTm stm
+<     eq <- withNSupply $ equal (ty :>: (stv, tmv'))
+<     if eq
+<         then  resume tt prob
 
->         else  runElabHope WorkElsewhere (PRF (EQBLUE (ty :>: tmv') (ty :>: stv))) >>
->               schedTrace "resume: WaitSolve failed!" >> resume tt prob
+<         else  runElabHope WorkElsewhere (PRF (EQBLUE (ty :>: tmv') (ty :>: stv))) >>
+<               schedTrace "resume: WaitSolve failed!" >> resume tt prob
 
 <         else  throwError' $ err "resume: hole" ++ errRef ref ++
 <                    err "has been solved with" ++ errTyVal (tmv' :<: ty) ++
@@ -194,9 +192,7 @@ there a better way to do this?}
 <                            errTyVal (valueOf stt' :<: ty)
 
 
-> resume tt (ElabSchedule prob) = resume tt prob
-
-> -}
+< resume tt (ElabSchedule prob) = resume tt prob
 
 > ifSnd :: (a, ElabStatus) -> Maybe a
 > ifSnd (a,  ElabSuccess)   = Just a

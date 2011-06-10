@@ -64,17 +64,12 @@
 \input{Evidences/Introduction.tex}
 
 %include Evidences/Tm.lhs
-%include Evidences/TmJig.lhs
 %include Evidences/NameSupply.lhs
-%include Evidences/Mangler.lhs
-%include Evidences/Eval.lhs
 %include Evidences/TypeChecker.lhs
+%include Evidences/TypeCheckRules.lhs
+%include Evidences/EtaQuote.lhs
 %include Evidences/DefinitionalEquality.lhs
-%include Evidences/BetaQuotation.lhs
-%include Evidences/Operators.lhs
-%include Evidences/OperatorDSL.lhs
-%include Evidences/PropositionalEquality.lhs
-%include Evidences/Utilities.lhs
+%include Evidences/ErrorHandling.lhs
 
 \chapter{The Display Language}
 
@@ -96,10 +91,9 @@
 
 %include ProofState/Edition/News.lhs
 %include ProofState/Edition/ProofContext.lhs
-%include ProofState/Edition/ProofState.lhs
 %include ProofState/Edition/Entries.lhs
-%include ProofState/Edition/FakeRef.lhs
 %include ProofState/Edition/Scope.lhs
+%include ProofState/Edition/ProofState.lhs
 %include ProofState/Edition/GetSet.lhs
 %include ProofState/Edition/Navigation.lhs
 
@@ -111,21 +105,19 @@
 %include ProofState/Interface/Search.lhs
 %include ProofState/Interface/Solving.lhs
 %include ProofState/Interface/NameResolution.lhs
-%include ProofState/Interface/Lifting.lhs
-%include ProofState/Interface/Anchor.lhs
 
 \chapter{The Proof Tactics}
 
 \input{Tactics/Introduction.tex}
 
 %include Tactics/Information.lhs
-%include Tactics/Elimination.lhs
-%include Tactics/PropositionSimplify.lhs
-%include Tactics/ProblemSimplify.lhs
-%include Tactics/Record.lhs
-%include Tactics/Relabel.lhs
-%include Tactics/Gadgets.lhs
-%include Tactics/ShowHaskell.lhs
+% %include Tactics/Elimination.lhs
+% %include Tactics/PropositionSimplify.lhs
+% %include Tactics/ProblemSimplify.lhs
+% %include Tactics/Record.lhs
+% %include Tactics/Relabel.lhs
+% %include Tactics/Gadgets.lhs
+% %include Tactics/ShowHaskell.lhs
 %include Tactics/Unification.lhs
 %include Tactics/Matching.lhs
 
@@ -150,7 +142,6 @@
 
 \input{Cochon/Introduction.tex}
 
-%include Cochon/DevLoad.lhs
 %include Cochon/CommandLexer.lhs
 %include Cochon/Cochon.lhs
 %include Cochon/Error.lhs
@@ -167,14 +158,14 @@
 
 \input{Compiler/Introduction.tex}
 
-%include Compiler/OpDef.lhs
-%include Compiler/Compiler.lhs
+% %include Compiler/Compiler.lhs
 
 \appendix
 
 \chapter{Kit}
 
 %include Kit/BwdFwd.lhs
+%include Kit/NatFinVec.lhs
 %include Kit/Parsley.lhs
 %include Kit/MissingLibrary.lhs
 %include Kit/Trace.lhs

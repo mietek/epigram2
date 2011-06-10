@@ -1,5 +1,7 @@
 \section{Managing Entries in a Proof Context}
 
+Move to |ProofState.ProofContext|?
+
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}

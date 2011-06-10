@@ -1,6 +1,8 @@
 \section{Resolving and unresolving names}
 \label{sec:ProofState.Interface.NameResolution}
 
+Move to |ProofState.NameResolution|?
+
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
@@ -652,32 +654,29 @@ erroneous terms, which may not be well-scoped.
 > failNom :: Name -> RelName
 > failNom nom = ("!!!",Rel 0):(map (\(a,b) -> (a,Abs b)) nom)
 
-> {-
 
 \subsubsection{Invoking unresolution}
 
 The |christenName| and |christenREF| functions call |unresolve| for names, and
 the name part of references, respectively.
 
-> christenName :: BScopeContext -> Name -> RKind -> RelName
-> christenName bsc target rk = s
->   where (s, _, _) = unresolve target rk (paramSpine . (uncurry flat) $ bsc) bsc B0
->
-> christenREF :: BScopeContext -> REF -> RelName
-> christenREF bsc (target := rk :<: _) = christenName bsc target rk
+< christenName :: BScopeContext -> Name -> RKind -> RelName
+< christenName bsc target rk = s
+<   where (s, _, _) = unresolve target rk (paramSpine . (uncurry flat) $ bsc) bsc B0
+<
+< christenREF :: BScopeContext -> REF -> RelName
+< christenREF bsc (target := rk :<: _) = christenName bsc target rk
 
 
 The |showEntries| function folds over a bunch of entries, christening
 them with the given entries in scope and current name, and
 intercalating to produce a comma-separated list.
 
-> showEntries :: (Traversable f, Traversable g) => BScopeContext -> f (Entry g) -> String
-> showEntries bsc = intercalate ", " . foldMap f
->   where
->     f e | Just r <- entryDef e  = [showRelName (christenREF bsc r)]
->         | otherwise             = []
-
-> -}
+< showEntries :: (Traversable f, Traversable g) => BScopeContext -> f (Entry g) -> String
+< showEntries bsc = intercalate ", " . foldMap f
+<   where
+<     f e | Just r <- entryDef e  = [showRelName (christenREF bsc r)]
+<         | otherwise             = []
 
 The |showEntriesAbs| function works similarly, but uses absolute names instead of
 christening them.

@@ -85,52 +85,51 @@ being with $\Pi$-types.
 >   -- [/Feature = Label]
 >   pretty c        = error $ show c
 
-> {-
-> instance Pretty (Can DInTmRN) where
->     pretty Set       = const (kword KwSet)
->     pretty (Pi s t)  = prettyPi empty (DPI s t)
->     pretty (Con x)   = wrapDoc (kword KwCon <+> pretty x ArgSize) AppSize
->     -- import <- CanPretty
->     -- [Feature = Anchor]
->     pretty (Anchor (DTAG u) t ts) = wrapDoc (text u <+> pretty ts ArgSize) ArgSize
->     pretty AllowedEpsilon = const empty
->     pretty (AllowedCons _ _ _ s ts) = wrapDoc (pretty s ArgSize <+> pretty ts ArgSize) ArgSize
->     {- Not yet implemented -}
->     -- [/Feature = Anchor]
->     -- [Feature = Enum]
->     pretty (EnumT t)  = wrapDoc (kword KwEnum <+> pretty t ArgSize) AppSize
->     pretty Ze         = const (int 0)
->     pretty (Su t)     = prettyEnumIndex 1 t
->     -- [/Feature = Enum]
->     -- [Feature = IDesc]
->     pretty (IMu (Just l   :?=: _) i)  = wrapDoc
->         (pretty l AppSize <+> pretty i ArgSize)
->         AppSize
->     pretty (IMu (Nothing  :?=: (Id ii :& Id d)) i)  = wrapDoc
->         (kword KwIMu <+> pretty ii ArgSize <+> pretty d ArgSize <+> pretty i ArgSize)
->         AppSize
->     -- [/Feature = IDesc]
->     -- [Feature = Prop]
->     pretty Prop           = const (kword KwProp)
->     pretty (Prf p)        = wrapDoc (kword KwPrf <+> pretty p AndSize) AppSize
->     pretty (All p q)      = prettyAll empty (DALL p q)
->     pretty (And p q)      = wrapDoc
->         (pretty p (pred AndSize) <+> kword KwAnd <+> pretty q AndSize)
->         AndSize
->     pretty Trivial        = const (kword KwTrivial)
->     pretty Absurd         = const (kword KwAbsurd)
->     pretty (Box (Irr p))  = pretty p
->     pretty (Inh ty)       = wrapDoc (kword KwInh <+> pretty ty ArgSize) AppSize
->     pretty (Wit t)        = wrapDoc (kword KwWit <+> pretty t ArgSize) AppSize
->     -- [/Feature = Prop]
->     -- [Feature = Sigma]
->     pretty Unit         = wrapDoc (kword KwSig <+> parens empty) AppSize
->     pretty Void         = prettyPair DVOID
->     pretty (Sigma s t)  = prettySigma empty (DSIGMA s t)
->     pretty (Pair a b)   = prettyPair (DPAIR a b)
->     -- [/Feature = Sigma]
->
-> -}
+
+< instance Pretty (Can DInTmRN) where
+<     pretty Set       = const (kword KwSet)
+<     pretty (Pi s t)  = prettyPi empty (DPI s t)
+<     pretty (Con x)   = wrapDoc (kword KwCon <+> pretty x ArgSize) AppSize
+<     -- import <- CanPretty
+<     -- [Feature = Anchor]
+<     pretty (Anchor (DTAG u) t ts) = wrapDoc (text u <+> pretty ts ArgSize) ArgSize
+<     pretty AllowedEpsilon = const empty
+<     pretty (AllowedCons _ _ _ s ts) = wrapDoc (pretty s ArgSize <+> pretty ts ArgSize) ArgSize
+<     {- Not yet implemented -}
+<     -- [/Feature = Anchor]
+<     -- [Feature = Enum]
+<     pretty (EnumT t)  = wrapDoc (kword KwEnum <+> pretty t ArgSize) AppSize
+<     pretty Ze         = const (int 0)
+<     pretty (Su t)     = prettyEnumIndex 1 t
+<     -- [/Feature = Enum]
+<     -- [Feature = IDesc]
+<     pretty (IMu (Just l   :?=: _) i)  = wrapDoc
+<         (pretty l AppSize <+> pretty i ArgSize)
+<         AppSize
+<     pretty (IMu (Nothing  :?=: (Id ii :& Id d)) i)  = wrapDoc
+<         (kword KwIMu <+> pretty ii ArgSize <+> pretty d ArgSize <+> pretty i ArgSize)
+<         AppSize
+<     -- [/Feature = IDesc]
+<     -- [Feature = Prop]
+<     pretty Prop           = const (kword KwProp)
+<     pretty (Prf p)        = wrapDoc (kword KwPrf <+> pretty p AndSize) AppSize
+<     pretty (All p q)      = prettyAll empty (DALL p q)
+<     pretty (And p q)      = wrapDoc
+<         (pretty p (pred AndSize) <+> kword KwAnd <+> pretty q AndSize)
+<         AndSize
+<     pretty Trivial        = const (kword KwTrivial)
+<     pretty Absurd         = const (kword KwAbsurd)
+<     pretty (Box (Irr p))  = pretty p
+<     pretty (Inh ty)       = wrapDoc (kword KwInh <+> pretty ty ArgSize) AppSize
+<     pretty (Wit t)        = wrapDoc (kword KwWit <+> pretty t ArgSize) AppSize
+<     -- [/Feature = Prop]
+<     -- [Feature = Sigma]
+<     pretty Unit         = wrapDoc (kword KwSig <+> parens empty) AppSize
+<     pretty Void         = prettyPair DVOID
+<     pretty (Sigma s t)  = prettySigma empty (DSIGMA s t)
+<     pretty (Pair a b)   = prettyPair (DPAIR a b)
+<     -- [/Feature = Sigma]
+<
 
 
 
@@ -231,7 +230,7 @@ than a $\lambda$-term is reached.
 >     -- [/Feature = Equality]
 
 <     -- import <- DInTmPretty
-<     {-- [Feature = Anchor]
+<     -- [Feature = Anchor]
 <     pretty (DANCHOR s args)  = wrapDoc (text s <+> pretty args ArgSize) ArgSize
 <     -- [/Feature = Anchor]
 <     -- [Feature = IDesc]

@@ -1,5 +1,6 @@
 \section{The Get Set}
 
+Move to |ProofState.GetSet|?
 
 %if False
 
@@ -275,7 +276,8 @@ And some specialized versions:
 >     return ()
 >
 > putNewsBelow :: NewsBulletin -> ProofState ()
-> putNewsBelow news = do
+> putNewsBelow NONEWS  = return ()
+> putNewsBelow news    = do
 >     l <- getLayer
 >     replaceLayer l{belowEntries = NF (Left news :> unNF (belowEntries l))}
 >     return ()

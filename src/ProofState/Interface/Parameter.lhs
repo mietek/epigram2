@@ -1,5 +1,7 @@
 \section{Making Parameters}
 
+Move to |ProofState.Interface|?
+
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
@@ -91,7 +93,7 @@ do.
 
 > piParam :: (String :<: EXP) -> ProofState (Tm {Head, s, Z})
 > piParam (s :<: ty) = do
->   chkPS $ SET :>: ty
+>   chkPS (SET :>: ty) `pushError` err "piParam: domain is not a set"
 >   piParamUnsafe $ s :<: ty
 
 The variant |piParamUnsafe| will not check that the proposed type is

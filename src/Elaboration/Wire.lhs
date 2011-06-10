@@ -161,7 +161,7 @@ updated news.
 >         GoodNews  -> do
 >             putDevTip tip'
 >             (def, _) <- updateDefFromTip
->             return $ addGirlNews (def, ne) news
+>             return $ addGirlNews (def, GoodNews) news
 
 > tellTip :: NewsBulletin -> Tip -> (Tip, News)
 > tellTip _ Module = (Module, NoNews)
@@ -197,7 +197,8 @@ updated news.
 > tellEProb news (ElabSchedule ep) = (ElabSchedule ep', ne)
 >   where (ep', ne) = tellEProb news ep
 
-> {-
+
+
 
 The |tellEntry| function informs an entry about a news bulletin that
 its development (if any) have already received. It applies the news
@@ -226,11 +227,11 @@ pattern-matching. At least, with two explicitly named functions, one
 can hardly ignore that one is for Parameters and the other for
 Definitions.}
 
-> tellEntry :: NewsBulletin -> Entry Bwd -> ProofState (NewsBulletin, Entry Bwd)
+< tellEntry :: NewsBulletin -> Entry Bwd -> ProofState (NewsBulletin, Entry Bwd)
 
 Modules carry no type information, so they are easy:
 
-> tellEntry news (EModule n d) = return (news, EModule n d)
+< tellEntry news (EModule n d) = return (news, EModule n d)
 
 To update a hole, we must first check to see if the news bulletin contains a
 definition for it. If so, we fill in the definition (and do not need to
@@ -243,27 +244,27 @@ update the news bulletin). If not, we must  \pierre{why?}:
 If the hole is |Hoping| and we have good news about its type, then we
 restart elaboration to see if it can make any progress.
 
-> tellEntry news (EDef def dev)  -- ref@(name := HOLE h :<: tyv) sn
->                       -- dkind dev@(Dev {devTip=Unknown tt}) ty anchor)
->   | Just (ref'@(_ := DEFN tm :<: _), GoodNews) <- getNews news ref = do
->     -- We have a Definition for it
->     es   <- getInScope
->     tm'  <- bquoteHere (tm $$$ paramSpine es)
->     let  (tt', _) = tellNewsEval news tt
->          (ty', _) = tellNews news ty
->     -- Define the hole
->     return (news, EDEF ref' sn dkind (dev{devTip=Defined tm' tt'}) ty' anchor)
->
->   | otherwise = do
->     -- Not a Definition
->     let  (tt', n)             = tellNewsEval news tt
->          (ty' :=>: tyv', n')  = tellNewsEval news (ty :=>: tyv)
->          ref                  = name := HOLE h :<: tyv'
->          tip                  = case (min n n', h) of
->                                  (GoodNews, Hoping)  -> Suspended tt' ElabHope
->                                  _                   -> Unknown tt'
->     return  (addNews (ref, min n n') news,
->             EDEF ref sn dkind (dev{devTip=tip}) ty' anchor)
+< tellEntry news (EDef def dev)  -- ref(name := HOLE h :<: tyv) sn
+<                       -- dkind dev(Dev {devTip=Unknown tt}) ty anchor)
+<   | Just (ref'@(_ := DEFN tm :<: _), GoodNews) <- getNews news ref = do
+<     -- We have a Definition for it
+<     es   <- getInScope
+<     tm'  <- bquoteHere (tm $$$ paramSpine es)
+<     let  (tt', _) = tellNewsEval news tt
+<          (ty', _) = tellNews news ty
+<     -- Define the hole
+<     return (news, EDEF ref' sn dkind (dev{devTip=Defined tm' tt'}) ty' anchor)
+<
+<   | otherwise = do
+<     -- Not a Definition
+<     let  (tt', n)             = tellNewsEval news tt
+<          (ty' :=>: tyv', n')  = tellNewsEval news (ty :=>: tyv)
+<          ref                  = name := HOLE h :<: tyv'
+<          tip                  = case (min n n', h) of
+<                                  (GoodNews, Hoping)  -> Suspended tt' ElabHope
+<                                  _                   -> Unknown tt'
+<     return  (addNews (ref, min n n') news,
+<             EDEF ref sn dkind (dev{devTip=tip}) ty' anchor)
 
 
 
@@ -277,34 +278,34 @@ process.
 
 
 
-> tellEntry news (EDEF  ref@(name := HOLE h :<: tyv) sn
->                       dkind dev@(Dev {devTip=Suspended tt prob}) ty anchor)
->   | Just ne <- getNews news ref = do
->      -- We have a Definition for it
->      case prob of
->       ElabHope  -> do
->         -- The elaboration strategy \emph{has to} be to |Hope|
->         tellEntry news (EDEF ref sn dkind (dev{devTip=Unknown tt}) ty anchor)
->       _         -> do
->         -- \pierre{Is that a |throwError| or an |error|?}
->         throwError' . err . unlines $ [
->                     "tellEntry: news bulletin contains update", show ne,
->                     "for hole", show ref,
->                     "with suspended computation", show prob]
->   | otherwise = do
->     -- We don't have a Definition
->     let  (tt', n)             = tellNewsEval news tt
->          (ty' :=>: tyv', n')  = tellNewsEval news (ty :=>: tyv)
->          ref                  = name := HOLE h :<: tyv'
->          prob'                = tellEProb news prob
->          state                = if isUnstable prob' 
->                                   then SuspendUnstable 
->                                   else SuspendStable
->     suspendHierarchy state
->     return  (addNews (ref, min n n') news,
->             EDEF ref sn dkind (dev{devTip=Suspended tt' prob'}) ty' anchor)
->         where tellEProb :: NewsBulletin -> EProb -> EProb
->               tellEProb news = fmap (getLatest news)
+< tellEntry news (EDEF  ref@(name := HOLE h :<: tyv) sn
+<                       dkind dev@(Dev {devTip=Suspended tt prob}) ty anchor)
+<   | Just ne <- getNews news ref = do
+<      -- We have a Definition for it
+<      case prob of
+<       ElabHope  -> do
+<         -- The elaboration strategy \emph{has to} be to |Hope|
+<         tellEntry news (EDEF ref sn dkind (dev{devTip=Unknown tt}) ty anchor)
+<       _         -> do
+<         -- \pierre{Is that a |throwError| or an |error|?}
+<         throwError' . err . unlines $ [
+<                     "tellEntry: news bulletin contains update", show ne,
+<                     "for hole", show ref,
+<                     "with suspended computation", show prob]
+<   | otherwise = do
+<     -- We don't have a Definition
+<     let  (tt', n)             = tellNewsEval news tt
+<          (ty' :=>: tyv', n')  = tellNewsEval news (ty :=>: tyv)
+<          ref                  = name := HOLE h :<: tyv'
+<          prob'                = tellEProb news prob
+<          state                = if isUnstable prob' 
+<                                   then SuspendUnstable 
+<                                   else SuspendStable
+<     suspendHierarchy state
+<     return  (addNews (ref, min n n') news,
+<             EDEF ref sn dkind (dev{devTip=Suspended tt' prob'}) ty' anchor)
+<         where tellEProb :: NewsBulletin -> EProb -> EProb
+<               tellEProb news = fmap (getLatest news)
 
 
 
@@ -317,17 +318,14 @@ To update a closed definition (|Defined|), we must:
 \item update the news bulletin with news about this definition.
 \end{enumerate}
 
-> tellEntry news (EDef def dev@(Dev {devTip=Defined (ty :>: tm)})) = do  
->     let  (ty', ne)   = tellNews news ty 
->          (tm', ne')  = tellNews news tm
+< tellEntry news (EDef def dev@(Dev {devTip=Defined (ty :>: tm)})) = do  
+<     let  (ty', ne)   = tellNews news ty 
+<          (tm', ne')  = tellNews news tm
 
->     let def' = def{defTy=dty'}name := DEFN (evTm tmL') :<: tyv'
->     return  (addNews (def', min ne ne') news,
->             EDef def' (dev{devTip=Defined (ty' :>: tm')}))
+<     let def' = def{defTy=dty'}name := DEFN (evTm tmL') :<: tyv'
+<     return  (addNews (def', min ne ne') news,
+<             EDef def' (dev{devTip=Defined (ty' :>: tm')}))
 
-
-
-> -}
 
 
 

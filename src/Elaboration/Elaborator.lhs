@@ -207,7 +207,7 @@ plus an implicit labelled type that provides evidence for the recursive call.
 >     CDefinition def _ <- getCurrentEntry
 > 
 >     lev <- getDevLev
->     -- pn :=>: _ <- getFakeCurrentEntry 
+>     -- |pn :=>: _ <- getFakeCurrentEntry |
 >     let fake :: Tm {Head, Exp, Z} ; fake = D def S0 Hole
 >     let schCall = makeCall fake 0 B0 sch'
 >     us <- getParamsInScope

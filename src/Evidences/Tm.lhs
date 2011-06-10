@@ -286,7 +286,11 @@
 > eats (n : ns) o = Eat (Just n) (eats ns o) 
 
 > instance Show (Operator {p, s}) where
->   show o = "oooo"
+>   show (Eat (Just s) o) = "(Eat " ++ s ++ show o ++ ")"
+>   show (Eat Nothing o)  = "(Eat Nothing " ++ show o ++ ")"
+>   show (Emit t)         = "(Emit " ++ show t ++ ")"
+>   show Hole             = "Hole"
+>   show _                = "oooo"
 
 > data Stk x  =  S0
 >             |  Stk x :<!: x
@@ -344,24 +348,24 @@
 
 > exp :: Tm {p, s, n} -> Tm {p, Exp, n}
 > exp = unsafeCoerce
-> {-
-> exp (L a b c) = L a b c
-> exp (LK a) = LK a
-> exp (a :- b) = a :- b
-> exp (a :$ b) = exp a :$ b
-> exp (V i) = V i
-> exp (P l) = P l
-> exp (Refl _S s) = Refl _S s
-> exp (a :/ b) = a :/ b
-> exp (D a b c) = D a b (expo c)
->  where expo :: Operator {p, s} -> Operator {p, Exp}
->        expo (Eat o) = Eat o
->        expo (Emit t) = Emit t
->        expo Hole = Hole
->        expo (Case os) = Case os
->        expo (StuckCase os) = StuckCase os
->        expo (Split o) = Split o
-> -}
+
+< exp (L a b c) = L a b c
+< exp (LK a) = LK a
+< exp (a :- b) = a :- b
+< exp (a :$ b) = exp a :$ b
+< exp (V i) = V i
+< exp (P l) = P l
+< exp (Refl _S s) = Refl _S s
+< exp (a :/ b) = a :/ b
+< exp (D a b c) = D a b (expo c)
+<  where expo :: Operator {p, s} -> Operator {p, Exp}
+<        expo (Eat o) = Eat o
+<        expo (Emit t) = Emit t
+<        expo Hole = Hole
+<        expo (Case os) = Case os
+<        expo (StuckCase os) = StuckCase os
+<        expo (Split o) = Split o
+
 
 > ev :: Tm {p, Exp, Z} -> VAL
 > ev = (ENil //)
@@ -652,7 +656,7 @@ by |lambdable|:
 >   "(coe " ++ ugly xs _S ++ " " ++ ugly xs _T ++ " " ++ ugly xs _Q ++ " " ++ ugly xs s ++ ")"
 > ugly xs (Coeh Coh _S _T _Q s) =
 >   "(coe " ++ ugly xs _S ++ " " ++ ugly xs _T ++ " " ++ ugly xs _Q ++ " " ++ ugly xs s ++ ")"
-> ugly xs (D d S0 _) = "DEF: " ++ show (defName d)
+> ugly xs (D d S0 _) = "(" ++ show d ++ ")"
 > ugly xs (D d es _) = "(" ++ show (defName d) ++ foldMap (\ e -> " " ++ ugly V0 e) (rewindStk es []) ++ ")"
 > ugly xs (g :/ e) = uglyEnv xs g e
 > ugly _ _ = "???"
