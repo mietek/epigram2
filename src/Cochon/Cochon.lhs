@@ -43,9 +43,9 @@
 > import ProofState.Interface.Solving
 
 > import Tactics.Information
+> import Tactics.Elimination
 
 > {-
-> import Tactics.Elimination
 > import Tactics.PropositionSimplify
 > import Tactics.ProblemSimplify
 > import Tactics.Gadgets
@@ -60,6 +60,8 @@
 
 > import Elaboration.Elaborator
 > import Elaboration.Scheduler
+
+> import DisplayLang.DisplayTm
 
 > import Distillation.Distiller
 
@@ -289,6 +291,8 @@ Construction tactics:
 >   unaryInCT "give" (\tm -> elabGiveNext tm >> return "Thank you.")
 >       "give <term> - solves the goal with <term>." :
 
+>   unaryInCT "=>" (\tm -> elabGiveNext (DLRET tm) >> return "Ta.")
+>       "=> <term> - solves the programming problem by returning <term>." :
 
 >   simpleCT 
 >         "lambda"
@@ -490,6 +494,13 @@ Import more tactics from an aspect:
 >          matchCTactic (argList (argPair argToStr argToIn) pars) a b)
 >      "match [<para>]* ; <term> ; <term> - match parameters in first term against second." :
 
+>   (simpleCT
+>     "eliminate"
+>     (|(B0 :<) tokenExTm |)
+>     (\[e] -> elimCTactic (argToEx e))
+>     "eliminate <eliminator> - eliminates with a motive.") :
+
+
 >     unaryStringCT "show" (\ s -> case s of
 >         "inscope"  -> infoInScope
 >         "context"  -> return "" -- infoContext 
@@ -661,3 +672,11 @@ Import more tactics from an aspect:
 >         tt  <- elaborate' (SET :>: t)
 >         P x   <- (assumeParam (s :<: tt) :: ProofState (Tm {Head, Exp, Z}))
 >         return (x , Nothing)
+
+> elimCTactic :: DExTmRN -> ProofState String
+> elimCTactic r = do 
+>   (e :<: elimTy) <- elabInferFully r
+>   elim (elimTy :>: e)
+>   -- toFirstMethod
+>   return "Eliminated. Subgoals awaiting work..."
+

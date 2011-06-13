@@ -174,10 +174,8 @@ And some specialized versions:
 > getInScope :: ProofState Entries
 > getInScope = gets inScope
 
-> {-
-> getDefinitionsToImpl :: ProofState [REF :<: INTM]
+> getDefinitionsToImpl :: ProofState [(Int,String,TY)]
 > getDefinitionsToImpl = gets definitionsToImpl
-> -}
 
 > getGlobalScope :: ProofState Entries
 > getGlobalScope = gets globalScope
@@ -187,6 +185,11 @@ And some specialized versions:
 > getParamsInScope = do  
 >     inScope <- getInScope
 >     return $ params inScope
+
+> getParamsInScope' :: ProofState [ (Int, String, TY) ]
+> getParamsInScope' = do  
+>     inScope <- getInScope
+>     return $ params' inScope
 
 > getDefsInScope :: ProofState [DEF]
 > getDefsInScope = do  

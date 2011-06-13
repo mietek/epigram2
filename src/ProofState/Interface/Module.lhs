@@ -12,6 +12,7 @@ Move to |ProofState.Interface|?
 
 > import ShePrelude
 
+> import Control.Applicative
 > import Data.Foldable
 
 > import Kit.BwdFwd
@@ -68,14 +69,15 @@ definition of a certain type (a goal). Turning a module into a goal is
 implemented by |moduleToGoal|. An instance of this pattern appears in
 Section~\ref{subsec:Tactics.Elimination.analysis}.
 
-
 > moduleToGoal :: EXP -> ProofState EXP
-> moduleToGoal ty = do
+> moduleToGoal e = (| snd (moduleToGoal' e) |)
+
+> moduleToGoal' :: EXP -> ProofState (DEF,EXP)
+> moduleToGoal' ty = do
 >     chkPS (SET :>: ty) `pushError` err "moduleToGoal: not a set"
 >     CModule _ <- getCurrentEntry
 >     putDevTip $ Unknown ty Waiting
->     (d, t) <- updateDefFromTip
->     return t
+>     updateDefFromTip
 >  where 
 >    boys :: Entries -> Bwd (Int, String, TY)
 >    boys B0 = B0

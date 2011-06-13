@@ -19,6 +19,7 @@ Delete this file?
 > import ProofState.Structure.Developments
 
 > import Kit.BwdFwd
+> import Kit.NatFinVec
 > import Kit.MissingLibrary
 
 %endif
@@ -58,28 +59,18 @@ entries.
 <     help (delnab  :< _)                            (nabla :< _)  t = 
 <         help delnab nabla t
 
-
 \subsection{Binding a type}
 
 The |liftType| function $\Pi$-binds a type over a list of entries.
 
-< liftType :: Entries -> INTM -> INTM
-< liftType es = liftType' (bwdList $ foldMap param es) 
-<   where param (EPARAM r _ _ t _) = [r :<: t]
-<         param _ = []
+> liftType :: Entries -> EXP -> EXP
+> liftType es = liftType' (bwdList $ foldMap param es) 
+>   where param (EParam _ s t l) = [(l, s, t)]
+>         param _ = []
 
-< liftType' :: Bwd (REF :<: INTM) -> INTM -> INTM
-< liftType' rtys t = pis rs tys (rs -|| t)
-<   where
-<     (rs, tys) = unzipBwd rtys
-<
-<     unzipBwd B0 = (B0, B0)
-<     unzipBwd (rtys :< (r :<: ty)) = (rs :< r, tys :< ty)
-<       where (rs, tys) = unzipBwd rtys
-
-<     pis B0 B0 t = t
-<     pis (rs :< r) (tys :< ty)  t = pis rs tys (PI (rs -|| ty) (L ((fst . last . refName $ r) :. t)))
-
+> liftType' :: Bwd (Int, String, TY) -> EXP -> EXP
+> liftType' es t = bwdVec es
+>   (\ n ys -> piLift {n} ys t)
 
 
 \subsection{Making a type out of a goal}

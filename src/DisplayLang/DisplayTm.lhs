@@ -257,6 +257,10 @@ places.
 > pattern DUID    = DC UId []
 > pattern DTAG s  = DC (Tag s) []
 > -- [/Feature = UId] 
+> -- [Feature = Label]
+> pattern DLABEL l t = DC Label [l, t]
+> pattern DLRET t    = DC Ret [t]
+> -- [/Feature = Label]
 
 < -- import <- CanDisplayPats
 < -- [Feature = Anchor]

@@ -648,7 +648,7 @@ by |lambdable|:
 > ugly xs (SIGMA s (L _    x t)) = "((" ++ x ++ " : " ++ ugly xs s ++ ") * ??? )"
 > ugly xs (c :- []) = show c
 > ugly xs (c :- es) = "(" ++ show c ++ foldMap (\ e -> " " ++ ugly xs e) es ++ ")"
-> ugly xs (h :$ B0) = ugly xs h
+> ugly xs (h :$ B0) = ugly xs h 
 > ugly xs (h :$ es) = "(" ++ ugly xs h ++ foldMap (\ e -> " " ++ uglyElim xs e) es ++ ")"
 > ugly xs (V i) = xs !>! i
 > ugly xs (P (i, s, t)) = s ++ " (P " ++ show i ++ ")"
@@ -692,7 +692,6 @@ by |lambdable|:
 > instance {:n :: Nat:} => Show (Tm {p, s, n}) where
 >   show t = ugly (fmap (\ i -> "v" ++ show i) vUpTo') t
 
-Pos could use a nice abstraction to do the following:
 
 > piLift' :: {: n :: Nat :} => BVec {n} (Int, String, TY) -> TY -> TY
 > piLift' = piLift {: n :: Nat :}
@@ -703,7 +702,7 @@ Pos could use a nice abstraction to do the following:
 >     spil :: pi (m :: Nat) . BVec {m} (Int, String, TY) -> Tm {Body, Exp, m} -> EXP
 >     spil {Z} BV0 t = t
 >     spil {S m} (sts :<<<: (_, s, ty)) t = 
->      spil {m} sts $ PI (capture {m} sts ty) (L ENil s t)
+>       spil {m} sts $ PI (capture {m} sts ty) (L ENil s t)
 
 
 > capture' :: {: n :: Nat :} => BVec {n} (Int, String, TY) ->

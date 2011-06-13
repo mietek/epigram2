@@ -27,20 +27,18 @@ Move to |ProofState.Interface|?
 
 
 The |lookupName| function looks up a name in the context (including axioms and
-primitives); if found, it returns the reference applied to the spine of
-shared parameters.
+primitives -- eventually);
 
-< lookupName :: Name -> ProofStateT e (Maybe (EXTM :=>: VAL))
-< lookupName name = do
-<     inScope <- getInScope
-<     case find ((name ==) . entryName) inScope of
-<       Just (EEntity ref _ _ _ _)  -> return $ Just $ applySpine ref inScope
-<       Nothing             ->
+> lookupName :: Name -> ProofState (Maybe EXP)
+> lookupName name = do
+>     inScope <- getInScope
+>     case find ((Just name ==) . entryName) inScope of
+>       Just (EDef d _ _)  -> return $ Just $ applySpine (def d) inScope 
+>       Nothing             -> return Nothing 
+
 <         case find ((name ==) . refName . snd) primitives of
 <           Just (_, ref)  -> return $ Just $ applySpine ref inScope
 <           Nothing        -> return Nothing
-
-
 
 The |pickName| command takes a prefix suggestion and a name suggestion
 (either of which may be empty), and returns a more-likely-to-be-unique

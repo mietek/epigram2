@@ -196,3 +196,4 @@
 > vlength :: Vec {n} a -> Int
 > vlength V0 = 0
 > vlength (_ :>>: xs) = 1 + vlength xs
+

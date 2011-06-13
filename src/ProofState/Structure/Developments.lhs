@@ -102,7 +102,7 @@ or value
 \end{itemize}
 
 > data Traversable f => Entry f
->   =  EDef     {  def        :: DEF 
+>   =  EDef     {  edef        :: DEF 
 >               ,  dev        :: Dev f
 >               ,  scheme     :: Maybe Scheme
 >               }

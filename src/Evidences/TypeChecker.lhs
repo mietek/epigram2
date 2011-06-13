@@ -46,8 +46,8 @@ here.
 >   chk l prob
 >   return (ev (g :/ t))
 
-> chk :: (Applicative m, MonadError StackError m) => 
->            Int -> TY :>: (Env {Z} {n}, Tm {Body, s, n}) -> m ()
+> chk :: (Applicative m, MonadError StackError m, {: p :: Part :}) => 
+>            Int -> TY :>: (Env {Z} {n}, Tm {p, s, n}) -> m ()
 > chk l (_T :>: (g, c :- es)) = case ev _T of
 >   _C :- as -> do
 >     _Ts <- canTyM ((_C, as) :>: c)
@@ -66,7 +66,8 @@ here.
 > chk l (_T :>: (g, t@((g' :/ L _ _ _) :$ _))) = chk l (_T :>: (ENil, eval {Val} g t))
 > chk l (_T :>: (g, t@((g' :/ LK _) :$ _))) = chk l (_T :>: (ENil, eval {Val} g t))
 
-> chk l (_T :>: (g, g' :/ t)) = chk l (_T :>: (g <+< g', toBody t))
+> chk l (_T :>: (g, g' :/ t)) = chk l (_T :>: (g <+< g', t))
+> chk l (_T :>: (g, t :$ B0)) = chk l (_T :>: (g , t))
 
 > chk l (_T :>: t@(g,tm)) = do
 >   _T' <- inf l (g, tm)
@@ -110,6 +111,7 @@ here.
 >   case c of
 >     Coe -> return (exp s' :<: exp _T, [])
 >     Coh -> return (exp q' :<: PRF (Eq :- [exp _S, exp s, exp _T, exp s']), [])
+> headTySpine l (g, h :$ B0)       = headTySpine l (g,h) 
 > headTySpine _ (g, h)             = throwError' $
 >     err "headTySpine with bad head" ++ errTm (exp (ev (g :/ h :$ B0)))
 
@@ -153,8 +155,8 @@ here.
 >     (_T,_)         -> throwError' $ err ("spInf: bad " ++ show e)
 
 
-> inf :: (Applicative m, MonadError StackError m) => 
->            Int -> (Env {Z} {n}, Tm {Body, s, n}) -> m TY
+> inf :: (Applicative m, MonadError StackError m, {: p :: Part :}) => 
+>            Int -> (Env {Z} {n}, Tm {p, s, n}) -> m TY
 > inf l (g, h :$ ss) = do
 >   (tty, es) <- headTySpine l (g, h)
 >   _T <- spInf l tty (g, map (A . wk) es ++ trail ss)
@@ -163,7 +165,8 @@ here.
 >   (tty, es) <- headTySpine l (g, d)
 >   _T <- spInf l tty (g, map (A . wk) es)
 >   return _T
-> inf l (g, g' :/ t) = inf l (g <+< g', toBody t)
+> inf l (g, g' :/ t) = inf l (g <+< g', t)
+> inf l ((gl,_), P (_,_,t)) = (| ((gl,INix) :/ t) |) 
 > inf _ (g, t) = throwError' $ [ErrorTm (Nothing :>: g :/ t) , StrMsg  "type inference failure"]
 
 
