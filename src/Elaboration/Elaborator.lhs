@@ -195,9 +195,10 @@ then convert the module into a goal with the scheme assigned.
 >     make (x ++ "-type" :<: SET)
 >     goIn
 >     (sch', ty) <- elabLiftedScheme sch
+>     trace "MadeTY" $ return ()
 >     moduleToGoal ty
 >     putCurrentScheme sch'
-
+>     trace "putScheme" $ return () 
 
 
 Now we add a definition with the same name as the function being defined,
@@ -228,11 +229,12 @@ problem. This could be implemented more cleanly, but it works.
 
 >     makeModule "impl"
 >     goIn
->     (pis,ty') <- piSch fake sch' (trail us)
+>     let schLocal = stripScheme (length us) sch'
+>     (pis,ty') <- piSch fake schLocal (bwdList us)
 >     moduleToGoal ty'
 >     imp <- getCurrentDefinition 
 >     goOut 
->     traverse lambdaParam (schemeNames sch')
+>     traverse lambdaParam (schemeNames schLocal)
 >     as <- getParamsInScope
 >     let refs'' :: Bwd (Elim EXP) ; refs'' = bwdList $ map (\x -> A x) as
 >     let ll' :: EXP ; ll' = fake :$ refs''
