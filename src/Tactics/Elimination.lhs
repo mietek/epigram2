@@ -160,6 +160,7 @@ Make a goal for the motive:
 Make goals for the methods and find the return type:
 
 >     (methods, returnType) <- makeMethods B0 (ev telType $$. motive)
+>     elimTrace "MakeMethods"
 
 
 Check motive and grab the targets (the terms that are applied to it):

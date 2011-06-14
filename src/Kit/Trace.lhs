@@ -24,7 +24,7 @@ We then can switch each one on or off individually:
 
 > traceEnabled :: Trace -> Bool
 > traceEnabled ProofTrace  = True
-> traceEnabled SimpTrace   = False
+> traceEnabled SimpTrace   = True
 > traceEnabled ElimTrace   = True
 > traceEnabled SchedTrace  = False
 > traceEnabled ElabTrace   = True

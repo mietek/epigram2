@@ -42,8 +42,8 @@
 
 > distillError :: ErrorTok -> ProofState ErrorTok 
 > distillError e@(ErrorTm (Nothing :>: t)) = (do
->     d <- moonshine t
->     return $ StrMsg (renderHouseStyle (pretty d AppSize))) 
+>     -- d <- moonshine t
+>     return $ StrMsg (show t)) -- (renderHouseStyle (pretty d AppSize))) 
 >   `catchError` \_ -> return e
 > distillError e@(ErrorTm (Just ty :>: t)) = (do
 >     d <- distill (ev ty :>: ev t) (0, B0)

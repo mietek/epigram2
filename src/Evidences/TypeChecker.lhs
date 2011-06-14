@@ -63,8 +63,6 @@ here.
 >   _ -> throwError' $ err ("klambda inhabiting non-canonical type")
 
 > chk l (_T :>: (g, t@(V _ :$ _))) = chk l (_T :>: (ENil, eval {Val} g t))
-> chk l (_T :>: (g, t@((g' :/ L _ _ _) :$ _))) = chk l (_T :>: (ENil, eval {Val} g t))
-> chk l (_T :>: (g, t@((g' :/ LK _) :$ _))) = chk l (_T :>: (ENil, eval {Val} g t))
 
 > chk l (_T :>: (g, g' :/ t)) = chk l (_T :>: (g <+< g', t))
 > chk l (_T :>: (g, t :$ B0)) = chk l (_T :>: (g , t))
@@ -92,10 +90,14 @@ here.
 
 > headTySpine :: (Applicative m, MonadError StackError m, {: p :: Part :} ) => 
 >                    Int -> (Env {Z} {n}, Tm {p, s, n}) ->
->                        m (EXP :<: TY, [EXP])
-> headTySpine l (g, g' :/ h)       = headTySpine l (g <+< g', h)
-> headTySpine l (g, D d es _)      = pure (D d S0 (defOp d) :<: defTy d, rewindStk es [])
-> headTySpine l (g, P (i, s, ty))  = pure (P (i, s, ty) :$ B0 :<: ty, [])
+>                        m (EXP :<: TY, [Elim (Tm {Body, Exp, n})])
+> headTySpine l (g, g' :/ h)       = do
+>   (ety, as) <- headTySpine l (g <+< g', h)
+>   return (ety, map (fmap (g' :/)) as)
+> headTySpine l (g, D d es _)      = 
+>   pure (D d S0 (defOp d) :<: defTy d, map (A . wk) $ rewindStk es [])
+> headTySpine l (g@(gl,_), p@(P (_,_,ty))) = 
+>   (| (eval {Exp} g p :<: ((gl, INix) :/ ty), []) |)
 > headTySpine l (g, Refl _S s)     = do
 >   _S <- chev l (SET :>: (g, _S))
 >   let _S' = exp _S
@@ -111,7 +113,9 @@ here.
 >   case c of
 >     Coe -> return (exp s' :<: exp _T, [])
 >     Coh -> return (exp q' :<: PRF (Eq :- [exp _S, exp s, exp _T, exp s']), [])
-> headTySpine l (g, h :$ B0)       = headTySpine l (g,h) 
+> headTySpine l (g, h :$ as)       = do 
+>   (ety, as') <- headTySpine l (g,h) 
+>   return (ety, (as' ++ trail as))
 > headTySpine _ (g, h)             = throwError' $
 >     err "headTySpine with bad head" ++ errTm (exp (ev (g :/ h :$ B0)))
 
@@ -159,11 +163,11 @@ here.
 >            Int -> (Env {Z} {n}, Tm {p, s, n}) -> m TY
 > inf l (g, h :$ ss) = do
 >   (tty, es) <- headTySpine l (g, h)
->   _T <- spInf l tty (g, map (A . wk) es ++ trail ss)
+>   _T <- spInf l tty (g, es ++ trail ss)
 >   return _T
 > inf l (g, d@(D _ _ _)) = do
 >   (tty, es) <- headTySpine l (g, d)
->   _T <- spInf l tty (g, map (A . wk) es)
+>   _T <- spInf l tty (g, es)
 >   return _T
 > inf l (g, g' :/ t) = inf l (g <+< g', t)
 > inf l ((gl,_), P (_,_,t)) = (| ((gl,INix) :/ t) |) 

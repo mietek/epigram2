@@ -14,12 +14,14 @@
 > import Data.Foldable
 > import Data.Traversable
 
+> import Kit.NatFinVec
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
 > import Kit.Trace
 
 > import Evidences.Tm
 > import Evidences.DefinitionalEquality
+> import Evidences.ErrorHandling
 
 > import ProofState.Edition.ProofState
 > import ProofState.Edition.GetSet
@@ -37,7 +39,6 @@
 
 %endif
 
-> {-
 
 \section{Problem Simplification}
 
@@ -58,10 +59,10 @@ repeatedly transforming the proof state into a simpler version, one step
 at a time. It will fail if no simplification is possible. The real work is done
 in |simplifyGoal| below.
 
-> problemSimplify :: ProofState (EXTM :=>: VAL)
+> problemSimplify :: ProofState EXP
 > problemSimplify = do
 >     simpTrace "problemSimplify"
->     getHoleGoal >>= simplifyGoal True . valueOf >> getCurrentDefinition
+>     getHoleGoal >>= simplifyGoal True . ev
 
 We say simplification is \emph{at the top level} if we are simplifying exactly
 the current goal in the proof state. If this is not the case, we can still
@@ -73,58 +74,71 @@ is at the top level.
 When simplifying at the top level, we should |give| the simplified form once we
 have computed it. The |topWrap| command makes this easy.
 
-> topWrap :: Bool -> INTM :=>: VAL -> ProofState (INTM :=>: VAL)
-> topWrap True   tt = give (termOf tt) >> return tt
+> topWrap :: Bool -> EXP -> ProofState EXP
+> topWrap True   tt = give tt >> return tt
 > topWrap False  tt = return tt
+
 
 Once we have simplified the goal slightly, we use |trySimplifyGoal| to attempt
 to continue, but give back the current result if no more simplification is
 possible. If not at the top level, this has to create a new goal.
 
-> trySimplifyGoal :: Bool -> TY -> ProofState (INTM :=>: VAL)
-> trySimplifyGoal True   g = simplifyGoal True g <|>
->                                 (neutralise =<< getCurrentDefinition)
-> trySimplifyGoal False  g = simplifyGoal False g <|> (do
->     g'  <- bquoteHere g
+> trySimplifyGoal :: Bool -> EXP -> ProofState EXP
+> trySimplifyGoal True   g = simplifyGoal True (ev g) <|>
+>                                 getCurrentDefinitionLocal
+> trySimplifyGoal False  g = simplifyGoal False (ev g) <|> (do
 >     es  <- getEntriesAbove
 >     cursorAboveLambdas
->     make ("tsg" :<: liftType es g')
+>     make ("tsg" :<: liftType es g)
 >     goIn
->     let rs = paramREFs es
->     traverse (lambdaParam . refNameAdvice) rs
->     x :=>: xv <- getCurrentDefinition
+>     let rs = params' es
+>     traverse (lambdaParam . (\(_,s,_) -> s)) rs
+>     d <- getCurrentDefinition
 >     goOut
->     let z = x $## map NP rs
->     return $ N z :=>: evTm z
+>     ps <- getParamsInScope
+>     elimTrace "Blah"
+>     return $ def d $$$. bwdList ps
 >   )
+
 
 We implement the simplification steps in |simplifyGoal|. This takes a boolean
 parameter indicating whether simplification is at the top level, and a type
 being simplified. It will return a term and value of that type (which might be
 the current hole).
 
-> simplifyGoal :: Bool -> TY -> ProofState (INTM :=>: VAL)
+> simplifyGoal :: Bool -> VAL -> ProofState EXP
+
 
 Functions from the unit type are simply constants, so we simplify them as such.
 
-> simplifyGoal b (PI UNIT t) = do
->     simpTrace "PI UNIT"
->     x :=>: xv <- trySimplifyGoal False (t $$ A VOID)
->     topWrap b $ LK x :=>: LK xv
+> simplifyGoal b (PI s t) | ONE <- ev s = do
+>     simpTrace "PI ONE"
+>     x <- trySimplifyGoal False (t $$ A ZERO)
+>     topWrap b $ LK x
+
 
 Given a function from a $\Sigma$-type, we can split it into its components.
 \adam{we should not automatically split if this parameter belongs to the user
 (i.e. appears in a programming problem).}
 
-> simplifyGoal b (PI (SIGMA d r) t) = do
+> simplifyGoal b (PI s t) | SIGMA d r <- ev s = do
 >     simpTrace "PI SIGMA"
->     let mt =  PI d . L $ (fortran r) :. [.a. 
->               PI (r -$ [NV a]) . L $ (fortran t) :. [.b. 
->               t -$ [PAIR (NV a) (NV b)] ] ]
->     x :=>: xv <- simplifyGoal False mt
->     ex <- annotate x mt
->     let body = N (ex :$ A (N (V 0 :$ Fst)) :$ A (N (V 0 :$ Snd)))
->     topWrap b $ L ("ps" :. body) :=>: L ("ps" :. body)
+>     make ("t" :<: ARR s SET)
+>     goIn
+>     h <- lambdaParam (fortran "s" [ev r] undefined)
+>     dd <- giveOutBelow (Evidences.Tm.exp $ ev t $$. toBody h)
+>     es <- getParamsInScope
+>     let  e = def dd $$$. bwdList es
+>          mt =  (("d", d) ->> \a ->
+>                 ("r", wr r a) ->> \b ->   
+>                 wr e (PAIR a b))
+>     x <- simplifyGoal False mt
+>     return ZERO
+>     let jd :: EXP ; jd = la "ps"  $ \_ ->  nix x :$ (B0 :< A (V Fz :$ (B0 :< Hd)) :< A (V Fz :$ (B0 :< Tl)))
+>     elimTrace $ show jd
+>     topWrap b  jd
+
+> {-
 
 Similarly, if we have a function from an enumeration, we can split it into its
 branches. \adam{we should not do this automatically at all, but we need to
@@ -218,6 +232,8 @@ the context and carry on. Note that this assumes we are at the top level.
 >         let gs' = fmap ($ (P r)) gs
 >         neutralise =<< give (N (y $## gs'))
 
+> -}
+
 Otherwise, we simplify $\Pi$-types by introducing a hypothesis, provided we are
 at the top level.
 
@@ -227,21 +243,21 @@ at the top level.
 
 To simplify a $\Pi$-type when not at the top level, we have to create a subgoal.
 
-> simplifyGoal False g@(PI _ _) = do
+> simplifyGoal False g@(PI s t) = do
 >     simpTrace "PI not"
->     g' <- bquoteHere g
 >     es <- getEntriesAbove
 >     cursorAboveLambdas
->     make ("pig" :<: liftType es g')
+>     make ("pig" :<: liftType es (PI s t))
 >     goIn
->     let rs = paramREFs es
->     traverse (lambdaParam . refNameAdvice) rs
->     _ :=>: ty <- getHoleGoal
->     simplifyGoal True ty
->     x :=>: xv <- getCurrentDefinition
+>     let rs = params' es
+>     traverse (lambdaParam . (\(_,s,_) -> s)) rs
+>     simplifyGoal True g 
+>     x <- getCurrentDefinition
 >     goOut
->     let z = x $## map NP rs
->     return $ N z :=>: evTm z
+>     ps <- getParamsInScope
+>     return (def x $$$. bwdList ps)
+
+> {-
 
 When the goal is a proof of a proposition, and we are at the top level, we can
 just invoke propositional simplification...
@@ -274,18 +290,22 @@ unless we know we are going to solve the goal completely.
 >             topWrap b $ LRET prf :=>: LRET (evTm prf)
 >         _ -> (|)
 
+> -}
+
 If the goal is a $\Sigma$-type, we might as well split it into its components.
 
 > simplifyGoal b (SIGMA s t) = do
 >     simpTrace "SIGMA"
->     stm :=>: sv <- trySimplifyGoal False s
->     ttm :=>: tv <- trySimplifyGoal False (t $$ A sv)
->     topWrap b $ PAIR stm ttm :=>: PAIR sv tv
+>     st <- trySimplifyGoal False s
+>     tt <- trySimplifyGoal False (t $$. st)
+>     topWrap b $ PAIR st tt
 
 If we are really lucky, the goal is trivial and we win.
 
-> simplifyGoal b UNIT                     = topWrap b $ VOID :=>: VOID
-> simplifyGoal b (LABEL _ UNIT)           = topWrap b $ LRET VOID :=>: LRET VOID
+> simplifyGoal b ONE                     = topWrap b $ ZERO 
+
+< simplifyGoal b (LABEL _ UNIT)           = topWrap b $ LRET VOID :=>: LRET VOID
+
 
 Otherwise, we cannot simplify the problem.
 
@@ -296,35 +316,33 @@ When at the top level and simplifying a $\Pi$-type, |passHypothesis| introduces
 a hypothesis into the context and continues simplifying. Its argument is the
 codomain function of the $\Pi$-type.
 
-> passHypothesis :: VAL -> ProofState (INTM :=>: VAL)                     
+> passHypothesis :: EXP -> ProofState EXP                     
 > passHypothesis t = do
->     ref <- lambdaParam (fortran t)
->     trySimplifyGoal True (t $$ A (NP ref))
+>     ref <- lambdaParam (fortran "x" [ev t] undefined)
+>     trySimplifyGoal True (t $$. toBody ref)
+
 
 
 The |elimSimplify| command invokes elimination with a motive, simplifies the
 methods, then returns to the original goal.
 
-> elimSimplify :: (TY :>: EXTM) -> ProofState ()
+> elimSimplify :: (TY :>: EXP) -> ProofState ()
 > elimSimplify tt = do
->     methods <- elim Nothing tt
+>     methods <- elim tt
 >     simpTrace "Eliminated!"
 >     toFirstMethod
 >     replicateM_ (length methods) (optional problemSimplify >> goDown)
 >     goOut
 
 
+
 > cursorAboveLambdas :: ProofState ()
 > cursorAboveLambdas = do
 >     es <- getEntriesAbove
->     case paramREFs es of
+>     case params es of
 >         []  -> return ()
 >         _   -> cursorUp >> cursorAboveLambdas
 
 
 
-> import -> CochonTactics where
->   : nullaryCT "simplify" (problemSimplify >> optional seekGoal >> return "Simplified.")
->       "simplify - simplifies the current problem."
 
-> -}

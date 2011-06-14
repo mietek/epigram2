@@ -44,10 +44,10 @@
 
 > import Tactics.Information
 > import Tactics.Elimination
+> import Tactics.ProblemSimplify
 
 > {-
 > import Tactics.PropositionSimplify
-> import Tactics.ProblemSimplify
 > import Tactics.Gadgets
 > import Tactics.IData
 > import Tactics.Relabel
@@ -527,6 +527,8 @@ Import more tactics from an aspect:
 >     unaryExCT "whatis" infoWhatIs
 >       "whatis <term> - prints the various representations of <term>." :
 
+>     nullaryCT "simplify" (problemSimplify >> optional seekGoal >> return "Simplified.")
+>       "simplify - simplifies the current problem." :
 
 >     [] )
 
@@ -676,7 +678,7 @@ Import more tactics from an aspect:
 > elimCTactic :: DExTmRN -> ProofState String
 > elimCTactic r = do 
 >   (e :<: elimTy) <- elabInferFully r
->   elim (elimTy :>: e)
+>   elimSimplify (elimTy :>: e)
 >   -- toFirstMethod
 >   return "Eliminated. Subgoals awaiting work..."
 
