@@ -10,7 +10,7 @@
 > import Prelude hiding (any, elem, exp)
 
 > import Data.List hiding (any, elem)
-> import Data.Foldable
+> import Data.Foldable hiding (foldr)
 > import qualified Data.Monoid as M
 
 > import Control.Applicative
@@ -130,14 +130,16 @@ What fresh hell is this:
 > occurs n p v (e :/ t) = let (p', v') = occursEnv n p v e in occurs n p' v' t
 
 > occursEnv :: Maybe Name -> [Int] -> [Fin m] -> Env {m} {n} -> ([Int] , [Fin {n}]) 
-> occursEnv n p v (lenv,ienv) = (occursLEnv n p v lenv p, occursIEnv n p v ienv)
+> occursEnv n p v (lenv,ienv) = let (ls,os) = occursLEnv n p v lenv in
+>   (nub $ foldr delete p ls ++ os, occursIEnv n p v ienv)
 
-> occursLEnv :: Maybe Name -> [Int] -> [Fin {n}] -> LEnv {n} -> [Int] -> [Int]
-> occursLEnv n p v [] os = os
-> occursLEnv n p v ((l, t) : lenv) os = 
->    if    occurs n p v t 
->    then  occursLEnv n p v lenv (l : delete l os)
->    else  occursLEnv n p v lenv (delete l os)
+> occursLEnv :: Maybe Name -> [Int] -> [Fin {n}] -> LEnv {n} -> ([Int],[Int])
+> occursLEnv n p v [] = ([], [])
+> occursLEnv n p v ((l, t) : lenv) = 
+>    let (ls, os) = occursLEnv n p v lenv 
+>    in if occurs n p v t 
+>       then (l : ls, l : os)
+>       else (l : ls, os) 
 
 > occursIEnv :: Maybe Name -> [Int] -> [Fin {m}] -> IEnv {m, n} -> [Fin {n}] 
 > occursIEnv n p v INix = []
