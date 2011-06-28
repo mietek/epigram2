@@ -63,6 +63,8 @@ here.
 >   _ -> throwError' $ err ("klambda inhabiting non-canonical type")
 
 > chk l (_T :>: (g, t@(V _ :$ _))) = chk l (_T :>: (ENil, eval {Val} g t))
+> chk l (_T :>: (g@(gl,_), t@(P (pl,_,_) :$ _))) | Just _ <- lookup pl gl = 
+>   chk l (_T :>: (ENil, eval {Val} g t))
 
 > chk l (_T :>: (g, g' :/ t)) = chk l (_T :>: (g <+< g', t))
 > chk l (_T :>: (g, t :$ B0)) = chk l (_T :>: (g , t))
