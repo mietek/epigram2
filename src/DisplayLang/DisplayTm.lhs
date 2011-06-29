@@ -67,7 +67,6 @@ parameter. Thanks to this hack, we can use |deriving Traversable|.
 >     DU     ::                       DInTm x -- underscore
 >     DT     :: InTmWrap x        ->  DInTm x -- embedding
 >     -- import <- DInTmConstructors
->    
 >     -- [Feature = Equality]
 
 In the display syntax, an equality can be between arbitrary DExTms,
@@ -81,12 +80,6 @@ to DInTm, along with appropriate elaboration and distillation rules.
 >     -- [Feature = Anchor]
 >     DAnchor :: String -> DInTm x -> DInTm x 
 >     -- [/Feature = Anchor] 
->     -- [Feature = IDesc]
->     -- DIMu :: Labelled (Id :*: Id) (DInTm p x) -> DInTm p x  -> DInTm p x 
->     -- [/Feature = IDesc]
->     -- [Feature = UId]
->     DTag :: String -> [DInTm x] -> DInTm x
->     -- [/Feature = UId]
 >     -}
 >  deriving (Functor, Foldable, Traversable, Show)
 >
@@ -261,6 +254,16 @@ places.
 > pattern DLABEL l t = DC Label [l, t]
 > pattern DLRET t    = DC Ret [t]
 > -- [/Feature = Label]
+> -- [Feature = IDesc]
+> pattern DIMU ii x i    = DC IMu [ii, x, i]
+> pattern DIVAR i        = DC IVar [i] 
+> pattern DIPI s t       = DC IPi [s,t]
+> pattern DIFPI s t      = DC IFPi [s,t]
+> pattern DISIGMA s t    = DC ISigma [s,t]
+> pattern DIFSIGMA s t   = DC IFSigma [s,t]
+> pattern DICONST p      = DC IConst [p]
+> pattern DIPROD u x y   = DC IProd [u,x,y]
+> -- [/Feature = IDesc]
 
 < -- import <- CanDisplayPats
 < -- [Feature = Anchor]
@@ -275,7 +278,6 @@ places.
 < pattern DIFSIGMAN  = DSU (DSU (DSU (DSU (DSU DZE))))
 < pattern DIPRODN    = DSU (DSU (DSU (DSU (DSU (DSU DZE)))))
 
-< pattern DIMU l ii x i  = DIMu (l :?=: (Id ii :& Id x)) i
 < pattern DIVAR i        = DCON (DPAIR DIVARN     (DPAIR i DVOID))
 < pattern DIPI s t       = DCON (DPAIR DIPIN      (DPAIR s (DPAIR t DVOID)))
 < pattern DIFPI s t      = DCON (DPAIR DIFPIN     (DPAIR s (DPAIR t DVOID)))

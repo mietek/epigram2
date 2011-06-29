@@ -72,7 +72,10 @@ being with $\Pi$-types.
 >   pretty EnumU  = const (kword KwEnumU)
 >   pretty EnumT  = const (kword KwEnum) 
 >   -- [/Feature = Enum]
->     -- [Feature = UId]
+>   -- [Feature = IDesc]
+>   pretty IMu  = const (kword KwIMu)
+>   -- [/Feature = IDesc]
+>   -- [Feature = UId]
 >   pretty UId      = const (kword KwUId)
 >   pretty (Tag s)  = const (kword KwTag <> text s)
 >   -- [/Feature = UId]

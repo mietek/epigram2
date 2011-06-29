@@ -45,11 +45,11 @@
 > import Tactics.Information
 > import Tactics.Elimination
 > import Tactics.ProblemSimplify
+> import Tactics.IData
 
 > {-
 > import Tactics.PropositionSimplify
 > import Tactics.Gadgets
-> import Tactics.IData
 > import Tactics.Relabel
 > import Tactics.ShowHaskell
 > -}
@@ -500,6 +500,32 @@ Import more tactics from an aspect:
 >     (\[e] -> elimCTactic (argToEx e))
 >     "eliminate <eliminator> - eliminates with a motive.") :
 
+>   CochonTactic
+>         {  ctName = "idata"
+>         ,  ctParse = do 
+>              nom <- tokenString
+>              pars <- tokenListArgs (bracket Round $ tokenPairArgs
+>                tokenString
+>                (keyword KwAsc)
+>                tokenInTm) (|()|)
+>              keyword KwAsc
+>              indty <- tokenAppInTm
+>              keyword KwArr
+>              keyword KwSet
+>              keyword KwDefn
+>              scs <- tokenListArgs (bracket Round $ tokenPairArgs
+>                (|id (%keyword KwTag%)
+>                     tokenString |)
+>                (keyword KwAsc)
+>                tokenInTm)
+>               (keyword KwSemi)
+>              return $ B0 :< nom :< pars :< indty :< scs
+>         , ctIO = (\ [StrArg nom, pars, indty, cons] -> simpleOutput $ 
+>                     ielabData nom (argList (argPair argToStr argToIn) pars) 
+>                      (argToIn indty) (argList (argPair argToStr argToIn) cons)
+>                       >> return "Data'd.")
+>         ,  ctHelp = "idata <name> [<para>]* : <inx> -> Set  := [(<con> : <ty>) ;]* - builds a data type for thee."
+>         } : 
 
 >     unaryStringCT "show" (\ s -> case s of
 >         "inscope"  -> infoInScope

@@ -3,7 +3,7 @@
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE TypeOperators, TypeSynonymInstances, GADTs #-}
+> {-# LANGUAGE TypeOperators, TypeSynonymInstances, GADTs, PatternGuards #-}
 
 > module Tactics.IData where
 
@@ -15,10 +15,13 @@
 > import Data.Traversable
 
 > import Kit.MissingLibrary
+> import Kit.NatFinVec
+> import Kit.BwdFwd
 
 > import Evidences.Tm
 > import Evidences.NameSupply
 > import Evidences.DefinitionalEquality
+> import Evidences.ErrorHandling
 
 > import ProofState.Edition.Scope
 > import ProofState.Edition.ProofState
@@ -27,118 +30,149 @@
 
 > import ProofState.Interface.ProofKit
 > import ProofState.Interface.Module
+> import ProofState.Interface.Lifting
 > import ProofState.Interface.Definition
 > import ProofState.Interface.Parameter
 > import ProofState.Interface.Solving
+> import ProofState.Interface.Search
 > import ProofState.Interface.NameResolution
 
 > import Elaboration.Elaborator
 
+> import Tactics.Unification
+
 > import DisplayLang.Name
 > import DisplayLang.DisplayTm
 
+> import Debug.Trace
+
 %endif
 
-> {-
-
-> ielabCons :: String -> INTM -> (EXTM :=>: VAL) -> 
->                [Elim VAL] -> (String , DInTmRN) -> 
->                ProofState ( String          -- con name
->                           , EXTM            -- con ty
->                           , EXTM            -- con desc
->                           , [String]
->                           )
-> ielabCons nom ty (indty :=>: indtyv) ps (s , t) = do
->   make ((s ++ "Ty") :<: ARR ty SET)
->   goIn 
->   r <- lambdaParam nom
->   (tyi :=>: v) <- elabGive' t
->   (x,y) <- freshRef ("i" :<: indtyv) 
->         (\i -> ity2desc indty r ps (NP i) (v $$ A (NP r)) >>=
->                  \(x,y) -> return ((L $ "i" :. (capM i 0 %% x))
->                           :? ARR (N indty) 
->                                  (N (P idescREF :$ A (N indty))),y))
->   goOut
->   return (s, tyi, x, y)
-
-> ity2desc :: EXTM -> REF -> [Elim VAL] -> VAL -> VAL -> ProofState (INTM,[String])
-> ity2desc indty r ps ind (PI a b) = do
->             let anom = fortran b
->             a' <- bquoteHere a
->             if occurs r a' 
->               then do 
->                 a'' <- ity2h indty r ps a
->                 (b',us) <- freshRef (fortran b:<:a)
->                         (\s -> do (b',us) <- ity2desc indty r ps ind (b $$ A (NP s))
->                                   when (occurs s b') $ 
->                                     throwError' (err "Bad dependency")
->                                   return (b',us))
->                 return (IPROD (TAG anom) a'' b',anom : us)
->               else do 
->                 freshRef (anom :<: a) 
->                  (\s -> ity2desc indty r ps ind (b $$ A (NP s)) >>= 
->                           \(x,y) -> 
->                             return (ISIGMA a' (L $ (fortran b) :. (capM s 0 %% x)),y))
-> ity2desc indty r ps i (N (x :$ A i')) = do 
->             b <- withNSupply (equal (SET :>: (N x, NP r $$$ ps)))
->             unless b $ throwError' (err "C doesn't target T")   
->             i'' <- bquoteHere i
->             i''' <- bquoteHere i'
->             return (ICONST (PRF (EQBLUE (N indty :>: i'') (N indty :>: i'''))),[])
-> ity2desc _ _ _ _ _ = throwError' (err "If you think this should work maybe you should have a chat with Dr Morris about it.")
-
-> ity2h :: EXTM -> REF -> [Elim VAL] -> VAL -> ProofState INTM
-> ity2h indty r ps (PI a b) = do
->   a' <- bquoteHere a
->   if occurs r a' 
->     then throwError' (err "Not strictly positive")
->     else do
->       b' <- freshRef (fortran b :<: a) 
->               (\s -> ity2h indty r ps (b $$ A (NP s)) >>= \x -> 
->                        (| (L $ (fortran b) :. (capM s 0 %% x) ) |))
->       return (IPI a' b')
-> ity2h indty r ps (N (x :$ A i')) = do
->   b <- withNSupply (equal (SET :>: (N x, NP r $$$ ps)))
->   unless b $ throwError' (err "Not SP")   
->   i'' <- bquoteHere i'
->   return (IVAR i'')
-> ity2h _ _ _ _ = throwError' (err "If you think this should work maybe you should have a chat with Dr Morris about it.")
-
-> imkAllowed :: (String, EXTM, INTM) -> [(String, EXTM, REF)] -> (INTM, INTM)
-> imkAllowed (s, ty, i) = foldr mkAllowedHelp ((ARR (N ty) SET, 
->                                              ALLOWEDCONS  (N ty) 
->                                                           (LK SET)
->                                                           (N (P refl :$ A SET :$ A (ARR (N ty) SET)))
->                                                           i
->                                                           ALLOWEDEPSILON))
->     where mkAllowedHelp (x, ty, r) (allowingTy, allowedTy) =
->             let allowingTy' = L $ x :. (capM r 0 %% allowingTy) in
->             (PI (N ty) allowingTy',
->              ALLOWEDCONS (N ty) allowingTy' (N (P refl :$ A SET :$ A (PI (N ty) allowingTy'))) (NP r) allowedTy)
-
+> unP :: Tm {Head, Exp, Z} -> (Int, String, TY)
+> unP (P l) = l
 
 > ielabData :: String -> [ (String , DInTmRN) ] -> DInTmRN ->
->                        [ (String , DInTmRN) ] -> ProofState (EXTM :=>: VAL)
+>                        [ (String , DInTmRN) ] -> ProofState EXP
 > ielabData nom pars indty scs = do
 >   oldaus <- (| paramSpine getInScope |)
 >   makeModule nom
 >   goIn
->   pars' <- traverse (\(x,y) -> do  
->     make ((x ++ "ParTy") :<: SET)
->     goIn
->     (yt :=>: yv) <- elabGive y
->     r <- assumeParam (x :<: (N yt :=>: yv))
->     return (x,yt,r)) pars
->   make ("indTy" :<: SET)
+>   tnom <- makeModule nom
 >   goIn
->   indty'@(indtye :=>: indtyv) <- elabGive indty
->   moduleToGoal (ARR (N indtye) SET)
->   cs <- traverse (ielabCons nom 
->                   (foldr (\(x,s,r) t -> 
->                             PI (N s) (L $ x :. 
->                               (capM r 0 %% t))) (ARR (N indtye) SET) pars')
->                   indty' (map (\(_,_,r) -> A (NP r)) pars')) scs
+>   pars' <- traverse (\(x,y) -> do  
+>     make ((x ++ "Ty") :<: SET)
+>     goIn
+>     y' <- elabGive y
+>     r <- assumeParam (x :<: y')
+>     return (x,y')) pars
+>   make ("iTy" :<: SET)
+>   goIn
+>   indty' <- elabGive indty
+>   (dtt, tt) <- moduleToGoal' (ARR indty' SET)
+>   goOut
+>   pars'' <- traverse (\(p,pty) -> assumeParam (p :<: pty)) pars'
+>   let aus = oldaus <+> bwdList (map (\x -> A (x :$ B0)) pars'')
+>   moduleToGoal (ARR indty' SET)
+>   dt <- give tt
+>   ctys <- traverse (\(s,cty) -> do
+>     cnom <- makeModule s
+>     goIn
+>     make ((s ++ "Ty") :<: SET)
+>     goIn
+>     cty' <- elabGive cty
+>     moduleToGoal cty'
+>     goOut
+>     return (s, cnom, cty') 
+>     ) scs
+>   goTo tnom
+>   cDs <- traverse (\(s,cnom,ty) -> do
+>     make (s ++ "D" :<: ARR indty' (def iDescDEF $$. indty'))
+>     goIn 
+>     i <- lambdaParam "i"
+>     (x,args,i') <- elabConDesc (dtt, aus) (i :$ B0 :<: indty') (ev ty)
+>     d <- giveOutBelow x
+>     return (cnom,d,args,i')
+>     ) ctys
+>   make ("conNames" :<: ENUMU)
+>   goIn
+>   dcns <- giveOutBelow (foldr (\(s,_,_) e -> CONSE (TAG s) e) NILE ctys) 
+>   let cns = def dcns $$$ aus
+>   make ("conDescs" :<: ARR indty' (def branchesDEF $$. cns
+>                                     $$. (LK (def iDescDEF $$. indty'))))
+>   goIn 
+>   ii <- lambdaParam "i"
+>   dcds <- giveOutBelow (foldr (\(_,dd,_,_) dds -> 
+>                                   PAIR (def dd $$$ aus $$. (ii :$ B0)) dds)
+>                               ZERO cDs)
+>   let cds = def dcds $$$ aus
+>   ii <- lambdaParam "i"
+>   giveOutBelow $ IMU indty' (la "i'" $ \i' -> IFSIGMA (wr cns) (wr cds i')) (ii :$ B0)
+>   traverse (\(e,(cnom,d,args,i')) -> do
+>     goTo cnom
+>     hs <- traverse lambdaParam (map fst args)
+>     give $ CON (PAIR (toSuZe e) 
+>                  (foldr (\x y -> PAIR (x :$ B0) y) (Refl indty' i' :$ B0) hs))
+>     goOut
+>     ) (zip [0..] cDs)
+>   goOut
+>   return $ def dt $$$ oldaus
 
+> elabConDesc :: (DEF, Bwd (Elim EXP)) -> (EXP :<: TY) -> VAL -> 
+>                ProofState (EXP, [(String, Maybe [(String, TY)])], EXP)
+> elabConDesc d@(dt,_) i@(_ :<: ity) (PI s t) 
+>     | not (occurs (Just (defName dt)) [] [] s) = do
+>   makeModule "conarg"
+>   aus <- (| paramSpine getInScope |)
+>   goIn
+>   let sx = fortran "x" [ev t] undefined 
+>   x <- assumeParam (sx :<: s)
+>   moduleToGoal (def iDescDEF $$. ity)
+>   (t',args,i') <- elabConDesc d i (ev t $$. (x :$ B0))
+>   dt <- giveOutBelow t'
+>   return $ (ISIGMA s (def dt $$$ aus), (sx, Nothing) : args, i')
+> elabConDesc d@(dt,_) i@(_ :<: ity) (PI s t) = do
+>   lev <- getDevLev
+>   let xs = fortran "x" [ev t] undefined
+>   let t' = ev t $$. (P (lev,"x",s) :$ B0)
+>   case occurs Nothing [lev] [] t' of
+>     True -> throwError' $ err "Dep error"
+>     False -> do
+>       (c,iargs) <- elabInd d ity (ev s)
+>       (d,args,i') <- elabConDesc d i t'
+>       return (IPROD (TAG xs) c d, (xs, Just iargs) : args, i')
+> elabConDesc (dt, das) (i :<: ity) (D d _ Hole :$ (as :< A i')) | dt == d && matchSpine das as = 
+>   return $ (ICONST (PRF (EQ ity i ity i')), [], i')
+
+> matchSpine :: Bwd (Elim EXP) -> Bwd (Elim EXP) -> Bool
+> matchSpine B0 B0 = True
+> matchSpine (as :< A a) (bs :< A b) 
+>   |  P (l,_,_)   :$ B0 <- ev a 
+>   ,  P (l',_,_)  :$ B0 <- ev b 
+>   ,  l == l' = matchSpine as bs
+> matchSpine _ _ = False 
+
+> elabInd :: (DEF, Bwd (Elim EXP)) -> TY -> VAL -> 
+>            ProofState (EXP, [(String, TY)])
+> elabInd d@(dt,_) ity (PI s t) 
+>     | not (occurs (Just (defName dt)) [] [] s) = do
+>   makeModule "indarg"
+>   aus <- (| paramSpine getInScope |)
+>   goIn
+>   let xs = fortran "x" [ev t] undefined 
+>   x <- assumeParam (xs :<: s)
+>   moduleToGoal (def iDescDEF $$. ity)
+>   (t',iargs) <- elabInd d ity (ev t $$. (x :$ B0))
+>   dt <- giveOutBelow t'
+>   return $ (IPI s (def dt $$$ aus), (xs, s) : iargs) 
+> elabInd (dt, das) _ (D d _ Hole :$ (as :< A i')) | dt == d && matchSpine das as = 
+>   return $ (IVAR i', [])
+> elabInd _ _ _ = throwError' $ err "Not SP"
+
+> toSuZe :: Int -> Tm {Body, s, n}
+> toSuZe 0 = ZE
+> toSuZe n = SU (toSuZe (n-1))
+
+> {-
 >   make ("ConNames" :<: NP enumREF) 
 >   goIn
 >   (e :=>: ev) <- giveOutBelow (foldr (\(t,_) e -> CONSE (TAG t) e) NILE scs)
@@ -233,32 +267,6 @@ dawg.}
 
 
 > import -> CochonTactics where
->   : CochonTactic
->         {  ctName = "idata"
->         ,  ctParse = do 
->              nom <- tokenString
->              pars <- tokenListArgs (bracket Round $ tokenPairArgs
->                tokenString
->                (keyword KwAsc)
->                tokenInTm) (|()|)
->              keyword KwAsc
->              indty <- tokenAppInTm
->              keyword KwArr
->              keyword KwSet
->              keyword KwDefn
->              scs <- tokenListArgs (bracket Round $ tokenPairArgs
->                (|id (%keyword KwTag%)
->                     tokenString |)
->                (keyword KwAsc)
->                tokenInTm)
->               (keyword KwSemi)
->              return $ B0 :< nom :< pars :< indty :< scs
->         , ctIO = (\ [StrArg nom, pars, indty, cons] -> simpleOutput $ 
->                     ielabData nom (argList (argPair argToStr argToIn) pars) 
->                      (argToIn indty) (argList (argPair argToStr argToIn) cons)
->                       >> return "Data'd.")
->         ,  ctHelp = "idata <name> [<para>]* : <inx> -> Set  := [(<con> : <ty>) ;]* - builds a data type for thee."
->         } 
 
 > occursM :: REF -> Mangle (Ko Any) REF REF
 > occursM r = Mang

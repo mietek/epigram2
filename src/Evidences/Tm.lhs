@@ -132,6 +132,9 @@
 >   Ze     :: Can
 >   Su     :: Can 
 >   -- [/Feature = Enum]
+>   -- [Feature = IDesc]
+>   IMu      :: Can  
+>   -- [/Feature = IDesc]
 >   -- [Feature = Label]
 >   Label  :: Can
 >   Ret    :: Can
@@ -173,6 +176,24 @@
 > pattern ZE         = Ze :- []
 > pattern SU n       = Su :- [n]
 >   -- [/Feature = Enum]
+>   -- [Feature = IDesc]
+> pattern IVARN     = ZE
+> pattern ICONSTN   = SU ZE
+> pattern IPIN      = SU (SU ZE)
+> pattern IFPIN     = SU (SU (SU ZE))
+> pattern ISIGMAN   = SU (SU (SU (SU ZE)))
+> pattern IFSIGMAN  = SU (SU (SU (SU (SU ZE))))
+> pattern IPRODN    = SU (SU (SU (SU (SU (SU ZE)))))
+
+> pattern IMU _I _D i   = IMu :- [_I, _D, i] 
+> pattern IVAR i        = CON (PAIR IVARN     (PAIR i ZERO))
+> pattern IPI s t       = CON (PAIR IPIN      (PAIR s (PAIR t ZERO)))
+> pattern IFPI s t      = CON (PAIR IFPIN     (PAIR s (PAIR t ZERO)))
+> pattern ISIGMA s t    = CON (PAIR ISIGMAN   (PAIR s (PAIR t ZERO)))
+> pattern IFSIGMA s t   = CON (PAIR IFSIGMAN  (PAIR s (PAIR t ZERO)))
+> pattern ICONST p      = CON (PAIR ICONSTN   (PAIR p ZERO))
+> pattern IPROD u x y   = CON (PAIR IPRODN    (PAIR u (PAIR x (PAIR y ZERO))))
+>   -- [/Feature = IDesc]
 >   -- [Feature = Label]
 > pattern LABEL t l  = Label :- [t, l]
 > pattern RET x      = Ret :- [x]
@@ -189,8 +210,12 @@
 > type OpMaker s = Int -> Operator {Body,s}
 
 > eat :: String -> ((forall t. Wrapper t {Z} => t) -> OpMaker s') -> OpMaker s
-> eat y b p = let x :: Tm {Head, Exp, Z} ; x = P (p,y,undefined) 
+> eat y b p = let x :: Tm {Head, Exp, Z} ; x = P (p,y,error $ "eat P escapage: " ++ y) 
 >             in  Eat (Just y) (b (wrapper x B0) (p + 1))
+
+> speat :: String -> ((forall t. Wrapper t {Z} => t) -> OpMaker s') -> OpMaker s
+> speat y b p = let x :: Tm {Head, Exp, Z} ; x = P (p,y,error "speat") 
+>               in  Split (Eat (Just y) (b (wrapper x B0) (p + 1)))
 
 > emit :: Tm {Body, Exp, Z} -> OpMaker {Exp}
 > emit x _ = Emit x
@@ -278,8 +303,96 @@
 >                        emit (wr (D switchDEF S0 (switchOP 0)) 
 >                                   _E x _P (b $$ Tl)))  ]) ]
 
+> iDescDEF :: DEF
+> iDescDEF = mkDEF
+>   [("PRIM",0),("IDesc",0)]
+>   (("I",SET) ->> \_ -> SET) $
+>   eat "I" $ \_I -> emit $ IMU ONE (wr (def iDescDDEF) _I) ZERO
+
+> iDescDDEF :: DEF
+> iDescDDEF = mkDEF
+>   [("PRIM",0),("IDescD",0)]
+>   (("I",SET) ->> \_ -> ONE --> wr (def iDescDEF) ONE) $
+>   eat "I" $ \_I -> eat "_" $ \_ -> emit $ IFSIGMA 
+>    (CONSE (TAG "varD") 
+>     (CONSE (TAG "constD")
+>      (CONSE (TAG "piD")
+>       (CONSE (TAG "fpiD")
+>        (CONSE (TAG "sigmaD")
+>         (CONSE (TAG "fsigmaD")
+>          (CONSE (TAG "prodD")  
+>           NILE)))))))
+>    {- varD: -}    (PAIR (ISIGMA _I (LK $ ICONST ONE))
+>    {- constD: -}  (PAIR (ISIGMA SET (LK $ ICONST ONE))
+>    {- piD: -}     (PAIR (ISIGMA SET (la "S" $ \_S -> 
+>                     (IPROD (TAG "T") (IPI _S (LK $ IVAR ZERO)) 
+>                            (ICONST ONE))))
+>    {- fpiD: -}    (PAIR (ISIGMA ENUMU (la "E" $ \_E ->
+>                     (IPROD (TAG "T") (IPI (ENUMT _E) (LK $ IVAR ZERO))
+>                            (ICONST ONE))))
+>    {- sigmaD: -}  (PAIR (ISIGMA SET (la "S" $ \_S ->  
+>                     (IPROD (TAG "T") (IPI _S (LK $ IVAR ZERO)) 
+>                            (ICONST ONE))))
+>    {- fsigmaD: -} (PAIR (ISIGMA ENUMU (la "E" $ \_E ->
+>                     (IPROD (TAG "T") (IFPI _E (LK $ IVAR ZERO))
+>                            (ICONST ONE))))
+>    {- prodD: -}   (PAIR (ISIGMA UID (la "u" $ \_ -> 
+>                          (IPROD (TAG "C") (IVAR ZERO) 
+>                           (IPROD (TAG "D") (IVAR ZERO) (ICONST ONE)))))
+>                     ZERO))))))) 
+
+> idescDEF :: DEF
+> idescDEF = mkDEF
+>   [("PRIM",0),("idesc",0)]
+>   (("I", SET) ->> \_I ->
+>    ("D", wr (def iDescDEF) _I) ->> \_D ->
+>    ("X", ARR _I SET) ->> \_X -> SET)
+>    idescOP
+>      where 
+>       idescOP = eat "I" $ \_I -> cases [ (Con , split $ cases 
+>        [  (Ze {- IVar -}, 
+>                 speat "i" $ \i -> eat "_" $ \_ -> eat "X" $ \_X -> emit $ _X i) 
+>        ,  (Su , cases 
+>         [  (Ze {- IConst -}, 
+>                  speat "K" $ \_K -> eat "_" $ \_ -> eat "X" $ \_X -> emit _K)
+>         ,  (Su , cases
+>          [  (Ze {- IPi -}, 
+>                  speat "S" $ \_S -> speat "D" $ \_D -> eat "_" $ \_ -> eat "X" $ \_X -> 
+>                  emit $ PI _S (L ENil "s" $ 
+>                            wr (def idescDEF) (wr _I)  
+>                                              (wr _D (V Fz :$ B0)) (wr _X)))
+>          ,  (Su , cases
+>           [  (Ze {- IFPi -}, 
+>                   speat "E" $ \_E -> speat "D" $ \_D -> eat "_" $ \_ -> eat "X" $ \_X -> 
+>                   emit $ wr (def branchesDEF) _E (L ENil "s" $ 
+>                            wr (def idescDEF) (wr _I) 
+>                                              (wr _D (V Fz :$ B0)) (wr _X)))
+>           ,  (Su , cases
+>            [  (Ze {- ISigma -}, 
+>                     speat "S" $ \_S -> speat "D" $ \_D -> eat "_" $ \_ -> eat "X" $ \_X -> 
+>                     emit $ SIGMA _S (L ENil "s" $ 
+>                               wr (def idescDEF) (wr _I) 
+>                                                 (wr _D (V Fz :$ B0)) (wr _X))) 
+>            ,  (Su , cases
+>             [  (Ze {- IFSigma -}, 
+>                      speat "E" $ \_E -> speat "D" $ \_D -> eat "_" $ \_ -> eat "X" $ \_X -> 
+>                      emit $ SIGMA (ENUMT _E) (L ENil "e" $ 
+>                               wr (def idescDEF) (wr _I)  
+>                                     (wr (def switchDEF) (wr _E) (V Fz :$ B0)
+>                                            (LK (wr (def iDescDEF) (wr _I) ZERO)) (wr _D))
+>                                     (wr _X)))
+>             ,  (Su , cases
+>              [  (Ze {- IProd -}, 
+>                    speat "u" $ \_ -> speat "C" $ \_C -> 
+>                      speat "D" $ \_D -> eat "_" $ \_ -> eat "X" $ \_X ->
+>                    emit $ TIMES  (wr (def idescDEF) _I _C _X) 
+>                                  (wr (def idescDEF) _I _D _X))
+>        ])])])])])])])]
+
+
 > prims :: [ DEF ] 
-> prims = [ idDEF , uncurryDEF , zeroElimDEF , inhElimDEF ]
+> prims = [ idDEF , uncurryDEF , zeroElimDEF , inhElimDEF , 
+>           branchesDEF , switchDEF , iDescDDEF , iDescDEF , idescDEF ]
 
 > eats :: [String] -> Operator {Body, s} -> Operator {Body, s}
 > eats [] o = o

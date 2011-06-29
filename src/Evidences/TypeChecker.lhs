@@ -167,13 +167,12 @@ here.
 >   (tty, es) <- headTySpine l (g, h)
 >   _T <- spInf l tty (g, es ++ trail ss)
 >   return _T
-> inf l (g, d@(D _ _ _)) = do
->   (tty, es) <- headTySpine l (g, d)
->   _T <- spInf l tty (g, es)
->   return _T
 > inf l (g, g' :/ t) = inf l (g <+< g', t)
 > inf l ((gl,_), P (_,_,t)) = (| ((gl,INix) :/ t) |) 
-> inf _ (g, t) = throwError' $ [ErrorTm (Nothing :>: g :/ t) , StrMsg  "type inference failure"]
+> inf l (g, t) = do
+>   (tty, es) <- headTySpine l (g, t)
+>   _T <- spInf l tty (g, es)
+>   return _T
 
 
 > polyIdTy, polyIdTm, compTy, compTm, badCompTm :: EXP

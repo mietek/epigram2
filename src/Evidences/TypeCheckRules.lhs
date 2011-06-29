@@ -72,6 +72,16 @@
 >   (CONSE _ _, Ze) -> (| ONE |) 
 >   (CONSE _ e, Su) -> (| (ENUMT e *** ONE) |) 
 > -- [/Feature = Enum]
+> -- [Feature = IDesc]
+> canTy ((Set, []) :>: IMu)    =
+>   pure $ ("I", SET) -** \ _I -> 
+>          ("D", ARR _I (wr (def iDescDEF) _I)) -** \ _D -> 
+>          ("i", _I) -** \ _ -> ONE
+> canTy ((IMu, [_I, _D, i]) :>: Con) = 
+>   pure $ ("x", wr (def idescDEF) _I (wr _D i) 
+>                      (la "i'" $ \i' -> IMU (nix _I) (nix _D) i')) -**
+>          \ _ -> ONE
+> -- [/Feature = IDesc]
 > -- [Feature = Label]
 > canTy ((Set, []) :>: Label)          = 
 >   pure $ ("T", SET) -** \ _T -> _T *** ONE
@@ -115,6 +125,17 @@
 >   pure (Pair, [EQ _S s _S' s', EQ (_T $$. s) t (_T' $$. s') t'])
 >   where s = p $$ Hd ; t = p $$ Tl ; s' = p' $$ Hd ; t' = p $$ Tl
 > eqUnfold ((Prf, [_]) :>: _) ((Prf, [_]) :>: _) = pure (Zero, [])
+> -- [Feature = IDesc]
+> eqUnfold ((IMu, [_I, _D, i]) :>: x) ((IMu, [_I', _D', i']) :>: x') = 
+>   pure (Con, 
+>     [  EQ  (def idescDEF $$$. (B0 :< _I :< (_D $$. i) :< 
+>              (L ENil "s" $ IMU (nix _I) (nix _D) (V Fz :$ B0)))) (x $$ Out)
+>            (def idescDEF $$$. (B0 :< _I' :< (_D' $$. i') :< 
+>              (L ENil "s" $ IMU (nix _I') (nix _D') (V Fz :$ B0)))) (x' $$ Out)
+>     ])
+> -- [/Feature = IDesc]
+> -- [Feature = Enum]
+> -- [Feature = UId]
 > eqUnfold _ _ = pure (Con, [ZERO])
 
 > eqSetUnfold :: VAL -> VAL -> Maybe (Can, [EXP])
@@ -127,5 +148,15 @@
 >   ,  EQ (_S --> SET) _T (_S' --> SET) _T'])
 > eqSetUnfold (PRF _P) (PRF _Q) =
 >   pure (Pair, [_P ==> _Q, _Q ==> _P])
+> -- [Feature = IDesc]
+> eqSetUnfold (IMU _I _D i) (IMU _I' _D' i') = pure (Pair,
+>   [  EQ SET _I SET _I'
+>   ,  AND  (EQ (ARR _I (def iDescDEF $$. _I $$. ZERO)) _D 
+>               (ARR _I' (def iDescDEF $$. _I' $$. ZERO)) _D')
+>           (EQ _I i _I' i') ])
+> -- [/Feature = IDesc]
+> -- [Feature = Enum]
+> -- [Feature = UId]
+
 > eqSetUnfold _ _ = pure (Con, [ZERO])
 
