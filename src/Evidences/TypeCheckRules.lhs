@@ -11,6 +11,7 @@
 > import Control.Monad.Error
 
 > import Evidences.Tm
+> import Evidences.Primitives
 > import Evidences.ErrorHandling
 
 > import Kit.MissingLibrary

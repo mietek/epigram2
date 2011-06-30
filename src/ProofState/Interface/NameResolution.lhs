@@ -37,6 +37,7 @@ Move to |ProofState.NameResolution|?
 > import DisplayLang.Scheme
 
 > import Evidences.Tm
+> import Evidences.Primitives
 > import Evidences.ErrorHandling
 > import Evidences.NameSupply
 > import Evidences.DefinitionalEquality

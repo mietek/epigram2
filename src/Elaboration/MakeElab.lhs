@@ -14,6 +14,7 @@
 > import Control.Monad.Error
 
 > import Evidences.Tm
+> import Evidences.Primitives
 > import Evidences.NameSupply
 > import Evidences.TypeChecker
 > import Evidences.TypeCheckRules

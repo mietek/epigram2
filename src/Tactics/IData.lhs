@@ -19,6 +19,7 @@
 > import Kit.BwdFwd
 
 > import Evidences.Tm
+> import Evidences.Primitives
 > import Evidences.NameSupply
 > import Evidences.DefinitionalEquality
 > import Evidences.ErrorHandling
