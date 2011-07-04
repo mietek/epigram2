@@ -355,11 +355,11 @@
 > apply {Val} (D d es (Case os)) (A a) = 
 >   case (ENil // a :: VAL) of -- check that it's canonical
 >     (c :- as) -> case lookup c os of
->       (Just o) -> foldl ($$.) (mkD {Val} d es o) as
->       Nothing -> error "You muppet"             
+>       (Just o) -> foldl ($$.) (mkD {Val} d (SCase c (length as) es) o) as
+>       Nothing -> error ("You muppet: " ++ show c ++ " " ++ show (defName d))             
 >     x -> D d (es :<!: exp x) (StuckCase os) :$ B0
 > apply {Val} (D d es (Split o)) (A a) = 
->   mkD {Val} d es o $$. ((ENil :/ a) :$ (B0 :< Hd)) $$. ((ENil :/ a) :$ (B0 :< Tl))
+>   mkD {Val} d (SSplit es) o $$. ((ENil :/ a) :$ (B0 :< Hd)) $$. ((ENil :/ a) :$ (B0 :< Tl))
 > apply {Exp} d@(D _ _ _) a = (ENil :/ d) :$ (B0 :< fmap exp a)  
 > apply {s} (PAIR a b) Hd = eval {s} ENil a
 > apply {s} (PAIR a b) Tl = eval {s} ENil b
