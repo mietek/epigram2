@@ -653,27 +653,27 @@ by |lambdable|:
 > piLift' = piLift {: n :: Nat :}
 
 > piLift :: pi (n :: Nat). BVec {n} (Int, String, TY) -> TY -> TY
-> piLift {n} bs t = spil {n} bs (capture {n} bs t)
+> piLift {n} bs t = spil {n} bs (capture {n} (fmap (\ (l, _, _) -> l) bs) t)
 >   where
 >     spil :: pi (m :: Nat) . BVec {m} (Int, String, TY) -> Tm {Body, Exp, m} -> EXP
 >     spil {Z} BV0 t = t
 >     spil {S m} (sts :<<<: (_, s, ty)) t = 
->       spil {m} sts $ PI (capture {m} sts ty) (L ENil s t)
+>       spil {m} sts $ PI (capture {m} (fmap (\ (l, _, _) -> l) sts) ty) (L ENil s t)
 
 
-> capture' :: {: n :: Nat :} => BVec {n} (Int, String, TY) ->
+> capture' :: {: n :: Nat :} => BVec {n} Int ->
 >                  EXP -> Tm {Body, Exp, n}
 > capture' = capture {: n :: Nat :}
 
-> capture :: pi (n :: Nat). BVec {n} (Int, String, TY) ->
+> capture :: forall a b. pi (n :: Nat). BVec {n} Int ->
 >                 EXP -> Tm {Body, Exp, n}
 > capture {n} bs t = (splif {n} bs (bvDownFromF {n}) [], INix) :/ t
 >   where
->     splif :: forall m . pi (n :: Nat). BVec {n} (Int, String, TY) -> 
+>     splif :: forall a b m . pi (n :: Nat). BVec {n} Int -> 
 >              BVec {n} (Fin {m}) -> [ (Int, Tm {Body, Exp, m}) ] -> 
 >              [ (Int, Tm {Body, Exp, m}) ]
 >     splif {Z} _ _ es = es
->     splif {S n} (ls :<<<: (l,_,_)) (vs :<<<: v) es = 
+>     splif {S n} (ls :<<<: l) (vs :<<<: v) es = 
 >       splif {n} ls vs ((l,V v :$ B0) : es)
 
 
