@@ -43,6 +43,17 @@
 
 > infixr 4 :<<<:
 
+> instance Functor (BVec {n}) where
+>     fmap = fmapDefault
+
+> instance Foldable (BVec {n}) where
+>     foldMap = foldMapDefault
+
+> instance Traversable (BVec {n}) where
+>     traverse f BV0           = (| BV0 |)
+>     traverse f (xs :<<<: x)  = (| (traverse f xs) :<<<: f x |)
+
+
 
 > fog :: Fin {n} -> Int
 > fog Fz = 0
@@ -82,10 +93,6 @@
 >     vapp :: Vec {m} (s -> t) -> Vec {m} s -> Vec {m} t
 >     vapp V0          V0          = V0
 >     vapp (f :>>: fs)  (s :>>: ss)  = f s :>>: vapp fs ss
-
-> instance Functor (BVec {n}) where
->   fmap f BV0          = BV0
->   fmap f (xs :<<<: x)  = fmap f xs :<<<: f x
 
 > vhead :: Vec {S n} x -> x
 > vhead (x :>>: xs) = x
