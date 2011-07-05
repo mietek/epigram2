@@ -124,7 +124,7 @@
 >        EQ (nix _T :$ ss) (nix f :$ ss) (nix _T' :$ ss') (nix f' :$ ss')])
 > eqUnfold ((Sigma, [_S, _T]) :>: p) ((Sigma, [_S', _T']) :>: p') =
 >   pure (Pair, [EQ _S s _S' s', EQ (_T $$. s) t (_T' $$. s') t'])
->   where s = p $$ Hd ; t = p $$ Tl ; s' = p' $$ Hd ; t' = p $$ Tl
+>   where s = p $$ Hd ; t = p $$ Tl ; s' = p' $$ Hd ; t' = p' $$ Tl
 > eqUnfold ((Prf, [_]) :>: _) ((Prf, [_]) :>: _) = pure (Zero, [])
 > -- [Feature = IDesc]
 > eqUnfold ((IMu, [_I, _D, i]) :>: x) ((IMu, [_I', _D', i']) :>: x') = 
@@ -136,11 +136,16 @@
 >     ])
 > -- [/Feature = IDesc]
 > -- [Feature = Enum]
+> eqUnfold ((EnumU, []) :>: e) ((EnumU, []) :>: e') = error "eqUnfold: EnumU"
+> eqUnfold ((EnumT, as) :>: e) ((EnumT, bs) :>: e') = error "eqUnfold: EnumT"
+> -- [/Feature = Enum]
 > -- [Feature = UId]
+> eqUnfold ((UId, []) :>: t) ((UId, []) :>: t') = error "eqUnfold: UId"
+> -- [/Feature = UId]
 > eqUnfold _ _ = pure (Con, [ZERO])
 
 > eqSetUnfold :: VAL -> VAL -> Maybe (Can, [EXP])
-> eqSetUnfold SET SET = pure (Zero, [])
+> eqSetUnfold (c :- []) (c' :- []) | c == c' = pure (Zero, [])
 > eqSetUnfold (PI _S _T) (PI _S' _T') = pure (Pair,
 >   [  EQ SET _S SET _S'
 >   ,  EQ (_S --> SET) _T (_S' --> SET) _T'])
@@ -157,7 +162,11 @@
 >           (EQ _I i _I' i') ])
 > -- [/Feature = IDesc]
 > -- [Feature = Enum]
+> eqSetUnfold (ENUMT as) (ENUMT bs) = error "eqSetUnfold: ENUMT"
+> -- [/Feature = Enum]
 > -- [Feature = UId]
+> -- [/Feature = UId]
 
-> eqSetUnfold _ _ = pure (Con, [ZERO])
+> eqSetUnfold (_ :- _) (_ :- _) = pure (Con, [ZERO])
+> eqSetUnfold _ _ = Nothing
 
