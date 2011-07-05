@@ -440,6 +440,14 @@ its type.
 >
 >     handleArgs (tm :<: PRF _P) (Sym : as) | EQ _S s _T t <- ev _P =
 >       handleArgs (tm $$ Sym :<: PRF (EQ _T t _S s)) as
+>
+>     handleArgs (tm :<: PRF _P) (Out : as)
+>         |  EQ _S s _T t    <- ev _P
+>         ,  (_Sc :- _Sas)   <- ev _S
+>         ,  (_Tc :- _Tas)   <- ev _T 
+>         ,  Just (Con, [q])  <- eqUnfold ((_Sc, _Sas) :>: s)
+>                                        ((_Tc, _Tas) :>: t) =
+>       handleArgs (tm $$ Out :<: PRF q) as
 >     -- [Feature = Equality]
 
 >     handleArgs (tm :<: ty@(_ :- _)) as =

@@ -55,16 +55,22 @@
 >     return (pretty dtm size)
 
 > distill :: VAL :>: VAL -> (Int, Bwd (Int, String, TY)) -> ProofState DInTmRN
-> distill (ty :>: L g n b) (l,ps) = case fromJust $ lambdable ty of
->   (k, s, t) -> 
+> distill (ty :>: L g n b) (l,ps) = case lambdable ty of
+>   Just (k, s, t) -> 
 >     (| (DLAV n) (distill (ev (t (P (l, n, s) :$ B0)) 
 >                           :>: ((g <:< (P (l, n, s) :$ B0)) // b)) 
 >                   (l + 1,ps:<(l,n,s)))
 >     |)
-> distill (ty :>: LK b) l = case fromJust $ lambdable ty of
->   (_, s, t) -> 
+>   Nothing -> throwError' $ err "distillSpine:"
+>                            ++ errTyTm (SET :>: exp ty)
+>                            ++ err "is not lambdable"
+> distill (ty :>: LK b) l = case lambdable ty of
+>   Just (_, s, t) -> 
 >      (| DLK  (distill (ev (t (error "LKdistill")) :>: ev b) l)
 >      |)
+>   Nothing -> throwError' $ err "distillSpine:"
+>                            ++ errTyTm (SET :>: exp ty)
+>                            ++ err "is not lambdable"
 
 We don't always want to do this, but often do want to, go figure:
 
@@ -122,6 +128,10 @@ We don't always want to do this, but often do want to, go figure:
 
 > distill ((tyc :- tyas) :>: (c :- as)) l = case canTy ((tyc , tyas) :>: c) of
 >   Nothing -> throwError' $ err "Tin thadger wasp unit"
+>                            ++ err "\ncanonical type"
+>                            ++ errTyTm (SET :>: (tyc :- tyas))
+>                            ++ err "does not admit canonical term"
+>                            ++ errTm (c :- as)
 >   Just tel -> (| (DC c) (distillCan (tel :>: as) l) |)
 
 
@@ -168,26 +178,38 @@ We don't always want to do this, but often do want to, go figure:
 >                 (Int, Bwd (Int, String, TY)) -> ProofState [Elim DInTmRN]
 > distillSpine (_ :>: (_, [], _)) _ = (| [] |)
 > distillSpine (ty :>: (haz, A a : as, Just (SchImplicitPi _ sch))) l = 
->   case fromJust $ lambdable ty of 
->     (k, s, t) -> do
+>   case lambdable ty of 
+>     Just (k, s, t) -> do
 >       as' <- distillSpine (ev (t a) :>: (haz $$ A a, as, Just sch)) l
 >       return $ as'
+>     Nothing -> throwError' $ err "distillSpine:"
+>                            ++ errTyTm (SET :>: exp ty)
+>                            ++ err "is not lambdable"
 > distillSpine (ty :>: (haz, A a : as, sch)) l = 
->   case fromJust $ lambdable ty of 
->     (k, s, t) -> do
+>   case lambdable ty of 
+>     Just (k, s, t) -> do
 >       a' <- (distill (ev s :>: (ev a)) l)
 >       as' <- distillSpine (ev (t a) :>: (haz $$ A a, as, fmap (stripScheme 1) sch)) l
 >       return $ A a' : as'
-> distillSpine (ty :>: (haz , Hd : as, _)) l = case fromJust $ projable ty of
->   (s, t) -> 
+>     Nothing -> throwError' $ err "distillSpine:"
+>                            ++ errTyTm (SET :>: exp ty)
+>                            ++ err "is not lambdable"
+> distillSpine (ty :>: (haz , Hd : as, _)) l = case projable ty of
+>   Just (s, t) -> 
 >     (| (Hd :) 
 >        (distillSpine (ev s :>: (haz $$ Hd , as, Nothing)) l)
 >     |)
-> distillSpine (ty :>: (haz , Tl : as, _)) l = case fromJust $ projable ty of
->   (s, t) -> 
+>   Nothing -> throwError' $ err "distillSpine:"
+>                            ++ errTyTm (SET :>: exp ty)
+>                            ++ err "is not projable"
+> distillSpine (ty :>: (haz , Tl : as, _)) l = case projable ty of
+>   Just (s, t) -> 
 >     (| (Tl :) 
 >        (distillSpine (ev (t (haz $$ Hd)) :>: (haz $$ Tl , as, Nothing)) l)
 >     |)
+>   Nothing -> throwError' $ err "distillSpine:"
+>                            ++ errTyTm (SET :>: exp ty)
+>                            ++ err "is not projable"
 > -- [Feature = Equality]
 > distillSpine (PRF _P :>: (tm, QA x y q : as, _)) l
 >           | EQ _S f _T g <- ev _P
@@ -202,5 +224,13 @@ We don't always want to do this, but often do want to, go figure:
 >
 > distillSpine (PRF _P :>: (tm, Sym : as, _)) l | EQ _S s _T t <- ev _P =
 >   (| (Sym :) (distillSpine (PRF (EQ _T t _S s) :>: (tm $$ Sym, as, Nothing)) l) |)
+>
+> distillSpine (PRF _P :>: (tm, Out : as, _)) l
+>     |  EQ _S s _T t    <- ev _P
+>     ,  (_Sc :- _Sas)   <- ev _S
+>     ,  (_Tc :- _Tas)   <- ev _T 
+>     ,  Just (Con, [q])  <- eqUnfold ((_Sc, _Sas) :>: s)
+>                                        ((_Tc, _Tas) :>: t) =
+>   (| (Out :) (distillSpine (PRF q :>: (tm $$ Out, as, Nothing)) l) |)
 > -- [/Feature = Equality]
 > distillSpine (_ :>: (_, (t : _), _)) _  = throwError' (err $ "dS: " ++ show t)
