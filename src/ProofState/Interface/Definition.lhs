@@ -83,7 +83,7 @@ mood such as |Hoping| or |Crying|.
 >     putDevNSupply $ freshen nsupply
 >     putEntryAbove $ EDef def dev Nothing
 >     -- Return a reference to the goal
->     return $  D def S0 (defOp def) $$$ fmap (\x -> A (P x :$ B0)) binScope
+>     return $  (D def :$ B0) $$$ fmap (\x -> A (P x :$ B0)) binScope
 >  where 
 >    boys :: Entries -> Bwd (Int, String, TY)
 >    boys B0 = B0

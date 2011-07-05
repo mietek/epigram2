@@ -141,8 +141,9 @@
 >       (c,iargs) <- elabInd d ity (ev s)
 >       (d,args,i') <- elabConDesc d i t'
 >       return (IPROD (TAG xs) c d, (xs, Just iargs) : args, i')
-> elabConDesc (dt, das) (i :<: ity) (D d _ Hole :$ (as :< A i')) | dt == d && matchSpine das as = 
+> elabConDesc (dt, das) (i :<: ity) (D d :$ (as :< A i')) | dt == d && matchSpine das as = 
 >   return $ (ICONST (PRF (EQ ity i ity i')), [], i')
+> elabConDesc _ _ x = error $ show x
 
 > matchSpine :: Bwd (Elim EXP) -> Bwd (Elim EXP) -> Bool
 > matchSpine B0 B0 = True
@@ -165,7 +166,7 @@
 >   (t',iargs) <- elabInd d ity (ev t $$. (x :$ B0))
 >   dt <- giveOutBelow t'
 >   return $ (IPI s (def dt $$$ aus), (xs, s) : iargs) 
-> elabInd (dt, das) _ (D d _ Hole :$ (as :< A i')) | dt == d && matchSpine das as = 
+> elabInd (dt, das) _ (D d :$ (as :< A i')) | dt == d && matchSpine das as = 
 >   return $ (IVAR i', [])
 > elabInd _ _ _ = throwError' $ err "Not SP"
 

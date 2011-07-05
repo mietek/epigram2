@@ -203,14 +203,10 @@ references remain as they are, as in |getLatest|.
 >     traverseTm (LK b) = (| LK (traverseTm b) |)
 >     traverseTm (c :- es) = (| (c :-) (traverse traverseTm es) |)
 >     traverseTm (f :$ as) = (| ((ENil :/) <$> traverseTm f) :$ (traverse (traverse traverseTm) as) |)
->     traverseTm (D d ss o) = do
->         let (ss', ns) = runWriter $ traverse traverseTm ss
->         tell ns
->         case (getNews bull d, ns) of
->           (Nothing, NoNews)  -> pure $ toBody $ exp $ D d ss o
->           (Just (d', n), _)  -> tell n 
->                              >> pure ((ENil :/D d' S0 (defOp d')) :$ fmap (A . wk) (bwdList (rewindStk ss' [])))
->           (Nothing, _)       -> pure $ (ENil :/ D d S0 (defOp d)) :$ fmap (A . wk) (bwdList (rewindStk ss' []))
+>     traverseTm (D d) = do
+>         case (getNews bull d) of
+>           Nothing         -> pure (D d :$ B0)
+>           (Just (d', n))  -> tell n >> pure (D d' :$ B0) 
 >     traverseTm (V i) = (| (V i :$ B0) |)
 >     traverseTm (P lst) = (| (| P (getBoyNews bull lst) |) :$ ~B0 |)
 >     traverseTm (Refl _X x) = do

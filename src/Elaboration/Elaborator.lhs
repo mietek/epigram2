@@ -205,11 +205,11 @@ Now we add a definition with the same name as the function being defined,
 to handle recursive calls. This has the same arguments as the function,
 plus an implicit labelled type that provides evidence for the recursive call.
 
->     CDefinition def _ <- getCurrentEntry
+>     CDefinition d _ <- getCurrentEntry
 > 
 >     lev <- getDevLev
 >     -- |pn :=>: _ <- getFakeCurrentEntry |
->     let fake :: Tm {Head, Exp, Z} ; fake = D def S0 Hole
+>     let fake :: Tm {Head, Exp, Z} ; fake = D d 
 >     let schCall = makeCall fake 0 B0 sch'
 >     us <- getParamsInScope
 >     let schCallLocal = stripScheme lev schCall
@@ -238,7 +238,7 @@ problem. This could be implemented more cleanly, but it works.
 >     as <- getParamsInScope
 >     let refs'' :: Bwd (Elim EXP) ; refs'' = bwdList $ map (\x -> A x) as
 >     let ll' :: EXP ; ll' = fake :$ refs''
->     give (D imp S0 (defOp imp) $$$ (refs'' :< Call ll'))
+>     give (def imp $$$ (refs'' :< Call ll'))
 >     goIn 
 >   where
 

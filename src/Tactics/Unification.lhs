@@ -64,7 +64,7 @@ holes with the new ones.
 >         _ :< e  -> pass e
 >   where
 >     pass :: Entry Bwd -> ProofState EXP
->     pass (EDef def@(DEF defName _ _) dev _)
+>     pass (EDef d@(DEF defName _ _) dev _)
 >       | name == defName && occursD defName = throwError' $
 >           err "solveHole: you can't define something in terms of itself!"
 >       | name == defName = do
@@ -75,10 +75,10 @@ holes with the new ones.
 >           putNewsBelow news
 >           let (tm', _) = tellNews news tm
 >               tm'' = exp (ev tm')
->           (| (\ d -> D d S0 (defOp d)) (giveOutBelow tm'') |)
+>           (| def (giveOutBelow tm'') |)
 >       | occursD defName = do
 >           goIn
->           solveHole' name ((def, devTip dev):deps) tm
+>           solveHole' name ((d, devTip dev):deps) tm
 >       | otherwise = goIn >> solveHole' name deps tm
 >     pass (EParam _ s _ l)
 >       | occursP l = throwError' $
@@ -96,8 +96,8 @@ holes with the new ones.
 >     makeDeps ((old, Unknown ty k) : deps) news = do
 >         let (ty', _) = tellNews news ty
 >         makeKinded Nothing k (fst (last name) :<: ty')
->         EDef def _ _ <- getEntryAbove
->         let op = Emit (D def S0 (defOp def))
+>         EDef d _ _ <- getEntryAbove
+>         let op = Emit (def d)
 >         makeDeps deps (addGirlNews (old{defOp = op}, GoodNews) news)
 >     makeDeps _ _ = throwError' $ err "makeDeps: bad reference kind! Perhaps "
 >         ++ err "solveHole was called with a term containing unexpanded definitions?"
@@ -124,7 +124,7 @@ What fresh hell is this:
 > occurs n p v (LK b) = occurs n p v b
 > occurs n p v (c :- es) = any (occurs n p v) es
 > occurs n p v (f :$ as) = (occurs n p v f) || any (any (occurs n p v)) as
-> occurs n p v (D def ss o) = any (defName def ==) n || any (occurs n [] []) ss
+> occurs n p v (D def) = any (defName def ==) n -- really?
 > occurs n p v (V i) = elem i v
 > occurs n p v (P (l , s , t)) = elem l p
 > occurs n p v (e :/ t) = let (p', v') = occursEnv n p v e in occurs n p' v' t

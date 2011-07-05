@@ -8,7 +8,7 @@
 >     MultiParamTypeClasses, TypeSynonymInstances, FlexibleInstances,
 >     FlexibleContexts, ScopedTypeVariables, TypeFamilies,
 >     DeriveFunctor, DeriveFoldable, DeriveTraversable,
->     FunctionalDependencies, UndecidableInstances #-}
+>     FunctionalDependencies, UndecidableInstances, PatternGuards #-}
 
 > module Evidences.Tm where
 
@@ -50,15 +50,13 @@
 >   (:-)  :: Can -> [Tm {Body, Exp, n}]                      -> Tm {Body, s, n}
 >   (:$)  :: Tm {Head, s, n} -> Bwd (Elim (Tm {Body, Exp, n}))
 >                                                            -> Tm {Body, s, n}
->   D     :: {: p :: Part :} => DEF -> Stk EXP -> Operator {p, s}    
->                                                            -> Tm {p, s,  n}
+>   D     :: DEF      {- Inv: Applied def is not Emit -}     -> Tm {Head, s, n}
+>   V     :: Fin {n}      {- dB i -}                         -> Tm {Head, s, n}
+>   P     :: (Int, String, TY)    {- dB l -}                 -> Tm {Head, s, n}
 >
->   V     :: Fin {n}      {- dB i -}                         -> Tm {Head, s,  n}
->   P     :: (Int, String, TY)    {- dB l -}                 -> Tm {Head, s,  n}
->
->   Refl  :: Tm {Body, Exp, n} -> Tm {Body, Exp, n}          -> Tm {Head, s,  n}
+>   Refl  :: Tm {Body, Exp, n} -> Tm {Body, Exp, n}          -> Tm {Head, s, n}
 >   Coeh  :: Coeh -> Tm {Body, Exp, n} -> Tm {Body, Exp, n}
->                 -> Tm {Body, Exp, n} -> Tm {Body, Exp, n}  -> Tm {Head, s,  n}
+>                 -> Tm {Body, Exp, n} -> Tm {Body, Exp, n}  -> Tm {Head, s, n}
 >
 >   (:/)  :: {: p :: Part :} => Env {n} {m} -> Tm {p, s, m}  -> Tm {p', Exp, n}
 
@@ -66,7 +64,7 @@
 
 > data DEF = DEF  {  defName :: Name
 >                 ,  defTy :: TY
->                 ,  defOp :: Operator {Body, Exp}
+>                 ,  defOp :: Operator 
 >                 }
 >   deriving Show
 
@@ -199,37 +197,36 @@
 > pattern RET x      = Ret :- [x]
 >   -- [/Feature = Label]
 
-> data Operator :: {Part, Status} -> * where
->   Eat    :: Maybe String -> Operator {p, s} -> Operator {Body, s'}
->   Emit   :: Tm {Body, Exp, Z} -> Operator {Body, Exp}
->   Hole   :: Operator {p, s}
->   Case   :: [(Can , Operator {Body, s})] -> Operator {Body, s'}
->   StuckCase  :: [(Can, Operator {Body, s})] -> Operator {Head, s'}
->   Split  :: Operator {p, s} -> Operator {Body, s'}
+> data Operator :: * where
+>   Eat    :: Maybe String -> Operator -> Operator 
+>   Emit   :: EXP -> Operator
+>   Hole   :: Operator
+>   Case   :: [(Can , Operator)] -> Operator
+>   Split  :: Operator -> Operator
 
-> type OpMaker s = Int -> Operator {Body,s}
+> type OpMaker = Int -> Operator 
 
-> eat :: String -> ((forall t. Wrapper t {Z} => t) -> OpMaker s') -> OpMaker s
+> eat :: String -> ((forall t. Wrapper t {Z} => t) -> OpMaker) -> OpMaker 
 > eat y b p = let x :: Tm {Head, Exp, Z} ; x = P (p,y,error $ "eat P escapage: " ++ y) 
 >             in  Eat (Just y) (b (wrapper x B0) (p + 1))
 
-> speat :: String -> ((forall t. Wrapper t {Z} => t) -> OpMaker s') -> OpMaker s
+> speat :: String -> ((forall t. Wrapper t {Z} => t) -> OpMaker) -> OpMaker 
 > speat y b p = let x :: Tm {Head, Exp, Z} ; x = P (p,y,error "speat") 
 >               in  Split (Eat (Just y) (b (wrapper x B0) (p + 1)))
 
-> emit :: Tm {Body, Exp, Z} -> OpMaker {Exp}
+> emit :: EXP -> OpMaker 
 > emit x _ = Emit x
 
-> split :: OpMaker s -> OpMaker s'
+> split :: OpMaker -> OpMaker 
 > split o i = Split (o i)
 
-> cases :: [(Can , OpMaker s)] -> OpMaker s'
+> cases :: [(Can , OpMaker)] -> OpMaker
 > cases ps i = Case $ map (\(c,om) -> (c,om i)) ps
 
 > def :: DEF -> EXP
-> def d = D d S0 (defOp d)
+> def d = D d :$ B0
 
-> mkDEF :: Name -> TY -> OpMaker {Exp} -> DEF
+> mkDEF :: Name -> TY -> OpMaker -> DEF
 > mkDEF nom ty f = DEF
 >  { defName = nom
 >  , defTy   = ty
@@ -237,38 +234,16 @@
 >  }
 
 
-> eats :: [String] -> Operator {Body, s} -> Operator {Body, s}
+> eats :: [String] -> Operator -> Operator
 > eats [] o = o
 > eats (n : ns) o = Eat (Just n) (eats ns o) 
 
-> instance Show (Operator {p, s}) where
+> instance Show Operator where
 >   show (Eat (Just s) o) = "(Eat " ++ s ++ show o ++ ")"
 >   show (Eat Nothing o)  = "(Eat Nothing " ++ show o ++ ")"
 >   show (Emit t)         = "(Emit " ++ show t ++ ")"
 >   show Hole             = "Hole"
 >   show _                = "oooo"
-
-> data Stk x  =  S0
->             |  Stk x :<!: x
->             |  SSplit (Stk x)
->             |  SCase Can Int (Stk x)
->   deriving (Eq, Functor, Foldable, Traversable)
-
-> instance HalfZip Stk where
->   halfZip S0 S0 = (| S0 |)
->   halfZip (s :<!: x) (t :<!: y) = (| halfZip s t :<!: ~(x,y) |)
->   halfZip (SSplit s) (SSplit t) = (| SSplit (halfZip s t) |)
->   halfZip (SCase c i s) (SCase d j t) | c == d && i == j = (| SCase ~c ~i (halfZip s t) |)
->   halfZip _ _ = (|)
-
-> rewindStk :: Stk EXP -> [EXP] -> [EXP]
-> rewindStk S0 es                  = es
-> rewindStk (s :<!: e) es          = rewindStk s (e:es)
-> rewindStk (SSplit s) (e1:e2:es)  = rewindStk s (PAIR e1 e2 : es)
-> rewindStk (SCase c i s) es    = rewindStk s ((c :- es1) : es2)
->   where (es1, es2) = splitAt i es
-
-
 
 > type Env n m = (LEnv {n}, IEnv {n, m})
 
@@ -313,15 +288,7 @@
 < exp (P l) = P l
 < exp (Refl _S s) = Refl _S s
 < exp (a :/ b) = a :/ b
-< exp (D a b c) = D a b (expo c)
-<  where expo :: Operator {p, s} -> Operator {p, Exp}
-<        expo (Eat o) = Eat o
-<        expo (Emit t) = Emit t
-<        expo Hole = Hole
-<        expo (Case os) = Case os
-<        expo (StuckCase os) = StuckCase os
-<        expo (Split o) = Split o
-
+< exp (D d) = D d
 
 > ev :: Tm {p, Exp, Z} -> VAL
 > ev = (ENil //)
@@ -332,8 +299,7 @@
 > eval {s} g (LK e) = LK (g :/ e)
 > eval {s} g (c :- es) = c :- (fmap (g :/) es)
 > eval {s} g (h :$ es) = applys {s} (eval {s} g h) (fmap (fmap (g :/)) es)
-> eval {s} ([], _) (D d ez o) = mkD {s} d ez o
-> eval {s} (es, _) (D d ez o) = mkD {s} d (fmap ((es, INix) :/) ez) o
+> eval {s} (es, _) (D d) = D d :$ B0
 > eval {s} (es, ez) (V i) = eval {s} ENil (ez !.! i)
 > eval {s} (es, _) (P lt@(l, _, _)) = case lookup l es of
 >   Just t -> eval {s} ENil t
@@ -351,16 +317,20 @@
 >          Tm {Body, s, Z} -> Elim (Tm {Body, s', Z}) -> Tm {Body, s, Z} 
 > apply {s} (L (gl, gi) _ b) (A a) = eval {s} (gl, gi :<<: a) b 
 > apply {s} (LK e) _ = eval {s} ENil e
-> apply {s} (D d es (Eat _ o)) (A a) = mkD {s} d (es :<!: exp a) o  
-> apply {Val} (D d es (Case os)) (A a) = 
->   case (ENil // a :: VAL) of -- check that it's canonical
->     (c :- as) -> case lookup c os of
->       (Just o) -> foldl ($$.) (mkD {Val} d (SCase c (length as) es) o) as
->       Nothing -> error ("You muppet: " ++ show c ++ " " ++ show (defName d))             
->     x -> D d (es :<!: exp x) (StuckCase os) :$ B0
-> apply {Val} (D d es (Split o)) (A a) = 
->   mkD {Val} d (SSplit es) o $$. ((ENil :/ a) :$ (B0 :< Hd)) $$. ((ENil :/ a) :$ (B0 :< Tl))
-> apply {Exp} d@(D _ _ _) a = (ENil :/ d) :$ (B0 :< fmap exp a)  
+
+< apply {s} (D d es (Eat _ o)) (A a) = mkD {s} d (es :<!: exp a) o  
+< apply {Val} (D d es (Case os)) (A a) = 
+<   case (ENil // a :: VAL) of -- check that it's canonical
+<     (c :- as) -> case lookup c os of
+<       (Just o) -> foldl ($$.) (mkD {Val} d (SCase c (length as) es) o) as
+<       Nothing -> error ("You muppet: " ++ show c ++ " " ++ show (defName d))             
+<     x -> D d (es :<!: exp x) (StuckCase os) :$ B0
+< apply {Val} (D d es (Split o)) (A a) = 
+<   mkD {Val} d (SSplit es) o $$. ((ENil :/ a) :$ (B0 :< Hd)) $$. ((ENil :/ a) :$ (B0 :< Tl))
+< apply {Exp} d@(D _ _ _) a = (ENil :/ d) :$ (B0 :< fmap exp a)  
+
+> apply {s} (D d :$ az) a 
+>   | Just e <- runOp {s} (defOp d) B0 (trail (az :< fmap exp a)) = e
 > apply {s} (PAIR a b) Hd = eval {s} ENil a
 > apply {s} (PAIR a b) Tl = eval {s} ENil b
 > apply {s} (CON t) Out = eval {s} ENil t
@@ -395,6 +365,50 @@
 > apply {Exp} (g :/ t) a = (g :/ t) :$ (B0 :< fmap exp a)
 > apply {s} x a = error $ show x ++ " $$ " ++ show a
 
+> ($$) :: {:s :: Status:} => 
+>         Tm {Body, s, Z} -> Elim (Tm {Body, s', Z}) -> Tm {Body, s, Z}
+> ($$) = apply {:s :: Status:}
+
+> ($$.) :: {:s :: Status:} => 
+>         Tm {Body, s, Z} -> Tm {Body, s', Z} -> Tm {Body, s, Z}
+> f $$. a = f $$ A a 
+
+> applys :: pi (s :: Status) . 
+>           Tm {Body, s, Z} -> Bwd (Elim EXP) -> Tm {Body, s, Z}
+> applys {s} (D d :$ az) az' = 
+>   case runOp {s} (defOp d) B0 (trail az ++ trail az') of
+>     Just e -> e
+>     Nothing -> D d :$ (az <+> az') 
+> applys {s} v B0 = v
+> applys {s} v (ez :< e) = apply {s} (applys {s} v ez) e
+
+> ($$$) :: {:s :: Status:} => 
+>          Tm {Body, s, Z} -> Bwd (Elim EXP) -> Tm {Body, s, Z}
+> ($$$) = applys {:s :: Status:}
+
+> ($$$.) :: {:s :: Status:} => 
+>          Tm {Body, s, Z} -> Bwd EXP -> Tm {Body, s, Z}
+> f $$$. as = f $$$ fmap A as
+
+> nix :: {: p :: Part :} => Tm {p, s, Z}  -> Tm {p', Exp, n}
+> nix e = ENix :/ e
+
+|runOp| applies a spine to an operator, in an attempt to find an |Emit|:
+
+> runOp :: pi (s :: Status) . Operator -> Bwd EXP -> [ Elim EXP ] ->
+>          Maybe (Tm {Body, s, Z})
+> runOp {s} (Emit t) oaz as = Just $ 
+>   applys {s} (eval {s} (zip [0..] (trail oaz),INix) t) (bwdList as)
+> runOp {s} (Eat _ o) oaz (A a : as) =  runOp {s} o (oaz :< a) as
+> runOp {Val} (Case os) oaz (A a : as) | c :- cas <- (ENil // a :: VAL) =
+>   case lookup c os of
+>     Just o -> runOp {Val} o oaz (map A cas ++ as)
+>     Nothing -> error "OpCase found Can it didn't like"
+> runOp {Val} (Split o) oaz (A a : as) =
+>   runOp {Val} o oaz (A ((ENil :/ a) :$ (B0 :< Hd)) : 
+>                      A ((ENil :/ a) :$ (B0 :< Tl)) : as)
+> runOp {s} _ _ _ = Nothing 
+
 This thing does coercion and coherence.
 
 > coeh :: VAL -> VAL -> VAL -> VAL -> (VAL, VAL)
@@ -418,38 +432,6 @@ This thing does coercion and coherence.
 > coeh _S _T _Q s = (Coeh Coe (exp _S) (exp _T) (exp _Q) (exp s) :$ B0,
 >                    Coeh Coh (exp _S) (exp _T) (exp _Q) (exp s) :$ B0)
 
-> ($$) :: {:s :: Status:} => 
->         Tm {Body, s, Z} -> Elim (Tm {Body, s', Z}) -> Tm {Body, s, Z}
-> ($$) = apply {:s :: Status:}
-
-> ($$.) :: {:s :: Status:} => 
->         Tm {Body, s, Z} -> Tm {Body, s', Z} -> Tm {Body, s, Z}
-> f $$. a = f $$ A a 
-
-> applys :: pi (s :: Status) . 
->           Tm {Body, s, Z} -> Bwd (Elim EXP) -> Tm {Body, s, Z}
-> applys {s} v B0 = v
-> applys {s} v (ez :< e) = apply {s} (applys {s} v ez) e
-
-> ($$$) :: {:s :: Status:} => 
->          Tm {Body, s, Z} -> Bwd (Elim EXP) -> Tm {Body, s, Z}
-> ($$$) = applys {:s :: Status:}
-
-> ($$$.) :: {:s :: Status:} => 
->          Tm {Body, s, Z} -> Bwd EXP -> Tm {Body, s, Z}
-> f $$$. as = f $$$ fmap A as
-
-> nix :: {: p :: Part :} => Tm {p, s, Z}  -> Tm {p', Exp, n}
-> nix e = ENix :/ e
-
-> mkD :: forall s' p . pi (s :: Status) . 
->        DEF -> Stk EXP -> Operator {p, s'} -> Tm {Body, s, Z}
-> mkD {s} d es (Emit t)               = eval {s} (zip [0..] (trail es), INix) t
-> mkD {s} d es (Eat n o)                = D d es (Eat n o)
-> mkD {s} d es Hole                   = D d es Hole :$ B0
-> mkD {s} d es (Case os)              = D d es (Case os) 
-> mkD {s} d es (Split o)              = D d es (Split o) 
-> mkD {s} d (es :<!: e) (StuckCase os)  = apply {s} (D d es (Case os)) (A e)
 
 > fortran :: String -> [Tm {Body, Val, n}] -> Tm {Body, Val, n} -> String
 > fortran _ (L _ s _:_) _ = s
@@ -613,8 +595,7 @@ by |lambdable|:
 >   "(coe " ++ ugly xs _S ++ " " ++ ugly xs _T ++ " " ++ ugly xs _Q ++ " " ++ ugly xs s ++ ")"
 > ugly xs (Coeh Coh _S _T _Q s) =
 >   "(coe " ++ ugly xs _S ++ " " ++ ugly xs _T ++ " " ++ ugly xs _Q ++ " " ++ ugly xs s ++ ")"
-> ugly xs (D d S0 _) = "(" ++ show d ++ ")"
-> ugly xs (D d es _) = "(" ++ show (defName d) ++ foldMap (\ e -> " " ++ ugly V0 e) (rewindStk es []) ++ ")"
+> ugly xs (D d) = show d
 > ugly xs (g :/ e) = uglyEnv xs g e
 > ugly _ _ = "???"
 

@@ -58,7 +58,6 @@
 > etaQuotev {l} (t :>: x :$ es) = 
 >   let  (h :<: t) = etahQuote {l} x  
 >   in   h :$ bwdList (etaQuoteSp {l} (x :$ B0 :<: ev t) (trail es))
-> etaQuotev {l} (x :>: D def ss op) = D def ss op 
 
 
 > etaQuoteSp :: pi (n :: Nat) . (VAL :<: VAL) -> [Elim EXP] -> 
@@ -71,24 +70,6 @@
 >   Hd : etaQuoteSp {n} (e $$ Hd :<: ev s) as
 > etaQuoteSp {n} (e :<: SIGMA s t) (Tl : as) =
 >   Tl : etaQuoteSp {n} (e $$ Tl :<: ev t $$. (e $$ Hd)) as 
-
-
-< etaQuotev {l} (t :>: x :$ es) = 
-<   let  (h :<: t) = etahQuote {l} x  
-<   in   h :$ fstEx (etaQuoteSp {l} (h :<: ev t) es) 
-
-< etaQuoteSp :: pi (n :: Nat) . (Tm {Head, Val, n} :<: VAL) -> 
-<                Bwd (Tm {Body, Exp, Z}) -> (Bwd (Tm {Body, Exp, n}) :<: VAL)
-< etaQuoteSp {n} (h :<: t) B0 = (B0 :<: t)
-< etaQuoteSp {n} ht@(h :<: t) (es :< e) = case (etaQuoteSp {n} ht es, e) of
-<   (vs :<: PI s t, _) -> 
-<     (vs :< exp (etaQuoten {n} (ev s :>: e))) :<: ev (t $$ e) 
-<   (vs :<: SIGMA s t, Hd) -> (vs :< Hd :<: ev s) 
-<   (vs :<: SIGMA s t, Tl) -> (vs :< Tl) :<: undefined  
-
-<     t :: Tm {Body, Exp, Z}, h :: Tm {Head, Val, n} 
- 
-<     (vs :< Tl :<: wk t :$ (B0 :< (exp h :$ (vs :< Hd)))) 
 
 > etahQuote :: pi (n :: Nat) . Tm {Head, Val, Z} -> (Tm {Head, Val, n} :<: TY)
 > etahQuote {n} (P (l, x, s)) = case levi {n} l of
@@ -106,7 +87,7 @@
 >  where eorh :: Coeh -> EXP
 >        eorh Coe = _S
 >        eorh Coh = PRF (EQ _S s _T (Coeh Coe _S _T q s :$ B0))
-> etahQuote {n} (D def S0 Hole) = D def S0 Hole :<: defTy def 
+> etahQuote {n} (D def) = D def :<: defTy def 
 > etahQuote {n} x = error $ ugly V0 x    
 
 > etaQuoteTEL :: pi (n :: Nat) . (VAL :>: [EXP]) -> [Tm {Body, Exp, n}]

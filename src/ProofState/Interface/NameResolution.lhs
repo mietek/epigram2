@@ -137,7 +137,7 @@ discarded, so all parameters can be provided explicitly.
 >                             ++ showRelName x')
 >     case res of
 >       Left (l, s, t) -> return $ (P (l, s, t) :$ B0 , 0, Nothing)
->       Right (d, i, m) -> return $ (D d S0 (defOp d), i, if b then Nothing else m)
+>       Right (d, i, m) -> return $ (D d :$ B0, i, if b then Nothing else m)
 
 >   where
 >     shouldDiscardScheme :: RelName -> (RelName, Bool)
@@ -151,7 +151,7 @@ discarding any shared parameters it should be applied to.
 > resolveDiscard :: RelName -> ProofState DEF
 > resolveDiscard x = resolveHere x >>= (\ (d, _, _) -> return (unD d))
 >   where unD :: Tm {Body, Exp, n} -> DEF
->         unD (D d _ _) = d
+>         unD (D d :$ B0) = d
 
 
 There are four stages relating to whether we are looking up or down
@@ -485,7 +485,7 @@ shared parameters to drop, and the scheme of the name (if there is one).
 >   case os of
 >     Nothing -> return (nn, Nothing, ns, Nothing)
 >     Just i -> do
->       ty <- spInf lev (D d S0 (defOp d) :<: defTy d) (ENil, trail i)
+>       ty <- spInf lev (D d :$ B0 :<: defTy d) (ENil, trail i)
 >       return (nn, Just ty, ns, ms)
 
 > foo :: Int -> [ Elim EXP ] -> (Int, Bool)

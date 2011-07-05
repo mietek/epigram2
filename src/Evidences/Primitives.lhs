@@ -78,7 +78,7 @@
 >       [  (NilE , eat "P" $ \_P -> emit ONE)
 >       ,  (ConsE , eat "T" $ \_T -> eat "E" $ \_E -> eat "P" $ \_P -> emit $
 >                     TIMES (_P $$. ZE) 
->                       (wr (D branchesDEF S0 (branchesOP 0)) 
+>                       (wr (def branchesDEF) 
 >                           _E (la "n" $ \n -> wr _P (SU n))) )]
 
 > switchDEF :: DEF
@@ -87,7 +87,7 @@
 >   (("E",ENUMU) ->> \_E ->
 >    ("x",ENUMT _E) ->> \x ->
 >    ("P",ARR (ENUMT _E) SET) ->> \_P ->
->    ("b",wr (D branchesDEF S0 (defOp branchesDEF)) _E _P) ->> \b -> 
+>    ("b",wr (def branchesDEF) _E _P) ->> \b -> 
 >    _P x)
 >   switchOP
 >     where
@@ -96,7 +96,7 @@
 >        ,  (ConsE , eat "T" $ \_T -> eat "E" $ \_E -> cases 
 >             [  (Ze , eat "P" $ \_P -> eat "b" $ \b -> emit (b $$ Hd))
 >             ,  (Su , eat "x" $ \x -> eat "P" $ \_P -> eat "b" $ \b ->
->                        emit (wr (D switchDEF S0 (switchOP 0)) 
+>                        emit (wr (def switchDEF) 
 >                                   _E x _P (b $$ Tl)))  ]) ]
 
 > tabulateDEF :: DEF

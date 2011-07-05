@@ -96,8 +96,8 @@ here.
 > headTySpine l (g, g' :/ h)       = do
 >   (ety, as) <- headTySpine l (g <+< g', h)
 >   return (ety, map (fmap (g' :/)) as)
-> headTySpine l (g, D d es _)      = 
->   pure (D d S0 (defOp d) :<: defTy d, map (A . wk) $ rewindStk es [])
+> headTySpine l (g, D d)      = 
+>   pure (D d :$ B0 :<: defTy d, [])
 > headTySpine l (g@(gl,_), p@(P (_,_,ty))) = 
 >   (| (eval {Exp} g p :<: ((gl, INix) :/ ty), []) |)
 > headTySpine l (g, Refl _S s)     = do

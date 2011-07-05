@@ -83,12 +83,6 @@ We don't always want to do this, but often do want to, go figure:
 <       |)
 
 
-> distill (ty :>: h@(D d sd _)) (l,ps) = do
->   (nom, ty, as, ms) <- unresolveD d ps (bwdList $ map A $ rewindStk sd [])
->   let ty'  =  maybe (defTy d) id ty
->   das <- distillSpine (ev ty' :>: (h, as, ms)) (l,ps)
->   (| (DN (DP nom ::$ das)) |)
-
 < distill (ty :>: h :$ as) l = do
 <     let (h',as') = stripCall h as []
 <     (dh, ty, ss, ms) <- distillHead h as' l
@@ -148,8 +142,8 @@ We don't always want to do this, but often do want to, go figure:
 > distillHead (P (l', n, s)) as (l,es) = do
 >   r <- unresolveP (l', n, s) es 
 >   return (DP r, s, as, Nothing)
-> distillHead (D def ss op) as (l,es) = do
->   (nom, ty, as', ms) <- unresolveD def es ((bwdList ((map A $ rewindStk ss []) ++ as)))
+> distillHead (D def) as (l,es) = do
+>   (nom, ty, as', ms) <- unresolveD def es (bwdList  as)
 >   return (DP nom, maybe (defTy def) id ty, as', ms)
 
 > -- [Feature = Equality]

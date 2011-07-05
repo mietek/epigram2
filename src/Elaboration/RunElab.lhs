@@ -231,7 +231,7 @@ a dummy definition and hands back the elaboration task to |runElab|.
 >                 goOut
 >                 return d
 >     es <- getInScope
->     return $ (D d S0 (defOp d) $$$ paramSpine es, status) 
+>     return $ (def d $$$ paramSpine es, status) 
   
 
 \subsection{Interpreting elaboration problems}

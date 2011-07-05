@@ -128,22 +128,13 @@ algorithm. Really we should do proper higher-order matching.}
 >      else case hb of 
 >       P (l',_,_) -> if l == l' then return () else throwError' (err n)
 
-> matchValue' lev zs (_ :>: ((D adef sas _) :$ as, (D bdef sbs _ :$ bs))) |
+> matchValue' lev zs (_ :>: ((D adef) :$ as, (D bdef:$ bs))) |
 >   adef == bdef = do  
->     let mabs = trail $ bwdZipWith halfZip 
->                          (fmap A (bwdList $ rewindStk sas []) <+> as)
->                          (fmap A (bwdList $ rewindStk sbs []) <+> bs) 
+>     let mabs = trail $ bwdZipWith halfZip as bs
 >     ab <- case sequence mabs of
 >       Nothing -> throwError' $ err "matchValue: mismatched Elim"
 >       Just ab -> return ab
->     matchSpine lev zs (defTy adef :>: D adef S0 (defOp adef)) ab     
-
-> matchValue' lev zs (_ :>: (s@(D def ss op), t@(D def' ss' op'))) | 
->    def == def' = matchSpine lev zs 
->                     (defTy def :>: D def S0 (defOp def)) 
->                                    (zipWith (\x y -> A (x,y)) 
->                                      (rewindStk ss [])
->                                      (rewindStk ss' [])) >> return ()
+>     matchSpine lev zs (defTy adef :>: def adef) ab     
 
 
 > matchValue' lev zs (ty :>: (v, w)) | (equal lev (exp ty :>: (exp v, exp w))) = return ()

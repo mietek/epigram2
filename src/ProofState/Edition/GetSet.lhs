@@ -140,7 +140,7 @@ And some specialized versions:
 > getCurrentDefinitionLocal = do
 >     d <- getCurrentDefinition
 >     es <- getGlobalScope
->     return $ D d S0 (defOp d) $$$ paramSpine es
+>     return $ (D d :$ B0) $$$ paramSpine es
 
 > getCurrentScheme :: ProofState (Maybe Scheme)
 > getCurrentScheme = do
@@ -393,7 +393,7 @@ machinery. Perhaps it should move somewhere more logical.
 >          def' = DEF nom ty' op
 >     sch <- getCurrentScheme -- TODO: do we need to update this scheme?
 >     putCurrentEntry $ CDefinition def' sch
->     return (def', D def' S0 op $$$ fmap (\x -> A (P x :$ B0)) ls)
+>     return (def', (D def' :$ B0) $$$ fmap (\x -> A (P x :$ B0)) ls)
 >  where 
 >    boys :: Entries -> Bwd (ParamKind, Int, String, TY)
 >    boys B0 = B0
@@ -406,7 +406,7 @@ machinery. Perhaps it should move somewhere more logical.
 >      let (bs' , ls') = blah bs ls in (bs', ls' :< (l,s,t))
 >    blah bs _ =  (fmap (\(_,x,y,z) -> (x,y,z)) bs, B0)
 
->    tipToOp :: [String] -> Bwd (Int, String, TY) -> Tip -> Operator {Body, Exp}
+>    tipToOp :: [String] -> Bwd (Int, String, TY) -> Tip -> Operator 
 >    tipToOp i f (Unknown _ _)         = Hole
 >    tipToOp i B0 (Defined (_ :>: tm))  = eats i $ Emit tm
 >    tipToOp i f (Defined (_ :>: tm))  =  

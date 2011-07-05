@@ -49,11 +49,6 @@ This is mostly for error-message generation.
 >     as' <- distillSpine (ev ty :>: (ev f , ss, ms)) (l, es)
 >     return $ DN (f' ::$ as')
 >   ) `catchError` \_ -> return (DTIN n)
-> moonshine' l es d@(D _ _ _) = (do
->     (f', ty, ss, ms) <- distillHead d [] (l,es)
->     as' <- distillSpine (ev ty :>: (ev d , ss, ms)) (l, es)
->     return $ DN (f' ::$ as')
->   ) `catchError` \_ -> return (DTIN d)
 > moonshine' l es t = return (DTIN t)
 
 > moonshine :: EXP -> ProofState DInTmRN

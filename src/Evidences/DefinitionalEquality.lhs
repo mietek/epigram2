@@ -44,8 +44,7 @@
 > compare {n} (h1 :$ es1)    (h2 :$ es2)    = 
 >   compare {n} h1 h2 && 
 >   maybe False id (| (F.all (uncurry (compareE {n}))) (halfZip es1 es2) |)
-> compare {n} (D d1 es1 _)   (D d2 es2 _)   = 
->   d1 == d2 && maybe False id (| (F.all (uncurry (compare {Z}))) (halfZip es1 es2) |)
+> compare {n} (D d1)   (D d2)               = d1 == d2 
 > compare {n} (V i)          (V j)          = i == j
 > compare {n} (P (i, _, _))  (P (j, _, _))  = i == j
 > compare {n} x              y              = False
