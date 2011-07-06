@@ -47,18 +47,23 @@ level. For making modules, we use |makeModule|.
 > makeModule :: String -> ProofState Name
 > makeModule s = do
 >     nsupply <- getDevNSupply
->     lev <- getDevLev
+>     inScope <- getInScope
 >     let n = mkName nsupply s
 >     -- Insert a new entry above, the empty module |s|
 >     let dev = Dev {  devEntries       =  B0
 >                   ,  devTip           =  Module 
 >                   ,  devNSupply       =  freshNSpace nsupply s
 >                   ,  devSuspendState  =  SuspendNone 
->                   ,  devLevelCount    =  lev }
+>                   ,  devLevelCount    =  boys inScope }
 >     putEntryAbove $ EModule  {  name   =  n 
 >                              ,  dev    =  dev}
 >     putDevNSupply $ freshen nsupply
 >     return n
+>  where 
+>    boys :: Entries -> Int
+>    boys B0 = 0
+>    boys (es :< EParam _ _ _ _) =  1 + boys es 
+>    boys (es :< _) =  boys es 
 
 
 The second usage is more technical, and occurs exclusively in the
@@ -78,11 +83,6 @@ Section~\ref{subsec:Tactics.Elimination.analysis}.
 >     CModule _ <- getCurrentEntry
 >     putDevTip $ Unknown ty Waiting
 >     updateDefFromTip
->  where 
->    boys :: Entries -> Bwd (Int, String, TY)
->    boys B0 = B0
->    boys (es :< EParam _ s t l) =  boys es :< (l, s, t)
->    boys (es :< _) =  boys es 
 
 
 The last usage of modules is to mess around: introducing things in the

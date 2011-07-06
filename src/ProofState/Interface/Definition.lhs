@@ -61,7 +61,6 @@ mood such as |Hoping| or |Crying|.
 >                     (err "make: " ++ errTm ty ++ err " is not a set.")
 >     -- Make a name for the goal, from |name|
 >     nsupply <- getDevNSupply
->     lev <- getDevLev
 >     goalName <- pickName "Goal" name
 >     let  n  =  mkName nsupply goalName
 >     -- Make a reference for the goal, with a lambda-lifted type
@@ -78,7 +77,7 @@ mood such as |Hoping| or |Crying|.
 >                   , devTip           =  Unknown ty holeKind
 >                   , devNSupply       =  freshNSpace nsupply goalName
 >                   , devSuspendState  =  SuspendNone
->                   , devLevelCount    =  lev }
+>                   , devLevelCount    =  bwdLength binScope }
 >     -- Put the entry in the proof context
 >     putDevNSupply $ freshen nsupply
 >     putEntryAbove $ EDef def dev Nothing
