@@ -69,6 +69,17 @@ here.
 > chk l (_T :>: (g, g' :/ t)) = chk l (_T :>: (g <+< g', t))
 > chk l (_T :>: (g, t :$ B0)) = chk l (_T :>: (g , t))
 
+> chk l (_T :>: (g, t@(h :$ _))) | isRedHead h
+>     = chk l (_T :>: (ENil, eval {Val} g t))
+>   where
+>     isRedHead :: Tm {p, s, n} -> Bool
+>     isRedHead (h :$ B0)  = isRedHead h
+>     isRedHead (_ :/ h)   = isRedHead h
+>     isRedHead (V _)      = True
+>     isRedHead (LK _)     = True
+>     isRedHead (L _ _ _)  = True
+>     isRedHead _          = False
+
 > chk l (_T :>: t@(g,tm)) = do
 >   _T' <- inf l (g, tm)
 >   if equal l (SET :>: (_T, _T'))
@@ -132,7 +143,7 @@ here.
 >       Just (_, _S, _T) -> do
 >         a <- chev l (_S :>: (g, a))
 >         spInf l (e $$. a :<: _T a) (g, as)
->       Nothing -> throwError' $ err "spInf: not lambdable"
+>       Nothing -> throwError' $ err "spInf:" ++ errTyTm (SET :>: wk _T) ++ err "not lambdable"
 >     (_T, Hd) -> case projable _T of
 >       Just (_S, _T)  -> spInf l (e $$ Hd :<: _S) (g, as)
 >       Nothing -> throwError' $ err "spInf: not projable"
