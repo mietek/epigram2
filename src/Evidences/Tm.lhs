@@ -22,6 +22,8 @@
 > import Data.Foldable
 > import Data.List hiding (foldl, all)
 > import Data.Traversable
+> import Data.Maybe
+> import Data.Function
 
 > import Kit.MissingLibrary
 > import Kit.BwdFwd
@@ -269,9 +271,8 @@
 >    g <<< INix = INix
 >    g <<< INil = g
 >    g <<< (g' :<<: e) = (g <<< g') :<<: ((gl, INil) :/ e)
->    gln = case gl' of
->     [] -> gl
->     y -> map (\(l,x) -> (l , (gl, gi) :/ x)) y
+>    gln = unionBy ((==) `on` fst)
+>              (map (\(l,x) -> (l , (gl, gi) :/ x)) gl') gl
 
 > pattern ENil = ([], INil)
 > pattern ENix = ([], INix)
