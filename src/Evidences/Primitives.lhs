@@ -54,6 +54,12 @@
 >   (ZERO --> (("S",SET) ->> \_S -> _S))
 >   (cases [])
 
+> falseElimDEF :: DEF
+> falseElimDEF = mkDEF
+>   [("PRIM",0),("falseElim",0)]
+>   (PRF ZERO --> (("S",SET) ->> \_S -> _S))
+>   (cases [])
+
 > inhElimDEF :: DEF
 > inhElimDEF = mkDEF
 >   [("PRIM",0),("inhElim",0)]
@@ -335,6 +341,6 @@
 >                                   (la "ix" $ \ix -> wr (def iinductionDEF) (wr _I) (wr _D) ix (wr _P) (wr p)) x)) ] 
 
 > prims :: [ DEF ] 
-> prims = [  idDEF , uncurryDEF , zeroElimDEF , inhElimDEF  
+> prims = [  idDEF , uncurryDEF , zeroElimDEF , falseElimDEF , inhElimDEF  
 >         ,  branchesDEF , switchDEF , iDescDDEF , iDescDEF , idescDEF 
 >         ,  iAllDEF ]
