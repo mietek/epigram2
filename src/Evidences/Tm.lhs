@@ -642,6 +642,18 @@ by |lambdable|:
 >       spil {m} sts $ PI (capture {m} (fmap (\ (l, _, _) -> l) sts) ty) (L ENil s t)
 
 
+> lamLift' :: {: n :: Nat :} => BVec {n} (Int, String, TY) -> EXP -> EXP
+> lamLift' = lamLift {: n :: Nat :}
+
+> lamLift :: pi (n :: Nat) . BVec {n} (Int, String, TY) -> EXP -> EXP
+> lamLift {n} bs = lamWrap {n} bs . capture n (fmap (\ (l, _, _) -> l) bs)
+>   where
+>     lamWrap :: pi (n :: Nat) . BVec {n} (Int, String, TY) -> Tm {Body, Exp, n} -> EXP
+>     lamWrap {Z}   BV0 t = t
+>     lamWrap {S n} (sts :<<<: (_, s, _)) t = lamWrap {n} sts (L ENil s t)
+
+
+
 > capture' :: {: n :: Nat :} => BVec {n} Int ->
 >                  EXP -> Tm {Body, Exp, n}
 > capture' = capture {: n :: Nat :}
