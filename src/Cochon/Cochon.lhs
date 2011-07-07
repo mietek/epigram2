@@ -46,9 +46,9 @@
 > import Tactics.Elimination
 > import Tactics.ProblemSimplify
 > import Tactics.IData
+> import Tactics.PropositionSimplify
 
 > {-
-> import Tactics.PropositionSimplify
 > import Tactics.Gadgets
 > import Tactics.Relabel
 > import Tactics.ShowHaskell
@@ -474,7 +474,7 @@ Miscellaneous tactics:
 
 Import more tactics from an aspect:
 
-<     import <- CochonTactics
+>     import <- CochonTactics
 
 
 >     simpleCT 
@@ -558,7 +558,7 @@ Import more tactics from an aspect:
 
 >     [] )
 
-< import <- CochonTacticsCode
+> import <- CochonTacticsCode
 
 
 > pFileName :: Parsley Token String

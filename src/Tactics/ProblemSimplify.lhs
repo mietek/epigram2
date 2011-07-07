@@ -257,40 +257,40 @@ To simplify a $\Pi$-type when not at the top level, we have to create a subgoal.
 >     ps <- getParamsInScope
 >     return (def x $$$. bwdList ps)
 
-> {-
 
-When the goal is a proof of a proposition, and we are at the top level, we can
-just invoke propositional simplification...
+When the goal is a proof of a proposition, and we are at the top
+level, we can just invoke propositional simplification...
 
 > simplifyGoal True (PRF p) = do
 >     simpTrace "PRF top"
 >     propSimplifyHere
->     getCurrentDefinition >>= neutralise
+>     getCurrentDefinitionLocal
 
 ...and if we are not at the top level, we create a subgoal.
 
 > simplifyGoal False g@(PRF _) = do
 >     simpTrace "PRF not"
->     g' <- bquoteHere g
->     make ("prg" :<: g')
+>     make ("prg" :<: Evidences.Tm.exp g)
 >     goIn
->     x :=>: xv <- simplifyGoal True g
+>     x <- simplifyGoal True g
 >     goOut
->     return $ x :=>: xv
+>     return x
 
-If the goal is a programming problem to produce a proof, and the proposition is
-trivial, then we win. However, we cannot simplify non-trivial propositions as
-the user might not want us to. Similarly, we cannot simplify inside |LABEL|
-unless we know we are going to solve the goal completely.
 
-> simplifyGoal b (LABEL _ (PRF p)) = do
->     pSimp <- runPropSimplify p
->     case pSimp of
->         Just (SimplyTrivial prf) -> do
->             topWrap b $ LRET prf :=>: LRET (evTm prf)
->         _ -> (|)
+If the goal is a programming problem to produce a proof, and the
+proposition is trivial, then we win. However, we cannot simplify
+non-trivial propositions as the user might not want us to. Similarly,
+we cannot simplify inside |LABEL| unless we know we are going to solve
+the goal completely.
 
-> -}
+< simplifyGoal b (LABEL _ (PRF p)) = do
+<     pSimp <- runPropSimplify p
+<     case pSimp of
+<         Just (SimplyTrivial prf) -> do
+<             topWrap b $ LRET prf :=>: LRET (evTm prf)
+<         _ -> (|)
+
+
 
 If the goal is a $\Sigma$-type, we might as well split it into its components.
 

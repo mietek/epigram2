@@ -4,159 +4,212 @@ make R := ? : Prop ;
 make A := ? : Set ;
 make B := ? : Set ;
 
+make x : :- ((P => FF) => P => (X : Set) -> FF) ;
+propsimplify ; -- Solve
+root ;
+
+make p : :- (P && (P => FF)) ;
+propsimplify ; -- Absurd
+root ;
+
+make yes : :- ((P && (P => FF)) => FF) ;
+propsimplify ; -- Solve
+root ;
+
+make yes2 : :- (P => (P => FF) => FF) ;
+propsimplify ; -- Solve
+root ;
+
+make no : :- (((P => FF) && P) => FF) ;
+propsimplify ; -- Solve
+root ;
+
+make nor : :- ((P => FF) => (P => FF)) ;
+propsimplify ; -- Solve
+root ;
+
+make oor : :- ((P && (P => Q)) => FF) ;
+propsimplify ; -- Simplify to P => Q => FF
+root ;
+
 make easy : :- TT ;
-propsimplify ;
+propsimplify ; -- Solve
 root ;
 
 make hard : :- FF ;
-propsimplify ;
+propsimplify ; -- Absurd
 root ;
 
 make useless : :- (TT => P) ;
-propsimplify ;
+propsimplify ; -- Simplify to P
 root ;
 
 make easyish : :- (FF => P) ;
-propsimplify ;
+propsimplify ; -- Solve
 root ; 
 
 make andy : :- (TT && P && TT) && (TT && Q) ;
-propsimplify ;
+propsimplify ; -- Simplify to P, Q
 root ;
 
 make ethel : :- (TT && P => Q && FF) ;
-propsimplify ;
+propsimplify ; -- Simplify to P => FF
 root ;
 
-make oops : :- ((TT && P => Q && FF) => FF) ;
-propsimplify ;
+make oops1 : :- ((TT && P => FF) => FF) ;
+propsimplify ; -- Simplify to (P => FF) => FF
+root ;
+
+make oops2 : :- ((TT && P => Q && FF) => FF) ;
+propsimplify ; -- Simplify to (P => FF) => FF
 root ;
 
 make f : :- ((TT => P) => TT) ;
-propsimplify ;
+propsimplify ; -- Solve
 root ;
 
 make g : :- (TT => TT) ;
-propsimplify ;
+propsimplify ; -- Solve
 root ;
 
 make h : :- (P => TT) ;
-propsimplify ;
+propsimplify ; -- Solve
 root ;
 
 make k : :- (P => FF && P) ;
-propsimplify ;
+propsimplify ; -- Simplify to P => FF
 root ; 
 
 make x : :- (((P && TT) && (TT && Q)) && R && P) ;
-propsimplify ;
+propsimplify ; -- Simplify to P, Q, R
 root ;
 
-make y : :- ((x : Set)(y : Set) => TT) ;
-propsimplify ; 
+make y : :- ((x : Set)(y : Set) -> TT) ;
+propsimplify ; -- Solve
 root ;
 
-make z : :- ((x : Set) => TT && P && Q) ;
-propsimplify ; 
+make z : :- ((x : Set) -> TT && P && Q) ;
+propsimplify ; -- Simplify to Set -> P, Set -> Q
 root ;
 
 make a : :- ((TT => FF) => P) ;
-propsimplify ;
+propsimplify ; -- Solve
 root ;
 
 make b : :- (TT => TT && P) ;
-propsimplify ;
+propsimplify ; -- Simplify to P
 root ;
 
 make eek : :- ((P => FF) => FF) ;
-propsimplify ;
+propsimplify ; -- Stuck
 root ;
 
 make d : :- (P && Q => TT) ;
-propsimplify ;
+propsimplify ; -- Solve
 root ;
 
 make e : :- (TT && P => Q && TT) ;
-propsimplify ;
+propsimplify ; -- Simplify to P => Q
 root ;
 
 make f : :- (P => P) ;
-propsimplify ;
+propsimplify ; -- Solve
 root ;
 
 make g : :- (P && Q => R && Q && P) ;
-propsimplify ;
+propsimplify ; -- Simplify to P => Q => R
 root ;
 
 make h : :- ((P => Q) => P => Q) ;
-propsimplify ;
+propsimplify ; -- Solve
+root ;
+
+make h2 : :- (P => (P => Q) => Q) ;
+propsimplify ; -- Solve
 root ;
 
 make k : :- (P == Q => P == Q) ;
-propsimplify ;
+propsimplify ; -- FAIL: Solve (eqUnfold needs fixing for Prop)
 root ;
 
 make l : :- (P => Q) ;
-propsimplify ;
+propsimplify ; -- Stuck
 root ;
 
 make m : :- ((: Set) Set == (: Set) Set) ;
-propsimplify ; 
+propsimplify ; -- Solve
 root ;
 
 make p : :- (((: Set -> Prop) \ x -> P) == ((: Set -> Prop) \ x -> Q)) ;
-propsimplify ;
+propsimplify ; -- FAIL: Simplify to (X : Set) -> P == Q
 root ;
 
 make q : :- ((: Set) Set == (: Set) (Set -> Set)) ;
-propsimplify ;
+propsimplify ; -- Absurd
+root ;
+
+make q2 : :- (((: Set) Set == (: Set) (Set -> Set)) => P) ;
+propsimplify ; -- Solve
 root ;
 
 make r : :- (P == P) ;
-propsimplify ;
+propsimplify ; -- Solve
 root ;
 
 make s : :- (A == A) ;
-propsimplify ;
+propsimplify ; -- Solve
 root ;
 
 make t : :- (A == B) ;
-propsimplify ;
+propsimplify ; -- Stuck
 root ;
 
-make u : :- ((: Sig (A ; B)) ?x == (: Sig (A ; B)) ?y) ;
-propsimplify ;
+make x := ? : Sig (A ; B) ;
+make y := ? : Sig (A ; B) ; 
+make u : :- x == y ;
+propsimplify ; -- Simplify to x ! == y !, x - == y -
 root ;
 
-make v : :- (P => (x : :- P)(y : :- P) => x == y) ;
-propsimplify ;
+make v : :- (P => (x : :- P)(y : :- P) -> x == y) ;
+propsimplify ; -- Solve
 root ;
 
 make g := ? : (:- P) -> Prop ;
-make w : :- ((x : :- P) => g x) ;
-propsimplify ;
+make w : :- ((x : :- P) -> g x) ;
+propsimplify ; -- Stuck
 root ;
 
-make en : :- ((x : Enum ['a 'b 'c]) => P) ;
-propsimplify ;
+make en : :- ((x : Enum ['a 'b 'c]) -> P) ;
+propsimplify ; -- FAIL: Simplify to P?
 root ;
 
-make en2 : :- ((x : Enum ['a 'b]) => x == (: Enum ['a 'b]) 'a) ;
-propsimplify ;
+make en2 : :- ((x : Enum ['a 'b]) -> x == (: Enum ['a 'b]) 'a) ;
+propsimplify ; -- FAIL: Absurd?
 root ;
 
-make sf : :- ((x : A) => FF) ;
-propsimplify ;
+make sf : :- ((x : A) -> FF) ;
+propsimplify ; -- Stuck
 root ;
 
-make sf2 : :- ((x : A) => FF && TT) ;
-propsimplify ;
+make sf2 : :- ((x : A) -> FF && TT) ;
+propsimplify ; -- Simplify to A -> FF
 root ;
 
-make sp : :- ((x : A) => P) ;
-propsimplify ;
+make sp : :- ((x : A) -> P) ;
+propsimplify ; -- Stuck
 root ;
 
-make bug74 : :- (((x : A) => (FF && FF)) => (FF && FF)) ;
-propsimplify ;
+make bug74 : :- (((x : A) -> (FF && FF)) => (FF && FF)) ;
+propsimplify ; -- Simplify to (A -> FF) => FF
 root ;
+
+make sss : :- ((x : A) -> P && Q) ;
+propsimplify ; -- Simplify to A -> P, A -> Q
+root ;
+
+make S := ? : A -> Prop ;
+make T := ? : A -> Prop ;
+make eee : :- ((a : A) -> S a && T a) ;
+propsimplify ; -- Simplify to (a : A) -> A a, (a : A) -> T a
+root ;
+
