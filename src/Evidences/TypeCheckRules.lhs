@@ -106,6 +106,17 @@
 
 
 
+> outable :: VAL -> Maybe TY
+> outable (PRF _P) = case ev _P of
+>   EQ _S s _T t -> case (ev _S, ev _T) of
+>     (_C :- es, _C' :- es') -> case eqUnfold ((_C, es) :>: s) ((_C', es') :>: t) of
+>       Just (Con, [_Q]) -> Just (PRF _Q)
+>       _ -> (|)
+>     _ -> (|)
+>   _ -> (|)
+> outable _ = Nothing
+
+
 > canTyM :: (Applicative m, MonadError StackError m) =>
 >               (Can, [EXP]) :>: Can -> m VAL
 > canTyM  x@((cty, es) :>: ct) = case canTy x of
@@ -126,6 +137,7 @@
 >   pure (Pair, [EQ _S s _S' s', EQ (_T $$. s) t (_T' $$. s') t'])
 >   where s = p $$ Hd ; t = p $$ Tl ; s' = p' $$ Hd ; t' = p' $$ Tl
 > eqUnfold ((Prf, [_]) :>: _) ((Prf, [_]) :>: _) = pure (Zero, [])
+> eqUnfold ((Prop, []) :>: p) ((Prop, []) :>: q) = error "eqUnfold: Prop"
 > -- [Feature = IDesc]
 > eqUnfold ((IMu, [_I, _D, i]) :>: x) ((IMu, [_I', _D', i']) :>: x') = 
 >   pure (Con, 
@@ -169,4 +181,3 @@
 
 > eqSetUnfold (_ :- _) (_ :- _) = pure (Con, [ZERO])
 > eqSetUnfold _ _ = Nothing
-

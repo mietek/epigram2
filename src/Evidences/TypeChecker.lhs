@@ -139,6 +139,10 @@ here.
 >     (_T, Tl) -> case projable _T of
 >       Just (_S, _T)  -> spInf l (e $$ Tl :<: _T (e $$ Hd)) (g, as)
 >       Nothing -> throwError' $ err "spInf: not projable"
+>     (_T, Out) -> case outable _T of
+>       Just _S -> spInf l (e $$ Out :<: _S) (g, as)
+>       Nothing -> throwError' $ err "spInf: not outable"
+>     -- [Feature = Prop]
 >     (PRF _P, QA s u q)  -> case ev _P of
 >       Eq :- [_X, f, _Y, h] -> case (ev _X, ev _Y) of
 >         (PI _S _T, PI _U _V) -> do
@@ -153,6 +157,7 @@ here.
 >     (PRF _P, Sym)  -> case ev _P of
 >       Eq :- [_X, x, _Y, y] -> spInf l (e $$ Sym :<: PRF (Eq :- [_Y, y, _X, x])) (g, as)
 >       _ -> throwError' $ err "spInf: symmetry on non-equation"
+>     -- [/Feature = Prop]
 >     -- [Feature = Label]
 >     (LABEL _T _, Call lab) -> do
 >       a <- chev l (_T :>: (g, lab)) 
