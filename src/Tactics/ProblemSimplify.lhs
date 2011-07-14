@@ -20,6 +20,7 @@
 > import Kit.Trace
 
 > import Evidences.Tm
+> import Evidences.Primitives
 > import Evidences.DefinitionalEquality
 > import Evidences.ErrorHandling
 
@@ -30,11 +31,13 @@
 
 > import ProofState.Interface.ProofKit
 > import ProofState.Interface.Definition
+> import ProofState.Interface.Module
 > import ProofState.Interface.Parameter
 > import ProofState.Interface.Solving
 > import ProofState.Interface.Lifting
 
 > import Tactics.Elimination
+> import Tactics.Unification
 > import Tactics.PropositionSimplify
 
 %endif
@@ -96,7 +99,6 @@ possible. If not at the top level, this has to create a new goal.
 >     d <- getCurrentDefinition
 >     goOut
 >     ps <- getParamsInScope
->     elimTrace "Blah"
 >     return $ def d $$$. bwdList ps
 >   )
 
@@ -134,9 +136,9 @@ Given a function from a $\Sigma$-type, we can split it into its components.
 >                 wr e (PAIR a b))
 >     x <- simplifyGoal False mt
 >     return ZERO
->     let jd :: EXP ; jd = la "ps"  $ \_ ->  nix x :$ (B0 :< A (V Fz :$ (B0 :< Hd)) :< A (V Fz :$ (B0 :< Tl)))
->     elimTrace $ show jd
->     topWrap b  jd
+>     topWrap b $
+>       la "ps"  $ \_ ->  nix x :$ (B0 :< A (V Fz :$ (B0 :< Hd)) 
+>                                      :< A (V Fz :$ (B0 :< Tl)))
 
 > {-
 
@@ -159,6 +161,8 @@ avoiding the worst problems with this simplification step.}
 >     checkTags (CONSE _ e)  = checkTags e
 >     checkTags _            = False
 
+> -}
+
 If we have a function from a proof, we call on propositional simplification to
 help out. If the proposition is absurd we win, and if it simplifies into a
 conjunction we abstract over each conjunct individually. If the proposition
@@ -166,73 +170,69 @@ cannot be simplified, we check to see if it is an equation with a variable on
 one side, and if so, eliminate it by |substEq|. Otherwise, we just put it in
 the context and carry on. Note that this assumes we are at the top level.
 
-> simplifyGoal True (PI (PRF p) t) = do
+> simplifyGoal True (PI s t) | PRF p <- ev s = do
 >     simpTrace "PI PRF"
->     pSimp <- runPropSimplify p
->     maybe (elimEquation p t <|> passHypothesis t) (simplifyProp p t) pSimp
+>     let evp = ev p
+>     pSimp <- runPropSimplify evp
+>     simplifyProp evp t pSimp
 >   where
->     elimEquation :: VAL -> VAL -> ProofState (INTM :=>: VAL) 
->     elimEquation (EQBLUE (_X :>: x) (_Y :>: NP y@(yn := DECL :<: _))) t = do
->         guard =<< (withNSupply $ equal (SET :>: (_X, _Y)))
->         t' <- bquoteHere t
->         guard $ y `elem` t'
->         simpTrace $ "elimSimp: " ++ show yn
+>     elimEquation :: VAL -> EXP -> ProofState EXP 
+>     elimEquation (EQ _X x _Y y) t | (P (l,_,_) :$ B0) <- ev y = do
+>         sc <- getInScope
+>         lev <- getDevLev
+>         guard $ equal lev (SET :>: (_X, _Y))
+>         guard $ occurs Nothing [l] [] t
+>         simpTrace $ "elimEqSimpL"
 >         q    <- lambdaParam "qe"
->         _X'  <- bquoteHere _X
->         x'   <- bquoteHere x
->         let  ety  =  PI (ARR _X SET) $ L $ "P" :. [._P.
->                          ARR (N (V _P :$ A x')) (N (V _P :$ A (NP y)))
->                      ]
->              ex   =  P substEq :$ A _X' :$ A x' :$ A (NP y) :$ A (NP q)
+>         let  ety  =  (("P", ARR _X SET) ->> \ _P ->
+>                      (_P (wr x)) --> (_P (wr y)))
+>              ex   =  wr (def substDEF) _X x y (q :$ B0)
 >         elimSimplify (ety :>: ex)
->         neutralise =<< getCurrentDefinition
->     elimEquation (EQBLUE (_Y :>: NP y@(yn := DECL :<: _)) (_X :>: x)) t = do
->         guard =<< (withNSupply $ equal (SET :>: (_X, _Y)))
->         t' <- bquoteHere t
->         guard $ y `elem` t'
->         simpTrace $ "elimSimp: " ++ show yn
+>         d <- getCurrentDefinition
+>         return $ applySpine (def d) sc
+>     elimEquation (EQ _Y y _X x) t | (P (l,_,_) :$ B0) <- ev y = do
+>         sc <- getInScope
+>         lev <- getDevLev
+>         guard $ equal lev (SET :>: (_X, _Y))
+>         guard $ occurs Nothing [l] [] t
+>         simpTrace $ "elimEqSimpR"
 >         q    <- lambdaParam "qe"
->         _X'  <- bquoteHere _X
->         x'   <- bquoteHere x
->         let  ety  =  PI (ARR _X SET) $ L $ "P" :. [._P.
->                          ARR (N (V _P :$ A x')) (N (V _P :$ A (NP y)))
->                      ]
->              ex   =  P substEq :$ A _X' :$ A x' :$ A (NP y) :$ A
->                          (N (P symEq :$ A _X' :$ A (NP y) :$ A x' :$ A (NP q)))
+>         let  ety  =  (("P", ARR _X SET) ->> \ _P ->
+>                      (_P (wr x)) --> (_P (wr y)))
+>              ex   =  wr (def substDEF) _X x y (q :$ (B0 :< Sym))
 >         elimSimplify (ety :>: ex)
->         neutralise =<< getCurrentDefinition
+>         d <- getCurrentDefinition
+>         return $ applySpine (def d) sc
 >     elimEquation _ _ = (|)
 >     
->     simplifyProp :: VAL -> VAL -> Simplify -> ProofState (INTM :=>: VAL)
+>     simplifyProp :: VAL -> EXP -> Simplify -> ProofState EXP
+>     simplifyProp p t CannotSimplify = 
+>       elimEquation p t <|> passHypothesis t
 >     simplifyProp p t (SimplyAbsurd prf) = do
->         r    <- lambdaParam (fortran t)
->         t'   <- bquoteHere t
->         t''  <- annotate t' (ARR (PRF p) SET)
->         neutralise =<< give (N (nEOp :@ [prf (P r), N (t'' :$ A (NP r))]))
->     simplifyProp p t (SimplyTrivial prf) = do
->         x :=>: xv <- trySimplifyGoal False (t $$ A (evTm prf))
->         neutralise =<< give (LK x)
->
->     simplifyProp p t (SimplyOne (qr :<: qst) g h) = do
->         t'   <- bquoteHere t
->         t''  <- annotate t' (ARR (PRF p) SET)
->         let q = PIV (fortran t) qst (N (t'' :$ A ((B0 :< qr) -|| h)))
->         x :=>: xv <- trySimplifyGoal False (evTm q)
->         let y = x ?? q
->         r <- lambdaParam (fortran t)
->         neutralise =<< give (N (y :$ A (g (P r))))
->
->     simplifyProp p t (Simply qs gs h) = do
->         t'   <- bquoteHere t
->         t''  <- annotate t' (ARR (PRF p) SET)
->         let q = dischargePi qs (N (t'' :$ A h))
->         x :=>: xv <- trySimplifyGoal False (evTm q)
->         let y = x ?? q
->         r <- lambdaParam (fortran t)
->         let gs' = fmap ($ (P r)) gs
->         neutralise =<< give (N (y $## gs'))
+>         simpTrace "Absurd"
+>         r    <- lambdaParam (fortran "s" [ev t] undefined)
+>         let ret = (wr (def falseElimDEF) (wr prf (r :$ B0)) (wr t (r :$ B0)))
+>         give ret >> return ret
 
-> -}
+>     simplifyProp p t (SimplyTrivial prf) = do
+>         simpTrace "Trivial"
+>         x <- trySimplifyGoal False (t $$. prf)
+>         give (LK x) >> return (LK x)
+
+>     simplifyProp p t (Simply _Ps prfPsImpP) = do
+>         simpTrace "Simply"
+>         sc <- getInScope
+>         let x = fortran "px" [ev t] undefined
+>         make ("Pig" :<: SET)
+>         goIn
+>         prfsPImpPs <- traverse (\((_Pi,prfPImpPi),i) -> do
+>           piParam ((x ++ show i) :<: PRF _Pi)
+>           return prfPImpPi) (zip (trail _Ps) [0..])
+>         tp <- giveOutBelow (t $$. prfPsImpP)
+>         f <- trySimplifyGoal False (applySpine (def tp) sc)
+>         h <- lambdaParam x
+>         let ret = (f $$$ (fmap (\pp -> A (pp $$. (h :$ B0))) (bwdList prfsPImpPs)))
+>         give ret >> return ret
 
 Otherwise, we simplify $\Pi$-types by introducing a hypothesis, provided we are
 at the top level.
