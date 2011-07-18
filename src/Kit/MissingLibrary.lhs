@@ -113,41 +113,6 @@ Ah, if only
 were possible. Unfortunately it isn't (at least without |UndecidableInstances|)
 so we have to do things the long way...
 
-
-> instance Applicative (State s) where
->   pure = return
->   (<*>) = ap
-
-> instance Applicative Identity where
->   pure = return
->   (<*>) = ap
-
-> instance Monad m => Applicative (ReaderT r m) where
->     pure = return 
->     (<*>) = ap
-
-> instance MonadPlus m => Alternative (ReaderT r m) where
->     empty = mzero
->     (<|>) = mplus
-
-> instance Monad m => Applicative (StateT r m) where
->     pure = return 
->     (<*>) = ap
-
-> instance MonadPlus m => Alternative (StateT r m) where
->     empty = mzero
->     (<|>) = mplus
-
-> instance Error x => Applicative (Either x) where
->   pure = return
->   (<*>) = ap
-
-> instance Error x => Alternative (Either x) where
->     empty = Left $ strMsg "empty alternative"
->     (Left _) <|> p = p
->     p@(Right _) <|> _ = p
-
-
 \subsection{Missing Instances}
 
 > instance Traversable (Either x) where
@@ -165,10 +130,6 @@ so we have to do things the long way...
 >   negate x       = (|negate x|)
 >   signum x       = (|signum x|)
 >   fromInteger i  = (|(fromInteger i)|)
-
-> instance Monoid o => Applicative (Writer o) where
->   pure = return
->   (<*>) = ap
 
 Grr.
 

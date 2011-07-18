@@ -13,6 +13,7 @@ HC_PACKAGE      = -hide-all-packages \
 		  -package haskell98 \
 	          -package filepath \
 		  -package she \
+		  -package transformers \
 		  $(HC_CABAL_PACKAGE)
 HC_OPTS_DEV     = $(HC_PACKAGE)
 HC_OPTS_TEST    = $(HC_PACKAGE) -fhpc

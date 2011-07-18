@@ -9,6 +9,7 @@
 > module Evidences.ErrorHandling where
 
 > import Control.Monad.Error
+> import Control.Monad.Trans.Error
 
 > import Evidences.Tm
 
@@ -42,8 +43,9 @@ further failures. The top of the stack is the head of the list.
 > errTyTm :: EXP :>: EXP -> ErrorItem
 > errTyTm (ty :>: t) = [ErrorTm (Just ty :>: t)]
 
-> instance Error StackError where
->   strMsg s = [err s]
+
+> instance ErrorList ErrorItem where
+>   listMsg s = [err s]
 
 > instance Show ErrorTok where
 >   show (StrMsg s) = s

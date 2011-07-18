@@ -515,8 +515,8 @@ context.
 >   return $ SimplyTrivial (Refl sty s :$ B0)
 
 > simplifyEq lev delta (sty :>: s) (tty :>: t) 
->     |  (cs :- cas)   <- ev sty
->     ,  (ct :- cat)   <- ev tty 
+>     |  Just (cs, cas)   <- isCan (ev sty)
+>     ,  Just (ct, cat)   <- isCan (ev tty) 
 >     ,  Just (k, es)  <- eqUnfold ((cs, cas) :>: s) ((ct, cat) :>: t) = 
 >   case (k, es) of
 >     (_,     [])      -> return $ SimplyTrivial (k :- [])

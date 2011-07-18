@@ -671,3 +671,8 @@ by |lambdable|:
 >       splif {n} ls vs ((l,V v :$ B0) : es)
 
 
+
+
+> isCan :: Tm {Body, Val, n} -> Maybe (Can, [Tm {Body, Exp, n}])
+> isCan (c :- es)  = Just (c, es)
+> isCan _          = Nothing
