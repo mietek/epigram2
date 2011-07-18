@@ -346,7 +346,7 @@
 < apply {Exp} d@(D _ _ _) a = (ENil :/ d) :$ (B0 :< fmap exp a)  
 
 > apply {Val} (D d :$ az) a 
->   | Just e <- runOp {s} (defOp d) B0 (trail (az :< fmap exp a)) = e
+>   | Just e <- runOp (defOp d) B0 (trail (az :< fmap exp a)) = e
 > apply {s} (PAIR a b) Hd = eval {s} ENil a
 > apply {s} (PAIR a b) Tl = eval {s} ENil b
 > apply {s} (CON t) Out = eval {s} ENil t
@@ -392,7 +392,7 @@
 > applys :: pi (s :: Status) . 
 >           Tm {Body, s, Z} -> Bwd (Elim EXP) -> Tm {Body, s, Z}
 > applys {Val} (D d :$ az) az' = 
->   case runOp {s} (defOp d) B0 (trail az ++ trail az') of
+>   case runOp (defOp d) B0 (trail az ++ trail az') of
 >     Just e -> e
 >     Nothing -> D d :$ (az <+> az') 
 > applys {s} v B0 = v
@@ -411,19 +411,18 @@
 
 |runOp| applies a spine to an operator, in an attempt to find an |Emit|:
 
-> runOp :: pi (s :: Status) . Operator -> Bwd EXP -> [ Elim EXP ] ->
->          Maybe (Tm {Body, s, Z})
-> runOp {s} (Emit t) oaz as = Just $ 
->   applys {s} (eval {s} (zip [0..] (trail oaz),INix) t) (bwdList as)
-> runOp {s} (Eat _ o) oaz (A a : as) =  runOp {s} o (oaz :< a) as
-> runOp {Val} (Case os) oaz (A a : as) | c :- cas <- (ENil // a :: VAL) =
+> runOp :: Operator -> Bwd EXP -> [ Elim EXP ] -> Maybe (Tm {Body, Val, Z})
+> runOp (Emit t) oaz as = Just $ 
+>   applys {Val} (eval {Val} (zip [0..] (trail oaz),INix) t) (bwdList as)
+> runOp (Eat _ o) oaz (A a : as) =  runOp o (oaz :< a) as
+> runOp (Case os) oaz (A a : as) | c :- cas <- (ENil // a :: VAL) =
 >   case lookup c os of
->     Just o -> runOp {Val} o oaz (map A cas ++ as)
+>     Just o -> runOp o oaz (map A cas ++ as)
 >     Nothing -> error "OpCase found Can it didn't like"
-> runOp {Val} (Split o) oaz (A a : as) =
->   runOp {Val} o oaz (A ((ENil :/ a) :$ (B0 :< Hd)) : 
->                      A ((ENil :/ a) :$ (B0 :< Tl)) : as)
-> runOp {s} _ _ _ = Nothing 
+> runOp (Split o) oaz (A a : as) =
+>   runOp o oaz (A ((ENil :/ a) :$ (B0 :< Hd)) : 
+>                A ((ENil :/ a) :$ (B0 :< Tl)) : as)
+> runOp _ _ _ = Nothing 
 
 This thing does coercion and coherence.
 
