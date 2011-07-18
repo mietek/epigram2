@@ -340,7 +340,22 @@
 >                  p i x (wr (def iallDEF) _I (_D i) (la "i'" $ \i' -> IMU (wr _I) (wr _D) i') _P
 >                                   (la "ix" $ \ix -> wr (def iinductionDEF) (wr _I) (wr _D) ix (wr _P) (wr p)) x)) ] 
 
+> substDEF :: DEF
+> substDEF = mkDEF
+>   [("PRIM",0),("subst",0)]
+>   (("X", SET) ->> \_X ->
+>    ("x", _X) ->> \x ->
+>    ("y", _X) ->> \y ->
+>    ("eq", PRF (EQ _X x _X y)) ->> \_ ->
+>    ("P", ARR _X SET) ->> \_P -> 
+>    _P x --> _P y)
+>   substOP
+>     where
+>       substOP = eat "X" $ \_X -> eat "x" $ \x -> eat "y" $ \y ->
+>                  eat "eq" $ \eq -> eat "P" $ \_P -> eat "p" $ \p ->
+>                   emit $ Coeh Coe (_P x) (_P y) 
+>                            (Refl (ARR _X SET) _P :$ (B0 :< QA x y eq)) p :$ B0
 > prims :: [ DEF ] 
 > prims = [  idDEF , uncurryDEF , zeroElimDEF , falseElimDEF , inhElimDEF  
 >         ,  branchesDEF , switchDEF , iDescDDEF , iDescDEF , idescDEF 
->         ,  iAllDEF ]
+>         ,  iAllDEF , substDEF ]
