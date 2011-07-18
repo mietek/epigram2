@@ -391,7 +391,7 @@
 
 > applys :: pi (s :: Status) . 
 >           Tm {Body, s, Z} -> Bwd (Elim EXP) -> Tm {Body, s, Z}
-> applys {s} (D d :$ az) az' = 
+> applys {Val} (D d :$ az) az' = 
 >   case runOp {s} (defOp d) B0 (trail az ++ trail az') of
 >     Just e -> e
 >     Nothing -> D d :$ (az <+> az') 
