@@ -345,7 +345,7 @@
 <   mkD {Val} d (SSplit es) o $$. ((ENil :/ a) :$ (B0 :< Hd)) $$. ((ENil :/ a) :$ (B0 :< Tl))
 < apply {Exp} d@(D _ _ _) a = (ENil :/ d) :$ (B0 :< fmap exp a)  
 
-> apply {s} (D d :$ az) a 
+> apply {Val} (D d :$ az) a 
 >   | Just e <- runOp {s} (defOp d) B0 (trail (az :< fmap exp a)) = e
 > apply {s} (PAIR a b) Hd = eval {s} ENil a
 > apply {s} (PAIR a b) Tl = eval {s} ENil b
