@@ -7,17 +7,16 @@ Move to |ProofState.ProofContext|?
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE FlexibleInstances, TypeOperators, TypeSynonymInstances,
->              GADTs, RankNTypes #-}
+>              GADTs, RankNTypes, GeneralizedNewtypeDeriving #-}
 
 > module ProofState.Edition.ProofState where
 
+> import Control.Applicative
+> import Control.Monad.Error
 > import Control.Monad.State
-
-> import DisplayLang.Name
 
 > import ProofState.Edition.ProofContext
 
-> import Evidences.Tm
 > import Evidences.ErrorHandling
 
 %endif
@@ -30,11 +29,31 @@ The proof state monad provides access to the |ProofContext| as in a
 |State| monad, but with the possibility of command failure represented
 by |Either StackError|. 
 
-> type ProofState = StateT ProofContext (Either StackError)
+> newtype ProofState a = ProofState
+>     {unProofState :: StateT ProofContext (Either StackError) a}
+>   deriving  (  Applicative
+>             ,  Alternative
+>             ,  Functor
+>             ,  MonadError StackError
+>             ,  MonadPlus
+>             ,  MonadState ProofContext
+>             )
 
-Most of the time, we will work in a |ProofStateT| carrying errors
-composed with Strings and terms in display syntax. Hence the following
-type synonym:
+This is annoying. We need |ProofState| to be a newtype so that we can
+override the |fail| behaviour of the |Monad| instance to invoke
+|throwError| rather than crashing with |error|.
+
+> instance Monad ProofState where
+>     return              = ProofState . return
+>     ProofState x >>= f  = ProofState (x >>= (unProofState . f))
+>     fail s              = throwError [err s]
 
 
+> evalProofState :: ProofState a -> ProofContext -> Either StackError a
+> evalProofState  = evalStateT . unProofState
 
+> runProofState :: ProofState a -> ProofContext -> Either StackError (a, ProofContext)
+> runProofState   = runStateT . unProofState
+
+> execProofState :: ProofState a -> ProofContext -> Either StackError ProofContext
+> execProofState  = execStateT . unProofState

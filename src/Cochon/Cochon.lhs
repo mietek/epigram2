@@ -88,7 +88,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >     -- Safety belt: this *must* type-check!      
 >     validateDevelopment (locs :< loc)
 >     -- Show goal and prompt
->     putStr $ fst $ runProofState showPrompt loc
+>     putStr $ fst $ runProofStateString showPrompt loc
 >     hFlush stdout
 >     l <- getLine
 >     case parse tokenize l of 
@@ -115,7 +115,7 @@ Here we have a very basic command-driven interface to the proof state monad.
 >         then validateCtxt loc
 >         else return ()
 >   where validateCtxt loc = do
->             case evalStateT validateHere loc of
+>             case evalProofState validateHere loc of
 >               Left ss -> do
 >                          putStrLn "*** Warning: definition failed to type-check! ***"
 >                          putStrLn $ renderHouseStyle $ prettyStackError ss
@@ -201,13 +201,13 @@ given string, either exactly or as a prefix.
 
 
 Given a proof state command and a context, we can run the command with
-|runProofState| to produce a message (either the response from the command or
-the error message) and |Maybe| a new proof context.
+|runProofStateString| to produce a message (either the response from
+the command or the error message) and |Maybe| a new proof context.
 
-> runProofState :: ProofState String -> ProofContext
+> runProofStateString :: ProofState String -> ProofContext
 >     -> (String, Maybe ProofContext)
-> runProofState m loc =
->     case runStateT (catchError m catchUnprettyErrors) loc of
+> runProofStateString m loc =
+>     case runProofState (catchError m catchUnprettyErrors) loc of
 >         Right (s, loc')  -> (s, Just loc')
 >         Left ss          -> (renderHouseStyle $ prettyStackError ss, Nothing)
 
@@ -215,7 +215,7 @@ the error message) and |Maybe| a new proof context.
 
 > simpleOutput :: ProofState String -> Bwd ProofContext -> IO (Bwd ProofContext)
 > simpleOutput eval (locs :< loc) = do
->     case runProofState eval loc of
+>     case runProofStateString eval loc of
 >         (s, Just loc') -> do
 >             putStrLn s
 >             return (locs :< loc :< loc')
@@ -658,7 +658,7 @@ Import more tactics from an aspect:
 > doCTacticsAt [] locs = return locs
 > doCTacticsAt ((_, []):ncs) locs = doCTacticsAt ncs locs
 > doCTacticsAt ((n, cs):ncs) (locs :< loc) = do
->     let Right loc' = execStateT (goTo n) loc
+>     let Right loc' = execProofState (goTo n) loc
 >     locs' <- doCTactics cs (locs :< loc :< loc')
 >     doCTacticsAt ncs locs'
 

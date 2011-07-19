@@ -16,6 +16,7 @@
 > import Kit.BwdFwd
 
 > import ProofState.Edition.ProofContext
+> import ProofState.Edition.ProofState
 
 > import Tactics.Information
 
@@ -102,6 +103,6 @@ either.
 
 >    printTopDev :: Bwd ProofContext -> IO ()
 >    printTopDev (_ :< loc) = do
->        let Right s = evalStateT prettyProofState loc
+>        let Right s = evalProofState prettyProofState loc
 >        putStrLn s
 
