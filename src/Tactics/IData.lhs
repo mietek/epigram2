@@ -100,7 +100,10 @@
 >                               ZERO cDs)
 >   let cds = def dcds $$$ aus
 >   ii <- lambdaParam "i"
->   giveOutBelow $ IMU indty' (la "i'" $ \i' -> IFSIGMA (wr cns) (wr cds i')) (ii :$ B0)
+>   make ("Desc" :<: (def iDescDEF $$. indty'))
+>   goIn 
+>   desc <- giveOutBelow $ IFSIGMA cns (cds $$. (ii :$ B0))
+>   giveOutBelow $ IMU indty' (la "i" $ \i -> wr (def desc $$$ oldaus) i) (ii :$ B0)
 >   traverse (\(e,(cnom,d,args,i')) -> do
 >     goTo cnom
 >     hs <- traverse lambdaParam (map fst args)
@@ -108,7 +111,17 @@
 >                  (foldr (\x y -> PAIR (x :$ B0) y) (Refl indty' i' :$ B0) hs))
 >     goOut
 >     ) (zip [0..] cDs)
->   goOut
+>   let xxx = (D tindDEF) :$ (B0 :< A indty' :< A (def dcns $$$ oldaus) :< A (def dcds $$$ oldaus))
+>   hhh <- infPS xxx
+>   make ("Ind" :<: hhh)
+>   goIn
+>   giveOutBelow xxx 
+>   let xxx = (D tcaseDEF) :$ (B0 :< A indty' :< A (def dcns $$$ oldaus) :< A (def dcds $$$ oldaus))
+>   hhh <- infPS xxx
+>   make ("Case" :<: hhh)
+>   goIn
+>   giveOutBelow xxx 
+>   goOut 
 >   return $ def dt $$$ oldaus
 
 > elabConDesc :: Int -> (DEF, Bwd (Elim EXP)) -> (EXP :<: TY) -> VAL -> 

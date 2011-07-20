@@ -71,7 +71,7 @@
 > canTy ((EnumU, []) :>: ConsE)        = (| (UID *** ENUMU *** ONE) |)
 > canTy ((EnumT, [_E]) :>: n)          = case (ev _E, n) of
 >   (CONSE _ _, Ze) -> (| ONE |) 
->   (CONSE _ e, Su) -> (| (ENUMT e *** ONE) |) 
+>   (CONSE _ _E', Su) -> (| (ENUMT _E' *** ONE) |) 
 > -- [/Feature = Enum]
 > -- [Feature = IDesc]
 > canTy ((Set, []) :>: IMu)    =
@@ -114,6 +114,8 @@
 >       _ -> (|)
 >     _ -> (|)
 >   _ -> (|)
+> outable (IMU _I _D i) = pure $ (D idescDEF) :$ (B0 :< A _I :< A (apply {Exp} _D (A i)) 
+>                                                    :< A (L ENil "i'" $ IMU (nix _I) (nix _D) (toBody (V Fz))))
 > outable _ = Nothing
 
 
@@ -136,6 +138,7 @@
 > eqUnfold ((Sigma, [_S, _T]) :>: p) ((Sigma, [_S', _T']) :>: p') =
 >   pure (Pair, [EQ _S s _S' s', EQ (_T $$. s) t (_T' $$. s') t'])
 >   where s = p $$ Hd ; t = p $$ Tl ; s' = p' $$ Hd ; t' = p' $$ Tl
+> eqUnfold ((One, []) :>: _) ((One, []) :>: _) = pure (Zero, [])
 > eqUnfold ((Prf, [_]) :>: _) ((Prf, [_]) :>: _) = pure (Zero, [])
 > eqUnfold ((Prop, []) :>: p) ((Prop, []) :>: q) = error "eqUnfold: Prop"
 > -- [Feature = IDesc]
@@ -149,7 +152,13 @@
 > -- [/Feature = IDesc]
 > -- [Feature = Enum]
 > eqUnfold ((EnumU, []) :>: e) ((EnumU, []) :>: e') = error "eqUnfold: EnumU"
-> eqUnfold ((EnumT, as) :>: e) ((EnumT, bs) :>: e') = error "eqUnfold: EnumT"
+> eqUnfold ((EnumT, [_E]) :>: e) ((EnumT, [_E']) :>: e') = case (ev _E, ev e, ev _E', ev e') of
+>   (CONSE _ _, ZE, CONSE _ _, ZE) -> (|(Zero, [])|)
+>   (CONSE _ _E, SU x, CONSE _ _E', SU y) -> (|(Con, [EQ (ENUMT _E) x (ENUMT _E') y])|)
+>   (CONSE _ _, ZE, CONSE _ _, SU _) -> (| (Con, [ZERO]) |)
+>   (CONSE _ _, SU _, CONSE _ _, ZE) -> (| (Con, [ZERO]) |)
+>   (CONSE _ _, _, CONSE _ _, _) -> (|)
+>   _ -> (| (Zero, []) |)
 > -- [/Feature = Enum]
 > -- [Feature = UId]
 > eqUnfold ((UId, []) :>: t) ((UId, []) :>: t') = error "eqUnfold: UId"

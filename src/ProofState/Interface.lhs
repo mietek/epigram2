@@ -40,6 +40,10 @@
 >  lev <- getDevLev
 >  chk lev (ty :>: (ENil, e))
 
+> infPS :: EXP -> ProofState TY
+> infPS e = do
+>   lev <- getDevLev
+>   inf lev (ENil, e)
 
 The proof state lives on a rich substrate of operations, inherited
 from the |ProofContext| as well as the |ProofState| monad. In this
