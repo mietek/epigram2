@@ -4,7 +4,7 @@
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
-> {-# LANGUAGE TypeOperators, GADTs, KindSignatures,
+> {-# LANGUAGE TypeOperators, GADTs, KindSignatures, RankNTypes,
 >     TypeSynonymInstances, FlexibleInstances, FlexibleContexts, PatternGuards #-}
 
 > module Evidences.TypeChecker where
@@ -44,7 +44,7 @@ here.
 >             Int -> TY :>: (Env {Z} {n}, Tm {Body, s, n}) -> m VAL
 > chev l prob@(_ :>: (g, t)) = do
 >   chk l prob
->   return (ev (g :/ t))
+>   return (ev (g :/ exp t))
 
 > chk :: (Applicative m, MonadError StackError m, {: p :: Part :}) => 
 >            Int -> TY :>: (Env {Z} {n}, Tm {p, s, n}) -> m ()
@@ -129,8 +129,14 @@ here.
 > headTySpine l (g, h :$ as)       = do 
 >   (ety, as') <- headTySpine l (g,h) 
 >   return (ety, (as' ++ trail as))
-> headTySpine _ (g, h)             = throwError' $
->     err "headTySpine with bad head" ++ errTm (exp (ev (g :/ h :$ B0)))
+> headTySpine _ (g, h)             = poof {: p :: Part :} g h where
+>   poof ::  forall s m n . (MonadError StackError m) => 
+>            pi (p :: Part). Env {Z} {n} -> Tm {p, s, n} ->
+>            m (EXP :<: TY, [Elim (Tm {Body, Exp, n})])
+>   poof {Head} g h = throwError' $
+>     err "headTySpine with bad head " ++ errTm (g :/ (exp h :$ B0))
+>   poof {Body} g h = throwError' $
+>     err "headTySpine with bad head " ++ errTm (g :/ exp h)
 
 
 

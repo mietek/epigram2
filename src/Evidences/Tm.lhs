@@ -60,7 +60,7 @@
 >   Coeh  :: Coeh -> Tm {Body, Exp, n} -> Tm {Body, Exp, n}
 >                 -> Tm {Body, Exp, n} -> Tm {Body, Exp, n}  -> Tm {Head, s, n}
 >
->   (:/)  :: {: p :: Part :} => Env {n} {m} -> Tm {p, s, m}  -> Tm {p', Exp, n}
+>   (:/)  :: Env {n} {m} -> Tm {Body, Exp, m} -> Tm {p', Exp, n}
 
 > data Coeh = Coe | Coh deriving (Eq, Show)
 
@@ -270,12 +270,27 @@
 >    (<<<) :: forall m n o. IEnv {Z, n} -> IEnv {n, o} -> IEnv {Z, o}
 >    g <<< INix = INix
 >    g <<< INil = g
->    g <<< (g' :<<: e) = (g <<< g') :<<: ((gl, INil) :/ e)
+>    g <<< (g' :<<: e) = (g <<< g') :<<: ((gl, INil) <:/> exp e)
 >    gln = unionBy ((==) `on` fst)
->              (map (\(l,x) -> (l , (gl, gi) :/ x)) gl') gl
+>              (map (\(l,x) -> (l , (gl, gi) <:/> exp x)) gl') gl
 
 > pattern ENil = ([], INil)
 > pattern ENix = ([], INix)
+
+> (<:/>)  ::  {: p' :: Part :} =>
+>             Env {Z} {m} -> Tm {Body, Exp, m}  -> Tm {p', Exp, Z}
+> g <:/> t = help {: p' :: Part :} g t where
+>   help :: forall n m.
+>           pi (p' :: Part).
+>           Env {Z} {m} -> Tm {Body, Exp, m} -> Tm {p', Exp, Z}
+>   help {Body} ([], INil) t = t
+>   help {p} g (g' :/ t) = help p (g <+< g') t
+>   help {Body} (_, gi) (V i :$ B0) = gi !.! i
+>   help {Body} g@(gl, _) t@(P (l, _, _) :$ B0) = case lookup l gl of
+>     Just e -> e
+>     Nothing -> g :/ t
+>   help {Body} g t = g :/ t
+>   help {Head} g t = g :/ t
 
 
 > exp :: Tm {p, s, n} -> Tm {p, Exp, n}
@@ -297,18 +312,18 @@
 > eval :: forall m n p s' . pi (s :: Status) . 
 >           Env {Z} {n} -> Tm {p, s', n} -> Tm {Body, s, Z}
 > eval {s} g (L g' x b) = L (g <+< g') x b
-> eval {s} g (LK e) = LK (g :/ e)
-> eval {s} g (c :- es) = c :- (fmap (g :/) es)
-> eval {s} g (h :$ es) = applys {s} (eval {s} g h) (fmap (fmap (g :/)) es)
+> eval {s} g (LK e) = LK (g <:/> e)
+> eval {s} g (c :- es) = c :- (fmap (g <:/>) es)
+> eval {s} g (h :$ es) = applys {s} (eval {s} g h) (fmap (fmap (g <:/>)) es)
 > eval {s} (es, _) (D d) = D d :$ B0
 > eval {s} (es, ez) (V i) = eval {s} ENil (ez !.! i)
 > eval {s} (es, _) (P lt@(l, _, _)) = case lookup l es of
 >   Just t -> eval {s} ENil t
 >   Nothing -> P lt :$ B0
-> eval {s} g (Refl _X x) = Refl (g :/ _X) (g :/ x) :$ B0
+> eval {s} g (Refl _X x) = Refl (g <:/> _X) (g <:/> x) :$ B0
 > eval {Val} g (Coeh Coe _S _T _Q s) = fst (coeh (g // _S) (g // _T) (g // _Q) (g // s))
 > eval {Val} g (Coeh Coh _S _T _Q s) = snd (coeh (g // _S) (g // _T) (g // _Q) (g // s))
-> eval {Exp} g c@(Coeh _ _ _ _ _) = g :/ c
+> eval {Exp} g c@(Coeh _ _ _ _ _) = g <:/> exp (c :$ B0)
 > eval {s} g (g' :/ e) = eval {s} (g <+< g') e
 
 > (//) :: {:s :: Status:} => Env {Z} {n} -> Tm {p, s', n} -> Tm {Body, s, Z}
@@ -391,8 +406,8 @@
 >          Tm {Body, s, Z} -> Bwd EXP -> Tm {Body, s, Z}
 > f $$$. as = f $$$ fmap A as
 
-> nix :: {: p :: Part :} => Tm {p, s, Z}  -> Tm {p', Exp, n}
-> nix e = ENix :/ e
+> nix :: Tm {Body, s, Z}  -> Tm {p', Exp, n}
+> nix e = ENix :/ exp e
 
 |runOp| applies a spine to an operator, in an attempt to find an |Emit|:
 
@@ -439,8 +454,8 @@ This thing does coercion and coherence.
 > fortran s (_:x) y = fortran s x y
 > fortran s [] _ = s
 
-> wk :: {: p :: Part :} => Tm {p, s, Z} -> Tm {p', Exp, n}
-> wk t = ([], INix) :/ t
+> wk :: Tm {Body, s, Z} -> Tm {p, Exp, n}
+> wk t = ([], INix) :/ exp t
 
 > (***) = TIMES
 > (-->) = ARR
