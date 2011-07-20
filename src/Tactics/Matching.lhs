@@ -90,7 +90,7 @@ algorithm. Really we should do proper higher-order matching.}
 > matchValue lev zs (ty :>: (P x :$ B0, t)) = do
 >     rs <- get
 >     if x `elemSubst` rs
->         then  lift (checkSafe zs t) >> insertSubst lev x (exp t)
+>         then  lift (checkSafe lev zs (ty :>: t)) >> insertSubst lev x (exp t)
 >         else  matchValue' lev zs (ev ty :>: (P x :$ B0, t))
 > matchValue lev zs (ty :>: vv) = matchValue' lev zs (ev ty :>: vv)
 
@@ -113,7 +113,7 @@ algorithm. Really we should do proper higher-order matching.}
 > matchValue' lev zs (cty :- asty :>: (cs :- ass, ct :- tas)) = 
 >     throwError' $ err "matchValue: unmatched constructors!"
 
-> matchValue' lev zs (_ :>: (P (l,n,_T) :$ as, hb :$ bs)) = do 
+> matchValue' lev zs (_ :>: (P (l,n,_T) :$ as, hb :$ bs)) = do
 >     rs <- get
 >     let mabs = trail $ bwdZipWith halfZip as bs 
 >     ab <- case sequence mabs of
@@ -122,7 +122,7 @@ algorithm. Really we should do proper higher-order matching.}
 >     matchSpine lev zs (_T :>: P (l, n, _T) :$ B0) ab
 >     if ((l,n,_T) `elemSubst` rs) 
 >      then do
->       lift $ checkSafe zs (hb :$ B0)
+>       lift $ checkSafe lev zs (_T :>: hb :$ B0)
 >       insertSubst lev (l, n, _T) (exp (hb :$ B0))
 >       return ()
 >      else case hb of 
@@ -172,9 +172,10 @@ occur as solutions to matching problems. The |checkSafe| function throws an
 error if any of the references occur in the value.
 
 > checkSafe :: (Applicative m, MonadError StackError m) => 
->              Bwd (Int, String, TY) -> VAL -> m ()
-> checkSafe zs t  | any (\(l,_,_) -> occurs Nothing [l] [] t) zs  = throwError' $ err "checkSafe: unsafe!"
->                 | otherwise          = return ()
+>              Int -> Bwd (Int, String, TY) -> (TY :>: VAL) -> m ()
+> checkSafe lev zs (ty :>: t)  | 
+>   any (\(l,_,_) -> occurs lev Nothing [l] (ty :>: exp t)) zs  = throwError' $ err "checkSafe: unsafe!"
+>                              | otherwise          = return ()
 
 
 For testing purposes, we define a @match@ tactic that takes a telescope of

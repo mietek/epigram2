@@ -30,15 +30,15 @@
 %endif
 
 > equal :: Int -> (TY :>: (EXP,EXP)) -> Bool
-> equal l (t :>: (x, y)) = intNat l (\ n -> 
->     let t' = ev t in
->     compare {n} (etaQuoten {n} (t' :>: x)) (etaQuoten {n} (t' :>: y)))
+> equal l (t :>: (x, y)) = 
+>     compare {Z} (etaQuote l (t :>: x)) (etaQuote l (t :>: y))
 
 
 
 > compare :: forall p s . pi (n :: Nat) . Tm {p, s, n} -> Tm {p, s, n} -> Bool
 > compare {n} (LK b1)        (LK b2)        = compare {n} b1 b2
 > compare {n} (L ENil _ b1)  (L ENil _ b2)  = compare {S n} b1 b2
+> compare {n} (CHKD _)       (CHKD _)       = True
 > compare {n} (c1 :- es1)    (c2 :- es2)    = 
 >   c1 == c2 && maybe False id (| (F.all (uncurry (compare {n}))) (halfZip es1 es2) |)
 > compare {n} (h1 :$ es1)    (h2 :$ es2)    = 

@@ -158,7 +158,7 @@
 > pattern WIT t      = Wit :- [t]
 > pattern AND _P _Q  = And :- [_P,_Q]
 > pattern ALL _S _P  = Pi :- [_S, _P]
-> pattern CHKD       = Chkd :- []
+> pattern CHKD p     = Chkd :- [p]
 >   -- [/Feature = Prop]
 >   -- [Feature = Eq]
 > pattern EQ _S s _T t  = Eq :- [_S, s, _T, t]
@@ -313,6 +313,7 @@
 >           Env {Z} {n} -> Tm {p, s', n} -> Tm {Body, s, Z}
 > eval {s} g (L g' x b) = L (g <+< g') x b
 > eval {s} g (LK e) = LK (g <:/> e)
+> eval {s} g (CHKD p) = eval {s} g p
 > eval {s} g (c :- es) = c :- (fmap (g <:/>) es)
 > eval {s} g (h :$ es) = applys {s} (eval {s} g h) (fmap (fmap (g <:/>)) es)
 > eval {s} (es, _) (D d) = D d :$ B0
@@ -604,19 +605,19 @@ by |lambdable|:
 > ugly xs (h :$ B0) = ugly xs h 
 > ugly xs (h :$ es) = "(" ++ ugly xs h ++ foldMap (\ e -> " " ++ uglyElim xs e) es ++ ")"
 > ugly xs (V i) = xs !>! i
-> ugly xs (P (i, s, t)) = s ++ " (P " ++ show i ++ ")"
+> ugly xs (P (i, s, t)) = "(" ++ s ++ " = " ++ show i ++ ")"
 > ugly xs (Refl _S s) = "(refl " ++ ugly xs _S ++ " " ++ ugly xs s ++ ")"
 > ugly xs (Coeh Coe _S _T _Q s) =
 >   "(coe " ++ ugly xs _S ++ " " ++ ugly xs _T ++ " " ++ ugly xs _Q ++ " " ++ ugly xs s ++ ")"
 > ugly xs (Coeh Coh _S _T _Q s) =
 >   "(coe " ++ ugly xs _S ++ " " ++ ugly xs _T ++ " " ++ ugly xs _Q ++ " " ++ ugly xs s ++ ")"
-> ugly xs (D d) = show d
+> ugly xs (D d) = show (defName d)
 > ugly xs (g :/ e) = uglyEnv xs g e
 > ugly _ _ = "???"
 
 > uglyEnv :: Vec {n} String -> Env {n} {m} -> Tm {p, s, m} -> String
-> uglyEnv xs ([], INil)  e = "(([], INil) :/ " ++ ugly xs e ++ ")"
-> uglyEnv xs ([], INix)  e = "(([], INix) :/ " ++ ugly V0 e ++ ")"
+> uglyEnv xs ([], INil)  e = "(ENil :/ " ++ ugly xs e ++ ")"
+> uglyEnv xs ([], INix)  e = "(ENix :/ " ++ ugly V0 e ++ ")"
 > uglyEnv xs (as, INix)  e = "((" ++ uglyLEnv xs as ++ ", INix) :/ " ++ ugly V0 e ++ ")"
 > uglyEnv xs (as, INil)  e = "((" ++ uglyLEnv xs as ++ ", INil) :/ " ++ ugly xs e ++ ")"
 > uglyEnv xs ([], ie)     e = "(([], " ++ s  ++ ") :/ " ++ ugly ys e ++ ")"

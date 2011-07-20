@@ -367,19 +367,18 @@ and the methods. Therefore, we can already split $\Delta$ into its
 parametric and non-parametric parts, $\Delta_0$ and $\Delta_1$. As we
 are not interested in $\Delta_0$, we fearlessly throw it away.
 
-> splitDelta :: Bwd (Int, String, TY) -> [EXP] -> 
+> splitDelta :: Int -> Bwd (Int, String, TY) -> [TY :>: EXP] -> 
 >               (Bwd (Int, String, TY), Bwd (Int, String, TY))
-> splitDelta B0 _ = (B0, B0)
-> splitDelta (bs :< b@(l,s,t)) es | any (occurs Nothing [l] []) es = 
->   let (delta0, delta1) = splitDelta bs (t:es) in (delta0 :< b,delta1)
-> splitDelta (bs :< b) es = 
->   let (delta0, delta1) = splitDelta bs es in (delta0, delta1 :< b)
+> splitDelta lev B0 _ = (B0, B0)
+> splitDelta lev (bs :< b@(l,s,t)) es | any (occurs lev Nothing [l]) es = let (delta0, delta1) = splitDelta lev bs ((SET:>:t):es) in (delta0 :< b,delta1)
+> splitDelta lev (bs :< b) es = 
+>   let (delta0, delta1) = splitDelta lev bs es in (delta0, delta1 :< b)
 
 
-> unfoldTelescope :: Int -> VAL -> ProofState [EXP]
+> unfoldTelescope :: Int -> VAL -> ProofState (Int, [TY :>: EXP])
 > unfoldTelescope lev (PI _S _T) = 
->   (| (_S :) (unfoldTelescope (lev+1) (ev _T $$. (P (lev,"s",_S) :$ B0))) |)
-> unfoldTelescope _ _ = (| [] |)
+>   (| (\(lev,es) -> (lev, (SET :>: _S) : es)) (unfoldTelescope (lev+1) (ev _T $$. (P (lev,"s",_S) :$ B0))) |)
+> unfoldTelescope lev _ = (| (lev, []) |)
 
 > {-
 
@@ -660,8 +659,9 @@ Extract non-parametric, non-removable hypotheses $\Delta_1$ from the context $\D
 
 >     elimTrace $ "delta: " ++ show delta
 >     lev <- getDevLev
->     (delta0, delta1) <- 
->       (| (splitDelta delta) (unfoldTelescope lev (ev elimTy)) |)
+>     (lev', unf) <- unfoldTelescope lev (ev elimTy)
+>     elimTrace $ "tel: " ++ show unf
+>     let (delta0, delta1) = (splitDelta lev' delta unf)
 
 >     elimTrace $ "delta1: " ++ show delta1
 

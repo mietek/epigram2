@@ -82,7 +82,8 @@
 >     make (s ++ "D" :<: ARR indty' (def iDescDEF $$. indty'))
 >     goIn 
 >     i <- lambdaParam "i"
->     (x,args,i') <- elabConDesc (dtt, aus) (i :$ B0 :<: indty') (ev ty)
+>     lev <- getDevLev
+>     (x,args,i') <- elabConDesc lev (dtt, aus) (i :$ B0 :<: indty') (ev ty)
 >     d <- giveOutBelow x
 >     return (cnom,d,args,i')
 >     ) ctys
@@ -110,32 +111,31 @@
 >   goOut
 >   return $ def dt $$$ oldaus
 
-> elabConDesc :: (DEF, Bwd (Elim EXP)) -> (EXP :<: TY) -> VAL -> 
+> elabConDesc :: Int -> (DEF, Bwd (Elim EXP)) -> (EXP :<: TY) -> VAL -> 
 >                ProofState (EXP, [(String, Maybe [(String, TY)])], EXP)
-> elabConDesc d@(dt,_) i@(_ :<: ity) (PI s t) 
->     | not (occurs (Just (defName dt)) [] [] s) = do
+> elabConDesc lev d@(dt,_) i@(_ :<: ity) (PI s t) 
+>     | not (occurs lev (Just (defName dt)) [] (SET:>:s)) = do
 >   makeModule "conarg"
 >   aus <- (| paramSpine getInScope |)
 >   goIn
 >   let sx = fortran "x" [ev t] undefined 
 >   x <- assumeParam (sx :<: s)
 >   moduleToGoal (def iDescDEF $$. ity)
->   (t',args,i') <- elabConDesc d i (ev t $$. (x :$ B0))
+>   (t',args,i') <- elabConDesc (lev+1) d i (ev t $$. (x :$ B0))
 >   dt <- giveOutBelow t'
 >   return $ (ISIGMA s (def dt $$$ aus), (sx, Nothing) : args, i')
-> elabConDesc d@(dt,_) i@(_ :<: ity) (PI s t) = do
->   lev <- getDevLev
+> elabConDesc lev d@(dt,_) i@(_ :<: ity) (PI s t) = do
 >   let xs = fortran "x" [ev t] undefined
->   let t' = ev t $$. (P (lev,"x",s) :$ B0)
->   case occurs Nothing [lev] [] t' of
+>   let t' = t $$. (P (lev,"x",s) :$ B0)
+>   case occurs lev Nothing [lev] (SET:>:t') of
 >     True -> throwError' $ err "Dep error"
 >     False -> do
->       (c,iargs) <- elabInd d ity (ev s)
->       (d,args,i') <- elabConDesc d i t'
+>       (c,iargs) <- elabInd lev d ity (ev s)
+>       (d,args,i') <- elabConDesc lev d i (ev t')
 >       return (IPROD (TAG xs) c d, (xs, Just iargs) : args, i')
-> elabConDesc (dt, das) (i :<: ity) (D d :$ (as :< A i')) | dt == d && matchSpine das as = 
+> elabConDesc _ (dt, das) (i :<: ity) (D d :$ (as :< A i')) | dt == d && matchSpine das as = 
 >   return $ (ICONST (PRF (EQ ity i ity i')), [], i')
-> elabConDesc _ _ x = error $ show x
+> elabConDesc _ _ _ x = error $ show x
 
 > matchSpine :: Bwd (Elim EXP) -> Bwd (Elim EXP) -> Bool
 > matchSpine B0 B0 = True
@@ -145,161 +145,24 @@
 >   ,  l == l' = matchSpine as bs
 > matchSpine _ _ = False 
 
-> elabInd :: (DEF, Bwd (Elim EXP)) -> TY -> VAL -> 
+> elabInd :: Int -> (DEF, Bwd (Elim EXP)) -> TY -> VAL -> 
 >            ProofState (EXP, [(String, TY)])
-> elabInd d@(dt,_) ity (PI s t) 
->     | not (occurs (Just (defName dt)) [] [] s) = do
+> elabInd lev d@(dt,_) ity (PI s t) 
+>     | not (occurs lev (Just (defName dt)) [] (SET :>: s)) = do
 >   makeModule "indarg"
 >   aus <- (| paramSpine getInScope |)
 >   goIn
 >   let xs = fortran "x" [ev t] undefined 
 >   x <- assumeParam (xs :<: s)
 >   moduleToGoal (def iDescDEF $$. ity)
->   (t',iargs) <- elabInd d ity (ev t $$. (x :$ B0))
+>   (t',iargs) <- elabInd (lev+1) d ity (ev t $$. (x :$ B0))
 >   dt <- giveOutBelow t'
 >   return $ (IPI s (def dt $$$ aus), (xs, s) : iargs) 
-> elabInd (dt, das) _ (D d :$ (as :< A i')) | dt == d && matchSpine das as = 
+> elabInd _ (dt, das) _ (D d :$ (as :< A i')) | dt == d && matchSpine das as = 
 >   return $ (IVAR i', [])
-> elabInd _ _ _ = throwError' $ err "Not SP"
+> elabInd _ _ _ _ = throwError' $ err "Not SP"
 
 > toSuZe :: Int -> Tm {Body, s, n}
 > toSuZe 0 = ZE
 > toSuZe n = SU (toSuZe (n-1))
 
-> {-
->   make ("ConNames" :<: NP enumREF) 
->   goIn
->   (e :=>: ev) <- giveOutBelow (foldr (\(t,_) e -> CONSE (TAG t) e) NILE scs)
->   make ("ConDescs" :<: 
->           ARR (N indtye) (N (branchesOp 
->                               :@ [ N e
->                                  , L $ K (N (P idescREF :$ A (N indtye)))
->                                  ])))
->   goIn
->   i <- lambdaParam "i"
->   (cs' :=>: _) <- giveOutBelow (foldr PAIR VOID (map (\(_,_,c,_) -> N (c :$ A (NP i))) cs))
-
->   make ("DataTy" :<: ARR (N indtye) SET)
->   goIn
->   i <- lambdaParam "i"
->   let d = L $ "i" :.IFSIGMA (N e) (N (cs' :$ A (NV 0)))
->       (allowingTy, allowedBy)  =  imkAllowed ("i", indtye, NV 0) pars' 
->                         -- \pierre{XXX: NV 0 refers to the .i. in the giveOut}
->       label                    =  ANCHOR (TAG nom) allowingTy allowedBy
->   (dty :=>: dtyv) <- giveOutBelow (IMU (Just (L $ "i" :. [.i. label])) (N indtye) d (NP i))
-
-We specialise the induction operator to this datatype, ensuring the label is
-assigned throughout, so the label will be preserved when eliminating by induction.
-
-This code attempts to find out if the definitions from tests/TaggedInduction
-are in scope, if so you get nicer induction principles (:
-
->   (do (icase,_,_) <- resolveHere [("TData",Rel 0),("tcase",Rel 0)]
->       makeModule "Case"
->       goIn
->       i <- assumeParam ("i" :<: (N indtye :=>: indtyv))
->       v <- assumeParam (comprefold (concat (map (\(_,_,_,c) -> c) cs)) 
->                         :<: (N (dty :$ A (NP i)) :=>: dtyv $$ A (NP i)))
->       let caseTm = P icase :$ A (N indtye) 
->                            :$ A (PAIR (N e) (PAIR (N cs') VOID))
->                            :$ A (NP i) :$ A (NP v)
->       caseV :<: caseTy <- inferHere caseTm
->       caseTy' <- bquoteHere caseTy
->       moduleToGoal (isetLabel (L $ "i" :. [.i. label]) caseTy')
->       giveOutBelow (N caseTm)
->       return ()) `catchError` \_ -> return ()
-
->   (do (dind,_,_) <- resolveHere [("TData",Rel 0),("tind",Rel 0)]
->       makeModule "Ind"
->       goIn
->       i <- assumeParam ("i" :<: (N indtye :=>: indtyv))
->       v <- assumeParam (comprefold (concat (map (\(_,_,_,c) -> c) cs)) 
->                         :<: (N (dty :$ A (NP i)) :=>: dtyv $$ A (NP i)))
->       let dindT = P dind :$ A (N indtye) 
->                          :$ A (PAIR (N e) (PAIR (N cs') VOID))
->                          :$ A (NP i) :$ A (NP v)
->       dindV :<: dindTy <- inferHere dindT
->       dindTy' <- bquoteHere dindTy
->       moduleToGoal (isetLabel (L $ "i" :. [.i. label]) dindTy')
->       giveOutBelow (N dindT)
->       return ()) `catchError` \_ -> 
->     (do let indTm = P (lookupOpRef iinductionOp) :$ A (N indtye) :$ A d
->         indV :<: indTy <- inferHere indTm
->         indTy' <- bquoteHere indTy
->         make ("Ind" :<: isetLabel (L $ "i" :. [.i. label]) indTy')
->         goIn
->         giveOutBelow (N indTm)
->         return ())
->   giveOutBelow $ N dty
-
-
-This is a hack, and should probably be replaced with a version that tests for
-equality, so it doesn't catch the wrong |MU|s.
-
-\pierre{The match on the |dataTy| anchor is yet another disgusting
-hack. When loading the @TaggedInduction.pig@ file, you are able to get
-much nicer induction principles. However, the resulting induction
-principle will target |dataTy| instead of the current
-|nom|. Therefore, we hack the hack so that it hacks when you hack. Yo,
-dawg.}
-
-> isetLabel :: INTM -> INTM -> INTM
-> isetLabel l (IMU Nothing ity tm i) = IMU (Just l) ity tm i
-> isetLabel l (IMU (Just (LK (ANCHOR (TAG x) _ _))) ity tm i) 
->               | x == "dataTy" = IMU (Just l) ity tm i
-> isetLabel l (L (x :. t)) = L (x :. isetLabel l t)
-> isetLabel l (L (K t)) = L (K (isetLabel l t))
-> isetLabel l (C c) = C (fmap (isetLabel l) c)
-> isetLabel l (N n) = N (isetLabelN l n)
-
-> isetLabelN :: INTM -> EXTM -> EXTM
-> isetLabelN l (P x) = P x
-> isetLabelN l (V n) = V n
-> isetLabelN l (op :@ as) = op :@ map (isetLabel l) as
-> isetLabelN l (f :$ a) = isetLabelN l f :$ fmap (isetLabel l) a
-> isetLabelN l (t :? ty) = isetLabel l t :? isetLabel l ty
-
-
-> import -> CochonTactics where
-
-> occursM :: REF -> Mangle (Ko Any) REF REF
-> occursM r = Mang
->             {  mangP = \ x _ -> Ko (Any (r == x))
->             ,  mangV = \ _ _ -> Ko (Any False)
->             ,  mangB = \ _ -> occursM r
->             }
-
-> swapM :: REF -> REF -> Mangle Identity REF REF
-> swapM r s = Mang
->             {  mangP = \ x xes ->
->                          if x == r then (| ((P s) $:$) xes |)
->                                    else (| ((P x) $:$) xes |)
->             ,  mangV = \ i ies -> (|(V i $:$) ies|)
->             ,  mangB = \ _ -> swapM r s
->             }
-
-> capM :: REF -> Int -> Mangle Identity REF REF
-> capM r i = Mang
->             {  mangP = \ x xes ->
->                          if x == r then (| ((V i) $:$) xes |)
->                                    else (| ((P x) $:$) xes |)
->             ,  mangV = \ j jes -> (|(V j $:$) jes|)
->             ,  mangB = \ _ -> capM r (i+1)
->             }
-
-> occurs :: REF -> INTM -> Bool
-> occurs r i = getAny (unKo (occursM r % i))
-
-> uncur 1 v t = N (v :$ A (N t))
-> uncur i v t = uncur (i-1) (v :$ A (N (t :$ Fst))) (t :$ Snd)
-
-> compre :: Eq a => [a] -> [a] -> [a] 
-> compre [] _ = [] 
-> compre _ [] = [] 
-> compre (a : as) (b : bs) | a == b = a : compre as bs 
-> compre (a : as) (b : bs) = [] 
- 
-> comprefold :: Eq a => [[a]] -> [a] 
-> comprefold [] = [] 
-> comprefold (as : ass) = foldr compre as ass 
-> -}

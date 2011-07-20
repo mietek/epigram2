@@ -155,11 +155,11 @@ been suspended) then the cursor could be anywhere earlier in the proof state.
 >     schedTrace $ "Suspended waiting for " ++ show tm ++ " to become canonical."
 >     suspendMe prob
 >     return Nothing
-> resume _ (WaitSolve def@(DEF _ _ Hole) t prob) = do
+> resume _ (WaitSolve def@(DEF _ ty Hole) t prob) = do
 >     suspendMe prob
 >     mn <- getCurrentName
 >     -- tm <- exp (ev t) -- force definitional expansion
->     solveHole' (defName def) [] (exp (ev t)) -- takes us to who knows where
+>     solveHole' (defName def) [] (ty :>: exp (ev t)) -- takes us to who knows where
 >     return Nothing
 
 

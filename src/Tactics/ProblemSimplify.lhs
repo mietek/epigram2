@@ -6,7 +6,7 @@
 
 > module Tactics.ProblemSimplify where
 
-> import Prelude hiding (any, foldl, elem)
+> import Prelude hiding (any, foldl, elem, exp)
 
 > import Control.Applicative 
 > import Control.Monad.Reader
@@ -23,6 +23,8 @@
 > import Evidences.Primitives
 > import Evidences.DefinitionalEquality
 > import Evidences.ErrorHandling
+
+> import Distillation.Distiller
 
 > import ProofState.ProofContext
 > import ProofState.GetSet
@@ -170,11 +172,11 @@ the context and carry on. Note that this assumes we are at the top level.
 >     simplifyProp evp t pSimp
 >   where
 >     elimEquation :: VAL -> EXP -> ProofState EXP 
->     elimEquation (EQ _X x _Y y) t | (P (l,_,_) :$ B0) <- ev y = do
+>     elimEquation eq@(EQ _X x _Y y) t | (P (l,_,_) :$ B0) <- ev y = do
 >         sc <- getInScope
 >         lev <- getDevLev
 >         guard $ equal lev (SET :>: (_X, _Y))
->         guard $ occurs Nothing [l] [] t
+>         guard $ occurs lev Nothing [l] (ARR (PRF (exp eq)) SET :>: t)
 >         simpTrace $ "elimEqSimpL"
 >         q    <- lambdaParam "qe"
 >         let  ety  =  (("P", ARR _X SET) ->> \ _P ->
@@ -183,11 +185,11 @@ the context and carry on. Note that this assumes we are at the top level.
 >         elimSimplify (ety :>: ex)
 >         d <- getCurrentDefinition
 >         return $ applySpine (def d) sc
->     elimEquation (EQ _Y y _X x) t | (P (l,_,_) :$ B0) <- ev y = do
+>     elimEquation eq@(EQ _Y y _X x) t | (P (l,_,_) :$ B0) <- ev y = do
 >         sc <- getInScope
 >         lev <- getDevLev
 >         guard $ equal lev (SET :>: (_X, _Y))
->         guard $ occurs Nothing [l] [] t
+>         guard $ occurs lev Nothing [l] (ARR (PRF (exp eq)) SET :>: t)
 >         simpTrace $ "elimEqSimpR"
 >         q    <- lambdaParam "qe"
 >         let  ety  =  (("P", ARR _X SET) ->> \ _P ->
@@ -202,7 +204,7 @@ the context and carry on. Note that this assumes we are at the top level.
 >     simplifyProp p t CannotSimplify = 
 >       elimEquation p t <|> passHypothesis t
 >     simplifyProp p t (SimplyAbsurd prf) = do
->         simpTrace "Absurd"
+>         simpTrace $ "Absurd"
 >         r    <- lambdaParam (fortran "s" [ev t] undefined)
 >         let ret = (wr (def falseElimDEF) (wr prf (r :$ B0)) (wr t (r :$ B0)))
 >         give ret >> return ret
