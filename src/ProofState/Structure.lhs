@@ -23,6 +23,10 @@
 %endif
 
 
+> data HypState = InheritHyps | NixHyps
+>   deriving (Eq, Show)
+
+
 \subsection{The |Dev| data-structure}
 
 
@@ -43,7 +47,11 @@ place of |Bwd|, and to store a |SuspendState|, giving:
 >                   ,  devNSupply       :: NameSupply
 >                   ,  devLevelCount    :: Int
 >                   ,  devSuspendState  :: SuspendState
+>                   ,  devHypState      :: HypState
 >                   }
+
+We should refactor this so the fields shared with |Layer| are stored
+in a single record.
 
 %if False
 

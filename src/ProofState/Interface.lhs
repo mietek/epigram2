@@ -154,7 +154,9 @@ level. For making modules, we use |makeModule|.
 >                   ,  devTip           =  Module 
 >                   ,  devNSupply       =  freshNSpace nsupply s
 >                   ,  devSuspendState  =  SuspendNone 
->                   ,  devLevelCount    =  boys inScope }
+>                   ,  devLevelCount    =  boys inScope
+>                   ,  devHypState      =  InheritHyps
+>                   }
 >     putEntryAbove $ EModule  {  name   =  n 
 >                              ,  dev    =  dev}
 >     putDevNSupply $ freshen nsupply
@@ -246,11 +248,13 @@ mood such as |Hoping| or |Crying|.
 <  (eats (trail (fmap (\(_,s,_) -> s) (boys inScope))) Hole)
 
 >     -- Make an entry for the goal, with an empty development
->     let dev = Dev { devEntries       =  B0
->                   , devTip           =  Unknown ty holeKind
->                   , devNSupply       =  freshNSpace nsupply goalName
->                   , devSuspendState  =  SuspendNone
->                   , devLevelCount    =  bwdLength binScope }
+>     let dev = Dev  {  devEntries       =  B0
+>                    ,  devTip           =  Unknown ty holeKind
+>                    ,  devNSupply       =  freshNSpace nsupply goalName
+>                    ,  devSuspendState  =  SuspendNone
+>                    ,  devLevelCount    =  bwdLength binScope
+>                    ,  devHypState      =  InheritHyps
+>                    }
 >     -- Put the entry in the proof context
 >     putDevNSupply $ freshen nsupply
 >     putEntryAbove $ EDef def dev Nothing

@@ -256,6 +256,11 @@ And some specialized versions:
 > putDevTip tip = do
 >     dev <- getAboveCursor
 >     putAboveCursor dev{devTip = tip}
+>
+> putDevHypState :: HypState -> ProofState ()
+> putDevHypState hs = do
+>     dev <- getAboveCursor
+>     putAboveCursor dev{devHypState = hs}
 
 And some specialized versions:
 

@@ -27,6 +27,7 @@
 > import DisplayLang.DisplayTm
 > import DisplayLang.PrettyPrint
 
+> import ProofState.Structure
 > import ProofState.ProofContext
 > import ProofState.GetSet
 > import ProofState.Navigation
@@ -546,6 +547,9 @@ Import more tactics from an aspect:
 
 >     nullaryCT "simplify" (problemSimplify >> optional seekGoal >> return "Simplified.")
 >       "simplify - simplifies the current problem." :
+
+>     nullaryCT "nix" (putDevHypState NixHyps >> return "Nixed.")
+>       "nix - set the current development to nix hypotheses." :
 
 >     [] )
 

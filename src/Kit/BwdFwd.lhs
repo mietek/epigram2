@@ -41,6 +41,11 @@ Backward and forward lists, applicative with zipping.
 > bwdZipWith f (as :< a) (bs :< b) = bwdZipWith f as bs :< f a b
 > bwdZipWith _ _ _ = B0
 
+> bwdFilter :: (a -> Bool) -> Bwd a -> Bwd a
+> bwdFilter p B0 = B0
+> bwdFilter p (bs :< b) | p b        = bwdFilter p bs :< b
+>                       | otherwise  = bwdFilter p bs
+
 > (<><) :: Bwd x -> Fwd x -> Bwd x
 > infixl 5 <><
 > xs <>< F0 = xs

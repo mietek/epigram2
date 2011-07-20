@@ -126,9 +126,9 @@ back the current entry.
 > getLeaveCurrent :: ProofState (Entry Bwd)
 > getLeaveCurrent = do
 >     currentEntry <- getCurrentEntry
->     Dev above tip root l state <- getAboveCursor
+>     Dev above tip root l sstate hypstate <- getAboveCursor
 >     below <- getBelowCursor
->     let dev = Dev (above <>< below) tip root l state
+>     let dev = Dev (above <>< below) tip root l sstate hypstate
 >     case currentEntry of
 >         CDefinition def sch  ->  return $ EDef def dev sch
 >         CModule n            ->  return $ EModule n dev
@@ -228,6 +228,7 @@ definition. If one can be found, it enters it and goes at the bottom.
 >                       ,  layNSupply       = devNSupply oldFocus
 >                       ,  layLevelCount    = devLevelCount oldFocus
 >                       ,  laySuspendState  = devSuspendState oldFocus
+>                       ,  layHypState      = devHypState oldFocus
 >                       }
 >     putAboveCursor dev
 >     putBelowCursor F0
@@ -251,7 +252,9 @@ development, with the additional burden of dealing with news.
 >                                   ,  devTip           =  layTip l
 >                                   ,  devNSupply       =  layNSupply l
 >                                   ,  devLevelCount    =  layLevelCount l
->                                   ,  devSuspendState  =  laySuspendState l }
+>                                   ,  devSuspendState  =  laySuspendState l
+>                                   ,  devHypState      =  layHypState l
+>                                   }
 >             putBelowCursor F0
 >             startPropagateNews (belowEntries l)
 >             -- Here, the cursor is at the bottom of the current development
@@ -292,7 +295,7 @@ the new development.
 >         -- Get the directly enclosing layer
 >         l <- getLayer
 >         case l of
->           (Layer (aboveE :< e) m (NF below) tip nsupply le state) -> 
+>           (Layer (aboveE :< e) m (NF below) tip nsupply le sstate hypstate) -> 
 >             -- It has at least one entry
 >             case entryDev e of
 >             Just dev -> do
@@ -351,7 +354,7 @@ parameteres on our way.
 >                 
 >                 -- Definition or Parameter?
 >                 case entryCoerce e of
->                 Left (Dev es' tip' nsupply' l' ss') -> do
+>                 Left (Dev es' tip' nsupply' l' ss' hypstate') -> do
 >                   -- Definition:
 >                    
 >                   -- Leave our current position
@@ -365,7 +368,7 @@ parameteres on our way.
 >                   -- The suspend state is cleared because there are no
 >                   -- entries in the |Dev|; the state will be updated
 >                   -- during news propagation.
->                   putAboveCursor (Dev B0 tip' nsupply' l' SuspendNone)
+>                   putAboveCursor (Dev B0 tip' nsupply' l' SuspendNone hypstate')
 >                   putBelowCursor F0
 >                   -- Push the collected news from above into the entries
 >                   runPropagateNews visitedNews es'

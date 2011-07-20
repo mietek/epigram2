@@ -67,6 +67,7 @@ zipper is a record with the following fields:
 >   ,  layNSupply       :: NameSupply
 >   ,  layLevelCount    :: Int
 >   ,  laySuspendState  :: SuspendState
+>   ,  layHypState      :: HypState
 >   }
 >  deriving Show
 
@@ -145,7 +146,9 @@ definition:
 >                                            ,  devTip           = Module
 >                                            ,  devNSupply       = (B0, 0)
 >                                            ,  devSuspendState  = SuspendNone
->                                            ,  devLevelCount    = 0 }
+>                                            ,  devLevelCount    = 0
+>                                            ,  devHypState      = InheritHyps
+>                                            }
 >                    ,  pcBelowCursor = F0 }
 
 
@@ -263,7 +266,22 @@ available in the current development, not including the ones involved
 in its construction.
 
 > globalScope :: ProofContext -> Entries
-> globalScope pc = foldMap aboveEntries (pcLayers pc)
+> globalScope pc = help (pcLayers pc)
+>   where
+>     help :: Bwd Layer -> Entries
+>     help B0 = B0
+>     help (ls :< l@(Layer{layHypState = NixHyps}))  = defsInScope ls <+> aboveEntries l
+>     help (ls :< l)                                 = help ls <+> aboveEntries l
+
+>     defsInScope :: Bwd Layer -> Entries
+>     defsInScope B0 = B0
+>     defsInScope (ls :< l) = defsInScope ls <+> filterOutParams (aboveEntries l)
+
+> filterOutParams :: Entries -> Entries
+> filterOutParams = bwdFilter (not . isParam)
+>   where
+>     isParam (EParam _ _ _ _)  = True
+>     isParam _                 = False
 
 
 The |inScope| function returns all parameters and definitions above
@@ -271,6 +289,7 @@ the cursor. These are all entries rightfully usable at the cursor's
 location.
 
 > inScope :: ProofContext -> Entries
+> inScope (PC{pcAboveCursor=Dev{devEntries = es, devHypState = NixHyps}}) = es
 > inScope pc@PC{pcAboveCursor=Dev{devEntries = es}} = globalScope pc <+> es
 
 
