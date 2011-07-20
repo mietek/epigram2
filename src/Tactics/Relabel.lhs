@@ -19,17 +19,6 @@
 > import Evidences.DefinitionalEquality
 > import Evidences.TypeChecker
 
-> import ProofState.Edition.ProofState
-> import ProofState.Edition.GetSet
-> import ProofState.Edition.Navigation
-> import ProofState.Edition.Scope
-
-> import ProofState.Interface.ProofKit
-> import ProofState.Interface.Definition
-> import ProofState.Interface.Solving
-> import ProofState.Interface.Lifting
-> import ProofState.Interface.Parameter
-
 > import DisplayLang.DisplayTm
 > import DisplayLang.Name
 

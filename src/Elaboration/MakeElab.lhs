@@ -21,7 +21,7 @@
 > import Evidences.DefinitionalEquality
 > import Evidences.ErrorHandling
 
-> import ProofState.Edition.ProofState
+> import ProofState.ProofContext
 
 > import DisplayLang.DisplayTm
 > import DisplayLang.PrettyPrint

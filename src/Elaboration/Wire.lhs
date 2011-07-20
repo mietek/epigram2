@@ -12,26 +12,18 @@
 > import Control.Applicative
 > import Control.Monad
 
-> import Kit.BwdFwd
-
-> import ProofState.Structure.Developments
-> import ProofState.Structure.Entries
-
-> import ProofState.Edition.ProofContext
-> import ProofState.Edition.News
-> import ProofState.Edition.ProofState
-> import ProofState.Edition.Entries
-> import ProofState.Edition.GetSet
-> import ProofState.Edition.Navigation
-> import ProofState.Edition.Scope
-
-> import ProofState.Interface.Lifting
-> import ProofState.Interface.ProofKit
-
 > import Evidences.Tm
+> import Evidences.News
+
+> import ProofState.Structure
+> import ProofState.ProofContext
+> import ProofState.GetSet
+> import ProofState.Navigation
+> import ProofState.Interface
 
 > import Elaboration.ElabProb
 
+> import Kit.BwdFwd
 > import Kit.MissingLibrary
 
 %endif

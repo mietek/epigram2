@@ -1,14 +1,12 @@
 \section{News about updated references}
-\label{sec:ProofState.Edition.News}
-
-Move to |Evidences.News|?
+\label{sec:Evidences.News}
 
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE FlexibleInstances, TypeOperators, GADTs #-}
 
-> module ProofState.Edition.News where
+> module Evidences.News where
 
 > import Prelude hiding (exp)
 

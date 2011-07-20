@@ -20,8 +20,8 @@
 > import DisplayLang.Name
 > import DisplayLang.PrettyPrint
 
-> import ProofState.Edition.ProofState
-> import ProofState.Interface.ProofKit
+> import ProofState.ProofContext
+> import ProofState.Interface
 
 > import Distillation.Distiller
 > import Distillation.Moonshine

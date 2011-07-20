@@ -14,19 +14,14 @@
 > import Evidences.Tm hiding (($$))
 > import Evidences.NameSupply
 
-> import ProofState.Structure.Developments
-> import ProofState.Structure.Entries
+> import ProofState.Structure
 
-> import ProofState.Edition.ProofContext
-> import ProofState.Edition.Scope
-> import ProofState.Edition.ProofState
-> import ProofState.Edition.GetSet
-> import ProofState.Edition.Navigation
+> import ProofState.ProofContext
+> import ProofState.GetSet
+> import ProofState.Navigation
 
-> import ProofState.Interface.Lifting
-> import ProofState.Interface.ProofKit
-> import ProofState.Interface.Module
-> import ProofState.Interface.NameResolution
+> import ProofState.Interface
+> import ProofState.NameResolution
 
 > import DisplayLang.DisplayTm
 > import DisplayLang.Name

@@ -1,14 +1,12 @@
 \section{Resolving and unresolving names}
-\label{sec:ProofState.Interface.NameResolution}
-
-Move to |ProofState.NameResolution|?
+\label{sec:ProofState.NameResolution}
 
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE GADTs, PatternGuards #-}
 
-> module ProofState.Interface.NameResolution where
+> module ProofState.NameResolution where
 
 > import Prelude hiding (compare, all)
 
@@ -23,17 +21,11 @@ Move to |ProofState.NameResolution|?
 > import Kit.MissingLibrary
 > import Kit.NatFinVec
 
-> import ProofState.Structure.Developments
-> import ProofState.Structure.Entries
-
-> import ProofState.Edition.ProofContext
-> import ProofState.Edition.Entries
-> import ProofState.Edition.Scope
-> import ProofState.Edition.ProofState
-> import ProofState.Edition.GetSet
+> import ProofState.Structure
+> import ProofState.ProofContext
+> import ProofState.GetSet
 
 > import DisplayLang.Name
-
 > import DisplayLang.Scheme
 
 > import Evidences.Tm

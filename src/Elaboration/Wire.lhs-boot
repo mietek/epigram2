@@ -1,11 +1,11 @@
 > module Elaboration.Wire where
 
 > import Evidences.Tm
+> import Evidences.News
 
-> import ProofState.Structure.Developments
-> import ProofState.Edition.ProofContext
-> import ProofState.Edition.News
-> import ProofState.Edition.ProofState
+> import ProofState.Structure
+> import ProofState.ProofContext
+
 > import Kit.BwdFwd
 
 > updateDef :: DEF -> ProofState ()

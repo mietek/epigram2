@@ -14,9 +14,9 @@
 
 > import Kit.BwdFwd
 
-> import ProofState.Structure.Developments
-> import ProofState.Edition.ProofState
-> import ProofState.Edition.GetSet
+> import ProofState.Structure
+> import ProofState.ProofContext
+> import ProofState.GetSet
 
 > import Distillation.Distiller
 

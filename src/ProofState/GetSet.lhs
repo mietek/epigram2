@@ -1,14 +1,12 @@
 \section{The Get Set}
 
-Move to |ProofState.GetSet|?
-
 %if False
 
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE FlexibleInstances, TypeOperators, TypeSynonymInstances,
 >              GADTs, RankNTypes #-}
 
-> module ProofState.Edition.GetSet where
+> module ProofState.GetSet where
 
 > import Control.Monad.State
 > import Control.Applicative
@@ -20,17 +18,13 @@ Move to |ProofState.GetSet|?
 
 > import DisplayLang.Scheme
 
-> import ProofState.Structure.Developments
-
-> import ProofState.Edition.News
-> import ProofState.Edition.ProofContext
-> import ProofState.Edition.ProofState
-> import ProofState.Edition.Entries
-> import ProofState.Edition.Scope
+> import ProofState.Structure
+> import ProofState.ProofContext
 
 > import Evidences.Tm
 > import Evidences.NameSupply
 > import Evidences.ErrorHandling
+> import Evidences.News
 
 %endif
 

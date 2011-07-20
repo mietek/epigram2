@@ -37,12 +37,10 @@
 > import Evidences.TypeCheckRules
 > import Evidences.Primitives
 
-> import ProofState.Edition.ProofState
-> import ProofState.Edition.GetSet
+> import ProofState.ProofContext
+> import ProofState.GetSet
+> import ProofState.Interface
 
-> import ProofState.Interface.Name
-> import ProofState.Interface.Definition
-> import ProofState.Interface.Solving
 
 %endif
 

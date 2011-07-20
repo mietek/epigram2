@@ -24,7 +24,7 @@ generate an executable from a collection of supercombinator definitions.
 > import Evidences.NameSupply
 > import Evidences.Tm
 
-> import ProofState.Structure.Developments
+> import ProofState.Structure
 
 > import Kit.BwdFwd
 > import Kit.MissingLibrary

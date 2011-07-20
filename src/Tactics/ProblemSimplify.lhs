@@ -24,17 +24,10 @@
 > import Evidences.DefinitionalEquality
 > import Evidences.ErrorHandling
 
-> import ProofState.Edition.ProofState
-> import ProofState.Edition.GetSet
-> import ProofState.Edition.Navigation
-> import ProofState.Edition.Scope
-
-> import ProofState.Interface.ProofKit
-> import ProofState.Interface.Definition
-> import ProofState.Interface.Module
-> import ProofState.Interface.Parameter
-> import ProofState.Interface.Solving
-> import ProofState.Interface.Lifting
+> import ProofState.ProofContext
+> import ProofState.GetSet
+> import ProofState.Navigation
+> import ProofState.Interface
 
 > import Tactics.Elimination
 > import Tactics.Unification

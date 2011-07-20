@@ -27,20 +27,11 @@
 > import DisplayLang.DisplayTm
 > import DisplayLang.PrettyPrint
 
-> import ProofState.Edition.ProofContext
-> import ProofState.Edition.ProofState
-> import ProofState.Edition.Entries
-> import ProofState.Edition.GetSet
-> import ProofState.Edition.Navigation
-
-
-> import ProofState.Interface.Search
-> import ProofState.Interface.ProofKit
-> import ProofState.Interface.NameResolution
-> import ProofState.Interface.Definition
-> import ProofState.Interface.Module
-> import ProofState.Interface.Parameter
-> import ProofState.Interface.Solving
+> import ProofState.ProofContext
+> import ProofState.GetSet
+> import ProofState.Navigation
+> import ProofState.Interface
+> import ProofState.NameResolution
 
 > import Tactics.Information
 > import Tactics.Elimination

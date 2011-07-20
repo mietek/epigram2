@@ -15,7 +15,7 @@
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
 
-> import ProofState.Edition.ProofState
+> import ProofState.ProofContext
 
 > import Distillation.Distiller
 

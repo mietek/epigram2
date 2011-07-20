@@ -42,10 +42,7 @@ SRCS_COMPILER := $(wildcard Compiler/*.lhs)
 SRCS_EVIDENCES := $(wildcard NameSupply/*.lhs) \
 		  $(wildcard Evidences/*.lhs) 
 
-SRCS_PFSTATE := $(wildcard ProofState/Structure/*.lhs) \
-		$(wildcard ProofState/Movement/*.lhs) \
-		$(wildcard ProofState/Edition/*.lhs) \
-		$(wildcard ProofState/Interface/*.lhs) 
+SRCS_PFSTATE := $(wildcard ProofState/*.lhs)
 
 SRCS_DISPLAYS := $(wildcard DisplayLang/*.lhs) \
 	  	 $(wildcard Elaboration/*.lhs) \

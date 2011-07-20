@@ -12,7 +12,7 @@
 > import Data.List
 > import Text.PrettyPrint.HughesPJ
 
-> import ProofState.Structure.Developments
+> import ProofState.Structure
 
 > import DisplayLang.DisplayTm
 > import DisplayLang.Name

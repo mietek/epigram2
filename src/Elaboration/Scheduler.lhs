@@ -16,15 +16,12 @@
 > import Evidences.NameSupply
 > import Evidences.DefinitionalEquality
 
-> import ProofState.Structure.Developments
+> import ProofState.Structure
 
-> import ProofState.Edition.ProofState
-> import ProofState.Edition.GetSet
-> import ProofState.Edition.Navigation
-
-> import ProofState.Interface.Lifting
-> import ProofState.Interface.ProofKit
-> import ProofState.Interface.Solving
+> import ProofState.ProofContext
+> import ProofState.GetSet
+> import ProofState.Navigation
+> import ProofState.Interface
 
 > import DisplayLang.Name
 

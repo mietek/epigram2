@@ -26,10 +26,10 @@
 > import DisplayLang.Scheme
 > import DisplayLang.PrettyPrint
 
-> import ProofState.Structure.Developments
-> import ProofState.Edition.ProofState
-> import ProofState.Edition.GetSet
-> import ProofState.Interface.NameResolution
+> import ProofState.Structure
+> import ProofState.ProofContext
+> import ProofState.GetSet
+> import ProofState.NameResolution
 
 > import Kit.BwdFwd
 > import Kit.NatFinVec

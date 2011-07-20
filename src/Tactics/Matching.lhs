@@ -24,9 +24,9 @@
 > import Evidences.TypeCheckRules
 > import Evidences.ErrorHandling
 
-> import ProofState.Edition.ProofState
-> import ProofState.Edition.GetSet
-> import ProofState.Interface.ProofKit
+> import ProofState.ProofContext
+> import ProofState.GetSet
+> import ProofState.Interface
 
 > import Tactics.Unification
 

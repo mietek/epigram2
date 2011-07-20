@@ -12,12 +12,6 @@
 
 > import Evidences.Tm
 
-> import ProofState.Structure.Developments
-
-> import ProofState.Edition.ProofState
-
-> import ProofState.Interface.ProofKit
-
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
 

@@ -20,19 +20,12 @@
 > import Evidences.DefinitionalEquality
 > import Evidences.ErrorHandling
 
-> import ProofState.Structure.Developments
-
-> import ProofState.Edition.Scope
-> import ProofState.Edition.ProofState
-> import ProofState.Edition.GetSet
-> import ProofState.Edition.Navigation
-
-> import ProofState.Interface.ProofKit
-> import ProofState.Interface.NameResolution
-> import ProofState.Interface.Name
-> import ProofState.Interface.Definition
-> import ProofState.Interface.Parameter
-> import ProofState.Interface.Solving
+> import ProofState.Structure
+> import ProofState.ProofContext
+> import ProofState.GetSet
+> import ProofState.Navigation
+> import ProofState.Interface
+> import ProofState.NameResolution
 
 > import DisplayLang.Scheme
 > import DisplayLang.Name

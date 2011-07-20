@@ -17,20 +17,15 @@
 
 > import Evidences.Tm
 > import Evidences.ErrorHandling
+> import Evidences.News
 
 > import DisplayLang.Name
 
-> import ProofState.Structure.Developments
-
-> import ProofState.Edition.News
-> import ProofState.Edition.ProofState
-> import ProofState.Edition.GetSet
-> import ProofState.Edition.Navigation
-
-> import ProofState.Interface.Search
-> import ProofState.Interface.ProofKit
-> import ProofState.Interface.Definition
-> import ProofState.Interface.Solving
+> import ProofState.Structure
+> import ProofState.ProofContext
+> import ProofState.GetSet
+> import ProofState.Navigation
+> import ProofState.Interface
 
 > import Kit.BwdFwd
 > import Kit.NatFinVec
