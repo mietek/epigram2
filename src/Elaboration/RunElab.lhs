@@ -572,7 +572,7 @@ always spot them.
 >     putHoleKind Hoping
 >     return . (, ElabSuspended) =<< getCurrentDefinitionLocal
 > lastHope WorkElsewhere ty = do
->     return . (, ElabSuccess) =<< makeKinded Nothing Hoping ("hope" :<: exp ty)
+>     return . (, ElabSuccess) =<< makeKinded InheritHyps Nothing Hoping ("hope" :<: exp ty)
 
 
 \subsection{Suspending computation}

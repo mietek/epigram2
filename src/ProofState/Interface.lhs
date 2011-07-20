@@ -149,7 +149,10 @@ avoiding name clashes. This is mostly used at the programming
 level. For making modules, we use |makeModule|.
 
 > makeModule :: String -> ProofState Name
-> makeModule s = do
+> makeModule = makeModule' InheritHyps
+
+> makeModule' :: HypState -> String -> ProofState Name
+> makeModule' hypstate s = do
 >     nsupply <- getDevNSupply
 >     inScope <- getInScope
 >     let n = mkName nsupply s
@@ -159,7 +162,7 @@ level. For making modules, we use |makeModule|.
 >                   ,  devNSupply       =  freshNSpace nsupply s
 >                   ,  devSuspendState  =  SuspendNone 
 >                   ,  devLevelCount    =  boys inScope
->                   ,  devHypState      =  InheritHyps
+>                   ,  devHypState      =  hypstate
 >                   }
 >     putEntryAbove $ EModule  {  name   =  n 
 >                              ,  dev    =  dev}
@@ -219,7 +222,7 @@ The |make| command adds a named goal of the given type above the
 cursor. The meat is actually in |makeKinded|, below.
 
 > make :: (String :<: TY) -> ProofState EXP
-> make = makeKinded Nothing Waiting
+> make = makeKinded InheritHyps Nothing Waiting
 
 When making a new definition, the reference to this definition bears a
 \emph{hole kind}
@@ -231,9 +234,9 @@ Elaboration for instance (Section~\ref{sec:Elaborator.Elaborator}),
 the proof system will insert goals itself, with a somewhat changing
 mood such as |Hoping| or |Crying|.
 
-> makeKinded :: Maybe String ->  HKind -> (String :<: TY) -> 
+> makeKinded :: HypState -> Maybe String ->  HKind -> (String :<: TY) -> 
 >                                ProofState EXP
-> makeKinded manchor holeKind (name :<: ty) = do
+> makeKinded hypstate manchor holeKind (name :<: ty) = do
 >     -- Check that the type is indeed a type
 >     checkHere (SET :>: ty) 
 >                     `pushError`  
@@ -257,7 +260,7 @@ mood such as |Hoping| or |Crying|.
 >                    ,  devNSupply       =  freshNSpace nsupply goalName
 >                    ,  devSuspendState  =  SuspendNone
 >                    ,  devLevelCount    =  bwdLength binScope
->                    ,  devHypState      =  InheritHyps
+>                    ,  devHypState      =  hypstate
 >                    }
 >     -- Put the entry in the proof context
 >     putDevNSupply $ freshen nsupply

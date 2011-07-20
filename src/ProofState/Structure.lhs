@@ -1,5 +1,5 @@
 \section{Developments}
-\label{sec:Structure.Developments}
+\label{sec:ProofState.Structure}
 
 %if False
 
@@ -21,10 +21,6 @@
 > import DisplayLang.Scheme
 
 %endif
-
-
-> data HypState = InheritHyps | NixHyps
->   deriving (Eq, Show, Ord)
 
 
 \subsection{The |Dev| data-structure}
@@ -132,19 +128,6 @@ Typically, we work with developments that use backwards lists, hence
 > type Entries = Bwd (Entry Bwd)
 
 
-%if False
-
-> {-
-> instance Show (Entry Bwd) where
->     show (EEntity ref xn e t a) = intercalate " " ["E", show ref, show xn, show e, show t, show a]
->     show (EModule n d) = intercalate " " ["M", show n, show d]
-> instance Show (Entry Fwd) where
->     show (EEntity ref xn e t a) = intercalate " " ["E", show ref, show xn, show e, show t, show a]
->     show (EModule n d) = intercalate " " ["M", show n, show d]
-> -}
-
-%endif
-
 \begin{danger}[Name caching]
 
 We have mentionned above that an Entity |E| caches the last component
@@ -161,22 +144,6 @@ it once and for all with |lastName| and later rely on the cached version.
 \end{danger}
 
 
-
-
-%if False
-
-> {-
-> instance Show (Entity Bwd) where
->     show (Parameter k) = "Param " ++ show k
->     show (Definition k d) = "Def " ++ show k ++ " " ++ show d
-
-> instance Show (Entity Fwd) where
->     show (Parameter k) = "Param " ++ show k
->     show (Definition k d) = "Def " ++ show k ++ " " ++ show d 
-> -}
-
-%endif
-
 \subsubsection{Suspension states}
 
 Definitions may have suspended elaboration processes attached,
@@ -188,8 +155,22 @@ least stable child.
 >   deriving (Eq, Show, Enum, Ord)
 
 
+\subsubsection{|HypState|}
 
+Usually the shared parameters of definitions in the proof state
+reflect its hierarchical structure. The contents of a development
+share the hypotheses above it (|InheritHyps|). However, sometimes we
+need to create a development locally that does not inherit the shared
+hypotheses: in this case we use |NixHyps| so there are no hypotheses
+in scope.
 
+> data HypState = InheritHyps | NixHyps
+>   deriving (Eq, Show, Ord)
+
+> devIsNixed :: Dev f -> Bool
+> devIsNixed d = case devHypState d of
+>                    NixHyps      -> True
+>                    InheritHyps  -> False
 
 
 \subsection{Looking into an |Entry|}

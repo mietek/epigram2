@@ -92,7 +92,7 @@ holes with the new ones.
 >     makeDeps [] news = return news
 >     makeDeps ((old, Unknown ty k) : deps) news = do
 >         let (ty', _) = tellNews news ty
->         makeKinded Nothing k (fst (last name) :<: ty')
+>         makeKinded InheritHyps Nothing k (fst (last name) :<: ty')
 >         EDef d _ _ <- getEntryAbove
 >         let op = Emit (def d)
 >         makeDeps deps (addGirlNews (old{defOp = op}, GoodNews) news)

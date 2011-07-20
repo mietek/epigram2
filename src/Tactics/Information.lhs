@@ -241,19 +241,21 @@ of the proof state at the current location.
 >                  (text x  <+> kword KwAsc
 >                           <+> pretty tyd (pred ArrSize)))
 >      
->     prettyE (EDef def _ _) = do
+>     prettyE (EDef def dev _) = do
 >         goIn
 >         d <- prettyES aus me
 >         goOut
 >         return (sep  [  text (fst (last (defName def))) 
+>                             <+> if devIsNixed dev then text "(NIX)" else empty
 >                      ,  nest 2 d <+> kword KwSemi
 >                      ])
 
->     prettyE (EModule n _) = do
+>     prettyE (EModule n dev) = do
 >         goIn
 >         d <- prettyES aus me
 >         goOut
 >         return (sep  [  text (fst (last n)) 
+>                              <+> if devIsNixed dev then text "(NIX)" else empty
 >                      ,  nest 2 d <+> kword KwSemi
 >                      ])
 >

@@ -70,6 +70,7 @@
 %include Evidences/EtaQuote.lhs
 %include Evidences/DefinitionalEquality.lhs
 %include Evidences/ErrorHandling.lhs
+%include Evidences/News.lhs
 
 \chapter{The Display Language}
 
@@ -86,25 +87,12 @@
 
 \input{ProofState/Introduction.tex}
 
-%include ProofState/Structure/Developments.lhs
-%include ProofState/Structure/Entries.lhs
-
-%include ProofState/Edition/News.lhs
-%include ProofState/Edition/ProofContext.lhs
-%include ProofState/Edition/Entries.lhs
-%include ProofState/Edition/Scope.lhs
-%include ProofState/Edition/ProofState.lhs
-%include ProofState/Edition/GetSet.lhs
-%include ProofState/Edition/Navigation.lhs
-
-%include ProofState/Interface/ProofKit.lhs
-%include ProofState/Interface/Name.lhs
-%include ProofState/Interface/Parameter.lhs
-%include ProofState/Interface/Definition.lhs
-%include ProofState/Interface/Module.lhs
-%include ProofState/Interface/Search.lhs
-%include ProofState/Interface/Solving.lhs
-%include ProofState/Interface/NameResolution.lhs
+%include ProofState/Structure.lhs
+%include ProofState/ProofContext.lhs
+%include ProofState/GetSet.lhs
+%include ProofState/Navigation.lhs
+%include ProofState/Interface.lhs
+%include ProofState/NameResolution.lhs
 
 \chapter{The Proof Tactics}
 

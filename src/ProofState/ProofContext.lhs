@@ -31,7 +31,7 @@
 
 %endif
 
-Recall from Section~\ref{sec:ProofState.Structure.Developments} the
+Recall from Section~\ref{sec:ProofState.Structure} the
 definition of a development:
 
 < type Dev = (f (Entry f), Tip, NameSupply)
@@ -75,7 +75,7 @@ The derivative makes sense only for definitions and modules, which
 have sub-developments. Parameters being childless, they `derive to
 0'. Hence, the data about the working development is the derivative of
 the Definition and Module data-types defined in
-Section~\ref{subsubsec:ProofState.Structure.Developments.entry}.
+Section~\ref{subsubsec:ProofState.Structure.entry}.
 
 > data CurrentEntry  =  CDefinition DEF (Maybe Scheme)
 >                    |  CModule Name
@@ -84,7 +84,7 @@ Section~\ref{subsubsec:ProofState.Structure.Developments.entry}.
 One would expect the |belowEntries| to be an |Entries|, just as the
 |aboveEntries|. However, the |belowEntries| needs to be a richer
 structure to support the news infrastructure
-(Section~\ref{sec:ProofState.Edition.News}). Indeed, we propagate
+(Section~\ref{sec:Evidences.News}). Indeed, we propagate
 reference updates lazily, by pushing news bulletin below the current
 cursor.
 
@@ -155,7 +155,7 @@ definition:
 
 \subsubsection{Manipulating the |CurrentEntry|}
 
-As with entries in Section~\ref{sec:ProofState.Structure.Entries}, we
+As with entries in Section~\ref{sec:ProofState.Structure}, we
 need some kit operating on any kind of |CurrentEntry|. So far, this is
 restricted to getting its name:
 
