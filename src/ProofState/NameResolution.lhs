@@ -100,7 +100,7 @@ When in the process of resolving a relative name, we keep track of a
 |ResolveState|. \question{What do the components mean?}
 
 > type ResolveState =  (  Either FScopeContext Entries
->                      ,  Int
+>                      ,  Maybe Int
 >                      ,  Maybe DEF 
 >                      ,  Maybe Scheme
 >                      )
@@ -108,7 +108,7 @@ When in the process of resolving a relative name, we keep track of a
 The outcome of the process is a |ResolveResult|: a reference, a list of shared
 parameters to which it should be applied, and a scheme for it (if there is one).
 
-> type ResolveResult = Either (Int, String, TY) (DEF, Int, Maybe Scheme)
+> type ResolveResult = Either (Int, String, TY) (DEF, Maybe Int, Maybe Scheme)
 
 < type ResolveResult = (REF, [REF], Maybe (Scheme INTM))
 
@@ -129,7 +129,8 @@ discarded, so all parameters can be provided explicitly.
 >                             ++ showRelName x')
 >     case res of
 >       Left (l, s, t) -> return $ (P (l, s, t) :$ B0 , 0, Nothing)
->       Right (d, i, m) -> return $ (D d :$ B0, i, if b then Nothing else m)
+>       Right (d, Just i, m) -> return $ (D d :$ B0, i, if b then Nothing else m)
+>       Right (d, Nothing, m) -> return $ (D d :$ B0, 0, if b then Nothing else m)
 
 >   where
 >     shouldDiscardScheme :: RelName -> (RelName, Bool)
@@ -169,7 +170,7 @@ then continues with |lookFor|.
 >       = Right (Right (def, 0, Nothing))
 
 > resolve ((x, Rel i) : us)  l bsc = do
->   x <- lookUp (x, i) l bsc (F0, F0)   
+>   x <- lookUp (x, i) (Just l) bsc (F0, F0)   
 >   case x of
 >     (Right y) -> lookFor us y
 >     (Left z) -> Right (Left z)
@@ -183,6 +184,7 @@ then continues with |lookFor|.
 > lookFor us (Left fsc,  l, _,        _)   = do 
 >     res <- lookFor' us 0 fsc
 >     case res of 
+>       Right (x, Nothing, z) -> return $ Right (x, Nothing, z) 
 >       Right (x, _, z) -> return $ Right (x, l, z) 
 > lookFor us (Right es,  l, mr, ms)         = lookLocal us es l mr ms
 
@@ -194,7 +196,7 @@ then continues with |lookFor|.
 > lookFor' []                 l fsc = Left [err "Oh no, the empty name"]
 
 
-> lookUp :: (String, Int) -> Int -> BScopeContext -> FScopeContext -> 
+> lookUp :: (String, Int) -> Maybe Int -> BScopeContext -> FScopeContext -> 
 >               Either (StackError) (Either (Int, String, TY) ResolveState)
 > lookUp (x,i) l (B0, B0) fs = Left [err $ "lookup: Not in scope " ++ x]
 > lookUp (x,i) l ((esus :< (es,(y,j))),B0) (fs,vfss) | x == y = 
@@ -202,22 +204,26 @@ then continues with |lookFor|.
 >             else lookUp (x,i-1) l (esus,es) (F0,((y,j),fs) :> vfss)
 > lookUp (x,i) l ((esus :< (es,(y,j))),B0) (fs,vfss) = 
 >   lookUp (x,i) l (esus,es) (F0,((y,j),fs) :> vfss)
-> lookUp (x,i) l (esus, es :< e@(EModule n (Dev {devEntries=es'}))) (fs,vfss) | lastNom n == x =
->   if i == 0 then Right (Right (Right es', l, Nothing, Nothing))
+> lookUp (x,i) l (esus, es :< e@(EModule n (Dev {devHypState=hs, devEntries=es'}))) (fs,vfss) | lastNom n == x =
+>   if i == 0 then Right (Right (Right es', case hs of InheritHyps -> l
+>                                                      NixHyps -> Nothing
+>                                         , Nothing, Nothing))
 >             else lookUp (x,i-1) l (esus,es) (e:>fs,vfss)
-> lookUp (x,i) l (esus, es :< e@(EDef d (Dev {devEntries=es'}) sch)) (fs,vfss) 
+> lookUp (x,i) l (esus, es :< e@(EDef d (Dev {devHypState=hs, devEntries=es'}) sch)) (fs,vfss) 
 >     | x == (fst $ last $ defName d) =
->   if i == 0 then Right (Right (Right es', l, Just d, sch))
+>   if i == 0 then Right (Right (Right es', case hs of InheritHyps -> l 
+>                                                      NixHyps -> Nothing
+>                                         , Just d, sch))
 >             else lookUp (x,i-1) l (esus,es) (e:>fs,vfss)
 > lookUp (x,i) l (esus, es :< e@(EParam _ s t l')) (fs,vfss) | x == s =
 >   if i == 0 then Right (Left (l', s, t))
->             else lookUp (x,i-1) (l-1) (esus,es) (e:>fs,vfss)
+>             else lookUp (x,i-1) (|l - ~1|) (esus,es) (e:>fs,vfss)
 > lookUp (x,i) l (esus, es :< e@(EParam _ _ _ _)) (fs,vfss) =
->             lookUp (x,i) (l-1) (esus,es) (e:>fs,vfss)
+>             lookUp (x,i) (|l - ~1|) (esus,es) (e:>fs,vfss)
 > lookUp u l (esus, es :< e) (fs,vfss) = lookUp u l (esus,es) (e:>fs,vfss)
 
 
-> lookDown :: (String,Int) -> FScopeContext -> Int -> 
+> lookDown :: (String,Int) -> FScopeContext -> Maybe Int -> 
 >                 Either (StackError) ResolveState
 > lookDown (x, 0) (EParam _ s _ _ :> es, uess) sp | x == s =
 >   Left [err "lookDown Param"]
@@ -228,9 +234,12 @@ then continues with |lookFor|.
 > lookDown (x, i) (e :> es, uess) sp =
 >     if x == (fst $ last $ maybe (error "A") id $ entryName e)
 >     then if i == 0
->          then case (|devEntries (entryDev e)|) of
->              Just zs  -> Right (Right zs, sp, entryDef e, entryScheme e)
->              Nothing  -> Right (Right B0, 0,  entryDef e, entryScheme e) 
+>          then 
+>            let edev = entryDev e 
+>            in case ((|devEntries edev|), (|devHypState edev|))  of
+>              (Just zs, Just InheritHyps)  -> Right (Right zs, sp, entryDef e, entryScheme e)
+>              (Just zs, Just NixHyps)  -> Right (Right zs, Nothing, entryDef e, entryScheme e)
+>              _  -> Right (Right B0, Just 0,  entryDef e, entryScheme e) 
 >          else lookDown (x, i-1) (es, uess) (pushSpine e sp)
 >     else lookDown (x, i) (es, uess) (pushSpine e sp)
 > lookDown (x, i) (F0 , (((y, j), es) :> uess)) sp =
@@ -242,13 +251,13 @@ then continues with |lookFor|.
 
 > lookDown (x, i) (F0, F0) fs = Left [err $ "Not in scope " ++ x]
 
-> pushSpine :: Entry Bwd -> Int -> Int
-> pushSpine (EParam _ _ _ _) sp   =  sp + 1
+> pushSpine :: Entry Bwd -> Maybe Int -> Maybe Int
+> pushSpine (EParam _ _ _ _) sp   =  (| (+1) sp |)
 > pushSpine _ sp                  =  sp
 
 
 
-> lookLocal :: RelName -> Entries -> Int -> Maybe DEF -> Maybe Scheme ->
+> lookLocal :: RelName -> Entries -> Maybe Int -> Maybe DEF -> Maybe Scheme ->
 >                  Either (StackError) ResolveResult
 > lookLocal ((x, Rel i) : ys) es sp _ _  = huntLocal (x, i) ys (reverse $ trail es) sp
 > lookLocal ((x, Abs i) : ys) es sp _ _  = huntLocal (x, i) ys (trail es) sp
@@ -256,7 +265,7 @@ then continues with |lookFor|.
 > lookLocal [] _ _   Nothing   _         = Left [err "Modules have no term representation"]
 
 
-> huntLocal :: (String, Int) -> RelName -> [Entry Bwd] -> Int ->
+> huntLocal :: (String, Int) -> RelName -> [Entry Bwd] -> Maybe Int ->
 >                      Either (StackError) ResolveResult
 > huntLocal (x, 0) ys (EParam _ s _ _ : es) as | x == s =
 >    Left [err "Params in other Devs are not in scope"] 
@@ -267,9 +276,10 @@ then continues with |lookFor|.
 > huntLocal (x, i) ys (e : es) as =
 >     if x == (fst $ last $ maybe (error "B") id $ entryName e)
 >     then if i == 0
->          then case (|devEntries (entryDev e)|) of
->              Just zs  -> lookLocal ys zs as (entryDef e) (entryScheme e)
->              Nothing  -> Left [err "Params in other Devs are not in scope"] 
+>          then case ((|devEntries (entryDev e)|),(|devHypState (entryDev e)|)) of
+>              (Just zs,Just InheritHyps)  -> lookLocal ys zs as (entryDef e) (entryScheme e)
+>              (Just zs,Just NixHyps)  -> lookLocal ys zs Nothing (entryDef e) (entryScheme e)
+>              _  -> Left [err "Params in other Devs are not in scope"] 
 >          else huntLocal (x, i-1) ys es as
 >     else huntLocal (x, i) ys es as 
 > huntLocal (x, i) ys [] as = Left [err $ "Had to give up looking for " ++ x]
@@ -453,9 +463,16 @@ shared parameters to drop, and the scheme of the name (if there is one).
 >   (mesus, mes) <- gets inBScope
 >   (nn , os , ns, ms) <- 
 >       maybe (return (failNom (defName d), Nothing, trail tsp, Nothing)) return $
->     case partNoms (defName d) (mesus,mes) [] B0 of
->       (Just (xs, Just (top, nom, sp, es))) -> do
->         let  (top', nom', i, fsc) = fromJust $ matchUp (xs :<
+>     case partNoms (defName d) (mesus,mes) [] InheritHyps B0 of
+>       (Just (NixHyps, _, Just (top, nom, sp, es))) -> do
+>         (tn,  tms)  <- nomTop top (mesus, mes <+> les)
+>         (rn,  rms)  <- nomRel nom (es <+> les) Nothing 
+>         let ms = case  null nom of
+>                        True   -> tms
+>                        _      -> rms
+>         return (tn : rn, Just sp , (trail tsp),  ms)
+>       (Just (_, xs, Just (top, nom, sp, es))) -> do
+>         let  (top', nom', i, fsc) = maybe (error "AAA") id $ matchUp (xs :<
 >                           (top, nom, sp, (F0, F0))) (fst $ foo 0 (trail tsp))
 >              mnom = take (length nom' - length nom) nom'
 >         (tn,  tms)  <- nomTop top' (mesus, mes <+> les)
@@ -466,7 +483,7 @@ shared parameters to drop, and the scheme of the name (if there is one).
 >                        (True,      False)  -> ams
 >                        (False,     _)      -> rms
 >         return ((tn : an) ++ rn, Just i , drop (bwdLength i) (trail tsp), fmap (stripScheme (bwdLength i)) ms)
->       (Just (xs, _)) -> do
+>       (Just (_, xs, _)) -> do
 >         let (top', nom', i, fsc) = fromJust $ matchUp xs (fst $ foo 0 $ trail tsp) 
 >         (tn, tms) <- nomTop top' (mesus, mes <+> les)
 >         (an, ams) <- nomAbs nom' fsc
@@ -489,30 +506,31 @@ shared parameters to drop, and the scheme of the name (if there is one).
 
 \question{Does anyone know what this does?}
 
-> partNoms :: Name -> BScopeContext -> Name 
+> partNoms :: Name -> BScopeContext -> Name -> HypState 
 >                  -> Bwd (Name, Name, Bwd (Elim EXP), FScopeContext)
->                  -> Maybe ( Bwd (Name, Name, Bwd (Elim EXP), FScopeContext) 
+>                  -> Maybe ( HypState
+>                           , Bwd (Name, Name, Bwd (Elim EXP), FScopeContext) 
 >                           , Maybe (Name,Name, Bwd (Elim EXP), Entries) ) 
-> partNoms [] bsc _ xs = Just (xs, Nothing)
-> partNoms nom@(top:rest) bsc n xs = case partNom n top bsc (F0,F0) of
->  Just (sp, Left es) -> Just (xs, Just (n ++ [top], rest, sp, es))
->  Just (sp, Right fsc) -> 
->    partNoms rest bsc (n ++ [top]) (xs:<(n ++ [top], rest, sp, fsc))
+> partNoms [] bsc _ hs xs = Just (hs, xs, Nothing)
+> partNoms nom@(top:rest) bsc n hs xs = case partNom n top bsc (F0,F0) of
+>  Just (sp, Left es, hs') -> Just (max hs hs', xs, Just (n ++ [top], rest, sp, es))
+>  Just (sp, Right fsc, hs') -> 
+>    partNoms rest bsc (n ++ [top]) (max hs hs') (xs:<(n ++ [top], rest, sp, fsc))
 >  Nothing -> Nothing
 
 
 > partNom :: Name -> (String, Int) -> BScopeContext -> FScopeContext
->                 -> Maybe (Bwd (Elim EXP), Either Entries FScopeContext)
+>                 -> Maybe (Bwd (Elim EXP), Either Entries FScopeContext, HypState)
 > partNom hd top ((esus :< (es,top')), B0) fsc | hd ++ [top] == (flatNom esus []) ++ [top'] =
->   Just (paramSpine (flat esus es),Right fsc)
+>   Just (paramSpine (flat esus es),Right fsc, InheritHyps)
 > partNom hd top ((esus :< (es,not)), B0) (js,vjss) =
 >   partNom hd top (esus,es) (F0,(not,js):>vjss)
-> partNom hd top (esus, es :< EModule n (Dev {devEntries=es'})) fsc 
+> partNom hd top (esus, es :< EModule n (Dev {devEntries=es',devHypState=hs})) fsc 
 >     | (hd ++ [top]) == n =
->   Just (paramSpine (flat esus es),Left es')
-> partNom hd top (esus, es :< EDef d (Dev {devEntries=es'}) _) fsc 
+>   Just (paramSpine (flat esus es),Left es',hs)
+> partNom hd top (esus, es :< EDef d (Dev {devEntries=es',devHypState=hs}) _) fsc 
 >     | hd ++ [top] == defName d =
->   Just (paramSpine (flat esus es),Left es')
+>   Just (paramSpine (flat esus es),Left es',hs)
 > partNom hd top (esus, es :< e) (fs, vfss)  = partNom hd top (esus, es) (e:>fs,vfss)
 > partNom _ _ _ _ = Nothing
 

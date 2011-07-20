@@ -24,7 +24,7 @@
 
 
 > data HypState = InheritHyps | NixHyps
->   deriving (Eq, Show)
+>   deriving (Eq, Show, Ord)
 
 
 \subsection{The |Dev| data-structure}
