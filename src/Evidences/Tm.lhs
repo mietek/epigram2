@@ -691,3 +691,57 @@ by |lambdable|:
 > isCan :: Tm {Body, Val, n} -> Maybe (Can, [Tm {Body, Exp, n}])
 > isCan (c :- es)  = Just (c, es)
 > isCan _          = Nothing
+
+
+
+
+
+
+> evalEager :: forall m n p s' . pi (s :: Status) .
+>           Env {Z} {n} -> Tm {p, s', n} -> Tm {Body, s, Z}
+> evalEager {s} g (L g' x b)  = L (g <+< g') x b
+> evalEager {s} g (LK b)      = LK (exp (evalEager {s} g b))
+> evalEager {s} g (c :- es)   = c :- (map (exp . evalEager {s} g) es)
+> evalEager {s} g (g' :/ e)   = evalEager {s} (g <+< g') e
+> evalEager {s} g (h :$ es)   = applysEager {s} (evalEager {s} g h)
+>                                                   (fmap (fmap (exp . evalEager {s} g)) es)
+> evalEager {s} (_, gi) (V i)           = evalEager {s} ENix (gi !.! i)
+> evalEager {s} (gl, _) (P (l, x, ty))  = case lookup l gl of
+>     Just t   -> evalEager {s} ENix t
+>     Nothing  -> P (l, x, ty) :$ B0
+> evalEager {Val} g (D (DEF _ _ (Emit t)))  = evalEager {Val} ENix t
+> evalEager {s} g (D d)                     = D d :$ B0 
+> evalEager {s} g e = error $ "evalEager: missing" 
+
+> applysEager ::  pi (s :: Status) . 
+>                     Tm {Body, s, Z} -> Bwd (Elim EXP) -> Tm {Body, s, Z}
+> applysEager {s} h B0         = h
+> applysEager {s} h (es :< e)  = applyEager {s} (applysEager {s} h es) e 
+
+
+> applyEager ::  forall s' . pi (s :: Status) . 
+>                    Tm {Body, s, Z} -> Elim (Tm {Body, s', Z}) -> Tm {Body, s, Z} 
+> applyEager {s}    (L g x b)    (A t)  = evalEager {s} (g <:< exp t) b 
+> applyEager {s}    (LK b)       (A _)  = evalEager {s} ENix b
+> applyEager {s}    (PAIR h _)   Hd     = evalEager {s} ENix h
+> applyEager {s}    (PAIR _ t)   Tl     = evalEager {s} ENix t
+> applyEager {Val}  (D d :$ az)  a
+>   | Just e <- runOpEager (defOp d) B0 (trail (az :< fmap exp a)) = e
+> applyEager {s}    (h :$ az)    a      = h :$ (az :< fmap exp a)
+> applyEager {s}    e            a = error $ "applyEager: missing " ++ show e
+>                                                ++ " $$ " ++ show a
+
+> runOpEager :: Operator -> Bwd EXP -> [ Elim EXP ] -> Maybe VAL
+> runOpEager (Emit t) oaz as = Just $ 
+>   applysEager {Val} (evalEager {Val} (zip [0..] (trail oaz),INix) t) (bwdList as)
+> runOpEager (Eat _ o) oaz (A a : as) =  runOpEager o (oaz :< a) as
+> runOpEager (Case os) oaz (A a : as) | c :- cas <- (ENil // a :: VAL) =
+>   case lookup c os of
+>     Just o -> runOpEager o oaz (map A cas ++ as)
+>     Nothing -> error "OpCase found Can it didn't like"
+> runOpEager (Split o) oaz (A a : as) =
+>   runOpEager o oaz (A ((ENil :/ a) :$ (B0 :< Hd)) : 
+>                      A ((ENil :/ a) :$ (B0 :< Tl)) : as)
+> runOpEager _ _ _ = Nothing 
+
+> evv = evalEager {Val} ENil

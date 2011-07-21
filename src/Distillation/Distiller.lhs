@@ -63,14 +63,16 @@
 >     |)
 >   Nothing -> throwError' $ err "distillSpine:"
 >                            ++ errTyTm (SET :>: exp ty)
->                            ++ err "is not lambdable"
+>                            ++ err "is not lambdable, so"
+>                            ++ errTm (L g n b) ++ err "won't fit"
 > distill (ty :>: LK b) l = case lambdable ty of
 >   Just (_, s, t) -> 
 >      (| DLK  (distill (ev (t (error "LKdistill")) :>: ev b) l)
 >      |)
 >   Nothing -> throwError' $ err "distillSpine:"
 >                            ++ errTyTm (SET :>: exp ty)
->                            ++ err "is not lambdable"
+>                            ++ err "is not lambdable, so"
+>                            ++ errTm (LK b) ++ err "won't fit"
 
 We don't always want to do this, but often do want to, go figure:
 
@@ -178,7 +180,10 @@ We don't always want to do this, but often do want to, go figure:
 >       return $ as'
 >     Nothing -> throwError' $ err "distillSpine:"
 >                            ++ errTyTm (SET :>: exp ty)
->                            ++ err "is not lambdable"
+>                            ++ err "is not a function type, so"
+>                            ++ errTm (exp haz) ++ err "can't be applied to"
+>                            ++ errTm a
+
 > distillSpine (ty :>: (haz, A a : as, sch)) l = 
 >   case lambdable ty of 
 >     Just (k, s, t) -> do
@@ -187,7 +192,9 @@ We don't always want to do this, but often do want to, go figure:
 >       return $ A a' : as'
 >     Nothing -> throwError' $ err "distillSpine:"
 >                            ++ errTyTm (SET :>: exp ty)
->                            ++ err "is not lambdable"
+>                            ++ err "is not a function type, so"
+>                            ++ errTm (exp haz) ++ err "can't be applied to"
+>                            ++ errTm a
 > distillSpine (ty :>: (haz , Hd : as, _)) l = case projable ty of
 >   Just (s, t) -> 
 >     (| (Hd :) 

@@ -470,19 +470,21 @@ shared parameters to drop, and the scheme of the name (if there is one).
 >         let ms = case  null nom of
 >                        True   -> tms
 >                        _      -> rms
->         return (tn : rn, Just sp , (trail tsp),  ms)
->       (Just (_, xs, Just (top, nom, sp, es))) -> do
->         let  (top', nom', i, fsc) = maybe (error "AAA") id $ matchUp (xs :<
->                           (top, nom, sp, (F0, F0))) (fst $ foo 0 (trail tsp))
->              mnom = take (length nom' - length nom) nom'
->         (tn,  tms)  <- nomTop top' (mesus, mes <+> les)
->         (an,  ams)  <- nomAbs mnom fsc
->         (rn,  rms)  <- nomRel nom (es <+> les) Nothing 
->         let ms = case  (null nom,  null mnom) of
+>         return (tn : rn, Nothing , trail tsp,  ms)
+>       (Just (_, xs, Just (top, nom, sp, es))) ->
+>         case matchUp (xs :<
+>                           (top, nom, sp, (F0, F0))) (fst $ foo 0 (trail tsp)) of
+>             Nothing -> Nothing
+>             Just (top', nom', i, fsc) -> do
+>               let mnom = take (length nom' - length nom) nom'
+>               (tn,  tms)  <- nomTop top' (mesus, mes <+> les)
+>               (an,  ams)  <- nomAbs mnom fsc
+>               (rn,  rms)  <- nomRel nom (es <+> les) Nothing 
+>               let ms = case  (null nom,  null mnom) of
 >                        (True,      True)   -> tms
 >                        (True,      False)  -> ams
 >                        (False,     _)      -> rms
->         return ((tn : an) ++ rn, Just i , drop (bwdLength i) (trail tsp), fmap (stripScheme (bwdLength i)) ms)
+>               return ((tn : an) ++ rn, Just i , drop (bwdLength i) (trail tsp), fmap (stripScheme (bwdLength i)) ms)
 >       (Just (_, xs, _)) -> do
 >         let (top', nom', i, fsc) = fromJust $ matchUp xs (fst $ foo 0 $ trail tsp) 
 >         (tn, tms) <- nomTop top' (mesus, mes <+> les)

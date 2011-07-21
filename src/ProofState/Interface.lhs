@@ -161,7 +161,9 @@ level. For making modules, we use |makeModule|.
 >                   ,  devTip           =  Module 
 >                   ,  devNSupply       =  freshNSpace nsupply s
 >                   ,  devSuspendState  =  SuspendNone 
->                   ,  devLevelCount    =  boys inScope
+>                   ,  devLevelCount    =  (case hypstate of
+>                                             NixHyps      -> 0
+>                                             InheritHyps  -> boys inScope)
 >                   ,  devHypState      =  hypstate
 >                   }
 >     putEntryAbove $ EModule  {  name   =  n 
@@ -224,6 +226,9 @@ cursor. The meat is actually in |makeKinded|, below.
 > make :: (String :<: TY) -> ProofState EXP
 > make = makeKinded InheritHyps Nothing Waiting
 
+> make' :: (String :<: TY) -> ProofState (DEF, EXP)
+> make' = makeKinded' InheritHyps Nothing Waiting 
+
 When making a new definition, the reference to this definition bears a
 \emph{hole kind}
 (Section~\ref{subsec:Evidences.Tm.references}). User-generated goals
@@ -236,7 +241,12 @@ mood such as |Hoping| or |Crying|.
 
 > makeKinded :: HypState -> Maybe String ->  HKind -> (String :<: TY) -> 
 >                                ProofState EXP
-> makeKinded hypstate manchor holeKind (name :<: ty) = do
+> makeKinded hypstate manchor holeKind (name :<: ty) =
+>     snd <$> makeKinded' hypstate manchor holeKind (name :<: ty)
+
+> makeKinded' :: HypState -> Maybe String ->  HKind -> (String :<: TY) -> 
+>                                ProofState (DEF, EXP)
+> makeKinded' hypstate manchor holeKind (name :<: ty) = do
 >     -- Check that the type is indeed a type
 >     checkHere (SET :>: ty) 
 >                     `pushError`  
@@ -259,14 +269,16 @@ mood such as |Hoping| or |Crying|.
 >                    ,  devTip           =  Unknown ty holeKind
 >                    ,  devNSupply       =  freshNSpace nsupply goalName
 >                    ,  devSuspendState  =  SuspendNone
->                    ,  devLevelCount    =  bwdLength binScope
+>                    ,  devLevelCount    =  (case hypstate of
+>                                             NixHyps      -> 0
+>                                             InheritHyps  -> bwdLength binScope)
 >                    ,  devHypState      =  hypstate
 >                    }
 >     -- Put the entry in the proof context
 >     putDevNSupply $ freshen nsupply
 >     putEntryAbove $ EDef def dev Nothing
 >     -- Return a reference to the goal
->     return $  (D def :$ B0) $$$ fmap (\x -> A (P x :$ B0)) binScope
+>     return (def, (D def :$ B0) $$$ fmap (\x -> A (P x :$ B0)) binScope)
 >  where 
 >    boys :: Entries -> Bwd (Int, String, TY)
 >    boys B0 = B0

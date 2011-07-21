@@ -325,8 +325,8 @@ methods, then returns to the original goal.
 > elimSimplify tt = do
 >     methods <- elim tt
 >     simpTrace "Eliminated!"
->     toFirstMethod
->     replicateM_ (length methods) (optional problemSimplify >> goDown)
+>     -- toFirstMethod
+>     -- replicateM_ (length methods) (optional problemSimplify >> goDown)
 >     goOut
 
 

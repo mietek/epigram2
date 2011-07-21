@@ -342,6 +342,11 @@ let us extract such spine from a list of entries:
 > paramSpine (ez :< (EParam _ s t l)) = paramSpine ez :< A (P (l, s, t) :$ B0)
 > paramSpine (ez :< _) = paramSpine ez
 
+> paramsBwd :: Entries -> Bwd (Int, String, TY)
+> paramsBwd B0 = B0
+> paramsBwd (ez :< (EParam _ s t l)) = paramsBwd ez :<  (l, s, t) 
+> paramsBwd (ez :< _) = paramsBwd ez
+
 > params' :: Entries -> [ (Int, String, TY) ]
 > params' es = herp es []
 >   where herp :: Entries -> [ (Int, String, TY) ] -> [ (Int, String, TY) ]
