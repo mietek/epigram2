@@ -98,8 +98,8 @@
 
 \input{Tactics/Introduction.tex}
 
+%include Tactics/Elimination.lhs
 %include Tactics/Information.lhs
-% %include Tactics/Elimination.lhs
 %include Tactics/PropositionSimplify.lhs
 % %include Tactics/ProblemSimplify.lhs
 % %include Tactics/Record.lhs
