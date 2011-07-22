@@ -17,6 +17,7 @@
 > import Data.Maybe
 
 > import Evidences.Tm
+> import Evidences.Primitives
 > import Evidences.NameSupply
 > import Evidences.TypeCheckRules
 > import Evidences.ErrorHandling
@@ -234,4 +235,6 @@ We don't always want to do this, but often do want to, go figure:
 >                                        ((_Tc, _Tas) :>: t) =
 >   (| (Out :) (distillSpine (PRF q :>: (tm $$ Out, as, Nothing)) l) |)
 > -- [/Feature = Equality]
+> distillSpine (IMU _I _D i :>: (tm, Out : as, _)) l =
+>   (| (Out :) (distillSpine ((ev $ def idescDEF) $$$ (B0 :< A _I :< A (_D $$. i) :< A (la "i" $ \i' -> IMU (nix _I) (nix _D) i')) :>: (tm $$ Out, as, Nothing)) l) |)
 > distillSpine (_ :>: (_, (t : _), _)) _  = throwError' (err $ "dS: " ++ show t)

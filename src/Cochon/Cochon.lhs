@@ -493,7 +493,7 @@ Import more tactics from an aspect:
 >     "eliminate <eliminator> - eliminates with a motive.") :
 
 >   CochonTactic
->         {  ctName = "idata"
+>         {  ctName = "data"
 >         ,  ctParse = do 
 >              nom <- tokenString
 >              pars <- tokenListArgs (bracket Round $ tokenPairArgs

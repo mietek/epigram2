@@ -83,6 +83,7 @@
 >   Hd : etaQuoteSp {n} l (e $$ Hd :<: ev s) as
 > etaQuoteSp {n} l (e :<: SIGMA s t) (Tl : as) =
 >   Tl : etaQuoteSp {n} l (e $$ Tl :<: ev t $$. (e $$ Hd)) as 
+> etaQuoteSp {n} l (e :<: t) (Out : as) | Just ty' <- outable t = Out : etaQuoteSp {n} l (e $$ Out :<: ev ty') as 
 
 > etahQuote :: pi (n :: Nat) . Int -> Tm {Head, Val, Z} -> (Tm {Head, Val, n} :<: TY)
 > etahQuote {n} l' (P (l, x, s)) = case levi {n} (l-l') of
