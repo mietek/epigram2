@@ -62,25 +62,23 @@ here.
 >   Just (_, _S, _T) -> chk l (_T undefined :>: (ENix, evalEager {Exp} g b)) 
 >   _ -> throwError' $ err ("klambda inhabiting non-canonical type")
 
-> {-
-> chk l (_T :>: (g, t@(V _ :$ _))) = chk l (_T :>: (ENil, eval {Val} g t))
-> chk l (_T :>: (g@(gl,_), t@(P (pl,_,_) :$ _))) | Just _ <- lookup pl gl = 
->   chk l (_T :>: (ENil, eval {Val} g t))
+< chk l (_T :>: (g, t@(V _ :$ _))) = chk l (_T :>: (ENil, eval {Val} g t))
+< chk l (_T :>: (g@(gl,_), t@(P (pl,_,_) :$ _))) | Just _ <- lookup pl gl = 
+<   chk l (_T :>: (ENil, eval {Val} g t))
 
-> chk l (_T :>: (g, g' :/ t)) = chk l (_T :>: (g <+< g', t))
-> chk l (_T :>: (g, t :$ B0)) = chk l (_T :>: (g , t))
+< chk l (_T :>: (g, g' :/ t)) = chk l (_T :>: (g <+< g', t))
+< chk l (_T :>: (g, t :$ B0)) = chk l (_T :>: (g , t))
 
-> chk l (_T :>: (g, t@(h :$ _))) | isRedHead h
->     = chk l (_T :>: (ENil, eval {Val} g t))
->   where
->     isRedHead :: Tm {p, s, n} -> Bool
->     isRedHead (h :$ B0)  = isRedHead h
->     isRedHead (_ :/ h)   = isRedHead h
->     isRedHead (V _)      = True
->     isRedHead (LK _)     = True
->     isRedHead (L _ _ _)  = True
->     isRedHead _          = False
-> -}
+< chk l (_T :>: (g, t@(h :$ _))) | isRedHead h
+<     = chk l (_T :>: (ENil, eval {Val} g t))
+<   where
+<     isRedHead :: Tm {p, s, n} -> Bool
+<     isRedHead (h :$ B0)  = isRedHead h
+<     isRedHead (_ :/ h)   = isRedHead h
+<     isRedHead (V _)      = True
+<     isRedHead (LK _)     = True
+<     isRedHead (L _ _ _)  = True
+<     isRedHead _          = False
 
 > chk l (_T :>: t@(g,tm)) = do
 >   _T' <- inf l (g, tm)
