@@ -54,14 +54,15 @@ here.
 >     chks l (_Ts :>: (g, es))
 >   _ -> throwError' $ err "canonical inhabitant of non-canonical type"
 > chk l (_T :>: (g, L g' x b)) = case lambdable (ev _T) of
->   Just (_, _S, _T) -> chk (l + 1) (_T x' :>: (g <+< g' <:< x', b)) where
+>   Just (_, _S, _T) -> chk (l + 1) (_T x' :>: (ENix, evalEager {Exp} (g <+< g' <:< x') b)) where
 >     x' = P (l, x, _S) :$ B0
 >   _ -> throwError' $ err ("lambda inhabiting non-canonical type: " ++ 
 >                       (show $ ev _T))
 > chk l (_T :>: (g, LK b)) = case lambdable (ev _T) of 
->   Just (_, _S, _T) -> chk l (_T undefined :>: (g, b)) 
+>   Just (_, _S, _T) -> chk l (_T undefined :>: (ENix, evalEager {Exp} g b)) 
 >   _ -> throwError' $ err ("klambda inhabiting non-canonical type")
 
+> {-
 > chk l (_T :>: (g, t@(V _ :$ _))) = chk l (_T :>: (ENil, eval {Val} g t))
 > chk l (_T :>: (g@(gl,_), t@(P (pl,_,_) :$ _))) | Just _ <- lookup pl gl = 
 >   chk l (_T :>: (ENil, eval {Val} g t))
@@ -79,6 +80,7 @@ here.
 >     isRedHead (LK _)     = True
 >     isRedHead (L _ _ _)  = True
 >     isRedHead _          = False
+> -}
 
 > chk l (_T :>: t@(g,tm)) = do
 >   _T' <- inf l (g, tm)

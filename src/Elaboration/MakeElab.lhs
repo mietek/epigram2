@@ -51,7 +51,7 @@ We can type-check a term using the |eCheck| instruction.
 > eCheck :: (TY :>: EXP) -> Elab ()
 > eCheck (ty :>: tm) = do
 >     l <- eAskDevLev
->     chk l (ty :>: (ENil,tm))
+>     chk l (ty :>: (ENix, evalEager {Exp} ENix tm))
 
 The |eCoerce| instruction attempts to coerce a value from the first type to
 the second type, either trivially (if the types are definitionally equal) or by

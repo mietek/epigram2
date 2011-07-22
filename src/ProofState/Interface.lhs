@@ -38,7 +38,7 @@
 > chkPS :: (TY :>: EXP) -> ProofState ()
 > chkPS (ty :>: e) = do
 >  lev <- getDevLev
->  chk lev (ty :>: (ENil, e))
+>  chk lev (ty :>: (ENix, evalEager {Exp} ENix e))
 
 > infPS :: EXP -> ProofState TY
 > infPS e = do
