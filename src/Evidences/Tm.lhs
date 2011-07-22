@@ -710,8 +710,11 @@ by |lambdable|:
 >     Just t   -> evalEager {s} ENix t
 >     Nothing  -> P (l, x, ty) :$ B0
 > evalEager {Val} g (D (DEF _ _ (Emit t)))  = evalEager {Val} ENix t
-> evalEager {s} g (D d)                     = D d :$ B0 
-> evalEager {s} g e = error $ "evalEager: missing" 
+> evalEager {s} g (D d)                     = D d :$ B0
+> evalEager {s} g (Refl _X x) = Refl (exp (evalEager {s} g _X)) (exp (evalEager {s} g x)) :$ B0
+> evalEager {s} g (Coeh Coe _S _T _Q x) = evalEager {s} ENil . fst $ (coeh (evalEager {Val} g _S) (evalEager {Val} g _T) (evalEager {Val} g _Q) (evalEager {Val} g x))
+> evalEager {s} g (Coeh Coh _S _T _Q x) = evalEager {s} ENil . snd $ (coeh (evalEager {Val} g _S) (evalEager {Val} g _T) (evalEager {Val} g _Q) (evalEager {Val} g x))
+> evalEager {s} g e = error $ "evalEager: missing: " 
 
 > applysEager ::  pi (s :: Status) . 
 >                     Tm {Body, s, Z} -> Bwd (Elim EXP) -> Tm {Body, s, Z}
@@ -728,6 +731,34 @@ by |lambdable|:
 > applyEager {Val}  (D d :$ az)  a
 >   | Just e <- runOpEager (defOp d) B0 (trail (az :< fmap exp a)) = e
 > applyEager {s}    (h :$ az)    a      = h :$ (az :< fmap exp a)
+> applyEager {s} (CON t) Out = evalEager {s} ENil t
+> -- [Feature = Eq]
+> applyEager {s} (Ext :- [f]) (QA a b q) =
+>   applyEager {s} (applyEager {s} (applyEager {s} (evalEager {s} ENil f) (A a)) (A b)) (A q)
+> applyEager {s} (Refl _F f :$ B0) (QA x _ q) | isRefl (ENil // q :: VAL) = case ev _F of
+>   PI _S _T -> Refl (exp (applyEager {s} (evalEager {s} ENil _T) (A (evalEager {s} ENil x)))) (exp (applyEager {s} (evalEager {s} ENil f) (A (evalEager {s} ENil x)))) :$ B0
+> applyEager {s} q Sym | isRefl (ENil // q :: VAL) = evalEager {s} ENil q
+> applyEager {s} (r@(Refl _T t) :$ B0) Hd = case (ev _T, ev t) of
+>   (SET, PI _S _T) -> Refl SET (exp (evalEager {s} ENil _S)) :$ B0
+>   (SET, SIGMA _S _T) -> Refl SET (exp (evalEager {s} ENil _S)) :$ B0
+>   (SIGMA _S _T, p) -> Refl (exp (evalEager {s} ENil _S)) (exp (applyEager {s} (evalEager {s} ENil p) Hd)) :$ B0
+>   (PROP, p) -> la "p" $ \ p -> p
+>   _ -> r :$ (B0 :< Hd)
+> applyEager {s} (r@(Refl _T t) :$ B0) Tl = case (ev _T, ev t) of
+>   (SET, PI _S _T) -> Refl (exp (evalEager {s} ENil _S) --> SET) (exp (evalEager {s} ENil _T)) :$ B0
+>   (SET, SIGMA _S _T) -> Refl (exp (evalEager {s} ENil _S) --> SET) (exp (evalEager {s} ENil _T)) :$ B0
+>   (SIGMA _S _T, p) -> Refl (exp (applyEager {s} (evalEager {s} ENil _T) (A (applyEager {s} (evalEager {s} ENil p) Hd)))) (exp (applyEager {s} (evalEager {s} ENil p) Tl)) :$ B0
+>   (PROP, p) -> la "p" $ \ p -> p
+>   _ -> r :$ (B0 :< Tl)
+> applyEager {s} (h :$ (ss :< Sym)) Sym = applysEager {s} (h :$ B0) ss
+> applyEager {s} (PAIR a b) Sym = PAIR (exp (applyEager {s} (evalEager {s} ENil a) Sym)) (exp (applyEager {s} (evalEager {s} ENil b) Sym))
+> applyEager {s} (CON z) Sym = CON (exp (evalEager {s} ENil z))
+> applyEager {s} (Ext :- [f]) Sym = Ext :- [la "a" $ \ a -> la "b" $ \ b -> la "q" $ \ q ->
+>   nix f :$ (B0 :< A b :< A a :< A (V Fz {- q, yuk -} :$ (B0 :< Sym)) :< Sym)]
+> -- [/Feature = Eq]
+> -- [Feature = Label]
+> applyEager {s} (RET t) (Call l) = evalEager {s} ENil t
+> -- [/Feature = Label]
 > applyEager {s}    e            a = error $ "applyEager: missing " ++ show e
 >                                                ++ " $$ " ++ show a
 
