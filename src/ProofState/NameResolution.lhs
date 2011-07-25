@@ -50,42 +50,45 @@ required for name resolution: a list of the above entries and last
 component of the current entry's name for each layer, along with the
 entries in the current development.
 
-> type BScopeContext =  (Bwd (Entries, (String, Int)), Entries) 
+> type BScopeContext =  (Bwd (Entries, (String, Int), HypState), Entries) 
 
 We can extract such a thing from a |ProofContext| using |inBScope|:
 
 > inBScope :: ProofContext -> BScopeContext
 > inBScope (PC layers dev _) = 
->   (  fmap (\l -> (aboveEntries l, last . currentEntryName . currentEntry $ l)) layers
+>   (  fmap (\l -> (  aboveEntries l
+>                  ,  last . currentEntryName . currentEntry $ l
+>                  ,  layHypState l 
+>                  )) layers
 >   ,  devEntries dev)
 
 An |FScopeContext| is the forwards variant:
 
 > type FScopeContext =  ( Fwd (Entry Bwd)
->                       , Fwd ((String, Int), Fwd (Entry Bwd))) 
+>                       , Fwd ((String, Int), HypState, Fwd (Entry Bwd))) 
 
 We can reverse the former to produce the latter:
 
 > bToF :: BScopeContext -> FScopeContext
-> bToF (uess :< (es,u),es') = 
+> bToF (uess :< (es,u,hs),es') = 
 >     let (fs, vfss) = bToF (uess,es) in 
->     (fs, (u,es' <>> F0) :> vfss)
+>     (fs, (u,hs,es' <>> F0) :> vfss)
 > bToF (B0,es) = (es <>> F0,F0) 
 
 
 The |flat| function, up to currying, takes a |BScopeContext| and flattens it
 to produce a list of entries.
 
-> flat :: Bwd (Entries, (String,Int)) -> Entries -> Entries
+> flat :: Bwd (Entries, (String,Int), HypState) -> Entries -> Entries
 > flat B0 es = es
-> flat (esus :< (es',_)) es = flat esus (es' <+> es)
+> flat (esus :< (es',_,_)) es = flat esus (es' <+> es)
 
 The |flatNom| function produces a name by prepending its second argument with
 the name components from the backwards list. 
 
-> flatNom :: Bwd (Entries, (String,Int)) -> Name -> Name
+> flatNom :: Bwd (Entries, (String,Int), HypState) -> Name -> Name
 > flatNom B0 nom = nom
-> flatNom (esus :< (_,u)) nom = flatNom esus (u : nom)
+> flatNom (esus :< (_,u,_)) nom = flatNom esus (u : nom)
 
 \subsection{Resolving relative names to references}
 
@@ -197,13 +200,17 @@ then continues with |lookFor|.
 
 
 > lookUp :: (String, Int) -> Maybe Int -> BScopeContext -> FScopeContext -> 
->               Either (StackError) (Either (Int, String, TY) ResolveState)
+>               Either StackError (Either (Int, String, TY) ResolveState)
 > lookUp (x,i) l (B0, B0) fs = Left [err $ "lookup: Not in scope " ++ x]
-> lookUp (x,i) l ((esus :< (es,(y,j))),B0) (fs,vfss) | x == y = 
+> lookUp (x,i) l ((esus :< (es,(y,j),hs)),B0) (fs,vfss) | x == y = 
 >   if i == 0 then Right (Right (Left (fs,vfss), l, Nothing, Nothing))
->             else lookUp (x,i-1) l (esus,es) (F0,((y,j),fs) :> vfss)
-> lookUp (x,i) l ((esus :< (es,(y,j))),B0) (fs,vfss) = 
->   lookUp (x,i) l (esus,es) (F0,((y,j),fs) :> vfss)
+>             else lookUp (x,i-1) (case hs of InheritHyps -> l
+>                                             NixHyps -> Nothing)
+>                         (esus,es) (F0,((y,j),hs,fs) :> vfss)
+> lookUp (x,i) l ((esus :< (es,(y,j),hs)),B0) (fs,vfss) = 
+>   lookUp (x,i) (case hs of InheritHyps -> l
+>                            NixHyps -> Nothing) 
+>                (esus,es) (F0,((y,j),hs,fs) :> vfss)
 > lookUp (x,i) l (esus, es :< e@(EModule n (Dev {devHypState=hs, devEntries=es'}))) (fs,vfss) | lastNom n == x =
 >   if i == 0 then Right (Right (Right es', case hs of InheritHyps -> l
 >                                                      NixHyps -> Nothing
@@ -242,11 +249,12 @@ then continues with |lookFor|.
 >              _  -> Right (Right B0, Just 0,  entryDef e, entryScheme e) 
 >          else lookDown (x, i-1) (es, uess) (pushSpine e sp)
 >     else lookDown (x, i) (es, uess) (pushSpine e sp)
-> lookDown (x, i) (F0 , (((y, j), es) :> uess)) sp =
+> lookDown (x, i) (F0 , (((y, j), hs, es) :> uess)) sp =
 >     if x == y
 >     then if i == 0
 >          then Right (Left (es, uess), sp, Nothing, Nothing)
->          else lookDown (x, i-1) (es, uess) sp
+>          else lookDown (x, i-1) (es, uess) (case hs of InheritHyps -> sp
+>                                                        NixHyps -> Nothing)
 >     else lookDown (x, i) (es, uess) sp 
 
 > lookDown (x, i) (F0, F0) fs = Left [err $ "Not in scope " ++ x]
@@ -435,9 +443,9 @@ shared parameters to drop, and the scheme of the name (if there is one).
 >   return $ maybe (failNom [(s,l)]) id $ findParam l s (mesus, mes <+> les) 0
 
 > findParam :: Int -> String -> BScopeContext -> Int -> Maybe RelName
-> findParam l s (esus :< (es', (s',_)), B0) o | s == s' = 
+> findParam l s (esus :< (es', (s',_), _), B0) o | s == s' = 
 >   findParam l s (esus, es') (o+1)
-> findParam l s (esus :< (es', u'), B0) o = 
+> findParam l s (esus :< (es', u', _), B0) o = 
 >   findParam l s (esus, es') o
 > findParam l s (esus, es :< EModule n _) o | s == lastNom n =
 >   findParam l s (esus, es) (o+1)
@@ -523,10 +531,10 @@ shared parameters to drop, and the scheme of the name (if there is one).
 
 > partNom :: Name -> (String, Int) -> BScopeContext -> FScopeContext
 >                 -> Maybe (Bwd (Elim EXP), Either Entries FScopeContext, HypState)
-> partNom hd top ((esus :< (es,top')), B0) fsc | hd ++ [top] == (flatNom esus []) ++ [top'] =
->   Just (paramSpine (flat esus es),Right fsc, InheritHyps)
-> partNom hd top ((esus :< (es,not)), B0) (js,vjss) =
->   partNom hd top (esus,es) (F0,(not,js):>vjss)
+> partNom hd top ((esus :< (es,top',hs)), B0) fsc | hd ++ [top] == (flatNom esus []) ++ [top'] =
+>   Just (paramSpine (flat esus es),Right fsc, hs)
+> partNom hd top ((esus :< (es,not,hs)), B0) (js,vjss) =
+>   partNom hd top (esus,es) (F0,(not,hs,js):>vjss)
 > partNom hd top (esus, es :< EModule n (Dev {devEntries=es',devHypState=hs})) fsc 
 >     | (hd ++ [top]) == n =
 >   Just (paramSpine (flat esus es),Left es',hs)
@@ -567,11 +575,11 @@ through the context, counting the number of things in scope with the same last
 name component. This also returns the scheme attached, if there is one.
 
 > countB :: Int -> Name -> BScopeContext -> Maybe (Int, Maybe Scheme)
-> countB i n (esus :< (es', u'), B0)
+> countB i n (esus :< (es', u',_), B0)
 >   | last n == u' && flatNom esus [] == init n  = (| (i, Nothing) |)
-> countB i n (esus :< (es', u'), B0)
+> countB i n (esus :< (es', u',_), B0)
 >   | lastNom n == fst u'                        = countB (i+1)  n (esus, es')
-> countB i n (esus :< (es', u'), B0)             = countB i      n (esus, es')
+> countB i n (esus :< (es', u',_), B0)             = countB i      n (esus, es')
 >
 > countB i n (esus, es :< EModule n' (Dev {devEntries=es'}))
 >   | n == n'                                    = (| (i, Nothing) |)
@@ -599,7 +607,7 @@ location but the spine is different.
 > nomAbs [u] (es,uess) = do
 >   (v,ms) <- findF 0 u es
 >   (| ([v],ms) |)
-> nomAbs ((x,_):nom) (es,(_,es'):>uess) = do 
+> nomAbs ((x,_):nom) (es,(_,_,es'):>uess) = do 
 >   (nom',ms) <- nomAbs nom (es',uess)
 >   case countF x es of
 >     0 -> (| ((x,Rel 0) : nom', ms) |)
