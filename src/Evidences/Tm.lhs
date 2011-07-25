@@ -451,6 +451,10 @@ This thing does coercion and coherence.
 
 > fortran :: String -> [Tm {Body, Val, n}] -> Tm {Body, Val, n} -> String
 > fortran _ (L _ s _:_) _ = s
+> fortran _ (D d :$ as : []) _ | Just s <- stillEating (defOp d) as = s
+>   where stillEating (Eat s _) B0 = s
+>         stillEating (Eat _ d) (as :< _) = stillEating d as
+>         stillEating _ _ = Nothing
 > fortran s (_:x) y = fortran s x y
 > fortran s [] _ = s
 
