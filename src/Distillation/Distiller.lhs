@@ -123,6 +123,24 @@ We don't always want to do this, but often do want to, go figure:
 >   (| (DEq (DTY _S' s') (DTY _T' t')) |)
 > -- [/Feature = Equality]
 
+> -- [Feature = IDesc]
+> distill (IMU _I _D i :>: CON x) l  |  IFSIGMA _E _T  <- evv (_D $$. i)
+>                                    ,  PAIR c as      <- ev  x           = do
+>   c' <- distill (ENUMT (exp _E) :>: ev c) l
+>   as' <- distill (ev (def idescDEF $$$. 
+>                        (B0 :< _I :< (def switchDEF $$$. 
+>                                        (B0 :< _E :< c
+>                                            :< LK (def iDescDEF $$. _I)
+>                                            :<  _T)) 
+>                            :< (la "i'" $ \i' -> IMU (nix _I) (nix _D) i')))
+>                    :>: ev as) l
+>   case c' of 
+>     DTAG c'' -> (| (DC (Tag c'') (listy as')) |)
+>     _ -> (| (DPAIR c' as') |)
+>  where  listy (DPAIR x y) = x : listy y
+>         listy _ = []
+> -- [/Feature = IDesc] 
+
 > distill ((tyc :- tyas) :>: (c :- as)) l = case canTy ((tyc , tyas) :>: c) of
 >   Nothing -> throwError' $ err "Tin thadger wasp unit"
 >                            ++ err "\ncanonical type"
