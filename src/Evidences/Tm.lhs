@@ -205,6 +205,7 @@
 >   Hole   :: Operator
 >   Case   :: [(Can , Operator)] -> Operator
 >   Split  :: Operator -> Operator
+>   GetTag :: String -> (String -> Operator) -> Operator
 
 > type OpMaker = Int -> Operator 
 
@@ -224,6 +225,9 @@
 
 > cases :: [(Can , OpMaker)] -> OpMaker
 > cases ps i = Case $ map (\(c,om) -> (c,om i)) ps
+
+> gettag :: String -> (String -> OpMaker) -> OpMaker
+> gettag s f i = GetTag s $ \s' -> f s' i
 
 > def :: DEF -> EXP
 > def d = D d :$ B0
@@ -423,6 +427,8 @@
 > runOp (Split o) oaz (A a : as) =
 >   runOp o oaz (A ((ENil :/ a) :$ (B0 :< Hd)) : 
 >                A ((ENil :/ a) :$ (B0 :< Tl)) : as)
+> runOp (GetTag s f) oaz (A a : as) | TAG s <- ev a = runOp (f s) oaz as
+> runOp (GetTag s f) oaz (A a : as) = runOp (f s) oaz as
 > runOp _ _ _ = Nothing 
 
 This thing does coercion and coherence.
@@ -777,6 +783,8 @@ by |lambdable|:
 > runOpEager (Split o) oaz (A a : as) =
 >   runOpEager o oaz (A ((ENil :/ a) :$ (B0 :< Hd)) : 
 >                      A ((ENil :/ a) :$ (B0 :< Tl)) : as)
+> runOpEager (GetTag s f) oaz (A a : as) | TAG s <- ev a = runOpEager (f s) oaz as
+> runOpEager (GetTag s f) oaz (A a : as) = runOpEager (f s) oaz as
 > runOpEager _ _ _ = Nothing 
 
 > evv = evalEager {Val} ENil

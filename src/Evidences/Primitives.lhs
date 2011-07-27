@@ -197,10 +197,11 @@
 >                                     (wr _X)))
 >             ,  (Su , cases
 >              [  (Ze {- IProd -}, 
->                    speat "u" $ \_ -> speat "C" $ \_C -> 
+>                    split $ gettag "x" $ \u -> speat "C" $ \_C -> 
 >                      speat "D" $ \_D -> eat "_" $ \_ -> eat "X" $ \_X ->
->                    emit $ TIMES  (wr (def idescDEF) _I _C _X) 
->                                  (wr (def idescDEF) _I _D _X))
+>                    emit $ SIGMA  (wr (def idescDEF) _I _C _X) 
+>                             (la u $ \_ ->
+>                                (wr (def idescDEF) (wr _I) (wr _D) (wr _X))))
 >        ])])])])])])])]
 
 > iAllDEF :: DEF
@@ -247,9 +248,9 @@
 >                                       _X t)
 >             ,  (Su , cases
 >              [  (Ze {- IProd -}, 
->                    speat "u" $ \u -> speat "C" $ \_C -> speat "D" $ \_D -> eat "_" $ \_ -> 
+>                    split $ gettag "x" $ \u -> speat "C" $ \_C -> speat "D" $ \_D -> eat "_" $ \_ -> 
 >                    eat "X" $ \_X -> speat "c" $ \c -> eat "d" $ \d ->
->                    emit $ IPROD (wr (TAG "h")) -- can we make a better name choice here please?
+>                    emit $ IPROD (wr (TAG (u ++ "h"))) 
 >                                 (wr (def iAllDEF) _I _C _X c) 
 >                                 (wr (def iAllDEF) _I _D _X d))
 >        ])])])])])])])]  

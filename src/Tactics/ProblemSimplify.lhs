@@ -126,7 +126,7 @@ Given a function from a $\Sigma$-type, we can split it into its components.
 >     dd <- giveOutBelow (Evidences.Tm.exp $ ev t $$. toBody h)
 >     es <- getParamsInScope
 >     let  e = def dd $$$. bwdList es
->          mt =  (("d", d) ->> \a ->
+>          mt =  ((fortran "d" [ev r] undefined, d) ->> \a ->
 >                 ("r", wr r a) ->> \b ->   
 >                 wr e (PAIR a b))
 >     x <- simplifyGoal False mt
