@@ -6,7 +6,7 @@
 > {-# OPTIONS_GHC -F -pgmF she #-}
 > {-# LANGUAGE TypeOperators, GADTs, KindSignatures, RankNTypes,
 >     MultiParamTypeClasses, TypeSynonymInstances, FlexibleInstances,
->     FlexibleContexts, ScopedTypeVariables, TypeFamilies #-}
+>     FlexibleContexts, ScopedTypeVariables, TypeFamilies, PatternGuards #-}
 
 > module Evidences.EtaQuote where
 
@@ -36,32 +36,21 @@
 > etaQuote l (t :>: e) = etaQuoten {Z} l (ev t :>: e)
 
 > etaQuoten :: pi (n :: Nat) . Int -> (VAL :>: EXP) -> Tm {Body, Val, n}
-> etaQuoten {n} l (PI s t :>: f) = 
->   L ENil nom (exp (etaQuoten {S n} l (ev (t $$. x) :>: f $$. x)))
->   where x :: EXP 
->         x = P (l + mkInt n, nom, exp s) :$ B0
->         nom = fortran "x" [ev f, ev t] undefined 
-> etaQuoten {n} l (SIGMA s t :>: p) = 
->   PAIR (exp (etaQuoten {n} l (ev s :>: p $$ Hd))) 
->        (exp (etaQuoten {n} l (ev (t $$. (p $$ Hd)) :>: p $$ Tl)))
-> etaQuoten {n} l (ONE :>: _) = ZERO
+> etaQuoten {n} l = etaQuoten' {n} l False
+
+> etaQuoten' :: pi (n :: Nat) . Int -> Bool -> (VAL :>: EXP) -> Tm {Body, Val, n}
 > -- [Feature = Prop]
-> etaQuoten {n} l (PRF _P :>: p) = CHKD (exp (etaQuotePrf {n} l (ev _P :>: p)))
-> -- [/Feature = Prf]
-> etaQuoten {n} l (t :>: e) = etaQuotev {n} l (t :>: ev e)
-
-> etaQuotePrf :: pi (n :: Nat) . Int -> (VAL :>: EXP) -> Tm {Body, Val, n}
-> etaQuotePrf {n} l (PI s t :>: f) = 
->   L ENil nom (exp (etaQuotePrf {S n} l (ev (t $$. x) :>: f $$. x)))
->   where x :: EXP 
->         x = P (l + mkInt n, nom, exp s) :$ B0
->         nom = fortran "x" [ev f, ev t] undefined 
-> etaQuotePrf {n} l (AND _P _Q :>: p) = 
->   PAIR (exp (etaQuotePrf {n} l (ev _P :>: p $$ Hd))) 
->        (exp (etaQuotePrf {n} l (ev _Q :>: p $$ Tl)))
-> etaQuotePrf {n} l (ONE :>: _) = ZERO
-> etaQuotePrf {n} l (t :>: e) = etaQuotev {n} l (t :>: ev e)
-
+> etaQuoten' {n} l False (PRF _P :>: p) = CHKD (exp (etaQuoten' {n} l True (PRF _P :>: p)))
+> -- [/Feature = Prop]
+> etaQuoten' {n} l b (ty :>: f) | Just (_, s, t) <- lambdable ty =
+>   let  x :: EXP ; x = P (l + mkInt n, nom, exp s) :$ B0
+>        nom = fortran "x" [ev f] undefined 
+>   in   L ENil nom (exp (etaQuoten' {S n} l b (ev (t x) :>: f $$. x)))
+> etaQuoten' {n} l b (ty :>: p) | Just (s, t) <- projable ty = 
+>   PAIR (exp (etaQuoten' {n} l b (ev s :>: p $$ Hd))) 
+>        (exp (etaQuoten' {n} l b (ev (t (p $$ Hd)) :>: p $$ Tl)))
+> etaQuoten' {n} l b (ONE :>: _) = ZERO
+> etaQuoten' {n} l b (t :>: e) = etaQuotev {n} l (t :>: ev e)
 
 > etaQuotev :: pi (n :: Nat) . Int -> (VAL :>: VAL) -> Tm {Body, Val, n}
 > etaQuotev {n} l (tc :- as :>: vc :- bs) = case canTy ((tc, as) :>: vc) of
@@ -76,14 +65,39 @@
 > etaQuoteSp :: pi (n :: Nat) . Int -> (VAL :<: VAL) -> [Elim EXP] -> 
 >                 [Elim (Tm {Body, Exp, n})]
 > etaQuoteSp {n} l (e :<: t) [] = []
-> etaQuoteSp {n} l (e :<: PI s t) (A a:as) = 
->   A (exp (etaQuoten {n} l (ev s :>: a))) :
->     etaQuoteSp {n} l (e $$. a :<: ev (t $$. a)) as
-> etaQuoteSp {n} l (e :<: SIGMA s t) (Hd : as) =
->   Hd : etaQuoteSp {n} l (e $$ Hd :<: ev s) as
-> etaQuoteSp {n} l (e :<: SIGMA s t) (Tl : as) =
->   Tl : etaQuoteSp {n} l (e $$ Tl :<: ev t $$. (e $$ Hd)) as 
-> etaQuoteSp {n} l (e :<: t) (Out : as) | Just ty' <- outable t = Out : etaQuoteSp {n} l (e $$ Out :<: ev ty') as 
+> etaQuoteSp {n} l (e :<: ty) (A a:as) = case lambdable ty of
+>   Just (_,s,t) ->
+>     A (exp (etaQuoten {n} l (ev s :>: a))) :
+>       etaQuoteSp {n} l (e $$. a :<: ev (t a)) as
+>   Nothing -> error "The impossible happened in etaQuoteSp (A)"
+> etaQuoteSp {n} l (e :<: ty) (Hd : as) = case projable ty of
+>   Just (s,t) ->
+>     Hd : etaQuoteSp {n} l (e $$ Hd :<: ev s) as
+>   Nothing -> error "The impossible happened in etaQuoteSp (Hd)"
+> etaQuoteSp {n} l (e :<: ty) (Tl : as) = case projable ty of
+>   Just (s,t) ->
+>     Tl : etaQuoteSp {n} l (e $$ Tl :<: ev (t (e $$ Hd))) as 
+>   Nothing -> error "The impossible happened in etaQuoteSp (Tl)"
+> etaQuoteSp {n} l (e :<: t) (Out : as) = case outable t of
+>   Just ty' ->
+>     Out : etaQuoteSp {n} l (e $$ Out :<: ev ty') as 
+>   Nothing -> error "The impossible happened in etaQuoteSp (Out)"
+> etaQuoteSp {n} l (p :<: PRF _P) (QA x y q : as) = case evv _P of
+>   EQ (PI _S _T) f (PI _S' _T') g  ->
+>     let  x' = etaQuoten {n} l (ev _S :>: x)
+>          y' = etaQuoten {n} l (ev _T :>: y)
+>          q' = etaQuoten {n} l (PRF (EQ (exp _S) x (exp _S') y) :>: q)
+>     in   QA (exp x') (exp y') (exp q') : 
+>            etaQuoteSp {n} l (p $$ QA x y q :<: 
+>                                PRF (EQ (_T $$. x) (f $$. x) 
+>                                        (_T' $$. y) (g $$. y))) as
+>   _ ->  error "The impossible happened in etaQuoteSp (QA)"
+> etaQuoteSp {n} l (p :<: PRF _P) (Sym : as) = case ev _P of
+>   EQ _S s _T t  -> Sym : etaQuoteSp {n} l (p $$ Sym :<: PRF (EQ _T t _S s)) as
+>   _ ->  error "The impossible happened in etaQuoteSp (Sym)"
+> etaQuoteSp {n} l (e :<: LABEL _T _) (Call lab : as) = 
+>   let  lab' = etaQuoten {n} l (ev _T :>: lab)  
+>   in   Call (exp lab') : etaQuoteSp {n} l (e $$ Call lab :<: ev _T) as
 
 > etahQuote :: pi (n :: Nat) . Int -> Tm {Head, Val, Z} -> (Tm {Head, Val, n} :<: TY)
 > etahQuote {n} l' (P (l, x, s)) = case levi {n} (l-l') of
