@@ -134,11 +134,13 @@ We don't always want to do this, but often do want to, go figure:
 >                                            :<  _T)) 
 >                            :< (la "i'" $ \i' -> IMU (nix _I) (nix _D) i')))
 >                    :>: ev as) l
->   case c' of 
->     DTAG c'' -> (| (DC (Tag c'') (listy as')) |)
->     _ -> (| (DPAIR c' as') |)
->  where  listy (DPAIR x y) = x : listy y
->         listy _ = []
+>   case (c', listy as') of 
+>     (DTAG c'', Just as'') -> (| (DC (Tag c'') as'') |)
+>     _ -> (| (DCON (DPAIR c' as')) |)
+>  where  listy (DPAIR x y) = (| ~x : (listy y) |)
+>         listy DVOID = (| [] |)
+>         listy (DN (DRefl _ _ ::$ [])) = (| [] |)
+>         listy _ = (|)
 > -- [/Feature = IDesc] 
 
 > distill ((tyc :- tyas) :>: (c :- as)) l = case canTy ((tyc , tyas) :>: c) of

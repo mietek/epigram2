@@ -335,7 +335,9 @@
 >       iinductionOP = eat "I" $ \_I -> eat "D" $ \_D -> eat "i" $ \i -> cases 
 >         [ (Con , eat "x" $ \x -> eat "P" $ \_P -> eat "p" $ \ p -> emit $
 >                  p i x (wr (def iallDEF) _I (_D i) (la "i'" $ \i' -> IMU (wr _I) (wr _D) i') _P
->                                   (la "ix" $ \ix -> wr (def iinductionDEF) (wr _I) (wr _D) ix (wr _P) (wr p)) x)) ] 
+>                                   (la "ix" $ \ix -> wr (def iinductionDEF) (wr _I) (wr _D) 
+>                                                          (wr (def fstDEF) (wr _I) (la "i'" $ \i' -> IMU (wr _I) (wr _D) i') ix) 
+>                                                          (wr (def sndDEF) (wr _I) (la "i'" $ \i' -> IMU (wr _I) (wr _D) i') ix)  (wr _P) (wr p)) x)) ] 
 
 > tindDEF :: DEF
 > tindDEF = mkDEF 
@@ -415,7 +417,7 @@
 >                     ("i'", wr _I) ->> \i' ->
 >                     ("xs", wr (def idescDEF) (wr _I) 
 >                       (wr (def switchDEF) (wr _Cs) c (LK $ wr (def iDescDEF) (wr _I)) (P (2, "Ds", error "B") :$ (B0 :< A i')))
->                       (la "i''" $ \i'' -> IMU (wr _I) (la "i'''" $ \i''' -> IFSIGMA (wr _Cs) (P (2,"Ds",error "C") :$ (B0 :< A i'))) i'')) ->> \xs ->
+>                       (la "i''" $ \i'' -> IMU (wr _I) (la "i'''" $ \i''' -> IFSIGMA (wr _Cs) (P (2, "Ds", error "C") :$ (B0 :< A i'))) i'')) ->> \xs ->
 >                     P (5, "P", error "D") :$ (B0 :< A (PAIR i' (CON (PAIR c xs)))))
 >                    (wr m) j (V (Fs Fz) :$ (B0 :< Tl)))
 
