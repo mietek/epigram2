@@ -352,21 +352,22 @@ search the hypotheses for a value with the same label.
 
 > seekLabel :: WorkTarget -> EXP -> TY -> ProofState (EXP, ElabStatus)
 > seekLabel wrk label ty = do
+>     l <- getDevLev
 >     es <- getInScope
->     seekOn es
+>     seekOn l es
 >     where
 
 The traversal of the hypotheses is carried by |seekOn|. It searches
 parameters and hands them to |seekIn|.
 
->       seekOn B0                                    = do
+>       seekOn lev B0                                    = do
 >           s <- prettyPS (ty :>: label)
 >           proofTrace $ "Failed to resolve recursive call to "
 >                            ++ renderHouseStyle s
 >           (|)
->       seekOn (es' :< EParam ParamLam s t l)  =  
->           seekIn l es' B0 (P (l, s, t) :$ B0) (ev t) <|> seekOn es'
->       seekOn (es' :< _)                            =    seekOn es'
+>       seekOn lev (es' :< EParam ParamLam s t l)  =  
+>           seekIn lev es' B0 (P (l, s, t) :$ B0) (ev t) <|> seekOn lev es'
+>       seekOn lev (es' :< _)                            =    seekOn lev es'
 
 Then, |seekIn| tries to match the label we are looking for with an
 hypothesis we have found. Recall that a label is a telescope
