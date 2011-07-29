@@ -132,6 +132,9 @@ What fresh hell is this:
 > occurs' n p v (V i) = elem i v
 > occurs' n p v (P (l , s , t)) = elem l p
 > occurs' n p v (e :/ t) = let (p', v') = occursEnv n p v e in occurs' n p' v' t
+> occurs' n p v (Refl _S s) = (occurs' n p v _S) || (occurs' n p v s)
+> occurs' n p v (Coeh _ _S _T eq s) = 
+>   (occurs' n p v _S) || (occurs' n p v _T) || (occurs' n p v eq) || (occurs' n p v s)
 
 > occursEnv :: Maybe Name -> [Int] -> [Fin m] -> Env {m} {n} -> ([Int] , [Fin {n}]) 
 > occursEnv n p v (lenv,ienv) = let (ls,os) = occursLEnv n p v lenv in

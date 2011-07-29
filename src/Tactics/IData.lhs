@@ -108,7 +108,8 @@
 >     goTo cnom
 >     hs <- traverse lambdaParam (map fst args)
 >     give $ CON (PAIR (toSuZe e) 
->                  (foldr (\x y -> PAIR (x :$ B0) y) (Refl indty' i' :$ B0) hs))
+>                (foldr (\x y -> PAIR (x :$ B0) y) 
+>                       (Refl indty' (i' $$$ bwdList (map (\h -> A (h :$ B0)) hs)) :$ B0) hs))
 >     goOut
 >     ) (zip [0..] cDs)
 >   let xxx = (D tindDEF) :$ (B0 :< A indty' :< A (def dcns $$$ oldaus) :< A (def dcds $$$ oldaus))
@@ -136,7 +137,8 @@
 >   moduleToGoal (def iDescDEF $$. ity)
 >   (t',args,i') <- elabConDesc (lev+1) d i (ev t $$. (x :$ B0))
 >   dt <- giveOutBelow t'
->   return $ (ISIGMA s (def dt $$$ aus), (sx, Nothing) : args, i')
+>   return $ (  ISIGMA s (def dt $$$ aus), (sx, Nothing) : args
+>            ,  la "sx" $ \sx -> ([(lev,sx)],INix) :/ i')
 > elabConDesc lev d@(dt,_) i@(_ :<: ity) (PI s t) = do
 >   let xs = fortran "x" [ev t] undefined
 >   let t' = t $$. (P (lev,"x",s) :$ B0)
@@ -145,7 +147,7 @@
 >     False -> do
 >       (c,iargs) <- elabInd lev d ity (ev s)
 >       (d,args,i') <- elabConDesc lev d i (ev t')
->       return (IPROD (TAG xs) c d, (xs, Just iargs) : args, i')
+>       return (IPROD (TAG xs) c d, (xs, Just iargs) : args, LK i')
 > elabConDesc _ (dt, das) (i :<: ity) (D d :$ (as :< A i')) | dt == d && matchSpine das as = 
 >   return $ (ICONST (PRF (EQ ity i ity i')), [], i')
 > elabConDesc _ _ _ x = error $ show x
