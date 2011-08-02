@@ -77,15 +77,10 @@ It's a |Monad| and all that.
 <   pure   = return
 <   (<*>)  = ap
 
-> instance Alternative (Parsley t) where
->   empty = Parsley $ \ _ -> Left noMsg
->   p <|> q = Parsley $ \ ts -> 
->             either (\_ -> runParsley q ts) Right (runParsley p ts)
->
 > instance MonadPlus (Parsley t) where
->   mzero  = empty
->   mplus  = (<|>)
-
+>   mzero = Parsley $ \ _ -> Left noMsg
+>   mplus p q = Parsley $ \ ts -> 
+>               either (\_ -> runParsley q ts) Right (runParsley p ts)
 
 > instance Error (PFailure t) where
 >   noMsg = PFailure ([], Abort)
