@@ -103,7 +103,7 @@
 >   make ("Desc" :<: (def iDescDEF $$. indty'))
 >   goIn 
 >   desc <- giveOutBelow $ IFSIGMA cns (cds $$. (ii :$ B0))
->   giveOutBelow $ IMU indty' (la "i" $ \i -> wr (def desc $$$ oldaus) i) (ii :$ B0)
+>   giveOutBelow $ IMU indty' (la "i" $ \i -> wr (def desc $$$ aus) i) (ii :$ B0)
 >   traverse (\(e,(cnom,d,args,i')) -> do
 >     goTo cnom
 >     hs <- traverse lambdaParam (map fst args)
@@ -112,12 +112,12 @@
 >                       (Refl indty' (i' $$$ bwdList (map (\h -> A (h :$ B0)) hs)) :$ B0) hs))
 >     goOut
 >     ) (zip [0..] cDs)
->   let xxx = (D tindDEF) :$ (B0 :< A indty' :< A (def dcns $$$ oldaus) :< A (def dcds $$$ oldaus))
+>   let xxx = (D tindDEF) :$ (B0 :< A indty' :< A cns :< A cds)
 >   hhh <- infPS xxx
 >   make ("Ind" :<: hhh)
 >   goIn
 >   giveOutBelow xxx 
->   let xxx = (D tcaseDEF) :$ (B0 :< A indty' :< A (def dcns $$$ oldaus) :< A (def dcds $$$ oldaus))
+>   let xxx = (D tcaseDEF) :$ (B0 :< A indty' :< A cns :< A cds)
 >   hhh <- infPS xxx
 >   make ("Case" :<: hhh)
 >   goIn
@@ -142,7 +142,7 @@
 > elabConDesc lev d@(dt,_) i@(_ :<: ity) (PI s t) = do
 >   let xs = fortran "x" [ev t] undefined
 >   let t' = t $$. (P (lev,"x",s) :$ B0)
->   case occurs lev Nothing [lev] (SET:>:t') of
+>   case occurs (lev+1) Nothing [lev] (SET:>:t') of
 >     True -> throwError' $ err "Dep error"
 >     False -> do
 >       (c,iargs) <- elabInd lev d ity (ev s)
