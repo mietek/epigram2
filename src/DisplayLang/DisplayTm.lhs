@@ -171,19 +171,21 @@ document.
 > pattern DTEX x = DTEx (ExTmWrap x)
 
 
-> instance Functor InTmWrap where
->   fmap = fmapDefault
-> instance Foldable InTmWrap where
->   foldMap = foldMapDefault
+< instance Functor InTmWrap where
+<   fmap = fmapDefault
+< instance Foldable InTmWrap where
+<   foldMap = foldMapDefault
+
 > instance Traversable InTmWrap where
 >   traverse f (InTmWrap x) = pure (InTmWrap x)
 > instance Show (InTmWrap x) where
 >   show x = "InTm"
 
-> instance Functor ExTmWrap where
->   fmap = fmapDefault
-> instance Foldable ExTmWrap where
->   foldMap = foldMapDefault
+< instance Functor ExTmWrap where
+<   fmap = fmapDefault
+< instance Foldable ExTmWrap where
+<   foldMap = foldMapDefault
+
 > instance Traversable ExTmWrap where
 >   traverse f (ExTmWrap x) = pure (ExTmWrap x)
 > instance Show (ExTmWrap x) where

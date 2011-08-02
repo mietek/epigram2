@@ -116,11 +116,12 @@ so we have to do things the long way...
 \subsection{Missing Instances}
 
 > instance Traversable (Either x) where
+>     hiding instance Functor -- already imported
 >     traverse g (Left a) = pure (Left a)
 >     traverse g (Right b) = Right <$> g b
 
-> instance Foldable (Either x) where
->     foldMap = foldMapDefault
+< instance Foldable (Either x) where
+<     foldMap = foldMapDefault
 
 > instance (Applicative f, Num x, Show (f x), Eq (f x)) => Num (f x) where
 >   x + y          = (|x + y|)
@@ -151,11 +152,11 @@ Grr.
 > data (p :+: q)  x = Le (p x) | Ri (q x)    deriving Show
 > data (p :*: q)  x = p x :& q x             deriving Show
 
-> instance Functor Id where
->   fmap f (Id x) = Id (f x)
+< instance Functor Id where  -- for free from Applicative
+<   fmap f (Id x) = Id (f x)
 
-> instance Functor (Ko a) where
->   fmap f (Ko a) = Ko a
+< instance Functor (Ko a) where
+<   fmap f (Ko a) = Ko a
 
 > instance (Functor p, Functor q) => Functor (p :+: q) where
 >   fmap f (Le px)  = Le (fmap f px)
@@ -164,17 +165,17 @@ Grr.
 > instance (Functor p, Functor q) => Functor (p :*: q) where
 >   fmap f (px :& qx)  = fmap f px :& fmap f qx
 
-> instance Foldable Id where
->   foldMap = foldMapDefault
+< instance Foldable Id where
+<   foldMap = foldMapDefault
 
-> instance Foldable (Ko a) where
->   foldMap = foldMapDefault
+< instance Foldable (Ko a) where
+<   foldMap = foldMapDefault
 
-> instance (Traversable p, Traversable q, Foldable p, Foldable q) => Foldable (p :+: q) where
->   foldMap = foldMapDefault
+< instance (Traversable p, Traversable q, Foldable p, Foldable q) => Foldable (p :+: q) where
+<   foldMap = foldMapDefault
 
-> instance (Traversable p, Traversable q, Foldable p, Foldable q) => Foldable (p :*: q) where
->   foldMap = foldMapDefault
+< instance (Traversable p, Traversable q, Foldable p, Foldable q) => Foldable (p :*: q) where
+<   foldMap = foldMapDefault
 
 > newtype Fix f = InF (f (Fix f))  -- tying the knot
 
@@ -188,23 +189,27 @@ Grr.
 >      {- :: f v -})
 
 > instance Traversable Id where
+>   hiding instance Functor  -- free from Applicative
 >   traverse f (Id x) = Id <$> f x
 
 > instance Traversable (Ko a) where
 >   traverse f (Ko c) = pure (Ko c)
 
 > instance (Traversable p, Traversable q) => Traversable (p :+: q) where
+>   hiding instance Functor
 >   traverse f (Le px)  = Le <$> traverse f px
 >   traverse f (Ri qx)  = Ri <$> traverse f qx
 
 > instance (Traversable p, Traversable q) => Traversable (p :*: q) where
+>   hiding instance Functor
 >   traverse f (px :& qx)  = (:&) <$> traverse f px <*> traverse f qx
 
-> instance Applicative Id where  -- makes fmap from traverse
+> instance Applicative Id where
 >   pure = Id
 >   Id f <*> Id s = Id (f s)
 
 > instance Monoid c => Applicative (Ko c) where-- makes crush from traverse
+>   hiding instance Functor
 >   -- pure :: x -> K c x
 >   pure x = Ko mempty
 >   -- (<*>) :: K c (s -> t) -> K c s -> K c t

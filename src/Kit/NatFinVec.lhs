@@ -43,11 +43,11 @@
 
 > infixr 4 :<<<:
 
-> instance Functor (BVec {n}) where
->     fmap = fmapDefault
+< instance Functor (BVec {n}) where
+<     fmap = fmapDefault
 
-> instance Foldable (BVec {n}) where
->     foldMap = foldMapDefault
+< instance Foldable (BVec {n}) where
+<     foldMap = foldMapDefault
 
 > instance Traversable (BVec {n}) where
 >     traverse f BV0           = (| BV0 |)
@@ -80,11 +80,12 @@
 >   show V0          = "V0"
 >   show (x :>>: xs)  = show x ++ " :>>: " ++ show xs
 
-> instance Functor (Vec {n}) where
->   fmap f V0          = V0
->   fmap f (x :>>: xs)  = f x :>>: fmap f xs
+< instance Functor (Vec {n}) where
+<   fmap f V0          = V0
+<   fmap f (x :>>: xs)  = f x :>>: fmap f xs
 
 > instance {:n :: Nat:} => Applicative (Vec {n}) where
+>   hiding instance Functor
 >   pure = vec {:n :: Nat:} where
 >     vec :: forall x. pi (n :: Nat). x -> Vec {n} x
 >     vec {Z}    x = V0
@@ -101,6 +102,7 @@
 > vtail (x :>>: xs) = xs
 
 > instance {:n :: Nat:} => Monad (Vec {n}) where
+>   hiding instance Applicative
 >   return = pure
 >   (>>=) = vdiag where
 >     vdiag :: Vec {m} a -> (a -> Vec {m} b) -> Vec {m} b
@@ -111,8 +113,8 @@
 >   traverse f V0          = (| V0 |)
 >   traverse f (x :>>: xs)  = (| f x :>>: traverse f xs |)
 
-> instance Foldable (Vec {n}) where
->   foldMap = foldMapDefault
+< instance Foldable (Vec {n}) where
+<   foldMap = foldMapDefault
 
 > class Leq (m :: {Nat}) (n :: {Nat}) where
 >   finj :: Fin {m} -> Fin {n}

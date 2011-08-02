@@ -140,12 +140,12 @@ to which source code locations. For the moment, |Loc|s are just ignored.
 >     EAskNSupply f    >>= k = EAskNSupply    ((k =<<) . f)
 >     EAskDevLev f     >>= k = EAskDevLev     ((k =<<) . f)
 
-> instance Functor Elab where
->     fmap = ap . return
->
-> instance Applicative Elab where
->     pure   = return
->     (<*>)  = ap
+< instance Functor Elab where
+<     fmap = ap . return
+<
+< instance Applicative Elab where
+<     pure   = return
+<     (<*>)  = ap
 
 > instance Alternative Elab where
 >     empty          = ECry [err "empty"]

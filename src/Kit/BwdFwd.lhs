@@ -120,23 +120,25 @@ Backward and forward lists, applicative with zipping.
 %if False
 
 > instance Traversable Bwd where
+>   hiding instance Functor
 >   traverse f B0         = (|B0|)
 >   traverse f (xs :< x)  = (|(f ^$ xs) :< f x|)
->
-> instance Functor Bwd where
->   fmap = fmapDefault
->
-> instance Foldable Bwd where
->   foldMap = foldMapDefault
->
+
+< instance Functor Bwd where
+<   fmap = fmapDefault
+
+< instance Foldable Bwd where
+<   foldMap = foldMapDefault
+
 > instance Traversable Fwd where
+>   hiding instance Functor
 >   traverse f F0         = (|F0|)
 >   traverse f (x :> xs)  = (|f x :> (f ^$ xs)|)
->
-> instance Functor Fwd where
->   fmap = fmapDefault
->
-> instance Foldable Fwd where
->   foldMap = foldMapDefault
+
+< instance Functor Fwd where
+<   fmap = fmapDefault
+
+< instance Foldable Fwd where
+<   foldMap = foldMapDefault
 
 %endif

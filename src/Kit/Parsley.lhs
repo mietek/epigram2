@@ -69,14 +69,14 @@ It's a |Monad| and all that.
 >     (tts, t', ts)  <- runParsley (f s') ts
 >     return (sts ++ tts, t', ts)
 >   fail s = Parsley $ \ _ -> Left (PFailure ([], Fail s))
->
-> instance Functor (Parsley t) where
->   fmap = ap . return
->
-> instance Applicative (Parsley t) where
->   pure   = return
->   (<*>)  = ap
->
+
+< instance Functor (Parsley t) where
+<   fmap = ap . return
+
+< instance Applicative (Parsley t) where
+<   pure   = return
+<   (<*>)  = ap
+
 > instance Alternative (Parsley t) where
 >   empty = Parsley $ \ _ -> Left noMsg
 >   p <|> q = Parsley $ \ ts -> 
