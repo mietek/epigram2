@@ -52,7 +52,7 @@ Backward and forward lists, applicative with zipping.
 > xs <>< (y :> ys) = (xs :< y) <>< ys
 
 > (<>>) :: Bwd x -> Fwd x -> Fwd x
-> infixl 5 <>>
+> infixr 5 <>>
 > B0 <>> ys = ys
 > (xs :< x) <>> ys = xs <>> (x :> ys)
 
