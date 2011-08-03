@@ -33,26 +33,23 @@
 > closers = [(')', Round), (']', Square), ('}', Curly)]
 
 > special :: [Char]
-> special = " " ++ soloists ++ map fst openers ++ map fst closers
+> special = " |" ++ soloists ++ map fst openers ++ map fst closers
 
 > boring :: Char -> Bool
 > boring c = not (elem c special)
-
-> blabel :: Char -> Bool
-> blabel '|' = False
-> blabel c = boring c
 
 > slex1 :: Char -> String -> (STok, String)
 > slex1 c s =
 >   case (elem c soloists, lookup c openers, lookup c closers) of
 >     (True, _, _) -> (Solo c, s)
 >     (_, Just b, _)
->       | (t, '|' : u) <- span blabel s -> (Open (b, Just t), u)
+>       | (t, '|' : u) <- span boring s -> (Open (b, Just t), u)
 >       | otherwise -> (Open (b, Nothing), s)
 >     (_, _, Just b) -> (Close (b, Nothing), s)
 >     _ | c == ' ' -> let (t, u) = span (== ' ') s in (Spc (1 + length t), u)
->     _ | c == '|' , (t, d : u) <- span blabel s , Just b <- lookup d closers
+>     _ | c == '|' , (t, d : u) <- span boring s , Just b <- lookup d closers
 >       -> (Close (b, Just t), u)
+>     _ | c == '|' -> (Solo c, s)
 >     _ -> let (t, u) = span boring s in (Sym (c : t), u)
 
 > slex :: String -> [STok]
@@ -117,8 +114,7 @@
 >   (Solo '!')
 >   =  (yz, (lz,
 >        (ebz :< (ez, b :<> (lz', gBang (ebz', ez' :< M MGnab, (), F0))),
->          ez'', (), bes)))
->   where
+>          ez'', (), bes))) where
 >     gBang (ebz :< (ez', b), ez, (), bes)
 >       = gBang (ebz, ez', (), (b, ez) :> bes)
 >     gBang (B0, ez, (), bes) = (ez, (), bes)
