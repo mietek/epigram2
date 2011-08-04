@@ -124,8 +124,8 @@ We don't always want to do this, but often do want to, go figure:
 > -- [/Feature = Equality]
 
 > -- [Feature = IDesc]
-> distill (IMU _I _D i :>: CON x) l  |  IFSIGMA _E _T  <- evv (_D $$. i)
->                                    ,  PAIR c as      <- ev  x           = do
+> distill (IMU _I _D i :>: CON x) l  |  Just (_E, _T) <- isIFSigma (evv (_D $$. i))
+>                                    ,  Just (c, as)   <- isPair (ev x)  = do
 >   c' <- distill (ENUMT (exp _E) :>: ev c) l
 >   as' <- distill (ev (def idescDEF $$$. 
 >                        (B0 :< _I :< (def switchDEF $$$. 
@@ -141,6 +141,12 @@ We don't always want to do this, but often do want to, go figure:
 >         listy DVOID = (| [] |)
 >         listy (DN (DRefl _ _ ::$ [])) = (| [] |)
 >         listy _ = (|)
+>         isPair :: VAL -> Maybe (EXP, EXP)
+>         isPair (PAIR c as) = (|(c,as)|)
+>         isPair _ = (|)
+>         isIFSigma :: VAL -> Maybe (EXP, EXP)
+>         isIFSigma (IFSIGMA _E _T) = (|(_E, _T)|)
+>         isIFSigma _ = (|)
 > -- [/Feature = IDesc] 
 
 > distill ((tyc :- tyas) :>: (c :- as)) l = case canTy ((tyc , tyas) :>: c) of
