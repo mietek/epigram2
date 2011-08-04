@@ -202,6 +202,9 @@ the parser.
 >     (ArgSize, (|mkNum (|read digits|) (optional $ (keyword KwPlus) *> sizedDInTm ArgSize)|)) :
 >     (AndSize, (|DENUMT (%keyword KwEnum%) (sizedDInTm ArgSize)|)) :
 >     -- [/Feature = Enum]
+>     -- [Feature = List]
+>     (AndSize, (|DLIST (%keyword KwList%) (sizedDInTm ArgSize)|)) :
+>     -- [/Feature = List]
 >     -- [Feature = Prop]
 >     (ArgSize, (|DPROP     (%keyword KwProp%)|)) :
 >     (ArgSize, (|DABSURD   (%keyword KwAbsurd%)|)) :

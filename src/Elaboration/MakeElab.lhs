@@ -174,6 +174,11 @@ for enumerations as well.
 >                                               ,  defName e == [("PRIM",0),("EnumD",0)]  = 
 >     makeElab' loc (en :>: DCONSE s t)
 > -- [/Feature = Enum] 
+> -- [Feature = List] 
+> makeElab' loc (LIST _A :>: DVOID) = (| NIL |)
+> makeElab' loc (LIST _A :>: DPAIR a as) =  
+>   (| CONS (subElab loc (_A :>: a)) (subElab loc (LIST _A :>: as)) |)
+> -- [/Feature = List] 
 > -- [Feature = Equality] 
 > makeElab' loc (PROP :>: DEq s t) = do
 >     s_S <- subElabInfer loc s

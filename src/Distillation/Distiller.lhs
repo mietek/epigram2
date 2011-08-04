@@ -127,6 +127,11 @@ We don't always want to do this, but often do want to, go figure:
 >        isConsE (CONSE u us)  = (| (u, us) |) 
 >        isConsE _             = (|) 
 > -- [/Feature = Enum]
+> -- [Feature = List]
+> distill (LIST _A :>: NIL) l = (| DVOID |)
+> distill (LIST _A :>: CONS a as) l = 
+>    (| DPAIR (distill (ev _A :>: ev a) l) (distill (LIST _A :>: ev as) l) |)
+> -- [/Feature = List]
 > -- [Feature = Equality]
 > distill (PROP :>: EQ _S s _T t) l = do
 >   _S' <- distill (SET :>: ev _S) l

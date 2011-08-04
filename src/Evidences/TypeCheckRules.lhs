@@ -85,6 +85,11 @@
 >   pure $ ("T", SET) -** \ _T -> _T *** ONE
 > canTy ((Label, [_T, _]) :>: Ret) = (| (_T *** ONE) |)
 > -- [/Feature = Label]
+> -- [Feature = List]
+> canTy ((Set, []) :>: List) = pure $ ("A", SET) -** \ _A -> ONE
+> canTy ((List, [_A]) :>: Nil) = pure ONE
+> canTy ((List, [_A]) :>: Cons) = pure $ (_A *** LIST _A *** ONE)
+> -- [/Feature = List]
 
 > canTy _ = (|)
 

@@ -158,6 +158,9 @@ things...
 >   KwEnum        :: Keyword
 >   KwPlus        :: Keyword
 >   -- [/Feature = Enum]
+>   -- [Feature = List]
+>   KwList        :: Keyword
+>   -- [/Feature = List]
 >   -- [Feature = Equality]
 >   KwPEq   :: Keyword
 >   KwExt   :: Keyword
@@ -233,6 +236,9 @@ things...
 > key KwEnum      = "Enum"
 > key KwPlus      = "+"
 > -- [/Feature = Enum]
+> -- [Feature = List]
+> key KwList      = "List"
+> -- [/Feature = List]
 > -- [Feature = Equality]
 > key KwPEq    = "=="
 > key KwExt    = "ext"

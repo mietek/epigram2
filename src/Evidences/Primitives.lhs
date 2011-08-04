@@ -481,8 +481,23 @@
 >                   emit $ Coeh Coe (_P x) (_P y) 
 >                            (Refl (ARR _X SET) _P :$ (B0 :< QA x y eq)) p :$ B0
 
+> -- [Feature = List]
+> mapDEF = mkDEF
+>   [("PRIM",0),("map",0)]
+>   (("A", SET) ->> \_A -> 
+>    ("B", SET) ->> \_B ->
+>    ("f", _A --> _B) ->> \f ->
+>    ("as", LIST _A) ->> \as ->
+>    LIST _B) $
+>   eat "A" $ \_A -> eat "B" $ \_B -> eat "f" $ \f -> cases
+>     [  (Nil , emit NIL) 
+>     ,  (Cons , eat "a" $ \a -> eat "as" $ \as -> 
+>          emit $ CONS (f a) (wr (def mapDEF) _A _B f as)) 
+>     ]
+> -- [/Feature = List]
+
 > prims :: [ DEF ] 
 > prims = [  idDEF , uncurryDEF , zeroElimDEF , falseElimDEF , inhElimDEF  
->         ,  enumDDEF , enumUDEF
+>         ,  enumDDEF , enumUDEF , mapDEF
 >         ,  branchesDEF , switchDEF , iDescDDEF , iDescDEF , idescDEF 
 >         ,  iAllDEF , iallDEF , iinductionDEF , tindDEF , fstDEF , sndDEF , substDEF ]

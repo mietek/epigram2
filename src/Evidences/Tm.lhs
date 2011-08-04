@@ -136,6 +136,11 @@
 >   Label  :: Can
 >   Ret    :: Can
 >   -- [/Feature = Label]
+>   -- [Feature = List]
+>   List :: Can
+>   Nil :: Can
+>   Cons :: Can
+>   -- [/Feature = List]
 
 >   deriving (Eq, Show)
 
@@ -194,6 +199,11 @@
 > pattern LABEL t l  = Label :- [t, l]
 > pattern RET x      = Ret :- [x]
 >   -- [/Feature = Label]
+>   -- [Feature = List]
+> pattern LIST _A = List :- [_A] 
+> pattern NIL = Nil :- [] 
+> pattern CONS a as = Cons :- [a, as]
+>   -- [/Feature = List]
 
 > data Operator :: * where
 >   Eat    :: Maybe String -> Operator -> Operator 
