@@ -156,7 +156,6 @@ things...
 >   -- import <- KeywordConstructors
 >   -- [Feature = Enum]
 >   KwEnum        :: Keyword
->   KwEnumU       :: Keyword
 >   KwPlus        :: Keyword
 >   -- [/Feature = Enum]
 >   -- [Feature = Equality]
@@ -232,7 +231,6 @@ things...
 > -- import <- KeywordTable
 > -- [Feature = Enum]
 > key KwEnum      = "Enum"
-> key KwEnumU      = "EnumU"
 > key KwPlus      = "+"
 > -- [/Feature = Enum]
 > -- [Feature = Equality]

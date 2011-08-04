@@ -241,10 +241,9 @@ places.
 > pattern DTIMES x y = DC Sigma [x , DL (DK y)]
 > -- [/Feature = Sigma]
 > -- [Feature = Enum]
-> pattern DENUMU      = DC EnumU [] 
 > pattern DENUMT e    = DC EnumT [e] 
-> pattern DNILE       = DC NilE [] -- DCON (DPAIR {-(DTAG "nil")-} DZE DVOID)
-> pattern DCONSE t e  = DC ConsE [t, e] -- DCON (DPAIR {- (DTAG "cons") -} (DSU DZE) (DPAIR t (DPAIR e DVOID)))
+> pattern DNILE       = DCON (DPAIR {-(DTAG "nil")-} DZE DVOID)
+> pattern DCONSE t e  = DCON (DPAIR {- (DTAG "cons") -} (DSU DZE) (DPAIR t (DPAIR e DVOID)))
 > pattern DZE         = DC Ze []
 > pattern DSU n       = DC Su [n]
 > -- [/Feature = Enum]

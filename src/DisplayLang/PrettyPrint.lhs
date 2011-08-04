@@ -69,7 +69,6 @@ being with $\Pi$-types.
 >   pretty Inh    = const (kword KwInh)
 >   pretty Wit    = const (kword KwWit)
 >   -- [Feature = Enum]
->   pretty EnumU  = const (kword KwEnumU)
 >   pretty EnumT  = const (kword KwEnum) 
 >   -- [/Feature = Enum]
 >   -- [Feature = IDesc]
@@ -211,8 +210,6 @@ than a $\lambda$-term is reached.
 >     -- [Feature = Enum]
 >     pretty (DC Ze [])           = const (int 0)
 >     pretty (DC Su [t])          = prettyEnumIndex 1 t
->     pretty (DC NilE [])              = prettyEnumU DNILE
->     pretty (DC ConsE [a , b])        = prettyEnumU (DCONSE a b)
 >     -- [/Feature = Enum]
 >     -- [Feature = Label]
 >     pretty (DC Label [t, l]) = const (kword KwLabel <+>
@@ -337,16 +334,6 @@ than a $\lambda$-term is reached.
 >   | isEmpty s  = wrapDoc t AppSize
 >   | otherwise  = wrapDoc (kword KwSig <+> parens (s <+> t)) AppSize
 > -- [/Feature = Sigma] 
-
-> -- [Feature = Enum]
-> prettyEnumU :: DInTmRN -> Size -> Doc
-> prettyEnumU p = const (brackets (prettyEnumUMore empty p))
-
-> prettyEnumUMore :: Doc -> DInTmRN -> Doc
-> prettyEnumUMore d DNILE        = d
-> prettyEnumUMore d (DCONSE a b)  = prettyEnumUMore (d <+> pretty a minBound) b
-> prettyEnumUMore d t            = d <+> kword KwComma <+> pretty t maxBound
-> -- [/Feature = Enum]
 
 The |prettyBKind| function pretty-prints a |ParamKind| if supplied
 with a document representing its name and type.

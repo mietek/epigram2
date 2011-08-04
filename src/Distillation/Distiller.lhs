@@ -105,15 +105,28 @@ We don't always want to do this, but often do want to, go figure:
 >     stripCall _ (_ :< Call l) as | hl :$ las <- ev l = 
 >       (exp hl, trail las ++ as)  
 >     stripCall h (az :< a) as = stripCall h az (a : as)
->     -- [/Feature = Label]
-
+> -- [/Feature = Label]
+> -- [Feature = Enum]
 > distill (ENUMT _E :>: tm) l | Just r <- findIndex (ev _E :>: tm) = return r
 >   where
 >     findIndex :: (VAL :>: VAL) -> Maybe DInTmRN
 >     findIndex (CONSE t  _ :>: ZE)  | (TAG s) <- ev t = Just (DTAG s)
 >     findIndex (CONSE _        a :>: SU b)  = findIndex (ev a :>: ev b)
 >     findIndex _                            = Nothing
-
+> distill (en@(IMU _ de _) :>: t) l |  D e :$ B0 <- ev de
+>                                   ,  defName e == [("PRIM",0),("EnumD",0)]  
+>                                   , isNilE (evv t) = (| DVOID |)
+>   where isNilE :: VAL -> Bool
+>         isNilE NILE = True
+>         isNilE _ = False
+> distill (en@(IMU _ de _) :>: t) l |  D e :$ B0 <- ev de
+>                                   ,  defName e == [("PRIM",0),("EnumD",0)]  
+>                                   , Just (u, us) <- isConsE (evv t) =
+>    (| DPAIR (distill (UID :>: ev u) l) (distill (en :>: ev us) l) |)
+>  where isConsE :: VAL -> Maybe (EXP,EXP)
+>        isConsE (CONSE u us)  = (| (u, us) |) 
+>        isConsE _             = (|) 
+> -- [/Feature = Enum]
 > -- [Feature = Equality]
 > distill (PROP :>: EQ _S s _T t) l = do
 >   _S' <- distill (SET :>: ev _S) l

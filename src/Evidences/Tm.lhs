@@ -125,9 +125,6 @@
 >   Tag    :: String -> Can
 >   -- [/Feature = UId]
 >   -- [Feature = Enum]
->   EnumU  :: Can  -- levitate me!
->   NilE   :: Can  -- levitate me!
->   ConsE  :: Can  -- levitate me! 
 >   EnumT  :: Can
 >   Ze     :: Can
 >   Su     :: Can 
@@ -169,9 +166,8 @@
 > pattern TAG t      = Tag t :- []
 >   -- [/Feature = UId]
 >   -- [Feature = Enum]
-> pattern ENUMU      = EnumU :- [] 
-> pattern NILE       = NilE :- []
-> pattern CONSE t e  = ConsE :- [t, e]
+> pattern NILE       = CON (PAIR ZE ZERO)
+> pattern CONSE t e  = CON (PAIR (SU ZE) (PAIR t (PAIR e ZERO)))
 > pattern ENUMT e    = EnumT :- [e]
 > pattern ZE         = Ze :- []
 > pattern SU n       = Su :- [n]
@@ -423,7 +419,7 @@
 > runOp (Case os) oaz (A a : as) | c :- cas <- (ENil // a :: VAL) =
 >   case lookup c os of
 >     Just o -> runOp o oaz (map A cas ++ as)
->     Nothing -> error "OpCase found Can it didn't like"
+>     Nothing -> error ("OpCase found Can it didn't like: " ++ show c)
 > runOp (Split o) oaz (A a : as) =
 >   runOp o oaz (A ((ENil :/ a) :$ (B0 :< Hd)) : 
 >                A ((ENil :/ a) :$ (B0 :< Tl)) : as)

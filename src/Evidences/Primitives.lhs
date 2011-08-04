@@ -72,25 +72,47 @@
 >    cases [(Wit , eat "t" $ \t -> eat "P" $ \_P -> eat "m" $ \m -> 
 >             emit (m t))]
 
+> enumDDEF :: DEF
+> enumDDEF = mkDEF
+>   [("PRIM",0),("EnumD",0)]
+>   (ONE --> wr (def iDescDEF) ONE) $
+>   eat "_" $ \_ -> emit $ IFSIGMA 
+>    (CONSE (TAG "nilE") 
+>     (CONSE (TAG "consE")
+>           NILE))
+>    {- nilE: -}  (PAIR (ICONST ONE)
+>    {- consE: -}  (PAIR (ISIGMA UID (la "u" $ \_ -> 
+>                           IPROD (TAG "E") (IVAR ZERO) (ICONST ONE)))
+>                   ZERO)) 
+
+> enumUDEF :: DEF
+> enumUDEF = mkDEF
+>   [("PRIM",0),("EnumU",0)]
+>   SET $
+>   emit (IMU ONE (def enumDDEF) ZERO)
+
 > branchesDEF :: DEF
 > branchesDEF = mkDEF
 >   [("PRIM",0),("branches",0)]
->   (("E",ENUMU) ->> \_E ->
+>   (("E",def enumUDEF) ->> \_E ->
 >    ("P",ARR (ENUMT _E) SET) ->> \_P ->
 >    SET)
 >   branchesOP
 >     where 
->      branchesOP = cases  
->       [  (NilE , eat "P" $ \_P -> emit ONE)
->       ,  (ConsE , eat "u" $ \_ -> eat "E" $ \_E -> eat "P" $ \_P -> emit $
+>      branchesOP = cases 
+>       [  (Con, split $ cases
+>        [  (Ze {- NilE -} , eat "_" $ \_ -> eat "P" $ \_P -> emit ONE)
+>        ,  (Su , cases
+>         [  (Ze {- ConsE -} , speat "u" $ \_ -> speat "E" $ \_E -> eat "_" $ \_ -> 
+>                    eat "P" $ \_P -> emit $
 >                     TIMES (_P ZE) 
 >                       (wr (def branchesDEF) 
->                           _E (la "n" $ \n -> wr _P (SU n))) )]
+>                           _E (la "n" $ \n -> wr _P (SU n))) )])])]
 
 > switchDEF :: DEF
 > switchDEF = mkDEF
 >   [("PRIM",0),("switch",0)]
->   (("E",ENUMU) ->> \_E ->
+>   (("E",def enumUDEF) ->> \_E ->
 >    ("x",ENUMT _E) ->> \x ->
 >    ("P",ARR (ENUMT _E) SET) ->> \_P ->
 >    ("b",wr (def branchesDEF) _E _P) ->> \b -> 
@@ -98,26 +120,30 @@
 >   switchOP
 >     where
 >      switchOP = cases  
->        [  (NilE , cases [])
->        ,  (ConsE , eat "u" $ \_ -> eat "E" $ \_E -> cases 
->             [  (Ze , eat "P" $ \_P -> split $ eat "b" $ \b -> eat "bs" $ \bs -> emit b)
->             ,  (Su , eat "x" $ \x -> eat "P" $ \_P -> split $ eat "b" $ \b -> eat "bs" $ \bs ->
->                        emit (wr (def switchDEF) _E x (la "n" $ \n -> wr _P (SU n)) bs))  ]) ]
+>        [  (Con , split $ cases
+>         [  (Ze {- NilE -} , eat "_" $ \ _ -> cases [])
+>         ,  (Su , cases
+>          [  (Ze {- ConsE -} , speat "u" $ \_ -> speat "E" $ \_E -> eat "_" $ \_ -> cases 
+>              [  (Ze , eat "P" $ \_P -> split $ eat "b" $ \b -> eat "bs" $ \bs -> emit b)
+>              ,  (Su , eat "x" $ \x -> eat "P" $ \_P -> split $ eat "b" $ \b -> eat "bs" $ \bs ->
+>                        emit (wr (def switchDEF) _E x (la "n" $ \n -> wr _P (SU n)) bs))  ]) ])])]
 
 > tabulateDEF :: DEF
 > tabulateDEF = mkDEF
 >   [("PRIM",0),("tabulate",0)]
->   (("E",ENUMU) ->> \_E ->
+>   (("E",def enumUDEF) ->> \_E ->
 >    ("P",ARR (ENUMT _E) SET) ->> \_P ->
 >    ("f",("e", ENUMT _E) ->> \e -> _P e) ->> \f ->
 >    wr (def branchesDEF) _E _P)
 >   tabulateOP
 >     where
 >       tabulateOP = cases
->         [  (NilE , eat "P" $ \_P -> eat "f" $ \f -> emit ZERO)
->         ,  (ConsE , eat "x" $ \x -> eat "E" $ \_E -> eat "P" $ \_P -> eat "f" $ \f -> 
+>         [  (Con , split $ cases
+>          [  (Ze {- NilE -} , eat "_" $ \_ -> eat "P" $ \_P -> eat "f" $ \f -> emit ZERO)
+>          ,  (Su , cases
+>           [  (Ze {- ConsE -} , speat "x" $ \x -> speat "E" $ \_E -> eat "_" $ \_ -> eat "P" $ \_P -> eat "f" $ \f -> 
 >              emit $ PAIR (f ZE) (wr (def tabulateDEF) _E (la "e" $ \e -> wr _P (SU e)) (la "e" $ \e -> wr f (SU e)))) 
->         ] 
+>         ])])] 
 >   
 
 > iDescDEF :: DEF
@@ -144,13 +170,13 @@
 >    {- piD: -}     (PAIR (ISIGMA SET (la "S" $ \_S -> 
 >                     (IPROD (TAG "T") (IPI _S (LK $ IVAR ZERO)) 
 >                            (ICONST ONE))))
->    {- fpiD: -}    (PAIR (ISIGMA ENUMU (la "E" $ \_E ->
+>    {- fpiD: -}    (PAIR (ISIGMA (def enumUDEF) (la "E" $ \_E ->
 >                     (IPROD (TAG "T") (IPI (ENUMT _E) (LK $ IVAR ZERO))
 >                            (ICONST ONE))))
 >    {- sigmaD: -}  (PAIR (ISIGMA SET (la "S" $ \_S ->  
 >                     (IPROD (TAG "T") (IPI _S (LK $ IVAR ZERO)) 
 >                            (ICONST ONE))))
->    {- fsigmaD: -} (PAIR (ISIGMA ENUMU (la "E" $ \_E ->
+>    {- fsigmaD: -} (PAIR (ISIGMA (def enumUDEF) (la "E" $ \_E ->
 >                     (IPROD (TAG "T") (IFPI _E (LK $ IVAR ZERO))
 >                            (ICONST ONE))))
 >    {- prodD: -}   (PAIR (ISIGMA UID (LK   
@@ -343,7 +369,7 @@
 > tindDEF = mkDEF 
 >   [("PRIM",0),("tind",0)]
 >   (("I", SET) ->> \_I ->
->    ("Cs", ENUMU) ->> \_Cs ->
+>    ("Cs", wr (def enumUDEF)) ->> \_Cs ->
 >    ("Ds", ARR _I (wr (def branchesDEF) _Cs (LK $ wr (def iDescDEF) _I))) ->> \_Ds ->
 >    ("i", _I) ->> \i -> 
 >    ("x", IMU _I (la "i'" $ \i' -> IFSIGMA _Cs (_Ds i')) i) ->> \x -> 
@@ -388,7 +414,7 @@
 > tcaseDEF = mkDEF 
 >   [("PRIM",0),("tcase",0)]
 >   (("I", SET) ->> \_I ->
->    ("Cs", ENUMU) ->> \_Cs ->
+>    ("Cs", wr (def enumUDEF)) ->> \_Cs ->
 >    ("Ds", ARR _I (wr (def branchesDEF) _Cs (LK $ wr (def iDescDEF) _I))) ->> \_Ds ->
 >    ("i", _I) ->> \i -> 
 >    ("x", IMU _I (la "i'" $ \i' -> IFSIGMA _Cs (_Ds i')) i) ->> \x -> 
@@ -457,5 +483,6 @@
 
 > prims :: [ DEF ] 
 > prims = [  idDEF , uncurryDEF , zeroElimDEF , falseElimDEF , inhElimDEF  
+>         ,  enumDDEF , enumUDEF
 >         ,  branchesDEF , switchDEF , iDescDDEF , iDescDEF , idescDEF 
 >         ,  iAllDEF , iallDEF , iinductionDEF , tindDEF , fstDEF , sndDEF , substDEF ]

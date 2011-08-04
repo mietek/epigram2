@@ -87,7 +87,7 @@
 >     d <- giveOutBelow x
 >     return (cnom,d,args,i')
 >     ) ctys
->   make ("conNames" :<: ENUMU)
+>   make ("conNames" :<: def enumUDEF)
 >   goIn
 >   dcns <- giveOutBelow (foldr (\(s,_,_) e -> CONSE (TAG s) e) NILE ctys) 
 >   let cns = def dcns $$$ aus

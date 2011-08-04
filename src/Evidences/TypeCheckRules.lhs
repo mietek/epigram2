@@ -65,11 +65,8 @@
 > canTy ((UId, []) :>: Tag _)          = (| ONE |)
 > -- [/Feature = UId]
 > -- [Feature = Enum]
-> canTy ((Set, []) :>: EnumU)          = (| ONE |)
-> canTy ((Set, []) :>: EnumT)          = (| (ENUMU *** ONE) |)
-> canTy ((EnumU, []) :>: NilE)         = (| ONE |)
-> canTy ((EnumU, []) :>: ConsE)        = (| (UID *** ENUMU *** ONE) |)
-> canTy ((EnumT, [_E]) :>: n)          = case (ev _E, n) of
+> canTy ((Set, []) :>: EnumT)          = (| (def enumUDEF *** ONE) |)
+> canTy ((EnumT, [_E]) :>: n)          = case (evv _E, n) of
 >   (CONSE _ _, Ze) -> (| ONE |) 
 >   (CONSE _ _E', Su) -> (| (ENUMT _E' *** ONE) |) 
 > -- [/Feature = Enum]
@@ -151,7 +148,6 @@
 >     ])
 > -- [/Feature = IDesc]
 > -- [Feature = Enum]
-> eqUnfold ((EnumU, []) :>: e) ((EnumU, []) :>: e') = error "eqUnfold: EnumU"
 > eqUnfold ((EnumT, [_E]) :>: e) ((EnumT, [_E']) :>: e') = case (ev _E, ev e, ev _E', ev e') of
 >   (CONSE _ _, ZE, CONSE _ _, ZE) -> (|(Zero, [])|)
 >   (CONSE _ _E, SU x, CONSE _ _E', SU y) -> (|(Con, [EQ (ENUMT _E) x (ENUMT _E') y])|)

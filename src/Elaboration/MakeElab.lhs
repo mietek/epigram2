@@ -167,10 +167,12 @@ data. This cannot apply in general because it leads to infinite loops when
 elaborating illegal values for some descriptions. Perhaps we should remove it
 for enumerations as well.
 
-> makeElab' loc (ENUMU :>: DVOID) = 
->     makeElab' loc (ENUMU :>: DNILE)
-> makeElab' loc (ENUMU :>: DPAIR s t) =
->     makeElab' loc (ENUMU :>: DCONSE s t)
+> makeElab' loc (en@(IMU _ de _) :>: DVOID) |  D e :$ B0 <- ev de
+>                                           ,  defName e == [("PRIM",0),("EnumD",0)]  = 
+>     makeElab' loc (en :>: DNILE)
+> makeElab' loc (en@(IMU _ de _) :>: DPAIR s t) |  D e :$ B0 <- ev de
+>                                               ,  defName e == [("PRIM",0),("EnumD",0)]  = 
+>     makeElab' loc (en :>: DCONSE s t)
 > -- [/Feature = Enum] 
 > -- [Feature = Equality] 
 > makeElab' loc (PROP :>: DEq s t) = do

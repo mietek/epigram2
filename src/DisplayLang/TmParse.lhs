@@ -199,7 +199,6 @@ the parser.
 >     -}
 
 >     -- [Feature = Enum]
->     (ArgSize, (|DENUMU     (%keyword KwEnumU%)|)) :
 >     (ArgSize, (|mkNum (|read digits|) (optional $ (keyword KwPlus) *> sizedDInTm ArgSize)|)) :
 >     (AndSize, (|DENUMT (%keyword KwEnum%) (sizedDInTm ArgSize)|)) :
 >     -- [/Feature = Enum]
