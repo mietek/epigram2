@@ -168,13 +168,17 @@ We don't always want to do this, but often do want to, go figure:
 > -- [/Feature = IDesc] 
 
 > distill ((tyc :- tyas) :>: (c :- as)) l = case canTy ((tyc , tyas) :>: c) of
->   Nothing -> throwError' $ err "Tin thadger wasp unit"
->                            ++ err "\ncanonical type"
+>   Nothing -> throwError' $ err "Distiller: canonical type"
 >                            ++ errTyTm (SET :>: (tyc :- tyas))
 >                            ++ err "does not admit canonical term"
 >                            ++ errTm (c :- as)
 >   Just tel -> (| (DC c) (distillCan (tel :>: as) l) |)
 
+
+> distill (B (SIMPLDTY na _I uDs) :$ (B0 :< A i) :>: t@(Con :- [x])) l = do
+>  distill  (IMU _I (la "i" $ \i -> IFSIGMA (D constrDEF :$ (B0 :< A (wk _I) :< A (wk uDs)))
+>                                           (D conDDEF :$ (B0 :< A (wk _I) :< A (wk uDs) :< A i))) i 
+>              :>: t) l
 
 > distill tt _ = throwError' $ err $ "Distiller can't cope with " ++ show tt
 
@@ -192,6 +196,10 @@ We don't always want to do this, but often do want to, go figure:
 > distillHead (D def) as (l,es) = do
 >   (nom, ty, as', ms) <- unresolveD def es (bwdList  as)
 >   return (DP nom, maybe (defTy def) id ty, as', ms)
+
+> distillHead h@(B (SIMPLDTY nam _I _)) as (l,es) = do
+>   (nom, ty, as', ms) <- unresolve nam (_I --> SET) (exp h :$ B0) es (bwdList  as)
+>   return (DP nom, maybe (_I --> SET) id ty, as', ms)
 
 > -- [Feature = Equality]
 > distillHead (Refl _T t) as l = do

@@ -15,6 +15,7 @@
 > import Prelude hiding (foldl, exp, all)
 > import ShePrelude
 
+
 > import Control.Applicative
 > import Control.Monad.Error
 > import Control.Monad.Writer
@@ -30,6 +31,7 @@
 > import Kit.NatFinVec
 
 > import Unsafe.Coerce
+> import Debug.Trace
 
 %endif
 
@@ -55,13 +57,17 @@
 >   D     :: DEF      {- Inv: Applied def is not Emit -}     -> Tm {Head, s, n}
 >   V     :: Fin {n}      {- dB i -}                         -> Tm {Head, s, n}
 >   P     :: (Int, String, TY)    {- dB l -}                 -> Tm {Head, s, n}
->
+>   B     :: DATATY                                          -> Tm {Head, s, n}
 >   Refl  :: Tm {Body, Exp, n} -> Tm {Body, Exp, n}          -> Tm {Head, s, n}
 >   Coeh  :: Coeh -> Tm {Body, Exp, n} -> Tm {Body, Exp, n}
 >                 -> Tm {Body, Exp, n} -> Tm {Body, Exp, n}  -> Tm {Head, s, n}
 >
 >   (:/)  :: Env {n} {m} -> Tm {Body, Exp, m} -> Tm {p', Exp, n}
 
+> data DATATY =
+>   SIMPLDTY Name EXP  -- I :<: SET 
+>                 EXP  -- uDs :<: I --> Constrs I 
+                
 > data Coeh = Coe | Coh deriving (Eq, Show)
 
 > data DEF = DEF  {  defName :: Name
@@ -327,6 +333,7 @@
 > eval {s} g (c :- es) = c :- (fmap (g <:/>) es)
 > eval {s} g (h :$ es) = applys {s} (eval {s} g h) (fmap (fmap (g <:/>)) es)
 > eval {s} (es, _) (D d) = D d :$ B0
+> eval {s} (es, _) (B d) = B d :$ B0
 > eval {s} (es, ez) (V i) = eval {s} ENil (ez !.! i)
 > eval {s} (es, _) (P lt@(l, _, _)) = case lookup l es of
 >   Just t -> eval {s} ENil t
@@ -389,7 +396,7 @@
 > apply {s} (RET t) (Call l) = eval {s} ENil t
 > -- [/Feature = Label]
 > apply {s} (h :$ ss) a = h :$ (ss :< fmap exp a)
-> apply {Exp} (g :/ t) a = (g :/ t) :$ (B0 :< fmap exp a)
+> apply {Exp} (g :/ t) a = (g <:/> t) :$ (B0 :< fmap exp a)
 > apply {s} x a = error $ show x ++ " $$ " ++ show a
 
 > ($$) :: {:s :: Status:} => 
@@ -431,8 +438,8 @@
 >     Just o -> runOp o oaz (map A cas ++ as)
 >     Nothing -> error ("OpCase found Can it didn't like: " ++ show c)
 > runOp (Split o) oaz (A a : as) =
->   runOp o oaz (A ((ENil :/ a) :$ (B0 :< Hd)) : 
->                A ((ENil :/ a) :$ (B0 :< Tl)) : as)
+>   runOp o oaz (A ((ENil <:/> a) :$ (B0 :< Hd)) : 
+>                A ((ENil <:/> a) :$ (B0 :< Tl)) : as)
 > runOp (GetTag s f) oaz (A a : as) | TAG s <- ev a = runOp (f s) oaz as
 > runOp (GetTag s f) oaz (A a : as) = runOp (f s) oaz as
 > runOp _ _ _ = Nothing 
@@ -628,6 +635,7 @@ by |lambdable|:
 > ugly xs (Coeh Coh _S _T _Q s) =
 >   "(coe " ++ ugly xs _S ++ " " ++ ugly xs _T ++ " " ++ ugly xs _Q ++ " " ++ ugly xs s ++ ")"
 > ugly xs (D d) = show (defName d)
+> ugly xs (B (SIMPLDTY na _ _)) = "B" ++ show na  
 > ugly xs (g :/ e) = uglyEnv xs g e
 > ugly _ _ = "???"
 
@@ -727,6 +735,7 @@ by |lambdable|:
 >     Nothing  -> P (l, x, ty) :$ B0
 > evalEager {Val} g (D (DEF _ _ (Emit t)))  = evalEager {Val} ENix t
 > evalEager {s} g (D d)                     = D d :$ B0
+> evalEager {s} g (B d)                     = B d :$ B0
 > evalEager {s} g (Refl _X x) = Refl (exp (evalEager {s} g _X)) (exp (evalEager {s} g x)) :$ B0
 > evalEager {s} g (Coeh Coe _S _T _Q x) = evalEager {s} ENil . fst $ (coeh (evalEager {Val} g _S) (evalEager {Val} g _T) (evalEager {Val} g _Q) (evalEager {Val} g x))
 > evalEager {s} g (Coeh Coh _S _T _Q x) = evalEager {s} ENil . snd $ (coeh (evalEager {Val} g _S) (evalEager {Val} g _T) (evalEager {Val} g _Q) (evalEager {Val} g x))
@@ -787,8 +796,8 @@ by |lambdable|:
 >     Just o -> runOpEager o oaz (map A cas ++ as)
 >     Nothing -> error "OpCase found Can it didn't like"
 > runOpEager (Split o) oaz (A a : as) =
->   runOpEager o oaz (A ((ENil :/ a) :$ (B0 :< Hd)) : 
->                      A ((ENil :/ a) :$ (B0 :< Tl)) : as)
+>   runOpEager o oaz (A ((ENil <:/> a) :$ (B0 :< Hd)) : 
+>                      A ((ENil <:/> a) :$ (B0 :< Tl)) : as)
 > runOpEager (GetTag s f) oaz (A a : as) | TAG s <- ev a = runOpEager (f s) oaz as
 > runOpEager (GetTag s f) oaz (A a : as) = runOpEager (f s) oaz as
 > runOpEager _ _ _ = Nothing 

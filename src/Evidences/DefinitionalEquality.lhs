@@ -25,6 +25,7 @@
 > import Kit.NatFinVec
 
 > import Evidences.Tm
+> import Evidences.Primitives
 > import Evidences.EtaQuote
 
 %endif
@@ -45,6 +46,8 @@
 >   compare {n} h1 h2 && 
 >   maybe False id (| (F.all (uncurry (compareE {n}))) (halfZip es1 es2) |)
 > compare {n} (D d1)   (D d2)               = d1 == d2 
+> compare {n} (B (SIMPLDTY name1 _I1 uDs1)) (B (SIMPLDTY name2 _I2 uDs2)) =
+>   name1 == name2 || equal 0 (SET :>: (_I1, _I2)) && equal 0 (wr (def constrsDEF) _I1 :>: (uDs1, uDs2))
 > compare {n} (V i)          (V j)          = i == j
 > compare {n} (P (i, _, _))  (P (j, _, _))  = i == j
 > compare {n} x              y              = False

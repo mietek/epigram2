@@ -129,6 +129,7 @@ What fresh hell is this:
 > occurs' n p v (c :- es) = any (occurs' n p v) es
 > occurs' n p v (f :$ as) = (occurs' n p v f) || any (any (occurs' n p v)) as
 > occurs' n p v (D def) = any (defName def ==) n -- really?
+> occurs' n p v (B (SIMPLDTY _ _I uDs)) = occurs' n p [] _I  || occurs' n p [] uDs 
 > occurs' n p v (V i) = elem i v
 > occurs' n p v (P (l , s , t)) = elem l p
 > occurs' n p v (e :/ t) = let (p', v') = occursEnv n p v e in occurs' n p' v' t

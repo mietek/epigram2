@@ -205,6 +205,10 @@ references remain as they are, as in |getLatest|.
 >         case (getNews bull d) of
 >           Nothing         -> pure (D d :$ B0)
 >           (Just (d', n))  -> tell n >> pure (D d' :$ B0) 
+>     traverseTm (B (SIMPLDTY na _I uDs)) = do
+>       _I' <- traverseTm _I
+>       uDs' <- traverseTm uDs
+>       return $ B (SIMPLDTY na _I' uDs') :$ B0
 >     traverseTm (V i) = (| (V i :$ B0) |)
 >     traverseTm (P lst) = (| (| P (getBoyNews bull lst) |) :$ ~B0 |)
 >     traverseTm (Refl _X x) = do

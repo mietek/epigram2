@@ -25,6 +25,7 @@
 > import Kit.NatFinVec
 
 > import Evidences.Tm
+> import Evidences.Primitives
 > import Evidences.TypeCheckRules
 
 %endif
@@ -56,10 +57,17 @@
 > etaQuotev {n} l (tc :- as :>: vc :- bs) = case canTy ((tc, as) :>: vc) of
 >   Nothing -> error "It will nae fit"
 >   Just t  -> vc :- etaQuoteTEL {n} l (t :>: bs)
+> etaQuotev {n} l (B d@(SIMPLDTY na _I uDs) :$ (B0 :< A i) :>: Con :- [x]) = 
+>   Con :- [ exp $  etaQuoten {n} l (ev (D idescDEF :$ (B0 
+>                     :< A _I 
+>                     :< A (IFSIGMA (D constrDEF :$ (B0 :< A _I :< A uDs))
+>                            (D conDDEF :$ (B0 :< A _I :< A uDs :< A i)))
+>                     :< A (B (SIMPLDTY na _I uDs) :$ B0))) :>: x) ]
 
 > etaQuotev {n} l (t :>: x :$ es) = 
 >   let  (h :<: t) = etahQuote {n} l x  
 >   in   h :$ bwdList (etaQuoteSp {n} l (x :$ B0 :<: ev t) (trail es))
+> etaQuotev {n} l (ty :>: x :- xs) = error $ show x    
 
 
 > etaQuoteSp :: pi (n :: Nat) . Int -> (VAL :<: VAL) -> [Elim EXP] -> 
@@ -116,6 +124,7 @@
 >        eorh Coe = _S
 >        eorh Coh = PRF (EQ _S s _T (Coeh Coe _S _T q s :$ B0))
 > etahQuote {n} l (D def) = D def :<: defTy def 
+> etahQuote {n} l (B d@(SIMPLDTY name _I uDs)) = B d :<: _I --> SET
 > etahQuote {n} l x = error $ ugly V0 x    
 
 > etaQuoteTEL :: pi (n :: Nat) . Int -> (VAL :>: [EXP]) -> [Tm {Body, Exp, n}]

@@ -386,29 +386,68 @@
 >                   (la "i''" $ \i'' -> IMU _I (la "i'''" $ \i''' -> IFSIGMA _Cs (_Ds i''')) i'') xs) _P) ->> \_ ->
 >       _P (PAIR i' (CON (PAIR c xs))))) ->> \m ->
 >    _P (PAIR i x))
->   tindOP
->     where
->       tindOP = 
->         eat "_I" $ \_I -> 
->         eat "Cs" $ \_Cs -> 
->         eat "Ds" $ \_Ds -> 
->         eat "i" $ \i -> 
->         eat "x" $ \x -> 
->         eat "P" $ \_P -> 
->         eat "m" $ \m ->
->         emit $ wr (def iinductionDEF) _I (la "i'" $ \i' -> IFSIGMA (wr _Cs) (wr _Ds i')) i x _P
->                  (la "j" $ \j -> la "y" $ \y -> la "yh" $ \yh ->
->                   wr (def switchDEF) (wr _Cs) (V (Fs Fz) :$ (B0 :< Hd)) (la "c" $ \c ->
->                     ("i'", wr _I) ->> \i' ->
->                     ("xs", wr (def idescDEF) (wr _I) 
+>   tindOP where
+>     tindOP = 
+>       eat "_I" $ \_I -> 
+>       eat "Cs" $ \_Cs -> 
+>       eat "Ds" $ \_Ds -> 
+>       eat "i" $ \i -> 
+>       eat "x" $ \x -> 
+>       eat "P" $ \_P -> 
+>       eat "m" $ \m ->
+>       emit $ wr (def iinductionDEF) _I (la "i'" $ \i' -> IFSIGMA (wr _Cs) (wr _Ds i')) i x _P
+>            (la "j" $ \j -> la "y" $ \y -> la "yh" $ \yh ->
+>             wr (def switchDEF) (wr _Cs) (V (Fs Fz) :$ (B0 :< Hd)) (la "c" $ \c ->
+>               ("i'", wr _I) ->> \i' ->
+>               ("xs", wr (def idescDEF) (wr _I) 
+>                 (wr (def switchDEF) (wr _Cs) c (LK $ wr (def iDescDEF) (wr _I)) (wr _Ds i'))
+>                 (la "i''" $ \i'' -> IMU (wr _I) (la "i'''" $ \i''' -> IFSIGMA (wr _Cs) (wr _Ds i''')) i'')) ->> \xs ->
+>               ("hs", wr (def idescDEF) (("i''", wr _I) -** \i'' -> IMU (wr _I) (la "i'''" $ \i''' -> IFSIGMA (wr _Cs) (wr _Ds i''')) i'')
+>                 (wr (def iAllDEF) (wr _I) 
+>                   (wr (def switchDEF) (wr _Cs) c (LK $ wr (def iDescDEF) (wr _I)) (wr _Ds i'))
+>                   (la "i''" $ \i'' -> IMU (wr _I) (la "i'''" $ \i''' -> IFSIGMA (wr _Cs) (wr _Ds i''')) i'') xs) (wr _P)) ->> \_ ->
+>               wr _P (PAIR i' (CON (PAIR c xs))))
+>              (wr m) j (V (Fs Fz) :$ (B0 :< Tl)) yh)
+
+
+> dindDEF :: DATATY -> DEF
+> dindDEF d@(SIMPLDTY name _I uDs)  = mkDEF 
+>   [("PRIM",0),("dind",0)]
+>   (("i", wr _I) ->> \i -> 
+>    ("x", wr (toBody (B d)) i) ->> \x -> 
+>    ("P", ARR (("i'", wr _I) -** \i' -> 
+>                wr (toBody (B d)) i') SET) ->> \_P ->
+>    ("m", wr (def branchesDEF) (wr (def constrDEF) (wr _I) (wr uDs)) (la "c" $ \c ->
+>       ("i'", wr _I) ->> \i' ->
+>       ("xs", wr (def idescDEF) (wr _I) 
+>                (wr (def switchDEF) (wr (def constrDEF) (wr _I) (wr uDs)) c (LK $ wr (def iDescDEF) (wr _I)) (wr (def conDDEF) (wr _I) (wr uDs) i'))
+>                (toBody (B d))) ->> \xs ->
+>       ("hs", wr (def idescDEF) (("i''", wr _I) -** \i'' -> wr (toBody (B d)) i'')
+>                (wr (def iAllDEF) (wr _I) 
+>                   (wr (def switchDEF) (wr (def constrDEF) (wr _I) (wr uDs)) c (LK $ wr (def iDescDEF) (wr _I)) (wr (def conDDEF) (wr _I) (wr uDs) i'))
+>                   (toBody (B d)) xs) _P) ->> \_ ->
+>       _P (PAIR i' (CON (PAIR c xs))))) ->> \m ->
+>    _P (PAIR i x))
+>   tindOP where
+>     tindOP = 
+>       let _Cs = wr (def constrDEF) _I uDs
+>           _Ds = wr (def conDDEF) _I uDs
+>       in eat "i" $ \i -> cases 
+>            [ (Con , speat "c" $ \c -> eat "as" $ \as -> eat "P" $ \_P -> eat "m" $ \m -> emit $
+>                 wr (def switchDEF) (wr _Cs) c (la "c" $ \c ->
+>                   ("i'", wr _I) ->> \i' ->
+>                   ("xs", wr (def idescDEF) (wr _I) 
+>                 (wr (def switchDEF) (wr _Cs) c (LK $ wr (def iDescDEF) (wr _I)) (wr _Ds i'))
+>                     (B d :$ B0)) ->> \xs ->
+>                   ("hs", wr (def idescDEF) (("i''", wr _I) -** \i'' -> wr (toBody (B d)) i'')
+>                     (wr (def iAllDEF) (wr _I) 
 >                       (wr (def switchDEF) (wr _Cs) c (LK $ wr (def iDescDEF) (wr _I)) (wr _Ds i'))
->                       (la "i''" $ \i'' -> IMU (wr _I) (la "i'''" $ \i''' -> IFSIGMA (wr _Cs) (wr _Ds i''')) i'')) ->> \xs ->
->                     ("hs", wr (def idescDEF) (("i''", wr _I) -** \i'' -> IMU (wr _I) (la "i'''" $ \i''' -> IFSIGMA (wr _Cs) (wr _Ds i''')) i'')
->                       (wr (def iAllDEF) (wr _I) 
->                         (wr (def switchDEF) (wr _Cs) c (LK $ wr (def iDescDEF) (wr _I)) (wr _Ds i'))
->                         (la "i''" $ \i'' -> IMU (wr _I) (la "i'''" $ \i''' -> IFSIGMA (wr _Cs) (wr _Ds i''')) i'') xs) (wr _P)) ->> \_ ->
->                     wr _P (PAIR i' (CON (PAIR c xs))))
->                    (wr m) j (V (Fs Fz) :$ (B0 :< Tl)) yh)
+>                       (B d :$ B0) xs) (wr _P)) ->> \_ ->
+>                   wr _P (PAIR i' (CON (PAIR c xs))))
+>              m i as (wr (def iallDEF) (wr _I) 
+>                       (wr (def switchDEF) (wr (def constrDEF) _I uDs) c (LK $ wr (def iDescDEF) _I) (wr (def conDDEF) _I uDs i))
+>                       (toBody (B d)) _P (la "ix" $ \ix -> wr (def (dindDEF d)) (wr (def fstDEF) (wr _I) (wr (toBody (B d))) ix) 
+>                                                                                (wr (def sndDEF) (wr _I) (wr (toBody (B d))) ix) (wr _P) (wr m)) as)) ]
 
 > tcaseDEF :: DEF
 > tcaseDEF = mkDEF 
@@ -482,22 +521,61 @@
 >                            (Refl (ARR _X SET) _P :$ (B0 :< QA x y eq)) p :$ B0
 
 > -- [Feature = List]
-> mapDEF = mkDEF
+> foldDEF = mkDEF
 >   [("PRIM",0),("map",0)]
 >   (("A", SET) ->> \_A -> 
 >    ("B", SET) ->> \_B ->
->    ("f", _A --> _B) ->> \f ->
->    ("as", LIST _A) ->> \as ->
->    LIST _B) $
->   eat "A" $ \_A -> eat "B" $ \_B -> eat "f" $ \f -> cases
->     [  (Nil , emit NIL) 
->     ,  (Cons , eat "a" $ \a -> eat "as" $ \as -> 
->          emit $ CONS (f a) (wr (def mapDEF) _A _B f as)) 
+>    ("f", _A --> _B --> _A) ->> \f ->
+>    ("z", _A) ->> \z ->
+>    ("as", LIST _B) ->> \bs ->
+>    _A) $
+>   eat "A" $ \_A -> eat "B" $ \_B -> eat "f" $ \f -> eat "z" $ \z -> cases
+>     [  (Nil , emit z) 
+>     ,  (Cons , eat "b" $ \b -> eat "bs" $ \bs -> 
+>          emit $ (f (wr (def foldDEF) _A _B f z bs) b)) 
 >     ]
 > -- [/Feature = List]
 
+> -- [Feature Tagged]
+> constrsDEF = mkDEF
+>   [("PRIM",0),("Constrs",0)]
+>   (("I", SET) ->> \_I -> SET) $
+>   eat "I" $ \_I -> emit $  LIST (UID *** (_I --> wr (def iDescDEF) _I))
+
+> constrDEF = mkDEF
+>   [("PRIM",0),("Constr",0)]
+>   (("I", SET) ->> \_I ->
+>    ("uDs", wr (def constrsDEF) _I) ->> \uDs ->
+>    wr (def enumUDEF)) $
+>   eat "I" $ \_I -> eat "uDs" $ \uDs -> emit $ 
+>     wr (def foldDEF) (wr (def enumUDEF)) (wr (def constrsDEF) _I) 
+>          (la "e" $ \e -> la "c" $ \c -> CONSE
+>             (wr (def fstDEF) UID 
+>                    (la "_" $ \_ -> (wr _I --> wr (def iDescDEF) (wr _I))) c) e)
+>          NILE uDs
+
+> conDDEF = mkDEF 
+>   [("PRIM",0),("ConD",0)]
+>   (("I", SET) ->> \_I ->
+>    ("uDs", wr (def constrsDEF) _I) ->> \uDs ->
+>    _I --> (wr (def branchesDEF) (wr (def constrDEF) _I uDs) 
+>                                 (LK $ wr (def iDescDEF) _I))) $
+>   eat "I" $ \_I -> eat "uDs" $ \uDs -> eat "i" $ \i -> emit $
+>     wr (def foldDEF) (wr (def branchesDEF) (wr (def constrDEF) _I uDs) 
+>                                 (LK $ wr (def iDescDEF) _I))
+>                      (wr (def constrsDEF) _I) 
+>          (la "t" $ \t -> la "c" $ \c -> PAIR
+>             (wr (def sndDEF) UID 
+>                   (la "_" $ \_ -> 
+>                      (wr _I --> wr (def iDescDEF) (wr _I))) c (wr i)) t)
+>          ZERO uDs 
+
+
+
 > prims :: [ DEF ] 
 > prims = [  idDEF , uncurryDEF , zeroElimDEF , falseElimDEF , inhElimDEF  
->         ,  enumDDEF , enumUDEF , mapDEF
+>         ,  enumDDEF , enumUDEF , foldDEF
 >         ,  branchesDEF , switchDEF , iDescDDEF , iDescDEF , idescDEF 
->         ,  iAllDEF , iallDEF , iinductionDEF , tindDEF , fstDEF , sndDEF , substDEF ]
+>         ,  iAllDEF , iallDEF , iinductionDEF , tindDEF , fstDEF , sndDEF , substDEF 
+>         ,  constrsDEF , constrDEF , conDDEF
+>         ]

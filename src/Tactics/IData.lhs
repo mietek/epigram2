@@ -48,7 +48,7 @@
 >                        [ (String , DInTmRN) ] -> ProofState EXP
 > ielabData nom pars indty scs = do
 >   oldaus <- (| paramSpine getInScope |)
->   makeModule nom
+>   dname <- makeModule nom
 >   goIn
 >   tnom <- makeModule nom
 >   goIn
@@ -85,8 +85,10 @@
 >     lev <- getDevLev
 >     (x,args,i') <- elabConDesc lev (dtt, aus) (i :$ B0 :<: indty') (ev ty)
 >     d <- giveOutBelow x
->     return (cnom,d,args,i')
+>     return (s,cnom,d,args,i')
 >     ) ctys
+
+>   {-
 >   make ("conNames" :<: def enumUDEF)
 >   goIn
 >   dcns <- giveOutBelow (foldr (\(s,_,_) e -> CONSE (TAG s) e) NILE ctys) 
@@ -99,12 +101,24 @@
 >                                   PAIR (def dd $$$ aus $$. (ii :$ B0)) dds)
 >                               ZERO cDs)
 >   let cds = def dcds $$$ aus
+>   -}
+
+>   make ("uDs" :<: def constrsDEF $$. indty') 
+>   goIn
+>   duDs <- giveOutBelow (foldr (\(s,_,d,_,_) uDs -> CONS (PAIR (TAG s) (def d $$$ aus)) uDs) NIL cDs)
+>   let uDs = def duDs 
+
+>   {-
 >   ii <- lambdaParam "i"
 >   make ("Desc" :<: (def iDescDEF $$. indty'))
 >   goIn 
 >   desc <- giveOutBelow $ IFSIGMA cns (cds $$. (ii :$ B0))
 >   giveOutBelow $ IMU indty' (la "i" $ \i -> wr (def desc $$$ aus) i) (ii :$ B0)
->   traverse (\(e,(cnom,d,args,i')) -> do
+>   -}
+
+>   giveOutBelow $ toBody $ B $ SIMPLDTY dname indty' uDs
+
+>   traverse (\(e,(_,cnom,d,args,i')) -> do
 >     goTo cnom
 >     hs <- traverse lambdaParam (map fst args)
 >     give $ CON (PAIR (toSuZe e) 
@@ -112,6 +126,8 @@
 >                       (Refl indty' (i' $$$ bwdList (map (\h -> A (h :$ B0)) hs)) :$ B0) hs))
 >     goOut
 >     ) (zip [0..] cDs)
+
+>   {-
 >   let xxx = (D tindDEF) :$ (B0 :< A indty' :< A cns :< A cds)
 >   hhh <- infPS xxx
 >   make ("Ind" :<: hhh)
@@ -122,6 +138,14 @@
 >   make ("Case" :<: hhh)
 >   goIn
 >   giveOutBelow xxx 
+>   -}
+
+>   let xxx = (D $ dindDEF (SIMPLDTY dname indty' uDs)) :$ B0 
+>   hhh <- infPS xxx
+>   make ("Ind" :<: hhh)
+>   goIn
+>   giveOutBelow xxx 
+
 >   goOut 
 >   return $ def dt $$$ oldaus
 

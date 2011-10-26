@@ -458,20 +458,23 @@ shared parameters to drop, and the scheme of the name (if there is one).
 > findParam l s (esus, es :< _) o = findParam l s (esus, es) o
 > findParam _ _ _ _ = Nothing
 
-
 > unresolveD :: DEF -> Bwd (Int, String, TY) -> Bwd (Elim EXP) -> 
 >               ProofState (RelName, Maybe TY, [ Elim EXP ], Maybe Scheme)
-> unresolveD d ps sp 
->     | ("PRIM",0) == head (defName d) =
->   return $  (  map (\(a,b) -> (a, Rel 0)) $ tail (defName d)
->             ,  Just $ defTy d, trail sp, Nothing) 
-> unresolveD d ps tsp = do
+> unresolveD d = unresolve (defName d) (defTy d) (D d :$ B0)
+
+> unresolve :: Name -> TY -> EXP -> Bwd (Int, String, TY) -> Bwd (Elim EXP) -> 
+>               ProofState (RelName, Maybe TY, [ Elim EXP ], Maybe Scheme)
+> unresolve dnam dty dexp ps sp 
+>     | ("PRIM",0) == head dnam =
+>   return $  (  map (\(a,b) -> (a, Rel 0)) $ tail dnam
+>             ,  Just dty, trail sp, Nothing) 
+> unresolve dnam dty dexp ps tsp = do
 >   lev <- getDevLev
 >   let les = fmap (\ (l, s, t) -> EParam ParamLam s t l) ps
 >   (mesus, mes) <- gets inBScope
 >   (nn , os , ns, ms) <- 
->       maybe (return (failNom (defName d), Nothing, trail tsp, Nothing)) return $
->     case partNoms (defName d) (mesus,mes) [] InheritHyps B0 of
+>       maybe (return (failNom dnam, Nothing, trail tsp, Nothing)) return $
+>     case partNoms dnam (mesus,mes) [] InheritHyps B0 of
 >       (Just (NixHyps, _, Just (top, nom, sp, es))) -> do
 >         (tn,  tms)  <- nomTop top (mesus, mes <+> les)
 >         (rn,  rms)  <- nomRel nom (es <+> les) Nothing 
@@ -504,7 +507,7 @@ shared parameters to drop, and the scheme of the name (if there is one).
 >   case os of
 >     Nothing -> return (nn, Nothing, ns, Nothing)
 >     Just i -> do
->       ty <- spInf lev (D d :$ B0 :<: defTy d) (ENil, trail i)
+>       ty <- spInf lev (dexp :<: dty) (ENil, trail i)
 >       return (nn, Just ty, ns, ms)
 
 > foo :: Int -> [ Elim EXP ] -> (Int, Bool)

@@ -23,6 +23,7 @@
 > import Kit.NatFinVec
 
 > import Evidences.Tm
+> import Evidences.Primitives
 > import Evidences.NameSupply
 > import Evidences.DefinitionalEquality
 > import Evidences.TypeCheckRules
@@ -48,6 +49,12 @@ here.
 
 > chk :: (Applicative m, MonadError StackError m, {: p :: Part :}) => 
 >            Int -> TY :>: (Env {Z} {n}, Tm {p, s, n}) -> m ()
+> chk l (_T :>: (g, Con :- [x])) | B (SIMPLDTY na _I uDs) :$ (B0 :< A i) <- ev _T =
+>   chk l (D idescDEF :$ (B0 
+>              :< A _I 
+>              :< A (IFSIGMA (D constrDEF :$ (B0 :< A _I :< A uDs))
+>                            (D conDDEF :$ (B0 :< A _I :< A uDs :< A i)))
+>              :< A (B (SIMPLDTY na _I uDs) :$ B0)) :>: (g, x))  
 > chk l (_T :>: (g, c :- es)) = case ev _T of
 >   _C :- as -> do
 >     _Ts <- canTyM ((_C, as) :>: c)
@@ -126,6 +133,8 @@ here.
 >   case c of
 >     Coe -> return (exp s' :<: exp _T, [])
 >     Coh -> return (exp q' :<: PRF (Eq :- [exp _S, exp s, exp _T, exp s']), [])
+> headTySpine l (g, B d@(SIMPLDTY name _I uDs)) = do
+>   return (B d :$ B0 :<: _I --> SET, [])
 > headTySpine l (g, h :$ as)       = do 
 >   (ety, as') <- headTySpine l (g,h) 
 >   return (ety, (as' ++ trail as))

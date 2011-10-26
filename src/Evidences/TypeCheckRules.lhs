@@ -142,7 +142,8 @@
 >   where s = p $$ Hd ; t = p $$ Tl ; s' = p' $$ Hd ; t' = p' $$ Tl
 > eqUnfold ((One, []) :>: _) ((One, []) :>: _) = pure (Zero, [])
 > eqUnfold ((Prf, [_]) :>: _) ((Prf, [_]) :>: _) = pure (Zero, [])
-> eqUnfold ((Prop, []) :>: p) ((Prop, []) :>: q) = error "eqUnfold: Prop"
+> eqUnfold ((Prop, []) :>: _P) ((Prop, []) :>: _Q) = 
+>   pure (Pair, [_P ==> _Q, _Q ==> _P])
 > -- [Feature = IDesc]
 > eqUnfold ((IMu, [_I, _D, i]) :>: x) ((IMu, [_I', _D', i']) :>: x') = 
 >   pure (Con, 

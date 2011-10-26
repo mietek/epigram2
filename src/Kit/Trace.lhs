@@ -23,11 +23,11 @@ Let us enumerate the different flavours of tracing available:
 We then can switch each one on or off individually:
 
 > traceEnabled :: Trace -> Bool
-> traceEnabled ProofTrace  = True
-> traceEnabled SimpTrace   = True
-> traceEnabled ElimTrace   = True
+> traceEnabled ProofTrace  = False
+> traceEnabled SimpTrace   = False
+> traceEnabled ElimTrace   = False
 > traceEnabled SchedTrace  = False
-> traceEnabled ElabTrace   = True
+> traceEnabled ElabTrace   = False
 
 That's fairly trivial, yet I'm pretty sure this goddamn laziness won't
 skip some traces (ML programmer speaking here).

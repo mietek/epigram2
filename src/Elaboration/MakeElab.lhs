@@ -148,7 +148,7 @@ we abstract it out. Thus |makeElab'| actually implements elaboration.
 To elaborate a tag with an enumeration as its type, we search for the
 tag in the enumeration to determine the appropriate index.
 
-> makeElab' loc (ENUMT t :>: DTAG a) = findTag a (ev t) 0
+> makeElab' loc (ENUMT t :>: DTAG a) = findTag a (evv t) 0
 >   where
 >     findTag :: String -> VAL -> Int -> Elab EXP
 >     findTag a (CONSE t e) n
@@ -197,7 +197,16 @@ for enumerations as well.
 
 > makeElab' loc (ty@(IMU _ _ _) :>: DC (Tag s) xs) =
 >     makeElab' loc (ty :>: DCON (DPAIR (DTAG s) (foldr DPAIR DU xs)))
-> -- [/Feature = IDesc] 
+> -- [/Feature = IDesc]
+> -- [Feature = Tagged]
+> makeElab' loc (ty@(B (SIMPLDTY _ _ _ ) :$ (B0 :< A _)) :>: DC (Tag s) xs) =
+>     makeElab' loc (ty :>: DCON (DPAIR (DTAG s) (foldr DPAIR DU xs)))
+> makeElab' loc (B d@(SIMPLDTY _ _I uDs) :$ (B0 :< A i) :>: DCON x) =
+>     (| CON (subElab loc ((D idescDEF) :$ (B0 :< A _I :< A (IFSIGMA (wr (def constrDEF) _I uDs)
+>                                                                    (wr (def conDDEF) _I uDs i))
+>                                              :< A (wr (toBody $ B d))) :>: x) ) |)
+> -- [/Feature = Tagged] 
+ 
 > -- [Feature = UId] 
 > makeElab' loc (UID :>: DTAG s) = return $ TAG s
 > -- [/Feature = UId] 
