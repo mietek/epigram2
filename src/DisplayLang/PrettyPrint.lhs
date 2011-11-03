@@ -81,6 +81,12 @@ being with $\Pi$-types.
 >   pretty UId      = const (kword KwUId)
 >   pretty (Tag s)  = const (kword KwTag <> text s)
 >   -- [/Feature = UId]
+>   -- [Feature = Scheme]
+>   pretty Scheme   = const (kword KwScheme)
+>   pretty SchTy    = const (kword KwSchTy)
+>   pretty SchPi    = const (kword KwSchPi)
+>   pretty SchImPi  = const (kword KwImPi)
+>   -- [/Feature = Scheme]
 >   -- [Feature = Equality]
 >   pretty Ext      = const (kword KwExt)
 >   pretty Eq       = const (kword KwPEq)

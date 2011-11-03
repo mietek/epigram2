@@ -536,6 +536,17 @@
 >     ]
 > -- [/Feature = List]
 
+> -- [Feature = Scheme]
+> schElDEF = mkDEF
+>   [("PRIME",0),("schEl",0)]
+>   (SCHEME --> SET) $
+>   cases
+>     [ (SchTy, eat "T" $ \_T -> emit _T)
+>     , (SchPi, eat "S" $ \_S -> eat "T" $ \_T -> emit $ ("s", wr (def schElDEF) _S) ->> \s -> wr (def schElDEF) (wr _T s))
+>     , (SchImPi, eat "S" $ \_S -> eat "T" $ \_T -> emit $ ("s", _S) ->> \s -> wr (def schElDEF) (wr _T s))
+>     ]
+> -- [/Feature = Scheme]
+
 > -- [Feature Tagged]
 > constrsDEF = mkDEF
 >   [("PRIM",0),("Constrs",0)]

@@ -90,6 +90,12 @@
 > canTy ((List, [_A]) :>: Nil) = pure ONE
 > canTy ((List, [_A]) :>: Cons) = pure $ (_A *** LIST _A *** ONE)
 > -- [/Feature = List]
+> -- [Feature = Scheme]
+> canTy ((Set, []) :>: Scheme) = (| ONE |)
+> canTy ((Scheme, []) :>: SchTy) = pure $ ("T", SET) -** \ _T -> ONE
+> canTy ((Scheme, []) :>: SchPi) = pure $ ("S", SCHEME) -** \ _S -> ("T", wr (def schElDEF) _S --> SCHEME) -** \ _T -> ONE
+> canTy ((Scheme, []) :>: SchImPi) = pure $ ("S", SET) -** \ _S -> ("T", _S --> SCHEME) -** \ _T -> ONE
+> -- [/Feature = Scheme]
 
 > canTy _ = (|)
 
@@ -165,6 +171,9 @@
 > -- [Feature = UId]
 > eqUnfold ((UId, []) :>: t) ((UId, []) :>: t') = error "eqUnfold: UId"
 > -- [/Feature = UId]
+> -- [Feature = Scheme]
+> eqSetUnfold ((Scheme, []) :>: s) ((Scheme, []) :>: s)  = error "eqUnfold: Scheme"
+> -- [/Feature = Scheme]
 > eqUnfold _ _ = pure (Con, [ZERO])
 
 > eqSetUnfold :: VAL -> VAL -> Maybe (Can, [EXP])

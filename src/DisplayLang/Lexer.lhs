@@ -209,6 +209,12 @@ things...
 >   KwUId  :: Keyword
 >   KwTag  :: Keyword
 >   -- [/Feature = UId]
+>   -- [Feature = Scheme]
+>   KwScheme   :: Keyword
+>   KwSchTy    :: Keyword
+>   KwSchPi    :: Keyword
+>   KwSchImPi  :: Keyword
+>   -- [/Feature = Scheme]
 
 >   KwAsc         :: Keyword
 >   KwComma       :: Keyword
@@ -287,6 +293,12 @@ things...
 > key KwUId       = "UId"
 > key KwTag       = "'"
 > -- [/Feature = UId]
+> -- [Feature = Scheme]
+> key KwScheme    = "Scheme"
+> key KwSchTy     = "SchTy"
+> key KwSchPi     = "SchPi"
+> key KwSchImPi   = "SchImPi"
+> -- [/Feature = Scheme]
 
 > key KwAsc         = ":"
 > key KwComma       = ","

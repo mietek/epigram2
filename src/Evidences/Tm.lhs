@@ -147,6 +147,12 @@
 >   Nil :: Can
 >   Cons :: Can
 >   -- [/Feature = List]
+>   -- [Feature = Scheme]
+>   Scheme   :: Can
+>   SchTy    :: Can
+>   SchPi    :: Can
+>   SchImPi  :: Can
+>   -- [/Feature = Scheme]
 
 >   deriving (Eq, Show)
 
@@ -210,6 +216,12 @@
 > pattern NIL = Nil :- [] 
 > pattern CONS a as = Cons :- [a, as]
 >   -- [/Feature = List]
+>   -- [Feature = Scheme]
+> pattern SCHEME = Scheme :- []
+> pattern SCHTY _T = SchTy :- [_T]
+> pattern SCHPI _S _T = SchPi :- [_S,_T]
+> pattern SCHIMPI _S _T = SchImPi :- [_S,_T]
+>   -- [/Feature = Scheme]
 
 > data Operator :: * where
 >   Eat    :: Maybe String -> Operator -> Operator 
@@ -803,3 +815,11 @@ by |lambdable|:
 > runOpEager _ _ _ = Nothing 
 
 > evv = evalEager {Val} ENil
+
+> applyScheme :: VAL -> Elim EXP -> EXP
+> applyScheme (SCHPI _ _T) a = _T $$ a
+> applyScheme (SCHIMPI _ _T) a = _T $$ a
+
+> applysScheme :: VAL -> [ Elim EXP ] -> EXP
+> applysScheme s [] = exp s
+> applysScheme s (a : as) = applysScheme (ev $ applyScheme s a) as
