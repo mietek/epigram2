@@ -345,7 +345,7 @@
 > eval {s} g (g' :/ e) = eval {s} (g <+< g') e
 
 > (//) :: {:s :: Status:} => Env {Z} {n} -> Tm {p, s', n} -> Tm {Body, s, Z}
-> (//) = eval {:s :: Status:}
+> (//) = evalEager {:s :: Status:}
 
 > apply :: forall s' . pi (s :: Status) . 
 >          Tm {Body, s, Z} -> Elim (Tm {Body, s', Z}) -> Tm {Body, s, Z} 
@@ -401,7 +401,7 @@
 
 > ($$) :: {:s :: Status:} => 
 >         Tm {Body, s, Z} -> Elim (Tm {Body, s', Z}) -> Tm {Body, s, Z}
-> ($$) = apply {:s :: Status:}
+> ($$) = applyEager {:s :: Status:}
 
 > ($$.) :: {:s :: Status:} => 
 >         Tm {Body, s, Z} -> Tm {Body, s', Z} -> Tm {Body, s, Z}
