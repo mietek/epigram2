@@ -96,6 +96,10 @@
 > canTy ((Scheme, []) :>: SchPi) = pure $ ("S", SCHEME) -** \ _S -> ("T", wr (def schElDEF) _S --> SCHEME) -** \ _T -> ONE
 > canTy ((Scheme, []) :>: SchImPi) = pure $ ("S", SET) -** \ _S -> ("T", _S --> SCHEME) -** \ _T -> ONE
 > -- [/Feature = Scheme]
+> -- [Feature = Dubbing]
+> canTy ((Set, []) :>: Dub) = pure $ ("u", UID) -** \u -> ("S", SET) -** \_S -> ("s", _S) -** \_ -> ONE
+> canTy ((Dub, [u, _S, s]) :>: Zero) = pure ONE
+> -- [/Feature = Dubbing]
 
 > canTy _ = (|)
 
@@ -174,6 +178,9 @@
 > -- [Feature = Scheme]
 > eqSetUnfold ((Scheme, []) :>: s) ((Scheme, []) :>: s)  = error "eqUnfold: Scheme"
 > -- [/Feature = Scheme]
+> -- [Feature = Dubbing]
+> eqUnfold ((Dub, _) :>: _) ((Dub, _) :>: _) = pure (Zero, [])
+> -- [/Feature = Dubbing]
 > eqUnfold _ _ = pure (Con, [ZERO])
 
 > eqSetUnfold :: VAL -> VAL -> Maybe (Can, [EXP])
@@ -196,8 +203,9 @@
 > -- [Feature = Enum]
 > eqSetUnfold (ENUMT as) (ENUMT bs) = error "eqSetUnfold: ENUMT"
 > -- [/Feature = Enum]
-> -- [Feature = UId]
-> -- [/Feature = UId]
+> -- [Feature = Dubbing]
+> eqSetUnfold (DUB u _S s) (DUB u' _S' s') = error "eqSetUnfold: DUB"
+> -- [/Feature = Dubbing]
 
 > eqSetUnfold (_ :- _) (_ :- _) = pure (Con, [ZERO])
 > eqSetUnfold _ _ = Nothing

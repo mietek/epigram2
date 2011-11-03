@@ -153,6 +153,9 @@
 >   SchPi    :: Can
 >   SchImPi  :: Can
 >   -- [/Feature = Scheme]
+>   -- [Feature = Dubbing]
+>   Dub      :: Can
+>   -- [/Feature = Dubbing]
 
 >   deriving (Eq, Show)
 
@@ -222,6 +225,9 @@
 > pattern SCHPI _S _T = SchPi :- [_S,_T]
 > pattern SCHIMPI _S _T = SchImPi :- [_S,_T]
 >   -- [/Feature = Scheme]
+>   -- [Feature = Dubbing]
+> pattern DUB u _S s = Dub :- [u, _S, s]
+>   -- [/Feature = Dubbing]
 
 > data Operator :: * where
 >   Eat    :: Maybe String -> Operator -> Operator 
