@@ -156,6 +156,9 @@
 >   -- [Feature = Dubbing]
 >   Dub      :: Can
 >   -- [/Feature = Dubbing]
+>   -- [Feature = Problem]
+>   Pro     :: Prob -> Can
+>   -- [/Feature = Problem]
 
 >   deriving (Eq, Show)
 
@@ -228,6 +231,22 @@
 >   -- [Feature = Dubbing]
 > pattern DUB u _S s = Dub :- [u, _S, s]
 >   -- [/Feature = Dubbing]
+
+> class Problem t where
+>   probName :: t -> String
+>   probTel :: t -> VAL -- parameter telescope
+>   probVal :: t -> [VAL] -> VAL -- Sigma type of result tuple
+
+> data Prob :: * where
+>   Blem :: Problem t => t -> Prob
+
+> instance Eq Prob where
+>   Blem p == Blem q = probName p == probName q
+
+> instance Show Prob where
+>   show (Blem p) = probName p
+
+> pattern Prob p = Pro (Blem p)
 
 > data Operator :: * where
 >   Eat    :: Maybe String -> Operator -> Operator 

@@ -100,8 +100,12 @@
 > canTy ((Set, []) :>: Dub) = pure $ ("u", UID) -** \u -> ("S", SET) -** \_S -> ("s", _S) -** \_ -> ONE
 > canTy ((Dub, [u, _S, s]) :>: Zero) = pure ONE
 > -- [/Feature = Dubbing]
+> -- [Feature = Problem]
+> canTy ((Set, []) :>: Prob p) = (| (probTel p) |)
+> canTy ((Prob p, as) :>: t) | Sigma :- bs <- probVal p (map ev as) = canTy ((Sigma, bs) :>: t) 
+> -- [/Feature = Problem]
 
-> canTy _ = (|)
+> canTy _ = (|) 
 
 
 > projable :: VAL -> Maybe (TY, Tm {Body, s, Z} -> TY)
@@ -176,7 +180,7 @@
 > eqUnfold ((UId, []) :>: t) ((UId, []) :>: t') = error "eqUnfold: UId"
 > -- [/Feature = UId]
 > -- [Feature = Scheme]
-> eqSetUnfold ((Scheme, []) :>: s) ((Scheme, []) :>: s)  = error "eqUnfold: Scheme"
+> eqUnfold ((Scheme, []) :>: s) ((Scheme, []) :>: s')  = error "eqUnfold: Scheme"
 > -- [/Feature = Scheme]
 > -- [Feature = Dubbing]
 > eqUnfold ((Dub, _) :>: _) ((Dub, _) :>: _) = pure (Zero, [])

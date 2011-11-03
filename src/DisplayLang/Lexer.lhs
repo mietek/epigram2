@@ -211,7 +211,7 @@ things...
 >   -- [/Feature = UId]
 >   -- [Feature = Scheme]
 >   KwScheme   :: Keyword
->   KwSchTy    :: Keyword
+>   KwSchType  :: Keyword
 >   KwSchPi    :: Keyword
 >   KwSchImPi  :: Keyword
 >   -- [/Feature = Scheme]
@@ -270,7 +270,7 @@ things...
 > key KwSch        = "Sch"
 > key KwSchTy      = "SchTy"
 > key KwExpPi      = "ExpPi"
-> key KwImpPi      = "ImpPi"
+> key KwImPi       = "ImpPi"
 > -- [/Feature = Problem]
 > -- [Feature = Prop]
 > key KwProp      = "Prop"
@@ -295,7 +295,7 @@ things...
 > -- [/Feature = UId]
 > -- [Feature = Scheme]
 > key KwScheme    = "Scheme"
-> key KwSchTy     = "SchTy"
+> key KwSchType   = "SchType"
 > key KwSchPi     = "SchPi"
 > key KwSchImPi   = "SchImPi"
 > -- [/Feature = Scheme]

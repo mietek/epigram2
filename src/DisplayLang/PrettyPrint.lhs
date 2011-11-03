@@ -83,7 +83,7 @@ being with $\Pi$-types.
 >   -- [/Feature = UId]
 >   -- [Feature = Scheme]
 >   pretty Scheme   = const (kword KwScheme)
->   pretty SchTy    = const (kword KwSchTy)
+>   pretty SchType  = const (kword KwSchType)
 >   pretty SchPi    = const (kword KwSchPi)
 >   pretty SchImPi  = const (kword KwImPi)
 >   -- [/Feature = Scheme]
