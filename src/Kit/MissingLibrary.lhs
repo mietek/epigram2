@@ -36,6 +36,9 @@
 > iter :: (a -> b -> b) -> [a] -> b -> b
 > iter = flip . Prelude.foldr
 
+> swap :: (a, b) -> (b, a)
+> swap (a, b) = (b, a)
+
 
 \subsection{Indicator Function}
 

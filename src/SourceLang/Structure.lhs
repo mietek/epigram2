@@ -16,6 +16,9 @@
 
 %endif
 
+\textbf{Conor says: good start, but let's have another go. An alternative to this
+module is under construction.}
+
 This is an implementation of the proposed @.epi@ file structure, based on
 Conor's notes. Everything is parameterised by a type for terms, so we get a
 bunch of traversable functors. This means we can't easily enforce invariants

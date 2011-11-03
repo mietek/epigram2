@@ -1,0 +1,8 @@
+data Nat : Set where
+  Nat :> zero
+      :> suc (n : Nat)
+
+let plus (x : Nat)(y : Nat) : Nat where
+  plus x y <= induction x
+    plus zero    y = y
+    plus (suc x) y = suc (plus x y)
