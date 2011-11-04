@@ -156,6 +156,7 @@ the parser.
 >     -- [Feature = Equality]
 >    (ArgSize, (| DRefl (%keyword KwRefl%) (sizedDInTm ArgSize) 
 >                       (sizedDInTm ArgSize)  |)) :
+>    (ArgSize, (| DSetRefl (%keyword KwRefl%) (sizedDInTm ArgSize)  |)) :
 >    (ArgSize, (| DCoeh ~Coe (%keyword KwCoe%) (sizedDInTm ArgSize) 
 >                       (sizedDInTm ArgSize) (sizedDInTm ArgSize) 
 >                      (sizedDInTm ArgSize)  |)) :
@@ -251,6 +252,8 @@ the parser.
 >     -- [Feature = Equality]
 >     (EqSize, \ t -> (| DEq  (pFilter isEx (pure t)) (%keyword KwPEq%)
 >                             (pFilter isEx (sizedDInTm (pred EqSize))) |)) :
+>     (EqSize, \ t -> (| (\u -> DC SetEq [t,u]) (%keyword KwSEq%)
+>                             (sizedDInTm (pred EqSize)) |)) :
 >     -- [/Feature = Equality]
 
 >     -- [Feature = Prop]

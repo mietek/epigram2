@@ -92,6 +92,7 @@ to DInTm, along with appropriate elaboration and distillation rules.
 >     DTEx   :: ExTmWrap x  -> DHead x -- embedding
 >     -- [Feature = Equality]
 >     DRefl  :: DInTm x ->  DInTm x -> DHead x 
+>     DSetRefl  :: DInTm x -> DHead x 
 >     DCoeh  :: Coeh -> DInTm x ->  DInTm x ->  DInTm x -> DInTm x -> DHead x 
 >     -- [/Feature = Equality]
 >  deriving (Functor, Foldable, Traversable, Show)

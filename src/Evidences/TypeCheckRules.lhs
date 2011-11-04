@@ -45,15 +45,23 @@
 > canTy ((Prop, []) :>: Eq)            = pure $
 >   (("S", SET) -** \ _S -> _S ***
 >    ("T", SET) -** \ _T -> _T *** ONE)
+> canTy ((Prop, []) :>: SetEq)         = pure $
+>   (SET *** SET *** ONE)
 > canTy ((Prf, [_P]) :>: p)            = case (ev _P, p) of
 >   (ONE, Zero) -> (| ONE |)
 >   (INH _T, Wit) -> (| (_T *** ONE) |)
 >   (AND _P _Q, Pair) -> (| (PRF _P *** PRF _Q *** ONE) |)
+
 >   (EQ _S s _T t, c) -> case (ev _S, ev _T) of
 >     (_C :- es, _C' :- es') -> case eqUnfold ((_C, es) :>: s) ((_C', es') :>: t) of
 >       Just (c', _Ps) | c == c' -> (| (prfs _Ps) |)
 >       _ -> (|)
 >     _ -> (|)
+
+>   (SETEQ _S _T, c) -> 
+>     case eqSetUnfold (ev _S) (ev _T) of
+>       Just (c', _Ps) | c == c' -> (| (prfs _Ps) |)
+>       _ -> (|)
 >   _ -> (|)
 >   where
 >     prfs :: [EXP] -> Tm {Body, s, Z}
@@ -117,6 +125,9 @@
 >       Just (Pair, [_P, _Q]) -> Just (PRF _P, \_ -> PRF _Q)
 >       _ -> (|)
 >     _ -> (|)
+>   SETEQ _S _T -> case eqSetUnfold (ev _S) (ev _T) of
+>       Just (Pair, [_P, _Q]) -> Just (PRF _P, \_ -> PRF _Q)
+>       _ -> (|)
 >   _            -> (|)
 > projable _                = Nothing
 
@@ -145,7 +156,7 @@
 >                               ++ errTm (ct :- [])
 
 > eqUnfold :: ((Can, [EXP]) :>: EXP) -> ((Can, [EXP]) :>: EXP) -> Maybe (Can, [EXP])
-> eqUnfold ((Set, []) :>: _A) ((Set, []) :>: _B) = eqSetUnfold (ev _A) (ev _B)
+> eqUnfold ((Set, []) :>: _A) ((Set, []) :>: _B) = pure (Con, [SETEQ _A _B])
 > eqUnfold ((Pi, [_S, _T]) :>: f) ((Pi, [_S', _T']) :>: f') = pure (Ext,
 >   [("s", _S) ->> \ s -> ("s'", nix _S') ->> \ s' ->
 >    let ss = B0 :< A s ; ss' = B0 :< A s'
@@ -190,16 +201,22 @@
 > eqSetUnfold :: VAL -> VAL -> Maybe (Can, [EXP])
 > eqSetUnfold (c :- []) (c' :- []) | c == c' = pure (Zero, [])
 > eqSetUnfold (PI _S _T) (PI _S' _T') = pure (Pair,
->   [  EQ SET _S SET _S'
->   ,  EQ (_S --> SET) _T (_S' --> SET) _T'])
+>   [  SETEQ _S _S'
+>   , ("s", _S) ->> \ s -> ("s'", nix _S') ->> \ s' ->
+>       let ss = B0 :< A s ; ss' = B0 :< A s'
+>       in  EQ (nix _S) s (nix _S') s' ==>
+>           SETEQ (nix _T :$ ss) (nix _T' :$ ss')]) 
 > eqSetUnfold (SIGMA _S _T) (SIGMA _S' _T') = pure (Pair,
->   [  EQ SET _S SET _S'
->   ,  EQ (_S --> SET) _T (_S' --> SET) _T'])
+>   [  SETEQ _S _S'
+>   , ("s", _S) ->> \ s -> ("s'", nix _S') ->> \ s' ->
+>       let ss = B0 :< A s ; ss' = B0 :< A s'
+>       in  EQ (nix _S) s (nix _S') s' ==>
+>           SETEQ (nix _T :$ ss) (nix _T' :$ ss')]) 
 > eqSetUnfold (PRF _P) (PRF _Q) =
 >   pure (Pair, [_P ==> _Q, _Q ==> _P])
 > -- [Feature = IDesc]
 > eqSetUnfold (IMU _I _D i) (IMU _I' _D' i') = pure (Pair,
->   [  EQ SET _I SET _I'
+>   [  SETEQ _I _I'
 >   ,  AND  (EQ (ARR _I (def iDescDEF $$. _I $$. ZERO)) _D 
 >               (ARR _I' (def iDescDEF $$. _I' $$. ZERO)) _D')
 >           (EQ _I i _I' i') ])

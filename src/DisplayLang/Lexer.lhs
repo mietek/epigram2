@@ -163,8 +163,10 @@ things...
 >   -- [/Feature = List]
 >   -- [Feature = Equality]
 >   KwPEq   :: Keyword
+>   KwSEq   :: Keyword
 >   KwExt   :: Keyword
 >   KwRefl  :: Keyword
+>   KwSetRefl  :: Keyword
 >   KwCoe   :: Keyword
 >   KwCoh   :: Keyword
 >   KwQA    :: Keyword
@@ -211,7 +213,7 @@ things...
 >   -- [/Feature = UId]
 >   -- [Feature = Scheme]
 >   KwScheme   :: Keyword
->   KwSchType  :: Keyword
+>   KwSchTyp   :: Keyword
 >   KwSchPi    :: Keyword
 >   KwSchImPi  :: Keyword
 >   -- [/Feature = Scheme]
@@ -247,8 +249,10 @@ things...
 > -- [/Feature = List]
 > -- [Feature = Equality]
 > key KwPEq    = "=="
+> key KwSEq    = "<->"
 > key KwExt    = "ext"
 > key KwRefl   = "refl"
+> key KwSetRefl   = "srefl"
 > key KwCoe    = "coe"
 > key KwCoh    = "coh" 
 > key KwQA     = "$=" 
@@ -270,7 +274,7 @@ things...
 > key KwSch        = "Sch"
 > key KwSchTy      = "SchTy"
 > key KwExpPi      = "ExpPi"
-> key KwImPi       = "ImpPi"
+> key KwImpPi       = "ImpPi"
 > -- [/Feature = Problem]
 > -- [Feature = Prop]
 > key KwProp      = "Prop"
@@ -295,7 +299,7 @@ things...
 > -- [/Feature = UId]
 > -- [Feature = Scheme]
 > key KwScheme    = "Scheme"
-> key KwSchType   = "SchType"
+> key KwSchTyp    = "SchTyp"
 > key KwSchPi     = "SchPi"
 > key KwSchImPi   = "SchImPi"
 > -- [/Feature = Scheme]

@@ -83,13 +83,14 @@ being with $\Pi$-types.
 >   -- [/Feature = UId]
 >   -- [Feature = Scheme]
 >   pretty Scheme   = const (kword KwScheme)
->   pretty SchType  = const (kword KwSchType)
+>   pretty SchTy    = const (kword KwSchTyp)
 >   pretty SchPi    = const (kword KwSchPi)
->   pretty SchImPi  = const (kword KwImPi)
+>   pretty SchImPi  = const (kword KwSchImPi)
 >   -- [/Feature = Scheme]
 >   -- [Feature = Equality]
 >   pretty Ext      = const (kword KwExt)
 >   pretty Eq       = const (kword KwPEq)
+>   pretty SetEq       = const (kword KwSEq)
 >   -- [/Feature = Equality]
 >   -- [Feature = Label]
 >   pretty Ret      = const (kword KwRet) 
@@ -229,6 +230,11 @@ than a $\lambda$-term is reached.
 >         pretty l maxBound <+> kword KwAsc <+> pretty t maxBound
 >         <+> kword KwLabelEnd)
 >     -- [Feature = Label]
+>     -- [Feature = Equality]
+>     pretty (DC SetEq [t , u]) = wrapDoc
+>       (pretty t ArgSize <+> kword KwSEq <+> pretty u ArgSize)
+>       ArgSize
+>     -- [/Feature = Equality]
 >     pretty (DC c [])       = pretty c
 >     pretty (DC c as)  = wrapDoc
 >         (pretty c AppSize <+> hsep (map (flip pretty ArgSize) as))
@@ -274,6 +280,8 @@ than a $\lambda$-term is reached.
 >     pretty (DTEx ex)    = const (quotes . text . show $ ex)
 >     pretty (DRefl _S s) = wrapDoc (kword KwRefl <+> pretty _S ArgSize
 >                                                 <+> pretty s ArgSize)
+>                             AppSize
+>     pretty (DSetRefl _S) = wrapDoc (kword KwSetRefl <+> pretty _S ArgSize)
 >                             AppSize
 >     pretty (DCoeh coeh _S _T q s) = 
 >       wrapDoc (kword (eorh coeh) <+> pretty _S ArgSize <+> pretty _T ArgSize

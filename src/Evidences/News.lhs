@@ -215,6 +215,9 @@ references remain as they are, as in |getLatest|.
 >       _X' <- traverseTm _X 
 >       x' <- traverseTm x
 >       return (Refl _X' x' :$ B0) 
+>     traverseTm (SetRefl _X) = do
+>       _X' <- traverseTm _X 
+>       return (SetRefl _X' :$ B0) 
 >     traverseTm (Coeh coeh _X _Y p x) = do
 >       _X' <- traverseTm _X
 >       _Y' <- traverseTm _Y 

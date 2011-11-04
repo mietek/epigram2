@@ -206,10 +206,13 @@ We don't always want to do this, but often do want to, go figure:
 >   _T' <- distill (SET :>: ev _T) l
 >   t' <- distill (ev _T :>: ev t) l
 >   (| (DRefl _T' t', PRF (EQ _T t _T t), as, Nothing) |)
+> distillHead (SetRefl _T) as l = do
+>   _T' <- distill (SET :>: ev _T) l
+>   (| (DSetRefl _T' , PRF (SETEQ _T _T), as, Nothing) |)
 > distillHead (Coeh coeh _S _T q s) as l = do
 >     _S' <- distill (SET :>: ev _S) l
 >     _T' <- distill (SET :>: ev _T) l
->     q' <- distill (PRF (EQ SET _S SET _T) :>: ev q) l
+>     q' <- distill (PRF (SETEQ _S _T) :>: ev q) l
 >     s' <- distill (ev _S :>: ev s) l
 >     (| (DCoeh coeh _S' _T' q' s', eorh coeh _S _T q s, as, Nothing) |)
 >   where
@@ -278,6 +281,9 @@ We don't always want to do this, but often do want to, go figure:
 >
 > distillSpine (PRF _P :>: (tm, Sym : as, _)) l | EQ _S s _T t <- ev _P =
 >   (| (Sym :) (distillSpine (PRF (EQ _T t _S s) :>: (tm $$ Sym, as, Nothing)) l) |)
+>
+> distillSpine (PRF _P :>: (tm, Sym : as, _)) l | SETEQ _S _T <- ev _P =
+>   (| (Sym :) (distillSpine (PRF (SETEQ _T _S) :>: (tm $$ Sym, as, Nothing)) l) |)
 >
 > distillSpine (PRF _P :>: (tm, Out : as, _)) l
 >     |  EQ _S s _T t    <- ev _P

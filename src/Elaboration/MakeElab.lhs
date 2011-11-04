@@ -58,12 +58,12 @@ the second type, either trivially (if the types are definitionally equal) or by
 hoping for a proof of the appropriate equation and inserting a coercion.
 
 > eCoerce :: EXP -> EXP -> EXP -> Elab EXP
-> eCoerce _S _T s = do
+> eCoerce _S _T s = do 
 >     eq <- eEqual $ SET :>: (_S, _T)
 >     if eq
 >         then return s
 >         else do
->             q <- eHopeFor $ PRF (EQ SET _S SET _T)
+>             q <- eHopeFor $ PRF (SETEQ _S _T)
 >             return $ (Coeh Coe _S _T q s :$ B0) 
 
 The |eEqual| instruction determines if two types are definitionally equal.
@@ -326,10 +326,13 @@ identity function at the given type.
 >   _T' <- subElab loc (SET :>: _T)
 >   t' <- subElab loc (_T' :>: t)
 >   (| (PAIR (PRF (EQ _T' t' _T' t')) (Refl _T' t' :$ B0), Nothing) |)
+> makeElabInferHead loc (DSetRefl _T) = do
+>   _T' <- subElab loc (SET :>: _T)
+>   (| (PAIR (PRF (SETEQ _T' _T')) (SetRefl _T'  :$ B0), Nothing) |)
 > makeElabInferHead loc (DCoeh coeh _S _T q s) = do
 >     _S' <- subElab loc (SET :>: _S)
 >     _T' <- subElab loc (SET :>: _T)
->     q' <- subElab loc (PRF (EQ SET _S' SET _T') :>: q)
+>     q' <- subElab loc (PRF (SETEQ _S' _T') :>: q)
 >     s' <- subElab loc (_S' :>: s)
 >     (| (PAIR (eorh coeh _S' _T' q' s') (Coeh coeh _S' _T' q' s' :$ B0), Nothing) |)
 >   where
@@ -456,6 +459,9 @@ its type.
 >
 >     handleArgs (tm :<: PRF _P) (Sym : as) | EQ _S s _T t <- ev _P =
 >       handleArgs (tm $$ Sym :<: PRF (EQ _T t _S s)) as
+>
+>     handleArgs (tm :<: PRF _P) (Sym : as) | SETEQ _S _T <- ev _P =
+>       handleArgs (tm $$ Sym :<: PRF (SETEQ _T _S)) as
 >
 >     handleArgs (tm :<: PRF _P) (Out : as)
 >         |  EQ _S s _T t    <- ev _P

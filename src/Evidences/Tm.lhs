@@ -58,7 +58,8 @@
 >   V     :: Fin {n}      {- dB i -}                         -> Tm {Head, s, n}
 >   P     :: (Int, String, TY)    {- dB l -}                 -> Tm {Head, s, n}
 >   B     :: DATATY                                          -> Tm {Head, s, n}
->   Refl  :: Tm {Body, Exp, n} -> Tm {Body, Exp, n}          -> Tm {Head, s, n}
+>   Refl     :: Tm {Body, Exp, n} -> Tm {Body, Exp, n}       -> Tm {Head, s, n}
+>   SetRefl  :: Tm {Body, Exp, n}                            -> Tm {Head, s, n}
 >   Coeh  :: Coeh -> Tm {Body, Exp, n} -> Tm {Body, Exp, n}
 >                 -> Tm {Body, Exp, n} -> Tm {Body, Exp, n}  -> Tm {Head, s, n}
 >
@@ -123,7 +124,8 @@
 >   Chkd   :: Can                            -- content of a proof for equality checking
 >   -- [/Feature = Prop]
 >   -- [Feature = Eq]
->   Eq     :: Can                            -- equality type
+>   Eq     :: Can                            -- value equality type
+>   SetEq  :: Can                            -- set equality type
 >   Ext    :: Can                            -- proof by appeal to extensionality
 >   -- [/Feature = Eq]
 >   -- [Feature = UId]
@@ -149,7 +151,7 @@
 >   -- [/Feature = List]
 >   -- [Feature = Scheme]
 >   Scheme   :: Can
->   SchTy    :: Can
+>   SchTy   :: Can
 >   SchPi    :: Can
 >   SchImPi  :: Can
 >   -- [/Feature = Scheme]
@@ -182,6 +184,7 @@
 >   -- [/Feature = Prop]
 >   -- [Feature = Eq]
 > pattern EQ _S s _T t  = Eq :- [_S, s, _T, t]
+> pattern SETEQ _S _T   = SetEq :- [_S, _T]
 > pattern EXT _P        = Ext :- [_P]
 >   -- [/Feature = Eq]
 >   -- [Feature = UId]
@@ -376,8 +379,12 @@
 >   Just t -> eval {s} ENil t
 >   Nothing -> P lt :$ B0
 > eval {s} g (Refl _X x) = Refl (g <:/> _X) (g <:/> x) :$ B0
-> eval {Val} g (Coeh Coe _S _T _Q s) = fst (coeh (g // _S) (g // _T) (g // _Q) (g // s))
-> eval {Val} g (Coeh Coh _S _T _Q s) = snd (coeh (g // _S) (g // _T) (g // _Q) (g // s))
+> eval {s} g (SetRefl _X) = SetRefl (g <:/> _X) :$ B0
+> eval {Val} g (Coeh c _S _T _Q x) = let _S' = (g // _S) ; _T' = (g // _T) ; _Q' = (g // _Q) ; x' = (g // x)
+>                                    in case (c,coeh _S' _T' _Q' x') of
+>                                         (Coe, Just (e,h)) -> e
+>                                         (Coh, Just (e,h)) -> h
+>                                         (_,Nothing) -> Coeh c (exp _S') (exp _T') (exp _Q') (exp x') :$ B0 
 > eval {Exp} g c@(Coeh _ _ _ _ _) = g <:/> exp (c :$ B0)
 > eval {s} g (g' :/ e) = eval {s} (g <+< g') e
 
@@ -412,17 +419,22 @@
 >   PI _S _T -> Refl (_T $$. s) (f $$. s) :$ B0
 > apply {_} q Sym | isRefl (ENil // q :: VAL) = q
 > apply {_} (r@(Refl _T t) :$ B0) Hd = case (ev _T, ev t) of
->   (SET, PI _S _T) -> Refl SET _S :$ B0
->   (SET, SIGMA _S _T) -> Refl SET _S :$ B0
 >   (SIGMA _S _T, p) -> Refl _S (exp (p $$ Hd)) :$ B0
 >   (PROP, p) -> la "p" $ \ p -> p
 >   _ -> r :$ (B0 :< Hd)
+> apply {_} (r@(SetRefl _T) :$ B0) Hd = case (ev _T) of
+>   (PI _S _T) -> SetRefl _S :$ B0
+>   (SIGMA _S _T) -> SetRefl _S :$ B0
+>   _ -> r :$ (B0 :< Hd)
 > apply {_} (r@(Refl _T t) :$ B0) Tl = case (ev _T, ev t) of
->   (SET, PI _S _T) -> Refl (_S --> SET) _T :$ B0
->   (SET, SIGMA _S _T) -> Refl (_S --> SET) _T :$ B0
 >   (SIGMA _S _T, p) -> Refl (_T $$. (p $$ Hd)) (exp (p $$ Tl)) :$ B0
 >   (PROP, p) -> la "p" $ \ p -> p
 >   _ -> r :$ (B0 :< Tl)
+> apply {_} (r@(SetRefl _T) :$ B0) Tl = case (ev _T) of
+>   (PI _S _T) -> la "s" $ \s -> la "t" $ \t -> la "q" $ \q ->  Refl (nix _S --> SET) (nix _T) :$ (B0 :< QA s t q :< Out)
+>   (SIGMA _S _T) -> la "s" $ \s -> la "t" $ \t -> la "q" $ \q ->  Refl (nix _S --> SET) (nix _T) :$ (B0 :< QA s t q :< Out)
+>   _ -> r :$ (B0 :< Tl)
+> apply {_} (Refl SET _T :$ B0) Out = SetRefl _T :$ B0 
 > apply {_} (h :$ (ss :< Sym)) Sym = h :$ ss
 > apply {s} (PAIR a b) Sym = PAIR (apply {Exp} a Sym) (apply {Exp} b Sym)
 > apply {s} (CON z) Sym = CON z
@@ -483,26 +495,29 @@
 
 This thing does coercion and coherence.
 
-> coeh :: VAL -> VAL -> VAL -> VAL -> (VAL, VAL)
-> coeh _S _ _Q s | isRefl _Q = (s, Refl (exp _S) (exp s) :$ B0)
-> coeh SET SET _ _S = (_S, Refl SET (exp _S) :$ B0)
-> coeh (PI _S _T) (PI _S' _T') _Q f =
+> coeh :: VAL -> VAL -> VAL -> VAL -> Maybe (VAL, VAL)
+> coeh _S _ _Q s | isRefl _Q = Just (s, Refl (exp _S) (exp s) :$ B0)
+> coeh SET SET _ _S = Just (_S, Refl SET (exp _S) :$ B0)
+> coeh (PI _S _T) (PI _S' _T') _Q f = Just
 >  (let _QS = _Q $$ Hd $$ Sym
 >   in  la "s'" $ \ s' ->
 >       let  s = Coeh Coe (nix _S') (nix _S) (nix _QS) s' :$ B0
 >            q = Coeh Coh (nix _S') (nix _S) (nix _QS) s' :$ (B0 :< Sym)
 >       in  Coeh Coe (nix _T :$ (B0 :< A s)) (nix _T' :$ (B0 :< A s'))
->              (nix _Q :$ (B0 :< Tl :< QA s s' q)) (nix f :$ (B0 :< A s)) :$ B0
+>              (nix _Q :$ (B0 :< Tl :< A s :< A s' :< A q)) (nix f :$ (B0 :< A s)) :$ B0
 >  , Coeh Coh (PI _S _T) (PI _S' _T')  (exp _Q) (exp f) :$ B0)
 > coeh (SIGMA _S _T) (SIGMA _S' _T') _Q p =
 >   let s = p $$ Hd
->       (s', q) = coeh (ev _S) (ev _S') (_Q $$ Hd) s'
->       (t', q') = coeh (ev _T $$. s) (ev _T' $$. s') (_Q $$ Tl $$ QA s s' q) (p $$ Tl)
->   in  (PAIR (exp s') (exp t'), PAIR (exp q) (exp q'))
-> coeh (PRF _) (PRF _) _Q p = (_Q $$ Hd $$. p, ZERO)
+>       (s', q) = (Coeh Coe _S _S' (exp (_Q $$ Hd)) (exp s') :$ B0 , Coeh Coh _S _S' (exp (_Q $$ Hd)) (exp s') :$ B0)
+>       (t', q') = (Coeh Coe (_T $$. s) (_T' $$. s') (exp (_Q $$ Tl $$ A s $$ A s' $$ A q)) (exp (p $$ Tl)) :$ B0
+>                  ,Coeh Coh (_T $$. s) (_T' $$. s') (exp (_Q $$ Tl $$ A s $$ A s' $$ A q)) (exp (p $$ Tl)) :$ B0)
+>   in  Just (PAIR (exp s') (exp t'), PAIR (exp q) (exp q'))
+> coeh (PRF _) (PRF _) _Q p = Just (_Q $$ Hd $$. p, ZERO)
 
-> coeh _S _T _Q s = (Coeh Coe (exp _S) (exp _T) (exp _Q) (exp s) :$ B0,
->                    Coeh Coh (exp _S) (exp _T) (exp _Q) (exp s) :$ B0)
+> coeh _S _T _Q s = Nothing
+
+<                   (Coeh Coe (exp _S) (exp _T) (exp _Q) (exp s) :$ B0,
+<                    Coeh Coh (exp _S) (exp _T) (exp _Q) (exp s) :$ B0)
 
 
 > fortran :: String -> [Tm {Body, Val, n}] -> Tm {Body, Val, n} -> String
@@ -527,6 +542,7 @@ by reflexivity, the basis for proof compaction and various other
 optimizations.
 
 > isRefl :: VAL -> Bool
+> isRefl (SetRefl _ :$ es) = isReflSp es 
 > isRefl (Refl _ _ :$ es) = isReflSp es 
 > isRefl (_ :- es) = all (isRefl . ev) es
 > isRefl _ = False
@@ -667,6 +683,7 @@ by |lambdable|:
 > ugly xs (V i) = xs !>! i
 > ugly xs (P (i, s, t)) = "(" ++ s ++ " = " ++ show i ++ ")"
 > ugly xs (Refl _S s) = "(refl " ++ ugly xs _S ++ " " ++ ugly xs s ++ ")"
+> ugly xs (SetRefl _S) = "(srefl " ++ ugly xs _S ++ ")"
 > ugly xs (Coeh Coe _S _T _Q s) =
 >   "(coe " ++ ugly xs _S ++ " " ++ ugly xs _T ++ " " ++ ugly xs _Q ++ " " ++ ugly xs s ++ ")"
 > ugly xs (Coeh Coh _S _T _Q s) =
@@ -774,8 +791,15 @@ by |lambdable|:
 > evalEager {s} g (D d)                     = D d :$ B0
 > evalEager {s} g (B d)                     = B d :$ B0
 > evalEager {s} g (Refl _X x) = Refl (exp (evalEager {s} g _X)) (exp (evalEager {s} g x)) :$ B0
-> evalEager {s} g (Coeh Coe _S _T _Q x) = evalEager {s} ENil . fst $ (coeh (evalEager {Val} g _S) (evalEager {Val} g _T) (evalEager {Val} g _Q) (evalEager {Val} g x))
-> evalEager {s} g (Coeh Coh _S _T _Q x) = evalEager {s} ENil . snd $ (coeh (evalEager {Val} g _S) (evalEager {Val} g _T) (evalEager {Val} g _Q) (evalEager {Val} g x))
+> evalEager {s} g (SetRefl _X) = SetRefl (exp (evalEager {s} g _X))  :$ B0
+> evalEager {s} g (Coeh c _S _T _Q x) = let _S' = (evalEager {Val} g _S) 
+>                                           _T' = (evalEager {Val} g _T) 
+>                                           _Q' = (evalEager {Val} g _Q) 
+>                                           x' = (evalEager {Val} g x)
+>                                       in case (c,coeh _S' _T' _Q' x') of
+>                                            (Coe, Just (e,h)) -> evalEager {s} ENil e
+>                                            (Coh, Just (e,h)) -> evalEager {s} ENil h
+>                                            (_,Nothing) -> Coeh c (exp _S') (exp _T') (exp _Q') (exp x') :$ B0 
 > evalEager {s} g e = error $ "evalEager: missing: " 
 
 > applysEager ::  pi (s :: Status) . 
@@ -801,20 +825,25 @@ by |lambdable|:
 >   PI _S _T -> Refl (exp (applyEager {s} (evalEager {s} ENil _T) (A (evalEager {s} ENil x)))) (exp (applyEager {s} (evalEager {s} ENil f) (A (evalEager {s} ENil x)))) :$ B0
 > applyEager {s} q Sym | isRefl (ENil // q :: VAL) = evalEager {s} ENil q
 > applyEager {s} (r@(Refl _T t) :$ B0) Hd = case (ev _T, ev t) of
->   (SET, PI _S _T) -> Refl SET (exp (evalEager {s} ENil _S)) :$ B0
->   (SET, SIGMA _S _T) -> Refl SET (exp (evalEager {s} ENil _S)) :$ B0
 >   (SIGMA _S _T, p) -> Refl (exp (evalEager {s} ENil _S)) (exp (applyEager {s} (evalEager {s} ENil p) Hd)) :$ B0
 >   (PROP, p) -> la "p" $ \ p -> p
 >   _ -> r :$ (B0 :< Hd)
+> applyEager {s} (r@(SetRefl _T) :$ B0) Hd = case (ev _T) of
+>   (PI _S _T) -> SetRefl (exp (evalEager {s} ENil _S)) :$ B0
+>   (SIGMA _S _T) -> SetRefl (exp (evalEager {s} ENil _S)) :$ B0
+>   _ -> r :$ (B0 :< Hd)
 > applyEager {s} (r@(Refl _T t) :$ B0) Tl = case (ev _T, ev t) of
->   (SET, PI _S _T) -> Refl (exp (evalEager {s} ENil _S) --> SET) (exp (evalEager {s} ENil _T)) :$ B0
->   (SET, SIGMA _S _T) -> Refl (exp (evalEager {s} ENil _S) --> SET) (exp (evalEager {s} ENil _T)) :$ B0
 >   (SIGMA _S _T, p) -> Refl (exp (applyEager {s} (evalEager {s} ENil _T) (A (applyEager {s} (evalEager {s} ENil p) Hd)))) (exp (applyEager {s} (evalEager {s} ENil p) Tl)) :$ B0
 >   (PROP, p) -> la "p" $ \ p -> p
+>   _ -> r :$ (B0 :< Tl)
+> applyEager {s} (r@(SetRefl _T) :$ B0) Tl = case (ev _T) of
+>   (PI _S _T) -> Refl (exp (evalEager {s} ENil _S) --> SET) (exp (evalEager {s} ENil _T)) :$ B0
+>   (SIGMA _S _T) -> Refl (exp (evalEager {s} ENil _S) --> SET) (exp (evalEager {s} ENil _T)) :$ B0
 >   _ -> r :$ (B0 :< Tl)
 > applyEager {s} (h :$ (ss :< Sym)) Sym = applysEager {s} (h :$ B0) ss
 > applyEager {s} (PAIR a b) Sym = PAIR (exp (applyEager {s} (evalEager {s} ENil a) Sym)) (exp (applyEager {s} (evalEager {s} ENil b) Sym))
 > applyEager {s} (CON z) Sym = CON (exp (evalEager {s} ENil z))
+> applyEager {s} (Refl SET _T :$ B0) Out = SetRefl _T :$ B0
 > applyEager {s} (Ext :- [f]) Sym = Ext :- [la "a" $ \ a -> la "b" $ \ b -> la "q" $ \ q ->
 >   nix f :$ (B0 :< A b :< A a :< A (V Fz {- q, yuk -} :$ (B0 :< Sym)) :< Sym)]
 > -- [/Feature = Eq]

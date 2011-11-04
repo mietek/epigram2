@@ -102,6 +102,7 @@
 >   _ ->  error "The impossible happened in etaQuoteSp (QA)"
 > etaQuoteSp {n} l (p :<: PRF _P) (Sym : as) = case ev _P of
 >   EQ _S s _T t  -> Sym : etaQuoteSp {n} l (p $$ Sym :<: PRF (EQ _T t _S s)) as
+>   SETEQ _S _T  -> Sym : etaQuoteSp {n} l (p $$ Sym :<: PRF (SETEQ _T _S)) as
 >   _ ->  error "The impossible happened in etaQuoteSp (Sym)"
 > etaQuoteSp {n} l (e :<: LABEL _T _) (Call lab : as) = 
 >   let  lab' = etaQuoten {n} l (ev _T :>: lab)  
@@ -114,10 +115,13 @@
 > etahQuote {n} l (Refl _S s) = 
 >   Refl (exp $ etaQuoten {n} l (SET :>: _S)) (exp $ etaQuoten {n} l (ev _S :>: s)) 
 >    :<: PRF (EQ _S s _S s)
+> etahQuote {n} l (SetRefl _S) = 
+>   SetRefl (exp $ etaQuoten {n} l (SET :>: _S))
+>    :<: PRF (SETEQ _S _S)
 > etahQuote {n} l (Coeh coeh _S _T q s) =
 >     Coeh coeh (exp $ etaQuoten {n} l (SET :>: _S)) 
 >               (exp $ etaQuoten {n} l (SET :>: _T))
->               (exp $ etaQuoten {n} l (PRF (EQ SET _S SET _T) :>: q))
+>               (exp $ etaQuoten {n} l (PRF (SETEQ _S _T) :>: q))
 >               (exp $ etaQuoten {n} l (ev _S :>: s)) 
 >       :<: eorh coeh
 >  where eorh :: Coeh -> EXP

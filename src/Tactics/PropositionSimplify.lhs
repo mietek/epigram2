@@ -278,6 +278,8 @@ matches, we can always try searching the context.
 >     _      -> simplifyAll lev delta s r
 > propSimplify lev delta (EQ sty s tty t) = 
 >     simplifyEq lev delta (sty :>: s) (tty :>: t)
+> propSimplify lev delta (SETEQ s t) = 
+>     simplifySetEq lev delta s t
 > propSimplify lev delta p = return $ propSearch lev delta p
 
 
@@ -531,6 +533,28 @@ context.
 >     return $ propSearch lev delta (EQ sty s tty t)
 
 
+> simplifySetEq ::  NameSupplier m => 
+>                      Int -> Bwd TY -> EXP -> EXP ->
+>                          m Simplify 
+> simplifySetEq lev delta s t 
+>     | equal lev (SET :>: (s, t)) =
+>   return $ SimplyTrivial (SetRefl s :$ B0)
+
+> simplifySetEq lev delta s t 
+>     |  Just (k, es)  <- eqSetUnfold (ev s) (ev t) = 
+>   case (k, es) of
+>     (_,     [])      -> return $ SimplyTrivial (k :- [])
+>     (Con,   [p])     -> mapSimp lev p (L ENil "x" (V Fz :$ (B0 :< Out)))
+>                                       (L ENil "x" (Con :- [V Fz :$ B0]))
+>                             <$> propSimplify lev delta (ev p)
+>     (Pair,  [p, q])  -> mapSimp lev (AND p q) pairEta pairEta
+>                             <$> propSimplify lev delta (AND p q)
+>     _                -> return $ propSearch lev delta (SETEQ s t)
+
+>   where pairEta = L ENil "x" $ PAIR (V Fz :$ (B0 :< Hd)) (V Fz :$ (B0 :< Tl))
+
+> simplifySetEq lev delta s t =
+>     return $ propSearch lev delta (SETEQ s t)
 
 \subsubsection{Proof search}
 

@@ -124,15 +124,19 @@ here.
 >   s <- chev l (exp _S :>: (g, s))
 >   let s' = exp s
 >   return ((Refl _S' (exp s') :$ B0) :<: PRF (Eq :- [_S', s', _S', s']), [])
+> headTySpine l (g, SetRefl _S)     = do
+>   _S <- chev l (SET :>: (g, _S))
+>   let _S' = exp _S
+>   return ((SetRefl _S' :$ B0) :<: PRF (SetEq :- [_S', _S']), [])
 > headTySpine l (g, Coeh c _S _T _Q s) = do
 >   _S <- chev l (SET :>: (g, _S))
 >   _T <- chev l (SET :>: (g, _T))
->   _Q <- chev l (PRF (Eq :- [SET, exp _S, SET, exp _T]) :>: (g, _Q))
+>   _Q <- chev l (PRF (SetEq :- [exp _S, exp _T]) :>: (g, _Q))
 >   s <- chev l (exp _S :>: (g, s))
->   let (s', q') = coeh _S _T _Q s
+>   let s' = eval {Exp} ENil (Coeh Coe (exp _S) (exp _T) (exp _Q) (exp s)) 
 >   case c of
->     Coe -> return (exp s' :<: exp _T, [])
->     Coh -> return (exp q' :<: PRF (Eq :- [exp _S, exp s, exp _T, exp s']), [])
+>     Coe -> return (s' :<: exp _T, [])
+>     Coh -> return (eval {Exp} ENil (Coeh Coh (exp _S) (exp _T) (exp _Q) (exp s)) :<: PRF (Eq :- [exp _S, exp s, exp _T, exp s']), [])
 > headTySpine l (g, B d@(SIMPLDTY name _I uDs)) = do
 >   return (B d :$ B0 :<: _I --> SET, [])
 > headTySpine l (g, h :$ as)       = do 
@@ -182,6 +186,7 @@ here.
 >       _ -> throwError' $ err "spInf: equation application on non-equation"
 >     (PRF _P, Sym)  -> case ev _P of
 >       Eq :- [_X, x, _Y, y] -> spInf l (e $$ Sym :<: PRF (Eq :- [_Y, y, _X, x])) (g, as)
+>       SetEq :- [_X, _Y] -> spInf l (e $$ Sym :<: PRF (SetEq :- [_Y, _X])) (g, as)
 >       _ -> throwError' $ err "spInf: symmetry on non-equation"
 >     -- [/Feature = Prop]
 >     -- [Feature = Label]

@@ -518,7 +518,7 @@
 >       substOP = eat "X" $ \_X -> eat "x" $ \x -> eat "y" $ \y ->
 >                  eat "eq" $ \eq -> eat "P" $ \_P -> eat "p" $ \p ->
 >                   emit $ Coeh Coe (_P x) (_P y) 
->                            (Refl (ARR _X SET) _P :$ (B0 :< QA x y eq)) p :$ B0
+>                            (Refl (ARR _X SET) _P :$ (B0 :< QA x y eq :< Out)) p :$ B0
 
 > -- [Feature = List]
 > foldDEF = mkDEF
