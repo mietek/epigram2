@@ -33,7 +33,8 @@
 
 > import Tactics.Matching
 
-< import Tactics.PropositionSimplify
+> import Tactics.PropositionSimplify
+
 < import Tactics.Unification
 
 > import Elaboration.ElabProb
@@ -336,11 +337,7 @@ create a hole.
 
 > runElabHope :: WorkTarget -> VAL -> ProofState (EXP, ElabStatus)
 > runElabHope wrk ONE             = return (ZERO, ElabSuccess)
-
-> {-
-> runElabHope wrk (PRF p)             = simplifyProof wrk p
-> -}
-
+> runElabHope wrk (PRF p)             = simplifyProof wrk (ev p)
 > runElabHope wrk v@(LABEL ty l)  = seekLabel wrk l ty <|> lastHope wrk v
 > runElabHope wrk ty              = lastHope wrk ty
 
@@ -440,28 +437,28 @@ state with hopes that we don't make use of.}
 If we are hoping for a proof of a proposition, we first try simplifying it using
 the propositional simplification machinery.
 
-< simplifyProof :: WorkTarget -> VAL -> ProofState (INTM :=>: VAL, ElabStatus)
-< simplifyProof wrk p = do
-<     pSimp <- runPropSimplify p
-<     case pSimp of
-<         Just (SimplyTrivial prf) -> do
-<             return (prf :=>: evTm prf, ElabSuccess)
-<         Just (SimplyAbsurd _) -> runElab wrk (PRF p :>:
-<             ECry [err "simplifyProof: proposition is absurd:"
-<                          ++ errTyVal (p :<: PROP)])
-<         Just (Simply qs _ h) -> do
-<             qrs <- traverse partProof qs
-<             let prf = substitute qs qrs h
-<             return (prf :=>: evTm prf, ElabSuccess)
-<         Nothing -> subProof wrk (PRF p)
-<   where
-<     partProof :: (REF :<: INTM) -> ProofState INTM
-<     partProof (ref :<: _) = do
-<       ((tm :=>: _) , _) <- subProof WorkElsewhere (pty ref)
-<       return tm
+> simplifyProof :: WorkTarget -> VAL -> ProofState (EXP, ElabStatus)
+> simplifyProof wrk p = do
+>     pSimp <- runPropSimplify p
+>     case pSimp of
+>         (SimplyTrivial prf) -> do
+>             return (prf, ElabSuccess)
+>         (SimplyAbsurd _) -> runElab wrk (PRF (exp p) :>:
+>             ECry [err "simplifyProof: proposition is absurd"])
+>         (Simply qs h) -> do
+>             qrs <- traverse partProof qs
+>             lev <- getDevLev
+>             let prf = (zip [lev..] (trail qrs),INil) :/  h
+>             return (prf, ElabSuccess)
+>         CannotSimplify -> subProof wrk (PRF (exp p))
+>   where
+>     partProof :: (EXP, EXP) -> ProofState EXP
+>     partProof (q, _) = do
+>       ( v , _) <- subProof WorkElsewhere (ev q)
+>       return v
 
-<     subProof :: WorkTarget -> VAL -> ProofState (INTM :=>: VAL, ElabStatus)
-<     subProof wrk (PRF p) = flexiProof wrk p <|> lastHope wrk (PRF p)
+>     subProof :: WorkTarget -> VAL -> ProofState (EXP, ElabStatus)
+>     subProof wrk (PRF p) = {- flexiProof wrk p <|> -} lastHope wrk (PRF p)
 
 
 After simplification has dealt with the easy stuff, it calls |flexiProof| to
@@ -470,7 +467,7 @@ and returning the subgoal).
 
 < flexiProof :: WorkTarget -> VAL -> ProofState (INTM :=>: VAL, ElabStatus)
 
-< flexiProof wrk (EQBLUE (_S :>: s) (_T :>: t)) = 
+< flexiProof wrk (EQ _S s _T t) = 
 <     flexiProofMatch           (_S :>: s) (_T :>: t)
 <     <|> flexiProofLeft   wrk  (_S :>: s) (_T :>: t)
 <     <|> flexiProofRight  wrk  (_S :>: s) (_T :>: t)
@@ -482,7 +479,7 @@ This case arises frequently when proving label equality to make recursive calls.
 \question{Do we need this case, or are we better off using matching?}
 
 < flexiProofMatch :: (TY :>: VAL) -> (TY :>: VAL)
-<     -> ProofState (INTM :=>: VAL, ElabStatus)
+<     -> ProofState (VAL, ElabStatus)
 < flexiProofMatch (_S :>: N s) (_T :>: N t)
 <   | Just (ref, ps) <- pairSpines s t [] = do
 <     let ty = pty ref
