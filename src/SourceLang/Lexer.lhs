@@ -1,9 +1,9 @@
-> {-# LANGUAGE PatternGuards #-}
+> {-# LANGUAGE PatternGuards, FlexibleInstances #-}
 
 > module SourceLang.Lexer where
 
-> import Prelude hiding (foldl)
-> import Data.List hiding (foldl)
+> import Prelude hiding (foldl, all)
+> import Data.List hiding (foldl, all)
 > import Data.Foldable hiding (elem)
 > import Control.Applicative
 > import Data.Monoid
@@ -64,42 +64,46 @@
 > slex []       = []
 > slex (c : s)  = let (t , s') = slex1 c s in t : slex s'
 
-> type Doc   = Fwd Line
-> type Line  = Fwd Elt
 > data Elt
 >   =  E STok
 >   |  M Movement
->   |  B BType Doc (Either HowOpen BType) deriving Show
+>   |  B BType [Elt] (Either HowOpen BType)
+>   deriving (Show, Eq)
 
 > data Movement
 >   = MOpen | MClose | MSOL | MEOL | MBang | MGnab deriving (Show, Eq)
 > data HowOpen   = Banged | Dangling deriving (Show, Eq)
 
-> type GStk    =  (Bwd GLayer, (Bwd Line, CLine))
+> type GStk    =  (Bwd GLayer, (Bwd Elt, CLine))
 > type CLine   = (Behind, Bwd Elt, (), Ahead)
 > type Behind  = Bwd (Bwd Elt, GSus)
 > type Ahead   = Fwd (GSus, Bwd Elt)
-> type GLayer  =  (Bwd Line, (Behind, Bwd Elt, (BType, ()), Bwd Elt, Ahead))
+> type GLayer  =  (Bwd Elt, (Behind, Bwd Elt, (BType, ()), Bwd Elt, Ahead))
 
-> data GSus = BType :<> (Bwd Line, (Bwd Elt, (), Ahead))
+> data GSus = BType :<> (Bwd Elt, (), Ahead)
 
-> gEOF :: GStk -> Doc
+> (<//) :: Bwd x -> [x] -> [x]
+> (<//) = ala Endo foldMap (:)
+
+> infixr 5 <//
+
+> gEOF :: GStk -> [Elt]
 > gEOF (yz, x) = yEOF yz (lEOF x) where
->   yEOF = ala Endo foldMap $ \ (lz, (ebz, ez, (b, ()), ez', bes)) ls -> lz <>>
->     behind ebz (ez <>> B b ls (Left Dangling) :> ez' <>> ahead bes) :> F0
+>   yEOF = ala Endo foldMap $ \ (lz, (ebz, ez, (b, ()), ez', bes)) ls ->
+>     lz <// behind ebz (ez <// B b ls (Left Dangling) : ez' <// ahead bes)
 
-> lEOF :: (Bwd Line, CLine) -> Doc
-> lEOF (lz, (ebz, ez, (), bes)) = lz <>> behind ebz (ez <>> ahead bes) :> F0
+> lEOF :: (Bwd Elt, CLine) -> [Elt]
+> lEOF (lz, (ebz, ez, (), bes)) = lz <// behind ebz (ez <// ahead bes)
 
-> behind :: Behind -> Fwd Elt -> Fwd Elt
-> behind = ala Endo foldMap $ \ (ez, g) es -> ez <>> cSus g :> es
+> behind :: Behind -> [Elt] -> [Elt]
+> behind = ala Endo foldMap $ \ (ez, g) es -> ez <// cSus g : es
 
-> ahead :: Ahead -> Fwd Elt
-> ahead = foldMap $ \ (g, ez) -> cSus g :> ez <>> F0
+> ahead :: Ahead -> [Elt]
+> ahead = foldMap $ \ (g, ez) -> cSus g : ez <// []
 
 > cSus :: GSus -> Elt
-> cSus (b :<> (lz, (ez, (), bes)))
->   = B b (lz <>> (ez <>> ahead bes) :> F0) (Left Banged)
+> cSus (b :<> (ez, (), bes))
+>   = B b (ez <// ahead bes) (Left Banged)
 
 > gTok :: GStk -> STok -> GStk
 > gTok (yz, (lz, (ebz, ez, (), bes))) (Open b)
@@ -110,38 +114,96 @@
 >   = (yz, (lz',
 >     (ebz', ez' :< B b' (lEOF x) (Right b) <|> (ez'' :< M MClose), (), bes')))
 > gTok (yz, (lz, (B0, ez, (), F0))) (Sym "\n")
->   = (yz, (lz :< (ez <>> M MEOL :> F0), (B0, B0 :< M MSOL, (), F0)))
+>   = (yz, (lz <|> ez :< M MEOL, (B0, B0 :< M MSOL, (), F0)))
 > gTok (yz, (lz, (ebz, ez, (), bes))) (Sym "\n")
 >   = (yz, (lz, gNL (ebz, ez :< M MEOL, (), bes))) where
 >       gNL (eb :< (ez, b), ez', (), bes) = gNL (eb, ez, (),  (b, ez') :> bes)
 >       gNL (B0, ez, (), bes) = (B0, ez :< M MSOL, (), bes)
-> gTok (yz, (lz, (ebz, ez, (), (b :<> (lz', (ez', (), bes')), ez'') :> bes)))
+> gTok (yz, (lz, (ebz, ez, (), (b :<> (ez', (), bes'), ez'') :> bes)))
 >   (Sym "!")
 >   =  (yz :< (lz, (ebz, ez :< M MBang, (b, ()), ez'', bes)),
->        (lz', (B0, ez':< M MSOL, (), bes')))
+>        (ez', (B0, B0 :< M MSOL, (), bes')))
 > gTok (yz :< (lz, (ebz, ez, (b, ()), ez'', bes)), (lz', (ebz', ez', (), F0)))
 >   (Sym "!")
 >   =  (yz, (lz,
->        (ebz :< (ez, b :<> (lz', gBang (ebz', ez' :< M MGnab, (), F0))),
+>        (ebz :< (ez, b :<> gBang lz' (ebz', ez' :< M MGnab, (), F0)),
 >          ez'', (), bes))) where
->     gBang (ebz :< (ez', b), ez, (), bes)
->       = gBang (ebz, ez', (), (b, ez) :> bes)
->     gBang (B0, ez, (), bes) = (ez, (), bes)
+>     gBang lz' (ebz :< (ez', b), ez, (), bes)
+>       = gBang lz' (ebz, ez', (), (b, ez) :> bes)
+>     gBang lz' (B0, ez, (), bes) = (lz' <|> ez, (), bes)
 > gTok (yz, (lz, (ebz, ez, (), bes))) t = (yz, (lz, (ebz, ez :< E t, (), bes)))
 
-> doc :: [STok] -> Doc
+> doc :: [STok] -> [Elt]
 > doc = go (B0, (B0, (B0, B0 :< M MSOL, (), F0))) where
 >   go g [] = gEOF g
 >   go g (t : ts) = mo (gTok g t) ts
->   mo (B0, (lz, x)) ts = lz <>> go (B0, (B0, x)) ts
+>   mo (B0, (lz, x)) ts = lz <// go (B0, (B0, x)) ts
 >   mo g ts = go g ts
 
-> dent :: Line -> Int
-> dent = go maxBound where
->   go u (M MSOL :> e :> es) = case e of
->     E (Spc i) | i < u  -> go i es
->     M _                -> go u es
->     _                  -> 0
->   go u (_ :> es)            = go u es
->   go u F0                 = u
+> data BotTop x = Bot | Topped x | Top deriving (Show, Eq, Ord)
 
+> lineAlone :: STok -> Bool
+> lineAlone (Sym "data") = True
+> lineAlone (Sym "let") = True
+> lineAlone (Sym "lemma") = True
+> lineAlone (Sym cs) | all ('-' ==) cs && length cs > 2 = True
+> lineAlone _ = False
+
+> lineStart :: STok -> Bool
+> lineStart (Sym "<=") = True
+> lineStart s = lineAlone s
+
+> lefty :: BotTop Int -> [Elt] -> ([Elt], Bool, [Elt])
+> lefty i (E s : ps)
+>   | lineAlone s = ([E s], False, ps)
+>   | lineStart s = (E s : qs, b, rs) where (qs, b, rs) = righty i ps
+> lefty i ps = righty i ps
+
+> righty :: BotTop Int -> [Elt] -> ([Elt], Bool, [Elt])
+> righty i [] = ([], False, [])
+> righty i ps@(E s : _) | lineStart s = ([], False, ps)
+> righty i (p@(E (Sym ";")) : ps) = ([p], True, ps)
+> righty i (M MSOL : E (Spc j) : ps)
+>   | i < Topped j = (M MSOL : E (Spc j) : qs, b, rs)
+>   where (qs, b, rs) = righty i ps
+> righty i ps@(M MSOL : _) = ([], False, ps)
+> righty i (p : ps) = (p : qs, b, rs) where (qs, b, rs) = righty i ps
+
+> glomLine :: [Elt] -> Maybe ((BotTop Int, [Elt], Bool), [Elt])
+> glomLine [] = Nothing
+> glomLine (M MSOL : E (Spc i) : ps) =
+>   Just ((Topped i, M MSOL : E (Spc i) : qs, b), rs)
+>   where (qs, b, rs) = lefty (Topped i) ps
+> glomLine (M MSOL : ps) =
+>   Just ((Topped 0, M MSOL : qs, b), rs)
+>   where (qs, b, rs) = lefty (Topped 0) ps
+> glomLine ps = Just ((Top, qs, b), rs) where (qs, b, rs) = lefty Top ps
+
+> dentLines :: [Elt] -> [(BotTop Int, [Elt], Bool)]
+> dentLines = unfoldr glomLine
+
+> data Nest = [Elt] :# [Nest] deriving Show
+
+> nestDents :: BotTop Int -> [(BotTop Int, [Elt], Bool)] ->
+>   ([Nest], [(BotTop Int, [Elt], Bool)])
+> nestDents i [] = ([], [])
+> nestDents i ((j, ps, b) : ls)
+>   | i < j =
+>     let (qs, rs) = if b then ([], ls) else nestDents j ls
+>         (ss, ts) = nestDents i rs
+>     in  ((ps :# qs) : ss, ts)
+> nestDents i ls = ([], ls)
+
+> nestLines :: [Elt] -> [Nest]
+> nestLines = fst . nestDents Bot . dentLines
+
+> ready :: String -> [Nest]
+> ready = nestLines . doc . slex
+
+> printNests :: Int -> [Nest] -> IO ()
+> printNests i [] = return ()
+> printNests i ((es :# qs) : rs) = do
+>   putStr (take i (repeat ' '))
+>   print es
+>   printNests (i + 2) qs
+>   printNests i rs

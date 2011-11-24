@@ -289,3 +289,12 @@ results.
 > ignore f = do
 >     f
 >     return ()
+
+
+\subsection{Tullsen Machinery}
+
+> class SS2Show (f :: * -> *) where
+>   ss2show :: Show x => f x -> String
+
+> instance SS2Show [] where
+>   ss2show = show

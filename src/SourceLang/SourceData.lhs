@@ -13,17 +13,17 @@
 > import Data.Foldable
 > import Data.Traversable
 
+> import SourceLang.Lexer
+> import SourceLang.Parx
+
 %endif
 
-> type Source = String -- this will change
 > type Template = String -- this will change
 > type Arg = Template -- really?
 
-> data Sourced t = Source :~ t deriving (Functor, Foldable, Traversable, Show)
-
 A document is a sequence of definitions.
 
-> type EpiDoc = [Sourced EpiDef]
+> type EpiDoc = [Nest :~ EpiDef]
 
 A definition is a declaration (keyword with signature) and a dialogue.
 There are three varieties.
@@ -35,17 +35,20 @@ There are three varieties.
 >   VarDef     :: DefKind
 >   deriving (Show, Eq, SheSingleton)
 
+> data Some :: * -> * where
+>   Some :: forall t. pi (x :: t). Some t
+
 > data EpiDef :: * where
 >   Def :: pi (k :: DefKind).
->          Sourced (EpiSig {k}) -> Sourced (EpiDial {k}) -> EpiDef
+>          Nest :~ EpiSig {k} -> Nest :~ (EpiDial {k}) -> EpiDef
 
 > instance Show EpiDef where
 >   show (Def {DataDef}   s d) = "data " ++ show s ++ " where " ++ show d
->   show (Def {LetDef}    s d) = "data " ++ show s ++ " where " ++ show d
->   show (Def {LemmaDef}  s d) = "data " ++ show s ++ " where " ++ show d
+>   show (Def {LetDef}    s d) = "let " ++ show s ++ " where " ++ show d
+>   show (Def {LemmaDef}  s d) = "lemma " ++ show s ++ " where " ++ show d
 
 > data EpiSig :: {DefKind} -> * where
->   Sig :: [Sourced EpiPrem] -> Sourced (EpiConc {k}) -> EpiSig {k}
+>   Sig :: [Nest :~ EpiPrem] -> Nest :~ (EpiConc {k}) -> EpiSig {k}
 
 > instance Show (EpiSig k) where
 >   show (Sig ps c) = show ps ++ " --- " ++ show c
@@ -59,13 +62,13 @@ There are three varieties.
 >   show (PrfPrem s) = "(" ++ show s ++ ")"
 
 > data EpiConc :: {DefKind} -> * where
->   DataConc :: Sourced Template -> [Sourced Arg] ->
+>   DataConc :: Elt :~ Template -> [Elt :~ Arg] ->
 >               EpiConc {DataDef} -- just Arg?
->   LetConc :: Sourced Template -> [Sourced Arg] -> 
->              Sourced EpiInTm -> EpiConc {LetDef}
->   VarConc :: Sourced Template -> [Sourced Arg] -> 
->              Maybe (Sourced EpiInTm) -> EpiConc {VarDef}
->   LemmaConc :: Sourced EpiInTm -> EpiConc {LemmaDef}
+>   LetConc :: Elt :~ Template -> [Elt :~ Arg] -> 
+>              Elt :~ EpiInTm -> EpiConc {LetDef}
+>   VarConc :: Elt :~ Template -> [Elt :~ Arg] -> 
+>              Maybe (Elt :~ EpiInTm) -> EpiConc {VarDef}
+>   LemmaConc :: Elt :~ EpiInTm -> EpiConc {LemmaDef}
 
 > instance Show (EpiConc {k}) where
 >   show (DataConc f as) = show f ++ show as ++ " : Set"
@@ -75,8 +78,8 @@ There are three varieties.
 >   show (LemmaConc p) = ":- " ++ show p
 
 > data EpiDial :: {DefKind} -> * where
->   Dial :: Sourced (EpiProb {k}) -> [Sourced (EpiStrat {k})] ->
->           [Sourced (EpiDial {k})] -> EpiDoc -> EpiDial {k}
+>   Dial :: Elt :~ (EpiProb {k}) -> [Nest :~ (EpiStrat {k})] ->
+>           [Nest :~ (EpiDial {k})] -> EpiDoc -> EpiDial {k}
 >   DotDotDot :: EpiDial {k}
 
 > denture :: String -> String
@@ -90,11 +93,11 @@ There are three varieties.
 >   show DotDotDot = "..."
 
 > data EpiProb :: {DefKind} -> * where
->   ProgProb :: Sourced Template -> [Sourced EpiInTm] -> [Sourced EpiInTm] ->
+>   ProgProb :: Elt :~ Template -> [Elt :~ EpiInTm] -> [Elt :~ EpiInTm] ->
 >             EpiProb {LetDef}
->   ProofProb :: Sourced (EpiSig {LemmaDef}) ->  [Sourced EpiInTm] ->
+>   ProofProb :: Elt :~ (EpiSig {LemmaDef}) ->  [Elt :~ EpiInTm] ->
 >             EpiProb {LemmaDef}
->   DataProb :: Sourced Template -> [Sourced EpiInTm] -> [Sourced EpiInTm] ->
+>   DataProb :: Elt :~ Template -> [Elt :~ EpiInTm] -> [Elt :~ EpiInTm] ->
 >             EpiProb {DataDef}
 
 > instance Show (EpiProb k) where
@@ -106,12 +109,12 @@ There are three varieties.
 >     if null ws then "" else " | " ++ show ws
 
 > data EpiStrat :: {DefKind} -> * where
->   EBy :: Sourced EpiInTm -> EpiStrat {k}
->   EWith :: Sourced EpiExTm -> EpiStrat {k}
->   ERet :: Sourced EpiInTm -> EpiStrat {LetDef}
->   ECons :: Sourced Template -> [Sourced (EpiSig {VarDef})] ->
+>   EBy :: Elt :~ EpiInTm -> EpiStrat {k}
+>   EWith :: Elt :~ EpiExTm -> EpiStrat {k}
+>   ERet :: Elt :~ EpiInTm -> EpiStrat {LetDef}
+>   ECons :: Elt :~ Template -> [Elt :~ (EpiSig {VarDef})] ->
 >            EpiStrat {DataDef}
->   EBecause :: Sourced EpiInTm -> [Sourced EpiInTm] ->
+>   EBecause :: Elt :~ EpiInTm -> [Elt :~ EpiInTm] ->
 >               EpiStrat {LemmaDef}
 
 > instance Show (EpiStrat k) where
@@ -125,14 +128,15 @@ There are three varieties.
 >   EEx :: EpiExTm -> EpiInTm
 >   ESet :: EpiInTm
 >   EPi, ESig, ELam
->     :: Sourced (EpiSig {VarDef}) -> Sourced EpiInTm -> EpiInTm
+>     :: Elt :~ (EpiSig {VarDef}) -> Elt :~ EpiInTm -> EpiInTm
 >   EV :: EpiInTm
->   EP :: Sourced EpiInTm -> Sourced EpiInTm -> EpiInTm
->   EC :: Sourced Template -> [Sourced EpiInTm] -> EpiInTm
+>   EP :: Elt :~ EpiInTm -> Elt :~ EpiInTm -> EpiInTm
+>   EC :: Elt :~ Template -> [Elt :~ EpiInTm] -> EpiInTm
+>   EShed :: EpiInTm
 >   deriving Show
 
 > data EpiExTm :: * where
->   EVS :: Sourced Template -> [Sourced EpiElim] -> EpiExTm
+>   EVS :: Elt :~ Template -> [Elt :~ EpiElim] -> EpiExTm
 >   deriving Show
 
 > data EpiElim :: * where
@@ -142,14 +146,14 @@ There are three varieties.
 
 > exampleEpiDoc :: EpiDoc
 > exampleEpiDoc =
->   [  "" :~ Def {DataDef}
->        ("" :~ Sig [] ("" :~ DataConc ("" :~ "Nat") []))
->        ("" :~ Dial ("" :~ DataProb ("" :~ "Nat") [] [])
->          [  "" :~ ECons ("" :~ "zero") []
->          ,  "" :~ ECons ("" :~ "suc")
->            ["" :~ Sig []
->               ("" :~ VarConc ("" :~ "n") []
->                 (Just ("" :~ EEx (EVS ("" :~ "Nat") []))))]
+>   [  [] :~ Def {DataDef}
+>        ([] :~ Sig [] ([] :~ DataConc ([] :~ "Nat") []))
+>        ([] :~ Dial ([] :~ DataProb ([] :~ "Nat") [] [])
+>          [  [] :~ ECons ([] :~ "zero") []
+>          ,  [] :~ ECons ([] :~ "suc")
+>            [[] :~ Sig []
+>               ([] :~ VarConc ([] :~ "n") []
+>                 (Just ([] :~ EEx (EVS ([] :~ "Nat") []))))]
 >          ] [] []
 >        )
 >   ]
