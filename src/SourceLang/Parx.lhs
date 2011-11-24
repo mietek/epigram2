@@ -56,8 +56,11 @@
 > gmany :: Gappy t => Parx t x -> Parx t [x]
 > gmany p = (|id (-gap-) (many (|id p (-gap-)|))|)
 
+> pad :: Gappy t => Parx t x -> Parx t x
+> pad p = (|id (-gap-) p (-gap-)|)
+
 > punc :: (Gappy t, Eq t) => t -> Parx t ()
-> punc t = (|() (-gap-)  (-teq t-)  (-gap-)|)
+> punc t = pad (teq t)
 
 > upto :: Parx t () -> Parx t [t]
 > upto p = (|[] (-p-) | like Just : upto p|)

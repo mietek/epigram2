@@ -17,6 +17,7 @@
 > isWhite :: Elt -> Bool
 > isWhite (M _) = True
 > isWhite (E (Spc _)) = True
+> isWhite (E (Sym ";")) = True
 > isWhite _ = False
 
 > instance Gappy Elt where
@@ -71,7 +72,7 @@
 > dashing _ = False
 
 > rule :: Parx Nest ()
-> rule = nest (|() (-gap-) (-tok dashing-) (-gap-)|) (|gap|)
+> rule = nest (pad (tok dashing)) (|gap|)
 
 > epiSig :: pi (k :: DefKind). Parx Nest (EpiSig k)
 > epiSig {k} =
@@ -80,7 +81,8 @@
 >      |[] (-gap-)
 >      |)
 >     (source (nest (epiConc {k}) $ \ c -> (|c (-gap-)|)))
->    |id (nest (brackNest (Round, Nothing) (epiSig {k})) $ \ c -> (|c (-gap-)|))
+>    |id (pad (nest (pad (brackNest (Round, Nothing) (epiSig {k})))
+>               $ \ c -> (|c (-gap-)|)))
 >    |)
 >  where mkSig ps (s :~ (qs, c)) = Sig (ps ++ qs) (s :~ c)
 
@@ -127,14 +129,14 @@
 >   gap
 >   f <- source template
 >   pas <- gmany epiArg
->   mt <- (|Just (-epunc ":"-) (-gap-) (source epiInTm) (-gap-)|Nothing|)
+>   mt <- (|Just (-epunc ":"-) (pad (source epiInTm))|Nothing|)
 >   gap
 >   return (foldMap fst pas, VarConc f (foldMap snd pas) mt)
 > epiConc {LetDef} = do
 >   gap
 >   f <- source template
 >   pas <- gmany epiArg
->   t <- (|id (-epunc ":"-) (-gap-) (source epiInTm) (-gap-)|)
+>   t <- (|id (-epunc ":"-) (pad (source epiInTm))|)
 >   return (foldMap fst pas, LetConc f (foldMap snd pas) t)
 > epiConc {k} = (|)
 
@@ -148,10 +150,9 @@ Termy things don't consume leading or trailing spaces.
 > smallEpiInTm =
 >   (|ESet (-sym "Set"-)
 >    |EEx (|EVS (source template) ~[]|)
->    |ELam (-sym "\\"-) (-gap-)
->       (source (precook (|(|(upto (sym "->")) :# ~[]|) : ~[]|)
->               (epiSig {VarDef})))
->       (-gap-)
+>    |ELam (-sym "\\"-)
+>       (pad (source (precook (|(|(upto (sym "->")) :# ~[]|) : ~[]|)
+>                     (epiSig {VarDef}))))
 >       (source epiInTm)
 >    |id (brackElt (Round, Nothing) epiInTm)|)
 
