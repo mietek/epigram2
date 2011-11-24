@@ -24,6 +24,7 @@
 > import DisplayLang.Name
 > import DisplayLang.Scheme
 
+> import SourceLang.Parx
 > import SourceLang.SourceData
 > import Elaboration.NewElabMonad
 > import Elaboration.NewRunElab
@@ -106,7 +107,7 @@
 
 >         _ -> undefined -- cry?
 
-> instance Problem t => Problem (Sourced t) where
+> instance Problem t => Problem (x :~ t) where
 >   probName (_ :~ x) = "sourced" ++ probName x
 >   probTel (_ :~ x) = probTel x
 >   probVal (_ :~ x) es = probVal x es
