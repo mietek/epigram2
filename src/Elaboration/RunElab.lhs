@@ -458,7 +458,7 @@ the propositional simplification machinery.
 >       return v
 
 >     subProof :: WorkTarget -> VAL -> ProofState (EXP, ElabStatus)
->     subProof wrk (PRF p) = {- flexiProof wrk p <|> -} lastHope wrk (PRF p)
+>     subProof wrk (PRF p) = {- flexiProof wrk p <> -} lastHope wrk (PRF p)
 
 
 After simplification has dealt with the easy stuff, it calls |flexiProof| to
