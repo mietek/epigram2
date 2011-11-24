@@ -30,6 +30,9 @@
 >     _ -> (|)
 >   _ -> (|)
 
+> nosub :: x -> Parx Nest x
+> nosub x = (|x (-gap-)|)
+
 > brackElt :: BType -> Parx Elt t -> Parx Elt t
 > brackElt b p = like br where
 >   br (B b' es (Right _)) | b == b' = case parx p es of
@@ -45,7 +48,7 @@
 >   br _ = (|)
 
 > instance Gappy Nest where
->   gap = (|() (-many (nest gap (|gap|))-)|)
+>   gap = (|() (-many (nest gap nosub)-)|)
 
 > epiDoc :: Parx Nest EpiDoc
 > epiDoc = gmany (source epiDef)
@@ -65,8 +68,7 @@
 
 > curlify :: Parx Nest x -> Parx Nest x
 > curlify p =
->   pad (nest (pad (brackNest (Curly, Nothing) (curlify p))) $ \ x ->
->        (|x (-gap-)|))
+>   pad (nest (pad (brackNest (Curly, Nothing) (curlify p))) nosub)
 >   <|> p
 
 > epiDef :: Parx Nest EpiDef
@@ -78,7 +80,7 @@
 > dashing _ = False
 
 > rule :: Parx Nest ()
-> rule = nest (pad (tok dashing)) (|gap|)
+> rule = (|() (-nest (pad (tok dashing)) nosub-)|)
 
 > epiSig :: pi (k :: DefKind). Parx Nest (EpiSig k)
 > epiSig {k} =
@@ -86,9 +88,8 @@
 >     (|id (precook (upto rule) (gmany (source epiPrem)))
 >      |[] (-gap-)
 >      |)
->     (source (nest (epiConc {k}) $ \ c -> (|c (-gap-)|)))
->    |id (pad (nest (pad (brackNest (Round, Nothing) (epiSig {k})))
->               $ \ c -> (|c (-gap-)|)))
+>     (nest (source (epiConc {k})) nosub)
+>    |id (pad (nest (pad (brackNest (Round, Nothing) (epiSig {k}))) nosub))
 >    |)
 >  where mkSig ps (s :~ (qs, c)) = Sig (ps ++ qs) (s :~ c)
 
@@ -98,9 +99,10 @@
 >    |PrfPrem (epiSig {LemmaDef})
 >    |)
 
-> reserved = ["data", "let", "lemma",
->   ":", "<=", "=>", "=", ";", ",", "|", ":>", "*", "\\",
->   "->", "<-", ":-", "-:", "...", ".", "Set", "Prop"]
+> reserved :: [String]
+> reserved = declKeys ++ stratPunc ++ ["where",
+>   ":", "=>", ";", ",", "|", "*", "\\", "==",
+>   "->", "<-", ":-", "...", ".", "Set", "Prop"]
 
 > numeric :: String -> Bool
 > numeric ('-':xs@(_:_)) = all isDigit xs
@@ -144,11 +146,74 @@
 >   pas <- gmany epiArg
 >   t <- (|id (-epunc ":"-) (pad (source epiInTm))|)
 >   return (foldMap fst pas, LetConc f (foldMap snd pas) t)
-> epiConc {k} = (|)
+> epiConc {DataDef} = do
+>   gap
+>   f <- source template
+>   pas <- gmany epiArg
+>   optional (|id (-epunc ":"-) (-epunc "Set"-)|)
+>   gap
+>   return (foldMap fst pas, DataConc f (foldMap snd pas))
+> epiConc {LemmaDef} =
+>   (| ~[] , (|LemmaConc (-epunc ":-"-) (source epiInTm) (-gap-)|)|)
+
+> epiLem :: Parx Elt (EpiConc {LemmaDef})
+> epiLem = (|LemmaConc (-epunc ":-"-) (source epiInTm) (-gap-)|)
 
 > epiDial :: pi (k :: DefKind). Parx Nest (EpiDial k)
 > epiDial {k} =
->  (|DotDotDot (-nest (gap *> sym "." *> sym "." *> sym "." *> gap) (|gap|)-)|)
+>  (|id (dataDial {k})
+>   |id (nest (pad (source (epiProb {k}))) $ \ p ->
+>        (|(Dial p)
+>          (gmany (source (epiStrat {k})))
+>          (gmany (source (epiDial {k})))
+>          (|id (-nest (epunc "where") nosub-) epiDoc
+>           |[]
+>           |)
+>         |))
+>   |DotDotDot (-nest (gap *> sym "." *> sym "." *> sym "." *> gap) nosub-)
+>   |)
+
+> dataDial :: pi (k :: DefKind). Parx Nest (EpiDial k)
+> dataDial {DataDef} =
+>   (| id (nest (pad (source (epiProb {DataDef}))) $ \ p -> do
+>           css <- gmany (nest
+>             (|(-epunc ":>"-) (source template),
+>             (gmany (brackNest (Round, Nothing) (source (epiSig {VarDef}))))|)
+>             nosub)
+>           return (ConsDial p css))
+>      (source (epiDial {DataDef}))
+>    |NilDial
+>    |)
+> dataDial {k} = (|)
+
+> dd :: Parx Nest (EpiDial {DataDef})
+> dd = epiDial {DataDef}
+
+> epiProb :: pi (k :: DefKind). Parx Elt (EpiProb k)
+> epiProb {DataDef} =
+>   (|DataProb (source template) (gmany (source smallEpiInTm))
+>     (gmany (|id (-epunc"|"-) (source epiInTm)|))|)
+> epiProb {LetDef} =
+>   (|ProgProb (source template) (gmany (source smallEpiInTm))
+>     (gmany (|id (-epunc"|"-) (source epiInTm)|))|)
+> epiProb {LemmaDef} =
+>   (|ProofProb
+>     (|id (source (|Sig ~[] (source epiLem)|))
+>      |id (source (brackNest (Round, Nothing) (epiSig {LemmaDef})))
+>      |)
+>     (gmany (|id (-epunc"|"-) (source epiInTm)|))|)
+> epiProb {k} = (|)
+
+> epiStrat :: pi (k :: DefKind). Parx Nest (EpiStrat k)
+> epiStrat {k} = nest (pad
+>   (|EBy (-epunc "<="-) (source epiExTm)
+>    |EWith (-epunc "with"-) (source epiExTm)
+>    |id (specStrat {k})
+>    |)) nosub
+
+> specStrat :: pi (k :: DefKind). Parx Elt (EpiStrat k)
+> specStrat {LetDef} = (|ERet (-epunc "="-) (source epiInTm)|)
+> specStrat {k} = (|)
 
 Termy things don't consume leading or trailing spaces.
 
@@ -171,7 +236,7 @@ Termy things don't consume leading or trailing spaces.
 >    |id smallEpiInTm|)
 >   >>= \ ex@(es :~ x) ->
 >   (|id (|EPi (-epunc "->"-) | ESig (-epunc "*"-)|)
->     ~(es :~ Sig [] ([es :# []] :~ VarConc ([] :~ "") [] (Just ex)))
+>     ~(es :~ Sig [] (es :~ VarConc ([] :~ "") [] (Just ex)))
 >     (source epiInTm)
 >    |x|)
 

@@ -142,15 +142,20 @@
 
 > data BotTop x = Bot | Topped x | Top deriving (Show, Eq, Ord)
 
+> declKeys :: [String]
+> declKeys = ["data", "let", "lemma"]
+
 > lineAlone :: STok -> Bool
-> lineAlone (Sym "data") = True
-> lineAlone (Sym "let") = True
-> lineAlone (Sym "lemma") = True
+> lineAlone (Sym x) | elem x declKeys = True
+> lineAlone (Sym "where") = True
 > lineAlone (Sym cs) | all ('-' ==) cs && length cs > 2 = True
 > lineAlone _ = False
 
+> stratPunc :: [String]
+> stratPunc = ["<=", "=", "-:", ":>", "with"]
+
 > lineStart :: STok -> Bool
-> lineStart (Sym "<=") = True
+> lineStart (Sym x) | elem x stratPunc = True
 > lineStart s = lineAlone s
 
 > lefty :: BotTop Int -> [Elt] -> ([Elt], Bool, [Elt])

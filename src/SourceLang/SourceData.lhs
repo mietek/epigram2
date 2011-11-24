@@ -48,7 +48,7 @@ There are three varieties.
 >   show (Def {LemmaDef}  s d) = "lemma " ++ show s ++ " where " ++ show d
 
 > data EpiSig :: {DefKind} -> * where
->   Sig :: [Nest :~ EpiPrem] -> Nest :~ (EpiConc {k}) -> EpiSig {k}
+>   Sig :: [Nest :~ EpiPrem] -> Elt :~ (EpiConc {k}) -> EpiSig {k}
 
 > instance Show (EpiSig k) where
 >   show (Sig ps c) = show ps ++ " --- " ++ show c
@@ -80,6 +80,10 @@ There are three varieties.
 > data EpiDial :: {DefKind} -> * where
 >   Dial :: Elt :~ (EpiProb {k}) -> [Nest :~ (EpiStrat {k})] ->
 >           [Nest :~ (EpiDial {k})] -> EpiDoc -> EpiDial {k}
+>   NilDial :: EpiDial {DataDef}
+>   ConsDial :: Elt :~ (EpiProb {DataDef}) ->
+>               [(Elt :~ Template, [Nest :~ (EpiSig {VarDef})])] ->
+>               Nest :~ EpiDial {DataDef} -> EpiDial {DataDef}
 >   DotDotDot :: EpiDial {k}
 
 > denture :: String -> String
@@ -90,6 +94,11 @@ There are three varieties.
 >     show p ++ " " ++ show ss ++ "\n"
 >       ++ denture (ds >>= show) ++
 >       if null ws then "" else "  where\n" ++ denture (ws >>= show)
+>   show NilDial = ""
+>   show (ConsDial p css d) =
+>     show p ++ " :> " ++ foldMap cof css ++ "\n" ++ show d where
+>       cof (c, ss) = ":> " ++ show c ++ foldMap bof ss ++ "\n"
+>       bof a = "(" ++ show a ++ ")"
 >   show DotDotDot = "..."
 
 > data EpiProb :: {DefKind} -> * where
@@ -109,11 +118,9 @@ There are three varieties.
 >     if null ws then "" else " | " ++ show ws
 
 > data EpiStrat :: {DefKind} -> * where
->   EBy :: Elt :~ EpiInTm -> EpiStrat {k}
+>   EBy :: Elt :~ EpiExTm -> EpiStrat {k}
 >   EWith :: Elt :~ EpiExTm -> EpiStrat {k}
 >   ERet :: Elt :~ EpiInTm -> EpiStrat {LetDef}
->   ECons :: Elt :~ Template -> [Elt :~ (EpiSig {VarDef})] ->
->            EpiStrat {DataDef}
 >   EBecause :: Elt :~ EpiInTm -> [Elt :~ EpiInTm] ->
 >               EpiStrat {LemmaDef}
 
@@ -121,7 +128,6 @@ There are three varieties.
 >   show (EBy gum) = " <= " ++ show gum
 >   show (EWith w) = " with " ++ show w
 >   show (ERet t) = " = " ++ show t
->   show (ECons c ss) = " :> " ++ show c ++ show ss
 >   show (EBecause p as) = " -: " ++ show p ++ " for " ++ show as
 
 > data EpiInTm :: * where
@@ -148,12 +154,11 @@ There are three varieties.
 > exampleEpiDoc =
 >   [  [] :~ Def {DataDef}
 >        ([] :~ Sig [] ([] :~ DataConc ([] :~ "Nat") []))
->        ([] :~ Dial ([] :~ DataProb ([] :~ "Nat") [] [])
->          [  [] :~ ECons ([] :~ "zero") []
->          ,  [] :~ ECons ([] :~ "suc")
+>        ([] :~ ConsDial ([] :~ DataProb ([] :~ "Nat") [] [])
+>          [([] :~ "zero", []),
+>           ([] :~ "suc",
 >            [[] :~ Sig []
 >               ([] :~ VarConc ([] :~ "n") []
->                 (Just ([] :~ EEx (EVS ([] :~ "Nat") []))))]
->          ] [] []
->        )
+>                 (Just ([] :~ EEx (EVS ([] :~ "Nat") []))))])]
+>             ([] :~ NilDial))
 >   ]
