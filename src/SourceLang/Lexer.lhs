@@ -169,27 +169,29 @@
 > righty i ps@(M MSOL : _) = ([], False, ps)
 > righty i (p : ps) = (p : qs, b, rs) where (qs, b, rs) = righty i ps
 
-> glomLine :: [Elt] -> Maybe ((BotTop Int, [Elt], Bool), [Elt])
-> glomLine [] = Nothing
-> glomLine (M MSOL : E (Spc i) : ps) =
->   Just ((Topped i, M MSOL : E (Spc i) : qs, b), rs)
+> glomLine :: (Bool, [Elt]) -> Maybe ((BotTop Int, [Elt]), (Bool, [Elt]))
+> glomLine (b, []) = Nothing
+> glomLine (False, M MSOL : E (Spc i) : ps) =
+>   Just ((Topped i, M MSOL : E (Spc i) : qs), (b, rs))
 >   where (qs, b, rs) = lefty (Topped i) ps
-> glomLine (M MSOL : ps) =
->   Just ((Topped 0, M MSOL : qs, b), rs)
+> glomLine (False, M MSOL : ps) =
+>   Just ((Topped 0, M MSOL : qs), (b, rs))
 >   where (qs, b, rs) = lefty (Topped 0) ps
-> glomLine ps = Just ((Top, qs, b), rs) where (qs, b, rs) = lefty Top ps
+> glomLine (False, ps) = Just ((Top, qs), (b, rs)) where
+>   (qs, b, rs) = lefty Top ps
+> glomLine (True, ps) = Just ((Topped 0, qs), (b, rs)) where
+>   (qs, b, rs) = lefty Top ps
 
-> dentLines :: [Elt] -> [(BotTop Int, [Elt], Bool)]
-> dentLines = unfoldr glomLine
+> dentLines :: [Elt] -> [(BotTop Int, [Elt])]
+> dentLines es = unfoldr glomLine (False, es)
 
 > data Nest = [Elt] :# [Nest] deriving Show
 
-> nestDents :: BotTop Int -> [(BotTop Int, [Elt], Bool)] ->
->   ([Nest], [(BotTop Int, [Elt], Bool)])
+> nestDents :: BotTop Int -> [(BotTop Int, [Elt])] ->
+>   ([Nest], [(BotTop Int, [Elt])])
 > nestDents i [] = ([], [])
-> nestDents i ((j, ps, b) : ls)
->   | i < j =
->     let (qs, rs) = if b then ([], ls) else nestDents j ls
+> nestDents i ((j, ps) : ls) | i < j =
+>     let (qs, rs) = nestDents j ls
 >         (ss, ts) = nestDents i rs
 >     in  ((ps :# qs) : ss, ts)
 > nestDents i ls = ([], ls)

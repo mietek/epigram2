@@ -63,8 +63,14 @@
 >    |(Some {LemmaDef}) (-epunc "lemma"-)
 >    |)
 
+> curlify :: Parx Nest x -> Parx Nest x
+> curlify p =
+>   pad (nest (pad (brackNest (Curly, Nothing) (curlify p))) $ \ x ->
+>        (|x (-gap-)|))
+>   <|> p
+
 > epiDef :: Parx Nest EpiDef
-> epiDef = nest someDefKind $ \ (Some {k}) ->
+> epiDef = nest someDefKind $ \ (Some {k}) -> curlify
 >   (|(Def {k}) (source (epiSig {k})) (source (epiDial {k}))|)
 
 > dashing :: Elt -> Bool
