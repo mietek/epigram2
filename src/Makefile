@@ -52,12 +52,15 @@ SRCS_TACTICS := $(wildcard Tactics/*.lhs)
 
 SRCS_COCHON := $(wildcard Cochon/*.lhs)
 
+SRCS_SOURCELANG := $(wildcard SourceLang/*.lhs)
+
 SRCS_MAIN := $(wildcard *.lhs)
 
 SRCS := $(SRCS_KIT) \
 	$(SRCS_COMPILER) \
 	$(SRCS_EVIDENCES) \
 	$(SRCS_PFSTATE) \
+	$(SRCS_SOURCELANG) \
 	$(SRCS_DISPLAYS) $(SRCS_TACTICS) \
 	$(SRCS_COCHON) $(SRCS_MAIN)
 OBJS := $(SRCS:.lhs=.o) 
@@ -102,9 +105,10 @@ proofstate: $(SRCS_PFSTATE:.lhs=.o)
 displays: $(SRCS_DISPLAYS:.lhs=.o)
 tactics: $(SRCS_TACTICS:.lhs=.o)
 cochon: $(SRCS_COCHON:.lhs=.o)
+sourcelang: $(SRCS_SOURCELANG:.lhs=.o)
 main: $(SRCS_MAIN:.lhs=.o)
 
-epigram: kit compiler evidences proofstate displays tactics cochon main
+epigram: kit compiler evidences proofstate displays tactics cochon sourcelang main
 
 ## Epigram:
 # Link the Epigram binary. Rely on the dependency graph to compile the

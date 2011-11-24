@@ -440,6 +440,8 @@ The |liftType| function $\Pi$-binds a type over a list of entries.
 The |lookupName| function looks up a name in the context (including axioms and
 primitives -- eventually);
 
+Seems to me this is broken if you head out through a nixed dev.
+
 > lookupName :: Name -> ProofState (Maybe EXP)
 > lookupName name = do
 >     inScope <- getInScope

@@ -33,6 +33,8 @@
 > import Unsafe.Coerce
 > import Debug.Trace
 
+> import {-# SOURCE #-} Elaboration.NewElabMonad
+
 %endif
 
 
@@ -156,7 +158,7 @@
 >   SchImPi  :: Can
 >   -- [/Feature = Scheme]
 >   -- [Feature = Dubbing]
->   Dub      :: Can
+>   Dub      :: Template -> Can
 >   -- [/Feature = Dubbing]
 >   -- [Feature = Problem]
 >   Pro     :: Prob -> Can
@@ -232,13 +234,14 @@
 > pattern SCHIMPI _S _T = SchImPi :- [_S,_T]
 >   -- [/Feature = Scheme]
 >   -- [Feature = Dubbing]
-> pattern DUB u _S s = Dub :- [u, _S, s]
+> pattern DUB u _S s = Dub u :- [_S, s]
 >   -- [/Feature = Dubbing]
 
 > class Problem t where
 >   probName :: t -> String
->   probTel :: t -> VAL -- parameter telescope
->   probVal :: t -> [VAL] -> VAL -- Sigma type of result tuple
+>   probTel :: t -> EXP -- parameter telescope
+>   probVal :: t -> [VAL] -> EXP -- Sigma type of result tuple
+>   probElab :: t -> [Feed] -> NewElab EXP
 
 > data Prob :: * where
 >   Blem :: Problem t => t -> Prob

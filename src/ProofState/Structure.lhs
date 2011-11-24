@@ -17,6 +17,7 @@
 > import Evidences.NameSupply
 
 > import Elaboration.ElabProb
+> import Elaboration.NewElabMonad
 
 > import DisplayLang.Scheme
 
@@ -78,6 +79,7 @@ value for performance purposes.
 >   = Module
 >   | Unknown TY HKind
 >   | Suspended TY EProb HKind
+>   | SusElab TY (Feeder, NewElab EXP) HKind
 >   | Defined (TY :>: EXP)
 >   deriving Show
 
@@ -104,7 +106,7 @@ or value
 \end{itemize}
 
 > data Traversable f => Entry f
->   =  EDef     {  edef        :: DEF 
+>   =  EDef     {  edef       :: DEF 
 >               ,  dev        :: Dev f
 >               ,  scheme     :: Maybe Scheme
 >               }

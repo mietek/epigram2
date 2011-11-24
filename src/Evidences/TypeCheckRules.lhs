@@ -105,11 +105,11 @@
 > canTy ((Scheme, []) :>: SchImPi) = pure $ ("S", SET) -** \ _S -> ("T", _S --> SCHEME) -** \ _T -> ONE
 > -- [/Feature = Scheme]
 > -- [Feature = Dubbing]
-> canTy ((Set, []) :>: Dub) = pure $ ("u", UID) -** \u -> ("S", SET) -** \_S -> ("s", _S) -** \_ -> ONE
-> canTy ((Dub, [u, _S, s]) :>: Zero) = pure ONE
+> canTy ((Set, []) :>: Dub u) = pure $ ("S", SET) -** \_S -> ("s", _S) -** \_ -> ONE
+> canTy ((Dub u, [_S, s]) :>: Zero) = pure ONE
 > -- [/Feature = Dubbing]
 > -- [Feature = Problem]
-> canTy ((Set, []) :>: Prob p) = (| (probTel p) |)
+> canTy ((Set, []) :>: Prob p) = (| (ev $ probTel p) |)
 > canTy ((Prob p, as) :>: t) | Sigma :- bs <- probVal p (map ev as) = canTy ((Sigma, bs) :>: t) 
 > -- [/Feature = Problem]
 
@@ -194,7 +194,7 @@
 > eqUnfold ((Scheme, []) :>: s) ((Scheme, []) :>: s')  = error "eqUnfold: Scheme"
 > -- [/Feature = Scheme]
 > -- [Feature = Dubbing]
-> eqUnfold ((Dub, _) :>: _) ((Dub, _) :>: _) = pure (Zero, [])
+> eqUnfold ((Dub u, _) :>: _) ((Dub t, _) :>: _) = pure (Zero, [])
 > -- [/Feature = Dubbing]
 > eqUnfold _ _ = pure (Con, [ZERO])
 
