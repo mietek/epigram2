@@ -206,13 +206,13 @@
 
 > epiStrat :: pi (k :: DefKind). Parx Nest (EpiStrat k)
 > epiStrat {k} = nest (pad
->   (|EBy (-epunc "<="-) (source epiExTm)
->    |EWith (-epunc "with"-) (source epiExTm)
+>   (|EBy (-epunc "<="-) (source epiExTm) (-gap-)
+>    |EWith (-epunc "with"-) (source epiExTm) (-gap-)
 >    |id (specStrat {k})
 >    |)) nosub
 
 > specStrat :: pi (k :: DefKind). Parx Elt (EpiStrat k)
-> specStrat {LetDef} = (|ERet (-epunc "="-) (source epiInTm)|)
+> specStrat {LetDef} = (|ERet (-epunc "="-) (source epiInTm)  (-gap-)|)
 > specStrat {k} = (|)
 
 Termy things don't consume leading or trailing spaces.
@@ -225,7 +225,7 @@ Termy things don't consume leading or trailing spaces.
 >       (pad (source (precook (|(|(upto (sym "->")) :# ~[]|) : ~[]|)
 >                     (epiSig {VarDef}))))
 >       (source epiInTm)
->    |id (brackElt (Round, Nothing) epiInTm)|)
+>    |id (brackElt (Round, Nothing) (pad epiInTm))|)
 
 > epiInTm :: Parx Elt EpiInTm
 > epiInTm = source
