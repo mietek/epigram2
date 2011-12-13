@@ -54,7 +54,7 @@ would be good to decide a uniform approach there.}
 > getAboveCursor :: ProofState (Dev Bwd)
 > getAboveCursor = gets pcAboveCursor
 >
-> getBelowCursor :: ProofState (Fwd (Entry Bwd))
+> getBelowCursor :: ProofState (NewsyFwd (Entry NewsyFwd))
 > getBelowCursor = gets pcBelowCursor
 
 And some specialized versions:
@@ -209,7 +209,7 @@ And some specialized versions:
 >     replaceAboveCursor dev
 >     return ()
 
-> putBelowCursor :: Fwd (Entry Bwd) -> ProofState (Fwd (Entry Bwd))
+> putBelowCursor :: NewsyEntries -> ProofState NewsyEntries
 > putBelowCursor below = do
 >     pc <- get
 >     put pc{pcBelowCursor=below}
@@ -222,10 +222,10 @@ And some specialized versions:
 >     pc@PC{pcLayers=ls} <- get
 >     put pc{pcLayers=ls :< l}
 >
-> putEntryBelowCursor :: Entry Bwd -> ProofState ()
+> putEntryBelowCursor :: Entry NewsyFwd -> ProofState ()
 > putEntryBelowCursor e = do
->     below <- getBelowCursor
->     putBelowCursor (e :> below)
+>     NF below <- getBelowCursor
+>     putBelowCursor $ NF (Right e :> below)
 >     return ()
 
 > putDevLev :: Int -> ProofState ()
@@ -247,11 +247,7 @@ And some specialized versions:
 >     dev <- getAboveCursor
 >     putAboveCursor dev{devNSupply = ns}
 >
-> putDevSuspendState :: SuspendState -> ProofState ()
-> putDevSuspendState ss = do
->     dev <- getAboveCursor
->     putAboveCursor dev{devSuspendState = ss}
->
+
 > putDevTip :: Tip -> ProofState ()
 > putDevTip tip = do
 >     dev <- getAboveCursor

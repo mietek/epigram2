@@ -66,9 +66,9 @@ state and starts searching from the top of the development. If not, it calls
 > scheduler n = do
 >     ss <- (|devSuspendState getAboveCursor|)
 >     case ss of
->         SuspendUnstable  -> do  putDevSuspendState SuspendNone
->                                 cursorTop
->                                 schedulerContinue n
+>         SuspendUnstable -> do  putDevSuspendState SuspendNone
+>                                cursorTop
+>                                schedulerContinue n
 >         _                -> schedulerDone n
 
 The |schedulerContinue| command processes the entries below the
@@ -80,11 +80,12 @@ its current entry, then search its children from the top.
 
 > schedulerContinue :: Name -> ProofState ()
 > schedulerContinue n = do
+>     clearCursor
 >     cs <- getBelowCursor
 >     case cs of
->         F0                    -> schedulerDone n
->         EParam _ _ _ _ :> _   -> cursorDown >> schedulerContinue n
->         _ :> _                -> do
+>         NF F0                      -> schedulerDone n
+>         NF (Right (EParam _ _ _ _) :> _)   -> cursorDown >> schedulerContinue n
+>         NF (Right _ :> _ )               -> do
 >             cursorDown
 >             goIn
 >             resumeCurrentEntry

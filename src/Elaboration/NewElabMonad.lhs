@@ -21,8 +21,8 @@
 > import Evidences.ErrorHandling
 
 > import DisplayLang.Name
-> import DisplayLang.Scheme
 
+> import SourceLang.SourceData 
 
 %endif
 
@@ -30,29 +30,39 @@
 
 > type Feeder = (Int, [EXP])
 
-> type Template = String
-
 The instruction signature given above is implemented using the following monad.
 
 > data NewElab :: * -> * where
 >     EReturn  :: x -> NewElab x
 >     EFeed    :: EXP -> (Feed -> NewElab x) -> NewElab x
+>     -- Stash an expression away so that it gets updated by News, get back a feed for that exp
 >     ELatest  :: Feed -> (VAL -> NewElab x) -> NewElab x
+>     -- Look up the latest copy of a Feed, get back the value of that Feed
 >     ECan     :: Feed -> ((Can, [Feed]) -> NewElab x) -> NewElab x
+>     -- Wait for the value of a feed to become canonical, get back the Can, and Feeds for its args
 >     EHope    :: String :<: SubElab TY -> (Feed -> NewElab x) -> NewElab x
+>     -- Hope for a value of the given type to turn up, get back a Feed for that value
 >     EElab    :: Problem t => String :<: SubElab (t, [EXP]) -> (Feed -> NewElab x) -> NewElab x
+>     -- Kick off a sub-elaboration problem, get back a Feed for its result
 >     EDub     :: Template -> ((Feed {- Thing -} :<: Feed {- Scheme -}) -> NewElab x) -> NewElab x
->     EInst    :: Name -> EXP -> NewElab x -> NewElab x
+>     -- Look up the evidence language term assoc. to some source language template, get back feeds for its value and Scheme
+>     EInst    :: DEF -> (TY :>: EXP) -> NewElab x -> NewElab x
+>     -- Ask for some DEF to be unified with an expression
+>     ECry     :: StackError -> NewElab x
+>     -- Fail with some error
 
 > instance Show x => Show (NewElab x) where
->   show = undefined
+>   show (EInst d x c) = "EInst: " ++ show d ++ " " ++ show x
+>   show (ECan x c) = "ECan"
+>   show (ECry s) = "ECry: " ++ show s
+>   show _ = "NewElab!!!"
 
 > data SubElab :: * -> * where
 >     SEReturn  :: x -> SubElab x
 >     SELambda  :: (String :<: TY) -> (VAL -> SubElab x) -> SubElab x  
 
 > instance Show x => Show (SubElab x) where
->   show = undefined
+>   show _ = "SubElab!!!"
 
 > instance Monad NewElab where
 >   return = EReturn
@@ -64,6 +74,9 @@ The instruction signature given above is implemented using the following monad.
 >   EElab e c >>= k = EElab e ((k =<<) . c)
 >   EDub t c >>= k = EDub t ((k =<<) . c)
 >   EInst n e c >>= k = EInst n e (k =<< c)
+>   ECry x >>= _ = ECry x
+
+To use the do notation, we define these operator versions of the Elab combinators
 
 > eFeed :: EXP -> NewElab Feed
 > eFeed e = EFeed e EReturn
@@ -83,8 +96,11 @@ The instruction signature given above is implemented using the following monad.
 > eDub :: Template -> NewElab (Feed {- Thing -} :<: Feed {- Scheme -}) 
 > eDub t = EDub t EReturn
 
-> eInst :: Name -> EXP -> NewElab ()
+> eInst :: DEF -> (TY :>: EXP) -> NewElab ()
 > eInst n e = EInst n e (EReturn ())
+
+> eCry :: StackError -> NewElab a
+> eCry = ECry
 
 > instance Monad SubElab where
 >   return = SEReturn
@@ -93,4 +109,3 @@ The instruction signature given above is implemented using the following monad.
 
 > seLambda :: (String :<: TY) -> SubElab VAL
 > seLambda sty = SELambda sty SEReturn
-

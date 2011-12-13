@@ -95,6 +95,7 @@ being with $\Pi$-types.
 >   -- [Feature = Label]
 >   pretty Ret      = const (kword KwRet) 
 >   -- [/Feature = Label]
+>   pretty (Pro t)  = const (text "Pro " <> text (show t))
 >   pretty c        = error $ show c
 
 

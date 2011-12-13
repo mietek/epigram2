@@ -10,13 +10,13 @@
 
 > import Data.List
 > import Data.Traversable
+> import Data.Monoid
 
 > import Kit.BwdFwd
 
 > import Evidences.Tm
 > import Evidences.NameSupply
 
-> import Elaboration.ElabProb
 > import Elaboration.NewElabMonad
 
 > import DisplayLang.Scheme
@@ -43,7 +43,6 @@ place of |Bwd|, and to store a |SuspendState|, giving:
 >                   ,  devTip           :: Tip
 >                   ,  devNSupply       :: NameSupply
 >                   ,  devLevelCount    :: Int
->                   ,  devSuspendState  :: SuspendState
 >                   ,  devHypState      :: HypState
 >                   }
 
@@ -78,7 +77,6 @@ value for performance purposes.
 > data Tip
 >   = Module
 >   | Unknown TY HKind
->   | Suspended TY EProb HKind
 >   | SusElab TY (Feeder, NewElab EXP) HKind
 >   | Defined (TY :>: EXP)
 >   deriving Show
@@ -146,17 +144,6 @@ it once and for all with |lastName| and later rely on the cached version.
 \end{danger}
 
 
-\subsubsection{Suspension states}
-
-Definitions may have suspended elaboration processes attached,
-indicated by a |Suspended| tip. These may be stable or unstable. For
-efficiency in the scheduler, each development stores the state of its
-least stable child.
-
-> data SuspendState = SuspendUnstable | SuspendStable | SuspendNone
->   deriving (Eq, Show, Enum, Ord)
-
-
 \subsubsection{|HypState|}
 
 Usually the shared parameters of definitions in the proof state
@@ -217,11 +204,6 @@ Hence, we have:
 > modifyEntryDev f (EModule n dev) = EModule n (f dev)
 > modifyEntryDev f (EParam k n t l) = EParam k n t l
 
-
-> entrySuspendState :: Traversable f => Entry f -> SuspendState
-> entrySuspendState e = case entryDev e of
->     Just dev  -> devSuspendState dev
->     Nothing   -> SuspendNone
 
 
 < entryAnchor :: Traversable f => Entry f -> Maybe String

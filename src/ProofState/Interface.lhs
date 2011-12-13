@@ -29,8 +29,6 @@
 > import Evidences.TypeChecker
 > import Evidences.ErrorHandling
 
-> import {-# SOURCE #-} Elaboration.Wire
-
 > import Kit.NatFinVec
 
 %endif
@@ -160,7 +158,6 @@ level. For making modules, we use |makeModule|.
 >     let dev = Dev {  devEntries       =  B0
 >                   ,  devTip           =  Module 
 >                   ,  devNSupply       =  freshNSpace nsupply s
->                   ,  devSuspendState  =  SuspendNone 
 >                   ,  devLevelCount    =  (case hypstate of
 >                                             NixHyps      -> 0
 >                                             InheritHyps  -> boys inScope)
@@ -268,7 +265,6 @@ mood such as |Hoping| or |Crying|.
 >     let dev = Dev  {  devEntries       =  B0
 >                    ,  devTip           =  Unknown ty holeKind
 >                    ,  devNSupply       =  freshNSpace nsupply goalName
->                    ,  devSuspendState  =  SuspendNone
 >                    ,  devLevelCount    =  (case hypstate of
 >                                             NixHyps      -> 0
 >                                             InheritHyps  -> bwdLength binScope)
@@ -316,7 +312,7 @@ that entries below the cursor are (lazily) notified of the good news.
 >             (def', _) <- updateDefFromTip
 
 >             -- Propagate the good news
->             updateDef def'
+>             -- updateDef def'  FIXME
 
 >             -- Return the reference
 >             return def'

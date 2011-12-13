@@ -143,6 +143,9 @@ not.
 > getNews :: NewsBulletin -> DEF -> Maybe (DEF, News)
 > getNews (nb, _) ref = find ((== ref) . fst) nb
 
+> getGirlNews :: NewsBulletin -> Name -> Maybe (DEF, News)
+> getGirlNews (nb, _) ref = find ((== ref) . defName . fst) nb
+
 > getBoyNews :: NewsBulletin -> (Int, String, TY) -> Writer News (Int, String, TY)
 > getBoyNews bull (l, s, t) = case lookupBoyNews bull l of
 >     NoBoyNews       -> pure (l, s, t)

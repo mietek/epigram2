@@ -37,25 +37,20 @@
 > import Tactics.Information
 > import Tactics.Elimination
 > import Tactics.ProblemSimplify
-> import Tactics.IData
 > import Tactics.PropositionSimplify
-
-> {-
-> import Tactics.Gadgets
-> import Tactics.Relabel
-> import Tactics.ShowHaskell
-> -}
 
 > import Tactics.Matching
 
 > import Tactics.Unification
 
-> import Elaboration.Elaborator
-> import Elaboration.Scheduler
-
 > import DisplayLang.DisplayTm
 
 > import Distillation.Distiller
+
+> import SourceLang.SourceParser
+
+> import Elaboration.Ambulando
+> import Elaboration.NewElaborator
 
 > import Cochon.CommandLexer
 > import Cochon.Error
@@ -280,67 +275,67 @@ Construction tactics:
 >       "done - solves the goal with the last entry in the development."
 > -}
 
->   unaryInCT "give" (\tm -> elabGiveNext tm >> return "Thank you.")
->       "give <term> - solves the goal with <term>." :
+<   unaryInCT "give" (\tm -> elabGiveNext tm >> return "Thank you.")
+<       "give <term> - solves the goal with <term>." :
 
->   unaryInCT "=>" (\tm -> elabGiveNext (DLRET tm) >> return "Ta.")
->       "=> <term> - solves the programming problem by returning <term>." :
+<   unaryInCT "=>" (\tm -> elabGiveNext (DLRET tm) >> return "Ta.")
+<       "=> <term> - solves the programming problem by returning <term>." :
 
->   simpleCT 
->         "lambda"
->          (| (|bwdList (pSep (keyword KwComma) tokenString) (%keyword KwAsc%)|) :< tokenInTm 
->           | bwdList (pSep (keyword KwComma) tokenString)
->           |)
->          (\ args -> case args of
->             [] -> return "This lambda needs no introduction!"
->             _ -> case last args of
->               InArg ty  -> Data.Traversable.mapM (elabLamParam . (:<: ty) . argToStr) (init args)
->                                >> return "Made lambda!"
->               _         -> Data.Traversable.mapM (lambdaParam . argToStr) args
->                                >> return "Made lambda!"
->            )
->          ("lambda <labels> - introduces one or more hypotheses.\n"++
->           "lambda <labels> : <type> - introduces new module parameters or hypotheses.") :
+<   simpleCT 
+<         "lambda"
+<          (| (|bwdList (pSep (keyword KwComma) tokenString) (%keyword KwAsc%)|) :< tokenInTm 
+<           | bwdList (pSep (keyword KwComma) tokenString)
+<           |)
+<          (\ args -> case args of
+<             [] -> return "This lambda needs no introduction!"
+<             _ -> case last args of
+<               InArg ty  -> Data.Traversable.mapM (elabLamParam . (:<: ty) . argToStr) (init args)
+<                                >> return "Made lambda!"
+<               _         -> Data.Traversable.mapM (lambdaParam . argToStr) args
+<                                >> return "Made lambda!"
+<            )
+<          ("lambda <labels> - introduces one or more hypotheses.\n"++
+<           "lambda <labels> : <type> - introduces new module parameters or hypotheses.") :
 
->   simpleCT
->         "let"
->         (| (| (B0 :< ) tokenString |) :< tokenScheme |)
->         (\ [StrArg x, SchemeArg s] -> do
->             elabLet (x :<: s)
->             -- optional problemSimplify
->             -- optional seekGoal
->             return ("Let there be " ++ x ++ "."))
->         "let <label> <scheme> : <type> - set up a programming problem with a scheme." :
+<   simpleCT
+<         "let"
+<         (| (| (B0 :< ) tokenString |) :< tokenScheme |)
+<         (\ [StrArg x, SchemeArg s] -> do
+<             elabLet (x :<: s)
+<             -- optional problemSimplify
+<             -- optional seekGoal
+<             return ("Let there be " ++ x ++ "."))
+<         "let <label> <scheme> : <type> - set up a programming problem with a scheme." :
 
->   simpleCT
->         "make"
->         (| (|(B0 :<) tokenString (%keyword KwAsc%)|) :< tokenInTm
->          | (|(B0 :<) tokenString (%keyword KwDefn%) |) <>< 
->              (| (\ (tm :<: ty) -> InArg tm :> InArg ty :> F0) pAscription |)
->          |)
->         (\ (StrArg s:tyOrTm) -> case tyOrTm of
->             [InArg ty] -> do
->                 elabMake (s :<: ty)
->                 goIn
->                 return "Appended goal!"
->             [InArg tm, InArg ty] -> do
->                 elabMake (s :<: ty)
->                 goIn
->                 elabGive tm
->                 return "Made."
->         )
->        ("make <x> : <type> - creates a new goal of the given type.\n"
->            ++ "make <x> := <term> - adds a definition to the context.") :
+<   simpleCT
+<         "make"
+<         (| (|(B0 :<) tokenString (%keyword KwAsc%)|) :< tokenInTm
+<          | (|(B0 :<) tokenString (%keyword KwDefn%) |) <>< 
+<              (| (\ (tm :<: ty) -> InArg tm :> InArg ty :> F0) pAscription |)
+<          |)
+<         (\ (StrArg s:tyOrTm) -> case tyOrTm of
+<             [InArg ty] -> do
+<                 elabMake (s :<: ty)
+<                 goIn
+<                 return "Appended goal!"
+<             [InArg tm, InArg ty] -> do
+<                 elabMake (s :<: ty)
+<                 goIn
+<                 elabGive tm
+<                 return "Made."
+<         )
+<        ("make <x> : <type> - creates a new goal of the given type.\n"
+<            ++ "make <x> := <term> - adds a definition to the context.") :
 
 >     unaryStringCT "module" (\s -> makeModule s >> goIn >> return "Made module.")
 >       "module <x> - creates a module with name <x>." :
 
 
->   simpleCT
->         "pi"
->          (| (|(B0 :<) tokenString (%keyword KwAsc%)|) :< tokenInTm |)
->         (\ [StrArg s, InArg ty] -> elabPiParam (s :<: ty) >> return "Made pi!")
->         "pi <x> : <type> - introduces a pi." :
+<   simpleCT
+<         "pi"
+<          (| (|(B0 :<) tokenString (%keyword KwAsc%)|) :< tokenInTm |)
+<         (\ [StrArg s, InArg ty] -> elabPiParam (s :<: ty) >> return "Made pi!")
+<         "pi <x> : <type> - introduces a pi." :
 
 
 <   : simpleCT
@@ -361,12 +356,20 @@ Navigation tactics:
 >       "out - moves to the development containing the current one." :
 >     nullaryCT "up" (goUp >> return "Going up...")
 >       "up - moves to the development above the current one." :
->     nullaryCT "down" (goDown >> return "Going down...")
->       "down - moves to the development below the current one." :
+>     nullaryCT "cup" (cursorUp >> return "Cursor up...")
+>       "up - moves to the development above the current one." :
+
+<     nullaryCT "down" (goDown >> return "Going down...")
+<       "down - moves to the development below the current one." :
+
+>     nullaryCT "cdown" (cursorDown >> return "Cursor down...")
+>       "cdown - moves to the development above the current one." :
 >     nullaryCT "top" (many goUp >> return "Going to top...")
 >       "top - moves to the top-most development at the current level." :
->     nullaryCT "bottom" (many goDown >> return "Going to bottom...")
->       "bottom - moves to the bottom-most development at the current level." :
+
+<     nullaryCT "bottom" (many goDown >> return "Going to bottom...")
+<       "bottom - moves to the bottom-most development at the current level." :
+
 >     nullaryCT "previous" (prevGoal >> return "Going to previous goal...")
 >       "previous - searches for the previous goal in the proof state." :
 >     nullaryCT "root" (many goOut >> return "Going to root...")
@@ -469,55 +472,55 @@ Import more tactics from an aspect:
 >     import <- CochonTactics
 
 
->     simpleCT 
->     "match"
->     (do
->         pars <- tokenListArgs (bracket Round $ tokenPairArgs
->                                       tokenString
->                                       (keyword KwAsc)
->                                       tokenInTm) (| () |)
->         keyword KwSemi
->         tm1 <- tokenExTm
->         keyword KwSemi
->         tm2 <- tokenInTm
->         return (B0 :< pars :< tm1 :< tm2)
->      )
->      (\ [pars, ExArg a, InArg b] ->
->          matchCTactic (argList (argPair argToStr argToIn) pars) a b)
->      "match [<para>]* ; <term> ; <term> - match parameters in first term against second." :
+<     simpleCT 
+<     "match"
+<     (do
+<         pars <- tokenListArgs (bracket Round $ tokenPairArgs
+<                                       tokenString
+<                                       (keyword KwAsc)
+<                                       tokenInTm) (| () |)
+<         keyword KwSemi
+<         tm1 <- tokenExTm
+<         keyword KwSemi
+<         tm2 <- tokenInTm
+<         return (B0 :< pars :< tm1 :< tm2)
+<      )
+<      (\ [pars, ExArg a, InArg b] ->
+<          matchCTactic (argList (argPair argToStr argToIn) pars) a b)
+<      "match [<para>]* ; <term> ; <term> - match parameters in first term against second." :
 
->   (simpleCT
->     "eliminate"
->     (|(B0 :<) tokenExTm |)
->     (\[e] -> elimCTactic (argToEx e))
->     "eliminate <eliminator> - eliminates with a motive.") :
+<   (simpleCT
+<     "eliminate"
+<     (|(B0 :<) tokenExTm |)
+<     (\[e] -> elimCTactic (argToEx e))
+<     "eliminate <eliminator> - eliminates with a motive.") :
 
->   CochonTactic
->         {  ctName = "data"
->         ,  ctParse = do 
->              nom <- tokenString
->              pars <- tokenListArgs (bracket Round $ tokenPairArgs
->                tokenString
->                (keyword KwAsc)
->                tokenInTm) (|()|)
->              keyword KwAsc
->              indty <- tokenAppInTm
->              keyword KwArr
->              keyword KwSet
->              keyword KwDefn
->              scs <- tokenListArgs (bracket Round $ tokenPairArgs
->                (|id (%keyword KwTag%)
->                     tokenString |)
->                (keyword KwAsc)
->                tokenInTm)
->               (keyword KwSemi)
->              return $ B0 :< nom :< pars :< indty :< scs
->         , ctIO = (\ [StrArg nom, pars, indty, cons] -> simpleOutput $ 
->                     ielabData nom (argList (argPair argToStr argToIn) pars) 
->                      (argToIn indty) (argList (argPair argToStr argToIn) cons)
->                       >> return "Data'd.")
->         ,  ctHelp = "idata <name> [<para>]* : <inx> -> Set  := [(<con> : <ty>) ;]* - builds a data type for thee."
->         } : 
+<   CochonTactic
+<         {  ctName = "data"
+<         ,  ctParse = do 
+<              nom <- tokenString
+<              pars <- tokenListArgs (bracket Round $ tokenPairArgs
+<                tokenString
+<                (keyword KwAsc)
+<                tokenInTm) (|()|)
+<              keyword KwAsc
+<              indty <- tokenAppInTm
+<              keyword KwArr
+<              keyword KwSet
+<              keyword KwDefn
+<              scs <- tokenListArgs (bracket Round $ tokenPairArgs
+<                (|id (%keyword KwTag%)
+<                     tokenString |)
+<                (keyword KwAsc)
+<                tokenInTm)
+<               (keyword KwSemi)
+<              return $ B0 :< nom :< pars :< indty :< scs
+<         , ctIO = (\ [StrArg nom, pars, indty, cons] -> simpleOutput $ 
+<                     ielabData nom (argList (argPair argToStr argToIn) pars) 
+<                      (argToIn indty) (argList (argPair argToStr argToIn) cons)
+<                       >> return "Data'd.")
+<         ,  ctHelp = "idata <name> [<para>]* : <inx> -> Set  := [(<con> : <ty>) ;]* - builds a data type for thee."
+<         } : 
 
 >     unaryStringCT "show" (\ s -> case s of
 >         "inscope"  -> infoInScope
@@ -529,27 +532,35 @@ Import more tactics from an aspect:
 >       )
 >       "show <inscope/context/dump/hyps/state> - displays useless information." :
 
->     unaryExCT "elm" elmCT "elm <term> - elaborate <term>, stabilise and print type-term pair." :
+<     unaryExCT "elm" elmCT "elm <term> - elaborate <term>, stabilise and print type-term pair." :
 
->     unaryExCT "elaborate" infoElaborate
->       "elaborate <term> - elaborates, evaluates, quotes, distills and pretty-prints <term>." :
->     unaryExCT "infer" infoInfer
->       "infer <term> - elaborates <term> and infers its type." :
+<     unaryExCT "elaborate" infoElaborate
+<       "elaborate <term> - elaborates, evaluates, quotes, distills and pretty-prints <term>." :
+<     unaryExCT "infer" infoInfer
+<       "infer <term> - elaborates <term> and infers its type." :
 
 >     unaryInCT "parse" (return . show)
 >       "parse <term> - parses <term> and displays the internal display-sytnax representation." :
 
->     unaryNameCT "scheme" infoScheme
->       "scheme <name> - looks up the scheme on the definition <name>." :
+<     unaryNameCT "scheme" infoScheme
+<       "scheme <name> - looks up the scheme on the definition <name>." :
 
->     unaryExCT "whatis" infoWhatIs
->       "whatis <term> - prints the various representations of <term>." :
+<     unaryExCT "whatis" infoWhatIs
+<       "whatis <term> - prints the various representations of <term>." :
 
 >     nullaryCT "simplify" (problemSimplify >> optional seekGoal >> return "Simplified.")
 >       "simplify - simplifies the current problem." :
 
 >     nullaryCT "nix" (putDevHypState NixHyps >> return "Nixed.")
 >       "nix - set the current development to nix hypotheses." :
+
+>     nullaryCT "suit" (do
+>       let probty = Prob exId :- [ARR SET SET]
+>       make ("suit" :<: probty) 
+>       goIn 
+>       putDevTip (SusElab probty ((1, [ARR SET SET]), (probElab exId [0])) Hoping)
+>       ambulando Nothing NONEWS 
+>       return "Suit.") "suit" :
 
 >     [] )
 
@@ -681,25 +692,25 @@ Import more tactics from an aspect:
 >     | otherwise  = (x :> xs, y :> ys)
 > diff xs ys = (xs, ys)
 
-> matchCTactic :: [(String, DInTmRN)] -> DExTmRN -> DInTmRN -> ProofState String
-> matchCTactic xs a b = draftModule "__match" $ do
->     lev <- getDevLev
->     rs <- traverse matchHyp xs
->     (a' :<: ty) <- elabInfer' a
->     b' <- elaborate' (ty :>: b)
->     rs' <- runStateT (matchValue lev B0 (ty :>: (ev a', ev b'))) (bwdList rs)
->     return (show rs')
->   where
->     matchHyp :: (String, DInTmRN) -> ProofState ((Int, String, TY), Maybe EXP)
->     matchHyp (s, t) = do
->         tt  <- elaborate' (SET :>: t)
->         P x   <- (assumeParam (s :<: tt) :: ProofState (Tm {Head, Exp, Z}))
->         return (x , Nothing)
+< matchCTactic :: [(String, DInTmRN)] -> DExTmRN -> DInTmRN -> ProofState String
+< matchCTactic xs a b = draftModule "__match" $ do
+<     lev <- getDevLev
+<     rs <- traverse matchHyp xs
+<     (a' :<: ty) <- elabInfer' a
+<     b' <- elaborate' (ty :>: b)
+<     rs' <- runStateT (matchValue lev B0 (ty :>: (ev a', ev b'))) (bwdList rs)
+<     return (show rs')
+<   where
+<     matchHyp :: (String, DInTmRN) -> ProofState ((Int, String, TY), Maybe EXP)
+<     matchHyp (s, t) = do
+<         tt  <- elaborate' (SET :>: t)
+<         P x   <- (assumeParam (s :<: tt) :: ProofState (Tm {Head, Exp, Z}))
+<         return (x , Nothing)
 
-> elimCTactic :: DExTmRN -> ProofState String
-> elimCTactic r = do 
->   (e :<: elimTy) <- elabInferFully r
->   elimSimplify (elimTy :>: e)
->   -- toFirstMethod
->   return "Eliminated. Subgoals awaiting work..."
+< elimCTactic :: DExTmRN -> ProofState String
+< elimCTactic r = do 
+<   (e :<: elimTy) <- elabInferFully r
+<   elimSimplify (elimTy :>: e)
+<   -- toFirstMethod
+<   return "Eliminated. Subgoals awaiting work..."
 

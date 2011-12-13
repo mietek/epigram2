@@ -1,6 +1,6 @@
-{-# OPTIONS --universe-polymorphism #-}
+{-# OPTIONS --universe-polymorphism --no-positivity-check #-}
 
-module IIR where
+module Alg-IIR where
  
 data Level : Set where
       zero : Level

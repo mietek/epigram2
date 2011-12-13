@@ -15,6 +15,7 @@
 > import Control.Monad.State
 > import Data.Traversable
 > import Data.Foldable
+> import Data.List
 
 > import Evidences.Tm
 > import Evidences.NameSupply
@@ -54,12 +55,14 @@
 \subsection{Running elaboration processes}
 \label{subsec:Elaborator.RunElab.runElab}
 
+> data ElabResult  =  ElabSuccess EXP 
+>                  |  ElabWaitCan Feeder Feed ((Can, [Feed]) -> NewElab EXP)
+>                  |  ElabGoInst Feeder DEF (TY :>: EXP) (NewElab EXP) 
+>                  |  ElabFailed StackError
 
-> runElab :: Feeder -> NewElab EXP -> ProofState (EXP, ElabStatus)
+> runElab :: Feeder -> NewElab EXP -> ProofState ElabResult
 
-> data ElabStatus = ElabSuccess | ElabSuspended deriving Eq
-
-> runElab _ (EReturn x) = return (x, ElabSuccess)
+> runElab _ (EReturn x) = return (ElabSuccess x)
 
 > runElab (nf, es) (EFeed e c) = runElab (nf+1, e:es) (c nf)
 
@@ -72,9 +75,8 @@
 >       let las = length as 
 >       runElab (nf+las, as++es) (c (ca,reverse (take las [nf..]))) 
 >     _ :$ _ -> do 
->       e <- suspendElab fes el 
->       (| (e, ElabSuspended) |)
->     _ -> undefined -- cry
+>       (| (ElabWaitCan fes f c) |)
+>     _ -> error "ECan" -- cry
 
 > runElab fes@(nf, es) (EHope (s :<: sub) c) = do
 >   makeModule s
@@ -87,14 +89,27 @@
 >   runElab (nf+1, (D d :$ B0):es) (c nf)
 
 > runElab fes@(nf, es) (EElab (s :<: sub) c) = do
->   makeModule s
+>   nom <- makeModule s
 >   goIn
 >   (t,as) <- runSubElab sub
 >   moduleToGoal (Prob t :- as)
 >   let las = length as
->   (e,_) <- runElab (las, as) (probElab t (reverse (take las [0..])))
->   d <- giveOutBelow e 
->   runElab (nf+1, (D d :$ B0):es) (c nf)
+>   er <- runElab (las, as) (probElab t (reverse (take las [0..])))
+>   case er of
+>     ElabSuccess e -> do 
+>       d <- giveOutBelow e
+>       runElab (nf+1, (D d :$ B0):es) (c nf)
+>     ElabWaitCan fes dc cc -> do
+>       d <- suspendElab fes (ECan dc cc)
+>       goOut
+>       runElab (nf+1, (D d :$ B0):es) (c nf)
+>     ElabGoInst fes d te ci -> do
+>       d <- getCurrentDefinition
+>       goOut 
+>       suspendElab (nf+1, (D d :$ B0):es) (c nf)
+>       goIn
+>       (| (ElabGoInst fes d te ci) |)
+>     ElabFailed s -> (| (ElabFailed s) |)
 
 > runElab fes@(nf, es) (EDub t c) = do
 >   ps <- getParamsInScope'
@@ -106,18 +121,17 @@
 >           dub (_ :< DUB u _S s) | t == u = (| (_S, s) |)
 >           dub (vz :< _) = dub vz
 
-> runElab fes e@(EInst n ex c) = do
+> runElab fes e@(EInst d@(DEF _ _ op) (ty :>: ex) c) = do
 >     inScope <- getInScope
->     case find ((Just n ==) . entryName) inScope of
->       Just (EDef d dev _) -> case devTip dev of 
->         Defined _ -> 
->           if equal 0 (defTy d :>: (D d :$ B0, ex))
->             then runElab fes c
->             else error "runElab EInst 1" -- cry
->         Unknown _ _ -> (| (,ElabSuspended) (suspendElab fes e) |)
->         _ -> error "runElab EInst 2" -- cry
->       _ -> error "runElab EInst 3" -- cry
+>     lev <- getDevLev
+>     case op of
+>       -- suspend and wait for ambulando to solve
+>       Hole -> (| (ElabGoInst fes d (ty :>: ex) c) |)
+>       _ -> if equal lev (ty :>: (def d $$$ paramSpine inScope, ex))
+>              then runElab fes c
+>              else error "runElab EInst" -- cry
  
+> runElab fes (ECry s) = (| (ElabFailed s) |)
 
 > runSubElab :: SubElab x -> ProofState x
 > runSubElab (SELambda sty c) = do
@@ -126,14 +140,16 @@
 
 > runSubElab (SEReturn x) = return x
 
-> suspendElab :: Feeder -> NewElab EXP -> ProofState EXP
+
+> suspendElab :: Feeder -> NewElab EXP -> ProofState DEF
 > suspendElab fes prob = do
 >     tip <- getDevTip
 >     case tip of 
 >       Unknown tt hk -> do 
 >         putDevTip (SusElab tt (fes, prob) hk)
->         getCurrentDefinitionLocal
+>         getCurrentDefinition
 >       _ -> error "Suspend elab" -- Hopefully we never get here? 
+
 
 > eSplit :: Feed -> NewElab (Feed, Feed)
 > eSplit f = do

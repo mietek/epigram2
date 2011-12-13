@@ -15,3 +15,8 @@
 > runPropagateNews :: NewsBulletin -> NewsyEntries -> ProofState ()
 
 > tellParamEntry :: NewsBulletin -> Entry Bwd -> (Entry Bwd, NewsBulletin)
+
+> tellCurrentEntry :: NewsBulletin -> ProofState NewsBulletin
+
+> propagateNewsWithin :: NewsBulletin -> Entry NewsyFwd -> ProofState NewsBulletin
+

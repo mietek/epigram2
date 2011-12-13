@@ -23,11 +23,11 @@
 
 > import DisplayLang.Name
 
-> import {-# SOURCE #-} Elaboration.Wire
-
 > import Evidences.Tm
 > import Evidences.ErrorHandling
 > import Evidences.News
+
+> import {-# SOURCE #-} Elaboration.Ambulando 
 
 %endif
 
@@ -126,12 +126,15 @@ back the current entry.
 > getLeaveCurrent :: ProofState (Entry Bwd)
 > getLeaveCurrent = do
 >     currentEntry <- getCurrentEntry
->     Dev above tip root l sstate hypstate <- getAboveCursor
+>     Dev above tip root l hypstate <- getAboveCursor
 >     below <- getBelowCursor
->     let dev = Dev (above <>< below) tip root l sstate hypstate
->     case currentEntry of
->         CDefinition def sch  ->  return $ EDef def dev sch
->         CModule n            ->  return $ EModule n dev
+>     case below of 
+>       NF F0 -> do
+>         let dev = Dev above tip root l hypstate
+>         case currentEntry of
+>           CDefinition def sch  ->  return $ EDef def dev sch
+>           CModule n            ->  return $ EModule n dev
+>       _ -> throwError' $ err "Can't leave from anywhere but the bottom"
 
 Conversely, when entering a new development, the former entry needs to
 be \emph{unzipped} to form the current development. 
@@ -150,10 +153,8 @@ be \emph{unzipped} to form the current development.
 
 \subsubsection{Cursor navigation}
 
-Cursor movement is straightforward, as there is no news to worry
-about. We simply move an entry above the cursor to one below, or vice
-versa.
-
+> clearCursor :: ProofState ()
+> clearCursor = cursorDown >> cursorUp
 
 > cursorUp :: ProofState ()
 > cursorUp = do
@@ -161,29 +162,44 @@ versa.
 >     above <- getEntriesAbove
 >     case above of
 >         aboveE :< e -> do
->             below <- getBelowCursor
+>             NF below <- getBelowCursor
 >             -- Move |e| from |above| to |below|
 >             putEntriesAbove aboveE
->             putBelowCursor $ e :> below
+>             putBelowCursor $ NF (Right (reverseEntry e) :> below)
 >             return ()
 >         B0 -> do
 >             -- There is no above..
 >             throwError' $ err "cursorUp: cannot move cursor up."
 >
-> cursorDown :: ProofState ()
-> cursorDown = do
+
+> cursorDown ::  ProofState ()
+> cursorDown = getBelowCursor >>= cursorDown' NONEWS
+
+> cursorDown' :: NewsBulletin -> NewsyEntries -> ProofState ()
+> cursorDown' news (NF (Right (EParam w x y z) :> belowE)) = do
+>   above <- getEntriesAbove
+>   let (e',news') = tellParamEntry news (EParam w x y z)
+>   case news' of
+>     NONEWS -> putBelowCursor (NF belowE)
+>     _ -> putBelowCursor (NF (Left news' :> belowE))
+>   putEntriesAbove (above :< e')
+>   return ()
+
+> cursorDown' news (NF (Right e :> belowE)) = do
 >     -- Look below
->     above <- getEntriesAbove
->     below <- getBelowCursor
->     case below of
->         e :> belowE -> do
->             -- Move |e| from |below| to |above|
->             putEntriesAbove (above :< e)
->             putBelowCursor belowE
->             return ()
->         F0 -> do
->             -- There is no below..
->             throwError' $ err "cursorDown: cannot move cursor down."
+>     news' <- return news -- propagateNewsWithin news e
+>     case news' of
+>       NONEWS -> putBelowCursor (NF belowE)
+>       _ -> putBelowCursor (NF (Left news' :> belowE))
+>     return ()
+> cursorDown' news (NF (Left news' :> belowE)) =
+>   cursorDown' (news <+> news') (NF belowE)
+> cursorDown' news (NF F0) = do
+>   putBelowCursor (NF F0)
+>   nom <- getCurrentName
+>   news' <- ambulando (Just nom) news
+>   lay <- getLayer
+>   return () 
 
 \subsubsection{Focus navigation}
 
@@ -223,15 +239,14 @@ definition. If one can be found, it enters it and goes at the bottom.
 >         Just dev     = entryDev e
 >     putLayer $ Layer  {  aboveEntries     = aboveE
 >                       ,  currentEntry     = mkCurrentEntry e
->                       ,  belowEntries     = reverseEntries below
+>                       ,  belowEntries     = below
 >                       ,  layTip           = devTip oldFocus
 >                       ,  layNSupply       = devNSupply oldFocus
 >                       ,  layLevelCount    = devLevelCount oldFocus
->                       ,  laySuspendState  = devSuspendState oldFocus
 >                       ,  layHypState      = devHypState oldFocus
 >                       }
 >     putAboveCursor dev
->     putBelowCursor F0
+>     putBelowCursor $ NF F0
 >     return ()
 
 
@@ -241,28 +256,8 @@ development, with the additional burden of dealing with news.
 
 > goOut :: ProofState ()
 > goOut = do
->     -- Leave the current entry
->     e <- getLeaveCurrent
->     -- Move one layer out
->     mLayer <- optional removeLayer
->     case mLayer of
->         Just l -> do 
->             -- Update the current development
->             putAboveCursor $ Dev  {  devEntries       =  aboveEntries l :< e
->                                   ,  devTip           =  layTip l
->                                   ,  devNSupply       =  layNSupply l
->                                   ,  devLevelCount    =  layLevelCount l
->                                   ,  devSuspendState  =  laySuspendState l
->                                   ,  devHypState      =  layHypState l
->                                   }
->             putBelowCursor F0
->             startPropagateNews (belowEntries l)
->             -- Here, the cursor is at the bottom of the current development
->             return ()
->         Nothing -> do
->             -- Already at outermost position
->             throwError' $ err "goOut: you can't go that way."
-
+>   nom <- getCurrentName
+>   ambulando (Just (init nom)) NONEWS
 
 
 The |goOutBelow| variant has a similar effect than |goOut|, excepted
@@ -295,7 +290,7 @@ the new development.
 >         -- Get the directly enclosing layer
 >         l <- getLayer
 >         case l of
->           (Layer (aboveE :< e) m (NF below) tip nsupply le sstate hypstate) -> 
+>           (Layer (aboveE :< e) m (NF below) tip nsupply le hypstate) -> 
 >             -- It has at least one entry
 >             case entryDev e of
 >             Just dev -> do
@@ -305,7 +300,7 @@ the new development.
 >                 currentE <- getLeaveCurrent
 >                 -- Put the cursor at the bottom of the development
 >                 putAboveCursor dev
->                 putBelowCursor F0
+>                 putBelowCursor $ NF F0
 >                 -- Set focus on this definition
 >                 let belowE = NF  $    visitedBelow 
 >                                  <+>  (Right (reverseEntry currentE) :> below)
@@ -330,60 +325,60 @@ the bottom of the new development. As often, moving down implies
 dealing with news: we accumulate them as we go, updating the
 parameteres on our way.
 
-> goDown :: ProofState ()
-> goDown = do
->     bc <- getBoyCount
->     goDownAcc B0 NONEWS
->   where
->     goDownAcc :: Entries -> NewsBulletin -> ProofState ()
->     goDownAcc visitedAbove visitedNews = do
->         -- Get the directly enclosing layer
->         lay <- getLayer
->         case lay of
->           (Layer {aboveEntries = above , belowEntries=NF (ne :> belowNE)}) -> 
->             -- What is the entry below?
->             case ne of
->             Left newsBulletin -> do 
->                 -- A news bulletin:
->
->                 -- Keep going down, accumulating the news
->                 replaceLayer $ lay { belowEntries = NF belowNE }
->                 goDownAcc visitedAbove $ mergeNews visitedNews newsBulletin
->             Right e -> 
->                 -- A real entry:
->                 
->                 -- Definition or Parameter?
->                 case entryCoerce e of
->                 Left (Dev es' tip' nsupply' l' ss' hypstate') -> do
->                   -- Definition:
->                    
->                   -- Leave our current position
->                   currentE <- getLeaveCurrent
->                   -- Set focus on this definition
->                   let aboveE = (above :< currentE) <+> visitedAbove
->                   replaceLayer $ lay  {  aboveEntries  =  aboveE
->                                     ,  currentEntry  =  mkCurrentEntry e
->                                     ,  belowEntries  =  NF belowNE }
->                   -- Put the cursor at the bottom of the development
->                   -- The suspend state is cleared because there are no
->                   -- entries in the |Dev|; the state will be updated
->                   -- during news propagation.
->                   putAboveCursor (Dev B0 tip' nsupply' l' SuspendNone hypstate')
->                   putBelowCursor F0
->                   -- Push the collected news from above into the entries
->                   runPropagateNews visitedNews es'
->                   return ()
->                 Right param -> do
->                   -- Parameter:
->
->                   -- Push the news into it
->                   let (param', news) = tellParamEntry visitedNews param
->                   -- Keep going down
->                   replaceLayer $ lay { belowEntries = NF belowNE }
->                   goDownAcc (visitedAbove :< param') news
->           _ -> do
->             -- There is no down
->             throwError' $ err "goDown: you can't go that way."
+< goDown :: ProofState ()
+< goDown = do
+<     bc <- getBoyCount
+<     goDownAcc B0 NONEWS
+<   where
+<     goDownAcc :: Entries -> NewsBulletin -> ProofState ()
+<     goDownAcc visitedAbove visitedNews = do
+<         -- Get the directly enclosing layer
+<         lay <- getLayer
+<         case lay of
+<           (Layer {aboveEntries = above , belowEntries=NF (ne :> belowNE)}) -> 
+<             -- What is the entry below?
+<             case ne of
+<             Left newsBulletin -> do 
+<                 -- A news bulletin:
+<
+<                 -- Keep going down, accumulating the news
+<                 replaceLayer $ lay { belowEntries = NF belowNE }
+<                 goDownAcc visitedAbove $ mergeNews visitedNews newsBulletin
+<             Right e -> 
+<                 -- A real entry:
+<                 
+<                 -- Definition or Parameter?
+<                 case entryCoerce e of
+<                 Left (Dev es' tip' nsupply' l' hypstate') -> do
+<                   -- Definition:
+<                    
+<                   -- Leave our current position
+<                   currentE <- getLeaveCurrent
+<                   -- Set focus on this definition
+<                   let aboveE = (above :< currentE) <+> visitedAbove
+<                   replaceLayer $ lay  {  aboveEntries  =  aboveE
+<                                     ,  currentEntry  =  mkCurrentEntry e
+<                                     ,  belowEntries  =  NF belowNE }
+<                   -- Put the cursor at the bottom of the development
+<                   -- The suspend state is cleared because there are no
+<                   -- entries in the |Dev|; the state will be updated
+<                   -- during news propagation.
+<                   putAboveCursor (Dev B0 tip' nsupply' l' hypstate')
+<                   putBelowCursor $ NF F0
+<                   -- Push the collected news from above into the entries
+<                   runPropagateNews visitedNews es'
+<                   return ()
+<                 Right param -> do
+<                   -- Parameter:
+<
+<                   -- Push the news into it
+<                   let (param', news) = tellParamEntry visitedNews param
+<                   -- Keep going down
+<                   replaceLayer $ lay { belowEntries = NF belowNE }
+<                   goDownAcc (visitedAbove :< param') news
+<           _ -> do
+<             -- There is no down
+<             throwError' $ err "goDown: you can't go that way."
 
 
 
@@ -403,7 +398,7 @@ above.
 > goTop = much goUp
 >
 > goBottom :: ProofState ()
-> goBottom = much goDown
+> goBottom = getCurrentName >>= \ nom -> ambulando (Just nom) NONEWS
 >
 > goRoot :: ProofState ()
 > goRoot = much goOut
@@ -459,28 +454,28 @@ development. In other words, it has been defined ``just
 \emph{previously}''. The definition transposes to the case of
 |nextStep|.
 
-> prevStep :: ProofState ()
-> prevStep =  (goUp >> much goIn) <|> goOut
->             `pushError` 
->             (err "prevStep: no previous steps.")
->
-> nextStep :: ProofState ()
-> nextStep =  (goIn >> goTop) <|> goDown <|> (goOut `untilA` goDown)
->             `pushError` 
->             (err "nextStep: no more steps.")
+< prevStep :: ProofState ()
+< prevStep =  (goUp >> much goIn) <|> goOut
+<             `pushError` 
+<             (err "prevStep: no previous steps.")
+<
+< nextStep :: ProofState ()
+< nextStep =  (goIn >> goTop) <|> goDown <|> (goOut `untilA` goDown)
+<             `pushError` 
+<             (err "nextStep: no more steps.")
 
 It is then straightforward to navigate relatively to goals: we move
 from steps to steps, looking for a step that would be a goal.
 
 > prevGoal :: ProofState ()
-> prevGoal =  prevStep `untilA` isGoal
->             `pushError` 
->             (err "prevGoal: no previous goals.")
+> prevGoal =  undefined -- prevStep `untilA` isGoal
+>             -- `pushError` 
+>             -- (err "prevGoal: no previous goals.")
 >
 > nextGoal :: ProofState ()
-> nextGoal =  nextStep `untilA` isGoal
->             `pushError` 
->             (err "nextGoal: no more goals.")
+> nextGoal =  undefined  -- nextStep `untilA` isGoal
+>             -- `pushError` 
+>             -- (err "nextGoal: no more goals.")
 
 In the very spirit of a theorem prover, we sometimes want to stay at
 the current location if it is a goal, and go to the next goal

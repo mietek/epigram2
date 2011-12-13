@@ -33,6 +33,8 @@
 > import Unsafe.Coerce
 > import Debug.Trace
 
+> import SourceLang.SourceData
+
 > import {-# SOURCE #-} Elaboration.NewElabMonad
 
 %endif
@@ -366,7 +368,7 @@
 < exp (D d) = D d
 
 > ev :: Tm {p, Exp, Z} -> VAL
-> ev = (ENil //)
+> ev = evv
  
 > eval :: forall m n p s' . pi (s :: Status) . 
 >           Env {Z} {n} -> Tm {p, s', n} -> Tm {Body, s, Z}

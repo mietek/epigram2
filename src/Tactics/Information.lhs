@@ -29,12 +29,11 @@
 > import DisplayLang.Lexer
 > import DisplayLang.PrettyPrint
 
-> import Elaboration.ElabProb
-> import Elaboration.ElabMonad
-> import Elaboration.MakeElab
-> import Elaboration.RunElab
-> import Elaboration.Scheduler
-> import Elaboration.Elaborator
+< import Elaboration.ElabProb
+< import Elaboration.ElabMonad
+< import Elaboration.MakeElab
+< import Elaboration.RunElab
+< import Elaboration.Elaborator
 
 > import Distillation.Distiller
 > import Distillation.Scheme
@@ -60,23 +59,23 @@ evaluates the resulting term and returns a pretty-printed string
 representation. Note that it works in its own module which it discards at the
 end, so it will not leave any subgoals lying around in the proof state.
 
-> infoElaborate :: DExTmRN -> ProofState String
-> infoElaborate tm = draftModule "__infoElaborate" (do
->     (tm' :<: ty) <- elabInfer' tm
->     s <- prettyPS (ty :>: tm')
->     return (renderHouseStyle s)
->  )
+< infoElaborate :: DExTmRN -> ProofState String
+< infoElaborate tm = draftModule "__infoElaborate" (do
+<     (tm' :<: ty) <- elabInfer' tm
+<     s <- prettyPS (ty :>: tm')
+<     return (renderHouseStyle s)
+<  )
 
 
 The |infoInfer| command is similar to |infoElaborate|, but it returns a string
 representation of the resulting type.
 
-> infoInfer :: DExTmRN -> ProofState String
-> infoInfer tm = draftModule "__infoInfer" (do
->     (_ :<: ty) <- elabInfer' tm
->     s <- prettyPS (SET :>: ty)
->     return (renderHouseStyle s)
->  )
+< infoInfer :: DExTmRN -> ProofState String
+< infoInfer tm = draftModule "__infoInfer" (do
+<     (_ :<: ty) <- elabInfer' tm
+<     s <- prettyPS (SET :>: ty)
+<     return (renderHouseStyle s)
+<  )
 
 
 
@@ -170,34 +169,34 @@ the saved state. We can get rid of it once we are confident that the new version
 
 
 
-> infoScheme :: RelName -> ProofState String
-> infoScheme x = do
->     (_, l, ms) <- resolveHere x
->     case ms of
->         Just sch -> do
->             d <- prettySchemePS (stripScheme l sch)
->             return (renderHouseStyle d)
->         Nothing -> return (showRelName x ++ " does not have a scheme.")
+< infoScheme :: RelName -> ProofState String
+< infoScheme x = do
+<     (_, l, ms) <- resolveHere x
+<     case ms of
+<         Just sch -> do
+<             d <- prettySchemePS (stripScheme l sch)
+<             return (renderHouseStyle d)
+<         Nothing -> return (showRelName x ++ " does not have a scheme.")
 
 
 
 The |infoWhatIs| command displays a term in various representations.
 
-> infoWhatIs :: DExTmRN -> ProofState String
-> infoWhatIs tmd = draftModule "__infoWhatIs" (do
->     (tm :<: ty) <- elabInfer' tmd
->     tms <- distillPS (ty :>: tm)
->     tys <- distillPS (SET :>: ty)
->     return (unlines
->         [  "Parsed term:", show tmd
->         ,  "Elaborated term:", show tm
->         ,  "Distilled term:", show tms
->         ,  "Pretty-printed term:", renderHouseStyle (pretty tms maxBound)
->         ,  "Inferred type:", show ty
->         ,   "Distilled type:", show tys
->         ,   "Pretty-printed type:", renderHouseStyle (pretty tys maxBound)
->         ])
->   )
+< infoWhatIs :: DExTmRN -> ProofState String
+< infoWhatIs tmd = draftModule "__infoWhatIs" (do
+<     (tm :<: ty) <- elabInfer' tmd
+<     tms <- distillPS (ty :>: tm)
+<     tys <- distillPS (SET :>: ty)
+<     return (unlines
+<         [  "Parsed term:", show tmd
+<         ,  "Elaborated term:", show tm
+<         ,  "Distilled term:", show tms
+<         ,  "Pretty-printed term:", renderHouseStyle (pretty tms maxBound)
+<         ,  "Inferred type:", show ty
+<         ,   "Distilled type:", show tys
+<         ,   "Pretty-printed type:", renderHouseStyle (pretty tys maxBound)
+<         ])
+<   )
 
 
 The |prettyProofState| command generates a pretty-printed representation
@@ -213,20 +212,21 @@ of the proof state at the current location.
 > prettyES :: Entries -> Name -> ProofState Doc
 > prettyES aus me = do
 >         es <- replaceEntriesAbove B0
->         cs <- putBelowCursor F0
+>         cs <- putBelowCursor (NF F0)
 >         case (es, cs) of
->             (B0, F0)  -> prettyEmptyTip
->             _   -> do
+>             (B0, NF F0)  -> prettyEmptyTip
+>             (_, NF F0)   -> do
 >                 d <- prettyEs empty (es <>> F0)
->                 d' <- case cs of
->                     F0  -> return d
->                     _   -> do
->                         d'' <- prettyEs empty cs
->                         return (d $$ text "---" $$ d'')
 >                 tip <- prettyTip
 >                 putEntriesAbove es
 >                 putBelowCursor cs
->                 return (lbrack <+> d' $$ rbrack <+> tip)
+>                 return (lbrack <+> d $$ rbrack <+> tip)
+>             _   -> do
+>                 d <- prettyEs empty (es <>> F0)
+>                 tip <- prettyTip
+>                 putEntriesAbove es
+>                 putBelowCursor cs
+>                 return (lbrack <+> d $$ rbrack <+> text "...")
 >  where
 >     prettyEs :: Doc -> Fwd (Entry Bwd) -> ProofState Doc
 >     prettyEs d F0         = return d
@@ -277,7 +277,7 @@ of the proof state at the current location.
 >                 tyd <- distillPS (SET :>: ty)
 >                 return (prettyHKind hk <+> kword KwAsc <+> pretty tyd maxBound)
 
->             Suspended ty prob hk -> do
+>             SusElab ty (_,prob) hk -> do
 >                 tyd <- prettyPS (SET :>: ty)
 >                 return (text ("(SUSPENDED: " ++ show prob ++ ")")
 >                             <+> prettyHKind hk <+> kword KwAsc <+> tyd)
@@ -298,10 +298,10 @@ The |elm| Cochon tactic elaborates a term, then starts the scheduler to
 stabilise the proof state, and returns a pretty-printed representation of the
 final type-term pair (using a quick hack).
 
-> elmCT :: DExTmRN -> ProofState String
-> elmCT tm = do
->     suspend ("elab" :<: sigSet) (ElabInferProb tm) Hoping
->     startScheduler
->     infoElaborate (DP [("elab", Rel 0)] ::$ [])
+< elmCT :: DExTmRN -> ProofState String
+< elmCT tm = do
+<     suspend ("elab" :<: sigSet) (ElabInferProb tm) Hoping
+<     startScheduler
+<     infoElaborate (DP [("elab", Rel 0)] ::$ [])
 
 

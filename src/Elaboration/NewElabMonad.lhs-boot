@@ -3,9 +3,6 @@
 
 > type Feed = Int -- DeBruijn level into an Env (list of stuffs) -- 0 is the last thing in the env
 
-> type Template = String
-
-
 > data NewElab x
 
 

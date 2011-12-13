@@ -55,8 +55,6 @@ zipper is a record with the following fields:
 \item[|layTip|] the |Tip| of the development that contains the current entry
 \item[|layNSupply|] the |NameSupply| of the development that contains the 
                     current entry
-\item[|laySuspendState|] the state of the development that contains the
-                         current entry
 \end{description}
 
 > data Layer = Layer
@@ -66,7 +64,6 @@ zipper is a record with the following fields:
 >   ,  layTip           :: Tip
 >   ,  layNSupply       :: NameSupply
 >   ,  layLevelCount    :: Int
->   ,  laySuspendState  :: SuspendState
 >   ,  layHypState      :: HypState
 >   }
 >  deriving Show
@@ -134,7 +131,7 @@ below the cursor (|pcBelowCursor|)..
 > data ProofContext = PC
 >     {  pcLayers       :: Bwd Layer
 >     ,  pcAboveCursor  :: Dev Bwd
->     ,  pcBelowCursor  :: Fwd (Entry Bwd)
+>     ,  pcBelowCursor  :: NewsyFwd (Entry NewsyFwd)
 >     }
 >   deriving Show
 
@@ -146,11 +143,10 @@ definition:
 >                    ,  pcAboveCursor = Dev  {  devEntries       = B0
 >                                            ,  devTip           = Module
 >                                            ,  devNSupply       = (B0, 0)
->                                            ,  devSuspendState  = SuspendNone
 >                                            ,  devLevelCount    = 0
 >                                            ,  devHypState      = InheritHyps
 >                                            }
->                    ,  pcBelowCursor = F0 }
+>                    ,  pcBelowCursor = NF F0 }
 
 
 
