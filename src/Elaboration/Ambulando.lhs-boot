@@ -1,0 +1,38 @@
+\label{sec:Elaboration.Ambulando}
+
+%if False
+
+> {-# OPTIONS_GHC -F -pgmF she #-}
+> {-# LANGUAGE FlexibleInstances, TypeOperators, TypeSynonymInstances,
+>              GADTs, RankNTypes, PatternGuards #-}
+
+> module Elaboration.Ambulando where
+
+> import Prelude hiding (exp, all, any, elem)
+
+> import Control.Applicative
+> import Control.Monad
+> import Data.Foldable hiding (foldr)
+
+> import Evidences.Tm
+> import Evidences.News
+> import Evidences.ErrorHandling
+
+> import ProofState.Structure
+> import ProofState.ProofContext
+
+> import Kit.BwdFwd
+
+%endif
+
+
+> ambulando :: Maybe Name -> NewsBulletin -> ProofState ()
+
+> odnalubma :: DEF -> (TY :>: EXP) -> ProofState ()
+
+> tellParamEntry :: NewsBulletin -> Entry Bwd -> (Entry Bwd, NewsBulletin)
+
+> tellTip :: Name -> NewsBulletin -> Tip ->
+>            ProofState (Either (DEF, TY :>: EXP) (Tip, News))
+
+> occurs :: Int -> Maybe Name -> [Int] -> (TY :>: EXP) -> Bool 
