@@ -165,7 +165,7 @@ here.
 >       Nothing -> throwError' $ err "spInf:" ++ errTyTm (SET :>: wk _T) ++ err "not lambdable"
 >     (_T, Hd) -> case projable _T of
 >       Just (_S, _T)  -> spInf l (e $$ Hd :<: _S) (g, as)
->       Nothing -> throwError' $ err "spInf: not projable"
+>       Nothing -> throwError' $ err ("spInf: " ++ ugly V0 _T ++ " not projable")
 >     (_T, Tl) -> case projable _T of
 >       Just (_S, _T)  -> spInf l (e $$ Tl :<: _T (e $$ Hd)) (g, as)
 >       Nothing -> throwError' $ err "spInf: not projable"

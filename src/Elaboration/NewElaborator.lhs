@@ -30,6 +30,8 @@
 > import Elaboration.NewElabMonad
 > import Elaboration.NewRunElab
 
+> import Debug.Trace
+
 %endif
 
 > instance Problem EpiInTm where
@@ -37,22 +39,21 @@
 >   probTel x = SET *** ONE
 >   probVal x [_S] = exp _S *** ONE
 >   probElab (EEx ex) [_Sf] = do
->     f <- eElab ("ex" :<: return (ex, []))
->     (_S'f, s'f) <- eSplit f
+>     ff <- eElab ("ex" :<: return (ex, []))
+>     (_S'f, s'f) <- eSplit ff
 >     [_S,_S'] <- eLatests [_Sf, _S'f]
->     h <- eHope ("eq" :<: return (SETEQ (exp _S') (exp _S)))
+>     h <- eHope ("eq" :<: return (PRF (SETEQ (exp _S') (exp _S))))
 >     [_S,_S',eq,s'] <- eLatests [_Sf, _S'f, h, s'f]
->     (| (Coeh Coe (exp _S') (exp _S) (exp eq) (exp s') :$ B0) |)    
+>     (| (PAIR (Coeh Coe (exp _S') (exp _S) (exp eq) (exp s') :$ B0) ZERO) |)   
 
 >   probElab (ELam (_ :~ Sig [] (_ :~ VarConc (_ :~ x) [] Nothing)) body) [_Sf] = do
->     _S <- eLatest _Sf  
->     case _S of
->       PI _A _B -> do
->         ff <- eElab ("body" :<: do  a <- seLambda ("a" :<: _A)
->                                     seLambda ("adub" :<: DUB x (SCHTY _A) (exp a))
->                                     (| (body, [_B $$. a]) |))
->         f <- eLatest ff
->         (| (la "a" $ \a -> nix f :$ (B0 :< A a :< A ZERO :< Hd)) |)
+>     (_Af, _Bf) <- ePi _Sf  
+>     [_A,_B] <- eLatests [_Af, _Bf]
+>     ff <- eElab ("body" :<: do  a <- seLambda (x :<: exp _A)
+>                                 seLambda (x ++ "dub" :<: DUB x (SCHTY (exp _A)) (exp a))
+>                                 (| (body, [exp _B $$. a]) |))
+>     f <- eLatest ff
+>     (| (PAIR (la "a" $ \a -> nix f :$ (B0 :< A a :< A ZERO :< Hd)) ZERO) |)
 
 >   probElab e [_S] = error $ show e -- "intm error"
 
@@ -61,12 +62,12 @@
 >   probTel x = ONE
 >   probVal x [] = ("S", SET) -** \_S -> _S
 >   probElab (EVS f as) [] = do
->     _Sff <- eElab ("f" :<: (| (f, []) |)) 
+>     _Sff <- eElab ("f" :<: (| (f, []) |))
 >     (_Sf, ff) <- eSplit _Sff 
 >     [_S, f] <- eLatests [_Sf, ff]
 >     _Txf <- eElab ("as" :<: (| (as, [exp _S, exp f]) |)) 
->     PAIR _T x <- eLatest _Txf
->     (| (PAIR _T x) |)
+>     (_Tf, xf) <- eSplit _Txf
+>     (| PAIR (| exp (eLatest _Tf) |) (| exp (eLatest xf) |) |)
 
 > instance Problem Template where
 >   probName x = "Template"

@@ -34,6 +34,8 @@
 > import Kit.BwdFwd
 > import Kit.MissingLibrary
 
+> import Debug.Trace
+
 %endif
 
 
@@ -108,7 +110,7 @@ currently doing and zoom out to deal with that.
 If we find some news, we combine it with the stuff we already knew:
 
 > ambulando' nam (Left news' :> belowE) news = 
->   ambulando nam (mergeNews news' news)
+>   ambulando' nam belowE (mergeNews news' news)
 
 
 If we encounter a parameter, we should find out if it's type has got more
@@ -139,25 +141,25 @@ we should go in and update everyone on the news.
 
 Ok, so we are backing up looking for the hole someone wanted solving
 
-> odnalubma :: DEF -> (TY :>: EXP) -> ProofState ()
-> odnalubma d e = do
+> odnalubma :: Name -> (TY :>: EXP) -> ProofState ()
+> odnalubma n e = do
 >   lev <- getDevLev 
 >   ez <- getEntriesAbove
 >   putEntriesAbove B0
->   odnalubma' d ([],[]) lev e ez 0
+>   odnalubma' n ([],[]) lev e ez 0
 
-> odnalubma' :: DEF -> ([(DEF,Tip)],[Int]) -> Int -> (TY :>: EXP) -> 
+> odnalubma' :: Name -> ([(DEF,Tip)],[Int]) -> Int -> (TY :>: EXP) -> 
 >              Bwd (Entry Bwd) -> Int -> ProofState ()
 
 Reached the top of the current layer without finding the target, exit to the
 containing layer, continue.
 
-> odnalubma' def (deps, ldeps) lev tm B0 nest = do
+> odnalubma' n (deps, ldeps) lev tm B0 nest = do
 >     currentEntry <- getCurrentEntry
 >     dev <- getAboveCursor
 >     below <- getBelowCursor
 >     e <- case currentEntry of
->       CDefinition def sch -> return $ EDef def (dev {devEntries = below}) sch
+>       CDefinition d sch -> return $ EDef d (dev {devEntries = below}) sch
 >       CModule n           -> return $ EModule n (dev {devEntries = below})
 >     mLayer <- optional removeLayer
 >     case mLayer of
@@ -169,62 +171,64 @@ containing layer, continue.
 >                              ,  devHypState      =  layHypState l
 >                              }
 >        putBelowCursor $ NF (Right e :> unNF (belowEntries l))
->        odnalubma' def (deps, pred ldeps) lev tm (aboveEntries l) (max 0 (nest-1))
+>        odnalubma' n (deps, pred ldeps) lev tm (aboveEntries l) (max 0 (nest-1))
 >  where pred :: [ Int ] -> [ Int ]
 >        pred = nub . map (max 0 . (subtract 1))
 
-> odnalubma' def (deps, ldeps) lev tm (ez :< EParam a b c l) nest 
+> odnalubma' n (deps, ldeps) lev tm (ez :< EParam a b c l) nest 
 >       | all (< nest) ldeps , not (occurs lev Nothing [l] tm)  = do
 >     below <- getBelowCursor
 >     putBelowCursor (NF (Right (EParam a b c l) :> unNF below))
->     odnalubma' def (deps, ldeps) lev tm ez nest 
+>     odnalubma' n (deps, ldeps) lev tm ez nest 
 >       | otherwise = error "O" -- bad param
 
-> odnalubma' def (deps,ldeps) lev tm (ez :< e) nest
->     | not (Just (defName def) == entryName e) = do
->   let Just dv = entryDev e
->   oldFocus  <- getAboveCursor
->   belowE <- getBelowCursor
->   putLayer $ Layer {  aboveEntries     = ez
->                    ,  currentEntry     = mkCurrentEntry e
->                    ,  belowEntries     = belowE
->                    ,  layTip           = devTip oldFocus
->                    ,  layNSupply       = devNSupply oldFocus
->                    ,  layLevelCount    = devLevelCount oldFocus
->                    ,  layHypState      = devHypState oldFocus
->                    }
->   putAboveCursor $ dv {devEntries = B0}
->   putBelowCursor $ NF F0
->   let ldeps' = case (entryDef e, occurs lev (entryName e) [] tm) of 
->                  (Just d, True) -> (nest:ldeps)
->                  _ -> ldeps
->   odnalubma' def (deps,ldeps) lev tm (devEntries dv) (nest+1)
 
-> odnalubma' d (deps, ldeps) lev (ty :>: tm) (ez :< e) nest = do
+> odnalubma' n (deps, ldeps) lev (ty :>: tm) (ez :< e) nest 
+>  | (Just n == entryName e) = do
 >     putEntriesAbove ez
 >     news <- makeDeps deps NONEWS
 >     ez' <- getEntriesAbove
 >     putEntriesAbove (ez' :< e)
->     es <- getBelowCursor
->     putBelowCursor $ NF (Left news :> unNF es)
 >     goIn
 >     let (tm', _) = tellNews news tm
 >         tm'' = exp (ev tm')
->     def' <- giveOutBelow tm''
->     putNewsBelow ([(def', GoodNews)], Nothing)
+>     def' <- give tm''
+>     goOut' 
+>     bc <- getBelowCursor
+>     putBelowCursor (NF (Left (mergeNews news ([(def', GoodNews)], Nothing)) :> unNF bc))
+>     return ()
 >   where
 >     makeDeps :: [(DEF, Tip)] -> NewsBulletin -> ProofState NewsBulletin
 >     makeDeps [] news = return news
 >     makeDeps ((old, Unknown ty k) : deps) news = do
 >         let (ty', _) = tellNews news ty
->         makeKinded InheritHyps Nothing k (fst (last (defName d)) :<: ty')
+>         makeKinded InheritHyps Nothing k (fst (last (defName old)) :<: ty')
 >         -- seems like a crap name choice
->         EDef d _ _ <- getEntryAbove
->         let op = Emit (def d)
+>         EDef oldd _ _ <- getEntryAbove
+>         let op = Emit (def oldd)
 >         makeDeps deps (addGirlNews (old{defOp = op}, GoodNews) news)
 >     makeDeps _ _ = throwError' $ err "makeDeps: bad reference kind! Perhaps "
 >         ++ err "solveHole was called with a term containing unexpanded definitions?"
 
+
+> odnalubma' n (deps, ldeps) lev (ty :>: tm) (ez :< e) nest = do
+>     let Just dv = entryDev e
+>     oldFocus  <- getAboveCursor
+>     belowE <- getBelowCursor
+>     putLayer $ Layer {  aboveEntries     = ez
+>                      ,  currentEntry     = mkCurrentEntry e
+>                      ,  belowEntries     = belowE
+>                      ,  layTip           = devTip oldFocus
+>                      ,  layNSupply       = devNSupply oldFocus
+>                      ,  layLevelCount    = devLevelCount oldFocus
+>                      ,  layHypState      = devHypState oldFocus
+>                      }
+>     putAboveCursor $ dv {devEntries = B0}
+>     putBelowCursor $ NF F0
+>     let deps' = case (entryDef e, occurs lev (entryName e) [] (ty :>: tm)) of 
+>                    (Just d, True) -> ((d,devTip dv):deps,nest:ldeps)
+>                    _ -> (deps,ldeps)
+>     odnalubma' n deps' lev (ty :>: tm) (devEntries dv) (nest+1)
 
 
 
@@ -238,7 +242,7 @@ containing layer, continue.
 >     in (EParam k n ty' l, (gns, bns'))
 
 > tellTip :: Name -> NewsBulletin -> Tip ->
->            ProofState (Either (DEF, TY :>: EXP) (Tip, News))
+>            ProofState (Either (Name, TY :>: EXP) (Tip, News))
 > tellTip nam news (Unknown ty Hoping) | 
 >     Just (d, GoodNews) <- getGirlNews news nam = do
 >   es <- getGlobalScope
@@ -251,16 +255,19 @@ containing layer, continue.
 >   where  (ty', ne1) = tellNews news ty
 >          (tm', ne2) = tellNews news tm
 >          ne         = min ne1 ne2
-> tellTip _ news (SusElab ty ((nf,es), e) hk) = do 
+> tellTip _ news (SusElab ty ((nf,es), e) hk) = do
+>   putDevTip (Unknown ty hk) 
 >   er <- runElab (nf, map (fst . tellNews news) es) e  
 >   case er of
->     ElabSuccess e' -> (| (Right (Defined (ty :>: e'), GoodNews)) |)
+>     ElabSuccess e' -> (| (Right (Defined (ty' :>: e'), GoodNews)) |)
+>       where  (ty', _) = tellNews news ty
 >     ElabWaitCan f ex c -> 
 >       (| (Right (SusElab ty (f, ECan ex c) hk, NoNews)) |)
->     ElabGoInst f d te c -> do
+>     ElabGoInst f (n,fn) te@(ty' :>: (ex,exf)) c -> do
 >       --record the progress made in the elab prob
->       putDevTip (SusElab ty (f, EInst d te c) hk)
->       (| (Left (d, te)) |)
+>       putDevTip (SusElab ty'' (f, EInst (n,fn) (ty' :>: exf) c) hk)
+>       (| (Left (n, ty' :>: ex)) |)
+>      where  (ty'', _) = tellNews news ty
 >     ElabFailed _ -> error "Tell Tip" -- run away and cry
 > tellTip _ news Module = (| (Right (Module, NoNews)) |)
 

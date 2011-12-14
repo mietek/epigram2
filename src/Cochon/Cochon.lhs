@@ -555,10 +555,21 @@ Import more tactics from an aspect:
 >       "nix - set the current development to nix hypotheses." :
 
 >     nullaryCT "suit" (do
->       let probty = Prob exId :- [ARR SET SET]
+>       -- _X <- make ("X" :<: SET)
+>       let _X = ARR SET SET
+>       let probty = Prob exId :- [_X]
 >       make ("suit" :<: probty) 
 >       goIn 
->       putDevTip (SusElab probty ((1, [ARR SET SET]), (probElab exId [0])) Hoping)
+>       putDevTip (SusElab probty ((1, [_X]), (probElab exId [0])) Hoping)
+>       ambulando Nothing NONEWS 
+>       return "Suit.") "suit" :
+
+>     nullaryCT "suit2" (do
+>       let _X = ("X",SET) ->> \_X -> _X --> _X 
+>       let probty = Prob exPId :- [_X]
+>       make ("suit" :<: probty) 
+>       goIn 
+>       putDevTip (SusElab probty ((1, [_X]), (probElab exPId [0])) Hoping)
 >       ambulando Nothing NONEWS 
 >       return "Suit.") "suit" :
 

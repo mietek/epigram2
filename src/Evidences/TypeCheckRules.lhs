@@ -105,7 +105,7 @@
 > canTy ((Scheme, []) :>: SchImPi) = pure $ ("S", SET) -** \ _S -> ("T", _S --> SCHEME) -** \ _T -> ONE
 > -- [/Feature = Scheme]
 > -- [Feature = Dubbing]
-> canTy ((Set, []) :>: Dub u) = pure $ ("S", SET) -** \_S -> ("s", _S) -** \_ -> ONE
+> canTy ((Set, []) :>: Dub u) = pure $ ("S", SCHEME) -** \_S -> ("s", wr (def schElDEF) _S) -** \_ -> ONE
 > canTy ((Dub u, [_S, s]) :>: Zero) = pure ONE
 > -- [/Feature = Dubbing]
 > -- [Feature = Problem]
@@ -129,6 +129,7 @@
 >       Just (Pair, [_P, _Q]) -> Just (PRF _P, \_ -> PRF _Q)
 >       _ -> (|)
 >   _            -> (|)
+> projable (Prob p :- as) = projable (ev (probVal p (map ev as)))
 > projable _                = Nothing
 
 

@@ -96,7 +96,8 @@ being with $\Pi$-types.
 >   pretty Ret      = const (kword KwRet) 
 >   -- [/Feature = Label]
 >   pretty (Pro t)  = const (text "Pro " <> text (show t))
->   pretty c        = error $ show c
+>   pretty (Dub x)  = const (text "Dub " <> text x)
+>   pretty c        = error $ "PP: " ++ show c
 
 
 < instance Pretty (Can DInTmRN) where

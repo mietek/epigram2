@@ -49,6 +49,7 @@
 > import Kit.Trace
 > import Kit.NatFinVec
 
+> import Debug.Trace
 
 %endif
 
@@ -57,7 +58,7 @@
 
 > data ElabResult  =  ElabSuccess EXP 
 >                  |  ElabWaitCan Feeder Feed ((Can, [Feed]) -> NewElab EXP)
->                  |  ElabGoInst Feeder DEF (TY :>: EXP) (NewElab EXP) 
+>                  |  ElabGoInst Feeder (Name, Feed) (TY :>: (EXP, Feed)) (NewElab EXP) 
 >                  |  ElabFailed StackError
 
 > runElab :: Feeder -> NewElab EXP -> ProofState ElabResult
@@ -85,34 +86,42 @@
 >   moduleToGoal ty
 >   putHoleKind Hoping
 >   d <- getCurrentDefinition
->   goOut
->   runElab (nf+1, (D d :$ B0):es) (c nf)
+>   trace (show (defName d) ++ " :::::: " ++ ugly V0 (defTy d)) $ (|()|)
+>   goOut'
+>   as <- (| paramSpine getInScope |)
+>   runElab (nf+1, (D d :$ as):es) (c nf)
 
 > runElab fes@(nf, es) (EElab (s :<: sub) c) = do
 >   nom <- makeModule s
 >   goIn
 >   (t,as) <- runSubElab sub
 >   moduleToGoal (Prob t :- as)
+>   d <- getCurrentDefinition
+>   trace (show (defName d) ++ " :::::: " ++ ugly V0 (defTy d) ++ " \n\n") $ (|()|)
 >   let las = length as
 >   er <- runElab (las, as) (probElab t (reverse (take las [0..])))
 >   case er of
 >     ElabSuccess e -> do 
->       d <- giveOutBelow e
->       runElab (nf+1, (D d :$ B0):es) (c nf)
+>       d <- give e
+>       goOut'
+>       as <- (| paramSpine getInScope |)
+>       runElab (nf+1, (D d :$ as):es) (c nf)
 >     ElabWaitCan fes dc cc -> do
 >       d <- suspendElab fes (ECan dc cc)
->       goOut
->       runElab (nf+1, (D d :$ B0):es) (c nf)
->     ElabGoInst fes d te ci -> do
+>       goOut'
+>       as <- (| paramSpine getInScope |)
+>       runElab (nf+1, (D d :$ as):es) (c nf)
+>     ElabGoInst fes ime te ci -> do
 >       d <- getCurrentDefinition
->       goOut 
->       suspendElab (nf+1, (D d :$ B0):es) (c nf)
+>       goOut'
+>       as <- (| paramSpine getInScope |)
+>       trace "sus" $ suspendElab (nf+1, (D d :$ as):es) (c nf)
 >       goIn
->       (| (ElabGoInst fes d te ci) |)
+>       (| (ElabGoInst fes ime te ci) |)
 >     ElabFailed s -> (| (ElabFailed s) |)
 
 > runElab fes@(nf, es) (EDub t c) = do
->   ps <- getParamsInScope'
+>   ps <- (| params' getInScope |)
 >   case dub (bwdList (map (\(_,_,ty) -> ev ty) ps)) of
 >       Just (_S, s) -> runElab (nf+2,(_S : s : es)) (c (nf :<: nf+1))
 >       Nothing -> error "runElab EDub" -- cry
@@ -121,20 +130,26 @@
 >           dub (_ :< DUB u _S s) | t == u = (| (_S, s) |)
 >           dub (vz :< _) = dub vz
 
-> runElab fes e@(EInst d@(DEF _ _ op) (ty :>: ex) c) = do
+> runElab fes@(nf,es) e@(EInst (n, f) (ty :>: ex) c) = do
 >     inScope <- getInScope
 >     lev <- getDevLev
->     case op of
->       -- suspend and wait for ambulando to solve
->       Hole -> (| (ElabGoInst fes d (ty :>: ex) c) |)
->       _ -> if equal lev (ty :>: (def d $$$ paramSpine inScope, ex))
+>     let x = es !! (nf - (f+1))
+>         y = es !! (nf - (ex+1))
+>     case ev x of
+>       D d :$ _ | defName d == n -> do
+>         suspendElab (nf, es) e
+>         -- suspend and wait for ambulando to solve
+>         (| (ElabGoInst fes (n,f) (ty :>: (y,ex)) c) |)
+>       _ -> if equal lev (ty :>: (x, y))
 >              then runElab fes c
->              else error "runElab EInst" -- cry
+>              else error $ "runElab EInst: " ++ show (ev x) ++ " =/= " ++ show (ev y) -- cry
+
  
 > runElab fes (ECry s) = (| (ElabFailed s) |)
 
 > runSubElab :: SubElab x -> ProofState x
-> runSubElab (SELambda sty c) = do
+> runSubElab (SELambda sty@(s :<: _) c) = do
+>   nom <- getCurrentName
 >   h <- assumeParam sty
 >   runSubElab (c $ h :$ B0)
 
@@ -146,7 +161,7 @@
 >     tip <- getDevTip
 >     case tip of 
 >       Unknown tt hk -> do 
->         putDevTip (SusElab tt (fes, prob) hk)
+>         trace (ugly V0 tt) $ putDevTip (SusElab tt (fes, prob) hk)
 >         getCurrentDefinition
 >       _ -> error "Suspend elab" -- Hopefully we never get here? 
 
@@ -163,3 +178,41 @@
 
 > eLatests :: [Feed] -> NewElab [VAL]
 > eLatests = traverse eLatest
+
+> ePi :: Feed -> NewElab (Feed, Feed)
+> ePi _Tf = do
+>   _T <- eLatest _Tf
+>   case _T of
+>     PI _A _B -> do
+>       [_Af, _Bf] <- eFeeds [_A, _B]
+>       (| (_Af, _Bf) |) 
+>     D d :$ _ -> do
+>       _Af <- eHope ("A" :<: (| SET |))
+>       _A <- eLatest _Af
+>       _Bf <- eHope ("B" :<: (| (exp _A --> SET) |))
+>       _B <- eLatest _Bf
+>       _T'f <- eFeed (PI (exp _A) (exp _B))
+>       eInst (defName d, _Tf) (SET :>: _T'f) 
+>       (| (_Af, _Bf) |)
+>     _ -> error "ePi" 
+
+> goOut' :: ProofState ()
+> goOut' = do
+>   nom <- getCurrentName
+>   currentEntry <- getCurrentEntry
+>   dev <- getAboveCursor
+>   e <- case currentEntry of
+>      CDefinition def sch -> return $ EDef def dev sch
+>      CModule n           -> return $ EModule n dev
+>   Just l <- optional removeLayer
+>   putAboveCursor $ Dev  {  devEntries       =  aboveEntries l :< e
+>                         ,  devTip           =  layTip l
+>                         ,  devNSupply       =  layNSupply l
+>                         ,  devLevelCount    =  layLevelCount l
+>                         ,  devHypState      =  layHypState l
+>                         }
+>   putBelowCursor $ belowEntries l 
+>   nom' <- getCurrentName
+>   return ()
+
+

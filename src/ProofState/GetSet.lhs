@@ -64,6 +64,12 @@ And some specialized versions:
 >     _ :< l <- getLayers
 >     return l
 
+> getLayer' :: ProofState (Maybe Layer)
+> getLayer' = do
+>     ls <- getLayers
+>     case ls of 
+>       _ :< l -> return (Just l)
+>       _ -> return Nothing
 
 \subsubsection{Getting in |AboveCursor|}
 
@@ -276,9 +282,10 @@ And some specialized versions:
 > putNewsBelow :: NewsBulletin -> ProofState ()
 > putNewsBelow NONEWS  = return ()
 > putNewsBelow news    = do
->     l <- getLayer
->     replaceLayer l{belowEntries = NF (Left news :> unNF (belowEntries l))}
->     return ()
+>     ml <- getLayer'
+>     case ml of 
+>       Just l -> replaceLayer l{belowEntries = NF (Left news :> unNF (belowEntries l))} >> (|()|)
+>       _ -> (|()|)
 
 
 \subsubsection{Putting in the |CurrentEntry|}

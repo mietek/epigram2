@@ -28,11 +28,11 @@
 
 > ambulando :: Maybe Name -> NewsBulletin -> ProofState ()
 
-> odnalubma :: DEF -> (TY :>: EXP) -> ProofState ()
+> odnalubma :: Name -> (TY :>: EXP) -> ProofState ()
 
 > tellParamEntry :: NewsBulletin -> Entry Bwd -> (Entry Bwd, NewsBulletin)
 
 > tellTip :: Name -> NewsBulletin -> Tip ->
->            ProofState (Either (DEF, TY :>: EXP) (Tip, News))
+>            ProofState (Either (Name, TY :>: EXP) (Tip, News))
 
 > occurs :: Int -> Maybe Name -> [Int] -> (TY :>: EXP) -> Bool 

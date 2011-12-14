@@ -252,3 +252,6 @@ Termy things don't consume leading or trailing spaces.
 > exId :: EpiInTm
 > exId = let (_, Just eid, _) = parx (pad epiInTm) (doc (slex "\\ x -> x")) in eid
 > -- exId = ELam ([E (Sym "x"),E (Spc 1),E (Sym "->")] :~ [] --- [E (Sym "x"),E (Spc 1)] :~ [E (Sym "x")] :~ "x"[]) ([E (Sym "x")] :~ EEx (EVS ([E (Sym "x")] :~ "x") []))
+
+> exPId :: EpiInTm
+> exPId = let (_, Just eid, _) = parx (pad epiInTm) (doc (slex "\\ X -> \\ x -> x")) in eid

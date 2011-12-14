@@ -55,7 +55,7 @@
 
 > etaQuotev :: pi (n :: Nat) . Int -> (VAL :>: VAL) -> Tm {Body, Val, n}
 > etaQuotev {n} l (tc :- as :>: vc :- bs) = case canTy ((tc, as) :>: vc) of
->   Nothing -> error "It will nae fit"
+>   Nothing -> error ((show vc) ++ " will nae fit in " ++ (show tc))
 >   Just t  -> vc :- etaQuoteTEL {n} l (t :>: bs)
 > etaQuotev {n} l (B d@(SIMPLDTY na _I uDs) :$ (B0 :< A i) :>: Con :- [x]) = 
 >   Con :- [ exp $  etaQuoten {n} l (ev (D idescDEF :$ (B0 

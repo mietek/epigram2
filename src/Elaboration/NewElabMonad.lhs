@@ -46,7 +46,7 @@ The instruction signature given above is implemented using the following monad.
 >     -- Kick off a sub-elaboration problem, get back a Feed for its result
 >     EDub     :: Template -> ((Feed {- Thing -} :<: Feed {- Scheme -}) -> NewElab x) -> NewElab x
 >     -- Look up the evidence language term assoc. to some source language template, get back feeds for its value and Scheme
->     EInst    :: DEF -> (TY :>: EXP) -> NewElab x -> NewElab x
+>     EInst    :: (Name, Feed) -> (TY :>: Feed) -> NewElab x -> NewElab x
 >     -- Ask for some DEF to be unified with an expression
 >     ECry     :: StackError -> NewElab x
 >     -- Fail with some error
@@ -96,7 +96,7 @@ To use the do notation, we define these operator versions of the Elab combinator
 > eDub :: Template -> NewElab (Feed {- Thing -} :<: Feed {- Scheme -}) 
 > eDub t = EDub t EReturn
 
-> eInst :: DEF -> (TY :>: EXP) -> NewElab ()
+> eInst :: (Name, Feed) -> (TY :>: Feed) -> NewElab ()
 > eInst n e = EInst n e (EReturn ())
 
 > eCry :: StackError -> NewElab a

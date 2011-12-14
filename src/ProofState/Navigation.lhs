@@ -197,9 +197,9 @@ be \emph{unzipped} to form the current development.
 > cursorDown' news (NF F0) = do
 >   putBelowCursor (NF F0)
 >   nom <- getCurrentName
->   news' <- ambulando (Just nom) news
->   lay <- getLayer
->   return () 
+>   ambulando (Just nom) news
+
+ 
 
 \subsubsection{Focus navigation}
 
