@@ -196,6 +196,13 @@
 >       (| (_Af, _Bf) |)
 >     _ -> error "ePi" 
 
+> eSet :: Feed -> NewElab ()
+> eSet _Tf = do
+>   _T <- eLatest _Tf
+>   case _T of 
+>     SET -> (| () |)
+>     D d :$ _ -> eFeed SET >>= \setf -> eInst (defName d, _Tf) (SET :>: setf)
+
 > goOut' :: ProofState ()
 > goOut' = do
 >   nom <- getCurrentName

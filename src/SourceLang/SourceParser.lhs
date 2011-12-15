@@ -255,3 +255,13 @@ Termy things don't consume leading or trailing spaces.
 
 > exPId :: EpiInTm
 > exPId = let (_, Just eid, _) = parx (pad epiInTm) (doc (slex "\\ X -> \\ x -> x")) in eid
+
+> exPIdTy :: EpiInTm
+> exPIdTy = let (_, Just eid, _) = parx (pad epiInTm) (doc (slex "(X : Set) -> X -> X")) in eid
+
+> exK :: EpiInTm
+> exK = let (_, Just eid, _) = parx (pad epiInTm) (doc (slex "\\ x -> \\ y -> x")) in eid
+
+> exS :: EpiInTm
+> exS = let (_, Just eid, _) = parx (pad epiInTm) (doc (slex "\\ f -> \\ g -> \\ x -> f x (g x)")) in eid
+

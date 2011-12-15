@@ -573,6 +573,47 @@ Import more tactics from an aspect:
 >       ambulando Nothing NONEWS 
 >       return "Suit.") "suit" :
 
+>     nullaryCT "suit3" (do
+>       _X <- make ("X" :<: SET)
+>       -- let _X = SET  
+>       let probty = Prob exPIdTy :- [_X]
+>       make ("suit" :<: probty) 
+>       goIn 
+>       putDevTip (SusElab probty ((1, [_X]), (probElab exPIdTy [0])) Hoping)
+>       ambulando Nothing NONEWS 
+>       return "Suit.") "suit" :
+
+>     nullaryCT "suitK" (do
+>       -- _X <- make ("X" :<: SET)
+>       _Ah <- assumeParam ("A" :<: SET)
+>       _Bh <- assumeParam ("B" :<: SET)
+>       let _A = _Ah :$ B0
+>       let _B = _Bh :$ B0
+>       let _X = (_A --> _B --> _A)
+>       let probty = Prob exK :- [_X]
+>       make ("suit" :<: probty) 
+>       goIn 
+>       putDevTip (SusElab probty ((1, [_X]), (probElab exK [0])) Hoping)
+>       ambulando Nothing NONEWS 
+>       return "Suit.") "suit" :
+
+
+>     nullaryCT "suitS" (do
+>       -- _X <- make ("X" :<: SET)
+>       _Ah <- assumeParam ("A" :<: SET)
+>       _Bh <- assumeParam ("B" :<: SET)
+>       _Ch <- assumeParam ("C" :<: SET)
+>       let _A = _Ah :$ B0
+>       let _B = _Bh :$ B0
+>       let _C = _Ch :$ B0
+>       let _X = ((_A --> _B --> _C) --> (_A --> _B) --> (_A --> _C)) 
+>       let probty = Prob exS :- [_X]
+>       make ("suit" :<: probty) 
+>       goIn 
+>       putDevTip (SusElab probty ((1, [_X]), (probElab exS [0])) Hoping)
+>       ambulando Nothing NONEWS 
+>       return "Suit.") "suit" :
+
 >     [] )
 
 > import <- CochonTacticsCode

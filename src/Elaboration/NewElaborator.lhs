@@ -53,7 +53,31 @@
 >                                 seLambda (x ++ "dub" :<: DUB x (SCHTY (exp _A)) (exp a))
 >                                 (| (body, [exp _B $$. a]) |))
 >     f <- eLatest ff
->     (| (PAIR (la "a" $ \a -> nix f :$ (B0 :< A a :< A ZERO :< Hd)) ZERO) |)
+>     (| (PAIR (la x $ \a -> nix f :$ (B0 :< A a :< A ZERO :< Hd)) ZERO) |)
+
+>   probElab (EPi (_ :~ Sig [] (_ :~ VarConc (_ :~ "") [] (Just ty))) body) [_Sf] = do
+>     -- Is there a better way to spot vac Pis?
+>     eSet _Sf
+>     _Xf' <- eElab ("X" :<: (| (ty, [SET]) |))
+>     (_Xf , _) <- eSplit _Xf'
+>     ff <- eElab ("body" :<: (| (body, [SET]) |))
+>     [_X, f] <- eLatests [_Xf, ff]
+>     (| (PAIR (PI (exp _X) (LK $ nix f :$ (B0 :< Hd))) ZERO) |)
+
+>   probElab (EPi (_ :~ Sig [] (_ :~ VarConc (_ :~ x) [] (Just ty))) body) [_Sf] = do
+>     eSet _Sf
+>     _Xf' <- eElab ("X" :<: (| (ty, [SET]) |))
+>     (_Xf , _) <- eSplit _Xf'
+>     _X <- eLatest _Xf
+>     ff <- eElab ("body" :<: do  a <- seLambda (x :<: exp _X)
+>                                 seLambda (x ++ "dub" :<: DUB x (SCHTY (exp _X)) (exp a))
+>                                 (| (body, [SET]) |))
+>     [_X, f] <- eLatests [_Xf, ff]
+>     (| (PAIR (PI (exp _X) (la x $ \a -> nix f :$ (B0 :< A a :< A ZERO :< Hd))) ZERO) |)
+
+>   probElab ESet [_Sf] = do
+>     eSet _Sf
+>     (| (PAIR SET ZERO) |) 
 
 >   probElab e [_S] = error $ show e -- "intm error"
 
