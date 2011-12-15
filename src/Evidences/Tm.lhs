@@ -233,6 +233,7 @@
 > pattern SCHEME = Scheme :- []
 > pattern SCHTY _T = SchTy :- [_T]
 > pattern SCHPI _S _T = SchPi :- [_S,_T]
+> pattern SCHARR s t    = SchPi :- [s, (LK t)]     
 > pattern SCHIMPI _S _T = SchImPi :- [_S,_T]
 >   -- [/Feature = Scheme]
 >   -- [Feature = Dubbing]
@@ -539,8 +540,9 @@ This thing does coercion and coherence.
 
 > (***) = TIMES
 > (-->) = ARR
+> (--!>) = SCHARR
 > (==>) = ARR . PRF
-> infixr 5 ==>, -->, ***
+> infixr 5 ==>, -->, ***, --!>
 
 We have a sound but incomplete test for whether an equality proof is
 by reflexivity, the basis for proof compaction and various other
@@ -662,6 +664,21 @@ by |lambdable|:
 >            -> Tm {Body, Exp, S m}) ->
 >        Tm {Body, s, m}
 > (x, s) ->> t = PI s (la x t)
+
+> (-!>) :: (String, Tm {Body, Exp, m}) ->
+>          ((forall t n. (Wrapper t n, Leq {S m} n) => t)
+>            -> Tm {Body, Exp, S m}) ->
+>        Tm {Body, s, m}
+> (x, s) -!> t = SCHPI s (la x t)
+
+> (-?>) :: (String, Tm {Body, Exp, m}) ->
+>          ((forall t n. (Wrapper t n, Leq {S m} n) => t)
+>            -> Tm {Body, Exp, S m}) ->
+>        Tm {Body, s, m}
+> (x, s) -?> t = SCHIMPI s (la x t)
+
+> sch :: Tm {Body, Exp, m} -> Tm {Body, Exp, m}
+> sch ty = SCHTY ty
 
 > (-**) :: (String, Tm {Body, Exp, m}) ->
 >          ((forall t n. (Wrapper t n, Leq {S m} n) => t)
@@ -865,7 +882,7 @@ by |lambdable|:
 > runOpEager (Case os) oaz (A a : as) | c :- cas <- (ENil // a :: VAL) =
 >   case lookup c os of
 >     Just o -> runOpEager o oaz (map A cas ++ as)
->     Nothing -> error "OpCase found Can it didn't like"
+>     Nothing -> error ("OpCase found Can it didn't like: " ++ show c)
 > runOpEager (Split o) oaz (A a : as) =
 >   runOpEager o oaz (A ((ENil <:/> a) :$ (B0 :< Hd)) : 
 >                      A ((ENil <:/> a) :$ (B0 :< Tl)) : as)

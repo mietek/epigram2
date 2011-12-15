@@ -34,9 +34,8 @@
 > import DisplayLang.PrettyPrint
 
 > import Tactics.Matching
-
-< import Tactics.PropositionSimplify
-< import Tactics.Unification
+> import Tactics.PropositionSimplify
+> import Tactics.ProblemSimplify
 
 > import Elaboration.NewElabMonad
 
@@ -85,11 +84,58 @@
 >   ty <- runSubElab sub 
 >   moduleToGoal ty
 >   putHoleKind Hoping
->   d <- getCurrentDefinition
->   trace (show (defName d) ++ " :::::: " ++ ugly V0 (defTy d)) $ (|()|)
->   goOut'
->   as <- (| paramSpine getInScope |)
->   runElab (nf+1, (D d :$ as):es) (c nf)
+>   case ev ty of
+>     PRF _P -> do
+>         pSimp <- runPropSimplify (ev _P)
+>         case pSimp of
+>           (SimplyTrivial prf) -> do
+>               give prf
+>               goOut'
+>               d <- getCurrentDefinition
+>               goOut'
+>               as <- (| paramSpine getInScope |)
+>               runElab (nf+1, (D d :$ as):es) (c nf)
+>               
+>           (SimplyAbsurd _) -> error ("Need to deal with failure better: " ++ ugly V0 _P)
+>           (Simply qs h) -> do
+>               lev <- getDevLev 
+>               ep <- runElab fes (do
+>                       qrfs <- traverse (eHope . partProof s) (bwdZipWith (,) (bwdList [0..]) qs)
+>                       qrs <- eLatests (trail qrfs)
+>                       (| ((zip [lev..] (trail (fmap exp qrs)),INil) :/  h) |))
+>               case ep of
+>                 ElabSuccess prf -> do
+>                   give prf
+>                   goOut'
+>                   d <- getCurrentDefinition
+>                   goOut'
+>                   as <- (| paramSpine getInScope |)
+>                   runElab (nf+1, (D d :$ as):es) (c nf)
+>                 ElabGoInst fes ime te ci -> do
+>                   d <- getCurrentDefinition
+>                   goOut'
+>                   as <- (| paramSpine getInScope |)
+>                   suspendElab (nf+1, (D d :$ as):es) (c nf)
+>                   goIn
+>                   (| (ElabGoInst fes ime te ci) |)
+>                 ElabWaitCan fes dc cc -> do
+>                   d <- suspendElab fes (ECan dc cc)
+>                   goOut'
+>                   as <- (| paramSpine getInScope |)
+>                   runElab (nf+1, (D d :$ as):es) (c nf)
+>                 ElabFailed s -> (| (ElabFailed s) |)  
+>           CannotSimplify -> subProof _P
+>       where
+>         partProof :: String ->  (Int, (EXP, EXP)) -> (String :<: SubElab TY)
+>         partProof s (i,(q, _)) = (s ++ show i :<: (| (PRF q) |))
+
+>         subProof :: EXP -> ProofState ElabResult
+>         subProof p = flexiProof (ev p) <|> lastHope (PRF p)
+>     _ -> do
+>       d <- getCurrentDefinition
+>       goOut'
+>       as <- (| paramSpine getInScope |)
+>       runElab (nf+1, (D d :$ as):es) (c nf)
 
 > runElab fes@(nf, es) (EElab (s :<: sub) c) = do
 >   nom <- makeModule s
@@ -97,7 +143,6 @@
 >   (t,as) <- runSubElab sub
 >   moduleToGoal (Prob t :- as)
 >   d <- getCurrentDefinition
->   trace (show (defName d) ++ " :::::: " ++ ugly V0 (defTy d) ++ " \n\n") $ (|()|)
 >   let las = length as
 >   er <- runElab (las, as) (probElab t (reverse (take las [0..])))
 >   case er of
@@ -115,7 +160,7 @@
 >       d <- getCurrentDefinition
 >       goOut'
 >       as <- (| paramSpine getInScope |)
->       trace "sus" $ suspendElab (nf+1, (D d :$ as):es) (c nf)
+>       suspendElab (nf+1, (D d :$ as):es) (c nf)
 >       goIn
 >       (| (ElabGoInst fes ime te ci) |)
 >     ElabFailed s -> (| (ElabFailed s) |)
@@ -161,7 +206,7 @@
 >     tip <- getDevTip
 >     case tip of 
 >       Unknown tt hk -> do 
->         trace (ugly V0 tt) $ putDevTip (SusElab tt (fes, prob) hk)
+>         putDevTip (SusElab tt (fes, prob) hk)
 >         getCurrentDefinition
 >       _ -> error "Suspend elab" -- Hopefully we never get here? 
 
@@ -179,6 +224,9 @@
 > eLatests :: [Feed] -> NewElab [VAL]
 > eLatests = traverse eLatest
 
+> eHopes :: [(String :<: SubElab TY)] -> NewElab [Feed]
+> eHopes = traverse eHope
+
 > ePi :: Feed -> NewElab (Feed, Feed)
 > ePi _Tf = do
 >   _T <- eLatest _Tf
@@ -194,7 +242,7 @@
 >       _T'f <- eFeed (PI (exp _A) (exp _B))
 >       eInst (defName d, _Tf) (SET :>: _T'f) 
 >       (| (_Af, _Bf) |)
->     _ -> error "ePi" 
+>     _T -> error ("ePi: " ++ ugly V0 _T) 
 
 > eSet :: Feed -> NewElab ()
 > eSet _Tf = do
@@ -223,3 +271,19 @@
 >   return ()
 
 
+> flexiProof :: VAL -> ProofState ElabResult
+> flexiProof (EQ _S s _T t) = let sv = ev s ; tv = ev t in  
+>   flexiMatch _S sv _T tv <|> flexiRight _S sv _T tv <|> flexiLeft _S sv _T tv 
+
+> flexiMatch :: TY :>: VAL -> TY :>: VAL -> ProofState ElabResult
+> flexiMatch = undefined
+
+> flexiRight :: TY :>: VAL -> TY :>: VAL -> ProofState ElabResult
+> flexiRight = undefined
+
+> flexiLeft :: TY :>: VAL -> TY :>: VAL -> ProofState ElabResult
+> flexiLeft = undefined
+> 
+
+> lastHope :: EXP -> ProofState ElabResult
+> lastHope = undefined

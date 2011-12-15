@@ -583,6 +583,16 @@ Import more tactics from an aspect:
 >       ambulando Nothing NONEWS 
 >       return "Suit.") "suit" :
 
+>     nullaryCT "suit4" (do
+>       -- _X <- make ("X" :<: SET)
+>       let _X = ("X", SET) -?> \_X -> (SCHTY _X) --!> SCHTY _X
+>       let probty = Prob (ESch exId) :- [_X]
+>       make ("suit" :<: probty) 
+>       goIn 
+>       putDevTip (SusElab probty ((1, [_X]), (probElab (ESch exId) [0])) Hoping)
+>       ambulando Nothing NONEWS 
+>       return "Suit.") "suit" :
+
 >     nullaryCT "suitK" (do
 >       -- _X <- make ("X" :<: SET)
 >       _Ah <- assumeParam ("A" :<: SET)
@@ -613,6 +623,40 @@ Import more tactics from an aspect:
 >       putDevTip (SusElab probty ((1, [_X]), (probElab exS [0])) Hoping)
 >       ambulando Nothing NONEWS 
 >       return "Suit.") "suit" :
+
+>     nullaryCT "suitApp" (do
+>       -- _X <- make ("X" :<: SET)
+>       _Ah <- assumeParam ("A" :<: SET)
+>       _Bh <- assumeParam ("B" :<: SET)
+>       _Ch <- assumeParam ("C" :<: SET)
+>       let _A = _Ah :$ B0
+>       let _B = _Bh :$ B0
+>       let _C = _Ch :$ B0
+>       let _X = ((_A --> _B --> _C) --> (_A --> _B --> _C)) 
+>       let probty = Prob exApp :- [_X]
+>       make ("suit" :<: probty) 
+>       goIn 
+>       putDevTip (SusElab probty ((1, [_X]), (probElab exApp [0])) Hoping)
+>       ambulando Nothing NONEWS 
+>       return "Suit.") "suit" :
+
+>     nullaryCT "suitComp" (do
+>       _Ah <- assumeParam ("A" :<: SET)
+>       let _A = _Ah :$ B0
+>       _Bh <- assumeParam ("B" :<: _A --> SET)
+>       let _B = _Bh :$ B0
+>       _Ch <- assumeParam ("C" :<: ("a", _A) ->> \a -> (wr _B a) --> SET)
+>       let _C = _Ch :$ B0
+>       let _X = (("a",_A) -?> \a -> ("b", SCHTY (wr _B a)) -!> \b -> SCHTY (wr _C a b)) --!> 
+>                 ("g", ("a", SCHTY _A) -!> \a -> SCHTY (wr _B a)) -!> \g ->
+>                  ("a", SCHTY (wr _A)) -!> \a -> SCHTY (wr _C a (g a))  
+>       let probty = Prob (ESch exComp) :- [_X]
+>       make ("suit" :<: probty) 
+>       goIn 
+>       putDevTip (SusElab probty ((1, [_X]), (probElab (ESch exComp) [0])) Hoping)
+>       ambulando Nothing NONEWS 
+>       return "Suit.") "suit" :
+
 
 >     [] )
 

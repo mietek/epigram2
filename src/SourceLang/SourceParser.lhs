@@ -246,7 +246,7 @@ Termy things don't consume leading or trailing spaces.
 > epiElim :: Parx Elt EpiElim
 > epiElim =
 >   (|EJ (like number)
->    |EA epiInTm
+>    |EA smallEpiInTm
 >    |)
 
 > exId :: EpiInTm
@@ -254,14 +254,19 @@ Termy things don't consume leading or trailing spaces.
 > -- exId = ELam ([E (Sym "x"),E (Spc 1),E (Sym "->")] :~ [] --- [E (Sym "x"),E (Spc 1)] :~ [E (Sym "x")] :~ "x"[]) ([E (Sym "x")] :~ EEx (EVS ([E (Sym "x")] :~ "x") []))
 
 > exPId :: EpiInTm
-> exPId = let (_, Just eid, _) = parx (pad epiInTm) (doc (slex "\\ X -> \\ x -> x")) in eid
+> exPId = let (_, Just eid, []) = parx (pad epiInTm) (doc (slex "\\ X -> \\ x -> x")) in eid
 
 > exPIdTy :: EpiInTm
-> exPIdTy = let (_, Just eid, _) = parx (pad epiInTm) (doc (slex "(X : Set) -> X -> X")) in eid
+> exPIdTy = let (_, Just eid, []) = parx (pad epiInTm) (doc (slex "(X : Set) -> X -> X")) in eid
 
 > exK :: EpiInTm
-> exK = let (_, Just eid, _) = parx (pad epiInTm) (doc (slex "\\ x -> \\ y -> x")) in eid
+> exK = let (_, Just eid, []) = parx (pad epiInTm) (doc (slex "\\ x -> \\ y -> x")) in eid
 
 > exS :: EpiInTm
-> exS = let (_, Just eid, _) = parx (pad epiInTm) (doc (slex "\\ f -> \\ g -> \\ x -> f x (g x)")) in eid
+> exS = let (_, Just eid, []) = parx (pad epiInTm) (doc (slex "\\ f -> \\ g -> \\ x -> f x (g x)")) in eid
 
+> exApp :: EpiInTm
+> exApp = let (_, Just eid, []) = parx (pad epiInTm) (doc (slex "\\ f -> \\ x -> \\ y -> f x y")) in eid
+
+> exComp :: EpiInTm
+> exComp = let (_, Just eid, []) = parx (pad epiInTm) (doc (slex "\\ f -> \\ g -> \\ x -> f (g x)")) in eid

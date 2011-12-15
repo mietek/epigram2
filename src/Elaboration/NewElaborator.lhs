@@ -89,7 +89,7 @@
 >     _Sff <- eElab ("f" :<: (| (f, []) |))
 >     (_Sf, ff) <- eSplit _Sff 
 >     [_S, f] <- eLatests [_Sf, ff]
->     _Txf <- eElab ("as" :<: (| (as, [exp _S, exp f]) |)) 
+>     _Txf <- eElab ("as" :<: (| (SchSpine as, [exp _S, exp f]) |)) 
 >     (_Tf, xf) <- eSplit _Txf
 >     (| PAIR (| exp (eLatest _Tf) |) (| exp (eLatest xf) |) |)
 
@@ -102,30 +102,55 @@
 >     [s, _S] <- eLatests [sf, _Sf]
 >     (| (PAIR (exp _S) (exp s)) |)
 
-> instance Problem [Elt :~ EpiElim] where
->   probName x = "elabSpine"
+> newtype SchSpine = SchSpine [Elt :~ EpiElim] 
+> newtype TySpine = TySpine [Elt :~ EpiElim] 
+
+> instance Problem SchSpine where
+>   probName x = "elabSchSpine"
 >   probTel x = ("S", SCHEME) -** \_S -> wr (def schElDEF) _S *** ONE
 >   probVal x _ = ("S", SET) -** \_S -> _S
->   probElab es [_Sf, ff] = do 
+>   probElab (SchSpine es) [_Sf, ff] = do 
 >     cfs <- eCan _Sf
 >     case (cfs, es) of
->       ((SchTy, [_Tf]), []) -> (| PAIR (| exp (eLatest _Tf) |) 
->                                       (| exp (eLatest ff) |) |)
->       ((SchTy, [_Tf]), _) -> error "elabSpine proj"
+>       ((SchTy, [_Tf]), as) -> do  
+>         [_T, f] <- eLatests [_Tf, ff] 
+>         spf <- eElab ("TySpine" :<: (| (TySpine as, [exp _T, exp f]) |))
+>         (_Sf, sf) <- eSplit spf
+>         [_S, s] <- eLatests [_Sf, sf]
+>         (| (PAIR (exp _S) (exp s)) |) 
 >       ((SchPi, [_Sf, _Tf]), (elt :~ EA a : es)) -> do
 >         _S <- eLatest _Sf
 >         sf <- eElab ("s" :<: return (elt :~ ESch a, [exp _S]))
 >         [_T, f, s] <- eLatests [_Tf, ff, sf]
->         rf <- eElab ("t" :<: return (es,  [ exp _T $$. (s $$ Hd)
->                                           , exp f $$. (s $$ Hd)]))
+>         rf <- eElab ("t" :<: return (SchSpine es,  [  exp _T $$. (s $$ Hd)
+>                                                    ,  exp f $$. (s $$ Hd)]))
 >         (| exp (eLatest rf) |)
 >       ((SchImPi, [_Sf, _Tf]), _) -> do
 >         _S <- eLatest _Sf
 >         sf <- eHope ("s" :<: return (exp _S))
 >         [_T, f, s] <- eLatests [_Tf, ff, sf]
->         rf <- eElab ("t" :<: return (es, [exp _T $$. s, exp f $$. s]))
+>         rf <- eElab ("t" :<: return (SchSpine es, [exp _T $$. s, exp f $$. s]))
 >         (| exp (eLatest rf) |)
 >       _ -> eCry [err "elabSpine"]
+
+> instance Problem TySpine where
+>   probName x = "elabTySpine"
+>   probTel x = ("S", SET) -** \_S -> _S *** ONE
+>   probVal x _ = ("S", SET) -** \_S -> _S
+>   probElab (TySpine []) [_Sf, sf] = (| PAIR (| exp (eLatest _Sf) |) (| exp (eLatest sf) |)  |)
+
+
+>   probElab (TySpine (elt :~ EA a : es)) [_Sf, ff] = do
+>     (domf, ranf) <- ePi _Sf
+>     dom <- eLatest domf
+>     argf <- eElab ("arg" :<: return (elt :~ a, [exp dom]))
+>     [ran, f, arg] <- eLatests [ranf, ff, argf]
+>     rf <- eElab ("appl" :<: return (TySpine es,  [  exp ran $$. (arg $$ Hd)
+>                                                  ,  exp f $$. (arg $$ Hd)]))
+>     (| exp (eLatest rf) |)
+
+
+ 
 
 > newtype ESch = ESch EpiInTm
 
@@ -140,24 +165,25 @@
 >          _T <- eLatest _Tf 
 >          af <- eElab ("escht" :<: return (a, [exp _T]))
 >          (| exp (eLatest af) |)
->       (SchPi, [_Sf, _Tf]) -> do
->          [_S,_T] <- eLatests [_Sf, _Tf]
->          ff <- eElab ("eschi" :<: do 
->             s <- seLambda ("s" :<: exp _S) 
->             return (ESch a, [exp $ _T $$. s]))
->          f <- eLatest ff
->          (| (PAIR (L ENil "s" (nix f :$ (B0 :< A (V Fz :$ B0) :< Hd))) ZERO) |)
->       (SchImPi, [_Sf, _Tf]) -> case a of
->         ELam (_ :~ Sig [] (_ :~ VarConc (_ :~ x) [] Nothing)) (e :~ t) -> do 
->           [_S,_T] <- eLatests [_Sf, _Tf]
->           ff <- eElab ("eschi" :<: do 
->              s <- seLambda ("s" :<: exp _S) 
->              seLambda ("sdub" :<: DUB x (exp _S) (exp s)) 
->              return (e :~ (ESch t), [exp $ _T $$. s]))
->           f <- eLatest ff
->           (| (PAIR (L ENil "s" (nix f :$ (B0 :< A (V Fz :$ B0) :< A ZERO :< Hd))) ZERO) |)
 
->         _ -> error "Sch error" -- cry?
+>       (SchPi, [_Sf, _Tf]) -> case a of 
+>         ELam (_ :~ Sig [] (_ :~ VarConc (_ :~ x) [] Nothing)) (e :~ t) -> do 
+>           [_S, _T] <- eLatests [_Sf, _Tf]
+>           ff <- eElab ("eschpi" :<: do  s <- seLambda (x :<: wr (def schElDEF) (exp _S))
+>                                         seLambda (x ++ "dub" :<: DUB x (exp _S) (exp s))
+>                                         (| (e :~ ESch t, [exp _T $$. s]) |))
+>           f <- eLatest ff
+>           (| (PAIR (la x $ \a -> nix f :$ (B0 :< A a :< A ZERO :< Hd)) ZERO) |)
+>         _ -> error "elabSch - explicit Pi not matched to any lambda"
+>       (SchImPi, [_Sf, _Tf]) -> do 
+>         [_S, _T] <- eLatests [_Sf, _Tf]
+>         ff <- eElab ("eschpi" :<: do  s <- seLambda ("a" :<: exp _S)
+>                                       (| (ESch a, [exp _T $$. s]) |))
+>         f <- eLatest ff
+>         (| (PAIR (la "a" $ \a -> nix f :$ (B0 :< A a :< Hd)) ZERO) |)
+>       _ -> error "elabSch - scheme not a scheme"
+
+
 
 > instance Problem t => Problem (x :~ t) where
 >   probName (_ :~ x) = "sourced" ++ probName x
