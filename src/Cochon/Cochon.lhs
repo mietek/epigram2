@@ -79,8 +79,8 @@ Here we have a very basic command-driven interface to the proof state monad.
 >     putStr $ fst $ runProofStateString showPrompt loc
 >     hFlush stdout
 >     l <- getLine
->     case parx (pad pCochonTactic) (doc (slex l)) of
->        (_,Nothing,as) -> do
+>     case parx (pad pCochonTactic) (doc (slex l))  of
+>        (as,Nothing,_) -> do
 >                   putStrLn ("Parse failure: " ++ show as)
 >                   cochon' (locs :< loc)
 >        (_,Just cd,[]) -> do
@@ -796,8 +796,7 @@ Import more tactics from an aspect:
 >         [ct] -> do
 >             args <- ctParse ct
 >             return (ct, trail args)
->         [] -> fail "unknown tactic name."
->         cts -> fail ("ambiguous tactic name (could be " ++ tacticNames cts ++ ").")
+>         [] -> (|)
 
 < pCochonTactics :: Parsley Token [CTData]
 < pCochonTactics = pSepTerminate (keyword KwSemi) pCochonTactic
