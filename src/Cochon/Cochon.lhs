@@ -83,7 +83,8 @@ Here we have a very basic command-driven interface to the proof state monad.
 >        (as,Nothing,_) -> do
 >                   putStrLn ("Parse failure: " ++ show as)
 >                   cochon' (locs :< loc)
->        (_,Just cd,[]) -> do
+>        (as,Just (Left s),_) -> putStrLn s >> cochon' (locs :< loc)
+>        (_,Just (Right cd),[]) -> do
 >                   locs' <- doCTactic cd (locs :< loc)
 >                   cochon' locs'
 >        (_,_,as) -> do
@@ -788,15 +789,16 @@ Import more tactics from an aspect:
 <                                      (eatNestedComments i) |)
 
 
-> pCochonTactic :: Parx Elt CTData
+> pCochonTactic :: Parx Elt (Either String CTData)
 > pCochonTactic  = do
 >     x <- (|id template |)
 >     gap
 >     case tacticsMatching x of
 >         [ct] -> do
 >             args <- ctParse ct
->             return (ct, trail args)
->         [] -> (|)
+>             return $ Right (ct, trail args)
+>         [] -> (| (Left "Unknown Tactic") |)
+>         _ -> (| (Left "Ambiguous tactic name") |)
 
 < pCochonTactics :: Parsley Token [CTData]
 < pCochonTactics = pSepTerminate (keyword KwSemi) pCochonTactic
