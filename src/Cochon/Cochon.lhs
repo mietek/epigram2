@@ -563,20 +563,41 @@ Import more tactics from an aspect:
 >       gap
 >       _X <- tokenInTm
 >       (| (B0 :< u :< _X :< x) |)) (\ [StrArg u, InArg _X, InArg x] -> do
->         make ("X" :<: Prob _X :- [SET])
+>         make ((u ++ "Ty") :<: Prob _X :- [SET])
 >         goIn
 >         nam <- getCurrentName
 >         ambulando (Just nam) NONEWS
 >         dX <- getCurrentDefinition
 >         goOut'
 >         as <- (| paramSpine getInScope |)
->         make ("x" :<: Prob x :- [(D dX :$ (as :< Hd))])
+>         make (u :<: Prob x :- [(D dX :$ (as :< Hd))])
 >         goIn 
 >         nam <- getCurrentName
 >         ambulando (Just nam) NONEWS
 >         dx <- getCurrentDefinition
 >         goOut'
->         make (u :<: DUB u (SCHTY (D dX :$ (as :< Hd))) (D dx :$ (as :< Hd)))
+>         make ((u ++ "dub") :<: DUB u (SCHTY (D dX :$ (as :< Hd))) (D dx :$ (as :< Hd)))
+>         goIn
+>         give ZERO
+>         goOut'
+>         (| "Yay!" |)
+>         ) "" :
+
+>     simpleCT "elabExTm" (do
+>       u <- tokenString
+>       gap
+>       sym ":="
+>       gap
+>       x <- tokenExTm 
+>       (| (B0 :< u :< x) |)) (\ [StrArg u, ExArg x] -> do
+>         make (("inf" ++ u) :<: Prob x :- [])
+>         goIn 
+>         nam <- getCurrentName
+>         ambulando (Just nam) NONEWS
+>         dx <- getCurrentDefinition
+>         goOut'
+>         as <- (| paramSpine getInScope |)
+>         make (u :<: DUB u (SCHTY (D dx :$ (as :< Hd))) (D dx :$ (as :< Tl)))
 >         goIn
 >         give ZERO
 >         goOut'
