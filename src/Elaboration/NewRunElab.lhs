@@ -50,6 +50,8 @@
 
 > import Debug.Trace
 
+> import SourceLang.SourceData 
+
 %endif
 
 \subsection{Running elaboration processes}
@@ -84,58 +86,10 @@
 >   ty <- runSubElab sub 
 >   moduleToGoal ty
 >   putHoleKind Hoping
->   case ev ty of
->     PRF _P -> do
->         pSimp <- runPropSimplify (ev _P)
->         case pSimp of
->           (SimplyTrivial prf) -> do
->               give prf
->               goOut'
->               d <- getCurrentDefinition
->               goOut'
->               as <- (| paramSpine getInScope |)
->               runElab (nf+1, (D d :$ as):es) (c nf)
->               
->           (SimplyAbsurd _) -> error ("Need to deal with failure better: " ++ ugly V0 _P)
->           (Simply qs h) -> do
->               lev <- getDevLev 
->               ep <- runElab fes (do
->                       qrfs <- traverse (eHope . partProof s) (bwdZipWith (,) (bwdList [0..]) qs)
->                       qrs <- eLatests (trail qrfs)
->                       (| ((zip [lev..] (trail (fmap exp qrs)),INil) :/  h) |))
->               case ep of
->                 ElabSuccess prf -> do
->                   give prf
->                   goOut'
->                   d <- getCurrentDefinition
->                   goOut'
->                   as <- (| paramSpine getInScope |)
->                   runElab (nf+1, (D d :$ as):es) (c nf)
->                 ElabGoInst fes ime te ci -> do
->                   d <- getCurrentDefinition
->                   goOut'
->                   as <- (| paramSpine getInScope |)
->                   suspendElab (nf+1, (D d :$ as):es) (c nf)
->                   goIn
->                   (| (ElabGoInst fes ime te ci) |)
->                 ElabWaitCan fes dc cc -> do
->                   d <- suspendElab fes (ECan dc cc)
->                   goOut'
->                   as <- (| paramSpine getInScope |)
->                   runElab (nf+1, (D d :$ as):es) (c nf)
->                 ElabFailed s -> (| (ElabFailed s) |)  
->           CannotSimplify -> subProof _P
->       where
->         partProof :: String ->  (Int, (EXP, EXP)) -> (String :<: SubElab TY)
->         partProof s (i,(q, _)) = (s ++ show i :<: (| (PRF q) |))
-
->         subProof :: EXP -> ProofState ElabResult
->         subProof p = flexiProof (ev p) <|> lastHope (PRF p)
->     _ -> do
->       d <- getCurrentDefinition
->       goOut'
->       as <- (| paramSpine getInScope |)
->       runElab (nf+1, (D d :$ as):es) (c nf)
+>   d <- getCurrentDefinition
+>   goOut'
+>   as <- (| paramSpine getInScope |)
+>   runElab (nf+1, (D d :$ as):es) (c nf)
 
 > runElab fes@(nf, es) (EElab (s :<: sub) c) = do
 >   nom <- makeModule s
@@ -166,13 +120,14 @@
 >     ElabFailed s -> (| (ElabFailed s) |)
 
 > runElab fes@(nf, es) (EDub t c) = do
->   ps <- (| params' getInScope |)
->   case dub (bwdList (map (\(_,_,ty) -> ev ty) ps)) of
->       Just (_S, s) -> runElab (nf+2,(_S : s : es)) (c (nf :<: nf+1))
->       Nothing -> error "runElab EDub" -- cry
->     where dub :: Bwd VAL -> Maybe (EXP, EXP)
+>   ps <- getInScope
+>   case dub ps of
+>       Just (_S, s) -> runElab (nf+2,(_S : s : es)) (c (Just (nf :<: nf+1)))
+>       Nothing -> runElab (nf,es) (c Nothing)
+>     where dub :: Bwd (Entry Bwd) -> Maybe (EXP, EXP)
 >           dub B0 = Nothing
->           dub (_ :< DUB u _S s) | t == u = (| (_S, s) |)
+>           dub (_ :< EParam _ _ ty _) | DUB u _S s <- ev ty , t == u = (| (_S, s) |)
+>           dub (_ :< EDef _ (Dev{devTip = Defined (ty :>: _)}) _) | DUB u _S s <- ev ty , t == u = (| (_S, s) |)
 >           dub (vz :< _) = dub vz
 
 > runElab fes@(nf,es) e@(EInst (n, f) (ty :>: ex) c) = do
@@ -187,14 +142,13 @@
 >         (| (ElabGoInst fes (n,f) (ty :>: (y,ex)) c) |)
 >       _ -> if equal lev (ty :>: (x, y))
 >              then runElab fes c
->              else error $ "runElab EInst: " ++ show (ev x) ++ " =/= " ++ show (ev y) -- cry
+>              else (| (ElabFailed [err $ "runElab EInst: " ++ show (ev x) ++ " =/= " ++ show (ev y)]) |) -- cry
 
  
 > runElab fes (ECry s) = (| (ElabFailed s) |)
 
 > runSubElab :: SubElab x -> ProofState x
 > runSubElab (SELambda sty@(s :<: _) c) = do
->   nom <- getCurrentName
 >   h <- assumeParam sty
 >   runSubElab (c $ h :$ B0)
 
@@ -251,39 +205,9 @@
 >     SET -> (| () |)
 >     D d :$ _ -> eFeed SET >>= \setf -> eInst (defName d, _Tf) (SET :>: setf)
 
-> goOut' :: ProofState ()
-> goOut' = do
->   nom <- getCurrentName
->   currentEntry <- getCurrentEntry
->   dev <- getAboveCursor
->   e <- case currentEntry of
->      CDefinition def sch -> return $ EDef def dev sch
->      CModule n           -> return $ EModule n dev
->   Just l <- optional removeLayer
->   putAboveCursor $ Dev  {  devEntries       =  aboveEntries l :< e
->                         ,  devTip           =  layTip l
->                         ,  devNSupply       =  layNSupply l
->                         ,  devLevelCount    =  layLevelCount l
->                         ,  devHypState      =  layHypState l
->                         }
->   putBelowCursor $ belowEntries l 
->   nom' <- getCurrentName
->   return ()
-
-
-> flexiProof :: VAL -> ProofState ElabResult
-> flexiProof (EQ _S s _T t) = let sv = ev s ; tv = ev t in  
->   flexiMatch _S sv _T tv <|> flexiRight _S sv _T tv <|> flexiLeft _S sv _T tv 
-
-> flexiMatch :: TY :>: VAL -> TY :>: VAL -> ProofState ElabResult
-> flexiMatch = undefined
-
-> flexiRight :: TY :>: VAL -> TY :>: VAL -> ProofState ElabResult
-> flexiRight = undefined
-
-> flexiLeft :: TY :>: VAL -> TY :>: VAL -> ProofState ElabResult
-> flexiLeft = undefined
-> 
-
-> lastHope :: EXP -> ProofState ElabResult
-> lastHope = undefined
+> eDub' :: Template -> NewElab (Feed {- Thing -} :<: Feed {- Scheme -})
+> eDub' t = do
+>   x <- eDub t
+>   case x of
+>     Just y -> (| y |)
+>     Nothing -> eCry [err ("Dubbing " ++ t ++ " failed")]

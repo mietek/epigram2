@@ -10,13 +10,12 @@
 
 > import Control.Applicative
 
-> import Kit.Parsley
-
-> import DisplayLang.Lexer
-> import DisplayLang.TmParse
-> import DisplayLang.DisplayTm
 > import DisplayLang.Name
-> import DisplayLang.Scheme
+
+> import SourceLang.SourceData
+> import SourceLang.Lexer
+> import SourceLang.Parx
+> import SourceLang.SourceParser
 
 %endif
 
@@ -29,9 +28,11 @@ we need a tagging mechanism to distinguish them, together
 with projection functions.
 
 > data CochonArg = StrArg String 
->                | InArg DInTmRN 
->                | ExArg DExTmRN
->                | SchemeArg DScheme
+>                | InArg EpiInTm 
+>                | ExArg EpiExTm
+
+<                | SchemeArg DScheme
+
 >                | Optional CochonArg
 >                | NoCochonArg
 >                | ListArgs [ CochonArg ]
@@ -43,40 +44,40 @@ with projection functions.
 
 \subsection{Tokenizer combinators}
 
-> tokenExTm :: Parsley Token CochonArg
-> tokenExTm = (| ExArg pDExTm |)
+> tokenExTm :: Parx Elt CochonArg
+> tokenExTm = (| ExArg epiExTm |)
 
-> tokenAscription :: Parsley Token CochonArg
-> tokenAscription = (| ExArg pAscriptionTC |)
+<  tokenAscription :: Parsley Token CochonArg
+< tokenAscription = (| ExArg pAscriptionTC |)
 
-> tokenInTm :: Parsley Token CochonArg
-> tokenInTm = (| InArg pDInTm |)
+> tokenInTm :: Parx Elt CochonArg
+> tokenInTm = (| InArg epiInTm |)
 
-> tokenAppInTm :: Parsley Token CochonArg
-> tokenAppInTm = (| InArg (sizedDInTm AppSize) |)
+> tokenAppInTm :: Parx Elt CochonArg
+> tokenAppInTm = (| InArg smallEpiInTm |)
 
-> tokenName :: Parsley Token CochonArg
-> tokenName = (| (ExArg . (::$ []) . DP) nameParse |)
+< tokenName :: Parsley Token CochonArg
+< tokenName = (| (ExArg . (::$ []) . DP) nameParse |)
 
-> tokenString :: Parsley Token CochonArg
-> tokenString = (| StrArg ident |)
+> tokenString :: Parx Elt CochonArg
+> tokenString = (| StrArg template |)
 
-> tokenScheme :: Parsley Token CochonArg
-> tokenScheme = (| SchemeArg pScheme |)
+< tokenScheme :: Parsley Token CochonArg
+< tokenScheme = (| SchemeArg pScheme |)
 
-> tokenOption :: Parsley Token CochonArg -> Parsley Token CochonArg
-> tokenOption p = (| Optional (bracket Square p) 
+> tokenOption :: Parx Elt CochonArg -> Parx Elt CochonArg
+> tokenOption p = (| Optional (brackElt (Square, Nothing) p) 
 >                  | NoCochonArg |)
 
-> tokenEither :: Parsley Token CochonArg -> Parsley Token CochonArg
->                                        -> Parsley Token CochonArg
+> tokenEither :: Parx Elt CochonArg -> Parx Elt CochonArg
+>                                   -> Parx Elt CochonArg
 > tokenEither p q = (| LeftArg p | RightArg q |)
 
-> tokenListArgs :: Parsley Token CochonArg -> Parsley Token () -> Parsley Token CochonArg
-> tokenListArgs p sep = (| ListArgs (pSep sep p) |) 
+> tokenListArgs :: Parx Elt CochonArg -> Parx Elt CochonArg
+> tokenListArgs p = (| ListArgs (gmany p) |) 
 
-> tokenPairArgs :: Parsley Token CochonArg -> Parsley Token () -> 
->                  Parsley Token CochonArg -> Parsley Token CochonArg
+> tokenPairArgs :: Parx Elt CochonArg -> Parx Elt () -> 
+>                  Parx Elt CochonArg -> Parx Elt CochonArg
 > tokenPairArgs p sep q = (| PairArgs p (% sep %) q |)
 
 \subsection{Printers}
@@ -84,10 +85,10 @@ with projection functions.
 > argToStr :: CochonArg -> String
 > argToStr (StrArg s) = s
 
-> argToIn :: CochonArg -> DInTmRN
+> argToIn :: CochonArg -> EpiInTm
 > argToIn (InArg a) = a
 
-> argToEx :: CochonArg -> DExTmRN
+> argToEx :: CochonArg -> EpiExTm
 > argToEx (ExArg a) = a
 
 > argOption :: (CochonArg -> a) -> CochonArg -> Maybe a

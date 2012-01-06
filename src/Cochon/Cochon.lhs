@@ -43,11 +43,13 @@
 
 > import Tactics.Unification
 
-> import DisplayLang.DisplayTm
 
 > import Distillation.Distiller
 
 > import SourceLang.SourceParser
+> import SourceLang.SourceData
+> import SourceLang.Lexer
+> import SourceLang.Parx
 
 > import Elaboration.Ambulando
 > import Elaboration.NewElaborator
@@ -58,7 +60,6 @@
 > -- import Compiler.Compiler
 
 > import Kit.BwdFwd
-> import Kit.Parsley
 > import Kit.MissingLibrary
 > import Kit.NatFinVec
 
@@ -78,18 +79,16 @@ Here we have a very basic command-driven interface to the proof state monad.
 >     putStr $ fst $ runProofStateString showPrompt loc
 >     hFlush stdout
 >     l <- getLine
->     case parse tokenize l of 
->         Left pf -> do
->             putStrLn ("Tokenize failure: " ++ describePFailure pf id)
->             cochon' (locs :< loc)
->         Right ts ->
->           case parse pCochonTactics ts of
->               Left pf -> do
->                   putStrLn ("Parse failure: " ++ describePFailure pf (intercalate " " . map crushToken))
+>     case parx (pad pCochonTactic) (doc (slex l)) of
+>        (_,Nothing,as) -> do
+>                   putStrLn ("Parse failure: " ++ show as)
 >                   cochon' (locs :< loc)
->               Right cds -> do
->                   locs' <- doCTactics cds (locs :< loc)
+>        (_,Just cd,[]) -> do
+>                   locs' <- doCTactic cd (locs :< loc)
 >                   cochon' locs'
+>        (_,_,as) -> do
+>                   putStrLn ("Unconsumed Input: " ++ show as)
+>                   cochon' (locs :< loc)
 
 
 > paranoid = False
@@ -135,16 +134,16 @@ Here we have a very basic command-driven interface to the proof state monad.
 >             Nothing  -> return "> "
 
 
-> describePFailure :: PFailure a -> ([a] -> String) -> String
-> describePFailure (PFailure (ts, fail)) f = (case fail of
->     Abort        -> "parser aborted."
->     EndOfStream  -> "end of stream."
->     EndOfParser  -> "end of parser."
->     Expect t     -> "expected " ++ f [t] ++ "."
->     Fail s       -> s
->   ) ++ (if length ts > 0
->        then ("\nSuccessfully parsed: ``" ++ f ts ++ "''.")
->        else "")
+< describePFailure :: PFailure a -> ([a] -> String) -> String
+< describePFailure (PFailure (ts, fail)) f = (case fail of
+<     Abort        -> "parser aborted."
+<     EndOfStream  -> "end of stream."
+<     EndOfParser  -> "end of parser."
+<     Expect t     -> "expected " ++ f [t] ++ "."
+<     Fail s       -> s
+<   ) ++ (if length ts > 0
+<        then ("\nSuccessfully parsed: ``" ++ f ts ++ "''.")
+<        else "")
 
 
 
@@ -159,7 +158,7 @@ A Cochon tactic consinsts of:
 
 > data CochonTactic =
 >     CochonTactic  {  ctName   :: String
->                   ,  ctParse  :: Parsley Token (Bwd CochonArg)
+>                   ,  ctParse  :: Parx Elt (Bwd CochonArg)
 >                   ,  ctIO     :: [CochonArg] -> Bwd ProofContext -> IO (Bwd ProofContext)
 >                   ,  ctHelp   :: String
 >                   }
@@ -217,7 +216,7 @@ We have some shortcuts for building common kinds of tactics:
 and there are various specialised versions of it for nullary and
 unary tactics.
 
-> simpleCT :: String -> Parsley Token (Bwd CochonArg)
+> simpleCT :: String -> Parx Elt (Bwd CochonArg)
 >     -> ([CochonArg] -> ProofState String) -> String -> CochonTactic
 > simpleCT name parser eval help = CochonTactic
 >     {  ctName = name
@@ -229,15 +228,14 @@ unary tactics.
 > nullaryCT :: String -> ProofState String -> String -> CochonTactic
 > nullaryCT name eval help = simpleCT name (pure B0) (const eval) help
 
-> unaryExCT :: String -> (DExTmRN -> ProofState String) -> String -> CochonTactic
+> unaryExCT :: String -> (EpiExTm -> ProofState String) -> String -> CochonTactic
 > unaryExCT name eval help = simpleCT
 >     name
->     (| (B0 :<) tokenExTm
->      | (B0 :<) tokenAscription |)
+>     (| (B0 :<) tokenExTm |)
 >     (eval . argToEx . head)
 >     help
 
-> unaryInCT :: String -> (DInTmRN -> ProofState String) -> String -> CochonTactic
+> unaryInCT :: String -> (EpiInTm -> ProofState String) -> String -> CochonTactic
 > unaryInCT name eval help = simpleCT
 >     name
 >     (| (B0 :<) tokenInTm |)
@@ -247,17 +245,17 @@ unary tactics.
 > unDP :: DExTm x -> x
 > unDP (DP ref ::$ []) = ref
 
-> unaryNameCT :: String -> (RelName -> ProofState String) -> String -> CochonTactic
-> unaryNameCT name eval help = simpleCT
->     name
->     (| (B0 :<) tokenName |)
->     (eval . unDP . argToEx . head)
->     help
+< unaryNameCT :: String -> (RelName -> ProofState String) -> String -> CochonTactic
+< unaryNameCT name eval help = simpleCT
+<     name
+<     (| (B0 :<) tokenName |)
+<     (eval . unDP . argToEx . head)
+<     help
 
 > unaryStringCT :: String -> (String -> ProofState String) -> String -> CochonTactic
 > unaryStringCT name eval help = simpleCT
 >     name
->     (| (B0 :<) tokenString |)
+>     (| (B0 :<) (pad tokenString) |)
 >     (eval . argToStr . head)
 >     help
 
@@ -554,6 +552,37 @@ Import more tactics from an aspect:
 >     nullaryCT "nix" (putDevHypState NixHyps >> return "Nixed.")
 >       "nix - set the current development to nix hypotheses." :
 
+>     simpleCT "elabInTm" (do
+>       u <- tokenString
+>       gap
+>       sym ":="
+>       gap
+>       x <- tokenInTm 
+>       gap
+>       sym ":"
+>       gap
+>       _X <- tokenInTm
+>       (| (B0 :< u :< _X :< x) |)) (\ [StrArg u, InArg x, InArg _X] -> do
+>         make ("X" :<: Prob _X :- [SET])
+>         goIn
+>         nam <- getCurrentName
+>         ambulando (Just nam) NONEWS
+>         dX <- getCurrentDefinition
+>         goOut'
+>         as <- (| paramSpine getInScope |)
+>         make ("x" :<: Prob x :- [(D dX :$ (as :< Hd))])
+>         goIn 
+>         nam <- getCurrentName
+>         ambulando (Just nam) NONEWS
+>         dx <- getCurrentDefinition
+>         goOut'
+>         make (u :<: DUB u (SCHTY (D dX :$ (as :< Hd))) (D dx :$ (as :< Hd)))
+>         goIn
+>         give ZERO
+>         goOut'
+>         (| "Yay!" |)
+>         ) "" :
+
 >     nullaryCT "suit" (do
 >       -- _X <- make ("X" :<: SET)
 >       let _X = ARR SET SET
@@ -657,85 +686,91 @@ Import more tactics from an aspect:
 >       ambulando Nothing NONEWS 
 >       return "Suit.") "suit" :
 
+>     nullaryCT "suitSig" (do
+>       let probty = Prob exSig :- []
+>       make ("suit" :<: probty) 
+>       goIn 
+>       putDevTip (SusElab probty ((0, []), (probElab exSig [])) Hoping)
+>       ambulando Nothing NONEWS 
+>       return "Suit.") "suit" :
 
 >     [] )
 
 > import <- CochonTacticsCode
 
 
-> pFileName :: Parsley Token String
-> pFileName = ident
+< pFileName :: Parsley Token String
+< pFileName = ident
 
 
 
 > type CTData = (CochonTactic, [CochonArg])
 
-> readCommands :: Handle -> IO [CTData]
-> readCommands file = do
->   f <- hGetContents file
->   case parse tokenizeCommands f of
->     Left err -> do
->       putStrLn $ "readCommands: failed to tokenize:\n" ++
->                  show err
->       exitFailure
->     Right lines -> do
->          t <- Data.Traversable.sequence $ map readCommand lines
->          return $ Data.List.concat t
+< readCommands :: Handle -> IO [CTData]
+< readCommands file = do
+<   f <- hGetContents file
+<   case parse tokenizeCommands f of
+<     Left err -> do
+<       putStrLn $ "readCommands: failed to tokenize:\n" ++
+<                  show err
+<       exitFailure
+<     Right lines -> do
+<          t <- Data.Traversable.sequence $ map readCommand lines
+<          return $ Data.List.concat t
 
-> readCommand :: String -> IO [CTData]
-> readCommand command =
->     case parse tokenize command of
->       Left err -> do
->         putStrLn $ "readCommand: failed to tokenize:\n" ++
->                    show err
->         putStrLn $ "Input was: " ++ command
->         exitFailure
->       Right toks -> do
->         case parse pCochonTactics toks of
->           Left err -> do
->             putStrLn $ "readCommand: failed to parse:\n" ++
->                        show err
->             putStrLn $ "Input was: " ++ command
->             exitFailure
->           Right command -> do
->             return command
+< readCommand :: String -> IO [CTData]
+< readCommand command =
+<     case parse tokenize command of
+<       Left err -> do
+<         putStrLn $ "readCommand: failed to tokenize:\n" ++
+<                    show err
+<         putStrLn $ "Input was: " ++ command
+<         exitFailure
+<       Right toks -> do
+<         case parse pCochonTactics toks of
+<           Left err -> do
+<             putStrLn $ "readCommand: failed to parse:\n" ++
+<                        show err
+<             putStrLn $ "Input was: " ++ command
+<             exitFailure
+<           Right command -> do
+<             return command
 
                            
 
 
-> tokenizeCommands :: Parsley Char [String]
-> tokenizeCommands = (|id ~ [] (% pEndOfStream %)
->                     |id (% oneLineComment %) 
->                         (% consumeUntil' endOfLine %)
->                         tokenizeCommands
->                     |id (% openBlockComment %)
->                         (% (eatNestedComments 0) %)
->                         tokenizeCommands
->                     |id (spaces *> endOfLine *> tokenizeCommands)
->                     |consumeUntil' endOfCommand : 
->                      tokenizeCommands
->                     |)
->     where endOfCommand = tokenEq ';' *> spaces *> endOfLine
->                      <|> pEndOfStream *> pure ()
->           endOfLine = tokenEq (head "\n") <|> pEndOfStream 
->           oneLineComment = tokenEq '-' *> tokenEq '-' 
->           openBlockComment = tokenEq '{' *> tokenEq '-'
->           closeBlockComment = tokenEq '-' *> tokenEq '}'
->           spaces = many $ tokenEq ' '
->           eatNestedComments (-1) = (|id ~ ()|)
->           eatNestedComments i = (|id  (% openBlockComment %)
->                                       (eatNestedComments (i+1))
->                                  |id (% closeBlockComment %)
->                                      (eatNestedComments (i-1))
->                                  |id (% nextToken %)
->                                      (eatNestedComments i) |)
+< tokenizeCommands :: Parsley Char [String]
+< tokenizeCommands = (|id ~ [] (% pEndOfStream %)
+<                     |id (% oneLineComment %) 
+<                         (% consumeUntil' endOfLine %)
+<                         tokenizeCommands
+<                     |id (% openBlockComment %)
+<                         (% (eatNestedComments 0) %)
+<                         tokenizeCommands
+<                     |id (spaces *> endOfLine *> tokenizeCommands)
+<                     |consumeUntil' endOfCommand : 
+<                      tokenizeCommands
+<                     |)
+<     where endOfCommand = tokenEq ';' *> spaces *> endOfLine
+<                      <|> pEndOfStream *> pure ()
+<           endOfLine = tokenEq (head "\n") <|> pEndOfStream 
+<           oneLineComment = tokenEq '-' *> tokenEq '-' 
+<           openBlockComment = tokenEq '{' *> tokenEq '-'
+<           closeBlockComment = tokenEq '-' *> tokenEq '}'
+<           spaces = many $ tokenEq ' '
+<           eatNestedComments (-1) = (|id ~ ()|)
+<           eatNestedComments i = (|id  (% openBlockComment %)
+<                                       (eatNestedComments (i+1))
+<                                  |id (% closeBlockComment %)
+<                                      (eatNestedComments (i-1))
+<                                  |id (% nextToken %)
+<                                      (eatNestedComments i) |)
 
 
-> pCochonTactic :: Parsley Token CTData
+> pCochonTactic :: Parx Elt CTData
 > pCochonTactic  = do
->     x <- (|id ident
->           |key anyKeyword
->           |)
+>     x <- (|id template |)
+>     gap
 >     case tacticsMatching x of
 >         [ct] -> do
 >             args <- ctParse ct
@@ -743,26 +778,26 @@ Import more tactics from an aspect:
 >         [] -> fail "unknown tactic name."
 >         cts -> fail ("ambiguous tactic name (could be " ++ tacticNames cts ++ ").")
 
-> pCochonTactics :: Parsley Token [CTData]
-> pCochonTactics = pSepTerminate (keyword KwSemi) pCochonTactic
+< pCochonTactics :: Parsley Token [CTData]
+< pCochonTactics = pSepTerminate (keyword KwSemi) pCochonTactic
 
 
 > doCTactic :: CTData -> Bwd ProofContext -> IO (Bwd ProofContext)
 > doCTactic (ct, args) (locs :< loc) = ctIO ct args (locs :< loc)
 
-> doCTactics :: [CTData] -> Bwd ProofContext -> IO (Bwd ProofContext)
-> doCTactics [] locs = return locs
-> doCTactics (cd:cds) locs = do
->     locs' <- doCTactic cd locs
->     doCTactics cds locs'
+< doCTactics :: [CTData] -> Bwd ProofContext -> IO (Bwd ProofContext)
+< doCTactics [] locs = return locs
+< doCTactics (cd:cds) locs = do
+<     locs' <- doCTactic cd locs
+<     doCTactics cds locs'
 
-> doCTacticsAt :: [(Name, [CTData])] -> Bwd ProofContext -> IO (Bwd ProofContext)
-> doCTacticsAt [] locs = return locs
-> doCTacticsAt ((_, []):ncs) locs = doCTacticsAt ncs locs
-> doCTacticsAt ((n, cs):ncs) (locs :< loc) = do
->     let Right loc' = execProofState (goTo n) loc
->     locs' <- doCTactics cs (locs :< loc :< loc')
->     doCTacticsAt ncs locs'
+< doCTacticsAt :: [(Name, [CTData])] -> Bwd ProofContext -> IO (Bwd ProofContext)
+< doCTacticsAt [] locs = return locs
+< doCTacticsAt ((_, []):ncs) locs = doCTacticsAt ncs locs
+< doCTacticsAt ((n, cs):ncs) (locs :< loc) = do
+<     let Right loc' = execProofState (goTo n) loc
+<     locs' <- doCTactics cs (locs :< loc :< loc')
+<     doCTacticsAt ncs locs'
 
 
 

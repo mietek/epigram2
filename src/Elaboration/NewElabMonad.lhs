@@ -44,7 +44,7 @@ The instruction signature given above is implemented using the following monad.
 >     -- Hope for a value of the given type to turn up, get back a Feed for that value
 >     EElab    :: Problem t => String :<: SubElab (t, [EXP]) -> (Feed -> NewElab x) -> NewElab x
 >     -- Kick off a sub-elaboration problem, get back a Feed for its result
->     EDub     :: Template -> ((Feed {- Thing -} :<: Feed {- Scheme -}) -> NewElab x) -> NewElab x
+>     EDub     :: Template -> (Maybe (Feed {- Thing -} :<: Feed {- Scheme -}) -> NewElab x) -> NewElab x
 >     -- Look up the evidence language term assoc. to some source language template, get back feeds for its value and Scheme
 >     EInst    :: (Name, Feed) -> (TY :>: Feed) -> NewElab x -> NewElab x
 >     -- Ask for some DEF to be unified with an expression
@@ -93,7 +93,7 @@ To use the do notation, we define these operator versions of the Elab combinator
 > eElab :: Problem t => (String :<: SubElab (t, [EXP])) -> NewElab Feed
 > eElab sp = EElab sp EReturn
 
-> eDub :: Template -> NewElab (Feed {- Thing -} :<: Feed {- Scheme -}) 
+> eDub :: Template -> NewElab (Maybe (Feed {- Thing -} :<: Feed {- Scheme -}))
 > eDub t = EDub t EReturn
 
 > eInst :: (Name, Feed) -> (TY :>: Feed) -> NewElab ()

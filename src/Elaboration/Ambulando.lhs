@@ -142,7 +142,7 @@ we should go in and update everyone on the news.
 Ok, so we are backing up looking for the hole someone wanted solving
 
 > odnalubma :: Name -> (TY :>: EXP) -> ProofState ()
-> odnalubma n e = do
+> odnalubma n e = do 
 >   lev <- getDevLev 
 >   ez <- getEntriesAbove
 >   putEntriesAbove B0
@@ -248,6 +248,8 @@ containing layer, continue.
 >   es <- getGlobalScope
 >   (| (Right (Defined (defTy d :>: ((def d) $$$ paramSpine es)), GoodNews)) |)
 >   -- some EInst has moved this goal out the way so solve it with the new copy
+> tellTip nam news (Unknown ty hk) | Prob p :- as <- ev ty = 
+>   tellTip nam news (SusElab ty ((length as,reverse as) , probElab p [0..(length as-1)]) hk) 
 > tellTip nam news (Unknown ty hk) = (| (Right (Unknown ty' hk, ne)) |)
 >   where (ty', ne) = tellNews news ty
 > tellTip _ news (Defined (ty :>: tm)) = 

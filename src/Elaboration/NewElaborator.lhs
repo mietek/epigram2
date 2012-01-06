@@ -98,7 +98,7 @@
 >   probTel x = ONE
 >   probVal x [] = ("S", SCHEME) -** \_S -> wr (def schElDEF) _S
 >   probElab t [] = do
->     (sf :<: _Sf) <- eDub t
+>     (sf :<: _Sf) <- eDub' t
 >     [s, _S] <- eLatests [sf, _Sf]
 >     (| (PAIR (exp _S) (exp s)) |)
 
@@ -147,10 +147,7 @@
 >     [ran, f, arg] <- eLatests [ranf, ff, argf]
 >     rf <- eElab ("appl" :<: return (TySpine es,  [  exp ran $$. (arg $$ Hd)
 >                                                  ,  exp f $$. (arg $$ Hd)]))
->     (| exp (eLatest rf) |)
-
-
- 
+>     (| exp (eLatest rf) |) 
 
 > newtype ESch = ESch EpiInTm
 
@@ -183,10 +180,57 @@
 >         (| (PAIR (la "a" $ \a -> nix f :$ (B0 :< A a :< Hd)) ZERO) |)
 >       _ -> error "elabSch - scheme not a scheme"
 
+> instance Problem (EpiSig {k}) where
+>   probName x = "EpiSig"
+>   probTel x = ONE
+>   probVal x es = SCHEME *** ONE
+>   probElab (Sig [] (_ :~ VarConc (_ :~ t) [] mety)) [] = do
+>     _Sf <- case mety of
+>              Just ety -> do 
+>                f <- eElab ("varTy" :<: (| (ety, [SET]) |))
+>                (| fst (eSplit f) |) 
+>              _ -> eHope ("hopeVarTy" :<: (| SET |)) 
+>     _S <- eLatest _Sf
+>     (| (PAIR (SCHTY (exp _S)) ZERO) |)
+>   probElab (Sig [] (_ :~ LetConc (_ :~ t) [] ety)) [] = do
+>     _Sf' <- eElab ("letTy" :<: (| (ety, [SET]) |))
+>     (_Sf,_) <- eSplit _Sf'
+>     _S <- eLatest _Sf
+>     (| (PAIR (SCHTY (exp _S)) ZERO) |)
+>   probElab (Sig ((sprem :~ VarPrem prem) : prems) (sc :~ VarConc cc ((_ :~ argt) : args) cty)) [] 
+>     | concPlate prem == argt = do
+>       pf <- eElab ("prem" :<: (| (sprem :~ prem, []) |))
+>       (schf,_) <- eSplit pf
+>       sch <- eLatest schf
+>       sschf <- eElab ("sub" :<: do
+>         f <- seLambda (argt :<: wr (def schElDEF) (exp sch))
+>         fdub <- seLambda (("dub" ++ argt) :<: DUB argt (exp sch) (exp f))
+>         (| (Sig prems (sc :~ VarConc cc args cty), []) |))
+>       [sch, ssch] <- eLatests [schf, sschf]
+>       (| (PAIR (SCHPI (exp sch) (la argt $ \a -> nix ssch :$ (B0 :< A a :< A ZERO :< Hd))) ZERO) |)
+>   probElab (Sig ((sprem :~ VarPrem prem) : prems) (sc :~ LetConc cc ((_ :~ argt) : args) cty)) [] 
+>     | concPlate prem == argt = do
+>       pf <- eElab ("prem" :<: (| (sprem :~ prem, []) |))
+>       (schf,_) <- eSplit pf
+>       sch <- eLatest schf
+>       sschf <- eElab ("sub" :<: do
+>         f <- seLambda (argt :<: wr (def schElDEF) (exp sch))
+>         fdub <- seLambda (("dub" ++ argt) :<: DUB argt (exp sch) (exp f))
+>         (| (Sig prems (sc :~ LetConc cc args cty), []) |))
+>       [sch, ssch] <- eLatests [schf, sschf]
+>       (| (PAIR (SCHPI (exp sch) (la argt $ \a -> nix ssch :$ (B0 :< A a :< A ZERO :< Hd))) ZERO) |)
+>   probElab x [] = error $ show x
+
+> concPlate :: EpiSig {k} -> Template
+> concPlate (Sig _ (_ :~ (VarConc (_ :~ t) _ _))) = t
+> concPlate (Sig _ (_ :~ (LetConc (_ :~ t) _ _))) = t
+> concPlate (Sig _ (_ :~ (DataConc (_ :~ t) _))) = t
 
 
 > instance Problem t => Problem (x :~ t) where
 >   probName (_ :~ x) = "sourced" ++ probName x
 >   probTel (_ :~ x) = probTel x
->   probVal (_ :~ x) es = probVal x es
->   probElab (_ :~ x) fs = probElab x fs
+>   probVal (_ :~ x) = probVal x
+>   probElab (_ :~ x) = probElab x
+
+

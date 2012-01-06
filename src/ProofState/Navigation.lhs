@@ -259,6 +259,24 @@ development, with the additional burden of dealing with news.
 >   nom <- getCurrentName
 >   ambulando (Just (init nom)) NONEWS
 
+> goOut' :: ProofState ()
+> goOut' = do
+>   nom <- getCurrentName
+>   currentEntry <- getCurrentEntry
+>   dev <- getAboveCursor
+>   e <- case currentEntry of
+>      CDefinition def sch -> return $ EDef def dev sch
+>      CModule n           -> return $ EModule n dev
+>   Just l <- optional removeLayer
+>   putAboveCursor $ Dev  {  devEntries       =  aboveEntries l :< e
+>                         ,  devTip           =  layTip l
+>                         ,  devNSupply       =  layNSupply l
+>                         ,  devLevelCount    =  layLevelCount l
+>                         ,  devHypState      =  layHypState l
+>                         }
+>   putBelowCursor $ belowEntries l 
+>   nom' <- getCurrentName
+>   return ()
 
 The |goOutBelow| variant has a similar effect than |goOut|, excepted
 that it brings the cursor right under the previous point of focus.
