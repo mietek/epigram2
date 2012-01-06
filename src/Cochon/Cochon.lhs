@@ -562,7 +562,7 @@ Import more tactics from an aspect:
 >       sym ":"
 >       gap
 >       _X <- tokenInTm
->       (| (B0 :< u :< _X :< x) |)) (\ [StrArg u, InArg x, InArg _X] -> do
+>       (| (B0 :< u :< _X :< x) |)) (\ [StrArg u, InArg _X, InArg x] -> do
 >         make ("X" :<: Prob _X :- [SET])
 >         goIn
 >         nam <- getCurrentName
