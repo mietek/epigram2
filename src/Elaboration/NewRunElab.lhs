@@ -86,10 +86,19 @@
 >   ty <- runSubElab sub 
 >   moduleToGoal ty
 >   putHoleKind Hoping
+>   heresHoping (ev ty)
 >   d <- getCurrentDefinition
 >   goOut'
 >   as <- (| paramSpine getInScope |)
 >   runElab (nf+1, (D d :$ as):es) (c nf)
+>     where heresHoping :: VAL -> ProofState ()
+>           heresHoping (PRF (SETEQ _X _Y)) = do
+>             lev <- getDevLev
+>             if equal lev (SET :>: (_X, _Y)) 
+>               then give (SetRefl _X :$ B0) >> (| () |)
+>               else (| () |)
+>           heresHoping _ = (| () |)
+>                                         
 
 > runElab fes@(nf, es) (EElab (s :<: sub) c) = do
 >   nom <- makeModule s
@@ -204,6 +213,7 @@
 >   case _T of 
 >     SET -> (| () |)
 >     D d :$ _ -> eFeed SET >>= \setf -> eInst (defName d, _Tf) (SET :>: setf)
+>     x -> error (ugly V0 x)
 
 > eDub' :: Template -> NewElab (Feed {- Thing -} :<: Feed {- Scheme -})
 > eDub' t = do
