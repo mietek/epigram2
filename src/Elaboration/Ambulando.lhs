@@ -265,12 +265,13 @@ containing layer, continue.
 >       where  (ty', _) = tellNews news ty
 >     ElabWaitCan f ex c -> 
 >       (| (Right (SusElab ty (f, ECan ex c) hk, NoNews)) |)
->     ElabGoInst f (n,fn) te@(ty' :>: (ex,exf)) c -> do
+>     ElabGoInst i nam f (n,fn) te@(ty' :>: (ex,exf)) c -> do
 >       --record the progress made in the elab prob
 >       putDevTip (SusElab ty'' (f, EInst (n,fn) (ty' :>: exf) c) hk)
+>       replicateM i goIn
 >       (| (Left (n, ty' :>: ex)) |)
 >      where  (ty'', _) = tellNews news ty
->     ElabFailed _ -> error "Tell Tip" -- run away and cry
+>     ElabFailed e -> error $ "Tell Tip:" ++ show e  -- run away and cry
 > tellTip _ news Module = (| (Right (Module, NoNews)) |)
 
 

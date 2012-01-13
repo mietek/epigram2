@@ -71,8 +71,8 @@ type (see section~\ref{sec:Elaboration.ElabMonad}), or a |Defined| term
 of the type. Note that the type is presented as both a term and a
 value for performance purposes. 
 
-> data HKind = Crying String | Waiting | Hoping
->   deriving Show
+< data HKind = Crying String | Waiting | Hoping
+<   deriving Show
 
 > data Tip
 >   = Module

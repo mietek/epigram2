@@ -29,6 +29,8 @@
 
 > import {-# SOURCE #-} Elaboration.Ambulando 
 
+> import Debug.Trace
+
 %endif
 
 
@@ -199,6 +201,7 @@ be \emph{unzipped} to form the current development.
 >   nom <- getCurrentName
 >   ambulando (Just nom) news
 
+
  
 
 \subsubsection{Focus navigation}
@@ -277,6 +280,28 @@ development, with the additional burden of dealing with news.
 >   putBelowCursor $ belowEntries l 
 >   nom' <- getCurrentName
 >   return ()
+
+> goOutTop :: ProofState ()
+> goOutTop = do
+>     currentEntry <- getCurrentEntry
+>     dev <- getAboveCursor
+>     below <- getBelowCursor
+>     e <- case currentEntry of
+>       CDefinition d sch -> return $ EDef d (dev {devEntries = below}) sch
+>       CModule n           -> return $ EModule n (dev {devEntries = below})
+>     mLayer <- optional removeLayer
+>     case mLayer of
+>      Just l ->  do
+>        putAboveCursor $ Dev  {  devEntries       =  aboveEntries l
+>                              ,  devTip           =  layTip l
+>                              ,  devNSupply       =  layNSupply l
+>                              ,  devLevelCount    =  layLevelCount l
+>                              ,  devHypState      =  layHypState l
+>                              }
+>        putBelowCursor $ NF (Right e :> unNF (belowEntries l))
+>        (| () |)
+>      Nothing -> throwError' $ err ""
+
 
 The |goOutBelow| variant has a similar effect than |goOut|, excepted
 that it brings the cursor right under the previous point of focus.
@@ -419,7 +444,7 @@ above.
 > goBottom = getCurrentName >>= \ nom -> ambulando (Just nom) NONEWS
 >
 > goRoot :: ProofState ()
-> goRoot = much goOut
+> goRoot = much (much cursorUp >> goOutTop)
 
 
 
@@ -434,23 +459,31 @@ have to follow this itinerary to reach our destination.
 
 > goTo :: Name -> ProofState ()
 > goTo name = do
+>   trace "goTo" (| () |)
+
 >   -- Start from the root
 >   goRoot
+>   trace "At Root" (| () |)
+
 >   -- Eat the name as you move in the context
 >   goTo' name
+>   trace "Arrived" (| () |)
 >   where
 >     goTo' :: Name -> ProofState ()
 >     goTo'  []          =  do 
 >                           -- Reached the end of the journey
 >                           return ()
->     goTo'  x@(xn:xns)  =  goIn >> seek xn >> goTo' xns
->                           `pushError` 
->                           (err "goTo: could not find " ++ err (showName x))
->
->     -- |seek| find the local short name on our itinerary
->     seek :: (String, Int) -> ProofState ()
->     seek xn = do
->         goUp `whileA` (guard . (== xn) . last =<< getCurrentName)
+>     goTo'  x@(xn:xns)  =  do
+>       trace "goTo'" (| () |)
+>       ez <- getBelowCursor
+>       case ez of 
+>         NF F0 -> throwError' $ err "goTo: could not find " ++ err (showName x)
+>         _ -> do 
+>           cursorDown `pushError` (err "goTo: could not find " ++ err (showName x))
+>           e <- getEntryAbove
+>           trace (show $ entryName e) (| () |)
+>           if fmap last (entryName e) == Just xn then goIn >> goTo' xns
+>                                                 else goTo' x 
 
 
 \subsection{Searching for a goal}

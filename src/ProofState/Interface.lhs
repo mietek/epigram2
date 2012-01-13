@@ -187,7 +187,8 @@ Section~\ref{subsec:Tactics.Elimination.analysis}.
 
 > moduleToGoal' :: EXP -> ProofState (DEF,EXP)
 > moduleToGoal' ty = do
->     chkPS (SET :>: ty) `pushError` err "moduleToGoal: not a set"
+>     nam <- getCurrentName
+>     chkPS (SET :>: ty) `pushError` err ("moduleToGoal: "++ show nam ++ " not a set")
 >     CModule _ <- getCurrentEntry
 >     putDevTip $ Unknown ty Waiting
 >     updateDefFromTip
@@ -257,7 +258,7 @@ mood such as |Hoping| or |Crying|.
 >     let  binScope  = boys inScope
 >          liftedTy = bwdVec (boys inScope)
 >                             (\ n ys -> piLift n ys) ty
->          def = DEF n liftedTy Hole
+>          def = DEF n liftedTy (Hole holeKind)
 
 <  (eats (trail (fmap (\(_,s,_) -> s) (boys inScope))) Hole)
 
@@ -330,8 +331,6 @@ and moves to the next goal, if one is available.
 >
 > giveNext :: EXP -> ProofState DEF
 > giveNext tm = give tm <* (nextGoal <|> goOut)
-
-
 
 
 \subsection{|\|-abstraction}

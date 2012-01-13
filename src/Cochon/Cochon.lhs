@@ -598,16 +598,42 @@ Import more tactics from an aspect:
 >         dx <- getCurrentDefinition
 >         goOut'
 >         as <- (| paramSpine getInScope |)
->         make (u :<: DUB u (SCHTY (D dx :$ (as :< Hd))) (D dx :$ (as :< Tl)))
+>         make ((u ++ "dub") :<: DUB u (SCHTY (D dx :$ (as :< Hd))) (D dx :$ (as :< Tl)))
 >         goIn
 >         give ZERO
 >         goOut'
 >         (| "Yay!" |)
 >         ) "" :
 
+>     simpleCT "hope" (do
+>       u <- tokenString
+>       gap
+>       sym ":"
+>       gap
+>       x <- tokenInTm 
+>       (| (B0 :< u :< x) |)) (\ [StrArg u, InArg _X] -> do
+>         make ((u ++ "Ty") :<: Prob _X :- [SET])
+>         goIn
+>         nam <- getCurrentName
+>         ambulando (Just nam) NONEWS
+>         dX <- getCurrentDefinition
+>         goOut'
+>         as <- (| paramSpine getInScope |)
+>         make (u :<: (D dX :$ (as :< Hd)))
+>         goIn
+>         dx <- getCurrentDefinition
+>         putHoleKind Hoping
+>         goOut'
+>         make ((u ++ "dub") :<: DUB u (SCHTY (D dX :$ (as :< Hd))) (D dx :$ as))
+>         goIn
+>         give ZERO
+>         goOut'
+>         (| "Hoped." |)) "" :
+
+
 >     nullaryCT "suit" (do
->       -- _X <- make ("X" :<: SET)
->       let _X = ARR SET SET
+>       _X <- make ("X" :<: SET)
+>       -- let _X = ARR SET SET
 >       let probty = Prob exId :- [_X]
 >       make ("suit" :<: probty) 
 >       goIn 
@@ -625,8 +651,8 @@ Import more tactics from an aspect:
 >       return "Suit.") "suit" :
 
 >     nullaryCT "suit3" (do
->       _X <- make ("X" :<: SET)
->       -- let _X = SET  
+>       -- _X <- make ("X" :<: SET)
+>       let _X = SET  
 >       let probty = Prob exPIdTy :- [_X]
 >       make ("suit" :<: probty) 
 >       goIn 
@@ -635,7 +661,6 @@ Import more tactics from an aspect:
 >       return "Suit.") "suit" :
 
 >     nullaryCT "suit4" (do
->       -- _X <- make ("X" :<: SET)
 >       let _X = ("X", SET) -?> \_X -> (SCHTY _X) --!> SCHTY _X
 >       let probty = Prob (ESch exId) :- [_X]
 >       make ("suit" :<: probty) 
@@ -645,12 +670,12 @@ Import more tactics from an aspect:
 >       return "Suit.") "suit" :
 
 >     nullaryCT "suitK" (do
->       -- _X <- make ("X" :<: SET)
->       _Ah <- assumeParam ("A" :<: SET)
->       _Bh <- assumeParam ("B" :<: SET)
->       let _A = _Ah :$ B0
->       let _B = _Bh :$ B0
->       let _X = (_A --> _B --> _A)
+>       _X <- make ("X" :<: SET)
+>       -- _Ah <- assumeParam ("A" :<: SET)
+>       -- _Bh <- assumeParam ("B" :<: SET)
+>       -- let _A = _Ah :$ B0
+>       -- let _B = _Bh :$ B0
+>       -- let _X = (_A --> _B --> _A)
 >       let probty = Prob exK :- [_X]
 >       make ("suit" :<: probty) 
 >       goIn 
@@ -660,14 +685,14 @@ Import more tactics from an aspect:
 
 
 >     nullaryCT "suitS" (do
->       -- _X <- make ("X" :<: SET)
->       _Ah <- assumeParam ("A" :<: SET)
->       _Bh <- assumeParam ("B" :<: SET)
->       _Ch <- assumeParam ("C" :<: SET)
->       let _A = _Ah :$ B0
->       let _B = _Bh :$ B0
->       let _C = _Ch :$ B0
->       let _X = ((_A --> _B --> _C) --> (_A --> _B) --> (_A --> _C)) 
+>       _X <- make ("X" :<: SET)
+>       -- _Ah <- assumeParam ("A" :<: SET)
+>       -- _Bh <- assumeParam ("B" :<: SET)
+>       -- _Ch <- assumeParam ("C" :<: SET)
+>       -- let _A = _Ah :$ B0
+>       -- let _B = _Bh :$ B0
+>       -- let _C = _Ch :$ B0
+>       -- let _X = ((_A --> _B --> _C) --> (_A --> _B) --> (_A --> _C)) 
 >       let probty = Prob exS :- [_X]
 >       make ("suit" :<: probty) 
 >       goIn 
@@ -676,14 +701,14 @@ Import more tactics from an aspect:
 >       return "Suit.") "suit" :
 
 >     nullaryCT "suitApp" (do
->       -- _X <- make ("X" :<: SET)
->       _Ah <- assumeParam ("A" :<: SET)
->       _Bh <- assumeParam ("B" :<: SET)
->       _Ch <- assumeParam ("C" :<: SET)
->       let _A = _Ah :$ B0
->       let _B = _Bh :$ B0
->       let _C = _Ch :$ B0
->       let _X = ((_A --> _B --> _C) --> (_A --> _B --> _C)) 
+>       _X <- make ("X" :<: SET)
+>       -- _Ah <- assumeParam ("A" :<: SET)
+>       -- _Bh <- assumeParam ("B" :<: SET)
+>       -- _Ch <- assumeParam ("C" :<: SET)
+>       -- let _A = _Ah :$ B0
+>       -- let _B = _Bh :$ B0
+>       -- let _C = _Ch :$ B0
+>       -- let _X = ((_A --> _B --> _C) --> (_A --> _B --> _C)) 
 >       let probty = Prob exApp :- [_X]
 >       make ("suit" :<: probty) 
 >       goIn 

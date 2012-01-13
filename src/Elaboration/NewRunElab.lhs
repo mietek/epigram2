@@ -59,8 +59,9 @@
 
 > data ElabResult  =  ElabSuccess EXP 
 >                  |  ElabWaitCan Feeder Feed ((Can, [Feed]) -> NewElab EXP)
->                  |  ElabGoInst Feeder (Name, Feed) (TY :>: (EXP, Feed)) (NewElab EXP) 
+>                  |  ElabGoInst Int Name Feeder (Name, Feed) (TY :>: (EXP, Feed)) (NewElab EXP) 
 >                  |  ElabFailed StackError
+>                  |  ElabNothing
 
 > runElab :: Feeder -> NewElab EXP -> ProofState ElabResult
 
@@ -86,19 +87,112 @@
 >   ty <- runSubElab sub 
 >   moduleToGoal ty
 >   putHoleKind Hoping
->   heresHoping (ev ty)
 >   d <- getCurrentDefinition
->   goOut'
->   as <- (| paramSpine getInScope |)
->   runElab (nf+1, (D d :$ as):es) (c nf)
->     where heresHoping :: VAL -> ProofState ()
->           heresHoping (PRF (SETEQ _X _Y)) = do
->             lev <- getDevLev
->             if equal lev (SET :>: (_X, _Y)) 
->               then give (SetRefl _X :$ B0) >> (| () |)
->               else (| () |)
->           heresHoping _ = (| () |)
->                                         
+>   se <- heresHoping (ev ty) 
+>   s <- runElab (0, []) se
+>   case s of
+>       ElabSuccess e -> do 
+>         d <- give e
+>         goOut'
+>         as <- (| paramSpine getInScope |)
+>         runElab (nf+1, (D d :$ as):es) (c nf)
+>       ElabWaitCan fes dc cc -> do
+>         d <- suspendElab fes (ECan dc cc)
+>         goOut'
+>         as <- (| paramSpine getInScope |)
+>         runElab (nf+1, (D d :$ as):es) (c nf)
+>       ElabGoInst i nam fes ime te ci -> do
+>         goOut'
+>         as <- (| paramSpine getInScope |)
+>         suspendElab (nf+1, (D d :$ as):es) (c nf)
+>         (| (ElabGoInst (i+1) nam fes ime te ci) |)
+>       ElabFailed [] -> {- Currently stands for "Made no progress" -} do
+>         goOut' 
+>         as <- (| paramSpine getInScope |)
+>         runElab (nf+1, (D d :$ as):es) (c nf)
+>       ElabFailed s -> (| (ElabFailed s) |)
+>     where heresHoping :: VAL -> ProofState (NewElab EXP)
+>           heresHoping (PRF _P) = do
+>             psimp <- runPropSimplify (ev _P)
+>             case psimp of 
+>               (SimplyTrivial prf) -> (| (| prf |) |)
+>               (SimplyAbsurd _) -> (| (eCry [err "Proposition is absurd"]) |)
+>               (Simply qs h) -> do
+>                 lev <- getDevLev
+>                 (| (do
+>                   prfqfs <- eHopes (map (\(i,(x,_)) -> (("s" ++ show i) :<: (|x|))) (zip [0..] (trail qs)))
+>                   prfqs <- eLatests prfqfs
+>                   let prf = (zip [lev..] (map exp prfqs), INil) :/ h
+>                   (| prf |) ) |)
+>               CannotSimplify -> case (ev _P) of
+>                 EQ _S s@(P (l,n,ty) :$ as) _T t@(P (l',n',ty') :$ as') 
+>                   | l == l' , Just elfs <- zipSpine (as, as') -> (| (do
+>                     fs <- elfs
+>                     hopeSpine (ev ty :>: fs) (Refl ty (P (l ,n ,ty) :$ B0)) B0) |)
+
+>                 SETEQ s@(P (l,n,ty) :$ as) t@(P (l',n',ty') :$ as') 
+>                   | l == l' , Just elfs <- zipSpine (as, as') -> (| (do
+>                     fs <- elfs
+>                     x <- hopeSpine (ev ty :>: fs) (Refl ty (P (l ,n ,ty) :$ B0)) B0
+>                     (| (x $$ Out) |) ) |) 
+
+>                 EQ _S s@(D def :$ as) _T t | Hole Hoping <- defOp def -> do 
+>                    nam <- getCurrentName
+>                    
+>                    (| (do
+>                          [_Sf, sf, _Tf, tf] <- eFeeds [_S, s, _T, t]
+>                          eInst (defName def, sf) (_T :>: tf)
+>                          [_T, t] <- eLatests [_Tf, tf]
+>                          (| (Refl (exp _T) (exp t) :$ B0) |) ) |)
+>                 EQ _S s _T t@(D def :$ as) | Hole Hoping <- defOp def -> do 
+>                    nam <- getCurrentName
+>                    (| (do
+>                          [_Sf, sf, _Tf, tf] <- eFeeds [_S, s, _T, t]
+>                          eInst (defName def, tf) (_S :>: sf)
+>                          [_S, s] <- eLatests [_Sf, sf]
+>                          (| (Refl (exp _S) (exp s) :$ B0) |) ) |)
+
+>                 SETEQ s@(D def :$ as) t | Hole Hoping <- defOp def -> do 
+>                    nam <- getCurrentName
+>                    
+>                    (| (do
+>                          [_Sf, tf] <- eFeeds [SET, t]
+>                          eInst (defName def, _Sf) (SET :>: tf)
+>                          [t] <- eLatests [tf]
+>                          (| (SetRefl (exp t) :$ B0) |) ) |)
+>                 SETEQ s t@(D def :$ as) | Hole Hoping <- defOp def -> do 
+>                    nam <- getCurrentName
+>                    
+>                    (| (do
+>                          [_Tf, sf] <- eFeeds [SET, s]
+>                          eInst (defName def, _Tf) (SET :>: sf)
+>                          [s] <- eLatests [sf]
+>                          (| (SetRefl (exp s) :$ B0) |) ) |)
+>                 _ -> (| (eCry []) |)
+>           heresHoping ONE = (| (| ZERO |)|) 
+>           heresHoping _ = (| (eCry []) |)
+
+>           zipSpine :: (Bwd (Elim EXP), Bwd (Elim EXP)) -> Maybe (NewElab [(Feed, Feed)])
+>           zipSpine (B0, B0) = (| (| [] |) |) 
+>           zipSpine (ez :< A e, ez' :< A e') = do
+>             r <- zipSpine (ez, ez')
+>             (| (do 
+>                   efsefs' <- r
+>                   [ef, ef'] <- eFeeds [e, e']
+>                   (| (efsefs' ++ [(ef,ef')]) |) ) |)
+>           zipSpine x = Nothing
+
+>           hopeSpine :: (VAL :>: [(Feed,Feed)]) -> Tm {Head, Exp, Z} -> Bwd (Elim Feed) -> NewElab EXP
+>           hopeSpine (PI _A _B :>: ((af, af') : afsafs')) h fz = do
+>             [a,a'] <- eLatests [af,af']
+>             let _Pbit =  EQ _A (exp a) _A (exp a')
+>             f <- trace ("bit: " ++ ugly V0 (ev _Pbit)) $ eHope ("bit" :<: (| (PRF _Pbit) |))
+>             a <- eLatest af
+>             hopeSpine (ev _B $$. a :>: afsafs') h (fz :< QA af af' f)
+>           hopeSpine (_T :>: []) h fz = do
+>             ez <- traverse (traverse (\ x -> (| exp (eLatest x) |))) fz
+>             (| (h :$ ez) |)
+>           hopeSpine _ _ _ = eCry []
 
 > runElab fes@(nf, es) (EElab (s :<: sub) c) = do
 >   nom <- makeModule s
@@ -119,13 +213,12 @@
 >       goOut'
 >       as <- (| paramSpine getInScope |)
 >       runElab (nf+1, (D d :$ as):es) (c nf)
->     ElabGoInst fes ime te ci -> do
+>     ElabGoInst i nam fes ime te ci -> do
 >       d <- getCurrentDefinition
 >       goOut'
 >       as <- (| paramSpine getInScope |)
 >       suspendElab (nf+1, (D d :$ as):es) (c nf)
->       goIn
->       (| (ElabGoInst fes ime te ci) |)
+>       (| (ElabGoInst (i+1) nam fes ime te ci) |)
 >     ElabFailed s -> (| (ElabFailed s) |)
 
 > runElab fes@(nf, es) (EDub t c) = do
@@ -148,7 +241,8 @@
 >       D d :$ _ | defName d == n -> do
 >         suspendElab (nf, es) e
 >         -- suspend and wait for ambulando to solve
->         (| (ElabGoInst fes (n,f) (ty :>: (y,ex)) c) |)
+>         nam <- getCurrentName
+>         (| (ElabGoInst 0 nam fes (n,f) (ty :>: (y,ex)) c) |)
 >       _ -> if equal lev (ty :>: (x, y))
 >              then runElab fes c
 >              else (| (ElabFailed [err $ "runElab EInst: " ++ show (ev x) ++ " =/= " ++ show (ev y)]) |) -- cry
@@ -171,6 +265,9 @@
 >       Unknown tt hk -> do 
 >         putDevTip (SusElab tt (fes, prob) hk)
 >         getCurrentDefinition
+>       SusElab tt _ hk -> do 
+>         putDevTip (SusElab tt (fes, prob) hk)
+>         getCurrentDefinition
 >       _ -> error "Suspend elab" -- Hopefully we never get here? 
 
 
@@ -181,13 +278,13 @@
 >     f1 <- eFeed (exp $ e $$ Tl)
 >     return (f0,f1)
 
-> eFeeds :: [EXP] -> NewElab [Feed]
+> eFeeds :: Traversable f => f EXP -> NewElab (f Feed)
 > eFeeds = traverse eFeed 
 
-> eLatests :: [Feed] -> NewElab [VAL]
+> eLatests :: Traversable f => f Feed -> NewElab (f VAL)
 > eLatests = traverse eLatest
 
-> eHopes :: [(String :<: SubElab TY)] -> NewElab [Feed]
+> eHopes :: Traversable f => f (String :<: SubElab TY) -> NewElab (f Feed)
 > eHopes = traverse eHope
 
 > ePi :: Feed -> NewElab (Feed, Feed)
@@ -221,3 +318,4 @@
 >   case x of
 >     Just y -> (| y |)
 >     Nothing -> eCry [err ("Dubbing " ++ t ++ " failed")]
+

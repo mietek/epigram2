@@ -303,7 +303,7 @@ And some specialized versions:
 > putHoleKind hk = do
 >     tip <- getDevTip
 >     case tip of
->       Unknown ty _  -> putDevTip (Unknown ty hk)
+>       Unknown ty _  -> putDevTip (Unknown ty hk) >> updateDefFromTip >> (| () |) 
 >       _             -> throwError' $ err "putHoleKind: goal is not a hole"
 
 
@@ -409,7 +409,7 @@ machinery. Perhaps it should move somewhere more logical.
 >    blah bs _ =  (fmap (\(_,x,y,z) -> (x,y,z)) bs, B0)
 
 >    tipToOp :: [String] -> Bwd (Int, String, TY) -> Tip -> Operator 
->    tipToOp i f (Unknown _ _)         = Hole
+>    tipToOp i f (Unknown _ k)         = Hole k
 >    tipToOp i B0 (Defined (_ :>: tm))  = eats i $ Emit tm
 >    tipToOp i f (Defined (_ :>: tm))  =  
 >      eats i $ Emit (bwdVec f (\ n ys -> piLift {n} ys) tm)

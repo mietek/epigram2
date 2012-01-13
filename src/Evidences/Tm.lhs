@@ -257,10 +257,13 @@
 
 > pattern Prob p = Pro (Blem p)
 
+> data HKind = Crying String | Waiting | Hoping
+>   deriving Show
+
 > data Operator :: * where
 >   Eat    :: Maybe String -> Operator -> Operator 
 >   Emit   :: EXP -> Operator
->   Hole   :: Operator
+>   Hole   :: HKind -> Operator
 >   Case   :: [(Can , Operator)] -> Operator
 >   Split  :: Operator -> Operator
 >   GetTag :: String -> (String -> Operator) -> Operator
@@ -306,7 +309,7 @@
 >   show (Eat (Just s) o) = "(Eat " ++ s ++ show o ++ ")"
 >   show (Eat Nothing o)  = "(Eat Nothing " ++ show o ++ ")"
 >   show (Emit t)         = "(Emit " ++ show t ++ ")"
->   show Hole             = "Hole"
+>   show (Hole k)         = "(Hole " ++ show k ++ ")"
 >   show _                = "oooo"
 
 > type Env n m = (LEnv {n}, IEnv {n, m})
@@ -557,6 +560,7 @@ optimizations.
 > isReflSp :: Bwd (Elim EXP) -> Bool
 > isReflSp B0 = True
 > isReflSp (es :< QA _ _ q) = isReflSp es && isRefl (ev q)
+> isReflSp (es :< Out) = isReflSp es
 > isReflSp (es :< _) = isReflSp es
 
 We have special pairs for types going into and coming out of
@@ -737,6 +741,7 @@ by |lambdable|:
 
 > uglyElim :: Vec {n} String -> Elim (Tm {p, s, n}) -> String
 > uglyElim v (A e) = ugly v e
+> uglyElim v (QA a b eq) = ugly v a ++ " " ++ ugly v b ++ " " ++ ugly v eq ++ " "
 > uglyElim v Hd = "!"
 > uglyElim v Tl = "-"
 > uglyElim v Out = "%"
