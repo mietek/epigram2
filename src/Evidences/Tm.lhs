@@ -42,6 +42,20 @@
 
 > type Name = [(String, Int)]
 
+
+> data Trichotomy = LESS | GREATER | EQUAL -- damn SHE
+
+If x < y then x is in scope for y (so we can solve y with x)
+
+> orderName :: Name -> Name -> Trichotomy
+> orderName [] [] = EQUAL
+> orderName [] _  = GREATER
+> orderName _  [] = LESS
+> orderName ((s,i):a) ((t,j):b) = case compare i j of
+>   LT -> LESS
+>   GT -> GREATER
+>   _  -> orderName a b -- would be EQ, but for SHE
+
 > data Part :: * where
 >   Head :: Part
 >   Body :: Part

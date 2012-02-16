@@ -136,9 +136,27 @@
 >                     x <- hopeSpine (ev ty :>: fs) (Refl ty (P (l ,n ,ty) :$ B0)) B0
 >                     (| (x $$ Out) |) ) |) 
 
+>                 {-
+>                 EQ _S s@(D def :$ as) _T t@(D def' :$ bs) | Hole Hoping <- defOp def, Hole Hoping <- defOp def' ->
+>                     case trace "POP" $ orderName (defName def) (defName def') of
+>                          GREATER -> do
+>                                nam <- getCurrentName
+>                                (| (do
+>                                    [_Sf, sf, _Tf, tf] <- eFeeds [_S, s, _T, t]
+>                                    eInst (defName def, sf) (_T :>: tf)
+>                                    [_T, t] <- eLatests [_Tf, tf]
+>                                    (| (Refl (exp _T) (exp t) :$ B0) |) ) |)
+>                          LESS -> do
+>                                nam <- getCurrentName
+>                                (| (do
+>                                    [_Sf, sf, _Tf, tf] <- eFeeds [_S, s, _T, t]
+>                                    eInst (defName def', tf) (_S :>: sf)
+>                                    [_S, s] <- eLatests [_Sf, sf]
+>                                    (| (Refl (exp _S) (exp s) :$ B0) |) ) |)
+>                          EQUAL -> error "these two names are equal, so the propositional simplifier should have solved this already"
+
 >                 EQ _S s@(D def :$ as) _T t | Hole Hoping <- defOp def -> do 
 >                    nam <- getCurrentName
->                    
 >                    (| (do
 >                          [_Sf, sf, _Tf, tf] <- eFeeds [_S, s, _T, t]
 >                          eInst (defName def, sf) (_T :>: tf)
@@ -152,9 +170,26 @@
 >                          [_S, s] <- eLatests [_Sf, sf]
 >                          (| (Refl (exp _S) (exp s) :$ B0) |) ) |)
 
+>                 SETEQ s@(D def :$ as) t@(D def' :$ bs) | Hole Hoping <- defOp def, Hole Hoping <- defOp def' ->
+>                     case orderName (defName def) (defName def') of
+>                       GREATER -> do
+>                           nam <- getCurrentName
+>                           (| (do
+>                               [sf, tf] <- eFeeds [s, t]
+>                               eInst (defName def, sf) (SET :>: tf)
+>                               [t] <- eLatests [tf]
+>                               (| (SetRefl (exp t) :$ B0) |) ) |)
+>                       LESS -> do
+>                           nam <- getCurrentName
+>                           (| (do
+>                               [tf, sf] <- eFeeds [t, s]
+>                               eInst (defName def', tf) (SET :>: sf)
+>                               [s] <- eLatests [sf]
+>                               (| (SetRefl (exp s) :$ B0) |) ) |)
+>                       EQUAL -> error "these two names are equal, so the propositional simplifier should have solved this already"
+
 >                 SETEQ s@(D def :$ as) t | Hole Hoping <- defOp def -> do 
 >                    nam <- getCurrentName
->                    
 >                    (| (do
 >                          [_Sf, tf] <- eFeeds [SET, t]
 >                          eInst (defName def, _Sf) (SET :>: tf)
@@ -162,12 +197,12 @@
 >                          (| (SetRefl (exp t) :$ B0) |) ) |)
 >                 SETEQ s t@(D def :$ as) | Hole Hoping <- defOp def -> do 
 >                    nam <- getCurrentName
->                    
 >                    (| (do
 >                          [_Tf, sf] <- eFeeds [SET, s]
 >                          eInst (defName def, _Tf) (SET :>: sf)
 >                          [s] <- eLatests [sf]
 >                          (| (SetRefl (exp s) :$ B0) |) ) |)
+>                 -}
 >                 _ -> (| (eCry []) |)
 >           heresHoping ONE = (| (| ZERO |)|) 
 >           heresHoping _ = (| (eCry []) |)
@@ -245,7 +280,7 @@
 >         (| (ElabGoInst 0 nam fes (n,f) (ty :>: (y,ex)) c) |)
 >       _ -> if equal lev (ty :>: (x, y))
 >              then runElab fes c
->              else (| (ElabFailed [err $ "runElab EInst: " ++ show (ev x) ++ " =/= " ++ show (ev y)]) |) -- cry
+>              else (| (ElabFailed [err $ "runElab EInst: " ++ show n ++ " -- " ++ show (ev x) ++ " =/= " ++ show (ev y)]) |) -- cry
 
  
 > runElab fes (ECry s) = (| (ElabFailed s) |)
