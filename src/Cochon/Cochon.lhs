@@ -14,7 +14,7 @@
 > import Data.Foldable
 > import Data.Traversable
 > import Data.List hiding (find)
-> import System
+> -- import System
 > import System.Exit
 > import System.IO 
 
@@ -267,12 +267,10 @@ The master list of Cochon tactics.
 
 Construction tactics:
 
-> {-
->     nullaryCT "apply" (apply >> return "Applied.")
->       "apply - applies the last entry in the development to a new subgoal."
->   : nullaryCT "done" (done >> return "Done.")
->       "done - solves the goal with the last entry in the development."
-> -}
+<     nullaryCT "apply" (apply >> return "Applied.")
+<       "apply - applies the last entry in the development to a new subgoal."
+<   : nullaryCT "done" (done >> return "Done.")
+<       "done - solves the goal with the last entry in the development."
 
 <   unaryInCT "give" (\tm -> elabGiveNext tm >> return "Thank you.")
 <       "give <term> - solves the goal with <term>." :
@@ -633,7 +631,7 @@ Import more tactics from an aspect:
 
 >     nullaryCT "suit" (do
 >       _X <- make ("X" :<: SET)
->       -- let _X = ARR SET SET
+>       -- |let _X = ARR SET SET|
 >       let probty = Prob exId :- [_X]
 >       make ("suit" :<: probty) 
 >       goIn 
@@ -651,7 +649,7 @@ Import more tactics from an aspect:
 >       return "Suit.") "suit" :
 
 >     nullaryCT "suit3" (do
->       -- _X <- make ("X" :<: SET)
+>       -- |_X <- make ("X" :<: SET)|
 >       let _X = SET  
 >       let probty = Prob exPIdTy :- [_X]
 >       make ("suit" :<: probty) 
@@ -671,11 +669,11 @@ Import more tactics from an aspect:
 
 >     nullaryCT "suitK" (do
 >       _X <- make ("X" :<: SET)
->       -- _Ah <- assumeParam ("A" :<: SET)
->       -- _Bh <- assumeParam ("B" :<: SET)
->       -- let _A = _Ah :$ B0
->       -- let _B = _Bh :$ B0
->       -- let _X = (_A --> _B --> _A)
+>       -- |_Ah <- assumeParam ("A" :<: SET)|
+>       -- |_Bh <- assumeParam ("B" :<: SET)|
+>       -- |let _A = _Ah :$ B0|
+>       -- |let _B = _Bh :$ B0|
+>       -- |let _X = (_A --> _B --> _A)|
 >       let probty = Prob exK :- [_X]
 >       make ("suit" :<: probty) 
 >       goIn 
@@ -686,13 +684,13 @@ Import more tactics from an aspect:
 
 >     nullaryCT "suitS" (do
 >       _X <- make ("X" :<: SET)
->       -- _Ah <- assumeParam ("A" :<: SET)
->       -- _Bh <- assumeParam ("B" :<: SET)
->       -- _Ch <- assumeParam ("C" :<: SET)
->       -- let _A = _Ah :$ B0
->       -- let _B = _Bh :$ B0
->       -- let _C = _Ch :$ B0
->       -- let _X = ((_A --> _B --> _C) --> (_A --> _B) --> (_A --> _C)) 
+>       -- |_Ah <- assumeParam ("A" :<: SET)|
+>       -- |_Bh <- assumeParam ("B" :<: SET)|
+>       -- |_Ch <- assumeParam ("C" :<: SET)|
+>       -- |let _A = _Ah :$ B0|
+>       -- |let _B = _Bh :$ B0|
+>       -- |let _C = _Ch :$ B0|
+>       -- |let _X = ((_A --> _B --> _C) --> (_A --> _B) --> (_A --> _C)) |
 >       let probty = Prob exS :- [_X]
 >       make ("suit" :<: probty) 
 >       goIn 
@@ -702,13 +700,13 @@ Import more tactics from an aspect:
 
 >     nullaryCT "suitApp" (do
 >       _X <- make ("X" :<: SET)
->       -- _Ah <- assumeParam ("A" :<: SET)
->       -- _Bh <- assumeParam ("B" :<: SET)
->       -- _Ch <- assumeParam ("C" :<: SET)
->       -- let _A = _Ah :$ B0
->       -- let _B = _Bh :$ B0
->       -- let _C = _Ch :$ B0
->       -- let _X = ((_A --> _B --> _C) --> (_A --> _B --> _C)) 
+>       -- |_Ah <- assumeParam ("A" :<: SET)|
+>       -- |_Bh <- assumeParam ("B" :<: SET)|
+>       -- |_Ch <- assumeParam ("C" :<: SET)|
+>       -- |let _A = _Ah :$ B0|
+>       -- |let _B = _Bh :$ B0|
+>       -- |let _C = _Ch :$ B0|
+>       -- |let _X = ((_A --> _B --> _C) --> (_A --> _B --> _C)) |
 >       let probty = Prob exApp :- [_X]
 >       make ("suit" :<: probty) 
 >       goIn 
@@ -851,18 +849,17 @@ Import more tactics from an aspect:
 > printChanges :: ProofContext -> ProofContext -> IO ()
 > printChanges from to = return ()
 
-> {-
->  do
->     let Right as = evalStateT getInScope from
->         Right bs = evalStateT getInScope to
->     let (lost, gained)  = diff (as <>> F0) (bs <>> F0)
->     if lost /= F0
->         then putStrLn ("Left scope: " ++ showEntriesAbs (fmap reverseEntry (NF (fmap Right lost))) )
->         else return ()
->     if gained /= F0
->        then putStrLn ("Entered scope: " ++ showEntriesAbs (fmap reverseEntry (NF (fmap Right gained))))
->        else return ()
-> -}
+
+<  do
+<     let Right as = evalStateT getInScope from
+<         Right bs = evalStateT getInScope to
+<     let (lost, gained)  = diff (as <>> F0) (bs <>> F0)
+<     if lost /= F0
+<         then putStrLn ("Left scope: " ++ showEntriesAbs (fmap reverseEntry (NF (fmap Right lost))) )
+<         else return ()
+<     if gained /= F0
+<        then putStrLn ("Entered scope: " ++ showEntriesAbs (fmap reverseEntry (NF (fmap Right gained))))
+<        else return ()
 
 > diff :: (Eq a, Show a) => Fwd a -> Fwd a -> (Fwd a, Fwd a)
 > diff (x :> xs) (y :> ys)

@@ -112,13 +112,14 @@
 \chapter{Elaboration}
 \label{chap:elaboration}
 
-%include Elaboration/ElabProb.lhs
-%include Elaboration/ElabMonad.lhs
-%include Elaboration/MakeElab.lhs
-%include Elaboration/RunElab.lhs
-%include Elaboration/Elaborator.lhs
-%include Elaboration/Scheduler.lhs
-%include Elaboration/Wire.lhs
+%%%include Elaboration/ElabProb.lhs
+%%include Elaboration/NewElabMonad.lhs
+%%%include Elaboration/MakeElab.lhs
+%%include Elaboration/NewRunElab.lhs
+%%include Elaboration/NewElaborator.lhs
+%%%include Elaboration/Scheduler.lhs
+%%%include Elaboration/Wire.lhs
+%%include Ambulando.lhs
 
 \chapter{Distillation}
 

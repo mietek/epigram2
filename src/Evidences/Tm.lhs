@@ -816,7 +816,7 @@ by |lambdable|:
 
 
 
-> evalEager :: forall m n p s' . pi (s :: Status) .
+> evalEager :: forall n p s' . pi (s :: Status) .
 >           Env {Z} {n} -> Tm {p, s', n} -> Tm {Body, s, Z}
 > evalEager {s} g (L g' x b)  = L (g <+< g') x b
 > evalEager {s} g (LK b)      = LK (exp (evalEager {s} g b))
@@ -909,6 +909,7 @@ by |lambdable|:
 > runOpEager (GetTag s f) oaz (A a : as) = runOpEager (f s) oaz as
 > runOpEager _ _ _ = Nothing 
 
+> evv :: forall p s' .  Tm {p, s', Z} -> Tm {Body, Val, Z}
 > evv = evalEager {Val} ENil
 
 > applyScheme :: VAL -> Elim EXP -> EXP

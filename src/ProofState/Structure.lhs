@@ -103,7 +103,7 @@ or value
 
 \end{itemize}
 
-> data Traversable f => Entry f
+> data {-Traversable f => no datatype contexts-} Entry f
 >   =  EDef     {  edef       :: DEF 
 >               ,  dev        :: Dev f
 >               ,  scheme     :: Maybe Scheme

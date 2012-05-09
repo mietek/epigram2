@@ -14,9 +14,9 @@ generate an executable from a collection of supercombinator definitions.
 
 > import System.Environment
 > import System.IO
-> import System
-> import Char
-> import List
+> -- import System
+> import Data.Char
+> import Data.List
 > import Control.Monad.State
 > import Data.Traversable
 > import Control.Applicative

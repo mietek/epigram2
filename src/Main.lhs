@@ -9,7 +9,7 @@
 > module Main where
 
 > import Control.Monad.State
-> import System
+> import System.Environment
 > import System.IO
 > import System.Console.GetOpt
 
@@ -62,7 +62,7 @@ either.
 
 > main :: IO ()
 > main = do
->        argv <- System.getArgs
+>        argv <- getArgs
 >        case getOpt RequireOrder options argv of
 >          -- Help:
 >          (Help : _, _, [])            -> do
