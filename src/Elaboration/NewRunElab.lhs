@@ -205,6 +205,7 @@
 >                 -}
 >                 _ -> (| (eCry []) |)
 >           heresHoping ONE = (| (| ZERO |)|) 
+>           heresHoping (DUB _ _ _ ) = (| (| ZERO |)|) 
 >           heresHoping _ = (| (eCry []) |)
 
 >           zipSpine :: (Bwd (Elim EXP), Bwd (Elim EXP)) -> Maybe (NewElab [(Feed, Feed)])
@@ -254,7 +255,12 @@
 >       as <- (| paramSpine getInScope |)
 >       suspendElab (nf+1, (D d :$ as):es) (c nf)
 >       (| (ElabGoInst (i+1) nam fes ime te ci) |)
->     ElabFailed s -> (| (ElabFailed s) |)
+>     ElabFailed s -> do
+>       d <- suspendElab fes (ECry s)
+>       goOut'
+>       as <- (| paramSpine getInScope |)
+>       runElab (nf+1, (D d :$ as):es) (c nf)
+
 
 > runElab fes@(nf, es) (EDub t c) = do
 >   ps <- getInScope

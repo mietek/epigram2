@@ -21,6 +21,17 @@
 
 > import Cochon.Cochon
 
+> import SourceLang.Lexer
+> import SourceLang.Parx
+> import SourceLang.SourceData
+> import SourceLang.SourceParser
+
+> import Elaboration.Ambulando
+> import ProofState.Navigation
+> import ProofState.GetSet
+> import ProofState.Interface
+> import Evidences.Tm
+
 %endif
 
 
@@ -31,6 +42,7 @@ The following flags can be passed to the executable:
 >              | CheckFile FilePath
 >              | PrintFile FilePath
 >              | Interactive
+>              | SourceFile FilePath
 >              | Help
 >
 > options :: [OptDescr Options]
@@ -38,6 +50,7 @@ The following flags can be passed to the executable:
 >           , Option ['c'] ["check"] (ReqArg CheckFile "FILE")  "Check the development"
 >           , Option ['p'] ["print"] (ReqArg PrintFile "FILE")  "Print the development"
 >           , Option ['i'] ["interactive"] (NoArg Interactive)  "Interactive mode"
+>           , Option ['s'] ["source"] (ReqArg SourceFile "FILE") "Interpret sourcey"
 >           , Option ['h'] ["help"]  (NoArg Help)               "Help! Help!"
 >           ]
 
@@ -83,7 +96,9 @@ either.
 >            loadDev file
 >          -- Empty development:
 >          (Interactive : _,[],[])      -> do
->            cochon emptyContext            
+>            cochon emptyContext
+>          (SourceFile file : _ , _, []) -> do
+>            sourceFile file            
 >          -- Empty development:
 >          ([],[],[])                   -> do
 >            cochon emptyContext            
@@ -98,6 +113,20 @@ either.
 
 >    loadDev :: String -> IO ()
 >    loadDev file = withFile file cochon'
+
+>    sourceFile :: String -> IO ()
+>    sourceFile file = do
+>      contents <- readFile file 
+>      let (_,Just doc,_) = parx epiDoc (ready contents)
+>      bc <- simpleOutput (do 
+>        make ("source" :<: Prob doc :- [])
+>        goIn 
+>        nam <- getCurrentName
+>        ambulando (Just nam) NONEWS
+>        goOut'
+>        return ""
+>       ) (B0 :< emptyContext)
+>      cochon' bc
 
 >    printTopDev :: Bwd ProofContext -> IO ()
 >    printTopDev (_ :< loc) = do

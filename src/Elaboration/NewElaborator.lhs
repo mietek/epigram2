@@ -197,6 +197,8 @@
 >     (_Sf,_) <- eSplit _Sf'
 >     _S <- eLatest _Sf
 >     (| (PAIR (SCHTY (exp _S)) ZERO) |)
+>   probElab (Sig [] (_ :~ DataConc (_ :~ t) [])) [] = do
+>     (| (PAIR (SCHTY SET) ZERO) |)
 >   probElab (Sig ((sprem :~ VarPrem prem) : prems) (sc :~ VarConc cc ((_ :~ argt) : args) cty)) [] 
 >     | concPlate prem == argt = do
 >       pf <- eElab ("prem" :<: (| (sprem :~ prem, []) |))
@@ -273,15 +275,8 @@
 >     schf' <- eElab (plate ++ "Sig" :<: (| (s, []) |))
 >     (schf, _) <- eSplit schf'
 >     sch <- eLatest schf
->     -- ff' <- eElab (plate ++ "Dia" :<: do
->     --   f <- seLambda ("call" ++ plate :<: wr (def schElDEF) (exp sch))
->     --   seLambda ("call" ++ plate ++ "Dub" :<: DUB plate (insCall sch))  
->     --   (| (d, [exp sch]) |))
->     -- (ff, _) <- eSplit ff'
->     
->     -- eLatests [schf,ff]
->     ff' <- eHope (plate :<: (|  (wr (def schElDEF) (exp sch)) |)) 
->     (ff, _) <- eSplit ff'
+>     ff' <- eElab (plate ++ "Dia" :<: (| (d, [exp sch]) |))
+>     (ff, _) <- eSplit ff' 
 >     [sch,f] <- eLatests [schf,ff]
 >     (| (PAIR (exp sch) (exp f)) |)
 
@@ -289,7 +284,7 @@
 >   probName _ = "EpiDial"
 >   probTel x = SCHEME *** ONE
 >   probVal x [_S] = wr (def schElDEF) (exp _S) *** ONE
->   probElab _ [_Sf] = eCry [err "elabSpine"]
+>   probElab _ [_Sf] = eCry [err "elabDial"]
 
 > instance Problem EpiDoc where
 >   probName _ = "EpiDoc"

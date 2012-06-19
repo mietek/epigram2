@@ -111,6 +111,7 @@
 > -- [Feature = Problem]
 > canTy ((Set, []) :>: Prob p) = (| (ev $ probTel p) |)
 > canTy ((Prob p, as) :>: t) | Sigma :- bs <- probVal p (map ev as) = canTy ((Sigma, bs) :>: t) 
+> canTy ((Prob p, as) :>: t) | One :- [] <- probVal p (map ev as) = canTy ((One, []) :>: t) 
 > -- [/Feature = Problem]
 
 > canTy _ = (|) 

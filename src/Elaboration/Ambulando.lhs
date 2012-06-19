@@ -267,7 +267,8 @@ containing layer, continue.
 >     ElabGoInst i nam f (n,fn) te@(ty' :>: (ex,exf)) c -> do
 >       replicateM i goIn
 >       (| (Left (n, ty' :>: ex)) |)
->     ElabFailed e -> error $ "Tell Tip:" ++ show e  -- run away and cry
+>     ElabFailed e -> 
+>       (| (Right (SusElab ty ((nf,es), ECry e) hk, NoNews)) |)
 >   where  (ty', _) = tellNews news ty
 > tellTip _ news Module = (| (Right (Module, NoNews)) |)
 
