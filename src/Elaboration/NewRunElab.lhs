@@ -191,15 +191,15 @@
 >                 SETEQ s@(D def :$ as) t | Hole Hoping <- defOp def -> do 
 >                    nam <- getCurrentName
 >                    (| (do
->                          [_Sf, tf] <- eFeeds [SET, t]
->                          eInst (defName def, _Sf) (SET :>: tf)
+>                          [sf, tf] <- eFeeds [s, t]
+>                          eInst (defName def, sf) (SET :>: tf)
 >                          [t] <- eLatests [tf]
 >                          (| (SetRefl (exp t) :$ B0) |) ) |)
 >                 SETEQ s t@(D def :$ as) | Hole Hoping <- defOp def -> do 
 >                    nam <- getCurrentName
 >                    (| (do
->                          [_Tf, sf] <- eFeeds [SET, s]
->                          eInst (defName def, _Tf) (SET :>: sf)
+>                          [sf, tf] <- eFeeds [s, t]
+>                          eInst (defName def, tf) (SET :>: sf)
 >                          [s] <- eLatests [sf]
 >                          (| (SetRefl (exp s) :$ B0) |) ) |)
 >                 -}
@@ -221,7 +221,7 @@
 >           hopeSpine (PI _A _B :>: ((af, af') : afsafs')) h fz = do
 >             [a,a'] <- eLatests [af,af']
 >             let _Pbit =  EQ _A (exp a) _A (exp a')
->             f <- trace ("bit: " ++ ugly V0 (ev _Pbit)) $ eHope ("bit" :<: (| (PRF _Pbit) |))
+>             f <- eHope ("bit" :<: (| (PRF _Pbit) |))
 >             a <- eLatest af
 >             hopeSpine (ev _B $$. a :>: afsafs') h (fz :< QA af af' f)
 >           hopeSpine (_T :>: []) h fz = do

@@ -79,7 +79,7 @@
 >     eSet _Sf
 >     (| (PAIR SET ZERO) |) 
 
->   probElab e [_S] = error $ show e -- "intm error"
+>   probElab e [_S] = error $ "SSS" ++ show e -- "intm error"
 
 > instance Problem EpiExTm where
 >   probName x = "elabExTm"
@@ -219,13 +219,94 @@
 >         (| (Sig prems (sc :~ LetConc cc args cty), []) |))
 >       [sch, ssch] <- eLatests [schf, sschf]
 >       (| (PAIR (SCHPI (exp sch) (la argt $ \a -> nix ssch :$ (B0 :< A a :< A ZERO :< Hd))) ZERO) |)
->   probElab x [] = error $ show x
+>   probElab (Sig ((sprem :~ VarPrem prem) : prems) (sc :~ LetConc cc args cty)) [] = do
+>       let argt = concPlate prem
+>       pf <- eElab ("prem" :<: (| (sprem :~ ExpEpiSig prem, []) |))
+>       (sf,_) <- eSplit pf
+>       s <- eLatest sf
+>       sschf <- eElab ("sub" :<: do
+>         f <- seLambda (argt :<: (exp s))
+>         fdub <- seLambda (("dub" ++ argt) :<: DUB argt (SCHTY (exp s)) (exp f))
+>         (| (Sig prems (sc :~ LetConc cc args cty), []) |))
+>       [s, ssch] <- eLatests [sf, sschf]
+>       (| (PAIR (SCHIMPI (exp s) (la argt $ \a -> nix ssch :$ (B0 :< A a :< A ZERO :< Hd))) ZERO) |)
+>   probElab x [] = error $ "elabSig: " ++ show x
+
+> newtype ExpEpiSig = ExpEpiSig (EpiSig {VarDef}) deriving Show
+
+> instance Problem ExpEpiSig where
+>   probName x = "ExpEpiSig"
+>   probTel x = ONE
+>   probVal x es = SET *** ONE
+>   probElab (ExpEpiSig (Sig [] (_ :~ VarConc (_ :~ t) [] mety))) [] = do
+>     _Sf <- case mety of
+>              Just ety -> do 
+>                f <- eElab ("varTy" :<: (| (ety, [SET]) |))
+>                (| fst (eSplit f) |) 
+>              _ -> eHope ("hopeVarTy" :<: (| SET |)) 
+>     _S <- eLatest _Sf
+>     (| (PAIR (exp _S) ZERO) |)
+>   probElab (ExpEpiSig (Sig ((sprem :~ VarPrem prem) : prems) (sc :~ VarConc cc ((_ :~ argt) : args) cty))) [] 
+>     | concPlate prem == argt = do
+>       pf <- eElab ("prem" :<: (| (sprem :~ ExpEpiSig prem, []) |))
+>       (sf,_) <- eSplit pf
+>       s <- eLatest sf
+>       tf <- eElab ("sub" :<: do
+>         f <- seLambda (argt :<: (exp s))
+>         fdub <- seLambda (("dub" ++ argt) :<: DUB argt (SCHTY (exp s)) (exp f))
+>         (| (ExpEpiSig (Sig prems (sc :~ VarConc cc args cty)), []) |))
+>       [s, t] <- eLatests [sf, tf]
+>       (| (PAIR (PI (exp s) (la argt $ \a -> nix t :$ (B0 :< A a :< A ZERO :< Hd))) ZERO) |)
+>   probElab x [] = error $ "ExpEpiSig: " ++ show x
 
 > concPlate :: EpiSig {k} -> Template
 > concPlate (Sig _ (_ :~ (VarConc (_ :~ t) _ _))) = t
 > concPlate (Sig _ (_ :~ (LetConc (_ :~ t) _ _))) = t
 > concPlate (Sig _ (_ :~ (DataConc (_ :~ t) _))) = t
 
+> instance Problem EpiDef where
+>   probName _ = "EpiDef"
+>   probTel _ = ONE
+>   probVal _ _ = ("S", SCHEME) -** \_S -> wr (def schElDEF) _S
+>   probElab (Def {k} s@(_ :~ s') d) _ = do
+>     let plate = concPlate s'
+>     schf' <- eElab (plate ++ "Sig" :<: (| (s, []) |))
+>     (schf, _) <- eSplit schf'
+>     sch <- eLatest schf
+>     -- ff' <- eElab (plate ++ "Dia" :<: do
+>     --   f <- seLambda ("call" ++ plate :<: wr (def schElDEF) (exp sch))
+>     --   seLambda ("call" ++ plate ++ "Dub" :<: DUB plate (insCall sch))  
+>     --   (| (d, [exp sch]) |))
+>     -- (ff, _) <- eSplit ff'
+>     
+>     -- eLatests [schf,ff]
+>     ff' <- eHope (plate :<: (|  (wr (def schElDEF) (exp sch)) |)) 
+>     (ff, _) <- eSplit ff'
+>     [sch,f] <- eLatests [schf,ff]
+>     (| (PAIR (exp sch) (exp f)) |)
+
+> instance Problem (EpiDial {k}) where
+>   probName _ = "EpiDial"
+>   probTel x = SCHEME *** ONE
+>   probVal x [_S] = wr (def schElDEF) (exp _S) *** ONE
+>   probElab _ [_Sf] = eCry [err "elabSpine"]
+
+> instance Problem EpiDoc where
+>   probName _ = "EpiDoc"
+>   probTel _ = ONE
+>   probVal _ _ = ONE
+>   probElab [] _ = (| ZERO |)
+>   -- probElab (d@(Def {LemmaDef} _ _) : ds) _ = do
+>   --   eElab ("lem" :<: (| (d, []) |)) 
+>   --   probElab ds ZERO
+>   probElab (d@(_ :~ Def {k} (_ :~ s) _) : ds) z = do
+>     let plate = concPlate s
+>     schfdeff <- eElab (plate ++ "Def" :<: (| (d, []) |))
+>     (schf, deff) <- eSplit schfdeff
+>     [sch, def] <- eLatests [schf, deff]
+>     eHope (plate ++ "Dub" :<: (| (DUB plate (exp sch) (exp def)) |)) 
+>     probElab ds z
+>     (| ZERO |)
 
 > instance Problem t => Problem (x :~ t) where
 >   probName (_ :~ x) = "sourced" ++ probName x

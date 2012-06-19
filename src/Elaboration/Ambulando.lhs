@@ -258,20 +258,17 @@ containing layer, continue.
 >          (tm', ne2) = tellNews news tm
 >          ne         = min ne1 ne2
 > tellTip _ news (SusElab ty ((nf,es), e) hk) = do
->   putDevTip (Unknown ty hk) 
+>   putDevTip (Unknown ty' hk) 
 >   er <- runElab (nf, map (fst . tellNews news) es) e  
 >   case er of
 >     ElabSuccess e' -> (| (Right (Defined (ty' :>: e'), GoodNews)) |)
->       where  (ty', _) = tellNews news ty
 >     ElabWaitCan f ex c -> 
 >       (| (Right (SusElab ty (f, ECan ex c) hk, NoNews)) |)
 >     ElabGoInst i nam f (n,fn) te@(ty' :>: (ex,exf)) c -> do
->       --record the progress made in the elab prob
->       putDevTip (SusElab ty'' (f, EInst (n,fn) (ty' :>: exf) c) hk)
 >       replicateM i goIn
 >       (| (Left (n, ty' :>: ex)) |)
->      where  (ty'', _) = tellNews news ty
 >     ElabFailed e -> error $ "Tell Tip:" ++ show e  -- run away and cry
+>   where  (ty', _) = tellNews news ty
 > tellTip _ news Module = (| (Right (Module, NoNews)) |)
 
 

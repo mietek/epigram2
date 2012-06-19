@@ -272,6 +272,6 @@ Termy things don't consume leading or trailing spaces.
 > exComp = let (_, Just eid, []) = parx (pad epiInTm) (doc (slex "\\ f -> \\ g -> \\ x -> f (g x)")) in eid
 
 > exSig :: EpiSig {LetDef} 
-> exSig = let (_, Just eid, []) = parx (pad $ epiSig {LetDef}) (ready "f (A : Set) (a : A) : A") in eid 
+> exSig = let (_, Just eid, []) = parx (pad $ epiSig {LetDef}) (ready "A\n---\nid (a : A) : A") in eid 
 
 > blah = (ready "blah ; \\ f -> \\ g -> \\ x -> f (g x)"))  
