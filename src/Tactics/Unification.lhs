@@ -116,6 +116,11 @@ holes with the new ones.
 
 What fresh hell is this:
 
+\conor{The following ought to be implemented using the
+mangler. Normalization can't introduce variable occurrence, but it can
+eliminate variable occurrence. Correspondingly, normalization is necessary
+to ensure that the occur check says yes as often as possible.}
+
 > occurs :: Int -> Maybe Name -> [Int] -> (TY :>: EXP) -> Bool 
 > occurs l n p (ty :>: tm) = 
 >   let tm' = etaQuote l (ty :>: tm)

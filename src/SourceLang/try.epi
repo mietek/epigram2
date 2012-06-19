@@ -1,0 +1,8 @@
+data Nat : Set
+  Nat :> zero
+  Nat :> suc (n : Nat)
+
+let plus (m : Nat) (n : Nat) : Nat
+  plus m n <= induction m
+    plus zero n = n
+    plus (suc m) n = suc (plus m n)

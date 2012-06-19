@@ -14,6 +14,10 @@
 > import SourceLang.Lexer
 > import SourceLang.SourceData
 
+> testFile :: String -> Maybe EpiDoc
+> testFile s = case parx epiDoc (ready s) of
+>   (_, m, _) -> m
+
 > isWhite :: Elt -> Bool
 > isWhite (M _) = True
 > isWhite (E (Spc _)) = True
